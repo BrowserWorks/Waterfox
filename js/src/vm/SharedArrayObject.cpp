@@ -179,7 +179,7 @@ const JSFunctionSpec SharedArrayBufferObject::jsstaticfuncs[] = {
 };
 
 MOZ_ALWAYS_INLINE bool
-SharedArrayBufferObject::byteLengthGetterImpl(JSContext* cx, CallArgs args)
+SharedArrayBufferObject::byteLengthGetterImpl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(IsSharedArrayBuffer(args.thisv()));
     args.rval().setInt32(args.thisv().toObject().as<SharedArrayBufferObject>().byteLength());
@@ -244,6 +244,7 @@ SharedArrayBufferObject::New(JSContext* cx, uint32_t length)
 SharedArrayBufferObject*
 SharedArrayBufferObject::New(JSContext* cx, SharedArrayRawBuffer* buffer)
 {
+    AutoSetNewObjectMetadata metadata(cx);
     Rooted<SharedArrayBufferObject*> obj(cx, NewBuiltinClassInstance<SharedArrayBufferObject>(cx));
     if (!obj)
         return nullptr;
@@ -303,7 +304,7 @@ const Class SharedArrayBufferObject::protoClass = {
 
 const Class SharedArrayBufferObject::class_ = {
     "SharedArrayBuffer",
-    JSCLASS_IMPLEMENTS_BARRIERS |
+    JSCLASS_DELAY_METADATA_CALLBACK |
     JSCLASS_HAS_RESERVED_SLOTS(SharedArrayBufferObject::RESERVED_SLOTS) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_SharedArrayBuffer),
     nullptr, /* addProperty */
@@ -346,7 +347,7 @@ js::InitSharedArrayBufferClass(JSContext* cx, HandleObject obj)
     RootedId byteLengthId(cx, NameToId(cx->names().byteLength));
     unsigned attrs = JSPROP_SHARED | JSPROP_GETTER | JSPROP_PERMANENT;
     JSObject* getter =
-        NewNativeFunction(cx, SharedArrayBufferObject::byteLengthGetter, 0, NullPtr());
+        NewNativeFunction(cx, SharedArrayBufferObject::byteLengthGetter, 0, nullptr);
     if (!getter)
         return nullptr;
 
@@ -382,9 +383,36 @@ js::AsSharedArrayBuffer(HandleObject obj)
     return obj->as<SharedArrayBufferObject>();
 }
 
+JS_FRIEND_API(void)
+js::GetSharedArrayBufferViewLengthAndData(JSObject* obj, uint32_t* length, uint8_t** data)
+{
+    MOZ_ASSERT(obj->is<SharedTypedArrayObject>());
+
+    *length = obj->as<SharedTypedArrayObject>().byteLength();
+
+    *data = static_cast<uint8_t*>(obj->as<SharedTypedArrayObject>().viewData());
+}
+
+JS_FRIEND_API(void)
+js::GetSharedArrayBufferLengthAndData(JSObject* obj, uint32_t* length, uint8_t** data)
+{
+    MOZ_ASSERT(obj->is<SharedArrayBufferObject>());
+    *length = obj->as<SharedArrayBufferObject>().byteLength();
+    *data = obj->as<SharedArrayBufferObject>().dataPointer();
+}
+
 JS_FRIEND_API(bool)
 JS_IsSharedArrayBufferObject(JSObject* obj)
 {
     obj = CheckedUnwrap(obj);
-    return obj ? obj->is<ArrayBufferObject>() : false;
+    return obj ? obj->is<SharedArrayBufferObject>() : false;
+}
+
+JS_FRIEND_API(uint8_t*)
+JS_GetSharedArrayBufferData(JSObject* obj, const JS::AutoCheckCannotGC&)
+{
+    obj = CheckedUnwrap(obj);
+    if (!obj)
+        return nullptr;
+    return obj->as<SharedArrayBufferObject>().dataPointer();
 }

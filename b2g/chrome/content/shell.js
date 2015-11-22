@@ -4,6 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+window.performance.mark('gecko-shell-loadstart');
+
 Cu.import('resource://gre/modules/ContactService.jsm');
 Cu.import('resource://gre/modules/DataStoreChangeNotifier.jsm');
 Cu.import('resource://gre/modules/AlarmService.jsm');
@@ -16,10 +18,12 @@ Cu.import('resource://gre/modules/Keyboard.jsm');
 Cu.import('resource://gre/modules/ErrorPage.jsm');
 Cu.import('resource://gre/modules/AlertsHelper.jsm');
 Cu.import('resource://gre/modules/RequestSyncService.jsm');
+Cu.import('resource://gre/modules/SystemUpdateService.jsm');
 #ifdef MOZ_WIDGET_GONK
 Cu.import('resource://gre/modules/NetworkStatsService.jsm');
 Cu.import('resource://gre/modules/ResourceStatsService.jsm');
 #endif
+Cu.import('resource://gre/modules/KillSwitchMain.jsm');
 
 // Identity
 Cu.import('resource://gre/modules/SignInToWebsite.jsm');
@@ -64,16 +68,19 @@ XPCOMUtils.defineLazyGetter(this, "libcutils", function () {
 });
 #endif
 
-#ifdef MOZ_CAPTIVEDETECT
 XPCOMUtils.defineLazyServiceGetter(Services, 'captivePortalDetector',
                                   '@mozilla.org/toolkit/captive-detector;1',
                                   'nsICaptivePortalDetector');
-#endif
 
 #ifdef MOZ_SAFE_BROWSING
 XPCOMUtils.defineLazyModuleGetter(this, "SafeBrowsing",
               "resource://gre/modules/SafeBrowsing.jsm");
 #endif
+
+XPCOMUtils.defineLazyModuleGetter(this, "SafeMode",
+                                  "resource://gre/modules/SafeMode.jsm");
+
+window.performance.measure('gecko-shell-jsm-loaded', 'gecko-shell-loadstart');
 
 function getContentWindow() {
   return shell.contentBrowser.contentWindow;
@@ -198,9 +205,9 @@ var shell = {
     debugCrashReport('Not online, postponing.');
 
     Services.obs.addObserver(function observer(subject, topic, state) {
-      let network = subject.QueryInterface(Ci.nsINetworkInterface);
-      if (network.state == Ci.nsINetworkInterface.NETWORK_STATE_CONNECTED
-          && network.type == Ci.nsINetworkInterface.NETWORK_TYPE_WIFI) {
+      let network = subject.QueryInterface(Ci.nsINetworkInfo);
+      if (network.state == Ci.nsINetworkInfo.NETWORK_STATE_CONNECTED
+          && network.type == Ci.nsINetworkInfo.NETWORK_TYPE_WIFI) {
         shell.submitQueuedCrashes();
 
         Services.obs.removeObserver(observer, topic);
@@ -228,20 +235,31 @@ var shell = {
   },
 
   bootstrap: function() {
-    let startManifestURL =
-      Cc['@mozilla.org/commandlinehandler/general-startup;1?type=b2gbootstrap']
-        .getService(Ci.nsISupports).wrappedJSObject.startManifestURL;
-    if (startManifestURL) {
-      Cu.import('resource://gre/modules/Bootstraper.jsm');
-      Bootstraper.ensureSystemAppInstall(startManifestURL)
-                 .then(this.start.bind(this))
-                 .catch(Bootstraper.bailout);
-    } else {
-      this.start();
-    }
+#ifdef MOZ_B2GDROID
+    Cc["@mozilla.org/b2g/b2gdroid-setup;1"]
+      .getService(Ci.nsIObserver).observe(window, "shell-startup", null);
+#endif
+
+    window.performance.mark('gecko-shell-bootstrap');
+
+    // Before anything, check if we want to start in safe mode.
+    SafeMode.check(window).then(() => {
+      let startManifestURL =
+        Cc['@mozilla.org/commandlinehandler/general-startup;1?type=b2gbootstrap']
+          .getService(Ci.nsISupports).wrappedJSObject.startManifestURL;
+      if (startManifestURL) {
+        Cu.import('resource://gre/modules/Bootstraper.jsm');
+        Bootstraper.ensureSystemAppInstall(startManifestURL)
+                   .then(this.start.bind(this))
+                   .catch(Bootstraper.bailout);
+      } else {
+        this.start();
+      }
+    });
   },
 
   start: function shell_start() {
+    window.performance.mark('gecko-shell-start');
     this._started = true;
 
     // This forces the initialization of the cookie service before we hit the
@@ -328,6 +346,18 @@ var shell = {
                   .sessionHistory = Cc["@mozilla.org/browser/shistory;1"]
                                       .createInstance(Ci.nsISHistory);
 
+    this.allowedAudioChannels = new Map();
+    let audioChannels = systemAppFrame.allowedAudioChannels;
+    audioChannels && audioChannels.forEach(function(audioChannel) {
+      this.allowedAudioChannels.set(audioChannel.name, audioChannel);
+      audioChannel.addEventListener('activestatechanged', this);
+      // Set all audio channels as unmuted by default
+      // because some audio in System app will be played
+      // before AudioChannelService[1] is Gaia is loaded.
+      // [1]: https://github.com/mozilla-b2g/gaia/blob/master/apps/system/js/audio_channel_service.js
+      audioChannel.setMuted(false);
+    }.bind(this));
+
     // On firefox mulet, shell.html is loaded in a tab
     // and we have to listen on the chrome event handler
     // to catch key events
@@ -350,6 +380,7 @@ var shell = {
     this.contentBrowser.addEventListener('mozbrowserloadstart', this, true);
     this.contentBrowser.addEventListener('mozbrowserselectionstatechanged', this, true);
     this.contentBrowser.addEventListener('mozbrowserscrollviewchange', this, true);
+    this.contentBrowser.addEventListener('mozbrowsercaretstatechanged', this);
 
     CustomEventManager.init();
     WebappsHelper.init();
@@ -358,6 +389,8 @@ var shell = {
 
     this.contentBrowser.src = homeURL;
     this.isHomeLoaded = false;
+
+    window.performance.mark('gecko-shell-system-frame-set');
 
     ppmm.addMessageListener("content-handler", this);
     ppmm.addMessageListener("dial-handler", this);
@@ -380,6 +413,7 @@ var shell = {
     this.contentBrowser.removeEventListener('mozbrowserloadstart', this, true);
     this.contentBrowser.removeEventListener('mozbrowserselectionstatechanged', this, true);
     this.contentBrowser.removeEventListener('mozbrowserscrollviewchange', this, true);
+    this.contentBrowser.removeEventListener('mozbrowsercaretstatechanged', this);
     ppmm.removeMessageListener("content-handler", this);
 
     UserAgentOverrides.uninit();
@@ -490,6 +524,28 @@ var shell = {
           detail: data,
         });
         break;
+      case 'mozbrowsercaretstatechanged':
+        {
+          let elt = evt.target;
+          let win = elt.ownerDocument.defaultView;
+          let offsetX = win.mozInnerScreenX - window.mozInnerScreenX;
+          let offsetY = win.mozInnerScreenY - window.mozInnerScreenY;
+
+          let rect = elt.getBoundingClientRect();
+          offsetX += rect.left;
+          offsetY += rect.top;
+
+          let data = evt.detail;
+          data.offsetX = offsetX;
+          data.offsetY = offsetY;
+          data.sendDoCommandMsg = null;
+
+          shell.sendChromeEvent({
+            type: 'caretstatechanged',
+            detail: data,
+          });
+        }
+        break;
 
       case 'MozApplicationManifest':
         try {
@@ -536,6 +592,18 @@ var shell = {
         break;
       case 'unload':
         this.stop();
+        break;
+      case 'activestatechanged':
+        var channel = evt.target;
+        // TODO: We should get the `isActive` state from evt.isActive.
+        // Then we don't need to do `channel.isActive()` here.
+        channel.isActive().onsuccess = function(evt) {
+          SystemAppProxy._sendCustomEvent('mozSystemWindowChromeEvent', {
+            type: 'system-audiochannel-state-changed',
+            name: channel.name,
+            isActive: evt.target.result
+          });
+        }.bind(this);
         break;
     }
   },
@@ -599,6 +667,7 @@ var shell = {
   },
 
   notifyContentStart: function shell_notifyContentStart() {
+    window.performance.mark('gecko-shell-notify-content-start');
     this.contentBrowser.removeEventListener('mozbrowserloadstart', this, true);
     this.contentBrowser.removeEventListener('mozbrowserlocationchange', this, true);
 
@@ -636,7 +705,28 @@ var shell = {
       }
       delete shell.pendingChromeEvents;
     });
-  }
+
+    shell.handleCmdLine();
+  },
+
+  handleCmdLine: function shell_handleCmdLine() {
+  // This isn't supported on devices.
+#ifndef ANDROID
+    let b2gcmds = Cc["@mozilla.org/commandlinehandler/general-startup;1?type=b2gcmds"]
+                    .getService(Ci.nsISupports);
+    let args = b2gcmds.wrappedJSObject.cmdLine;
+    try {
+      // Returns null if -url is not present
+      let url = args.handleFlagWithParam("url", false);
+      if (url) {
+        this.sendChromeEvent({type: "mozbrowseropenwindow", url});
+        args.preventDefault = true;
+      }
+    } catch(e) {
+      // Throws if -url is present with no params
+    }
+#endif
+  },
 };
 
 Services.obs.addObserver(function onFullscreenOriginChange(subject, topic, data) {
@@ -661,6 +751,14 @@ Services.obs.addObserver(function onBluetoothVolumeChange(subject, topic, data) 
 Services.obs.addObserver(function(subject, topic, data) {
   shell.sendCustomEvent('mozmemorypressure');
 }, 'memory-pressure', false);
+
+var permissionMap = new Map([
+  ['unknown', Services.perms.UNKNOWN_ACTION],
+  ['allow', Services.perms.ALLOW_ACTION],
+  ['deny', Services.perms.DENY_ACTION],
+  ['prompt', Services.perms.PROMPT_ACTION],
+]);
+var permissionMapRev = new Map(Array.from(permissionMap.entries()).reverse());
 
 var CustomEventManager = {
   init: function custevt_init() {
@@ -695,14 +793,39 @@ var CustomEventManager = {
       case 'inputregistry-remove':
         KeyboardHelper.handleEvent(detail);
         break;
+      case 'system-audiochannel-list':
+      case 'system-audiochannel-mute':
+      case 'system-audiochannel-volume':
+        SystemAppMozBrowserHelper.handleEvent(detail);
+        break;
       case 'do-command':
         DoCommandHelper.handleEvent(detail.cmd);
+        break;
+      case 'copypaste-do-command':
+        Services.obs.notifyObservers({ wrappedJSObject: shell.contentBrowser },
+                                     'ask-children-to-execute-copypaste-command', detail.cmd);
+        break;
+      case 'add-permission':
+        Services.perms.add(Services.io.newURI(detail.uri, null, null),
+                           detail.permissionType, permissionMap.get(detail.permission));
+        break;
+      case 'remove-permission':
+        Services.perms.remove(Services.io.newURI(detail.uri, null, null),
+                              detail.permissionType);
+        break;
+      case 'test-permission':
+        let result = Services.perms.testExactPermission(
+          Services.io.newURI(detail.uri, null, null), detail.permissionType);
+        // Not equal check here because we want to prevent default only if it's not set
+        if (result !== permissionMapRev.get(detail.permission)) {
+          evt.preventDefault();
+        }
         break;
     }
   }
 }
 
-let DoCommandHelper = {
+var DoCommandHelper = {
   _event: null,
   setEvent: function docommand_setEvent(evt) {
     this._event = evt;
@@ -803,7 +926,7 @@ var WebappsHelper = {
   }
 }
 
-let KeyboardHelper = {
+var KeyboardHelper = {
   handleEvent: function keyboard_handleEvent(detail) {
     switch (detail.type) {
       case 'inputmethod-update-layouts':
@@ -814,6 +937,63 @@ let KeyboardHelper = {
       case 'inputregistry-remove':
         Keyboard.inputRegistryGlue.returnMessage(detail);
 
+        break;
+    }
+  }
+};
+
+var SystemAppMozBrowserHelper = {
+  handleEvent: function systemAppMozBrowser_handleEvent(detail) {
+    let request;
+    let name;
+    switch (detail.type) {
+      case 'system-audiochannel-list':
+        let audioChannels = [];
+        shell.allowedAudioChannels.forEach(function(value, name) {
+          audioChannels.push(name);
+        });
+        SystemAppProxy._sendCustomEvent('mozSystemWindowChromeEvent', {
+          type: 'system-audiochannel-list',
+          audioChannels: audioChannels
+        });
+        break;
+      case 'system-audiochannel-mute':
+        name = detail.name;
+        let isMuted = detail.isMuted;
+        request = shell.allowedAudioChannels.get(name).setMuted(isMuted);
+        request.onsuccess = function() {
+          SystemAppProxy._sendCustomEvent('mozSystemWindowChromeEvent', {
+            type: 'system-audiochannel-mute-onsuccess',
+            name: name,
+            isMuted: isMuted
+          });
+        };
+        request.onerror = function() {
+          SystemAppProxy._sendCustomEvent('mozSystemWindowChromeEvent', {
+            type: 'system-audiochannel-mute-onerror',
+            name: name,
+            isMuted: isMuted
+          });
+        };
+        break;
+      case 'system-audiochannel-volume':
+        name = detail.name;
+        let volume = detail.volume;
+        request = shell.allowedAudioChannels.get(name).setVolume(volume);
+        request.onsuccess = function() {
+          sSystemAppProxy._sendCustomEvent('mozSystemWindowChromeEvent', {
+            type: 'system-audiochannel-volume-onsuccess',
+            name: name,
+            volume: volume
+          });
+        };
+        request.onerror = function() {
+          SystemAppProxy._sendCustomEvent('mozSystemWindowChromeEvent', {
+            type: 'system-audiochannel-volume-onerror',
+            name: name,
+            volume: volume
+          });
+        };
         break;
     }
   }
@@ -887,6 +1067,7 @@ window.addEventListener('ContentStart', function update_onContentStart() {
   Cu.import('resource://gre/modules/WebappsUpdater.jsm');
   WebappsUpdater.handleContentStart(shell);
 
+#ifdef MOZ_UPDATER
   let promptCc = Cc["@mozilla.org/updates/update-prompt;1"];
   if (!promptCc) {
     return;
@@ -898,6 +1079,7 @@ window.addEventListener('ContentStart', function update_onContentStart() {
   }
 
   updatePrompt.wrappedJSObject.handleContentStart(shell);
+#endif
 });
 
 (function geolocationStatusTracker() {
@@ -1086,7 +1268,12 @@ window.addEventListener('ContentStart', function update_onContentStart() {
 
   // We must set the size in KB, and keep a bit of free space.
   let size = Math.floor(stats.totalBytes / 1024) - 1024;
-  Services.prefs.setIntPref("browser.cache.disk.capacity", size);
+
+  // keep the default value if it is smaller than the physical partition size.
+  let oldSize = Services.prefs.getIntPref("browser.cache.disk.capacity");
+  if (size < oldSize) {
+    Services.prefs.setIntPref("browser.cache.disk.capacity", size);
+  }
 })();
 #endif
 

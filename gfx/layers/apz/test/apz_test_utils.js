@@ -91,11 +91,28 @@ function buildApzcTree(paint) {
   // This 'root' does not correspond to an APZC.
   var root = makeNode(-1);
   for (var scrollId in paint) {
-    if ("isRootForLayersId" in paint[scrollId]) {
+    if ("hasNoParentWithSameLayersId" in paint[scrollId]) {
       addRoot(root, scrollId);
     } else if ("parentScrollId" in paint[scrollId]) {
       addLink(root, scrollId, paint[scrollId]["parentScrollId"]);
     }
   }
   return root;
+}
+
+function flushApzRepaints(aCallback, aWindow = window) {
+  if (!aCallback) {
+    throw "A callback must be provided!";
+  }
+  var repaintDone = function() {
+    SpecialPowers.Services.obs.removeObserver(repaintDone, "apz-repaints-flushed", false);
+    setTimeout(aCallback, 0);
+  };
+  SpecialPowers.Services.obs.addObserver(repaintDone, "apz-repaints-flushed", false);
+  if (SpecialPowers.getDOMWindowUtils(aWindow).flushApzRepaints()) {
+    dump("Flushed APZ repaints, waiting for callback...\n");
+  } else {
+    dump("Flushing APZ repaints was a no-op, triggering callback directly...\n");
+    repaintDone();
+  }
 }

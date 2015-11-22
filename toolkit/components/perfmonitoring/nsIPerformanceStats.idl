@@ -6,6 +6,7 @@
 
 #include "nsISupports.idl"
 #include "nsIArray.idl"
+#include "nsIDOMWindow.idl"
 
 /**
  * Mechanisms for querying the current process about performance
@@ -16,13 +17,31 @@
 
 /**
  * Snapshot of the performance of a component, e.g. an add-on, a web
- * page, system built-ins, or the entire process itself.
+ * page, system built-ins, a module or the entire process itself.
  *
  * All values are monotonic and are updated only when
  * `nsIPerformanceStatsService.isStopwatchActive` is `true`.
  */
-[scriptable, uuid(f015cbad-e16f-4982-a080-67e4e69a5b2e)]
+[scriptable, uuid(89440555-dd81-4a22-8747-049bcf0ab586)]
 interface nsIPerformanceStats: nsISupports {
+  /**
+   * An identifier unique to the component.
+   *
+   * This identifier is somewhat human-readable to aid with debugging,
+   * but clients should not rely upon the format.
+   */
+  readonly attribute AString groupId;
+
+  /**
+   * If this component is part of a larger component, the larger
+   * component. Otherwise, null.
+   *
+   * As of this writing, there can be at most two levels of components:
+   * - compartments (a single module, iframe, etc.);
+   * - groups (an entire add-on, an entire webpage, etc.).
+   */
+  readonly attribute AString parentId;
+
   /**
    * The name of the component:
    * - for the process itself, "<process>";
@@ -37,6 +56,18 @@ interface nsIPerformanceStats: nsISupports {
    * otherwise an empty string.
    */
   readonly attribute AString addonId;
+
+  /**
+   * If the component is code executed in a window, the ID of the topmost
+   * outer window (i.e. the tab), otherwise 0.
+   */
+  readonly attribute uint64_t windowId;
+
+  /**
+   * If the component is code executed in a window, the title of the topmost
+   * window (i.e. the tab), otherwise an empty string.
+   */
+  readonly attribute AString title;
 
   /**
    * Total amount of time spent executing code in this group, in
@@ -61,6 +92,11 @@ interface nsIPerformanceStats: nsISupports {
   readonly attribute bool isSystem;
 
   /**
+   * The process running this group.
+   */
+  readonly attribute unsigned long long processId;
+
+  /**
    * Jank indicator.
    *
    * durations[i] == number of times execution of this group
@@ -73,7 +109,7 @@ interface nsIPerformanceStats: nsISupports {
 /**
  * A snapshot of the performance data of the process.
  */
-[scriptable, uuid(29ecebd0-908a-4b34-8f62-a6015dea1141)]
+[scriptable, uuid(2e0c50e2-3aff-4cc8-88a6-c0dc200da8fc)]
 interface nsIPerformanceSnapshot: nsISupports {
   /**
    * Data on all individual components.
@@ -91,17 +127,29 @@ interface nsIPerformanceSnapshot: nsISupports {
   nsIPerformanceStats getProcessData();
 };
 
-[scriptable, builtinclass, uuid(5795113a-39a1-4087-ba09-98b7d07d025a)]
+[scriptable, builtinclass, uuid(60973d54-13e2-455c-a3c6-84dea5dfc8b9)]
 interface nsIPerformanceStatsService : nsISupports {
   /**
-   * `true` if we should monitor performance, `false` otherwise.
+   * `true` if we should monitor CPOW, `false` otherwise.
    */
-  [implicit_jscontext] attribute bool isStopwatchActive;
+  [implicit_jscontext] attribute bool isMonitoringCPOW;
+
+  /**
+   * `true` if we should monitor jank, `false` otherwise.
+   */
+  [implicit_jscontext] attribute bool isMonitoringJank;
+
+  /**
+   * `true` if all compartments need to be monitored individually,
+   * `false` if only performance groups (i.e. entire add-ons, entire
+   * webpages, etc.) need to be monitored.
+   */
+  [implicit_jscontext] attribute bool isMonitoringPerCompartment;
 
   /**
    * Capture a snapshot of the performance data.
    */
-  nsIPerformanceSnapshot getSnapshot();
+  [implicit_jscontext] nsIPerformanceSnapshot getSnapshot();
 };
 
 %{C++

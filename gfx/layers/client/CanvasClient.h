@@ -8,7 +8,7 @@
 
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
 #include "mozilla/Attributes.h"         // for override
-#include "mozilla/RefPtr.h"             // for RefPtr, TemporaryRef
+#include "mozilla/RefPtr.h"             // for RefPtr, already_AddRefed
 #include "mozilla/layers/CompositableClient.h"  // for CompositableClient
 #include "mozilla/layers/CompositorTypes.h"  // for TextureInfo, etc
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor
@@ -19,17 +19,11 @@
 #include "mozilla/gfx/Types.h"          // for SurfaceFormat
 
 namespace mozilla {
-namespace gl {
-class SharedSurface;
-class ShSurfHandle;
-}
-}
-
-namespace mozilla {
 namespace layers {
 
 class ClientCanvasLayer;
 class CompositableForwarder;
+class SharedSurfaceTextureClient;
 
 /**
  * Compositable client for 2d and webgl canvas.
@@ -47,7 +41,7 @@ public:
     CanvasClientGLContext,
     CanvasClientTypeShSurf,
   };
-  static TemporaryRef<CanvasClient> CreateCanvasClient(CanvasClientType aType,
+  static already_AddRefed<CanvasClient> CreateCanvasClient(CanvasClientType aType,
                                                        CompositableForwarder* aFwd,
                                                        TextureFlags aFlags);
 
@@ -100,7 +94,7 @@ public:
   }
 
 private:
-  TemporaryRef<TextureClient>
+  already_AddRefed<TextureClient>
     CreateTextureClientForCanvas(gfx::SurfaceFormat aFormat,
                                  gfx::IntSize aSize,
                                  TextureFlags aFlags,
@@ -114,10 +108,9 @@ private:
 class CanvasClientSharedSurface : public CanvasClient
 {
 private:
-  RefPtr<gl::ShSurfHandle> mFront;
-  RefPtr<gl::ShSurfHandle> mPrevFront;
-
-  RefPtr<TextureClient> mFrontTex;
+  RefPtr<SharedSurfaceTextureClient> mShSurfClient;
+  RefPtr<TextureClient> mReadbackClient;
+  RefPtr<TextureClient> mFront;
 
   void ClearSurfaces();
 
@@ -125,10 +118,7 @@ public:
   CanvasClientSharedSurface(CompositableForwarder* aLayerForwarder,
                             TextureFlags aFlags);
 
-  ~CanvasClientSharedSurface()
-  {
-    ClearSurfaces();
-  }
+  ~CanvasClientSharedSurface();
 
   virtual TextureInfo GetTextureInfo() const override {
     return TextureInfo(CompositableType::IMAGE);
@@ -146,7 +136,7 @@ public:
   }
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif

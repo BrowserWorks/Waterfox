@@ -21,6 +21,7 @@ import org.mozilla.gecko.home.HomeConfig.OnReloadListener;
 import org.mozilla.gecko.home.HomeConfig.PanelConfig;
 import org.mozilla.gecko.home.HomeConfig.PanelType;
 import org.mozilla.gecko.home.HomeConfig.State;
+import org.mozilla.gecko.restrictions.Restriction;
 import org.mozilla.gecko.util.HardwareUtils;
 
 import android.content.BroadcastReceiver;
@@ -73,34 +74,15 @@ class HomeConfigPrefsBackend implements HomeConfigBackend {
                                                   EnumSet.of(PanelConfig.Flags.DEFAULT_PANEL)));
 
         panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.BOOKMARKS));
+        panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.HISTORY));
+
+        // We disable Synced Tabs for guest mode / restricted profiles.
+        if (RestrictedProfiles.isAllowed(mContext, Restriction.DISALLOW_MODIFY_ACCOUNTS)) {
+            panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.REMOTE_TABS));
+        }
+
+        panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.RECENT_TABS));
         panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.READING_LIST));
-
-        final PanelConfig historyEntry = createBuiltinPanelConfig(mContext, PanelType.HISTORY);
-        final PanelConfig recentTabsEntry = createBuiltinPanelConfig(mContext, PanelType.RECENT_TABS);
-
-        // We disable Synced Tabs for guest mode profiles.
-        final PanelConfig remoteTabsEntry;
-        if (RestrictedProfiles.isAllowed(mContext, RestrictedProfiles.Restriction.DISALLOW_MODIFY_ACCOUNTS)) {
-            remoteTabsEntry = createBuiltinPanelConfig(mContext, PanelType.REMOTE_TABS);
-        } else {
-            remoteTabsEntry = null;
-        }
-
-        // On tablets, we go [...|History|Recent Tabs|Synced Tabs].
-        // On phones, we go [Synced Tabs|Recent Tabs|History|...].
-        if (HardwareUtils.isTablet()) {
-            panelConfigs.add(historyEntry);
-            panelConfigs.add(recentTabsEntry);
-            if (remoteTabsEntry != null) {
-                panelConfigs.add(remoteTabsEntry);
-            }
-        } else {
-            panelConfigs.add(0, historyEntry);
-            panelConfigs.add(0, recentTabsEntry);
-            if (remoteTabsEntry != null) {
-                panelConfigs.add(0, remoteTabsEntry);
-            }
-        }
 
         return new State(panelConfigs, true);
     }

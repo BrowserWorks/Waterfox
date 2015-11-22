@@ -360,6 +360,10 @@ class RegExpObject : public NativeObject
 
     static const Class class_;
 
+    // The maximum number of pairs a MatchResult can have, without having to
+    // allocate a bigger MatchResult.
+    static const size_t MaxPairCount = 14;
+
     /*
      * Note: The regexp statics flags are OR'd into the provided flags,
      * so this function is really meant for object creation during code
@@ -469,6 +473,10 @@ class RegExpObject : public NativeObject
     /* Call setShared in preference to setPrivate. */
     void setPrivate(void* priv) = delete;
 };
+
+JSString*
+str_replace_regexp_raw(JSContext* cx, HandleString string, Handle<RegExpObject*> regexp,
+                       HandleString replacement);
 
 /*
  * Parse regexp flags. Report an error and return false if an invalid

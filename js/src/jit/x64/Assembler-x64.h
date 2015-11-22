@@ -70,8 +70,18 @@ static MOZ_CONSTEXPR_VAR Register JSReturnReg = rcx;
 static MOZ_CONSTEXPR_VAR Register JSReturnReg_Type = JSReturnReg;
 static MOZ_CONSTEXPR_VAR Register JSReturnReg_Data = JSReturnReg;
 
-static MOZ_CONSTEXPR_VAR Register ReturnReg = rax;
 static MOZ_CONSTEXPR_VAR Register ScratchReg = r11;
+
+// Helper class for ScratchRegister usage. Asserts that only one piece
+// of code thinks it has exclusive ownership of the scratch register.
+struct ScratchRegisterScope : public AutoRegisterScope
+{
+    explicit ScratchRegisterScope(MacroAssembler& masm)
+      : AutoRegisterScope(masm, ScratchReg)
+    { }
+};
+
+static MOZ_CONSTEXPR_VAR Register ReturnReg = rax;
 static MOZ_CONSTEXPR_VAR Register HeapReg = r15;
 static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloat32Reg = FloatRegister(X86Encoding::xmm0, FloatRegisters::Single);
 static MOZ_CONSTEXPR_VAR FloatRegister ReturnDoubleReg = FloatRegister(X86Encoding::xmm0, FloatRegisters::Double);
@@ -265,7 +275,7 @@ class Assembler : public AssemblerX86Shared
     using AssemblerX86Shared::vmovq;
 
     static uint8_t* PatchableJumpAddress(JitCode* code, size_t index);
-    static void PatchJumpEntry(uint8_t* entry, uint8_t* target);
+    static void PatchJumpEntry(uint8_t* entry, uint8_t* target, ReprotectCode reprotect);
 
     Assembler()
       : extendedJumpTable_(0)
@@ -565,6 +575,13 @@ class Assembler : public AssemblerX86Shared
         masm.xorq_ir(imm.value, dest.encoding());
     }
 
+    void imulq(Register src, Register dest) {
+        masm.imulq_rr(src.encoding(), dest.encoding());
+    }
+    void vcvtsi2sdq(Register src, FloatRegister dest) {
+        masm.vcvtsi2sdq_rr(src.encoding(), dest.encoding());
+    }
+
     void mov(ImmWord word, Register dest) {
         // Use xor for setting registers to zero, as it is specially optimized
         // for this purpose on modern hardware. Note that it does clobber FLAGS
@@ -787,15 +804,20 @@ class Assembler : public AssemblerX86Shared
 };
 
 static inline void
-PatchJump(CodeLocationJump jump, CodeLocationLabel label)
+PatchJump(CodeLocationJump jump, CodeLocationLabel label, ReprotectCode reprotect = DontReprotect)
 {
     if (X86Encoding::CanRelinkJump(jump.raw(), label.raw())) {
+        MaybeAutoWritableJitCode awjc(jump.raw() - 8, 8, reprotect);
         X86Encoding::SetRel32(jump.raw(), label.raw());
     } else {
-        X86Encoding::SetRel32(jump.raw(), jump.jumpTableEntry());
-        Assembler::PatchJumpEntry(jump.jumpTableEntry(), label.raw());
+        {
+            MaybeAutoWritableJitCode awjc(jump.raw() - 8, 8, reprotect);
+            X86Encoding::SetRel32(jump.raw(), jump.jumpTableEntry());
+        }
+        Assembler::PatchJumpEntry(jump.jumpTableEntry(), label.raw(), reprotect);
     }
 }
+
 static inline void
 PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitRuntime::BackedgeTarget target)
 {

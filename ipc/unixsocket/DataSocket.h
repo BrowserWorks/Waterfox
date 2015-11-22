@@ -10,6 +10,7 @@
 #define mozilla_ipc_datasocket_h
 
 #include "mozilla/ipc/SocketBase.h"
+#include "nsTArray.h"
 
 namespace mozilla {
 namespace ipc {
@@ -35,6 +36,9 @@ public:
    * @param aBuffer Data to be sent to socket
    */
   virtual void SendSocketData(UnixSocketIOBuffer* aBuffer) = 0;
+
+protected:
+  DataSocket();
 };
 
 //
@@ -90,7 +94,7 @@ public:
   nsresult SendPendingData(int aFd);
 
 protected:
-  DataSocketIO();
+  DataSocketIO(MessageLoop* aConsumerLoop);
 
 private:
   /**
@@ -120,10 +124,10 @@ public:
 
   void Run() override
   {
-    MOZ_ASSERT(!NS_IsMainThread());
     MOZ_ASSERT(!SocketIOTask<Tio>::IsCanceled());
 
     Tio* io = SocketIOTask<Tio>::GetIO();
+    MOZ_ASSERT(!io->IsConsumerThread());
     MOZ_ASSERT(!io->IsShutdownOnIOThread());
 
     io->Send(mData);

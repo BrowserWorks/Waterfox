@@ -12,6 +12,7 @@
 #include "nsIconChannel.h"
 #include "nsIStringStream.h"
 #include "nsNetUtil.h"
+#include "nsComponentManagerUtils.h"
 #include "nsNullPrincipal.h"
 
 NS_IMPL_ISUPPORTS(nsIconChannel,
@@ -80,7 +81,7 @@ moz_icon_to_channel(nsIURI* aURI, const nsACString& aFileExt,
   *(out++) = height;
 
   nsresult rv;
-  if (XRE_GetProcessType() == GeckoProcessType_Default) {
+  if (XRE_IsParentProcess()) {
     rv = GetIconForExtension(aFileExt, aIconSize, out);
   } else {
     rv = CallRemoteGetIconForExtension(aFileExt, aIconSize, out);

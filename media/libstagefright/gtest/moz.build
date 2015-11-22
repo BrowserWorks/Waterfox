@@ -8,8 +8,13 @@ Library('stagefright_gtest')
 
 SOURCES += [
     'TestInterval.cpp',
+    'TestParser.cpp',
 ]
 
-FINAL_LIBRARY = 'xul-gtest'
+if CONFIG['MOZ_RUST']:
+    UNIFIED_SOURCES += ['TestMP4Rust.cpp',]
+    TEST_HARNESS_FILES.gtest += [
+        '../../../dom/media/test/street.mp4',
+    ]
 
-FAIL_ON_WARNINGS = True
+FINAL_LIBRARY = 'xul-gtest'

@@ -1,6 +1,6 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -17,51 +17,38 @@
 class ChromeContextMenuListener;
 class imgRequestProxy;
 
-//*****************************************************************************
-// class nsContextMenuInfo
-//
 // Helper class for implementors of nsIContextMenuListener2
-//*****************************************************************************
- 
 class nsContextMenuInfo : public nsIContextMenuInfo
 {
   friend class ChromeContextMenuListener;
-  
-public:    
-                    nsContextMenuInfo();
+
+public:
+  nsContextMenuInfo();
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSICONTEXTMENUINFO
-  
+
 private:
-  virtual           ~nsContextMenuInfo();
+  virtual ~nsContextMenuInfo();
 
-  void              SetMouseEvent(nsIDOMEvent *aEvent)
-                    { mMouseEvent = aEvent; }
+  void SetMouseEvent(nsIDOMEvent* aEvent) { mMouseEvent = aEvent; }
+  void SetDOMNode(nsIDOMNode* aNode) { mDOMNode = aNode; }
+  void SetAssociatedLink(nsIDOMNode* aLink) { mAssociatedLink = aLink; }
 
-  void              SetDOMNode(nsIDOMNode *aNode)
-                    { mDOMNode = aNode; }
-                    
-  void              SetAssociatedLink(nsIDOMNode *aLink)
-                    { mAssociatedLink = aLink; }
+  nsresult GetImageRequest(nsIDOMNode* aDOMNode, imgIRequest** aRequest);
 
-  nsresult          GetImageRequest(nsIDOMNode *aDOMNode,
-                                    imgIRequest **aRequest);
+  bool HasBackgroundImage(nsIDOMNode* aDOMNode);
 
-  bool              HasBackgroundImage(nsIDOMNode *aDOMNode);
+  nsresult GetBackgroundImageRequest(nsIDOMNode* aDOMNode,
+                                     imgRequestProxy** aRequest);
 
-  nsresult          GetBackgroundImageRequest(nsIDOMNode *aDOMNode,
-                                              imgRequestProxy **aRequest);
+  nsresult GetBackgroundImageRequestInternal(nsIDOMNode* aDOMNode,
+                                             imgRequestProxy** aRequest);
 
-  nsresult          GetBackgroundImageRequestInternal(nsIDOMNode *aDOMNode,
-                                                      imgRequestProxy **aRequest);
-  
 private:
-  nsCOMPtr<nsIDOMEvent>   mMouseEvent;
-  nsCOMPtr<nsIDOMNode>    mDOMNode;  
-  nsCOMPtr<nsIDOMNode>    mAssociatedLink;
-
-}; // class nsContextMenuInfo
-
+  nsCOMPtr<nsIDOMEvent> mMouseEvent;
+  nsCOMPtr<nsIDOMNode> mDOMNode;
+  nsCOMPtr<nsIDOMNode> mAssociatedLink;
+};
 
 #endif // nsContextMenuInfo_h__

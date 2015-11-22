@@ -5,17 +5,17 @@
 
 package org.mozilla.gecko;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.mozilla.gecko.annotation.RobocopTarget;
+import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.AppConstants.Versions;
-import org.mozilla.gecko.mozglue.RobocopTarget;
-import org.mozilla.gecko.mozglue.generatorannotations.WrapElementForJNI;
+import org.mozilla.gecko.restrictions.DefaultConfiguration;
+import org.mozilla.gecko.restrictions.GuestProfileConfiguration;
+import org.mozilla.gecko.restrictions.RestrictedProfileConfiguration;
+import org.mozilla.gecko.restrictions.Restriction;
+import org.mozilla.gecko.restrictions.RestrictionConfiguration;
+
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.UserManager;
@@ -25,64 +25,62 @@ import android.util.Log;
 public class RestrictedProfiles {
     private static final String LOGTAG = "GeckoRestrictedProfiles";
 
-    private static volatile Boolean inGuest = null;
+    private static RestrictionConfiguration configuration;
 
-    @SuppressWarnings("serial")
-    private static final List<String> BANNED_SCHEMES = new ArrayList<String>() {{
-        add("file");
-        add("chrome");
-        add("resource");
-        add("jar");
-        add("wyciwyg");
-    }};
-
-    /**
-     * This is a hack to allow non-GeckoApp activities to safely call into
-     * RestrictedProfiles without reworking this class or GeckoProfile.
-     *
-     * It can be removed after Bug 1077590 lands.
-     */
-    public static void initWithProfile(GeckoProfile profile) {
-        inGuest = profile.inGuestMode();
-    }
-
-    private static boolean getInGuest() {
-        if (inGuest == null) {
-            inGuest = GeckoAppShell.getGeckoInterface().getProfile().inGuestMode();
+    private static RestrictionConfiguration getConfiguration(Context context) {
+        if (configuration == null) {
+            configuration = createConfiguration(context);
         }
 
-        return inGuest;
+        return configuration;
     }
 
-    @SuppressWarnings("serial")
-    private static final List<String> BANNED_URLS = new ArrayList<String>() {{
-        add("about:config");
-    }};
-
-    /* This is a list of things we can restrict you from doing. Some of these are reflected in Android UserManager constants.
-     * Others are specific to us.
-     * These constants should be in sync with the ones from toolkit/components/parentalcontrols/nsIParentalControlServices.idl
-     */
-    public static enum Restriction {
-        DISALLOW_DOWNLOADS(1, "no_download_files"),
-        DISALLOW_INSTALL_EXTENSION(2, "no_install_extensions"),
-        DISALLOW_INSTALL_APPS(3, "no_install_apps"), // UserManager.DISALLOW_INSTALL_APPS
-        DISALLOW_BROWSE_FILES(4, "no_browse_files"),
-        DISALLOW_SHARE(5, "no_share"),
-        DISALLOW_BOOKMARK(6, "no_bookmark"),
-        DISALLOW_ADD_CONTACTS(7, "no_add_contacts"),
-        DISALLOW_SET_IMAGE(8, "no_set_image"),
-        DISALLOW_MODIFY_ACCOUNTS(9, "no_modify_accounts"), // UserManager.DISALLOW_MODIFY_ACCOUNTS
-        DISALLOW_REMOTE_DEBUGGING(10, "no_remote_debugging"),
-        DISALLOW_IMPORT_SETTINGS(11, "no_import_settings");
-
-        public final int id;
-        public final String name;
-
-        private Restriction(final int id, final String name) {
-            this.id = id;
-            this.name = name;
+    public static synchronized RestrictionConfiguration createConfiguration(Context context) {
+        if (configuration != null) {
+            // This method is synchronized and another thread might already have created the configuration.
+            return configuration;
         }
+
+        if (isGuestProfile(context)) {
+            return new GuestProfileConfiguration();
+        } else if (isRestrictedProfile(context)) {
+            return new RestrictedProfileConfiguration(context);
+        } else {
+            return new DefaultConfiguration();
+        }
+    }
+
+    private static boolean isGuestProfile(Context context) {
+        if (configuration != null) {
+            return configuration instanceof GuestProfileConfiguration;
+        }
+
+        GeckoAppShell.GeckoInterface geckoInterface = GeckoAppShell.getGeckoInterface();
+        if (geckoInterface != null) {
+            return geckoInterface.getProfile().inGuestMode();
+        }
+
+        return GeckoProfile.get(context).inGuestMode();
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+    public static boolean isRestrictedProfile(Context context) {
+        if (configuration != null) {
+            return configuration instanceof RestrictedProfileConfiguration;
+        }
+
+        if (Versions.preJBMR2) {
+            // Early versions don't support restrictions at all
+            return false;
+        }
+
+        // The user is on a restricted profile if, and only if, we injected application restrictions during account setup.
+        final UserManager mgr = (UserManager) context.getSystemService(Context.USER_SERVICE);
+        return !mgr.getApplicationRestrictions(context.getPackageName()).isEmpty();
+    }
+
+    public static void update(Context context) {
+        getConfiguration(context).update();
     }
 
     private static Restriction geckoActionToRestriction(int action) {
@@ -95,91 +93,25 @@ public class RestrictedProfiles {
         throw new IllegalArgumentException("Unknown action " + action);
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-    private static Bundle getRestrictions(final Context context) {
-        final UserManager mgr = (UserManager) context.getSystemService(Context.USER_SERVICE);
-        return mgr.getUserRestrictions();
-    }
-
-    /**
-     * This method does the system version check for you.
-     *
-     * Returns false if the system doesn't support restrictions,
-     * or the provided value is not present in the set of user
-     * restrictions.
-     *
-     * Returns true otherwise.
-     */
-    private static boolean getRestriction(final Context context, final String name) {
-        // Early versions don't support restrictions at all,
-        // so no action can be restricted.
-        if (Versions.preJBMR2) {
-            return false;
-        }
-
-        return getRestrictions(context).getBoolean(name, false);
-    }
-
     private static boolean canLoadUrl(final Context context, final String url) {
-        // Null URLs are always permitted.
-        if (url == null) {
-            return true;
-        }
-
-        try {
-            // If we're not in guest mode, and the system restriction isn't in place, everything is allowed.
-            if (!getInGuest() &&
-                !getRestriction(context, Restriction.DISALLOW_BROWSE_FILES.name)) {
-                return true;
-            }
-        } catch (IllegalArgumentException ex) {
-            Log.i(LOGTAG, "Invalid action", ex);
-        }
-
-        final Uri u = Uri.parse(url);
-        final String scheme = u.getScheme();
-        if (BANNED_SCHEMES.contains(scheme)) {
-            return false;
-        }
-
-        for (String banned : BANNED_URLS) {
-            if (url.startsWith(banned)) {
-                return false;
-            }
-        }
-
-        // TODO: The UserManager should support blacklisting URLs by the device owner.
-        return true;
+        return getConfiguration(context).canLoadUrl(url);
     }
 
-    @WrapElementForJNI
+    @WrapForJNI
     public static boolean isUserRestricted() {
         return isUserRestricted(GeckoAppShell.getContext());
     }
 
-    private static boolean isUserRestricted(final Context context) {
-        // Guest mode is supported in all Android versions.
-        if (getInGuest()) {
-            return true;
-        }
-
-        if (Versions.preJBMR2) {
-            return false;
-        }
-
-        return !getRestrictions(context).isEmpty();
+    public static boolean isUserRestricted(final Context context) {
+        return getConfiguration(context).isRestricted();
     }
 
-    public static boolean isAllowed(final Context context, final Restriction action) {
-        return isAllowed(context, action.id, null);
+    public static boolean isAllowed(final Context context, final Restriction restriction) {
+        return getConfiguration(context).isAllowed(restriction);
     }
 
-    @WrapElementForJNI
+    @WrapForJNI
     public static boolean isAllowed(int action, String url) {
-        return isAllowed(GeckoAppShell.getContext(), action, url);
-    }
-
-    private static boolean isAllowed(final Context context, int action, String url) {
         final Restriction restriction;
         try {
             restriction = geckoActionToRestriction(action);
@@ -190,52 +122,12 @@ public class RestrictedProfiles {
             return false;
         }
 
-        if (getInGuest()) {
-            if (Restriction.DISALLOW_BROWSE_FILES == restriction) {
-                return canLoadUrl(context, url);
-            }
+        final Context context = GeckoAppShell.getContext();
 
-            // Guest users can't do anything.
-            return false;
+        if (Restriction.DISALLOW_BROWSE_FILES == restriction) {
+            return canLoadUrl(context, url);
+        } else {
+            return isAllowed(context, restriction);
         }
-
-        // NOTE: Restrictions hold the opposite intention, so we need to flip it.
-        return !getRestriction(context, restriction.name);
-    }
-
-    @WrapElementForJNI
-    public static String getUserRestrictions() {
-        return getUserRestrictions(GeckoAppShell.getContext());
-    }
-
-    private static String getUserRestrictions(final Context context) {
-        // Guest mode is supported in all Android versions
-        if (getInGuest()) {
-            StringBuilder builder = new StringBuilder("{ ");
-
-            for (Restriction restriction : Restriction.values()) {
-                builder.append("\"" + restriction.name + "\": true, ");
-            }
-
-            builder.append(" }");
-            return builder.toString();
-        }
-
-        if (Versions.preJBMR2) {
-            return "{}";
-        }
-
-        final JSONObject json = new JSONObject();
-        final Bundle restrictions = getRestrictions(context);
-        final Set<String> keys = restrictions.keySet();
-
-        for (String key : keys) {
-            try {
-                json.put(key, restrictions.get(key));
-            } catch (JSONException e) {
-            }
-        }
-
-        return json.toString();
     }
 }

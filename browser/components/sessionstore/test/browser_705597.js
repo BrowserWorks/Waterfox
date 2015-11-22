@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-let tabState = {
+var tabState = {
   entries: [{url: "about:robots", children: [{url: "about:mozilla"}]}]
 };
 
@@ -26,7 +26,8 @@ function test() {
     whenChildCount(entry, 1, function () {
       whenChildCount(entry, 2, function () {
         promiseBrowserLoaded(browser).then(() => {
-          TabState.flush(browser);
+          return TabStateFlusher.flush(browser);
+        }).then(() => {
           let {entries} = JSON.parse(ss.getTabState(tab));
           is(entries.length, 1, "tab has one history entry");
           ok(!entries[0].children, "history entry has no subframes");

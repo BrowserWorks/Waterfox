@@ -5,7 +5,7 @@
 # This file contains code for populating the virtualenv environment for
 # Mozilla's build system. It is typically called as part of configure.
 
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import distutils.sysconfig
 import os
@@ -194,9 +194,9 @@ class VirtualenvManager(object):
         """
 
         packages = self.packages()
+        python_lib = distutils.sysconfig.get_python_lib()
 
         def handle_package(package):
-            python_lib = distutils.sysconfig.get_python_lib()
             if package[0] == 'setup.py':
                 assert len(package) >= 2
 
@@ -331,6 +331,16 @@ class VirtualenvManager(object):
 
             for package in packages:
                 handle_package(package)
+
+            sitecustomize = os.path.join(
+                os.path.dirname(os.__file__), 'sitecustomize.py')
+            with open(sitecustomize, 'w') as f:
+                f.write(
+                    '# Importing mach_bootstrap has the side effect of\n'
+                    '# installing an import hook\n'
+                    'import mach_bootstrap\n'
+                )
+
         finally:
             os.environ.pop('MACOSX_DEPLOYMENT_TARGET', None)
 

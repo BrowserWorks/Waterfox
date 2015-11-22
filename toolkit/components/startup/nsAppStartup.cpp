@@ -35,6 +35,7 @@
 #include "mozilla/Services.h"
 #include "nsIXPConnect.h"
 #include "jsapi.h"
+#include "js/Date.h"
 #include "prenv.h"
 #include "nsAppDirectoryServiceDefs.h"
 
@@ -234,7 +235,7 @@ NS_IMPL_ISUPPORTS(nsAppStartup,
 NS_IMETHODIMP
 nsAppStartup::CreateHiddenWindow()
 {
-#ifdef MOZ_WIDGET_GONK
+#if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_UIKIT)
   return NS_OK;
 #else
   nsCOMPtr<nsIAppShellService> appShellService
@@ -249,7 +250,7 @@ nsAppStartup::CreateHiddenWindow()
 NS_IMETHODIMP
 nsAppStartup::DestroyHiddenWindow()
 {
-#ifdef MOZ_WIDGET_GONK
+#if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_UIKIT)
   return NS_OK;
 #else
   nsCOMPtr<nsIAppShellService> appShellService
@@ -780,7 +781,7 @@ nsAppStartup::GetStartupInfo(JSContext* aCx, JS::MutableHandle<JS::Value> aRetva
       if (stamp >= procTime) {
         PRTime prStamp = ComputeAbsoluteTimestamp(absNow, now, stamp)
           / PR_USEC_PER_MSEC;
-        JS::Rooted<JSObject*> date(aCx, JS_NewDateObjectMsec(aCx, prStamp));
+        JS::Rooted<JSObject*> date(aCx, JS::NewDateObject(aCx, JS::TimeClip(prStamp)));
         JS_DefineProperty(aCx, obj, StartupTimeline::Describe(ev), date, JSPROP_ENUMERATE);
       } else {
         Telemetry::Accumulate(Telemetry::STARTUP_MEASUREMENT_ERRORS, ev);

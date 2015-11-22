@@ -13,16 +13,15 @@ assertThrowsInstanceOf(() => new Function('[...a++] = []'), SyntaxError, 'postfi
 assertThrowsInstanceOf(() => new Function('[...!a] = []'), SyntaxError, 'unary expression');
 assertThrowsInstanceOf(() => new Function('[...a+b] = []'), SyntaxError, 'binary expression');
 assertThrowsInstanceOf(() => new Function('var [...a.x] = []'), SyntaxError, 'lvalue expression in declaration');
+assertThrowsInstanceOf(() => new Function('var [...(b)] = []'), SyntaxError);
 
-// XXX: The way the current parser works, certain things, like a trailing comma
-// and parenthesis, are lost before we check for destructuring.
-// See bug 1041341. Once fixed, please update these assertions
+// XXX: The way the current parser works, a trailing comma is lost before we
+//      check for destructuring.  See bug 1041341. Once fixed, please update
+//      this assertion.
 assertThrowsInstanceOf(() =>
 	assertThrowsInstanceOf(() => new Function('[...b,] = []'), SyntaxError)
 	, Error);
-assertThrowsInstanceOf(() =>
-	assertThrowsInstanceOf(() => new Function('var [...(b)] = []'), SyntaxError)
-	, Error);
+
 
 var inputArray = [1, 2, 3];
 var inputDeep = [1, inputArray];
@@ -81,7 +80,7 @@ testDeclaration(testVar);
 function testGlobal(pattern, input, binding) {
   binding = binding || 'rest';
   return new Function('input',
-    '(' + pattern + ') = input;' +
+    '(' + pattern + ' = input);' +
     'return ' + binding
   )(input);
 }
@@ -91,7 +90,7 @@ function testClosure(pattern, input, binding) {
   binding = binding || 'rest';
   return new Function('input',
     'var ' + binding + '; (function () {' +
-    '(' + pattern + ') = input;' +
+    '(' + pattern + ' = input);' +
     '})();' +
     'return ' + binding
   )(input);
@@ -128,7 +127,7 @@ function testThrow(pattern, input, binding) {
 }
 testDeclaration(testThrow);
 
-// XXX: Support for let blocks and expressions will be removed in bug 1023609.
+// XXX: Support for let blocks will be removed in bug 1023609.
 // However, they test a special code path in destructuring assignment so having
 // these tests here for now seems like a good idea.
 function testLetBlock(pattern, input, binding) {
@@ -139,12 +138,3 @@ function testLetBlock(pattern, input, binding) {
   )(input);
 }
 testDeclaration(testLetBlock);
-
-function testLetExpression(pattern, input, binding) {
-  binding = binding || 'rest';
-  return new Function('input',
-    'return (let (' + pattern + ' = input) ' + binding + ');'
-  )(input);
-}
-testDeclaration(testLetExpression);
-

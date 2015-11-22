@@ -39,40 +39,27 @@ var gTestWindows = [
   "file_fullscreen-plugins.html",
   "file_fullscreen-hidden.html",
   "file_fullscreen-svg-element.html",
-  "file_fullscreen-navigation.html"
+  "file_fullscreen-navigation.html",
+  "file_fullscreen-selector.html"
 ];
 
 var testWindow = null;
 var gTestIndex = 0;
 
-// TODO: if ever we remove these checks for XP and Lion, we should do the same
-// in dom/tests/mochitest/pointerlock/test_pointerlock-api.html, which uses the same pattern.
-const isWinXP = navigator.userAgent.indexOf("Windows NT 5.1") != -1;
-const isOSXLion = navigator.userAgent.indexOf("Mac OS X 10.7") != -1;
-const isOSXMtnLion = navigator.userAgent.indexOf("Mac OS X 10.8") != -1;
-const isOSXYosemite = navigator.userAgent.indexOf("Mac OS X 10.10") != -1;
+function finish() {
+  SimpleTest.finish();
+}
 
 function nextTest() {
-  if (isWinXP) {
-    todo(false, "Can't reliably run full-screen tests on Windows XP due to bug 704010");
-    SimpleTest.finish();
-    return;
-  }
   if (testWindow) {
     testWindow.close();
-    if (isOSXLion || isOSXMtnLion || isOSXYosemite) {
-      // On OS X Lion, tests cause problems. Timeouts are a bad way to get around
-      // the problem and may lead to future [orange], but they are the only option
-      // at this point.
-      SimpleTest.waitForFocus(function() { setTimeout(runNextTest, 3000); });
-      return;
-    }
   }
-  runNextTest();
+  SimpleTest.executeSoon(runNextTest);
 }
 
 function runNextTest() {
   if (gTestIndex < gTestWindows.length) {
+    info("Run test " + gTestWindows[gTestIndex]);
     testWindow = window.open(gTestWindows[gTestIndex], "", "width=500,height=500");
     // We'll wait for the window to load, then make sure our window is refocused
     // before starting the test, which will get kicked off on "focus".
@@ -90,24 +77,24 @@ function runNextTest() {
   }
 }
 
-if (isOSXLion || isOSXMtnLion || isOSXYosemite) {
-  todo(false, "Can't reliably run full-screen tests on OS X (bug 900453 comment 18 & bug 802504)");
-} else {
-  try {
-    window.fullScreen = true;
-  } catch (e) {
-  }
-  is(window.fullScreen, false, "Shouldn't be able to set window fullscreen from content");
-  // Ensure the full-screen api is enabled, and will be disabled on test exit.
-  // Disable the requirement for trusted contexts only, so the tests are easier
-  // to write
-  addLoadEvent(function() {
-    SpecialPowers.pushPrefEnv({
-      "set":[["full-screen-api.enabled", true],
-             ["full-screen-api.allow-trusted-requests-only", false]]}, nextTest);
-  });
-  SimpleTest.waitForExplicitFinish();
+try {
+  window.fullScreen = true;
+} catch (e) {
 }
+is(window.fullScreen, false, "Shouldn't be able to set window fullscreen from content");
+// Ensure the full-screen api is enabled, and will be disabled on test exit.
+// Disable the requirement for trusted contexts only, so the tests are easier
+// to write
+addLoadEvent(function() {
+  SpecialPowers.pushPrefEnv({
+      "set": [
+        ["full-screen-api.enabled", true],
+        ["full-screen-api.allow-trusted-requests-only", false],
+        ["full-screen-api.transition-duration.enter", "0 0"],
+        ["full-screen-api.transition-duration.leave", "0 0"]
+      ]}, nextTest);
+});
+SimpleTest.waitForExplicitFinish();
 </script>
 </pre>
 </body>

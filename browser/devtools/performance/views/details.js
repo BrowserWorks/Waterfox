@@ -7,7 +7,7 @@
  * Details view containing call trees, flamegraphs and markers waterfall.
  * Manages subviews and toggles visibility between them.
  */
-let DetailsView = {
+var DetailsView = {
   /**
    * Name to (node id, view object, actor requirements, pref killswitch)
    * mapping of subviews.
@@ -16,7 +16,6 @@ let DetailsView = {
     "waterfall": {
       id: "waterfall-view",
       view: WaterfallView,
-      actors: ["timeline"],
       features: ["withMarkers"]
     },
     "js-calltree": {
@@ -26,20 +25,18 @@ let DetailsView = {
     "js-flamegraph": {
       id: "js-flamegraph-view",
       view: JsFlameGraphView,
-      actors: ["timeline"]
     },
     "memory-calltree": {
       id: "memory-calltree-view",
       view: MemoryCallTreeView,
-      actors: ["memory"],
       features: ["withAllocations"]
     },
     "memory-flamegraph": {
       id: "memory-flamegraph-view",
       view: MemoryFlameGraphView,
-      actors: ["memory", "timeline"],
-      features: ["withAllocations"]
-    }
+      features: ["withAllocations"],
+      prefs: ["enable-memory-flame"],
+    },
   },
 
   /**
@@ -59,7 +56,7 @@ let DetailsView = {
 
     yield this.setAvailableViews();
 
-    PerformanceController.on(EVENTS.RECORDING_STOPPED, this._onRecordingStoppedOrSelected);
+    PerformanceController.on(EVENTS.RECORDING_STATE_CHANGE, this._onRecordingStoppedOrSelected);
     PerformanceController.on(EVENTS.RECORDING_SELECTED, this._onRecordingStoppedOrSelected);
     PerformanceController.on(EVENTS.PREF_CHANGED, this.setAvailableViews);
   }),
@@ -76,7 +73,7 @@ let DetailsView = {
       component.initialized && (yield component.view.destroy());
     }
 
-    PerformanceController.off(EVENTS.RECORDING_STOPPED, this._onRecordingStoppedOrSelected);
+    PerformanceController.off(EVENTS.RECORDING_STATE_CHANGE, this._onRecordingStoppedOrSelected);
     PerformanceController.off(EVENTS.RECORDING_SELECTED, this._onRecordingStoppedOrSelected);
     PerformanceController.off(EVENTS.PREF_CHANGED, this.setAvailableViews);
   }),
@@ -92,7 +89,7 @@ let DetailsView = {
     let invalidCurrentView = false;
 
     for (let [name, { view }] of Iterator(this.components)) {
-      let isSupported = this._isViewSupported(name, true);
+      let isSupported = this._isViewSupported(name);
 
       $(`toolbarbutton[data-view=${name}]`).hidden = !isSupported;
 
@@ -118,15 +115,24 @@ let DetailsView = {
   }),
 
   /**
-   * Takes a view name and optionally if there must be a currently recording in progress.
+   * Takes a view name and determines if the current recording 
+   * can support the view.
    *
    * @param {string} viewName
-   * @param {boolean?} mustBeCompleted
    * @return {boolean}
    */
-  _isViewSupported: function (viewName, mustBeCompleted) {
-    let { features, actors } = this.components[viewName];
-    return PerformanceController.isFeatureSupported({ features, actors, mustBeCompleted });
+  _isViewSupported: function (viewName) {
+    let { features, prefs } = this.components[viewName];
+    let recording = PerformanceController.getCurrentRecording();
+
+    if (!recording || !recording.isCompleted()) {
+      return false;
+    }
+
+    let prefSupported = (prefs && prefs.length) ?
+                        prefs.every(p => PerformanceController.getPref(p)) :
+                        true;
+    return PerformanceController.isFeatureSupported(features) && prefSupported;
   },
 
   /**
@@ -241,7 +247,10 @@ let DetailsView = {
   /**
    * Called when recording stops or is selected.
    */
-  _onRecordingStoppedOrSelected: function(_, recording) {
+  _onRecordingStoppedOrSelected: function(_, state, recording) {
+    if (typeof state === "string" && state !== "recording-stopped") {
+      return;
+    }
     this.setAvailableViews();
   },
 

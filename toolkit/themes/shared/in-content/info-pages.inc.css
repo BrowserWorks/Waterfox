@@ -1,9 +1,13 @@
+% This Source Code Form is subject to the terms of the Mozilla Public
+% License, v. 2.0. If a copy of the MPL was not distributed with this
+% file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 @import url("chrome://global/skin/in-content/common.css");
 /* Body and container */
 body {
   display: flex;
   flex-direction: column;
-  box-sizing: padding-box;
+  box-sizing: border-box;
   min-height: 100vh;
   padding-top: 0;
   padding-bottom: 0;

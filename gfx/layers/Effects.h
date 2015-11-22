@@ -7,7 +7,7 @@
 #define MOZILLA_LAYERS_EFFECTS_H
 
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
-#include "mozilla/RefPtr.h"             // for RefPtr, TemporaryRef, etc
+#include "mozilla/RefPtr.h"             // for RefPtr, already_AddRefed, etc
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
 #include "mozilla/gfx/Point.h"          // for IntSize
 #include "mozilla/gfx/Rect.h"           // for Rect
@@ -74,6 +74,7 @@ struct TexturedEffect : public Effect
   TextureSource* mTexture;
   bool mPremultiplied;
   gfx::Filter mFilter;
+  LayerRenderState mState;
 };
 
 // Support an alpha mask.
@@ -196,6 +197,15 @@ struct EffectYCbCr : public TexturedEffect
   virtual const char* Name() { return "EffectYCbCr"; }
 };
 
+struct EffectNV12 : public TexturedEffect
+{
+  EffectNV12(TextureSource *aSource, gfx::Filter aFilter)
+    : TexturedEffect(EffectTypes::NV12, aSource, false, aFilter)
+  {}
+
+  virtual const char* Name() { return "EffectNV12"; }
+};
+
 struct EffectComponentAlpha : public TexturedEffect
 {
   EffectComponentAlpha(TextureSource *aOnBlack,
@@ -244,11 +254,12 @@ struct EffectChain
  * where aFormat would be FOMRAT_YCBCR and each texture source would be
  * a one-channel A8 texture)
  */
-inline TemporaryRef<TexturedEffect>
+inline already_AddRefed<TexturedEffect>
 CreateTexturedEffect(gfx::SurfaceFormat aFormat,
                      TextureSource* aSource,
                      const gfx::Filter& aFilter,
-                     bool isAlphaPremultiplied)
+                     bool isAlphaPremultiplied,
+                     const LayerRenderState &state = LayerRenderState())
 {
   MOZ_ASSERT(aSource);
   RefPtr<TexturedEffect> result;
@@ -263,12 +274,17 @@ CreateTexturedEffect(gfx::SurfaceFormat aFormat,
   case gfx::SurfaceFormat::YUV:
     result = new EffectYCbCr(aSource, aFilter);
     break;
+  case gfx::SurfaceFormat::NV12:
+    result = new EffectNV12(aSource, aFilter);
+    break;
   default:
     NS_WARNING("unhandled program type");
     break;
   }
 
-  return result;
+  result->mState = state;
+
+  return result.forget();
 }
 
 /**
@@ -277,23 +293,26 @@ CreateTexturedEffect(gfx::SurfaceFormat aFormat,
  *
  * aSourceOnWhite can be null.
  */
-inline TemporaryRef<TexturedEffect>
+inline already_AddRefed<TexturedEffect>
 CreateTexturedEffect(TextureSource* aSource,
                      TextureSource* aSourceOnWhite,
                      const gfx::Filter& aFilter,
-                     bool isAlphaPremultiplied)
+                     bool isAlphaPremultiplied,
+                     const LayerRenderState &state = LayerRenderState())
 {
   MOZ_ASSERT(aSource);
   if (aSourceOnWhite) {
     MOZ_ASSERT(aSource->GetFormat() == gfx::SurfaceFormat::R8G8B8X8 ||
-               aSourceOnWhite->GetFormat() == gfx::SurfaceFormat::B8G8R8X8);
-    return new EffectComponentAlpha(aSource, aSourceOnWhite, aFilter);
+               aSource->GetFormat() == gfx::SurfaceFormat::B8G8R8X8);
+    MOZ_ASSERT(aSource->GetFormat() == aSourceOnWhite->GetFormat());
+    return MakeAndAddRef<EffectComponentAlpha>(aSource, aSourceOnWhite, aFilter);
   }
 
   return CreateTexturedEffect(aSource->GetFormat(),
                               aSource,
                               aFilter,
-                              isAlphaPremultiplied);
+                              isAlphaPremultiplied,
+                              state);
 }
 
 /**
@@ -301,11 +320,12 @@ CreateTexturedEffect(TextureSource* aSource,
  *
  * This version excudes the possibility of component alpha.
  */
-inline TemporaryRef<TexturedEffect>
+inline already_AddRefed<TexturedEffect>
 CreateTexturedEffect(TextureSource *aTexture,
-                     const gfx::Filter& aFilter)
+                     const gfx::Filter& aFilter,
+                     const LayerRenderState &state = LayerRenderState())
 {
-  return CreateTexturedEffect(aTexture, nullptr, aFilter, true);
+  return CreateTexturedEffect(aTexture, nullptr, aFilter, true, state);
 }
 
 

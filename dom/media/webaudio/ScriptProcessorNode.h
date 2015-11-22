@@ -28,6 +28,9 @@ public:
 
   IMPL_EVENT_HANDLER(audioprocess)
 
+  virtual void EventListenerAdded(nsIAtom* aType) override;
+  virtual void EventListenerRemoved(nsIAtom* aType) override;
+
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual void Connect(AudioNode& aDestination, uint32_t aOutput,
@@ -35,7 +38,7 @@ public:
   {
     AudioNode::Connect(aDestination, aOutput, aInput, aRv);
     if (!aRv.Failed()) {
-      MarkActive();
+      UpdateConnectedStatus();
     }
   }
 
@@ -44,16 +47,26 @@ public:
   {
     AudioNode::Connect(aDestination, aOutput, aRv);
     if (!aRv.Failed()) {
-      MarkActive();
+      UpdateConnectedStatus();
     }
   }
 
   virtual void Disconnect(uint32_t aOutput, ErrorResult& aRv) override
   {
     AudioNode::Disconnect(aOutput, aRv);
-    if (!aRv.Failed() && OutputNodes().IsEmpty() && OutputParams().IsEmpty()) {
-      MarkInactive();
+    if (!aRv.Failed()) {
+      UpdateConnectedStatus();
     }
+  }
+  virtual void NotifyInputsChanged() override
+  {
+    UpdateConnectedStatus();
+  }
+  virtual void NotifyHasPhantomInput() override
+  {
+    mHasPhantomInput = true;
+    // No need to UpdateConnectedStatus() because there was previously an
+    // input in InputNodes().
   }
 
   virtual void SetChannelCount(uint32_t aChannelCount, ErrorResult& aRv) override
@@ -76,11 +89,6 @@ public:
     return mBufferSize;
   }
 
-  SharedBuffers* GetSharedBuffers() const
-  {
-    return mSharedBuffers;
-  }
-
   uint32_t NumberOfOutputChannels() const
   {
     return mNumberOfOutputChannels;
@@ -96,17 +104,18 @@ public:
   virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
   virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
 
-protected:
+private:
   virtual ~ScriptProcessorNode();
 
-private:
-  nsAutoPtr<SharedBuffers> mSharedBuffers;
+  void UpdateConnectedStatus();
+
   const uint32_t mBufferSize;
   const uint32_t mNumberOfOutputChannels;
+  bool mHasPhantomInput = false;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif
 

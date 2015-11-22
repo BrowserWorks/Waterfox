@@ -31,16 +31,16 @@ public:
     }
 
     virtual already_AddRefed<gfxASurface>
-    CreateOffscreenSurface(const IntSize& size,
-                           gfxContentType contentType);
+    CreateOffscreenSurface(const IntSize& aSize,
+                           gfxImageFormat aFormat);
     
     virtual gfxImageFormat GetOffscreenFormat() { return mOffscreenFormat; }
     
-    mozilla::TemporaryRef<mozilla::gfx::ScaledFont>
+    already_AddRefed<mozilla::gfx::ScaledFont>
       GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont);
 
     // to support IPC font list (sharing between chrome and content)
-    void GetFontList(InfallibleTArray<FontListEntry>* retValue);
+    void GetSystemFontList(InfallibleTArray<FontListEntry>* retValue);
 
     // platform implementations of font functions
     virtual bool IsFontFormatSupported(nsIURI *aFontURI, uint32_t aFormatFlags);
@@ -69,10 +69,11 @@ public:
     virtual nsresult GetStandardFamilyName(const nsAString& aFontName,
                                            nsAString& aFamilyName);
 
-    virtual gfxFontGroup*
+    gfxFontGroup*
     CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
                     const gfxFontStyle *aStyle,
-                    gfxUserFontSet* aUserFontSet);
+                    gfxTextPerfMetrics* aTextPerf,
+                    gfxUserFontSet *aUserFontSet) override;
 
     virtual bool FontHintingEnabled() override;
     virtual bool RequiresLinearZoom() override;
@@ -89,12 +90,16 @@ public:
     virtual bool UseAcceleratedSkiaCanvas() override;
     virtual already_AddRefed<mozilla::gfx::VsyncSource> CreateHardwareVsyncSource() override;
 
-
 #ifdef MOZ_WIDGET_GONK
     virtual bool IsInGonkEmulator() const { return mIsInGonkEmulator; }
 #endif
 
     virtual bool SupportsApzTouchInput() const override {
+      return true;
+    }
+
+protected:
+    bool AccelerateLayersByDefault() override {
       return true;
     }
 

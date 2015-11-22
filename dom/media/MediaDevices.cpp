@@ -7,6 +7,7 @@
 #include "mozilla/dom/MediaDevicesBinding.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/MediaManager.h"
+#include "MediaTrackConstraints.h"
 #include "nsIEventTarget.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsIPermissionManager.h"
@@ -41,38 +42,6 @@ private:
 
 class MediaDevices::EnumDevResolver : public nsIGetUserMediaDevicesSuccessCallback
 {
-  static bool HasAPersistentPermission(uint64_t aWindowId)
-  {
-    nsPIDOMWindow *window = static_cast<nsPIDOMWindow*>
-        (nsGlobalWindow::GetInnerWindowWithId(aWindowId));
-    if (NS_WARN_IF(!window)) {
-      return false;
-    }
-    // Check if this site has persistent permissions.
-    nsresult rv;
-    nsCOMPtr<nsIPermissionManager> mgr =
-      do_GetService(NS_PERMISSIONMANAGER_CONTRACTID, &rv);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return false; // no permission manager no permissions!
-    }
-
-    uint32_t audio = nsIPermissionManager::UNKNOWN_ACTION;
-    uint32_t video = nsIPermissionManager::UNKNOWN_ACTION;
-    {
-      auto* principal = window->GetExtantDoc()->NodePrincipal();
-      rv = mgr->TestExactPermissionFromPrincipal(principal, "microphone", &audio);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return false;
-      }
-      rv = mgr->TestExactPermissionFromPrincipal(principal, "camera", &video);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return false;
-      }
-    }
-    return audio == nsIPermissionManager::ALLOW_ACTION ||
-           video == nsIPermissionManager::ALLOW_ACTION;
-  }
-
 public:
   NS_DECL_ISUPPORTS
 
@@ -83,31 +52,34 @@ public:
   OnSuccess(nsIVariant* aDevices) override
   {
     // Cribbed from MediaPermissionGonk.cpp
-    nsIID elementIID;
-    uint16_t elementType;
 
     // Create array for nsIMediaDevice
     nsTArray<nsCOMPtr<nsIMediaDevice>> devices;
     // Contain the fumes
     {
-      void* rawArray;
-      uint32_t arrayLen;
-      nsresult rv;
-      rv = aDevices->GetAsArray(&elementType, &elementIID, &arrayLen, &rawArray);
+      uint16_t vtype;
+      nsresult rv = aDevices->GetDataType(&vtype);
       NS_ENSURE_SUCCESS(rv, rv);
+      if (vtype != nsIDataType::VTYPE_EMPTY_ARRAY) {
+        nsIID elementIID;
+        uint16_t elementType;
+        void* rawArray;
+        uint32_t arrayLen;
+        rv = aDevices->GetAsArray(&elementType, &elementIID, &arrayLen, &rawArray);
+        NS_ENSURE_SUCCESS(rv, rv);
+        if (elementType != nsIDataType::VTYPE_INTERFACE) {
+          free(rawArray);
+          return NS_ERROR_FAILURE;
+        }
 
-      if (elementType != nsIDataType::VTYPE_INTERFACE) {
-        free(rawArray);
-        return NS_ERROR_FAILURE;
+        nsISupports **supportsArray = reinterpret_cast<nsISupports **>(rawArray);
+        for (uint32_t i = 0; i < arrayLen; ++i) {
+          nsCOMPtr<nsIMediaDevice> device(do_QueryInterface(supportsArray[i]));
+          devices.AppendElement(device);
+          NS_IF_RELEASE(supportsArray[i]); // explicitly decrease refcount for rawptr
+        }
+        free(rawArray); // explicitly free memory from nsIVariant::GetAsArray
       }
-
-      nsISupports **supportsArray = reinterpret_cast<nsISupports **>(rawArray);
-      for (uint32_t i = 0; i < arrayLen; ++i) {
-        nsCOMPtr<nsIMediaDevice> device(do_QueryInterface(supportsArray[i]));
-        devices.AppendElement(device);
-        NS_IF_RELEASE(supportsArray[i]); // explicitly decrease refcount for rawptr
-      }
-      free(rawArray); // explicitly free memory from nsIVariant::GetAsArray
     }
     nsTArray<nsRefPtr<MediaDeviceInfo>> infos;
     for (auto& device : devices) {
@@ -123,8 +95,7 @@ public:
         device->GetId(id);
         // Include name only if page currently has a gUM stream active or
         // persistent permissions (audio or video) have been granted
-        if (MediaManager::Get()->IsWindowActivelyCapturing(mWindowId) ||
-            HasAPersistentPermission(mWindowId) ||
+        if (MediaManager::Get()->IsActivelyCapturingOrHasAPermission(mWindowId) ||
             Preferences::GetBool("media.navigator.permission.disabled", false)) {
           device->GetName(name);
         }

@@ -4,24 +4,31 @@
 
 const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
-let { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
-let { Preferences } = Cu.import("resource://gre/modules/Preferences.jsm", {});
-let { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-let { Promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
-let { devtools } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-let { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
-let { DevToolsUtils } = Cu.import("resource://gre/modules/devtools/DevToolsUtils.jsm", {});
-let { DebuggerServer } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
-let { merge } = devtools.require("sdk/util/object");
-let { generateUUID } = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
-let { getPerformanceActorsConnection, PerformanceFront } = devtools.require("devtools/performance/front");
-let TargetFactory = devtools.TargetFactory;
+var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+var { Preferences } = Cu.import("resource://gre/modules/Preferences.jsm", {});
+var { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
+var { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+var { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
+var { console } = require("resource://gre/modules/devtools/Console.jsm");
+var { TargetFactory } = require("devtools/framework/target");
+var Promise = require("promise");
+var DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+var { DebuggerServer } = require("devtools/server/main");
+var { merge } = require("sdk/util/object");
+var { createPerformanceFront } = require("devtools/server/actors/performance");
+var RecordingUtils = require("devtools/toolkit/performance/utils");
+var {
+  PMM_loadFrameScripts, PMM_isProfilerActive, PMM_stopProfiler,
+  sendProfilerCommand, consoleMethod
+} = require("devtools/toolkit/performance/process-communication");
 
-let mm = null;
+var mm = null;
 
 const FRAME_SCRIPT_UTILS_URL = "chrome://browser/content/devtools/frame-script-utils.js"
 const EXAMPLE_URL = "http://example.com/browser/browser/devtools/performance/test/";
 const SIMPLE_URL = EXAMPLE_URL + "doc_simple-test.html";
+const MARKERS_URL = EXAMPLE_URL + "doc_markers.html";
+const ALLOCS_URL = EXAMPLE_URL + "doc_allocs.html";
 
 const MEMORY_SAMPLE_PROB_PREF = "devtools.performance.memory.sample-probability";
 const MEMORY_MAX_LOG_LEN_PREF = "devtools.performance.memory.max-log-length";
@@ -30,34 +37,38 @@ const PROFILER_SAMPLE_RATE_PREF = "devtools.performance.profiler.sample-frequenc
 
 const FRAMERATE_PREF = "devtools.performance.ui.enable-framerate";
 const MEMORY_PREF = "devtools.performance.ui.enable-memory";
+const ALLOCATIONS_PREF = "devtools.performance.ui.enable-allocations";
 
 const PLATFORM_DATA_PREF = "devtools.performance.ui.show-platform-data";
 const IDLE_PREF = "devtools.performance.ui.show-idle-blocks";
 const INVERT_PREF = "devtools.performance.ui.invert-call-tree";
 const INVERT_FLAME_PREF = "devtools.performance.ui.invert-flame-graph";
 const FLATTEN_PREF = "devtools.performance.ui.flatten-tree-recursion";
-const JIT_PREF = "devtools.performance.ui.show-jit-optimizations";
+const JIT_PREF = "devtools.performance.ui.enable-jit-optimizations";
 const EXPERIMENTAL_PREF = "devtools.performance.ui.experimental";
 
 // All tests are asynchronous.
 waitForExplicitFinish();
 
-gDevTools.testing = true;
+DevToolsUtils.testing = true;
 
-let DEFAULT_PREFS = [
+var DEFAULT_PREFS = [
   "devtools.debugger.log",
   "devtools.performance.ui.invert-call-tree",
   "devtools.performance.ui.flatten-tree-recursion",
+  "devtools.performance.ui.show-triggers-for-gc-types",
   "devtools.performance.ui.show-platform-data",
   "devtools.performance.ui.show-idle-blocks",
   "devtools.performance.ui.enable-memory",
+  "devtools.performance.ui.enable-allocations",
   "devtools.performance.ui.enable-framerate",
-  "devtools.performance.ui.show-jit-optimizations",
+  "devtools.performance.ui.enable-jit-optimizations",
   "devtools.performance.memory.sample-probability",
   "devtools.performance.memory.max-log-length",
   "devtools.performance.profiler.buffer-size",
   "devtools.performance.profiler.sample-frequency-khz",
   "devtools.performance.ui.experimental",
+  "devtools.performance.timeline.hidden-markers",
 ].reduce((prefs, pref) => {
   prefs[pref] = Preferences.get(pref);
   return prefs;
@@ -69,6 +80,10 @@ Services.prefs.setBoolPref("devtools.performance.enabled", true);
 // be affected by this pref.
 Services.prefs.setBoolPref("devtools.debugger.log", false);
 
+// By default, enable memory flame graphs for tests for now
+// TODO remove when we have flame charts via bug 1148663
+Services.prefs.setBoolPref("devtools.performance.ui.enable-memory-flame", true);
+
 /**
  * Call manually in tests that use frame script utils after initializing
  * the tool. Must be called after initializing (once we have a tab).
@@ -79,7 +94,7 @@ function loadFrameScripts () {
 }
 
 registerCleanupFunction(() => {
-  gDevTools.testing = false;
+  DevToolsUtils.testing = false;
   info("finish() was called, cleaning up...");
 
   // Rollback any pref changes
@@ -182,19 +197,16 @@ function initBackend(aUrl, targetOps={}) {
 
     yield target.makeRemote();
 
-    // Attach addition options to `target`. This is used to force mock fronts
+    // Attach addition options to `client`. This is used to force mock fronts
     // to smokescreen test different servers where memory or timeline actors
     // may not exist. Possible options that will actually work:
-    // TEST_MOCK_MEMORY_ACTOR = true
+    // TEST_PERFORMANCE_LEGACY_FRONT = true
     // TEST_MOCK_TIMELINE_ACTOR = true
-    // TEST_MOCK_PROFILER_CHECK_TIMER = number
     // TEST_PROFILER_FILTER_STATUS = array
     merge(target, targetOps);
 
-    let connection = getPerformanceActorsConnection(target);
-    yield connection.open();
-
-    let front = new PerformanceFront(connection);
+    let front = createPerformanceFront(target);
+    yield front.connect();
     return { target, front };
   });
 }
@@ -208,16 +220,19 @@ function initPerformance(aUrl, tool="performance", targetOps={}) {
 
     yield target.makeRemote();
 
-    // Attach addition options to `target`. This is used to force mock fronts
+    // Attach addition options to `client`. This is used to force mock fronts
     // to smokescreen test different servers where memory or timeline actors
     // may not exist. Possible options that will actually work:
-    // TEST_MOCK_MEMORY_ACTOR = true
+    // TEST_PERFORMANCE_LEGACY_FRONT = true
     // TEST_MOCK_TIMELINE_ACTOR = true
-    // TEST_MOCK_PROFILER_CHECK_TIMER = number
     // TEST_PROFILER_FILTER_STATUS = array
     merge(target, targetOps);
 
     let toolbox = yield gDevTools.showToolbox(target, tool);
+
+    // Wait for the performance tool to be spun up
+    yield toolbox.initPerformance();
+
     let panel = toolbox.getCurrentPanel();
     return { target, panel, toolbox };
   });
@@ -227,9 +242,9 @@ function initPerformance(aUrl, tool="performance", targetOps={}) {
  * Initializes a webconsole panel. Returns a target, panel and toolbox reference.
  * Also returns a console property that allows calls to `profile` and `profileEnd`.
  */
-function initConsole(aUrl) {
+function initConsole(aUrl, options) {
   return Task.spawn(function*() {
-    let { target, toolbox, panel } = yield initPerformance(aUrl, "webconsole");
+    let { target, toolbox, panel } = yield initPerformance(aUrl, "webconsole", options);
     let { hud } = panel;
     return {
       target, toolbox, panel, console: {
@@ -261,13 +276,6 @@ function consoleExecute (console, method, val) {
   return promise;
 }
 
-function waitForProfilerConnection() {
-  let { promise, resolve } = Promise.defer();
-  Services.obs.addObserver(resolve, "performance-actors-connection-opened", false);
-  return promise.then(() =>
-    Services.obs.removeObserver(resolve, "performance-actors-connection-opened"));
-}
-
 function* teardown(panel) {
   info("Destroying the performance tool.");
 
@@ -284,21 +292,6 @@ function busyWait(time) {
   let start = Date.now();
   let stack;
   while (Date.now() - start < time) { stack = Components.stack; }
-}
-
-function consoleMethod (...args) {
-  if (!mm) {
-    throw new Error("`loadFrameScripts()` must be called before using frame scripts.");
-  }
-  // Terrible ugly hack -- this gets stringified when it uses the
-  // message manager, so an undefined arg in `console.profileEnd()`
-  // turns into a stringified "null", which is terrible. This method is only used
-  // for test helpers, so swap out the argument if its undefined with an empty string.
-  // Differences between empty string and undefined are tested on the front itself.
-  if (args[1] == null) {
-    args[1] = "";
-  }
-  mm.sendAsyncMessage("devtools:test:console", args);
 }
 
 function* consoleProfile(win, label) {
@@ -333,9 +326,12 @@ function* startRecording(panel, options = {
 }) {
   let win = panel.panelWin;
   let clicked = panel.panelWin.PerformanceView.once(win.EVENTS.UI_START_RECORDING);
-  let willStart = panel.panelWin.PerformanceController.once(win.EVENTS.RECORDING_WILL_START);
   let hasStarted = panel.panelWin.PerformanceController.once(win.EVENTS.RECORDING_STARTED);
   let button = win.$("#main-record-button");
+  let stateChanged = options.waitForStateChanged
+    ? once(win.PerformanceView, win.EVENTS.UI_STATE_CHANGED)
+    : Promise.resolve();
+
 
   ok(!button.hasAttribute("checked"),
     "The record button should not be checked yet.");
@@ -350,19 +346,12 @@ function* startRecording(panel, options = {
   ok(button.hasAttribute("locked"),
     "The record button should be locked.");
 
-  yield willStart;
-  let stateChanged = options.waitForStateChanged
-    ? once(win.PerformanceView, win.EVENTS.UI_STATE_CHANGED)
-    : Promise.resolve();
-
   yield hasStarted;
-
-  let overviewRendered = options.waitForOverview
+  yield options.waitForOverview
     ? once(win.OverviewView, win.EVENTS.OVERVIEW_RENDERED)
     : Promise.resolve();
 
   yield stateChanged;
-  yield overviewRendered;
 
   is(win.PerformanceView.getState(), "recording",
     "The current state is 'recording'.");
@@ -381,6 +370,7 @@ function* stopRecording(panel, options = {
   let clicked = panel.panelWin.PerformanceView.once(win.EVENTS.UI_STOP_RECORDING);
   let willStop = panel.panelWin.PerformanceController.once(win.EVENTS.RECORDING_WILL_STOP);
   let hasStopped = panel.panelWin.PerformanceController.once(win.EVENTS.RECORDING_STOPPED);
+  let controllerStopped = panel.panelWin.PerformanceController.once(win.EVENTS.CONTROLLER_STOPPED_RECORDING);
   let button = win.$("#main-record-button");
   let overviewRendered = null;
 
@@ -392,12 +382,12 @@ function* stopRecording(panel, options = {
   click(win, button);
   yield clicked;
 
+  yield willStop;
   ok(!button.hasAttribute("checked"),
     "The record button should not be checked.");
   ok(button.hasAttribute("locked"),
     "The record button should be locked.");
 
-  yield willStop;
   let stateChanged = options.waitForStateChanged
     ? once(win.PerformanceView, win.EVENTS.UI_STATE_CHANGED)
     : Promise.resolve();
@@ -422,6 +412,8 @@ function* stopRecording(panel, options = {
     "The record button should not be checked.");
   ok(!button.hasAttribute("locked"),
     "The record button should not be locked.");
+
+  yield controllerStopped;
 }
 
 function waitForWidgetsRendered(panel) {
@@ -538,27 +530,9 @@ function getInflatedStackLocations(thread, sample) {
 }
 
 /**
- * Get a path in a FrameNode call tree.
- */
-function getFrameNodePath(root, path) {
-  let calls = root.calls;
-  let node;
-  for (let key of path.split(" > ")) {
-    node = calls.find((node) => node.key == key);
-    if (!node) {
-      break;
-    }
-    calls = node.calls;
-  }
-  return node;
-}
-
-/**
  * Synthesize a profile for testing.
  */
 function synthesizeProfileForTest(samples) {
-  const RecordingUtils = devtools.require("devtools/performance/recording-utils");
-
   samples.unshift({
     time: 0,
     frames: [
@@ -573,38 +547,10 @@ function synthesizeProfileForTest(samples) {
   }, uniqueStacks);
 }
 
-function PMM_isProfilerActive () {
-  return sendProfilerCommand("IsActive");
+function isVisible (element) {
+  return !element.classList.contains("hidden") && !element.hidden;
 }
 
-function PMM_stopProfiler () {
-  return Task.spawn(function*() {
-    let isActive = (yield sendProfilerCommand("IsActive")).isActive;
-    if (isActive) {
-      return sendProfilerCommand("StopProfiler");
-    }
-  });
-}
-
-function sendProfilerCommand (method, args=[]) {
-  let deferred = Promise.defer();
-
-  if (!mm) {
-    throw new Error("`loadFrameScripts()` must be called when using MessageManager.");
-  }
-
-  let id = generateUUID().toString();
-  mm.addMessageListener("devtools:test:profiler:response", handler);
-  mm.sendAsyncMessage("devtools:test:profiler", { method, args, id });
-
-  function handler ({ data }) {
-    if (id !== data.id) {
-      return;
-    }
-
-    mm.removeMessageListener("devtools:test:profiler:response", handler);
-    deferred.resolve(data.data);
-  }
-
-  return deferred.promise;
+function within (actual, expected, fuzz, desc) {
+  ok((actual - expected) <= fuzz, `${desc}: Expected ${actual} to be within ${fuzz} of ${expected}`);
 }

@@ -10,6 +10,7 @@
 #include "nsIEventTarget.h"
 #include "nsITimer.h"
 #include "nsCOMPtr.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/SHA1.h"
 #include "mozilla/TimeStamp.h"
 #include "nsTArray.h"
@@ -32,9 +33,9 @@ class CacheFile;
 class CacheFileHandlesEntry;
 #endif
 
-const char kEntriesDir[] = "entries";
-const char kDoomedDir[]  = "doomed";
-const char kTrashDir[]   = "trash";
+#define ENTRIES_DIR "entries"
+#define DOOMED_DIR  "doomed"
+#define TRASH_DIR   "trash"
 
 
 class CacheFileHandle : public nsISupports
@@ -69,7 +70,7 @@ private:
   virtual ~CacheFileHandle();
 
   const SHA1Sum::Hash *mHash;
-  bool                 mIsDoomed;
+  mozilla::Atomic<bool,ReleaseAcquire> mIsDoomed;
   bool                 mPriority;
   bool                 mClosed;
   bool                 mSpecialFile;
@@ -407,7 +408,7 @@ private:
   TimeStamp                            mLastSmartSizeTime;
 };
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla
 
 #endif

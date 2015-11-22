@@ -15,6 +15,5 @@ add_task(function*() {
   let node = yield getNodeFront(".animated", inspector);
   yield selectNode(node, inspector);
 
-  is(panel.playerWidgets.length, 1,
-    "Exactly 1 player widget is shown for animated node");
+  assertAnimationsDisplayed(panel, 1);
 });

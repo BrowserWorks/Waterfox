@@ -66,7 +66,7 @@ GetTopLevelWindowActiveState(nsIFrame *aFrame)
   // Used by window frame and button box rendering. We can end up in here in
   // the content process when rendering one of these moz styles freely in a
   // page. Bail in this case, there is no applicable window focus state.
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     return mozilla::widget::themeconst::FS_INACTIVE;
   }
   // Get the widget. nsIFrame's GetNearestWidget walks up the view chain
@@ -1623,10 +1623,10 @@ RENDER_AGAIN:
 
 #if 0
   {
-    PR_LOG(gWindowsLog, PR_LOG_ERROR,
+    MOZ_LOG(gWindowsLog, LogLevel::Error,
            (stderr, "xform: %f %f %f %f [%f %f]\n", m._11, m._21, m._12, m._22,
             m._31, m._32));
-    PR_LOG(gWindowsLog, PR_LOG_ERROR,
+    MOZ_LOG(gWindowsLog, LogLevel::Error,
            (stderr, "tr: [%d %d %d %d]\ndr: [%d %d %d %d]\noff: [%f %f]\n",
             tr.x, tr.y, tr.width, tr.height, dr.x, dr.y, dr.width, dr.height,
             offset.x, offset.y));

@@ -26,9 +26,12 @@ this.webrtcUI = {
                  .getService(Ci.nsIMessageBroadcaster);
     ppmm.addMessageListener("webrtc:UpdatingIndicators", this);
     ppmm.addMessageListener("webrtc:UpdateGlobalIndicators", this);
+    ppmm.addMessageListener("child-process-shutdown", this);
 
     let mm = Cc["@mozilla.org/globalmessagemanager;1"]
                .getService(Ci.nsIMessageListenerManager);
+    mm.addMessageListener("rtcpeer:Request", this);
+    mm.addMessageListener("rtcpeer:CancelRequest", this);
     mm.addMessageListener("webrtc:Request", this);
     mm.addMessageListener("webrtc:CancelRequest", this);
     mm.addMessageListener("webrtc:UpdateBrowserIndicators", this);
@@ -44,15 +47,54 @@ this.webrtcUI = {
 
     let mm = Cc["@mozilla.org/globalmessagemanager;1"]
                .getService(Ci.nsIMessageListenerManager);
+    mm.removeMessageListener("rtcpeer:Request", this);
+    mm.removeMessageListener("rtcpeer:CancelRequest", this);
     mm.removeMessageListener("webrtc:Request", this);
     mm.removeMessageListener("webrtc:CancelRequest", this);
     mm.removeMessageListener("webrtc:UpdateBrowserIndicators", this);
   },
 
-  showGlobalIndicator: false,
-  showCameraIndicator: false,
-  showMicrophoneIndicator: false,
-  showScreenSharingIndicator: "", // either "Application", "Screen", "Window" or "Browser"
+  processIndicators: new Map(),
+
+  get showGlobalIndicator() {
+    for (let [, indicators] of this.processIndicators) {
+      if (indicators.showGlobalIndicator)
+        return true;
+    }
+    return false;
+  },
+
+  get showCameraIndicator() {
+    for (let [, indicators] of this.processIndicators) {
+      if (indicators.showCameraIndicator)
+        return true;
+    }
+    return false;
+  },
+
+  get showMicrophoneIndicator() {
+    for (let [, indicators] of this.processIndicators) {
+      if (indicators.showMicrophoneIndicator)
+        return true;
+    }
+    return false;
+  },
+
+  get showScreenSharingIndicator() {
+    let list = [""];
+    for (let [, indicators] of this.processIndicators) {
+      if (indicators.showScreenSharingIndicator)
+        list.push(indicators.showScreenSharingIndicator);
+    }
+
+    let precedence =
+      ["Screen", "Window", "Application", "Browser", ""];
+
+    list.sort((a, b) => { return precedence.indexOf(a) -
+                                 precedence.indexOf(b); });
+
+    return list[0];
+  },
 
   _streams: [],
   // The boolean parameters indicate which streams should be included in the result.
@@ -124,6 +166,47 @@ this.webrtcUI = {
 
   receiveMessage: function(aMessage) {
     switch (aMessage.name) {
+
+      // Add-ons can override stock permission behavior by doing:
+      //
+      //   var stockReceiveMessage = webrtcUI.receiveMessage;
+      //
+      //   webrtcUI.receiveMessage = function(aMessage) {
+      //     switch (aMessage.name) {
+      //      case "rtcpeer:Request": {
+      //        // new code.
+      //        break;
+      //      ...
+      //      default:
+      //        return stockReceiveMessage.call(this, aMessage);
+      //
+      // Intercepting gUM and peerConnection requests should let an add-on
+      // limit PeerConnection activity with automatic rules and/or prompts
+      // in a sensible manner that avoids double-prompting in typical
+      // gUM+PeerConnection scenarios. For example:
+      //
+      //   State                                    Sample Action
+      //   --------------------------------------------------------------
+      //   No IP leaked yet + No gUM granted        Warn user
+      //   No IP leaked yet + gUM granted           Avoid extra dialog
+      //   No IP leaked yet + gUM request pending.  Delay until gUM grant
+      //   IP already leaked                        Too late to warn
+
+      case "rtcpeer:Request": {
+        // Always allow. This code-point exists for add-ons to override.
+        let { callID, windowID } = aMessage.data;
+        // Also available: isSecure, innerWindowID. For contentWindow:
+        //
+        //   let contentWindow = Services.wm.getOuterWindowWithId(windowID);
+
+        let mm = aMessage.target.messageManager;
+        mm.sendAsyncMessage("rtcpeer:Allow",
+                            { callID: callID, windowID: windowID });
+        break;
+      }
+      case "rtcpeer:CancelRequest":
+        // No data to release. This code-point exists for add-ons to override.
+        break;
       case "webrtc:Request":
         prompt(aMessage.target, aMessage.data);
         break;
@@ -134,11 +217,15 @@ this.webrtcUI = {
         webrtcUI._streams = [];
         break;
       case "webrtc:UpdateGlobalIndicators":
-        updateIndicators(aMessage.data)
+        updateIndicators(aMessage.data, aMessage.target);
         break;
       case "webrtc:UpdateBrowserIndicators":
         webrtcUI._streams.push({browser: aMessage.target, state: aMessage.data});
         updateBrowserSpecificIndicator(aMessage.target, aMessage.data);
+        break;
+      case "child-process-shutdown":
+        webrtcUI.processIndicators.delete(aMessage.target);
+        updateIndicators(null, null);
         break;
     }
   }
@@ -188,7 +275,8 @@ function getHost(uri, href) {
 
 function prompt(aBrowser, aRequest) {
   let {audioDevices: audioDevices, videoDevices: videoDevices,
-       sharingScreen: sharingScreen, requestTypes: requestTypes} = aRequest;
+       sharingScreen: sharingScreen, sharingAudio: sharingAudio,
+       requestTypes: requestTypes} = aRequest;
   let uri = Services.io.newURI(aRequest.documentURI, null, null);
   let host = getHost(uri);
   let chromeDoc = aBrowser.ownerDocument;
@@ -198,10 +286,9 @@ function prompt(aBrowser, aRequest) {
   let message = stringBundle.getFormattedString(stringId, [host]);
 
   let mainLabel;
-  if (sharingScreen) {
+  if (sharingScreen || sharingAudio) {
     mainLabel = stringBundle.getString("getUserMedia.shareSelectedItems.label");
-  }
-  else {
+  } else {
     let string = stringBundle.getString("getUserMedia.shareSelectedDevices.label");
     mainLabel = PluralForm.get(requestTypes.length, string);
   }
@@ -225,8 +312,8 @@ function prompt(aBrowser, aRequest) {
       }
     }
   ];
-
-  if (!sharingScreen) { // Bug 1037438: implement 'never' for screen sharing.
+  // Bug 1037438: implement 'never' for screen sharing.
+  if (!sharingScreen && !sharingAudio) {
     secondaryActions.push({
       label: stringBundle.getString("getUserMedia.never.label"),
       accessKey: stringBundle.getString("getUserMedia.never.accesskey"),
@@ -243,10 +330,10 @@ function prompt(aBrowser, aRequest) {
     });
   }
 
-  if (aRequest.secure && !sharingScreen) {
+  if (aRequest.secure && !sharingScreen && !sharingAudio) {
     // Don't show the 'Always' action if the connection isn't secure, or for
-    // screen sharing (because we can't guess which window the user wants to
-    // share without prompting).
+    // screen/audio sharing (because we can't guess which window the user wants
+    // to share without prompting).
     secondaryActions.unshift({
       label: stringBundle.getString("getUserMedia.always.label"),
       accessKey: stringBundle.getString("getUserMedia.always.accesskey"),
@@ -266,7 +353,8 @@ function prompt(aBrowser, aRequest) {
       if (aTopic == "shown") {
         let PopupNotifications = chromeDoc.defaultView.PopupNotifications;
         let popupId = "Devices";
-        if (requestTypes.length == 1 && requestTypes[0] == "Microphone")
+        if (requestTypes.length == 1 && (requestTypes[0] == "Microphone" ||
+                                         requestTypes[0] == "AudioCapture"))
           popupId = "Microphone";
         if (requestTypes.indexOf("Screen") != -1)
           popupId = "Screen";
@@ -305,7 +393,16 @@ function prompt(aBrowser, aRequest) {
             allowedDevices.push(videoDevices[0].deviceIndex);
           if (audioDevices.length && micPerm == perms.ALLOW_ACTION)
             allowedDevices.push(audioDevices[0].deviceIndex);
-          let mm = this.browser.messageManager;
+
+          // Remember on which URIs we found persistent permissions so that we
+          // can remove them if the user clicks 'Stop Sharing'. There's no
+          // other way for the stop sharing code to know the hostnames of frames
+          // using devices until bug 1066082 is fixed.
+          let browser = this.browser;
+          browser._devicePermissionURIs = browser._devicePermissionURIs || [];
+          browser._devicePermissionURIs.push(uri);
+
+          let mm = browser.messageManager;
           mm.sendAsyncMessage("webrtc:Allow", {callID: aRequest.callID,
                                                windowID: aRequest.windowID,
                                                devices: allowedDevices});
@@ -344,12 +441,18 @@ function prompt(aBrowser, aRequest) {
         menupopup.appendChild(chromeDoc.createElement("menuseparator"));
 
         // Build the list of 'devices'.
+        let monitorIndex = 1;
         for (let i = 0; i < devices.length; ++i) {
           let name;
-          // Screen has a special treatment because we currently only support
-          // sharing the primary screen and want to display a localized string.
+          // Building screen list from available screens.
           if (type == "screen") {
-            name = stringBundle.getString("getUserMedia.shareEntireScreen.label");
+            if (devices[i].name == "Primary Monitor") {
+              name = stringBundle.getString("getUserMedia.shareEntireScreen.label");
+            } else {
+              name = stringBundle.getFormattedString("getUserMedia.shareMonitor.label",
+                                                     [monitorIndex]);
+              ++monitorIndex;
+            }
           }
           else {
             name = devices[i].name;
@@ -384,7 +487,7 @@ function prompt(aBrowser, aRequest) {
 
       chromeDoc.getElementById("webRTC-selectCamera").hidden = !videoDevices.length || sharingScreen;
       chromeDoc.getElementById("webRTC-selectWindowOrScreen").hidden = !sharingScreen || !videoDevices.length;
-      chromeDoc.getElementById("webRTC-selectMicrophone").hidden = !audioDevices.length;
+      chromeDoc.getElementById("webRTC-selectMicrophone").hidden = !audioDevices.length || sharingAudio;
 
       let camMenupopup = chromeDoc.getElementById("webRTC-selectCamera-menupopup");
       let windowMenupopup = chromeDoc.getElementById("webRTC-selectWindow-menupopup");
@@ -393,12 +496,16 @@ function prompt(aBrowser, aRequest) {
         listScreenShareDevices(windowMenupopup, videoDevices);
       else
         listDevices(camMenupopup, videoDevices);
-      listDevices(micMenupopup, audioDevices);
+
+      if (!sharingAudio)
+        listDevices(micMenupopup, audioDevices);
+
       if (requestTypes.length == 2) {
         let stringBundle = chromeDoc.defaultView.gNavigatorBundle;
         if (!sharingScreen)
           addDeviceToList(camMenupopup, stringBundle.getString("getUserMedia.noVideo.label"), "-1");
-        addDeviceToList(micMenupopup, stringBundle.getString("getUserMedia.noAudio.label"), "-1");
+        if (!sharingAudio)
+          addDeviceToList(micMenupopup, stringBundle.getString("getUserMedia.noAudio.label"), "-1");
       }
 
       this.mainAction.callback = function(aRemember) {
@@ -416,13 +523,18 @@ function prompt(aBrowser, aRequest) {
           }
         }
         if (audioDevices.length) {
-          let audioDeviceIndex = chromeDoc.getElementById("webRTC-selectMicrophone-menulist").value;
-          let allowMic = audioDeviceIndex != "-1";
-          if (allowMic)
-            allowedDevices.push(audioDeviceIndex);
-          if (aRemember) {
-            perms.add(uri, "microphone",
-                      allowMic ? perms.ALLOW_ACTION : perms.DENY_ACTION);
+          if (!sharingAudio) {
+            let audioDeviceIndex = chromeDoc.getElementById("webRTC-selectMicrophone-menulist").value;
+            let allowMic = audioDeviceIndex != "-1";
+            if (allowMic)
+              allowedDevices.push(audioDeviceIndex);
+            if (aRemember) {
+              perms.add(uri, "microphone",
+                        allowMic ? perms.ALLOW_ACTION : perms.DENY_ACTION);
+            }
+          } else {
+            // Only one device possible for audio capture.
+            allowedDevices.push(0);
           }
         }
 
@@ -431,7 +543,14 @@ function prompt(aBrowser, aRequest) {
           return;
         }
 
-        let mm = notification.browser.messageManager
+        if (aRemember) {
+          // Remember on which URIs we set persistent permissions so that we
+          // can remove them if the user clicks 'Stop Sharing'.
+          aBrowser._devicePermissionURIs = aBrowser._devicePermissionURIs || [];
+          aBrowser._devicePermissionURIs.push(uri);
+        }
+
+        let mm = notification.browser.messageManager;
         mm.sendAsyncMessage("webrtc:Allow", {callID: aRequest.callID,
                                              windowID: aRequest.windowID,
                                              devices: allowedDevices});
@@ -686,11 +805,22 @@ function maybeAddMenuIndicator(window) {
 
 var gIndicatorWindow = null;
 
-function updateIndicators(data) {
-  webrtcUI.showGlobalIndicator = data.showGlobalIndicator;
-  webrtcUI.showCameraIndicator = data.showCameraIndicator;
-  webrtcUI.showMicrophoneIndicator = data.showMicrophoneIndicator;
-  webrtcUI.showScreenSharingIndicator = data.showScreenSharingIndicator;
+function updateIndicators(data, target) {
+  if (data) {
+    // the global indicators specific to this process
+    let indicators;
+    if (webrtcUI.processIndicators.has(target)) {
+      indicators = webrtcUI.processIndicators.get(target);
+    } else {
+      indicators = {};
+      webrtcUI.processIndicators.set(target, indicators);
+    }
+
+    indicators.showGlobalIndicator = data.showGlobalIndicator;
+    indicators.showCameraIndicator = data.showCameraIndicator;
+    indicators.showMicrophoneIndicator = data.showMicrophoneIndicator;
+    indicators.showScreenSharingIndicator = data.showScreenSharingIndicator;
+  }
 
   let browserWindowEnum = Services.wm.getEnumerator("navigator:browser");
   while (browserWindowEnum.hasMoreElements()) {
@@ -748,16 +878,17 @@ function updateBrowserSpecificIndicator(aBrowser, aState) {
     label: stringBundle.getString("getUserMedia.stopSharing.label"),
     accessKey: stringBundle.getString("getUserMedia.stopSharing.accesskey"),
     callback: function () {
-      let uri = Services.io.newURI(aState.documentURI, null, null);
-      let host = getHost(uri);
+      let uris = aBrowser._devicePermissionURIs || [];
+      uris = uris.concat(Services.io.newURI(aState.documentURI, null, null));
       let perms = Services.perms;
-      if (aState.camera &&
-          perms.testExactPermission(uri, "camera") == perms.ALLOW_ACTION)
-        perms.remove(host, "camera");
-      if (aState.microphone &&
-          perms.testExactPermission(uri, "microphone") == perms.ALLOW_ACTION)
-        perms.remove(host, "microphone");
-
+      for (let uri of uris) {
+        if (aState.camera &&
+            perms.testExactPermission(uri, "camera") == perms.ALLOW_ACTION)
+          perms.remove(uri, "camera");
+        if (aState.microphone &&
+            perms.testExactPermission(uri, "microphone") == perms.ALLOW_ACTION)
+          perms.remove(uri, "microphone");
+      }
       let mm = notification.browser.messageManager;
       mm.sendAsyncMessage("webrtc:StopSharing", windowId);
     }
@@ -789,12 +920,13 @@ function updateBrowserSpecificIndicator(aBrowser, aState) {
                                         anchorId, mainAction, secondaryActions, options);
   }
   else {
-    removeBrowserNotification(aBrowser,"webRTC-sharingDevices");
+    removeBrowserNotification(aBrowser, "webRTC-sharingDevices");
+    aBrowser._devicePermissionURIs = null;
   }
 
   // Now handle the screen sharing indicator.
   if (!aState.screen) {
-    removeBrowserNotification(aBrowser,"webRTC-sharingScreen");
+    removeBrowserNotification(aBrowser, "webRTC-sharingScreen");
     return;
   }
 

@@ -46,7 +46,9 @@ static char *RCSSTRING __UNUSED__="$Id: ice_component.c,v 1.2 2008/04/28 17:59:0
 #include "nr_socket_turn.h"
 #include "nr_socket_wrapper.h"
 #include "nr_socket_buffered_stun.h"
+#include "nr_socket_multi_tcp.h"
 #include "ice_reg.h"
+#include "nr_crypto.h"
 
 static int nr_ice_component_stun_server_default_cb(void *cb_arg,nr_stun_server_ctx *stun_ctx,nr_socket *sock, nr_stun_server_request *req, int *dont_free, int *error);
 static int nr_ice_pre_answer_request_destroy(nr_ice_pre_answer_request **parp);
@@ -173,6 +175,28 @@ int nr_ice_component_destroy(nr_ice_component **componentp)
     return(0);
   }
 
+static int nr_ice_component_create_stun_server_ctx(nr_ice_component *component, nr_ice_socket *isock, nr_socket *sock, nr_transport_addr *addr, char *lufrag, Data *pwd)
+  {
+    char label[256];
+    int r,_status;
+
+    /* Create a STUN server context for this socket */
+    snprintf(label, sizeof(label), "server(%s)", addr->as_string);
+    if(r=nr_stun_server_ctx_create(label,sock,&isock->stun_server))
+      ABORT(r);
+    if(r=nr_ice_socket_register_stun_server(isock,isock->stun_server,&isock->stun_server_handle))
+      ABORT(r);
+
+   /* Add the default STUN credentials so that we can respond before
+      we hear about the peer.*/
+    if(r=nr_stun_server_add_default_client(isock->stun_server, lufrag, pwd, nr_ice_component_stun_server_default_cb, component))
+      ABORT(r);
+
+    _status = 0;
+ abort:
+    return(_status);
+  }
+
 static int nr_ice_component_initialize_udp(struct nr_ice_ctx_ *ctx,nr_ice_component *component, nr_local_addr *addrs, int addr_ct, char *lufrag, Data *pwd)
   {
     nr_socket *sock;
@@ -180,7 +204,6 @@ static int nr_ice_component_initialize_udp(struct nr_ice_ctx_ *ctx,nr_ice_compon
     nr_ice_candidate *cand=0;
     int i;
     int j;
-    char label[256];
     int r,_status;
 
     /* Now one ice_socket for each address */
@@ -196,61 +219,71 @@ static int nr_ice_component_initialize_udp(struct nr_ice_ctx_ *ctx,nr_ice_compon
           continue;
       }
       r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): host address %s",ctx->label,addrs[i].addr.as_string);
-      if(r=nr_socket_local_create(&addrs[i].addr,&sock)){
+      if((r=nr_socket_factory_create_socket(ctx->socket_factory,&addrs[i].addr,&sock))){
         r_log(LOG_ICE,LOG_WARNING,"ICE(%s): couldn't create socket for address %s",ctx->label,addrs[i].addr.as_string);
         continue;
       }
 
-      if(r=nr_ice_socket_create(ctx,component,sock,&isock))
-        ABORT(r);
-      /* Create one host candidate */
-      if(r=nr_ice_candidate_create(ctx,component,isock,sock,HOST,0,
-        component->component_id,&cand))
+      if(r=nr_ice_socket_create(ctx,component,sock,NR_ICE_SOCKET_TYPE_DGRAM,&isock))
         ABORT(r);
 
-      TAILQ_INSERT_TAIL(&component->candidates,cand,entry_comp);
-      component->candidate_ct++;
-      cand=0;
-
-      /* And a srvrflx candidate for each STUN server */
-      for(j=0;j<ctx->stun_server_ct;j++){
-        if(r=nr_ice_candidate_create(ctx,component,
-          isock,sock,SERVER_REFLEXIVE,
-          &ctx->stun_servers[j],component->component_id,&cand))
+      if (!(ctx->flags & NR_ICE_CTX_FLAGS_RELAY_ONLY)) {
+        /* Create one host candidate */
+        if(r=nr_ice_candidate_create(ctx,component,isock,sock,HOST,0,0,
+          component->component_id,&cand))
           ABORT(r);
+
         TAILQ_INSERT_TAIL(&component->candidates,cand,entry_comp);
         component->candidate_ct++;
         cand=0;
+
+        /* And a srvrflx candidate for each STUN server */
+        for(j=0;j<ctx->stun_server_ct;j++){
+          /* Skip non-UDP */
+          if(ctx->stun_servers[j].transport!=IPPROTO_UDP)
+            continue;
+
+          if(r=nr_ice_candidate_create(ctx,component,
+            isock,sock,SERVER_REFLEXIVE,0,
+            &ctx->stun_servers[j],component->component_id,&cand))
+            ABORT(r);
+          TAILQ_INSERT_TAIL(&component->candidates,cand,entry_comp);
+          component->candidate_ct++;
+          cand=0;
+        }
       }
 
 #ifdef USE_TURN
-      /* And both a srvrflx and relayed candidate for each TURN server */
+      /* And both a srvrflx and relayed candidate for each TURN server (unless
+         we're in relay-only mode, in which case just the relayed one) */
       for(j=0;j<ctx->turn_server_ct;j++){
         nr_socket *turn_sock;
-        nr_ice_candidate *srvflx_cand;
+        nr_ice_candidate *srvflx_cand=0;
 
         /* Skip non-UDP */
-        if (ctx->turn_servers[j].transport != IPPROTO_UDP)
+        if (ctx->turn_servers[j].turn_server.transport != IPPROTO_UDP)
           continue;
 
-        /* srvrflx */
-        if(r=nr_ice_candidate_create(ctx,component,
-          isock,sock,SERVER_REFLEXIVE,
-          &ctx->turn_servers[j].turn_server,component->component_id,&cand))
-          ABORT(r);
-        cand->state=NR_ICE_CAND_STATE_INITIALIZING; /* Don't start */
-        cand->done_cb=nr_ice_gather_finished_cb;
-        cand->cb_arg=cand;
+        if (!(ctx->flags & NR_ICE_CTX_FLAGS_RELAY_ONLY)) {
+          /* srvrflx */
+          if(r=nr_ice_candidate_create(ctx,component,
+            isock,sock,SERVER_REFLEXIVE,0,
+            &ctx->turn_servers[j].turn_server,component->component_id,&cand))
+            ABORT(r);
+          cand->state=NR_ICE_CAND_STATE_INITIALIZING; /* Don't start */
+          cand->done_cb=nr_ice_gather_finished_cb;
+          cand->cb_arg=cand;
 
-        TAILQ_INSERT_TAIL(&component->candidates,cand,entry_comp);
-        component->candidate_ct++;
-        srvflx_cand=cand;
-
+          TAILQ_INSERT_TAIL(&component->candidates,cand,entry_comp);
+          component->candidate_ct++;
+          srvflx_cand=cand;
+          cand=0;
+        }
         /* relayed*/
         if(r=nr_socket_turn_create(sock, &turn_sock))
           ABORT(r);
         if(r=nr_ice_candidate_create(ctx,component,
-          isock,turn_sock,RELAYED,
+          isock,turn_sock,RELAYED,0,
           &ctx->turn_servers[j].turn_server,component->component_id,&cand))
            ABORT(r);
         cand->u.relayed.srvflx_candidate=srvflx_cand;
@@ -263,15 +296,7 @@ static int nr_ice_component_initialize_udp(struct nr_ice_ctx_ *ctx,nr_ice_compon
 #endif /* USE_TURN */
 
       /* Create a STUN server context for this socket */
-      snprintf(label, sizeof(label), "server(%s)", addrs[i].addr.as_string);
-      if(r=nr_stun_server_ctx_create(label,sock,&isock->stun_server))
-        ABORT(r);
-      if(r=nr_ice_socket_register_stun_server(isock,isock->stun_server,&isock->stun_server_handle))
-        ABORT(r);
-
-      /* Add the default STUN credentials so that we can respond before
-         we hear about the peer. */
-      if(r=nr_stun_server_add_default_client(isock->stun_server, lufrag, pwd, nr_ice_component_stun_server_default_cb, component))
+      if ((r=nr_ice_component_create_stun_server_ctx(component,isock,sock,&addrs[i].addr,lufrag,pwd)))
         ABORT(r);
 
       STAILQ_INSERT_TAIL(&component->sockets,isock,entry);
@@ -282,48 +307,215 @@ static int nr_ice_component_initialize_udp(struct nr_ice_ctx_ *ctx,nr_ice_compon
     return(_status);
   }
 
+static int nr_ice_component_get_port_from_ephemeral_range(uint16_t *port)
+  {
+    int _status, r;
+    void *buf = port;
+    if(r=nr_crypto_random_bytes(buf, 2))
+      ABORT(r);
+    *port|=49152; /* make it fit into IANA ephemeral port range >= 49152 */
+    _status=0;
+abort:
+    return(_status);
+  }
+
+static int nr_ice_component_create_tcp_host_candidate(struct nr_ice_ctx_ *ctx,
+  nr_ice_component *component, nr_transport_addr *interface_addr, nr_socket_tcp_type tcp_type,
+  int backlog, int so_sock_ct, char *lufrag, Data *pwd, nr_ice_socket **isock)
+  {
+    int r,_status;
+    nr_ice_candidate *cand=0;
+    int tries=3;
+    nr_ice_socket *isock_tmp=0;
+    nr_socket *nrsock=0;
+    nr_transport_addr addr;
+    uint16_t local_port;
+
+    if ((r=nr_transport_addr_copy(&addr,interface_addr)))
+      ABORT(r);
+    addr.protocol=IPPROTO_TCP;
+
+    do{
+      if (!tries--)
+        ABORT(r);
+
+      if((r=nr_ice_component_get_port_from_ephemeral_range(&local_port)))
+        ABORT(r);
+
+      if ((r=nr_transport_addr_set_port(&addr, local_port)))
+        ABORT(r);
+
+      if((r=nr_transport_addr_fmt_addr_string(&addr)))
+        ABORT(r);
+
+      /* It would be better to stop trying if there is error other than
+         port already used, but it'd require significant work to support this. */
+      r=nr_socket_multi_tcp_create(ctx,&addr,tcp_type,so_sock_ct,1,NR_STUN_MAX_MESSAGE_SIZE,&nrsock);
+
+    } while(r);
+
+    if((tcp_type == TCP_TYPE_PASSIVE) && (r=nr_socket_listen(nrsock,backlog)))
+      ABORT(r);
+
+    if((r=nr_ice_socket_create(ctx,component,nrsock,NR_ICE_SOCKET_TYPE_STREAM_TCP,&isock_tmp)))
+      ABORT(r);
+
+    /* nr_ice_socket took ownership of nrsock */
+    nrsock=NULL;
+
+    /* Create a STUN server context for this socket */
+    if ((r=nr_ice_component_create_stun_server_ctx(component,isock_tmp,isock_tmp->sock,&addr,lufrag,pwd)))
+      ABORT(r);
+
+    if((r=nr_ice_candidate_create(ctx,component,isock_tmp,isock_tmp->sock,HOST,tcp_type,0,
+      component->component_id,&cand)))
+      ABORT(r);
+
+    if (isock)
+      *isock=isock_tmp;
+
+    TAILQ_INSERT_TAIL(&component->candidates,cand,entry_comp);
+    component->candidate_ct++;
+
+    STAILQ_INSERT_TAIL(&component->sockets,isock_tmp,entry);
+
+    _status=0;
+abort:
+    if (_status) {
+      nr_ice_socket_destroy(&isock_tmp);
+      nr_socket_destroy(&nrsock);
+    }
+    return(_status);
+  }
+
 static int nr_ice_component_initialize_tcp(struct nr_ice_ctx_ *ctx,nr_ice_component *component, nr_local_addr *addrs, int addr_ct, char *lufrag, Data *pwd)
   {
-    nr_ice_socket *isock=0;
     nr_ice_candidate *cand=0;
     int i;
     int j;
-    char label[256];
     int r,_status;
+    int so_sock_ct=0;
+    int backlog=10;
+    char ice_tcp_disabled=1;
 
     r_log(LOG_ICE,LOG_DEBUG,"nr_ice_component_initialize_tcp");
 
-    /* Create a new relayed candidate for each addr/TURN server pair */
+    if(r=NR_reg_get_int4(NR_ICE_REG_ICE_TCP_SO_SOCK_COUNT,&so_sock_ct)){
+      if(r!=R_NOT_FOUND)
+        ABORT(r);
+    }
+
+    if(r=NR_reg_get_int4(NR_ICE_REG_ICE_TCP_LISTEN_BACKLOG,&backlog)){
+      if(r!=R_NOT_FOUND)
+        ABORT(r);
+    }
+
+    if ((r=NR_reg_get_char(NR_ICE_REG_ICE_TCP_DISABLE, &ice_tcp_disabled))) {
+      if (r != R_NOT_FOUND)
+        ABORT(r);
+    }
+    if (ctx->flags & NR_ICE_CTX_FLAGS_RELAY_ONLY) {
+      ice_tcp_disabled = 1;
+    }
+
     for(i=0;i<addr_ct;i++){
       char suppress;
+      nr_ice_socket *isock_psv=0;
+      nr_ice_socket *isock_so=0;
 
       if(r=NR_reg_get2_char(NR_ICE_REG_SUPPRESS_INTERFACE_PRFX,addrs[i].addr.ifname,&suppress)){
         if(r!=R_NOT_FOUND)
           ABORT(r);
       }
-      else{
-        if(suppress)
+      else if(suppress) {
           continue;
       }
 
+      if (!ice_tcp_disabled) {
+        /* passive host candidate */
+        if ((r=nr_ice_component_create_tcp_host_candidate(ctx, component, &addrs[i].addr,
+          TCP_TYPE_PASSIVE, backlog, 0, lufrag, pwd, &isock_psv)))
+          ABORT(r);
+
+        /* active host candidate */
+        if ((r=nr_ice_component_create_tcp_host_candidate(ctx, component, &addrs[i].addr,
+          TCP_TYPE_ACTIVE, 0, 0, lufrag, pwd, NULL)))
+          ABORT(r);
+
+        /* simultaneous-open host candidate */
+        if (so_sock_ct) {
+          if ((r=nr_ice_component_create_tcp_host_candidate(ctx, component, &addrs[i].addr,
+            TCP_TYPE_SO, 0, so_sock_ct, lufrag, pwd, &isock_so)))
+            ABORT(r);
+        }
+
+        /* And srvrflx candidates for each STUN server */
+        for(j=0;j<ctx->stun_server_ct;j++){
+          if (ctx->stun_servers[j].transport!=IPPROTO_TCP)
+            continue;
+
+          if(r=nr_ice_candidate_create(ctx,component,
+            isock_psv,isock_psv->sock,SERVER_REFLEXIVE,TCP_TYPE_PASSIVE,
+            &ctx->stun_servers[j],component->component_id,&cand))
+            ABORT(r);
+          TAILQ_INSERT_TAIL(&component->candidates,cand,entry_comp);
+          component->candidate_ct++;
+          cand=0;
+
+          if (so_sock_ct) {
+            if(r=nr_ice_candidate_create(ctx,component,
+              isock_so,isock_so->sock,SERVER_REFLEXIVE,TCP_TYPE_SO,
+              &ctx->stun_servers[j],component->component_id,&cand))
+              ABORT(r);
+            TAILQ_INSERT_TAIL(&component->candidates,cand,entry_comp);
+            component->candidate_ct++;
+            cand=0;
+          }
+        }
+      }
+
 #ifdef USE_TURN
+      /* Create a new relayed candidate for each addr/TURN server pair */
       for(j=0;j<ctx->turn_server_ct;j++){
         nr_transport_addr addr;
-        nr_socket *sock;
+        nr_socket *local_sock;
         nr_socket *buffered_sock;
         nr_socket *turn_sock;
+        nr_ice_socket *turn_isock;
 
         /* Skip non-TCP */
-        if (ctx->turn_servers[j].transport != IPPROTO_TCP)
+        if (ctx->turn_servers[j].turn_server.transport != IPPROTO_TCP)
           continue;
 
-        /* Create a local socket */
+        if (!ice_tcp_disabled) {
+          /* Use TURN server to get srflx candidates */
+          if(r=nr_ice_candidate_create(ctx,component,
+            isock_psv,isock_psv->sock,SERVER_REFLEXIVE,TCP_TYPE_PASSIVE,
+            &ctx->turn_servers[j].turn_server,component->component_id,&cand))
+            ABORT(r);
+          TAILQ_INSERT_TAIL(&component->candidates,cand,entry_comp);
+          component->candidate_ct++;
+          cand=0;
+
+          if (so_sock_ct) {
+            if(r=nr_ice_candidate_create(ctx,component,
+              isock_so,isock_so->sock,SERVER_REFLEXIVE,TCP_TYPE_SO,
+              &ctx->turn_servers[j].turn_server,component->component_id,&cand))
+              ABORT(r);
+            TAILQ_INSERT_TAIL(&component->candidates,cand,entry_comp);
+            component->candidate_ct++;
+            cand=0;
+          }
+        }
+
+        /* Create relay candidate */
         if ((r=nr_transport_addr_copy(&addr, &addrs[i].addr)))
           ABORT(r);
         addr.protocol = IPPROTO_TCP;
         if ((r=nr_transport_addr_fmt_addr_string(&addr)))
           ABORT(r);
-        if((r=nr_socket_local_create(&addr, &sock))){
+        /* Create a local socket */
+        if((r=nr_socket_factory_create_socket(ctx->socket_factory,&addr,&local_sock))){
           r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): couldn't create socket for address %s",ctx->label,addr.as_string);
           continue;
         }
@@ -332,12 +524,12 @@ static int nr_ice_component_initialize_tcp(struct nr_ice_ctx_ *ctx,nr_ice_compon
 
         if (ctx->turn_tcp_socket_wrapper) {
           /* Wrap it */
-          if((r=nr_socket_wrapper_factory_wrap(ctx->turn_tcp_socket_wrapper, sock, &sock)))
+          if((r=nr_socket_wrapper_factory_wrap(ctx->turn_tcp_socket_wrapper, local_sock, &local_sock)))
             ABORT(r);
         }
 
         /* Wrap it */
-        if((r=nr_socket_buffered_stun_create(sock, NR_STUN_MAX_MESSAGE_SIZE, &buffered_sock)))
+        if((r=nr_socket_buffered_stun_create(local_sock, NR_STUN_MAX_MESSAGE_SIZE, TURN_TCP_FRAMING, &buffered_sock)))
           ABORT(r);
 
         /* The TURN socket */
@@ -345,12 +537,12 @@ static int nr_ice_component_initialize_tcp(struct nr_ice_ctx_ *ctx,nr_ice_compon
           ABORT(r);
 
         /* Create an ICE socket */
-        if((r=nr_ice_socket_create(ctx, component, buffered_sock, &isock)))
+        if((r=nr_ice_socket_create(ctx, component, buffered_sock, NR_ICE_SOCKET_TYPE_STREAM_TURN, &turn_isock)))
           ABORT(r);
 
         /* Attach ourselves to it */
         if(r=nr_ice_candidate_create(ctx,component,
-          isock,turn_sock,RELAYED,
+          turn_isock,turn_sock,RELAYED,TCP_TYPE_NONE,
           &ctx->turn_servers[j].turn_server,component->component_id,&cand))
           ABORT(r);
         cand->u.relayed.srvflx_candidate=NULL;
@@ -360,21 +552,13 @@ static int nr_ice_component_initialize_tcp(struct nr_ice_ctx_ *ctx,nr_ice_compon
         cand=0;
 
         /* Create a STUN server context for this socket */
-        snprintf(label, sizeof(label), "server(%s)", addr.as_string);
-        if(r=nr_stun_server_ctx_create(label,sock,&isock->stun_server))
-          ABORT(r);
-        if(r=nr_ice_socket_register_stun_server(isock,isock->stun_server,&isock->stun_server_handle))
+        if ((r=nr_ice_component_create_stun_server_ctx(component,turn_isock,local_sock,&addr,lufrag,pwd)))
           ABORT(r);
 
-       /* Add the default STUN credentials so that we can respond before
-          we hear about the peer.*/
-        if(r=nr_stun_server_add_default_client(isock->stun_server, lufrag, pwd, nr_ice_component_stun_server_default_cb, component))
-          ABORT(r);
-
-        STAILQ_INSERT_TAIL(&component->sockets,isock,entry);
+        STAILQ_INSERT_TAIL(&component->sockets,turn_isock,entry);
       }
+#endif /* USE_TURN */
     }
-#endif
 
     _status = 0;
  abort:
@@ -419,15 +603,15 @@ int nr_ice_component_initialize(struct nr_ice_ctx_ *ctx,nr_ice_component *compon
 
     /* Initialize the UDP candidates */
     if (r=nr_ice_component_initialize_udp(ctx, component, addrs, addr_ct, lufrag, &pwd))
-      ABORT(r);
+      r_log(LOG_ICE,LOG_INFO,"ICE(%s): failed to create UDP candidates with error %d",ctx->label,r);
     /* And the TCP candidates */
     if (r=nr_ice_component_initialize_tcp(ctx, component, addrs, addr_ct, lufrag, &pwd))
-      ABORT(r);
+      r_log(LOG_ICE,LOG_INFO,"ICE(%s): failed to create TCP candidates with error %d",ctx->label,r);
 
     /* count the candidates that will be initialized */
     cand=TAILQ_FIRST(&component->candidates);
     if(!cand){
-      r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): couldn't create any valid candidates",ctx->label);
+      r_log(LOG_ICE,LOG_ERR,"ICE(%s): couldn't create any valid candidates",ctx->label);
       ABORT(R_NOT_FOUND);
     }
 
@@ -483,8 +667,9 @@ int nr_ice_component_maybe_prune_candidate(nr_ice_ctx *ctx, nr_ice_component *co
          !nr_transport_addr_cmp(&c1->addr,&c2->addr,NR_TRANSPORT_ADDR_CMP_MODE_ALL)){
 
         if((c1->type == c2->type) ||
-           (c1->type==HOST && c2->type == SERVER_REFLEXIVE) ||
-           (c2->type==HOST && c1->type == SERVER_REFLEXIVE)){
+           (!(ctx->flags & NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS) &&
+            ((c1->type==HOST && c2->type == SERVER_REFLEXIVE) ||
+             (c2->type==HOST && c1->type == SERVER_REFLEXIVE)))){
 
           /*
              These are redundant. Remove the lower pri one, or if pairing has
@@ -533,6 +718,7 @@ static int nr_ice_component_process_incoming_check(nr_ice_component *comp, nr_tr
     int remote_addr_matched;
     nr_ice_cand_pair *found_invalid=0;
     int r=0,_status;
+    int new_pcand_created=0;
 
     r_log(LOG_ICE,LOG_DEBUG,"ICE-PEER(%s)/STREAM(%s)/COMP(%d): received request from %s",comp->stream->pctx->label,comp->stream->label,comp->component_id,req->src_addr.as_string);
 
@@ -564,7 +750,7 @@ static int nr_ice_component_process_incoming_check(nr_ice_component *comp, nr_tr
         /* OK, there is a conflict. Who's right? */
         r_log(LOG_ICE,LOG_INFO,"ICE-PEER(%s): role conflict, both controlled",comp->stream->pctx->label);
 
-        if(attr->u.ice_controlling < comp->stream->pctx->tiebreaker){
+        if(attr->u.ice_controlled < comp->stream->pctx->tiebreaker){
           /* Update the peer ctx. This will propagate to all candidate pairs
              in the context. */
           nr_ice_peer_ctx_switch_controlling_role(comp->stream->pctx);
@@ -637,17 +823,32 @@ static int nr_ice_component_process_incoming_check(nr_ice_component *comp, nr_tr
           ABORT(R_NOT_FOUND);
         }
 
-        /* We now need to make a peer reflexive */
-        if(r=nr_ice_peer_peer_rflx_candidate_create(comp->stream->pctx->ctx,"prflx",comp,&req->src_addr,&pcand)) {
-          *error=(r==R_NO_MEMORY)?500:400;
-          ABORT(r);
+        /* Try to find matching peer active tcp candidate */
+        pcand=TAILQ_FIRST(&comp->candidates);
+        while(pcand){
+          if(pcand->tcp_type == TCP_TYPE_ACTIVE) {
+            if(!nr_transport_addr_cmp(&pcand->addr,&req->src_addr,NR_TRANSPORT_ADDR_CMP_MODE_ALL))
+              break;
+          }
+
+          pcand=TAILQ_NEXT(pcand,entry_comp);
         }
-        if(!nr_stun_message_has_attribute(sreq,NR_STUN_ATTR_PRIORITY,&attr)){
-          r_log(LOG_ICE,LOG_WARNING,"ICE-PEER(%s): Rejecting stun request without priority",comp->stream->pctx->label);
-          *error=487;
-          ABORT(R_BAD_DATA);
+
+        if (!pcand){
+          /* We now need to make a peer reflexive */
+          if(r=nr_ice_peer_peer_rflx_candidate_create(comp->stream->pctx->ctx,"prflx",comp,&req->src_addr,&pcand)) {
+            *error=(r==R_NO_MEMORY)?500:400;
+            ABORT(r);
+          }
+          new_pcand_created=1;
+          if(!nr_stun_message_has_attribute(sreq,NR_STUN_ATTR_PRIORITY,&attr)){
+            r_log(LOG_ICE,LOG_WARNING,"ICE-PEER(%s): Rejecting stun request without priority",comp->stream->pctx->label);
+            *error=487;
+            ABORT(R_BAD_DATA);
+          }
+          pcand->priority=attr->u.priority;
         }
-        pcand->priority=attr->u.priority;
+
         pcand->state=NR_ICE_CAND_PEER_CANDIDATE_PAIRED;
 
         if(r=nr_ice_candidate_pair_create(comp->stream->pctx,cand,pcand,
@@ -664,8 +865,10 @@ static int nr_ice_component_process_incoming_check(nr_ice_component *comp, nr_tr
         }
 
         /* Do this last, since any call to ABORT will destroy pcand */
-        TAILQ_INSERT_TAIL(&comp->candidates,pcand,entry_comp);
-        pcand=0;
+        if (new_pcand_created){
+          TAILQ_INSERT_TAIL(&comp->candidates,pcand,entry_comp);
+          pcand=0;
+        }
       }
       else{
         /* OK, there was a pair, it's just invalid: According to Section
@@ -715,7 +918,8 @@ static int nr_ice_component_process_incoming_check(nr_ice_component *comp, nr_tr
     _status=0;
   abort:
     if(_status){
-      nr_ice_candidate_destroy(&pcand);
+      if (new_pcand_created)
+        nr_ice_candidate_destroy(&pcand);
       assert(*error != 0);
       if(r!=R_NO_MEMORY) assert(*error != 500);
     }
@@ -798,8 +1002,20 @@ int nr_ice_component_pair_candidate(nr_ice_peer_ctx *pctx, nr_ice_component *pco
         break;
     }
 
-    pcand=TAILQ_FIRST(&pcomp->candidates);
-    while(pcand){
+    TAILQ_FOREACH(pcand, &pcomp->candidates, entry_comp){
+      if (lcand->tcp_type && !pcand->tcp_type)
+        continue;
+      if (!lcand->tcp_type && pcand->tcp_type)
+        continue;
+      if (lcand->tcp_type == TCP_TYPE_ACTIVE && pcand->tcp_type != TCP_TYPE_PASSIVE)
+        continue;
+      if (lcand->tcp_type == TCP_TYPE_SO && pcand->tcp_type != TCP_TYPE_SO)
+        continue;
+      if (lcand->tcp_type == TCP_TYPE_PASSIVE)
+        continue;
+      if(pcand->addr.ip_version != lcand->addr.ip_version)
+        continue;
+
       /*
         Two modes, depending on |pair_all_remote|
 
@@ -825,8 +1041,6 @@ int nr_ice_component_pair_candidate(nr_ice_peer_ctx *pctx, nr_ice_component *pco
         if(r=nr_ice_component_insert_pair(pcomp, pair))
           ABORT(r);
       }
-
-      pcand=TAILQ_NEXT(pcand,entry_comp);
     }
 
    done:
@@ -1135,5 +1349,46 @@ int nr_ice_component_insert_pair(nr_ice_component *pcomp, nr_ice_cand_pair *pair
     _status=0;
   abort:
     return(_status);
+  }
+
+int nr_ice_component_get_default_candidate(nr_ice_component *comp, nr_ice_candidate **candp, int ip_version)
+  {
+    int _status;
+    nr_ice_candidate *cand;
+    nr_ice_candidate *best_cand = NULL;
+
+    /* We have the component. Now find the "best" candidate, making
+       use of the fact that more "reliable" candidate types have
+       higher numbers. So, we sort by type and then priority within
+       type
+    */
+    cand=TAILQ_FIRST(&comp->candidates);
+    while(cand){
+      if (!nr_ice_ctx_hide_candidate(comp->ctx, cand) &&
+          cand->addr.ip_version == ip_version) {
+        if (!best_cand) {
+          best_cand = cand;
+        }
+        else if (best_cand->type < cand->type) {
+          best_cand = cand;
+        } else if (best_cand->type == cand->type &&
+                   best_cand->priority < cand->priority) {
+          best_cand = cand;
+        }
+      }
+
+      cand=TAILQ_NEXT(cand,entry_comp);
+    }
+
+    /* No candidates */
+    if (!best_cand)
+      ABORT(R_NOT_FOUND);
+
+    *candp = best_cand;
+
+    _status=0;
+  abort:
+    return(_status);
+
   }
 

@@ -26,6 +26,8 @@
 
 #include "jscntxtinlines.h"
 
+#include "vm/ObjectGroup-inl.h"
+
 namespace js {
 
 /////////////////////////////////////////////////////////////////////
@@ -353,25 +355,8 @@ TrackPropertyTypes(ExclusiveContext* cx, JSObject* obj, jsid id)
     return true;
 }
 
-inline void
-EnsureTrackPropertyTypes(JSContext* cx, JSObject* obj, jsid id)
-{
-    id = IdToTypeId(id);
-
-    if (obj->isSingleton()) {
-        AutoEnterAnalysis enter(cx);
-        if (obj->hasLazyGroup() && !obj->getGroup(cx)) {
-            CrashAtUnhandlableOOM("Could not allocate ObjectGroup in EnsureTrackPropertyTypes");
-            return;
-        }
-        if (!obj->group()->unknownProperties() && !obj->group()->getProperty(cx, obj, id)) {
-            MOZ_ASSERT(obj->group()->unknownProperties());
-            return;
-        }
-    }
-
-    MOZ_ASSERT(obj->group()->unknownProperties() || TrackPropertyTypes(cx, obj, id));
-}
+void
+EnsureTrackPropertyTypes(JSContext* cx, JSObject* obj, jsid id);
 
 inline bool
 CanHaveEmptyPropertyTypesForOwnProperty(JSObject* obj)
@@ -445,7 +430,7 @@ MarkObjectGroupFlags(ExclusiveContext* cx, JSObject* obj, ObjectGroupFlags flags
 }
 
 inline void
-MarkObjectGroupUnknownProperties(JSContext* cx, ObjectGroup* obj)
+MarkObjectGroupUnknownProperties(ExclusiveContext* cx, ObjectGroup* obj)
 {
     if (!obj->unknownProperties())
         obj->markUnknown(cx);
@@ -465,18 +450,6 @@ MarkTypePropertyNonWritable(ExclusiveContext* cx, JSObject* obj, jsid id)
     id = IdToTypeId(id);
     if (TrackPropertyTypes(cx, obj, id))
         obj->group()->markPropertyNonWritable(cx, obj, id);
-}
-
-inline bool
-IsTypePropertyIdMarkedNonData(JSObject* obj, jsid id)
-{
-    return obj->group()->isPropertyNonData(id);
-}
-
-inline bool
-IsTypePropertyIdMarkedNonWritable(JSObject* obj, jsid id)
-{
-    return obj->group()->isPropertyNonWritable(id);
 }
 
 /* Mark a state change on a particular object. */
@@ -1093,18 +1066,6 @@ ObjectGroup::getProperty(unsigned i)
     }
     return propertySet[i];
 }
-
-template <>
-struct GCMethods<const TypeSet::Type>
-{
-    static TypeSet::Type initial() { return TypeSet::UnknownType(); }
-};
-
-template <>
-struct GCMethods<TypeSet::Type>
-{
-    static TypeSet::Type initial() { return TypeSet::UnknownType(); }
-};
 
 } // namespace js
 

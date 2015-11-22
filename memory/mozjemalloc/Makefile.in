@@ -3,22 +3,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-include $(topsrcdir)/config/rules.mk
-
-ifndef MOZ_JEMALLOC3
+ifndef MOZ_JEMALLOC4
 # Force optimize mozjemalloc on --disable-optimize builds.
 # This works around the issue that the Android NDK's definition of ffs is
 # broken when compiling without optimization, while avoiding to add yet another
 # configure test.
 MOZ_OPTIMIZE = 1
-
-ifeq ($(OS_ARCH),SunOS)
-ifndef GNU_CC
-MODULE_OPTIMIZE_FLAGS = -xO5
-endif
-endif
 endif
 
-ifeq ($(HOST_OS_ARCH),WINNT)
-#jemalloc.$(OBJ_SUFFIX): CFLAGS := -Od
-endif

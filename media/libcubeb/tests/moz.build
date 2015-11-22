@@ -19,8 +19,6 @@ LOCAL_INCLUDES += [
     '../include'
 ]
 
-FAIL_ON_WARNINGS = True
-
 if CONFIG['OS_ARCH'] == 'WINNT':
     # On windows, the WASAPI backend needs the resampler we have in
     # /media/libspeex_resampler, so we can't get away with just linking cubeb's
@@ -44,10 +42,15 @@ else:
             'speex',
         ]
 
-if CONFIG['OS_TARGET'] == 'Darwin':
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     OS_LIBS += [
         '-framework AudioUnit',
         '-framework CoreAudio',
+    ]
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'uikit':
+    OS_LIBS += [
+      '-framework CoreFoundation',
+      '-framework AudioToolbox',
     ]
 elif CONFIG['OS_TARGET'] == 'OpenBSD':
     OS_LIBS += [

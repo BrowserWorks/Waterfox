@@ -15,8 +15,7 @@ var gContentPane = {
     this._rebuildFonts();
     var menulist = document.getElementById("defaultFont");
     if (menulist.selectedIndex == -1) {
-      menulist.insertItemAt(0, "", "", "");
-      menulist.selectedIndex = 0;
+      menulist.value = FontBuilder.readFontSelection(menulist);
     }
 
     // Show translation preferences if we may:
@@ -24,6 +23,11 @@ var gContentPane = {
     if (Services.prefs.getBoolPref(prefName)) {
       let row = document.getElementById("translationBox");
       row.removeAttribute("hidden");
+      // Showing attribution only for Bing Translator.
+      Components.utils.import("resource:///modules/translation/Translation.jsm");
+      if (Translation.translationEngine == "bing") {
+        document.getElementById("bingAttribution").removeAttribute("hidden");
+      }
     }
 
     setEventListener("font.language.group", "change",

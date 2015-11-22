@@ -17,8 +17,9 @@
 #define GET_NATIVE_WINDOW(aWidget) (EGLNativeWindowType)(aWidget->GetNativeData(NS_NATIVE_SHAREABLE_WINDOW))
 #elif defined(MOZ_WIDGET_GONK)
 #define GET_NATIVE_WINDOW(aWidget) ((EGLNativeWindowType)aWidget->GetNativeData(NS_NATIVE_WINDOW))
-#include "HwcComposer2D.h"
 #include "libdisplay/GonkDisplay.h"
+#include "nsWindow.h"
+#include "nsScreenManagerGonk.h"
 #endif
 
 #if defined(ANDROID)
@@ -128,7 +129,7 @@ namespace gl {
 } while (0)
 
 static bool
-CreateConfig(EGLConfig* aConfig);
+CreateConfig(EGLConfig* aConfig, nsIWidget* aWidget);
 
 // append three zeros at the end of attribs list to work around
 // EGL implementation bugs that iterate until they find 0, instead of
@@ -483,7 +484,7 @@ GLContextEGL::CreateSurfaceForWindow(nsIWidget* aWidget)
     }
 
     EGLConfig config;
-    if (!CreateConfig(&config)) {
+    if (!CreateConfig(&config, aWidget)) {
         MOZ_CRASH("Failed to create EGLConfig!\n");
         return nullptr;
     }
@@ -549,7 +550,7 @@ GLContextEGL::CreateGLContext(const SurfaceCaps& caps,
 EGLSurface
 GLContextEGL::CreatePBufferSurfaceTryingPowerOfTwo(EGLConfig config,
                                                    EGLenum bindToTextureFormat,
-                                                   gfxIntSize& pbsize)
+                                                   mozilla::gfx::IntSize& pbsize)
 {
     nsTArray<EGLint> pbattrs(16);
     EGLSurface surface = nullptr;
@@ -637,7 +638,7 @@ static const EGLint kEGLConfigAttribsRGBA32[] = {
 };
 
 static bool
-CreateConfig(EGLConfig* aConfig, int32_t depth)
+CreateConfig(EGLConfig* aConfig, int32_t depth, nsIWidget* aWidget)
 {
     EGLConfig configs[64];
     const EGLint* attribs;
@@ -673,12 +674,13 @@ CreateConfig(EGLConfig* aConfig, int32_t depth)
     //  HAL_PIXEL_FORMAT_RGBX_8888
     //  HAL_PIXEL_FORMAT_BGRA_8888
     //  HAL_PIXEL_FORMAT_RGB_565
+    nsWindow* window = static_cast<nsWindow*>(aWidget);
     for (int j = 0; j < ncfg; ++j) {
         EGLConfig config = configs[j];
         EGLint format;
         if (sEGLLibrary.fGetConfigAttrib(EGL_DISPLAY(), config,
                                          LOCAL_EGL_NATIVE_VISUAL_ID, &format) &&
-            format == GetGonkDisplay()->surfaceformat)
+            format == window->GetScreen()->GetSurfaceFormat())
         {
             *aConfig = config;
             return true;
@@ -714,20 +716,20 @@ CreateConfig(EGLConfig* aConfig, int32_t depth)
 // NB: It's entirely legal for the returned EGLConfig to be valid yet
 // have the value null.
 static bool
-CreateConfig(EGLConfig* aConfig)
+CreateConfig(EGLConfig* aConfig, nsIWidget* aWidget)
 {
     int32_t depth = gfxPlatform::GetPlatform()->GetScreenDepth();
-    if (!CreateConfig(aConfig, depth)) {
+    if (!CreateConfig(aConfig, depth, aWidget)) {
 #ifdef MOZ_WIDGET_ANDROID
         // Bug 736005
         // Android doesn't always support 16 bit so also try 24 bit
         if (depth == 16) {
-            return CreateConfig(aConfig, 24);
+            return CreateConfig(aConfig, 24, aWidget);
         }
         // Bug 970096
         // Some devices that have 24 bit screens only support 16 bit OpenGL?
         if (depth == 24) {
-            return CreateConfig(aConfig, 16);
+            return CreateConfig(aConfig, 16, aWidget);
         }
 #endif
         return false;
@@ -772,7 +774,7 @@ GLContextProviderEGL::CreateForWindow(nsIWidget *aWidget)
     bool doubleBuffered = true;
 
     EGLConfig config;
-    if (!CreateConfig(&config)) {
+    if (!CreateConfig(&config, aWidget)) {
         MOZ_CRASH("Failed to create EGLConfig!\n");
         return nullptr;
     }
@@ -811,7 +813,7 @@ GLContextProviderEGL::CreateEGLSurface(void* aWindow)
     }
 
     EGLConfig config;
-    if (!CreateConfig(&config)) {
+    if (!CreateConfig(&config, static_cast<nsIWidget*>(aWindow))) {
         MOZ_CRASH("Failed to create EGLConfig!\n");
     }
 
@@ -838,7 +840,7 @@ GLContextProviderEGL::DestroyEGLSurface(EGLSurface surface)
 #endif // defined(ANDROID)
 
 already_AddRefed<GLContextEGL>
-GLContextEGL::CreateEGLPBufferOffscreenContext(const gfxIntSize& size)
+GLContextEGL::CreateEGLPBufferOffscreenContext(const mozilla::gfx::IntSize& size)
 {
     EGLConfig config;
     EGLSurface surface;
@@ -861,7 +863,7 @@ GLContextEGL::CreateEGLPBufferOffscreenContext(const gfxIntSize& size)
     if (GLContext::ShouldSpew())
         sEGLLibrary.DumpEGLConfig(config);
 
-    gfxIntSize pbSize(size);
+    mozilla::gfx::IntSize pbSize(size);
     surface = GLContextEGL::CreatePBufferSurfaceTryingPowerOfTwo(config,
                                                                  LOCAL_EGL_NONE,
                                                                  pbSize);
@@ -891,7 +893,7 @@ GLContextEGL::CreateEGLPBufferOffscreenContext(const gfxIntSize& size)
 }
 
 already_AddRefed<GLContextEGL>
-GLContextEGL::CreateEGLPixmapOffscreenContext(const gfxIntSize& size)
+GLContextEGL::CreateEGLPixmapOffscreenContext(const mozilla::gfx::IntSize& size)
 {
     gfxASurface *thebesSurface = nullptr;
     EGLNativePixmapType pixmap = 0;
@@ -931,13 +933,13 @@ GLContextEGL::CreateEGLPixmapOffscreenContext(const gfxIntSize& size)
 }
 
 already_AddRefed<GLContext>
-GLContextProviderEGL::CreateHeadless(bool)
+GLContextProviderEGL::CreateHeadless(CreateContextFlags flags)
 {
-    if (!sEGLLibrary.EnsureInitialized()) {
+    if (!sEGLLibrary.EnsureInitialized(bool(flags & CreateContextFlags::FORCE_ENABLE_HARDWARE))) {
         return nullptr;
     }
 
-    gfxIntSize dummySize = gfxIntSize(16, 16);
+    mozilla::gfx::IntSize dummySize = mozilla::gfx::IntSize(16, 16);
     nsRefPtr<GLContext> glContext;
     glContext = GLContextEGL::CreateEGLPBufferOffscreenContext(dummySize);
     if (!glContext)
@@ -949,11 +951,11 @@ GLContextProviderEGL::CreateHeadless(bool)
 // Under EGL, on Android, pbuffers are supported fine, though
 // often without the ability to texture from them directly.
 already_AddRefed<GLContext>
-GLContextProviderEGL::CreateOffscreen(const gfxIntSize& size,
+GLContextProviderEGL::CreateOffscreen(const mozilla::gfx::IntSize& size,
                                       const SurfaceCaps& caps,
-                                      bool requireCompatProfile)
+                                      CreateContextFlags flags)
 {
-    nsRefPtr<GLContext> glContext = CreateHeadless(requireCompatProfile);
+    nsRefPtr<GLContext> glContext = CreateHeadless(flags);
     if (!glContext)
         return nullptr;
 

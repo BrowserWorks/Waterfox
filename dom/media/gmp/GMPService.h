@@ -15,6 +15,7 @@
 #include "nsString.h"
 #include "nsCOMPtr.h"
 #include "nsIThread.h"
+#include "nsThreadUtils.h"
 #include "nsPIDOMWindow.h"
 #include "nsIDocument.h"
 #include "nsIWeakReference.h"

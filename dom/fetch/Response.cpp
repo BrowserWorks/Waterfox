@@ -159,6 +159,25 @@ Response::Constructor(const GlobalObject& aGlobal,
   nsRefPtr<InternalResponse> internalResponse =
     new InternalResponse(aInit.mStatus, statusText);
 
+  // Grab a valid channel info from the global so this response is 'valid' for
+  // interception.
+  if (NS_IsMainThread()) {
+    ChannelInfo info;
+    nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(global);
+    if (window) {
+      nsIDocument* doc = window->GetExtantDoc();
+      MOZ_ASSERT(doc);
+      info.InitFromDocument(doc);
+    } else {
+      info.InitFromChromeGlobal(global);
+    }
+    internalResponse->InitChannelInfo(info);
+  } else {
+    workers::WorkerPrivate* worker = workers::GetCurrentThreadWorkerPrivate();
+    MOZ_ASSERT(worker);
+    internalResponse->InitChannelInfo(worker->GetChannelInfo());
+  }
+
   nsRefPtr<Response> r = new Response(global, internalResponse);
 
   if (aInit.mHeaders.WasPassed()) {
@@ -234,5 +253,6 @@ Response::Headers_()
 
   return mHeaders;
 }
+
 } // namespace dom
 } // namespace mozilla

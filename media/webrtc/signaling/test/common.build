@@ -25,6 +25,7 @@ LOCAL_INCLUDES += [
     '/media/mtransport/third_party/nrappkit/src/event',
     '/media/mtransport/third_party/nrappkit/src/log',
     '/media/mtransport/third_party/nrappkit/src/plugin',
+    '/media/mtransport/third_party/nrappkit/src/port/generic/include',
     '/media/mtransport/third_party/nrappkit/src/registry',
     '/media/mtransport/third_party/nrappkit/src/share',
     '/media/mtransport/third_party/nrappkit/src/stats',
@@ -74,7 +75,6 @@ if CONFIG['OS_TARGET'] == 'Darwin':
 if CONFIG['OS_TARGET'] in ('DragonFly', 'FreeBSD', 'NetBSD', 'OpenBSD'):
     LOCAL_INCLUDES += [
         '/media/mtransport/third_party/nrappkit/src/port/darwin/include',
-        '/media/mtransport/third_party/nrappkit/src/port/generic/include',
     ]
 
 USE_LIBS += [
@@ -123,6 +123,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk2':
     ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk3':
+    OS_LIBS += CONFIG['XLIBS']
     OS_LIBS += CONFIG['MOZ_GTK3_LIBS']
     USE_LIBS += [
         'freetype',
@@ -139,5 +140,3 @@ if CONFIG['OS_TARGET'] in ('Linux', 'DragonFly', 'FreeBSD', 'NetBSD',
 
 if CONFIG['OS_TARGET'] == 'Darwin':
     OS_LIBS += CONFIG['TK_LIBS']
-
-FAIL_ON_WARNINGS = True

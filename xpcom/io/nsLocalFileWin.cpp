@@ -1179,8 +1179,8 @@ NS_IMETHODIMP
 nsLocalFile::Clone(nsIFile** aFile)
 {
   // Just copy-construct ourselves
-  *aFile = new nsLocalFile(*this);
-  NS_ADDREF(*aFile);
+  nsRefPtr<nsLocalFile> file = new nsLocalFile(*this);
+  file.forget(aFile);
 
   return NS_OK;
 }
@@ -1412,7 +1412,7 @@ nsLocalFile::AppendInternal(const nsAFlatString& aNode,
 
   // check the relative path for validity
   if (aNode.First() == L'\\' ||               // can't start with an '\'
-      aNode.FindChar(L'/') != kNotFound ||    // can't contain /
+      aNode.Contains(L'/') ||                 // can't contain /
       aNode.EqualsASCII("..")) {              // can't be ..
     return NS_ERROR_FILE_UNRECOGNIZED_PATH;
   }
@@ -1441,7 +1441,7 @@ nsLocalFile::AppendInternal(const nsAFlatString& aNode,
     }
   }
   // single components can't contain '\'
-  else if (aNode.FindChar(L'\\') != kNotFound) {
+  else if (aNode.Contains(L'\\')) {
     return NS_ERROR_FILE_UNRECOGNIZED_PATH;
   }
 
@@ -2266,6 +2266,18 @@ nsLocalFile::RenameTo(nsIFile* aNewParentDir, const nsAString& aNewName)
   }
   // Move single file, or move a directory
   return CopySingleFile(this, targetParentDir, aNewName, options);
+}
+
+NS_IMETHODIMP
+nsLocalFile::RenameToNative(nsIFile* aNewParentDir, const nsACString& aNewName)
+{
+  nsAutoString tmp;
+  nsresult rv = NS_CopyNativeToUnicode(aNewName, tmp);
+  if (NS_SUCCEEDED(rv)) {
+    return RenameTo(aNewParentDir, tmp);
+  }
+
+  return rv;
 }
 
 NS_IMETHODIMP
@@ -3180,7 +3192,6 @@ nsLocalFile::GetTarget(nsAString& aResult)
 }
 
 
-/* attribute bool followLinks; */
 NS_IMETHODIMP
 nsLocalFile::GetFollowLinks(bool* aFollowLinks)
 {
@@ -3203,14 +3214,12 @@ nsLocalFile::GetDirectoryEntries(nsISimpleEnumerator** aEntries)
 
   *aEntries = nullptr;
   if (mWorkingPath.EqualsLiteral("\\\\.")) {
-    nsDriveEnumerator* drives = new nsDriveEnumerator;
-    NS_ADDREF(drives);
+    nsRefPtr<nsDriveEnumerator> drives = new nsDriveEnumerator;
     rv = drives->Init();
     if (NS_FAILED(rv)) {
-      NS_RELEASE(drives);
       return rv;
     }
-    *aEntries = drives;
+    drives.forget(aEntries);
     return NS_OK;
   }
 
@@ -3242,7 +3251,6 @@ nsLocalFile::SetPersistentDescriptor(const nsACString& aPersistentDescriptor)
   }
 }
 
-/* attrib unsigned long fileAttributesWin; */
 NS_IMETHODIMP
 nsLocalFile::GetFileAttributesWin(uint32_t* aAttribs)
 {
@@ -3350,20 +3358,18 @@ nsLocalFile::Launch()
 nsresult
 NS_NewLocalFile(const nsAString& aPath, bool aFollowLinks, nsIFile** aResult)
 {
-  nsLocalFile* file = new nsLocalFile();
-  NS_ADDREF(file);
+  nsRefPtr<nsLocalFile> file = new nsLocalFile();
 
   file->SetFollowLinks(aFollowLinks);
 
   if (!aPath.IsEmpty()) {
     nsresult rv = file->InitWithPath(aPath);
     if (NS_FAILED(rv)) {
-      NS_RELEASE(file);
       return rv;
     }
   }
 
-  *aResult = file;
+  file.forget(aResult);
   return NS_OK;
 }
 

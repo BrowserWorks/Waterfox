@@ -81,7 +81,10 @@ GetPasswordString(void *arg, char *prompt)
     fflush(stdout);
   }
 
-  QUIET_FGETS (phrase, sizeof(phrase), input);
+  if (!QUIET_FGETS(phrase, sizeof(phrase), input)) {
+    fprintf(stderr, "QUIET_FGETS failed\n");
+    return NULL;
+  }
 
   if (isInputTerminal) {
     fprintf(stdout, "\n");
@@ -219,7 +222,11 @@ SECU_GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
   sprintf(prompt, 
           "Press Enter, then enter PIN for \"%s\" on external device.\n",
     PK11_GetTokenName(slot));
-  (void) GetPasswordString(NULL, prompt);
+  pw = GetPasswordString(NULL, prompt);
+  if (pw) {
+    memset(pw, 0, PORT_Strlen(pw));
+    PORT_Free(pw);
+  }
       /* Fall Through */
     case PW_PLAINTEXT:
   return PL_strdup(pwdata->data);

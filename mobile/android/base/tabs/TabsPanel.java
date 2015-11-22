@@ -5,18 +5,22 @@
 
 package org.mozilla.gecko.tabs;
 
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoApplication;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.RestrictedProfiles;
+import org.mozilla.gecko.Tab;
+import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.animation.PropertyAnimator;
-import org.mozilla.gecko.Tab;
-import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.animation.ViewHelper;
 import org.mozilla.gecko.lwt.LightweightTheme;
 import org.mozilla.gecko.lwt.LightweightThemeDrawable;
+import org.mozilla.gecko.restrictions.Restriction;
+import org.mozilla.gecko.util.ColorUtils;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.widget.GeckoPopupMenu;
 import org.mozilla.gecko.widget.IconTabWidget;
@@ -36,6 +40,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import org.mozilla.gecko.widget.themed.ThemedImageButton;
 
 public class TabsPanel extends LinearLayout
                        implements GeckoPopupMenu.OnMenuItemClickListener,
@@ -43,36 +48,37 @@ public class TabsPanel extends LinearLayout
                                   IconTabWidget.OnTabChangedListener {
     private static final String LOGTAG = "Gecko" + TabsPanel.class.getSimpleName();
 
-    public static enum Panel {
+    public enum Panel {
         NORMAL_TABS,
         PRIVATE_TABS,
     }
 
-    public static interface PanelView {
-        public void setTabsPanel(TabsPanel panel);
-        public void show();
-        public void hide();
-        public boolean shouldExpand();
+    public interface PanelView {
+        void setTabsPanel(TabsPanel panel);
+        void show();
+        void hide();
+        boolean shouldExpand();
     }
 
-    public static interface CloseAllPanelView extends PanelView {
-        public void closeAll();
+    public interface CloseAllPanelView extends PanelView {
+        void closeAll();
     }
 
-    public static interface TabsLayout extends CloseAllPanelView {
-        public void setEmptyView(View view);
+    public interface TabsLayout extends CloseAllPanelView {
+        void setEmptyView(View view);
     }
+
+    public interface TabsLayoutChangeListener {
+        void onTabsLayoutChange(int width, int height);
+    }
+
 
     public static View createTabsLayout(final Context context, final AttributeSet attrs) {
-        if (HardwareUtils.isTablet()) {
+        if (HardwareUtils.isTablet() || AppConstants.NIGHTLY_BUILD) {
             return new TabsGridLayout(context, attrs);
         } else {
             return new TabsListLayout(context, attrs);
         }
-    }
-
-    public static interface TabsLayoutChangeListener {
-        public void onTabsLayoutChange(int width, int height);
     }
 
     private final Context mContext;
@@ -86,7 +92,7 @@ public class TabsPanel extends LinearLayout
     private TabsLayoutChangeListener mLayoutChangeListener;
 
     private IconTabWidget mTabWidget;
-    private static ImageButton mMenuButton;
+    private static View mMenuButton;
     private static ImageButton mAddTab;
     private ImageButton mNavBackButton;
 
@@ -137,11 +143,17 @@ public class TabsPanel extends LinearLayout
         mTabWidget = (IconTabWidget) findViewById(R.id.tab_widget);
 
         mTabWidget.addTab(R.drawable.tabs_normal, R.string.tabs_normal);
-        mTabWidget.addTab(R.drawable.tabs_private, R.string.tabs_private);
+        final ThemedImageButton privateTabsPanel =
+                (ThemedImageButton) mTabWidget.addTab(R.drawable.tabs_private, R.string.tabs_private);
+        privateTabsPanel.setPrivateMode(true);
+
+        if (!RestrictedProfiles.isAllowed(mContext, Restriction.DISALLOW_PRIVATE_BROWSING)) {
+            mTabWidget.setVisibility(View.GONE);
+        }
 
         mTabWidget.setTabSelectionListener(this);
 
-        mMenuButton = (ImageButton) findViewById(R.id.menu);
+        mMenuButton = findViewById(R.id.menu);
         mMenuButton.setOnClickListener(new Button.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -149,7 +161,7 @@ public class TabsPanel extends LinearLayout
             }
         });
 
-        if (HardwareUtils.isTablet()) {
+        if (AppConstants.NIGHTLY_BUILD || HardwareUtils.isTablet()) {
             ViewStub backButtonStub = (ViewStub) findViewById(R.id.nav_back_stub);
             mNavBackButton = (ImageButton) backButtonStub.inflate( );
             mNavBackButton.setOnClickListener(new Button.OnClickListener() {
@@ -166,7 +178,8 @@ public class TabsPanel extends LinearLayout
 
         // Each panel has a "+" shortcut button, so don't show it for that panel.
         menu.findItem(R.id.new_tab).setVisible(mCurrentPanel != Panel.NORMAL_TABS);
-        menu.findItem(R.id.new_private_tab).setVisible(mCurrentPanel != Panel.PRIVATE_TABS);
+        menu.findItem(R.id.new_private_tab).setVisible(mCurrentPanel != Panel.PRIVATE_TABS
+                && RestrictedProfiles.isAllowed(mContext, Restriction.DISALLOW_PRIVATE_BROWSING));
 
         // Only show "Clear * tabs" for current panel.
         menu.findItem(R.id.close_all_tabs).setVisible(mCurrentPanel == Panel.NORMAL_TABS);
@@ -176,11 +189,11 @@ public class TabsPanel extends LinearLayout
     }
 
     private void addTab() {
+        Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.ACTIONBAR, "new_tab");
+
         if (mCurrentPanel == Panel.NORMAL_TABS) {
-            Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.ACTIONBAR, "new_tab");
             mActivity.addTab();
         } else {
-            Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.ACTIONBAR, "new_private_tab");
             mActivity.addPrivateTab();
         }
 
@@ -202,8 +215,7 @@ public class TabsPanel extends LinearLayout
 
         if (itemId == R.id.close_all_tabs) {
             if (mCurrentPanel == Panel.NORMAL_TABS) {
-                final String extras = getResources().getResourceEntryName(itemId);
-                Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.MENU, extras);
+                Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.MENU, "close_all_tabs");
 
                 // Disable the menu button so that the menu won't interfere with the tab close animation.
                 mMenuButton.setEnabled(false);
@@ -216,8 +228,8 @@ public class TabsPanel extends LinearLayout
 
         if (itemId == R.id.close_private_tabs) {
             if (mCurrentPanel == Panel.PRIVATE_TABS) {
-                final String extras = getResources().getResourceEntryName(itemId);
-                Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.MENU, extras);
+                // Mask private browsing
+                Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.MENU, "close_all_tabs");
 
                 ((CloseAllPanelView) mPanelPrivate).closeAll();
             } else {
@@ -237,15 +249,24 @@ public class TabsPanel extends LinearLayout
         Resources resources = tabsContainer.getContext().getResources();
 
         int screenHeight = resources.getDisplayMetrics().heightPixels;
+
         int actionBarHeight = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height);
 
-        if (HardwareUtils.isTablet()) {
+        if (HardwareUtils.isTablet() || AppConstants.NIGHTLY_BUILD) {
             return screenHeight - actionBarHeight;
         }
 
         PanelView panelView = tabsContainer.getCurrentPanelView();
         if (panelView != null && !panelView.shouldExpand()) {
-            return resources.getDimensionPixelSize(R.dimen.tabs_layout_horizontal_height);
+
+            // This allows us to accommodate varying height tab previews across different devices.
+            // We should be able to remove once we remove the list view and remove the chrome again
+            return resources.getDimensionPixelSize(R.dimen.tab_thumbnail_height)
+                 + resources.getDimensionPixelSize(R.dimen.tab_title_height)
+                 + 2 * (resources.getDimensionPixelSize(R.dimen.tab_highlight_stroke_width)
+                      + resources.getDimensionPixelSize(R.dimen.tab_vertical_padding)
+                      + resources.getDimensionPixelSize(R.dimen.tab_thumbnail_padding)
+                      + resources.getDimensionPixelSize(R.dimen.tab_thumbnail_margin));
         }
 
         Rect windowRect = new Rect();
@@ -256,7 +277,8 @@ public class TabsPanel extends LinearLayout
         // The tabs panel shouldn't take less than 50% of the screen height and can take
         // up to 80% of the window height.
         return (int) Math.max(screenHeight * 0.5f,
-                              Math.min(windowHeight - 2.5f * actionBarHeight, windowHeight * 0.8f) - actionBarHeight);
+                Math.min(windowHeight - 2.5f * actionBarHeight, windowHeight * 0.8f) - actionBarHeight);
+
     }
 
     @Override
@@ -274,7 +296,7 @@ public class TabsPanel extends LinearLayout
     @Override
     @SuppressWarnings("deprecation") // setBackgroundDrawable deprecated by API level 16
     public void onLightweightThemeChanged() {
-        final int background = getResources().getColor(R.color.text_and_tabs_tray_grey);
+        final int background = ColorUtils.getColor(getContext(), R.color.text_and_tabs_tray_grey);
         final LightweightThemeDrawable drawable = mTheme.getColorDrawable(this, background, true);
         if (drawable == null)
             return;
@@ -285,7 +307,7 @@ public class TabsPanel extends LinearLayout
 
     @Override
     public void onLightweightThemeReset() {
-        setBackgroundColor(getContext().getResources().getColor(R.color.text_and_tabs_tray_grey));
+        setBackgroundColor(ColorUtils.getColor(getContext(), R.color.text_and_tabs_tray_grey));
     }
 
     @Override
@@ -295,21 +317,24 @@ public class TabsPanel extends LinearLayout
     }
 
     static class TabsLayoutContainer extends FrameLayout {
+
         public TabsLayoutContainer(Context context, AttributeSet attrs) {
             super(context, attrs);
         }
 
         public PanelView getCurrentPanelView() {
             final int childCount = getChildCount();
+
             for (int i = 0; i < childCount; i++) {
                 View child = getChildAt(i);
-                if (!(child instanceof PanelView))
+                if (!(child instanceof PanelView)) {
                     continue;
+                }
 
-                if (child.getVisibility() == View.VISIBLE)
+                if (child.getVisibility() == View.VISIBLE) {
                     return (PanelView) child;
+                }
             }
-
             return null;
         }
 
@@ -345,7 +370,7 @@ public class TabsPanel extends LinearLayout
         @Override
         @SuppressWarnings("deprecation") // setBackgroundDrawable deprecated by API level 16
         public void onLightweightThemeChanged() {
-            final int background = getResources().getColor(R.color.text_and_tabs_tray_grey);
+            final int background = ColorUtils.getColor(getContext(), R.color.text_and_tabs_tray_grey);
             final LightweightThemeDrawable drawable = mTheme.getColorDrawable(this, background);
             if (drawable == null)
                 return;
@@ -356,7 +381,7 @@ public class TabsPanel extends LinearLayout
 
         @Override
         public void onLightweightThemeReset() {
-            setBackgroundColor(getContext().getResources().getColor(R.color.text_and_tabs_tray_grey));
+            setBackgroundColor(ColorUtils.getColor(getContext(), R.color.text_and_tabs_tray_grey));
         }
 
         @Override
@@ -413,7 +438,6 @@ public class TabsPanel extends LinearLayout
         mPanel.show();
 
         mAddTab.setVisibility(View.VISIBLE);
-        mAddTab.setImageLevel(index);
 
         if (!HardwareUtils.hasMenuButton()) {
             mMenuButton.setVisibility(View.VISIBLE);

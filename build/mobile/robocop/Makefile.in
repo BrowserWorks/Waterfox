@@ -5,13 +5,9 @@
 mobile-tests := mobile/android/tests/browser/robocop
 TESTPATH     := $(topsrcdir)/$(mobile-tests)
 
-ANDROID_APK_NAME := robocop-debug
-
 ANDROID_EXTRA_JARS += \
   $(srcdir)/robotium-solo-4.3.1.jar \
   $(NULL)
-
-ANDROID_ASSETS_DIR := $(TESTPATH)/assets
 
 _JAVA_HARNESS := \
   Actions.java \
@@ -24,6 +20,7 @@ _JAVA_HARNESS := \
   FennecTalosAssert.java \
   FennecNativeDriver.java \
   FennecNativeElement.java \
+  LaunchFennecWithConfigurationActivity.java \
   RoboCopException.java \
   RobocopShare1.java \
   RobocopShare2.java \
@@ -66,7 +63,7 @@ tools:: $(ANDROID_APK_NAME).apk
 # out of sync with base's build config.
 jars_dir := $(DEPTH)/mobile/android/base
 stumbler_jars_dir := $(DEPTH)/mobile/android/stumbler
-JAVA_BOOTCLASSPATH := $(JAVA_BOOTCLASSPATH):$(subst $(NULL) ,:,$(wildcard $(jars_dir)/*.jar)):$(subst $(NULL) ,:,$(wildcard $(stumbler_jars_dir)/*.jar)):$(ANDROID_COMPAT_LIB)
+JAVA_BOOTCLASSPATH := $(JAVA_BOOTCLASSPATH):$(subst $(NULL) ,:,$(wildcard $(jars_dir)/*.jar)):$(subst $(NULL) ,:,$(wildcard $(stumbler_jars_dir)/*.jar)):$(ANDROID_COMPAT_LIB):$(ANDROID_RECYCLERVIEW_LIB)
 # We also want to re-compile classes.dex when the associated base
 # content changes.
 classes.dex: $(wildcard $(jars_dir)/*.jar)

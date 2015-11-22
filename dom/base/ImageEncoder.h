@@ -12,7 +12,6 @@
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/HTMLCanvasElementBinding.h"
 #include "nsLayoutUtils.h"
-#include "nsNetUtil.h"
 #include "nsSize.h"
 
 class nsICanvasRenderingContextInternal;
@@ -21,7 +20,7 @@ namespace mozilla {
 
 namespace layers {
 class Image;
-}
+} // namespace layers
 
 namespace dom {
 
@@ -116,7 +115,7 @@ class EncodeCompleteCallback
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(EncodeCompleteCallback)
 
-  virtual nsresult ReceiveBlob(already_AddRefed<File> aBlob) = 0;
+  virtual nsresult ReceiveBlob(already_AddRefed<Blob> aBlob) = 0;
 
 protected:
   virtual ~EncodeCompleteCallback() {}

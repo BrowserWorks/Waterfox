@@ -16,6 +16,7 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseWorkerProxy.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/dom/StructuredCloneHelper.h"
 #include "mozilla/ErrorResult.h"
 
 #include "WorkerPrivate.h"
@@ -188,7 +189,7 @@ public:
     MOZ_ASSERT(aWorkerPrivate);
     aWorkerPrivate->AssertIsOnWorkerThread();
 
-    if (!mId.AppendElements(aId)) {
+    if (!mId.AppendElements(aId, fallible)) {
       mRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     }
   }
@@ -207,8 +208,8 @@ protected:
 
 // A DataStoreRunnable to run DataStore::Put(...) on the main thread.
 class DataStorePutRunnable final : public DataStoreProxyRunnable
+                                 , public StructuredCloneHelper
 {
-  JSAutoStructuredCloneBuffer mObjBuffer;
   const StringOrUnsignedLong& mId;
   const nsString mRevisionId;
   ErrorResult& mRv;
@@ -223,6 +224,8 @@ public:
                        const nsAString& aRevisionId,
                        ErrorResult& aRv)
     : DataStoreProxyRunnable(aWorkerPrivate, aBackingStore, aWorkerPromise)
+    , StructuredCloneHelper(CloningNotSupported, TransferringNotSupported,
+                            SameProcessDifferentThread)
     , mId(aId)
     , mRevisionId(aRevisionId)
     , mRv(aRv)
@@ -231,10 +234,8 @@ public:
     aWorkerPrivate->AssertIsOnWorkerThread();
 
     // This needs to be structured cloned while it's still on the worker thread.
-    if (!mObjBuffer.write(aCx, aObj)) {
-      JS_ClearPendingException(aCx);
-      mRv.Throw(NS_ERROR_DOM_DATA_CLONE_ERR);
-    }
+    Write(aCx, aObj, mRv);
+    NS_WARN_IF(mRv.Failed());
   }
 
 protected:
@@ -252,9 +253,8 @@ protected:
     JSContext* cx = jsapi.cx();
 
     JS::Rooted<JS::Value> value(cx);
-    if (!mObjBuffer.read(cx, &value)) {
-      JS_ClearPendingException(cx);
-      mRv.Throw(NS_ERROR_DOM_DATA_CLONE_ERR);
+    Read(mBackingStore->GetParentObject(), cx, &value, mRv);
+    if (NS_WARN_IF(mRv.Failed())) {
       return true;
     }
 
@@ -270,8 +270,8 @@ protected:
 
 // A DataStoreRunnable to run DataStore::Add(...) on the main thread.
 class DataStoreAddRunnable final : public DataStoreProxyRunnable
+                                 , public StructuredCloneHelper
 {
-  JSAutoStructuredCloneBuffer mObjBuffer;
   const Optional<StringOrUnsignedLong>& mId;
   const nsString mRevisionId;
   ErrorResult& mRv;
@@ -286,6 +286,8 @@ public:
                        const nsAString& aRevisionId,
                        ErrorResult& aRv)
     : DataStoreProxyRunnable(aWorkerPrivate, aBackingStore, aWorkerPromise)
+    , StructuredCloneHelper(CloningNotSupported, TransferringNotSupported,
+                            SameProcessDifferentThread)
     , mId(aId)
     , mRevisionId(aRevisionId)
     , mRv(aRv)
@@ -294,10 +296,8 @@ public:
     aWorkerPrivate->AssertIsOnWorkerThread();
 
     // This needs to be structured cloned while it's still on the worker thread.
-    if (!mObjBuffer.write(aCx, aObj)) {
-      JS_ClearPendingException(aCx);
-      mRv.Throw(NS_ERROR_DOM_DATA_CLONE_ERR);
-    }
+    Write(aCx, aObj, mRv);
+    NS_WARN_IF(mRv.Failed());
   }
 
 protected:
@@ -315,9 +315,8 @@ protected:
     JSContext* cx = jsapi.cx();
 
     JS::Rooted<JS::Value> value(cx);
-    if (!mObjBuffer.read(cx, &value)) {
-      JS_ClearPendingException(cx);
-      mRv.Throw(NS_ERROR_DOM_DATA_CLONE_ERR);
+    Read(mBackingStore->GetParentObject(), cx, &value, mRv);
+    if (NS_WARN_IF(mRv.Failed())) {
       return true;
     }
 

@@ -48,10 +48,10 @@ public:
     }
   }
 
-  virtual void SetData(const Data& aData) override;
+  virtual bool SetData(const Data& aData) override;
   virtual void SetDelayedConversion(bool aDelayed) override { mDelayedConversion = aDelayed; }
 
-  TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
+  already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
 
   virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
@@ -91,20 +91,20 @@ public:
   }
 };
 
-void
+bool
 BasicPlanarYCbCrImage::SetData(const Data& aData)
 {
   PlanarYCbCrImage::SetData(aData);
 
   if (mDelayedConversion) {
-    return;
+    return false;
   }
 
   // Do some sanity checks to prevent integer overflow
   if (aData.mYSize.width > PlanarYCbCrImage::MAX_DIMENSION ||
       aData.mYSize.height > PlanarYCbCrImage::MAX_DIMENSION) {
     NS_ERROR("Illegal image source width or height");
-    return;
+    return false;
   }
 
   gfx::SurfaceFormat format = gfx::ImageFormatToSurfaceFormat(GetOffscreenFormat());
@@ -114,7 +114,7 @@ BasicPlanarYCbCrImage::SetData(const Data& aData)
   if (size.width > PlanarYCbCrImage::MAX_DIMENSION ||
       size.height > PlanarYCbCrImage::MAX_DIMENSION) {
     NS_ERROR("Illegal image dest width or height");
-    return;
+    return false;
   }
 
   gfxImageFormat iFormat = gfx::SurfaceFormatToImageFormat(format);
@@ -122,21 +122,24 @@ BasicPlanarYCbCrImage::SetData(const Data& aData)
   mDecodedBuffer = AllocateBuffer(size.height * mStride);
   if (!mDecodedBuffer) {
     // out of memory
-    return;
+    return false;
   }
 
   gfx::ConvertYCbCrToRGB(aData, format, size, mDecodedBuffer, mStride);
   SetOffscreenFormat(iFormat);
   mSize = size;
+
+  return true;
 }
 
-TemporaryRef<gfx::SourceSurface>
+already_AddRefed<gfx::SourceSurface>
 BasicPlanarYCbCrImage::GetAsSourceSurface()
 {
   NS_ASSERTION(NS_IsMainThread(), "Must be main thread");
 
   if (mSourceSurface) {
-    return mSourceSurface.get();
+    RefPtr<gfx::SourceSurface> surface(mSourceSurface);
+    return surface.forget();
   }
 
   if (!mDecodedBuffer) {
@@ -165,7 +168,7 @@ BasicPlanarYCbCrImage::GetAsSourceSurface()
   mRecycleBin->RecycleBuffer(mDecodedBuffer.forget(), mSize.height * mStride);
 
   mSourceSurface = surface;
-  return mSourceSurface.get();
+  return surface.forget();
 }
 
 
@@ -179,5 +182,5 @@ BasicLayerManager::GetImageFactory()
   return mFactory.get();
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

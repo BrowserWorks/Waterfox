@@ -11,15 +11,19 @@
 #include "gfxUtils.h"
 #include "ImageHost.h"                  // for ImageHostBuffered, etc
 #include "TiledContentHost.h"           // for TiledContentHost
+#include "mozilla/layers/ImageContainerParent.h"
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor
 #include "mozilla/layers/TextureHost.h"  // for TextureHost, etc
-#include "nsRefPtr.h"                   // for nsRefPtr
+#include "mozilla/nsRefPtr.h"                   // for nsRefPtr
 #include "nsDebug.h"                    // for NS_WARNING
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "mozilla/layers/PCompositableParent.h"
 
 namespace mozilla {
+
+using namespace gfx;
+
 namespace layers {
 
 class Compositor;
@@ -30,20 +34,25 @@ class Compositor;
  *
  * CompositableParent is owned by the IPDL system. It's deletion is triggered
  * by either the CompositableChild's deletion, or by the IPDL communication
- * goind down.
+ * going down.
  */
 class CompositableParent : public PCompositableParent
 {
 public:
   CompositableParent(CompositableParentManager* aMgr,
                      const TextureInfo& aTextureInfo,
-                     uint64_t aID = 0)
+                     uint64_t aID = 0,
+                     PImageContainerParent* aImageContainer = nullptr)
   {
     MOZ_COUNT_CTOR(CompositableParent);
     mHost = CompositableHost::Create(aTextureInfo);
     mHost->SetAsyncID(aID);
     if (aID) {
       CompositableMap::Set(aID, this);
+    }
+    if (aImageContainer) {
+      mHost->SetImageContainer(
+          static_cast<ImageContainerParent*>(aImageContainer));
     }
   }
 
@@ -84,9 +93,10 @@ CompositableHost::~CompositableHost()
 PCompositableParent*
 CompositableHost::CreateIPDLActor(CompositableParentManager* aMgr,
                                   const TextureInfo& aTextureInfo,
-                                  uint64_t aID)
+                                  uint64_t aID,
+                                  PImageContainerParent* aImageContainer)
 {
-  return new CompositableParent(aMgr, aTextureInfo, aID);
+  return new CompositableParent(aMgr, aTextureInfo, aID, aImageContainer);
 }
 
 bool
@@ -104,13 +114,12 @@ CompositableHost::FromIPDLActor(PCompositableParent* aActor)
 }
 
 void
-CompositableHost::UseTextureHost(TextureHost* aTexture)
+CompositableHost::UseTextureHost(const nsTArray<TimedTexture>& aTextures)
 {
-  if (!aTexture) {
-    return;
-  }
   if (GetCompositor()) {
-    aTexture->SetCompositor(GetCompositor());
+    for (auto& texture : aTextures) {
+      texture.mTexture->SetCompositor(GetCompositor());
+    }
   }
 }
 
@@ -178,7 +187,7 @@ CompositableHost::RemoveMaskEffect()
   }
 }
 
-/* static */ TemporaryRef<CompositableHost>
+/* static */ already_AddRefed<CompositableHost>
 CompositableHost::Create(const TextureInfo& aTextureInfo)
 {
   RefPtr<CompositableHost> result;
@@ -206,7 +215,7 @@ CompositableHost::Create(const TextureInfo& aTextureInfo)
   default:
     NS_ERROR("Unknown CompositableType");
   }
-  return result;
+  return result.forget();
 }
 
 void
@@ -219,7 +228,7 @@ CompositableHost::DumpTextureHost(std::stringstream& aStream, TextureHost* aText
   if (!dSurf) {
     return;
   }
-  aStream << gfxUtils::GetAsLZ4Base64Str(dSurf).get();
+  aStream << gfxUtils::GetAsDataURI(dSurf).get();
 }
 
 namespace CompositableMap {

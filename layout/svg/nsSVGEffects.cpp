@@ -21,9 +21,6 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 
-// nsSVGRenderingObserver impl
-NS_IMPL_ISUPPORTS(nsSVGRenderingObserver, nsIMutationObserver)
-
 void
 nsSVGRenderingObserver::StartListening()
 {
@@ -115,7 +112,8 @@ nsSVGRenderingObserver::AttributeChanged(nsIDocument* aDocument,
                                          dom::Element* aElement,
                                          int32_t aNameSpaceID,
                                          nsIAtom* aAttribute,
-                                         int32_t aModType)
+                                         int32_t aModType,
+                                         const nsAttrValue* aOldValue)
 {
   // An attribute belonging to the element that we are observing *or one of its
   // descendants* has changed.
@@ -218,6 +216,8 @@ nsSVGFrameReferenceFromProperty::Get()
   }
   return mFrame;
 }
+
+NS_IMPL_ISUPPORTS(nsSVGRenderingObserverProperty, nsIMutationObserver)
 
 void
 nsSVGRenderingObserverProperty::DoUpdate()
@@ -573,8 +573,18 @@ nsSVGEffects::GetPaintServer(nsIFrame *aTargetFrame, const nsStyleSVGPaint *aPai
   if (aPaint->mType != eStyleSVGPaintType_Server)
     return nullptr;
 
-  nsIFrame *frame = aTargetFrame->GetContent()->IsNodeOfType(nsINode::eTEXT) ?
-                      aTargetFrame->GetParent() : aTargetFrame;
+  // If we're looking at a frame within SVG text, then we need to look up
+  // to find the right frame to get the painting property off.  We should at
+  // least look up past a text frame, and if the text frame's parent is the
+  // anonymous block frame, then we look up to its parent (the SVGTextFrame).
+  nsIFrame* frame = aTargetFrame;
+  if (frame->GetContent()->IsNodeOfType(nsINode::eTEXT)) {
+    frame = frame->GetParent();
+    nsIFrame* grandparent = frame->GetParent();
+    if (grandparent && grandparent->GetType() == nsGkAtoms::svgTextFrame) {
+      frame = grandparent;
+    }
+  }
   nsSVGPaintingProperty *property =
     nsSVGEffects::GetPaintingProperty(aPaint->mPaint.mPaintServer, frame, aType);
   if (!property)
@@ -660,30 +670,6 @@ nsSVGEffects::GetFilterProperty(nsIFrame *aFrame)
     (aFrame->Properties().Get(FilterProperty()));
 }
 
-static PLDHashOperator
-GatherEnumerator(nsPtrHashKey<nsSVGRenderingObserver>* aEntry, void* aArg)
-{
-  nsTArray<nsSVGRenderingObserver*>* array =
-    static_cast<nsTArray<nsSVGRenderingObserver*>*>(aArg);
-  array->AppendElement(aEntry->GetKey());
-
-  return PL_DHASH_REMOVE;
-}
-
-static PLDHashOperator
-GatherEnumeratorForReflow(nsPtrHashKey<nsSVGRenderingObserver>* aEntry, void* aArg)
-{
-  if (!aEntry->GetKey()->ObservesReflow()) {
-    return PL_DHASH_NEXT;
-  }
-
-  nsTArray<nsSVGRenderingObserver*>* array =
-    static_cast<nsTArray<nsSVGRenderingObserver*>*>(aArg);
-  array->AppendElement(aEntry->GetKey());
-
-  return PL_DHASH_REMOVE;
-}
-
 void
 nsSVGRenderingObserverList::InvalidateAll()
 {
@@ -692,8 +678,10 @@ nsSVGRenderingObserverList::InvalidateAll()
 
   nsAutoTArray<nsSVGRenderingObserver*,10> observers;
 
-  // The PL_DHASH_REMOVE in GatherEnumerator drops all our observers here:
-  mObservers.EnumerateEntries(GatherEnumerator, &observers);
+  for (auto it = mObservers.Iter(); !it.Done(); it.Next()) {
+    observers.AppendElement(it.Get()->GetKey());
+  }
+  mObservers.Clear();
 
   for (uint32_t i = 0; i < observers.Length(); ++i) {
     observers[i]->InvalidateViaReferencedElement();
@@ -708,8 +696,13 @@ nsSVGRenderingObserverList::InvalidateAllForReflow()
 
   nsAutoTArray<nsSVGRenderingObserver*,10> observers;
 
-  // The PL_DHASH_REMOVE in GatherEnumerator drops all our observers here:
-  mObservers.EnumerateEntries(GatherEnumeratorForReflow, &observers);
+  for (auto it = mObservers.Iter(); !it.Done(); it.Next()) {
+    nsSVGRenderingObserver* obs = it.Get()->GetKey();
+    if (obs->ObservesReflow()) {
+      observers.AppendElement(obs);
+      it.Remove();
+    }
+  }
 
   for (uint32_t i = 0; i < observers.Length(); ++i) {
     observers[i]->InvalidateViaReferencedElement();
@@ -721,8 +714,10 @@ nsSVGRenderingObserverList::RemoveAll()
 {
   nsAutoTArray<nsSVGRenderingObserver*,10> observers;
 
-  // The PL_DHASH_REMOVE in GatherEnumerator drops all our observers here:
-  mObservers.EnumerateEntries(GatherEnumerator, &observers);
+  for (auto it = mObservers.Iter(); !it.Done(); it.Next()) {
+    observers.AppendElement(it.Get()->GetKey());
+  }
+  mObservers.Clear();
 
   // Our list is now cleared.  We need to notify the observers we've removed,
   // so they can update their state & remove themselves as mutation-observers.

@@ -14,10 +14,11 @@
 #include "nsWeakPtr.h"
 #include "nsWeakReference.h"
 #include "nsISupportsPriority.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "mozilla/TimeStamp.h"
 
-class nsILoadGroupConnectionInfo;
+class nsISchedulingContext;
+class nsISchedulingContextService;
 class nsITimedChannel;
 
 class nsLoadGroup : public nsILoadGroup,
@@ -50,13 +51,13 @@ public:
     // nsLoadGroup methods:
 
     explicit nsLoadGroup(nsISupports* outer);
+    virtual ~nsLoadGroup();
 
     nsresult Init();
 
 protected:
-    virtual ~nsLoadGroup();
-
     nsresult MergeLoadFlags(nsIRequest *aRequest, nsLoadFlags& flags);
+    nsresult MergeDefaultLoadFlags(nsIRequest *aRequest, nsLoadFlags& flags);
 
 private:
     void TelemetryReport();
@@ -70,7 +71,8 @@ protected:
 
     nsCOMPtr<nsILoadGroup>          mLoadGroup; // load groups can contain load groups
     nsCOMPtr<nsIInterfaceRequestor> mCallbacks;
-    nsCOMPtr<nsILoadGroupConnectionInfo> mConnectionInfo;
+    nsCOMPtr<nsISchedulingContext>  mSchedulingContext;
+    nsCOMPtr<nsISchedulingContextService> mSchedulingContextService;
 
     nsCOMPtr<nsIRequest>            mDefaultLoadRequest;
     PLDHashTable                    mRequests;

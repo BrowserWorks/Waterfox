@@ -6,6 +6,7 @@
 
 #include "nsGenericHTMLFrameElement.h"
 
+#include "mozilla/dom/BrowserElementAudioChannel.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/ErrorResult.h"
@@ -34,7 +35,19 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(nsGenericHTMLFrameElement,
                                                   nsGenericHTMLElement)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mFrameLoader)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBrowserElementAPI)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBrowserElementAudioChannels)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(nsGenericHTMLFrameElement,
+                                                nsGenericHTMLElement)
+  if (tmp->mFrameLoader) {
+    tmp->mFrameLoader->Destroy();
+  }
+
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mFrameLoader)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mBrowserElementAPI)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mBrowserElementAudioChannels)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_ADDREF_INHERITED(nsGenericHTMLFrameElement, nsGenericHTMLElement)
 NS_IMPL_RELEASE_INHERITED(nsGenericHTMLFrameElement, nsGenericHTMLElement)
@@ -78,6 +91,9 @@ nsGenericHTMLFrameElement::GetContentDocument()
   }
 
   nsIDocument *doc = win->GetDoc();
+  if (!doc) {
+    return nullptr;
+  }
 
   // Return null for cross-origin contentDocument.
   if (!nsContentUtils::SubjectPrincipal()->
@@ -492,7 +508,7 @@ bool NestedEnabled()
   return sMozNestedEnabled;
 }
 
-} // anonymous namespace
+} // namespace
 
 /* [infallible] */ NS_IMETHODIMP
 nsGenericHTMLFrameElement::GetReallyIsWidget(bool *aOut)
@@ -596,7 +612,7 @@ nsGenericHTMLFrameElement::GetAppManifestURL(nsAString& aOut)
 
   // Only allow content process to embed an app when nested content
   // process is enabled.
-  if (XRE_GetProcessType() != GeckoProcessType_Default &&
+  if (!XRE_IsParentProcess() &&
       !(GetBoolAttr(nsGkAtoms::Remote) && NestedEnabled())){
     NS_WARNING("Can't embed-apps. Embed-apps is restricted to in-proc apps "
                "or content processes with nested pref enabled, see bug 1097479");

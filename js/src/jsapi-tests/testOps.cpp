@@ -27,14 +27,14 @@ static const JSClass myClass = {
 };
 
 static bool
-createMyObject(JSContext* context, unsigned argc, jsval* vp)
+createMyObject(JSContext* context, unsigned argc, JS::Value* vp)
 {
     JS_BeginRequest(context);
 
     //JS_GC(context); //<- if we make GC here, all is ok
 
     JSObject* myObject = JS_NewObject(context, &myClass);
-    *vp = OBJECT_TO_JSVAL(myObject);
+    *vp = JS::ObjectOrNullValue(myObject);
 
     JS_EndRequest(context);
 
@@ -57,7 +57,7 @@ BEGIN_TEST(testOps_bug559006)
         JS::RootedValue rval(cx);
         CHECK(JS_CallFunctionName(cx, global, "main", JS::HandleValueArray::empty(),
                                   &rval));
-        CHECK_SAME(rval, INT_TO_JSVAL(123));
+        CHECK(rval.isInt32(123));
     }
     return true;
 }

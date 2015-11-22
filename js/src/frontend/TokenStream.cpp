@@ -1016,16 +1016,6 @@ TokenStream::checkForKeyword(const KeywordInfo* kw, TokenKind* ttp)
 }
 
 bool
-TokenStream::checkForKeyword(const char16_t* s, size_t length, TokenKind* ttp)
-{
-    const KeywordInfo* kw = FindKeyword(s, length);
-    if (!kw)
-        return true;
-
-    return checkForKeyword(kw, ttp);
-}
-
-bool
 TokenStream::checkForKeyword(JSAtom* atom, TokenKind* ttp)
 {
     const KeywordInfo* kw = FindKeyword(atom);
@@ -1235,13 +1225,23 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
             length = userbuf.addressOfNextRawChar() - identStart;
         }
 
-        // Check for keywords unless the parser told us not to.
+        // Represent keywords as keyword tokens unless told otherwise.
         if (modifier != KeywordIsName) {
-            tp->type = TOK_NAME;
-            if (!checkForKeyword(chars, length, &tp->type))
-                goto error;
-            if (tp->type != TOK_NAME)
-                goto out;
+            if (const KeywordInfo* kw = FindKeyword(chars, length)) {
+                // That said, keywords can't contain escapes.  (Contexts where
+                // keywords are treated as names, that also sometimes treat
+                // keywords as keywords, must manually check this requirement.)
+                if (hadUnicodeEscape) {
+                    reportError(JSMSG_ESCAPED_KEYWORD);
+                    goto error;
+                }
+
+                tp->type = TOK_NAME;
+                if (!checkForKeyword(kw, &tp->type))
+                    goto error;
+                if (tp->type != TOK_NAME)
+                    goto out;
+            }
         }
 
         JSAtom* atom = AtomizeChars(cx, chars, length);
@@ -1509,7 +1509,12 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
         goto out;
 
       case '*':
-        tp->type = matchChar('=') ? TOK_MULASSIGN : TOK_MUL;
+#ifdef JS_HAS_EXPONENTIATION
+        if (matchChar('*'))
+            tp->type = matchChar('=') ? TOK_POWASSIGN : TOK_POW;
+        else
+#endif
+            tp->type = matchChar('=') ? TOK_MULASSIGN : TOK_MUL;
         goto out;
 
       case '/':
@@ -1642,6 +1647,13 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
 
     flags.isDirtyLine = true;
     tp->pos.end = userbuf.offset();
+#ifdef DEBUG
+    // Save the modifier used to get this token, so that if an ungetToken()
+    // occurs and then the token is re-gotten (or peeked, etc.), we can assert
+    // that both gets have used the same modifiers.
+    tp->modifier = modifier;
+    tp->modifierException = NoException;
+#endif
     MOZ_ASSERT(IsTokenSane(tp));
     *ttp = tp->type;
     return true;
@@ -1813,7 +1825,7 @@ TokenStream::getStringOrTemplateToken(int untilChar, Token** tp)
                     }
 
                     c = char16_t(val);
-                } 
+                }
                 break;
             }
         } else if (TokenBuf::isRawEOLChar(c)) {
@@ -1835,8 +1847,10 @@ TokenStream::getStringOrTemplateToken(int untilChar, Token** tp)
             ungetCharIgnoreEOL(nc);
         }
 
-        if (!tokenbuf.append(c))
+        if (!tokenbuf.append(c)) {
+            ReportOutOfMemory(cx);
             return false;
+        }
     }
 
     JSAtom* atom = atomize(cx, tokenbuf);

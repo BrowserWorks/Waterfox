@@ -18,6 +18,8 @@
 #include "nsSize.h"
 #include "limits.h"
 
+class nsIDocument;
+
 namespace mozilla {
 namespace layers {
 class LayerManager;
@@ -104,9 +106,10 @@ native TempRefImageContainer(already_AddRefed<mozilla::layers::ImageContainer>);
 native Orientation(mozilla::image::Orientation);
 [ref] native TimeStamp(mozilla::TimeStamp);
 [ref] native MaybeSVGImageContext(mozilla::Maybe<mozilla::SVGImageContext>);
-native TempRefSourceSurface(mozilla::TemporaryRef<mozilla::gfx::SourceSurface>);
+native TempRefSourceSurface(already_AddRefed<mozilla::gfx::SourceSurface>);
 native TempRefImgIContainer(already_AddRefed<imgIContainer>);
 native nsIntSizeByVal(nsIntSize);
+[ptr] native nsIDocument(nsIDocument);
 
 
 /**
@@ -116,7 +119,7 @@ native nsIntSizeByVal(nsIntSize);
  *
  * Internally, imgIContainer also manages animation of images.
  */
-[scriptable, builtinclass, uuid(e3261ae7-4749-4cf6-bf06-59946233366f)]
+[scriptable, builtinclass, uuid(4e5a0547-6c54-4051-8b52-1f2fdd667696)]
 interface imgIContainer : nsISupports
 {
   /**
@@ -265,13 +268,37 @@ interface imgIContainer : nsISupports
                                                      in uint32_t aFlags);
 
   /**
+   * Get a surface for the given frame at the specified size. Matching the
+   * requested size is best effort; it's not guaranteed that the surface you get
+   * will be a perfect match. (Some reasons you may get a surface of a different
+   * size include: if you requested upscaling, if downscale-during-decode is
+   * disabled, or if you didn't request the first frame.)
+   *
+   * @param aSize The desired size.
+   * @param aWhichFrame Frame specifier of the FRAME_* variety.
+   * @param aFlags Flags of the FLAG_* variety
+   */
+  [noscript, notxpcom] TempRefSourceSurface getFrameAtSize([const] in nsIntSize aSize,
+                                                           in uint32_t aWhichFrame,
+                                                           in uint32_t aFlags);
+
+  /**
    * Whether this image is opaque (i.e., needs a background painted behind it).
    */
   [notxpcom] boolean isOpaque();
 
   /**
+   * @return true if getImageContainer() is expected to return a valid
+   *         ImageContainer when passed the given @Manager and @Flags
+   *         parameters.
+   */
+  [noscript, notxpcom] boolean isImageContainerAvailable(in LayerManager aManager,
+                                                         in uint32_t aFlags);
+  /**
    * Attempts to create an ImageContainer (and Image) containing the current
-   * frame. Only valid for RASTER type images.
+   * frame.
+   *
+   * Avoid calling this unless you're actually going to layerize this image.
    *
    * @param aManager The LayerManager which will be used to create the
    *                 ImageContainer.
@@ -535,4 +562,10 @@ interface imgIContainer : nsISupports
    * Removes any ImageWrappers and returns the unwrapped base image.
    */
   [notxpcom, nostdcall] TempRefImgIContainer unwrap();
+
+  /*
+   * Propagate the use counters (if any) from this container to the passed in
+   * document.
+   */
+  [noscript, notxpcom] void propagateUseCounters(in nsIDocument aDocument);
 };

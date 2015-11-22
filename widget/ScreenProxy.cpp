@@ -169,16 +169,9 @@ ScreenProxy::InvalidateCacheOnNextTick()
 
   mCacheWillInvalidate = true;
 
-  nsCOMPtr<nsIAppShell> appShell = do_GetService(kAppShellCID);
-  if (appShell) {
-    appShell->RunInStableState(
-      NS_NewRunnableMethod(this, &ScreenProxy::InvalidateCache)
-    );
-  } else {
-    // It's pretty bad news if we can't get the appshell. In that case,
-    // let's just invalidate the cache right away.
-    InvalidateCache();
-  }
+  nsCOMPtr<nsIRunnable> r =
+    NS_NewRunnableMethod(this, &ScreenProxy::InvalidateCache);
+  nsContentUtils::RunInStableState(r.forget());
 }
 
 void

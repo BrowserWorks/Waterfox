@@ -11,8 +11,6 @@ const { Task } = require("resource://gre/modules/Task.jsm");
 loader.lazyRequireGetter(this, "promise");
 loader.lazyRequireGetter(this, "EventEmitter",
   "devtools/toolkit/event-emitter");
-loader.lazyRequireGetter(this, "PerformanceFront",
-  "devtools/performance/front", true);
 
 function PerformancePanel(iframeWindow, toolbox) {
   this.panelWin = iframeWindow;
@@ -32,31 +30,52 @@ PerformancePanel.prototype = {
    *         completes opening.
    */
   open: Task.async(function*() {
+    if (this._opening) {
+      return this._opening;
+    }
+    let deferred = promise.defer();
+    this._opening = deferred.promise;
+
     this.panelWin.gToolbox = this._toolbox;
     this.panelWin.gTarget = this.target;
-    this._onRecordingStartOrStop = this._onRecordingStartOrStop.bind(this);
+    this._checkRecordingStatus = this._checkRecordingStatus.bind(this);
 
-    // Connection is already created in the toolbox; reuse
-    // the same connection.
-    this._connection = this.panelWin.gToolbox.getPerformanceActorsConnection();
-    // The toolbox will also open the connection, but attempt to open it again
-    // incase it's still in the process of opening.
-    yield this._connection.open();
+    // Actor is already created in the toolbox; reuse
+    // the same front, and the toolbox will also initialize the front,
+    // but redo it here so we can hook into the same event to prevent race conditions
+    // in the case of the front still being in the process of opening.
+    let front = yield this.panelWin.gToolbox.initPerformance();
 
-    this.panelWin.gFront = new PerformanceFront(this._connection);
-    this.panelWin.gFront.on("recording-started", this._onRecordingStartOrStop);
-    this.panelWin.gFront.on("recording-stopped", this._onRecordingStartOrStop);
+    // This should only happen if this is completely unsupported (when profiler
+    // does not exist), and in that case, the tool shouldn't be available,
+    // so let's ensure this assertion.
+    if (!front) {
+      Cu.reportError("No PerformanceFront found in toolbox.");
+    }
 
+    this.panelWin.gFront = front;
+    let { PerformanceController, EVENTS } = this.panelWin;
+    PerformanceController.on(EVENTS.NEW_RECORDING, this._checkRecordingStatus);
+    PerformanceController.on(EVENTS.RECORDING_STATE_CHANGE, this._checkRecordingStatus);
     yield this.panelWin.startupPerformance();
+
+    // Fire this once incase we have an in-progress recording (console profile)
+    // that caused this start up, and no state change yet, so we can highlight the
+    // tab if we need.
+    this._checkRecordingStatus();
 
     this.isReady = true;
     this.emit("ready");
-    return this;
+
+    deferred.resolve(this);
+    return this._opening;
   }),
 
   // DevToolPanel API
 
-  get target() this._toolbox.target,
+  get target() {
+    return this._toolbox.target;
+  },
 
   destroy: Task.async(function*() {
     // Make sure this panel is not already destroyed.
@@ -64,16 +83,16 @@ PerformancePanel.prototype = {
       return;
     }
 
-    this.panelWin.gFront.off("recording-started", this._onRecordingStartOrStop);
-    this.panelWin.gFront.off("recording-stopped", this._onRecordingStartOrStop);
+    let { PerformanceController, EVENTS } = this.panelWin;
+    PerformanceController.off(EVENTS.NEW_RECORDING, this._checkRecordingStatus);
+    PerformanceController.off(EVENTS.RECORDING_STATE_CHANGE, this._checkRecordingStatus);
     yield this.panelWin.shutdownPerformance();
     this.emit("destroyed");
     this._destroyed = true;
   }),
 
-  _onRecordingStartOrStop: function () {
-    let front = this.panelWin.gFront;
-    if (front.isRecording()) {
+  _checkRecordingStatus: function () {
+    if (this.panelWin.PerformanceController.isRecording()) {
       this._toolbox.highlightTool("performance");
     } else {
       this._toolbox.unhighlightTool("performance");

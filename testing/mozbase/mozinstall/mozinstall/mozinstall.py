@@ -82,10 +82,7 @@ def get_binary(path, app_name):
                     break
 
     if not binary:
-        # The expected binary has not been found. Make sure we clean the
-        # install folder to remove any traces
-        mozfile.remove(path)
-
+        # The expected binary has not been found.
         raise InvalidBinary('"%s" does not contain a valid binary.' % path)
 
     return binary
@@ -105,7 +102,9 @@ def install(src, dest):
     if not is_installer(src):
         raise InvalidSource(src + ' is not valid installer file.')
 
+    did_we_create = False
     if not os.path.exists(dest):
+        did_we_create = True
         os.makedirs(dest)
 
     trbk = None
@@ -120,10 +119,24 @@ def install(src, dest):
 
         return install_dir
 
-    except Exception, ex:
+    except:
         cls, exc, trbk = sys.exc_info()
-        error = InstallError('Failed to install "%s (%s)"' % (src, str(ex)))
-        raise InstallError, error, trbk
+        if did_we_create:
+            try:
+                # try to uninstall this properly
+                uninstall(dest)
+            except:
+                # uninstall may fail, let's just try to clean the folder
+                # in this case
+                try:
+                    mozfile.remove(dest)
+                except:
+                    pass
+        if issubclass(cls, Exception):
+            error = InstallError('Failed to install "%s (%s)"' % (src, str(exc)))
+            raise InstallError, error, trbk
+        # any other kind of exception like KeyboardInterrupt is just re-raised.
+        raise cls, exc, trbk
 
     finally:
         # trbk won't get GC'ed due to circular reference

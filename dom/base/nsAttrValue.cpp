@@ -29,6 +29,11 @@
 #include "nsIDocument.h"
 #include <algorithm>
 
+#ifdef LoadImage
+// Undefine LoadImage to prevent naming conflict with Windows.
+#undef LoadImage
+#endif
+
 using namespace mozilla;
 
 #define MISC_STR_PTR(_cont) \
@@ -1928,7 +1933,7 @@ nsAttrValue::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
         //n += container->mCSSStyleRule->SizeOfIncludingThis(aMallocSizeOf);
       } else if (Type() == eAtomArray && container->mValue.mAtomArray) {
         // Don't measure each nsIAtom, they are measured separatly.
-        n += container->mValue.mAtomArray->SizeOfIncludingThis(aMallocSizeOf);
+        n += container->mValue.mAtomArray->ShallowSizeOfIncludingThis(aMallocSizeOf);
       }
       break;
     }

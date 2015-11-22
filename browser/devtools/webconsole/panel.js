@@ -5,12 +5,10 @@
 "use strict";
 
 const {Cc, Ci, Cu} = require("chrome");
+const promise = require("promise");
 
-loader.lazyImporter(this, "devtools", "resource://gre/modules/devtools/Loader.jsm");
-loader.lazyImporter(this, "promise", "resource://gre/modules/Promise.jsm", "Promise");
 loader.lazyGetter(this, "HUDService", () => require("devtools/webconsole/hudservice"));
 loader.lazyGetter(this, "EventEmitter", () => require("devtools/toolkit/event-emitter"));
-loader.lazyImporter(this, "gDevTools", "resource:///modules/devtools/gDevTools.jsm");
 
 /**
  * A DevToolPanel that controls the Web Console.
@@ -103,10 +101,16 @@ WebConsolePanel.prototype = {
       });
   },
 
-  get target() this._toolbox.target,
+  get target()
+  {
+    return this._toolbox.target;
+  },
 
   _isReady: false,
-  get isReady() this._isReady,
+  get isReady()
+  {
+    return this._isReady;
+  },
 
   destroy: function WCP_destroy()
   {

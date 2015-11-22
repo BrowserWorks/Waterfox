@@ -11,7 +11,7 @@ const REFERRER_URL_BASE = "/browser/browser/base/content/test/referrer/";
 const REFERRER_POLICYSERVER_URL =
   "test1.example.com" + REFERRER_URL_BASE + "file_referrer_policyserver.sjs";
 
-let gTestWindow = null;
+var gTestWindow = null;
 
 // We test that the UI code propagates three pieces of state - the referrer URI
 // itself, the referrer policy, and the triggering principal. After that, we
@@ -21,7 +21,7 @@ let gTestWindow = null;
 // would break when the UI code drops either of these pieces; we don't try to
 // duplicate the entire cross-product test in bug 704320 - that would be slow,
 // especially when we're opening a new window for each case.
-let _referrerTests = [
+var _referrerTests = [
   // 1. Normal cases - no referrer policy, no special attributes.
   //    We expect a full referrer normally, and no referrer on downgrade.
   {
@@ -49,19 +49,19 @@ let _referrerTests = [
     rel: "noreferrer",
     result: ""  // rel=noreferrer trumps meta-referrer
   },
-  // 3. Origin-when-crossorigin policy - this depends on the triggering
+  // 3. Origin-when-cross-origin policy - this depends on the triggering
   //    principal.  We expect full referrer for same-origin requests,
   //    and origin referrer for cross-origin requests.
   {
     fromScheme: "https://",
     toScheme: "https://",
-    policy: "origin-when-crossorigin",
+    policy: "origin-when-cross-origin",
     result: "https://test1.example.com/browser"  // same origin
   },
   {
     fromScheme: "http://",
     toScheme: "https://",
-    policy: "origin-when-crossorigin",
+    policy: "origin-when-cross-origin",
     result: "http://test1.example.com"  // cross origin
   },
 ];
@@ -94,52 +94,8 @@ function getReferrerTestDescription(aTestNumber) {
  * @param aOptions The options for synthesizeMouseAtCenter.
  */
 function clickTheLink(aWindow, aLinkId, aOptions) {
-  ContentTask.spawn(aWindow.gBrowser.selectedBrowser,
-                    {id: aLinkId, options: aOptions},
-                    function(data) {
-    let element = content.document.getElementById(data.id);
-    let options = data.options;
-
-    // EventUtils.synthesizeMouseAtCenter(element, options, content);
-    // Alas, EventUtils doesn't work in the content task environment.
-    function doClick() {
-      var domWindowUtils =
-          content.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-          .getInterface(Components.interfaces.nsIDOMWindowUtils);
-      var rect = element.getBoundingClientRect();
-      var left = rect.left + rect.width / 2;
-      var top = rect.top + rect.height / 2;
-      var button = options.button || 0;
-      function sendMouseEvent(type) {
-        domWindowUtils.sendMouseEvent(type, left, top, button,
-                                      1, 0, false, 0, 0, true);
-      }
-      if ("type" in options) {
-        sendMouseEvent(options.type);  // e.g., "contextmenu"
-      } else {
-        sendMouseEvent("mousedown");
-        sendMouseEvent("mouseup");
-      }
-    }
-
-    // waitForFocus(doClick, content);
-    let focusManager = Components.classes["@mozilla.org/focus-manager;1"].
-                       getService(Components.interfaces.nsIFocusManager);
-    let desiredWindow = {};
-    focusManager.getFocusedElementForWindow(content, true, desiredWindow);
-    desiredWindow = desiredWindow.value;
-    if (desiredWindow == focusManager.focusedWindow) {
-      // The window is already focused - click away.
-      doClick();
-    } else {
-      // Focus the window first, then click.
-      desiredWindow.addEventListener("focus", function onFocus() {
-        desiredWindow.removeEventListener("focus", onFocus, true);
-        setTimeout(doClick, 0);
-      }, true);
-      desiredWindow.focus();
-    }
-  });
+  return BrowserTestUtils.synthesizeMouseAtCenter(
+    "#" + aLinkId, aOptions, aWindow.gBrowser.selectedBrowser);
 }
 
 /**
@@ -196,20 +152,8 @@ function someTabLoaded(aWindow) {
  * @resolves With the new window once it's open and loaded.
  */
 function newWindowOpened() {
-  return new Promise(function(resolve) {
-    Services.wm.addListener({
-      onOpenWindow: function(aXULWindow) {
-        Services.wm.removeListener(this);
-        var newWindow = aXULWindow.QueryInterface(Ci.nsIInterfaceRequestor)
-                                  .getInterface(Ci.nsIDOMWindow);
-        delayedStartupFinished(newWindow).then(function() {
-          resolve(newWindow);
-        });
-      },
-      onCloseWindow: function(aXULWindow) { },
-      onWindowTitleChange: function(aXULWindow, aNewTitle) { }
-    });
-  });
+  return TestUtils.topicObserved("browser-delayed-startup-finished")
+                  .then(([win]) => win);
 }
 
 /**
@@ -220,16 +164,11 @@ function newWindowOpened() {
  * @resolves With the menu popup when the context menu is open.
  */
 function contextMenuOpened(aWindow, aLinkId) {
-  return new Promise(function(resolve) {
-    aWindow.document.addEventListener("popupshown",
-                                      function handleMenu(aEvent) {
-      aWindow.document.removeEventListener("popupshown", handleMenu, false);
-      resolve(aEvent.target);
-    }, false);
-
-    // Simulate right-click that opens the context menu.
-    clickTheLink(aWindow, aLinkId, {type: "contextmenu", button: 2});
-  });
+  let popupShownPromise = BrowserTestUtils.waitForEvent(aWindow.document,
+                                                        "popupshown");
+  // Simulate right-click.
+  clickTheLink(aWindow, aLinkId, { type: "contextmenu", button: 2 });
+  return popupShownPromise.then(e => e.target);
 }
 
 /**

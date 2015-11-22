@@ -5,16 +5,17 @@
 
 package org.mozilla.gecko.gfx;
 
+import org.mozilla.gecko.annotation.RobocopTarget;
+import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.gfx.LayerView.DrawListener;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.ZoomConstraints;
-import org.mozilla.gecko.mozglue.RobocopTarget;
-import org.mozilla.gecko.mozglue.generatorannotations.WrapElementForJNI;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.util.FloatUtils;
+import org.mozilla.gecko.AppConstants;
 
 import android.content.Context;
 import android.graphics.PointF;
@@ -22,6 +23,7 @@ import android.graphics.RectF;
 import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,7 @@ import java.util.List;
 class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
 {
     private static final String LOGTAG = "GeckoLayerClient";
+    private static int sPaintSyncId = 1;
 
     private LayerRenderer mLayerRenderer;
     private boolean mLayerRendererInitialized;
@@ -63,7 +66,6 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
 
     /* Used as temporaries by syncViewportInfo */
     private final ViewTransform mCurrentViewTransform;
-    private final RectF mCurrentViewTransformMargins;
 
     /* Used as the return value of progressiveUpdateCallback */
     private final ProgressiveUpdateData mProgressiveUpdateData;
@@ -86,15 +88,13 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
      *    that because mViewportMetrics might get reassigned in between reading the different
      *    fields. */
     private volatile ImmutableViewportMetrics mViewportMetrics;
-    private LayerView.OnMetricsChangedListener mDynamicToolbarViewportChangeListener;
-    private LayerView.OnMetricsChangedListener mZoomedViewViewportChangeListener;
 
     private ZoomConstraints mZoomConstraints;
 
     private boolean mGeckoIsReady;
 
     private final PanZoomController mPanZoomController;
-    private final LayerMarginsAnimator mMarginsAnimator;
+    private final DynamicToolbarAnimator mToolbarAnimator;
     private final LayerView mView;
 
     /* This flag is true from the time that browser.js detects a first-paint is about to start,
@@ -116,7 +116,6 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         mRecordDrawTimes = true;
         mDrawTimingQueue = new DrawTimingQueue();
         mCurrentViewTransform = new ViewTransform(0, 0, 1);
-        mCurrentViewTransformMargins = new RectF();
         mProgressiveUpdateData = new ProgressiveUpdateData();
         mProgressiveUpdateDisplayPort = new DisplayPortMetrics();
 
@@ -135,8 +134,8 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         mFrameMetrics = mViewportMetrics;
 
         mDrawListeners = new ArrayList<DrawListener>();
+        mToolbarAnimator = new DynamicToolbarAnimator(this);
         mPanZoomController = PanZoomController.Factory.create(this, view, eventDispatcher);
-        mMarginsAnimator = new LayerMarginsAnimator(this, view);
         mView = view;
         mView.setListener(this);
         mContentDocumentIsDisplayed = true;
@@ -153,7 +152,7 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         mRootLayer = new VirtualLayer(new IntSize(mView.getWidth(), mView.getHeight()));
         mLayerRenderer = mView.getRenderer();
 
-        sendResizeEventIfNecessary(true);
+        sendResizeEventIfNecessary(true, null);
 
         DisplayPortCalculator.initPrefs();
 
@@ -172,7 +171,7 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
 
     public void destroy() {
         mPanZoomController.destroy();
-        mMarginsAnimator.destroy();
+        mToolbarAnimator.destroy();
         mDrawListeners.clear();
     }
 
@@ -214,35 +213,46 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
      * to the layer client. That way, the layer client won't be tempted to call this, which might
      * result in an infinite loop.
      */
-    void setViewportSize(int width, int height) {
+    boolean setViewportSize(int width, int height, PointF scrollChange) {
+        if (mViewportMetrics.viewportRectWidth == width &&
+            mViewportMetrics.viewportRectHeight == height &&
+            (scrollChange == null || (scrollChange.x == 0 && scrollChange.y == 0))) {
+            return false;
+        }
         mViewportMetrics = mViewportMetrics.setViewportSize(width, height);
+        if (scrollChange != null) {
+            mViewportMetrics = mViewportMetrics.offsetViewportByAndClamp(scrollChange.x, scrollChange.y);
+        }
 
         if (mGeckoIsReady) {
             // here we send gecko a resize message. The code in browser.js is responsible for
             // picking up on that resize event, modifying the viewport as necessary, and informing
             // us of the new viewport.
-            sendResizeEventIfNecessary(true);
+            sendResizeEventIfNecessary(true, scrollChange);
+
             // the following call also sends gecko a message, which will be processed after the resize
             // message above has updated the viewport. this message ensures that if we have just put
             // focus in a text field, we scroll the content so that the text field is in view.
             GeckoAppShell.viewSizeChanged();
         }
+        return true;
     }
 
     PanZoomController getPanZoomController() {
         return mPanZoomController;
     }
 
-    LayerMarginsAnimator getLayerMarginsAnimator() {
-        return mMarginsAnimator;
+    DynamicToolbarAnimator getDynamicToolbarAnimator() {
+        return mToolbarAnimator;
     }
 
     /* Informs Gecko that the screen size has changed. */
-    private void sendResizeEventIfNecessary(boolean force) {
+    private void sendResizeEventIfNecessary(boolean force, PointF scrollChange) {
         DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
 
         IntSize newScreenSize = new IntSize(metrics.widthPixels, metrics.heightPixels);
-        IntSize newWindowSize = new IntSize(mView.getWidth(), mView.getHeight());
+        IntSize newWindowSize = new IntSize(mViewportMetrics.viewportRectWidth,
+                                            mViewportMetrics.viewportRectHeight);
 
         boolean screenSizeChanged = !mScreenSize.equals(newScreenSize);
         boolean windowSizeChanged = !mWindowSize.equals(newWindowSize);
@@ -265,7 +275,26 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         GeckoEvent event = GeckoEvent.createSizeChangedEvent(mWindowSize.width, mWindowSize.height,
                                                              mScreenSize.width, mScreenSize.height);
         GeckoAppShell.sendEventToGecko(event);
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Window:Resize", ""));
+
+        String json = "";
+        try {
+            if (scrollChange != null) {
+                int id = ++sPaintSyncId;
+                if (id == 0) {
+                    // never use 0 as that is the default value for "this is not
+                    // a special transaction"
+                    id = ++sPaintSyncId;
+                }
+                JSONObject jsonObj = new JSONObject();
+                jsonObj.put("x", scrollChange.x / mViewportMetrics.zoomFactor);
+                jsonObj.put("y", scrollChange.y / mViewportMetrics.zoomFactor);
+                jsonObj.put("id", id);
+                json = jsonObj.toString();
+            }
+        } catch (Exception e) {
+            Log.e(LOGTAG, "Unable to convert point to JSON for " + event, e);
+        }
+        GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Window:Resize", json));
     }
 
     /** Sets the current page rect. You must hold the monitor while calling this. */
@@ -290,69 +319,14 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         });
     }
 
-    /**
-     * Derives content document fixed position margins/fixed layer margins from
-     * the view margins in the given metrics object.
-     */
-    private void getFixedMargins(ImmutableViewportMetrics metrics, RectF fixedMargins) {
-        fixedMargins.left = 0;
-        fixedMargins.top = 0;
-        fixedMargins.right = 0;
-        fixedMargins.bottom = 0;
-
-        // The maximum margins are determined by the scrollable area of the page.
-        float maxMarginWidth = Math.max(0, metrics.getPageWidth() - metrics.getWidthWithoutMargins());
-        float maxMarginHeight = Math.max(0, metrics.getPageHeight() - metrics.getHeightWithoutMargins());
-
-        // If the margins can't fully hide, they're pinned on - in which case,
-        // fixed margins should always be zero.
-        if (maxMarginWidth < metrics.marginLeft + metrics.marginRight) {
-          maxMarginWidth = 0;
-        }
-        if (maxMarginHeight < metrics.marginTop + metrics.marginBottom) {
-          maxMarginHeight = 0;
-        }
-
-        PointF offset = metrics.getMarginOffset();
-        RectF overscroll = metrics.getOverscroll();
-        if (offset.x >= 0) {
-            fixedMargins.right = Math.max(0, Math.min(offset.x - overscroll.right, maxMarginWidth));
-        } else {
-            fixedMargins.left = Math.max(0, Math.min(-offset.x - overscroll.left, maxMarginWidth));
-        }
-        if (offset.y >= 0) {
-            fixedMargins.bottom = Math.max(0, Math.min(offset.y - overscroll.bottom, maxMarginHeight));
-        } else {
-            fixedMargins.top = Math.max(0, Math.min(-offset.y - overscroll.top, maxMarginHeight));
-        }
-
-        // Adjust for overscroll. If we're overscrolled on one side, add that
-        // distance to the margins of the other side (limiting to the maximum
-        // margin size calculated above).
-        if (overscroll.left > 0) {
-            fixedMargins.right = Math.min(maxMarginWidth - fixedMargins.left,
-                                          fixedMargins.right + overscroll.left);
-        } else if (overscroll.right > 0) {
-            fixedMargins.left = Math.min(maxMarginWidth - fixedMargins.right,
-                                         fixedMargins.left + overscroll.right);
-        }
-        if (overscroll.top > 0) {
-            fixedMargins.bottom = Math.min(maxMarginHeight - fixedMargins.top,
-                                           fixedMargins.bottom + overscroll.top);
-        } else if (overscroll.bottom > 0) {
-            fixedMargins.top = Math.min(maxMarginHeight - fixedMargins.bottom,
-                                        fixedMargins.top + overscroll.bottom);
-        }
-    }
-
     private void adjustViewport(DisplayPortMetrics displayPort) {
+        // TODO: APZ For fennec might need margins information to deal with
+        // the dynamic toolbar.
+        if (AppConstants.MOZ_ANDROID_APZ)
+            return;
+
         ImmutableViewportMetrics metrics = getViewportMetrics();
         ImmutableViewportMetrics clampedMetrics = metrics.clamp();
-
-        RectF margins = new RectF();
-        getFixedMargins(metrics, margins);
-        clampedMetrics = clampedMetrics.setMargins(
-            margins.left, margins.top, margins.right, margins.bottom);
 
         if (displayPort == null) {
             displayPort = DisplayPortCalculator.calculate(metrics, mPanZoomController.getVelocityVector());
@@ -400,7 +374,18 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
             default:
             case UPDATE:
                 // Keep the old viewport size
-                newMetrics = messageMetrics.setViewportSize(oldMetrics.getWidth(), oldMetrics.getHeight());
+                newMetrics = messageMetrics.setViewportSize(oldMetrics.viewportRectWidth, oldMetrics.viewportRectHeight);
+                if (mToolbarAnimator.isResizing()) {
+                    // If we're in the middle of a resize, we don't want to clobber
+                    // the scroll offset, so grab the one from the oldMetrics and
+                    // keep using that. We also don't want to abort animations,
+                    // because at that point we're guaranteed to not be animating
+                    // anyway, and calling abortPanZoomAnimation has a nasty
+                    // side-effect of clmaping and clobbering the metrics, which
+                    // we don't want here.
+                    newMetrics = newMetrics.setViewportOrigin(oldMetrics.viewportRectLeft, oldMetrics.viewportRectTop);
+                    break;
+                }
                 if (!oldMetrics.fuzzyEquals(newMetrics)) {
                     abortPanZoomAnimation();
                 }
@@ -430,7 +415,7 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         return mDisplayPort;
     }
 
-    @WrapElementForJNI
+    @WrapForJNI
     DisplayPortMetrics getDisplayPort(boolean pageSizeUpdate, boolean isBrowserContentDisplayed, int tabId, ImmutableViewportMetrics metrics) {
         Tabs tabs = Tabs.getInstance();
         if (isBrowserContentDisplayed && tabs.isSelectedTabId(tabId)) {
@@ -447,12 +432,12 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         }
     }
 
-    @WrapElementForJNI
+    @WrapForJNI
     void contentDocumentChanged() {
         mContentDocumentIsDisplayed = false;
     }
 
-    @WrapElementForJNI
+    @WrapForJNI
     boolean isContentDocumentDisplayed() {
         return mContentDocumentIsDisplayed;
     }
@@ -462,7 +447,7 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
     // to abort the current update and continue with any subsequent ones. This
     // is useful for slow-to-render pages when the display-port starts lagging
     // behind enough that continuing to draw it is wasted effort.
-    @WrapElementForJNI(allowMultithread = true)
+    @WrapForJNI(allowMultithread = true)
     public ProgressiveUpdateData progressiveUpdateCallback(boolean aHasPendingNewThebesContent,
                                                            float x, float y, float width, float height,
                                                            float resolution, boolean lowPrecision) {
@@ -539,8 +524,8 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         //     the page fall outside of the display-port.
         if (Math.max(viewportMetrics.viewportRectLeft, viewportMetrics.pageRectLeft) + 1 < x ||
             Math.max(viewportMetrics.viewportRectTop, viewportMetrics.pageRectTop) + 1 < y ||
-            Math.min(viewportMetrics.viewportRectRight, viewportMetrics.pageRectRight) - 1 > x + width ||
-            Math.min(viewportMetrics.viewportRectBottom, viewportMetrics.pageRectBottom) - 1 > y + height) {
+            Math.min(viewportMetrics.viewportRectRight(), viewportMetrics.pageRectRight) - 1 > x + width ||
+            Math.min(viewportMetrics.viewportRectBottom(), viewportMetrics.pageRectBottom) - 1 > y + height) {
             Log.d(LOGTAG, "Aborting update due to viewport not in display-port");
             mProgressiveUpdateData.abort = true;
 
@@ -576,7 +561,7 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
       * viewport information provided. setPageRect will never be invoked on the same frame that
       * this function is invoked on; and this function will always be called prior to syncViewportInfo.
       */
-    @WrapElementForJNI(allowMultithread = true)
+    @WrapForJNI(allowMultithread = true)
     public void setFirstPaintViewport(float offsetX, float offsetY, float zoom,
             float cssPageLeft, float cssPageTop, float cssPageRight, float cssPageBottom) {
         synchronized (getLock()) {
@@ -621,6 +606,7 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
 
             // Indicate that the document is about to be composited so the
             // LayerView background can be removed.
+            Log.i("GeckoBug1151102", "Done first paint; state " + mView.getPaintState());
             if (mView.getPaintState() == LayerView.PAINT_START) {
                 mView.setPaintState(LayerView.PAINT_BEFORE_FIRST);
             }
@@ -636,7 +622,7 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
       * is invoked on a frame, then this function will not be. For any given frame, this
       * function will be invoked before syncViewportInfo.
       */
-    @WrapElementForJNI(allowMultithread = true)
+    @WrapForJNI(allowMultithread = true)
     public void setPageRect(float cssPageLeft, float cssPageTop, float cssPageRight, float cssPageBottom) {
         synchronized (getLock()) {
             RectF cssPageRect = new RectF(cssPageLeft, cssPageTop, cssPageRight, cssPageBottom);
@@ -657,8 +643,9 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
       * every time we're called. NOTE: we might be able to return a ImmutableViewportMetrics
       * which would avoid the copy into mCurrentViewTransform.
       */
-    @WrapElementForJNI(allowMultithread = true)
-    public ViewTransform syncViewportInfo(int x, int y, int width, int height, float resolution, boolean layersUpdated) {
+    @WrapForJNI(allowMultithread = true)
+    public ViewTransform syncViewportInfo(int x, int y, int width, int height, float resolution, boolean layersUpdated,
+                                          int paintSyncId) {
         // getViewportMetrics is thread safe so we don't need to synchronize.
         // We save the viewport metrics here, so we later use it later in
         // createFrame (which will be called by nsWindow::DrawWindowUnderlay on
@@ -667,28 +654,14 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         // of the compositor thread.
         mFrameMetrics = getViewportMetrics();
 
-        mCurrentViewTransform.x = mFrameMetrics.viewportRectLeft;
-        mCurrentViewTransform.y = mFrameMetrics.viewportRectTop;
-        mCurrentViewTransform.scale = mFrameMetrics.zoomFactor;
-
-        // Adjust the fixed layer margins so that overscroll subtracts from them.
-        getFixedMargins(mFrameMetrics, mCurrentViewTransformMargins);
-        mCurrentViewTransform.fixedLayerMarginLeft = mCurrentViewTransformMargins.left;
-        mCurrentViewTransform.fixedLayerMarginTop = mCurrentViewTransformMargins.top;
-        mCurrentViewTransform.fixedLayerMarginRight = mCurrentViewTransformMargins.right;
-        mCurrentViewTransform.fixedLayerMarginBottom = mCurrentViewTransformMargins.bottom;
-
-        // Offset the view transform so that it renders in the correct place.
-        PointF offset = mFrameMetrics.getMarginOffset();
-        mCurrentViewTransform.offsetX = offset.x;
-        mCurrentViewTransform.offsetY = offset.y;
+        if (paintSyncId == sPaintSyncId) {
+            mToolbarAnimator.scrollChangeResizeCompleted();
+        }
+        mToolbarAnimator.populateViewTransform(mCurrentViewTransform, mFrameMetrics);
 
         if (mRootLayer != null) {
             mRootLayer.setPositionAndResolution(
-                Math.round(x + mCurrentViewTransform.offsetX),
-                Math.round(y + mCurrentViewTransform.offsetY),
-                Math.round(x + width + mCurrentViewTransform.offsetX),
-                Math.round(y + height + mCurrentViewTransform.offsetY),
+                x, y, x + width, y + height,
                 resolution);
         }
 
@@ -714,21 +687,25 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         return mCurrentViewTransform;
     }
 
-    @WrapElementForJNI(allowMultithread = true)
-    public ViewTransform syncFrameMetrics(float offsetX, float offsetY, float zoom,
+    @WrapForJNI(allowMultithread = true)
+    public ViewTransform syncFrameMetrics(float scrollX, float scrollY, float zoom,
                 float cssPageLeft, float cssPageTop, float cssPageRight, float cssPageBottom,
-                boolean layersUpdated, int x, int y, int width, int height, float resolution,
-                boolean isFirstPaint)
+                int dpX, int dpY, int dpWidth, int dpHeight, float paintedResolution,
+                boolean layersUpdated, int paintSyncId)
     {
-        if (isFirstPaint) {
-            setFirstPaintViewport(offsetX, offsetY, zoom,
-                                  cssPageLeft, cssPageTop, cssPageRight, cssPageBottom);
+        // TODO: optimize this so it doesn't create so much garbage - it's a
+        // hot path
+        RectF cssPageRect = new RectF(cssPageLeft, cssPageTop, cssPageRight, cssPageBottom);
+        synchronized (getLock()) {
+            mViewportMetrics = mViewportMetrics.setViewportOrigin(scrollX, scrollY)
+                .setZoomFactor(zoom)
+                .setPageRect(RectUtils.scale(cssPageRect, zoom), cssPageRect);
         }
-
-        return syncViewportInfo(x, y, width, height, resolution, layersUpdated);
+        return syncViewportInfo(dpX, dpY, dpWidth, dpHeight, paintedResolution,
+                    layersUpdated, paintSyncId);
     }
 
-    @WrapElementForJNI(allowMultithread = true)
+    @WrapForJNI(allowMultithread = true)
     public LayerRenderer.Frame createFrame() {
         // Create the shaders and textures if necessary.
         if (!mLayerRendererInitialized) {
@@ -748,12 +725,12 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         }
     }
 
-    @WrapElementForJNI(allowMultithread = true)
+    @WrapForJNI(allowMultithread = true)
     public void activateProgram() {
         mLayerRenderer.activateDefaultProgram();
     }
 
-    @WrapElementForJNI(allowMultithread = true)
+    @WrapForJNI(allowMultithread = true)
     public void deactivateProgramAndRestoreState(boolean enableScissor,
             int scissorX, int scissorY, int scissorW, int scissorH)
     {
@@ -763,7 +740,7 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
 
     private void geometryChanged(DisplayPortMetrics displayPort) {
         /* Let Gecko know if the screensize has changed */
-        sendResizeEventIfNecessary(false);
+        sendResizeEventIfNecessary(false, null);
         if (getRedrawHint()) {
             adjustViewport(displayPort);
         }
@@ -773,7 +750,7 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
     @Override
     public void renderRequested() {
         try {
-            GeckoAppShell.scheduleComposite();
+            GeckoAppShell.invalidateAndScheduleComposite();
         } catch (UnsupportedOperationException uoe) {
             // In some very rare cases this gets called before libxul is loaded,
             // so catch and ignore the exception that will throw. See bug 837821
@@ -793,7 +770,8 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
     /** Implementation of LayerView.Listener */
     @Override
     public void surfaceChanged(int width, int height) {
-        setViewportSize(width, height);
+        IntSize viewportSize = mToolbarAnimator.getViewportSize();
+        setViewportSize(viewportSize.width, viewportSize.height, null);
     }
 
     /** Implementation of PanZoomTarget */
@@ -816,8 +794,8 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
 
     /** Implementation of PanZoomTarget */
     @Override
-    public RectF getMaxMargins() {
-        return mMarginsAnimator.getMaxMargins();
+    public PointF getVisibleEndOfLayerView() {
+        return mToolbarAnimator.getVisibleEndOfLayerView();
     }
 
     /** Implementation of PanZoomTarget */
@@ -850,8 +828,7 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         // updated is in GeckoLayerClient.setViewportSize, and the only place the margins should
         // ever be updated is in GeckoLayerClient.setFixedLayerMargins; both of these assign to
         // mViewportMetrics directly.
-        metrics = metrics.setViewportSize(mViewportMetrics.getWidth(), mViewportMetrics.getHeight());
-        metrics = metrics.setMarginsFrom(mViewportMetrics);
+        metrics = metrics.setViewportSize(mViewportMetrics.viewportRectWidth, mViewportMetrics.viewportRectHeight);
         mViewportMetrics = metrics;
 
         viewportMetricsChanged(notifyGecko);
@@ -861,12 +838,7 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
      * You must hold the monitor while calling this.
      */
     private void viewportMetricsChanged(boolean notifyGecko) {
-        if (mDynamicToolbarViewportChangeListener != null) {
-            mDynamicToolbarViewportChangeListener.onMetricsChanged(mViewportMetrics);
-        }
-        if (mZoomedViewViewportChangeListener != null) {
-            mZoomedViewViewportChangeListener.onMetricsChanged(mViewportMetrics);
-        }
+        mToolbarAnimator.onMetricsChanged(mViewportMetrics);
 
         mView.requestRender();
         if (notifyGecko && mGeckoIsReady) {
@@ -899,34 +871,14 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
     @Override
     public void scrollBy(float dx, float dy) {
         // Set mViewportMetrics manually so the margin changes take.
-        mViewportMetrics = mMarginsAnimator.scrollBy(mViewportMetrics, dx, dy);
-        viewportMetricsChanged(true);
-    }
-
-    /** Implementation of PanZoomTarget
-     * Notification that a subdocument has been scrolled by a certain amount.
-     * This is used here to make sure that the margins are still accessible
-     * during subdocument scrolling.
-     *
-     * You must hold the monitor while calling this.
-     */
-    @Override
-    public void scrollMarginsBy(float dx, float dy) {
-        ImmutableViewportMetrics newMarginsMetrics =
-            mMarginsAnimator.scrollBy(mViewportMetrics, dx, dy);
-        mViewportMetrics = mViewportMetrics.setMarginsFrom(newMarginsMetrics);
+        mViewportMetrics = mViewportMetrics.offsetViewportBy(dx, dy);
         viewportMetricsChanged(true);
     }
 
     /** Implementation of PanZoomTarget */
     @Override
     public void panZoomStopped() {
-        if (mDynamicToolbarViewportChangeListener != null) {
-            mDynamicToolbarViewportChangeListener.onPanZoomStopped();
-        }
-        if (mZoomedViewViewportChangeListener != null) {
-            mZoomedViewViewportChangeListener.onPanZoomStopped();
-        }
+        mToolbarAnimator.onPanZoomStopped();
     }
 
     /** Implementation of PanZoomTarget */
@@ -977,8 +929,6 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
 
         ImmutableViewportMetrics viewportMetrics = mViewportMetrics;
         PointF origin = viewportMetrics.getOrigin();
-        PointF offset = viewportMetrics.getMarginOffset();
-        origin.offset(-offset.x, -offset.y);
         float zoom = viewportMetrics.zoomFactor;
         ImmutableViewportMetrics geckoViewport = mGeckoViewport;
         PointF geckoOrigin = geckoViewport.getOrigin();
@@ -994,14 +944,6 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
                 ((viewPoint.y + origin.y) / zoom) - (geckoOrigin.y / geckoZoom));
 
         return layerPoint;
-    }
-
-    void setOnMetricsChangedDynamicToolbarViewportListener(LayerView.OnMetricsChangedListener listener) {
-        mDynamicToolbarViewportChangeListener = listener;
-    }
-
-    void setOnMetricsChangedZoomedViewportListener(LayerView.OnMetricsChangedListener listener) {
-    	mZoomedViewViewportChangeListener = listener;
     }
 
     public void addDrawListener(DrawListener listener) {

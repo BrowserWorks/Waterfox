@@ -6,10 +6,10 @@
  * works as advertised.
  */
 
-let { AbstractTreeItem } = Cu.import("resource:///modules/devtools/AbstractTreeItem.jsm", {});
-let { Heritage } = Cu.import("resource:///modules/devtools/ViewHelpers.jsm", {});
+var { AbstractTreeItem } = Cu.import("resource:///modules/devtools/AbstractTreeItem.jsm", {});
+var { Heritage } = Cu.import("resource:///modules/devtools/ViewHelpers.jsm", {});
 
-function spawnTest () {
+function* spawnTest() {
   let container = document.createElement("vbox");
   gBrowser.selectedBrowser.parentNode.appendChild(container);
 
@@ -17,6 +17,11 @@ function spawnTest () {
 
   let treeRoot = new MyCustomTreeItem(gDataSrc, { parent: null });
   treeRoot.attachTo(container);
+
+  ok(!treeRoot.expanded,
+    "The root node should not be expanded yet.");
+  ok(!treeRoot.populated,
+    "The root node should not be populated yet.");
 
   is(container.childNodes.length, 1,
     "The container node should have one child available.");
@@ -160,7 +165,7 @@ MyCustomTreeItem.prototype = Heritage.extend(AbstractTreeItem.prototype, {
   }
 });
 
-let gDataSrc = {
+var gDataSrc = {
   label: "root",
   children: [{
     label: "foo",

@@ -9,10 +9,11 @@
 
 const { Cc, Ci, Cu, Cr } = require("chrome");
 const { Task } = require("resource://gre/modules/Task.jsm");
-const { LineGraphWidget } = require("resource:///modules/devtools/Graphs.jsm");
-const { BarGraphWidget } = require("resource:///modules/devtools/Graphs.jsm");
-const { CanvasGraphUtils } = require("resource:///modules/devtools/Graphs.jsm");
 const { Heritage } = require("resource:///modules/devtools/ViewHelpers.jsm");
+const LineGraphWidget = require("devtools/shared/widgets/LineGraphWidget");
+const BarGraphWidget = require("devtools/shared/widgets/BarGraphWidget");
+const MountainGraphWidget = require("devtools/shared/widgets/MountainGraphWidget");
+const { CanvasGraphUtils } = require("devtools/shared/widgets/Graphs");
 
 loader.lazyRequireGetter(this, "promise");
 loader.lazyRequireGetter(this, "EventEmitter",
@@ -24,10 +25,12 @@ loader.lazyRequireGetter(this, "getColor",
   "devtools/shared/theme", true);
 loader.lazyRequireGetter(this, "ProfilerGlobal",
   "devtools/performance/global");
-loader.lazyRequireGetter(this, "TimelineGlobal",
-  "devtools/performance/global");
+loader.lazyRequireGetter(this, "L10N",
+  "devtools/performance/global", true);
 loader.lazyRequireGetter(this, "MarkersOverview",
   "devtools/performance/markers-overview", true);
+loader.lazyRequireGetter(this, "createTierGraphDataFromFrameNode",
+  "devtools/performance/jit", true);
 
 /**
  * For line graphs
@@ -37,9 +40,9 @@ const STROKE_WIDTH = 1; // px
 const DAMPEN_VALUES = 0.95;
 const CLIPHEAD_LINE_COLOR = "#666";
 const SELECTION_LINE_COLOR = "#555";
-const SELECTION_BACKGROUND_COLOR_NAME = "highlight-blue";
-const FRAMERATE_GRAPH_COLOR_NAME = "highlight-green";
-const MEMORY_GRAPH_COLOR_NAME = "highlight-blue";
+const SELECTION_BACKGROUND_COLOR_NAME = "graphs-blue";
+const FRAMERATE_GRAPH_COLOR_NAME = "graphs-green";
+const MEMORY_GRAPH_COLOR_NAME = "graphs-blue";
 
 /**
  * For timeline overview
@@ -47,6 +50,11 @@ const MEMORY_GRAPH_COLOR_NAME = "highlight-blue";
 const MARKERS_GRAPH_HEADER_HEIGHT = 14; // px
 const MARKERS_GRAPH_ROW_HEIGHT = 10; // px
 const MARKERS_GROUP_VERTICAL_PADDING = 4; // px
+
+/**
+ * For optimization graph
+ */
+const OPTIMIZATIONS_GRAPH_RESOLUTION = 100;
 
 /**
  * A base class for performance graphs to inherit from.
@@ -86,7 +94,7 @@ PerformanceGraph.prototype = Heritage.extend(LineGraphWidget.prototype, {
    */
   setTheme: function (theme) {
     theme = theme || "light";
-    let mainColor = getColor(this.mainColor || "highlight-blue", theme);
+    let mainColor = getColor(this.mainColor || "graphs-blue", theme);
     this.backgroundColor = getColor("body-background", theme);
     this.strokeColor = mainColor;
     this.backgroundGradientStart = colorUtils.setAlpha(mainColor, 0.2);
@@ -124,7 +132,7 @@ FramerateGraph.prototype = Heritage.extend(PerformanceGraph.prototype, {
  *        The parent node holding the overview.
  */
 function MemoryGraph(parent) {
-  PerformanceGraph.call(this, parent, TimelineGlobal.L10N.getStr("graphs.memory"));
+  PerformanceGraph.call(this, parent, L10N.getStr("graphs.memory"));
 }
 
 MemoryGraph.prototype = Heritage.extend(PerformanceGraph.prototype, {
@@ -135,8 +143,8 @@ MemoryGraph.prototype = Heritage.extend(PerformanceGraph.prototype, {
   }
 });
 
-function TimelineGraph(parent, blueprint) {
-  MarkersOverview.call(this, parent, blueprint);
+function TimelineGraph(parent, filter) {
+  MarkersOverview.call(this, parent, filter);
 }
 
 TimelineGraph.prototype = Heritage.extend(MarkersOverview.prototype, {
@@ -163,7 +171,6 @@ const GRAPH_DEFINITIONS = {
   timeline: {
     constructor: TimelineGraph,
     selector: "#markers-overview",
-    needsBlueprints: true,
     primaryLink: true
   }
 };
@@ -174,15 +181,15 @@ const GRAPH_DEFINITIONS = {
  *
  * @param {object} definition
  * @param {DOMElement} root
- * @param {function} getBlueprint
+ * @param {function} getFilter
  * @param {function} getTheme
  */
-function GraphsController ({ definition, root, getBlueprint, getTheme }) {
+function GraphsController ({ definition, root, getFilter, getTheme }) {
   this._graphs = {};
   this._enabled = new Set();
   this._definition = definition || GRAPH_DEFINITIONS;
   this._root = root;
-  this._getBlueprint = getBlueprint;
+  this._getFilter = getFilter;
   this._getTheme = getTheme;
   this._primaryLink = Object.keys(this._definition).filter(name => this._definition[name].primaryLink)[0];
   this.$ = root.ownerDocument.querySelector.bind(root.ownerDocument);
@@ -289,7 +296,7 @@ GraphsController.prototype = {
    */
   enable: function (graphName, isEnabled) {
     let el = this.$(this._definition[graphName].selector);
-    el.hidden = !isEnabled;
+    el.classList[isEnabled ? "remove" : "add"]("hidden");
 
     // If no status change, just return
     if (this._enabled.has(graphName) === isEnabled) {
@@ -311,7 +318,7 @@ GraphsController.prototype = {
    * when older platforms do not have any timeline data.
    */
   disableAll: function () {
-    this._root.hidden = true;
+    this._root.classList.add("hidden");
     // Hide all the subelements
     Object.keys(this._definition).forEach(graphName => this.enable(graphName, false));
   },
@@ -326,7 +333,7 @@ GraphsController.prototype = {
 
   /**
    * Fetches the currently mapped selection. If graphs are not yet rendered,
-   * (which throws in Graphs.jsm), return null.
+   * (which throws in Graphs.js), return null.
    */
   getMappedSelection: function ({ mapStart, mapEnd }) {
     let primary = this._getPrimaryLink();
@@ -369,8 +376,8 @@ GraphsController.prototype = {
   _construct: Task.async(function *(graphName) {
     let def = this._definition[graphName];
     let el = this.$(def.selector);
-    let blueprint = def.needsBlueprints ? this._getBlueprint() : void 0;
-    let graph = this._graphs[graphName] = new def.constructor(el, blueprint);
+    let filter = this._getFilter();
+    let graph = this._graphs[graphName] = new def.constructor(el, filter);
     graph.graphName = graphName;
 
     yield graph.ready();
@@ -382,6 +389,9 @@ GraphsController.prototype = {
       CanvasGraphUtils.linkAnimation(this._getPrimaryLink(), graph);
       CanvasGraphUtils.linkSelection(this._getPrimaryLink(), graph);
     }
+
+    // Sets the container element's visibility based off of enabled status
+    el.classList[this._enabled.has(graphName) ? "remove" : "add"]("hidden");
 
     this.setTheme();
     return graph;
@@ -423,6 +433,82 @@ GraphsController.prototype = {
   }),
 };
 
+/**
+ * A base class for performance graphs to inherit from.
+ *
+ * @param nsIDOMNode parent
+ *        The parent node holding the overview.
+ * @param string metric
+ *        The unit of measurement for this graph.
+ */
+function OptimizationsGraph(parent) {
+  MountainGraphWidget.call(this, parent);
+  this.setTheme();
+}
+
+OptimizationsGraph.prototype = Heritage.extend(MountainGraphWidget.prototype, {
+
+  render: Task.async(function *(threadNode, frameNode) {
+    // Regardless if we draw or clear the graph, wait
+    // until it's ready.
+    yield this.ready();
+
+    if (!threadNode || !frameNode) {
+      this.setData([]);
+      return;
+    }
+
+    let { sampleTimes } = threadNode;
+
+    if (!sampleTimes.length) {
+      this.setData([]);
+      return;
+    }
+
+    // Take startTime/endTime from samples recorded, rather than
+    // using duration directly from threadNode, as the first sample that
+    // equals the startTime does not get recorded.
+    let startTime = sampleTimes[0];
+    let endTime = sampleTimes[sampleTimes.length - 1];
+
+    let bucketSize = (endTime - startTime) / OPTIMIZATIONS_GRAPH_RESOLUTION;
+    let data = createTierGraphDataFromFrameNode(frameNode, sampleTimes, bucketSize);
+
+    // If for some reason we don't have data (like the frameNode doesn't
+    // have optimizations, but it shouldn't be at this point if it doesn't),
+    // log an error.
+    if (!data) {
+      Cu.reportError(`FrameNode#${frameNode.location} does not have optimizations data to render.`);
+      return;
+    }
+
+    this.dataOffsetX = startTime;
+    yield this.setData(data);
+  }),
+
+  /**
+   * Sets the theme via `theme` to either "light" or "dark",
+   * and updates the internal styling to match. Requires a redraw
+   * to see the effects.
+   */
+  setTheme: function (theme) {
+    theme = theme || "light";
+
+    let interpreterColor = getColor("graphs-red", theme);
+    let baselineColor = getColor("graphs-blue", theme);
+    let ionColor = getColor("graphs-green", theme);
+
+    this.format = [
+      { color: interpreterColor },
+      { color: baselineColor },
+      { color: ionColor },
+    ];
+
+    this.backgroundColor = getColor("sidebar-background", theme);
+  }
+});
+
+exports.OptimizationsGraph = OptimizationsGraph;
 exports.FramerateGraph = FramerateGraph;
 exports.MemoryGraph = MemoryGraph;
 exports.TimelineGraph = TimelineGraph;

@@ -80,7 +80,9 @@ menuitem.spell-suggestion {
 }
 
 menu.menu-iconic > .menu-iconic-left,
-menuitem.menuitem-iconic > .menu-iconic-left {
+menuitem.menuitem-iconic > .menu-iconic-left,
+menu.menu-iconic > .menu-iconic-right,
+menuitem.menuitem-iconic > .menu-iconic-right {
   -moz-appearance: menuimage;
   padding-top: 2px;
 }
@@ -155,7 +157,6 @@ menulist > menupopup > menu {
 menulist > menupopup > menuitem > .menu-iconic-left,
 menulist > menupopup > menu > .menu-iconic-left {
   display: none;
-  padding-top: 0px;
 }
 
 menulist > menupopup > menuitem > label,

@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include "TestCommon.h"
 #include "nsNetUtil.h"
+#include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "mozilla/Attributes.h"
 #include "nsIScriptSecurityManager.h"
 
@@ -10,7 +11,7 @@
 // set NSPR_LOG_MODULES=Test:5
 //
 static PRLogModuleInfo *gTestLog = nullptr;
-#define LOG(args) PR_LOG(gTestLog, PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(gTestLog, mozilla::LogLevel::Debug, args)
 
 class MyStreamLoaderObserver final : public nsIStreamLoaderObserver
 {
@@ -73,7 +74,7 @@ int main(int argc, char **argv)
     rv = NS_NewChannel(getter_AddRefs(chan),
                        uri,
                        systemPrincipal,
-                       nsILoadInfo::SEC_NORMAL,
+                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
                        nsIContentPolicy::TYPE_OTHER);
 
     if (NS_FAILED(rv))
@@ -88,7 +89,7 @@ int main(int argc, char **argv)
     if (NS_FAILED(rv))
       return -1;
 
-    rv = chan->AsyncOpen(loader, nullptr);
+    rv = chan->AsyncOpen2(loader);
     if (NS_FAILED(rv))
       return -1;
 

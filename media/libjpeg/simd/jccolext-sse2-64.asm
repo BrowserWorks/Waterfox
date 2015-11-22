@@ -50,14 +50,14 @@ EXTN(jsimd_rgb_ycc_convert_sse2):
         collect_args
         push    rbx
 
-        mov     ecx, r10d
+        mov     rcx, r10
         test    rcx,rcx
         jz      near .return
 
         push    rcx
 
         mov rsi, r12
-        mov ecx, r13d
+        mov rcx, r13
         mov     rdi, JSAMPARRAY [rsi+0*SIZEOF_JSAMPARRAY]
         mov     rbx, JSAMPARRAY [rsi+1*SIZEOF_JSAMPARRAY]
         mov     rdx, JSAMPARRAY [rsi+2*SIZEOF_JSAMPARRAY]

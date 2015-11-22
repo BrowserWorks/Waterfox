@@ -15,7 +15,8 @@ SOURCES += [
     'nsViewManager.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']
 
 FINAL_LIBRARY = 'xul'
 

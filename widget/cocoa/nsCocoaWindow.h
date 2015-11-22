@@ -283,10 +283,28 @@ public:
     NS_IMETHOD              Move(double aX, double aY) override;
     NS_IMETHOD              PlaceBehind(nsTopLevelWidgetZPlacement aPlacement,
                                         nsIWidget *aWidget, bool aActivate) override;
-    NS_IMETHOD              SetSizeMode(int32_t aMode) override;
+    NS_IMETHOD              SetSizeMode(nsSizeMode aMode) override;
     NS_IMETHOD              HideWindowChrome(bool aShouldHide) override;
-    void                    EnteredFullScreen(bool aFullScreen);
-    NS_IMETHOD              MakeFullScreen(bool aFullScreen, nsIScreen* aTargetScreen = nullptr) override;
+
+    void EnteredFullScreen(bool aFullScreen, bool aNativeMode = true);
+    virtual bool PrepareForFullscreenTransition(nsISupports** aData) override;
+    virtual void PerformFullscreenTransition(FullscreenTransitionStage aStage,
+                                             uint16_t aDuration,
+                                             nsISupports* aData,
+                                             nsIRunnable* aCallback) override;
+    NS_IMETHOD MakeFullScreen(
+      bool aFullScreen, nsIScreen* aTargetScreen = nullptr) override final;
+    NS_IMETHOD MakeFullScreenWithNativeTransition(
+      bool aFullScreen, nsIScreen* aTargetScreen = nullptr) override final;
+    NSAnimation* FullscreenTransitionAnimation() const { return mFullscreenTransitionAnimation; }
+    void ReleaseFullscreenTransitionAnimation()
+    {
+      MOZ_ASSERT(mFullscreenTransitionAnimation,
+                 "Should only be called when there is animation");
+      [mFullscreenTransitionAnimation release];
+      mFullscreenTransitionAnimation = nil;
+    }
+
     NS_IMETHOD              Resize(double aWidth, double aHeight, bool aRepaint) override;
     NS_IMETHOD              Resize(double aX, double aY, double aWidth, double aHeight, bool aRepaint) override;
     NS_IMETHOD              GetClientBounds(nsIntRect &aRect) override;
@@ -383,6 +401,10 @@ protected:
   nsresult             DoResize(double aX, double aY, double aWidth, double aHeight,
                                 bool aRepaint, bool aConstrainToCurrentScreen);
 
+  inline bool ShouldToggleNativeFullscreen(bool aFullScreen,
+                                           bool aUseSystemTransition);
+  nsresult DoMakeFullScreen(bool aFullScreen, bool aUseSystemTransition);
+
   virtual already_AddRefed<nsIWidget>
   AllocateChildPopupWidget() override
   {
@@ -400,6 +422,9 @@ protected:
   nsRefPtr<nsMenuBarX> mMenuBar;
   NSWindow*            mSheetWindowParent; // if this is a sheet, this is the NSWindow it's attached to
   nsChildView*         mPopupContentView; // if this is a popup, this is its content widget
+  // if this is a toplevel window, and there is any ongoing fullscreen
+  // transition, it is the animation object.
+  NSAnimation*         mFullscreenTransitionAnimation;
   int32_t              mShadowStyle;
 
   CGFloat              mBackingScaleFactor;
@@ -409,12 +434,17 @@ protected:
   bool                 mWindowMadeHere; // true if we created the window, false for embedding
   bool                 mSheetNeedsShow; // if this is a sheet, are we waiting to be shown?
                                         // this is used for sibling sheet contention only
-  bool                 mFullScreen;
+  bool                 mInFullScreenMode;
   bool                 mInFullScreenTransition; // true from the request to enter/exit fullscreen
                                                 // (MakeFullScreen() call) to EnteredFullScreen()
   bool                 mModal;
 
-  bool                 mUsesNativeFullScreen; // only true on Lion if SetShowsFullScreenButton(true);
+  // Only true on 10.7+ if SetShowsFullScreenButton(true) is called.
+  bool                 mSupportsNativeFullScreen;
+  // Whether we are currently using Lion native fullscreen. It could be
+  // false either because we are not on Lion, or we are in the DOM
+  // fullscreen where we do not use the native fullscreen.
+  bool                 mInNativeFullScreenMode;
 
   bool                 mIsAnimationSuppressed;
 

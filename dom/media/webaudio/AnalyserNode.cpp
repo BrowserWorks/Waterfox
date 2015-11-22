@@ -12,6 +12,14 @@
 #include "mozilla/PodOperations.h"
 
 namespace mozilla {
+
+static const uint32_t MAX_FFT_SIZE = 32768;
+static const size_t CHUNK_COUNT = MAX_FFT_SIZE >> WEBAUDIO_BLOCK_SIZE_BITS;
+static_assert(MAX_FFT_SIZE == CHUNK_COUNT * WEBAUDIO_BLOCK_SIZE,
+              "MAX_FFT_SIZE must be a multiple of WEBAUDIO_BLOCK_SIZE");
+static_assert((CHUNK_COUNT & (CHUNK_COUNT - 1)) == 0,
+              "CHUNK_COUNT must be power of 2 for remainder behavior");
+
 namespace dom {
 
 NS_IMPL_ISUPPORTS_INHERITED0(AnalyserNode, AudioNode)
@@ -30,15 +38,8 @@ class AnalyserNodeEngine final : public AudioNodeEngine
 
     NS_IMETHOD Run()
     {
-      nsRefPtr<AnalyserNode> node;
-      {
-        // No need to keep holding the lock for the whole duration of this
-        // function, since we're holding a strong reference to it, so if
-        // we can obtain the reference, we will hold the node alive in
-        // this function.
-        MutexAutoLock lock(mStream->Engine()->NodeMutex());
-        node = static_cast<AnalyserNode*>(mStream->Engine()->Node());
-      }
+      nsRefPtr<AnalyserNode> node =
+        static_cast<AnalyserNode*>(mStream->Engine()->NodeMainThread());
       if (node) {
         node->AppendChunk(mChunk);
       }
@@ -58,31 +59,15 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioChunk& aInput,
-                            AudioChunk* aOutput,
+                            const AudioBlock& aInput,
+                            AudioBlock* aOutput,
                             bool* aFinished) override
   {
     *aOutput = aInput;
 
-    MutexAutoLock lock(NodeMutex());
-
-    if (Node()) {
-      // If the input is silent, we sill need to send a silent buffer
-      if (aOutput->IsNull()) {
-        AllocateAudioBlock(1, aOutput);
-        float* samples = static_cast<float*>(
-            const_cast<void*>(aOutput->mChannelData[0]));
-        PodZero(samples, WEBAUDIO_BLOCK_SIZE);
-      }
-      uint32_t channelCount = aOutput->mChannelData.Length();
-      for (uint32_t channel = 0; channel < channelCount; ++channel) {
-        float* samples = static_cast<float*>(
-            const_cast<void*>(aOutput->mChannelData[channel]));
-        AudioBlockInPlaceScale(samples, aOutput->mVolume);
-      }
-      nsRefPtr<TransferBuffer> transfer = new TransferBuffer(aStream, *aOutput);
-      NS_DispatchToMainThread(transfer);
-    }
+    nsRefPtr<TransferBuffer> transfer =
+      new TransferBuffer(aStream, aInput.AsAudioChunk());
+    NS_DispatchToMainThread(transfer);
   }
 
   virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
@@ -100,10 +85,16 @@ AnalyserNode::AnalyserNode(AudioContext* aContext)
   , mMinDecibels(-100.)
   , mMaxDecibels(-30.)
   , mSmoothingTimeConstant(.8)
-  , mWriteIndex(0)
 {
-  mStream = aContext->Graph()->CreateAudioNodeStream(new AnalyserNodeEngine(this),
-                                                     MediaStreamGraph::INTERNAL_STREAM);
+  mStream = AudioNodeStream::Create(aContext,
+                                    new AnalyserNodeEngine(this),
+                                    AudioNodeStream::NO_STREAM_FLAGS);
+
+  // Enough chunks must be recorded to handle the case of fftSize being
+  // increased to maximum immediately before getFloatTimeDomainData() is
+  // called, for example.
+  unused << mChunks.SetLength(CHUNK_COUNT, fallible);
+
   AllocateBuffer();
 }
 
@@ -112,8 +103,8 @@ AnalyserNode::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 {
   size_t amount = AudioNode::SizeOfExcludingThis(aMallocSizeOf);
   amount += mAnalysisBlock.SizeOfExcludingThis(aMallocSizeOf);
-  amount += mBuffer.SizeOfExcludingThis(aMallocSizeOf);
-  amount += mOutputBuffer.SizeOfExcludingThis(aMallocSizeOf);
+  amount += mChunks.ShallowSizeOfExcludingThis(aMallocSizeOf);
+  amount += mOutputBuffer.ShallowSizeOfExcludingThis(aMallocSizeOf);
   return amount;
 }
 
@@ -134,7 +125,7 @@ AnalyserNode::SetFftSize(uint32_t aValue, ErrorResult& aRv)
 {
   // Disallow values that are not a power of 2 and outside the [32,32768] range
   if (aValue < 32 ||
-      aValue > 32768 ||
+      aValue > MAX_FFT_SIZE ||
       (aValue & (aValue - 1)) != 0) {
     aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
     return;
@@ -223,11 +214,9 @@ AnalyserNode::GetFloatTimeDomainData(const Float32Array& aArray)
   aArray.ComputeLengthAndData();
 
   float* buffer = aArray.Data();
-  size_t length = std::min(size_t(aArray.Length()), mBuffer.Length());
+  size_t length = std::min(aArray.Length(), FftSize());
 
-  for (size_t i = 0; i < length; ++i) {
-    buffer[i] = mBuffer[(i + mWriteIndex) % mBuffer.Length()];;
-  }
+  GetTimeDomainData(buffer, length);
 }
 
 void
@@ -235,11 +224,18 @@ AnalyserNode::GetByteTimeDomainData(const Uint8Array& aArray)
 {
   aArray.ComputeLengthAndData();
 
-  unsigned char* buffer = aArray.Data();
-  size_t length = std::min(size_t(aArray.Length()), mBuffer.Length());
+  size_t length = std::min(aArray.Length(), FftSize());
 
+  AlignedTArray<float> tmpBuffer;
+  if (!tmpBuffer.SetLength(length, fallible)) {
+    return;
+  }
+
+  GetTimeDomainData(tmpBuffer.Elements(), length);
+
+  unsigned char* buffer = aArray.Data();
   for (size_t i = 0; i < length; ++i) {
-    const float value = mBuffer[(i + mWriteIndex) % mBuffer.Length()];
+    const float value = tmpBuffer[i];
     // scale the value to the range of [0, UCHAR_MAX]
     const float scaled = std::max(0.0f, std::min(float(UCHAR_MAX),
                                                  128.0f * (value + 1.0f)));
@@ -250,25 +246,19 @@ AnalyserNode::GetByteTimeDomainData(const Uint8Array& aArray)
 bool
 AnalyserNode::FFTAnalysis()
 {
-  float* inputBuffer;
-  AlignedFallibleTArray<float> tmpBuffer;
-  if (mWriteIndex == 0) {
-    inputBuffer = mBuffer.Elements();
-  } else {
-    if (!tmpBuffer.SetLength(FftSize())) {
-      return false;
-    }
-    inputBuffer = tmpBuffer.Elements();
-    memcpy(inputBuffer, mBuffer.Elements() + mWriteIndex, sizeof(float) * (FftSize() - mWriteIndex));
-    memcpy(inputBuffer + FftSize() - mWriteIndex, mBuffer.Elements(), sizeof(float) * mWriteIndex);
+  AlignedTArray<float> tmpBuffer;
+  size_t fftSize = FftSize();
+  if (!tmpBuffer.SetLength(fftSize, fallible)) {
+    return false;
   }
 
-  ApplyBlackmanWindow(inputBuffer, FftSize());
-
+  float* inputBuffer = tmpBuffer.Elements();
+  GetTimeDomainData(inputBuffer, fftSize);
+  ApplyBlackmanWindow(inputBuffer, fftSize);
   mAnalysisBlock.PerformFFT(inputBuffer);
 
   // Normalize so than an input sine wave at 0dBfs registers as 0dBfs (undo FFT scaling factor).
-  const double magnitudeScale = 1.0 / FftSize();
+  const double magnitudeScale = 1.0 / fftSize;
 
   for (uint32_t i = 0; i < mOutputBuffer.Length(); ++i) {
     double scalarMagnitude = NS_hypot(mAnalysisBlock.RealData(i),
@@ -300,14 +290,8 @@ bool
 AnalyserNode::AllocateBuffer()
 {
   bool result = true;
-  if (mBuffer.Length() != FftSize()) {
-    if (!mBuffer.SetLength(FftSize())) {
-      return false;
-    }
-    memset(mBuffer.Elements(), 0, sizeof(float) * FftSize());
-    mWriteIndex = 0;
-
-    if (!mOutputBuffer.SetLength(FrequencyBinCount())) {
+  if (mOutputBuffer.Length() != FrequencyBinCount()) {
+    if (!mOutputBuffer.SetLength(FrequencyBinCount(), fallible)) {
       return false;
     }
     memset(mOutputBuffer.Elements(), 0, sizeof(float) * FrequencyBinCount());
@@ -318,34 +302,60 @@ AnalyserNode::AllocateBuffer()
 void
 AnalyserNode::AppendChunk(const AudioChunk& aChunk)
 {
-  const uint32_t bufferSize = mBuffer.Length();
-  const uint32_t channelCount = aChunk.mChannelData.Length();
-  uint32_t chunkDuration = aChunk.mDuration;
-  MOZ_ASSERT((bufferSize & (bufferSize - 1)) == 0); // Must be a power of two!
-  MOZ_ASSERT(channelCount > 0);
-  MOZ_ASSERT(chunkDuration == WEBAUDIO_BLOCK_SIZE);
-
-  if (chunkDuration > bufferSize) {
-    // Copy a maximum bufferSize samples.
-    chunkDuration = bufferSize;
+  if (mChunks.Length() == 0) {
+    return;
   }
 
-  PodCopy(mBuffer.Elements() + mWriteIndex, static_cast<const float*>(aChunk.mChannelData[0]), chunkDuration);
-  for (uint32_t i = 1; i < channelCount; ++i) {
-    AudioBlockAddChannelWithScale(static_cast<const float*>(aChunk.mChannelData[i]), 1.0f,
-                                  mBuffer.Elements() + mWriteIndex);
+  ++mCurrentChunk;
+  mChunks[mCurrentChunk & (CHUNK_COUNT - 1)] = aChunk;
+}
+
+// Reads into aData the oldest aLength samples of the fftSize most recent
+// samples.
+void
+AnalyserNode::GetTimeDomainData(float* aData, size_t aLength)
+{
+  size_t fftSize = FftSize();
+  MOZ_ASSERT(aLength <= fftSize);
+
+  if (mChunks.Length() == 0) {
+    PodZero(aData, aLength);
+    return;
   }
-  if (channelCount > 1) {
-    AudioBlockInPlaceScale(mBuffer.Elements() + mWriteIndex,
-                           1.0f / aChunk.mChannelData.Length());
-  }
-  mWriteIndex += chunkDuration;
-  MOZ_ASSERT(mWriteIndex <= bufferSize);
-  if (mWriteIndex >= bufferSize) {
-    mWriteIndex = 0;
+
+  size_t readChunk =
+    mCurrentChunk - ((fftSize - 1) >> WEBAUDIO_BLOCK_SIZE_BITS);
+  size_t readIndex = (0 - fftSize) & (WEBAUDIO_BLOCK_SIZE - 1);
+  MOZ_ASSERT(readIndex == 0 || readIndex + fftSize == WEBAUDIO_BLOCK_SIZE);
+
+  for (size_t writeIndex = 0; writeIndex < aLength; ) {
+    const AudioChunk& chunk = mChunks[readChunk & (CHUNK_COUNT - 1)];
+    const size_t channelCount = chunk.ChannelCount();
+    size_t copyLength =
+      std::min<size_t>(aLength - writeIndex, WEBAUDIO_BLOCK_SIZE);
+    float* dataOut = &aData[writeIndex];
+
+    if (channelCount == 0) {
+      PodZero(dataOut, copyLength);
+    } else {
+      float scale = chunk.mVolume / channelCount;
+      { // channel 0
+        auto channelData =
+          static_cast<const float*>(chunk.mChannelData[0]) + readIndex;
+        AudioBufferCopyWithScale(channelData, scale, dataOut, copyLength);
+      }
+      for (uint32_t i = 1; i < channelCount; ++i) {
+        auto channelData =
+          static_cast<const float*>(chunk.mChannelData[i]) + readIndex;
+        AudioBufferAddWithScale(channelData, scale, dataOut, copyLength);
+      }
+    }
+
+    readChunk++;
+    writeIndex += copyLength;
   }
 }
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 

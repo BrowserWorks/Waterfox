@@ -388,16 +388,19 @@ nsSplitterFrame::HandleEvent(nsPresContext* aPresContext,
 
   nsWeakFrame weakFrame(this);
   nsRefPtr<nsSplitterFrameInner> kungFuDeathGrip(mInner);
-  switch (aEvent->message) {
-    case NS_MOUSE_MOVE: 
+  switch (aEvent->mMessage) {
+    case eMouseMove: 
       mInner->MouseDrag(aPresContext, aEvent);
-    break;
+      break;
   
-    case NS_MOUSE_BUTTON_UP:
+    case eMouseUp:
       if (aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton) {
         mInner->MouseUp(aPresContext, aEvent);
       }
-    break;
+      break;
+
+    default:
+      break;
   }
 
   NS_ENSURE_STATE(weakFrame.IsAlive());
@@ -1047,8 +1050,6 @@ nsSplitterFrameInner::ResizeChildTo(nsPresContext* aPresContext,
     if (aBounded) {
        aDiff += spaceLeft;
        AddRemoveSpace(spaceLeft, aChildrenBeforeInfos,aChildrenBeforeCount,spaceLeft);
-    } else {
-      spaceLeft = 0;
     }
   }
 }

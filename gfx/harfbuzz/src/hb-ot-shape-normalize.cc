@@ -197,16 +197,17 @@ static inline void
 decompose_current_character (const hb_ot_shape_normalize_context_t *c, bool shortest)
 {
   hb_buffer_t * const buffer = c->buffer;
+  hb_codepoint_t u = buffer->cur().codepoint;
   hb_codepoint_t glyph;
 
   /* Kind of a cute waterfall here... */
-  if (shortest && c->font->get_glyph (buffer->cur().codepoint, 0, &glyph))
+  if (shortest && c->font->get_glyph (u, 0, &glyph))
     next_char (buffer, glyph);
-  else if (decompose (c, shortest, buffer->cur().codepoint))
+  else if (decompose (c, shortest, u))
     skip_char (buffer);
-  else if (!shortest && c->font->get_glyph (buffer->cur().codepoint, 0, &glyph))
+  else if (!shortest && c->font->get_glyph (u, 0, &glyph))
     next_char (buffer, glyph);
-  else if (decompose_compatibility (c, buffer->cur().codepoint))
+  else if (decompose_compatibility (c, u))
     skip_char (buffer);
   else
     next_char (buffer, glyph); /* glyph is initialized in earlier branches. */
@@ -322,7 +323,7 @@ _hb_ot_shape_normalize (const hb_ot_shape_plan_t *plan,
   {
     unsigned int end;
     for (end = buffer->idx + 1; end < count; end++)
-      if (buffer->cur().cluster != buffer->info[end].cluster)
+      if (likely (!HB_UNICODE_GENERAL_CATEGORY_IS_MARK (_hb_glyph_info_get_general_category (&buffer->info[end]))))
         break;
 
     decompose_cluster (&c, end, might_short_circuit, always_short_circuit);
@@ -343,15 +344,13 @@ _hb_ot_shape_normalize (const hb_ot_shape_plan_t *plan,
       if (_hb_glyph_info_get_modified_combining_class (&buffer->info[end]) == 0)
         break;
 
-    /* We are going to do a bubble-sort.  Only do this if the
-     * sequence is short.  Doing it on long sequences can result
-     * in an O(n^2) DoS. */
+    /* We are going to do a O(n^2).  Only do this if the sequence is short. */
     if (end - i > 10) {
       i = end;
       continue;
     }
 
-    hb_bubble_sort (buffer->info + i, end - i, compare_combining_class);
+    buffer->sort (i, end, compare_combining_class);
 
     i = end;
   }

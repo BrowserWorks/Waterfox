@@ -5,51 +5,30 @@
 "use strict";
 
 // Tests the behaviour of adding a new rule to the rule view and editing
-// its selector
+// its selector.
 
-let PAGE_CONTENT = [
-  '<style type="text/css">',
-  '  #testid {',
-  '    text-align: center;',
-  '  }',
-  '</style>',
-  '<div id="testid">Styled Node</div>',
-  '<span>This is a span</span>'
-].join("\n");
+const TEST_URI = `
+  <style type="text/css">
+    #testid {
+      text-align: center;
+    }
+  </style>
+  <div id="testid">Styled Node</div>
+  <span>This is a span</span>
+`;
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8,test rule view add rule");
-
-  info("Creating the test document");
-  content.document.body.innerHTML = PAGE_CONTENT;
-
-  info("Opening the rule-view");
-  let {toolbox, inspector, view} = yield openRuleView();
-
-  info("Selecting the test element");
+  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+  let {inspector, view} = yield openRuleView();
   yield selectNode("#testid", inspector);
 
-  info("Waiting for context menu to be shown");
-  let onPopup = once(view._contextmenu, "popupshown");
-  let win = view.doc.defaultView;
-
-  EventUtils.synthesizeMouseAtCenter(view.element,
-    {button: 2, type: "contextmenu"}, win);
-  yield onPopup;
-
-  ok(!view.menuitemAddRule.hidden, "Add rule is visible");
-
-  info("Waiting for rule view to change");
   let onRuleViewChanged = once(view, "ruleview-changed");
-
-  info("Adding the new rule");
-  view.menuitemAddRule.click();
+  view.addRuleButton.click();
   yield onRuleViewChanged;
-  view._contextmenu.hidePopup();
 
   yield testEditSelector(view, "span");
 
-  info("Selecting the modified element");
+  info("Selecting the modified element with the new rule");
   yield selectNode("span", inspector);
   yield checkModifiedElement(view, "span");
 });
@@ -62,14 +41,15 @@ function* testEditSelector(view, name) {
   info("Entering a new selector name and committing");
   editor.value = name;
 
-  info("Waiting for rule view to refresh");
-  let onRuleViewRefresh = once(view, "ruleview-refreshed");
+  info("Waiting for rule view to update");
+  let onRuleViewChanged = once(view, "ruleview-changed");
 
   info("Entering the commit key");
   EventUtils.synthesizeKey("VK_RETURN", {});
-  yield onRuleViewRefresh;
+  yield onRuleViewChanged;
 
-  is(view._elementStyle.rules.length, 2, "Should have 2 rules.");
+  is(view._elementStyle.rules.length, 3, "Should have 3 rules.");
+  ok(getRuleViewRule(view, name), "Rule with " + name + " selector exists.");
 }
 
 function* checkModifiedElement(view, name) {

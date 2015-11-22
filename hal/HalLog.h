@@ -7,7 +7,7 @@
 #ifndef mozilla_HalLog_h
 #define mozilla_HalLog_h
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 /*
  * HalLog.h contains internal macros and functions used for logging.
@@ -22,9 +22,9 @@ namespace hal {
 
 extern PRLogModuleInfo *GetHalLog();
 #define HAL_LOG(...) \
-  PR_LOG(mozilla::hal::GetHalLog(), PR_LOG_DEBUG, (__VA_ARGS__))
+  MOZ_LOG(mozilla::hal::GetHalLog(), LogLevel::Debug, (__VA_ARGS__))
 #define HAL_ERR(...) \
-  PR_LOG(mozilla::hal::GetHalLog(), PR_LOG_ERROR, (__VA_ARGS__))
+  MOZ_LOG(mozilla::hal::GetHalLog(), LogLevel::Error, (__VA_ARGS__))
 
 } // namespace hal
 

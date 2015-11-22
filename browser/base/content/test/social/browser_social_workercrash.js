@@ -8,8 +8,8 @@
 // A content script we inject into one of our browsers
 const TEST_CONTENT_HELPER = "chrome://mochitests/content/browser/browser/base/content/test/social/social_crash_content_helper.js";
 
-let {getFrameWorkerHandle} = Cu.import("resource://gre/modules/FrameWorker.jsm", {});
-let {Promise} = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
+var {getFrameWorkerHandle} = Cu.import("resource://gre/modules/FrameWorker.jsm", {});
+var {Promise} = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
 
 function test() {
   waitForExplicitFinish();
@@ -28,7 +28,7 @@ function test() {
   });
 }
 
-let gProviders = [
+var gProviders = [
   {
     name: "provider 1",
     origin: "https://example.com",
@@ -63,7 +63,7 @@ var tests = {
           Services.obs.removeObserver(observer, 'ipc:content-shutdown');
           // Add another sidebar load listener - it should be the error page.
           onSidebarLoad(function() {
-            ok(sbrowser.contentDocument.location.href.indexOf("about:socialerror?")==0, "is on social error page");
+            ok(sbrowser.contentDocument.location.href.indexOf("about:socialerror?mode=workerFailure")==0, "is on social error page");
             // after reloading, the sidebar should reload
             onSidebarLoad(function() {
               // now ping both workers - they should both be alive.
@@ -113,7 +113,7 @@ function ensureWorkerLoaded(manifest, callback) {
 
 // This observer is needed so we can clean up all evidence of the crash so
 // the testrunner thinks things are peachy.
-let crashObserver = function(callback) {
+var crashObserver = function(callback) {
   this.callback = callback;
 }
 crashObserver.prototype = {

@@ -9,6 +9,8 @@ EXPORTS += [
     'sqlite3.h',
 ]
 
+ALLOW_COMPILER_WARNINGS = True
+
 if CONFIG['MOZ_FOLD_LIBS']:
     # When folding libraries, sqlite is actually in the nss library.
     FINAL_LIBRARY = 'nss'
@@ -35,7 +37,8 @@ SOURCES += [
 # concurrent connections, especially when they use shared cache.
 # Note: Be sure to update the configure.in checks when these change!
 for var in ('SQLITE_SECURE_DELETE', 'SQLITE_THREADSAFE', 'SQLITE_CORE',
-            'SQLITE_ENABLE_FTS3', 'SQLITE_ENABLE_UNLOCK_NOTIFY'):
+            'SQLITE_ENABLE_FTS3', 'SQLITE_ENABLE_UNLOCK_NOTIFY',
+            'SQLITE_ENABLE_DBSTAT_VTAB'):
     DEFINES[var] = 1
 
 DEFINES['SQLITE_DEFAULT_PAGE_SIZE'] = 32768
@@ -51,6 +54,10 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
 # -DSQLITE_ENABLE_LOCKING_STYLE=1 to help with AFP folders
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     DEFINES['SQLITE_ENABLE_LOCKING_STYLE'] = 1
+
+# sqlite defaults this to on on __APPLE_ but it breaks on newer iOS SDKs
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'uikit':
+    DEFINES['SQLITE_ENABLE_LOCKING_STYLE'] = 0
 
 # Turn on SQLite's assertions in debug builds.
 if CONFIG['MOZ_DEBUG']:

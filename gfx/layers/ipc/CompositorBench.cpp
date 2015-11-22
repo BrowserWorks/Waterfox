@@ -129,16 +129,16 @@ public:
     DrawFrameTrivialQuad(aCompositor, aScreenRect, aStep, effects);
   }
 
-  TemporaryRef<Effect> CreateEffect(size_t i) {
+  already_AddRefed<Effect> CreateEffect(size_t i) {
       float red;
       float tmp;
       red = modf(i * 0.03f, &tmp);
       EffectChain effects;
       gfxRGBA color(red, 0.4f, 0.4f, 1.0f);
-      return new EffectSolidColor(gfx::Color(color.r,
-                                             color.g,
-                                             color.b,
-                                             color.a));
+      return MakeAndAddRef<EffectSolidColor>(gfx::Color(color.r,
+                                                        color.g,
+                                                        color.b,
+                                                        color.a));
   }
 };
 
@@ -155,16 +155,16 @@ public:
     DrawFrameStressQuad(aCompositor, aScreenRect, aStep, effects);
   }
 
-  TemporaryRef<Effect> CreateEffect(size_t i) {
+  already_AddRefed<Effect> CreateEffect(size_t i) {
       float red;
       float tmp;
       red = modf(i * 0.03f, &tmp);
       EffectChain effects;
       gfxRGBA color(red, 0.4f, 0.4f, 1.0f);
-      return new EffectSolidColor(gfx::Color(color.r,
-                                             color.g,
-                                             color.b,
-                                             color.a));
+      return MakeAndAddRef<EffectSolidColor>(gfx::Color(color.r,
+                                                        color.g,
+                                                        color.b,
+                                                        color.a));
   }
 };
 
@@ -240,9 +240,8 @@ public:
     free(mBuf);
   }
 
-  TemporaryRef<Effect> CreateEffect(size_t i) {
-    RefPtr<TexturedEffect> effect = CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT, true);
-    return effect;
+  already_AddRefed<Effect> CreateEffect(size_t i) {
+    return CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT, true);
   }
 };
 
@@ -284,9 +283,8 @@ public:
     free(mBuf);
   }
 
-  virtual TemporaryRef<Effect> CreateEffect(size_t i) {
-    RefPtr<TexturedEffect> effect = CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT, true);
-    return effect;
+  virtual already_AddRefed<Effect> CreateEffect(size_t i) {
+    return CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT, true);
   }
 };
 
@@ -327,9 +325,8 @@ public:
     free(mBuf);
   }
 
-  virtual TemporaryRef<Effect> CreateEffect(size_t i) {
-    RefPtr<TexturedEffect> effect = CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT);
-    return effect;
+  virtual already_AddRefed<Effect> CreateEffect(size_t i) {
+    return CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT);
   }
 };
 
@@ -369,9 +366,8 @@ public:
     free(mBuf);
   }
 
-  virtual TemporaryRef<Effect> CreateEffect(size_t i) {
-    RefPtr<TexturedEffect> effect = CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT);
-    return effect;
+  virtual already_AddRefed<Effect> CreateEffect(size_t i) {
+    return CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT);
   }
 };
 #endif
@@ -449,5 +445,6 @@ void CompositorBench(Compositor* aCompositor, const gfx::Rect& aScreenRect)
 
 } // namespace layers
 } // namespace mozilla
+
 #endif
 

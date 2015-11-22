@@ -9,11 +9,13 @@
 #include "mozilla/dom/MimeTypeArrayBinding.h"
 #include "mozilla/dom/MimeTypeBinding.h"
 #include "nsIDOMNavigator.h"
+#include "nsPIDOMWindow.h"
 #include "nsPluginArray.h"
 #include "nsIMIMEService.h"
 #include "nsIMIMEInfo.h"
 #include "Navigator.h"
 #include "nsServiceManagerUtils.h"
+#include "nsPluginTags.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -27,8 +29,7 @@ NS_INTERFACE_MAP_END
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(nsMimeTypeArray,
                                       mWindow,
-                                      mMimeTypes,
-                                      mHiddenMimeTypes)
+                                      mMimeTypes)
 
 nsMimeTypeArray::nsMimeTypeArray(nsPIDOMWindow* aWindow)
   : mWindow(aWindow)
@@ -49,7 +50,6 @@ void
 nsMimeTypeArray::Refresh()
 {
   mMimeTypes.Clear();
-  mHiddenMimeTypes.Clear();
 }
 
 nsPIDOMWindow*
@@ -114,10 +114,6 @@ nsMimeTypeArray::NamedGetter(const nsAString& aName, bool &aFound)
   ToLowerCase(lowerName);
 
   nsMimeType* mimeType = FindMimeType(mMimeTypes, lowerName);
-  if (!mimeType) {
-    mimeType = FindMimeType(mHiddenMimeTypes, lowerName);
-  }
-
   if (mimeType) {
     aFound = true;
     return mimeType;
@@ -164,11 +160,8 @@ nsMimeTypeArray::NamedGetter(const nsAString& aName, bool &aFound)
   // If we got here, we support this type!  Say so.
   aFound = true;
 
-  // We don't want navigator.mimeTypes enumeration to expose MIME types with
-  // application handlers, so add them to the list of hidden MIME types.
   nsMimeType *mt = new nsMimeType(mWindow, lowerName);
-  mHiddenMimeTypes.AppendElement(mt);
-
+  mMimeTypes.AppendElement(mt);
   return mt;
 }
 
@@ -199,7 +192,7 @@ nsMimeTypeArray::GetSupportedNames(unsigned, nsTArray< nsString >& aRetval)
 void
 nsMimeTypeArray::EnsurePluginMimeTypes()
 {
-  if (!mMimeTypes.IsEmpty() || !mHiddenMimeTypes.IsEmpty() || !mWindow) {
+  if (!mMimeTypes.IsEmpty() || !mWindow) {
     return;
   }
 
@@ -217,7 +210,7 @@ nsMimeTypeArray::EnsurePluginMimeTypes()
     return;
   }
 
-  pluginArray->GetMimeTypes(mMimeTypes, mHiddenMimeTypes);
+  pluginArray->GetMimeTypes(mMimeTypes);
 }
 
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(nsMimeType, AddRef)
@@ -225,19 +218,22 @@ NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(nsMimeType, Release)
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(nsMimeType, mWindow, mPluginElement)
 
-nsMimeType::nsMimeType(nsPIDOMWindow* aWindow, nsPluginElement* aPluginElement,
-                       uint32_t aPluginTagMimeIndex, const nsAString& aType)
+nsMimeType::nsMimeType(nsPIDOMWindow* aWindow,
+                       nsPluginElement* aPluginElement,
+                       const nsAString& aType,
+                       const nsAString& aDescription,
+                       const nsAString& aExtension)
   : mWindow(aWindow),
     mPluginElement(aPluginElement),
-    mPluginTagMimeIndex(aPluginTagMimeIndex),
-    mType(aType)
+    mType(aType),
+    mDescription(aDescription),
+    mExtension(aExtension)
 {
 }
 
 nsMimeType::nsMimeType(nsPIDOMWindow* aWindow, const nsAString& aType)
   : mWindow(aWindow),
     mPluginElement(nullptr),
-    mPluginTagMimeIndex(0),
     mType(aType)
 {
 }
@@ -260,32 +256,24 @@ nsMimeType::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 }
 
 void
-nsMimeType::GetDescription(nsString& retval) const
+nsMimeType::GetDescription(nsString& aRetval) const
 {
-  retval.Truncate();
-
-  if (mPluginElement) {
-    CopyUTF8toUTF16(mPluginElement->PluginTag()->
-                    mMimeDescriptions[mPluginTagMimeIndex], retval);
-  }
+  aRetval = mDescription;
 }
 
 nsPluginElement*
 nsMimeType::GetEnabledPlugin() const
 {
-  return (mPluginElement && mPluginElement->PluginTag()->IsEnabled()) ?
-    mPluginElement : nullptr;
+  if (!mPluginElement || !mPluginElement->PluginTag()->IsEnabled()) {
+    return nullptr;
+  }
+  return mPluginElement;
 }
 
 void
-nsMimeType::GetSuffixes(nsString& retval) const
+nsMimeType::GetSuffixes(nsString& aRetval) const
 {
-  retval.Truncate();
-
-  if (mPluginElement) {
-    CopyUTF8toUTF16(mPluginElement->PluginTag()->
-                    mExtensions[mPluginTagMimeIndex], retval);
-  }
+  aRetval = mExtension;
 }
 
 void

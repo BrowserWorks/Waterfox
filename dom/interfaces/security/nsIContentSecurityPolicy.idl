@@ -20,7 +20,7 @@ interface nsIURI;
 
 typedef unsigned short CSPDirective;
 
-[scriptable, uuid(68434447-b816-4473-a731-efc4f6d59902)]
+[scriptable, uuid(fe07ab08-21ba-470c-8b89-78d0e7298c68)]
 interface nsIContentSecurityPolicy : nsISerializable
 {
   /**
@@ -32,22 +32,24 @@ interface nsIContentSecurityPolicy : nsISerializable
    * NOTE: When implementing a new directive, you will need to add it here but also
    * add it to the CSPStrDirectives array in nsCSPUtils.h.
    */
-  const unsigned short NO_DIRECTIVE               = 0;
-  const unsigned short DEFAULT_SRC_DIRECTIVE      = 1;
-  const unsigned short SCRIPT_SRC_DIRECTIVE       = 2;
-  const unsigned short OBJECT_SRC_DIRECTIVE       = 3;
-  const unsigned short STYLE_SRC_DIRECTIVE        = 4;
-  const unsigned short IMG_SRC_DIRECTIVE          = 5;
-  const unsigned short MEDIA_SRC_DIRECTIVE        = 6;
-  const unsigned short FRAME_SRC_DIRECTIVE        = 7;
-  const unsigned short FONT_SRC_DIRECTIVE         = 8;
-  const unsigned short CONNECT_SRC_DIRECTIVE      = 9;
-  const unsigned short REPORT_URI_DIRECTIVE       = 10;
-  const unsigned short FRAME_ANCESTORS_DIRECTIVE  = 11;
-  const unsigned short REFLECTED_XSS_DIRECTIVE    = 12;
-  const unsigned short BASE_URI_DIRECTIVE         = 13;
-  const unsigned short FORM_ACTION_DIRECTIVE      = 14;
-  const unsigned short REFERRER_DIRECTIVE         = 15;
+  const unsigned short NO_DIRECTIVE                   = 0;
+  const unsigned short DEFAULT_SRC_DIRECTIVE          = 1;
+  const unsigned short SCRIPT_SRC_DIRECTIVE           = 2;
+  const unsigned short OBJECT_SRC_DIRECTIVE           = 3;
+  const unsigned short STYLE_SRC_DIRECTIVE            = 4;
+  const unsigned short IMG_SRC_DIRECTIVE              = 5;
+  const unsigned short MEDIA_SRC_DIRECTIVE            = 6;
+  const unsigned short FRAME_SRC_DIRECTIVE            = 7;
+  const unsigned short FONT_SRC_DIRECTIVE             = 8;
+  const unsigned short CONNECT_SRC_DIRECTIVE          = 9;
+  const unsigned short REPORT_URI_DIRECTIVE           = 10;
+  const unsigned short FRAME_ANCESTORS_DIRECTIVE      = 11;
+  const unsigned short REFLECTED_XSS_DIRECTIVE        = 12;
+  const unsigned short BASE_URI_DIRECTIVE             = 13;
+  const unsigned short FORM_ACTION_DIRECTIVE          = 14;
+  const unsigned short REFERRER_DIRECTIVE             = 15;
+  const unsigned short WEB_MANIFEST_SRC_DIRECTIVE     = 16;
+  const unsigned short UPGRADE_IF_INSECURE_DIRECTIVE  = 17;
 
   /**
    * Accessor method for a read-only string version of the policy at a given
@@ -60,6 +62,13 @@ interface nsIContentSecurityPolicy : nsISerializable
    * getPolicy().
    */
   readonly attribute unsigned long policyCount;
+
+  /**
+   * Returns whether this policy uses the directive upgrade-insecure-requests.
+   * Please note that upgrade-insecure-reqeusts also applies if the parent or
+   * including document (context) makes use of the directive.
+   */
+  readonly attribute bool upgradeInsecureRequests;
 
   /**
    * Obtains the referrer policy (as integer) for this browsing context as
@@ -92,18 +101,22 @@ interface nsIContentSecurityPolicy : nsISerializable
    */
   void appendPolicy(in AString policyString, in boolean reportOnly);
 
-  /**
-   * Whether this policy allows in-page script.
-   * @param shouldReportViolations
-   *     Whether or not the use of inline script should be reported.
-   *     This function always returns "true" for report-only policies, but when
-   *     any policy (report-only or otherwise) is violated,
-   *     shouldReportViolations is true as well.
+  /*
+   * Whether this policy allows inline script or style.
+   * @param aContentPolicyType Either TYPE_SCRIPT or TYPE_STYLESHEET
+   * @param aNonce The nonce string to check against the policy
+   * @param aContent  The content of the inline resource to hash
+   *        (and compare to the hashes listed in the policy)
+   * @param aLineNumber The line number of the inline resource
+   *        (used for reporting)
    * @return
-   *     Whether or not the effects of the inline script should be allowed
-   *     (block the compilation if false).
+   *     Whether or not the effects of the inline style should be allowed
+   *     (block the rules if false).
    */
-  boolean getAllowsInlineScript(out boolean shouldReportViolations);
+  boolean getAllowsInline(in nsContentPolicyType aContentPolicyType,
+                          in AString aNonce,
+                          in AString aContent,
+                          in unsigned long aLineNumber);
 
   /**
    * whether this policy allows eval and eval-like functions
@@ -118,59 +131,6 @@ interface nsIContentSecurityPolicy : nsISerializable
    *     (block the call if false).
    */
   boolean getAllowsEval(out boolean shouldReportViolations);
-
-  /**
-   * Whether this policy allows in-page styles.
-   * This includes <style> tags with text content and style="" attributes in
-   * HTML elements.
-   * @param shouldReportViolations
-   *     Whether or not the use of inline style should be reported.
-   *     If there are report-only policies, this function may return true
-   *     (don't block), but one or more policy may still want to send
-   *     violation reports so shouldReportViolations will be true even if the
-   *     inline style should be permitted.
-   * @return
-   *     Whether or not the effects of the inline style should be allowed
-   *     (block the rules if false).
-   */
-  boolean getAllowsInlineStyle(out boolean shouldReportViolations);
-
-  /**
-   * Whether this policy accepts the given nonce
-   * @param aNonce
-   *     The nonce string to check against the policy
-   * @param aContentType
-   *     The type of element on which we encountered this nonce
-   * @param shouldReportViolation
-   *     Whether or not the use of an incorrect nonce should be reported.
-   *     This function always returns "true" for report-only policies, but when
-   *     the report-only policy is violated, shouldReportViolation is true as
-   *     well.
-   * @return
-   *     Whether or not this nonce is valid
-   */
-   boolean getAllowsNonce(in AString aNonce,
-                          in unsigned long aContentType,
-                          out boolean shouldReportViolation);
-
-   /**
-    * Whether this policy accepts the given inline resource based on the hash
-    * of its content.
-    * @param aContent
-    *     The content of the inline resource to hash (and compare to the
-    *     hashes listed in the policy)
-    * @param aContentType
-    *     The type of inline element (script or style)
-    * @param shouldReportViolation
-    *     Whether this inline resource should be reported as a hash-source
-    *     violation. If there are no hash-sources in the policy, this is
-    *     always false.
-    * @return
-    *     Whether or not this inline resource is whitelisted by a hash-source
-    */
-   boolean getAllowsHash(in AString aContent,
-                         in unsigned short aContentType,
-                         out boolean shouldReportViolation);
 
   /**
    * For each violated policy (of type violationType), log policy violation on
@@ -281,5 +241,10 @@ interface nsIContentSecurityPolicy : nsISerializable
 // nsIObserver topic to fire when the policy encounters a violation.
 #define CSP_VIOLATION_TOPIC "csp-on-violate-policy"
 %}
+
+  /**
+   * Returns the CSP in JSON notation.
+   */
+  AString toJSON();
 
 };

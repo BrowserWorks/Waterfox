@@ -7,7 +7,10 @@
 // See bug 580030: the error handler fails silently after page reload.
 // https://bugzilla.mozilla.org/show_bug.cgi?id=580030
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-error.html";
+"use strict";
+
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-error.html";
 
 function test() {
   Task.spawn(function*() {
@@ -27,7 +30,12 @@ function test() {
     let button = content.document.querySelector("button");
     ok(button, "button found");
 
-    expectUncaughtException();
+    // On e10s, the exception is triggered in child process
+    // and is ignored by test harness
+    if (!Services.appinfo.browserTabsRemoteAutostart) {
+      expectUncaughtException();
+    }
+
     EventUtils.sendMouseEvent({type: "click"}, button, content);
 
     yield waitForMessages({

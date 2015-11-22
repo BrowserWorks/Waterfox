@@ -14,6 +14,7 @@
 #include "mozilla/dom/DataStoreImplBinding.h"
 #include "nsIDataStore.h"
 
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
@@ -51,10 +52,13 @@
 #include "nsXULAppAPI.h"
 
 #define ASSERT_PARENT_PROCESS()                                             \
-  AssertIsInMainProcess();                                                  \
-  if (NS_WARN_IF(!IsMainProcess())) {                                       \
+  MOZ_ASSERT(XRE_IsParentProcess());                                        \
+  if (NS_WARN_IF(!XRE_IsParentProcess())) {                                 \
     return NS_ERROR_FAILURE;                                                \
   }
+
+using mozilla::BasePrincipal;
+using mozilla::OriginAttributes;
 
 namespace mozilla {
 namespace dom {
@@ -121,23 +125,10 @@ namespace {
 
 // Singleton for DataStoreService.
 StaticRefPtr<DataStoreService> gDataStoreService;
+nsString gHomeScreenManifestURL;
 static uint64_t gCounterID = 0;
 
 typedef nsClassHashtable<nsUint32HashKey, DataStoreInfo> HashApp;
-
-bool
-IsMainProcess()
-{
-  static const bool isMainProcess =
-    XRE_GetProcessType() == GeckoProcessType_Default;
-  return isMainProcess;
-}
-
-void
-AssertIsInMainProcess()
-{
-  MOZ_ASSERT(IsMainProcess());
-}
 
 void
 RejectPromise(nsPIDOMWindow* aWindow, Promise* aPromise, nsresult aRv)
@@ -161,8 +152,7 @@ void
 DeleteDatabase(const nsAString& aName,
                const nsAString& aManifestURL)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   nsRefPtr<DataStoreDB> db = new DataStoreDB(aManifestURL, aName);
   db->Delete();
@@ -174,8 +164,7 @@ DeleteDataStoresAppEnumerator(
                              nsAutoPtr<DataStoreInfo>& aInfo,
                              void* aUserData)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   auto* appId = static_cast<uint32_t*>(aUserData);
   if (*appId != aAppId) {
@@ -191,8 +180,7 @@ DeleteDataStoresEnumerator(const nsAString& aName,
                            nsAutoPtr<HashApp>& aApps,
                            void* aUserData)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   aApps->Enumerate(DeleteDataStoresAppEnumerator, aUserData);
   return aApps->Count() ? PL_DHASH_NEXT : PL_DHASH_REMOVE;
@@ -215,8 +203,7 @@ ResetPermission(uint32_t aAppId, const nsAString& aOriginURL,
                 const nsAString& aPermission,
                 bool aReadOnly)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   nsresult rv;
   nsCOMPtr<nsIIOService> ioService(do_GetService(NS_IOSERVICE_CONTRACTID, &rv));
@@ -231,17 +218,10 @@ ResetPermission(uint32_t aAppId, const nsAString& aOriginURL,
     return rv;
   }
 
-  nsIScriptSecurityManager* ssm = nsContentUtils::GetSecurityManager();
-  if (!ssm) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsCOMPtr<nsIPrincipal> principal;
-  rv = ssm->GetAppCodebasePrincipal(uri, aAppId, false,
-                                    getter_AddRefs(principal));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
+  OriginAttributes attrs(aAppId, false);
+  nsCOMPtr<nsIPrincipal> principal =
+    BasePrincipal::CreateCodebasePrincipal(uri, attrs);
+  NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
 
   nsCOMPtr<nsIPermissionManager> pm =
     do_GetService(NS_PERMISSIONMANAGER_CONTRACTID);
@@ -347,8 +327,7 @@ GetDataStoreInfosEnumerator(const uint32_t& aAppId,
                             DataStoreInfo* aInfo,
                             void* aUserData)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   auto* data = static_cast<GetDataStoreInfosData*>(aUserData);
   if (aAppId == data->mAppId) {
@@ -384,8 +363,7 @@ GetAppManifestURLsEnumerator(const uint32_t& aAppId,
                              DataStoreInfo* aInfo,
                              void* aUserData)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   auto* manifestURLs = static_cast<nsIMutableArray*>(aUserData);
   nsCOMPtr<nsISupportsString> manifestURL(do_CreateInstance(NS_SUPPORTS_STRING_CONTRACTID));
@@ -417,8 +395,7 @@ AddPermissionsEnumerator(const uint32_t& aAppId,
                          DataStoreInfo* aInfo,
                          void* userData)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   auto* data = static_cast<AddPermissionsData*>(userData);
 
@@ -457,8 +434,7 @@ AddAccessPermissionsEnumerator(const uint32_t& aAppId,
                                DataStoreInfo* aInfo,
                                void* userData)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   auto* data = static_cast<AddAccessPermissionsData*>(userData);
 
@@ -472,6 +448,18 @@ AddAccessPermissionsEnumerator(const uint32_t& aAppId,
                                   aInfo->mManifestURL,
                                   permission, readOnly);
   return NS_FAILED(data->mResult) ? PL_DHASH_STOP : PL_DHASH_NEXT;
+}
+
+void
+HomeScreenPrefCallback(const char* aPrefName, void* /* aClosure */)
+{
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
+  nsRefPtr<DataStoreService> service = DataStoreService::Get();
+  if (!service) {
+    return;
+  }
+
+  service->HomeScreenPrefChanged();
 }
 
 } /* anonymous namespace */
@@ -517,15 +505,13 @@ public:
     , mName(aName)
     , mManifestURL(aManifestURL)
   {
-    AssertIsInMainProcess();
-    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
   }
 
   void
   Run(const nsAString& aRevisionId)
   {
-    AssertIsInMainProcess();
-    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
     nsRefPtr<DataStoreService> service = DataStoreService::Get();
     MOZ_ASSERT(service);
@@ -553,15 +539,13 @@ public:
     , mName(aName)
     , mManifestURL(aManifestURL)
   {
-    AssertIsInMainProcess();
-    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
   }
 
   void
   Run(DataStoreDB* aDb, RunStatus aStatus) override
   {
-    AssertIsInMainProcess();
-    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
     MOZ_ASSERT(aDb);
 
     if (aStatus == Error) {
@@ -642,8 +626,7 @@ public:
   NS_IMETHOD
   HandleEvent(nsIDOMEvent* aEvent) override
   {
-    AssertIsInMainProcess();
-    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
     nsRefPtr<IDBRequest> request;
     request.swap(mRequest);
@@ -830,11 +813,17 @@ DataStoreService::Shutdown()
   MOZ_ASSERT(NS_IsMainThread());
 
   if (gDataStoreService) {
-    if (IsMainProcess()) {
+    if (XRE_IsParentProcess()) {
       nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
       if (obs) {
         obs->RemoveObserver(gDataStoreService, "webapps-clear-data");
       }
+
+      nsresult rv =
+        Preferences::UnregisterCallback(HomeScreenPrefCallback,
+                                        "dom.mozApps.homescreenURL",
+                                        nullptr);
+      NS_WARN_IF(NS_FAILED(rv));
     }
 
     gDataStoreService = nullptr;
@@ -863,7 +852,7 @@ DataStoreService::~DataStoreService()
 nsresult
 DataStoreService::Init()
 {
-  if (!IsMainProcess()) {
+  if (!XRE_IsParentProcess()) {
     return NS_OK;
   }
 
@@ -873,6 +862,13 @@ DataStoreService::Init()
   }
 
   nsresult rv = obs->AddObserver(this, "webapps-clear-data", false);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  rv = Preferences::RegisterCallback(HomeScreenPrefCallback,
+                                     "dom.mozApps.homescreenURL",
+                                     nullptr);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -973,7 +969,7 @@ DataStoreService::GetDataStores(nsIDOMWindow* aWindow,
 
   // If this request comes from the main process, we have access to the
   // window, so we can skip the ipc communication.
-  if (IsMainProcess()) {
+  if (XRE_IsParentProcess()) {
     uint32_t appId;
     nsresult rv = principal->GetAppId(&appId);
     if (NS_FAILED(rv)) {
@@ -1132,8 +1128,7 @@ DataStoreService::GetDataStoreInfos(const nsAString& aName,
                                     nsIPrincipal* aPrincipal,
                                     nsTArray<DataStoreInfo>& aStores)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   nsCOMPtr<nsIAppsService> appsService =
     do_GetService("@mozilla.org/AppsService;1");
@@ -1223,8 +1218,41 @@ DataStoreService::CheckPermission(nsIPrincipal* aPrincipal)
     return false;
   }
 
-  // Only support DataStore API for certified apps for now.
-  return status == nsIPrincipal::APP_STATUS_CERTIFIED;
+  // Certified apps are always allowed.
+  if (status == nsIPrincipal::APP_STATUS_CERTIFIED) {
+    return true;
+  }
+
+  if (status != nsIPrincipal::APP_STATUS_PRIVILEGED) {
+    return false;
+  }
+
+  // Privileged apps are allowed if they are the homescreen.
+  nsAdoptingString homescreen =
+    Preferences::GetString("dom.mozApps.homescreenURL");
+  if (!homescreen) {
+    return false;
+  }
+
+  uint32_t appId;
+  nsresult rv = aPrincipal->GetAppId(&appId);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return false;
+  }
+
+  nsCOMPtr<nsIAppsService> appsService =
+    do_GetService("@mozilla.org/AppsService;1");
+  if (NS_WARN_IF(!appsService)) {
+    return false;
+  }
+
+  nsAutoString manifestURL;
+  rv = appsService->GetManifestURLByLocalId(appId, manifestURL);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return false;
+  }
+
+  return manifestURL.Equals(homescreen);
 }
 
 NS_IMETHODIMP
@@ -1242,8 +1270,7 @@ DataStoreService::CheckPermission(nsIPrincipal* aPrincipal,
 void
 DataStoreService::DeleteDataStores(uint32_t aAppId)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   mStores.Enumerate(DeleteDataStoresEnumerator, &aAppId);
   mAccessStores.Enumerate(DeleteDataStoresEnumerator, &aAppId);
@@ -1254,8 +1281,7 @@ DataStoreService::Observe(nsISupports* aSubject,
                           const char* aTopic,
                           const char16_t* aData)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   if (strcmp(aTopic, "webapps-clear-data")) {
     return NS_OK;
@@ -1294,8 +1320,7 @@ DataStoreService::AddPermissions(uint32_t aAppId,
                                  const nsAString& aManifestURL,
                                  bool aReadOnly)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   // This is the permission name.
   nsString permission;
@@ -1327,8 +1352,7 @@ DataStoreService::AddAccessPermissions(uint32_t aAppId, const nsAString& aName,
                                        const nsAString& aManifestURL,
                                        bool aReadOnly)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   // When an app wants to have access to a DataStore, the permissions must be
   // set.
@@ -1349,8 +1373,7 @@ DataStoreService::CreateFirstRevisionId(uint32_t aAppId,
                                         const nsAString& aName,
                                         const nsAString& aManifestURL)
 {
-  AssertIsInMainProcess();
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   nsRefPtr<DataStoreDB> db = new DataStoreDB(aManifestURL, aName);
 
@@ -1358,7 +1381,9 @@ DataStoreService::CreateFirstRevisionId(uint32_t aAppId,
     new FirstRevisionIdCallback(aAppId, aName, aManifestURL);
 
   Sequence<nsString> dbs;
-  dbs.AppendElement(NS_LITERAL_STRING(DATASTOREDB_REVISION));
+  if (!dbs.AppendElement(NS_LITERAL_STRING(DATASTOREDB_REVISION), fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
   return db->Open(IDBTransactionMode::Readwrite, dbs, callback);
 }
@@ -1378,7 +1403,7 @@ DataStoreService::EnableDataStore(uint32_t aAppId, const nsAString& aName,
   }
 
   // Notify the child processes.
-  if (IsMainProcess()) {
+  if (XRE_IsParentProcess()) {
     nsTArray<ContentParent*> children;
     ContentParent::GetAll(children);
     for (uint32_t i = 0; i < children.Length(); i++) {
@@ -1445,8 +1470,7 @@ DataStoreService::GetDataStoresFromIPC(const nsAString& aName,
                                        nsIPrincipal* aPrincipal,
                                        nsTArray<DataStoreSetting>* aValue)
 {
-  MOZ_ASSERT(IsMainProcess());
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
 
   uint32_t appId;
   nsresult rv = aPrincipal->GetAppId(&appId);
@@ -1495,6 +1519,91 @@ DataStoreService::GenerateUUID(nsAString& aID)
   CopyASCIItoUTF16(chars, aID);
 
   return NS_OK;
+}
+
+void
+DataStoreService::HomeScreenPrefChanged()
+{
+  MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread());
+
+  nsAdoptingString homescreen =
+    Preferences::GetString("dom.mozApps.homescreenURL");
+  if (homescreen == gHomeScreenManifestURL) {
+    return;
+  }
+
+  // Remove datastores of the old homescreen.
+  if (!gHomeScreenManifestURL.IsEmpty()) {
+    DeleteDataStoresIfNotAllowed(gHomeScreenManifestURL);
+  }
+
+  gHomeScreenManifestURL = homescreen;
+  if (gHomeScreenManifestURL.IsEmpty()) {
+    return;
+  }
+
+  // Add datastores for the new homescreen.
+  AddDataStoresIfAllowed(gHomeScreenManifestURL);
+}
+
+void
+DataStoreService::DeleteDataStoresIfNotAllowed(const nsAString& aManifestURL)
+{
+  nsCOMPtr<nsIAppsService> appsService =
+    do_GetService("@mozilla.org/AppsService;1");
+  if (NS_WARN_IF(!appsService)) {
+    return;
+  }
+
+  nsCOMPtr<mozIApplication> app;
+  nsresult rv = appsService->GetAppByManifestURL(aManifestURL,
+                                                 getter_AddRefs(app));
+  if (NS_WARN_IF(NS_FAILED(rv)) || !app) {
+    return;
+  }
+
+  uint32_t localId;
+  rv = app->GetLocalId(&localId);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  nsCOMPtr<nsIPrincipal> principal;
+  rv = app->GetPrincipal(getter_AddRefs(principal));
+
+  // We delete all the dataStores for this app here.
+  if (NS_WARN_IF(NS_FAILED(rv)) || !principal ||
+      !CheckPermission(principal)) {
+    DeleteDataStores(localId);
+  }
+}
+
+void
+DataStoreService::AddDataStoresIfAllowed(const nsAString& aManifestURL)
+{
+  nsCOMPtr<nsIAppsService> appsService =
+    do_GetService("@mozilla.org/AppsService;1");
+  if (NS_WARN_IF(!appsService)) {
+    return;
+  }
+
+  nsCOMPtr<mozIApplication> app;
+  nsresult rv = appsService->GetAppByManifestURL(aManifestURL,
+                                                 getter_AddRefs(app));
+  if (NS_WARN_IF(NS_FAILED(rv)) || !app) {
+    return;
+  }
+
+  uint32_t localId;
+  rv = app->GetLocalId(&localId);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  rv = appsService->UpdateDataStoreEntriesFromLocalId(localId);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
 }
 
 } // namespace dom

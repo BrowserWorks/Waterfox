@@ -94,7 +94,6 @@
         <item name="menuItemActionBarStyle">@style/Widget.MenuItemActionBar</item>
         <item name="menuItemActionModeStyle">@style/GeckoActionBar.Button</item>
         <item name="menuItemShareActionButtonStyle">@style/Widget.MenuItemSecondaryActionBar</item>
-        <item name="panelGridViewStyle">@style/Widget.PanelGridView</item>
         <item name="topSitesGridItemViewStyle">@style/Widget.TopSitesGridItemView</item>
         <item name="topSitesGridViewStyle">@style/Widget.TopSitesGridView</item>
         <item name="topSitesThumbnailViewStyle">@style/Widget.TopSitesThumbnailView</item>
@@ -103,8 +102,6 @@
     <style name="Gecko.Preferences" parent="GeckoPreferencesBase">
         <item name="floatingHintEditTextStyle">@style/FloatingHintEditText</item>
     </style>
-
-    <style name="GeckoStartPane" parent="GeckoBase"/>
 
     <!-- Make an activity appear like an overlay. -->
     <style name="OverlayActivity" parent="Gecko">

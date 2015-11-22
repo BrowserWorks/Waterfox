@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -20,7 +21,7 @@
 #include "nsStreamUtils.h"
 #include "nsAutoPtr.h"
 #include "prtime.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "plstr.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
 #include "mozilla/Preferences.h"
@@ -38,16 +39,16 @@ using namespace mozilla;
 //    set NSPR_LOG_MODULES=nsPrefetch:5
 //    set NSPR_LOG_FILE=prefetch.log
 //
-// this enables PR_LOG_ALWAYS level information and places all output in
+// this enables LogLevel::Debug level information and places all output in
 // the file http.log
 //
 static PRLogModuleInfo *gPrefetchLog;
 
 #undef LOG
-#define LOG(args) PR_LOG(gPrefetchLog, 4, args)
+#define LOG(args) MOZ_LOG(gPrefetchLog, mozilla::LogLevel::Debug, args)
 
 #undef LOG_ENABLED
-#define LOG_ENABLED() PR_LOG_TEST(gPrefetchLog, 4)
+#define LOG_ENABLED() MOZ_LOG_TEST(gPrefetchLog, mozilla::LogLevel::Debug)
 
 #define PREFETCH_PREF "network.prefetch-next"
 
@@ -185,15 +186,17 @@ nsPrefetchNode::OpenChannel()
         return NS_ERROR_FAILURE;
     }
     nsCOMPtr<nsILoadGroup> loadGroup = source->OwnerDoc()->GetDocumentLoadGroup();
-    nsresult rv = NS_NewChannel(getter_AddRefs(mChannel),
-                                mURI,
-                                nsContentUtils::GetSystemPrincipal(),
-                                nsILoadInfo::SEC_NORMAL,
-                                nsIContentPolicy::TYPE_OTHER,
-                                loadGroup, // aLoadGroup
-                                this,      // aCallbacks
-                                nsIRequest::LOAD_BACKGROUND |
-                                nsICachingChannel::LOAD_ONLY_IF_MODIFIED);
+    nsresult rv = NS_NewChannelInternal(getter_AddRefs(mChannel),
+                                        mURI,
+                                        source,
+                                        source->NodePrincipal(),
+                                        nullptr,   //aTriggeringPrincipal
+                                        nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
+                                        nsIContentPolicy::TYPE_OTHER,
+                                        loadGroup, // aLoadGroup
+                                        this,      // aCallbacks
+                                        nsIRequest::LOAD_BACKGROUND |
+                                        nsICachingChannel::LOAD_ONLY_IF_MODIFIED);
 
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -208,10 +211,7 @@ nsPrefetchNode::OpenChannel()
             false);
     }
 
-    rv = mChannel->AsyncOpen(this, nullptr);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    return NS_OK;
+    return mChannel->AsyncOpen2(this);
 }
 
 nsresult

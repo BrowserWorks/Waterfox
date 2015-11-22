@@ -2,11 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var expect = chai.expect;
-
 describe("loop.StandaloneMozLoop", function() {
   "use strict";
 
+  var expect = chai.expect;
   var sandbox, fakeXHR, requests, callback, mozLoop;
   var fakeToken, fakeBaseServerUrl, fakeServerErrorDescription;
 
@@ -56,12 +55,6 @@ describe("loop.StandaloneMozLoop", function() {
 
       expect(localStorage.getItem("fakePref")).eql("fakeValue");
     });
-
-    it("should not store the value of seenToS", function() {
-      mozLoop.setLoopPref("seenToS", "fakeValue1");
-
-      expect(localStorage.getItem("seenToS")).eql(null);
-    });
   });
 
   describe("#getLoopPref", function() {
@@ -90,8 +83,7 @@ describe("loop.StandaloneMozLoop", function() {
 
       var roomDetails = {
         roomName: "fakeName",
-        roomUrl: "http://invalid",
-        roomOwner: "gavin"
+        roomUrl: "http://invalid"
       };
 
       requests[0].respond(200, {"Content-Type": "application/json"},
@@ -153,14 +145,14 @@ describe("loop.StandaloneMozLoop", function() {
   });
 
   describe("#rooms.refreshMembership", function() {
-    var mozLoop, fakeServerErrorDescription;
+    var standaloneMozLoop, fakeServerErrDescription;
 
     beforeEach(function() {
-      mozLoop = new loop.StandaloneMozLoop({
+      standaloneMozLoop = new loop.StandaloneMozLoop({
         baseServerUrl: fakeBaseServerUrl
       });
 
-      fakeServerErrorDescription = {
+      fakeServerErrDescription = {
         code: 401,
         errno: 101,
         error: "error",
@@ -170,7 +162,8 @@ describe("loop.StandaloneMozLoop", function() {
     });
 
     it("should POST to the server", function() {
-      mozLoop.rooms.refreshMembership("fakeToken", "fakeSessionToken", callback);
+      standaloneMozLoop.rooms.refreshMembership("fakeToken", "fakeSessionToken",
+                                                callback);
 
       expect(requests).to.have.length.of(1);
       expect(requests[0].url).eql(fakeBaseServerUrl + "/rooms/fakeToken");
@@ -184,7 +177,8 @@ describe("loop.StandaloneMozLoop", function() {
     });
 
     it("should call the callback with success parameters", function() {
-      mozLoop.rooms.refreshMembership("fakeToken", "fakeSessionToken", callback);
+      standaloneMozLoop.rooms.refreshMembership("fakeToken", "fakeSessionToken",
+                                                callback);
 
       var responseData = {
         expires: 20
@@ -198,10 +192,11 @@ describe("loop.StandaloneMozLoop", function() {
     });
 
     it("should call the callback with failure parameters", function() {
-      mozLoop.rooms.refreshMembership("fakeToken", "fakeSessionToken", callback);
+      standaloneMozLoop.rooms.refreshMembership("fakeToken", "fakeSessionToken",
+                                                callback);
 
       requests[0].respond(401, {"Content-Type": "application/json"},
-                          JSON.stringify(fakeServerErrorDescription));
+                          JSON.stringify(fakeServerErrDescription));
       sinon.assert.calledWithMatch(callback, sinon.match(function(err) {
         return /HTTP 401 Unauthorized/.test(err.message);
       }));

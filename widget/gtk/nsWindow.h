@@ -31,12 +31,12 @@
 #endif
 #include "mozilla/EventForwards.h"
 
-#include "nsGtkIMModule.h"
+#include "IMContextWrapper.h"
 
 #undef LOG
 #ifdef MOZ_LOGGING
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsTArray.h"
 #include "Units.h"
 
@@ -45,10 +45,10 @@ extern PRLogModuleInfo *gWidgetFocusLog;
 extern PRLogModuleInfo *gWidgetDragLog;
 extern PRLogModuleInfo *gWidgetDrawLog;
 
-#define LOG(args) PR_LOG(gWidgetLog, 4, args)
-#define LOGFOCUS(args) PR_LOG(gWidgetFocusLog, 4, args)
-#define LOGDRAG(args) PR_LOG(gWidgetDragLog, 4, args)
-#define LOGDRAW(args) PR_LOG(gWidgetDrawLog, 4, args)
+#define LOG(args) MOZ_LOG(gWidgetLog, mozilla::LogLevel::Debug, args)
+#define LOGFOCUS(args) MOZ_LOG(gWidgetFocusLog, mozilla::LogLevel::Debug, args)
+#define LOGDRAG(args) MOZ_LOG(gWidgetDragLog, mozilla::LogLevel::Debug, args)
+#define LOGDRAW(args) MOZ_LOG(gWidgetDrawLog, mozilla::LogLevel::Debug, args)
 
 #else
 
@@ -66,6 +66,11 @@ class nsPluginNativeWindowGtk;
 #  define MOZ_HAVE_SHMIMAGE
 class nsShmImage;
 #endif
+
+namespace mozilla {
+class TimeStamp;
+class CurrentX11TimeGetter;
+}
 
 class nsWindow : public nsBaseWidget
 {
@@ -121,7 +126,7 @@ public:
                                    nsIWidget                  *aWidget,
                                    bool                        aActivate) override;
     void               SetZIndex(int32_t aZIndex) override;
-    NS_IMETHOD         SetSizeMode(int32_t aMode) override;
+    NS_IMETHOD         SetSizeMode(nsSizeMode aMode) override;
     NS_IMETHOD         Enable(bool aState) override;
     NS_IMETHOD         SetFocus(bool aRaise = false) override;
     NS_IMETHOD         GetScreenBounds(nsIntRect &aRect) override;
@@ -147,6 +152,11 @@ public:
                                            bool aIntersectWithExisting) override;
     virtual bool       HasPendingInputEvent() override;
 
+    virtual bool PrepareForFullscreenTransition(nsISupports** aData) override;
+    virtual void PerformFullscreenTransition(FullscreenTransitionStage aStage,
+                                             uint16_t aDuration,
+                                             nsISupports* aData,
+                                             nsIRunnable* aCallback) override;
     NS_IMETHOD         MakeFullScreen(bool aFullScreen,
                                       nsIScreen* aTargetScreen = nullptr) override;
     NS_IMETHOD         HideWindowChrome(bool aShouldHide) override;
@@ -160,6 +170,8 @@ public:
     // utility method, -1 if no change should be made, otherwise returns a
     // value that can be passed to gdk_window_set_decorations
     gint               ConvertBorderStyles(nsBorderStyle aStyle);
+
+    GdkRectangle DevicePixelsToGdkRectRoundOut(nsIntRect rect);
 
     // event callbacks
 #if (MOZ_WIDGET_GTK == 2)
@@ -194,20 +206,17 @@ public:
                                                guint            aTime,
                                                gpointer         aData);
 
-  mozilla::TemporaryRef<mozilla::gfx::DrawTarget> StartRemoteDrawing() override;
+    virtual already_AddRefed<mozilla::gfx::DrawTarget>
+                       StartRemoteDrawingInRegion(nsIntRegion& aInvalidRegion) override;
+    virtual void       EndRemoteDrawingInRegion(mozilla::gfx::DrawTarget* aDrawTarget,
+                                                nsIntRegion& aInvalidRegion) override;
 
 private:
     void               UpdateAlpha(gfxPattern* aPattern, nsIntRect aBoundsRect);
 
-    void               NativeResize(int32_t aWidth,
-                                    int32_t aHeight,
-                                    bool    aRepaint);
-
-    void               NativeResize(int32_t aX,
-                                    int32_t aY,
-                                    int32_t aWidth,
-                                    int32_t aHeight,
-                                    bool    aRepaint);
+    void               NativeMove();
+    void               NativeResize();
+    void               NativeMoveResize();
 
     void               NativeShow  (bool    aAction);
     void               SetHasMappedToplevel(bool aState);
@@ -250,8 +259,8 @@ public:
     GdkWindow*         GetGdkWindow() { return mGdkWindow; }
     bool               IsDestroyed() { return mIsDestroyed; }
 
-    void               DispatchDragEvent(uint32_t aMsg,
-                                         const nsIntPoint& aRefPoint,
+    void               DispatchDragEvent(mozilla::EventMessage aMsg,
+                                         const mozilla::LayoutDeviceIntPoint& aRefPoint,
                                          guint aTime);
     static void        UpdateDragStatus (GdkDragContext *aDragContext,
                                          nsIDragService *aDragService);
@@ -259,6 +268,8 @@ public:
     // otherwise, FALSE.
     bool               DispatchKeyDownEvent(GdkEventKey *aEvent,
                                             bool *aIsCancelled);
+    mozilla::TimeStamp GetEventTimeStamp(guint32 aEventTime);
+    mozilla::CurrentX11TimeGetter* GetCurrentTimeGetter();
 
     NS_IMETHOD_(void) SetInputContext(const InputContext& aContext,
                                       const InputContextAction& aAction) override;
@@ -289,7 +300,7 @@ public:
    virtual nsresult    ConfigureChildren(const nsTArray<Configuration>& aConfigurations) override;
    nsresult            UpdateTranslucentWindowAlphaInternal(const nsIntRect& aRect,
                                                             uint8_t* aAlphas, int32_t aStride);
-    virtual gfxASurface *GetThebesSurface();
+    virtual already_AddRefed<mozilla::gfx::DrawTarget> GetDrawTarget(const nsIntRegion& aRegion);
 
 #if (MOZ_WIDGET_GTK == 2)
     static already_AddRefed<gfxASurface> GetSurfaceForGdkDrawable(GdkDrawable* aDrawable,
@@ -306,13 +317,23 @@ public:
                                                nsIObserver* aObserver) override
     { return SynthesizeNativeMouseEvent(aPoint, GDK_MOTION_NOTIFY, 0, aObserver); }
 
+    virtual nsresult SynthesizeNativeMouseScrollEvent(mozilla::LayoutDeviceIntPoint aPoint,
+                                                      uint32_t aNativeMessage,
+                                                      double aDeltaX,
+                                                      double aDeltaY,
+                                                      double aDeltaZ,
+                                                      uint32_t aModifierFlags,
+                                                      uint32_t aAdditionalFlags,
+                                                      nsIObserver* aObserver) override;
+
 protected:
     virtual ~nsWindow();
 
     // event handling code
     void DispatchActivateEvent(void);
     void DispatchDeactivateEvent(void);
-    void DispatchResized(int32_t aWidth, int32_t aHeight);
+    void DispatchResized();
+    void MaybeDispatchResized();
 
     // Helper for SetParent and ReparentNativeWidget.
     void ReparentNativeWidgetInternal(nsIWidget* aNewParent,
@@ -329,14 +350,10 @@ protected:
     // Has this widget been destroyed yet?
     bool                mIsDestroyed;
 
-    // This is a flag that tracks if we need to resize a widget or
-    // window when we show it.
-    bool                mNeedsResize;
-    // This is a flag that tracks if we need to move a widget or
-    // window when we show it.
-    bool                mNeedsMove;
     // Should we send resize events on all resizes?
     bool                mListenForResizes;
+    // Does WindowResized need to be called on listeners?
+    bool                mNeedsDispatchResized;
     // This flag tracks if we're hidden or shown.
     bool                mIsShown;
     bool                mNeedsShow;
@@ -355,7 +372,7 @@ private:
     void               InitButtonEvent(mozilla::WidgetMouseEvent& aEvent,
                                        GdkEventButton* aGdkEvent);
     bool               DispatchCommandEvent(nsIAtom* aCommand);
-    bool               DispatchContentCommandEvent(int32_t aMsg);
+    bool               DispatchContentCommandEvent(mozilla::EventMessage aMsg);
     bool               CheckForRollup(gdouble aMouseX, gdouble aMouseY,
                                       bool aIsWheel, bool aAlwaysRollup);
     bool               GetDragInfo(mozilla::WidgetMouseEvent* aMouseEvent,
@@ -381,11 +398,17 @@ private:
     guint32             mLastScrollEventTime;
 #endif
 
+#ifdef MOZ_X11
+    Display*            mXDisplay;
+    Drawable            mXWindow;
+    Visual*             mXVisual;
+    int                 mXDepth;
+#endif
+
 #ifdef MOZ_HAVE_SHMIMAGE
-    // If we're using xshm rendering, mThebesSurface wraps mShmImage
+    // If we're using xshm rendering
     nsRefPtr<nsShmImage>  mShmImage;
 #endif
-    nsRefPtr<gfxASurface> mThebesSurface;
 
 #ifdef ACCESSIBILITY
     nsRefPtr<mozilla::a11y::Accessible> mRootAccessible;
@@ -467,14 +490,13 @@ private:
                                           LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
                                           LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT,
                                           bool* aAllowRetaining = nullptr) override;
-#if (MOZ_WIDGET_GTK == 3)
-    gfxASurface* GetThebesSurface(cairo_t *cr);
-#endif
 
     void CleanLayerManagerRecursive();
 
+    virtual int32_t RoundsWidgetCoordinatesTo() override;
+
     /**
-     * |mIMModule| takes all IME related stuff.
+     * |mIMContext| takes all IME related stuff.
      *
      * This is owned by the top-level nsWindow or the topmost child
      * nsWindow embedded in a non-Gecko widget.
@@ -486,7 +508,9 @@ private:
      * level window is released, the children still have a valid pointer,
      * however, IME doesn't work at that time.
      */
-    nsRefPtr<nsGtkIMModule> mIMModule;
+    nsRefPtr<mozilla::widget::IMContextWrapper> mIMContext;
+
+    nsAutoPtr<mozilla::CurrentX11TimeGetter> mCurrentTimeGetter;
 
     // HiDPI scale conversion
     gint GdkScaleFactor();
@@ -495,11 +519,14 @@ private:
     gint DevicePixelsToGdkCoordRoundUp(int pixels);
     gint DevicePixelsToGdkCoordRoundDown(int pixels);
     GdkPoint DevicePixelsToGdkPointRoundDown(nsIntPoint point);
-    GdkRectangle DevicePixelsToGdkRectRoundOut(nsIntRect rect);
+    GdkRectangle DevicePixelsToGdkSizeRoundUp(nsIntSize pixelSize);
 
     // From GDK
     int GdkCoordToDevicePixels(gint coord);
+public:
     mozilla::LayoutDeviceIntPoint GdkPointToDevicePixels(GdkPoint point);
+private:
+    mozilla::LayoutDeviceIntPoint GdkEventCoordsToDevicePixels(gdouble x, gdouble y);
     nsIntRect GdkRectToDevicePixels(GdkRectangle rect);
 };
 

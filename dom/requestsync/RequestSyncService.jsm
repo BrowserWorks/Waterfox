@@ -20,6 +20,7 @@ const RSYNC_STATE_ENABLED = "enabled";
 const RSYNC_STATE_DISABLED = "disabled";
 const RSYNC_STATE_WIFIONLY = "wifiOnly";
 
+Cu.import("resource://gre/modules/BrowserUtils.jsm");
 Cu.import('resource://gre/modules/IndexedDBHelper.jsm');
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -45,6 +46,9 @@ XPCOMUtils.defineLazyServiceGetter(this, "systemMessenger",
 XPCOMUtils.defineLazyServiceGetter(this, "secMan",
                                    "@mozilla.org/scriptsecuritymanager;1",
                                    "nsIScriptSecurityManager");
+
+XPCOMUtils.defineLazyModuleGetter(this, "AlarmService",
+                                  "resource://gre/modules/AlarmService.jsm");
 
 this.RequestSyncService = {
   __proto__: IndexedDBHelper.prototype,
@@ -72,6 +76,10 @@ this.RequestSyncService = {
   _timers: {},
   _pendingRequests: {},
 
+  // This array contains functions to be executed after the scheduling of the
+  // current task or immediately if there are not scheduling in progress.
+  _afterSchedulingTasks: [],
+
   // Initialization of the RequestSyncService.
   init: function() {
     debug("init");
@@ -81,7 +89,7 @@ this.RequestSyncService = {
     }).bind(this));
 
     Services.obs.addObserver(this, 'xpcom-shutdown', false);
-    Services.obs.addObserver(this, 'webapps-clear-data', false);
+    Services.obs.addObserver(this, 'clear-origin-data', false);
     Services.obs.addObserver(this, 'wifi-state-changed', false);
 
     this.initDBHelper("requestSync", RSYNCDB_VERSION, [RSYNCDB_NAME]);
@@ -90,16 +98,16 @@ this.RequestSyncService = {
     // Any incoming message will be stored and processed when the async
     // operation is completed.
 
-    let self = this;
     this.dbTxn("readonly", function(aStore) {
       aStore.openCursor().onsuccess = function(event) {
         let cursor = event.target.result;
         if (cursor) {
-          self.addRegistration(cursor.value);
-          cursor.continue();
+          this.addRegistration(cursor.value, function() {
+            cursor.continue();
+          });
         }
       }
-    },
+    }.bind(this),
     function() {
       debug("initialization done");
     },
@@ -117,17 +125,16 @@ this.RequestSyncService = {
     }).bind(this));
 
     Services.obs.removeObserver(this, 'xpcom-shutdown');
-    Services.obs.removeObserver(this, 'webapps-clear-data');
+    Services.obs.removeObserver(this, 'clear-origin-data');
     Services.obs.removeObserver(this, 'wifi-state-changed');
 
     this.close();
 
     // Removing all the registrations will delete the pending timers.
-    let self = this;
     this.forEachRegistration(function(aObj) {
-      let key = self.principalToKey(aObj.principal);
-      self.removeRegistrationInternal(aObj.data.task, key);
-    });
+      let key = this.principalToKey(aObj.principal);
+      this.removeRegistrationInternal(aObj.data.task, key);
+    }.bind(this));
   },
 
   observe: function(aSubject, aTopic, aData) {
@@ -135,15 +142,21 @@ this.RequestSyncService = {
 
     switch (aTopic) {
       case 'xpcom-shutdown':
-        this.shutdown();
+        this.executeAfterScheduling(function() {
+          this.shutdown();
+        }.bind(this));
         break;
 
-      case 'webapps-clear-data':
-        this.clearData(aSubject);
+      case 'clear-origin-data':
+        this.executeAfterScheduling(function() {
+          this.clearData(aData);
+        }.bind(this));
         break;
 
       case 'wifi-state-changed':
-        this.wifiStateChanged(aSubject == 'enabled');
+        this.executeAfterScheduling(function() {
+          this.wifiStateChanged(aSubject == 'enabled');
+        }.bind(this));
         break;
 
       default:
@@ -160,19 +173,12 @@ this.RequestSyncService = {
       return;
     }
 
-    let params =
-      aData.QueryInterface(Ci.mozIApplicationClearPrivateDataParams);
-    if (!params) {
-      return;
-    }
-
-    // At this point we don't have the origin, so we cannot create the full
-    // key. Using the partial one is enough to detect the uninstalled app.
-    let partialKey = params.appId + '|' + params.browserOnly + '|';
+    let pattern = JSON.parse(aData);
     let dbKeys = [];
 
-    for (let key  in this._registrations) {
-      if (key.indexOf(partialKey) != 0) {
+    for (let key in this._registrations) {
+      let prin = BrowserUtils.principalFromOrigin(key);
+      if (!ChromeUtils.originAttributesMatchPattern(prin.originAttributes, pattern)) {
         continue;
       }
 
@@ -207,13 +213,11 @@ this.RequestSyncService = {
 
   // This method generates the key for the indexedDB object storage.
   principalToKey: function(aPrincipal) {
-    return aPrincipal.appId + '|' +
-           aPrincipal.isInBrowserElement + '|' +
-           aPrincipal.origin;
+    return aPrincipal.origin;
   },
 
   // Add a task to the _registrations map and create the timer if it's needed.
-  addRegistration: function(aObj) {
+  addRegistration: function(aObj, aCb) {
     debug('addRegistration');
 
     let key = this.principalToKey(aObj.principal);
@@ -221,8 +225,12 @@ this.RequestSyncService = {
       this._registrations[key] = {};
     }
 
-    this.scheduleTimer(aObj);
-    this._registrations[key][aObj.data.task] = aObj;
+    this.scheduleTimer(aObj, function() {
+      this._registrations[key][aObj.data.task] = aObj;
+      if (aCb) {
+        aCb();
+      }
+    }.bind(this));
   },
 
   // Remove a task from the _registrations map and delete the timer if it's
@@ -287,51 +295,52 @@ this.RequestSyncService = {
     }
 
     // The principal is used to validate the message.
-    if (!aMessage.principal) {
-      return;
-    }
-
-    let uri = Services.io.newURI(aMessage.principal.origin, null, null);
-
-    let principal;
-    try {
-      principal = secMan.getAppCodebasePrincipal(uri,
-        aMessage.principal.appId, aMessage.principal.isInBrowserElement);
-    } catch(e) {
-      return;
-    }
-
+    let principal = aMessage.principal;
     if (!principal) {
       return;
     }
 
     switch (aMessage.name) {
       case "RequestSync:Register":
-        this.register(aMessage.target, aMessage.data, principal);
+        this.executeAfterScheduling(function() {
+          this.register(aMessage.target, aMessage.data, principal);
+        }.bind(this));
         break;
 
       case "RequestSync:Unregister":
-        this.unregister(aMessage.target, aMessage.data, principal);
+        this.executeAfterScheduling(function() {
+          this.unregister(aMessage.target, aMessage.data, principal);
+        }.bind(this));
         break;
 
       case "RequestSync:Registrations":
-        this.registrations(aMessage.target, aMessage.data, principal);
+        this.executeAfterScheduling(function() {
+          this.registrations(aMessage.target, aMessage.data, principal);
+        }.bind(this));
         break;
 
       case "RequestSync:Registration":
-        this.registration(aMessage.target, aMessage.data, principal);
+        this.executeAfterScheduling(function() {
+          this.registration(aMessage.target, aMessage.data, principal);
+        }.bind(this));
         break;
 
       case "RequestSyncManager:Registrations":
-        this.managerRegistrations(aMessage.target, aMessage.data, principal);
+        this.executeAfterScheduling(function() {
+          this.managerRegistrations(aMessage.target, aMessage.data, principal);
+        }.bind(this));
         break;
 
       case "RequestSyncManager:SetPolicy":
-        this.managerSetPolicy(aMessage.target, aMessage.data, principal);
+        this.executeAfterScheduling(function() {
+          this.managerSetPolicy(aMessage.target, aMessage.data, principal);
+        }.bind(this));
         break;
 
       case "RequestSyncManager:RunTask":
-        this.managerRunTask(aMessage.target, aMessage.data, principal);
+        this.executeAfterScheduling(function() {
+          this.managerRunTask(aMessage.target, aMessage.data, principal);
+        }.bind(this));
         break;
 
       default:
@@ -395,10 +404,7 @@ this.RequestSyncService = {
 
     aData.params.overwrittenMinInterval = 0;
 
-    let dbKey = aData.task + "|" +
-                aPrincipal.appId + '|' +
-                aPrincipal.isInBrowserElement + '|' +
-                aPrincipal.origin;
+    let dbKey = aData.task + "|" + key;
 
     let data = { principal: aPrincipal,
                  dbKey: dbKey,
@@ -410,9 +416,10 @@ this.RequestSyncService = {
       aStore.put(data, data.dbKey);
     },
     function() {
-      self.addRegistration(data);
-      aTarget.sendAsyncMessage("RequestSync:Register:Return",
-                               { requestID: aData.requestID });
+      self.addRegistration(data, function() {
+        aTarget.sendAsyncMessage("RequestSync:Register:Return",
+                                 { requestID: aData.requestID });
+      });
     },
     function() {
       aTarget.sendAsyncMessage("RequestSync:Register:Return",
@@ -514,7 +521,7 @@ this.RequestSyncService = {
       }
 
       if (aObj.principal.isInBrowserElement != aData.isInBrowserElement ||
-          aObj.principal.origin != aData.origin) {
+          aObj.principal.originNoSuffix != aData.origin) {
         return;
       }
 
@@ -545,9 +552,10 @@ this.RequestSyncService = {
     }
 
     this.updateObjectInDB(toSave, function() {
-      self.scheduleTimer(toSave);
-      aTarget.sendAsyncMessage("RequestSyncManager:SetPolicy:Return",
-                               { requestID: aData.requestID });
+      self.scheduleTimer(toSave, function() {
+        aTarget.sendAsyncMessage("RequestSyncManager:SetPolicy:Return",
+                                 { requestID: aData.requestID });
+      });
     });
   },
 
@@ -562,7 +570,7 @@ this.RequestSyncService = {
       }
 
       if (aObj.principal.isInBrowserElement != aData.isInBrowserElement ||
-          aObj.principal.origin != aData.origin) {
+          aObj.principal.originNoSuffix != aData.origin) {
         return;
       }
 
@@ -607,7 +615,7 @@ this.RequestSyncService = {
     let obj = this.createPartialTaskObject(aObj);
 
     obj.app = { manifestURL: '',
-                origin: aObj.principal.origin,
+                origin: aObj.principal.originNoSuffix,
                 isInBrowserElement: aObj.principal.isInBrowserElement };
 
     let app = appsService.getAppByLocalId(aObj.principal.appId);
@@ -621,26 +629,57 @@ this.RequestSyncService = {
   },
 
   // Creation of the timer for a particular task object.
-  scheduleTimer: function(aObj) {
+  scheduleTimer: function(aObj, aCb) {
     debug("scheduleTimer");
+
+    aCb = aCb || function() {};
 
     this.removeTimer(aObj);
 
     // A  registration can be already inactive if it was 1 shot.
     if (!aObj.active) {
+      aCb();
       return;
     }
 
     if (aObj.data.state == RSYNC_STATE_DISABLED) {
+      aCb();
       return;
     }
 
     // WifiOnly check.
     if (aObj.data.state == RSYNC_STATE_WIFIONLY && !this._wifi) {
+      aCb();
       return;
     }
 
-    this.createTimer(aObj);
+    if (this.scheduling) {
+      dump("ERROR!! RequestSyncService - ScheduleTimer called into ScheduleTimer.\n");
+      aCb();
+      return;
+    }
+
+    this.scheduling = true;
+
+    this.createTimer(aObj, function() {
+      this.scheduling = false;
+
+      while (this._afterSchedulingTasks.length) {
+        var cb = this._afterSchedulingTasks.shift();
+        cb();
+      }
+
+      aCb();
+    }.bind(this));
+  },
+
+  executeAfterScheduling: function(aCb) {
+    if (!this.scheduling) {
+      aCb();
+      return;
+    }
+
+    this._afterSchedulingTasks.push(aCb);
   },
 
   timeout: function(aObj) {
@@ -749,17 +788,15 @@ this.RequestSyncService = {
                                    { requestID: pendingRequests[i].requestID });
     }
 
-    let self = this;
     this.updateObjectInDB(this._activeTask, function() {
-      // SchedulerTimer creates a timer and a nsITimer cannot be cloned. This
-      // is the reason why this operation has to be done after storing the task
-      // into IDB.
-      if (!self._activeTask.data.oneShot) {
-        self.scheduleTimer(self._activeTask);
+      if (!this._activeTask.data.oneShot) {
+        this.scheduleTimer(this._activeTask, function() {
+          this.processNextTask();
+        }.bind(this));
+      } else {
+        this.processNextTask();
       }
-
-      self.processNextTask();
-    });
+    }.bind(this));
   },
 
   processNextTask: function() {
@@ -857,47 +894,51 @@ this.RequestSyncService = {
 
   wifiStateChanged: function(aEnabled) {
     debug("onWifiStateChanged");
+
     this._wifi = aEnabled;
 
     if (!this._wifi) {
       // Disable all the wifiOnly tasks.
-      let self = this;
       this.forEachRegistration(function(aObj) {
-        if (aObj.data.state == RSYNC_STATE_WIFIONLY && self.hasTimer(aObj)) {
-          self.removeTimer(aObj);
+        if (aObj.data.state == RSYNC_STATE_WIFIONLY && this.hasTimer(aObj)) {
+          this.removeTimer(aObj);
 
           // It can be that this task has been already schedulated.
-          self.removeTaskFromQueue(aObj);
+          this.removeTaskFromQueue(aObj);
         }
-      });
+      }.bind(this));
       return;
     }
 
     // Enable all the tasks.
-    let self = this;
     this.forEachRegistration(function(aObj) {
-      if (aObj.active && !self.hasTimer(aObj)) {
+      if (aObj.active && !this.hasTimer(aObj)) {
         if (!aObj.data.wifiOnly) {
           dump("ERROR - Found a disabled task that is not wifiOnly.");
         }
 
-        self.scheduleTimer(aObj);
+        this.scheduleTimer(aObj);
       }
-    });
+    }.bind(this));
   },
 
-  createTimer: function(aObj) {
-    this._timers[aObj.dbKey] = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+  createTimer: function(aObj, aCb) {
+    aCb = aCb || function() {};
 
     let interval = aObj.data.minInterval;
     if (aObj.data.overwrittenMinInterval > 0) {
       interval = aObj.data.overwrittenMinInterval;
     }
 
-    let self = this;
-    this._timers[aObj.dbKey].initWithCallback(function() { self.timeout(aObj); },
-                                              interval * 1000,
-                                              Ci.nsITimer.TYPE_ONE_SHOT);
+    AlarmService.add(
+      { date: new Date(Date.now() + interval * 1000),
+        ignoreTimezone: false },
+      () => this.timeout(aObj),
+      function(aTimerId) {
+        this._timers[aObj.dbKey] = aTimerId;
+        aCb();
+      }.bind(this),
+      () => aCb());
   },
 
   hasTimer: function(aObj) {
@@ -906,7 +947,7 @@ this.RequestSyncService = {
 
   removeTimer: function(aObj) {
     if (aObj.dbKey in this._timers) {
-      this._timers[aObj.dbKey].cancel();
+      AlarmService.remove(this._timers[aObj.dbKey]);
       delete this._timers[aObj.dbKey];
     }
   },

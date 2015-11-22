@@ -28,7 +28,7 @@ public:
   virtual SurfaceFormat GetFormat() const { return mA->GetFormat(); }
 
   /* Readback from this surface type is not supported! */
-  virtual TemporaryRef<DataSourceSurface> GetDataSurface() { return nullptr; }
+  virtual already_AddRefed<DataSourceSurface> GetDataSurface() { return nullptr; }
 private:
   friend class DualSurface;
   friend class DualPattern;
@@ -37,7 +37,7 @@ private:
   RefPtr<SourceSurface> mB;
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif /* MOZILLA_GFX_SOURCESURFACEDUAL_H_ */

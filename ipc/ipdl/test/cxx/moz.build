@@ -17,6 +17,7 @@ SOURCES += [
     'TestActorPunning.cpp',
     'TestBadActor.cpp',
     'TestBridgeMain.cpp',
+    'TestCancel.cpp',
     'TestCrashCleanup.cpp',
     'TestDataStructures.cpp',
     'TestDesc.cpp',
@@ -56,12 +57,9 @@ if CONFIG['OS_ARCH'] == 'Linux':
     ]
 
 SOURCES += [
+    '!IPDLUnitTests.cpp',
     'IPDLUnitTestProcessChild.cpp',
     'IPDLUnitTestSubprocess.cpp',
-]
-
-GENERATED_SOURCES += [
-    'IPDLUnitTests.cpp',
 ]
 
 IPDL_SOURCES += [
@@ -73,6 +71,7 @@ IPDL_SOURCES += [
     'PTestBridgeMain.ipdl',
     'PTestBridgeMainSub.ipdl',
     'PTestBridgeSub.ipdl',
+    'PTestCancel.ipdl',
     'PTestCrashCleanup.ipdl',
     'PTestDataStructures.ipdl',
     'PTestDataStructuresCommon.ipdlh',

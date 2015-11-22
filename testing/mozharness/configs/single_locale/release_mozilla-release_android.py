@@ -2,11 +2,7 @@ BRANCH = "mozilla-release"
 MOZ_UPDATE_CHANNEL = "release"
 MOZILLA_DIR = BRANCH
 OBJDIR = "obj-l10n"
-EN_US_BINARY_URL = "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d/android/en-US"
-#STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
-STAGE_SERVER = "stage.mozilla.org"
-STAGE_USER = "ffxbld"
-STAGE_SSH_KEY = "~/.ssh/ffxbld_rsa"
+EN_US_BINARY_URL = "http://archive.mozilla.org/pub/mobile/candidates/%(version)s-candidates/build%(buildnum)d/android/en-US"
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 config = {
@@ -27,7 +23,6 @@ config = {
     "tooltool_config": {
         "manifest": "mobile/android/config/tooltool-manifests/android/releng.manifest",
         "output_dir": "%(abs_work_dir)s/" + MOZILLA_DIR,
-        "bootstrap_cmd": ["bash", "-xe", "setup.sh"],
     },
     "exes": {
         'tooltool.py': '/tools/tooltool.py',
@@ -63,15 +58,8 @@ config = {
         "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
     },
     "base_en_us_binary_url": EN_US_BINARY_URL,
-    # TODO ideally we could get this info from a central location.
-    # However, the agility of these individual config files might trump that.
-    "upload_env": {
-        "UPLOAD_USER": STAGE_USER,
-        "UPLOAD_SSH_KEY": STAGE_SSH_KEY,
-        "UPLOAD_HOST": STAGE_SERVER,
-        "UPLOAD_TO_TEMP": "1",
-        "MOZ_PKG_VERSION": "%(version)s",
-    },
+    "upload_branch": "%s-android" % BRANCH,
+    "ssh_key_dir": "~/.ssh",
     "base_post_upload_cmd": "post_upload.py -p mobile -n %(buildnum)s -v %(version)s --builddir android/%(locale)s --release-to-mobile-candidates-dir --nightly-dir=candidates",
     "merge_locales": True,
     "make_dirs": ['config'],
@@ -79,16 +67,6 @@ config = {
     "mozconfig": "%s/mobile/android/config/mozconfigs/android/l10n-release" % MOZILLA_DIR,
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",
     "key_alias": "release",
-    "default_actions": [
-        "clobber",
-        "pull",
-        "list-locales",
-        "setup",
-        "repack",
-        "upload-repacks",
-        "submit-to-balrog",
-        "summary",
-    ],
     # Mock
     "mock_target": "mozilla-centos6-x86_64-android",
     "mock_packages": ['autoconf213', 'python', 'zip', 'mozilla-python27-mercurial', 'git', 'ccache',
@@ -113,5 +91,6 @@ config = {
                       ],
     "mock_files": [
         ("/home/cltbld/.ssh", "/home/mock_mozilla/.ssh"),
+        ('/usr/local/lib/hgext', '/usr/local/lib/hgext'),
     ],
 }

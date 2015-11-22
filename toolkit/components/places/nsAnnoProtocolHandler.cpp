@@ -23,6 +23,7 @@
 #include "nsISupportsUtils.h"
 #include "nsIURI.h"
 #include "nsNetUtil.h"
+#include "nsIOutputStream.h"
 #include "nsContentUtils.h"
 #include "nsServiceManagerUtils.h"
 #include "nsStringStream.h"
@@ -200,7 +201,7 @@ NS_IMPL_ISUPPORTS_INHERITED(
   nsIRequestObserver
 )
 
-} // anonymous namespace
+} // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
 //// nsAnnoProtocolHandler

@@ -5,6 +5,15 @@
 %filter substitution
 %include defines.inc
 
+a {
+  text-decoration: none;
+  color: #0096DD;
+}
+
+a:active {
+  color: #0082C6;
+}
+
 .details {
   width: 100%;
 }
@@ -23,6 +32,21 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.warn-unsigned {
+  border-top: 1px solid @color_about_item_border@;
+  padding: 1em;
+  -moz-padding-start: calc(var(--icon-size) + var(--icon-margin) * 2);
+  background-image: url("chrome://browser/skin/images/grey-caution.svg");
+  background-size: var(--icon-size);
+  background-position: var(--icon-margin);
+  background-repeat: no-repeat;
+  display: none;
+}
+
+.addon-item[isUnsigned="true"] .warn-unsigned {
+  display: block;
 }
 
 .status {
@@ -47,6 +71,42 @@
 
 #addons-details > .list-item:active {
   background-color: #fff;
+}
+
+/* Buttons */
+
+.buttons {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.buttons > button {
+  -moz-appearance: none;
+  font-size: 1em;
+  border: 1px solid transparent;
+  border-top-color: @color_about_item_border@;
+  -moz-border-start-color: @color_about_item_border@;
+  background-color: @color_about_item@;
+  flex: 1;
+  padding: 0.75em 0.5em;
+  border-radius: 0;
+}
+
+.buttons > button:active {
+  background-color: #eeeeee;
+}
+
+.buttons > button[disabled="true"] {
+  color: #b5b5b5;
+}
+
+.buttons > button[hidden="true"] {
+  display: none;
+}
+
+.buttons:first-child {
+  -moz-border-start-color: transparent;
 }
 
 /* Settings */

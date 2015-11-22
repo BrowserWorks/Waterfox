@@ -9,7 +9,7 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FxAccounts.jsm");
 
-let fxAccountsCommon = {};
+var fxAccountsCommon = {};
 Cu.import("resource://gre/modules/FxAccountsCommon.js", fxAccountsCommon);
 
 // for master-password utilities
@@ -95,7 +95,14 @@ function shouldAllowRelink(acctName) {
   return !needRelinkWarning(acctName) || promptForRelink(acctName);
 }
 
-let wrapper = {
+function updateDisplayedEmail(user) {
+  let emailDiv = document.getElementById("email");
+  if (emailDiv && user) {
+    emailDiv.textContent = user.email;
+  }
+}
+
+var wrapper = {
   iframe: null,
 
   init: function (url, urlParams) {
@@ -107,6 +114,10 @@ let wrapper = {
 
     let iframe = document.getElementById("remote");
     this.iframe = iframe;
+    this.iframe.QueryInterface(Ci.nsIFrameLoaderOwner);
+    let docShell = this.iframe.frameLoader.docShell;
+    docShell.QueryInterface(Ci.nsIWebProgress);
+    docShell.addProgressListener(this.iframeListener, Ci.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
     iframe.addEventListener("load", this);
 
     // Ideally we'd just merge urlParams with new URL(url).searchParams, but our
@@ -115,7 +126,57 @@ let wrapper = {
     if (urlParamStr) {
       url += (url.includes("?") ? "&" : "?") + urlParamStr;
     }
-    iframe.src = url;
+    this.url = url;
+    // Set the iframe's location with loadURI/LOAD_FLAGS_BYPASS_HISTORY to
+    // avoid having a new history entry being added.
+    let webNav = iframe.frameLoader.docShell.QueryInterface(Ci.nsIWebNavigation);
+    webNav.loadURI(url, Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_HISTORY, null, null, null);
+  },
+
+  retry: function () {
+    let webNav = this.iframe.frameLoader.docShell.QueryInterface(Ci.nsIWebNavigation);
+    webNav.loadURI(this.url, Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_HISTORY, null, null, null);
+  },
+
+  iframeListener: {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
+                                         Ci.nsISupportsWeakReference,
+                                         Ci.nsISupports]),
+
+    onStateChange: function(aWebProgress, aRequest, aState, aStatus) {
+      let failure = false;
+
+      // Captive portals sometimes redirect users
+      if ((aState & Ci.nsIWebProgressListener.STATE_REDIRECTING)) {
+        failure = true;
+      } else if ((aState & Ci.nsIWebProgressListener.STATE_STOP)) {
+        if (aRequest instanceof Ci.nsIHttpChannel) {
+          try {
+            failure = aRequest.responseStatus != 200;
+          } catch (e) {
+            failure = aStatus != Components.results.NS_OK;
+          }
+        }
+      }
+
+      // Calling cancel() will raise some OnStateChange notifications by itself,
+      // so avoid doing that more than once
+      if (failure && aStatus != Components.results.NS_BINDING_ABORTED) {
+        aRequest.cancel(Components.results.NS_BINDING_ABORTED);
+        setErrorPage();
+      }
+    },
+
+    onLocationChange: function(aWebProgress, aRequest, aLocation, aFlags) {
+      if (aRequest && aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_ERROR_PAGE) {
+        aRequest.cancel(Components.results.NS_BINDING_ABORTED);
+        setErrorPage();
+      }
+    },
+
+    onProgressChange: function() {},
+    onStatusChange: function() {},
+    onSecurityChange: function() {},
   },
 
   handleEvent: function (evt) {
@@ -141,8 +202,13 @@ let wrapper = {
 
     if (accountData.customizeSync) {
       Services.prefs.setBoolPref(PREF_SYNC_SHOW_CUSTOMIZATION, true);
-      delete accountData.customizeSync;
     }
+    delete accountData.customizeSync;
+    // sessionTokenContext is erroneously sent by the content server.
+    // https://github.com/mozilla/fxa-content-server/issues/2766
+    // To avoid having the FxA storage manager not knowing what to do with
+    // it we delete it here.
+    delete accountData.sessionTokenContext;
 
     // We need to confirm a relink - see shouldAllowRelink for more
     let newAccountEmail = accountData.email;
@@ -153,8 +219,8 @@ let wrapper = {
       // we need to tell the page we successfully received the message, but
       // then bail without telling fxAccounts
       this.injectData("message", { status: "login" });
-      // and re-init the page by navigating to about:accounts
-      window.location = "about:accounts";
+      // after a successful login we return to preferences
+      openPrefs();
       return;
     }
     delete accountData.verifiedCanLinkAccount;
@@ -168,12 +234,13 @@ let wrapper = {
               .getService(Ci.nsISupports)
               .wrappedJSObject;
     xps.whenLoaded().then(() => {
+      updateDisplayedEmail(accountData);
       return fxAccounts.setSignedInUser(accountData);
     }).then(() => {
       // If the user data is verified, we want it to immediately look like
       // they are signed in without waiting for messages to bounce around.
       if (accountData.verified) {
-        show("stage", "manage");
+        openPrefs();
       }
       this.injectData("message", { status: "login" });
       // until we sort out a better UX, just leave the jelly page in place.
@@ -191,19 +258,6 @@ let wrapper = {
     // We need to confirm a relink - see shouldAllowRelink for more
     let ok = shouldAllowRelink(accountData.email);
     this.injectData("message", { status: "can_link_account", data: { ok: ok } });
-  },
-
-  /**
-   * onSessionStatus sends the currently signed in user's credentials
-   * to the jelly.
-   */
-  onSessionStatus: function () {
-    log("Received: 'session_status'.");
-
-    fxAccounts.getSignedInUser().then(
-      (accountData) => this.injectData("message", { status: "session_status", data: accountData }),
-      (err) => this.injectData("message", { status: "error", error: err })
-    );
   },
 
   /**
@@ -228,9 +282,6 @@ let wrapper = {
         break;
       case "can_link_account":
         this.onCanLinkAccount(data);
-        break;
-      case "session_status":
-        this.onSessionStatus(data);
         break;
       case "sign_out":
         this.onSignOut(data);
@@ -276,8 +327,15 @@ function getStarted() {
   show("remote");
 }
 
+function retry() {
+  show("remote");
+  wrapper.retry();
+}
+
 function openPrefs() {
-  window.openPreferences("paneSync");
+  // Bug 1199303 calls for this tab to always be replaced with Preferences
+  // rather than it opening in a different tab.
+  window.location = "about:preferences#sync";
 }
 
 function init() {
@@ -287,6 +345,8 @@ function init() {
     if (window.closed) {
       return;
     }
+
+    updateDisplayedEmail(user);
 
     // Ideally we'd use new URL(document.URL).searchParams, but for about: URIs,
     // searchParams is empty.
@@ -327,8 +387,6 @@ function init() {
       // No action specified.
       if (user) {
         show("stage", "manage");
-        let sb = Services.strings.createBundle("chrome://browser/locale/syncSetup.properties");
-        document.title = sb.GetStringFromName("manage.pageTitle");
       } else {
         // Attempt a migration if enabled or show the introductory page
         // otherwise.
@@ -342,7 +400,13 @@ function init() {
       }
       break;
     }
+  }).catch(err => {
+    error("Failed to get the signed in user: " + err);
   });
+}
+
+function setErrorPage() {
+  show("stage", "networkError");
 }
 
 // Causes the "top-level" element with |id| to be shown - all other top-level
@@ -394,6 +458,7 @@ function migrateToDevEdition(urlParams) {
   let fxAccountsStorage = OS.Path.join(defaultProfilePath, fxAccountsCommon.DEFAULT_STORAGE_FILENAME);
   return OS.File.read(fxAccountsStorage, { encoding: "utf-8" }).then(text => {
     let accountData = JSON.parse(text).accountData;
+    updateDisplayedEmail(accountData);
     return fxAccounts.setSignedInUser(accountData);
   }).then(() => {
     return fxAccounts.promiseAccountsForceSigninURI().then(url => {
@@ -430,6 +495,9 @@ document.addEventListener("DOMContentLoaded", function onload() {
   var buttonGetStarted = document.getElementById('buttonGetStarted');
   buttonGetStarted.addEventListener('click', getStarted);
 
+  var buttonRetry = document.getElementById('buttonRetry');
+  buttonRetry.addEventListener('click', retry);
+
   var oldsync = document.getElementById('oldsync');
   oldsync.addEventListener('click', handleOldSync);
 
@@ -445,8 +513,9 @@ function initObservers() {
       window.location = "about:accounts?action=signin";
       return;
     }
-    // must be onverified - just about:accounts is loaded.
-    window.location = "about:accounts";
+
+    // must be onverified - we want to open preferences.
+    openPrefs();
   }
 
   for (let topic of OBSERVER_TOPICS) {

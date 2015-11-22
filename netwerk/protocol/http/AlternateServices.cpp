@@ -219,8 +219,6 @@ AltSvcMapping::RouteEquals(AltSvcMapping *map)
   return mAlternateHost.Equals(map->mAlternateHost) &&
     (mAlternatePort == map->mAlternatePort) &&
     mNPNToken.Equals(map->mNPNToken);
-
-  return false;
 }
 
 void
@@ -586,5 +584,5 @@ AltSvcOverride::GetAllow1918(bool *allow)
 
 NS_IMPL_ISUPPORTS(AltSvcOverride, nsIInterfaceRequestor, nsISpeculativeConnectionOverrider)
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

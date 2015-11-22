@@ -18,6 +18,7 @@ class TestCapabilities(MarionetteTestCase):
         self.assertIn("browserVersion", self.caps)
         self.assertIn("platformName", self.caps)
         self.assertIn("platformVersion", self.caps)
+        self.assertIn("specificationLevel", self.caps)
 
         self.assertEqual(self.caps["browserName"], self.appinfo["name"])
         self.assertEqual(self.caps["browserVersion"], self.appinfo["version"])
@@ -26,17 +27,13 @@ class TestCapabilities(MarionetteTestCase):
                          self.appinfo["platformVersion"])
 
     def test_supported_features(self):
-        self.assertIn("handlesAlerts", self.caps)
-        self.assertIn("nativeEvents", self.caps)
         self.assertIn("rotatable", self.caps)
-        self.assertIn("secureSsl", self.caps)
+        self.assertIn("acceptSslCerts", self.caps)
         self.assertIn("takesElementScreenshot", self.caps)
         self.assertIn("takesScreenshot", self.caps)
 
-        self.assertFalse(self.caps["handlesAlerts"])
-        self.assertFalse(self.caps["nativeEvents"])
         self.assertEqual(self.caps["rotatable"], self.appinfo["name"] == "B2G")
-        self.assertFalse(self.caps["secureSsl"])
+        self.assertFalse(self.caps["acceptSslCerts"])
         self.assertTrue(self.caps["takesElementScreenshot"])
         self.assertTrue(self.caps["takesScreenshot"])
 
@@ -61,6 +58,14 @@ class TestCapabilities(MarionetteTestCase):
         caps = self.marionette.session_capabilities
         self.assertIn("somethingAwesome", caps)
 
+    def test_we_dont_overwrite_server_capabilities(self):
+        self.marionette.delete_session()
+        capabilities = { "desiredCapabilities": {"browserName": "ChocolateCake"}}
+        self.marionette.start_session(capabilities)
+        caps = self.marionette.session_capabilities
+        self.assertEqual(caps["browserName"], self.appinfo["name"],
+                         "This should have appname not ChocolateCake")
+
     def test_we_can_pass_in_required_capabilities_on_session_start(self):
         self.marionette.delete_session()
         capabilities = { "requiredCapabilities": {"browserName": self.appinfo["name"]}}
@@ -81,3 +86,7 @@ class TestCapabilities(MarionetteTestCase):
         # Start a new session just to make sure we leave the browser in the
         # same state it was before it started the test
         self.marionette.start_session()
+
+    def test_we_get_valid_uuid_4_when_creating_a_session(self):
+        self.assertNotIn("{", self.marionette.session_id, 'Session ID has {} in it. %s ' \
+                         % self.marionette.session_id)

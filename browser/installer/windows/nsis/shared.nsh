@@ -286,7 +286,7 @@ ${EndIf}
     CreateShortCut "$DESKTOP\${BrandFullName}.lnk" "$INSTDIR\${FileMainEXE}"
     ${If} ${FileExists} "$DESKTOP\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$DESKTOP\${BrandFullName}.lnk" "$INSTDIR"
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$DESKTOP\${BrandFullName}.lnk" "$AppUserModelID" "true"
       ${EndIf}
@@ -297,7 +297,7 @@ ${EndIf}
         ${If} ${FileExists} "$DESKTOP\${BrandFullName}.lnk"
           ShellLink::SetShortCutWorkingDirectory "$DESKTOP\${BrandFullName}.lnk" \
                                                  "$INSTDIR"
-          ${If} ${AtLeastWinXP}
+          ${If} ${AtLeastWin7}
           ${AndIf} "$AppUserModelID" != ""
             ApplicationID::Set "$DESKTOP\${BrandFullName}.lnk" "$AppUserModelID" "true"
           ${EndIf}
@@ -312,7 +312,7 @@ ${EndIf}
     ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                              "$INSTDIR"
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" "$AppUserModelID" "true"
       ${EndIf}
@@ -324,7 +324,7 @@ ${EndIf}
         ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
           ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                                  "$INSTDIR"
-          ${If} ${AtLeastWinXP}
+          ${If} ${AtLeastWin7}
           ${AndIf} "$AppUserModelID" != ""
             ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" "$AppUserModelID" "true"
           ${EndIf}
@@ -334,7 +334,7 @@ ${EndIf}
   ${EndUnless}
 
   ; Windows 7 doesn't use the QuickLaunch directory
-  ${Unless} ${AtLeastWinXP}
+  ${Unless} ${AtLeastWin7}
   ${AndUnless} ${FileExists} "$QUICKLAUNCH\${BrandFullName}.lnk"
     CreateShortCut "$QUICKLAUNCH\${BrandFullName}.lnk" \
                    "$INSTDIR\${FileMainEXE}"
@@ -995,147 +995,21 @@ ${EndIf}
     RmDir /r /REBOOTOK "$INSTDIR\extensions\talkback@mozilla.org"
   ${EndIf}
 
-  ; Remove the Java Console extension (bug 597235)
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0012-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0012-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0013-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0013-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0014-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0014-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0015-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0015-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0016-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0016-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0017-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0017-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0018-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0018-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0019-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0019-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0020-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0020-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0021-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0021-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0022-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0015-0000-0022-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0000-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0000-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0001-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0001-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0002-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0002-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0003-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0003-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0004-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0004-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0005-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0005-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0006-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0006-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0007-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0007-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0010-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0010-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0011-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0011-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0012-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0012-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0013-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0013-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0014-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0014-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0015-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0015-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0016-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0016-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0017-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0017-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0018-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0018-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0019-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0019-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0020-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0020-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0021-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0021-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0022-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0022-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0023-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0023-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0024-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0024-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0025-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0025-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0026-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0026-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0027-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0027-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0028-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0028-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0029-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0029-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0030-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0030-ABCDEFFEDCBA}"
-  ${EndIf}
+  ; Remove the Java Console extension (bug 1165156)
   ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0031-ABCDEFFEDCBA}"
     RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0031-ABCDEFFEDCBA}"
   ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0032-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0032-ABCDEFFEDCBA}"
+  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0034-ABCDEFFEDCBA}"
+    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0034-ABCDEFFEDCBA}"
+  ${EndIf}
+  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0039-ABCDEFFEDCBA}"
+    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0039-ABCDEFFEDCBA}"
+  ${EndIf}
+  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0045-ABCDEFFEDCBA}"
+    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0016-0000-0045-ABCDEFFEDCBA}"
   ${EndIf}
   ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0017-0000-0000-ABCDEFFEDCBA}"
     RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0017-0000-0000-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0017-0000-0001-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0017-0000-0001-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0017-0000-0002-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0017-0000-0002-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0017-0000-0003-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0017-0000-0003-ABCDEFFEDCBA}"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\extensions\{CAFEEFAC-0017-0000-0004-ABCDEFFEDCBA}"
-    RmDir /r /REBOOTOK "$INSTDIR\extensions\{CAFEEFAC-0017-0000-0004-ABCDEFFEDCBA}"
   ${EndIf}
 !macroend
 !define RemoveDeprecatedFiles "!insertmacro RemoveDeprecatedFiles"
@@ -1249,7 +1123,7 @@ ${EndIf}
     ${If} ${Errors}
       ClearErrors
       WriteIniStr "$0" "TASKBAR" "Migrated" "true"
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
         ; No need to check the default on Win8 and later
         ${If} ${AtMostWin2008R2}
           ; Check if the Firefox is the http handler for this user
@@ -1277,7 +1151,7 @@ ${EndIf}
 ; model ID removes a pinned pinned Start Menu shortcut this will also add a
 ; pinned Start Menu shortcut.
 !macro PinToTaskBar
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWin7}
     StrCpy $8 "false" ; Whether a shortcut had to be created
     ${IsPinnedToTaskBar} "$INSTDIR\${FileMainEXE}" $R9
     ${If} "$R9" == "false"
@@ -1379,7 +1253,7 @@ ${EndIf}
                 ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
                   ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                                          "$INSTDIR"
-                  ${If} ${AtLeastWinXP}
+                  ${If} ${AtLeastWin7}
                   ${AndIf} "$AppUserModelID" != ""
                     ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" \
                                        "$AppUserModelID" "true"
@@ -1611,7 +1485,7 @@ FunctionEnd
 
 ; Helper for updating the shortcut application model IDs.
 Function FixShortcutAppModelIDs
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWin7}
   ${AndIf} "$AppUserModelID" != ""
     ${UpdateShortcutAppModelIDs} "$INSTDIR\${FileMainEXE}" "$AppUserModelID" $0
   ${EndIf}

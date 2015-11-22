@@ -51,7 +51,7 @@ public:
   virtual TextureFactoryIdentifier
     GetTextureFactoryIdentifier() override;
 
-  virtual TemporaryRef<DataTextureSource>
+  virtual already_AddRefed<DataTextureSource>
     CreateDataTextureSource(TextureFlags aFlags = TextureFlags::NO_FLAGS) override;
 
   virtual bool CanUseCanvasLayerForSize(const gfx::IntSize& aSize) override;
@@ -59,11 +59,11 @@ public:
 
   virtual void MakeCurrent(MakeCurrentFlags aFlags = 0)  override {}
 
-  virtual TemporaryRef<CompositingRenderTarget>
+  virtual already_AddRefed<CompositingRenderTarget>
     CreateRenderTarget(const gfx::IntRect &aRect,
                        SurfaceInitMode aInit) override;
 
-  virtual TemporaryRef<CompositingRenderTarget>
+  virtual already_AddRefed<CompositingRenderTarget>
     CreateRenderTargetFromSource(const gfx::IntRect& aRect,
                                  const CompositingRenderTarget* aSource,
                                  const gfx::IntPoint& aSourcePoint) override;
@@ -94,7 +94,8 @@ public:
                         const gfx::Rect &aClipRect,
                         const EffectChain &aEffectChain,
                         gfx::Float aOpacity,
-                        const gfx::Matrix4x4 &aTransform) override;
+                        const gfx::Matrix4x4& aTransform,
+                        const gfx::Rect& aVisibleRect) override;
 
   /* Helper for when the primary effect is VR_DISTORTION */
   void DrawVRDistortion(const gfx::Rect &aRect,
@@ -128,7 +129,9 @@ public:
    * Setup the viewport and projection matrix for rendering
    * to a window of the given dimensions.
    */
-  virtual void PrepareViewport(const gfx::IntSize& aSize) override;
+  virtual void PrepareViewport(const gfx::IntSize& aSize);
+  virtual void PrepareViewport(const gfx::IntSize& aSize, const gfx::Matrix4x4& aProjection,
+                               float aZNear, float aZFar);
 
   virtual bool SupportsPartialTextureUpdate() override { return true; }
 
@@ -161,11 +164,11 @@ private:
   void EnsureSize();
   bool VerifyBufferSize();
   void UpdateRenderTarget();
-  bool CreateShaders();
   bool UpdateConstantBuffers();
   void SetSamplerForFilter(gfx::Filter aFilter);
   void SetPSForEffect(Effect *aEffect, MaskType aMaskType, gfx::SurfaceFormat aFormat);
   void PaintToTarget();
+  bool SetBlendMode(gfx::CompositionOp aOp, bool aPremultipled = true);
 
   virtual gfx::IntSize GetWidgetSize() const override { return mSize; }
 

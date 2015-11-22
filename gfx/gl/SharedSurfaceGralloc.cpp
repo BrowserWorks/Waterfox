@@ -19,7 +19,6 @@
 #include "ScopedGLHelpers.h"
 
 #include "gfxPlatform.h"
-#include "gfx2DGlue.h"
 #include "gfxPrefs.h"
 
 #define DEBUG_GRALLOC
@@ -35,13 +34,10 @@ namespace gl {
 using namespace mozilla::layers;
 using namespace android;
 
-SurfaceFactory_Gralloc::SurfaceFactory_Gralloc(GLContext* prodGL,
-                                               const SurfaceCaps& caps,
-                                               layers::TextureFlags flags,
-                                               layers::ISurfaceAllocator* allocator)
-    : SurfaceFactory(prodGL, SharedSurfaceType::Gralloc, caps)
-    , mFlags(flags)
-    , mAllocator(allocator)
+SurfaceFactory_Gralloc::SurfaceFactory_Gralloc(GLContext* prodGL, const SurfaceCaps& caps,
+                                               const RefPtr<layers::ISurfaceAllocator>& allocator,
+                                               const layers::TextureFlags& flags)
+    : SurfaceFactory(SharedSurfaceType::Gralloc, prodGL, caps, allocator, flags)
 {
     MOZ_ASSERT(mAllocator);
 }
@@ -67,12 +63,9 @@ SharedSurface_Gralloc::Create(GLContext* prodGL,
     gfxContentType type = hasAlpha ? gfxContentType::COLOR_ALPHA
                                    : gfxContentType::COLOR;
 
-    auto platform = gfxPlatform::GetPlatform();
-    gfxImageFormat format = platform->OptimalFormatForContent(type);
-
     typedef GrallocTextureClientOGL ptrT;
     RefPtr<ptrT> grallocTC = new ptrT(allocator,
-                                      gfx::ImageFormatToSurfaceFormat(format),
+                                      gfxPlatform::GetPlatform()->Optimal2DFormatForContent(type),
                                       gfx::BackendType::NONE, // we don't need to use it with a DrawTarget
                                       flags);
 
@@ -132,7 +125,8 @@ SharedSurface_Gralloc::SharedSurface_Gralloc(GLContext* prodGL,
                     AttachmentType::GLTexture,
                     prodGL,
                     size,
-                    hasAlpha)
+                    hasAlpha,
+                    true)
     , mEGL(egl)
     , mSync(0)
     , mAllocator(allocator)
@@ -194,9 +188,7 @@ SharedSurface_Gralloc::Fence()
             int fenceFd = mEGL->fDupNativeFenceFDANDROID(mEGL->Display(), sync);
             if (fenceFd != -1) {
                 mEGL->fDestroySync(mEGL->Display(), sync);
-                android::sp<android::Fence> fence(new android::Fence(fenceFd));
-                FenceHandle handle = FenceHandle(fence);
-                mTextureClient->SetAcquireFenceHandle(handle);
+                mTextureClient->SetAcquireFenceHandle(FenceHandle(new FenceHandle::FdObj(fenceFd)));
             } else {
                 mSync = sync;
             }
@@ -284,5 +276,12 @@ SharedSurface_Gralloc::WaitForBufferOwnership()
     mTextureClient->WaitForBufferOwnership();
 }
 
+bool
+SharedSurface_Gralloc::ToSurfaceDescriptor(layers::SurfaceDescriptor* const out_descriptor)
+{
+    mTextureClient->MarkShared();
+    return mTextureClient->ToSurfaceDescriptor(*out_descriptor);
 }
-}
+
+} // namespace gl
+} // namespace mozilla

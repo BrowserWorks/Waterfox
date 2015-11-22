@@ -6,11 +6,11 @@
  * when `contentOnly` is on correctly.
  */
 
-let { CATEGORY_MASK } = devtools.require("devtools/performance/global");
+var { CATEGORY_MASK } = require("devtools/performance/global");
 
 function test() {
-  let { ThreadNode } = devtools.require("devtools/performance/tree-model");
-  let { CallView } = devtools.require("devtools/performance/tree-view");
+  let { ThreadNode } = require("devtools/performance/tree-model");
+  let { CallView } = require("devtools/performance/tree-view");
 
   /*
    * should have a tree like:
@@ -26,7 +26,7 @@ function test() {
    *   - (JS)
    */
 
-  let threadNode = new ThreadNode(gThread, { contentOnly: true });
+  let threadNode = new ThreadNode(gThread, { startTime: 0, endTime: 30, contentOnly: true });
   // Don't display the synthesized (root) and the real (root) node twice.
   threadNode.calls = threadNode.calls[0].calls;
   let treeRoot = new CallView({ frame: threadNode, autoExpandDepth: 10 });
@@ -63,7 +63,7 @@ function test() {
   finish();
 }
 
-let gThread = synthesizeProfileForTest([{
+var gThread = synthesizeProfileForTest([{
   time: 5,
   frames: [
     { location: "(root)" },

@@ -11,55 +11,94 @@ const URL = "http://example.com/browser/toolkit/components/aboutperformance/test
 function frameScript() {
   "use strict";
 
-  addMessageListener("aboutperformance-test:hasItems", ({data: url}) => {
-    let hasPlatform = false;
-    let hasURL = false;
+  addMessageListener("aboutperformance-test:done", () => {
+    content.postMessage("stop", "*");
+    sendAsyncMessage("aboutperformance-test:done", null);
+  });
+  addMessageListener("aboutperformance-test:setTitle", ({data: title}) => {
+    content.document.title = title;
+    sendAsyncMessage("aboutperformance-test:setTitle", null);
+  });
+  
+  addMessageListener("aboutperformance-test:hasItems", ({data: {title, options}}) => {
+    let observer = function(subject, topic, mode) {
+      Services.obs.removeObserver(observer, "about:performance-update-complete");
+      let hasTitleInWebpages = false;
+      let hasTitleInAddons = false;
 
-    try {
-      let eltData = content.document.getElementById("liveData");
-      if (!eltData) {
-        return;
-      }
-
-      // Find if we have a row for "platform"
-      hasPlatform = eltData.querySelector("tr.platform") != null;
-
-      // Find if we have a row for our URL
-      hasURL = false;
-      for (let eltContent of eltData.querySelectorAll("tr.content td.name")) {
-        if (eltContent.textContent == url) {
-          hasURL = true;
-          break;
+      try {
+        let eltWeb = content.document.getElementById("webpages");
+        let eltAddons = content.document.getElementById("addons");
+        if (!eltWeb || !eltAddons) {
+          return;
         }
-      }
 
-    } catch (ex) {
-      Cu.reportError("Error in content: " + ex);
-      Cu.reportError(ex.stack);
-    } finally {
-      sendAsyncMessage("aboutperformance-test:hasItems", {hasPlatform, hasURL});
+        let addonTitles = [for (eltContent of eltAddons.querySelectorAll("span.title")) eltContent.textContent];
+        let webTitles = [for (eltContent of eltWeb.querySelectorAll("span.title")) eltContent.textContent];
+
+        hasTitleInAddons = addonTitles.includes(title);
+        hasTitleInWebpages = webTitles.includes(title);
+
+      } catch (ex) {
+        Cu.reportError("Error in content: " + ex);
+        Cu.reportError(ex.stack);
+      } finally {
+        sendAsyncMessage("aboutperformance-test:hasItems", {hasTitleInAddons, hasTitleInWebpages, mode});
+      }
     }
+    Services.obs.addObserver(observer, "about:performance-update-complete", false);
+    Services.obs.notifyObservers(null, "test-about:performance-test-driver", JSON.stringify(options));
   });
 }
 
+var gTabAboutPerformance = null;
+var gTabContent = null;
 
-add_task(function* test() {
-  let tabAboutPerformance = gBrowser.addTab("about:performance");
-  let tabContent = gBrowser.addTab(URL);
+add_task(function* init() {
+  info("Setting up about:performance");
+  gTabAboutPerformance = gBrowser.selectedTab = gBrowser.addTab("about:performance");
+  yield ContentTask.spawn(gTabAboutPerformance.linkedBrowser, null, frameScript);
 
-  yield ContentTask.spawn(tabAboutPerformance.linkedBrowser, null, frameScript);
+  info(`Setting up ${URL}`);
+  gTabContent = gBrowser.addTab(URL);
+  yield ContentTask.spawn(gTabContent.linkedBrowser, null, frameScript);
+});
 
-  while (true) {
-    yield new Promise(resolve => setTimeout(resolve, 100));
-    let {hasPlatform, hasURL} = (yield promiseContentResponse(tabAboutPerformance.linkedBrowser, "aboutperformance-test:hasItems", URL));
-    info(`Platform: ${hasPlatform}, url: ${hasURL}`);
-    if (hasPlatform && hasURL) {
-      Assert.ok(true, "Found a row for <platform> and a row for our URL");
-      break;
+var promiseExpectContent = Task.async(function*(options) {
+  let title = "Testing about:performance " + Math.random();
+  for (let i = 0; i < 30; ++i) {
+    yield promiseContentResponse(gTabContent.linkedBrowser, "aboutperformance-test:setTitle", title);
+    let {hasTitleInWebpages, hasTitleInAddons, mode} = (yield promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:hasItems", {title, options}));
+    if (hasTitleInWebpages && ((mode == "recent") == options.displayRecent)) {
+      Assert.ok(!hasTitleInAddons, "The title appears in webpages, but not in addons");
+      return true;
     }
+    info(`Title not found, trying again ${i}/30`);
+    yield new Promise(resolve => setTimeout(resolve, 100));
+  }
+  return false;
+});
+
+add_task(function* tests() {
+    for (let autoRefresh of [100, -1]) {
+      for (let displayRecent of [true, false]) {
+        info(`Testing ${autoRefresh > 0?"with":"without"} autoRefresh, in ${displayRecent?"recent":"global"} mode`);
+        let found = yield promiseExpectContent({autoRefresh, displayRecent});
+        Assert.equal(found, autoRefresh > 0, "The page title appears iff about:performance is set to auto-refresh");
+      }
+    }
+});
+
+add_task(function* cleanup() {
+  // Cleanup
+  info("Cleaning up");
+  yield promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:done", null);
+
+  info("Closing tabs");
+  for (let tab of gBrowser.tabs) {
+    yield BrowserTestUtils.removeTab(tab);
   }
 
-  // Cleanup
-  gBrowser.removeTab(tabContent);
-  gBrowser.removeTab(tabAboutPerformance);
+  info("Done");
+  gBrowser.selectedTab = null;
 });

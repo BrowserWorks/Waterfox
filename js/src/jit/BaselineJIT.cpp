@@ -67,7 +67,8 @@ BaselineScript::BaselineScript(uint32_t prologueOffset, uint32_t epilogueOffset,
     postDebugPrologueOffset_(postDebugPrologueOffset),
     flags_(0),
     inlinedBytecodeLength_(0),
-    maxInliningDepth_(UINT8_MAX)
+    maxInliningDepth_(UINT8_MAX),
+    pendingBuilder_(nullptr)
 { }
 
 static const unsigned BASELINE_MAX_ARGS_LENGTH = 20000;
@@ -181,6 +182,7 @@ jit::EnterBaselineAtBranch(JSContext* cx, InterpreterFrame* fp, jsbytecode* pc)
     data.osrFrame = fp;
     data.osrNumStackValues = fp->script()->nfixed() + cx->interpreterRegs().stackDepth();
 
+    AutoValueVector vals(cx);
     RootedValue thisv(cx);
 
     if (fp->isNonEvalFunctionFrame()) {
@@ -203,6 +205,21 @@ jit::EnterBaselineAtBranch(JSContext* cx, InterpreterFrame* fp, jsbytecode* pc)
             data.calleeToken = CalleeToToken(&fp->callee(), /* constructing = */ false);
         else
             data.calleeToken = CalleeToToken(fp->script());
+
+        if (fp->isEvalFrame()) {
+            if (!vals.reserve(2))
+                return JitExec_Aborted;
+
+            vals.infallibleAppend(thisv);
+            
+            if (fp->isFunctionFrame())
+                vals.infallibleAppend(fp->newTarget());
+            else
+                vals.infallibleAppend(NullValue());
+
+            data.maxArgc = 2;
+            data.maxArgv = vals.begin();
+        }
     }
 
     TraceLoggerThread* logger = TraceLoggerForMainThread(cx->runtime());
@@ -228,14 +245,19 @@ jit::BaselineCompile(JSContext* cx, JSScript* script, bool forceDebugInstrumenta
 
     LifoAlloc alloc(TempAllocator::PreferredLifoChunkSize);
     TempAllocator* temp = alloc.new_<TempAllocator>(&alloc);
-    if (!temp)
+    if (!temp) {
+        ReportOutOfMemory(cx);
         return Method_Error;
+    }
 
     JitContext jctx(cx, temp);
 
     BaselineCompiler compiler(cx, *temp, script);
-    if (!compiler.init())
+    if (!compiler.init()) {
+        ReportOutOfMemory(cx);
         return Method_Error;
+    }
+
     if (forceDebugInstrumentation)
         compiler.setCompileDebugInstrumentation();
 
@@ -339,7 +361,7 @@ jit::CanEnterBaselineMethod(JSContext* cx, RunState& state)
     } else {
         MOZ_ASSERT(state.isExecute());
         ExecuteType type = state.asExecute()->type();
-        if (type == EXECUTE_DEBUG || type == EXECUTE_DEBUG_GLOBAL) {
+        if (type == EXECUTE_DEBUG) {
             JitSpew(JitSpew_BaselineAbort, "debugger frame");
             return Method_CantCompile;
         }
@@ -419,10 +441,7 @@ BaselineScript::trace(JSTracer* trc)
     // Mark all IC stub codes hanging off the IC stub entries.
     for (size_t i = 0; i < numICEntries(); i++) {
         ICEntry& ent = icEntry(i);
-        if (!ent.hasStub())
-            continue;
-        for (ICStub* stub = ent.firstStub(); stub; stub = stub->next())
-            stub->trace(trc);
+        ent.trace(trc);
     }
 }
 
@@ -452,9 +471,26 @@ BaselineScript::Destroy(FreeOp* fop, BaselineScript* script)
      */
     MOZ_ASSERT(fop->runtime()->gc.nursery.isEmpty());
 
+    MOZ_ASSERT(!script->hasPendingIonBuilder());
+
     script->unlinkDependentAsmJSModules(fop);
 
     fop->delete_(script);
+}
+
+void
+BaselineScript::clearDependentAsmJSModules()
+{
+    // Remove any links from AsmJSModules that contain optimized FFI calls into
+    // this BaselineScript.
+    if (dependentAsmJSModules_) {
+        for (size_t i = 0; i < dependentAsmJSModules_->length(); i++) {
+            DependentAsmJSModuleExit exit = (*dependentAsmJSModules_)[i];
+            exit.module->detachJitCompilation(exit.exitIndex);
+        }
+
+        dependentAsmJSModules_->clear();
+    }
 }
 
 void
@@ -843,6 +879,8 @@ BaselineScript::toggleDebugTraps(JSScript* script, jsbytecode* pc)
 
     SrcNoteLineScanner scanner(script->notes(), script->lineno());
 
+    AutoWritableJitCode awjc(method());
+
     for (uint32_t i = 0; i < numPCMappingIndexEntries(); i++) {
         PCMappingIndexEntry& entry = pcMappingIndexEntry(i);
 
@@ -912,6 +950,8 @@ BaselineScript::toggleTraceLoggerScripts(JSRuntime* runtime, JSScript* script, b
     else
         traceLoggerScriptEvent_ = TraceLoggerEvent(logger, TraceLogger_Scripts);
 
+    AutoWritableJitCode awjc(method());
+
     // Enable/Disable the traceLogger prologue and epilogue.
     CodeLocationLabel enter(method_, CodeOffsetLabel(traceLoggerEnterToggleOffset_));
     CodeLocationLabel exit(method_, CodeOffsetLabel(traceLoggerExitToggleOffset_));
@@ -937,6 +977,8 @@ BaselineScript::toggleTraceLoggerEngine(bool enable)
 
     MOZ_ASSERT(enable == !traceLoggerEngineEnabled_);
     MOZ_ASSERT(scriptsEnabled == traceLoggerScriptsEnabled_);
+
+    AutoWritableJitCode awjc(method());
 
     // Enable/Disable the traceLogger prologue and epilogue.
     CodeLocationLabel enter(method_, CodeOffsetLabel(traceLoggerEnterToggleOffset_));
@@ -965,6 +1007,8 @@ BaselineScript::toggleProfilerInstrumentation(bool enable)
 
     JitSpew(JitSpew_BaselineIC, "  toggling profiling %s for BaselineScript %p",
             enable ? "on" : "off", this);
+
+    AutoWritableJitCode awjc(method());
 
     // Toggle the jump
     CodeLocationLabel enterToggleLocation(method_, CodeOffsetLabel(profilerEnterToggleOffset_));
@@ -1123,6 +1167,11 @@ MarkActiveBaselineScripts(JSRuntime* rt, const JitActivationIterator& activation
           case JitFrame_BaselineJS:
             iter.script()->baselineScript()->setActive();
             break;
+          case JitFrame_LazyLink: {
+            LazyLinkExitFrameLayout* ll = iter.exitFrame()->as<LazyLinkExitFrameLayout>();
+            ScriptFromCalleeToken(ll->jsFrame()->calleeToken())->baselineScript()->setActive();
+            break;
+          }
           case JitFrame_Bailout:
           case JitFrame_IonJS: {
             // Keep the baseline script around, since bailouts from the ion

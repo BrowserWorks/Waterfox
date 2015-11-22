@@ -70,6 +70,7 @@ enum AsmJSMathBuiltinFunction
 enum AsmJSAtomicsBuiltinFunction
 {
     AsmJSAtomicsBuiltin_compareExchange,
+    AsmJSAtomicsBuiltin_exchange,
     AsmJSAtomicsBuiltin_load,
     AsmJSAtomicsBuiltin_store,
     AsmJSAtomicsBuiltin_fence,
@@ -77,7 +78,8 @@ enum AsmJSAtomicsBuiltinFunction
     AsmJSAtomicsBuiltin_sub,
     AsmJSAtomicsBuiltin_and,
     AsmJSAtomicsBuiltin_or,
-    AsmJSAtomicsBuiltin_xor
+    AsmJSAtomicsBuiltin_xor,
+    AsmJSAtomicsBuiltin_isLockFree
 };
 
 // Set of known global object SIMD's attributes, i.e. types
@@ -97,7 +99,7 @@ enum AsmJSSimdOperation
 
 // These labels describe positions in the prologue/epilogue of functions while
 // compiling an AsmJSModule.
-struct AsmJSFunctionLabels
+struct MOZ_STACK_CLASS AsmJSFunctionLabels
 {
     AsmJSFunctionLabels(jit::Label& entry, jit::Label& overflowExit)
       : entry(entry), overflowExit(overflowExit) {}
@@ -540,7 +542,10 @@ class AsmJSModule
 
     class CodeRange
     {
+      protected:
         uint32_t nameIndex_;
+
+      private:
         uint32_t lineNumber_;
         uint32_t begin_;
         uint32_t profilingReturn_;
@@ -622,6 +627,24 @@ class AsmJSModule
         AsmJSExit::BuiltinKind thunkTarget() const {
             MOZ_ASSERT(isThunk());
             return AsmJSExit::BuiltinKind(u.thunk.target_);
+        }
+    };
+
+    class FunctionCodeRange : public CodeRange
+    {
+      private:
+        PropertyName* name_;
+
+      public:
+        FunctionCodeRange(PropertyName* name, uint32_t lineNumber, const AsmJSFunctionLabels& l)
+          : CodeRange(UINT32_MAX, lineNumber, l), name_(name)
+        {}
+
+        PropertyName* name() const { return name_; }
+
+        void initNameIndex(uint32_t nameIndex) {
+            MOZ_ASSERT(nameIndex_ == UINT32_MAX);
+            nameIndex_ = nameIndex;
         }
     };
 
@@ -728,7 +751,7 @@ class AsmJSModule
 
         explicit RelativeLink(Kind kind)
         {
-#if defined(JS_CODEGEN_MIPS)
+#if defined(JS_CODEGEN_MIPS32)
             kind_ = kind;
 #elif defined(JS_CODEGEN_ARM)
             // On ARM, CodeLabels are only used to label raw pointers, so in
@@ -739,14 +762,14 @@ class AsmJSModule
         }
 
         bool isRawPointerPatch() {
-#if defined(JS_CODEGEN_MIPS)
+#if defined(JS_CODEGEN_MIPS32)
             return kind_ == RawPointer;
 #else
             return true;
 #endif
         }
 
-#ifdef JS_CODEGEN_MIPS
+#ifdef JS_CODEGEN_MIPS32
         Kind kind_;
 #endif
         uint32_t patchAtOffset;
@@ -838,9 +861,6 @@ class AsmJSModule
     Vector<jit::IonScriptCounts*,  0, SystemAllocPolicy> functionCounts_;
 #if defined(MOZ_VTUNE) || defined(JS_ION_PERF)
     Vector<ProfiledFunction,       0, SystemAllocPolicy> profiledFunctions_;
-#endif
-#if defined(JS_ION_PERF)
-    Vector<ProfiledBlocksFunction, 0, SystemAllocPolicy> perfProfiledBlocksFunctions_;
 #endif
 
     ScriptSource *                        scriptSource_;
@@ -1135,15 +1155,14 @@ class AsmJSModule
     bool addCodeRange(CodeRange::Kind kind, uint32_t begin, uint32_t pret, uint32_t end) {
         return codeRanges_.append(CodeRange(kind, begin, pret, end));
     }
-    bool addFunctionCodeRange(PropertyName* name, uint32_t lineNumber,
-                              const AsmJSFunctionLabels& labels)
+    bool addFunctionCodeRange(PropertyName* name, FunctionCodeRange&& codeRange)
     {
         MOZ_ASSERT(!isFinished());
         MOZ_ASSERT(name->isTenured());
         if (names_.length() >= UINT32_MAX)
             return false;
-        uint32_t nameIndex = names_.length();
-        return names_.append(name) && codeRanges_.append(CodeRange(nameIndex, lineNumber, labels));
+        codeRange.initNameIndex(names_.length());
+        return names_.append(name) && codeRanges_.append(Move(codeRange));
     }
     bool addBuiltinThunkCodeRange(AsmJSExit::BuiltinKind builtin, uint32_t begin,
                                   uint32_t profilingReturn, uint32_t end)
@@ -1189,12 +1208,10 @@ class AsmJSModule
         return functionCounts_.append(counts);
     }
 #if defined(MOZ_VTUNE) || defined(JS_ION_PERF)
-    bool addProfiledFunction(PropertyName* name, unsigned codeStart, unsigned codeEnd,
-                             unsigned line, unsigned column)
+    bool addProfiledFunction(ProfiledFunction&& func)
     {
         MOZ_ASSERT(isFinishedWithModulePrologue() && !isFinishedWithFunctionBodies());
-        ProfiledFunction func(name, codeStart, codeEnd, line, column);
-        return profiledFunctions_.append(func);
+        return profiledFunctions_.append(mozilla::Move(func));
     }
     unsigned numProfiledFunctions() const {
         MOZ_ASSERT(isFinishedWithModulePrologue());
@@ -1203,23 +1220,6 @@ class AsmJSModule
     ProfiledFunction& profiledFunction(unsigned i) {
         MOZ_ASSERT(isFinishedWithModulePrologue());
         return profiledFunctions_[i];
-    }
-#endif
-#ifdef JS_ION_PERF
-    bool addProfiledBlocks(PropertyName* name, unsigned codeBegin, unsigned inlineEnd,
-                           unsigned codeEnd, jit::BasicBlocksVector& basicBlocks)
-    {
-        MOZ_ASSERT(isFinishedWithModulePrologue() && !isFinishedWithFunctionBodies());
-        ProfiledBlocksFunction func(name, codeBegin, inlineEnd, codeEnd, basicBlocks);
-        return perfProfiledBlocksFunctions_.append(mozilla::Move(func));
-    }
-    unsigned numPerfBlocksFunctions() const {
-        MOZ_ASSERT(isFinishedWithModulePrologue());
-        return perfProfiledBlocksFunctions_.length();
-    }
-    ProfiledBlocksFunction& perfProfiledBlocksFunction(unsigned i) {
-        MOZ_ASSERT(isFinishedWithModulePrologue());
-        return perfProfiledBlocksFunctions_[i];
     }
 #endif
 
@@ -1569,10 +1569,7 @@ class AsmJSModule
         MOZ_ASSERT(isDynamicallyLinked());
         return maybeHeap_;
     }
-    size_t heapLength() const {
-        MOZ_ASSERT(isDynamicallyLinked());
-        return maybeHeap_ ? maybeHeap_->byteLength() : 0;
-    }
+    size_t heapLength() const;
     bool profilingEnabled() const {
         MOZ_ASSERT(isDynamicallyLinked());
         return profilingEnabled_;
@@ -1629,6 +1626,6 @@ class AsmJSModuleObject : public NativeObject
     static const Class class_;
 };
 
-}  // namespace js
+} // namespace js
 
 #endif /* asmjs_AsmJSModule_h */

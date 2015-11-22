@@ -7,20 +7,19 @@ const TEST_BASE_HTTP = "http://example.com/browser/browser/devtools/styleeditor/
 const TEST_BASE_HTTPS = "https://example.com/browser/browser/devtools/styleeditor/test/";
 const TEST_HOST = 'mochi.test:8888';
 
-let {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-let TargetFactory = devtools.TargetFactory;
-let {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
-let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
-
-
+var {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+var {TargetFactory} = require("devtools/framework/target");
+var {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
+var promise = require("promise");
+var DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 
 // Import the GCLI test helper
-let testDir = gTestPath.substr(0, gTestPath.lastIndexOf("/"));
+var testDir = gTestPath.substr(0, gTestPath.lastIndexOf("/"));
 Services.scriptloader.loadSubScript(testDir + "../../../commandline/test/helpers.js", this);
 
-gDevTools.testing = true;
+DevToolsUtils.testing = true;
 SimpleTest.registerCleanupFunction(() => {
-  gDevTools.testing = false;
+  DevToolsUtils.testing = false;
 });
 
 /**
@@ -75,7 +74,7 @@ function* cleanup()
  * Creates a new tab in specified window navigates it to the given URL and
  * opens style editor in it.
  */
-let openStyleEditorForURL = Task.async(function* (url, win) {
+var openStyleEditorForURL = Task.async(function* (url, win) {
   let tab = yield addTab(url, win);
   let target = TargetFactory.forTab(tab);
   let toolbox = yield gDevTools.showToolbox(target, "styleeditor");

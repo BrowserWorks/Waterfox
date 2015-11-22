@@ -18,14 +18,14 @@ function runTests() {
   var Cc = Components.classes;
   var Ci = Components.interfaces;
 
-  Cu.import("resource://gre/modules/devtools/Loader.jsm");
-  Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
-  Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
+  var {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+  var {DebuggerClient} = require("devtools/toolkit/client/main");
+  var {DebuggerServer} = require("devtools/server/main");
   Cu.import("resource://gre/modules/Services.jsm");
 
   SimpleTest.waitForExplicitFinish();
 
-  var {getPreferenceFront} = devtools.require("devtools/server/actors/preference");
+  var {getPreferenceFront} = require("devtools/server/actors/preference");
 
   DebuggerServer.init();
   DebuggerServer.addBrowserActors();

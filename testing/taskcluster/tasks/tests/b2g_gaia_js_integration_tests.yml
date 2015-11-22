@@ -1,7 +1,6 @@
 ---
 $inherits:
   from: 'tasks/test.yml'
-reruns: 2
 task:
   metadata:
     name: '[TC] - Gaia JS Integration Test'
@@ -33,7 +32,7 @@ task:
 
   extra:
     chunks:
-      total: 30
+      total: 40
     treeherderEnv:
       - production
       - staging

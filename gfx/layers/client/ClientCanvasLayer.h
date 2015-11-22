@@ -6,7 +6,7 @@
 #ifndef GFX_CLIENTCANVASLAYER_H
 #define GFX_CLIENTCANVASLAYER_H
 
-#include "mozilla/layers/CanvasClient.h"  // for CanvasClient, etc
+#include "CanvasClient.h"               // for CanvasClient, etc
 #include "ClientLayerManager.h"         // for ClientLayerManager, etc
 #include "CopyableCanvasLayer.h"        // for CopyableCanvasLayer
 #include "Layers.h"                     // for CanvasLayer, etc
@@ -21,9 +21,8 @@
 
 namespace mozilla {
 namespace gl {
-class SharedSurface;
 class SurfaceFactory;
-}
+} // namespace gl
 
 namespace layers {
 
@@ -81,6 +80,9 @@ public:
   {
     return mCanvasClient;
   }
+
+  const TextureFlags& Flags() const { return mFlags; }
+
 protected:
   ClientLayerManager* ClientManager()
   {
@@ -93,11 +95,14 @@ protected:
 
   UniquePtr<gl::SurfaceFactory> mFactory;
 
+  TextureFlags mFlags;
+
   friend class DeprecatedCanvasClient2D;
   friend class CanvasClient2D;
   friend class CanvasClientSharedSurface;
 };
-}
-}
+
+} // namespace layers
+} // namespace mozilla
 
 #endif

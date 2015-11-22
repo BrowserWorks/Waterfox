@@ -30,6 +30,8 @@
       <xul:browser anonid="content" class="chat-frame" flex="1"
                   context="contentAreaContextMenu"
                   disableglobalhistory="true"
+                  message="true"
+                  messagemanagergroup="social"
                   tooltip="aHTMLTooltip"
                   xbl:inherits="src,origin" type="content"/>
     </content>
@@ -51,10 +53,6 @@
           });
         }
 
-        if (!this.chatbar) {
-          document.getAnonymousElementByAttribute(this, "anonid", "minimize").hidden = true;
-          document.getAnonymousElementByAttribute(this, "anonid", "close").hidden = true;
-        }
         let contentWindow = this.contentWindow;
         // process this._callbacks, then set to null so the chatbox creator
         // knows to make new callbacks immediately.
@@ -69,14 +67,8 @@
             return;
           this.removeEventListener("DOMContentLoaded", DOMContentLoaded, true);
           this.isActive = !this.minimized;
+          this._chat.loadButtonSet(this, this.getAttribute("buttonSet"));
           this._deferredChatLoaded.resolve(this);
-        }, true);
-
-        // load content.js to support webrtc, fullscreen, etc.
-        this.addEventListener("load", function loaded(event) {
-          this.removeEventListener("load", loaded, true);
-          let mm = this.content.messageManager;
-          mm.loadFrameScript("chrome://browser/content/content.js", true);
         }, true);
 
         if (this.src)
@@ -95,6 +87,10 @@
 
       <field name="content" readonly="true">
         document.getAnonymousElementByAttribute(this, "anonid", "content");
+      </field>
+
+      <field name="_chat" readonly="true">
+        Cu.import("resource:///modules/Chat.jsm", {}).Chat;
       </field>
 
       <property name="contentWindow">
@@ -141,10 +137,10 @@
 
       <property name="isActive">
         <getter>
-          return this.content.docShell.isActive;
+          return this.content.docShellIsActive;
         </getter>
         <setter>
-          this.content.docShell.isActive = !!val;
+          this.content.docShellIsActive = !!val;
 
           // let the chat frame know if it is being shown or hidden
           let evt = this.contentDocument.createEvent("CustomEvent");
@@ -165,12 +161,20 @@
         <parameter name="aTarget"/>
         <body><![CDATA[
           aTarget.setAttribute("label", this.contentDocument.title);
-          if (this.getAttribute("dark") == "true")
-            aTarget.setAttribute("dark", "true");
+
           aTarget.src = this.src;
           aTarget.content.setAttribute("origin", this.content.getAttribute("origin"));
           aTarget.content.popupnotificationanchor.className = this.content.popupnotificationanchor.className;
           aTarget.content.swapDocShells(this.content);
+        ]]></body>
+      </method>
+
+      <method name="setDecorationAttributes">
+        <parameter name="aTarget"/>
+        <body><![CDATA[
+          if (this.hasAttribute("customSize"))
+            aTarget.setAttribute("customSize", this.getAttribute("customSize"));
+          this._chat.loadButtonSet(aTarget, this.getAttribute("buttonSet"));
         ]]></body>
       </method>
 
@@ -216,6 +220,8 @@
           let chatbar = win.document.getElementById("pinnedchats");
           let origin = this.content.getAttribute("origin");
           let cb = chatbar.openChat(origin, title, "about:blank");
+          this.setDecorationAttributes(cb);
+
           cb.promiseChatLoaded.then(
             () => {
               this.swapDocShells(cb);
@@ -229,6 +235,12 @@
               // more than one chat window isn't possible.
               chatbar.chatboxForURL.delete("about:blank");
               chatbar.chatboxForURL.set(this.src, Cu.getWeakReference(cb));
+
+              let attachEvent = new cb.contentWindow.CustomEvent("socialFrameAttached", {
+                bubbles: true,
+                cancelable: true,
+              });
+              cb.contentDocument.dispatchEvent(attachEvent);
 
               deferred.resolve(cb);
             }
@@ -462,8 +474,10 @@
           // These are from the CSS for the chatbox and must be kept in sync.
           // We can't use calcTotalWidthOf due to the transitions...
           const CHAT_WIDTH_OPEN = 260;
+          const CHAT_WIDTH_OPEN_ALT = 300;
           const CHAT_WIDTH_MINIMIZED = 160;
-          let openWidth = aChatbox.hasAttribute("large") ? 300 : CHAT_WIDTH_OPEN;
+          let openWidth = aChatbox.hasAttribute("customSize") ?
+            CHAT_WIDTH_OPEN_ALT : CHAT_WIDTH_OPEN;
 
           return aChatbox.minimized ? CHAT_WIDTH_MINIMIZED : openWidth;
         ]]></body>
@@ -689,17 +703,26 @@
             if (event.target != otherWin.document)
               return;
 
+            if (aChatbox.hasAttribute("customSize")) {
+              otherWin.document.getElementById("chat-window").
+                setAttribute("customSize", aChatbox.getAttribute("customSize"));
+            }
+
+            let document = aChatbox.contentDocument;
             let detachEvent = new aChatbox.contentWindow.CustomEvent("socialFrameDetached", {
               bubbles: true,
               cancelable: true,
             });
-            aChatbox.contentDocument.dispatchEvent(detachEvent);
 
             otherWin.removeEventListener("load", _chatLoad, true);
             let otherChatbox = otherWin.document.getElementById("chatter");
+            aChatbox.setDecorationAttributes(otherChatbox);
             aChatbox.swapDocShells(otherChatbox);
             aChatbox.close();
             chatbar.chatboxForURL.set(aChatbox.src, Cu.getWeakReference(otherChatbox));
+
+            // All processing is done, now we can fire the event.
+            document.dispatchEvent(detachEvent);
 
             deferred.resolve(otherChatbox);
           }, true);
@@ -782,12 +805,7 @@
         let top = Math.min(Math.max(eY, sY.value),
                            sY.value + sHeight.value - winHeight);
 
-        let title = draggedChat.content.getAttribute("title");
-        this.detachChatbox(draggedChat, { screenX: left, screenY: top }).then(
-          chatbox => {
-            chatbox.contentWindow.document.title = title;
-          }
-        );
+        this.detachChatbox(draggedChat, { screenX: left, screenY: top });
         event.stopPropagation();
       ]]></handler>
     </handlers>

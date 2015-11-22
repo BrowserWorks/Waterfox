@@ -38,6 +38,8 @@ MOZ_SERVICE(AsyncShutdown, nsIAsyncShutdownService,
             "@mozilla.org/async-shutdown-service;1")
 MOZ_SERVICE(UUIDGenerator, nsIUUIDGenerator,
             "@mozilla.org/uuid-generator;1");
+MOZ_SERVICE(GfxInfo, nsIGfxInfo,
+            "@mozilla.org/gfx/info;1");
 
 #ifdef MOZ_USE_NAMESPACE
 namespace mozilla {
@@ -47,6 +49,6 @@ MOZ_SERVICE(HistoryService, IHistory,
             "@mozilla.org/browser/history;1")
 
 #ifdef MOZ_USE_NAMESPACE
-}
+} // namespace mozilla
 #endif
 #endif // !defined(MOZILLA_XPCOMRT_API)

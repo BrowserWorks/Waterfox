@@ -129,6 +129,11 @@ public:
      */
     static bool IsKeyPressEventNecessary(GdkEventKey* aGdkKeyEvent);
 
+    /**
+     * Destroys the singleton KeymapWrapper instance, if it exists.
+     */
+    static void Shutdown();
+
 protected:
 
     /**
@@ -245,8 +250,6 @@ protected:
      * Signal handlers.
      */
     static void OnKeysChanged(GdkKeymap* aKeymap, KeymapWrapper* aKeymapWrapper);
-    static void OnDestroyKeymap(KeymapWrapper* aKeymapWrapper,
-                                GdkKeymap *aGdkKeymap);
 
     /**
      * GetCharCodeFor() Computes what character is inputted by the key event
@@ -330,7 +333,7 @@ protected:
      * InitKeypressEvent() intializes keyCode, charCode and
      * alternativeCharCodes of keypress event.
      *
-     * @param aKeyEvent         An NS_KEY_PRESS event, must not be nullptr.
+     * @param aKeyEvent         An eKeyPress event, must not be nullptr.
      *                          The modifier related members and keyCode must
      *                          be initialized already.
      * @param aGdkKeyEvent      A native key event which causes dispatching

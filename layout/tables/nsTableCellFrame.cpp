@@ -48,10 +48,10 @@ nsTableCellFrame::nsTableCellFrame(nsStyleContext* aContext,
   , mDesiredSize(aTableFrame->GetWritingMode())
 {
   mColIndex = 0;
-  mPriorAvailWidth = 0;
+  mPriorAvailISize = 0;
 
   SetContentEmpty(false);
-  SetHasPctOverHeight(false);
+  SetHasPctOverBSize(false);
 }
 
 nsTableCellFrame::~nsTableCellFrame()
@@ -82,7 +82,7 @@ nsTableCellFrame::Init(nsIContent*       aContent,
   // Let the base class do its initialization
   nsContainerFrame::Init(aContent, aParent, aPrevInFlow);
 
-  if (GetStateBits() & NS_FRAME_FONT_INFLATION_CONTAINER) {
+  if (HasAnyStateBits(NS_FRAME_FONT_INFLATION_CONTAINER)) {
     AddStateBits(NS_FRAME_FONT_INFLATION_FLOW_ROOT);
   }
 
@@ -98,17 +98,17 @@ nsTableCellFrame::Init(nsIContent*       aContent,
 void
 nsTableCellFrame::DestroyFrom(nsIFrame* aDestructRoot)
 {
-  if (GetStateBits() & NS_FRAME_CAN_HAVE_ABSPOS_CHILDREN) {
+  if (HasAnyStateBits(NS_FRAME_CAN_HAVE_ABSPOS_CHILDREN)) {
     nsTableFrame::UnregisterPositionedTablePart(this, aDestructRoot);
   }
 
   nsContainerFrame::DestroyFrom(aDestructRoot);
 }
 
-// nsIPercentHeightObserver methods
+// nsIPercentBSizeObserver methods
 
 void
-nsTableCellFrame::NotifyPercentHeight(const nsHTMLReflowState& aReflowState)
+nsTableCellFrame::NotifyPercentBSize(const nsHTMLReflowState& aReflowState)
 {
   // nsHTMLReflowState ensures the mCBReflowState of blocks inside a
   // cell is the cell frame, not the inner-cell block, and that the
@@ -121,28 +121,28 @@ nsTableCellFrame::NotifyPercentHeight(const nsHTMLReflowState& aReflowState)
   const nsHTMLReflowState *cellRS = aReflowState.mCBReflowState;
 
   if (cellRS && cellRS->frame == this &&
-      (cellRS->ComputedHeight() == NS_UNCONSTRAINEDSIZE ||
-       cellRS->ComputedHeight() == 0)) { // XXXldb Why 0?
-    // This is a percentage height on a frame whose percentage heights
-    // are based on the height of the cell, since its containing block
+      (cellRS->ComputedBSize() == NS_UNCONSTRAINEDSIZE ||
+       cellRS->ComputedBSize() == 0)) { // XXXldb Why 0?
+    // This is a percentage bsize on a frame whose percentage bsizes
+    // are based on the bsize of the cell, since its containing block
     // is the inner cell frame.
 
-    // We'll only honor the percent height if sibling-cells/ancestors
-    // have specified/pct height. (Also, siblings only count for this if
+    // We'll only honor the percent bsize if sibling-cells/ancestors
+    // have specified/pct bsize. (Also, siblings only count for this if
     // both this cell and the sibling cell span exactly 1 row.)
 
-    if (nsTableFrame::AncestorsHaveStyleHeight(*cellRS) ||
+    if (nsTableFrame::AncestorsHaveStyleBSize(*cellRS) ||
         (GetTableFrame()->GetEffectiveRowSpan(*this) == 1 &&
-         (cellRS->parentReflowState->frame->GetStateBits() &
-          NS_ROW_HAS_CELL_WITH_STYLE_HEIGHT))) {
+         cellRS->parentReflowState->frame->
+           HasAnyStateBits(NS_ROW_HAS_CELL_WITH_STYLE_BSIZE))) {
 
       for (const nsHTMLReflowState *rs = aReflowState.parentReflowState;
            rs != cellRS;
            rs = rs->parentReflowState) {
-        rs->frame->AddStateBits(NS_FRAME_CONTAINS_RELATIVE_HEIGHT);
+        rs->frame->AddStateBits(NS_FRAME_CONTAINS_RELATIVE_BSIZE);
       }
 
-      nsTableFrame::RequestSpecialHeightReflow(*cellRS);
+      nsTableFrame::RequestSpecialBSizeReflow(*cellRS);
     }
   }
 }
@@ -165,7 +165,7 @@ nsTableCellFrame::NeedsToObserve(const nsHTMLReflowState& aReflowState)
     return false;
   }
 
-  // We always need to let the percent height observer be propagated
+  // We always need to let the percent bsize observer be propagated
   // from an outer table frame to an inner table frame.
   nsIAtom *fType = aReflowState.frame->GetType();
   if (fType == nsGkAtoms::tableFrame) {
@@ -175,6 +175,9 @@ nsTableCellFrame::NeedsToObserve(const nsHTMLReflowState& aReflowState)
   // We need the observer to be propagated to all children of the cell
   // (i.e., children of the child block) in quirks mode, but only to
   // tables in standards mode.
+  // XXX This may not be true in the case of orthogonal flows within
+  // the cell (bug 1174711 comment 8); we may need to observe isizes
+  // instead of bsizes for orthogonal children.
   return rs->frame == this &&
          (PresContext()->CompatibilityMode() == eCompatibility_NavQuirks ||
           fType == nsGkAtoms::tableOuterFrame);
@@ -581,66 +584,68 @@ nsTableCellFrame::GetBorderOverflow()
 
 // Align the cell's child frame within the cell
 
-void nsTableCellFrame::VerticallyAlignChild(nscoord aMaxAscent)
+void nsTableCellFrame::BlockDirAlignChild(WritingMode aWM, nscoord aMaxAscent)
 {
   /* It's the 'border-collapse' on the table that matters */
-  nsMargin borderPadding = GetUsedBorderAndPadding();
+  LogicalMargin borderPadding = GetLogicalUsedBorderAndPadding(aWM);
 
-  nscoord topInset = borderPadding.top;
-  nscoord bottomInset = borderPadding.bottom;
+  nscoord bStartInset = borderPadding.BStart(aWM);
+  nscoord bEndInset = borderPadding.BEnd(aWM);
 
   uint8_t verticalAlignFlags = GetVerticalAlign();
 
-  nscoord height = mRect.height;
+  nscoord bSize = BSize(aWM);
   nsIFrame* firstKid = mFrames.FirstChild();
-  NS_ASSERTION(firstKid, "Frame construction error, a table cell always has an inner cell frame");
-  nsRect kidRect = firstKid->GetRect();
-  nscoord childHeight = kidRect.height;
+  nsSize containerSize = mRect.Size();
+  NS_ASSERTION(firstKid, "Frame construction error, a table cell always has "
+                         "an inner cell frame");
+  LogicalRect kidRect = firstKid->GetLogicalRect(aWM, containerSize);
+  nscoord childBSize = kidRect.BSize(aWM);
 
   // Vertically align the child
-  nscoord kidYTop = 0;
+  nscoord kidBStart = 0;
   switch (verticalAlignFlags)
   {
     case NS_STYLE_VERTICAL_ALIGN_BASELINE:
       // Align the baselines of the child frame with the baselines of
       // other children in the same row which have 'vertical-align: baseline'
-      kidYTop = topInset + aMaxAscent - GetCellBaseline();
+      kidBStart = bStartInset + aMaxAscent - GetCellBaseline();
     break;
 
     case NS_STYLE_VERTICAL_ALIGN_TOP:
       // Align the top of the child frame with the top of the content area,
-      kidYTop = topInset;
+      kidBStart = bStartInset;
     break;
 
     case NS_STYLE_VERTICAL_ALIGN_BOTTOM:
       // Align the bottom of the child frame with the bottom of the content area,
-      kidYTop = height - childHeight - bottomInset;
+      kidBStart = bSize - childBSize - bEndInset;
     break;
 
     default:
     case NS_STYLE_VERTICAL_ALIGN_MIDDLE:
       // Align the middle of the child frame with the middle of the content area,
-      kidYTop = (height - childHeight - bottomInset + topInset) / 2;
+      kidBStart = (bSize - childBSize - bEndInset + bStartInset) / 2;
   }
-  // if the content is larger than the cell height align from top
-  kidYTop = std::max(0, kidYTop);
+  // if the content is larger than the cell bsize, align from bstart
+  kidBStart = std::max(0, kidBStart);
 
-  if (kidYTop != kidRect.y) {
+  if (kidBStart != kidRect.BStart(aWM)) {
     // Invalidate at the old position first
     firstKid->InvalidateFrameSubtree();
   }
 
-  firstKid->SetPosition(nsPoint(kidRect.x, kidYTop));
-  WritingMode wm = GetWritingMode();
-  nsHTMLReflowMetrics desiredSize(wm);
-  desiredSize.SetSize(wm, GetLogicalSize(wm));
+  firstKid->SetPosition(aWM, LogicalPoint(aWM, kidRect.IStart(aWM),
+                                          kidBStart), containerSize);
+  nsHTMLReflowMetrics desiredSize(aWM);
+  desiredSize.SetSize(aWM, GetLogicalSize(aWM));
 
   nsRect overflow(nsPoint(0,0), GetSize());
   overflow.Inflate(GetBorderOverflow());
   desiredSize.mOverflowAreas.SetAllTo(overflow);
   ConsiderChildOverflow(desiredSize.mOverflowAreas, firstKid);
   FinishAndStoreOverflow(&desiredSize);
-  if (kidYTop != kidRect.y) {
+  if (kidBStart != kidRect.BStart(aWM)) {
     // Make sure any child views are correctly positioned. We know the inner table
     // cell won't have a view
     nsContainerFrame::PositionChildViews(firstKid);
@@ -788,10 +793,9 @@ nsTableCellFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nsIFrame::IntrinsicISizeOffsetData
-nsTableCellFrame::IntrinsicISizeOffsets(nsRenderingContext* aRenderingContext)
+nsTableCellFrame::IntrinsicISizeOffsets()
 {
-  IntrinsicISizeOffsetData result =
-    nsContainerFrame::IntrinsicISizeOffsets(aRenderingContext);
+  IntrinsicISizeOffsetData result = nsContainerFrame::IntrinsicISizeOffsets();
 
   result.hMargin = 0;
   result.hPctMargin = 0;
@@ -806,8 +810,7 @@ nsTableCellFrame::IntrinsicISizeOffsets(nsRenderingContext* aRenderingContext)
 #define PROBABLY_TOO_LARGE 1000000
 static
 void DebugCheckChildSize(nsIFrame*            aChild,
-                         nsHTMLReflowMetrics& aMet,
-                         nsSize&              aAvailSize)
+                         nsHTMLReflowMetrics& aMet)
 {
   WritingMode wm = aMet.GetWritingMode();
   if ((aMet.ISize(wm) < 0) || (aMet.ISize(wm) > PROBABLY_TOO_LARGE)) {
@@ -817,14 +820,14 @@ void DebugCheckChildSize(nsIFrame*            aChild,
 }
 #endif
 
-// the computed height for the cell, which descendants use for percent height calculations
-// it is the height (minus border, padding) of the cell's first in flow during its final
-// reflow without an unconstrained height.
+// the computed bsize for the cell, which descendants use for percent bsize calculations
+// it is the bsize (minus border, padding) of the cell's first in flow during its final
+// reflow without an unconstrained bsize.
 static nscoord
-CalcUnpaginagedHeight(nsPresContext*        aPresContext,
-                      nsTableCellFrame&     aCellFrame,
-                      nsTableFrame&         aTableFrame,
-                      nscoord               aVerticalBorderPadding)
+CalcUnpaginatedBSize(nsPresContext*     aPresContext,
+                      nsTableCellFrame& aCellFrame,
+                      nsTableFrame&     aTableFrame,
+                      nscoord           aBlockDirBorderPadding)
 {
   const nsTableCellFrame* firstCellInFlow =
     static_cast<nsTableCellFrame*>(aCellFrame.FirstInFlow());
@@ -839,19 +842,19 @@ CalcUnpaginagedHeight(nsPresContext*        aPresContext,
   firstCellInFlow->GetRowIndex(rowIndex);
   int32_t rowSpan = aTableFrame.GetEffectiveRowSpan(*firstCellInFlow);
 
-  nscoord computedHeight = firstTableInFlow->GetRowSpacing(rowIndex,
-                                                           rowIndex + rowSpan - 1);
-  computedHeight -= aVerticalBorderPadding;
+  nscoord computedBSize = firstTableInFlow->GetRowSpacing(rowIndex,
+                                                          rowIndex + rowSpan - 1);
+  computedBSize -= aBlockDirBorderPadding;
   int32_t rowX;
   for (row = firstRGInFlow->GetFirstRow(), rowX = 0; row; row = row->GetNextRow(), rowX++) {
     if (rowX > rowIndex + rowSpan - 1) {
       break;
     }
     else if (rowX >= rowIndex) {
-      computedHeight += row->GetUnpaginatedHeight(aPresContext);
+      computedBSize += row->GetUnpaginatedBSize(aPresContext);
     }
   }
-  return computedHeight;
+  return computedBSize;
 }
 
 void
@@ -864,91 +867,94 @@ nsTableCellFrame::Reflow(nsPresContext*           aPresContext,
   DO_GLOBAL_REFLOW_COUNT("nsTableCellFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aDesiredSize, aStatus);
 
-  if (aReflowState.mFlags.mSpecialHeightReflow) {
+  if (aReflowState.mFlags.mSpecialBSizeReflow) {
     FirstInFlow()->AddStateBits(NS_TABLE_CELL_HAD_SPECIAL_REFLOW);
   }
 
-  // see if a special height reflow needs to occur due to having a pct height
-  nsTableFrame::CheckRequestSpecialHeightReflow(aReflowState);
+  // see if a special bsize reflow needs to occur due to having a pct height
+  nsTableFrame::CheckRequestSpecialBSizeReflow(aReflowState);
 
   aStatus = NS_FRAME_COMPLETE;
-  nsSize availSize(aReflowState.AvailableWidth(), aReflowState.AvailableHeight());
-
   WritingMode wm = aReflowState.GetWritingMode();
+  LogicalSize availSize(wm, aReflowState.AvailableISize(),
+                            aReflowState.AvailableBSize());
+
   LogicalMargin borderPadding = aReflowState.ComputedLogicalPadding();
   LogicalMargin border = GetBorderWidth(wm);
   borderPadding += border;
 
-  nscoord topInset = borderPadding.Top(wm);
-  nscoord rightInset = borderPadding.Right(wm);
-  nscoord bottomInset = borderPadding.Bottom(wm);
-  nscoord leftInset = borderPadding.Left(wm);
-
   // reduce available space by insets, if we're in a constrained situation
-  availSize.width -= leftInset + rightInset;
-  if (NS_UNCONSTRAINEDSIZE != availSize.height)
-    availSize.height -= topInset + bottomInset;
+  availSize.ISize(wm) -= borderPadding.IStartEnd(wm);
+  if (NS_UNCONSTRAINEDSIZE != availSize.BSize(wm)) {
+    availSize.BSize(wm) -= borderPadding.BStartEnd(wm);
+  }
 
   // Try to reflow the child into the available space. It might not
   // fit or might need continuing.
-  if (availSize.height < 0)
-    availSize.height = 1;
+  if (availSize.BSize(wm) < 0) {
+    availSize.BSize(wm) = 1;
+  }
 
   nsHTMLReflowMetrics kidSize(wm, aDesiredSize.mFlags);
   kidSize.ClearSize();
-  SetPriorAvailWidth(aReflowState.AvailableWidth());
+  SetPriorAvailISize(aReflowState.AvailableISize());
   nsIFrame* firstKid = mFrames.FirstChild();
   NS_ASSERTION(firstKid, "Frame construction error, a table cell always has an inner cell frame");
   nsTableFrame* tableFrame = GetTableFrame();
 
-  if (aReflowState.mFlags.mSpecialHeightReflow) {
-    const_cast<nsHTMLReflowState&>(aReflowState).SetComputedHeight(mRect.height - topInset - bottomInset);
+  if (aReflowState.mFlags.mSpecialBSizeReflow) {
+    const_cast<nsHTMLReflowState&>(aReflowState).
+      SetComputedBSize(BSize(wm) - borderPadding.BStartEnd(wm));
     DISPLAY_REFLOW_CHANGE();
   }
   else if (aPresContext->IsPaginated()) {
-    nscoord computedUnpaginatedHeight =
-      CalcUnpaginagedHeight(aPresContext, (nsTableCellFrame&)*this,
-                            *tableFrame, topInset + bottomInset);
-    if (computedUnpaginatedHeight > 0) {
-      const_cast<nsHTMLReflowState&>(aReflowState).SetComputedHeight(computedUnpaginatedHeight);
+    nscoord computedUnpaginatedBSize =
+      CalcUnpaginatedBSize(aPresContext, (nsTableCellFrame&)*this,
+                           *tableFrame, borderPadding.BStartEnd(wm));
+    if (computedUnpaginatedBSize > 0) {
+      const_cast<nsHTMLReflowState&>(aReflowState).SetComputedBSize(computedUnpaginatedBSize);
       DISPLAY_REFLOW_CHANGE();
     }
   }
   else {
-    SetHasPctOverHeight(false);
+    SetHasPctOverBSize(false);
   }
 
+  WritingMode kidWM = firstKid->GetWritingMode();
   nsHTMLReflowState kidReflowState(aPresContext, aReflowState, firstKid,
-                                   LogicalSize(firstKid->GetWritingMode(),
-                                               availSize));
+                                   availSize.ConvertTo(kidWM, wm));
 
   // Don't be a percent height observer if we're in the middle of
-  // special-height reflow, in case we get an accidental NotifyPercentHeight()
-  // call (which we shouldn't honor during special-height reflow)
-  if (!aReflowState.mFlags.mSpecialHeightReflow) {
-    // mPercentHeightObserver is for children of cells in quirks mode,
+  // special-bsize reflow, in case we get an accidental NotifyPercentBSize()
+  // call (which we shouldn't honor during special-bsize reflow)
+  if (!aReflowState.mFlags.mSpecialBSizeReflow) {
+    // mPercentBSizeObserver is for children of cells in quirks mode,
     // but only those than are tables in standards mode.  NeedsToObserve
     // will determine how far this is propagated to descendants.
-    kidReflowState.mPercentHeightObserver = this;
+    kidReflowState.mPercentBSizeObserver = this;
   }
-  // Don't propagate special height reflow state to our kids
-  kidReflowState.mFlags.mSpecialHeightReflow = false;
+  // Don't propagate special bsize reflow state to our kids
+  kidReflowState.mFlags.mSpecialBSizeReflow = false;
 
-  if (aReflowState.mFlags.mSpecialHeightReflow ||
-      (FirstInFlow()->GetStateBits() & NS_TABLE_CELL_HAD_SPECIAL_REFLOW)) {
-    // We need to force the kid to have mVResize set if we've had a
+  if (aReflowState.mFlags.mSpecialBSizeReflow ||
+      FirstInFlow()->HasAnyStateBits(NS_TABLE_CELL_HAD_SPECIAL_REFLOW)) {
+    // We need to force the kid to have mBResize set if we've had a
     // special reflow in the past, since the non-special reflow needs to
-    // resize back to what it was without the special height reflow.
-    kidReflowState.SetVResize(true);
+    // resize back to what it was without the special bsize reflow.
+    kidReflowState.SetBResize(true);
   }
 
-  nsPoint kidOrigin(leftInset, topInset);
+  nsSize containerSize =
+    aReflowState.ComputedSizeAsContainerIfConstrained();
+
+  LogicalPoint kidOrigin(wm, borderPadding.IStart(wm),
+                         borderPadding.BStart(wm));
   nsRect origRect = firstKid->GetRect();
   nsRect origVisualOverflow = firstKid->GetVisualOverflowRect();
-  bool firstReflow = (firstKid->GetStateBits() & NS_FRAME_FIRST_REFLOW) != 0;
+  bool firstReflow = firstKid->HasAnyStateBits(NS_FRAME_FIRST_REFLOW);
 
   ReflowChild(firstKid, aPresContext, kidSize, kidReflowState,
-              kidOrigin.x, kidOrigin.y, 0, aStatus);
+              wm, kidOrigin, containerSize, 0, aStatus);
   if (NS_FRAME_OVERFLOW_IS_INCOMPLETE(aStatus)) {
     // Don't pass OVERFLOW_INCOMPLETE through tables until they can actually handle it
     //XXX should paginate overflow as overflow, but not in this patch (bug 379349)
@@ -957,12 +963,12 @@ nsTableCellFrame::Reflow(nsPresContext*           aPresContext,
   }
 
   // XXXbz is this invalidate actually needed, really?
-  if (GetStateBits() & NS_FRAME_IS_DIRTY) {
+  if (HasAnyStateBits(NS_FRAME_IS_DIRTY)) {
     InvalidateFrameSubtree();
   }
 
 #ifdef DEBUG
-  DebugCheckChildSize(firstKid, kidSize, availSize);
+  DebugCheckChildSize(firstKid, kidSize);
 #endif
 
   // 0 dimensioned cells need to be treated specially in Standard/NavQuirks mode
@@ -978,48 +984,47 @@ nsTableCellFrame::Reflow(nsPresContext*           aPresContext,
 
   // Place the child
   FinishReflowChild(firstKid, aPresContext, kidSize, &kidReflowState,
-                    kidOrigin.x, kidOrigin.y, 0);
+                    wm, kidOrigin, containerSize, 0);
 
   nsTableFrame::InvalidateTableFrame(firstKid, origRect, origVisualOverflow,
                                      firstReflow);
 
-  // first, compute the height which can be set w/o being restricted by aMaxSize.height
+  // first, compute the bsize which can be set w/o being restricted by
+  // available bsize
   LogicalSize cellSize(wm);
-  LogicalMargin logicalInsets(wm, nsMargin(topInset, rightInset,
-                                           bottomInset, leftInset));
   cellSize.BSize(wm) = kidSize.BSize(wm);
 
   if (NS_UNCONSTRAINEDSIZE != cellSize.BSize(wm)) {
-    cellSize.BSize(wm) += logicalInsets.BStartEnd(wm);
+    cellSize.BSize(wm) += borderPadding.BStartEnd(wm);
   }
 
-  // next determine the cell's width
+  // next determine the cell's isize
   cellSize.ISize(wm) = kidSize.ISize(wm);      // at this point, we've factored in the cell's style attributes
 
   // factor in border and padding
   if (NS_UNCONSTRAINEDSIZE != cellSize.ISize(wm)) {
-    cellSize.ISize(wm) += logicalInsets.IStartEnd(wm);
+    cellSize.ISize(wm) += borderPadding.IStartEnd(wm);
   }
 
   // set the cell's desired size and max element size
   aDesiredSize.SetSize(wm, cellSize);
 
-  // the overflow area will be computed when the child will be vertically aligned
+  // the overflow area will be computed when BlockDirAlignChild() gets called
 
-  if (aReflowState.mFlags.mSpecialHeightReflow) {
-    if (aDesiredSize.Height() > mRect.height) {
-      // set a bit indicating that the pct height contents exceeded
+  if (aReflowState.mFlags.mSpecialBSizeReflow) {
+    if (aDesiredSize.BSize(wm) > BSize(wm)) {
+      // set a bit indicating that the pct bsize contents exceeded
       // the height that they could honor in the pass 2 reflow
-      SetHasPctOverHeight(true);
+      SetHasPctOverBSize(true);
     }
-    if (NS_UNCONSTRAINEDSIZE == aReflowState.AvailableHeight()) {
-      aDesiredSize.Height() = mRect.height;
+    if (NS_UNCONSTRAINEDSIZE == aReflowState.AvailableBSize()) {
+      aDesiredSize.BSize(wm) = BSize(wm);
     }
   }
 
   // If our parent is in initial reflow, it'll handle invalidating our
   // entire overflow rect.
-  if (!(GetParent()->GetStateBits() & NS_FRAME_FIRST_REFLOW) &&
+  if (!GetParent()->HasAnyStateBits(NS_FRAME_FIRST_REFLOW) &&
       nsSize(aDesiredSize.Width(), aDesiredSize.Height()) != mRect.Size()) {
     InvalidateFrame();
   }
@@ -1040,7 +1045,7 @@ nsTableCellFrame::Reflow(nsPresContext*           aPresContext,
 NS_QUERYFRAME_HEAD(nsTableCellFrame)
   NS_QUERYFRAME_ENTRY(nsTableCellFrame)
   NS_QUERYFRAME_ENTRY(nsITableCellLayout)
-  NS_QUERYFRAME_ENTRY(nsIPercentHeightObserver)
+  NS_QUERYFRAME_ENTRY(nsIPercentBSizeObserver)
 NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 
 #ifdef ACCESSIBILITY

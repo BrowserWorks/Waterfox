@@ -114,19 +114,15 @@ public class HomePager extends ViewPager {
         public void onPanelSelected(String panelId);
     }
 
-    interface OnTitleClickListener {
-        public void onTitleClicked(int index);
-    }
-
     /**
      * Special type of child views that could be added as pager decorations by default.
      */
-    interface Decor {
-        public void onAddPagerView(String title);
-        public void removeAllPagerViews();
-        public void onPageSelected(int position);
-        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels);
-        public void setOnTitleClickListener(OnTitleClickListener onTitleClickListener);
+    public interface Decor {
+        void onAddPagerView(String title);
+        void removeAllPagerViews();
+        void onPageSelected(int position);
+        void onPageScrolled(int position, float positionOffset, int positionOffsetPixels);
+        void setOnTitleClickListener(TabMenuStrip.OnTitleClickListener onTitleClickListener);
     }
 
     /**
@@ -185,14 +181,12 @@ public class HomePager extends ViewPager {
             mDecor = (Decor) child;
             mTabStrip = child;
 
-            mDecor.setOnTitleClickListener(new OnTitleClickListener() {
+            mDecor.setOnTitleClickListener(new TabMenuStrip.OnTitleClickListener() {
                 @Override
                 public void onTitleClicked(int index) {
                     setCurrentItem(index, true);
                 }
             });
-        } else if (child instanceof HomePagerTabStrip) {
-            mTabStrip = child;
         }
 
         super.addView(child, index, params);

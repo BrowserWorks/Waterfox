@@ -54,7 +54,7 @@ size_t HRTFElevation::sizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) c
 {
     size_t amount = aMallocSizeOf(this);
 
-    amount += m_kernelListL.SizeOfExcludingThis(aMallocSizeOf);
+    amount += m_kernelListL.ShallowSizeOfExcludingThis(aMallocSizeOf);
     for (size_t i = 0; i < m_kernelListL.Length(); i++) {
         amount += m_kernelListL[i]->sizeOfIncludingThis(aMallocSizeOf);
     }
@@ -232,7 +232,7 @@ nsReturnRef<HRTFElevation> HRTFElevation::createBuiltin(int elevation, float sam
 
     SpeexResamplerState* resampler = sampleRate == rawSampleRate ? nullptr :
         speex_resampler_init(1, rawSampleRate, sampleRate,
-                             SPEEX_RESAMPLER_QUALITY_DEFAULT, nullptr);
+                             SPEEX_RESAMPLER_QUALITY_MIN, nullptr);
 
     // Load convolution kernels from HRTF files.
     int interpolatedIndex = 0;

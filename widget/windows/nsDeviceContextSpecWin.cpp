@@ -43,9 +43,9 @@
 
 #include "mozilla/gfx/Logging.h"
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 PRLogModuleInfo * kWidgetPrintingLogMod = PR_NewLogModule("printing-widget");
-#define PR_PL(_p1)  PR_LOG(kWidgetPrintingLogMod, PR_LOG_DEBUG, _p1)
+#define PR_PL(_p1)  MOZ_LOG(kWidgetPrintingLogMod, mozilla::LogLevel::Debug, _p1)
 
 using namespace mozilla;
 
@@ -624,7 +624,6 @@ NS_IMPL_ISUPPORTS(nsPrinterEnumeratorWin, nsIPrinterEnumerator)
 
 //----------------------------------------------------------------------------------
 // Return the Default Printer name
-/* readonly attribute wstring defaultPrinterName; */
 NS_IMETHODIMP 
 nsPrinterEnumeratorWin::GetDefaultPrinterName(char16_t * *aDefaultPrinterName)
 {
@@ -635,7 +634,6 @@ nsPrinterEnumeratorWin::GetDefaultPrinterName(char16_t * *aDefaultPrinterName)
   return NS_OK;
 }
 
-/* void initPrintSettingsFromPrinter (in wstring aPrinterName, in nsIPrintSettings aPrintSettings); */
 NS_IMETHODIMP 
 nsPrinterEnumeratorWin::InitPrintSettingsFromPrinter(const char16_t *aPrinterName, nsIPrintSettings *aPrintSettings)
 {

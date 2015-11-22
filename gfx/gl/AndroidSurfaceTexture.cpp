@@ -11,6 +11,7 @@
 #include <android/log.h>
 #include "AndroidSurfaceTexture.h"
 #include "gfxImageSurface.h"
+#include "gfxPrefs.h"
 #include "AndroidBridge.h"
 #include "nsThreadUtils.h"
 #include "mozilla/gfx/Matrix.h"
@@ -36,13 +37,13 @@ IsSTSupported()
   return AndroidBridge::Bridge()->GetAPIVersion() >= 14; /* ICS */
 }
 
-TemporaryRef<AndroidSurfaceTexture>
+already_AddRefed<AndroidSurfaceTexture>
 AndroidSurfaceTexture::Create()
 {
   return Create(nullptr, 0);
 }
 
-TemporaryRef<AndroidSurfaceTexture>
+already_AddRefed<AndroidSurfaceTexture>
 AndroidSurfaceTexture::Create(GLContext* aContext, GLuint aTexture)
 {
   if (!IsSTSupported()) {
@@ -131,9 +132,12 @@ AndroidSurfaceTexture::UpdateCanDetach()
   // The API for attach/detach only exists on 16+, and PowerVR has some sort of
   // fencing issue. Additionally, attach/detach seems to be busted on at least some
   // Mali adapters (400MP2 for sure, bug 1131793)
+  bool canDetach = gfxPrefs::SurfaceTextureDetachEnabled();
+
   mCanDetach = AndroidBridge::Bridge()->GetAPIVersion() >= 16 &&
     (!mAttachedContext || mAttachedContext->Vendor() != GLVendor::Imagination) &&
-    (!mAttachedContext || mAttachedContext->Vendor() != GLVendor::ARM /* Mali */);
+    (!mAttachedContext || mAttachedContext->Vendor() != GLVendor::ARM /* Mali */) &&
+    canDetach;
 }
 
 bool
@@ -162,7 +166,7 @@ AndroidSurfaceTexture::Init(GLContext* aContext, GLuint aTexture)
     return false;
   }
 
-  mNativeWindow = AndroidNativeWindow::CreateFromSurface(GetJNIForThread(),
+  mNativeWindow = AndroidNativeWindow::CreateFromSurface(jni::GetEnvForThread(),
                                                          mSurface.Get());
   MOZ_ASSERT(mNativeWindow, "Failed to create native window from surface");
 
@@ -203,7 +207,7 @@ AndroidSurfaceTexture::UpdateTexImage()
 void
 AndroidSurfaceTexture::GetTransformMatrix(gfx::Matrix4x4& aMatrix)
 {
-  JNIEnv* env = GetJNIForThread();
+  JNIEnv* const env = jni::GetEnvForThread();
 
   auto jarray = FloatArray::LocalRef::Adopt(env, env->NewFloatArray(16));
   mSurfaceTexture->GetTransformMatrix(jarray);

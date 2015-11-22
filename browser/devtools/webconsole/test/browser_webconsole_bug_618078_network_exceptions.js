@@ -6,15 +6,22 @@
 // Tests that we report JS exceptions in event handlers coming from
 // network requests, like onreadystate for XHR. See bug 618078.
 
-const TEST_URI = "data:text/html;charset=utf-8,Web Console test for bug 618078";
-const TEST_URI2 = "http://example.com/browser/browser/devtools/webconsole/test/test-bug-618078-network-exceptions.html";
+"use strict";
 
-let test = asyncTest(function* () {
+const TEST_URI = "data:text/html;charset=utf-8,Web Console test for bug 618078";
+const TEST_URI2 = "http://example.com/browser/browser/devtools/webconsole/" +
+                  "test/test-bug-618078-network-exceptions.html";
+
+var test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();
 
-  expectUncaughtException();
+  // On e10s, the exception is triggered in child process
+  // and is ignored by test harness
+  if (!Services.appinfo.browserTabsRemoteAutostart) {
+    expectUncaughtException();
+  }
 
   content.location = TEST_URI2;
 

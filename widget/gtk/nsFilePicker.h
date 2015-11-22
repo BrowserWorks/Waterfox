@@ -73,6 +73,10 @@ protected:
 
 private:
   static nsIFile *mPrevDisplayDirectory;
+
+#if (MOZ_WIDGET_GTK == 3)
+  GtkFileChooserWidget *mFileChooserDelegate;
+#endif
 };
 
 #endif

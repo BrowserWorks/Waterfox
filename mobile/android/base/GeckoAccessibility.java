@@ -35,14 +35,12 @@ import com.googlecode.eyesfree.braille.selfbraille.WriteData;
 public class GeckoAccessibility {
     private static final String LOGTAG = "GeckoAccessibility";
     private static final int VIRTUAL_ENTRY_POINT_BEFORE = 1;
-    private static final int VIRTUAL_CURSOR_PREVIOUS = 2;
-    private static final int VIRTUAL_CURSOR_POSITION = 3;
-    private static final int VIRTUAL_CURSOR_NEXT = 4;
-    private static final int VIRTUAL_ENTRY_POINT_AFTER = 5;
+    private static final int VIRTUAL_CURSOR_POSITION = 2;
+    private static final int VIRTUAL_ENTRY_POINT_AFTER = 3;
 
     private static boolean sEnabled;
     // Used to store the JSON message and populate the event later in the code path.
-    private static JSONObject sEventMessage;
+    private static JSONObject sHoverEnter;
     private static AccessibilityNodeInfo sVirtualCursorNode;
     private static int sCurrentNode;
 
@@ -150,7 +148,24 @@ public class GeckoAccessibility {
         }
     }
 
+    public static boolean isEnabled() {
+        return sEnabled;
+    }
+
     public static void sendAccessibilityEvent (final JSONObject message) {
+        if (!sEnabled)
+            return;
+
+        final int eventType = message.optInt("eventType", -1);
+        if (eventType < 0) {
+            Log.e(LOGTAG, "No accessibility event type provided");
+            return;
+        }
+
+        sendAccessibilityEvent(message, eventType);
+    }
+
+    public static void sendAccessibilityEvent (final JSONObject message, final int eventType) {
         if (!sEnabled)
             return;
 
@@ -161,12 +176,6 @@ public class GeckoAccessibility {
             sCurrentNode = VIRTUAL_ENTRY_POINT_BEFORE;
         } else {
             sCurrentNode = VIRTUAL_CURSOR_POSITION;
-        }
-
-        final int eventType = message.optInt("eventType", -1);
-        if (eventType < 0) {
-            Log.e(LOGTAG, "No accessibility event type provided");
-            return;
         }
 
         if (Versions.preJB) {
@@ -222,29 +231,24 @@ public class GeckoAccessibility {
                                 braille.optInt("selectionStart"), braille.optInt("selectionEnd"));
             }
 
+            if (eventType == AccessibilityEvent.TYPE_VIEW_HOVER_ENTER) {
+                sHoverEnter = message;
+            }
+
             ThreadUtils.postToUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        // If this is an accessibility focus, a lot of internal voodoo happens so we perform an
-                        // accessibility focus action on the view, and it in turn sends the right events.
-                        switch (eventType) {
-                        case AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED:
-                            sEventMessage = message;
-                            view.performAccessibilityAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null);
-                            break;
-                        case AccessibilityEvent.TYPE_ANNOUNCEMENT:
-                        case AccessibilityEvent.TYPE_VIEW_SCROLLED:
-                            sEventMessage = null;
-                            final AccessibilityEvent accEvent = AccessibilityEvent.obtain(eventType);
-                            view.onInitializeAccessibilityEvent(accEvent);
-                            populateEventFromJSON(accEvent, message);
-                            view.getParent().requestSendAccessibilityEvent(view, accEvent);
-                            break;
-                        default:
-                            sEventMessage = message;
-                            view.sendAccessibilityEvent(eventType);
-                            break;
+                        final AccessibilityEvent event = AccessibilityEvent.obtain(eventType);
+                        event.setPackageName(GeckoAppShell.getContext().getPackageName());
+                        event.setClassName(GeckoAccessibility.class.getName());
+                        if (eventType == AccessibilityEvent.TYPE_ANNOUNCEMENT ||
+                            eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+                            event.setSource(view, View.NO_ID);
+                        } else {
+                            event.setSource(view, VIRTUAL_CURSOR_POSITION);
                         }
+                        populateEventFromJSON(event, message);
+                        view.requestSendAccessibilityEvent(view, event);
                     }
                 });
 
@@ -293,27 +297,12 @@ public class GeckoAccessibility {
         AccessibilityNodeProvider mAccessibilityNodeProvider;
 
         @Override
-        public void onPopulateAccessibilityEvent (View host, AccessibilityEvent event) {
-            super.onPopulateAccessibilityEvent(host, event);
-            if (sEventMessage != null) {
-                populateEventFromJSON(event, sEventMessage);
-                event.setSource(host, sCurrentNode);
-            }
-            // We save the hover enter event so that we could reuse it for a subsequent accessibility focus event.
-            if (event.getEventType() != AccessibilityEvent.TYPE_VIEW_HOVER_ENTER)
-                sEventMessage = null;
-        }
-
-        @Override
         public AccessibilityNodeProvider getAccessibilityNodeProvider(final View host) {
             if (mAccessibilityNodeProvider == null)
-                // The accessibility node structure for web content consists of 5 LayerView child nodes:
+                // The accessibility node structure for web content consists of 3 LayerView child nodes:
                 // 1. VIRTUAL_ENTRY_POINT_BEFORE: Represents the entry point before the LayerView.
-                // 2. VIRTUAL_CURSOR_PREVIOUS: Represents the virtual cursor position that is previous to the
-                // current one.
-                // 3. VIRTUAL_CURSOR_POSITION: Represents the current position of the virtual cursor.
-                // 4. VIRTUAL_CURSOR_NEXT: Represents the next virtual cursor position.
-                // 5. VIRTUAL_ENTRY_POINT_AFTER: Represents the entry point after the LayerView.
+                // 2. VIRTUAL_CURSOR_POSITION: Represents the current position of the virtual cursor.
+                // 3. VIRTUAL_ENTRY_POINT_AFTER: Represents the entry point after the LayerView.
                 mAccessibilityNodeProvider = new AccessibilityNodeProvider() {
                         @Override
                         public AccessibilityNodeInfo createAccessibilityNodeInfo(int virtualDescendantId) {
@@ -326,9 +315,7 @@ public class GeckoAccessibility {
                                 // This is the parent LayerView node, populate it with children.
                                 onInitializeAccessibilityNodeInfo(host, info);
                                 info.addChild(host, VIRTUAL_ENTRY_POINT_BEFORE);
-                                info.addChild(host, VIRTUAL_CURSOR_PREVIOUS);
                                 info.addChild(host, VIRTUAL_CURSOR_POSITION);
-                                info.addChild(host, VIRTUAL_CURSOR_NEXT);
                                 info.addChild(host, VIRTUAL_ENTRY_POINT_AFTER);
                                 break;
                             default:
@@ -344,8 +331,13 @@ public class GeckoAccessibility {
                                 info.addAction(AccessibilityNodeInfo.ACTION_LONG_CLICK);
                                 info.addAction(AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY);
                                 info.addAction(AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY);
+                                info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD);
+                                info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);
+                                info.addAction(AccessibilityNodeInfo.ACTION_NEXT_HTML_ELEMENT);
+                                info.addAction(AccessibilityNodeInfo.ACTION_PREVIOUS_HTML_ELEMENT);
                                 info.setMovementGranularities(AccessibilityNodeInfo.MOVEMENT_GRANULARITY_CHARACTER |
                                                               AccessibilityNodeInfo.MOVEMENT_GRANULARITY_WORD |
+                                                              AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE |
                                                               AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PARAGRAPH);
                                 break;
                             }
@@ -356,26 +348,14 @@ public class GeckoAccessibility {
                         public boolean performAction (int virtualViewId, int action, Bundle arguments) {
                             if (action == AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS) {
                                 // The accessibility focus is permanently on the middle node, VIRTUAL_CURSOR_POSITION.
-                                // When accessibility focus is requested on one of its siblings we move the virtual cursor
-                                // either forward or backward depending on which sibling was selected.
                                 // When we enter the view forward or backward we just ask Gecko to get focus, keeping the current position.
-
-                                switch (virtualViewId) {
-                                case VIRTUAL_CURSOR_PREVIOUS:
+                                if (virtualViewId == VIRTUAL_CURSOR_POSITION && sHoverEnter != null) {
+                                    GeckoAccessibility.sendAccessibilityEvent(sHoverEnter, AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED);
+                                } else {
                                     GeckoAppShell.
-                                        sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:PreviousObject", null));
-                                    return true;
-                                case VIRTUAL_CURSOR_NEXT:
-                                    GeckoAppShell.
-                                        sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:NextObject", null));
-                                    return true;
-                                case VIRTUAL_ENTRY_POINT_BEFORE:
-                                case VIRTUAL_ENTRY_POINT_AFTER:
-                                    GeckoAppShell.
-                                        sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:Focus", "true"));
-                                default:
-                                    break;
+                                      sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:Focus", "true"));
                                 }
+                                return true;
                             } else if (action == AccessibilityNodeInfo.ACTION_CLICK && virtualViewId == VIRTUAL_CURSOR_POSITION) {
                                 GeckoAppShell.
                                     sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:ActivateObject", null));
@@ -384,12 +364,41 @@ public class GeckoAccessibility {
                                 GeckoAppShell.
                                     sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:LongPress", null));
                                 return true;
+                            } else if (action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD && virtualViewId == VIRTUAL_CURSOR_POSITION) {
+                                GeckoAppShell.
+                                    sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:ScrollForward", null));
+                                return true;
+                            } else if (action == AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD && virtualViewId == VIRTUAL_CURSOR_POSITION) {
+                                GeckoAppShell.
+                                    sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:ScrollBackward", null));
+                                return true;
+                            } else if (action == AccessibilityNodeInfo.ACTION_NEXT_HTML_ELEMENT && virtualViewId == VIRTUAL_CURSOR_POSITION) {
+                                String traversalRule = "";
+                                if (arguments != null) {
+                                    traversalRule = arguments.getString(AccessibilityNodeInfo.ACTION_ARGUMENT_HTML_ELEMENT_STRING);
+                                }
+                                GeckoAppShell.
+                                    sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:NextObject", traversalRule));
+                                return true;
+                            } else if (action == AccessibilityNodeInfo.ACTION_PREVIOUS_HTML_ELEMENT && virtualViewId == VIRTUAL_CURSOR_POSITION) {
+                                String traversalRule = "";
+                                if (arguments != null) {
+                                    traversalRule = arguments.getString(AccessibilityNodeInfo.ACTION_ARGUMENT_HTML_ELEMENT_STRING);
+                                }
+                                GeckoAppShell.
+                                    sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:PreviousObject", traversalRule));
+                                return true;
                             } else if (action == AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY &&
                                        virtualViewId == VIRTUAL_CURSOR_POSITION) {
                                 // XXX: Self brailling gives this action with a bogus argument instead of an actual click action;
-                                // the argument value is the BRAILLE_CLICK_BASE_INDEX - the index of the routing key that was hit
+                                // the argument value is the BRAILLE_CLICK_BASE_INDEX - the index of the routing key that was hit.
+                                // Other negative values are used by ChromeVox, but we don't support them.
+                                // FAKE_GRANULARITY_READ_CURRENT = -1
+                                // FAKE_GRANULARITY_READ_TITLE = -2
+                                // FAKE_GRANULARITY_STOP_SPEECH = -3
+                                // FAKE_GRANULARITY_CHANGE_SHIFTER = -4
                                 int granularity = arguments.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT);
-                                if (granularity < 0) {
+                                if (granularity <= BRAILLE_CLICK_BASE_INDEX) {
                                     int keyIndex = BRAILLE_CLICK_BASE_INDEX - granularity;
                                     JSONObject activationData = new JSONObject();
                                     try {
@@ -399,7 +408,7 @@ public class GeckoAccessibility {
                                     }
                                     GeckoAppShell.
                                         sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:ActivateObject", activationData.toString()));
-                                } else {
+                                } else if (granularity > 0) {
                                     JSONObject movementData = new JSONObject();
                                     try {
                                         movementData.put("direction", "Next");
@@ -414,14 +423,17 @@ public class GeckoAccessibility {
                             } else if (action == AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY &&
                                        virtualViewId == VIRTUAL_CURSOR_POSITION) {
                                 JSONObject movementData = new JSONObject();
+                                int granularity = arguments.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT);
                                 try {
                                     movementData.put("direction", "Previous");
-                                    movementData.put("granularity", arguments.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT));
+                                    movementData.put("granularity", granularity);
                                 } catch (JSONException e) {
                                     return true;
                                 }
-                                GeckoAppShell.
-                                    sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:MoveByGranularity", movementData.toString()));
+                                if (granularity > 0) {
+                                    GeckoAppShell.
+                                      sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:MoveByGranularity", movementData.toString()));
+                                }
                                 return true;
                             }
                             return host.performAccessibilityAction(action, arguments);

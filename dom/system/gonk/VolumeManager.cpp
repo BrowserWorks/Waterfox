@@ -71,11 +71,12 @@ VolumeManager::NumVolumes()
 }
 
 //static
-TemporaryRef<Volume>
+already_AddRefed<Volume>
 VolumeManager::GetVolume(size_t aIndex)
 {
   MOZ_ASSERT(aIndex < NumVolumes());
-  return sVolumeManager->mVolumeArray[aIndex];
+  RefPtr<Volume> vol = sVolumeManager->mVolumeArray[aIndex];
+  return vol.forget();
 }
 
 //static
@@ -124,7 +125,7 @@ void VolumeManager::UnregisterStateObserver(StateObserver* aObserver)
 }
 
 //static
-TemporaryRef<Volume>
+already_AddRefed<Volume>
 VolumeManager::FindVolumeByName(const nsCSubstring& aName)
 {
   if (!sVolumeManager) {
@@ -135,24 +136,24 @@ VolumeManager::FindVolumeByName(const nsCSubstring& aName)
   for (volIndex = 0; volIndex < numVolumes; volIndex++) {
     RefPtr<Volume> vol = GetVolume(volIndex);
     if (vol->Name().Equals(aName)) {
-      return vol;
+      return vol.forget();
     }
   }
   return nullptr;
 }
 
 //static
-TemporaryRef<Volume>
+already_AddRefed<Volume>
 VolumeManager::FindAddVolumeByName(const nsCSubstring& aName)
 {
   RefPtr<Volume> vol = FindVolumeByName(aName);
   if (vol) {
-    return vol;
+    return vol.forget();
   }
   // No volume found, create and add a new one.
   vol = new Volume(aName);
   sVolumeManager->mVolumeArray.AppendElement(vol);
-  return vol;
+  return vol.forget();
 }
 
 //static

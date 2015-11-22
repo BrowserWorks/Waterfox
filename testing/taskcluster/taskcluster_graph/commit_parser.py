@@ -23,6 +23,34 @@ BUILD_TYPE_ALIASES = {
 class InvalidCommitException(Exception):
     pass
 
+def escape_whitspace_in_brackets(input_str):
+    '''
+    In tests you may restrict them by platform [] inside of the brackets
+    whitespace may occur this is typically invalid shell syntax so we escape it
+    with backslash sequences    .
+    '''
+    result = ""
+    in_brackets = False
+    for char in input_str:
+        if char == '[':
+            in_brackets = True
+            result += char
+            continue
+
+        if char == ']':
+            in_brackets = False
+            result += char
+            continue
+
+        if char == ' ' and in_brackets:
+            result += '\ '
+            continue
+
+        result += char
+
+    return result
+
+
 def normalize_platform_list(alias, all_builds, build_list):
     if build_list == 'all':
         return all_builds
@@ -178,7 +206,7 @@ def parse_commit(message, jobs):
     '''
 
     # shlex used to ensure we split correctly when giving values to argparse.
-    parts = shlex.split(message)
+    parts = shlex.split(escape_whitspace_in_brackets(message))
     try_idx = None
     for idx, part in enumerate(parts):
         if part == TRY_DELIMITER:
@@ -194,6 +222,7 @@ def parse_commit(message, jobs):
     parser.add_argument('-b', '--build', dest='build_types')
     parser.add_argument('-p', '--platform', nargs='?', dest='platforms', const='all', default='all')
     parser.add_argument('-u', '--unittests', nargs='?', dest='tests', const='all', default='all')
+    parser.add_argument('-i', '--interactive', dest='interactive', action='store_true', default=False)
     args, unknown = parser.parse_known_args(parts[try_idx:])
 
     # Then builds...
@@ -231,13 +260,26 @@ def parse_commit(message, jobs):
             else:
                 additional_parameters = {}
 
+            # Generate list of post build tasks that run on this build
+            post_build_jobs = []
+            for job_flag in jobs['flags'].get('post-build', []):
+                job = jobs['post-build'][job_flag]
+                if ('allowed_build_tasks' in job and
+                        build_task not in job['allowed_build_tasks']):
+                    continue
+                post_build_jobs.append(copy.deepcopy(job))
+
             # Node for this particular build type
             result.append({
                 'task': build_task,
+                'post-build': post_build_jobs,
                 'dependents': extract_tests_from_platform(
                     jobs['tests'], platform_builds, build_task, tests
                 ),
-                'additional-parameters': additional_parameters
+                'additional-parameters': additional_parameters,
+                'build_name': platform,
+                'build_type': build_type,
+                'interactive': args.interactive,
             })
 
     return result

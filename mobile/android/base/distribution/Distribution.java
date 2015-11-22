@@ -32,16 +32,16 @@ import java.util.zip.ZipFile;
 
 import javax.net.ssl.SSLException;
 
-import org.apache.http.protocol.HTTP;
+import ch.boye.httpclientandroidlib.protocol.HTTP;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Telemetry;
-import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.util.FileUtils;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.ThreadUtils;

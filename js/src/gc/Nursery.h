@@ -23,7 +23,7 @@
 
 namespace JS {
 struct Zone;
-}
+} // namespace JS
 
 namespace js {
 
@@ -39,11 +39,12 @@ namespace gc {
 struct Cell;
 class MinorCollectionTracer;
 class RelocationOverlay;
+struct TenureCountCache;
 } /* namespace gc */
 
 namespace jit {
 class MacroAssembler;
-}
+} // namespace jit
 
 class TenuringTracer : public JSTracer
 {
@@ -59,11 +60,7 @@ class TenuringTracer : public JSTracer
     gc::RelocationOverlay* head;
     gc::RelocationOverlay** tail;
 
-    // Save and restore all of the runtime state we use during MinorGC.
-    bool savedRuntimeNeedBarrier;
-
     TenuringTracer(JSRuntime* rt, Nursery* nursery);
-    ~TenuringTracer();
 
   public:
     const Nursery& nursery() const { return nursery_; }
@@ -73,6 +70,11 @@ class TenuringTracer : public JSTracer
 
     void insertIntoFixupList(gc::RelocationOverlay* entry);
 
+    // The store buffers need to be able to call these directly.
+    void traceObject(JSObject* src);
+    void traceObjectSlots(NativeObject* nobj, uint32_t start, uint32_t length);
+    void traceSlots(JS::Value* vp, uint32_t nslots) { traceSlots(vp, vp + nslots); }
+
   private:
     Nursery& nursery() { return nursery_; }
 
@@ -81,10 +83,7 @@ class TenuringTracer : public JSTracer
     size_t moveElementsToTenured(NativeObject* dst, NativeObject* src, gc::AllocKind dstKind);
     size_t moveSlotsToTenured(NativeObject* dst, NativeObject* src, gc::AllocKind dstKind);
 
-    void traceObject(JSObject* src);
-    void markSlots(JS::Value* vp, uint32_t nslots) { markSlots(vp, vp + nslots); }
-    void markSlots(JS::Value* vp, JS::Value* end);
-    void markTraceList(const int32_t* traceList, uint8_t* memory);
+    void traceSlots(JS::Value* vp, JS::Value* end);
 };
 
 class Nursery
@@ -210,7 +209,7 @@ class Nursery
     void leaveZealMode();
 #endif
 
-  public:
+  private:
     /*
      * The start and end pointers are stored under the runtime so that we can
      * inline the isInsideNursery check into embedder code. Use the start()
@@ -327,8 +326,6 @@ class Nursery
     /* Allocates a new GC thing from the tenured generation during minor GC. */
     gc::TenuredCell* allocateFromTenured(JS::Zone* zone, gc::AllocKind thingKind);
 
-    struct TenureCountCache;
-
     /* Common internal allocator function. */
     void* allocate(size_t size);
 
@@ -336,7 +333,7 @@ class Nursery
      * Move the object at |src| in the Nursery to an already-allocated cell
      * |dst| in Tenured.
      */
-    void collectToFixedPoint(TenuringTracer& trc, TenureCountCache& tenureCounts);
+    void collectToFixedPoint(TenuringTracer& trc, gc::TenureCountCache& tenureCounts);
 
     /* Handle relocation of slots/elements pointers stored in Ion frames. */
     void setForwardingPointer(void* oldData, void* newData, bool direct);

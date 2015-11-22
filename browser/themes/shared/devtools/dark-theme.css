@@ -38,6 +38,7 @@
   /* Colors used in Graphs, like performance tools. Mostly similar to some "highlight-*" colors. */
   --theme-graphs-green: #70bf53;
   --theme-graphs-blue: #46afe3;
+  --theme-graphs-bluegrey: #5e88b0;
   --theme-graphs-purple: #df80ff;
   --theme-graphs-yellow: #d99b28;
   --theme-graphs-red: #eb5368;
@@ -138,7 +139,7 @@
 
 .cm-s-mozilla .cm-unused-line {
   text-decoration: line-through;
-  text-decoration-color: #5f88b0;
+  text-decoration-color: #0072ab;
 }
 
 .cm-s-mozilla .cm-executed-line {
@@ -334,7 +335,7 @@ div.CodeMirror span.eval-text {
   background-position: -42px 0;
 }
 
-@media (min-resolution: 1.25dppx) {
+@media (min-resolution: 1.1dppx) {
   .theme-twisty, .theme-checkbox {
     background-image: url("chrome://browser/skin/devtools/controls@2x.png");
   }
@@ -372,7 +373,7 @@ div.CodeMirror span.eval-text {
   margin-left: -4px;
 }
 
-@media (min-resolution: 1.25dppx) {
+@media (min-resolution: 1.1dppx) {
   .theme-tooltip-panel .panel-arrow[side="top"],
   .theme-tooltip-panel .panel-arrow[side="bottom"] {
     list-style-image: url("chrome://browser/skin/devtools/tooltip/arrow-vertical-dark@2x.png");

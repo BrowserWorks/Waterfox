@@ -6,14 +6,12 @@ import sys
 from setuptools import setup
 
 PACKAGE_NAME = 'mozprofile'
-PACKAGE_VERSION = '0.23'
+PACKAGE_VERSION = '0.27'
 
 # we only support python 2 right now
 assert sys.version_info[0] == 2
 
-deps = ['manifestparser >= 0.6',
-        'mozfile >= 1.0',
-        'mozlog']
+deps = ['mozfile >= 1.0', 'mozlog >= 3.0']
 
 setup(name=PACKAGE_NAME,
       version=PACKAGE_VERSION,
@@ -36,6 +34,7 @@ setup(name=PACKAGE_NAME,
       include_package_data=True,
       zip_safe=False,
       install_requires=deps,
+      extras_require={'manifest': ['manifestparser >= 0.6']},
       tests_require=['mozhttpd'],
       entry_points="""
       # -*- Entry points: -*-

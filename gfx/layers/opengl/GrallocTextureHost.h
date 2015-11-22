@@ -16,9 +16,6 @@ namespace mozilla {
 namespace layers {
 
 class GrallocTextureHostOGL : public TextureHost
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-                            , public TextureHostOGL
-#endif
 {
   friend class GrallocBufferActor;
 public:
@@ -26,8 +23,6 @@ public:
                         const NewSurfaceDescriptorGralloc& aDescriptor);
 
   virtual ~GrallocTextureHostOGL();
-
-  virtual void Updated(const nsIntRegion* aRegion) override {}
 
   virtual bool Lock() override;
 
@@ -43,7 +38,7 @@ public:
 
   virtual gfx::SurfaceFormat GetFormat() const;
 
-  virtual gfx::IntSize GetSize() const override { return mDescriptorSize; }
+  virtual gfx::IntSize GetSize() const override { return mCropSize; }
 
   virtual LayerRenderState GetRenderState() override;
 
@@ -53,16 +48,11 @@ public:
 
   virtual void UnbindTextureSource() override;
 
-  virtual FenceHandle GetAndResetReleaseFenceHandle() override;
+  virtual already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override;
 
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-  virtual TextureHostOGL* AsHostOGL() override
-  {
-    return this;
-  }
-#endif
+  virtual void WaitAcquireFenceHandleSyncComplete() override;
 
-  virtual TemporaryRef<gfx::DataSourceSurface> GetAsSurface() override;
+  virtual void SetCropRect(nsIntRect aCropRect) override;
 
   bool IsValid() const;
 
@@ -80,7 +70,7 @@ private:
   gfx::IntSize mSize;
   // Size reported by TextureClient, can be different in some cases (video?),
   // used by LayerRenderState.
-  gfx::IntSize mDescriptorSize;
+  gfx::IntSize mCropSize;
   gfx::SurfaceFormat mFormat;
   EGLImage mEGLImage;
   bool mIsOpaque;

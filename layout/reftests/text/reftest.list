@@ -24,7 +24,9 @@ HTTP(..) load ligature-with-space-1.html
 == line-editing-1c.html line-editing-1-ref.html
 == line-editing-1d.html line-editing-1-ref.html
 == line-editing-1e.html line-editing-1-ref.html
-fails-if(cocoaWidget||winWidget) HTTP(..) == lineheight-metrics-1.html lineheight-metrics-1-ref.html # bug 657864
+fails-if(cocoaWidget||(winWidget&&!/^Windows\x20NT\x205\.1/.test(http.oscpu)&&layersGPUAccelerated)) HTTP(..) == lineheight-metrics-1.html lineheight-metrics-1-ref.html # bug 657864
+HTTP(..) == lineheight-metrics-2a.html lineheight-metrics-2-ref.html
+HTTP(..) == lineheight-metrics-2b.html lineheight-metrics-2-ref.html
 == lineheight-percentage-1.html lineheight-percentage-1-ref.html
 skip-if(B2G||Mulet) == long-1.html long-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 fuzzy-if(Android,255,42) == pre-line-1.html pre-line-1-ref.html
@@ -143,7 +145,7 @@ HTTP(..) == zwnj-02.xhtml zwnj-02-ref.xhtml # HTTP(..) for ../filters.svg
 == 449555-1.html 449555-1-ref.html
 == 467722.html 467722-ref.html
 skip-if(B2G||Mulet) HTTP(..) == 475092-sub.html 475092-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-fails-if(!winWidget&&!gtk2Widget) skip-if(B2G||Mulet) HTTP(..) == 475092-pos.html 475092-sub.html # bug 482596 # Initial mulet triage: parity with B2G/B2G Desktop
+fails-if(!winWidget&&!gtkWidget) skip-if(B2G||Mulet) HTTP(..) == 475092-pos.html 475092-sub.html # bug 482596 # Initial mulet triage: parity with B2G/B2G Desktop
 == 476378-soft-hyphen-fallback.html 476378-soft-hyphen-fallback-ref.html
 # Test for bug 484954
 == rgba-text.html rgba-text-ref.html
@@ -172,6 +174,7 @@ skip-if(B2G||Mulet) == 726392-3.html 726392-3-ref.html # Initial mulet triage: p
 == 745555-1.html 745555-1-ref.html
 == 745555-2.html 745555-2-ref.html
 == 820255.html 820255-ref.html
+HTTP(..) != 1170688.html 1170688-ref.html
 
 # ensure emoji chars don't render blank (bug 715798, bug 779042);
 # should at least render hexboxes if there's no font support
@@ -182,8 +185,8 @@ skip-if(B2G||Mulet) == 726392-3.html 726392-3-ref.html # Initial mulet triage: p
 == emoji-03.html emoji-03-ref.html
 # the next two will fail on OS X 10.6 and on Windows prior to 8.1 because no color emoji font is present,
 # and also on Linux/Android/B2G platforms until we have color emoji fonts there
-fails-if(OSX==1006||/^Windows\x20NT\x20(5|6\.[0-2])/.test(http.oscpu)||gtk2Widget||Android||B2G) != emoji-03.html emoji-03-notref.html
-fails-if(OSX==1006||/^Windows\x20NT\x20(5|6\.[0-2])/.test(http.oscpu)||gtk2Widget||Android||B2G) == emoji-04.html emoji-04-ref.html
+fails-if(OSX==1006||/^Windows\x20NT\x20(5|6\.[0-2])/.test(http.oscpu)||gtkWidget||Android) != emoji-03.html emoji-03-notref.html
+fails-if(OSX==1006||/^Windows\x20NT\x20(5|6\.[0-2])/.test(http.oscpu)||gtkWidget||Android) == emoji-04.html emoji-04-ref.html
 != emoji-05.html emoji-05-notref.html
 
 # check that Graphite shaping (bug 631479) is working
@@ -221,7 +224,10 @@ HTTP(..) == graphite-05-feat.html graphite-05-ref.html
 pref(gfx.font_rendering.graphite.enabled,false) HTTP(..) == glyph-decomposition-opentype.html glyph-decomposition-opentype-ref.html
 pref(gfx.font_rendering.graphite.enabled,true) HTTP(..) == glyph-decomposition-graphite.html glyph-decomposition-graphite-ref.html
 
-# Tests for hyphenation with -moz-hyphens
+# test for bidi bug in graphite 1.3.2, fixed in 1.3.3 (bug 1207061)
+HTTP(..) == graphite-bidi-1.html graphite-bidi-1-ref.html
+
+# Tests for hyphenation with hyphens property
 == auto-hyphenation-1.html auto-hyphenation-1-ref.html
 != auto-hyphenation-1.html auto-hyphenation-1-notref.html
 == auto-hyphenation-1a.html auto-hyphenation-1-ref.html
@@ -302,7 +308,7 @@ fails-if(!cocoaWidget||OSX==1006||OSX==1007) != osx-font-smoothing-2.html osx-fo
 
 pref(layout.css.text-align-true-value.enabled,true) == text-align-true.html text-align-true-ref.html
 
-# stray control chars should not be invisible, bug 909344
+# stray control chars should be visible by default, bug 1099557
 != control-chars-01a.html control-chars-01-notref.html
 != control-chars-01b.html control-chars-01-notref.html
 != control-chars-01c.html control-chars-01-notref.html
@@ -310,6 +316,10 @@ pref(layout.css.text-align-true-value.enabled,true) == text-align-true.html text
 != control-chars-02.html control-chars-02-notref.html
 == control-chars-03a.html control-chars-03-ref.html
 == control-chars-03b.html control-chars-03-ref.html
+pref(layout.css.control-characters.visible,true) != control-chars-04a.html control-chars-04-notref.html
+pref(layout.css.control-characters.visible,true) != control-chars-04b.html control-chars-04-notref.html
+pref(layout.css.control-characters.visible,true) != control-chars-04c.html control-chars-04-notref.html
+pref(layout.css.control-characters.visible,true) != control-chars-04d.html control-chars-04-notref.html
 
 # font fallback for <space> when not supported in the primary font family - bug 970891
 HTTP(..) == space-font-1.html space-font-1-ref.html

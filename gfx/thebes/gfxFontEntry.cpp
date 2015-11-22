@@ -6,7 +6,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/MathAlgorithms.h"
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #include "nsServiceManagerUtils.h"
 #include "nsExpirationTracker.h"
@@ -85,6 +85,8 @@ gfxFontEntry::gfxFontEntry() :
     mHasSpaceFeaturesKerning(false),
     mHasSpaceFeaturesNonKerning(false),
     mSkipDefaultFeatureSpaceCheck(false),
+    mGraphiteSpaceContextualsInitialized(false),
+    mHasGraphiteSpaceContextuals(false),
     mSpaceGlyphIsInvisible(false),
     mSpaceGlyphIsInvisibleInitialized(false),
     mCheckedForGraphiteTables(false),
@@ -122,6 +124,8 @@ gfxFontEntry::gfxFontEntry(const nsAString& aName, bool aIsStandardFace) :
     mHasSpaceFeaturesKerning(false),
     mHasSpaceFeaturesNonKerning(false),
     mSkipDefaultFeatureSpaceCheck(false),
+    mGraphiteSpaceContextualsInitialized(false),
+    mHasGraphiteSpaceContextuals(false),
     mSpaceGlyphIsInvisible(false),
     mSpaceGlyphIsInvisibleInitialized(false),
     mCheckedForGraphiteTables(false),
@@ -562,7 +566,7 @@ public:
     }
 
     size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const {
-        return mTableData.SizeOfExcludingThis(aMallocSizeOf);
+        return mTableData.ShallowSizeOfExcludingThis(aMallocSizeOf);
     }
     size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const {
         return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
@@ -862,6 +866,21 @@ gfxFontEntry::CheckForGraphiteTables()
     mHasGraphiteTables = HasFontTable(TRUETYPE_TAG('S','i','l','f'));
 }
 
+bool
+gfxFontEntry::HasGraphiteSpaceContextuals()
+{
+    if (!mGraphiteSpaceContextualsInitialized) {
+        gr_face* face = GetGrFace();
+        if (face) {
+            const gr_faceinfo* faceInfo = gr_face_info(face, 0);
+            mHasGraphiteSpaceContextuals =
+                faceInfo->space_contextuals != gr_faceinfo::gr_space_none;
+        }
+        ReleaseGrFace(face); // always balance GetGrFace, even if face is null
+        mGraphiteSpaceContextualsInitialized = true;
+    }
+    return mHasGraphiteSpaceContextuals;
+}
 
 #define FEATURE_SCRIPT_MASK 0x000000ff // script index replaces low byte of tag
 
@@ -886,7 +905,8 @@ gfxFontEntry::SupportsOpenTypeFeature(int32_t aScript, uint32_t aFeatureTag)
                  aFeatureTag == HB_TAG('p','c','a','p') ||
                  aFeatureTag == HB_TAG('c','2','p','c') ||
                  aFeatureTag == HB_TAG('s','u','p','s') ||
-                 aFeatureTag == HB_TAG('s','u','b','s'),
+                 aFeatureTag == HB_TAG('s','u','b','s') ||
+                 aFeatureTag == HB_TAG('v','e','r','t'),
                  "use of unknown feature tag");
 
     // note: graphite feature support uses the last script index
@@ -1035,7 +1055,7 @@ gfxFontEntry::SupportsGraphiteFeature(uint32_t aFeatureTag)
     }
 
     gr_face* face = GetGrFace();
-    result = gr_face_find_fref(face, aFeatureTag) != nullptr;
+    result = face ? gr_face_find_fref(face, aFeatureTag) != nullptr : false;
     ReleaseGrFace(face);
 
     mSupportedFeatures->Put(scriptFeature, result);
@@ -1099,15 +1119,15 @@ gfxFontEntry::AddSizeOfIncludingThis(MallocSizeOf aMallocSizeOf,
 //
 //////////////////////////////////////////////////////////////////////////////
 
-// we consider faces with mStandardFace == true to be "greater than" those with false,
-// because during style matching, later entries will replace earlier ones
+// we consider faces with mStandardFace == true to be "less than" those with false,
+// because during style matching, earlier entries are tried first
 class FontEntryStandardFaceComparator {
   public:
     bool Equals(const nsRefPtr<gfxFontEntry>& a, const nsRefPtr<gfxFontEntry>& b) const {
         return a->mStandardFace == b->mStandardFace;
     }
     bool LessThan(const nsRefPtr<gfxFontEntry>& a, const nsRefPtr<gfxFontEntry>& b) const {
-        return (a->mStandardFace == false && b->mStandardFace == true);
+        return (a->mStandardFace == true && b->mStandardFace == false);
     }
 };
 
@@ -1318,9 +1338,9 @@ gfxFontFamily::FindAllFontsForStyle(const gfxFontStyle& aFontStyle,
 
     uint32_t minDistance = 0xffffffff;
     gfxFontEntry* matched = nullptr;
-    // iterate in reverse order so that the last-defined font is the first one
-    // in the fontlist used for matching, as per CSS Fonts spec
-    for (int32_t i = count - 1; i >= 0; i--) {
+    // iterate in forward order so that faces like 'Bold' are matched before
+    // matching style distance faces such as 'Bold Outline' (see bug 1185812)
+    for (uint32_t i = 0; i < count; i++) {
         fe = mAvailableFonts[i];
         uint32_t distance =
             WeightDistance(aFontStyle.weight, fe->Weight()) +
@@ -1479,10 +1499,10 @@ gfxFontFamily::FindFontForChar(GlobalFontMatch *aMatchData)
 
             PRLogModuleInfo *log = gfxPlatform::GetLog(eGfxLog_textrun);
 
-            if (MOZ_UNLIKELY(PR_LOG_TEST(log, PR_LOG_DEBUG))) {
+            if (MOZ_UNLIKELY(MOZ_LOG_TEST(log, LogLevel::Debug))) {
                 uint32_t unicodeRange = FindCharUnicodeRange(aMatchData->mCh);
                 uint32_t script = GetScriptCode(aMatchData->mCh);
-                PR_LOG(log, PR_LOG_DEBUG,\
+                MOZ_LOG(log, LogLevel::Debug,\
                        ("(textrun-systemfallback-fonts) char: u+%6.6x "
                         "unicode-range: %d script: %d match: [%s]\n",
                         aMatchData->mCh,
@@ -1818,7 +1838,7 @@ gfxFontFamily::AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
         mFamilyCharacterMap.SizeOfExcludingThis(aMallocSizeOf);
 
     aSizes->mFontListSize +=
-        mAvailableFonts.SizeOfExcludingThis(aMallocSizeOf);
+        mAvailableFonts.ShallowSizeOfExcludingThis(aMallocSizeOf);
     for (uint32_t i = 0; i < mAvailableFonts.Length(); ++i) {
         gfxFontEntry *fe = mAvailableFonts[i];
         if (fe) {

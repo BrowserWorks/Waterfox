@@ -61,13 +61,13 @@ public:
    * This makes a copy of the data buffers, in order to support functioning
    * in all different layer managers.
    */
-  virtual void SetData(const Data& aData);
+  virtual bool SetData(const Data& aData);
 
   /**
    *  Share the SurfaceDescriptor without making the copy, in order
    *  to support functioning in all different layer managers.
    */
-  virtual void SetData(const GrallocData& aData);
+  virtual bool SetData(const GrallocData& aData);
 
   // From [android 4.0.4]/hardware/msm7k/libgralloc-qsd8k/gralloc_priv.h
   enum {
@@ -84,7 +84,7 @@ public:
     GRALLOC_SW_UAGE = android::GraphicBuffer::USAGE_SOFTWARE_MASK,
   };
 
-  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
+  virtual already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
 
   android::sp<android::GraphicBuffer> GetGraphicBuffer() const;
 
@@ -129,6 +129,7 @@ private:
 
 } // namespace layers
 } // namespace mozilla
+
 #endif
 
 #endif /* GRALLOCIMAGES_H */

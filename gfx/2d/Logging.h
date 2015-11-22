@@ -12,7 +12,7 @@
 #include <vector>
 
 #ifdef MOZ_LOGGING
-#include <prlog.h>
+#include "mozilla/Logging.h"
 #endif
 
 #if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_ANDROID)
@@ -42,20 +42,20 @@ const int LOG_DEFAULT = LOG_EVERYTHING;
 const int LOG_DEFAULT = LOG_CRITICAL;
 #endif
 
-inline PRLogModuleLevel PRLogLevelForLevel(int aLevel) {
+inline mozilla::LogLevel PRLogLevelForLevel(int aLevel) {
   switch (aLevel) {
   case LOG_CRITICAL:
-    return PR_LOG_ERROR;
+    return LogLevel::Error;
   case LOG_WARNING:
-    return PR_LOG_WARNING;
+    return LogLevel::Warning;
   case LOG_DEBUG:
-    return PR_LOG_DEBUG;
+    return LogLevel::Debug;
   case LOG_DEBUG_PRLOG:
-    return PR_LOG_DEBUG;
+    return LogLevel::Debug;
   case LOG_EVERYTHING:
-    return PR_LOG_ALWAYS;
+    return LogLevel::Error;
   }
-  return PR_LOG_DEBUG;
+  return LogLevel::Debug;
 }
 
 class PreferenceAccess
@@ -123,6 +123,17 @@ private:
 /// is further controlled by "gfx2d" PR logging module.  However, in the case
 /// where such module would disable the output, in all but gfxDebug cases,
 /// we will still send a printf.
+
+// The range is due to the values set in Histograms.json
+enum class LogReason : int {
+  MustBeMoreThanThis = -1,
+  // Start.  Do not insert, always add at end.  If you remove items,
+  // make sure the other items retain their values.
+
+  // End
+  MustBeLessThanThis = 101,
+};
+
 struct BasicLogger
 {
   // For efficiency, this method exists and copies the logic of the
@@ -133,7 +144,7 @@ struct BasicLogger
 #if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_ANDROID)
       return true;
 #else
-      if (PR_LOG_TEST(GetGFX2DLog(), PRLogLevelForLevel(aLevel))) {
+      if (MOZ_LOG_TEST(GetGFX2DLog(), PRLogLevelForLevel(aLevel))) {
         return true;
       } else if ((PreferenceAccess::sGfxLogLevel >= LOG_DEBUG_PRLOG) ||
                  (aLevel < LOG_DEBUG)) {
@@ -143,6 +154,9 @@ struct BasicLogger
     }
     return false;
   }
+
+  // Only for really critical errors.
+  static void CrashAction(LogReason aReason) {}
 
   static void OutputMessage(const std::string &aString,
                             int aLevel,
@@ -160,7 +174,7 @@ struct BasicLogger
 #if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_ANDROID)
       printf_stderr("%s%s", aString.c_str(), aNoNewline ? "" : "\n");
 #else
-      if (PR_LOG_TEST(GetGFX2DLog(), PRLogLevelForLevel(aLevel))) {
+      if (MOZ_LOG_TEST(GetGFX2DLog(), PRLogLevelForLevel(aLevel))) {
         PR_LogPrint("%s%s", aString.c_str(), aNoNewline ? "" : "\n");
       } else if ((PreferenceAccess::sGfxLogLevel >= LOG_DEBUG_PRLOG) ||
                  (aLevel < LOG_DEBUG)) {
@@ -173,6 +187,7 @@ struct BasicLogger
 
 struct CriticalLogger {
   static void OutputMessage(const std::string &aString, int aLevel, bool aNoNewline);
+  static void CrashAction(LogReason aReason);
 };
 
 // Implement this interface and init the Factory with an instance to
@@ -181,6 +196,7 @@ class LogForwarder {
 public:
   virtual ~LogForwarder() {}
   virtual void Log(const std::string &aString) = 0;
+  virtual void CrashAction(LogReason aReason) = 0;
 
   // Provide a copy of the logs to the caller.  The int is the index
   // of the Log call, if the number of logs exceeds some preset capacity
@@ -205,7 +221,8 @@ public:
 enum class LogOptions : int {
   NoNewline = 0x01,
   AutoPrefix = 0x02,
-  AssertOnCall = 0x04
+  AssertOnCall = 0x04,
+  CrashAction = 0x08,
 };
 
 template<typename T>
@@ -231,8 +248,9 @@ public:
   // Logger::ShouldOutputMessage.  Since we currently don't have a different
   // version of that method for different loggers, this is OK. Once we do,
   // change BasicLogger::ShouldOutputMessage to Logger::ShouldOutputMessage.
-  explicit Log(int aOptions = Log::DefaultOptions(L == LOG_CRITICAL)) {
-    Init(aOptions, BasicLogger::ShouldOutputMessage(L));
+  explicit Log(int aOptions = Log::DefaultOptions(L == LOG_CRITICAL),
+               LogReason aReason = LogReason::MustBeMoreThanThis) {
+    Init(aOptions, BasicLogger::ShouldOutputMessage(L), aReason);
   }
 
   ~Log() {
@@ -246,7 +264,7 @@ public:
     if (!str.empty()) {
       WriteLog(str);
     }
-    mMessage.clear();
+    mMessage.str("");
   }
 
   Log &operator <<(char aChar) {
@@ -441,22 +459,30 @@ public:
   inline bool LogIt() const { return mLogIt; }
   inline bool NoNewline() const { return mOptions & int(LogOptions::NoNewline); }
   inline bool AutoPrefix() const { return mOptions & int(LogOptions::AutoPrefix); }
+  inline bool ValidReason() const { return (int)mReason > (int)LogReason::MustBeMoreThanThis && (int)mReason < (int)LogReason::MustBeLessThanThis; }
 
   // We do not want this version to do any work, and stringstream can't be
   // copied anyway.  It does come in handy for the "Once" macro defined below.
-  MOZ_IMPLICIT Log(const Log& log) { Init(log.mOptions, false); }
+  MOZ_IMPLICIT Log(const Log& log) { Init(log.mOptions, false, log.mReason); }
 
 private:
   // Initialization common to two constructors
-  void Init(int aOptions, bool aLogIt) {
+  void Init(int aOptions, bool aLogIt, LogReason aReason) {
     mOptions = aOptions;
+    mReason = aReason;
     mLogIt = aLogIt;
-    if (mLogIt && AutoPrefix()) {
-      if (mOptions & int(LogOptions::AssertOnCall)) {
-        mMessage << "[GFX" << L << "]: ";
-      } else {
-        mMessage << "[GFX" << L << "-]: ";
+    if (mLogIt) {
+      if (AutoPrefix()) {
+        if (mOptions & int(LogOptions::AssertOnCall)) {
+          mMessage << "[GFX" << L;
+        } else {
+          mMessage << "[GFX" << L << "-";
+        }
       }
+      if ((mOptions & int(LogOptions::CrashAction)) && ValidReason()) {
+        mMessage << " " << (int)mReason;
+      }
+      mMessage << "]: ";
     }
   }
 
@@ -466,11 +492,15 @@ private:
       if (mOptions & int(LogOptions::AssertOnCall)) {
         MOZ_ASSERT(false, "An assert from the graphics logger");
       }
+      if ((mOptions & int(LogOptions::CrashAction)) && ValidReason()) {
+        Logger::CrashAction(mReason);
+      }
     }
   }
 
   std::stringstream mMessage;
   int mOptions;
+  LogReason mReason;
   bool mLogIt;
 };
 
@@ -488,6 +518,15 @@ typedef Log<LOG_CRITICAL, CriticalLogger> CriticalLog;
 // This log goes into crash reports, use with care.
 #define gfxCriticalError mozilla::gfx::CriticalLog
 #define gfxCriticalErrorOnce static gfxCriticalError GFX_LOGGING_GLUE(sOnceAtLine,__LINE__) = gfxCriticalError
+
+// This is a shortcut for errors we want logged in crash reports/about support
+// but we do not want asserting.  These are available in all builds, so it is
+// not worth trying to do magic to avoid matching the syntax of gfxCriticalError.
+// So, this one is used as
+// gfxCriticalNote << "Something to report and not assert";
+// while the critical error is
+// gfxCriticalError() << "Something to report and assert";
+#define gfxCriticalNote gfxCriticalError(gfxCriticalError::DefaultOptions(false))
 
 // The "once" versions will only trigger the first time through. You can do this:
 // gfxCriticalErrorOnce() << "This message only shows up once;
@@ -511,6 +550,14 @@ typedef Log<LOG_CRITICAL, CriticalLogger> CriticalLog;
 #define gfxWarning if (1) ; else mozilla::gfx::NoLog
 #define gfxWarningOnce if (1) ; else mozilla::gfx::NoLog
 #endif
+
+// In the debug build, this is equivalent to the default gfxCriticalError.
+// In the non-debug build, on nightly and dev edition, it will MOZ_CRASH.
+// On beta and release versions, it will telemetry count, but proceed.
+//
+// You should create a (new) enum in the LogReason and use it for the reason
+// parameter to ensure uniqueness.
+#define gfxCrash(reason) gfxCriticalError(int(LogOptions::AutoPrefix) | int(LogOptions::AssertOnCall) | int(LogOptions::CrashAction), (reason))
 
 // See nsDebug.h and the NS_WARN_IF macro
 
@@ -621,7 +668,7 @@ private:
   TreeLog& mTreeLog;
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif /* MOZILLA_GFX_LOGGING_H_ */

@@ -6,7 +6,7 @@
 
 body {
   display: flex;
-  box-sizing: padding-box;
+  box-sizing: border-box;
   min-height: 100vh;
   padding: 0 48px;
   align-items: center;
@@ -33,18 +33,23 @@ ul {
   max-width: 512px;
 }
 
-#errorTitleText {
+#errorTitle {
   background: url("aboutNetError_info.svg") left 0 no-repeat;
-  background-size: 1.2em;
-  -moz-margin-start: -2em;
-  -moz-padding-start: 2em;
+  background-size: 3em;
+  -moz-margin-start: -5em;
+  -moz-padding-start: 5em;
+}
+
+#errorTitleText {
+  border-bottom: 1px solid #C1C1C1;
+  padding-bottom: 0.4em;
 }
 
 #errorTitleText:-moz-dir(rtl) {
   background-position: right 0;
 }
 
-#errorTitleText[sslv3=true] {
+#errorTitle[sslv3=true] {
   background-image: url("aboutNetError_alert.svg");
 }
 
@@ -58,7 +63,7 @@ ul {
 }
 
 @media (max-width: 675px) {
-  #errorTitleText {
+  #errorTitle {
     padding-top: 0;
     background-image: none;
     -moz-padding-start: 0;

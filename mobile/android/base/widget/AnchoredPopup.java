@@ -23,14 +23,15 @@ import org.mozilla.gecko.util.HardwareUtils;
  * AnchoredPopup is the base class for doorhanger notifications, and is anchored to the urlbar.
  */
 public abstract class AnchoredPopup extends PopupWindow {
-    public interface OnShowListener {
+    public interface OnVisibilityChangeListener {
         public void onDoorHangerShow();
+        public void onDoorHangerHide();
     }
 
     private View mAnchor;
-    private OnShowListener mOnShowListener;
+    private OnVisibilityChangeListener onVisibilityChangeListener;
 
-    protected LinearLayout mContent;
+    protected RoundedCornerLayout mContent;
     protected boolean mInflated;
 
     protected final Context mContext;
@@ -60,7 +61,7 @@ public abstract class AnchoredPopup extends PopupWindow {
         final View layout = inflater.inflate(R.layout.anchored_popup, null);
         setContentView(layout);
 
-        mContent = (LinearLayout) layout.findViewById(R.id.content);
+        mContent = (RoundedCornerLayout) layout.findViewById(R.id.content);
 
         mInflated = true;
     }
@@ -74,8 +75,8 @@ public abstract class AnchoredPopup extends PopupWindow {
         mAnchor = anchor;
     }
 
-    public void setOnShowListener(OnShowListener listener) {
-        mOnShowListener = listener;
+    public void setOnVisibilityChangeListener(OnVisibilityChangeListener listener) {
+        onVisibilityChangeListener = listener;
     }
 
     /**
@@ -87,8 +88,8 @@ public abstract class AnchoredPopup extends PopupWindow {
             throw new IllegalStateException("ArrowPopup#init() must be called before ArrowPopup#show()");
         }
 
-        if (mOnShowListener != null) {
-            mOnShowListener.onDoorHangerShow();
+        if (onVisibilityChangeListener != null) {
+            onVisibilityChangeListener.onDoorHangerShow();
         }
 
         final int[] anchorLocation = new int[2];
@@ -129,6 +130,14 @@ public abstract class AnchoredPopup extends PopupWindow {
             final View anchor = validAnchor ? mAnchor : decorView;
 
             showAtLocation(anchor, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, offsetY);
+        }
+    }
+
+    @Override
+    public void dismiss() {
+        super.dismiss();
+        if (onVisibilityChangeListener != null) {
+            onVisibilityChangeListener.onDoorHangerHide();
         }
     }
 }

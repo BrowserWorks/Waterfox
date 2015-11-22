@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsString.h"
 #include "nsCOMPtr.h"
 #include "nsIURI.h"
@@ -27,18 +27,14 @@ using namespace mozilla;
 /* Keeps track of whether or not CSP is enabled */
 bool CSPService::sCSPEnabled = true;
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo* gCspPRLog;
-#endif
 
 CSPService::CSPService()
 {
   Preferences::AddBoolVarCache(&sCSPEnabled, "security.csp.enable");
 
-#ifdef PR_LOGGING
   if (!gCspPRLog)
     gCspPRLog = PR_NewLogModule("CSP");
-#endif
 }
 
 CSPService::~CSPService()
@@ -109,18 +105,19 @@ CSPService::ShouldLoad(uint32_t aContentType,
                        nsIPrincipal *aRequestPrincipal,
                        int16_t *aDecision)
 {
+  MOZ_ASSERT(aContentType == nsContentUtils::InternalContentPolicyTypeToExternal(aContentType),
+             "We should only see external content policy types here.");
+
   if (!aContentLocation) {
     return NS_ERROR_FAILURE;
   }
 
-#ifdef PR_LOGGING
-  {
+  if (MOZ_LOG_TEST(gCspPRLog, LogLevel::Debug)) {
     nsAutoCString location;
     aContentLocation->GetSpec(location);
-    PR_LOG(gCspPRLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCspPRLog, LogLevel::Debug,
            ("CSPService::ShouldLoad called for %s", location.get()));
   }
-#endif
 
   // default decision, CSP can revise it if there's a policy to enforce
   *aDecision = nsIContentPolicy::ACCEPT;
@@ -210,21 +207,19 @@ CSPService::ShouldLoad(uint32_t aContentType,
     principal->GetCsp(getter_AddRefs(csp));
 
     if (csp) {
-#ifdef PR_LOGGING
-      {
+      if (MOZ_LOG_TEST(gCspPRLog, LogLevel::Debug)) {
         uint32_t numPolicies = 0;
         nsresult rv = csp->GetPolicyCount(&numPolicies);
         if (NS_SUCCEEDED(rv)) {
           for (uint32_t i=0; i<numPolicies; i++) {
             nsAutoString policy;
             csp->GetPolicy(i, policy);
-            PR_LOG(gCspPRLog, PR_LOG_DEBUG,
+            MOZ_LOG(gCspPRLog, LogLevel::Debug,
                    ("Document has CSP[%d]: %s", i,
                    NS_ConvertUTF16toUTF8(policy).get()));
           }
         }
       }
-#endif
       // obtain the enforcement decision
       // (don't pass aExtra, we use that slot for redirects)
       csp->ShouldLoad(aContentType,
@@ -236,14 +231,12 @@ CSPService::ShouldLoad(uint32_t aContentType,
                       aDecision);
     }
   }
-#ifdef PR_LOGGING
-  else {
+  else if (MOZ_LOG_TEST(gCspPRLog, LogLevel::Debug)) {
     nsAutoCString uriSpec;
     aContentLocation->GetSpec(uriSpec);
-    PR_LOG(gCspPRLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCspPRLog, LogLevel::Debug,
            ("COULD NOT get nsINode for location: %s", uriSpec.get()));
   }
-#endif
 
   return NS_OK;
 }
@@ -258,6 +251,9 @@ CSPService::ShouldProcess(uint32_t         aContentType,
                           nsIPrincipal     *aRequestPrincipal,
                           int16_t          *aDecision)
 {
+  MOZ_ASSERT(aContentType == nsContentUtils::InternalContentPolicyTypeToExternal(aContentType),
+             "We should only see external content policy types here.");
+
   if (!aContentLocation)
     return NS_ERROR_FAILURE;
 
@@ -315,7 +311,8 @@ CSPService::AsyncOnChannelRedirect(nsIChannel *oldChannel,
   nsCOMPtr<nsIURI> originalUri;
   rv = oldChannel->GetOriginalURI(getter_AddRefs(originalUri));
   NS_ENSURE_SUCCESS(rv, rv);
-  nsContentPolicyType policyType = loadInfo->GetContentPolicyType();
+  nsContentPolicyType policyType =
+    nsContentUtils::InternalContentPolicyTypeToExternal(loadInfo->GetContentPolicyType());
 
   int16_t aDecision = nsIContentPolicy::ACCEPT;
   csp->ShouldLoad(policyType,     // load type per nsIContentPolicy (uint32_t)
@@ -326,23 +323,21 @@ CSPService::AsyncOnChannelRedirect(nsIChannel *oldChannel,
                   originalUri,    // aMimeTypeGuess
                   &aDecision);
 
-#ifdef PR_LOGGING
-  if (newUri) {
+  if (newUri && MOZ_LOG_TEST(gCspPRLog, LogLevel::Debug)) {
     nsAutoCString newUriSpec("None");
     newUri->GetSpec(newUriSpec);
-    PR_LOG(gCspPRLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCspPRLog, LogLevel::Debug,
            ("CSPService::AsyncOnChannelRedirect called for %s",
             newUriSpec.get()));
   }
   if (aDecision == 1) {
-    PR_LOG(gCspPRLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCspPRLog, LogLevel::Debug,
            ("CSPService::AsyncOnChannelRedirect ALLOWING request."));
   }
   else {
-    PR_LOG(gCspPRLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCspPRLog, LogLevel::Debug,
            ("CSPService::AsyncOnChannelRedirect CANCELLING request."));
   }
-#endif
 
   // if ShouldLoad doesn't accept the load, cancel the request
   if (!NS_CP_ACCEPTED(aDecision)) {

@@ -9,6 +9,7 @@
 #include "mozilla/dom/WebGLRenderingContextBinding.h"
 #include "ScopedGLHelpers.h"
 #include "WebGLContext.h"
+#include "WebGLStrongTypes.h"
 #include "WebGLTexture.h"
 
 namespace mozilla {
@@ -41,20 +42,22 @@ NeedsDepthStencilEmu(gl::GLContext* gl, GLenum internalFormat)
 }
 
 JSObject*
-WebGLRenderbuffer::WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto)
+WebGLRenderbuffer::WrapObject(JSContext* cx, JS::Handle<JSObject*> givenProto)
 {
-    return dom::WebGLRenderbufferBinding::Wrap(cx, this, aGivenProto);
+    return dom::WebGLRenderbufferBinding::Wrap(cx, this, givenProto);
 }
 
 WebGLRenderbuffer::WebGLRenderbuffer(WebGLContext* webgl)
-    : WebGLBindable<RBTarget>()
-    , WebGLContextBoundObject(webgl)
+    : WebGLContextBoundObject(webgl)
     , mPrimaryRB(0)
     , mSecondaryRB(0)
     , mInternalFormat(0)
     , mInternalFormatForGL(0)
     , mImageDataStatus(WebGLImageDataStatus::NoImageData)
     , mSamples(1)
+#ifdef ANDROID
+    , mIsRB(false)
+#endif
 {
     mContext->MakeContextCurrent();
 
@@ -75,6 +78,9 @@ WebGLRenderbuffer::Delete()
         mContext->gl->fDeleteRenderbuffers(1, &mSecondaryRB);
 
     LinkedListElement<WebGLRenderbuffer>::removeFrom(mContext->mRenderbuffers);
+#ifdef ANDROID
+    mIsRB = false;
+#endif
 }
 
 int64_t

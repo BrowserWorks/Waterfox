@@ -6,9 +6,10 @@
  * the container bounds.
  */
 
-function spawnTest () {
+function* spawnTest() {
   let { target, panel } = yield initPerformance(SIMPLE_URL);
   let { $, EVENTS, PerformanceController, OverviewView, DetailsView, WaterfallView } = panel.panelWin;
+  let { WATERFALL_MARKER_SIDEBAR_SAFE_BOUNDS } = require("devtools/performance/marker-view");
 
   yield startRecording(panel);
   ok(true, "Recording has started.");
@@ -25,27 +26,31 @@ function spawnTest () {
     DetailsView.selectView("waterfall"),
     once(WaterfallView, EVENTS.WATERFALL_RENDERED)
   ]);
+
   yield stopRecording(panel);
   ok(true, "Recording has ended.");
+
   yield rendered;
+  ok(true, "Recording has rendered.");
 
   // Test the waterfall background.
 
   let parentWidth = $("#waterfall-view").getBoundingClientRect().width;
   let sidebarWidth = $(".waterfall-sidebar").getBoundingClientRect().width;
   let detailsWidth = $("#waterfall-details").getBoundingClientRect().width;
-  let waterfallWidth = WaterfallView.waterfall._waterfallWidth;
-  is(waterfallWidth, parentWidth - sidebarWidth - detailsWidth,
+  let waterfallWidth = WaterfallView._markersRoot._waterfallWidth;
+
+  is(waterfallWidth, parentWidth - sidebarWidth - detailsWidth - WATERFALL_MARKER_SIDEBAR_SAFE_BOUNDS,
     "The waterfall width is correct.")
 
-  ok(WaterfallView.waterfall._canvas,
+  ok(WaterfallView._waterfallHeader._canvas,
     "A canvas should be created after the recording ended.");
-  ok(WaterfallView.waterfall._ctx,
+  ok(WaterfallView._waterfallHeader._ctx,
     "A 2d context should be created after the recording ended.");
 
-  is(WaterfallView.waterfall._canvas.width, waterfallWidth,
+  is(WaterfallView._waterfallHeader._canvas.width, waterfallWidth,
     "The canvas width is correct.");
-  is(WaterfallView.waterfall._canvas.height, 1,
+  is(WaterfallView._waterfallHeader._canvas.height, 1,
     "The canvas height is correct.");
 
   yield teardown(panel);

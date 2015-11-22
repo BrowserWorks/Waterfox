@@ -32,6 +32,7 @@
 ******************************************************************************/
 /* AG feature masks */
 #define BTIF_HF_FEATURES   ( BTA_AG_FEAT_3WAY | \
+                             BTA_AG_FEAT_ECNR | \
                              BTA_AG_FEAT_REJECT | \
                              BTA_AG_FEAT_ECS    | \
                              BTA_AG_FEAT_EXTERR)
@@ -40,5 +41,10 @@
 #define BTA_AG_CHLD_VAL    "(0,1,2,3)"
 /* SDP AVRCP 1.5 feature */
 #define SDP_AVRCP_1_5 FALSE
+
+/* BLE Feature */
+#define BTA_GATT_INCLUDED  TRUE
+#define BLE_INCLUDED       TRUE
+#define SMP_INCLUDED       TRUE
 
 #endif /* B2G_BDROID_BUILDCFG_H */

@@ -16,18 +16,30 @@ document.addEventListener("Initialized", () => {
   if (!AppConstants.isPlatformAndVersionAtLeast("win", "10")) {
     document.getElementById("redirectSearchCheckbox").hidden = true;
   }
-
-  if (Services.prefs.getBoolPref("browser.search.showOneOffButtons"))
-    return;
-
-  document.getElementById("category-search").hidden = true;
-  if (document.location.hash == "#search")
-    document.location.hash = "";
 });
 
 var gEngineView = null;
 
 var gSearchPane = {
+
+  /**
+   * Initialize autocomplete to ensure prefs are in sync.
+   */
+  _initAutocomplete: function () {
+    let unifiedCompletePref = false;
+    try {
+      unifiedCompletePref =
+        Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete");
+    } catch (ex) {}
+
+    if (unifiedCompletePref) {
+      Components.classes["@mozilla.org/autocomplete/search;1?name=unifiedcomplete"]
+                .getService(Components.interfaces.mozIPlacesAutoComplete);
+    } else {
+      Components.classes["@mozilla.org/autocomplete/search;1?name=history"]
+                .getService(Components.interfaces.mozIPlacesAutoComplete);
+    }
+  },
 
   init: function ()
   {
@@ -46,6 +58,38 @@ var gSearchPane = {
     window.addEventListener("unload", () => {
       Services.obs.removeObserver(this, "browser-search-engine-modified", false);
     });
+
+    this._initAutocomplete();
+
+    let suggestsPref =
+      document.getElementById("browser.search.suggest.enabled");
+    suggestsPref.addEventListener("change", () => {
+      this.updateSuggestsCheckbox();
+    });
+    this.updateSuggestsCheckbox();
+  },
+
+  updateSuggestsCheckbox() {
+    let urlbarSuggests = document.getElementById("urlBarSuggestion");
+    urlbarSuggests.hidden =
+      !Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete");
+
+    let suggestsPref =
+      document.getElementById("browser.search.suggest.enabled");
+    let permanentPB =
+      Services.prefs.getBoolPref("browser.privatebrowsing.autostart");
+    urlbarSuggests.disabled = !suggestsPref.value || permanentPB;
+
+    let urlbarSuggestsPref =
+      document.getElementById("browser.urlbar.suggest.searches");
+    urlbarSuggests.checked = urlbarSuggestsPref.value;
+    if (urlbarSuggests.disabled) {
+      urlbarSuggests.checked = false;
+    }
+
+    let permanentPBLabel =
+      document.getElementById("urlBarSuggestionPermanentPBLabel");
+    permanentPBLabel.hidden = urlbarSuggests.hidden || !permanentPB;
   },
 
   buildDefaultEngineDropDown: function() {

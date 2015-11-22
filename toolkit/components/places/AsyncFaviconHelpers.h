@@ -58,7 +58,6 @@ struct IconData
   , fetchMode(FETCH_NEVER)
   , status(ICON_STATUS_UNKNOWN)
   {
-    guid.SetIsVoid(true);
   }
 
   int64_t id;
@@ -68,7 +67,6 @@ struct IconData
   PRTime expiration;
   enum AsyncFaviconFetchMode fetchMode;
   uint16_t status; // This is a bitset, see ICON_STATUS_* defines above.
-  nsCString guid;
 };
 
 /**
@@ -104,7 +102,6 @@ protected:
 
   virtual ~AsyncFaviconHelperBase();
 
-  nsRefPtr<Database> mDB;
   // Strong reference since we are responsible for its existence.
   nsCOMPtr<nsIFaviconDataCallback> mCallback;
 };

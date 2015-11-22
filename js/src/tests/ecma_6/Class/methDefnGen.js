@@ -66,10 +66,17 @@ assertEq(next.done, true);
 assertEq(next.value.hello, 2);
 assertEq(next.value.world, 3);
 
+// prototype property
+assertEq(b.g.hasOwnProperty("prototype"), true);
+
 // Strict mode
 a = {*b(c){"use strict";yield c;}};
 assertEq(a.b(1).next().value, 1);
 a = {*["b"](c){"use strict";return c;}};
 assertEq(a.b(1).next().value, 1);
+
+// Generators should not have [[Construct]]
+a = {*g() { yield 1; }}
+assertThrowsInstanceOf(() => { new a.g }, TypeError);
 
 reportCompare(0, 0, "ok");

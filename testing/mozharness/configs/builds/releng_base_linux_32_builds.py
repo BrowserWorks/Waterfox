@@ -30,7 +30,7 @@ config = {
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
     # decides whether we want to use moz_sign_cmd in env
     'enable_signing': True,
-    'purge_skip': ['info', 'rel-*:45d', 'tb-rel-*:45d'],
+    'purge_skip': ['info', 'rel-*:10d', 'tb-rel-*:10d'],
     'purge_basedirs':  ["/mock/users/cltbld/home/cltbld/build"],
     # mock shtuff
     'mock_mozilla_dir':  '/builds/mock_mozilla',
@@ -45,6 +45,7 @@ config = {
         ('/builds/mozilla-desktop-geoloc-api.key', '/builds/mozilla-desktop-geoloc-api.key'),
         ('/builds/crash-stats-api.token', '/builds/crash-stats-api.token'),
         ('/builds/adjust-sdk.token', '/builds/adjust-sdk.token'),
+        ('/usr/local/lib/hgext', '/usr/local/lib/hgext'),
     ],
     'enable_ccache': True,
     'vcs_share_base': '/builds/hg-shared',
@@ -62,6 +63,7 @@ config = {
     'base_name': 'Linux_%(branch)s',
     'platform': 'linux',
     'stage_platform': 'linux',
+    'publish_nightly_en_US_routes': True,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
         'MOZ_AUTOMATION': '1',

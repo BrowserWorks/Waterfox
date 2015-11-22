@@ -67,6 +67,7 @@
             <menuitem value="ko"              label="&font.langGroup.korean;"/>
             <menuitem value="x-western"       label="&font.langGroup.latin;"/>
             <menuitem value="x-mlym"          label="&font.langGroup.malayalam;"/>
+            <menuitem value="x-math"          label="&font.langGroup.math;"/>
             <menuitem value="x-orya"          label="&font.langGroup.oriya;"/>
             <menuitem value="x-sinh"          label="&font.langGroup.sinhala;"/>
             <menuitem value="x-tamil"         label="&font.langGroup.tamil;"/>
@@ -107,7 +108,7 @@
                      accesskey="&sizeProportional.accesskey;"
                      control="sizeVar"/>
             </hbox>  
-            <menulist id="sizeVar">
+            <menulist id="sizeVar" delayprefsave="true">
               <menupopup>
                 <menuitem value="9" label="9"/>
                 <menuitem value="10" label="10"/>
@@ -141,30 +142,30 @@
             <hbox align="center" pack="end">
               <label accesskey="&serif.accesskey;" control="serif">&serif.label;</label>
             </hbox>
-            <menulist id="serif" flex="1" style="width: 0px;"
-                      onsyncfrompreference="return gFontsDialog.readFontSelection(document.getElementById('serif'));"/>
+            <menulist id="serif" flex="1" style="width: 0px;" delayprefsave="true"
+                      onsyncfrompreference="return FontBuilder.readFontSelection(this);"/>
             <spacer/>
           </row>
           <row align="center">
             <hbox align="center" pack="end">
               <label accesskey="&sans-serif.accesskey;" control="sans-serif">&sans-serif.label;</label>
             </hbox>
-            <menulist id="sans-serif" flex="1" style="width: 0px;"
-                      onsyncfrompreference="return gFontsDialog.readFontSelection(document.getElementById('sans-serif'));"/>
+            <menulist id="sans-serif" flex="1" style="width: 0px;" delayprefsave="true"
+                      onsyncfrompreference="return FontBuilder.readFontSelection(this);"/>
             <spacer/>
           </row>
           <row align="center">
             <hbox align="center" pack="end">
               <label accesskey="&monospace.accesskey;" control="monospace">&monospace.label;</label>
             </hbox>
-            <menulist id="monospace" flex="1" style="width: 0px;" crop="right"
-                      onsyncfrompreference="return gFontsDialog.readFontSelection(document.getElementById('monospace'));"/>
+            <menulist id="monospace" flex="1" style="width: 0px;" crop="right" delayprefsave="true"
+                      onsyncfrompreference="return FontBuilder.readFontSelection(this);"/>
             <hbox align="center" pack="end">
               <label value="&size.label;"
                      accesskey="&sizeMonospace.accesskey;"
                      control="sizeMono"/>
             </hbox>  
-            <menulist id="sizeMono">
+            <menulist id="sizeMono" delayprefsave="true">
               <menupopup>
                 <menuitem value="9" label="9"/>
                 <menuitem value="10" label="10"/>

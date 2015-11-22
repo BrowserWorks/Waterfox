@@ -6,7 +6,7 @@
 /**
  * View handler for toolbar events (mostly option toggling and triggering)
  */
-let ToolbarView = {
+var ToolbarView = {
   /**
    * Sets up the view with event binding.
    */
@@ -93,7 +93,7 @@ let ToolbarView = {
    * hiding or showing all elements with class "experimental-option".
    *
    * TODO re-enable "#option-enable-memory" permanently once stable in bug 1163350
-   * TODO re-enable "#option-show-jit-optimizations" permanently once stable in bug 1163351
+   * TODO re-enable "#option-enable-jit-optimizations" permanently once stable in bug 1163351
    *
    * @param {boolean} isEnabled
    */

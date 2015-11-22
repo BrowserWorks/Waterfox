@@ -4,15 +4,21 @@
 
 toolkit.jar:
 *  res/ua.css    (ua.css)
-   res/html.css    (html.css)
+*  res/html.css    (html.css)
    res/quirk.css    (quirk.css)
    res/full-screen-override.css    (full-screen-override.css)
    res/plaintext.css     (plaintext.css)
    res/viewsource.css    (viewsource.css)
    res/counterstyles.css (counterstyles.css)
+   res/noscript.css (noscript.css)
+   res/noframes.css (noframes.css)
 *  res/forms.css    (forms.css)
    res/number-control.css    (number-control.css)
-   res/arrow.gif    (arrow.gif)
-   res/arrowd.gif   (arrowd.gif)
+   res/arrow.gif        (arrow.gif)
+   res/arrow-left.gif   (arrow-left.gif)
+   res/arrow-right.gif  (arrow-right.gif)
+   res/arrowd.gif       (arrowd.gif)
+   res/arrowd-left.gif  (arrowd-left.gif)
+   res/arrowd-right.gif (arrowd-right.gif)
 
 % resource gre-resources %res/

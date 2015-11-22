@@ -11,9 +11,7 @@
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gMediaDecoderLog;
-#endif
 
 NS_IMPL_ISUPPORTS0(BufferDecoder)
 
@@ -23,11 +21,9 @@ BufferDecoder::BufferDecoder(MediaResource* aResource)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_COUNT_CTOR(BufferDecoder);
-#ifdef PR_LOGGING
   if (!gMediaDecoderLog) {
     gMediaDecoderLog = PR_NewLogModule("MediaDecoder");
   }
-#endif
 }
 
 BufferDecoder::~BufferDecoder()
@@ -37,7 +33,7 @@ BufferDecoder::~BufferDecoder()
 }
 
 void
-BufferDecoder::BeginDecoding(MediaTaskQueue* aTaskQueueIdentity)
+BufferDecoder::BeginDecoding(TaskQueue* aTaskQueueIdentity)
 {
   MOZ_ASSERT(!mTaskQueueIdentity && aTaskQueueIdentity);
   mTaskQueueIdentity = aTaskQueueIdentity;
@@ -89,25 +85,6 @@ BufferDecoder::NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
   // ignore
 }
 
-int64_t
-BufferDecoder::GetMediaDuration()
-{
-  // unknown
-  return -1;
-}
-
-void
-BufferDecoder::SetMediaDuration(int64_t aDuration)
-{
-  // ignore
-}
-
-void
-BufferDecoder::UpdateEstimatedMediaDuration(int64_t aDuration)
-{
-  // ignore
-}
-
 void
 BufferDecoder::SetMediaSeekable(bool aMediaSeekable)
 {
@@ -153,24 +130,6 @@ BufferDecoder::FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo, MediaDecoderEventVis
 }
 
 void
-BufferDecoder::QueueMetadata(int64_t aTime, nsAutoPtr<MediaInfo> aInfo, nsAutoPtr<MetadataTags> aTags)
-{
-  // ignore
-}
-
-void
-BufferDecoder::RemoveMediaTracks()
-{
-  // ignore
-}
-
-void
-BufferDecoder::SetMediaEndTime(int64_t aTime)
-{
-  // ignore
-}
-
-void
 BufferDecoder::OnReadMetadataCompleted()
 {
   // ignore
@@ -178,12 +137,6 @@ BufferDecoder::OnReadMetadataCompleted()
 
 void
 BufferDecoder::NotifyWaitingForResourcesStatusChanged()
-{
-  // ignore
-}
-
-void
-BufferDecoder::NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset)
 {
   // ignore
 }

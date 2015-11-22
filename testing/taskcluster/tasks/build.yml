@@ -25,8 +25,8 @@ task:
     # the board.
     - 'docker-worker:cache:tc-vcs'
     - 'docker-worker:image:{{#docker_image}}builder{{/docker_image}}'
-    - 'queue:define-task:aws-provisioner/build-c4-2xlarge'
-    - 'queue:create-task:aws-provisioner/build-c4-2xlarge'
+    - 'queue:define-task:aws-provisioner-v1/build-c4-2xlarge'
+    - 'queue:create-task:aws-provisioner-v1/build-c4-2xlarge'
 
 
   payload:
@@ -52,11 +52,11 @@ task:
       GECKO_HEAD_REPOSITORY: '{{head_repository}}'
       GECKO_HEAD_REV: '{{head_rev}}'
       GECKO_HEAD_REF: '{{head_ref}}'
-      MOZHARNESS_REPOSITORY: '{{mozharness_repository}}'
-      MOZHARNESS_REV: '{{mozharness_rev}}'
-      MOZHARNESS_REF: '{{mozharness_ref}}'
+      TOOLTOOL_REPO: 'https://git.mozilla.org/build/tooltool.git'
+      TOOLTOOL_REV: 'master'
 
   extra:
+    build_product: '{{build_product}}'
     index:
       rank: {{pushlog_id}}
     treeherder:

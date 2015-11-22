@@ -14,8 +14,8 @@
       factory.call(this, require, this);
     } else {
       const Cu = Components.utils;
-      const { devtools } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-      factory.call(this, devtools.require, this);
+      const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+      factory.call(this, require, this);
     }
   }
 }).call(this, function (require, exports) {
@@ -274,9 +274,13 @@ DebuggerTransport.prototype = {
 
     try {
       this._currentOutgoing.write(stream);
-    } catch(e if e.result != Cr.NS_BASE_STREAM_WOULD_BLOCK) {
-      this.close(e.result);
-      return;
+    } catch(e) {
+      if (e.result != Cr.NS_BASE_STREAM_WOULD_BLOCK) {
+        this.close(e.result);
+        return;
+      } else {
+        throw e;
+      }
     }
 
     this._flushOutgoing();
@@ -351,8 +355,12 @@ DebuggerTransport.prototype = {
       while(stream.available() && this._incomingEnabled &&
             this._processIncoming(stream, stream.available())) {}
       this._waitForIncoming();
-    } catch(e if e.result != Cr.NS_BASE_STREAM_WOULD_BLOCK) {
-      this.close(e.result);
+    } catch(e) {
+      if (e.result != Cr.NS_BASE_STREAM_WOULD_BLOCK) {
+        this.close(e.result);
+      } else {
+        throw e;
+      }
     }
   }, "DebuggerTransport.prototype.onInputStreamReady"),
 
@@ -745,5 +753,121 @@ ChildDebuggerTransport.prototype = {
 };
 
 exports.ChildDebuggerTransport = ChildDebuggerTransport;
+
+// WorkerDebuggerTransport is defined differently depending on whether we are
+// on the main thread or a worker thread. In the former case, we are required
+// by the devtools loader, and isWorker will be false. Otherwise, we are
+// required by the worker loader, and isWorker will be true.
+//
+// Each worker debugger supports only a single connection to the main thread.
+// However, its theoretically possible for multiple servers to connect to the
+// same worker. Consequently, each transport has a connection id, to allow
+// messages from multiple connections to be multiplexed on a single channel.
+
+if (!this.isWorker) {
+  (function () { // Main thread
+    /**
+     * A transport that uses a WorkerDebugger to send packets from the main
+     * thread to a worker thread.
+     */
+    function WorkerDebuggerTransport(dbg, id) {
+      this._dbg = dbg;
+      this._id = id;
+      this.onMessage = this._onMessage.bind(this);
+    }
+
+    WorkerDebuggerTransport.prototype = {
+      constructor: WorkerDebuggerTransport,
+
+      ready: function () {
+        this._dbg.addListener(this);
+      },
+
+      close: function () {
+        this._dbg.removeListener(this);
+        if (this.hooks) {
+          this.hooks.onClosed();
+        }
+      },
+
+      send: function (packet) {
+        this._dbg.postMessage(JSON.stringify({
+          type: "message",
+          id: this._id,
+          message: packet
+        }));
+      },
+
+      startBulkSend: function () {
+        throw new Error("Can't send bulk data from worker threads!");
+      },
+
+      _onMessage: function (message) {
+        let packet = JSON.parse(message);
+        if (packet.type !== "message" || packet.id !== this._id) {
+          return;
+        }
+
+        if (this.hooks) {
+          this.hooks.onPacket(packet.message);
+        }
+      }
+    };
+
+    exports.WorkerDebuggerTransport = WorkerDebuggerTransport;
+  }).call(this);
+} else {
+  (function () { // Worker thread
+    /*
+     * A transport that uses a WorkerDebuggerGlobalScope to send packets from a
+     * worker thread to the main thread.
+     */
+    function WorkerDebuggerTransport(scope, id) {
+      this._scope = scope;
+      this._id = id;
+      this._onMessage = this._onMessage.bind(this);
+    }
+
+    WorkerDebuggerTransport.prototype = {
+      constructor: WorkerDebuggerTransport,
+
+      ready: function () {
+        this._scope.addEventListener("message", this._onMessage);
+      },
+
+      close: function () {
+        this._scope.removeEventListener("message", this._onMessage);
+        if (this.hooks) {
+          this.hooks.onClosed();
+        }
+      },
+
+      send: function (packet) {
+        this._scope.postMessage(JSON.stringify({
+          type: "message",
+          id: this._id,
+          message: packet
+        }));
+      },
+
+      startBulkSend: function () {
+        throw new Error("Can't send bulk data from worker threads!");
+      },
+
+      _onMessage: function (event) {
+        let packet = JSON.parse(event.data);
+        if (packet.type !== "message" || packet.id !== this._id) {
+          return;
+        }
+
+        if (this.hooks) {
+          this.hooks.onPacket(packet.message);
+        }
+      }
+    };
+
+    exports.WorkerDebuggerTransport = WorkerDebuggerTransport;
+  }).call(this);
+}
 
 });

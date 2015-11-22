@@ -6,7 +6,7 @@
 
 #include "mozilla/dom/FileSystemTaskBase.h"
 
-#include "nsNetUtil.h" // Stream transport service.
+#include "nsNetCID.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FileSystemBase.h"
@@ -35,7 +35,7 @@ FileSystemTaskBase::FileSystemTaskBase(FileSystemBase* aFileSystem,
   , mFileSystem(aFileSystem)
   , mRequestParent(aParent)
 {
-  MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
+  MOZ_ASSERT(XRE_IsParentProcess(),
              "Only call from parent process!");
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   MOZ_ASSERT(aFileSystem, "aFileSystem should not be null.");
@@ -61,7 +61,7 @@ FileSystemTaskBase::Start()
     return;
   }
 
-  if (FileSystemUtils::IsParentProcess()) {
+  if (XRE_IsParentProcess()) {
     // Run in parent process.
     // Start worker thread.
     nsCOMPtr<nsIEventTarget> target
@@ -121,7 +121,7 @@ FileSystemTaskBase::HandleResult()
 FileSystemResponseValue
 FileSystemTaskBase::GetRequestResult() const
 {
-  MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
+  MOZ_ASSERT(XRE_IsParentProcess(),
              "Only call from parent process!");
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   if (HasError()) {
@@ -134,7 +134,7 @@ FileSystemTaskBase::GetRequestResult() const
 void
 FileSystemTaskBase::SetRequestResult(const FileSystemResponseValue& aValue)
 {
-  MOZ_ASSERT(!FileSystemUtils::IsParentProcess(),
+  MOZ_ASSERT(!XRE_IsParentProcess(),
              "Only call from child process!");
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   if (aValue.type() == FileSystemResponseValue::TFileSystemErrorResponse) {
@@ -154,9 +154,9 @@ FileSystemTaskBase::Recv__delete__(const FileSystemResponseValue& aValue)
 }
 
 BlobParent*
-FileSystemTaskBase::GetBlobParent(nsIDOMFile* aFile) const
+FileSystemTaskBase::GetBlobParent(BlobImpl* aFile) const
 {
-  MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
+  MOZ_ASSERT(XRE_IsParentProcess(),
              "Only call from parent process!");
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   MOZ_ASSERT(aFile);
@@ -164,13 +164,23 @@ FileSystemTaskBase::GetBlobParent(nsIDOMFile* aFile) const
   // Load the lazy dom file data from the parent before sending to the child.
   nsString mimeType;
   aFile->GetType(mimeType);
-  uint64_t fileSize;
-  aFile->GetSize(&fileSize);
-  int64_t lastModifiedDate;
-  aFile->GetMozLastModifiedDate(&lastModifiedDate);
+
+  // We call GetSize and GetLastModified to prepopulate the value in the
+  // BlobImpl.
+  {
+    ErrorResult rv;
+    aFile->GetSize(rv);
+    rv.SuppressException();
+  }
+
+  {
+    ErrorResult rv;
+    aFile->GetLastModified(rv);
+    rv.SuppressException();
+  }
 
   ContentParent* cp = static_cast<ContentParent*>(mRequestParent->Manager());
-  return cp->GetOrCreateActorForBlob(static_cast<File*>(aFile));
+  return cp->GetOrCreateActorForBlobImpl(aFile);
 }
 
 void

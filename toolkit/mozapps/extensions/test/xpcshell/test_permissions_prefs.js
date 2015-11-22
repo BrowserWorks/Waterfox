@@ -9,7 +9,7 @@ const PREF_XPI_WHITELIST_PERMISSIONS  = "xpinstall.whitelist.add";
 const PREF_XPI_BLACKLIST_PERMISSIONS  = "xpinstall.blacklist.add";
 
 function newPrincipal(uri) {
-  return Services.scriptSecurityManager.getNoAppCodebasePrincipal(NetUtil.newURI(uri));
+  return Services.scriptSecurityManager.createCodebasePrincipal(NetUtil.newURI(uri), {});
 }
 
 function do_check_permission_prefs(preferences) {
@@ -34,9 +34,9 @@ function run_test() {
 
   // Create own preferences to test
   Services.prefs.setCharPref("xpinstall.whitelist.add.EMPTY", "");
-  Services.prefs.setCharPref("xpinstall.whitelist.add.TEST", "whitelist.example.com");
+  Services.prefs.setCharPref("xpinstall.whitelist.add.TEST", "http://whitelist.example.com");
   Services.prefs.setCharPref("xpinstall.blacklist.add.EMPTY", "");
-  Services.prefs.setCharPref("xpinstall.blacklist.add.TEST", "blacklist.example.com");
+  Services.prefs.setCharPref("xpinstall.blacklist.add.TEST", "http://blacklist.example.com");
 
   // Get list of preferences to check
   var whitelistPreferences = Services.prefs.getChildList(PREF_XPI_WHITELIST_PERMISSIONS, {});
@@ -56,19 +56,19 @@ function run_test() {
 
   // First, request to flush all permissions
   clear_imported_preferences_cache();
-  Services.prefs.setCharPref("xpinstall.whitelist.add.TEST2", "whitelist2.example.com");
+  Services.prefs.setCharPref("xpinstall.whitelist.add.TEST2", "https://whitelist2.example.com");
   Services.obs.notifyObservers(null, "flush-pending-permissions", "install");
   do_check_permission_prefs(preferences);
 
   // Then, request to flush just install permissions
   clear_imported_preferences_cache();
-  Services.prefs.setCharPref("xpinstall.whitelist.add.TEST3", "whitelist3.example.com");
+  Services.prefs.setCharPref("xpinstall.whitelist.add.TEST3", "https://whitelist3.example.com");
   Services.obs.notifyObservers(null, "flush-pending-permissions", "");
   do_check_permission_prefs(preferences);
 
   // And a request to flush some other permissions sholdn't flush install permissions
   clear_imported_preferences_cache();
-  Services.prefs.setCharPref("xpinstall.whitelist.add.TEST4", "whitelist4.example.com");
+  Services.prefs.setCharPref("xpinstall.whitelist.add.TEST4", "https://whitelist4.example.com");
   Services.obs.notifyObservers(null, "flush-pending-permissions", "lolcats");
-  do_check_eq(Services.prefs.getCharPref("xpinstall.whitelist.add.TEST4"), "whitelist4.example.com");
+  do_check_eq(Services.prefs.getCharPref("xpinstall.whitelist.add.TEST4"), "https://whitelist4.example.com");
 }

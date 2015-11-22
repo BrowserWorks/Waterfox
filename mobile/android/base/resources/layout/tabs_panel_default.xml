@@ -19,7 +19,7 @@
               android:background="@color/text_and_tabs_tray_grey">
 
             <ViewStub android:id="@+id/nav_back_stub"
-                      android:layout="@layout/new_tablet_tabs_panel_back_button"
+                      android:layout="@layout/tabs_panel_back_button"
                       android:layout_width="wrap_content"
                       android:layout_height="match_parent"/>
 
@@ -28,7 +28,7 @@
                                                     android:layout_height="match_parent"
                                                     android:tabStripEnabled="false"
                                                     android:divider="@drawable/tab_indicator_divider"
-                                                    android:dividerPadding="@dimen/new_tablet_tab_panel_divider_vertical_padding"
+                                                    android:dividerPadding="@dimen/tab_panel_divider_vertical_padding"
                                                     android:layout="@layout/tabs_panel_indicator"/>
 
             <View android:layout_width="0dip"
@@ -37,18 +37,29 @@
 
             <ImageButton android:id="@+id/add_tab"
                          style="@style/UrlBar.ImageButton"
+                         android:layout_width="@dimen/tabs_panel_button_width"
                          android:padding="@dimen/browser_toolbar_button_padding"
-                         android:src="@drawable/tab_new_level"
+                         android:src="@drawable/tab_new"
                          android:contentDescription="@string/new_tab"
                          android:background="@drawable/action_bar_button_inverse"/>
 
-            <ImageButton android:id="@+id/menu"
+            <FrameLayout android:id="@+id/menu"
                          style="@style/UrlBar.ImageButton"
-                         android:padding="@dimen/browser_toolbar_button_padding"
-                         android:src="@drawable/menu_tabs"
-                         android:contentDescription="@string/menu"
+                         android:layout_width="@dimen/tabs_panel_button_width"
                          android:background="@drawable/action_bar_button_inverse"
-                         android:visibility="gone"/>
+                         android:contentDescription="@string/menu"
+                         android:visibility="gone">
+
+                <ImageButton
+                        style="@style/UrlBar.ImageButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/browser_toolbar_menu_icon_height"
+                        android:layout_gravity="center"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/menu"
+                        android:tint="@color/tabs_tray_icon_grey"/>
+
+            </FrameLayout>
 
         </view>
 
@@ -62,7 +73,7 @@
     <view class="org.mozilla.gecko.tabs.TabsPanel$TabsLayoutContainer"
           android:id="@+id/tabs_container"
           android:layout_width="match_parent"
-          android:layout_height="wrap_content">
+          android:layout_height="match_parent">
 
         <view class="org.mozilla.gecko.tabs.TabsPanel$TabsLayout"
               android:id="@+id/normal_tabs"

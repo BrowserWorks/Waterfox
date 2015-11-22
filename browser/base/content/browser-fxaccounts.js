@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-let gFxAccounts = {
+var gFxAccounts = {
 
   PREF_SYNC_START_DOORHANGER: "services.sync.ui.showSyncStartDoorhanger",
   DOORHANGER_ACTIVATE_DELAY_MS: 5000,
@@ -33,15 +33,37 @@ let gFxAccounts = {
       "weave:service:setup-complete",
       "weave:ui:login:error",
       "fxa-migration:state-changed",
+      this.FxAccountsCommon.ONLOGIN_NOTIFICATION,
       this.FxAccountsCommon.ONVERIFIED_NOTIFICATION,
       this.FxAccountsCommon.ONLOGOUT_NOTIFICATION,
       "weave:notification:removed",
+      this.FxAccountsCommon.ON_PROFILE_CHANGE_NOTIFICATION,
     ];
   },
 
-  get button() {
-    delete this.button;
-    return this.button = document.getElementById("PanelUI-fxa-status");
+  get panelUIFooter() {
+    delete this.panelUIFooter;
+    return this.panelUIFooter = document.getElementById("PanelUI-footer-fxa");
+  },
+
+  get panelUIStatus() {
+    delete this.panelUIStatus;
+    return this.panelUIStatus = document.getElementById("PanelUI-fxa-status");
+  },
+
+  get panelUIAvatar() {
+    delete this.panelUIAvatar;
+    return this.panelUIAvatar = document.getElementById("PanelUI-fxa-avatar");
+  },
+
+  get panelUILabel() {
+    delete this.panelUILabel;
+    return this.panelUILabel = document.getElementById("PanelUI-fxa-label");
+  },
+
+  get panelUIIcon() {
+    delete this.panelUIIcon;
+    return this.panelUIIcon = document.getElementById("PanelUI-fxa-icon");
   },
 
   get strings() {
@@ -89,14 +111,7 @@ let gFxAccounts = {
     // notified of fxa-migration:state-changed in response if necessary.
     Services.obs.notifyObservers(null, "fxa-migration:state-request", null);
 
-    let contentUri = Services.urlFormatter.formatURLPref("identity.fxaccounts.remote.webchannel.uri");
-    // The FxAccountsWebChannel listens for events and updates
-    // the state machine accordingly.
-    let fxAccountsWebChannel = new FxAccountsWebChannel({
-      content_uri: contentUri,
-      channel_id: this.FxAccountsCommon.WEBCHANNEL_ID
-    });
-
+    EnsureFxAccountsWebChannel();
     this._initialized = true;
 
     this.updateUI();
@@ -134,6 +149,9 @@ let gFxAccounts = {
           // it's an [x] on our notification, so record telemetry.
           this.fxaMigrator.recordTelemetry(this.fxaMigrator.TELEMETRY_DECLINED);
         }
+        break;
+      case this.FxAccountsCommon.ONPROFILE_IMAGE_CHANGE_NOTIFICATION:
+        this.updateUI();
         break;
       default:
         this.updateUI();
@@ -196,20 +214,22 @@ let gFxAccounts = {
     this.showDoorhanger("sync-start-panel");
   },
 
-  showSyncFailedDoorhanger: function () {
-    this.showDoorhanger("sync-error-panel");
-  },
-
   updateUI: function () {
     this.updateAppMenuItem();
     this.updateMigrationNotification();
   },
 
+  // Note that updateAppMenuItem() returns a Promise that's only used by tests.
   updateAppMenuItem: function () {
     if (this._migrationInfo) {
       this.updateAppMenuItemForMigration();
-      return;
+      return Promise.resolve();
     }
+
+    let profileInfoEnabled = false;
+    try {
+      profileInfoEnabled = Services.prefs.getBoolPref("identity.fxaccounts.profile_image.enabled");
+    } catch (e) { }
 
     // Bail out if FxA is disabled.
     if (!this.weave.fxAccountsEnabled) {
@@ -217,51 +237,117 @@ let gFxAccounts = {
       // fxAccountsEnabled is false because migration has not yet finished.  In
       // that case, hide the button.  We'll get another notification with a null
       // state once migration is complete.
-      this.button.hidden = true;
-      this.button.removeAttribute("fxastatus");
-      return;
+      this.panelUIFooter.hidden = true;
+      this.panelUIFooter.removeAttribute("fxastatus");
+      return Promise.resolve();
     }
 
-    // FxA is enabled, show the widget.
-    this.button.hidden = false;
+    this.panelUIFooter.hidden = false;
 
     // Make sure the button is disabled in customization mode.
     if (this._inCustomizationMode) {
-      this.button.setAttribute("disabled", "true");
+      this.panelUIStatus.setAttribute("disabled", "true");
+      this.panelUILabel.setAttribute("disabled", "true");
+      this.panelUIAvatar.setAttribute("disabled", "true");
+      this.panelUIIcon.setAttribute("disabled", "true");
     } else {
-      this.button.removeAttribute("disabled");
+      this.panelUIStatus.removeAttribute("disabled");
+      this.panelUILabel.removeAttribute("disabled");
+      this.panelUIAvatar.removeAttribute("disabled");
+      this.panelUIIcon.removeAttribute("disabled");
     }
 
-    let defaultLabel = this.button.getAttribute("defaultlabel");
-    let errorLabel = this.button.getAttribute("errorlabel");
+    let defaultLabel = this.panelUIStatus.getAttribute("defaultlabel");
+    let errorLabel = this.panelUIStatus.getAttribute("errorlabel");
+    let unverifiedLabel = this.panelUIStatus.getAttribute("unverifiedlabel");
+    let signedInTooltiptext = this.panelUIStatus.getAttribute("signedinTooltiptext");
 
-    // If the user is signed into their Firefox account and we are not
-    // currently in customization mode, show their email address.
-    let doUpdate = userData => {
+    let updateWithUserData = (userData) => {
+      // Window might have been closed while fetching data.
+      if (window.closed) {
+        return;
+      }
+
       // Reset the button to its original state.
-      this.button.setAttribute("label", defaultLabel);
-      this.button.removeAttribute("tooltiptext");
-      this.button.removeAttribute("fxastatus");
+      this.panelUILabel.setAttribute("label", defaultLabel);
+      this.panelUIStatus.removeAttribute("tooltiptext");
+      this.panelUIFooter.removeAttribute("fxastatus");
+      this.panelUIFooter.removeAttribute("fxaprofileimage");
+      this.panelUIAvatar.style.removeProperty("list-style-image");
+      let showErrorBadge = false;
 
-      if (!this._inCustomizationMode) {
+      if (!this._inCustomizationMode && userData) {
+        // At this point we consider the user as logged-in (but still can be in an error state)
         if (this.loginFailed) {
-          this.button.setAttribute("fxastatus", "error");
-          this.button.setAttribute("label", errorLabel);
-        } else if (userData) {
-          this.button.setAttribute("fxastatus", "signedin");
-          this.button.setAttribute("label", userData.email);
-          this.button.setAttribute("tooltiptext", userData.email);
+          let tooltipDescription = this.strings.formatStringFromName("reconnectDescription", [userData.email], 1);
+          this.panelUIFooter.setAttribute("fxastatus", "error");
+          this.panelUILabel.setAttribute("label", errorLabel);
+          this.panelUIStatus.setAttribute("tooltiptext", tooltipDescription);
+          showErrorBadge = true;
+        } else if (!userData.verified) {
+          let tooltipDescription = this.strings.formatStringFromName("verifyDescription", [userData.email], 1);
+          this.panelUIFooter.setAttribute("fxastatus", "error");
+          this.panelUIFooter.setAttribute("unverified", "true");
+          this.panelUILabel.setAttribute("label", unverifiedLabel);
+          this.panelUIStatus.setAttribute("tooltiptext", tooltipDescription);
+          showErrorBadge = true;
+        } else {
+          this.panelUIFooter.setAttribute("fxastatus", "signedin");
+          this.panelUILabel.setAttribute("label", userData.email);
+          this.panelUIStatus.setAttribute("tooltiptext", signedInTooltiptext);
+        }
+        if (profileInfoEnabled) {
+          this.panelUIFooter.setAttribute("fxaprofileimage", "enabled");
+        }
+      }
+      if (showErrorBadge) {
+        gMenuButtonBadgeManager.addBadge(gMenuButtonBadgeManager.BADGEID_FXA, "fxa-needs-authentication");
+      } else {
+        gMenuButtonBadgeManager.removeBadge(gMenuButtonBadgeManager.BADGEID_FXA);
+      }
+    }
+
+    let updateWithProfile = (profile) => {
+      if (!this._inCustomizationMode && profileInfoEnabled) {
+        if (profile.displayName) {
+          this.panelUILabel.setAttribute("label", profile.displayName);
+        }
+        if (profile.avatar) {
+          let img = new Image();
+          // Make sure the image is available before attempting to display it
+          img.onload = () => {
+            this.panelUIFooter.setAttribute("fxaprofileimage", "set");
+            this.panelUIAvatar.style.listStyleImage = "url('" + profile.avatar + "')";
+          };
+          img.src = profile.avatar;
         }
       }
     }
-    fxAccounts.getSignedInUser().then(userData => {
-      doUpdate(userData);
-    }).then(null, error => {
+
+    return fxAccounts.getSignedInUser().then(userData => {
+      // userData may be null here when the user is not signed-in, but that's expected
+      updateWithUserData(userData);
+      // unverified users cause us to spew log errors fetching an OAuth token
+      // to fetch the profile, so don't even try in that case.
+      if (!userData || !userData.verified || !profileInfoEnabled) {
+        return null; // don't even try to grab the profile.
+      }
+      return fxAccounts.getSignedInUserProfile().catch(err => {
+        // Not fetching the profile is sad but the FxA logs will already have noise.
+        return null;
+      });
+    }).then(profile => {
+      if (!profile) {
+        return;
+      }
+      updateWithProfile(profile);
+    }).catch(error => {
       // This is most likely in tests, were we quickly log users in and out.
       // The most likely scenario is a user logged out, so reflect that.
       // Bug 995134 calls for better errors so we could retry if we were
       // sure this was the failure reason.
-      doUpdate(null);
+      this.FxAccountsCommon.log.error("Error updating FxA account info", error);
+      updateWithUserData(null);
     });
   },
 
@@ -272,7 +358,7 @@ let gFxAccounts = {
       case this.fxaMigrator.STATE_USER_FXA:
         status = "migrate-signup";
         label = this.strings.formatStringFromName("needUserShort",
-          [this.button.getAttribute("fxabrandname")], 1);
+          [this.panelUILabel.getAttribute("fxabrandname")], 1);
         break;
       case this.fxaMigrator.STATE_USER_FXA_VERIFIED:
         status = "migrate-verify";
@@ -281,9 +367,8 @@ let gFxAccounts = {
                                                   1);
         break;
     }
-    this.button.label = label;
-    this.button.hidden = false;
-    this.button.setAttribute("fxastatus", status);
+    this.panelUILabel.label = label;
+    this.panelUIFooter.setAttribute("fxastatus", status);
   }),
 
   updateMigrationNotification: Task.async(function* () {
@@ -350,15 +435,18 @@ let gFxAccounts = {
     Weave.Notifications.replaceTitle(note);
   }),
 
-  onMenuPanelCommand: function (event) {
-    let button = event.originalTarget;
+  onMenuPanelCommand: function () {
 
-    switch (button.getAttribute("fxastatus")) {
+    switch (this.panelUIFooter.getAttribute("fxastatus")) {
     case "signedin":
       this.openPreferences();
       break;
     case "error":
-      this.openSignInAgainPage("menupanel");
+      if (this.panelUIFooter.getAttribute("unverified")) {
+        this.openPreferences();
+      } else {
+        this.openSignInAgainPage("menupanel");
+      }
       break;
     case "migrate-signup":
     case "migrate-verify":
@@ -367,7 +455,7 @@ let gFxAccounts = {
       this.openPreferences();
       break;
     default:
-      this.openAccountsPage(null, { entryPoint: "menupanel" });
+      this.openPreferences();
       break;
     }
 
@@ -375,16 +463,16 @@ let gFxAccounts = {
   },
 
   openPreferences: function () {
-    openPreferences("paneSync");
+    openPreferences("paneSync", { urlParams: { entrypoint: "menupanel" } });
   },
 
   openAccountsPage: function (action, urlParams={}) {
-    // An entryPoint param is used for server-side metrics.  If the current tab
+    // An entrypoint param is used for server-side metrics.  If the current tab
     // is UITour, assume that it initiated the call to this method and override
-    // the entryPoint accordingly.
+    // the entrypoint accordingly.
     if (UITour.tourBrowsersByWindow.get(window) &&
         UITour.tourBrowsersByWindow.get(window).has(gBrowser.selectedBrowser)) {
-      urlParams.entryPoint = "uitour";
+      urlParams.entrypoint = "uitour";
     }
     let params = new URLSearchParams();
     if (action) {
@@ -402,7 +490,7 @@ let gFxAccounts = {
   },
 
   openSignInAgainPage: function (entryPoint) {
-    this.openAccountsPage("reauth", { entryPoint: entryPoint });
+    this.openAccountsPage("reauth", { entrypoint: entryPoint });
   },
 };
 
@@ -413,5 +501,5 @@ XPCOMUtils.defineLazyGetter(gFxAccounts, "FxAccountsCommon", function () {
 XPCOMUtils.defineLazyModuleGetter(gFxAccounts, "fxaMigrator",
   "resource://services-sync/FxaMigrator.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "FxAccountsWebChannel",
+XPCOMUtils.defineLazyModuleGetter(this, "EnsureFxAccountsWebChannel",
   "resource://gre/modules/FxAccountsWebChannel.jsm");

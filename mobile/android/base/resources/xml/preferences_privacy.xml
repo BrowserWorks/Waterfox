@@ -8,7 +8,7 @@
                   android:title="@string/pref_category_privacy_short"
                   android:enabled="false">
 
-    <CheckBoxPreference android:key="privacy.trackingprotection.enabled"
+    <CheckBoxPreference android:key="privacy.trackingprotection.pbmode.enabled"
                         android:title="@string/pref_tracking_protection_title"
                         android:summary="@string/pref_tracking_protection_summary"
                         android:persistent="false" />
@@ -40,7 +40,7 @@
 
         <org.mozilla.gecko.preferences.LinkPreference android:key="android.not_a_preference.signon.manage"
                                                       android:title="@string/pref_manage_logins"
-                                                      url="about:passwords"/>
+                                                      url="about:logins"/>
 
         <CheckBoxPreference android:key="signon.rememberSignons"
                             android:title="@string/pref_remember_signons"
@@ -53,7 +53,7 @@
     </PreferenceCategory>
 
     <!-- keys prefixed with "android.not_a_preference." are not synced with Gecko -->
-    <PreferenceCategory android:title="@string/pref_clear_private_data_category">
+    <PreferenceCategory android:key="android.not_a_preference.category_private_data" android:title="@string/pref_clear_private_data_category">
 
         <org.mozilla.gecko.preferences.PrivateDataPreference
                             android:key="android.not_a_preference.privacy.clear"

@@ -20,6 +20,9 @@
 #include "prerror.h"
 #include "prio.h"
 #include "TunnelUtils.h"
+#include "nsNetCID.h"
+#include "nsServiceManagerUtils.h"
+#include "nsComponentManagerUtils.h"
 
 #ifdef DEBUG
 // defined by the socket transport service while active
@@ -1640,5 +1643,5 @@ NS_IMPL_ISUPPORTS(OutputStreamShim, nsIOutputStream, nsIAsyncOutputStream)
 NS_IMPL_ISUPPORTS(SocketInWrapper, nsIAsyncInputStream)
 NS_IMPL_ISUPPORTS(SocketOutWrapper, nsIAsyncOutputStream)
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

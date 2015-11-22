@@ -4,14 +4,14 @@
 
 "use strict";
 
-let { Ci, Cu } = require("chrome");
-let Services = require("Services");
-let { ActorPool } = require("devtools/server/actors/common");
-let { TabSources } = require("./utils/TabSources");
-let makeDebugger = require("./utils/make-debugger");
-let { ConsoleAPIListener } = require("devtools/toolkit/webconsole/utils");
-let DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
-let { dbg_assert, update } = DevToolsUtils;
+var { Ci, Cu } = require("chrome");
+var Services = require("Services");
+var { ActorPool } = require("devtools/server/actors/common");
+var { TabSources } = require("./utils/TabSources");
+var makeDebugger = require("./utils/make-debugger");
+var { ConsoleAPIListener } = require("devtools/toolkit/webconsole/utils");
+var DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+var { dbg_assert, update } = DevToolsUtils;
 
 loader.lazyRequireGetter(this, "AddonThreadActor", "devtools/server/actors/script", true);
 loader.lazyRequireGetter(this, "unwrapDebuggerObjectGlobal", "devtools/server/actors/script", true);
@@ -25,7 +25,7 @@ function BrowserAddonActor(aConnection, aAddon) {
   this._addon = aAddon;
   this._contextPool = new ActorPool(this.conn);
   this.conn.addActorPool(this._contextPool);
-  this._threadActor = null;
+  this.threadActor = null;
   this._global = null;
 
   this._shouldAddNewGlobalAsDebuggee = this._shouldAddNewGlobalAsDebuggee.bind(this);
@@ -55,7 +55,7 @@ BrowserAddonActor.prototype = {
   },
 
   get attached() {
-    return this._threadActor;
+    return this.threadActor;
   },
 
   get global() {
@@ -65,7 +65,7 @@ BrowserAddonActor.prototype = {
   get sources() {
     if (!this._sources) {
       dbg_assert(this.threadActor, "threadActor should exist when creating sources.");
-      this._sources = new TabSources(this._threadActor, this._allowSource);
+      this._sources = new TabSources(this.threadActor, this._allowSource);
     }
     return this._sources;
   },
@@ -135,11 +135,11 @@ BrowserAddonActor.prototype = {
     }
 
     if (!this.attached) {
-      this._threadActor = new AddonThreadActor(this.conn, this);
-      this._contextPool.addActor(this._threadActor);
+      this.threadActor = new AddonThreadActor(this.conn, this);
+      this._contextPool.addActor(this.threadActor);
     }
 
-    return { type: "tabAttached", threadActor: this._threadActor.actorID };
+    return { type: "tabAttached", threadActor: this.threadActor.actorID };
   },
 
   onDetach: function BAA_onDetach() {
@@ -147,9 +147,9 @@ BrowserAddonActor.prototype = {
       return { error: "wrongState" };
     }
 
-    this._contextPool.removeActor(this._threadActor);
+    this._contextPool.removeActor(this.threadActor);
 
-    this._threadActor = null;
+    this.threadActor = null;
     this._sources = null;
 
     return { type: "detached" };

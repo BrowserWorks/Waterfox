@@ -363,10 +363,10 @@ Http2Stream::ParseHttpRequestHeaders(const char *buf,
   // check the push cache for GET
   if (head->IsGet()) {
     // from :scheme, :authority, :path
-    nsILoadGroupConnectionInfo *loadGroupCI = mTransaction->LoadGroupConnectionInfo();
+    nsISchedulingContext *schedulingContext = mTransaction->SchedulingContext();
     SpdyPushCache *cache = nullptr;
-    if (loadGroupCI) {
-      loadGroupCI->GetSpdyPushCache(&cache);
+    if (schedulingContext) {
+      schedulingContext->GetSpdyPushCache(&cache);
     }
 
     Http2PushedStream *pushedStream = nullptr;
@@ -393,8 +393,8 @@ Http2Stream::ParseHttpRequestHeaders(const char *buf,
     }
 
     LOG3(("Pushed Stream Lookup "
-          "session=%p key=%s loadgroupci=%p cache=%p hit=%p\n",
-          mSession, hashkey.get(), loadGroupCI, cache, pushedStream));
+          "session=%p key=%s schedulingcontext=%p cache=%p hit=%p\n",
+          mSession, hashkey.get(), schedulingContext, cache, pushedStream));
 
     if (pushedStream) {
       LOG3(("Pushed Stream Match located id=0x%X key=%s\n",
@@ -945,10 +945,7 @@ Http2Stream::ConvertResponseHeaders(Http2Decompressor *decompressor,
   // The decoding went ok. Now we can customize and clean up.
 
   aHeadersIn.Truncate();
-  nsAutoCString negotiatedToken;
-  mSession->GetNegotiatedToken(negotiatedToken);
-  aHeadersOut.Append("X-Firefox-Spdy: ");
-  aHeadersOut.Append(negotiatedToken);
+  aHeadersOut.Append("X-Firefox-Spdy: h2");
   aHeadersOut.Append("\r\n\r\n");
   LOG (("decoded response headers are:\n%s", aHeadersOut.BeginReading()));
   if (mIsTunnel && !mPlainTextTunnel) {
@@ -1364,6 +1361,6 @@ Http2Stream::MapStreamToHttpConnection()
                                      mTransaction->ConnectionInfo());
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla
 

@@ -28,11 +28,11 @@ config = {
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
     # decides whether we want to use moz_sign_cmd in env
     'enable_signing': True,
-    'purge_skip': ['info', 'rel-*:45d', 'tb-rel-*:45d'],
+    'purge_skip': ['info', 'rel-*:10d', 'tb-rel-*:10d'],
     'purge_basedirs':  [],
     'enable_ccache': True,
     'vcs_share_base': '/builds/hg-shared',
-    'objdir': 'obj-firefox/i386',
+    'objdir': 'obj-firefox/x86_64',
     'tooltool_script': ["/builds/tooltool.py"],
     'tooltool_bootstrap': "setup.sh",
     'enable_count_ctors': False,
@@ -46,6 +46,7 @@ config = {
     'base_name': 'OS X 10.7 %(branch)s',
     'platform': 'macosx64',
     'stage_platform': 'macosx64',
+    'publish_nightly_en_US_routes': True,
     'use_platform_in_symbols_extra_buildid': True,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),

@@ -42,10 +42,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NR_RESOLVE_PROTOCOL_TURN 2
 
 typedef struct nr_resolver_resource_ {
-  char *domain_name;
+  const char *domain_name;
   UINT2 port;
   int stun_turn;
   UCHAR transport_protocol;
+  UCHAR address_family;
 } nr_resolver_resource;
 
 typedef struct nr_resolver_vtbl_ {

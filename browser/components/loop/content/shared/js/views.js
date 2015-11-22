@@ -1,14 +1,10 @@
-/** @jsx React.DOM */
-
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* jshint newcap:false */
-/* global loop:true, React */
 var loop = loop || {};
 loop.shared = loop.shared || {};
-loop.shared.views = (function(_, l10n) {
+loop.shared.views = (function(_, mozL10n) {
   "use strict";
 
   var sharedActions = loop.shared.actions;
@@ -27,10 +23,11 @@ loop.shared.views = (function(_, l10n) {
    */
   var MediaControlButton = React.createClass({displayName: "MediaControlButton",
     propTypes: {
-      scope: React.PropTypes.string.isRequired,
-      type: React.PropTypes.string.isRequired,
       action: React.PropTypes.func.isRequired,
       enabled: React.PropTypes.bool.isRequired,
+      scope: React.PropTypes.string.isRequired,
+      title: React.PropTypes.string,
+      type: React.PropTypes.string.isRequired,
       visible: React.PropTypes.bool.isRequired
     },
 
@@ -58,17 +55,21 @@ loop.shared.views = (function(_, l10n) {
     },
 
     _getTitle: function(enabled) {
+      if (this.props.title) {
+        return this.props.title;
+      }
+
       var prefix = this.props.enabled ? "mute" : "unmute";
-      var suffix = "button_title";
+      var suffix = (this.props.type === "video") ? "button_title2" : "button_title";
       var msgId = [prefix, this.props.scope, this.props.type, suffix].join("_");
-      return l10n.get(msgId);
+      return mozL10n.get(msgId);
     },
 
     render: function() {
       return (
         React.createElement("button", {className: this._getClasses(), 
-                title: this._getTitle(), 
-                onClick: this.handleClick})
+                onClick: this.handleClick, 
+                title: this._getTitle()})
       );
     }
   });
@@ -87,8 +88,8 @@ loop.shared.views = (function(_, l10n) {
 
     propTypes: {
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
-      visible: React.PropTypes.bool.isRequired,
-      state: React.PropTypes.string.isRequired
+      state: React.PropTypes.string.isRequired,
+      visible: React.PropTypes.bool.isRequired
     },
 
     getInitialState: function() {
@@ -119,17 +120,19 @@ loop.shared.views = (function(_, l10n) {
 
     _handleShareTabs: function() {
       this._startScreenShare("browser");
+      this.hideDropdownMenu();
     },
 
     _handleShareWindows: function() {
       this._startScreenShare("window");
+      this.hideDropdownMenu();
     },
 
     _getTitle: function() {
       var prefix = this.props.state === SCREEN_SHARE_STATES.ACTIVE ?
         "active" : "inactive";
 
-      return l10n.get(prefix + "_screenshare_button_title");
+      return mozL10n.get(prefix + "_screenshare_button_title");
     },
 
     render: function() {
@@ -149,12 +152,12 @@ loop.shared.views = (function(_, l10n) {
         "disabled": this.props.state === SCREEN_SHARE_STATES.PENDING
       });
       var dropdownMenuClasses = cx({
-        "native-dropdown-menu": true,
-        "conversation-window-dropdown": true,
-        "hide": !this.state.showMenu,
-        "visually-hidden": true
+        "screen-share-menu": true,
+        "dropdown-menu": true,
+        "hide": !this.state.showMenu
       });
       var windowSharingClasses = cx({
+        "dropdown-menu-item": true,
         "disabled": this.state.windowSharingDisabled
       });
 
@@ -162,17 +165,203 @@ loop.shared.views = (function(_, l10n) {
         React.createElement("div", null, 
           React.createElement("button", {className: screenShareClasses, 
                   onClick: this.handleClick, 
-                  ref: "menu-button", 
+                  ref: "anchor", 
                   title: this._getTitle()}, 
             isActive ? null : React.createElement("span", {className: "chevron"})
           ), 
-          React.createElement("ul", {ref: "menu", className: dropdownMenuClasses}, 
-            React.createElement("li", {onClick: this._handleShareTabs}, 
-              l10n.get("share_tabs_button_title2")
+          React.createElement("ul", {className: dropdownMenuClasses, ref: "menu"}, 
+            React.createElement("li", {className: "dropdown-menu-item", onClick: this._handleShareTabs}, 
+              mozL10n.get("share_tabs_button_title2")
             ), 
-            React.createElement("li", {onClick: this._handleShareWindows, className: windowSharingClasses}, 
-              l10n.get("share_windows_button_title")
+            React.createElement("li", {className: windowSharingClasses, onClick: this._handleShareWindows}, 
+              mozL10n.get("share_windows_button_title")
             )
+          )
+        )
+      );
+    }
+  });
+
+  /**
+   * Settings control button.
+   */
+  var SettingsControlButton = React.createClass({displayName: "SettingsControlButton",
+    propTypes: {
+      // Set to true if the menu should be below the button rather than above.
+      menuBelow: React.PropTypes.bool,
+      menuItems: React.PropTypes.array,
+      mozLoop: React.PropTypes.object
+    },
+
+    mixins: [
+      sharedMixins.DropdownMenuMixin(),
+      React.addons.PureRenderMixin
+    ],
+
+    getDefaultProps: function() {
+      return {
+        menuBelow: false
+      };
+    },
+
+    /**
+     * Reposition Menu if cropped
+     *
+     * Added to reposition the menu if it is cropped on the left side because of
+     * a long text string. This function measures how much the menu is cropped
+     * on the left or right and adjusts the coordinates so the menu isn't cropped.
+     * Also, sets the left style to auto, to prevent complexity in calculations
+     *
+     * The dropdownmenu mixin needs to be revamped, along with all components
+     * using dropdown menus. Components should be utilizing a global function
+     * for menu positions and it should be consistent throughout.
+     *
+     */
+    _repositionMenu: function() {
+      if (this.refs.menu && this.state.showMenu) {
+        var menuNode = this.refs.menu && this.refs.menu.getDOMNode();
+
+        if (menuNode) {
+          // Amount of pixels that the dropdown needs to stay away from the edges
+          // of the page body. Copied from the mixin.
+          var boundOffset = 4;
+          var menuNodeRect = menuNode.getBoundingClientRect();
+          var menuComputedStyle = window.getComputedStyle(menuNode);
+          var documentBody = this.getDOMNode().ownerDocument.body;
+          var bodyRect = documentBody.getBoundingClientRect();
+          var menuLeft = parseFloat(menuNodeRect.left);
+          var menuRight = parseFloat(menuNodeRect.right);
+          var bodyRight = parseFloat(bodyRect.right);
+
+          menuNode.style.left = "auto";
+
+          // If menu is too close or cropped on left, move right
+          if (menuLeft < -boundOffset) {
+            menuNode.style.right =
+              (parseFloat(menuComputedStyle.right) + menuLeft - boundOffset) + "px";
+          }
+          // If menu is too close or cropped on right, move left
+          if (menuRight > bodyRight - boundOffset) {
+            menuNode.style.right =
+              (parseFloat(menuComputedStyle.right) + (menuRight - bodyRight) + boundOffset) + "px";
+          }
+        }
+      }
+    },
+
+    /**
+     * Return the function that Show or hide the edit context edition form
+     */
+    getHandleToggleEdit: function(editItem) {
+      return function _handleToglleEdit(event) {
+          event.preventDefault();
+          if (editItem.onClick) {
+            editItem.onClick(!editItem.enabled);
+          }
+        };
+    },
+
+    /**
+     * Load on the browser the help (support) url from prefs
+     */
+    handleHelpEntry: function(event) {
+      event.preventDefault();
+      var helloSupportUrl = this.props.mozLoop.getLoopPref("support_url");
+      this.props.mozLoop.openURL(helloSupportUrl);
+    },
+
+    /**
+     * Load on the browser the feedback url from prefs
+     */
+    handleSubmitFeedback: function(event) {
+      event.preventDefault();
+      var helloFeedbackUrl = this.props.mozLoop.getLoopPref("feedback.formURL");
+      this.props.mozLoop.openURL(helloFeedbackUrl);
+    },
+
+    /**
+     * Recover the needed info for generating an specific menu Item
+     */
+    getItemInfo: function(menuItem) {
+      var cx = React.addons.classSet;
+      switch (menuItem.id) {
+        case "feedback":
+          return {
+            cssClasses: "dropdown-menu-item",
+            handler: this.handleSubmitFeedback,
+            label: mozL10n.get("feedback_request_button")
+          };
+        case "help":
+          return {
+            cssClasses: "dropdown-menu-item",
+            handler: this.handleHelpEntry,
+            label: mozL10n.get("help_label")
+          };
+        case "edit":
+          return {
+            cssClasses: cx({
+              "dropdown-menu-item": true,
+              "entry-settings-edit": true,
+              "hide": !menuItem.visible
+            }),
+            handler: this.getHandleToggleEdit(menuItem),
+            label: mozL10n.get(menuItem.enabled ?
+              "conversation_settings_menu_edit_context" :
+              "conversation_settings_menu_hide_context"),
+            scope: "local",
+            type: "edit"
+          };
+        default:
+          console.error("Invalid menu item", menuItem);
+          return null;
+       }
+    },
+
+    /**
+     * Generate a menu item after recover its info
+     */
+    generateMenuItem: function(menuItem) {
+      var itemInfo = this.getItemInfo(menuItem);
+      if (!itemInfo) {
+        return null;
+      }
+      return (
+        React.createElement("li", {className: itemInfo.cssClasses, 
+            key: menuItem.id, 
+            onClick: itemInfo.handler, 
+            scope: itemInfo.scope || "", 
+            type: itemInfo.type || ""}, 
+          itemInfo.label
+        )
+        );
+    },
+
+    render: function() {
+      if (!this.props.menuItems || !this.props.menuItems.length) {
+        return null;
+      }
+      var menuItemRows = this.props.menuItems.map(this.generateMenuItem)
+        .filter(function(item) { return item; });
+
+      if (!menuItemRows || !menuItemRows.length) {
+        return null;
+      }
+
+      var cx = React.addons.classSet;
+      var settingsDropdownMenuClasses = cx({
+        "settings-menu": true,
+        "dropdown-menu": true,
+        "menu-below": this.props.menuBelow,
+        "hide": !this.state.showMenu
+      });
+      return (
+        React.createElement("div", {className: "settings-control"}, 
+          React.createElement("button", {className: "btn btn-settings transparent-button", 
+             onClick: this.toggleDropdownMenu, 
+             ref: "anchor", 
+             title: mozL10n.get("settings_menu_button_tooltip")}), 
+          React.createElement("ul", {className: settingsDropdownMenuClasses, ref: "menu"}, 
+            menuItemRows
           )
         )
       );
@@ -188,19 +377,31 @@ loop.shared.views = (function(_, l10n) {
         video: {enabled: true, visible: true},
         audio: {enabled: true, visible: true},
         screenShare: {state: SCREEN_SHARE_STATES.INACTIVE, visible: false},
-        enableHangup: true
+        settingsMenuItems: null,
+        enableHangup: true,
+        showHangup: true
+      };
+    },
+
+    getInitialState: function() {
+      return {
+        idle: false
       };
     },
 
     propTypes: {
-      dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
-      video: React.PropTypes.object.isRequired,
       audio: React.PropTypes.object.isRequired,
-      screenShare: React.PropTypes.object,
+      dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
+      enableHangup: React.PropTypes.bool,
       hangup: React.PropTypes.func.isRequired,
-      publishStream: React.PropTypes.func.isRequired,
       hangupButtonLabel: React.PropTypes.string,
-      enableHangup: React.PropTypes.bool
+      mozLoop: React.PropTypes.object,
+      publishStream: React.PropTypes.func.isRequired,
+      screenShare: React.PropTypes.object,
+      settingsMenuItems: React.PropTypes.array,
+      show: React.PropTypes.bool.isRequired,
+      showHangup: React.PropTypes.bool,
+      video: React.PropTypes.object.isRequired
     },
 
     handleClickHangup: function() {
@@ -215,254 +416,118 @@ loop.shared.views = (function(_, l10n) {
       this.props.publishStream("audio", !this.props.audio.enabled);
     },
 
-    _getHangupButtonLabel: function() {
-      return this.props.hangupButtonLabel || l10n.get("hangup_button_caption2");
-    },
-
-    render: function() {
-      return (
-        React.createElement("ul", {className: "conversation-toolbar"}, 
-          React.createElement("li", {className: "conversation-toolbar-btn-box btn-hangup-entry"}, 
-            React.createElement("button", {className: "btn btn-hangup", onClick: this.handleClickHangup, 
-                    title: l10n.get("hangup_button_title"), 
-                    disabled: !this.props.enableHangup}, 
-              this._getHangupButtonLabel()
-            )
-          ), 
-          React.createElement("li", {className: "conversation-toolbar-btn-box"}, 
-            React.createElement(MediaControlButton, {action: this.handleToggleVideo, 
-                                enabled: this.props.video.enabled, 
-                                visible: this.props.video.visible, 
-                                scope: "local", type: "video"})
-          ), 
-          React.createElement("li", {className: "conversation-toolbar-btn-box"}, 
-            React.createElement(MediaControlButton, {action: this.handleToggleAudio, 
-                                enabled: this.props.audio.enabled, 
-                                visible: this.props.audio.visible, 
-                                scope: "local", type: "audio"})
-          ), 
-          React.createElement("li", {className: "conversation-toolbar-btn-box btn-screen-share-entry"}, 
-            React.createElement(ScreenShareControlButton, {dispatcher: this.props.dispatcher, 
-                                      visible: this.props.screenShare.visible, 
-                                      state: this.props.screenShare.state})
-          )
-        )
-      );
-    }
-  });
-
-  /**
-   * Conversation view.
-   */
-  var ConversationView = React.createClass({displayName: "ConversationView",
-    mixins: [
-      Backbone.Events,
-      sharedMixins.AudioMixin,
-      sharedMixins.MediaSetupMixin
-    ],
-
-    propTypes: {
-      sdk: React.PropTypes.object.isRequired,
-      video: React.PropTypes.object,
-      audio: React.PropTypes.object,
-      initiate: React.PropTypes.bool,
-      isDesktop: React.PropTypes.bool
-    },
-
-    getDefaultProps: function() {
-      return {
-        initiate: true,
-        isDesktop: false,
-        video: {enabled: true, visible: true},
-        audio: {enabled: true, visible: true}
-      };
-    },
-
-    getInitialState: function() {
-      return {
-        video: this.props.video,
-        audio: this.props.audio
-      };
-    },
-
     componentDidMount: function() {
-      if (this.props.initiate) {
-        /**
-         * XXX This is a workaround for desktop machines that do not have a
-         * camera installed. As we don't yet have device enumeration, when
-         * we do, this can be removed (bug 1138851), and the sdk should handle it.
-         */
-        if (this.props.isDesktop &&
-            !window.MediaStreamTrack.getSources) {
-          // If there's no getSources function, the sdk defines its own and caches
-          // the result. So here we define the "normal" one which doesn't get cached, so
-          // we can change it later.
-          window.MediaStreamTrack.getSources = function(callback) {
-            callback([{kind: "audio"}, {kind: "video"}]);
-          };
-        }
-
-        this.listenTo(this.props.sdk, "exception", this._handleSdkException.bind(this));
-
-        this.listenTo(this.props.model, "session:connected",
-                                        this._onSessionConnected);
-        this.listenTo(this.props.model, "session:stream-created",
-                                        this._streamCreated);
-        this.listenTo(this.props.model, ["session:peer-hungup",
-                                         "session:network-disconnected",
-                                         "session:ended"].join(" "),
-                                         this.stopPublishing);
-        this.props.model.startSession();
-      }
+      this.userActivity = false;
+      this.startIdleCountDown();
+      document.body.addEventListener("mousemove", this._onBodyMouseMove);
     },
 
     componentWillUnmount: function() {
-      // Unregister all local event listeners
-      this.stopListening();
-      this.hangup();
-    },
-
-    hangup: function() {
-      this.stopPublishing();
-      this.props.model.endSession();
-    },
-
-    _onSessionConnected: function(event) {
-      this.startPublishing(event);
-      this.play("connected");
+      clearTimeout(this.inactivityTimeout);
+      clearInterval(this.inactivityPollInterval);
+      document.body.removeEventListener("mousemove", this._onBodyMouseMove);
     },
 
     /**
-     * Subscribes and attaches each created stream to a DOM element.
-     *
-     * XXX: for now we only support a single remote stream, hence a single DOM
-     *      element.
-     *
-     * http://tokbox.com/opentok/libraries/client/js/reference/StreamEvent.html
-     *
-     * @param  {StreamEvent} event
+     * If the conversation toolbar is idle, update its state and initialize the countdown
+     * to return of the idle state. If the toolbar is active, only it's updated the userActivity flag.
      */
-    _streamCreated: function(event) {
-      var incoming = this.getDOMNode().querySelector(".remote");
-      this.props.model.subscribe(event.stream, incoming,
-        this.getDefaultPublisherConfig({
-          publishVideo: this.props.video.enabled
-        }));
-    },
-
-    /**
-     * Handles the SDK Exception event.
-     *
-     * https://tokbox.com/opentok/libraries/client/js/reference/ExceptionEvent.html
-     *
-     * @param {ExceptionEvent} event
-     */
-    _handleSdkException: function(event) {
-      /**
-       * XXX This is a workaround for desktop machines that do not have a
-       * camera installed. As we don't yet have device enumeration, when
-       * we do, this can be removed (bug 1138851), and the sdk should handle it.
-       */
-      if (this.publisher &&
-          event.code === OT.ExceptionCodes.UNABLE_TO_PUBLISH &&
-          event.message === "GetUserMedia" &&
-          this.state.video.enabled) {
-        this.state.video.enabled = false;
-
-        window.MediaStreamTrack.getSources = function(callback) {
-          callback([{kind: "audio"}]);
-        };
-
-        this.stopListening(this.publisher);
-        this.publisher.destroy();
-        this.startPublishing();
-      }
-    },
-
-    /**
-     * Publishes remote streams available once a session is connected.
-     *
-     * http://tokbox.com/opentok/libraries/client/js/reference/SessionConnectEvent.html
-     *
-     * @param  {SessionConnectEvent} event
-     */
-    startPublishing: function(event) {
-      var outgoing = this.getDOMNode().querySelector(".local");
-
-      // XXX move this into its StreamingVideo component?
-      this.publisher = this.props.sdk.initPublisher(
-        outgoing, this.getDefaultPublisherConfig({publishVideo: this.props.video.enabled}));
-
-      // Suppress OT GuM custom dialog, see bug 1018875
-      this.listenTo(this.publisher, "accessDialogOpened accessDenied",
-                    function(event) {
-                      event.preventDefault();
-                    });
-
-      this.listenTo(this.publisher, "streamCreated", function(event) {
-        this.setState({
-          audio: {enabled: event.stream.hasAudio},
-          video: {enabled: event.stream.hasVideo}
-        });
-      }.bind(this));
-
-      this.listenTo(this.publisher, "streamDestroyed", function() {
-        this.setState({
-          audio: {enabled: false},
-          video: {enabled: false}
-        });
-      }.bind(this));
-
-      this.props.model.publish(this.publisher);
-    },
-
-    /**
-     * Toggles streaming status for a given stream type.
-     *
-     * @param  {String}  type     Stream type ("audio" or "video").
-     * @param  {Boolean} enabled  Enabled stream flag.
-     */
-    publishStream: function(type, enabled) {
-      if (type === "audio") {
-        this.publisher.publishAudio(enabled);
-        this.setState({audio: {enabled: enabled}});
+    _onBodyMouseMove: function() {
+      if (this.state.idle) {
+        this.setState({idle: false});
+        this.startIdleCountDown();
       } else {
-        this.publisher.publishVideo(enabled);
-        this.setState({video: {enabled: enabled}});
+        this.userActivity = true;
       }
     },
 
     /**
-     * Unpublishes local stream.
+     * Instead of resetting the timeout for every mousemove (this event is called to many times,
+     * when the mouse is moving, we check the flat userActivity every 4 seconds. If the flag is activated,
+     * the user is still active, and we can restart the countdown for the idle state
      */
-    stopPublishing: function() {
-      if (this.publisher) {
-        // Unregister listeners for publisher events
-        this.stopListening(this.publisher);
+    checkUserActivity: function() {
+      this.inactivityPollInterval = setInterval(function() {
+        if (this.userActivity) {
+          this.userActivity = false;
+          this.restartIdleCountDown();
+        }
+      }.bind(this), 4000);
+    },
 
-        this.props.model.session.unpublish(this.publisher);
-      }
+    /**
+     * Stop the execution of the current inactivity countdown and it starts a new one.
+     */
+    restartIdleCountDown: function() {
+      clearTimeout(this.inactivityTimeout);
+      this.startIdleCountDown();
+    },
+
+    /**
+     * Launchs the process to check the user activity and the inactivity countdown to change
+     * the toolbar to idle.
+     * When the toolbar changes to idle, we remove the procces to check the user activity,
+     * because the toolbar is going to be updated directly when the user moves the mouse.
+     */
+    startIdleCountDown: function() {
+      this.checkUserActivity();
+      this.inactivityTimeout = setTimeout(function() {
+        this.setState({idle: true});
+        clearInterval(this.inactivityPollInterval);
+      }.bind(this), 6000);
+    },
+
+    _getHangupButtonLabel: function() {
+      return this.props.hangupButtonLabel || mozL10n.get("hangup_button_caption2");
     },
 
     render: function() {
-      var localStreamClasses = React.addons.classSet({
-        local: true,
-        "local-stream": true,
-        "local-stream-audio": !this.state.video.enabled
+      if (!this.props.show) {
+        return null;
+      }
+
+      var cx = React.addons.classSet;
+      var conversationToolbarCssClasses = cx({
+        "conversation-toolbar": true,
+        "idle": this.state.idle
+      });
+      var mediaButtonGroupCssClasses = cx({
+        "conversation-toolbar-media-btn-group-box": true,
+        "hide": (!this.props.video.visible && !this.props.audio.visible)
       });
       return (
-        React.createElement("div", {className: "video-layout-wrapper"}, 
-          React.createElement("div", {className: "conversation in-call"}, 
-            React.createElement("div", {className: "media nested"}, 
-              React.createElement("div", {className: "video_wrapper remote_wrapper"}, 
-                React.createElement("div", {className: "video_inner remote focus-stream"})
-              ), 
-              React.createElement("div", {className: localStreamClasses})
-            ), 
-            React.createElement(ConversationToolbar, {video: this.state.video, 
-                                 audio: this.state.audio, 
-                                 publishStream: this.publishStream, 
-                                 hangup: this.hangup})
+        React.createElement("ul", {className: conversationToolbarCssClasses}, 
+          
+            this.props.showHangup ?
+            React.createElement("li", {className: "conversation-toolbar-btn-box btn-hangup-entry"}, 
+              React.createElement("button", {className: "btn btn-hangup", 
+                      disabled: !this.props.enableHangup, 
+                      onClick: this.handleClickHangup, 
+                      title: mozL10n.get("hangup_button_title")}, 
+                this._getHangupButtonLabel()
+              )
+            ) : null, 
+          
+          React.createElement("li", {className: "conversation-toolbar-btn-box"}, 
+            React.createElement("div", {className: mediaButtonGroupCssClasses}, 
+                React.createElement(MediaControlButton, {action: this.handleToggleVideo, 
+                                    enabled: this.props.video.enabled, 
+                                    scope: "local", type: "video", 
+                                    visible: this.props.video.visible}), 
+                React.createElement(MediaControlButton, {action: this.handleToggleAudio, 
+                                    enabled: this.props.audio.enabled, 
+                                    scope: "local", type: "audio", 
+                                    visible: this.props.audio.visible})
+            )
+          ), 
+          React.createElement("li", {className: "conversation-toolbar-btn-box"}, 
+            React.createElement(ScreenShareControlButton, {dispatcher: this.props.dispatcher, 
+                                      state: this.props.screenShare.state, 
+                                      visible: this.props.screenShare.visible})
+          ), 
+          React.createElement("li", {className: "conversation-toolbar-btn-box btn-edit-entry"}, 
+            React.createElement(SettingsControlButton, {menuItems: this.props.settingsMenuItems, 
+                                   mozLoop: this.props.mozLoop})
           )
         )
       );
@@ -476,23 +541,21 @@ loop.shared.views = (function(_, l10n) {
     mixins: [Backbone.Events],
 
     propTypes: {
-      notification: React.PropTypes.object.isRequired,
-      key: React.PropTypes.number.isRequired
+      notification: React.PropTypes.object.isRequired
     },
 
     render: function() {
       var notification = this.props.notification;
       return (
         React.createElement("div", {className: "notificationContainer"}, 
-          React.createElement("div", {key: this.props.key, 
-               className: "alert alert-" + notification.get("level")}, 
+          React.createElement("div", {className: "alert alert-" + notification.get("level")}, 
             React.createElement("span", {className: "message"}, notification.get("message"))
           ), 
           React.createElement("div", {className: "detailsBar details-" + notification.get("level"), 
                hidden: !notification.get("details")}, 
             React.createElement("button", {className: "detailsButton btn-info", 
-                    onClick: notification.get("detailsButtonCallback"), 
-                    hidden: !notification.get("detailsButtonLabel") || !notification.get("detailsButtonCallback")}, 
+                    hidden: !notification.get("detailsButtonLabel") || !notification.get("detailsButtonCallback"), 
+                    onClick: notification.get("detailsButtonCallback")}, 
               notification.get("detailsButtonLabel")
             ), 
             React.createElement("span", {className: "details"}, notification.get("details"))
@@ -509,8 +572,8 @@ loop.shared.views = (function(_, l10n) {
     mixins: [Backbone.Events, sharedMixins.DocumentVisibilityMixin],
 
     propTypes: {
-      notifications: React.PropTypes.object.isRequired,
-      clearOnDocumentHidden: React.PropTypes.bool
+      clearOnDocumentHidden: React.PropTypes.bool,
+      notifications: React.PropTypes.object.isRequired
     },
 
     getDefaultProps: function() {
@@ -520,7 +583,7 @@ loop.shared.views = (function(_, l10n) {
     componentDidMount: function() {
       this.listenTo(this.props.notifications, "reset add remove", function() {
         this.forceUpdate();
-      }.bind(this));
+      });
     },
 
     componentWillUnmount: function() {
@@ -549,7 +612,6 @@ loop.shared.views = (function(_, l10n) {
           this.props.notifications.map(function(notification, key) {
             return React.createElement(NotificationView, {key: key, notification: notification});
           })
-        
         )
       );
     }
@@ -557,11 +619,12 @@ loop.shared.views = (function(_, l10n) {
 
   var Button = React.createClass({displayName: "Button",
     propTypes: {
-      caption: React.PropTypes.string.isRequired,
-      onClick: React.PropTypes.func.isRequired,
-      disabled: React.PropTypes.bool,
       additionalClass: React.PropTypes.string,
-      htmlId: React.PropTypes.string
+      caption: React.PropTypes.string.isRequired,
+      children: React.PropTypes.element,
+      disabled: React.PropTypes.bool,
+      htmlId: React.PropTypes.string,
+      onClick: React.PropTypes.func.isRequired
     },
 
     getDefaultProps: function() {
@@ -579,10 +642,10 @@ loop.shared.views = (function(_, l10n) {
         classObject[this.props.additionalClass] = true;
       }
       return (
-        React.createElement("button", {onClick: this.props.onClick, 
+        React.createElement("button", {className: cx(classObject), 
                 disabled: this.props.disabled, 
                 id: this.props.htmlId, 
-                className: cx(classObject)}, 
+                onClick: this.props.onClick}, 
           React.createElement("span", {className: "button-caption"}, this.props.caption), 
           this.props.children
         )
@@ -591,8 +654,12 @@ loop.shared.views = (function(_, l10n) {
   });
 
   var ButtonGroup = React.createClass({displayName: "ButtonGroup",
-    PropTypes: {
-      additionalClass: React.PropTypes.string
+    propTypes: {
+      additionalClass: React.PropTypes.string,
+      children: React.PropTypes.oneOfType([
+        React.PropTypes.element,
+        React.PropTypes.arrayOf(React.PropTypes.element)
+      ])
     },
 
     getDefaultProps: function() {
@@ -616,12 +683,15 @@ loop.shared.views = (function(_, l10n) {
   });
 
   var Checkbox = React.createClass({displayName: "Checkbox",
-    PropTypes: {
+    propTypes: {
       additionalClass: React.PropTypes.string,
       checked: React.PropTypes.bool,
       disabled: React.PropTypes.bool,
       label: React.PropTypes.string,
       onChange: React.PropTypes.func.isRequired,
+      // If true, this will cause the label to be cut off at the end of the
+      // first line with an ellipsis, and a tooltip supplied.
+      useEllipsis: React.PropTypes.bool,
       // If `value` is not supplied, the consumer should rely on the boolean
       // `checked` state changes.
       value: React.PropTypes.string
@@ -633,8 +703,18 @@ loop.shared.views = (function(_, l10n) {
         checked: false,
         disabled: false,
         label: null,
+        useEllipsis: false,
         value: ""
       };
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+      // Only change the state if the prop has changed, and if it is also
+      // different from the state.
+      if (this.props.checked !== nextProps.checked &&
+          this.state.checked !== nextProps.checked) {
+        this.setState({ checked: nextProps.checked });
+      }
     },
 
     getInitialState: function() {
@@ -666,6 +746,11 @@ loop.shared.views = (function(_, l10n) {
         checked: this.state.checked,
         disabled: this.props.disabled
       };
+      var labelClasses = {
+        "checkbox-label": true,
+        "ellipsis": this.props.useEllipsis
+      };
+
       if (this.props.additionalClass) {
         wrapperClasses[this.props.additionalClass] = true;
       }
@@ -674,21 +759,398 @@ loop.shared.views = (function(_, l10n) {
              disabled: this.props.disabled, 
              onClick: this._handleClick}, 
           React.createElement("div", {className: cx(checkClasses)}), 
-          this.props.label ?
-            React.createElement("label", null, this.props.label) :
-            null
+          
+            this.props.label ?
+              React.createElement("div", {className: cx(labelClasses), 
+                   title: this.props.useEllipsis ? this.props.label : ""}, 
+                this.props.label
+              ) : null
+          
+        )
+      );
+    }
+  });
+
+  /**
+   * Renders an avatar element for display when video is muted.
+   */
+  var AvatarView = React.createClass({displayName: "AvatarView",
+    mixins: [React.addons.PureRenderMixin],
+
+    render: function() {
+        return React.createElement("div", {className: "avatar"});
+    }
+  });
+
+  /**
+   * Renders a loading spinner for when video content is not yet available.
+   */
+  var LoadingView = React.createClass({displayName: "LoadingView",
+    mixins: [React.addons.PureRenderMixin],
+
+    render: function() {
+        return (
+          React.createElement("div", {className: "loading-background"}, 
+            React.createElement("div", {className: "loading-stream"})
+          )
+        );
+    }
+  });
+
+  /**
+   * Renders a url that's part of context on the display.
+   *
+   * @property {Boolean} allowClick         Set to true to allow the url to be clicked. If this
+   *                                        is specified, then 'dispatcher' is also required.
+   * @property {String}  description        The description for the context url.
+   * @property {loop.Dispatcher} dispatcher
+   * @property {Boolean} showContextTitle   Whether or not to show the "Let's talk about" title.
+   * @property {String}  thumbnail          The thumbnail url (expected to be a data url) to
+   *                                        display. If not specified, a fallback url will be
+   *                                        shown.
+   * @property {String}  url                The url to be displayed. If not present or invalid,
+   *                                        then this view won't be displayed.
+   * @property {Boolean} useDesktopPaths    Whether or not to use the desktop paths for for the
+   *                                        fallback url.
+   */
+  var ContextUrlView = React.createClass({displayName: "ContextUrlView",
+    mixins: [React.addons.PureRenderMixin],
+
+    propTypes: {
+      allowClick: React.PropTypes.bool.isRequired,
+      description: React.PropTypes.string.isRequired,
+      dispatcher: React.PropTypes.instanceOf(loop.Dispatcher),
+      showContextTitle: React.PropTypes.bool.isRequired,
+      thumbnail: React.PropTypes.string,
+      url: React.PropTypes.string,
+      useDesktopPaths: React.PropTypes.bool.isRequired
+    },
+
+    /**
+     * Dispatches an action to record when the link is clicked.
+     */
+    handleLinkClick: function() {
+      if (!this.props.allowClick) {
+        return;
+      }
+
+      this.props.dispatcher.dispatch(new sharedActions.RecordClick({
+        linkInfo: "Shared URL"
+      }));
+    },
+
+    /**
+     * Renders the context title ("Let's talk about") if necessary.
+     */
+    renderContextTitle: function() {
+      if (!this.props.showContextTitle) {
+        return null;
+      }
+
+      return React.createElement("p", null, mozL10n.get("context_inroom_label2"));
+    },
+
+    render: function() {
+      var hostname;
+
+      try {
+        hostname = new URL(this.props.url).hostname;
+      } catch (ex) {
+        return null;
+      }
+
+      var thumbnail = this.props.thumbnail;
+
+      if (!thumbnail) {
+        thumbnail = this.props.useDesktopPaths ?
+          "loop/shared/img/icons-16x16.svg#globe" :
+          "shared/img/icons-16x16.svg#globe";
+      }
+
+      var wrapperClasses = React.addons.classSet({
+        "context-wrapper": true,
+        "clicks-allowed": this.props.allowClick
+      });
+
+      return (
+        React.createElement("div", {className: "context-content"}, 
+          this.renderContextTitle(), 
+          React.createElement("a", {className: wrapperClasses, 
+             href: this.props.allowClick ? this.props.url : null, 
+             onClick: this.handleLinkClick, 
+             rel: "noreferrer", 
+             target: "_blank"}, 
+            React.createElement("img", {className: "context-preview", src: thumbnail}), 
+            React.createElement("span", {className: "context-info"}, 
+              this.props.description, 
+              React.createElement("span", {className: "context-url"}, 
+                hostname
+              )
+            )
+          )
+        )
+      );
+    }
+  });
+
+  /**
+   * Renders a media element for display. This also handles displaying an avatar
+   * instead of the video, and attaching a video stream to the video element.
+   */
+  var MediaView = React.createClass({displayName: "MediaView",
+    // srcMediaElement should be ok for a shallow comparison, so we are safe
+    // to use the pure render mixin here.
+    mixins: [React.addons.PureRenderMixin],
+
+    propTypes: {
+      displayAvatar: React.PropTypes.bool.isRequired,
+      isLoading: React.PropTypes.bool.isRequired,
+      mediaType: React.PropTypes.string.isRequired,
+      posterUrl: React.PropTypes.string,
+      // Expecting "local" or "remote".
+      srcMediaElement: React.PropTypes.object
+    },
+
+    componentDidMount: function() {
+      if (!this.props.displayAvatar) {
+        this.attachVideo(this.props.srcMediaElement);
+      }
+    },
+
+    componentDidUpdate: function() {
+      if (!this.props.displayAvatar) {
+        this.attachVideo(this.props.srcMediaElement);
+      }
+    },
+
+    /**
+     * Attaches a video stream from a donor video element to this component's
+     * video element if the component is displaying one.
+     *
+     * @param {Object} srcMediaElement The src video object to clone the stream
+     *                                from.
+     *
+     * XXX need to have a corresponding detachVideo or change this to syncVideo
+     * to protect from leaks (bug 1171978)
+     */
+    attachVideo: function(srcMediaElement) {
+      if (!srcMediaElement) {
+        // Not got anything to display.
+        return;
+      }
+
+      var videoElement = this.getDOMNode();
+
+      if (videoElement.tagName.toLowerCase() !== "video") {
+        // Must be displaying the avatar view, so don't try and attach video.
+        return;
+      }
+
+      // Set the src of our video element
+      var attrName = "";
+      if ("srcObject" in videoElement) {
+        // srcObject is according to the standard.
+        attrName = "srcObject";
+      } else if ("mozSrcObject" in videoElement) {
+        // mozSrcObject is for Firefox
+        attrName = "mozSrcObject";
+      } else if ("src" in videoElement) {
+        // src is for Chrome.
+        attrName = "src";
+      } else {
+        console.error("Error attaching stream to element - no supported" +
+                      "attribute found");
+        return;
+      }
+
+      // If the object hasn't changed it, then don't reattach it.
+      if (videoElement[attrName] !== srcMediaElement[attrName]) {
+        videoElement[attrName] = srcMediaElement[attrName];
+      }
+      videoElement.play();
+    },
+
+    render: function() {
+      if (this.props.isLoading) {
+        return React.createElement(LoadingView, null);
+      }
+
+      if (this.props.displayAvatar) {
+        return React.createElement(AvatarView, null);
+      }
+
+      if (!this.props.srcMediaElement && !this.props.posterUrl) {
+        return React.createElement("div", {className: "no-video"});
+      }
+
+      var optionalPoster = {};
+      if (this.props.posterUrl) {
+        optionalPoster.poster = this.props.posterUrl;
+      }
+
+      // For now, always mute media. For local media, we should be muted anyway,
+      // as we don't want to hear ourselves speaking.
+      //
+      // For remote media, we would ideally have this live video element in
+      // control of the audio, but due to the current method of not rendering
+      // the element at all when video is muted we have to rely on the hidden
+      // dom element in the sdk driver to play the audio.
+      // We might want to consider changing this if we add UI controls relating
+      // to the remote audio at some stage in the future.
+      return (
+        React.createElement("video", React.__spread({},  optionalPoster, 
+               {className: this.props.mediaType + "-video", 
+               muted: true}))
+      );
+    }
+  });
+
+  var MediaLayoutView = React.createClass({displayName: "MediaLayoutView",
+    propTypes: {
+      children: React.PropTypes.node,
+      dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
+      displayScreenShare: React.PropTypes.bool.isRequired,
+      isLocalLoading: React.PropTypes.bool.isRequired,
+      isRemoteLoading: React.PropTypes.bool.isRequired,
+      isScreenShareLoading: React.PropTypes.bool.isRequired,
+      // The poster URLs are for UI-showcase testing and development.
+      localPosterUrl: React.PropTypes.string,
+      localSrcMediaElement: React.PropTypes.object,
+      localVideoMuted: React.PropTypes.bool.isRequired,
+      // Passing in matchMedia, allows it to be overriden for ui-showcase's
+      // benefit. We expect either the override or window.matchMedia.
+      matchMedia: React.PropTypes.func.isRequired,
+      remotePosterUrl: React.PropTypes.string,
+      remoteSrcMediaElement: React.PropTypes.object,
+      renderRemoteVideo: React.PropTypes.bool.isRequired,
+      screenShareMediaElement: React.PropTypes.object,
+      screenSharePosterUrl: React.PropTypes.string,
+      showContextRoomName: React.PropTypes.bool.isRequired,
+      useDesktopPaths: React.PropTypes.bool.isRequired
+    },
+
+    isLocalMediaAbsolutelyPositioned: function(matchMedia) {
+      if (!matchMedia) {
+        matchMedia = this.props.matchMedia;
+      }
+      return matchMedia &&
+        // The screen width is less than 640px and we are not screen sharing.
+        ((matchMedia("screen and (max-width:640px)").matches &&
+         !this.props.displayScreenShare) ||
+         // or the screen width is less than 300px.
+         (matchMedia("screen and (max-width:300px)").matches));
+    },
+
+    getInitialState: function() {
+      return {
+        localMediaAboslutelyPositioned: this.isLocalMediaAbsolutelyPositioned()
+      };
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+      // This is all for the ui-showcase's benefit.
+      if (this.props.matchMedia !== nextProps.matchMedia) {
+        this.updateLocalMediaState(null, nextProps.matchMedia);
+      }
+    },
+
+    componentDidMount: function() {
+      window.addEventListener("resize", this.updateLocalMediaState);
+    },
+
+    componentWillUnmount: function() {
+      window.removeEventListener("resize", this.updateLocalMediaState);
+    },
+
+    updateLocalMediaState: function(event, matchMedia) {
+      var newState = this.isLocalMediaAbsolutelyPositioned(matchMedia);
+      if (this.state.localMediaAboslutelyPositioned !== newState) {
+        this.setState({
+          localMediaAboslutelyPositioned: newState
+        });
+      }
+    },
+
+    renderLocalVideo: function() {
+      return (
+        React.createElement("div", {className: "local"}, 
+          React.createElement(MediaView, {displayAvatar: this.props.localVideoMuted, 
+            isLoading: this.props.isLocalLoading, 
+            mediaType: "local", 
+            posterUrl: this.props.localPosterUrl, 
+            srcMediaElement: this.props.localSrcMediaElement})
+        )
+      );
+    },
+
+    render: function() {
+      var remoteStreamClasses = React.addons.classSet({
+        "remote": true,
+        "focus-stream": !this.props.displayScreenShare
+      });
+
+      var screenShareStreamClasses = React.addons.classSet({
+        "screen": true,
+        "focus-stream": this.props.displayScreenShare
+      });
+
+      var mediaWrapperClasses = React.addons.classSet({
+        "media-wrapper": true,
+        "receiving-screen-share": this.props.displayScreenShare,
+        "showing-local-streams": this.props.localSrcMediaElement ||
+          this.props.localPosterUrl,
+        "showing-remote-streams": this.props.remoteSrcMediaElement ||
+          this.props.remotePosterUrl || this.props.isRemoteLoading
+      });
+
+      return (
+        React.createElement("div", {className: "media-layout"}, 
+          React.createElement("div", {className: mediaWrapperClasses}, 
+            React.createElement("span", {className: "self-view-hidden-message"}, 
+              mozL10n.get("self_view_hidden_message")
+            ), 
+            React.createElement("div", {className: remoteStreamClasses}, 
+              React.createElement(MediaView, {displayAvatar: !this.props.renderRemoteVideo, 
+                isLoading: this.props.isRemoteLoading, 
+                mediaType: "remote", 
+                posterUrl: this.props.remotePosterUrl, 
+                srcMediaElement: this.props.remoteSrcMediaElement}), 
+               this.state.localMediaAboslutelyPositioned ?
+                this.renderLocalVideo() : null, 
+               this.props.children
+
+            ), 
+            React.createElement("div", {className: screenShareStreamClasses}, 
+              React.createElement(MediaView, {displayAvatar: false, 
+                isLoading: this.props.isScreenShareLoading, 
+                mediaType: "screen-share", 
+                posterUrl: this.props.screenSharePosterUrl, 
+                srcMediaElement: this.props.screenShareMediaElement})
+            ), 
+            React.createElement(loop.shared.views.chat.TextChatView, {
+              dispatcher: this.props.dispatcher, 
+              showRoomName: this.props.showContextRoomName, 
+              useDesktopPaths: this.props.useDesktopPaths}), 
+             this.state.localMediaAboslutelyPositioned ?
+              null : this.renderLocalVideo()
+          )
         )
       );
     }
   });
 
   return {
+    AvatarView: AvatarView,
     Button: Button,
     ButtonGroup: ButtonGroup,
     Checkbox: Checkbox,
-    ConversationView: ConversationView,
+    ContextUrlView: ContextUrlView,
     ConversationToolbar: ConversationToolbar,
     MediaControlButton: MediaControlButton,
+    MediaLayoutView: MediaLayoutView,
+    MediaView: MediaView,
+    LoadingView: LoadingView,
+    SettingsControlButton: SettingsControlButton,
     ScreenShareControlButton: ScreenShareControlButton,
     NotificationListView: NotificationListView
   };

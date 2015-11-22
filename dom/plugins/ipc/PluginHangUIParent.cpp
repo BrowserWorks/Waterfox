@@ -64,7 +64,7 @@ private:
   uint32_t mResponseTimeMs;
   uint32_t mTimeoutMs;
 };
-} // anonymous namespace
+} // namespace
 
 namespace mozilla {
 namespace plugins {
@@ -353,7 +353,9 @@ PluginHangUIParent::RecvUserResponse(const unsigned int& aResponse)
   int responseCode;
   if (aResponse & HANGUI_USER_RESPONSE_STOP) {
     // User clicked Stop
-    mModule->TerminateChildProcess(mMainThreadMessageLoop);
+    mModule->TerminateChildProcess(mMainThreadMessageLoop,
+                                   NS_LITERAL_CSTRING("ModalHangUI"),
+                                   EmptyString());
     responseCode = 1;
   } else if(aResponse & HANGUI_USER_RESPONSE_CONTINUE) {
     mModule->OnHangUIContinue();

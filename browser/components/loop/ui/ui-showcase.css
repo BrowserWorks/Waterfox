@@ -2,8 +2,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+html[dir="rtl"]:not(#outer-html) {
+  /* Temporary work around and visual hack -
+   * Scope the root body overflow visible to remove the scroll bars that appear
+   * inside an iFrame. Can remove this rule after core layout fix for
+   * https://bugzilla.mozilla.org/show_bug.cgi?id=1204680 has landed.
+   */
+  overflow: hidden;
+}
+
 body {
-  /* Override the hidden in common.css */
+  /* Override the "overflow: hidden" rule on the body in common.css.
+   * Very important; otherwise you can't scroll the showcase.
+   */
   overflow: visible;
 }
 
@@ -52,15 +63,20 @@ body {
 }
 
 .showcase > section .comp {
+  /* contain absolute positioned elements such as dropdowns */
+  position: relative;
   margin: 0 auto; /* width is usually set programmatically */
 }
 
-.showcase > section .comp.dashed {
+.showcase > section .comp.dashed,
+.showcase > section .comp > iframe.dashed
+{
   border: 1px dashed #ccc;
 }
 
 .showcase > section > .example {
   margin-bottom: 6em;
+  background: #fbfbfb;
 }
 
 .showcase > section > h2 {
@@ -82,6 +98,10 @@ body {
 .showcase > section .example > h3 a {
   text-decoration: none;
   color: #555;
+}
+
+.showcase .checkbox.checked {
+  background-image: url("../content/shared/img/check.svg#check-blue");
 }
 
 .showcase p.note {
@@ -107,72 +127,15 @@ body {
   font-weight: bold;
 }
 
-/*
- * Switched to using height: 100% in standalone version
- * this mocks it for the ui so that the component has height
- * */
-.standalone .video-layout-wrapper,
-.standalone .remote_wrapper {
-  min-height: 550px;
-}
-
-@media screen and (max-width:640px) {
-
-  .standalone .local-stream {
-    background-size: cover;
-  }
-
-  .standalone .local-stream,
-  .conversation .media.nested .remote {
-    background-size: cover;
-    background-position: center;
-  }
-
-  .standalone .remote_wrapper {
-    width: 100%;
-    background-size: cover;
-    background-position: center;
-  }
-}
-
-.remote_wrapper {
-  background-image: url("sample-img/video-screen-remote.png");
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-
-.local-stream {
-  background-image: url("sample-img/video-screen-local.png");
-  background-repeat: no-repeat;
-}
-
-  .local-stream.local:not(.local-stream-audio) {
-    background-size: cover;
-  }
-
 .call-action-group .btn-group-chevron,
 .call-action-group .btn-group {
   /* Prevent box overflow due to long string */
   max-width: 120px;
 }
 
-.conversation .media.nested .remote {
-  /* Height of obsolute box covers media control buttons. UI showcase only.
-   * When tokbox inserts the markup into the page the problem goes away */
-  bottom: auto;
+.room-waiting-tile {
+  background-color: grey;
 }
-
-.standalone .ended-conversation .remote_wrapper,
-.standalone .video-layout-wrapper {
-  /* Removes the fake video image for ended conversations */
-  background: none;
-}
-
-/* Rooms edge cases */
-.standalone .room-conversation .remote_wrapper {
-  background: none;
-}
-
 /* SVG icons showcase */
 
 .svg-icons h3 {
@@ -200,4 +163,15 @@ body {
   display: inline-block;
   margin-left: .5rem;
   border: 0;
+}
+
+/* Temporary until bug 1168829 is completed */
+.standalone.text-chat-example .text-chat-view {
+  height: 400px;
+}
+
+/* Force dropdown menus to display. */
+.force-menu-show .icons,
+.force-menu-show .dropdown-menu {
+  display: inline-block !important;
 }

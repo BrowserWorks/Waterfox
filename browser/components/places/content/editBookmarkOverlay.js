@@ -9,7 +9,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
 const LAST_USED_ANNO = "bookmarkPropertiesDialog/folderLastUsed";
 const MAX_FOLDER_ITEM_IN_MENU_LIST = 5;
 
-let gEditItemOverlay = {
+var gEditItemOverlay = {
   _observersAdded: false,
   _staticFoldersListBuilt: false,
 
@@ -34,6 +34,12 @@ let gEditItemOverlay = {
     let isItem = itemId != -1;
     let isFolderShortcut = isItem &&
       node.type == Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER_SHORTCUT;
+    let isTag = node && PlacesUtils.nodeIsTagQuery(node);
+    if (isTag) {
+      itemId = PlacesUtils.getConcreteItemId(node);
+      // For now we don't have access to the item guid synchronously for tags,
+      // so we'll need to fetch it later.
+    }
     let isURI = node && PlacesUtils.nodeIsURI(node);
     let uri = isURI ? NetUtil.newURI(node.uri) : null;
     let title = node ? node.title : null;
@@ -50,12 +56,13 @@ let gEditItemOverlay = {
                             PlacesUIUtils.isContentsReadOnly(parent);
       }
     }
+    let focusedElement = aInitInfo.focusedElement;
 
     return this._paneInfo = { itemId, itemGuid, isItem,
                               isURI, uri, title,
                               isBookmark, isFolderShortcut, isParentReadOnly,
                               bulkTagging, uris,
-                              visibleRows, postData };
+                              visibleRows, postData, isTag, focusedElement };
   },
 
   get initialized() {
@@ -89,12 +96,13 @@ let gEditItemOverlay = {
     // This pane is read-only if:
     //  * the panel is not initialized
     //  * the node is a folder shortcut
-    //  * the node is not bookmarked
-    //  * the node is child of a read-only container and is not a bookmarked URI
+    //  * the node is not bookmarked and not a tag container
+    //  * the node is child of a read-only container and is not a bookmarked
+    //    URI nor a tag container
     return !this.initialized ||
            this._paneInfo.isFolderShortcut ||
-           !this._paneInfo.isItem ||
-           (this._paneInfo.isParentReadOnly && !this._paneInfo.isBookmark);
+           (!this._paneInfo.isItem && !this._paneInfo.isTag) ||
+           (this._paneInfo.isParentReadOnly && !this._paneInfo.isBookmark && !this._paneInfo.isTag);
   },
 
   // the first field which was edited after this panel was initialized for
@@ -174,7 +182,7 @@ let gEditItemOverlay = {
     let { itemId, itemGuid, isItem,
           isURI, uri, title,
           isBookmark, bulkTagging, uris,
-          visibleRows } = this._setPaneInfo(aInfo);
+          visibleRows, focusedElement } = this._setPaneInfo(aInfo);
 
     let showOrCollapse =
       (rowId, isAppropriateForInput, nameInHiddenRows = null) => {
@@ -244,6 +252,24 @@ let gEditItemOverlay = {
       PlacesUtils.bookmarks.addObserver(this, false);
       window.addEventListener("unload", this, false);
       this._observersAdded = true;
+    }
+
+    // The focusedElement possible values are:
+    //  * preferred: focus the field that the user touched first the last
+    //    time the pane was shown (either namePicker or tagsField)
+    //  * first: focus the first non collapsed textbox
+    // Note: since all controls are collapsed by default, we don't get the
+    // default XUL dialog behavior, that selects the first control, so we set
+    // the focus explicitly.
+    let elt;
+    if (focusedElement === "preferred") {
+      elt = this._element(gPrefService.getCharPref("browser.bookmarks.editDialog.firstEditField"));
+    } else if (focusedElement === "first") {
+      elt = document.querySelector("textbox:not([collapsed=true])");
+    }
+    if (elt) {
+      elt.focus();
+      elt.select();
     }
   },
 
@@ -375,7 +401,9 @@ let gEditItemOverlay = {
   XPCOMUtils.generateQI([Components.interfaces.nsIDOMEventListener,
                          Components.interfaces.nsINavBookmarkObserver]),
 
-  _element(aID) document.getElementById("editBMPanel_" + aID),
+  _element(aID) {
+    return document.getElementById("editBMPanel_" + aID);
+  },
 
   uninitPanel(aHideCollapsibleElements) {
     if (aHideCollapsibleElements) {
@@ -516,7 +544,7 @@ let gEditItemOverlay = {
   },
 
   onNamePickerChange() {
-    if (this.readOnly || !this._paneInfo.isItem)
+    if (this.readOnly || !(this._paneInfo.isItem || this._paneInfo.isTag))
       return;
 
     // Here we update either the item title or its cached static title
@@ -534,9 +562,13 @@ let gEditItemOverlay = {
         PlacesUtils.transactionManager.doTransaction(txn);
         return;
       }
-      let guid = this._paneInfo.itemGuid;
-      PlacesTransactions.EditTitle({ guid, title: newTitle })
-                        .transact().catch(Components.utils.reportError);
+      Task.spawn(function* () {
+        let guid = this._paneInfo.isTag
+                    ? (yield PlacesUtils.promiseItemGuid(this._paneInfo.itemId))
+                    : this._paneInfo.itemGuid;
+        PlacesTransactions.EditTitle({ guid, title: newTitle })
+                          .transact().catch(Components.utils.reportError);
+      }).catch(Cu.reportError);
     }
   },
 

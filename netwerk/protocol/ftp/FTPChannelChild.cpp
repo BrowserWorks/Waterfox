@@ -22,7 +22,7 @@
 using namespace mozilla::ipc;
 
 #undef LOG
-#define LOG(args) PR_LOG(gFTPLog, PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(gFTPLog, mozilla::LogLevel::Debug, args)
 
 namespace mozilla {
 namespace net {
@@ -141,41 +141,6 @@ FTPChannelChild::GetUploadStream(nsIInputStream** stream)
   return NS_OK;
 }
 
-//-----------------------------------------------------------------------------
-
-// helper function to assign loadInfo to openArgs
-void
-propagateLoadInfo(nsILoadInfo *aLoadInfo,
-                  FTPChannelOpenArgs& openArgs)
-{
-  mozilla::ipc::PrincipalInfo requestingPrincipalInfo;
-  mozilla::ipc::PrincipalInfo triggeringPrincipalInfo;
-
-  if (aLoadInfo) {
-    mozilla::ipc::PrincipalToPrincipalInfo(aLoadInfo->LoadingPrincipal(),
-                                           &requestingPrincipalInfo);
-    openArgs.requestingPrincipalInfo() = requestingPrincipalInfo;
-
-    mozilla::ipc::PrincipalToPrincipalInfo(aLoadInfo->TriggeringPrincipal(),
-                                           &triggeringPrincipalInfo);
-    openArgs.triggeringPrincipalInfo() = triggeringPrincipalInfo;
-
-    openArgs.securityFlags() = aLoadInfo->GetSecurityFlags();
-    openArgs.contentPolicyType() = aLoadInfo->GetContentPolicyType();
-    openArgs.innerWindowID() = aLoadInfo->GetInnerWindowID();
-    return;
-  }
-
-  // use default values if no loadInfo is provided
-  mozilla::ipc::PrincipalToPrincipalInfo(nsContentUtils::GetSystemPrincipal(),
-                                         &requestingPrincipalInfo);
-  openArgs.requestingPrincipalInfo() = requestingPrincipalInfo;
-  openArgs.triggeringPrincipalInfo() = requestingPrincipalInfo;
-  openArgs.securityFlags() = nsILoadInfo::SEC_NORMAL;
-  openArgs.contentPolicyType() = nsIContentPolicy::TYPE_OTHER;
-  openArgs.innerWindowID() = 0;
-}
-
 NS_IMETHODIMP
 FTPChannelChild::AsyncOpen(::nsIStreamListener* listener, nsISupports* aContext)
 {
@@ -229,7 +194,8 @@ FTPChannelChild::AsyncOpen(::nsIStreamListener* listener, nsISupports* aContext)
 
   nsCOMPtr<nsILoadInfo> loadInfo;
   GetLoadInfo(getter_AddRefs(loadInfo));
-  propagateLoadInfo(loadInfo, openArgs);
+  rv = mozilla::ipc::LoadInfoToLoadInfoArgs(loadInfo, &openArgs.loadInfo());
+  NS_ENSURE_SUCCESS(rv, rv);
 
   gNeckoChild->
     SendPFTPChannelConstructor(this, tabChild, IPC::SerializedLoadContext(this),

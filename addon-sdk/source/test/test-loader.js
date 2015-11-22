@@ -3,13 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 'use strict';
 
-let {
+var {
   Loader, main, unload, parseStack, generateMap, resolve, join,
   Require, Module
 } = require('toolkit/loader');
-let { readURI } = require('sdk/net/url');
+var { readURI } = require('sdk/net/url');
 
-let root = module.uri.substr(0, module.uri.lastIndexOf('/'));
+var root = module.uri.substr(0, module.uri.lastIndexOf('/'));
 
 const app = require('sdk/system/xul-app');
 
@@ -57,6 +57,10 @@ exports['test join'] = function (assert) {
     'resource://my/path/yeah/whoa');
   assert.equal(join('resource://my/path/yeah/yuh', './whoa'),
     'resource://my/path/yeah/yuh/whoa');
+  assert.equal(join('resource:///my/path/yeah/yuh', '../whoa'),
+    'resource:///my/path/yeah/whoa');
+  assert.equal(join('resource:///my/path/yeah/yuh', './whoa'),
+    'resource:///my/path/yeah/yuh/whoa');
   assert.equal(join('file:///my/path/yeah/yuh', '../whoa'),
     'file:///my/path/yeah/whoa');
   assert.equal(join('file:///my/path/yeah/yuh', './whoa'),
@@ -367,6 +371,16 @@ exports['test shared globals'] = function(assert) {
   unload(loader);
 }
 
+exports['test prototype of global'] = function (assert) {
+  let uri = root + '/fixtures/loader/globals/';
+  let loader = Loader({ paths: { '': uri }, sharedGlobal: true,
+                        sandboxPrototype: { globalFoo: 5 }});
+
+  let program = main(loader, 'main');
+
+  assert.ok(program.globalFoo === 5, '`globalFoo` exists');
+};
+
 exports["test require#resolve"] = function(assert) {
   let foundRoot = require.resolve("sdk/tabs").replace(/sdk\/tabs.js$/, "");
   assert.ok(root, foundRoot, "correct resolution root");
@@ -523,5 +537,79 @@ exports['test lazy globals'] = function (assert) {
   assert.equal(program.useFoo(), foo, "foo mock works");
   assert.ok(gotFoo, "foo has been accessed only when we first try to use it");
 };
+
+exports['test user global'] = function(assert) {
+  // Test case for bug 827792
+  let com = {};
+  let loader = require('toolkit/loader');
+  let loadOptions = require('@loader/options');
+  let options = loader.override(loadOptions,
+                                {globals: loader.override(loadOptions.globals,
+                                                          {com: com,
+                                                           console: console,
+                                                           dump: dump})});
+  let subloader = loader.Loader(options);
+  let userRequire = loader.Require(subloader, module);
+  let userModule = userRequire("./loader/user-global");
+
+  assert.equal(userModule.getCom(), com,
+               "user module returns expected `com` global");
+};
+
+exports['test custom require caching'] = function(assert) {
+  const loader = Loader({
+    paths: { '': root + "/" },
+    require: (id, require) => {
+      // Just load it normally
+      return require(id);
+    }
+  });
+  const require = Require(loader, module);
+
+  let data = require('fixtures/loader/json/mutation.json');
+  assert.equal(data.value, 1, 'has initial value');
+  data.value = 2;
+  let newdata = require('fixtures/loader/json/mutation.json');
+  assert.equal(
+    newdata.value,
+    2,
+    'JSON objects returned should be cached and the same instance'
+  );
+};
+
+exports['test caching when proxying a loader'] = function(assert) {
+  const parentRequire = require;
+  const loader = Loader({
+    paths: { '': root + "/" },
+    require: (id, childRequire) => {
+      if(id === 'gimmejson') {
+        return childRequire('fixtures/loader/json/mutation.json')
+      }
+      // Load it with the original (global) require
+      return parentRequire(id);
+    }
+  });
+  const childRequire = Require(loader, module);
+
+  let data = childRequire('./fixtures/loader/json/mutation.json');
+  assert.equal(data.value, 1, 'data has initial value');
+  data.value = 2;
+
+  let newdata = childRequire('./fixtures/loader/json/mutation.json');
+  assert.equal(newdata.value, 2, 'data has changed');
+
+  let childData = childRequire('gimmejson');
+  assert.equal(childData.value, 1, 'data from child loader has initial value');
+  childData.value = 3;
+  let newChildData = childRequire('gimmejson');
+  assert.equal(newChildData.value, 3, 'data from child loader has changed');
+
+  data = childRequire('./fixtures/loader/json/mutation.json');
+  assert.equal(data.value, 2, 'data from parent loader has not changed');
+
+  // Set it back to the original value just in case (this instance
+  // will be shared across tests)
+  data.value = 1;
+}
 
 require('sdk/test').run(exports);

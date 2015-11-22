@@ -1,11 +1,11 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "21.1.1"
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
 
     defaultConfig {
-        targetSdkVersion 21
+        targetSdkVersion 22
         minSdkVersion 9
     }
 
@@ -14,17 +14,29 @@ android {
         targetCompatibility JavaVersion.VERSION_1_7
     }
 
-    dexOptions {
-        incremental true
-    }
-
     lintOptions {
         abortOnError false
     }
+
+    sourceSets {
+        main {
+            res {
+                srcDir "${project.buildDir}/generated/source/preprocessed_resources"
+            }
+        }
+    }
+}
+
+task syncPreprocessedResources(type: Sync) {
+    into("${project.buildDir}/generated/source/preprocessed_resources")
+    from("${topobjdir}/mobile/android/base/res")
 }
 
 android.libraryVariants.all { variant ->
-    variant.checkManifest.dependsOn rootProject.generateCodeAndResources
+    // variant does not expose its generate debug res values task.
+    def name = variant.buildType.name
+    def generateResValuesTask = tasks.findByName("generate${name.capitalize()}ResValues")
+    generateResValuesTask.dependsOn syncPreprocessedResources
 }
 
 dependencies {

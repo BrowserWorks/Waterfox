@@ -94,6 +94,13 @@ class MIRGenerator
         return isProfilerInstrumentationEnabled() && !info().isAnalysis();
     }
 
+    bool safeForMinorGC() const {
+        return safeForMinorGC_;
+    }
+    void setNotSafeForMinorGC() {
+        safeForMinorGC_ = false;
+    }
+
     // Whether the main thread is trying to cancel this build.
     bool shouldCancel(const char* why) {
         maybePause();
@@ -145,13 +152,6 @@ class MIRGenerator
     // Traverses the graph to find if there's any SIMD instruction. Costful but
     // the value is cached, so don't worry about calling it several times.
     bool usesSimd();
-    void initMinAsmJSHeapLength(uint32_t len) {
-        MOZ_ASSERT(minAsmJSHeapLength_ == 0);
-        minAsmJSHeapLength_ = len;
-    }
-    uint32_t minAsmJSHeapLength() const {
-        return minAsmJSHeapLength_;
-    }
 
     bool modifiesFrameArguments() const {
         return modifiesFrameArguments_;
@@ -186,7 +186,6 @@ class MIRGenerator
     bool performsCall_;
     bool usesSimd_;
     bool usesSimdCached_;
-    uint32_t minAsmJSHeapLength_;
 
     // Keep track of whether frame arguments are modified during execution.
     // RegAlloc needs to know this as spilling values back to their register
@@ -195,12 +194,7 @@ class MIRGenerator
 
     bool instrumentedProfiling_;
     bool instrumentedProfilingIsCached_;
-
-    // List of nursery objects used by this compilation. Can be traced by a
-    // minor GC while compilation happens off-thread. This Vector should only
-    // be accessed on the main thread (IonBuilder, nursery GC or
-    // CodeGenerator::link).
-    ObjectVector nurseryObjects_;
+    bool safeForMinorGC_;
 
     void addAbortedPreliminaryGroup(ObjectGroup* group);
 
@@ -230,12 +224,6 @@ class MIRGenerator
   public:
     const JitCompileOptions options;
 
-    void traceNurseryObjects(JSTracer* trc);
-
-    const ObjectVector& nurseryObjects() const {
-        return nurseryObjects_;
-    }
-
     Label* conversionErrorLabel() const {
         MOZ_ASSERT((conversionErrorLabel_ != nullptr) == compilingAsmJS());
         return conversionErrorLabel_;
@@ -246,6 +234,14 @@ class MIRGenerator
     }
     bool needsAsmJSBoundsCheckBranch(const MAsmJSHeapAccess* access) const;
     size_t foldableOffsetRange(const MAsmJSHeapAccess* access) const;
+
+  private:
+    GraphSpewer gs_;
+
+  public:
+    GraphSpewer& graphSpewer() {
+        return gs_;
+    }
 };
 
 } // namespace jit

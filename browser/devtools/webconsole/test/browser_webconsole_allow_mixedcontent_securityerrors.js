@@ -9,10 +9,14 @@
 // Bug 875456 - Log mixed content messages from the Mixed Content
 // Blocker to the Security Pane in the Web Console
 
-const TEST_URI = "https://example.com/browser/browser/devtools/webconsole/test/test-mixedcontent-securityerrors.html";
-const LEARN_MORE_URI = "https://developer.mozilla.org/docs/Security/MixedContent";
+"use strict";
 
-let test = asyncTest(function* () {
+const TEST_URI = "https://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-mixedcontent-securityerrors.html";
+const LEARN_MORE_URI = "https://developer.mozilla.org/docs/Security/" +
+                       "MixedContent";
+
+var test = asyncTest(function* () {
   yield pushPrefEnv();
 
   yield loadTab(TEST_URI);
@@ -24,14 +28,17 @@ let test = asyncTest(function* () {
     messages: [
       {
         name: "Logged mixed active content",
-        text: "Loading mixed (insecure) active content \"http://example.com/\" on a secure page",
+        text: "Loading mixed (insecure) active content " +
+              "\"http://example.com/\" on a secure page",
         category: CATEGORY_SECURITY,
         severity: SEVERITY_WARNING,
         objects: true,
       },
       {
         name: "Logged mixed passive content - image",
-        text: "Loading mixed (insecure) display content \"http://example.com/tests/image/test/mochitest/blue.png\" on a secure page",
+        text: "Loading mixed (insecure) display content " +
+              "\"http://example.com/tests/image/test/mochitest/blue.png\" " +
+              "on a secure page",
         category: CATEGORY_SECURITY,
         severity: SEVERITY_WARNING,
         objects: true,
@@ -42,8 +49,7 @@ let test = asyncTest(function* () {
   yield testClickOpenNewTab(hud, results);
 });
 
-function pushPrefEnv()
-{
+function pushPrefEnv() {
   let deferred = promise.defer();
   let options = {"set":
       [["security.mixed_content.block_active_content", false],

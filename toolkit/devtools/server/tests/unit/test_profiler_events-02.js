@@ -4,66 +4,67 @@
 "use strict";
 
 /**
- * Tests the event notification service for the profiler actor, specifically
- * for when the profiler is started and stopped.
+ * Tests the event notification service for the profiler actor.
  */
 
 const Profiler = Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
+const MAX_PROFILER_ENTRIES = 10000000;
+const { ProfilerFront } = require("devtools/server/actors/profiler");
+const { waitForTime } = DevToolsUtils;
 
-function run_test()
-{
-  get_chrome_actors((client, form) => {
-    let actor = form.profilerActor;
-    activate_profiler(client, actor, () => {
-      test_events(client, actor, () => {
-        client.close(do_test_finished);
-      });
-    });
-  })
-
-  do_test_pending();
+function run_test() {
+  run_next_test();
 }
 
-function activate_profiler(client, actor, callback)
-{
-  client.request({ to: actor, type: "startProfiler" }, response => {
-    do_check_true(response.started);
-    client.request({ to: actor, type: "isActive" }, response => {
-      do_check_true(response.isActive);
-      callback();
-    });
-  });
-}
+add_task(function *() {
+  let [client, form] = yield getChromeActors();
+  let front = new ProfilerFront(client, form);
 
-function register_events(client, actor, events, callback)
-{
-  client.request({
-    to: actor,
-    type: "registerEventNotifications",
-    events: events
-  }, callback);
-}
+  // Ensure the profiler is not running when the test starts (it could
+  // happen if the MOZ_PROFILER_STARTUP environment variable is set).
+  Profiler.StopProfiler();
+  let eventsCalled = 0;
+  let handledThreeTimes = promise.defer();
 
-function wait_for_event(client, topic, callback)
-{
-  client.addListener("eventNotification", (type, response) => {
-    do_check_eq(type, "eventNotification");
+  front.on("profiler-status", (response) => {
+    dump("'profiler-status' fired\n");
+    do_check_true(typeof response.position === "number");
+    do_check_true(typeof response.totalSize === "number");
+    do_check_true(typeof response.generation === "number");
+    do_check_true(response.position > 0 && response.position < response.totalSize);
+    do_check_true(response.totalSize === MAX_PROFILER_ENTRIES);
+    // There's no way we'll fill the buffer in this test.
+    do_check_true(response.generation === 0);
 
-    if (response.topic == topic) {
-      callback();
+    eventsCalled++;
+    if (eventsCalled > 2) {
+      handledThreeTimes.resolve();
     }
   });
-}
 
-function test_events(client, actor, callback)
-{
-  register_events(client, actor, ["profiler-started", "profiler-stopped"], () => {
-    wait_for_event(client, "profiler-started", () => {
-      wait_for_event(client, "profiler-stopped", () => {
-        callback();
-      });
-      Profiler.StopProfiler();
-    });
-    Profiler.StartProfiler(1000000, 1, ["js"], 1);
-  });
+  yield front.setProfilerStatusInterval(1);
+  dump("Set the profiler-status event interval to 1\n");
+  yield front.startProfiler();
+  yield waitForTime(500);
+  yield front.stopProfiler();
+
+  do_check_true(eventsCalled === 0, "No 'profiler-status' events should be fired before registering.");
+
+  let ret = yield front.registerEventNotifications({ events: ["profiler-status"] });
+  do_check_true(ret.registered.length === 1);
+
+  yield front.startProfiler();
+  yield handledThreeTimes.promise;
+  yield front.stopProfiler();
+  do_check_true(eventsCalled >= 3, "profiler-status fired atleast three times while recording");
+
+  let totalEvents = eventsCalled;
+  yield waitForTime(50);
+  do_check_true(totalEvents === eventsCalled, "No more profiler-status events after recording.");
+});
+
+function getChromeActors () {
+  let deferred = promise.defer();
+  get_chrome_actors((client, form) => deferred.resolve([client, form]));
+  return deferred.promise;
 }

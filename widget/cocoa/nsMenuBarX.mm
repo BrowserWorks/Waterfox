@@ -33,6 +33,7 @@ NativeMenuItemTarget* nsMenuBarX::sNativeEventTarget = nil;
 nsMenuBarX* nsMenuBarX::sLastGeckoMenuBarPainted = nullptr; // Weak
 nsMenuBarX* nsMenuBarX::sCurrentPaintDelayedMenuBar = nullptr; // Weak
 NSMenu* sApplicationMenu = nil;
+BOOL sApplicationMenuIsFallback = NO;
 BOOL gSomeMenuBarPainted = NO;
 
 // We keep references to the first quit and pref item content nodes we find, which
@@ -186,6 +187,7 @@ void nsMenuBarX::ConstructFallbackNativeMenus()
   [quitMenuItem setTarget:nsMenuBarX::sNativeEventTarget];
   [quitMenuItem setTag:eCommand_ID_Quit];
   [sApplicationMenu addItem:quitMenuItem];
+  sApplicationMenuIsFallback = YES;
 }
 
 uint32_t nsMenuBarX::GetMenuCount()
@@ -207,6 +209,11 @@ nsresult nsMenuBarX::InsertMenuAtIndex(nsMenuX* aMenu, uint32_t aIndex)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
+  // If we've only yet created a fallback global Application menu (using
+  // ContructFallbackNativeMenus()), destroy it before recreating it properly.
+  if (sApplicationMenu && sApplicationMenuIsFallback) {
+    ResetNativeApplicationMenu();
+  }
   // If we haven't created a global Application menu yet, do it.
   if (!sApplicationMenu) {
     nsresult rv = NS_OK; // avoid warning about rv being unused
@@ -506,6 +513,7 @@ void nsMenuBarX::ResetNativeApplicationMenu()
   [sApplicationMenu removeAllItems];
   [sApplicationMenu release];
   sApplicationMenu = nil;
+  sApplicationMenuIsFallback = NO;
 }
 
 // Hide the item in the menu by setting the 'hidden' attribute. Returns it in |outHiddenNode| so
@@ -924,28 +932,11 @@ static BOOL gMenuItemsExecuteCommands = YES;
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
-  // menuGroupOwner below is an nsMenuBarX object, which we sometimes access
-  // after it's been deleted, causing crashes (see bug 704866 and bug 670914).
-  // To fix this "correctly", in nsMenuBarX::~nsMenuBarX() we'd need to
-  // iterate through every NSMenuItem in nsMenuBarX::mNativeMenu and its
-  // submenus, which might be quite time consuming.  (For every NSMenuItem
-  // that has a "representedObject" that's a MenuItemInfo object, we'd need
-  // need to null out its "menuGroupOwner" if it's the same as the nsMenuBarX
-  // object being destroyed.)  But if the nsMenuBarX object being destroyed
-  // corresponds to the currently focused window, it's likely that the
-  // nsMenuBarX destructor will null out sLastGeckoMenuBarPainted.  So we can
-  // probably eliminate most of these crashes if we use this variable being
-  // null as an indicator that we're likely to crash below when we dereference
-  // menuGroupOwner.
-  if (!nsMenuBarX::sLastGeckoMenuBarPainted) {
+  if (!gMenuItemsExecuteCommands) {
     return;
   }
 
   int tag = [sender tag];
-
-  if (!gMenuItemsExecuteCommands) {
-    return;
-  }
 
   nsMenuGroupOwnerX* menuGroupOwner = nullptr;
   nsMenuBarX* menuBar = nullptr;

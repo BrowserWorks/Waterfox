@@ -23,6 +23,9 @@
 #include "nsIFile.h"
 #include "nsIInputStream.h"
 #include "nsIObserverService.h"
+#include "nsIOutputStream.h"
+#include "nsISafeOutputStream.h"
+#include "nsISimpleEnumerator.h"
 #include "nsIStringEnumerator.h"
 #include "nsIZipReader.h"
 #include "nsPrefBranch.h"
@@ -34,7 +37,7 @@
 #include "nsPrintfCString.h"
 
 #include "nsQuickSort.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 
 #include "prefapi.h"
 #include "prefread.h"
@@ -50,7 +53,7 @@
 
 #ifdef DEBUG
 #define ENSURE_MAIN_PROCESS(message, pref) do {                                \
-  if (MOZ_UNLIKELY(XRE_GetProcessType() != GeckoProcessType_Default)) {        \
+  if (MOZ_UNLIKELY(!XRE_IsParentProcess())) {        \
     nsPrintfCString msg("ENSURE_MAIN_PROCESS failed. %s %s", message, pref);   \
     NS_WARNING(msg.get());                                                     \
     return NS_ERROR_NOT_AVAILABLE;                                             \
@@ -58,7 +61,7 @@
 } while (0);
 #else
 #define ENSURE_MAIN_PROCESS(message, pref)                                     \
-  if (MOZ_UNLIKELY(XRE_GetProcessType() != GeckoProcessType_Default)) {        \
+  if (MOZ_UNLIKELY(!XRE_IsParentProcess())) {        \
     return NS_ERROR_NOT_AVAILABLE;                                             \
   }
 #endif
@@ -215,18 +218,6 @@ AssertNotAlreadyCached(const char* aPrefType,
 }
 #endif
 
-static size_t
-SizeOfObserverEntryExcludingThis(ValueObserverHashKey* aKey,
-                                 const nsRefPtr<ValueObserver>& aData,
-                                 mozilla::MallocSizeOf aMallocSizeOf,
-                                 void*)
-{
-  size_t n = 0;
-  n += aKey->mPrefName.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
-  n += aData->mClosures.SizeOfExcludingThis(aMallocSizeOf);
-  return n;
-}
-
 // Although this is a member of Preferences, it measures sPreferences and
 // several other global structures.
 /* static */ int64_t
@@ -235,21 +226,24 @@ Preferences::SizeOfIncludingThisAndOtherStuff(mozilla::MallocSizeOf aMallocSizeO
   NS_ENSURE_TRUE(InitStaticMembers(), 0);
 
   size_t n = aMallocSizeOf(sPreferences);
-  if (gHashTable.IsInitialized()) {
+  if (gHashTable) {
     // pref keys are allocated in a private arena, which we count elsewhere.
     // pref stringvals are allocated out of the same private arena.
-    n += PL_DHashTableSizeOfExcludingThis(&gHashTable, nullptr, aMallocSizeOf);
+    n += gHashTable->ShallowSizeOfIncludingThis(aMallocSizeOf);
   }
   if (gCacheData) {
-    n += gCacheData->SizeOfIncludingThis(aMallocSizeOf);
+    n += gCacheData->ShallowSizeOfIncludingThis(aMallocSizeOf);
     for (uint32_t i = 0, count = gCacheData->Length(); i < count; ++i) {
       n += aMallocSizeOf((*gCacheData)[i]);
     }
   }
   if (gObserverTable) {
     n += aMallocSizeOf(gObserverTable);
-    n += gObserverTable->SizeOfExcludingThis(SizeOfObserverEntryExcludingThis,
-                                             aMallocSizeOf);
+    n += gObserverTable->ShallowSizeOfIncludingThis(aMallocSizeOf);
+    for (auto iter = gObserverTable->Iter(); !iter.Done(); iter.Next()) {
+      n += iter.Key()->mPrefName.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
+      n += iter.Data()->mClosures.ShallowSizeOfExcludingThis(aMallocSizeOf);
+    }
   }
   // We don't measure sRootBranch and sDefaultRootBranch here because
   // DMD indicates they are not significant.
@@ -392,7 +386,7 @@ class AddPreferencesMemoryReporterRunnable : public nsRunnable
     return RegisterStrongMemoryReporter(new PreferenceServiceReporter());
   }
 };
-} // anonymous namespace
+} // namespace
 
 // static
 Preferences*
@@ -523,14 +517,13 @@ Preferences::Init()
 {
   nsresult rv;
 
-  rv = PREF_Init();
-  NS_ENSURE_SUCCESS(rv, rv);
+  PREF_Init();
 
   rv = pref_InitInitialObjects();
   NS_ENSURE_SUCCESS(rv, rv);
 
   using mozilla::dom::ContentChild;
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     InfallibleTArray<PrefSetting> prefs;
     ContentChild::GetSingleton()->SendReadPrefsArray(&prefs);
 
@@ -581,7 +574,7 @@ NS_IMETHODIMP
 Preferences::Observe(nsISupports *aSubject, const char *aTopic,
                      const char16_t *someData)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content)
+  if (XRE_IsContentProcess())
     return NS_ERROR_NOT_AVAILABLE;
 
   nsresult rv = NS_OK;
@@ -606,7 +599,7 @@ Preferences::Observe(nsISupports *aSubject, const char *aTopic,
 NS_IMETHODIMP
 Preferences::ReadUserPrefs(nsIFile *aFile)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     NS_ERROR("cannot load prefs from content process");
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -636,7 +629,7 @@ Preferences::ReadUserPrefs(nsIFile *aFile)
 NS_IMETHODIMP
 Preferences::ResetPrefs()
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     NS_ERROR("cannot reset prefs from content process");
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -644,8 +637,7 @@ Preferences::ResetPrefs()
   NotifyServiceObservers(NS_PREFSERVICE_RESET_TOPIC_ID);
   PREF_CleanupPrefs();
 
-  nsresult rv = PREF_Init();
-  NS_ENSURE_SUCCESS(rv, rv);
+  PREF_Init();
 
   return pref_InitInitialObjects();
 }
@@ -653,7 +645,7 @@ Preferences::ResetPrefs()
 NS_IMETHODIMP
 Preferences::ResetUserPrefs()
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     NS_ERROR("cannot reset user prefs from content process");
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -665,7 +657,7 @@ Preferences::ResetUserPrefs()
 NS_IMETHODIMP
 Preferences::SavePrefFile(nsIFile *aFile)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     NS_ERROR("cannot save pref file from content process");
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -738,8 +730,12 @@ Preferences::GetPreference(PrefSetting* aPref)
 void
 Preferences::GetPreferences(InfallibleTArray<PrefSetting>* aPrefs)
 {
-  aPrefs->SetCapacity(gHashTable.Capacity());
-  PL_DHashTableEnumerate(&gHashTable, pref_GetPrefs, aPrefs);
+  aPrefs->SetCapacity(gHashTable->Capacity());
+  for (auto iter = gHashTable->Iter(); !iter.Done(); iter.Next()) {
+    auto entry = static_cast<PrefHashEntry*>(iter.Get());
+    dom::PrefSetting *pref = aPrefs->AppendElement();
+    pref_GetPrefFromEntry(entry, pref);
+  }
 }
 
 NS_IMETHODIMP
@@ -944,7 +940,7 @@ Preferences::WritePrefFile(nsIFile* aFile)
   uint32_t                  writeAmount;
   nsresult                  rv;
 
-  if (!gHashTable.IsInitialized())
+  if (!gHashTable)
     return NS_ERROR_NOT_INITIALIZED;
 
   // execute a "safe" save by saving through a tempfile
@@ -958,23 +954,21 @@ Preferences::WritePrefFile(nsIFile* aFile)
   if (NS_FAILED(rv)) 
       return rv;  
 
-  nsAutoArrayPtr<char*> valueArray(new char*[gHashTable.EntryCount()]);
-  memset(valueArray, 0, gHashTable.EntryCount() * sizeof(char*));
-  pref_saveArgs saveArgs;
-  saveArgs.prefArray = valueArray;
-  saveArgs.saveTypes = SAVE_ALL;
-  
+  nsAutoArrayPtr<char*> valueArray(new char*[gHashTable->EntryCount()]);
+  memset(valueArray, 0, gHashTable->EntryCount() * sizeof(char*));
+
   // get the lines that we're supposed to be writing to the file
-  PL_DHashTableEnumerate(&gHashTable, pref_savePref, &saveArgs);
-    
+  pref_savePrefs(gHashTable, valueArray);
+
   /* Sort the preferences to make a readable file on disk */
-  NS_QuickSort(valueArray, gHashTable.EntryCount(), sizeof(char *), pref_CompareStrings, nullptr);
-  
+  NS_QuickSort(valueArray, gHashTable->EntryCount(), sizeof(char *),
+               pref_CompareStrings, nullptr);
+
   // write out the file header
   outStream->Write(outHeader, sizeof(outHeader) - 1, &writeAmount);
 
   char** walker = valueArray;
-  for (uint32_t valueIdx = 0; valueIdx < gHashTable.EntryCount(); valueIdx++, walker++) {
+  for (uint32_t valueIdx = 0; valueIdx < gHashTable->EntryCount(); valueIdx++, walker++) {
     if (*walker) {
       outStream->Write(*walker, strlen(*walker), &writeAmount);
       outStream->Write(NS_LINEBREAK, NS_LINEBREAK_LEN, &writeAmount);
@@ -1520,7 +1514,7 @@ Preferences::SetCString(const char* aPref, const nsACString &aValue)
 
 // static
 nsresult
-Preferences::SetString(const char* aPref, const char16_t* aValue)
+Preferences::SetString(const char* aPref, const char16ptr_t aValue)
 {
   ENSURE_MAIN_PROCESS("Cannot SetString from content process:", aPref);
   NS_ENSURE_TRUE(InitStaticMembers(), NS_ERROR_NOT_AVAILABLE);

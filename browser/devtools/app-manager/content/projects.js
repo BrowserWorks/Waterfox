@@ -7,8 +7,7 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 Cu.import("resource:///modules/devtools/gDevTools.jsm");
-const {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const {require} = devtools;
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const {ConnectionManager, Connection} = require("devtools/client/connection-manager");
 const {AppProjects} = require("devtools/app-manager/app-projects");
 const {AppValidator} = require("devtools/app-manager/app-validator");
@@ -43,7 +42,7 @@ window.addEventListener("unload", function onUnload() {
   UI.destroy();
 });
 
-let UI = {
+var UI = {
   isReady: false,
 
   onload: function() {
@@ -126,7 +125,7 @@ let UI = {
   _getLocalIconURL: function(project, manifest) {
     let icon;
     if (manifest.icons) {
-      let size = Object.keys(manifest.icons).sort(function(a, b) b - a)[0];
+      let size = Object.keys(manifest.icons).sort((a, b) => b - a)[0];
       if (size) {
         icon = manifest.icons[size];
       }

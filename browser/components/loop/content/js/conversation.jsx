@@ -1,25 +1,18 @@
-/** @jsx React.DOM */
-
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
-
-/* jshint newcap:false, esnext:true */
-/* global loop:true, React */
 
 var loop = loop || {};
 loop.conversation = (function(mozL10n) {
   "use strict";
 
-  var sharedViews = loop.shared.views;
   var sharedMixins = loop.shared.mixins;
-  var sharedModels = loop.shared.models;
   var sharedActions = loop.shared.actions;
 
   var CallControllerView = loop.conversationViews.CallControllerView;
-  var CallIdentifierView = loop.conversationViews.CallIdentifierView;
   var DesktopRoomConversationView = loop.roomViews.DesktopRoomConversationView;
-  var GenericFailureView = loop.conversationViews.GenericFailureView;
+  var FeedbackView = loop.feedbackViews.FeedbackView;
+  var DirectCallFailureView = loop.conversationViews.DirectCallFailureView;
 
   /**
    * Master controller view for handling if incoming or outgoing calls are
@@ -29,36 +22,75 @@ loop.conversation = (function(mozL10n) {
     mixins: [
       Backbone.Events,
       loop.store.StoreMixin("conversationAppStore"),
+      sharedMixins.DocumentTitleMixin,
       sharedMixins.WindowCloseMixin
     ],
 
     propTypes: {
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
-      roomStore: React.PropTypes.instanceOf(loop.store.RoomStore),
-      mozLoop: React.PropTypes.object.isRequired
+      mozLoop: React.PropTypes.object.isRequired,
+      roomStore: React.PropTypes.instanceOf(loop.store.RoomStore)
     },
 
     getInitialState: function() {
       return this.getStoreState();
     },
 
+    _renderFeedbackForm: function() {
+      this.setTitle(mozL10n.get("conversation_has_ended"));
+
+      return (<FeedbackView
+        mozLoop={this.props.mozLoop}
+        onAfterFeedbackReceived={this.closeWindow} />);
+    },
+
+    /**
+     * We only show the feedback for once every 6 months, otherwise close
+     * the window.
+     */
+    handleCallTerminated: function() {
+      var delta = new Date() - new Date(this.state.feedbackTimestamp);
+
+      // Show timestamp if feedback period (6 months) passed.
+      // 0 is default value for pref. Always show feedback form on first use.
+      if (this.state.feedbackTimestamp === 0 ||
+          delta >= this.state.feedbackPeriod) {
+        this.props.dispatcher.dispatch(new sharedActions.ShowFeedbackForm());
+        return;
+      }
+
+      this.closeWindow();
+    },
+
     render: function() {
+      if (this.state.showFeedbackForm) {
+        return this._renderFeedbackForm();
+      }
+
       switch(this.state.windowType) {
         // CallControllerView is used for both.
         case "incoming":
         case "outgoing": {
           return (<CallControllerView
+            chatWindowDetached={this.state.chatWindowDetached}
             dispatcher={this.props.dispatcher}
-            mozLoop={this.props.mozLoop} />);
+            mozLoop={this.props.mozLoop}
+            onCallTerminated={this.handleCallTerminated} />);
         }
         case "room": {
           return (<DesktopRoomConversationView
+            chatWindowDetached={this.state.chatWindowDetached}
             dispatcher={this.props.dispatcher}
             mozLoop={this.props.mozLoop}
+            onCallTerminated={this.handleCallTerminated}
             roomStore={this.props.roomStore} />);
         }
         case "failed": {
-          return <GenericFailureView cancelCall={this.closeWindow} />;
+          return (<DirectCallFailureView
+            contact={{}}
+            dispatcher={this.props.dispatcher}
+            mozLoop={this.props.mozLoop}
+            outgoing={false} />);
         }
         default: {
           // If we don't have a windowType, we don't know what we are yet,
@@ -91,10 +123,14 @@ loop.conversation = (function(mozL10n) {
       }
     });
 
+    // We want data channels only if the text chat preference is enabled.
+    var useDataChannels = loop.shared.utils.getBoolPreference("textChat.enabled");
+
     var dispatcher = new loop.Dispatcher();
     var client = new loop.Client();
     var sdkDriver = new loop.OTSdkDriver({
       isDesktop: true,
+      useDataChannels: useDataChannels,
       dispatcher: dispatcher,
       sdk: OT,
       mozLoop: navigator.mozLoop
@@ -103,20 +139,7 @@ loop.conversation = (function(mozL10n) {
     // expose for functional tests
     loop.conversation._sdkDriver = sdkDriver;
 
-    var appVersionInfo = navigator.mozLoop.appVersionInfo;
-    var feedbackClient = new loop.FeedbackAPIClient(
-      navigator.mozLoop.getLoopPref("feedback.baseUrl"), {
-      product: navigator.mozLoop.getLoopPref("feedback.product"),
-      platform: appVersionInfo.OS,
-      channel: appVersionInfo.channel,
-      version: appVersionInfo.version
-    });
-
     // Create the stores.
-    var conversationAppStore = new loop.store.ConversationAppStore({
-      dispatcher: dispatcher,
-      mozLoop: navigator.mozLoop
-    });
     var conversationStore = new loop.store.ConversationStore(dispatcher, {
       client: client,
       isDesktop: true,
@@ -128,18 +151,23 @@ loop.conversation = (function(mozL10n) {
       mozLoop: navigator.mozLoop,
       sdkDriver: sdkDriver
     });
+    var conversationAppStore = new loop.store.ConversationAppStore({
+      activeRoomStore: activeRoomStore,
+      dispatcher: dispatcher,
+      mozLoop: navigator.mozLoop
+    });
     var roomStore = new loop.store.RoomStore(dispatcher, {
       mozLoop: navigator.mozLoop,
       activeRoomStore: activeRoomStore
     });
-    var feedbackStore = new loop.store.FeedbackStore(dispatcher, {
-      feedbackClient: feedbackClient
+    var textChatStore = new loop.store.TextChatStore(dispatcher, {
+      sdkDriver: sdkDriver
     });
 
     loop.store.StoreMixin.register({
       conversationAppStore: conversationAppStore,
       conversationStore: conversationStore,
-      feedbackStore: feedbackStore
+      textChatStore: textChatStore
     });
 
     // Obtain the windowId and pass it through
@@ -151,17 +179,14 @@ loop.conversation = (function(mozL10n) {
       windowId = hash[1];
     }
 
-    window.addEventListener("unload", function(event) {
-      dispatcher.dispatch(new sharedActions.WindowUnload());
-    });
+    React.render(
+      <AppControllerView
+        dispatcher={dispatcher}
+        mozLoop={navigator.mozLoop}
+        roomStore={roomStore} />, document.querySelector("#main"));
 
-    React.render(<AppControllerView
-      roomStore={roomStore}
-      dispatcher={dispatcher}
-      mozLoop={navigator.mozLoop}
-    />, document.querySelector('#main'));
-
-    document.body.setAttribute("dir", mozL10n.getDirection());
+    document.documentElement.setAttribute("lang", mozL10n.getLanguage());
+    document.documentElement.setAttribute("dir", mozL10n.getDirection());
     document.body.setAttribute("platform", loop.shared.utils.getPlatform());
 
     dispatcher.dispatch(new sharedActions.GetWindowData({
@@ -183,4 +208,4 @@ loop.conversation = (function(mozL10n) {
   };
 })(document.mozL10n);
 
-document.addEventListener('DOMContentLoaded', loop.conversation.init);
+document.addEventListener("DOMContentLoaded", loop.conversation.init);

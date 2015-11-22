@@ -6,20 +6,21 @@
 // Test that makes sure web console eval works while the js debugger paused the
 // page, and while the inspector is active. See bug 886137.
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-eval-in-stackframe.html";
+"use strict";
 
-let gWebConsole, gJSTerm, gDebuggerWin, gThread, gDebuggerController,
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-eval-in-stackframe.html";
+
+var gWebConsole, gJSTerm, gDebuggerWin, gThread, gDebuggerController,
     gStackframes, gVariablesView;
 
-function test()
-{
+function test() {
   loadTab(TEST_URI).then(() => {
     openConsole().then(consoleOpened);
   }, true);
 }
 
-function consoleOpened(hud)
-{
+function consoleOpened(hud) {
   gWebConsole = hud;
   gJSTerm = hud.jsterm;
 
@@ -27,10 +28,9 @@ function consoleOpened(hud)
   openDebugger().then(debuggerOpened);
 }
 
-function debuggerOpened(aResult)
-{
+function debuggerOpened(result) {
   info("debugger opened");
-  gDebuggerWin = aResult.panelWin;
+  gDebuggerWin = result.panelWin;
   gDebuggerController = gDebuggerWin.DebuggerController;
   gThread = gDebuggerController.activeThread;
   gStackframes = gDebuggerController.StackFrames;
@@ -38,8 +38,7 @@ function debuggerOpened(aResult)
   openInspector().then(inspectorOpened);
 }
 
-function inspectorOpened(aPanel)
-{
+function inspectorOpened() {
   info("inspector opened");
   gThread.addOneTimeListener("framesadded", onFramesAdded);
 
@@ -47,18 +46,16 @@ function inspectorOpened(aPanel)
   content.wrappedJSObject.firstCall();
 }
 
-function onFramesAdded()
-{
+function onFramesAdded() {
   info("onFramesAdded");
 
   openConsole().then(() => gJSTerm.execute("fooObj").then(onExecuteFooObj));
 }
 
-function onExecuteFooObj(msg)
-{
+function onExecuteFooObj(msg) {
   ok(msg, "output message found");
   ok(msg.textContent.includes('{ testProp2: "testValue2" }'),
-     "message text check");
+                              "message text check");
 
   let anchor = msg.querySelector("a");
   ok(anchor, "object link found");
@@ -68,8 +65,7 @@ function onExecuteFooObj(msg)
   EventUtils.synthesizeMouse(anchor, 2, 2, {}, gWebConsole.iframeWindow);
 }
 
-function onFooObjFetch(aEvent, aVar)
-{
+function onFooObjFetch(aEvent, aVar) {
   gVariablesView = aVar._variablesView;
   ok(gVariablesView, "variables view object");
 
@@ -79,8 +75,7 @@ function onFooObjFetch(aEvent, aVar)
   ], { webconsole: gWebConsole }).then(onTestPropFound);
 }
 
-function onTestPropFound(aResults)
-{
+function onTestPropFound(aResults) {
   let prop = aResults[0].matchedProp;
   ok(prop, "matched the |testProp2| property in the variables view");
 
@@ -94,8 +89,7 @@ function onTestPropFound(aResults)
   }).then(onFooObjFetchAfterUpdate);
 }
 
-function onFooObjFetchAfterUpdate(aVar)
-{
+function onFooObjFetchAfterUpdate(aVar) {
   info("onFooObjFetchAfterUpdate");
   let para = content.wrappedJSObject.document.querySelector("p");
   let expectedValue = content.document.title + "foo2SecondCall" + para;
@@ -105,8 +99,7 @@ function onFooObjFetchAfterUpdate(aVar)
   ], { webconsole: gWebConsole }).then(onUpdatedTestPropFound);
 }
 
-function onUpdatedTestPropFound(aResults)
-{
+function onUpdatedTestPropFound(aResults) {
   let prop = aResults[0].matchedProp;
   ok(prop, "matched the updated |testProp2| property value");
 
@@ -114,8 +107,7 @@ function onUpdatedTestPropFound(aResults)
   gJSTerm.execute("fooObj.testProp2").then(onExecuteFooObjTestProp2);
 }
 
-function onExecuteFooObjTestProp2()
-{
+function onExecuteFooObjTestProp2() {
   let para = content.wrappedJSObject.document.querySelector("p");
   let expected = content.document.title + "foo2SecondCall" + para;
 

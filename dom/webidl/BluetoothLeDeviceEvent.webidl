@@ -4,19 +4,19 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-[CheckPermissions="bluetooth",
+[CheckAnyPermissions="bluetooth",
  Constructor(DOMString type, optional BluetoothLeDeviceEventInit eventInitDict)]
 interface BluetoothLeDeviceEvent : Event
 {
-  readonly attribute BluetoothDevice device;
+  readonly attribute BluetoothDevice? device;
   readonly attribute short rssi;
   [Throws]
-  readonly attribute ArrayBuffer scanRecord;
+  readonly attribute ArrayBuffer? scanRecord;
 };
 
 dictionary BluetoothLeDeviceEventInit : EventInit
 {
-  required BluetoothDevice device;
-  short  rssi = 0;
-  required ArrayBuffer scanRecord;
+  BluetoothDevice? device = null;
+  short rssi = 0;
+  ArrayBuffer? scanRecord = null;
 };

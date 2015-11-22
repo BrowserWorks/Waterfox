@@ -10,13 +10,15 @@ const Cu = Components.utils;
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
-Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
-let {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
-let {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+var {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
+var {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+var {TargetFactory} = require("devtools/framework/target");
+var {Toolbox} = require("devtools/framework/toolbox")
+var promise = require("promise");
+var {DebuggerClient} = require("devtools/toolkit/client/main");
 
-let gClient;
-let gConnectionTimeout;
+var gClient;
+var gConnectionTimeout;
 
 XPCOMUtils.defineLazyGetter(window, 'l10n', function () {
   return Services.strings.createBundle('chrome://browser/locale/devtools/connection-screen.properties');
@@ -52,7 +54,7 @@ window.addEventListener("DOMContentLoaded", function onDOMReady() {
 /**
  * Called when the "connect" button is clicked.
  */
-let submit = Task.async(function*() {
+var submit = Task.async(function*() {
   // Show the "connecting" screen
   document.body.classList.add("connecting");
 
@@ -85,7 +87,7 @@ function clientConnect() {
 /**
  * Connection is ready. List actors and build buttons.
  */
-let onConnectionReady = Task.async(function*(aType, aTraits) {
+var onConnectionReady = Task.async(function*(aType, aTraits) {
   clearTimeout(gConnectionTimeout);
 
   let deferred = promise.defer();
@@ -236,8 +238,8 @@ function openToolbox(form, chrome=false, tool="webconsole", isTabActor) {
     chrome: chrome,
     isTabActor: isTabActor
   };
-  devtools.TargetFactory.forRemoteTab(options).then((target) => {
-    let hostType = devtools.Toolbox.HostType.WINDOW;
+  TargetFactory.forRemoteTab(options).then((target) => {
+    let hostType = Toolbox.HostType.WINDOW;
     gDevTools.showToolbox(target, tool, hostType).then((toolbox) => {
       toolbox.once("destroyed", function() {
         gClient.close();

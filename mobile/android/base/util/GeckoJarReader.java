@@ -5,20 +5,23 @@
 package org.mozilla.gecko.util;
 
 import android.content.Context;
-import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.mozglue.NativeZip;
-
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
-import org.mozilla.gecko.mozglue.RobocopTarget;
+import org.mozilla.gecko.annotation.RobocopTarget;
+import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.mozglue.GeckoLoader;
+import org.mozilla.gecko.mozglue.NativeZip;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Stack;
@@ -31,12 +34,13 @@ public final class GeckoJarReader {
 
     private GeckoJarReader() {}
 
-    public static Bitmap getBitmap(Resources resources, String url) {
-        BitmapDrawable drawable = getBitmapDrawable(resources, url);
+    public static Bitmap getBitmap(Context context, Resources resources, String url) {
+        BitmapDrawable drawable = getBitmapDrawable(context, resources, url);
         return (drawable != null) ? drawable.getBitmap() : null;
     }
 
-    public static BitmapDrawable getBitmapDrawable(Resources resources, String url) {
+    public static BitmapDrawable getBitmapDrawable(Context context, Resources resources,
+                                                   String url) {
         Stack<String> jarUrls = parseUrl(url);
         InputStream inputStream = null;
         BitmapDrawable bitmap = null;
@@ -44,7 +48,7 @@ public final class GeckoJarReader {
         NativeZip zip = null;
         try {
             // Load the initial jar file as a zip
-            zip = getZipFile(jarUrls.pop());
+            zip = getZipFile(context, jarUrls.pop());
             inputStream = getStream(zip, jarUrls, url);
             if (inputStream != null) {
                 bitmap = new BitmapDrawable(resources, inputStream);
@@ -67,14 +71,14 @@ public final class GeckoJarReader {
         return bitmap;
     }
 
-    public static String getText(String url) {
+    public static String getText(Context context, String url) {
         Stack<String> jarUrls = parseUrl(url);
 
         NativeZip zip = null;
         BufferedReader reader = null;
         String text = null;
         try {
-            zip = getZipFile(jarUrls.pop());
+            zip = getZipFile(context, jarUrls.pop());
             InputStream input = getStream(zip, jarUrls, url);
             if (input != null) {
                 reader = new BufferedReader(new InputStreamReader(input));
@@ -98,16 +102,80 @@ public final class GeckoJarReader {
         return text;
     }
 
-    private static NativeZip getZipFile(String url) throws IOException, URISyntaxException {
+    private static NativeZip getZipFile(Context context, String url)
+            throws IOException, URISyntaxException {
         URI fileUrl = new URI(url);
+        GeckoLoader.loadMozGlue(context);
         return new NativeZip(fileUrl.getPath());
     }
 
     @RobocopTarget
-    public static InputStream getStream(String url) {
+    /**
+     * Extract a (possibly nested) file from an archive and write it to a temporary file.
+     *
+     * @param context Android context.
+     * @param url to open.  Can include jar: to "reach into" nested archives.
+     * @param dir to write temporary file to.
+     * @return a <code>File</code>, if one could be written; otherwise null.
+     * @throws IOException if an error occured.
+     */
+    public static File extractStream(Context context, String url, File dir, String suffix) throws IOException {
+        InputStream input = null;
+        try {
+            try {
+                final URI fileURI = new URI(url);
+                // We don't check the scheme because we want to catch bare files, not just file:// URIs.
+                // If we let bare files through, we'd try to open them as ZIP files later -- and crash in native code.
+                if (fileURI != null && fileURI.getPath() != null) {
+                    final File inputFile = new File(fileURI.getPath());
+                    if (inputFile != null && inputFile.exists()) {
+                        input = new FileInputStream(inputFile);
+                    }
+                }
+            } catch (URISyntaxException e) {
+                // Not a file:// URI.
+            }
+            if (input == null) {
+                // No luck with file:// URI; maybe some other URI?
+                input = getStream(context, url);
+            }
+            if (input == null) {
+                // Not found!
+                return null;
+            }
+
+            // n.b.: createTempFile does not in fact delete the file.
+            final File file = File.createTempFile("extractStream", suffix, dir);
+            OutputStream output = null;
+            try {
+                output = new FileOutputStream(file);
+                byte[] buf = new byte[8192];
+                int len;
+                while ((len = input.read(buf)) >= 0) {
+                    output.write(buf, 0, len);
+                }
+                return file;
+            } finally {
+                if (output != null) {
+                    output.close();
+                }
+            }
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    Log.w(LOGTAG, "Got exception closing stream; ignoring.", e);
+                }
+            }
+        }
+    }
+
+    @RobocopTarget
+    public static InputStream getStream(Context context, String url) {
         Stack<String> jarUrls = parseUrl(url);
         try {
-            NativeZip zip = getZipFile(jarUrls.pop());
+            NativeZip zip = getZipFile(context, jarUrls.pop());
             return getStream(zip, jarUrls, url);
         } catch (Exception ex) {
             // Some JNI code throws IllegalArgumentException on a bad file name;

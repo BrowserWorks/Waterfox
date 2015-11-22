@@ -6,7 +6,7 @@
 #include "MediaDecoder.h"
 #include "nsIPrincipal.h"
 #include "nsMimeTypes.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/StaticPtr.h"
 
@@ -31,12 +31,8 @@
 #undef LOG
 #endif
 
-#ifdef PR_LOGGING
 PRLogModuleInfo* gMediaEncoderLog;
-#define LOG(type, msg) PR_LOG(gMediaEncoderLog, type, msg)
-#else
-#define LOG(type, msg)
-#endif
+#define LOG(type, msg) MOZ_LOG(gMediaEncoderLog, type, msg)
 
 namespace mozilla {
 
@@ -66,7 +62,7 @@ MediaEncoder::NotifyEvent(MediaStreamGraph* aGraph,
                           MediaStreamListener::MediaStreamGraphEvent event)
 {
   // In case that MediaEncoder does not receive a TRACK_EVENT_ENDED event.
-  LOG(PR_LOG_DEBUG, ("NotifyRemoved in [MediaEncoder]."));
+  LOG(LogLevel::Debug, ("NotifyRemoved in [MediaEncoder]."));
   if (mAudioEncoder) {
     mAudioEncoder->NotifyEvent(aGraph, event);
   }
@@ -77,13 +73,13 @@ MediaEncoder::NotifyEvent(MediaStreamGraph* aGraph,
 
 /* static */
 already_AddRefed<MediaEncoder>
-MediaEncoder::CreateEncoder(const nsAString& aMIMEType, uint8_t aTrackTypes)
+MediaEncoder::CreateEncoder(const nsAString& aMIMEType, uint32_t aAudioBitrate,
+                            uint32_t aVideoBitrate, uint32_t aBitrate,
+                            uint8_t aTrackTypes)
 {
-#ifdef PR_LOGGING
   if (!gMediaEncoderLog) {
     gMediaEncoderLog = PR_NewLogModule("MediaEncoder");
   }
-#endif
   PROFILER_LABEL("MediaEncoder", "CreateEncoder",
     js::ProfileEntry::Category::OTHER);
 
@@ -93,7 +89,7 @@ MediaEncoder::CreateEncoder(const nsAString& aMIMEType, uint8_t aTrackTypes)
   nsRefPtr<MediaEncoder> encoder;
   nsString mimeType;
   if (!aTrackTypes) {
-    LOG(PR_LOG_ERROR, ("NO TrackTypes!!!"));
+    LOG(LogLevel::Error, ("NO TrackTypes!!!"));
     return nullptr;
   }
 #ifdef MOZ_WEBM_ENCODER
@@ -144,14 +140,21 @@ MediaEncoder::CreateEncoder(const nsAString& aMIMEType, uint8_t aTrackTypes)
     mimeType = NS_LITERAL_STRING(AUDIO_OGG);
   }
   else {
-    LOG(PR_LOG_ERROR, ("Can not find any encoder to record this media stream"));
+    LOG(LogLevel::Error, ("Can not find any encoder to record this media stream"));
     return nullptr;
   }
-  LOG(PR_LOG_DEBUG, ("Create encoder result:a[%d] v[%d] w[%d] mimeType = %s.",
+  LOG(LogLevel::Debug, ("Create encoder result:a[%d] v[%d] w[%d] mimeType = %s.",
                       audioEncoder != nullptr, videoEncoder != nullptr,
                       writer != nullptr, mimeType.get()));
+  if (videoEncoder && aVideoBitrate != 0) {
+    videoEncoder->SetBitrate(aVideoBitrate);
+  }
+  if (audioEncoder && aAudioBitrate != 0) {
+    audioEncoder->SetBitrate(aAudioBitrate);
+  }
   encoder = new MediaEncoder(writer.forget(), audioEncoder.forget(),
-                             videoEncoder.forget(), mimeType);
+                             videoEncoder.forget(), mimeType, aAudioBitrate,
+                             aVideoBitrate, aBitrate);
   return encoder.forget();
 }
 
@@ -193,49 +196,49 @@ MediaEncoder::GetEncodedData(nsTArray<nsTArray<uint8_t> >* aOutputBufs,
   while (reloop) {
     switch (mState) {
     case ENCODE_METADDATA: {
-      LOG(PR_LOG_DEBUG, ("ENCODE_METADDATA TimeStamp = %f", GetEncodeTimeStamp()));
+      LOG(LogLevel::Debug, ("ENCODE_METADDATA TimeStamp = %f", GetEncodeTimeStamp()));
       nsresult rv = CopyMetadataToMuxer(mAudioEncoder.get());
       if (NS_FAILED(rv)) {
-        LOG(PR_LOG_ERROR, ("Error! Fail to Set Audio Metadata"));
+        LOG(LogLevel::Error, ("Error! Fail to Set Audio Metadata"));
         break;
       }
       rv = CopyMetadataToMuxer(mVideoEncoder.get());
       if (NS_FAILED(rv)) {
-        LOG(PR_LOG_ERROR, ("Error! Fail to Set Video Metadata"));
+        LOG(LogLevel::Error, ("Error! Fail to Set Video Metadata"));
         break;
       }
 
       rv = mWriter->GetContainerData(aOutputBufs,
                                      ContainerWriter::GET_HEADER);
       if (aOutputBufs != nullptr) {
-        mSizeOfBuffer = aOutputBufs->SizeOfExcludingThis(MallocSizeOf);
+        mSizeOfBuffer = aOutputBufs->ShallowSizeOfExcludingThis(MallocSizeOf);
       }
       if (NS_FAILED(rv)) {
-       LOG(PR_LOG_ERROR,("Error! writer fail to generate header!"));
+       LOG(LogLevel::Error,("Error! writer fail to generate header!"));
        mState = ENCODE_ERROR;
        break;
       }
-      LOG(PR_LOG_DEBUG, ("Finish ENCODE_METADDATA TimeStamp = %f", GetEncodeTimeStamp()));
+      LOG(LogLevel::Debug, ("Finish ENCODE_METADDATA TimeStamp = %f", GetEncodeTimeStamp()));
       mState = ENCODE_TRACK;
       break;
     }
 
     case ENCODE_TRACK: {
-      LOG(PR_LOG_DEBUG, ("ENCODE_TRACK TimeStamp = %f", GetEncodeTimeStamp()));
+      LOG(LogLevel::Debug, ("ENCODE_TRACK TimeStamp = %f", GetEncodeTimeStamp()));
       EncodedFrameContainer encodedData;
       nsresult rv = NS_OK;
       rv = WriteEncodedDataToMuxer(mAudioEncoder.get());
       if (NS_FAILED(rv)) {
-        LOG(PR_LOG_ERROR, ("Error! Fail to write audio encoder data to muxer"));
+        LOG(LogLevel::Error, ("Error! Fail to write audio encoder data to muxer"));
         break;
       }
-      LOG(PR_LOG_DEBUG, ("Audio encoded TimeStamp = %f", GetEncodeTimeStamp()));
+      LOG(LogLevel::Debug, ("Audio encoded TimeStamp = %f", GetEncodeTimeStamp()));
       rv = WriteEncodedDataToMuxer(mVideoEncoder.get());
       if (NS_FAILED(rv)) {
-        LOG(PR_LOG_ERROR, ("Fail to write video encoder data to muxer"));
+        LOG(LogLevel::Error, ("Fail to write video encoder data to muxer"));
         break;
       }
-      LOG(PR_LOG_DEBUG, ("Video encoded TimeStamp = %f", GetEncodeTimeStamp()));
+      LOG(LogLevel::Debug, ("Video encoded TimeStamp = %f", GetEncodeTimeStamp()));
       // In audio only or video only case, let unavailable track's flag to be true.
       bool isAudioCompleted = (mAudioEncoder && mAudioEncoder->IsEncodingComplete()) || !mAudioEncoder;
       bool isVideoCompleted = (mVideoEncoder && mVideoEncoder->IsEncodingComplete()) || !mVideoEncoder;
@@ -243,14 +246,14 @@ MediaEncoder::GetEncodedData(nsTArray<nsTArray<uint8_t> >* aOutputBufs,
                                      isAudioCompleted && isVideoCompleted ?
                                      ContainerWriter::FLUSH_NEEDED : 0);
       if (aOutputBufs != nullptr) {
-        mSizeOfBuffer = aOutputBufs->SizeOfExcludingThis(MallocSizeOf);
+        mSizeOfBuffer = aOutputBufs->ShallowSizeOfExcludingThis(MallocSizeOf);
       }
       if (NS_SUCCEEDED(rv)) {
         // Successfully get the copy of final container data from writer.
         reloop = false;
       }
       mState = (mWriter->IsWritingComplete()) ? ENCODE_DONE : ENCODE_TRACK;
-      LOG(PR_LOG_DEBUG, ("END ENCODE_TRACK TimeStamp = %f "
+      LOG(LogLevel::Debug, ("END ENCODE_TRACK TimeStamp = %f "
           "mState = %d aComplete %d vComplete %d",
           GetEncodeTimeStamp(), mState, isAudioCompleted, isVideoCompleted));
       break;
@@ -258,7 +261,7 @@ MediaEncoder::GetEncodedData(nsTArray<nsTArray<uint8_t> >* aOutputBufs,
 
     case ENCODE_DONE:
     case ENCODE_ERROR:
-      LOG(PR_LOG_DEBUG, ("MediaEncoder has been shutdown."));
+      LOG(LogLevel::Debug, ("MediaEncoder has been shutdown."));
       mSizeOfBuffer = 0;
       mShutdown = true;
       reloop = false;
@@ -286,7 +289,7 @@ MediaEncoder::WriteEncodedDataToMuxer(TrackEncoder *aTrackEncoder)
   nsresult rv = aTrackEncoder->GetEncodedTrack(encodedVideoData);
   if (NS_FAILED(rv)) {
     // Encoding might be canceled.
-    LOG(PR_LOG_ERROR, ("Error! Fail to get encoded data from video encoder."));
+    LOG(LogLevel::Error, ("Error! Fail to get encoded data from video encoder."));
     mState = ENCODE_ERROR;
     return rv;
   }
@@ -294,7 +297,7 @@ MediaEncoder::WriteEncodedDataToMuxer(TrackEncoder *aTrackEncoder)
                                   aTrackEncoder->IsEncodingComplete() ?
                                   ContainerWriter::END_OF_STREAM : 0);
   if (NS_FAILED(rv)) {
-    LOG(PR_LOG_ERROR, ("Error! Fail to write encoded video track to the media container."));
+    LOG(LogLevel::Error, ("Error! Fail to write encoded video track to the media container."));
     mState = ENCODE_ERROR;
   }
   return rv;
@@ -312,14 +315,14 @@ MediaEncoder::CopyMetadataToMuxer(TrackEncoder *aTrackEncoder)
 
   nsRefPtr<TrackMetadataBase> meta = aTrackEncoder->GetMetadata();
   if (meta == nullptr) {
-    LOG(PR_LOG_ERROR, ("Error! metadata = null"));
+    LOG(LogLevel::Error, ("Error! metadata = null"));
     mState = ENCODE_ERROR;
     return NS_ERROR_ABORT;
   }
 
   nsresult rv = mWriter->SetMetadata(meta);
   if (NS_FAILED(rv)) {
-   LOG(PR_LOG_ERROR, ("Error! SetMetadata fail"));
+   LOG(LogLevel::Error, ("Error! SetMetadata fail"));
    mState = ENCODE_ERROR;
   }
   return rv;
@@ -358,4 +361,4 @@ MediaEncoder::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
   return amount;
 }
 
-}
+} // namespace mozilla

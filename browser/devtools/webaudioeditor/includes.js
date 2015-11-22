@@ -10,11 +10,10 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
 Cu.import("resource:///modules/devtools/gDevTools.jsm");
 
-const devtools = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools;
-const { require } = devtools;
+const { loader, require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 
-let { console } = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
-let { EventTarget } = require("sdk/event/target");
+var { console } = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
+var { EventTarget } = require("sdk/event/target");
 
 const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 const { Class } = require("sdk/core/heritage");
@@ -23,15 +22,17 @@ const STRINGS_URI = "chrome://browser/locale/devtools/webaudioeditor.properties"
 const L10N = new ViewHelpers.L10N(STRINGS_URI);
 const Telemetry = require("devtools/shared/telemetry");
 const telemetry = new Telemetry();
-devtools.lazyImporter(this, "LineGraphWidget",
-  "resource:///modules/devtools/Graphs.jsm");
+const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+
+loader.lazyRequireGetter(this, "LineGraphWidget",
+  "devtools/shared/widgets/LineGraphWidget");
 
 // `AUDIO_NODE_DEFINITION` defined in the controller's initialization,
 // which describes all the properties of an AudioNode
-let AUDIO_NODE_DEFINITION;
+var AUDIO_NODE_DEFINITION;
 
 // Override DOM promises with Promise.jsm helpers
-const { defer, all } = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
+const { defer, all } = require("promise");
 
 /* Events fired on `window` to indicate state or actions*/
 const EVENTS = {
@@ -77,7 +78,7 @@ const EVENTS = {
 /**
  * The current target and the Web Audio Editor front, set by this tool's host.
  */
-let gToolbox, gTarget, gFront;
+var gToolbox, gTarget, gFront;
 
 /**
  * Convenient way of emitting events from the panel window.

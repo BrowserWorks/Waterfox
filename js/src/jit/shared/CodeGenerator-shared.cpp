@@ -20,6 +20,7 @@
 #include "vm/TraceLogging.h"
 
 #include "jit/JitFrames-inl.h"
+#include "jit/MacroAssembler-inl.h"
 
 using namespace js;
 using namespace js::jit;
@@ -53,6 +54,8 @@ CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph, Mac
 #endif
     lastOsiPointOffset_(0),
     safepoints_(graph->totalSlotCount(), (gen->info().nargs() + 1) * sizeof(Value)),
+    returnLabel_(),
+    stubSpace_(),
     nativeToBytecodeMap_(nullptr),
     nativeToBytecodeMapSize_(0),
     nativeToBytecodeTableOffset_(0),
@@ -106,6 +109,54 @@ CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph, Mac
     } else {
         frameClass_ = FrameSizeClass::FromDepth(frameDepth_);
     }
+}
+
+bool
+CodeGeneratorShared::generatePrologue()
+{
+    MOZ_ASSERT(masm.framePushed() == 0);
+    MOZ_ASSERT(!gen->compilingAsmJS());
+
+#ifdef JS_USE_LINK_REGISTER
+    masm.pushReturnAddress();
+#endif
+
+    // If profiling, save the current frame pointer to a per-thread global field.
+    if (isProfilerInstrumentationEnabled())
+        masm.profilerEnterFrame(masm.getStackPointer(), CallTempReg0);
+
+    // Ensure that the Ion frame is properly aligned.
+    masm.assertStackAlignment(JitStackAlignment, 0);
+
+    // Note that this automatically sets MacroAssembler::framePushed().
+    masm.reserveStack(frameSize());
+    masm.checkStackAlignment();
+
+    emitTracelogIonStart();
+    return true;
+}
+
+bool
+CodeGeneratorShared::generateEpilogue()
+{
+    MOZ_ASSERT(!gen->compilingAsmJS());
+    masm.bind(&returnLabel_);
+
+    emitTracelogIonStop();
+
+    masm.freeStack(frameSize());
+    MOZ_ASSERT(masm.framePushed() == 0);
+
+    // If profiling, reset the per-thread global lastJitFrame to point to
+    // the previous frame.
+    if (isProfilerInstrumentationEnabled())
+        masm.profilerExitFrame();
+
+    masm.ret();
+
+    // On systems that use a constant pool, this is a good time to emit.
+    masm.flushBuffer();
+    return true;
 }
 
 bool
@@ -537,7 +588,7 @@ CodeGeneratorShared::encode(LSnapshot* snapshot)
     for (LRecoverInfo::OperandIter it(recoverInfo); !it; ++it) {
         DebugOnly<uint32_t> allocWritten = snapshots_.allocWritten();
         encodeAllocation(snapshot, *it, &allocIndex);
-        MOZ_ASSERT(allocWritten + 1 == snapshots_.allocWritten());
+        MOZ_ASSERT_IF(!snapshots_.oom(), allocWritten + 1 == snapshots_.allocWritten());
     }
 
     MOZ_ASSERT(allocIndex == snapshot->numSlots());
@@ -971,12 +1022,16 @@ CodeGeneratorShared::verifyCompactTrackedOptimizationsMap(JitCode* code, uint32_
             MOZ_ASSERT(index == unique.indexOf(entry.optimizations));
 
             // Assert that the type info and attempts vectors are correctly
-            // decoded.
-            IonTrackedOptimizationsTypeInfo typeInfo = typesTable->entry(index);
-            TempOptimizationTypeInfoVector tvec(alloc());
-            ReadTempTypeInfoVectorOp top(alloc(), &tvec);
-            typeInfo.forEach(top, allTypes);
-            MOZ_ASSERT(entry.optimizations->matchTypes(tvec));
+            // decoded. This is disabled for now if the types table might
+            // contain nursery pointers, in which case the types might not
+            // match, see bug 1175761.
+            if (!code->runtimeFromMainThread()->gc.storeBuffer.cancelIonCompilations()) {
+                IonTrackedOptimizationsTypeInfo typeInfo = typesTable->entry(index);
+                TempOptimizationTypeInfoVector tvec(alloc());
+                ReadTempTypeInfoVectorOp top(alloc(), &tvec);
+                typeInfo.forEach(top, allTypes);
+                MOZ_ASSERT(entry.optimizations->matchTypes(tvec));
+            }
 
             IonTrackedOptimizationsAttempts attempts = attemptsTable->entry(index);
             TempOptimizationAttemptsVector avec(alloc());
@@ -997,7 +1052,7 @@ CodeGeneratorShared::markSafepoint(LInstruction* ins)
 void
 CodeGeneratorShared::markSafepointAt(uint32_t offset, LInstruction* ins)
 {
-    MOZ_ASSERT_IF(!safepointIndices_.empty(),
+    MOZ_ASSERT_IF(!safepointIndices_.empty() && !masm.oom(),
                   offset - safepointIndices_.back().displacement() >= sizeof(uint32_t));
     masm.propagateOOM(safepointIndices_.append(SafepointIndex(offset, ins->safepoint())));
 }
@@ -1295,16 +1350,22 @@ CodeGeneratorShared::callVM(const VMFunction& fun, LInstruction* ins, const Regi
         StoreAllLiveRegs(masm, ins->safepoint()->liveRegs());
 #endif
 
+    // Push an exit frame descriptor. If |dynStack| is a valid pointer to a
+    // register, then its value is added to the value of the |framePushed()| to
+    // fill the frame descriptor.
+    if (dynStack) {
+        masm.addPtr(Imm32(masm.framePushed()), *dynStack);
+        masm.makeFrameDescriptor(*dynStack, JitFrame_IonJS);
+        masm.Push(*dynStack); // descriptor
+    } else {
+        masm.pushStaticFrameDescriptor(JitFrame_IonJS);
+    }
+
     // Call the wrapper function.  The wrapper is in charge to unwind the stack
     // when returning from the call.  Failures are handled with exceptions based
     // on the return value of the C functions.  To guard the outcome of the
     // returned value, use another LIR instruction.
-    uint32_t callOffset;
-    if (dynStack)
-        callOffset = masm.callWithExitFrame(wrapper, *dynStack);
-    else
-        callOffset = masm.callWithExitFrame(wrapper);
-
+    uint32_t callOffset = masm.callJit(wrapper);
     markSafepointAt(callOffset, ins);
 
     // Remove rest of the frame left on the stack. We remove the return address
@@ -1381,12 +1442,12 @@ CodeGeneratorShared::visitOutOfLineTruncateSlow(OutOfLineTruncateSlow* ool)
     Register dest = ool->dest();
 
     saveVolatile(dest);
-#if defined(JS_CODEGEN_ARM)
+
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64)
     if (ool->needFloat32Conversion()) {
         masm.convertFloat32ToDouble(src, ScratchDoubleReg);
         src = ScratchDoubleReg;
     }
-
 #else
     FloatRegister srcSingle = src.asSingle();
     if (ool->needFloat32Conversion()) {
@@ -1396,7 +1457,8 @@ CodeGeneratorShared::visitOutOfLineTruncateSlow(OutOfLineTruncateSlow* ool)
         src = src.asDouble();
     }
 #endif
-    masm.setupUnalignedABICall(1, dest);
+
+    masm.setupUnalignedABICall(dest);
     masm.passABIArg(src, MoveOp::DOUBLE);
     if (gen->compilingAsmJS())
         masm.callWithABI(AsmJSImm_ToInt32);
@@ -1404,12 +1466,12 @@ CodeGeneratorShared::visitOutOfLineTruncateSlow(OutOfLineTruncateSlow* ool)
         masm.callWithABI(BitwiseCast<void*, int32_t(*)(double)>(JS::ToInt32));
     masm.storeCallResult(dest);
 
-#if !defined(JS_CODEGEN_ARM)
+#if !defined(JS_CODEGEN_ARM) && !defined(JS_CODEGEN_ARM64)
     if (ool->needFloat32Conversion())
         masm.pop(srcSingle);
 #endif
-    restoreVolatile(dest);
 
+    restoreVolatile(dest);
     masm.jump(ool->rejoin());
 }
 
@@ -1519,7 +1581,7 @@ CodeGeneratorShared::jumpToBlock(MBasicBlock* mir)
         // Note: the backedge is initially a jump to the next instruction.
         // It will be patched to the target block's label during link().
         RepatchLabel rejoin;
-        CodeOffsetJump backedge = masm.backedgeJump(&rejoin);
+        CodeOffsetJump backedge = masm.backedgeJump(&rejoin, mir->lir()->label());
         masm.bind(&rejoin);
 
         masm.propagateOOM(patchableBackedges_.append(PatchableBackedgeInfo(backedge, mir->lir()->label(), oolEntry)));
@@ -1529,7 +1591,7 @@ CodeGeneratorShared::jumpToBlock(MBasicBlock* mir)
 }
 
 // This function is not used for MIPS. MIPS has branchToBlock.
-#ifndef JS_CODEGEN_MIPS
+#ifndef JS_CODEGEN_MIPS32
 void
 CodeGeneratorShared::jumpToBlock(MBasicBlock* mir, Assembler::Condition cond)
 {
@@ -1540,7 +1602,7 @@ CodeGeneratorShared::jumpToBlock(MBasicBlock* mir, Assembler::Condition cond)
         // Note: the backedge is initially a jump to the next instruction.
         // It will be patched to the target block's label during link().
         RepatchLabel rejoin;
-        CodeOffsetJump backedge = masm.jumpWithPatch(&rejoin, cond);
+        CodeOffsetJump backedge = masm.jumpWithPatch(&rejoin, cond, mir->lir()->label());
         masm.bind(&rejoin);
 
         masm.propagateOOM(patchableBackedges_.append(PatchableBackedgeInfo(backedge, mir->lir()->label(), oolEntry)));
@@ -1568,45 +1630,56 @@ CodeGeneratorShared::addCacheLocations(const CacheLocationList& locs, size_t* nu
 }
 
 ReciprocalMulConstants
-CodeGeneratorShared::computeDivisionConstants(int d) {
-    // In what follows, d is positive and is not a power of 2.
-    MOZ_ASSERT(d > 0 && (d & (d - 1)) != 0);
+CodeGeneratorShared::computeDivisionConstants(uint32_t d, int maxLog) {
+    MOZ_ASSERT(maxLog >= 2 && maxLog <= 32);
+    // In what follows, 0 < d < 2^maxLog and d is not a power of 2.
+    MOZ_ASSERT(d < (uint64_t(1) << maxLog) && (d & (d - 1)) != 0);
 
     // Speeding up division by non power-of-2 constants is possible by
     // calculating, during compilation, a value M such that high-order
-    // bits of M*n correspond to the result of the division. Formally,
-    // we compute values 0 <= M < 2^32 and 0 <= s < 31 such that
-    //         (M * n) >> (32 + s) = floor(n/d)    if n >= 0
-    //         (M * n) >> (32 + s) = ceil(n/d) - 1 if n < 0.
+    // bits of M*n correspond to the result of the division of n by d.
+    // No value of M can serve this purpose for arbitrarily big values
+    // of n but, for optimizing integer division, we're just concerned
+    // with values of n whose absolute value is bounded (by fitting in
+    // an integer type, say). With this in mind, we'll find a constant
+    // M as above that works for -2^maxLog <= n < 2^maxLog; maxLog can
+    // then be 31 for signed division or 32 for unsigned division.
+    //
     // The original presentation of this technique appears in Hacker's
     // Delight, a book by Henry S. Warren, Jr.. A proof of correctness
-    // for our version follows.
-
-    // Define p = 32 + s, M = ceil(2^p/d), and assume that s satisfies
-    //                     M - 2^p/d <= 2^(s+1)/d.                 (1)
-    // (Observe that s = FloorLog32(d) satisfies this, because in this
-    // case d <= 2^(s+1) and so the RHS of (1) is at least one). Then,
+    // for our version follows; we'll denote maxLog by L in the proof,
+    // for conciseness.
     //
-    // a) If s <= FloorLog32(d), then M <= 2^32 - 1.
-    // Proof: Indeed, M is monotone in s and, for s = FloorLog32(d),
-    // the inequalities 2^31 > d >= 2^s + 1 readily imply
-    //    2^p / d  = 2^p/(d - 1) * (d - 1)/d
-    //            <= 2^32 * (1 - 1/d) < 2 * (2^31 - 1) = 2^32 - 2.
+    // Formally, for |d| < 2^L, we'll compute two magic values M and s
+    // in the ranges 0 <= M < 2^(L+1) and 0 <= s <= L such that
+    //     (M * n) >> (32 + s) = floor(n/d)    if    0 <= n < 2^L
+    //     (M * n) >> (32 + s) = ceil(n/d) - 1 if -2^L <= n < 0.
+    //
+    // Define p = 32 + s, M = ceil(2^p/d), and assume that s satisfies
+    //                     M - 2^p/d <= 2^(p-L)/d.                 (1)
+    // (Observe that p = CeilLog32(d) + L satisfies this, as the right
+    // side of (1) is at least one in this case). Then,
+    //
+    // a) If p <= CeilLog32(d) + L, then M < 2^(L+1) - 1.
+    // Proof: Indeed, M is monotone in p and, for p equal to the above
+    // value, the bounds 2^L > d >= 2^(p-L-1) + 1 readily imply that
+    //    2^p / d <  2^p/(d - 1) * (d - 1)/d
+    //            <= 2^(L+1) * (1 - 1/d) < 2^(L+1) - 2.
     // The claim follows by applying the ceiling function.
     //
-    // b) For any 0 <= n < 2^31, floor(Mn/2^p) = floor(n/d).
+    // b) For any 0 <= n < 2^L, floor(Mn/2^p) = floor(n/d).
     // Proof: Put x = floor(Mn/2^p); it's the unique integer for which
     //                    Mn/2^p - 1 < x <= Mn/2^p.                (2)
     // Using M >= 2^p/d on the LHS and (1) on the RHS, we get
-    //           n/d - 1 < x <= n/d + n/(2^31 d) < n/d + 1/d.
+    //           n/d - 1 < x <= n/d + n/(2^L d) < n/d + 1/d.
     // Since x is an integer, it's not in the interval (n/d, (n+1)/d),
     // and so n/d - 1 < x <= n/d, which implies x = floor(n/d).
     //
-    // c) For any -2^31 <= n < 0, floor(Mn/2^p) + 1 = ceil(n/d).
+    // c) For any -2^L <= n < 0, floor(Mn/2^p) + 1 = ceil(n/d).
     // Proof: The proof is similar. Equation (2) holds as above. Using
     // M > 2^p/d (d isn't a power of 2) on the RHS and (1) on the LHS,
-    //                 n/d + n/(2^31 d) - 1 < x < n/d.
-    // Using n >= -2^31 and summing 1,
+    //                 n/d + n/(2^L d) - 1 < x < n/d.
+    // Using n >= -2^L and summing 1,
     //                  n/d - 1/d < x + 1 < n/d + 1.
     // Since x + 1 is an integer, this implies n/d <= x + 1 < n/d + 1.
     // In other words, x + 1 = ceil(n/d).
@@ -1614,26 +1687,29 @@ CodeGeneratorShared::computeDivisionConstants(int d) {
     // Condition (1) isn't necessary for the existence of M and s with
     // the properties above. Hacker's Delight provides a slightly less
     // restrictive condition when d >= 196611, at the cost of a 3-page
-    // proof of correctness.
-
+    // proof of correctness, for the case L = 31.
+    //
     // Note that, since d*M - 2^p = d - (2^p)%d, (1) can be written as
-    //                   2^(s+1) >= d - (2^p)%d.
-    // We now compute the least s with this property...
+    //                   2^(p-L) >= d - (2^p)%d.
+    // In order to avoid overflow in the (2^p) % d calculation, we can
+    // compute it as (2^p-1) % d + 1, where 2^p-1 can then be computed
+    // without overflow as UINT64_MAX >> (64-p).
 
-    int32_t shift = 0;
-    while ((int64_t(1) << (shift+1)) + (int64_t(1) << (shift+32)) % d < d)
-        shift++;
+    // We now compute the least p >= 32 with the property above...
+    int32_t p = 32;
+    while ((uint64_t(1) << (p-maxLog)) + (UINT64_MAX >> (64-p)) % d + 1 < d)
+        p++;
 
-    // ...and the corresponding M. This may not fit in a signed 32-bit
-    // integer; we will compute (M - 2^32) * n + (2^32 * n) instead of
-    // M * n if this is the case (cf. item (a) above).
+    // ...and the corresponding M. For either the signed (L=31) or the
+    // unsigned (L=32) case, this value can be too large (cf. item a).
+    // Codegen can still multiply by M by multiplying by (M - 2^L) and
+    // adjusting the value afterwards, if this is the case.
     ReciprocalMulConstants rmc;
-    rmc.multiplier = int32_t((int64_t(1) << (shift+32))/d + 1);
-    rmc.shiftAmount = shift;
+    rmc.multiplier = (UINT64_MAX >> (64-p))/d + 1;
+    rmc.shiftAmount = p - 32;
 
     return rmc;
 }
-
 
 #ifdef JS_TRACE_LOGGING
 

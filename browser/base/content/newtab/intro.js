@@ -7,7 +7,7 @@
 const PREF_INTRO_SHOWN = "browser.newtabpage.introShown";
 const PREF_NEWTAB_ENHANCED = "browser.newtabpage.enhanced";
 
-let gIntro = {
+var gIntro = {
   _nodeIDSuffixes: [
     "mask",
     "modal",
@@ -57,13 +57,18 @@ let gIntro = {
 
   _generateParagraphs: function() {
     let customizeIcon = '<input type="button" class="newtab-control newtab-customize"/>';
-    this._paragraphs.push(`${newTabString("intro.paragraph9")} ${newTabString("intro.paragraph7")}`);
-    this._paragraphs.push(
-        `${newTabString("intro.paragraph2", [this._link(TILES_PRIVACY_LINK, newTabString("privacy.link"))])}
-         ${newTabString("intro.paragraph4", [customizeIcon, this._bold(newTabString("intro.controls"))])}`);
+    this._paragraphs.push(newTabString("intro1.paragraph1"));
+    this._paragraphs.push(newTabString("intro1.paragraph2",
+                            [
+                              this._link(TILES_PRIVACY_LINK, newTabString("privacy.link")),
+                              customizeIcon
+                            ]));
   },
 
   showIfNecessary: function() {
+    if (!Services.prefs.getBoolPref(PREF_NEWTAB_ENHANCED)) {
+      return;
+    }
     if (!Services.prefs.getBoolPref(PREF_INTRO_SHOWN)) {
       this.showPanel();
       Services.prefs.setBoolPref(PREF_INTRO_SHOWN, true);

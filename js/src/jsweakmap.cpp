@@ -39,7 +39,10 @@ WeakMapBase::WeakMapBase(JSObject* memOf, JSCompartment* c)
 
 WeakMapBase::~WeakMapBase()
 {
-    MOZ_ASSERT(!isInList());
+    MOZ_ASSERT(CurrentThreadIsGCSweeping() || CurrentThreadIsHandlingInitFailure());
+    MOZ_ASSERT_IF(CurrentThreadIsGCSweeping(), !isInList());
+    if (isInList())
+        removeWeakMapFromList(this);
 }
 
 void
@@ -47,22 +50,26 @@ WeakMapBase::trace(JSTracer* tracer)
 {
     MOZ_ASSERT(isInList());
     if (tracer->isMarkingTracer()) {
-        // We don't trace any of the WeakMap entries at this time, just record
-        // record the fact that the WeakMap has been marked. Enties are marked
-        // in the iterative marking phase by markAllIteratively(), which happens
-        // when many keys as possible have been marked already.
-        MOZ_ASSERT(tracer->eagerlyTraceWeakMaps() == DoNotTraceWeakMaps);
         marked = true;
+        if (tracer->weakMapAction() == DoNotTraceWeakMaps) {
+            // Do not trace any WeakMap entries at this time. Just record the
+            // fact that the WeakMap has been marked. Entries are marked in the
+            // iterative marking phase by markAllIteratively(), after as many
+            // keys as possible have been marked already.
+        } else {
+            MOZ_ASSERT(tracer->weakMapAction() == ExpandWeakMaps);
+            markEphemeronEntries(tracer);
+        }
     } else {
         // If we're not actually doing garbage collection, the keys won't be marked
         // nicely as needed by the true ephemeral marking algorithm --- custom tracers
         // such as the cycle collector must use their own means for cycle detection.
         // So here we do a conservative approximation: pretend all keys are live.
-        if (tracer->eagerlyTraceWeakMaps() == DoNotTraceWeakMaps)
+        if (tracer->weakMapAction() == DoNotTraceWeakMaps)
             return;
 
         nonMarkingTraceValues(tracer);
-        if (tracer->eagerlyTraceWeakMaps() == TraceWeakMapKeysValues)
+        if (tracer->weakMapAction() == TraceWeakMapKeysValues)
             nonMarkingTraceKeys(tracer);
     }
 }
@@ -77,7 +84,7 @@ WeakMapBase::unmarkCompartment(JSCompartment* c)
 void
 WeakMapBase::markAll(JSCompartment* c, JSTracer* tracer)
 {
-    MOZ_ASSERT(tracer->eagerlyTraceWeakMaps() != DoNotTraceWeakMaps);
+    MOZ_ASSERT(tracer->weakMapAction() != DoNotTraceWeakMaps);
     for (WeakMapBase* m = c->gcWeakMapList; m; m = m->next) {
         m->trace(tracer);
         if (m->memberOf)
@@ -155,7 +162,7 @@ WeakMapBase::saveCompartmentMarkedWeakMaps(JSCompartment* c, WeakMapSet& markedW
 }
 
 void
-WeakMapBase::restoreCompartmentMarkedWeakMaps(WeakMapSet& markedWeakMaps)
+WeakMapBase::restoreMarkedWeakMaps(WeakMapSet& markedWeakMaps)
 {
     for (WeakMapSet::Range r = markedWeakMaps.all(); !r.empty(); r.popFront()) {
         WeakMapBase* map = r.front();
@@ -183,7 +190,7 @@ ObjectValueMap::findZoneEdges()
 {
     /*
      * For unmarked weakmap keys with delegates in a different zone, add a zone
-     * edge to ensure that the delegate zone does finish marking after the key
+     * edge to ensure that the delegate zone finishes marking before the key
      * zone.
      */
     JS::AutoSuppressGCAnalysis nogc;
@@ -214,7 +221,7 @@ IsWeakMap(HandleValue v)
 }
 
 MOZ_ALWAYS_INLINE bool
-WeakMap_has_impl(JSContext* cx, CallArgs args)
+WeakMap_has_impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(IsWeakMap(args.thisv()));
 
@@ -243,7 +250,7 @@ js::WeakMap_has(JSContext* cx, unsigned argc, Value* vp)
 }
 
 MOZ_ALWAYS_INLINE bool
-WeakMap_clear_impl(JSContext* cx, CallArgs args)
+WeakMap_clear_impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(IsWeakMap(args.thisv()));
 
@@ -264,7 +271,7 @@ js::WeakMap_clear(JSContext* cx, unsigned argc, Value* vp)
 }
 
 MOZ_ALWAYS_INLINE bool
-WeakMap_get_impl(JSContext* cx, CallArgs args)
+WeakMap_get_impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(IsWeakMap(args.thisv()));
 
@@ -293,7 +300,7 @@ js::WeakMap_get(JSContext* cx, unsigned argc, Value* vp)
 }
 
 MOZ_ALWAYS_INLINE bool
-WeakMap_delete_impl(JSContext* cx, CallArgs args)
+WeakMap_delete_impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(IsWeakMap(args.thisv()));
 
@@ -342,10 +349,8 @@ TryPreserveReflector(JSContext* cx, HandleObject obj)
 static inline void
 WeakMapPostWriteBarrier(JSRuntime* rt, ObjectValueMap* weakMap, JSObject* key)
 {
-    // Strip the barriers from the type before inserting into the store buffer.
-    // This will automatically ensure that barriers do not fire during GC.
     if (key && IsInsideNursery(key))
-        rt->gc.storeBuffer.putGeneric(UnbarrieredRef(weakMap, key));
+        rt->gc.storeBuffer.putGeneric(gc::HashKeyRef<ObjectValueMap, JSObject*>(weakMap, key));
 }
 
 static MOZ_ALWAYS_INLINE bool
@@ -354,14 +359,15 @@ SetWeakMapEntryInternal(JSContext* cx, Handle<WeakMapObject*> mapObj,
 {
     ObjectValueMap* map = mapObj->getMap();
     if (!map) {
-        map = cx->new_<ObjectValueMap>(cx, mapObj.get());
-        if (!map)
+        AutoInitGCManagedObject<ObjectValueMap> newMap(
+            cx->make_unique<ObjectValueMap>(cx, mapObj.get()));
+        if (!newMap)
             return false;
-        if (!map->init()) {
-            js_delete(map);
+        if (!newMap->init()) {
             JS_ReportOutOfMemory(cx);
             return false;
         }
+        map = newMap.release();
         mapObj->setPrivate(map);
     }
 
@@ -386,13 +392,13 @@ SetWeakMapEntryInternal(JSContext* cx, Handle<WeakMapObject*> mapObj,
 }
 
 MOZ_ALWAYS_INLINE bool
-WeakMap_set_impl(JSContext* cx, CallArgs args)
+WeakMap_set_impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(IsWeakMap(args.thisv()));
 
     if (!args.get(0).isObject()) {
         UniquePtr<char[], JS::FreePolicy> bytes =
-            DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, args.get(0), NullPtr());
+            DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, args.get(0), nullptr);
         if (!bytes)
             return false;
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT, bytes.get());
@@ -511,13 +517,13 @@ static bool
 WeakMap_construct(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    RootedObject obj(cx, NewBuiltinClassInstance(cx, &WeakMapObject::class_));
-    if (!obj)
-        return false;
 
     // ES6 draft rev 31 (15 Jan 2015) 23.3.1.1 step 1.
-    // FIXME: bug 1083752
-    if (!WarnIfNotConstructing(cx, args, "WeakMap"))
+    if (!ThrowIfNotConstructing(cx, args, "WeakMap"))
+        return false;
+
+    RootedObject obj(cx, NewBuiltinClassInstance(cx, &WeakMapObject::class_));
+    if (!obj)
         return false;
 
     // Steps 5-6, 11.
@@ -577,7 +583,7 @@ WeakMap_construct(JSContext* cx, unsigned argc, Value* vp)
             if (isOriginalAdder) {
                 if (keyVal.isPrimitive()) {
                     UniquePtr<char[], JS::FreePolicy> bytes =
-                        DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, keyVal, NullPtr());
+                        DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, keyVal, nullptr);
                     if (!bytes)
                         return false;
                     JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT, bytes.get());
@@ -608,7 +614,7 @@ WeakMap_construct(JSContext* cx, unsigned argc, Value* vp)
 
 const Class WeakMapObject::class_ = {
     "WeakMap",
-    JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS |
+    JSCLASS_HAS_PRIVATE |
     JSCLASS_HAS_CACHED_PROTO(JSProto_WeakMap),
     nullptr, /* addProperty */
     nullptr, /* delProperty */
@@ -677,9 +683,12 @@ js::InitBareWeakMapCtor(JSContext* cx, HandleObject obj)
 
 ObjectWeakMap::ObjectWeakMap(JSContext* cx)
   : map(cx, nullptr)
+{}
+
+bool
+ObjectWeakMap::init()
 {
-    if (!map.init())
-        CrashAtUnhandlableOOM("ObjectWeakMap");
+    return map.init();
 }
 
 ObjectWeakMap::~ObjectWeakMap()
@@ -690,6 +699,7 @@ ObjectWeakMap::~ObjectWeakMap()
 JSObject*
 ObjectWeakMap::lookup(const JSObject* obj)
 {
+    MOZ_ASSERT(map.initialized());
     if (ObjectValueMap::Ptr p = map.lookup(const_cast<JSObject*>(obj)))
         return &p->value().toObject();
     return nullptr;
@@ -699,12 +709,15 @@ bool
 ObjectWeakMap::add(JSContext* cx, JSObject* obj, JSObject* target)
 {
     MOZ_ASSERT(obj && target);
+    MOZ_ASSERT(map.initialized());
 
     MOZ_ASSERT(!map.has(obj));
     if (!map.put(obj, ObjectValue(*target))) {
         ReportOutOfMemory(cx);
         return false;
     }
+    if (IsInsideNursery(obj))
+        cx->runtime()->gc.storeBuffer.putGeneric(StoreBufferRef(&map, obj));
 
     return true;
 }
@@ -712,18 +725,21 @@ ObjectWeakMap::add(JSContext* cx, JSObject* obj, JSObject* target)
 void
 ObjectWeakMap::clear()
 {
+    MOZ_ASSERT(map.initialized());
     map.clear();
 }
 
 void
 ObjectWeakMap::trace(JSTracer* trc)
 {
+    MOZ_ASSERT(map.initialized());
     map.trace(trc);
 }
 
 size_t
 ObjectWeakMap::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf)
 {
+    MOZ_ASSERT(map.initialized());
     return map.sizeOfExcludingThis(mallocSizeOf);
 }
 
@@ -731,6 +747,7 @@ ObjectWeakMap::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf)
 void
 ObjectWeakMap::checkAfterMovingGC()
 {
+    MOZ_ASSERT(map.initialized());
     for (ObjectValueMap::Range r = map.all(); !r.empty(); r.popFront()) {
         CheckGCThingAfterMovingGC(r.front().key().get());
         CheckGCThingAfterMovingGC(&r.front().value().toObject());

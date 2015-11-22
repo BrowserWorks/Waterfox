@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "skia/GrContext.h"
-#include "skia/GrGLInterface.h"
+#include "skia/include/gpu/GrContext.h"
+#include "skia/include/gpu/gl/GrGLInterface.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/DebugOnly.h"
@@ -872,7 +872,7 @@ static GrGLInterface* CreateGrGLInterfaceFromGLContext(GLContext* context)
     i->fFunctions.fDeleteVertexArrays = glDeleteVertexArrays_mozilla;
     i->fFunctions.fGenVertexArrays = glGenVertexArrays_mozilla;
 
-    // Desktop GL 
+    // Desktop GL
     i->fFunctions.fGetTexLevelParameteriv = glGetTexLevelParameteriv_mozilla;
     i->fFunctions.fDrawBuffer = glDrawBuffer_mozilla;
     i->fFunctions.fReadBuffer = glReadBuffer_mozilla;
@@ -898,4 +898,16 @@ SkiaGLGlue::SkiaGLGlue(GLContext* context)
     mGrGLInterface.adopt(CreateGrGLInterfaceFromGLContext(mGLContext));
     mGrGLInterface->fCallbackData = reinterpret_cast<GrGLInterfaceCallbackData>(this);
     mGrContext.adopt(GrContext::Create(kOpenGL_GrBackend, (GrBackendContext)mGrGLInterface.get()));
+}
+
+SkiaGLGlue::~SkiaGLGlue()
+{
+    /*
+     * These members have inter-dependencies, but do not keep each other alive, so
+     * destruction order is very important here: mGrContext uses mGrGLInterface, and
+     * through it, uses mGLContext
+     */
+    mGrContext = nullptr;
+    mGrGLInterface = nullptr;
+    mGLContext = nullptr;
 }

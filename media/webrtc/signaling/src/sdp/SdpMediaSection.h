@@ -12,8 +12,7 @@
 #include "signaling/src/sdp/SdpAttributeList.h"
 #include <string>
 #include <vector>
-
-#include "signaling/src/sdp/SdpEnum.h"
+#include <iostream>
 
 namespace mozilla
 {
@@ -81,6 +80,8 @@ public:
   virtual uint32_t GetBandwidth(const std::string& type) const = 0;
   virtual const std::vector<std::string>& GetFormats() const = 0;
 
+  std::vector<std::string> GetFormatsForSimulcastVersion(
+      size_t simulcastVersion, bool send, bool recv) const;
   virtual const SdpAttributeList& GetAttributeList() const = 0;
   virtual SdpAttributeList& GetAttributeList() = 0;
 
@@ -104,20 +105,20 @@ public:
   inline bool
   IsReceiving() const
   {
-    return GetDirectionAttribute().mValue & SdpDirectionAttribute::kRecvFlag;
+    return GetDirectionAttribute().mValue & sdp::kRecv;
   }
 
   inline bool
   IsSending() const
   {
-    return GetDirectionAttribute().mValue & SdpDirectionAttribute::kSendFlag;
+    return GetDirectionAttribute().mValue & sdp::kSend;
   }
 
   inline void
   SetReceiving(bool receiving)
   {
     auto direction = GetDirectionAttribute().mValue;
-    if (direction & SdpDirectionAttribute::kSendFlag) {
+    if (direction & sdp::kSend) {
       SetDirection(receiving ?
                    SdpDirectionAttribute::kSendrecv :
                    SdpDirectionAttribute::kSendonly);
@@ -132,7 +133,7 @@ public:
   SetSending(bool sending)
   {
     auto direction = GetDirectionAttribute().mValue;
-    if (direction & SdpDirectionAttribute::kRecvFlag) {
+    if (direction & sdp::kRecv) {
       SetDirection(sending ?
                    SdpDirectionAttribute::kSendrecv :
                    SdpDirectionAttribute::kRecvonly);
@@ -147,6 +148,25 @@ public:
   {
     GetAttributeList().SetAttribute(new SdpDirectionAttribute(direction));
   }
+
+  const SdpFmtpAttributeList::Parameters* FindFmtp(const std::string& pt) const;
+  void SetFmtp(const SdpFmtpAttributeList::Fmtp& fmtp);
+  const SdpRtpmapAttributeList::Rtpmap* FindRtpmap(const std::string& pt) const;
+  const SdpSctpmapAttributeList::Sctpmap* FindSctpmap(
+      const std::string& pt) const;
+  bool HasRtcpFb(const std::string& pt,
+                 SdpRtcpFbAttributeList::Type type,
+                 const std::string& subType) const;
+  SdpRtcpFbAttributeList GetRtcpFbs() const;
+  void SetRtcpFbs(const SdpRtcpFbAttributeList& rtcpfbs);
+  bool HasFormat(const std::string& format) const
+  {
+    return std::find(GetFormats().begin(), GetFormats().end(), format) !=
+        GetFormats().end();
+  }
+  void SetSsrcs(const std::vector<uint32_t>& ssrcs,
+                const std::string& cname);
+  void AddMsid(const std::string& id, const std::string& appdata);
 
 private:
   size_t mLevel;
@@ -286,6 +306,11 @@ public:
   SetAddress(const std::string& address)
   {
     mAddr = address;
+    if (mAddr.find(':') != std::string::npos) {
+      mAddrType = sdp::kIPv6;
+    } else {
+      mAddrType = sdp::kIPv4;
+    }
   }
   uint8_t
   GetTtl() const

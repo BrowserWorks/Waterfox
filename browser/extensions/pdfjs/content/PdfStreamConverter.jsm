@@ -157,18 +157,16 @@ function makeContentReadable(obj, window) {
 }
 
 function createNewChannel(uri, node, principal) {
-  return NetUtil.newChannel2(uri,
-                             null,
-                             null,
-                             node, // aLoadingNode
-                             principal, // aLoadingPrincipal
-                             null, // aTriggeringPrincipal
-                             Ci.nsILoadInfo.SEC_NORMAL,
-                             Ci.nsIContentPolicy.TYPE_OTHER);
+  return NetUtil.newChannel({
+    uri: uri,
+    loadingNode: node,
+    loadingPrincipal: principal,
+    contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER,
+  });
 }
 
 function asyncFetchChannel(channel, callback) {
-  return NetUtil.asyncFetch2(channel, callback);
+  return NetUtil.asyncFetch(channel, callback);
 }
 
 // PDF data storage
@@ -440,9 +438,23 @@ ChromeActions.prototype = {
       message = getLocalizedString(strings, 'unsupported_feature');
     }
     PdfJsTelemetry.onFallback();
-    PdfjsContentUtils.displayWarning(domWindow, message, sendResponse,
+    PdfjsContentUtils.displayWarning(domWindow, message,
       getLocalizedString(strings, 'open_with_different_viewer'),
       getLocalizedString(strings, 'open_with_different_viewer', 'accessKey'));
+
+    let winmm = domWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+                         .getInterface(Ci.nsIDocShell)
+                         .QueryInterface(Ci.nsIInterfaceRequestor)
+                         .getInterface(Ci.nsIContentFrameMessageManager);
+
+    winmm.addMessageListener('PDFJS:Child:fallbackDownload',
+      function fallbackDownload(msg) {
+        let data = msg.data;
+        sendResponse(data.download);
+
+        winmm.removeMessageListener('PDFJS:Child:fallbackDownload',
+                                    fallbackDownload);
+      });
   },
   updateFindControlState: function(data) {
     if (!this.supportsIntegratedFind()) {
@@ -983,14 +995,21 @@ PdfStreamConverter.prototype = {
 
     // We can use resource principal when data is fetched by the chrome
     // e.g. useful for NoScript
-    var securityManager = Cc['@mozilla.org/scriptsecuritymanager;1']
-                          .getService(Ci.nsIScriptSecurityManager);
+    var ssm = Cc['@mozilla.org/scriptsecuritymanager;1']
+                .getService(Ci.nsIScriptSecurityManager);
     var uri = NetUtil.newURI(PDF_VIEWER_WEB_PAGE, null, null);
     // FF16 and below had getCodebasePrincipal, it was replaced by
     // getNoAppCodebasePrincipal (bug 758258).
-    var resourcePrincipal = 'getNoAppCodebasePrincipal' in securityManager ?
-                            securityManager.getNoAppCodebasePrincipal(uri) :
-                            securityManager.getCodebasePrincipal(uri);
+    // FF 43 added createCodebasePrincipal to replace getNoAppCodebasePrincipal
+    // (bug 1165272).
+    var resourcePrincipal
+    if ('createCodebasePrincipal' in ssm) {
+      resourcePrincipal = ssm.createCodebasePrincipal(uri, {});
+    } else if ('getNoAppCodebasePrincipal' in ssm) {
+      resourcePrincipal = ssm.getNoAppCodebasePrincipal(uri)
+    } else {
+      resourcePrincipal = ssm.getCodebasePrincipal(uri);
+    }
     aRequest.owner = resourcePrincipal;
     channel.asyncOpen(proxy, aContext);
   },

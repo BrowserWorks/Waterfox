@@ -19,6 +19,7 @@
 #include "mozilla/Likely.h"
 #include "mozilla/Poison.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/MemoryChecking.h"
 
@@ -76,6 +77,7 @@
 #include "nsIToolkitProfile.h"
 #include "nsIToolkitProfileService.h"
 #include "nsIURI.h"
+#include "nsIURL.h"
 #include "nsIWindowCreator.h"
 #include "nsIWindowMediator.h"
 #include "nsIWindowWatcher.h"
@@ -88,6 +90,7 @@
 #include "nsAppShellCID.h"
 #include "mozilla/scache/StartupCache.h"
 #include "nsIGfxInfo.h"
+#include "gfxPrefs.h"
 
 #include "base/histogram.h"
 
@@ -103,6 +106,10 @@
 
 #ifndef PROCESS_DEP_ENABLE
 #define PROCESS_DEP_ENABLE 0x1
+#endif
+
+#if defined(MOZ_CONTENT_SANDBOX)
+#include "nsIUUIDGenerator.h"
 #endif
 #endif
 
@@ -173,7 +180,7 @@
 #endif
 
 #ifdef DEBUG
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #endif
 
 #ifdef MOZ_JPROF
@@ -226,6 +233,7 @@ static char **gQtOnlyArgv;
 #endif
 
 #if defined(MOZ_WIDGET_GTK)
+#include <glib.h>
 #if defined(DEBUG) || defined(NS_BUILD_REFCNT_LOGGING)
 #define CLEANUP_MEMORY 1
 #define PANGO_ENABLE_BACKEND
@@ -246,7 +254,7 @@ extern "C" MFBT_API bool IsSignalHandlingBroken();
 
 namespace mozilla {
 int (*RunGTest)() = 0;
-}
+} // namespace mozilla
 
 using namespace mozilla;
 using mozilla::unused;
@@ -584,6 +592,165 @@ CanShowProfileManager()
   return true;
 }
 
+#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
+static already_AddRefed<nsIFile>
+GetAndCleanLowIntegrityTemp(const nsAString& aTempDirSuffix)
+{
+  // Get the base low integrity Mozilla temp directory.
+  nsCOMPtr<nsIFile> lowIntegrityTemp;
+  nsresult rv = NS_GetSpecialDirectory(NS_WIN_LOW_INTEGRITY_TEMP_BASE,
+                                       getter_AddRefs(lowIntegrityTemp));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return nullptr;
+  }
+
+  // Append our profile specific temp name.
+  rv = lowIntegrityTemp->Append(NS_LITERAL_STRING("Temp-") + aTempDirSuffix);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return nullptr;
+  }
+
+  rv = lowIntegrityTemp->Remove(/* aRecursive */ true);
+  if (NS_FAILED(rv) && rv != NS_ERROR_FILE_NOT_FOUND) {
+    NS_WARNING("Failed to delete low integrity temp directory.");
+    return nullptr;
+  }
+
+  return lowIntegrityTemp.forget();
+}
+
+static void
+SetUpSandboxEnvironment()
+{
+  // A low integrity temp only currently makes sense for Vista and later, e10s
+  // and sandbox pref level 1.
+  if (!IsVistaOrLater() || !BrowserTabsRemoteAutostart() ||
+      Preferences::GetInt("security.sandbox.content.level") != 1) {
+    return;
+  }
+
+  // Get (and create if blank) temp directory suffix pref.
+  nsresult rv;
+  nsAdoptingString tempDirSuffix =
+    Preferences::GetString("security.sandbox.content.tempDirSuffix");
+  if (tempDirSuffix.IsEmpty()) {
+    nsCOMPtr<nsIUUIDGenerator> uuidgen =
+      do_GetService("@mozilla.org/uuid-generator;1", &rv);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return;
+    }
+
+    nsID uuid;
+    rv = uuidgen->GenerateUUIDInPlace(&uuid);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return;
+    }
+
+    char uuidChars[NSID_LENGTH];
+    uuid.ToProvidedString(uuidChars);
+    tempDirSuffix.AssignASCII(uuidChars);
+
+    // Save the pref to be picked up later.
+    rv = Preferences::SetCString("security.sandbox.content.tempDirSuffix",
+                                 uuidChars);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      // If we fail to save the pref we don't want to create the temp dir,
+      // because we won't be able to clean it up later.
+      return;
+    }
+
+    nsCOMPtr<nsIPrefService> prefsvc = Preferences::GetService();
+    if (!prefsvc || NS_FAILED(prefsvc->SavePrefFile(nullptr))) {
+      // Again, if we fail to save the pref file we might not be able to clean
+      // up the temp directory, so don't create one.
+      NS_WARNING("Failed to save pref file, cannot create temp dir.");
+      return;
+    }
+  }
+
+  // Get (and clean up if still there) the low integrity Mozilla temp directory.
+  nsCOMPtr<nsIFile> lowIntegrityTemp = GetAndCleanLowIntegrityTemp(tempDirSuffix);
+  if (!lowIntegrityTemp) {
+    NS_WARNING("Failed to get or clean low integrity Mozilla temp directory.");
+    return;
+  }
+
+  rv = lowIntegrityTemp->Create(nsIFile::DIRECTORY_TYPE, 0700);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+}
+
+#if defined(NIGHTLY_BUILD)
+static void
+CleanUpOldSandboxEnvironment()
+{
+  // Temporary code to clean up the old low integrity temp directories.
+  // The removal of this is tracked by bug 1165818.
+  nsCOMPtr<nsIFile> lowIntegrityMozilla;
+  nsresult rv = NS_GetSpecialDirectory(NS_WIN_LOW_INTEGRITY_TEMP_BASE,
+                              getter_AddRefs(lowIntegrityMozilla));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  nsCOMPtr<nsISimpleEnumerator> iter;
+  rv = lowIntegrityMozilla->GetDirectoryEntries(getter_AddRefs(iter));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  bool more;
+  nsCOMPtr<nsISupports> elem;
+  while (NS_SUCCEEDED(iter->HasMoreElements(&more)) && more) {
+    rv = iter->GetNext(getter_AddRefs(elem));
+    if (NS_FAILED(rv)) {
+      break;
+    }
+
+    nsCOMPtr<nsIFile> file = do_QueryInterface(elem);
+    if (!file) {
+      continue;
+    }
+
+    nsAutoString leafName;
+    rv = file->GetLeafName(leafName);
+    if (NS_FAILED(rv)) {
+      continue;
+    }
+
+    if (leafName.Find(NS_LITERAL_STRING("MozTemp-{")) == 0) {
+      file->Remove(/* aRecursive */ true);
+    }
+  }
+}
+#endif
+
+static void
+CleanUpSandboxEnvironment()
+{
+  // We can't have created a low integrity temp before Vista.
+  if (!IsVistaOrLater()) {
+    return;
+  }
+
+#if defined(NIGHTLY_BUILD)
+  CleanUpOldSandboxEnvironment();
+#endif
+
+  // Get temp directory suffix pref.
+  nsAdoptingString tempDirSuffix =
+    Preferences::GetString("security.sandbox.content.tempDirSuffix");
+  if (tempDirSuffix.IsEmpty()) {
+    return;
+  }
+
+  // Get and remove the low integrity Mozilla temp directory.
+  // This function already warns if the deletion fails.
+  nsCOMPtr<nsIFile> lowIntegrityTemp = GetAndCleanLowIntegrityTemp(tempDirSuffix);
+}
+#endif
+
 bool gSafeMode = false;
 
 /**
@@ -635,7 +802,7 @@ NS_INTERFACE_MAP_BEGIN(nsXULAppInfo)
   NS_INTERFACE_MAP_ENTRY(nsIFinishDumpingCallback)
 #endif
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIXULAppInfo, gAppData || 
-                                     XRE_GetProcessType() == GeckoProcessType_Content)
+                                     XRE_IsContentProcess())
 NS_INTERFACE_MAP_END
 
 NS_IMETHODIMP_(MozExternalRefCountType)
@@ -653,7 +820,7 @@ nsXULAppInfo::Release()
 NS_IMETHODIMP
 nsXULAppInfo::GetVendor(nsACString& aResult)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     ContentChild* cc = ContentChild::GetSingleton();
     aResult = cc->GetAppInfo().vendor;
     return NS_OK;
@@ -666,7 +833,7 @@ nsXULAppInfo::GetVendor(nsACString& aResult)
 NS_IMETHODIMP
 nsXULAppInfo::GetName(nsACString& aResult)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     ContentChild* cc = ContentChild::GetSingleton();
     aResult = cc->GetAppInfo().name;
     return NS_OK;
@@ -679,7 +846,7 @@ nsXULAppInfo::GetName(nsACString& aResult)
 NS_IMETHODIMP
 nsXULAppInfo::GetID(nsACString& aResult)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     ContentChild* cc = ContentChild::GetSingleton();
     aResult = cc->GetAppInfo().ID;
     return NS_OK;
@@ -692,7 +859,7 @@ nsXULAppInfo::GetID(nsACString& aResult)
 NS_IMETHODIMP
 nsXULAppInfo::GetVersion(nsACString& aResult)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     ContentChild* cc = ContentChild::GetSingleton();
     aResult = cc->GetAppInfo().version;
     return NS_OK;
@@ -713,7 +880,7 @@ nsXULAppInfo::GetPlatformVersion(nsACString& aResult)
 NS_IMETHODIMP
 nsXULAppInfo::GetAppBuildID(nsACString& aResult)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     ContentChild* cc = ContentChild::GetSingleton();
     aResult = cc->GetAppInfo().buildID;
     return NS_OK;
@@ -734,7 +901,7 @@ nsXULAppInfo::GetPlatformBuildID(nsACString& aResult)
 NS_IMETHODIMP
 nsXULAppInfo::GetUAName(nsACString& aResult)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     ContentChild* cc = ContentChild::GetSingleton();
     aResult = cc->GetAppInfo().UAName;
     return NS_OK;
@@ -896,7 +1063,7 @@ nsXULAppInfo::GetIs64Bit(bool* aResult)
 NS_IMETHODIMP
 nsXULAppInfo::EnsureContentProcess()
 {
-  if (XRE_GetProcessType() != GeckoProcessType_Default)
+  if (!XRE_IsParentProcess())
     return NS_ERROR_NOT_AVAILABLE;
 
   nsRefPtr<ContentParent> unused = ContentParent::GetNewOrUsedBrowserProcess();
@@ -1802,7 +1969,7 @@ private:
   nsresult mRv;
 };
 
-} // anonymous namespace
+} // namespace
 
 static ReturnAbortOnError
 ProfileLockedDialog(nsIFile* aProfileDir, nsIFile* aProfileLocalDir,
@@ -1988,6 +2155,10 @@ ShowProfileManager(nsIToolkitProfileService* aProfileSvc,
     ScopedXPCOMStartup xpcom;
     rv = xpcom.Initialize();
     NS_ENSURE_SUCCESS(rv, rv);
+
+    // Initialize the graphics prefs, some of the paths need them before
+    // any other graphics is initialized (e.g., showing the profile chooser.)
+    gfxPrefs::GetSingleton();
 
     rv = xpcom.SetWindowCreator(aNative);
     NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
@@ -2731,17 +2902,23 @@ static void MOZ_gdk_display_close(GdkDisplay *display)
 #if CLEANUP_MEMORY
   // XXX wallpaper for bug 417163: don't close the Display if we're using the
   // Qt theme because we crash (in Qt code) when using jemalloc.
-  bool theme_is_qt = false;
+  bool skip_display_close = false;
   GtkSettings* settings =
     gtk_settings_get_for_screen(gdk_display_get_default_screen(display));
   gchar *theme_name;
   g_object_get(settings, "gtk-theme-name", &theme_name, nullptr);
   if (theme_name) {
-    theme_is_qt = strcmp(theme_name, "Qt") == 0;
-    if (theme_is_qt)
+    skip_display_close = strcmp(theme_name, "Qt") == 0;
+    if (skip_display_close)
       NS_WARNING("wallpaper bug 417163 for Qt theme");
     g_free(theme_name);
   }
+
+#if (MOZ_WIDGET_GTK == 3)
+  // A workaround for https://bugzilla.gnome.org/show_bug.cgi?id=703257
+  if (gtk_check_version(3,9,8) != NULL)
+    skip_display_close = true;
+#endif
 
   // Get a (new) Pango context that holds a reference to the fontmap that
   // GTK has been using.  gdk_pango_context_get() must be called while GTK
@@ -2755,7 +2932,7 @@ static void MOZ_gdk_display_close(GdkDisplay *display)
     // like Pango and cairo. But if cairo shutdown is buggy, we should
     // shut down cairo first otherwise it may crash because of dangling
     // references to Display objects (see bug 469831).
-    if (!theme_is_qt)
+    if (!skip_display_close)
       gdk_display_close(display);
   }
 
@@ -2792,7 +2969,7 @@ static void MOZ_gdk_display_close(GdkDisplay *display)
   FcFini();
 
   if (buggyCairoShutdown) {
-    if (!theme_is_qt)
+    if (!skip_display_close)
       gdk_display_close(display);
   }
 #else // not CLEANUP_MEMORY
@@ -2945,7 +3122,17 @@ XREMain::XRE_mainInit(bool* aExitFlag)
 
   StartupTimeline::Record(StartupTimeline::MAIN);
 
-  if (ChaosMode::isActive(ChaosMode::Any)) {
+  if (PR_GetEnv("MOZ_CHAOSMODE")) {
+    ChaosFeature feature = ChaosFeature::Any;
+    long featureInt = strtol(PR_GetEnv("MOZ_CHAOSMODE"), nullptr, 16);
+    if (featureInt) {
+      // NOTE: MOZ_CHAOSMODE=0 or a non-hex value maps to Any feature.
+      feature = static_cast<ChaosFeature>(featureInt);
+    }
+    ChaosMode::SetChaosFeature(feature);
+  }
+
+  if (ChaosMode::isActive(ChaosFeature::Any)) {
     printf_stderr("*** You are running in chaos test mode. See ChaosMode.h. ***\n");
   }
 
@@ -3253,6 +3440,12 @@ XREMain::XRE_mainInit(bool* aExitFlag)
     gSafeMode = true;
 #endif
 
+#ifdef MOZ_CRASHREPORTER
+    CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("SafeMode"),
+                                       gSafeMode ? NS_LITERAL_CSTRING("1") :
+                                                   NS_LITERAL_CSTRING("0"));
+#endif
+
   // Handle --no-remote and --new-instance command line arguments. Setup
   // the environment to better accommodate other components and various
   // restart scenarios.
@@ -3396,7 +3589,7 @@ static void PR_CALLBACK AnnotateSystemManufacturer_ThreadStart(void*)
 
 namespace mozilla {
   ShutdownChecksMode gShutdownChecks = SCM_NOTHING;
-}
+} // namespace mozilla
 
 static void SetShutdownChecks() {
   // Set default first. On debug builds we crash. On nightly and local
@@ -3506,6 +3699,11 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   }
 
   // Initialize GTK here for splash.
+
+#if (MOZ_WIDGET_GTK == 3) && defined(MOZ_X11)
+  // Disable XInput2 support due to focus bugginess. See bugs 1182700, 1170342.
+  gdk_disable_multidevice();
+#endif
 
   // Open the display ourselves instead of using gtk_init, so that we can
   // close it without fear that one day gtk might clean up the display it
@@ -3641,9 +3839,9 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   if (NS_FAILED(rv))
     updRoot = mDirProvider.GetAppDir();
 
-  // If the MOZ_PROCESS_UPDATES environment variable already exists, then
+  // If the MOZ_TEST_PROCESS_UPDATES environment variable already exists, then
   // we are being called from the callback application.
-  if (EnvHasValue("MOZ_PROCESS_UPDATES")) {
+  if (EnvHasValue("MOZ_TEST_PROCESS_UPDATES")) {
     // If the caller has asked us to log our arguments, do so.  This is used
     // to make sure that the maintenance service successfully launches the
     // callback application.
@@ -3661,13 +3859,13 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
     return 0;
   }
 
-  // Support for processing an update and exiting. The MOZ_PROCESS_UPDATES
+  // Support for processing an update and exiting. The MOZ_TEST_PROCESS_UPDATES
   // environment variable will be part of the updater's environment and the
   // application that is relaunched by the updater. When the application is
   // relaunched by the updater it will be removed below and the application
   // will exit.
-  if (CheckArg("process-updates")) {
-    SaveToEnv("MOZ_PROCESS_UPDATES=1");
+  if (CheckArg("test-process-updates")) {
+    SaveToEnv("MOZ_TEST_PROCESS_UPDATES=1");
   }
   nsCOMPtr<nsIFile> exeFile, exeDir;
   rv = mDirProvider.GetFile(XRE_EXECUTABLE_FILE, &persistent,
@@ -3681,8 +3879,8 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
                  gRestartArgc,
                  gRestartArgv,
                  mAppData->version);
-  if (EnvHasValue("MOZ_PROCESS_UPDATES")) {
-    SaveToEnv("MOZ_PROCESS_UPDATES=");
+  if (EnvHasValue("MOZ_TEST_PROCESS_UPDATES")) {
+    SaveToEnv("MOZ_TEST_PROCESS_UPDATES=");
     *aExitFlag = true;
     return 0;
   }
@@ -3965,7 +4163,11 @@ XREMain::XRE_mainRun()
 
 #ifdef MOZ_CRASHREPORTER
   nsCString userAgentLocale;
-  if (NS_SUCCEEDED(Preferences::GetCString("general.useragent.locale", &userAgentLocale))) {
+  // Try a localized string first. This pref is always a localized string in
+  // Fennec, and might be elsewhere, too.
+  if (NS_SUCCEEDED(Preferences::GetLocalizedCString("general.useragent.locale", &userAgentLocale))) {
+    CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("useragent_locale"), userAgentLocale);
+  } else if (NS_SUCCEEDED(Preferences::GetCString("general.useragent.locale", &userAgentLocale))) {
     CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("useragent_locale"), userAgentLocale);
   }
 #endif
@@ -3994,6 +4196,18 @@ XREMain::XRE_mainRun()
       obsService->NotifyObservers(cmdLine, "command-line-startup", nullptr);
     }
   }
+
+#ifdef XP_WIN
+  // Hack to sync up the various environment storages. XUL_APP_FILE is special
+  // in that it comes from a different CRT (firefox.exe's static-linked copy).
+  // Ugly details in http://bugzil.la/1175039#c27
+  char appFile[MAX_PATH];
+  if (GetEnvironmentVariableA("XUL_APP_FILE", appFile, sizeof(appFile))) {
+    char* saved = PR_smprintf("XUL_APP_FILE=%s", appFile);
+    PR_SetEnv(saved);
+    PR_smprintf_free(saved);
+  }
+#endif
 
   SaveStateForAppInitiatedRestart();
 
@@ -4074,6 +4288,10 @@ XREMain::XRE_mainRun()
   }
 #endif /* MOZ_INSTRUMENT_EVENT_LOOP */
 
+#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
+  SetUpSandboxEnvironment();
+#endif
+
   {
     rv = appStartup->Run();
     if (NS_FAILED(rv)) {
@@ -4082,8 +4300,31 @@ XREMain::XRE_mainRun()
     }
   }
 
+#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
+  CleanUpSandboxEnvironment();
+#endif
+
   return rv;
 }
+
+#if MOZ_WIDGET_GTK == 2
+void XRE_GlibInit()
+{
+  static bool ran_once = false;
+
+  // glib < 2.24 doesn't want g_thread_init to be invoked twice, so ensure
+  // we only do it once. No need for thread safety here, since this is invoked
+  // well before any thread is spawned.
+  if (!ran_once) {
+    // glib version < 2.36 doesn't initialize g_slice in a static initializer.
+    // Ensure this happens through g_thread_init (glib version < 2.32) or
+    // g_type_init (2.32 <= gLib version < 2.36)."
+    g_thread_init(nullptr);
+    g_type_init();
+    ran_once = true;
+  }
+}
+#endif
 
 /*
  * XRE_main - A class based main entry point used by most platforms.
@@ -4093,6 +4334,8 @@ XREMain::XRE_mainRun()
 int
 XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
 {
+  ScopedLogging log;
+
   char aLocal;
   GeckoProfilerInitRAII profilerGuard(&aLocal);
 
@@ -4106,17 +4349,6 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
 
   NS_ENSURE_TRUE(aAppData, 2);
 
-#if defined(_MSC_VER) && _MSC_VER < 1900 && defined(_M_X64)
-  // Disable CRT use of FMA3 on non-AVX2 processors because of bug 1160148
-  int cpuid0[4] = {0};
-  int cpuid7[4] = {0};
-  __cpuid(cpuid0, 0); // Get the maximum supported CPUID function
-  __cpuid(cpuid7, 7); // AVX2 is function 7, subfunction 0, EBX, bit 5
-  if (cpuid0[0] < 7 || !(cpuid7[1] & 0x20)) {
-    _set_FMA3_enable(0);
-  }
-#endif
-
   mAppData = new ScopedAppData(aAppData);
   if (!mAppData)
     return 1;
@@ -4126,18 +4358,10 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
   // used throughout this file
   gAppData = mAppData;
 
-  ScopedLogging log;
-
   mozilla::IOInterposerInit ioInterposerGuard;
 
-#if defined(MOZ_WIDGET_GTK)
-#if defined(MOZ_MEMORY) || defined(__FreeBSD__) || defined(__NetBSD__)
-  // Disable the slice allocator, since jemalloc already uses similar layout
-  // algorithms, and using a sub-allocator tends to increase fragmentation.
-  // This must be done before g_thread_init() is called.
-  g_slice_set_config(G_SLICE_CONFIG_ALWAYS_MALLOC, 1);
-#endif
-  g_thread_init(nullptr);
+#if MOZ_WIDGET_GTK == 2
+  XRE_GlibInit();
 #endif
 
   // init
@@ -4366,6 +4590,12 @@ XRE_IsParentProcess()
   return XRE_GetProcessType() == GeckoProcessType_Default;
 }
 
+bool
+XRE_IsContentProcess()
+{
+  return XRE_GetProcessType() == GeckoProcessType_Content;
+}
+
 #ifdef E10S_TESTING_ONLY
 static void
 LogE10sBlockedReason(const char *reason) {
@@ -4447,7 +4677,7 @@ mozilla::BrowserTabsRemoteAutostart()
 
     // Check for blocked drivers
     if (!accelDisabled) {
-      nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
+      nsCOMPtr<nsIGfxInfo> gfxInfo = services::GetGfxInfo();
       if (gfxInfo) {
         int32_t status;
         if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_OPENGL_LAYERS, &status)) &&

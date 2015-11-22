@@ -8,10 +8,14 @@
 # linux) to the information; I certainly wouldn't want anyone parsing this
 # information and having behaviour depend on it
 
+from __future__ import absolute_import
+
 import os
 import platform
 import re
 import sys
+from .string_version import StringVersion
+
 
 # keep a copy of the os module since updating globals overrides this
 _os = os
@@ -23,6 +27,29 @@ class unknown(object):
     def __str__(self):
         return 'UNKNOWN'
 unknown = unknown() # singleton
+
+def get_windows_version():
+    import ctypes
+    class OSVERSIONINFOEXW(ctypes.Structure):
+        _fields_ = [('dwOSVersionInfoSize', ctypes.c_ulong),
+                    ('dwMajorVersion', ctypes.c_ulong),
+                    ('dwMinorVersion', ctypes.c_ulong),
+                    ('dwBuildNumber', ctypes.c_ulong),
+                    ('dwPlatformId', ctypes.c_ulong),
+                    ('szCSDVersion', ctypes.c_wchar*128),
+                    ('wServicePackMajor', ctypes.c_ushort),
+                    ('wServicePackMinor', ctypes.c_ushort),
+                    ('wSuiteMask', ctypes.c_ushort),
+                    ('wProductType', ctypes.c_byte),
+                    ('wReserved', ctypes.c_byte)]
+
+    os_version = OSVERSIONINFOEXW()
+    os_version.dwOSVersionInfoSize = ctypes.sizeof(os_version)
+    retcode = ctypes.windll.Ntdll.RtlGetVersion(ctypes.byref(os_version))
+    if retcode != 0:
+        raise OSError
+
+    return os_version.dwMajorVersion, os_version.dwMinorVersion, os_version.dwBuildNumber
 
 # get system information
 info = {'os': unknown,
@@ -46,6 +73,14 @@ if system in ["Microsoft", "Windows"]:
     system = os.environ.get("OS", system).replace('_', ' ')
     (major, minor, _, _, service_pack) = os.sys.getwindowsversion()
     info['service_pack'] = service_pack
+    if major >= 6 and minor >= 2:
+        # On windows >= 8.1 the system call that getwindowsversion uses has
+        # been frozen to always return the same values. In this case we call
+        # the RtlGetVersion API directly, which still provides meaningful
+        # values, at least for now.
+        major, minor, build_number = get_windows_version()
+        version = "%d.%d.%d" % (major, minor, build_number)
+
     os_version = "%d.%d" % (major, minor)
 elif system == "Linux":
     if hasattr(platform, "linux_distribution"):
@@ -73,7 +108,7 @@ else:
     os_version = version = unknown
 
 info['version'] = version
-info['os_version'] = os_version
+info['os_version'] = StringVersion(os_version)
 
 # processor type and bits
 if processor in ["i386", "i686"]:
@@ -180,6 +215,11 @@ def find_and_update_from_json(*dirs):
 
     return None
 
+def output_to_file(path):
+    import json
+    with open(path, 'w') as f:
+        f.write(json.dumps(info));
+
 update({})
 
 # exports
@@ -192,6 +232,8 @@ __all__ += [
     'choices',
     'update',
     'find_and_update_from_json',
+    'output_to_file',
+    'StringVersion',
     ]
 
 def main(args=None):

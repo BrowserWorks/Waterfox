@@ -201,6 +201,8 @@ Moving right along, let's say you want to pass/return an array of Incrementors. 
         response: { incrementors: RetVal("array:incrementor") }
     })
 
+You can use an iterator in place of an array as an argument or return value, and the library will handle the conversion automatically.
+
 Or maybe you want to return a dictionary where one item is a incrementor.  To do this you need to tell the type system which members of the dictionary need custom marshallers:
 
     protocol.types.addDictType("contrivedObject", {
@@ -419,6 +421,12 @@ You might want to update your front's state when an event is fired, before emitt
 
     countGoodNews: protocol.preEvent("good-news", function(news) {
         this.amountOfGoodNews++;
+    });
+
+You can have events wait until an asynchronous action completes before firing by returning a promise. If you have multiple preEvents defined for a specific event, and atleast one fires asynchronously, then all preEvents most resolve before all events are fired.
+
+    countGoodNews: protocol.preEvent("good-news", function(news) {
+        return this.updateGoodNews().then(() => this.amountOfGoodNews++);
     });
 
 On a somewhat related note, not every method needs to be request/response.  Just like an actor can emit a one-way event, a method can be marked as a one-way request.  Maybe we don't care about giveGoodNews returning anything:

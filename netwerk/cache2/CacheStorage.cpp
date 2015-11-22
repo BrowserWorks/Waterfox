@@ -25,10 +25,12 @@ NS_IMPL_ISUPPORTS(CacheStorage, nsICacheStorage)
 
 CacheStorage::CacheStorage(nsILoadContextInfo* aInfo,
                            bool aAllowDisk,
-                           bool aLookupAppCache)
+                           bool aLookupAppCache,
+                           bool aSkipSizeCheck)
 : mLoadContextInfo(GetLoadContextInfo(aInfo))
 , mWriteToDisk(aAllowDisk)
 , mLookupAppCache(aLookupAppCache)
+, mSkipSizeCheck(aSkipSizeCheck)
 {
 }
 
@@ -216,5 +218,5 @@ nsresult CacheStorage::ChooseApplicationCache(nsIURI* aURI,
   return NS_OK;
 }
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla

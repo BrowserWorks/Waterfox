@@ -56,6 +56,7 @@ public:
   virtual const SdpExtmapAttributeList& GetExtmap() const override;
   virtual const SdpFmtpAttributeList& GetFmtp() const override;
   virtual const SdpImageattrAttributeList& GetImageattr() const override;
+  const SdpSimulcastAttribute& GetSimulcast() const override;
   virtual const SdpMsidAttributeList& GetMsid() const override;
   virtual const SdpRtcpFbAttributeList& GetRtcpFb() const override;
   virtual const SdpRtpmapAttributeList& GetRtpmap() const override;
@@ -105,6 +106,8 @@ private:
   void LoadCandidate(sdp_t* sdp, uint16_t level);
   void LoadSetup(sdp_t* sdp, uint16_t level);
   void LoadSsrc(sdp_t* sdp, uint16_t level);
+  bool LoadImageattr(sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder);
+  bool LoadSimulcast(sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder);
   bool LoadGroups(sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder);
   bool LoadMsidSemantics(sdp_t* sdp,
                          uint16_t level,

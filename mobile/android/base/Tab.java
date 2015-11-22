@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.URLMetadata;
 import org.mozilla.gecko.favicons.Favicons;
@@ -36,6 +37,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+import org.mozilla.gecko.widget.SiteLogins;
 
 public class Tab {
     private static final String LOGTAG = "GeckoTab";
@@ -57,6 +59,7 @@ public class Tab {
     private boolean mHasFeeds;
     private boolean mHasOpenSearch;
     private final SiteIdentity mSiteIdentity;
+    private SiteLogins mSiteLogins;
     private BitmapDrawable mThumbnail;
     private final int mParentId;
     private final boolean mExternal;
@@ -78,6 +81,7 @@ public class Tab {
     private ErrorType mErrorType = ErrorType.NONE;
     private volatile int mLoadProgress;
     private volatile int mRecordingCount;
+    private volatile boolean mIsAudioPlaying;
     private String mMostRecentHomePanel;
 
     private int mHistoryIndex;
@@ -144,6 +148,7 @@ public class Tab {
         Tabs.getInstance().notifyListeners(this, Tabs.TabEvents.CLOSED);
     }
 
+    @RobocopTarget
     public int getId() {
         return mId;
     }
@@ -278,6 +283,10 @@ public class Tab {
 
     public SiteIdentity getSiteIdentity() {
         return mSiteIdentity;
+    }
+
+    public SiteLogins getSiteLogins() {
+        return mSiteLogins;
     }
 
     public boolean isBookmark() {
@@ -415,6 +424,11 @@ public class Tab {
     }
 
     public void loadFavicon() {
+        // Static Favicons never change
+        if (AboutPages.isBuiltinIconPage(mUrl) && mFavicon != null) {
+            return;
+        }
+
         // If we have a Favicon explicitly set, load it.
         if (!mAvailableFavicons.isEmpty()) {
             RemoteFavicon newFavicon = mAvailableFavicons.first();
@@ -494,6 +508,10 @@ public class Tab {
         mSiteIdentity.update(identityData);
     }
 
+    public void setSiteLogins(SiteLogins siteLogins) {
+        mSiteLogins = siteLogins;
+    }
+
     void updateBookmark() {
         if (getURL() == null) {
             return;
@@ -570,12 +588,7 @@ public class Tab {
                 }
 
                 mDB.getReadingListAccessor().addBasicReadingListItem(getContentResolver(), url, mTitle);
-                ThreadUtils.postToUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(mAppContext, R.string.reading_list_added, Toast.LENGTH_SHORT).show();
-                    }
-                });
+                Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.READING_LIST_ADDED);
             }
         });
     }
@@ -592,31 +605,17 @@ public class Tab {
                     url = ReaderModeUtils.getUrlFromAboutReader(url);
                 }
                 mDB.getReadingListAccessor().removeReadingListItemWithURL(getContentResolver(), url);
-                ThreadUtils.postToUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(mAppContext, R.string.reading_list_removed, Toast.LENGTH_SHORT).show();
-                    }
-                });
+                Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.READING_LIST_REMOVED);
             }
         });
-    }
-
-    public void toggleReaderMode() {
-        if (AboutPages.isAboutReader(mUrl)) {
-            Tabs.getInstance().loadUrl(ReaderModeUtils.getUrlFromAboutReader(mUrl));
-        } else {
-            mEnteringReaderMode = true;
-            Tabs.getInstance().loadUrl(ReaderModeUtils.getAboutReaderForUrl(mUrl, mId));
-        }
     }
 
     public boolean isEnteringReaderMode() {
         return mEnteringReaderMode;
     }
 
-    public void doReload() {
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Reload", "");
+    public void doReload(boolean bypassCache) {
+        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Reload", "{\"bypassCache\":" + String.valueOf(bypassCache) + "}");
         GeckoAppShell.sendEventToGecko(e);
     }
 
@@ -673,6 +672,12 @@ public class Tab {
                 // spurious location change, so we're definitely loading a new
                 // page.
                 clearFavicon();
+
+                // Load local static Favicons immediately
+                if (AboutPages.isBuiltinIconPage(uri)) {
+                    loadFavicon();
+                }
+
                 updateTitle(null);
             }
         }
@@ -691,6 +696,7 @@ public class Tab {
         setHasFeeds(false);
         setHasOpenSearch(false);
         mSiteIdentity.reset();
+        setSiteLogins(null);
         setZoomConstraints(new ZoomConstraints(true));
         setHasTouchListeners(false);
         setBackgroundColor(DEFAULT_BACKGROUND_COLOR);
@@ -910,6 +916,14 @@ public class Tab {
 
     public boolean isRecording() {
         return mRecordingCount > 0;
+    }
+
+    public void setIsAudioPlaying(boolean isAudioPlaying) {
+        mIsAudioPlaying = isAudioPlaying;
+    }
+
+    public boolean isAudioPlaying() {
+        return mIsAudioPlaying;
     }
 
     public boolean isEditing() {

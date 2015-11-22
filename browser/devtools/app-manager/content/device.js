@@ -4,11 +4,10 @@
 
 const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
 const {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
 
-const {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const {require} = devtools;
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const {TargetFactory} = require("devtools/framework/target");
 
 const {ConnectionManager, Connection}
   = require("devtools/client/connection-manager");
@@ -43,7 +42,7 @@ window.addEventListener("unload", function onUnload() {
   UI.destroy();
 });
 
-let UI = {
+var UI = {
   init: function() {
     this.showFooterIfNeeded();
     this.setTab("apps");
@@ -167,7 +166,7 @@ let UI = {
       client: this.connection.client,
       chrome: true
     };
-    devtools.TargetFactory.forRemoteTab(options).then((target) => {
+    TargetFactory.forRemoteTab(options).then((target) => {
       top.UI.openAndShowToolboxForTarget(target, "Main process", null);
     });
   },
@@ -193,7 +192,7 @@ let UI = {
         chrome: false
       };
       let deferred = promise.defer();
-      return devtools.TargetFactory.forRemoteTab(options);
+      return TargetFactory.forRemoteTab(options);
   },
 
   openToolboxForTab: function (aNode) {

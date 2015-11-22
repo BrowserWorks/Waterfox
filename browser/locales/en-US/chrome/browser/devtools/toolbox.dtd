@@ -15,12 +15,27 @@
 <!ENTITY toolboxNextTool.key           "]">
 <!ENTITY toolboxPreviousTool.key       "[">
 
-<!ENTITY toolboxZoomIn.key             "+">
-<!ENTITY toolboxZoomIn.key2            "="> <!-- + is above this key on many keyboards -->
-<!ENTITY toolboxZoomOut.key            "-">
-<!ENTITY toolboxZoomReset.key          "0">
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey, fullZoomEnlargeCmd.commandkey2,
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey,
+fullZoomReduceCmd.commandkey2, fullZoomResetCmd.commandkey,
+and fullZoomResetCmd.commandkey2 should all match the corresponding
+values from browser.dtd.  -->
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "=">
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
 
 <!ENTITY toolboxReload.key             "r">
+<!-- This key is used with the accel+shift modifiers to minimize the toolbox -->
+<!ENTITY toolboxToggleMinimize.key     "U">
+
+<!ENTITY toolboxToggle.key             "d">
 <!-- LOCALIZATION NOTE (toolboxFramesButton): This is the label for
   -  the iframes menu list that appears only when the document has some.
   -  It allows you to switch the context of the whole toolbox. -->
@@ -87,6 +102,12 @@
   -  boolean preference in about:config, in the options panel. -->
 <!ENTITY options.enableRemote.label3    "Enable remote debugging">
 <!ENTITY options.enableRemote.tooltip   "Turning this option on will allow the developer tools to debug remote Firefox instance like Firefox OS">
+
+<!-- LOCALIZATION NOTE (options.enableWorkers.label): This is the label for the
+  -  checkbox that toggles worker debugging, i.e. devtools.debugger.workers
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableWorkers.label    "Enable worker debugging (in development)">
+<!ENTITY options.enableWorkers.tooltip  "Turning this option on will allow the developer tools to debug workers">
 
 <!-- LOCALIZATION NOTE (options.disableJavaScript.label,
   -  options.disableJavaScript.tooltip): This is the options panel label and
@@ -160,11 +181,6 @@
    - label for the checkbox that toggles autocompletion of css in the Style Editor -->
 <!ENTITY options.stylesheetAutocompletion.label      "Autocomplete CSS">
 <!ENTITY options.stylesheetAutocompletion.tooltip    "Autocomplete CSS properties, values and selectors in Style Editor as you type">
-
-<!-- LOCALIZATION NOTE (options.profiler.label): This is the label for the
-  -  heading of the group of JavaScript Profiler preferences in the options
-  -  panel. -->
-<!ENTITY options.profiler.label            "JavaScript Profiler">
 
 <!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
       of all preferences that affect both the Web Console and the Network

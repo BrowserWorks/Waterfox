@@ -20,6 +20,7 @@
 #ifndef nsIPresShell_h___
 #define nsIPresShell_h___
 
+#include "mozilla/ArenaObjectID.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/StaticPtr.h"
@@ -59,6 +60,7 @@ class nsCanvasFrame;
 class nsAString;
 class nsCaret;
 namespace mozilla {
+class AccessibleCaretEventHub;
 class TouchCaret;
 class SelectionCarets;
 } // namespace mozilla
@@ -138,10 +140,10 @@ typedef struct CapturingContentInfo {
   mozilla::StaticRefPtr<nsIContent> mContent;
 } CapturingContentInfo;
 
-// a7ef8bb3-d628-4965-80f3-a326e089fb7f
+// b07c5323-3061-4ca9-95ed-84cccbffadac
 #define NS_IPRESSHELL_IID \
-{ 0xa7ef8bb3, 0xd628, 0x4965, \
-  { 0x80, 0xf3, 0xa3, 0x26, 0xe0, 0x89, 0xfb, 0x7f } }
+{ 0xb07c5323, 0x3061, 0x4ca9, \
+  { 0x95, 0xed, 0x84, 0xcc, 0xcb, 0xff, 0xad, 0xac } }
 
 // debug VerifyReflow flags
 #define VERIFY_REFLOW_ON                    0x01
@@ -245,7 +247,7 @@ public:
    * the same aSize value.  AllocateByObjectID returns zero-filled memory.
    * AllocateByObjectID is infallible and will abort on out-of-memory.
    */
-  void* AllocateByObjectID(nsPresArena::ObjectID aID, size_t aSize)
+  void* AllocateByObjectID(mozilla::ArenaObjectID aID, size_t aSize)
   {
 #ifdef DEBUG
     mPresArenaAllocCount++;
@@ -255,7 +257,7 @@ public:
     return result;
   }
 
-  void FreeByObjectID(nsPresArena::ObjectID aID, void* aPtr)
+  void FreeByObjectID(mozilla::ArenaObjectID aID, void* aPtr)
   {
 #ifdef DEBUG
     mPresArenaAllocCount--;
@@ -288,6 +290,23 @@ public:
 #endif
     if (!mIsDestroying)
       mFrameArena.FreeBySize(aSize, aPtr);
+  }
+
+  template<typename T>
+  void RegisterArenaRefPtr(mozilla::ArenaRefPtr<T>* aPtr)
+  {
+    mFrameArena.RegisterArenaRefPtr(aPtr);
+  }
+
+  template<typename T>
+  void DeregisterArenaRefPtr(mozilla::ArenaRefPtr<T>* aPtr)
+  {
+    mFrameArena.DeregisterArenaRefPtr(aPtr);
+  }
+
+  void ClearArenaRefPtrs(mozilla::ArenaObjectID aObjectID)
+  {
+    mFrameArena.ClearArenaRefPtrs(aObjectID);
   }
 
   nsIDocument* GetDocument() const { return mDocument; }
@@ -354,15 +373,11 @@ public:
   void ReconstructStyleData() { ReconstructStyleDataExternal(); }
 #endif
 
-  /** Setup all style rules required to implement preferences
-   * - used for background/text/link colors and link underlining
-   *    may be extended for any prefs that are implemented via style rules
-   * - aForceReflow argument is used to force a full reframe to make the rules show
-   *   (only used when the current page needs to reflect changed pref rules)
-   *
-   * - initially created for bugs 31816, 20760, 22963
+  /**
+   * Update the style set somehow to take into account changed prefs which
+   * affect document styling.
    */
-  virtual nsresult SetPreferenceStyleRules(bool aForceReflow) = 0;
+  virtual void UpdatePreferenceStyles() = 0;
 
   /**
    * FrameSelection will return the Frame based selection API.
@@ -408,11 +423,10 @@ public:
    */
   virtual nsresult ResizeReflow(nscoord aWidth, nscoord aHeight) = 0;
   /**
-   * Reflow, and also change presshell state so as to only permit
-   * reflowing off calls to ResizeReflowOverride() in the future.
-   * ResizeReflow() calls are ignored after ResizeReflowOverride().
+   * Do the same thing as ResizeReflow but even if ResizeReflowOverride was
+   * called previously.
    */
-  virtual nsresult ResizeReflowOverride(nscoord aWidth, nscoord aHeight) = 0;
+  virtual nsresult ResizeReflowIgnoreOverride(nscoord aWidth, nscoord aHeight) = 0;
 
   /**
    * Returns true if ResizeReflowOverride has been called.
@@ -511,9 +525,19 @@ public:
     eTreeChange, // mark intrinsic widths dirty on aFrame and its ancestors
     eStyleChange // Do eTreeChange, plus all of aFrame's descendants
   };
+  enum ReflowRootHandling {
+    ePositionOrSizeChange, // aFrame is changing position or size
+    eNoPositionOrSizeChange, // ... NOT changing ...
+    eInferFromBitToAdd // is changing iff (aBitToAdd == NS_FRAME_IS_DIRTY)
+
+    // Note:  With eStyleChange, these can also apply to out-of-flows
+    // in addition to aFrame.
+  };
   virtual void FrameNeedsReflow(nsIFrame *aFrame,
                                 IntrinsicDirty aIntrinsicDirty,
-                                nsFrameState aBitToAdd) = 0;
+                                nsFrameState aBitToAdd,
+                                ReflowRootHandling aRootHandling =
+                                  eInferFromBitToAdd) = 0;
 
   /**
    * Calls FrameNeedsReflow on all fixed position children of the root frame.
@@ -809,6 +833,11 @@ public:
   virtual mozilla::dom::Element* GetSelectionCaretsEndElement() const = 0;
 
   /**
+   * Get the AccessibleCaretEventHub, if it exists. AddRefs it.
+   */
+  virtual already_AddRefed<mozilla::AccessibleCaretEventHub> GetAccessibleCaretEventHub() const = 0;
+
+  /**
    * Get the caret, if it exists. AddRefs it.
    */
   virtual already_AddRefed<nsCaret> GetCaret() const = 0;
@@ -1093,17 +1122,22 @@ public:
                                   nscolor aBackgroundColor,
                                   gfxContext* aRenderedContext) = 0;
 
+  enum {
+    RENDER_AUTO_SCALE = 0x80
+  };
+
   /**
    * Renders a node aNode to a surface and returns it. The aRegion may be used
    * to clip the rendering. This region is measured in CSS pixels from the
-   * edge of the presshell area. The aPoint, aScreenRect and aSurface
-   * arguments function in a similar manner as RenderSelection.
+   * edge of the presshell area. The aPoint, aScreenRect and aFlags arguments
+   * function in a similar manner as RenderSelection.
    */
-  virtual mozilla::TemporaryRef<SourceSurface>
+  virtual already_AddRefed<SourceSurface>
   RenderNode(nsIDOMNode* aNode,
              nsIntRegion* aRegion,
              nsIntPoint& aPoint,
-             nsIntRect* aScreenRect) = 0;
+             nsIntRect* aScreenRect,
+             uint32_t aFlags) = 0;
 
   /**
    * Renders a selection to a surface and returns it. This method is primarily
@@ -1112,18 +1146,20 @@ public:
    * aScreenRect will be filled in with the bounding rectangle of the
    * selection area on screen.
    *
-   * If the area of the selection is large, the image will be scaled down.
-   * The argument aPoint is used in this case as a reference point when
-   * determining the new screen rectangle after scaling. Typically, this
-   * will be the mouse position, so that the screen rectangle is positioned
-   * such that the mouse is over the same point in the scaled image as in
-   * the original. When scaling does not occur, the mouse point isn't used
-   * as the position can be determined from the displayed frames.
+   * If the area of the selection is large and the RENDER_AUTO_SCALE flag is
+   * set, the image will be scaled down. The argument aPoint is used in this
+   * case as a reference point when determining the new screen rectangle after
+   * scaling. Typically, this will be the mouse position, so that the screen
+   * rectangle is positioned such that the mouse is over the same point in the
+   * scaled image as in the original. When scaling does not occur, the mouse
+   * point isn't used because the position can be determined from the displayed
+   * frames.
    */
-  virtual mozilla::TemporaryRef<SourceSurface>
+  virtual already_AddRefed<SourceSurface>
   RenderSelection(nsISelection* aSelection,
                   nsIntPoint& aPoint,
-                  nsIntRect* aScreenRect) = 0;
+                  nsIntRect* aScreenRect,
+                  uint32_t aFlags) = 0;
 
   void AddWeakFrameInternal(nsWeakFrame* aWeakFrame);
   virtual void AddWeakFrameExternal(nsWeakFrame* aWeakFrame);
@@ -1363,6 +1399,12 @@ public:
   virtual LayerManager* GetLayerManager() = 0;
 
   /**
+   * Return true iff there is a widget rendering this presShell and that
+   * widget is APZ-enabled.
+   */
+  virtual bool AsyncPanZoomEnabled() = 0;
+
+  /**
    * Track whether we're ignoring viewport scrolling for the purposes
    * of painting.  If we are ignoring, then layers aren't clipped to
    * the CSS viewport and scrollbars aren't drawn.
@@ -1551,6 +1593,18 @@ public:
   virtual bool AssumeAllImagesVisible() = 0;
 
   /**
+   * Returns whether the document's style set's rule processor for the
+   * specified level of the cascade is shared by multiple style sets.
+   *
+   * @param aSheetType One of the nsIStyleSheetService.*_SHEET constants.
+   */
+  nsresult HasRuleProcessorUsedByMultipleStyleSets(uint32_t aSheetType,
+                                                   bool* aRetVal);
+
+  bool IsInFullscreenChange() const { return mIsInFullscreenChange; }
+  void SetIsInFullscreenChange(bool aValue);
+
+  /**
    * Refresh observer management.
    */
 protected:
@@ -1609,11 +1663,6 @@ public:
   nsSize GetScrollPositionClampingScrollPortSize() {
     NS_ASSERTION(mScrollPositionClampingScrollPortSizeSet, "asking for scroll port when its not set?");
     return mScrollPositionClampingScrollPortSize;
-  }
-
-  void SetContentDocumentFixedPositionMargins(const nsMargin& aMargins);
-  const nsMargin& GetContentDocumentFixedPositionMargins() {
-    return mContentDocumentFixedPositionMargins;
   }
 
   virtual void WindowSizeMoveDone() = 0;
@@ -1708,12 +1757,6 @@ protected:
 
   nsSize                    mScrollPositionClampingScrollPortSize;
 
-  // This margin is intended to be used when laying out fixed position children
-  // on this PresShell's viewport frame. See the documentation of
-  // nsIDOMWindowUtils.setContentDocumentFixedPositionMargins for details of
-  // their use.
-  nsMargin                  mContentDocumentFixedPositionMargins;
-
   // A list of weak frames. This is a pointer to the last item in the list.
   nsWeakFrame*              mWeakFrames;
 
@@ -1741,6 +1784,11 @@ protected:
   bool                      mIsDestroying : 1;
   bool                      mIsZombie : 1;
   bool                      mIsReflowing : 1;
+
+  // Indicates that the whole document is performing fullscreen change,
+  // in which case, we need to defer dispatching resize event and freeze
+  // the refresh driver to avoid unnecessary reflow.
+  bool                      mIsInFullscreenChange : 1;
 
   // For all documents we initially lock down painting.
   bool                      mPaintingSuppressed : 1;

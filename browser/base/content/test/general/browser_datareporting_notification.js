@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let originalPolicy = null;
+var originalPolicy = null;
 
 /**
  * Display a datareporting notification to the user.
@@ -47,31 +47,7 @@ function sendNotifyRequest(name) {
   return [policy, deferred.promise];
 }
 
-/**
- * Wait for a <notification> to be closed then call the specified callback.
- */
-function waitForNotificationClose(notification, cb) {
-  let parent = notification.parentNode;
-
-  let observer = new MutationObserver(function onMutatations(mutations) {
-    for (let mutation of mutations) {
-      for (let i = 0; i < mutation.removedNodes.length; i++) {
-        let node = mutation.removedNodes.item(i);
-
-        if (node != notification) {
-          continue;
-        }
-
-        observer.disconnect();
-        cb();
-      }
-    }
-  });
-
-  observer.observe(parent, {childList: true});
-}
-
-let dumpAppender, rootLogger;
+var dumpAppender, rootLogger;
 
 function test() {
   registerCleanupFunction(cleanup);
@@ -201,11 +177,6 @@ function test_multiple_windows() {
         ok(true, "Advanced preferences opened on info bar button press.");
         executeSoon(function soon() {
           prefWindowOpened = true;
-          // If the prefs are being displayed in a dialog we need to close it.
-          // If in a tab (ie, in-content prefs) it closes with the window.
-          if (!Services.prefs.getBoolPref("browser.preferences.inContent")) {
-            prefWin.close();
-          }
           maybeFinish();
         });
       }, "advanced-pane-loaded", false);

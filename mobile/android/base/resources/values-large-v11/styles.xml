@@ -5,47 +5,14 @@
 
 <resources>
 
-    <style name="UrlBar.ImageButton.NewTablet">
-        <item name="android:layout_width">@dimen/new_tablet_browser_toolbar_menu_item_width</item>
+    <style name="UrlBar.ImageButton" parent="UrlBar.ImageButtonBase">
+        <item name="android:layout_width">@dimen/tablet_browser_toolbar_menu_item_width</item>
     </style>
 
-    <!-- Note: this style is for the visible and expanded forward button.  We translate/hide
-         the forward button in code - see BrowserToolbarNewTablet.animateForwardButton. -->
-    <style name="UrlBar.ImageButton.Forward">
-        <item name="android:contentDescription">@string/forward</item>
-        <item name="android:layout_height">match_parent</item>
-        <item name="android:paddingTop">0dp</item>
-        <item name="android:paddingBottom">0dp</item>
-        <item name="android:layout_marginTop">11.5dp</item>
-        <item name="android:layout_marginBottom">11.5dp</item>
-        <item name="android:layout_gravity">center_vertical</item>
-        <item name="android:layout_centerVertical">true</item>
-        <item name="android:src">@drawable/new_tablet_ic_menu_forward</item>
-        <item name="android:background">@drawable/new_tablet_url_bar_nav_button</item>
-
-        <!-- Start with the button hidden -->
-        <item name="android:alpha">0</item>
-
-        <!-- The visible area of the forward button is a nav_button_width and the
-             non-visible area slides halfway under the back button. This non-visible
-             area is used to ensure the forward button background fully
-             covers the space to the right of the back button. -->
-        <item name="android:layout_width">@dimen/new_tablet_nav_button_width_plus_half</item>
-
-        <!-- (See note above) We left align with back,
-             but only need to hide halfway underneath. -->
-        <item name="android:layout_marginLeft">@dimen/new_tablet_nav_button_width_half</item>
-
-        <!-- We use left padding to center the arrow in the
-             visible area as opposed to the true width. -->
-        <item name="android:paddingLeft">18dp</item>
-    </style>
-
-    <style name="UrlBar.ImageButton.TabCount.NewTablet">
-        <item name="android:background">@drawable/new_tablet_tabs_count</item>
-
-        <!-- From UrlBar.ImageButton.NewTablet because we can't inherit directly. -->
-        <item name="android:layout_width">@dimen/new_tablet_browser_toolbar_menu_item_width</item>
+    <!-- If this style wasn't actually shared outside the
+         url bar, this name could be improved (bug 1197424). -->
+    <style name="UrlBar.ImageButton.BrowserToolbarColors">
+        <item name="drawableTintList">@color/action_bar_menu_item_colors</item>
     </style>
 
     <style name="UrlBar.Button.Container">
@@ -77,7 +44,8 @@
     <style name="Widget.MenuItemActionBar">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:background">@drawable/new_tablet_action_bar_button</item>
+        <item name="android:background">@drawable/browser_toolbar_action_bar_button</item>
+        <item name="drawableTintList">@color/action_bar_menu_item_colors</item>
         <item name="android:scaleType">center</item>
 
         <!-- layout_width/height doesn't work here, likely because it's
@@ -88,8 +56,8 @@
                  * The reload button contains whitespace at the top of the image to lower it -->
         <item name="android:paddingTop">19dp</item>
         <item name="android:paddingBottom">21dp</item>
-        <item name="android:paddingLeft">@dimen/new_tablet_browser_toolbar_menu_item_padding_horizontal</item>
-        <item name="android:paddingRight">@dimen/new_tablet_browser_toolbar_menu_item_padding_horizontal</item>
+        <item name="android:paddingLeft">@dimen/tablet_browser_toolbar_menu_item_padding_horizontal</item>
+        <item name="android:paddingRight">@dimen/tablet_browser_toolbar_menu_item_padding_horizontal</item>
     </style>
 
     <style name="Widget.BookmarksListView" parent="Widget.HomeListView">
@@ -124,36 +92,6 @@
     <style name="Widget.HomeBanner">
         <item name="android:paddingLeft">32dp</item>
         <item name="android:paddingRight">32dp</item>
-    </style>
-
-    <!-- Tabs panel -->
-    <style name="PrivateTabsPanelFrame">
-        <item name="android:orientation">vertical</item>
-
-        <!-- We want to center the content on the screen, not in
-             the View, so add padding to compensate for the header. -->
-        <item name="android:layout_gravity">center</item>
-        <item name="android:paddingBottom">@dimen/browser_toolbar_height</item>
-    </style>
-
-    <style name="TabsPanelSection.PrivateTabs">
-        <item name="android:layout_weight">1</item>
-        <item name="android:layout_marginLeft">20dp</item>
-        <item name="android:layout_marginRight">20dp</item>
-    </style>
-
-    <style name="TabsPanelSection.PrivateTabs.Header">
-        <item name="android:paddingTop">10dp</item>
-    </style>
-
-    <style name="TabsPanelItem.TextAppearance.Header.PrivateTabs">
-        <item name="android:visibility">visible</item>
-    </style>
-
-    <style name="TabsPanelItem.TextAppearance.Linkified.LearnMore">
-        <item name="android:layout_height">match_parent</item>
-        <item name="android:gravity">center</item>
-        <item name="android:layout_gravity">center</item>
     </style>
 
     <style name="TextAppearance.UrlBar.Title" parent="TextAppearance.Medium">

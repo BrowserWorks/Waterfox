@@ -9,26 +9,32 @@
 
 #include "NamespaceImports.h"
 
+#include "vm/String.h"
+
 class JSLinearString;
 
 namespace js {
 
-class AutoNameVector;
 class LazyScript;
 class LifoAlloc;
+class ModuleObject;
 class ScriptSourceObject;
-class StaticEvalObject;
+class ScopeObject;
 struct SourceCompressionTask;
 
 namespace frontend {
 
 JSScript*
 CompileScript(ExclusiveContext* cx, LifoAlloc* alloc,
-              HandleObject scopeChain, HandleScript evalCaller,
-              Handle<StaticEvalObject*> evalStaticScope,
-              const ReadOnlyCompileOptions& options, SourceBufferHolder& srcBuf,
-              JSString* source_ = nullptr, unsigned staticLevel = 0,
-              SourceCompressionTask* extraSct = nullptr);
+              HandleObject scopeChain, Handle<ScopeObject*> enclosingStaticScope,
+              HandleScript evalCaller, const ReadOnlyCompileOptions& options,
+              SourceBufferHolder& srcBuf, JSString* source_ = nullptr,
+              SourceCompressionTask* extraSct = nullptr,
+              ScriptSourceObject** sourceObjectOut = nullptr);
+
+ModuleObject *
+CompileModule(JSContext *cx, HandleObject obj, const ReadOnlyCompileOptions &options,
+              SourceBufferHolder &srcBuf);
 
 bool
 CompileLazyFunction(JSContext* cx, Handle<LazyScript*> lazy, const char16_t* chars, size_t length);
@@ -40,12 +46,12 @@ CompileLazyFunction(JSContext* cx, Handle<LazyScript*> lazy, const char16_t* cha
 bool
 CompileFunctionBody(JSContext* cx, MutableHandleFunction fun,
                     const ReadOnlyCompileOptions& options,
-                    const AutoNameVector& formals, JS::SourceBufferHolder& srcBuf,
-                    HandleObject enclosingStaticScope);
+                    Handle<PropertyNameVector> formals, JS::SourceBufferHolder& srcBuf,
+                    Handle<ScopeObject*> enclosingStaticScope);
 bool
 CompileStarGeneratorBody(JSContext* cx, MutableHandleFunction fun,
                          const ReadOnlyCompileOptions& options,
-                         const AutoNameVector& formals, JS::SourceBufferHolder& srcBuf);
+                         Handle<PropertyNameVector> formals, JS::SourceBufferHolder& srcBuf);
 
 ScriptSourceObject*
 CreateScriptSourceObject(ExclusiveContext* cx, const ReadOnlyCompileOptions& options);

@@ -453,25 +453,6 @@ WebSocketChannelChild::OnServerClose(const uint16_t& aCode,
   }
 }
 
-// helper function to assign loadInfo to wsArgs
-void
-propagateLoadInfo(nsILoadInfo *aLoadInfo,
-                  WebSocketLoadInfoArgs& wsArgs)
-{
-  mozilla::ipc::PrincipalInfo requestingPrincipalInfo;
-  mozilla::ipc::PrincipalInfo triggeringPrincipalInfo;
-
-  mozilla::ipc::PrincipalToPrincipalInfo(aLoadInfo->LoadingPrincipal(),
-                                         &requestingPrincipalInfo);
-  wsArgs.requestingPrincipalInfo() = requestingPrincipalInfo;
-  mozilla::ipc::PrincipalToPrincipalInfo(aLoadInfo->TriggeringPrincipal(),
-                                         &triggeringPrincipalInfo);
-  wsArgs.triggeringPrincipalInfo() = triggeringPrincipalInfo;
-  wsArgs.securityFlags() = aLoadInfo->GetSecurityFlags();
-  wsArgs.contentPolicyType() = aLoadInfo->GetContentPolicyType();
-  wsArgs.innerWindowID() = aLoadInfo->GetInnerWindowID();
-}
-
 NS_IMETHODIMP
 WebSocketChannelChild::AsyncOpen(nsIURI *aURI,
                                  const nsACString &aOrigin,
@@ -502,14 +483,15 @@ WebSocketChannelChild::AsyncOpen(nsIURI *aURI,
   // Corresponding release in DeallocPWebSocket
   AddIPDLReference();
 
-  WebSocketLoadInfoArgs wsArgs;
-  propagateLoadInfo(mLoadInfo, wsArgs);
+  OptionalLoadInfoArgs loadInfoArgs;
+  nsresult rv = LoadInfoToLoadInfoArgs(mLoadInfo, &loadInfoArgs);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   gNeckoChild->SendPWebSocketConstructor(this, tabChild,
                                          IPC::SerializedLoadContext(this));
   if (!SendAsyncOpen(uri, nsCString(aOrigin), mProtocol, mEncrypted,
                      mPingInterval, mClientSetPingInterval,
-                     mPingResponseTimeout, mClientSetPingTimeout, wsArgs)) {
+                     mPingResponseTimeout, mClientSetPingTimeout, loadInfoArgs)) {
     return NS_ERROR_UNEXPECTED;
   }
 

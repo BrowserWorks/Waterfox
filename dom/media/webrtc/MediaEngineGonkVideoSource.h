@@ -61,14 +61,21 @@ public:
     }
 
   virtual nsresult Allocate(const dom::MediaTrackConstraints &aConstraints,
-                            const MediaEnginePrefs &aPrefs) override;
+                            const MediaEnginePrefs &aPrefs,
+                            const nsString& aDeviceId) override;
   virtual nsresult Deallocate() override;
   virtual nsresult Start(SourceMediaStream* aStream, TrackID aID) override;
   virtual nsresult Stop(SourceMediaStream* aSource, TrackID aID) override;
+  virtual nsresult Restart(const dom::MediaTrackConstraints& aConstraints,
+                           const MediaEnginePrefs &aPrefs,
+                           const nsString& aDeviceId) override;
   virtual void NotifyPull(MediaStreamGraph* aGraph,
                           SourceMediaStream* aSource,
                           TrackID aId,
                           StreamTime aDesiredTime) override;
+  virtual const dom::MediaSourceEnum GetMediaSource() override {
+    return dom::MediaSourceEnum::Camera;
+  }
 
   void OnHardwareStateChange(HardwareState aState, nsresult aReason) override;
   void GetRotation();
@@ -112,7 +119,7 @@ protected:
   mozilla::ReentrantMonitor mCallbackMonitor; // Monitor for camera callback handling
   // This is only modified on MainThread (AllocImpl and DeallocImpl)
   nsRefPtr<ICameraControl> mCameraControl;
-  nsCOMPtr<nsIDOMFile> mLastCapture;
+  nsRefPtr<dom::File> mLastCapture;
 
   android::sp<android::GonkCameraSource> mCameraSource;
 

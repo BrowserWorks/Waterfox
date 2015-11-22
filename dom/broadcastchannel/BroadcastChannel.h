@@ -12,7 +12,7 @@
 #include "nsIIPCBackgroundChildCreateCallback.h"
 #include "nsIObserver.h"
 #include "nsTArray.h"
-#include "nsRefPtr.h"
+#include "mozilla/nsRefPtr.h"
 
 class nsPIDOMWindow;
 
@@ -20,13 +20,13 @@ namespace mozilla {
 
 namespace ipc {
 class PrincipalInfo;
-}
+} // namespace ipc
 
 namespace dom {
 
 namespace workers {
 class WorkerFeature;
-}
+} // namespace workers
 
 class BroadcastChannelChild;
 class BroadcastChannelMessage;
@@ -46,8 +46,6 @@ public:
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(BroadcastChannel,
                                            DOMEventTargetHelper)
-
-  static bool IsEnabled(JSContext* aCx, JSObject* aGlobal);
 
   virtual JSObject*
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
@@ -92,7 +90,7 @@ public:
 private:
   BroadcastChannel(nsPIDOMWindow* aWindow,
                    const PrincipalInfo& aPrincipalInfo,
-                   const nsAString& aOrigin,
+                   const nsACString& aOrigin,
                    const nsAString& aChannel,
                    bool aPrivateBrowsing);
 
@@ -105,6 +103,11 @@ private:
 
   void UpdateMustKeepAlive();
 
+  bool IsCertainlyAliveForCC() const override
+  {
+    return mIsKeptAlive;
+  }
+
   nsRefPtr<BroadcastChannelChild> mActor;
   nsTArray<nsRefPtr<BroadcastChannelMessage>> mPendingMessages;
 
@@ -112,7 +115,7 @@ private:
 
   nsAutoPtr<PrincipalInfo> mPrincipalInfo;
 
-  nsString mOrigin;
+  nsCString mOrigin;
   nsString mChannel;
   bool mPrivateBrowsing;
 

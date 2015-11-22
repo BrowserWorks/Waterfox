@@ -56,7 +56,10 @@
 
 const {components, Cc, Ci, Cu} = require("chrome");
 loader.lazyImporter(this, "NetUtil", "resource://gre/modules/NetUtil.jsm");
-loader.lazyImporter(this, "DevToolsUtils", "resource://gre/modules/devtools/DevToolsUtils.jsm");
+const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+
+// The cache used in the `nsIURL` function.
+const gNSURLStore = new Map();
 
 /**
  * Helper object for networking stuff.
@@ -64,7 +67,7 @@ loader.lazyImporter(this, "DevToolsUtils", "resource://gre/modules/devtools/DevT
  * Most of the following functions have been taken from the Firebug source. They
  * have been modified to match the Firefox coding rules.
  */
-let NetworkHelper = {
+var NetworkHelper = {
   /**
    * Converts aText with a given aCharset to unicode.
    *
@@ -275,21 +278,14 @@ let NetworkHelper = {
    */
   loadFromCache: function NH_loadFromCache(aUrl, aCharset, aCallback)
   {
-    let channel = NetUtil.newChannel2(aUrl,
-                                      null,
-                                      null,
-                                      null,      // aLoadingNode
-                                      Services.scriptSecurityManager.getSystemPrincipal(),
-                                      null,      // aTriggeringPrincipal
-                                      Ci.nsILoadInfo.SEC_NORMAL,
-                                      Ci.nsIContentPolicy.TYPE_OTHER);
+    let channel = NetUtil.newChannel({uri: aUrl, loadUsingSystemPrincipal: true});
 
     // Ensure that we only read from the cache and not the server.
     channel.loadFlags = Ci.nsIRequest.LOAD_FROM_CACHE |
       Ci.nsICachingChannel.LOAD_ONLY_FROM_CACHE |
       Ci.nsICachingChannel.LOAD_BYPASS_LOCAL_CACHE_IF_BUSY;
 
-    NetUtil.asyncFetch2(
+    NetUtil.asyncFetch(
       channel,
       (aInputStream, aStatusCode, aRequest) => {
         if (!components.isSuccessCode(aStatusCode)) {
@@ -559,7 +555,7 @@ let NetworkHelper = {
      *
      * - request is HTTPS but it uses a weak cipher or old protocol, see
      *   http://hg.mozilla.org/mozilla-central/annotate/def6ed9d1c1a/
-     *   security/manager/ssl/src/nsNSSCallbacks.cpp#l1233
+     *   security/manager/ssl/nsNSSCallbacks.cpp#l1233
      * - request is mixed content (which makes no sense whatsoever)
      *   => .securityState has STATE_IS_BROKEN flag
      *   => .errorCode is NOT an NSS error code
@@ -732,7 +728,7 @@ let NetworkHelper = {
 
     // If there's non-fatal security issues the request has STATE_IS_BROKEN
     // flag set. See http://hg.mozilla.org/mozilla-central/file/44344099d119
-    // /security/manager/ssl/src/nsNSSCallbacks.cpp#l1233
+    // /security/manager/ssl/nsNSSCallbacks.cpp#l1233
     let reasons = [];
 
     if (state & wpl.STATE_IS_BROKEN) {
@@ -750,6 +746,46 @@ let NetworkHelper = {
 
     return reasons;
   },
+
+  /**
+   * Parse a url's query string into its components
+   *
+   * @param string aQueryString
+   *        The query part of a url
+   * @return array
+   *         Array of query params {name, value}
+   */
+  parseQueryString: function(aQueryString) {
+    // Make sure there's at least one param available.
+    // Be careful here, params don't necessarily need to have values, so
+    // no need to verify the existence of a "=".
+    if (!aQueryString) {
+      return;
+    }
+
+    // Turn the params string into an array containing { name: value } tuples.
+    let paramsArray = aQueryString.replace(/^[?&]/, "").split("&").map(e => {
+      let param = e.split("=");
+      return {
+        name: param[0] ? NetworkHelper.convertToUnicode(unescape(param[0])) : "",
+        value: param[1] ? NetworkHelper.convertToUnicode(unescape(param[1])) : ""
+      }});
+
+    return paramsArray;
+  },
+
+  /**
+   * Helper for getting an nsIURL instance out of a string.
+   */
+  nsIURL: function(aUrl, aStore = gNSURLStore) {
+    if (aStore.has(aUrl)) {
+      return aStore.get(aUrl);
+    }
+
+    let uri = Services.io.newURI(aUrl, null, null).QueryInterface(Ci.nsIURL);
+    aStore.set(aUrl, uri);
+    return uri;
+  }
 };
 
 for (let prop of Object.getOwnPropertyNames(NetworkHelper)) {

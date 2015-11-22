@@ -21,6 +21,7 @@
 #pragma GCC diagnostic pop
 
 #include "MediaDecoderReader.h"
+#include "MediaResource.h"
 #include "MP3FrameParser.h"
 #include "ImageContainer.h"
 #include "nsRect.h"
@@ -28,10 +29,6 @@
 struct GstURIDecodeBin;
 
 namespace mozilla {
-
-namespace dom {
-class TimeRanges;
-}
 
 class AbstractMediaDecoder;
 
@@ -53,11 +50,12 @@ public:
                                 MetadataTags** aTags) override;
   virtual nsRefPtr<SeekPromise>
   Seek(int64_t aTime, int64_t aEndTime) override;
-  virtual nsresult GetBuffered(dom::TimeRanges* aBuffered) override;
+  virtual media::TimeIntervals GetBuffered() override;
 
-  virtual void NotifyDataArrived(const char *aBuffer,
-                                 uint32_t aLength,
-                                 int64_t aOffset) override;
+protected:
+  virtual void NotifyDataArrivedInternal(uint32_t aLength,
+                                         int64_t aOffset) override;
+public:
 
   virtual bool HasAudio() override {
     return mInfo.HasAudio();
@@ -265,6 +263,9 @@ private:
 #endif
   int fpsNum;
   int fpsDen;
+
+  MediaResourceIndex mResource;
+  NotifyDataArrivedFilter mFilter;
 };
 
 } // namespace mozilla

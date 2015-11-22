@@ -165,9 +165,10 @@ gfxGraphiteShaper::ShapeText(gfxContext      *aContext,
     size_t numChars = gr_count_unicode_characters(gr_utf16,
                                                   aText, aText + aLength,
                                                   nullptr);
+    gr_bidirtl grBidi = gr_bidirtl(aShapedText->IsRightToLeft()
+                                   ? (gr_rtl | gr_nobidi) : gr_nobidi);
     gr_segment *seg = gr_make_seg(mGrFont, mGrFace, 0, grFeatures,
-                                  gr_utf16, aText, numChars,
-                                  aShapedText->IsRightToLeft());
+                                  gr_utf16, aText, numChars, grBidi);
 
     gr_featureval_destroy(grFeatures);
 
@@ -213,10 +214,10 @@ gfxGraphiteShaper::SetGlyphsFromSegment(gfxContext      *aContext,
     AutoFallibleTArray<float,SMALL_GLYPH_RUN> xLocs;
     AutoFallibleTArray<float,SMALL_GLYPH_RUN> yLocs;
 
-    if (!clusters.SetLength(aLength) ||
-        !gids.SetLength(glyphCount) ||
-        !xLocs.SetLength(glyphCount) ||
-        !yLocs.SetLength(glyphCount))
+    if (!clusters.SetLength(aLength, fallible) ||
+        !gids.SetLength(glyphCount, fallible) ||
+        !xLocs.SetLength(glyphCount, fallible) ||
+        !yLocs.SetLength(glyphCount, fallible))
     {
         return NS_ERROR_OUT_OF_MEMORY;
     }

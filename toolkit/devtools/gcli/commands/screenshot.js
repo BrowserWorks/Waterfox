@@ -7,9 +7,9 @@
 const { Cc, Ci, Cu } = require("chrome");
 const l10n = require("gcli/l10n");
 const { Services } = require("resource://gre/modules/Services.jsm");
+const { getRect } = require("devtools/toolkit/layout/utils");
 
 loader.lazyImporter(this, "Downloads", "resource://gre/modules/Downloads.jsm");
-loader.lazyImporter(this, "LayoutHelpers", "resource://gre/modules/devtools/LayoutHelpers.jsm");
 loader.lazyImporter(this, "Task", "resource://gre/modules/Task.jsm");
 loader.lazyImporter(this, "OS", "resource://gre/modules/osfile.jsm");
 
@@ -55,7 +55,6 @@ const standardParams = {
     },
     {
       name: "imgur",
-      hidden: true, // Hidden because it fails with "Could not reach imgur API"
       type: "boolean",
       description: l10n.lookup("screenshotImgurDesc"),
       manual: l10n.lookup("screenshotImgurManual")
@@ -66,6 +65,13 @@ const standardParams = {
       defaultValue: 0,
       description: l10n.lookup("screenshotDelayDesc"),
       manual: l10n.lookup("screenshotDelayManual")
+    },
+    {
+      name: "dpi",
+      type: { name: "number", min: 0, allowFloat: true },
+      defaultValue: 0,
+      description: l10n.lookup("screenshotDPIDesc"),
+      manual: l10n.lookup("screenshotDPIManual")
     },
     {
       name: "fullpage",
@@ -133,10 +139,13 @@ exports.items = [
       }
 
       // Click handler
-      if (imageSummary.filename) {
+      if (imageSummary.href || imageSummary.filename) {
         root.style.cursor = "pointer";
         root.addEventListener("click", () => {
-          if (imageSummary.filename) {
+          if (imageSummary.href) {
+            const gBrowser = context.environment.chromeWindow.gBrowser;
+            gBrowser.selectedTab = gBrowser.addTab(imageSummary.href);
+          } else if (imageSummary.filename) {
             const file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
             file.initWithPath(imageSummary.filename);
             file.reveal();
@@ -265,8 +274,7 @@ function createScreenshotData(document, args) {
     height = window.innerHeight + window.scrollMaxY;
   }
   else if (args.selector) {
-    const lh = new LayoutHelpers(window);
-    ({ top, left, width, height }) = lh.getRect(args.selector, window);
+    ({ top, left, width, height } = getRect(window, args.selector, window));
   }
   else {
     left = window.scrollX;
@@ -284,9 +292,11 @@ function createScreenshotData(document, args) {
   height -= scrollbarHeight.value;
 
   const canvas = document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
-  canvas.width = width;
-  canvas.height = height;
   const ctx = canvas.getContext("2d");
+  const ratio = args.dpi ? args.dpi : window.devicePixelRatio;
+  canvas.width = width * ratio;
+  canvas.height = height * ratio;
+  ctx.scale(ratio, ratio);
   ctx.drawWindow(window, left, top, width, height, "#fff");
   const data = canvas.toDataURL("image/png", "");
 
@@ -404,16 +414,15 @@ function uploadToImgur(reply) {
       if (xhr.readyState == 4) {
         if (xhr.status == 200) {
           reply.href = xhr.response.data.link;
-          reply.destinations.push(l10n.lookupFormat("screenshotImgurError",
+          reply.destinations.push(l10n.lookupFormat("screenshotImgurUploaded",
                                                     [ reply.href ]));
-        }
-        else {
+        } else {
           reply.destinations.push(l10n.lookup("screenshotImgurError"));
         }
 
         resolve();
       }
-    }
+    };
   });
 }
 

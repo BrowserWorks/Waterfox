@@ -11,6 +11,7 @@
 
 #include "mozilla/Mutex.h"
 #include "nsString.h"
+#include "Intervals.h"
 
 namespace mozilla {
 
@@ -112,7 +113,7 @@ public:
     return mIsMP3 != NOT_MP3;
   }
 
-  void Parse(const char* aBuffer, uint32_t aLength, uint64_t aStreamOffset);
+  void Parse(const uint8_t* aBuffer, uint32_t aLength, uint64_t aStreamOffset);
 
   // Returns the duration, in microseconds. If the entire stream has not
   // been parsed yet, this is an estimate based on the bitrate of the
@@ -213,6 +214,24 @@ private:
 
 };
 
-}
+class NotifyDataArrivedFilter {
+public:
+  media::IntervalSet<int64_t> NotifyDataArrived(uint32_t aLength, int64_t aOffset) {
+    media::Interval<int64_t> interval(aOffset, aOffset + aLength);
+    media::IntervalSet<int64_t> newIntervals(interval);
+    newIntervals -= mIntervals;
+    mIntervals += interval;
+    return newIntervals;
+  }
+
+  const media::IntervalSet<int64_t>& GetIntervals() {
+    return mIntervals;
+  }
+
+private:
+  media::IntervalSet<int64_t> mIntervals;
+};
+
+} // namespace mozilla
 
 #endif

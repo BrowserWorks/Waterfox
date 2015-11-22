@@ -7,9 +7,10 @@
 
 "use strict";
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-console.html";
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-console.html";
 
-let test = asyncTest(function*() {
+var test = asyncTest(function*() {
   yield loadTab(TEST_URI);
   let hud = yield openConsole();
   hud.jsterm.clearOutput();
@@ -27,7 +28,7 @@ let test = asyncTest(function*() {
       category: CATEGORY_WEBDEV,
       severity: SEVERITY_LOG,
     }],
-  })
+  });
 
   is(hud.outputNode.children.length, 50, "number of messages");
 
@@ -88,9 +89,8 @@ function countMessageNodes(hud) {
   return displayedMessageNodes;
 }
 
-function setStringFilter(hud, aValue)
-{
-  hud.ui.filterBox.value = aValue;
+function setStringFilter(hud, value) {
+  hud.ui.filterBox.value = value;
   hud.ui.adjustVisibilityOnSearchStringChange();
 }
 

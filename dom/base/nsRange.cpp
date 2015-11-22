@@ -31,6 +31,7 @@
 #include "mozilla/dom/RangeBinding.h"
 #include "mozilla/dom/DOMRect.h"
 #include "mozilla/dom/ShadowRoot.h"
+#include "mozilla/dom/Selection.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/Likely.h"
 #include "nsCSSFrameConstructor.h"
@@ -135,36 +136,6 @@ nsRange::CompareNodeToRange(nsINode* aNode, nsRange* aRange,
   return NS_OK;
 }
 
-struct FindSelectedRangeData
-{
-  nsINode*  mNode;
-  nsRange* mResult;
-  uint32_t  mStartOffset;
-  uint32_t  mEndOffset;
-};
-
-static PLDHashOperator
-FindSelectedRange(nsPtrHashKey<nsRange>* aEntry, void* userArg)
-{
-  nsRange* range = aEntry->GetKey();
-  if (range->IsInSelection() && !range->Collapsed()) {
-    FindSelectedRangeData* data = static_cast<FindSelectedRangeData*>(userArg);
-    int32_t cmp = nsContentUtils::ComparePoints(data->mNode, data->mEndOffset,
-                                                range->GetStartParent(),
-                                                range->StartOffset());
-    if (cmp == 1) {
-      cmp = nsContentUtils::ComparePoints(data->mNode, data->mStartOffset,
-                                          range->GetEndParent(),
-                                          range->EndOffset());
-      if (cmp == -1) {
-        data->mResult = range;
-        return PL_DHASH_STOP;
-      }
-    }
-  }
-  return PL_DHASH_NEXT;
-}
-
 static nsINode*
 GetNextRangeCommonAncestor(nsINode* aNode)
 {
@@ -183,16 +154,27 @@ nsRange::IsNodeSelected(nsINode* aNode, uint32_t aStartOffset,
 {
   NS_PRECONDITION(aNode, "bad arg");
 
-  FindSelectedRangeData data = { aNode, nullptr, aStartOffset, aEndOffset };
   nsINode* n = GetNextRangeCommonAncestor(aNode);
   NS_ASSERTION(n || !aNode->IsSelectionDescendant(),
                "orphan selection descendant");
   for (; n; n = GetNextRangeCommonAncestor(n->GetParentNode())) {
     RangeHashTable* ranges =
       static_cast<RangeHashTable*>(n->GetProperty(nsGkAtoms::range));
-    ranges->EnumerateEntries(FindSelectedRange, &data);
-    if (data.mResult) {
-      return true;
+    for (auto iter = ranges->ConstIter(); !iter.Done(); iter.Next()) {
+      nsRange* range = iter.Get()->GetKey();
+      if (range->IsInSelection() && !range->Collapsed()) {
+        int32_t cmp = nsContentUtils::ComparePoints(aNode, aEndOffset,
+                                                    range->GetStartParent(),
+                                                    range->StartOffset());
+        if (cmp == 1) {
+          cmp = nsContentUtils::ComparePoints(aNode, aStartOffset,
+                                              range->GetEndParent(),
+                                              range->EndOffset());
+          if (cmp == -1) {
+            return true;
+          }
+        }
+      }
     }
   }
   return false;
@@ -211,6 +193,26 @@ nsRange::~nsRange()
 
   // we want the side effects (releases and list removals)
   DoSetRange(nullptr, 0, nullptr, 0, nullptr);
+}
+
+nsRange::nsRange(nsINode* aNode)
+  : mRoot(nullptr)
+  , mStartOffset(0)
+  , mEndOffset(0)
+  , mIsPositioned(false)
+  , mIsDetached(false)
+  , mMaySpanAnonymousSubtrees(false)
+  , mIsGenerated(false)
+  , mStartOffsetWasIncremented(false)
+  , mEndOffsetWasIncremented(false)
+  , mEnableGravitationOnElementRemoval(true)
+#ifdef DEBUG
+  , mAssertNextInsertOrAppendIndex(-1)
+  , mAssertNextInsertOrAppendNode(nullptr)
+#endif
+{
+  MOZ_ASSERT(aNode, "range isn't in a document!");
+  mOwner = aNode->OwnerDoc();
 }
 
 /* static */
@@ -288,6 +290,10 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsRange)
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mOwner);
   tmp->Reset();
+
+  // This needs to be unlinked after Reset() is called, as it controls
+  // the result of IsInSelection() which is used by tmp->Reset().
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mSelection);
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsRange)
@@ -295,6 +301,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsRange)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mStartParent)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mEndParent)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRoot)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSelection)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -898,14 +905,20 @@ nsRange::DoSetRange(nsINode* aStartN, int32_t aStartOffset,
         RegisterCommonAncestor(newCommonAncestor);
       } else {
         NS_ASSERTION(!mIsPositioned, "unexpected disconnected nodes");
-        mInSelection = false;
+        mSelection = nullptr;
       }
     }
   }
 
-  // This needs to be the last thing this function does.  See comment
-  // in ParentChainChanged.
+  // This needs to be the last thing this function does, other than notifying
+  // selection listeners. See comment in ParentChainChanged.
   mRoot = aRoot;
+
+  // Notify any selection listeners. This has to occur last because otherwise the world
+  // could be observed by a selection listener while the range was in an invalid state.
+  if (mSelection) {
+    mSelection->NotifySelectionListeners();
+  }
 }
 
 static int32_t
@@ -914,6 +927,28 @@ IndexOf(nsINode* aChild)
   nsINode* parent = aChild->GetParentNode();
 
   return parent ? parent->IndexOf(aChild) : -1;
+}
+
+void
+nsRange::SetSelection(mozilla::dom::Selection* aSelection)
+{
+  if (mSelection == aSelection) {
+    return;
+  }
+  // At least one of aSelection and mSelection must be null
+  // aSelection will be null when we are removing from a selection
+  // and a range can't be in more than one selection at a time,
+  // thus mSelection must be null too.
+  MOZ_ASSERT(!aSelection || !mSelection);
+
+  mSelection = aSelection;
+  nsINode* commonAncestor = GetCommonAncestor();
+  NS_ASSERTION(commonAncestor, "unexpected disconnected nodes");
+  if (mSelection) {
+    RegisterCommonAncestor(commonAncestor);
+  } else {
+    UnregisterCommonAncestor(commonAncestor);
+  }
 }
 
 nsINode*
@@ -1129,7 +1164,9 @@ nsRange::SetStart(nsIDOMNode* aParent, int32_t aOffset)
 nsRange::SetStart(nsINode* aParent, int32_t aOffset)
 {
   nsINode* newRoot = IsValidBoundary(aParent);
-  NS_ENSURE_TRUE(newRoot, NS_ERROR_DOM_INVALID_NODE_TYPE_ERR);
+  if (!newRoot) {
+    return NS_ERROR_DOM_INVALID_NODE_TYPE_ERR;
+  }
 
   if (aOffset < 0 || uint32_t(aOffset) > aParent->Length()) {
     return NS_ERROR_DOM_INDEX_SIZE_ERR;
@@ -1228,7 +1265,9 @@ nsRange::SetEnd(nsIDOMNode* aParent, int32_t aOffset)
 nsRange::SetEnd(nsINode* aParent, int32_t aOffset)
 {
   nsINode* newRoot = IsValidBoundary(aParent);
-  NS_ENSURE_TRUE(newRoot, NS_ERROR_DOM_INVALID_NODE_TYPE_ERR);
+  if (!newRoot) {
+    return NS_ERROR_DOM_INVALID_NODE_TYPE_ERR;
+  }
 
   if (aOffset < 0 || uint32_t(aOffset) > aParent->Length()) {
     return NS_ERROR_DOM_INDEX_SIZE_ERR;

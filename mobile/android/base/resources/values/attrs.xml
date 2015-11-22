@@ -14,9 +14,6 @@
         <attr name="menuItemActionBarStyle" format="reference"/>
 
         <!-- Style for MenuItemActionBar -->
-        <attr name="menuItemActionBarStyleNewTablet" format="reference"/>
-
-        <!-- Style for MenuItemActionBar -->
         <attr name="menuItemActionModeStyle" format="reference"/>
 
         <!-- Style for MenuItemActionView -->
@@ -37,8 +34,8 @@
         <!-- Default style for the TopSitesGridItemView -->
         <attr name="topSitesGridItemViewStyle" format="reference" />
 
-        <!-- Style for the PanelGridView -->
-        <attr name="panelGridViewStyle" format="reference" />
+        <!-- Styles for dynamic panel grid views -->
+        <attr name="panelIconViewStyle" format="reference" />
 
         <!-- Style for the TabsGridLayout -->
         <attr name="tabGridLayoutViewStyle" format="reference" />
@@ -169,6 +166,10 @@
 
     <declare-styleable name="TabMenuStrip">
         <attr name="strip" format="reference"/>
+        <attr name="tabContentStart" format="dimension" />
+        <attr name="activeTextColor" format="color" />
+        <attr name="inactiveTextColor" format="color" />
+        <attr name="titlebarFill" format="boolean" />
     </declare-styleable>
 
     <declare-styleable name="TabPanelBackButton">
@@ -193,6 +194,16 @@
         <attr name="drawable" format="reference" />
         <attr name="enabledText" format="string" />
         <attr name="disabledText" format="string" />
+    </declare-styleable>
+
+    <declare-styleable name="ThemedView">
+        <!-- A reimplementation of android:tintList which is
+             otherwise only available on API 21+.
+
+             Using this attribute is mutually exclusive with android:tint
+             and setting colorFilters in code. This is because on pre-Lollipop,
+             android:tint and DrawableCompat.tint* uses colorFilters under the hood. -->
+        <attr name="drawableTintList" format="color" />
     </declare-styleable>
 
 </resources>

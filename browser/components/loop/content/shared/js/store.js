@@ -2,8 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* global loop:true */
-
 var loop = loop || {};
 loop.store = loop.store || {};
 
@@ -115,17 +113,20 @@ loop.store.createStore = (function() {
  *     });
  */
 loop.store.StoreMixin = (function() {
+  "use strict";
+
   var _stores = {};
   function StoreMixin(id) {
-    function _getStore() {
-      if (!_stores[id]) {
-        throw new Error("Unavailable store " + id);
-      }
-      return _stores[id];
-    }
     return {
       getStore: function() {
-        return _getStore();
+        // Allows the ui-showcase to override the specified store.
+        if (id in this.props) {
+          return this.props[id];
+        }
+        if (!_stores[id]) {
+          throw new Error("Unavailable store " + id);
+        }
+        return _stores[id];
       },
       getStoreState: function() {
         return this.getStore().getStoreState();
@@ -142,6 +143,12 @@ loop.store.StoreMixin = (function() {
   }
   StoreMixin.register = function(stores) {
     _.extend(_stores, stores);
+  };
+  /**
+   * Used for test purposes, to clear the list of registered stores.
+   */
+  StoreMixin.clearRegisteredStores = function() {
+    _stores = {};
   };
   return StoreMixin;
 })();

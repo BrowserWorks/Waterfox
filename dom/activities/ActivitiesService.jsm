@@ -12,6 +12,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/IndexedDBHelper.jsm");
 Cu.import("resource://gre/modules/AppsUtils.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "DOMApplicationRegistry",
   "resource://gre/modules/Webapps.jsm");
@@ -34,7 +35,7 @@ function debug(aMsg) {
 }
 
 const DB_NAME    = "activities";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = "activities";
 
 function ActivitiesDb() {
@@ -63,6 +64,25 @@ ActivitiesDb.prototype = {
    */
   upgradeSchema: function actdb_upgradeSchema(aTransaction, aDb, aOldVersion, aNewVersion) {
     debug("Upgrade schema " + aOldVersion + " -> " + aNewVersion);
+
+    let self = this;
+
+    function upgrade(currentVersion) {
+      let next = upgrade.bind(self, currentVersion + 1);
+      switch (currentVersion) {
+        case 0:
+          self.createSchema(aDb, next);
+          break;
+        case 1:
+          self.upgradeSchemaVersion2(aDb, aTransaction, next);
+          break;
+      }
+    }
+
+    upgrade(aOldVersion);
+  },
+
+  createSchema: function(aDb, aNext) {
     let objectStore = aDb.createObjectStore(STORE_NAME, { keyPath: "id" });
 
     // indexes
@@ -70,6 +90,49 @@ ActivitiesDb.prototype = {
     objectStore.createIndex("manifest", "manifest", { unique: false });
 
     debug("Created object stores and indexes");
+
+    aNext();
+  },
+
+  upgradeSchemaVersion2: function(aDb, aTransaction, aNext) {
+    debug("Upgrading DB to version 2");
+
+    // In order to be able to have multiple activities with same name
+    // but different descriptions, we need to update the keypath from
+    // a hash made from {manifest, name} to a hash made from {manifest,
+    // name, description}.
+    //
+    // Unfortunately, updating the keypath is not allowed by IDB, so we
+    // need to remove and recreate the activities object store.
+
+    let activities = [];
+    let objectStore = aTransaction.objectStore(STORE_NAME);
+    objectStore.openCursor().onsuccess = (event) => {
+      let cursor = event.target.result;
+      if (!cursor) {
+        aDb.deleteObjectStore(STORE_NAME);
+
+        let objectStore = aDb.createObjectStore(STORE_NAME, { keyPath: "id" });
+
+        // indexes
+        objectStore.createIndex("name", "name", { unique: false });
+        objectStore.createIndex("manifest", "manifest", { unique: false });
+
+        this.add(activities, () => {
+          debug("DB upgraded to version 2");
+          aNext();
+        }, () => {
+          dump("Error upgrading DB to version 2 " + error + "\n");
+        });
+        return;
+      }
+
+      let activity = cursor.value;
+      debug("Upgrading activity " + JSON.stringify(activity));
+      activity.id = this.createId(activity);
+      activities.push(activity);
+      cursor.continue();
+    };
   },
 
   // unique ids made of (uri, action)
@@ -83,8 +146,17 @@ ActivitiesDb.prototype = {
     hasher.init(hasher.SHA1);
 
     // add uri and action to the hash
-    ["manifest", "name"].forEach(function(aProp) {
-      let data = converter.convertToByteArray(aObject[aProp], {});
+    ["manifest", "name", "description"].forEach(function(aProp) {
+      if (!aObject[aProp]) {
+        return;
+      }
+
+      let property = aObject[aProp];
+      if (aProp == "description") {
+        property = JSON.stringify(aObject[aProp]);
+      }
+
+      let data = converter.convertToByteArray(property, {});
       hasher.update(data, data.length);
     });
 
@@ -110,16 +182,17 @@ ActivitiesDb.prototype = {
 
   // Remove all the activities carried in the |aObjects| array.
   remove: function actdb_remove(aObjects) {
-    this.newTxn("readwrite", STORE_NAME, function (txn, store) {
-      aObjects.forEach(function (aObject) {
+    this.newTxn("readwrite", STORE_NAME, (txn, store) => {
+      aObjects.forEach((aObject) => {
         let object = {
           manifest: aObject.manifest,
-          name: aObject.name
+          name: aObject.name,
+          description: aObject.description
         };
         debug("Going to remove " + JSON.stringify(object));
         store.delete(this.createId(object));
-      }, this);
-    }.bind(this), function() {}, function() {});
+      });
+    }, function() {}, function() {});
   },
 
   // Remove all activities associated with the given |aManifest| URL.
@@ -166,7 +239,7 @@ ActivitiesDb.prototype = {
   }
 }
 
-let Activities = {
+var Activities = {
   messages: [
     // ActivityProxy.js
     "Activity:Start",
@@ -247,13 +320,20 @@ let Activities = {
             debug("Activity choice: " + aResult);
 
             // We have no matching activity registered, let's fire an error.
-            // Don't do this check until we have passed to UIGlue so the glue can choose to launch
-            // its own activity if needed.
+            // Don't do this check until we have passed to UIGlue so the glue
+            // can choose to launch its own activity if needed.
             if (aResults.options.length === 0) {
-              self.trySendAndCleanup(aMsg.id, "Activity:FireError", {
-                "id": aMsg.id,
-                "error": "NO_PROVIDER"
-              });
+              if (AppConstants.MOZ_B2GDROID) {
+                // Fallback on the Android Intent mapper.
+                let glue = Cc["@mozilla.org/dom/activities/android-ui-glue;1"]
+                             .createInstance(Ci.nsIActivityUIGlue);
+                glue.chooseActivity(aMsg.options, aResults.options, getActivityChoice);
+              } else {
+                self.trySendAndCleanup(aMsg.id, "Activity:FireError", {
+                  "id": aMsg.id,
+                  "error": "NO_PROVIDER"
+                });
+              }
               return;
             }
 
@@ -270,7 +350,7 @@ let Activities = {
                           .getService(Ci.nsISystemMessagesInternal);
             if (!sysmm) {
               // System message is not present, what should we do?
-              delete self.callers[aMsg.id];
+              self.removeCaller(aMsg.id);
               return;
             }
 
@@ -334,7 +414,7 @@ let Activities = {
               "id": aMsg.id,
               "result": results
             });
-          delete Activities.callers[aMsg.id];
+          self.removeCaller(aMsg.id);
         });
       } else {
         let glue = Cc["@mozilla.org/dom/activities/ui-glue;1"]
@@ -383,7 +463,7 @@ let Activities = {
     try {
       this.callers[aId].mm.sendAsyncMessage(aName, aPayload);
     } finally {
-      delete this.callers[aId];
+      this.removeCaller(aId);
     }
   },
 
@@ -409,8 +489,10 @@ let Activities = {
 
     switch(aMessage.name) {
       case "Activity:Start":
+        Services.obs.notifyObservers(null, "activity-opened", msg.childID);
         this.callers[msg.id] = { mm: mm,
                                  manifestURL: msg.manifestURL,
+                                 childID: msg.childID,
                                  pageURL: msg.pageURL };
         this.startActivity(msg);
         break;
@@ -458,6 +540,12 @@ let Activities = {
         }
         break;
     }
+  },
+
+  removeCaller: function activities_removeCaller(id) {
+    Services.obs.notifyObservers(null, "activity-closed",
+                                 this.callers[id].childID);
+    delete this.callers[id];
   }
 
 }

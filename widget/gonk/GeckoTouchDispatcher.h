@@ -22,7 +22,7 @@
 #include "Units.h"
 #include "mozilla/Mutex.h"
 #include <vector>
-#include "nsRefPtr.h"
+#include "mozilla/nsRefPtr.h"
 
 class nsIWidget;
 
@@ -79,6 +79,7 @@ private:
   // All times below are in nanoseconds
   TimeDuration mVsyncAdjust;     // Time from vsync we create sample times from
   TimeDuration mMaxPredict;      // How far into the future we're allowed to extrapolate
+  TimeDuration mMinDelta;        // Minimal time difference between touches for resampling
 
   // Amount of time between vsync and the last event that is required before we
   // resample
@@ -94,4 +95,5 @@ private:
 };
 
 } // namespace mozilla
+
 #endif // GECKO_TOUCH_INPUT_DISPATCHER_h

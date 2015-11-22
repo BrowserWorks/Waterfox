@@ -8,6 +8,7 @@ this.EXPORTED_SYMBOLS = ["ContentRestore"];
 
 const Cu = Components.utils;
 const Ci = Components.interfaces;
+const Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 
@@ -136,7 +137,11 @@ ContentRestoreInternal.prototype = {
     SessionHistory.restore(this.docShell, tabData);
 
     // Add a listener to watch for reloads.
-    let listener = new HistoryListener(this.docShell, callbacks.onReload);
+    let listener = new HistoryListener(this.docShell, () => {
+      // On reload, restore tab contents.
+      this.restoreTabContent(null, callbacks.onLoadFinished);
+    });
+
     webNavigation.sessionHistory.addSHistoryListener(listener);
     this._historyListener = listener;
 
@@ -178,8 +183,19 @@ ContentRestoreInternal.prototype = {
     let webNavigation = this.docShell.QueryInterface(Ci.nsIWebNavigation);
     let history = webNavigation.sessionHistory;
 
-    // Listen for the tab to finish loading.
-    this.restoreTabContentStarted(finishCallback);
+    // Wait for the tab load to complete or fail
+    this.restoreTabContentStarted((status) => {
+      // If loadArgument is not null then we're attempting to load a new url
+      // that required us to switch process. If that load is cancelled (for
+      // example by a content handler) we want to restore the current history
+      // entry.
+      if (loadArguments && (status == Cr.NS_BINDING_ABORTED)) {
+        this._tabData = tabData;
+        this.restoreTabContent(null, finishCallback);
+      } else {
+        finishCallback();
+      }
+    });
 
     // Reset the current URI to about:blank. We changed it above for
     // switch-to-tab, but now it must go back to the correct value before the
@@ -193,29 +209,20 @@ ContentRestoreInternal.prototype = {
       if (loadArguments) {
         // A load has been redirected to a new process so get history into the
         // same state it was before the load started then trigger the load.
-        let activeIndex = tabData.index - 1;
-        if (activeIndex > 0) {
-          // Go to the right history entry, but don't load anything yet.
-          history.getEntryAtIndex(activeIndex, true);
-        }
         let referrer = loadArguments.referrer ?
                        Utils.makeURI(loadArguments.referrer) : null;
         let referrerPolicy = ('referrerPolicy' in loadArguments
             ? loadArguments.referrerPolicy
             : Ci.nsIHttpChannel.REFERRER_POLICY_DEFAULT);
+        let postData = loadArguments.postData ?
+                       Utils.makeInputStream(loadArguments.postData) : null;
         webNavigation.loadURIWithOptions(loadArguments.uri, loadArguments.flags,
-                                         referrer, referrerPolicy, null, null,
-                                         null);
+                                         referrer, referrerPolicy, postData,
+                                         null, null);
       } else if (tabData.userTypedValue && tabData.userTypedClear) {
         // If the user typed a URL into the URL bar and hit enter right before
         // we crashed, we want to start loading that page again. A non-zero
         // userTypedClear value means that the load had started.
-        let activeIndex = tabData.index - 1;
-        if (activeIndex > 0) {
-          // Go to the right history entry, but don't load anything yet.
-          history.getEntryAtIndex(activeIndex, true);
-        }
-
         // Load userTypedValue and fix up the URL if it's partial/broken.
         webNavigation.loadURI(tabData.userTypedValue,
                               Ci.nsIWebNavigation.LOAD_FLAGS_ALLOW_THIRD_PARTY_FIXUP,
@@ -231,7 +238,6 @@ ContentRestoreInternal.prototype = {
         // In order to work around certain issues in session history, we need to
         // force session history to update its internal index and call reload
         // instead of gotoIndex. See bug 597315.
-        history.getEntryAtIndex(activeIndex, true);
         history.reloadCurrentEntry();
       } else {
         // If there's nothing to restore, we should still blank the page.
@@ -254,22 +260,26 @@ ContentRestoreInternal.prototype = {
    */
   restoreTabContentStarted(finishCallback) {
     // The reload listener is no longer needed.
-    this._historyListener.uninstall();
-    this._historyListener = null;
+    if (this._historyListener) {
+      this._historyListener.uninstall();
+      this._historyListener = null;
+    }
 
     // Remove the old progress listener.
-    this._progressListener.uninstall();
+    if (this._progressListener) {
+      this._progressListener.uninstall();
+    }
 
     // We're about to start a load. This listener will be called when the load
     // has finished getting everything from the network.
     this._progressListener = new ProgressListener(this.docShell, {
-      onStopRequest: () => {
+      onStopRequest: (status) => {
         // Call resetRestore() to reset the state back to normal. The data
         // needed for restoreDocument() (which hasn't happened yet) will
         // remain in _restoringDocument.
         this.resetRestore();
 
-        finishCallback();
+        finishCallback(status);
       }
     });
   },
@@ -352,6 +362,15 @@ HistoryListener.prototype = {
   // This will be called for a pending tab when loadURI(uri) is called where
   // the given |uri| only differs in the fragment.
   OnHistoryNewEntry(newURI) {
+    let currentURI = this.webNavigation.currentURI;
+
+    // Ignore new SHistory entries with the same URI as those do not indicate
+    // a navigation inside a document by changing the #hash part of the URL.
+    // We usually hit this when purging session history for browsers.
+    if (currentURI && (currentURI.spec == newURI.spec)) {
+      return;
+    }
+
     // Reset the tab's URL to what it's actually showing. Without this loadURI()
     // would use the current document and change the displayed URL only.
     this.webNavigation.setCurrentURI(Utils.makeURI("about:blank"));
@@ -412,7 +431,7 @@ ProgressListener.prototype = {
     }
 
     if (stateFlags & STATE_STOP && this.callbacks.onStopRequest) {
-      this.callbacks.onStopRequest();
+      this.callbacks.onStopRequest(status);
     }
   },
 

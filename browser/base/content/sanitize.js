@@ -94,6 +94,34 @@ Sanitizer.prototype = {
       return deferred.promise;
     }
 
+    let cookiesIndex = itemsToClear.indexOf("cookies");
+    if (cookiesIndex != -1) {
+      itemsToClear.splice(cookiesIndex, 1);
+      let item = this.items.cookies;
+      item.range = this.range;
+      let ok = item.clear(() => {
+        try {
+          if (!itemsToClear.length) {
+            // we're done
+            deferred.resolve();
+            return;
+          }
+          let clearedPromise = this.sanitize(itemsToClear);
+          clearedPromise.then(deferred.resolve, deferred.reject);
+        } catch(e) {
+          let error = "Sanitizer threw after clearing cookies: " + e;
+          Cu.reportError(error);
+          deferred.reject(error);
+        }
+      });
+      // When cancelled, reject immediately
+      if (!ok) {
+        deferred.reject("Sanitizer canceled clearing cookies");
+      }
+
+      return deferred.promise;
+    }
+
     TelemetryStopwatch.start("FX_SANITIZE_TOTAL");
 
     // Cache the range of times to clear
@@ -177,9 +205,10 @@ Sanitizer.prototype = {
     },
 
     cookies: {
-      clear: function ()
+      clear: function (aCallback)
       {
         TelemetryStopwatch.start("FX_SANITIZE_COOKIES");
+        TelemetryStopwatch.start("FX_SANITIZE_COOKIES_2");
 
         var cookieMgr = Components.classes["@mozilla.org/cookiemanager;1"]
                                   .getService(Ci.nsICookieManager);
@@ -199,12 +228,25 @@ Sanitizer.prototype = {
           cookieMgr.removeAll();
         }
 
+        TelemetryStopwatch.finish("FX_SANITIZE_COOKIES_2");
+
         // Clear deviceIds. Done asynchronously (returns before complete).
         let mediaMgr = Components.classes["@mozilla.org/mediaManagerService;1"]
                                  .getService(Ci.nsIMediaManagerService);
         mediaMgr.sanitizeDeviceIds(this.range && this.range[0]);
 
         // Clear plugin data.
+        TelemetryStopwatch.start("FX_SANITIZE_PLUGINS");
+        this.clearPluginCookies().then(
+          function() {
+            TelemetryStopwatch.finish("FX_SANITIZE_PLUGINS");
+            TelemetryStopwatch.finish("FX_SANITIZE_COOKIES");
+            aCallback();
+          });
+        return true;
+      },
+
+      clearPluginCookies: function() {
         const phInterface = Ci.nsIPluginHost;
         const FLAG_CLEAR_ALL = phInterface.FLAG_CLEAR_ALL;
         let ph = Cc["@mozilla.org/plugin/host;1"].getService(phInterface);
@@ -213,28 +255,35 @@ Sanitizer.prototype = {
         // that this.range[1] is actually now, so we compute age range based
         // on the lower bound. If this.range results in a negative age, do
         // nothing.
-        let age = this.range ? (Date.now() / 1000 - this.range[0] / 1000000)
-                             : -1;
+        let age = this.range ? (Date.now() / 1000 - this.range[0] / 1000000) : -1;
         if (!this.range || age >= 0) {
           let tags = ph.getPluginTags();
-          for (let i = 0; i < tags.length; i++) {
-            try {
-              ph.clearSiteData(tags[i], null, FLAG_CLEAR_ALL, age);
-            } catch (e) {
-              // If the plugin doesn't support clearing by age, clear everything.
-              if (e.result == Components.results.
-                    NS_ERROR_PLUGIN_TIME_RANGE_NOT_SUPPORTED) {
-                try {
-                  ph.clearSiteData(tags[i], null, FLAG_CLEAR_ALL, -1);
-                } catch (e) {
-                  // Ignore errors from the plugin
-                }
+          function iterate(tag) {
+            let promise = new Promise(resolve => {
+              try {
+                let onClear = function(rv) {
+                  // If the plugin doesn't support clearing by age, clear everything.
+                  if (rv == Components.results. NS_ERROR_PLUGIN_TIME_RANGE_NOT_SUPPORTED) {
+                    ph.clearSiteData(tag, null, FLAG_CLEAR_ALL, -1, function() {
+                      resolve();
+                    });
+                  } else {
+                    resolve();
+                  }
+                };
+                ph.clearSiteData(tag, null, FLAG_CLEAR_ALL, age, onClear);
+              } catch (ex) {
+                resolve();
               }
-            }
+            });
+            return promise;
           }
+          let promises = [];
+          for (let tag of tags) {
+            promises.push(iterate(tag));
+          }
+          return Promise.all(promises);
         }
-
-        TelemetryStopwatch.finish("FX_SANITIZE_COOKIES");
       },
 
       get canClear()
@@ -398,26 +447,6 @@ Sanitizer.prototype = {
       }
     },
 
-    passwords: {
-      clear: function ()
-      {
-        TelemetryStopwatch.start("FX_SANITIZE_PASSWORDS");
-        var pwmgr = Components.classes["@mozilla.org/login-manager;1"]
-                              .getService(Components.interfaces.nsILoginManager);
-        // Passwords are timeless, and don't respect the timeSpan setting
-        pwmgr.removeAllLogins();
-        TelemetryStopwatch.finish("FX_SANITIZE_PASSWORDS");
-      },
-
-      get canClear()
-      {
-        var pwmgr = Components.classes["@mozilla.org/login-manager;1"]
-                              .getService(Components.interfaces.nsILoginManager);
-        var count = pwmgr.countLogins("", "", ""); // count all logins
-        return (count > 0);
-      }
-    },
-
     sessions: {
       clear: function ()
       {
@@ -487,9 +516,13 @@ Sanitizer.prototype = {
         sss.clearAll();
 
         // Clear all push notification subscriptions
-        var push = Cc["@mozilla.org/push/NotificationService;1"]
-                    .getService(Ci.nsIPushNotificationService);
-        push.clearAll();
+        try {
+          var push = Cc["@mozilla.org/push/NotificationService;1"]
+                      .getService(Ci.nsIPushNotificationService);
+          push.clearAll();
+        } catch (e) {
+          dump("Web Push may not be available.\n");
+        }
 
         TelemetryStopwatch.finish("FX_SANITIZE_SITESETTINGS");
       },
@@ -573,20 +606,6 @@ Sanitizer.prototype = {
         let features = "chrome,all,dialog=no," + this.privateStateForNewWindow;
         let newWindow = existingWindow.openDialog("chrome://browser/content/", "_blank",
                                                   features, defaultArgs);
-#ifdef XP_MACOSX
-        function onFullScreen(e) {
-          newWindow.removeEventListener("fullscreen", onFullScreen);
-          let docEl = newWindow.document.documentElement;
-          let sizemode = docEl.getAttribute("sizemode");
-          if (!newWindow.fullScreen && sizemode == "fullscreen") {
-            docEl.setAttribute("sizemode", "normal");
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-          }
-        }
-        newWindow.addEventListener("fullscreen", onFullScreen);
-#endif
 
         // Window creation and destruction is asynchronous. We need to wait
         // until all existing windows are fully closed, and the new window is
@@ -600,9 +619,6 @@ Sanitizer.prototype = {
             return;
 
           Services.obs.removeObserver(onWindowOpened, "browser-delayed-startup-finished");
-#ifdef XP_MACOSX
-          newWindow.removeEventListener("fullscreen", onFullScreen);
-#endif
           newWindowOpened = true;
           // If we're the last thing to happen, invoke callback.
           if (numWindowsClosing == 0) {
@@ -753,6 +769,20 @@ Sanitizer._checkAndSanitize = function()
   const prefs = Sanitizer.prefs;
   if (prefs.getBoolPref(Sanitizer.prefShutdown) &&
       !prefs.prefHasUserValue(Sanitizer.prefDidShutdown)) {
+
+    // One time migration to remove support for the clear saved passwords on exit feature.
+    if (!Services.prefs.getBoolPref("privacy.sanitize.migrateClearSavedPwdsOnExit")) {
+      let deprecatedPref = "privacy.clearOnShutdown.passwords";
+      let doUpdate = Services.prefs.prefHasUserValue(deprecatedPref) &&
+                     Services.prefs.getBoolPref(deprecatedPref);
+      if (doUpdate) {
+        Services.logins.removeAllLogins();
+        Services.prefs.setBoolPref("signon.rememberSignons", false);
+      }
+      Services.prefs.clearUserPref(deprecatedPref);
+      Services.prefs.setBoolPref("privacy.sanitize.migrateClearSavedPwdsOnExit", true);
+    }
+
     // this is a shutdown or a startup after an unclean exit
     var s = new Sanitizer();
     s.prefDomain = "privacy.clearOnShutdown.";

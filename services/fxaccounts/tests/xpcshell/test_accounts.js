@@ -12,6 +12,9 @@ Cu.import("resource://gre/modules/FxAccountsOAuthGrantClient.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 
+// We grab some additional stuff via backstage passes.
+var {AccountState} = Cu.import("resource://gre/modules/FxAccounts.jsm", {});
+
 const ONE_HOUR_MS = 1000 * 60 * 60;
 const ONE_DAY_MS = ONE_HOUR_MS * 24;
 const TWO_MINUTES_MS = 1000 * 60 * 2;
@@ -21,7 +24,7 @@ initTestLogging("Trace");
 // XXX until bug 937114 is fixed
 Cu.importGlobalProperties(['atob']);
 
-let log = Log.repository.getLogger("Services.FxAccounts.test");
+var log = Log.repository.getLogger("Services.FxAccounts.test");
 log.level = Log.Level.Debug;
 
 // See verbose logging from FxAccounts.jsm
@@ -47,6 +50,42 @@ Services.prefs.setCharPref("identity.fxaccounts.settings.uri", CONTENT_URL);
  * We add the _verified attribute to mock the change in verification
  * state on the FXA server.
  */
+
+function MockStorageManager() {
+}
+
+MockStorageManager.prototype = {
+  promiseInitialized: Promise.resolve(),
+
+  initialize(accountData) {
+    this.accountData = accountData;
+  },
+
+  finalize() {
+    return Promise.resolve();
+  },
+
+  getAccountData() {
+    return Promise.resolve(this.accountData);
+  },
+
+  updateAccountData(updatedFields) {
+    for (let [name, value] of Iterator(updatedFields)) {
+      if (value == null) {
+        delete this.accountData[name];
+      } else {
+        this.accountData[name] = value;
+      }
+    }
+    return Promise.resolve();
+  },
+
+  deleteAccountData() {
+    this.accountData = null;
+    return Promise.resolve();
+  }
+}
+
 function MockFxAccountsClient() {
   this._email = "nobody@example.com";
   this._verified = false;
@@ -96,25 +135,6 @@ MockFxAccountsClient.prototype = {
   __proto__: FxAccountsClient.prototype
 }
 
-let MockStorage = function() {
-  this.data = null;
-};
-MockStorage.prototype = Object.freeze({
-  set: function (contents) {
-    this.data = contents;
-    return Promise.resolve(null);
-  },
-  get: function () {
-    return Promise.resolve(this.data);
-  },
-  getOAuthTokens() {
-    return Promise.resolve(null);
-  },
-  setOAuthTokens(contents) {
-    return Promise.resolve();
-  },
-});
-
 /*
  * We need to mock the FxAccounts module's interfaces to external
  * services, such as storage and the FxAccounts client.  We also
@@ -128,9 +148,14 @@ function MockFxAccounts() {
     _getCertificateSigned_calls: [],
     _d_signCertificate: Promise.defer(),
     _now_is: new Date(),
-    signedInUserStorage: new MockStorage(),
     now: function () {
       return this._now_is;
+    },
+    newAccountState(credentials) {
+      // we use a real accountState but mocked storage.
+      let storage = new MockStorageManager();
+      storage.initialize(credentials);
+      return new AccountState(storage);
     },
     getCertificateSigned: function (sessionToken, serializedPublicKey) {
       _("mock getCertificateSigned\n");
@@ -139,6 +164,22 @@ function MockFxAccounts() {
     },
     fxAccountsClient: new MockFxAccountsClient()
   });
+}
+
+/*
+ * Some tests want a "real" fxa instance - however, we still mock the storage
+ * to keep the tests fast on b2g.
+ */
+function MakeFxAccounts(internal = {}) {
+  if (!internal.newAccountState) {
+    // we use a real accountState but mocked storage.
+    internal.newAccountState = function(credentials) {
+      let storage = new MockStorageManager();
+      storage.initialize(credentials);
+      return new AccountState(storage);
+    };
+  }
+  return new FxAccounts(internal);
 }
 
 add_test(function test_non_https_remote_server_uri_with_requireHttps_false() {
@@ -170,12 +211,8 @@ add_test(function test_non_https_remote_server_uri() {
 });
 
 add_task(function test_get_signed_in_user_initially_unset() {
-  // This test, unlike many of the the rest, uses a (largely) un-mocked
-  // FxAccounts instance.
-  // We do mock the storage to keep the test fast on b2g.
-  let account = new FxAccounts({
-    signedInUserStorage: new MockStorage(),
-  });
+  _("Check getSignedInUser initially and after signout reports no user");
+  let account = MakeFxAccounts();
   let credentials = {
     email: "foo@example.com",
     uid: "1234@lcip.org",
@@ -185,13 +222,13 @@ add_task(function test_get_signed_in_user_initially_unset() {
     kB: "cafe",
     verified: true
   };
-  // and a sad hack to ensure the mocked storage is used for the initial reads.
-  account.internal.currentAccountState.signedInUserStorage = account.internal.signedInUserStorage;
-
   let result = yield account.getSignedInUser();
   do_check_eq(result, null);
 
   yield account.setSignedInUser(credentials);
+  let histogram = Services.telemetry.getHistogramById("FXA_CONFIGURED");
+  do_check_eq(histogram.snapshot().sum, 1);
+  histogram.clear();
 
   result = yield account.getSignedInUser();
   do_check_eq(result.email, credentials.email);
@@ -215,35 +252,22 @@ add_task(function test_get_signed_in_user_initially_unset() {
   do_check_eq(result, null);
 });
 
-add_task(function* test_getCertificate() {
-  _("getCertificate()");
-  // This test, unlike many of the the rest, uses a (largely) un-mocked
-  // FxAccounts instance.
-  // We do mock the storage to keep the test fast on b2g.
-  let fxa = new FxAccounts({
-    signedInUserStorage: new MockStorage(),
-  });
+add_task(function* test_getCertificateOffline() {
+  _("getCertificateOffline()");
+  let fxa = MakeFxAccounts();
   let credentials = {
     email: "foo@example.com",
     uid: "1234@lcip.org",
-    assertion: "foobar",
     sessionToken: "dead",
-    kA: "beef",
-    kB: "cafe",
-    verified: true
+    verified: true,
   };
-  // and a sad hack to ensure the mocked storage is used for the initial reads.
-  fxa.internal.currentAccountState.signedInUserStorage = fxa.internal.signedInUserStorage;
+
   yield fxa.setSignedInUser(credentials);
 
   // Test that an expired cert throws if we're offline.
-  fxa.internal.currentAccountState.cert = {
-    validUntil: Date.parse("Mon, 13 Jan 2000 21:45:06 GMT")
-  };
   let offline = Services.io.offline;
   Services.io.offline = true;
-  // This call would break from missing parameters ...
-  yield fxa.internal.currentAccountState.getCertificate().then(
+  yield fxa.internal.getKeypairAndCertificate(fxa.internal.currentAccountState).then(
     result => {
       Services.io.offline = offline;
       do_throw("Unexpected success");
@@ -254,8 +278,99 @@ add_task(function* test_getCertificate() {
       do_check_eq(err, "Error: OFFLINE");
     }
   );
+  yield fxa.signOut(/*localOnly = */true);
 });
 
+add_task(function* test_getCertificateCached() {
+  _("getCertificateCached()");
+  let fxa = MakeFxAccounts();
+  let credentials = {
+    email: "foo@example.com",
+    uid: "1234@lcip.org",
+    sessionToken: "dead",
+    verified: true,
+    // A cached keypair and cert that remain valid.
+    keyPair: {
+      validUntil: Date.now() + KEY_LIFETIME + 10000,
+      rawKeyPair: "good-keypair",
+    },
+    cert: {
+      validUntil: Date.now() + CERT_LIFETIME + 10000,
+      rawCert: "good-cert",
+    },
+  };
+
+  yield fxa.setSignedInUser(credentials);
+  let {keyPair, certificate} = yield fxa.internal.getKeypairAndCertificate(fxa.internal.currentAccountState);
+  // should have the same keypair and cert.
+  do_check_eq(keyPair, credentials.keyPair.rawKeyPair);
+  do_check_eq(certificate, credentials.cert.rawCert);
+  yield fxa.signOut(/*localOnly = */true);
+});
+
+add_task(function* test_getCertificateExpiredCert() {
+  _("getCertificateExpiredCert()");
+  let fxa = MakeFxAccounts({
+    getCertificateSigned() {
+      return "new cert";
+    }
+  });
+  let credentials = {
+    email: "foo@example.com",
+    uid: "1234@lcip.org",
+    sessionToken: "dead",
+    verified: true,
+    // A cached keypair that remains valid.
+    keyPair: {
+      validUntil: Date.now() + KEY_LIFETIME + 10000,
+      rawKeyPair: "good-keypair",
+    },
+    // A cached certificate which has expired.
+    cert: {
+      validUntil: Date.parse("Mon, 13 Jan 2000 21:45:06 GMT"),
+      rawCert: "expired-cert",
+    },
+  };
+  yield fxa.setSignedInUser(credentials);
+  let {keyPair, certificate} = yield fxa.internal.getKeypairAndCertificate(fxa.internal.currentAccountState);
+  // should have the same keypair but a new cert.
+  do_check_eq(keyPair, credentials.keyPair.rawKeyPair);
+  do_check_neq(certificate, credentials.cert.rawCert);
+  yield fxa.signOut(/*localOnly = */true);
+});
+
+add_task(function* test_getCertificateExpiredKeypair() {
+  _("getCertificateExpiredKeypair()");
+  let fxa = MakeFxAccounts({
+    getCertificateSigned() {
+      return "new cert";
+    },
+  });
+  let credentials = {
+    email: "foo@example.com",
+    uid: "1234@lcip.org",
+    sessionToken: "dead",
+    verified: true,
+    // A cached keypair that has expired.
+    keyPair: {
+      validUntil: Date.now() - 1000,
+      rawKeyPair: "expired-keypair",
+    },
+    // A cached certificate which remains valid.
+    cert: {
+      validUntil: Date.now() + CERT_LIFETIME + 10000,
+      rawCert: "expired-cert",
+    },
+  };
+
+  yield fxa.setSignedInUser(credentials);
+  let {keyPair, certificate} = yield fxa.internal.getKeypairAndCertificate(fxa.internal.currentAccountState);
+  // even though the cert was valid, the fact the keypair was not means we
+  // should have fetched both.
+  do_check_neq(keyPair, credentials.keyPair.rawKeyPair);
+  do_check_neq(certificate, credentials.cert.rawCert);
+  yield fxa.signOut(/*localOnly = */true);
+});
 
 // Sanity-check that our mocked client is working correctly
 add_test(function test_client_mock() {
@@ -476,8 +591,9 @@ add_task(function test_getAssertion() {
   _("ASSERTION: " + assertion + "\n");
   let pieces = assertion.split("~");
   do_check_eq(pieces[0], "cert1");
-  let keyPair = fxa.internal.currentAccountState.keyPair;
-  let cert = fxa.internal.currentAccountState.cert;
+  let userData = yield fxa.getSignedInUser();
+  let keyPair = userData.keyPair;
+  let cert = userData.cert;
   do_check_neq(keyPair, undefined);
   _(keyPair.validUntil + "\n");
   let p2 = pieces[1].split(".");
@@ -524,9 +640,10 @@ add_task(function test_getAssertion() {
   // expiration time of the assertion should be different.  We compare this to
   // the initial start time, to which they are relative, not the current value
   // of "now".
+  userData = yield fxa.getSignedInUser();
 
-  keyPair = fxa.internal.currentAccountState.keyPair;
-  cert = fxa.internal.currentAccountState.cert;
+  keyPair = userData.keyPair;
+  cert = userData.cert;
   do_check_eq(keyPair.validUntil, start + KEY_LIFETIME);
   do_check_eq(cert.validUntil, start + CERT_LIFETIME);
   exp = Number(payload.exp);
@@ -547,8 +664,9 @@ add_task(function test_getAssertion() {
   header = JSON.parse(atob(p2[0]));
   payload = JSON.parse(atob(p2[1]));
   do_check_eq(payload.aud, "fourth.example.com");
-  keyPair = fxa.internal.currentAccountState.keyPair;
-  cert = fxa.internal.currentAccountState.cert;
+  userData = yield fxa.getSignedInUser();
+  keyPair = userData.keyPair;
+  cert = userData.cert;
   do_check_eq(keyPair.validUntil, now + KEY_LIFETIME);
   do_check_eq(cert.validUntil, now + CERT_LIFETIME);
   exp = Number(payload.exp);
@@ -814,7 +932,6 @@ add_task(function* test_getOAuthTokenCachedScopeNormalization() {
   do_check_eq(result, "token");
 });
 
-
 Services.prefs.setCharPref("identity.fxaccounts.remote.oauth.uri", "https://example.com/v1");
 add_test(function test_getOAuthToken_invalid_param() {
   let fxa = new MockFxAccounts();
@@ -960,71 +1077,27 @@ add_test(function test_getOAuthToken_unknown_error() {
   });
 });
 
-add_test(function test_accountState_initProfile() {
-  let fxa = new MockFxAccounts();
-  let alice = getTestUser("alice");
-  alice.verified = true;
-
-  fxa.internal.getOAuthToken = function (opts) {
-    return Promise.resolve("token");
-  };
-
-  fxa.setSignedInUser(alice).then(() => {
-    let accountState = fxa.internal.currentAccountState;
-
-    accountState.initProfile(options)
-      .then(result => {
-         do_check_true(!!accountState.profile);
-         run_next_test();
-      });
-  });
-
-});
-
-add_test(function test_accountState_getProfile() {
-  let fxa = new MockFxAccounts();
+add_test(function test_getSignedInUserProfile() {
   let alice = getTestUser("alice");
   alice.verified = true;
 
   let mockProfile = {
     getProfile: function () {
       return Promise.resolve({ avatar: "image" });
-    }
+    },
+    tearDown: function() {},
   };
+  let fxa = new FxAccounts({});
 
   fxa.setSignedInUser(alice).then(() => {
-    let accountState = fxa.internal.currentAccountState;
-    accountState.profile = mockProfile;
-    accountState.initProfilePromise = new Promise((resolve, reject) => resolve(mockProfile));
-
-    accountState.getProfile()
+    fxa.internal._profile = mockProfile;
+    fxa.getSignedInUserProfile()
       .then(result => {
          do_check_true(!!result);
          do_check_eq(result.avatar, "image");
          run_next_test();
       });
   });
-
-});
-
-add_test(function test_getSignedInUserProfile_ok() {
-  let fxa = new MockFxAccounts();
-  let alice = getTestUser("alice");
-  alice.verified = true;
-
-  fxa.setSignedInUser(alice).then(() => {
-    let accountState = fxa.internal.currentAccountState;
-    accountState.getProfile = function () {
-      return Promise.resolve({ avatar: "image" });
-    };
-
-    fxa.getSignedInUserProfile()
-      .then(result => {
-         do_check_eq(result.avatar, "image");
-         run_next_test();
-      });
-  });
-
 });
 
 add_test(function test_getSignedInUserProfile_error_uses_account_data() {
@@ -1036,19 +1109,26 @@ add_test(function test_getSignedInUserProfile_error_uses_account_data() {
     return Promise.resolve({ email: "foo@bar.com" });
   };
 
+  let teardownCalled = false;
   fxa.setSignedInUser(alice).then(() => {
-    let accountState = fxa.internal.currentAccountState;
-    accountState.getProfile = function () {
-      return Promise.reject("boom");
+    fxa.internal._profile = {
+      getProfile: function () {
+        return Promise.reject("boom");
+      },
+      tearDown: function() {
+        teardownCalled = true;
+      }
     };
 
     fxa.getSignedInUserProfile()
       .catch(error => {
-         do_check_eq(error.message, "UNKNOWN_ERROR");
-         fxa.signOut().then(run_next_test);
+        do_check_eq(error.message, "UNKNOWN_ERROR");
+        fxa.signOut().then(() => {
+          do_check_true(teardownCalled);
+          run_next_test();
+        });
       });
   });
-
 });
 
 add_test(function test_getSignedInUserProfile_unverified_account() {
@@ -1056,8 +1136,6 @@ add_test(function test_getSignedInUserProfile_unverified_account() {
   let alice = getTestUser("alice");
 
   fxa.setSignedInUser(alice).then(() => {
-    let accountState = fxa.internal.currentAccountState;
-
     fxa.getSignedInUserProfile()
       .catch(error => {
          do_check_eq(error.message, "UNVERIFIED_ACCOUNT");

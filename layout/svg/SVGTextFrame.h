@@ -35,7 +35,7 @@ class TextRenderedRunIterator;
 namespace dom {
 class SVGIRect;
 class SVGPathElement;
-}
+} // namespace dom
 
 /**
  * Information about the positioning for a single character in an SVG <text>
@@ -605,7 +605,7 @@ private:
   // Methods to get information for a <textPath> frame.
   mozilla::dom::SVGPathElement*
   GetTextPathPathElement(nsIFrame* aTextPathFrame);
-  mozilla::TemporaryRef<Path> GetTextPath(nsIFrame* aTextPathFrame);
+  already_AddRefed<Path> GetTextPath(nsIFrame* aTextPathFrame);
   gfxFloat GetOffsetScale(nsIFrame* aTextPathFrame);
   gfxFloat GetStartOffset(nsIFrame* aTextPathFrame);
 

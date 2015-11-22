@@ -8,11 +8,11 @@
 #include "BroadcastChannelChild.h"
 #include "mozilla/dom/BroadcastChannelBinding.h"
 #include "mozilla/dom/Navigator.h"
-#include "mozilla/dom/StructuredCloneUtils.h"
+#include "mozilla/dom/File.h"
+#include "mozilla/dom/StructuredCloneHelper.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackgroundChild.h"
-#include "mozilla/Preferences.h"
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
 
@@ -31,62 +31,22 @@ namespace dom {
 
 using namespace workers;
 
-class BroadcastChannelMessage final
+class BroadcastChannelMessage final : public StructuredCloneHelper
 {
 public:
   NS_INLINE_DECL_REFCOUNTING(BroadcastChannelMessage)
 
-  JSAutoStructuredCloneBuffer mBuffer;
-  StructuredCloneClosure mClosure;
-
   BroadcastChannelMessage()
-  { }
+    : StructuredCloneHelper(CloningSupported, TransferringNotSupported,
+                            DifferentProcess)
+  {}
 
 private:
   ~BroadcastChannelMessage()
-  { }
+  {}
 };
 
 namespace {
-
-void
-GetOrigin(nsIPrincipal* aPrincipal, nsAString& aOrigin, ErrorResult& aRv)
-{
-  MOZ_ASSERT(aPrincipal);
-
-  nsAutoString tmp;
-  aRv = nsContentUtils::GetUTFOrigin(aPrincipal, tmp);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
-  }
-
-  // 'null' means an unknown origin (it can be chrome code or it can be some
-  // about: page).
-
-  aOrigin = tmp;
-  if (!aOrigin.EqualsASCII("null")) {
-    return;
-  }
-
-  nsCOMPtr<nsIURI> uri;
-  aRv = aPrincipal->GetURI(getter_AddRefs(uri));
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
-  }
-
-  if (NS_WARN_IF(!uri)) {
-    aRv.Throw(NS_ERROR_FAILURE);
-    return;
-  }
-
-  nsAutoCString spec;
-  aRv = uri->GetSpec(spec);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
-  }
-
-  aOrigin = NS_ConvertUTF8toUTF16(spec);
-}
 
 nsIPrincipal*
 GetPrincipalFromWorkerPrivate(WorkerPrivate* aWorkerPrivate)
@@ -108,7 +68,7 @@ GetPrincipalFromWorkerPrivate(WorkerPrivate* aWorkerPrivate)
 class InitializeRunnable final : public WorkerMainThreadRunnable
 {
 public:
-  InitializeRunnable(WorkerPrivate* aWorkerPrivate, nsAString& aOrigin,
+  InitializeRunnable(WorkerPrivate* aWorkerPrivate, nsACString& aOrigin,
                      PrincipalInfo& aPrincipalInfo, bool& aPrivateBrowsing,
                      ErrorResult& aRv)
     : WorkerMainThreadRunnable(aWorkerPrivate)
@@ -147,7 +107,7 @@ public:
       return true;
     }
 
-    GetOrigin(principal, mOrigin, mRv);
+    mRv = principal->GetOrigin(mOrigin);
     if (NS_WARN_IF(mRv.Failed())) {
       return true;
     }
@@ -177,7 +137,7 @@ public:
 
 private:
   WorkerPrivate* mWorkerPrivate;
-  nsAString& mOrigin;
+  nsACString& mOrigin;
   PrincipalInfo& mPrincipalInfo;
   bool& mPrivateBrowsing;
   ErrorResult& mRv;
@@ -206,20 +166,21 @@ public:
     ClonedMessageData message;
 
     SerializedStructuredCloneBuffer& buffer = message.data();
-    buffer.data = mData->mBuffer.data();
-    buffer.dataLength = mData->mBuffer.nbytes();
+    buffer.data = mData->BufferData();
+    buffer.dataLength = mData->BufferSize();
 
     PBackgroundChild* backgroundManager = mActor->Manager();
     MOZ_ASSERT(backgroundManager);
 
-    const nsTArray<nsRefPtr<File>>& blobs = mData->mClosure.mBlobs;
+    const nsTArray<nsRefPtr<BlobImpl>>& blobImpls = mData->BlobImpls();
 
-    if (!blobs.IsEmpty()) {
-      message.blobsChild().SetCapacity(blobs.Length());
+    if (!blobImpls.IsEmpty()) {
+      message.blobsChild().SetCapacity(blobImpls.Length());
 
-      for (uint32_t i = 0, len = blobs.Length(); i < len; ++i) {
+      for (uint32_t i = 0, len = blobImpls.Length(); i < len; ++i) {
         PBlobChild* blobChild =
-          BackgroundChild::GetOrCreateActorForBlob(backgroundManager, blobs[i]);
+          BackgroundChild::GetOrCreateActorForBlobImpl(backgroundManager,
+                                                       blobImpls[i]);
         MOZ_ASSERT(blobChild);
 
         message.blobsChild().AppendElement(blobChild);
@@ -337,53 +298,11 @@ private:
   }
 };
 
-class PrefEnabledRunnable final : public WorkerMainThreadRunnable
-{
-public:
-  explicit PrefEnabledRunnable(WorkerPrivate* aWorkerPrivate)
-    : WorkerMainThreadRunnable(aWorkerPrivate)
-    , mEnabled(false)
-  { }
-
-  bool MainThreadRun() override
-  {
-    AssertIsOnMainThread();
-    mEnabled = Preferences::GetBool("dom.broadcastChannel.enabled", false);
-    return true;
-  }
-
-  bool IsEnabled() const
-  {
-    return mEnabled;
-  }
-
-private:
-  bool mEnabled;
-};
-
-} // anonymous namespace
-
-/* static */ bool
-BroadcastChannel::IsEnabled(JSContext* aCx, JSObject* aGlobal)
-{
-  if (NS_IsMainThread()) {
-    return Preferences::GetBool("dom.broadcastChannel.enabled", false);
-  }
-
-  WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
-  MOZ_ASSERT(workerPrivate);
-  workerPrivate->AssertIsOnWorkerThread();
-
-  nsRefPtr<PrefEnabledRunnable> runnable =
-    new PrefEnabledRunnable(workerPrivate);
-  runnable->Dispatch(workerPrivate->GetJSContext());
-
-  return runnable->IsEnabled();
-}
+} // namespace
 
 BroadcastChannel::BroadcastChannel(nsPIDOMWindow* aWindow,
                                    const PrincipalInfo& aPrincipalInfo,
-                                   const nsAString& aOrigin,
+                                   const nsACString& aOrigin,
                                    const nsAString& aChannel,
                                    bool aPrivateBrowsing)
   : DOMEventTargetHelper(aWindow)
@@ -419,7 +338,7 @@ BroadcastChannel::Constructor(const GlobalObject& aGlobal,
   nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aGlobal.GetAsSupports());
   // Window is null in workers.
 
-  nsAutoString origin;
+  nsAutoCString origin;
   PrincipalInfo principalInfo;
   bool privateBrowsing = false;
   WorkerPrivate* workerPrivate = nullptr;
@@ -449,7 +368,7 @@ BroadcastChannel::Constructor(const GlobalObject& aGlobal,
       return nullptr;
     }
 
-    GetOrigin(principal, origin, aRv);
+    aRv = principal->GetOrigin(origin);
     if (NS_WARN_IF(aRv.Failed())) {
       return nullptr;
     }
@@ -536,17 +455,9 @@ BroadcastChannel::PostMessageInternal(JSContext* aCx,
 {
   nsRefPtr<BroadcastChannelMessage> data = new BroadcastChannelMessage();
 
-  if (!WriteStructuredClone(aCx, aMessage, data->mBuffer, data->mClosure)) {
-    aRv.Throw(NS_ERROR_DOM_DATA_CLONE_ERR);
+  data->Write(aCx, aMessage, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
     return;
-  }
-
-  const nsTArray<nsRefPtr<File>>& blobs = data->mClosure.mBlobs;
-  for (uint32_t i = 0, len = blobs.Length(); i < len; ++i) {
-    if (!blobs[i]->Impl()->MayBeClonedToOtherThreads()) {
-      aRv.Throw(NS_ERROR_DOM_DATA_CLONE_ERR);
-      return;
-    }
   }
 
   PostMessageData(data);
@@ -736,10 +647,6 @@ BroadcastChannel::Observe(nsISupports* aSubject, const char* aTopic,
 
   // If the window is destroyed we have to release the reference that we are
   // keeping.
-  if (!mIsKeptAlive) {
-    return NS_OK;
-  }
-
   nsCOMPtr<nsISupportsPRUint64> wrapper = do_QueryInterface(aSubject);
   NS_ENSURE_TRUE(wrapper, NS_ERROR_FAILURE);
 
@@ -778,5 +685,5 @@ NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 NS_IMPL_ADDREF_INHERITED(BroadcastChannel, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(BroadcastChannel, DOMEventTargetHelper)
 
-} // dom namespace
-} // mozilla namespace
+} // namespace dom
+} // namespace mozilla

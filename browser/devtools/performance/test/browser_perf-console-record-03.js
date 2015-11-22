@@ -6,24 +6,21 @@
  * also console recordings that have finished before it was opened.
  */
 
-let { getPerformanceActorsConnection } = devtools.require("devtools/performance/front");
-let WAIT_TIME = 10;
+var WAIT_TIME = 10;
 
-function spawnTest () {
-  let profilerConnected = waitForProfilerConnection();
+function* spawnTest() {
   let { target, toolbox, console } = yield initConsole(SIMPLE_URL);
-  yield profilerConnected;
-  let connection = getPerformanceActorsConnection(target);
+  let front = toolbox.performance;
 
-  let profileStart = once(connection, "recording-started");
+  let profileStart = once(front, "recording-started");
   console.profile("rust");
   yield profileStart;
 
-  let profileEnd = once(connection, "recording-stopped");
+  let profileEnd = once(front, "recording-stopped");
   console.profileEnd("rust");
   yield profileEnd;
 
-  profileStart = once(connection, "recording-started");
+  profileStart = once(front, "recording-started");
   console.profile("rust2");
   yield profileStart;
 
@@ -31,6 +28,7 @@ function spawnTest () {
   let panel = toolbox.getCurrentPanel();
   let { panelWin: { PerformanceController, RecordingsView }} = panel;
 
+  yield waitUntil(() => PerformanceController.getRecordings().length === 2);
   let recordings = PerformanceController.getRecordings();
   is(recordings.length, 2, "two recordings found in the performance panel.");
   is(recordings[0].isConsole(), true, "recording came from console.profile (1).");
@@ -43,7 +41,7 @@ function spawnTest () {
   is(RecordingsView.selectedItem.attachment, recordings[0],
     "The first console recording should be selected.");
 
-  profileEnd = once(connection, "recording-stopped");
+  profileEnd = once(front, "recording-stopped");
   console.profileEnd("rust2");
   yield profileEnd;
 

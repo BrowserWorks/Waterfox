@@ -17,6 +17,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/TextRange.h"
+#include "mozilla/dom/TabParent.h"
 
 class nsIEditor;
 
@@ -38,8 +39,13 @@ class TextComposition final
   NS_INLINE_DECL_REFCOUNTING(TextComposition)
 
 public:
+  typedef dom::TabParent TabParent;
+
+  static bool IsHandlingSelectionEvent() { return sHandlingSelectionEvent; }
+
   TextComposition(nsPresContext* aPresContext,
                   nsINode* aNode,
+                  TabParent* aTabParent,
                   WidgetCompositionEvent* aCompositionEvent);
 
   bool Destroyed() const { return !mPresContext; }
@@ -125,6 +131,12 @@ public:
   void EndHandlingComposition(nsIEditor* aEditor);
 
   /**
+   * OnEditorDestroyed() is called when the editor is destroyed but there is
+   * active composition.
+   */
+  void OnEditorDestroyed();
+
+  /**
    * CompositionChangeEventHandlingMarker class should be created at starting
    * to handle text event in focused editor.  This calls
    * EditorWillHandleCompositionChangeEvent() and
@@ -161,12 +173,17 @@ private:
     // WARNING: mPresContext may be destroying, so, be careful if you touch it.
   }
 
+  // sHandlingSelectionEvent is true while TextComposition sends a selection
+  // event to ContentEventHandler.
+  static bool sHandlingSelectionEvent;
+
   // This class holds nsPresContext weak.  This instance shouldn't block
   // destroying it.  When the presContext is being destroyed, it's notified to
   // IMEStateManager::OnDestroyPresContext(), and then, it destroy
   // this instance.
   nsPresContext* mPresContext;
   nsCOMPtr<nsINode> mNode;
+  nsRefPtr<TabParent> mTabParent;
 
   // This is the clause and caret range information which is managed by
   // the focused editor.  This may be null if there is no clauses or caret.
@@ -274,6 +291,18 @@ private:
                                 bool aIsSynthesized);
 
   /**
+   * HandleSelectionEvent() sends the selection event to ContentEventHandler
+   * or dispatches it to the focused child process.
+   */
+  void HandleSelectionEvent(WidgetSelectionEvent* aSelectionEvent)
+  {
+    HandleSelectionEvent(mPresContext, mTabParent, aSelectionEvent);
+  }
+  static void HandleSelectionEvent(nsPresContext* aPresContext,
+                                   TabParent* aTabParent,
+                                   WidgetSelectionEvent* aSelectionEvent);
+
+  /**
    * MaybeDispatchCompositionUpdate() may dispatch a compositionupdate event
    * if aCompositionEvent changes composition string.
    * @return Returns false if dispatching the compositionupdate event caused
@@ -290,7 +319,7 @@ private:
    */
   BaseEventFlags CloneAndDispatchAs(
                    const WidgetCompositionEvent* aCompositionEvent,
-                   uint32_t aMessage,
+                   EventMessage aMessage,
                    nsEventStatus* aStatus = nullptr,
                    EventDispatchingCallback* aCallBack = nullptr);
 
@@ -308,8 +337,7 @@ private:
    * compositionupdate, compositionend or compositionchange event due to not
    * safe to dispatch event.
    */
-  void OnCompositionEventDiscarded(
-         const WidgetCompositionEvent* aCompositionEvent);
+  void OnCompositionEventDiscarded(WidgetCompositionEvent* aCompositionEvent);
 
   /**
    * Calculate composition offset then notify composition update to widget
@@ -325,7 +353,7 @@ private:
   public:
     CompositionEventDispatcher(TextComposition* aTextComposition,
                                nsINode* aEventTarget,
-                               uint32_t aEventMessage,
+                               EventMessage aEventMessage,
                                const nsAString& aData,
                                bool aIsSynthesizedEvent = false);
     NS_IMETHOD Run() override;
@@ -333,8 +361,8 @@ private:
   private:
     nsRefPtr<TextComposition> mTextComposition;
     nsCOMPtr<nsINode> mEventTarget;
-    uint32_t mEventMessage;
     nsString mData;
+    EventMessage mEventMessage;
     bool mIsSynthesizedEvent;
 
     CompositionEventDispatcher() {};
@@ -353,7 +381,7 @@ private:
    *                                commit or cancel composition.  Otherwise,
    *                                false.
    */
-  void DispatchCompositionEventRunnable(uint32_t aEventMessage,
+  void DispatchCompositionEventRunnable(EventMessage aEventMessage,
                                         const nsAString& aData,
                                         bool aIsSynthesizingCommit = false);
 };

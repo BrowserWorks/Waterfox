@@ -17,7 +17,7 @@
 
 #include "AudioChannelFormat.h"
 #include "GrallocImages.h"
-#include <mozilla/Monitor.h>
+#include "mozilla/Monitor.h"
 #include "mozilla/layers/GrallocTextureClient.h"
 
 using namespace mozilla;
@@ -45,27 +45,21 @@ enum BufferState
 bool
 OMXCodecReservation::ReserveOMXCodec()
 {
-  if (!mManagerService.get()) {
-    sp<MediaResourceManagerClient::EventListener> listener = this;
-    mClient = new MediaResourceManagerClient(listener);
-
-    mManagerService = mClient->getMediaResourceManagerService();
-    if (!mManagerService.get()) {
-      mClient = nullptr;
-      return true; // not really in use, but not usable
-    }
+  if (mClient) {
+    // Already tried reservation.
+    return false;
   }
-  return (mManagerService->requestMediaResource(mClient, mType, false) == OK); // don't wait
+  mClient = new mozilla::MediaSystemResourceClient(mType);
+  return mClient->AcquireSyncNoWait(); // don't wait if resrouce is not available
 }
 
 void
 OMXCodecReservation::ReleaseOMXCodec()
 {
-  if (!mManagerService.get() || !mClient.get()) {
+  if (!mClient) {
     return;
   }
-
-  mManagerService->cancelClient(mClient, mType);
+  mClient->ReleaseResource();
 }
 
 OMXAudioEncoder*
@@ -388,7 +382,7 @@ ConvertGrallocImageToNV12(GrallocImage* aSource, uint8_t* aDestination)
 
 nsresult
 OMXVideoEncoder::Encode(const Image* aImage, int aWidth, int aHeight,
-                        int64_t aTimestamp, int aInputFlags)
+                        int64_t aTimestamp, int aInputFlags, bool* aSendEOS)
 {
   MOZ_ASSERT(mStarted, "Configure() should be called before Encode().");
 
@@ -462,6 +456,9 @@ OMXVideoEncoder::Encode(const Image* aImage, int aWidth, int aHeight,
   // Queue this input buffer.
   result = mCodec->queueInputBuffer(index, 0, dstSize, aTimestamp, aInputFlags);
 
+  if (aSendEOS && (aInputFlags & BUFFER_EOS) && result == OK) {
+    *aSendEOS = true;
+  }
   return result == OK ? NS_OK : NS_ERROR_FAILURE;
 }
 
@@ -828,7 +825,8 @@ OMXAudioEncoder::~OMXAudioEncoder()
 }
 
 nsresult
-OMXAudioEncoder::Encode(AudioSegment& aSegment, int aInputFlags)
+OMXAudioEncoder::Encode(AudioSegment& aSegment, int aInputFlags,
+                        bool* aSendEOS)
 {
 #ifndef MOZ_SAMPLE_TYPE_S16
 #error MediaCodec accepts only 16-bit PCM data.
@@ -883,7 +881,9 @@ OMXAudioEncoder::Encode(AudioSegment& aSegment, int aInputFlags)
   }
   result = buffer.Enqueue(mTimestamp, flags);
   NS_ENSURE_TRUE(result == OK, NS_ERROR_FAILURE);
-
+  if (aSendEOS && (aInputFlags & BUFFER_EOS)) {
+    *aSendEOS = true;
+  }
   return NS_OK;
 }
 

@@ -51,6 +51,7 @@ static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloat32x4Reg = FloatRegister(X86Enc
 static MOZ_CONSTEXPR_VAR FloatRegister ScratchFloat32Reg = FloatRegister(X86Encoding::xmm7, FloatRegisters::Single);
 static MOZ_CONSTEXPR_VAR FloatRegister ScratchDoubleReg = FloatRegister(X86Encoding::xmm7, FloatRegisters::Double);
 static MOZ_CONSTEXPR_VAR FloatRegister ScratchSimdReg = xmm7;
+static MOZ_CONSTEXPR_VAR FloatRegister ScratchInt32x4Reg = FloatRegister(X86Encoding::xmm7, FloatRegisters::Int32x4);
 
 // Avoid ebp, which is the FramePointer, which is unavailable in some modes.
 static MOZ_CONSTEXPR_VAR Register ArgumentsRectifierReg = esi;
@@ -159,7 +160,7 @@ namespace js {
 namespace jit {
 
 static inline void
-PatchJump(CodeLocationJump jump, CodeLocationLabel label)
+PatchJump(CodeLocationJump jump, CodeLocationLabel label, ReprotectCode reprotect = DontReprotect)
 {
 #ifdef DEBUG
     // Assert that we're overwriting a jump instruction, either:
@@ -169,6 +170,7 @@ PatchJump(CodeLocationJump jump, CodeLocationLabel label)
     MOZ_ASSERT(((*x >= 0x80 && *x <= 0x8F) && *(x - 1) == 0x0F) ||
                (*x == 0xE9));
 #endif
+    MaybeAutoWritableJitCode awjc(jump.raw() - 8, 8, reprotect);
     X86Encoding::SetRel32(jump.raw(), label.raw());
 }
 static inline void
@@ -214,9 +216,6 @@ class Assembler : public AssemblerX86Shared
     void push(ImmGCPtr ptr) {
         masm.push_i32(int32_t(ptr.value));
         writeDataRelocation(ptr);
-    }
-    void push(ImmMaybeNurseryPtr ptr) {
-        push(noteMaybeNurseryPtr(ptr));
     }
     void push(const ImmWord imm) {
         push(Imm32(imm.value));
@@ -368,9 +367,6 @@ class Assembler : public AssemblerX86Shared
             MOZ_CRASH("unexpected operand kind");
         }
     }
-    void cmpl(ImmMaybeNurseryPtr rhs, const Operand& lhs) {
-        cmpl(noteMaybeNurseryPtr(rhs), lhs);
-    }
     void cmpl(Register rhs, AsmJSAbsoluteAddress lhs) {
         masm.cmpl_rm_disp32(rhs.encoding(), (void*)-1);
         append(AsmJSAbsoluteLink(CodeOffsetLabel(masm.currentOffset()), lhs.kind()));
@@ -378,6 +374,66 @@ class Assembler : public AssemblerX86Shared
     void cmpl(Imm32 rhs, AsmJSAbsoluteAddress lhs) {
         JmpSrc src = masm.cmpl_im_disp32(rhs.value, (void*)-1);
         append(AsmJSAbsoluteLink(CodeOffsetLabel(src.offset()), lhs.kind()));
+    }
+
+    void adcl(Imm32 imm, Register dest) {
+        masm.adcl_ir(imm.value, dest.encoding());
+    }
+
+    void mull(Register multiplier) {
+        masm.mull_r(multiplier.encoding());
+    }
+
+    void shldl(const Imm32 imm, Register src, Register dest) {
+        masm.shldl_irr(imm.value, src.encoding(), dest.encoding());
+    }
+    void shrdl(const Imm32 imm, Register src, Register dest) {
+        masm.shrdl_irr(imm.value, src.encoding(), dest.encoding());
+    }
+
+    void vhaddpd(FloatRegister src, FloatRegister dest) {
+        MOZ_ASSERT(HasSSE3());
+        MOZ_ASSERT(src.size() == 16);
+        MOZ_ASSERT(dest.size() == 16);
+        masm.vhaddpd_rr(src.encoding(), dest.encoding());
+    }
+    void vsubpd(const Operand& src1, FloatRegister src0, FloatRegister dest) {
+        MOZ_ASSERT(HasSSE2());
+        MOZ_ASSERT(src0.size() == 16);
+        MOZ_ASSERT(dest.size() == 16);
+        switch (src1.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.vsubpd_mr(src1.disp(), src1.base(), src0.encoding(), dest.encoding());
+            break;
+          case Operand::MEM_ADDRESS32:
+            masm.vsubpd_mr(src1.address(), src0.encoding(), dest.encoding());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
+
+    void vpunpckldq(FloatRegister src1, FloatRegister src0, FloatRegister dest) {
+        MOZ_ASSERT(HasSSE2());
+        MOZ_ASSERT(src0.size() == 16);
+        MOZ_ASSERT(src1.size() == 16);
+        MOZ_ASSERT(dest.size() == 16);
+        masm.vpunpckldq_rr(src1.encoding(), src0.encoding(), dest.encoding());
+    }
+    void vpunpckldq(const Operand& src1, FloatRegister src0, FloatRegister dest) {
+        MOZ_ASSERT(HasSSE2());
+        MOZ_ASSERT(src0.size() == 16);
+        MOZ_ASSERT(dest.size() == 16);
+        switch (src1.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.vpunpckldq_mr(src1.disp(), src1.base(), src0.encoding(), dest.encoding());
+            break;
+          case Operand::MEM_ADDRESS32:
+            masm.vpunpckldq_mr(src1.address(), src0.encoding(), dest.encoding());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
     }
 
     void jmp(ImmPtr target, Relocation::Kind reloc = Relocation::HARDCODED) {

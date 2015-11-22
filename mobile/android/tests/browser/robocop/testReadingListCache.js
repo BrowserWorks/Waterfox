@@ -3,17 +3,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/*globals ReaderMode */
+
 const { utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/ReaderMode.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
-let Reader = Services.wm.getMostRecentWindow("navigator:browser").Reader;
+var Reader = Services.wm.getMostRecentWindow("navigator:browser").Reader;
 
 const URL_PREFIX = "http://mochi.test:8888/tests/robocop/reader_mode_pages/";
 
-let TEST_PAGES = [
+var TEST_PAGES = [
   {
     url: URL_PREFIX + "basic_article.html",
     expected: {

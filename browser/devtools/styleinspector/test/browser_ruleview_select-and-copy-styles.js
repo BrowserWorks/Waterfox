@@ -10,50 +10,54 @@ XPCOMUtils.defineLazyGetter(this, "osString", function() {
   return Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).OS;
 });
 
+const TEST_URI = `
+  <style type="text/css">
+    html {
+      color: #000000;
+    }
+    span {
+      font-variant: small-caps; color: #000000;
+    }
+    .nomatches {
+      color: #ff0000;
+    }
+  </style>
+  <div id="first" style="margin: 10em;
+    font-size: 14pt; font-family: helvetica, sans-serif; color: #AAA">
+    <h1>Some header text</h1>
+    <p id="salutation" style="font-size: 12pt">hi.</p>
+    <p id="body" style="font-size: 12pt">I am a test-case. This text exists
+    solely to provide some things to <span style="color: yellow">
+    highlight</span> and <span style="font-weight: bold">count</span>
+    style list-items in the box at right. If you are reading this,
+    you should go do something else instead. Maybe read a book. Or better
+    yet, write some test-cases for another bit of code.
+    <span style="font-style: italic">some text</span></p>
+    <p id="closing">more text</p>
+    <p>even more text</p>
+  </div>
+`;
+
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8,<p>rule view context menu test</p>");
-
-  info("Creating the test document");
-  content.document.body.innerHTML = '<style type="text/css"> ' +
-    'html { color: #000000; } ' +
-    'span { font-variant: small-caps; color: #000000; } ' +
-    '.nomatches {color: #ff0000;}</style> <div id="first" style="margin: 10em; ' +
-    'font-size: 14pt; font-family: helvetica, sans-serif; color: #AAA">\n' +
-    '<h1>Some header text</h1>\n' +
-    '<p id="salutation" style="font-size: 12pt">hi.</p>\n' +
-    '<p id="body" style="font-size: 12pt">I am a test-case. This text exists ' +
-    'solely to provide some things to <span style="color: yellow">' +
-    'highlight</span> and <span style="font-weight: bold">count</span> ' +
-    'style list-items in the box at right. If you are reading this, ' +
-    'you should go do something else instead. Maybe read a book. Or better ' +
-    'yet, write some test-cases for another bit of code. ' +
-    '<span style="font-style: italic">some text</span></p>\n' +
-    '<p id="closing">more text</p>\n' +
-    '<p>even more text</p>' +
-    '</div>';
-  content.document.title = "Rule view context menu test";
-
-  info("Opening the computed view");
-  let {toolbox, inspector, view} = yield openRuleView();
-
-  info("Selecting the test node");
+  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+  let {inspector, view} = yield openRuleView();
   yield selectNode("div", inspector);
-
   yield checkCopySelection(view);
   yield checkSelectAll(view);
 });
 
-function checkCopySelection(view) {
+function* checkCopySelection(view) {
   info("Testing selection copy");
 
-  let contentDoc = view.doc;
+  let contentDoc = view.styleDocument;
+  let win = view.styleWindow;
   let prop = contentDoc.querySelector(".ruleview-property");
   let values = contentDoc.querySelectorAll(".ruleview-propertyvaluecontainer");
 
   let range = contentDoc.createRange();
   range.setStart(prop, 0);
   range.setEnd(values[4], 2);
-  let selection = view.doc.defaultView.getSelection().addRange(range);
+  win.getSelection().addRange(range);
 
   info("Checking that _Copy() returns the correct clipboard value");
 
@@ -65,23 +69,34 @@ function checkCopySelection(view) {
                         "html {[\\r\\n]+" +
                         "    color: #000;[\\r\\n]*";
 
-  return waitForClipboard(() => {
-    fireCopyEvent(prop);
-  }, () => {
-    return checkClipboardData(expectedPattern);
-  }).then(() => {}, () => {
+  let onPopup = once(view._contextmenu._menupopup, "popupshown");
+  EventUtils.synthesizeMouseAtCenter(prop,
+    {button: 2, type: "contextmenu"}, win);
+  yield onPopup;
+
+  ok(!view._contextmenu.menuitemCopy.hidden,
+    "Copy menu item is not hidden as expected");
+
+  try {
+    yield waitForClipboard(() => view._contextmenu.menuitemCopy.click(),
+      () => checkClipboardData(expectedPattern));
+  } catch(e) {
     failedClipboard(expectedPattern);
-  });
+  }
+
+  view._contextmenu._menupopup.hidePopup();
 }
 
-function checkSelectAll(view) {
+function* checkSelectAll(view) {
   info("Testing select-all copy");
 
-  let contentDoc = view.doc;
+  let contentDoc = view.styleDocument;
+  let win = view.styleWindow;
   let prop = contentDoc.querySelector(".ruleview-property");
 
-  info("Checking that _SelectAll() then copy returns the correct clipboard value");
-  view._onSelectAll();
+  info("Checking that _SelectAll() then copy returns the correct " +
+    "clipboard value");
+  view._contextmenu._onSelectAll();
   let expectedPattern = "[\\r\\n]+" +
                         "element {[\\r\\n]+" +
                         "    margin: 10em;[\\r\\n]+" +
@@ -93,13 +108,22 @@ function checkSelectAll(view) {
                         "    color: #000;[\\r\\n]+" +
                         "}[\\r\\n]*";
 
-  return waitForClipboard(() => {
-    fireCopyEvent(prop);
-  }, () => {
-    return checkClipboardData(expectedPattern);
-  }).then(() => {}, () => {
+  let onPopup = once(view._contextmenu._menupopup, "popupshown");
+  EventUtils.synthesizeMouseAtCenter(prop,
+    {button: 2, type: "contextmenu"}, win);
+  yield onPopup;
+
+  ok(!view._contextmenu.menuitemCopy.hidden,
+    "Copy menu item is not hidden as expected");
+
+  try {
+    yield waitForClipboard(() => view._contextmenu.menuitemCopy.click(),
+      () => checkClipboardData(expectedPattern));
+  } catch(e) {
     failedClipboard(expectedPattern);
-  });
+  }
+
+  view._contextmenu._menupopup.hidePopup();
 }
 
 function checkClipboardData(expectedPattern) {

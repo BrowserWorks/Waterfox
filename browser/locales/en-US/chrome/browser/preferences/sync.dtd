@@ -16,7 +16,6 @@
 <!-- Manage Account -->
 <!ENTITY manageAccount.label          "Manage Account">
 <!ENTITY manageAccount.accesskey      "n">
-<!ENTITY viewQuota.label              "View Quota">
 <!ENTITY changePassword2.label        "Change Password…">
 <!ENTITY myRecoveryKey.label          "My Recovery Key">
 <!ENTITY resetSync2.label             "Reset Sync…">
@@ -26,8 +25,6 @@
 <!ENTITY syncMy.label               "Sync My">
 <!ENTITY engine.bookmarks.label     "Bookmarks">
 <!ENTITY engine.bookmarks.accesskey "m">
-<!ENTITY engine.readinglist.label   "Reading List">
-<!ENTITY engine.readinglist.accesskey "L">
 <!ENTITY engine.tabs.label          "Tabs">
 <!ENTITY engine.tabs.accesskey      "T">
 <!ENTITY engine.history.label       "History">
@@ -42,6 +39,10 @@
 <!-- Device Settings -->
 <!ENTITY syncDeviceName.label       "Device Name:">
 <!ENTITY syncDeviceName.accesskey   "c">
+<!ENTITY fxaSyncDeviceName.label       "Device Name">
+<!ENTITY changeSyncDeviceName.label "Change Device Name…">
+<!ENTITY cancelChangeSyncDeviceName.label "Cancel">
+<!ENTITY saveChangeSyncDeviceName.label "Save">
 <!ENTITY unlinkDevice.label           "Unlink This Device">
 
 <!-- Footer stuff -->
@@ -70,7 +71,8 @@ both, to better adapt this sentence to their language.
 
 <!ENTITY notSignedIn.label           "You are not signed in.">
 <!ENTITY signIn.label                "Sign in">
-<!ENTITY manage.label                "Manage">
+<!ENTITY profilePicture.tooltip      "Change profile picture">
+<!ENTITY verifiedManage.label        "Manage Account">
 <!ENTITY disconnect.label            "Disconnect…">
 <!ENTITY verify.label                "Verify Email">
 <!ENTITY forget.label                "Forget this Email">
@@ -80,3 +82,17 @@ both, to better adapt this sentence to their language.
 <!ENTITY welcome.createAccount.label "Create Account">
 
 <!ENTITY welcome.useOldSync.label "Using an older version of Sync?">
+
+<!ENTITY signedOut.caption            "Take your Web with you">
+<!ENTITY signedOut.description        "Synchronize your bookmarks, history, tabs, passwords, add-ons, and preferences across all your devices.">
+<!ENTITY signedOut.accountBox.title   "Connect with a &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Create Account">
+<!ENTITY signedOut.accountBox.signin  "Sign In">
+
+<!ENTITY signedIn.engines.label       "Sync across all devices">
+
+<!ENTITY mobilePromo.start            "Download Firefox for ">
+<!-- LOCALIZATION NOTE (mobilePromo.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo.androidLink      "Android™">
+<!ENTITY mobilePromo.end              " to sync with your mobile device.">
+<!ENTITY androidAttribution           "Android is a trademark of Google Inc.">

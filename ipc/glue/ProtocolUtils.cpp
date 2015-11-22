@@ -26,6 +26,18 @@ using base::ProcessId;
 namespace mozilla {
 namespace ipc {
 
+ProtocolCloneContext::ProtocolCloneContext()
+  : mNeckoParent(nullptr)
+{}
+
+ProtocolCloneContext::~ProtocolCloneContext()
+{}
+
+void ProtocolCloneContext::SetContentParent(ContentParent* aContentParent)
+{
+  mContentParent = aContentParent;
+}
+
 static StaticMutex gProtocolMutex;
 
 IToplevelProtocol::IToplevelProtocol(ProtocolId aProtoId)
@@ -167,34 +179,41 @@ public:
   }
 };
 
-bool
+nsresult
 Bridge(const PrivateIPDLInterface&,
        MessageChannel* aParentChannel, ProcessId aParentPid,
        MessageChannel* aChildChannel, ProcessId aChildPid,
        ProtocolId aProtocol, ProtocolId aChildProtocol)
 {
   if (!aParentPid || !aChildPid) {
-    return false;
+    return NS_ERROR_INVALID_ARG;
   }
 
   TransportDescriptor parentSide, childSide;
-  if (!CreateTransport(aParentPid, &parentSide, &childSide)) {
-    return false;
+  nsresult rv;
+  if (NS_FAILED(rv = CreateTransport(aParentPid, &parentSide, &childSide))) {
+    return rv;
   }
 
   if (!aParentChannel->Send(new ChannelOpened(parentSide,
                                               aChildPid,
                                               aProtocol,
-                                              IPC::Message::PRIORITY_URGENT)) ||
-      !aChildChannel->Send(new ChannelOpened(childSide,
-                                             aParentPid,
-                                             aChildProtocol,
-                                             IPC::Message::PRIORITY_URGENT))) {
+                                              IPC::Message::PRIORITY_URGENT))) {
     CloseDescriptor(parentSide);
     CloseDescriptor(childSide);
-    return false;
+    return NS_ERROR_BRIDGE_OPEN_PARENT;
   }
-  return true;
+
+  if (!aChildChannel->Send(new ChannelOpened(childSide,
+                                            aParentPid,
+                                            aChildProtocol,
+                                            IPC::Message::PRIORITY_URGENT))) {
+    CloseDescriptor(parentSide);
+    CloseDescriptor(childSide);
+    return NS_ERROR_BRIDGE_OPEN_CHILD;
+  }
+
+  return NS_OK;
 }
 
 bool
@@ -212,7 +231,7 @@ Open(const PrivateIPDLInterface&,
   }
 
   TransportDescriptor parentSide, childSide;
-  if (!CreateTransport(parentId, &parentSide, &childSide)) {
+  if (NS_FAILED(CreateTransport(parentId, &parentSide, &childSide))) {
     return false;
   }
 
@@ -296,20 +315,18 @@ FatalError(const char* aProtocolName, const char* aMsg,
   formattedMessage.AppendLiteral("]: \"");
   formattedMessage.AppendASCII(aMsg);
   if (aIsParent) {
-    formattedMessage.AppendLiteral("\". Killing child side as a result.");
+#ifdef MOZ_CRASHREPORTER
+    // We're going to crash the parent process because at this time
+    // there's no other really nice way of getting a minidump out of
+    // this process if we're off the main thread.
+    formattedMessage.AppendLiteral("\". Intentionally crashing.");
     NS_ERROR(formattedMessage.get());
-
-    if (aOtherPid != kInvalidProcessId && aOtherPid != base::GetCurrentProcId()) {
-      ScopedProcessHandle otherProcessHandle;
-      if (base::OpenProcessHandle(aOtherPid, &otherProcessHandle.rwget())) {
-        if (!base::KillProcess(otherProcessHandle,
-                               base::PROCESS_END_KILLED_BY_USER, false)) {
-          NS_ERROR("May have failed to kill child!");
-        }
-      } else {
-        NS_ERROR("Failed to open child process when attempting kill.");
-      }
-    }
+    CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("IPCFatalErrorProtocol"),
+                                       nsDependentCString(aProtocolName));
+    CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("IPCFatalErrorMsg"),
+                                       nsDependentCString(aMsg));
+#endif
+    MOZ_CRASH("IPC FatalError in the parent process!");
   } else {
     formattedMessage.AppendLiteral("\". abort()ing as a result.");
     NS_RUNTIMEABORT(formattedMessage.get());

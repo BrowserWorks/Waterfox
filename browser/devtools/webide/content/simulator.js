@@ -4,7 +4,7 @@
 
 const Cu = Components.utils;
 
-const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools;
+const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const { GetDevices, GetDeviceString } = require("devtools/shared/devices");
 const { Services } = Cu.import("resource://gre/modules/Services.jsm");
 const { Simulators, Simulator } = require("devtools/webide/simulators");
@@ -14,7 +14,7 @@ const utils = require("devtools/webide/utils");
 
 const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
 
-let SimulatorEditor = {
+var SimulatorEditor = {
 
   // Available Firefox OS Simulator addons (key: `addon.id`).
   _addons: {},

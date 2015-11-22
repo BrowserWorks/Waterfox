@@ -60,6 +60,157 @@ config = {
             "ssl_port": "4454", # starting ssl port to use for the server
             "emulator_port": 5554,
         },
+    "suite_definitions": {
+        "mochitest": {
+            "run_filename": "runtestsremote.py",
+            "testsdir": "mochitest",
+            "options": [
+                "--dm_trans=adb",
+                "--app=%(app)s",
+                "--remote-webserver=%(remote_webserver)s",
+                "--xre-path=%(xre_path)s",
+                "--utility-path=%(utility_path)s",
+                "--http-port=%(http_port)s",
+                "--ssl-port=%(ssl_port)s",
+                "--certificate-path=%(certs_path)s",
+                "--symbols-path=%(symbols_path)s",
+                "--quiet",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
+                "--screenshot-on-fail",
+            ],
+        },
+        "mochitest-gl": {
+            "run_filename": "runtestsremote.py",
+            "testsdir": "mochitest",
+            "options": [
+                "--dm_trans=adb",
+                "--app=%(app)s",
+                "--remote-webserver=%(remote_webserver)s",
+                "--xre-path=%(xre_path)s",
+                "--utility-path=%(utility_path)s",
+                "--http-port=%(http_port)s",
+                "--ssl-port=%(ssl_port)s",
+                "--certificate-path=%(certs_path)s",
+                "--symbols-path=%(symbols_path)s",
+                "--quiet",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
+                "--screenshot-on-fail",
+                "--total-chunks=4",
+                "--subsuite=webgl",
+            ],
+        },
+        "robocop": {
+            "run_filename": "runrobocop.py",
+            "testsdir": "mochitest",
+            "options": [
+                "--dm_trans=adb",
+                "--app=%(app)s",
+                "--remote-webserver=%(remote_webserver)s",
+                "--xre-path=%(xre_path)s",
+                "--utility-path=%(utility_path)s",
+                "--http-port=%(http_port)s",
+                "--ssl-port=%(ssl_port)s",
+                "--certificate-path=%(certs_path)s",
+                "--symbols-path=%(symbols_path)s",
+                "--quiet",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
+                "--total-chunks=4",
+                "--robocop-apk=../../robocop.apk",
+                "--robocop-ini=robocop.ini",
+            ],
+        },
+        "reftest": {
+            "run_filename": "remotereftest.py",
+            "testsdir": "reftest",
+            "options": [
+                "--app=%(app)s",
+                "--ignore-window-size",
+                "--dm_trans=adb",
+                "--bootstrap",
+                "--remote-webserver=%(remote_webserver)s",
+                "--xre-path=%(xre_path)s",
+                "--utility-path=%(utility_path)s",
+                "--http-port=%(http_port)s",
+                "--ssl-port=%(ssl_port)s",
+                "--httpd-path", "%(modules_dir)s",
+                "--symbols-path=%(symbols_path)s",
+                "--total-chunks=16",
+                "--suite=reftest",
+            ],
+            "tests": ["tests/layout/reftests/reftest.list",],
+        },
+        "crashtest": {
+            "run_filename": "remotereftest.py",
+            "testsdir": "reftest",
+            "options": [
+                "--app=%(app)s",
+                "--ignore-window-size",
+                "--dm_trans=adb",
+                "--bootstrap",
+                "--remote-webserver=%(remote_webserver)s",
+                "--xre-path=%(xre_path)s",
+                "--utility-path=%(utility_path)s",
+                "--http-port=%(http_port)s",
+                "--ssl-port=%(ssl_port)s",
+                "--httpd-path",
+                "%(modules_dir)s",
+                "--symbols-path=%(symbols_path)s",
+                "--total-chunks=2",
+                "--suite=crashtest",
+            ],
+            "tests": ["tests/testing/crashtest/crashtests.list",],
+        },
+        "jsreftest": {
+            "run_filename": "remotereftest.py",
+            "testsdir": "reftest",
+            "options": [
+                "--app=%(app)s",
+                "--ignore-window-size",
+                "--dm_trans=adb",
+                "--bootstrap",
+                "--remote-webserver=%(remote_webserver)s", "--xre-path=%(xre_path)s",
+                "--utility-path=%(utility_path)s", "--http-port=%(http_port)s",
+                "--ssl-port=%(ssl_port)s", "--httpd-path", "%(modules_dir)s",
+                "--symbols-path=%(symbols_path)s",
+                "--total-chunks=6",
+                "--extra-profile-file=jsreftest/tests/user.js",
+                "--suite=jstestbrowser",
+            ],
+            "tests": ["../jsreftest/tests/jstests.list",],
+        },
+        "xpcshell": {
+            "run_filename": "remotexpcshelltests.py",
+            "testsdir": "xpcshell",
+            "options": [
+                "--dm_trans=adb",
+                "--xre-path=%(xre_path)s",
+                "--testing-modules-dir=%(modules_dir)s",
+                "--apk=%(installer_path)s",
+                "--no-logfiles",
+                "--symbols-path=%(symbols_path)s",
+                "--manifest=tests/xpcshell.ini",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
+                "--total-chunks=3",
+            ],
+        },
+        "cppunittest": {
+            "run_filename": "remotecppunittests.py",
+            "testsdir": "cppunittest",
+            "options": [
+                "--symbols-path=%(symbols_path)s",
+                "--xre-path=%(xre_path)s",
+                "--dm_trans=adb",
+                "--localBinDir=../bin",
+                "--apk=%(installer_path)s",
+                ".",
+            ],
+        },
+
+    }, # end suite_definitions
     "test_suite_definitions": {
         "jsreftest-1": {
             "category": "jsreftest",
@@ -84,6 +235,62 @@ config = {
         "jsreftest-6": {
             "category": "jsreftest",
             "extra_args": ["--this-chunk=6"],
+        },
+        "jsreftest-7": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=7"],
+        },
+        "jsreftest-8": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=8"],
+        },
+        "jsreftest-9": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=9"],
+        },
+        "jsreftest-10": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=10"],
+        },
+        "jsreftest-11": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=11"],
+        },
+        "jsreftest-12": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=12"],
+        },
+        "jsreftest-13": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=13"],
+        },
+        "jsreftest-14": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=14"],
+        },
+        "jsreftest-15": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=15"],
+        },
+        "jsreftest-16": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=16"],
+        },
+        "jsreftest-17": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=17"],
+        },
+        "jsreftest-18": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=18"],
+        },
+        "jsreftest-19": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=19"],
+        },
+        "jsreftest-20": {
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=20"],
         },
         "mochitest-1": {
             "category": "mochitest",
@@ -171,83 +378,195 @@ config = {
         },
         "reftest-1": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=1",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=1"],
         },
         "reftest-2": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=2",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=2"],
         },
         "reftest-3": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=3",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=3"],
         },
         "reftest-4": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=4",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=4"],
         },
         "reftest-5": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=5",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=5"],
         },
         "reftest-6": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=6",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=6"],
         },
         "reftest-7": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=7",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=7"],
         },
         "reftest-8": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=8",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=8"],
         },
         "reftest-9": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=9",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=9"],
         },
         "reftest-10": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=10",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=10"],
         },
         "reftest-11": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=11",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=11"],
         },
         "reftest-12": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=12",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=12"],
         },
         "reftest-13": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=13",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=13"],
         },
         "reftest-14": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=14",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=14"],
         },
         "reftest-15": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=15",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=15"],
         },
         "reftest-16": {
             "category": "reftest",
-            "extra_args": ["--total-chunks=16", "--this-chunk=16",
-                "tests/layout/reftests/reftest.list"]
+            "extra_args": ["--total-chunks=48", "--this-chunk=16"],
+        },
+        "reftest-17": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=17"],
+        },
+       "reftest-18": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=18"],
+        },
+        "reftest-19": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=19"],
+        },
+        "reftest-20": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=20"],
+        },
+        "reftest-21": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=21"],
+        },
+        "reftest-22": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=22"],
+        },
+        "reftest-23": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=23"],
+        },
+        "reftest-24": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=24"],
+        },
+        "reftest-25": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=25"],
+        },
+        "reftest-26": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=26"],
+        },
+        "reftest-27": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=27"],
+        },
+        "reftest-28": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=28"],
+        },
+        "reftest-29": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=29"],
+        },
+        "reftest-30": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=30"],
+        },
+        "reftest-31": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=31"],
+        },
+        "reftest-32": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=32"],
+        },
+        "reftest-33": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=33"],
+        },
+        "reftest-34": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=34"],
+        },
+        "reftest-35": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=35"],
+        },
+        "reftest-36": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=36"],
+        },
+        "reftest-37": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=37"],
+        },
+        "reftest-38": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=38"],
+        },
+        "reftest-39": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=39"],
+        },
+        "reftest-40": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=40"],
+        },
+        "reftest-41": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=41"],
+        },
+        "reftest-42": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=42"],
+        },
+        "reftest-43": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=43"],
+        },
+        "reftest-44": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=44"],
+        },
+        "reftest-45": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=45"],
+        },
+        "reftest-46": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=46"],
+        },
+        "reftest-47": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=47"],
+        },
+        "reftest-48": {
+            "category": "reftest",
+            "extra args": ["--total-chunks=48", "--this-chunk=48"],
         },
         "crashtest-1": {
             "category": "crashtest",
@@ -256,6 +575,14 @@ config = {
         "crashtest-2": {
             "category": "crashtest",
             "extra_args": ["--this-chunk=2"],
+        },
+        "crashtest-3": {
+            "category": "crashtest",
+            "extra_args": ["--this-chunk=3"],
+        },
+        "crashtest-4": {
+            "category": "crashtest",
+            "extra_args": ["--this-chunk=4"],
         },
         "xpcshell-1": {
             "category": "xpcshell",
@@ -290,8 +617,6 @@ config = {
             "extra_args": [],
         },
     }, # end of "test_definitions"
-    # test harness options are located in the gecko tree
-    "in_tree_config": "config/mozharness/android_arm_4_3_config.py",
     "download_minidump_stackwalk": True,
     "default_blob_upload_servers": [
          "https://blobupload.elasticbeanstalk.com",

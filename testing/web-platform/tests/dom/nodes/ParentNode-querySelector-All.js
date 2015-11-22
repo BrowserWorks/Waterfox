@@ -3,7 +3,7 @@
 /*
  * Create and append special elements that cannot be created correctly with HTML markup alone.
  */
-function setupSpecialElements(parent) {
+function setupSpecialElements(doc, parent) {
   // Setup null and undefined tests
   parent.appendChild(doc.createElement("null"));
   parent.appendChild(doc.createElement("undefined"));
@@ -75,7 +75,7 @@ function interfaceCheck(type, obj) {
  * Verify that the NodeList returned by querySelectorAll is static and and that a new list is created after
  * each call. A static list should not be affected by subsequent changes to the DOM.
  */
-function verifyStaticList(type, root) {
+function verifyStaticList(type, doc, root) {
   var pre, post, preLength;
 
   test(function() {
@@ -160,7 +160,7 @@ function runValidSelectorTest(type, root, selectors, testType, docType) {
       nodeType = "fragment";
       break;
     default:
-      console.log("Reached unreachable code path.");
+      assert_unreached();
       nodeType = "unknown"; // This should never happen.
   }
 
@@ -172,7 +172,6 @@ function runValidSelectorTest(type, root, selectors, testType, docType) {
 
     if ((!s["exclude"] || (s["exclude"].indexOf(nodeType) === -1 && s["exclude"].indexOf(docType) === -1))
      && (s["testType"] & testType) ) {
-      //console.log("Running tests " + nodeType + ": " + s["testType"] + "&" + testType + "=" + (s["testType"] & testType) + ": " + JSON.stringify(s))
       var foundall, found;
 
       test(function() {
@@ -199,8 +198,6 @@ function runValidSelectorTest(type, root, selectors, testType, docType) {
           assert_equals(found, null, "The method should not match anything.");
         }
       }, type + ".querySelector: " + n + ": " + q);
-    } else {
-      //console.log("Excluding for " + nodeType + ": " + s["testType"] + "&" + testType + "=" + (s["testType"] & testType) + ": " + JSON.stringify(s))
     }
   }
 }
@@ -249,7 +246,7 @@ function getNodeType(node) {
     case Node.DOCUMENT_FRAGMENT_NODE:
       return "fragment";
     default:
-      console.log("Reached unreachable code path.");
+      assert_unreached();
       return "unknown"; // This should never happen.
   }
 }

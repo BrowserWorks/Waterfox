@@ -7,13 +7,16 @@
 #ifndef CDMProxy_h_
 #define CDMProxy_h_
 
+#include "mozilla/CDMCaps.h"
+#include "mozilla/Monitor.h"
+#include "mozilla/MozPromise.h"
+
+#include "mozilla/dom/MediaKeys.h"
+
+#include "nsIThread.h"
 #include "nsString.h"
 #include "nsAutoPtr.h"
-#include "mozilla/dom/MediaKeys.h"
-#include "mozilla/Monitor.h"
-#include "nsIThread.h"
 #include "GMPDecryptorProxy.h"
-#include "mozilla/CDMCaps.h"
 
 namespace mozilla {
 class MediaRawData;
@@ -21,13 +24,15 @@ class CDMCallbackProxy;
 
 namespace dom {
 class MediaKeySession;
-}
+} // namespace dom
 
-class DecryptionClient {
-public:
-  virtual ~DecryptionClient() {}
-  virtual void Decrypted(GMPErr aResult,
-                         MediaRawData* aSample) = 0;
+struct DecryptResult {
+  DecryptResult(GMPErr aStatus, MediaRawData* aSample)
+    : mStatus(aStatus)
+    , mSample(aSample)
+  {}
+  GMPErr mStatus;
+  nsRefPtr<MediaRawData> mSample;
 };
 
 // Proxies calls GMP/CDM, and proxies calls back.
@@ -40,6 +45,8 @@ class CDMProxy {
 public:
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CDMProxy)
+
+  typedef MozPromise<DecryptResult, DecryptResult, /* IsExclusive = */ true> DecryptPromise;
 
   // Main thread only.
   CDMProxy(dom::MediaKeys* aKeys, const nsAString& aKeySystem);
@@ -140,10 +147,7 @@ public:
                        nsresult aDOMException,
                        const nsCString& aMsg);
 
-  // Threadsafe.
-  void Decrypt(MediaRawData* aSample,
-               DecryptionClient* aSink,
-               MediaTaskQueue* aTaskQueue);
+  nsRefPtr<DecryptPromise> Decrypt(MediaRawData* aSample);
 
   // Reject promise with DOMException corresponding to aExceptionCode.
   // Can be called from any thread.
@@ -236,32 +240,28 @@ private:
   // GMP thread only.
   void gmp_RemoveSession(nsAutoPtr<SessionOpData> aData);
 
-  class DecryptJob : public nsRunnable {
+  class DecryptJob {
   public:
-    explicit DecryptJob(MediaRawData* aSample,
-                        DecryptionClient* aClient,
-                        MediaTaskQueue* aTaskQueue)
+    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DecryptJob)
+
+    explicit DecryptJob(MediaRawData* aSample)
       : mId(0)
       , mSample(aSample)
-      , mClient(aClient)
-      , mResult(GMPGenericErr)
-      , mTaskQueue(aTaskQueue)
     {
-      MOZ_ASSERT(mClient);
-      MOZ_ASSERT(mSample);
     }
 
-    NS_METHOD Run() override;
     void PostResult(GMPErr aResult, const nsTArray<uint8_t>& aDecryptedData);
     void PostResult(GMPErr aResult);
+
+    nsRefPtr<DecryptPromise> Ensure() {
+      return mPromise.Ensure(__func__);
+    }
 
     uint32_t mId;
     nsRefPtr<MediaRawData> mSample;
   private:
     ~DecryptJob() {}
-    nsAutoPtr<DecryptionClient> mClient;
-    GMPErr mResult;
-    nsRefPtr<MediaTaskQueue> mTaskQueue;
+    MozPromiseHolder<DecryptPromise> mPromise;
   };
   // GMP thread only.
   void gmp_Decrypt(nsRefPtr<DecryptJob> aJob);

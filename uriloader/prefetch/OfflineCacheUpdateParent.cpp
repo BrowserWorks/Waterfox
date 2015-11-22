@@ -5,6 +5,7 @@
 
 #include "OfflineCacheUpdateParent.h"
 
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/unused.h"
@@ -12,9 +13,10 @@
 #include "nsIApplicationCache.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsNetUtil.h"
-#include "nsContentUtils.h"
 
 using namespace mozilla::ipc;
+using mozilla::BasePrincipal;
+using mozilla::OriginAttributes;
 using mozilla::dom::TabParent;
 
 //
@@ -23,16 +25,16 @@ using mozilla::dom::TabParent;
 //    set NSPR_LOG_MODULES=nsOfflineCacheUpdate:5
 //    set NSPR_LOG_FILE=offlineupdate.log
 //
-// this enables PR_LOG_ALWAYS level information and places all output in
+// this enables LogLevel::Debug level information and places all output in
 // the file offlineupdate.log
 //
 extern PRLogModuleInfo *gOfflineCacheUpdateLog;
 
 #undef LOG
-#define LOG(args) PR_LOG(gOfflineCacheUpdateLog, 4, args)
+#define LOG(args) MOZ_LOG(gOfflineCacheUpdateLog, mozilla::LogLevel::Debug, args)
 
 #undef LOG_ENABLED
-#define LOG_ENABLED() PR_LOG_TEST(gOfflineCacheUpdateLog, 4)
+#define LOG_ENABLED() MOZ_LOG_TEST(gOfflineCacheUpdateLog, mozilla::LogLevel::Debug)
 
 namespace mozilla {
 namespace docshell {
@@ -91,10 +93,10 @@ OfflineCacheUpdateParent::Schedule(const URIParams& aManifestURI,
 
     bool offlinePermissionAllowed = false;
 
-    nsCOMPtr<nsIPrincipal> principal;
-    nsContentUtils::GetSecurityManager()->
-        GetAppCodebasePrincipal(manifestURI, mAppId, mIsInBrowserElement,
-                                getter_AddRefs(principal));
+    // TODO: Bug 1165466 - use OriginAttributes
+    OriginAttributes attrs(mAppId, mIsInBrowserElement);
+    nsCOMPtr<nsIPrincipal> principal =
+      BasePrincipal::CreateCodebasePrincipal(manifestURI, attrs);
 
     nsresult rv = service->OfflineAppAllowed(
         principal, nullptr, &offlinePermissionAllowed);
@@ -263,5 +265,5 @@ OfflineCacheUpdateParent::GetAppId(uint32_t *aAppId)
     return NS_OK;
 }
 
-} // docshell
-} // mozilla
+} // namespace docshell
+} // namespace mozilla

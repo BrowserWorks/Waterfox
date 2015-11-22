@@ -7,6 +7,7 @@
 #define mozilla_dom_HTMLCanvasElement_h
 
 #include "mozilla/Attributes.h"
+#include "mozilla/WeakPtr.h"
 #include "nsIDOMHTMLCanvasElement.h"
 #include "nsGenericHTMLElement.h"
 #include "nsGkAtoms.h"
@@ -22,23 +23,64 @@ namespace mozilla {
 
 namespace layers {
 class CanvasLayer;
+class Image;
 class LayerManager;
-}
+} // namespace layers
 namespace gfx {
 class SourceSurface;
-}
+} // namespace gfx
 
 namespace dom {
-
+class CanvasCaptureMediaStream;
 class File;
 class FileCallback;
 class HTMLCanvasPrintState;
 class PrintCallback;
+class RequestedFrameRefreshObserver;
 
 enum class CanvasContextType : uint8_t {
+  NoContext,
   Canvas2D,
   WebGL1,
   WebGL2
+};
+
+/*
+ * FrameCaptureListener is used by captureStream() as a way of getting video
+ * frames from the canvas. On a refresh driver tick after something has been
+ * drawn to the canvas since the last such tick, all registered
+ * FrameCaptureListeners whose `mFrameCaptureRequested` equals `true`,
+ * will be given a copy of the just-painted canvas.
+ * All FrameCaptureListeners get the same copy.
+ */
+class FrameCaptureListener : public SupportsWeakPtr<FrameCaptureListener>
+{
+public:
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(FrameCaptureListener)
+
+  FrameCaptureListener()
+    : mFrameCaptureRequested(false) {}
+
+  /*
+   * Called when a frame capture is desired on next paint.
+   */
+  void RequestFrameCapture() { mFrameCaptureRequested = true; }
+
+  /*
+   * Indicates to the canvas whether or not this listener has requested a frame.
+   */
+  bool FrameCaptureRequested() const { return mFrameCaptureRequested; }
+
+  /*
+   * Interface through which new video frames will be provided while
+   * `mFrameCaptureRequested` is `true`.
+   */
+  virtual void NewFrame(already_AddRefed<layers::Image> aImage) = 0;
+
+protected:
+  virtual ~FrameCaptureListener() {}
+
+  bool mFrameCaptureRequested;
 };
 
 class HTMLCanvasElement final : public nsGenericHTMLElement,
@@ -118,13 +160,11 @@ public:
     aRv = MozGetIPCContext(aContextId, getter_AddRefs(context));
     return context.forget();
   }
-  void MozFetchAsStream(nsIInputStreamCallback* aCallback,
-                        const nsAString& aType, ErrorResult& aRv)
-  {
-    aRv = MozFetchAsStream(aCallback, aType);
-  }
   PrintCallback* GetMozPrintCallback() const;
   void SetMozPrintCallback(PrintCallback* aCallback);
+
+  already_AddRefed<CanvasCaptureMediaStream>
+  CaptureStream(const Optional<double>& aFrameRate, ErrorResult& aRv);
 
   /**
    * Get the size in pixels of this canvas element
@@ -165,7 +205,30 @@ public:
    */
   bool GetIsOpaque();
 
-  virtual TemporaryRef<gfx::SourceSurface> GetSurfaceSnapshot(bool* aPremultAlpha = nullptr);
+  virtual already_AddRefed<gfx::SourceSurface> GetSurfaceSnapshot(bool* aPremultAlpha = nullptr);
+
+  /*
+   * Register a FrameCaptureListener with this canvas.
+   * The canvas hooks into the RefreshDriver while there are
+   * FrameCaptureListeners registered.
+   * The registered FrameCaptureListeners are stored as WeakPtrs, thus it's the
+   * caller's responsibility to keep them alive. Once a registered
+   * FrameCaptureListener is destroyed it will be automatically deregistered.
+   */
+  void RegisterFrameCaptureListener(FrameCaptureListener* aListener);
+
+  /*
+   * Returns true when there is at least one registered FrameCaptureListener
+   * that has requested a frame capture.
+   */
+  bool IsFrameCaptureRequested() const;
+
+  /*
+   * Called by the RefreshDriver hook when a frame has been captured.
+   * Makes a copy of the provided surface and hands it to all
+   * FrameCaptureListeners having requested frame capture.
+   */
+  void SetFrameCapture(already_AddRefed<gfx::SourceSurface> aSurface);
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
                                 nsIAtom* aAttribute,
@@ -210,6 +273,13 @@ public:
   // take a snapshot of the canvas that needs to be "live" (e.g. -moz-element).
   void MarkContextClean();
 
+  // Call this after capturing a frame, so we can avoid unnecessary surface
+  // copies for future frames when no drawing has occurred.
+  void MarkContextCleanForFrameCapture();
+
+  // Starts returning false when something is drawn.
+  bool IsContextCleanForFrameCapture();
+
   nsresult GetContext(const nsAString& aContextId, nsISupports** aContext);
 
 protected:
@@ -232,9 +302,9 @@ protected:
                          const nsAString& aMimeType,
                          const JS::Value& aEncoderOptions,
                          nsAString& aDataURL);
-  nsresult MozGetAsFileImpl(const nsAString& aName,
+  nsresult MozGetAsBlobImpl(const nsAString& aName,
                             const nsAString& aType,
-                            nsIDOMFile** aResult);
+                            nsISupports** aResult);
   void CallPrintCallback();
 
   CanvasContextType mCurrentContextType;
@@ -242,6 +312,8 @@ protected:
   nsRefPtr<PrintCallback> mPrintCallback;
   nsCOMPtr<nsICanvasRenderingContextInternal> mCurrentContext;
   nsRefPtr<HTMLCanvasPrintState> mPrintState;
+  nsTArray<WeakPtr<FrameCaptureListener>> mRequestedFrameListeners;
+  nsRefPtr<RequestedFrameRefreshObserver> mRequestedFrameRefreshObserver;
 
 public:
   // Record whether this canvas should be write-only or not.
@@ -259,6 +331,10 @@ public:
   void ResetPrintCallback();
 
   HTMLCanvasElement* GetOriginalCanvas();
+
+  CanvasContextType GetCurrentContextType() {
+    return mCurrentContextType;
+  }
 };
 
 class HTMLCanvasPrintState final : public nsWrapperCache

@@ -63,7 +63,7 @@ XPCOMUtils.defineLazyGetter(this, "libcutils", function () {
   return libcutils;
 });
 
-let logging = Services.prefs.getBoolPref("devtools.discovery.log");
+var logging = Services.prefs.getBoolPref("devtools.discovery.log");
 function log(msg) {
   if (logging) {
     console.log("DISCOVERY: " + msg);
@@ -183,7 +183,7 @@ LocalDevice.prototype = {
    */
   _generate: function() {
     if (Services.appinfo.widgetToolkit == "gonk") {
-      // For Gonk devices, create one from the device name plus a little
+      // For Firefox OS devices, create one from the device name plus a little
       // randomness.  The goal is just to distinguish devices in an office
       // environment where many people may have the same device model for
       // testing purposes (which would otherwise all report the same name).
@@ -193,6 +193,10 @@ LocalDevice.prototype = {
       // To hex and zero pad
       randomID = ("00000000" + randomID.toString(16)).slice(-8);
       this.name = name + "-" + randomID;
+    } else if (Services.appinfo.widgetToolkit == "android") {
+      // For Firefox for Android, use the device's model name.
+      // TODO: Bug 1180997: Find the right way to expose an editable name
+      this.name = sysInfo.get("device");
     } else {
       this.name = sysInfo.get("host");
     }
@@ -381,16 +385,16 @@ Discovery.prototype = {
     if (topic !== "network-active-changed") {
       return;
     }
-    let activeNetwork = subject;
-    if (!activeNetwork) {
-      log("No active network");
+    let activeNetworkInfo = subject;
+    if (!activeNetworkInfo) {
+      log("No active network info");
       return;
     }
-    activeNetwork = activeNetwork.QueryInterface(Ci.nsINetworkInterface);
-    log("Active network changed to: " + activeNetwork.type);
+    activeNetworkInfo = activeNetworkInfo.QueryInterface(Ci.nsINetworkInfo);
+    log("Active network changed to: " + activeNetworkInfo.type);
     // UDP sockets go down when the device goes offline, so we'll restart them
     // when the active network goes back to WiFi.
-    if (activeNetwork.type === Ci.nsINetworkInterface.NETWORK_TYPE_WIFI) {
+    if (activeNetworkInfo.type === Ci.nsINetworkInfo.NETWORK_TYPE_WIFI) {
       this._restartListening();
     }
   },
@@ -508,6 +512,6 @@ Discovery.prototype = {
 
 };
 
-let discovery = new Discovery();
+var discovery = new Discovery();
 
 module.exports = discovery;

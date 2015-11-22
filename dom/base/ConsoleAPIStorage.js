@@ -4,9 +4,9 @@
 
 "use strict";
 
-let Cu = Components.utils;
-let Ci = Components.interfaces;
-let Cc = Components.classes;
+var Cu = Components.utils;
+var Ci = Components.interfaces;
+var Cc = Components.classes;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -114,6 +114,9 @@ ConsoleAPIStorageService.prototype = {
    * @param string aId
    *        The ID of the inner window for which the event occurred or "jsm" for
    *        messages logged from JavaScript modules..
+   * @param string aOuterId
+   *        This ID is used as 3rd parameters for the console-api-log-event
+   *        notification.
    * @param object aEvent
    *        A JavaScript object you want to store.
    */

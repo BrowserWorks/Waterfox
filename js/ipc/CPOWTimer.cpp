@@ -9,17 +9,37 @@
 #include "nsContentUtils.h"
 #include "CPOWTimer.h"
 
+#include "jsapi.h"
+
+CPOWTimer::CPOWTimer(JSContext* cx MOZ_GUARD_OBJECT_NOTIFIER_PARAM_IN_IMPL)
+    : cx_(nullptr)
+    , startInterval_(0)
+{
+    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+    JSRuntime* runtime = JS_GetRuntime(cx);
+    if (!js::GetStopwatchIsMonitoringCPOW(runtime))
+        return;
+    cx_ = cx;
+    startInterval_ = JS_Now();
+}
 CPOWTimer::~CPOWTimer()
 {
-    JSContext* cx = nsContentUtils::GetCurrentJSContextForThread();
-    if (!cx)
+    if (!cx_) {
+        // Monitoring was off when we started the timer.
         return;
+    }
 
-    JSRuntime* runtime = JS_GetRuntime(cx);
-    if (!js::IsStopwatchActive(runtime))
+    JSRuntime* runtime = JS_GetRuntime(cx_);
+    if (!js::GetStopwatchIsMonitoringCPOW(runtime)) {
+        // Monitoring has been deactivated while we were in the timer.
         return;
+    }
 
-    js::PerformanceData* performance = js::GetPerformanceData(runtime);
-    uint64_t duration = PR_IntervalToMicroseconds(PR_IntervalNow() - startInterval);
-    performance->totalCPOWTime += duration;
+    const int64_t endInterval = JS_Now();
+    if (endInterval <= startInterval_) {
+        // Do not assume monotonicity.
+        return;
+    }
+
+    js::AddCPOWPerformanceDelta(runtime, endInterval - startInterval_);
 }

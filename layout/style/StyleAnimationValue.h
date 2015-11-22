@@ -15,6 +15,7 @@
 #include "nsColor.h"
 #include "nsCSSValue.h"
 
+class nsIFrame;
 class nsStyleContext;
 class gfx3DMatrix;
 
@@ -23,6 +24,10 @@ namespace mozilla {
 namespace dom {
 class Element;
 } // namespace dom
+
+namespace gfx {
+class Matrix4x4;
+} // namespace gfx
 
 /**
  * Utility class to handle animated style values
@@ -188,9 +193,9 @@ public:
    * @param aMatrix2   Second matrix, using CSS pixel units.
    * @param aProgress  Interpolation value in the range [0.0, 1.0]
    */
-  static gfx3DMatrix InterpolateTransformMatrix(const gfx3DMatrix &aMatrix1,
-                                                const gfx3DMatrix &aMatrix2,
-                                                double aProgress);
+  static gfx::Matrix4x4 InterpolateTransformMatrix(const gfx::Matrix4x4 &aMatrix1,
+                                                   const gfx::Matrix4x4 &aMatrix2,
+                                                   double aProgress);
 
   static already_AddRefed<nsCSSValue::Array>
     AppendTransformFunction(nsCSSKeyword aTransformFunction,
@@ -316,6 +321,9 @@ public:
     uint32_t len = NS_strlen(GetBufferValue(mValue.mString));
     mValue.mString->ToString(len, aBuffer);
   }
+
+  /// @return the scale for this value, calculated with reference to @aForFrame.
+  gfxSize GetScaleValue(const nsIFrame* aForFrame) const;
 
   explicit StyleAnimationValue(Unit aUnit = eUnit_Null) : mUnit(aUnit) {
     NS_ASSERTION(aUnit == eUnit_Null || aUnit == eUnit_Normal ||

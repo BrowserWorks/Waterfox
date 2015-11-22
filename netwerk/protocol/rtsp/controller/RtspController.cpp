@@ -30,11 +30,10 @@
 #include "nsStringStream.h"
 #include "nsAlgorithm.h"
 #include "nsProxyRelease.h"
-#include "nsNetUtil.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #include "plbase64.h"
 #include "prmem.h"
@@ -45,7 +44,7 @@
 
 extern PRLogModuleInfo* gRtspLog;
 #undef LOG
-#define LOG(args) PR_LOG(gRtspLog, PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(gRtspLog, mozilla::LogLevel::Debug, args)
 
 namespace mozilla {
 namespace net {

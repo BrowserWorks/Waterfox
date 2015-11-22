@@ -16,14 +16,14 @@ using namespace js::jit;
 
 void
 LIRGeneratorX86::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1,
-                             Register reg2)
+                             Register reg2, bool useAtStart)
 {
     MOZ_ASSERT(mir->type() == MIRType_Value);
     MOZ_ASSERT(reg1 != reg2);
 
     ensureDefined(mir);
-    lir->setOperand(n, LUse(reg1, mir->virtualRegister()));
-    lir->setOperand(n + 1, LUse(reg2, VirtualRegisterOfPayload(mir)));
+    lir->setOperand(n, LUse(reg1, mir->virtualRegister(), useAtStart));
+    lir->setOperand(n + 1, LUse(reg2, VirtualRegisterOfPayload(mir), useAtStart));
 }
 
 LAllocation
@@ -178,6 +178,12 @@ LIRGeneratorX86::visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArra
 }
 
 void
+LIRGeneratorX86::visitAtomicExchangeTypedArrayElement(MAtomicExchangeTypedArrayElement* ins)
+{
+    lowerAtomicExchangeTypedArrayElement(ins, /*useI386ByteRegisters=*/ true);
+}
+
+void
 LIRGeneratorX86::visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop* ins)
 {
     lowerAtomicTypedArrayElementBinop(ins, /* useI386ByteRegisters = */ true);
@@ -305,6 +311,24 @@ LIRGeneratorX86::visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap* ins)
 }
 
 void
+LIRGeneratorX86::visitAsmJSAtomicExchangeHeap(MAsmJSAtomicExchangeHeap* ins)
+{
+    MOZ_ASSERT(ins->ptr()->type() == MIRType_Int32);
+
+    const LAllocation ptr = useRegister(ins->ptr());
+    const LAllocation value = useRegister(ins->value());
+
+    LAsmJSAtomicExchangeHeap* lir =
+        new(alloc()) LAsmJSAtomicExchangeHeap(ptr, value);
+
+    lir->setAddrTemp(temp());
+    if (byteSize(ins->accessType()) == 1)
+        defineFixed(lir, ins, LAllocation(AnyRegister(eax)));
+    else
+        define(lir, ins);
+}
+
+void
 LIRGeneratorX86::visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins)
 {
     MOZ_ASSERT(ins->accessType() < Scalar::Float32);
@@ -412,4 +436,16 @@ LIRGeneratorX86::visitSubstr(MSubstr* ins)
                                          tempByteOpRegister());
     define(lir, ins);
     assignSafepoint(lir, ins);
+}
+
+void
+LIRGeneratorX86::visitRandom(MRandom* ins)
+{
+    // eax and edx are necessary for mull.
+    LRandom *lir = new(alloc()) LRandom(tempFixed(eax),
+                                        tempFixed(edx),
+                                        temp(),
+                                        temp(),
+                                        temp());
+    defineFixed(lir, ins, LFloatReg(ReturnDoubleReg));
 }

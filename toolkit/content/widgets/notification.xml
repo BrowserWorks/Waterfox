@@ -122,7 +122,8 @@
                 var button = aButtons[b];
                 var buttonElem = document.createElementNS(XULNS, "button");
                 buttonElem.setAttribute("label", button.label);
-                buttonElem.setAttribute("accesskey", button.accessKey);
+                if (typeof button.accessKey == "string")
+                  buttonElem.setAttribute("accesskey", button.accessKey);
                 if (typeof button.type == "string") {
                   buttonElem.setAttribute("type", button.type);
                   if ((button.type == "menu-button" || button.type == "menu") &&
@@ -479,8 +480,8 @@
         <xul:hbox align="start">
           <xul:vbox flex="1">
             <xul:label class="popup-notification-origin header"
-                       xbl:inherits="value=origin"
-                       crop="end"/>
+                       xbl:inherits="value=origin,tooltiptext=origin"
+                       crop="center"/>
             <xul:description class="popup-notification-description"
                              xbl:inherits="xbl:text=label,popupid"/>
           </xul:vbox>
@@ -491,7 +492,7 @@
         </xul:hbox>
         <children includes="popupnotificationcontent"/>
         <xul:label class="text-link popup-notification-learnmore-link"
-               xbl:inherits="href=learnmoreurl">&learnMore;</xul:label>
+               xbl:inherits="onclick=learnmoreclick,href=learnmoreurl">&learnMore;</xul:label>
         <xul:spacer flex="1"/>
         <xul:hbox class="popup-notification-button-container"
                   pack="end" align="center">
@@ -499,7 +500,7 @@
           <xul:button anonid="button"
                       class="popup-notification-menubutton"
                       type="menu-button"
-                      xbl:inherits="oncommand=buttoncommand,label=buttonlabel,accesskey=buttonaccesskey">
+                      xbl:inherits="oncommand=buttoncommand,onpopupshown=buttonpopupshown,label=buttonlabel,accesskey=buttonaccesskey">
             <xul:menupopup anonid="menupopup"
                            xbl:inherits="oncommand=menucommand">
               <children/>

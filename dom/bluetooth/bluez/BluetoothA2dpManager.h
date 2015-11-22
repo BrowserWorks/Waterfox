@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_bluetooth_bluetootha2dpmanager_h__
-#define mozilla_dom_bluetooth_bluetootha2dpmanager_h__
+#ifndef mozilla_dom_bluetooth_bluez_BluetoothA2dpManager_h
+#define mozilla_dom_bluetooth_bluez_BluetoothA2dpManager_h
 
 #include "BluetoothCommon.h"
 #include "BluetoothProfileController.h"
@@ -35,25 +35,6 @@ public:
   // A2DP-specific functions
   void HandleSinkPropertyChanged(const BluetoothSignal& aSignal);
 
-  // AVRCP-specific functions
-  void SetAvrcpConnected(bool aConnected);
-  bool IsAvrcpConnected();
-  void UpdateMetaData(const nsAString& aTitle,
-                      const nsAString& aArtist,
-                      const nsAString& aAlbum,
-                      uint64_t aMediaNumber,
-                      uint64_t aTotalMediaCount,
-                      uint32_t aDuration);
-  void UpdatePlayStatus(uint32_t aDuration,
-                        uint32_t aPosition,
-                        ControlPlayStatus aPlayStatus);
-  void GetAlbum(nsAString& aAlbum);
-  uint32_t GetDuration();
-  ControlPlayStatus GetPlayStatus();
-  uint32_t GetPosition();
-  uint64_t GetMediaNumber();
-  void GetTitle(nsAString& aTitle);
-
 protected:
   virtual ~BluetoothA2dpManager();
 
@@ -61,7 +42,6 @@ private:
   BluetoothA2dpManager();
   bool Init();
   void ResetA2dp();
-  void ResetAvrcp();
 
   void HandleShutdown();
   void NotifyConnectionStatusChanged();
@@ -73,18 +53,8 @@ private:
   bool mA2dpConnected;
   SinkState mSinkState;
 
-  // AVRCP data member
-  bool mAvrcpConnected;
-  nsString mAlbum;
-  nsString mArtist;
-  nsString mTitle;
-  uint32_t mDuration;
-  uint64_t mMediaNumber;
-  uint64_t mTotalMediaCount;
-  uint32_t mPosition;
-  ControlPlayStatus mPlayStatus;
 };
 
 END_BLUETOOTH_NAMESPACE
 
-#endif
+#endif // mozilla_dom_bluetooth_bluez_BluetoothA2dpManager_h

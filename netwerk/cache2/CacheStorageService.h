@@ -278,6 +278,7 @@ private:
                            nsIURI* aURI,
                            const nsACString & aIdExtension,
                            bool aWriteToDisk,
+                           bool aSkipSizeCheck,
                            bool aCreateIfNotExist,
                            bool aReplace,
                            CacheEntryHandle** aResult);
@@ -378,8 +379,8 @@ void ProxyReleaseMainThread(nsCOMPtr<T> &object)
   ProxyRelease(object, mainThread);
 }
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla
 
 #define NS_CACHE_STORAGE_SERVICE_CID \
   { 0xea70b098, 0x5014, 0x4e21, \

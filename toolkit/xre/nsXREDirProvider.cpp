@@ -10,7 +10,6 @@
 #include "jsapi.h"
 #include "xpcpublic.h"
 
-#include "nsIJSRuntimeService.h"
 #include "nsIAddonInterposition.h"
 #include "nsIAppStartup.h"
 #include "nsIDirectoryEnumerator.h"
@@ -52,6 +51,9 @@
 #endif
 #ifdef XP_UNIX
 #include <ctype.h>
+#endif
+#ifdef XP_IOS
+#include "UIKitDirProvider.h"
 #endif
 
 #if defined(XP_MACOSX)
@@ -639,7 +641,7 @@ nsXREDirProvider::LoadExtensionBundleDirectories()
 
       RegisterExtensionInterpositions(parser);
       LoadExtensionDirectories(parser, "ExtensionDirs", mExtensionDirectories,
-                               NS_APP_LOCATION);
+                               NS_EXTENSION_LOCATION);
       LoadExtensionDirectories(parser, "ThemeDirs", mThemeDirectories,
                                NS_SKIN_LOCATION);
 #ifdef MOZ_BUILD_APP_IS_BROWSER
@@ -905,14 +907,9 @@ nsXREDirProvider::DoShutdown()
       // Phase 2c: Now that things are torn down, force JS GC so that things which depend on
       // resources which are about to go away in "profile-before-change" are destroyed first.
 
-      nsCOMPtr<nsIJSRuntimeService> rtsvc
-        (do_GetService("@mozilla.org/js/xpc/RuntimeService;1"));
-      if (rtsvc)
-      {
-        JSRuntime *rt = nullptr;
-        rtsvc->GetRuntime(&rt);
-        if (rt)
-          ::JS_GC(rt);
+      JSRuntime *rt = xpc::GetJSRuntime();
+      if (rt) {
+        JS_GC(rt);
       }
 
       // Phase 3: Notify observers of a profile change
@@ -1253,6 +1250,14 @@ nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile, bool aLocal)
   NS_ENSURE_SUCCESS(rv, rv);
 
   localDir = do_QueryInterface(dirFileMac, &rv);
+#elif defined(XP_IOS)
+  nsAutoCString userDir;
+  if (GetUIKitDirectory(aLocal, userDir)) {
+    rv = NS_NewNativeLocalFile(userDir, true, getter_AddRefs(localDir));
+  } else {
+    rv = NS_ERROR_FAILURE;
+  }
+  NS_ENSURE_SUCCESS(rv, rv);
 #elif defined(XP_WIN)
   nsString path;
   if (aLocal) {

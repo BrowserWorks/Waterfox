@@ -130,7 +130,7 @@ private:
 NS_IMPL_ISUPPORTS_INHERITED(GCAndCCLogDumpRunnable, nsRunnable,
                             nsIDumpGCAndCCLogsCallback)
 
-} // anonymous namespace
+} // namespace
 
 #if defined(MOZ_SUPPORTS_RT_SIGNALS) // {
 namespace {
@@ -188,7 +188,7 @@ void doGCCCDump(const uint8_t aRecvSig)
   NS_DispatchToMainThread(runnable);
 }
 
-} // anonymous namespace
+} // namespace
 #endif // MOZ_SUPPORTS_RT_SIGNALS }
 
 #if defined(MOZ_SUPPORTS_FIFO) // {
@@ -258,7 +258,7 @@ OnFifoEnabledChange(const char* /*unused*/, void* /*unused*/)
   }
 }
 
-} // anonymous namespace
+} // namespace
 #endif // MOZ_SUPPORTS_FIFO }
 
 NS_IMPL_ISUPPORTS(nsMemoryInfoDumper, nsIMemoryInfoDumper)
@@ -484,7 +484,7 @@ public:
       // of the form "$PROCESS_NAME (pid $PID)", or just "(pid $PID)" if we
       // don't have a process name.  If we're the main process, we let
       // $PROCESS_NAME be "Main Process".
-      if (XRE_GetProcessType() == GeckoProcessType_Default) {
+      if (XRE_IsParentProcess()) {
         // We're the main process.
         process.AssignLiteral("Main Process");
       } else if (ContentChild* cc = ContentChild::GetSingleton()) {

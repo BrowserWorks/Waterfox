@@ -5,7 +5,7 @@
 const TEST_URI = "http://example.com/browser/browser/devtools/commandline/" +
                  "test/browser_cmd_screenshot.html";
 
-let FileUtils = (Cu.import("resource://gre/modules/FileUtils.jsm", {})).FileUtils;
+var FileUtils = (Cu.import("resource://gre/modules/FileUtils.jsm", {})).FileUtils;
 
 function test() {
   return Task.spawn(spawnTest).then(finish, helpers.handleError);
@@ -25,7 +25,7 @@ function* spawnTest() {
   pbWin.close();
 }
 
-function addTabWithToolbarRunTests(win) {
+function* addTabWithToolbarRunTests(win) {
   let options = yield helpers.openTab(TEST_URI, { chromeWindow: win });
   yield helpers.openToolbar(options);
 

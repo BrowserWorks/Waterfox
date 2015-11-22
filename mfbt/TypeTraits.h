@@ -637,10 +637,29 @@ public:
  * For obscure reasons, you can't use IsConvertible when the types being tested
  * are related through private inheritance, and you'll get a compile error if
  * you try.  Just don't do it!
+ *
+ * Note - we need special handling for void, which ConvertibleTester doesn't
+ * handle. The void handling here doesn't handle const/volatile void correctly,
+ * which could be easily fixed if the need arises.
  */
 template<typename From, typename To>
 struct IsConvertible
   : IntegralConstant<bool, detail::ConvertibleTester<From, To>::value>
+{};
+
+template<typename B>
+struct IsConvertible<void, B>
+  : IntegralConstant<bool, IsVoid<B>::value>
+{};
+
+template<typename A>
+struct IsConvertible<A, void>
+  : IntegralConstant<bool, IsVoid<A>::value>
+{};
+
+template<>
+struct IsConvertible<void, void>
+  : TrueType
 {};
 
 /* 20.9.7 Transformations between types [meta.trans] */
@@ -755,8 +774,8 @@ struct AddLvalueReferenceHelper<T, TIsNotVoid>
 
 /**
  * AddLvalueReference adds an lvalue & reference to T if one isn't already
- * present.  (Note: adding an lvalue reference to an rvalue && reference in
- * essence replaces the && with a &&, per C+11 reference collapsing rules.  For
+ * present. (Note: adding an lvalue reference to an rvalue && reference in
+ * essence replaces the && with a &&, per C+11 reference collapsing rules. For
  * example, int&& would become int&.)
  *
  * The final computed type will only *not* be an lvalue reference if T is void.
@@ -771,6 +790,56 @@ template<typename T>
 struct AddLvalueReference
   : detail::AddLvalueReferenceHelper<T>
 {};
+
+namespace detail {
+
+template<typename T, Voidness V = IsVoid<T>::value ? TIsVoid : TIsNotVoid>
+struct AddRvalueReferenceHelper;
+
+template<typename T>
+struct AddRvalueReferenceHelper<T, TIsVoid>
+{
+  typedef void Type;
+};
+
+template<typename T>
+struct AddRvalueReferenceHelper<T, TIsNotVoid>
+{
+  typedef T&& Type;
+};
+
+} // namespace detail
+
+/**
+ * AddRvalueReference adds an rvalue && reference to T if one isn't already
+ * present. (Note: adding an rvalue reference to an lvalue & reference in
+ * essence keeps the &, per C+11 reference collapsing rules. For example,
+ * int& would remain int&.)
+ *
+ * The final computed type will only *not* be a reference if T is void.
+ *
+ * mozilla::AddRvalueReference<int>::Type is int&&;
+ * mozilla::AddRvalueRference<volatile int&>::Type is volatile int&;
+ * mozilla::AddRvalueRference<const int&&>::Type is const int&&;
+ * mozilla::AddRvalueReference<void*>::Type is void*&&;
+ * mozilla::AddRvalueReference<void>::Type is void;
+ * mozilla::AddRvalueReference<struct S&>::Type is struct S&.
+ */
+template<typename T>
+struct AddRvalueReference
+  : detail::AddRvalueReferenceHelper<T>
+{};
+
+/* 20.2.4 Function template declval [declval] */
+
+/**
+ * DeclVal simplifies the definition of expressions which occur as unevaluated
+ * operands. It converts T to a reference type, making it possible to use in
+ * decltype expressions even if T does not have a default constructor, e.g.:
+ * decltype(DeclVal<TWithNoDefaultConstructor>().foo())
+ */
+template<typename T>
+typename AddRvalueReference<T>::Type DeclVal();
 
 /* 20.9.7.3 Sign modifications [meta.trans.sign] */
 
@@ -972,7 +1041,7 @@ struct RemovePointerHelper<T, Pointee*>
   typedef Pointee Type;
 };
 
-} // namespac detail
+} // namespace detail
 
 /**
  * Produces the pointed-to type if a pointer is provided, else returns the input

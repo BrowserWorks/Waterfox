@@ -26,6 +26,11 @@ XPCOMUtils.defineLazyModuleGetter(this, "Notifications", "resource://gre/modules
 XPCOMUtils.defineLazyModuleGetter(this, "Messaging", "resource://gre/modules/Messaging.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
 
+// Import AppsServiceChild.DOMApplicationRegistry for its getAll method.
+var AppsServiceChild = {};
+XPCOMUtils.defineLazyModuleGetter(AppsServiceChild, "DOMApplicationRegistry",
+                                  "resource://gre/modules/AppsServiceChild.jsm");
+
 XPCOMUtils.defineLazyGetter(this, "Strings", function() {
   return Services.strings.createBundle("chrome://browser/locale/webapp.properties");
 });
@@ -58,8 +63,8 @@ function getFormattedPluralForm(stringName, formatterArgs, pluralNum) {
   return unescapedString;
 }
 
-let Log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog;
-let debug = Log.d.bind(null, "WebappManager");
+var Log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog;
+var debug = Log.d.bind(null, "WebappManager");
 
 this.WebappManager = {
   __proto__: DOMRequestIpcHelper.prototype,
@@ -266,16 +271,6 @@ this.WebappManager = {
   autoInstall: function(aData) {
     debug("autoInstall " + aData.manifestURL);
 
-    // If the app is already installed, update the existing installation.
-    // We should be able to use DOMApplicationRegistry.getAppByManifestURL,
-    // but it returns a mozIApplication, while _autoUpdate needs the original
-    // object from DOMApplicationRegistry.webapps in order to modify it.
-    for (let [ , app] in Iterator(DOMApplicationRegistry.webapps)) {
-      if (app.manifestURL == aData.manifestURL) {
-        return this._autoUpdate(aData, app);
-      }
-    }
-
     let mm = {
       sendAsyncMessage: function (aMessageName, aData) {
         // TODO hook this back to Java to report errors.
@@ -310,6 +305,16 @@ this.WebappManager = {
     message.apkInstall = true;
 
     DOMApplicationRegistry.registryReady.then(() => {
+      // If the app is already installed, update the existing installation.
+      // We should be able to use DOMApplicationRegistry.getAppByManifestURL,
+      // but it returns a mozIApplication, while _autoUpdate needs the original
+      // object from DOMApplicationRegistry.webapps in order to modify it.
+      for (let [ , app] in Iterator(DOMApplicationRegistry.webapps)) {
+        if (app.manifestURL == aData.manifestURL) {
+          return this._autoUpdate(aData, app);
+        }
+      }
+
       switch (aData.type) { // can be hosted or packaged.
         case "hosted":
           DOMApplicationRegistry.doInstall(message, mm);
@@ -463,7 +468,7 @@ this.WebappManager = {
 
   _getInstalledApps: function() {
     let deferred = Promise.defer();
-    DOMApplicationRegistry.getAll(apps => deferred.resolve(apps));
+    AppsServiceChild.DOMApplicationRegistry.getAll(apps => deferred.resolve(apps));
     return deferred.promise;
   },
 

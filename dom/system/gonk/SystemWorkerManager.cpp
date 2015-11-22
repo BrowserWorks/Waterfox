@@ -35,7 +35,6 @@
 #include "nsIObserverService.h"
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
-#include "nsRadioInterfaceLayer.h"
 #include "WifiWorker.h"
 #include "mozilla/Services.h"
 
@@ -52,7 +51,7 @@ NS_DEFINE_CID(kWifiWorkerCID, NS_WIFIWORKER_CID);
 // Doesn't carry a reference, we're owned by services.
 SystemWorkerManager *gInstance = nullptr;
 
-} // anonymous namespace
+} // namespace
 
 SystemWorkerManager::SystemWorkerManager()
   : mShutdown(false)
@@ -72,7 +71,7 @@ SystemWorkerManager::~SystemWorkerManager()
 nsresult
 SystemWorkerManager::Init()
 {
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
@@ -119,7 +118,7 @@ SystemWorkerManager::Shutdown()
   ShutdownAutoMounter();
 
 #ifdef MOZ_B2G_RIL
-  RilConsumer::Shutdown();
+  RilWorker::Shutdown();
 #endif
 
   nsCOMPtr<nsIWifi> wifi(do_QueryInterface(mWifiWorker));
@@ -201,7 +200,7 @@ SystemWorkerManager::RegisterRilWorker(unsigned int aClientId,
     return NS_ERROR_FAILURE;
   }
 
-  return RilConsumer::Register(aClientId, wctd);
+  return RilWorker::Register(aClientId, wctd);
 #endif // MOZ_B2G_RIL
 }
 

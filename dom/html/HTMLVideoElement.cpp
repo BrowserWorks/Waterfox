@@ -13,7 +13,6 @@
 #include "nsError.h"
 #include "nsNodeInfoManager.h"
 #include "plbase64.h"
-#include "nsNetUtil.h"
 #include "nsXPCOMStrings.h"
 #include "prlock.h"
 #include "nsThreadUtils.h"
@@ -43,6 +42,7 @@ NS_IMPL_ELEMENT_CLONE(HTMLVideoElement)
 
 HTMLVideoElement::HTMLVideoElement(already_AddRefed<NodeInfo>& aNodeInfo)
   : HTMLMediaElement(aNodeInfo)
+  , mUseScreenWakeLock(true)
 {
 }
 
@@ -174,7 +174,11 @@ double HTMLVideoElement::MozFrameDelay()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Should be on main thread.");
   VideoFrameContainer* container = GetVideoFrameContainer();
-  return container ?  container->GetFrameDelay() : 0;
+  // Hide negative delays. Frame timing tweaks in the compositor (e.g.
+  // adding a bias value to prevent multiple dropped/duped frames when
+  // frame times are aligned with composition times) may produce apparent
+  // negative delay, but we shouldn't report that.
+  return container ? std::max(0.0, container->GetFrameDelay()) : 0.0;
 }
 
 bool HTMLVideoElement::MozHasAudio() const
@@ -183,17 +187,31 @@ bool HTMLVideoElement::MozHasAudio() const
   return HasAudio();
 }
 
+bool HTMLVideoElement::MozUseScreenWakeLock() const
+{
+  MOZ_ASSERT(NS_IsMainThread(), "Should be on main thread.");
+  return mUseScreenWakeLock;
+}
+
+void HTMLVideoElement::SetMozUseScreenWakeLock(bool aValue)
+{
+  MOZ_ASSERT(NS_IsMainThread(), "Should be on main thread.");
+  mUseScreenWakeLock = aValue;
+  UpdateScreenWakeLock();
+}
+
 JSObject*
 HTMLVideoElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   return HTMLVideoElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
-void
-HTMLVideoElement::NotifyOwnerDocumentActivityChanged()
+bool
+HTMLVideoElement::NotifyOwnerDocumentActivityChangedInternal()
 {
-  HTMLMediaElement::NotifyOwnerDocumentActivityChanged();
+  bool pauseElement = HTMLMediaElement::NotifyOwnerDocumentActivityChangedInternal();
   UpdateScreenWakeLock();
+  return pauseElement;
 }
 
 already_AddRefed<VideoPlaybackQuality>
@@ -209,12 +227,12 @@ HTMLVideoElement::GetVideoPlaybackQuality()
     if (window) {
       nsPerformance* perf = window->GetPerformance();
       if (perf) {
-        creationTime = perf->GetDOMTiming()->TimeStampToDOMHighRes(TimeStamp::Now());
+        creationTime = perf->Now();
       }
     }
 
     if (mDecoder) {
-      MediaDecoder::FrameStatistics& stats = mDecoder->GetFrameStatistics();
+      FrameStatistics& stats = mDecoder->GetFrameStatistics();
       totalFrames = stats.GetParsedFrames();
       droppedFrames = stats.GetDroppedFrames();
       corruptedFrames = 0;
@@ -246,15 +264,15 @@ HTMLVideoElement::UpdateScreenWakeLock()
 {
   bool hidden = OwnerDoc()->Hidden();
 
-  if (mScreenWakeLock && (mPaused || hidden)) {
+  if (mScreenWakeLock && (mPaused || hidden || !mUseScreenWakeLock)) {
     ErrorResult rv;
     mScreenWakeLock->Unlock(rv);
-    NS_WARN_IF_FALSE(!rv.Failed(), "Failed to unlock the wakelock.");
     mScreenWakeLock = nullptr;
     return;
   }
 
-  if (!mScreenWakeLock && !mPaused && !hidden && HasVideo()) {
+  if (!mScreenWakeLock && !mPaused && !hidden &&
+      mUseScreenWakeLock && HasVideo()) {
     nsRefPtr<power::PowerManagerService> pmService =
       power::PowerManagerService::GetInstance();
     NS_ENSURE_TRUE_VOID(pmService);

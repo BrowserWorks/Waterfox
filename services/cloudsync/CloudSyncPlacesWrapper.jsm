@@ -14,7 +14,7 @@ Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource:///modules/PlacesUIUtils.jsm");
 Cu.import("resource://services-common/utils.js");
 
-let PlacesQueries = function () {
+var PlacesQueries = function () {
 }
 
 PlacesQueries.prototype = {
@@ -30,7 +30,7 @@ PlacesQueries.prototype = {
   }
 };
 
-let PlacesWrapper = function () {
+var PlacesWrapper = function () {
 }
 
 PlacesWrapper.prototype = {
@@ -75,23 +75,6 @@ PlacesWrapper.prototype = {
 
     this.asyncQuery(query, ["guid"])
         .then(getGuid, deferred.reject)
-        .then(deferred.resolve, deferred.reject);
-
-    return deferred.promise;
-  },
-
-  setGuidForLocalId: function (localId, guid) {
-    let deferred = Promise.defer();
-
-    let stmt = "UPDATE moz_bookmarks " +
-               "SET guid = :guid " +
-               "WHERE id = :item_id";
-    let query = this.placesQueries.getQuery(stmt);
-
-    query.params.guid = guid;
-    query.params.item_id = localId;
-
-    this.asyncQuery(query)
         .then(deferred.resolve, deferred.reject);
 
     return deferred.promise;

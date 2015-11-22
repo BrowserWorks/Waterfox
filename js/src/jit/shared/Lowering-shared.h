@@ -142,6 +142,11 @@ class LIRGeneratorShared : public MDefinitionVisitor
     inline void defineBox(LInstructionHelper<BOX_PIECES, Ops, Temps>* lir, MDefinition* mir,
                           LDefinition::Policy policy = LDefinition::REGISTER);
 
+    template <size_t Ops, size_t Temps>
+    inline void defineSinCos(LInstructionHelper<2, Ops, Temps> *lir, MDefinition *mir,
+                             LDefinition::Policy policy = LDefinition::REGISTER);
+
+    inline void defineSharedStubReturn(LInstruction* lir, MDefinition* mir);
     inline void defineReturn(LInstruction* lir, MDefinition* mir);
 
     template <size_t X>
@@ -161,6 +166,9 @@ class LIRGeneratorShared : public MDefinitionVisitor
     // Rather than defining a new virtual register, sets |ins| to have the same
     // virtual register as |as|.
     inline void redefine(MDefinition* ins, MDefinition* as);
+
+    // Redefine a sin/cos call to sincos.
+    inline void redefine(MDefinition* def, MDefinition* as, MMathFunction::Function func);
 
     TempAllocator& alloc() const {
         return graph.alloc();
@@ -208,6 +216,13 @@ class LIRGeneratorShared : public MDefinitionVisitor
                          BailoutKind kind = Bailout_DuringVMCall);
 
   public:
+    void lowerConstantDouble(double d, MInstruction* mir) {
+        define(new(alloc()) LDouble(d), mir);
+    }
+    void lowerConstantFloat32(float f, MInstruction* mir) {
+        define(new(alloc()) LFloat32(f), mir);
+    }
+
     void visitConstant(MConstant* ins);
 
     // Whether to generate typed reads for element accesses with hole checks.

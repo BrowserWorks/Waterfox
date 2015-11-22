@@ -119,11 +119,11 @@ function run_test() {
              .getService(Ci.nsIPermissionManager);
   let latestNow = Number(Date.now());
 
-  // The schema should be upgraded to 4, and a 'modificationTime' column should
+  // The schema should be upgraded to 6, and a 'modificationTime' column should
   // exist with all records having a value of 0.
-  do_check_eq(connection.schemaVersion, 4);
+  do_check_eq(connection.schemaVersion, 8);
 
-  let select = connection.createStatement("SELECT modificationTime FROM moz_hosts")
+  let select = connection.createStatement("SELECT modificationTime FROM moz_perms")
   let numMigrated = 0;
   while (select.executeStep()) {
     let thisModTime = select.getInt64(0);
@@ -134,8 +134,9 @@ function run_test() {
   do_check_true(numMigrated > 0, "we found at least 1 record that was migrated");
 
   // This permission should always be there.
-  let principal = Cc["@mozilla.org/scriptsecuritymanager;1"]
-                    .getService(Ci.nsIScriptSecurityManager)
-                    .getNoAppCodebasePrincipal(NetUtil.newURI("http://example.org"));
+  let ssm = Cc["@mozilla.org/scriptsecuritymanager;1"]
+              .getService(Ci.nsIScriptSecurityManager);
+  let uri = NetUtil.newURI("http://example.org");
+  let principal = ssm.createCodebasePrincipal(uri, {});
   do_check_eq(pm.testPermissionFromPrincipal(principal, 'test-load-invalid-entries'), Ci.nsIPermissionManager.ALLOW_ACTION);
 }

@@ -21,7 +21,7 @@ builds:
       opt:
         task: tasks/builds/mulet_linux.yml
   emulator-kk:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:
@@ -29,7 +29,7 @@ builds:
       debug:
         task: tasks/builds/b2g_emulator_kk_debug.yml
   emulator-jb:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:
@@ -37,7 +37,7 @@ builds:
       debug:
         task: tasks/builds/b2g_emulator_jb_debug.yml
   emulator:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:
@@ -84,23 +84,6 @@ tests:
     allowed_build_tasks:
       tasks/builds/b2g_desktop_opt.yml:
         task: tasks/tests/b2g_gaia_unit.yml
-  gaia-ui-test-accessibility:
-    allowed_build_tasks:
-      tasks/builds/b2g_desktop_opt.yml:
-        task: tasks/tests/b2g_gaia_ui_test_accessibility.yml
-  gaia-ui-test-functional:
-    allowed_build_tasks:
-      tasks/builds/b2g_desktop_opt.yml:
-        task: tasks/tests/b2g_gaia_ui_test_functional.yml
-        chunks: 3
-  gaia-ui-test-unit:
-    allowed_build_tasks:
-      tasks/builds/b2g_desktop_opt.yml:
-        task: tasks/tests/b2g_gaia_ui_test_unit.yml
-  gaia-ui-test-oop:
-    allowed_build_tasks:
-      tasks/builds/b2g_desktop_opt.yml:
-        task: tasks/tests/b2g_gip_oop.yml
   jsreftest:
     allowed_build_tasks:
       tasks/builds/b2g_emulator_ics_opt.yml:

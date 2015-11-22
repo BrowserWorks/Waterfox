@@ -6,6 +6,7 @@
 
 #include "DataChannelParent.h"
 #include "mozilla/Assertions.h"
+#include "nsNetUtil.h"
 
 namespace mozilla {
 namespace net {
@@ -83,5 +84,5 @@ DataChannelParent::OnDataAvailable(nsIRequest *aRequest,
     MOZ_CRASH("Should never be called");
 }
 
-} // namespace mozilla
 } // namespace net
+} // namespace mozilla

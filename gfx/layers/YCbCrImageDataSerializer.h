@@ -10,13 +10,13 @@
 #include <stdint.h>                     // for uint8_t, uint32_t
 #include "ImageTypes.h"                 // for StereoMode
 #include "mozilla/Attributes.h"         // for MOZ_STACK_CLASS
-#include "mozilla/RefPtr.h"             // for TemporaryRef
+#include "mozilla/RefPtr.h"             // for already_AddRefed
 #include "mozilla/gfx/Point.h"          // for IntSize
 
 namespace mozilla {
 namespace gfx {
 class DataSourceSurface;
-}
+} // namespace gfx
 
 namespace layers {
 
@@ -177,10 +177,10 @@ public:
    * This is a costly operation, so use it only when YCbCr compositing is
    * not supported.
    */
-  TemporaryRef<gfx::DataSourceSurface> ToDataSourceSurface();
+  already_AddRefed<gfx::DataSourceSurface> ToDataSourceSurface();
 };
 
-} // namespace
-} // namespace
+} // namespace layers
+} // namespace mozilla
 
 #endif

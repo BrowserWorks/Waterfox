@@ -17,6 +17,7 @@
 #include "nsTObserverArray.h"
 #include "nsTArray.h"
 #include "nsTHashtable.h"
+#include "nsTObserverArray.h"
 #include "nsClassHashtable.h"
 #include "nsHashKeys.h"
 #include "mozilla/Attributes.h"
@@ -28,13 +29,15 @@ class nsPresContext;
 class nsIPresShell;
 class nsIDocument;
 class imgIRequest;
+class nsIDOMEvent;
+class nsINode;
 
 namespace mozilla {
 class RefreshDriverTimer;
 namespace layout {
 class VsyncChild;
-}
-}
+} // namespace layout
+} // namespace mozilla
 
 /**
  * An abstract base class to be implemented by callers wanting to be
@@ -212,14 +215,25 @@ public:
   }
 
   /**
-   * Add a document for which we have nsIFrameRequestCallbacks
+   * Add a document for which we have FrameRequestCallbacks
    */
   void ScheduleFrameRequestCallbacks(nsIDocument* aDocument);
 
   /**
-   * Remove a document for which we have nsIFrameRequestCallbacks
+   * Remove a document for which we have FrameRequestCallbacks
    */
   void RevokeFrameRequestCallbacks(nsIDocument* aDocument);
+
+  /**
+   * Queue a new event to dispatch in next tick before the style flush
+   */
+  void ScheduleEventDispatch(nsINode* aTarget, nsIDOMEvent* aEvent);
+
+  /**
+   * Cancel all pending events scheduled by ScheduleEventDispatch which
+   * targets any node in aDocument.
+   */
+  void CancelPendingEvents(nsIDocument* aDocument);
 
   /**
    * Tell the refresh driver that it is done driving refreshes and
@@ -307,7 +321,9 @@ private:
   };
   typedef nsClassHashtable<nsUint32HashKey, ImageStartData> ImageStartTable;
 
-  void RunFrameRequestCallbacks(int64_t aNowEpoch, mozilla::TimeStamp aNowTime);
+  void DispatchPendingEvents();
+  void DispatchAnimationEvents();
+  void RunFrameRequestCallbacks(mozilla::TimeStamp aNowTime);
 
   void Tick(int64_t aNowEpoch, mozilla::TimeStamp aNowTime);
 
@@ -321,16 +337,12 @@ private:
 
   uint32_t ObserverCount() const;
   uint32_t ImageRequestCount() const;
-  static PLDHashOperator ImageRequestEnumerator(nsISupportsHashKey* aEntry,
-                                                void* aUserArg);
   static PLDHashOperator StartTableRequestCounter(const uint32_t& aKey,
                                                   ImageStartData* aEntry,
                                                   void* aUserArg);
   static PLDHashOperator StartTableRefresh(const uint32_t& aKey,
                                            ImageStartData* aEntry,
                                            void* aUserArg);
-  static PLDHashOperator BeginRefreshingImages(nsISupportsHashKey* aEntry,
-                                               void* aUserArg);
   ObserverArray& ArrayFor(mozFlushType aFlushType);
   // Trigger a refresh immediately, if haven't been disconnected or frozen.
   void DoRefresh();
@@ -338,6 +350,8 @@ private:
   double GetRefreshTimerInterval() const;
   double GetRegularTimerInterval(bool *outIsDefault = nullptr) const;
   static double GetThrottledTimerInterval();
+
+  static mozilla::TimeDuration GetMinRecomputeVisibilityInterval();
 
   bool HaveFrameRequestCallbacks() const {
     return mFrameRequestCallbackDocs.Length() != 0;
@@ -367,7 +381,14 @@ private:
   // non-visible) documents registered with a non-throttled refresh driver.
   const mozilla::TimeDuration mThrottledFrameRequestInterval;
 
+  // How long we wait, at a minimum, before recomputing image visibility
+  // information. This is a minimum because, regardless of this interval, we
+  // only recompute visibility when we've seen a layout or style flush since the
+  // last time we did it.
+  const mozilla::TimeDuration mMinRecomputeVisibilityInterval;
+
   bool mThrottled;
+  bool mNeedToRecomputeVisibility;
   bool mTestControllingRefreshes;
   bool mViewManagerFlushIsPending;
   bool mRequestedHighPrecision;
@@ -386,11 +407,17 @@ private:
   mozilla::TimeStamp mMostRecentTick;
   mozilla::TimeStamp mTickStart;
   mozilla::TimeStamp mNextThrottledFrameRequestTick;
+  mozilla::TimeStamp mNextRecomputeVisibilityTick;
 
   // separate arrays for each flush type we support
   ObserverArray mObservers[3];
   RequestTable mRequests;
   ImageStartTable mStartTable;
+
+  struct PendingEvent {
+    nsCOMPtr<nsINode> mTarget;
+    nsCOMPtr<nsIDOMEvent> mEvent;
+  };
 
   nsAutoTArray<nsIPresShell*, 16> mStyleFlushObservers;
   nsAutoTArray<nsIPresShell*, 16> mLayoutFlushObservers;
@@ -398,7 +425,8 @@ private:
   // nsTArray on purpose, because we want to be able to swap.
   nsTArray<nsIDocument*> mFrameRequestCallbackDocs;
   nsTArray<nsIDocument*> mThrottledFrameRequestCallbackDocs;
-  nsTArray<nsAPostRefreshObserver*> mPostRefreshObservers;
+  nsTObserverArray<nsAPostRefreshObserver*> mPostRefreshObservers;
+  nsTArray<PendingEvent> mPendingEvents;
 
   // Helper struct for processing image requests
   struct ImageRequestParameters {
@@ -407,6 +435,9 @@ private:
     RequestTable* mRequests;
     mozilla::TimeStamp mDesired;
   };
+
+  static void BeginRefreshingImages(RequestTable& aEntries,
+                                    ImageRequestParameters* aParms);
 
   friend class mozilla::RefreshDriverTimer;
 

@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "mozilla/Snprintf.h"
+
 #ifdef XP_WIN
 #include <io.h>
 #include <windows.h>
@@ -76,6 +78,7 @@ NS_strtok(const char* aDelims, char** aStr)
 uint32_t
 NS_strlen(const char16_t* aString)
 {
+  MOZ_ASSERT(aString);
   const char16_t* end;
 
   for (end = aString; *end; ++end) {
@@ -99,6 +102,23 @@ NS_strcmp(const char16_t* aStrA, const char16_t* aStrB)
   }
 
   return *aStrA != '\0';
+}
+
+int
+NS_strncmp(const char16_t* aStrA, const char16_t* aStrB, size_t aLen)
+{
+  while (aLen && *aStrB) {
+    int r = *aStrA - *aStrB;
+    if (r) {
+      return r;
+    }
+
+    ++aStrA;
+    ++aStrB;
+    --aLen;
+  }
+
+  return aLen ? *aStrA != '\0' : *aStrA - *aStrB;
 }
 
 char16_t*
@@ -258,19 +278,19 @@ NS_IsAsciiDigit(char16_t aChar)
   return aChar >= '0' && aChar <= '9';
 }
 
-
 #ifndef XPCOM_GLUE_AVOID_NSPR
-#define TABLE_SIZE 36
-static const char table[] = {
-  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-  'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-  'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3',
-  '4', '5', '6', '7', '8', '9'
-};
 
 void
 NS_MakeRandomString(char* aBuf, int32_t aBufLen)
 {
+#define TABLE_SIZE 36
+  static const char table[] = {
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+    'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+    'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3',
+    '4', '5', '6', '7', '8', '9'
+  };
+
   // turn PR_Now() into milliseconds since epoch
   // and salt rand with that.
   static unsigned int seed = 0;
@@ -312,8 +332,9 @@ copy_stderr_to_file(const char* aFile)
   if (sStderrCopy) {
     return;
   }
-  char* buf = (char*)malloc(strlen(aFile) + 16);
-  sprintf(buf, "%s.%u", aFile, (uint32_t)getpid());
+  size_t buflen = strlen(aFile) + 16;
+  char* buf = (char*)malloc(buflen);
+  snprintf(buf, buflen, "%s.%u", aFile, (uint32_t)getpid());
   sStderrCopy = fopen(buf, "w");
   free(buf);
   set_stderr_callback(stderr_to_file);
@@ -414,5 +435,3 @@ fprintf_stderr(FILE* aFile, const char* aFmt, ...)
   }
   va_end(args);
 }
-
-

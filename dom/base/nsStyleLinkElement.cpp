@@ -23,7 +23,6 @@
 #include "nsIDOMComment.h"
 #include "nsIDOMNode.h"
 #include "nsIDOMStyleSheet.h"
-#include "nsNetUtil.h"
 #include "nsUnicharUtils.h"
 #include "nsCRT.h"
 #include "nsXPCOMCIDInternal.h"
@@ -31,6 +30,16 @@
 #include "nsContentUtils.h"
 #include "nsStyleUtil.h"
 #include "nsQueryObject.h"
+
+static PRLogModuleInfo*
+GetSriLog()
+{
+  static PRLogModuleInfo *gSriPRLog;
+  if (!gSriPRLog) {
+    gSriPRLog = PR_NewLogModule("SRI");
+  }
+  return gSriPRLog;
+}
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -50,7 +59,7 @@ nsStyleLinkElement::~nsStyleLinkElement()
 void
 nsStyleLinkElement::Unlink()
 {
-  mStyleSheet = nullptr;
+  nsStyleLinkElement::SetStyleSheet(nullptr);
 }
 
 void
@@ -118,6 +127,12 @@ nsStyleLinkElement::OverrideBaseURI(nsIURI* aNewBaseURI)
 nsStyleLinkElement::SetLineNumber(uint32_t aLineNumber)
 {
   mLineNumber = aLineNumber;
+}
+
+/* virtual */ uint32_t
+nsStyleLinkElement::GetLineNumber()
+{
+  return mLineNumber;
 }
 
 /* static */ bool
@@ -404,7 +419,7 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
   nsresult rv = NS_OK;
   if (isInline) {
     nsAutoString text;
-    if (!nsContentUtils::GetNodeTextContent(thisContent, false, text)) {
+    if (!nsContentUtils::GetNodeTextContent(thisContent, false, text, fallible)) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
 
@@ -422,13 +437,21 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
                       scopeElement, aObserver, &doneLoading, &isAlternate);
   }
   else {
+    nsAutoString integrity;
+    thisContent->GetAttr(kNameSpaceID_None, nsGkAtoms::integrity, integrity);
+    if (!integrity.IsEmpty()) {
+      MOZ_LOG(GetSriLog(), mozilla::LogLevel::Debug,
+              ("nsStyleLinkElement::DoUpdateStyleSheet, integrity=%s",
+               NS_ConvertUTF16toUTF8(integrity).get()));
+    }
+
     // XXXbz clone the URI here to work around content policies modifying URIs.
     nsCOMPtr<nsIURI> clonedURI;
     uri->Clone(getter_AddRefs(clonedURI));
     NS_ENSURE_TRUE(clonedURI, NS_ERROR_OUT_OF_MEMORY);
     rv = doc->CSSLoader()->
       LoadStyleLink(thisContent, clonedURI, title, media, isAlternate,
-                    GetCORSMode(), doc->GetReferrerPolicy(),
+                    GetCORSMode(), doc->GetReferrerPolicy(), integrity,
                     aObserver, &isAlternate);
     if (NS_FAILED(rv)) {
       // Don't propagate LoadStyleLink() errors further than this, since some

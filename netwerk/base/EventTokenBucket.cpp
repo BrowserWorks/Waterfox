@@ -7,7 +7,7 @@
 #include "EventTokenBucket.h"
 
 #include "nsICancelable.h"
-#include "nsNetUtil.h"
+#include "nsNetCID.h"
 #include "nsSocketTransportService2.h"
 
 #ifdef DEBUG
@@ -434,5 +434,5 @@ EventTokenBucket::FineGrainResetTimerNotify()
 
 #endif
 
-} // mozilla::net
-} // mozilla
+} // namespace net
+} // namespace mozilla

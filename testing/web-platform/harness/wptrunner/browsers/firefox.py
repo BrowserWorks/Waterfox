@@ -4,6 +4,7 @@
 
 import os
 import subprocess
+import sys
 
 import mozinfo
 from mozprocess import ProcessHandler
@@ -26,7 +27,8 @@ __wptrunner__ = {"product": "firefox",
                               "reftest": "MarionetteRefTestExecutor"},
                  "browser_kwargs": "browser_kwargs",
                  "executor_kwargs": "executor_kwargs",
-                 "env_options": "env_options"}
+                 "env_options": "env_options",
+                 "run_info_extras": "run_info_extras"}
 
 
 def check_args(**kwargs):
@@ -42,13 +44,17 @@ def browser_kwargs(**kwargs):
             "symbols_path": kwargs["symbols_path"],
             "stackwalk_binary": kwargs["stackwalk_binary"],
             "certutil_binary": kwargs["certutil_binary"],
-            "ca_certificate_path": kwargs["ssl_env"].ca_cert_path()}
+            "ca_certificate_path": kwargs["ssl_env"].ca_cert_path(),
+            "e10s": kwargs["gecko_e10s"]}
 
 
-def executor_kwargs(test_type, server_config, cache_manager, **kwargs):
+def executor_kwargs(test_type, server_config, cache_manager, run_info_data,
+                    **kwargs):
     executor_kwargs = base_executor_kwargs(test_type, server_config,
                                            cache_manager, **kwargs)
     executor_kwargs["close_after_done"] = True
+    if run_info_data["debug"] and kwargs["timeout_multiplier"] is None:
+        executor_kwargs["timeout_multiplier"] = 3
     return executor_kwargs
 
 
@@ -59,18 +65,19 @@ def env_options():
             "certificate_domain": "web-platform.test",
             "supports_debugger": True}
 
+def run_info_extras(**kwargs):
+    return {"e10s": kwargs["gecko_e10s"]}
 
 class FirefoxBrowser(Browser):
     used_ports = set()
 
     def __init__(self, logger, binary, prefs_root, debug_info=None,
                  symbols_path=None, stackwalk_binary=None, certutil_binary=None,
-                 ca_certificate_path=None):
+                 ca_certificate_path=None, e10s=False):
         Browser.__init__(self, logger)
         self.binary = binary
         self.prefs_root = prefs_root
         self.marionette_port = None
-        self.used_ports.add(self.marionette_port)
         self.runner = None
         self.debug_info = debug_info
         self.profile = None
@@ -78,9 +85,11 @@ class FirefoxBrowser(Browser):
         self.stackwalk_binary = stackwalk_binary
         self.ca_certificate_path = ca_certificate_path
         self.certutil_binary = certutil_binary
+        self.e10s = e10s
 
     def start(self):
         self.marionette_port = get_free_port(2828, exclude=self.used_ports)
+        self.used_ports.add(self.marionette_port)
 
         env = os.environ.copy()
         env["MOZ_DISABLE_NONLOCAL_CONNECTIONS"] = "1"
@@ -95,6 +104,8 @@ class FirefoxBrowser(Browser):
                                       "marionette.defaultPrefs.port": self.marionette_port,
                                       "dom.disable_open_during_load": False,
                                       "network.dns.localDomains": ",".join(hostnames)})
+        if self.e10s:
+            self.profile.set_preferences({"browser.tabs.remote.autostart": True})
 
         if self.ca_certificate_path is not None:
             self.setup_ssl()
@@ -191,7 +202,8 @@ class FirefoxBrowser(Browser):
 
 
         env[env_var] = (os.path.pathsep.join([certutil_dir, env[env_var]])
-                        if env_var in env else certutil_dir)
+                        if env_var in env else certutil_dir).encode(
+                                sys.getfilesystemencoding() or 'utf-8', 'replace')
 
         def certutil(*args):
             cmd = [self.certutil_binary] + list(args)

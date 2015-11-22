@@ -39,6 +39,8 @@ public:
     MaybeAwaitTrialCreate(aKeySystem, p, aParent);
   }
 
+  static void UpdateTrialCreateState(const nsAString& aKeySystem, uint32_t aState);
+
 private:
 
   class AbstractPromiseLike {
@@ -88,9 +90,11 @@ private:
   };
 
   static TrialCreateState GetCreateTrialState(const nsAString& aKeySystem);
+  static void UpdateTrialCreateState(const nsAString& aKeySystem,
+                                     TrialCreateState aState);
 
   struct TrialCreateData {
-    TrialCreateData(const nsAString& aKeySystem)
+    explicit TrialCreateData(const nsAString& aKeySystem)
       : mKeySystem(aKeySystem)
       , mStatus(GetCreateTrialState(aKeySystem))
     {}
@@ -141,7 +145,7 @@ public:
   class Callback : public GetGMPVideoDecoderCallback
   {
   public:
-    Callback(TestGMPVideoDecoder* aInstance)
+    explicit Callback(TestGMPVideoDecoder* aInstance)
       : mInstance(aInstance)
     {}
     ~Callback() {}

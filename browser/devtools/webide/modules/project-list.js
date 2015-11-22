@@ -7,14 +7,15 @@ const {Cu} = require("chrome");
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
 const {AppProjects} = require("devtools/app-manager/app-projects");
 const {AppManager} = require("devtools/webide/app-manager");
-const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const promise = require("promise");
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 const utils = require("devtools/webide/utils");
+const Telemetry = require("devtools/shared/telemetry");
 
 const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
 
-let ProjectList;
+var ProjectList;
 
 module.exports = ProjectList = function(win, parentWindow) {
   EventEmitter.decorate(this);
@@ -23,6 +24,7 @@ module.exports = ProjectList = function(win, parentWindow) {
   this._parentWindow = parentWindow;
   this._panelNodeEl = "toolbarbutton";
   this._sidebarsEnabled = Services.prefs.getBoolPref("devtools.webide.sidebars");
+  this._telemetry = new Telemetry();
 
   if (this._sidebarsEnabled) {
     this._panelNodeEl = "div";
@@ -77,6 +79,7 @@ ProjectList.prototype = {
    */
   newApp: function(testOptions) {
     let parentWindow = this._parentWindow;
+    let self = this;
     return this._UI.busyUntil(Task.spawn(function*() {
       // Open newapp.xul, which will feed ret.location
       let ret = {location: null, testOptions: testOptions};
@@ -89,6 +92,8 @@ ProjectList.prototype = {
 
       // Select project
       AppManager.selectedProject = project;
+
+      self._telemetry.actionOccurred("webideNewProject");
     }), "creating new app");
   },
 
@@ -130,16 +135,25 @@ ProjectList.prototype = {
    */
   _renderProjectItem: function(opts) {
     if (this._sidebarsEnabled && this._doc !== this._parentWindow.document) {
-      let span = this._doc.createElement("span");
+      let span = opts.panel.querySelector("span") || this._doc.createElement("span");
       span.textContent = opts.name;
-      let icon = this._doc.createElement("img");
+      let icon = opts.panel.querySelector("img") || this._doc.createElement("img");
       icon.className = "project-image";
       icon.setAttribute("src", opts.icon);
       opts.panel.appendChild(icon);
       opts.panel.appendChild(span);
+      opts.panel.setAttribute("title", opts.name);
     } else {
       opts.panel.setAttribute("label", opts.name);
       opts.panel.setAttribute("image", opts.icon);
+    }
+  },
+
+  refreshTabs: function() {
+    if (AppManager.connected) {
+      return AppManager.listTabs().then(() => {
+        this.updateTabs();
+      }).catch(console.error);
     }
   },
 
@@ -178,7 +192,9 @@ ProjectList.prototype = {
       // tabs, so that's no help for any remote tabs.  Maybe some favicon wizard
       // knows how to get high-res favicons easily, or we could offer actor
       // support for this (bug 1061654).
-      tab.favicon = url.origin + "/favicon.ico";
+      if (url.origin) {
+        tab.favicon = url.origin + "/favicon.ico";
+      }
       tab.name = tab.title || Strings.GetStringFromName("project_tab_loading");
       if (url.protocol.startsWith("http")) {
         tab.name = url.hostname + ": " + tab.name;
@@ -189,7 +205,7 @@ ProjectList.prototype = {
       this._renderProjectItem({
         panel: panelItemNode,
         name: tab.name,
-        icon: tab.favicon
+        icon: tab.favicon || AppManager.DEFAULT_PROJECT_ICON
       });
       panelItemNode.addEventListener("click", () => {
         if (!this._sidebarsEnabled) {
@@ -198,7 +214,7 @@ ProjectList.prototype = {
         AppManager.selectedProject = {
           type: "tab",
           app: tab,
-          icon: tab.favicon,
+          icon: tab.favicon || AppManager.DEFAULT_PROJECT_ICON,
           location: tab.url,
           name: tab.name
         };
@@ -338,12 +354,7 @@ ProjectList.prototype = {
         let panelItemNode = doc.createElement(this._panelNodeEl);
         panelItemNode.className = "panel-item";
         projectsNode.appendChild(panelItemNode);
-        this._renderProjectItem({
-          panel: panelItemNode,
-          name: project.name || AppManager.DEFAULT_PROJECT_NAME,
-          icon: project.icon || AppManager.DEFAULT_PROJECT_ICON
-        });
-        if (!project.name || !project.icon) {
+        if (!project.validationStatus) {
           // The result of the validation process (storing names, icons, …) is not stored in
           // the IndexedDB database when App Manager v1 is used.
           // We need to run the validation again and update the name and icon of the app.
@@ -353,6 +364,12 @@ ProjectList.prototype = {
               name: project.name,
               icon: project.icon
             });
+          });
+        } else {
+          this._renderProjectItem({
+            panel: panelItemNode,
+            name: project.name || AppManager.DEFAULT_PROJECT_NAME,
+            icon: project.icon || AppManager.DEFAULT_PROJECT_ICON
           });
         }
         panelItemNode.addEventListener("click", () => {

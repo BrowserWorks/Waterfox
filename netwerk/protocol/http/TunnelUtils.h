@@ -15,6 +15,7 @@
 #include "nsITimer.h"
 #include "NullHttpTransaction.h"
 #include "mozilla/TimeStamp.h"
+#include "prio.h"
 
 // a TLSFilterTransaction wraps another nsAHttpTransaction but
 // applies a encode/decode filter of TLS onto the ReadSegments
@@ -238,6 +239,7 @@ private:
   nsRefPtr<nsHttpTransaction>    mDrivingTransaction;
 };
 
-}} // namespace mozilla::net
+} // namespace net
+} // namespace mozilla
 
 #endif // mozilla_net_TLSFilterTransaction_h

@@ -26,13 +26,13 @@ public:
   GMPChild();
   virtual ~GMPChild();
 
-  bool Init(const std::string& aPluginPath,
-            const std::string& aVoucherPath,
+  bool Init(const nsAString& aPluginPath,
+            const nsAString& aVoucherPath,
             base::ProcessId aParentPid,
             MessageLoop* aIOLoop,
             IPC::Channel* aChannel);
 #ifdef XP_WIN
-  bool PreLoadLibraries(const std::string& aPluginPath);
+  bool PreLoadLibraries(const nsAString& aPluginPath);
 #endif
   MessageLoop* GMPMessageLoop();
 
@@ -50,13 +50,13 @@ public:
 private:
   friend class GMPContentChild;
 
-  bool PreLoadPluginVoucher(const std::string& aPluginPath);
+  bool PreLoadPluginVoucher();
   void PreLoadSandboxVoucher();
 
   bool GetUTF8LibPath(nsACString& aOutLibPath);
 
   virtual bool RecvSetNodeId(const nsCString& aNodeId) override;
-  virtual bool RecvStartPlugin() override;
+  virtual bool AnswerStartPlugin() override;
 
   virtual PCrashReporterChild* AllocPCrashReporterChild(const NativeThreadId& aThread) override;
   virtual bool DeallocPCrashReporterChild(PCrashReporterChild*) override;
@@ -87,9 +87,9 @@ private:
   nsRefPtr<GMPStorageChild> mStorage;
 
   MessageLoop* mGMPMessageLoop;
-  std::string mPluginPath;
-  std::string mSandboxVoucherPath;
-  std::string mNodeId;
+  nsString mPluginPath;
+  nsString mSandboxVoucherPath;
+  nsCString mNodeId;
   GMPLoader* mGMPLoader;
   nsTArray<uint8_t> mPluginVoucher;
   nsTArray<uint8_t> mSandboxVoucher;

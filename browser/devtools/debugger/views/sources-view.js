@@ -138,6 +138,7 @@ SourcesView.prototype = Heritage.extend(WidgetMethods, {
       unBlackBoxButton: () => this._onStopBlackBoxing(),
       prettyPrintCommand: () => this.togglePrettyPrint(),
       toggleBreakpointsCommand: () =>this.toggleBreakpoints(),
+      togglePromiseDebuggerCommand: () => this.togglePromiseDebugger(),
       nextSourceCommand: () => this.selectNextItem(),
       prevSourceCommand: () => this.selectPrevItem()
     });
@@ -615,6 +616,17 @@ SourcesView.prototype = Heritage.extend(WidgetMethods, {
     }
   },
 
+  togglePromiseDebugger: function() {
+    if (Prefs.promiseDebuggerEnabled) {
+      let promisePane = this.DebuggerView._promisePane;
+      promisePane.hidden = !promisePane.hidden;
+
+      if (!this.DebuggerView._promiseDebuggerIframe) {
+        this.DebuggerView._initializePromiseDebugger();
+      }
+    }
+  },
+
   hidePrettyPrinting: function() {
     this._prettyPrintButton.style.display = 'none';
 
@@ -910,7 +922,7 @@ SourcesView.prototype = Heritage.extend(WidgetMethods, {
     if (!selected) {
       return;
     }
-    clipboardHelper.copyString(selected.source.url, document);
+    clipboardHelper.copyString(selected.source.url);
   },
 
   /**

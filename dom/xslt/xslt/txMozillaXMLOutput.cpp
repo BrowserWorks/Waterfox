@@ -16,7 +16,6 @@
 #include "nsPIDOMWindow.h"
 #include "nsIContent.h"
 #include "nsContentCID.h"
-#include "nsNetUtil.h"
 #include "nsUnicharUtils.h"
 #include "nsGkAtoms.h"
 #include "txLog.h"
@@ -264,7 +263,7 @@ txMozillaXMLOutput::endElement()
 
     if (mBadChildLevel) {
         --mBadChildLevel;
-        PR_LOG(txLog::xslt, PR_LOG_DEBUG,
+        MOZ_LOG(txLog::xslt, LogLevel::Debug,
                ("endElement, mBadChildLevel = %d\n", mBadChildLevel));
         return NS_OK;
     }
@@ -493,7 +492,7 @@ txMozillaXMLOutput::startElementInternal(nsIAtom* aPrefix,
 
     if (mBadChildLevel) {
         ++mBadChildLevel;
-        PR_LOG(txLog::xslt, PR_LOG_DEBUG,
+        MOZ_LOG(txLog::xslt, LogLevel::Debug,
                ("startElement, mBadChildLevel = %d\n", mBadChildLevel));
         return NS_OK;
     }
@@ -506,7 +505,7 @@ txMozillaXMLOutput::startElementInternal(nsIAtom* aPrefix,
         // eCloseElement couldn't add the parent so we fail as well or we've
         // reached the limit of the depth of the tree that we allow.
         ++mBadChildLevel;
-        PR_LOG(txLog::xslt, PR_LOG_DEBUG,
+        MOZ_LOG(txLog::xslt, LogLevel::Debug,
                ("startElement, mBadChildLevel = %d\n", mBadChildLevel));
         return NS_OK;
     }
@@ -620,11 +619,9 @@ txMozillaXMLOutput::createTxWrapper()
         RegisterNameSpace(NS_LITERAL_STRING(kTXNameSpaceURI), namespaceID);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsCOMPtr<nsIContent> wrapper;
-    rv = mDocument->CreateElem(nsDependentAtomString(nsGkAtoms::result),
-                               nsGkAtoms::transformiix, namespaceID,
-                               getter_AddRefs(wrapper));
-    NS_ENSURE_SUCCESS(rv, rv);
+    nsCOMPtr<Element> wrapper =
+      mDocument->CreateElem(nsDependentAtomString(nsGkAtoms::result),
+                            nsGkAtoms::transformiix, namespaceID);
 
     uint32_t i, j, childCount = mDocument->GetChildCount();
 #ifdef DEBUG

@@ -18,84 +18,6 @@ Services.prefs.clearUserPref("browser.sessionstore.restore_on_demand");
 // Running this test in ASAN is slow.
 requestLongerTimeout(2);
 
-/**
- * Returns a Promise that resolves once a remote <xul:browser> has experienced
- * a crash. Also does the job of cleaning up the minidump of the crash.
- *
- * @param browser
- *        The <xul:browser> that will crash
- * @return Promise
- */
-function crashBrowser(browser) {
-  // This frame script is injected into the remote browser, and used to
-  // intentionally crash the tab. We crash by using js-ctypes and dereferencing
-  // a bad pointer. The crash should happen immediately upon loading this
-  // frame script.
-  let frame_script = () => {
-    const Cu = Components.utils;
-    Cu.import("resource://gre/modules/ctypes.jsm");
-
-    let dies = function() {
-      privateNoteIntentionalCrash();
-      let zero = new ctypes.intptr_t(8);
-      let badptr = ctypes.cast(zero, ctypes.PointerType(ctypes.int32_t));
-      badptr.contents
-    };
-
-    dump("Et tu, Brute?");
-    dies();
-  }
-
-  let crashCleanupPromise = new Promise((resolve, reject) => {
-    let observer = (subject, topic, data) => {
-      is(topic, 'ipc:content-shutdown', 'Received correct observer topic.');
-      ok(subject instanceof Ci.nsIPropertyBag2,
-         'Subject implements nsIPropertyBag2.');
-      // we might see this called as the process terminates due to previous tests.
-      // We are only looking for "abnormal" exits...
-      if (!subject.hasKey("abnormal")) {
-        info("This is a normal termination and isn't the one we are looking for...");
-        return;
-      }
-
-      let dumpID;
-      if ('nsICrashReporter' in Ci) {
-        dumpID = subject.getPropertyAsAString('dumpID');
-        ok(dumpID, "dumpID is present and not an empty string");
-      }
-
-      if (dumpID) {
-        let minidumpDirectory = getMinidumpDirectory();
-        removeFile(minidumpDirectory, dumpID + '.dmp');
-        removeFile(minidumpDirectory, dumpID + '.extra');
-      }
-
-      Services.obs.removeObserver(observer, 'ipc:content-shutdown');
-      info("Crash cleaned up");
-      resolve();
-    };
-
-    Services.obs.addObserver(observer, 'ipc:content-shutdown');
-  });
-
-  let aboutTabCrashedLoadPromise = new Promise((resolve, reject) => {
-    browser.addEventListener("AboutTabCrashedLoad", function onCrash() {
-      browser.removeEventListener("AboutTabCrashedLoad", onCrash, false);
-      info("about:tabcrashed loaded");
-      resolve();
-    }, false, true);
-  });
-
-  // This frame script will crash the remote browser as soon as it is
-  // evaluated.
-  let mm = browser.messageManager;
-  mm.loadFrameScript("data:,(" + frame_script.toString() + ")();", false);
-  return Promise.all([crashCleanupPromise, aboutTabCrashedLoadPromise]).then(() => {
-    let tab = gBrowser.getTabForBrowser(browser);
-    is(tab.getAttribute("crashed"), "true", "Tab should be marked as crashed");
-  });
-}
-
 function clickButton(browser, id) {
   info("Clicking " + id);
 
@@ -106,34 +28,6 @@ function clickButton(browser, id) {
 
   let mm = browser.messageManager;
   mm.loadFrameScript("data:,(" + frame_script.toString() + ")('" + id + "');", false);
-}
-
-/**
- * Returns the directory where crash dumps are stored.
- *
- * @return nsIFile
- */
-function getMinidumpDirectory() {
-  let dir = Services.dirsvc.get('ProfD', Ci.nsIFile);
-  dir.append("minidumps");
-  return dir;
-}
-
-/**
- * Removes a file from a directory. This is a no-op if the file does not
- * exist.
- *
- * @param directory
- *        The nsIFile representing the directory to remove from.
- * @param filename
- *        A string for the file to remove from the directory.
- */
-function removeFile(directory, filename) {
-  let file = directory.clone();
-  file.append(filename);
-  if (file.exists()) {
-    file.remove(false);
-  }
 }
 
 /**
@@ -220,7 +114,7 @@ add_task(function test_crash_page_not_in_history() {
 
   browser.loadURI(PAGE_1);
   yield promiseBrowserLoaded(browser);
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   // Crash the tab
   yield crashBrowser(browser);
@@ -249,7 +143,7 @@ add_task(function test_revived_history_from_remote() {
 
   browser.loadURI(PAGE_1);
   yield promiseBrowserLoaded(browser);
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   // Crash the tab
   yield crashBrowser(browser);
@@ -260,7 +154,7 @@ add_task(function test_revived_history_from_remote() {
   yield promiseTabRestored(newTab);
   ok(!newTab.hasAttribute("crashed"), "Tab shouldn't be marked as crashed anymore.");
   ok(browser.isRemoteBrowser, "Should be a remote browser");
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   // Check the tab state and make sure the tab crashed page isn't
   // mentioned.
@@ -288,7 +182,7 @@ add_task(function test_revived_history_from_non_remote() {
 
   browser.loadURI(PAGE_1);
   yield promiseBrowserLoaded(browser);
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   // Crash the tab
   yield crashBrowser(browser);
@@ -299,7 +193,7 @@ add_task(function test_revived_history_from_non_remote() {
   yield promiseBrowserLoaded(browser);
   ok(!newTab.hasAttribute("crashed"), "Tab shouldn't be marked as crashed anymore.");
   ok(!browser.isRemoteBrowser, "Should not be a remote browser");
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   // Check the tab state and make sure the tab crashed page isn't
   // mentioned.
@@ -338,7 +232,7 @@ add_task(function test_revive_tab_from_session_store() {
   browser.loadURI(PAGE_2);
   yield promiseBrowserLoaded(browser);
 
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   // Crash the tab
   yield crashBrowser(browser);
@@ -388,8 +282,8 @@ add_task(function test_revive_all_tabs_from_session_store() {
   browser.loadURI(PAGE_2);
   yield promiseBrowserLoaded(browser);
 
-  TabState.flush(browser);
-  TabState.flush(browser2);
+  yield TabStateFlusher.flush(browser);
+  yield TabStateFlusher.flush(browser2);
 
   // Crash the tab
   yield crashBrowser(browser);
@@ -434,7 +328,7 @@ add_task(function test_close_tab_after_crash() {
   browser.loadURI(PAGE_1);
   yield promiseBrowserLoaded(browser);
 
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   // Crash the tab
   yield crashBrowser(browser);
@@ -446,4 +340,80 @@ add_task(function test_close_tab_after_crash() {
   yield promise;
 
   is(gBrowser.tabs.length, 1, "Should have closed the tab");
+});
+
+/**
+ * Checks that "restore all" button is only shown if more than one tab
+ * has crashed.
+ */
+add_task(function* test_hide_restore_all_button() {
+  let newTab = gBrowser.addTab();
+  gBrowser.selectedTab = newTab;
+  let browser = newTab.linkedBrowser;
+  ok(browser.isRemoteBrowser, "Should be a remote browser");
+  yield promiseBrowserLoaded(browser);
+
+  browser.loadURI(PAGE_1);
+  yield promiseBrowserLoaded(browser);
+
+  yield TabStateFlusher.flush(browser);
+
+  // Crash the tab
+  yield crashBrowser(browser);
+
+  let doc = browser.contentDocument;
+  let restoreAllButton = doc.getElementById("restoreAll");
+  let restoreOneButton = doc.getElementById("restoreTab");
+
+  is(restoreAllButton.getAttribute("hidden"), "true", "Restore All button should be hidden");
+  ok(restoreOneButton.classList.contains("primary"), "Restore Tab button should have the primary class");
+
+  let newTab2 = gBrowser.addTab();
+  gBrowser.selectedTab = newTab;
+
+  browser.loadURI(PAGE_2);
+  yield promiseBrowserLoaded(browser);
+
+  // Crash the tab
+  yield crashBrowser(browser);
+
+  doc = browser.contentDocument;
+  restoreAllButton = doc.getElementById("restoreAll");
+  restoreOneButton = doc.getElementById("restoreTab");
+
+  ok(!restoreAllButton.hasAttribute("hidden"), "Restore All button should not be hidden");
+  ok(!(restoreOneButton.classList.contains("primary")), "Restore Tab button should not have the primary class");
+
+  gBrowser.removeTab(newTab);
+  gBrowser.removeTab(newTab2);
+});
+
+add_task(function* test_aboutcrashedtabzoom() {
+  let newTab = gBrowser.addTab();
+  gBrowser.selectedTab = newTab;
+  let browser = newTab.linkedBrowser;
+  ok(browser.isRemoteBrowser, "Should be a remote browser");
+  yield promiseBrowserLoaded(browser);
+
+  browser.loadURI(PAGE_1);
+  yield promiseBrowserLoaded(browser);
+
+  FullZoom.enlarge();
+  let zoomLevel = ZoomManager.getZoomForBrowser(browser);
+  ok(zoomLevel !== 1, "should have enlarged");
+
+  yield TabStateFlusher.flush(browser);
+
+  // Crash the tab
+  yield crashBrowser(browser);
+
+  ok(ZoomManager.getZoomForBrowser(browser) === 1, "zoom should have reset on crash");
+
+  clickButton(browser, "restoreTab");
+  yield promiseTabRestored(newTab);
+
+  ok(ZoomManager.getZoomForBrowser(browser) === zoomLevel, "zoom should have gone back to enlarged");
+  FullZoom.reset();
+
+  gBrowser.removeTab(newTab);
 });

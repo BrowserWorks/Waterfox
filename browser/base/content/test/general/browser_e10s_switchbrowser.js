@@ -35,7 +35,7 @@ function get_remote_history(browser) {
   });
 }
 
-let check_history = Task.async(function*() {
+var check_history = Task.async(function*() {
   let sessionHistory = yield get_remote_history(gBrowser.selectedBrowser);
 
   let count = sessionHistory.entries.length;
@@ -55,7 +55,7 @@ function clear_history() {
 }
 
 // Waits for a load and updates the known history
-let waitForLoad = Task.async(function*(uri) {
+var waitForLoad = Task.async(function*(uri) {
   info("Loading " + uri);
   // Longwinded but this ensures we don't just shortcut to LoadInNewProcess
   gBrowser.selectedBrowser.webNavigation.loadURI(uri, Ci.nsIWebNavigation.LOAD_FLAGS_NONE, null, null, null);
@@ -69,7 +69,7 @@ let waitForLoad = Task.async(function*(uri) {
 });
 
 // Waits for a load and updates the known history
-let waitForLoadWithFlags = Task.async(function*(uri, flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE) {
+var waitForLoadWithFlags = Task.async(function*(uri, flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE) {
   info("Loading " + uri + " flags = " + flags);
   gBrowser.selectedBrowser.loadURIWithFlags(uri, flags, null, null, null);
 
@@ -90,14 +90,14 @@ let waitForLoadWithFlags = Task.async(function*(uri, flags = Ci.nsIWebNavigation
   }
 });
 
-let back = Task.async(function*() {
+var back = Task.async(function*() {
   info("Going back");
   gBrowser.goBack();
   yield waitForDocLoadComplete();
   gExpectedHistory.index--;
 });
 
-let forward = Task.async(function*() {
+var forward = Task.async(function*() {
   info("Going forward");
   gBrowser.goForward();
   yield waitForDocLoadComplete();
@@ -197,7 +197,7 @@ add_task(function* test_synchronous() {
   info("2");
   // Load another page
   info("Loading about:robots");
-  gBrowser.selectedBrowser.loadURI("about:robots");
+  yield BrowserTestUtils.loadURI(gBrowser.selectedBrowser, "about:robots");
   is(gBrowser.selectedBrowser.isRemoteBrowser, false, "Remote attribute should be correct");
   is(gBrowser.selectedBrowser.permanentKey, permanentKey, "browser.permanentKey is still the same");
 
@@ -208,7 +208,7 @@ add_task(function* test_synchronous() {
   info("3");
   // Load the remote page again
   info("Loading http://example.org/" + DUMMY_PATH);
-  gBrowser.loadURI("http://example.org/" + DUMMY_PATH);
+  yield BrowserTestUtils.loadURI(gBrowser.selectedBrowser, "http://example.org/" + DUMMY_PATH);
   is(gBrowser.selectedBrowser.isRemoteBrowser, expectedRemote, "Remote attribute should be correct");
   is(gBrowser.selectedBrowser.permanentKey, permanentKey, "browser.permanentKey is still the same");
 

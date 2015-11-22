@@ -81,7 +81,7 @@ internalIntlRegExps.currencyDigitsRE = null;
 function getUnicodeLocaleExtensionSequenceRE() {
     return internalIntlRegExps.unicodeLocaleExtensionSequenceRE ||
            (internalIntlRegExps.unicodeLocaleExtensionSequenceRE =
-            regexp_construct_no_statics("-u(-[a-z0-9]{2,8})+"));
+            regexp_construct_no_statics("-u(?:-[a-z0-9]{2,8})+"));
 }
 
 
@@ -89,15 +89,38 @@ function getUnicodeLocaleExtensionSequenceRE() {
  * Removes Unicode locale extension sequences from the given language tag.
  */
 function removeUnicodeExtensions(locale) {
-    // Don't use std_String_replace directly with a regular expression,
-    // as that would set RegExp statics.
+    // A wholly-privateuse locale has no extension sequences.
+    if (callFunction(std_String_startsWith, locale, "x-"))
+        return locale;
+
+    // Otherwise, split on "-x-" marking the start of any privateuse component.
+    // Replace Unicode locale extension sequences in the left half, and return
+    // the concatenation.
+    var pos = callFunction(std_String_indexOf, locale, "-x-");
+    if (pos < 0)
+        pos = locale.length;
+
+    var left = callFunction(std_String_substring, locale, 0, pos);
+    var right = callFunction(std_String_substring, locale, pos);
+
     var extensions;
     var unicodeLocaleExtensionSequenceRE = getUnicodeLocaleExtensionSequenceRE();
-    while ((extensions = regexp_exec_no_statics(unicodeLocaleExtensionSequenceRE, locale)) !== null) {
-        locale = callFunction(std_String_replace, locale, extensions[0], "");
+    while ((extensions = regexp_exec_no_statics(unicodeLocaleExtensionSequenceRE, left)) !== null) {
+        left = callFunction(std_String_replace, left, extensions[0], "");
         unicodeLocaleExtensionSequenceRE.lastIndex = 0;
     }
-    return locale;
+
+    var combined = left + right;
+    assert(IsStructurallyValidLanguageTag(combined), "recombination produced an invalid language tag");
+    assert(function() {
+        var uindex = callFunction(std_String_indexOf, combined, "-u-");
+        if (uindex < 0)
+            return true;
+        var xindex = callFunction(std_String_indexOf, combined, "-x-");
+        return xindex > 0 && xindex < uindex;
+    }(), "recombination failed to remove all Unicode locale extension sequences");
+
+    return combined;
 }
 
 
@@ -232,11 +255,15 @@ function getDuplicateVariantRE() {
         // different subtag.
         "(?!" + alphanum + ")";
 
-    // Language tags are case insensitive (RFC 5646 section 2.1.1), but for
-    // this regular expression that's covered by having its character classes
-    // list both upper- and lower-case characters.
+    // Language tags are case insensitive (RFC 5646 section 2.1.1).  Using
+    // character classes covering both upper- and lower-case characters nearly
+    // addresses this -- but for the possibility of variant repetition with
+    // differing case, e.g. "en-variant-Variant".  Use a case-insensitive
+    // regular expression to address this.  (Note that there's no worry about
+    // case transformation accepting invalid characters here: users have
+    // already verified the string is alphanumeric Latin plus "-".)
     return (internalIntlRegExps.duplicateVariantRE =
-            regexp_construct_no_statics(duplicateVariant));
+            regexp_construct_no_statics(duplicateVariant, "i"));
 }
 
 
@@ -274,11 +301,15 @@ function getDuplicateSingletonRE() {
         // different subtag.
         "(?!" + alphanum + ")";
 
-    // Language tags are case insensitive (RFC 5646 section 2.1.1), but for
-    // this regular expression that's covered by having its character classes
-    // list both upper- and lower-case characters.
+    // Language tags are case insensitive (RFC 5646 section 2.1.1).  Using
+    // character classes covering both upper- and lower-case characters nearly
+    // addresses this -- but for the possibility of singleton repetition with
+    // differing case, e.g. "en-u-foo-U-foo".  Use a case-insensitive regular
+    // expression to address this.  (Note that there's no worry about case
+    // transformation accepting invalid characters here: users have already
+    // verified the string is alphanumeric Latin plus "-".)
     return (internalIntlRegExps.duplicateSingletonRE =
-            regexp_construct_no_statics(duplicateSingleton));
+            regexp_construct_no_statics(duplicateSingleton, "i"));
 }
 
 
@@ -437,15 +468,99 @@ function CanonicalizeLanguageTag(locale) {
 }
 
 
-// mappings from some commonly used old-style language tags to current flavors
-// with script codes
+function localeContainsNoUnicodeExtensions(locale) {
+    // No "-u-", no possible Unicode extension.
+    if (callFunction(std_String_indexOf, locale, "-u-") === -1)
+        return true;
+
+    // "-u-" within privateuse also isn't one.
+    if (callFunction(std_String_indexOf, locale, "-u-") > callFunction(std_String_indexOf, locale, "-x-"))
+        return true;
+
+    // An entirely-privateuse tag doesn't contain extensions.
+    if (callFunction(std_String_startsWith, locale, "x-"))
+        return true;
+
+    // Otherwise, we have a Unicode extension sequence.
+    return false;
+}
+
+
+// The last-ditch locale is used if none of the available locales satisfies a
+// request. "en-GB" is used based on the assumptions that English is the most
+// common second language, that both en-GB and en-US are normally available in
+// an implementation, and that en-GB is more representative of the English used
+// in other locales.
+function lastDitchLocale() {
+    // Per bug 1177929, strings don't clone out of self-hosted code as atoms,
+    // breaking IonBuilder::constant.  Put this in a function for now.
+    return "en-GB";
+}
+
+
+// Certain old, commonly-used language tags that lack a script, are expected to
+// nonetheless imply one.  This object maps these old-style tags to modern
+// equivalents.
 var oldStyleLanguageTagMappings = {
     "pa-PK": "pa-Arab-PK",
     "zh-CN": "zh-Hans-CN",
     "zh-HK": "zh-Hant-HK",
     "zh-SG": "zh-Hans-SG",
-    "zh-TW": "zh-Hant-TW"
+    "zh-TW": "zh-Hant-TW",
 };
+
+
+var localeCandidateCache = {
+    runtimeDefaultLocale: undefined,
+    candidateDefaultLocale: undefined,
+};
+
+
+var localeCache = {
+    runtimeDefaultLocale: undefined,
+    defaultLocale: undefined,
+};
+
+
+/**
+ * Compute the candidate default locale: the locale *requested* to be used as
+ * the default locale.  We'll use it if and only if ICU provides support (maybe
+ * fallback support, e.g. supporting "de-ZA" through "de" support implied by a
+ * "de-DE" locale).
+ */
+function DefaultLocaleIgnoringAvailableLocales() {
+    const runtimeDefaultLocale = RuntimeDefaultLocale();
+    if (runtimeDefaultLocale === localeCandidateCache.runtimeDefaultLocale)
+        return localeCandidateCache.candidateDefaultLocale;
+
+    // If we didn't get a cache hit, compute the candidate default locale and
+    // cache it.  Fall back on the last-ditch locale when necessary.
+    var candidate;
+    if (!IsStructurallyValidLanguageTag(runtimeDefaultLocale)) {
+        candidate = lastDitchLocale();
+    } else {
+        candidate = CanonicalizeLanguageTag(runtimeDefaultLocale);
+
+        // The default locale must be in [[availableLocales]], and that list
+        // must not contain any locales with Unicode extension sequences, so
+        // remove any present in the candidate.
+        candidate = removeUnicodeExtensions(candidate);
+
+        if (callFunction(std_Object_hasOwnProperty, oldStyleLanguageTagMappings, candidate))
+            candidate = oldStyleLanguageTagMappings[candidate];
+    }
+
+    // Cache the candidate locale until the runtime default locale changes.
+    localeCandidateCache.runtimeDefaultLocale = runtimeDefaultLocale;
+    localeCandidateCache.candidateDefaultLocale = candidate;
+
+    assert(IsStructurallyValidLanguageTag(candidate),
+           "the candidate must be structurally valid");
+    assert(localeContainsNoUnicodeExtensions(candidate),
+           "the candidate must not contain a Unicode extension sequence");
+
+    return candidate;
+}
 
 
 /**
@@ -454,27 +569,37 @@ var oldStyleLanguageTagMappings = {
  * Spec: ECMAScript Internationalization API Specification, 6.2.4.
  */
 function DefaultLocale() {
-    // The locale of last resort is used if none of the available locales
-    // satisfies a request. "en-GB" is used based on the assumptions that
-    // English is the most common second language, that both en-GB and en-US
-    // are normally available in an implementation, and that en-GB is more
-    // representative of the English used in other locales.
-    var localeOfLastResort = "en-GB";
+    const runtimeDefaultLocale = RuntimeDefaultLocale();
+    if (runtimeDefaultLocale === localeCache.runtimeDefaultLocale)
+        return localeCache.defaultLocale;
 
-    var locale = RuntimeDefaultLocale();
-    if (!IsStructurallyValidLanguageTag(locale))
-        return localeOfLastResort;
-
-    locale = CanonicalizeLanguageTag(locale);
-    if (callFunction(std_Object_hasOwnProperty, oldStyleLanguageTagMappings, locale))
-        locale = oldStyleLanguageTagMappings[locale];
-
-    if (!(collatorInternalProperties.availableLocales()[locale] &&
-          numberFormatInternalProperties.availableLocales()[locale] &&
-          dateTimeFormatInternalProperties.availableLocales()[locale]))
+    // If we didn't have a cache hit, compute the candidate default locale.
+    // Then use it as the actual default locale if ICU supports that locale
+    // (perhaps via fallback).  Otherwise use the last-ditch locale.
+    var candidate = DefaultLocaleIgnoringAvailableLocales();
+    var locale;
+    if (BestAvailableLocaleIgnoringDefault(collatorInternalProperties.availableLocales(),
+                                           candidate) &&
+        BestAvailableLocaleIgnoringDefault(numberFormatInternalProperties.availableLocales(),
+                                           candidate) &&
+        BestAvailableLocaleIgnoringDefault(dateTimeFormatInternalProperties.availableLocales(),
+                                           candidate))
     {
-        locale = localeOfLastResort;
+        locale = candidate;
+    } else {
+        locale = lastDitchLocale();
     }
+
+    assert(IsStructurallyValidLanguageTag(locale),
+           "the computed default locale must be structurally valid");
+    assert(locale === CanonicalizeLanguageTag(locale),
+           "the computed default locale must be canonical");
+    assert(localeContainsNoUnicodeExtensions(locale),
+           "the computed default locale must not contain a Unicode extension sequence");
+
+    localeCache.runtimeDefaultLocale = runtimeDefaultLocale;
+    localeCache.defaultLocale = locale;
+
     return locale;
 }
 
@@ -500,22 +625,28 @@ function IsWellFormedCurrencyCode(currency) {
 
 /********** Locale and Parameter Negotiation **********/
 
-
 /**
  * Add old-style language tags without script code for locales that in current
- * usage would include a script subtag. Returns the availableLocales argument
- * provided.
- *
- * Spec: ECMAScript Internationalization API Specification, 9.1.
+ * usage would include a script subtag.  Also add an entry for the last-ditch
+ * locale, in case ICU doesn't directly support it (but does support it through
+ * fallback, e.g. supporting "en-GB" indirectly using "en" support).
  */
-function addOldStyleLanguageTags(availableLocales) {
+function addSpecialMissingLanguageTags(availableLocales) {
+    // Certain old-style language tags lack a script code, but in current usage
+    // they *would* include a script code.  Map these over to modern forms.
     var oldStyleLocales = std_Object_getOwnPropertyNames(oldStyleLanguageTagMappings);
     for (var i = 0; i < oldStyleLocales.length; i++) {
         var oldStyleLocale = oldStyleLocales[i];
         if (availableLocales[oldStyleLanguageTagMappings[oldStyleLocale]])
             availableLocales[oldStyleLocale] = true;
     }
-    return availableLocales;
+
+    // Also forcibly provide the last-ditch locale.
+    var lastDitch = lastDitchLocale();
+    assert(lastDitch === "en-GB" && availableLocales["en"],
+           "shouldn't be a need to add every locale implied by the last-" +
+           "ditch locale, merely just the last-ditch locale");
+    availableLocales[lastDitch] = true;
 }
 
 
@@ -553,6 +684,50 @@ function CanonicalizeLocaleList(locales) {
 }
 
 
+function BestAvailableLocaleHelper(availableLocales, locale, considerDefaultLocale) {
+    assert(IsStructurallyValidLanguageTag(locale), "invalid BestAvailableLocale locale structure");
+    assert(locale === CanonicalizeLanguageTag(locale), "non-canonical BestAvailableLocale locale");
+    assert(localeContainsNoUnicodeExtensions(locale), "locale must contain no Unicode extensions");
+
+    // In the spec, [[availableLocales]] is formally a list of all available
+    // locales.  But in our implementation, it's an *incomplete* list, not
+    // necessarily including the default locale (and all locales implied by it,
+    // e.g. "de" implied by "de-CH"), if that locale isn't in every
+    // [[availableLocales]] list (because that locale is supported through
+    // fallback, e.g. "de-CH" supported through "de").
+    //
+    // If we're considering the default locale, augment the spec loop with
+    // additional checks to also test whether the current prefix is a prefix of
+    // the default locale.
+
+    var defaultLocale;
+    if (considerDefaultLocale)
+        defaultLocale = DefaultLocale();
+
+    var candidate = locale;
+    while (true) {
+        if (availableLocales[candidate])
+            return candidate;
+
+        if (considerDefaultLocale && candidate.length <= defaultLocale.length) {
+            if (candidate === defaultLocale)
+                return candidate;
+            if (callFunction(std_String_startsWith, defaultLocale, candidate + "-"))
+                return candidate;
+        }
+
+        var pos = callFunction(std_String_lastIndexOf, candidate, "-");
+        if (pos === -1)
+            return undefined;
+
+        if (pos >= 2 && candidate[pos - 2] === "-")
+            pos -= 2;
+
+        candidate = callFunction(std_String_substring, candidate, 0, pos);
+    }
+}
+
+
 /**
  * Compares a BCP 47 language tag against the locales in availableLocales
  * and returns the best available match. Uses the fallback
@@ -562,21 +737,16 @@ function CanonicalizeLocaleList(locales) {
  * Spec: RFC 4647, section 3.4.
  */
 function BestAvailableLocale(availableLocales, locale) {
-    assert(IsStructurallyValidLanguageTag(locale), "invalid BestAvailableLocale locale structure");
-    assert(locale === CanonicalizeLanguageTag(locale), "non-canonical BestAvailableLocale locale");
-    assert(callFunction(std_String_indexOf, locale, "-u-") === -1, "locale shouldn't contain -u-");
+    return BestAvailableLocaleHelper(availableLocales, locale, true);
+}
 
-    var candidate = locale;
-    while (true) {
-        if (availableLocales[candidate])
-            return candidate;
-        var pos = callFunction(std_String_lastIndexOf, candidate, "-");
-        if (pos === -1)
-            return undefined;
-        if (pos >= 2 && candidate[pos - 2] === "-")
-            pos -= 2;
-        candidate = callFunction(std_String_substring, candidate, 0, pos);
-    }
+
+/**
+ * Identical to BestAvailableLocale, but does not consider the default locale
+ * during computation.
+ */
+function BestAvailableLocaleIgnoringDefault(availableLocales, locale) {
+    return BestAvailableLocaleHelper(availableLocales, locale, false);
 }
 
 
@@ -927,15 +1097,6 @@ function GetNumberOption(options, property, minimum, maximum, fallback) {
 
 
 /********** Property access for Intl objects **********/
-
-
-/**
- * Set a normal public property p of o to value v, but use Object.defineProperty
- * to avoid interference from setters on Object.prototype.
- */
-function defineProperty(o, p, v) {
-    _DefineDataProperty(o, p, v, ATTR_ENUMERABLE | ATTR_CONFIGURABLE | ATTR_WRITABLE);
-}
 
 
 /**
@@ -1366,8 +1527,10 @@ var collatorInternalProperties = {
         var locales = this._availableLocales;
         if (locales)
             return locales;
-        return (this._availableLocales =
-          addOldStyleLanguageTags(intl_Collator_availableLocales()));
+
+        locales = intl_Collator_availableLocales();
+        addSpecialMissingLanguageTags(locales);
+        return (this._availableLocales = locales);
     },
     relevantExtensionKeys: ["co", "kn"]
 };
@@ -1458,7 +1621,7 @@ function Intl_Collator_resolvedOptions() {
     for (var i = 0; i < relevantExtensionKeys.length; i++) {
         var key = relevantExtensionKeys[i];
         var property = (key === "co") ? "collation" : collatorKeyMappings[key].property;
-        defineProperty(result, property, internals[property]);
+        _DefineDataProperty(result, property, internals[property]);
     }
     return result;
 }
@@ -1480,8 +1643,10 @@ var numberFormatInternalProperties = {
         var locales = this._availableLocales;
         if (locales)
             return locales;
-        return (this._availableLocales =
-          addOldStyleLanguageTags(intl_NumberFormat_availableLocales()));
+
+        locales = intl_NumberFormat_availableLocales();
+        addSpecialMissingLanguageTags(locales);
+        return (this._availableLocales = locales);
     },
     relevantExtensionKeys: ["nu"]
 };
@@ -1738,11 +1903,11 @@ var currencyDigits = {
     BHD: 3,
     BIF: 0,
     BYR: 0,
-    CLF: 0,
+    CLF: 4,
     CLP: 0,
     DJF: 0,
-    IQD: 3,
     GNF: 0,
+    IQD: 3,
     ISK: 0,
     JOD: 3,
     JPY: 0,
@@ -1901,7 +2066,7 @@ function Intl_NumberFormat_resolvedOptions() {
     for (var i = 0; i < optionalProperties.length; i++) {
         var p = optionalProperties[i];
         if (callFunction(std_Object_hasOwnProperty, internals, p))
-            defineProperty(result, p, internals[p]);
+            _DefineDataProperty(result, p, internals[p]);
     }
     return result;
 }
@@ -2366,17 +2531,17 @@ function ToDateTimeOptions(options, required, defaults) {
         // the Throw parameter, while Object.defineProperty uses true. For the
         // calls here, the difference doesn't matter because we're adding
         // properties to a new object.
-        defineProperty(options, "year", "numeric");
-        defineProperty(options, "month", "numeric");
-        defineProperty(options, "day", "numeric");
+        _DefineDataProperty(options, "year", "numeric");
+        _DefineDataProperty(options, "month", "numeric");
+        _DefineDataProperty(options, "day", "numeric");
     }
 
     // Step 8.
     if (needDefaults && (defaults === "time" || defaults === "all")) {
         // See comment for step 7.
-        defineProperty(options, "hour", "numeric");
-        defineProperty(options, "minute", "numeric");
-        defineProperty(options, "second", "numeric");
+        _DefineDataProperty(options, "hour", "numeric");
+        _DefineDataProperty(options, "minute", "numeric");
+        _DefineDataProperty(options, "second", "numeric");
     }
 
     // Step 9.
@@ -2513,8 +2678,10 @@ var dateTimeFormatInternalProperties = {
         var locales = this._availableLocales;
         if (locales)
             return locales;
-        return (this._availableLocales =
-          addOldStyleLanguageTags(intl_DateTimeFormat_availableLocales()));
+
+        locales = intl_DateTimeFormat_availableLocales();
+        addSpecialMissingLanguageTags(locales);
+        return (this._availableLocales = locales);
     },
     relevantExtensionKeys: ["ca", "nu"]
 };
@@ -2680,11 +2847,11 @@ function resolveICUPattern(pattern, result) {
                 // skip other pattern characters and literal text
             }
             if (callFunction(std_Object_hasOwnProperty, icuPatternCharToComponent, c))
-                defineProperty(result, icuPatternCharToComponent[c], value);
+                _DefineDataProperty(result, icuPatternCharToComponent[c], value);
             if (c === "h" || c === "K")
-                defineProperty(result, "hour12", true);
+                _DefineDataProperty(result, "hour12", true);
             else if (c === "H" || c === "k")
-                defineProperty(result, "hour12", false);
+                _DefineDataProperty(result, "hour12", false);
         }
     }
 }

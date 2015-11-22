@@ -17,6 +17,10 @@
 #include "InternalResponse.h"
 
 namespace mozilla {
+namespace ipc {
+class PrincipalInfo;
+} // namespace ipc
+
 namespace dom {
 
 class Headers;
@@ -78,10 +82,22 @@ public:
     return mInternalResponse->Headers();
   }
 
-  const nsCString&
-  GetSecurityInfo() const
+  void
+  InitChannelInfo(nsIChannel* aChannel)
   {
-    return mInternalResponse->GetSecurityInfo();
+    mInternalResponse->InitChannelInfo(aChannel);
+  }
+
+  const ChannelInfo&
+  GetChannelInfo() const
+  {
+    return mInternalResponse->GetChannelInfo();
+  }
+
+  const UniquePtr<mozilla::ipc::PrincipalInfo>&
+  GetPrincipalInfo() const
+  {
+    return mInternalResponse->GetPrincipalInfo();
   }
 
   Headers* Headers_();

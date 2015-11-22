@@ -27,6 +27,10 @@
 #endif
 #include "SerializedLoadContext.h"
 #include "nsIOService.h"
+#include "nsINetworkPredictor.h"
+#include "nsINetworkPredictorVerifier.h"
+#include "mozilla/ipc/URIUtils.h"
+#include "nsNetUtil.h"
 
 using mozilla::dom::TCPSocketChild;
 using mozilla::dom::TCPServerSocketChild;
@@ -44,6 +48,8 @@ NeckoChild::NeckoChild()
 
 NeckoChild::~NeckoChild()
 {
+  //Send__delete__(gNeckoChild);
+  gNeckoChild = nullptr;
 }
 
 void NeckoChild::InitNeckoChild()
@@ -56,21 +62,6 @@ void NeckoChild::InitNeckoChild()
     NS_ASSERTION(cpc, "Content Protocol is NULL!");
     gNeckoChild = cpc->SendPNeckoConstructor(); 
     NS_ASSERTION(gNeckoChild, "PNecko Protocol init failed!");
-  }
-}
-
-// Note: not actually called; has some lifespan as child process, so
-// automatically destroyed at exit.  
-void NeckoChild::DestroyNeckoChild()
-{
-  MOZ_ASSERT(IsNeckoChild(), "DestroyNeckoChild called by non-child!");
-  static bool alreadyDestroyed = false;
-  MOZ_ASSERT(!alreadyDestroyed, "DestroyNeckoChild already called!");
-
-  if (!alreadyDestroyed) {
-    Send__delete__(gNeckoChild); 
-    gNeckoChild = nullptr;
-    alreadyDestroyed = true;
   }
 }
 
@@ -219,8 +210,7 @@ PTCPSocketChild*
 NeckoChild::AllocPTCPSocketChild(const nsString& host,
                                  const uint16_t& port)
 {
-  TCPSocketChild* p = new TCPSocketChild();
-  p->Init(host, port);
+  TCPSocketChild* p = new TCPSocketChild(host, port);
   p->AddIPDLReference();
   return p;
 }
@@ -236,7 +226,7 @@ NeckoChild::DeallocPTCPSocketChild(PTCPSocketChild* child)
 PTCPServerSocketChild*
 NeckoChild::AllocPTCPServerSocketChild(const uint16_t& aLocalPort,
                                   const uint16_t& aBacklog,
-                                  const nsString& aBinaryType)
+                                  const bool& aUseArrayBuffers)
 {
   NS_NOTREACHED("AllocPTCPServerSocket should not be called");
   return nullptr;
@@ -333,6 +323,43 @@ NeckoChild::RecvAsyncAuthPromptForNestedFrame(const TabId& aNestedFrameId,
   return true;
 }
 
+/* Predictor Messages */
+bool
+NeckoChild::RecvPredOnPredictPreconnect(const URIParams& aURI)
+{
+  MOZ_ASSERT(NS_IsMainThread(), "PredictorChild::RecvOnPredictPreconnect "
+                                "off main thread.");
+
+  nsCOMPtr<nsIURI> uri = DeserializeURI(aURI);
+
+  // Get the current predictor
+  nsresult rv = NS_OK;
+  nsCOMPtr<nsINetworkPredictorVerifier> predictor =
+    do_GetService("@mozilla.org/network/predictor;1", &rv);
+  NS_ENSURE_SUCCESS(rv, false);
+
+  predictor->OnPredictPreconnect(uri);
+  return true;
+}
+
+bool
+NeckoChild::RecvPredOnPredictDNS(const URIParams& aURI)
+{
+  MOZ_ASSERT(NS_IsMainThread(), "PredictorChild::RecvOnPredictDNS off "
+                                "main thread.");
+
+  nsCOMPtr<nsIURI> uri = DeserializeURI(aURI);
+
+  // Get the current predictor
+  nsresult rv = NS_OK;
+  nsCOMPtr<nsINetworkPredictorVerifier> predictor =
+    do_GetService("@mozilla.org/network/predictor;1", &rv);
+  NS_ENSURE_SUCCESS(rv, false);
+
+  predictor->OnPredictDNS(uri);
+  return true;
+}
+
 bool
 NeckoChild::RecvAppOfflineStatus(const uint32_t& aId, const bool& aOffline)
 {
@@ -345,5 +372,6 @@ NeckoChild::RecvAppOfflineStatus(const uint32_t& aId, const bool& aOffline)
   return true;
 }
 
-}} // mozilla::net
+} // namespace net
+} // namespace mozilla
 

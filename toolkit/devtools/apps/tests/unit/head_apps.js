@@ -7,17 +7,15 @@ const Cu = Components.utils;
 const Cr = Components.results;
 const CC = Components.Constructor;
 
-Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
-Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
-
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
-const {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const {require} = devtools;
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const {DebuggerClient} = require("devtools/toolkit/client/main");
+const {DebuggerServer} = require("devtools/server/main");
 const {AppActorFront} = require("devtools/app-actor-front");
 
-let gClient, gActor, gActorFront;
+var gClient, gActor, gActorFront;
 
 function connect(onDone) {
   // Initialize a loopback remote protocol connection

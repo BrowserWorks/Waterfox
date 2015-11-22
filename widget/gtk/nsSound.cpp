@@ -16,6 +16,7 @@
 #include "nsIURL.h"
 #include "nsIFileURL.h"
 #include "nsNetUtil.h"
+#include "nsIChannel.h"
 #include "nsCOMPtr.h"
 #include "nsAutoPtr.h"
 #include "nsString.h"
@@ -23,6 +24,7 @@
 #include "nsDirectoryServiceDefs.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/Services.h"
+#include "mozilla/unused.h"
 #include "nsIStringBundle.h"
 #include "nsIXULAppInfo.h"
 #include "nsContentUtils.h"
@@ -79,7 +81,7 @@ struct ScopedCanberraFile {
     }
 
     void forget() {
-        mFile.forget();
+        mozilla::unused << mFile.forget();
     }
     nsIFile* operator->() { return mFile; }
     operator nsIFile*() { return mFile; }

@@ -15,6 +15,7 @@
 
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
+#include "nsIURI.h"
 #include "nsAutoPtr.h"
 #include "nsEscape.h"
 #include "nsIPrefBranch.h"
@@ -225,7 +226,7 @@ nsOfflineCacheEvictionFunction::Apply()
   LOG(("nsOfflineCacheEvictionFunction::Apply\n"));
 
   for (int32_t i = 0; i < mItems.Count(); i++) {
-    if (PR_LOG_TEST(gCacheLog, PR_LOG_DEBUG)) {
+    if (MOZ_LOG_TEST(gCacheLog, LogLevel::Debug)) {
       nsAutoCString path;
       mItems[i]->GetNativePath(path);
       LOG(("  removing %s\n", path.get()));
@@ -1327,7 +1328,7 @@ GetJARIdentifier(nsIURI *aURI,
     return AppendJARIdentifier(_result, appId, isInBrowserElement);
 }
 
-} // anon namespace
+} // namespace
 
 // static
 nsresult

@@ -76,9 +76,21 @@ public:
    * GetStrokedBounds on it.  It also helps us avoid rounding error for simple
    * shapes and simple transforms where the Moz2D Path backends can fail to
    * produce the clean integer bounds that content authors expect in some cases.
+   *
+   * If |aToNonScalingStrokeSpace| is non-null then |aBounds|, which is computed
+   * in bounds space, has the property that it's the smallest (axis-aligned)
+   * rectangular bound containing the image of this shape as stroked in
+   * non-scaling-stroke space.  (When all transforms involved are rectilinear
+   * the bounds of the image of |aBounds| in non-scaling-stroke space will be
+   * tight, but if there are non-rectilinear transforms involved then that may
+   * be impossible and this method will return false).
+   *
+   * If |aToNonScalingStrokeSpace| is non-null then |*aToNonScalingStrokeSpace|
+   * must be non-singular.
    */
   virtual bool GetGeometryBounds(Rect* aBounds, const StrokeOptions& aStrokeOptions,
-                                 const Matrix& aTransform) {
+                                 const Matrix& aToBoundsSpace,
+                                 const Matrix* aToNonScalingStrokeSpace = nullptr) {
     return false;
   }
 
@@ -146,7 +158,7 @@ public:
    * this element. May return nullptr if there is no [valid] path. The path
    * that is created may be cached and returned on subsequent calls.
    */
-  virtual mozilla::TemporaryRef<Path> GetOrBuildPath(const DrawTarget& aDrawTarget,
+  virtual already_AddRefed<Path> GetOrBuildPath(const DrawTarget& aDrawTarget,
                                                      FillRule fillRule);
 
   /**
@@ -154,7 +166,7 @@ public:
    * previously cached Path, nor caches the Path that in does return).
    * this element. May return nullptr if there is no [valid] path.
    */
-  virtual mozilla::TemporaryRef<Path> BuildPath(PathBuilder* aBuilder) = 0;
+  virtual already_AddRefed<Path> BuildPath(PathBuilder* aBuilder) = 0;
 
   /**
    * Returns a Path that can be used to measure the length of this elements
@@ -171,7 +183,7 @@ public:
    * run into problems with the inserted lines negatively affecting measuring
    * for content.
    */
-  virtual mozilla::TemporaryRef<Path> GetOrBuildPathForMeasuring();
+  virtual already_AddRefed<Path> GetOrBuildPathForMeasuring();
 
   /**
    * Returns the current computed value of the CSS property 'fill-rule' for

@@ -6,7 +6,7 @@
 
 #ifdef USE_SKIA
 #include "HelpersSkia.h"
-#include "skia/SkBitmap.h"
+#include "skia/include/core/SkBitmap.h"
 #include "image_operations.h"
 #endif
 
@@ -51,5 +51,5 @@ bool Scale(uint8_t* srcData, int32_t srcWidth, int32_t srcHeight, int32_t srcStr
 #endif
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

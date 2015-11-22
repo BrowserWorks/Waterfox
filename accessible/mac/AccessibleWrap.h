@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* For documentation of the accessibility architecture, 
+/* For documentation of the accessibility architecture,
  * see http://lxr.mozilla.org/seamonkey/source/accessible/accessible-docs.html
  */
 
@@ -59,10 +59,7 @@ public: // construction, destruction
    * for it.
    */
   bool IsIgnored();
-  
-  inline bool HasPopup () 
-    { return (NativeState() & mozilla::a11y::states::HASPOPUP); }
-  
+
   /**
    * Returns this accessible's all children, adhering to "flat" accessibles by 
    * not returning their children.
@@ -90,7 +87,7 @@ private:
 
   /**
    * Our native object. Private because its creation is done lazily.
-   * Don't access it directly. Ever. Unless you are GetNativeObject() or 
+   * Don't access it directly. Ever. Unless you are GetNativeObject() or
    * Shutdown()
    */
 #if defined(__OBJC__)
@@ -105,8 +102,16 @@ private:
    * This can never go back to false.
    * We need it because checking whether we need a native object cost time.
    */
-  bool mNativeInited;  
+  bool mNativeInited;
 };
+
+#if defined(__OBJC__)
+  void FireNativeEvent(mozAccessible* aNativeAcc, uint32_t aEventType);
+#else
+  void FireNativeEvent(id aNativeAcc, uint32_t aEventType);
+#endif
+
+Class GetTypeFromRole(roles::Role aRole);
 
 } // namespace a11y
 } // namespace mozilla

@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+const {TabStateFlusher} = Cu.import("resource:///modules/sessionstore/TabStateFlusher.jsm", {});
+
 const DUMMY = "http://example.com/browser/browser/base/content/test/general/dummy_page.html";
 
 function getMinidumpDirectory() {
@@ -11,7 +13,7 @@ function getMinidumpDirectory() {
 
 // This observer is needed so we can clean up all evidence of the crash so
 // the testrunner thinks things are peachy.
-let CrashObserver = {
+var CrashObserver = {
   observe: function(subject, topic, data) {
     is(topic, 'ipc:content-shutdown', 'Received correct observer topic.');
     ok(subject instanceof Ci.nsIPropertyBag2,
@@ -80,13 +82,13 @@ function isBrowserAppTab(browser) {
 }
 
 // Restarts the child process by crashing it then reloading the tab
-let restart = Task.async(function*(browser) {
+var restart = Task.async(function*(browser) {
   // If the tab isn't remote this would crash the main process so skip it
   if (!browser.isRemoteBrowser)
     return browser;
 
   // Make sure the main process has all of the current tab state before crashing
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   browser.messageManager.sendAsyncMessage("Test:Crash");
   yield promiseWaitForEvent(browser, "AboutTabCrashedLoad", false, true);

@@ -128,6 +128,15 @@ public:
   } 
   nsDOMTokenList* RelList();
 
+  void SetReferrer(const nsAString& aValue, mozilla::ErrorResult& rv)
+  {
+    SetHTMLAttr(nsGkAtoms::referrer, aValue, rv);
+  }
+  void GetReferrer(nsAString& aReferrer)
+  {
+    GetHTMLAttr(nsGkAtoms::referrer, aReferrer);
+  }
+
   // The Link::GetOrigin is OK for us
 
   using Link::GetProtocol;
@@ -158,7 +167,6 @@ public:
   using Link::SetHash;
 
   // The Link::GetSearchParams is OK for us
-  // The Link::SetSearchParams is OK for us
 
   bool NoHref() const
   {

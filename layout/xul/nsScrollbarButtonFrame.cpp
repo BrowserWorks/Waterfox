@@ -52,27 +52,29 @@ nsScrollbarButtonFrame::HandleEvent(nsPresContext* aPresContext,
     return NS_OK;
   }
 
-  switch (aEvent->message) {
-    case NS_MOUSE_BUTTON_DOWN:
+  switch (aEvent->mMessage) {
+    case eMouseDown:
       mCursorOnThis = true;
       // if we didn't handle the press ourselves, pass it on to the superclass
       if (HandleButtonPress(aPresContext, aEvent, aEventStatus)) {
         return NS_OK;
       }
       break;
-    case NS_MOUSE_BUTTON_UP:
+    case eMouseUp:
       HandleRelease(aPresContext, aEvent, aEventStatus);
       break;
-    case NS_MOUSE_OUT:
+    case eMouseOut:
       mCursorOnThis = false;
       break;
-    case NS_MOUSE_MOVE: {
+    case eMouseMove: {
       nsPoint cursor =
         nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent, this);
       nsRect frameRect(nsPoint(0, 0), GetSize());
       mCursorOnThis = frameRect.Contains(cursor);
       break;
     }
+    default:
+      break;
   }
 
   return nsButtonBoxFrame::HandleEvent(aPresContext, aEvent, aEventStatus);

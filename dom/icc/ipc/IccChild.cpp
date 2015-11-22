@@ -4,8 +4,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/dom/icc/IccChild.h"
 #include "IccInfo.h"
+#include "mozilla/dom/icc/IccChild.h"
+#include "mozilla/dom/icc/IccIPCUtils.h"
+#include "nsIStkCmdFactory.h"
+#include "nsIStkProactiveCmd.h"
 
 using mozilla::dom::IccInfo;
 
@@ -82,6 +85,35 @@ IccChild::RecvNotifyIccInfoChanged(const OptionalIccInfoData& aInfoData)
   return true;
 }
 
+bool
+IccChild::RecvNotifyStkCommand(const nsString& aStkProactiveCmd)
+{
+  nsCOMPtr<nsIStkCmdFactory> cmdFactory =
+    do_GetService(ICC_STK_CMD_FACTORY_CONTRACTID);
+  NS_ENSURE_TRUE(cmdFactory, false);
+
+  nsCOMPtr<nsIStkProactiveCmd> cmd;
+  cmdFactory->InflateCommand(aStkProactiveCmd, getter_AddRefs(cmd));
+
+  NS_ENSURE_TRUE(cmd, false);
+
+  for (int32_t i = 0; i < mListeners.Count(); i++) {
+    mListeners[i]->NotifyStkCommand(cmd);
+  }
+
+  return true;
+}
+
+bool
+IccChild::RecvNotifyStkSessionEnd()
+{
+  for (int32_t i = 0; i < mListeners.Count(); i++) {
+    mListeners[i]->NotifyStkSessionEnd();
+  }
+
+  return true;
+}
+
 PIccRequestChild*
 IccChild::AllocPIccRequestChild(const IccRequest& aRequest)
 {
@@ -131,8 +163,8 @@ IccChild::UpdateIccInfo(const OptionalIccInfoData& aInfoData) {
   // We update the orignal one instead of replacing with a new one
   // if the IccType is the same.
   if (mIccInfo) {
-    nsString oldIccType;
-    nsString newIccType;
+    nsAutoString oldIccType;
+    nsAutoString newIccType;
     mIccInfo->GetIccType(oldIccType);
     iccInfo->GetIccType(newIccType);
 
@@ -206,8 +238,8 @@ IccChild::UnlockCardLock(uint32_t aLockType,
                          nsIIccCallback* aRequestReply)
 {
   return SendRequest(UnlockCardLockRequest(aLockType,
-                                           nsString(aPassword),
-                                           nsString(aNewPin)),
+                                           nsAutoString(aPassword),
+                                           nsAutoString(aNewPin)),
                      aRequestReply)
     ? NS_OK : NS_ERROR_FAILURE;
 }
@@ -219,7 +251,7 @@ IccChild::SetCardLockEnabled(uint32_t aLockType,
                              nsIIccCallback* aRequestReply)
 {
   return SendRequest(SetCardLockEnabledRequest(aLockType,
-                                               nsString(aPassword),
+                                               nsAutoString(aPassword),
                                                aEnabled),
                      aRequestReply)
     ? NS_OK : NS_ERROR_FAILURE;
@@ -232,8 +264,8 @@ IccChild::ChangeCardLockPassword(uint32_t aLockType,
                                  nsIIccCallback* aRequestReply)
 {
   return SendRequest(ChangeCardLockPasswordRequest(aLockType,
-                                                   nsString(aPassword),
-                                                   nsString(aNewPassword)),
+                                                   nsAutoString(aPassword),
+                                                   nsAutoString(aNewPassword)),
                      aRequestReply)
     ? NS_OK : NS_ERROR_FAILURE;
 }
@@ -251,7 +283,7 @@ IccChild::MatchMvno(uint32_t aMvnoType,
                     const nsAString& aMvnoData,
                     nsIIccCallback* aRequestReply)
 {
-  return SendRequest(MatchMvnoRequest(aMvnoType, nsString(aMvnoData)),
+  return SendRequest(MatchMvnoRequest(aMvnoType, nsAutoString(aMvnoData)),
                      aRequestReply)
     ? NS_OK : NS_ERROR_FAILURE;
 }
@@ -261,6 +293,100 @@ IccChild::GetServiceStateEnabled(uint32_t aService,
                                  nsIIccCallback* aRequestReply)
 {
   return SendRequest(GetServiceStateEnabledRequest(aService),
+                     aRequestReply)
+    ? NS_OK : NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+IccChild::IccOpenChannel(const nsAString& aAid, nsIIccChannelCallback* aCallback)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+IccChild::IccExchangeAPDU(int32_t aChannel, uint8_t aCla, uint8_t aIns, uint8_t aP1,
+                          uint8_t aP2, int16_t aP3, const nsAString & aData,
+                          nsIIccChannelCallback* aCallback)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+IccChild::IccCloseChannel(int32_t aChannel, nsIIccChannelCallback* aCallback)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+IccChild::SendStkResponse(nsIStkProactiveCmd* aCommand, nsIStkTerminalResponse* aResponse)
+{
+  nsCOMPtr<nsIStkCmdFactory> cmdFactory =
+    do_GetService(ICC_STK_CMD_FACTORY_CONTRACTID);
+  NS_ENSURE_TRUE(cmdFactory, NS_ERROR_FAILURE);
+
+  nsAutoString cmd, response;
+
+  nsresult rv = cmdFactory->DeflateCommand(aCommand, cmd);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  rv = cmdFactory->DeflateResponse(aResponse, response);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return PIccChild::SendStkResponse(cmd, response) ? NS_OK : NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+IccChild::SendStkMenuSelection(uint16_t aItemIdentifier, bool aHelpRequested)
+{
+  return PIccChild::SendStkMenuSelection(aItemIdentifier, aHelpRequested)
+    ? NS_OK : NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+IccChild::SendStkTimerExpiration(uint16_t aTimerId, uint32_t aTimerValue)
+{
+  return PIccChild::SendStkTimerExpiration(aTimerId, aTimerValue)
+    ? NS_OK : NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+IccChild::SendStkEventDownload(nsIStkDownloadEvent* aEvent)
+{
+  MOZ_ASSERT(aEvent);
+
+  nsCOMPtr<nsIStkCmdFactory> cmdFactory =
+    do_GetService(ICC_STK_CMD_FACTORY_CONTRACTID);
+  NS_ENSURE_TRUE(cmdFactory, NS_ERROR_FAILURE);
+
+  nsAutoString event;
+
+  nsresult rv = cmdFactory->DeflateDownloadEvent(aEvent, event);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return PIccChild::SendStkEventDownload(event) ? NS_OK : NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+IccChild::ReadContacts(uint32_t aContactType, nsIIccCallback* aRequestReply)
+{
+  return SendRequest(ReadContactsRequest(aContactType),
+                     aRequestReply)
+    ? NS_OK : NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+IccChild::UpdateContact(uint32_t aContactType, nsIIccContact* aContact,
+                        const nsAString& aPin2,
+                        nsIIccCallback* aRequestReply)
+{
+  MOZ_ASSERT(aContact);
+
+  IccContactData contactData;
+  IccIPCUtils::GetIccContactDataFromIccContact(aContact, contactData);
+
+  return SendRequest(UpdateContactRequest(aContactType,
+                                          nsAutoString(aPin2),
+                                          contactData),
                      aRequestReply)
     ? NS_OK : NS_ERROR_FAILURE;
 }
@@ -306,6 +432,42 @@ IccRequestChild::Recv__delete__(const IccReply& aResponse)
       return NS_SUCCEEDED(
         mRequestReply->NotifyCardLockError(error.message(),
                                            error.retryCount()));
+    }
+    case IccReply::TIccReplyReadContacts: {
+      const nsTArray<IccContactData>& data
+        = aResponse.get_IccReplyReadContacts().contacts();
+
+      uint32_t count = data.Length();
+      nsCOMArray<nsIIccContact> contactList;
+      nsresult rv;
+      for (uint32_t i = 0; i < count; i++) {
+        nsCOMPtr<nsIIccContact> contact;
+        rv = IccContact::Create(data[i].id(),
+                                data[i].names(),
+                                data[i].numbers(),
+                                data[i].emails(),
+                                getter_AddRefs(contact));
+        NS_ENSURE_SUCCESS(rv, false);
+        contactList.AppendElement(contact);
+      }
+
+      rv = mRequestReply->NotifyRetrievedIccContacts(contactList.Elements(),
+                                                     count);
+
+      return NS_SUCCEEDED(rv);
+    }
+    case IccReply::TIccReplyUpdateContact: {
+      IccContactData data
+        = aResponse.get_IccReplyUpdateContact().contact();
+      nsCOMPtr<nsIIccContact> contact;
+      IccContact::Create(data.id(),
+                         data.names(),
+                         data.numbers(),
+                         data.emails(),
+                         getter_AddRefs(contact));
+
+      return NS_SUCCEEDED(
+        mRequestReply->NotifyUpdatedIccContact(contact));
     }
     default:
       MOZ_CRASH("Received invalid response type!");

@@ -11,15 +11,12 @@ const FRAMERATE_GRAPH_LOW_RES_INTERVAL = 100; // ms
 const FRAMERATE_GRAPH_HIGH_RES_INTERVAL = 16; // ms
 const GRAPH_REQUIREMENTS = {
   timeline: {
-    actors: ["timeline"],
     features: ["withMarkers"]
   },
   framerate: {
-    actors: ["timeline"],
     features: ["withTicks"]
   },
   memory: {
-    actors: ["memory"],
     features: ["withMemory"]
   },
 }
@@ -28,7 +25,7 @@ const GRAPH_REQUIREMENTS = {
  * View handler for the overview panel's time view, displaying
  * framerate, timeline and memory over time.
  */
-let OverviewView = {
+var OverviewView = {
 
   /**
    * How frequently we attempt to render the graphs. Overridden
@@ -42,12 +39,12 @@ let OverviewView = {
   initialize: function () {
     this.graphs = new GraphsController({
       root: $("#overview-pane"),
-      getBlueprint: () => PerformanceController.getTimelineBlueprint(),
+      getFilter: () => PerformanceController.getPref("hidden-markers"),
       getTheme: () => PerformanceController.getTheme(),
     });
 
     // If no timeline support, shut it all down.
-    if (!gFront.getActorSupport().timeline) {
+    if (!PerformanceController.getTraits().features.withMarkers) {
       this.disable();
       return;
     }
@@ -55,10 +52,7 @@ let OverviewView = {
     // Store info on multiprocess support.
     this._multiprocessData = PerformanceController.getMultiprocessStatus();
 
-    this._onRecordingWillStart = this._onRecordingWillStart.bind(this);
-    this._onRecordingStarted = this._onRecordingStarted.bind(this);
-    this._onRecordingWillStop = this._onRecordingWillStop.bind(this);
-    this._onRecordingStopped = this._onRecordingStopped.bind(this);
+    this._onRecordingStateChange = this._onRecordingStateChange.bind(this);
     this._onRecordingSelected = this._onRecordingSelected.bind(this);
     this._onRecordingTick = this._onRecordingTick.bind(this);
     this._onGraphSelecting = this._onGraphSelecting.bind(this);
@@ -70,10 +64,7 @@ let OverviewView = {
     // based off of prefs.
     PerformanceController.on(EVENTS.PREF_CHANGED, this._onPrefChanged);
     PerformanceController.on(EVENTS.THEME_CHANGED, this._onThemeChanged);
-    PerformanceController.on(EVENTS.RECORDING_WILL_START, this._onRecordingWillStart);
-    PerformanceController.on(EVENTS.RECORDING_STARTED, this._onRecordingStarted);
-    PerformanceController.on(EVENTS.RECORDING_WILL_STOP, this._onRecordingWillStop);
-    PerformanceController.on(EVENTS.RECORDING_STOPPED, this._onRecordingStopped);
+    PerformanceController.on(EVENTS.RECORDING_STATE_CHANGE, this._onRecordingStateChange);
     PerformanceController.on(EVENTS.RECORDING_SELECTED, this._onRecordingSelected);
     this.graphs.on("selecting", this._onGraphSelecting);
     this.graphs.on("rendered", this._onGraphRendered);
@@ -85,10 +76,7 @@ let OverviewView = {
   destroy: Task.async(function*() {
     PerformanceController.off(EVENTS.PREF_CHANGED, this._onPrefChanged);
     PerformanceController.off(EVENTS.THEME_CHANGED, this._onThemeChanged);
-    PerformanceController.off(EVENTS.RECORDING_WILL_START, this._onRecordingWillStart);
-    PerformanceController.off(EVENTS.RECORDING_STARTED, this._onRecordingStarted);
-    PerformanceController.off(EVENTS.RECORDING_WILL_STOP, this._onRecordingWillStop);
-    PerformanceController.off(EVENTS.RECORDING_STOPPED, this._onRecordingStopped);
+    PerformanceController.off(EVENTS.RECORDING_STATE_CHANGE, this._onRecordingStateChange);
     PerformanceController.off(EVENTS.RECORDING_SELECTED, this._onRecordingSelected);
     this.graphs.off("selecting", this._onGraphSelecting);
     this.graphs.off("rendered", this._onGraphRendered);
@@ -165,8 +153,10 @@ let OverviewView = {
     let mapEnd = () => recording.getDuration();
     let selection = this.graphs.getMappedSelection({ mapStart, mapEnd });
     // If no selection returned, this means the overview graphs have not been rendered
-    // yet, so act as if we have no selection (the full recording).
-    if (!selection) {
+    // yet, so act as if we have no selection (the full recording). Also
+    // if the selection range distance is tiny, assume the range was cleared or just
+    // clicked, and we do not have a range.
+    if (!selection || (selection.max - selection.min) < 1) {
       return { startTime: 0, endTime: recording.getDuration() };
     }
     return { startTime: selection.min, endTime: selection.max };
@@ -176,7 +166,7 @@ let OverviewView = {
    * Method for handling all the set up for rendering the overview graphs.
    *
    * @param number resolution
-   *        The fps graph resolution. @see Graphs.jsm
+   *        The fps graph resolution. @see Graphs.js
    */
   render: Task.async(function *(resolution) {
     if (this.isDisabled()) {
@@ -212,29 +202,12 @@ let OverviewView = {
   },
 
   /**
-   * Called when recording will start. No recording because it does not
-   * exist yet, but can just disable from here. This will only trigger for
-   * manual recordings.
+   * Called when recording state changes.
    */
-  _onRecordingWillStart: OverviewViewOnStateChange(Task.async(function* () {
-    yield this._checkSelection();
-    this.graphs.dropSelection();
-  })),
-
-  /**
-   * Called when recording actually starts.
-   */
-  _onRecordingStarted: OverviewViewOnStateChange(),
-
-  /**
-   * Called when recording will stop.
-   */
-  _onRecordingWillStop: OverviewViewOnStateChange(),
-
-  /**
-   * Called when recording actually stops.
-   */
-  _onRecordingStopped: OverviewViewOnStateChange(Task.async(function* (_, recording) {
+  _onRecordingStateChange: OverviewViewOnStateChange(Task.async(function* (_, state, recording) {
+    if (state !== "recording-stopped") {
+      return;
+    }
     // Check to see if the recording that just stopped is the current recording.
     // If it is, render the high-res graphs. For manual recordings, it will also
     // be the current recording, but profiles generated by `console.profile` can stop
@@ -300,14 +273,8 @@ let OverviewView = {
     if (this._stopSelectionChangeEventPropagation) {
       return;
     }
-    // If the range is smaller than a pixel (which can happen when performing
-    // a click on the graphs), treat this as a cleared selection.
-    let interval = this.getTimeInterval();
-    if (interval.endTime - interval.startTime < 1) {
-      this.emit(EVENTS.OVERVIEW_RANGE_CLEARED);
-    } else {
-      this.emit(EVENTS.OVERVIEW_RANGE_SELECTED, interval);
-    }
+
+    this.emit(EVENTS.OVERVIEW_RANGE_SELECTED, this.getTimeInterval());
   },
 
   _onGraphRendered: function (_, graphName) {
@@ -335,8 +302,8 @@ let OverviewView = {
       case "hidden-markers": {
         let graph;
         if (graph = yield this.graphs.isAvailable("timeline")) {
-          let blueprint = PerformanceController.getTimelineBlueprint();
-          graph.setBlueprint(blueprint);
+          let filter = PerformanceController.getPref("hidden-markers");
+          graph.setFilter(filter);
           graph.refresh({ force: true });
         }
         break;
@@ -346,7 +313,7 @@ let OverviewView = {
 
   _setGraphVisibilityFromRecordingFeatures: function (recording) {
     for (let [graphName, requirements] of Iterator(GRAPH_REQUIREMENTS)) {
-      this.graphs.enable(graphName, PerformanceController.isFeatureSupported(requirements));
+      this.graphs.enable(graphName, PerformanceController.isFeatureSupported(requirements.features));
     }
   },
 
@@ -369,14 +336,14 @@ let OverviewView = {
    */
   _showGraphsPanel: function (recording) {
     this._setGraphVisibilityFromRecordingFeatures(recording);
-    $("#overview-pane").hidden = false;
+    $("#overview-pane").classList.remove("hidden");
   },
 
   /**
    * Hide the graphs container completely.
    */
   _hideGraphsPanel: function () {
-    $("#overview-pane").hidden = true;
+    $("#overview-pane").classList.add("hidden");
   },
 
   /**
@@ -401,6 +368,12 @@ let OverviewView = {
  */
 function OverviewViewOnStateChange (fn) {
   return function _onRecordingStateChange (eventName, recording) {
+    // Normalize arguments for the RECORDING_STATE_CHANGE event,
+    // as it also has a `state` argument.
+    if (typeof recording === "string") {
+      recording = arguments[2];
+    }
+
     let currentRecording = PerformanceController.getCurrentRecording();
 
     // All these methods require a recording to exist selected and
@@ -433,6 +406,7 @@ function OverviewViewOnStateChange (fn) {
     } else if (currentRecording.isRecording() && !this.isRendering()) {
       this._startPolling();
     }
+
     if (fn) {
       fn.apply(this, arguments);
     }

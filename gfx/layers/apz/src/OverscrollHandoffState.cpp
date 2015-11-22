@@ -107,23 +107,10 @@ OverscrollHandoffChain::SnapBackOverscrolledApzc(const AsyncPanZoomController* a
   uint32_t i = IndexOf(aStart);
   for (; i < Length(); ++i) {
     AsyncPanZoomController* apzc = mChain[i];
-    if (!apzc->IsDestroyed() && apzc->SnapBackIfOverscrolled()) {
-      // At most one APZC from |aStart| onwards can be overscrolled.
-      break;
-    }
-  }
-
-  // In debug builds, verify our assumption that only one APZC from |aStart|
-  // onwards is overscrolled.
-#ifdef DEBUG
-  ++i;
-  for (; i < Length(); ++i) {
-    AsyncPanZoomController* apzc = mChain[i];
     if (!apzc->IsDestroyed()) {
-      MOZ_ASSERT(!apzc->IsOverscrolled());
+      apzc->SnapBackIfOverscrolled();
     }
   }
-#endif
 }
 
 bool
@@ -162,19 +149,19 @@ OverscrollHandoffChain::CanScrollInDirection(const AsyncPanZoomController* aApzc
 }
 
 bool
-OverscrollHandoffChain::HasOverscrolledApzc() const
+OverscrollHandoffChain::HasApzcPannedIntoOverscroll() const
 {
-  return AnyApzc(&AsyncPanZoomController::IsOverscrolled);
+  return AnyApzc(&AsyncPanZoomController::IsPannedIntoOverscroll);
 }
 
 bool
-OverscrollHandoffChain::HasFastMovingApzc() const
+OverscrollHandoffChain::HasFastFlungApzc() const
 {
-  return AnyApzc(&AsyncPanZoomController::IsMovingFast);
+  return AnyApzc(&AsyncPanZoomController::IsFlingingFast);
 }
 
 nsRefPtr<AsyncPanZoomController>
-OverscrollHandoffChain::FindFirstScrollable(const ScrollWheelInput& aInput) const
+OverscrollHandoffChain::FindFirstScrollable(const InputData& aInput) const
 {
   for (size_t i = 0; i < Length(); i++) {
     if (mChain[i]->CanScroll(aInput)) {

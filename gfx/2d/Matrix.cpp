@@ -9,10 +9,55 @@
 #include <algorithm>
 #include <ostream>
 #include <math.h>
+#include <float.h>  // for FLT_EPSILON
 
 #include "mozilla/FloatingPoint.h" // for UnspecifiedNaN
 
 using namespace std;
+
+namespace {
+
+/* Force small values to zero.  We do this to avoid having sin(360deg)
+ * evaluate to a tiny but nonzero value.
+ */
+double
+FlushToZero(double aVal)
+{
+  // XXX Is double precision really necessary here
+  if (-FLT_EPSILON < aVal && aVal < FLT_EPSILON) {
+    return 0.0f;
+  } else {
+    return aVal;
+  }
+}
+
+/* Computes tan(aTheta).  For values of aTheta such that tan(aTheta) is
+ * undefined or very large, SafeTangent returns a manageably large value
+ * of the correct sign.
+ */
+double
+SafeTangent(double aTheta)
+{
+  // XXX Is double precision really necessary here
+  const double kEpsilon = 0.0001;
+
+  /* tan(theta) = sin(theta)/cos(theta); problems arise when
+   * cos(theta) is too close to zero.  Limit cos(theta) to the
+   * range [-1, -epsilon] U [epsilon, 1].
+   */
+
+  double sinTheta = sin(aTheta);
+  double cosTheta = cos(aTheta);
+
+  if (cosTheta >= 0 && cosTheta < kEpsilon) {
+    cosTheta = kEpsilon;
+  } else if (cosTheta < 0 && cosTheta >= -kEpsilon) {
+    cosTheta = -kEpsilon;
+  }
+  return FlushToZero(sinTheta / cosTheta);
+}
+
+} // namespace
 
 namespace mozilla {
 namespace gfx {
@@ -99,12 +144,19 @@ Matrix::NudgeToIntegers()
   return *this;
 }
 
-Rect
-Matrix4x4::TransformBounds(const Rect& aRect) const
+template<class F>
+RectTyped<UnknownUnits, F>
+Matrix4x4::TransformBounds(const RectTyped<UnknownUnits, F>& aRect) const
 {
-  Point quad[4];
-  Float min_x, max_x;
-  Float min_y, max_y;
+  Point4DTyped<UnknownUnits, F> verts[4];
+  verts[0] = *this * Point4DTyped<UnknownUnits, F>(aRect.x, aRect.y, 0.0, 1.0);
+  verts[1] = *this * Point4DTyped<UnknownUnits, F>(aRect.XMost(), aRect.y, 0.0, 1.0);
+  verts[2] = *this * Point4DTyped<UnknownUnits, F>(aRect.XMost(), aRect.YMost(), 0.0, 1.0);
+  verts[3] = *this * Point4DTyped<UnknownUnits, F>(aRect.x, aRect.YMost(), 0.0, 1.0);
+
+  PointTyped<UnknownUnits, F> quad[4];
+  F min_x, max_x;
+  F min_y, max_y;
 
   quad[0] = *this * aRect.TopLeft();
   quad[1] = *this * aRect.TopRight();
@@ -130,7 +182,7 @@ Matrix4x4::TransformBounds(const Rect& aRect) const
     }
   }
 
-  return Rect(min_x, min_y, max_x - min_x, max_y - min_y);
+  return RectTyped<UnknownUnits, F>(min_x, min_y, max_x - min_x, max_y - min_y);
 }
 
 Point4D ComputePerspectivePlaneIntercept(const Point4D& aFirst,
@@ -225,6 +277,83 @@ Rect Matrix4x4::ProjectRectBounds(const Rect& aRect, const Rect &aClip) const
   }
 
   return Rect(min_x, min_y, max_x - min_x, max_y - min_y);
+}
+
+template<class F>
+size_t
+Matrix4x4::TransformAndClipRect(const RectTyped<UnknownUnits, F>& aRect,
+                                const RectTyped<UnknownUnits, F>& aClip,
+                                PointTyped<UnknownUnits, F>* aVerts) const
+{
+  // Initialize a double-buffered array of points in homogenous space with
+  // the input rectangle, aRect.
+  Point4DTyped<UnknownUnits, F> points[2][kTransformAndClipRectMaxVerts];
+  Point4DTyped<UnknownUnits, F>* dstPoint = points[0];
+  *dstPoint++ = *this * Point4DTyped<UnknownUnits, F>(aRect.x, aRect.y, 0, 1);
+  *dstPoint++ = *this * Point4DTyped<UnknownUnits, F>(aRect.XMost(), aRect.y, 0, 1);
+  *dstPoint++ = *this * Point4DTyped<UnknownUnits, F>(aRect.XMost(), aRect.YMost(), 0, 1);
+  *dstPoint++ = *this * Point4DTyped<UnknownUnits, F>(aRect.x, aRect.YMost(), 0, 1);
+
+  // View frustum clipping planes are described as normals originating from
+  // the 0,0,0,0 origin.
+  Point4DTyped<UnknownUnits, F> planeNormals[4];
+  planeNormals[0] = Point4DTyped<UnknownUnits, F>(1.0, 0.0, 0.0, -aClip.x);
+  planeNormals[1] = Point4DTyped<UnknownUnits, F>(-1.0, 0.0, 0.0, aClip.XMost());
+  planeNormals[2] = Point4DTyped<UnknownUnits, F>(0.0, 1.0, 0.0, -aClip.y);
+  planeNormals[3] = Point4DTyped<UnknownUnits, F>(0.0, -1.0, 0.0, aClip.YMost());
+
+  // Iterate through each clipping plane and clip the polygon.
+  // In each pass, we double buffer, alternating between points[0] and
+  // points[1].
+  for (int plane=0; plane < 4; plane++) {
+    planeNormals[plane].Normalize();
+
+    Point4DTyped<UnknownUnits, F>* srcPoint = points[plane & 1];
+    Point4DTyped<UnknownUnits, F>* srcPointEnd = dstPoint;
+    dstPoint = points[~plane & 1];
+
+    Point4DTyped<UnknownUnits, F>* prevPoint = srcPointEnd - 1;
+    F prevDot = planeNormals[plane].DotProduct(*prevPoint);
+    while (srcPoint < srcPointEnd) {
+      F nextDot = planeNormals[plane].DotProduct(*srcPoint);
+
+      if ((nextDot >= 0.0) != (prevDot >= 0.0)) {
+        // An intersection with the clipping plane has been detected.
+        // Interpolate to find the intersecting point and emit it.
+        F t = -prevDot / (nextDot - prevDot);
+        *dstPoint++ = *srcPoint * t + *prevPoint * (1.0 - t);
+      }
+
+      if (nextDot >= 0.0) {
+        // Emit any source points that are on the positive side of the
+        // clipping plane.
+        *dstPoint++ = *srcPoint;
+      }
+
+      prevPoint = srcPoint++;
+      prevDot = nextDot;
+    }
+  }
+
+  size_t dstPointCount = 0;
+  size_t srcPointCount = dstPoint - points[0];
+  for (Point4DTyped<UnknownUnits, F>* srcPoint = points[0]; srcPoint < points[0] + srcPointCount; srcPoint++) {
+
+    PointTyped<UnknownUnits, F> p;
+    if (srcPoint->w == 0.0) {
+      // If a point lies on the intersection of the clipping planes at
+      // (0,0,0,0), we must avoid a division by zero w component.
+      p = PointTyped<UnknownUnits, F>(0.0, 0.0);
+    } else {
+      p = srcPoint->As2DPoint();
+    }
+    // Emit only unique points
+    if (dstPointCount == 0 || p != aVerts[dstPointCount - 1]) {
+      aVerts[dstPointCount++] = p;
+    }
+  }
+
+  return dstPointCount;
 }
 
 bool
@@ -322,5 +451,191 @@ Matrix4x4::SetRotationFromQuaternion(const Quaternion& q)
   _44 = 1.0f;
 }
 
+void
+Matrix4x4::SkewXY(double aXSkew, double aYSkew)
+{
+  // XXX Is double precision really necessary here
+  float tanX = SafeTangent(aXSkew);
+  float tanY = SafeTangent(aYSkew);
+  float temp;
+
+  temp = _11;
+  _11 += tanY * _21;
+  _21 += tanX * temp;
+
+  temp = _12;
+  _12 += tanY * _22;
+  _22 += tanX * temp;
+
+  temp = _13;
+  _13 += tanY * _23;
+  _23 += tanX * temp;
+
+  temp = _14;
+  _14 += tanY * _24;
+  _24 += tanX * temp;
 }
+
+void
+Matrix4x4::RotateX(double aTheta)
+{
+  // XXX Is double precision really necessary here
+  double cosTheta = FlushToZero(cos(aTheta));
+  double sinTheta = FlushToZero(sin(aTheta));
+
+  float temp;
+
+  temp = _21;
+  _21 = cosTheta * _21 + sinTheta * _31;
+  _31 = -sinTheta * temp + cosTheta * _31;
+
+  temp = _22;
+  _22 = cosTheta * _22 + sinTheta * _32;
+  _32 = -sinTheta * temp + cosTheta * _32;
+
+  temp = _23;
+  _23 = cosTheta * _23 + sinTheta * _33;
+  _33 = -sinTheta * temp + cosTheta * _33;
+
+  temp = _24;
+  _24 = cosTheta * _24 + sinTheta * _34;
+  _34 = -sinTheta * temp + cosTheta * _34;
 }
+
+void
+Matrix4x4::RotateY(double aTheta)
+{
+  // XXX Is double precision really necessary here
+  double cosTheta = FlushToZero(cos(aTheta));
+  double sinTheta = FlushToZero(sin(aTheta));
+
+  float temp;
+
+  temp = _11;
+  _11 = cosTheta * _11 + -sinTheta * _31;
+  _31 = sinTheta * temp + cosTheta * _31;
+
+  temp = _12;
+  _12 = cosTheta * _12 + -sinTheta * _32;
+  _32 = sinTheta * temp + cosTheta * _32;
+
+  temp = _13;
+  _13 = cosTheta * _13 + -sinTheta * _33;
+  _33 = sinTheta * temp + cosTheta * _33;
+
+  temp = _14;
+  _14 = cosTheta * _14 + -sinTheta * _34;
+  _34 = sinTheta * temp + cosTheta * _34;
+}
+
+void
+Matrix4x4::RotateZ(double aTheta)
+{
+  // XXX Is double precision really necessary here
+  double cosTheta = FlushToZero(cos(aTheta));
+  double sinTheta = FlushToZero(sin(aTheta));
+
+  float temp;
+
+  temp = _11;
+  _11 = cosTheta * _11 + sinTheta * _21;
+  _21 = -sinTheta * temp + cosTheta * _21;
+
+  temp = _12;
+  _12 = cosTheta * _12 + sinTheta * _22;
+  _22 = -sinTheta * temp + cosTheta * _22;
+
+  temp = _13;
+  _13 = cosTheta * _13 + sinTheta * _23;
+  _23 = -sinTheta * temp + cosTheta * _23;
+
+  temp = _14;
+  _14 = cosTheta * _14 + sinTheta * _24;
+  _24 = -sinTheta * temp + cosTheta * _24;
+}
+
+void
+Matrix4x4::Perspective(float aDepth)
+{
+  MOZ_ASSERT(aDepth > 0.0f, "Perspective must be positive!");
+  _31 += -1.0/aDepth * _41;
+  _32 += -1.0/aDepth * _42;
+  _33 += -1.0/aDepth * _43;
+  _34 += -1.0/aDepth * _44;
+}
+
+Point3D
+Matrix4x4::GetNormalVector() const
+{
+  // Define a plane in transformed space as the transformations
+  // of 3 points on the z=0 screen plane.
+  Point3D a = *this * Point3D(0, 0, 0);
+  Point3D b = *this * Point3D(0, 1, 0);
+  Point3D c = *this * Point3D(1, 0, 0);
+
+  // Convert to two vectors on the surface of the plane.
+  Point3D ab = b - a;
+  Point3D ac = c - a;
+
+  return ac.CrossProduct(ab);
+}
+
+template<class F>
+RectTyped<UnknownUnits, F>
+Matrix4x4::TransformAndClipBounds(const RectTyped<UnknownUnits, F>& aRect,
+                                  const RectTyped<UnknownUnits, F>& aClip) const
+{
+  PointTyped<UnknownUnits, F> verts[kTransformAndClipRectMaxVerts];
+  size_t vertCount = TransformAndClipRect(aRect, aClip, verts);
+
+  F min_x = std::numeric_limits<F>::max();
+  F min_y = std::numeric_limits<F>::max();
+  F max_x = -std::numeric_limits<F>::max();
+  F max_y = -std::numeric_limits<F>::max();
+  for (size_t i=0; i < vertCount; i++) {
+    min_x = std::min(min_x, verts[i].x);
+    max_x = std::max(max_x, verts[i].x);
+    min_y = std::min(min_y, verts[i].y);
+    max_y = std::max(max_y, verts[i].y);
+  }
+
+  if (max_x < min_x || max_y < min_y) {
+    return RectTyped<UnknownUnits, F>(0, 0, 0, 0);
+  }
+
+  return RectTyped<UnknownUnits, F>(min_x, min_y, max_x - min_x, max_y - min_y);
+
+}
+
+// Explicit template instantiation for float and double precision
+template
+size_t
+Matrix4x4::TransformAndClipRect(const Rect& aRect, const Rect& aClip,
+                                Point* aVerts) const;
+
+template
+size_t
+Matrix4x4::TransformAndClipRect(const RectDouble& aRect,
+                                const RectDouble& aClip,
+                                PointDouble* aVerts) const;
+
+template
+Rect
+Matrix4x4::TransformAndClipBounds(const Rect& aRect,
+                                  const Rect& aClip) const;
+
+template
+RectDouble
+Matrix4x4::TransformAndClipBounds(const RectDouble& aRect,
+                                  const RectDouble& aClip) const;
+
+template
+Rect
+Matrix4x4::TransformBounds(const Rect& aRect) const;
+
+template
+RectDouble
+Matrix4x4::TransformBounds(const RectDouble& aRect) const;
+
+} // namespace gfx
+} // namespace mozilla

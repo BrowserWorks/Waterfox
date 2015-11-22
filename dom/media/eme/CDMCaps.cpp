@@ -51,7 +51,6 @@ CDMCaps::AutoLock::~AutoLock()
   mData.Unlock();
 }
 
-#ifdef PR_LOGGING
 static void
 TestCap(uint64_t aFlag,
         uint64_t aCaps,
@@ -77,7 +76,6 @@ CapsToString(uint64_t aCaps)
   TestCap(GMP_EME_CAP_DECRYPT_AND_DECODE_VIDEO, aCaps, NS_LITERAL_CSTRING("DecryptAndDecodeVideo"), capsStr);
   return capsStr;
 }
-#endif // PR_LOGGING
 
 void
 CDMCaps::AutoLock::SetCaps(uint64_t aCaps)
@@ -184,6 +182,18 @@ CDMCaps::AutoLock::AreCapsKnown()
 {
   mData.mMonitor.AssertCurrentThreadOwns();
   return mData.mCaps != 0;
+}
+
+bool
+CDMCaps::AutoLock::CanRenderAudio()
+{
+  return mData.HasCap(GMP_EME_CAP_RENDER_AUDIO);
+}
+
+bool
+CDMCaps::AutoLock::CanRenderVideo()
+{
+  return mData.HasCap(GMP_EME_CAP_RENDER_VIDEO);
 }
 
 bool

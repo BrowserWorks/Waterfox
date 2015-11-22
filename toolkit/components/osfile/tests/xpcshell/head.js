@@ -3,9 +3,9 @@
 
 "use strict";
 
-let {utils: Cu, interfaces: Ci} = Components;
+var {utils: Cu, interfaces: Ci} = Components;
 
-let {XPCOMUtils} = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
+var {XPCOMUtils} = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
 
 // Bug 1014484 can only be reproduced by loading OS.File first from the
 // CommonJS loader, so we do not want OS.File to be loaded eagerly for
@@ -19,8 +19,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
   "resource://gre/modules/Services.jsm");
 
-let {Promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
-let {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
+var {Promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+var {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 
 Services.prefs.setBoolPref("toolkit.osfile.log", true);
 
@@ -54,9 +54,10 @@ function reference_fetch_file(path, test) {
   do_print("Fetching file " + path);
   let deferred = Promise.defer();
   let file = new FileUtils.File(path);
-  NetUtil.asyncFetch2(
-    file,
-    function(stream, status) {
+  NetUtil.asyncFetch({
+    uri: NetUtil.newURI(file),
+    loadUsingSystemPrincipal: true
+  }, function(stream, status) {
       if (!Components.isSuccessCode(status)) {
         deferred.reject(status);
         return;
@@ -73,12 +74,7 @@ function reference_fetch_file(path, test) {
       } else {
         deferred.resolve(result);
       }
-    },
-    null,      // aLoadingNode
-    Services.scriptSecurityManager.getSystemPrincipal(),
-    null,      // aTriggeringPrincipal
-    Ci.nsILoadInfo.SEC_NORMAL,
-    Ci.nsIContentPolicy.TYPE_OTHER);
+    });
 
   return deferred.promise;
 };

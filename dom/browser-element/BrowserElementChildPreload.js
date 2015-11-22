@@ -8,12 +8,16 @@ dump("######################## BrowserElementChildPreload.js loaded\n");
 
 var BrowserElementIsReady = false;
 
-let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
+var { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/BrowserElementPromptService.jsm");
 
-let kLongestReturnedString = 128;
+XPCOMUtils.defineLazyServiceGetter(this, "acs",
+                                   "@mozilla.org/audiochannel/service;1",
+                                   "nsIAudioChannelService");
+
+var kLongestReturnedString = 128;
 
 function debug(msg) {
   //dump("BrowserElementChildPreload - " + msg + "\n");
@@ -47,19 +51,20 @@ function sendSyncMsg(msg, data) {
   return sendSyncMessage('browser-element-api:call', data);
 }
 
-let CERTIFICATE_ERROR_PAGE_PREF = 'security.alternate_certificate_error_page';
+var CERTIFICATE_ERROR_PAGE_PREF = 'security.alternate_certificate_error_page';
 
 const OBSERVED_EVENTS = [
-  'fullscreen-origin-change',
-  'ask-parent-to-exit-fullscreen',
-  'ask-parent-to-rollback-fullscreen',
   'xpcom-shutdown',
-  'activity-done'
+  'audio-playback',
+  'activity-done',
+  'invalid-widget'
 ];
 
 const COMMAND_MAP = {
   'cut': 'cmd_cut',
   'copy': 'cmd_copyAndCollapseToEnd',
+  'copyImage': 'cmd_copyImage',
+  'copyLink': 'cmd_copyLink',
   'paste': 'cmd_paste',
   'selectall': 'cmd_selectAll'
 };
@@ -147,6 +152,21 @@ BrowserElementChild.prototype = {
                      /* useCapture = */ true,
                      /* wantsUntrusted = */ false);
 
+    addEventListener("MozDOMFullscreen:Request",
+                     this._mozRequestedDOMFullscreen.bind(this),
+                     /* useCapture = */ true,
+                     /* wantsUntrusted = */ false);
+
+    addEventListener("MozDOMFullscreen:NewOrigin",
+                     this._mozFullscreenOriginChange.bind(this),
+                     /* useCapture = */ true,
+                     /* wantsUntrusted = */ false);
+
+    addEventListener("MozDOMFullscreen:Exit",
+                     this._mozExitDomFullscreen.bind(this),
+                     /* useCapture = */ true,
+                     /* wantsUntrusted = */ false);
+
     addEventListener('DOMMetaAdded',
                      this._metaChangedHandler.bind(this),
                      /* useCapture = */ true,
@@ -204,6 +224,11 @@ BrowserElementChild.prototype = {
       "send-touch-event": this._recvSendTouchEvent,
       "get-can-go-back": this._recvCanGoBack,
       "get-can-go-forward": this._recvCanGoForward,
+      "mute": this._recvMute.bind(this),
+      "unmute": this._recvUnmute.bind(this),
+      "get-muted": this._recvGetMuted.bind(this),
+      "set-volume": this._recvSetVolume.bind(this),
+      "get-volume": this._recvGetVolume.bind(this),
       "go-back": this._recvGoBack,
       "go-forward": this._recvGoForward,
       "reload": this._recvReload,
@@ -212,11 +237,21 @@ BrowserElementChild.prototype = {
       "unblock-modal-prompt": this._recvStopWaiting,
       "fire-ctx-callback": this._recvFireCtxCallback,
       "owner-visibility-change": this._recvOwnerVisibilityChange,
+      "entered-fullscreen": this._recvEnteredFullscreen,
       "exit-fullscreen": this._recvExitFullscreen.bind(this),
       "activate-next-paint-listener": this._activateNextPaintListener.bind(this),
       "set-input-method-active": this._recvSetInputMethodActive.bind(this),
       "deactivate-next-paint-listener": this._deactivateNextPaintListener.bind(this),
-      "do-command": this._recvDoCommand
+      "do-command": this._recvDoCommand,
+      "find-all": this._recvFindAll.bind(this),
+      "find-next": this._recvFindNext.bind(this),
+      "clear-match": this._recvClearMatch.bind(this),
+      "execute-script": this._recvExecuteScript,
+      "get-audio-channel-volume": this._recvGetAudioChannelVolume,
+      "set-audio-channel-volume": this._recvSetAudioChannelVolume,
+      "get-audio-channel-muted": this._recvGetAudioChannelMuted,
+      "set-audio-channel-muted": this._recvSetAudioChannelMuted,
+      "get-is-audio-channel-active": this._recvIsAudioChannelActive
     }
 
     addMessageListener("browser-element-api:call", function(aMessage) {
@@ -254,25 +289,27 @@ BrowserElementChild.prototype = {
   observe: function(subject, topic, data) {
     // Ignore notifications not about our document.  (Note that |content| /can/
     // be null; see bug 874900.)
-    if (topic !== 'activity-done' && (!content || subject != content.document))
+
+    if (topic !== 'activity-done' && topic !== 'audio-playback' &&
+        (!content || subject !== content.document)) {
       return;
+    }
     if (topic == 'activity-done' && docShell !== subject)
       return;
     switch (topic) {
-      case 'fullscreen-origin-change':
-        sendAsyncMsg('fullscreen-origin-change', { _payload_: data });
-        break;
-      case 'ask-parent-to-exit-fullscreen':
-        sendAsyncMsg('exit-fullscreen');
-        break;
-      case 'ask-parent-to-rollback-fullscreen':
-        sendAsyncMsg('rollback-fullscreen');
-        break;
       case 'activity-done':
         sendAsyncMsg('activitydone', { success: (data == 'activity-success') });
         break;
+      case 'audio-playback':
+        if (subject === content) {
+          sendAsyncMsg('audioplaybackchange', { _payload_: data });
+        }
+        break;
       case 'xpcom-shutdown':
         this._shuttingDown = true;
+        break;
+      case 'invalid-widget':
+        sendAsyncMsg('error', { type: 'invalid-widget' });
         break;
     }
   },
@@ -286,6 +323,12 @@ BrowserElementChild.prototype = {
     OBSERVED_EVENTS.forEach((aTopic) => {
       Services.obs.removeObserver(this, aTopic);
     });
+  },
+
+  get _windowUtils() {
+    return content.document.defaultView
+                  .QueryInterface(Ci.nsIInterfaceRequestor)
+                  .getInterface(Ci.nsIDOMWindowUtils);
   },
 
   _tryGetInnerWindowID: function(win) {
@@ -431,11 +474,18 @@ BrowserElementChild.prototype = {
     win.modalDepth--;
   },
 
+  _recvEnteredFullscreen: function() {
+    if (!this._windowUtils.handleFullscreenRequests() &&
+        !content.document.mozFullScreen) {
+      // If we don't actually have any pending fullscreen request
+      // to handle, neither we have been in fullscreen, tell the
+      // parent to just exit.
+      sendAsyncMsg("exit-dom-fullscreen");
+    }
+  },
+
   _recvExitFullscreen: function() {
-    var utils = content.document.defaultView
-                       .QueryInterface(Ci.nsIInterfaceRequestor)
-                       .getInterface(Ci.nsIDOMWindowUtils);
-    utils.exitFullscreen();
+    this._windowUtils.exitFullscreen();
   },
 
   _titleChangedHandler: function(e) {
@@ -520,31 +570,42 @@ BrowserElementChild.prototype = {
       return;
     }
 
-    if (!e.target.name) {
+    var name = e.target.name;
+    var property = e.target.getAttributeNS(null, "property");
+
+    if (!name && !property) {
       return;
     }
 
-    debug('Got metaChanged: (' + e.target.name + ') ' + e.target.content);
+    debug('Got metaChanged: (' + (name || property) + ') ' +
+          e.target.content);
 
     let handlers = {
-      'theme-color': this._themeColorChangedHandler,
+      'viewmode': this._genericMetaHandler,
+      'theme-color': this._genericMetaHandler,
+      'theme-group': this._genericMetaHandler,
       'application-name': this._applicationNameChangedHandler
     };
+    let handler = handlers[name];
 
-    let handler = handlers[e.target.name];
+    if ((property || name).match(/^og:/)) {
+      name = property || name;
+      handler = this._genericMetaHandler;
+    }
+
     if (handler) {
-      handler(e.type, e.target);
+      handler(name, e.type, e.target);
     }
   },
 
-  _applicationNameChangedHandler: function(eventType, target) {
+  _applicationNameChangedHandler: function(name, eventType, target) {
     if (eventType !== 'DOMMetaAdded') {
       // Bug 1037448 - Decide what to do when <meta name="application-name">
       // changes
       return;
     }
 
-    let meta = { name: 'application-name',
+    let meta = { name: name,
                  content: target.content };
 
     let lang;
@@ -699,9 +760,9 @@ BrowserElementChild.prototype = {
     sendAsyncMsg('selectionstatechanged', detail);
   },
 
-  _themeColorChangedHandler: function(eventType, target) {
+  _genericMetaHandler: function(name, eventType, target) {
     let meta = {
-      name: 'theme-color',
+      name: name,
       content: target.content,
       type: eventType.replace('DOMMeta', '').toLowerCase()
     };
@@ -805,6 +866,17 @@ BrowserElementChild.prototype = {
     var elem = e.target;
     var menuData = {systemTargets: [], contextmenu: null};
     var ctxMenuId = null;
+    var copyableElements = {
+      image: false,
+      link: false,
+      hasElements: function() {
+        return this.image || this.link;
+      }
+    };
+
+    // Set the event target as the copy image command needs it to
+    // determine what was context-clicked on.
+    docShell.contentViewer.QueryInterface(Ci.nsIContentViewerEdit).setCommandNode(elem);
 
     while (elem && elem.parentNode) {
       var ctxData = this._getSystemCtxMenuData(elem);
@@ -818,15 +890,28 @@ BrowserElementChild.prototype = {
       if (!ctxMenuId && 'hasAttribute' in elem && elem.hasAttribute('contextmenu')) {
         ctxMenuId = elem.getAttribute('contextmenu');
       }
+
+      // Enable copy image/link option
+      if (elem.nodeName == 'IMG') {
+        copyableElements.image = true;
+      } else if (elem.nodeName == 'A') {
+        copyableElements.link = true;
+      }
+
       elem = elem.parentNode;
     }
 
-    if (ctxMenuId) {
-      var menu = e.target.ownerDocument.getElementById(ctxMenuId);
-      if (menu) {
-        menuData.contextmenu = this._buildMenuObj(menu, '');
+    if (ctxMenuId || copyableElements.hasElements()) {
+      var menu = null;
+      if (ctxMenuId) {
+        menu = e.target.ownerDocument.getElementById(ctxMenuId);
       }
+      menuData.contextmenu = this._buildMenuObj(menu, '', copyableElements);
     }
+
+    // Pass along the position where the context menu should be located
+    menuData.clientX = e.clientX;
+    menuData.clientY = e.clientY;
 
     // The value returned by the contextmenu sync call is true if the embedder
     // called preventDefault() on its contextmenu event.
@@ -940,6 +1025,90 @@ BrowserElementChild.prototype = {
       takeScreenshotClosure, maxDelayMS);
   },
 
+  _recvExecuteScript: function(data) {
+    debug("Received executeScript message: (" + data.json.id + ")");
+
+    let domRequestID = data.json.id;
+
+    let sendError = errorMsg => sendAsyncMsg("execute-script-done", {
+      errorMsg,
+      id: domRequestID
+    });
+
+    let sendSuccess = successRv => sendAsyncMsg("execute-script-done", {
+      successRv,
+      id: domRequestID
+    });
+
+    let isJSON = obj => {
+      try {
+        JSON.stringify(obj);
+      } catch(e) {
+        return false;
+      }
+      return true;
+    }
+
+    let expectedOrigin = data.json.args.options.origin;
+    let expectedUrl = data.json.args.options.url;
+
+    if (expectedOrigin) {
+      if (expectedOrigin != content.location.origin) {
+        sendError("Origin mismatches");
+        return;
+      }
+    }
+
+    if (expectedUrl) {
+      let expectedURI
+      try {
+       expectedURI = Services.io.newURI(expectedUrl, null, null);
+      } catch(e) {
+        sendError("Malformed URL");
+        return;
+      }
+      let currentURI = docShell.QueryInterface(Ci.nsIWebNavigation).currentURI;
+      if (!currentURI.equalsExceptRef(expectedURI)) {
+        sendError("URL mismatches");
+        return;
+      }
+    }
+
+    let sandbox = new Cu.Sandbox([content], {
+      sandboxPrototype: content,
+      sandboxName: "browser-api-execute-script",
+      allowWaivers: false,
+      sameZoneAs: content
+    });
+
+    try {
+      let sandboxRv = Cu.evalInSandbox(data.json.args.script, sandbox, "1.8");
+      if (sandboxRv instanceof Promise) {
+        sandboxRv.then(rv => {
+          if (isJSON(rv)) {
+            sendSuccess(rv);
+          } else {
+            sendError("Value returned (resolve) by promise is not a valid JSON object");
+          }
+        }, error => {
+          if (isJSON(error)) {
+            sendError(error);
+          } else {
+            sendError("Value returned (reject) by promise is not a valid JSON object");
+          }
+        });
+      } else {
+        if (isJSON(sandboxRv)) {
+          sendSuccess(sandboxRv);
+        } else {
+          sendError("Script last expression must be a promise or a JSON object");
+        }
+      }
+    } catch(e) {
+      sendError(e.toString());
+    }
+  },
+
   _recvGetContentDimensions: function(data) {
     debug("Received getContentDimensions message: (" + data.json.id + ")");
     sendAsyncMsg('got-contentdimensions', {
@@ -949,11 +1118,24 @@ BrowserElementChild.prototype = {
   },
 
   _mozScrollAreaChanged: function(e) {
-    let dimensions = this._getContentDimensions();
     sendAsyncMsg('scrollareachanged', {
-      width: dimensions.width,
-      height: dimensions.height
+      width: e.width,
+      height: e.height
     });
+  },
+
+  _mozRequestedDOMFullscreen: function(e) {
+    sendAsyncMsg("requested-dom-fullscreen");
+  },
+
+  _mozFullscreenOriginChange: function(e) {
+    sendAsyncMsg("fullscreen-origin-change", {
+      originNoSuffix: e.target.nodePrincipal.originNoSuffix
+    });
+  },
+
+  _mozExitDomFullscreen: function(e) {
+    sendAsyncMsg("exit-dom-fullscreen");
   },
 
   _getContentDimensions: function() {
@@ -1057,31 +1239,54 @@ BrowserElementChild.prototype = {
 
   _recvFireCtxCallback: function(data) {
     debug("Received fireCtxCallback message: (" + data.json.menuitem + ")");
-    // We silently ignore if the embedder uses an incorrect id in the callback
-    if (data.json.menuitem in this._ctxHandlers) {
+
+    if (data.json.menuitem == 'copy-image') {
+      // Set command
+      data.json.command = 'copyImage';
+      this._recvDoCommand(data);
+    } else if (data.json.menuitem == 'copy-link') {
+      // Set command
+      data.json.command = 'copyLink';
+      this._recvDoCommand(data);
+    } else if (data.json.menuitem in this._ctxHandlers) {
       this._ctxHandlers[data.json.menuitem].click();
       this._ctxHandlers = {};
     } else {
+      // We silently ignore if the embedder uses an incorrect id in the callback
       debug("Ignored invalid contextmenu invocation");
     }
   },
 
-  _buildMenuObj: function(menu, idPrefix) {
+  _buildMenuObj: function(menu, idPrefix, copyableElements) {
     var menuObj = {type: 'menu', items: []};
-    this._maybeCopyAttribute(menu, menuObj, 'label');
+    // Customized context menu
+    if (menu) {
+      this._maybeCopyAttribute(menu, menuObj, 'label');
 
-    for (var i = 0, child; child = menu.children[i++];) {
-      if (child.nodeName === 'MENU') {
-        menuObj.items.push(this._buildMenuObj(child, idPrefix + i + '_'));
-      } else if (child.nodeName === 'MENUITEM') {
-        var id = this._ctxCounter + '_' + idPrefix + i;
-        var menuitem = {id: id, type: 'menuitem'};
-        this._maybeCopyAttribute(child, menuitem, 'label');
-        this._maybeCopyAttribute(child, menuitem, 'icon');
-        this._ctxHandlers[id] = child;
-        menuObj.items.push(menuitem);
+      for (var i = 0, child; child = menu.children[i++];) {
+        if (child.nodeName === 'MENU') {
+          menuObj.items.push(this._buildMenuObj(child, idPrefix + i + '_', false));
+        } else if (child.nodeName === 'MENUITEM') {
+          var id = this._ctxCounter + '_' + idPrefix + i;
+          var menuitem = {id: id, type: 'menuitem'};
+          this._maybeCopyAttribute(child, menuitem, 'label');
+          this._maybeCopyAttribute(child, menuitem, 'icon');
+          this._ctxHandlers[id] = child;
+          menuObj.items.push(menuitem);
+        }
       }
     }
+    // Note: Display "Copy Link" first in order to make sure "Copy Image" is
+    //       put together with other image options if elem is an image link.
+    // "Copy Link" menu item
+    if (copyableElements.link) {
+      menuObj.items.push({id: 'copy-link'});
+    }
+    // "Copy Image" menu item
+    if (copyableElements.image) {
+      menuObj.items.push({id: 'copy-image'});
+    }
+
     return menuObj;
   },
 
@@ -1154,6 +1359,32 @@ BrowserElementChild.prototype = {
     });
   },
 
+  _recvMute: function(data) {
+    this._windowUtils.audioMuted = true;
+  },
+
+  _recvUnmute: function(data) {
+    this._windowUtils.audioMuted = false;
+  },
+
+  _recvGetMuted: function(data) {
+    sendAsyncMsg('got-muted', {
+      id: data.json.id,
+      successRv: this._windowUtils.audioMuted
+    });
+  },
+
+  _recvSetVolume: function(data) {
+    this._windowUtils.audioVolume = data.json.volume;
+  },
+
+  _recvGetVolume: function(data) {
+    sendAsyncMsg('got-volume', {
+      id: data.json.id,
+      successRv: this._windowUtils.audioVolume
+    });
+  },
+
   _recvGoBack: function(data) {
     try {
       docShell.QueryInterface(Ci.nsIWebNavigation).goBack();
@@ -1196,6 +1427,106 @@ BrowserElementChild.prototype = {
       this._selectionStateChangedTarget = null;
       docShell.doCommand(COMMAND_MAP[data.json.command]);
     }
+  },
+
+  _recvGetAudioChannelVolume: function(data) {
+    debug("Received getAudioChannelVolume message: (" + data.json.id + ")");
+
+    let volume = acs.getAudioChannelVolume(content,
+                                           data.json.args.audioChannel);
+    sendAsyncMsg('got-audio-channel-volume', {
+      id: data.json.id, successRv: volume
+    });
+  },
+
+  _recvSetAudioChannelVolume: function(data) {
+    debug("Received setAudioChannelVolume message: (" + data.json.id + ")");
+
+    acs.setAudioChannelVolume(content,
+                              data.json.args.audioChannel,
+                              data.json.args.volume);
+    sendAsyncMsg('got-set-audio-channel-volume', {
+      id: data.json.id, successRv: true
+    });
+  },
+
+  _recvGetAudioChannelMuted: function(data) {
+    debug("Received getAudioChannelMuted message: (" + data.json.id + ")");
+
+    let muted = acs.getAudioChannelMuted(content, data.json.args.audioChannel);
+    sendAsyncMsg('got-audio-channel-muted', {
+      id: data.json.id, successRv: muted
+    });
+  },
+
+  _recvSetAudioChannelMuted: function(data) {
+    debug("Received setAudioChannelMuted message: (" + data.json.id + ")");
+
+    acs.setAudioChannelMuted(content, data.json.args.audioChannel,
+                             data.json.args.muted);
+    sendAsyncMsg('got-set-audio-channel-muted', {
+      id: data.json.id, successRv: true
+    });
+  },
+
+  _recvIsAudioChannelActive: function(data) {
+    debug("Received isAudioChannelActive message: (" + data.json.id + ")");
+
+    let active = acs.isAudioChannelActive(content, data.json.args.audioChannel);
+    sendAsyncMsg('got-is-audio-channel-active', {
+      id: data.json.id, successRv: active
+    });
+  },
+
+  _initFinder: function() {
+    if (!this._finder) {
+      try {
+        this._findLimit = Services.prefs.getIntPref("accessibility.typeaheadfind.matchesCountLimit");
+      } catch (e) {
+        // Pref not available, assume 0, no match counting.
+        this._findLimit = 0;
+      }
+
+      let {Finder} = Components.utils.import("resource://gre/modules/Finder.jsm", {});
+      this._finder = new Finder(docShell);
+      this._finder.addResultListener({
+        onMatchesCountResult: (data) => {
+          sendAsyncMsg('findchange', {
+            active: true,
+            searchString: this._finder.searchString,
+            searchLimit: this._findLimit,
+            activeMatchOrdinal: data.current,
+            numberOfMatches: data.total
+          });
+        }
+      });
+    }
+  },
+
+  _recvFindAll: function(data) {
+    this._initFinder();
+    let searchString = data.json.searchString;
+    this._finder.caseSensitive = data.json.caseSensitive;
+    this._finder.fastFind(searchString, false, false);
+    this._finder.requestMatchesCount(searchString, this._findLimit, false);
+  },
+
+  _recvFindNext: function(data) {
+    if (!this._finder) {
+      debug("findNext() called before findAll()");
+      return;
+    }
+    this._finder.findAgain(data.json.backward, false, false);
+    this._finder.requestMatchesCount(this._finder.searchString, this._findLimit, false);
+  },
+
+  _recvClearMatch: function(data) {
+    if (!this._finder) {
+      debug("clearMach() called before findAll()");
+      return;
+    }
+    this._finder.removeSelection();
+    sendAsyncMsg('findchange', {active: false});
   },
 
   _recvSetInputMethodActive: function(data) {
@@ -1386,24 +1717,54 @@ BrowserElementChild.prototype = {
         return;
       }
 
-      var stateDesc;
+      var securityStateDesc;
       if (state & Ci.nsIWebProgressListener.STATE_IS_SECURE) {
-        stateDesc = 'secure';
+        securityStateDesc = 'secure';
       }
       else if (state & Ci.nsIWebProgressListener.STATE_IS_BROKEN) {
-        stateDesc = 'broken';
+        securityStateDesc = 'broken';
       }
       else if (state & Ci.nsIWebProgressListener.STATE_IS_INSECURE) {
-        stateDesc = 'insecure';
+        securityStateDesc = 'insecure';
       }
       else {
         debug("Unexpected securitychange state!");
-        stateDesc = '???';
+        securityStateDesc = '???';
+      }
+
+      var trackingStateDesc;
+      if (state & Ci.nsIWebProgressListener.STATE_LOADED_TRACKING_CONTENT) {
+        trackingStateDesc = 'loaded_tracking_content';
+      }
+      else if (state & Ci.nsIWebProgressListener.STATE_BLOCKED_TRACKING_CONTENT) {
+        trackingStateDesc = 'blocked_tracking_content';
+      }
+
+      var mixedStateDesc;
+      if (state & Ci.nsIWebProgressListener.STATE_BLOCKED_MIXED_ACTIVE_CONTENT) {
+        mixedStateDesc = 'blocked_mixed_active_content';
+      }
+      else if (state & Ci.nsIWebProgressListener.STATE_LOADED_MIXED_ACTIVE_CONTENT) {
+        // Note that STATE_LOADED_MIXED_ACTIVE_CONTENT implies STATE_IS_BROKEN
+        mixedStateDesc = 'loaded_mixed_active_content';
       }
 
       var isEV = !!(state & Ci.nsIWebProgressListener.STATE_IDENTITY_EV_TOPLEVEL);
+      var isTrackingContent = !!(state &
+        (Ci.nsIWebProgressListener.STATE_BLOCKED_TRACKING_CONTENT |
+        Ci.nsIWebProgressListener.STATE_LOADED_TRACKING_CONTENT));
+      var isMixedContent = !!(state &
+        (Ci.nsIWebProgressListener.STATE_BLOCKED_MIXED_ACTIVE_CONTENT |
+        Ci.nsIWebProgressListener.STATE_LOADED_MIXED_ACTIVE_CONTENT));
 
-      sendAsyncMsg('securitychange', { state: stateDesc, extendedValidation: isEV });
+      sendAsyncMsg('securitychange', {
+        state: securityStateDesc,
+        trackingState: trackingStateDesc,
+        mixedState: mixedStateDesc,
+        extendedValidation: isEV,
+        trackingContent: isTrackingContent,
+        mixedContent: isMixedContent,
+      });
     },
 
     onStatusChange: function(webProgress, request, status, message) {},
@@ -1424,5 +1785,13 @@ BrowserElementChild.prototype = {
   }
 };
 
-var api = new BrowserElementChild();
-
+var api = null;
+if ('DoPreloadPostfork' in this && typeof this.DoPreloadPostfork === 'function') {
+  // If we are preloaded, instantiate BrowserElementChild after a content
+  // process is forked.
+  this.DoPreloadPostfork(function() {
+    api = new BrowserElementChild();
+  });
+} else {
+  api = new BrowserElementChild();
+}

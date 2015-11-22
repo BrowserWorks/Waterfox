@@ -23,7 +23,6 @@ TEST_HARNESS_BINS := \
   certutil$(BIN_SUFFIX) \
   pk12util$(BIN_SUFFIX) \
   BadCertServer$(BIN_SUFFIX) \
-  ClientAuthServer$(BIN_SUFFIX) \
   OCSPStaplingServer$(BIN_SUFFIX) \
   GenerateOCSPResponse$(BIN_SUFFIX) \
   fix_stack_using_bpsyms.py \
@@ -33,7 +32,6 @@ ifeq ($(OS_ARCH),WINNT)
 TEST_HARNESS_BINS += \
   crashinject$(BIN_SUFFIX) \
   crashinjectdll$(DLL_SUFFIX) \
-  vmwarerecordinghelper$(DLL_SUFFIX) \
   $(NULL)
 endif
 
@@ -45,8 +43,10 @@ ifeq ($(OS_ARCH),Linux)
 TEST_HARNESS_BINS += fix_linux_stack.py
 endif
 
-ifeq (gtk2_1,$(MOZ_WIDGET_TOOLKIT)_$(MOZ_X11))
+ifdef MOZ_X11
+ifneq (,$(filter gtk%,$(MOZ_WIDGET_TOOLKIT)))
 TEST_HARNESS_BINS += screentopng
+endif
 endif
 
 ifeq (windows,$(MOZ_WIDGET_TOOLKIT))
@@ -71,12 +71,16 @@ ifeq (Darwin,$(OS_TARGET))
 TEST_HARNESS_PLUGINS := \
   Test.plugin/ \
   SecondTest.plugin/ \
+  ThirdTest.plugin/ \
+  npswftest.plugin/ \
   JavaTest.plugin/
 else
 TEST_HARNESS_PLUGINS := \
   $(DLL_PREFIX)nptest$(DLL_SUFFIX) \
   $(DLL_PREFIX)npsecondtest$(DLL_SUFFIX) \
-  $(DLL_PREFIX)nptestjava$(DLL_SUFFIX)
+  $(DLL_PREFIX)npthirdtest$(DLL_SUFFIX) \
+  $(DLL_PREFIX)nptestjava$(DLL_SUFFIX) \
+  $(DLL_PREFIX)npswftest$(DLL_SUFFIX)
 endif
 
 # Rules for staging the necessary harness bits for a test package

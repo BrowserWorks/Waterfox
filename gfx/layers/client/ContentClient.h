@@ -12,7 +12,7 @@
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "mozilla/Assertions.h"         // for MOZ_CRASH
 #include "mozilla/Attributes.h"         // for override
-#include "mozilla/RefPtr.h"             // for RefPtr, TemporaryRef
+#include "mozilla/RefPtr.h"             // for RefPtr, already_AddRefed
 #include "mozilla/gfx/Point.h"          // for IntSize
 #include "mozilla/layers/CompositableClient.h"  // for CompositableClient
 #include "mozilla/layers/CompositableForwarder.h"
@@ -31,7 +31,7 @@
 namespace mozilla {
 namespace gfx {
 class DrawTarget;
-}
+} // namespace gfx
 
 namespace layers {
 
@@ -78,7 +78,7 @@ public:
    * message will be sent to the compositor to create a corresponding content
    * host.
    */
-  static TemporaryRef<ContentClient> CreateContentClient(CompositableForwarder* aFwd);
+  static already_AddRefed<ContentClient> CreateContentClient(CompositableForwarder* aFwd);
 
   explicit ContentClient(CompositableForwarder* aForwarder)
   : CompositableClient(aForwarder)
@@ -259,6 +259,11 @@ public:
   virtual void CreateBuffer(ContentType aType, const gfx::IntRect& aRect, uint32_t aFlags,
                             RefPtr<gfx::DrawTarget>* aBlackDT, RefPtr<gfx::DrawTarget>* aWhiteDT) override;
 
+  virtual TextureFlags ExtraTextureFlags() const
+  {
+    return TextureFlags::NO_FLAGS;
+  }
+
 protected:
   void DestroyBuffers();
 
@@ -390,11 +395,16 @@ public:
 
   virtual TextureInfo GetTextureInfo() const override
   {
-    return TextureInfo(CompositableType::CONTENT_SINGLE, mTextureFlags);
+    return TextureInfo(CompositableType::CONTENT_SINGLE, mTextureFlags | ExtraTextureFlags());
+  }
+
+  virtual TextureFlags ExtraTextureFlags() const override
+  {
+    return TextureFlags::IMMEDIATE_UPLOAD;
   }
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif

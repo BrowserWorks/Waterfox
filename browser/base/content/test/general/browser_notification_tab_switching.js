@@ -4,17 +4,17 @@
 
 "use strict";
 
-let tab;
-let notification;
-let notificationURL = "http://example.org/browser/browser/base/content/test/general/file_dom_notifications.html";
-let newWindowOpenedFromTab;
+var tab;
+var notification;
+var notificationURL = "http://example.org/browser/browser/base/content/test/general/file_dom_notifications.html";
+var newWindowOpenedFromTab;
 
 function test () {
   waitForExplicitFinish();
 
   let pm = Services.perms;
   registerCleanupFunction(function() {
-    pm.remove(notificationURL, "desktop-notification");
+    pm.remove(makeURI(notificationURL), "desktop-notification");
     gBrowser.removeTab(tab);
     window.restore();
   });

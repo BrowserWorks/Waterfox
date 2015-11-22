@@ -8,7 +8,7 @@
 
 #include "MediaStreamGraph.h"
 #include "mozilla/dom/AudioNodeBinding.h"
-#include "AudioSegment.h"
+#include "AudioBlock.h"
 
 namespace mozilla {
 
@@ -16,7 +16,7 @@ namespace dom {
 struct ThreeDPoint;
 class AudioParamTimeline;
 class AudioContext;
-}
+} // namespace dom
 
 class ThreadSharedFloatArrayBufferList;
 class AudioNodeEngine;
@@ -41,17 +41,38 @@ public:
 
   enum { AUDIO_TRACK = 1 };
 
-  typedef nsAutoTArray<AudioChunk, 1> OutputChunks;
+  typedef nsAutoTArray<AudioBlock, 1> OutputChunks;
 
+  // Flags re main thread updates and stream output.
+  typedef unsigned Flags;
+  enum : Flags {
+    NO_STREAM_FLAGS = 0U,
+    NEED_MAIN_THREAD_FINISHED = 1U << 0,
+    NEED_MAIN_THREAD_CURRENT_TIME = 1U << 1,
+    // Internal AudioNodeStreams can only pass their output to another
+    // AudioNode, whereas external AudioNodeStreams can pass their output
+    // to other ProcessedMediaStreams or hardware audio output.
+    EXTERNAL_OUTPUT = 1U << 2,
+  };
+  /**
+   * Create a stream that will process audio for an AudioNode.
+   * Takes ownership of aEngine.
+   * If aGraph is non-null, use that as the MediaStreamGraph, otherwise use
+   * aCtx's graph. aGraph is only non-null when called for AudioDestinationNode
+   * since the context's graph hasn't been set up in that case.
+   */
+  static already_AddRefed<AudioNodeStream>
+  Create(AudioContext* aCtx, AudioNodeEngine* aEngine, Flags aKind,
+         MediaStreamGraph* aGraph = nullptr);
+
+protected:
   /**
    * Transfers ownership of aEngine to the new AudioNodeStream.
    */
   AudioNodeStream(AudioNodeEngine* aEngine,
-                  MediaStreamGraph::AudioNodeStreamKind aKind,
-                  TrackRate aSampleRate,
-                  AudioContext::AudioContextId aContextId);
+                  Flags aFlags,
+                  TrackRate aSampleRate);
 
-protected:
   ~AudioNodeStream();
 
 public:
@@ -111,19 +132,13 @@ public:
   }
   virtual bool MainThreadNeedsUpdates() const override
   {
-    // Only source and external streams need updates on the main thread.
-    return (mKind == MediaStreamGraph::SOURCE_STREAM && mFinished) ||
-           mKind == MediaStreamGraph::EXTERNAL_STREAM;
-  }
-  virtual bool IsIntrinsicallyConsumed() const override
-  {
-    return true;
+    return ((mFlags & NEED_MAIN_THREAD_FINISHED) && mFinished) ||
+      (mFlags & NEED_MAIN_THREAD_CURRENT_TIME);
   }
 
   // Any thread
   AudioNodeEngine* Engine() { return mEngine; }
   TrackRate SampleRate() const { return mSampleRate; }
-  AudioContext::AudioContextId AudioContextId() const override { return mAudioContextId; }
 
   /**
    * Convert a time in seconds on the destination stream to ticks
@@ -152,29 +167,31 @@ public:
 
 
 protected:
+  virtual void DestroyImpl() override;
+
   void AdvanceOutputSegment();
   void FinishOutput();
-  void AccumulateInputChunk(uint32_t aInputIndex, const AudioChunk& aChunk,
-                            AudioChunk* aBlock,
+  void AccumulateInputChunk(uint32_t aInputIndex, const AudioBlock& aChunk,
+                            AudioBlock* aBlock,
                             nsTArray<float>* aDownmixBuffer);
-  void UpMixDownMixChunk(const AudioChunk* aChunk, uint32_t aOutputChannelCount,
-                         nsTArray<const void*>& aOutputChannels,
+  void UpMixDownMixChunk(const AudioBlock* aChunk, uint32_t aOutputChannelCount,
+                         nsTArray<const float*>& aOutputChannels,
                          nsTArray<float>& aDownmixBuffer);
 
   uint32_t ComputedNumberOfChannels(uint32_t aInputChannelCount);
-  void ObtainInputBlock(AudioChunk& aTmpChunk, uint32_t aPortIndex);
+  void ObtainInputBlock(AudioBlock& aTmpChunk, uint32_t aPortIndex);
 
   // The engine that will generate output for this node.
   nsAutoPtr<AudioNodeEngine> mEngine;
+  // The mixed input blocks are kept from iteration to iteration to avoid
+  // reallocating channel data arrays and any buffers for mixing.
+  OutputChunks mInputChunks;
   // The last block produced by this node.
   OutputChunks mLastChunks;
   // The stream's sampling rate
   const TrackRate mSampleRate;
-  // This is necessary to be able to find all the nodes for a given
-  // AudioContext. It is set on the main thread, in the constructor.
-  const AudioContext::AudioContextId mAudioContextId;
   // Whether this is an internal or external stream
-  const MediaStreamGraph::AudioNodeStreamKind mKind;
+  const Flags mFlags;
   // The number of input channels that this stream requires. 0 means don't care.
   uint32_t mNumberOfInputChannels;
   // The mixing modes
@@ -189,6 +206,6 @@ protected:
   bool mPassThrough;
 };
 
-}
+} // namespace mozilla
 
 #endif /* MOZILLA_AUDIONODESTREAM_H_ */

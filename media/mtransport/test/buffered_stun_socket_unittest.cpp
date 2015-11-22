@@ -59,11 +59,12 @@ class BufferedStunSocketTest : public ::testing::Test {
     int r = nr_socket_buffered_stun_create(
         dummy->get_nr_socket(),
         kStunMessageLen,
+        TURN_TCP_FRAMING,
         &test_socket_);
     ASSERT_EQ(0, r);
     dummy_ = dummy.forget();  // Now owned by test_socket_.
 
-    r = nr_ip4_str_port_to_transport_addr(
+    r = nr_str_port_to_transport_addr(
         (char *)"192.0.2.133", 3333, IPPROTO_TCP, &remote_addr_);
     ASSERT_EQ(0, r);
 
@@ -183,7 +184,7 @@ TEST_F(BufferedStunSocketTest, TestSendToReject) {
 TEST_F(BufferedStunSocketTest, TestSendToWrongAddr) {
   nr_transport_addr addr;
 
-  int r = nr_ip4_str_port_to_transport_addr(
+  int r = nr_str_port_to_transport_addr(
       (char *)"192.0.2.134", 3333, IPPROTO_TCP, &addr);
   ASSERT_EQ(0, r);
 

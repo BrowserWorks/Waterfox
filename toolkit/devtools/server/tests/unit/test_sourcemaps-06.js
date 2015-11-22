@@ -10,7 +10,7 @@ var gDebuggee;
 var gClient;
 var gThreadClient;
 
-Components.utils.import("resource:///modules/devtools/SourceMap.jsm");
+const {SourceNode} = require("source-map");
 
 function run_test()
 {
@@ -30,11 +30,11 @@ function test_source_content()
 {
   let numNewSources = 0;
 
-  gClient.addListener("newSource", function _onNewSource(aEvent, aPacket) {
+  gThreadClient.addListener("newSource", function _onNewSource(aEvent, aPacket) {
     if (++numNewSources !== 3) {
       return;
     }
-    gClient.removeListener("newSource", _onNewSource);
+    gThreadClient.removeListener("newSource", _onNewSource);
 
     gThreadClient.getSources(function (aResponse) {
       do_check_true(!aResponse.error, "Should not get an error");

@@ -2,24 +2,22 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
- * Tests that the JIT Optimizations view does not display information
+ * Tests that the OptimizationsListView does not display information
  * for meta nodes when viewing "content only".
  */
 
-const { CATEGORY_MASK } = devtools.require("devtools/performance/global");
-const RecordingUtils = devtools.require("devtools/performance/recording-utils");
-
 Services.prefs.setBoolPref(INVERT_PREF, false);
 Services.prefs.setBoolPref(PLATFORM_DATA_PREF, false);
+var { CATEGORY_MASK } = require("devtools/performance/global");
 
-function spawnTest () {
+function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let { EVENTS, $, $$, window, PerformanceController } = panel.panelWin;
-  let { OverviewView, DetailsView, JITOptimizationsView, JsCallTreeView, RecordingsView } = panel.panelWin;
+  let { OverviewView, DetailsView, OptimizationsListView, JsCallTreeView, RecordingsView } = panel.panelWin;
 
   let profilerData = { threads: [gThread] };
 
-  is(Services.prefs.getBoolPref(JIT_PREF), false, "show JIT Optimizations pref off by default");
+  Services.prefs.setBoolPref(JIT_PREF, true);
 
   // Make two recordings, so we have one to switch to later, as the
   // second one will have fake sample data
@@ -33,16 +31,15 @@ function spawnTest () {
 
   yield injectAndRenderProfilerData();
 
-  Services.prefs.setBoolPref(JIT_PREF, true);
   // Click the frame
-  let rendered = once(JITOptimizationsView, EVENTS.OPTIMIZATIONS_RENDERED);
+  let rendered = once(OptimizationsListView, EVENTS.OPTIMIZATIONS_RENDERED);
   mousedown(window, $$(".call-tree-item")[2]);
   yield rendered;
 
   ok($("#jit-optimizations-view").classList.contains("empty"),
     "platform meta frame shows as empty");
 
-  let { $headerName, $headerLine, $headerFile } = JITOptimizationsView;
+  let { $headerName, $headerLine, $headerFile } = OptimizationsListView;
   ok(!$headerName.hidden, "header function name should be shown");
   ok($headerLine.hidden, "header line should be hidden");
   ok($headerFile.hidden, "header file should be hidden");
@@ -61,24 +58,21 @@ function spawnTest () {
 
     // Force a rerender
     let rendered = once(JsCallTreeView, EVENTS.JS_CALL_TREE_RENDERED);
-    JsCallTreeView.render();
+    JsCallTreeView.render(OverviewView.getTimeInterval());
     yield rendered;
 
-    Services.prefs.setBoolPref(JIT_PREF, true);
     ok($("#jit-optimizations-view").classList.contains("empty"),
       "JIT Optimizations view has empty message when no frames selected.");
-
-     Services.prefs.setBoolPref(JIT_PREF, false);
   }
 }
 
-let gUniqueStacks = new RecordingUtils.UniqueStacks();
+var gUniqueStacks = new RecordingUtils.UniqueStacks();
 
 function uniqStr(s) {
   return gUniqueStacks.getOrAddStringIndex(s);
 }
 
-let gThread = RecordingUtils.deflateThread({
+var gThread = RecordingUtils.deflateThread({
   samples: [{
     time: 0,
     frames: [
@@ -102,7 +96,7 @@ let gThread = RecordingUtils.deflateThread({
 }, gUniqueStacks);
 
 // 3 RawOptimizationSites
-let gRawSite1 = {
+var gRawSite1 = {
   line: 12,
   column: 2,
   types: [{
@@ -130,7 +124,7 @@ let gRawSite1 = {
   }
 };
 
-let gRawSite2 = {
+var gRawSite2 = {
   line: 22,
   types: [{
     mirType: uniqStr("Int32"),

@@ -10,12 +10,8 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-function ok(passed, text) {
-  do_report_result(passed, text, Components.stack.caller, false);
-}
-
 // Make the timer global so it doesn't get GC'd
-let gTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+var gTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 
 function sleep(wait) {
   return new Promise((resolve, reject) => {
@@ -56,7 +52,7 @@ function promiseLoadEvent(browser, url, eventType="load") {
 const PENDING_VISIT_WAIT = 4000;
 
 // Manage the saved history visits so we can compare in the tests
-let gVisitURLs = [];
+var gVisitURLs = [];
 function visitObserver(subject, topic, data) {
   let uri = subject.QueryInterface(Ci.nsIURI);
   do_print("Observer: " + uri.spec);
@@ -64,7 +60,7 @@ function visitObserver(subject, topic, data) {
 };
 
 // Track the <browser> where the tests are happening
-let gBrowser;
+var gBrowser;
 
 add_test(function setup_browser() {
   let chromeWin = Services.wm.getMostRecentWindow("navigator:browser");
@@ -72,7 +68,7 @@ add_test(function setup_browser() {
 
   do_register_cleanup(function cleanup() {
     Services.obs.removeObserver(visitObserver, "link-visited");
-    BrowserApp.closeTab(BrowserApp.getTabForBrowser(browser));
+    BrowserApp.closeTab(BrowserApp.getTabForBrowser(gBrowser));
   });
 
   Services.obs.addObserver(visitObserver, "link-visited", false);

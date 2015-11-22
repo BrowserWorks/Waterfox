@@ -21,7 +21,7 @@ const PREF_LOG_LEVEL_DUMP = "identity.fxaccounts.log.appender.dump";
 // identifiable info, credentials, etc) will be logged.
 const PREF_LOG_SENSITIVE_DETAILS = "identity.fxaccounts.log.sensitive";
 
-let exports = Object.create(null);
+var exports = Object.create(null);
 
 XPCOMUtils.defineLazyGetter(exports, 'log', function() {
   let log = Log.repository.getLogger("FirefoxAccounts");
@@ -66,7 +66,6 @@ exports.FXACCOUNTS_PERMISSION = "firefox-accounts";
 
 exports.DATA_FORMAT_VERSION = 1;
 exports.DEFAULT_STORAGE_FILENAME = "signedInUser.json";
-exports.DEFAULT_OAUTH_TOKENS_FILENAME = "signedInUserOAuthTokens.json";
 
 // Token life times.
 // Having this parameter be short has limited security value and can cause
@@ -177,6 +176,7 @@ exports.ERROR_OFFLINE                        = "OFFLINE";
 exports.ERROR_PERMISSION_DENIED              = "PERMISSION_DENIED";
 exports.ERROR_REQUEST_BODY_TOO_LARGE         = "REQUEST_BODY_TOO_LARGE";
 exports.ERROR_SERVER_ERROR                   = "SERVER_ERROR";
+exports.ERROR_SYNC_DISABLED                  = "SYNC_DISABLED";
 exports.ERROR_TOO_MANY_CLIENT_REQUESTS       = "TOO_MANY_CLIENT_REQUESTS";
 exports.ERROR_SERVICE_TEMP_UNAVAILABLE       = "SERVICE_TEMPORARY_UNAVAILABLE";
 exports.ERROR_UI_ERROR                       = "UI_ERROR";
@@ -212,12 +212,22 @@ exports.ERROR_MSG_METHOD_NOT_ALLOWED         = "METHOD_NOT_ALLOWED";
 
 // FxAccounts has the ability to "split" the credentials between a plain-text
 // JSON file in the profile dir and in the login manager.
-// These constants relate to that.
+// In order to prevent new fields accidentally ending up in the "wrong" place,
+// all fields stored are listed here.
 
 // The fields we save in the plaintext JSON.
 // See bug 1013064 comments 23-25 for why the sessionToken is "safe"
-exports.FXA_PWDMGR_PLAINTEXT_FIELDS = ["email", "verified", "authAt",
-                                       "sessionToken", "uid"];
+exports.FXA_PWDMGR_PLAINTEXT_FIELDS = new Set(
+  ["email", "verified", "authAt", "sessionToken", "uid", "oauthTokens", "profile"]);
+
+// Fields we store in secure storage if it exists.
+exports.FXA_PWDMGR_SECURE_FIELDS = new Set(
+  ["kA", "kB", "keyFetchToken", "unwrapBKey", "assertion"]);
+
+// Fields we keep in memory and don't persist anywhere.
+exports.FXA_PWDMGR_MEMORY_FIELDS = new Set(
+  ["cert", "keyPair"]);
+
 // The pseudo-host we use in the login manager
 exports.FXA_PWDMGR_HOST = "chrome://FirefoxAccounts";
 // The realm we use in the login manager.

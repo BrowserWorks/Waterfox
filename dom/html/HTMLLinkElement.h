@@ -61,16 +61,9 @@ public:
                               bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep = true,
                               bool aNullParent = true) override;
-  nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                   const nsAString& aValue, bool aNotify)
-  {
-    return SetAttr(aNameSpaceID, aName, nullptr, aValue, aNotify);
-  }
-  virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) override;
-  virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify) override;
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
+                                const nsAttrValue* aValue,
+                                bool aNotify) override;
   virtual bool IsLink(nsIURI** aURI) const override;
   virtual already_AddRefed<nsIURI> GetHrefURI() const override;
 
@@ -142,6 +135,14 @@ public:
   void SetTarget(const nsAString& aTarget, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::target, aTarget, aRv);
+  }
+  void GetIntegrity(nsAString& aIntegrity) const
+  {
+    GetHTMLAttr(nsGkAtoms::integrity, aIntegrity);
+  }
+  void SetIntegrity(const nsAString& aIntegrity, ErrorResult& aRv)
+  {
+    SetHTMLAttr(nsGkAtoms::integrity, aIntegrity, aRv);
   }
 
   already_AddRefed<nsIDocument> GetImport();

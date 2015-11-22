@@ -3,18 +3,19 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-///////////////////
-//
 // Whitelisting this test.
 // As part of bug 1077403, the leaking uncaught rejection should be fixed.
-//
+
+"use strict";
+
 thisTestLeaksUncaughtRejectionsAndShouldBeFixed("null");
 
 // Test the webconsole output for DOM events.
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-console-output-events.html";
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-console-output-events.html";
 
-let test = asyncTest(function* () {
+var test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();

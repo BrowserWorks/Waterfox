@@ -79,7 +79,7 @@ void mozilla_dump_image(void* bytes, int width, int height, int bytepp,
 
     RefPtr<DataSourceSurface> surf =
         Factory::CreateWrappingDataSourceSurface((uint8_t*)bytes, strideBytes,
-                                                 gfx::IntSize(width, height),
+                                                 IntSize(width, height),
                                                  format);
     gfxUtils::DumpAsDataURI(surf);
 }
@@ -323,7 +323,7 @@ MapSrcAndCreateMappedDest(DataSourceSurface* srcSurf,
     return true;
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 gfxUtils::CreatePremultipliedDataSurface(DataSourceSurface* srcSurf)
 {
     RefPtr<DataSourceSurface> destSurf;
@@ -331,7 +331,8 @@ gfxUtils::CreatePremultipliedDataSurface(DataSourceSurface* srcSurf)
     DataSourceSurface::MappedSurface destMap;
     if (!MapSrcAndCreateMappedDest(srcSurf, &destSurf, &srcMap, &destMap)) {
         MOZ_ASSERT(false, "MapSrcAndCreateMappedDest failed.");
-        return srcSurf;
+        RefPtr<DataSourceSurface> surface(srcSurf);
+        return surface.forget();
     }
 
     PremultiplyData(srcMap.mData, srcMap.mStride,
@@ -340,10 +341,10 @@ gfxUtils::CreatePremultipliedDataSurface(DataSourceSurface* srcSurf)
                     srcSurf->GetSize().height);
 
     UnmapSrcDest(srcSurf, destSurf);
-    return destSurf;
+    return destSurf.forget();
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 gfxUtils::CreateUnpremultipliedDataSurface(DataSourceSurface* srcSurf)
 {
     RefPtr<DataSourceSurface> destSurf;
@@ -351,7 +352,8 @@ gfxUtils::CreateUnpremultipliedDataSurface(DataSourceSurface* srcSurf)
     DataSourceSurface::MappedSurface destMap;
     if (!MapSrcAndCreateMappedDest(srcSurf, &destSurf, &srcMap, &destMap)) {
         MOZ_ASSERT(false, "MapSrcAndCreateMappedDest failed.");
-        return srcSurf;
+        RefPtr<DataSourceSurface> surface(srcSurf);
+        return surface.forget();
     }
 
     UnpremultiplyData(srcMap.mData, srcMap.mStride,
@@ -360,7 +362,7 @@ gfxUtils::CreateUnpremultipliedDataSurface(DataSourceSurface* srcSurf)
                       srcSurf->GetSize().height);
 
     UnmapSrcDest(srcSurf, destSurf);
-    return destSurf;
+    return destSurf.forget();
 }
 
 void
@@ -389,7 +391,7 @@ IsSafeImageTransformComponent(gfxFloat aValue)
   return aValue >= -32768 && aValue <= 32767;
 }
 
-#ifndef MOZ_GFX_OPTIMIZE_MOBILE
+#if !defined(MOZ_GFX_OPTIMIZE_MOBILE)
 /**
  * This returns the fastest operator to use for solid surfaces which have no
  * alpha channel or their alpha channel is uniformly opaque.
@@ -422,6 +424,12 @@ CreateSamplingRestrictedDrawable(gfxDrawable* aDrawable,
     PROFILER_LABEL("gfxUtils", "CreateSamplingRestricedDrawable",
       js::ProfileEntry::Category::GRAPHICS);
 
+    DrawTarget* destDrawTarget = aContext->GetDrawTarget();
+    if ((destDrawTarget->GetBackendType() == BackendType::DIRECT2D1_1) ||
+        (destDrawTarget->GetBackendType() == BackendType::DIRECT2D)) {
+      return nullptr;
+    }
+
     gfxRect clipExtents = aContext->GetClipExtents();
 
     // Inflate by one pixel because bilinear filtering will sample at most
@@ -438,7 +446,7 @@ CreateSamplingRestrictedDrawable(gfxDrawable* aDrawable,
     if (needed.IsEmpty())
         return nullptr;
 
-    gfxIntSize size(int32_t(needed.Width()), int32_t(needed.Height()));
+    IntSize size(int32_t(needed.Width()), int32_t(needed.Height()));
 
     RefPtr<DrawTarget> target =
       gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(size, aFormat);
@@ -602,6 +610,102 @@ static GraphicsFilter ReduceResamplingFilter(GraphicsFilter aFilter,
 }
 #endif
 
+#ifdef MOZ_WIDGET_COCOA
+// Only prescale a temporary surface if we're going to repeat it often.
+// Scaling is expensive on OS X and without prescaling, we'd scale
+// every tile of the repeated rect. However, using a temp surface also potentially uses
+// more memory if the scaled image is large. So only prescale on a temp
+// surface if we know we're going to repeat the image in either the X or Y axis
+// multiple times.
+static bool
+ShouldUseTempSurface(Rect aImageRect, Rect aNeededRect)
+{
+  int repeatX = aNeededRect.width / aImageRect.width;
+  int repeatY = aNeededRect.height / aImageRect.height;
+  return (repeatX >= 5) || (repeatY >= 5);
+}
+
+static bool
+PrescaleAndTileDrawable(gfxDrawable* aDrawable,
+                        gfxContext* aContext,
+                        const ImageRegion& aRegion,
+                        Rect aImageRect,
+                        const GraphicsFilter& aFilter,
+                        const SurfaceFormat aFormat,
+                        gfxFloat aOpacity)
+{
+  gfxSize scaleFactor = aContext->CurrentMatrix().ScaleFactors(true);
+  gfxMatrix scaleMatrix = gfxMatrix::Scaling(scaleFactor.width, scaleFactor.height);
+  const float fuzzFactor = 0.01;
+
+  // If we aren't scaling or translating, don't go down this path
+  if ((FuzzyEqual(scaleFactor.width, 1.0, fuzzFactor) &&
+      FuzzyEqual(scaleFactor.width, 1.0, fuzzFactor)) ||
+      aContext->CurrentMatrix().HasNonAxisAlignedTransform()) {
+    return false;
+  }
+
+  gfxRect clipExtents = aContext->GetClipExtents();
+
+  // Inflate by one pixel because bilinear filtering will sample at most
+  // one pixel beyond the computed image pixel coordinate.
+  clipExtents.Inflate(1.0);
+
+  gfxRect needed = aRegion.IntersectAndRestrict(clipExtents);
+  Rect scaledNeededRect = ToMatrix(scaleMatrix).TransformBounds(ToRect(needed));
+  scaledNeededRect.RoundOut();
+  if (scaledNeededRect.IsEmpty()) {
+    return false;
+  }
+
+  Rect scaledImageRect = ToMatrix(scaleMatrix).TransformBounds(aImageRect);
+  if (!ShouldUseTempSurface(scaledImageRect, scaledNeededRect)) {
+    return false;
+  }
+
+  gfxIntSize scaledImageSize((int32_t)scaledImageRect.width,
+                             (int32_t)scaledImageRect.height);
+  if (scaledImageSize.width != scaledImageRect.width ||
+      scaledImageSize.height != scaledImageRect.height) {
+    // If the scaled image isn't pixel aligned, we'll get artifacts
+    // so we have to take the slow path.
+    return false;
+  }
+
+  RefPtr<DrawTarget> scaledDT =
+    gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(scaledImageSize, aFormat);
+  if (!scaledDT) {
+    return false;
+  }
+
+  nsRefPtr<gfxContext> tmpCtx = new gfxContext(scaledDT);
+  scaledDT->SetTransform(ToMatrix(scaleMatrix));
+  gfxRect gfxImageRect(aImageRect.x, aImageRect.y, aImageRect.width, aImageRect.height);
+  aDrawable->Draw(tmpCtx, gfxImageRect, true, aFilter, 1.0, gfxMatrix());
+
+  RefPtr<SourceSurface> scaledImage = scaledDT->Snapshot();
+
+  {
+    gfxContextMatrixAutoSaveRestore autoSR(aContext);
+    Matrix withoutScale = ToMatrix(aContext->CurrentMatrix());
+    DrawTarget* destDrawTarget = aContext->GetDrawTarget();
+
+    // The translation still is in scaled units
+    withoutScale.PreScale(1.0 / scaleFactor.width, 1.0 / scaleFactor.height);
+    aContext->SetMatrix(ThebesMatrix(withoutScale));
+
+    DrawOptions drawOptions(aOpacity,
+        CompositionOpForOp(aContext->CurrentOperator()),
+        aContext->CurrentAntialiasMode());
+
+    SurfacePattern scaledImagePattern(scaledImage, ExtendMode::REPEAT,
+                                      Matrix(), ToFilter(aFilter));
+    destDrawTarget->FillRect(scaledNeededRect, scaledImagePattern, drawOptions);
+  }
+  return true;
+}
+#endif // MOZ_WIDGET_COCOA
+
 /* static */ void
 gfxUtils::DrawPixelSnapped(gfxContext*         aContext,
                            gfxDrawable*        aDrawable,
@@ -647,21 +751,29 @@ gfxUtils::DrawPixelSnapped(gfxContext*         aContext,
               return;
             }
 
+#ifdef MOZ_WIDGET_COCOA
+            if (PrescaleAndTileDrawable(aDrawable, aContext, aRegion,
+                                        ToRect(imageRect), aFilter,
+                                        aFormat, aOpacity)) {
+              return;
+            }
+#endif
+
             // On Mobile, we don't ever want to do this; it has the potential for
             // allocating very large temporary surfaces, especially since we'll
             // do full-page snapshots often (see bug 749426).
-#ifndef MOZ_GFX_OPTIMIZE_MOBILE
+#if !defined(MOZ_GFX_OPTIMIZE_MOBILE)
             nsRefPtr<gfxDrawable> restrictedDrawable =
               CreateSamplingRestrictedDrawable(aDrawable, aContext,
                                                aRegion, aFormat);
             if (restrictedDrawable) {
-                drawable.swap(restrictedDrawable);
-            }
+              drawable.swap(restrictedDrawable);
 
-            // We no longer need to tile: Either we never needed to, or we already
-            // filled a surface with the tiled pattern; this surface can now be
-            // drawn without tiling.
-            doTile = false;
+              // We no longer need to tile: Either we never needed to, or we already
+              // filled a surface with the tiled pattern; this surface can now be
+              // drawn without tiling.
+              doTile = false;
+            }
 #endif
         }
     }
@@ -703,7 +815,7 @@ ClipToRegionInternal(gfxContext* aContext, const nsIntRegion& aRegion)
   aContext->Clip();
 }
 
-static TemporaryRef<Path>
+static already_AddRefed<Path>
 PathFromRegionInternal(DrawTarget* aTarget, const nsIntRegion& aRegion)
 {
   RefPtr<PathBuilder> pb = aTarget->CreatePathBuilder();
@@ -717,8 +829,7 @@ PathFromRegionInternal(DrawTarget* aTarget, const nsIntRegion& aRegion)
     pb->LineTo(Point(r->x, r->YMost()));
     pb->Close();
   }
-  RefPtr<Path> path = pb->Finish();
-  return path;
+  return pb->Finish();
 }
 
 static void
@@ -857,7 +968,7 @@ gfxUtils::GfxRectToIntRect(const gfxRect& aIn, IntRect* aOut)
 void
 gfxUtils::GetYCbCrToRGBDestFormatAndSize(const PlanarYCbCrData& aData,
                                          gfxImageFormat& aSuggestedFormat,
-                                         gfxIntSize& aSuggestedSize)
+                                         IntSize& aSuggestedSize)
 {
   YUVType yuvtype =
     TypeFromSize(aData.mYSize.width,
@@ -911,7 +1022,7 @@ gfxUtils::GetYCbCrToRGBDestFormatAndSize(const PlanarYCbCrData& aData,
 void
 gfxUtils::ConvertYCbCrToRGB(const PlanarYCbCrData& aData,
                             const gfxImageFormat& aDestFormat,
-                            const gfxIntSize& aDestSize,
+                            const IntSize& aDestSize,
                             unsigned char* aDestBuffer,
                             int32_t aStride)
 {
@@ -1019,7 +1130,7 @@ gfxUtils::ConvertYCbCrToRGB(const PlanarYCbCrData& aData,
   cairo_destroy(ctx);
 }
 
-/* static */ TemporaryRef<DataSourceSurface>
+/* static */ already_AddRefed<DataSourceSurface>
 gfxUtils::CopySurfaceToDataSourceSurfaceWithFormat(SourceSurface* aSurface,
                                                    SurfaceFormat aFormat)
 {
@@ -1262,7 +1373,7 @@ EncodeSourceSurfaceInternal(SourceSurface* aSurface,
   } else {
     nsCOMPtr<nsIClipboardHelper> clipboard(do_GetService("@mozilla.org/widget/clipboardhelper;1", &rv));
     if (clipboard) {
-      clipboard->CopyString(NS_ConvertASCIItoUTF16(string), nullptr);
+      clipboard->CopyString(NS_ConvertASCIItoUTF16(string));
     }
   }
   return NS_OK;
@@ -1452,10 +1563,14 @@ FILE *gfxUtils::sDumpPaintFile = stderr;
 
 #ifdef MOZ_DUMP_PAINTING
 bool gfxUtils::sDumpPainting = getenv("MOZ_DUMP_PAINT") != 0;
+bool gfxUtils::sDumpPaintingIntermediate = getenv("MOZ_DUMP_PAINT_INTERMEDIATE") != 0;
 bool gfxUtils::sDumpPaintingToFile = getenv("MOZ_DUMP_PAINT_TO_FILE") != 0;
+bool gfxUtils::sDumpPaintItems = getenv("MOZ_DUMP_PAINT_ITEMS") != 0;
 #else
 bool gfxUtils::sDumpPainting = false;
+bool gfxUtils::sDumpPaintingIntermediate = false;
 bool gfxUtils::sDumpPaintingToFile = false;
+bool gfxUtils::sDumpPaintItems = false;
 #endif
 
 namespace mozilla {

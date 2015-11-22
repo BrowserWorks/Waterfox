@@ -23,14 +23,6 @@ var tests = [
     constraints: { audio: { somethingUnknown: { exact: 0 } },
                    fake: true },
     error: null },
-  { message: "video overconstrained by facingMode fails",
-    constraints: { video: { facingMode:{ exact: 'left' } },
-                   fake: true },
-    error: "NotFoundError" },
-  { message: "video overconstrained by facingMode array fails",
-    constraints: { video: { facingMode:{ exact: ['left', 'right'] } },
-                   fake: true },
-    error: "NotFoundError" },
   { message: "audio overconstrained by facingMode ignored",
     constraints: { audio: { facingMode: { exact: 'left' } },
                    fake: true },
@@ -47,9 +39,14 @@ var tests = [
   { message: "browser screensharing requires permission",
     constraints: { video: { mediaSource: 'browser' } },
     error: "PermissionDeniedError" },
-  { message: "unknown mediaSource fails",
+  { message: "unknown mediaSource in video fails",
     constraints: { video: { mediaSource: 'uncle' } },
-    error: "NotFoundError" },
+    error: "OverconstrainedError",
+    constraint: "mediaSource" },
+  { message: "unknown mediaSource in audio fails",
+    constraints: { audio: { mediaSource: 'uncle' } },
+    error: "OverconstrainedError",
+    constraint: "mediaSource" },
   { message: "emtpy constraint fails",
     constraints: { },
     error: "NotSupportedError" },
@@ -73,23 +70,59 @@ var tests = [
     error: null },
 ];
 
+var mustSupport = [
+  'width', 'height', 'frameRate', 'facingMode', 'deviceId',
+// Yet to add:
+//  'aspectRatio', 'frameRate', 'volume', 'sampleRate', 'sampleSize',
+//  'echoCancellation', 'latency', 'groupId'
+
+  // http://fluffy.github.io/w3c-screen-share/#screen-based-video-constraints
+  // OBE by http://w3c.github.io/mediacapture-screen-share
+  'mediaSource',
+
+  // Experimental https://bugzilla.mozilla.org/show_bug.cgi?id=1131568#c3
+  'browserWindow', 'scrollWithPage',
+];
+
 /**
  * Starts the test run by running through each constraint
  * test by verifying that the right resolution and rejection is fired.
  */
 
 runTest(function() {
+
+  // Check supported constraints first.
+  var dict = navigator.mediaDevices.getSupportedConstraints();
+  var supported = Object.keys(dict);
+
+  mustSupport.forEach(key => ok(supported.indexOf(key) != -1 && dict[key],
+                                "Supports " + key));
+
+  var unexpected = supported.filter(key => mustSupport.indexOf(key) == -1);
+  is(unexpected.length, 0,
+     "Unanticipated support (please update test): " + unexpected);
+
+  // Run constraint tests
+
   var p = new Promise(resolve => SpecialPowers.pushPrefEnv({
       set : [ ['media.getusermedia.browser.enabled', false],
               ['media.getusermedia.screensharing.enabled', false] ]
     }, resolve));
 
-  tests.reduce((p, test) =>
+  return tests.reduce((p, test) =>
     p.then(() => navigator.mediaDevices.getUserMedia(test.constraints))
-    .then(() => is(null, test.error, test.message),
-          e => is(e.name, test.error, test.message + ": " + e.message)), p)
-  .catch(e => ok(false, "Unexpected failure: " + e.name + ", " + e.message))
-  .then(SimpleTest.finish);
+    .then(() => is(null, test.error, test.message), e => {
+      is(e.name, test.error, test.message + ": " + e.message);
+      if (test.constraint) {
+        is(e.constraint, test.constraint,
+           test.message + " w/correct constraint.");
+      }
+    }), p)
+    .then(() => navigator.mediaDevices.getUserMedia({video: true, audio: true}))
+    .then(stream => stream.getVideoTracks()[0].applyConstraints({ width: 320 })
+      .then(() => stream.getAudioTracks()[0].applyConstraints({ })))
+    .then(() => ok(true, "applyConstraints code exercised"))
+    // TODO: Test outcome once fake devices support constraints (Bug 1088621)
 });
 
 </script>

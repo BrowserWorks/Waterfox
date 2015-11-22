@@ -5,7 +5,7 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
-let bsp = Cu.import("resource://gre/modules/CrashManager.jsm", this);
+var bsp = Cu.import("resource://gre/modules/CrashManager.jsm", this);
 Cu.import("resource://gre/modules/Promise.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/osfile.jsm", this);
@@ -213,6 +213,10 @@ add_task(function* test_main_crash_event_file() {
   let ac = new TelemetryArchiveTesting.Checker();
   yield ac.promiseInit();
   let theEnvironment = TelemetryEnvironment.currentEnvironment;
+
+  // To test proper escaping, add data to the environment with an embedded
+  // double-quote
+  theEnvironment.testValue = "MyValue\"";
 
   let m = yield getManager();
   yield m.createEventsFile("1", "crash.main.2", DUMMY_DATE, "id1\nk1=v1\nk2=v2\nTelemetryEnvironment=" + JSON.stringify(theEnvironment));

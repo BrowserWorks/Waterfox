@@ -14,6 +14,7 @@
 #include "vm/Debugger.h"
 #include "vm/Runtime.h"
 
+#include "jscompartmentinlines.h"
 #include "jsgcinlines.h"
 
 using namespace js;
@@ -23,6 +24,7 @@ Zone * const Zone::NotOnList = reinterpret_cast<Zone*>(1);
 
 JS::Zone::Zone(JSRuntime* rt)
   : JS::shadow::Zone(rt, &rt->gc.marker),
+    debuggers(nullptr),
     arenas(rt),
     types(this),
     compartments(),
@@ -56,6 +58,7 @@ Zone::~Zone()
     if (this == rt->gc.systemZone)
         rt->gc.systemZone = nullptr;
 
+    js_delete(debuggers);
     js_delete(jitZone_);
 }
 
@@ -73,9 +76,7 @@ Zone::setNeedsIncrementalBarrier(bool needs, ShouldUpdateJit updateJit)
         jitUsingBarriers_ = needs;
     }
 
-    if (needs && runtimeFromMainThread()->isAtomsZone(this))
-        MOZ_ASSERT(!runtimeFromMainThread()->exclusiveThreadsPresent());
-
+    MOZ_ASSERT_IF(needs && isAtomsZone(), !runtimeFromMainThread()->exclusiveThreadsPresent());
     MOZ_ASSERT_IF(needs, canCollect());
     needsIncrementalBarrier_ = needs;
 }
@@ -118,6 +119,42 @@ Zone::beginSweepTypes(FreeOp* fop, bool releaseTypes)
     AutoClearTypeInferenceStateOnOOM oom(this);
     types.beginSweep(fop, releaseTypes, oom);
 }
+
+Zone::DebuggerVector*
+Zone::getOrCreateDebuggers(JSContext* cx)
+{
+    if (debuggers)
+        return debuggers;
+
+    debuggers = js_new<DebuggerVector>();
+    if (!debuggers)
+        ReportOutOfMemory(cx);
+    return debuggers;
+}
+
+void
+Zone::logPromotionsToTenured()
+{
+    auto* dbgs = getDebuggers();
+    if (MOZ_LIKELY(!dbgs))
+        return;
+
+    auto now = JS_GetCurrentEmbedderTime();
+    JSRuntime* rt = runtimeFromAnyThread();
+
+    for (auto** dbgp = dbgs->begin(); dbgp != dbgs->end(); dbgp++) {
+        if (!(*dbgp)->isEnabled() || !(*dbgp)->isTrackingTenurePromotions())
+            continue;
+
+        for (auto range = awaitingTenureLogging.all(); !range.empty(); range.popFront()) {
+            if ((*dbgp)->isDebuggee(range.front()->compartment()))
+                (*dbgp)->logTenurePromotion(rt, *range.front(), now);
+        }
+    }
+
+    awaitingTenureLogging.clear();
+}
+
 
 void
 Zone::sweepBreakpoints(FreeOp* fop)
@@ -249,7 +286,7 @@ Zone::canCollect()
     if (usedByExclusiveThread)
         return false;
     JSRuntime* rt = runtimeFromAnyThread();
-    if (rt->isAtomsZone(this) && rt->exclusiveThreadsPresent())
+    if (isAtomsZone() && rt->exclusiveThreadsPresent())
         return false;
     return true;
 }
@@ -278,15 +315,6 @@ Zone::notifyObservingDebuggers()
             }
         }
     }
-}
-
-JS::Zone*
-js::ZoneOfValue(const JS::Value& value)
-{
-    MOZ_ASSERT(value.isMarkable());
-    if (value.isObject())
-        return value.toObject().zone();
-    return js::gc::TenuredCell::fromPointer(value.toGCThing())->zone();
 }
 
 bool

@@ -78,9 +78,6 @@ BrowserCLH.prototype = {
       if (!uri)
         return;
 
-      // Let's get a head start on opening the network connection to the URI we are about to load
-      Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
-
       let browserWin = Services.wm.getMostRecentWindow("navigator:browser");
       if (browserWin) {
         let whereFlags = pinned ? Ci.nsIBrowserDOMWindow.OPEN_SWITCHTAB : Ci.nsIBrowserDOMWindow.OPEN_NEWTAB;
@@ -93,7 +90,11 @@ BrowserCLH.prototype = {
         };
 
         let flags = "chrome,dialog=no,all";
-        browserWin = openWindow(null, "chrome://browser/content/browser.xul", "_blank", flags, args);
+        let chromeURL = "chrome://browser/content/browser.xul";
+        try {
+          chromeURL = Services.prefs.getCharPref("toolkit.defaultChromeURI");
+        } catch(e) {}
+        browserWin = openWindow(null, chromeURL, "_blank", flags, args);
       }
 
       aCmdLine.preventDefault = true;

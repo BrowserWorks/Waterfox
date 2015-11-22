@@ -8,7 +8,7 @@
 #include "AudioSinkFilter.h"
 #include "AudioSinkInputPin.h"
 #include "VideoUtils.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 
 #include <initguid.h>
@@ -23,12 +23,8 @@ using namespace mozilla::media;
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
 PRLogModuleInfo* GetDirectShowLog();
-#define LOG(...) PR_LOG(GetDirectShowLog(), PR_LOG_DEBUG, (__VA_ARGS__))
-#else
-#define LOG(...)
-#endif
+#define LOG(...) MOZ_LOG(GetDirectShowLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 AudioSinkFilter::AudioSinkFilter(const wchar_t* aObjectName, HRESULT* aOutResult)
   : BaseFilter(aObjectName, CLSID_MozAudioSinkFilter),

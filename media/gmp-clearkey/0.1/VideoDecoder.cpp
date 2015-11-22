@@ -33,6 +33,7 @@ VideoDecoder::VideoDecoder(GMPVideoHost *aHostAPI)
   , mMutex(nullptr)
   , mNumInputTasks(0)
   , mSentExtraData(false)
+  , mIsFlushing(false)
   , mHasShutdown(false)
 {
   // We drop the ref in DecodingComplete().
@@ -56,7 +57,7 @@ VideoDecoder::InitDecode(const GMPVideoCodec& aCodecSettings,
   mCallback = aCallback;
   assert(mCallback);
   mDecoder = new WMFH264Decoder();
-  HRESULT hr = mDecoder->Init();
+  HRESULT hr = mDecoder->Init(aCoreCount);
   if (FAILED(hr)) {
     CK_LOGD("VideoDecoder::InitDecode failed to init WMFH264Decoder");
     mCallback->Error(GMPGenericErr);
@@ -144,6 +145,11 @@ VideoDecoder::DecodeTask(GMPVideoEncodedFrame* aInput)
     AutoLock lock(mMutex);
     mNumInputTasks--;
     assert(mNumInputTasks >= 0);
+  }
+
+  if (mIsFlushing) {
+    CK_LOGD("VideoDecoder::DecodeTask rejecting frame: flushing.");
+    return;
   }
 
   if (!aInput || !mHostAPI || !mDecoder) {
@@ -344,14 +350,28 @@ VideoDecoder::SampleToVideoFrame(IMFSample* aSample,
 }
 
 void
+VideoDecoder::ResetCompleteTask()
+{
+  mIsFlushing = false;
+  if (mCallback) {
+    MaybeRunOnMainThread(WrapTask(mCallback,
+                                  &GMPVideoDecoderCallback::ResetComplete));
+  }
+}
+
+void
 VideoDecoder::Reset()
 {
+  mIsFlushing = true;
   if (mDecoder) {
     mDecoder->Reset();
   }
-  if (mCallback) {
-    mCallback->ResetComplete();
-  }
+
+  // Schedule ResetComplete callback to run after existing frames have been
+  // flushed out of the task queue.
+  EnsureWorker();
+  mWorkerThread->Post(WrapTaskRefCounted(this,
+                                         &VideoDecoder::ResetCompleteTask));
 }
 
 void

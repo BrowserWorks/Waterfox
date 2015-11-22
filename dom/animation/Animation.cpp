@@ -7,25 +7,34 @@
 #include "Animation.h"
 #include "AnimationUtils.h"
 #include "mozilla/dom/AnimationBinding.h"
+#include "mozilla/dom/AnimationPlaybackEvent.h"
 #include "mozilla/AutoRestore.h"
+#include "mozilla/AsyncEventDispatcher.h" //For AsyncEventDispatcher
 #include "AnimationCommon.h" // For AnimationCollection,
                              // CommonAnimationManager
 #include "nsIDocument.h" // For nsIDocument
 #include "nsIPresShell.h" // For nsIPresShell
 #include "nsLayoutUtils.h" // For PostRestyleEvent (remove after bug 1073336)
+#include "nsThreadUtils.h" // For nsRunnableMethod and nsRevocableEventPtr
 #include "PendingAnimationTracker.h" // For PendingAnimationTracker
 
 namespace mozilla {
 namespace dom {
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(Animation, mTimeline,
-                                      mEffect, mReady, mFinished)
-NS_IMPL_CYCLE_COLLECTING_ADDREF(Animation)
-NS_IMPL_CYCLE_COLLECTING_RELEASE(Animation)
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Animation)
-  NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
-  NS_INTERFACE_MAP_ENTRY(nsISupports)
-NS_INTERFACE_MAP_END
+// Static members
+uint64_t Animation::sNextAnimationIndex = 0;
+
+NS_IMPL_CYCLE_COLLECTION_INHERITED(Animation, DOMEventTargetHelper,
+                                   mTimeline,
+                                   mEffect,
+                                   mReady,
+                                   mFinished)
+
+NS_IMPL_ADDREF_INHERITED(Animation, DOMEventTargetHelper)
+NS_IMPL_RELEASE_INHERITED(Animation, DOMEventTargetHelper)
+
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(Animation)
+NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 JSObject*
 Animation::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
@@ -42,6 +51,9 @@ Animation::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 void
 Animation::SetEffect(KeyframeEffectReadOnly* aEffect)
 {
+  if (mEffect == aEffect) {
+    return;
+  }
   if (mEffect) {
     mEffect->SetParentTime(Nullable<TimeDuration>());
   }
@@ -49,19 +61,35 @@ Animation::SetEffect(KeyframeEffectReadOnly* aEffect)
   if (mEffect) {
     mEffect->SetParentTime(GetCurrentTime());
   }
-  UpdateRelevance();
+
+  UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
+}
+
+void
+Animation::SetTimeline(AnimationTimeline* aTimeline)
+{
+  if (mTimeline == aTimeline) {
+    return;
+  }
+
+  if (mTimeline) {
+    mTimeline->RemoveAnimation(*this);
+  }
+
+  mTimeline = aTimeline;
+
+  // FIXME(spec): Once we implement the seeking defined in the spec
+  // surely this should be SeekFlag::DidSeek but the spec says otherwise.
+  UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
+
+  // FIXME: When we expose this method to script we'll need to call PostUpdate
+  // (but *not* when this method gets called from style).
 }
 
 void
 Animation::SetStartTime(const Nullable<TimeDuration>& aNewStartTime)
 {
-#if 1
-  // Bug 1096776: once we support inactive/missing timelines we'll want to take
-  // the disabled branch.
-  MOZ_ASSERT(mTimeline && !mTimeline->GetCurrentTime().IsNull(),
-             "We don't support inactive/missing timelines yet");
-#else
-  Nullable<TimeDuration> timelineTime = mTimeline->GetCurrentTime();
+  Nullable<TimeDuration> timelineTime;
   if (mTimeline) {
     // The spec says to check if the timeline is active (has a resolved time)
     // before using it here, but we don't need to since it's harmless to set
@@ -71,7 +99,7 @@ Animation::SetStartTime(const Nullable<TimeDuration>& aNewStartTime)
   if (timelineTime.IsNull() && !aNewStartTime.IsNull()) {
     mHoldTime.SetNull();
   }
-#endif
+
   Nullable<TimeDuration> previousCurrentTime = GetCurrentTime();
   mStartTime = aNewStartTime;
   if (!aNewStartTime.IsNull()) {
@@ -89,7 +117,7 @@ Animation::SetStartTime(const Nullable<TimeDuration>& aNewStartTime)
     mReady->MaybeResolve(this);
   }
 
-  UpdateTiming();
+  UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
   PostUpdate();
 }
 
@@ -103,7 +131,7 @@ Animation::GetCurrentTime() const
     return result;
   }
 
-  if (!mStartTime.IsNull()) {
+  if (mTimeline && !mStartTime.IsNull()) {
     Nullable<TimeDuration> timelineTime = mTimeline->GetCurrentTime();
     if (!timelineTime.IsNull()) {
       result.SetValue((timelineTime.Value() - mStartTime.Value())
@@ -120,14 +148,17 @@ Animation::SetCurrentTime(const TimeDuration& aSeekTime)
   SilentlySetCurrentTime(aSeekTime);
 
   if (mPendingState == PendingState::PausePending) {
-    CancelPendingTasks();
+    // Finish the pause operation
+    mHoldTime.SetValue(aSeekTime);
+    mStartTime.SetNull();
+
     if (mReady) {
       mReady->MaybeResolve(this);
     }
+    CancelPendingTasks();
   }
 
-  UpdateFinishedState(true);
-  UpdateEffect();
+  UpdateTiming(SeekFlag::DidSeek, SyncNotifyFlag::Async);
   PostUpdate();
 }
 
@@ -137,9 +168,7 @@ Animation::SetPlaybackRate(double aPlaybackRate)
   Nullable<TimeDuration> previousTime = GetCurrentTime();
   mPlaybackRate = aPlaybackRate;
   if (!previousTime.IsNull()) {
-    ErrorResult rv;
     SetCurrentTime(previousTime.Value());
-    MOZ_ASSERT(!rv.Failed(), "Should not assert for non-null time");
   }
 }
 
@@ -167,21 +196,12 @@ Animation::PlayState() const
   return AnimationPlayState::Running;
 }
 
-static inline already_AddRefed<Promise>
-CreatePromise(DocumentTimeline* aTimeline, ErrorResult& aRv)
-{
-  nsIGlobalObject* global = aTimeline->GetParentObject();
-  if (global) {
-    return Promise::Create(global, aRv);
-  }
-  return nullptr;
-}
-
 Promise*
 Animation::GetReady(ErrorResult& aRv)
 {
-  if (!mReady) {
-    mReady = CreatePromise(mTimeline, aRv); // Lazily create on demand
+  nsCOMPtr<nsIGlobalObject> global = GetOwnerGlobal();
+  if (!mReady && global) {
+    mReady = Promise::Create(global, aRv); // Lazily create on demand
   }
   if (!mReady) {
     aRv.Throw(NS_ERROR_FAILURE);
@@ -194,13 +214,14 @@ Animation::GetReady(ErrorResult& aRv)
 Promise*
 Animation::GetFinished(ErrorResult& aRv)
 {
-  if (!mFinished) {
-    mFinished = CreatePromise(mTimeline, aRv); // Lazily create on demand
+  nsCOMPtr<nsIGlobalObject> global = GetOwnerGlobal();
+  if (!mFinished && global) {
+    mFinished = Promise::Create(global, aRv); // Lazily create on demand
   }
   if (!mFinished) {
     aRv.Throw(NS_ERROR_FAILURE);
-  } else if (IsFinished()) {
-    mFinished->MaybeResolve(this);
+  } else if (mFinishedIsResolved) {
+    MaybeResolveFinishedPromise();
   }
   return mFinished;
 }
@@ -225,30 +246,69 @@ Animation::Finish(ErrorResult& aRv)
   TimeDuration limit =
     mPlaybackRate > 0 ? TimeDuration(EffectEnd()) : TimeDuration(0);
 
-  SetCurrentTime(limit);
+  SilentlySetCurrentTime(limit);
 
-  if (mPendingState == PendingState::PlayPending) {
+  // If we are paused or play-pending we need to fill in the start time in
+  // order to transition to the finished state.
+  //
+  // We only do this, however, if we have an active timeline. If we have an
+  // inactive timeline we can't transition into the finished state just like
+  // we can't transition to the running state (this finished state is really
+  // a substate of the running state).
+  if (mStartTime.IsNull() &&
+      mTimeline &&
+      !mTimeline->GetCurrentTime().IsNull()) {
+    mStartTime.SetValue(mTimeline->GetCurrentTime().Value() -
+                        limit.MultDouble(1.0 / mPlaybackRate));
+  }
+
+  // If we just resolved the start time for a pause or play-pending
+  // animation, we need to clear the task. We don't do this as a branch of
+  // the above however since we can have a play-pending animation with a
+  // resolved start time if we aborted a pause operation.
+  if (!mStartTime.IsNull() &&
+      (mPendingState == PendingState::PlayPending ||
+       mPendingState == PendingState::PausePending)) {
+    if (mPendingState == PendingState::PausePending) {
+      mHoldTime.SetNull();
+    }
     CancelPendingTasks();
     if (mReady) {
       mReady->MaybeResolve(this);
     }
   }
-  UpdateFinishedState(true);
+  UpdateTiming(SeekFlag::DidSeek, SyncNotifyFlag::Sync);
   PostUpdate();
 }
 
 void
-Animation::Play(LimitBehavior aLimitBehavior)
+Animation::Play(ErrorResult& aRv, LimitBehavior aLimitBehavior)
 {
-  DoPlay(aLimitBehavior);
+  DoPlay(aRv, aLimitBehavior);
   PostUpdate();
 }
 
 void
-Animation::Pause()
+Animation::Pause(ErrorResult& aRv)
 {
-  DoPause();
+  DoPause(aRv);
   PostUpdate();
+}
+
+void
+Animation::Reverse(ErrorResult& aRv)
+{
+  if (!mTimeline || mTimeline->GetCurrentTime().IsNull()) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return;
+  }
+
+  if (mPlaybackRate == 0.0) {
+    return;
+  }
+
+  SilentlySetPlaybackRate(-mPlaybackRate);
+  Play(aRv, LimitBehavior::AutoRewind);
 }
 
 // ---------------------------------------------------------------------------
@@ -300,6 +360,8 @@ Animation::Tick()
   // resuming.
   if (mPendingState != PendingState::NotPending &&
       !mPendingReadyTime.IsNull() &&
+      mTimeline &&
+      !mTimeline->GetCurrentTime().IsNull() &&
       mPendingReadyTime.Value() <= mTimeline->GetCurrentTime().Value()) {
     FinishPendingAt(mPendingReadyTime.Value());
     mPendingReadyTime.SetNull();
@@ -311,7 +373,17 @@ Animation::Tick()
     FinishPendingAt(mTimeline->GetCurrentTime().Value());
   }
 
-  UpdateTiming();
+  UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
+
+  // FIXME: Detect the no-change case and don't request a restyle at all
+  // FIXME: Detect changes to IsPlaying() state and request RestyleType::Layer
+  //        so that layers get updated immediately
+  AnimationCollection* collection = GetCollection();
+  if (collection) {
+    collection->RequestRestyle(CanThrottle() ?
+      AnimationCollection::RestyleType::Throttled :
+      AnimationCollection::RestyleType::Standard);
+  }
 }
 
 void
@@ -333,10 +405,22 @@ Animation::TriggerOnNextTick(const Nullable<TimeDuration>& aReadyTime)
 void
 Animation::TriggerNow()
 {
-  MOZ_ASSERT(PlayState() == AnimationPlayState::Pending,
-             "Expected to start a pending animation");
-  MOZ_ASSERT(mTimeline && !mTimeline->GetCurrentTime().IsNull(),
-             "Expected an active timeline");
+  // Normally we expect the play state to be pending but when an animation
+  // is cancelled and its rendered document can't be reached, we can end up
+  // with the animation still in a pending player tracker even after it is
+  // no longer pending.
+  if (PlayState() != AnimationPlayState::Pending) {
+    return;
+  }
+
+  // If we don't have an active timeline we can't trigger the animation.
+  // However, this is a test-only method that we don't expect to be used in
+  // conjunction with animations without an active timeline so generate
+  // a warning if we do find ourselves in that situation.
+  if (!mTimeline || mTimeline->GetCurrentTime().IsNull()) {
+    NS_WARNING("Failed to trigger an animation with an active timeline");
+    return;
+  }
 
   FinishPendingAt(mTimeline->GetCurrentTime().Value());
 }
@@ -389,9 +473,7 @@ Animation::SilentlySetPlaybackRate(double aPlaybackRate)
   Nullable<TimeDuration> previousTime = GetCurrentTime();
   mPlaybackRate = aPlaybackRate;
   if (!previousTime.IsNull()) {
-    ErrorResult rv;
     SilentlySetCurrentTime(previousTime.Value());
-    MOZ_ASSERT(!rv.Failed(), "Should not assert for non-null time");
   }
 }
 
@@ -408,13 +490,14 @@ Animation::DoCancel()
   if (mFinished) {
     mFinished->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
   }
-  // Clear finished promise. We'll create a new one lazily.
-  mFinished = nullptr;
+  ResetFinishedPromise();
+
+  DispatchPlaybackEvent(NS_LITERAL_STRING("cancel"));
 
   mHoldTime.SetNull();
   mStartTime.SetNull();
 
-  UpdateEffect();
+  UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
 }
 
 void
@@ -432,43 +515,72 @@ Animation::UpdateRelevance()
 }
 
 bool
+Animation::HasLowerCompositeOrderThan(const Animation& aOther) const
+{
+  // Due to the way subclasses of this repurpose the mAnimationIndex to
+  // implement their own brand of composite ordering it is possible for
+  // two animations to have an identical mAnimationIndex member.
+  // However, these subclasses override this method so we shouldn't see
+  // identical animation indices here.
+  MOZ_ASSERT(mAnimationIndex != aOther.mAnimationIndex || &aOther == this,
+             "Animation indices should be unique");
+
+  return mAnimationIndex < aOther.mAnimationIndex;
+}
+
+bool
 Animation::CanThrottle() const
 {
-  if (!mEffect ||
-      mEffect->IsFinishedTransition() ||
-      mEffect->Properties().IsEmpty()) {
+  // This method answers the question, "Can we get away with NOT updating
+  // style on the main thread for this animation on this tick?"
+
+  // Ignore animations that were never going to have any effect anyway.
+  if (!mEffect || mEffect->Properties().IsEmpty()) {
     return true;
   }
 
-  if (!mIsRunningOnCompositor) {
-    return false;
+  // Finished animations can be throttled unless this is the first
+  // sample since finishing. In that case we need an unthrottled sample
+  // so we can apply the correct end-of-animation behavior on the main
+  // thread (either removing the animation style or applying the fill mode).
+  if (PlayState() == AnimationPlayState::Finished) {
+    return mFinishedAtLastComposeStyle;
   }
 
-  if (PlayState() != AnimationPlayState::Finished) {
-    // Unfinished animations can be throttled.
+  // We should also ignore animations which are not "in effect"--i.e. not
+  // producing an output. This includes animations that are idle or in their
+  // delay phase but with no backwards fill.
+  //
+  // Note that unlike newly-finished animations, we don't need to worry about
+  // special handling for newly-idle animations or animations that are newly
+  // yet-to-start since any operation that would cause that change (e.g. a call
+  // to cancel() on the animation, or seeking its current time) will trigger an
+  // unthrottled sample.
+  if (!IsInEffect()) {
     return true;
   }
 
-  // The animation has finished but, if this is the first sample since
-  // finishing, we need an unthrottled sample so we can apply the correct
-  // end-of-animation behavior on the main thread (either removing the
-  // animation style or applying the fill mode).
-  return mFinishedAtLastComposeStyle;
+  return IsRunningOnCompositor();
 }
 
 void
-Animation::ComposeStyle(nsRefPtr<css::AnimValuesStyleRule>& aStyleRule,
+Animation::ComposeStyle(nsRefPtr<AnimValuesStyleRule>& aStyleRule,
                         nsCSSPropertySet& aSetProperties,
                         bool& aNeedsRefreshes)
 {
-  if (!mEffect || mEffect->IsFinishedTransition()) {
+  if (!mEffect) {
     return;
   }
 
   AnimationPlayState playState = PlayState();
   if (playState == AnimationPlayState::Running ||
-      playState == AnimationPlayState::Pending) {
+      playState == AnimationPlayState::Pending ||
+      HasEndEventToQueue()) {
     aNeedsRefreshes = true;
+  }
+
+  if (!IsInEffect()) {
+    return;
   }
 
   // In order to prevent flicker, there are a few cases where we want to use
@@ -517,7 +629,7 @@ Animation::ComposeStyle(nsRefPtr<css::AnimValuesStyleRule>& aStyleRule,
       Nullable<TimeDuration> timeToUse = mPendingReadyTime;
       if (timeToUse.IsNull() &&
           mTimeline &&
-          !mTimeline->IsUnderTestControl()) {
+          mTimeline->TracksWallclockTime()) {
         timeToUse = mTimeline->ToTimelineTime(TimeStamp::Now());
       }
       if (!timeToUse.IsNull()) {
@@ -532,24 +644,28 @@ Animation::ComposeStyle(nsRefPtr<css::AnimValuesStyleRule>& aStyleRule,
     mEffect->ComposeStyle(aStyleRule, aSetProperties);
 
     if (updatedHoldTime) {
-      UpdateTiming();
+      UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
     }
 
     mFinishedAtLastComposeStyle = (playState == AnimationPlayState::Finished);
   }
 }
 
+void
+Animation::NotifyEffectTimingUpdated()
+{
+  MOZ_ASSERT(mEffect,
+             "We should only update timing effect when we have a target "
+             "effect");
+  UpdateTiming(Animation::SeekFlag::NoSeek,
+               Animation::SyncNotifyFlag::Async);
+}
+
 // http://w3c.github.io/web-animations/#play-an-animation
 void
-Animation::DoPlay(LimitBehavior aLimitBehavior)
+Animation::DoPlay(ErrorResult& aRv, LimitBehavior aLimitBehavior)
 {
   bool abortedPause = mPendingState == PendingState::PausePending;
-
-  bool reuseReadyPromise = false;
-  if (mPendingState != PendingState::NotPending) {
-    CancelPendingTasks();
-    reuseReadyPromise = true;
-  }
 
   Nullable<TimeDuration> currentTime = GetCurrentTime();
   if (mPlaybackRate > 0.0 &&
@@ -563,9 +679,19 @@ Animation::DoPlay(LimitBehavior aLimitBehavior)
               (aLimitBehavior == LimitBehavior::AutoRewind &&
                (currentTime.Value().ToMilliseconds() <= 0.0 ||
                 currentTime.Value() > EffectEnd())))) {
+    if (EffectEnd() == TimeDuration::Forever()) {
+      aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+      return;
+    }
     mHoldTime.SetValue(TimeDuration(EffectEnd()));
   } else if (mPlaybackRate == 0.0 && currentTime.IsNull()) {
     mHoldTime.SetValue(TimeDuration(0));
+  }
+
+  bool reuseReadyPromise = false;
+  if (mPendingState != PendingState::NotPending) {
+    CancelPendingTasks();
+    reuseReadyPromise = true;
   }
 
   // If the hold time is null then we're either already playing normally (and
@@ -576,10 +702,18 @@ Animation::DoPlay(LimitBehavior aLimitBehavior)
     return;
   }
 
-  // Clear the start time until we resolve a new one (unless we are aborting
-  // a pending pause operation, in which case we keep the old start time so
-  // that the animation continues moving uninterrupted by the aborted pause).
-  if (!abortedPause) {
+  // Clear the start time until we resolve a new one. We do this except
+  // for the case where we are aborting a pause and don't have a hold time.
+  //
+  // If we're aborting a pause and *do* have a hold time (e.g. because
+  // the animation is finished or we just applied the auto-rewind behavior
+  // above) we should respect it by clearing the start time. If we *don't*
+  // have a hold time we should keep the current start time so that the
+  // the animation continues moving uninterrupted by the aborted pause.
+  //
+  // (If we're not aborting a pause, mHoldTime must be resolved by now
+  //  or else we would have returned above.)
+  if (!mHoldTime.IsNull()) {
     mStartTime.SetNull();
   }
 
@@ -591,24 +725,36 @@ Animation::DoPlay(LimitBehavior aLimitBehavior)
   mPendingState = PendingState::PlayPending;
 
   nsIDocument* doc = GetRenderedDocument();
-  if (!doc) {
+  if (doc) {
+    PendingAnimationTracker* tracker =
+      doc->GetOrCreatePendingAnimationTracker();
+    tracker->AddPlayPending(*this);
+  } else {
     TriggerOnNextTick(Nullable<TimeDuration>());
-    return;
   }
 
-  PendingAnimationTracker* tracker = doc->GetOrCreatePendingAnimationTracker();
-  tracker->AddPlayPending(*this);
-
-  // We may have updated the current time when we set the hold time above.
-  UpdateTiming();
+  UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
 }
 
 // http://w3c.github.io/web-animations/#pause-an-animation
 void
-Animation::DoPause()
+Animation::DoPause(ErrorResult& aRv)
 {
   if (IsPausedOrPausing()) {
     return;
+  }
+
+  // If we are transitioning from idle, fill in the current time
+  if (GetCurrentTime().IsNull()) {
+    if (mPlaybackRate >= 0.0) {
+      mHoldTime.SetValue(TimeDuration(0));
+    } else {
+      if (EffectEnd() == TimeDuration::Forever()) {
+        aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+        return;
+      }
+      mHoldTime.SetValue(TimeDuration(EffectEnd()));
+    }
   }
 
   bool reuseReadyPromise = false;
@@ -616,11 +762,6 @@ Animation::DoPause()
     CancelPendingTasks();
     reuseReadyPromise = true;
   }
-
-  // Mark this as no longer running on the compositor so that next time
-  // we update animations we won't throttle them and will have a chance
-  // to remove the animation from any layer it might be on.
-  mIsRunningOnCompositor = false;
 
   if (!reuseReadyPromise) {
     // Clear ready promise. We'll create a new one lazily.
@@ -630,15 +771,15 @@ Animation::DoPause()
   mPendingState = PendingState::PausePending;
 
   nsIDocument* doc = GetRenderedDocument();
-  if (!doc) {
+  if (doc) {
+    PendingAnimationTracker* tracker =
+      doc->GetOrCreatePendingAnimationTracker();
+    tracker->AddPausePending(*this);
+  } else {
     TriggerOnNextTick(Nullable<TimeDuration>());
-    return;
   }
 
-  PendingAnimationTracker* tracker = doc->GetOrCreatePendingAnimationTracker();
-  tracker->AddPausePending(*this);
-
-  UpdateFinishedState();
+  UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
 }
 
 void
@@ -666,7 +807,7 @@ Animation::ResumeAt(const TimeDuration& aReadyTime)
   }
   mPendingState = PendingState::NotPending;
 
-  UpdateTiming();
+  UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
 
   if (mReady) {
     mReady->MaybeResolve(this);
@@ -686,7 +827,7 @@ Animation::PauseAt(const TimeDuration& aReadyTime)
   mStartTime.SetNull();
   mPendingState = PendingState::NotPending;
 
-  UpdateTiming();
+  UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
 
   if (mReady) {
     mReady->MaybeResolve(this);
@@ -694,16 +835,52 @@ Animation::PauseAt(const TimeDuration& aReadyTime)
 }
 
 void
-Animation::UpdateTiming()
+Animation::UpdateTiming(SeekFlag aSeekFlag, SyncNotifyFlag aSyncNotifyFlag)
 {
   // We call UpdateFinishedState before UpdateEffect because the former
   // can change the current time, which is used by the latter.
-  UpdateFinishedState();
+  UpdateFinishedState(aSeekFlag, aSyncNotifyFlag);
   UpdateEffect();
+
+  // Unconditionally Add/Remove from the timeline. This is ok because if the
+  // animation has already been added/removed (which will be true more often
+  // than not) the work done by AnimationTimeline/DocumentTimeline is still
+  // negligible and its easier than trying to detect whenever we are switching
+  // to/from being relevant.
+  //
+  // We need to do this after calling UpdateEffect since it updates some
+  // cached state used by IsRelevant.
+  //
+  // Note that we only store relevant animations on the timeline since they
+  // are the only ones that need ticks and are the only ones returned from
+  // AnimationTimeline::GetAnimations. Storing any more than that would mean
+  // that we fail to garbage collect irrelevant animations since the timeline
+  // keeps a strong reference to each animation.
+  //
+  // Once we tick animations from the their timeline, and once we expect
+  // timelines to go in and out of being inactive, we will also need to store
+  // non-idle animations that are waiting for their timeline to become active
+  // on their timeline (as otherwise once the timeline becomes active it will
+  // have no way of notifying its animations). For now, however, we can
+  // simply store just the relevant animations.
+  if (mTimeline) {
+    // FIXME: Once we expect animations to go back and forth betweeen being
+    // inactive and active, we will need to store more than just relevant
+    // animations on the timeline. This is because an animation might be
+    // deemed irrelevant because its timeline is inactive. If it is removed
+    // from the timeline at that point the timeline will have no way of
+    // getting the animation to add itself again once it becomes active.
+    if (IsRelevant()) {
+      mTimeline->AddAnimation(*this);
+    } else {
+      mTimeline->RemoveAnimation(*this);
+    }
+  }
 }
 
 void
-Animation::UpdateFinishedState(bool aSeekFlag)
+Animation::UpdateFinishedState(SeekFlag aSeekFlag,
+                               SyncNotifyFlag aSyncNotifyFlag)
 {
   Nullable<TimeDuration> currentTime = GetCurrentTime();
   TimeDuration effectEnd = TimeDuration(EffectEnd());
@@ -713,7 +890,7 @@ Animation::UpdateFinishedState(bool aSeekFlag)
     if (mPlaybackRate > 0.0 &&
         !currentTime.IsNull() &&
         currentTime.Value() >= effectEnd) {
-      if (aSeekFlag) {
+      if (aSeekFlag == SeekFlag::DidSeek) {
         mHoldTime = currentTime;
       } else if (!mPreviousCurrentTime.IsNull()) {
         mHoldTime.SetValue(std::max(mPreviousCurrentTime.Value(), effectEnd));
@@ -723,34 +900,29 @@ Animation::UpdateFinishedState(bool aSeekFlag)
     } else if (mPlaybackRate < 0.0 &&
                !currentTime.IsNull() &&
                currentTime.Value().ToMilliseconds() <= 0.0) {
-      if (aSeekFlag) {
+      if (aSeekFlag == SeekFlag::DidSeek) {
         mHoldTime = currentTime;
       } else {
         mHoldTime.SetValue(0);
       }
     } else if (mPlaybackRate != 0.0 &&
-               !currentTime.IsNull()) {
-      if (aSeekFlag && !mHoldTime.IsNull()) {
+               !currentTime.IsNull() &&
+               mTimeline &&
+               !mTimeline->GetCurrentTime().IsNull()) {
+      if (aSeekFlag == SeekFlag::DidSeek && !mHoldTime.IsNull()) {
         mStartTime.SetValue(mTimeline->GetCurrentTime().Value() -
-                              (mHoldTime.Value().MultDouble(1 / mPlaybackRate)));
+                             (mHoldTime.Value().MultDouble(1 / mPlaybackRate)));
       }
       mHoldTime.SetNull();
     }
   }
 
-  bool currentFinishedState = IsFinished();
-  if (currentFinishedState && !mIsPreviousStateFinished) {
-    if (mFinished) {
-      mFinished->MaybeResolve(this);
-    }
-  } else if (!currentFinishedState && mIsPreviousStateFinished) {
-    // Clear finished promise. We'll create a new one lazily.
-    mFinished = nullptr;
-    if (mEffect->AsTransition()) {
-      mEffect->SetIsFinishedTransition(false);
-    }
+  bool currentFinishedState = PlayState() == AnimationPlayState::Finished;
+  if (currentFinishedState && !mFinishedIsResolved) {
+    DoFinishNotification(aSyncNotifyFlag);
+  } else if (!currentFinishedState && mFinishedIsResolved) {
+    ResetFinishedPromise();
   }
-  mIsPreviousStateFinished = currentFinishedState;
   // We must recalculate the current time to take account of any mHoldTime
   // changes the code above made.
   mPreviousCurrentTime = GetCurrentTime();
@@ -779,7 +951,7 @@ Animation::PostUpdate()
 {
   AnimationCollection* collection = GetCollection();
   if (collection) {
-    collection->NotifyAnimationUpdated();
+    collection->RequestRestyle(AnimationCollection::RestyleType::Layer);
   }
 }
 
@@ -804,19 +976,6 @@ Animation::CancelPendingTasks()
 
   mPendingState = PendingState::NotPending;
   mPendingReadyTime.SetNull();
-}
-
-bool
-Animation::IsFinished() const
-{
-  // Unfortunately there's some weirdness in the spec at the moment where if
-  // you're finished and paused, the playState is paused. This prevents us
-  // from just checking |PlayState() == AnimationPlayState::Finished| here,
-  // and we need this much more messy check to see if we're finished.
-  Nullable<TimeDuration> currentTime = GetCurrentTime();
-  return !currentTime.IsNull() &&
-      ((mPlaybackRate > 0.0 && currentTime.Value() >= EffectEnd()) ||
-       (mPlaybackRate < 0.0 && currentTime.Value().ToMilliseconds() <= 0.0));
 }
 
 bool
@@ -864,7 +1023,7 @@ Animation::IsPossiblyOrphanedPendingAnimation() const
   // never starting/pausing the animation and is unlikely.
   nsIDocument* doc = GetRenderedDocument();
   if (!doc) {
-    return false;
+    return true;
   }
 
   PendingAnimationTracker* tracker = doc->GetPendingAnimationTracker();
@@ -882,6 +1041,46 @@ Animation::EffectEnd() const
 
   return mEffect->Timing().mDelay
          + mEffect->GetComputedTiming().mActiveDuration;
+}
+
+TimeStamp
+Animation::AnimationTimeToTimeStamp(const StickyTimeDuration& aTime) const
+{
+  // Initializes to null. Return the same object every time to benefit from
+  // return-value-optimization.
+  TimeStamp result;
+
+  // We *don't* check for mTimeline->TracksWallclockTime() here because that
+  // method only tells us if the timeline times can be converted to
+  // TimeStamps that can be compared to TimeStamp::Now() or not, *not*
+  // whether the timelines can be converted to TimeStamp values at all.
+  //
+  // Since we never compare the result of this method with TimeStamp::Now()
+  // it is ok to return values even if mTimeline->TracksWallclockTime() is
+  // false. Furthermore, we want to be able to use this method when the
+  // refresh driver is under test control (in which case TracksWallclockTime()
+  // will return false).
+  //
+  // Once we introduce timelines that are not time-based we will need to
+  // differentiate between them here and determine how to sort their events.
+  if (!mTimeline) {
+    return result;
+  }
+
+  // Check the time is convertible to a timestamp
+  if (aTime == TimeDuration::Forever() ||
+      mPlaybackRate == 0.0 ||
+      mStartTime.IsNull()) {
+    return result;
+  }
+
+  // Invert the standard relation:
+  //   animation time = (timeline time - start time) * playback rate
+  TimeDuration timelineTime =
+    TimeDuration(aTime).MultDouble(1.0 / mPlaybackRate) + mStartTime.Value();
+
+  result = mTimeline->ToTimeStamp(timelineTime);
+  return result;
 }
 
 nsIDocument*
@@ -918,7 +1117,7 @@ Animation::GetPresContext() const
 AnimationCollection*
 Animation::GetCollection() const
 {
-  css::CommonAnimationManager* manager = GetAnimationManager();
+  CommonAnimationManager* manager = GetAnimationManager();
   if (!manager) {
     return nullptr;
   }
@@ -932,6 +1131,76 @@ Animation::GetCollection() const
              "An animation with an animation manager must have a target");
 
   return manager->GetAnimations(targetElement, targetPseudoType, false);
+}
+
+void
+Animation::DoFinishNotification(SyncNotifyFlag aSyncNotifyFlag)
+{
+  if (aSyncNotifyFlag == SyncNotifyFlag::Sync) {
+    DoFinishNotificationImmediately();
+  } else if (!mFinishNotificationTask.IsPending()) {
+    nsRefPtr<nsRunnableMethod<Animation>> runnable =
+      NS_NewRunnableMethod(this, &Animation::DoFinishNotificationImmediately);
+    Promise::DispatchToMicroTask(runnable);
+    mFinishNotificationTask = runnable;
+  }
+}
+
+void
+Animation::ResetFinishedPromise()
+{
+  mFinishedIsResolved = false;
+  mFinished = nullptr;
+}
+
+void
+Animation::MaybeResolveFinishedPromise()
+{
+  if (mFinished) {
+    mFinished->MaybeResolve(this);
+  }
+  mFinishedIsResolved = true;
+}
+
+void
+Animation::DoFinishNotificationImmediately()
+{
+  mFinishNotificationTask.Revoke();
+
+  if (PlayState() != AnimationPlayState::Finished) {
+    return;
+  }
+
+  MaybeResolveFinishedPromise();
+
+  DispatchPlaybackEvent(NS_LITERAL_STRING("finish"));
+}
+
+void
+Animation::DispatchPlaybackEvent(const nsAString& aName)
+{
+  AnimationPlaybackEventInit init;
+
+  if (aName.EqualsLiteral("finish")) {
+    init.mCurrentTime = GetCurrentTimeAsDouble();
+  }
+  if (mTimeline) {
+    init.mTimelineTime = mTimeline->GetCurrentTimeAsDouble();
+  }
+
+  nsRefPtr<AnimationPlaybackEvent> event =
+    AnimationPlaybackEvent::Constructor(this, aName, init);
+  event->SetTrusted(true);
+
+  nsRefPtr<AsyncEventDispatcher> asyncDispatcher =
+    new AsyncEventDispatcher(this, event);
+  asyncDispatcher->PostDOMEvent();
+}
+
+bool
+Animation::IsRunningOnCompositor() const
+{
+  return mEffect && mEffect->IsRunningOnCompositor();
 }
 
 } // namespace dom

@@ -125,6 +125,19 @@
 
       obj = {
         role: ROLE_MATHML_ROOT,
+        relations: {
+          RELATION_NODE_PARENT_OF: ["mroot_index", "mroot_base"]
+        },
+        children: [
+          {
+            role: ROLE_MATHML_IDENTIFIER,
+            relations: { RELATION_NODE_CHILD_OF: "mroot" }
+          },
+          {
+            role: ROLE_MATHML_NUMBER,
+            relations: { RELATION_NODE_CHILD_OF: "mroot" }
+          }
+        ]
       };
       testElm("mroot", obj);
 
@@ -267,28 +280,10 @@
       testElm("merror", obj);
 
       //////////////////////////////////////////////////////////////////////////
-      // semantics
-
-      obj = {
-        role: ROLE_MATHML_SEMANTICS,
-      };
-      testElm("semantics", obj);
-
-      //////////////////////////////////////////////////////////////////////////
-      // annotation
-
-      obj = {
-        role: ROLE_MATHML_ANNOTATION,
-      };
-      testElm("annotation", obj);
-
-      //////////////////////////////////////////////////////////////////////////
-      // annotation-xml
-
-      obj = {
-        role: ROLE_MATHML_XML_ANNOTATION,
-      };
-      testElm("annotation-xml", obj);
+      // semantics, annotation, annotation-xml
+      ok(!isAccessible("semantics"), "semantics should not have accessible");
+      ok(!isAccessible("annotation"), "annotation should not have accessible");
+      ok(!isAccessible("annotation-xml"), "annotation-xml should not have accessible");
 
       //////////////////////////////////////////////////////////////////////////
       // mstack
@@ -404,8 +399,8 @@
       <mn>2</mn>
     </mfrac>
     <mroot id="mroot">
-      <mi>x</mi>
-      <mn>5</mn>
+      <mi id="mroot_base">x</mi>
+      <mn id="mroot_index">5</mn>
     </mroot>
     <mspace width="1em"/>
     <mfenced id="mfenced" close="[" open="]" separators=".">

@@ -4,9 +4,12 @@
 
 // Make sure that JS eval result are properly formatted as strings.
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-result-format-as-string.html";
+"use strict";
 
-let test = asyncTest(function* () {
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-result-format-as-string.html";
+
+var test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();

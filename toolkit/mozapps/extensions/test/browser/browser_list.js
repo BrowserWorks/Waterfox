@@ -4,9 +4,9 @@
 
 // Tests the list view
 
-let tempScope = {};
+var tempScope = {};
 Components.utils.import("resource://gre/modules/LightweightThemeManager.jsm", tempScope);
-let LightweightThemeManager = tempScope.LightweightThemeManager;
+var LightweightThemeManager = tempScope.LightweightThemeManager;
 
 var gProvider;
 var gManagerWindow;
@@ -17,7 +17,9 @@ var gVersion = Services.appinfo.version;
 var gBlocklistURL = Services.urlFormatter.formatURLPref("extensions.blocklist.detailsURL");
 var gPluginURL = Services.urlFormatter.formatURLPref("plugins.update.url");
 var gDate = new Date(2010, 7, 16);
-let infoURL = Services.urlFormatter.formatURLPref("app.support.baseURL") + "unsigned-addons";
+var infoURL = Services.urlFormatter.formatURLPref("app.support.baseURL") + "unsigned-addons";
+
+const EXPECTED_ADDONS = 13;
 
 var gLWTheme = {
                 id: "4",
@@ -102,7 +104,20 @@ add_task(function*() {
     name: "Test add-on 11",
     signedState: AddonManager.SIGNEDSTATE_MISSING,
     isActive: false,
+    isCompatible: false,
     appDisabled: true,
+  }, {
+    id: "addon12@tests.mozilla.org",
+    name: "Test add-on 12",
+    signedState: AddonManager.SIGNEDSTATE_PRELIMINARY,
+    isActive: false,
+    appDisabled: true,
+    foreignInstall: true,
+  }, {
+    id: "addon13@tests.mozilla.org",
+    name: "Test add-on 13",
+    signedState: AddonManager.SIGNEDSTATE_SIGNED,
+    foreignInstall: true,
   }]);
 
   gManagerWindow = yield open_manager(null);
@@ -138,7 +153,7 @@ function get_class_node(parent, cls) {
 add_task(function*() {
   yield gCategoryUtilities.openType("extension");
   let items = get_test_items();
-  is(Object.keys(items).length, 11, "Should be the right number of add-ons installed");
+  is(Object.keys(items).length, EXPECTED_ADDONS, "Should be the right number of add-ons installed");
 
   info("Addon 1");
   let addon = items["Test add-on"];
@@ -180,7 +195,7 @@ add_task(function*() {
   info("Addon 2");
   addon = items["Test add-on 2"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 2", "Name should be correct");
   is(name, "Test add-on 2", "Tooltip name should be correct");
   is(version, "2.0", "Tooltip version should be correct");
@@ -217,7 +232,7 @@ add_task(function*() {
   info("Addon 3");
   addon = items["Test add-on 3"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 3", "Name should be correct");
   is(name, "Test add-on 3", "Tooltip name should be correct");
   is(version, undefined, "Tooltip version should be hidden");
@@ -237,7 +252,7 @@ add_task(function*() {
   info("Addon 4");
   addon = items["Test add-on 4"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 4", "Name should be correct");
   is(name, "Test add-on 4", "Tooltip name should be correct");
 
@@ -272,7 +287,7 @@ add_task(function*() {
   info("Addon 5");
   addon = items["Test add-on 5"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 5", "Name should be correct");
   is(name, "Test add-on 5", "Tooltip name should be correct");
 
@@ -293,7 +308,7 @@ add_task(function*() {
   info("Addon 6");
   addon = items["Test add-on 6"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 6", "Name should be correct");
   is(name, "Test add-on 6", "Tooltip name should be correct");
   is_element_hidden(get_class_node(addon, "disabled-postfix"), "Disabled postfix should be hidden");
@@ -327,7 +342,7 @@ add_task(function*() {
   info("Addon 7");
   addon = items["Test add-on 7"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 7", "Name should be correct");
   is(name, "Test add-on 7", "Tooltip name should be correct");
 
@@ -362,7 +377,7 @@ add_task(function*() {
   info("Addon 8");
   addon = items["Test add-on 8"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 8", "Name should be correct");
   is(name, "Test add-on 8", "Tooltip name should be correct");
 
@@ -383,7 +398,7 @@ add_task(function*() {
   info("Addon 9");
   addon = items["Test add-on 9"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 9", "Name should be correct");
   is(name, "Test add-on 9", "Tooltip name should be correct");
 
@@ -404,7 +419,7 @@ add_task(function*() {
   info("Addon 10");
   addon = items["Test add-on 10"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 10", "Name should be correct");
   is(name, "Test add-on 10", "Tooltip name should be correct");
 
@@ -425,7 +440,7 @@ add_task(function*() {
   info("Addon 11");
   addon = items["Test add-on 11"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 11", "Name should be correct");
   is(name, "Test add-on 11", "Tooltip name should be correct");
 
@@ -434,44 +449,20 @@ add_task(function*() {
   is_element_hidden(get_node(addon, "disable-btn"), "Disable button should be hidden");
   is_element_visible(get_node(addon, "remove-btn"), "Remove button should be visible");
 
-  is_element_hidden(get_node(addon, "warning"), "Warning message should be hidden");
+  is_element_visible(get_node(addon, "warning"), "Warning message should be visible");
+  is(get_node(addon, "warning").textContent, "Test add-on 11 is incompatible with " + gApp + " " + gVersion + ".", "Warning message should be correct");
   is_element_hidden(get_node(addon, "warning-link"), "Warning link should be hidden");
-  is_element_visible(get_node(addon, "error"), "Error message should be visible");
-  is(get_node(addon, "error").textContent, "Test add-on 11 could not be verified for use in " + gApp + " and has been disabled.", "Error message should be correct");
-  is_element_visible(get_node(addon, "error-link"), "Error link should be visible");
-  is(get_node(addon, "error-link").value, "More Information", "Error link text should be correct");
-  is(get_node(addon, "error-link").href, infoURL, "Error link should be correct");
+  is_element_hidden(get_node(addon, "error"), "Error message should be hidden");
+  is_element_hidden(get_node(addon, "error-link"), "Error link should be hidden");
   is_element_hidden(get_node(addon, "pending"), "Pending message should be hidden");
 
-  info("Filter for disabled unsigned extensions");
+  info("Filter for disabled unsigned extensions shouldn't appear because signing checks are off");
   let filterButton = gManagerWindow.document.getElementById("show-disabled-unsigned-extensions");
   let showAllButton = gManagerWindow.document.getElementById("show-all-extensions");
   let signingInfoUI = gManagerWindow.document.getElementById("disabled-unsigned-addons-info");
-  is_element_visible(filterButton, "Button for showing disabled unsigned extensions should be visible");
+  is_element_hidden(filterButton, "Button for showing disabled unsigned extensions should be hidden");
   is_element_hidden(showAllButton, "Button for showing all extensions should be hidden");
   is_element_hidden(signingInfoUI, "Signing info UI should be hidden");
-
-  filterButton.click();
-
-  yield new Promise(resolve => wait_for_view_load(gManagerWindow, resolve));
-
-  is_element_hidden(filterButton, "Button for showing disabled unsigned extensions should be hidden");
-  is_element_visible(showAllButton, "Button for showing all extensions should be visible");
-  is_element_visible(signingInfoUI, "Signing info UI should be visible");
-
-  items = get_test_items();
-  is(Object.keys(items).length, 1, "Only one add-on should be shown");
-  is(Object.keys(items)[0], "Test add-on 11", "The disabled unsigned extension should be shown");
-
-  showAllButton.click();
-
-  yield new Promise(resolve => wait_for_view_load(gManagerWindow, resolve));
-
-  items = get_test_items();
-  is(Object.keys(items).length, 11, "All add-ons should be shown again");
-  is_element_visible(filterButton, "Button for showing disabled unsigned extensions should be visible again");
-  is_element_hidden(showAllButton, "Button for showing all extensions should be hidden again");
-  is_element_hidden(signingInfoUI, "Signing info UI should be hidden again");
 });
 
 // Check the add-ons are now in the right state
@@ -493,7 +484,7 @@ add_task(function*() {
   yield gCategoryUtilities.openType("extension");
 
   let items = get_test_items();
-  is(Object.keys(items).length, 11, "Should be the right number of add-ons installed");
+  is(Object.keys(items).length, EXPECTED_ADDONS, "Should be the right number of add-ons installed");
 
   info("Addon 1");
   let addon = items["Test add-on"];
@@ -536,7 +527,7 @@ add_task(function*() {
   info("Addon 2");
   addon = items["Test add-on 2"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 2", "Name should be correct");
   is(name, "Test add-on 2", "Tooltip name should be correct");
   is(version, "2.0", "Tooltip version should be correct");
@@ -573,7 +564,7 @@ add_task(function*() {
   info("Addon 4");
   addon = items["Test add-on 4"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 4", "Name should be correct");
   is(name, "Test add-on 4", "Tooltip name should be correct");
 
@@ -608,7 +599,7 @@ add_task(function*() {
   info("Addon 6");
   addon = items["Test add-on 6"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 6", "Name should be correct");
   is(name, "Test add-on 6", "Tooltip name should be correct");
   is_element_visible(get_class_node(addon, "disabled-postfix"), "Disabled postfix should be visible");
@@ -642,7 +633,7 @@ add_task(function*() {
   info("Addon 7");
   addon = items["Test add-on 7"];
   addon.parentNode.ensureElementIsVisible(addon);
-  ({ name, version }) = yield get_tooltip_info(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
   is(get_node(addon, "name").value, "Test add-on 7", "Name should be correct");
   is(name, "Test add-on 7", "Tooltip name should be correct");
 
@@ -698,7 +689,7 @@ add_task(function*() {
   }]);
 
   let items = get_test_items();
-  is(Object.keys(items).length, 11, "Should be the right number of add-ons installed");
+  is(Object.keys(items).length, EXPECTED_ADDONS, "Should be the right number of add-ons installed");
 
   let addon = items["Test add-on replacement"];
   addon.parentNode.ensureElementIsVisible(addon);
@@ -746,6 +737,7 @@ add_task(function*() {
            getService(Ci.nsIFocusManager);
 
   let addon = items["Test add-on 6"];
+  addon.parentNode.ensureElementIsVisible(addon);
   EventUtils.synthesizeMouseAtCenter(addon, { }, gManagerWindow);
   is(fm.focusedElement, addon.parentNode, "Focus should have moved to the list");
 
@@ -830,6 +822,128 @@ add_task(function*() {
   is(el.getAttribute("active"), "false", "Addon should not be marked as active");
   is_element_visible(get_node(el, "warning"), "Warning message should be visible");
   is(get_node(el, "warning").textContent, "Test add-on 2 is incompatible with " + gApp + " " + gVersion + ".", "Warning message should be correct");
+});
+
+// Check that the list displays correctly when signing is required
+add_task(function*() {
+  yield close_manager(gManagerWindow);
+  Services.prefs.setBoolPref("xpinstall.signatures.required", true);
+  gManagerWindow = yield open_manager(null);
+  gCategoryUtilities = new CategoryUtilities(gManagerWindow);
+
+  yield gCategoryUtilities.openType("extension");
+  let items = get_test_items();
+  is(Object.keys(items).length, EXPECTED_ADDONS, "Should be the right number of add-ons installed");
+
+  info("Addon 10");
+  let addon = items["Test add-on 10"];
+  addon.parentNode.ensureElementIsVisible(addon);
+  let { name, version } = yield get_tooltip_info(addon);
+  is(get_node(addon, "name").value, "Test add-on 10", "Name should be correct");
+  is(name, "Test add-on 10", "Tooltip name should be correct");
+
+  is_element_hidden(get_node(addon, "preferences-btn"), "Preferences button should be hidden");
+  is_element_hidden(get_node(addon, "enable-btn"), "Enable button should be hidden");
+  is_element_visible(get_node(addon, "disable-btn"), "Disable button should be visible");
+  is_element_visible(get_node(addon, "remove-btn"), "Remove button should be visible");
+
+  is_element_hidden(get_node(addon, "warning"), "Warning message should be hidden");
+  is_element_hidden(get_node(addon, "warning-link"), "Warning link should be hidden");
+  is_element_visible(get_node(addon, "error"), "Error message should be visible");
+  is(get_node(addon, "error").textContent, "Test add-on 10 could not be verified for use in " + gApp + " and has been disabled.", "Error message should be correct");
+  is_element_visible(get_node(addon, "error-link"), "Error link should be visible");
+  is(get_node(addon, "error-link").value, "More Information", "Error link text should be correct");
+  is(get_node(addon, "error-link").href, infoURL, "Error link should be correct");
+
+  info("Addon 11");
+  addon = items["Test add-on 11"];
+  addon.parentNode.ensureElementIsVisible(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
+  is(get_node(addon, "name").value, "Test add-on 11", "Name should be correct");
+  is(name, "Test add-on 11", "Tooltip name should be correct");
+
+  is_element_hidden(get_node(addon, "preferences-btn"), "Preferences button should be hidden");
+  is_element_hidden(get_node(addon, "enable-btn"), "Enable button should be hidden");
+  is_element_hidden(get_node(addon, "disable-btn"), "Disable button should be hidden");
+  is_element_visible(get_node(addon, "remove-btn"), "Remove button should be visible");
+
+  is_element_hidden(get_node(addon, "warning"), "Warning message should be hidden");
+  is_element_hidden(get_node(addon, "warning-link"), "Warning link should be hidden");
+  is_element_visible(get_node(addon, "error"), "Error message should be visible");
+  is(get_node(addon, "error").textContent, "Test add-on 11 could not be verified for use in " + gApp + " and has been disabled.", "Error message should be correct");
+  is_element_visible(get_node(addon, "error-link"), "Error link should be visible");
+  is(get_node(addon, "error-link").value, "More Information", "Error link text should be correct");
+  is(get_node(addon, "error-link").href, infoURL, "Error link should be correct");
+
+  info("Addon 12");
+  addon = items["Test add-on 12"];
+  addon.parentNode.ensureElementIsVisible(addon);
+  ({ name, version } = yield get_tooltip_info(addon))
+  is(get_node(addon, "name").value, "Test add-on 12", "Name should be correct");
+  is(name, "Test add-on 12", "Tooltip name should be correct");
+
+  is_element_hidden(get_node(addon, "preferences-btn"), "Preferences button should be hidden");
+  is_element_hidden(get_node(addon, "enable-btn"), "Enable button should be hidden");
+  is_element_hidden(get_node(addon, "disable-btn"), "Disable button should be hidden");
+  is_element_visible(get_node(addon, "remove-btn"), "Remove button should be visible");
+
+  is_element_hidden(get_node(addon, "warning"), "Warning message should be hidden");
+  is_element_hidden(get_node(addon, "warning-link"), "Warning link should be hidden");
+  is_element_visible(get_node(addon, "error"), "Error message should be visible");
+  is(get_node(addon, "error").textContent, "Test add-on 12 could not be verified for use in " + gApp + " and has been disabled.", "Error message should be correct");
+  is_element_visible(get_node(addon, "error-link"), "Error link should be visible");
+  is(get_node(addon, "error-link").value, "More Information", "Error link text should be correct");
+  is(get_node(addon, "error-link").href, infoURL, "Error link should be correct");
+
+  info("Addon 13");
+  addon = items["Test add-on 13"];
+  addon.parentNode.ensureElementIsVisible(addon);
+  ({ name, version } = yield get_tooltip_info(addon));
+  is(get_node(addon, "name").value, "Test add-on 13", "Name should be correct");
+  is(name, "Test add-on 13", "Tooltip name should be correct");
+
+  is_element_hidden(get_node(addon, "preferences-btn"), "Preferences button should be hidden");
+  is_element_hidden(get_node(addon, "enable-btn"), "Enable button should be hidden");
+  is_element_visible(get_node(addon, "disable-btn"), "Disable button should be visible");
+  is_element_visible(get_node(addon, "remove-btn"), "Remove button should be visible");
+
+  is_element_hidden(get_node(addon, "warning"), "Warning message should be hidden");
+  is_element_hidden(get_node(addon, "warning-link"), "Warning link should be hidden");
+  is_element_hidden(get_node(addon, "error"), "Error message should be hidden");
+
+  info("Filter for disabled unsigned extensions");
+  let filterButton = gManagerWindow.document.getElementById("show-disabled-unsigned-extensions");
+  let showAllButton = gManagerWindow.document.getElementById("show-all-extensions");
+  let signingInfoUI = gManagerWindow.document.getElementById("disabled-unsigned-addons-info");
+  is_element_visible(filterButton, "Button for showing disabled unsigned extensions should be visible");
+  is_element_hidden(showAllButton, "Button for showing all extensions should be hidden");
+  is_element_hidden(signingInfoUI, "Signing info UI should be hidden");
+
+  filterButton.click();
+
+  yield new Promise(resolve => wait_for_view_load(gManagerWindow, resolve));
+
+  is_element_hidden(filterButton, "Button for showing disabled unsigned extensions should be hidden");
+  is_element_visible(showAllButton, "Button for showing all extensions should be visible");
+  is_element_visible(signingInfoUI, "Signing info UI should be visible");
+
+  items = get_test_items();
+  is(Object.keys(items).length, 3, "Two add-ons should be shown");
+  is(Object.keys(items)[0], "Test add-on 10", "The disabled unsigned extension should be shown");
+  is(Object.keys(items)[1], "Test add-on 11", "The disabled unsigned extension should be shown");
+  is(Object.keys(items)[2], "Test add-on 12", "The disabled foreign installed extension should be shown");
+
+  showAllButton.click();
+
+  yield new Promise(resolve => wait_for_view_load(gManagerWindow, resolve));
+
+  items = get_test_items();
+  is(Object.keys(items).length, EXPECTED_ADDONS, "All add-ons should be shown again");
+  is_element_visible(filterButton, "Button for showing disabled unsigned extensions should be visible again");
+  is_element_hidden(showAllButton, "Button for showing all extensions should be hidden again");
+  is_element_hidden(signingInfoUI, "Signing info UI should be hidden again");
+
+  Services.prefs.setBoolPref("xpinstall.signatures.required", false);
 });
 
 add_task(function*() {

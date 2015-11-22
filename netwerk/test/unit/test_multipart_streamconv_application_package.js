@@ -69,7 +69,22 @@ function contentHandler_chunked_headers(metadata, response)
   });
 }
 
+function contentHandler_type_missing(metadata, response)
+{
+  response.setHeader("Content-Type", 'text/plain');
+  var body = testData.getData();
+  response.bodyOutputStream.write(body, body.length);
+}
+
+function contentHandler_with_package_header(metadata, response)
+{
+  response.setHeader("Content-Type", 'application/package');
+  var body = testData.packageHeader + testData.getData();
+  response.bodyOutputStream.write(body, body.length);
+}
+
 var testData = {
+  packageHeader: 'manifest-signature: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk\r\n',
   content: [
    { headers: ["Content-Location: /index.html", "Content-Type: text/html"], data: "<html>\r\n  <head>\r\n    <script src=\"/scripts/app.js\"></script>\r\n    ...\r\n  </head>\r\n  ...\r\n</html>\r\n", type: "text/html" },
    { headers: ["Content-Location: /scripts/app.js", "Content-Type: text/javascript"], data: "module Math from '/scripts/helpers/math.js';\r\n...\r\n", type: "text/javascript" },
@@ -92,16 +107,22 @@ var testData = {
   }
 }
 
-function multipartListener(test) {
+function multipartListener(test, badContentType, shouldVerifyPackageHeader) {
   this._buffer = "";
   this.testNum = 0;
   this.test = test;
   this.numTests = this.test.content.length;
+  // If set to true, that means the package is missing the application/package
+  // content type. If so, resources will have their content type set to
+  // application/octet-stream
+  this.badContentType = badContentType == undefined ? false : badContentType;
+  this.shouldVerifyPackageHeader = shouldVerifyPackageHeader;
 }
 
 multipartListener.prototype.responseHandler = function(request, buffer) {
     equal(buffer, this.test.content[this.testNum].data);
-    equal(request.QueryInterface(Ci.nsIChannel).contentType, this.test.content[this.testNum].type);
+    equal(request.QueryInterface(Ci.nsIChannel).contentType,
+          this.badContentType ? "application/octet-stream" : this.test.content[this.testNum].type);
     if (++this.testNum == this.numTests) {
       run_next_test();
     }
@@ -116,11 +137,24 @@ multipartListener.prototype.QueryInterface = function(iid) {
 }
 
 multipartListener.prototype.onStartRequest = function(request, context) {
+  if (this.shouldVerifyPackageHeader) {
+    let partChannel = request.QueryInterface(Ci.nsIMultiPartChannel);
+    ok(!!partChannel, 'Should be multipart channel');
+    equal(partChannel.preamble, this.test.packageHeader);
+  }
+
   this._buffer = "";
-  this.headerListener = new headerListener(this.test.content[this.testNum].headers);
+  this.headerListener = new headerListener(this.test.content[this.testNum].headers, this.badContentType);
   let headerProvider = request.QueryInterface(Ci.nsIResponseHeadProvider);
   if (headerProvider) {
     headerProvider.visitResponseHeaders(this.headerListener);
+  }
+
+  // Verify the original header if the request is a multipart channel.
+  let partChannel = request.QueryInterface(Ci.nsIMultiPartChannel);
+  if (partChannel) {
+    let originalHeader = this.test.content[this.testNum].headers.join("\r\n") + "\r\n\r\n";
+    equal(originalHeader, partChannel.originalResponseHeader, "Oringinal header check.");
   }
 }
 
@@ -141,8 +175,9 @@ multipartListener.prototype.onStopRequest = function(request, context, status) {
   }
 }
 
-function headerListener(headers) {
+function headerListener(headers, badContentType) {
   this.expectedHeaders = headers;
+  this.badContentType = badContentType;
   this.index = 0;
 }
 
@@ -155,14 +190,15 @@ headerListener.prototype.QueryInterface = function(iid) {
 
 headerListener.prototype.visitHeader = function(header, value) {
   ok(this.index <= this.expectedHeaders.length);
-  equal(header + ": " + value, this.expectedHeaders[this.index]);
+  if (!this.badContentType)
+    equal(header + ": " + value, this.expectedHeaders[this.index]);
   this.index++;
 }
 
 function test_multipart() {
   var streamConv = Cc["@mozilla.org/streamConverters;1"]
                      .getService(Ci.nsIStreamConverterService);
-  var conv = streamConv.asyncConvertData("multipart/mixed",
+  var conv = streamConv.asyncConvertData("application/package",
            "*/*",
            new multipartListener(testData),
            null);
@@ -174,7 +210,7 @@ function test_multipart() {
 function test_multipart_with_boundary() {
   var streamConv = Cc["@mozilla.org/streamConverters;1"]
                      .getService(Ci.nsIStreamConverterService);
-  var conv = streamConv.asyncConvertData("multipart/mixed",
+  var conv = streamConv.asyncConvertData("application/package",
            "*/*",
            new multipartListener(testData),
            null);
@@ -186,12 +222,38 @@ function test_multipart_with_boundary() {
 function test_multipart_chunked_headers() {
   var streamConv = Cc["@mozilla.org/streamConverters;1"]
                      .getService(Ci.nsIStreamConverterService);
-  var conv = streamConv.asyncConvertData("multipart/mixed",
+  var conv = streamConv.asyncConvertData("application/package",
            "*/*",
            new multipartListener(testData),
            null);
 
   var chan = make_channel(uri + "/multipart3");
+  chan.asyncOpen(conv, null);
+}
+
+function test_multipart_content_type_other() {
+  var streamConv = Cc["@mozilla.org/streamConverters;1"]
+                     .getService(Ci.nsIStreamConverterService);
+
+  var conv = streamConv.asyncConvertData("application/package",
+           "*/*",
+           new multipartListener(testData, true),
+           null);
+
+  var chan = make_channel(uri + "/multipart4");
+  chan.asyncOpen(conv, null);
+}
+
+function test_multipart_package_header() {
+  var streamConv = Cc["@mozilla.org/streamConverters;1"]
+                     .getService(Ci.nsIStreamConverterService);
+
+  var conv = streamConv.asyncConvertData("application/package",
+           "*/*",
+           new multipartListener(testData, false, true),
+           null);
+
+  var chan = make_channel(uri + "/multipart5");
   chan.asyncOpen(conv, null);
 }
 
@@ -201,6 +263,8 @@ function run_test()
   httpserver.registerPathHandler("/multipart", contentHandler);
   httpserver.registerPathHandler("/multipart2", contentHandler_with_boundary);
   httpserver.registerPathHandler("/multipart3", contentHandler_chunked_headers);
+  httpserver.registerPathHandler("/multipart4", contentHandler_type_missing);
+  httpserver.registerPathHandler("/multipart5", contentHandler_with_package_header);
   httpserver.start(-1);
 
   run_next_test();
@@ -209,3 +273,5 @@ function run_test()
 add_test(test_multipart);
 add_test(test_multipart_with_boundary);
 add_test(test_multipart_chunked_headers);
+add_test(test_multipart_content_type_other);
+add_test(test_multipart_package_header);

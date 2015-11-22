@@ -144,7 +144,7 @@ public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(LocalSourceStreamInfo)
 
 private:
-  TemporaryRef<MediaPipeline> ForgetPipelineByTrackId_m(
+  already_AddRefed<MediaPipeline> ForgetPipelineByTrackId_m(
       const std::string& trackId);
 };
 
@@ -228,12 +228,10 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
 
   PeerConnectionImpl* GetPC() { return mParent; }
   nsresult Init(const std::vector<NrIceStunServer>& stun_servers,
-                const std::vector<NrIceTurnServer>& turn_servers);
+                const std::vector<NrIceTurnServer>& turn_servers,
+                NrIceCtx::Policy policy);
   // WARNING: This destroys the object!
   void SelfDestruct();
-
-  // Configure the ability to use localhost.
-  void SetAllowIceLoopback(bool val) { mAllowIceLoopback = val; }
 
   RefPtr<NrIceCtx> ice_ctx() const { return mIceCtx; }
 
@@ -245,8 +243,12 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
     return mIceCtx->GetStreamCount();
   }
 
-  // Create and modify transports in response to negotiation events.
-  void UpdateTransports(const JsepSession& session, bool restartGathering);
+  // Ensure ICE transports exist that we might need when offer/answer concludes
+  void EnsureTransports(const JsepSession& aSession);
+
+  // Activate or remove ICE transports at the conclusion of offer/answer,
+  // or when rollback occurs.
+  void ActivateOrRemoveTransports(const JsepSession& aSession);
 
   // Start ICE checks.
   void StartIceChecks(const JsepSession& session);
@@ -407,8 +409,9 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
     NS_DECL_ISUPPORTS
 
    private:
-      RefPtr<PeerConnectionMedia> pcm_;
-      virtual ~ProtocolProxyQueryHandler() {}
+    void SetProxyOnPcm(nsIProxyInfo& proxyinfo);
+    RefPtr<PeerConnectionMedia> pcm_;
+    virtual ~ProtocolProxyQueryHandler() {}
   };
 #endif // !defined(MOZILLA_XPCOMRT_API)
 
@@ -420,19 +423,22 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   void SelfDestruct_m();
 
   // Manage ICE transports.
-  void UpdateIceMediaStream_s(size_t aMLine, size_t aComponentCount,
-                              bool aHasAttrs,
-                              const std::string& aUfrag,
-                              const std::string& aPassword,
-                              const std::vector<std::string>& aCandidateList);
+  void EnsureTransport_s(size_t aLevel, size_t aComponentCount);
+  void ActivateOrRemoveTransport_s(
+      size_t aMLine,
+      size_t aComponentCount,
+      const std::string& aUfrag,
+      const std::string& aPassword,
+      const std::vector<std::string>& aCandidateList);
+  void RemoveTransportsAtOrAfter_s(size_t aMLine);
+
   void GatherIfReady();
   void FlushIceCtxOperationQueueIfReady();
   void PerformOrEnqueueIceCtxOperation(nsIRunnable* runnable);
   void EnsureIceGathering_s();
   void StartIceChecks_s(bool aIsControlling,
                         bool aIsIceLite,
-                        const std::vector<std::string>& aIceOptionsList,
-                        const std::vector<size_t>& aComponentCountByLevel);
+                        const std::vector<std::string>& aIceOptionsList);
 
   // Process a trickle ICE candidate.
   void AddIceCandidate_s(const std::string& aCandidate, const std::string& aMid,
@@ -483,9 +489,6 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
 
   std::map<size_t, std::pair<bool, RefPtr<MediaSessionConduit>>> mConduits;
 
-  // Allow loopback for ICE.
-  bool mAllowIceLoopback;
-
   // ICE objects
   RefPtr<NrIceCtx> mIceCtx;
 
@@ -522,5 +525,6 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(PeerConnectionMedia)
 };
 
-}  // namespace mozilla
+} // namespace mozilla
+
 #endif

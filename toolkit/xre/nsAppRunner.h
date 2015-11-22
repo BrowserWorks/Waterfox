@@ -108,8 +108,8 @@ WinLaunchChild(const wchar_t *exePath, int argc,
 namespace mozilla {
 namespace startup {
 extern GeckoProcessType sChildProcessType;
-}
-}
+} // namespace startup
+} // namespace mozilla
 
 /**
  * Set up platform specific error handling such as suppressing DLL load dialog

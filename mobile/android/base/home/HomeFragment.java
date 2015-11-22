@@ -7,14 +7,13 @@ package org.mozilla.gecko.home;
 
 import java.util.EnumSet;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.mozilla.gecko.EditBookmarkDialog;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.ReaderModeUtils;
+import org.mozilla.gecko.RestrictedProfiles;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.db.BrowserDB;
@@ -24,6 +23,7 @@ import org.mozilla.gecko.home.HomeContextMenuInfo.RemoveItemType;
 import org.mozilla.gecko.home.HomePager.OnUrlOpenInBackgroundListener;
 import org.mozilla.gecko.home.HomePager.OnUrlOpenListener;
 import org.mozilla.gecko.home.TopSitesGridView.TopSitesGridContextMenuInfo;
+import org.mozilla.gecko.restrictions.Restriction;
 import org.mozilla.gecko.util.Clipboard;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -36,6 +36,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -151,6 +152,13 @@ public abstract class HomeFragment extends Fragment {
         if (!StringUtils.isShareableUrl(info.url) || GeckoProfile.get(getActivity()).inGuestMode()) {
             menu.findItem(R.id.home_share).setVisible(false);
         }
+
+        if (!RestrictedProfiles.isAllowed(view.getContext(), Restriction.DISALLOW_PRIVATE_BROWSING)) {
+            menu.findItem(R.id.home_open_private_tab).setVisible(false);
+        }
+
+        menu.findItem(R.id.mark_read).setVisible(info.isInReadingList() && info.isUnread);
+        menu.findItem(R.id.mark_unread).setVisible(info.isInReadingList() && !info.isUnread);
     }
 
     @Override
@@ -172,7 +180,12 @@ public abstract class HomeFragment extends Fragment {
 
         // Track the menu action. We don't know much about the context, but we can use this to determine
         // the frequency of use for various actions.
-        Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.CONTEXT_MENU, getResources().getResourceEntryName(itemId));
+        String extras = getResources().getResourceEntryName(itemId);
+        if (TextUtils.equals(extras, "home_open_private_tab")) {
+            // Mask private browsing
+            extras = "home_open_new_tab";
+        }
+        Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.CONTEXT_MENU, extras);
 
         if (itemId == R.id.home_copyurl) {
             if (info.url == null) {
@@ -193,7 +206,7 @@ public abstract class HomeFragment extends Fragment {
                                               Intent.ACTION_SEND, info.getDisplayTitle());
 
                 // Context: Sharing via chrome homepage contextmenu list (home session should be active)
-                Telemetry.sendUIEvent(TelemetryContract.Event.SHARE, TelemetryContract.Method.LIST);
+                Telemetry.sendUIEvent(TelemetryContract.Event.SHARE, TelemetryContract.Method.LIST, "home_contextmenu");
                 return true;
             }
         }
@@ -247,6 +260,22 @@ public abstract class HomeFragment extends Fragment {
 
             (new RemoveItemByUrlTask(context, info.url, info.itemType, position)).execute();
             return true;
+        }
+
+        if (itemId == R.id.mark_read) {
+            GeckoProfile
+                    .get(context)
+                    .getDB()
+                    .getReadingListAccessor()
+                    .markAsRead(context.getContentResolver(), info.id);
+        }
+
+        if (itemId == R.id.mark_unread) {
+            GeckoProfile
+                    .get(context)
+                    .getDB()
+                    .getReadingListAccessor()
+                    .markAsUnread(context.getContentResolver(), info.id);
         }
 
         return false;

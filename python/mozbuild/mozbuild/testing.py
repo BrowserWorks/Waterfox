@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import json
 import os
@@ -72,7 +72,8 @@ class TestMetadata(object):
         for path in sorted(self._tests_by_flavor.get(flavor, [])):
             yield self._tests_by_path[path]
 
-    def resolve_tests(self, paths=None, flavor=None, subsuite=None, under_path=None):
+    def resolve_tests(self, paths=None, flavor=None, subsuite=None, under_path=None,
+                      tags=None):
         """Resolve tests from an identifier.
 
         This is a generator of dicts describing each test.
@@ -94,7 +95,13 @@ class TestMetadata(object):
 
         If ``subsuite`` is a string, it will be used to filter returned tests
         to only be in the subsuite specified.
+
+        If ``tags`` are specified, they will be used to filter returned tests
+        to only those with a matching tag.
         """
+        if tags:
+            tags = set(tags)
+
         def fltr(tests):
             for test in tests:
                 if flavor:
@@ -103,6 +110,9 @@ class TestMetadata(object):
                     continue
 
                 if subsuite and test.get('subsuite') != subsuite:
+                    continue
+
+                if tags and not (tags & set(test.get('tags', '').split())):
                     continue
 
                 if under_path \
@@ -163,6 +173,12 @@ class TestResolver(MozbuildObject):
                 'mochitest', 'chrome'),
             'mochitest': os.path.join(self.topobjdir, '_tests', 'testing',
                 'mochitest', 'tests'),
+            'webapprt-chrome': os.path.join(self.topobjdir, '_tests', 'testing',
+                'mochitest', 'webapprtChrome'),
+            'webapprt-content': os.path.join(self.topobjdir, '_tests', 'testing',
+                'mochitest', 'webapprtContent'),
+            'web-platform-tests': os.path.join(self.topobjdir, '_tests', 'testing',
+                                               'web-platform'),
             'xpcshell': os.path.join(self.topobjdir, '_tests', 'xpcshell'),
         }
 

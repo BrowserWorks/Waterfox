@@ -4,7 +4,7 @@
 
 "use strict";
 
-let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
+var { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 
 function debug(msg) {
@@ -34,12 +34,23 @@ function isTopBrowserElement(docShell) {
 }
 
 if (!('BrowserElementIsPreloaded' in this)) {
-  if (isTopBrowserElement(docShell) &&
-      Services.prefs.getBoolPref("dom.mozInputMethod.enabled")) {
-    try {
-      Services.scriptloader.loadSubScript("chrome://global/content/forms.js");
-    } catch (e) {
+  if (isTopBrowserElement(docShell)) {
+    if (Services.prefs.getBoolPref("dom.mozInputMethod.enabled")) {
+      try {
+        Services.scriptloader.loadSubScript("chrome://global/content/forms.js");
+      } catch (e) {
+      }
     }
+  }
+
+  if(Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
+    // general content apps
+    if (isTopBrowserElement(docShell)) {
+      Services.scriptloader.loadSubScript("chrome://global/content/BrowserElementCopyPaste.js");
+    }
+  } else {
+    // rocketbar in system app and other in-process case (ex. B2G desktop client)
+    Services.scriptloader.loadSubScript("chrome://global/content/BrowserElementCopyPaste.js");
   }
 
   if (Services.prefs.getIntPref("dom.w3c_touch_events.enabled") == 1) {

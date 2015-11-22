@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_bluetooth_bluetoothhfpmanager_h__
-#define mozilla_dom_bluetooth_bluetoothhfpmanager_h__
+#ifndef mozilla_dom_bluetooth_bluedroid_BluetoothHfpManager_h
+#define mozilla_dom_bluetooth_bluedroid_BluetoothHfpManager_h
 
 #include "BluetoothInterface.h"
 #include "BluetoothCommon.h"
@@ -109,6 +109,9 @@ public:
   void IgnoreWaitingCall();
   void ToggleCalls();
 
+  // Handle unexpected backend crash
+  void HandleBackendError();
+
   //
   // Bluetooth notifications
   //
@@ -124,6 +127,8 @@ public:
                           const nsAString& aBdAddress) override;
   void DtmfNotification(char aDtmf,
                         const nsAString& aBdAddress) override;
+  void NRECNotification(BluetoothHandsfreeNRECState aNrec,
+                        const nsAString& aBdAddr) override;
   void CallHoldNotification(BluetoothHandsfreeCallHoldType aChld,
                             const nsAString& aBdAddress) override;
   void DialCallNotification(const nsAString& aNumber,
@@ -208,8 +213,9 @@ private:
   int mCurrentVgs;
   int mCurrentVgm;
   bool mReceiveVgsFlag;
+  // This flag is for HFP only, not for HSP.
   bool mDialingRequestProcessed;
-  bool mFirstCKPD;
+  bool mNrecEnabled;
   PhoneType mPhoneType;
   nsString mDeviceAddress;
   nsString mMsisdn;
@@ -225,4 +231,4 @@ private:
 
 END_BLUETOOTH_NAMESPACE
 
-#endif
+#endif // mozilla_dom_bluetooth_bluedroid_BluetoothHfpManager_h

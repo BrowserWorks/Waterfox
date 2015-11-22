@@ -12,7 +12,7 @@
 function getIdentityAssertion(fpArray) {
   var Cu = SpecialPowers.Cu;
   var rtcid = Cu.import('resource://gre/modules/media/IdpSandbox.jsm');
-  var sandbox = new rtcid.IdpSandbox('example.com', 'idp.js', window.document);
+  var sandbox = new rtcid.IdpSandbox('example.com', 'idp.js', window);
   return sandbox.start()
     .then(idp => SpecialPowers.wrap(idp)
                    .generateAssertion(JSON.stringify({ fingerprint: fpArray }),
@@ -105,8 +105,7 @@ function testMultipleFingerprints() {
 
 SimpleTest.waitForExplicitFinish();
 SpecialPowers.pushPrefEnv({
-  set: [ [ 'dom.messageChannel.enabled', true ],
-         [ 'media.peerconnection.identity.enabled', true ] ]
+  set: [ [ 'media.peerconnection.identity.enabled', true ] ]
 }, testMultipleFingerprints);
 </script>
   </body>

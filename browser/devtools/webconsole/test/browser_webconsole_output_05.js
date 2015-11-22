@@ -5,12 +5,22 @@
 
 // Test the webconsole output for various types of objects.
 
+"use strict";
+
 const TEST_URI = "data:text/html;charset=utf8,test for console output - 05";
-const ELLIPSIS = Services.prefs.getComplexValue("intl.ellipsis", Ci.nsIPrefLocalizedString).data;
+const ELLIPSIS = Services.prefs.getComplexValue("intl.ellipsis",
+  Ci.nsIPrefLocalizedString).data;
 
-let dateNow = Date.now();
+// March, 1960: The first implementation of Lisp. From Wikipedia:
+//
+// > Lisp was first implemented by Steve Russell on an IBM 704 computer. Russell
+// > had read McCarthy's paper, and realized (to McCarthy's surprise) that the
+// > Lisp eval function could be implemented in machine code. The result was a
+// > working Lisp interpreter which could be used to run Lisp programs, or more
+// > properly, 'evaluate Lisp expressions.'
+var testDate = -310435200000;
 
-let inputTests = [
+var inputTests = [
   // 0
   {
     input: "/foo?b*\\s\"ar/igym",
@@ -46,9 +56,9 @@ let inputTests = [
 
   // 5
   {
-    input: "new Date(" + dateNow + ")",
-    output: "Date " + (new Date(dateNow)).toISOString(),
-    printOutput: (new Date(dateNow)).toString(),
+    input: "new Date(" + testDate + ")",
+    output: "Date " + (new Date(testDate)).toISOString(),
+    printOutput: (new Date(testDate)).toString(),
     inspectable: true,
   },
 
@@ -64,10 +74,10 @@ let inputTests = [
   // 7
   {
     input: "Date.prototype",
-    output: "Date",
+    output: /Object \{.*\}/,
     printOutput: "Invalid Date",
     inspectable: true,
-    variablesViewLabel: "Date",
+    variablesViewLabel: "Object",
   },
 
   // 8
@@ -99,17 +109,21 @@ let inputTests = [
 
   // 10
   {
-    input: "(function () { var p = new Promise(function () {}); p.foo = 1; return p; }())",
+    input: "(function () { var p = new Promise(function () {}); " +
+           "p.foo = 1; return p; }())",
     output: 'Promise { <state>: "pending", foo: 1 }',
     printOutput: "[object Promise]",
     inspectable: true,
     variablesViewLabel: "Promise"
   },
 
-  //11
+  // 11
   {
-    input: "new Object({1: 'this\\nis\\nsupposed\\nto\\nbe\\na\\nvery\\nlong\\nstring\\n,shown\\non\\na\\nsingle\\nline', 2: 'a shorter string', 3: 100})",
-    output: 'Object { 1: "this is supposed to be a very long ' + ELLIPSIS + '", 2: "a shorter string", 3: 100 }',
+    input: "new Object({1: 'this\\nis\\nsupposed\\nto\\nbe\\na\\nvery" +
+           "\\nlong\\nstring\\n,shown\\non\\na\\nsingle\\nline', " +
+           "2: 'a shorter string', 3: 100})",
+    output: 'Object { 1: "this is supposed to be a very long ' + ELLIPSIS +
+            '", 2: "a shorter string", 3: 100 }',
     printOutput: "[object Object]",
     inspectable: false,
   }
@@ -125,6 +139,6 @@ function test() {
 }
 
 function finishUp() {
-  inputTests = dateNow = null;
+  inputTests = testDate = null;
   finishTest();
 }

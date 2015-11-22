@@ -3,7 +3,7 @@
 
 function test() {
   const Cu = Components.utils;
-  let {ToolSidebar} = devtools.require("devtools/framework/sidebar");
+  let {ToolSidebar} = require("devtools/framework/sidebar");
 
   const toolURL = "data:text/xml;charset=utf8,<?xml version='1.0'?>" +
                   "<?xml-stylesheet href='chrome://browser/skin/devtools/common.css' type='text/css'?>" +
@@ -27,7 +27,7 @@ function test() {
     visibilityswitch: "devtools.fakeTool4242.enabled",
     url: toolURL,
     label: "FAKE TOOL!!!",
-    isTargetSupported: function() true,
+    isTargetSupported: () => true,
     build: function(iframeWindow, toolbox) {
       let deferred = promise.defer();
       executeSoon(() => {
@@ -35,7 +35,7 @@ function test() {
           target: toolbox.target,
           toolbox: toolbox,
           isReady: true,
-          destroy: function(){},
+          destroy: function() {},
           panelDoc: iframeWindow.document,
         });
       });

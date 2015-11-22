@@ -229,20 +229,14 @@ var StarUI = {
 
     gEditItemOverlay.initPanel({ node: aNode
                                , hiddenRows: ["description", "location",
-                                              "loadInSidebar", "keyword"] });
+                                              "loadInSidebar", "keyword"]
+                               , focusedElement: "preferred" });
   }),
 
   panelShown:
   function SU_panelShown(aEvent) {
     if (aEvent.target == this.panel) {
-      if (!this._element("editBookmarkPanelContent").hidden) {
-        let fieldToFocus = "editBMPanel_" +
-          gPrefService.getCharPref("browser.bookmarks.editDialog.firstEditField");
-        var elt = this._element(fieldToFocus);
-        elt.focus();
-        elt.select();
-      }
-      else {
+      if (this._element("editBookmarkPanelContent").hidden) {
         // Note this isn't actually used anymore, we should remove this
         // once we decide not to bring back the page bookmarked notification
         this.panel.focus();
@@ -1027,7 +1021,7 @@ var PlacesMenuDNDHandler = {
  * This object handles the initialization and uninitialization of the bookmarks
  * toolbar.
  */
-let PlacesToolbarHelper = {
+var PlacesToolbarHelper = {
   _place: "place:folder=TOOLBAR",
 
   get _viewElt() {
@@ -1174,7 +1168,7 @@ let PlacesToolbarHelper = {
  * Handles the bookmarks menu-button in the toolbar.
  */
 
-let BookmarkingUI = {
+var BookmarkingUI = {
   BOOKMARK_BUTTON_ID: "bookmarks-menu-button",
   BOOKMARK_BUTTON_SHORTCUT: "addBookmarkAsKb",
   get button() {
@@ -1344,33 +1338,20 @@ let BookmarkingUI = {
 
     if (aState == "invalid") {
       this.star.setAttribute("disabled", "true");
-      this.button.removeAttribute("starred");
-      this.button.setAttribute("buttontooltiptext", "");
+      this.broadcaster.setAttribute("stardisabled", "true");
+      this.broadcaster.removeAttribute("starred");
+      this.broadcaster.setAttribute("buttontooltiptext", "");
     }
     else {
       this.star.removeAttribute("disabled");
+      this.broadcaster.removeAttribute("stardisabled");
       this._updateStar();
     }
-    this._updateToolbarStyle();
   },
 
   _updateCustomizationState: function BUI__updateCustomizationState() {
     let placement = CustomizableUI.getPlacementOfWidget(this.BOOKMARK_BUTTON_ID);
     this._currentAreaType = placement && CustomizableUI.getAreaType(placement.area);
-  },
-
-  _updateToolbarStyle: function BUI__updateToolbarStyle() {
-    let onPersonalToolbar = false;
-    if (this._currentAreaType == CustomizableUI.TYPE_TOOLBAR) {
-      let personalToolbar = document.getElementById("PersonalToolbar");
-      onPersonalToolbar = this.button.parentNode == personalToolbar ||
-                          this.button.parentNode.parentNode == personalToolbar;
-    }
-
-    if (onPersonalToolbar)
-      this.button.classList.add("bookmark-item");
-    else
-      this.button.classList.remove("bookmark-item");
   },
 
   _uninitView: function BUI__uninitView() {
@@ -1435,14 +1416,12 @@ let BookmarkingUI = {
     if (!this._isCustomizing) {
       this._uninitView();
     }
-    this._updateToolbarStyle();
   },
 
   onCustomizeEnd: function BUI_customizeEnd(aWindow) {
     if (aWindow == window) {
       this._isCustomizing = false;
       this.onToolbarVisibilityChange();
-      this._updateToolbarStyle();
     }
   },
 
@@ -1523,23 +1502,23 @@ let BookmarkingUI = {
 
   _updateStar: function BUI__updateStar() {
     if (!this._shouldUpdateStarState()) {
-      if (this.button.hasAttribute("starred")) {
-        this.button.removeAttribute("starred");
-        this.button.removeAttribute("buttontooltiptext");
+      if (this.broadcaster.hasAttribute("starred")) {
+        this.broadcaster.removeAttribute("starred");
+        this.broadcaster.removeAttribute("buttontooltiptext");
       }
       return;
     }
 
     if (this._itemIds.length > 0) {
-      this.button.setAttribute("starred", "true");
-      this.button.setAttribute("buttontooltiptext", this._starredTooltip);
+      this.broadcaster.setAttribute("starred", "true");
+      this.broadcaster.setAttribute("buttontooltiptext", this._starredTooltip);
       if (this.button.getAttribute("overflowedItem") == "true") {
         this.button.setAttribute("label", this._starButtonOverflowedStarredLabel);
       }
     }
     else {
-      this.button.removeAttribute("starred");
-      this.button.setAttribute("buttontooltiptext", this._unstarredTooltip);
+      this.broadcaster.removeAttribute("starred");
+      this.broadcaster.setAttribute("buttontooltiptext", this._unstarredTooltip);
       if (this.button.getAttribute("overflowedItem") == "true") {
         this.button.setAttribute("label", this._starButtonOverflowedLabel);
       }
@@ -1553,7 +1532,9 @@ let BookmarkingUI = {
   _updateBookmarkPageMenuItem: function BUI__updateBookmarkPageMenuItem(forceReset) {
     let isStarred = !forceReset && this._itemIds.length > 0;
     let label = isStarred ? "editlabel" : "bookmarklabel";
-    this.broadcaster.setAttribute("label", this.broadcaster.getAttribute(label));
+    if (this.broadcaster) {
+      this.broadcaster.setAttribute("label", this.broadcaster.getAttribute(label));
+    }
   },
 
   onMainMenuPopupShowing: function BUI_onMainMenuPopupShowing(event) {
@@ -1563,28 +1544,6 @@ let BookmarkingUI = {
 
   updatePocketItemVisibility: function BUI_updatePocketItemVisibility(prefix) {
     let hidden = !CustomizableUI.getPlacementOfWidget("pocket-button");
-    if (!hidden) {
-      let locale = Cc["@mozilla.org/chrome/chrome-registry;1"].
-                   getService(Ci.nsIXULChromeRegistry).
-                   getSelectedLocale("browser");
-      if (locale == "en-GB" || locale == "en-ZA")
-        locale = "en-US";
-
-      if (locale != "en-US") {
-        if (locale == "ja-JP-mac")
-          locale = "ja";
-        let url = "chrome://browser/content/browser-pocket-" + locale + ".properties";
-        let bundle = Services.strings.createBundle(url);
-        let item = document.getElementById(prefix + "pocket");
-        try {
-          item.setAttribute("label", bundle.GetStringFromName("pocketMenuitem.label"));
-        } catch (err) {
-          // GetStringFromName throws when the bundle doesn't exist.  In that
-          // case, the item will retain the browser-pocket.dtd en-US string that
-          // it has in the markup.
-        }
-      }
-    }
     document.getElementById(prefix + "pocket").hidden = hidden;
     document.getElementById(prefix + "pocketSeparator").hidden = hidden;
   },
@@ -1691,6 +1650,10 @@ let BookmarkingUI = {
         this._showBookmarkedNotification();
       PlacesCommandHook.bookmarkCurrentPage(isBookmarked);
     }
+  },
+
+  onCurrentPageContextPopupShowing() {
+    this._updateBookmarkPageMenuItem();
   },
 
   handleEvent: function BUI_handleEvent(aEvent) {

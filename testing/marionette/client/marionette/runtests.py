@@ -4,9 +4,16 @@
 
 import sys
 
-from marionette_test import MarionetteTestCase, MarionetteJSTestCase
-from mozlog import structured
-from runner import BaseMarionetteTestRunner, BaseMarionetteOptions
+from marionette import __version__
+from marionette_driver import __version__ as driver_version
+from marionette_transport import __version__ as transport_version
+from marionette.marionette_test import MarionetteTestCase, MarionetteJSTestCase
+from marionette.runner import (
+    BaseMarionetteTestRunner,
+    BaseMarionetteArguments,
+    BrowserMobProxyArguments,
+)
+import mozlog
 
 
 class MarionetteTestRunner(BaseMarionetteTestRunner):
@@ -14,27 +21,42 @@ class MarionetteTestRunner(BaseMarionetteTestRunner):
         BaseMarionetteTestRunner.__init__(self, **kwargs)
         self.test_handlers = [MarionetteTestCase, MarionetteJSTestCase]
 
-def startTestRunner(runner_class, options, tests):
-    if options.pydebugger:
-        MarionetteTestCase.pydebugger = __import__(options.pydebugger)
 
-    runner = runner_class(**vars(options))
+class MarionetteArguments(BaseMarionetteArguments):
+    def __init__(self, **kwargs):
+        BaseMarionetteArguments.__init__(self, **kwargs)
+        self.register_argument_container(BrowserMobProxyArguments())
+
+
+def startTestRunner(runner_class, args):
+    if args.pydebugger:
+        MarionetteTestCase.pydebugger = __import__(args.pydebugger)
+
+    args = vars(args)
+    tests = args.pop('tests')
+    runner = runner_class(**args)
     runner.run_tests(tests)
     return runner
 
+def cli(runner_class=MarionetteTestRunner, parser_class=MarionetteArguments):
+    parser = parser_class(
+        usage='%(prog)s [options] test_file_or_dir <test_file_or_dir> ...',
+        version="%(prog)s {version} (using marionette-driver: {driver_version}"
+                ", marionette-transport: {transport_version})".format(
+                    version=__version__,
+                    driver_version=driver_version,
+                    transport_version=transport_version)
+    )
+    mozlog.commandline.add_logging_group(parser)
+    args = parser.parse_args()
+    parser.verify_usage(args)
 
-def cli(runner_class=MarionetteTestRunner, parser_class=BaseMarionetteOptions):
-    parser = parser_class(usage='%prog [options] test_file_or_dir <test_file_or_dir> ...')
-    structured.commandline.add_logging_group(parser)
-    options, tests = parser.parse_args()
-    parser.verify_usage(options, tests)
+    logger = mozlog.commandline.setup_logging(
+        args.logger_name, args, {"tbpl": sys.stdout})
 
-    logger = structured.commandline.setup_logging(
-        options.logger_name, options, {"tbpl": sys.stdout})
+    args.logger = logger
 
-    options.logger = logger
-
-    runner = startTestRunner(runner_class, options, tests)
+    runner = startTestRunner(runner_class, args)
     if runner.failed > 0:
         sys.exit(10)
 

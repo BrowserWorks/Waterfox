@@ -10,17 +10,18 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/ContentParent.h"
+#include "mozilla/dom/ContentBridgeParent.h"
 #include "mozilla/dom/PTabContext.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
-#include "mozilla/dom/StructuredCloneUtils.h"
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/dom/ipc/BlobParent.h"
+#include "mozilla/dom/ipc/StructuredCloneData.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "mozilla/unused.h"
 
 #include "nsFrameMessageManager.h"
-#include "nsIJSRuntimeService.h"
 #include "nsPrintfCString.h"
+#include "xpcpublic.h"
 
 using namespace mozilla::jsipc;
 
@@ -46,18 +47,17 @@ nsIContentParent::AsContentParent()
   return static_cast<ContentParent*>(this);
 }
 
+ContentBridgeParent*
+nsIContentParent::AsContentBridgeParent()
+{
+  MOZ_ASSERT(IsContentBridgeParent());
+  return static_cast<ContentBridgeParent*>(this);
+}
+
 PJavaScriptParent*
 nsIContentParent::AllocPJavaScriptParent()
 {
-  nsCOMPtr<nsIJSRuntimeService> svc =
-    do_GetService("@mozilla.org/js/xpc/RuntimeService;1");
-  NS_ENSURE_TRUE(svc, nullptr);
-
-  JSRuntime *rt;
-  svc->GetRuntime(&rt);
-  NS_ENSURE_TRUE(svc, nullptr);
-
-  return NewJavaScriptParent(rt);
+  return NewJavaScriptParent(xpc::GetJSRuntime());
 }
 
 bool
@@ -159,15 +159,24 @@ nsIContentParent::DeallocPBlobParent(PBlobParent* aActor)
 }
 
 BlobParent*
-nsIContentParent::GetOrCreateActorForBlob(File* aBlob)
+nsIContentParent::GetOrCreateActorForBlob(Blob* aBlob)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aBlob);
 
-  nsRefPtr<FileImpl> blobImpl = aBlob->Impl();
+  nsRefPtr<BlobImpl> blobImpl = aBlob->Impl();
   MOZ_ASSERT(blobImpl);
 
-  BlobParent* actor = BlobParent::GetOrCreate(this, blobImpl);
+  return GetOrCreateActorForBlobImpl(blobImpl);
+}
+
+BlobParent*
+nsIContentParent::GetOrCreateActorForBlobImpl(BlobImpl* aImpl)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aImpl);
+
+  BlobParent* actor = BlobParent::GetOrCreate(this, aImpl);
   NS_ENSURE_TRUE(actor, nullptr);
 
   return actor;
@@ -178,7 +187,7 @@ nsIContentParent::RecvSyncMessage(const nsString& aMsg,
                                   const ClonedMessageData& aData,
                                   InfallibleTArray<CpowEntry>&& aCpows,
                                   const IPC::Principal& aPrincipal,
-                                  InfallibleTArray<nsString>* aRetvals)
+                                  nsTArray<ipc::StructuredCloneData>* aRetvals)
 {
   // FIXME Permission check in Content process
   nsIPrincipal* principal = aPrincipal;
@@ -192,10 +201,12 @@ nsIContentParent::RecvSyncMessage(const nsString& aMsg,
 
   nsRefPtr<nsFrameMessageManager> ppm = mMessageManager;
   if (ppm) {
-    StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
+    ipc::StructuredCloneData data;
+    ipc::UnpackClonedMessageDataForParent(aData, data);
+
     CrossProcessCpowHolder cpows(this, aCpows);
     ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()), nullptr,
-                        aMsg, true, &cloneData, &cpows, aPrincipal, aRetvals);
+                        aMsg, true, &data, &cpows, aPrincipal, aRetvals);
   }
   return true;
 }
@@ -205,7 +216,7 @@ nsIContentParent::RecvRpcMessage(const nsString& aMsg,
                                  const ClonedMessageData& aData,
                                  InfallibleTArray<CpowEntry>&& aCpows,
                                  const IPC::Principal& aPrincipal,
-                                 InfallibleTArray<nsString>* aRetvals)
+                                 nsTArray<ipc::StructuredCloneData>* aRetvals)
 {
   // FIXME Permission check in Content process
   nsIPrincipal* principal = aPrincipal;
@@ -219,10 +230,12 @@ nsIContentParent::RecvRpcMessage(const nsString& aMsg,
 
   nsRefPtr<nsFrameMessageManager> ppm = mMessageManager;
   if (ppm) {
-    StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
+    ipc::StructuredCloneData data;
+    ipc::UnpackClonedMessageDataForParent(aData, data);
+
     CrossProcessCpowHolder cpows(this, aCpows);
     ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()), nullptr,
-                        aMsg, true, &cloneData, &cpows, aPrincipal, aRetvals);
+                        aMsg, true, &data, &cpows, aPrincipal, aRetvals);
   }
   return true;
 }
@@ -245,10 +258,12 @@ nsIContentParent::RecvAsyncMessage(const nsString& aMsg,
 
   nsRefPtr<nsFrameMessageManager> ppm = mMessageManager;
   if (ppm) {
-    StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
+    ipc::StructuredCloneData data;
+    ipc::UnpackClonedMessageDataForParent(aData, data);
+
     CrossProcessCpowHolder cpows(this, aCpows);
     ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()), nullptr,
-                        aMsg, false, &cloneData, &cpows, aPrincipal, nullptr);
+                        aMsg, false, &data, &cpows, aPrincipal, nullptr);
   }
   return true;
 }

@@ -11,15 +11,15 @@ function Deferred()  {
   Object.freeze(this);
 }
 
-let telephony;
-let conference;
+var telephony;
+var conference;
 
 const kPrefRilDebuggingEnabled = "ril.debugging.enabled";
 
 /**
  * Emulator helper.
  */
-let emulator = (function() {
+var emulator = (function() {
   let pendingCmdCount = 0;
   let originalRunEmulatorCmd = runEmulatorCmd;
 
@@ -274,6 +274,70 @@ let emulator = (function() {
         return telephony.calls.length === 0;
       });
     });
+  }
+
+  /**
+   * @param aVoiceType
+   *        The voice type of a mobileConnection, which can be obtained from
+   *        |<mobileConnection>.voice.type|.
+   * @return A string with format of the emulator voice tech.
+   */
+  function voiceTypeToTech(aVoiceType) {
+    switch(aVoiceType) {
+        case "gsm":
+        case "gprs":
+        case "edge":
+          return "gsm";
+
+        case "umts":
+        case "hsdpa":
+        case "hsupa":
+        case "hspa":
+        case "hspa+":
+          return "wcdma";
+
+        case "is95a":
+        case "is95b":
+        case "1xrtt":
+          return "cdma";
+
+        case "evdo0":
+        case "evdoa":
+        case "evdob":
+          return "evdo";
+
+        case "ehrpd":
+        case "lte":
+          return "lte";
+
+        default:
+          return null;
+      }
+  }
+
+  /**
+   * @return Promise
+   */
+  function changeModemTech(aTech, aPreferredMask) {
+    let mobileConn = navigator.mozMobileConnections[0];
+
+    function isTechMatched() {
+      return aTech === voiceTypeToTech(mobileConn.voice.type);
+    }
+
+    let promise1 = isTechMatched() ? Promise.resolve()
+                                   : waitForEvent(mobileConn,
+                                                  "voicechange",
+                                                  isTechMatched);
+
+    let promise2 = Promise.resolve()
+      .then(() => emulator.runCmd("modem tech " + aTech + " " + aPreferredMask))
+      .then(() => emulator.runCmd("modem tech"))
+      .then(result => is(result[0],
+                         aTech + " " + aPreferredMask,
+                         "Check modem 'tech/preferred mask'"));
+
+    return Promise.all([promise1, promise2]);
   }
 
   /**
@@ -1107,12 +1171,19 @@ let emulator = (function() {
 
     let promises = [];
 
-    let promise = gWaitForEvent(connection, "radiostatechange", event => {
+    promises.push(gWaitForEvent(connection, "radiostatechange", event => {
       let state = connection.radioState;
       log("current radioState: " + state);
       return state == desiredRadioState;
-    });
-    promises.push(promise);
+    }));
+
+    // Wait for icc status to finish updating. Please see bug 1169504 for the
+    // reason why we need this.
+    promises.push(gWaitForEvent(connection, "iccchange", event => {
+      let iccId = connection.iccId;
+      log("current iccId: " + iccId);
+      return !!iccId === enabled;
+    }));
 
     promises.push(connection.setRadioEnabled(enabled));
 
@@ -1145,6 +1216,7 @@ let emulator = (function() {
   this.gWaitForNamedStateEvent = waitForNamedStateEvent;
   this.gWaitForStateChangeEvent = waitForStateChangeEvent;
   this.gCheckInitialState = checkInitialState;
+  this.gChangeModemTech = changeModemTech;
   this.gClearCalls = clearCalls;
   this.gOutCallStrPool = outCallStrPool;
   this.gInCallStrPool = inCallStrPool;

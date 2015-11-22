@@ -24,7 +24,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Weave",
   "resource://services-sync/main.js");
 
 // FxAccountsCommon.js doesn't use a "namespace", so create one here.
-let fxAccountsCommon = {};
+var fxAccountsCommon = {};
 Cu.import("resource://gre/modules/FxAccountsCommon.js", fxAccountsCommon);
 
 // We send this notification whenever the "user" migration state changes.
@@ -62,7 +62,8 @@ const FXA_SENTINEL_PREFS = [
   "identity.fxaccounts.remote.signup.uri",
   "identity.fxaccounts.remote.signin.uri",
   "identity.fxaccounts.settings.uri",
-  "services.sync.tokenServerURI",
+  // Note that "identity.sync.tokenserver.uri" and "services.sync.tokenServerURI"
+  // have special handing when writing/reading prefs.
 ];
 
 function Migrator() {
@@ -303,6 +304,20 @@ Migrator.prototype = {
         result[pref] = Services.prefs.getCharPref(pref);
       }
     }
+    // We used to use services.sync.tokenServerURI as the tokenServer pref but
+    // have since changed to identity.sync.tokenserver.uri. However, clients
+    // using this pref may not have updated - so always write whatever value
+    // is actually being used to the "old" name.
+    let tokenServerValue;
+    for (let pref of ["services.sync.tokenServerURI", "identity.sync.tokenserver.uri"]) {
+      if (Services.prefs.prefHasUserValue(pref)) {
+        tokenServerValue = Services.prefs.getCharPref(pref);
+        break;
+      }
+    }
+    if (tokenServerValue) {
+      result["services.sync.tokenServerURI"] = tokenServerValue;
+    }
     return result;
   },
 
@@ -312,6 +327,11 @@ Migrator.prototype = {
       if (savedPrefs[pref]) {
         Services.prefs.setCharPref(pref, savedPrefs[pref]);
       }
+    }
+    // And special handling for the tokenserver prefs.
+    let tokenServerValue = savedPrefs["services.sync.tokenServerURI"];
+    if (tokenServerValue) {
+      Services.prefs.setCharPref("identity.sync.tokenserver.uri", tokenServerValue);
     }
   },
 
@@ -543,4 +563,4 @@ Migrator.prototype = {
 
 // We expose a singleton
 this.EXPORTED_SYMBOLS = ["fxaMigrator"];
-let fxaMigrator = new Migrator();
+var fxaMigrator = new Migrator();

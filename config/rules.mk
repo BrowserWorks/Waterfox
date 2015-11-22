@@ -214,6 +214,12 @@ endif # !GNU_CC
 
 endif # WINNT
 
+ifeq (arm-Darwin,$(CPU_ARCH)-$(OS_TARGET))
+ifdef PROGRAM
+MOZ_PROGRAM_LDFLAGS += -Wl,-rpath -Wl,@executable_path/Frameworks
+endif
+endif
+
 ifeq ($(SOLARIS_SUNPRO_CXX),1)
 ifeq (86,$(findstring 86,$(OS_TEST)))
 OS_LDFLAGS += -M $(MOZILLA_DIR)/config/solaris_ia32.map
@@ -390,7 +396,12 @@ ifdef SHARED_LIBRARY
 ifdef IS_COMPONENT
 EXTRA_DSO_LDOPTS	+= -bundle
 else
-EXTRA_DSO_LDOPTS	+= -dynamiclib -install_name @executable_path/$(SHARED_LIBRARY) -compatibility_version 1 -current_version 1 -single_module
+ifdef MOZ_IOS
+_LOADER_PATH := @rpath
+else
+_LOADER_PATH := @executable_path
+endif
+EXTRA_DSO_LDOPTS	+= -dynamiclib -install_name $(_LOADER_PATH)/$(SHARED_LIBRARY) -compatibility_version 1 -current_version 1 -single_module
 endif
 endif
 endif
@@ -877,7 +888,8 @@ $(basename $2$(notdir $1)).$(OBJ_SUFFIX): $1 $$(call mkdir_deps,$$(MDDEPDIR))
 endef
 $(foreach f,$(CSRCS) $(SSRCS) $(CPPSRCS) $(CMSRCS) $(CMMSRCS) $(ASFILES),$(eval $(call src_objdep,$(f))))
 $(foreach f,$(HOST_CSRCS) $(HOST_CPPSRCS) $(HOST_CMSRCS) $(HOST_CMMSRCS),$(eval $(call src_objdep,$(f),host_)))
-# The rust compiler only outputs library objects, and so we need different
+
+# The Rust compiler only outputs library objects, and so we need different
 # mangling to generate dependency rules for it.
 mk_libname = $(basename lib$(notdir $1)).$(LIB_SUFFIX)
 src_libdep = $(call mk_libname,$1): $1 $$(call mkdir_deps,$$(MDDEPDIR))
@@ -935,7 +947,7 @@ ifdef MOZ_RUST
 # in the target's LIBS.
 $(RSOBJS):
 	$(REPORT_BUILD)
-	$(RUSTC) --crate-type staticlib -o $(call mk_libname,$<) $(_VPATH_SRCS)
+	$(RUSTC) $(RUSTFLAGS) --crate-type staticlib -o $(call mk_libname,$<) $(_VPATH_SRCS)
 endif
 
 $(SOBJS):
@@ -1168,21 +1180,6 @@ endif
 endif
 
 ################################################################################
-# Install a linked .xpt into the appropriate place.
-# This should ideally be performed by the non-recursive idl make file. Some day.
-ifdef XPT_NAME #{
-
-ifndef NO_DIST_INSTALL
-ifndef NO_INTERFACES_MANIFEST
-export:: $(call mkdir_deps,$(FINAL_TARGET)/components)
-	$(call py_action,buildlist,$(FINAL_TARGET)/components/interfaces.manifest 'interfaces $(XPT_NAME)')
-	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest components/interfaces.manifest')
-endif
-endif
-
-endif #} XPT_NAME
-
-################################################################################
 # Copy each element of EXTRA_COMPONENTS to $(FINAL_TARGET)/components
 ifdef EXTRA_COMPONENTS
 misc:: $(EXTRA_COMPONENTS)
@@ -1320,7 +1317,7 @@ ifndef MOZ_DEBUG
 endif
 endif
 	@echo 'Packaging $(XPI_PKGNAME).xpi...'
-	cd $(FINAL_TARGET) && $(ZIP) -qr ../$(XPI_PKGNAME).xpi *
+	$(call py_action,zip,-C $(FINAL_TARGET) ../$(XPI_PKGNAME).xpi '*')
 endif
 
 # See comment above about moving this out of the tools tier.

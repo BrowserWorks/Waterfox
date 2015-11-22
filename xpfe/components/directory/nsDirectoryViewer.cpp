@@ -50,6 +50,8 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "nsContentUtils.h"
+#include "nsIURI.h"
+#include "nsNetUtil.h"
 
 using namespace mozilla;
 
@@ -239,22 +241,21 @@ nsHTTPIndex::OnStartRequest(nsIRequest *request, nsISupports* aContext)
     nsCOMPtr<nsIXPConnect> xpc(do_GetService(kXPConnectCID, &rv));
     if (NS_FAILED(rv)) return rv;
 
-    nsCOMPtr<nsIXPConnectJSObjectHolder> wrapper;
+    JS::Rooted<JSObject*> jsobj(cx);
     rv = xpc->WrapNative(cx,
                          global,
                          static_cast<nsIHTTPIndex*>(this),
                          NS_GET_IID(nsIHTTPIndex),
-                         getter_AddRefs(wrapper));
+                         jsobj.address());
 
     NS_ASSERTION(NS_SUCCEEDED(rv), "unable to xpconnect-wrap http-index");
     if (NS_FAILED(rv)) return rv;
 
-    JS::Rooted<JSObject*> jsobj(cx, wrapper->GetJSObject());
     NS_ASSERTION(jsobj,
                  "unable to get jsobj from xpconnect wrapper");
     if (!jsobj) return NS_ERROR_UNEXPECTED;
 
-    JS::Rooted<JS::Value> jslistener(cx, OBJECT_TO_JSVAL(jsobj));
+    JS::Rooted<JS::Value> jslistener(cx, JS::ObjectValue(*jsobj));
 
     // ...and stuff it into the global context
     bool ok = JS_SetProperty(cx, global, "HTTPIndex", jslistener);

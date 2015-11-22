@@ -46,6 +46,9 @@ using namespace mozilla::gfx;
 // an insignificant dot
 static const int32_t kMinBidiIndicatorPixels = 2;
 
+/*static*/ bool nsCaret::sSelectionCaretEnabled = false;
+/*static*/ bool nsCaret::sSelectionCaretsAffectCaret = false;
+
 /**
  * Find the first frame in an in-order traversal of the frame subtree rooted
  * at aFrame which is either a text frame logically at the end of a line,
@@ -112,15 +115,21 @@ AdjustCaretFrameForLineEnd(nsIFrame** aFrame, int32_t* aOffset)
 }
 
 static bool
-IsBidiUI()
+IsKeyboardRTL()
 {
-  return Preferences::GetBool("bidi.browser.ui");
+  bool isKeyboardRTL = false;
+  nsIBidiKeyboard* bidiKeyboard = nsContentUtils::GetBidiKeyboard();
+  if (bidiKeyboard) {
+    bidiKeyboard->IsLangRTL(&isKeyboardRTL);
+  }
+  return isKeyboardRTL;
 }
 
 nsCaret::nsCaret()
 : mOverrideOffset(0)
-, mIsBlinkOn(false)
 , mBlinkCount(-1)
+, mHideCount(0)
+, mIsBlinkOn(false)
 , mVisible(false)
 , mReadOnly(false)
 , mShowDuringSelection(false)
@@ -143,6 +152,15 @@ nsresult nsCaret::Init(nsIPresShell *inPresShell)
   mShowDuringSelection =
     LookAndFeel::GetInt(LookAndFeel::eIntID_ShowCaretDuringSelection,
                         mShowDuringSelection ? 1 : 0) != 0;
+
+  static bool addedCaretPref = false;
+  if (!addedCaretPref) {
+    Preferences::AddBoolVarCache(&sSelectionCaretEnabled,
+      "selectioncaret.enabled");
+    Preferences::AddBoolVarCache(&sSelectionCaretsAffectCaret,
+      "selectioncaret.visibility.affectscaret");
+    addedCaretPref = true;
+  }
 
   // get the selection from the pres shell, and set ourselves up as a selection
   // listener
@@ -249,11 +267,12 @@ void nsCaret::SetVisible(bool inMakeVisible)
 
 bool nsCaret::IsVisible()
 {
-  if (!mVisible) {
+  if (!mVisible || mHideCount) {
     return false;
   }
 
-  if (!mShowDuringSelection) {
+  if (!mShowDuringSelection &&
+      !(sSelectionCaretEnabled && sSelectionCaretsAffectCaret)) {
     Selection* selection = GetSelectionInternal();
     if (!selection) {
       return false;
@@ -264,11 +283,44 @@ bool nsCaret::IsVisible()
     }
   }
 
+  // The Android IME can have a visible caret when there is a composition
+  // selection, due to auto-suggest/auto-correct styling (underlining),
+  // but never when the SelectionCarets are visible.
+  if (sSelectionCaretEnabled && sSelectionCaretsAffectCaret) {
+    nsCOMPtr<nsISelectionController> selCon = do_QueryReferent(mPresShell);
+    if (selCon) {
+      bool visible = false;
+      selCon->GetSelectionCaretsVisibility(&visible);
+      if (visible) {
+        return false;
+      }
+    }
+  }
+
   if (IsMenuPopupHidingCaret()) {
     return false;
   }
 
   return true;
+}
+
+void nsCaret::AddForceHide()
+{
+  MOZ_ASSERT(mHideCount < UINT32_MAX);
+  if (++mHideCount > 1) {
+    return;
+  }
+  ResetBlinking();
+  SchedulePaint();
+}
+
+void nsCaret::RemoveForceHide()
+{
+  if (!mHideCount || --mHideCount) {
+    return;
+  }
+  ResetBlinking();
+  SchedulePaint();
 }
 
 void nsCaret::SetCaretReadOnly(bool inMakeReadonly)
@@ -358,10 +410,10 @@ nsCaret::GetGeometryForFrame(nsIFrame* aFrame,
   return rect;
 }
 
-static nsIFrame*
-GetFrameAndOffset(Selection* aSelection,
-                  nsINode* aOverrideNode, int32_t aOverrideOffset,
-                  int32_t* aFrameOffset)
+nsIFrame*
+nsCaret::GetFrameAndOffset(Selection* aSelection,
+                           nsINode* aOverrideNode, int32_t aOverrideOffset,
+                           int32_t* aFrameOffset)
 {
   nsINode* focusNode;
   int32_t focusOffset;
@@ -451,6 +503,21 @@ nsCaret::SetCaretPosition(nsIDOMNode* aNode, int32_t aOffset)
   SchedulePaint();
 }
 
+bool
+nsCaret::IsBidiUI()
+{
+  nsIFrame* frame = nullptr;
+
+  if(Selection* selection = GetSelectionInternal()) {
+    int32_t contentOffset;
+    frame = GetFrameAndOffset(selection, mOverrideContent, mOverrideOffset,
+                              &contentOffset);
+  }
+
+  return (frame && frame->GetStateBits() & NS_FRAME_IS_BIDI) ||
+         Preferences::GetBool("bidi.browser.ui");
+}
+
 void
 nsCaret::CheckSelectionLanguageChange()
 {
@@ -458,11 +525,8 @@ nsCaret::CheckSelectionLanguageChange()
     return;
   }
 
-  bool isKeyboardRTL = false;
-  nsIBidiKeyboard* bidiKeyboard = nsContentUtils::GetBidiKeyboard();
-  if (bidiKeyboard) {
-    bidiKeyboard->IsLangRTL(&isKeyboardRTL);
-  }
+  bool isKeyboardRTL = IsKeyboardRTL();
+
   // Call SelectionLanguageChange on every paint. Mostly it will be a noop
   // but it should be fast anyway. This guarantees we never paint the caret
   // at the wrong place.
@@ -578,7 +642,7 @@ void nsCaret::ResetBlinking()
 {
   mIsBlinkOn = true;
 
-  if (mReadOnly || !mVisible) {
+  if (mReadOnly || !mVisible || mHideCount) {
     StopBlinking();
     return;
   }
@@ -648,11 +712,12 @@ nsCaret::GetCaretFrameForNodeOffset(nsFrameSelection*    aFrameSelection,
   // ------------------
   // NS_STYLE_DIRECTION_LTR : LTR or Default
   // NS_STYLE_DIRECTION_RTL
-  if (IsBidiUI())
+  if (theFrame->PresContext()->BidiEnabled())
   {
     // If there has been a reflow, take the caret Bidi level to be the level of the current frame
-    if (aBidiLevel & BIDI_LEVEL_UNDEFINED)
+    if (aBidiLevel & BIDI_LEVEL_UNDEFINED) {
       aBidiLevel = NS_GET_EMBEDDING_LEVEL(theFrame);
+    }
 
     int32_t start;
     int32_t end;
@@ -875,21 +940,22 @@ nsCaret::ComputeCaretRects(nsIFrame* aFrame, int32_t aFrameOffset,
     }
   }
 
-  // Simon -- make a hook to draw to the left or right of the caret to show keyboard language direction
   aHookRect->SetEmpty();
-  if (!IsBidiUI()) {
+
+  Selection* selection = GetSelectionInternal();
+  if (!selection || !selection->GetFrameSelection()) {
     return;
   }
 
-  bool isCaretRTL;
-  nsIBidiKeyboard* bidiKeyboard = nsContentUtils::GetBidiKeyboard();
-  // if bidiKeyboard->IsLangRTL() fails, there is no way to tell the
-  // keyboard direction, or the user has no right-to-left keyboard
-  // installed, so we never draw the hook.
-  if (bidiKeyboard && NS_SUCCEEDED(bidiKeyboard->IsLangRTL(&isCaretRTL))) {
-    // If keyboard language is RTL, draw the hook on the left; if LTR, to the right
+  if (IsBidiUI() || IsKeyboardRTL()) {
+    // If caret level is RTL, draw the hook on the left; if LTR, to the right
     // The height of the hook rectangle is the same as the width of the caret
     // rectangle.
+    int caretBidiLevel = selection->GetFrameSelection()->GetCaretBidiLevel();
+    if (caretBidiLevel & BIDI_LEVEL_UNDEFINED) {
+      caretBidiLevel = NS_GET_EMBEDDING_LEVEL(aFrame);
+    }
+    bool isCaretRTL = caretBidiLevel % 2;
     if (isVertical) {
       aHookRect->SetRect(aCaretRect->XMost() - bidiIndicatorSize,
                          aCaretRect->y + (isCaretRTL ? bidiIndicatorSize * -1 :

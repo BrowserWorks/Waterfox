@@ -13,7 +13,6 @@
 #include "nsColor.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
 #include "mozilla/dom/HTMLVideoElement.h"
-#include "CanvasUtils.h"
 #include "gfxTextRun.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/CanvasGradient.h"
@@ -27,6 +26,7 @@
 #include "mozilla/EnumeratedArray.h"
 #include "FilterSupport.h"
 #include "nsSVGEffects.h"
+#include "Layers.h"
 
 class nsGlobalWindow;
 class nsXULElement;
@@ -34,10 +34,11 @@ class nsXULElement;
 namespace mozilla {
 namespace gl {
 class SourceSurface;
-}
+} // namespace gl
 
 namespace dom {
-class HTMLImageElementOrHTMLCanvasElementOrHTMLVideoElement;
+class HTMLImageElementOrHTMLCanvasElementOrHTMLVideoElementOrImageBitmap;
+typedef HTMLImageElementOrHTMLCanvasElementOrHTMLVideoElementOrImageBitmap CanvasImageSource;
 class ImageData;
 class StringOrCanvasGradientOrCanvasPattern;
 class OwningStringOrCanvasGradientOrCanvasPattern;
@@ -60,9 +61,6 @@ class CanvasRenderingContext2D final :
   public nsICanvasRenderingContextInternal,
   public nsWrapperCache
 {
-typedef HTMLImageElementOrHTMLCanvasElementOrHTMLVideoElement
-  HTMLImageOrCanvasOrVideoElement;
-
   virtual ~CanvasRenderingContext2D();
 
 public:
@@ -132,7 +130,7 @@ public:
     CreateRadialGradient(double x0, double y0, double r0, double x1, double y1,
                          double r1, ErrorResult& aError);
   already_AddRefed<CanvasPattern>
-    CreatePattern(const HTMLImageOrCanvasOrVideoElement& element,
+    CreatePattern(const CanvasImageSource& element,
                   const nsAString& repeat, ErrorResult& error);
 
   double ShadowOffsetX()
@@ -187,7 +185,7 @@ public:
   void Fill(const CanvasPath& path, const CanvasWindingRule& winding);
   void Stroke();
   void Stroke(const CanvasPath& path);
-  void DrawFocusIfNeeded(mozilla::dom::Element& element);
+  void DrawFocusIfNeeded(mozilla::dom::Element& element, ErrorResult& aRv);
   bool DrawCustomFocusRing(mozilla::dom::Element& element);
   void Clip(const CanvasWindingRule& winding);
   void Clip(const CanvasPath& path, const CanvasWindingRule& winding);
@@ -208,20 +206,20 @@ public:
   void RemoveHitRegion(const nsAString& id);
   void ClearHitRegions();
 
-  void DrawImage(const HTMLImageOrCanvasOrVideoElement& image,
+  void DrawImage(const CanvasImageSource& image,
                  double dx, double dy, mozilla::ErrorResult& error)
   {
     DrawImage(image, 0.0, 0.0, 0.0, 0.0, dx, dy, 0.0, 0.0, 0, error);
   }
 
-  void DrawImage(const HTMLImageOrCanvasOrVideoElement& image,
+  void DrawImage(const CanvasImageSource& image,
                  double dx, double dy, double dw, double dh,
                  mozilla::ErrorResult& error)
   {
     DrawImage(image, 0.0, 0.0, 0.0, 0.0, dx, dy, dw, dh, 2, error);
   }
 
-  void DrawImage(const HTMLImageOrCanvasOrVideoElement& image,
+  void DrawImage(const CanvasImageSource& image,
                  double sx, double sy, double sw, double sh, double dx,
                  double dy, double dw, double dh, mozilla::ErrorResult& error)
   {
@@ -363,7 +361,8 @@ public:
   void SetMozDash(JSContext* cx, const JS::Value& mozDash,
                   mozilla::ErrorResult& error);
 
-  void SetLineDash(const Sequence<double>& mSegments);
+  void SetLineDash(const Sequence<double>& mSegments,
+                   mozilla::ErrorResult& aRv);
   void GetLineDash(nsTArray<double>& mSegments) const;
 
   void SetLineDashOffset(double mOffset);
@@ -401,6 +400,7 @@ public:
   void DrawWindow(nsGlobalWindow& window, double x, double y, double w, double h,
                   const nsAString& bgColor, uint32_t flags,
                   mozilla::ErrorResult& error);
+  void DrawWidgetAsOnScreen(nsGlobalWindow& aWindow, mozilla::ErrorResult& error);
   void AsyncDrawXULElement(nsXULElement& elem, double x, double y, double w,
                            double h, const nsAString& bgColor, uint32_t flags,
                            mozilla::ErrorResult& error);
@@ -441,7 +441,7 @@ public:
                             const char16_t* aEncoderOptions,
                             nsIInputStream **aStream) override;
 
-  mozilla::TemporaryRef<mozilla::gfx::SourceSurface> GetSurfaceSnapshot(bool* aPremultAlpha = nullptr) override
+  already_AddRefed<mozilla::gfx::SourceSurface> GetSurfaceSnapshot(bool* aPremultAlpha = nullptr) override
   {
     EnsureTarget();
     if (aPremultAlpha) {
@@ -453,11 +453,14 @@ public:
   NS_IMETHOD SetIsOpaque(bool isOpaque) override;
   bool GetIsOpaque() override { return mOpaque; }
   NS_IMETHOD Reset() override;
+  mozilla::layers::PersistentBufferProvider* GetBufferProvider(mozilla::layers::LayerManager* aManager);
   already_AddRefed<CanvasLayer> GetCanvasLayer(nsDisplayListBuilder* aBuilder,
                                                CanvasLayer *aOldLayer,
                                                LayerManager *aManager) override;
   virtual bool ShouldForceInactiveLayer(LayerManager *aManager) override;
   void MarkContextClean() override;
+  void MarkContextCleanForFrameCapture() override;
+  bool IsContextCleanForFrameCapture() override;
   NS_IMETHOD SetIsIPC(bool isIPC) override;
   // this rect is in canvas device space
   void Redraw(const mozilla::gfx::Rect &r);
@@ -595,6 +598,10 @@ protected:
                    nsTArray<nsStyleFilter>& aFilterChain,
                    ErrorResult& error);
 
+  // Returns whether the font was successfully updated.
+  bool SetFontInternal(const nsAString& font, mozilla::ErrorResult& error);
+
+
   /**
    * Creates the error target, if it doesn't exist
    */
@@ -629,16 +636,22 @@ protected:
    */
   RenderingMode EnsureTarget(RenderingMode aRenderMode = RenderingMode::DefaultBackendMode);
 
-  /*
+  /**
    * Disposes an old target and prepares to lazily create a new target.
    */
   void ClearTarget();
+
+  /*
+   * Returns the target to the buffer provider. i.e. this will queue a frame for
+   * rendering.
+   */
+  void ReturnTarget();
 
   /**
    * Check if the target is valid after calling EnsureTarget.
    */
   bool IsTargetValid() const {
-    return mTarget != sErrorTarget && mTarget != nullptr;
+    return (sErrorTarget == nullptr || mTarget != sErrorTarget) && (mBufferProvider != nullptr || mTarget);
   }
 
   /**
@@ -656,7 +669,7 @@ protected:
   nsLayoutUtils::SurfaceFromElementResult
     CachedSurfaceFromElement(Element* aElement);
 
-  void DrawImage(const HTMLImageOrCanvasOrVideoElement &imgElt,
+  void DrawImage(const CanvasImageSource &imgElt,
                  double sx, double sy, double sw, double sh,
                  double dx, double dy, double dw, double dh,
                  uint8_t optional_argc, mozilla::ErrorResult& error);
@@ -675,6 +688,9 @@ protected:
     return CurrentState().font;
   }
 
+  // This function maintains a list of raw pointers to cycle-collected
+  // objects. We need to ensure that no entries persist beyond unlink,
+  // since the objects are logically destructed at that point.
   static std::vector<CanvasRenderingContext2D*>& DemotableContexts();
   static void DemoteOldestContextIfNecessary();
 
@@ -712,6 +728,8 @@ protected:
   // sErrorTarget.
   mozilla::RefPtr<mozilla::gfx::DrawTarget> mTarget;
 
+  mozilla::RefPtr<mozilla::layers::PersistentBufferProvider> mBufferProvider;
+
   uint32_t SkiaGLTex() const;
 
   // This observes our draw calls at the beginning of the canvas
@@ -731,6 +749,13 @@ protected:
     * many more Redraw calls.
     */
   bool mPredictManyRedrawCalls;
+
+  /**
+   * Flag to avoid unnecessary surface copies to FrameCaptureListeners in the
+   * case when the canvas is not currently being drawn into and not rendered
+   * but canvas capturing is still ongoing.
+   */
+  bool mIsCapturedFrameInvalid;
 
   // This is stored after GetThebesSurface has been called once to avoid
   // excessive ThebesSurface initialization overhead.
@@ -854,10 +879,10 @@ protected:
 protected:
   gfxFontGroup *GetCurrentFontStyle();
 
-  /*
-    * Implementation of the fillText, strokeText, and measure functions with
-    * the operation abstracted to a flag.
-    */
+  /**
+   * Implementation of the fillText, strokeText, and measure functions with
+   * the operation abstracted to a flag.
+   */
   nsresult DrawOrMeasureText(const nsAString& text,
                              float x,
                              float y,
@@ -881,6 +906,7 @@ protected:
                      fillRule(mozilla::gfx::FillRule::FILL_WINDING),
                      lineCap(mozilla::gfx::CapStyle::BUTT),
                      lineJoin(mozilla::gfx::JoinStyle::MITER_OR_BEVEL),
+                     filterString(MOZ_UTF16("none")),
                      imageSmoothingEnabled(true),
                      fontExplicitLanguage(false)
     { }
@@ -977,7 +1003,7 @@ protected:
     mozilla::gfx::Float miterLimit;
     mozilla::gfx::Float globalAlpha;
     mozilla::gfx::Float shadowBlur;
-    FallibleTArray<mozilla::gfx::Float> dash;
+    nsTArray<mozilla::gfx::Float> dash;
     mozilla::gfx::Float dashOffset;
 
     mozilla::gfx::CompositionOp op;
@@ -1038,7 +1064,7 @@ protected:
   friend class CanvasDrawObserver;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif /* CanvasRenderingContext2D_h */

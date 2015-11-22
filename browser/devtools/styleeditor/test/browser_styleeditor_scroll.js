@@ -16,8 +16,8 @@ const DOCUMENT_WITH_LONG_SHEET = "data:text/html;charset=UTF-8," +
            "<html>",
            " <head>",
            "  <title>Editor scroll test page</title>",
-           '  <link rel="stylesheet" type="text/css" href="'+SIMPLE+'">',
-           '  <link rel="stylesheet" type="text/css" href="'+LONG+'">',
+           '  <link rel="stylesheet" type="text/css" href="' + SIMPLE + '">',
+           '  <link rel="stylesheet" type="text/css" href="' + LONG + '">',
            " </head>",
            " <body>Editor scroll test page</body>",
            "</html>"
@@ -79,7 +79,7 @@ add_task(function* () {
  * @param {StyleEditorUI} ui
  *        The StyleEditorUI the editor belongs to.
  */
-let waitForEditorToBeSelected = Task.async(function* (editor, ui) {
+var waitForEditorToBeSelected = Task.async(function* (editor, ui) {
   info(`Waiting for ${editor.friendlyName} to be selected.`);
   let selected = yield ui.once("editor-selected");
   while (selected != editor) {

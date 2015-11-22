@@ -4,15 +4,14 @@
 
 "use strict";
 
-// Test that color pickers stops following the pointer if the pointer is
+// Tests that color pickers stops following the pointer if the pointer is
 // released outside the tooltip frame (bug 1160720).
 
-const PAGE_CONTENT = "data:text/html;charset=utf-8," +
-  '<body style="color: red">Test page for bug 1160720';
+const TEST_URI = "<body style='color: red'>Test page for bug 1160720";
 
 add_task(function*() {
-  yield addTab(PAGE_CONTENT);
-  let {toolbox, inspector, view} = yield openRuleView();
+  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+  let {view} = yield openRuleView();
 
   let cSwatch = getRuleViewProperty(view, "element", "color").valueSpan
     .querySelector(".ruleview-colorswatch");
@@ -22,9 +21,11 @@ add_task(function*() {
   let change = spectrum.once("changed");
 
   info("Pressing mouse down over color picker.");
+  let onRuleViewChanged = view.once("ruleview-changed");
   EventUtils.synthesizeMouseAtCenter(spectrum.dragger, {
     type: "mousedown",
   }, spectrum.dragger.ownerDocument.defaultView);
+  yield onRuleViewChanged;
 
   let value = yield change;
   info(`Color changed to ${value} on mousedown.`);
@@ -41,6 +42,7 @@ add_task(function*() {
   // i.e. the buttons that were pressed down between events.
 
   info("Moving mouse over color picker without any buttons pressed.");
+
   EventUtils.synthesizeMouse(spectrum.dragger, 10, 10, {
     button: -1, // -1 = no buttons are pressed down
     type: "mousemove",

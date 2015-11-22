@@ -143,6 +143,20 @@ HTMLTableCellAccessible::NativeAttributes()
   return attributes.forget();
 }
 
+GroupPos
+HTMLTableCellAccessible::GroupPosition()
+{
+  int32_t count = 0, index = 0;
+  TableAccessible* table = Table();
+  if (table && nsCoreUtils::GetUIntAttr(table->AsAccessible()->GetContent(),
+                                        nsGkAtoms::aria_colcount, &count) &&
+      nsCoreUtils::GetUIntAttr(mContent, nsGkAtoms::aria_colindex, &index)) {
+    return GroupPos(0, index, count);
+  }
+
+  return HyperTextAccessibleWrap::GroupPosition();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // HTMLTableCellAccessible: TableCellAccessible implementation
 
@@ -354,6 +368,20 @@ HTMLTableRowAccessible::NativeRole()
     return roles::MATHML_LABELED_ROW;
   }
   return roles::ROW;
+}
+
+GroupPos
+HTMLTableRowAccessible::GroupPosition()
+{
+  int32_t count = 0, index = 0;
+  Accessible* table = nsAccUtils::TableFor(this);
+  if (table && nsCoreUtils::GetUIntAttr(table->GetContent(),
+                                        nsGkAtoms::aria_rowcount, &count) &&
+      nsCoreUtils::GetUIntAttr(mContent, nsGkAtoms::aria_rowindex, &index)) {
+    return GroupPos(0, index, count);
+  }
+
+  return AccessibleWrap::GroupPosition();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

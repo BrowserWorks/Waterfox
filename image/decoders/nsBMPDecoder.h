@@ -22,8 +22,6 @@ class RasterImage;
 class nsBMPDecoder : public Decoder
 {
 public:
-
-    explicit nsBMPDecoder(RasterImage* aImage);
     ~nsBMPDecoder();
 
     // Specifies whether or not the BMP file will contain alpha data
@@ -42,19 +40,29 @@ public:
 
     // Obtains the internal output image buffer
     uint32_t* GetImageData();
+    size_t GetImageDataLength() const { return mImageDataLength; }
 
     // Obtains the size of the compressed image resource
     int32_t GetCompressedImageSize() const;
 
     // Obtains whether or not a BMP file had alpha data in its 4th byte
     // for 32BPP bitmaps.  Only use after the bitmap has been processed.
-    bool HasAlphaData() const;
+    bool HasAlphaData() const { return mHaveAlphaData; }
+
+    /// Marks this BMP as having alpha data (due to e.g. an ICO alpha mask).
+    void SetHasAlphaData() { mHaveAlphaData = true; }
 
     virtual void WriteInternal(const char* aBuffer,
                                uint32_t aCount) override;
     virtual void FinishInternal() override;
 
 private:
+    friend class DecoderFactory;
+    friend class nsICODecoder;
+
+    // Decoders should only be instantiated via DecoderFactory.
+    // XXX(seth): nsICODecoder is temporarily an exception to this rule.
+    explicit nsBMPDecoder(RasterImage* aImage);
 
     /// Calculates the red-, green- and blueshift in mBitFields using
     /// the bitmasks from mBitFields
@@ -64,8 +72,8 @@ private:
 
     BMPFILEHEADER mBFH;
     BITMAPV5HEADER mBIH;
-    char mRawBuf[WIN_V3_INTERNAL_BIH_LENGTH]; //< If this is changed,
-                                              // WriteInternal() MUST be updated
+    char mRawBuf[BIH_INTERNAL_LENGTH::WIN_V3]; //< If this is changed,
+                                               // WriteInternal() MUST be updated
 
     uint32_t mLOH; //< Length of the header
 

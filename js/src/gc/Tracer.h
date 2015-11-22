@@ -10,6 +10,7 @@
 #include "jsfriendapi.h"
 
 #include "gc/Barrier.h"
+#include "js/TraceableHashTable.h"
 
 namespace js {
 
@@ -22,11 +23,11 @@ namespace js {
 // purposes as well.
 //
 // One commonly misunderstood subtlety of the tracing architecture is the role
-// of graph verticies versus graph edges. Graph verticies are the heap
+// of graph vertices versus graph edges. Graph vertices are the heap
 // allocations -- GC things -- that are returned by Allocate. Graph edges are
 // pointers -- including tagged pointers like Value and jsid -- that link the
 // allocations into a complex heap. The tracing API deals *only* with edges.
-// Any action taken on the target of a graph edge is independent to the tracing
+// Any action taken on the target of a graph edge is independent of the tracing
 // itself.
 //
 // Another common misunderstanding relates to the role of the JSTracer. The
@@ -61,6 +62,12 @@ TraceEdge(JSTracer* trc, BarrieredBase<T>* thingp, const char* name);
 template <typename T>
 void
 TraceRoot(JSTracer* trc, T* thingp, const char* name);
+
+// Idential to TraceRoot, except that this variant will not crash if |*thingp|
+// is null.
+template <typename T>
+void
+TraceNullableRoot(JSTracer* trc, T* thingp, const char* name);
 
 // Like TraceEdge, but for edges that do not use one of the automatic barrier
 // classes and, thus, must be treated specially for moving GC. This method is
@@ -109,14 +116,36 @@ TraceGenericPointerRoot(JSTracer* trc, gc::Cell** thingp, const char* name);
 void
 TraceManuallyBarrieredGenericPointerEdge(JSTracer* trc, gc::Cell** thingp, const char* name);
 
-// Object slots are not stored as a contiguous vector, so marking them as such
-// will lead to the wrong indicies, if such are requested when tracing.
-void
-TraceObjectSlots(JSTracer* trc, NativeObject* obj, uint32_t start, uint32_t nslots);
-
 // Depricated. Please use one of the strongly typed variants above.
 void
-TraceChildren(JSTracer* trc, void* thing, JSGCTraceKind kind);
+TraceChildren(JSTracer* trc, void* thing, JS::TraceKind kind);
+
+namespace gc {
+
+// Trace through a shape or group iteratively during cycle collection to avoid
+// deep or infinite recursion.
+void
+TraceCycleCollectorChildren(JS::CallbackTracer* trc, Shape* shape);
+void
+TraceCycleCollectorChildren(JS::CallbackTracer* trc, ObjectGroup* group);
+
+} // namespace gc
+
+template <typename T>
+struct DefaultTracer<T*>
+{
+    static void trace(JSTracer* trc, T** t, const char* name) {
+        TraceManuallyBarrieredEdge(trc, t, name);
+    }
+};
+
+template <typename T>
+struct DefaultTracer<RelocatablePtr<T*>>
+{
+    static void trace(JSTracer* trc, RelocatablePtr<T*> t, const char* name) {
+        TraceEdge(trc, t, name);
+    }
+};
 
 } // namespace js
 

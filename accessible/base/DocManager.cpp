@@ -32,7 +32,7 @@
 #include "nsIWebProgress.h"
 #include "nsCoreUtils.h"
 #include "nsXULAppAPI.h"
-#include "mozilla/dom/ContentChild.h"
+#include "mozilla/dom/TabChild.h"
 
 using namespace mozilla;
 using namespace mozilla::a11y;
@@ -455,10 +455,20 @@ DocManager::CreateDocOrRootAccessible(nsIDocument* aDocument)
                              ApplicationAcc());
 
     if (IPCAccessibilityActive()) {
-      DocAccessibleChild* ipcDoc = new DocAccessibleChild(docAcc);
-      docAcc->SetIPCDoc(ipcDoc);
-    auto contentChild = dom::ContentChild::GetSingleton();
-    contentChild->SendPDocAccessibleConstructor(ipcDoc, nullptr, 0);
+      nsIDocShell* docShell = aDocument->GetDocShell();
+      if (docShell) {
+        nsCOMPtr<nsITabChild> tabChild = do_GetInterface(docShell);
+
+        // XXX We may need to handle the case that we don't have a tab child
+        // differently.  It may be that this will cause us to fail to notify
+        // the parent process about important accessible documents.
+        if (tabChild) {
+          DocAccessibleChild* ipcDoc = new DocAccessibleChild(docAcc);
+          docAcc->SetIPCDoc(ipcDoc);
+          static_cast<TabChild*>(tabChild.get())->
+            SendPDocAccessibleConstructor(ipcDoc, nullptr, 0);
+        }
+      }
     }
   } else {
     parentDocAcc->BindChildDocument(docAcc);
@@ -549,5 +559,5 @@ DocManager::RemoteDocAdded(DocAccessibleParent* aDoc)
   MOZ_ASSERT(!sRemoteDocuments->Contains(aDoc),
       "How did we already have the doc!");
   sRemoteDocuments->AppendElement(aDoc);
-  ProxyCreated(aDoc, 0);
+  ProxyCreated(aDoc, Interfaces::DOCUMENT | Interfaces::HYPERTEXT);
 }

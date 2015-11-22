@@ -36,9 +36,10 @@ CameraPreviewMediaStream::CameraPreviewMediaStream(DOMMediaStream* aWrapper)
   , mRateLimit(false)
   , mTrackCreated(false)
 {
-  SetGraphImpl(MediaStreamGraph::GetInstance());
+  SetGraphImpl(
+      MediaStreamGraph::GetInstance(
+        MediaStreamGraph::SYSTEM_THREAD_DRIVER, AudioChannel::Normal));
   mFakeMediaStreamGraph = new FakeMediaStreamGraph();
-  mIsConsumed = false;
 }
 
 void
@@ -62,15 +63,6 @@ CameraPreviewMediaStream::AddVideoOutput(VideoFrameContainer* aContainer)
   MutexAutoLock lock(mMutex);
   nsRefPtr<VideoFrameContainer> container = aContainer;
   AddVideoOutputImpl(container.forget());
-
-  if (mVideoOutputs.Length() > 1) {
-    return;
-  }
-  mIsConsumed = true;
-  for (uint32_t j = 0; j < mListeners.Length(); ++j) {
-    MediaStreamListener* l = mListeners[j];
-    l->NotifyConsumptionChanged(mFakeMediaStreamGraph, MediaStreamListener::CONSUMED);
-  }
 }
 
 void
@@ -78,20 +70,6 @@ CameraPreviewMediaStream::RemoveVideoOutput(VideoFrameContainer* aContainer)
 {
   MutexAutoLock lock(mMutex);
   RemoveVideoOutputImpl(aContainer);
-
-  if (!mVideoOutputs.IsEmpty()) {
-    return;
-  }
-  mIsConsumed = false;
-  for (uint32_t j = 0; j < mListeners.Length(); ++j) {
-    MediaStreamListener* l = mListeners[j];
-    l->NotifyConsumptionChanged(mFakeMediaStreamGraph, MediaStreamListener::NOT_CONSUMED);
-  }
-}
-
-void
-CameraPreviewMediaStream::ChangeExplicitBlockerCount(int32_t aDelta)
-{
 }
 
 void
@@ -205,4 +183,4 @@ CameraPreviewMediaStream::ClearCurrentFrame()
   }
 }
 
-}
+} // namespace mozilla

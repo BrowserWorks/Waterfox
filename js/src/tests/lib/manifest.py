@@ -7,7 +7,7 @@ from __future__ import print_function
 import os, re, sys
 from subprocess import Popen, PIPE
 
-from tests import TestCase
+from tests import RefTestCase
 
 
 def split_path_into_dirs(path):
@@ -168,13 +168,13 @@ def _build_manifest_script_entry(script_name, test):
         line.append(test.comment)
     return ' '.join(line)
 
-def _map_prefixes_left(test_list):
+def _map_prefixes_left(test_gen):
     """
     Splits tests into a dictionary keyed on the first component of the test
     path, aggregating tests with a common base path into a list.
     """
     byprefix = {}
-    for t in test_list:
+    for t in test_gen:
         left, sep, remainder = t.path.partition(os.sep)
         if left not in byprefix:
             byprefix[left] = []
@@ -183,14 +183,14 @@ def _map_prefixes_left(test_list):
         byprefix[left].append(t)
     return byprefix
 
-def _emit_manifest_at(location, relative, test_list, depth):
+def _emit_manifest_at(location, relative, test_gen, depth):
     """
     location  - str: absolute path where we want to write the manifest
     relative  - str: relative path from topmost manifest directory to current
-    test_list - [str]: list of all test paths and directorys
+    test_gen  - (str): generator of all test paths and directorys
     depth     - int: number of dirs we are below the topmost manifest dir
     """
-    manifests = _map_prefixes_left(test_list)
+    manifests = _map_prefixes_left(test_gen)
 
     filename = os.path.join(location, 'jstests.list')
     manifest = []
@@ -223,8 +223,8 @@ def _emit_manifest_at(location, relative, test_list, depth):
     finally:
         fp.close()
 
-def make_manifests(location, test_list):
-    _emit_manifest_at(location, '', test_list, 0)
+def make_manifests(location, test_gen):
+    _emit_manifest_at(location, '', test_gen, 0)
 
 def _find_all_js_files(base, location):
     for root, dirs, files in os.walk(location):
@@ -323,18 +323,8 @@ def _apply_external_manifests(filename, testcase, entries, xul_tester):
             testcase.comment = entry["comment"]
             _parse_one(testcase, xul_tester)
 
-def load(location, requested_paths, excluded_paths, xul_tester, reldir=''):
-    """
-    Locates all tests by walking the filesystem starting at |location|.
-    Uses xul_tester to evaluate any test conditions in the test header.
-    Failure type and comment for a test case can come from
-    - an external manifest entry for the test case,
-    - an external manifest entry for a containing directory,
-    - most commonly: the header of the test case itself.
-    """
-    # The list of tests that we are collecting.
-    tests = []
-
+def _is_test_file(path_from_root, basename, filename, requested_paths,
+                  excluded_paths):
     # Any file whose basename matches something in this set is ignored.
     EXCLUDED = set(('browser.js', 'shell.js', 'jsref.js', 'template.js',
                     'user.js', 'sta.js',
@@ -343,39 +333,59 @@ def load(location, requested_paths, excluded_paths, xul_tester, reldir=''):
                     'testBuiltInObject.js', 'testIntl.js',
                     'js-test-driver-begin.js', 'js-test-driver-end.js'))
 
+    # Skip js files in the root test directory.
+    if not path_from_root:
+        return False
+
+    # Skip files that we know are not tests.
+    if basename in EXCLUDED:
+        return False
+
+    # If any tests are requested by name, skip tests that do not match.
+    if requested_paths \
+        and not any(req in filename for req in requested_paths):
+        return False
+
+    # Skip excluded tests.
+    if filename in excluded_paths:
+        return False
+
+    return True
+
+
+def count_tests(location, requested_paths, excluded_paths):
+    count = 0
+    for root, basename in _find_all_js_files(location, location):
+        filename = os.path.join(root, basename)
+        if _is_test_file(root, basename, filename, requested_paths, excluded_paths):
+            count += 1
+    return count
+
+
+def load_reftests(location, requested_paths, excluded_paths, xul_tester, reldir=''):
+    """
+    Locates all tests by walking the filesystem starting at |location|.
+    Uses xul_tester to evaluate any test conditions in the test header.
+    Failure type and comment for a test case can come from
+    - an external manifest entry for the test case,
+    - an external manifest entry for a containing directory,
+    - most commonly: the header of the test case itself.
+    """
     manifestFile = os.path.join(location, 'jstests.list')
     externalManifestEntries = _parse_external_manifest(manifestFile, '')
 
     for root, basename in _find_all_js_files(location, location):
-        # Skip js files in the root test directory.
-        if not root:
-            continue
-
-        # Skip files that we know are not tests.
-        if basename in EXCLUDED:
-            continue
-
         # Get the full path and relative location of the file.
         filename = os.path.join(root, basename)
-        fullpath = os.path.join(location, filename)
-
-        # If any tests are requested by name, skip tests that do not match.
-        if requested_paths \
-           and not any(req in filename for req in requested_paths):
-            continue
-
-        # Skip excluded tests.
-        if filename in excluded_paths:
+        if not _is_test_file(root, basename, filename, requested_paths, excluded_paths):
             continue
 
         # Skip empty files.
+        fullpath = os.path.join(location, filename)
         statbuf = os.stat(fullpath)
-        if statbuf.st_size == 0:
-            continue
 
-        testcase = TestCase(os.path.join(reldir, filename))
+        testcase = RefTestCase(os.path.join(reldir, filename))
         _apply_external_manifests(filename, testcase, externalManifestEntries,
                                   xul_tester)
         _parse_test_header(fullpath, testcase, xul_tester)
-        tests.append(testcase)
-    return tests
+        yield testcase

@@ -24,10 +24,10 @@ class nsIPrincipal;
 namespace mozilla {
 class DOMMediaStream;
 namespace dom {
-class FileImpl;
+class BlobImpl;
 class MediaSource;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 class nsHostObjectProtocolHandler : public nsIProtocolHandler
 {
@@ -122,7 +122,10 @@ inline bool IsFontTableURI(nsIURI* aUri)
 }
 
 extern nsresult
-NS_GetBlobForBlobURI(nsIURI* aURI, mozilla::dom::FileImpl** aBlob);
+NS_GetBlobForBlobURI(nsIURI* aURI, mozilla::dom::BlobImpl** aBlob);
+
+extern nsresult
+NS_GetBlobForBlobURISpec(const nsACString& aSpec, mozilla::dom::BlobImpl** aBlob);
 
 extern nsresult
 NS_GetStreamForBlobURI(nsIURI* aURI, nsIInputStream** aStream);

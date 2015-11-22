@@ -682,7 +682,9 @@ static boolean sdp_attr_is_simple_string(sdp_attr_e attr_type) {
         (attr_type != SDP_ATTR_X_CONFID) &&
         (attr_type != SDP_ATTR_LABEL) &&
         (attr_type != SDP_ATTR_IDENTITY) &&
-        (attr_type != SDP_ATTR_ICE_OPTIONS)) {
+        (attr_type != SDP_ATTR_ICE_OPTIONS) &&
+        (attr_type != SDP_ATTR_IMAGEATTR) &&
+        (attr_type != SDP_ATTR_SIMULCAST)) {
       return FALSE;
     }
     return TRUE;
@@ -1625,8 +1627,6 @@ sdp_result_e sdp_attr_get_ice_attribute (sdp_t *sdp_p, uint16_t level,
         sdp_p->conf_p->num_invalid_param++;
         return (SDP_INVALID_PARAMETER);
     }
-
-    return (SDP_FAILURE);
 }
 
 /* Function:    sdp_attr_is_present
@@ -1693,8 +1693,6 @@ sdp_result_e sdp_attr_get_rtcp_mux_attribute (sdp_t *sdp_p, uint16_t level,
         sdp_p->conf_p->num_invalid_param++;
         return (SDP_INVALID_PARAMETER);
     }
-
-    return (SDP_FAILURE);
 }
 
 /* Function:    sdp_attr_get_setup_attribute
@@ -1798,8 +1796,6 @@ sdp_result_e sdp_attr_get_dtls_fingerprint_attribute (sdp_t *sdp_p, uint16_t lev
         sdp_p->conf_p->num_invalid_param++;
         return (SDP_INVALID_PARAMETER);
     }
-
-    return (SDP_FAILURE);
 }
 
 /* Function:    sdp_attr_sprtmap_payload_valid

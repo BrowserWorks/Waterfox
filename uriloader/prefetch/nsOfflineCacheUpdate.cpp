@@ -32,7 +32,7 @@
 #include "nsThreadUtils.h"
 #include "nsProxyRelease.h"
 #include "nsIConsoleService.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Attributes.h"
@@ -57,16 +57,16 @@ static const int32_t  kCustomProfileQuota = 512000;
 //    set NSPR_LOG_MODULES=nsOfflineCacheUpdate:5
 //    set NSPR_LOG_FILE=offlineupdate.log
 //
-// this enables PR_LOG_ALWAYS level information and places all output in
+// this enables LogLevel::Debug level information and places all output in
 // the file offlineupdate.log
 //
 extern PRLogModuleInfo *gOfflineCacheUpdateLog;
 
 #undef LOG
-#define LOG(args) PR_LOG(gOfflineCacheUpdateLog, 4, args)
+#define LOG(args) MOZ_LOG(gOfflineCacheUpdateLog, mozilla::LogLevel::Debug, args)
 
 #undef LOG_ENABLED
-#define LOG_ENABLED() PR_LOG_TEST(gOfflineCacheUpdateLog, 4)
+#define LOG_ENABLED() MOZ_LOG_TEST(gOfflineCacheUpdateLog, mozilla::LogLevel::Debug)
 
 class AutoFreeArray {
 public:
@@ -78,7 +78,7 @@ private:
     char **mValues;
 };
 
-namespace { // anon
+namespace {
 
 nsresult
 DropReferenceFromURL(nsIURI * aURI)
@@ -107,7 +107,7 @@ LogToConsole(const char * message, nsOfflineCacheUpdateItem * item = nullptr)
     }
 }
 
-} // anon namespace
+} // namespace
 
 //-----------------------------------------------------------------------------
 // nsManifestCheck
@@ -177,7 +177,7 @@ nsManifestCheck::Begin()
     rv = NS_NewChannel(getter_AddRefs(mChannel),
                        mURI,
                        nsContentUtils::GetSystemPrincipal(),
-                       nsILoadInfo::SEC_NORMAL,
+                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                        nsIContentPolicy::TYPE_OTHER,
                        nullptr,   // loadGroup
                        nullptr,   // aCallbacks
@@ -195,10 +195,7 @@ nsManifestCheck::Begin()
                                       false);
     }
 
-    rv = mChannel->AsyncOpen(this, nullptr);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    return NS_OK;
+    return mChannel->AsyncOpen2(this);
 }
 
 //-----------------------------------------------------------------------------
@@ -371,7 +368,7 @@ nsOfflineCacheUpdateItem::OpenChannel(nsOfflineCacheUpdate *aUpdate)
     rv = NS_NewChannel(getter_AddRefs(mChannel),
                        mURI,
                        nsContentUtils::GetSystemPrincipal(),
-                       nsILoadInfo::SEC_NORMAL,
+                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                        nsIContentPolicy::TYPE_OTHER,
                        nullptr,  // aLoadGroup
                        this,     // aCallbacks
@@ -403,7 +400,7 @@ nsOfflineCacheUpdateItem::OpenChannel(nsOfflineCacheUpdate *aUpdate)
                                       false);
     }
 
-    rv = mChannel->AsyncOpen(this, nullptr);
+    rv = mChannel->AsyncOpen2(this);
     NS_ENSURE_SUCCESS(rv, rv);
 
     mUpdate = aUpdate;

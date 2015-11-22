@@ -153,8 +153,9 @@ static DllBlockInfo sWindowsDllBlocklist[] = {
   { "libinject2.dll", 0x537DDC93, DllBlockInfo::USE_TIMESTAMP },
   { "libredir2.dll", 0x5385B7ED, DllBlockInfo::USE_TIMESTAMP },
 
-  // Crashes with RoboForm2Go written against old SDK, bug 988311
+  // Crashes with RoboForm2Go written against old SDK, bug 988311/1196859
   { "rf-firefox-22.dll", ALL_VERSIONS },
+  { "rf-firefox-40.dll", ALL_VERSIONS },
 
   // Crashes with DesktopTemperature, bug 1046382
   { "dtwxsvc.dll", 0x53153234, DllBlockInfo::USE_TIMESTAMP },
@@ -436,12 +437,16 @@ DllBlockSet::Add(const char* name, unsigned long long version)
 void
 DllBlockSet::Write(HANDLE file)
 {
-  AutoCriticalSection lock(&sLock);
-  DWORD nBytes;
+  // It would be nicer to use AutoCriticalSection here. However, its destructor
+  // might not run if an exception occurs, in which case we would never leave
+  // the critical section. (MSVC warns about this possibility.) So we
+  // enter and leave manually.
+  ::EnterCriticalSection(&sLock);
 
   // Because this method is called after a crash occurs, and uses heap memory,
   // protect this entire block with a structured exception handler.
   MOZ_SEH_TRY {
+    DWORD nBytes;
     for (DllBlockSet* b = gFirst; b; b = b->mNext) {
       // write name[,v.v.v.v];
       WriteFile(file, b->mName, strlen(b->mName), &nBytes, nullptr);
@@ -465,6 +470,8 @@ DllBlockSet::Write(HANDLE file)
     }
   }
   MOZ_SEH_EXCEPT (EXCEPTION_EXECUTE_HANDLER) { }
+
+  ::LeaveCriticalSection(&sLock);
 }
 
 static
@@ -474,7 +481,7 @@ wchar_t* getFullPath (PWCHAR filePath, wchar_t* fname)
   // path name.  For example, its numerical value can be 1.  Passing a non-valid
   // pointer to SearchPathW will cause a crash, so we need to check to see if we
   // are handed a valid pointer, and otherwise just pass nullptr to SearchPathW.
-  PWCHAR sanitizedFilePath = (intptr_t(filePath) < 1024) ? nullptr : filePath;
+  PWCHAR sanitizedFilePath = (intptr_t(filePath) < 4096) ? nullptr : filePath;
 
   // figure out the length of the string that we need
   DWORD pathlen = SearchPathW(sanitizedFilePath, fname, L".dll", 0, nullptr,
@@ -704,7 +711,7 @@ continue_loading:
 
 WindowsDllInterceptor NtDllIntercept;
 
-} // anonymous namespace
+} // namespace
 
 NS_EXPORT void
 DllBlocklist_Initialize()

@@ -140,7 +140,9 @@ public:
         nsRefPtr<gfxFontEntry> fe = aFontEntry;
         // remove existing entry, if already present
         mAvailableFonts.RemoveElement(aFontEntry);
-        mAvailableFonts.AppendElement(aFontEntry);
+        // insert at the beginning so that the last-defined font is the first
+        // one in the fontlist used for matching, as per CSS Fonts spec
+        mAvailableFonts.InsertElementAt(0, aFontEntry);
 
         if (aFontEntry->mFamilyName.IsEmpty()) {
             aFontEntry->mFamilyName = Name();
@@ -338,7 +340,9 @@ public:
         struct Key {
             nsCOMPtr<nsIURI>        mURI;
             nsCOMPtr<nsIPrincipal>  mPrincipal; // use nullptr with data: URLs
-            gfxFontEntry*           mFontEntry;
+            // The font entry MUST notify the cache when it is destroyed
+            // (by calling ForgetFont()).
+            gfxFontEntry* MOZ_NON_OWNING_REF mFontEntry;
             uint32_t                mCRC32;
             uint32_t                mLength;
             bool                    mPrivate;
@@ -422,17 +426,11 @@ public:
 
             gfxFontEntry* GetFontEntry() const { return mFontEntry; }
 
-            static PLDHashOperator
-            RemoveUnlessPersistent(Entry* aEntry, void* aUserData);
-            static PLDHashOperator
-            RemoveIfPrivate(Entry* aEntry, void* aUserData);
-            static PLDHashOperator
-            RemoveIfMatches(Entry* aEntry, void* aUserData);
-            static PLDHashOperator
-            DisconnectSVG(Entry* aEntry, void* aUserData);
+            bool IsPersistent() const { return mPersistence == kPersistent; }
+            bool IsPrivate() const { return mPrivate; }
 
 #ifdef DEBUG_USERFONT_CACHE
-            static PLDHashOperator DumpEntry(Entry* aEntry, void* aUserData);
+            void Dump();
 #endif
 
         private:
@@ -450,8 +448,8 @@ public:
 
             // The "real" font entry corresponding to this downloaded font.
             // The font entry MUST notify the cache when it is destroyed
-            // (by calling Forget()).
-            gfxFontEntry*          mFontEntry;
+            // (by calling ForgetFont()).
+            gfxFontEntry* MOZ_NON_OWNING_REF mFontEntry;
 
             // Whether this font was loaded from a private window.
             bool                   mPrivate;
@@ -649,7 +647,9 @@ protected:
     nsRefPtr<gfxFontEntry>   mPlatformFontEntry;
     nsTArray<gfxFontFaceSrc> mSrcList;
     uint32_t                 mSrcIndex; // index of loading src item
-    nsFontFaceLoader*        mLoader; // current loader for this entry, if any
+    // This field is managed by the nsFontFaceLoader. In the destructor and Cancel()
+    // methods of nsFontFaceLoader this reference is nulled out.
+    nsFontFaceLoader* MOZ_NON_OWNING_REF mLoader; // current loader for this entry, if any
     gfxUserFontSet*          mFontSet; // font-set to which the userfont entry belongs
     nsCOMPtr<nsIPrincipal>   mPrincipal;
 };

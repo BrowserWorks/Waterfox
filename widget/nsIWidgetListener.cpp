@@ -54,6 +54,11 @@ nsIWidgetListener::SizeModeChanged(nsSizeMode aSizeMode)
 {
 }
 
+void
+nsIWidgetListener::FullscreenChanged(bool aInFullscreen)
+{
+}
+
 bool
 nsIWidgetListener::ZLevelChanged(bool aImmediate,
                                  nsWindowZ* aPlacement,
@@ -102,7 +107,8 @@ nsIWidgetListener::DidPaintWindow()
 }
 
 void
-nsIWidgetListener::DidCompositeWindow()
+nsIWidgetListener::DidCompositeWindow(const TimeStamp& aCompositeStart,
+                                      const TimeStamp& aCompositeEnd)
 {
 }
 

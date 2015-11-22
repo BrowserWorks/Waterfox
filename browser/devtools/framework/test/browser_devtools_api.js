@@ -13,13 +13,12 @@ thisTestLeaksUncaughtRejectionsAndShouldBeFixed("TypeError: this.doc is undefine
 
 // Tests devtools API
 
-const Cu = Components.utils;
 const toolId1 = "test-tool-1";
 const toolId2 = "test-tool-2";
 
-let tempScope = {};
+var tempScope = {};
 Cu.import("resource://gre/modules/devtools/event-emitter.js", tempScope);
-let EventEmitter = tempScope.EventEmitter;
+var EventEmitter = tempScope.EventEmitter;
 
 function test() {
   addTab("about:blank").then(runTests1);
@@ -29,7 +28,7 @@ function test() {
 function runTests1(aTab) {
   let toolDefinition = {
     id: toolId1,
-    isTargetSupported: function() true,
+    isTargetSupported: () => true,
     visibilityswitch: "devtools.test-tool.enabled",
     url: "about:blank",
     label: "someLabel",
@@ -90,7 +89,7 @@ function runTests1(aTab) {
 function runTests2() {
   let toolDefinition = {
     id: toolId2,
-    isTargetSupported: function() true,
+    isTargetSupported: () => true,
     visibilityswitch: "devtools.test-tool.enabled",
     url: "about:blank",
     label: "someLabel",
@@ -229,11 +228,17 @@ DevToolPanel.prototype = {
     return deferred.promise;
   },
 
-  get target() this._toolbox.target,
+  get target() {
+    return this._toolbox.target;
+  },
 
-  get toolbox() this._toolbox,
+  get toolbox() {
+    return this._toolbox;
+  },
 
-  get isReady() this._isReady,
+  get isReady() {
+    return this._isReady;
+  },
 
   _isReady: false,
 

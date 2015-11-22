@@ -12,10 +12,13 @@
 #include "nsIDOMWindow.h"
 #include "nsIDownloadHistory.h"
 #include "nsIDownloadManagerUI.h"
+#include "nsIFileURL.h"
 #include "nsIMIMEService.h"
 #include "nsIParentalControlsService.h"
 #include "nsIPrefService.h"
+#include "nsIPrivateBrowsingChannel.h"
 #include "nsIPromptService.h"
+#include "nsIPropertyBag2.h"
 #include "nsIResumableChannel.h"
 #include "nsIWebBrowserPersist.h"
 #include "nsIWindowMediator.h"
@@ -27,10 +30,12 @@
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsArrayEnumerator.h"
 #include "nsCExternalHandlerService.h"
+#include "nsCRTGlue.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsDownloadManager.h"
 #include "nsNetUtil.h"
 #include "nsThreadUtils.h"
+#include "prtime.h"
 
 #include "mozStorageCID.h"
 #include "nsDocShellCID.h"
@@ -1718,7 +1723,7 @@ private:
   nsCOMPtr<nsIDownload> mResult;
   nsCOMPtr<nsIDownloadManagerResult> mCallback;
 };
-} // anonymous namespace
+} // namespace
 
 NS_IMETHODIMP
 nsDownloadManager::GetDownloadByGUID(const nsACString& aGUID,
@@ -3553,7 +3558,7 @@ nsDownload::Resume()
   rv = NS_NewChannel(getter_AddRefs(channel),
                      mSource,
                      nsContentUtils::GetSystemPrincipal(),
-                     nsILoadInfo::SEC_NORMAL,
+                     nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                      nsIContentPolicy::TYPE_OTHER,
                      nullptr,  // aLoadGroup
                      ir);

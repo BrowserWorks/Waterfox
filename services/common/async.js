@@ -123,11 +123,22 @@ this.Async = {
     Services.obs.addObserver(function onQuitApplication() {
       Services.obs.removeObserver(onQuitApplication, "quit-application");
       Async.checkAppReady = function() {
-        throw Components.Exception("App. Quitting", Cr.NS_ERROR_ABORT);
+        let exception = Components.Exception("App. Quitting", Cr.NS_ERROR_ABORT);
+        exception.appIsShuttingDown = true;
+        throw exception;
       };
     }, "quit-application", false);
     // In the common case, checkAppReady just returns true
     return (Async.checkAppReady = function() { return true; })();
+  },
+
+  /**
+   * Check if the passed exception is one raised by checkAppReady. Typically
+   * this will be used in exception handlers to allow such exceptions to
+   * make their way to the top frame and allow the app to actually terminate.
+   */
+  isShutdownException(exception) {
+    return exception && exception.appIsShuttingDown === true;
   },
 
   /**
@@ -194,9 +205,9 @@ this.Async = {
 
   querySpinningly: function querySpinningly(query, names) {
     // 'Synchronously' asyncExecute, fetching all results by name.
-    let storageCallback = {names: names,
-                           syncCb: Async.makeSyncCallback()};
-    storageCallback.__proto__ = Async._storageCallbackPrototype;
+    let storageCallback = Object.create(Async._storageCallbackPrototype);
+    storageCallback.names = names;
+    storageCallback.syncCb = Async.makeSyncCallback();
     query.executeAsync(storageCallback);
     return Async.waitForSyncCallback(storageCallback.syncCb);
   },

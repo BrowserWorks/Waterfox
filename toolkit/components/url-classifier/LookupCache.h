@@ -12,8 +12,9 @@
 #include "nsCOMPtr.h"
 #include "nsIFile.h"
 #include "nsIFileStreams.h"
+#include "mozilla/nsRefPtr.h"
 #include "nsUrlClassifierPrefixSet.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 namespace mozilla {
 namespace safebrowsing {
@@ -101,7 +102,7 @@ public:
   nsresult GetPrefixes(FallibleTArray<uint32_t>& aAddPrefixes);
   void ClearCompleteCache();
 
-#if DEBUG && defined(PR_LOGGING)
+#if DEBUG
   void Dump();
 #endif
   nsresult WriteFile();
@@ -136,7 +137,7 @@ private:
   nsRefPtr<nsUrlClassifierPrefixSet> mPrefixSet;
 };
 
-}
-}
+} // namespace safebrowsing
+} // namespace mozilla
 
 #endif

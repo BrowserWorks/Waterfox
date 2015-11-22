@@ -6,21 +6,18 @@
  * before it was opened.
  */
 
-let { getPerformanceActorsConnection } = devtools.require("devtools/performance/front");
-let WAIT_TIME = 10;
+var WAIT_TIME = 10;
 
-function spawnTest () {
-  let profilerConnected = waitForProfilerConnection();
+function* spawnTest() {
   let { target, toolbox, console } = yield initConsole(SIMPLE_URL);
-  yield profilerConnected;
-  let connection = getPerformanceActorsConnection(target);
+  let front = toolbox.performance;
 
-  let profileStart = once(connection, "recording-started");
+  let profileStart = once(front, "recording-started");
   console.profile("rust");
   yield profileStart;
 
   busyWait(WAIT_TIME);
-  let profileEnd = once(connection, "recording-stopped");
+  let profileEnd = once(front, "recording-stopped");
   console.profileEnd("rust");
   yield profileEnd;
 
@@ -29,6 +26,7 @@ function spawnTest () {
   let { panelWin: { PerformanceController, RecordingsView }} = panel;
 
   let recordings = PerformanceController.getRecordings();
+  yield waitUntil(() => PerformanceController.getRecordings().length === 1);
   is(recordings.length, 1, "one recording found in the performance panel.");
   is(recordings[0].isConsole(), true, "recording came from console.profile.");
   is(recordings[0].getLabel(), "rust", "correct label in the recording model.");

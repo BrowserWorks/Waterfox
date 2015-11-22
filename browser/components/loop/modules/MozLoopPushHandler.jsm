@@ -47,7 +47,7 @@ PushSocket.prototype = {
 
   connect: function(pushUri, onMsg, onStart, onClose) {
     if (!pushUri || !onMsg || !onStart || !onClose) {
-      throw new Error("PushSocket: missing required parameter(s):"
+      throw new Error("PushSocket: missing required parameter(s):" +
                       (pushUri ? "" : " pushUri") +
                       (onMsg ? "" : " onMsg") +
                       (onStart ? "" : " onStart") +
@@ -206,7 +206,9 @@ PushSocket.prototype = {
     try {
       this._websocket.close(this._websocket.CLOSE_NORMAL);
     }
-    catch (e) {}
+    catch (e) {
+      // Do nothing
+    }
   }
 };
 
@@ -321,7 +323,7 @@ PingMonitor.prototype = {
  * We don't have push notifications on desktop currently, so this is a
  * workaround to get them going for us.
  */
-let MozLoopPushHandler = {
+var MozLoopPushHandler = {
   // This is the uri of the push server.
   pushServerUri: undefined,
   // Records containing the registration and notification callbacks indexed by channelID.
@@ -385,13 +387,9 @@ let MozLoopPushHandler = {
     */
   initialize: function(options = {}) {
     consoleLog.info("PushHandler: initialize options = ", options);
-    if (Services.io.offline) {
-      consoleLog.warn("PushHandler: IO offline");
-      return false;
-    }
 
     if (this._initDone) {
-      return true;
+      return;
     }
 
     this._initDone = true;
@@ -409,7 +407,6 @@ let MozLoopPushHandler = {
     }
 
     this._openSocket();
-    return true;
   },
 
   /**
@@ -783,13 +780,15 @@ let MozLoopPushHandler = {
     try {
       this.pushServerUri = Services.prefs.getCharPref("loop.debug.pushserver");
     }
-    catch (e) {}
+    catch (e) {
+      // Do nothing
+    }
 
     if (!this.pushServerUri) {
       // Get push server to use from the Loop server
       let pushUrlEndpoint = Services.prefs.getCharPref("loop.server") + "/push-server-config";
-      let req = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].
-                  createInstance(Ci.nsIXMLHttpRequest);
+      let req = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance(
+                Ci.nsIXMLHttpRequest);
       req.open("GET", pushUrlEndpoint);
       req.onload = () => {
         if (req.status >= 200 && req.status < 300) {

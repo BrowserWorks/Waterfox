@@ -15,14 +15,13 @@ const MANIFEST_HANDLER         = "manifests/handler";
 const SEC_IN_ONE_DAY  = 24 * 60 * 60;
 const MS_IN_ONE_DAY   = SEC_IN_ONE_DAY * 1000;
 
-let gProfileDir          = null;
-let gHttpServer          = null;
-let gHttpRoot            = null;
-let gDataRoot            = null;
-let gReporter            = null;
-let gPolicy              = null;
-let gManifestObject      = null;
-let gManifestHandlerURI  = null;
+var gProfileDir          = null;
+var gHttpServer          = null;
+var gHttpRoot            = null;
+var gDataRoot            = null;
+var gPolicy              = null;
+var gManifestObject      = null;
+var gManifestHandlerURI  = null;
 
 function run_test() {
   run_next_test();
@@ -53,15 +52,9 @@ add_task(function* test_setup() {
   Services.prefs.setCharPref(PREF_MANIFEST_URI, gManifestHandlerURI);
   Services.prefs.setIntPref(PREF_FETCHINTERVAL, 0);
 
-  gReporter = yield getReporter("json_payload_simple");
-  yield gReporter.collectMeasurements();
-  let payload = yield gReporter.getJSONPayload(false);
-  do_register_cleanup(() => gReporter._shutdown());
-
   gPolicy = new Experiments.Policy();
   patchPolicy(gPolicy, {
     updatechannel: () => "nightly",
-    healthReportPayload: () => Promise.resolve(payload),
     oneshotTimer: (callback, timeout, thisObj, name) => {},
   });
 });

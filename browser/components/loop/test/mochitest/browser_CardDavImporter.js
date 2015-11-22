@@ -13,7 +13,7 @@ const kAuth = {
 
 
 // "pid" for "provider ID"
-let vcards = [
+var vcards = [
     "VERSION:3.0\n" +
     "N:Smith;John;;;\n" +
     "FN:John Smith\n" +
@@ -91,18 +91,18 @@ const monkeyPatchImporter = function(importer) {
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<d:multistatus xmlns:card="urn:ietf:params:xml:ns:carddav"\n' +
     '               xmlns:d="DAV:">\n' +
-    ' <d:response>\n' +
-    '  <d:href>/carddav/abook/</d:href>\n' +
-    '  <d:propstat>\n' +
-    '   <d:status>HTTP/1.1 200 OK</d:status>\n' +
-    '  </d:propstat>\n' +
-    '  <d:propstat>\n' +
-    '   <d:status>HTTP/1.1 404 Not Found</d:status>\n' +
-    '   <d:prop>\n' +
-    '    <d:getetag/>\n' +
-    '   </d:prop>\n' +
-    '  </d:propstat>\n' +
-    ' </d:response>\n';
+    " <d:response>\n" +
+    "  <d:href>/carddav/abook/</d:href>\n" +
+    "  <d:propstat>\n" +
+    "   <d:status>HTTP/1.1 200 OK</d:status>\n" +
+    "  </d:propstat>\n" +
+    "  <d:propstat>\n" +
+    "   <d:status>HTTP/1.1 404 Not Found</d:status>\n" +
+    "   <d:prop>\n" +
+    "    <d:getetag/>\n" +
+    "   </d:prop>\n" +
+    "  </d:propstat>\n" +
+    " </d:response>\n";
 
   let listReportMultiget =
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
@@ -112,27 +112,27 @@ const monkeyPatchImporter = function(importer) {
   vcards.forEach(vcard => {
     let uid = /\nUID:(.*?)\n/.exec(vcard);
     listPropfind +=
-      ' <d:response>\n' +
-      '  <d:href>/carddav/abook/' + uid + '</d:href>\n' +
-      '  <d:propstat>\n' +
-      '   <d:status>HTTP/1.1 200 OK</d:status>\n' +
-      '   <d:prop>\n' +
+      " <d:response>\n" +
+      "  <d:href>/carddav/abook/" + uid + "</d:href>\n" +
+      "  <d:propstat>\n" +
+      "   <d:status>HTTP/1.1 200 OK</d:status>\n" +
+      "   <d:prop>\n" +
       '    <d:getetag>"2011-07-12T07:43:20.855-07:00"</d:getetag>\n' +
-      '   </d:prop>\n' +
-      '  </d:propstat>\n' +
-      ' </d:response>\n';
+      "   </d:prop>\n" +
+      "  </d:propstat>\n" +
+      " </d:response>\n";
 
     listReportMultiget +=
-      ' <d:response>\n' +
-      '  <d:href>/carddav/abook/' + uid + '</d:href>\n' +
-      '  <d:propstat>\n' +
-      '   <d:status>HTTP/1.1 200 OK</d:status>\n' +
-      '   <d:prop>\n' +
+      " <d:response>\n" +
+      "  <d:href>/carddav/abook/" + uid + "</d:href>\n" +
+      "  <d:propstat>\n" +
+      "   <d:status>HTTP/1.1 200 OK</d:status>\n" +
+      "   <d:prop>\n" +
       '    <d:getetag>"2011-07-12T07:43:20.855-07:00"</d:getetag>\n' +
-      '    <card:address-data>' + vcard + '</card:address-data>\n' +
-      '   </d:prop>\n' +
-      '  </d:propstat>\n' +
-      ' </d:response>\n';
+      "    <card:address-data>" + vcard + "</card:address-data>\n" +
+      "   </d:prop>\n" +
+      "  </d:propstat>\n" +
+      " </d:response>\n";
   });
 
   listPropfind += "</d:multistatus>\n";
@@ -170,7 +170,7 @@ const monkeyPatchImporter = function(importer) {
 
 add_task(function* test_CardDavImport() {
   let importer = monkeyPatchImporter(new CardDavImporter());
-  yield new Promise ((resolve, reject) => {
+  yield new Promise((resolve, reject) => {
     info("Initiating import");
     importer.startImport({
         "host": "example.com",
@@ -265,7 +265,7 @@ add_task(function* test_CardDavImport() {
   Assert.equal(c.name[0], "anyone@example.com", "Full name should be synthesized correctly");
 
   // Check that a re-import doesn't cause contact duplication.
-  yield new Promise ((resolve, reject) => {
+  yield new Promise((resolve, reject) => {
     info("Initiating import");
     importer.startImport({
         "host": "example.com",
@@ -278,7 +278,7 @@ add_task(function* test_CardDavImport() {
                "Second import shouldn't increase DB size");
 
   // Check that errors are propagated back to caller
-  let error = yield new Promise ((resolve, reject) => {
+  let error = yield new Promise((resolve, reject) => {
     info("Initiating import");
     importer.startImport({
         "host": "example.com",
@@ -289,7 +289,7 @@ add_task(function* test_CardDavImport() {
   });
   Assert.equal(error.message, "401 Auth Failure", "Auth error should propagate");
 
-  error = yield new Promise ((resolve, reject) => {
+  error = yield new Promise((resolve, reject) => {
     info("Initiating import");
     importer.startImport({
         "host": "example.invalid",
@@ -304,7 +304,7 @@ add_task(function* test_CardDavImport() {
   mockDb.getByServiceId = function(serviceId, callback) {
     callback(new Error("getByServiceId failed"));
   };
-  error = yield new Promise ((resolve, reject) => {
+  error = yield new Promise((resolve, reject) => {
     info("Initiating import");
     importer.startImport({
         "host": "example.com",
@@ -316,7 +316,7 @@ add_task(function* test_CardDavImport() {
   Assert.equal(error.message, "getByServiceId failed", "Database error should propagate");
   mockDb.getByServiceId = tmp;
 
-  error = yield new Promise ((resolve, reject) => {
+  error = yield new Promise((resolve, reject) => {
     info("Initiating import");
     importer.startImport({
         "host": "example.com"

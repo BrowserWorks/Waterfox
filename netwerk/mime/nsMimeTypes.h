@@ -64,6 +64,7 @@
 #define APPLICATION_OLEOBJECT2              "application/x-oleobject"
 #define APPLICATION_JAVAARCHIVE             "application/java-archive"
 #define APPLICATION_MARIMBA                 "application/marimba"
+#define APPLICATION_WEB_MANIFEST            "application/manifest+json"
 #define APPLICATION_XMARIMBA                "application/x-marimba"
 #define APPLICATION_XPINSTALL               "application/x-xpinstall"
 #define APPLICATION_XML                     "application/xml"
@@ -71,6 +72,7 @@
 #define APPLICATION_XSLT_XML                "application/xslt+xml"
 #define APPLICATION_MATHML_XML              "application/mathml+xml"
 #define APPLICATION_RDF_XML                 "application/rdf+xml"
+#define APPLICATION_PACKAGE                 "application/package"
 
 #define AUDIO_BASIC                         "audio/basic"
 #define AUDIO_OGG                           "audio/ogg"
@@ -96,7 +98,6 @@
 #define IMAGE_XBM                           "image/x-xbitmap"
 #define IMAGE_XBM2                          "image/x-xbm"
 #define IMAGE_XBM3                          "image/xbm"
-#define IMAGE_WEBP                          "image/webp"
 #define IMAGE_ART                           "image/x-jg"
 #define IMAGE_TIFF                          "image/tiff"
 #define IMAGE_BMP                           "image/bmp"

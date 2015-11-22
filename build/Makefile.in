@@ -20,7 +20,7 @@ DEFINES += -DAPP_BUILDID=$(APP_BUILDID)
 
 APP_INI_DEPS += $(DEPTH)/config/autoconf.mk
 
-MOZ_SOURCE_STAMP := $(firstword $(shell cd $(topsrcdir)/$(MOZ_BUILD_APP)/.. && hg parent --template='{node|short}\n' 2>/dev/null))
+MOZ_SOURCE_STAMP := $(firstword $(shell cd $(topsrcdir)/$(MOZ_BUILD_APP)/.. && hg parent --template='{node}\n' 2>/dev/null))
 ifdef MOZ_SOURCE_STAMP
 DEFINES += -DMOZ_SOURCE_STAMP='$(MOZ_SOURCE_STAMP)'
 endif
@@ -64,6 +64,9 @@ ifdef MOZTTDIR
 # Install the Firefox OS fonts.
 include $(MOZTTDIR)/fonts.mk
 MOZTT_DEST = $(FINAL_TARGET)/fonts
+ifdef MOZ_B2GDROID
+MOZTT_DEST = $(FINAL_TARGET)/res/fonts
+endif
 MOZTT_FILES = $(patsubst external/moztt/%,$(MOZTTDIR)/%,$(filter external/moztt/%,$(subst :, ,$(PRODUCT_COPY_FILES))))
 INSTALL_TARGETS += MOZTT
 endif
@@ -99,6 +102,3 @@ endif
 
 libs:: automation.py
 
-ifdef ENABLE_TESTS
-GARBAGE += $(srcdir)/automationutils.pyc
-endif # ENABLE_TESTS

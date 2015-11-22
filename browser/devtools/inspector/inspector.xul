@@ -55,6 +55,15 @@
       <menuitem id="node-menu-showdomproperties"
         label="&inspectorShowDOMProperties.label;"
         oncommand="inspector.showDOMProperties()"/>
+      <menuitem id="node-menu-useinconsole"
+        label="&inspectorUseInConsole.label;"
+        oncommand="inspector.useInConsole()"/>
+      <menuitem id="node-menu-expand"
+        label="&inspectorExpandNode.label;"
+        oncommand="inspector.expandNode()"/>
+      <menuitem id="node-menu-collapse"
+        label="&inspectorCollapseNode.label;"
+        oncommand="inspector.collapseNode()"/>
       <menuseparator/>
       <menuitem id="node-menu-pasteinnerhtml"
         label="&inspectorHTMLPasteInner.label;"
@@ -91,15 +100,18 @@
         label="&inspectorScrollNodeIntoView.label;"
         accesskey="&inspectorScrollNodeIntoView.accesskey;"
         oncommand="inspector.scrollNodeIntoView()"/>
+      <menuitem id="node-menu-screenshotnode"
+        label="&inspectorScreenshotNode.label;"
+        oncommand="inspector.screenshotNode()" />
       <menuitem id="node-menu-delete"
         label="&inspectorHTMLDelete.label;"
         accesskey="&inspectorHTMLDelete.accesskey;"
         oncommand="inspector.deleteNode()"/>
       <menuseparator id="node-menu-link-separator"/>
       <menuitem id="node-menu-link-follow"
-        oncommand="inspector.followAttributeLink()"/>
+        oncommand="inspector.onFollowLink()"/>
       <menuitem id="node-menu-link-copy"
-        oncommand="inspector.copyAttributeLink()"/>
+        oncommand="inspector.onCopyLink()"/>
       <menuseparator/>
       <menuitem id="node-menu-pseudo-hover"
         label=":hover" type="checkbox"

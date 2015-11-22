@@ -7,11 +7,11 @@
 #define _MOZILLA_GFX_SOURCESURFACESKIA_H
 
 #ifdef USE_SKIA_GPU
-#include "skia/GrContext.h"
-#include "skia/GrGLInterface.h"
+#include "skia/include/gpu/GrContext.h"
+#include "skia/include/gpu/gl/GrGLInterface.h"
 #endif
 
-#include "skia/SkCanvas.h"
+#include "skia/include/core/SkCanvas.h"
 
 #include "2D.h"
 #include "HelpersSkia.h"
@@ -34,8 +34,11 @@ public:
 
   virtual DrawTargetType GetType() const override;
   virtual BackendType GetBackendType() const override { return BackendType::SKIA; }
-  virtual TemporaryRef<SourceSurface> Snapshot() override;
+  virtual already_AddRefed<SourceSurface> Snapshot() override;
   virtual IntSize GetSize() override { return mSize; }
+  virtual bool LockBits(uint8_t** aData, IntSize* aSize,
+                        int32_t* aStride, SurfaceFormat* aFormat) override;
+  virtual void ReleaseBits(uint8_t* aData) override;
   virtual void Flush() override;
   virtual void DrawSurface(SourceSurface *aSurface,
                            const Rect &aDest,
@@ -90,18 +93,18 @@ public:
   virtual void PushClip(const Path *aPath) override;
   virtual void PushClipRect(const Rect& aRect) override;
   virtual void PopClip() override;
-  virtual TemporaryRef<SourceSurface> CreateSourceSurfaceFromData(unsigned char *aData,
+  virtual already_AddRefed<SourceSurface> CreateSourceSurfaceFromData(unsigned char *aData,
                                                             const IntSize &aSize,
                                                             int32_t aStride,
                                                             SurfaceFormat aFormat) const override;
-  virtual TemporaryRef<SourceSurface> OptimizeSourceSurface(SourceSurface *aSurface) const override;
-  virtual TemporaryRef<SourceSurface>
+  virtual already_AddRefed<SourceSurface> OptimizeSourceSurface(SourceSurface *aSurface) const override;
+  virtual already_AddRefed<SourceSurface>
     CreateSourceSurfaceFromNativeSurface(const NativeSurface &aSurface) const override;
-  virtual TemporaryRef<DrawTarget>
+  virtual already_AddRefed<DrawTarget>
     CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFormat) const override;
-  virtual TemporaryRef<PathBuilder> CreatePathBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const override;
-  virtual TemporaryRef<GradientStops> CreateGradientStops(GradientStop *aStops, uint32_t aNumStops, ExtendMode aExtendMode = ExtendMode::CLAMP) const override;
-  virtual TemporaryRef<FilterNode> CreateFilter(FilterType aType) override;
+  virtual already_AddRefed<PathBuilder> CreatePathBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const override;
+  virtual already_AddRefed<GradientStops> CreateGradientStops(GradientStop *aStops, uint32_t aNumStops, ExtendMode aExtendMode = ExtendMode::CLAMP) const override;
+  virtual already_AddRefed<FilterNode> CreateFilter(FilterType aType) override;
   virtual void SetTransform(const Matrix &aTransform) override;
   virtual void *GetNativeSurface(NativeSurfaceType aType) override;
 
@@ -126,6 +129,8 @@ private:
 
   void MarkChanged();
 
+  bool ShouldLCDRenderText(FontType aFontType, AntialiasMode aAntialiasMode);
+
   SkRect SkRectCoveringWholeSurface() const;
 
   bool UsingSkiaGPU() const;
@@ -140,7 +145,7 @@ private:
   SourceSurfaceSkia* mSnapshot;
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif // _MOZILLA_GFX_SOURCESURFACESKIA_H

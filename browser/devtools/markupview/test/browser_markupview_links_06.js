@@ -22,7 +22,7 @@ add_task(function*() {
 
   info("Follow the link and wait for the style-editor to open");
   let onStyleEditorReady = toolbox.once("styleeditor-ready");
-  inspector.followAttributeLink();
+  inspector.onFollowLink();
   yield onStyleEditorReady;
 
   // No real need to test that the editor opened on the right file here as this
@@ -36,13 +36,13 @@ add_task(function*() {
   yield selectNode("script", inspector);
 
   info("Set the popupNode to the node that contains the uri");
-  ({editor}) = yield getContainerForSelector("script", inspector);
+  ({editor} = yield getContainerForSelector("script", inspector));
   popupNode = editor.attrElements.get("src").querySelector(".link");
   inspector.panelDoc.popupNode = popupNode;
 
   info("Follow the link and wait for the debugger to open");
   let onDebuggerReady = toolbox.once("jsdebugger-ready");
-  inspector.followAttributeLink();
+  inspector.onFollowLink();
   yield onDebuggerReady;
 
   // No real need to test that the debugger opened on the right file here as

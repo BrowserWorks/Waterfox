@@ -7,6 +7,8 @@
 #include "ProcessGlobal.h"
 
 #include "nsContentCID.h"
+#include "nsDOMClassInfoID.h"
+#include "mozilla/HoldDropJSObjects.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -35,7 +37,6 @@ ProcessGlobal::Get()
   return static_cast<ProcessGlobal*>(service.get());
 }
 
-/* [notxpcom] boolean markForCC (); */
 // This method isn't automatically forwarded safely because it's notxpcom, so
 // the IDL binding doesn't know what value to return.
 NS_IMETHODIMP_(bool)
@@ -102,4 +103,10 @@ ProcessGlobal::LoadScript(const nsAString& aURL)
 {
   Init();
   LoadScriptInternal(aURL, false);
+}
+
+void
+ProcessGlobal::SetInitialProcessData(JS::HandleValue aInitialData)
+{
+  mMessageManager->SetInitialProcessData(aInitialData);
 }

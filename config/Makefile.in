@@ -10,10 +10,6 @@ ifdef NSBUILDROOT
 override NSBUILDROOT :=
 endif
 
-ifdef GNU_CC
-MODULE_OPTIMIZE_FLAGS = -O3
-endif
-
 include $(topsrcdir)/config/config.mk
 
 # L10n jobs are doing make -C config manually before anything else,
@@ -45,8 +41,6 @@ endif
 
 include $(topsrcdir)/config/rules.mk
 
-HOST_CFLAGS += -DUNICODE -D_UNICODE
-
 ifndef JS_STANDALONE
 ifndef MOZ_PROFILE_USE
 # Generate a new buildid every time we "export" in config... that's only
@@ -76,7 +70,6 @@ export:: $(export-preqs)
 		-DMOZ_NATIVE_JPEG=$(MOZ_NATIVE_JPEG) \
 		-DMOZ_NATIVE_LIBEVENT=$(MOZ_NATIVE_LIBEVENT) \
 		-DMOZ_NATIVE_LIBVPX=$(MOZ_NATIVE_LIBVPX) \
-		-DMOZ_NATIVE_LIBWEBP=$(MOZ_NATIVE_LIBWEBP) \
 		-DMOZ_NATIVE_ICU=$(MOZ_NATIVE_ICU) \
 		$(srcdir)/system-headers | $(PERL) $(topsrcdir)/nsprpub/config/make-system-wrappers.pl system_wrappers
 	$(INSTALL) system_wrappers $(DIST)

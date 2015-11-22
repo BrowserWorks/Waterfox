@@ -114,10 +114,10 @@ RootActor.prototype = {
     // adjacent HTML.
     pasteHTML: true,
     // Whether the server-side highlighter actor exists and can be used to
-    // remotely highlight nodes (see server/actors/highlighter.js)
+    // remotely highlight nodes (see server/actors/highlighters.js)
     highlightable: true,
     // Which custom highlighter does the server-side highlighter actor supports?
-    // (see server/actors/highlighter.js)
+    // (see server/actors/highlighters.js)
     customHighlighters: true,
     // Whether the inspector actor implements the getImageDataFromURL
     // method that returns data-uris for image URLs. This is used for image
@@ -171,7 +171,7 @@ RootActor.prototype = {
     },
     // Whether or not `getProfile()` supports specifying a `startTime`
     // and `endTime` to filter out samples. Fx40+
-    profilerDataFilterable: true
+    profilerDataFilterable: true,
   },
 
   /**
@@ -260,7 +260,7 @@ RootActor.prototype = {
       let reply = {
         "from": this.actorID,
         "selected": selected || 0,
-        "tabs": [actor.form() for (actor of tabActorList)],
+        "tabs": tabActorList.map(actor => actor.form())
       };
 
       /* If a root window is accessible, include its URL. */
@@ -338,7 +338,7 @@ RootActor.prototype = {
 
       return {
         "from": this.actorID,
-        "addons": [addonActor.form() for (addonActor of addonActors)]
+        "addons": addonActors.map(addonActor => addonActor.form())
       };
     });
   },

@@ -62,7 +62,6 @@ int32_t nsMenuX::sIndexingMenuLevel = 0;
 - (id) initWithMenuGroupOwner:(nsMenuGroupOwnerX *)aMenuGroupOwner
 {
   if ((self = [super init]) != nil) {
-    mMenuGroupOwner = nullptr;
     [self setMenuGroupOwner:aMenuGroupOwner];
   }
   return self;
@@ -83,6 +82,9 @@ int32_t nsMenuX::sIndexingMenuLevel = 0;
 {
   // weak reference as the nsMenuGroupOwnerX owns all of its sub-objects
   mMenuGroupOwner = aMenuGroupOwner;
+  if (aMenuGroupOwner) {
+    aMenuGroupOwner->AddMenuItemInfoToSet(self);
+  }
 }
 
 @end
@@ -353,7 +355,7 @@ nsEventStatus nsMenuX::MenuOpened()
   }
 
   nsEventStatus status = nsEventStatus_eIgnore;
-  WidgetMouseEvent event(true, NS_XUL_POPUP_SHOWN, nullptr,
+  WidgetMouseEvent event(true, eXULPopupShown, nullptr,
                          WidgetMouseEvent::eReal);
 
   nsCOMPtr<nsIContent> popupContent;
@@ -377,7 +379,7 @@ void nsMenuX::MenuClosed()
     mContent->UnsetAttr(kNameSpaceID_None, nsGkAtoms::open, true);
 
     nsEventStatus status = nsEventStatus_eIgnore;
-    WidgetMouseEvent event(true, NS_XUL_POPUP_HIDDEN, nullptr,
+    WidgetMouseEvent event(true, eXULPopupHidden, nullptr,
                            WidgetMouseEvent::eReal);
 
     nsCOMPtr<nsIContent> popupContent;
@@ -418,11 +420,12 @@ void nsMenuX::MenuConstruct()
       dom::AutoJSAPI jsapi;
       if (ownerDoc && jsapi.Init(ownerDoc->GetInnerWindow())) {
         JSContext* cx = jsapi.cx();
+        JS::RootedObject ignoredObj(cx);
         nsCOMPtr<nsIXPConnectJSObjectHolder> wrapper;
         xpconnect->WrapNative(cx, JS::CurrentGlobalOrNull(cx), menuPopup,
-                              NS_GET_IID(nsISupports), getter_AddRefs(wrapper));
+                              NS_GET_IID(nsISupports), ignoredObj.address());
         mXBLAttached = true;
-      } 
+      }
     }
   }
 
@@ -557,7 +560,7 @@ void nsMenuX::LoadSubMenu(nsIContent* inMenuContent)
 bool nsMenuX::OnOpen()
 {
   nsEventStatus status = nsEventStatus_eIgnore;
-  WidgetMouseEvent event(true, NS_XUL_POPUP_SHOWING, nullptr,
+  WidgetMouseEvent event(true, eXULPopupShowing, nullptr,
                          WidgetMouseEvent::eReal);
   
   nsCOMPtr<nsIContent> popupContent;
@@ -574,7 +577,7 @@ bool nsMenuX::OnOpen()
   // must potentially be updated.
 
   // Get new popup content first since it might have changed as a result of the
-  // NS_XUL_POPUP_SHOWING event above.
+  // eXULPopupShowing event above.
   GetMenuPopupContent(getter_AddRefs(popupContent));
   if (!popupContent)
     return true;
@@ -595,7 +598,7 @@ bool nsMenuX::OnClose()
     return true;
 
   nsEventStatus status = nsEventStatus_eIgnore;
-  WidgetMouseEvent event(true, NS_XUL_POPUP_HIDING, nullptr,
+  WidgetMouseEvent event(true, eXULPopupHiding, nullptr,
                          WidgetMouseEvent::eReal);
 
   nsCOMPtr<nsIContent> popupContent;

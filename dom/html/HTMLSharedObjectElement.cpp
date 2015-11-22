@@ -164,7 +164,7 @@ HTMLSharedObjectElement::UnbindFromTree(bool aDeep,
 {
 #ifdef XP_MACOSX
   // When a page is reloaded (when an nsIDocument's content is removed), the
-  // focused element isn't necessarily sent an NS_BLUR_CONTENT event. See
+  // focused element isn't necessarily sent an eBlur event. See
   // nsFocusManager::ContentRemoved(). This means that a widget may think it
   // still contains a focused plugin when it doesn't -- which in turn can
   // disable text input in the browser window. See bug 1137229.
@@ -385,6 +385,19 @@ HTMLSharedObjectElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenPr
   JS::Rooted<JSObject*> rootedObj(aCx, obj);
   SetupProtoChain(aCx, rootedObj);
   return rootedObj;
+}
+
+nsContentPolicyType
+HTMLSharedObjectElement::GetContentPolicyType() const
+{
+  if (mNodeInfo->Equals(nsGkAtoms::applet)) {
+    // We use TYPE_INTERNAL_OBJECT for applet too, since it is not exposed
+    // through RequestContext yet.
+    return nsIContentPolicy::TYPE_INTERNAL_OBJECT;
+  } else {
+    MOZ_ASSERT(mNodeInfo->Equals(nsGkAtoms::embed));
+    return nsIContentPolicy::TYPE_INTERNAL_EMBED;
+  }
 }
 
 } // namespace dom

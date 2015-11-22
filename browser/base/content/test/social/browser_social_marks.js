@@ -2,16 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
+var SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
 
-let manifest = { // builtin provider
-  name: "provider example.com",
-  origin: "https://example.com",
-  sidebarURL: "https://example.com/browser/browser/base/content/test/social/social_sidebar.html",
-  workerURL: "https://example.com/browser/browser/base/content/test/social/social_worker.js",
-  iconURL: "https://example.com/browser/browser/base/content/test/general/moz.png"
-};
-let manifest2 = { // used for testing install
+var manifest2 = { // used for testing install
   name: "provider test1",
   origin: "https://test1.example.com",
   workerURL: "https://test1.example.com/browser/browser/base/content/test/social/social_worker.js",
@@ -22,41 +15,21 @@ let manifest2 = { // used for testing install
   iconURL: "https://test1.example.com/browser/browser/base/content/test/general/moz.png",
   version: 1
 };
-let manifest3 = { // used for testing install
+var manifest3 = { // used for testing install
   name: "provider test2",
   origin: "https://test2.example.com",
   sidebarURL: "https://test2.example.com/browser/browser/base/content/test/social/social_sidebar.html",
   iconURL: "https://test2.example.com/browser/browser/base/content/test/general/moz.png",
   version: 1
 };
-function makeMarkProvider(origin) {
-  return { // used for testing install
-    name: "mark provider " + origin,
-    origin: "https://" + origin + ".example.com",
-    workerURL: "https://" + origin + ".example.com/browser/browser/base/content/test/social/social_worker.js",
-    markURL: "https://" + origin + ".example.com/browser/browser/base/content/test/social/social_mark.html?url=%{url}",
-    markedIcon: "https://" + origin + ".example.com/browser/browser/base/content/test/social/unchecked.jpg",
-    unmarkedIcon: "https://" + origin + ".example.com/browser/browser/base/content/test/social/checked.jpg",
-
-    iconURL: "https://" + origin + ".example.com/browser/browser/base/content/test/general/moz.png",
-    version: 1
-  }
-}
 
 function test() {
   waitForExplicitFinish();
 
-  let toolbar = document.getElementById("nav-bar");
-  let currentsetAtStart = toolbar.currentSet;
-  runSocialTestWithProvider(manifest, function (finishcb) {
-    runSocialTests(tests, undefined, undefined, function () {
-      Services.prefs.clearUserPref("social.remote-install.enabled");
-      // just in case the tests failed, clear these here as well
-      Services.prefs.clearUserPref("social.whitelist");
-      ok(CustomizableUI.inDefaultState, "Should be in the default state when we finish");
-      CustomizableUI.reset();
-      finishcb();
-    });
+  runSocialTests(tests, undefined, undefined, function () {
+    ok(CustomizableUI.inDefaultState, "Should be in the default state when we finish");
+    CustomizableUI.reset();
+    finish();
   });
 }
 
@@ -110,8 +83,7 @@ var tests = {
           let widget = CustomizableUI.getWidget(id);
           ok(!widget || !widget.forWindow(window).node, "no button added to widget set");
           Social.uninstallProvider(manifest3.origin, function() {
-            gBrowser.removeTab(tab);
-            next();
+            ensureBrowserTabClosed(tab).then(next);
           });
         });
       });
@@ -152,8 +124,7 @@ var tests = {
           is(button.hidden, false, "mark button is visible");
 
           checkSocialUI(window);
-          gBrowser.removeTab(tab);
-          next();
+          ensureBrowserTabClosed(tab).then(next);
         });
       });
     });
@@ -238,7 +209,7 @@ var tests = {
         ensureEventFired(btn.panel, "popupshown").then(() => {
           info("marks panel is open");
           ensureFrameLoaded(btn.content).then(() => {
-            is(btn.contentDocument.location.href.indexOf("about:socialerror?"), 0, "social error page is showing");
+            is(btn.contentDocument.documentURI.indexOf("about:socialerror?mode=tryAgainOnly"), 0, "social error page is showing "+btn.contentDocument.documentURI);
             // cleanup after the page has been unmarked
             ensureBrowserTabClosed(tab).then(() => {
               ok(btn.disabled, "button is disabled");
@@ -326,86 +297,6 @@ var tests = {
                          checkSocialUI(window);
                          Social.uninstallProvider(manifest2.origin, next);
                        }, "button does not exist after disabling the provider");
-    });
-  },
-
-  testContextSubmenu: function(next) {
-    // install 4 providers to test that the menu's are added as submenus
-    let manifests = [
-      makeMarkProvider("sub1.test1"),
-      makeMarkProvider("sub2.test1"),
-      makeMarkProvider("sub1.test2"),
-      makeMarkProvider("sub2.test2")
-    ];
-    let installed = [];
-    let markLinkMenu = document.getElementById("context-marklinkMenu").firstChild;
-    let markPageMenu = document.getElementById("context-markpageMenu").firstChild;
-
-    function addProviders(callback) {
-      let manifest = manifests.pop();
-      if (!manifest) {
-        info("INSTALLATION FINISHED");
-        executeSoon(callback);
-        return;
-      }
-      info("INSTALLING " + manifest.origin);
-      let panel = document.getElementById("servicesInstall-notification");
-      ensureEventFired(PopupNotifications.panel, "popupshown").then(() => {
-        info("servicesInstall-notification panel opened");
-        panel.button.click();
-      });
-
-      let activationURL = manifest.origin + "/browser/browser/base/content/test/social/social_activate.html"
-      let id = SocialMarks._toolbarHelper.idFromOrigin(manifest.origin);
-      let toolbar = document.getElementById("nav-bar");
-      addTab(activationURL, function(tab) {
-        let doc = tab.linkedBrowser.contentDocument;
-        let data = {
-          origin: doc.nodePrincipal.origin,
-          url: doc.location.href,
-          manifest: manifest,
-          window: window
-        }
-
-        Social.installProvider(data, function(addonManifest) {
-          // enable the provider so we know the button would have appeared
-          SocialService.enableProvider(manifest.origin, function(provider) {
-            waitForCondition(function() { return CustomizableUI.getWidget(id) },
-                             function() {
-              gBrowser.removeTab(tab);
-              installed.push(manifest.origin);
-              // checkSocialUI will properly check where the menus are located
-              checkSocialUI(window);
-              executeSoon(function() {
-                addProviders(callback);
-              });
-            }, "button exists after enabling social");
-          });
-        });
-      });
-    }
-
-    function removeProviders(callback) {
-      let origin = installed.pop();
-      if (!origin) {
-        executeSoon(callback);
-        return;
-      }
-      Social.uninstallProvider(origin, function(provider) {
-        executeSoon(function() {
-          removeProviders(callback);
-        });
-      });
-    }
-
-    addProviders(function() {
-      removeProviders(function() {
-        is(SocialMarks.getProviders().length, 0, "mark providers removed");
-        is(markLinkMenu.childNodes.length, 0, "marklink menu ok");
-        is(markPageMenu.childNodes.length, 0, "markpage menu ok");
-        checkSocialUI(window);
-        next();
-      });
     });
   }
 }

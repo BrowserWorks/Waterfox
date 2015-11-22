@@ -53,7 +53,7 @@ MmsAttachmentDataToJSObject(JSContext* aContext,
     return nullptr;
   }
 
-  nsRefPtr<FileImpl> blobImpl = static_cast<BlobParent*>(aAttachment.contentParent())->GetBlobImpl();
+  nsRefPtr<BlobImpl> blobImpl = static_cast<BlobParent*>(aAttachment.contentParent())->GetBlobImpl();
 
   // nsRefPtr<File> needs to go out of scope before toObjectOrNull() is
   // called because the static analysis thinks dereferencing XPCOM objects
@@ -65,8 +65,8 @@ MmsAttachmentDataToJSObject(JSContext* aContext,
     nsIGlobalObject *global = xpc::NativeGlobal(JS::CurrentGlobalOrNull(aContext));
     MOZ_ASSERT(global);
 
-    nsRefPtr<File> blob = new File(global, blobImpl);
-    if (!GetOrCreateDOMReflector(aContext, blob, &content)) {
+    nsRefPtr<Blob> blob = Blob::Create(global, blobImpl);
+    if (!ToJSValue(aContext, blob, &content)) {
       return nullptr;
     }
   }
@@ -761,9 +761,13 @@ SmsRequestParent::NotifyGetSegmentInfoForTextFailed(int32_t aError)
 }
 
 NS_IMETHODIMP
-SmsRequestParent::NotifyGetSmscAddress(const nsAString& aSmscAddress)
+SmsRequestParent::NotifyGetSmscAddress(const nsAString& aSmscAddress,
+                                       uint32_t aTypeOfNumber,
+                                       uint32_t aNumberPlanIdentification)
 {
-  return SendReply(ReplyGetSmscAddress(nsString(aSmscAddress)));
+  return SendReply(ReplyGetSmscAddress(nsString(aSmscAddress),
+                                       aTypeOfNumber,
+                                       aNumberPlanIdentification));
 }
 
 NS_IMETHODIMP
@@ -843,6 +847,7 @@ MobileMessageCursorParent::DoRequest(const CreateMessageCursorRequest& aRequest)
                                         filter.delivery(),
                                         filter.hasRead(),
                                         filter.read(),
+                                        filter.hasThreadId(),
                                         filter.threadId(),
                                         aRequest.reverse(),
                                         this,

@@ -28,12 +28,14 @@
 #include "nsCocoaFeatures.h"
 #include "nsCocoaUtils.h"
 #include "nsChildView.h"
-#include "nsMenuBarX.h"
 #include "nsToolkit.h"
 #include "TextInputHandler.h"
 #include "mozilla/HangMonitor.h"
 #include "GeckoProfiler.h"
 #include "pratom.h"
+#if !defined(RELEASE_BUILD) || defined(DEBUG)
+#include "nsSandboxViolationSink.h"
+#endif
 
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include "nsIDOMWakeLockListener.h"
@@ -319,6 +321,13 @@ nsAppShell::Init()
     // turns on CGEvent logging.
     CGSSetDebugOptions(0x80000007);
   }
+
+#if !defined(RELEASE_BUILD) || defined(DEBUG)
+  if (nsCocoaFeatures::OnMavericksOrLater() &&
+      Preferences::GetBool("security.sandbox.mac.track.violations", false)) {
+    nsSandboxViolationSink::Start();
+  }
+#endif
 
   [localPool release];
 
@@ -648,7 +657,6 @@ nsAppShell::Run(void)
   mStarted = true;
 
   AddScreenWakeLockListener();
-  nsMenuBarX::ResetNativeApplicationMenu();
 
   NS_OBJC_TRY_ABORT([NSApp run]);
 
@@ -673,6 +681,12 @@ nsAppShell::Exit(void)
   }
 
   mTerminated = true;
+
+#if !defined(RELEASE_BUILD) || defined(DEBUG)
+  if (nsCocoaFeatures::OnMavericksOrLater()) {
+    nsSandboxViolationSink::Stop();
+  }
+#endif
 
   // Quoting from Apple's doc on the [NSApplication stop:] method (from their
   // doc on the NSApplication class):  "If this method is invoked during a
@@ -719,8 +733,7 @@ nsAppShell::Exit(void)
 //
 // public
 NS_IMETHODIMP
-nsAppShell::OnProcessNextEvent(nsIThreadInternal *aThread, bool aMayWait,
-                               uint32_t aRecursionDepth)
+nsAppShell::OnProcessNextEvent(nsIThreadInternal *aThread, bool aMayWait)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
@@ -730,7 +743,7 @@ nsAppShell::OnProcessNextEvent(nsIThreadInternal *aThread, bool aMayWait,
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
   ::CFArrayAppendValue(mAutoreleasePools, pool);
 
-  return nsBaseAppShell::OnProcessNextEvent(aThread, aMayWait, aRecursionDepth);
+  return nsBaseAppShell::OnProcessNextEvent(aThread, aMayWait);
 
   NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
 }
@@ -744,7 +757,6 @@ nsAppShell::OnProcessNextEvent(nsIThreadInternal *aThread, bool aMayWait,
 // public
 NS_IMETHODIMP
 nsAppShell::AfterProcessNextEvent(nsIThreadInternal *aThread,
-                                  uint32_t aRecursionDepth,
                                   bool aEventWasProcessed)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
@@ -759,8 +771,7 @@ nsAppShell::AfterProcessNextEvent(nsIThreadInternal *aThread,
   ::CFArrayRemoveValueAtIndex(mAutoreleasePools, count - 1);
   [pool release];
 
-  return nsBaseAppShell::AfterProcessNextEvent(aThread, aRecursionDepth,
-                                               aEventWasProcessed);
+  return nsBaseAppShell::AfterProcessNextEvent(aThread, aEventWasProcessed);
 
   NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
 }

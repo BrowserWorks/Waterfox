@@ -5,6 +5,11 @@
 $inherits:
   from: tasks/branches/base_job_flags.yml
 
+# Flags specific to this branch
+flags:
+  post-build:
+    - upload-symbols
+
 builds:
   linux64_gecko:
     platforms:
@@ -21,7 +26,7 @@ builds:
       opt:
         task: tasks/builds/mulet_linux.yml
   emulator-l:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:
@@ -29,7 +34,7 @@ builds:
       debug:
         task: tasks/builds/b2g_emulator_l_debug.yml
   emulator-kk:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:
@@ -37,19 +42,21 @@ builds:
       debug:
         task: tasks/builds/b2g_emulator_kk_debug.yml
   emulator-x86-l:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:
         task: tasks/builds/b2g_emulator_x86_l_opt.yml
   emulator-x86-kk:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:
         task: tasks/builds/b2g_emulator_x86_kk_opt.yml
+      debug:
+        task: tasks/builds/b2g_emulator_x86_kk_debug.yml
   emulator-jb:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:
@@ -57,19 +64,35 @@ builds:
       debug:
         task: tasks/builds/b2g_emulator_jb_debug.yml
   emulator:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:
         task: tasks/builds/b2g_emulator_ics_opt.yml
       debug:
         task: tasks/builds/b2g_emulator_ics_debug.yml
+  aries:
+    platforms:
+      - b2g
+    types:
+      opt:
+        task: tasks/builds/b2g_aries_spark_opt.yml
+      debug:
+        task: tasks/builds/b2g_aries_spark_debug.yml
+  aries-eng:
+    platforms:
+      - b2g
+    types:
+      opt:
+        task: tasks/builds/b2g_aries_spark_eng.yml
   flame-kk:
     platforms:
       - b2g
     types:
       opt:
         task: tasks/builds/b2g_flame_kk_opt.yml
+      debug:
+        task: tasks/builds/b2g_flame_kk_debug.yml
   flame-kk-eng:
     platforms:
       - b2g
@@ -100,6 +123,80 @@ builds:
     types:
       opt:
         task: tasks/builds/b2g_dolphin_512_eng.yml
+  android-api-11:
+    platforms:
+      - Android
+    types:
+      opt:
+        task: tasks/builds/android_api_11.yml
+  linux64:
+    platforms:
+      - Linux64
+    types:
+      opt:
+        task: tasks/builds/opt_linux64_clobber.yml
+      debug:
+        task: tasks/builds/dbg_linux64_clobber.yml
+  macosx64:
+    platforms:
+      - MacOSX64
+    types:
+      debug:
+        task: tasks/builds/dbg_macosx64.yml
+  sm-plain:
+    platforms:
+      - Linux64
+    types:
+      opt:
+        task: tasks/builds/sm_plain.yml
+      debug:
+       task: tasks/builds/sm_plaindebug.yml
+  sm-arm-sim:
+    platforms:
+      - Linux64
+    types:
+      opt:
+        task: tasks/builds/sm_arm_sim.yml
+  sm-arm-sim-osx:
+    platforms:
+      - Linux64
+    types:
+      opt:
+        task: tasks/builds/sm_arm_sim_osx.yml
+  sm-compacting:
+    platforms:
+      - Linux64
+    types:
+      opt:
+        task: tasks/builds/sm_compacting.yml
+  sm-generational:
+    platforms:
+      - Linux64
+    types:
+      opt:
+        task: tasks/builds/sm_generational.yml
+  sm-rootanalysis:
+    platforms:
+      - Linux64
+    types:
+      opt:
+        task: tasks/builds/sm_rootanalysis.yml
+  sm-warnaserr:
+    platforms:
+      - Linux64
+    types:
+      opt:
+        task: tasks/builds/sm_warnaserr.yml
+      debug:
+        task: tasks/builds/sm_warnaserrdebug.yml
+
+post-build:
+  upload-symbols:
+    allowed_build_tasks:
+      - tasks/builds/opt_linux64.yml
+      - tasks/builds/dbg_linux64.yml
+      - tasks/builds/android_api_11.yml
+    task: tasks/post-builds/upload_symbols.yml
 
 tests:
   cppunit:
@@ -108,18 +205,26 @@ tests:
         task: tasks/tests/b2g_emulator_cpp_unit.yml
       tasks/builds/b2g_emulator_ics_debug.yml:
         task: tasks/tests/b2g_emulator_cpp_unit.yml
+      tasks/builds/b2g_emulator_x86_kk_opt.yml:
+        task: tasks/tests/b2g_emulator_cpp_unit.yml
   crashtest:
     allowed_build_tasks:
       tasks/builds/b2g_emulator_ics_opt.yml:
+        task: tasks/tests/b2g_emulator_crashtest.yml
+      tasks/builds/b2g_emulator_x86_kk_opt.yml:
         task: tasks/tests/b2g_emulator_crashtest.yml
   gaia-build:
     allowed_build_tasks:
       tasks/builds/b2g_desktop_opt.yml:
         task: tasks/tests/b2g_build_test.yml
+      tasks/builds/mulet_linux.yml:
+        task: tasks/tests/mulet_build_test.yml
   gaia-build-unit:
     allowed_build_tasks:
       tasks/builds/b2g_desktop_opt.yml:
         task: tasks/tests/b2g_build_unit.yml
+      tasks/builds/mulet_linux.yml:
+        task: tasks/tests/mulet_build_unit.yml
   gaia-js-integration:
     allowed_build_tasks:
       tasks/builds/b2g_desktop_opt.yml:
@@ -130,46 +235,32 @@ tests:
     allowed_build_tasks:
       tasks/builds/b2g_desktop_opt.yml:
         task: tasks/tests/b2g_linter.yml
-  gaia-ui-test-accessibility:
-    allowed_build_tasks:
-      tasks/builds/b2g_desktop_opt.yml:
-        task: tasks/tests/b2g_gaia_ui_test_accessibility.yml
-      tasks/builds/b2g_desktop_debug.yml:
-        task: tasks/tests/b2g_gaia_ui_test_accessibility.yml
-  gaia-ui-test-functional:
-    allowed_build_tasks:
-      tasks/builds/b2g_desktop_opt.yml:
-        task: tasks/tests/b2g_gaia_ui_test_functional.yml
-      tasks/builds/b2g_desktop_debug.yml:
-        task: tasks/tests/b2g_gaia_ui_test_functional.yml
-  gaia-ui-test-unit:
-    allowed_build_tasks:
-      tasks/builds/b2g_desktop_opt.yml:
-        task: tasks/tests/b2g_gaia_ui_test_unit.yml
-      tasks/builds/b2g_desktop_debug.yml:
-        task: tasks/tests/b2g_gaia_ui_test_unit.yml
+      tasks/builds/mulet_linux.yml:
+        task: tasks/tests/mulet_linter.yml
   gaia-unit:
     allowed_build_tasks:
       tasks/builds/b2g_desktop_opt.yml:
         task: tasks/tests/b2g_gaia_unit.yml
+      tasks/builds/mulet_linux.yml:
+        task: tasks/tests/mulet_gaia_unit.yml
+  gaia-unit-oop:
+    allowed_build_tasks:
+      tasks/builds/mulet_linux.yml:
+        task: tasks/tests/mulet_gaia_unit_oop.yml
   marionette:
     allowed_build_tasks:
-      tasks/builds/b2g_emulator_kk_opt.yml:
+      tasks/builds/b2g_emulator_x86_kk_opt.yml:
         task: tasks/tests/b2g_emulator_marionette.yml
       tasks/builds/b2g_emulator_ics_opt.yml:
         task: tasks/tests/b2g_emulator_marionette.yml
   marionette-webapi:
     allowed_build_tasks:
-      tasks/builds/b2g_emulator_kk_opt.yml:
+      tasks/builds/b2g_emulator_x86_kk_opt.yml:
         task: tasks/tests/b2g_emulator_marionette_webapi.yml
       tasks/builds/b2g_emulator_ics_opt.yml:
         task: tasks/tests/b2g_emulator_marionette_webapi.yml
   mochitest:
     allowed_build_tasks:
-      tasks/builds/b2g_emulator_kk_debug.yml:
-        task: tasks/tests/b2g_emulator_mochitest.yml
-      tasks/builds/b2g_emulator_kk_opt.yml:
-        task: tasks/tests/b2g_emulator_mochitest.yml
       tasks/builds/b2g_emulator_x86_l_opt.yml:
         task: tasks/tests/b2g_emulator_mochitest.yml
       tasks/builds/b2g_emulator_x86_kk_opt.yml:
@@ -188,8 +279,6 @@ tests:
     allowed_build_tasks:
       tasks/builds/mulet_linux.yml:
         task: tasks/tests/mulet_reftests.yml
-      tasks/builds/b2g_emulator_kk_opt.yml:
-        task: tasks/tests/b2g_emulator_reftest.yml
       tasks/builds/b2g_emulator_x86_l_opt.yml:
         task: tasks/tests/b2g_emulator_reftest.yml
       tasks/builds/b2g_emulator_x86_kk_opt.yml:
@@ -203,8 +292,6 @@ tests:
   xpcshell:
     allowed_build_tasks:
       tasks/builds/b2g_emulator_x86_kk_opt.yml:
-        task: tasks/tests/b2g_emulator_xpcshell_chunked.yml
-      tasks/builds/b2g_emulator_kk_opt.yml:
         task: tasks/tests/b2g_emulator_xpcshell_chunked.yml
       tasks/builds/b2g_emulator_ics_opt.yml:
         task: tasks/tests/b2g_emulator_xpcshell_chunked.yml

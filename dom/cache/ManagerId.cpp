@@ -7,7 +7,7 @@
 #include "mozilla/dom/cache/ManagerId.h"
 #include "nsIPrincipal.h"
 #include "nsProxyRelease.h"
-#include "nsRefPtr.h"
+#include "mozilla/nsRefPtr.h"
 #include "nsThreadUtils.h"
 
 namespace mozilla {
@@ -21,31 +21,16 @@ ManagerId::Create(nsIPrincipal* aPrincipal, ManagerId** aManagerIdOut)
   MOZ_ASSERT(NS_IsMainThread());
 
   // The QuotaManager::GetInfoFromPrincipal() has special logic for system
-  // and about: principals.  We currently don't need the system principal logic
-  // because ManagerId only uses the origin for in memory comparisons.  We
-  // also don't do any special logic to host the same Cache for different about:
-  // pages, so we don't need those checks either.
-  //
-  // But, if we get the same QuotaManager directory for different about:
-  // origins, we probably only want one Manager instance.  So, we might
-  // want to start using the QM's concept of origin uniqueness here.
-  //
-  // TODO: consider using QuotaManager's modified origin here (bug 1112071)
-
-  nsAutoCString origin;
-  nsresult rv = aPrincipal->GetOrigin(getter_Copies(origin));
+  // and about: principals.  We need to use the same modified origin in
+  // order to interpret calls from QM correctly.
+  nsCString quotaOrigin;
+  nsresult rv = QuotaManager::GetInfoFromPrincipal(aPrincipal,
+                                                   nullptr,   //group
+                                                   &quotaOrigin,
+                                                   nullptr);  // is app
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-  uint32_t appId;
-  rv = aPrincipal->GetAppId(&appId);
-  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-  bool inBrowserElement;
-  rv = aPrincipal->GetIsInBrowserElement(&inBrowserElement);
-  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-
-  nsRefPtr<ManagerId> ref = new ManagerId(aPrincipal, origin, appId,
-                                          inBrowserElement);
+  nsRefPtr<ManagerId> ref = new ManagerId(aPrincipal, quotaOrigin);
   ref.forget(aManagerIdOut);
 
   return NS_OK;
@@ -59,12 +44,9 @@ ManagerId::Principal() const
   return ref.forget();
 }
 
-ManagerId::ManagerId(nsIPrincipal* aPrincipal, const nsACString& aOrigin,
-                     uint32_t aAppId, bool aInBrowserElement)
+ManagerId::ManagerId(nsIPrincipal* aPrincipal, const nsACString& aQuotaOrigin)
     : mPrincipal(aPrincipal)
-    , mOrigin(aOrigin)
-    , mAppId(aAppId)
-    , mInBrowserElement(aInBrowserElement)
+    , mQuotaOrigin(aQuotaOrigin)
 {
   MOZ_ASSERT(mPrincipal);
 }

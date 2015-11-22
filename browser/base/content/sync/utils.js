@@ -8,7 +8,7 @@
 const PERMISSIONS_RWUSR = 0x180;
 
 // Weave should always exist before before this file gets included.
-let gSyncUtils = {
+var gSyncUtils = {
   get bundle() {
     delete this.bundle;
     return this.bundle = Services.strings.createBundle("chrome://browser/locale/syncSetup.properties");
@@ -87,10 +87,6 @@ let gSyncUtils = {
     this._openLink(Weave.Svc.Prefs.get(root + "privacyURL"));
   },
 
-  openFirstSyncProgressPage: function () {
-    this._openLink("about:sync-progress");
-  },
-
   /**
    * Prepare an invisible iframe with the passphrase backup document.
    * Used by both the print and saving methods.
@@ -130,7 +126,7 @@ let gSyncUtils = {
 
   /**
    * Print passphrase backup document.
-   * 
+   *
    * @param elid : ID of the form element containing the passphrase.
    */
   passphrasePrint: function(elid) {
@@ -158,7 +154,7 @@ let gSyncUtils = {
 
   /**
    * Save passphrase backup document to disk as HTML file.
-   * 
+   *
    * @param elid : ID of the form element containing the passphrase.
    */
   passphraseSave: function(elid) {
@@ -196,7 +192,7 @@ let gSyncUtils = {
    *
    * @param el1 : the first textbox element in the form
    * @param el2 : the second textbox element, if omitted it's an update form
-   * 
+   *
    * returns [valid, errorString]
    */
   validatePassword: function (el1, el2) {

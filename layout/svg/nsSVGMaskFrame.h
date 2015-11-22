@@ -53,7 +53,7 @@ public:
   NS_DECL_FRAMEARENA_HELPERS
 
   // nsSVGMaskFrame method:
-  mozilla::TemporaryRef<SourceSurface>
+  already_AddRefed<SourceSurface>
   GetMaskForMaskedFrame(gfxContext* aContext,
                         nsIFrame* aMaskedFrame,
                         const gfxMatrix &aMatrix,
@@ -100,7 +100,7 @@ private:
   // automatically sets and clears the mInUse flag on the mask frame
   // (to prevent nasty reference loops). It's easy to mess this up
   // and break things, so this helper makes the code far more robust.
-  class MOZ_STACK_CLASS AutoMaskReferencer
+  class MOZ_RAII AutoMaskReferencer
   {
   public:
     explicit AutoMaskReferencer(nsSVGMaskFrame *aFrame

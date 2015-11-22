@@ -60,14 +60,20 @@ for (var constructor of constructors) {
         }, TypeError);
     });
 
-    // FIXME: Should throw if `this` is a method definition or a getter/setter function, see bug 1059908.
-    constructor.of.call({method() {}}.method);
-    constructor.of.call(Object.getOwnPropertyDescriptor({get getter() {}}, "getter").get);
+    // Throw if `this` is a method definition or a getter/setter function.
+    assertThrowsInstanceOf(() => {
+        constructor.of.call({method() {}}.method);
+    }, TypeError);
+    assertThrowsInstanceOf(() => {
+        constructor.of.call(Object.getOwnPropertyDescriptor({get getter() {}}, "getter").get);
+    }, TypeError);
 
-    // Generators are also legal constructors.
-    assertEq(constructor.of.call(function*(len) {
+    // Generators are not legal constructors.
+    assertThrowsInstanceOf(() => {
+      constructor.of.call(function*(len) {
         return len;
-    }, "a", "b", "c").next().value, 3);
+      }, "a")
+    }, TypeError);
 
     // An exception might be thrown in a strict assignment to the new object's indexed properties.
     assertThrowsInstanceOf(() => {

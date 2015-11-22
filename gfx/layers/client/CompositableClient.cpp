@@ -128,6 +128,7 @@ CompositableClient::CompositableClient(CompositableForwarder* aForwarder,
 : mCompositableChild(nullptr)
 , mForwarder(aForwarder)
 , mTextureFlags(aTextureFlags)
+, mDestroyed(false)
 {
   MOZ_COUNT_CTOR(CompositableClient);
 }
@@ -157,18 +158,20 @@ CompositableClient::GetIPDLActor() const
 }
 
 bool
-CompositableClient::Connect()
+CompositableClient::Connect(ImageContainer* aImageContainer)
 {
   if (!GetForwarder() || GetIPDLActor()) {
     return false;
   }
-  GetForwarder()->Connect(this);
+  GetForwarder()->Connect(this, aImageContainer);
   return true;
 }
 
 void
 CompositableClient::Destroy()
 {
+  mDestroyed = true;
+
   if (!mCompositableChild) {
     return;
   }
@@ -190,7 +193,7 @@ CompositableClient::GetAsyncID() const
   return 0; // zero is always an invalid async ID
 }
 
-TemporaryRef<BufferTextureClient>
+already_AddRefed<BufferTextureClient>
 CompositableClient::CreateBufferTextureClient(gfx::SurfaceFormat aFormat,
                                               gfx::IntSize aSize,
                                               gfx::BackendType aMoz2DBackend,
@@ -201,15 +204,15 @@ CompositableClient::CreateBufferTextureClient(gfx::SurfaceFormat aFormat,
                                                  aTextureFlags | mTextureFlags);
 }
 
-TemporaryRef<TextureClient>
+already_AddRefed<TextureClient>
 CompositableClient::CreateTextureClientForDrawing(gfx::SurfaceFormat aFormat,
                                                   gfx::IntSize aSize,
-                                                  gfx::BackendType aMoz2DBackend,
+                                                  BackendSelector aSelector,
                                                   TextureFlags aTextureFlags,
                                                   TextureAllocationFlags aAllocFlags)
 {
   return TextureClient::CreateForDrawing(GetForwarder(),
-                                         aFormat, aSize, aMoz2DBackend,
+                                         aFormat, aSize, aSelector,
                                          aTextureFlags | mTextureFlags,
                                          aAllocFlags);
 }
@@ -222,11 +225,6 @@ CompositableClient::AddTextureClient(TextureClient* aClient)
   }
   aClient->SetAddedToCompositableClient();
   return aClient->InitIPDLActor(mForwarder);
-}
-
-void
-CompositableClient::OnTransaction()
-{
 }
 
 void
@@ -270,6 +268,27 @@ CompositableClient::DumpTextureClient(std::stringstream& aStream, TextureClient*
     return;
   }
   aStream << gfxUtils::GetAsLZ4Base64Str(dSurf).get();
+}
+
+AutoRemoveTexture::~AutoRemoveTexture()
+{
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
+  if (mCompositable && mTexture && mCompositable->GetForwarder()) {
+    // remove old buffer from CompositableHost
+    RefPtr<AsyncTransactionWaiter> waiter = new AsyncTransactionWaiter();
+    RefPtr<AsyncTransactionTracker> tracker =
+        new RemoveTextureFromCompositableTracker(waiter);
+    // Hold TextureClient until transaction complete.
+    tracker->SetTextureClient(mTexture);
+    mTexture->SetRemoveFromCompositableWaiter(waiter);
+    // RemoveTextureFromCompositableAsync() expects CompositorChild's presence.
+    mCompositable->GetForwarder()->RemoveTextureFromCompositableAsync(tracker, mCompositable, mTexture);
+  }
+#else
+  if (mCompositable && mTexture) {
+    mCompositable->RemoveTexture(mTexture);
+  }
+#endif
 }
 
 } // namespace layers

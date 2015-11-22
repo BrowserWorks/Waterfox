@@ -18,21 +18,23 @@
 #include "jit/RegisterSets.h"
 #include "vm/HelperThreads.h"
 
-#if defined(JS_CODEGEN_ARM)
-#define JS_USE_LINK_REGISTER
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64)
+// Push return addresses callee-side.
+# define JS_USE_LINK_REGISTER
 #endif
 
-#if defined(JS_CODEGEN_X64) || defined(JS_CODEGEN_ARM)
+#if defined(JS_CODEGEN_X64) || defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64)
 // JS_SMALL_BRANCH means the range on a branch instruction
 // is smaller than the whole address space
-#    define JS_SMALL_BRANCH
+# define JS_SMALL_BRANCH
 #endif
+
 namespace js {
 namespace jit {
 
 namespace Disassembler {
 class HeapAccess;
-};
+} // namespace Disassembler
 
 static const uint32_t Simd128DataSize = 4 * sizeof(int32_t);
 static_assert(Simd128DataSize == 4 * sizeof(int32_t), "SIMD data should be able to contain int32x4");
@@ -120,6 +122,15 @@ struct ImmWord
     uintptr_t value;
 
     explicit ImmWord(uintptr_t value) : value(value)
+    { }
+};
+
+// Used for 64-bit immediates which do not require relocation.
+struct Imm64
+{
+    uint64_t value;
+
+    explicit Imm64(uint64_t value) : value(value)
     { }
 };
 
@@ -214,39 +225,6 @@ struct PatchedImmPtr {
 class AssemblerShared;
 class ImmGCPtr;
 
-// Used for immediates which require relocation and may be traced during minor GC.
-class ImmMaybeNurseryPtr
-{
-    friend class AssemblerShared;
-    friend class ImmGCPtr;
-    const gc::Cell* value;
-
-    ImmMaybeNurseryPtr() : value(0) {}
-
-  public:
-    explicit ImmMaybeNurseryPtr(const gc::Cell* ptr) : value(ptr)
-    {
-        // asm.js shouldn't be creating GC things
-        MOZ_ASSERT(!IsCompilingAsmJS());
-    }
-};
-
-// Dummy value used for nursery pointers during Ion compilation, see
-// LNurseryObject.
-class IonNurseryPtr
-{
-    const gc::Cell* ptr;
-
-  public:
-    friend class ImmGCPtr;
-
-    explicit IonNurseryPtr(const gc::Cell* ptr) : ptr(ptr)
-    {
-        MOZ_ASSERT(ptr);
-        MOZ_ASSERT(uintptr_t(ptr) & 0x1);
-    }
-};
-
 // Used for immediates which require relocation.
 class ImmGCPtr
 {
@@ -255,15 +233,10 @@ class ImmGCPtr
 
     explicit ImmGCPtr(const gc::Cell* ptr) : value(ptr)
     {
-        MOZ_ASSERT_IF(ptr, ptr->isTenured());
-
-        // asm.js shouldn't be creating GC things
-        MOZ_ASSERT(!IsCompilingAsmJS());
-    }
-
-    explicit ImmGCPtr(IonNurseryPtr ptr) : value(ptr.ptr)
-    {
-        MOZ_ASSERT(value);
+        // Nursery pointers can't be used if the main thread might be currently
+        // performing a minor GC.
+        MOZ_ASSERT_IF(ptr && !ptr->isTenured(),
+                      !CurrentThreadIsIonCompilingSafeForMinorGC());
 
         // asm.js shouldn't be creating GC things
         MOZ_ASSERT(!IsCompilingAsmJS());
@@ -271,13 +244,6 @@ class ImmGCPtr
 
   private:
     ImmGCPtr() : value(0) {}
-
-    friend class AssemblerShared;
-    explicit ImmGCPtr(ImmMaybeNurseryPtr ptr) : value(ptr.value)
-    {
-        // asm.js shouldn't be creating GC things
-        MOZ_ASSERT(!IsCompilingAsmJS());
-    }
 };
 
 // Pointer to be embedded as an immediate that is loaded/stored from by an
@@ -814,7 +780,7 @@ class AsmJSHeapAccess
         cmpDelta_ = cmp == NoLengthCheck ? 0 : insnOffset - cmp;
         MOZ_ASSERT(offsetWithinWholeSimdVector_ == offsetWithinWholeSimdVector);
     }
-#elif defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS)
+#elif defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64) || defined(JS_CODEGEN_MIPS32)
     explicit AsmJSHeapAccess(uint32_t insnOffset)
     {
         mozilla::PodZero(this);  // zero padding for Valgrind
@@ -862,6 +828,7 @@ enum AsmJSImmKind
     AsmJSImm_aeabi_idivmod   = AsmJSExit::Builtin_IDivMod,
     AsmJSImm_aeabi_uidivmod  = AsmJSExit::Builtin_UDivMod,
     AsmJSImm_AtomicCmpXchg   = AsmJSExit::Builtin_AtomicCmpXchg,
+    AsmJSImm_AtomicXchg      = AsmJSExit::Builtin_AtomicXchg,
     AsmJSImm_AtomicFetchAdd  = AsmJSExit::Builtin_AtomicFetchAdd,
     AsmJSImm_AtomicFetchSub  = AsmJSExit::Builtin_AtomicFetchSub,
     AsmJSImm_AtomicFetchAnd  = AsmJSExit::Builtin_AtomicFetchAnd,
@@ -956,7 +923,6 @@ class AssemblerShared
     Vector<AsmJSAbsoluteLink, 0, SystemAllocPolicy> asmJSAbsoluteLinks_;
 
   protected:
-    Vector<CodeOffsetLabel, 0, SystemAllocPolicy> profilerCallSites_;
     bool enoughMemory_;
     bool embedsNurseryPointers_;
 
@@ -978,24 +944,8 @@ class AssemblerShared
         return !enoughMemory_;
     }
 
-    void appendProfilerCallSite(CodeOffsetLabel label) {
-        enoughMemory_ &= profilerCallSites_.append(label);
-    }
-
     bool embedsNurseryPointers() const {
         return embedsNurseryPointers_;
-    }
-
-    ImmGCPtr noteMaybeNurseryPtr(ImmMaybeNurseryPtr ptr) {
-        if (ptr.value && gc::IsInsideNursery(ptr.value)) {
-            // noteMaybeNurseryPtr can be reached from off-thread compilation,
-            // though not with an actual nursery pointer argument in that case.
-            MOZ_ASSERT(GetJitContext()->runtime->onMainThread());
-            // Do not be ion-compiling on the main thread.
-            MOZ_ASSERT(!GetJitContext()->runtime->mainThread()->ionCompiling);
-            embedsNurseryPointers_ = true;
-        }
-        return ImmGCPtr(ptr);
     }
 
     void append(const CallSiteDesc& desc, size_t currentOffset, size_t framePushed) {

@@ -11,6 +11,7 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsAutoPtr.h"
 #include "nsString.h"
+#include "nsWrapperCache.h"
 
 class nsISupports;
 class nsIURI;
@@ -22,28 +23,34 @@ class DOMMediaStream;
 
 namespace dom {
 
-class File;
+class Blob;
 class MediaSource;
 class GlobalObject;
 struct objectURLOptions;
 
 namespace workers {
 class URLProxy;
-}
+} // namespace workers
 
 class URL final : public URLSearchParamsObserver
+                , public nsWrapperCache
 {
   ~URL() {}
 
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_CLASS(URL)
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(URL)
 
-  explicit URL(already_AddRefed<nsIURI> aURI);
+  URL(nsISupports* aParent, already_AddRefed<nsIURI> aURI);
 
   // WebIDL methods
-  bool
-  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto, JS::MutableHandle<JSObject*> aReflector);
+  nsISupports* GetParentObject() const
+  {
+    return mParent;
+  }
+
+  virtual JSObject*
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<URL>
   Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
@@ -56,12 +63,14 @@ public:
   Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
               const nsAString& aBase, ErrorResult& aRv);
   static already_AddRefed<URL>
-  Constructor(const nsAString& aUrl, const nsAString& aBase, ErrorResult& aRv);
+  Constructor(nsISupports* aParent, const nsAString& aUrl,
+              const nsAString& aBase, ErrorResult& aRv);
   static already_AddRefed<URL>
-  Constructor(const nsAString& aUrl, nsIURI* aBase, ErrorResult& aRv);
+  Constructor(nsISupports* aParent, const nsAString& aUrl,
+              nsIURI* aBase, ErrorResult& aRv);
 
   static void CreateObjectURL(const GlobalObject& aGlobal,
-                              File& aBlob,
+                              Blob& aBlob,
                               const objectURLOptions& aOptions,
                               nsAString& aResult,
                               ErrorResult& aError);
@@ -119,8 +128,6 @@ public:
 
   URLSearchParams* SearchParams();
 
-  void SetSearchParams(URLSearchParams& aSearchParams);
-
   void GetHash(nsAString& aRetval, ErrorResult& aRv) const;
 
   void SetHash(const nsAString& aArg, ErrorResult& aRv);
@@ -152,6 +159,7 @@ private:
                                       nsAString& aResult,
                                       ErrorResult& aError);
 
+  nsCOMPtr<nsISupports> mParent;
   nsCOMPtr<nsIURI> mURI;
   nsRefPtr<URLSearchParams> mSearchParams;
 
@@ -160,7 +168,7 @@ private:
 
 bool IsChromeURI(nsIURI* aURI);
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif /* URL_h___ */

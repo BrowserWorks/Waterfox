@@ -26,9 +26,15 @@ interface nsIBrowserElementNextPaintListener : nsISupports
  * Interface to the BrowserElementParent implementation. All methods
  * but setFrameLoader throw when the remote process is dead.
  */
-[scriptable, uuid(3811446f-90bb-42c1-b2b6-aae3603b61e1)]
+[scriptable, uuid(56bd3e12-4a8b-422a-89fc-6dc25aa30aa2)]
 interface nsIBrowserElementAPI : nsISupports
 {
+  const long FIND_CASE_SENSITIVE = 0;
+  const long FIND_CASE_INSENSITIVE = 1;
+
+  const long FIND_FORWARD = 0;
+  const long FIND_BACKWARD = 1;
+
   void setFrameLoader(in nsIFrameLoader frameLoader);
 
   void setVisible(in boolean visible);
@@ -67,10 +73,31 @@ interface nsIBrowserElementAPI : nsISupports
   nsIDOMDOMRequest getCanGoForward();
   nsIDOMDOMRequest getContentDimensions();
 
+  void findAll(in DOMString searchString, in long caseSensitivity);
+  void findNext(in long direction);
+  void clearMatch();
+
+  void mute();
+  void unmute();
+  nsIDOMDOMRequest getMuted();
+
+  void setVolume(in float volume);
+  nsIDOMDOMRequest getVolume();
+
   void addNextPaintListener(in nsIBrowserElementNextPaintListener listener);
   void removeNextPaintListener(in nsIBrowserElementNextPaintListener listener);
 
   nsIDOMDOMRequest setInputMethodActive(in boolean isActive);
 
+  nsIDOMDOMRequest getAudioChannelVolume(in uint32_t audioChannel);
+  nsIDOMDOMRequest setAudioChannelVolume(in uint32_t audioChannel, in float volume);
+
+  nsIDOMDOMRequest getAudioChannelMuted(in uint32_t audioChannel);
+  nsIDOMDOMRequest setAudioChannelMuted(in uint32_t audioChannel, in bool muted);
+
+  nsIDOMDOMRequest isAudioChannelActive(in uint32_t audioChannel);
+
   void setNFCFocus(in boolean isFocus);
+
+  nsIDOMDOMRequest executeScript(in DOMString script, in jsval options);
 };

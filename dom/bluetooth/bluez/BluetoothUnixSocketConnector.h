@@ -4,33 +4,55 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_bluetooth_BluetoothUnixSocketConnector_h
-#define mozilla_dom_bluetooth_BluetoothUnixSocketConnector_h
+#ifndef mozilla_dom_bluetooth_bluez_BluetoothUnixSocketConnector_h
+#define mozilla_dom_bluetooth_bluez_BluetoothUnixSocketConnector_h
 
+#include <bluetooth/bluetooth.h>
 #include "BluetoothCommon.h"
-#include <sys/socket.h>
-#include <mozilla/ipc/UnixSocketConnector.h>
+#include "mozilla/ipc/UnixSocketConnector.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
 
-class BluetoothUnixSocketConnector : public mozilla::ipc::UnixSocketConnector
+class BluetoothUnixSocketConnector final
+  : public mozilla::ipc::UnixSocketConnector
 {
 public:
-  BluetoothUnixSocketConnector(BluetoothSocketType aType, int aChannel,
-                               bool aAuth, bool aEncrypt);
-  virtual ~BluetoothUnixSocketConnector()
-  {}
-  virtual int Create() override;
-  virtual bool CreateAddr(bool aIsServer,
-                          socklen_t& aAddrSize,
-                          mozilla::ipc::sockaddr_any& aAddr,
-                          const char* aAddress) override;
-  virtual bool SetUp(int aFd) override;
-  virtual bool SetUpListenSocket(int aFd) override;
-  virtual void GetSocketAddr(const mozilla::ipc::sockaddr_any& aAddr,
-                             nsAString& aAddrStr) override;
+  BluetoothUnixSocketConnector(const nsACString& aAddressString,
+                               BluetoothSocketType aType,
+                               int aChannel, bool aAuth, bool aEncrypt);
+  ~BluetoothUnixSocketConnector();
+
+  // Methods for |UnixSocketConnector|
+  //
+
+  nsresult ConvertAddressToString(const struct sockaddr& aAddress,
+                                  socklen_t aAddressLength,
+                                  nsACString& aAddressString) override;
+
+  nsresult CreateListenSocket(struct sockaddr* aAddress,
+                              socklen_t* aAddressLength,
+                              int& aListenFd) override;
+
+  nsresult AcceptStreamSocket(int aListenFd,
+                              struct sockaddr* aAddress,
+                              socklen_t* aAddressLen,
+                              int& aStreamFd) override;
+
+  nsresult CreateStreamSocket(struct sockaddr* aAddress,
+                              socklen_t* aAddressLength,
+                              int& aStreamFd) override;
+
+  nsresult Duplicate(UnixSocketConnector*& aConnector) override;
 
 private:
+  nsresult CreateSocket(int& aFd) const;
+  nsresult SetSocketFlags(int aFd) const;
+  nsresult CreateAddress(struct sockaddr& aAddress,
+                         socklen_t& aAddressLength) const;
+  static nsresult ConvertAddressString(const char* aAddressString,
+                                       bdaddr_t& aAddress);
+
+  nsCString mAddressString;
   BluetoothSocketType mType;
   int mChannel;
   bool mAuth;
@@ -39,4 +61,4 @@ private:
 
 END_BLUETOOTH_NAMESPACE
 
-#endif
+#endif // mozilla_dom_bluetooth_bluez_BluetoothUnixSocketConnector_h

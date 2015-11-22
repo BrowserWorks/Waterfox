@@ -33,7 +33,7 @@ public:
     }
     aRetval.set(mCurve);
   }
-  void SetCurve(const Nullable<Float32Array>& aData);
+  void SetCurve(const Nullable<Float32Array>& aData, ErrorResult& aRv);
 
   OverSampleType Oversample() const
   {
@@ -69,7 +69,7 @@ private:
   OverSampleType mType;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif

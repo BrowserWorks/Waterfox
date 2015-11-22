@@ -12,6 +12,7 @@
 #include "nsIServiceManager.h"
 #include "nsISupportsArray.h"
 #include "nsString.h"
+#include "nsIStyleSheetLinkingElement.h"
 #include "nsIDOMElement.h"
 #include "nsIDocument.h"
 #include "nsIPresShell.h"
@@ -73,12 +74,12 @@ inDOMUtils::GetAllStyleSheets(nsIDOMDocument *aDocument, uint32_t *aLength,
 {
   NS_ENSURE_ARG_POINTER(aDocument);
 
-  nsCOMArray<nsISupports> sheets;
+  nsCOMArray<nsIStyleSheet> sheets;
 
   nsCOMPtr<nsIDocument> document = do_QueryInterface(aDocument);
   MOZ_ASSERT(document);
 
-  // Get the agent, then user sheets in the style set.
+  // Get the agent, then user and finally xbl sheets in the style set.
   nsIPresShell* presShell = document->GetShell();
   if (presShell) {
     nsStyleSet* styleSet = presShell->StyleSet();
@@ -89,6 +90,17 @@ inDOMUtils::GetAllStyleSheets(nsIDOMDocument *aDocument, uint32_t *aLength,
     sheetType = nsStyleSet::eUserSheet;
     for (int32_t i = 0; i < styleSet->SheetCount(sheetType); i++) {
       sheets.AppendElement(styleSet->StyleSheetAt(sheetType, i));
+    }
+    nsAutoTArray<CSSStyleSheet*, 32> xblSheetArray;
+    styleSet->AppendAllXBLStyleSheets(xblSheetArray);
+
+    // The XBL stylesheet array will quite often be full of duplicates. Cope:
+    nsTHashtable<nsPtrHashKey<CSSStyleSheet>> sheetSet;
+    for (CSSStyleSheet* sheet : xblSheetArray) {
+      if (!sheetSet.Contains(sheet)) {
+        sheetSet.PutEntry(sheet);
+        sheets.AppendElement(sheet);
+      }
     }
   }
 
@@ -287,6 +299,33 @@ inDOMUtils::GetRuleColumn(nsIDOMCSSRule* aRule, uint32_t* _retval)
   }
 
   *_retval = rule->GetColumnNumber();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+inDOMUtils::GetRelativeRuleLine(nsIDOMCSSRule* aRule, uint32_t* _retval)
+{
+  NS_ENSURE_ARG_POINTER(aRule);
+
+  Rule* rule = aRule->GetCSSRule();
+  if (!rule) {
+    return NS_ERROR_FAILURE;
+  }
+
+  uint32_t lineNumber = rule->GetLineNumber();
+  CSSStyleSheet* sheet = rule->GetStyleSheet();
+  if (sheet) {
+    nsINode* owningNode = sheet->GetOwnerNode();
+    if (owningNode) {
+      nsCOMPtr<nsIStyleSheetLinkingElement> link =
+        do_QueryInterface(owningNode);
+      if (link) {
+        lineNumber -= link->GetLineNumber() - 1;
+      }
+    }
+  }
+
+  *_retval = lineNumber;
   return NS_OK;
 }
 
@@ -561,6 +600,7 @@ static void GetColorsForProperty(const uint32_t aParserVariant,
     for (size_t i = 0; i < size; i++) {
       CopyASCIItoUTF16(allColorNames[i], *aArray.AppendElement());
     }
+    InsertNoDuplicates(aArray, NS_LITERAL_STRING("currentColor"));
   }
   return;
 }
@@ -623,12 +663,17 @@ inDOMUtils::GetSubpropertiesForCSSProperty(const nsAString& aProperty,
   nsCSSProperty propertyID =
     nsCSSProps::LookupProperty(aProperty, nsCSSProps::eEnabledForAllContent);
 
-  if (propertyID == eCSSProperty_UNKNOWN ||
-      propertyID == eCSSPropertyExtra_variable) {
+  if (propertyID == eCSSProperty_UNKNOWN) {
     return NS_ERROR_FAILURE;
   }
 
-  nsTArray<nsString> array;
+  if (propertyID == eCSSPropertyExtra_variable) {
+    *aValues = static_cast<char16_t**>(moz_xmalloc(sizeof(char16_t*)));
+    (*aValues)[0] = ToNewUnicode(aProperty);
+    *aLength = 1;
+    return NS_OK;
+  }
+
   if (!nsCSSProps::IsShorthand(propertyID)) {
     *aValues = static_cast<char16_t**>(moz_xmalloc(sizeof(char16_t*)));
     (*aValues)[0] = ToNewUnicode(nsCSSProps::GetStringValue(propertyID));
@@ -663,7 +708,11 @@ inDOMUtils::CssPropertyIsShorthand(const nsAString& aProperty, bool *_retval)
     return NS_ERROR_FAILURE;
   }
 
-  *_retval = nsCSSProps::IsShorthand(propertyID);
+  if (propertyID == eCSSPropertyExtra_variable) {
+    *_retval = false;
+  } else {
+    *_retval = nsCSSProps::IsShorthand(propertyID);
+  }
   return NS_OK;
 }
 

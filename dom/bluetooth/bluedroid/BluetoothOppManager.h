@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_bluetooth_bluetoothoppmanager_h__
-#define mozilla_dom_bluetooth_bluetoothoppmanager_h__
+#ifndef mozilla_dom_bluetooth_bluedroid_BluetoothOppManager_h
+#define mozilla_dom_bluetooth_bluedroid_BluetoothOppManager_h
 
 #include "BluetoothCommon.h"
 #include "BluetoothProfileManagerBase.h"
@@ -14,13 +14,13 @@
 #include "mozilla/ipc/SocketBase.h"
 #include "nsCOMArray.h"
 
-class nsIDOMBlob;
 class nsIOutputStream;
 class nsIInputStream;
 class nsIVolumeMountLock;
 
 namespace mozilla {
 namespace dom {
+class Blob;
 class BlobParent;
 }
 }
@@ -55,7 +55,7 @@ public:
   bool Listen();
 
   bool SendFile(const nsAString& aDeviceAddress, BlobParent* aActor);
-  bool SendFile(const nsAString& aDeviceAddress, nsIDOMBlob* aBlob);
+  bool SendFile(const nsAString& aDeviceAddress, Blob* aBlob);
   bool StopSendingFile();
   bool ConfirmReceivingFile(bool aConfirm);
 
@@ -76,7 +76,6 @@ private:
   BluetoothOppManager();
   bool Init();
   void HandleShutdown();
-
   void HandleVolumeStateChanged(nsISupports* aSubject);
 
   void StartFileTransfer();
@@ -102,7 +101,7 @@ private:
   void NotifyAboutFileChange();
   bool AcquireSdcardMountLock();
   void SendObexData(uint8_t* aData, uint8_t aOpcode, int aSize);
-  void AppendBlobToSend(const nsAString& aDeviceAddress, nsIDOMBlob* aBlob);
+  void AppendBlobToSend(const nsAString& aDeviceAddress, Blob* aBlob);
   void DiscardBlobsToSend();
   bool ProcessNextBatch();
   void ConnectInternal(const nsAString& aDeviceAddress);
@@ -153,6 +152,12 @@ private:
   bool mNeedsUpdatingSdpRecords;
 
   /**
+   * This holds the time when OPP manager fail to get service channel and
+   * prepare to refresh SDP records.
+   */
+  mozilla::TimeStamp mLastServiceChannelCheck;
+
+  /**
    * Set when StopSendingFile() is called.
    */
   bool mAbortFlag;
@@ -199,7 +204,7 @@ private:
   nsAutoArrayPtr<uint8_t> mReceivedDataBuffer;
 
   int mCurrentBlobIndex;
-  nsCOMPtr<nsIDOMBlob> mBlob;
+  nsRefPtr<Blob> mBlob;
   nsTArray<SendFileBatch> mBatches;
 
   /**
@@ -226,4 +231,4 @@ private:
 
 END_BLUETOOTH_NAMESPACE
 
-#endif
+#endif // mozilla_dom_bluetooth_bluedroid_BluetoothOppManager_h

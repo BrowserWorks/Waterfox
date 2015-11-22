@@ -25,6 +25,7 @@ EXPORTS.mozilla.ipc += [
     'IOThreadChild.h',
     'MessageChannel.h',
     'MessageLink.h',
+    'Neutering.h',
     'ProcessChild.h',
     'ProtocolUtils.h',
     'ScopedXREEmbed.h',
@@ -75,6 +76,11 @@ if CONFIG['OS_TARGET'] == 'Android':
     EXPORTS.mozilla.ipc += ['SharedMemoryBasic_android.h']
     UNIFIED_SOURCES += [
         'SharedMemoryBasic_android.cpp',
+    ]
+elif CONFIG['OS_ARCH'] == 'Darwin':
+    EXPORTS.mozilla.ipc += ['SharedMemoryBasic_mach.h']
+    SOURCES += [
+        'SharedMemoryBasic_mach.cpp',
     ]
 else:
     EXPORTS.mozilla.ipc += ['SharedMemoryBasic_chromium.h']
@@ -133,6 +139,8 @@ LOCAL_INCLUDES += [
     '/caps',
     '/dom/broadcastchannel',
     '/dom/indexedDB',
+    '/dom/workers',
+    '/media/webrtc/trunk',
     '/xpcom/build',
 ]
 
@@ -157,8 +165,8 @@ include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 
-for var in ('MOZ_CHILD_PROCESS_NAME', 'MOZ_CHILD_PROCESS_BUNDLE',
-            'DLL_PREFIX', 'DLL_SUFFIX'):
+for var in ('MOZ_CHILD_PROCESS_NAME', 'MOZ_CHILD_PROCESS_NAME_PIE',
+            'MOZ_CHILD_PROCESS_BUNDLE', 'DLL_PREFIX', 'DLL_SUFFIX'):
     DEFINES[var] = '"%s"' % CONFIG[var]
 
 LOCAL_INCLUDES += [
@@ -171,5 +179,3 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
         '/security/sandbox/chromium-shim',
         '/security/sandbox/win/src/sandboxbroker',
     ]
-
-FAIL_ON_WARNINGS = True

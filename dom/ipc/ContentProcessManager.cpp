@@ -12,6 +12,7 @@
 #include "mozilla/ClearOnShutdown.h"
 
 #include "nsPrintfCString.h"
+#include "nsIScriptSecurityManager.h"
 
 // XXX need another bug to move this to a common header.
 #ifdef DISABLE_ASSERTS_FOR_FUZZING
@@ -32,7 +33,7 @@ ContentProcessManager::sSingleton;
 /* static */ ContentProcessManager*
 ContentProcessManager::GetSingleton()
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   if (!sSingleton) {
     sSingleton = new ContentProcessManager();
@@ -332,6 +333,41 @@ ContentProcessManager::GetTopLevelTabParentByProcessAndTabId(const ContentParent
 
   // Get the top level TabParent by the current ContentParentId and TabId
   return GetTabParentByProcessAndTabId(currentCpId, currentTabId);
+}
+
+nsTArray<TabId>
+ContentProcessManager::GetTabParentsByProcessId(const ContentParentId& aChildCpId)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsTArray<TabId> tabIdList;
+  auto iter = mContentParentMap.find(aChildCpId);
+  if (NS_WARN_IF(iter == mContentParentMap.end())) {
+    ASSERT_UNLESS_FUZZING();
+    return Move(tabIdList);
+  }
+
+  for (auto remoteFrameIter = iter->second.mRemoteFrames.begin();
+      remoteFrameIter != iter->second.mRemoteFrames.end();
+      ++remoteFrameIter) {
+    tabIdList.AppendElement(remoteFrameIter->first);
+  }
+
+  return Move(tabIdList);
+}
+
+uint32_t
+ContentProcessManager::GetAppIdByProcessAndTabId(const ContentParentId& aChildCpId,
+                                                 const TabId& aChildTabId)
+{
+  uint32_t appId = nsIScriptSecurityManager::NO_APP_ID;
+  if (aChildCpId && aChildTabId) {
+    TabContext tabContext;
+    if (GetTabContextByProcessAndTabId(aChildCpId, aChildTabId, &tabContext)) {
+      appId = tabContext.OwnOrContainingAppId();
+    }
+  }
+  return appId;
 }
 
 } // namespace dom

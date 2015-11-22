@@ -21,13 +21,17 @@ EXPORTS += [
 
 if CONFIG['MOZ_WEBRTC']:
     EXPORTS += ['AudioOutputObserver.h',
+                'MediaEngineRemoteVideoSource.h',
                 'MediaEngineWebRTC.h']
+    EXPORTS.mozilla.dom += [ 'RTCIdentityProviderRegistrar.h' ]
     UNIFIED_SOURCES += [
         'MediaEngineCameraVideoSource.cpp',
+        'MediaEngineRemoteVideoSource.cpp',
         'MediaEngineTabVideoSource.cpp',
         'MediaEngineWebRTCAudio.cpp',
-        'MediaEngineWebRTCVideo.cpp',
         'MediaTrackConstraints.cpp',
+        'RTCCertificate.cpp',
+        'RTCIdentityProviderRegistrar.cpp',
     ]
     # MediaEngineWebRTC.cpp needs to be built separately.
     SOURCES += [
@@ -64,6 +68,9 @@ UNIFIED_SOURCES += [
 EXPORTS.mozilla += [
     'PeerIdentity.h',
 ]
+EXPORTS.mozilla.dom += [
+    'RTCCertificate.h',
+]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -72,18 +79,14 @@ include('/ipc/chromium/chromium-config.mozbuild')
 #    defined, which complains about important MOZ_EXPORT attributes for
 #    android API types
 if CONFIG['GNU_CC'] or CONFIG['CLANG_CL']:
-  CXXFLAGS += [
-    '-Wno-error=attributes'
-  ]
+    CXXFLAGS += [
+        '-Wno-error=attributes'
+    ]
 
 FINAL_LIBRARY = 'xul'
-if CONFIG['OS_ARCH'] == 'WINNT':
-    DEFINES['NOMINMAX'] = True
-
 
 if CONFIG['_MSC_VER']:
-  CXXFLAGS += [
-    '-wd4275', # non dll-interface class used as base for dll-interface class
-  ]
-
-FAIL_ON_WARNINGS = True
+    CXXFLAGS += [
+        '-wd4275', # non dll-interface class used as base for dll-interface class
+    ]
+    DEFINES['__PRETTY_FUNCTION__'] = '__FUNCSIG__'

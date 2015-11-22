@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import json
 import logging
@@ -25,6 +25,7 @@ from .mozconfig import (
     MozconfigLoadException,
     MozconfigLoader,
 )
+from .util import memoized_property
 from .virtualenv import VirtualenvManager
 
 
@@ -43,8 +44,8 @@ def ancestors(path):
 def samepath(path1, path2):
     if hasattr(os.path, 'samefile'):
         return os.path.samefile(path1, path2)
-    return os.path.normpath(os.path.realpath(path1)) == \
-        os.path.normpath(os.path.realpath(path2))
+    return os.path.normcase(os.path.realpath(path1)) == \
+        os.path.normcase(os.path.realpath(path2))
 
 class BadEnvironmentException(Exception):
     """Base class for errors raised when the build environment is not sane."""
@@ -277,7 +278,7 @@ class MozbuildObject(ProcessExecutionMixin):
 
     @property
     def bindir(self):
-        import mozinfo
+        from . import mozinfo
         if mozinfo.os == "mac":
             return os.path.join(self.topobjdir, 'dist', self.substs['MOZ_MACBUNDLE_NAME'], 'Contents', 'Resources')
         return os.path.join(self.topobjdir, 'dist', 'bin')
@@ -290,17 +291,47 @@ class MozbuildObject(ProcessExecutionMixin):
     def statedir(self):
         return os.path.join(self.topobjdir, '.mozbuild')
 
+    @memoized_property
+    def extra_environment_variables(self):
+        '''Some extra environment variables are stored in .mozconfig.mk.
+        This functions extracts and returns them.'''
+        from pymake.process import ClineSplitter
+        mozconfig_mk = os.path.join(self.topobjdir, '.mozconfig.mk')
+        env = {}
+        with open(mozconfig_mk) as fh:
+            for line in fh:
+                if line.startswith('export '):
+                    exports = ClineSplitter(line, self.topobjdir)[1:]
+                    for e in exports:
+                        if '=' in e:
+                            key, value = e.split('=')
+                            env[key] = value
+        return env
+
     def is_clobber_needed(self):
         if not os.path.exists(self.topobjdir):
             return False
         return Clobberer(self.topsrcdir, self.topobjdir).clobber_needed()
 
+    def have_winrm(self):
+        # `winrm -h` should print 'winrm version ...' and exit 1
+        try:
+            p = subprocess.Popen(['winrm.exe', '-h'],
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
+            return p.wait() == 1 and p.stdout.read().startswith('winrm')
+        except:
+            return False
+
     def remove_objdir(self):
         """Remove the entire object directory."""
 
-        # We use mozfile because it is faster than shutil.rmtree().
-        # mozfile doesn't like unicode arguments (bug 818783).
-        rmtree(self.topobjdir.encode('utf-8'))
+        if sys.platform.startswith('win') and self.have_winrm():
+            subprocess.check_call(['winrm', '-rf', self.topobjdir])
+        else:
+            # We use mozfile because it is faster than shutil.rmtree().
+            # mozfile doesn't like unicode arguments (bug 818783).
+            rmtree(self.topobjdir.encode('utf-8'))
 
     def get_binary_path(self, what='app', validate_exists=True, where='default'):
         """Obtain the path to a compiled binary for this build configuration.
@@ -700,6 +731,20 @@ class MachCommandBase(MozbuildObject):
 
             sys.exit(1)
 
+        # Always keep a log of the last command, but don't do that for mach
+        # invokations from scripts (especially not the ones done by the build
+        # system itself).
+        if (self.log_manager and self.log_manager.terminal and
+                not getattr(self, 'NO_AUTO_LOG', False)):
+            self._ensure_state_subdir_exists('.')
+            logfile = self._get_state_filename('last_log.json')
+            try:
+                fd = open(logfile, "wb")
+                self.log_manager.add_json_handler(fd)
+            except Exception as e:
+                self.log(logging.WARNING, 'mach', {'error': e},
+                         'Log will not be kept for this command: {error}.')
+
 
 class MachCommandConditions(object):
     """A series of commonly used condition functions which can be applied to
@@ -748,6 +793,22 @@ class MachCommandConditions(object):
         """Must have an Android build."""
         if hasattr(cls, 'substs'):
             return cls.substs.get('MOZ_WIDGET_TOOLKIT') == 'android'
+        return False
+
+    @staticmethod
+    def is_hg(cls):
+        """Must have a mercurial source checkout."""
+        if hasattr(cls, 'substs'):
+            top_srcdir = cls.substs.get('top_srcdir')
+            return top_srcdir and os.path.isdir(os.path.join(top_srcdir, '.hg'))
+        return False
+
+    @staticmethod
+    def is_git(cls):
+        """Must have a git source checkout."""
+        if hasattr(cls, 'substs'):
+            top_srcdir = cls.substs.get('top_srcdir')
+            return top_srcdir and os.path.isdir(os.path.join(top_srcdir, '.git'))
         return False
 
 

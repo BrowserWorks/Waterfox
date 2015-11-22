@@ -18,11 +18,12 @@
 #include "nsStringGlue.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Move.h"
+#include "nsTArray.h"
 
 namespace IPC {
 class Message;
 template <typename> struct ParamTraits;
-}
+} // namespace IPC
 
 namespace mozilla {
 
@@ -36,8 +37,30 @@ enum ErrNum {
   Err_Limit
 };
 
+uint16_t
+GetErrorArgCount(const ErrNum aErrorNumber);
+
 bool
 ThrowErrorMessage(JSContext* aCx, const ErrNum aErrorNumber, ...);
+
+struct StringArrayAppender
+{
+  static void Append(nsTArray<nsString>& aArgs, uint16_t aCount)
+  {
+    MOZ_RELEASE_ASSERT(aCount == 0, "Must give at least as many string arguments as are required by the ErrNum.");
+  }
+
+  template<typename... Ts>
+  static void Append(nsTArray<nsString>& aArgs, uint16_t aCount, const nsAString* aFirst, Ts... aOtherArgs)
+  {
+    if (aCount == 0) {
+      MOZ_ASSERT(false, "There should not be more string arguments provided than are required by the ErrNum.");
+      return;
+    }
+    aArgs.AppendElement(*aFirst);
+    Append(aArgs, aCount - 1, aOtherArgs...);
+  }
+};
 
 } // namespace dom
 
@@ -91,15 +114,25 @@ public:
     return rv;
   }
 
-  void ThrowTypeError(const dom::ErrNum errorNumber, ...);
-  void ThrowRangeError(const dom::ErrNum errorNumber, ...);
+  template<typename... Ts>
+  void ThrowTypeError(const dom::ErrNum errorNumber, Ts... messageArgs)
+  {
+    ThrowErrorWithMessage(errorNumber, NS_ERROR_TYPE_ERR, messageArgs...);
+  }
+
+  template<typename... Ts>
+  void ThrowRangeError(const dom::ErrNum errorNumber, Ts... messageArgs)
+  {
+    ThrowErrorWithMessage(errorNumber, NS_ERROR_RANGE_ERR, messageArgs...);
+  }
+
   void ReportErrorWithMessage(JSContext* cx);
   bool IsErrorWithMessage() const { return ErrorCode() == NS_ERROR_TYPE_ERR || ErrorCode() == NS_ERROR_RANGE_ERR; }
 
   // Facilities for throwing a preexisting JS exception value via this
   // ErrorResult.  The contract is that any code which might end up calling
   // ThrowJSException() must call MightThrowJSException() even if no exception
-  // is being thrown.  Code that would call ReportJSException* or
+  // is being thrown.  Code that would call ReportJSException or
   // StealJSException as needed must first call WouldReportJSException even if
   // this ErrorResult has not failed.
   //
@@ -108,16 +141,7 @@ public:
   // will wrap it into whatever compartment they're working in, as needed.
   void ThrowJSException(JSContext* cx, JS::Handle<JS::Value> exn);
   void ReportJSException(JSContext* cx);
-  // Used to implement throwing exceptions from the JS implementation of
-  // bindings to callers of the binding.
-  void ReportJSExceptionFromJSImplementation(JSContext* aCx);
   bool IsJSException() const { return ErrorCode() == NS_ERROR_DOM_JS_EXCEPTION; }
-
-  void ThrowNotEnoughArgsError() { mResult = NS_ERROR_XPC_NOT_ENOUGH_ARGS; }
-  void ReportNotEnoughArgsError(JSContext* cx,
-                                const char* ifaceName,
-                                const char* memberName);
-  bool IsNotEnoughArgsError() const { return ErrorCode() == NS_ERROR_XPC_NOT_ENOUGH_ARGS; }
 
   // Report a generic error.  This should only be used if we're not
   // some more specific exception type.
@@ -183,8 +207,27 @@ private:
   void SerializeMessage(IPC::Message* aMsg) const;
   bool DeserializeMessage(const IPC::Message* aMsg, void** aIter);
 
-  void ThrowErrorWithMessage(va_list ap, const dom::ErrNum errorNumber,
-                             nsresult errorType);
+  // Helper method that creates a new Message for this ErrorResult,
+  // and returns the arguments array from that Message.
+  nsTArray<nsString>& CreateErrorMessageHelper(const dom::ErrNum errorNumber, nsresult errorType);
+
+  template<typename... Ts>
+  void ThrowErrorWithMessage(const dom::ErrNum errorNumber, nsresult errorType, Ts... messageArgs)
+  {
+    if (IsJSException()) {
+      // We have rooted our mJSException, and we don't have the info
+      // needed to unroot here, so just bail.
+      MOZ_ASSERT(false,
+                 "Ignoring ThrowErrorWithMessage call because we have a JS exception");
+      return;
+    }
+    nsTArray<nsString>& messageArgsArray = CreateErrorMessageHelper(errorNumber, errorType);
+    uint16_t argCount = dom::GetErrorArgCount(errorNumber);
+    dom::StringArrayAppender::Append(messageArgsArray, argCount, messageArgs...);
+#ifdef DEBUG
+    mHasMessage = true;
+#endif
+  }
 
   void AssignErrorCode(nsresult aRv) {
     MOZ_ASSERT(aRv != NS_ERROR_TYPE_ERR, "Use ThrowTypeError()");
@@ -192,8 +235,7 @@ private:
     MOZ_ASSERT(!IsErrorWithMessage(), "Don't overwrite errors with message");
     MOZ_ASSERT(aRv != NS_ERROR_DOM_JS_EXCEPTION, "Use ThrowJSException()");
     MOZ_ASSERT(!IsJSException(), "Don't overwrite JS exceptions");
-    MOZ_ASSERT(aRv != NS_ERROR_XPC_NOT_ENOUGH_ARGS, "Use ThrowNotEnoughArgsError()");
-    MOZ_ASSERT(!IsNotEnoughArgsError(), "Don't overwrite not enough args error");
+    MOZ_ASSERT(aRv != NS_ERROR_XPC_NOT_ENOUGH_ARGS, "May need to bring back ThrowNotEnoughArgsError");
     mResult = aRv;
   }
 

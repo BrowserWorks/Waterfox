@@ -34,6 +34,7 @@ int32_t GrallocImage::sColorIdMap[] = {
     HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED, HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED,
     HAL_PIXEL_FORMAT_YCbCr_420_SP_VENUS, HAL_PIXEL_FORMAT_YCbCr_420_SP_VENUS,
     HAL_PIXEL_FORMAT_YV12, OMX_COLOR_FormatYUV420Planar,
+    HAL_PIXEL_FORMAT_RGBA_8888, -1,
     0, 0
 };
 
@@ -56,7 +57,7 @@ GrallocImage::~GrallocImage()
 {
 }
 
-void
+bool
 GrallocImage::SetData(const Data& aData)
 {
   MOZ_ASSERT(!mTextureClient, "TextureClient is already set");
@@ -69,7 +70,7 @@ GrallocImage::SetData(const Data& aData)
 
   if (gfxPlatform::GetPlatform()->IsInGonkEmulator()) {
     // Emulator does not support HAL_PIXEL_FORMAT_YV12.
-    return;
+    return false;
   }
 
   RefPtr<GrallocTextureClientOGL> textureClient =
@@ -87,7 +88,7 @@ GrallocImage::SetData(const Data& aData)
   sp<GraphicBuffer> graphicBuffer = textureClient->GetGraphicBuffer();
   if (!result || !graphicBuffer.get()) {
     mTextureClient = nullptr;
-    return;
+    return false;
   }
 
   mTextureClient = textureClient;
@@ -95,7 +96,7 @@ GrallocImage::SetData(const Data& aData)
   void* vaddr;
   if (graphicBuffer->lock(GraphicBuffer::USAGE_SW_WRITE_OFTEN,
                           &vaddr) != OK) {
-    return;
+    return false;
   }
 
   uint8_t* yChannel = static_cast<uint8_t*>(vaddr);
@@ -143,12 +144,14 @@ GrallocImage::SetData(const Data& aData)
   mData.mYChannel     = nullptr;
   mData.mCrChannel    = nullptr;
   mData.mCbChannel    = nullptr;
+  return true;
 }
 
-void GrallocImage::SetData(const GrallocData& aData)
+bool GrallocImage::SetData(const GrallocData& aData)
 {
   mTextureClient = static_cast<GrallocTextureClientOGL*>(aData.mGraphicBuffer.get());
   mSize = aData.mPicSize;
+  return true;
 }
 
 /**
@@ -361,6 +364,21 @@ ConvertOmxYUVFormatToRGB565(android::sp<GraphicBuffer>& aBuffer,
     return OK;
   }
 
+  if (format == HAL_PIXEL_FORMAT_RGBA_8888) {
+    uint32_t* src = (uint32_t*)(buffer);
+    uint16_t* dest = (uint16_t*)(aMappedSurface->mData);
+
+    // Convert RGBA8888 to RGB565
+    for (size_t i = 0; i < width * height; i++) {
+      uint32_t r = ((*src >> 0 ) & 0xFF);
+      uint32_t g = ((*src >> 8 ) & 0xFF);
+      uint32_t b = ((*src >> 16) & 0xFF);
+      *dest++ = ((r >> 3) << 11) | ((g >> 2) << 5) | ((b >> 3) << 0);
+      src++;
+    }
+    return OK;
+  }
+
   android::ColorConverter colorConverter((OMX_COLOR_FORMATTYPE)omxFormat,
                                          OMX_COLOR_Format16bitRGB565);
   if (!colorConverter.isValid()) {
@@ -381,7 +399,7 @@ ConvertOmxYUVFormatToRGB565(android::sp<GraphicBuffer>& aBuffer,
   return OK;
 }
 
-TemporaryRef<gfx::SourceSurface>
+already_AddRefed<gfx::SourceSurface>
 GrallocImage::GetAsSourceSurface()
 {
   if (!mTextureClient) {
@@ -407,7 +425,7 @@ GrallocImage::GetAsSourceSurface()
   rv = ConvertOmxYUVFormatToRGB565(graphicBuffer, surface, &mappedSurface, mData);
   if (rv == OK) {
     surface->Unmap();
-    return surface;
+    return surface.forget();
   }
 
   rv = ConvertVendorYUVFormatToRGB565(graphicBuffer, surface, &mappedSurface);
@@ -417,7 +435,7 @@ GrallocImage::GetAsSourceSurface()
     return nullptr;
   }
 
-  return surface;
+  return surface.forget();
 }
 
 android::sp<android::GraphicBuffer>

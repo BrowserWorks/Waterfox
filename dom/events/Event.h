@@ -124,7 +124,7 @@ public:
 
   static void Shutdown();
 
-  static const char* GetEventName(uint32_t aEventType);
+  static const char* GetEventName(EventMessage aEventType);
   static CSSIntPoint GetClientCoords(nsPresContext* aPresContext,
                                      WidgetEvent* aEvent,
                                      LayoutDeviceIntPoint aPoint,
@@ -270,7 +270,7 @@ protected:
   bool                        mPrivateDataDuplicated;
   bool                        mIsMainThreadEvent;
   // True when popup control check should rely on event.type, not
-  // WidgetEvent.message.
+  // WidgetEvent.mMessage.
   bool                        mWantsPopupControlCheck;
 };
 
@@ -309,6 +309,7 @@ private:
   NS_IMETHOD GetCancelable(bool* aCancelable) override { return _to GetCancelable(aCancelable); } \
   NS_IMETHOD GetTimeStamp(DOMTimeStamp* aTimeStamp) override { return _to GetTimeStamp(aTimeStamp); } \
   NS_IMETHOD StopPropagation(void) override { return _to StopPropagation(); } \
+  NS_IMETHOD StopCrossProcessForwarding(void) override { return _to StopCrossProcessForwarding(); } \
   NS_IMETHOD PreventDefault(void) override { return _to PreventDefault(); } \
   NS_IMETHOD InitEvent(const nsAString& eventTypeArg, bool canBubbleArg, bool cancelableArg) override { return _to InitEvent(eventTypeArg, canBubbleArg, cancelableArg); } \
   NS_IMETHOD GetDefaultPrevented(bool* aDefaultPrevented) override { return _to GetDefaultPrevented(aDefaultPrevented); } \
@@ -338,5 +339,10 @@ ToCanonicalSupports(mozilla::dom::Event* e)
 {
   return static_cast<nsIDOMEvent*>(e);
 }
+
+already_AddRefed<mozilla::dom::Event>
+NS_NewDOMEvent(mozilla::dom::EventTarget* aOwner,
+               nsPresContext* aPresContext,
+               mozilla::WidgetEvent* aEvent);
 
 #endif // mozilla_dom_Event_h_

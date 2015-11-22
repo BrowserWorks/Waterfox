@@ -5,13 +5,46 @@
 #ifndef mozilla_ipc_backgroundutils_h__
 #define mozilla_ipc_backgroundutils_h__
 
+#include "ipc/IPCMessageUtils.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/BasePrincipal.h"
 #include "nsCOMPtr.h"
 #include "nscore.h"
 
+class nsILoadInfo;
 class nsIPrincipal;
 
+namespace IPC {
+
+template<>
+struct ParamTraits<mozilla::OriginAttributes>
+{
+  typedef mozilla::OriginAttributes paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam)
+  {
+    nsAutoCString suffix;
+    aParam.CreateSuffix(suffix);
+    WriteParam(aMsg, suffix);
+  }
+
+  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  {
+    nsAutoCString suffix;
+    return ReadParam(aMsg, aIter, &suffix) &&
+           aResult->PopulateFromSuffix(suffix);
+  }
+};
+
+} // namespace IPC
+
 namespace mozilla {
+namespace net {
+class OptionalLoadInfoArgs;
+} // namespace net
+
+using namespace mozilla::net;
+
 namespace ipc {
 
 class PrincipalInfo;
@@ -33,6 +66,20 @@ PrincipalInfoToPrincipal(const PrincipalInfo& aPrincipalInfo,
 nsresult
 PrincipalToPrincipalInfo(nsIPrincipal* aPrincipal,
                          PrincipalInfo* aPrincipalInfo);
+
+/**
+ * Convert a LoadInfo to LoadInfoArgs struct.
+ */
+nsresult
+LoadInfoToLoadInfoArgs(nsILoadInfo *aLoadInfo,
+                       OptionalLoadInfoArgs* outOptionalLoadInfoArgs);
+
+/**
+ * Convert LoadInfoArgs to a LoadInfo.
+ */
+nsresult
+LoadInfoArgsToLoadInfo(const OptionalLoadInfoArgs& aOptionalLoadInfoArgs,
+                       nsILoadInfo** outLoadInfo);
 
 } // namespace ipc
 } // namespace mozilla

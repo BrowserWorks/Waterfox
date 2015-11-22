@@ -24,6 +24,7 @@
 
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
+#include "WorkerScope.h"
 
 BEGIN_WORKERS_NAMESPACE
 using mozilla::dom::GlobalObject;
@@ -69,11 +70,11 @@ private:
 class CreateURLRunnable : public WorkerMainThreadRunnable
 {
 private:
-  FileImpl* mBlobImpl;
+  BlobImpl* mBlobImpl;
   nsAString& mURL;
 
 public:
-  CreateURLRunnable(WorkerPrivate* aWorkerPrivate, FileImpl* aBlobImpl,
+  CreateURLRunnable(WorkerPrivate* aWorkerPrivate, BlobImpl* aBlobImpl,
                     const mozilla::dom::objectURLOptions& aOptions,
                     nsAString& aURL)
   : WorkerMainThreadRunnable(aWorkerPrivate)
@@ -94,7 +95,7 @@ public:
 
     AssertIsOnMainThread();
 
-    nsRefPtr<FileImpl> newBlobImplHolder;
+    nsRefPtr<BlobImpl> newBlobImplHolder;
 
     if (nsCOMPtr<nsIRemoteBlob> remoteBlob = do_QueryInterface(mBlobImpl)) {
       if (BlobChild* blobChild = remoteBlob->GetBlobChild()) {
@@ -259,11 +260,12 @@ public:
 
     nsRefPtr<mozilla::dom::URL> url;
     if (mBaseProxy) {
-      url = mozilla::dom::URL::Constructor(mURL, mBaseProxy->URI(), mRv);
+      url = mozilla::dom::URL::Constructor(nullptr, mURL, mBaseProxy->URI(),
+                                           mRv);
     } else if (!mBase.IsVoid()) {
-      url = mozilla::dom::URL::Constructor(mURL, mBase, mRv);
+      url = mozilla::dom::URL::Constructor(nullptr, mURL, mBase, mRv);
     } else {
-      url = mozilla::dom::URL::Constructor(mURL, nullptr, mRv);
+      url = mozilla::dom::URL::Constructor(nullptr, mURL, nullptr, mRv);
     }
 
     if (mRv.Failed()) {
@@ -480,7 +482,7 @@ private:
   mozilla::ErrorResult& mRv;
 };
 
-NS_IMPL_CYCLE_COLLECTION(URL, mSearchParams)
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(URL, mSearchParams)
 
 // The reason for using worker::URL is to have different refcnt logging than
 // for main thread URL.
@@ -488,6 +490,7 @@ NS_IMPL_CYCLE_COLLECTING_ADDREF(workers::URL)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(workers::URL)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(URL)
+  NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
@@ -580,10 +583,10 @@ URL::~URL()
   }
 }
 
-bool
-URL::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto, JS::MutableHandle<JSObject*> aReflector)
+JSObject*
+URL::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return URLBinding_workers::Wrap(aCx, this, aGivenProto, aReflector);
+  return URLBinding_workers::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -839,21 +842,6 @@ URL::SearchParams()
 }
 
 void
-URL::SetSearchParams(URLSearchParams& aSearchParams)
-{
-  if (mSearchParams) {
-    mSearchParams->RemoveObserver(this);
-  }
-
-  mSearchParams = &aSearchParams;
-  mSearchParams->AddObserver(this);
-
-  nsAutoString search;
-  mSearchParams->Serialize(search);
-  SetSearchInternal(search);
-}
-
-void
 URL::GetHash(nsAString& aHash, ErrorResult& aRv) const
 {
   nsRefPtr<GetterRunnable> runnable =
@@ -880,14 +868,14 @@ URL::SetHash(const nsAString& aHash, ErrorResult& aRv)
 
 // static
 void
-URL::CreateObjectURL(const GlobalObject& aGlobal, File& aBlob,
+URL::CreateObjectURL(const GlobalObject& aGlobal, Blob& aBlob,
                      const mozilla::dom::objectURLOptions& aOptions,
                      nsAString& aResult, mozilla::ErrorResult& aRv)
 {
   JSContext* cx = aGlobal.Context();
   WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(cx);
 
-  nsRefPtr<FileImpl> blobImpl = aBlob.Impl();
+  nsRefPtr<BlobImpl> blobImpl = aBlob.Impl();
   MOZ_ASSERT(blobImpl);
 
   aRv = blobImpl->SetMutable(false);
@@ -959,7 +947,7 @@ URL::UpdateURLSearchParams()
     nsAutoString search;
     ErrorResult rv;
     GetSearch(search, rv);
-    mSearchParams->ParseInput(NS_ConvertUTF16toUTF8(Substring(search, 1)), this);
+    mSearchParams->ParseInput(NS_ConvertUTF16toUTF8(Substring(search, 1)));
   }
 }
 
@@ -967,8 +955,7 @@ void
 URL::CreateSearchParamsIfNeeded()
 {
   if (!mSearchParams) {
-    mSearchParams = new URLSearchParams();
-    mSearchParams->AddObserver(this);
+    mSearchParams = new URLSearchParams(nullptr, this);
     UpdateURLSearchParams();
   }
 }

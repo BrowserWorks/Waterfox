@@ -175,7 +175,7 @@ public:
                                bool aExpand);
 
   void InvalidateTree();
-  
+
   bool mBatchInProgress;
 
   nsMaybeWeakPtrArray<nsINavHistoryResultObserver> mObservers;
@@ -281,7 +281,8 @@ public:
                            uint16_t aItemType,
                            int64_t aParentId,
                            const nsACString& aGUID,
-                           const nsACString& aParentGUID);
+                           const nsACString& aParentGUID,
+                           const nsACString &aOldValue);
 
 protected:
   virtual ~nsNavHistoryResultNode() {}

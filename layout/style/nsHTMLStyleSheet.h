@@ -17,7 +17,7 @@
 #include "nsCOMPtr.h"
 #include "nsIStyleRule.h"
 #include "nsIStyleRuleProcessor.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/MemoryReporting.h"
 #include "nsString.h"
@@ -45,7 +45,8 @@ public:
   virtual nsRestyleHint HasStateDependentStyle(PseudoElementStateRuleProcessorData* aData) override;
   virtual bool HasDocumentStateDependentStyle(StateRuleProcessorData* aData) override;
   virtual nsRestyleHint
-    HasAttributeDependentStyle(AttributeRuleProcessorData* aData) override;
+    HasAttributeDependentStyle(AttributeRuleProcessorData* aData,
+                               mozilla::RestyleHintData& aRestyleHintDataResult) override;
   virtual bool MediumFeaturesChanged(nsPresContext* aPresContext) override;
   virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf)
     const MOZ_MUST_OVERRIDE override;
@@ -69,7 +70,7 @@ private:
   nsHTMLStyleSheet(const nsHTMLStyleSheet& aCopy) = delete;
   nsHTMLStyleSheet& operator=(const nsHTMLStyleSheet& aCopy) = delete;
 
-  ~nsHTMLStyleSheet();
+  ~nsHTMLStyleSheet() {}
 
   class HTMLColorRule;
   friend class HTMLColorRule;
@@ -132,6 +133,8 @@ public: // for mLangRuleTable structures only
 
   // Rule to handle xml:lang attributes, of which we have exactly one
   // per language string, maintained in mLangRuleTable.
+  // We also create one extra rule for the "x-math" language string, used on
+  // <math> elements.
   class LangRule final : public nsIStyleRule {
   private:
     ~LangRule() {}

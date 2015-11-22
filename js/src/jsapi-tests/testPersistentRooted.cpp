@@ -6,6 +6,7 @@
 #include "jsapi-tests/tests.h"
 
 using namespace JS;
+using mozilla::UniquePtr;
 
 struct BarkWhenTracedClass {
     static int finalizeCount;
@@ -21,7 +22,8 @@ int BarkWhenTracedClass::finalizeCount;
 int BarkWhenTracedClass::traceCount;
 
 const JSClass BarkWhenTracedClass::class_ = {
-    "BarkWhenTracedClass", JSCLASS_IMPLEMENTS_BARRIERS,
+    "BarkWhenTracedClass",
+    0,
     nullptr,
     nullptr,
     nullptr,
@@ -81,13 +83,13 @@ BEGIN_TEST(test_PersistentRooted)
 {
     BarkWhenTracedClass::reset();
 
-    Kennel* kennel = Allocate(cx);
-    CHECK(kennel);
+    UniquePtr<Kennel> kennel(Allocate(cx));
+    CHECK(kennel.get());
 
     // GC should be able to find our barker.
     CHECK(GCFinalizesNBarkers(cx, 0));
 
-    delete(kennel);
+    kennel = nullptr;
 
     // Now GC should not be able to find the barker.
     JS_GC(JS_GetRuntime(cx));
@@ -117,21 +119,21 @@ BEGIN_TEST(test_PersistentRootedCopy)
 {
     BarkWhenTracedClass::reset();
 
-    Kennel* kennel = Allocate(cx);
-    CHECK(kennel);
+    UniquePtr<Kennel> kennel(Allocate(cx));
+    CHECK(kennel.get());
 
     CHECK(GCFinalizesNBarkers(cx, 0));
 
     // Copy construction! AMAZING!
-    Kennel* newKennel = new Kennel(*kennel);
+    UniquePtr<Kennel> newKennel(new Kennel(*kennel));
 
     CHECK(GCFinalizesNBarkers(cx, 0));
 
-    delete(kennel);
+    kennel = nullptr;
 
     CHECK(GCFinalizesNBarkers(cx, 0));
 
-    delete(newKennel);
+    newKennel = nullptr;
 
     // Now that kennel and nowKennel are both deallocated, GC should not be
     // able to find the barker.
@@ -147,13 +149,13 @@ BEGIN_TEST(test_PersistentRootedAssign)
 {
     BarkWhenTracedClass::reset();
 
-    Kennel* kennel = Allocate(cx);
-    CHECK(kennel);
+    UniquePtr<Kennel> kennel(Allocate(cx));
+    CHECK(kennel.get());
 
     CHECK(GCFinalizesNBarkers(cx, 0));
 
     // Allocate a new, empty kennel.
-    Kennel* kennel2 = new Kennel(cx);
+    UniquePtr<Kennel> kennel2(new Kennel(cx));
 
     // Assignment! ASTONISHING!
     *kennel2 = *kennel;
@@ -161,22 +163,22 @@ BEGIN_TEST(test_PersistentRootedAssign)
     // With both kennels referring to the same barker, it is held alive.
     CHECK(GCFinalizesNBarkers(cx, 0));
 
-    delete(kennel2);
+    kennel2 = nullptr;
 
     // The destination of the assignment alone holds the barker alive.
     CHECK(GCFinalizesNBarkers(cx, 0));
 
     // Allocate a second barker.
-    kennel2 = Allocate(cx);
-    CHECK(kennel);
+    kennel2 = UniquePtr<Kennel>(Allocate(cx));
+    CHECK(kennel2.get());
 
     *kennel = *kennel2;
 
     // Nothing refers to the first kennel any more.
     CHECK(GCFinalizesNBarkers(cx, 1));
 
-    delete(kennel);
-    delete(kennel2);
+    kennel = nullptr;
+    kennel2 = nullptr;
 
     // Now that kennel and kennel2 are both deallocated, GC should not be
     // able to find the barker.

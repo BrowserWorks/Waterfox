@@ -17,6 +17,7 @@ const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/LoginRecipes.jsm");
+Cu.import("resource://gre/modules/LoginHelper.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadPaths",
                                   "resource://gre/modules/DownloadPaths.jsm");
@@ -56,7 +57,7 @@ function run_test()
 // used, on Windows these might still be pending deletion on the physical file
 // system.  Thus, start from a new base number every time, to make a collision
 // with a file that is still pending deletion highly unlikely.
-let gFileCounter = Math.floor(Math.random() * 1000000);
+var gFileCounter = Math.floor(Math.random() * 1000000);
 
 /**
  * Returns a reference to a temporary file, that is guaranteed not to exist, and
@@ -120,41 +121,46 @@ function newPropertyBag(aProperties)
 
 const RecipeHelpers = {
   initNewParent() {
-    return (new LoginRecipesParent({ defaults: false })).initializationPromise;
+    return (new LoginRecipesParent({ defaults: null })).initializationPromise;
   },
+};
 
+const MockDocument = {
   /**
-   * Create a document for the given URL containing the given HTML containing a
-   * form and return the <form>.
+   * Create a document for the given URL containing the given HTML with the ownerDocument of all <form>s having a mocked location.
    */
-  createTestForm(aDocumentURL, aHTML = "<form>") {
+  createTestDocument(aDocumentURL, aContent = "<form>", aType = "text/html") {
     let parser = Cc["@mozilla.org/xmlextras/domparser;1"].
                  createInstance(Ci.nsIDOMParser);
     parser.init();
-    let parsedDoc = parser.parseFromString(aHTML, "text/html");
+    let parsedDoc = parser.parseFromString(aContent, aType);
 
+    for (let element of parsedDoc.forms) {
+      this.mockOwnerDocumentProperty(element, parsedDoc, aDocumentURL);
+    }
+    return parsedDoc;
+  },
+
+  mockOwnerDocumentProperty(aElement, aDoc, aURL) {
     // Mock the document.location object so we can unit test without a frame. We use a proxy
     // instead of just assigning to the property since it's not configurable or writable.
-    let document = new Proxy(parsedDoc, {
+    let document = new Proxy(aDoc, {
       get(target, property, receiver) {
         // document.location is normally null when a document is outside of a "browsing context".
         // See https://html.spec.whatwg.org/#the-location-interface
         if (property == "location") {
-          return new URL(aDocumentURL);
+          return new URL(aURL);
         }
         return target[property];
       },
     });
 
-    let form = parsedDoc.forms[0];
-
-    // Assign form.ownerDocument to the proxy so document.location works.
-    Object.defineProperty(form, "ownerDocument", {
+    // Assign element.ownerDocument to the proxy so document.location works.
+    Object.defineProperty(aElement, "ownerDocument", {
       value: document,
     });
+  },
 
-    return form;
-  }
 };
 
 //// Initialization functions common to all tests
@@ -176,3 +182,23 @@ add_task(function test_common_initialize()
   // Clean up after every test.
   do_register_cleanup(() => LoginTestUtils.clearData());
 });
+
+/**
+ * Compare two FormLike to see if they represent the same information. Elements
+ * are compared using their @id attribute.
+ */
+function formLikeEqual(a, b) {
+  Assert.strictEqual(Object.keys(a).length, Object.keys(b).length,
+                     "Check the formLikes have the same number of properties");
+
+  for (let propName of Object.keys(a)) {
+    if (propName == "elements") {
+      Assert.strictEqual(a.elements.length, b.elements.length, "Check element count");
+      for (let i = 0; i < a.elements.length; i++) {
+        Assert.strictEqual(a.elements[i].id, b.elements[i].id, "Check element " + i + " id");
+      }
+      continue;
+    }
+    Assert.strictEqual(a[propName], b[propName], "Compare formLike " + propName + " property");
+  }
+}

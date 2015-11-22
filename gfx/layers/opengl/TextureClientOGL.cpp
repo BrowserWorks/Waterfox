@@ -7,7 +7,7 @@
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
 #include "mozilla/layers/ISurfaceAllocator.h"
 #include "mozilla/layers/TextureClientOGL.h"
-#include "nsSize.h"                     // for nsIntSize
+#include "mozilla/gfx/Point.h"          // for IntSize
 #include "GLLibraryEGL.h"
 
 using namespace mozilla::gl;
@@ -29,7 +29,7 @@ EGLImageTextureClient::EGLImageTextureClient(ISurfaceAllocator* aAllocator,
   , mSize(aSize)
   , mIsLocked(false)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default,
+  MOZ_ASSERT(XRE_IsParentProcess(),
              "Can't pass an `EGLImage` between processes.");
 
   AddFlags(TextureFlags::DEALLOCATE_CLIENT);
@@ -46,7 +46,9 @@ EGLImageTextureClient::ToSurfaceDescriptor(SurfaceDescriptor& aOutDescriptor)
   MOZ_ASSERT(IsAllocated());
 
   const EGLImageImage::Data* data = mImage->GetData();
-  aOutDescriptor = EGLImageDescriptor((uintptr_t)data->mImage, (uintptr_t)data->mSync, mSize);
+  const bool hasAlpha = true;
+  aOutDescriptor = EGLImageDescriptor((uintptr_t)data->mImage, (uintptr_t)data->mSync,
+                                      mSize, hasAlpha);
   return true;
 }
 
@@ -83,7 +85,7 @@ SurfaceTextureClient::SurfaceTextureClient(ISurfaceAllocator* aAllocator,
   , mSize(aSize)
   , mIsLocked(false)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default,
+  MOZ_ASSERT(XRE_IsParentProcess(),
              "Can't pass pointers between processes.");
 
   // Our data is always owned externally.
@@ -130,5 +132,5 @@ SurfaceTextureClient::Unlock()
 
 #endif // MOZ_WIDGET_ANDROID
 
-} // namespace
-} // namespace
+} // namespace layers
+} // namespace mozilla

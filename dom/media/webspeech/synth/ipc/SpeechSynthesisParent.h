@@ -24,8 +24,9 @@ class SpeechSynthesisParent : public PSpeechSynthesisParent
 public:
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
-  bool RecvReadVoiceList(InfallibleTArray<RemoteVoice>* aVoices,
-                         InfallibleTArray<nsString>* aDefaults) override;
+  bool RecvReadVoicesAndState(InfallibleTArray<RemoteVoice>* aVoices,
+                              InfallibleTArray<nsString>* aDefaults,
+                              bool* aIsSpeaking) override;
 
 protected:
   SpeechSynthesisParent();
@@ -66,6 +67,10 @@ protected:
   virtual bool RecvResume() override;
 
   virtual bool RecvCancel() override;
+
+  virtual bool RecvForceEnd() override;
+
+  virtual bool RecvSetAudioOutputVolume(const float& aVolume) override;
 };
 
 class SpeechTaskParent : public nsSpeechTask
@@ -75,7 +80,7 @@ public:
   SpeechTaskParent(float aVolume, const nsAString& aUtterance)
     : nsSpeechTask(aVolume, aUtterance) {}
 
-  virtual nsresult DispatchStartImpl();
+  virtual nsresult DispatchStartImpl(const nsAString& aUri);
 
   virtual nsresult DispatchEndImpl(float aElapsedTime, uint32_t aCharIndex);
 

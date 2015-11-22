@@ -34,7 +34,7 @@ public:
                          AudioDestinationNode* aDestination)
     : AudioNodeEngine(aNode)
     , mSource(nullptr)
-    , mDestination(static_cast<AudioNodeStream*>(aDestination->Stream()))
+    , mDestination(aDestination->Stream())
     // Keep the default value in sync with the default value in
     // StereoPannerNode::StereoPannerNode.
     , mPan(0.f)
@@ -83,41 +83,41 @@ public:
     aRightGain = sin(0.5 * M_PI * aPanning);
   }
 
-  void SetToSilentStereoBlock(AudioChunk* aChunk)
+  void SetToSilentStereoBlock(AudioBlock* aChunk)
   {
     for (uint32_t channel = 0; channel < 2; channel++) {
-      float* samples = static_cast<float*>(const_cast<void*>(aChunk->mChannelData[channel]));
+      float* samples = aChunk->ChannelFloatsForWrite(channel);
       for (uint32_t i = 0; i < WEBAUDIO_BLOCK_SIZE; i++) {
         samples[i] = 0.f;
       }
     }
   }
 
-  void UpmixToStereoIfNeeded(const AudioChunk& aInput, AudioChunk* aOutput)
+  void UpmixToStereoIfNeeded(const AudioBlock& aInput, AudioBlock* aOutput)
   {
     if (aInput.ChannelCount() == 2) {
       *aOutput = aInput;
     } else {
       MOZ_ASSERT(aInput.ChannelCount() == 1);
-      AllocateAudioBlock(2, aOutput);
+      aOutput->AllocateChannels(2);
       const float* input = static_cast<const float*>(aInput.mChannelData[0]);
       for (uint32_t channel = 0; channel < 2; channel++) {
-        float* output = static_cast<float*>(const_cast<void*>(aOutput->mChannelData[channel]));
+        float* output = aOutput->ChannelFloatsForWrite(channel);
         PodCopy(output, input, WEBAUDIO_BLOCK_SIZE);
       }
     }
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioChunk& aInput,
-                            AudioChunk* aOutput,
+                            const AudioBlock& aInput,
+                            AudioBlock* aOutput,
                             bool *aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
 
     // The output of this node is always stereo, no matter what the inputs are.
     MOZ_ASSERT(aInput.ChannelCount() <= 2);
-    AllocateAudioBlock(2, aOutput);
+    aOutput->AllocateChannels(2);
     bool monoToStereo = aInput.ChannelCount() == 1;
 
     if (aInput.IsNull()) {
@@ -181,9 +181,9 @@ StereoPannerNode::StereoPannerNode(AudioContext* aContext)
   , mPan(new AudioParam(this, SendPanToStream, 0.f, "pan"))
 {
   StereoPannerNodeEngine* engine = new StereoPannerNodeEngine(this, aContext->Destination());
-  mStream = aContext->Graph()->CreateAudioNodeStream(engine,
-                                                     MediaStreamGraph::INTERNAL_STREAM);
-  engine->SetSourceStream(static_cast<AudioNodeStream*>(mStream.get()));
+  mStream = AudioNodeStream::Create(aContext, engine,
+                                    AudioNodeStream::NO_STREAM_FLAGS);
+  engine->SetSourceStream(mStream);
 }
 
 StereoPannerNode::~StereoPannerNode()
@@ -217,5 +217,5 @@ StereoPannerNode::SendPanToStream(AudioNode* aNode)
   SendTimelineParameterToStream(This, StereoPannerNodeEngine::PAN, *This->mPan);
 }
 
-}
-}
+} // namespace dom
+} // namespace mozilla

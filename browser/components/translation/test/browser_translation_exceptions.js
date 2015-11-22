@@ -4,10 +4,10 @@
 
 // tests the translation infobar, using a fake 'Translation' implementation.
 
-let tmp = {};
+var tmp = {};
 Cu.import("resource:///modules/translation/Translation.jsm", tmp);
 Cu.import("resource://gre/modules/Promise.jsm", tmp);
-let {Translation, Promise} = tmp;
+var {Translation, Promise} = tmp;
 
 const kLanguagesPref = "browser.translation.neverForLanguages";
 const kShowUIPref = "browser.translation.ui.show";
@@ -51,14 +51,26 @@ function getDomainExceptions() {
 
     if (perm.type == "translate" &&
         perm.capability == Services.perms.DENY_ACTION)
-      results.push(perm.host);
+      results.push(perm.principal);
   }
 
   return results;
 }
 
 function getInfoBar() {
-  return gBrowser.getNotificationBox().getNotificationWithValue("translation");
+  let deferred = Promise.defer();
+  let infobar =
+    gBrowser.getNotificationBox().getNotificationWithValue("translation");
+
+  if (!infobar) {
+    deferred.resolve();
+  } else {
+    // Wait for all animations to finish
+    Promise.all(infobar.getAnimations().map(animation => animation.finished))
+      .then(() => deferred.resolve(infobar));
+  }
+
+  return deferred.promise;
 }
 
 function openPopup(aPopup) {
@@ -89,7 +101,7 @@ function waitForWindowLoad(aWin) {
 }
 
 
-let gTests = [
+var gTests = [
 
 {
   desc: "clean exception lists at startup",
@@ -109,7 +121,7 @@ let gTests = [
                                       {state: Translation.STATE_OFFER,
                                        originalShown: true,
                                        detectedLanguage: "fr"});
-    let notif = getInfoBar();
+    let notif = yield getInfoBar();
     ok(notif, "the infobar is visible");
     let ui = gBrowser.selectedBrowser.translationUI;
     let uri = gBrowser.selectedBrowser.currentURI;
@@ -127,7 +139,8 @@ let gTests = [
 
     // Click the 'Never for French' item.
     notif._getAnonElt("neverForLanguage").click();
-    ok(!getInfoBar(), "infobar hidden");
+    notif = yield getInfoBar();
+    ok(!notif, "infobar hidden");
 
     // Check this has been saved to the exceptions list.
     let langs = getLanguageExceptions();
@@ -138,7 +151,7 @@ let gTests = [
 
     // Reopen the infobar.
     PopupNotifications.getNotification("translate").anchorElement.click();
-    notif = getInfoBar();
+    notif = yield getInfoBar();
     // Open the "options" drop down.
     yield openPopup(notif._getAnonElt("options"));
     ok(notif._getAnonElt("neverForLanguage").disabled,
@@ -158,7 +171,7 @@ let gTests = [
                                       {state: Translation.STATE_OFFER,
                                        originalShown: true,
                                        detectedLanguage: "fr"});
-    let notif = getInfoBar();
+    let notif = yield getInfoBar();
     ok(notif, "the infobar is visible");
     let ui = gBrowser.selectedBrowser.translationUI;
     let uri = gBrowser.selectedBrowser.currentURI;
@@ -176,25 +189,26 @@ let gTests = [
 
     // Click the 'Never for French' item.
     notif._getAnonElt("neverForSite").click();
-    ok(!getInfoBar(), "infobar hidden");
+    notif = yield getInfoBar();
+    ok(!notif, "infobar hidden");
 
     // Check this has been saved to the exceptions list.
     let sites = getDomainExceptions();
     is(sites.length, 1, "one site in the exception list");
-    is(sites[0], "example.com", "correct site in the exception list");
+    is(sites[0].origin, "http://example.com", "correct site in the exception list");
     ok(!ui.shouldShowInfoBar(uri, "fr"),
        "the infobar wouldn't be shown anymore");
 
     // Reopen the infobar.
     PopupNotifications.getNotification("translate").anchorElement.click();
-    notif = getInfoBar();
+    notif = yield getInfoBar();
     // Open the "options" drop down.
     yield openPopup(notif._getAnonElt("options"));
     ok(notif._getAnonElt("neverForSite").disabled,
        "The 'Never translate French' item is disabled");
 
     // Cleanup.
-    Services.perms.remove("example.com", "translate");
+    Services.perms.remove(makeURI("http://example.com"), "translate");
     notif.close();
   }
 },
@@ -287,8 +301,8 @@ let gTests = [
     is(getDomainExceptions().length, 1, "One exception in the permissions");
 
     // Clear the permissions, and check the last item is removed from the display.
-    perms.remove("example.org", "translate");
-    perms.remove("example.com", "translate");
+    perms.remove(makeURI("http://example.org"), "translate");
+    perms.remove(makeURI("http://example.com"), "translate");
     is(tree.view.rowCount, 0, "The site exceptions list is empty");
     ok(remove.disabled, "The 'Remove Site' button is disabled");
     ok(removeAll.disabled, "The 'Remove All Site' button is disabled");

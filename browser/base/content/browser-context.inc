@@ -32,7 +32,7 @@
                   command="Browser:Stop"/>
         <menuitem id="context-bookmarkpage"
                   class="menuitem-iconic"
-                  tooltiptext="&bookmarkPageCmd2.label;"
+                  observes="bookmarkThisPageBroadcaster"
                   aria-label="&bookmarkPageCmd2.label;"
                   oncommand="gContextMenu.bookmarkThisPage();"/>
       </menugroup>
@@ -381,8 +381,8 @@
       <menuitem id="context-viewsource"
                 label="&viewPageSourceCmd.label;"
                 accesskey="&viewPageSourceCmd.accesskey;"
-                oncommand="BrowserViewSourceOfDocument(gContextMenu.browser.contentDocumentAsCPOW);"
-                observes="isImage"/>
+                oncommand="BrowserViewSource(gContextMenu.browser);"
+                observes="canViewSource"/>
       <menuitem id="context-viewinfo"
                 label="&viewPageInfoCmd.label;"
                 accesskey="&viewPageInfoCmd.accesskey;"
@@ -417,6 +417,28 @@
                 label="&bidiSwitchPageDirectionItem.label;"
                 accesskey="&bidiSwitchPageDirectionItem.accesskey;"
                 oncommand="gContextMenu.switchPageDirection();"/>
+      <menuseparator id="fill-login-separator" hidden="true"/>
+      <menu id="fill-login"
+            label="&fillLoginMenu.label;"
+            label-login="&fillLoginMenu.label;"
+            label-password="&fillPasswordMenu.label;"
+            label-username="&fillUsernameMenu.label;"
+            accesskey="&fillLoginMenu.accesskey;"
+            accesskey-login="&fillLoginMenu.accesskey;"
+            accesskey-password="&fillPasswordMenu.accesskey;"
+            accesskey-username="&fillUsernameMenu.accesskey;"
+            hidden="true">
+        <menupopup id="fill-login-popup">
+          <menuitem id="fill-login-no-logins"
+                    label="&noLoginSuggestions.label;"
+                    disabled="true"
+                    hidden="true"/>
+          <menuseparator id="saved-logins-separator"/>
+          <menuitem id="fill-login-saved-passwords"
+                    label="&viewSavedLogins.label;"
+                    oncommand="gContextMenu.openPasswordManager();"/>
+        </menupopup>
+      </menu>
       <menuseparator id="inspect-separator" hidden="true"/>
       <menuitem id="context-inspect"
                 hidden="true"

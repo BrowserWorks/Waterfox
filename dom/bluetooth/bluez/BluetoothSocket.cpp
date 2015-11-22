@@ -8,9 +8,8 @@
 #include <fcntl.h>
 #include "BluetoothSocketObserver.h"
 #include "BluetoothUnixSocketConnector.h"
-#include "mozilla/unused.h"
-#include "nsTArray.h"
-#include "nsThreadUtils.h"
+#include "mozilla/RefPtr.h"
+#include "nsISupportsImpl.h" // for MOZ_COUNT_CTOR, MOZ_COUNT_DTOR
 #include "nsXULAppAPI.h"
 
 using namespace mozilla::ipc;
@@ -28,13 +27,13 @@ class BluetoothSocket::BluetoothSocketIO final
   , public DataSocketIO
 {
 public:
-  BluetoothSocketIO(MessageLoop* mIOLoop,
+  BluetoothSocketIO(MessageLoop* aConsumerLoop,
+                    MessageLoop* aIOLoop,
                     BluetoothSocket* aConsumer,
-                    UnixSocketConnector* aConnector,
-                    const nsACString& aAddress);
+                    UnixSocketConnector* aConnector);
   ~BluetoothSocketIO();
 
-  void        GetSocketAddr(nsAString& aAddrStr) const;
+  void GetSocketAddr(nsAString& aAddrStr) const;
 
   BluetoothSocket* GetBluetoothSocket();
   DataSocket* GetDataSocket();
@@ -83,26 +82,23 @@ public:
 
   SocketBase* GetSocketBase() override;
 
-  bool IsShutdownOnMainThread() const override;
+  bool IsShutdownOnConsumerThread() const override;
   bool IsShutdownOnIOThread() const override;
 
-  void ShutdownOnMainThread() override;
+  void ShutdownOnConsumerThread() override;
   void ShutdownOnIOThread() override;
 
 private:
-  class ReceiveRunnable;
+  class ReceiveTask;
 
   void FireSocketError();
 
-  // Set up flags on file descriptor.
-  static bool SetSocketFlags(int aFd);
-
   /**
-   * Consumer pointer. Non-thread safe RefPtr, so should only be manipulated
-   * directly from main thread. All non-main-thread accesses should happen with
-   * mIO as container.
+   * Consumer pointer. Non-thread-safe pointer, so should only be manipulated
+   * directly from consumer thread. All non-consumer-thread accesses should
+   * happen with mIO as container.
    */
-  RefPtr<BluetoothSocket> mConsumer;
+  BluetoothSocket* mConsumer;
 
   /**
    * Connector object used to create the connection we are currently using.
@@ -115,22 +111,18 @@ private:
   bool mShuttingDownOnIOThread;
 
   /**
-   * Address we are connecting to, assuming we are creating a client connection.
+   * Number of valid bytes in |mAddress|
    */
-  nsCString mAddress;
+  socklen_t mAddressLength;
 
   /**
-   * Size of the socket address struct
+   * Address structure of the socket currently in use
    */
-  socklen_t mAddrSize;
+  struct sockaddr_storage mAddress;
 
   /**
-   * Address struct of the socket currently in use
-   */
-  sockaddr_any mAddr;
-
-  /**
-   * Task member for delayed connect task. Should only be access on main thread.
+   * Task member for delayed connect task. Should only be access on consumer
+   * thread.
    */
   CancelableTask* mDelayedConnectTask;
 
@@ -141,25 +133,30 @@ private:
 };
 
 BluetoothSocket::BluetoothSocketIO::BluetoothSocketIO(
-  MessageLoop* mIOLoop,
+  MessageLoop* aConsumerLoop,
+  MessageLoop* aIOLoop,
   BluetoothSocket* aConsumer,
-  UnixSocketConnector* aConnector,
-  const nsACString& aAddress)
-  : UnixSocketWatcher(mIOLoop)
+  UnixSocketConnector* aConnector)
+  : UnixSocketWatcher(aIOLoop)
+  , DataSocketIO(aConsumerLoop)
   , mConsumer(aConsumer)
   , mConnector(aConnector)
   , mShuttingDownOnIOThread(false)
-  , mAddress(aAddress)
+  , mAddressLength(0)
   , mDelayedConnectTask(nullptr)
 {
   MOZ_ASSERT(mConsumer);
   MOZ_ASSERT(mConnector);
+
+  MOZ_COUNT_CTOR_INHERITED(BluetoothSocketIO, DataSocketIO);
 }
 
 BluetoothSocket::BluetoothSocketIO::~BluetoothSocketIO()
 {
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(IsShutdownOnMainThread());
+  MOZ_ASSERT(IsConsumerThread());
+  MOZ_ASSERT(IsShutdownOnConsumerThread());
+
+  MOZ_COUNT_DTOR_INHERITED(BluetoothSocketIO, DataSocketIO);
 }
 
 void
@@ -170,13 +167,23 @@ BluetoothSocket::BluetoothSocketIO::GetSocketAddr(nsAString& aAddrStr) const
     aAddrStr.Truncate();
     return;
   }
-  mConnector->GetSocketAddr(mAddr, aAddrStr);
+
+  nsCString addressString;
+  nsresult rv = mConnector->ConvertAddressToString(
+    *reinterpret_cast<const struct sockaddr*>(&mAddress), mAddressLength,
+    addressString);
+  if (NS_FAILED(rv)) {
+    aAddrStr.Truncate();
+    return;
+  }
+
+  aAddrStr.Assign(NS_ConvertUTF8toUTF16(addressString));
 }
 
 BluetoothSocket*
 BluetoothSocket::BluetoothSocketIO::GetBluetoothSocket()
 {
-  return mConsumer.get();
+  return mConsumer;
 }
 
 DataSocket*
@@ -188,7 +195,7 @@ BluetoothSocket::BluetoothSocketIO::GetDataSocket()
 void
 BluetoothSocket::BluetoothSocketIO::SetDelayedConnectTask(CancelableTask* aTask)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(IsConsumerThread());
 
   mDelayedConnectTask = aTask;
 }
@@ -196,7 +203,7 @@ BluetoothSocket::BluetoothSocketIO::SetDelayedConnectTask(CancelableTask* aTask)
 void
 BluetoothSocket::BluetoothSocketIO::ClearDelayedConnectTask()
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(IsConsumerThread());
 
   mDelayedConnectTask = nullptr;
 }
@@ -204,7 +211,7 @@ BluetoothSocket::BluetoothSocketIO::ClearDelayedConnectTask()
 void
 BluetoothSocket::BluetoothSocketIO::CancelDelayedConnectTask()
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(IsConsumerThread());
 
   if (!mDelayedConnectTask) {
     return;
@@ -221,34 +228,20 @@ BluetoothSocket::BluetoothSocketIO::Listen()
   MOZ_ASSERT(mConnector);
 
   if (!IsOpen()) {
-    int fd = mConnector->Create();
-    if (fd < 0) {
-      NS_WARNING("Cannot create socket fd!");
-      FireSocketError();
-      return;
-    }
-    if (!SetSocketFlags(fd)) {
-      NS_WARNING("Cannot set socket flags!");
-      FireSocketError();
-      return;
-    }
-    if (!mConnector->SetUpListenSocket(fd)) {
-      NS_WARNING("Could not set up listen socket!");
-      FireSocketError();
-      return;
-    }
-    // This will set things we don't particularly care about, but it will hand
-    // back the correct structure size which is what we do care about.
-    if (!mConnector->CreateAddr(true, mAddrSize, mAddr, nullptr)) {
-      NS_WARNING("Cannot create socket address!");
+    mAddressLength = sizeof(mAddress);
+
+    int fd;
+    nsresult rv = mConnector->CreateListenSocket(
+      reinterpret_cast<struct sockaddr*>(&mAddress), &mAddressLength, fd);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
       FireSocketError();
       return;
     }
     SetFd(fd);
 
     // calls OnListening on success, or OnError otherwise
-    nsresult rv = UnixSocketWatcher::Listen(
-      reinterpret_cast<struct sockaddr*>(&mAddr), mAddrSize);
+    rv = UnixSocketWatcher::Listen(
+      reinterpret_cast<struct sockaddr*>(&mAddress), mAddressLength);
     NS_WARN_IF(NS_FAILED(rv));
   }
 }
@@ -260,24 +253,12 @@ BluetoothSocket::BluetoothSocketIO::Connect()
   MOZ_ASSERT(mConnector);
 
   if (!IsOpen()) {
-    int fd = mConnector->Create();
-    if (fd < 0) {
-      NS_WARNING("Cannot create socket fd!");
-      FireSocketError();
-      return;
-    }
-    if (!SetSocketFlags(fd)) {
-      NS_WARNING("Cannot set socket flags!");
-      FireSocketError();
-      return;
-    }
-    if (!mConnector->SetUp(fd)) {
-      NS_WARNING("Could not set up socket!");
-      FireSocketError();
-      return;
-    }
-    if (!mConnector->CreateAddr(false, mAddrSize, mAddr, mAddress.get())) {
-      NS_WARNING("Cannot create socket address!");
+    mAddressLength = sizeof(mAddress);
+
+    int fd;
+    nsresult rv = mConnector->CreateStreamSocket(
+      reinterpret_cast<struct sockaddr*>(&mAddress), &mAddressLength, fd);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
       FireSocketError();
       return;
     }
@@ -286,7 +267,7 @@ BluetoothSocket::BluetoothSocketIO::Connect()
 
   // calls OnConnected() on success, or OnError() otherwise
   nsresult rv = UnixSocketWatcher::Connect(
-    reinterpret_cast<struct sockaddr*>(&mAddr), mAddrSize);
+    reinterpret_cast<struct sockaddr*>(&mAddress), mAddressLength);
   NS_WARN_IF(NS_FAILED(rv));
 }
 
@@ -303,8 +284,8 @@ BluetoothSocket::BluetoothSocketIO::OnConnected()
   MOZ_ASSERT(MessageLoopForIO::current() == GetIOLoop());
   MOZ_ASSERT(GetConnectionStatus() == SOCKET_IS_CONNECTED);
 
-  NS_DispatchToMainThread(
-    new SocketIOEventRunnable(this, SocketIOEventRunnable::CONNECT_SUCCESS));
+  GetConsumerThread()->PostTask(
+    FROM_HERE, new SocketEventTask(this, SocketEventTask::CONNECT_SUCCESS));
 
   AddWatchers(READ_WATCHER, true);
   if (HasPendingData()) {
@@ -338,26 +319,22 @@ BluetoothSocket::BluetoothSocketIO::OnSocketCanAcceptWithoutBlocking()
 
   RemoveWatchers(READ_WATCHER|WRITE_WATCHER);
 
-  socklen_t mAddrSize = sizeof(mAddr);
-  int fd = TEMP_FAILURE_RETRY(accept(GetFd(),
-    reinterpret_cast<struct sockaddr*>(&mAddr), &mAddrSize));
-  if (fd < 0) {
-    OnError("accept", errno);
-    return;
-  }
-  if (!SetSocketFlags(fd)) {
-    return;
-  }
-  if (!mConnector->SetUp(fd)) {
-    NS_WARNING("Could not set up socket!");
+  mAddressLength = sizeof(mAddress);
+
+  int fd;
+  nsresult rv = mConnector->AcceptStreamSocket(
+    GetFd(),
+    reinterpret_cast<struct sockaddr*>(&mAddress), &mAddressLength, fd);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    FireSocketError();
     return;
   }
 
   Close();
   SetSocket(fd, SOCKET_IS_CONNECTED);
 
-  NS_DispatchToMainThread(
-    new SocketIOEventRunnable(this, SocketIOEventRunnable::CONNECT_SUCCESS));
+  GetConsumerThread()->PostTask(
+    FROM_HERE, new SocketEventTask(this, SocketEventTask::CONNECT_SUCCESS));
 
   AddWatchers(READ_WATCHER, true);
   if (HasPendingData()) {
@@ -405,42 +382,9 @@ BluetoothSocket::BluetoothSocketIO::FireSocketError()
   // Clean up watchers, statuses, fds
   Close();
 
-  // Tell the main thread we've errored
-  NS_DispatchToMainThread(
-    new SocketIOEventRunnable(this, SocketIOEventRunnable::CONNECT_ERROR));
-
-}
-
-bool
-BluetoothSocket::BluetoothSocketIO::SetSocketFlags(int aFd)
-{
-  // Set socket addr to be reused even if kernel is still waiting to close
-  int n = 1;
-  if (setsockopt(aFd, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) < 0) {
-    return false;
-  }
-
-  // Set close-on-exec bit.
-  int flags = TEMP_FAILURE_RETRY(fcntl(aFd, F_GETFD));
-  if (-1 == flags) {
-    return false;
-  }
-  flags |= FD_CLOEXEC;
-  if (-1 == TEMP_FAILURE_RETRY(fcntl(aFd, F_SETFD, flags))) {
-    return false;
-  }
-
-  // Set non-blocking status flag.
-  flags = TEMP_FAILURE_RETRY(fcntl(aFd, F_GETFL));
-  if (-1 == flags) {
-    return false;
-  }
-  flags |= O_NONBLOCK;
-  if (-1 == TEMP_FAILURE_RETRY(fcntl(aFd, F_SETFL, flags))) {
-    return false;
-  }
-
-  return true;
+  // Tell the consumer thread we've errored
+  GetConsumerThread()->PostTask(
+    FROM_HERE, new SocketEventTask(this, SocketEventTask::CONNECT_ERROR));
 }
 
 // |DataSocketIO|
@@ -460,36 +404,34 @@ BluetoothSocket::BluetoothSocketIO::QueryReceiveBuffer(
 }
 
 /**
- * |ReceiveRunnable| transfers data received on the I/O thread
- * to an instance of |BluetoothSocket| on the main thread.
+ * |ReceiveTask| transfers data received on the I/O thread
+ * to an instance of |BluetoothSocket| on the consumer thread.
  */
-class BluetoothSocket::BluetoothSocketIO::ReceiveRunnable final
-  : public SocketIORunnable<BluetoothSocketIO>
+class BluetoothSocket::BluetoothSocketIO::ReceiveTask final
+  : public SocketTask<BluetoothSocketIO>
 {
 public:
-  ReceiveRunnable(BluetoothSocketIO* aIO, UnixSocketBuffer* aBuffer)
-    : SocketIORunnable<BluetoothSocketIO>(aIO)
+  ReceiveTask(BluetoothSocketIO* aIO, UnixSocketBuffer* aBuffer)
+    : SocketTask<BluetoothSocketIO>(aIO)
     , mBuffer(aBuffer)
   { }
 
-  NS_IMETHOD Run() override
+  void Run() override
   {
-    MOZ_ASSERT(NS_IsMainThread());
+    BluetoothSocketIO* io = SocketTask<BluetoothSocketIO>::GetIO();
 
-    BluetoothSocketIO* io = SocketIORunnable<BluetoothSocketIO>::GetIO();
+    MOZ_ASSERT(io->IsConsumerThread());
 
-    if (NS_WARN_IF(io->IsShutdownOnMainThread())) {
+    if (NS_WARN_IF(io->IsShutdownOnConsumerThread())) {
       // Since we've already explicitly closed and the close
       // happened before this, this isn't really an error.
-      return NS_OK;
+      return;
     }
 
     BluetoothSocket* bluetoothSocket = io->GetBluetoothSocket();
     MOZ_ASSERT(bluetoothSocket);
 
     bluetoothSocket->ReceiveSocketData(mBuffer);
-
-    return NS_OK;
   }
 
 private:
@@ -499,7 +441,8 @@ private:
 void
 BluetoothSocket::BluetoothSocketIO::ConsumeBuffer()
 {
-  NS_DispatchToMainThread(new ReceiveRunnable(this, mBuffer.forget()));
+  GetConsumerThread()->PostTask(FROM_HERE,
+                                new ReceiveTask(this, mBuffer.forget()));
 }
 
 void
@@ -517,18 +460,18 @@ BluetoothSocket::BluetoothSocketIO::GetSocketBase()
 }
 
 bool
-BluetoothSocket::BluetoothSocketIO::IsShutdownOnMainThread() const
+BluetoothSocket::BluetoothSocketIO::IsShutdownOnConsumerThread() const
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(IsConsumerThread());
 
   return mConsumer == nullptr;
 }
 
 void
-BluetoothSocket::BluetoothSocketIO::ShutdownOnMainThread()
+BluetoothSocket::BluetoothSocketIO::ShutdownOnConsumerThread()
 {
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!IsShutdownOnMainThread());
+  MOZ_ASSERT(IsConsumerThread());
+  MOZ_ASSERT(!IsShutdownOnConsumerThread());
 
   mConsumer = nullptr;
 }
@@ -542,7 +485,7 @@ BluetoothSocket::BluetoothSocketIO::IsShutdownOnIOThread() const
 void
 BluetoothSocket::BluetoothSocketIO::ShutdownOnIOThread()
 {
-  MOZ_ASSERT(!NS_IsMainThread());
+  MOZ_ASSERT(!IsConsumerThread());
   MOZ_ASSERT(!mShuttingDownOnIOThread);
 
   Close(); // will also remove fd from I/O loop
@@ -564,7 +507,7 @@ public:
 
   void Run() override
   {
-    MOZ_ASSERT(!NS_IsMainThread());
+    MOZ_ASSERT(!GetIO()->IsConsumerThread());
 
     if (!IsCanceled()) {
       GetIO()->Listen();
@@ -582,7 +525,7 @@ public:
 
   void Run() override
   {
-    MOZ_ASSERT(!NS_IsMainThread());
+    MOZ_ASSERT(!GetIO()->IsConsumerThread());
     MOZ_ASSERT(!IsCanceled());
 
     GetIO()->Connect();
@@ -599,19 +542,19 @@ public:
 
   void Run() override
   {
-    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(GetIO()->IsConsumerThread());
 
     if (IsCanceled()) {
       return;
     }
 
     BluetoothSocketIO* io = GetIO();
-    if (io->IsShutdownOnMainThread()) {
+    if (io->IsShutdownOnConsumerThread()) {
       return;
     }
 
     io->ClearDelayedConnectTask();
-    XRE_GetIOMessageLoop()->PostTask(FROM_HERE, new ConnectTask(io));
+    io->GetIOLoop()->PostTask(FROM_HERE, new ConnectTask(io));
   }
 };
 
@@ -619,72 +562,75 @@ public:
 // BluetoothSocket
 //
 
-BluetoothSocket::BluetoothSocket(BluetoothSocketObserver* aObserver,
-                                 BluetoothSocketType aType,
-                                 bool aAuth,
-                                 bool aEncrypt)
+BluetoothSocket::BluetoothSocket(BluetoothSocketObserver* aObserver)
   : mObserver(aObserver)
-  , mType(aType)
-  , mAuth(aAuth)
-  , mEncrypt(aEncrypt)
   , mIO(nullptr)
 {
   MOZ_ASSERT(aObserver);
+
+  MOZ_COUNT_CTOR_INHERITED(BluetoothSocket, DataSocket);
 }
 
 BluetoothSocket::~BluetoothSocket()
 {
   MOZ_ASSERT(!mIO);
+
+  MOZ_COUNT_DTOR_INHERITED(BluetoothSocket, DataSocket);
 }
 
-bool
+nsresult
 BluetoothSocket::Connect(const nsAString& aDeviceAddress,
                          const BluetoothUuid& aServiceUuid,
-                         int aChannel)
+                         BluetoothSocketType aType,
+                         int aChannel,
+                         bool aAuth, bool aEncrypt)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!aDeviceAddress.IsEmpty());
 
-  nsAutoPtr<BluetoothUnixSocketConnector> c(
-    new BluetoothUnixSocketConnector(mType, aChannel, mAuth, mEncrypt));
+  nsAutoPtr<BluetoothUnixSocketConnector> connector(
+    new BluetoothUnixSocketConnector(NS_ConvertUTF16toUTF8(aDeviceAddress),
+                                     aType, aChannel, aAuth, aEncrypt));
 
-  if (!ConnectSocket(c.forget(),
-                     NS_ConvertUTF16toUTF8(aDeviceAddress).BeginReading())) {
+  nsresult rv = Connect(connector);
+  if (NS_FAILED(rv)) {
     nsAutoString addr;
     GetAddress(addr);
     BT_LOGD("%s failed. Current connected device address: %s",
            __FUNCTION__, NS_ConvertUTF16toUTF8(addr).get());
-    return false;
+    return rv;
   }
+  connector.forget();
 
-  return true;
+  return NS_OK;
 }
 
-bool
+nsresult
 BluetoothSocket::Listen(const nsAString& aServiceName,
                         const BluetoothUuid& aServiceUuid,
-                        int aChannel)
+                        BluetoothSocketType aType,
+                        int aChannel,
+                        bool aAuth, bool aEncrypt)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  nsAutoPtr<BluetoothUnixSocketConnector> connector(
+    new BluetoothUnixSocketConnector(NS_LITERAL_CSTRING(BLUETOOTH_ADDRESS_NONE),
+                                     aType, aChannel, aAuth, aEncrypt));
 
-  nsAutoPtr<BluetoothUnixSocketConnector> c(
-    new BluetoothUnixSocketConnector(mType, aChannel, mAuth, mEncrypt));
-
-  if (!ListenSocket(c.forget())) {
+  nsresult rv = Listen(connector);
+  if (NS_FAILED(rv)) {
     nsAutoString addr;
     GetAddress(addr);
     BT_LOGD("%s failed. Current connected device address: %s",
            __FUNCTION__, NS_ConvertUTF16toUTF8(addr).get());
-    return false;
+    return rv;
   }
+  connector.forget();
 
-  return true;
+  return NS_OK;
 }
 
 void
 BluetoothSocket::ReceiveSocketData(nsAutoPtr<UnixSocketBuffer>& aBuffer)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mObserver);
 
   mObserver->ReceiveSocketData(this, aBuffer);
@@ -702,8 +648,63 @@ BluetoothSocket::SendSocketData(const nsACString& aStr)
   return true;
 }
 
+nsresult
+BluetoothSocket::Connect(BluetoothUnixSocketConnector* aConnector,
+                         int aDelayMs,
+                         MessageLoop* aConsumerLoop, MessageLoop* aIOLoop)
+{
+  MOZ_ASSERT(aConnector);
+  MOZ_ASSERT(aConsumerLoop);
+  MOZ_ASSERT(aIOLoop);
+  MOZ_ASSERT(!mIO);
+
+  mIO = new BluetoothSocketIO(aConsumerLoop, aIOLoop, this, aConnector);
+  SetConnectionStatus(SOCKET_CONNECTING);
+
+  if (aDelayMs > 0) {
+    DelayedConnectTask* connectTask = new DelayedConnectTask(mIO);
+    mIO->SetDelayedConnectTask(connectTask);
+    MessageLoop::current()->PostDelayedTask(FROM_HERE, connectTask, aDelayMs);
+  } else {
+    aIOLoop->PostTask(FROM_HERE, new ConnectTask(mIO));
+  }
+
+  return NS_OK;
+}
+
+nsresult
+BluetoothSocket::Connect(BluetoothUnixSocketConnector* aConnector,
+                         int aDelayMs)
+{
+  return Connect(aConnector, aDelayMs, MessageLoop::current(),
+                 XRE_GetIOMessageLoop());
+}
+
+nsresult
+BluetoothSocket::Listen(BluetoothUnixSocketConnector* aConnector,
+                        MessageLoop* aConsumerLoop, MessageLoop* aIOLoop)
+{
+  MOZ_ASSERT(aConnector);
+  MOZ_ASSERT(aConsumerLoop);
+  MOZ_ASSERT(aIOLoop);
+  MOZ_ASSERT(!mIO);
+
+  mIO = new BluetoothSocketIO(aConsumerLoop, aIOLoop, this, aConnector);
+  SetConnectionStatus(SOCKET_LISTENING);
+
+  aIOLoop->PostTask(FROM_HERE, new ListenTask(mIO));
+
+  return NS_OK;
+}
+
+nsresult
+BluetoothSocket::Listen(BluetoothUnixSocketConnector* aConnector)
+{
+  return Listen(aConnector, MessageLoop::current(), XRE_GetIOMessageLoop());
+}
+
 void
-BluetoothSocket::GetSocketAddr(nsAString& aAddrStr)
+BluetoothSocket::GetAddress(nsAString& aAddrStr)
 {
   aAddrStr.Truncate();
   if (!mIO || GetConnectionStatus() != SOCKET_CONNECTED) {
@@ -713,65 +714,16 @@ BluetoothSocket::GetSocketAddr(nsAString& aAddrStr)
   mIO->GetSocketAddr(aAddrStr);
 }
 
-bool
-BluetoothSocket::ConnectSocket(BluetoothUnixSocketConnector* aConnector,
-                               const char* aAddress,
-                               int aDelayMs)
-{
-  MOZ_ASSERT(aConnector);
-  MOZ_ASSERT(NS_IsMainThread());
-
-  nsAutoPtr<UnixSocketConnector> connector(aConnector);
-
-  if (mIO) {
-    NS_WARNING("Socket already connecting/connected!");
-    return false;
-  }
-
-  nsCString addr(aAddress);
-  MessageLoop* ioLoop = XRE_GetIOMessageLoop();
-  mIO = new BluetoothSocketIO(ioLoop, this, connector.forget(), addr);
-  SetConnectionStatus(SOCKET_CONNECTING);
-  if (aDelayMs > 0) {
-    DelayedConnectTask* connectTask = new DelayedConnectTask(mIO);
-    mIO->SetDelayedConnectTask(connectTask);
-    MessageLoop::current()->PostDelayedTask(FROM_HERE, connectTask, aDelayMs);
-  } else {
-    ioLoop->PostTask(FROM_HERE, new ConnectTask(mIO));
-  }
-  return true;
-}
-
-bool
-BluetoothSocket::ListenSocket(BluetoothUnixSocketConnector* aConnector)
-{
-  MOZ_ASSERT(aConnector);
-  MOZ_ASSERT(NS_IsMainThread());
-
-  nsAutoPtr<UnixSocketConnector> connector(aConnector);
-
-  if (mIO) {
-    NS_WARNING("Socket already connecting/connected!");
-    return false;
-  }
-
-  mIO = new BluetoothSocketIO(
-    XRE_GetIOMessageLoop(), this, connector.forget(), EmptyCString());
-  SetConnectionStatus(SOCKET_LISTENING);
-  XRE_GetIOMessageLoop()->PostTask(FROM_HERE, new ListenTask(mIO));
-  return true;
-}
-
 // |DataSocket|
 
 void
 BluetoothSocket::SendSocketData(UnixSocketIOBuffer* aBuffer)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mIO);
-  MOZ_ASSERT(!mIO->IsShutdownOnMainThread());
+  MOZ_ASSERT(mIO->IsConsumerThread());
+  MOZ_ASSERT(!mIO->IsShutdownOnConsumerThread());
 
-  XRE_GetIOMessageLoop()->PostTask(
+  mIO->GetIOLoop()->PostTask(
     FROM_HERE,
     new SocketIOSendTask<BluetoothSocketIO, UnixSocketIOBuffer>(mIO, aBuffer));
 }
@@ -779,22 +731,21 @@ BluetoothSocket::SendSocketData(UnixSocketIOBuffer* aBuffer)
 // |SocketBase|
 
 void
-BluetoothSocket::CloseSocket()
+BluetoothSocket::Close()
 {
-  MOZ_ASSERT(NS_IsMainThread());
   if (!mIO) {
     return;
   }
+
+  MOZ_ASSERT(mIO->IsConsumerThread());
 
   mIO->CancelDelayedConnectTask();
 
   // From this point on, we consider mIO as being deleted.
   // We sever the relationship here so any future calls to listen or connect
   // will create a new implementation.
-  mIO->ShutdownOnMainThread();
-
-  XRE_GetIOMessageLoop()->PostTask(FROM_HERE, new SocketIOShutdownTask(mIO));
-
+  mIO->ShutdownOnConsumerThread();
+  mIO->GetIOLoop()->PostTask(FROM_HERE, new SocketIOShutdownTask(mIO));
   mIO = nullptr;
 
   NotifyDisconnect();
@@ -803,7 +754,6 @@ BluetoothSocket::CloseSocket()
 void
 BluetoothSocket::OnConnectSuccess()
 {
-  MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mObserver);
   mObserver->OnSocketConnectSuccess(this);
 }
@@ -811,7 +761,6 @@ BluetoothSocket::OnConnectSuccess()
 void
 BluetoothSocket::OnConnectError()
 {
-  MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mObserver);
   mObserver->OnSocketConnectError(this);
 }
@@ -819,7 +768,6 @@ BluetoothSocket::OnConnectError()
 void
 BluetoothSocket::OnDisconnect()
 {
-  MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mObserver);
   mObserver->OnSocketDisconnect(this);
 }

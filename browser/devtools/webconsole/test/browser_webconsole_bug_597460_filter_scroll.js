@@ -8,10 +8,13 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-network.html";
+"use strict";
+
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-network.html";
 const PREF = "devtools.webconsole.persistlog";
 
-let test = asyncTest(function* () {
+var test = asyncTest(function* () {
   Services.prefs.setBoolPref(PREF, true);
 
   yield loadTab(TEST_URI);

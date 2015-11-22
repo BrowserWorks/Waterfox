@@ -4,15 +4,15 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-[CheckPermissions="bluetooth",
+[CheckAnyPermissions="bluetooth",
  Constructor(DOMString type,
              optional BluetoothGattCharacteristicEventInit eventInitDict)]
 interface BluetoothGattCharacteristicEvent : Event
 {
-  readonly attribute BluetoothGattCharacteristic characteristic;
+  readonly attribute BluetoothGattCharacteristic? characteristic;
 };
 
 dictionary BluetoothGattCharacteristicEventInit : EventInit
 {
-  required BluetoothGattCharacteristic characteristic;
+  BluetoothGattCharacteristic? characteristic = null;
 };

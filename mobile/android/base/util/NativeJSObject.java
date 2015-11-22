@@ -5,7 +5,9 @@
 
 package org.mozilla.gecko.util;
 
-import org.mozilla.gecko.mozglue.JNITarget;
+import org.mozilla.gecko.annotation.JNITarget;
+import org.mozilla.gecko.annotation.WrapForJNI;
+import org.mozilla.gecko.mozglue.JNIObject;
 
 import android.os.Bundle;
 
@@ -13,8 +15,8 @@ import android.os.Bundle;
  * NativeJSObject is a wrapper around the SpiderMonkey JSAPI to make it possible to
  * access Javascript objects in Java.
  */
-@JNITarget
-public class NativeJSObject
+@WrapForJNI
+public class NativeJSObject extends JNIObject
 {
     @SuppressWarnings("serial")
     @JNITarget
@@ -24,17 +26,12 @@ public class NativeJSObject
         }
     }
 
-    private final NativeJSContainer mContainer;
-    private final int mObjectIndex;
-
     protected NativeJSObject() {
-        mContainer = (NativeJSContainer)this;
-        mObjectIndex = -1;
     }
 
-    private NativeJSObject(NativeJSContainer container, int index) {
-        mContainer = container;
-        mObjectIndex = index;
+    @Override
+    protected void disposeNative() {
+        // NativeJSObject is disposed as part of NativeJSContainer disposal.
     }
 
     /**

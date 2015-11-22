@@ -21,11 +21,15 @@ async protocol PSpeechSynthesisRequest
 
   Cancel();
 
+  ForceEnd();
+
+  SetAudioOutputVolume(float aVolume);
+
  child:
 
   __delete__(bool aIsError, float aElapsedTime, uint32_t aCharIndex);
 
-  OnStart();
+  OnStart(nsString aUri);
 
   OnPause(float aElapsedTime, uint32_t aCharIndex);
 

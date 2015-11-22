@@ -80,12 +80,6 @@
                     tooltiptext="&options.stylesheetAutocompletion.tooltip;"
                     data-pref="devtools.styleeditor.autocompletion-enabled"/>
         </vbox>
-        <label>&options.profiler.label;</label>
-        <vbox id="profiler-options" class="options-groupbox">
-          <checkbox label="&options.showPlatformData.label;"
-                    tooltiptext="&options.showPlatformData.tooltip;"
-                    data-pref="devtools.performance.ui.show-platform-data"/>
-        </vbox>
       </vbox>
 
       <vbox id="sourceeditor-box" class="options-vertical-pane" flex="1">
@@ -138,6 +132,10 @@
         </vbox>
         <label>&options.context.advancedSettings;</label>
         <vbox id="context-options" class="options-groupbox">
+          <checkbox id="devtools-show-gecko-data"
+                    label="&options.showPlatformData.label;"
+                    tooltiptext="&options.showPlatformData.tooltip;"
+                    data-pref="devtools.performance.ui.show-platform-data"/>
           <checkbox id="devtools-disable-cache"
                     label="&options.disableCache.label2;"
                     tooltiptext="&options.disableCache.tooltip2;"
@@ -158,6 +156,11 @@
             <checkbox label="&options.enableRemote.label3;"
                       tooltiptext="&options.enableRemote.tooltip;"
                       data-pref="devtools.debugger.remote-enabled"/>
+          </hbox>
+          <hbox class="hidden-labels-box">
+            <checkbox label="&options.enableWorkers.label;"
+                      tooltiptext="&options.enableWorkers.tooltip;"
+                      data-pref="devtools.debugger.workers"/>
           </hbox>
           <label class="options-citation-label theme-comment"
           >&options.context.triggersPageRefresh;</label>

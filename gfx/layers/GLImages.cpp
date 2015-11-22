@@ -33,13 +33,13 @@ EGLImageImage::~EGLImageImage()
   }
 }
 
-TemporaryRef<gfx::SourceSurface>
+already_AddRefed<gfx::SourceSurface>
 GLImage::GetAsSourceSurface()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Should be on the main thread");
 
   if (!sSnapshotContext) {
-    sSnapshotContext = GLContextProvider::CreateHeadless(false);
+    sSnapshotContext = GLContextProvider::CreateHeadless(CreateContextFlags::NONE);
     if (!sSnapshotContext) {
       NS_WARNING("Failed to create snapshot GLContext");
       return nullptr;
@@ -82,5 +82,5 @@ GLImage::GetAsSourceSurface()
   return source.forget();
 }
 
-} // layers
-} // mozilla
+} // namespace layers
+} // namespace mozilla

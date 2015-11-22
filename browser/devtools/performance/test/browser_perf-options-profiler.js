@@ -5,7 +5,7 @@
 /**
  * Tests that setting the `devtools.performance.profiler.` prefs propagate to the profiler actor.
  */
-function spawnTest () {
+function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let { gFront } = panel.panelWin;
 
@@ -14,7 +14,7 @@ function spawnTest () {
 
   yield startRecording(panel);
 
-  let { entries, interval } = yield gFront._request("profiler", "getStartOptions");
+  let { entries, interval } = yield gFront.getConfiguration();
 
   yield stopRecording(panel);
 

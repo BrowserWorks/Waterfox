@@ -16,8 +16,6 @@
 
 #include "nsDebug.h"
 
-#include "IMediaResourceManagerService.h"
-
 #include "OMXCodecProxy.h"
 
 namespace android {
@@ -60,13 +58,13 @@ OMXCodecProxy::OMXCodecProxy(
       mFlags(flags),
       mNativeWindow(nativeWindow),
       mSource(source),
-      mState(MediaResourceManagerClient::CLIENT_STATE_WAIT_FOR_RESOURCE)
+      mState(ResourceState::START)
 {
 }
 
 OMXCodecProxy::~OMXCodecProxy()
 {
-  mState = MediaResourceManagerClient::CLIENT_STATE_SHUTDOWN;
+  mState = ResourceState::END;
 
   if (mOMXCodec.get()) {
     wp<MediaSource> tmp = mOMXCodec;
@@ -79,8 +77,9 @@ OMXCodecProxy::~OMXCodecProxy()
   // Complete all pending Binder ipc transactions
   IPCThreadState::self()->flushCommands();
 
-  if (mManagerService.get() && mClient.get()) {
-    mManagerService->cancelClient(mClient, IMediaResourceManagerService::HW_VIDEO_DECODER);
+  if (mResourceClient) {
+    mResourceClient->ReleaseResource();
+    mResourceClient = nullptr;
   }
 
   mSource.clear();
@@ -88,25 +87,25 @@ OMXCodecProxy::~OMXCodecProxy()
   mComponentName = nullptr;
 }
 
-MediaResourceManagerClient::State OMXCodecProxy::getState()
+void OMXCodecProxy::setListener(const wp<CodecResourceListener>& listener)
 {
   Mutex::Autolock autoLock(mLock);
-  return mState;
+  mListener = listener;
 }
 
-void OMXCodecProxy::setEventListener(const wp<OMXCodecProxy::EventListener>& listener)
+void OMXCodecProxy::notifyResourceReserved()
 {
-  Mutex::Autolock autoLock(mLock);
-  mEventListener = listener;
+  sp<CodecResourceListener> listener = mListener.promote();
+  if (listener != nullptr) {
+    listener->codecReserved();
+  }
 }
 
-void OMXCodecProxy::notifyStatusChangedLocked()
+void OMXCodecProxy::notifyResourceCanceled()
 {
-  if (mEventListener != nullptr) {
-    sp<EventListener> listener = mEventListener.promote();
-    if (listener != nullptr) {
-      listener->statusChanged();
-    }
+  sp<CodecResourceListener> listener = mListener.promote();
+  if (listener != nullptr) {
+    listener->codecCanceled();
   }
 }
 
@@ -114,45 +113,32 @@ void OMXCodecProxy::requestResource()
 {
   Mutex::Autolock autoLock(mLock);
 
-  if (mClient.get()) {
+  if (mResourceClient) {
     return;
   }
-  sp<MediaResourceManagerClient::EventListener> listener = this;
-  mClient = new MediaResourceManagerClient(listener);
+  mState = ResourceState::WAITING;
 
-  mManagerService = mClient->getMediaResourceManagerService();
-  if (!mManagerService.get()) {
-    mClient = nullptr;
-    return;
-  }
-
-  mManagerService->requestMediaResource(mClient, IMediaResourceManagerService::HW_VIDEO_DECODER, true /* will wait */);
+  mozilla::MediaSystemResourceType type = mIsEncoder ? mozilla::MediaSystemResourceType::VIDEO_ENCODER :
+                                                 mozilla::MediaSystemResourceType::VIDEO_DECODER;
+  mResourceClient = new mozilla::MediaSystemResourceClient(type);
+  mResourceClient->SetListener(this);
+  mResourceClient->Acquire();
 }
 
-bool OMXCodecProxy::IsWaitingResources()
-{
-  Mutex::Autolock autoLock(mLock);
-  return mState == MediaResourceManagerClient::CLIENT_STATE_WAIT_FOR_RESOURCE;
-}
-
-// called on Binder ipc thread
-void OMXCodecProxy::statusChanged(int event)
+// Called on ImageBridge thread
+void
+OMXCodecProxy::ResourceReserved()
 {
   Mutex::Autolock autoLock(mLock);
 
-  if (mState != MediaResourceManagerClient::CLIENT_STATE_WAIT_FOR_RESOURCE) {
-    return;
-  }
-
-  mState = (MediaResourceManagerClient::State) event;
-  if (mState != MediaResourceManagerClient::CLIENT_STATE_RESOURCE_ASSIGNED) {
+  if (mState != ResourceState::WAITING) {
     return;
   }
 
   const char *mime;
   if (!mSrcMeta->findCString(kKeyMIMEType, &mime)) {
-    mState = MediaResourceManagerClient::CLIENT_STATE_SHUTDOWN;
-    notifyStatusChangedLocked();
+    mState = ResourceState::END;
+    notifyResourceCanceled();
     return;
   }
 
@@ -160,8 +146,8 @@ void OMXCodecProxy::statusChanged(int event)
     sp<MediaSource> codec;
     mOMXCodec = OMXCodec::Create(mOMX, mSrcMeta, mIsEncoder, mSource, mComponentName, mFlags, mNativeWindow);
     if (mOMXCodec == nullptr) {
-      mState = MediaResourceManagerClient::CLIENT_STATE_SHUTDOWN;
-      notifyStatusChangedLocked();
+      mState = ResourceState::END;
+      notifyResourceCanceled();
       return;
     }
     // Check if this video is sized such that we're comfortable
@@ -181,27 +167,37 @@ void OMXCodecProxy::statusChanged(int event)
       printf_stderr("Failed to get video size, or it was too large for HW decoder (<w=%d, h=%d> but <maxW=%d, maxH=%d>)",
                     width, height, maxWidth, maxHeight);
       mOMXCodec.clear();
-      mState = MediaResourceManagerClient::CLIENT_STATE_SHUTDOWN;
-      notifyStatusChangedLocked();
+      mState = ResourceState::END;
+      notifyResourceCanceled();
       return;
     }
 
     if (mOMXCodec->start() != OK) {
       NS_WARNING("Couldn't start OMX video source");
       mOMXCodec.clear();
-      mState = MediaResourceManagerClient::CLIENT_STATE_SHUTDOWN;
-      notifyStatusChangedLocked();
+      mState = ResourceState::END;
+      notifyResourceCanceled();
       return;
     }
   }
-  notifyStatusChangedLocked();
+
+  mState = ResourceState::ACQUIRED;
+  notifyResourceReserved();
+}
+
+// Called on ImageBridge thread
+void
+OMXCodecProxy::ResourceReserveFailed()
+{
+  Mutex::Autolock autoLock(mLock);
+  mState = ResourceState::NOT_ACQUIRED;
 }
 
 status_t OMXCodecProxy::start(MetaData *params)
 {
   Mutex::Autolock autoLock(mLock);
 
-  if (mState != MediaResourceManagerClient::CLIENT_STATE_RESOURCE_ASSIGNED) {
+  if (mState != ResourceState::ACQUIRED) {
     return NO_INIT;
   }
   CHECK(mOMXCodec.get() != nullptr);
@@ -212,7 +208,7 @@ status_t OMXCodecProxy::stop()
 {
   Mutex::Autolock autoLock(mLock);
 
-  if (mState != MediaResourceManagerClient::CLIENT_STATE_RESOURCE_ASSIGNED) {
+  if (mState != ResourceState::ACQUIRED) {
     return NO_INIT;
   }
   CHECK(mOMXCodec.get() != nullptr);
@@ -223,7 +219,7 @@ sp<MetaData> OMXCodecProxy::getFormat()
 {
   Mutex::Autolock autoLock(mLock);
 
-  if (mState != MediaResourceManagerClient::CLIENT_STATE_RESOURCE_ASSIGNED) {
+  if (mState != ResourceState::ACQUIRED) {
     sp<MetaData> meta = new MetaData;
     return meta;
   }
@@ -235,7 +231,7 @@ status_t OMXCodecProxy::read(MediaBuffer **buffer, const ReadOptions *options)
 {
   Mutex::Autolock autoLock(mLock);
 
-  if (mState != MediaResourceManagerClient::CLIENT_STATE_RESOURCE_ASSIGNED) {
+  if (mState != ResourceState::ACQUIRED) {
     return NO_INIT;
   }
   CHECK(mOMXCodec.get() != nullptr);
@@ -246,11 +242,11 @@ status_t OMXCodecProxy::pause()
 {
   Mutex::Autolock autoLock(mLock);
 
-  if (mState != MediaResourceManagerClient::CLIENT_STATE_RESOURCE_ASSIGNED) {
+  if (mState != ResourceState::ACQUIRED) {
     return NO_INIT;
   }
   CHECK(mOMXCodec.get() != nullptr);
   return mOMXCodec->pause();
 }
 
-}  // namespace android
+} // namespace android

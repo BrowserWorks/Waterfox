@@ -46,6 +46,15 @@ const EXPECTED_REFLOWS = [
     "ssi_updateWindowFeatures/<@resource:///modules/sessionstore/SessionStore.jsm|" +
     "ssi_updateWindowFeatures@resource:///modules/sessionstore/SessionStore.jsm|" +
     "ssi_collectWindowData@resource:///modules/sessionstore/SessionStore.jsm|",
+
+  // selection change notification may cause querying the focused editor content
+  // by IME and that will cause reflow.
+  "select@chrome://global/content/bindings/textbox.xml|" +
+    "focusAndSelectUrlBar@chrome://browser/content/browser.js|" +
+    "openLinkIn@chrome://browser/content/utilityOverlay.js|" +
+    "openUILinkIn@chrome://browser/content/utilityOverlay.js|" +
+    "BrowserOpenTab@chrome://browser/content/browser.js|",
+
 ];
 
 const PREF_PRELOAD = "browser.newtab.preload";
@@ -115,7 +124,7 @@ add_task(function*() {
   gBrowser.removeCurrentTab();
 });
 
-let observer = {
+var observer = {
   reflow: function (start, end) {
     // Gather information about the current code path.
     let path = (new Error().stack).split("\n").slice(1).map(line => {

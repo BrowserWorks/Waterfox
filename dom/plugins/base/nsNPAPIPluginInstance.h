@@ -17,6 +17,7 @@
 #include "nsHashKeys.h"
 #include <prinrval.h>
 #include "js/TypeDecls.h"
+#include "nsIAudioChannelAgent.h"
 #ifdef MOZ_WIDGET_ANDROID
 #include "nsAutoPtr.h"
 #include "nsIRunnable.h"
@@ -30,6 +31,7 @@ class SharedPluginTexture;
 
 #include "mozilla/TimeStamp.h"
 #include "mozilla/PluginLibrary.h"
+#include "mozilla/WeakPtr.h"
 
 class nsPluginStreamListenerPeer; // browser-initiated stream class
 class nsNPAPIPluginStreamListener; // plugin-initiated stream class
@@ -74,13 +76,16 @@ public:
   bool needUnschedule;
 };
 
-class nsNPAPIPluginInstance : public nsISupports
+class nsNPAPIPluginInstance final : public nsIAudioChannelAgentCallback
+                                  , public mozilla::SupportsWeakPtr<nsNPAPIPluginInstance>
 {
 private:
   typedef mozilla::PluginLibrary PluginLibrary;
 
 public:
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(nsNPAPIPluginInstance)
   NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSIAUDIOCHANNELAGENTCALLBACK
 
   nsresult Initialize(nsNPAPIPlugin *aPlugin, nsPluginInstanceOwner* aOwner, const nsACString& aMIMEType);
   nsresult Start();
@@ -116,7 +121,15 @@ public:
   nsresult GetJSContext(JSContext* *outContext);
   nsPluginInstanceOwner* GetOwner();
   void SetOwner(nsPluginInstanceOwner *aOwner);
-  nsresult ShowStatus(const char* message);
+
+  bool HasAudioChannelAgent() const
+  {
+    return !!mAudioChannelAgent;
+  }
+
+  nsresult GetOrCreateAudioChannelAgent(nsIAudioChannelAgent** aAgent);
+
+  nsresult SetMuted(bool aIsMuted);
 
   nsNPAPIPlugin* GetPlugin();
 
@@ -387,7 +400,7 @@ private:
 
 #ifdef MOZ_WIDGET_ANDROID
   void EnsureSharedTexture();
-  mozilla::TemporaryRef<mozilla::gl::AndroidSurfaceTexture> CreateSurfaceTexture();
+  already_AddRefed<mozilla::gl::AndroidSurfaceTexture> CreateSurfaceTexture();
 
   std::map<void*, VideoInfo*> mVideos;
   bool mOnScreen;
@@ -405,6 +418,8 @@ private:
   uint32_t mCachedParamLength;
   char **mCachedParamNames;
   char **mCachedParamValues;
+
+  nsCOMPtr<nsIAudioChannelAgent> mAudioChannelAgent;
 };
 
 // On Android, we need to guard against plugin code leaking entries in the local

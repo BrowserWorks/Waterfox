@@ -59,9 +59,9 @@ enum hb_ot_shape_zero_width_marks_type_t {
   HB_COMPLEX_SHAPER_IMPLEMENT (myanmar_old) \
   HB_COMPLEX_SHAPER_IMPLEMENT (indic) \
   HB_COMPLEX_SHAPER_IMPLEMENT (myanmar) \
-  HB_COMPLEX_SHAPER_IMPLEMENT (sea) \
   HB_COMPLEX_SHAPER_IMPLEMENT (thai) \
   HB_COMPLEX_SHAPER_IMPLEMENT (tibetan) \
+  HB_COMPLEX_SHAPER_IMPLEMENT (use) \
   /* ^--- Add new shapers here */
 
 
@@ -179,9 +179,12 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
     case HB_SCRIPT_PSALTER_PAHLAVI:
 
       /* For Arabic script, use the Arabic shaper even if no OT script tag was found.
-       * This is because we do fallback shaping for Arabic script (and not others). */
-      if (planner->map.chosen_script[0] != HB_OT_TAG_DEFAULT_SCRIPT ||
-	  planner->props.script == HB_SCRIPT_ARABIC)
+       * This is because we do fallback shaping for Arabic script (and not others).
+       * But note that Arabic shaping is applicable only to horizontal layout; for
+       * vertical text, just use the generic shaper instead. */
+      if ((planner->map.chosen_script[0] != HB_OT_TAG_DEFAULT_SCRIPT ||
+	   planner->props.script == HB_SCRIPT_ARABIC) &&
+	  HB_DIRECTION_IS_HORIZONTAL(planner->props.direction))
 	return &_hb_ot_complex_shaper_arabic;
       else
 	return &_hb_ot_complex_shaper_default;
@@ -214,60 +217,9 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
 
     /* ^--- Add new shapers here */
 
-
 #if 0
-    /* Note:
-     *
-     * These disabled scripts are listed in ucd/IndicSyllabicCategory.txt, but according
-     * to Martin Hosken and Jonathan Kew do not require complex shaping.
-     *
-     * TODO We should automate figuring out which scripts do not need complex shaping
-     *
-     * TODO We currently keep data for these scripts in our indic table.  Need to fix the
-     * generator to not do that.
-     */
-
-
-    /* Simple? */
-
-    /* Unicode-3.2 additions */
-    case HB_SCRIPT_BUHID:
-    case HB_SCRIPT_HANUNOO:
-
-    /* Unicode-5.1 additions */
-    case HB_SCRIPT_SAURASHTRA:
-
-    /* Unicode-6.0 additions */
-    case HB_SCRIPT_BATAK:
-    case HB_SCRIPT_BRAHMI:
-
-
-    /* Simple */
-
-    /* Unicode-1.1 additions */
-    /* These have their own shaper now. */
-    case HB_SCRIPT_LAO:
-    case HB_SCRIPT_THAI:
-
-    /* Unicode-3.2 additions */
-    case HB_SCRIPT_TAGALOG:
-    case HB_SCRIPT_TAGBANWA:
-
-    /* Unicode-4.0 additions */
-    case HB_SCRIPT_LIMBU:
-    case HB_SCRIPT_TAI_LE:
-
     /* Unicode-4.1 additions */
-    case HB_SCRIPT_KHAROSHTHI:
-    case HB_SCRIPT_SYLOTI_NAGRI:
-
-    /* Unicode-5.1 additions */
-    case HB_SCRIPT_KAYAH_LI:
-
-    /* Unicode-5.2 additions */
-    case HB_SCRIPT_TAI_VIET:
-
-
+    case HB_SCRIPT_NEW_TAI_LUE:
 #endif
 
     /* Unicode-1.1 additions */
@@ -284,28 +236,11 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
     /* Unicode-3.0 additions */
     case HB_SCRIPT_SINHALA:
 
-    /* Unicode-5.0 additions */
-    case HB_SCRIPT_BALINESE:
-
-    /* Unicode-5.1 additions */
-    case HB_SCRIPT_LEPCHA:
-    case HB_SCRIPT_REJANG:
-    case HB_SCRIPT_SUNDANESE:
-
     /* Unicode-5.2 additions */
     case HB_SCRIPT_JAVANESE:
-    case HB_SCRIPT_KAITHI:
-    case HB_SCRIPT_MEETEI_MAYEK:
-
-    /* Unicode-6.0 additions */
-
-    /* Unicode-6.1 additions */
-    case HB_SCRIPT_CHAKMA:
-    case HB_SCRIPT_SHARADA:
-    case HB_SCRIPT_TAKRI:
 
       /* If the designer designed the font for the 'DFLT' script,
-       * use the default shaper.  Otherwise, use the Indic shaper.
+       * use the default shaper.  Otherwise, use the specific shaper.
        * Note that for some simple scripts, there may not be *any*
        * GSUB/GPOS needed, so there may be no scripts found! */
       if (planner->map.chosen_script[0] == HB_TAG ('D','F','L','T'))
@@ -337,24 +272,82 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
       else
 	return &_hb_ot_complex_shaper_default;
 
+
+    /* Unicode-2.0 additions */
+    //case HB_SCRIPT_TIBETAN:
+
+    /* Unicode-3.0 additions */
+    //case HB_SCRIPT_MONGOLIAN:
+    //case HB_SCRIPT_SINHALA:
+
+    /* Unicode-3.2 additions */
+    case HB_SCRIPT_BUHID:
+    case HB_SCRIPT_HANUNOO:
+    case HB_SCRIPT_TAGALOG:
+    case HB_SCRIPT_TAGBANWA:
+
+    /* Unicode-4.0 additions */
+    case HB_SCRIPT_LIMBU:
+    case HB_SCRIPT_TAI_LE:
+
     /* Unicode-4.1 additions */
     case HB_SCRIPT_BUGINESE:
-    case HB_SCRIPT_NEW_TAI_LUE:
+    case HB_SCRIPT_KHAROSHTHI:
+    case HB_SCRIPT_SYLOTI_NAGRI:
+    case HB_SCRIPT_TIFINAGH:
+
+    /* Unicode-5.0 additions */
+    case HB_SCRIPT_BALINESE:
+    //case HB_SCRIPT_NKO:
+    //case HB_SCRIPT_PHAGS_PA:
 
     /* Unicode-5.1 additions */
     case HB_SCRIPT_CHAM:
+    case HB_SCRIPT_KAYAH_LI:
+    case HB_SCRIPT_LEPCHA:
+    case HB_SCRIPT_REJANG:
+    case HB_SCRIPT_SAURASHTRA:
+    case HB_SCRIPT_SUNDANESE:
 
     /* Unicode-5.2 additions */
+    case HB_SCRIPT_EGYPTIAN_HIEROGLYPHS:
+    //case HB_SCRIPT_JAVANESE:
+    case HB_SCRIPT_KAITHI:
+    case HB_SCRIPT_MEETEI_MAYEK:
     case HB_SCRIPT_TAI_THAM:
+    case HB_SCRIPT_TAI_VIET:
+
+    /* Unicode-6.0 additions */
+    case HB_SCRIPT_BATAK:
+    case HB_SCRIPT_BRAHMI:
+    //case HB_SCRIPT_MANDAIC:
+
+    /* Unicode-6.1 additions */
+    case HB_SCRIPT_CHAKMA:
+    case HB_SCRIPT_SHARADA:
+    case HB_SCRIPT_TAKRI:
+
+    /* Unicode-7.0 additions */
+    case HB_SCRIPT_DUPLOYAN:
+    case HB_SCRIPT_GRANTHA:
+    case HB_SCRIPT_KHOJKI:
+    case HB_SCRIPT_KHUDAWADI:
+    case HB_SCRIPT_MAHAJANI:
+    //case HB_SCRIPT_MANICHAEAN:
+    case HB_SCRIPT_MODI:
+    case HB_SCRIPT_PAHAWH_HMONG:
+    //case HB_SCRIPT_PSALTER_PAHLAVI:
+    case HB_SCRIPT_SIDDHAM:
+    case HB_SCRIPT_TIRHUTA:
 
       /* If the designer designed the font for the 'DFLT' script,
-       * use the default shaper.  Otherwise, use the Indic shaper.
+       * use the default shaper.  Otherwise, use the specific shaper.
        * Note that for some simple scripts, there may not be *any*
        * GSUB/GPOS needed, so there may be no scripts found! */
       if (planner->map.chosen_script[0] == HB_TAG ('D','F','L','T'))
 	return &_hb_ot_complex_shaper_default;
       else
-	return &_hb_ot_complex_shaper_sea;
+	return &_hb_ot_complex_shaper_use;
   }
 }
 

@@ -23,8 +23,8 @@ namespace mozilla {
     struct RectCornerRadii;
     class SourceSurface;
     class DrawTarget;
-  }
-}
+  } // namespace gfx
+} // namespace mozilla
 
 /**
  * Implementation of a triple box blur approximation of a Gaussian blur.
@@ -73,8 +73,8 @@ public:
      *  for speed reasons. It is safe to pass nullptr here.
      */
     gfxContext* Init(const gfxRect& aRect,
-                     const gfxIntSize& aSpreadRadius,
-                     const gfxIntSize& aBlurRadius,
+                     const mozilla::gfx::IntSize& aSpreadRadius,
+                     const mozilla::gfx::IntSize& aBlurRadius,
                      const gfxRect* aDirtyRect,
                      const gfxRect* aSkipRect);
 
@@ -88,7 +88,7 @@ public:
         return mContext;
     }
 
-    mozilla::TemporaryRef<mozilla::gfx::SourceSurface> DoBlur(mozilla::gfx::DrawTarget* aDT, mozilla::gfx::IntPoint* aTopLeft);
+    already_AddRefed<mozilla::gfx::SourceSurface> DoBlur(mozilla::gfx::DrawTarget* aDT, mozilla::gfx::IntPoint* aTopLeft);
 
     /**
      * Does the actual blurring/spreading and mask applying. Users of this
@@ -106,7 +106,7 @@ public:
      * this function should be used as the aBlurRadius parameter to Init,
      * above.
      */
-    static gfxIntSize CalculateBlurRadius(const gfxPoint& aStandardDeviation);
+    static mozilla::gfx::IntSize CalculateBlurRadius(const gfxPoint& aStandardDeviation);
 
     /**
      * Blurs a coloured rectangle onto aDestinationCtx. This is equivalent

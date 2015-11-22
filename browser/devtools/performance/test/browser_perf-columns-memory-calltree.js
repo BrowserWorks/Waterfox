@@ -4,7 +4,7 @@
 /**
  * Tests that the memory call tree view renders the correct columns.
  */
-function spawnTest () {
+function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let { EVENTS, $, $$, DetailsView, MemoryCallTreeView } = panel.panelWin;
 
@@ -12,7 +12,7 @@ function spawnTest () {
   Services.prefs.setBoolPref(MEMORY_PREF, true);
 
   yield startRecording(panel);
-  yield busyWait(1000);
+  yield busyWait(100);
 
   let rendered = once(MemoryCallTreeView, EVENTS.MEMORY_CALL_TREE_RENDERED);
   yield stopRecording(panel);
@@ -23,10 +23,16 @@ function spawnTest () {
   testCells($, $$, {
     "duration": false,
     "percentage": false,
-    "allocations": true,
+    "count": true,
+    "count-percentage": true,
+    "size": true,
+    "size-percentage": true,
     "self-duration": false,
     "self-percentage": false,
-    "self-allocations": true,
+    "self-count": true,
+    "self-count-percentage": true,
+    "self-size": true,
+    "self-size-percentage": true,
     "samples": false,
     "function": true
   });

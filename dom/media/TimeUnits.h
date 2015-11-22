@@ -8,13 +8,35 @@
 #define TIME_UNITS_H
 
 #include "Intervals.h"
-#include "VideoUtils.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/FloatingPoint.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/dom/TimeRanges.h"
 
 namespace mozilla {
 namespace media {
+class TimeIntervals;
+} // namespace media
+} // namespace mozilla
+// CopyChooser specalization for nsTArray
+template<>
+struct nsTArray_CopyChooser<mozilla::media::TimeIntervals>
+{
+  typedef nsTArray_CopyWithConstructors<mozilla::media::TimeIntervals> Type;
+};
+
+namespace mozilla {
+
+// Number of microseconds per second. 1e6.
+static const int64_t USECS_PER_S = 1000000;
+
+// Number of microseconds per millisecond.
+static const int64_t USECS_PER_MS = 1000;
+
+namespace media {
+
+// Number of nanoseconds per second. 1e9.
+static const int64_t NSECS_PER_S = 1000000000;
 
 struct Microseconds {
   Microseconds()
@@ -61,11 +83,16 @@ struct Microseconds {
   int64_t mValue;
 };
 
+// TimeUnit at present uses a CheckedInt64 as storage.
+// INT64_MAX has the special meaning of being +oo.
 class TimeUnit final {
 public:
   static TimeUnit FromSeconds(double aValue) {
     MOZ_ASSERT(!IsNaN(aValue));
 
+    if (mozilla::IsInfinite<double>(aValue)) {
+      return FromInfinity();
+    }
     double val = aValue * USECS_PER_S;
     if (val >= double(INT64_MAX)) {
       return FromMicroseconds(INT64_MAX);
@@ -84,17 +111,48 @@ public:
     return TimeUnit(aValue.mValue);
   }
 
+  static TimeUnit FromNanoseconds(int64_t aValue) {
+    return TimeUnit(aValue / 1000);
+  }
+
+  static TimeUnit FromInfinity() {
+    return TimeUnit(INT64_MAX);
+  }
+
+  static TimeUnit Invalid() {
+    TimeUnit ret;
+    ret.mValue = CheckedInt64(INT64_MAX);
+    // Force an overflow to render the CheckedInt invalid.
+    ret.mValue += 1;
+    return ret;
+  }
+
   int64_t ToMicroseconds() const {
     return mValue.value();
   }
 
+  int64_t ToNanoseconds() const {
+    return mValue.value() * 1000;
+  }
+
   double ToSeconds() const {
+    if (IsInfinite()) {
+      return PositiveInfinity<double>();
+    }
     return double(mValue.value()) / USECS_PER_S;
+  }
+
+  bool IsInfinite() const {
+    return mValue.value() == INT64_MAX;
   }
 
   bool operator == (const TimeUnit& aOther) const {
     MOZ_ASSERT(IsValid() && aOther.IsValid());
     return mValue.value() == aOther.mValue.value();
+  }
+  bool operator != (const TimeUnit& aOther) const {
+    MOZ_ASSERT(IsValid() && aOther.IsValid());
+    return mValue.value() != aOther.mValue.value();
   }
   bool operator >= (const TimeUnit& aOther) const {
     MOZ_ASSERT(IsValid() && aOther.IsValid());
@@ -111,10 +169,35 @@ public:
     return !(*this >= aOther);
   }
   TimeUnit operator + (const TimeUnit& aOther) const {
+    if (IsInfinite() || aOther.IsInfinite()) {
+      return FromInfinity();
+    }
     return TimeUnit(mValue + aOther.mValue);
   }
   TimeUnit operator - (const TimeUnit& aOther) const {
+    if (IsInfinite() && !aOther.IsInfinite()) {
+      return FromInfinity();
+    }
+    MOZ_ASSERT(!IsInfinite() && !aOther.IsInfinite());
     return TimeUnit(mValue - aOther.mValue);
+  }
+  TimeUnit& operator += (const TimeUnit& aOther) {
+    *this = *this + aOther;
+    return *this;
+  }
+  TimeUnit& operator -= (const TimeUnit& aOther) {
+    *this = *this - aOther;
+    return *this;
+  }
+
+  friend TimeUnit operator* (int aVal, const TimeUnit& aUnit) {
+    return TimeUnit(aUnit.mValue * aVal);
+  }
+  friend TimeUnit operator* (const TimeUnit& aUnit, int aVal) {
+    return TimeUnit(aUnit.mValue * aVal);
+  }
+  friend TimeUnit operator/ (const TimeUnit& aUnit, int aVal) {
+    return TimeUnit(aUnit.mValue / aVal);
   }
 
   bool IsValid() const
@@ -148,6 +231,8 @@ private:
   CheckedInt64 mValue;
 };
 
+typedef Maybe<TimeUnit> NullableTimeUnit;
+
 typedef Interval<TimeUnit> TimeInterval;
 
 class TimeIntervals : public IntervalSet<TimeUnit>
@@ -174,6 +259,17 @@ public:
   explicit TimeIntervals(BaseType::ElemType&& aOther)
     : BaseType(Move(aOther))
   {}
+
+  static TimeIntervals Invalid()
+  {
+    return TimeIntervals(TimeInterval(TimeUnit::FromMicroseconds(INT64_MIN),
+                                      TimeUnit::FromMicroseconds(INT64_MIN)));
+  }
+  bool IsInvalid() const
+  {
+    return Length() == 1 && Start(0).ToMicroseconds() == INT64_MIN &&
+      End(0).ToMicroseconds() == INT64_MIN;
+  }
 
   TimeIntervals() = default;
 

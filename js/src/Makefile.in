@@ -12,13 +12,6 @@ ifneq ($(make_min_ver),$(firstword $(sort $(make_min_ver) $(MAKE_VERSION))))
 $(error GNU Make $(make_min_ver) or higher is required)
 endif
 
-TOPLEVEL_BUILD := 1
-
-run_for_side_effects := $(shell echo 'MAKE: $(MAKE)')
-
-DIST_INSTALL = 1
-NO_EXPAND_LIBS = 1
-
 ifdef JS_HAS_CTYPES
 ifdef MOZ_NATIVE_FFI
 LOCAL_INCLUDES = $(MOZ_FFI_CFLAGS)
@@ -38,6 +31,8 @@ DASH_R		= -r
 GARBAGE += jsautokw.h host_jskwgen$(HOST_BIN_SUFFIX)
 
 GARBAGE += selfhosted.out.h
+
+USE_HOST_CXX = 1
 
 ifdef HAVE_DTRACE
 ifneq ($(OS_ARCH),Darwin)
@@ -70,26 +65,6 @@ jsconfig_TARGET := export
 
 include $(topsrcdir)/config/rules.mk
 
-#############################################
-# BEGIN ECMAScript Internationalization API
-#
-
-# ICU headers need to be available whether we build with the complete
-# Internationalization API or not - ICU stubs rely on them.
-
-LOCAL_INCLUDES += $(MOZ_ICU_CFLAGS)
-
-ifdef ENABLE_INTL_API
-ifndef MOZ_NATIVE_ICU
-
-endif
-endif
-
-#
-# END ECMAScript Internationalization API
-#############################################
-
-
 # check_vanilla_allocations.py is tailored to Linux, so only run it there.
 # That should be enough to catch any problems.
 check-vanilla-allocations:
@@ -120,24 +95,30 @@ JITTEST_VALGRIND_FLAG = --valgrind
 endif
 endif
 
-ifdef MOZ_ASAN
 ifneq ($(LLVM_SYMBOLIZER),)
-# Use the LLVM symbolizer when running jit-tests under ASan, if available
-JITTEST_ASAN_ENV=ASAN_SYMBOLIZER_PATH='$(LLVM_SYMBOLIZER)'
+# Use the LLVM symbolizer when running jit-tests under ASan and TSan, if available
+ifdef MOZ_ASAN
+JITTEST_SANITIZER_ENV=ASAN_SYMBOLIZER_PATH='$(LLVM_SYMBOLIZER)'
+endif
+ifdef MOZ_TSAN
+JITTEST_SANITIZER_ENV=TSAN_OPTIONS='external_symbolizer_path=$(LLVM_SYMBOLIZER)'
 endif
 endif
 
 check-style::
 	(cd $(srcdir) && $(PYTHON) $(topsrcdir)/config/check_spidermonkey_style.py);
 
+check-masm::
+	(cd $(srcdir) && $(PYTHON) $(topsrcdir)/config/check_macroassembler_style.py);
+
 check-jit-test::
-	$(JITTEST_ASAN_ENV) $(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/jit-test/jit_test.py \
+	$(JITTEST_SANITIZER_ENV) $(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/jit-test/jit_test.py \
 	        --no-slow --no-progress --format=automation --jitflags=all \
 			$(JITTEST_VALGRIND_FLAG) \
 			$(JITTEST_EXTRA_ARGS) \
-	        $(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX)
+	        $(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX) $(JITTEST_TEST_ARGS)
 
-check:: check-style
+check:: check-style check-masm
 
 check-jstests:
 	$(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/tests/jstests.py \
@@ -312,6 +293,7 @@ selfhosting_srcs := \
   $(srcdir)/builtin/Map.js \
   $(srcdir)/builtin/Number.js \
   $(srcdir)/builtin/Object.js \
+  $(srcdir)/builtin/Reflect.js \
   $(srcdir)/builtin/RegExp.js \
   $(srcdir)/builtin/String.js \
   $(srcdir)/builtin/Set.js \
@@ -364,66 +346,5 @@ clean::
 	MOZJS_PATCH_VERSION=$(MOZJS_PATCH_VERSION) \
 	MOZJS_ALPHA=$(MOZJS_ALPHA) \
 	$(srcdir)/make-source-package.sh clean
-
-endif
-
-ifeq ($(HOST_OS_ARCH),WINNT)
-
-BaselineBailouts.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-BaselineBailouts.$(OBJ_SUFFIX): CXXFLAGS := -O2
-BaselineDebugModeOSR.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-BaselineDebugModeOSR.$(OBJ_SUFFIX): CXXFLAGS := -O2
-BaselineFrame.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-BaselineFrame.$(OBJ_SUFFIX): CXXFLAGS := -O2
-BaselineIC.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-BaselineIC.$(OBJ_SUFFIX): CXXFLAGS := -O2
-BaselineJIT.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-BaselineJIT.$(OBJ_SUFFIX): CXXFLAGS := -O2
-BytecodeEmitter.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-BytecodeEmitter.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Debugger.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Debugger.$(OBJ_SUFFIX): CXXFLAGS := -O2
-DebuggerMemory.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-DebuggerMemory.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Eval.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Eval.$(OBJ_SUFFIX): CXXFLAGS := -O2
-HelperThreads.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-HelperThreads.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Interpreter.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Interpreter.$(OBJ_SUFFIX): CXXFLAGS := -O2
-JitFrames.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-JitFrames.$(OBJ_SUFFIX): CXXFLAGS := -O2
-NativeObject.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-NativeObject.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Nursery.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Nursery.$(OBJ_SUFFIX): CXXFLAGS := -O2
-RematerializedFrame.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-RematerializedFrame.$(OBJ_SUFFIX): CXXFLAGS := -O2
-RootMarking.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-RootMarking.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Runtime.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Runtime.$(OBJ_SUFFIX): CXXFLAGS := -O2
-SavedStacks.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-SavedStacks.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Statistics.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Statistics.$(OBJ_SUFFIX): CXXFLAGS := -O2
-TypeInference.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-TypeInference.$(OBJ_SUFFIX): CXXFLAGS := -O2
-UbiNode.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-UbiNode.$(OBJ_SUFFIX): CXXFLAGS := -O2
-VMFunctions.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-VMFunctions.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Xdr.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Xdr.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Zone.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Zone.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsapi.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsapi.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jscompartment.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jscompartment.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsgc.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsgc.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsscript.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsscript.$(OBJ_SUFFIX): CXXFLAGS := -O2
 
 endif

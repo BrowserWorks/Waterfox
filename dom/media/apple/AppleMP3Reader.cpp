@@ -19,18 +19,14 @@
 // 1152 is most memory efficient.
 #define MAX_AUDIO_FRAMES 128
 
+using namespace mozilla::media;
+
 namespace mozilla {
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gMediaDecoderLog;
-#define LOGE(...) PR_LOG(gMediaDecoderLog, PR_LOG_ERROR, (__VA_ARGS__))
-#define LOGW(...) PR_LOG(gMediaDecoderLog, PR_LOG_WARNING, (__VA_ARGS__))
-#define LOGD(...) PR_LOG(gMediaDecoderLog, PR_LOG_DEBUG, (__VA_ARGS__))
-#else
-#define LOGE(...)
-#define LOGW(...)
-#define LOGD(...)
-#endif
+#define LOGE(...) MOZ_LOG(gMediaDecoderLog, mozilla::LogLevel::Error, (__VA_ARGS__))
+#define LOGW(...) MOZ_LOG(gMediaDecoderLog, mozilla::LogLevel::Warning, (__VA_ARGS__))
+#define LOGD(...) MOZ_LOG(gMediaDecoderLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 #define PROPERTY_ID_FORMAT "%c%c%c%c"
 #define PROPERTY_ID_PRINT(x) ((x) >> 24), \
@@ -48,6 +44,7 @@ AppleMP3Reader::AppleMP3Reader(AbstractMediaDecoder *aDecoder)
   , mAudioFileStream(nullptr)
   , mAudioConverter(nullptr)
   , mMP3FrameParser(mDecoder->GetResource()->GetLength())
+  , mResource(mDecoder->GetResource())
 {
   MOZ_ASSERT(NS_IsMainThread(), "Should be on main thread");
 }
@@ -94,27 +91,15 @@ static void _AudioSampleCallback(void *aThis,
 nsresult
 AppleMP3Reader::Read(uint32_t *aNumBytes, char *aData)
 {
-  MediaResource *resource = mDecoder->GetResource();
+  nsresult rv = mResource.Read(aData, *aNumBytes, aNumBytes);
 
-  // Loop until we have all the data asked for, or we've reached EOS
-  uint32_t totalBytes = 0;
-  uint32_t numBytes;
-  do {
-    uint32_t bytesWanted = *aNumBytes - totalBytes;
-    nsresult rv = resource->Read(aData + totalBytes, bytesWanted, &numBytes);
-    totalBytes += numBytes;
+  if (NS_FAILED(rv)) {
+    *aNumBytes = 0;
+    return NS_ERROR_FAILURE;
+  }
 
-    if (NS_FAILED(rv)) {
-      *aNumBytes = 0;
-      return NS_ERROR_FAILURE;
-    }
-  } while(totalBytes < *aNumBytes && numBytes);
-
-  *aNumBytes = totalBytes;
-
-  // We will have read some data in the last iteration iff we filled the buffer.
   // XXX Maybe return a better value than NS_ERROR_FAILURE?
-  return numBytes ? NS_OK : NS_ERROR_FAILURE;
+  return *aNumBytes ? NS_OK : NS_ERROR_FAILURE;
 }
 
 nsresult
@@ -261,7 +246,7 @@ AppleMP3Reader::AudioSampleCallback(UInt32 aNumBytes,
     LOGD("pushed audio at time %lfs; duration %lfs\n",
          (double)time / USECS_PER_S, (double)duration / USECS_PER_S);
 
-    AudioData *audio = new AudioData(mDecoder->GetResource()->Tell(),
+    AudioData *audio = new AudioData(mResource.Tell(),
                                      time, duration, numFrames,
                                      reinterpret_cast<AudioDataValue *>(decoded.forget()),
                                      mAudioChannels, mAudioSampleRate);
@@ -391,7 +376,7 @@ AppleMP3Reader::ReadMetadata(MediaInfo* aInfo,
                                    bytes,
                                    0 /* flags */);
 
-    mMP3FrameParser.Parse(bytes, numBytes, offset);
+    mMP3FrameParser.Parse(reinterpret_cast<uint8_t*>(bytes), numBytes, offset);
 
     offset += numBytes;
 
@@ -419,11 +404,11 @@ AppleMP3Reader::ReadMetadata(MediaInfo* aInfo,
     aInfo->mAudio.mChannels = mAudioChannels;
   }
 
-  {
-    ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
-    mDuration = mMP3FrameParser.GetDuration();
-    mDecoder->SetMediaDuration(mDuration);
-  }
+  // This special snowflake reader doesn't seem to set *aInfo = mInfo like all
+  // the others. Yuck.
+  mDuration = mMP3FrameParser.GetDuration();
+  mInfo.mMetadataDuration.emplace(TimeUnit::FromMicroseconds(mDuration));
+  aInfo->mMetadataDuration.emplace(TimeUnit::FromMicroseconds(mDuration));
 
   return NS_OK;
 }
@@ -521,7 +506,7 @@ AppleMP3Reader::Seek(int64_t aTime, int64_t aEndTime)
        byteOffset,
        (flags & kAudioFileStreamSeekFlag_OffsetIsEstimated) ? "YES" : "NO");
 
-  mDecoder->GetResource()->Seek(nsISeekableStream::NS_SEEK_SET, byteOffset);
+  mResource.Seek(nsISeekableStream::NS_SEEK_SET, byteOffset);
 
   ResetDecode();
 
@@ -529,27 +514,41 @@ AppleMP3Reader::Seek(int64_t aTime, int64_t aEndTime)
 }
 
 void
-AppleMP3Reader::NotifyDataArrived(const char* aBuffer,
-                                  uint32_t aLength,
-                                  int64_t aOffset)
+AppleMP3Reader::NotifyDataArrivedInternal(uint32_t aLength, int64_t aOffset)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(OnTaskQueue());
   if (!mMP3FrameParser.NeedsData()) {
     return;
   }
 
-  mMP3FrameParser.Parse(aBuffer, aLength, aOffset);
-  if (!mMP3FrameParser.IsMP3()) {
+  AutoPinned<MediaResource> resource(mResource.GetResource());
+  nsTArray<MediaByteRange> byteRanges;
+  nsresult rv = resource->GetCachedRanges(byteRanges);
+
+  if (NS_FAILED(rv)) {
     return;
+  }
+
+  IntervalSet<int64_t> intervals;
+  for (auto& range : byteRanges) {
+    intervals += mFilter.NotifyDataArrived(range.Length(), range.mStart);
+  }
+  for (const auto& interval : intervals) {
+    nsRefPtr<MediaByteBuffer> bytes =
+      resource->MediaReadAt(interval.mStart, interval.Length());
+    NS_ENSURE_TRUE_VOID(bytes);
+    mMP3FrameParser.Parse(bytes->Elements(), interval.Length(), interval.mStart);
+    if (!mMP3FrameParser.IsMP3()) {
+      return;
+    }
   }
 
   uint64_t duration = mMP3FrameParser.GetDuration();
   if (duration != mDuration) {
     LOGD("Updating media duration to %lluus\n", duration);
     MOZ_ASSERT(mDecoder);
-    ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
     mDuration = duration;
-    mDecoder->UpdateEstimatedMediaDuration(duration);
+    mDecoder->DispatchUpdateEstimatedMediaDuration(duration);
   }
 }
 

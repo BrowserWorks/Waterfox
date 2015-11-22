@@ -78,7 +78,7 @@ def js_quote(quote, s):
 
 os.path.relpath = _relpath
 
-class Test:
+class JitTest:
 
     VALGRIND_CMD = []
     paths = (d for d in os.environ['PATH'].split(os.pathsep))
@@ -116,11 +116,13 @@ class Test:
         self.tz_pacific = False # True means force Pacific time for the test
         self.test_also_noasmjs = False # True means run with and without asm.js
                                        # enabled.
+        self.test_also = [] # List of other configurations to test with.
+        self.test_join = [] # List of other configurations to test with all existing variants.
         self.expect_error = '' # Errors to expect and consider passing
         self.expect_status = 0 # Exit status to expect from shell
 
     def copy(self):
-        t = Test(self.path)
+        t = JitTest(self.path)
         t.jitflags = self.jitflags[:]
         t.slow = self.slow
         t.allow_oom = self.allow_oom
@@ -129,6 +131,8 @@ class Test:
         t.valgrind = self.valgrind
         t.tz_pacific = self.tz_pacific
         t.test_also_noasmjs = self.test_also_noasmjs
+        t.test_also = self.test_also
+        t.test_join = self.test_join
         t.expect_error = self.expect_error
         t.expect_status = self.expect_status
         return t
@@ -139,12 +143,14 @@ class Test:
         return t
 
     def copy_variants(self, variants):
-        # If the tests are flagged with the |jit-test| test-also-noasmjs flags,
-        # then we duplicate the variants such that the test can be used both
-        # with the interpreter and asmjs.  This is a simple way to check for
-        # differential behaviour.
-        if self.test_also_noasmjs:
-            variants = variants + [['--no-asmjs']]
+        # Append variants to be tested in addition to the current set of tests.
+        variants = variants + self.test_also
+
+        # For each existing variant, duplicates it for each list of options in
+        # test_join.  This will multiply the number of variants by 2 for set of
+        # options.
+        for join_opts in self.test_join:
+            variants = variants + [ opts + join_opts for opts in variants ];
 
         # For each list of jit flags, make a copy of the test.
         return [self.copy_and_extend_jitflags(v) for v in variants]
@@ -201,9 +207,16 @@ class Test:
                     elif name == 'tz-pacific':
                         test.tz_pacific = True
                     elif name == 'test-also-noasmjs':
-                        test.test_also_noasmjs = options.can_test_also_noasmjs
+                        if options.can_test_also_noasmjs:
+                            test.test_also.append(['--no-asmjs'])
+                    elif name.startswith('test-also='):
+                        test.test_also.append([name[len('test-also='):]])
+                    elif name.startswith('test-join='):
+                        test.test_join.append([name[len('test-join='):]])
                     elif name == 'ion-eager':
                         test.jitflags.append('--ion-eager')
+                    elif name == 'baseline-eager':
+                        test.jitflags.append('--baseline-eager')
                     elif name == 'dump-bytecode':
                         test.jitflags.append('--dump-bytecode')
                     elif name.startswith('--'):
@@ -242,7 +255,7 @@ class Test:
 
         # We may have specified '-a' or '-d' twice: once via --jitflags, once
         # via the "|jit-test|" line.  Remove dups because they are toggles.
-        cmd = prefix + ['--js-cache', Test.CacheDir]
+        cmd = prefix + ['--js-cache', JitTest.CacheDir]
         cmd += list(set(self.jitflags)) + ['-e', expr, '-f', path]
         if self.valgrind:
             cmd = self.VALGRIND_CMD + cmd
@@ -818,8 +831,8 @@ def run_tests_remote(tests, prefix, options):
     push_progs(options, dm, [prefix[0]])
     dm.chmodDir(options.remote_test_root)
 
-    Test.CacheDir = posixpath.join(options.remote_test_root, '.js-cache')
-    dm.mkDir(Test.CacheDir)
+    JitTest.CacheDir = posixpath.join(options.remote_test_root, '.js-cache')
+    dm.mkDir(JitTest.CacheDir)
 
     dm.pushDir(JS_TESTS_DIR, posixpath.join(jit_tests_dir, 'tests'),
                timeout=600)

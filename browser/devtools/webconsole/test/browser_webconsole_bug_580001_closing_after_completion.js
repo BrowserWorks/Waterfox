@@ -6,10 +6,12 @@
 // Tests to ensure that errors don't appear when the console is closed while a
 // completion is being performed.
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-console.html";
+"use strict";
 
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-console.html";
 
-let test = asyncTest(function* () {
+var test = asyncTest(function* () {
   let { browser } = yield loadTab(TEST_URI);
 
   let hud = yield openConsole();
@@ -22,7 +24,7 @@ function testClosingAfterCompletion(hud, browser) {
   let inputNode = hud.jsterm.inputNode;
 
   let errorWhileClosing = false;
-  function errorListener(evt) {
+  function errorListener() {
     errorWhileClosing = true;
   }
 
@@ -45,4 +47,3 @@ function testClosingAfterCompletion(hud, browser) {
 
   return deferred.promise;
 }
-

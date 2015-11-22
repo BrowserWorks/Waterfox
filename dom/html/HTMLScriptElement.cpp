@@ -75,10 +75,16 @@ HTMLScriptElement::ParseAttribute(int32_t aNamespaceID,
                                   const nsAString& aValue,
                                   nsAttrValue& aResult)
 {
-  if (aNamespaceID == kNameSpaceID_None &&
-      aAttribute == nsGkAtoms::crossorigin) {
-    ParseCORSValue(aValue, aResult);
-    return true;
+  if (aNamespaceID == kNameSpaceID_None) {
+    if (aAttribute == nsGkAtoms::crossorigin) {
+      ParseCORSValue(aValue, aResult);
+      return true;
+    }
+
+    if (aAttribute == nsGkAtoms::integrity) {
+      aResult.ParseStringOrAtom(aValue);
+      return true;
+    }
   }
 
   return nsGenericHTMLElement::ParseAttribute(aNamespaceID, aAttribute, aValue,
@@ -110,7 +116,7 @@ HTMLScriptElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) c
 NS_IMETHODIMP
 HTMLScriptElement::GetText(nsAString& aValue)
 {
-  if (!nsContentUtils::GetNodeTextContent(this, false, aValue)) {
+  if (!nsContentUtils::GetNodeTextContent(this, false, aValue, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   return NS_OK;
@@ -222,7 +228,7 @@ HTMLScriptElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
 NS_IMETHODIMP
 HTMLScriptElement::GetInnerHTML(nsAString& aInnerHTML)
 {
-  if (!nsContentUtils::GetNodeTextContent(this, false, aInnerHTML)) {
+  if (!nsContentUtils::GetNodeTextContent(this, false, aInnerHTML, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   return NS_OK;

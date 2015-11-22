@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const CURRENT_SCHEMA_VERSION = 28;
+const CURRENT_SCHEMA_VERSION = 30;
 const FIRST_UPGRADABLE_SCHEMA_VERSION = 11;
 
 const NS_APP_USER_PROFILE_50_DIR = "ProfD";
@@ -57,11 +57,21 @@ XPCOMUtils.defineLazyGetter(this, "SMALLPNG_DATA_URI", function() {
          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAA" +
          "AAAA6fptVAAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==");
 });
+XPCOMUtils.defineLazyGetter(this, "SMALLSVG_DATA_URI", function() {
+  return NetUtil.newURI(
+         "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy5" +
+         "3My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiBmaWxs" +
+         "PSIjNDI0ZTVhIj4NCiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iN" +
+         "DQiIHN0cm9rZT0iIzQyNGU1YSIgc3Ryb2tlLXdpZHRoPSIxMSIgZmlsbD" +
+         "0ibm9uZSIvPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjI0LjYiIHI9IjY" +
+         "uNCIvPg0KICA8cmVjdCB4PSI0NSIgeT0iMzkuOSIgd2lkdGg9IjEwLjEi" +
+         "IGhlaWdodD0iNDEuOCIvPg0KPC9zdmc%2BDQo%3D");
+});
 
-let gTestDir = do_get_cwd();
+var gTestDir = do_get_cwd();
 
 // Initialize profile.
-let gProfD = do_get_profile();
+var gProfD = do_get_profile();
 
 // Remove any old database.
 clearDB();
@@ -86,7 +96,7 @@ function uri(aSpec) NetUtil.newURI(aSpec);
  *
  * @return The database connection or null if unable to get one.
  */
-let gDBConn;
+var gDBConn;
 function DBConn(aForceNewConnection) {
   if (!aForceNewConnection) {
     let db = PlacesUtils.history.QueryInterface(Ci.nsPIPlacesDatabase)
@@ -367,12 +377,20 @@ function promiseTopicObserved(aTopic)
 /**
  * Simulates a Places shutdown.
  */
-function shutdownPlaces(aKeepAliveConnection)
-{
+var shutdownPlaces = function() {
+  do_print("shutdownPlaces: starting");
+  let promise = new Promise(resolve => {
+    Services.obs.addObserver(resolve, "places-connection-closed", false);
+  });
   let hs = PlacesUtils.history.QueryInterface(Ci.nsIObserver);
-  hs.observe(null, "profile-change-teardown", null);
-  hs.observe(null, "profile-before-change", null);
-}
+  hs.observe(null, "test-simulate-places-shutdown-phase-1", null);
+  do_print("shutdownPlaces: sent test-simulate-places-shutdown-phase-1");
+  hs.observe(null, "test-simulate-places-shutdown-phase-2", null);
+  do_print("shutdownPlaces: sent test-simulate-places-shutdown-phase-2");
+  return promise.then(() => {
+    do_print("shutdownPlaces: complete");
+  });
+};
 
 const FILENAME_BOOKMARKS_HTML = "bookmarks.html";
 const FILENAME_BOOKMARKS_JSON = "bookmarks-" +

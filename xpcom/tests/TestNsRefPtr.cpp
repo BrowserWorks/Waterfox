@@ -27,8 +27,13 @@ class Foo : public nsISupports
       NS_IMETHOD_(MozExternalRefCountType) AddRef();
       NS_IMETHOD_(MozExternalRefCountType) Release();
       NS_IMETHOD QueryInterface( const nsIID&, void** );
-
+      void MemberFunction( int, int*, int& );
+      virtual void VirtualMemberFunction( int, int*, int& );
+      virtual void VirtualConstMemberFunction( int, int*, int& ) const;
       static void print_totals();
+
+      void NonconstMethod() {}
+      void ConstMethod() const {}
 
     private:
       unsigned int refcount_;
@@ -156,6 +161,23 @@ Foo::QueryInterface( const nsIID& aIID, void** aResult )
 		return status;
 	}
 
+void
+Foo::MemberFunction( int aArg1, int* aArgPtr, int& aArgRef )
+  {
+    printf("member function is invoked.\n");
+  }
+
+void
+Foo::VirtualMemberFunction( int aArg1, int* aArgPtr, int& aArgRef )
+  {
+    printf("virtual member function is invoked.\n");
+  }
+void
+Foo::VirtualConstMemberFunction( int aArg1, int* aArgPtr, int& aArgRef ) const
+  {
+    printf("virtual const member function is invoked.\n");
+  }
+
 nsresult
 CreateFoo( void** result )
     // a typical factory function (that calls AddRef)
@@ -207,7 +229,10 @@ class Bar : public Foo
       Bar();
       virtual ~Bar();
 
-      NS_IMETHOD QueryInterface( const nsIID&, void** );
+      NS_IMETHOD QueryInterface( const nsIID&, void** ) override;
+
+      virtual void VirtualMemberFunction( int, int*, int& ) override;
+      virtual void VirtualConstMemberFunction( int, int*, int& ) const override;
   };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(Bar, NS_BAR_IID)
@@ -248,7 +273,16 @@ Bar::QueryInterface( const nsID& aIID, void** aResult )
 		return status;
 	}
 
-
+void
+Bar::VirtualMemberFunction( int aArg1, int* aArgPtr, int& aArgRef )
+  {
+    printf("override virtual member function is invoked.\n");
+  }
+void
+Bar::VirtualConstMemberFunction( int aArg1, int* aArgPtr, int& aArgRef ) const
+  {
+    printf("override virtual const member function is invoked.\n");
+  }
 
 nsresult
 CreateBar( void** result )
@@ -317,7 +351,43 @@ TestBloat_Smart()
 		return result;
 	}
 
+#define NS_INLINE_DECL_THREADSAFE_MUTABLE_REFCOUNTING(_class)                 \
+public:                                                                       \
+  NS_METHOD_(MozExternalRefCountType) AddRef(void) const {                    \
+    MOZ_ASSERT_TYPE_OK_FOR_REFCOUNTING(_class)                                \
+    MOZ_ASSERT(int32_t(mRefCnt) >= 0, "illegal refcnt");                      \
+    nsrefcnt count = ++mRefCnt;                                               \
+    return (nsrefcnt) count;                                                  \
+  }                                                                           \
+  NS_METHOD_(MozExternalRefCountType) Release(void) const {                   \
+    MOZ_ASSERT(int32_t(mRefCnt) > 0, "dup release");                          \
+    nsrefcnt count = --mRefCnt;                                               \
+    if (count == 0) {                                                         \
+      delete (this);                                                          \
+      return 0;                                                               \
+    }                                                                         \
+    return count;                                                             \
+  }                                                                           \
+protected:                                                                    \
+  mutable ::mozilla::ThreadSafeAutoRefCnt mRefCnt;                            \
+public:
 
+class ObjectForConstPtr
+{
+private:
+  // Reference-counted classes cannot have public destructors.
+  ~ObjectForConstPtr()
+  {
+    printf("ObjectForConstPtr@%p::~ObjectForConstPtr()\n", static_cast<void*>(this));
+  }
+public:
+  NS_INLINE_DECL_THREADSAFE_MUTABLE_REFCOUNTING(ObjectForConstPtr)
+  void ConstMemberFunction( int aArg1, int* aArgPtr, int& aArgRef ) const
+  {
+    printf("const member function is invoked by nsRefPtr<const T>->*.\n");
+  }
+};
+#undef NS_INLINE_DECL_THREADSAFE_MUTABLE_REFCOUNTING
 
 
 nsRefPtr<Foo> gFoop;
@@ -381,16 +451,16 @@ main()
       else
         printf("foo1p == foo2p\n");
 
-      printf("\n### Test  7.5: can you compare a |nsCOMPtr| with NULL, 0, nullptr [!=]?\n");
-      if ( foo1p != 0 )
-      	printf("foo1p != 0\n");
-      if ( 0 != foo1p )
-      	printf("0 != foo1p\n");
-      if ( foo1p == 0 )
-      	printf("foo1p == 0\n");
-      if ( 0 == foo1p )
-      	printf("0 == foo1p\n");
-			
+      printf("\n### Test  7.5: can you compare a |nsCOMPtr| with nullptr [!=]?\n");
+      if ( foo1p != nullptr )
+      	printf("foo1p != nullptr\n");
+      if ( nullptr != foo1p )
+      	printf("nullptr != foo1p\n");
+      if ( foo1p == nullptr )
+      	printf("foo1p == nullptr\n");
+      if ( nullptr == foo1p )
+      	printf("nullptr == foo1p\n");
+
 
       Foo* raw_foo2p = foo2p.get();
 
@@ -430,8 +500,8 @@ main()
       else
         printf("foo1p is NULL\n");
 
-      printf("\n### Test 13: numeric pointer test?\n");
-      if ( foo1p == 0 )
+      printf("\n### Test 13: null pointer test?\n");
+      if ( foo1p == nullptr )
         printf("foo1p is NULL\n");
       else
         printf("foo1p is not NULL\n");
@@ -546,10 +616,53 @@ main()
 			AVoidPtrPtrContext( getter_AddRefs(fooP) );
 		}
 
+		{
+		  printf("\n### setup for Test 25\n");
+		  nsRefPtr<Foo> fooP(new Foo);
 
-    printf("\n### Test 25: will a static |nsCOMPtr| |Release| before program termination?\n");
+		  printf("### Test 25: can you construct an |nsRefPtr<const T>| from an |nsRefPtr<T>|?\n");
+		  nsRefPtr<const Foo> constFooP = fooP;
+
+		  printf("### Test 25: can you call a non-const method on an |nsRefPtr<const T>|?\n");
+		  constFooP->ConstMethod();
+
+		  // [Shouldn't compile] Is it a compile time error to call a non-const method on an |nsRefPtr<const T>|?
+		  //constFooP->NonconstMethod();
+
+		  // [Shouldn't compile] Is it a compile time error to construct an |nsRefPtr<T> from an |nsRefPtr<const T>|?
+		  //nsRefPtr<Foo> otherFooP(constFooP);
+		}
+
+
+    printf("\n### Test 26: will a static |nsCOMPtr| |Release| before program termination?\n");
     gFoop = do_QueryObject(new Foo);
-    
+
+    {
+      printf("\n### setup for Test 26, 27, 28\n");
+      nsRefPtr<Foo> foop = new Foo;
+      nsRefPtr<Foo> foop2 = new Bar;
+      nsRefPtr<const ObjectForConstPtr> foop3 = new ObjectForConstPtr;
+      int test = 1;
+      void (Foo::*fPtr)( int, int*, int& ) = &Foo::MemberFunction;
+      void (Foo::*fVPtr)( int, int*, int& ) = &Foo::VirtualMemberFunction;
+      void (Foo::*fVCPtr)( int, int*, int& ) const = &Foo::VirtualConstMemberFunction;
+      void (ObjectForConstPtr::*fCPtr2)( int, int*, int& ) const = &ObjectForConstPtr::ConstMemberFunction;
+
+      printf("### Test 26: invoke member function via operator ->*\n");
+      (foop->*fPtr)(test, &test, test);
+      printf("### End Test 26\n");
+
+      printf("### Test 27: invoke virtual / virtual const member function via operator ->*\n");
+      (foop2->*fVPtr)(test, &test, test);
+      (foop2->*fVCPtr)(test, &test, test);
+      printf("### End Test 27\n");
+
+      printf("### Test 28: invoke virtual const member function via nsRefPtr<const T> operator ->*\n");
+      (foop3->*fCPtr2)(test, &test, test);
+      printf("### End Test 28\n");
+    }
+
+
     printf("<<main()\n");
     return 0;
   }

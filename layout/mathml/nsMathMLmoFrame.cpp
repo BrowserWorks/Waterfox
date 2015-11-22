@@ -115,9 +115,7 @@ nsMathMLmoFrame::ProcessTextData()
   mFlags = 0;
 
   nsAutoString data;
-  if (!nsContentUtils::GetNodeTextContent(mContent, false, data)) {
-    NS_RUNTIMEABORT("OOM");
-  }
+  nsContentUtils::GetNodeTextContent(mContent, false, data);
 
   data.CompressWhitespace();
   int32_t length = data.Length();
@@ -455,8 +453,9 @@ nsMathMLmoFrame::ProcessOperatorData()
   mEmbellishData.trailingSpace = trailingSpace;
 
   // Now see if there are user-defined attributes that override the dictionary.
-  // XXX If an attribute can be forced to be true when it is false in the
-  // dictionary, then the following code has to change...
+  // XXX Bug 1197771 - forcing an attribute to true when it is false in the
+  // dictionary can cause conflicts in the rest of the stretching algorithms
+  // (e.g. all largeops are assumed to have a vertical direction)
 
   // For each attribute overriden by the user, turn off its bit flag.
   // symmetric|movablelimits|separator|largeop|accent|fence|stretchy|form
@@ -473,6 +472,8 @@ nsMathMLmoFrame::ProcessOperatorData()
     mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::fence_, value);
     if (value.EqualsLiteral("false"))
       mFlags &= ~NS_MATHML_OPERATOR_FENCE;
+    else
+      mEmbellishData.flags |= NS_MATHML_EMBELLISH_FENCE;
   }
   mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::largeop_, value);
   if (value.EqualsLiteral("false")) {
@@ -484,6 +485,8 @@ nsMathMLmoFrame::ProcessOperatorData()
     mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::separator_, value);
     if (value.EqualsLiteral("false"))
       mFlags &= ~NS_MATHML_OPERATOR_SEPARATOR;
+    else
+      mEmbellishData.flags |= NS_MATHML_EMBELLISH_SEPARATOR;
   }
   mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::symmetric_, value);
   if (value.EqualsLiteral("false"))

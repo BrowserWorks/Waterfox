@@ -37,7 +37,7 @@ ClearAttrCache(const nsAString& aKey, MiscContainer*& aValue, void*)
   return PL_DHASH_REMOVE;
 }
 
-} // anonymous namespace
+} // namespace
 
 nsHTMLCSSStyleSheet::nsHTMLCSSStyleSheet()
 {
@@ -144,7 +144,9 @@ nsHTMLCSSStyleSheet::HasDocumentStateDependentStyle(StateRuleProcessorData* aDat
 
 // Test if style is dependent on attribute
 /* virtual */ nsRestyleHint
-nsHTMLCSSStyleSheet::HasAttributeDependentStyle(AttributeRuleProcessorData* aData)
+nsHTMLCSSStyleSheet::HasAttributeDependentStyle(
+    AttributeRuleProcessorData* aData,
+    RestyleHintData& aRestyleHintDataResult)
 {
   // Perhaps should check that it's XUL, SVG, (or HTML) namespace, but
   // it doesn't really matter.
@@ -161,26 +163,21 @@ nsHTMLCSSStyleSheet::MediumFeaturesChanged(nsPresContext* aPresContext)
   return false;
 }
 
-size_t
-SizeOfCachedStyleAttrsEntryExcludingThis(nsStringHashKey::KeyType& aKey,
-                                         MiscContainer* const& aData,
-                                         mozilla::MallocSizeOf aMallocSizeOf,
-                                         void* userArg)
-{
-  // We don't own the MiscContainers so we don't count them. We do care about
-  // the size of the nsString members in the keys though.
-  return aKey.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
-}
-
 /* virtual */ size_t
 nsHTMLCSSStyleSheet::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 {
   // The size of mCachedStyleAttrs's mTable member (a PLDHashTable) is
   // significant in itself, but more significant is the size of the nsString
   // members of the nsStringHashKeys.
-  return mCachedStyleAttrs.SizeOfExcludingThis(SizeOfCachedStyleAttrsEntryExcludingThis,
-                                               aMallocSizeOf,
-                                               nullptr);
+  size_t n = 0;
+  n += mCachedStyleAttrs.ShallowSizeOfExcludingThis(aMallocSizeOf);
+  for (auto iter = mCachedStyleAttrs.ConstIter(); !iter.Done(); iter.Next()) {
+    // We don't own the MiscContainers (the hash table values) so we don't
+    // count them. We do care about the size of the nsString members in the
+    // keys though.
+    n += iter.Key().SizeOfExcludingThisIfUnshared(aMallocSizeOf);
+  }
+  return n;
 }
 
 /* virtual */ size_t

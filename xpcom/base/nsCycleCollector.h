@@ -19,7 +19,7 @@ template<class T> struct already_AddRefed;
 
 namespace mozilla {
 class CycleCollectedJSRuntime;
-}
+} // namespace mozilla
 
 bool nsCycleCollector_init();
 
@@ -39,7 +39,8 @@ void nsCycleCollector_prepareForGarbageCollection();
 // If an incremental cycle collection is in progress, finish it.
 void nsCycleCollector_finishAnyCurrentCollection();
 
-void nsCycleCollector_dispatchDeferredDeletion(bool aContinuation = false);
+void nsCycleCollector_dispatchDeferredDeletion(bool aContinuation = false,
+                                               bool aPurge = false);
 bool nsCycleCollector_doDeferredDeletion();
 
 already_AddRefed<nsICycleCollectorLogSink> nsCycleCollector_createLogSink();

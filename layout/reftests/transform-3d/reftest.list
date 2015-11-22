@@ -11,7 +11,7 @@
 == rotatex-perspective-1c.html rotatex-1-ref.html
 == rotatex-perspective-3a.html rotatex-perspective-3-ref.html
 == scalez-1a.html scalez-1-ref.html
-fuzzy-if(cocoaWidget,17,3) == preserve3d-1a.html preserve3d-1-ref.html
+fuzzy-if(cocoaWidget,17,4) == preserve3d-1a.html preserve3d-1-ref.html
 == preserve3d-1b.html about:blank
 == preserve3d-clipped.html about:blank
 == preserve3d-2a.html preserve3d-2-ref.html
@@ -39,7 +39,7 @@ fuzzy-if(winWidget&&!layersGPUAccelerated,1,251) == backface-visibility-2.html b
 == backface-visibility-3.html backface-visibility-3-ref.html
 != perspective-origin-1a.html rotatex-perspective-1a.html
 random-if(Android&&AndroidVersion==17) == perspective-origin-1b.html perspective-origin-1a.html
-random-if(Android&&!browserIsRemote) == perspective-origin-2a.html perspective-origin-2-ref.html # bug 732568
+fuzzy(3,99) random-if(Android&&!browserIsRemote) == perspective-origin-2a.html perspective-origin-2-ref.html # subpixel AA, bug 732568
 fuzzy-if(winWidget&&!layersGPUAccelerated,1,61) == perspective-origin-3a.html perspective-origin-3-ref.html
 == perspective-origin-4a.html perspective-origin-4-ref.html
 != sorting-1a.html sorting-1-ref.html
@@ -50,16 +50,20 @@ fuzzy-if(winWidget&&!layersGPUAccelerated,1,61) == perspective-origin-3a.html pe
 == sorting-3a.html green-rect.html
 # Different, but equivalent (for the given transform) transform origins
 == rotatex-transformorigin-1a.html rotatex-transformorigin-1-ref.html
-fuzzy-if((gtk2Widget&&layersOMTC)||(winWidget&&!layersGPUAccelerated),1,86) == overflow-hidden-1a.html overflow-hidden-1-ref.html
+fuzzy-if((gtkWidget&&layersOMTC)||(winWidget&&!layersGPUAccelerated),1,86) == overflow-hidden-1a.html overflow-hidden-1-ref.html
 == transform-style-flat-1a.html transform-style-flat-1-ref.html
-pref(layout.css.will-change.enabled,true) == willchange-containing-block.html?willchange willchange-containing-block.html?ref
-pref(layout.css.will-change.enabled,true) != willchange-containing-block.html?willchange willchange-containing-block.html?noblock
+== willchange-containing-block.html?willchange willchange-containing-block.html?ref
+!= willchange-containing-block.html?willchange willchange-containing-block.html?noblock
 fuzzy-if(winWidget&&!layersGPUAccelerated,1,606) == scroll-perspective-1.html scroll-perspective-1-ref.html
 # Bugs
 fails-if(!layersGPUAccelerated) == 1035611-1.html 1035611-1-ref.html # Bug 1072898 for !layersGPUAccelerated failures
-== animate-cube-radians.html animate-cube-radians-ref.html
-fuzzy-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)&&!layersGPUAccelerated,16,6) fuzzy-if(Mulet,16,9) == animate-cube-radians-zoom.html animate-cube-radians-zoom-ref.html
+!= 1157984-1.html about:blank # Bug 1157984
+fuzzy(3,99) == animate-cube-radians.html animate-cube-radians-ref.html # subpixel AA
+fuzzy(3,99) fuzzy-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)&&!layersGPUAccelerated,16,6) fuzzy-if(Mulet,16,9) == animate-cube-radians-zoom.html animate-cube-radians-zoom-ref.html
 != animate-cube-radians-ref.html animate-cube-radians-zoom-ref.html
-== animate-cube-degrees.html animate-cube-degrees-ref.html
+fuzzy(3,99) == animate-cube-degrees.html animate-cube-degrees-ref.html # subpixel AA
 == animate-cube-degrees-zoom.html animate-cube-degrees-zoom-ref.html
 != animate-cube-degrees-ref.html animate-cube-degrees-zoom-ref.html
+fuzzy-if(cocoaWidget,128,9) == animate-preserve3d-parent.html animate-preserve3d-ref.html # intermittently fuzzy on Mac
+fuzzy-if(cocoaWidget,128,9) == animate-preserve3d-child.html animate-preserve3d-ref.html # intermittently fuzzy on Mac
+== animate-backface-hidden.html about:blank

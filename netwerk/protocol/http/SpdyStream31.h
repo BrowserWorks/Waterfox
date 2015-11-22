@@ -42,9 +42,9 @@ public:
   bool HasRegisteredID() { return mStreamID != 0; }
 
   nsAHttpTransaction *Transaction() { return mTransaction; }
-  virtual nsILoadGroupConnectionInfo *LoadGroupConnectionInfo()
+  virtual nsISchedulingContext *SchedulingContext()
   {
-    return mTransaction ? mTransaction->LoadGroupConnectionInfo() : nullptr;
+    return mTransaction ? mTransaction->SchedulingContext() : nullptr;
   }
 
   void Close(nsresult reason);
@@ -277,6 +277,7 @@ private:
   bool mPlainTextTunnel;
 };
 
-}} // namespace mozilla::net
+} // namespace net
+} // namespace mozilla
 
 #endif // mozilla_net_SpdyStream31_h

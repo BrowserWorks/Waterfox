@@ -54,6 +54,8 @@ public:
 
   void GetVoices(nsTArray< nsRefPtr<SpeechSynthesisVoice> >& aResult);
 
+  void ForceEnd();
+
 private:
   virtual ~SpeechSynthesis();
 
@@ -66,9 +68,10 @@ private:
   nsRefPtr<nsSpeechTask> mCurrentTask;
 
   nsRefPtrHashtable<nsStringHashKey, SpeechSynthesisVoice> mVoiceCache;
+
+  bool mHoldQueue;
 };
 
 } // namespace dom
 } // namespace mozilla
-
 #endif

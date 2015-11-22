@@ -14,6 +14,16 @@ DebuggerServer.addTestGlobal = function(aGlobal) {
   gTestGlobals.push(aGlobal);
 };
 
+DebuggerServer.getTestGlobal = function(name) {
+  for (let g of gTestGlobals) {
+    if (g.__name == name) {
+      return g;
+    }
+  }
+
+  return null;
+}
+
 // A mock tab list, for use by tests. This simply presents each global in
 // gTestGlobals as a tab, and the list is fixed: it never calls its
 // onListChanged handler.
@@ -47,7 +57,7 @@ function TestTabList(aConnection) {
 TestTabList.prototype = {
   constructor: TestTabList,
   getList: function () {
-    return Promise.resolve([tabActor for (tabActor of this._tabActors)]);
+    return Promise.resolve([...this._tabActors]);
   }
 };
 
@@ -85,7 +95,7 @@ TestTabActor.prototype = {
   actorPrefix: "TestTabActor",
 
   get window() {
-    return { wrappedJSObject: this._global };
+    return this._global;
   },
 
   get url() {

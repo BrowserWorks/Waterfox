@@ -17,7 +17,7 @@ class AtomicsObject : public JSObject
   public:
     static const Class class_;
     static JSObject* initClass(JSContext* cx, Handle<GlobalObject*> global);
-    static bool toString(JSContext* cx, unsigned int argc, jsval* vp);
+    static bool toString(JSContext* cx, unsigned int argc, Value* vp);
 
     // Defined return values for futexWait.
     // The error values must be negative because APIs such as futexWaitOrRequeue
@@ -29,9 +29,8 @@ class AtomicsObject : public JSObject
     };
 };
 
-void atomics_fullMemoryBarrier();
-
 bool atomics_compareExchange(JSContext* cx, unsigned argc, Value* vp);
+bool atomics_exchange(JSContext* cx, unsigned argc, Value* vp);
 bool atomics_load(JSContext* cx, unsigned argc, Value* vp);
 bool atomics_store(JSContext* cx, unsigned argc, Value* vp);
 bool atomics_fence(JSContext* cx, unsigned argc, Value* vp);
@@ -40,6 +39,7 @@ bool atomics_sub(JSContext* cx, unsigned argc, Value* vp);
 bool atomics_and(JSContext* cx, unsigned argc, Value* vp);
 bool atomics_or(JSContext* cx, unsigned argc, Value* vp);
 bool atomics_xor(JSContext* cx, unsigned argc, Value* vp);
+bool atomics_isLockFree(JSContext* cx, unsigned argc, Value* vp);
 bool atomics_futexWait(JSContext* cx, unsigned argc, Value* vp);
 bool atomics_futexWake(JSContext* cx, unsigned argc, Value* vp);
 bool atomics_futexWakeOrRequeue(JSContext* cx, unsigned argc, Value* vp);
@@ -51,6 +51,7 @@ int32_t atomics_and_asm_callout(int32_t vt, int32_t offset, int32_t value);
 int32_t atomics_or_asm_callout(int32_t vt, int32_t offset, int32_t value);
 int32_t atomics_xor_asm_callout(int32_t vt, int32_t offset, int32_t value);
 int32_t atomics_cmpxchg_asm_callout(int32_t vt, int32_t offset, int32_t oldval, int32_t newval);
+int32_t atomics_xchg_asm_callout(int32_t vt, int32_t offset, int32_t value);
 
 class FutexRuntime
 {
@@ -97,19 +98,22 @@ public:
     //
     // If the thread is waiting in a call to futexWait() and the
     // reason is WakeForJSInterrupt then the futexWait() will return
-    // with WokenForJSInterrupt; in the latter case the caller of
-    // futexWait() must handle the interrupt.
+    // with WaitingNotifiedForInterrupt; in the latter case the caller
+    // of futexWait() must handle the interrupt.
     void wake(WakeReason reason);
 
     bool isWaiting();
 
   private:
     enum FutexState {
-        Idle,                   // We are not waiting or woken
-        Waiting,                // We are waiting, nothing has happened yet
-        WaitingInterrupted,     // We are waiting, but have been interrupted
-        Woken,                  // Woken by a script call to futexWake
-        WokenForJSInterrupt     // Woken by an interrupt handler
+        Idle,                        // We are not waiting or woken
+        Waiting,                     // We are waiting, nothing has happened yet
+        WaitingNotifiedForInterrupt, // We are waiting, but have been interrupted,
+                                     //   and have not yet started running the
+                                     //   interrupt handler
+        WaitingInterrupted,          // We are waiting, but have been interrupted
+                                     //   and are running the interrupt handler
+        Woken                        // Woken by a script call to futexWake
     };
 
     // Condition variable that this runtime will wait on.

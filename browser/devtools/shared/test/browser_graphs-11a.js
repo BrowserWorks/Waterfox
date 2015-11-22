@@ -3,8 +3,7 @@
 
 // Tests that bar graph create a legend as expected.
 
-let {BarGraphWidget} = Cu.import("resource:///modules/devtools/Graphs.jsm", {});
-let {Promise} = devtools.require("resource://gre/modules/Promise.jsm");
+var BarGraphWidget = require("devtools/shared/widgets/BarGraphWidget");
 
 const CATEGORIES = [
   { color: "#46afe3", label: "Foo" },

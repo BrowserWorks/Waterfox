@@ -63,6 +63,8 @@ protected:
 public:
     virtual ~SharedSurface_EGLImage();
 
+    virtual layers::TextureFlags GetTextureFlags() const override;
+
     virtual void LockProdImpl() override {}
     virtual void UnlockProdImpl() override {}
 
@@ -77,6 +79,8 @@ public:
     // Implementation-specific functions below:
     // Returns texture and target
     void AcquireConsumerTexture(GLContext* consGL, GLuint* out_texture, GLuint* out_target);
+
+    virtual bool ToSurfaceDescriptor(layers::SurfaceDescriptor* const out_descriptor) override;
 };
 
 
@@ -87,17 +91,20 @@ class SurfaceFactory_EGLImage
 public:
     // Fallible:
     static UniquePtr<SurfaceFactory_EGLImage> Create(GLContext* prodGL,
-                                                     const SurfaceCaps& caps);
+                                                     const SurfaceCaps& caps,
+                                                     const RefPtr<layers::ISurfaceAllocator>& allocator,
+                                                     const layers::TextureFlags& flags);
 
 protected:
     const EGLContext mContext;
 
-    SurfaceFactory_EGLImage(GLContext* prodGL,
-                            EGLContext context,
-                            const SurfaceCaps& caps)
-        : SurfaceFactory(prodGL, SharedSurfaceType::EGLImageShare, caps)
+    SurfaceFactory_EGLImage(GLContext* prodGL, const SurfaceCaps& caps,
+                            const RefPtr<layers::ISurfaceAllocator>& allocator,
+                            const layers::TextureFlags& flags,
+                            EGLContext context)
+        : SurfaceFactory(SharedSurfaceType::EGLImageShare, prodGL, caps, allocator, flags)
         , mContext(context)
-    {}
+    { }
 
 public:
     virtual UniquePtr<SharedSurface> CreateShared(const gfx::IntSize& size) override {
@@ -106,7 +113,8 @@ public:
     }
 };
 
-} /* namespace gfx */
+} // namespace gl
+
 } /* namespace mozilla */
 
 #endif /* SHARED_SURFACE_EGL_H_ */

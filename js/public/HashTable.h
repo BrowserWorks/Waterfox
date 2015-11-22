@@ -17,6 +17,7 @@
 #include "mozilla/ReentrancyGuard.h"
 #include "mozilla/TemplateLib.h"
 #include "mozilla/TypeTraits.h"
+#include "mozilla/UniquePtr.h"
 
 #include "js/Utility.h"
 
@@ -28,7 +29,7 @@ template <class, class> class HashMapEntry;
 namespace detail {
     template <class T> class HashTableEntry;
     template <class T, class HashPolicy, class AllocPolicy> class HashTable;
-}
+} // namespace detail
 
 /*****************************************************************************/
 
@@ -585,6 +586,25 @@ struct DefaultHasher
 template <class T>
 struct DefaultHasher<T*> : PointerHasher<T*, mozilla::tl::FloorLog2<sizeof(void*)>::value>
 {};
+
+// Specialize hashing policy for mozilla::UniquePtr<T> to proxy the UniquePtr's
+// raw pointer to PointerHasher.
+template <class T>
+struct DefaultHasher<mozilla::UniquePtr<T>>
+{
+    using Lookup = mozilla::UniquePtr<T>;
+    using PtrHasher = PointerHasher<T*, mozilla::tl::FloorLog2<sizeof(void*)>::value>;
+
+    static HashNumber hash(const Lookup& l) {
+        return PtrHasher::hash(l.get());
+    }
+    static bool match(const mozilla::UniquePtr<T>& k, const Lookup& l) {
+        return PtrHasher::match(k.get(), l.get());
+    }
+    static void rekey(mozilla::UniquePtr<T>& k, mozilla::UniquePtr<T>&& newKey) {
+        k = mozilla::Move(newKey);
+    }
+};
 
 // For doubles, we can xor the two uint32s.
 template <>
@@ -1696,7 +1716,7 @@ class HashTable : private AllocPolicy
 #undef METER
 };
 
-}  // namespace detail
-}  // namespace js
+} // namespace detail
+} // namespace js
 
 #endif  /* js_HashTable_h */

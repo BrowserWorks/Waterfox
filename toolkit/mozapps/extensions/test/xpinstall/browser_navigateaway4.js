@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // Tests that navigating to a new origin cancels ongoing installs and closes
 // the install UI.
-let sawUnload = null;
+var sawUnload = null;
 
 function test() {
   Harness.installConfirmCallback = confirm_install;
@@ -34,7 +34,7 @@ function install_ended(install, addon) {
 function finish_test(count) {
   is(count, 0, "No add-ons should have been successfully installed");
 
-  Services.perms.remove("http://example.com", "install");
+  Services.perms.remove(makeURI("http://example.com"), "install");
 
   sawUnload.then(() => {
     ok(true, "The install UI should have closed itself.");

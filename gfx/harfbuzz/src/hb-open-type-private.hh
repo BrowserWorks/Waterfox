@@ -179,10 +179,13 @@ struct hb_sanitize_context_t
   inline const char *get_name (void) { return "SANITIZE"; }
   static const unsigned int max_debug_depth = HB_DEBUG_SANITIZE;
   typedef bool return_t;
+  template <typename T, typename F>
+  inline bool may_dispatch (const T *obj, const F *format)
+  { return format->sanitize (this); }
   template <typename T>
   inline return_t dispatch (const T &obj) { return obj.sanitize (this); }
   static return_t default_return_value (void) { return true; }
-  bool stop_sublookup_iteration (const return_t r HB_UNUSED) const { return false; }
+  bool stop_sublookup_iteration (const return_t r) const { return !r; }
 
   inline void init (hb_blob_t *b)
   {
@@ -270,9 +273,9 @@ struct hb_sanitize_context_t
   }
 
   template <typename Type, typename ValueType>
-  inline bool try_set (Type *obj, const ValueType &v) {
+  inline bool try_set (const Type *obj, const ValueType &v) {
     if (this->may_edit (obj, obj->static_size)) {
-      obj->set (v);
+      const_cast<Type *> (obj)->set (v);
       return true;
     }
     return false;
@@ -533,6 +536,20 @@ struct Supplier
 template <typename Type, int Bytes> struct BEInt;
 
 template <typename Type>
+struct BEInt<Type, 1>
+{
+  public:
+  inline void set (Type V)
+  {
+    v = V;
+  }
+  inline operator Type (void) const
+  {
+    return v;
+  }
+  private: uint8_t v;
+};
+template <typename Type>
 struct BEInt<Type, 2>
 {
   public:
@@ -546,12 +563,6 @@ struct BEInt<Type, 2>
     return (v[0] <<  8)
          + (v[1]      );
   }
-  inline bool operator == (const BEInt<Type, 2>& o) const
-  {
-    return v[0] == o.v[0]
-        && v[1] == o.v[1];
-  }
-  inline bool operator != (const BEInt<Type, 2>& o) const { return !(*this == o); }
   private: uint8_t v[2];
 };
 template <typename Type>
@@ -570,13 +581,6 @@ struct BEInt<Type, 3>
          + (v[1] <<  8)
          + (v[2]      );
   }
-  inline bool operator == (const BEInt<Type, 3>& o) const
-  {
-    return v[0] == o.v[0]
-        && v[1] == o.v[1]
-        && v[2] == o.v[2];
-  }
-  inline bool operator != (const BEInt<Type, 3>& o) const { return !(*this == o); }
   private: uint8_t v[3];
 };
 template <typename Type>
@@ -597,14 +601,6 @@ struct BEInt<Type, 4>
          + (v[2] <<  8)
          + (v[3]      );
   }
-  inline bool operator == (const BEInt<Type, 4>& o) const
-  {
-    return v[0] == o.v[0]
-        && v[1] == o.v[1]
-        && v[2] == o.v[2]
-        && v[3] == o.v[3];
-  }
-  inline bool operator != (const BEInt<Type, 4>& o) const { return !(*this == o); }
   private: uint8_t v[4];
 };
 
@@ -614,12 +610,19 @@ struct IntType
 {
   inline void set (Type i) { v.set (i); }
   inline operator Type(void) const { return v; }
-  inline bool operator == (const IntType<Type,Size> &o) const { return v == o.v; }
-  inline bool operator != (const IntType<Type,Size> &o) const { return v != o.v; }
+  inline bool operator == (const IntType<Type,Size> &o) const { return (Type) v == (Type) o.v; }
+  inline bool operator != (const IntType<Type,Size> &o) const { return !(*this == o); }
   static inline int cmp (const IntType<Type,Size> *a, const IntType<Type,Size> *b) { return b->cmp (*a); }
-  inline int cmp (IntType<Type,Size> va) const { Type a = va; Type b = v; return a < b ? -1 : a == b ? 0 : +1; }
-  inline int cmp (Type a) const { Type b = v; return a < b ? -1 : a == b ? 0 : +1; }
-  inline bool sanitize (hb_sanitize_context_t *c) {
+  inline int cmp (Type a) const
+  {
+    Type b = v;
+    if (sizeof (Type) < sizeof (int))
+      return (int) a - (int) b;
+    else
+      return a < b ? -1 : a == b ? 0 : +1;
+  }
+  inline bool sanitize (hb_sanitize_context_t *c) const
+  {
     TRACE_SANITIZE (this);
     return TRACE_RETURN (likely (c->check_struct (this)));
   }
@@ -629,7 +632,7 @@ struct IntType
   DEFINE_SIZE_STATIC (Size);
 };
 
-typedef		uint8_t	     BYTE;	/* 8-bit unsigned integer. */
+typedef	IntType<uint8_t	, 1> BYTE;	/* 8-bit unsigned integer. */
 typedef IntType<uint16_t, 2> USHORT;	/* 16-bit unsigned integer. */
 typedef IntType<int16_t,  2> SHORT;	/* 16-bit signed integer. */
 typedef IntType<uint32_t, 4> ULONG;	/* 32-bit unsigned integer. */
@@ -646,7 +649,8 @@ typedef USHORT UFWORD;
  * 1904. The value is represented as a signed 64-bit integer. */
 struct LONGDATETIME
 {
-  inline bool sanitize (hb_sanitize_context_t *c) {
+  inline bool sanitize (hb_sanitize_context_t *c) const
+  {
     TRACE_SANITIZE (this);
     return TRACE_RETURN (likely (c->check_struct (this)));
   }
@@ -670,7 +674,10 @@ struct Tag : ULONG
 DEFINE_NULL_DATA (Tag, "    ");
 
 /* Glyph index number, same as uint16 (length = 16 bits) */
-typedef USHORT GlyphID;
+struct GlyphID : USHORT {
+  static inline int cmp (const GlyphID *a, const GlyphID *b) { return b->USHORT::cmp (*a); }
+  inline int cmp (hb_codepoint_t a) const { return (int) a - (int) *this; }
+};
 
 /* Script/language-system/feature index */
 struct Index : USHORT {
@@ -719,7 +726,8 @@ struct FixedVersion
 {
   inline uint32_t to_int (void) const { return (major << 16) + minor; }
 
-  inline bool sanitize (hb_sanitize_context_t *c) {
+  inline bool sanitize (hb_sanitize_context_t *c) const
+  {
     TRACE_SANITIZE (this);
     return TRACE_RETURN (c->check_struct (this));
   }
@@ -747,33 +755,35 @@ struct OffsetTo : Offset<OffsetType>
     return StructAtOffset<Type> (base, offset);
   }
 
-  inline Type& serialize (hb_serialize_context_t *c, void *base)
+  inline Type& serialize (hb_serialize_context_t *c, const void *base)
   {
     Type *t = c->start_embed<Type> ();
     this->set ((char *) t - (char *) base); /* TODO(serialize) Overflow? */
     return *t;
   }
 
-  inline bool sanitize (hb_sanitize_context_t *c, void *base) {
+  inline bool sanitize (hb_sanitize_context_t *c, const void *base) const
+  {
     TRACE_SANITIZE (this);
     if (unlikely (!c->check_struct (this))) return TRACE_RETURN (false);
     unsigned int offset = *this;
     if (unlikely (!offset)) return TRACE_RETURN (true);
-    Type &obj = StructAtOffset<Type> (base, offset);
+    const Type &obj = StructAtOffset<Type> (base, offset);
     return TRACE_RETURN (likely (obj.sanitize (c)) || neuter (c));
   }
   template <typename T>
-  inline bool sanitize (hb_sanitize_context_t *c, void *base, T user_data) {
+  inline bool sanitize (hb_sanitize_context_t *c, const void *base, T user_data) const
+  {
     TRACE_SANITIZE (this);
     if (unlikely (!c->check_struct (this))) return TRACE_RETURN (false);
     unsigned int offset = *this;
     if (unlikely (!offset)) return TRACE_RETURN (true);
-    Type &obj = StructAtOffset<Type> (base, offset);
+    const Type &obj = StructAtOffset<Type> (base, offset);
     return TRACE_RETURN (likely (obj.sanitize (c, user_data)) || neuter (c));
   }
 
   /* Set the offset to Null */
-  inline bool neuter (hb_sanitize_context_t *c) {
+  inline bool neuter (hb_sanitize_context_t *c) const {
     return c->try_set (this, 0);
   }
   DEFINE_SIZE_STATIC (sizeof(OffsetType));
@@ -838,7 +848,8 @@ struct ArrayOf
     return TRACE_RETURN (true);
   }
 
-  inline bool sanitize (hb_sanitize_context_t *c) {
+  inline bool sanitize (hb_sanitize_context_t *c) const
+  {
     TRACE_SANITIZE (this);
     if (unlikely (!sanitize_shallow (c))) return TRACE_RETURN (false);
 
@@ -853,7 +864,8 @@ struct ArrayOf
 
     return TRACE_RETURN (true);
   }
-  inline bool sanitize (hb_sanitize_context_t *c, void *base) {
+  inline bool sanitize (hb_sanitize_context_t *c, const void *base) const
+  {
     TRACE_SANITIZE (this);
     if (unlikely (!sanitize_shallow (c))) return TRACE_RETURN (false);
     unsigned int count = len;
@@ -863,7 +875,8 @@ struct ArrayOf
     return TRACE_RETURN (true);
   }
   template <typename T>
-  inline bool sanitize (hb_sanitize_context_t *c, void *base, T user_data) {
+  inline bool sanitize (hb_sanitize_context_t *c, const void *base, T user_data) const
+  {
     TRACE_SANITIZE (this);
     if (unlikely (!sanitize_shallow (c))) return TRACE_RETURN (false);
     unsigned int count = len;
@@ -884,7 +897,8 @@ struct ArrayOf
   }
 
   private:
-  inline bool sanitize_shallow (hb_sanitize_context_t *c) {
+  inline bool sanitize_shallow (hb_sanitize_context_t *c) const
+  {
     TRACE_SANITIZE (this);
     return TRACE_RETURN (c->check_struct (this) && c->check_array (this, Type::static_size, len));
   }
@@ -910,12 +924,14 @@ struct OffsetListOf : OffsetArrayOf<Type>
     return this+this->array[i];
   }
 
-  inline bool sanitize (hb_sanitize_context_t *c) {
+  inline bool sanitize (hb_sanitize_context_t *c) const
+  {
     TRACE_SANITIZE (this);
     return TRACE_RETURN (OffsetArrayOf<Type>::sanitize (c, this));
   }
   template <typename T>
-  inline bool sanitize (hb_sanitize_context_t *c, T user_data) {
+  inline bool sanitize (hb_sanitize_context_t *c, T user_data) const
+  {
     TRACE_SANITIZE (this);
     return TRACE_RETURN (OffsetArrayOf<Type>::sanitize (c, this, user_data));
   }
@@ -949,12 +965,14 @@ struct HeadlessArrayOf
     return TRACE_RETURN (true);
   }
 
-  inline bool sanitize_shallow (hb_sanitize_context_t *c) {
+  inline bool sanitize_shallow (hb_sanitize_context_t *c) const
+  {
     return c->check_struct (this)
 	&& c->check_array (this, Type::static_size, len);
   }
 
-  inline bool sanitize (hb_sanitize_context_t *c) {
+  inline bool sanitize (hb_sanitize_context_t *c) const
+  {
     TRACE_SANITIZE (this);
     if (unlikely (!sanitize_shallow (c))) return TRACE_RETURN (false);
 

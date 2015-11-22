@@ -52,7 +52,14 @@ dictionary RTCDataChannelInit {
   unsigned short stream; // now id
 };
 
-dictionary RTCOfferOptions {
+dictionary RTCOfferAnswerOptions {
+//  boolean voiceActivityDetection = true; // TODO: support this (Bug 1184712)
+};
+
+dictionary RTCAnswerOptions : RTCOfferAnswerOptions {
+};
+
+dictionary RTCOfferOptions : RTCOfferAnswerOptions {
   long    offerToReceiveVideo;
   long    offerToReceiveAudio;
   boolean mozDontOfferDataChannel;
@@ -78,6 +85,9 @@ interface RTCDataChannel;
               optional object? constraints)]
 // moz-prefixed until sufficiently standardized.
 interface mozRTCPeerConnection : EventTarget  {
+  [Throws, StaticClassOverride="mozilla::dom::RTCCertificate"]
+  static Promise<RTCCertificate> generateCertificate (AlgorithmIdentifier keygenAlgorithm);
+
   [Pref="media.peerconnection.identity.enabled"]
   void setIdentityProvider (DOMString provider,
                             optional DOMString protocol,
@@ -85,7 +95,7 @@ interface mozRTCPeerConnection : EventTarget  {
   [Pref="media.peerconnection.identity.enabled"]
   Promise<DOMString> getIdentityAssertion();
   Promise<mozRTCSessionDescription> createOffer (optional RTCOfferOptions options);
-  Promise<mozRTCSessionDescription> createAnswer ();
+  Promise<mozRTCSessionDescription> createAnswer (optional RTCAnswerOptions options);
   Promise<void> setLocalDescription (mozRTCSessionDescription description);
   Promise<void> setRemoteDescription (mozRTCSessionDescription description);
   readonly attribute mozRTCSessionDescription? localDescription;
@@ -134,7 +144,7 @@ interface mozRTCPeerConnection : EventTarget  {
   attribute EventHandler onremovestream;
   attribute EventHandler oniceconnectionstatechange;
 
-  Promise<RTCStatsReport> getStats (MediaStreamTrack? selector);
+  Promise<RTCStatsReport> getStats (optional MediaStreamTrack? selector);
 
   // Data channel.
   RTCDataChannel createDataChannel (DOMString label,

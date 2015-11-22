@@ -58,6 +58,8 @@ SOURCES += [
     'pixman.c',
 ]
 
+ALLOW_COMPILER_WARNINGS = True
+
 FINAL_LIBRARY = 'gkmedias'
 LOCAL_INCLUDES += [
     '../../cairo/src',
@@ -79,18 +81,12 @@ use_vmx = False
 use_arm_simd_gcc = False
 use_arm_neon_gcc = False
 if '86' in CONFIG['OS_TEST']:
-    if '64' in CONFIG['OS_TEST']:
-        if CONFIG['GNU_CC']:
-            use_sse2 = True
-    else:
+    use_sse2 = True
+    if '64' not in CONFIG['OS_TEST']:
         if CONFIG['_MSC_VER']:
             use_mmx = True
-        if CONFIG['HAVE_GCC_ALIGN_ARG_POINTER']:
-            use_sse2 = True
     if CONFIG['GNU_CC']:
         use_mmx = True
-    if CONFIG['_MSC_VER']:
-        use_sse2 = True
 elif 'ppc' in CONFIG['OS_TEST']:
     if CONFIG['GNU_CC']:
         use_vmx = True
@@ -151,3 +147,7 @@ if CONFIG['GNU_CC']:
             '-Wno-tautological-compare',
             '-Wno-tautological-constant-out-of-range-compare',
         ]
+
+# See bug 386897.
+if CONFIG['OS_TARGET'] == 'Android' and CONFIG['MOZ_OPTIMIZE']:
+    CFLAGS += ['-O2']

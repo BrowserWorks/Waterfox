@@ -9,13 +9,13 @@
 #include "gfxContext.h"
 #include "mozilla/Attributes.h"
 #include "nsCOMPtr.h"
-#include "nsRefPtr.h"
+#include "mozilla/nsRefPtr.h"
 
 namespace mozilla {
 namespace gfx {
 class DrawTarget;
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 class MOZ_STACK_CLASS nsRenderingContext final
 {

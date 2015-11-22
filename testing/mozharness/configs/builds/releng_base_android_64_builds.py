@@ -25,7 +25,7 @@ config = {
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
     # decides whether we want to use moz_sign_cmd in env
     'enable_signing': True,
-    'purge_skip': ['info', 'rel-*:45d', 'tb-rel-*:45d'],
+    'purge_skip': ['info', 'rel-*:10d', 'tb-rel-*:10d'],
     'purge_basedirs':  ["/mock/users/cltbld/home/cltbld/build"],
     # mock shtuff
     'mock_mozilla_dir':  '/builds/mock_mozilla',
@@ -37,6 +37,7 @@ config = {
         ('/builds/mozilla-api.key', '/builds/mozilla-api.key'),
         ('/builds/mozilla-fennec-geoloc-api.key', '/builds/mozilla-fennec-geoloc-api.key'),
         ('/builds/crash-stats-api.token', '/builds/crash-stats-api.token'),
+        ('/usr/local/lib/hgext', '/usr/local/lib/hgext'),
     ],
     'enable_ccache': True,
     'vcs_share_base': '/builds/hg-shared',
@@ -55,6 +56,7 @@ config = {
     'platform': 'android',
     'stage_platform': 'android',
     'stage_product': 'mobile',
+    'publish_nightly_en_US_routes': True,
     'post_upload_include_platform': True,
     'enable_max_vsize': False,
     'use_package_as_marfile': True,

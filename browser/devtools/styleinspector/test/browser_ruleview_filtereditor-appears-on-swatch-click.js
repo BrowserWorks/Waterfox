@@ -10,7 +10,7 @@ const TEST_URL = TEST_URL_ROOT + "doc_filter.html";
 add_task(function*() {
   yield addTab(TEST_URL);
 
-  let {toolbox, inspector, view} = yield openRuleView();
+  let {view} = yield openRuleView();
 
   info("Getting the filter swatch element");
   let swatch = getRuleViewProperty(view, "body", "filter").valueSpan
@@ -18,8 +18,12 @@ add_task(function*() {
 
   let filterTooltip = view.tooltips.filterEditor;
   let onShow = filterTooltip.tooltip.once("shown");
+  let onRuleViewChanged = view.once("ruleview-changed");
   swatch.click();
   yield onShow;
+  // Clicking on swatch runs a preview of the current value
+  // and updates the rule-view
+  yield onRuleViewChanged;
 
   ok(true, "The shown event was emitted after clicking on swatch");
   ok(!inplaceEditor(swatch.parentNode),

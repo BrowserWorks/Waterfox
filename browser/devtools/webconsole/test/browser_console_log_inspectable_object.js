@@ -6,8 +6,9 @@
 
 "use strict";
 
-let test = asyncTest(function*() {
-  yield loadTab("data:text/html;charset=utf8,test for bug 676722 - inspectable objects for window.console");
+var test = asyncTest(function*() {
+  yield loadTab("data:text/html;charset=utf8,test for bug 676722 - " +
+                "inspectable objects for window.console");
 
   let hud = yield openConsole();
   hud.jsterm.clearOutput(true);

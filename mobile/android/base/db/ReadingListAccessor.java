@@ -9,7 +9,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import org.mozilla.gecko.mozglue.RobocopTarget;
+import org.mozilla.gecko.annotation.RobocopTarget;
 
 @RobocopTarget
 public interface ReadingListAccessor {
@@ -37,6 +37,7 @@ public interface ReadingListAccessor {
     void registerContentObserver(Context context, ContentObserver observer);
 
     void markAsRead(ContentResolver cr, long itemID);
+    void markAsUnread(ContentResolver cr, long itemID);
     void updateContent(ContentResolver cr, long itemID, String resolvedTitle, String resolvedURL, String excerpt);
     void deleteItem(ContentResolver cr, long itemID);
 }

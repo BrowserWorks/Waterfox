@@ -35,7 +35,7 @@ This is likely the same like id.heading in crashes.dtd. -->
 
 
 <!ENTITY aboutSupport.appBasicsTitle "Application Basics">
-<!ENTITY aboutSupport.appBasicsName "Waterfox">
+<!ENTITY aboutSupport.appBasicsName "Name">
 <!ENTITY aboutSupport.appBasicsVersion "Version">
 <!ENTITY aboutSupport.appBasicsBuildID "Build ID">
 
@@ -60,6 +60,8 @@ Windows/Mac use the term "Folder" instead of "Directory" -->
 <!ENTITY aboutSupport.appBasicsServiceWorkers "Registered Service Workers">
 
 <!ENTITY aboutSupport.appBasicsMultiProcessSupport "Multiprocess Windows">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Safe Mode">
 
 <!ENTITY aboutSupport.showDir.label "Open Directory">
 <!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific

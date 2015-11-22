@@ -47,9 +47,10 @@ MediaStreamPlayback.prototype = {
   startMedia : function(isResume) {
     var canPlayThroughFired = false;
 
-    // If we're initially running this media, check that the time is zero
+    // If we're playing this media element for the first time,
+    // check that the time is zero.
     if (!isResume) {
-      is(this.mediaStream.currentTime, 0,
+      is(this.mediaElement.currentTime, 0,
          "Before starting the media element, currentTime = 0");
     }
 
@@ -121,7 +122,7 @@ MediaStreamPlayback.prototype = {
                                          false);
 
       // Hooks up the media stream to the media element and starts playing it
-      this.mediaElement.mozSrcObject = this.mediaStream;
+      this.mediaElement.srcObject = this.mediaStream;
       this.mediaElement.play();
 
       // If canplaythrough doesn't fire in enough time, we fail the test
@@ -141,7 +142,7 @@ MediaStreamPlayback.prototype = {
    */
   stopMediaElement : function() {
     this.mediaElement.pause();
-    this.mediaElement.mozSrcObject = null;
+    this.mediaElement.srcObject = null;
   }
 }
 
@@ -227,6 +228,6 @@ function createHTML(options) {
   return scriptsReady.then(() => realCreateHTML(options));
 }
 
-function runTest(f) {
-  return scriptsReady.then(() => runTestWhenReady(f));
-}
+var runTest = testFunction => scriptsReady
+  .then(() => runTestWhenReady(testFunction))
+  .then(() => finish());

@@ -8,7 +8,7 @@
 const { Cc, Ci, Cu, Cr } = require("chrome");
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const { WebAudioFront } = require("devtools/server/actors/webaudio");
-let Promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
+var Promise = require("promise");
 
 function WebAudioEditorPanel (iframeWindow, toolbox) {
   this.panelWin = iframeWindow;
@@ -52,7 +52,9 @@ WebAudioEditorPanel.prototype = {
 
   // DevToolPanel API
 
-  get target() this._toolbox.target,
+  get target() {
+    return this._toolbox.target;
+  },
 
   destroy: function() {
     // Make sure this panel is not already destroyed.

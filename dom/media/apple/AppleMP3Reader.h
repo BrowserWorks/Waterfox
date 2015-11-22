@@ -6,6 +6,7 @@
 #define __AppleMP3Reader_h__
 
 #include "MediaDecoderReader.h"
+#include "MediaResource.h"
 #include "MP3FrameParser.h"
 #include "VideoUtils.h"
 
@@ -45,9 +46,10 @@ public:
                              AudioFileStreamPropertyID aPropertyID,
                              UInt32 *aFlags);
 
-  virtual void NotifyDataArrived(const char* aBuffer,
-                                 uint32_t aLength,
-                                 int64_t aOffset) override;
+protected:
+  virtual void NotifyDataArrivedInternal(uint32_t aLength,
+                                         int64_t aOffset) override;
+public:
 
   virtual bool IsMediaSeekable() override;
 
@@ -78,6 +80,9 @@ private:
   AudioConverterRef mAudioConverter;
 
   MP3FrameParser mMP3FrameParser;
+
+  MediaResourceIndex mResource;
+  NotifyDataArrivedFilter mFilter;
 };
 
 } // namespace mozilla

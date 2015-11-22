@@ -20,7 +20,7 @@ public class ScrollbarLayer extends Layer {
     private static final String LOGTAG = "GeckoScrollbarLayer";
 
     public static final long FADE_DELAY = 500; // milliseconds before fade-out starts
-    private static final float FADE_AMOUNT = 0.03f; // how much (as a percent) the scrollbar should fade per frame
+    private static final float FADE_MILLIS = 250; // how long the scrollbar should take to fade
 
     private final boolean mVertical;
     private float mOpacity;
@@ -141,16 +141,17 @@ public class ScrollbarLayer extends Layer {
     }
 
     /**
-     * Decrease the opacity of the scrollbar by one frame's worth.
+     * Set the opacity of the scrollbar depending on how much time has
+     * passed from the given start time, current time, and the constant duration.
      * Return true if the opacity was decreased, or false if the scrollbars
      * are already fully faded out.
      */
-    public boolean fade() {
+    public boolean fade(final long startMillis, final long currentMillis) {
         if (FloatUtils.fuzzyEquals(mOpacity, 0.0f)) {
             return false;
         }
         beginTransaction(); // called on compositor thread
-        mOpacity = Math.max(mOpacity - FADE_AMOUNT, 0.0f);
+        mOpacity = Math.max(1 - (currentMillis - startMillis) / FADE_MILLIS, 0.0f);
         endTransaction();
         return true;
     }
@@ -201,7 +202,6 @@ public class ScrollbarLayer extends Layer {
         float viewHeight = context.viewport.height();
 
         mBarRectF.set(mBarRect.left, viewHeight - mBarRect.top, mBarRect.right, viewHeight - mBarRect.bottom);
-        mBarRectF.offset(context.offset.x, -context.offset.y);
 
         // We take a 1-pixel slice from the center of the image and scale it to become the bar
         fillRectCoordBuffer(mCoords, mBarRectF, viewWidth, viewHeight, mBodyTexCoords, mTexWidth, mTexHeight);
@@ -285,9 +285,9 @@ public class ScrollbarLayer extends Layer {
     private void getVerticalRect(RenderContext context, RectF dest) {
         RectF viewport = context.viewport;
         RectF pageRect = context.pageRect;
-        float viewportHeight = viewport.height() - context.offset.y;
-        float barStart = ((viewport.top - context.offset.y - pageRect.top) * (viewportHeight / pageRect.height())) + mCapLength;
-        float barEnd = ((viewport.bottom - context.offset.y - pageRect.top) * (viewportHeight / pageRect.height())) - mCapLength;
+        float viewportHeight = viewport.height();
+        float barStart = ((viewport.top - pageRect.top) * (viewportHeight / pageRect.height())) + mCapLength;
+        float barEnd = ((viewport.bottom - pageRect.top) * (viewportHeight / pageRect.height())) - mCapLength;
         if (barStart > barEnd) {
             float middle = (barStart + barEnd) / 2.0f;
             barStart = barEnd = middle;
@@ -298,9 +298,9 @@ public class ScrollbarLayer extends Layer {
     private void getHorizontalRect(RenderContext context, RectF dest) {
         RectF viewport = context.viewport;
         RectF pageRect = context.pageRect;
-        float viewportWidth = viewport.width() - context.offset.x;
-        float barStart = ((viewport.left - context.offset.x - pageRect.left) * (viewport.width() / pageRect.width())) + mCapLength;
-        float barEnd = ((viewport.right - context.offset.x - pageRect.left) * (viewport.width() / pageRect.width())) - mCapLength;
+        float viewportWidth = viewport.width();
+        float barStart = ((viewport.left - pageRect.left) * (viewport.width() / pageRect.width())) + mCapLength;
+        float barEnd = ((viewport.right - pageRect.left) * (viewport.width() / pageRect.width())) - mCapLength;
         if (barStart > barEnd) {
             float middle = (barStart + barEnd) / 2.0f;
             barStart = barEnd = middle;

@@ -1,0 +1,27 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2015 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/collation/th.xml
+// *
+// ***************************************************************************
+th{
+    Version{"2.0.96.14"}
+    collations{
+        standard{
+            Sequence{
+                "[normalization on][alternate shifted][reorder Thai]"
+                "&[before 1]๚<ฯ"
+                "&๛<ๆ"
+                "&๎<<์"
+                "&[before 1]ะ<ํ"
+                "&า<<<ๅ"
+                "&าํ<<<ํา<<<ำ"
+                "&ๅํ<<<ํๅ"
+                "&ไ<ฺ"
+            }
+            Version{"27.0.1"}
+        }
+    }
+}

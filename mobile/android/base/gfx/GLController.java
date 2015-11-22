@@ -5,11 +5,11 @@
 
 package org.mozilla.gecko.gfx;
 
+import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.GeckoThread;
-import org.mozilla.gecko.mozglue.generatorannotations.WrapElementForJNI;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.util.Log;
@@ -142,7 +142,7 @@ public class GLController {
         // two conditions are satisfied, we can be relatively sure that the compositor creation will
         // happen without needing to block anywhere. Do it with a synchronous Gecko event so that the
         // Android doesn't have a chance to destroy our surface in between.
-        if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
+        if (GeckoThread.isRunning()) {
             GeckoAppShell.sendEventToGeckoSync(GeckoEvent.createCompositorCreateEvent(mWidth, mHeight));
         }
     }
@@ -250,7 +250,7 @@ public class GLController {
         return mEGLSurfaceForCompositor != null;
     }
 
-    @WrapElementForJNI(allowMultithread = true, stubName = "CreateEGLSurfaceForCompositorWrapper")
+    @WrapForJNI(allowMultithread = true, stubName = "CreateEGLSurfaceForCompositorWrapper")
     private synchronized EGLSurface createEGLSurfaceForCompositor() {
         AttemptPreallocateEGLSurfaceForCompositor();
         EGLSurface result = mEGLSurfaceForCompositor;
@@ -272,6 +272,7 @@ public class GLController {
         if (mCompositorCreated) {
             GeckoAppShell.scheduleResumeComposition(width, height);
             GeckoAppShell.sendEventToGecko(GeckoEvent.createCompositorResumeEvent());
+            mView.requestRender();
         }
     }
 

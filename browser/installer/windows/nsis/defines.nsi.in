@@ -64,7 +64,7 @@
 #ifdef HAVE_64BIT_BUILD
 !define HAVE_64BIT_BUILD
 !define ARCH "x64"
-!define MinSupportedVer "Microsoft Windows XP SP2 x64"
+!define MinSupportedVer "Microsoft Windows 7 x64"
 #else
 !define ARCH "x86"
 !define MinSupportedVer "Microsoft Windows XP SP2"
@@ -77,11 +77,11 @@
 # File details shared by both the installer and uninstaller
 VIProductVersion "1.0.0.0"
 VIAddVersionKey "ProductName"     "${BrandShortName}"
-VIAddVersionKey "CompanyName"     "Waterfox Ltd"
+VIAddVersionKey "CompanyName"     "${CompanyName}"
 #ifdef MOZ_OFFICIAL_BRANDING
-VIAddVersionKey "LegalTrademarks" "${BrandShortName} is a part of Waterfox Ltd."
+VIAddVersionKey "LegalTrademarks" "${BrandShortName} is a Trademark of The Mozilla Foundation."
 #endif
-VIAddVersionKey "LegalCopyright"  "Waterfox Ltd"
+VIAddVersionKey "LegalCopyright"  "${CompanyName}"
 VIAddVersionKey "FileVersion"     "${AppVersion}"
 VIAddVersionKey "ProductVersion"  "${AppVersion}"
 # Comments is not used but left below commented out for future reference

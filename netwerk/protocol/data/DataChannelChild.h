@@ -23,7 +23,7 @@ class DataChannelChild : public nsDataChannel
 public:
     explicit DataChannelChild(nsIURI *uri);
 
-    NS_DECL_ISUPPORTS
+    NS_DECL_ISUPPORTS_INHERITED
     NS_DECL_NSICHILDCHANNEL
 
 protected:
@@ -37,7 +37,7 @@ private:
     bool mIPCOpen;
 };
 
-} // namespace mozilla
 } // namespace net
+} // namespace mozilla
 
 #endif /* NS_DATACHANNELCHILD_H */

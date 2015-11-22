@@ -67,16 +67,17 @@ AddSandboxAllowedFile(vector<std::wstring>& aAllowedFiles, nsIProperties* aDirSv
     if (!aSuffix.IsEmpty()) {
         userDirPath.Append(aSuffix);
     }
-    aAllowedFiles.push_back(userDirPath.get());
+    aAllowedFiles.push_back(std::wstring(userDirPath.get()));
     return;
 }
 
 static void
 AddSandboxAllowedFiles(int32_t aSandboxLevel,
                        vector<std::wstring>& aAllowedFilesRead,
-                       vector<std::wstring>& aAllowedFilesReadWrite)
+                       vector<std::wstring>& aAllowedFilesReadWrite,
+                       vector<std::wstring>& aAllowedDirectories)
 {
-    if (aSandboxLevel < 3) {
+    if (aSandboxLevel < 2) {
         return;
     }
 
@@ -87,14 +88,33 @@ AddSandboxAllowedFiles(int32_t aSandboxLevel,
         return;
     }
 
-    AddSandboxAllowedFile(aAllowedFilesRead, dirSvc, NS_WIN_HOME_DIR);
-    AddSandboxAllowedFile(aAllowedFilesRead, dirSvc, NS_WIN_HOME_DIR,
-                          NS_LITERAL_STRING("\\*"));
+    // Higher than level 2 currently removes the users own rights.
+    if (aSandboxLevel > 2) {
+        AddSandboxAllowedFile(aAllowedFilesRead, dirSvc, NS_WIN_HOME_DIR);
+        AddSandboxAllowedFile(aAllowedFilesRead, dirSvc, NS_WIN_HOME_DIR,
+                              NS_LITERAL_STRING("\\*"));
+    }
 
+    // Level 2 and above is now using low integrity, so we need to give write
+    // access to the Flash directories. Access also has to be given to create
+    // the parent directories as they may not exist.
+    // This should be made Flash specific (Bug 1171396).
     AddSandboxAllowedFile(aAllowedFilesReadWrite, dirSvc, NS_WIN_APPDATA_DIR,
                           NS_LITERAL_STRING("\\Macromedia\\Flash Player\\*"));
+    AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_APPDATA_DIR,
+                          NS_LITERAL_STRING("\\Macromedia\\Flash Player"));
+    AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_APPDATA_DIR,
+                          NS_LITERAL_STRING("\\Macromedia"));
     AddSandboxAllowedFile(aAllowedFilesReadWrite, dirSvc, NS_WIN_APPDATA_DIR,
                           NS_LITERAL_STRING("\\Adobe\\Flash Player\\*"));
+    AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_APPDATA_DIR,
+                          NS_LITERAL_STRING("\\Adobe\\Flash Player"));
+    AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_APPDATA_DIR,
+                          NS_LITERAL_STRING("\\Adobe"));
+
+    // Write access to the Temp directory is needed in some mochitest crash
+    // tests.
+    // Bug 1171393 tracks removing this requirement.
     AddSandboxAllowedFile(aAllowedFilesReadWrite, dirSvc, NS_OS_TEMP_DIR,
                           NS_LITERAL_STRING("\\*"));
 }
@@ -107,7 +127,7 @@ PluginProcessParent::Launch(mozilla::UniquePtr<LaunchCompleteTask> aLaunchComple
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
     mSandboxLevel = aSandboxLevel;
     AddSandboxAllowedFiles(mSandboxLevel, mAllowedFilesRead,
-                           mAllowedFilesReadWrite);
+                           mAllowedFilesReadWrite, mAllowedDirectories);
 #else
     if (aSandboxLevel != 0) {
         MOZ_ASSERT(false,

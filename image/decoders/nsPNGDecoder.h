@@ -24,17 +24,19 @@ class RasterImage;
 class nsPNGDecoder : public Decoder
 {
 public:
-  explicit nsPNGDecoder(RasterImage* aImage);
   virtual ~nsPNGDecoder();
 
   virtual void InitInternal() override;
   virtual void WriteInternal(const char* aBuffer, uint32_t aCount) override;
   virtual Telemetry::ID SpeedHistogram() override;
 
-  void CreateFrame(png_uint_32 x_offset, png_uint_32 y_offset,
-                   int32_t width, int32_t height,
-                   gfx::SurfaceFormat format);
+  nsresult CreateFrame(png_uint_32 aXOffset, png_uint_32 aYOffset,
+                       int32_t aWidth, int32_t aHeight,
+                       gfx::SurfaceFormat aFormat);
   void EndImageFrame();
+
+  void CheckForTransparency(gfx::SurfaceFormat aFormat,
+                            const gfx::IntRect& aFrameRect);
 
   // Check if PNG is valid ICO (32bpp RGBA)
   // http://blogs.msdn.com/b/oldnewthing/archive/2010/10/22/10079192.aspx
@@ -67,6 +69,17 @@ public:
     }
   }
 
+private:
+  friend class DecoderFactory;
+  friend class nsICODecoder;
+
+  // Decoders should only be instantiated via DecoderFactory.
+  // XXX(seth): nsICODecoder is temporarily an exception to this rule.
+  explicit nsPNGDecoder(RasterImage* aImage);
+
+  void PostPartialInvalidation(const IntRect& aInvalidRegion);
+  void PostFullInvalidation();
+
 public:
   png_structp mPNG;
   png_infop mInfo;
@@ -78,7 +91,7 @@ public:
 
   gfx::SurfaceFormat format;
 
-  // For size decodes
+  // For metadata decodes.
   uint8_t mSizeBytes[8]; // Space for width and height, both 4 bytes
   uint32_t mHeaderBytesRead;
 
@@ -88,6 +101,7 @@ public:
   uint8_t mChannels;
   bool mFrameIsHidden;
   bool mDisablePremultipliedAlpha;
+  bool mSuccessfulEarlyFinish;
 
   struct AnimFrameInfo
   {

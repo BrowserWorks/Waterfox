@@ -31,9 +31,9 @@ const CHILD_SCRIPT = "resource://gre/modules/addons/Content.js";
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-let gSingleton = null;
+var gSingleton = null;
 
-let gParentMM = null;
+var gParentMM = null;
 
 
 function amManager() {
@@ -47,6 +47,9 @@ function amManager() {
   gParentMM = Cc["@mozilla.org/parentprocessmessagemanager;1"]
                  .getService(Ci.nsIMessageListenerManager);
   gParentMM.addMessageListener(MSG_INSTALL_ENABLED, this);
+
+  // Needed so receiveMessage can be called directly by JS callers
+  this.wrappedJSObject = this;
 }
 
 amManager.prototype = {

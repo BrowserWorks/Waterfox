@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<panel id="identity-popup"
+       type="arrow"
+       hidden="true"
+       onpopupshown="gIdentityHandler.onPopupShown(event);"
+       onpopuphidden="gIdentityHandler.onPopupHidden(event);"
+       orient="vertical">
+
+  <broadcasterset>
+    <broadcaster id="identity-popup-content-host" class="identity-popup-headline" crop="start"/>
+    <broadcaster id="identity-popup-mcb-learn-more" class="text-link plain" value="&identity.learnMore;"/>
+  </broadcasterset>
+
+  <panelmultiview id="identity-popup-multiView"
+                  mainViewId="identity-popup-mainView">
+    <panelview id="identity-popup-mainView" flex="1">
+
+      <!-- Security Section -->
+      <hbox id="identity-popup-security" class="identity-popup-section">
+        <vbox id="identity-popup-security-content" flex="1">
+          <label observes="identity-popup-content-host"/>
+          <description class="identity-popup-connection-not-secure"
+                       value="&identity.connectionNotSecure;"
+                       when-connection="not-secure"/>
+          <description class="identity-popup-connection-secure"
+                       value="&identity.connectionSecure;"
+                       when-connection="secure secure-ev"/>
+          <description value="&identity.connectionInternal;"
+                       when-connection="chrome"/>
+          <description value="&identity.connectionFile;"
+                       when-connection="file"/>
+
+          <vbox id="identity-popup-security-descriptions">
+            <description class="identity-popup-warning-gray"
+                         when-mixedcontent="active-blocked">&identity.activeBlocked;</description>
+            <description class="identity-popup-warning-yellow"
+                         when-mixedcontent="passive-loaded">&identity.passiveLoaded;</description>
+            <description when-mixedcontent="active-loaded">&identity.activeLoaded;</description>
+            <description class="identity-popup-warning-yellow"
+                         when-ciphers="weak">&identity.weakEncryption;</description>
+          </vbox>
+        </vbox>
+        <button id="identity-popup-security-expander"
+                class="identity-popup-expander"
+                when-connection="not-secure secure secure-ev"
+                oncommand="gIdentityHandler.toggleSubView('security', this)"/>
+      </hbox>
+
+      <!-- Tracking Protection Section -->
+      <hbox id="tracking-protection-container"
+            class="identity-popup-section"
+            when-connection="not-secure secure secure-ev file">
+        <vbox id="tracking-protection-content" flex="1">
+          <description class="identity-popup-headline"
+                       crop="end"
+                       value="&trackingProtection.title;" />
+
+          <label id="tracking-blocked"
+                 crop="end">&trackingProtection.detectedBlocked3;</label>
+          <label id="tracking-loaded"
+                 crop="end">&trackingProtection.detectedNotBlocked3;</label>
+          <label id="tracking-not-detected"
+                 crop="end">&trackingProtection.notDetected3;</label>
+
+          <button id="tracking-action-unblock"
+                  label="&trackingProtection.unblock.label;"
+                  accesskey="&trackingProtection.unblock.accesskey;"
+                  oncommand="TrackingProtection.disableForCurrentPage();" />
+          <button id="tracking-action-unblock-private"
+                  label="&trackingProtection.unblockPrivate.label;"
+                  accesskey="&trackingProtection.unblockPrivate.accesskey;"
+                  oncommand="TrackingProtection.disableForCurrentPage();" />
+          <button id="tracking-action-block"
+                  label="&trackingProtection.block2.label;"
+                  accesskey="&trackingProtection.block2.accesskey;"
+                  oncommand="TrackingProtection.enableForCurrentPage();" />
+        </vbox>
+      </hbox>
+
+      <!-- Permissions Section -->
+      <hbox class="identity-popup-section">
+        <vbox id="identity-popup-permissions-content" flex="1">
+          <label class="identity-popup-headline"
+                 value="&identity.permissions;"/>
+          <vbox id="identity-popup-permission-list"/>
+          <description>&identity.permissionsEmpty;</description>
+        </vbox>
+      </hbox>
+    </panelview>
+
+    <!-- Security SubView -->
+    <panelview id="identity-popup-securityView" flex="1">
+      <vbox id="identity-popup-securityView-header">
+        <label observes="identity-popup-content-host"/>
+        <description class="identity-popup-connection-not-secure"
+                     value="&identity.connectionNotSecure;"
+                     when-connection="not-secure"/>
+        <description class="identity-popup-connection-secure"
+                     value="&identity.connectionSecure;"
+                     when-connection="secure secure-ev"/>
+      </vbox>
+
+      <vbox id="identity-popup-securityView-body">
+        <!-- (EV) Certificate Information -->
+        <description id="identity-popup-content-verified-by"
+                     when-connection="secure-ev">&identity.connectionVerified1;</description>
+        <description id="identity-popup-content-owner"
+                     when-connection="secure-ev"
+                     class="header"/>
+        <description id="identity-popup-content-supplemental"
+                     when-connection="secure-ev"/>
+        <description id="identity-popup-content-verifier"
+                     when-connection="secure secure-ev"/>
+
+        <!-- Connection is Not Secure -->
+        <description when-connection="not-secure">&identity.description.insecure;</description>
+
+        <!-- Weak Cipher -->
+        <description when-ciphers="weak">&identity.description.weakCipher;</description>
+        <description class="identity-popup-warning-yellow"
+                     when-ciphers="weak">&identity.description.weakCipher2;</description>
+
+        <!-- Active Mixed Content Blocked -->
+        <description class="identity-popup-warning-gray"
+                     when-mixedcontent="active-blocked">&identity.description.activeBlocked; <label observes="identity-popup-mcb-learn-more"/></description>
+
+        <!-- Passive Mixed Content Loaded -->
+        <description when-mixedcontent="passive-loaded">&identity.description.passiveLoaded;</description>
+        <description class="identity-popup-warning-yellow"
+                     when-mixedcontent="passive-loaded">&identity.description.passiveLoaded2; <label observes="identity-popup-mcb-learn-more"/></description>
+
+        <!-- Passive Mixed Content Loaded, Active Mixed Content Blocked -->
+        <description when-mixedcontent="passive-loaded active-blocked">&identity.description.passiveLoaded;</description>
+        <description when-mixedcontent="passive-loaded active-blocked"
+                     class="identity-popup-warning-yellow">&identity.description.passiveLoaded3; <label observes="identity-popup-mcb-learn-more"/></description>
+
+        <!-- Active Mixed Content Blocking Disabled -->
+        <description when-mixedcontent="active-loaded">&identity.description.activeLoaded;</description>
+        <description when-mixedcontent="active-loaded">&identity.description.activeLoaded2; <label observes="identity-popup-mcb-learn-more"/></description>
+
+        <!-- Buttons to enable/disable mixed content blocking. -->
+        <button when-mixedcontent="active-blocked"
+                label="&identity.disableMixedContentBlocking.label;"
+                accesskey="&identity.disableMixedContentBlocking.accesskey;"
+                oncommand="gIdentityHandler.disableMixedContentProtection()"/>
+        <button when-mixedcontent="active-loaded"
+                label="&identity.enableMixedContentBlocking.label;"
+                accesskey="&identity.enableMixedContentBlocking.accesskey;"
+                oncommand="gIdentityHandler.enableMixedContentProtection()"/>
+
+        <!-- More Security Information -->
+        <button label="&identity.moreInfoLinkText2;"
+                oncommand="gIdentityHandler.handleMoreInfoClick(event);"/>
+      </vbox>
+
+    </panelview>
+  </panelmultiview>
+</panel>

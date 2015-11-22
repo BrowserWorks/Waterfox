@@ -10,7 +10,7 @@ var gClient;
 var gThreadClient;
 var gTabClient;
 
-Components.utils.import("resource:///modules/devtools/SourceMap.jsm");
+const {SourceNode} = require("source-map");
 
 function run_test()
 {
@@ -77,7 +77,7 @@ function setup_new_code() {
   code += "\n//# sourceMappingURL=" + getFileUrl(MAP_FILE_NAME, true);
   writeFile(MAP_FILE_NAME, map.toString());
 
-  gClient.addOneTimeListener("newSource", test_new_sources);
+  gThreadClient.addOneTimeListener("newSource", test_new_sources);
   Cu.evalInSandbox(code,
                    gDebuggee,
                    "1.8",

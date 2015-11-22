@@ -11,9 +11,9 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-const require = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools.require;
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const Editor  = require("devtools/sourceeditor/editor");
-const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const promise = require("promise");
 const {CssLogic} = require("devtools/styleinspector/css-logic");
 const {console} = require("resource://gre/modules/devtools/Console.jsm");
 
@@ -386,7 +386,7 @@ StyleSheetEditor.prototype = {
     sourceEditor.on("dirty-change", this._onPropertyChange);
 
     return sourceEditor.appendTo(inputElement).then(() => {
-      sourceEditor.on("save", this.saveToFile);
+      sourceEditor.on("saveRequested", this.saveToFile);
 
       if (this.styleSheet.update) {
         sourceEditor.on("change", this.updateStyleSheet);
@@ -715,7 +715,7 @@ StyleSheetEditor.prototype = {
   destroy: function() {
     if (this._sourceEditor) {
       this._sourceEditor.off("dirty-change", this._onPropertyChange);
-      this._sourceEditor.off("save", this.saveToFile);
+      this._sourceEditor.off("saveRequested", this.saveToFile);
       this._sourceEditor.off("change", this.updateStyleSheet);
       if (this.highlighter && this.walker && this._sourceEditor.container) {
         this._sourceEditor.container.removeEventListener("mousemove",

@@ -5,28 +5,22 @@
 
 package org.mozilla.gecko.toolbar;
 
-import org.mozilla.gecko.ActivityHandlerHelper;
-import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.AboutPages;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.CustomEditText;
-import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.InputMethods;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.toolbar.BrowserToolbar.OnCommitListener;
 import org.mozilla.gecko.toolbar.BrowserToolbar.OnDismissListener;
 import org.mozilla.gecko.toolbar.BrowserToolbar.OnFilterListener;
-import org.mozilla.gecko.util.ActivityResultHandler;
+import org.mozilla.gecko.util.DrawableUtil;
 import org.mozilla.gecko.util.GamepadUtils;
 import org.mozilla.gecko.util.StringUtils;
+import org.mozilla.gecko.util.HardwareUtils;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.speech.RecognizerIntent;
+import android.graphics.Rect;
 import android.text.Editable;
 import android.text.NoCopySpan;
 import android.text.Selection;
@@ -37,18 +31,14 @@ import android.text.style.BackgroundColorSpan;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputMethodManager;
-import android.view.ViewParent;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.TextView;
-
-import java.util.List;
 
 /**
 * {@code ToolbarEditText} is the text entry used when the toolbar
@@ -103,12 +93,18 @@ public class ToolbarEditText extends CustomEditText
         setOnKeyPreImeListener(new KeyPreImeListener());
         setOnSelectionChangedListener(new SelectionChangeListener());
         addTextChangedListener(new TextChangeListener());
-        configureCompoundDrawables();
+        // Set an inactive search icon on tablet devices when in editing mode
+        updateSearchIcon(false);
     }
 
     @Override
     public void onFocusChanged(boolean gainFocus, int direction, Rect previouslyFocusedRect) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect);
+
+        // Make search icon inactive when edit toolbar search term isn't a user entered
+        // search term
+        final boolean isActive = !TextUtils.isEmpty(getText());
+        updateSearchIcon(isActive);
 
         if (gainFocus) {
             resetAutocompleteState();
@@ -129,7 +125,17 @@ public class ToolbarEditText extends CustomEditText
 
     @Override
     public void setText(final CharSequence text, final TextView.BufferType type) {
-        super.setText(text, type);
+        final String textString = (text == null) ? "" : text.toString();
+
+        // If we're on the home or private browsing page, we don't set the "about" url.
+        final CharSequence finalText;
+        if (AboutPages.isAboutHome(textString) || AboutPages.isAboutPrivateBrowsing(textString)) {
+            finalText = "";
+        } else {
+            finalText = text;
+        }
+
+        super.setText(finalText, type);
 
         // Any autocomplete text would have been overwritten, so reset our autocomplete states.
         resetAutocompleteState();
@@ -152,6 +158,33 @@ public class ToolbarEditText extends CustomEditText
 
     void setToolbarPrefs(final ToolbarPrefs prefs) {
         mPrefs = prefs;
+    }
+
+    /**
+     * Update the search icon at the left of the edittext based
+     * on its state.
+     *
+     * @param isActive The state of the edittext. Active is when the initialized
+     *         text has changed and is not empty.
+     */
+    void updateSearchIcon(boolean isActive) {
+        if (!HardwareUtils.isTablet()) {
+            return;
+        }
+
+        // When on tablet show a magnifying glass in editing mode
+        final int searchDrawableId = R.drawable.search_icon_active;
+        final Drawable searchDrawable;
+        if (!isActive) {
+            searchDrawable = DrawableUtil.tintDrawable(getContext(), searchDrawableId, R.color.placeholder_grey);
+        } else {
+            if (isPrivateMode()) {
+                searchDrawable = DrawableUtil.tintDrawable(getContext(), searchDrawableId, R.color.tabs_tray_icon_grey);
+            } else {
+                searchDrawable = getResources().getDrawable(searchDrawableId);
+            }
+        }
+        setCompoundDrawablesWithIntrinsicBounds(searchDrawable, null, null, null);
     }
 
     /**
@@ -470,98 +503,6 @@ public class ToolbarEditText extends CustomEditText
         };
     }
 
-    /**
-     * Detect if we are able to enable the 'buttons' made from compound drawables.
-     *
-     * Currently, only voice input.
-     */
-    private void configureCompoundDrawables() {
-        if (!AppConstants.NIGHTLY_BUILD || !supportsVoiceRecognizer()) {
-            // Remove the mic button if we can't support the voice recognizer.
-            setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
-            return;
-        }
-        setOnTouchListener(new VoiceSearchOnTouchListener());
-    }
-
-    private boolean supportsVoiceRecognizer() {
-        final Intent intent = createVoiceRecognizerIntent();
-        return intent.resolveActivity(getContext().getPackageManager()) != null;
-    }
-
-    private Intent createVoiceRecognizerIntent() {
-        final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH);
-        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, getResources().getString(R.string.voicesearch_prompt));
-        return intent;
-    }
-
-    private void launchVoiceRecognizer() {
-        final Intent intent = createVoiceRecognizerIntent();
-
-        Activity activity = GeckoAppShell.getGeckoInterface().getActivity();
-        ActivityHandlerHelper.startIntentForActivity(activity, intent, new ActivityResultHandler() {
-            @Override
-            public void onActivityResult(int resultCode, Intent data) {
-                switch (resultCode) {
-                    case RecognizerIntent.RESULT_CLIENT_ERROR:
-                    case RecognizerIntent.RESULT_NETWORK_ERROR:
-                    case RecognizerIntent.RESULT_SERVER_ERROR:
-                        // We have an temporarily unrecoverable error.
-                        handleVoiceSearchError(false);
-                        break;
-                    case RecognizerIntent.RESULT_AUDIO_ERROR:
-                    case RecognizerIntent.RESULT_NO_MATCH:
-                        // Maybe the user can say it differently?
-                        handleVoiceSearchError(true);
-                        break;
-                    case Activity.RESULT_CANCELED:
-                        break;
-                }
-
-                if (resultCode != Activity.RESULT_OK) {
-                    return;
-                }
-
-                // We have RESULT_OK, not RESULT_NO_MATCH so it should be safe to assume that
-                // we have at least one match. We only need one: this will be
-                // used for showing the user search engines with this search term in it.
-                List<String> voiceStrings = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-                String text = voiceStrings.get(0);
-                setText(text);
-                setSelection(0, text.length());
-            }
-        });
-    }
-
-    private void handleVoiceSearchError(boolean offerRetry) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
-                .setTitle(R.string.voicesearch_failed_title)
-                .setIcon(R.drawable.icon).setNeutralButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-
-        if (offerRetry) {
-            builder.setMessage(R.string.voicesearch_failed_message_recoverable)
-                   .setNegativeButton(R.string.voicesearch_failed_retry, new DialogInterface.OnClickListener() {
-                       @Override
-                       public void onClick(DialogInterface dialog, int which) {
-                           launchVoiceRecognizer();
-                       }
-                   });
-        } else {
-            builder.setMessage(R.string.voicesearch_failed_message);
-        }
-
-        AlertDialog dialog = builder.create();
-
-        dialog.show();
-    }
-
     private class SelectionChangeListener implements OnSelectionChangedListener {
         @Override
         public void onSelectionChanged(final int selStart, final int selEnd) {
@@ -621,6 +562,9 @@ public class ToolbarEditText extends CustomEditText
                 // until any new autocomplete text gets added.
                 removeAutocomplete(editable);
             }
+
+            // Update search icon with an active state since user is typing
+            updateSearchIcon(textLength > 0);
 
             if (mFilterListener != null) {
                 mFilterListener.onFilter(text, doAutocomplete ? ToolbarEditText.this : null);
@@ -703,40 +647,6 @@ public class ToolbarEditText extends CustomEditText
             }
 
             return false;
-        }
-    }
-
-    private class VoiceSearchOnTouchListener implements View.OnTouchListener {
-        private int mVoiceSearchIconIndex = -1;
-        private Drawable mVoiceSearchIcon;
-
-        public VoiceSearchOnTouchListener() {
-            Drawable[] drawables = getCompoundDrawables();
-            for (int i = 0; i < drawables.length; i++) {
-                if (drawables[i] != null) {
-                    mVoiceSearchIcon = drawables[i];
-                    mVoiceSearchIconIndex = i;
-                }
-            }
-        }
-
-        @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            boolean tapped;
-            switch (mVoiceSearchIconIndex) {
-                case 0:
-                    tapped = event.getX() < (getPaddingLeft() + mVoiceSearchIcon.getIntrinsicWidth());
-                    break;
-                case 2:
-                    tapped = event.getX() > (getWidth() - getPaddingRight() - mVoiceSearchIcon.getIntrinsicWidth());
-                    break;
-                default:
-                    tapped = false;
-            }
-            if (tapped) {
-                launchVoiceRecognizer();
-            }
-            return tapped;
         }
     }
 }

@@ -42,7 +42,7 @@ const DelayValues WindowsCaptureDelays[NoWindowsCaptureDelays] = {
 };
 
 
-  void _FreeMediaType(AM_MEDIA_TYPE& mt)
+void _FreeMediaType(AM_MEDIA_TYPE& mt)
 {
     if (mt.cbFormat != 0)
     {
@@ -617,6 +617,10 @@ int32_t DeviceInfoDS::CreateCapabilityMap(
                     else
                         capability.maxFPS = 0;
                 }
+
+                if (frameDurationList) {
+                  CoTaskMemFree((PVOID)frameDurationList); // NULL not safe
+                }
             }
             else // use existing method in case IAMVideoControl is not supported
             {
@@ -674,24 +678,27 @@ int32_t DeviceInfoDS::CreateCapabilityMap(
                 StringFromGUID2(pmt->subtype, strGuid, 39);
                 WEBRTC_TRACE( webrtc::kTraceWarning,
                              webrtc::kTraceVideoCapture, _id,
-                             "Device support unknown media type %ls, width %d, height %d",
+                             "Device supports unknown media type %ls",
                              strGuid);
-                continue;
+                // leave rawType=kVideoUnknown
+                assert(capability.rawType == kVideoUnknown);
             }
 
-            // Get the expected capture delay from the static list
-            capability.expectedCaptureDelay
-                            = GetExpectedCaptureDelay(WindowsCaptureDelays,
-                                                      NoWindowsCaptureDelays,
-                                                      productId,
-                                                      capability.width,
-                                                      capability.height);
-            _captureCapabilities.push_back(capability);
-            _captureCapabilitiesWindows.push_back(capability);
-            WEBRTC_TRACE( webrtc::kTraceInfo, webrtc::kTraceVideoCapture, _id,
-                         "Camera capability, width:%d height:%d type:%d fps:%d",
-                         capability.width, capability.height,
-                         capability.rawType, capability.maxFPS);
+            if (capability.rawType != kVideoUnknown) {
+              // Get the expected capture delay from the static list
+              capability.expectedCaptureDelay
+                = GetExpectedCaptureDelay(WindowsCaptureDelays,
+                                          NoWindowsCaptureDelays,
+                                          productId,
+                                          capability.width,
+                                          capability.height);
+              _captureCapabilities.push_back(capability);
+              _captureCapabilitiesWindows.push_back(capability);
+              WEBRTC_TRACE( webrtc::kTraceInfo, webrtc::kTraceVideoCapture, _id,
+                            "Camera capability, width:%d height:%d type:%d fps:%d",
+                            capability.width, capability.height,
+                            capability.rawType, capability.maxFPS);
+            }
         }
         _FreeMediaType(*pmt);
         pmt = NULL;

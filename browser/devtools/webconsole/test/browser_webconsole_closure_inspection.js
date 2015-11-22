@@ -6,32 +6,43 @@
 // Check that inspecting a closure in the variables view sidebar works when
 // execution is paused.
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-closures.html";
+"use strict";
 
-let gWebConsole, gJSTerm, gVariablesView;
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-closures.html";
 
-function test()
-{
+var gWebConsole, gJSTerm, gVariablesView;
+
+function test() {
   registerCleanupFunction(() => {
     gWebConsole = gJSTerm = gVariablesView = null;
   });
+
+  function resumeDebugger(toolbox, panelWin, deferred) {
+    panelWin.gThreadClient.addOneTimeListener("resumed", () => {
+      ok(true, "Debugger resumed");
+      deferred.resolve({ toolbox: toolbox, panelWin: panelWin });
+    });
+  }
+
+  function fetchScopes(hud, toolbox, panelWin, deferred) {
+    panelWin.once(panelWin.EVENTS.FETCHED_SCOPES, () => {
+      ok(true, "Scopes were fetched");
+      toolbox.selectTool("webconsole").then(() => consoleOpened(hud));
+      deferred.resolve();
+    });
+  }
 
   loadTab(TEST_URI).then(() => {
     openConsole().then((hud) => {
       openDebugger().then(({ toolbox, panelWin }) => {
         let deferred = promise.defer();
-        panelWin.gThreadClient.addOneTimeListener("resumed", (aEvent, aPacket) => {
-          ok(true, "Debugger resumed");
-          deferred.resolve({ toolbox: toolbox, panelWin: panelWin });
-        });
+        resumeDebugger(toolbox, panelWin, deferred);
+
         return deferred.promise;
       }).then(({ toolbox, panelWin }) => {
         let deferred = promise.defer();
-        panelWin.once(panelWin.EVENTS.FETCHED_SCOPES, (aEvent, aPacket) => {
-          ok(true, "Scopes were fetched");
-          toolbox.selectTool("webconsole").then(() => consoleOpened(hud));
-          deferred.resolve();
-        });
+        fetchScopes(hud, toolbox, panelWin, deferred);
 
         let button = content.document.querySelector("button");
         ok(button, "button element found");
@@ -39,12 +50,11 @@ function test()
 
         return deferred.promise;
       });
-    })
+    });
   });
 }
 
-function consoleOpened(hud)
-{
+function consoleOpened(hud) {
   gWebConsole = hud;
   gJSTerm = hud.jsterm;
   gJSTerm.execute("window.george.getName");
@@ -59,28 +69,33 @@ function consoleOpened(hud)
   }).then(onExecuteGetName);
 }
 
-function onExecuteGetName(aResults)
-{
-  let clickable = aResults[0].clickableElements[0];
+function onExecuteGetName(results) {
+  let clickable = results[0].clickableElements[0];
   ok(clickable, "clickable object found");
 
   gJSTerm.once("variablesview-fetched", onGetNameFetch);
-  EventUtils.synthesizeMouse(clickable, 2, 2, {}, gWebConsole.iframeWindow);
+  let contextMenu =
+      gWebConsole.iframeWindow.document.getElementById("output-contextmenu");
+  waitForContextMenu(contextMenu, clickable, () => {
+    let openInVarView = contextMenu.querySelector("#menu_openInVarView");
+    ok(openInVarView.disabled === false,
+       "the \"Open In Variables View\" context menu item should be clickable");
+    // EventUtils.synthesizeMouseAtCenter seems to fail here in Mac OSX
+    openInVarView.click();
+  });
 }
 
-function onGetNameFetch(aEvent, aVar)
-{
-  gVariablesView = aVar._variablesView;
+function onGetNameFetch(evt, view) {
+  gVariablesView = view._variablesView;
   ok(gVariablesView, "variables view object");
 
-  findVariableViewProperties(aVar, [
+  findVariableViewProperties(view, [
     { name: /_pfactory/, value: "" },
   ], { webconsole: gWebConsole }).then(onExpandClosure);
 }
 
-function onExpandClosure(aResults)
-{
-  let prop = aResults[0].matchedProp;
+function onExpandClosure(results) {
+  let prop = results[0].matchedProp;
   ok(prop, "matched the name property in the variables view");
 
   gVariablesView.window.focus();

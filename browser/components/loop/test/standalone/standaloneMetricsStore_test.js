@@ -2,11 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var expect = chai.expect;
-
 describe("loop.store.StandaloneMetricsStore", function() {
   "use strict";
 
+  var expect = chai.expect;
   var sandbox, dispatcher, store, fakeActiveRoomStore;
 
   var sharedActions = loop.shared.actions;
@@ -47,6 +46,37 @@ describe("loop.store.StandaloneMetricsStore", function() {
     beforeEach(function() {
     });
 
+    it("should log an event on ConnectedToSdkServers", function() {
+      store.connectedToSdkServers();
+
+      sinon.assert.calledOnce(window.ga);
+      sinon.assert.calledWithExactly(window.ga,
+        "send", "event", METRICS_GA_CATEGORY.general, METRICS_GA_ACTIONS.success,
+        "Joined sdk servers");
+    });
+
+    it("should log an event on connection failure if media denied", function() {
+      store.connectionFailure(new sharedActions.ConnectionFailure({
+        reason: FAILURE_DETAILS.MEDIA_DENIED
+      }));
+
+      sinon.assert.calledOnce(window.ga);
+      sinon.assert.calledWithExactly(window.ga,
+        "send", "event", METRICS_GA_CATEGORY.general, METRICS_GA_ACTIONS.failed,
+        "Media denied");
+    });
+
+    it("should log an event on connection failure if no media was found", function() {
+      store.connectionFailure(new sharedActions.ConnectionFailure({
+        reason: FAILURE_DETAILS.NO_MEDIA
+      }));
+
+      sinon.assert.calledOnce(window.ga);
+      sinon.assert.calledWithExactly(window.ga,
+        "send", "event", METRICS_GA_CATEGORY.general, METRICS_GA_ACTIONS.failed,
+        "No media");
+    });
+
     it("should log an event on GotMediaPermission", function() {
       store.gotMediaPermission();
 
@@ -63,6 +93,15 @@ describe("loop.store.StandaloneMetricsStore", function() {
       sinon.assert.calledWithExactly(window.ga,
         "send", "event", METRICS_GA_CATEGORY.general, METRICS_GA_ACTIONS.button,
         "Join the conversation");
+    });
+
+    it("should log an event on JoinedRoom", function() {
+      store.joinedRoom();
+
+      sinon.assert.calledOnce(window.ga);
+      sinon.assert.calledWithExactly(window.ga,
+        "send", "event", METRICS_GA_CATEGORY.general, METRICS_GA_ACTIONS.success,
+        "Joined room");
     });
 
     it("should log an event on LeaveRoom", function() {
@@ -92,6 +131,24 @@ describe("loop.store.StandaloneMetricsStore", function() {
       sinon.assert.calledWithExactly(window.ga,
         "send", "event", METRICS_GA_CATEGORY.general, METRICS_GA_ACTIONS.linkClick,
         "fake");
+    });
+
+    it("should log an event on RemotePeerConnected", function() {
+      store.remotePeerConnected();
+
+      sinon.assert.calledOnce(window.ga);
+      sinon.assert.calledWithExactly(window.ga,
+        "send", "event", METRICS_GA_CATEGORY.general, METRICS_GA_ACTIONS.success,
+        "Remote peer connected");
+    });
+
+    it("should log an event on RetryAfterRoomFailure", function() {
+      store.retryAfterRoomFailure();
+
+      sinon.assert.calledOnce(window.ga);
+      sinon.assert.calledWithExactly(window.ga,
+        "send", "event", METRICS_GA_CATEGORY.general, METRICS_GA_ACTIONS.button,
+        "Retry failed room");
     });
   });
 
@@ -137,6 +194,23 @@ describe("loop.store.StandaloneMetricsStore", function() {
       sinon.assert.calledWithExactly(window.ga,
         "send", "event", METRICS_GA_CATEGORY.general, METRICS_GA_ACTIONS.audioMute,
         "mute");
+    });
+
+    describe("Event listeners", function() {
+      it("should call windowUnload when action is dispatched", function() {
+        sandbox.stub(store, "windowUnload");
+
+        dispatcher.dispatch(new sharedActions.WindowUnload());
+        sinon.assert.calledOnce(store.windowUnload);
+      });
+
+      it("should stop listening to activeRoomStore", function() {
+        var stopListeningStub = sandbox.stub(store, "stopListening");
+        store.windowUnload();
+
+        sinon.assert.calledOnce(stopListeningStub);
+        sinon.assert.calledWithExactly(stopListeningStub, store.activeRoomStore);
+      });
     });
   });
 });

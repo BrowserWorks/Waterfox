@@ -62,6 +62,7 @@ public:
 
   virtual void InvalidateChildren() override;
   virtual bool RemoveChild(Accessible* aAccessible) override;
+  virtual Relation RelationByType(RelationType aType) override;
 
   // HyperTextAccessible (static helper method)
 
@@ -559,6 +560,12 @@ protected:
   void GetSpellTextAttr(nsINode* aNode, int32_t aNodeOffset,
                         uint32_t* aStartOffset, uint32_t* aEndOffset,
                         nsIPersistentProperties* aAttributes);
+
+  /**
+   * Set xml-roles attributes for MathML elements.
+   * @param aAttributes
+   */
+  void SetMathMLXMLRoles(nsIPersistentProperties* aAttributes);
 
 private:
   /**

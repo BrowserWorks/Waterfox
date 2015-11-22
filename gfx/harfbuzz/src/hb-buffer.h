@@ -185,7 +185,19 @@ hb_buffer_set_flags (hb_buffer_t       *buffer,
 hb_buffer_flags_t
 hb_buffer_get_flags (hb_buffer_t *buffer);
 
+typedef enum {
+  HB_BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES	= 0,
+  HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS	= 1,
+  HB_BUFFER_CLUSTER_LEVEL_CHARACTERS		= 2,
+  HB_BUFFER_CLUSTER_LEVEL_DEFAULT = HB_BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES
+} hb_buffer_cluster_level_t;
 
+void
+hb_buffer_set_cluster_level (hb_buffer_t               *buffer,
+			     hb_buffer_cluster_level_t  cluster_level);
+
+hb_buffer_cluster_level_t
+hb_buffer_get_cluster_level (hb_buffer_t *buffer);
 
 #define HB_BUFFER_REPLACEMENT_CODEPOINT_DEFAULT 0xFFFDu
 
@@ -222,6 +234,10 @@ void
 hb_buffer_reverse (hb_buffer_t *buffer);
 
 void
+hb_buffer_reverse_range (hb_buffer_t *buffer,
+			 unsigned int start, unsigned int end);
+
+void
 hb_buffer_reverse_clusters (hb_buffer_t *buffer);
 
 
@@ -252,6 +268,14 @@ hb_buffer_add_utf32 (hb_buffer_t    *buffer,
 		     int             text_length,
 		     unsigned int    item_offset,
 		     int             item_length);
+
+/* Allows only access to first 256 Unicode codepoints. */
+void
+hb_buffer_add_latin1 (hb_buffer_t   *buffer,
+		      const uint8_t *text,
+		      int            text_length,
+		      unsigned int   item_offset,
+		      int            item_length);
 
 /* Like add_utf32 but does NOT check for invalid Unicode codepoints. */
 void
@@ -299,7 +323,8 @@ typedef enum { /*< flags >*/
   HB_BUFFER_SERIALIZE_FLAG_DEFAULT		= 0x00000000u,
   HB_BUFFER_SERIALIZE_FLAG_NO_CLUSTERS		= 0x00000001u,
   HB_BUFFER_SERIALIZE_FLAG_NO_POSITIONS		= 0x00000002u,
-  HB_BUFFER_SERIALIZE_FLAG_NO_GLYPH_NAMES	= 0x00000004u
+  HB_BUFFER_SERIALIZE_FLAG_NO_GLYPH_NAMES	= 0x00000004u,
+  HB_BUFFER_SERIALIZE_FLAG_GLYPH_EXTENTS	= 0x00000008u
 } hb_buffer_serialize_flags_t;
 
 typedef enum {

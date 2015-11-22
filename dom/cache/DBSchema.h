@@ -29,9 +29,11 @@ struct SavedResponse;
 
 namespace db {
 
+// Note, this cannot be executed within a transaction.
 nsresult
-CreateSchema(mozIStorageConnection* aConn);
+CreateOrMigrateSchema(mozIStorageConnection* aConn);
 
+// Note, this cannot be executed within a transaction.
 nsresult
 InitializeConnection(mozIStorageConnection* aConn);
 
@@ -46,6 +48,13 @@ DeleteCacheId(mozIStorageConnection* aConn, CacheId aCacheId,
 nsresult
 IsCacheOrphaned(mozIStorageConnection* aConn, CacheId aCacheId,
                 bool* aOrphanedOut);
+
+nsresult
+FindOrphanedCacheIds(mozIStorageConnection* aConn,
+                     nsTArray<CacheId>& aOrphanedListOut);
+
+nsresult
+GetKnownBodyIds(mozIStorageConnection* aConn, nsTArray<nsID>& aBodyIdListOut);
 
 nsresult
 CacheMatch(mozIStorageConnection* aConn, CacheId aCacheId,
@@ -104,8 +113,13 @@ nsresult
 StorageGetKeys(mozIStorageConnection* aConn, Namespace aNamespace,
                nsTArray<nsString>& aKeysOut);
 
-// We will wipe out databases with a schema versions less than this.
-extern const int32_t kMaxWipeSchemaVersion;
+// Note, this works best when its NOT executed within a transaction.
+nsresult
+IncrementalVacuum(mozIStorageConnection* aConn);
+
+// We will wipe out databases with a schema versions less than this.  Newer
+// versions will be migrated on open to the latest schema version.
+extern const int32_t kFirstShippedSchemaVersion;
 
 } // namespace db
 } // namespace cache

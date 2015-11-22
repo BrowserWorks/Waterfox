@@ -10,6 +10,7 @@
 #include "nsHttpResponseHead.h"
 #include "nsPrintfCString.h"
 #include "prtime.h"
+#include "plstr.h"
 #include "nsURLHelper.h"
 #include <algorithm>
 
@@ -834,5 +835,5 @@ nsHttpResponseHead::ParsePragma(const char *val)
         mPragmaNoCache = true;
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

@@ -8,6 +8,7 @@
 #include "nsNetCID.h"
 #include "nsError.h"
 #include "DataChannelChild.h"
+#include "plstr.h"
 
 static NS_DEFINE_CID(kSimpleURICID, NS_SIMPLEURI_CID);
 
@@ -110,7 +111,7 @@ nsDataHandler::NewChannel2(nsIURI* uri,
 {
     NS_ENSURE_ARG_POINTER(uri);
     nsDataChannel* channel;
-    if (XRE_GetProcessType() == GeckoProcessType_Default) {
+    if (XRE_IsParentProcess()) {
         channel = new nsDataChannel(uri);
     } else {
         channel = new mozilla::net::DataChannelChild(uri);
@@ -168,7 +169,8 @@ nsDataHandler::ParseURI(nsCString& spec,
 
     // First, find the start of the data
     char *comma = strchr(buffer, ',');
-    if (!comma)
+    char *hash = strchr(buffer, '#');
+    if (!comma || (hash && hash < comma))
         return NS_ERROR_MALFORMED_URI;
 
     *comma = '\0';
@@ -223,7 +225,6 @@ nsDataHandler::ParseURI(nsCString& spec,
 
     // Split encoded data from terminal "#ref" (if present)
     char *data = comma + 1;
-    char *hash = strchr(data, '#');
     if (!hash) {
         dataBuffer.Assign(data);
         hashRef.Truncate();

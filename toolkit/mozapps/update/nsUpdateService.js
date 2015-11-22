@@ -31,6 +31,7 @@ const PREF_APP_UPDATE_CERT_ERRORS         = "app.update.cert.errors";
 const PREF_APP_UPDATE_CERT_MAXERRORS      = "app.update.cert.maxErrors";
 const PREF_APP_UPDATE_CERT_REQUIREBUILTIN = "app.update.cert.requireBuiltIn";
 const PREF_APP_UPDATE_CUSTOM              = "app.update.custom";
+const PREF_APP_UPDATE_IMEI_HASH           = "app.update.imei_hash";
 const PREF_APP_UPDATE_ENABLED             = "app.update.enabled";
 const PREF_APP_UPDATE_IDLETIME            = "app.update.idletime";
 const PREF_APP_UPDATE_INCOMPATIBLE_MODE   = "app.update.incompatible.mode";
@@ -245,6 +246,9 @@ XPCOMUtils.defineLazyGetter(this, "gABI", function aus_gABI() {
     if (macutils.isUniversalBinary) {
       abi += "-u-" + macutils.architecturesInBinary;
     }
+  } else if (AppConstants.platform == "win") {
+    // Windows build should report the CPU architecture that it's running on.
+    abi += "-" + gWinCPUArch;
   }
   return abi;
 });
@@ -310,7 +314,7 @@ XPCOMUtils.defineLazyGetter(this, "gOSVersion", function aus_gOSVersion() {
         osVersion += ".unknown (unknown)";
       }
 
-      if(kernel32) {
+      if (kernel32) {
         try {
           // Get Service pack info
           try {
@@ -332,38 +336,12 @@ XPCOMUtils.defineLazyGetter(this, "gOSVersion", function aus_gOSVersion() {
             LOG("gOSVersion - error getting service pack information. Exception: " + e);
             osVersion += ".unknown";
           }
-
-          // Get processor architecture
-          let arch = "unknown";
-          try {
-            let GetNativeSystemInfo = kernel32.declare("GetNativeSystemInfo",
-                                                       ctypes.default_abi,
-                                                       ctypes.void_t,
-                                                       SYSTEM_INFO.ptr);
-            let winSystemInfo = SYSTEM_INFO();
-            // Default to unknown
-            winSystemInfo.wProcessorArchitecture = 0xffff;
-
-            GetNativeSystemInfo(winSystemInfo.address());
-            switch(winSystemInfo.wProcessorArchitecture) {
-              case 9:
-                arch = "x64";
-                break;
-              case 6:
-                arch = "IA64";
-                break;
-              case 0:
-                arch = "x86";
-                break;
-            }
-          } catch (e) {
-            LOG("gOSVersion - error getting processor architecture.  Exception: " + e);
-          } finally {
-            osVersion += " (" + arch + ")";
-          }
         } finally {
           kernel32.close();
         }
+
+        // Add processor architecture
+        osVersion += " (" + gWinCPUArch + ")";
       }
     }
 
@@ -376,6 +354,71 @@ XPCOMUtils.defineLazyGetter(this, "gOSVersion", function aus_gOSVersion() {
     osVersion = encodeURIComponent(osVersion);
   }
   return osVersion;
+});
+
+/* Windows only getter that returns the processor architecture. */
+XPCOMUtils.defineLazyGetter(this, "gWinCPUArch", function aus_gWinCPUArch() {
+  // Get processor architecture
+  let arch = "unknown";
+
+  const WORD = ctypes.uint16_t;
+  const DWORD = ctypes.uint32_t;
+
+  // This structure is described at:
+  // http://msdn.microsoft.com/en-us/library/ms724958%28v=vs.85%29.aspx
+  const SYSTEM_INFO = new ctypes.StructType('SYSTEM_INFO',
+      [
+      {wProcessorArchitecture: WORD},
+      {wReserved: WORD},
+      {dwPageSize: DWORD},
+      {lpMinimumApplicationAddress: ctypes.voidptr_t},
+      {lpMaximumApplicationAddress: ctypes.voidptr_t},
+      {dwActiveProcessorMask: DWORD.ptr},
+      {dwNumberOfProcessors: DWORD},
+      {dwProcessorType: DWORD},
+      {dwAllocationGranularity: DWORD},
+      {wProcessorLevel: WORD},
+      {wProcessorRevision: WORD}
+      ]);
+
+  let kernel32 = false;
+  try {
+    kernel32 = ctypes.open("Kernel32");
+  } catch (e) {
+    LOG("gWinCPUArch - Unable to open kernel32! Exception: " + e);
+  }
+
+  if (kernel32) {
+    try {
+      let GetNativeSystemInfo = kernel32.declare("GetNativeSystemInfo",
+                                                 ctypes.default_abi,
+                                                 ctypes.void_t,
+                                                 SYSTEM_INFO.ptr);
+      let winSystemInfo = SYSTEM_INFO();
+      // Default to unknown
+      winSystemInfo.wProcessorArchitecture = 0xffff;
+
+      GetNativeSystemInfo(winSystemInfo.address());
+      switch (winSystemInfo.wProcessorArchitecture) {
+        case 9:
+          arch = "x64";
+          break;
+        case 6:
+          arch = "IA64";
+          break;
+        case 0:
+          arch = "x86";
+          break;
+      }
+    } catch (e) {
+      LOG("gWinCPUArch - error getting processor architecture. " +
+          "Exception: " + e);
+    } finally {
+      kernel32.close();
+    }
+  }
+
+  return arch;
 });
 
 /**
@@ -1037,10 +1080,9 @@ function shouldUseService() {
 }
 
 /**
- * Determines if the service is is installed and enabled or not.
+ * Determines if the service is is installed.
  *
- * @return  true if the service should be used for updates,
- *          is installed and enabled.
+ * @return  true if the service is installed.
  */
 function isServiceInstalled() {
   if (AppConstants.MOZ_MAINTENANCE_SERVICE && AppConstants.platform == "win") {
@@ -1220,7 +1262,7 @@ function getLocale() {
                                       Services.scriptSecurityManager.getSystemPrincipal(),
                                       null,      // aTriggeringPrincipal
                                       Ci.nsILoadInfo.SEC_NORMAL,
-                                      Ci.nsIContentPolicy.TYPE_DATAREQUEST);
+                                      Ci.nsIContentPolicy.TYPE_INTERNAL_XMLHTTPREQUEST);
     try {
       var inputStream = channel.open();
       gLocale = readStringFromInputStream(inputStream);
@@ -3498,13 +3540,15 @@ Checker.prototype = {
       let buildType = sysLibs.libcutils.property_get("ro.build.type");
       url = url.replace(/%PRODUCT_MODEL%/g,
                         sysLibs.libcutils.property_get("ro.product.model"));
-      if (buildType == "user") {
+      if (buildType == "user" || buildType == "userdebug") {
         url = url.replace(/%PRODUCT_DEVICE%/g, productDevice);
       } else {
         url = url.replace(/%PRODUCT_DEVICE%/g, productDevice + "-" + buildType);
       }
       url = url.replace(/%B2G_VERSION%/g,
                         getPref("getCharPref", PREF_APP_B2G_VERSION, null));
+      url = url.replace(/%IMEI%/g,
+                        getPref("getCharPref", PREF_APP_UPDATE_IMEI_HASH, "default"));
     }
 
     if (force) {
@@ -3634,7 +3678,7 @@ Checker.prototype = {
 
     var prefs = Services.prefs;
     var certs = null;
-    if (!prefs.prefHasUserValue(PREF_APP_UPDATE_URL_OVERRIDE) &&
+    if (!getPref("getCharPref", PREF_APP_UPDATE_URL_OVERRIDE, null) &&
         getPref("getBoolPref", PREF_APP_UPDATE_CERT_CHECKATTRS, true)) {
       certs = gCertUtils.readCertPrefs(PREF_APP_UPDATE_CERTS_BRANCH);
     }
@@ -3831,6 +3875,13 @@ Downloader.prototype = {
     }
 
     LOG("Downloader:_verifyDownload downloaded size == expected size.");
+
+    // The hash check is not necessary when mar signatures are used to verify
+    // the downloaded mar file.
+    if (AppConstants.MOZ_VERIFY_MAR_SIGNATURE) {
+      return true;
+    }
+
     let fileStream = Cc["@mozilla.org/network/file-input-stream;1"].
                      createInstance(Ci.nsIFileInputStream);
     fileStream.init(destination, FileUtils.MODE_RDONLY, FileUtils.PERMS_FILE, 0);
@@ -4568,13 +4619,16 @@ UpdatePrompt.prototype = {
    * See nsIUpdateService.idl
    */
   showUpdateDownloaded: function UP_showUpdateDownloaded(update, background) {
+    if (background && getPref("getBoolPref", PREF_APP_UPDATE_SILENT, false)) {
+      return;
+    }
+    // Trigger the display of the hamburger menu badge.
+    Services.obs.notifyObservers(null, "update-downloaded", update.state);
+
     if (this._getAltUpdateWindow())
       return;
 
     if (background) {
-      if (getPref("getBoolPref", PREF_APP_UPDATE_SILENT, false))
-        return;
-
       var stringsPrefix = "updateDownloaded_" + update.type + ".";
       var title = gUpdateBundle.formatStringFromName(stringsPrefix + "title",
                                                      [update.name], 1);

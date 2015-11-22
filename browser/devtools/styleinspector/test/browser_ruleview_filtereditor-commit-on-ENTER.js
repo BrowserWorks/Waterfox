@@ -9,8 +9,7 @@ const TEST_URL = TEST_URL_ROOT + "doc_filter.html";
 
 add_task(function*() {
   yield addTab(TEST_URL);
-
-  let {toolbox, inspector, view} = yield openRuleView();
+  let {view} = yield openRuleView();
 
   info("Getting the filter swatch element");
   let swatch = getRuleViewProperty(view, "body", "filter").valueSpan
@@ -29,7 +28,7 @@ add_task(function*() {
   ok(true, "Changes previewed on the element");
 
   info("Pressing RETURN to commit changes");
-  EventUtils.sendKey("RETURN", widget.doc.defaultView);
+  EventUtils.sendKey("RETURN", widget.styleWindow);
 
   const computed = content.getComputedStyle(content.document.body);
   is(computed.filter, "blur(2px)",

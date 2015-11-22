@@ -43,13 +43,14 @@ const HOSTAPD_CONFIG_LIST = [
   },
 ];
 
-let gTestSuite = (function() {
+var gTestSuite = (function() {
   let suite = {};
 
   // Private member variables of the returned object |suite|.
   let wifiManager;
   let wifiOrigEnabled;
   let pendingEmulatorShellCount = 0;
+  let sdkVersion;
 
   /**
    * A wrapper function of "is".
@@ -434,6 +435,23 @@ let gTestSuite = (function() {
   }
 
   /**
+   * Set the given network to static ip mode.
+   *
+   * Resolve when we set static ip mode successfully; reject when any error
+   * occurs.
+   *
+   * Fulfill params: (none)
+   * Reject params: (none)
+   *
+   * @return A deferred promise.
+   */
+  function setStaticIpMode(aNetwork, aConfig) {
+    let request = wifiManager.setStaticIpMode(aNetwork, aConfig);
+    return wrapDomRequestAsPromise(request)
+      .then(event => event.target.result);
+  }
+
+  /**
    * Issue a request to scan all wifi available networks.
    *
    * Resolve when we get the scan result; reject when any error
@@ -758,7 +776,12 @@ let gTestSuite = (function() {
         .then(() => runEmulatorShellSafe(['hostapd', '-B', configFileName]))
         .then(function (reply) {
           // It may fail at the first time due to the previous ungracefully terminated one.
-          if (reply[0] === 'bind(PF_UNIX): Address already in use') {
+          if (reply.length === 0) {
+            // The hostapd starts successfully
+            return;
+          }
+
+          if (reply[0].indexOf('bind(PF_UNIX): Address already in use') !== -1) {
             return startOneHostapd(aIndex);
           }
         });
@@ -1026,6 +1049,117 @@ let gTestSuite = (function() {
   }
 
   /**
+   * Execute 'netcfg' shell and parse the result.
+   *
+   * Resolve when the executing is successful and reject otherwise.
+   *
+   * Fulfill params: Command result object, each key of which is the interface
+   *                 name and value is { ip(string), prefix(string) }.
+   * Reject params: String that indicates the reason of rejection.
+   *
+   * @return A deferred promise.
+   */
+  function exeAndParseNetcfg() {
+    return runEmulatorShellSafe(['netcfg'])
+      .then(function (aLines) {
+        // Sample output:
+        //
+        // lo       UP     127.0.0.1/8   0x00000049 00:00:00:00:00:00
+        // eth0     UP     10.0.2.15/24  0x00001043 52:54:00:12:34:56
+        // rmnet1   DOWN   0.0.0.0/0   0x00001002 52:54:00:12:34:58
+        // rmnet2   DOWN   0.0.0.0/0   0x00001002 52:54:00:12:34:59
+        // rmnet3   DOWN   0.0.0.0/0   0x00001002 52:54:00:12:34:5a
+        // wlan0    UP     192.168.1.1/24  0x00001043 52:54:00:12:34:5b
+        // sit0     DOWN   0.0.0.0/0   0x00000080 00:00:00:00:00:00
+        // rmnet0   UP     10.0.2.100/24  0x00001043 52:54:00:12:34:57
+        //
+        let netcfgResult = {};
+        aLines.forEach(function (aLine) {
+          let tokens = aLine.split(/\s+/);
+          if (tokens.length < 5) {
+            return;
+          }
+          let ifname = tokens[0];
+          let [ip, prefix] = tokens[2].split('/');
+          netcfgResult[ifname] = { ip: ip, prefix: prefix };
+        });
+        log("netcfg result:" + JSON.stringify(netcfgResult));
+
+        return netcfgResult;
+      });
+  }
+
+  /**
+   * Execute 'ip route' and parse the result.
+   *
+   * Resolve when the executing is successful and reject otherwise.
+   *
+   * Fulfill params: Command result object, each key of which is the interface
+   *                 name and value is { src(string), gateway(string),
+   *                 default(boolean) }.
+   * Reject params: String that indicates the reason of rejection.
+   *
+   * @return A deferred promise.
+   */
+  function exeAndParseIpRoute() {
+    return runEmulatorShellSafe(['ip', 'route'])
+      .then(function (aLines) {
+        // Sample output:
+        //
+        // 10.0.2.4 via 10.0.2.2 dev rmnet0
+        // 10.0.2.3 via 10.0.2.2 dev rmnet0
+        // 192.168.1.0/24 dev wlan0  proto kernel  scope link  src 192.168.1.1
+        // 10.0.2.0/24 dev eth0  proto kernel  scope link  src 10.0.2.15
+        // 10.0.2.0/24 dev rmnet0  proto kernel  scope link  src 10.0.2.100
+        // default via 10.0.2.2 dev rmnet0
+        // default via 10.0.2.2 dev eth0  metric 2
+        //
+
+        let ipRouteResult = {};
+
+        // Parse source ip for each interface.
+        aLines.forEach(function (aLine) {
+          let tokens = aLine.trim().split(/\s+/);
+          let srcIndex = tokens.indexOf('src');
+          if (srcIndex < 0 || srcIndex + 1 >= tokens.length) {
+            return;
+          }
+          let ifname = tokens[2];
+          let src = tokens[srcIndex + 1];
+          ipRouteResult[ifname] = { src: src, default: false, gateway: null };
+        });
+
+        // Parse default interfaces.
+        aLines.forEach(function (aLine) {
+          let tokens = aLine.split(/\s+/);
+          if (tokens.length < 2) {
+            return;
+          }
+          if ('default' === tokens[0]) {
+            let ifnameIndex = tokens.indexOf('dev');
+            if (ifnameIndex < 0 || ifnameIndex + 1 >= tokens.length) {
+              return;
+            }
+            let ifname = tokens[ifnameIndex + 1];
+            if (!ipRouteResult[ifname]) {
+              return;
+            }
+            ipRouteResult[ifname].default = true;
+            let gwIndex = tokens.indexOf('via');
+            if (gwIndex < 0 || gwIndex + 1 >= tokens.length) {
+              return;
+            }
+            ipRouteResult[ifname].gateway = tokens[gwIndex + 1];
+            return;
+          }
+        });
+        log("ip route result:" + JSON.stringify(ipRouteResult));
+
+        return ipRouteResult;
+      });
+  }
+
+  /**
    * Verify everything about routing when the wifi tethering is either on or off.
    *
    * We use two unix commands to verify the routing: 'netcfg' and 'ip route'.
@@ -1044,93 +1178,20 @@ let gTestSuite = (function() {
    * @return A deferred promise.
    */
   function verifyTetheringRouting(aEnabled) {
-    let netcfgResult = {};
-    let ipRouteResult = {};
-
-    // Execute 'netcfg' and parse to |netcfgResult|, each key of which is the
-    // interface name and value is { ip(string) }.
-    function exeAndParseNetcfg() {
-      return runEmulatorShellSafe(['netcfg'])
-        .then(function (aLines) {
-          // Sample output:
-          //
-          // lo       UP     127.0.0.1/8   0x00000049 00:00:00:00:00:00
-          // eth0     UP     10.0.2.15/24  0x00001043 52:54:00:12:34:56
-          // rmnet1   DOWN   0.0.0.0/0   0x00001002 52:54:00:12:34:58
-          // rmnet2   DOWN   0.0.0.0/0   0x00001002 52:54:00:12:34:59
-          // rmnet3   DOWN   0.0.0.0/0   0x00001002 52:54:00:12:34:5a
-          // wlan0    UP     192.168.1.1/24  0x00001043 52:54:00:12:34:5b
-          // sit0     DOWN   0.0.0.0/0   0x00000080 00:00:00:00:00:00
-          // rmnet0   UP     10.0.2.100/24  0x00001043 52:54:00:12:34:57
-          //
-          aLines.forEach(function (aLine) {
-            let tokens = aLine.split(/\s+/);
-            if (tokens.length < 5) {
-              return;
-            }
-            let ifname = tokens[0];
-            let ip = (tokens[2].split('/'))[0];
-            netcfgResult[ifname] = { ip: ip };
-          });
-        });
-    }
-
-    // Execute 'ip route' and parse to |ipRouteResult|, each key of which is the
-    // interface name and value is { src(string), default(boolean) }.
-    function exeAndParseIpRoute() {
-      return runEmulatorShellSafe(['ip', 'route'])
-        .then(function (aLines) {
-          // Sample output:
-          //
-          // 10.0.2.4 via 10.0.2.2 dev rmnet0
-          // 10.0.2.3 via 10.0.2.2 dev rmnet0
-          // 192.168.1.0/24 dev wlan0  proto kernel  scope link  src 192.168.1.1
-          // 10.0.2.0/24 dev eth0  proto kernel  scope link  src 10.0.2.15
-          // 10.0.2.0/24 dev rmnet0  proto kernel  scope link  src 10.0.2.100
-          // default via 10.0.2.2 dev rmnet0
-          // default via 10.0.2.2 dev eth0  metric 2
-          //
-
-          // Parse source ip for each interface.
-          aLines.forEach(function (aLine) {
-            let tokens = aLine.trim().split(/\s+/);
-            let srcIndex = tokens.indexOf('src');
-            if (srcIndex < 0 || srcIndex + 1 >= tokens.length) {
-              return;
-            }
-            let ifname = tokens[2];
-            let src = tokens[srcIndex + 1];
-            ipRouteResult[ifname] = { src: src, default: false };
-          });
-
-          // Parse default interfaces.
-          aLines.forEach(function (aLine) {
-            let tokens = aLine.split(/\s+/);
-            if (tokens.length < 2) {
-              return;
-            }
-            if ('default' === tokens[0]) {
-              let ifnameIndex = tokens.indexOf('dev');
-              if (ifnameIndex < 0 || ifnameIndex + 1 >= tokens.length) {
-                return;
-              }
-              let ifname = tokens[ifnameIndex + 1];
-              if (ipRouteResult[ifname]) {
-                ipRouteResult[ifname].default = true;
-              }
-              return;
-            }
-          });
-
-        });
-
-    }
+    let netcfgResult;
+    let ipRouteResult;
 
     // Find MASQUERADE in POSTROUTING section. 'MASQUERADE' should be found
     // when tethering is enabled. 'MASQUERADE' shouldn't be found when tethering
     // is disabled.
     function verifyIptables() {
-      return runEmulatorShellSafe(['iptables', '-t', 'nat', '-L', 'POSTROUTING'])
+      let MASQUERADE_checkSection = 'POSTROUTING';
+      if (sdkVersion > 15) {
+        // Check 'natctrl_nat_POSTROUTING' section after ICS.
+        MASQUERADE_checkSection = 'natctrl_nat_POSTROUTING';
+      }
+
+      return runEmulatorShellSafe(['iptables', '-t', 'nat', '-L', MASQUERADE_checkSection])
         .then(function(aLines) {
           // $ iptables -t nat -L POSTROUTING
           //
@@ -1158,9 +1219,6 @@ let gTestSuite = (function() {
     }
 
     function verifyDefaultRouteAndIp(aExpectedWifiTetheringIp) {
-      log(JSON.stringify(ipRouteResult));
-      log(JSON.stringify(netcfgResult));
-
       if (aEnabled) {
         isOrThrow(ipRouteResult['rmnet0'].src, netcfgResult['rmnet0'].ip, 'rmnet0.ip');
         isOrThrow(ipRouteResult['rmnet0'].default, true, 'rmnet0.default');
@@ -1173,7 +1231,9 @@ let gTestSuite = (function() {
 
     return verifyIptables()
       .then(exeAndParseNetcfg)
+      .then((aResult) => { netcfgResult = aResult; })
       .then(exeAndParseIpRoute)
+      .then((aResult) => { ipRouteResult = aResult; })
       .then(() => getSettings(SETTINGS_TETHERING_WIFI_IP))
       .then(ip => verifyDefaultRouteAndIp(ip));
   }
@@ -1225,6 +1285,10 @@ let gTestSuite = (function() {
           throw 'window.navigator.mozWifiManager is NULL';
         }
         wifiOrigEnabled = wifiManager.enabled;
+      })
+      .then(() => runEmulatorShellSafe(['getprop', 'ro.build.version.sdk']))
+      .then(aLines => {
+        sdkVersion = parseInt(aLines[0]);
       });
   }
 
@@ -1244,6 +1308,7 @@ let gTestSuite = (function() {
   suite.getFirstIndexBySsid = getFirstIndexBySsid;
   suite.testAssociate = testAssociate;
   suite.getKnownNetworks = getKnownNetworks;
+  suite.setStaticIpMode = setStaticIpMode;
   suite.requestWifiScan = requestWifiScan;
   suite.waitForConnected = waitForConnected;
   suite.forgetNetwork = forgetNetwork;
@@ -1254,6 +1319,8 @@ let gTestSuite = (function() {
   suite.getImportedCerts = getImportedCerts;
   suite.deleteCert = deleteCert;
   suite.writeFile = writeFile;
+  suite.exeAndParseNetcfg = exeAndParseNetcfg;
+  suite.exeAndParseIpRoute = exeAndParseIpRoute;
 
   /**
    * Common test routine.
@@ -1346,7 +1413,12 @@ let gTestSuite = (function() {
     return suite.doTest(function() {
       return verifyInitialState()
         .then(initTetheringTestEnvironment)
+        // Since stock hostapd is not reliable after ICS, we just
+        // turn off potential stock hostapd during testing to avoid 
+        // interference.
+        .then(stopStockHostapd)
         .then(aTestCaseChain)
+        .then(startStockHostapd)
         .then(restoreToInitialState, function onreject(aReason) {
           return restoreToInitialState()
             .then(() => { throw aReason; }); // Re-throw the orignal reject reason.

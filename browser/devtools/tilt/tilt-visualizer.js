@@ -7,11 +7,11 @@
 
 const {Cu, Ci, ChromeWorker} = require("chrome");
 
-let TiltGL = require("devtools/tilt/tilt-gl");
-let TiltUtils = require("devtools/tilt/tilt-utils");
-let TiltVisualizerStyle = require("devtools/tilt/tilt-visualizer-style");
-let {EPSILON, TiltMath, vec3, mat4, quat4} = require("devtools/tilt/tilt-math");
-let {TargetFactory} = require("devtools/framework/target");
+var TiltGL = require("devtools/tilt/tilt-gl");
+var TiltUtils = require("devtools/tilt/tilt-utils");
+var TiltVisualizerStyle = require("devtools/tilt/tilt-visualizer-style");
+var {EPSILON, TiltMath, vec3, mat4, quat4} = require("devtools/tilt/tilt-math");
+var {TargetFactory} = require("devtools/framework/target");
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource:///modules/devtools/gDevTools.jsm");
@@ -453,6 +453,7 @@ TiltVisualizer.Presenter.prototype = {
   _loop: function TVP__loop()
   {
     let renderer = this._renderer;
+    let frameStartTime = this.chromeWindow.performance.now();
 
     // if the renderer was destroyed, don't continue rendering
     if (!renderer || !renderer.context) {
@@ -460,7 +461,7 @@ TiltVisualizer.Presenter.prototype = {
     }
 
     // prepare for the next frame of the animation loop
-    this.chromeWindow.mozRequestAnimationFrame(this._loop);
+    this.chromeWindow.requestAnimationFrame(this._loop);
 
     // only redraw if we really have to
     if (this._redraw) {
@@ -473,17 +474,17 @@ TiltVisualizer.Presenter.prototype = {
       this._controllerUpdate(this._time, this._delta);
     }
 
-    this._handleFrameDelta();
+    this._handleFrameDelta(frameStartTime);
     this._handleKeyframeNotifications();
   },
 
   /**
    * Calculates the current frame delta time.
    */
-  _handleFrameDelta: function TVP__handleFrameDelta()
+  _handleFrameDelta: function TVP__handleFrameDelta(frameStartTime)
   {
     this._prevFrameTime = this._currFrameTime;
-    this._currFrameTime = this.chromeWindow.mozAnimationStartTime;
+    this._currFrameTime = frameStartTime;
     this._delta = this._currFrameTime - this._prevFrameTime;
   },
 

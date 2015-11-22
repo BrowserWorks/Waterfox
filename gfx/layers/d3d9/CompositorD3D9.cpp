@@ -45,10 +45,7 @@ CompositorD3D9::Initialize()
 
   ScopedGfxFeatureReporter reporter("D3D9 Layers", force);
 
-  if (!gfxPlatform::CanUseDirect3D9()) {
-    NS_WARNING("Direct3D 9-accelerated layers are not supported on this system.");
-    return false;
-  }
+  MOZ_ASSERT(gfxPlatform::CanUseDirect3D9());
 
   mDeviceManager = gfxWindowsPlatform::GetPlatform()->GetD3D9DeviceManager();
   if (!mDeviceManager) {
@@ -98,13 +95,13 @@ CompositorD3D9::GetMaxTextureSize() const
   return mDeviceManager ? mDeviceManager->GetMaxTextureSize() : INT32_MAX;
 }
 
-TemporaryRef<DataTextureSource>
+already_AddRefed<DataTextureSource>
 CompositorD3D9::CreateDataTextureSource(TextureFlags aFlags)
 {
-  return new DataTextureSourceD3D9(SurfaceFormat::UNKNOWN, this, aFlags);
+  return MakeAndAddRef<DataTextureSourceD3D9>(SurfaceFormat::UNKNOWN, this, aFlags);
 }
 
-TemporaryRef<CompositingRenderTarget>
+already_AddRefed<CompositingRenderTarget>
 CompositorD3D9::CreateRenderTarget(const gfx::IntRect &aRect,
                                    SurfaceInitMode aInit)
 {
@@ -129,13 +126,10 @@ CompositorD3D9::CreateRenderTarget(const gfx::IntRect &aRect,
     return nullptr;
   }
 
-  RefPtr<CompositingRenderTargetD3D9> rt =
-    new CompositingRenderTargetD3D9(texture, aInit, aRect);
-
-  return rt;
+  return MakeAndAddRef<CompositingRenderTargetD3D9>(texture, aInit, aRect);
 }
 
-TemporaryRef<CompositingRenderTarget>
+already_AddRefed<CompositingRenderTarget>
 CompositorD3D9::CreateRenderTargetFromSource(const gfx::IntRect &aRect,
                                              const CompositingRenderTarget *aSource,
                                              const gfx::IntPoint &aSourcePoint)
@@ -196,12 +190,9 @@ CompositorD3D9::CreateRenderTargetFromSource(const gfx::IntRect &aRect,
     }
   }
 
-  RefPtr<CompositingRenderTargetD3D9> rt =
-    new CompositingRenderTargetD3D9(texture,
-                                    INIT_MODE_NONE,
-                                    aRect);
-
-  return rt;
+  return MakeAndAddRef<CompositingRenderTargetD3D9>(texture,
+                                                    INIT_MODE_NONE,
+                                                    aRect);
 }
 
 void
@@ -251,7 +242,8 @@ CompositorD3D9::DrawQuad(const gfx::Rect &aRect,
                          const gfx::Rect &aClipRect,
                          const EffectChain &aEffectChain,
                          gfx::Float aOpacity,
-                         const gfx::Matrix4x4 &aTransform)
+                         const gfx::Matrix4x4& aTransform,
+                         const gfx::Rect& aVisibleRect)
 {
   if (!mDeviceManager) {
     return;
@@ -673,7 +665,7 @@ CompositorD3D9::EndFrame()
   if (mDeviceManager) {
     device()->EndScene();
 
-    nsIntSize oldSize = mSize;
+    IntSize oldSize = mSize;
     EnsureSize();
     if (oldSize == mSize) {
       if (mTarget) {

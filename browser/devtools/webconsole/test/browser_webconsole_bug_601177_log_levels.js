@@ -8,17 +8,25 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-const TEST_URI = "data:text/html;charset=utf-8,Web Console test for bug 601177: log levels";
-const TEST_URI2 = "http://example.com/browser/browser/devtools/webconsole/test/test-bug-601177-log-levels.html";
+"use strict";
 
-let test = asyncTest(function* () {
+const TEST_URI = "data:text/html;charset=utf-8,Web Console test for " +
+                 "bug 601177: log levels";
+const TEST_URI2 = "http://example.com/browser/browser/devtools/webconsole/" +
+                  "test/test-bug-601177-log-levels.html";
+
+var test = asyncTest(function* () {
   Services.prefs.setBoolPref("javascript.options.strict", true);
 
-  let { browser } = yield loadTab(TEST_URI);
+  yield loadTab(TEST_URI);
 
   let hud = yield openConsole();
 
-  expectUncaughtException();
+  // On e10s, the exception is triggered in child process
+  // and is ignored by test harness
+  if (!Services.appinfo.browserTabsRemoteAutostart) {
+    expectUncaughtException();
+  }
 
   yield testLogLevels(hud);
 

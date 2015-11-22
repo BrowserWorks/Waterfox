@@ -11,6 +11,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.text.Html;
+import android.text.Spanned;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,75 +26,59 @@ import android.widget.Toast;
 import ch.boye.httpclientandroidlib.util.TextUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONArray;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.favicons.Favicons;
 import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
 
 public class LoginDoorHanger extends DoorHanger {
     private static final String LOGTAG = "LoginDoorHanger";
-    private enum ActionType { EDIT };
+    private enum ActionType { EDIT, SELECT }
 
-    private final TextView mTitle;
-    private final TextView mLogin;
-    private int mCallbackID;
+    private final TextView mMessage;
+    private final DoorhangerConfig.ButtonConfig mButtonConfig;
 
     public LoginDoorHanger(Context context, DoorhangerConfig config) {
         super(context, config, Type.LOGIN);
 
-        mTitle = (TextView) findViewById(R.id.doorhanger_title);
-        mLogin = (TextView) findViewById(R.id.doorhanger_login);
+        mMessage = (TextView) findViewById(R.id.doorhanger_message);
+        mIcon.setImageResource(R.drawable.icon_key);
+        mIcon.setVisibility(View.VISIBLE);
+
+        mButtonConfig = config.getPositiveButtonConfig();
 
         loadConfig(config);
+    }
+
+    private void setMessage(String message) {
+        Spanned markupMessage = Html.fromHtml(message);
+        mMessage.setText(markupMessage);
     }
 
     @Override
     protected void loadConfig(DoorhangerConfig config) {
         setOptions(config.getOptions());
         setMessage(config.getMessage());
-        setButtons(config);
+        // Store the positive callback id for nested dialogs that need the same callback id.
+        addButtonsToLayout(config);
+    }
+
+    @Override
+    protected int getContentResource() {
+        return R.layout.login_doorhanger;
     }
 
     @Override
     protected void setOptions(final JSONObject options) {
         super.setOptions(options);
 
-        final JSONObject titleObj = options.optJSONObject("title");
-        if (titleObj != null) {
-
-            try {
-                final String text = titleObj.getString("text");
-                mTitle.setText(text);
-            } catch (JSONException e) {
-                Log.e(LOGTAG, "Error loading title from options JSON", e);
-            }
-
-            final String resource = titleObj.optString("resource");
-            if (resource != null) {
-                Favicons.getSizedFaviconForPageFromLocal(mContext, resource, 32, new OnFaviconLoadedListener() {
-                    @Override
-                    public void onFaviconLoaded(String url, String faviconURL, Bitmap favicon) {
-                        if (favicon != null) {
-                            mTitle.setCompoundDrawablesWithIntrinsicBounds(new BitmapDrawable(mResources, favicon), null, null, null);
-                            mTitle.setCompoundDrawablePadding((int) mResources.getDimension(R.dimen.doorhanger_drawable_padding));
-                        }
-                    }
-                });
-            }
-        }
-
         final JSONObject actionText = options.optJSONObject("actionText");
         addActionText(actionText);
     }
 
     @Override
-    protected Button createButtonInstance(final String text, final int id) {
-        // HACK: Confirm button will the the rightmost/last button added. Bug 1147064 should add differentiation of the two.
-        mCallbackID = id;
-
-        final Button button = (Button) LayoutInflater.from(getContext()).inflate(R.layout.doorhanger_button, null);
-        button.setText(text);
-
-        button.setOnClickListener(new Button.OnClickListener() {
+    protected OnClickListener makeOnButtonClickListener(final int id) {
+        return new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
                 final JSONObject response = new JSONObject();
@@ -103,9 +89,7 @@ public class LoginDoorHanger extends DoorHanger {
                 }
                 mOnButtonClickListener.onButtonClick(response, LoginDoorHanger.this);
             }
-        });
-
-        return button;
+        };
     }
 
     /**
@@ -117,18 +101,9 @@ public class LoginDoorHanger extends DoorHanger {
      */
     private void addActionText(JSONObject actionTextObj) {
         if (actionTextObj == null) {
-            mLogin.setVisibility(View.GONE);
+            mLink.setVisibility(View.GONE);
             return;
         }
-
-        boolean hasUsername = true;
-        String text = actionTextObj.optString("text");
-        if (TextUtils.isEmpty(text)) {
-            hasUsername = false;
-            text = mResources.getString(R.string.doorhanger_login_no_username);
-        }
-        mLogin.setText(text);
-        mLogin.setVisibility(View.VISIBLE);
 
         // Make action.
         try {
@@ -158,12 +133,12 @@ public class LoginDoorHanger extends DoorHanger {
                     });
                     builder.setView(view);
 
-                    builder.setPositiveButton(R.string.button_remember, new DialogInterface.OnClickListener() {
+                    builder.setPositiveButton(mButtonConfig.label, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             JSONObject response = new JSONObject();
                             try {
-                                response.put("callback", mCallbackID);
+                                response.put("callback", mButtonConfig.callback);
                                 final JSONObject inputs = new JSONObject();
                                 inputs.put("username", username.getText());
                                 inputs.put("password", password.getText());
@@ -182,10 +157,60 @@ public class LoginDoorHanger extends DoorHanger {
                             dialog.dismiss();
                         }
                     });
+                    String text = actionTextObj.optString("text");
+                    if (TextUtils.isEmpty(text)) {
+                        text = mResources.getString(R.string.doorhanger_login_no_username);
+                    }
+                    mLink.setText(text);
+                    mLink.setVisibility(View.VISIBLE);
+                    break;
+
+                case SELECT:
+                    try {
+                        builder.setTitle(mResources.getString(R.string.doorhanger_login_select_title));
+                        final JSONArray logins = bundle.getJSONArray("logins");
+                        final int numLogins = logins.length();
+                        final CharSequence[] usernames = new CharSequence[numLogins];
+                        final String[] passwords = new String[numLogins];
+                        final String noUser = mResources.getString(R.string.doorhanger_login_no_username);
+                        for (int i = 0; i < numLogins; i++) {
+                            final JSONObject login = (JSONObject) logins.get(i);
+                            String user = login.getString("username");
+                            if (TextUtils.isEmpty(user)) {
+                                user = noUser;
+                            }
+                            usernames[i] = user;
+                            passwords[i] = login.getString("password");
+                        }
+                        builder.setItems(usernames, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                final JSONObject response = new JSONObject();
+                                try {
+                                    response.put("callback", mButtonConfig.callback);
+                                    response.put("password", passwords[which]);
+                                } catch (JSONException e) {
+                                    Log.e(LOGTAG, "Error making login select dialog JSON", e);
+                                }
+                                mOnButtonClickListener.onButtonClick(response, LoginDoorHanger.this);
+                            }
+                        });
+                        builder.setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                        mLink.setText(R.string.doorhanger_login_select_action_text);
+                        mLink.setVisibility(View.VISIBLE);
+                    } catch (JSONException e) {
+                        Log.e(LOGTAG, "Problem creating list of logins");
+                    }
+                    break;
             }
 
             final Dialog dialog = builder.create();
-            mLogin.setOnClickListener(new OnClickListener() {
+            mLink.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     dialog.show();
@@ -193,11 +218,7 @@ public class LoginDoorHanger extends DoorHanger {
             });
 
         } catch (JSONException e) {
-            // Log an error, but leave the text visible if there was a username.
             Log.e(LOGTAG, "Error fetching actionText from JSON", e);
-            if (!hasUsername) {
-                mLogin.setVisibility(View.GONE);
-            }
         }
     }
 }

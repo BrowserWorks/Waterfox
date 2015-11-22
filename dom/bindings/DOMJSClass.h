@@ -40,7 +40,10 @@ typedef bool
                            JS::AutoIdVector& props);
 
 bool
-CheckPermissions(JSContext* aCx, JSObject* aObj, const char* const aPermissions[]);
+CheckAnyPermissions(JSContext* aCx, JSObject* aObj, const char* const aPermissions[]);
+
+bool
+CheckAllPermissions(JSContext* aCx, JSObject* aObj, const char* const aPermissions[]);
 
 struct ConstantSpec
 {
@@ -52,26 +55,29 @@ typedef bool (*PropertyEnabled)(JSContext* cx, JSObject* global);
 
 template<typename T>
 struct Prefable {
-  inline bool isEnabled(JSContext* cx, JSObject* obj) const {
+  inline bool isEnabled(JSContext* cx, JS::Handle<JSObject*> obj) const {
     if (!enabled) {
       return false;
     }
-    if (!enabledFunc && !availableFunc && !checkPermissions) {
+    if (!enabledFunc && !availableFunc && !checkAnyPermissions && !checkAllPermissions) {
       return true;
     }
-    // Just go ahead and root obj, in case enabledFunc GCs
-    JS::Rooted<JSObject*> rootedObj(cx, obj);
     if (enabledFunc &&
-        !enabledFunc(cx, js::GetGlobalForObjectCrossCompartment(rootedObj))) {
+        !enabledFunc(cx, js::GetGlobalForObjectCrossCompartment(obj))) {
       return false;
     }
     if (availableFunc &&
-        !availableFunc(cx, js::GetGlobalForObjectCrossCompartment(rootedObj))) {
+        !availableFunc(cx, js::GetGlobalForObjectCrossCompartment(obj))) {
       return false;
     }
-    if (checkPermissions &&
-        !CheckPermissions(cx, js::GetGlobalForObjectCrossCompartment(rootedObj),
-                          checkPermissions)) {
+    if (checkAnyPermissions &&
+        !CheckAnyPermissions(cx, js::GetGlobalForObjectCrossCompartment(obj),
+                             checkAnyPermissions)) {
+      return false;
+    }
+    if (checkAllPermissions &&
+        !CheckAllPermissions(cx, js::GetGlobalForObjectCrossCompartment(obj),
+                             checkAllPermissions)) {
       return false;
     }
     return true;
@@ -88,7 +94,8 @@ struct Prefable {
   // is basically a hack to avoid having to codegen PropertyEnabled
   // implementations in case when we need to do two separate checks.
   PropertyEnabled availableFunc;
-  const char* const* checkPermissions;
+  const char* const* checkAnyPermissions;
+  const char* const* checkAllPermissions;
   // Array of specs, terminated in whatever way is customary for T.
   // Null to indicate a end-of-array for Prefable, when such an
   // indicator is needed.
@@ -224,9 +231,9 @@ struct DOMJSClass
   ParentGetter mGetParent;
   ProtoHandleGetter mGetProto;
 
-  // This stores the CC participant for the native, null if this class is for a
-  // worker or for a native inheriting from nsISupports (we can get the CC
-  // participant by QI'ing in that case).
+  // This stores the CC participant for the native, null if this class does not
+  // implement cycle collection or if it inherits from nsISupports (we can get
+  // the CC participant by QI'ing in that case).
   nsCycleCollectionParticipant* mParticipant;
 
   static const DOMJSClass* FromJSClass(const JSClass* base) {

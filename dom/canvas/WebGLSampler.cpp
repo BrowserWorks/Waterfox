@@ -12,8 +12,8 @@
 namespace mozilla {
 
 WebGLSampler::WebGLSampler(WebGLContext* webgl, GLuint sampler)
-    : WebGLBindableName<GLenum>(sampler),
-      WebGLContextBoundObject(webgl)
+    : WebGLContextBoundObject(webgl)
+    , mGLName(sampler)
 {
     mContext->mSamplers.insertBack(this);
 }
@@ -39,9 +39,9 @@ WebGLSampler::GetParentObject() const
 }
 
 JSObject*
-WebGLSampler::WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto)
+WebGLSampler::WrapObject(JSContext* cx, JS::Handle<JSObject*> givenProto)
 {
-    return dom::WebGLSamplerBinding::Wrap(cx, this, aGivenProto);
+    return dom::WebGLSamplerBinding::Wrap(cx, this, givenProto);
 }
 
 

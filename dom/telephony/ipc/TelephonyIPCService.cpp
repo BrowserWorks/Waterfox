@@ -37,7 +37,7 @@ getDefaultServiceId()
   return id;
 }
 
-} // Anonymous namespace
+} // namespace
 
 NS_IMPL_ISUPPORTS(TelephonyIPCService,
                   nsITelephonyService,
@@ -417,16 +417,6 @@ TelephonyIPCService::NotifyConferenceError(const nsAString& aName,
 {
   for (uint32_t i = 0; i < mListeners.Length(); i++) {
     mListeners[i]->NotifyConferenceError(aName, aMessage);
-  }
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-TelephonyIPCService::NotifyError(uint32_t aClientId, int32_t aCallIndex,
-                                  const nsAString& aError)
-{
-  for (uint32_t i = 0; i < mListeners.Length(); i++) {
-    mListeners[i]->NotifyError(aClientId, aCallIndex, aError);
   }
   return NS_OK;
 }

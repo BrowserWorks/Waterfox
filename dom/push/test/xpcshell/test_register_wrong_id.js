@@ -3,7 +3,7 @@
 
 'use strict';
 
-const {PushDB, PushService} = serviceExports;
+const {PushDB, PushService, PushServiceWebSocket} = serviceExports;
 
 const userAgentID = '84afc774-6995-40d1-9c90-8c34ddcd0cb4';
 const clientChannelID = '4b42a681c99e4dfbbb166a7e01a09b8b';
@@ -25,11 +25,12 @@ function run_test() {
 add_task(function* test_register_wrong_id() {
   // Should reconnect after the register request times out.
   let registers = 0;
-  let helloDefer = Promise.defer();
-  let helloDone = after(2, helloDefer.resolve);
+  let helloDone;
+  let helloPromise = new Promise(resolve => helloDone = after(2, resolve));
 
-  PushService._generateID = () => clientChannelID;
+  PushServiceWebSocket._generateID = () => clientChannelID;
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -58,14 +59,15 @@ add_task(function* test_register_wrong_id() {
   });
 
   yield rejects(
-    PushNotificationService.register('https://example.com/mismatched'),
+    PushNotificationService.register('https://example.com/mismatched',
+      ChromeUtils.originAttributesToSuffix({ appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false })),
     function(error) {
       return error == 'TimeoutError';
     },
     'Wrong error for mismatched register reply'
   );
 
-  yield waitForPromise(helloDefer.promise, DEFAULT_TIMEOUT,
+  yield waitForPromise(helloPromise, DEFAULT_TIMEOUT,
     'Reconnect after mismatched register reply timed out');
   equal(registers, 1, 'Wrong register count');
 });

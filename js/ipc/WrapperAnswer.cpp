@@ -189,7 +189,7 @@ WrapperAnswer::RecvDefineProperty(const ObjectId& objId, const JSIDVariant& idVa
         return fail(jsapi, rs);
 
     ObjectOpResult success;
-    if (!js::DefineOwnProperty(cx, obj, id, desc, success))
+    if (!JS_DefinePropertyById(cx, obj, id, desc, success))
         return fail(jsapi, rs);
     return ok(rs, success);
 }
@@ -220,14 +220,15 @@ WrapperAnswer::RecvDelete(const ObjectId& objId, const JSIDVariant& idVar, Retur
 }
 
 bool
-WrapperAnswer::RecvHas(const ObjectId& objId, const JSIDVariant& idVar, ReturnStatus* rs, bool* bp)
+WrapperAnswer::RecvHas(const ObjectId& objId, const JSIDVariant& idVar, ReturnStatus* rs,
+                       bool* foundp)
 {
     AutoJSAPI jsapi;
     if (NS_WARN_IF(!jsapi.Init(scopeForTargetObjects())))
         return false;
     jsapi.TakeOwnershipOfErrorReporting();
     JSContext* cx = jsapi.cx();
-    *bp = false;
+    *foundp = false;
 
     RootedObject obj(cx, findObjectById(cx, objId));
     if (!obj)
@@ -239,24 +240,21 @@ WrapperAnswer::RecvHas(const ObjectId& objId, const JSIDVariant& idVar, ReturnSt
     if (!fromJSIDVariant(cx, idVar, &id))
         return fail(jsapi, rs);
 
-    bool found;
-    if (!JS_HasPropertyById(cx, obj, id, &found))
+    if (!JS_HasPropertyById(cx, obj, id, foundp))
         return fail(jsapi, rs);
-    *bp = !!found;
-
     return ok(rs);
 }
 
 bool
 WrapperAnswer::RecvHasOwn(const ObjectId& objId, const JSIDVariant& idVar, ReturnStatus* rs,
-                          bool* bp)
+                          bool* foundp)
 {
     AutoJSAPI jsapi;
     if (NS_WARN_IF(!jsapi.Init(scopeForTargetObjects())))
         return false;
     jsapi.TakeOwnershipOfErrorReporting();
     JSContext* cx = jsapi.cx();
-    *bp = false;
+    *foundp = false;
 
     RootedObject obj(cx, findObjectById(cx, objId));
     if (!obj)
@@ -268,16 +266,13 @@ WrapperAnswer::RecvHasOwn(const ObjectId& objId, const JSIDVariant& idVar, Retur
     if (!fromJSIDVariant(cx, idVar, &id))
         return fail(jsapi, rs);
 
-    Rooted<JSPropertyDescriptor> desc(cx);
-    if (!JS_GetPropertyDescriptorById(cx, obj, id, &desc))
+    if (!JS_HasOwnPropertyById(cx, obj, id, foundp))
         return fail(jsapi, rs);
-    *bp = (desc.object() == obj);
-
     return ok(rs);
 }
 
 bool
-WrapperAnswer::RecvGet(const ObjectId& objId, const ObjectVariant& receiverVar,
+WrapperAnswer::RecvGet(const ObjectId& objId, const JSVariant& receiverVar,
                        const JSIDVariant& idVar, ReturnStatus* rs, JSVariant* result)
 {
     // We may run scripted getters.
@@ -294,8 +289,8 @@ WrapperAnswer::RecvGet(const ObjectId& objId, const ObjectVariant& receiverVar,
     if (!obj)
         return fail(aes, rs);
 
-    RootedObject receiver(cx, fromObjectVariant(cx, receiverVar));
-    if (!receiver)
+    RootedValue receiver(cx);
+    if (!fromVariant(cx, receiverVar, &receiver))
         return fail(aes, rs);
 
     RootedId id(cx);

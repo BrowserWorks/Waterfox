@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import argparse
 import difflib
@@ -92,7 +92,6 @@ class CommandAction(argparse.Action):
         elif values:
             command = values[0].lower()
             args = values[1:]
-
             if command == 'help':
                 if args and args[0] not in ['-h', '--help']:
                     # Make sure args[0] is indeed a command.
@@ -102,21 +101,33 @@ class CommandAction(argparse.Action):
                 sys.exit(0)
             elif '-h' in args or '--help' in args:
                 # -h or --help is in the command arguments.
-                self._handle_command_help(parser, command)
-                sys.exit(0)
+                if '--' in args:
+                    # -- is in command arguments
+                    if '-h' in args[:args.index('--')] or '--help' in args[:args.index('--')]:
+                        # Honor -h or --help only if it appears before --
+                        self._handle_command_help(parser, command)
+                        sys.exit(0)
+                else:
+                    self._handle_command_help(parser, command)
+                    sys.exit(0)
+
+
         else:
             raise NoCommandError()
 
         # Command suggestion
         if command not in self._mach_registrar.command_handlers:
+            # Make sure we don't suggest any deprecated commands.
+            names = [h.name for h in self._mach_registrar.command_handlers.values()
+                        if h.cls.__name__ == 'DeprecatedCommands']
             # We first try to look for a valid command that is very similar to the given command.
-            suggested_commands = difflib.get_close_matches(command, self._mach_registrar.command_handlers.keys(), cutoff=0.8)
+            suggested_commands = difflib.get_close_matches(command, names, cutoff=0.8)
             # If we find more than one matching command, or no command at all, we give command suggestions instead
             # (with a lower matching threshold). All commands that start with the given command (for instance: 'mochitest-plain',
             # 'mochitest-chrome', etc. for 'mochitest-') are also included.
             if len(suggested_commands) != 1:
-                suggested_commands = set(difflib.get_close_matches(command, self._mach_registrar.command_handlers.keys(), cutoff=0.5))
-                suggested_commands |= {cmd for cmd in self._mach_registrar.command_handlers if cmd.startswith(command)}
+                suggested_commands = set(difflib.get_close_matches(command, names, cutoff=0.5))
+                suggested_commands |= {cmd for cmd in names if cmd.startswith(command)}
                 raise UnknownCommandError(command, 'run', suggested_commands)
             sys.stderr.write("We're assuming the '%s' command is '%s' and we're executing it for you.\n\n" % (command, suggested_commands[0]))
             command = suggested_commands[0]
@@ -169,13 +180,19 @@ class CommandAction(argparse.Action):
             'usage': usage,
         }
 
+        remainder = None
+
         if handler.parser:
             subparser = handler.parser
             subparser.context = self._context
+            for arg in subparser._actions[:]:
+                if arg.nargs == argparse.REMAINDER:
+                    subparser._actions.remove(arg)
+                    remainder = (arg.dest,), {'default': arg.default,
+                                              'nargs': arg.nargs,
+                                              'help': arg.help}
         else:
             subparser = argparse.ArgumentParser(**parser_args)
-
-        remainder = None
 
         for arg in handler.arguments:
             # Remove our group keyword; it's not needed here.
@@ -227,7 +244,7 @@ class CommandAction(argparse.Action):
                 setattr(command_namespace, name, extra)
             else:
                 setattr(command_namespace, name, options.get('default', []))
-        elif extra:
+        elif extra and handler.cls.__name__ != 'DeprecatedCommands':
             raise UnrecognizedArgumentError(command, extra)
 
     def _handle_main_help(self, parser, verbose):
@@ -348,13 +365,19 @@ class CommandAction(argparse.Action):
 
         self._populate_command_group(c_parser, handler, group)
 
-        # This will print the description of the command below the usage.
-        description = handler.description
-        if description:
-            parser.description = description
+        # Set the long help of the command to the docstring (if present) or
+        # the command decorator description argument (if present).
+        if handler.docstring:
+            parser.description = format_docstring(handler.docstring)
+        elif handler.description:
+            parser.description = handler.description
 
         parser.usage = '%(prog)s [global arguments] ' + command + \
             ' [command arguments]'
+
+        # This is needed to preserve line endings in the description field,
+        # which may be populated from a docstring.
+        parser.formatter_class = argparse.RawDescriptionHelpFormatter
         parser.print_help()
         print('')
         c_parser.print_help()
@@ -368,6 +391,11 @@ class CommandAction(argparse.Action):
             group.add_argument(subcommand, help=subhandler.description,
                 action='store_true')
 
+        if handler.docstring:
+            parser.description = format_docstring(handler.docstring)
+
+        parser.formatter_class = argparse.RawDescriptionHelpFormatter
+
         parser.print_help()
 
     def _handle_subcommand_help(self, parser, command, subcommand, handler):
@@ -379,10 +407,40 @@ class CommandAction(argparse.Action):
         group = c_parser.add_argument_group('Sub Command Arguments')
         self._populate_command_group(c_parser, handler, group)
 
+        if handler.docstring:
+            parser.description = format_docstring(handler.docstring)
+
+        parser.formatter_class = argparse.RawDescriptionHelpFormatter
+
         parser.print_help()
         print('')
         c_parser.print_help()
 
+
 class NoUsageFormatter(argparse.HelpFormatter):
     def _format_usage(self, *args, **kwargs):
         return ""
+
+
+def format_docstring(docstring):
+    """Format a raw docstring into something suitable for presentation.
+
+    This function is based on the example function in PEP-0257.
+    """
+    if not docstring:
+        return ''
+    lines = docstring.expandtabs().splitlines()
+    indent = sys.maxint
+    for line in lines[1:]:
+        stripped = line.lstrip()
+        if stripped:
+            indent = min(indent, len(line) - len(stripped))
+    trimmed = [lines[0].strip()]
+    if indent < sys.maxint:
+        for line in lines[1:]:
+            trimmed.append(line[indent:].rstrip())
+    while trimmed and not trimmed[-1]:
+        trimmed.pop()
+    while trimmed and not trimmed[0]:
+        trimmed.pop(0)
+    return '\n'.join(trimmed)

@@ -16,7 +16,7 @@
 #include "nsStaticAtom.h"
 #include "nsString.h"
 #include "nsCRT.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "prenv.h"
 #include "nsThreadUtils.h"
 #include "nsDataHashtable.h"
@@ -41,7 +41,7 @@ using namespace mozilla;
  * sure it's only manipulated from the main thread.  Probably the latter
  * is better, since the former would hurt performance.
  */
-static PLDHashTable gAtomTable;
+static PLDHashTable* gAtomTable;
 
 class StaticAtomEntry : public PLDHashEntryHdr
 {
@@ -293,29 +293,11 @@ AtomTableInitEntry(PLDHashEntryHdr* aEntry, const void* aKey)
 static const PLDHashTableOps AtomTableOps = {
   AtomTableGetHash,
   AtomTableMatchKey,
-  PL_DHashMoveEntryStub,
+  PLDHashTable::MoveEntryStub,
   AtomTableClearEntry,
   AtomTableInitEntry
 };
 
-
-#ifdef DEBUG
-static PLDHashOperator
-DumpAtomLeaks(PLDHashTable* aTable, PLDHashEntryHdr* aEntryHdr,
-              uint32_t aIndex, void* aArg)
-{
-  AtomTableEntry* entry = static_cast<AtomTableEntry*>(aEntryHdr);
-  AtomImpl* atom = entry->mAtom;
-  if (!atom->IsPermanent()) {
-    ++*static_cast<uint32_t*>(aArg);
-    nsAutoCString str;
-    atom->ToUTF8String(str);
-    fputs(str.get(), stdout);
-    fputs("\n", stdout);
-  }
-  return PL_DHASH_NEXT;
-}
-#endif
 
 static inline
 void
@@ -336,19 +318,31 @@ void
 NS_PurgeAtomTable()
 {
   delete gStaticAtomTable;
+  gStaticAtomTable = nullptr;
 
-  if (gAtomTable.IsInitialized()) {
+  if (gAtomTable) {
 #ifdef DEBUG
     const char* dumpAtomLeaks = PR_GetEnv("MOZ_DUMP_ATOM_LEAKS");
     if (dumpAtomLeaks && *dumpAtomLeaks) {
       uint32_t leaked = 0;
       printf("*** %d atoms still exist (including permanent):\n",
-             gAtomTable.EntryCount());
-      PL_DHashTableEnumerate(&gAtomTable, DumpAtomLeaks, &leaked);
+             gAtomTable->EntryCount());
+      for (auto iter = gAtomTable->Iter(); !iter.Done(); iter.Next()) {
+        auto entry = static_cast<AtomTableEntry*>(iter.Get());
+        AtomImpl* atom = entry->mAtom;
+        if (!atom->IsPermanent()) {
+          leaked++;
+          nsAutoCString str;
+          atom->ToUTF8String(str);
+          fputs(str.get(), stdout);
+          fputs("\n", stdout);
+        }
+      }
       printf("*** %u non-permanent atoms leaked\n", leaked);
     }
 #endif
-    PL_DHashTableFinish(&gAtomTable);
+    delete gAtomTable;
+    gAtomTable = nullptr;
   }
 }
 
@@ -397,17 +391,16 @@ AtomImpl::AtomImpl(nsStringBuffer* aStringBuffer, uint32_t aLength,
 
 AtomImpl::~AtomImpl()
 {
-  NS_PRECONDITION(gAtomTable.IsInitialized(), "uninitialized atom hashtable");
+  MOZ_ASSERT(gAtomTable, "uninitialized atom hashtable");
   // Permanent atoms are removed from the hashtable at shutdown, and we
   // don't want to remove them twice.  See comment above in
   // |AtomTableClearEntry|.
   if (!IsPermanentInDestructor()) {
     AtomTableKey key(mString, mLength, mHash);
-    PL_DHashTableRemove(&gAtomTable, &key);
-    if (gAtomTable.IsInitialized() && gAtomTable.EntryCount() == 0) {
-      PL_DHashTableFinish(&gAtomTable);
-      NS_ASSERTION(gAtomTable.EntryCount() == 0,
-                   "PL_DHashTableFinish changed the entry count");
+    gAtomTable->Remove(&key);
+    if (gAtomTable->EntryCount() == 0) {
+      delete gAtomTable;
+      gAtomTable = nullptr;
     }
   }
 
@@ -510,29 +503,23 @@ AtomImpl::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf)
 
 //----------------------------------------------------------------------
 
-static size_t
-SizeOfAtomTableEntryExcludingThis(PLDHashEntryHdr* aHdr,
-                                  MallocSizeOf aMallocSizeOf,
-                                  void* aArg)
-{
-  AtomTableEntry* entry = static_cast<AtomTableEntry*>(aHdr);
-  return entry->mAtom->SizeOfIncludingThis(aMallocSizeOf);
-}
-
 void
 NS_SizeOfAtomTablesIncludingThis(MallocSizeOf aMallocSizeOf,
                                  size_t* aMain, size_t* aStatic)
 {
-  *aMain = gAtomTable.IsInitialized()
-         ? PL_DHashTableSizeOfExcludingThis(&gAtomTable,
-                                            SizeOfAtomTableEntryExcludingThis,
-                                            aMallocSizeOf)
-         : 0;
+  *aMain = 0;
+  if (gAtomTable) {
+    *aMain += gAtomTable->ShallowSizeOfIncludingThis(aMallocSizeOf);
+    for (auto iter = gAtomTable->Iter(); !iter.Done(); iter.Next()) {
+      auto entry = static_cast<AtomTableEntry*>(iter.Get());
+      *aMain += entry->mAtom->SizeOfIncludingThis(aMallocSizeOf);
+    }
+  }
 
   // The atoms in the this table are almost certainly stored in static data, so
-  // we don't need a SizeOfEntry function.
+  // we don't need to measure entries separately.
   *aStatic = gStaticAtomTable
-           ? gStaticAtomTable->SizeOfIncludingThis(nullptr, aMallocSizeOf)
+           ? gStaticAtomTable->ShallowSizeOfIncludingThis(aMallocSizeOf)
            : 0;
 }
 
@@ -541,9 +528,9 @@ NS_SizeOfAtomTablesIncludingThis(MallocSizeOf aMallocSizeOf,
 static inline void
 EnsureTableExists()
 {
-  if (!gAtomTable.IsInitialized()) {
-    PL_DHashTableInit(&gAtomTable, &AtomTableOps,
-                      sizeof(AtomTableEntry), ATOM_HASHTABLE_INITIAL_LENGTH);
+  if (!gAtomTable) {
+    gAtomTable = new PLDHashTable(&AtomTableOps, sizeof(AtomTableEntry),
+                                  ATOM_HASHTABLE_INITIAL_LENGTH);
   }
 }
 
@@ -554,7 +541,7 @@ GetAtomHashEntry(const char* aString, uint32_t aLength, uint32_t* aHashOut)
   EnsureTableExists();
   AtomTableKey key(aString, aLength, aHashOut);
   // This is an infallible add.
-  return static_cast<AtomTableEntry*>(PL_DHashTableAdd(&gAtomTable, &key));
+  return static_cast<AtomTableEntry*>(gAtomTable->Add(&key));
 }
 
 static inline AtomTableEntry*
@@ -564,7 +551,7 @@ GetAtomHashEntry(const char16_t* aString, uint32_t aLength, uint32_t* aHashOut)
   EnsureTableExists();
   AtomTableKey key(aString, aLength, aHashOut);
   // This is an infallible add.
-  return static_cast<AtomTableEntry*>(PL_DHashTableAdd(&gAtomTable, &key));
+  return static_cast<AtomTableEntry*>(gAtomTable->Add(&key));
 }
 
 class CheckStaticAtomSizes
@@ -709,7 +696,8 @@ NS_NewPermanentAtom(const nsAString& aUTF16String)
 nsrefcnt
 NS_GetNumberOfAtoms(void)
 {
-  return gAtomTable.EntryCount();
+  MOZ_ASSERT(gAtomTable);
+  return gAtomTable->EntryCount();
 }
 
 nsIAtom*

@@ -8,15 +8,15 @@
 
 #include "mozilla/LinkedList.h"
 #include "nsWrapperCache.h"
-#include "WebGLBindableName.h"
+
 #include "WebGLFramebufferAttachable.h"
 #include "WebGLObjectModel.h"
+#include "WebGLStrongTypes.h"
 
 namespace mozilla {
 
 class WebGLRenderbuffer final
     : public nsWrapperCache
-    , public WebGLBindable<RBTarget>
     , public WebGLRefCountedObject<WebGLRenderbuffer>
     , public LinkedListElement<WebGLRenderbuffer>
     , public WebGLRectangleObject
@@ -41,6 +41,8 @@ public:
     GLsizei Samples() const { return mSamples; }
     void SetSamples(GLsizei samples) { mSamples = samples; }
 
+    GLuint PrimaryGLName() const { return mPrimaryRB; }
+
     GLenum InternalFormat() const { return mInternalFormat; }
     void SetInternalFormat(GLenum internalFormat) {
         mInternalFormat = internalFormat;
@@ -64,7 +66,7 @@ public:
     // Only handles a subset of `pname`s.
     GLint GetRenderbufferParameter(RBTarget target, RBParam pname) const;
 
-    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override;
+    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> givenProto) override;
 
     NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(WebGLRenderbuffer)
     NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(WebGLRenderbuffer)
@@ -80,7 +82,16 @@ protected:
     GLenum mInternalFormatForGL;
     WebGLImageDataStatus mImageDataStatus;
     GLsizei mSamples;
+#ifdef ANDROID
+    // Bug 1140459: Some drivers (including our test slaves!) don't
+    // give reasonable answers for IsRenderbuffer, maybe others.
+    // This shows up on Android 2.3 emulator.
+    //
+    // So we track the `is a Renderbuffer` state ourselves.
+    bool mIsRB;
+#endif
 
+    friend class WebGLContext;
     friend class WebGLFramebuffer;
 };
 

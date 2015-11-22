@@ -156,7 +156,7 @@ ReturnedValueMustNotBePrimitive(JSContext* cx, HandleObject proxy, JSAtom* atom,
         if (AtomToPrintableString(cx, atom, &bytes)) {
             RootedValue val(cx, ObjectOrNullValue(proxy));
             ReportValueError2(cx, JSMSG_BAD_TRAP_RETURN_VALUE,
-                              JSDVG_SEARCH_STACK, val, js::NullPtr(), bytes.ptr());
+                              JSDVG_SEARCH_STACK, val, nullptr, bytes.ptr());
         }
         return false;
     }
@@ -285,7 +285,7 @@ ScriptedIndirectProxyHandler::hasOwn(JSContext* cx, HandleObject proxy, HandleId
 }
 
 bool
-ScriptedIndirectProxyHandler::get(JSContext* cx, HandleObject proxy, HandleObject receiver,
+ScriptedIndirectProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue receiver,
                                   HandleId id, MutableHandleValue vp) const
 {
     RootedObject handler(cx, GetIndirectProxyHandlerObject(proxy));
@@ -293,7 +293,7 @@ ScriptedIndirectProxyHandler::get(JSContext* cx, HandleObject proxy, HandleObjec
     if (!IdToStringOrSymbol(cx, id, &idv))
         return false;
     JS::AutoValueArray<2> argv(cx);
-    argv[0].setObjectOrNull(receiver);
+    argv[0].set(receiver);
     argv[1].set(idv);
     RootedValue fval(cx);
     if (!GetDerivedTrap(cx, handler, cx->names().get, &fval))
@@ -426,7 +426,7 @@ ScriptedIndirectProxyHandler::getOwnEnumerablePropertyKeys(JSContext* cx, Handle
 
 bool
 ScriptedIndirectProxyHandler::nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                                         CallArgs args) const
+                                         const CallArgs& args) const
 {
     return BaseProxyHandler::nativeCall(cx, test, impl, args);
 }
@@ -463,11 +463,24 @@ bool
 CallableScriptedIndirectProxyHandler::construct(JSContext* cx, HandleObject proxy, const CallArgs& args) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, CALL);
+
     RootedObject ccHolder(cx, &proxy->as<ProxyObject>().extra(0).toObject());
     MOZ_ASSERT(ccHolder->getClass() == &CallConstructHolder);
+
     RootedValue construct(cx, ccHolder->as<NativeObject>().getReservedSlot(1));
-    MOZ_ASSERT(construct.isObject() && construct.toObject().isCallable());
-    return InvokeConstructor(cx, construct, args.length(), args.array(), args.rval());
+
+    // We could enforce this at proxy creation time, but lipstick on a pig.
+    // Plus, let's delay in-the-field bustage as long as possible.
+    if (!IsConstructor(construct)) {
+        ReportValueError(cx, JSMSG_NOT_CONSTRUCTOR, JSDVG_IGNORE_STACK, construct, nullptr);
+        return false;
+    }
+
+    ConstructArgs cargs(cx);
+    if (!FillArgumentsFromArraylike(cx, cargs, args))
+        return false;
+
+    return Construct(cx, construct, cargs, args.newTarget(), args.rval());
 }
 
 const CallableScriptedIndirectProxyHandler CallableScriptedIndirectProxyHandler::singleton;
@@ -532,7 +545,7 @@ js::proxy_createFunction(JSContext* cx, unsigned argc, Value* vp)
     // Stash the call and construct traps on a holder object that we can stick
     // in a slot on the proxy.
     RootedObject ccHolder(cx, JS_NewObjectWithGivenProto(cx, Jsvalify(&CallConstructHolder),
-                                                         js::NullPtr()));
+                                                         nullptr));
     if (!ccHolder)
         return false;
     ccHolder->as<NativeObject>().setReservedSlot(0, ObjectValue(*call));

@@ -63,6 +63,18 @@ function testSteps()
     // This one lives in storage/default/file++++c++
     { url: "file:///c:/", dbName: "dbQ", dbVersion: 1 },
 
+    // This one lives in storage/default/file++++Users+joe+c+++index.html
+    { url: "file:///Users/joe/c++/index.html", dbName: "dbR", dbVersion: 1 },
+
+    // This one lives in storage/default/file++++Users+joe+c+++index.html
+    { url: "file:///Users/joe/c///index.html", dbName: "dbR", dbVersion: 1 },
+
+    // This one lives in storage/default/file++++++index.html
+    { url: "file:///+/index.html", dbName: "dbS", dbVersion: 1 },
+
+    // This one lives in storage/default/file++++++index.html
+    { url: "file://///index.html", dbName: "dbS", dbVersion: 1 },
+
     // This one lives in storage/temporary/http+++localhost
     { url: "http://localhost", dbName: "dbZ",
       dbOptions: { version: 1, storage: "temporary" } }
@@ -78,13 +90,10 @@ function testSteps()
     let request;
     if ("url" in params) {
       let uri = ios.newURI(params.url, null, null);
-      let principal;
-      if ("appId" in params) {
-        principal = ssm.getAppCodebasePrincipal(uri, params.appId,
-                                                params.inMozBrowser);
-      } else {
-        principal = ssm.getNoAppCodebasePrincipal(uri);
-      }
+      let principal =
+        ssm.createCodebasePrincipal(uri,
+                                    {appId: params.appId || ssm.NO_APPID,
+                                     inBrowser: params.inMozBrowser});
       if ("dbVersion" in params) {
         request = indexedDB.openForPrincipal(principal, params.dbName,
                                              params.dbVersion);

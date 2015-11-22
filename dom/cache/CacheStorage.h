@@ -24,7 +24,7 @@ class ErrorResult;
 
 namespace ipc {
   class PrincipalInfo;
-}
+} // namespace ipc
 
 namespace dom {
 
@@ -33,7 +33,7 @@ class Promise;
 
 namespace workers {
   class WorkerPrivate;
-}
+} // namespace workers
 
 namespace cache {
 
@@ -49,11 +49,15 @@ class CacheStorage final : public nsIIPCBackgroundChildCreateCallback
 public:
   static already_AddRefed<CacheStorage>
   CreateOnMainThread(Namespace aNamespace, nsIGlobalObject* aGlobal,
-                     nsIPrincipal* aPrincipal, ErrorResult& aRv);
+                     nsIPrincipal* aPrincipal, bool aStorageDisabled,
+                     bool aForceTrustedOrigin, ErrorResult& aRv);
 
   static already_AddRefed<CacheStorage>
   CreateOnWorker(Namespace aNamespace, nsIGlobalObject* aGlobal,
                  workers::WorkerPrivate* aWorkerPrivate, ErrorResult& aRv);
+
+  static bool
+  DefineCaches(JSContext* aCx, JS::Handle<JSObject*> aGlobal);
 
   // webidl interface methods
   already_AddRefed<Promise> Match(const RequestOrUSVString& aRequest,
@@ -94,6 +98,7 @@ public:
 private:
   CacheStorage(Namespace aNamespace, nsIGlobalObject* aGlobal,
                const mozilla::ipc::PrincipalInfo& aPrincipalInfo, Feature* aFeature);
+  explicit CacheStorage(nsresult aFailureResult);
   ~CacheStorage();
 
   void MaybeRunPendingRequests();
@@ -109,7 +114,7 @@ private:
   struct Entry;
   nsTArray<nsAutoPtr<Entry>> mPendingRequests;
 
-  bool mFailedActor;
+  nsresult mStatus;
 
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS

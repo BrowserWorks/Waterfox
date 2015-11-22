@@ -12,7 +12,7 @@ interface nsIChannel;
  * associated with a MultiPartChannel.
  */
 
-[scriptable, uuid(4b04e835-d131-42af-8bf0-74289f99374f)]
+[scriptable, uuid(4fefb490-5567-11e5-a837-0800200c9a66)]
 interface nsIMultiPartChannel : nsISupports
 {
     /**
@@ -32,4 +32,15 @@ interface nsIMultiPartChannel : nsISupports
      * whether more data can be expected.
      */
     readonly attribute boolean isLastPart;
+
+    /**
+     * ASCII-encoding content prior to the first resource. Only valid for
+     * content-type=application/package.
+     */
+    readonly attribute ACString preamble;
+
+    /**
+     * The original http response header in each part.
+     */
+    readonly attribute ACString originalResponseHeader;
 };

@@ -23,9 +23,8 @@ LOCAL_INCLUDES += [
 ]
 
 USE_LIBS += [
+    'mfbt',
     'xpcomglue',
 ]
 
 DISABLE_STL_WRAPPING = True
-
-FAIL_ON_WARNINGS = True

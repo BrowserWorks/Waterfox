@@ -6,7 +6,7 @@ this.EXPORTED_SYMBOLS = [ "SitePermissions" ];
 
 Components.utils.import("resource://gre/modules/Services.jsm");
 
-let gStringBundle =
+var gStringBundle =
   Services.strings.createBundle("chrome://browser/locale/sitePermissions.properties");
 
 this.SitePermissions = {
@@ -93,7 +93,7 @@ this.SitePermissions = {
     if (!this.isSupportedURI(aURI))
       return;
 
-    Services.perms.remove(aURI.host, aPermissionID);
+    Services.perms.remove(aURI, aPermissionID);
   },
 
   /* Returns the localized label for the permission with the given ID, to be
@@ -122,7 +122,7 @@ this.SitePermissions = {
   }
 };
 
-let gPermissionObject = {
+var gPermissionObject = {
   /* Holds permission ID => options pairs.
    *
    * Supported options:
@@ -185,8 +185,6 @@ let gPermissionObject = {
   },
 
   "indexedDB": {},
-
-  "fullscreen": {},
 
   "pointerLock": {
     exactHostMatch: true

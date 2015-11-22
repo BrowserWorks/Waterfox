@@ -13,6 +13,17 @@
 #include "prlock.h"
 #include "nsDebug.h"
 
+// These are the codes returned by |EnumReadFunction| and |EnumFunction|, which
+// control the behavior of EnumerateRead() and Enumerate(). The PLD/PL_D prefix
+// is because they originated in PLDHashTable, but that class no longer uses
+// them.
+enum PLDHashOperator
+{
+  PL_DHASH_NEXT = 0,          // enumerator says continue
+  PL_DHASH_STOP = 1,          // enumerator says stop
+  PL_DHASH_REMOVE = 2         // enumerator says remove
+};
+
 template<class KeyClass, class DataType, class UserDataType>
 class nsBaseHashtable; // forward declaration
 
@@ -162,18 +173,23 @@ public:
 
   /**
    * enumerate entries in the hashtable, without allowing changes
+   * WARNING: this function is deprecated. Please use Iterator instead.
    * @param aEnumFunc enumeration callback
    * @param aUserArg passed unchanged to the EnumReadFunction
    */
   uint32_t EnumerateRead(EnumReadFunction aEnumFunc, void* aUserArg) const
   {
-    NS_ASSERTION(this->mTable.IsInitialized(),
-                 "nsBaseHashtable was not initialized properly.");
-
-    s_EnumReadArgs enumData = { aEnumFunc, aUserArg };
-    return PL_DHashTableEnumerate(const_cast<PLDHashTable*>(&this->mTable),
-                                  s_EnumReadStub,
-                                  &enumData);
+    uint32_t n = 0;
+    for (auto iter = this->mTable.ConstIter(); !iter.Done(); iter.Next()) {
+      auto entry = static_cast<EntryType*>(iter.Get());
+      PLDHashOperator op = aEnumFunc(entry->GetKey(), entry->mData, aUserArg);
+      n++;
+      MOZ_ASSERT(!(op & PL_DHASH_REMOVE));
+      if (op & PL_DHASH_STOP) {
+        break;
+      }
+    }
+    return n;
   }
 
   /**
@@ -192,20 +208,68 @@ public:
                                           void* aUserArg);
 
   /**
-   * enumerate entries in the hashtable, allowing changes. This
-   * functions write-locks the hashtable.
+   * enumerate entries in the hashtable, allowing changes.
+   * WARNING: this function is deprecated. Please use Iterator and/or
+   * MutatingIterator instead.
    * @param aEnumFunc enumeration callback
    * @param aUserArg passed unchanged to the EnumFunction
    */
   uint32_t Enumerate(EnumFunction aEnumFunc, void* aUserArg)
   {
-    NS_ASSERTION(this->mTable.IsInitialized(),
-                 "nsBaseHashtable was not initialized properly.");
+    uint32_t n = 0;
+    for (auto iter = this->mTable.Iter(); !iter.Done(); iter.Next()) {
+      auto entry = static_cast<EntryType*>(iter.Get());
+      PLDHashOperator op = aEnumFunc(entry->GetKey(), entry->mData, aUserArg);
+      n++;
+      if (op & PL_DHASH_REMOVE) {
+        iter.Remove();
+      }
+      if (op & PL_DHASH_STOP) {
+        break;
+      }
+    }
+    return n;
+  }
 
-    s_EnumArgs enumData = { aEnumFunc, aUserArg };
-    return PL_DHashTableEnumerate(&this->mTable,
-                                  s_EnumStub,
-                                  &enumData);
+  // This is an iterator that also allows entry removal. Example usage:
+  //
+  //   for (auto iter = table.Iter(); !iter.Done(); iter.Next()) {
+  //     const KeyType key = iter.Key();
+  //     const UserDataType data = iter.UserData();
+  //     // or
+  //     const DataType& data = iter.Data();
+  //     // ... do stuff with |key| and/or |data| ...
+  //     // ... possibly call iter.Remove() once ...
+  //   }
+  //
+  class Iterator : public PLDHashTable::Iterator
+  {
+  public:
+    typedef PLDHashTable::Iterator Base;
+
+    explicit Iterator(nsBaseHashtable* aTable) : Base(&aTable->mTable) {}
+    Iterator(Iterator&& aOther) : Base(aOther.mTable) {}
+    ~Iterator() {}
+
+    KeyType Key() const { return static_cast<EntryType*>(Get())->GetKey(); }
+    UserDataType UserData() const
+    {
+      return static_cast<EntryType*>(Get())->mData;
+    }
+    DataType& Data() const { return static_cast<EntryType*>(Get())->mData; }
+
+  private:
+    Iterator() = delete;
+    Iterator(const Iterator&) = delete;
+    Iterator& operator=(const Iterator&) = delete;
+    Iterator& operator=(const Iterator&&) = delete;
+  };
+
+  Iterator Iter() { return Iterator(this); }
+
+  Iterator ConstIter() const
+  {
+    return Iterator(const_cast<nsBaseHashtable*>(this));
   }
 
   /**
@@ -214,143 +278,38 @@ public:
   void Clear() { nsTHashtable<EntryType>::Clear(); }
 
   /**
-   * client must provide a SizeOfEntryExcludingThisFun function for
-   *   SizeOfExcludingThis.
-   * @param     aKey the key being enumerated
-   * @param     aData Reference to data being enumerated.
-   * @param     aMallocSizeOf the function used to measure heap-allocated blocks
-   * @param     aUserArg passed unchanged from SizeOf{In,Ex}cludingThis
-   * @return    summed size of the things pointed to by the entries
-   */
-  typedef size_t
-    (*SizeOfEntryExcludingThisFun)(KeyType aKey,
-                                   const DataType& aData,
-                                   mozilla::MallocSizeOf aMallocSizeOf,
-                                   void* aUserArg);
-
-  /**
-   * Measure the size of the table's entry storage and the table itself.
-   * If |aSizeOfEntryExcludingThis| is non-nullptr, measure the size of things
-   * pointed to by entries.
+   * Measure the size of the table's entry storage. The size of things pointed
+   * to by entries must be measured separately; hence the "Shallow" prefix.
    *
-   * @param    aSizeOfEntryExcludingThis
-   *           the <code>SizeOfEntryExcludingThisFun</code> function to call
-   * @param    aMallocSizeOf the function used to meeasure heap-allocated blocks
-   * @param    aUserArg a point to pass to the
-   *           <code>SizeOfEntryExcludingThisFun</code> function
-   * @return   the summed size of the entries, the table, and the table's storage
+   * @param   aMallocSizeOf the function used to measure heap-allocated blocks
+   * @return  the summed size of the table's storage
    */
-  size_t SizeOfIncludingThis(SizeOfEntryExcludingThisFun aSizeOfEntryExcludingThis,
-                             mozilla::MallocSizeOf aMallocSizeOf,
-                             void* aUserArg = nullptr)
+  size_t ShallowSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
   {
-    return aMallocSizeOf(this) +
-      this->SizeOfExcludingThis(aSizeOfEntryExcludingThis, aMallocSizeOf,
-                                aUserArg);
+    return this->mTable.ShallowSizeOfExcludingThis(aMallocSizeOf);
   }
 
   /**
-   * Measure the size of the table's entry storage, and if
-   * |aSizeOfEntryExcludingThis| is non-nullptr, measure the size of things
-   * pointed to by entries.
-   *
-   * @param     aSizeOfEntryExcludingThis the
-   *            <code>SizeOfEntryExcludingThisFun</code> function to call
-   * @param     aMallocSizeOf the function used to measure heap-allocated blocks
-   * @param     aUserArg a pointer to pass to the
-   *            <code>SizeOfEntryExcludingThisFun</code> function
-   * @return    the summed size of all the entries
+   * Like ShallowSizeOfExcludingThis, but includes sizeof(*this).
    */
-  size_t SizeOfExcludingThis(SizeOfEntryExcludingThisFun aSizeOfEntryExcludingThis,
-                             mozilla::MallocSizeOf aMallocSizeOf,
-                             void* aUserArg = nullptr) const
+  size_t ShallowSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
   {
-    if (aSizeOfEntryExcludingThis) {
-      s_SizeOfArgs args = { aSizeOfEntryExcludingThis, aUserArg };
-      return PL_DHashTableSizeOfExcludingThis(&this->mTable, s_SizeOfStub,
-                                              aMallocSizeOf, &args);
-    }
-    return PL_DHashTableSizeOfExcludingThis(&this->mTable, nullptr,
-                                            aMallocSizeOf);
+    return aMallocSizeOf(this) + ShallowSizeOfExcludingThis(aMallocSizeOf);
   }
+
+  /**
+   * Swap the elements in this hashtable with the elements in aOther.
+   */
+  void SwapElements(nsBaseHashtable& aOther)
+  {
+    nsTHashtable<EntryType>::SwapElements(aOther);
+  }
+
 
 #ifdef DEBUG
   using nsTHashtable<EntryType>::MarkImmutable;
 #endif
-
-protected:
-  /**
-   * used internally during EnumerateRead.  Allocated on the stack.
-   * @param func the enumerator passed to EnumerateRead
-   * @param userArg the userArg passed to EnumerateRead
-   */
-  struct s_EnumReadArgs
-  {
-    EnumReadFunction func;
-    void* userArg;
-  };
-
-  static PLDHashOperator s_EnumReadStub(PLDHashTable* aTable,
-                                        PLDHashEntryHdr* aHdr,
-                                        uint32_t aNumber,
-                                        void* aArg);
-
-  struct s_EnumArgs
-  {
-    EnumFunction func;
-    void* userArg;
-  };
-
-  static PLDHashOperator s_EnumStub(PLDHashTable* aTable,
-                                    PLDHashEntryHdr* aHdr,
-                                    uint32_t aNumber,
-                                    void* aArg);
-
-  struct s_SizeOfArgs
-  {
-    SizeOfEntryExcludingThisFun func;
-    void* userArg;
-  };
-
-  static size_t s_SizeOfStub(PLDHashEntryHdr* aEntry,
-                             mozilla::MallocSizeOf aMallocSizeOf,
-                             void* aArg);
 };
-
-class nsCycleCollectionTraversalCallback;
-
-struct MOZ_STACK_CLASS nsBaseHashtableCCTraversalData
-{
-  nsBaseHashtableCCTraversalData(nsCycleCollectionTraversalCallback& aCallback,
-                                 const char* aName,
-                                 uint32_t aFlags)
-    : mCallback(aCallback)
-    , mName(aName)
-    , mFlags(aFlags)
-  {
-  }
-
-  nsCycleCollectionTraversalCallback& mCallback;
-  const char* mName;
-  uint32_t mFlags;
-
-};
-
-template<typename K, typename T>
-PLDHashOperator
-ImplCycleCollectionTraverse_EnumFunc(K aKey,
-                                     T aData,
-                                     void* aUserData)
-{
-  nsBaseHashtableCCTraversalData* userData =
-    static_cast<nsBaseHashtableCCTraversalData*>(aUserData);
-
-  CycleCollectionNoteChild(userData->mCallback,
-                           aData,
-                           userData->mName,
-                           userData->mFlags);
-  return PL_DHASH_NEXT;
-}
 
 //
 // nsBaseHashtableET definitions
@@ -374,53 +333,6 @@ nsBaseHashtableET<KeyClass, DataType>::nsBaseHashtableET(
 template<class KeyClass, class DataType>
 nsBaseHashtableET<KeyClass, DataType>::~nsBaseHashtableET()
 {
-}
-
-
-//
-// nsBaseHashtable definitions
-//
-
-template<class KeyClass, class DataType, class UserDataType>
-PLDHashOperator
-nsBaseHashtable<KeyClass, DataType, UserDataType>::s_EnumReadStub(
-    PLDHashTable* aTable, PLDHashEntryHdr* aHdr, uint32_t aNumber, void* aArg)
-{
-  EntryType* ent = static_cast<EntryType*>(aHdr);
-  s_EnumReadArgs* eargs = (s_EnumReadArgs*)aArg;
-
-  PLDHashOperator res = (eargs->func)(ent->GetKey(), ent->mData, eargs->userArg);
-
-  NS_ASSERTION(!(res & PL_DHASH_REMOVE),
-               "PL_DHASH_REMOVE return during const enumeration; ignoring.");
-
-  if (res & PL_DHASH_STOP) {
-    return PL_DHASH_STOP;
-  }
-
-  return PL_DHASH_NEXT;
-}
-
-template<class KeyClass, class DataType, class UserDataType>
-PLDHashOperator
-nsBaseHashtable<KeyClass, DataType, UserDataType>::s_EnumStub(
-    PLDHashTable* aTable, PLDHashEntryHdr* aHdr, uint32_t aNumber, void* aArg)
-{
-  EntryType* ent = static_cast<EntryType*>(aHdr);
-  s_EnumArgs* eargs = (s_EnumArgs*)aArg;
-
-  return (eargs->func)(ent->GetKey(), ent->mData, eargs->userArg);
-}
-
-template<class KeyClass, class DataType, class UserDataType>
-size_t
-nsBaseHashtable<KeyClass, DataType, UserDataType>::s_SizeOfStub(
-    PLDHashEntryHdr* aHdr, mozilla::MallocSizeOf aMallocSizeOf, void* aArg)
-{
-  EntryType* ent = static_cast<EntryType*>(aHdr);
-  s_SizeOfArgs* eargs = static_cast<s_SizeOfArgs*>(aArg);
-
-  return (eargs->func)(ent->GetKey(), ent->mData, aMallocSizeOf, eargs->userArg);
 }
 
 #endif // nsBaseHashtable_h__

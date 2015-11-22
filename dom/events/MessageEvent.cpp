@@ -167,12 +167,12 @@ MessageEvent::Constructor(EventTarget* aEventTarget,
   }
 
   if (aParam.mPorts.WasPassed() && !aParam.mPorts.Value().IsNull()) {
-    nsTArray<nsRefPtr<MessagePortBase>> ports;
+    nsTArray<nsRefPtr<MessagePort>> ports;
     for (uint32_t i = 0, len = aParam.mPorts.Value().Value().Length(); i < len; ++i) {
       ports.AppendElement(aParam.mPorts.Value().Value()[i].get());
     }
 
-    event->mPorts = new MessagePortList(static_cast<EventBase*>(event), ports);
+    event->mPorts = new MessagePortList(static_cast<Event*>(event), ports);
   }
 
   return event.forget();
@@ -224,14 +224,11 @@ MessageEvent::SetSource(mozilla::dom::workers::ServiceWorkerClient* aClient)
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsresult
-NS_NewDOMMessageEvent(nsIDOMEvent** aInstancePtrResult,
-                      EventTarget* aOwner,
+already_AddRefed<MessageEvent>
+NS_NewDOMMessageEvent(EventTarget* aOwner,
                       nsPresContext* aPresContext,
                       WidgetEvent* aEvent) 
 {
-  MessageEvent* it = new MessageEvent(aOwner, aPresContext, aEvent);
-  NS_ADDREF(it);
-  *aInstancePtrResult = static_cast<Event*>(it);
-  return NS_OK;
+  nsRefPtr<MessageEvent> it = new MessageEvent(aOwner, aPresContext, aEvent);
+  return it.forget();
 }

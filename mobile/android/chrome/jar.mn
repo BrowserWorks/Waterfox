@@ -24,8 +24,6 @@ chrome.jar:
   content/Reader.js                    (content/Reader.js)
   content/aboutHome.xhtml              (content/aboutHome.xhtml)
   content/aboutRights.xhtml            (content/aboutRights.xhtml)
-  content/aboutApps.xhtml              (content/aboutApps.xhtml)
-  content/aboutApps.js                 (content/aboutApps.js)
   content/blockedSite.xhtml            (content/blockedSite.xhtml)
   content/languages.properties         (content/languages.properties)
   content/browser.xul                  (content/browser.xul)
@@ -35,6 +33,7 @@ chrome.jar:
   content/netError.xhtml               (content/netError.xhtml)
   content/SelectHelper.js              (content/SelectHelper.js)
   content/SelectionHandler.js          (content/SelectionHandler.js)
+  content/ActionBarHandler.js          (content/ActionBarHandler.js)
   content/WebappRT.js                  (content/WebappRT.js)
   content/EmbedRT.js                   (content/EmbedRT.js)
   content/InputWidgetHelper.js         (content/InputWidgetHelper.js)
@@ -42,6 +41,7 @@ chrome.jar:
   content/MemoryObserver.js            (content/MemoryObserver.js)
   content/ConsoleAPI.js                (content/ConsoleAPI.js)
   content/PluginHelper.js              (content/PluginHelper.js)
+  content/PrintHelper.js               (content/PrintHelper.js)
   content/OfflineApps.js               (content/OfflineApps.js)
   content/MasterPassword.js            (content/MasterPassword.js)
   content/FindHelper.js                (content/FindHelper.js)
@@ -51,6 +51,7 @@ chrome.jar:
   content/Linkify.js                   (content/Linkify.js)
   content/ZoomHelper.js                (content/ZoomHelper.js)
   content/CastingApps.js               (content/CastingApps.js)
+  content/RemoteDebugger.js            (content/RemoteDebugger.js)
 #ifdef MOZ_SERVICES_HEALTHREPORT
   content/aboutHealthReport.xhtml      (content/aboutHealthReport.xhtml)
   content/aboutHealthReport.js         (content/aboutHealthReport.js)
@@ -59,9 +60,13 @@ chrome.jar:
   content/aboutDevices.xhtml           (content/aboutDevices.xhtml)
   content/aboutDevices.js              (content/aboutDevices.js)
 #endif
+#ifndef MOZ_ANDROID_NATIVE_ACCOUNT_UI
+  content/aboutAccounts.xhtml          (content/aboutAccounts.xhtml)
+  content/aboutAccounts.js             (content/aboutAccounts.js)
+#endif
+  content/aboutLogins.xhtml            (content/aboutLogins.xhtml)
+  content/aboutLogins.js               (content/aboutLogins.js)
 #ifdef NIGHTLY_BUILD
-  content/aboutPasswords.xhtml         (content/aboutPasswords.xhtml)
-  content/aboutPasswords.js            (content/aboutPasswords.js)
   content/WebcompatReporter.js         (content/WebcompatReporter.js)
 #endif
 #ifdef MOZ_PAY

@@ -35,7 +35,9 @@ function SimulatorProcess() {}
 SimulatorProcess.prototype = {
 
   // Check if B2G is running.
-  get isRunning() !!this.process,
+  get isRunning() {
+    return !!this.process;
+  },
 
   // Start the process and connect the debugger client.
   run() {
@@ -65,8 +67,13 @@ SimulatorProcess.prototype = {
       }
     });
 
-    this.on("stdout", (e, data) => this.log(e, data.trim()));
-    this.on("stderr", (e, data) => this.log(e, data.trim()));
+    let logHandler = (e, data) => this.log(e, data.trim());
+    this.on("stdout", logHandler);
+    this.on("stderr", logHandler);
+    this.once("exit", () => {
+      this.off("stdout", logHandler);
+      this.off("stderr", logHandler);
+    });
 
     let environment;
     if (OS.indexOf("linux") > -1) {
@@ -158,7 +165,7 @@ function CustomSimulatorProcess(options) {
   this.options = options;
 }
 
-let CSPp = CustomSimulatorProcess.prototype = Object.create(SimulatorProcess.prototype);
+var CSPp = CustomSimulatorProcess.prototype = Object.create(SimulatorProcess.prototype);
 
 // Compute B2G binary file handle.
 Object.defineProperty(CSPp, "b2gBinary", {
@@ -186,7 +193,7 @@ function AddonSimulatorProcess(addon, options) {
   this.options = options;
 }
 
-let ASPp = AddonSimulatorProcess.prototype = Object.create(SimulatorProcess.prototype);
+var ASPp = AddonSimulatorProcess.prototype = Object.create(SimulatorProcess.prototype);
 
 // Compute B2G binary file handle.
 Object.defineProperty(ASPp, "b2gBinary", {
@@ -246,7 +253,7 @@ function OldAddonSimulatorProcess(addon, options) {
   this.options = options;
 }
 
-let OASPp = OldAddonSimulatorProcess.prototype = Object.create(AddonSimulatorProcess.prototype);
+var OASPp = OldAddonSimulatorProcess.prototype = Object.create(AddonSimulatorProcess.prototype);
 
 // Compute B2G binary file handle.
 Object.defineProperty(OASPp, "b2gBinary", {

@@ -10,25 +10,20 @@
 
 #include "nsISeekableStream.h"
 #include "nsISupports.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "MediaData.h"
 
-#ifdef PR_LOGGING
 PRLogModuleInfo* GetSourceBufferResourceLog()
 {
-  static PRLogModuleInfo* sLogModule;
+  static PRLogModuleInfo* sLogModule = nullptr;
   if (!sLogModule) {
     sLogModule = PR_NewLogModule("SourceBufferResource");
   }
   return sLogModule;
 }
 
-#define SBR_DEBUG(arg, ...) PR_LOG(GetSourceBufferResourceLog(), PR_LOG_DEBUG, ("SourceBufferResource(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
-#define SBR_DEBUGV(arg, ...) PR_LOG(GetSourceBufferResourceLog(), PR_LOG_DEBUG+1, ("SourceBufferResource(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
-#else
-#define SBR_DEBUG(...)
-#define SBR_DEBUGV(...)
-#endif
+#define SBR_DEBUG(arg, ...) MOZ_LOG(GetSourceBufferResourceLog(), mozilla::LogLevel::Debug, ("SourceBufferResource(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
+#define SBR_DEBUGV(arg, ...) MOZ_LOG(GetSourceBufferResourceLog(), mozilla::LogLevel::Verbose, ("SourceBufferResource(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
 
 namespace mozilla {
 
@@ -41,16 +36,6 @@ SourceBufferResource::Close()
   mClosed = true;
   mon.NotifyAll();
   return NS_OK;
-}
-
-nsresult
-SourceBufferResource::Read(char* aBuffer, uint32_t aCount, uint32_t* aBytes)
-{
-  SBR_DEBUGV("Read(aBuffer=%p, aCount=%u, aBytes=%p)",
-             aBuffer, aCount, aBytes);
-  ReentrantMonitorAutoEnter mon(mMonitor);
-
-  return ReadInternal(aBuffer, aCount, aBytes, /* aMayBlock = */ true);
 }
 
 nsresult
@@ -120,33 +105,6 @@ SourceBufferResource::ReadAtInternal(int64_t aOffset, char* aBuffer, uint32_t aC
 }
 
 nsresult
-SourceBufferResource::Seek(int32_t aWhence, int64_t aOffset)
-{
-  SBR_DEBUG("Seek(aWhence=%d, aOffset=%lld)",
-            aWhence, aOffset);
-  ReentrantMonitorAutoEnter mon(mMonitor);
-
-  int64_t newOffset = mOffset;
-  switch (aWhence) {
-  case nsISeekableStream::NS_SEEK_END:
-    newOffset = GetLength() - aOffset;
-    break;
-  case nsISeekableStream::NS_SEEK_CUR:
-    newOffset += aOffset;
-    break;
-  case nsISeekableStream::NS_SEEK_SET:
-    newOffset = aOffset;
-    break;
-  }
-
-  SBR_DEBUGV("newOffset=%lld GetOffset()=%llu GetLength()=%llu)",
-             newOffset, mInputBuffer.GetOffset(), GetLength());
-  nsresult rv = SeekInternal(newOffset);
-  mon.NotifyAll();
-  return rv;
-}
-
-nsresult
 SourceBufferResource::SeekInternal(int64_t aOffset)
 {
   mMonitor.AssertCurrentThreadIn();
@@ -179,12 +137,13 @@ SourceBufferResource::ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCo
 }
 
 uint32_t
-SourceBufferResource::EvictData(uint64_t aPlaybackOffset, uint32_t aThreshold)
+SourceBufferResource::EvictData(uint64_t aPlaybackOffset, uint32_t aThreshold,
+                                ErrorResult& aRv)
 {
   SBR_DEBUG("EvictData(aPlaybackOffset=%llu,"
             "aThreshold=%u)", aPlaybackOffset, aThreshold);
   ReentrantMonitorAutoEnter mon(mMonitor);
-  uint32_t result = mInputBuffer.Evict(aPlaybackOffset, aThreshold);
+  uint32_t result = mInputBuffer.Evict(aPlaybackOffset, aThreshold, aRv);
   if (result > 0) {
     // Wake up any waiting threads in case a ReadInternal call
     // is now invalid.
@@ -194,13 +153,13 @@ SourceBufferResource::EvictData(uint64_t aPlaybackOffset, uint32_t aThreshold)
 }
 
 void
-SourceBufferResource::EvictBefore(uint64_t aOffset)
+SourceBufferResource::EvictBefore(uint64_t aOffset, ErrorResult& aRv)
 {
   SBR_DEBUG("EvictBefore(aOffset=%llu)", aOffset);
   ReentrantMonitorAutoEnter mon(mMonitor);
   // If aOffset is past the current playback offset we don't evict.
   if (aOffset < mOffset) {
-    mInputBuffer.EvictBefore(aOffset);
+    mInputBuffer.EvictBefore(aOffset, aRv);
   }
   // Wake up any waiting threads in case a ReadInternal call
   // is now invalid.
@@ -216,7 +175,7 @@ SourceBufferResource::EvictAll()
 }
 
 void
-SourceBufferResource::AppendData(MediaLargeByteBuffer* aData)
+SourceBufferResource::AppendData(MediaByteBuffer* aData)
 {
   SBR_DEBUG("AppendData(aData=%p, aLength=%u)",
             aData->Elements(), aData->Length());

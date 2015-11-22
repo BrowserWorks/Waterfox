@@ -18,7 +18,7 @@
 #include "nsPrintfCString.h"
 #include "nsIStringBundle.h"
 #include "prefapi.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 
 #include "nsCRT.h"
 #include "mozilla/Services.h"
@@ -46,23 +46,12 @@
   }
 #endif
 
-// Definitions
-struct EnumerateData {
-  const char  *parent;
-  nsTArray<nsCString> *pref_list;
-};
-
-// Prototypes
-static PLDHashOperator
-  pref_enumChild(PLDHashTable *table, PLDHashEntryHdr *heh,
-                 uint32_t i, void *arg);
-
 using mozilla::dom::ContentChild;
 
 static ContentChild*
 GetContentChild()
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     ContentChild* cpc = ContentChild::GetSingleton();
     if (!cpc) {
       NS_RUNTIMEABORT("Content Protocol is NULL!  We're going to crash!");
@@ -526,7 +515,6 @@ NS_IMETHODIMP nsPrefBranch::UnlockPref(const char *aPrefName)
   return PREF_LockPref(pref, false);
 }
 
-/* void resetBranch (in string startingAt); */
 NS_IMETHODIMP nsPrefBranch::ResetBranch(const char *aStartingAt)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
@@ -545,7 +533,6 @@ NS_IMETHODIMP nsPrefBranch::GetChildList(const char *aStartingAt, uint32_t *aCou
   char            **outArray;
   int32_t         numPrefs;
   int32_t         dwIndex;
-  EnumerateData   ed;
   nsAutoTArray<nsCString, 32> prefArray;
 
   NS_ENSURE_ARG(aStartingAt);
@@ -555,15 +542,17 @@ NS_IMETHODIMP nsPrefBranch::GetChildList(const char *aStartingAt, uint32_t *aCou
   *aChildArray = nullptr;
   *aCount = 0;
 
-  if (!gHashTable.IsInitialized())
-    return NS_ERROR_NOT_INITIALIZED;
-
   // this will contain a list of all the pref name strings
   // allocate on the stack for speed
-  
-  ed.parent = getPrefName(aStartingAt);
-  ed.pref_list = &prefArray;
-  PL_DHashTableEnumerate(&gHashTable, pref_enumChild, &ed);
+
+  const char* parent = getPrefName(aStartingAt);
+  size_t parentLen = strlen(parent);
+  for (auto iter = gHashTable->Iter(); !iter.Done(); iter.Next()) {
+    auto entry = static_cast<PrefHashEntry*>(iter.Get());
+    if (strncmp(entry->key, parent, parentLen) == 0) {
+      prefArray.AppendElement(entry->key);
+    }
+  }
 
   // now that we've built up the list, run the callback on
   // all the matching elements
@@ -774,18 +763,6 @@ const char *nsPrefBranch::getPrefName(const char *aPrefName)
   mPrefRoot.Truncate(mPrefRootLength);
   mPrefRoot.Append(aPrefName);
   return mPrefRoot.get();
-}
-
-static PLDHashOperator
-pref_enumChild(PLDHashTable *table, PLDHashEntryHdr *heh,
-               uint32_t i, void *arg)
-{
-  PrefHashEntry *he = static_cast<PrefHashEntry*>(heh);
-  EnumerateData *d = reinterpret_cast<EnumerateData *>(arg);
-  if (strncmp(he->key, d->parent, strlen(d->parent)) == 0) {
-    d->pref_list->AppendElement(he->key);
-  }
-  return PL_DHASH_NEXT;
 }
 
 //----------------------------------------------------------------------------

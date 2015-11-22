@@ -590,6 +590,13 @@ JSONParserBase::finishObject(MutableHandleValue vp, PropertyVector& properties)
     if (!freeProperties.append(&properties))
         return false;
     stack.popBack();
+
+    if (!stack.empty() && stack.back().state == FinishArrayElement) {
+        const ElementVector& elements = stack.back().elements();
+        if (!CombinePlainObjectPropertyTypes(cx, obj, elements.begin(), elements.length()))
+            return false;
+    }
+
     return true;
 }
 
@@ -598,17 +605,22 @@ JSONParserBase::finishArray(MutableHandleValue vp, ElementVector& elements)
 {
     MOZ_ASSERT(&elements == &stack.back().elements());
 
-    ArrayObject* obj = NewDenseCopiedArray(cx, elements.length(), elements.begin());
+    JSObject* obj = ObjectGroup::newArrayObject(cx, elements.begin(), elements.length(),
+                                                GenericObject);
     if (!obj)
         return false;
-
-    /* Try to assign a new group to the array according to its elements. */
-    ObjectGroup::fixArrayGroup(cx, obj);
 
     vp.setObject(*obj);
     if (!freeElements.append(&elements))
         return false;
     stack.popBack();
+
+    if (!stack.empty() && stack.back().state == FinishArrayElement) {
+        const ElementVector& elements = stack.back().elements();
+        if (!CombineArrayElementTypes(cx, obj, elements.begin(), elements.length()))
+            return false;
+    }
+
     return true;
 }
 

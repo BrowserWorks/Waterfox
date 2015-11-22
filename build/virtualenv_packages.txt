@@ -1,5 +1,6 @@
 marionette_transport.pth:testing/marionette/transport
 marionette_driver.pth:testing/marionette/driver
+browsermobproxy.pth:testing/marionette/client/marionette/runner/mixins/browsermob-proxy-py
 marionette.pth:testing/marionette/client
 blessings.pth:python/blessings
 configobj.pth:python/configobj
@@ -24,6 +25,10 @@ packages.txt:testing/mozbase/packages.txt
 objdir:build
 gyp.pth:media/webrtc/trunk/tools/gyp/pylib
 pyasn1.pth:python/pyasn1
+pyasn1_modules.pth:python/pyasn1-modules
 bitstring.pth:python/bitstring
 redo.pth:python/redo
 requests.pth:python/requests
+rsa.pth:python/rsa
+futures.pth:python/futures
+ecc.pth:python/PyECC

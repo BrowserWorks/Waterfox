@@ -39,21 +39,63 @@ class SyntaxParseHandler
     enum Node {
         NodeFailure = 0,
         NodeGeneric,
-        NodeName,
         NodeGetProp,
         NodeStringExprStatement,
-        NodeLValue,
         NodeReturn,
         NodeHoistableDeclaration,
         NodeBreak,
         NodeThrow,
         NodeEmptyStatement,
 
+        // This is needed for proper assignment-target handling.  ES6 formally
+        // requires function calls *not* pass IsValidSimpleAssignmentTarget,
+        // but at last check there were still sites with |f() = 5| and similar
+        // in code not actually executed (or at least not executed enough to be
+        // noticed).
+        NodeFunctionCall,
+
+        // Nodes representing *parenthesized* IsValidSimpleAssignmentTarget
+        // nodes.  We can't simply treat all such parenthesized nodes
+        // identically, because in assignment and increment/decrement contexts
+        // ES6 says that parentheses constitute a syntax error.
+        //
+        //   var obj = {};
+        //   var val;
+        //   (val) = 3; (obj.prop) = 4;       // okay per ES5's little mind
+        //   [(a)] = [3]; [(obj.prop)] = [4]; // invalid ES6 syntax
+        //   // ...and so on for the other IsValidSimpleAssignmentTarget nodes
+        //
+        // We don't know in advance in the current parser when we're parsing
+        // in a place where name parenthesization changes meaning, so we must
+        // have multiple node values for these cases.
+        NodeParenthesizedArgumentsName,
+        NodeParenthesizedEvalName,
+        NodeParenthesizedName,
+
+        NodeDottedProperty,
+        NodeElement,
+
+        // Destructuring target patterns can't be parenthesized: |([a]) = [3];|
+        // must be a syntax error.  (We can't use NodeGeneric instead of these
+        // because that would trigger invalid-left-hand-side ReferenceError
+        // semantics when SyntaxError semantics are desired.)
+        NodeParenthesizedArray,
+        NodeParenthesizedObject,
+
         // In rare cases a parenthesized |node| doesn't have the same semantics
         // as |node|.  Each such node has a special Node value, and we use a
         // different Node value to represent the parenthesized form.  See also
-        // isUnparenthesized*(Node), newExprStatement(Node, uint32_t),
-        // parenthesize(Node), and meaningMightChangeIfParenthesized(Node).
+        // is{Unp,P}arenthesized*(Node), parenthesize(Node), and the various
+        // functions that deal in NodeUnparenthesized* below.
+
+        // Nodes representing unparenthesized names.
+        NodeUnparenthesizedArgumentsName,
+        NodeUnparenthesizedEvalName,
+        NodeUnparenthesizedName,
+
+        // Valuable for recognizing potential destructuring patterns.
+        NodeUnparenthesizedArray,
+        NodeUnparenthesizedObject,
 
         // The directive prologue at the start of a FunctionBody or ScriptBody
         // is the longest sequence (possibly empty) of string literal
@@ -87,18 +129,39 @@ class SyntaxParseHandler
         // warnings, and parsing with that option disables syntax parsing.  But
         // it seems best to be consistent, and perhaps the syntax parser will
         // eventually enforce extraWarnings and will require this then.)
-        NodeUnparenthesizedAssignment
+        NodeUnparenthesizedAssignment,
+
+        // This node is necessary to determine if the LHS of a property access is
+        // super related.
+        NodeSuperBase
     };
     typedef Definition::Kind DefinitionNode;
 
-  private:
-    static bool meaningMightChangeIfParenthesized(Node node) {
-        return node == NodeUnparenthesizedString ||
-               node == NodeUnparenthesizedCommaExpr ||
-               node == NodeUnparenthesizedYieldExpr ||
-               node == NodeUnparenthesizedAssignment;
+    bool isPropertyAccess(Node node) {
+        return node == NodeDottedProperty || node == NodeElement;
     }
 
+    bool isFunctionCall(Node node) {
+        // Note: super() is a special form, *not* a function call.
+        return node == NodeFunctionCall;
+    }
+
+    static bool isUnparenthesizedDestructuringPattern(Node node) {
+        return node == NodeUnparenthesizedArray || node == NodeUnparenthesizedObject;
+    }
+
+    static bool isParenthesizedDestructuringPattern(Node node) {
+        // Technically this isn't a destructuring target at all -- the grammar
+        // doesn't treat it as such.  But we need to know when this happens to
+        // consider it a SyntaxError rather than an invalid-left-hand-side
+        // ReferenceError.
+        return node == NodeParenthesizedArray || node == NodeParenthesizedObject;
+    }
+
+    static bool isDestructuringPatternAnyParentheses(Node node) {
+        return isUnparenthesizedDestructuringPattern(node) ||
+                isParenthesizedDestructuringPattern(node);
+    }
 
   public:
     SyntaxParseHandler(ExclusiveContext* cx, LifoAlloc& alloc,
@@ -110,15 +173,22 @@ class SyntaxParseHandler
 
     static Node null() { return NodeFailure; }
 
+    void prepareNodeForMutation(Node node) {}
+    void freeTree(Node node) {}
+
     void trace(JSTracer* trc) {}
 
-    Node newName(PropertyName* name, uint32_t blockid, const TokenPos& pos) {
+    Node newName(PropertyName* name, uint32_t blockid, const TokenPos& pos, ExclusiveContext* cx) {
         lastAtom = name;
-        return NodeName;
+        if (name == cx->names().arguments)
+            return NodeUnparenthesizedArgumentsName;
+        if (name == cx->names().eval)
+            return NodeUnparenthesizedEvalName;
+        return NodeUnparenthesizedName;
     }
 
     Node newComputedName(Node expr, uint32_t start, uint32_t end) {
-        return NodeName;
+        return NodeGeneric;
     }
 
     DefinitionNode newPlaceholder(JSAtom* atom, uint32_t blockid, const TokenPos& pos) {
@@ -126,7 +196,7 @@ class SyntaxParseHandler
     }
 
     Node newObjectLiteralPropertyName(JSAtom* atom, const TokenPos& pos) {
-        return NodeName;
+        return NodeUnparenthesizedName;
     }
 
     Node newNumber(double value, DecimalPoint decimalPoint, const TokenPos& pos) { return NodeGeneric; }
@@ -142,7 +212,7 @@ class SyntaxParseHandler
         return NodeGeneric;
     }
 
-    Node newCallSiteObject(uint32_t begin, unsigned blockidGen) {
+    Node newCallSiteObject(uint32_t begin) {
         return NodeGeneric;
     }
 
@@ -160,7 +230,17 @@ class SyntaxParseHandler
 
     Node newElision() { return NodeGeneric; }
 
-    Node newDelete(uint32_t begin, Node expr) { return NodeGeneric; }
+    void markAsSetCall(Node node) {
+        MOZ_ASSERT(node == NodeFunctionCall);
+    }
+
+    Node newDelete(uint32_t begin, Node expr) {
+        return NodeGeneric;
+    }
+
+    Node newTypeof(uint32_t begin, Node kid) {
+        return NodeGeneric;
+    }
 
     Node newUnary(ParseNodeKind kind, JSOp op, uint32_t begin, Node kid) {
         return NodeGeneric;
@@ -182,18 +262,22 @@ class SyntaxParseHandler
 
     // Expressions
 
-    Node newArrayComprehension(Node body, unsigned blockid, const TokenPos& pos) {
-        return NodeGeneric;
-    }
-    Node newArrayLiteral(uint32_t begin, unsigned blockid) { return NodeGeneric; }
+    Node newArrayComprehension(Node body, const TokenPos& pos) { return NodeGeneric; }
+    Node newArrayLiteral(uint32_t begin) { return NodeUnparenthesizedArray; }
     bool addElision(Node literal, const TokenPos& pos) { return true; }
     bool addSpreadElement(Node literal, uint32_t begin, Node inner) { return true; }
     void addArrayElement(Node literal, Node element) { }
 
-    Node newObjectLiteral(uint32_t begin) { return NodeGeneric; }
+    Node newCall() { return NodeFunctionCall; }
+    Node newTaggedTemplate() { return NodeGeneric; }
+
+    Node newObjectLiteral(uint32_t begin) { return NodeUnparenthesizedObject; }
     Node newClassMethodList(uint32_t begin) { return NodeGeneric; }
-    Node newSuperProperty(JSAtom* atom, const TokenPos& pos) { return NodeGeneric; }
-    Node newSuperElement(Node expr, const TokenPos& pos) { return NodeGeneric; }
+
+    Node newNewTarget(Node newHolder, Node targetHolder) { return NodeGeneric; }
+    Node newPosHolder(const TokenPos& pos) { return NodeGeneric; }
+    Node newSuperBase(const TokenPos& pos, ExclusiveContext* cx) { return NodeSuperBase; }
+
     bool addPrototypeMutation(Node literal, uint32_t begin, Node expr) { return true; }
     bool addPropertyDefinition(Node literal, Node name, Node expr) { return true; }
     bool addShorthand(Node literal, Node name, Node expr) { return true; }
@@ -234,15 +318,16 @@ class SyntaxParseHandler
 
     Node newPropertyAccess(Node pn, PropertyName* name, uint32_t end) {
         lastAtom = name;
-        return NodeGetProp;
+        return NodeDottedProperty;
     }
 
-    Node newPropertyByValue(Node pn, Node kid, uint32_t end) { return NodeLValue; }
+    Node newPropertyByValue(Node pn, Node kid, uint32_t end) { return NodeElement; }
 
     bool addCatchBlock(Node catchList, Node letBlock,
                        Node catchName, Node catchGuard, Node catchBody) { return true; }
 
-    void setLastFunctionArgumentDefault(Node funcpn, Node pn) {}
+    bool setLastFunctionArgumentDefault(Node funcpn, Node pn) { return true; }
+    void setLastFunctionArgumentDestructuring(Node funcpn, Node pn) {}
     Node newFunctionDefinition() { return NodeHoistableDeclaration; }
     void setFunctionBody(Node pn, Node kid) {}
     void setFunctionBox(Node pn, FunctionBox* funbox) {}
@@ -259,10 +344,6 @@ class SyntaxParseHandler
     Node newLexicalScope(ObjectBox* blockbox) { return NodeGeneric; }
     void setLexicalScopeBody(Node block, Node body) {}
 
-    Node newLetExpression(Node vars, Node block, const TokenPos& pos) {
-        return NodeGeneric;
-    }
-
     Node newLetBlock(Node vars, Node block, const TokenPos& pos) {
         return NodeGeneric;
     }
@@ -275,6 +356,7 @@ class SyntaxParseHandler
     void setEndPosition(Node pn, Node oth) {}
     void setEndPosition(Node pn, uint32_t end) {}
 
+    void setDerivedClassConstructor(Node pn) {}
 
     void setPosition(Node pn, const TokenPos& pos) {}
     TokenPos getPosition(Node pn) {
@@ -283,6 +365,9 @@ class SyntaxParseHandler
 
     Node newList(ParseNodeKind kind, JSOp op = JSOP_NOP) {
         MOZ_ASSERT(kind != PNK_VAR);
+        return NodeGeneric;
+    }
+    Node newList(ParseNodeKind kind, uint32_t begin, JSOp op = JSOP_NOP) {
         return NodeGeneric;
     }
     Node newDeclarationList(ParseNodeKind kind, JSOp op = JSOP_NOP) {
@@ -309,8 +394,12 @@ class SyntaxParseHandler
     }
 
     void addList(Node list, Node kid) {
-        MOZ_ASSERT(list == NodeGeneric || list == NodeUnparenthesizedCommaExpr ||
-                   list == NodeHoistableDeclaration);
+        MOZ_ASSERT(list == NodeGeneric ||
+                   list == NodeUnparenthesizedArray ||
+                   list == NodeUnparenthesizedObject ||
+                   list == NodeUnparenthesizedCommaExpr ||
+                   list == NodeHoistableDeclaration ||
+                   list == NodeFunctionCall);
     }
 
     Node newAssignment(ParseNodeKind kind, Node lhs, Node rhs,
@@ -342,13 +431,41 @@ class SyntaxParseHandler
                pn == NodeEmptyStatement;
     }
 
+    bool isSuperBase(Node pn, ExclusiveContext* cx) {
+        // While NodePosHolder is used in other places than just as super-base,
+        // it is unique enough for our purposes.
+        return pn == NodeSuperBase;
+    }
+
     void setOp(Node pn, JSOp op) {}
     void setBlockId(Node pn, unsigned blockid) {}
     void setFlag(Node pn, unsigned flag) {}
     void setListFlag(Node pn, unsigned flag) {}
     MOZ_WARN_UNUSED_RESULT Node parenthesize(Node node) {
-        if (meaningMightChangeIfParenthesized(node))
+        // A number of nodes have different behavior upon parenthesization, but
+        // only in some circumstances.  Convert these nodes to special
+        // parenthesized forms.
+        if (node == NodeUnparenthesizedArgumentsName)
+            return NodeParenthesizedArgumentsName;
+        if (node == NodeUnparenthesizedEvalName)
+            return NodeParenthesizedEvalName;
+        if (node == NodeUnparenthesizedName)
+            return NodeParenthesizedName;
+
+        if (node == NodeUnparenthesizedArray)
+            return NodeParenthesizedArray;
+        if (node == NodeUnparenthesizedObject)
+            return NodeParenthesizedObject;
+
+        // Other nodes need not be recognizable after parenthesization; convert
+        // them to a generic node.
+        if (node == NodeUnparenthesizedString ||
+            node == NodeUnparenthesizedCommaExpr ||
+            node == NodeUnparenthesizedYieldExpr ||
+            node == NodeUnparenthesizedAssignment)
+        {
             return NodeGeneric;
+        }
 
         // In all other cases, the parenthesized form of |node| is equivalent
         // to the unparenthesized form: return |node| unchanged.
@@ -360,12 +477,44 @@ class SyntaxParseHandler
     void setPrologue(Node pn) {}
 
     bool isConstant(Node pn) { return false; }
-    PropertyName* isName(Node pn) {
-        return (pn == NodeName) ? lastAtom->asPropertyName() : nullptr;
+
+    PropertyName* maybeUnparenthesizedName(Node node) {
+        if (node == NodeUnparenthesizedName ||
+            node == NodeUnparenthesizedArgumentsName ||
+            node == NodeUnparenthesizedEvalName)
+        {
+            return lastAtom->asPropertyName();
+        }
+        return nullptr;
     }
-    PropertyName* isGetProp(Node pn) {
-        return (pn == NodeGetProp) ? lastAtom->asPropertyName() : nullptr;
+
+    PropertyName* maybeParenthesizedName(Node node) {
+        if (node == NodeParenthesizedName ||
+            node == NodeParenthesizedArgumentsName ||
+            node == NodeParenthesizedEvalName)
+        {
+            return lastAtom->asPropertyName();
+        }
+        return nullptr;
     }
+
+    PropertyName* maybeNameAnyParentheses(Node node) {
+        if (PropertyName* name = maybeUnparenthesizedName(node))
+            return name;
+        return maybeParenthesizedName(node);
+    }
+
+    PropertyName* maybeDottedProperty(Node node) {
+        // Note: |super.apply(...)| is a special form that calls an "apply"
+        // method retrieved from one value, but using a *different* value as
+        // |this|.  It's not really eligible for the funapply/funcall
+        // optimizations as they're currently implemented (assuming a single
+        // value is used for both retrieval and |this|).
+        if (node != NodeDottedProperty)
+            return nullptr;
+        return lastAtom->asPropertyName();
+    }
+
     JSAtom* isStringExprStatement(Node pn, TokenPos* pos) {
         if (pn == NodeStringExprStatement) {
             *pos = lastStringPos;
@@ -373,6 +522,10 @@ class SyntaxParseHandler
         }
         return nullptr;
     }
+
+    void markAsAssigned(Node node) {}
+    void adjustGetToSet(Node node) {}
+    void maybeDespecializeSet(Node node) {}
 
     Node makeAssignment(Node pn, Node rhs) { return NodeGeneric; }
 

@@ -26,7 +26,8 @@ enum class VibrancyType {
   DARK,
   TOOLTIP,
   MENU,
-  HIGHLIGHTED_MENUITEM
+  HIGHLIGHTED_MENUITEM,
+  SHEET
 };
 
 /**
@@ -115,6 +116,6 @@ protected:
   nsClassHashtable<nsUint32HashKey, VibrantRegion> mVibrantRegions;
 };
 
-}
+} // namespace mozilla
 
 #endif // VibrancyManager_h

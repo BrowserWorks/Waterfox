@@ -7,6 +7,7 @@
 external_dirs = []
 
 DIRS += [
+    'lgpllibs',
     'sqlite',
 ]
 if not CONFIG['MOZ_NATIVE_JPEG']:
@@ -34,14 +35,17 @@ if CONFIG['MOZ_WEBM_ENCODER']:
 if CONFIG['MOZ_VPX'] and not CONFIG['MOZ_NATIVE_LIBVPX']:
     external_dirs += ['media/libvpx']
 
-if CONFIG['MOZ_WEBP'] and not CONFIG['MOZ_NATIVE_WEBP']:
-    external_dirs += ['media/libwebp']
-
 if not CONFIG['MOZ_NATIVE_PNG']:
     external_dirs += ['media/libpng']
 
 if CONFIG['CPU_ARCH'] == 'arm':
     external_dirs += ['media/openmax_dl']
+
+if CONFIG['MOZ_WEBSPEECH_POCKETSPHINX']:
+    external_dirs += [
+        'media/sphinxbase',
+        'media/pocketsphinx',
+    ]
 
 external_dirs += [
     'media/kiss_fft',

@@ -32,7 +32,12 @@ run_for_effects := $(shell if test ! -d $(DIST); then $(NSINSTALL) -D $(DIST); f
 # This makefile uses variable overrides from the libs-% target to
 # build non-default locales to non-default dist/ locations. Be aware!
 
-AB = $(firstword $(subst -, ,$(AB_CD)))
+LPROJ_ROOT = $(firstword $(subst -, ,$(AB_CD)))
+ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+ifeq (zh-TW,$(AB_CD))
+LPROJ_ROOT := $(subst -,_,$(AB_CD))
+endif
+endif
 
 # These are defaulted to be compatible with the files the wget-en-US target
 # pulls. You may override them if you provide your own files. You _must_
@@ -116,8 +121,8 @@ endif
 		$(if $(filter omni,$(MOZ_PACKAGER_FORMAT)),$(if $(NON_OMNIJAR_FILES),--non-resource $(NON_OMNIJAR_FILES)))
 
 ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
-ifneq (en,$(AB))
-	mv $(STAGEDIST)/en.lproj $(STAGEDIST)/$(AB).lproj
+ifneq (en,$(LPROJ_ROOT))
+	mv $(STAGEDIST)/en.lproj $(STAGEDIST)/$(LPROJ_ROOT).lproj
 endif
 ifdef MOZ_CRASHREPORTER
 # On Mac OS X, the crashreporter.ini file needs to be moved from under the
@@ -138,9 +143,9 @@ ifdef MAKE_COMPLETE_MAR
 	  PACKAGE_BASE_DIR='$(_ABS_DIST)/l10n-stage'
 endif
 # packaging done, undo l10n stuff
-ifneq (en,$(AB))
+ifneq (en,$(LPROJ_ROOT))
 ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
-	mv $(STAGEDIST)/$(AB).lproj $(STAGEDIST)/en.lproj
+	mv $(STAGEDIST)/$(LPROJ_ROOT).lproj $(STAGEDIST)/en.lproj
 endif
 endif
 	$(NSINSTALL) -D $(DIST)/$(PKG_PATH)
@@ -170,8 +175,7 @@ langpack-%: libs-%
 	$(NSINSTALL) -D $(DIST)/$(PKG_LANGPACK_PATH)
 	$(call py_action,preprocessor,$(DEFINES) $(ACDEFINES) \
 	  -I$(TK_DEFINES) -I$(APP_DEFINES) $(srcdir)/generic/install.rdf -o $(DIST)/xpi-stage/$(XPI_NAME)/install.rdf)
-	cd $(DIST)/xpi-stage/locale-$(AB_CD) && \
-	  $(ZIP) -r9D $(LANGPACK_FILE) install.rdf $(PKG_ZIP_DIRS) chrome.manifest
+	$(call py_action,zip,-C $(DIST)/xpi-stage/locale-$(AB_CD) $(LANGPACK_FILE) install.rdf $(PKG_ZIP_DIRS) chrome.manifest)
 
 # This variable is to allow the wget-en-US target to know which ftp server to download from
 ifndef EN_US_BINARY_URL 

@@ -5,19 +5,22 @@
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
 notification {
-  color: InfoText;
+  color: -moz-gtk-info-bar-text;
   background-color: InfoBackground;
+  -moz-appearance: -moz-gtk-info-bar;
   text-shadow: none;
 }
 
 notification[type="info"] {
   color: -moz-DialogText;
   background-color: -moz-Dialog;
+  -moz-appearance: none;
 }
 
 notification[type="critical"] {
   color: white;
   background-image: linear-gradient(rgb(212,0,0), rgb(152,0,0));
+  -moz-appearance: none;
 }
 
 .notification-inner {
@@ -82,6 +85,11 @@ notification[type="critical"] {
 
 .popup-notification-button-container {
   margin-top: 17px;
+}
+
+.popup-notification-closebutton {
+  -moz-margin-end: -10px;
+  margin-top: -6px;
 }
 
 .popup-notification-menubutton > .button-menubutton-button[disabled] {

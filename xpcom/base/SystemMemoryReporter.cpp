@@ -144,13 +144,13 @@ public:
   do {                                                                        \
     size_t amount = _amount;  /* evaluate _amount only once */                \
     if (amount > 0) {                                                         \
-      nsresult rv;                                                            \
-      rv = aHandleReport->Callback(NS_LITERAL_CSTRING("System"), _path,       \
+      nsresult rvReport;                                                      \
+      rvReport = aHandleReport->Callback(NS_LITERAL_CSTRING("System"), _path, \
                                    KIND_NONHEAP, _units, amount, _desc,       \
                                    aData);                                    \
-      if (NS_WARN_IF(NS_FAILED(rv))) {                                        \
+      if (NS_WARN_IF(NS_FAILED(rvReport))) {                                  \
         _cleanup;                                                             \
-        return rv;                                                            \
+        return rvReport;                                                      \
       }                                                                       \
     }                                                                         \
   } while (0)
@@ -221,38 +221,25 @@ private:
 
     void Report(nsIHandleReportCallback* aHandleReport, nsISupports* aData)
     {
-      EnumArgs env = { aHandleReport, aData };
-      mTagged.EnumerateRead(ReportSizes, &env);
+      for (auto iter = mTagged.Iter(); !iter.Done(); iter.Next()) {
+        nsCStringHashKey::KeyType key = iter.Key();
+        size_t amount = iter.UserData();
+
+        nsAutoCString path("processes/");
+        path.Append(key);
+
+        nsAutoCString desc("This is the sum of all processes' '");
+        desc.Append(key);
+        desc.AppendLiteral("' numbers.");
+
+        aHandleReport->Callback(NS_LITERAL_CSTRING("System"), path,
+                                KIND_NONHEAP, UNITS_BYTES, amount,
+                                desc, aData);
+      }
     }
 
   private:
     nsDataHashtable<nsCStringHashKey, size_t> mTagged;
-
-    struct EnumArgs
-    {
-      nsIHandleReportCallback* mHandleReport;
-      nsISupports* mData;
-    };
-
-    static PLDHashOperator ReportSizes(nsCStringHashKey::KeyType aKey,
-                                       size_t aAmount,
-                                       void* aUserArg)
-    {
-      const EnumArgs* envp = reinterpret_cast<const EnumArgs*>(aUserArg);
-
-      nsAutoCString path("processes/");
-      path.Append(aKey);
-
-      nsAutoCString desc("This is the sum of all processes' '");
-      desc.Append(aKey);
-      desc.AppendLiteral("' numbers.");
-
-      envp->mHandleReport->Callback(NS_LITERAL_CSTRING("System"), path,
-                                    KIND_NONHEAP, UNITS_BYTES, aAmount,
-                                    desc, envp->mData);
-
-      return PL_DHASH_NEXT;
-    }
   };
 
   nsresult ReadMemInfo(int64_t* aMemTotal, int64_t* aMemFree)
@@ -386,14 +373,15 @@ private:
     char devMinor[17];
     unsigned int inode;
     char line[1025];
+
     // This variable holds the path of the current entry, or is void
     // if we're scanning for the start of a new entry.
-    nsAutoCString path;
+    nsAutoCString currentPath;
     int pathOffset;
 
-    path.SetIsVoid(true);
+    currentPath.SetIsVoid(true);
     while (fgets(line, sizeof(line), aFile)) {
-      if (path.IsVoid()) {
+      if (currentPath.IsVoid()) {
         int n = sscanf(line,
                        "%llx-%llx %4s %llx "
                        "%16[0-9a-fA-F]:%16[0-9a-fA-F] %u %n",
@@ -401,8 +389,8 @@ private:
                        devMinor, &inode, &pathOffset);
 
         if (n >= argCount - 1) {
-          path.Assign(line + pathOffset);
-          path.StripChars("\n");
+          currentPath.Assign(line + pathOffset);
+          currentPath.StripChars("\n");
         }
         continue;
       }
@@ -417,14 +405,14 @@ private:
       size_t pss = pss_kb * 1024;
       if (pss > 0) {
         nsAutoCString name, description, tag;
-        GetReporterNameAndDescription(path.get(), perms, name, description, tag);
+        GetReporterNameAndDescription(currentPath.get(), perms, name, description, tag);
 
-        nsAutoCString path("mem/processes/");
-        path.Append(aProcessName);
-        path.Append('/');
-        path.Append(name);
+        nsAutoCString processMemPath("mem/processes/");
+        processMemPath.Append(aProcessName);
+        processMemPath.Append('/');
+        processMemPath.Append(name);
 
-        REPORT(path, pss, description);
+        REPORT(processMemPath, pss, description);
 
         // Increment the appropriate aProcessSizes values, and the total.
         aProcessSizes->Add(tag, pss);
@@ -432,7 +420,7 @@ private:
       }
 
       // Now that we've seen the PSS, we're done with this entry.
-      path.SetIsVoid(true);
+      currentPath.SetIsVoid(true);
     }
     return NS_OK;
   }

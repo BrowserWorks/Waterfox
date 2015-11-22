@@ -52,7 +52,7 @@ namespace {
 
 const char kPrefIndexedDBEnabled[] = "dom.indexedDB.enabled";
 
-} // anonymous namespace
+} // namespace
 
 class IDBFactory::BackgroundCreateCallback final
   : public nsIIPCBackgroundChildCreateCallback
@@ -180,18 +180,26 @@ IDBFactory::CreateForWindow(nsPIDOMWindow* aWindow,
 
 // static
 nsresult
-IDBFactory::CreateForChromeJS(JSContext* aCx,
-                              JS::Handle<JSObject*> aOwningObject,
-                              IDBFactory** aFactory)
+IDBFactory::CreateForMainThreadJS(JSContext* aCx,
+                                  JS::Handle<JSObject*> aOwningObject,
+                                  IDBFactory** aFactory)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
 
-  nsAutoPtr<PrincipalInfo> principalInfo(
-    new PrincipalInfo(SystemPrincipalInfo()));
+  nsAutoPtr<PrincipalInfo> principalInfo(new PrincipalInfo());
+  nsIPrincipal* principal = nsContentUtils::ObjectPrincipal(aOwningObject);
+  MOZ_ASSERT(principal);
+  bool isSystem;
+  if (!AllowedForPrincipal(principal, &isSystem)) {
+    return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
+  }
 
-  nsresult rv =
-    CreateForMainThreadJSInternal(aCx, aOwningObject, principalInfo, aFactory);
+  nsresult rv = PrincipalToPrincipalInfo(principal, principalInfo);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  rv = CreateForMainThreadJSInternal(aCx, aOwningObject, principalInfo, aFactory);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -354,8 +362,13 @@ IDBFactory::AllowedForWindowInternal(nsPIDOMWindow* aWindow,
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
   }
 
-  nsIDocument* document = aWindow->GetExtantDoc();
-  if (document->GetSandboxFlags() & SANDBOXED_ORIGIN) {
+  nsContentUtils::StorageAccess access =
+    nsContentUtils::StorageAllowedForWindow(aWindow);
+
+  // the factory callsite records whether the browser is in private browsing.
+  // and thus we don't have to respect that setting here. IndexedDB has no
+  // concept of session-local storage, and thus ignores it.
+  if (access == nsContentUtils::StorageAccess::eDeny) {
     return NS_ERROR_DOM_SECURITY_ERR;
   }
 
@@ -365,6 +378,7 @@ IDBFactory::AllowedForWindowInternal(nsPIDOMWindow* aWindow,
   nsCOMPtr<nsIPrincipal> principal = sop->GetPrincipal();
   if (NS_WARN_IF(!principal)) {
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
+
   }
 
   if (nsContentUtils::IsSystemPrincipal(principal)) {
@@ -372,20 +386,13 @@ IDBFactory::AllowedForWindowInternal(nsPIDOMWindow* aWindow,
     return NS_OK;
   }
 
-  bool isNullPrincipal;
-  if (NS_WARN_IF(NS_FAILED(principal->GetIsNullPrincipal(&isNullPrincipal))) ||
-      isNullPrincipal) {
-    return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
-  }
-
-  // Whitelist about:home, since it doesn't have a base domain it would not
-  // pass the ThirdPartyUtil check, though it should be able to use indexedDB.
-  bool skipThirdPartyCheck = false;
-
+  // About URIs shouldn't be able to access IndexedDB unless they have the
+  // nsIAboutModule::ENABLE_INDEXED_DB flag set on them.
   nsCOMPtr<nsIURI> uri;
   MOZ_ALWAYS_TRUE(NS_SUCCEEDED(principal->GetURI(getter_AddRefs(uri))));
+  MOZ_ASSERT(uri);
 
-  bool isAbout;
+  bool isAbout = false;
   MOZ_ALWAYS_TRUE(NS_SUCCEEDED(uri->SchemeIs("about", &isAbout)));
 
   if (isAbout) {
@@ -393,35 +400,49 @@ IDBFactory::AllowedForWindowInternal(nsPIDOMWindow* aWindow,
     if (NS_SUCCEEDED(NS_GetAboutModule(uri, getter_AddRefs(module)))) {
       uint32_t flags;
       if (NS_SUCCEEDED(module->GetURIFlags(uri, &flags))) {
-        skipThirdPartyCheck = flags & nsIAboutModule::ENABLE_INDEXED_DB;
+        if (!(flags & nsIAboutModule::ENABLE_INDEXED_DB)) {
+          return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+        }
       } else {
-        NS_WARNING("GetURIFlags failed!");
+        return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
       }
     } else {
-      NS_WARNING("NS_GetAboutModule failed!");
-    }
-  }
-
-  if (!skipThirdPartyCheck) {
-    nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
-      do_GetService(THIRDPARTYUTIL_CONTRACTID);
-    MOZ_ASSERT(thirdPartyUtil);
-
-    bool isThirdParty;
-    if (NS_WARN_IF(NS_FAILED(
-          thirdPartyUtil->IsThirdPartyWindow(aWindow,
-                                             nullptr,
-                                             &isThirdParty)))) {
-      return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
-    }
-
-    if (isThirdParty) {
       return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
     }
   }
 
   principal.forget(aPrincipal);
   return NS_OK;
+}
+
+// static
+bool
+IDBFactory::AllowedForPrincipal(nsIPrincipal* aPrincipal,
+                                bool* aIsSystemPrincipal)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aPrincipal);
+
+  if (NS_WARN_IF(!IndexedDatabaseManager::GetOrCreate())) {
+    return false;
+  }
+
+  if (nsContentUtils::IsSystemPrincipal(aPrincipal)) {
+    if (aIsSystemPrincipal) {
+      *aIsSystemPrincipal = true;
+    }
+    return true;
+  } else if (aIsSystemPrincipal) {
+    *aIsSystemPrincipal = false;
+  }
+
+  bool isNullPrincipal;
+  if (NS_WARN_IF(NS_FAILED(aPrincipal->GetIsNullPrincipal(&isNullPrincipal))) ||
+      isNullPrincipal) {
+    return false;
+  }
+
+  return true;
 }
 
 #ifdef DEBUG
@@ -431,6 +452,13 @@ IDBFactory::AssertIsOnOwningThread() const
 {
   MOZ_ASSERT(mOwningThread);
   MOZ_ASSERT(PR_GetCurrentThread() == mOwningThread);
+}
+
+PRThread*
+IDBFactory::OwningThread() const
+{
+  MOZ_ASSERT(mOwningThread);
+  return mOwningThread;
 }
 
 #endif // DEBUG

@@ -25,7 +25,7 @@ public:
 #ifdef USE_SKIA
   virtual SkTypeface* GetSkTypeface();
 #endif
-  virtual TemporaryRef<Path> GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget);
+  virtual already_AddRefed<Path> GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget);
   virtual void CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBuilder, BackendType aBackendType, const Matrix *aTransformHint);
   virtual bool GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton);
 
@@ -47,7 +47,7 @@ public:
   static CTFontDrawGlyphsFuncT* CTFontDrawGlyphsPtr;
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif /* MOZILLA_GFX_SCALEDFONTMAC_H_ */

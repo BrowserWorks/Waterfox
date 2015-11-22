@@ -4,13 +4,12 @@
 
 package org.mozilla.gecko;
 
-import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.LocalBrowserDB;
 import org.mozilla.gecko.home.HomePanelsManager;
 import org.mozilla.gecko.lwt.LightweightTheme;
-import org.mozilla.gecko.mozglue.GeckoLoader;
+import org.mozilla.gecko.mdns.MulticastDNSManager;
 import org.mozilla.gecko.util.Clipboard;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -126,12 +125,13 @@ public class GeckoApplication extends Application
         HardwareUtils.init(context);
         Clipboard.init(context);
         FilePicker.init(context);
-        GeckoLoader.loadMozGlue(context);
         DownloadsIntegration.init();
         HomePanelsManager.getInstance().init(context);
 
         // This getInstance call will force initialization of the NotificationHelper, but does nothing with the result
         NotificationHelper.getInstance(context).init();
+
+        MulticastDNSManager.getInstance(context).init();
 
         // Make sure that all browser-ish applications default to the real LocalBrowserDB.
         // GeckoView consumers use their own Application class, so this doesn't affect them.
@@ -153,10 +153,6 @@ public class GeckoApplication extends Application
         });
 
         super.onCreate();
-
-        if (AppConstants.MOZ_INSTALL_TRACKING) {
-            AppConstants.getAdjustHelper().onCreate(this, AppConstants.MOZ_INSTALL_TRACKING_ADJUST_SDK_APP_TOKEN);
-        }
     }
 
     public boolean isApplicationInBackground() {

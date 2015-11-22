@@ -11,7 +11,7 @@ import pkg_resources
 import sys
 import time
 
-from mozlog.structured.structuredlog import get_default_logger
+from mozlog import get_default_logger
 import mozversion
 from xmlgen import html
 from xmlgen import raw
@@ -223,15 +223,14 @@ class HTMLReportingTestRunnerMixin(object):
         return doc.unicode(indent=2)
 
 
-class HTMLReportingOptionsMixin(object):
-
-    def __init__(self, **kwargs):
-        group = self.add_option_group('htmlreporting')
-        group.add_option('--html-output',
-                         action='store',
-                         dest='html_output',
-                         help='html output',
-                         metavar='path')
+class HTMLReportingArguments(object):
+    name = 'htmlreporting'
+    args = [
+        [['--html-output'],
+         {'help': 'html output',
+          'metavar': 'path',
+          }],
+    ]
 
 
 class HTMLReportingTestResultMixin(object):

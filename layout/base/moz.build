@@ -40,6 +40,10 @@ with Files('nsChangeHint.h'):
 with Files('nsBidi*'):
     BUG_COMPONENT = ('Core', 'Layout: Text')
 
+for caret_file in ('AccessibleCaret*', 'TouchCaret*', 'SelectionCarets*'):
+    with Files(caret_file):
+        BUG_COMPONENT = ('Core', 'Selection')
+
 XPIDL_SOURCES += [
     'nsIStyleSheetService.idl',
 ]
@@ -59,6 +63,7 @@ EXPORTS += [
     'FrameLayerBuilder.h',
     'FramePropertyTable.h',
     'LayerState.h',
+    'LayoutLogging.h',
     'nsArenaMemoryStats.h',
     'nsBidi.h',
     'nsBidiPresUtils.h',
@@ -76,11 +81,12 @@ EXPORTS += [
     'nsIFrameTraversal.h',
     'nsILayoutDebugger.h',
     'nsILayoutHistoryState.h',
-    'nsIPercentHeightObserver.h',
+    'nsIPercentBSizeObserver.h',
     'nsIPresShell.h',
     'nsIReflowCallback.h',
     'nsLayoutUtils.h',
     'nsPresArena.h',
+    'nsPresArenaObjectList.h',
     'nsPresContext.h',
     'nsPresState.h',
     'nsRefreshDriver.h',
@@ -93,19 +99,28 @@ EXPORTS += [
 ]
 
 EXPORTS.mozilla += [
+    'ArenaObjectID.h',
+    'ArenaRefPtr.h',
+    'ArenaRefPtrInlines.h',
     'GeometryUtils.h',
     'PaintTracker.h',
     'RestyleLogging.h',
 ]
 
 UNIFIED_SOURCES += [
+    'AccessibleCaret.cpp',
+    'AccessibleCaretEventHub.cpp',
+    'AccessibleCaretLogger.cpp',
+    'AccessibleCaretManager.cpp',
     'ActiveLayerTracker.cpp',
     'DisplayItemClip.cpp',
     'DisplayListClipState.cpp',
     'FrameLayerBuilder.cpp',
     'FramePropertyTable.cpp',
     'GeometryUtils.cpp',
+    'LayoutLogging.cpp',
     'MaskLayerImageCache.cpp',
+    'MobileViewportManager.cpp',
     'nsBidi.cpp',
     'nsBidiPresUtils.cpp',
     'nsCaret.cpp',
@@ -137,6 +152,7 @@ UNIFIED_SOURCES += [
     'StackArena.cpp',
     'TouchCaret.cpp',
     'TouchManager.cpp',
+    'ZoomConstraintsClient.cpp',
 ]
 
 # nsPresArena.cpp needs to be built separately because it uses plarena.h.
@@ -146,7 +162,8 @@ SOURCES += [
     'nsRefreshDriver.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
+if CONFIG['ENABLE_TESTS']:
+    DIRS += ['gtest']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

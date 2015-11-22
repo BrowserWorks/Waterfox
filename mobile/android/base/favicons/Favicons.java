@@ -481,7 +481,7 @@ public class Favicons {
         putFaviconsInMemCache(BUILT_IN_FAVICON_URL, toInsert.iterator(), true);
 
         pageURLMappings.putWithoutEviction(AboutPages.HOME, BUILT_IN_SEARCH_URL);
-        List<Bitmap> searchIcons = Collections.singletonList(BitmapFactory.decodeResource(res, R.drawable.favicon_search));
+        List<Bitmap> searchIcons = Collections.singletonList(BitmapFactory.decodeResource(res, R.drawable.search_icon_inactive));
         putFaviconsInMemCache(BUILT_IN_SEARCH_URL, searchIcons.iterator(), true);
     }
 
@@ -494,7 +494,8 @@ public class Favicons {
     }
 
     private static Bitmap loadBrandingBitmap(Context context, String name) {
-        Bitmap b = GeckoJarReader.getBitmap(context.getResources(),
+        Bitmap b = GeckoJarReader.getBitmap(context,
+                                            context.getResources(),
                                             getBrandingBitmapPath(context, name));
         if (b == null) {
             throw new IllegalStateException("Bitmap " + name + " missing from JAR!");

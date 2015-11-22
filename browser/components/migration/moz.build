@@ -10,12 +10,14 @@ JAR_MANIFESTS += ['jar.mn']
 
 XPIDL_SOURCES += [
     'nsIBrowserProfileMigrator.idl',
+    'nsIEdgeReadingListExtractor.idl',
 ]
 
 XPIDL_MODULE = 'migration'
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     SOURCES += [
+        'nsEdgeReadingListExtractor.cpp',
         'nsIEHistoryEnumerator.cpp',
     ]
 
@@ -26,9 +28,13 @@ EXTRA_COMPONENTS += [
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     EXTRA_COMPONENTS += [
+        '360seProfileMigrator.js',
+        'EdgeProfileMigrator.js',
         'IEProfileMigrator.js',
     ]
+    DEFINES['HAS_360SE_MIGRATOR'] = True
     DEFINES['HAS_IE_MIGRATOR'] = True
+    DEFINES['HAS_EDGE_MIGRATOR'] = True
 
 EXTRA_PP_COMPONENTS += [
     'BrowserProfileMigrators.manifest',
@@ -51,9 +57,12 @@ EXTRA_PP_JS_MODULES += [
     'MigrationUtils.jsm',
 ]
 
-FINAL_LIBRARY = 'browsercomps'
+if CONFIG['OS_ARCH'] == 'WINNT':
+    EXTRA_JS_MODULES += [
+        'MSMigrationUtils.jsm',
+    ]
 
-FAIL_ON_WARNINGS = True
+FINAL_LIBRARY = 'browsercomps'
 
 with Files('**'):
     BUG_COMPONENT = ('Firefox', 'Migration')

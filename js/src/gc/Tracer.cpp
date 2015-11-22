@@ -24,7 +24,10 @@
 #include "vm/Shape.h"
 #include "vm/Symbol.h"
 
+#include "jscompartmentinlines.h"
 #include "jsgcinlines.h"
+
+#include "vm/ObjectGroup-inl.h"
 
 using namespace js;
 using namespace js::gc;
@@ -44,20 +47,19 @@ T
 DoCallback(JS::CallbackTracer* trc, T* thingp, const char* name)
 {
     CheckTracedThing(trc, *thingp);
-    JSGCTraceKind kind = MapTypeToTraceKind<typename mozilla::RemovePointer<T>::Type>::kind;
     JS::AutoTracingName ctx(trc, name);
-    trc->invoke((void**)thingp, kind);
+    trc->dispatchToOnEdge(thingp);
     return *thingp;
 }
 #define INSTANTIATE_ALL_VALID_TRACE_FUNCTIONS(name, type, _) \
     template type* DoCallback<type*>(JS::CallbackTracer*, type**, const char*);
-FOR_EACH_GC_LAYOUT(INSTANTIATE_ALL_VALID_TRACE_FUNCTIONS);
+JS_FOR_EACH_TRACEKIND(INSTANTIATE_ALL_VALID_TRACE_FUNCTIONS);
 #undef INSTANTIATE_ALL_VALID_TRACE_FUNCTIONS
 
 template <typename S>
 struct DoCallbackFunctor : public IdentityDefaultAdaptor<S> {
     template <typename T> S operator()(T* t, JS::CallbackTracer* trc, const char* name) {
-        return js::gc::RewrapValueOrId<S, T*>::wrap(DoCallback(trc, &t, name));
+        return js::gc::RewrapTaggedPointer<S, T*>::wrap(DoCallback(trc, &t, name));
     }
 };
 
@@ -75,6 +77,14 @@ DoCallback<jsid>(JS::CallbackTracer* trc, jsid* idp, const char* name)
 {
     *idp = DispatchIdTyped(DoCallbackFunctor<jsid>(), *idp, trc, name);
     return *idp;
+}
+
+template <>
+TaggedProto
+DoCallback<TaggedProto>(JS::CallbackTracer* trc, TaggedProto* protop, const char* name)
+{
+    *protop = DispatchTaggedProtoTyped(DoCallbackFunctor<TaggedProto>(), *protop, trc, name);
+    return *protop;
 }
 
 void
@@ -174,9 +184,9 @@ JS_CallTenuredObjectTracer(JSTracer* trc, JS::TenuredHeap<JSObject*>* objp, cons
 }
 
 JS_PUBLIC_API(void)
-JS_TraceChildren(JSTracer* trc, void* thing, JSGCTraceKind kind)
+JS::TraceChildren(JSTracer* trc, GCCellPtr thing)
 {
-    js::TraceChildren(trc, thing, kind);
+    js::TraceChildren(trc, thing.asCell(), thing.kind());
 }
 
 struct TraceChildrenFunctor {
@@ -187,11 +197,11 @@ struct TraceChildrenFunctor {
 };
 
 void
-js::TraceChildren(JSTracer* trc, void* thing, JSGCTraceKind kind)
+js::TraceChildren(JSTracer* trc, void* thing, JS::TraceKind kind)
 {
     MOZ_ASSERT(thing);
     TraceChildrenFunctor f;
-    CallTyped(f, kind, trc, thing);
+    DispatchTraceKindTyped(f, kind, trc, thing);
 }
 
 JS_PUBLIC_API(void)
@@ -256,6 +266,126 @@ JS_TraceIncomingCCWs(JSTracer* trc, const JS::ZoneSet& zones)
 }
 
 
+/*** Cycle Collector Helpers **********************************************************************/
+
+// This function is used by the Cycle Collector (CC) to trace through -- or in
+// CC parlance, traverse -- a Shape tree. The CC does not care about Shapes or
+// BaseShapes, only the JSObjects held live by them. Thus, we walk the Shape
+// lineage, but only report non-Shape things. This effectively makes the entire
+// shape lineage into a single node in the CC, saving tremendous amounts of
+// space and time in its algorithms.
+//
+// The algorithm implemented here uses only bounded stack space. This would be
+// possible to implement outside the engine, but would require much extra
+// infrastructure and many, many more slow GOT lookups. We have implemented it
+// inside SpiderMonkey, despite the lack of general applicability, for the
+// simplicity and performance of FireFox's embedding of this engine.
+void
+gc::TraceCycleCollectorChildren(JS::CallbackTracer* trc, Shape* shape)
+{
+    // We need to mark the global, but it's OK to only do this once instead of
+    // doing it for every Shape in our lineage, since it's always the same
+    // global.
+    JSObject* global = shape->compartment()->unsafeUnbarrieredMaybeGlobal();
+    MOZ_ASSERT(global);
+    DoCallback(trc, &global, "global");
+
+    do {
+        MOZ_ASSERT(global == shape->compartment()->unsafeUnbarrieredMaybeGlobal());
+
+        MOZ_ASSERT(shape->base());
+        shape->base()->assertConsistency();
+
+        TraceEdge(trc, &shape->propidRef(), "propid");
+
+        if (shape->hasGetterObject()) {
+            JSObject* tmp = shape->getterObject();
+            DoCallback(trc, &tmp, "getter");
+            MOZ_ASSERT(tmp == shape->getterObject());
+        }
+
+        if (shape->hasSetterObject()) {
+            JSObject* tmp = shape->setterObject();
+            DoCallback(trc, &tmp, "setter");
+            MOZ_ASSERT(tmp == shape->setterObject());
+        }
+
+        shape = shape->previous();
+    } while (shape);
+}
+
+void
+TraceObjectGroupCycleCollectorChildrenCallback(JS::CallbackTracer* trc,
+                                               void** thingp, JS::TraceKind kind);
+
+// Object groups can point to other object groups via an UnboxedLayout or the
+// the original unboxed group link. There can potentially be deep or cyclic
+// chains of such groups to trace through without going through a thing that
+// participates in cycle collection. These need to be handled iteratively to
+// avoid blowing the stack when running the cycle collector's callback tracer.
+struct ObjectGroupCycleCollectorTracer : public JS::CallbackTracer
+{
+    explicit ObjectGroupCycleCollectorTracer(JS::CallbackTracer* innerTracer)
+        : JS::CallbackTracer(innerTracer->runtime(), DoNotTraceWeakMaps),
+          innerTracer(innerTracer)
+    {}
+
+    void onChild(const JS::GCCellPtr& thing) override;
+
+    JS::CallbackTracer* innerTracer;
+    Vector<ObjectGroup*, 4, SystemAllocPolicy> seen, worklist;
+};
+
+void
+ObjectGroupCycleCollectorTracer::onChild(const JS::GCCellPtr& thing)
+{
+    if (thing.is<JSObject>() || thing.is<JSScript>()) {
+        // Invoke the inner cycle collector callback on this child. It will not
+        // recurse back into TraceChildren.
+        innerTracer->onChild(thing);
+        return;
+    }
+
+    if (thing.is<ObjectGroup>()) {
+        // If this group is required to be in an ObjectGroup chain, trace it
+        // via the provided worklist rather than continuing to recurse.
+        ObjectGroup& group = thing.as<ObjectGroup>();
+        if (group.maybeUnboxedLayout()) {
+            for (size_t i = 0; i < seen.length(); i++) {
+                if (seen[i] == &group)
+                    return;
+            }
+            if (seen.append(&group) && worklist.append(&group)) {
+                return;
+            } else {
+                // If append fails, keep tracing normally. The worst that will
+                // happen is we end up overrecursing.
+            }
+        }
+    }
+
+    TraceChildren(this, thing.asCell(), thing.kind());
+}
+
+void
+gc::TraceCycleCollectorChildren(JS::CallbackTracer* trc, ObjectGroup* group)
+{
+    MOZ_ASSERT(trc->isCallbackTracer());
+
+    // Early return if this group is not required to be in an ObjectGroup chain.
+    if (!group->maybeUnboxedLayout())
+        return group->traceChildren(trc);
+
+    ObjectGroupCycleCollectorTracer groupTracer(trc->asCallbackTracer());
+    group->traceChildren(&groupTracer);
+
+    while (!groupTracer.worklist.empty()) {
+        ObjectGroup* innerGroup = groupTracer.worklist.popCopy();
+        innerGroup->traceChildren(&groupTracer);
+    }
+}
+
+
 /*** Traced Edge Printer *************************************************************************/
 
 static size_t
@@ -272,7 +402,7 @@ CountDecimalDigits(size_t num)
 
 JS_PUBLIC_API(void)
 JS_GetTraceThingInfo(char* buf, size_t bufsize, JSTracer* trc, void* thing,
-                     JSGCTraceKind kind, bool details)
+                     JS::TraceKind kind, bool details)
 {
     const char* name = nullptr; /* silence uninitialized warning */
     size_t n;
@@ -281,43 +411,43 @@ JS_GetTraceThingInfo(char* buf, size_t bufsize, JSTracer* trc, void* thing,
         return;
 
     switch (kind) {
-      case JSTRACE_OBJECT:
+      case JS::TraceKind::Object:
       {
         name = static_cast<JSObject*>(thing)->getClass()->name;
         break;
       }
 
-      case JSTRACE_SCRIPT:
+      case JS::TraceKind::Script:
         name = "script";
         break;
 
-      case JSTRACE_STRING:
+      case JS::TraceKind::String:
         name = ((JSString*)thing)->isDependent()
                ? "substring"
                : "string";
         break;
 
-      case JSTRACE_SYMBOL:
+      case JS::TraceKind::Symbol:
         name = "symbol";
         break;
 
-      case JSTRACE_BASE_SHAPE:
+      case JS::TraceKind::BaseShape:
         name = "base_shape";
         break;
 
-      case JSTRACE_JITCODE:
+      case JS::TraceKind::JitCode:
         name = "jitcode";
         break;
 
-      case JSTRACE_LAZY_SCRIPT:
+      case JS::TraceKind::LazyScript:
         name = "lazyscript";
         break;
 
-      case JSTRACE_SHAPE:
+      case JS::TraceKind::Shape:
         name = "shape";
         break;
 
-      case JSTRACE_OBJECT_GROUP:
+      case JS::TraceKind::ObjectGroup:
         name = "object_group";
         break;
 
@@ -336,7 +466,7 @@ JS_GetTraceThingInfo(char* buf, size_t bufsize, JSTracer* trc, void* thing,
 
     if (details && bufsize > 2) {
         switch (kind) {
-          case JSTRACE_OBJECT:
+          case JS::TraceKind::Object:
           {
             JSObject* obj = (JSObject*)thing;
             if (obj->is<JSFunction>()) {
@@ -354,14 +484,14 @@ JS_GetTraceThingInfo(char* buf, size_t bufsize, JSTracer* trc, void* thing,
             break;
           }
 
-          case JSTRACE_SCRIPT:
+          case JS::TraceKind::Script:
           {
             JSScript* script = static_cast<JSScript*>(thing);
             JS_snprintf(buf, bufsize, " %s:%" PRIuSIZE, script->filename(), script->lineno());
             break;
           }
 
-          case JSTRACE_STRING:
+          case JS::TraceKind::String:
           {
             *buf++ = ' ';
             bufsize--;
@@ -384,7 +514,7 @@ JS_GetTraceThingInfo(char* buf, size_t bufsize, JSTracer* trc, void* thing,
             break;
           }
 
-          case JSTRACE_SYMBOL:
+          case JS::TraceKind::Symbol:
           {
             JS::Symbol* sym = static_cast<JS::Symbol*>(thing);
             if (JSString* desc = sym->description()) {

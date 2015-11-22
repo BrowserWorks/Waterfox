@@ -6,6 +6,7 @@
 
 const cssAutoCompleter  = require("devtools/sourceeditor/css-autocompleter");
 const {InspectorFront} = require("devtools/server/actors/inspector");
+const {TargetFactory} = require("devtools/framework/target");
 const { Cc, Ci } = require("chrome");
 
 const CSS_URI = "http://mochi.test:8888/browser/browser/devtools/sourceeditor" +
@@ -69,12 +70,12 @@ const TEST_URI = "data:text/html;charset=UTF-8," + encodeURIComponent(
    " </html>"
   ].join("\n"));
 
-let doc = null;
-let index = 0;
-let completer = null;
-let progress;
-let progressDiv;
-let inspector;
+var doc = null;
+var index = 0;
+var completer = null;
+var progress;
+var progressDiv;
+var inspector;
 
 function test() {
   waitForExplicitFinish();
@@ -90,7 +91,7 @@ function test() {
 function runTests() {
   progress = doc.getElementById("progress");
   progressDiv = doc.querySelector("#progress > div");
-  let target = devtools.TargetFactory.forTab(gBrowser.selectedTab);
+  let target = TargetFactory.forTab(gBrowser.selectedTab);
   target.makeRemote().then(() => {
     inspector = InspectorFront(target.client, target.form);
     inspector.getWalker().then(walker => {

@@ -7,6 +7,7 @@
 #define MOZILLA_GFX_COMPOSITORD3D9_H
 
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/Point.h"
 #include "gfx2DGlue.h"
 #include "mozilla/layers/Compositor.h"
 #include "mozilla/layers/TextureD3D9.h"
@@ -34,11 +35,11 @@ public:
 
   virtual void MakeCurrent(MakeCurrentFlags aFlags = 0) override {}
 
-  virtual TemporaryRef<CompositingRenderTarget>
+  virtual already_AddRefed<CompositingRenderTarget>
     CreateRenderTarget(const gfx::IntRect &aRect,
                        SurfaceInitMode aInit) override;
 
-  virtual TemporaryRef<CompositingRenderTarget>
+  virtual already_AddRefed<CompositingRenderTarget>
     CreateRenderTargetFromSource(const gfx::IntRect &aRect,
                                  const CompositingRenderTarget *aSource,
                                  const gfx::IntPoint &aSourcePoint) override;
@@ -57,7 +58,8 @@ public:
                         const gfx::Rect &aClipRect,
                         const EffectChain &aEffectChain,
                         gfx::Float aOpacity,
-                        const gfx::Matrix4x4 &aTransform) override;
+                        const gfx::Matrix4x4& aTransform,
+                        const gfx::Rect& aVisibleRect) override;
 
   virtual void BeginFrame(const nsIntRegion& aInvalidRegion,
                           const gfx::Rect *aClipRectIn,
@@ -69,7 +71,7 @@ public:
 
   virtual void EndFrameForExternalComposition(const gfx::Matrix& aTransform) override {}
 
-  virtual void PrepareViewport(const gfx::IntSize& aSize) override;
+  virtual void PrepareViewport(const gfx::IntSize& aSize);
 
   virtual bool SupportsPartialTextureUpdate() override{ return true; }
 
@@ -116,7 +118,7 @@ public:
     // If the offset is 0, 0 that's okay.
   }
 
-  virtual TemporaryRef<DataTextureSource>
+  virtual already_AddRefed<DataTextureSource>
     CreateDataTextureSource(TextureFlags aFlags = TextureFlags::NO_FLAGS) override;
 private:
   // ensure mSize is up to date with respect to mWidget
@@ -167,7 +169,7 @@ private:
   RefPtr<CompositingRenderTargetD3D9> mDefaultRT;
   RefPtr<CompositingRenderTargetD3D9> mCurrentRT;
 
-  nsIntSize mSize;
+  gfx::IntSize mSize;
 
   uint32_t mDeviceResetCount;
   uint32_t mFailedResetAttempts;

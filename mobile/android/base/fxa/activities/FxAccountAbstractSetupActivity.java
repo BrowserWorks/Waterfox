@@ -32,6 +32,7 @@ import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
+import org.mozilla.gecko.util.ColorUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -74,6 +75,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   public static final String JSON_KEY_AUTH = "auth";
   public static final String JSON_KEY_SERVICES = "services";
   public static final String JSON_KEY_SYNC = "sync";
+  public static final String JSON_KEY_PROFILE = "profile";
 
   public FxAccountAbstractSetupActivity() {
     super(CANNOT_RESUME_WHEN_ACCOUNTS_EXIST | CANNOT_RESUME_WHEN_LOCKED_OUT);
@@ -100,6 +102,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
 
   private String authServerEndpoint;
   private String syncServerEndpoint;
+  private String profileServerEndpoint;
 
   protected String getAuthServerEndpoint() {
     return authServerEndpoint;
@@ -107,6 +110,10 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
 
   protected String getTokenServerEndpoint() {
     return syncServerEndpoint;
+  }
+
+  protected String getProfileServerEndpoint() {
+    return profileServerEndpoint;
   }
 
   protected void createShowPasswordButton() {
@@ -129,12 +136,12 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
       passwordEdit.setTransformationMethod(PasswordTransformationMethod.getInstance());
       showPasswordButton.setText(R.string.fxaccount_password_show);
       showPasswordButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.fxaccount_password_button_show_background));
-      showPasswordButton.setTextColor(getResources().getColor(R.color.fxaccount_password_show_textcolor));
+      showPasswordButton.setTextColor(ColorUtils.getColor(this, R.color.fxaccount_password_show_textcolor));
     } else {
       passwordEdit.setTransformationMethod(SingleLineTransformationMethod.getInstance());
       showPasswordButton.setText(R.string.fxaccount_password_hide);
       showPasswordButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.fxaccount_password_button_hide_background));
-      showPasswordButton.setTextColor(getResources().getColor(R.color.fxaccount_password_hide_textcolor));
+      showPasswordButton.setTextColor(ColorUtils.getColor(this, R.color.fxaccount_password_hide_textcolor));
     }
     passwordEdit.setSelection(start, stop);
   }
@@ -347,6 +354,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
       try {
         final String profile = Constants.DEFAULT_PROFILE;
         final String tokenServerURI = getTokenServerEndpoint();
+        final String profileServerURI = getProfileServerEndpoint();
         // It is crucial that we use the email address provided by the server
         // (rather than whatever the user entered), because the user's keys are
         // wrapped and salted with the initial email they provided to
@@ -363,6 +371,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
             profile,
             serverURI,
             tokenServerURI,
+            profileServerURI,
             state,
             this.authoritiesToSyncAutomaticallyMap);
         if (fxAccount == null) {
@@ -471,6 +480,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     if (FxAccountUtils.LOG_PERSONAL_INFORMATION) {
       FxAccountUtils.pii(LOG_TAG, "Using auth server: " + authServerEndpoint);
       FxAccountUtils.pii(LOG_TAG, "Using sync server: " + syncServerEndpoint);
+      FxAccountUtils.pii(LOG_TAG, "Using profile server: " + profileServerEndpoint);
     }
 
     updateCustomServerView();
@@ -530,6 +540,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     // Start with defaults.
     this.authServerEndpoint = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT;
     this.syncServerEndpoint = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT;
+    this.profileServerEndpoint = FxAccountConstants.DEFAULT_PROFILE_SERVER_ENDPOINT;
 
     if (intent == null) {
       Logger.warn(LOG_TAG, "Intent is null; ignoring and using default servers.");
@@ -554,12 +565,16 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
 
     String authServer = extras.getString(JSON_KEY_AUTH);
     String syncServer = services == null ? null : services.getString(JSON_KEY_SYNC);
+    String profileServer = services == null ? null : services.getString(JSON_KEY_PROFILE);
 
     if (authServer != null) {
       this.authServerEndpoint = authServer;
     }
     if (syncServer != null) {
       this.syncServerEndpoint = syncServer;
+    }
+    if (profileServer != null) {
+      this.profileServerEndpoint = profileServer;
     }
 
     if (FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(syncServerEndpoint) &&

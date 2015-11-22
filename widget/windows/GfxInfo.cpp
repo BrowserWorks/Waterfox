@@ -15,7 +15,9 @@
 #include "prprf.h"
 #include "GfxDriverInfo.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/gfx/Logging.h"
 #include "nsPrintfCString.h"
+#include "jsapi.h"
 
 #if defined(MOZ_CRASHREPORTER)
 #include "nsExceptionHandler.h"
@@ -27,9 +29,7 @@ using namespace mozilla;
 using namespace mozilla::widget;
 
 #ifdef DEBUG
-NS_IMPL_ISUPPORTS_INHERITED(GfxInfo, GfxInfoBase, nsIGfxInfo2, nsIGfxInfoDebug)
-#else
-NS_IMPL_ISUPPORTS_INHERITED(GfxInfo, GfxInfoBase, nsIGfxInfo2)
+NS_IMPL_ISUPPORTS_INHERITED(GfxInfo, GfxInfoBase, nsIGfxInfoDebug)
 #endif
 
 static const uint32_t allWindowsVersions = 0xffffffff;
@@ -57,7 +57,6 @@ GfxInfo::GetDWriteEnabled(bool *aEnabled)
   return NS_OK;
 }
 
-/* readonly attribute DOMString DWriteVersion; */
 NS_IMETHODIMP
 GfxInfo::GetDWriteVersion(nsAString & aDwriteVersion)
 {
@@ -68,7 +67,6 @@ GfxInfo::GetDWriteVersion(nsAString & aDwriteVersion)
 #define PIXEL_STRUCT_RGB  1
 #define PIXEL_STRUCT_BGR  2
 
-/* readonly attribute DOMString cleartypeParameters; */
 NS_IMETHODIMP
 GfxInfo::GetCleartypeParameters(nsAString & aCleartypeParams)
 {
@@ -523,18 +521,25 @@ GfxInfo::Init()
              driverNumericVersion = 0, knownSafeMismatchVersion = 0;
     ParseDriverVersion(dllVersion, &dllNumericVersion);
     ParseDriverVersion(dllVersion2, &dllNumericVersion2);
+
     ParseDriverVersion(mDriverVersion, &driverNumericVersion);
     ParseDriverVersion(NS_LITERAL_STRING("9.17.10.0"), &knownSafeMismatchVersion);
 
     // If there's a driver version mismatch, consider this harmful only when
     // the driver version is less than knownSafeMismatchVersion.  See the
-    // above comment about crashes with old mismatches. If the GetDllVersion
-    // call fails, then they return 0, so that will be considered a mismatch.
-    if (dllNumericVersion != driverNumericVersion &&
-        dllNumericVersion2 != driverNumericVersion &&
-        (driverNumericVersion < knownSafeMismatchVersion ||
-         std::max(dllNumericVersion, dllNumericVersion2) < knownSafeMismatchVersion)) {
-      mHasDriverVersionMismatch = true;
+    // above comment about crashes with old mismatches.  If the GetDllVersion
+    // call fails, we are not calling it a mismatch.
+    if ((dllNumericVersion != 0 && dllNumericVersion != driverNumericVersion) ||
+        (dllNumericVersion2 != 0 && dllNumericVersion2 != driverNumericVersion)) {
+      if (driverNumericVersion < knownSafeMismatchVersion ||
+          std::max(dllNumericVersion, dllNumericVersion2) < knownSafeMismatchVersion) {
+        mHasDriverVersionMismatch = true;
+        gfxWarningOnce() << "Mismatched driver versions between the registry " << mDriverVersion.get() << " and DLL(s) " << NS_ConvertUTF16toUTF8(dllVersion).get() << ", " << NS_ConvertUTF16toUTF8(dllVersion2).get() << " reported.";
+      }
+    } else if (dllNumericVersion == 0 && dllNumericVersion2 == 0) {
+      // Leave it as an asserting error for now, to see if we can find
+      // a system that exhibits this kind of a problem internally.
+      gfxCriticalErrorOnce() << "Potential driver version mismatch ignored due to missing DLLs";
     }
   }
 
@@ -555,12 +560,9 @@ GfxInfo::Init()
 
   AddCrashReportAnnotations();
 
-  GetCountryCode();
-
   return rv;
 }
 
-/* readonly attribute DOMString adapterDescription; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterDescription(nsAString & aAdapterDescription)
 {
@@ -568,7 +570,6 @@ GfxInfo::GetAdapterDescription(nsAString & aAdapterDescription)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterDescription2; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterDescription2(nsAString & aAdapterDescription)
 {
@@ -576,7 +577,6 @@ GfxInfo::GetAdapterDescription2(nsAString & aAdapterDescription)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterRAM; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterRAM(nsAString & aAdapterRAM)
 {
@@ -585,7 +585,6 @@ GfxInfo::GetAdapterRAM(nsAString & aAdapterRAM)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterRAM2; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterRAM2(nsAString & aAdapterRAM)
 {
@@ -597,7 +596,6 @@ GfxInfo::GetAdapterRAM2(nsAString & aAdapterRAM)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterDriver; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterDriver(nsAString & aAdapterDriver)
 {
@@ -606,7 +604,6 @@ GfxInfo::GetAdapterDriver(nsAString & aAdapterDriver)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterDriver2; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterDriver2(nsAString & aAdapterDriver)
 {
@@ -618,7 +615,6 @@ GfxInfo::GetAdapterDriver2(nsAString & aAdapterDriver)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterDriverVersion; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterDriverVersion(nsAString & aAdapterDriverVersion)
 {
@@ -626,7 +622,6 @@ GfxInfo::GetAdapterDriverVersion(nsAString & aAdapterDriverVersion)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterDriverDate; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterDriverDate(nsAString & aAdapterDriverDate)
 {
@@ -634,7 +629,6 @@ GfxInfo::GetAdapterDriverDate(nsAString & aAdapterDriverDate)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterDriverVersion2; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterDriverVersion2(nsAString & aAdapterDriverVersion)
 {
@@ -642,7 +636,6 @@ GfxInfo::GetAdapterDriverVersion2(nsAString & aAdapterDriverVersion)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterDriverDate2; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterDriverDate2(nsAString & aAdapterDriverDate)
 {
@@ -650,7 +643,6 @@ GfxInfo::GetAdapterDriverDate2(nsAString & aAdapterDriverDate)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterVendorID; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterVendorID(nsAString & aAdapterVendorID)
 {
@@ -658,7 +650,6 @@ GfxInfo::GetAdapterVendorID(nsAString & aAdapterVendorID)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterVendorID2; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterVendorID2(nsAString & aAdapterVendorID)
 {
@@ -666,7 +657,6 @@ GfxInfo::GetAdapterVendorID2(nsAString & aAdapterVendorID)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterDeviceID; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterDeviceID(nsAString & aAdapterDeviceID)
 {
@@ -674,7 +664,6 @@ GfxInfo::GetAdapterDeviceID(nsAString & aAdapterDeviceID)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterDeviceID2; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterDeviceID2(nsAString & aAdapterDeviceID)
 {
@@ -682,7 +671,6 @@ GfxInfo::GetAdapterDeviceID2(nsAString & aAdapterDeviceID)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterSubsysID; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterSubsysID(nsAString & aAdapterSubsysID)
 {
@@ -690,7 +678,6 @@ GfxInfo::GetAdapterSubsysID(nsAString & aAdapterSubsysID)
   return NS_OK;
 }
 
-/* readonly attribute DOMString adapterSubsysID2; */
 NS_IMETHODIMP
 GfxInfo::GetAdapterSubsysID2(nsAString & aAdapterSubsysID)
 {
@@ -698,7 +685,6 @@ GfxInfo::GetAdapterSubsysID2(nsAString & aAdapterSubsysID)
   return NS_OK;
 }
 
-/* readonly attribute boolean isGPU2Active; */
 NS_IMETHODIMP
 GfxInfo::GetIsGPU2Active(bool* aIsGPU2Active)
 {
@@ -722,15 +708,6 @@ CheckForCiscoVPN() {
   }
 }
 #endif
-
-/* interface nsIGfxInfo2 */
-/* readonly attribute DOMString countryCode; */
-NS_IMETHODIMP
-GfxInfo::GetCountryCode(nsAString& aCountryCode)
-{
-  aCountryCode = mCountryCode;
-  return NS_OK;
-}
 
 void
 GfxInfo::AddCrashReportAnnotations()
@@ -811,28 +788,6 @@ GfxInfo::AddCrashReportAnnotations()
   CrashReporter::AppendAppNotesToCrashReport(note);
 
 #endif
-}
-
-void
-GfxInfo::GetCountryCode()
-{
-  GEOID geoid = GetUserGeoID(GEOCLASS_NATION);
-  if (geoid == GEOID_NOT_AVAILABLE) {
-    return;
-  }
-  // Get required length
-  int numChars = GetGeoInfoW(geoid, GEO_ISO2, nullptr, 0, 0);
-  if (!numChars) {
-    return;
-  }
-  // Now get the string for real
-  mCountryCode.SetLength(numChars);
-  numChars = GetGeoInfoW(geoid, GEO_ISO2, wwc(mCountryCode.BeginWriting()),
-                         mCountryCode.Length(), 0);
-  if (numChars) {
-    // numChars includes null terminator
-    mCountryCode.Truncate(numChars - 1);
-  }
 }
 
 static OperatingSystem
@@ -1075,6 +1030,18 @@ GfxInfo::GetGfxDriverInfo()
       nsIGfxInfo::FEATURE_DIRECT3D_11_LAYERS, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
       DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions );
 
+    /* Disable D3D11 layers on Intel GMA 3150 for failing to allocate a shared handle for textures.
+     * See bug 1207665. Additionally block D2D so we don't accidentally use WARP.
+     */
+    APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_ALL,
+        (nsAString&) GfxDriverInfo::GetDeviceVendor(VendorIntel), (GfxDeviceFamily*) GfxDriverInfo::GetDeviceFamily(Bug1207665),
+        nsIGfxInfo::FEATURE_DIRECT3D_11_LAYERS, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
+      DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions );
+    APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_ALL,
+        (nsAString&) GfxDriverInfo::GetDeviceVendor(VendorIntel), (GfxDeviceFamily*) GfxDriverInfo::GetDeviceFamily(Bug1207665),
+        nsIGfxInfo::FEATURE_DIRECT2D, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
+      DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions );
+
     /* Disable D2D on AMD Catalyst 14.4 until 14.6
      * See bug 984488
      */
@@ -1139,10 +1106,6 @@ GfxInfo::GetGfxDriverInfo()
     /* Bug 1153381: WebGL issues with D3D11 ANGLE on Intel. These may be fixed by an ANGLE update. */
     APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_ALL,
       (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorIntel), (GfxDeviceFamily*)GfxDriverInfo::GetDeviceFamily(IntelGMAX4500HD),
-      nsIGfxInfo::FEATURE_DIRECT3D_11_ANGLE, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
-      DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions);
-    APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_ALL,
-      (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorIntel), (GfxDeviceFamily*)GfxDriverInfo::GetDeviceFamily(IntelHDGraphicsToIvyBridge),
       nsIGfxInfo::FEATURE_DIRECT3D_11_ANGLE, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
       DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions);
 
@@ -1216,7 +1179,7 @@ GfxInfo::GetFeatureStatusImpl(int32_t aFeature,
       os = DRIVER_OS_WINDOWS_XP;
 
     if (mHasDriverVersionMismatch) {
-      *aStatus = nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION;
+      *aStatus = nsIGfxInfo::FEATURE_BLOCKED_MISMATCHED_VERSION;
       return NS_OK;
     }
   }
@@ -1224,32 +1187,110 @@ GfxInfo::GetFeatureStatusImpl(int32_t aFeature,
   return GfxInfoBase::GetFeatureStatusImpl(aFeature, aStatus, aSuggestedDriverVersion, aDriverInfo, &os);
 }
 
+nsresult
+GfxInfo::FindMonitors(JSContext* aCx, JS::HandleObject aOutArray)
+{
+  int deviceCount = 0;
+  for (int deviceIndex = 0;; deviceIndex++) {
+    DISPLAY_DEVICEA device;
+    device.cb = sizeof(device);
+    if (!::EnumDisplayDevicesA(nullptr, deviceIndex, &device, 0)) {
+      break;
+    }
+
+    if (!(device.StateFlags & DISPLAY_DEVICE_ACTIVE)) {
+      continue;
+    }
+
+    DEVMODEA mode;
+    mode.dmSize = sizeof(mode);
+    mode.dmDriverExtra = 0;
+    if (!::EnumDisplaySettingsA(device.DeviceName, ENUM_CURRENT_SETTINGS, &mode)) {
+      continue;
+    }
+
+    JS::Rooted<JSObject*> obj(aCx, JS_NewPlainObject(aCx));
+
+    JS::Rooted<JS::Value> screenWidth(aCx, JS::Int32Value(mode.dmPelsWidth));
+    JS_SetProperty(aCx, obj, "screenWidth", screenWidth);
+
+    JS::Rooted<JS::Value> screenHeight(aCx, JS::Int32Value(mode.dmPelsHeight));
+    JS_SetProperty(aCx, obj, "screenHeight", screenHeight);
+
+    JS::Rooted<JS::Value> refreshRate(aCx, JS::Int32Value(mode.dmDisplayFrequency));
+    JS_SetProperty(aCx, obj, "refreshRate", refreshRate);
+
+    JS::Rooted<JS::Value> pseudoDisplay(aCx,
+      JS::BooleanValue(!!(device.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER)));
+    JS_SetProperty(aCx, obj, "pseudoDisplay", pseudoDisplay);
+
+    JS::Rooted<JS::Value> element(aCx, JS::ObjectValue(*obj));
+    JS_SetElement(aCx, aOutArray, deviceCount++, element);
+  }
+  return NS_OK;
+}
+
+void
+GfxInfo::DescribeFeatures(JSContext* aCx, JS::Handle<JSObject*> aObj)
+{
+  JS::Rooted<JSObject*> obj(aCx);
+
+  gfxWindowsPlatform* platform = gfxWindowsPlatform::GetPlatform();
+
+  gfx::FeatureStatus d3d11 = platform->GetD3D11Status();
+  if (!InitFeatureObject(aCx, aObj, "d3d11", d3d11, &obj)) {
+    return;
+  }
+  if (d3d11 == gfx::FeatureStatus::Available) {
+    JS::Rooted<JS::Value> val(aCx, JS::Int32Value(platform->GetD3D11Version()));
+    JS_SetProperty(aCx, obj, "version", val);
+
+    val = JS::BooleanValue(platform->IsWARP());
+    JS_SetProperty(aCx, obj, "warp", val);
+
+    val = JS::BooleanValue(platform->CompositorD3D11TextureSharingWorks());
+    JS_SetProperty(aCx, obj, "textureSharing", val);
+
+    val = JS::BooleanValue(!platform->CanUseDirect3D11());
+    JS_SetProperty(aCx, obj, "blacklisted", val);
+  }
+
+  gfx::FeatureStatus d2d = platform->GetD2DStatus();
+  if (!InitFeatureObject(aCx, aObj, "d2d", d2d, &obj)) {
+    return;
+  }
+  {
+    const char* version = "1.0";
+    if (platform->GetD2D1Status() == gfx::FeatureStatus::Available)
+      version = "1.1";
+    JS::Rooted<JSString*> str(aCx, JS_NewStringCopyZ(aCx, version));
+    JS::Rooted<JS::Value> val(aCx, JS::StringValue(str));
+    JS_SetProperty(aCx, obj, "version", val);
+  }
+}
+
 #ifdef DEBUG
 
 // Implement nsIGfxInfoDebug
 
-/* void spoofVendorID (in DOMString aVendorID); */
 NS_IMETHODIMP GfxInfo::SpoofVendorID(const nsAString & aVendorID)
 {
   mAdapterVendorID = aVendorID;
   return NS_OK;
 }
 
-/* void spoofDeviceID (in unsigned long aDeviceID); */
 NS_IMETHODIMP GfxInfo::SpoofDeviceID(const nsAString & aDeviceID)
 {
   mAdapterDeviceID = aDeviceID;
   return NS_OK;
 }
 
-/* void spoofDriverVersion (in DOMString aDriverVersion); */
 NS_IMETHODIMP GfxInfo::SpoofDriverVersion(const nsAString & aDriverVersion)
 {
   mDriverVersion = aDriverVersion;
   return NS_OK;
 }
 
-/* void spoofOSVersion (in unsigned long aVersion); */
 NS_IMETHODIMP GfxInfo::SpoofOSVersion(uint32_t aVersion)
 {
   mWindowsVersion = aVersion;

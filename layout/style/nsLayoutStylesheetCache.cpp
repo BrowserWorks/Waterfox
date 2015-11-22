@@ -18,6 +18,17 @@
 #include "nsIXULRuntime.h"
 #include "nsPrintfCString.h"
 
+// Includes for the crash report annotation in ErrorLoadingBuiltinSheet.
+#ifdef MOZ_CRASHREPORTER
+#include "mozilla/Omnijar.h"
+#include "nsDirectoryService.h"
+#include "nsDirectoryServiceDefs.h"
+#include "nsExceptionHandler.h"
+#include "nsIChromeRegistry.h"
+#include "nsISimpleEnumerator.h"
+#include "nsISubstitutingProtocolHandler.h"
+#endif
+
 using namespace mozilla;
 
 static bool sNumberControlEnabled;
@@ -192,6 +203,97 @@ nsLayoutStylesheetCache::CounterStylesSheet()
   return gStyleCache->mCounterStylesSheet;
 }
 
+CSSStyleSheet*
+nsLayoutStylesheetCache::NoScriptSheet()
+{
+  EnsureGlobal();
+
+  if (!gStyleCache->mNoScriptSheet) {
+    // If you update the data: URL, also update noscript.css  (See bug 1194856.)
+    LoadSheetURL(
+#ifdef RELEASE_BUILD
+                 "data:text/css,noscript { display%3A none !important%3B }",
+#else
+                 "resource://gre-resources/noscript.css",
+#endif
+                 gStyleCache->mNoScriptSheet, true);
+  }
+
+  return gStyleCache->mNoScriptSheet;
+}
+
+CSSStyleSheet*
+nsLayoutStylesheetCache::NoFramesSheet()
+{
+  EnsureGlobal();
+
+  if (!gStyleCache->mNoFramesSheet) {
+    // If you update the data: URL, also update noframes.css  (See bug 1194856.)
+    LoadSheetURL(
+#ifdef RELEASE_BUILD
+                 "data:text/css,noframes { display%3A block%3B } "
+                 "frame%2C frameset%2C iframe { display%3A none !important%3B }",
+#else
+                 "resource://gre-resources/noframes.css",
+#endif
+                 gStyleCache->mNoFramesSheet, true);
+  }
+
+  return gStyleCache->mNoFramesSheet;
+}
+
+/* static */ CSSStyleSheet*
+nsLayoutStylesheetCache::ChromePreferenceSheet(nsPresContext* aPresContext)
+{
+  EnsureGlobal();
+
+  if (!gStyleCache->mChromePreferenceSheet) {
+    gStyleCache->BuildPreferenceSheet(gStyleCache->mChromePreferenceSheet,
+                                      aPresContext);
+  }
+
+  return gStyleCache->mChromePreferenceSheet;
+}
+
+/* static */ CSSStyleSheet*
+nsLayoutStylesheetCache::ContentPreferenceSheet(nsPresContext* aPresContext)
+{
+  EnsureGlobal();
+
+  if (!gStyleCache->mContentPreferenceSheet) {
+    gStyleCache->BuildPreferenceSheet(gStyleCache->mContentPreferenceSheet,
+                                      aPresContext);
+  }
+
+  return gStyleCache->mContentPreferenceSheet;
+}
+
+/* static */ CSSStyleSheet*
+nsLayoutStylesheetCache::ContentEditableSheet()
+{
+  EnsureGlobal();
+
+  if (!gStyleCache->mContentEditableSheet) {
+    LoadSheetURL("resource://gre/res/contenteditable.css",
+                 gStyleCache->mContentEditableSheet, true);
+  }
+
+  return gStyleCache->mContentEditableSheet;
+}
+
+/* static */ CSSStyleSheet*
+nsLayoutStylesheetCache::DesignModeSheet()
+{
+  EnsureGlobal();
+
+  if (!gStyleCache->mDesignModeSheet) {
+    LoadSheetURL("resource://gre/res/designmode.css",
+                 gStyleCache->mDesignModeSheet, true);
+  }
+
+  return gStyleCache->mDesignModeSheet;
+}
+
 void
 nsLayoutStylesheetCache::Shutdown()
 {
@@ -219,12 +321,18 @@ nsLayoutStylesheetCache::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf
 
   #define MEASURE(s) n += s ? s->SizeOfIncludingThis(aMallocSizeOf) : 0;
 
+  MEASURE(mChromePreferenceSheet);
+  MEASURE(mContentEditableSheet);
+  MEASURE(mContentPreferenceSheet);
   MEASURE(mCounterStylesSheet);
+  MEASURE(mDesignModeSheet);
   MEASURE(mFormsSheet);
   MEASURE(mFullScreenOverrideSheet);
   MEASURE(mHTMLSheet);
   MEASURE(mMathMLSheet);
   MEASURE(mMinimalXULSheet);
+  MEASURE(mNoFramesSheet);
+  MEASURE(mNoScriptSheet);
   MEASURE(mNumberControlSheet);
   MEASURE(mQuirkSheet);
   MEASURE(mSVGSheet);
@@ -367,9 +475,249 @@ nsLayoutStylesheetCache::LoadSheetFile(nsIFile* aFile, nsRefPtr<CSSStyleSheet>& 
   LoadSheet(uri, aSheet, false);
 }
 
+#ifdef MOZ_CRASHREPORTER
+static void
+ListInterestingFiles(nsString& aAnnotation, nsIFile* aFile,
+                     const nsTArray<nsString>& aInterestingFilenames)
+{
+  nsString filename;
+  aFile->GetLeafName(filename);
+  for (const nsString& interestingFilename : aInterestingFilenames) {
+    if (interestingFilename == filename) {
+      nsString path;
+      aFile->GetPath(path);
+      aAnnotation.AppendLiteral("  ");
+      aAnnotation.Append(path);
+      aAnnotation.AppendLiteral(" (");
+      int64_t size;
+      if (NS_SUCCEEDED(aFile->GetFileSize(&size))) {
+        aAnnotation.AppendPrintf("%ld", size);
+      } else {
+        aAnnotation.AppendLiteral("???");
+      }
+      aAnnotation.AppendLiteral(" bytes)\n");
+      return;
+    }
+  }
+
+  bool isDir = false;
+  aFile->IsDirectory(&isDir);
+
+  if (!isDir) {
+    return;
+  }
+
+  nsCOMPtr<nsISimpleEnumerator> entries;
+  if (NS_FAILED(aFile->GetDirectoryEntries(getter_AddRefs(entries)))) {
+    aAnnotation.AppendLiteral("  (failed to enumerated directory)\n");
+    return;
+  }
+
+  for (;;) {
+    bool hasMore = false;
+    if (NS_FAILED(entries->HasMoreElements(&hasMore))) {
+      aAnnotation.AppendLiteral("  (failed during directory enumeration)\n");
+      return;
+    }
+    if (!hasMore) {
+      break;
+    }
+
+    nsCOMPtr<nsISupports> entry;
+    if (NS_FAILED(entries->GetNext(getter_AddRefs(entry)))) {
+      aAnnotation.AppendLiteral("  (failed during directory enumeration)\n");
+      return;
+    }
+
+    nsCOMPtr<nsIFile> file = do_QueryInterface(entry);
+    if (file) {
+      ListInterestingFiles(aAnnotation, file, aInterestingFilenames);
+    }
+  }
+}
+
+// Generate a crash report annotation to help debug issues with style
+// sheets failing to load (bug 1194856).
+static void
+AnnotateCrashReport(nsIURI* aURI)
+{
+  nsAutoCString spec;
+  nsAutoCString scheme;
+  nsDependentCSubstring filename;
+  if (aURI) {
+    aURI->GetSpec(spec);
+    aURI->GetScheme(scheme);
+    int32_t i = spec.RFindChar('/');
+    if (i != -1) {
+      filename.Rebind(spec, i + 1);
+    }
+  }
+
+  nsString annotation;
+
+  // The URL of the sheet that failed to load.
+  annotation.AppendLiteral("Error loading sheet: ");
+  annotation.Append(NS_ConvertUTF8toUTF16(spec).get());
+  annotation.Append('\n');
+
+  // The jar: or file: URL that the sheet's resource: or chrome: URL
+  // resolves to.
+  if (scheme.EqualsLiteral("resource")) {
+    annotation.AppendLiteral("Real location: ");
+    nsCOMPtr<nsISubstitutingProtocolHandler> handler;
+    nsCOMPtr<nsIIOService> io(do_GetIOService());
+    if (io) {
+      nsCOMPtr<nsIProtocolHandler> ph;
+      io->GetProtocolHandler(scheme.get(), getter_AddRefs(ph));
+      if (ph) {
+        handler = do_QueryInterface(ph);
+      }
+    }
+    if (!handler) {
+      annotation.AppendLiteral("(ResolveURI failed)\n");
+    } else {
+      nsAutoCString resolvedSpec;
+      handler->ResolveURI(aURI, resolvedSpec);
+      annotation.Append(NS_ConvertUTF8toUTF16(resolvedSpec));
+      annotation.Append('\n');
+    }
+  } else if (scheme.EqualsLiteral("chrome")) {
+    annotation.AppendLiteral("Real location: ");
+    nsCOMPtr<nsIChromeRegistry> reg =
+      mozilla::services::GetChromeRegistryService();
+    if (!reg) {
+      annotation.AppendLiteral("(no chrome registry)\n");
+    } else {
+      nsCOMPtr<nsIURI> resolvedURI;
+      reg->ConvertChromeURL(aURI, getter_AddRefs(resolvedURI));
+      if (!resolvedURI) {
+        annotation.AppendLiteral("(ConvertChromeURL failed)\n");
+      } else {
+        nsAutoCString resolvedSpec;
+        resolvedURI->GetSpec(resolvedSpec);
+        annotation.Append(NS_ConvertUTF8toUTF16(resolvedSpec));
+        annotation.Append('\n');
+      }
+    }
+  }
+
+  nsTArray<nsString> interestingFiles;
+  interestingFiles.AppendElement(NS_LITERAL_STRING("chrome.manifest"));
+  interestingFiles.AppendElement(NS_LITERAL_STRING("omni.ja"));
+  interestingFiles.AppendElement(NS_ConvertUTF8toUTF16(filename));
+
+  annotation.AppendLiteral("GRE directory: ");
+  nsCOMPtr<nsIFile> file;
+  nsDirectoryService::gService->Get(NS_GRE_DIR, NS_GET_IID(nsIFile),
+                                    getter_AddRefs(file));
+  if (file) {
+    // The Firefox installation directory.
+    nsString path;
+    file->GetPath(path);
+    annotation.Append(path);
+    annotation.Append('\n');
+
+    // List interesting files -- any chrome.manifest or omni.ja file or any file
+    // whose name is the sheet's filename -- under the Firefox installation
+    // directory.
+    annotation.AppendLiteral("Interesting files in the GRE directory:\n");
+    ListInterestingFiles(annotation, file, interestingFiles);
+
+    // If the Firefox installation directory has a chrome.manifest file, let's
+    // see what's in it.
+    file->Append(NS_LITERAL_STRING("chrome.manifest"));
+    bool exists = false;
+    file->Exists(&exists);
+    if (exists) {
+      annotation.AppendLiteral("Contents of chrome.manifest:\n[[[\n");
+      PRFileDesc* fd;
+      if (NS_SUCCEEDED(file->OpenNSPRFileDesc(PR_RDONLY, 0, &fd))) {
+        nsCString contents;
+        char buf[512];
+        int32_t n;
+        while ((n = PR_Read(fd, buf, sizeof(buf))) > 0) {
+          contents.Append(buf, n);
+        }
+        if (n < 0) {
+          annotation.AppendLiteral("  (error while reading)\n");
+        } else {
+          annotation.Append(NS_ConvertUTF8toUTF16(contents));
+        }
+        PR_Close(fd);
+      }
+      annotation.AppendLiteral("]]]\n");
+    }
+  } else {
+    annotation.AppendLiteral("(none)\n");
+  }
+
+  // The jar: or file: URL prefix that chrome: and resource: URLs get translated
+  // to.
+  annotation.AppendLiteral("GRE omnijar URI string: ");
+  nsCString uri;
+  nsresult rv = Omnijar::GetURIString(Omnijar::GRE, uri);
+  if (NS_FAILED(rv)) {
+    annotation.AppendLiteral("(failed)\n");
+  } else {
+    annotation.Append(NS_ConvertUTF8toUTF16(uri));
+    annotation.Append('\n');
+  }
+
+  nsRefPtr<nsZipArchive> zip = Omnijar::GetReader(Omnijar::GRE);
+  if (zip) {
+    // List interesting files in the GRE omnijar.
+    annotation.AppendLiteral("Interesting files in the GRE omnijar:\n");
+    nsZipFind* find;
+    rv = zip->FindInit(nullptr, &find);
+    if (NS_FAILED(rv)) {
+      annotation.AppendPrintf("  (FindInit failed with 0x%08x)\n", rv);
+    } else if (!find) {
+      annotation.AppendLiteral("  (FindInit returned null)\n");
+    } else {
+      const char* result;
+      uint16_t len;
+      while (NS_SUCCEEDED(find->FindNext(&result, &len))) {
+        nsCString itemPathname;
+        nsString itemFilename;
+        itemPathname.Append(result, len);
+        int32_t i = itemPathname.RFindChar('/');
+        if (i != -1) {
+          itemFilename = NS_ConvertUTF8toUTF16(Substring(itemPathname, i + 1));
+        }
+        for (const nsString& interestingFile : interestingFiles) {
+          if (interestingFile == itemFilename) {
+            annotation.AppendLiteral("  ");
+            annotation.Append(NS_ConvertUTF8toUTF16(itemPathname));
+            nsZipItem* item = zip->GetItem(itemPathname.get());
+            if (!item) {
+              annotation.AppendLiteral(" (GetItem failed)\n");
+            } else {
+              annotation.AppendPrintf(" (%d bytes, crc32 = 0x%08x)\n",
+                                      item->RealSize(),
+                                      item->CRC32());
+            }
+            break;
+          }
+        }
+      }
+      delete find;
+    }
+  } else {
+    annotation.AppendLiteral("No GRE omnijar\n");
+  }
+
+  CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("SheetLoadFailure"),
+                                     NS_ConvertUTF16toUTF8(annotation));
+}
+#endif
+
 static void
 ErrorLoadingBuiltinSheet(nsIURI* aURI, const char* aMsg)
 {
+#ifdef MOZ_CRASHREPORTER
+  AnnotateCrashReport(aURI);
+#endif
+
   nsAutoCString spec;
   if (aURI) {
     aURI->GetSpec(spec);
@@ -430,6 +778,133 @@ nsLayoutStylesheetCache::DependentPrefChanged(const char* aPref, void* aData)
   // for layout.css.ruby.enabled
   InvalidateSheet(gStyleCache->mUASheet);
   InvalidateSheet(gStyleCache->mHTMLSheet);
+}
+
+/* static */ void
+nsLayoutStylesheetCache::InvalidatePreferenceSheets()
+{
+  if (!gStyleCache) {
+    return;
+  }
+
+  gStyleCache->mContentPreferenceSheet = nullptr;
+  gStyleCache->mChromePreferenceSheet = nullptr;
+}
+
+/* static */ void
+nsLayoutStylesheetCache::AppendPreferenceRule(CSSStyleSheet* aSheet,
+                                              const nsAString& aString)
+{
+  uint32_t result;
+  aSheet->InsertRuleInternal(aString, aSheet->StyleRuleCount(), &result);
+}
+
+/* static */ void
+nsLayoutStylesheetCache::AppendPreferenceColorRule(CSSStyleSheet* aSheet,
+                                                   const char* aString,
+                                                   nscolor aColor)
+{
+  nsAutoString rule;
+  rule.AppendPrintf(
+      aString, NS_GET_R(aColor), NS_GET_G(aColor), NS_GET_B(aColor));
+  AppendPreferenceRule(aSheet, rule);
+}
+
+void
+nsLayoutStylesheetCache::BuildPreferenceSheet(nsRefPtr<CSSStyleSheet>& aSheet,
+                                              nsPresContext* aPresContext)
+{
+  aSheet = new CSSStyleSheet(CORS_NONE, mozilla::net::RP_Default);
+
+  nsCOMPtr<nsIURI> uri;
+  NS_NewURI(getter_AddRefs(uri), "about:PreferenceStyleSheet", nullptr);
+  MOZ_ASSERT(uri, "URI creation shouldn't fail");
+
+  aSheet->SetURIs(uri, uri, uri);
+  aSheet->SetComplete();
+
+  AppendPreferenceRule(aSheet,
+      NS_LITERAL_STRING("@namespace url(http://www.w3.org/1999/xhtml);"));
+  AppendPreferenceRule(aSheet,
+      NS_LITERAL_STRING("@namespace svg url(http://www.w3.org/2000/svg);"));
+
+  // Rules for link styling.
+
+  AppendPreferenceColorRule(aSheet,
+      "*|*:link { color: #%02x%02x%02x; }",
+      aPresContext->DefaultLinkColor());
+  AppendPreferenceColorRule(aSheet,
+      "*|*:-moz-any-link:active { color: #%02x%02x%02x; }",
+      aPresContext->DefaultActiveLinkColor());
+  AppendPreferenceColorRule(aSheet,
+      "*|*:visited { color: #%02x%02x%02x; }",
+      aPresContext->DefaultVisitedLinkColor());
+
+  AppendPreferenceRule(aSheet,
+      aPresContext->GetCachedBoolPref(kPresContext_UnderlineLinks) ?
+        NS_LITERAL_STRING(
+            "*|*:-moz-any-link:not(svg|a) { text-decoration: underline; }") :
+        NS_LITERAL_STRING(
+            "*|*:-moz-any-link{ text-decoration: none; }"));
+
+  // Rules for focus styling.
+
+  bool focusRingOnAnything = aPresContext->GetFocusRingOnAnything();
+  uint8_t focusRingWidth = aPresContext->FocusRingWidth();
+  uint8_t focusRingStyle = aPresContext->GetFocusRingStyle();
+
+  if ((focusRingWidth != 1 && focusRingWidth <= 4) || focusRingOnAnything) {
+    if (focusRingWidth != 1) {
+      // If the focus ring width is different from the default, fix buttons
+      // with rings.
+      nsString rule;
+      rule.AppendPrintf(
+          "button::-moz-focus-inner, input[type=\"reset\"]::-moz-focus-inner, "
+          "input[type=\"button\"]::-moz-focus-inner, "
+          "input[type=\"submit\"]::-moz-focus-inner { "
+          "padding: 1px 2px 1px 2px; "
+          "border: %d %s transparent !important; }",
+          focusRingWidth,
+          focusRingWidth == 0 ? (const char*) "solid" : (const char*) "dotted");
+      AppendPreferenceRule(aSheet, rule);
+
+      // NS_LITERAL_STRING doesn't work with concatenated string literals, hence
+      // the newline escaping.
+      AppendPreferenceRule(aSheet, NS_LITERAL_STRING("\
+button:focus::-moz-focus-inner, \
+input[type=\"reset\"]:focus::-moz-focus-inner, \
+input[type=\"button\"]:focus::-moz-focus-inner, \
+input[type=\"submit\"]:focus::-moz-focus-inner { \
+border-color: ButtonText !important; }"));
+    }
+
+    nsString rule;
+    if (focusRingOnAnything) {
+      rule.AppendLiteral(":focus");
+    } else {
+      rule.AppendLiteral("*|*:link:focus, *|*:visited:focus");
+    }
+    rule.AppendPrintf(" { outline: %dpx ", focusRingWidth);
+    if (focusRingStyle == 0) { // solid
+      rule.AppendLiteral("solid -moz-mac-focusring !important; "
+                         "-moz-outline-radius: 3px; outline-offset: 1px; }");
+    } else {
+      rule.AppendLiteral("dotted WindowText !important; }");
+    }
+    AppendPreferenceRule(aSheet, rule);
+  }
+
+  if (aPresContext->GetUseFocusColors()) {
+    nsString rule;
+    nscolor focusText = aPresContext->FocusTextColor();
+    nscolor focusBG = aPresContext->FocusBackgroundColor();
+    rule.AppendPrintf(
+        "*:focus, *:focus > font { color: #%02x%02x%02x !important; "
+        "background-color: #%02x%02x%02x !important; }",
+        NS_GET_R(focusText), NS_GET_G(focusText), NS_GET_B(focusText),
+        NS_GET_R(focusBG), NS_GET_G(focusBG), NS_GET_B(focusBG));
+    AppendPreferenceRule(aSheet, rule);
+  }
 }
 
 mozilla::StaticRefPtr<nsLayoutStylesheetCache>

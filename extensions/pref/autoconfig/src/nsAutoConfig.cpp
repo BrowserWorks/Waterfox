@@ -17,8 +17,14 @@
 #include "nsIStringBundle.h"
 #include "nsContentUtils.h"
 #include "nsCRT.h"
+#include "nsNetCID.h"
+#include "nsNetUtil.h"
 #include "nspr.h"
 #include <algorithm>
+
+#include "mozilla/Logging.h"
+
+using mozilla::LogLevel;
 
 PRLogModuleInfo *MCD;
 
@@ -120,7 +126,7 @@ nsAutoConfig::OnStopRequest(nsIRequest *request, nsISupports *context,
 
     // If the request is failed, go read the failover.jsc file
     if (NS_FAILED(aStatus)) {
-        PR_LOG(MCD, PR_LOG_DEBUG, ("mcd request failed with status %x\n", aStatus));
+        MOZ_LOG(MCD, LogLevel::Debug, ("mcd request failed with status %x\n", aStatus));
         return readOfflineFile();
     }
 
@@ -131,7 +137,7 @@ nsAutoConfig::OnStopRequest(nsIRequest *request, nsISupports *context,
         pHTTPCon->GetResponseStatus(&httpStatus);
         if (httpStatus != 200) 
         {
-            PR_LOG(MCD, PR_LOG_DEBUG, ("mcd http request failed with status %x\n", httpStatus));
+            MOZ_LOG(MCD, LogLevel::Debug, ("mcd http request failed with status %x\n", httpStatus));
             return readOfflineFile();
         }
     }
@@ -196,7 +202,7 @@ nsresult nsAutoConfig::downloadAutoConfig()
     static bool firstTime = true;
     
     if (mConfigURL.IsEmpty()) {
-        PR_LOG(MCD, PR_LOG_DEBUG, ("global config url is empty - did you set autoadmin.global_config_url?\n"));
+        MOZ_LOG(MCD, LogLevel::Debug, ("global config url is empty - did you set autoadmin.global_config_url?\n"));
         NS_WARNING("AutoConfig called without global_config_url");
         return NS_OK;
     }
@@ -270,16 +276,16 @@ nsresult nsAutoConfig::downloadAutoConfig()
     rv = NS_NewURI(getter_AddRefs(url), mConfigURL.get(), nullptr, nullptr);
     if (NS_FAILED(rv))
     {
-        PR_LOG(MCD, PR_LOG_DEBUG, ("failed to create URL - is autoadmin.global_config_url valid? - %s\n", mConfigURL.get()));
+        MOZ_LOG(MCD, LogLevel::Debug, ("failed to create URL - is autoadmin.global_config_url valid? - %s\n", mConfigURL.get()));
         return rv;
     }
 
-    PR_LOG(MCD, PR_LOG_DEBUG, ("running MCD url %s\n", mConfigURL.get()));
+    MOZ_LOG(MCD, LogLevel::Debug, ("running MCD url %s\n", mConfigURL.get()));
     // open a channel for the url
     rv = NS_NewChannel(getter_AddRefs(channel),
                        url,
                        nsContentUtils::GetSystemPrincipal(),
-                       nsILoadInfo::SEC_NORMAL,
+                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                        nsIContentPolicy::TYPE_OTHER,
                        nullptr,  // loadGroup
                        nullptr,  // aCallbacks
@@ -289,7 +295,7 @@ nsresult nsAutoConfig::downloadAutoConfig()
     if (NS_FAILED(rv)) 
         return rv;
 
-    rv = channel->AsyncOpen(this, nullptr); 
+    rv = channel->AsyncOpen2(this);
     if (NS_FAILED(rv)) {
         readOfflineFile();
         return rv;

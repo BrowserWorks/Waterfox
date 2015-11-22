@@ -42,7 +42,7 @@ of the License or (at your option) any later version.
 #include "inc/Rule.h"
 #include "inc/Silf.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 #ifdef NDEBUG
 #ifdef __GNUC__
@@ -89,12 +89,13 @@ public:
         byte      max_ref;
         
         analysis() : slotref(0), max_ref(0) {};
-        void set_ref(int index) throw();
+        void set_ref(int index, bool incinsert=false) throw();
+        void set_noref(int index) throw();
         void set_changed(int index) throw();
 
     };
     
-    decoder(const limits & lims, Code &code) throw();
+    decoder(limits & lims, Code &code, enum passtype pt) throw();
     
     bool        load(const byte * bc_begin, const byte * bc_end);
     void        apply_analysis(instr * const code, instr * code_end);
@@ -107,6 +108,7 @@ private:
     bool        emit_opcode(opcode opc, const byte * & bc);
     bool        validate_opcode(const opcode opc, const byte * const bc);
     bool        valid_upto(const uint16 limit, const uint16 x) const throw();
+    bool        test_context() const throw();
     void        failure(const status_t s) const throw() { _code.failure(s); }
     
     Code              & _code;
@@ -114,14 +116,17 @@ private:
     uint16              _rule_length;
     instr             * _instr;
     byte              * _data;
-    const limits      & _max;
+    limits            & _max;
     analysis            _analysis;
+    enum passtype       _passtype;
+    int                 _stack_depth;
+    bool                _in_ctxt_item;
 };
 
 
 struct Machine::Code::decoder::limits
 {
-  const byte * const bytecode;
+  const byte       * bytecode;
   const uint8        pre_context;
   const uint16       rule_length,
                      classes,
@@ -130,19 +135,22 @@ struct Machine::Code::decoder::limits
   const byte         attrid[gr_slatMax];
 };
    
-inline Machine::Code::decoder::decoder(const limits & lims, Code &code) throw()
+inline Machine::Code::decoder::decoder(limits & lims, Code &code, enum passtype pt) throw()
 : _code(code),
   _pre_context(code._constraint ? 0 : lims.pre_context), 
   _rule_length(code._constraint ? 1 : lims.rule_length), 
-  _instr(code._code), _data(code._data), _max(lims)
+  _instr(code._code), _data(code._data), _max(lims), _passtype(pt),
+  _stack_depth(0),
+  _in_ctxt_item(false)
 { }
     
 
 
 Machine::Code::Code(bool is_constraint, const byte * bytecode_begin, const byte * const bytecode_end,
-           uint8 pre_context, uint16 rule_length, const Silf & silf, const Face & face)
+           uint8 pre_context, uint16 rule_length, const Silf & silf, const Face & face,
+           enum passtype pt, byte * * const _out)
  :  _code(0), _data(0), _data_size(0), _instr_count(0), _max_ref(0), _status(loaded),
-    _constraint(is_constraint), _modify(false), _delete(false), _own(true)
+    _constraint(is_constraint), _modify(false), _delete(false), _own(_out==0)
 {
 #ifdef GRAPHITE2_TELEMETRY
     telemetry::category _code_cat(face.tele.code);
@@ -150,25 +158,24 @@ Machine::Code::Code(bool is_constraint, const byte * bytecode_begin, const byte 
     assert(bytecode_begin != 0);
     if (bytecode_begin == bytecode_end)
     {
-      ::new (this) Code();
+      // ::new (this) Code();
       return;
     }
     assert(bytecode_end > bytecode_begin);
     const opcode_t *    op_to_fn = Machine::getOpcodeTable();
     
-    // Allocate code and dat target buffers, these sizes are a worst case 
+    // Allocate code and data target buffers, these sizes are a worst case
     // estimate.  Once we know their real sizes the we'll shrink them.
-    _code = static_cast<instr *>(malloc((bytecode_end - bytecode_begin)
-                                             * sizeof(instr)));
-    _data = static_cast<byte *>(malloc((bytecode_end - bytecode_begin)
-                                             * sizeof(byte)));
+    if (_out)   _code = reinterpret_cast<instr *>(*_out);
+    else        _code = static_cast<instr *>(malloc(estimateCodeDataOut(bytecode_end-bytecode_begin)));
+    _data = reinterpret_cast<byte *>(_code + (bytecode_end - bytecode_begin));
     
     if (!_code || !_data) {
         failure(alloc_failed);
         return;
     }
     
-    const decoder::limits lims = {
+    decoder::limits lims = {
         bytecode_end,
         pre_context,
         rule_length,
@@ -184,7 +191,7 @@ Machine::Code::Code(bool is_constraint, const byte * bytecode_begin, const byte 
          0,0,0,0,0,0,0, silf.numUser()}
     };
     
-    decoder dec(lims, *this);
+    decoder dec(lims, *this, pt);
     if(!dec.load(bytecode_begin, bytecode_end))
        return;
     
@@ -209,10 +216,15 @@ Machine::Code::Code(bool is_constraint, const byte * bytecode_begin, const byte 
     // Now we know exactly how much code and data the program really needs
     // realloc the buffers to exactly the right size so we don't waste any 
     // memory.
-    assert((bytecode_end - bytecode_begin) >= std::ptrdiff_t(_instr_count));
-    assert((bytecode_end - bytecode_begin) >= std::ptrdiff_t(_data_size));
-    _code = static_cast<instr *>(realloc(_code, (_instr_count+1)*sizeof(instr)));
-    _data = static_cast<byte *>(realloc(_data, _data_size*sizeof(byte)));
+    assert((bytecode_end - bytecode_begin) >= ptrdiff_t(_instr_count));
+    assert((bytecode_end - bytecode_begin) >= ptrdiff_t(_data_size));
+    memmove(_code + (_instr_count+1), _data, _data_size*sizeof(byte));
+    size_t const total_sz = ((_instr_count+1) + (_data_size + sizeof(instr)-1)/sizeof(instr))*sizeof(instr);
+    if (_out)
+        *_out += total_sz;
+    else
+        _code = static_cast<instr *>(realloc(_code, total_sz));
+   _data = reinterpret_cast<byte *>(_code + (_instr_count+1));
 
     if (!_code)
     {
@@ -237,6 +249,7 @@ Machine::Code::~Code() throw ()
 
 bool Machine::Code::decoder::load(const byte * bc, const byte * bc_end)
 {
+    _max.bytecode = bc_end;
     while (bc < bc_end)
     {
         const opcode opc = fetch_opcode(bc++);
@@ -266,98 +279,138 @@ opcode Machine::Code::decoder::fetch_opcode(const byte * bc)
     switch (opc)
     {
         case NOP :
+            break;
         case PUSH_BYTE :
         case PUSH_BYTEU :
         case PUSH_SHORT :
         case PUSH_SHORTU :
         case PUSH_LONG :
+            ++_stack_depth;
+            break;
         case ADD :
         case SUB :
         case MUL :
         case DIV :
         case MIN_ :
         case MAX_ :
-        case NEG :
-        case TRUNC8 :
-        case TRUNC16 :
-        case COND :
         case AND :
         case OR :
-        case NOT :
         case EQUAL :
         case NOT_EQ :
         case LESS :
         case GTR :
         case LESS_EQ :
         case GTR_EQ :
+        case BITOR :
+        case BITAND :
+            if (--_stack_depth <= 0)
+                failure(underfull_stack);
+            break;
+        case NEG :
+        case TRUNC8 :
+        case TRUNC16 :
+        case NOT :
+        case BITNOT :
+        case BITSET :
+            if (_stack_depth <= 0)
+                failure(underfull_stack);
+            break;
+        case COND :
+            _stack_depth -= 2;
+            if (_stack_depth <= 0)
+                failure(underfull_stack);
             break;
         case NEXT :
         case NEXT_N :           // runtime checked
         case COPY_NEXT :
+            test_context();
             ++_pre_context;
             break;
         case PUT_GLYPH_8BIT_OBS :
             valid_upto(_max.classes, bc[0]);
+            test_context();
             break;
         case PUT_SUBS_8BIT_OBS :
             valid_upto(_rule_length, _pre_context + int8(bc[0]));
             valid_upto(_max.classes, bc[1]);
             valid_upto(_max.classes, bc[2]);
+            test_context();
             break;
         case PUT_COPY :
             valid_upto(_rule_length, _pre_context + int8(bc[0]));
+            test_context();
             break;
         case INSERT :
-            --_pre_context;
+            if (_passtype >= PASS_TYPE_POSITIONING)
+                failure(invalid_opcode);
+            else
+                --_pre_context;
             break;
         case DELETE :
+            if (_passtype >= PASS_TYPE_POSITIONING)
+                failure(invalid_opcode);
+            test_context();
             break;
         case ASSOC :
             for (uint8 num = bc[0]; num; --num)
                 valid_upto(_rule_length, _pre_context + int8(bc[num]));
+            test_context();
             break;
         case CNTXT_ITEM :
             valid_upto(_max.rule_length, _max.pre_context + int8(bc[0]));
-            if (bc + 2 + bc[1] >= _max.bytecode)  failure(jump_past_end);
-            if (_pre_context != 0)                failure(nested_context_item);
+            if (bc + 2 + bc[1] >= _max.bytecode)    failure(jump_past_end);
+            if (_in_ctxt_item)                      failure(nested_context_item);
             break;
         case ATTR_SET :
         case ATTR_ADD :
         case ATTR_SUB :
         case ATTR_SET_SLOT :
+            if (--_stack_depth < 0)
+                failure(underfull_stack);
             valid_upto(gr_slatMax, bc[0]);
+            test_context();
             break;
         case IATTR_SET_SLOT :
+            if (--_stack_depth < 0)
+                failure(underfull_stack);
             if (valid_upto(gr_slatMax, bc[0]))
                 valid_upto(_max.attrid[bc[0]], bc[1]);
+            test_context();
             break;
         case PUSH_SLOT_ATTR :
+            ++_stack_depth;
             valid_upto(gr_slatMax, bc[0]);
             valid_upto(_rule_length, _pre_context + int8(bc[1]));
             break;
         case PUSH_GLYPH_ATTR_OBS :
+            ++_stack_depth;
             valid_upto(_max.glyf_attrs, bc[0]);
             valid_upto(_rule_length, _pre_context + int8(bc[1]));
             break;
         case PUSH_GLYPH_METRIC :
+            ++_stack_depth;
             valid_upto(kgmetDescent, bc[0]);
             valid_upto(_rule_length, _pre_context + int8(bc[1]));
             // level: dp[2] no check necessary
             break;
         case PUSH_FEAT :
+            ++_stack_depth;
             valid_upto(_max.features, bc[0]);
             valid_upto(_rule_length, _pre_context + int8(bc[1]));
             break;
         case PUSH_ATT_TO_GATTR_OBS :
+            ++_stack_depth;
             valid_upto(_max.glyf_attrs, bc[0]);
             valid_upto(_rule_length, _pre_context + int8(bc[1]));
             break;
         case PUSH_ATT_TO_GLYPH_METRIC :
+            ++_stack_depth;
             valid_upto(kgmetDescent, bc[0]);
             valid_upto(_rule_length, _pre_context + int8(bc[1]));
             // level: dp[2] no check necessary
             break;
         case PUSH_ISLOT_ATTR :
+            ++_stack_depth;
             if (valid_upto(gr_slatMax, bc[0]))
             {
                 valid_upto(_rule_length, _pre_context + int8(bc[1]));
@@ -365,32 +418,45 @@ opcode Machine::Code::decoder::fetch_opcode(const byte * bc)
             }
             break;
         case PUSH_IGLYPH_ATTR :// not implemented
+            ++_stack_depth;
+            break;
         case POP_RET :
+            if (--_stack_depth < 0)
+                failure(underfull_stack);
+            GR_FALLTHROUGH;
+            // no break
         case RET_ZERO :
         case RET_TRUE :
             break;
         case IATTR_SET :
         case IATTR_ADD :
         case IATTR_SUB :
+            if (--_stack_depth < 0)
+                failure(underfull_stack);
             if (valid_upto(gr_slatMax, bc[0]))
                 valid_upto(_max.attrid[bc[0]], bc[1]);
+            test_context();
             break;
         case PUSH_PROC_STATE :  // dummy: dp[0] no check necessary
         case PUSH_VERSION :
+            ++_stack_depth;
             break;
         case PUT_SUBS :
             valid_upto(_rule_length, _pre_context + int8(bc[0]));
             valid_upto(_max.classes, uint16(bc[1]<< 8) | bc[2]);
             valid_upto(_max.classes, uint16(bc[3]<< 8) | bc[4]);
+            test_context();
             break;
         case PUT_SUBS2 :        // not implemented
         case PUT_SUBS3 :        // not implemented
             break;
         case PUT_GLYPH :
             valid_upto(_max.classes, uint16(bc[0]<< 8) | bc[1]);
+            test_context();
             break;
         case PUSH_GLYPH_ATTR :
         case PUSH_ATT_TO_GLYPH_ATTR :
+            ++_stack_depth;
             valid_upto(_max.glyf_attrs, uint16(bc[0]<< 8) | bc[1]);
             valid_upto(_rule_length, _pre_context + int8(bc[2]));
             break;
@@ -415,14 +481,23 @@ void Machine::Code::decoder::analyse_opcode(const opcode opc, const int8  * arg)
     case PUT_GLYPH_8BIT_OBS :
     case PUT_GLYPH :
       _code._modify = true;
-      _analysis.set_changed(_analysis.slotref);
+      _analysis.set_changed(0);
+      break;
+    case ATTR_SET :
+    case ATTR_ADD :
+    case ATTR_SET_SLOT :
+    case IATTR_SET_SLOT :
+    case IATTR_SET :
+    case IATTR_ADD :
+    case IATTR_SUB :
+      _analysis.set_noref(0);
       break;
     case NEXT :
     case COPY_NEXT :
       if (!_analysis.contexts[_analysis.slotref].flags.inserted)
         ++_analysis.slotref;
       _analysis.contexts[_analysis.slotref] = context(_code._instr_count+1);
-      if (_analysis.slotref > _analysis.max_ref) _analysis.max_ref = _analysis.slotref;
+      // if (_analysis.slotref > _analysis.max_ref) _analysis.max_ref = _analysis.slotref;
       break;
     case INSERT :
       _analysis.contexts[_analysis.slotref].flags.inserted = true;
@@ -431,18 +506,21 @@ void Machine::Code::decoder::analyse_opcode(const opcode opc, const int8  * arg)
     case PUT_SUBS_8BIT_OBS :    // slotref on 1st parameter
     case PUT_SUBS : 
       _code._modify = true;
-      _analysis.set_changed(_analysis.slotref);
+      _analysis.set_changed(0);
+      GR_FALLTHROUGH;
       // no break
     case PUT_COPY :
     {
-      if (arg[0] != 0) { _analysis.set_changed(_analysis.slotref); _code._modify = true; }
+      if (arg[0] != 0) { _analysis.set_changed(0); _code._modify = true; }
       if (arg[0] <= 0 && -arg[0] <= _analysis.slotref - _analysis.contexts[_analysis.slotref].flags.inserted)
-        _analysis.set_ref(_analysis.slotref + arg[0] - _analysis.contexts[_analysis.slotref].flags.inserted);
-      else if (_analysis.slotref + arg[0] > _analysis.max_ref) _analysis.max_ref = _analysis.slotref + arg[0];
+        _analysis.set_ref(arg[0], true);
+      else if (arg[0] > 0)
+        _analysis.set_ref(arg[0], true);
       break;
     }
     case PUSH_ATT_TO_GATTR_OBS : // slotref on 2nd parameter
         if (_code._constraint) return;
+        GR_FALLTHROUGH;
         // no break
     case PUSH_GLYPH_ATTR_OBS :
     case PUSH_SLOT_ATTR :
@@ -451,16 +529,19 @@ void Machine::Code::decoder::analyse_opcode(const opcode opc, const int8  * arg)
     case PUSH_ISLOT_ATTR :
     case PUSH_FEAT :
       if (arg[1] <= 0 && -arg[1] <= _analysis.slotref - _analysis.contexts[_analysis.slotref].flags.inserted)
-        _analysis.set_ref(_analysis.slotref + arg[1] - _analysis.contexts[_analysis.slotref].flags.inserted);
-      else if (_analysis.slotref + arg[1] > _analysis.max_ref) _analysis.max_ref = _analysis.slotref + arg[1];
+        _analysis.set_ref(arg[1], true);
+      else if (arg[1] > 0)
+        _analysis.set_ref(arg[1], true);
       break;
     case PUSH_ATT_TO_GLYPH_ATTR :
         if (_code._constraint) return;
+        GR_FALLTHROUGH;
         // no break
     case PUSH_GLYPH_ATTR :
       if (arg[2] <= 0 && -arg[2] <= _analysis.slotref - _analysis.contexts[_analysis.slotref].flags.inserted)
-        _analysis.set_ref(_analysis.slotref + arg[2] - _analysis.contexts[_analysis.slotref].flags.inserted);
-      else if (_analysis.slotref + arg[2] > _analysis.max_ref) _analysis.max_ref = _analysis.slotref + arg[2];
+        _analysis.set_ref(arg[2], true);
+      else if (arg[2] > 0)
+        _analysis.set_ref(arg[2], true);
       break;
     case ASSOC :                // slotrefs in varargs
       break;
@@ -499,6 +580,7 @@ bool Machine::Code::decoder::emit_opcode(opcode opc, const byte * & bc)
     if (opc == CNTXT_ITEM)
     {
         assert(_pre_context == 0);
+        _in_ctxt_item = true;
         _pre_context = _max.pre_context + int8(_data[-2]);
         _rule_length = _max.rule_length;
 
@@ -506,15 +588,23 @@ bool Machine::Code::decoder::emit_opcode(opcode opc, const byte * & bc)
         byte & instr_skip = _data[-1];
         byte & data_skip  = *_data++;
         ++_code._data_size;
+        const byte *curr_end = _max.bytecode;
 
         if (load(bc, bc + instr_skip))
         {
             bc += instr_skip;
             data_skip  = instr_skip - (_code._instr_count - ctxt_start);
             instr_skip = _code._instr_count - ctxt_start;
+            _max.bytecode = curr_end;
 
             _rule_length = 1;
             _pre_context = 0;
+            _in_ctxt_item = false;
+        }
+        else
+        {
+            _pre_context = 0;
+            return false;
         }
     }
     
@@ -538,6 +628,7 @@ void Machine::Code::decoder::apply_analysis(instr * const code, instr * code_end
         *tip = temp_copy;
         ++code_end;
         ++tempcount;
+        _code._delete = true;
     }
     
     _code._instr_count = code_end - code;
@@ -553,8 +644,13 @@ bool Machine::Code::decoder::validate_opcode(const opcode opc, const byte * cons
         return false;
     }
     const opcode_t & op = Machine::getOpcodeTable()[opc];
+    if (op.param_sz == VARARGS && bc >= _max.bytecode)
+    {
+        failure(arguments_exhausted);
+        return false;
+    }
     const size_t param_sz = op.param_sz == VARARGS ? bc[0] + 1 : op.param_sz;
-    if (bc + param_sz > _max.bytecode)
+    if (bc - 1 + param_sz >= _max.bytecode)
     {
         failure(arguments_exhausted);
         return false;
@@ -570,6 +666,15 @@ bool Machine::Code::decoder::valid_upto(const uint16 limit, const uint16 x) cons
     return t;
 }
 
+bool Machine::Code::decoder::test_context() const throw()
+{
+    if (_pre_context >= _rule_length)
+    {
+        failure(out_of_range_data);
+        return false;
+    }
+    return true;
+}
 
 inline 
 void Machine::Code::failure(const status_t s) throw() {
@@ -579,23 +684,35 @@ void Machine::Code::failure(const status_t s) throw() {
 
 
 inline
-void Machine::Code::decoder::analysis::set_ref(const int index) throw() {
-    contexts[index].flags.referenced = true;
-    if (index > max_ref) max_ref = index;
+void Machine::Code::decoder::analysis::set_ref(int index, bool incinsert) throw() {
+    if (incinsert && contexts[slotref].flags.inserted) --index;
+    if (index + slotref < 0) return;
+    contexts[index + slotref].flags.referenced = true;
+    if ((index > 0 || !contexts[index + slotref].flags.inserted) && index + slotref > max_ref) max_ref = index + slotref;
 }
 
 
 inline
-void Machine::Code::decoder::analysis::set_changed(const int index) throw() {
-    contexts[index].flags.changed = true;
-    if (index > max_ref) max_ref = index;
+void Machine::Code::decoder::analysis::set_noref(int index) throw() {
+    if (contexts[slotref].flags.inserted) --index;
+    if (index + slotref < 0) return;
+    if ((index > 0 || !contexts[index + slotref].flags.inserted) && index + slotref > max_ref) max_ref = index + slotref;
+}
+
+
+inline
+void Machine::Code::decoder::analysis::set_changed(int index) throw() {
+    if (contexts[slotref].flags.inserted) --index;
+    if (index + slotref < 0) return;
+    contexts[index + slotref].flags.changed = true;
+    if ((index > 0 || !contexts[index + slotref].flags.inserted) && index + slotref > max_ref) max_ref = index + slotref;
 }
 
 
 void Machine::Code::release_buffers() throw()
 {
-    free(_code);
-    free(_data);
+    if (_own)
+        free(_code);
     _code = 0;
     _data = 0;
     _own  = false;
@@ -604,14 +721,15 @@ void Machine::Code::release_buffers() throw()
 
 int32 Machine::Code::run(Machine & m, slotref * & map) const
 {
-    assert(_own);
+//    assert(_own);
     assert(*this);          // Check we are actually runnable
 
-    if (m.slotMap().size() <= size_t(_max_ref + m.slotMap().context()))
+    if (m.slotMap().size() <= size_t(_max_ref + m.slotMap().context())
+        || m.slotMap()[_max_ref + m.slotMap().context()] == 0)
     {
         m._status = Machine::slot_offset_out_bounds;
-//        return (m.slotMap().end() - map);
         return 1;
+//        return m.run(_code, _data, map);
     }
 
     return  m.run(_code, _data, map);

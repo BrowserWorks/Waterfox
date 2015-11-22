@@ -6,7 +6,8 @@
 # the arguments that can be used to generate the output file, call the
 # script's |main| method with appropriate arguments.
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
+
 import argparse
 import imp
 import os
@@ -30,6 +31,16 @@ def main(argv):
     args = parser.parse_args(argv)
 
     script = args.python_script
+    # Permit the script to import modules from the same directory in which it
+    # resides.  The justification for doing this is that if we were invoking
+    # the script as:
+    #
+    #    python script arg1...
+    #
+    # then importing modules from the script's directory would come for free.
+    # Since we're invoking the script in a roundabout way, we provide this
+    # bit of convenience.
+    sys.path.append(os.path.dirname(script))
     with open(script, 'r') as fh:
         module = imp.load_module('script', fh, script,
                                  ('.py', 'r', imp.PY_SOURCE))

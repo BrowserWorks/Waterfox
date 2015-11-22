@@ -47,16 +47,9 @@ protected:
 
   nsCOMPtr<nsPIDOMWindow> mWindow;
 
-  // mMimeTypes contains MIME types handled by non-hidden plugins, those
-  // popular plugins that must be exposed in navigator.plugins enumeration to
-  // avoid breaking web content. Likewise, mMimeTypes are exposed in
-  // navigator.mimeTypes enumeration.
+  // mMimeTypes contains MIME types handled by plugins or by an OS
+  // PreferredApplicationHandler.
   nsTArray<nsRefPtr<nsMimeType> > mMimeTypes;
-
-  // mHiddenMimeTypes contains MIME types handled by plugins hidden from
-  // navigator.plugins enumeration or by an OS PreferredApplicationHandler.
-  // mHiddenMimeTypes are hidden from navigator.mimeTypes enumeration.
-  nsTArray<nsRefPtr<nsMimeType> > mHiddenMimeTypes;
 };
 
 class nsMimeType final : public nsWrapperCache
@@ -65,8 +58,11 @@ public:
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(nsMimeType)
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(nsMimeType)
 
-  nsMimeType(nsPIDOMWindow* aWindow, nsPluginElement* aPluginElement,
-             uint32_t aPluginTagMimeIndex, const nsAString& aMimeType);
+  nsMimeType(nsPIDOMWindow* aWindow,
+             nsPluginElement* aPluginElement,
+             const nsAString& aType,
+             const nsAString& aDescription,
+             const nsAString& aExtension);
   nsMimeType(nsPIDOMWindow* aWindow, const nsAString& aMimeType);
   nsPIDOMWindow* GetParentObject() const;
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
@@ -92,8 +88,9 @@ protected:
   // mimetype array. We rely on the cycle collector to break this
   // cycle.
   nsRefPtr<nsPluginElement> mPluginElement;
-  uint32_t mPluginTagMimeIndex;
   nsString mType;
+  nsString mDescription;
+  nsString mExtension;
 };
 
 #endif /* nsMimeTypeArray_h___ */

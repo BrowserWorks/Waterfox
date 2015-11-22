@@ -62,7 +62,48 @@ JS_Assert(const char* s, const char* file, int ln);
 #if defined JS_USE_CUSTOM_ALLOCATOR
 # include "jscustomallocator.h"
 #else
+
+namespace js {
+namespace oom {
+
+/*
+ * To make testing OOM in certain helper threads more effective,
+ * allow restricting the OOM testing to a certain helper thread
+ * type. This allows us to fail e.g. in off-thread script parsing
+ * without causing an OOM in the main thread first.
+ */
+enum ThreadType {
+    THREAD_TYPE_NONE,           // 0
+    THREAD_TYPE_MAIN,           // 1
+    THREAD_TYPE_ASMJS,          // 2
+    THREAD_TYPE_ION,            // 3
+    THREAD_TYPE_PARSE,          // 4
+    THREAD_TYPE_COMPRESS,       // 5
+    THREAD_TYPE_GCHELPER,       // 6
+    THREAD_TYPE_GCPARALLEL,     // 7
+    THREAD_TYPE_MAX             // Used to check shell function arguments
+};
+
+
+/*
+ * Getter/Setter functions to encapsulate mozilla::ThreadLocal,
+ * implementation is in jsutil.cpp.
+ */
 # if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
+extern bool InitThreadType(void);
+extern void SetThreadType(ThreadType);
+extern uint32_t GetThreadType(void);
+# else
+inline bool InitThreadType(void) { return true; }
+inline void SetThreadType(ThreadType t) {};
+inline uint32_t GetThreadType(void) { return 0; }
+# endif
+
+} /* namespace oom */
+} /* namespace js */
+
+# if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
+
 /*
  * In order to test OOM conditions, when the testing function
  * oomAfterAllocations COUNT is passed, we fail continuously after the NUM'th
@@ -70,6 +111,7 @@ JS_Assert(const char* s, const char* file, int ln);
  */
 extern JS_PUBLIC_DATA(uint32_t) OOM_maxAllocations; /* set in builtin/TestingFunctions.cpp */
 extern JS_PUBLIC_DATA(uint32_t) OOM_counter; /* data race, who cares. */
+extern JS_PUBLIC_DATA(bool) OOM_failAlways;
 
 #ifdef JS_OOM_BREAKPOINT
 static MOZ_NEVER_INLINE void js_failedAllocBreakpoint() { asm(""); }
@@ -78,39 +120,65 @@ static MOZ_NEVER_INLINE void js_failedAllocBreakpoint() { asm(""); }
 #define JS_OOM_CALL_BP_FUNC() do {} while(0)
 #endif
 
-#  define JS_OOM_POSSIBLY_FAIL() \
-    do \
-    { \
-        if (++OOM_counter > OOM_maxAllocations) { \
-            JS_OOM_CALL_BP_FUNC();\
-            return nullptr; \
-        } \
-    } while (0)
-#  define JS_OOM_POSSIBLY_FAIL_BOOL() \
-    do \
-    { \
-        if (++OOM_counter > OOM_maxAllocations) { \
-            JS_OOM_CALL_BP_FUNC();\
-            return false; \
-        } \
-    } while (0)
-
 namespace js {
 namespace oom {
-static inline bool ShouldFailWithOOM()
+
+extern JS_PUBLIC_DATA(uint32_t) targetThread;
+
+static inline bool
+OOMThreadCheck()
 {
-    if (++OOM_counter > OOM_maxAllocations) {
+    return (!js::oom::targetThread 
+            || js::oom::targetThread == js::oom::GetThreadType());
+}
+
+static inline bool
+IsSimulatedOOMAllocation()
+{
+    return OOMThreadCheck() && (OOM_counter == OOM_maxAllocations ||
+           (OOM_counter > OOM_maxAllocations && OOM_failAlways));
+}
+
+static inline bool
+ShouldFailWithOOM()
+{
+    if (!OOMThreadCheck())
+        return false;
+
+    OOM_counter++;
+    if (IsSimulatedOOMAllocation()) {
         JS_OOM_CALL_BP_FUNC();
         return true;
     }
     return false;
 }
-}
-}
+
+} /* namespace oom */
+} /* namespace js */
+
+#  define JS_OOM_POSSIBLY_FAIL()                                              \
+    do {                                                                      \
+        if (js::oom::ShouldFailWithOOM())                                     \
+            return nullptr;                                                   \
+    } while (0)
+
+#  define JS_OOM_POSSIBLY_FAIL_BOOL()                                         \
+    do {                                                                      \
+        if (js::oom::ShouldFailWithOOM())                                     \
+            return false;                                                     \
+    } while (0)
+
 # else
+
 #  define JS_OOM_POSSIBLY_FAIL() do {} while(0)
 #  define JS_OOM_POSSIBLY_FAIL_BOOL() do {} while(0)
-namespace js { namespace oom { static inline bool ShouldFailWithOOM() { return false; } } }
+namespace js {
+namespace oom {
+static inline bool IsSimulatedOOMAllocation() { return false; }
+static inline bool ShouldFailWithOOM() { return false; }
+} /* namespace oom */
+} /* namespace js */
+
 # endif /* DEBUG || JS_OOM_BREAKPOINT */
 
 static inline void* js_malloc(size_t bytes)
@@ -178,7 +246,7 @@ static inline char* js_strdup(const char* s)
  *   general SpiderMonkey idiom that a JSContext-taking function reports its
  *   own errors.)
  *
- * - Otherwise, use js_malloc/js_realloc/js_calloc/js_free/js_new
+ * - Otherwise, use js_malloc/js_realloc/js_calloc/js_new
  *
  * Deallocation:
  *
@@ -262,22 +330,22 @@ CalculateAllocSizeWithExtra(size_t numExtra, size_t* bytesOut)
 
 template <class T>
 static MOZ_ALWAYS_INLINE void
-js_delete(T* p)
+js_delete(const T* p)
 {
     if (p) {
         p->~T();
-        js_free(p);
+        js_free(const_cast<T*>(p));
     }
 }
 
 template<class T>
 static MOZ_ALWAYS_INLINE void
-js_delete_poison(T* p)
+js_delete_poison(const T* p)
 {
     if (p) {
         p->~T();
-        memset(p, 0x3B, sizeof(T));
-        js_free(p);
+        memset(const_cast<T*>(p), 0x3B, sizeof(T));
+        js_free(const_cast<T*>(p));
     }
 }
 
@@ -414,7 +482,7 @@ ScrambleHashCode(HashNumber h)
      *
      * So we use Fibonacci hashing, as described in Knuth, The Art of Computer
      * Programming, 6.4. This mixes all the bits of the input hash code h.
-     * 
+     *
      * The value of goldenRatio is taken from the hex
      * expansion of the golden ratio, which starts 1.9E3779B9....
      * This value is especially good if values with consecutive hash codes

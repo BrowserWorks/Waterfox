@@ -1,0 +1,17 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2015 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/collation/fil.xml
+// *
+// ***************************************************************************
+fil{
+    Version{"2.0.96.14"}
+    collations{
+        standard{
+            Sequence{"&N<ñ<<<Ñ<ng<<<Ng<<<NG"}
+            Version{"27.0.1"}
+        }
+    }
+}

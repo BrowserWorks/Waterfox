@@ -48,7 +48,7 @@ public:
     return gfx::SurfaceFormat::UNKNOWN;
   }
 
-  virtual TemporaryRef<TextureClient>
+  virtual already_AddRefed<TextureClient>
   CreateSimilar(TextureFlags aFlags = TextureFlags::DEFAULT,
                 TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT) const override
   {
@@ -99,7 +99,7 @@ public:
     return gfx::SurfaceFormat::UNKNOWN;
   }
 
-  virtual TemporaryRef<TextureClient>
+  virtual already_AddRefed<TextureClient>
   CreateSimilar(TextureFlags aFlags = TextureFlags::DEFAULT,
                 TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT) const override
   {
@@ -119,7 +119,7 @@ protected:
 
 #endif // MOZ_WIDGET_ANDROID
 
-} // namespace
-} // namespace
+} // namespace layers
+} // namespace mozilla
 
 #endif

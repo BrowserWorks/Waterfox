@@ -33,24 +33,24 @@ public:
     // Get the number of output channels, and allocate it
     size_t channelCount = 0;
     for (uint16_t i = 0; i < InputCount(); ++i) {
-      channelCount += aInput[i].mChannelData.Length();
+      channelCount += aInput[i].ChannelCount();
     }
     if (channelCount == 0) {
       aOutput[0].SetNull(WEBAUDIO_BLOCK_SIZE);
       return;
     }
     channelCount = std::min(channelCount, WebAudioUtils::MaxChannelCount);
-    AllocateAudioBlock(channelCount, &aOutput[0]);
+    aOutput[0].AllocateChannels(channelCount);
 
     // Append each channel in each input to the output
     size_t channelIndex = 0;
     for (uint16_t i = 0; true; ++i) {
       MOZ_ASSERT(i < InputCount());
-      for (size_t j = 0; j < aInput[i].mChannelData.Length(); ++j) {
+      for (size_t j = 0; j < aInput[i].ChannelCount(); ++j) {
         AudioBlockCopyChannelWithScale(
             static_cast<const float*>(aInput[i].mChannelData[j]),
             aInput[i].mVolume,
-            static_cast<float*>(const_cast<void*>(aOutput[0].mChannelData[channelIndex])));
+            aOutput[0].ChannelFloatsForWrite(channelIndex));
         ++channelIndex;
         if (channelIndex >= channelCount) {
           return;
@@ -73,8 +73,9 @@ ChannelMergerNode::ChannelMergerNode(AudioContext* aContext,
               ChannelInterpretation::Speakers)
   , mInputCount(aInputCount)
 {
-  mStream = aContext->Graph()->CreateAudioNodeStream(new ChannelMergerNodeEngine(this),
-                                                     MediaStreamGraph::INTERNAL_STREAM);
+  mStream = AudioNodeStream::Create(aContext,
+                                    new ChannelMergerNodeEngine(this),
+                                    AudioNodeStream::NO_STREAM_FLAGS);
 }
 
 ChannelMergerNode::~ChannelMergerNode()
@@ -87,6 +88,6 @@ ChannelMergerNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
   return ChannelMergerNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 

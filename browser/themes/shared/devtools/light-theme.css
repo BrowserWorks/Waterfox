@@ -28,7 +28,7 @@
 
   --theme-highlight-green: #2cbb0f;
   --theme-highlight-blue: #0088cc;
-  --theme-highlight-bluegrey: #5f88b0;
+  --theme-highlight-bluegrey: #0072ab;
   --theme-highlight-purple: #5b5fff;
   --theme-highlight-lightorange: #d97e00;
   --theme-highlight-orange: #f13c00;
@@ -38,6 +38,7 @@
   /* Colors used in Graphs, like performance tools. Similar colors to Chrome's timeline. */
   --theme-graphs-green: #85d175;
   --theme-graphs-blue: #83b7f6;
+  --theme-graphs-bluegrey: #0072ab;
   --theme-graphs-purple: #b693eb;
   --theme-graphs-yellow: #efc052;
   --theme-graphs-red: #e57180;
@@ -343,7 +344,7 @@ div.CodeMirror span.eval-text {
   background-position: -14px 0;
 }
 
-@media (min-resolution: 1.25dppx) {
+@media (min-resolution: 1.1dppx) {
   .theme-twisty, .theme-checkbox {
     background-image: url("chrome://browser/skin/devtools/controls@2x.png");
   }
@@ -381,7 +382,7 @@ div.CodeMirror span.eval-text {
   margin-left: -4px;
 }
 
-@media (min-resolution: 1.25dppx) {
+@media (min-resolution: 1.1dppx) {
   .theme-tooltip-panel .panel-arrow[side="top"],
   .theme-tooltip-panel .panel-arrow[side="bottom"] {
     list-style-image: url("chrome://browser/skin/devtools/tooltip/arrow-vertical-light@2x.png");

@@ -4,12 +4,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsAutoPtr.h"
+#include "nsIConsoleService.h"
 #include "nsIObserverService.h"
 #include "nsIObserver.h"
+#include "nsIScriptError.h"
 #include "nsObserverService.h"
 #include "nsObserverList.h"
+#include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
 #include "nsEnumeratorUtils.h"
 #include "xpcpublic.h"
@@ -25,7 +28,7 @@
 //    set NSPR_LOG_MODULES=ObserverService:5
 //    set NSPR_LOG_FILE=nspr.log
 //
-// this enables PR_LOG_DEBUG level information and places all output in
+// this enables LogLevel::Debug level information and places all output in
 // the file nspr.log
 static PRLogModuleInfo*
 GetObserverServiceLog()
@@ -36,101 +39,76 @@ GetObserverServiceLog()
   }
   return sLog;
 }
-#define LOG(x)  PR_LOG(GetObserverServiceLog(), PR_LOG_DEBUG, x)
-
-namespace mozilla {
-
-struct SuspectObserver
-{
-  SuspectObserver(const char* aTopic, size_t aReferentCount)
-    : topic(aTopic)
-    , referentCount(aReferentCount)
-  {
-  }
-  const char* topic;
-  size_t referentCount;
-};
-
-struct ObserverServiceReferentCount
-{
-  ObserverServiceReferentCount()
-    : numStrong(0)
-    , numWeakAlive(0)
-    , numWeakDead(0)
-  {
-  }
-  size_t numStrong;
-  size_t numWeakAlive;
-  size_t numWeakDead;
-  nsTArray<SuspectObserver> suspectObservers;
-};
-
-} // namespace mozilla
+#define LOG(x)  MOZ_LOG(GetObserverServiceLog(), mozilla::LogLevel::Debug, x)
 
 using namespace mozilla;
-
-PLDHashOperator
-nsObserverService::CountReferents(nsObserverList* aObserverList,
-                                  void* aClosure)
-{
-  if (!aObserverList) {
-    return PL_DHASH_NEXT;
-  }
-
-  ObserverServiceReferentCount* referentCount =
-    static_cast<ObserverServiceReferentCount*>(aClosure);
-
-  size_t numStrong = 0;
-  size_t numWeakAlive = 0;
-  size_t numWeakDead = 0;
-
-  nsTArray<ObserverRef>& observers = aObserverList->mObservers;
-  for (uint32_t i = 0; i < observers.Length(); i++) {
-    if (observers[i].isWeakRef) {
-      nsCOMPtr<nsIObserver> observerRef(
-        do_QueryReferent(observers[i].asWeak()));
-      if (observerRef) {
-        numWeakAlive++;
-      } else {
-        numWeakDead++;
-      }
-    } else {
-      numStrong++;
-    }
-  }
-
-  referentCount->numStrong += numStrong;
-  referentCount->numWeakAlive += numWeakAlive;
-  referentCount->numWeakDead += numWeakDead;
-
-  // Keep track of topics that have a suspiciously large number
-  // of referents (symptom of leaks).
-  size_t total = numStrong + numWeakAlive + numWeakDead;
-  if (total > kSuspectReferentCount) {
-    SuspectObserver suspect(aObserverList->GetKey(), total);
-    referentCount->suspectObservers.AppendElement(suspect);
-  }
-
-  return PL_DHASH_NEXT;
-}
 
 NS_IMETHODIMP
 nsObserverService::CollectReports(nsIHandleReportCallback* aHandleReport,
                                   nsISupports* aData, bool aAnonymize)
 {
-  ObserverServiceReferentCount referentCount;
-  mObserverTopicTable.EnumerateEntries(CountReferents, &referentCount);
+  struct SuspectObserver
+  {
+    SuspectObserver(const char* aTopic, size_t aReferentCount)
+      : mTopic(aTopic)
+      , mReferentCount(aReferentCount)
+    {}
+    const char* mTopic;
+    size_t mReferentCount;
+  };
+
+  size_t totalNumStrong = 0;
+  size_t totalNumWeakAlive = 0;
+  size_t totalNumWeakDead = 0;
+  nsTArray<SuspectObserver> suspectObservers;
+
+  for (auto iter = mObserverTopicTable.Iter(); !iter.Done(); iter.Next()) {
+    nsObserverList* observerList = iter.Get();
+    if (!observerList) {
+      continue;
+    }
+
+    size_t topicNumStrong = 0;
+    size_t topicNumWeakAlive = 0;
+    size_t topicNumWeakDead = 0;
+
+    nsTArray<ObserverRef>& observers = observerList->mObservers;
+    for (uint32_t i = 0; i < observers.Length(); i++) {
+      if (observers[i].isWeakRef) {
+        nsCOMPtr<nsIObserver> observerRef(
+          do_QueryReferent(observers[i].asWeak()));
+        if (observerRef) {
+          topicNumWeakAlive++;
+        } else {
+          topicNumWeakDead++;
+        }
+      } else {
+        topicNumStrong++;
+      }
+    }
+
+    totalNumStrong += topicNumStrong;
+    totalNumWeakAlive += topicNumWeakAlive;
+    totalNumWeakDead += topicNumWeakDead;
+
+    // Keep track of topics that have a suspiciously large number
+    // of referents (symptom of leaks).
+    size_t topicTotal = topicNumStrong + topicNumWeakAlive + topicNumWeakDead;
+    if (topicTotal > kSuspectReferentCount) {
+      SuspectObserver suspect(observerList->GetKey(), topicTotal);
+      suspectObservers.AppendElement(suspect);
+    }
+  }
 
   // These aren't privacy-sensitive and so don't need anonymizing.
   nsresult rv;
-  for (uint32_t i = 0; i < referentCount.suspectObservers.Length(); i++) {
-    SuspectObserver& suspect = referentCount.suspectObservers[i];
-    nsPrintfCString suspectPath("observer-service-suspect/"
-                                "referent(topic=%s)",
-                                suspect.topic);
+  for (uint32_t i = 0; i < suspectObservers.Length(); i++) {
+    SuspectObserver& suspect = suspectObservers[i];
+    nsPrintfCString suspectPath("observer-service-suspect/referent(topic=%s)",
+                                suspect.mTopic);
     rv = aHandleReport->Callback(
       /* process */ EmptyCString(),
-      suspectPath, KIND_OTHER, UNITS_COUNT, suspect.referentCount,
+      suspectPath, KIND_OTHER, UNITS_COUNT, suspect.mReferentCount,
       NS_LITERAL_CSTRING("A topic with a suspiciously large number of "
                          "referents.  This may be symptomatic of a leak "
                          "if the number of referents is high with "
@@ -145,7 +123,7 @@ nsObserverService::CollectReports(nsIHandleReportCallback* aHandleReport,
   rv = aHandleReport->Callback(
          /* process */ EmptyCString(),
          NS_LITERAL_CSTRING("observer-service/referent/strong"),
-         KIND_OTHER, UNITS_COUNT, referentCount.numStrong,
+         KIND_OTHER, UNITS_COUNT, totalNumStrong,
          NS_LITERAL_CSTRING("The number of strong references held by the "
                             "observer service."),
          aData);
@@ -157,7 +135,7 @@ nsObserverService::CollectReports(nsIHandleReportCallback* aHandleReport,
   rv = aHandleReport->Callback(
          /* process */ EmptyCString(),
          NS_LITERAL_CSTRING("observer-service/referent/weak/alive"),
-         KIND_OTHER, UNITS_COUNT, referentCount.numWeakAlive,
+         KIND_OTHER, UNITS_COUNT, totalNumWeakAlive,
          NS_LITERAL_CSTRING("The number of weak references held by the "
                             "observer service that are still alive."),
          aData);
@@ -169,7 +147,7 @@ nsObserverService::CollectReports(nsIHandleReportCallback* aHandleReport,
   rv = aHandleReport->Callback(
          /* process */ EmptyCString(),
          NS_LITERAL_CSTRING("observer-service/referent/weak/dead"),
-         KIND_OTHER, UNITS_COUNT, referentCount.numWeakDead,
+         KIND_OTHER, UNITS_COUNT, totalNumWeakDead,
          NS_LITERAL_CSTRING("The number of weak references held by the "
                             "observer service that are dead."),
          aData);
@@ -264,6 +242,13 @@ nsObserverService::AddObserver(nsIObserver* aObserver, const char* aTopic,
   }
 
   if (mozilla::net::IsNeckoChild() && !strncmp(aTopic, "http-on-", 8)) {
+    nsCOMPtr<nsIConsoleService> console(do_GetService(NS_CONSOLESERVICE_CONTRACTID));
+    nsCOMPtr<nsIScriptError> error(do_CreateInstance(NS_SCRIPTERROR_CONTRACTID));
+    error->Init(NS_LITERAL_STRING("http-on-* observers only work in the parent process"),
+                EmptyString(), EmptyString(), 0, 0,
+                nsIScriptError::warningFlag, "chrome javascript");
+    console->LogMessage(error);
+
     return NS_ERROR_NOT_IMPLEMENTED;
   }
 
@@ -340,19 +325,6 @@ NS_IMETHODIMP nsObserverService::NotifyObservers(nsISupports* aSubject,
   return NS_OK;
 }
 
-#if !defined(MOZILLA_XPCOMRT_API)
-static PLDHashOperator
-AppendStrongObservers(nsObserverList* aObserverList, void* aClosure)
-{
-  nsCOMArray<nsIObserver>* array = static_cast<nsCOMArray<nsIObserver>*>(aClosure);
-
-  if (aObserverList) {
-    aObserverList->AppendStrongObservers(*array);
-  }
-  return PL_DHASH_NEXT;
-}
-#endif // !defined(MOZILLA_XPCOMRT_API)
-
 NS_IMETHODIMP
 nsObserverService::UnmarkGrayStrongObservers()
 {
@@ -360,7 +332,12 @@ nsObserverService::UnmarkGrayStrongObservers()
 
 #if !defined(MOZILLA_XPCOMRT_API)
   nsCOMArray<nsIObserver> strongObservers;
-  mObserverTopicTable.EnumerateEntries(AppendStrongObservers, &strongObservers);
+  for (auto iter = mObserverTopicTable.Iter(); !iter.Done(); iter.Next()) {
+    nsObserverList* aObserverList = iter.Get();
+    if (aObserverList) {
+      aObserverList->AppendStrongObservers(strongObservers);
+    }
+  }
 
   for (uint32_t i = 0; i < strongObservers.Length(); ++i) {
     xpc_TryUnmarkWrappedGrayObject(strongObservers[i]);

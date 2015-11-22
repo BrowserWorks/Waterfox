@@ -10,9 +10,7 @@
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIComponentManager.h"
 #include "nsIServiceManager.h"
-#include "nsIJSRuntimeService.h"
 #include "nsComponentManagerUtils.h"
-#include "nsNetUtil.h"
 #include "nsScriptLoader.h"
 #include "nsFrameLoader.h"
 #include "xpcpublic.h"
@@ -20,20 +18,18 @@
 #include "nsDOMClassInfoID.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/dom/SameProcessMessageQueue.h"
-#include "mozilla/dom/StructuredCloneUtils.h"
-#include "js/StructuredClone.h"
 
-using mozilla::dom::StructuredCloneData;
-using mozilla::dom::StructuredCloneClosure;
 using namespace mozilla;
+using namespace mozilla::dom;
+using namespace mozilla::dom::ipc;
 
 bool
 nsInProcessTabChildGlobal::DoSendBlockingMessage(JSContext* aCx,
                                                  const nsAString& aMessage,
-                                                 const dom::StructuredCloneData& aData,
+                                                 StructuredCloneData& aData,
                                                  JS::Handle<JSObject *> aCpows,
                                                  nsIPrincipal* aPrincipal,
-                                                 InfallibleTArray<nsString>* aJSONRetVal,
+                                                 nsTArray<StructuredCloneData>* aRetVal,
                                                  bool aIsSync)
 {
   SameProcessMessageQueue* queue = SameProcessMessageQueue::Get();
@@ -44,7 +40,7 @@ nsInProcessTabChildGlobal::DoSendBlockingMessage(JSContext* aCx,
     nsRefPtr<nsFrameMessageManager> mm = mChromeMessageManager;
     nsCOMPtr<nsIFrameLoader> fl = GetFrameLoader();
     mm->ReceiveMessage(mOwner, fl, aMessage, true, &aData, &cpows, aPrincipal,
-                       aJSONRetVal);
+                       aRetVal);
   }
   return true;
 }
@@ -56,7 +52,7 @@ public:
   nsAsyncMessageToParent(JSContext* aCx,
                          nsInProcessTabChildGlobal* aTabChild,
                          const nsAString& aMessage,
-                         const StructuredCloneData& aData,
+                         StructuredCloneData& aData,
                          JS::Handle<JSObject *> aCpows,
                          nsIPrincipal* aPrincipal)
     : nsSameProcessAsyncMessageBase(aCx, aMessage, aData, aCpows, aPrincipal),
@@ -76,7 +72,7 @@ public:
 bool
 nsInProcessTabChildGlobal::DoSendAsyncMessage(JSContext* aCx,
                                               const nsAString& aMessage,
-                                              const StructuredCloneData& aData,
+                                              StructuredCloneData& aData,
                                               JS::Handle<JSObject *> aCpows,
                                               nsIPrincipal* aPrincipal)
 {
@@ -114,7 +110,6 @@ nsInProcessTabChildGlobal::~nsInProcessTabChildGlobal()
   mozilla::DropJSObjects(this);
 }
 
-/* [notxpcom] boolean markForCC (); */
 // This method isn't automatically forwarded safely because it's notxpcom, so
 // the IDL binding doesn't know what value to return.
 NS_IMETHODIMP_(bool)

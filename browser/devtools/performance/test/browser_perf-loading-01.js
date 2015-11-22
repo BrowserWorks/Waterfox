@@ -6,14 +6,13 @@
  * recording, and once the record has loaded.
  */
 
-let test = Task.async(function*() {
+var test = Task.async(function*() {
+  // This test seems to take a long time to cleanup.
+  requestLongerTimeout(2);
+
   let { target, panel, toolbox } = yield initPerformance(SIMPLE_URL);
   let { RecordingsView, PerformanceController, PerformanceView,
-        EVENTS, $, L10N, ViewHelpers } = panel.panelWin;
-
-  // This should be removed with bug 1163763.
-  let DBG_STRINGS_URI = "chrome://browser/locale/devtools/debugger.properties";
-  let DBG_L10N = new ViewHelpers.L10N(DBG_STRINGS_URI);
+        EVENTS, $, L10N } = panel.panelWin;
 
   info("Start to record");
   yield startRecording(panel);
@@ -25,21 +24,21 @@ let test = Task.async(function*() {
     "The duration node should show the 'recording' message while recording");
 
   info("Stop the recording and wait for the WILL_STOP and STOPPED events");
-  let clicked = PerformanceView.once(EVENTS.UI_STOP_RECORDING);
+
   let willStop = PerformanceController.once(EVENTS.RECORDING_WILL_STOP);
   let hasStopped = PerformanceController.once(EVENTS.RECORDING_STOPPED);
+  let stoppingRecording = PerformanceController.stopRecording();
 
-  click(panel.panelWin, $("#main-record-button"));
-  yield clicked;
   yield willStop;
 
   is(durationNode.getAttribute("value"),
-    DBG_L10N.getStr("loadingText"),
+    L10N.getStr("recordingsList.loadingLabel"),
     "The duration node should show the 'loading' message while stopping");
 
-  let stateChanged = once(PerformanceView, EVENTS.UI_STATE_CHANGED);
   yield hasStopped;
-  yield stateChanged;
+  yield stoppingRecording;
+
+  ok(PerformanceController.getCurrentRecording().isCompleted(), "recording should be completed");
 
   let duration = RecordingsView.selectedItem.attachment.getDuration().toFixed(0);
   is(durationNode.getAttribute("value"),
@@ -47,6 +46,7 @@ let test = Task.async(function*() {
     "The duration node should show the duration after the record has stopped");
 
   yield PerformanceController.clearRecordings();
+
   yield teardown(panel);
   finish();
 });

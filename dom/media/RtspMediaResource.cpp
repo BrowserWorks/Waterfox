@@ -19,18 +19,14 @@
 #include "mozilla/net/RtspChannelChild.h"
 #endif
 using namespace mozilla::net;
+using namespace mozilla::media;
 
-#ifdef PR_LOGGING
 PRLogModuleInfo* gRtspMediaResourceLog;
-#define RTSP_LOG(msg, ...) PR_LOG(gRtspMediaResourceLog, PR_LOG_DEBUG, \
+#define RTSP_LOG(msg, ...) MOZ_LOG(gRtspMediaResourceLog, mozilla::LogLevel::Debug, \
                                   (msg, ##__VA_ARGS__))
 // Debug logging macro with object pointer and class name.
 #define RTSPMLOG(msg, ...) \
         RTSP_LOG("%p [RtspMediaResource]: " msg, this, ##__VA_ARGS__)
-#else
-#define RTSP_LOG(msg, ...)
-#define RTSPMLOG(msg, ...)
-#endif
 
 namespace mozilla {
 
@@ -509,11 +505,9 @@ RtspMediaResource::RtspMediaResource(MediaDecoder* aDecoder,
   MOZ_ASSERT(mMediaStreamController);
   mListener = new Listener(this);
   mMediaStreamController->AsyncOpen(mListener);
-#ifdef PR_LOGGING
   if (!gRtspMediaResourceLog) {
     gRtspMediaResourceLog = PR_NewLogModule("RtspMediaResource");
   }
-#endif
 #endif
 }
 
@@ -552,7 +546,7 @@ size_t
 RtspMediaResource::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 {
   size_t size = BaseMediaResource::SizeOfExcludingThis(aMallocSizeOf);
-  size += mTrackBuffer.SizeOfExcludingThis(aMallocSizeOf);
+  size += mTrackBuffer.ShallowSizeOfExcludingThis(aMallocSizeOf);
 
   // Include the size of each track buffer.
   for (size_t i = 0; i < mTrackBuffer.Length(); i++) {
@@ -732,7 +726,6 @@ RtspMediaResource::OnConnected(uint8_t aTrackIdx,
     // Not live stream.
     mIsLiveStream = false;
     mDecoder->SetInfinite(false);
-    mDecoder->SetDuration((double)(durationUs) / USECS_PER_S);
   } else {
     // Live stream.
     // Check the preference "media.realtime_decoder.enabled".

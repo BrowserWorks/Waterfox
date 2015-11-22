@@ -394,7 +394,7 @@ struct IsModValidImpl<T, true>
   }
 };
 
-template<typename T, bool IsTSigned = IsSigned<T>::value>
+template<typename T, bool IsSigned = IsSigned<T>::value>
 struct NegateImpl;
 
 template<typename T>
@@ -526,7 +526,7 @@ public:
    * argument is valid.
    */
   template<typename U>
-  CheckedInt(U aValue) MOZ_NO_ARITHMETIC_EXPR_IN_ARGUMENT
+  MOZ_IMPLICIT CheckedInt(U aValue) MOZ_NO_ARITHMETIC_EXPR_IN_ARGUMENT
     : mValue(T(aValue)),
       mIsValid(detail::IsInRange<T>(aValue))
   {

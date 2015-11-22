@@ -11,12 +11,12 @@ interface nsIPrefBranch;
 /**
  * nsINetUtil provides various network-related utility methods.
  */
-[scriptable, uuid(ca68c485-9db3-4c12-82a6-4fab7948e2d5)]
+[scriptable, uuid(fe2625ec-b884-4df1-b39c-9e830e47aa94)]
 interface nsINetUtil : nsISupports
 {
   /**
-   * Parse a content-type header and return the content type and
-   * charset (if any).
+   * Parse a content-type request header and return the content type
+   * and charset (if any).
    *
    * @param aTypeHeader the header string to parse
    * @param [out] aCharset the charset parameter specified in the
@@ -24,9 +24,23 @@ interface nsINetUtil : nsISupports
    * @param [out] aHadCharset whether a charset was explicitly specified.
    * @return the MIME type specified in the header, in lower-case.
    */
-  AUTF8String parseContentType(in AUTF8String aTypeHeader,
-                               out AUTF8String aCharset,
-                               out boolean aHadCharset);
+  AUTF8String parseRequestContentType(in AUTF8String aTypeHeader,
+                                      out AUTF8String aCharset,
+                                      out boolean aHadCharset);
+
+  /**
+   * Parse a content-type response header and return the content type
+   * and charset (if any).
+   *
+   * @param aTypeHeader the header string to parse
+   * @param [out] aCharset the charset parameter specified in the
+   *              header, if any.
+   * @param [out] aHadCharset whether a charset was explicitly specified.
+   * @return the MIME type specified in the header, in lower-case.
+   */
+  AUTF8String parseResponseContentType(in AUTF8String aTypeHeader,
+                                       out AUTF8String aCharset,
+                                       out boolean aHadCharset);
 
   /**
    * Test whether the given URI's handler has the given protocol flags.
@@ -192,4 +206,16 @@ interface nsINetUtil : nsISupports
                                         out AUTF8String aCharset,
                                         out long aCharsetStart,
                                         out long aCharsetEnd);
+
+/**
+   * Parse an attribute referrer policy string (no-referrer, origin, unsafe-url)
+   * and return the according integer code (defined in nsIHttpChannel.idl)
+   *
+   * @param aPolicyString
+   *        the policy string given as attribute
+   * @return aPolicyEnum
+   *         referrer policy code from nsIHttpChannel.idl, (see parser in
+   *         ReferrerPolicy.h for details)
+   */
+  unsigned long parseAttributePolicyString(in AString aPolicyString);
 };

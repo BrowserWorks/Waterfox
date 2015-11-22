@@ -34,6 +34,11 @@ class Request final : public nsISupports
 public:
   Request(nsIGlobalObject* aOwner, InternalRequest* aRequest);
 
+  static bool
+  RequestContextEnabled(JSContext* aCx, JSObject* aObj);
+  static bool
+  RequestCacheEnabled(JSContext* aCx, JSObject* aObj);
+
   JSObject*
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
@@ -73,17 +78,16 @@ public:
     return mRequest->GetCacheMode();
   }
 
+  RequestRedirect
+  Redirect() const
+  {
+    return mRequest->GetRedirectMode();
+  }
+
   RequestContext
   Context() const
   {
     return mRequest->Context();
-  }
-
-  // [ChromeOnly]
-  void
-  SetContext(RequestContext aContext)
-  {
-    mRequest->SetContext(aContext);
   }
 
   void
@@ -108,6 +112,9 @@ public:
 
   void
   GetBody(nsIInputStream** aStream) { return mRequest->GetBody(aStream); }
+
+  void
+  SetBody(nsIInputStream* aStream) { return mRequest->SetBody(aStream); }
 
   static already_AddRefed<Request>
   Constructor(const GlobalObject& aGlobal, const RequestOrUSVString& aInput,

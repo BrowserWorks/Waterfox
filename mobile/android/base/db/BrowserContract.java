@@ -8,7 +8,7 @@ package org.mozilla.gecko.db;
 import org.mozilla.gecko.AppConstants;
 
 import android.net.Uri;
-import org.mozilla.gecko.mozglue.RobocopTarget;
+import org.mozilla.gecko.annotation.RobocopTarget;
 
 @RobocopTarget
 public class BrowserContract {
@@ -268,8 +268,11 @@ public class BrowserContract {
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/deleted-formhistory";
     }
 
+    @RobocopTarget
     public static final class Tabs implements CommonColumns {
         private Tabs() {}
+        public static final String TABLE_NAME = "tabs";
+
         public static final Uri CONTENT_URI = Uri.withAppendedPath(TABS_AUTHORITY_URI, "tabs");
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/tab";
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/tab";
@@ -299,6 +302,7 @@ public class BrowserContract {
 
     public static final class Clients {
         private Clients() {}
+        public static final Uri CONTENT_RECENCY_URI = Uri.withAppendedPath(TABS_AUTHORITY_URI, "clients_recency");
         public static final Uri CONTENT_URI = Uri.withAppendedPath(TABS_AUTHORITY_URI, "clients");
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/client";
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/client";
@@ -334,11 +338,13 @@ public class BrowserContract {
         public static final String TITLE = "title";
         public static final String DESCRIPTION = "description";
         public static final String IMAGE_URL = "image_url";
+        public static final String BACKGROUND_COLOR = "background_color";
+        public static final String BACKGROUND_URL = "background_url";
         public static final String CREATED = "created";
         public static final String FILTER = "filter";
 
         public static final String[] DEFAULT_PROJECTION =
-            new String[] { _ID, DATASET_ID, URL, TITLE, DESCRIPTION, IMAGE_URL, FILTER };
+            new String[] { _ID, DATASET_ID, URL, TITLE, DESCRIPTION, IMAGE_URL, BACKGROUND_COLOR, BACKGROUND_URL, FILTER };
     }
 
     @RobocopTarget
@@ -412,7 +418,7 @@ public class BrowserContract {
 
 
         public static final String DEFAULT_SORT_ORDER = CLIENT_LAST_MODIFIED + " DESC";
-        public static final String[] DEFAULT_PROJECTION = new String[] { _ID, URL, TITLE, EXCERPT, WORD_COUNT };
+        public static final String[] DEFAULT_PROJECTION = new String[] { _ID, URL, TITLE, EXCERPT, WORD_COUNT, IS_UNREAD };
 
         // Minimum fields required to create a reading list item.
         public static final String[] REQUIRED_FIELDS = { ReadingListItems.URL, ReadingListItems.TITLE };
@@ -469,6 +475,7 @@ public class BrowserContract {
 
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/searchhistory";
         public static final String QUERY = "query";
+        public static final String DATE = "date";
         public static final String TABLE_NAME = "searchhistory";
 
         public static final Uri CONTENT_URI = Uri.withAppendedPath(SEARCH_HISTORY_AUTHORITY_URI, "searchhistory");

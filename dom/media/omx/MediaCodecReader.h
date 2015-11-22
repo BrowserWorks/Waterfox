@@ -27,6 +27,8 @@
 #include <ui/Fence.h>
 #endif
 
+#include "MP3FrameParser.h"
+
 namespace android {
 struct ALooper;
 struct AMessage;
@@ -41,7 +43,7 @@ class GonkNativeWindow;
 
 namespace mozilla {
 
-class FlushableMediaTaskQueue;
+class FlushableTaskQueue;
 class MP3FrameParser;
 
 namespace layers {
@@ -52,6 +54,7 @@ class MediaCodecReader : public MediaOmxCommonReader
 {
   typedef mozilla::layers::TextureClient TextureClient;
   typedef mozilla::layers::FenceHandle FenceHandle;
+  typedef MediaOmxCommonReader::MediaResourcePromise MediaResourcePromise;
 
 public:
   MediaCodecReader(AbstractMediaDecoder* aDecoder);
@@ -61,12 +64,6 @@ public:
   // on failure.
   virtual nsresult Init(MediaDecoderReader* aCloneDonor);
 
-  // True if this reader is waiting media resource allocation
-  virtual bool IsWaitingMediaResources();
-
-  // True when this reader need to become dormant state
-  virtual bool IsDormantNeeded() { return true;}
-
   // Release media resources they should be released in dormant state
   virtual void ReleaseMediaResources();
 
@@ -75,12 +72,14 @@ public:
   // irreversible, whereas ReleaseMediaResources() is reversible.
   virtual nsRefPtr<ShutdownPromise> Shutdown();
 
+protected:
   // Used to retrieve some special information that can only be retrieved after
   // all contents have been continuously parsed. (ex. total duration of some
   // variable-bit-rate MP3 files.)
-  virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset);
+  virtual void NotifyDataArrivedInternal(uint32_t aLength, int64_t aOffset) override;
+public:
 
-  // Flush the MediaTaskQueue, flush MediaCodec and raise the mDiscontinuity.
+  // Flush the TaskQueue, flush MediaCodec and raise the mDiscontinuity.
   virtual nsresult ResetDecode() override;
 
   // Disptach a DecodeVideoFrameTask to decode video data.
@@ -94,13 +93,7 @@ public:
   virtual bool HasAudio();
   virtual bool HasVideo();
 
-  virtual void PreReadMetadata() override;
-  // Read header data for all bitstreams in the file. Fills aInfo with
-  // the data required to present the media, and optionally fills *aTags
-  // with tag metadata from the file.
-  // Returns NS_OK on success, or NS_ERROR_FAILURE on failure.
-  virtual nsresult ReadMetadata(MediaInfo* aInfo,
-                                MetadataTags** aTags);
+  virtual nsRefPtr<MediaDecoderReader::MetadataPromise> AsyncReadMetadata() override;
 
   // Moves the decode head to aTime microseconds. aStartTime and aEndTime
   // denote the start and end times of the media in usecs, and aCurrentTime
@@ -156,15 +149,13 @@ protected:
 
     // playback parameters
     CheckedUint32 mInputIndex;
-    // mDiscontinuity, mFlushed, mInputEndOfStream, mInputEndOfStream,
-    // mSeekTimeUs don't be protected by a lock because the
-    // mTaskQueue->Flush() will flush all tasks.
+
     bool mInputEndOfStream;
     bool mOutputEndOfStream;
     int64_t mSeekTimeUs;
     bool mFlushed; // meaningless when mSeekTimeUs is invalid.
     bool mDiscontinuity;
-    nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
+    nsRefPtr<TaskQueue> mTaskQueue;
     Monitor mTrackMonitor;
 
   private:
@@ -184,14 +175,14 @@ protected:
 
   virtual bool CreateExtractor();
 
-  // Check the underlying HW resource is available and store the result in
-  // mIsWaitingResources.
-  void UpdateIsWaitingMediaResources();
+  virtual void HandleResourceAllocated();
 
   android::sp<android::MediaExtractor> mExtractor;
-  // A cache value updated by UpdateIsWaitingMediaResources(), makes the
-  // "waiting resources state" is synchronous to StateMachine.
-  bool mIsWaitingResources;
+
+  MozPromiseHolder<MediaDecoderReader::MetadataPromise> mMetadataPromise;
+  // XXX Remove after bug 1168008 land.
+  MozPromiseRequestHolder<MediaResourcePromise> mMediaResourceRequest;
+  MozPromiseHolder<MediaResourcePromise> mMediaResourcePromise;
 
 private:
 
@@ -226,7 +217,7 @@ private:
   {
     AudioTrack();
     // Protected by mTrackMonitor.
-    MediaPromiseHolder<AudioDataPromise> mAudioPromise;
+    MozPromiseHolder<AudioDataPromise> mAudioPromise;
 
   private:
     // Forbidden
@@ -248,9 +239,9 @@ private:
     nsIntRect mPictureRect;
     gfx::IntRect mRelativePictureRect;
     // Protected by mTrackMonitor.
-    MediaPromiseHolder<VideoDataPromise> mVideoPromise;
+    MozPromiseHolder<VideoDataPromise> mVideoPromise;
 
-    nsRefPtr<MediaTaskQueue> mReleaseBufferTaskQueue;
+    nsRefPtr<TaskQueue> mReleaseBufferTaskQueue;
   private:
     // Forbidden
     VideoTrack(const VideoTrack &rhs) = delete;
@@ -339,7 +330,7 @@ private:
   MediaCodecReader() = delete;
   const MediaCodecReader& operator=(const MediaCodecReader& rhs) = delete;
 
-  bool ReallocateResources();
+  bool ReallocateExtractorResources();
   void ReleaseCriticalResources();
   void ReleaseResources();
 
@@ -351,10 +342,11 @@ private:
   bool CreateMediaSources();
   void DestroyMediaSources();
 
-  bool CreateMediaCodecs();
+  nsRefPtr<MediaResourcePromise> CreateMediaCodecs();
   static bool CreateMediaCodec(android::sp<android::ALooper>& aLooper,
                                Track& aTrack,
                                bool aAsync,
+                               bool& aIsWaiting,
                                android::wp<android::MediaCodecProxy::CodecResourceListener> aListener);
   static bool ConfigureMediaCodec(Track& aTrack);
   void DestroyMediaCodecs();
@@ -439,26 +431,20 @@ private:
   int64_t mNextParserPosition;
   int64_t mParsedDataLength;
   nsAutoPtr<MP3FrameParser> mMP3FrameParser;
-#if MOZ_WIDGET_GONK && ANDROID_VERSION >= 17
   // mReleaseIndex corresponding to a graphic buffer, and the mReleaseFence is
   // the graohic buffer's fence. We must wait for the fence signaled by
   // compositor, otherwise we will see the flicker because the HW decoder and
   // compositor use the buffer concurrently.
   struct ReleaseItem {
-    ReleaseItem(size_t aIndex, const android::sp<android::Fence>& aFence)
+    ReleaseItem(size_t aIndex, const FenceHandle& aFence)
     : mReleaseIndex(aIndex)
     , mReleaseFence(aFence) {}
     size_t mReleaseIndex;
-    android::sp<android::Fence> mReleaseFence;
+    FenceHandle mReleaseFence;
   };
-#else
-  struct ReleaseItem {
-    ReleaseItem(size_t aIndex)
-    : mReleaseIndex(aIndex) {}
-    size_t mReleaseIndex;
-  };
-#endif
   nsTArray<ReleaseItem> mPendingReleaseItems;
+
+  NotifyDataArrivedFilter mFilter;
 };
 
 } // namespace mozilla

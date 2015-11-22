@@ -19,15 +19,33 @@
 }
 
 .popup-notification-icon[popupid="xpinstall-disabled"],
-.popup-notification-icon[popupid="addon-progress"],
 .popup-notification-icon[popupid="addon-install-blocked"],
-.popup-notification-icon[popupid="addon-install-origin-blocked"],
-.popup-notification-icon[popupid="addon-install-failed"],
-.popup-notification-icon[popupid="addon-install-confirmation"],
+.popup-notification-icon[popupid="addon-install-origin-blocked"] {
+  list-style-image: url(chrome://browser/skin/addons/addon-install-blocked.svg);
+}
+
+.popup-notification-icon[popupid="addon-progress"] {
+  list-style-image: url(chrome://browser/skin/addons/addon-install-downloading.svg);
+}
+
+.popup-notification-icon[popupid="addon-install-failed"] {
+  list-style-image: url(chrome://browser/skin/addons/addon-install-error.svg);
+}
+
+.popup-notification-icon[popupid="addon-install-confirmation"] {
+  list-style-image: url(chrome://browser/skin/addons/addon-install-confirm.svg);
+}
+
+#addon-install-confirmation-notification[warning] .popup-notification-icon[popupid="addon-install-confirmation"] {
+  list-style-image: url(chrome://browser/skin/addons/addon-install-warning.svg);
+}
+
 .popup-notification-icon[popupid="addon-install-complete"] {
-  list-style-image: url(chrome://mozapps/skin/extensions/extensionGeneric.png);
-  width: 32px;
-  height: 32px;
+  list-style-image: url(chrome://browser/skin/addons/addon-install-installed.svg);
+}
+
+.popup-notification-icon[popupid="addon-install-restart"] {
+  list-style-image: url(chrome://browser/skin/addons/addon-install-restart.svg);
 }
 
 .popup-notification-icon[popupid="click-to-play-plugins"] {
@@ -51,15 +69,6 @@
 .popup-notification-icon[popupid="webapps-install-progress"],
 .popup-notification-icon[popupid="webapps-install"] {
   list-style-image: url(chrome://global/skin/icons/webapps-64.png);
-}
-
-.popup-notification-icon[popupid="bad-content"] {
-  list-style-image: url(chrome://browser/skin/bad-content-blocked-64.png);
-}
-
-.popup-notification-icon[popupid="bad-content"][mixedblockdisabled],
-.popup-notification-icon[popupid="bad-content"][trackingblockdisabled] {
-  list-style-image: url(chrome://browser/skin/bad-content-unblocked-64.png);
 }
 
 .popup-notification-icon[popupid="webRTC-sharingDevices"],
@@ -94,12 +103,21 @@
 }
 
 @conditionalForwardWithUrlbar@ > #forward-button[disabled] + #urlbar > #notification-popup-box {
-  padding-left: 7px;
+  padding-left: calc(var(--backbutton-urlbar-overlap) + 3px);
 }
 
+/* This changes the direction of the main notification box on the url bar. */
 #notification-popup-box:-moz-locale-dir(rtl),
+/* This adds a second flip for the notification anchors, as they don't switch direction
+   for RTL mode. */
 .notification-anchor-icon:-moz-locale-dir(rtl) {
   transform: scaleX(-1);
+}
+
+/* For the anchor icons in the chat window, we don't have the notification popup box,
+   so we need to cancel the RTL transform. */
+.notification-anchor-icon.chat-toolbarbutton:-moz-locale-dir(rtl) {
+  transform: none;
 }
 
 .notification-anchor-icon {
@@ -129,7 +147,15 @@
 }
 
 #addons-notification-icon {
-  list-style-image: url(chrome://mozapps/skin/extensions/extensionGeneric-16.png);
+  list-style-image: url(chrome://browser/skin/addons/addon-install-anchor.svg#default);
+}
+
+#addons-notification-icon:hover {
+  list-style-image: url(chrome://browser/skin/addons/addon-install-anchor.svg#hover);
+}
+
+#addons-notification-icon:hover:active {
+  list-style-image: url(chrome://browser/skin/addons/addon-install-anchor.svg#active);
 }
 
 .indexedDB-notification-icon,
@@ -139,6 +165,12 @@
 
 #password-notification-icon {
   list-style-image: url(chrome://mozapps/skin/passwordmgr/key-16.png);
+}
+
+#login-fill-notification-icon {
+  /* Temporary icon until the capture and fill doorhangers are unified. */
+  list-style-image: url(chrome://mozapps/skin/passwordmgr/key-16.png);
+  transform: scaleX(-1);
 }
 
 .webapps-notification-icon,
@@ -188,16 +220,6 @@
   to {
     opacity: 1;
   }
-}
-
-.bad-content-blocked-notification-icon,
-#bad-content-blocked-notification-icon {
-  list-style-image: url(chrome://browser/skin/bad-content-blocked-16.png);
-}
-
-.bad-content-unblocked-notification-icon,
-#bad-content-unblocked-notification-icon {
-  list-style-image: url(chrome://browser/skin/bad-content-unblocked-16.png);
 }
 
 .webRTC-shareDevices-notification-icon,
@@ -356,10 +378,7 @@
     list-style-image: url(chrome://global/skin/icons/question-32.png);
   }
 
-  #addons-notification-icon {
-    list-style-image: url(chrome://mozapps/skin/extensions/extensionGeneric.png);
-  }
-
+  #login-fill-notification-icon,
   #password-notification-icon {
     list-style-image: url(chrome://mozapps/skin/passwordmgr/key-16@2x.png);
   }
@@ -391,14 +410,6 @@
 
   #plugins-notification-icon:active {
     -moz-image-region: rect(0, 96px, 32px, 64px);
-  }
-
-  #bad-content-blocked-notification-icon {
-    list-style-image: url(chrome://browser/skin/bad-content-blocked-16@2x.png);
-  }
-
-  #bad-content-unblocked-notification-icon {
-    list-style-image: url(chrome://browser/skin/bad-content-unblocked-16@2x.png);
   }
 
   .web-notifications-notification-icon,
@@ -433,15 +444,6 @@
 
   .popup-notification-icon[popupid="web-notifications"] {
     list-style-image: url(chrome://browser/skin/notification-64@2x.png);
-  }
-
-  .popup-notification-icon[popupid="bad-content"] {
-    list-style-image: url(chrome://browser/skin/bad-content-blocked-64@2x.png);
-  }
-
-  .popup-notification-icon[popupid="bad-content"][mixedblockdisabled],
-  .popup-notification-icon[popupid="bad-content"][trackingblockdisabled] {
-    list-style-image: url(chrome://browser/skin/bad-content-unblocked-64@2x.png);
   }
 
   .popup-notification-icon[popupid="pointerLock"] {

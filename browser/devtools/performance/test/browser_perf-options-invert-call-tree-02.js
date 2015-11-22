@@ -4,12 +4,12 @@
 /**
  * Tests that the memory call tree views get rerendered when toggling `invert-call-tree`
  */
-function spawnTest () {
+function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let { EVENTS, DetailsView, MemoryCallTreeView } = panel.panelWin;
 
   // Enable memory to test
-  Services.prefs.setBoolPref(MEMORY_PREF, true);
+  Services.prefs.setBoolPref(ALLOCATIONS_PREF, true);
   Services.prefs.setBoolPref(INVERT_PREF, true);
 
   yield startRecording(panel);

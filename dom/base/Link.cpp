@@ -444,7 +444,7 @@ Link::GetHash(nsAString &_hash, ErrorResult& aError)
   nsresult rv = uri->GetRef(ref);
   if (NS_SUCCEEDED(rv) && !ref.IsEmpty()) {
     _hash.Assign(char16_t('#'));
-    if (nsContentUtils::EncodeDecodeURLHash()) {
+    if (nsContentUtils::GettersDecodeURLHash()) {
       NS_UnescapeURL(ref); // XXX may result in random non-ASCII bytes!
     }
     AppendUTF8toUTF16(ref, _hash);
@@ -579,21 +579,6 @@ Link::SearchParams()
 }
 
 void
-Link::SetSearchParams(URLSearchParams& aSearchParams)
-{
-  if (mSearchParams) {
-    mSearchParams->RemoveObserver(this);
-  }
-
-  mSearchParams = &aSearchParams;
-  mSearchParams->AddObserver(this);
-
-  nsAutoString search;
-  mSearchParams->Serialize(search);
-  SetSearchInternal(search);
-}
-
-void
 Link::URLSearchParamsUpdated(URLSearchParams* aSearchParams)
 {
   MOZ_ASSERT(mSearchParams);
@@ -621,15 +606,14 @@ Link::UpdateURLSearchParams()
     }
   }
 
-  mSearchParams->ParseInput(search, this);
+  mSearchParams->ParseInput(search);
 }
 
 void
 Link::CreateSearchParamsIfNeeded()
 {
   if (!mSearchParams) {
-    mSearchParams = new URLSearchParams();
-    mSearchParams->AddObserver(this);
+    mSearchParams = new URLSearchParams(this, this);
     UpdateURLSearchParams();
   }
 }
@@ -638,7 +622,6 @@ void
 Link::Unlink()
 {
   if (mSearchParams) {
-    mSearchParams->RemoveObserver(this);
     mSearchParams = nullptr;
   }
 }

@@ -12,7 +12,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ZipUtils", "resource://gre/modules/ZipUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads", "resource://gre/modules/Downloads.jsm");
 
-const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools;
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm");
 const {AppProjects} = require("devtools/app-manager/app-projects");
 const {AppManager} = require("devtools/webide/app-manager");
@@ -20,7 +20,7 @@ const {getJSON} = require("devtools/shared/getjson");
 
 const TEMPLATES_URL = "devtools.webide.templatesURL";
 
-let gTemplateList = null;
+var gTemplateList = null;
 
 // See bug 989619
 console.log = console.log.bind(console);
@@ -129,12 +129,14 @@ function doOK() {
 
   // Create subfolder with fs-friendly name of project
   let subfolder = projectName.replace(/[\\/:*?"<>|]/g, '').toLowerCase();
+  let win = Services.wm.getMostRecentWindow("devtools:webide");
   folder.append(subfolder);
 
   try {
     folder.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
   } catch(e) {
-    console.error(e);
+    win.UI.reportError("error_folderCreationFailed");
+    window.close();
     return false;
   }
 

@@ -38,8 +38,6 @@ EXPORTS += [
     'nsMathMLOperators.h'
 ]
 
-FAIL_ON_WARNINGS = True
-
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../base',
@@ -55,13 +53,9 @@ JAR_MANIFESTS += ['jar.mn']
 
 RESOURCE_FILES.fonts += [
     'mathfont.properties',
-    'mathfontMathJax_Main.properties',
-    'mathfontStandardSymbolsL.properties',
     'mathfontSTIXGeneral.properties',
     'mathfontUnicode.properties',
 ]
-
-RESOURCE_FILES.fonts['mathfont.properties'].preprocess = True
 
 if CONFIG['TARGET_MD_ARCH'] == 'win32':
     RESOURCE_FILES.fonts += [

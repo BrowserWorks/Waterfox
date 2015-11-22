@@ -21,7 +21,7 @@ public class testBookmarksPanel extends AboutHomeTest {
         initializeProfile();
 
         // Add a mobile bookmark.
-        mDatabaseHelper.addOrUpdateMobileBookmark(mStringHelper.ROBOCOP_BLANK_PAGE_01_TITLE, BOOKMARK_URL);
+        mDatabaseHelper.addMobileBookmark(mStringHelper.ROBOCOP_BLANK_PAGE_01_TITLE, BOOKMARK_URL);
 
         openAboutHomeTab(AboutHomeTabs.BOOKMARKS);
 
@@ -110,7 +110,7 @@ public class testBookmarksPanel extends AboutHomeTest {
         }
 
         // Close the menu.
-        mActions.sendSpecialKey(Actions.SpecialKey.BACK);
+        mSolo.goBack();
 
         openBookmarkContextMenu(nonShareableURL);
         for (String contextMenuOption : mStringHelper.BOOKMARK_CONTEXT_MENU_ITEMS) {
@@ -131,7 +131,7 @@ public class testBookmarksPanel extends AboutHomeTest {
                 "Share option is not present");
 
         // Close the menu.
-        mActions.sendSpecialKey(Actions.SpecialKey.BACK);
+        mSolo.goBack();
     }
 
    /**

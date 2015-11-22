@@ -5,7 +5,7 @@
  * Tests that toggling `enable-memory` during a recording doesn't change that
  * recording's state and does not break.
  */
-function spawnTest () {
+function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let { EVENTS, PerformanceController, $ } = panel.panelWin;
 
@@ -28,8 +28,8 @@ function spawnTest () {
 
   is(PerformanceController.getCurrentRecording().getConfiguration().withMemory, true,
     "The recording finished with tracking memory.");
-  is(PerformanceController.getCurrentRecording().getConfiguration().withAllocations, true,
-    "The recording finished with tracking allocations.");
+  is(PerformanceController.getCurrentRecording().getConfiguration().withAllocations, false,
+    "The recording still is not recording allocations.");
 
   yield teardown(panel);
   finish();

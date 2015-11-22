@@ -67,10 +67,19 @@ parent:
               FTPChannelCreationArgs args);
 
   PWebSocket(PBrowserOrId browser, SerializedLoadContext loadContext);
-  PTCPServerSocket(uint16_t localPort, uint16_t backlog, nsString binaryType);
+  PTCPServerSocket(uint16_t localPort, uint16_t backlog, bool useArrayBuffers);
   PUDPSocket(Principal principal, nsCString filter);
 
   PDNSRequest(nsCString hostName, uint32_t flags, nsCString networkInterface);
+
+
+  /* Predictor Methods */
+  PredPredict(OptionalURIParams targetURI, OptionalURIParams sourceURI,
+              uint32_t reason, SerializedLoadContext loadContext,
+              bool hasVerifier);
+  PredLearn(URIParams targetURI, OptionalURIParams sourceURI,
+            uint32_t reason, SerializedLoadContext loadContext);
+  PredReset();
 
   PRemoteOpenFile(SerializedLoadContext loadContext,
                   URIParams fileuri,
@@ -99,6 +108,8 @@ parent:
                   nsString password, nsString domain);
   OnAuthCancelled(uint64_t callbackId, bool userCancel);
 
+  RemoveSchedulingContext(nsCString scid);
+
 child:
   /*
    * Bring up the http auth prompt for a nested remote mozbrowser.
@@ -109,6 +120,10 @@ child:
                                 nsString realm, uint64_t callbackId);
   // Notifies child that a given app is now offline (or online)
   AppOfflineStatus(uint32_t appId, bool offline);
+
+  /* Predictor Methods */
+  PredOnPredictPreconnect(URIParams uri);
+  PredOnPredictDNS(URIParams uri);
 
 both:
   // Actually we need PTCPSocket() for parent. But ipdl disallows us having different

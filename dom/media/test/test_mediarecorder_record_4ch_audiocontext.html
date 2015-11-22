@@ -1,4 +1,4 @@
-﻿<!DOCTYPE HTML>
+<!DOCTYPE HTML>
 <html>
 <head>
   <title>Test MediaRecorder Record AudioContext with four channels</title>
@@ -31,7 +31,7 @@ function startTest() {
   source.channelCountMode = 'explicit';
   source.connect(dest);
   var elem = document.createElement('audio');
-  elem.mozSrcObject = dest.stream;
+  elem.srcObject = dest.stream;
   mMediaStream = dest.stream;
   source.start(0);
   elem.play();

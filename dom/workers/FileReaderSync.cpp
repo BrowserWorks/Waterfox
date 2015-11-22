@@ -52,14 +52,12 @@ FileReaderSync::WrapObject(JSContext* aCx,
 void
 FileReaderSync::ReadAsArrayBuffer(JSContext* aCx,
                                   JS::Handle<JSObject*> aScopeObj,
-                                  File& aBlob,
+                                  Blob& aBlob,
                                   JS::MutableHandle<JSObject*> aRetval,
                                   ErrorResult& aRv)
 {
-  uint64_t blobSize;
-  nsresult rv = aBlob.GetSize(&blobSize);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  uint64_t blobSize = aBlob.GetSize(aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 
@@ -70,16 +68,14 @@ FileReaderSync::ReadAsArrayBuffer(JSContext* aCx,
   }
 
   nsCOMPtr<nsIInputStream> stream;
-  rv = aBlob.GetInternalStream(getter_AddRefs(stream));
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  aBlob.GetInternalStream(getter_AddRefs(stream), aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 
   uint32_t numRead;
-  rv = stream->Read(bufferData.get(), blobSize, &numRead);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  aRv = stream->Read(bufferData.get(), blobSize, &numRead);
+  if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
   NS_ASSERTION(numRead == blobSize, "failed to read data");
@@ -95,23 +91,21 @@ FileReaderSync::ReadAsArrayBuffer(JSContext* aCx,
 }
 
 void
-FileReaderSync::ReadAsBinaryString(File& aBlob,
+FileReaderSync::ReadAsBinaryString(Blob& aBlob,
                                    nsAString& aResult,
                                    ErrorResult& aRv)
 {
   nsCOMPtr<nsIInputStream> stream;
-  nsresult rv = aBlob.GetInternalStream(getter_AddRefs(stream));
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  aBlob.GetInternalStream(getter_AddRefs(stream), aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 
   uint32_t numRead;
   do {
     char readBuf[4096];
-    rv = stream->Read(readBuf, sizeof(readBuf), &numRead);
-    if (NS_FAILED(rv)) {
-      aRv.Throw(rv);
+    aRv = stream->Read(readBuf, sizeof(readBuf), &numRead);
+    if (NS_WARN_IF(aRv.Failed())) {
       return;
     }
 
@@ -125,25 +119,23 @@ FileReaderSync::ReadAsBinaryString(File& aBlob,
 }
 
 void
-FileReaderSync::ReadAsText(File& aBlob,
+FileReaderSync::ReadAsText(Blob& aBlob,
                            const Optional<nsAString>& aEncoding,
                            nsAString& aResult,
                            ErrorResult& aRv)
 {
   nsCOMPtr<nsIInputStream> stream;
-  nsresult rv = aBlob.GetInternalStream(getter_AddRefs(stream));
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  aBlob.GetInternalStream(getter_AddRefs(stream), aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 
   nsAutoCString encoding;
   unsigned char sniffBuf[3] = { 0, 0, 0 };
   uint32_t numRead;
-  rv = stream->Read(reinterpret_cast<char*>(sniffBuf),
-                    sizeof(sniffBuf), &numRead);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  aRv = stream->Read(reinterpret_cast<char*>(sniffBuf),
+                     sizeof(sniffBuf), &numRead);
+  if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 
@@ -181,21 +173,19 @@ FileReaderSync::ReadAsText(File& aBlob,
 
   // Seek to 0 because to undo the BOM sniffing advance. UTF-8 and UTF-16
   // decoders will swallow the BOM.
-  rv = seekable->Seek(nsISeekableStream::NS_SEEK_SET, 0);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  aRv = seekable->Seek(nsISeekableStream::NS_SEEK_SET, 0);
+  if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 
-  rv = ConvertStream(stream, encoding.get(), aResult);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  aRv = ConvertStream(stream, encoding.get(), aResult);
+  if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 }
 
 void
-FileReaderSync::ReadAsDataURL(File& aBlob, nsAString& aResult,
+FileReaderSync::ReadAsDataURL(Blob& aBlob, nsAString& aResult,
                               ErrorResult& aRv)
 {
   nsAutoString scratchResult;
@@ -212,30 +202,25 @@ FileReaderSync::ReadAsDataURL(File& aBlob, nsAString& aResult,
   scratchResult.AppendLiteral(";base64,");
 
   nsCOMPtr<nsIInputStream> stream;
-  nsresult rv = aBlob.GetInternalStream(getter_AddRefs(stream));
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  aBlob.GetInternalStream(getter_AddRefs(stream), aRv);
+  if (NS_WARN_IF(aRv.Failed())){
     return;
   }
 
-  uint64_t size;
-  rv = aBlob.GetSize(&size);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  uint64_t size = aBlob.GetSize(aRv);
+  if (NS_WARN_IF(aRv.Failed())){
     return;
   }
 
   nsCOMPtr<nsIInputStream> bufferedStream;
-  rv = NS_NewBufferedInputStream(getter_AddRefs(bufferedStream), stream, size);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  aRv = NS_NewBufferedInputStream(getter_AddRefs(bufferedStream), stream, size);
+  if (NS_WARN_IF(aRv.Failed())){
     return;
   }
 
   nsAutoString encodedData;
-  rv = Base64EncodeInputStream(bufferedStream, encodedData, size);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  aRv = Base64EncodeInputStream(bufferedStream, encodedData, size);
+  if (NS_WARN_IF(aRv.Failed())){
     return;
   }
 

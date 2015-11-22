@@ -78,6 +78,11 @@ nsPrintDialogServiceX::Show(nsIDOMWindow *aParent, nsIPrintSettings *aSettings,
   [NSPrintOperation setCurrentOperation:printOperation];
 
   NSPrintPanel* panel = [NSPrintPanel printPanel];
+  [panel setOptions:NSPrintPanelShowsCopies
+    | NSPrintPanelShowsPageRange
+    | NSPrintPanelShowsPaperSize
+    | NSPrintPanelShowsOrientation
+    | NSPrintPanelShowsScaling ];
   PrintPanelAccessoryController* viewController =
     [[PrintPanelAccessoryController alloc] initWithSettings:aSettings];
   [panel addAccessoryController:viewController];
@@ -88,9 +93,14 @@ nsPrintDialogServiceX::Show(nsIDOMWindow *aParent, nsIPrintSettings *aSettings,
   int button = [panel runModal];
   nsCocoaUtils::CleanUpAfterNativeAppModalDialog();
 
-  settingsX->SetCocoaPrintInfo([[[NSPrintOperation currentOperation] printInfo] copy]);
+  NSPrintInfo* copy = [[[NSPrintOperation currentOperation] printInfo] copy];
+  if (!copy) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  settingsX->SetCocoaPrintInfo(copy);
+  [copy release];
+
   [NSPrintOperation setCurrentOperation:nil];
-  [printInfo release];
   [tmpView release];
 
   if (button != NSOKButton)

@@ -16,8 +16,6 @@
 
 namespace mozilla {
 
-#if defined(PR_LOGGING)
-
 // Create a table which maps GUIDs to a string representation of the GUID.
 // This is useful for debugging purposes, for logging the GUIDs of media types.
 // This is only available when logging is enabled, i.e. not in release builds.
@@ -48,7 +46,6 @@ GetDirectShowGuidName(const GUID& aGuid)
   }
   return "Unknown";
 }
-#endif // PR_LOGGING
 
 void
 RemoveGraphFromRunningObjectTable(DWORD aRotRegister)
@@ -287,7 +284,7 @@ MatchUnconnectedPin(IPin* aPin,
 }
 
 // Return the first unconnected input pin or output pin.
-TemporaryRef<IPin>
+already_AddRefed<IPin>
 GetUnconnectedPin(IBaseFilter* aFilter, PIN_DIRECTION aPinDir)
 {
   RefPtr<IEnumPins> enumPins;
@@ -301,7 +298,7 @@ GetUnconnectedPin(IBaseFilter* aFilter, PIN_DIRECTION aPinDir)
     bool matches = FALSE;
     if (SUCCEEDED(MatchUnconnectedPin(pin, aPinDir, &matches)) &&
         matches) {
-      return pin;
+      return pin.forget();
     }
   }
 

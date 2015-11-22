@@ -1,0 +1,18 @@
+$inherits:
+  from: 'tasks/builds/b2g_aries_spark_ota_base.yml'
+  variables:
+    build_name: 'aries-ota'
+    build_type: 'opt'
+task:
+  metadata:
+    name: '[TC] B2G Aries OTA (user)'
+  scopes:
+    - 'docker-worker:cache:build-aries-spark-ota-user'
+    - 'docker-worker:cache:build-aries-spark-ota-user-objdir-gecko-{{project}}'
+  payload:
+    cache:
+      build-aries-spark-ota-user: /home/worker/workspace
+      build-aries-spark-ota-user-objdir-gecko-{{project}}: /home/worker/objdir-gecko
+    env:
+      VARIANT: user
+

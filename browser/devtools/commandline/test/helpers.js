@@ -22,12 +22,11 @@ var { helpers, assert } = (function() {
 
 var helpers = {};
 
-var TargetFactory = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools.TargetFactory;
-var require = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools.require;
+var { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+var { TargetFactory } = require("devtools/framework/target");
 
 var assert = { ok: ok, is: is, log: info };
 var util = require('gcli/util/util');
-var Promise = require('gcli/util/promise').Promise;
 var cli = require('gcli/cli');
 var KeyEvent = require('gcli/util/util').KeyEvent;
 

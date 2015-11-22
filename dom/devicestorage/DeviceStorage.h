@@ -7,14 +7,13 @@
 #ifndef DeviceStorage_h
 #define DeviceStorage_h
 
-#include "nsIDOMDeviceStorage.h"
 #include "nsIFile.h"
 #include "nsIPrincipal.h"
-#include "nsIObserver.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/dom/DOMRequest.h"
+#include "nsWeakReference.h"
 
 #define DEVICESTORAGE_PICTURES   "pictures"
 #define DEVICESTORAGE_VIDEOS     "videos"
@@ -25,10 +24,15 @@
 
 class nsIInputStream;
 class nsIOutputStream;
+struct DeviceStorageFileDescriptor;
+#ifdef MOZ_WIDGET_GONK
+class nsIVolume;
+#endif
 
 namespace mozilla {
 class EventListenerManager;
 namespace dom {
+class Blob;
 struct DeviceStorageEnumerationParameters;
 class DOMCursor;
 class DOMRequest;
@@ -37,8 +41,14 @@ class DeviceStorageFileSystem;
 } // namespace dom
 namespace ipc {
 class FileDescriptor;
-}
+class PrincipalInfo;
+} // namespace ipc
 } // namespace mozilla
+
+class DeviceStorageRequest;
+class DeviceStorageCursorRequest;
+class DeviceStorageRequestManager;
+class nsDOMDeviceStorageCursor;
 
 class DeviceStorageFile final
   : public nsISupports {
@@ -103,7 +113,7 @@ public:
   void AccumDiskUsage(uint64_t* aPicturesSoFar, uint64_t* aVideosSoFar,
                       uint64_t* aMusicSoFar, uint64_t* aTotalSoFar);
 
-  void GetDiskFreeSpace(int64_t* aSoFar);
+  void GetStorageFreeSpace(int64_t* aSoFar);
   void GetStatus(nsAString& aStatus);
   void GetStorageStatus(nsAString& aStatus);
   void DoFormat(nsAString& aStatus);
@@ -129,37 +139,13 @@ private:
                            uint64_t* aTotalSoFar);
 };
 
-/*
-  The FileUpdateDispatcher converts file-watcher-notify
-  observer events to file-watcher-update events.  This is
-  used to be able to broadcast events from one child to
-  another child in B2G.  (f.e., if one child decides to add
-  a file, we want to be able to able to send a onchange
-  notifications to every other child watching that device
-  storage object).
-
-  We create this object (via GetSingleton) in two places:
-    * ContentParent::Init (for IPC)
-    * nsDOMDeviceStorage::Init (for non-ipc)
-*/
-class FileUpdateDispatcher final
-  : public nsIObserver
-{
-  ~FileUpdateDispatcher() {}
-
- public:
-  NS_DECL_ISUPPORTS
-  NS_DECL_NSIOBSERVER
-
-  static FileUpdateDispatcher* GetSingleton();
- private:
-  static mozilla::StaticRefPtr<FileUpdateDispatcher> sSingleton;
-};
+#define NS_DOM_DEVICE_STORAGE_CID \
+  { 0xe4a9b969, 0x81fe, 0x44f1, \
+    { 0xaa, 0x0c, 0x9e, 0x16, 0x64, 0x86, 0x2a, 0xd5 } }
 
 class nsDOMDeviceStorage final
   : public mozilla::DOMEventTargetHelper
-  , public nsIDOMDeviceStorage
-  , public nsIObserver
+  , public nsSupportsWeakReference
 {
   typedef mozilla::ErrorResult ErrorResult;
   typedef mozilla::dom::DeviceStorageEnumerationParameters
@@ -171,32 +157,19 @@ class nsDOMDeviceStorage final
 public:
   typedef nsTArray<nsString> VolumeNameArray;
 
+  NS_DECLARE_STATIC_IID_ACCESSOR(NS_DOM_DEVICE_STORAGE_CID)
   NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_NSIDOMDEVICESTORAGE
+  NS_REALLY_FORWARD_NSIDOMEVENTTARGET(DOMEventTargetHelper)
 
-  NS_DECL_NSIOBSERVER
-  NS_DECL_NSIDOMEVENTTARGET
-
-  virtual mozilla::EventListenerManager*
-    GetExistingListenerManager() const override;
-  virtual mozilla::EventListenerManager*
-    GetOrCreateListenerManager() override;
-
-  virtual void
-  AddEventListener(const nsAString& aType,
-                   mozilla::dom::EventListener* aListener,
-                   bool aUseCapture,
-                   const mozilla::dom::Nullable<bool>& aWantsUntrusted,
-                   ErrorResult& aRv) override;
-
-  virtual void RemoveEventListener(const nsAString& aType,
-                                   mozilla::dom::EventListener* aListener,
-                                   bool aUseCapture,
-                                   ErrorResult& aRv) override;
+  void EventListenerWasAdded(const nsAString& aType,
+                             ErrorResult& aRv,
+                             JSCompartment* aCompartment) override;
 
   explicit nsDOMDeviceStorage(nsPIDOMWindow* aWindow);
 
   static int InstanceCount() { return sInstanceCount; }
+
+  static void InvalidateVolumeCaches();
 
   nsresult Init(nsPIDOMWindow* aWindow, const nsAString& aType,
                 const nsAString& aVolName);
@@ -222,16 +195,13 @@ public:
   IMPL_EVENT_HANDLER(change)
 
   already_AddRefed<DOMRequest>
-  Add(nsIDOMBlob* aBlob, ErrorResult& aRv);
+  Add(mozilla::dom::Blob* aBlob, ErrorResult& aRv);
   already_AddRefed<DOMRequest>
-  AddNamed(nsIDOMBlob* aBlob, const nsAString& aPath, ErrorResult& aRv);
+  AddNamed(mozilla::dom::Blob* aBlob, const nsAString& aPath, ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  AppendNamed(nsIDOMBlob* aBlob, const nsAString& aPath, ErrorResult& aRv);
-
-  already_AddRefed<DOMRequest>
-  AddOrAppendNamed(nsIDOMBlob* aBlob, const nsAString& aPath,
-                   const int32_t aRequestType, ErrorResult& aRv);
+  AppendNamed(mozilla::dom::Blob* aBlob, const nsAString& aPath,
+              ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
   Get(const nsAString& aPath, ErrorResult& aRv)
@@ -271,13 +241,17 @@ public:
   already_AddRefed<DOMRequest> Mount(ErrorResult& aRv);
   already_AddRefed<DOMRequest> Unmount(ErrorResult& aRv);
 
+  already_AddRefed<DOMRequest> CreateFileDescriptor(const nsAString& aPath,
+                                                    DeviceStorageFileDescriptor* aDSFD,
+                                                    ErrorResult& aRv);
+
   bool CanBeMounted();
   bool CanBeFormatted();
   bool CanBeShared();
   bool IsRemovable();
+  bool LowDiskSpace();
   bool Default();
-
-  // Uses XPCOM GetStorageName
+  void GetStorageName(nsAString& aStorageName);
 
   already_AddRefed<Promise>
   GetRoot(ErrorResult& aRv);
@@ -288,35 +262,62 @@ public:
                          nsDOMDeviceStorage** aStore);
 
   static void
-  CreateDeviceStoragesFor(nsPIDOMWindow* aWin,
-                          const nsAString& aType,
-                          nsTArray<nsRefPtr<nsDOMDeviceStorage> >& aStores);
-
-  static void
   CreateDeviceStorageByNameAndType(nsPIDOMWindow* aWin,
                                    const nsAString& aName,
                                    const nsAString& aType,
                                    nsDOMDeviceStorage** aStore);
 
+  bool Equals(nsPIDOMWindow* aWin,
+              const nsAString& aName,
+              const nsAString& aType);
+
   void Shutdown();
+
+  static void GetOrderedVolumeNames(const nsAString& aType,
+                                    nsTArray<nsString>& aVolumeNames);
 
   static void GetOrderedVolumeNames(nsTArray<nsString>& aVolumeNames);
 
   static void GetDefaultStorageName(const nsAString& aStorageType,
-                                    nsAString &aStorageName);
+                                    nsAString& aStorageName);
 
   static bool ParseFullPath(const nsAString& aFullPath,
                             nsAString& aOutStorageName,
                             nsAString& aOutStoragePath);
+
+  // DeviceStorageStatics callbacks
+  void OnFileWatcherUpdate(const nsCString& aData, DeviceStorageFile* aFile);
+  void OnDiskSpaceWatcher(bool aLowDiskSpace);
+  void OnWritableNameChanged();
+#ifdef MOZ_WIDGET_GONK
+  void OnVolumeStateChanged(nsIVolume* aVolume);
+#endif
+
+  uint32_t CreateDOMRequest(DOMRequest** aRequest, ErrorResult& aRv);
+  uint32_t CreateDOMCursor(DeviceStorageCursorRequest* aRequest,
+                           nsDOMDeviceStorageCursor** aCursor,
+                           ErrorResult& aRv);
+  already_AddRefed<DOMRequest> CreateAndRejectDOMRequest(const char *aReason,
+                                                         ErrorResult& aRv);
+
+  nsresult CheckPermission(DeviceStorageRequest* aRequest);
+  void StorePermission(DeviceStorageRequest* aRequest, bool aAllow);
+
+  bool IsOwningThread();
+  nsresult DispatchToOwningThread(nsIRunnable* aRunnable);
+
 private:
   ~nsDOMDeviceStorage();
 
+  static nsresult CheckPrincipal(nsPIDOMWindow* aWindow, bool aIsAppsStorage,
+                                 nsIPrincipal** aPrincipal);
+
+  already_AddRefed<DOMRequest>
+  AddOrAppendNamed(mozilla::dom::Blob* aBlob, const nsAString& aPath,
+                   bool aCreate, ErrorResult& aRv);
+
   already_AddRefed<DOMRequest>
   GetInternal(const nsAString& aPath, bool aEditable, ErrorResult& aRv);
-
-  void
-  GetInternal(nsPIDOMWindow* aWin, const nsAString& aPath, DOMRequest* aRequest,
-              bool aEditable);
 
   void
   DeleteInternal(nsPIDOMWindow* aWin, const nsAString& aPath,
@@ -345,12 +346,7 @@ private:
                             const nsAString& aStorageName,
                             const nsAString& aType);
 
-  nsCOMPtr<nsIPrincipal> mPrincipal;
-
-  bool mIsWatchingFile;
-  bool mAllowedToWatchFile;
   bool mIsDefaultLocation;
-  void DispatchDefaultChangeEvent();
 
   nsresult Notify(const char* aReason, class DeviceStorageFile* aFile);
 
@@ -366,14 +362,13 @@ private:
   void DispatchStorageStatusChangeEvent(nsAString& aStorageStatus);
 #endif
 
-  // nsIDOMDeviceStorage.type
-  enum {
-      DEVICE_STORAGE_TYPE_DEFAULT = 0,
-      DEVICE_STORAGE_TYPE_SHARED,
-      DEVICE_STORAGE_TYPE_EXTERNAL
-  };
-
+  uint64_t mInnerWindowID;
   nsRefPtr<DeviceStorageFileSystem> mFileSystem;
+  nsRefPtr<DeviceStorageRequestManager> mManager;
+  nsAutoPtr<mozilla::ipc::PrincipalInfo> mPrincipalInfo;
+  nsCOMPtr<nsIThread> mOwningThread;
 };
+
+NS_DEFINE_STATIC_IID_ACCESSOR(nsDOMDeviceStorage, NS_DOM_DEVICE_STORAGE_CID)
 
 #endif

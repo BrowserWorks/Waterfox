@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // Ensure that an inner frame from a different origin can't initiate an install
 
-let wasOriginBlocked = false;
+var wasOriginBlocked = false;
 
 function test() {
   Harness.installOriginBlockedCallback = install_blocked;
@@ -31,7 +31,7 @@ function finish_test(count) {
   ok(wasOriginBlocked, "Should have been blocked due to the cross origin request.");
 
   is(count, 0, "No add-ons should have been installed");
-  Services.perms.remove("http://example.com", "install");
+  Services.perms.remove(makeURI("http://example.com"), "install");
 
   gBrowser.removeCurrentTab();
   Harness.finish();

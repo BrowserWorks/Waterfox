@@ -9,6 +9,7 @@
 <?xml-stylesheet href="chrome://browser/content/browser.css" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/content/places/places.css" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/skin/devtools/common.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/controlcenter/panel.css" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/skin/customizableui/panelUIOverlay.css" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/skin/" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/skin/browser-lightweightTheme.css" type="text/css"?>
@@ -57,6 +58,7 @@
         screenX="4" screenY="4"
         fullscreenbutton="true"
         sizemode="normal"
+        retargetdocumentfocus="urlbar"
         persist="screenX screenY width height sizemode">
 
 # All JS files which are not content (only) dependent that browser.xul
@@ -81,6 +83,7 @@
                onpopuphidden="if (event.target == this) TabContextMenu.contextTab = null;">
       <menuitem id="context_reloadTab" label="&reloadTab.label;" accesskey="&reloadTab.accesskey;"
                 oncommand="gBrowser.reloadTab(TabContextMenu.contextTab);"/>
+      <menuitem id="context_toggleMuteTab" oncommand="TabContextMenu.contextTab.toggleMuteAudio();"/>
       <menuseparator/>
       <menuitem id="context_pinTab" label="&pinTab.label;"
                 accesskey="&pinTab.accesskey;"
@@ -144,14 +147,25 @@
     <panel type="autocomplete" id="PopupSearchAutoComplete" noautofocus="true" hidden="true"/>
 
     <!-- for url bar autocomplete -->
-    <panel type="autocomplete-richlistbox" id="PopupAutoCompleteRichResult" noautofocus="true" hidden="true"/>
+    <panel type="autocomplete-richlistbox" id="PopupAutoCompleteRichResult" noautofocus="true" hidden="true">
+#ifdef NIGHTLY_BUILD
+      <hbox id="urlbar-search-footer" flex="1" align="stretch" pack="end">
+        <button id="urlbar-search-settings" label="&changeSearchSettings.button;"
+                oncommand="BrowserUITelemetry.countSearchSettingsEvent('urlbar'); openPreferences('paneSearch')"/>
+      </hbox>
+#endif
+    </panel>
 
     <!-- for select dropdowns. The menupopup is what shows the list of options,
          and the popuponly menulist makes things like the menuactive attributes
          work correctly on the menupopup. ContentSelectDropdown expects the
          popuponly menulist to be its immediate parent. -->
     <menulist popuponly="true" id="ContentSelectDropdown" hidden="true">
-      <menupopup rolluponmousewheel="true"/>
+      <menupopup rolluponmousewheel="true"
+#ifdef XP_WIN
+                 consumeoutsideclicks="false" ignorekeys="handled"
+#endif
+        />
     </menulist>
 
     <!-- for invalid form error message -->
@@ -406,67 +420,6 @@
 
     <menupopup id="placesContext"/>
 
-    <!-- Popup for site identity information -->
-    <panel id="identity-popup"
-           type="arrow"
-           hidden="true"
-           noautofocus="true"
-           onpopupshown="if (event.target == this)
-                           gIdentityHandler.onPopupShown(event);"
-           orient="vertical"
-           level="top">
-      <hbox id="identity-popup-container" align="top">
-        <image id="identity-popup-icon"/>
-        <vbox id="identity-popup-content-box">
-          <label id="identity-popup-brandName"
-                 class="identity-popup-label"
-                 value="&brandFullName;"/>
-          <label id="identity-popup-chromeLabel"
-                 class="identity-popup-label"/>
-          <label id="identity-popup-connectedToLabel"
-                 class="identity-popup-label"
-                 value="&identity.connectedTo;"/>
-          <label id="identity-popup-connectedToLabel2"
-                 class="identity-popup-label"
-                 value="&identity.unverifiedsite2;"/>
-          <description id="identity-popup-content-host"
-                       class="identity-popup-description"/>
-          <label id="identity-popup-runByLabel"
-                 class="identity-popup-label"
-                 value="&identity.runBy;"/>
-          <description id="identity-popup-content-owner"
-                       class="identity-popup-description"/>
-          <description id="identity-popup-content-supplemental"
-                       class="identity-popup-description"/>
-          <description id="identity-popup-content-verifier"
-                       class="identity-popup-description"/>
-          <hbox id="identity-popup-encryption" flex="1">
-            <vbox>
-              <image id="identity-popup-encryption-icon"/>
-            </vbox>
-            <description id="identity-popup-encryption-label" flex="1"
-                         class="identity-popup-description"/>
-          </hbox>
-          <vbox id="identity-popup-permissions">
-            <separator class="thin"/>
-            <label class="identity-popup-label header"
-                   value="&identity.permissions;"/>
-            <vbox id="identity-popup-permission-list" class="indent"/>
-          </vbox>
-        </vbox>
-      </hbox>
-      <!-- Footer button to open security page info -->
-      <hbox id="identity-popup-button-container" align="center">
-        <button id="identity-popup-help-icon"
-               oncommand="gIdentityHandler.handleHelpCommand(event);"
-               tooltiptext="&identity.help.tooltip;"/>
-        <spacer flex="1"/>
-        <button id="identity-popup-more-info-button"
-                label="&identity.moreInfoLinkText;"
-                oncommand="gIdentityHandler.handleMoreInfoClick(event);"/>
-      </hbox>
-    </panel>
-
     <panel id="ctrlTab-panel" class="KUI-panel" hidden="true" norestorefocus="true" level="top">
       <hbox>
         <button class="ctrlTab-preview" flex="1"/>
@@ -492,28 +445,6 @@
                        value="&syncStartPanel2.heading;"/>
           <description id="sync-start-panel-subtitle"
                        value="&syncStartPanel2.subTitle;"/>
-        </vbox>
-      </hbox>
-    </panel>
-
-    <!-- Sync Error Panel -->
-    <panel id="sync-error-panel" class="sync-panel" type="arrow" hidden="true"
-           noautofocus="true" onclick="this.hidePopup();"
-           flip="slide">
-      <hbox class="sync-panel-outer">
-        <image class="sync-panel-icon"/>
-        <vbox class="sync-panel-inner">
-          <description id="sync-error-panel-title"
-                       value="&syncErrorPanel.heading;"/>
-          <description id="sync-error-panel-subtitle"
-                       value="&syncErrorPanel.subTitle;"/>
-          <hbox class="sync-panel-button-box">
-            <spacer flex="1"/>
-            <button class="sync-panel-button"
-                    label="&syncErrorPanel.signInButton.label;"
-                    accesskey="&syncErrorPanel.signInButton.accesskey;"
-                    onclick="gFxAccounts.openSignInAgainPage();"/>
-          </hbox>
         </vbox>
       </hbox>
     </panel>
@@ -549,6 +480,7 @@
 #include popup-notifications.inc
 
 #include ../../components/customizableui/content/panelUI.inc.xul
+#include ../../components/controlcenter/content/panel.inc.xul
 
     <hbox id="downloads-animation-container" mousethrough="always">
       <vbox id="downloads-notification-anchor">
@@ -765,6 +697,7 @@
                      autocompletesearchparam="enable-actions"
                      autocompletepopup="PopupAutoCompleteRichResult"
                      completeselectedindex="true"
+                     shrinkdelay="250"
                      tabscrolling="true"
                      showcommentcolumn="true"
                      showimagecolumn="true"
@@ -783,12 +716,11 @@
                 <image id="push-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="addons-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="indexedDB-notification-icon" class="notification-anchor-icon" role="button"/>
+                <image id="login-fill-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="password-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="webapps-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="plugins-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="web-notifications-notification-icon" class="notification-anchor-icon" role="button"/>
-                <image id="bad-content-blocked-notification-icon" class="notification-anchor-icon" role="button"/>
-                <image id="bad-content-unblocked-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="webRTC-shareDevices-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="webRTC-sharingDevices-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="webRTC-shareMicrophone-notification-icon" class="notification-anchor-icon" role="button"/>
@@ -810,10 +742,13 @@
                    onclick="gIdentityHandler.handleIdentityButtonEvent(event);"
                    onkeypress="gIdentityHandler.handleIdentityButtonEvent(event);"
                    ondragstart="gIdentityHandler.onDragStart(event);">
-                <image id="page-proxy-favicon"
-                       consumeanchor="identity-box"
-                       onclick="PageProxyClickHandler(event);"
-                       pageproxystate="invalid"/>
+                <hbox id="identity-icons"
+                      consumeanchor="identity-box">
+                  <image id="tracking-protection-icon"/>
+                  <image id="page-proxy-favicon"
+                         onclick="PageProxyClickHandler(event);"
+                         pageproxystate="invalid"/>
+                </hbox>
                 <hbox id="identity-icon-labels">
                   <label id="identity-icon-label" class="plain" flex="1"/>
                   <label id="identity-icon-country-label" class="plain"/>
@@ -828,10 +763,6 @@
                        hidden="true"
                        tooltiptext="&pageReportIcon.tooltip;"
                        onclick="gPopupBlockerObserver.onReportButtonClick(event);"/>
-                <image id="readinglist-addremove-button"
-                       class="urlbar-icon"
-                       hidden="true"
-                       onclick="ReadingListUI.buttonClick(event);"/>
                 <image id="reader-mode-button"
                        class="urlbar-icon"
                        hidden="true"
@@ -863,7 +794,6 @@
 
         <toolbarbutton id="bookmarks-menu-button"
                        class="toolbarbutton-1 chromeclass-toolbar-additional"
-                       persist="class"
                        removable="true"
                        type="menu-button"
                        label="&bookmarksMenuButton.label;"
@@ -875,6 +805,8 @@
                        ondrop="PlacesMenuDNDHandler.onDrop(event);"
                        cui-areatype="toolbar"
                        oncommand="BookmarkingUI.onCommand(event);">
+          <observes element="bookmarkThisPageBroadcaster" attribute="starred"/>
+          <observes element="bookmarkThisPageBroadcaster" attribute="buttontooltiptext"/>
           <menupopup id="BMB_bookmarksPopup"
                      class="cui-widget-panel cui-widget-panelview cui-widget-panelWithFooter PanelUI-subView"
                      placespopup="true"
@@ -960,22 +892,6 @@
                                            new PlacesMenu(event, 'place:folder=UNFILED_BOOKMARKS',
                                                           PlacesUIUtils.getViewForNode(this.parentNode.parentNode).options);"/>
             </menu>
-            <menuseparator>
-              <observes element="readingListSidebar" attribute="hidden"/>
-            </menuseparator>
-            <menu id="BMB_readingList"
-                  class="menu-iconic bookmark-item subviewbutton"
-                  label="&readingList.label;"
-                  container="true">
-              <observes element="readingListSidebar" attribute="hidden"/>
-              <menupopup id="BMB_readingListPopup"
-                         placespopup="true"
-                         onpopupshowing="ReadingListUI.onReadingListPopupShowing(this);">
-                <menuitem id="BMB_viewReadingListSidebar" class="subviewbutton"
-                          oncommand="SidebarUI.show('readingListSidebar');"
-                          label="&readingList.showSidebar.label;"/>
-              </menupopup>
-            </menu>
             <menuseparator/>
             <!-- Bookmarks menu items will go here -->
             <menuitem id="BMB_bookmarksShowAll"
@@ -1001,7 +917,7 @@
                        tooltip="dynamic-shortcut-tooltip"/>
 
         <toolbarbutton id="home-button" class="toolbarbutton-1 chromeclass-toolbar-additional"
-                       persist="class" removable="true"
+                       removable="true"
                        label="&homeButton.label;"
                        ondragover="homeButtonObserver.onDragOver(event)"
                        ondragenter="homeButtonObserver.onDragOver(event)"
@@ -1022,7 +938,7 @@
                    class="chromeclass-toolbar-additional"
                    removable="false">
         <toolbarbutton id="PanelUI-menu-button"
-                       class="toolbarbutton-1"
+                       class="toolbarbutton-1 badged-button"
                        consumeanchor="PanelUI-button"
                        label="&brandShortName;"
                        tooltiptext="&appmenu.tooltip;"/>
@@ -1222,6 +1138,8 @@
         <browser id="social-sidebar-browser"
                  type="content"
                  context="contentAreaContextMenu"
+                 message="true"
+                 messagemanagergroup="social"
                  disableglobalhistory="true"
                  tooltip="aHTMLTooltip"
                  popupnotificationanchor="social-sidebar-favico"
@@ -1233,34 +1151,24 @@
 #include ../../components/customizableui/content/customizeMode.inc.xul
   </deck>
 
-  <hbox id="full-screen-warning-container" hidden="true" fadeout="true">
-    <hbox style="width: 100%;" pack="center"> <!-- Inner hbox needed due to bug 579776. -->
-      <vbox id="full-screen-warning-message" align="center">
-        <description id="full-screen-domain-text"/>
-        <description class="full-screen-description" value="&fullscreenExitHint2.value;"/>
-        <vbox id="full-screen-approval-pane" align="center">
-          <hbox>
-#ifdef XP_UNIX
-            <button label="&fullscreenExitButton.label;"
-                    oncommand="FullScreen.setFullscreenAllowed(false);"
-                    class="full-screen-approval-button"/>
-            <button label="&fullscreenAllowButton.label;"
-                    oncommand="FullScreen.setFullscreenAllowed(true);"
-                    class="full-screen-approval-button"/>
+  <html:div id="fullscreen-warning" hidden="true">
+    <html:div id="fullscreen-domain-text">
+      &fullscreenWarning.beforeDomain.label;
+      <html:span id="fullscreen-domain"/>
+      &fullscreenWarning.afterDomain.label;
+    </html:div>
+    <html:div id="fullscreen-generic-text">
+      &fullscreenWarning.generic.label;
+    </html:div>
+    <html:button id="fullscreen-exit-button"
+                 onclick="FullScreen.exitDomFullScreen();">
+#ifdef XP_MACOSX
+            &exitDOMFullscreenMac.button;
 #else
-            <button label="&fullscreenAllowButton.label;"
-                    oncommand="FullScreen.setFullscreenAllowed(true);"
-                    class="full-screen-approval-button"/>
-            <button label="&fullscreenExitButton.label;"
-                    oncommand="FullScreen.setFullscreenAllowed(false);"
-                    class="full-screen-approval-button"/>
+            &exitDOMFullscreen.button;
 #endif
-          </hbox>
-          <checkbox id="full-screen-remember-decision"/>
-        </vbox>
-      </vbox>
-    </hbox>
-  </hbox>
+    </html:button>
+  </html:div>
 
   <vbox id="browser-bottombox" layer="true">
     <notificationbox id="global-notificationbox"/>

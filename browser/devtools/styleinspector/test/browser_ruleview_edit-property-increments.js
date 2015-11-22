@@ -148,7 +148,7 @@ function* testOddCases(view) {
 };
 
 function* runIncrementTest(propertyEditor, view, tests) {
-  let editor = yield focusEditableField(propertyEditor.valueSpan);
+  let editor = yield focusEditableField(view, propertyEditor.valueSpan);
 
   for(let test in tests) {
     yield testIncrement(editor, tests[test], view, propertyEditor);
@@ -167,15 +167,18 @@ function* testIncrement(editor, options, view, {ruleEditor}) {
 
   is(input.value, options.start, "Value initialized at " + options.start);
 
-  let onModifications = ruleEditor.rule._applyingModifications;
+  let onRuleViewChanged = view.once("ruleview-changed");
   let onKeyUp = once(input, "keyup");
   let key;
   key = options.down ? "VK_DOWN" : "VK_UP";
   key = options.pageDown ? "VK_PAGE_DOWN" : options.pageUp ? "VK_PAGE_UP" : key;
   EventUtils.synthesizeKey(key, {altKey: options.alt, shiftKey: options.shift},
-    view.doc.defaultView);
+    view.styleWindow);
   yield onKeyUp;
-  yield onModifications;
+  // Only expect a change if the value actually changed!
+  if (options.start !== options.end) {
+    yield onRuleViewChanged;
+  }
 
-  is(editor.input.value, options.end, "Value changed to " + options.end);
+  is(input.value, options.end, "Value changed to " + options.end);
 }

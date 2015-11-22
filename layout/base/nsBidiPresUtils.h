@@ -30,7 +30,7 @@ template<class T> class nsTHashtable;
 namespace mozilla {
   class WritingMode;
   class LogicalMargin;
-}
+} // namespace mozilla
 
 /**
  * A structure representing some continuation state for each frame on the line,
@@ -357,24 +357,6 @@ public:
                               nsBidi*                aBidiEngine);
 
   /**
-   * Make a copy of a string, converting from logical to visual order
-   *
-   * @param aSource the source string
-   * @param aDest the destination string
-   * @param aBaseDirection the base direction of the string
-   *       (NSBIDI_LTR or NSBIDI_RTL to force the base direction;
-   *        NSBIDI_DEFAULT_LTR or NSBIDI_DEFAULT_RTL to let the bidi engine
-   *        determine the direction from rules P2 and P3 of the bidi algorithm.
-   *  @see nsBidi::GetPara
-   * @param aOverride if TRUE, the text has a bidi override, according to
-   *                    the direction in aDir
-   */
-  static void CopyLogicalToVisual(const nsAString& aSource,
-                                  nsAString& aDest,
-                                  nsBidiLevel aBaseDirection,
-                                  bool aOverride);
-
-  /**
    * Use style attributes to determine the base paragraph level to pass to the
    * bidi algorithm.
    *
@@ -568,16 +550,6 @@ private:
   
   static void StripBidiControlCharacters(char16_t* aText,
                                          int32_t&   aTextLength);
-
-  static bool WriteLogicalToVisual(const char16_t* aSrc,
-                                     uint32_t aSrcLength,
-                                     char16_t* aDest,
-                                     nsBidiLevel aBaseDirection,
-                                     nsBidi* aBidiEngine);
-
-  static void WriteReverse(const char16_t* aSrc,
-                           uint32_t aSrcLength,
-                           char16_t* aDest);
 };
 
 #endif /* nsBidiPresUtils_h___ */

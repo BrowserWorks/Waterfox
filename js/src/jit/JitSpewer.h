@@ -26,6 +26,8 @@ namespace jit {
     _(Alias)                                \
     /* Information during GVN */            \
     _(GVN)                                  \
+    /* Information during sincos */         \
+    _(Sincos)                               \
     /* Information during sinking */        \
     _(Sink)                                 \
     /* Information during Range analysis */ \
@@ -77,7 +79,7 @@ namespace jit {
     /* Information about compiled scripts */\
     _(IonScripts)                           \
     /* Info about failing to log script */  \
-    _(IonLogs)                              \
+    _(IonSyncLogs)                          \
     /* Information during MIR building */   \
     _(IonMIR)                               \
     /* Information during bailouts */       \
@@ -96,6 +98,8 @@ enum JitSpewChannel {
     JitSpew_Terminator
 };
 
+class MIRGenerator;
+class TempAllocator;
 
 // The JitSpewer is only available on debug builds.
 // None of the global functions have effect on non-debug builds.
@@ -103,44 +107,56 @@ static const int NULL_ID = -1;
 
 #ifdef DEBUG
 
-class IonSpewer
+// Class made to hold the MIR and LIR graphs of an AsmJS / Ion compilation.
+class GraphSpewer
 {
   private:
-    MIRGraph* graph;
-    C1Spewer c1Spewer;
-    JSONSpewer jsonSpewer;
-    bool inited_;
+    MIRGraph* graph_;
+    LSprinter c1Printer_;
+    LSprinter jsonPrinter_;
+    C1Spewer c1Spewer_;
+    JSONSpewer jsonSpewer_;
 
   public:
-    IonSpewer()
-      : graph(nullptr), inited_(false)
-    { }
+    explicit GraphSpewer(TempAllocator *alloc);
 
-    // File output is terminated safely upon destruction.
-    ~IonSpewer();
-
-    bool init();
-    void beginFunction(MIRGraph* graph, JS::HandleScript);
-    bool isSpewingFunction() const;
+    bool isSpewing() const {
+        return graph_;
+    }
+    void init(MIRGraph* graph, JSScript* function);
+    void beginFunction(JSScript* function);
     void spewPass(const char* pass);
     void spewPass(const char* pass, BacktrackingAllocator* ra);
     void endFunction();
+
+    void dump(Fprinter& c1, Fprinter& json);
 };
 
-class IonSpewFunction
+void SpewBeginFunction(MIRGenerator* mir, JSScript* function);
+class AutoSpewEndFunction
 {
-  public:
-    IonSpewFunction(MIRGraph* graph, JS::HandleScript function);
-    ~IonSpewFunction();
-};
+  private:
+    MIRGenerator* mir_;
 
-void IonSpewNewFunction(MIRGraph* graph, JS::HandleScript function);
-void IonSpewPass(const char* pass);
-void IonSpewPass(const char* pass, BacktrackingAllocator* ra);
-void IonSpewEndFunction();
+  public:
+    explicit AutoSpewEndFunction(MIRGenerator* mir)
+      : mir_(mir)
+    { }
+    ~AutoSpewEndFunction();
+};
 
 void CheckLogging();
-extern FILE* JitSpewFile;
+Fprinter& JitSpewPrinter();
+
+class JitSpewIndent
+{
+    JitSpewChannel channel_;
+
+  public:
+    explicit JitSpewIndent(JitSpewChannel channel);
+    ~JitSpewIndent();
+};
+
 void JitSpew(JitSpewChannel channel, const char* fmt, ...);
 void JitSpewStart(JitSpewChannel channel, const char* fmt, ...);
 void JitSpewCont(JitSpewChannel channel, const char* fmt, ...);
@@ -154,28 +170,62 @@ void JitSpewDef(JitSpewChannel channel, const char* str, MDefinition* def);
 
 void EnableChannel(JitSpewChannel channel);
 void DisableChannel(JitSpewChannel channel);
-void EnableIonDebugLogging();
+void EnableIonDebugSyncLogging();
+void EnableIonDebugAsyncLogging();
 
 #else
 
-static inline void IonSpewNewFunction(MIRGraph* graph, JS::HandleScript function)
+class GraphSpewer
+{
+  public:
+    explicit GraphSpewer(TempAllocator *alloc) { }
+
+    bool isSpewing() { return false; }
+    void init(MIRGraph* graph, JSScript* function) { }
+    void beginFunction(JSScript* function) { }
+    void spewPass(const char* pass) { }
+    void spewPass(const char* pass, BacktrackingAllocator* ra) { }
+    void endFunction() { }
+
+    void dump(Fprinter& c1, Fprinter& json) { }
+};
+
+static inline void SpewBeginFunction(MIRGenerator* mir, JSScript* function)
 { }
-static inline void IonSpewPass(const char* pass)
-{ }
-static inline void IonSpewPass(const char* pass, BacktrackingAllocator* ra)
-{ }
-static inline void IonSpewEndFunction()
-{ }
+
+class AutoSpewEndFunction
+{
+  public:
+    explicit AutoSpewEndFunction(MIRGenerator* mir) { }
+    ~AutoSpewEndFunction() { }
+};
 
 static inline void CheckLogging()
 { }
-static FILE* const JitSpewFile = nullptr;
-static inline void JitSpew(JitSpewChannel, const char* fmt, ...)
+static inline Fprinter& JitSpewPrinter()
+{
+    MOZ_CRASH("No empty backend for JitSpewPrinter");
+}
+
+class JitSpewIndent
+{
+  public:
+    explicit JitSpewIndent(JitSpewChannel channel) {}
+    ~JitSpewIndent() {}
+};
+
+// The computation of some of the argument of the spewing functions might be
+// costly, thus we use variaidic macros to ignore any argument of these
+// functions.
+static inline void JitSpewCheckArguments(JitSpewChannel channel, const char* fmt)
 { }
-static inline void JitSpewStart(JitSpewChannel channel, const char* fmt, ...)
-{ }
-static inline void JitSpewCont(JitSpewChannel channel, const char* fmt, ...)
-{ }
+
+#define JitSpewCheckExpandedArgs(channel, fmt, ...) JitSpewCheckArguments(channel, fmt)
+#define JitSpewCheckExpandedArgs_(ArgList) JitSpewCheckExpandedArgs ArgList /* Fix MSVC issue */
+#define JitSpew(...) JitSpewCheckExpandedArgs_((__VA_ARGS__))
+#define JitSpewStart(...) JitSpewCheckExpandedArgs_((__VA_ARGS__))
+#define JitSpewCont(...) JitSpewCheckExpandedArgs_((__VA_ARGS__))
+
 static inline void JitSpewFin(JitSpewChannel channel)
 { }
 
@@ -192,7 +242,9 @@ static inline void EnableChannel(JitSpewChannel)
 { }
 static inline void DisableChannel(JitSpewChannel)
 { }
-static inline void EnableIonDebugLogging()
+static inline void EnableIonDebugSyncLogging()
+{ }
+static inline void EnableIonDebugAsyncLogging()
 { }
 
 #endif /* DEBUG */
@@ -218,7 +270,7 @@ class AutoDisableSpew
     }
 };
 
-} /* ion */
-} /* js */
+} // namespace jit
+} // namespace js
 
 #endif /* jit_JitSpewer_h */

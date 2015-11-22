@@ -9,6 +9,7 @@ include LayersSurfaces;
 include protocol PCompositable;
 include protocol PCompositor;
 include protocol PLayer;
+include protocol PImageContainer;
 include protocol PRenderFrame;
 include protocol PTexture;
 
@@ -28,7 +29,7 @@ using class mozilla::TimeDuration from "mozilla/TimeStamp.h";
 using class mozilla::TimeStamp from "mozilla/TimeStamp.h";
 using mozilla::ScreenRotation from "mozilla/WidgetUtils.h";
 using nsCSSProperty from "nsCSSProperty.h";
-using mozilla::dom::ScreenOrientation from "mozilla/dom/ScreenOrientation.h";
+using mozilla::dom::ScreenOrientationInternal from "mozilla/dom/ScreenOrientation.h";
 using struct mozilla::layers::TextureInfo from "mozilla/layers/CompositorTypes.h";
 using mozilla::LayerMargin from "Units.h";
 using mozilla::LayerPoint from "Units.h";
@@ -41,7 +42,6 @@ using mozilla::layers::DiagnosticTypes from "mozilla/layers/CompositorTypes.h";
 using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
 using mozilla::layers::FrameMetrics::ViewID from "FrameMetrics.h";
 using struct mozilla::layers::FenceHandle from "mozilla/layers/FenceUtils.h";
-using std::string from "string";
 
 namespace mozilla {
 namespace layers {
@@ -49,12 +49,12 @@ namespace layers {
 struct TargetConfig {
   IntRect naturalBounds;
   ScreenRotation rotation;
-  ScreenOrientation orientation;
+  ScreenOrientationInternal orientation;
   nsIntRegion clearRegion;
 };
 
 // Create a shadow layer for |layer|
-struct OpCreatePaintedLayer     { PLayer layer; };
+struct OpCreatePaintedLayer    { PLayer layer; };
 struct OpCreateContainerLayer  { PLayer layer; };
 struct OpCreateImageLayer      { PLayer layer; };
 struct OpCreateColorLayer      { PLayer layer; };
@@ -198,6 +198,7 @@ struct Animation {
   int32_t direction;
   nsCSSProperty property;
   AnimationData data;
+  float playbackRate;
 };
 
 // Change a layer's attributes
@@ -213,8 +214,9 @@ struct CommonLayerAttributes {
   bool useClipRect;
   ParentLayerIntRect clipRect;
   bool isFixedPosition;
+  uint64_t fixedPositionScrollContainerId;
   LayerPoint fixedPositionAnchor;
-  LayerMargin fixedPositionMargin;
+  bool isClipFixed;
   bool isStickyPosition;
   uint64_t stickyScrollContainerId;
   LayerRect stickyScrollRangeOuter;
@@ -225,11 +227,12 @@ struct CommonLayerAttributes {
   int8_t mixBlendMode;
   bool forceIsolatedGroup;
   nullable PLayer maskLayer;
+  PLayer[] ancestorMaskLayers;
   // Animated colors will only honored for ColorLayers.
   Animation[] animations;
   nsIntRegion invalidRegion;
   FrameMetrics[] metrics;
-  string contentDescription;
+  nsCString displayListLog;
 };
 
 struct PaintedLayerAttributes {
@@ -315,6 +318,7 @@ union MaybeTexture {
 struct TexturedTileDescriptor {
   PTexture texture;
   MaybeTexture textureOnWhite;
+  IntRect updateRect;
   TileLock sharedLock;
 };
 
@@ -328,8 +332,11 @@ union TileDescriptor {
 
 struct SurfaceDescriptorTiles {
   nsIntRegion validRegion;
-  nsIntRegion paintedRegion;
   TileDescriptor[] tiles;
+  IntPoint    tileOrigin;
+  IntSize     tileSize;
+  int         firstTileX;
+  int         firstTileY;
   int         retainedWidth;
   int         retainedHeight;
   float       resolution;
@@ -345,17 +352,13 @@ struct OpUseTiledLayerBuffer {
 struct OpUseOverlaySource {
   PCompositable compositable;
   OverlaySource overlay;
+  IntRect picture;
 };
 
 struct OpPaintTextureRegion {
   PCompositable compositable;
   ThebesBufferData bufferData;
   nsIntRegion updatedRegion;
-};
-
-struct OpUpdatePictureRect {
-  PCompositable compositable;
-  IntRect picture;
 };
 
 /**
@@ -383,14 +386,28 @@ union MaybeFence {
   null_t;
 };
 
+struct TimedTexture {
+  PTexture texture;
+  MaybeFence fence;
+  TimeStamp timeStamp;
+  IntRect picture;
+  uint32_t frameID;
+  uint32_t producerID;
+};
+
 /**
- * Tells the compositor-side which texture to use (for example, as front buffer
- * if there is several textures for double buffering)
+ * Tells the compositor-side which textures to use (for example, as front buffer
+ * if there are several textures for double buffering).
+ * This provides a list of textures with timestamps, ordered by timestamp.
+ * The newest texture whose timestamp is <= the current time is rendered
+ * (where null is considered less than every other timestamp). If there is no
+ * such texture, the first texture is rendered.
+ * The first timestamp value can be null, but the others must not be.
+ * The list must not be empty.
  */
 struct OpUseTexture {
   PCompositable compositable;
-  PTexture texture;
-  MaybeFence fence;
+  TimedTexture[] textures;
 };
 
 struct OpUseComponentAlphaTextures {
@@ -416,8 +433,6 @@ struct OpDeliverFenceToTracker {
 };
 
 union CompositableOperation {
-  OpUpdatePictureRect;
-
   OpPaintTextureRegion;
 
   OpUseTiledLayerBuffer;
@@ -463,18 +478,22 @@ struct OpContentBufferSwap {
   nsIntRegion frontUpdatedRegion;
 };
 
-struct ReturnReleaseFence {
-  PCompositable compositable;
-  PTexture texture;
-  FenceHandle fence;
+/**
+ * An ImageCompositeNotification is sent the first time a particular
+ * image is composited by an ImageHost.
+ */
+struct ImageCompositeNotification {
+  PImageContainer imageContainer;
+  TimeStamp imageTimeStamp;
+  TimeStamp firstCompositeTimeStamp;
+  uint32_t frameID;
+  uint32_t producerID;
 };
 
 // Unit of a "changeset reply".  This is a weird abstraction, probably
 // only to be used for buffer swapping.
 union EditReply {
   OpContentBufferSwap;
-
-  ReturnReleaseFence;
 };
 
 union AsyncParentMessageData {

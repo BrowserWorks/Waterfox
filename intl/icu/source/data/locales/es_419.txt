@@ -1,0 +1,168 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2015 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/es_419.xml
+// *
+// ***************************************************************************
+es_419{
+    NumberElements{
+        latn{
+            patterns{
+                accountingFormat{"¤#,##0.00"}
+                currencyFormat{"¤#,##0.00"}
+            }
+            patternsShort{
+                decimalFormat{
+                    1000{
+                        one{"0"}
+                        other{"0"}
+                    }
+                    10000{
+                        one{"00k"}
+                        other{"00k"}
+                    }
+                    100000{
+                        one{"000k"}
+                        other{"000k"}
+                    }
+                    1000000000{
+                        one{"0k M"}
+                        other{"0k M"}
+                    }
+                    10000000000{
+                        one{"00k M"}
+                        other{"00k M"}
+                    }
+                    100000000000{
+                        one{"000k M"}
+                        other{"000k M"}
+                    }
+                }
+            }
+            symbols{
+                decimal{"."}
+                group{","}
+            }
+        }
+    }
+    Version{"2.1.13.23"}
+    calendar{
+        generic{
+            availableFormats{
+                GyMMM{"MMM 'de' y G"}
+                GyMMMd{"d 'de' MMM 'de' y G"}
+                MMMEd{"E, d 'de' MMM"}
+                MMMd{"d 'de' MMM"}
+                yMEd{"E d/M/y G"}
+            }
+            intervalFormats{
+                yM{
+                    M{"M/y – M/y GGGGG"}
+                    y{"M/y – M/y GGGGG"}
+                }
+                yMEd{
+                    M{"E, d/M/y – E, d/M/y GGGGG"}
+                    d{"E, d/M/y – E, d/M/y GGGGG"}
+                    y{"E, d/M/y – E, d/M/y GGGGG"}
+                }
+                yMd{
+                    M{"d/M/y – d/M/y GGGGG"}
+                    d{"d/M/y – d/M/y GGGGG"}
+                    y{"d/M/y – d/M/y GGGGG"}
+                }
+            }
+        }
+        gregorian{
+            DateTimePatterns{
+                "h:mm:ss a zzzz",
+                "h:mm:ss a z",
+                "h:mm:ss a",
+                "h:mm a",
+                "EEEE, d 'de' MMMM 'de' y",
+                "d 'de' MMMM 'de' y",
+                "d MMM y",
+                "d/M/yy",
+                "{1} {0}",
+                "{1}, {0}",
+                "{1}, {0}",
+                "{1} {0}",
+                "{1} {0}",
+            }
+            availableFormats{
+                EHm{"E, HH:mm"}
+                EHms{"E, HH:mm:ss"}
+                GyMMMd{"d 'de' MMM 'de' y G"}
+                H{"HH"}
+                Hm{"HH:mm"}
+                Hms{"HH:mm:ss"}
+                MMMdd{"dd-MMM"}
+                yMEd{"E d/M/y"}
+                yMMMEd{"E, d 'de' MMM 'de' y"}
+                yQQQ{"QQQ 'de' y"}
+            }
+            dayNames{
+                format{
+                    narrow{
+                        "d",
+                        "l",
+                        "m",
+                        "m",
+                        "j",
+                        "v",
+                        "s",
+                    }
+                }
+                stand-alone{
+                    narrow{
+                        "D",
+                        "L",
+                        "M",
+                        "M",
+                        "J",
+                        "V",
+                        "S",
+                    }
+                }
+            }
+            intervalFormats{
+                H{
+                    H{"HH – HH"}
+                }
+                Hm{
+                    H{"HH:mm – HH:mm"}
+                    m{"HH:mm – HH:mm"}
+                }
+                Hmv{
+                    H{"HH:mm – HH:mm v"}
+                    m{"HH:mm – HH:mm v"}
+                }
+                Hv{
+                    H{"HH – HH v"}
+                }
+                MMMEd{
+                    M{"E, d 'de' MMM – E, d 'de' MMM"}
+                    d{"E, d 'de' MMM – E, d 'de' MMM"}
+                }
+                MMMd{
+                    M{"d 'de' MMM – d 'de' MMM"}
+                    d{"d – d 'de' MMM"}
+                }
+                yMMM{
+                    y{"MMM 'de' y – MMM 'de' y"}
+                }
+                yMMMEd{
+                    M{"E, d 'de' MMM – E, d 'de' MMM 'de' y"}
+                    d{"E, d 'de' MMM – E, d 'de' MMM 'de' y"}
+                    y{"E, d 'de' MMM 'de' y – E, d 'de' MMM 'de' y"}
+                }
+                yMMMd{
+                    M{"d 'de' MMM – d 'de' MMM 'de' y"}
+                    d{"d – d 'de' MMM 'de' y"}
+                    y{"d 'de' MMM 'de' y – d 'de' MMM 'de' y"}
+                }
+            }
+        }
+    }
+}

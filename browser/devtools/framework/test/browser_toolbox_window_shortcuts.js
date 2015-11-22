@@ -1,9 +1,11 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-let Toolbox = devtools.Toolbox;
+"use strict";
 
-let toolbox, toolIDs, idIndex, modifiedPrefs = [];
+var {Toolbox} = require("devtools/framework/toolbox");
+
+var toolbox, toolIDs, idIndex, modifiedPrefs = [];
 
 function test() {
   addTab("about:blank").then(function() {

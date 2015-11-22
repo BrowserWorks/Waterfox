@@ -15,18 +15,21 @@
 namespace mozilla {
 namespace dom {
 
-class File;
+class Blob;
 
 namespace indexedDB {
 
 class FileInfo;
 class IDBDatabase;
+class IDBMutableFile;
 class SerializedStructuredCloneReadInfo;
 
 struct StructuredCloneFile
 {
-  nsRefPtr<File> mFile;
+  nsRefPtr<Blob> mBlob;
+  nsRefPtr<IDBMutableFile> mMutableFile;
   nsRefPtr<FileInfo> mFileInfo;
+  bool mMutable;
 
   // In IndexedDatabaseInlines.h
   inline

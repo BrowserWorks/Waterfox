@@ -10,6 +10,7 @@
 #define PL_ARENA_CONST_ALIGN_MASK (sizeof(void*)-1)
 #include "nsLineLayout.h"
 
+#include "LayoutLogging.h"
 #include "SVGTextFrame.h"
 #include "nsBlockFrame.h"
 #include "nsFontMetrics.h"
@@ -154,17 +155,19 @@ nsLineLayout::BeginLineReflow(nscoord aICoord, nscoord aBCoord,
                               const nsSize& aContainerSize)
 {
   NS_ASSERTION(nullptr == mRootSpan, "bad linelayout user");
-  NS_WARN_IF_FALSE(aISize != NS_UNCONSTRAINEDSIZE,
-                   "have unconstrained width; this should only result from "
-                   "very large sizes, not attempts at intrinsic width "
-                   "calculation");
+  LAYOUT_WARN_IF_FALSE(aISize != NS_UNCONSTRAINEDSIZE,
+                       "have unconstrained width; this should only result from "
+                       "very large sizes, not attempts at intrinsic width "
+                       "calculation");
 #ifdef DEBUG
-  if ((aISize != NS_UNCONSTRAINEDSIZE) && CRAZY_SIZE(aISize)) {
+  if ((aISize != NS_UNCONSTRAINEDSIZE) && CRAZY_SIZE(aISize) &&
+      !LineContainerFrame()->GetParent()->IsCrazySizeAssertSuppressed()) {
     nsFrame::ListTag(stdout, mBlockReflowState->frame);
     printf(": Init: bad caller: width WAS %d(0x%x)\n",
            aISize, aISize);
   }
-  if ((aBSize != NS_UNCONSTRAINEDSIZE) && CRAZY_SIZE(aBSize)) {
+  if ((aBSize != NS_UNCONSTRAINEDSIZE) && CRAZY_SIZE(aBSize) &&
+      !LineContainerFrame()->GetParent()->IsCrazySizeAssertSuppressed()) {
     nsFrame::ListTag(stdout, mBlockReflowState->frame);
     printf(": Init: bad caller: height WAS %d(0x%x)\n",
            aBSize, aBSize);
@@ -315,7 +318,7 @@ nsLineLayout::UpdateBand(WritingMode aWM,
   // need to convert to our writing mode, because we might have a different
   // mode from the caller due to dir: auto
   LogicalRect availSpace = aNewAvailSpace.ConvertTo(lineWM, aWM,
-                                                    ContainerWidth());
+                                                    ContainerSize());
 #ifdef REALLY_NOISY_REFLOW
   printf("nsLL::UpdateBand %d, %d, %d, %d, (converted to %d, %d, %d, %d); frame=%p\n  will set mImpacted to true\n",
          aNewAvailSpace.x, aNewAvailSpace.y,
@@ -326,13 +329,15 @@ nsLineLayout::UpdateBand(WritingMode aWM,
 #endif
 #ifdef DEBUG
   if ((availSpace.ISize(lineWM) != NS_UNCONSTRAINEDSIZE) &&
-      CRAZY_SIZE(availSpace.ISize(lineWM))) {
+      CRAZY_SIZE(availSpace.ISize(lineWM)) &&
+      !LineContainerFrame()->GetParent()->IsCrazySizeAssertSuppressed()) {
     nsFrame::ListTag(stdout, mBlockReflowState->frame);
     printf(": UpdateBand: bad caller: ISize WAS %d(0x%x)\n",
            availSpace.ISize(lineWM), availSpace.ISize(lineWM));
   }
   if ((availSpace.BSize(lineWM) != NS_UNCONSTRAINEDSIZE) &&
-      CRAZY_SIZE(availSpace.BSize(lineWM))) {
+      CRAZY_SIZE(availSpace.BSize(lineWM)) &&
+      !LineContainerFrame()->GetParent()->IsCrazySizeAssertSuppressed()) {
     nsFrame::ListTag(stdout, mBlockReflowState->frame);
     printf(": UpdateBand: bad caller: BSize WAS %d(0x%x)\n",
            availSpace.BSize(lineWM), availSpace.BSize(lineWM));
@@ -878,10 +883,10 @@ nsLineLayout::ReflowFrame(nsIFrame* aFrame,
   // Inline-ish and text-ish things don't compute their width;
   // everything else does.  We need to give them an available width that
   // reflects the space left on the line.
-  NS_WARN_IF_FALSE(psd->mIEnd != NS_UNCONSTRAINEDSIZE,
-                   "have unconstrained width; this should only result from "
-                   "very large sizes, not attempts at intrinsic width "
-                   "calculation");
+  LAYOUT_WARN_IF_FALSE(psd->mIEnd != NS_UNCONSTRAINEDSIZE,
+                      "have unconstrained width; this should only result from "
+                      "very large sizes, not attempts at intrinsic width "
+                      "calculation");
   nscoord availableSpaceOnLine = psd->mIEnd - psd->mICoord;
 
   // Setup reflow state for reflowing the frame
@@ -941,7 +946,7 @@ nsLineLayout::ReflowFrame(nsIFrame* aFrame,
   metrics.ISize(lineWM) = nscoord(0xdeadbeef);
   metrics.BSize(lineWM) = nscoord(0xdeadbeef);
 #endif
-  nscoord tI = pfd->mBounds.LineLeft(lineWM, ContainerWidth());
+  nscoord tI = pfd->mBounds.LineLeft(lineWM, ContainerSize());
   nscoord tB = pfd->mBounds.BStart(lineWM);
   mFloatManager->Translate(tI, tB);
 
@@ -1044,8 +1049,9 @@ nsLineLayout::ReflowFrame(nsIFrame* aFrame,
   // Note: break-before means ignore the reflow metrics since the
   // frame will be reflowed another time.
   if (!NS_INLINE_IS_BREAK_BEFORE(aReflowStatus)) {
-    if (CRAZY_SIZE(metrics.ISize(lineWM)) ||
-        CRAZY_SIZE(metrics.BSize(lineWM))) {
+    if ((CRAZY_SIZE(metrics.ISize(lineWM)) ||
+         CRAZY_SIZE(metrics.BSize(lineWM))) &&
+        !LineContainerFrame()->GetParent()->IsCrazySizeAssertSuppressed()) {
       printf("nsLineLayout: ");
       nsFrame::ListTag(stdout, aFrame);
       printf(" metrics=%d,%d!\n", metrics.Width(), metrics.Height());
@@ -1070,7 +1076,7 @@ nsLineLayout::ReflowFrame(nsIFrame* aFrame,
   pfd->mBounds.BSize(lineWM) = metrics.BSize(lineWM);
 
   // Size the frame, but |RelativePositionFrames| will size the view.
-  aFrame->SetRect(lineWM, pfd->mBounds, ContainerWidthForSpan(psd));
+  aFrame->SetRect(lineWM, pfd->mBounds, ContainerSizeForSpan(psd));
 
   // Tell the frame that we're done reflowing it
   aFrame->DidReflow(mPresContext,
@@ -1249,13 +1255,16 @@ nsLineLayout::SyncAnnotationBounds(PerFrameData* aRubyFrame)
     for (PerFrameData* rtc = pfd->mNextAnnotation;
          rtc; rtc = rtc->mNextAnnotation) {
       // When the annotation container is reflowed, the width of the
-      // ruby container is unknown, hence zero should be used here
-      // as container width to get the correct logical rect.
-      LogicalRect rtcBounds(lineWM, rtc->mFrame->GetRect(), 0);
+      // ruby container is unknown so we use a dummy container size;
+      // in the case of RTL block direction, the final position will be
+      // fixed up later.
+      const nsSize dummyContainerSize;
+      LogicalRect rtcBounds(lineWM, rtc->mFrame->GetRect(),
+                            dummyContainerSize);
       rtc->mBounds = rtcBounds;
-      nscoord rtcWidth = rtcBounds.Width(lineWM);
+      nsSize rtcSize = rtcBounds.Size(lineWM).GetPhysicalSize(lineWM);
       for (PerFrameData* rt = rtc->mSpan->mFirstFrame; rt; rt = rt->mNext) {
-        LogicalRect rtBounds = rt->mFrame->GetLogicalRect(lineWM, rtcWidth);
+        LogicalRect rtBounds = rt->mFrame->GetLogicalRect(lineWM, rtcSize);
         MOZ_ASSERT(rt->mBounds.Size(lineWM) == rtBounds.Size(lineWM),
                    "Size of the annotation should not have been changed");
         rt->mBounds.SetOrigin(lineWM, rtBounds.Origin(lineWM));
@@ -1497,7 +1506,7 @@ nsLineLayout::AddBulletFrame(nsIFrame* aFrame,
   }
 
   // Note: block-coord value will be updated during block-direction alignment
-  pfd->mBounds = LogicalRect(lineWM, aFrame->GetRect(), ContainerWidth());
+  pfd->mBounds = LogicalRect(lineWM, aFrame->GetRect(), ContainerSize());
   pfd->mOverflowAreas = aMetrics.mOverflowAreas;
 }
 
@@ -1513,7 +1522,7 @@ nsLineLayout::DumpPerSpanData(PerSpanData* psd, int32_t aIndent)
     nsFrame::IndentBy(stdout, aIndent+1);
     nsFrame::ListTag(stdout, pfd->mFrame);
     nsRect rect = pfd->mBounds.GetPhysicalRect(psd->mWritingMode,
-                                               ContainerWidth());
+                                               ContainerSize());
     printf(" %d,%d,%d,%d\n", rect.x, rect.y, rect.width, rect.height);
     if (pfd->mSpan) {
       DumpPerSpanData(pfd->mSpan, aIndent + 1);
@@ -1602,7 +1611,7 @@ nsLineLayout::VerticalAlignLine()
   for (PerFrameData* pfd = psd->mFirstFrame; pfd; pfd = pfd->mNext) {
     if (pfd->mBlockDirAlign == VALIGN_OTHER) {
       pfd->mBounds.BStart(lineWM) += baselineBCoord;
-      pfd->mFrame->SetRect(lineWM, pfd->mBounds, ContainerWidth());
+      pfd->mFrame->SetRect(lineWM, pfd->mBounds, ContainerSize());
     }
   }
   PlaceTopBottomFrames(psd, -mBStartEdge, lineBSize);
@@ -1613,7 +1622,7 @@ nsLineLayout::VerticalAlignLine()
     mLineBox->SetBounds(lineWM,
                         psd->mIStart, mBStartEdge,
                         psd->mICoord - psd->mIStart, lineBSize,
-                        ContainerWidth());
+                        ContainerSize());
 
     mLineBox->SetLogicalAscent(baselineBCoord - mBStartEdge);
 #ifdef NOISY_BLOCKDIR_ALIGN
@@ -1638,7 +1647,7 @@ nsLineLayout::PlaceTopBottomFrames(PerSpanData* psd,
     NS_ASSERTION(0xFF != pfd->mBlockDirAlign, "umr");
 #endif
     WritingMode lineWM = mRootSpan->mWritingMode;
-    nscoord containerWidth = ContainerWidthForSpan(psd);
+    nsSize containerSize = ContainerSizeForSpan(psd);
     switch (pfd->mBlockDirAlign) {
       case VALIGN_TOP:
         if (span) {
@@ -1648,7 +1657,7 @@ nsLineLayout::PlaceTopBottomFrames(PerSpanData* psd,
           pfd->mBounds.BStart(lineWM) =
             -aDistanceFromStart + pfd->mMargin.BStart(lineWM);
         }
-        pfd->mFrame->SetRect(lineWM, pfd->mBounds, containerWidth);
+        pfd->mFrame->SetRect(lineWM, pfd->mBounds, containerSize);
 #ifdef NOISY_BLOCKDIR_ALIGN
         printf("    ");
         nsFrame::ListTag(stdout, pfd->mFrame);
@@ -1668,7 +1677,7 @@ nsLineLayout::PlaceTopBottomFrames(PerSpanData* psd,
           pfd->mBounds.BStart(lineWM) = -aDistanceFromStart + aLineBSize -
             pfd->mMargin.BEnd(lineWM) - pfd->mBounds.BSize(lineWM);
         }
-        pfd->mFrame->SetRect(lineWM, pfd->mBounds, containerWidth);
+        pfd->mFrame->SetRect(lineWM, pfd->mBounds, containerSize);
 #ifdef NOISY_BLOCKDIR_ALIGN
         printf("    ");
         nsFrame::ListTag(stdout, pfd->mFrame);
@@ -2246,7 +2255,7 @@ nsLineLayout::VerticalAlignFrames(PerSpanData* psd)
 #endif
       }
       if (psd != mRootSpan) {
-        frame->SetRect(lineWM, pfd->mBounds, ContainerWidthForSpan(psd));
+        frame->SetRect(lineWM, pfd->mBounds, ContainerSizeForSpan(psd));
       }
     }
     pfd = pfd->mNext;
@@ -2409,7 +2418,7 @@ nsLineLayout::VerticalAlignFrames(PerSpanData* psd)
       while (nullptr != pfd) {
         pfd->mBounds.BStart(lineWM) -= minBCoord; // move all the children
                                                   // back up
-        pfd->mFrame->SetRect(lineWM, pfd->mBounds, ContainerWidthForSpan(psd));
+        pfd->mFrame->SetRect(lineWM, pfd->mBounds, ContainerSizeForSpan(psd));
         pfd = pfd->mNext;
       }
       maxBCoord -= minBCoord; // since minBCoord is in the frame's own
@@ -2487,11 +2496,11 @@ nsLineLayout::TrimTrailingWhiteSpaceIn(PerSpanData* psd,
             // that are direct children of the block will be updated
             // later, however, because the VerticalAlignFrames method
             // will be run after this method.
-            nscoord containerWidth = ContainerWidthForSpan(childSpan);
+            nsSize containerSize = ContainerSizeForSpan(childSpan);
             nsIFrame* f = pfd->mFrame;
-            LogicalRect r(lineWM, f->GetRect(), containerWidth);
+            LogicalRect r(lineWM, f->GetRect(), containerSize);
             r.ISize(lineWM) -= deltaISize;
-            f->SetRect(lineWM, r, containerWidth);
+            f->SetRect(lineWM, r, containerSize);
           }
 
           // Adjust the inline end edge of the span that contains the child span
@@ -2555,7 +2564,7 @@ nsLineLayout::TrimTrailingWhiteSpaceIn(PerSpanData* psd,
           // The frame was already placed during psd's
           // reflow. Update the frames rectangle now.
           pfd->mFrame->SetRect(lineWM, pfd->mBounds,
-                               ContainerWidthForSpan(psd));
+                               ContainerSizeForSpan(psd));
         }
 
         // Adjust containing span's right edge
@@ -2771,7 +2780,7 @@ nsLineLayout::ComputeFrameJustification(PerSpanData* aPSD,
 
 void
 nsLineLayout::AdvanceAnnotationInlineBounds(PerFrameData* aPFD,
-                                            nscoord aContainerWidth,
+                                            const nsSize& aContainerSize,
                                             nscoord aDeltaICoord,
                                             nscoord aDeltaISize)
 {
@@ -2809,7 +2818,7 @@ nsLineLayout::AdvanceAnnotationInlineBounds(PerFrameData* aPFD,
     // themselves properly. We only need to expand its own size here.
     aPFD->mBounds.ISize(lineWM) += aDeltaISize;
   }
-  aPFD->mFrame->SetRect(lineWM, aPFD->mBounds, aContainerWidth);
+  aPFD->mFrame->SetRect(lineWM, aPFD->mBounds, aContainerSize);
 }
 
 /**
@@ -2823,8 +2832,8 @@ nsLineLayout::ApplyLineJustificationToAnnotations(PerFrameData* aPFD,
 {
   PerFrameData* pfd = aPFD->mNextAnnotation;
   while (pfd) {
-    nscoord containerWidth = pfd->mFrame->GetParent()->GetRect().Width();
-    AdvanceAnnotationInlineBounds(pfd, containerWidth,
+    nsSize containerSize = pfd->mFrame->GetParent()->GetSize();
+    AdvanceAnnotationInlineBounds(pfd, containerSize,
                                   aDeltaICoord, aDeltaISize);
 
     // There are two cases where an annotation frame has siblings which
@@ -2836,7 +2845,7 @@ nsLineLayout::ApplyLineJustificationToAnnotations(PerFrameData* aPFD,
     // need to move them so that they won't overlap other frames.
     PerFrameData* sibling = pfd->mNext;
     while (sibling && !sibling->mIsLinkedToBase) {
-      AdvanceAnnotationInlineBounds(sibling, containerWidth,
+      AdvanceAnnotationInlineBounds(sibling, containerSize,
                                     aDeltaICoord + aDeltaISize, 0);
       sibling = sibling->mNext;
     }
@@ -2894,7 +2903,7 @@ nsLineLayout::ApplyFrameJustification(PerSpanData* aPSD,
       // excluded from the isize added to the annotation.
       ApplyLineJustificationToAnnotations(pfd, deltaICoord, dw - gapsAtEnd);
       deltaICoord += dw;
-      pfd->mFrame->SetRect(lineWM, pfd->mBounds, ContainerWidthForSpan(aPSD));
+      pfd->mFrame->SetRect(lineWM, pfd->mBounds, ContainerSizeForSpan(aPSD));
     }
   }
   return deltaICoord;
@@ -2919,7 +2928,7 @@ FindNearestRubyBaseAncestor(nsIFrame* aFrame)
  */
 void
 nsLineLayout::ExpandRubyBox(PerFrameData* aFrame, nscoord aReservedISize,
-                            nscoord aContainerWidth)
+                            const nsSize& aContainerSize)
 {
   WritingMode lineWM = mRootSpan->mWritingMode;
   auto rubyAlign = aFrame->mFrame->StyleText()->mRubyAlign;
@@ -2951,7 +2960,7 @@ nsLineLayout::ExpandRubyBox(PerFrameData* aFrame, nscoord aReservedISize,
       for (PerFrameData* child = aFrame->mSpan->mFirstFrame;
            child; child = child->mNext) {
         child->mBounds.IStart(lineWM) += aReservedISize / 2;
-        child->mFrame->SetRect(lineWM, child->mBounds, aContainerWidth);
+        child->mFrame->SetRect(lineWM, child->mBounds, aContainerSize);
       }
       break;
     default:
@@ -2959,7 +2968,7 @@ nsLineLayout::ExpandRubyBox(PerFrameData* aFrame, nscoord aReservedISize,
   }
 
   aFrame->mBounds.ISize(lineWM) += aReservedISize;
-  aFrame->mFrame->SetRect(lineWM, aFrame->mBounds, aContainerWidth);
+  aFrame->mFrame->SetRect(lineWM, aFrame->mBounds, aContainerSize);
 }
 
 /**
@@ -2969,11 +2978,11 @@ nsLineLayout::ExpandRubyBox(PerFrameData* aFrame, nscoord aReservedISize,
  */
 void
 nsLineLayout::ExpandRubyBoxWithAnnotations(PerFrameData* aFrame,
-                                           nscoord aContainerWidth)
+                                           const nsSize& aContainerSize)
 {
   nscoord reservedISize = RubyUtils::GetReservedISize(aFrame->mFrame);
   if (reservedISize) {
-    ExpandRubyBox(aFrame, reservedISize, aContainerWidth);
+    ExpandRubyBox(aFrame, reservedISize, aContainerSize);
   }
 
   WritingMode lineWM = mRootSpan->mWritingMode;
@@ -2991,7 +3000,7 @@ nsLineLayout::ExpandRubyBoxWithAnnotations(PerFrameData* aFrame,
       MOZ_ASSERT(
         rtcFrame->GetLogicalSize(lineWM) == annotation->mBounds.Size(lineWM));
       rtcFrame->SetPosition(lineWM, annotation->mBounds.Origin(lineWM),
-                            aContainerWidth);
+                            aContainerSize);
     }
 
     nscoord reservedISize = RubyUtils::GetReservedISize(annotation->mFrame);
@@ -3011,13 +3020,13 @@ nsLineLayout::ExpandRubyBoxWithAnnotations(PerFrameData* aFrame,
       computeState.mLastParticipant->mJustificationAssignment.mGapsAtEnd = 1;
     }
     nsIFrame* parentFrame = annotation->mFrame->GetParent();
-    nscoord containerWidth = parentFrame->GetRect().Width();
-    MOZ_ASSERT(containerWidth == aContainerWidth ||
+    nsSize containerSize = parentFrame->GetSize();
+    MOZ_ASSERT(containerSize == aContainerSize ||
                parentFrame->GetType() == nsGkAtoms::rubyTextContainerFrame,
                "Container width should only be different when the current "
                "annotation is a ruby text frame, whose parent is not same "
                "as its base frame.");
-    ExpandRubyBox(annotation, reservedISize, containerWidth);
+    ExpandRubyBox(annotation, reservedISize, containerSize);
     ExpandInlineRubyBoxes(annotation->mSpan);
   }
 }
@@ -3029,10 +3038,10 @@ nsLineLayout::ExpandRubyBoxWithAnnotations(PerFrameData* aFrame,
 void
 nsLineLayout::ExpandInlineRubyBoxes(PerSpanData* aSpan)
 {
-  nscoord containerWidth = ContainerWidthForSpan(aSpan);
+  nsSize containerSize = ContainerSizeForSpan(aSpan);
   for (PerFrameData* pfd = aSpan->mFirstFrame; pfd; pfd = pfd->mNext) {
     if (RubyUtils::IsExpandableRubyBox(pfd->mFrame)) {
-      ExpandRubyBoxWithAnnotations(pfd, containerWidth);
+      ExpandRubyBoxWithAnnotations(pfd, containerSize);
     }
     if (pfd->mSpan) {
       ExpandInlineRubyBoxes(pfd->mSpan);
@@ -3052,10 +3061,10 @@ nsLineLayout::TextAlignLine(nsLineBox* aLine,
    */
   PerSpanData* psd = mRootSpan;
   WritingMode lineWM = psd->mWritingMode;
-  NS_WARN_IF_FALSE(psd->mIEnd != NS_UNCONSTRAINEDSIZE,
-                   "have unconstrained width; this should only result from "
-                   "very large sizes, not attempts at intrinsic width "
-                   "calculation");
+  LAYOUT_WARN_IF_FALSE(psd->mIEnd != NS_UNCONSTRAINEDSIZE,
+                       "have unconstrained width; this should only result from "
+                       "very large sizes, not attempts at intrinsic width "
+                       "calculation");
   nscoord availISize = psd->mIEnd - psd->mIStart;
   nscoord remainingISize = availISize - aLine->ISize();
 #ifdef NOISY_INLINEDIR_ALIGN
@@ -3126,7 +3135,7 @@ nsLineLayout::TextAlignLine(nsLineBox* aLine,
           // Apply the justification, and make sure to update our linebox
           // width to account for it.
           aLine->ExpandBy(ApplyFrameJustification(psd, applyState),
-                          ContainerWidthForSpan(psd));
+                          ContainerSizeForSpan(psd));
 
           MOZ_ASSERT(applyState.mGaps.mHandled == applyState.mGaps.mCount,
                      "Unprocessed justification gaps");
@@ -3178,14 +3187,14 @@ nsLineLayout::TextAlignLine(nsLineBox* aLine,
                                    lineWM, mContainerSize,
                                    psd->mIStart + mTextIndent + dx);
     if (dx) {
-      aLine->IndentBy(dx, ContainerWidth());
+      aLine->IndentBy(dx, ContainerSize());
     }
   } else if (dx) {
     for (PerFrameData* pfd = psd->mFirstFrame; pfd; pfd = pfd->mNext) {
       pfd->mBounds.IStart(lineWM) += dx;
-      pfd->mFrame->SetRect(lineWM, pfd->mBounds, ContainerWidthForSpan(psd));
+      pfd->mFrame->SetRect(lineWM, pfd->mBounds, ContainerSizeForSpan(psd));
     }
-    aLine->IndentBy(dx, ContainerWidth());
+    aLine->IndentBy(dx, ContainerSize());
   }
 }
 
@@ -3199,13 +3208,13 @@ nsLineLayout::ApplyRelativePositioning(PerFrameData* aPFD)
 
   nsIFrame* frame = aPFD->mFrame;
   WritingMode frameWM = frame->GetWritingMode();
-  LogicalPoint origin = frame->GetLogicalPosition(ContainerWidth());
+  LogicalPoint origin = frame->GetLogicalPosition(ContainerSize());
   // right and bottom are handled by
   // nsHTMLReflowState::ComputeRelativeOffsets
   nsHTMLReflowState::ApplyRelativePositioning(frame, frameWM,
                                               aPFD->mOffsets, &origin,
-                                              ContainerWidth());
-  frame->SetPosition(frameWM, origin, ContainerWidth());
+                                              ContainerSize());
+  frame->SetPosition(frameWM, origin, ContainerSize());
 }
 
 // This method do relative positioning for ruby annotations.
@@ -3258,7 +3267,7 @@ nsLineLayout::RelativePositionFrames(PerSpanData* psd, nsOverflowAreas& aOverflo
     // children of the block starts at the upper left corner of the
     // line and is sized to match the size of the line's bounding box
     // (the same size as the values returned from VerticalAlignFrames)
-    overflowAreas.VisualOverflow() = rect.GetPhysicalRect(wm, ContainerWidth());
+    overflowAreas.VisualOverflow() = rect.GetPhysicalRect(wm, ContainerSize());
     overflowAreas.ScrollableOverflow() = overflowAreas.VisualOverflow();
   }
 

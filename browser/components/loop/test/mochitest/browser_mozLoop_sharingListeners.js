@@ -9,7 +9,7 @@
 const {injectLoopAPI} = Cu.import("resource:///modules/loop/MozLoopAPI.jsm", {});
 gMozLoopAPI = injectLoopAPI({});
 
-let handlers = [
+var handlers = [
   {
     resolve: null,
     windowId: null,
@@ -35,21 +35,21 @@ function promiseWindowIdReceivedOnAdd(handler) {
   });
 }
 
-let createdTabs = [];
+var createdTabs = [];
 
-function promiseWindowIdReceivedNewTab(handlers = []) {
+function promiseWindowIdReceivedNewTab(handlersParam = []) {
   let promiseHandlers = [];
 
-  handlers.forEach(handler => {
+  handlersParam.forEach(handler => {
     promiseHandlers.push(new Promise(resolve => {
       handler.resolve = resolve;
     }));
   });
 
-  let createdTab = gBrowser.selectedTab = gBrowser.addTab();
+  let createdTab = gBrowser.selectedTab = gBrowser.addTab("about:mozilla");
   createdTabs.push(createdTab);
 
-  promiseHandlers.push(promiseTabLoadEvent(createdTab, "about:mozilla"));
+  promiseHandlers.push(BrowserTestUtils.browserLoaded(createdTab.linkedBrowser));
 
   return Promise.all(promiseHandlers);
 }

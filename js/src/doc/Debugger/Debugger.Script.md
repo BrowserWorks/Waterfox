@@ -114,39 +114,6 @@ from its prototype:
     scope this script runs. The result refers to the global directly, not
     via a wrapper or a `WindowProxy` ("outer window", in Firefox).
 
-`staticLevel`
-:   The number of function bodies enclosing this script's code.
-
-    Global code is at level zero; bodies of functions defined at the top
-    level in global code are at level one; bodies of functions nested within
-    those are at level two; and so on.
-
-    A script for code passed to direct `eval` is at a static level one
-    greater than that of the script containing the call to `eval`, because
-    direct eval code runs within the caller's scope. However, a script for
-    code passed to an indirect `eval` call is at static level zero, since it
-    is evaluated in the global scope.
-
-    Note that a generator's expressions are considered to be part of the
-    body of a synthetic function, produced by the compiler.
-
-    Scripts' static level be useful in deciding where to set breakpoints.
-    For example, a breakpoint set on line 3 in this code:
-
-    ```language-js
-    function f() {
-      x = function g() {  // line 2
-                          // line 3; no code here
-        ...;
-      }
-    }
-    ```
-
-    should be set in `g`'s script, not in `f`'s, even though neither script
-    contains code at that line. In such a case, the most deeply nested
-    script—the one with the highest static level—should receive the
-    breakpoint.
-
 `strictMode`
 :   This is `true` if this script's code is ECMAScript strict mode code, and
     `false` otherwise.
@@ -235,6 +202,7 @@ methods of other kinds of objects.
      { lineNumber: 1, columnNumber: 5, offset: 5 },
      { lineNumber: 1, columnNumber: 10, offset: 20 },
      { lineNumber: 3, columnNumber: 4, offset: 10 }]
+    ```
 
 <code>getLineOffsets(<i>line</i>)</code>
 :   Return an array of bytecode instruction offsets representing the entry
@@ -244,6 +212,23 @@ methods of other kinds of objects.
 <code>getOffsetLine(<i>offset</i>)</code>
 :   Return the source code line responsible for the bytecode at
     <i>offset</i> in this script.
+
+`getOffsetsCoverage()`:
+:   Return `null` or an array which contains informations about the coverage of
+    all opcodes. The elements of the array are objects, each of which describes
+    a single opcode, and contains the following properties:
+
+    * lineNumber: the line number of the current opcode.
+
+    * columnNumber: the column number of the current opcode.
+
+    * offset: the bytecode instruction offset of the current opcode.
+
+    * count: the number of times the current opcode got executed.
+
+    If this script has no coverage, or if it is not instrumented, then this
+    function will return `null`. To ensure that the debuggee is instrumented,
+    the flag `Debugger.collectCoverageInfo` should be set to `true`.
 
 `getChildScripts()`
 :   Return a new array whose elements are Debugger.Script objects for each

@@ -59,6 +59,53 @@
 .textLayer ::selection { background: rgb(0,0,255); }
 .textLayer ::-moz-selection { background: rgb(0,0,255); }
 
+
+.annotationLayer .annotLink > a:hover {
+  opacity: 0.2;
+  background: #ff0;
+  box-shadow: 0px 2px 10px #ff0;
+}
+
+.annotationLayer .annotText > img {
+  position: absolute;
+  cursor: pointer;
+}
+
+.annotationLayer .annotTextContentWrapper {
+  position: absolute;
+  width: 20em;
+}
+
+.annotationLayer .annotTextContent {
+  z-index: 200;
+  float: left;
+  max-width: 20em;
+  background-color: #FFFF99;
+  box-shadow: 0px 2px 5px #333;
+  border-radius: 2px;
+  padding: 0.6em;
+  cursor: pointer;
+}
+
+.annotationLayer .annotTextContent > h1 {
+  font-size: 1em;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 0.2em;
+}
+
+.annotationLayer .annotTextContent > p {
+  padding-top: 0.2em;
+}
+
+.annotationLayer .annotLink > a {
+  position: absolute;
+  font-size: 1em;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .pdfViewer .canvasWrapper {
   overflow: hidden;
 }
@@ -96,12 +143,6 @@
   background: url('images/loading-icon.gif') center no-repeat;
 }
 
-.pdfViewer .page .annotLink > a:hover {
-  opacity: 0.2;
-  background: #ff0;
-  box-shadow: 0px 2px 10px #ff0;
-}
-
 .pdfPresentationMode:-moz-full-screen .pdfViewer .page {
   margin-bottom: 100%;
   border: 0;
@@ -110,46 +151,6 @@
 .pdfPresentationMode:fullscreen .pdfViewer .page {
   margin-bottom: 100%;
   border: 0;
-}
-
-.pdfViewer .page .annotText > img {
-  position: absolute;
-  cursor: pointer;
-}
-
-.pdfViewer .page .annotTextContentWrapper {
-  position: absolute;
-  width: 20em;
-}
-
-.pdfViewer .page .annotTextContent {
-  z-index: 200;
-  float: left;
-  max-width: 20em;
-  background-color: #FFFF99;
-  box-shadow: 0px 2px 5px #333;
-  border-radius: 2px;
-  padding: 0.6em;
-  cursor: pointer;
-}
-
-.pdfViewer .page .annotTextContent > h1 {
-  font-size: 1em;
-  border-bottom: 1px solid #000000;
-  padding-bottom: 0.2em;
-}
-
-.pdfViewer .page .annotTextContent > p {
-  padding-top: 0.2em;
-}
-
-.pdfViewer .page .annotLink > a {
-  position: absolute;
-  font-size: 1em;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
 }
 
 * {
@@ -661,6 +662,7 @@ html[dir='rtl'] .splitToolbarButton > .toolbarButton {
 .splitToolbarButton > .toolbarButton:focus,
 .dropdownToolbarButton:hover,
 .overlayButton:hover,
+.overlayButton:focus,
 .toolbarButton.textButton:hover,
 .toolbarButton.textButton:focus {
   background-color: hsla(0,0%,0%,.2);
@@ -803,7 +805,7 @@ html[dir='rtl'] .dropdownToolbarButton {
 .dropdownToolbarButton {
   width: 120px;
   max-width: 120px;
-  padding: 3px 2px 2px;
+  padding: 0;
   overflow: hidden;
   background: url(images/toolbarButton-menuArrows.png) no-repeat;
 }
@@ -819,7 +821,7 @@ html[dir='rtl'] .dropdownToolbarButton {
   font-size: 12px;
   color: hsl(0,0%,95%);
   margin: 0;
-  padding: 0;
+  padding: 3px 2px 2px;
   border: none;
   background: rgba(0,0,0,0); /* Opera does not support 'transparent' <select> background */
 }
@@ -1172,7 +1174,6 @@ html[dir='rtl'] .verticalToolbarSeparator {
 }
 
 .thumbnailImage {
-  transition-duration: 150ms;
   border: 1px solid transparent;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
   opacity: 0.8;
@@ -1184,7 +1185,6 @@ html[dir='rtl'] .verticalToolbarSeparator {
 .thumbnailSelectionRing {
   border-radius: 2px;
   padding: 7px;
-  transition-duration: 150ms;
 }
 
 a:focus > .thumbnail > .thumbnailSelectionRing > .thumbnailImage,
@@ -1235,10 +1235,12 @@ a:focus > .thumbnail > .thumbnailSelectionRing,
   padding: 3px 4px 0;
 }
 
+html[dir='ltr'] .outlineWithDeepNesting > .outlineItem,
 html[dir='ltr'] .outlineItem > .outlineItems {
   margin-left: 20px;
 }
 
+html[dir='rtl'] .outlineWithDeepNesting > .outlineItem,
 html[dir='rtl'] .outlineItem > .outlineItems {
   margin-right: 20px;
 }
@@ -1248,6 +1250,8 @@ html[dir='rtl'] .outlineItem > .outlineItems {
   text-decoration: none;
   display: inline-block;
   min-width: 95%;
+  min-width: calc(100% - 4px); /* Subtract the right padding (left, in RTL mode)
+                                  of the container. */
   height: auto;
   margin-bottom: 1px;
   border-radius: 2px;
@@ -1266,7 +1270,7 @@ html[dir='rtl'] .outlineItem > .outlineItems {
 }
 
 html[dir='ltr'] .outlineItem > a {
-  padding: 2px 0 5px 10px;
+  padding: 2px 0 5px 4px;
 }
 html[dir='ltr'] .attachmentsItem > button {
   padding: 2px 0 3px 7px;
@@ -1274,13 +1278,49 @@ html[dir='ltr'] .attachmentsItem > button {
 }
 
 html[dir='rtl'] .outlineItem > a {
-  padding: 2px 10px 5px 0;
+  padding: 2px 4px 5px 0;
 }
 html[dir='rtl'] .attachmentsItem > button {
   padding: 2px 7px 3px 0;
   text-align: right;
 }
 
+.outlineItemToggler {
+  position: relative;
+  height: 0;
+  width: 0;
+  color: hsla(0,0%,100%,.5);
+}
+.outlineItemToggler::before {
+  content: url(images/treeitem-expanded.png);
+  display: inline-block;
+  position: absolute;
+}
+html[dir='ltr'] .outlineItemToggler.outlineItemsHidden::before {
+  content: url(images/treeitem-collapsed.png);
+}
+html[dir='rtl'] .outlineItemToggler.outlineItemsHidden::before {
+  content: url(images/treeitem-collapsed-rtl.png);
+}
+.outlineItemToggler.outlineItemsHidden ~ .outlineItems {
+  display: none;
+}
+html[dir='ltr'] .outlineItemToggler {
+  float: left;
+}
+html[dir='rtl'] .outlineItemToggler {
+  float: right;
+}
+html[dir='ltr'] .outlineItemToggler::before {
+  right: 4px;
+}
+html[dir='rtl'] .outlineItemToggler::before {
+  left: 4px;
+}
+
+.outlineItemToggler:hover,
+.outlineItemToggler:hover + a,
+.outlineItemToggler:hover ~ .outlineItems,
 .outlineItem > a:hover,
 .attachmentsItem > button:hover {
   background-color: hsla(0,0%,100%,.02);
@@ -1289,6 +1329,7 @@ html[dir='rtl'] .attachmentsItem > button {
   box-shadow: 0 1px 0 hsla(0,0%,100%,.05) inset,
               0 0 1px hsla(0,0%,100%,.2) inset,
               0 0 1px hsla(0,0%,0%,.2);
+  border-radius: 2px;
   color: hsla(0,0%,100%,.9);
 }
 
@@ -1400,10 +1441,6 @@ html[dir='rtl'] .attachmentsItem > button {
 .dialog .toolbarField {
   margin: 5px 0;
 }
-.dialog .toolbarField:hover,
-.dialog .toolbarField:focus {
-  border-color: hsla(0,0%,0%,.32) hsla(0,0%,0%,.38) hsla(0,0%,0%,.42);
-}
 
 .dialog .separator {
   display: block;
@@ -1417,6 +1454,10 @@ html[dir='rtl'] .attachmentsItem > button {
 .dialog .buttonRow {
   text-align: center;
   vertical-align: middle;
+}
+
+.dialog :link {
+  color: white;
 }
 
 #passwordOverlay > .dialog {
@@ -1704,6 +1745,24 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   .secondaryToolbarButton.documentProperties::before {
     content: url(images/secondaryToolbarButton-documentProperties@2x.png);
   }
+
+  .outlineItemToggler::before {
+    transform: scale(0.5);
+    top: -1px;
+    content: url(images/treeitem-expanded@2x.png);
+  }
+  html[dir='ltr'] .outlineItemToggler.outlineItemsHidden::before {
+    content: url(images/treeitem-collapsed@2x.png);
+  }
+  html[dir='rtl'] .outlineItemToggler.outlineItemsHidden::before {
+    content: url(images/treeitem-collapsed-rtl@2x.png);
+  }
+  html[dir='ltr'] .outlineItemToggler::before {
+    right: 0;
+  }
+  html[dir='rtl'] .outlineItemToggler::before {
+    left: 0;
+  }
 }
 
 @media print {
@@ -1750,10 +1809,14 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   body[data-mozPrintCallback] #printContainer {
     display: block;
   }
-  #printContainer canvas {
+  /* wrapper around (scaled) print canvas elements */
+  #printContainer > div {
     position: relative;
     top: 0;
     left: 0;
+    overflow: hidden;
+  }
+  #printContainer canvas {
     display: block;
   }
 }

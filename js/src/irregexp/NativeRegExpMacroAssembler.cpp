@@ -37,6 +37,8 @@
 #endif
 #include "vm/MatchPairs.h"
 
+#include "jit/MacroAssembler-inl.h"
+
 using namespace js;
 using namespace js::irregexp;
 using namespace js::jit;
@@ -117,6 +119,12 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
     // Finalize code - write the entry point code now we know how many
     // registers we need.
     masm.bind(&entry_label_);
+
+#ifdef JS_CODEGEN_ARM64
+    // ARM64 communicates stack address via sp, but uses a pseudo-sp for addressing.
+    MOZ_ASSERT(!masm.GetStackPointer64().Is(sp));
+    masm.Mov(masm.GetStackPointer64(), sp);
+#endif
 
     // Push non-volatile registers which might be modified by jitcode.
     size_t pushedNonVolatileRegisters = 0;
@@ -385,16 +393,16 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
 
         // Save registers before calling C function
         LiveGeneralRegisterSet volatileRegs(GeneralRegisterSet::Volatile());
-#if defined(JS_CODEGEN_ARM)
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64)
         volatileRegs.add(Register::FromCode(Registers::lr));
-#elif defined(JS_CODEGEN_MIPS)
+#elif defined(JS_CODEGEN_MIPS32)
         volatileRegs.add(Register::FromCode(Registers::ra));
 #endif
         volatileRegs.takeUnchecked(temp0);
         volatileRegs.takeUnchecked(temp1);
         masm.PushRegsInMask(volatileRegs);
 
-        masm.setupUnalignedABICall(1, temp0);
+        masm.setupUnalignedABICall(temp0);
         masm.passABIArg(temp1);
         masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, GrowBacktrackStack));
         masm.storeCallResult(temp0);
@@ -439,6 +447,8 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "RegExp");
 #endif
+
+    AutoWritableJitCode awjc(code);
 
     for (size_t i = 0; i < labelPatches.length(); i++) {
         LabelPatch& v = labelPatches[i];
@@ -804,7 +814,7 @@ NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label
         //   Address byte_offset1 - Address captured substring's start.
         //   Address byte_offset2 - Address of current character position.
         //   size_t byte_length - length of capture in bytes(!)
-        masm.setupUnalignedABICall(3, temp0);
+        masm.setupUnalignedABICall(temp0);
         masm.passABIArg(current_character);
         masm.passABIArg(current_position);
         masm.passABIArg(temp1);
@@ -1314,7 +1324,7 @@ NativeRegExpMacroAssembler::CanReadUnaligned()
 {
 #if defined(JS_CODEGEN_ARM)
     return !jit::HasAlignmentFault();
-#elif defined(JS_CODEGEN_MIPS)
+#elif defined(JS_CODEGEN_MIPS32)
     return false;
 #else
     return true;

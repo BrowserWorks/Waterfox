@@ -11,14 +11,22 @@
 
 <!ENTITY importFromIE.label             "Microsoft Internet Explorer">
 <!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
 <!ENTITY importFromNothing.label        "Don't import anything">
 <!ENTITY importFromNothing.accesskey    "D">
 <!ENTITY importFromSafari.label         "Safari">
 <!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
 <!ENTITY importFromChrome.label         "Chrome">
 <!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
 <!ENTITY importFromFirefox.label        "Firefox">
 <!ENTITY importFromFirefox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
 
 <!ENTITY noMigrationSources.label       "No programs that contain bookmarks, history or password data could be found.">
 
@@ -35,3 +43,4 @@
 <!ENTITY done.title                     "Import Complete">
 <!ENTITY done.label                     "The following items were successfully imported:">
 
+<!ENTITY closeSourceBrowser.label       "Please ensure the selected browser is closed before continuing.">

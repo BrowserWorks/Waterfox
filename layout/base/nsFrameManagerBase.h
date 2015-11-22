@@ -20,7 +20,7 @@
 #define _nsFrameManagerBase_h_
 
 #include "nsDebug.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "mozilla/Attributes.h"
 
 class nsIFrame;
@@ -30,15 +30,7 @@ class nsStyleSet;
 class nsFrameManagerBase
 {
 public:
-  nsFrameManagerBase()
-    : mPresShell(nullptr)
-    , mStyleSet(nullptr)
-    , mRootFrame(nullptr)
-    , mUndisplayedMap(nullptr)
-    , mDisplayContentsMap(nullptr)
-    , mIsDestroyingFrames(false)
-  {
-  }
+  nsFrameManagerBase();
 
   bool IsDestroyingFrames() { return mIsDestroyingFrames; }
 

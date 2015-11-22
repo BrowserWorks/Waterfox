@@ -203,6 +203,19 @@ function safePrefGetter(aPrefBranch, aName, aDefault) {
   }
 }
 
+/**
+ * Whether UnifiedComplete is alive.
+ */
+function isUnifiedCompleteInstantiated() {
+  try {
+    return Components.manager.QueryInterface(Ci.nsIServiceManager)
+                     .isServiceInstantiated(Cc["@mozilla.org/autocomplete/search;1?name=unifiedcomplete"],
+                                            Ci.mozIPlacesAutoComplete);
+  } catch (ex) {
+    return false;
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //// AutoCompleteStatementCallbackWrapper class
 
@@ -318,7 +331,7 @@ function nsPlacesAutoComplete()
 
     // Autocomplete often fallbacks to a table scan due to lack of text indices.
     // In such cases a larger cache helps reducing IO.  The default Storage
-    // value is MAX_CACHE_SIZE_BYTES in storage/src/mozStorageConnection.cpp.
+    // value is MAX_CACHE_SIZE_BYTES in storage/mozStorageConnection.cpp.
     let stmt = db.createAsyncStatement("PRAGMA cache_size = -6144"); // 6MiB
     stmt.executeAsync();
     stmt.finalize();
@@ -464,7 +477,7 @@ function nsPlacesAutoComplete()
   this._prefs = Cc["@mozilla.org/preferences-service;1"].
                 getService(Ci.nsIPrefService).
                 getBranch(kBrowserUrlbarBranch);
-  this._syncEnabledPref(true);
+  this._syncEnabledPref();
   this._loadPrefs(true);
 
   // register observers
@@ -696,7 +709,12 @@ nsPlacesAutoComplete.prototype = {
       }
     }
     else if (aTopic == kPrefChanged) {
-      this._loadPrefs(aSubject, aTopic, aData);
+      // Avoid re-entrancy when flipping linked preferences.
+      if (this._ignoreNotifications)
+        return;
+      this._ignoreNotifications = true;
+      this._loadPrefs(false, aTopic, aData);
+      this._ignoreNotifications = false;
     }
   },
 
@@ -807,20 +825,16 @@ nsPlacesAutoComplete.prototype = {
   /**
    * Synchronize suggest.* prefs with autocomplete.enabled.
    */
-  _syncEnabledPref: function PAC_syncEnabledPref(init = false)
+  _syncEnabledPref: function PAC_syncEnabledPref()
   {
     let suggestPrefs = ["suggest.history", "suggest.bookmark", "suggest.openpage"];
-    let types = ["History", "Bookmark", "Openpage", "Typed"];
+    let types = ["History", "Bookmark", "Openpage"];
 
-    if (init) {
-      // Make sure to initialize the properties when first called with init = true.
-      this._enabled = safePrefGetter(this._prefs, kBrowserUrlbarAutocompleteEnabledPref,
-                                     true);
-      this._suggestHistory = safePrefGetter(this._prefs, "suggest.history", true);
-      this._suggestBookmark = safePrefGetter(this._prefs, "suggest.bookmark", true);
-      this._suggestOpenpage = safePrefGetter(this._prefs, "suggest.openpage", true);
-      this._suggestTyped = safePrefGetter(this._prefs, "suggest.history.onlyTyped", false);
-    }
+    this._enabled = safePrefGetter(this._prefs, kBrowserUrlbarAutocompleteEnabledPref,
+                                   true);
+    this._suggestHistory = safePrefGetter(this._prefs, "suggest.history", true);
+    this._suggestBookmark = safePrefGetter(this._prefs, "suggest.bookmark", true);
+    this._suggestOpenpage = safePrefGetter(this._prefs, "suggest.openpage", true);
 
     if (this._enabled) {
       // If the autocomplete preference is active, activate all suggest
@@ -851,6 +865,18 @@ nsPlacesAutoComplete.prototype = {
    */
   _loadPrefs: function PAC_loadPrefs(aRegisterObserver, aTopic, aData)
   {
+    // Avoid race conditions with UnifiedComplete component.
+    if (aData && !isUnifiedCompleteInstantiated()) {
+      // Synchronize suggest.* prefs with autocomplete.enabled.
+      if (aData == kBrowserUrlbarAutocompleteEnabledPref) {
+        this._syncEnabledPref();
+      } else if (aData.startsWith("suggest.")) {
+        let suggestPrefs = ["suggest.history", "suggest.bookmark", "suggest.openpage"];
+        this._prefs.setBoolPref(kBrowserUrlbarAutocompleteEnabledPref,
+                                suggestPrefs.some(pref => safePrefGetter(this._prefs, pref, true)));
+      }
+    }
+
     this._enabled = safePrefGetter(this._prefs,
                                    kBrowserUrlbarAutocompleteEnabledPref,
                                    true);
@@ -909,12 +935,6 @@ nsPlacesAutoComplete.prototype = {
     // register observer
     if (aRegisterObserver) {
       this._prefs.addObserver("", this, false);
-    }
-
-    // Synchronize suggest.* prefs with autocomplete.enabled every time
-    // autocomplete.enabled is changed.
-    if (aData == kBrowserUrlbarAutocompleteEnabledPref) {
-      this._syncEnabledPref();
     }
   },
 
@@ -1638,7 +1658,14 @@ urlInlineComplete.prototype = {
 
   //////////////////////////////////////////////////////////////////////////////
   //// nsIAutoCompleteSearchDescriptor
-  get searchType() Ci.nsIAutoCompleteSearchDescriptor.SEARCH_TYPE_IMMEDIATE,
+
+  get searchType() {
+    return Ci.nsIAutoCompleteSearchDescriptor.SEARCH_TYPE_IMMEDIATE;
+  },
+
+  get clearingAutoFillSearchesAgain() {
+    return false;
+  },
 
   //////////////////////////////////////////////////////////////////////////////
   //// nsIObserver
@@ -1742,5 +1769,5 @@ urlInlineComplete.prototype = {
   ])
 };
 
-let components = [nsPlacesAutoComplete, urlInlineComplete];
+var components = [nsPlacesAutoComplete, urlInlineComplete];
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(components);

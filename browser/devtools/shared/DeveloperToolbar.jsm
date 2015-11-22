@@ -13,7 +13,9 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-const { require, TargetFactory } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools;
+const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const { TargetFactory } = require("devtools/framework/target");
+const promise = require("promise");
 
 const Node = Ci.nsIDOMNode;
 
@@ -41,7 +43,7 @@ const Telemetry = require("devtools/shared/telemetry");
 
 XPCOMUtils.defineLazyGetter(this, "gcliInit", function() {
   try {
-    return require("gcli/commands/index");
+    return require("devtools/toolkit/gcli/commands/index");
   }
   catch (ex) {
     console.log(ex);
@@ -60,12 +62,10 @@ Object.defineProperty(this, "ConsoleServiceListener", {
   enumerable: true
 });
 
-const promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
-
 /**
  * A collection of utilities to help working with commands
  */
-let CommandUtils = {
+var CommandUtils = {
   /**
    * Utility to ensure that things are loaded in the correct order
    */
@@ -306,7 +306,7 @@ Object.defineProperty(DeveloperToolbar.prototype, "visible", {
   enumerable: true
 });
 
-let _gSequenceId = 0;
+var _gSequenceId = 0;
 
 /**
  * Getter for a unique ID.
@@ -645,9 +645,22 @@ DeveloperToolbar.prototype._notify = function(topic) {
 DeveloperToolbar.prototype.handleEvent = function(ev) {
   if (ev.type == "TabSelect" || ev.type == "load") {
     if (this.visible) {
-      this.target = TargetFactory.forTab(this._chromeWindow.gBrowser.selectedTab);
+      let tab = this._chromeWindow.gBrowser.selectedTab;
+      this.target = TargetFactory.forTab(tab);
       gcliInit.getSystem(this.target).then(system => {
         this.requisition.system = system;
+      }, error => {
+        if (!this._chromeWindow.gBrowser.getBrowserForTab(tab)) {
+          // The tab was closed, suppress the error and print a warning as the
+          // destroyed tab was likely the cause.
+          console.warn("An error occurred as the tab was closed while " +
+            "updating Developer Toolbar state. The error was: ", error);
+          return;
+        }
+
+        // Propagate other errors as they're more likely to cause real issues
+        // and thus should cause tests to fail.
+        throw error;
       });
 
       if (ev.type == "TabSelect") {

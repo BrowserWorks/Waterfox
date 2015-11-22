@@ -2,9 +2,12 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const TEST_URI = "data:text/html;charset=utf-8,<p>bug 660806 - history navigation must not show the autocomplete popup";
+"use strict";
 
-let test = asyncTest(function* () {
+const TEST_URI = "data:text/html;charset=utf-8,<p>bug 660806 - history " +
+                 "navigation must not show the autocomplete popup";
+
+var test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();
@@ -12,8 +15,7 @@ let test = asyncTest(function* () {
   yield consoleOpened(hud);
 });
 
-function consoleOpened(HUD)
-{
+function consoleOpened(HUD) {
   let deferred = promise.defer();
 
   let jsterm = HUD.jsterm;

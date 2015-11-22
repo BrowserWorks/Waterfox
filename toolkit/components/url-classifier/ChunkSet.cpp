@@ -41,7 +41,7 @@ ChunkSet::Set(uint32_t aChunk)
 {
   size_t idx = mChunks.BinaryIndexOf(aChunk);
   if (idx == nsTArray<uint32_t>::NoIndex) {
-    if (!mChunks.InsertElementSorted(aChunk)) {
+    if (!mChunks.InsertElementSorted(aChunk, fallible)) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
   }
@@ -81,7 +81,7 @@ ChunkSet::Remove(const ChunkSet& aOther)
     }
   }
 
-  if (!mChunks.SetLength(addIter - mChunks.Elements())) {
+  if (!mChunks.SetLength(addIter - mChunks.Elements(), fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -94,5 +94,5 @@ ChunkSet::Clear()
   mChunks.Clear();
 }
 
-}
-}
+} // namespace safebrowsing
+} // namespace mozilla

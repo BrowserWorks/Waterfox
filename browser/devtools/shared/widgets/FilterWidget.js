@@ -14,6 +14,10 @@ const { Cu } = require("chrome");
 const { ViewHelpers } = Cu.import("resource:///modules/devtools/ViewHelpers.jsm", {});
 const STRINGS_URI = "chrome://browser/locale/devtools/filterwidget.properties";
 const L10N = new ViewHelpers.L10N(STRINGS_URI);
+const {cssTokenizer} = require("devtools/sourceeditor/css-tokenizer");
+
+loader.lazyGetter(this, "asyncStorage",
+                  () => require("devtools/toolkit/shared/async-storage"));
 
 const DEFAULT_FILTER_TYPE = "length";
 const UNIT_MAPPING = {
@@ -115,29 +119,52 @@ function CSSFilterEditorWidget(el, value = "") {
   this._mouseDown = this._mouseDown.bind(this);
   this._keyDown = this._keyDown.bind(this);
   this._input = this._input.bind(this);
+  this._presetClick = this._presetClick.bind(this);
+  this._savePreset = this._savePreset.bind(this);
+  this._togglePresets = this._togglePresets.bind(this);
+
+  // Passed to asyncStorage, requires binding
+  this.renderPresets = this.renderPresets.bind(this);
 
   this._initMarkup();
   this._buildFilterItemMarkup();
+  this._buildPresetItemMarkup();
   this._addEventListeners();
 
   EventEmitter.decorate(this);
 
   this.filters = [];
   this.setCssValue(value);
+  this.renderPresets();
 }
 
 exports.CSSFilterEditorWidget = CSSFilterEditorWidget;
 
 CSSFilterEditorWidget.prototype = {
   _initMarkup: function() {
-    const list = this.el.querySelector(".filters");
-    this.el.appendChild(list);
-    this.el.insertBefore(list, this.el.firstChild);
-    this.container = this.el;
-    this.list = list;
-
+    this.filtersList = this.el.querySelector("#filters");
+    this.presetsList = this.el.querySelector("#presets");
+    this.togglePresets = this.el.querySelector("#toggle-presets");
     this.filterSelect = this.el.querySelector("select");
+    this.addPresetButton = this.el.querySelector(".presets-list .add");
+    this.addPresetInput = this.el.querySelector(".presets-list .footer input");
+
+    this.el.querySelector(".presets-list input").value = "";
+
     this._populateFilterSelect();
+  },
+
+  _destroyMarkup: function() {
+    this._filterItemMarkup.remove();
+    this.el.remove();
+    this.el = this.filtersList = this._filterItemMarkup = null;
+    this.presetsList = this.togglePresets = this.filterSelect = null;
+    this.addPresetButton = null;
+  },
+
+  destroy: function() {
+    this._removeEventListeners();
+    this._destroyMarkup();
   },
 
   /**
@@ -183,20 +210,42 @@ CSSFilterEditorWidget.prototype = {
 
     let removeButton = this.doc.createElement("button");
     removeButton.className = "remove-button";
-    value.appendChild(removeButton);
 
     base.appendChild(name);
     base.appendChild(value);
+    base.appendChild(removeButton);
 
     this._filterItemMarkup = base;
+  },
+
+  _buildPresetItemMarkup: function() {
+    let base = this.doc.createElement("div");
+    base.classList.add("preset");
+
+    let name = this.doc.createElement("label");
+    base.appendChild(name);
+
+    let value = this.doc.createElement("span");
+    base.appendChild(value);
+
+    let removeButton = this.doc.createElement("button");
+    removeButton.classList.add("remove-button");
+
+    base.appendChild(removeButton);
+
+    this._presetItemMarkup = base;
   },
 
   _addEventListeners: function() {
     this.addButton = this.el.querySelector("#add-filter");
     this.addButton.addEventListener("click", this._addButtonClick);
-    this.list.addEventListener("click", this._removeButtonClick);
-    this.list.addEventListener("mousedown", this._mouseDown);
-    this.list.addEventListener("keydown", this._keyDown);
+    this.filtersList.addEventListener("click", this._removeButtonClick);
+    this.filtersList.addEventListener("mousedown", this._mouseDown);
+    this.filtersList.addEventListener("keydown", this._keyDown);
+
+    this.presetsList.addEventListener("click", this._presetClick);
+    this.togglePresets.addEventListener("click", this._togglePresets);
+    this.addPresetButton.addEventListener("click", this._savePreset);
 
     // These events are event delegators for
     // drag-drop re-ordering and label-dragging
@@ -204,11 +253,29 @@ CSSFilterEditorWidget.prototype = {
     this.win.addEventListener("mouseup", this._mouseUp);
 
     // Used to workaround float-precision problems
-    this.list.addEventListener("input", this._input);
+    this.filtersList.addEventListener("input", this._input);
+  },
+
+  _removeEventListeners: function() {
+    this.addButton.removeEventListener("click", this._addButtonClick);
+    this.filtersList.removeEventListener("click", this._removeButtonClick);
+    this.filtersList.removeEventListener("mousedown", this._mouseDown);
+    this.filtersList.removeEventListener("keydown", this._keyDown);
+
+    this.presetsList.removeEventListener("click", this._presetClick);
+    this.togglePresets.removeEventListener("click", this._togglePresets);
+    this.addPresetButton.removeEventListener("click", this._savePreset);
+
+    // These events are used for drag drop re-ordering
+    this.win.removeEventListener("mousemove", this._mouseMove);
+    this.win.removeEventListener("mouseup", this._mouseUp);
+
+    // Used to workaround float-precision problems
+    this.filtersList.removeEventListener("input", this._input);
   },
 
   _getFilterElementIndex: function(el) {
-    return [...this.list.children].indexOf(el);
+    return [...this.filtersList.children].indexOf(el);
   },
 
   _keyDown: function(e) {
@@ -296,7 +363,7 @@ CSSFilterEditorWidget.prototype = {
       filterEl.startingY = e.pageY;
       filterEl.classList.add("dragging");
 
-      this.container.classList.add("dragging");
+      this.el.classList.add("dragging");
     // label-dragging
     } else if (e.target.classList.contains("devtools-draglabel")) {
       let label = e.target,
@@ -356,7 +423,7 @@ CSSFilterEditorWidget.prototype = {
   },
 
   _dragFilterElement: function(e) {
-    const rect = this.list.getBoundingClientRect(),
+    const rect = this.filtersList.getBoundingClientRect(),
           top = e.pageY - LIST_PADDING,
           bottom = e.pageY + LIST_PADDING;
     // don't allow dragging over top/bottom of list
@@ -364,7 +431,7 @@ CSSFilterEditorWidget.prototype = {
       return;
     }
 
-    const filterEl = this.list.querySelector(".dragging");
+    const filterEl = this.filtersList.querySelector(".dragging");
 
     const delta = e.pageY - filterEl.startingY;
     filterEl.style.top = delta + "px";
@@ -375,7 +442,7 @@ CSSFilterEditorWidget.prototype = {
     change = change > 0 ? Math.floor(change) :
              change < 0 ? Math.ceil(change) : change;
 
-    const children = this.list.children;
+    const children = this.filtersList.children;
     const index = [...children].indexOf(filterEl);
     const destination = index + change;
 
@@ -391,9 +458,9 @@ CSSFilterEditorWidget.prototype = {
     const target = change > 0 ? children[destination + 1]
                               : children[destination];
     if (target) {
-      this.list.insertBefore(filterEl, target);
+      this.filtersList.insertBefore(filterEl, target);
     } else {
-      this.list.appendChild(filterEl);
+      this.filtersList.appendChild(filterEl);
     }
 
     filterEl.removeAttribute("style");
@@ -441,15 +508,68 @@ CSSFilterEditorWidget.prototype = {
     if (!this.isReorderingFilter) {
       return;
     }
-    let filterEl = this.list.querySelector(".dragging");
+    let filterEl = this.filtersList.querySelector(".dragging");
 
     this.isReorderingFilter = false;
     filterEl.classList.remove("dragging");
-    this.container.classList.remove("dragging");
+    this.el.classList.remove("dragging");
     filterEl.removeAttribute("style");
 
     this.emit("updated", this.getCssValue());
     this.render();
+  },
+
+  _presetClick: function(e) {
+    let el = e.target;
+    let preset = el.closest(".preset");
+    if (!preset) {
+      return;
+    }
+
+    let id = +preset.dataset.id;
+
+    this.getPresets().then(presets => {
+      if (el.classList.contains("remove-button")) {
+        // If the click happened on the remove button.
+        presets.splice(id, 1);
+        this.setPresets(presets).then(this.renderPresets, Cu.reportError);
+      } else {
+        // Or if the click happened on a preset.
+        let p = presets[id];
+
+        this.setCssValue(p.value);
+        this.addPresetInput.value = p.name;
+      }
+    }, Cu.reportError);
+  },
+
+  _togglePresets: function() {
+    this.el.classList.toggle("show-presets");
+    this.emit("render");
+  },
+
+  _savePreset: function(e) {
+    e.preventDefault();
+
+    let name = this.addPresetInput.value,
+        value = this.getCssValue();
+
+    if (!name || !value || value === "none") {
+      this.emit("preset-save-error");
+      return;
+    }
+
+    this.getPresets().then(presets => {
+      let index = presets.findIndex(preset => preset.name === name);
+
+      if (index > -1) {
+        presets[index].value = value;
+      } else {
+        presets.push({name, value});
+      }
+
+      this.setPresets(presets).then(this.renderPresets, Cu.reportError);
+    }, Cu.reportError);
   },
 
   /**
@@ -458,13 +578,13 @@ CSSFilterEditorWidget.prototype = {
    */
   render: function() {
     if (!this.filters.length) {
-      this.list.innerHTML = `<p> ${L10N.getStr("emptyFilterList")} <br />
+      this.filtersList.innerHTML = `<p> ${L10N.getStr("emptyFilterList")} <br />
                                  ${L10N.getStr("addUsingList")} </p>`;
       this.emit("render");
       return;
     }
 
-    this.list.innerHTML = "";
+    this.filtersList.innerHTML = "";
 
     let base = this._filterItemMarkup;
 
@@ -514,17 +634,46 @@ CSSFilterEditorWidget.prototype = {
         unitPreview.remove();
       }
 
-      this.list.appendChild(el);
+      this.filtersList.appendChild(el);
     }
 
-    let el = this.list.querySelector(`.filter:last-of-type input`);
-    if (el) {
-      el.focus();
+    let lastInput = this.filtersList.querySelector(`.filter:last-of-type input`);
+    if (lastInput) {
+      lastInput.focus();
       // move cursor to end of input
-      el.setSelectionRange(el.value.length, el.value.length);
+      const end = lastInput.value.length;
+      lastInput.setSelectionRange(end, end);
     }
 
     this.emit("render");
+  },
+
+  renderPresets: function() {
+    this.getPresets().then(presets => {
+      if (!presets || !presets.length) {
+        this.presetsList.innerHTML = `<p>${L10N.getStr("emptyPresetList")}</p>`;
+        this.emit("render");
+        return;
+      }
+      let base = this._presetItemMarkup;
+
+      this.presetsList.innerHTML = "";
+
+      for (let [index, preset] of presets.entries()) {
+        let el = base.cloneNode(true);
+
+        let [label, span] = el.children;
+
+        el.dataset.id = index;
+
+        label.textContent = preset.name;
+        span.textContent = preset.value;
+
+        this.presetsList.appendChild(el);
+      }
+
+      this.emit("render");
+    });
   },
 
   /**
@@ -688,29 +837,19 @@ CSSFilterEditorWidget.prototype = {
     this.emit("updated", this.getCssValue());
   },
 
-  _removeEventListeners: function() {
-    this.addButton.removeEventListener("click", this._addButtonClick);
-    this.list.removeEventListener("click", this._removeButtonClick);
-    this.list.removeEventListener("mousedown", this._mouseDown);
-    this.list.removeEventListener("keydown", this._keyDown);
+  getPresets: function() {
+    return asyncStorage.getItem("cssFilterPresets").then(presets => {
+      if (!presets) {
+        return [];
+      }
 
-    // These events are used for drag drop re-ordering
-    this.win.removeEventListener("mousemove", this._mouseMove);
-    this.win.removeEventListener("mouseup", this._mouseUp);
-
-    // Used to workaround float-precision problems
-    this.list.removeEventListener("input", this._input);
+      return presets;
+    }, Cu.reportError);
   },
 
-  _destroyMarkup: function() {
-    this._filterItemMarkup.remove();
-    this.el.remove();
-    this.el = this.list = this.container = this._filterItemMarkup = null;
-  },
-
-  destroy: function() {
-    this._removeEventListeners();
-    this._destroyMarkup();
+  setPresets: function(presets) {
+    return asyncStorage.setItem("cssFilterPresets", presets)
+                       .catch(Cu.reportError);
   }
 };
 
@@ -750,41 +889,46 @@ function swapArrayIndices(array, a, b) {
   */
 function tokenizeComputedFilter(css) {
   let filters = [];
-  let current = "";
   let depth = 0;
 
   if (css === "none") {
     return filters;
   }
 
-  while (css.length) {
-    const char = css[0];
+  let state = "initial";
+  let name;
+  let contents;
+  for (let token of cssTokenizer(css)) {
+    switch (state) {
+      case "initial":
+        if (token.tokenType === "function") {
+          name = token.text;
+          contents = "";
+          state = "function";
+          depth = 1;
+        } else if (token.tokenType === "url" || token.tokenType === "bad_url") {
+          filters.push({name: "url", value: token.text});
+          // Leave state as "initial" because the URL token includes
+          // the trailing close paren.
+        }
+        break;
 
-    switch (char) {
-      case "(":
-        depth++;
-        if (depth === 1) {
-          filters.push({name: current.trim()});
-          current = "";
-        } else {
-          current += char;
+      case "function":
+        if (token.tokenType === "symbol" && token.text === ")") {
+          --depth;
+          if (depth === 0) {
+            filters.push({name: name, value: contents});
+            state = "initial";
+            break;
+          }
         }
-      break;
-      case ")":
-        depth--;
-        if (depth === 0) {
-          filters[filters.length - 1].value = current.trim();
-          current = "";
-        } else {
-          current += char;
+        contents += css.substring(token.startOffset, token.endOffset);
+        if (token.tokenType === "function" ||
+            (token.tokenType === "symbol" && token.text === "(")) {
+          ++depth;
         }
-      break;
-      default:
-        current += char;
-      break;
+        break;
     }
-
-    css = css.slice(1);
   }
 
   return filters;

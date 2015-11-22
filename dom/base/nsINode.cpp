@@ -76,7 +76,6 @@
 #include "nsIWidget.h"
 #include "nsLayoutUtils.h"
 #include "nsNameSpaceManager.h"
-#include "nsNetUtil.h"
 #include "nsNodeInfoManager.h"
 #include "nsNodeUtils.h"
 #include "nsPIBoxObject.h"
@@ -105,9 +104,16 @@
 #include "nsDOMMutationObserver.h"
 #include "GeometryUtils.h"
 #include "nsIAnimationObserver.h"
+#include "nsChildContentList.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
+
+nsINode::nsSlots::nsSlots()
+  : mWeakReference(nullptr),
+    mEditableDescendantCount(0)
+{
+}
 
 nsINode::nsSlots::~nsSlots()
 {
@@ -415,6 +421,36 @@ nsINode::IsInAnonymousSubtree() const
   }
 
   return AsContent()->IsInAnonymousSubtree();
+}
+
+std::ostream&
+operator<<(std::ostream& aStream, const nsINode& aNode)
+{
+  nsAutoString elemDesc;
+  const nsINode* curr = &aNode;
+  while (curr) {
+    const nsString& localName = curr->LocalName();
+    nsString id;
+    if (curr->IsElement()) {
+      curr->AsElement()->GetId(id);
+    }
+
+    if (!elemDesc.IsEmpty()) {
+      elemDesc = elemDesc + NS_LITERAL_STRING(".");
+    }
+
+    elemDesc = elemDesc + localName;
+
+    if (!id.IsEmpty()) {
+      elemDesc = elemDesc + NS_LITERAL_STRING("['") + id +
+                 NS_LITERAL_STRING("']");
+    }
+
+    curr = curr->GetParentNode();
+  }
+
+  NS_ConvertUTF16toUTF8 str(elemDesc);
+  return aStream << str.get();
 }
 
 bool
@@ -1296,11 +1332,50 @@ nsINode::GetContextForEventHandlers(nsresult* aRv)
 }
 
 nsIDOMWindow*
-nsINode::GetOwnerGlobal()
+nsINode::GetOwnerGlobalForBindings()
 {
   bool dummy;
   return nsPIDOMWindow::GetOuterFromCurrentInner(
     static_cast<nsGlobalWindow*>(OwnerDoc()->GetScriptHandlingObject(dummy)));
+}
+
+nsIGlobalObject*
+nsINode::GetOwnerGlobal() const
+{
+  bool dummy;
+  return OwnerDoc()->GetScriptHandlingObject(dummy);
+}
+
+void
+nsINode::ChangeEditableDescendantCount(int32_t aDelta)
+{
+  if (aDelta == 0) {
+    return;
+  }
+
+  nsSlots* s = Slots();
+  MOZ_ASSERT(aDelta > 0 ||
+             s->mEditableDescendantCount >= (uint32_t) (-1 * aDelta));
+  s->mEditableDescendantCount += aDelta;
+}
+
+void
+nsINode::ResetEditableDescendantCount()
+{
+  nsSlots* s = GetExistingSlots();
+  if (s) {
+    s->mEditableDescendantCount = 0;
+  }
+}
+
+uint32_t
+nsINode::EditableDescendantCount()
+{
+  nsSlots* s = GetExistingSlots();
+  if (s) {
+    return s->mEditableDescendantCount;
+  }
+  return 0;
 }
 
 bool
@@ -1535,7 +1610,7 @@ nsINode::doInsertChildAt(nsIContent* aKid, uint32_t aIndex,
 
     if (nsContentUtils::HasMutationListeners(aKid,
           NS_EVENT_BITS_MUTATION_NODEINSERTED, this)) {
-      InternalMutationEvent mutation(true, NS_MUTATION_NODEINSERTED);
+      InternalMutationEvent mutation(true, eLegacyNodeInserted);
       mutation.mRelatedNode = do_QueryInterface(this);
 
       mozAutoSubtreeModified subtree(OwnerDoc(), this);
@@ -2459,7 +2534,7 @@ struct SelectorMatchInfo {
   nsCSSSelectorList* const mSelectorList;
   TreeMatchContext& mMatchContext;
 };
-}
+} // namespace
 
 // Given an id, find elements with that id under aRoot that match aMatchInfo if
 // any is provided.  If no SelectorMatchInfo is provided, just find the ones
@@ -2757,4 +2832,13 @@ nsINode::AddAnimationObserverUnlessExists(
 {
   AddMutationObserverUnlessExists(aAnimationObserver);
   OwnerDoc()->SetMayHaveAnimationObservers();
+}
+
+bool
+nsINode::HasApzAwareListeners() const
+{
+  if (NodeMayHaveApzAwareListeners()) {
+    return EventTarget::HasApzAwareListeners();
+  }
+  return false;
 }

@@ -7,6 +7,29 @@
 
 #include "nsMathUtils.h"
 
+#include "mozilla/gfx/Matrix.h"
+
+#include "gfxQuad.h"
+
+gfxQuad
+gfxRect::TransformToQuad(const mozilla::gfx::Matrix4x4 &aMatrix) const
+{
+  gfxPoint points[4];
+
+  points[0] = TopLeft();
+  points[1] = TopRight();
+  points[2] = BottomRight();
+  points[3] = BottomLeft();
+
+  points[0].Transform(aMatrix);
+  points[1].Transform(aMatrix);
+  points[2].Transform(aMatrix);
+  points[3].Transform(aMatrix);
+
+  // Could this ever result in lines that intersect? I don't think so.
+  return gfxQuad(points[0], points[1], points[2], points[3]);
+}
+
 static bool
 WithinEpsilonOfInteger(gfxFloat aX, gfxFloat aEpsilon)
 {

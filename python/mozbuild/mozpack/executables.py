@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
 import os
 import struct
 import subprocess
@@ -105,8 +107,9 @@ def may_elfhack(path):
     # elfhack only supports libraries. We should check the ELF header for
     # the right flag, but checking the file extension works too.
     from buildconfig import substs
-    return 'USE_ELF_HACK' in substs and substs['USE_ELF_HACK'] and \
-           path.endswith(substs['DLL_SUFFIX'])
+    return ('USE_ELF_HACK' in substs and substs['USE_ELF_HACK'] and
+        path.endswith(substs['DLL_SUFFIX']) and
+        'COMPILE_ENVIRONMENT' in substs and substs['COMPILE_ENVIRONMENT'])
 
 
 def elfhack(path):

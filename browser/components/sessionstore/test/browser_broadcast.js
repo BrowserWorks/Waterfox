@@ -55,6 +55,7 @@ add_task(function flush_on_duplicate() {
   yield modifySessionStorage(browser, {test: "on-duplicate"});
   let tab2 = ss.duplicateTab(window, tab);
   yield promiseTabRestored(tab2);
+
   yield promiseRemoveTab(tab2);
   let [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
   is(storage["http://example.com"].test, "on-duplicate",
@@ -89,7 +90,7 @@ add_task(function flush_on_settabstate() {
   let browser = tab.linkedBrowser;
 
   // Flush to make sure our tab state is up-to-date.
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   let state = ss.getTabState(tab);
   yield modifySessionStorage(browser, {test: "on-set-tab-state"});
@@ -117,7 +118,7 @@ add_task(function flush_on_tabclose_racy() {
   let browser = tab.linkedBrowser;
 
   // Flush to make sure we start with an empty queue.
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   yield modifySessionStorage(browser, {test: "on-tab-close-racy"});
 

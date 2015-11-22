@@ -13,7 +13,7 @@ const gHttpsTestRoot1 = "https://test1.example.com/browser/browser/base/content/
 const gHttpTestRoot2 = "http://example.net/browser/browser/base/content/test/general/";
 const gHttpsTestRoot2 = "https://test2.example.com/browser/browser/base/content/test/general/";
 
-let gTestBrowser = null;
+var gTestBrowser = null;
 
 function SecStateTestsCompleted() {
   gBrowser.removeCurrentTab();
@@ -48,6 +48,7 @@ function SecStateTest1B() {
   // check security state.  Since current url is https and doesn't have any
   // mixed content resources, we expect it to be secure.
   isSecurityState("secure");
+  assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: false, passiveLoaded: false});
 
   whenLoaded(gTestBrowser, SecStateTest2A);
 
@@ -57,7 +58,7 @@ function SecStateTest1B() {
 }
 
 // Navigation from an http page to a https page that has mixed display content
-// The http page loads an http image on unload
+// The https page loads an http image on unload
 function SecStateTest2A() {
   whenLoaded(gTestBrowser, SecStateTest2B);
   let url = gHttpsTestRoot2 + "file_mixedContentFromOnunload_test2.html";
@@ -66,37 +67,9 @@ function SecStateTest2A() {
 
 function SecStateTest2B() {
   isSecurityState("broken");
+  assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: false, passiveLoaded: true});
 
   SecStateTestsCompleted();
-}
-
-// Compares the security state of the page with what is expected
-function isSecurityState(expectedState) {
-  let ui = gTestBrowser.securityUI;
-  if (!ui) {
-    ok(false, "No security UI to get the security state");
-    return;
-  }
-
-  const wpl = Components.interfaces.nsIWebProgressListener;
-
-  // determine the security state
-  let isSecure = ui.state & wpl.STATE_IS_SECURE;
-  let isBroken = ui.state & wpl.STATE_IS_BROKEN;
-  let isInsecure = ui.state & wpl.STATE_IS_INSECURE;
-
-  let actualState;
-  if (isSecure && !(isBroken || isInsecure)) {
-    actualState = "secure";
-  } else if (isBroken && !(isSecure || isInsecure)) {
-    actualState = "broken";
-  } else if (isInsecure && !(isSecure || isBroken)) {
-    actualState = "insecure";
-  } else {
-    actualState = "unknown";
-  }
-
-  is(expectedState, actualState, "Expected state " + expectedState + " and the actual state is " + actualState + ".");
 }
 
 function whenLoaded(aElement, aCallback) {

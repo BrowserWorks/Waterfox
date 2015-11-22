@@ -21,6 +21,10 @@ Login Manager test: notifications
 
 /** Test for Login Manager: notifications. **/
 
+const { Services } = SpecialPowers.Cu.import("resource://gre/modules/Services.jsm");
+
+const BRAND_BUNDLE = "chrome://branding/locale/brand.properties";
+
 // Set testpath to the directory where we live. Used to load tests from
 // alternate Mochitest servers (different hostnames, same content).
 var testpath = document.location.pathname + "/../";
@@ -56,6 +60,7 @@ var subtests = [
                    "subtst_notifications_2pw_0un.html",  // 28
                    "http://example.org" + testpath + "subtst_notifications_2pw_1un_1text.html", // 29
                    "http://example.org" + testpath + "subtst_notifications_2pw_1un_1text.html", // 30
+                   "subtst_notifications_1.html", // 31
                ];
 
 
@@ -94,6 +99,8 @@ function checkTest() {
     var gotUser = SpecialPowers.wrap(iframe).contentDocument.getElementById("user").textContent;
     var gotPass = SpecialPowers.wrap(iframe).contentDocument.getElementById("pass").textContent;
 
+    let brandBundle = Services.strings.createBundle(BRAND_BUNDLE);
+    let brandShortName = brandBundle.GetStringFromName("brandShortName");
 
     switch(testNum) {
 
@@ -239,11 +246,12 @@ function checkTest() {
         break;
 
       case 13:
-        // Check for no notification popup when existing pw-only login matches form.
+        // Check for update popup when existing pw-only login matches form.
         is(gotUser, "notifyu1", "Checking submitted username");
         is(gotPass, "notifyp1", "Checking submitted password");
-        popup = getPopup(popupNotifications, "password-save");
-        ok(!popup, "checking for no notification popup");
+        popup = getPopup(popupNotifications, "password-change");
+        ok(popup, "checking for notification popup");
+        popup.remove();
         pwmgr.removeLogin(login2);
 
         // Add login for the next test
@@ -355,8 +363,8 @@ function checkTest() {
         ok(popup, "got notification popup");
         // Check the text, which comes from the localized saveLoginText string.
         notificationText = popup.message;
-        expectedText = /^Would you like to remember the password on example.org\?$/;
-        ok(expectedText.test(notificationText), "Checking text: " + notificationText);
+        expectedText = "Would you like " + brandShortName + " to remember this login?";
+        is(expectedText, notificationText, "Checking text: " + notificationText);
         popup.remove();
         break;
 
@@ -368,8 +376,8 @@ function checkTest() {
         ok(popup, "got notification popup");
         // Check the text, which comes from the localized saveLoginText string.
         notificationText = popup.message;
-        expectedText = /^Would you like to remember the password on example.org\?$/;
-        ok(expectedText.test(notificationText), "Checking text: " + notificationText);
+        expectedText = "Would you like " + brandShortName + " to remember this login\?";
+        is(expectedText, notificationText, "Checking text: " + notificationText);
         popup.remove();
         break;
 
@@ -381,8 +389,8 @@ function checkTest() {
         ok(popup, "got notification popup");
         // Check the text, which comes from the localized saveLoginTextNoUser string.
         notificationText = popup.message;
-        expectedText = /^Would you like to remember the password on example.org\?$/;
-        ok(expectedText.test(notificationText), "Checking text: " + notificationText);
+        expectedText = "Would you like " + brandShortName + " to remember this password\?";
+        is(expectedText, notificationText, "Checking text: " + notificationText);
         popup.remove();
         break;
 
@@ -510,9 +518,34 @@ function checkTest() {
 
         // remove the added login
         pwmgr.removeAllLogins();
+
+        // Add login for the next test
+        pwmgr.addLogin(login3);
+
         break;
       }
 
+      case 31: {
+        // make sure we didn't prompt for an existing login with different
+        // scheme for formSubmitURL.
+        is(gotUser, "notifyu1", "Checking submitted username");
+        is(gotPass, "notifyp1", "Checking submitted password");
+        popup = getPopup(popupNotifications, "password-save");
+        ok(!popup, "checking for no notification popup");
+
+        // Check to make sure we updated the timestamps and use count on the
+        // existing login that was submitted for this form.
+        var logins = pwmgr.getAllLogins();
+        is(logins.length, 1, "Should only have 1 login");
+        ok(SpecialPowers.call_Instanceof(logins[0], Ci.nsILoginMetaInfo), "metainfo QI");
+        is(logins[0].timesUsed, 2, "check .timesUsed for existing login submission");
+        ok(logins[0].timeLastUsed > logins[0].timeCreated, "timeLastUsed bumped");
+        ok(logins[0].timeCreated == logins[0].timePasswordChanged, "timeChanged not updated");
+
+        // remove that login
+        pwmgr.removeAllLogins();
+        break;
+      }
       default:
         ok(false, "Unexpected call to checkTest for test #" + testNum);
 
@@ -549,6 +582,8 @@ var login1B = new nsLoginInfo("http://mochi.test:8888", "http://mochi.test:8888"
                               "notifyu1B", "notifyp1B", "user", "pass");
 var login2B = new nsLoginInfo("http://mochi.test:8888", "http://mochi.test:8888", null,
                               "", "notifyp1B", "", "pass");
+var login3 = new nsLoginInfo("http://mochi.test:8888", "https://mochi.test:8888", null,
+                             "notifyu1", "notifyp1", "user", "pass");
 
 var parentScriptURL = SimpleTest.getTestFileURL("pwmgr_common.js");
 var mm = SpecialPowers.loadChromeScript(parentScriptURL);

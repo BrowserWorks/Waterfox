@@ -31,7 +31,7 @@
 #include "nsCRT.h"
 #include "nsXULAppAPI.h"
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prinit.h"
 
 #include "mozilla/MemoryReporting.h"
@@ -218,7 +218,7 @@ gfxFT2Font::AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
 {
     gfxFont::AddSizeOfExcludingThis(aMallocSizeOf, aSizes);
     aSizes->mFontInstances +=
-        mCharGlyphCache.SizeOfExcludingThis(nullptr, aMallocSizeOf);
+        mCharGlyphCache.ShallowSizeOfExcludingThis(aMallocSizeOf);
 }
 
 void
@@ -230,7 +230,7 @@ gfxFT2Font::AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
 }
 
 #ifdef USE_SKIA
-mozilla::TemporaryRef<mozilla::gfx::GlyphRenderingOptions>
+already_AddRefed<mozilla::gfx::GlyphRenderingOptions>
 gfxFT2Font::GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams)
 {
   mozilla::gfx::FontHinting hinting;

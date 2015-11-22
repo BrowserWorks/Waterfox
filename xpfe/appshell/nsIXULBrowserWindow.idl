@@ -19,7 +19,7 @@ interface nsITabParent;
  * internals of the browser area to tell the containing xul window to update
  * its ui. 
  */
-[scriptable, uuid(db89f748-9736-40b2-a172-3928aa1194b2)]
+[scriptable, uuid(a8675fa9-c8b4-4350-9803-c38f344a9e38)]
 interface nsIXULBrowserWindow : nsISupports
 {
   /**

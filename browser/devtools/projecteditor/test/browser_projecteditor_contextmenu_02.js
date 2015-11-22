@@ -14,6 +14,10 @@ add_task(function*() {
 
   let {textEditorContextMenuPopup} = projecteditor;
 
+  // Update menu items for a clean slate, so previous tests cannot
+  // affect paste, and possibly other side effects
+  projecteditor._updateMenuItems();
+
   let cmdDelete = textEditorContextMenuPopup.querySelector("[command=cmd_delete]");
   let cmdSelectAll = textEditorContextMenuPopup.querySelector("[command=cmd_selectAll]");
   let cmdCut = textEditorContextMenuPopup.querySelector("[command=cmd_cut]");
@@ -47,14 +51,14 @@ add_task(function*() {
   is (cmdPaste.getAttribute("disabled"), "", "cmdPaste is enabled");
 });
 
-function openContextMenuForEditor(editor, contextMenu) {
+function* openContextMenuForEditor(editor, contextMenu) {
   let editorDoc = editor.editor.container.contentDocument;
   let shown = onPopupShow(contextMenu);
   EventUtils.synthesizeMouse(editorDoc.body, 2, 2,
     {type: "contextmenu", button: 2}, editorDoc.defaultView);
   yield shown;
 }
-function closeContextMenuForEditor(editor, contextMenu) {
+function* closeContextMenuForEditor(editor, contextMenu) {
   let editorDoc = editor.editor.container.contentDocument;
   let hidden = onPopupHidden(contextMenu);
   contextMenu.hidePopup();

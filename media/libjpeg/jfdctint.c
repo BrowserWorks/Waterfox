@@ -1,10 +1,8 @@
 /*
  * jfdctint.c
  *
- * This file was part of the Independent JPEG Group's software.
  * Copyright (C) 1991-1996, Thomas G. Lane.
- * libjpeg-turbo Modifications:
- * Copyright (C) 2015, D. R. Commander
+ * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
  * This file contains a slow-but-accurate integer implementation of the
@@ -172,8 +170,8 @@ jpeg_fdct_islow (DCTELEM * data)
     tmp11 = tmp1 + tmp2;
     tmp12 = tmp1 - tmp2;
 
-    dataptr[0] = (DCTELEM) LEFT_SHIFT(tmp10 + tmp11, PASS1_BITS);
-    dataptr[4] = (DCTELEM) LEFT_SHIFT(tmp10 - tmp11, PASS1_BITS);
+    dataptr[0] = (DCTELEM) ((tmp10 + tmp11) << PASS1_BITS);
+    dataptr[4] = (DCTELEM) ((tmp10 - tmp11) << PASS1_BITS);
 
     z1 = MULTIPLY(tmp12 + tmp13, FIX_0_541196100);
     dataptr[2] = (DCTELEM) DESCALE(z1 + MULTIPLY(tmp13, FIX_0_765366865),

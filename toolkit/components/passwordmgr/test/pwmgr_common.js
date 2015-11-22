@@ -182,11 +182,11 @@ function commonInit(selfFilling) {
         form.appendChild(password);
 
         var observer = SpecialPowers.wrapCallback(function(subject, topic, data) {
-            var form = subject.QueryInterface(SpecialPowers.Ci.nsIDOMNode);
-            if (form.id !== 'observerforcer')
+            var formLikeRoot = subject.QueryInterface(SpecialPowers.Ci.nsIDOMNode);
+            if (formLikeRoot.id !== 'observerforcer')
                 return;
             SpecialPowers.removeObserver(observer, "passwordmgr-processed-form");
-            form.parentNode.removeChild(form);
+            formLikeRoot.remove();
             SimpleTest.executeSoon(() => {
                 var event = new Event("runTests");
                 window.dispatchEvent(event);
@@ -259,6 +259,30 @@ function dumpLogin(label, login) {
     ok(true, label + loginText);
 }
 
+function getRecipeParent() {
+  var { LoginManagerParent } = SpecialPowers.Cu.import("resource://gre/modules/LoginManagerParent.jsm", {});
+  return LoginManagerParent.recipeParentPromise.then((recipeParent) => {
+    return SpecialPowers.wrap(recipeParent);
+  });
+}
+
+/**
+ * Resolves when a specified number of forms have been processed.
+ */
+function promiseFormsProcessed(expectedCount = 1) {
+  var processedCount = 0;
+  return new Promise((resolve, reject) => {
+    function onProcessedForm(subject, topic, data) {
+      processedCount++;
+      if (processedCount == expectedCount) {
+        SpecialPowers.removeObserver(onProcessedForm, "passwordmgr-processed-form");
+        resolve(subject, data);
+      }
+    }
+    SpecialPowers.addObserver(onProcessedForm, "passwordmgr-processed-form", false);
+  });
+}
+
 // Code to run when loaded as a chrome script in tests via loadChromeScript
 if (this.addMessageListener) {
   const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
@@ -273,10 +297,21 @@ if (this.addMessageListener) {
     commonInit(true);
     sendAsyncMessage("doneSetup");
   });
+
   addMessageListener("loadRecipes", Task.async(function* loadRecipes(recipes) {
     var { LoginManagerParent } = Cu.import("resource://gre/modules/LoginManagerParent.jsm", {});
     var recipeParent = yield LoginManagerParent.recipeParentPromise;
     yield recipeParent.load(recipes);
     sendAsyncMessage("loadedRecipes", recipes);
   }));
+
+  var globalMM = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
+  globalMM.addMessageListener("RemoteLogins:onFormSubmit", function onFormSubmit(message) {
+    sendAsyncMessage("formSubmissionProcessed", message.data, message.objects);
+  });
+} else {
+  // Code to only run in the mochitest pages (not in the chrome script).
+  SimpleTest.registerCleanupFunction(() => {
+    getRecipeParent().then(recipeParent => recipeParent.reset());
+  });
 }

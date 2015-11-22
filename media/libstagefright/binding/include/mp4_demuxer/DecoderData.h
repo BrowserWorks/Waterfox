@@ -9,7 +9,7 @@
 #include "MediaInfo.h"
 #include "mozilla/Types.h"
 #include "mozilla/Vector.h"
-#include "nsRefPtr.h"
+#include "mozilla/nsRefPtr.h"
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nsString.h"
@@ -75,7 +75,6 @@ public:
   virtual bool IsValid() const override;
 };
 
-typedef int64_t Microseconds;
 }
 
 #endif

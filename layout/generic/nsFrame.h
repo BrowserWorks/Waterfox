@@ -12,7 +12,7 @@
 #include "mozilla/EventForwards.h"
 #include "mozilla/Likely.h"
 #include "nsBox.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #include "nsIPresShell.h"
 #include "nsHTMLReflowState.h"
@@ -250,8 +250,7 @@ public:
                                  InlineMinISizeData *aData) override;
   virtual void AddInlinePrefISize(nsRenderingContext *aRenderingContext,
                                   InlinePrefISizeData *aData) override;
-  virtual IntrinsicISizeOffsetData
-    IntrinsicISizeOffsets(nsRenderingContext* aRenderingContext) override;
+  virtual IntrinsicISizeOffsetData IntrinsicISizeOffsets() override;
   virtual mozilla::IntrinsicSize GetIntrinsicSize() override;
   virtual nsSize GetIntrinsicRatio() override;
 
@@ -340,12 +339,12 @@ public:
                             nsHTMLReflowMetrics&     aDesiredSize,
                             const nsHTMLReflowState& aReflowState,
                             nsReflowStatus&          aStatus,
-                            bool                     aConstrainHeight = true);
+                            bool                     aConstrainBSize = true);
   void FinishReflowWithAbsoluteFrames(nsPresContext*           aPresContext,
                                       nsHTMLReflowMetrics&     aDesiredSize,
                                       const nsHTMLReflowState& aReflowState,
                                       nsReflowStatus&          aStatus,
-                                      bool                     aConstrainHeight = true);
+                                      bool                     aConstrainBSize = true);
 
   /*
    * If this frame is dirty, marks all absolutely-positioned children of this
@@ -583,8 +582,10 @@ public:
   static bool ShouldApplyOverflowClipping(const nsIFrame* aFrame,
                                           const nsStyleDisplay* aDisp)
   {
-    // clip overflow:-moz-hidden-unscrollable ...
-    if (MOZ_UNLIKELY(aDisp->mOverflowX == NS_STYLE_OVERFLOW_CLIP)) {
+    // clip overflow:-moz-hidden-unscrollable, except for nsListControlFrame,
+    // which is an nsHTMLScrollFrame.
+    if (MOZ_UNLIKELY(aDisp->mOverflowX == NS_STYLE_OVERFLOW_CLIP &&
+                     aFrame->GetType() != nsGkAtoms::listControlFrame)) {
       return true;
     }
 
@@ -733,12 +734,6 @@ public:
 
 public:
 
-  static void PrintDisplayItem(nsDisplayListBuilder* aBuilder,
-                               nsDisplayItem* aItem,
-                               std::stringstream& aStream,
-                               bool aDumpSublist = false,
-                               bool aDumpHtml = false);
-
   static void PrintDisplayList(nsDisplayListBuilder* aBuilder,
                                const nsDisplayList& aList,
                                bool aDumpHtml = false)
@@ -822,8 +817,7 @@ public:
 
   struct DR_init_offsets_cookie {
     DR_init_offsets_cookie(nsIFrame* aFrame, nsCSSOffsetState* aState,
-                           nscoord aHorizontalPercentBasis,
-                           nscoord aVerticalPercentBasis,
+                           const mozilla::LogicalSize& aPercentBasis,
                            const nsMargin* aBorder,
                            const nsMargin* aPadding);
     ~DR_init_offsets_cookie();
@@ -862,8 +856,8 @@ public:
                                  dr_bdr, dr_pad)                           \
   DR_init_constraints_cookie dr_cookie(dr_frame, dr_state, dr_cbw, dr_cbh, \
                                        dr_bdr, dr_pad)
-#define DISPLAY_INIT_OFFSETS(dr_frame, dr_state, dr_hpb, dr_vpb, dr_bdr, dr_pad)  \
-  DR_init_offsets_cookie dr_cookie(dr_frame, dr_state, dr_hpb, dr_vpb, dr_bdr, dr_pad)
+#define DISPLAY_INIT_OFFSETS(dr_frame, dr_state, dr_pb, dr_bdr, dr_pad)  \
+  DR_init_offsets_cookie dr_cookie(dr_frame, dr_state, dr_pb, dr_bdr, dr_pad)
 #define DISPLAY_INIT_TYPE(dr_frame, dr_result) \
   DR_init_type_cookie dr_cookie(dr_frame, dr_result)
 
@@ -880,7 +874,7 @@ public:
 #define DISPLAY_INIT_CONSTRAINTS(dr_frame, dr_state, dr_cbw, dr_cbh,       \
                                  dr_bdr, dr_pad)                           \
   PR_BEGIN_MACRO PR_END_MACRO
-#define DISPLAY_INIT_OFFSETS(dr_frame, dr_state, dr_hpb, dr_vpb, dr_bdr, dr_pad)  \
+#define DISPLAY_INIT_OFFSETS(dr_frame, dr_state, dr_pb, dr_bdr, dr_pad)  \
   PR_BEGIN_MACRO PR_END_MACRO
 #define DISPLAY_INIT_TYPE(dr_frame, dr_result) PR_BEGIN_MACRO PR_END_MACRO
 

@@ -85,6 +85,7 @@ public:
     uint8 aMirror() const {return m_aMirror; }
     uint8 aPassBits() const { return m_aPassBits; }
     uint8 aBidi() const { return m_aBidi; }
+    uint8 aCollision() const { return m_aCollision; }
     uint8 substitutionPass() const { return m_sPass; }
     uint8 positionPass() const { return m_pPass; }
     uint8 justificationPass() const { return m_jPass; }
@@ -93,6 +94,7 @@ public:
     uint8 maxCompPerLig() const { return m_iMaxComp; }
     uint16 numClasses() const { return m_nClass; }
     byte  flags() const { return m_flags; }
+    byte  dir() const { return m_dir; }
     uint8 numJustLevels() const { return m_numJusts; }
     Justinfo *justAttrs() const { return m_justs; }
     uint16 endLineGlyphid() const { return m_gEndLine; }
@@ -112,15 +114,12 @@ private:
     uint8           m_numPasses;
     uint8           m_numJusts;
     uint8           m_sPass, m_pPass, m_jPass, m_bPass,
-                    m_flags;
+                    m_flags, m_dir;
 
-    uint8   m_aPseudo, m_aBreak, m_aUser, m_aBidi, m_aMirror, m_aPassBits,
-            m_iMaxComp;
-    uint16  m_aLig,
-            m_numPseudo,
-            m_nClass,
-            m_nLinear,
-            m_gEndLine;
+    uint8       m_aPseudo, m_aBreak, m_aUser, m_aBidi, m_aMirror, m_aPassBits,
+                m_iMaxComp, m_aCollision;
+    uint16      m_aLig, m_numPseudo, m_nClass, m_nLinear,
+                m_gEndLine;
     gr_faceinfo m_silfinfo;
     
     void releaseBuffers() throw();

@@ -7,20 +7,16 @@
 #include "nsTemplateRule.h"
 #include "nsXULTemplateQueryProcessorRDF.h"
 
-#include "prlog.h"
-#ifdef PR_LOGGING
+#include "mozilla/Logging.h"
 extern PRLogModuleInfo* gXULTemplateLog;
-#endif
 
 nsInstantiationNode::nsInstantiationNode(nsXULTemplateQueryProcessorRDF* aProcessor,
                                          nsRDFQuery* aQuery)
         : mProcessor(aProcessor),
           mQuery(aQuery)
 {
-#ifdef PR_LOGGING
-    PR_LOG(gXULTemplateLog, PR_LOG_DEBUG,
+    MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
            ("nsInstantiationNode[%p] query=%p", this, aQuery));
-#endif
 
     MOZ_COUNT_CTOR(nsInstantiationNode);
 }

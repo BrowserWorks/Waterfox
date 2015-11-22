@@ -133,7 +133,8 @@ private:
         mParent(0),
         mObjectSize(0),
         mDateCreated(0),
-        mDateModified(0) {}
+        mDateModified(0),
+        mDateAdded(0) {}
 
     NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DbEntry)
 
@@ -145,8 +146,9 @@ private:
     uint64_t        mObjectSize;
     nsCString       mDisplayName;
     nsCString       mPath;
-    PRTime          mDateCreated;
-    PRTime          mDateModified;
+    time_t          mDateCreated;
+    time_t          mDateModified;
+    time_t          mDateAdded;
 
   protected:
     ~DbEntry() {}
@@ -243,7 +245,7 @@ private:
   void AddEntryAndNotify(DbEntry* aEntr, RefCountedMtpServer* aMtpServer);
   void DumpEntries(const char* aLabel);
   MtpObjectHandle FindEntryByPath(const nsACString& aPath);
-  mozilla::TemporaryRef<DbEntry> GetEntry(MtpObjectHandle aHandle);
+  already_AddRefed<DbEntry> GetEntry(MtpObjectHandle aHandle);
   void RemoveEntry(MtpObjectHandle aHandle);
   void RemoveEntryAndNotify(MtpObjectHandle aHandle, RefCountedMtpServer* aMtpServer);
   void UpdateEntry(MtpObjectHandle aHandle, DeviceStorageFile* aFile);

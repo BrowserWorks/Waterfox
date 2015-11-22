@@ -12,8 +12,8 @@ Cu.import("resource:///modules/devtools/SideMenuWidget.jsm");
 Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
 Cu.import("resource://gre/modules/devtools/Console.jsm");
 
-const require = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools.require;
-const promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const promise = require("promise");
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const {Tooltip} = require("devtools/shared/widgets/Tooltip");
 const Editor = require("devtools/sourceeditor/editor");
@@ -54,7 +54,7 @@ const DEFAULT_EDITOR_CONFIG = {
 /**
  * The current target and the WebGL Editor front, set by this tool's host.
  */
-let gToolbox, gTarget, gFront;
+var gToolbox, gTarget, gFront;
 
 /**
  * Initializes the shader editor controller and views.
@@ -81,7 +81,7 @@ function shutdownShaderEditor() {
 /**
  * Functions handling target-related lifetime events.
  */
-let EventsHandler = {
+var EventsHandler = {
   /**
    * Listen for events emitted by the current tab target.
    */
@@ -95,7 +95,8 @@ let EventsHandler = {
     gTarget.on("will-navigate", this._onTabNavigated);
     gTarget.on("navigate", this._onTabNavigated);
     gFront.on("program-linked", this._onProgramLinked);
-
+    this.reloadButton = $("#requests-menu-reload-notice-button");
+    this.reloadButton.addEventListener("command", this._onReloadCommand);
   },
 
   /**
@@ -107,6 +108,14 @@ let EventsHandler = {
     gTarget.off("will-navigate", this._onTabNavigated);
     gTarget.off("navigate", this._onTabNavigated);
     gFront.off("program-linked", this._onProgramLinked);
+    this.reloadButton.removeEventListener("command", this._onReloadCommand);
+  },
+
+  /**
+   * Handles a command event on reload button
+   */
+  _onReloadCommand() {
+    gFront.setup({ reload: true });
   },
 
   /**
@@ -187,7 +196,7 @@ let EventsHandler = {
 /**
  * Functions handling the sources UI.
  */
-let ShadersListView = Heritage.extend(WidgetMethods, {
+var ShadersListView = Heritage.extend(WidgetMethods, {
   /**
    * Initialization function, called when the tool is started.
    */
@@ -354,7 +363,7 @@ let ShadersListView = Heritage.extend(WidgetMethods, {
 /**
  * Functions handling the editors displaying the vertex and fragment shaders.
  */
-let ShadersEditorsView = {
+var ShadersEditorsView = {
   /**
    * Initialization function, called when the tool is started.
    */
@@ -612,7 +621,7 @@ let ShadersEditorsView = {
 /**
  * Localization convenience methods.
  */
-let L10N = new ViewHelpers.L10N(STRINGS_URI);
+var L10N = new ViewHelpers.L10N(STRINGS_URI);
 
 /**
  * Convenient way of emitting events from the panel window.
@@ -622,4 +631,4 @@ EventEmitter.decorate(this);
 /**
  * DOM query helper.
  */
-function $(selector, target = document) target.querySelector(selector);
+var $ = (selector, target = document) => target.querySelector(selector);

@@ -21,8 +21,8 @@
 "use strict";
 
 const {CssDocsTooltip} = require("devtools/shared/widgets/Tooltip");
-const {setBaseCssDocsUrl, MdnDocsWidget} = devtools.require("devtools/shared/widgets/MdnDocsWidget");
-const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const {setBaseCssDocsUrl, MdnDocsWidget} = require("devtools/shared/widgets/MdnDocsWidget");
+const promise = require("promise");
 
 // frame to load the tooltip into
 const MDN_DOCS_TOOLTIP_FRAME = "chrome://browser/content/devtools/mdn-docs-frame.xhtml";
@@ -38,7 +38,13 @@ const MDN_DOCS_TOOLTIP_FRAME = "chrome://browser/content/devtools/mdn-docs-frame
 const BASIC_TESTING_PROPERTY = "html-mdn-css-basic-testing.html";
 
 const BASIC_EXPECTED_SUMMARY = "A summary of the property.";
-const BASIC_EXPECTED_SYNTAX = "/* The part we want   */\nthis: is-the-part-we-want";
+const BASIC_EXPECTED_SYNTAX = [{type: "comment",        text: "/* The part we want   */"},
+                               {type: "text",           text: "\n"},
+                               {type: "property-name",  text: "this"},
+                               {type: "text",           text: ":"},
+                               {type: "text",           text: " "},
+                               {type: "property-value", text: "is-the-part-we-want"},
+                               {type: "text",           text: ";"}];
 
 const URI_PARAMS = "?utm_source=mozilla&utm_medium=firefox-inspector&utm_campaign=default";
 
@@ -168,7 +174,5 @@ function checkTooltipContents(doc, expected) {
      expected.summary,
      "Summary is correct");
 
-  is(doc.syntax.textContent,
-     expected.syntax,
-     "Syntax is correct");
+   checkCssSyntaxHighlighterOutput(expected.syntax, doc.syntax);
 }

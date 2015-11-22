@@ -18,22 +18,28 @@ class MediaEngineTabVideoSource : public MediaEngineVideoSource, nsIDOMEventList
     NS_DECL_NSITIMERCALLBACK
     MediaEngineTabVideoSource();
 
+    virtual void Shutdown() override {};
     virtual void GetName(nsAString_internal&) override;
-    virtual void GetUUID(nsAString_internal&) override;
+    virtual void GetUUID(nsACString_internal&) override;
     virtual nsresult Allocate(const dom::MediaTrackConstraints &,
-                              const mozilla::MediaEnginePrefs&) override;
+                              const mozilla::MediaEnginePrefs&,
+                              const nsString& aDeviceId) override;
     virtual nsresult Deallocate() override;
     virtual nsresult Start(mozilla::SourceMediaStream*, mozilla::TrackID) override;
     virtual void SetDirectListeners(bool aHasDirectListeners) override {};
     virtual void NotifyPull(mozilla::MediaStreamGraph*, mozilla::SourceMediaStream*, mozilla::TrackID, mozilla::StreamTime) override;
     virtual nsresult Stop(mozilla::SourceMediaStream*, mozilla::TrackID) override;
+    virtual nsresult Restart(const dom::MediaTrackConstraints& aConstraints,
+                             const mozilla::MediaEnginePrefs& aPrefs,
+                             const nsString& aDeviceId) override;
     virtual nsresult Config(bool, uint32_t, bool, uint32_t, bool, uint32_t, int32_t) override;
     virtual bool IsFake() override;
     virtual const dom::MediaSourceEnum GetMediaSource() override {
       return dom::MediaSourceEnum::Browser;
     }
     virtual uint32_t GetBestFitnessDistance(
-      const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets) override
+      const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets,
+      const nsString& aDeviceId) override
     {
       return 0;
     }

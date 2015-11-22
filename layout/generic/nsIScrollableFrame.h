@@ -11,7 +11,9 @@
 #define nsIScrollFrame_h___
 
 #include "nsCoord.h"
+#include "DisplayItemClip.h"
 #include "ScrollbarStyles.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/gfx/Point.h"
 #include "nsIScrollbarMediator.h"
 #include "Units.h"
@@ -33,8 +35,15 @@ namespace mozilla {
 struct ContainerLayerParameters;
 namespace layers {
 class Layer;
-}
-}
+} // namespace layers
+
+struct FrameMetricsAndClip
+{
+  layers::FrameMetrics metrics;
+  mozilla::Maybe<DisplayItemClip> clip;
+};
+
+} // namespace mozilla
 
 /**
  * Interface for frames that are scrollable. This interface exposes
@@ -98,8 +107,10 @@ public:
   /**
    * Return the width for non-disappearing scrollbars.
    */
-  virtual nscoord GetNondisappearingScrollbarWidth(nsPresContext* aPresContext,
-                                                   nsRenderingContext* aRC) = 0;
+  virtual nscoord
+  GetNondisappearingScrollbarWidth(nsPresContext* aPresContext,
+                                   nsRenderingContext* aRC,
+                                   mozilla::WritingMode aWM) = 0;
   /**
    * GetScrolledRect is designed to encapsulate deciding which
    * directions of overflow should be reachable by scrolling and which
@@ -414,11 +425,11 @@ public:
    * aLayer's animated geometry root is this frame. If there needs to be a
    * FrameMetrics contributed by this frame, append it to aOutput.
    */
-  virtual void ComputeFrameMetrics(mozilla::layers::Layer* aLayer,
-                                   nsIFrame* aContainerReferenceFrame,
-                                   const ContainerLayerParameters& aParameters,
-                                   nsRect* aOutClipRect,
-                                   nsTArray<FrameMetrics>* aOutput) const = 0;
+  virtual mozilla::Maybe<mozilla::FrameMetricsAndClip> ComputeFrameMetrics(
+    mozilla::layers::Layer* aLayer,
+    nsIFrame* aContainerReferenceFrame,
+    const ContainerLayerParameters& aParameters,
+    bool aIsForCaret) const = 0;
 
   /**
    * If this scroll frame is ignoring viewporting clipping
@@ -432,6 +443,18 @@ public:
 
   virtual void SetTransformingByAPZ(bool aTransforming) = 0;
   virtual bool IsTransformingByAPZ() const = 0;
+
+  /**
+   * Notify this scroll frame that it can be zoomed by APZ.
+   */
+  virtual void SetZoomableByAPZ(bool aZoomable) = 0;
+
+  /**
+   * Whether or not this frame uses containerful scrolling.
+   */
+  virtual bool UsesContainerScrolling() const = 0;
+
+  virtual mozilla::Maybe<mozilla::DisplayItemClip> ComputeScrollClip(bool aIsForCaret) const = 0;
 };
 
 #endif

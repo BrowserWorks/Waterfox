@@ -202,10 +202,8 @@ if os_linux:
         ]
     if CONFIG['MOZ_ENABLE_QT']:
         SOURCES += [
+            '!moc_message_pump_qt.cc',
             'src/base/message_pump_qt.cc',
-        ]
-        GENERATED_SOURCES += [
-            'moc_message_pump_qt.cc',
         ]
     if not CONFIG['MOZ_NATIVE_LIBEVENT']:
         if CONFIG['OS_TARGET'] != 'Android':
@@ -239,10 +237,8 @@ if os_bsd:
         ]
     if CONFIG['MOZ_ENABLE_QT']:
         SOURCES += [
+            '!moc_message_pump_qt.cc',
             'src/base/message_pump_qt.cc',
-        ]
-        GENERATED_SOURCES += [
-            'moc_message_pump_qt.cc',
         ]
     if not CONFIG['MOZ_NATIVE_LIBEVENT']:
         SOURCES += [
@@ -251,11 +247,14 @@ if os_bsd:
         LOCAL_INCLUDES += ['src/third_party/libevent/bsd']
 
 ost = CONFIG['OS_TEST']
-if ost.find('86') == -1 and ost.find('arm') == -1 and ost.find('mips') == -1:
+if '86' not in ost and 'arm' not in ost and 'mips' not in ost:
     SOURCES += [
         'src/base/atomicops_internals_mutex.cc',
     ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
+
+# XXX: We should fix these warnings.
+ALLOW_COMPILER_WARNINGS = True
 
 FINAL_LIBRARY = 'xul'

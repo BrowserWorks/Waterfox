@@ -170,7 +170,8 @@ inline uint_fast8_t
 CountLeadingZeroes32(uint32_t aValue)
 {
   unsigned long index;
-  _BitScanReverse(&index, static_cast<unsigned long>(aValue));
+  if (!_BitScanReverse(&index, static_cast<unsigned long>(aValue)))
+      return 32;
   return uint_fast8_t(31 - index);
 }
 
@@ -179,7 +180,8 @@ inline uint_fast8_t
 CountTrailingZeroes32(uint32_t aValue)
 {
   unsigned long index;
-  _BitScanForward(&index, static_cast<unsigned long>(aValue));
+  if (!_BitScanForward(&index, static_cast<unsigned long>(aValue)))
+      return 32;
   return uint_fast8_t(index);
 }
 
@@ -202,7 +204,8 @@ CountLeadingZeroes64(uint64_t aValue)
 {
 #if defined(MOZ_BITSCAN_WINDOWS64)
   unsigned long index;
-  _BitScanReverse64(&index, static_cast<unsigned __int64>(aValue));
+  if (!_BitScanReverse64(&index, static_cast<unsigned __int64>(aValue)))
+      return 64;
   return uint_fast8_t(63 - index);
 #else
   uint32_t hi = uint32_t(aValue >> 32);
@@ -218,7 +221,8 @@ CountTrailingZeroes64(uint64_t aValue)
 {
 #if defined(MOZ_BITSCAN_WINDOWS64)
   unsigned long index;
-  _BitScanForward64(&index, static_cast<unsigned __int64>(aValue));
+  if (!_BitScanForward64(&index, static_cast<unsigned __int64>(aValue)))
+      return 64;
   return uint_fast8_t(index);
 #else
   uint32_t lo = uint32_t(aValue);
@@ -494,6 +498,38 @@ RotateRight(const T aValue, uint_fast8_t aShift)
   MOZ_ASSERT(aShift < sizeof(T) * CHAR_BIT, "Shift value is too large!");
   static_assert(IsUnsigned<T>::value, "Rotates require unsigned values");
   return (aValue >> aShift) | (aValue << (sizeof(T) * CHAR_BIT - aShift));
+}
+
+/**
+ * Returns true if |x| is a power of two.
+ * Zero is not an integer power of two. (-Inf is not an integer)
+ */
+template<typename T>
+inline bool
+IsPowerOfTwo(T x)
+{
+    static_assert(IsUnsigned<T>::value,
+                  "IsPowerOfTwo requires unsigned values");
+    return x && (x & (x - 1)) == 0;
+}
+
+template<typename T>
+inline T
+Clamp(const T aValue, const T aMin, const T aMax)
+{
+    static_assert(IsIntegral<T>::value,
+                  "Clamp accepts only integral types, so that it doesn't have"
+                  " to distinguish differently-signed zeroes (which users may"
+                  " or may not care to distinguish, likely at a perf cost) or"
+                  " to decide how to clamp NaN or a range with a NaN"
+                  " endpoint.");
+    MOZ_ASSERT(aMin <= aMax);
+
+    if (aValue <= aMin)
+        return aMin;
+    if (aValue >= aMax)
+        return aMax;
+    return aValue;
 }
 
 } /* namespace mozilla */

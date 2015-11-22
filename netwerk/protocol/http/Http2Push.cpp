@@ -77,7 +77,7 @@ Http2PushedStream::Http2PushedStream(Http2PushTransactionBuffer *aTransaction,
   mStreamID = aID;
   MOZ_ASSERT(!(aID & 1)); // must be even to be a pushed stream
   mBufferedPush->SetPushStream(this);
-  mLoadGroupCI = aAssociatedStream->LoadGroupConnectionInfo();
+  mSchedulingContext = aAssociatedStream->SchedulingContext();
   mLastRead = TimeStamp::Now();
   SetPriority(aAssociatedStream->Priority() + 1);
 }
@@ -445,5 +445,5 @@ Http2PushTransactionBuffer::GetBufferedData(char *buf,
   return NS_OK;
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

@@ -36,7 +36,7 @@ interface FontFaceSet : EventTarget {
   readonly attribute unsigned long size;
   [Throws] void add(FontFace font);
   boolean has(FontFace font);
-  [Throws] boolean delete(FontFace font);
+  boolean delete(FontFace font);
   void clear();
   [NewObject] FontFaceSetIterator entries();
   // Iterator keys();
@@ -50,13 +50,11 @@ interface FontFaceSet : EventTarget {
 
   // check and start loads if appropriate
   // and fulfill promise when all loads complete
-  // Not implemented yet: bug 1072102.
-  // [Throws] Promise<sequence<FontFace>> load(DOMString font, optional DOMString text = " ");
+  [NewObject] Promise<sequence<FontFace>> load(DOMString font, optional DOMString text = " ");
 
   // return whether all fonts in the fontlist are loaded
   // (does not initiate load if not available)
-  // Not implemented yet: bug 1072102.
-  // [Throws] boolean check(DOMString font, optional DOMString text = " ");
+  [Throws] boolean check(DOMString font, optional DOMString text = " ");
 
   // async notification that font loading and layout operations are done
   [Throws] readonly attribute Promise<void> ready;

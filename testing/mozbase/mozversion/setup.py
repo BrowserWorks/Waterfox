@@ -4,11 +4,8 @@
 
 from setuptools import setup
 
-PACKAGE_VERSION = '1.2'
+PACKAGE_VERSION = '1.4'
 
-dependencies = ['mozdevice >= 0.44',
-                'mozfile >= 1.0',
-                'mozlog >= 2.11']
 
 setup(name='mozversion',
       version=PACKAGE_VERSION,
@@ -23,7 +20,8 @@ setup(name='mozversion',
       packages=['mozversion'],
       include_package_data=True,
       zip_safe=False,
-      install_requires=dependencies,
+      install_requires=['mozfile >= 1.0', 'mozlog >= 3.0'],
+      extras_require={'device': ['mozdevice >= 0.44']},
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]

@@ -12,7 +12,6 @@
 #include "nsGkAtoms.h"              // for nsGkAtoms::baseURIProperty
 #include "nsIDOMNode.h"
 #include "mozilla/dom/NodeInfo.h"            // member (in nsCOMPtr)
-#include "nsINodeList.h"            // base class
 #include "nsIVariant.h"             // for use in GetUserData()
 #include "nsNodeInfoManager.h"      // for use in NodePrincipal()
 #include "nsPropertyTable.h"        // for typedefs
@@ -23,6 +22,7 @@
 #include "js/TypeDecls.h"     // for Handle, Value, JSObject, JSContext
 #include "mozilla/dom/DOMString.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include <iosfwd>
 
 // Including 'windows.h' will #define GetClassInfo to something else.
 #ifdef XP_WIN
@@ -44,6 +44,7 @@ class nsIEditor;
 class nsIFrame;
 class nsIMutationObserver;
 class nsINode;
+class nsINodeList;
 class nsIPresShell;
 class nsIPrincipal;
 class nsIURI;
@@ -234,52 +235,6 @@ private:
   static uint64_t sGeneration;
 };
 
-/**
- * Class that implements the nsIDOMNodeList interface (a list of children of
- * the content), by holding a reference to the content and delegating GetLength
- * and Item to its existing child list.
- * @see nsIDOMNodeList
- */
-class nsChildContentList final : public nsINodeList
-{
-public:
-  explicit nsChildContentList(nsINode* aNode)
-    : mNode(aNode)
-  {
-  }
-
-  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_SKIPPABLE_SCRIPT_HOLDER_CLASS(nsChildContentList)
-
-  // nsWrapperCache
-  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
-
-  // nsIDOMNodeList interface
-  NS_DECL_NSIDOMNODELIST
-
-  // nsINodeList interface
-  virtual int32_t IndexOf(nsIContent* aContent) override;
-  virtual nsIContent* Item(uint32_t aIndex) override;
-
-  void DropReference()
-  {
-    mNode = nullptr;
-  }
-
-  virtual nsINode* GetParentObject() override
-  {
-    return mNode;
-  }
-
-private:
-  ~nsChildContentList() {}
-
-  // The node whose children make up the list.
-  // This is a non-owning ref which is safe because it's set to nullptr by
-  // DropReference() by the node slots get destroyed.
-  nsINode* MOZ_NON_OWNING_REF mNode;
-};
-
 // This should be used for any nsINode sub-class that has fields of its own
 // that it needs to measure;  any sub-class that doesn't use it will inherit
 // SizeOfExcludingThis from its super-class.  SizeOfIncludingThis() need not be
@@ -295,8 +250,8 @@ private:
 
 // IID for the nsINode interface
 #define NS_INODE_IID \
-{ 0xe8fdd227, 0x27da, 0x46ee, \
-  { 0xbe, 0xf3, 0x1a, 0xef, 0x5a, 0x8f, 0xc5, 0xb4 } }
+{ 0x70ba4547, 0x7699, 0x44fc, \
+  { 0xb3, 0x20, 0x52, 0xdb, 0xe3, 0xd1, 0xf9, 0x0a } }
 
 /**
  * An internal interface that abstracts some DOMNode-related parts that both
@@ -627,6 +582,12 @@ public:
   {
     return mNodeInfo->NamespaceID() == aNamespace;
   }
+
+  /**
+   * Print a debugger friendly descriptor of this element. This will describe
+   * the position of this element in the document.
+   */
+  friend std::ostream& operator<<(std::ostream& aStream, const nsINode& aNode);
 
 protected:
   // These 2 methods are useful for the recursive templates IsHTMLElement,
@@ -988,7 +949,11 @@ public:
                                 const mozilla::dom::Nullable<bool>& aWantsUntrusted,
                                 mozilla::ErrorResult& aRv) override;
   using nsIDOMEventTarget::AddSystemEventListener;
-  virtual nsIDOMWindow* GetOwnerGlobal() override;
+
+  virtual bool HasApzAwareListeners() const override;
+
+  virtual nsIDOMWindow* GetOwnerGlobalForBindings() override;
+  virtual nsIGlobalObject* GetOwnerGlobal() const override;
 
   /**
    * Adds a mutation observer to be notified when this node, or any of its
@@ -1066,10 +1031,7 @@ public:
   class nsSlots
   {
   public:
-    nsSlots()
-      : mWeakReference(nullptr)
-    {
-    }
+    nsSlots();
 
     // If needed we could remove the vtable pointer this dtor causes by
     // putting a DestroySlots function on nsINode
@@ -1095,6 +1057,12 @@ public:
      * nsNodeWeakReference.
      */
     nsNodeWeakReference* MOZ_NON_OWNING_REF mWeakReference;
+
+    /**
+     * Number of descendant nodes in the uncomposed document that have been
+     * explicitly set as editable.
+     */
+    uint32_t mEditableDescendantCount;
   };
 
   /**
@@ -1129,6 +1097,22 @@ public:
                  "Trying to unset write-only flags");
     nsWrapperCache::UnsetFlags(aFlagsToUnset);
   }
+
+  void ChangeEditableDescendantCount(int32_t aDelta);
+
+  /**
+   * Returns the count of descendant nodes in the uncomposed
+   * document that are explicitly set as editable.
+   */
+  uint32_t EditableDescendantCount();
+
+  /**
+   * Sets the editable descendant count to 0. The editable
+   * descendant count only counts explicitly editable nodes
+   * that are in the uncomposed document so this method
+   * should be called when nodes are are removed from it.
+   */
+  void ResetEditableDescendantCount();
 
   void SetEditableFlag(bool aEditable)
   {
@@ -1514,6 +1498,8 @@ private:
     ElementHasWeirdParserInsertionMode,
     // Parser sets this flag if it has notified about the node.
     ParserHasNotified,
+    // EventListenerManager sets this flag in case we have apz aware listeners.
+    MayHaveApzAwareListeners,
     // Guard value
     BooleanFlagCount
   };
@@ -1656,6 +1642,12 @@ public:
   void SetHasRelevantHoverRules() { SetBoolFlag(NodeHasRelevantHoverRules); }
   void SetParserHasNotified() { SetBoolFlag(ParserHasNotified); };
   bool HasParserNotified() { return GetBoolFlag(ParserHasNotified); }
+
+  void SetMayHaveApzAwareListeners() { SetBoolFlag(MayHaveApzAwareListeners); }
+  bool NodeMayHaveApzAwareListeners() const
+  {
+    return GetBoolFlag(MayHaveApzAwareListeners);
+  }
 protected:
   void SetParentIsContent(bool aValue) { SetBoolFlag(ParentIsContent, aValue); }
   void SetInDocument() { SetBoolFlag(IsInDocument); }
@@ -1770,7 +1762,7 @@ public:
     mNodeInfo->GetPrefix(aPrefix);
   }
 #endif
-  void GetLocalName(mozilla::dom::DOMString& aLocalName)
+  void GetLocalName(mozilla::dom::DOMString& aLocalName) const
   {
     const nsString& localName = LocalName();
     if (localName.IsVoid()) {

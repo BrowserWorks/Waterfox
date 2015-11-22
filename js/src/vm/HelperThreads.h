@@ -29,7 +29,7 @@ struct AsmJSParallelTask;
 struct ParseTask;
 namespace jit {
   class IonBuilder;
-}
+} // namespace jit
 
 // Per-process state for off thread work items.
 class GlobalHelperThreadState
@@ -103,8 +103,9 @@ class GlobalHelperThreadState
 
     GlobalHelperThreadState();
 
-    void ensureInitialized();
+    bool ensureInitialized();
     void finish();
+    void finishThreads();
 
     void lock();
     void unlock();
@@ -146,7 +147,8 @@ class GlobalHelperThreadState
         return ionFinishedList_;
     }
     IonBuilderList& ionLazyLinkList() {
-        MOZ_ASSERT(isLocked());
+        MOZ_ASSERT(TlsPerThreadData.get()->runtimeFromMainThread(),
+                   "Should only be mutated by the main thread.");
         return ionLazyLinkList_;
     }
 
@@ -350,7 +352,7 @@ void
 DestroyHelperThreadsState();
 
 // Initialize helper threads unless already initialized.
-void
+bool
 EnsureHelperThreadsInitialized();
 
 // This allows the JS shell to override GetCPUCount() when passed the
@@ -400,11 +402,17 @@ StartOffThreadParseScript(JSContext* cx, const ReadOnlyCompileOptions& options,
 void
 EnqueuePendingParseTasksAfterGC(JSRuntime* rt);
 
+struct AutoEnqueuePendingParseTasksAfterGC {
+    const gc::GCRuntime& gc_;
+    explicit AutoEnqueuePendingParseTasksAfterGC(const gc::GCRuntime& gc) : gc_(gc) {}
+    ~AutoEnqueuePendingParseTasksAfterGC();
+};
+
 /* Start a compression job for the specified token. */
 bool
 StartOffThreadCompression(ExclusiveContext* cx, SourceCompressionTask* task);
 
-class AutoLockHelperThreadState
+class MOZ_RAII AutoLockHelperThreadState
 {
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
@@ -420,7 +428,7 @@ class AutoLockHelperThreadState
     }
 };
 
-class AutoUnlockHelperThreadState
+class MOZ_RAII AutoUnlockHelperThreadState
 {
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
@@ -442,7 +450,7 @@ struct AsmJSParallelTask
 {
     JSRuntime* runtime;     // Associated runtime.
     LifoAlloc lifo;         // Provider of all heap memory used for compilation.
-    void* func;             // Really, a ModuleCompiler::Func*
+    void* func;             // Really, an AsmFunction*
     jit::MIRGenerator* mir; // Passed from main thread to helper.
     jit::LIRGraph* lir;     // Passed from helper to main thread.
     unsigned compileTime;
@@ -478,6 +486,9 @@ struct ParseTask
     // point where FinishOffThreadScript is called, which will destroy the
     // ParseTask.
     JSScript* script;
+
+    // Holds the ScriptSourceObject generated for the script compilation.
+    ScriptSourceObject* sourceObject;
 
     // Any errors or warnings produced during compilation. These are reported
     // when finishing the script.

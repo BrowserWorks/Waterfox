@@ -7,7 +7,6 @@
 #include "CompositableHost.h"           // for TiledLayerProperties, etc
 #include "FrameMetrics.h"               // for FrameMetrics
 #include "Units.h"                      // for CSSRect, LayerPixel, etc
-#include "gfx2DGlue.h"                  // for ToMatrix4x4
 #include "gfxUtils.h"                   // for gfxUtils, etc
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
@@ -19,7 +18,7 @@
 #include "mozilla/layers/Effects.h"     // for EffectChain
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "nsAString.h"
-#include "nsRefPtr.h"                   // for nsRefPtr
+#include "mozilla/nsRefPtr.h"                   // for nsRefPtr
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsMathUtils.h"                // for NS_lround
 #include "nsString.h"                   // for nsAutoCString
@@ -28,8 +27,6 @@
 
 namespace mozilla {
 namespace layers {
-
-class TiledLayerComposer;
 
 PaintedLayerComposite::PaintedLayerComposite(LayerManagerComposite *aManager)
   : PaintedLayer(aManager, nullptr)
@@ -91,16 +88,6 @@ PaintedLayerComposite::SetLayerManager(LayerManagerComposite* aManager)
   }
 }
 
-TiledLayerComposer*
-PaintedLayerComposite::GetTiledLayerComposer()
-{
-  if (!mBuffer) {
-    return nullptr;
-  }
-  MOZ_ASSERT(mBuffer->IsAttached());
-  return mBuffer->AsTiledLayerComposer();
-}
-
 LayerRenderState
 PaintedLayerComposite::GetRenderState()
 {
@@ -119,12 +106,13 @@ PaintedLayerComposite::RenderLayer(const gfx::IntRect& aClipRect)
   PROFILER_LABEL("PaintedLayerComposite", "RenderLayer",
     js::ProfileEntry::Category::GRAPHICS);
 
-  MOZ_ASSERT(mBuffer->GetCompositor() == mCompositeManager->GetCompositor() &&
+  Compositor* compositor = mCompositeManager->GetCompositor();
+
+  MOZ_ASSERT(mBuffer->GetCompositor() == compositor &&
              mBuffer->GetLayer() == this,
              "buffer is corrupted");
 
   const nsIntRegion& visibleRegion = GetEffectiveVisibleRegion();
-  gfx::Rect clipRect(aClipRect.x, aClipRect.y, aClipRect.width, aClipRect.height);
 
 #ifdef MOZ_DUMP_PAINTING
   if (gfxUtils::sDumpPainting) {
@@ -135,21 +123,22 @@ PaintedLayerComposite::RenderLayer(const gfx::IntRect& aClipRect)
   }
 #endif
 
-  EffectChain effectChain(this);
-  LayerManagerComposite::AutoAddMaskEffect autoMaskEffect(mMaskLayer, effectChain);
-  AddBlendModeEffect(effectChain);
 
-  mBuffer->SetPaintWillResample(MayResample());
+  RenderWithAllMasks(this, compositor, aClipRect,
+                     [&](EffectChain& effectChain, const Rect& clipRect) {
+    mBuffer->SetPaintWillResample(MayResample());
 
-  mBuffer->Composite(effectChain,
-                     GetEffectiveOpacity(),
-                     GetEffectiveTransform(),
-                     GetEffectFilter(),
-                     clipRect,
-                     &visibleRegion);
+    mBuffer->Composite(this, effectChain,
+                       GetEffectiveOpacity(),
+                       GetEffectiveTransform(),
+                       GetEffectFilter(),
+                       clipRect,
+                       &visibleRegion);
+  });
+
   mBuffer->BumpFlashCounter();
 
-  mCompositeManager->GetCompositor()->MakeCurrent();
+  compositor->MakeCurrent();
 }
 
 CompositableHost*
@@ -190,5 +179,5 @@ PaintedLayerComposite::PrintInfo(std::stringstream& aStream, const char* aPrefix
   }
 }
 
-} /* layers */
-} /* mozilla */
+} // namespace layers
+} // namespace mozilla

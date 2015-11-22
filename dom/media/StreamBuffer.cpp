@@ -4,29 +4,25 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "StreamBuffer.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include <algorithm>
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gMediaStreamGraphLog;
-#define STREAM_LOG(type, msg) PR_LOG(gMediaStreamGraphLog, type, msg)
-#else
-#define STREAM_LOG(type, msg)
-#endif
+#define STREAM_LOG(type, msg) MOZ_LOG(gMediaStreamGraphLog, type, msg)
 
 #ifdef DEBUG
 void
 StreamBuffer::DumpTrackInfo() const
 {
-  STREAM_LOG(PR_LOG_ALWAYS, ("DumpTracks: mTracksKnownTime %lld", mTracksKnownTime));
+  STREAM_LOG(LogLevel::Info, ("DumpTracks: mTracksKnownTime %lld", mTracksKnownTime));
   for (uint32_t i = 0; i < mTracks.Length(); ++i) {
     Track* track = mTracks[i];
     if (track->IsEnded()) {
-      STREAM_LOG(PR_LOG_ALWAYS, ("Track[%d] %d: ended", i, track->GetID()));
+      STREAM_LOG(LogLevel::Info, ("Track[%d] %d: ended", i, track->GetID()));
     } else {
-      STREAM_LOG(PR_LOG_ALWAYS, ("Track[%d] %d: %lld", i, track->GetID(),
+      STREAM_LOG(LogLevel::Info, ("Track[%d] %d: %lld", i, track->GetID(),
                                  track->GetEnd()));
     }
   }
@@ -67,14 +63,30 @@ StreamBuffer::GetAllTracksEnd() const
 StreamBuffer::Track*
 StreamBuffer::FindTrack(TrackID aID)
 {
-  if (aID == TRACK_NONE)
+  if (aID == TRACK_NONE || mTracks.IsEmpty()) {
     return nullptr;
-  for (uint32_t i = 0; i < mTracks.Length(); ++i) {
-    Track* track = mTracks[i];
-    if (track->GetID() == aID) {
-      return track;
+  }
+
+  // The tracks are sorted by ID. We can use a binary search.
+
+  uint32_t left = 0, right = mTracks.Length() - 1;
+  while (left <= right) {
+    uint32_t middle = (left + right) / 2;
+    if (mTracks[middle]->GetID() == aID) {
+      return mTracks[middle];
+    }
+
+    if (mTracks[middle]->GetID() > aID) {
+      if (middle == 0) {
+        break;
+      }
+
+      right = middle - 1;
+    } else {
+      left = middle + 1;
     }
   }
+
   return nullptr;
 }
 
@@ -93,6 +105,7 @@ StreamBuffer::ForgetUpTo(StreamTime aTime)
     Track* track = mTracks[i];
     if (track->IsEnded() && track->GetEnd() <= aTime) {
       mTracks.RemoveElementAt(i);
+      mTracksDirty = true;
       --i;
       continue;
     }
@@ -101,4 +114,4 @@ StreamBuffer::ForgetUpTo(StreamTime aTime)
   }
 }
 
-}
+} // namespace mozilla

@@ -24,6 +24,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.AboutPages;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
@@ -39,7 +40,7 @@ import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.favicons.decoders.FaviconDecoder;
 import org.mozilla.gecko.favicons.decoders.LoadFaviconResult;
 import org.mozilla.gecko.gfx.BitmapUtils;
-import org.mozilla.gecko.mozglue.RobocopTarget;
+import org.mozilla.gecko.RestrictedProfiles;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.util.GeckoJarReader;
 import org.mozilla.gecko.util.StringUtils;
@@ -55,7 +56,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.provider.Browser;
 import android.text.TextUtils;
 import android.util.Log;
 import org.mozilla.gecko.util.IOUtils;
@@ -225,6 +225,21 @@ public class LocalBrowserDB implements BrowserDB {
             }
 
             try {
+                if (RestrictedProfiles.isRestrictedProfile(context)) {
+                    // matching on variable name from strings.xml.in
+                    final String addons = "bookmarkdefaults_title_addons";
+                    final String marketplace = "bookmarkdefaults_title_marketplace";
+                    final String regularSumo = "bookmarkdefaults_title_support";
+                    if (name.equals(addons) || name.equals(marketplace) || name.equals(regularSumo)) {
+                        continue;
+                    }
+                }
+                if (!RestrictedProfiles.isRestrictedProfile(context)) {
+                    // if we're not in kidfox, skip the kidfox specific bookmark(s)
+                    if (name.startsWith("bookmarkdefaults_title_restricted")) {
+                        continue;
+                    }
+                }
                 final int titleID = fields[i].getInt(null);
                 final String title = context.getString(titleID);
 
@@ -483,7 +498,7 @@ public class LocalBrowserDB implements BrowserDB {
         }
 
         final String bitmapPath = GeckoJarReader.getJarURL(context, context.getString(faviconId));
-        final InputStream iStream = GeckoJarReader.getStream(bitmapPath);
+        final InputStream iStream = GeckoJarReader.getStream(context, bitmapPath);
 
         return IOUtils.readFully(iStream, DEFAULT_FAVICON_BUFFER_SIZE);
     }
@@ -705,6 +720,21 @@ public class LocalBrowserDB implements BrowserDB {
     }
 
     @Override
+    public Cursor getRecentHistoryBetweenTime(ContentResolver cr, int limit, long start, long end) {
+        return cr.query(combinedUriWithLimit(limit),
+                new String[] { Combined._ID,
+                        Combined.BOOKMARK_ID,
+                        Combined.HISTORY_ID,
+                        Combined.URL,
+                        Combined.TITLE,
+                        Combined.DATE_LAST_VISITED,
+                        Combined.VISITS },
+                History.DATE_LAST_VISITED + " >= " + start + " AND " + History.DATE_LAST_VISITED + " < " + end,
+                null,
+                History.DATE_LAST_VISITED + " DESC");
+    }
+
+    @Override
     public void expireHistory(ContentResolver cr, ExpirePriority priority) {
         Uri url = mHistoryExpireUriWithProfile;
         url = url.buildUpon().appendQueryParameter(BrowserContract.PARAM_EXPIRE_PRIORITY, priority.toString()).build();
@@ -889,7 +919,7 @@ public class LocalBrowserDB implements BrowserDB {
         final long now = System.currentTimeMillis();
         ContentValues values = new ContentValues();
         if (title != null) {
-            values.put(Browser.BookmarkColumns.TITLE, title);
+            values.put(Bookmarks.TITLE, title);
         }
 
         values.put(Bookmarks.URL, uri);
@@ -939,9 +969,34 @@ public class LocalBrowserDB implements BrowserDB {
 
     @Override
     @RobocopTarget
-    public void addBookmark(ContentResolver cr, String title, String uri) {
+    public boolean addBookmark(ContentResolver cr, String title, String uri) {
         long folderId = getFolderIdFromGuid(cr, Bookmarks.MOBILE_FOLDER_GUID);
+        if (isBookmarkForUrlInFolder(cr, uri, folderId)) {
+            // Bookmark added already.
+            return false;
+        }
+
+        // Add a new bookmark.
         addBookmarkItem(cr, title, uri, folderId);
+        return true;
+    }
+
+    private boolean isBookmarkForUrlInFolder(ContentResolver cr, String uri, long folderId) {
+        final Cursor c = cr.query(bookmarksUriWithLimit(1),
+                                  new String[] { Bookmarks._ID },
+                                  Bookmarks.URL + " = ? AND " + Bookmarks.PARENT + " = ? AND " + Bookmarks.IS_DELETED + " == 0",
+                                  new String[] { uri, String.valueOf(folderId) },
+                                  Bookmarks.URL);
+
+        if (c == null) {
+            return false;
+        }
+
+        try {
+            return c.getCount() > 0;
+        } finally {
+            c.close();
+        }
     }
 
     @Override
@@ -967,7 +1022,7 @@ public class LocalBrowserDB implements BrowserDB {
     @RobocopTarget
     public void updateBookmark(ContentResolver cr, int id, String uri, String title, String keyword) {
         ContentValues values = new ContentValues();
-        values.put(Browser.BookmarkColumns.TITLE, title);
+        values.put(Bookmarks.TITLE, title);
         values.put(Bookmarks.URL, uri);
         values.put(Bookmarks.KEYWORD, keyword);
         values.put(Bookmarks.DATE_MODIFIED, System.currentTimeMillis());

@@ -22,13 +22,14 @@
 #include "BaseWebSocketChannel.h"
 
 #ifdef MOZ_WIDGET_GONK
-#include "nsINetworkManager.h"
+#include "nsINetworkInterface.h"
 #include "nsProxyRelease.h"
 #endif
 
 #include "nsCOMPtr.h"
 #include "nsString.h"
 #include "nsDeque.h"
+#include "mozilla/Atomics.h"
 
 class nsIAsyncVerifyRedirectCallback;
 class nsIDashboardEventNotifier;
@@ -144,6 +145,9 @@ private:
   void GeneratePong(uint8_t *payload, uint32_t len);
   void GeneratePing();
 
+  nsresult OnNetworkChanged();
+  nsresult StartPinging();
+
   void     BeginOpen(bool aCalledFromAdmissionManager);
   void     BeginOpenInternal();
   nsresult HandleExtensions();
@@ -216,22 +220,28 @@ private:
 
   int32_t                         mMaxConcurrentConnections;
 
+  // following members are accessed only on the main thread
   uint32_t                        mGotUpgradeOK              : 1;
   uint32_t                        mRecvdHttpUpgradeTransport : 1;
-  uint32_t                        mRequestedClose            : 1;
-  uint32_t                        mClientClosed              : 1;
-  uint32_t                        mServerClosed              : 1;
-  uint32_t                        mStopped                   : 1;
-  uint32_t                        mCalledOnStop              : 1;
-  uint32_t                        mPingOutstanding           : 1;
   uint32_t                        mAutoFollowRedirects       : 1;
-  uint32_t                        mReleaseOnTransmit         : 1;
-  uint32_t                        mTCPClosed                 : 1;
-  uint32_t                        mOpenedHttpChannel         : 1;
-  uint32_t                        mDataStarted               : 1;
-  uint32_t                        mIncrementedSessionCount   : 1;
-  uint32_t                        mDecrementedSessionCount   : 1;
   uint32_t                        mAllowPMCE                 : 1;
+  uint32_t                                                   : 0;
+
+  // following members are accessed only on the socket thread
+  uint32_t                        mPingOutstanding           : 1;
+  uint32_t                        mReleaseOnTransmit         : 1;
+  uint32_t                                                   : 0;
+
+  Atomic<bool>                    mDataStarted;
+  Atomic<bool>                    mRequestedClose;
+  Atomic<bool>                    mClientClosed;
+  Atomic<bool>                    mServerClosed;
+  Atomic<bool>                    mStopped;
+  Atomic<bool>                    mCalledOnStop;
+  Atomic<bool>                    mTCPClosed;
+  Atomic<bool>                    mOpenedHttpChannel;
+  Atomic<bool>                    mIncrementedSessionCount;
+  Atomic<bool>                    mDecrementedSessionCount;
 
   int32_t                         mMaxMessageSize;
   nsresult                        mStopOnClose;
@@ -276,12 +286,12 @@ private:
 
 // These members are used for network per-app metering (bug 855949)
 // Currently, they are only available on gonk.
-  uint64_t                        mCountRecv;
-  uint64_t                        mCountSent;
+  Atomic<uint64_t, Relaxed>       mCountRecv;
+  Atomic<uint64_t, Relaxed>       mCountSent;
   uint32_t                        mAppId;
   bool                            mIsInBrowser;
 #ifdef MOZ_WIDGET_GONK
-  nsMainThreadPtrHandle<nsINetworkInterface> mActiveNetwork;
+  nsMainThreadPtrHandle<nsINetworkInfo> mActiveNetworkInfo;
 #endif
   nsresult                        SaveNetworkStats(bool);
   void                            CountRecvBytes(uint64_t recvBytes)
@@ -304,6 +314,7 @@ protected:
     virtual ~WebSocketSSLChannel() {}
 };
 
-}} // namespace mozilla::net
+} // namespace net
+} // namespace mozilla
 
 #endif // mozilla_net_WebSocketChannel_h

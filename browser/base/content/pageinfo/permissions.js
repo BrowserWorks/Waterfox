@@ -18,7 +18,7 @@ var permissionObserver = {
   {
     if (aTopic == "perm-changed") {
       var permission = aSubject.QueryInterface(Components.interfaces.nsIPermission);
-      if (permission.host == gPermURI.host) {
+      if (permission.matchesURI(gPermURI, true)) {
         if (gPermissions.indexOf(permission.type) > -1)
           initRow(permission.type);
         else if (permission.type.startsWith("plugin"))
@@ -28,14 +28,13 @@ var permissionObserver = {
   }
 };
 
-function onLoadPermission()
+function onLoadPermission(uri)
 {
-  var uri = BrowserUtils.makeURIFromCPOW(gDocument.documentURIObject);
   var permTab = document.getElementById("permTab");
   if (SitePermissions.isSupportedURI(uri)) {
     gPermURI = uri;
     var hostText = document.getElementById("hostText");
-    hostText.value = gPermURI.host;
+    hostText.value = gPermURI.prePath;
 
     for (var i of gPermissions)
       initRow(i);
@@ -189,8 +188,11 @@ function initIndexedDBRow()
 
   var quotaManager = Components.classes["@mozilla.org/dom/quota/manager;1"]
                                .getService(nsIQuotaManager);
+  let principal = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
+                            .getService(Components.interfaces.nsIScriptSecurityManager)
+                            .createCodebasePrincipal(gPermURI, {});
   gUsageRequest =
-    quotaManager.getUsageForURI(gPermURI, onIndexedDBUsageCallback);
+    quotaManager.getUsageForPrincipal(principal, onIndexedDBUsageCallback);
 
   var status = document.getElementById("indexedDBStatus");
   var button = document.getElementById("indexedDBClear");
@@ -202,16 +204,25 @@ function initIndexedDBRow()
 
 function onIndexedDBClear()
 {
+  let principal = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
+                            .getService(Components.interfaces.nsIScriptSecurityManager)
+                            .createCodebasePrincipal(gPermURI, {});
+
   Components.classes["@mozilla.org/dom/quota/manager;1"]
             .getService(nsIQuotaManager)
-            .clearStoragesForURI(gPermURI);
+            .clearStoragesForPrincipal(principal);
+
+  Components.classes["@mozilla.org/serviceworkers/manager;1"]
+            .getService(Components.interfaces.nsIServiceWorkerManager)
+            .removeAndPropagate(gPermURI.host);
 
   SitePermissions.remove(gPermURI, "indexedDB");
   initIndexedDBRow();
 }
 
-function onIndexedDBUsageCallback(uri, usage, fileUsage)
+function onIndexedDBUsageCallback(principal, usage, fileUsage)
 {
+  let uri = principal.URI;
   if (!uri.equals(gPermURI)) {
     throw new Error("Callback received for bad URI: " + uri);
   }

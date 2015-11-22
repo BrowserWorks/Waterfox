@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <stdlib.h>
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #include "mozilla/Mutex.h"
 #include "mozilla/Attributes.h"
@@ -31,7 +31,7 @@ GetTeeLog()
   }
   return sLog;
 }
-#define LOG(args) PR_LOG(GetTeeLog(), PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(GetTeeLog(), mozilla::LogLevel::Debug, args)
 
 class nsInputStreamTee final : public nsIInputStreamTee
 {
@@ -358,7 +358,7 @@ NS_NewInputStreamTeeAsync(nsIInputStream** aResult,
     return rv;
   }
 
-  NS_ADDREF(*aResult = tee);
+  tee.forget(aResult);
   return rv;
 }
 

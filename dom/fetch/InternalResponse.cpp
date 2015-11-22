@@ -6,21 +6,25 @@
 
 #include "InternalResponse.h"
 
-#include "nsIDOMFile.h"
-
+#include "mozilla/Assertions.h"
 #include "mozilla/dom/InternalHeaders.h"
+#include "mozilla/dom/cache/CacheTypes.h"
+#include "mozilla/ipc/PBackgroundSharedTypes.h"
+#include "nsIURI.h"
 #include "nsStreamUtils.h"
-#include "nsSerializationHelper.h"
 
 namespace mozilla {
 namespace dom {
 
 InternalResponse::InternalResponse(uint16_t aStatus, const nsACString& aStatusText)
   : mType(ResponseType::Default)
-  , mFinalURL(false)
   , mStatus(aStatus)
   , mStatusText(aStatusText)
   , mHeaders(new InternalHeaders(HeadersGuardEnum::Response))
+{
+}
+
+InternalResponse::~InternalResponse()
 {
 }
 
@@ -78,22 +82,79 @@ InternalResponse::CORSResponse()
 }
 
 void
-InternalResponse::SetSecurityInfo(nsISupports* aSecurityInfo)
+InternalResponse::SetPrincipalInfo(UniquePtr<mozilla::ipc::PrincipalInfo> aPrincipalInfo)
 {
-  MOZ_ASSERT(mSecurityInfo.IsEmpty(), "security info should only be set once");
-  nsCOMPtr<nsISerializable> serializable = do_QueryInterface(aSecurityInfo);
-  if (!serializable) {
-    NS_WARNING("A non-serializable object was passed to InternalResponse::SetSecurityInfo");
-    return;
-  }
-  NS_SerializeToString(serializable, mSecurityInfo);
+  mPrincipalInfo = Move(aPrincipalInfo);
 }
 
-void
-InternalResponse::SetSecurityInfo(const nsCString& aSecurityInfo)
+nsresult
+InternalResponse::StripFragmentAndSetUrl(const nsACString& aUrl)
 {
-  MOZ_ASSERT(mSecurityInfo.IsEmpty(), "security info should only be set once");
-  mSecurityInfo = aSecurityInfo;
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsCOMPtr<nsIURI> iuri;
+  nsresult rv;
+
+  rv = NS_NewURI(getter_AddRefs(iuri), aUrl);
+  if(NS_WARN_IF(NS_FAILED(rv))){
+    return rv;
+  }
+
+  nsCOMPtr<nsIURI> iuriClone;
+  // We use CloneIgnoringRef to strip away the fragment even if the original URI
+  // is immutable.
+  rv = iuri->CloneIgnoringRef(getter_AddRefs(iuriClone));
+  if(NS_WARN_IF(NS_FAILED(rv))){
+    return rv;
+  }
+
+  nsCString spec;
+  rv = iuriClone->GetSpec(spec);
+  if(NS_WARN_IF(NS_FAILED(rv))){
+    return rv;
+  }
+
+  SetUrl(spec);
+  return NS_OK;
+}
+
+already_AddRefed<InternalResponse>
+InternalResponse::OpaqueResponse()
+{
+  MOZ_ASSERT(!mWrappedResponse, "Can't OpaqueResponse a already wrapped response");
+  nsRefPtr<InternalResponse> response = new InternalResponse(0, EmptyCString());
+  response->mType = ResponseType::Opaque;
+  response->mTerminationReason = mTerminationReason;
+  response->mChannelInfo = mChannelInfo;
+  if (mPrincipalInfo) {
+    response->mPrincipalInfo = MakeUnique<mozilla::ipc::PrincipalInfo>(*mPrincipalInfo);
+  }
+  response->mWrappedResponse = this;
+  return response.forget();
+}
+
+already_AddRefed<InternalResponse>
+InternalResponse::OpaqueRedirectResponse()
+{
+  MOZ_ASSERT(!mWrappedResponse, "Can't OpaqueRedirectResponse a already wrapped response");
+  nsRefPtr<InternalResponse> response = OpaqueResponse();
+  response->mType = ResponseType::Opaqueredirect;
+  response->mURL = mURL;
+  return response.forget();
+}
+
+already_AddRefed<InternalResponse>
+InternalResponse::CreateIncompleteCopy()
+{
+  nsRefPtr<InternalResponse> copy = new InternalResponse(mStatus, mStatusText);
+  copy->mType = mType;
+  copy->mTerminationReason = mTerminationReason;
+  copy->mURL = mURL;
+  copy->mChannelInfo = mChannelInfo;
+  if (mPrincipalInfo) {
+    copy->mPrincipalInfo = MakeUnique<mozilla::ipc::PrincipalInfo>(*mPrincipalInfo);
+  }
+  return copy.forget();
 }
 
 } // namespace dom

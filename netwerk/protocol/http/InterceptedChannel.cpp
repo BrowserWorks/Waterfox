@@ -13,9 +13,13 @@
 #include "nsHttpChannel.h"
 #include "HttpChannelChild.h"
 #include "nsHttpResponseHead.h"
+#include "mozilla/dom/ChannelInfo.h"
 
 namespace mozilla {
 namespace net {
+
+extern bool
+WillRedirect(const nsHttpResponseHead * response);
 
 extern nsresult
 DoAddCacheEntryHeaders(nsHttpChannel *self,
@@ -183,6 +187,13 @@ InterceptedChannelChrome::FinishSynthesizedResponse()
 
   EnsureSynthesizedResponse();
 
+  // If the synthesized response is a redirect, then we want to respect
+  // the encoding of whatever is loaded as a result.
+  if (WillRedirect(mSynthesizedResponseHead.ref())) {
+    nsresult rv = mChannel->SetApplyConversion(mOldApplyConversion);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
   mChannel->MarkIntercepted();
 
   // First we ensure the appropriate metadata is set on the synthesized cache entry
@@ -219,27 +230,29 @@ InterceptedChannelChrome::FinishSynthesizedResponse()
 }
 
 NS_IMETHODIMP
-InterceptedChannelChrome::Cancel()
+InterceptedChannelChrome::Cancel(nsresult aStatus)
 {
+  MOZ_ASSERT(NS_FAILED(aStatus));
+
   if (!mChannel) {
     return NS_ERROR_FAILURE;
   }
 
   // we need to use AsyncAbort instead of Cancel since there's no active pump
   // to cancel which will provide OnStart/OnStopRequest to the channel.
-  nsresult rv = mChannel->AsyncAbort(NS_BINDING_ABORTED);
+  nsresult rv = mChannel->AsyncAbort(aStatus);
   NS_ENSURE_SUCCESS(rv, rv);
   return NS_OK;
 }
 
 NS_IMETHODIMP
-InterceptedChannelChrome::SetSecurityInfo(nsISupports* aSecurityInfo)
+InterceptedChannelChrome::SetChannelInfo(dom::ChannelInfo* aChannelInfo)
 {
   if (!mChannel) {
     return NS_ERROR_FAILURE;
   }
 
-  return mChannel->OverrideSecurityInfo(aSecurityInfo);
+  return aChannelInfo->ResurrectInfoOnChannel(mChannel);
 }
 
 InterceptedChannelContent::InterceptedChannelContent(HttpChannelChild* aChannel,
@@ -324,15 +337,17 @@ InterceptedChannelContent::FinishSynthesizedResponse()
 }
 
 NS_IMETHODIMP
-InterceptedChannelContent::Cancel()
+InterceptedChannelContent::Cancel(nsresult aStatus)
 {
+  MOZ_ASSERT(NS_FAILED(aStatus));
+
   if (!mChannel) {
     return NS_ERROR_FAILURE;
   }
 
   // we need to use AsyncAbort instead of Cancel since there's no active pump
   // to cancel which will provide OnStart/OnStopRequest to the channel.
-  nsresult rv = mChannel->AsyncAbort(NS_BINDING_ABORTED);
+  nsresult rv = mChannel->AsyncAbort(aStatus);
   NS_ENSURE_SUCCESS(rv, rv);
   mChannel = nullptr;
   mStreamListener = nullptr;
@@ -340,13 +355,13 @@ InterceptedChannelContent::Cancel()
 }
 
 NS_IMETHODIMP
-InterceptedChannelContent::SetSecurityInfo(nsISupports* aSecurityInfo)
+InterceptedChannelContent::SetChannelInfo(dom::ChannelInfo* aChannelInfo)
 {
   if (!mChannel) {
     return NS_ERROR_FAILURE;
   }
 
-  return mChannel->OverrideSecurityInfo(aSecurityInfo);
+  return aChannelInfo->ResurrectInfoOnChannel(mChannel);
 }
 
 } // namespace net

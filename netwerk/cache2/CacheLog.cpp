@@ -14,7 +14,7 @@ namespace net {
 //    set NSPR_LOG_MODULES=cache2:5
 //    set NSPR_LOG_FILE=nspr.log
 //
-// this enables PR_LOG_DEBUG level information and places all output in
+// this enables LogLevel::Debug level information and places all output in
 // the file nspr.log
 PRLogModuleInfo* GetCache2Log()
 {
@@ -24,5 +24,5 @@ PRLogModuleInfo* GetCache2Log()
   return sLog;
 }
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla

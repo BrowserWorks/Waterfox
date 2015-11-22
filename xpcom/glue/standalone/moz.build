@@ -43,9 +43,18 @@ LOCAL_INCLUDES += [
 # Don't use STL wrappers here (i.e. wrapped <new>); they require mozalloc
 DISABLE_STL_WRAPPING = True
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']
 
 # Include fallible for third party code using the xpcom glue
 USE_LIBS += [
     'fallible',
 ]
+
+# Force to build a static library only
+NO_EXPAND_LIBS = True
+
+DIST_INSTALL = True
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk2', 'gtk3'):
+    CXXFLAGS += CONFIG['GLIB_CFLAGS']

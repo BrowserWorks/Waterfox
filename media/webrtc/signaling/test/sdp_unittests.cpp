@@ -265,7 +265,7 @@ class SdpTest : public ::testing::Test {
 
 static const std::string kVideoSdp =
   "v=0\r\n"
-  "o=- 137331303 2 IN IP4 127.0.0.1\r\n"
+  "o=- 4294967296 2 IN IP4 127.0.0.1\r\n"
   "s=SIP Call\r\n"
   "c=IN IP4 198.51.100.7\r\n"
   "t=0 0\r\n"
@@ -813,7 +813,7 @@ TEST_F(SdpTest, addFmtpMaxFsFr) {
 
 static const std::string kBrokenFmtp =
   "v=0\r\n"
-  "o=- 137331303 2 IN IP4 127.0.0.1\r\n"
+  "o=- 4294967296 2 IN IP4 127.0.0.1\r\n"
   "s=SIP Call\r\n"
   "t=0 0\r\n"
   "m=video 56436 RTP/SAVPF 120\r\n"
@@ -846,7 +846,7 @@ TEST_F(SdpTest, addIceLite) {
 TEST_F(SdpTest, parseIceLite) {
     std::string sdp =
         "v=0\r\n"
-        "o=- 137331303 2 IN IP4 127.0.0.1\r\n"
+        "o=- 4294967296 2 IN IP4 127.0.0.1\r\n"
         "s=SIP Call\r\n"
         "t=0 0\r\n"
         "a=ice-lite\r\n";
@@ -1006,7 +1006,7 @@ TEST_P(NewSdpTest, CheckOriginGetUsername) {
 
 TEST_P(NewSdpTest, CheckOriginGetSessionId) {
   ParseSdp(kVideoSdp);
-  ASSERT_EQ(137331303U, mSdp->GetOrigin().GetSessionId())
+  ASSERT_EQ(4294967296U, mSdp->GetOrigin().GetSessionId())
     << "Wrong session id in origin";
 }
 
@@ -1036,7 +1036,7 @@ TEST_P(NewSdpTest, CheckGetMissingBandwidth) {
 
 TEST_P(NewSdpTest, CheckGetBandwidth) {
   ParseSdp("v=0" CRLF
-           "o=- 137331303 2 IN IP4 127.0.0.1" CRLF
+           "o=- 4294967296 2 IN IP4 127.0.0.1" CRLF
            "s=SIP Call" CRLF
            "c=IN IP4 198.51.100.7" CRLF
            "b=CT:5000" CRLF
@@ -1104,7 +1104,7 @@ TEST_P(NewSdpTest, CheckMediaSectionGetMissingBandwidth) {
 
 TEST_P(NewSdpTest, CheckMediaSectionGetBandwidth) {
   ParseSdp("v=0\r\n"
-           "o=- 137331303 2 IN IP4 127.0.0.1\r\n"
+           "o=- 4294967296 2 IN IP4 127.0.0.1\r\n"
            "c=IN IP4 198.51.100.7\r\n"
            "t=0 0\r\n"
            "m=video 56436 RTP/SAVPF 120\r\n"
@@ -1193,6 +1193,9 @@ const std::string kBasicAudioVideoOffer =
 "a=end-of-candidates" CRLF
 "a=ssrc:1111 foo" CRLF
 "a=ssrc:1111 foo:bar" CRLF
+"a=imageattr:120 send * recv *" CRLF
+"a=imageattr:121 send [x=640,y=480] recv [x=640,y=480]" CRLF
+"a=simulcast:sendrecv 120;121" CRLF
 "m=audio 9 RTP/SAVPF 0" CRLF
 "a=mid:third" CRLF
 "a=rtpmap:0 PCMU/8000" CRLF
@@ -2002,6 +2005,77 @@ TEST_P(NewSdpTest, CheckRtcp) {
   ASSERT_EQ("", rtcpAttr_1.mAddress);
 }
 
+TEST_P(NewSdpTest, CheckImageattr)
+{
+  ParseSdp(kBasicAudioVideoOffer);
+  ASSERT_TRUE(!!mSdp);
+  ASSERT_EQ(3U, mSdp->GetMediaSectionCount()) << "Wrong number of media sections";
+
+  ASSERT_FALSE(mSdp->GetAttributeList().HasAttribute(
+        SdpAttribute::kImageattrAttribute));
+  ASSERT_FALSE(mSdp->GetMediaSection(0).GetAttributeList().HasAttribute(
+        SdpAttribute::kImageattrAttribute));
+  ASSERT_TRUE(mSdp->GetMediaSection(1).GetAttributeList().HasAttribute(
+        SdpAttribute::kImageattrAttribute));
+  ASSERT_FALSE(mSdp->GetMediaSection(2).GetAttributeList().HasAttribute(
+        SdpAttribute::kImageattrAttribute));
+
+  const SdpImageattrAttributeList& imageattrs =
+    mSdp->GetMediaSection(1).GetAttributeList().GetImageattr();
+
+  ASSERT_EQ(2U, imageattrs.mImageattrs.size());
+  const SdpImageattrAttributeList::Imageattr& imageattr_0(
+      imageattrs.mImageattrs[0]);
+  ASSERT_TRUE(imageattr_0.pt.isSome());
+  ASSERT_EQ(120U, *imageattr_0.pt);
+  ASSERT_TRUE(imageattr_0.sendAll);
+  ASSERT_TRUE(imageattr_0.recvAll);
+
+  const SdpImageattrAttributeList::Imageattr& imageattr_1(
+      imageattrs.mImageattrs[1]);
+  ASSERT_TRUE(imageattr_1.pt.isSome());
+  ASSERT_EQ(121U, *imageattr_1.pt);
+  ASSERT_FALSE(imageattr_1.sendAll);
+  ASSERT_FALSE(imageattr_1.recvAll);
+  ASSERT_EQ(1U, imageattr_1.sendSets.size());
+  ASSERT_EQ(1U, imageattr_1.sendSets[0].xRange.discreteValues.size());
+  ASSERT_EQ(640U, imageattr_1.sendSets[0].xRange.discreteValues.front());
+  ASSERT_EQ(1U, imageattr_1.sendSets[0].yRange.discreteValues.size());
+  ASSERT_EQ(480U, imageattr_1.sendSets[0].yRange.discreteValues.front());
+  ASSERT_EQ(1U, imageattr_1.recvSets.size());
+  ASSERT_EQ(1U, imageattr_1.recvSets[0].xRange.discreteValues.size());
+  ASSERT_EQ(640U, imageattr_1.recvSets[0].xRange.discreteValues.front());
+  ASSERT_EQ(1U, imageattr_1.recvSets[0].yRange.discreteValues.size());
+  ASSERT_EQ(480U, imageattr_1.recvSets[0].yRange.discreteValues.front());
+}
+
+TEST_P(NewSdpTest, CheckSimulcast)
+{
+  ParseSdp(kBasicAudioVideoOffer);
+  ASSERT_TRUE(!!mSdp);
+  ASSERT_EQ(3U, mSdp->GetMediaSectionCount()) << "Wrong number of media sections";
+
+  ASSERT_FALSE(mSdp->GetAttributeList().HasAttribute(
+        SdpAttribute::kSimulcastAttribute));
+  ASSERT_FALSE(mSdp->GetMediaSection(0).GetAttributeList().HasAttribute(
+        SdpAttribute::kSimulcastAttribute));
+  ASSERT_TRUE(mSdp->GetMediaSection(1).GetAttributeList().HasAttribute(
+        SdpAttribute::kSimulcastAttribute));
+  ASSERT_FALSE(mSdp->GetMediaSection(2).GetAttributeList().HasAttribute(
+        SdpAttribute::kSimulcastAttribute));
+
+  const SdpSimulcastAttribute& simulcast =
+    mSdp->GetMediaSection(1).GetAttributeList().GetSimulcast();
+
+  ASSERT_EQ(0U, simulcast.sendVersions.size());
+  ASSERT_EQ(0U, simulcast.recvVersions.size());
+  ASSERT_EQ(2U, simulcast.sendrecvVersions.size());
+  ASSERT_EQ(1U, simulcast.sendrecvVersions[0].choices.size());
+  ASSERT_EQ(120U, simulcast.sendrecvVersions[0].choices[0]);
+  ASSERT_EQ(1U, simulcast.sendrecvVersions[1].choices.size());
+  ASSERT_EQ(121U, simulcast.sendrecvVersions[1].choices[0]);
+}
+
 TEST_P(NewSdpTest, CheckSctpmap) {
   ParseSdp(kBasicAudioVideoDataOffer);
   ASSERT_TRUE(!!mSdp) << "Parse failed: " << GetParseErrors();
@@ -2484,6 +2558,28 @@ TEST_P(NewSdpTest, CheckSsrcGroupInSessionLevel) {
   }
 }
 
+const std::string kMalformedImageattr =
+"v=0" CRLF
+"o=Mozilla-SIPUA-35.0a1 5184 0 IN IP4 0.0.0.0" CRLF
+"s=SIP Call" CRLF
+"c=IN IP4 224.0.0.1/100/12" CRLF
+"t=0 0" CRLF
+"m=video 9 RTP/SAVPF 120" CRLF
+"c=IN IP4 0.0.0.0" CRLF
+"a=rtpmap:120 VP8/90000" CRLF
+"a=imageattr:flob" CRLF;
+
+TEST_P(NewSdpTest, CheckMalformedImageattr)
+{
+  if (GetParam()) {
+    // Don't do a parse/serialize before running this test
+    return;
+  }
+
+  ParseSdp(kMalformedImageattr, false);
+  ASSERT_NE("", GetParseErrors());
+}
+
 const std::string kNoAttributes =
 "v=0" CRLF
 "o=Mozilla-SIPUA-35.0a1 5184 0 IN IP4 0.0.0.0" CRLF
@@ -2545,6 +2641,1004 @@ TEST(NewSdpTestNoFixture, CheckAttributeTypeSerialize) {
       ASSERT_NE("", os.str());
     }
   }
+}
+
+static SdpImageattrAttributeList::XYRange
+ParseXYRange(const std::string& input)
+{
+  std::istringstream is(input + ",");
+  std::string error;
+  SdpImageattrAttributeList::XYRange range;
+  EXPECT_TRUE(range.Parse(is, &error)) << error;
+  EXPECT_EQ(',', is.get());
+  EXPECT_EQ(EOF, is.get());
+  return range;
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrXYRangeParseValid)
+{
+  {
+    SdpImageattrAttributeList::XYRange range(ParseXYRange("640"));
+    ASSERT_EQ(1U, range.discreteValues.size());
+    ASSERT_EQ(640U, range.discreteValues[0]);
+  }
+
+  {
+    SdpImageattrAttributeList::XYRange range(ParseXYRange("[320,640]"));
+    ASSERT_EQ(2U, range.discreteValues.size());
+    ASSERT_EQ(320U, range.discreteValues[0]);
+    ASSERT_EQ(640U, range.discreteValues[1]);
+  }
+
+  {
+    SdpImageattrAttributeList::XYRange range(ParseXYRange("[320,640,1024]"));
+    ASSERT_EQ(3U, range.discreteValues.size());
+    ASSERT_EQ(320U, range.discreteValues[0]);
+    ASSERT_EQ(640U, range.discreteValues[1]);
+    ASSERT_EQ(1024U, range.discreteValues[2]);
+  }
+
+  {
+    SdpImageattrAttributeList::XYRange range(ParseXYRange("[320:640]"));
+    ASSERT_EQ(0U, range.discreteValues.size());
+    ASSERT_EQ(320U, range.min);
+    ASSERT_EQ(1U, range.step);
+    ASSERT_EQ(640U, range.max);
+  }
+
+  {
+    SdpImageattrAttributeList::XYRange range(ParseXYRange("[320:16:640]"));
+    ASSERT_EQ(0U, range.discreteValues.size());
+    ASSERT_EQ(320U, range.min);
+    ASSERT_EQ(16U, range.step);
+    ASSERT_EQ(640U, range.max);
+  }
+}
+
+template<typename T>
+void
+ParseInvalid(const std::string& input, size_t last)
+{
+  std::istringstream is(input);
+  T parsed;
+  std::string error;
+  ASSERT_FALSE(parsed.Parse(is, &error))
+    << "\'" << input << "\' should not have parsed successfully";
+  is.clear();
+  ASSERT_EQ(last, static_cast<size_t>(is.tellg()))
+    << "Parse failed at unexpected location:" << std::endl
+    << input << std::endl
+    << std::string(is.tellg(), ' ') << "^" << std::endl;
+  // For a human to eyeball to make sure the error strings look sane
+  std::cout << "\"" << input << "\" - " << error << std::endl; \
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrXYRangeParseInvalid)
+{
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[-1", 1);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[-", 1);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[-x", 1);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:-1", 5);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:-1", 8);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640,-1", 5);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640,-]", 5);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("-x", 0);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("-1", 0);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("", 0);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[", 1);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[x", 1);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[", 1);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[ 640", 1);
+  // It looks like the overflow detection only happens once the whole number
+  // is scanned...
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[99999999999999999:", 18);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640", 4);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:", 5);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:x", 5);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16", 7);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:", 8);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:x", 8);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:320]", 11);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:320", 11);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:320x", 11);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:1024", 9);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:320]", 8);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:1024x", 9);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640,", 5);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640,x", 5);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640]", 4);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640x", 4);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640,]", 5);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>(" ", 0);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("x", 0);
+}
+
+static SdpImageattrAttributeList::SRange
+ParseSRange(const std::string& input)
+{
+  std::istringstream is(input + ",");
+  std::string error;
+  SdpImageattrAttributeList::SRange range;
+  EXPECT_TRUE(range.Parse(is, &error)) << error;
+  EXPECT_EQ(',', is.get());
+  EXPECT_EQ(EOF, is.get());
+  return range;
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrSRangeParseValid)
+{
+  {
+    SdpImageattrAttributeList::SRange range(ParseSRange("0.1"));
+    ASSERT_EQ(1U, range.discreteValues.size());
+    ASSERT_FLOAT_EQ(0.1f, range.discreteValues[0]);
+  }
+
+  {
+    SdpImageattrAttributeList::SRange range(ParseSRange("[0.1,0.2]"));
+    ASSERT_EQ(2U, range.discreteValues.size());
+    ASSERT_FLOAT_EQ(0.1f, range.discreteValues[0]);
+    ASSERT_FLOAT_EQ(0.2f, range.discreteValues[1]);
+  }
+
+  {
+    SdpImageattrAttributeList::SRange range(ParseSRange("[0.1,0.2,0.3]"));
+    ASSERT_EQ(3U, range.discreteValues.size());
+    ASSERT_FLOAT_EQ(0.1f, range.discreteValues[0]);
+    ASSERT_FLOAT_EQ(0.2f, range.discreteValues[1]);
+    ASSERT_FLOAT_EQ(0.3f, range.discreteValues[2]);
+  }
+
+  {
+    SdpImageattrAttributeList::SRange range(ParseSRange("[0.1-0.2]"));
+    ASSERT_EQ(0U, range.discreteValues.size());
+    ASSERT_FLOAT_EQ(0.1f, range.min);
+    ASSERT_FLOAT_EQ(0.2f, range.max);
+  }
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrSRangeParseInvalid)
+{
+  ParseInvalid<SdpImageattrAttributeList::SRange>("", 0);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[", 1);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[x", 1);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[-1", 1);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[", 1);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[-", 1);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[x", 1);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[ 0.2", 1);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[10.1-", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.08-", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2", 4);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-x", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2--1", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-0.3", 8);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-0.1]", 8);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-0.3x", 8);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2,", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2,x", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2,-1", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2]", 4);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2x", 4);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2,]", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2,-]", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>(" ", 0);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("x", 0);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("-x", 0);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("-1", 0);
+}
+
+static SdpImageattrAttributeList::PRange
+ParsePRange(const std::string& input)
+{
+  std::istringstream is(input + ",");
+  std::string error;
+  SdpImageattrAttributeList::PRange range;
+  EXPECT_TRUE(range.Parse(is, &error)) << error;
+  EXPECT_EQ(',', is.get());
+  EXPECT_EQ(EOF, is.get());
+  return range;
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrPRangeParseValid)
+{
+  SdpImageattrAttributeList::PRange range(ParsePRange("[0.1000-9.9999]"));
+  ASSERT_FLOAT_EQ(0.1f, range.min);
+  ASSERT_FLOAT_EQ(9.9999f, range.max);
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrPRangeParseInvalid)
+{
+  ParseInvalid<SdpImageattrAttributeList::PRange>("", 0);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[", 1);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[x", 1);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[-1", 1);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[", 1);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[-", 1);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[x", 1);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[ 0.2", 1);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[10.1-", 5);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.08-", 5);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2", 4);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-", 5);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-x", 5);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2--1", 5);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-0.3", 8);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-0.1]", 8);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-0.3x", 8);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2,", 4);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2:", 4);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2]", 4);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2x", 4);
+  ParseInvalid<SdpImageattrAttributeList::PRange>(" ", 0);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("x", 0);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("-x", 0);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("-1", 0);
+}
+
+static SdpImageattrAttributeList::Set
+ParseSet(const std::string& input)
+{
+  std::istringstream is(input + " ");
+  std::string error;
+  SdpImageattrAttributeList::Set set;
+  EXPECT_TRUE(set.Parse(is, &error)) << error;
+  EXPECT_EQ(' ', is.get());
+  EXPECT_EQ(EOF, is.get());
+  return set;
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrSetParseValid)
+{
+  {
+    SdpImageattrAttributeList::Set set(ParseSet("[x=320,y=240]"));
+    ASSERT_EQ(1U, set.xRange.discreteValues.size());
+    ASSERT_EQ(320U, set.xRange.discreteValues[0]);
+    ASSERT_EQ(1U, set.yRange.discreteValues.size());
+    ASSERT_EQ(240U, set.yRange.discreteValues[0]);
+    ASSERT_FALSE(set.sRange.IsSet());
+    ASSERT_FALSE(set.pRange.IsSet());
+    ASSERT_FLOAT_EQ(0.5f, set.qValue);
+  }
+
+  {
+    SdpImageattrAttributeList::Set set(ParseSet("[X=320,Y=240]"));
+    ASSERT_EQ(1U, set.xRange.discreteValues.size());
+    ASSERT_EQ(320U, set.xRange.discreteValues[0]);
+    ASSERT_EQ(1U, set.yRange.discreteValues.size());
+    ASSERT_EQ(240U, set.yRange.discreteValues[0]);
+    ASSERT_FALSE(set.sRange.IsSet());
+    ASSERT_FALSE(set.pRange.IsSet());
+    ASSERT_FLOAT_EQ(0.5f, set.qValue);
+  }
+
+  {
+    SdpImageattrAttributeList::Set set(ParseSet("[x=320,y=240,par=[0.1-0.2]]"));
+    ASSERT_EQ(1U, set.xRange.discreteValues.size());
+    ASSERT_EQ(320U, set.xRange.discreteValues[0]);
+    ASSERT_EQ(1U, set.yRange.discreteValues.size());
+    ASSERT_EQ(240U, set.yRange.discreteValues[0]);
+    ASSERT_FALSE(set.sRange.IsSet());
+    ASSERT_TRUE(set.pRange.IsSet());
+    ASSERT_FLOAT_EQ(0.1f, set.pRange.min);
+    ASSERT_FLOAT_EQ(0.2f, set.pRange.max);
+    ASSERT_FLOAT_EQ(0.5f, set.qValue);
+  }
+
+  {
+    SdpImageattrAttributeList::Set set(ParseSet("[x=320,y=240,sar=[0.1-0.2]]"));
+    ASSERT_EQ(1U, set.xRange.discreteValues.size());
+    ASSERT_EQ(320U, set.xRange.discreteValues[0]);
+    ASSERT_EQ(1U, set.yRange.discreteValues.size());
+    ASSERT_EQ(240U, set.yRange.discreteValues[0]);
+    ASSERT_TRUE(set.sRange.IsSet());
+    ASSERT_FLOAT_EQ(0.1f, set.sRange.min);
+    ASSERT_FLOAT_EQ(0.2f, set.sRange.max);
+    ASSERT_FALSE(set.pRange.IsSet());
+    ASSERT_FLOAT_EQ(0.5f, set.qValue);
+  }
+
+  {
+    SdpImageattrAttributeList::Set set(ParseSet("[x=320,y=240,q=0.1]"));
+    ASSERT_EQ(1U, set.xRange.discreteValues.size());
+    ASSERT_EQ(320U, set.xRange.discreteValues[0]);
+    ASSERT_EQ(1U, set.yRange.discreteValues.size());
+    ASSERT_EQ(240U, set.yRange.discreteValues[0]);
+    ASSERT_FALSE(set.sRange.IsSet());
+    ASSERT_FALSE(set.pRange.IsSet());
+    ASSERT_FLOAT_EQ(0.1f, set.qValue);
+  }
+
+  {
+    SdpImageattrAttributeList::Set set(
+        ParseSet("[x=320,y=240,par=[0.1-0.2],sar=[0.3-0.4],q=0.6]"));
+    ASSERT_EQ(1U, set.xRange.discreteValues.size());
+    ASSERT_EQ(320U, set.xRange.discreteValues[0]);
+    ASSERT_EQ(1U, set.yRange.discreteValues.size());
+    ASSERT_EQ(240U, set.yRange.discreteValues[0]);
+    ASSERT_TRUE(set.sRange.IsSet());
+    ASSERT_FLOAT_EQ(0.3f, set.sRange.min);
+    ASSERT_FLOAT_EQ(0.4f, set.sRange.max);
+    ASSERT_TRUE(set.pRange.IsSet());
+    ASSERT_FLOAT_EQ(0.1f, set.pRange.min);
+    ASSERT_FLOAT_EQ(0.2f, set.pRange.max);
+    ASSERT_FLOAT_EQ(0.6f, set.qValue);
+  }
+
+  {
+    SdpImageattrAttributeList::Set set(ParseSet("[x=320,y=240,foo=bar,q=0.1]"));
+    ASSERT_EQ(1U, set.xRange.discreteValues.size());
+    ASSERT_EQ(320U, set.xRange.discreteValues[0]);
+    ASSERT_EQ(1U, set.yRange.discreteValues.size());
+    ASSERT_EQ(240U, set.yRange.discreteValues[0]);
+    ASSERT_FALSE(set.sRange.IsSet());
+    ASSERT_FALSE(set.pRange.IsSet());
+    ASSERT_FLOAT_EQ(0.1f, set.qValue);
+  }
+
+  {
+    SdpImageattrAttributeList::Set set(
+        ParseSet("[x=320,y=240,foo=bar,q=0.1,bar=baz]"));
+    ASSERT_EQ(1U, set.xRange.discreteValues.size());
+    ASSERT_EQ(320U, set.xRange.discreteValues[0]);
+    ASSERT_EQ(1U, set.yRange.discreteValues.size());
+    ASSERT_EQ(240U, set.yRange.discreteValues[0]);
+    ASSERT_FALSE(set.sRange.IsSet());
+    ASSERT_FALSE(set.pRange.IsSet());
+    ASSERT_FLOAT_EQ(0.1f, set.qValue);
+  }
+
+  {
+    SdpImageattrAttributeList::Set set(
+        ParseSet("[x=320,y=240,foo=[bar],q=0.1,bar=[baz]]"));
+    ASSERT_EQ(1U, set.xRange.discreteValues.size());
+    ASSERT_EQ(320U, set.xRange.discreteValues[0]);
+    ASSERT_EQ(1U, set.yRange.discreteValues.size());
+    ASSERT_EQ(240U, set.yRange.discreteValues[0]);
+    ASSERT_FALSE(set.sRange.IsSet());
+    ASSERT_FALSE(set.pRange.IsSet());
+    ASSERT_FLOAT_EQ(0.1f, set.qValue);
+  }
+
+  {
+    SdpImageattrAttributeList::Set set(
+        ParseSet("[x=320,y=240,foo=[par=foo,sar=bar],q=0.1,bar=[baz]]"));
+    ASSERT_EQ(1U, set.xRange.discreteValues.size());
+    ASSERT_EQ(320U, set.xRange.discreteValues[0]);
+    ASSERT_EQ(1U, set.yRange.discreteValues.size());
+    ASSERT_EQ(240U, set.yRange.discreteValues[0]);
+    ASSERT_FALSE(set.sRange.IsSet());
+    ASSERT_FALSE(set.pRange.IsSet());
+    ASSERT_FLOAT_EQ(0.1f, set.qValue);
+  }
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrSetParseInvalid)
+{
+  ParseInvalid<SdpImageattrAttributeList::Set>("", 0);
+  ParseInvalid<SdpImageattrAttributeList::Set>("x", 0);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[", 1);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[=", 2);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x", 2);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[y=", 3);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=[", 4);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320", 6);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320x", 6);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,", 7);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,=", 8);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,x", 8);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,x=", 9);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=[", 10);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240", 12);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240x", 12);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,", 13);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=", 15);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=x", 15);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5", 18);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5,", 19);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5,]", 20);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5,=]", 20);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5,sar=x]", 23);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5,q=0.4", 21);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,sar=", 17);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,sar=x", 17);
+  ParseInvalid<SdpImageattrAttributeList::Set>(
+      "[x=320,y=240,sar=[0.5-0.6],sar=[0.7-0.8]", 31);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,par=", 17);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,par=x", 17);
+  ParseInvalid<SdpImageattrAttributeList::Set>(
+      "[x=320,y=240,par=[0.5-0.6],par=[0.7-0.8]", 31);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,foo=", 17);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,foo=x", 18);
+}
+
+static SdpImageattrAttributeList::Imageattr
+ParseImageattr(const std::string& input)
+{
+  std::istringstream is(input);
+  std::string error;
+  SdpImageattrAttributeList::Imageattr imageattr;
+  EXPECT_TRUE(imageattr.Parse(is, &error)) << error;
+  EXPECT_TRUE(is.eof());
+  return imageattr;
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrParseValid)
+{
+  {
+    SdpImageattrAttributeList::Imageattr imageattr(ParseImageattr("* send *"));
+    ASSERT_FALSE(imageattr.pt.isSome());
+    ASSERT_TRUE(imageattr.sendAll);
+    ASSERT_TRUE(imageattr.sendSets.empty());
+    ASSERT_FALSE(imageattr.recvAll);
+    ASSERT_TRUE(imageattr.recvSets.empty());
+  }
+
+  {
+    SdpImageattrAttributeList::Imageattr imageattr(ParseImageattr("* SEND *"));
+    ASSERT_FALSE(imageattr.pt.isSome());
+    ASSERT_TRUE(imageattr.sendAll);
+    ASSERT_TRUE(imageattr.sendSets.empty());
+    ASSERT_FALSE(imageattr.recvAll);
+    ASSERT_TRUE(imageattr.recvSets.empty());
+  }
+
+  {
+    SdpImageattrAttributeList::Imageattr imageattr(ParseImageattr("* recv *"));
+    ASSERT_FALSE(imageattr.pt.isSome());
+    ASSERT_FALSE(imageattr.sendAll);
+    ASSERT_TRUE(imageattr.sendSets.empty());
+    ASSERT_TRUE(imageattr.recvAll);
+    ASSERT_TRUE(imageattr.recvSets.empty());
+  }
+
+  {
+    SdpImageattrAttributeList::Imageattr imageattr(ParseImageattr("* RECV *"));
+    ASSERT_FALSE(imageattr.pt.isSome());
+    ASSERT_FALSE(imageattr.sendAll);
+    ASSERT_TRUE(imageattr.sendSets.empty());
+    ASSERT_TRUE(imageattr.recvAll);
+    ASSERT_TRUE(imageattr.recvSets.empty());
+  }
+
+  {
+    SdpImageattrAttributeList::Imageattr imageattr(
+        ParseImageattr("* recv * send *"));
+    ASSERT_FALSE(imageattr.pt.isSome());
+    ASSERT_TRUE(imageattr.sendAll);
+    ASSERT_TRUE(imageattr.sendSets.empty());
+    ASSERT_TRUE(imageattr.recvAll);
+    ASSERT_TRUE(imageattr.recvSets.empty());
+  }
+
+  {
+    SdpImageattrAttributeList::Imageattr imageattr(
+        ParseImageattr("* send * recv *"));
+    ASSERT_FALSE(imageattr.pt.isSome());
+    ASSERT_TRUE(imageattr.sendAll);
+    ASSERT_TRUE(imageattr.sendSets.empty());
+    ASSERT_TRUE(imageattr.recvAll);
+    ASSERT_TRUE(imageattr.recvSets.empty());
+  }
+
+  {
+    SdpImageattrAttributeList::Imageattr imageattr(
+        ParseImageattr("8 send * recv *"));
+    ASSERT_EQ(8U, *imageattr.pt);
+    ASSERT_TRUE(imageattr.sendAll);
+    ASSERT_TRUE(imageattr.sendSets.empty());
+    ASSERT_TRUE(imageattr.recvAll);
+    ASSERT_TRUE(imageattr.recvSets.empty());
+  }
+
+  {
+    SdpImageattrAttributeList::Imageattr imageattr(
+        ParseImageattr("8 send [x=320,y=240] recv *"));
+    ASSERT_EQ(8U, *imageattr.pt);
+    ASSERT_FALSE(imageattr.sendAll);
+    ASSERT_EQ(1U, imageattr.sendSets.size());
+    ASSERT_EQ(1U, imageattr.sendSets[0].xRange.discreteValues.size());
+    ASSERT_EQ(320U, imageattr.sendSets[0].xRange.discreteValues[0]);
+    ASSERT_EQ(1U, imageattr.sendSets[0].yRange.discreteValues.size());
+    ASSERT_EQ(240U, imageattr.sendSets[0].yRange.discreteValues[0]);
+    ASSERT_TRUE(imageattr.recvAll);
+    ASSERT_TRUE(imageattr.recvSets.empty());
+  }
+
+  {
+    SdpImageattrAttributeList::Imageattr imageattr(
+        ParseImageattr("8 send [x=320,y=240] [x=640,y=480] recv *"));
+    ASSERT_EQ(8U, *imageattr.pt);
+    ASSERT_FALSE(imageattr.sendAll);
+    ASSERT_EQ(2U, imageattr.sendSets.size());
+    ASSERT_EQ(1U, imageattr.sendSets[0].xRange.discreteValues.size());
+    ASSERT_EQ(320U, imageattr.sendSets[0].xRange.discreteValues[0]);
+    ASSERT_EQ(1U, imageattr.sendSets[0].yRange.discreteValues.size());
+    ASSERT_EQ(240U, imageattr.sendSets[0].yRange.discreteValues[0]);
+    ASSERT_EQ(1U, imageattr.sendSets[1].xRange.discreteValues.size());
+    ASSERT_EQ(640U, imageattr.sendSets[1].xRange.discreteValues[0]);
+    ASSERT_EQ(1U, imageattr.sendSets[1].yRange.discreteValues.size());
+    ASSERT_EQ(480U, imageattr.sendSets[1].yRange.discreteValues[0]);
+    ASSERT_TRUE(imageattr.recvAll);
+    ASSERT_TRUE(imageattr.recvSets.empty());
+  }
+
+  {
+    SdpImageattrAttributeList::Imageattr imageattr(
+        ParseImageattr("8 send * recv [x=320,y=240]"));
+    ASSERT_EQ(8U, *imageattr.pt);
+    ASSERT_FALSE(imageattr.recvAll);
+    ASSERT_EQ(1U, imageattr.recvSets.size());
+    ASSERT_EQ(1U, imageattr.recvSets[0].xRange.discreteValues.size());
+    ASSERT_EQ(320U, imageattr.recvSets[0].xRange.discreteValues[0]);
+    ASSERT_EQ(1U, imageattr.recvSets[0].yRange.discreteValues.size());
+    ASSERT_EQ(240U, imageattr.recvSets[0].yRange.discreteValues[0]);
+    ASSERT_TRUE(imageattr.sendAll);
+    ASSERT_TRUE(imageattr.sendSets.empty());
+  }
+
+  {
+    SdpImageattrAttributeList::Imageattr imageattr(
+        ParseImageattr("8 send * recv [x=320,y=240] [x=640,y=480]"));
+    ASSERT_EQ(8U, *imageattr.pt);
+    ASSERT_FALSE(imageattr.recvAll);
+    ASSERT_EQ(2U, imageattr.recvSets.size());
+    ASSERT_EQ(1U, imageattr.recvSets[0].xRange.discreteValues.size());
+    ASSERT_EQ(320U, imageattr.recvSets[0].xRange.discreteValues[0]);
+    ASSERT_EQ(1U, imageattr.recvSets[0].yRange.discreteValues.size());
+    ASSERT_EQ(240U, imageattr.recvSets[0].yRange.discreteValues[0]);
+    ASSERT_EQ(1U, imageattr.recvSets[1].xRange.discreteValues.size());
+    ASSERT_EQ(640U, imageattr.recvSets[1].xRange.discreteValues[0]);
+    ASSERT_EQ(1U, imageattr.recvSets[1].yRange.discreteValues.size());
+    ASSERT_EQ(480U, imageattr.recvSets[1].yRange.discreteValues[0]);
+    ASSERT_TRUE(imageattr.sendAll);
+    ASSERT_TRUE(imageattr.sendSets.empty());
+  }
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrParseInvalid)
+{
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("", 0);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>(" ", 0);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("-1", 0);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("99999 ", 5);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("*", 1);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("* sen", 5);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("* vcer *", 6);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("* send x", 7);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>(
+      "* send [x=640,y=480] [", 22);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("* send * sen", 12);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("* send * vcer *", 13);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("* send * send *", 13);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("* recv * recv *", 13);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>("* send * recv x", 14);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>(
+      "* send * recv [x=640,y=480] [", 29);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>(
+      "* send * recv [x=640,y=480] *", 28);
+  ParseInvalid<SdpImageattrAttributeList::Imageattr>(
+      "* send * recv [x=640,y=480] foobajooba", 28);
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrXYRangeSerialization)
+{
+  SdpImageattrAttributeList::XYRange range;
+  std::stringstream os;
+
+  range.min = 320;
+  range.max = 640;
+  range.Serialize(os);
+  ASSERT_EQ("[320:640]", os.str());
+  os.str(""); // clear
+
+  range.step = 16;
+  range.Serialize(os);
+  ASSERT_EQ("[320:16:640]", os.str());
+  os.str(""); // clear
+
+  range.min = 0;
+  range.max = 0;
+  range.discreteValues.push_back(320);
+  range.Serialize(os);
+  ASSERT_EQ("320", os.str());
+  os.str("");
+
+  range.discreteValues.push_back(640);
+  range.Serialize(os);
+  ASSERT_EQ("[320,640]", os.str());
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrSRangeSerialization)
+{
+  SdpImageattrAttributeList::SRange range;
+  std::ostringstream os;
+
+  range.min = 0.1f;
+  range.max = 0.9999f;
+  range.Serialize(os);
+  ASSERT_EQ("[0.1000-0.9999]", os.str());
+  os.str("");
+
+  range.min = 0.0f;
+  range.max = 0.0f;
+  range.discreteValues.push_back(0.1f);
+  range.Serialize(os);
+  ASSERT_EQ("0.1000", os.str());
+  os.str("");
+
+  range.discreteValues.push_back(0.5f);
+  range.Serialize(os);
+  ASSERT_EQ("[0.1000,0.5000]", os.str());
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrPRangeSerialization)
+{
+  SdpImageattrAttributeList::PRange range;
+  std::ostringstream os;
+
+  range.min = 0.1f;
+  range.max = 0.9999f;
+  range.Serialize(os);
+  ASSERT_EQ("[0.1000-0.9999]", os.str());
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrSetSerialization)
+{
+  SdpImageattrAttributeList::Set set;
+  std::ostringstream os;
+
+  set.xRange.discreteValues.push_back(640);
+  set.yRange.discreteValues.push_back(480);
+  set.Serialize(os);
+  ASSERT_EQ("[x=640,y=480]", os.str());
+  os.str("");
+
+  set.qValue = 0.00f;
+  set.Serialize(os);
+  ASSERT_EQ("[x=640,y=480,q=0.00]", os.str());
+  os.str("");
+
+  set.qValue = 0.10f;
+  set.Serialize(os);
+  ASSERT_EQ("[x=640,y=480,q=0.10]", os.str());
+  os.str("");
+
+  set.qValue = 1.00f;
+  set.Serialize(os);
+  ASSERT_EQ("[x=640,y=480,q=1.00]", os.str());
+  os.str("");
+
+  set.sRange.discreteValues.push_back(1.1f);
+  set.Serialize(os);
+  ASSERT_EQ("[x=640,y=480,sar=1.1000,q=1.00]", os.str());
+  os.str("");
+
+  set.pRange.min = 0.9f;
+  set.pRange.max = 1.1f;
+  set.Serialize(os);
+  ASSERT_EQ("[x=640,y=480,sar=1.1000,par=[0.9000-1.1000],q=1.00]", os.str());
+  os.str("");
+}
+
+TEST(NewSdpTestNoFixture, CheckImageattrSerialization)
+{
+  SdpImageattrAttributeList::Imageattr imageattr;
+  std::ostringstream os;
+
+  imageattr.sendAll = true;
+  imageattr.pt = Some<uint16_t>(8U);
+  imageattr.Serialize(os);
+  ASSERT_EQ("8 send *", os.str());
+  os.str("");
+
+  imageattr.pt.reset();;
+  imageattr.Serialize(os);
+  ASSERT_EQ("* send *", os.str());
+  os.str("");
+
+  imageattr.sendAll = false;
+  imageattr.recvAll = true;
+  imageattr.Serialize(os);
+  ASSERT_EQ("* recv *", os.str());
+  os.str("");
+
+  imageattr.sendAll = true;
+  imageattr.Serialize(os);
+  ASSERT_EQ("* send * recv *", os.str());
+  os.str("");
+
+  imageattr.sendAll = false;
+  imageattr.sendSets.push_back(SdpImageattrAttributeList::Set());
+  imageattr.sendSets.back().xRange.discreteValues.push_back(320);
+  imageattr.sendSets.back().yRange.discreteValues.push_back(240);
+  imageattr.Serialize(os);
+  ASSERT_EQ("* send [x=320,y=240] recv *", os.str());
+  os.str("");
+
+  imageattr.sendSets.push_back(SdpImageattrAttributeList::Set());
+  imageattr.sendSets.back().xRange.discreteValues.push_back(640);
+  imageattr.sendSets.back().yRange.discreteValues.push_back(480);
+  imageattr.Serialize(os);
+  ASSERT_EQ("* send [x=320,y=240] [x=640,y=480] recv *", os.str());
+  os.str("");
+
+  imageattr.recvAll = false;
+  imageattr.recvSets.push_back(SdpImageattrAttributeList::Set());
+  imageattr.recvSets.back().xRange.discreteValues.push_back(320);
+  imageattr.recvSets.back().yRange.discreteValues.push_back(240);
+  imageattr.Serialize(os);
+  ASSERT_EQ("* send [x=320,y=240] [x=640,y=480] recv [x=320,y=240]", os.str());
+  os.str("");
+
+  imageattr.recvSets.push_back(SdpImageattrAttributeList::Set());
+  imageattr.recvSets.back().xRange.discreteValues.push_back(640);
+  imageattr.recvSets.back().yRange.discreteValues.push_back(480);
+  imageattr.Serialize(os);
+  ASSERT_EQ(
+      "* send [x=320,y=240] [x=640,y=480] recv [x=320,y=240] [x=640,y=480]",
+      os.str());
+  os.str("");
+}
+
+TEST(NewSdpTestNoFixture, CheckSimulcastVersionSerialize)
+{
+  std::ostringstream os;
+
+  SdpSimulcastAttribute::Version version;
+  version.choices.push_back(8U);
+  version.Serialize(os);
+  ASSERT_EQ("8", os.str());
+  os.str("");
+
+  version.choices.push_back(9U);
+  version.Serialize(os);
+  ASSERT_EQ("8,9", os.str());
+  os.str("");
+
+  version.choices.push_back(0U);
+  version.Serialize(os);
+  ASSERT_EQ("8,9,0", os.str());
+  os.str("");
+}
+
+static SdpSimulcastAttribute::Version
+ParseSimulcastVersion(const std::string& input)
+{
+  std::istringstream is(input + ";");
+  std::string error;
+  SdpSimulcastAttribute::Version version;
+  EXPECT_TRUE(version.Parse(is, &error)) << error;
+  EXPECT_EQ(';', is.get());
+  EXPECT_EQ(EOF, is.get());
+  return version;
+}
+
+TEST(NewSdpTestNoFixture, CheckSimulcastVersionValidParse)
+{
+  {
+    SdpSimulcastAttribute::Version version(
+        ParseSimulcastVersion("1"));
+    ASSERT_EQ(1U, version.choices.size());
+    ASSERT_EQ(1U, version.choices[0]);
+  }
+
+  {
+    SdpSimulcastAttribute::Version version(
+        ParseSimulcastVersion("1,2"));
+    ASSERT_EQ(2U, version.choices.size());
+    ASSERT_EQ(1U, version.choices[0]);
+    ASSERT_EQ(2U, version.choices[1]);
+  }
+}
+
+TEST(NewSdpTestNoFixture, CheckSimulcastVersionInvalidParse)
+{
+  ParseInvalid<SdpSimulcastAttribute::Version>("", 0);
+  ParseInvalid<SdpSimulcastAttribute::Version>("x", 0);
+  ParseInvalid<SdpSimulcastAttribute::Version>("*", 0);
+  ParseInvalid<SdpSimulcastAttribute::Version>("8,", 2);
+  ParseInvalid<SdpSimulcastAttribute::Version>("8,x", 2);
+  ParseInvalid<SdpSimulcastAttribute::Version>("8,*", 2);
+  ParseInvalid<SdpSimulcastAttribute::Version>("-1", 0);
+  ParseInvalid<SdpSimulcastAttribute::Version>("8,-1", 2);
+  ParseInvalid<SdpSimulcastAttribute::Version>("99999", 5);
+  ParseInvalid<SdpSimulcastAttribute::Version>("8,99999", 7);
+}
+
+TEST(NewSdpTestNoFixture, CheckSimulcastVersionsSerialize)
+{
+  std::ostringstream os;
+
+  SdpSimulcastAttribute::Versions versions;
+  versions.push_back(SdpSimulcastAttribute::Version());
+  versions.back().choices.push_back(8U);
+  versions.Serialize(os);
+  ASSERT_EQ("8", os.str());
+  os.str("");
+
+  versions.push_back(SdpSimulcastAttribute::Version());
+  versions.Serialize(os);
+  ASSERT_EQ("8", os.str());
+  os.str("");
+
+  versions.back().choices.push_back(9U);
+  versions.Serialize(os);
+  ASSERT_EQ("8;9", os.str());
+  os.str("");
+
+  versions.push_back(SdpSimulcastAttribute::Version());
+  versions.back().choices.push_back(0U);
+  versions.Serialize(os);
+  ASSERT_EQ("8;9;0", os.str());
+  os.str("");
+}
+
+static SdpSimulcastAttribute::Versions
+ParseSimulcastVersions(const std::string& input)
+{
+  std::istringstream is(input + " ");
+  std::string error;
+  SdpSimulcastAttribute::Versions list;
+  EXPECT_TRUE(list.Parse(is, &error)) << error;
+  EXPECT_EQ(' ', is.get());
+  EXPECT_EQ(EOF, is.get());
+  return list;
+}
+
+TEST(NewSdpTestNoFixture, CheckSimulcastVersionsValidParse)
+{
+  {
+    SdpSimulcastAttribute::Versions versions(
+        ParseSimulcastVersions("8"));
+    ASSERT_EQ(1U, versions.size());
+    ASSERT_EQ(1U, versions[0].choices.size());
+    ASSERT_EQ(8U, versions[0].choices[0]);
+  }
+
+  {
+    SdpSimulcastAttribute::Versions versions(
+        ParseSimulcastVersions("8,9"));
+    ASSERT_EQ(1U, versions.size());
+    ASSERT_EQ(2U, versions[0].choices.size());
+    ASSERT_EQ(8U, versions[0].choices[0]);
+    ASSERT_EQ(9U, versions[0].choices[1]);
+  }
+
+  {
+    SdpSimulcastAttribute::Versions versions(
+        ParseSimulcastVersions("8,9;10"));
+    ASSERT_EQ(2U, versions.size());
+    ASSERT_EQ(2U, versions[0].choices.size());
+    ASSERT_EQ(8U, versions[0].choices[0]);
+    ASSERT_EQ(9U, versions[0].choices[1]);
+    ASSERT_EQ(1U, versions[1].choices.size());
+    ASSERT_EQ(10U, versions[1].choices[0]);
+  }
+}
+
+TEST(NewSdpTestNoFixture, CheckSimulcastVersionsInvalidParse)
+{
+  ParseInvalid<SdpSimulcastAttribute::Versions>("", 0);
+  ParseInvalid<SdpSimulcastAttribute::Versions>("x", 0);
+  ParseInvalid<SdpSimulcastAttribute::Versions>(";", 0);
+  ParseInvalid<SdpSimulcastAttribute::Versions>("8;", 2);
+  ParseInvalid<SdpSimulcastAttribute::Versions>("8;x", 2);
+  ParseInvalid<SdpSimulcastAttribute::Versions>("8;;", 2);
+}
+
+TEST(NewSdpTestNoFixture, CheckSimulcastSerialize)
+{
+  std::ostringstream os;
+
+  SdpSimulcastAttribute simulcast;
+  simulcast.recvVersions.push_back(SdpSimulcastAttribute::Version());
+  simulcast.recvVersions.back().choices.push_back(8U);
+  simulcast.Serialize(os);
+  ASSERT_EQ("a=simulcast: recv 8" CRLF, os.str());
+  os.str("");
+
+  simulcast.sendVersions.push_back(SdpSimulcastAttribute::Version());
+  simulcast.sendVersions.back().choices.push_back(9U);
+  simulcast.Serialize(os);
+  ASSERT_EQ("a=simulcast: send 9 recv 8" CRLF, os.str());
+  os.str("");
+
+  simulcast.sendrecvVersions.push_back(SdpSimulcastAttribute::Version());
+  simulcast.sendrecvVersions.back().choices.push_back(0U);
+  simulcast.Serialize(os);
+  ASSERT_EQ("a=simulcast: send 9 recv 8 sendrecv 0" CRLF, os.str());
+  os.str("");
+}
+
+static SdpSimulcastAttribute
+ParseSimulcast(const std::string& input)
+{
+  std::istringstream is(input);
+  std::string error;
+  SdpSimulcastAttribute simulcast;
+  EXPECT_TRUE(simulcast.Parse(is, &error)) << error;
+  EXPECT_TRUE(is.eof());
+  return simulcast;
+}
+
+TEST(NewSdpTestNoFixture, CheckSimulcastValidParse)
+{
+  {
+    SdpSimulcastAttribute simulcast(ParseSimulcast(" send 8"));
+    ASSERT_EQ(1U, simulcast.sendVersions.size());
+    ASSERT_EQ(1U, simulcast.sendVersions[0].choices.size());
+    ASSERT_EQ(8U, simulcast.sendVersions[0].choices[0]);
+    ASSERT_EQ(0U, simulcast.recvVersions.size());
+    ASSERT_EQ(0U, simulcast.sendrecvVersions.size());
+  }
+
+  {
+    SdpSimulcastAttribute simulcast(ParseSimulcast(" SEND 8"));
+    ASSERT_EQ(1U, simulcast.sendVersions.size());
+    ASSERT_EQ(1U, simulcast.sendVersions[0].choices.size());
+    ASSERT_EQ(8U, simulcast.sendVersions[0].choices[0]);
+    ASSERT_EQ(0U, simulcast.recvVersions.size());
+    ASSERT_EQ(0U, simulcast.sendrecvVersions.size());
+  }
+
+  {
+    SdpSimulcastAttribute simulcast(ParseSimulcast(" recv 8"));
+    ASSERT_EQ(1U, simulcast.recvVersions.size());
+    ASSERT_EQ(1U, simulcast.recvVersions[0].choices.size());
+    ASSERT_EQ(8U, simulcast.recvVersions[0].choices[0]);
+    ASSERT_EQ(0U, simulcast.sendVersions.size());
+    ASSERT_EQ(0U, simulcast.sendrecvVersions.size());
+  }
+
+  {
+    SdpSimulcastAttribute simulcast(ParseSimulcast(" sendrecv 8"));
+    ASSERT_EQ(1U, simulcast.sendrecvVersions.size());
+    ASSERT_EQ(1U, simulcast.sendrecvVersions[0].choices.size());
+    ASSERT_EQ(8U, simulcast.sendrecvVersions[0].choices[0]);
+    ASSERT_EQ(0U, simulcast.sendVersions.size());
+    ASSERT_EQ(0U, simulcast.recvVersions.size());
+  }
+
+  {
+    SdpSimulcastAttribute simulcast(
+        ParseSimulcast(" send 8,9;101;97,98 recv 101,120;97 sendrecv 101;97"));
+    ASSERT_EQ(3U, simulcast.sendVersions.size());
+    ASSERT_EQ(2U, simulcast.sendVersions[0].choices.size());
+    ASSERT_EQ(8U, simulcast.sendVersions[0].choices[0]);
+    ASSERT_EQ(9U, simulcast.sendVersions[0].choices[1]);
+    ASSERT_EQ(1U, simulcast.sendVersions[1].choices.size());
+    ASSERT_EQ(101U, simulcast.sendVersions[1].choices[0]);
+    ASSERT_EQ(2U, simulcast.sendVersions[2].choices.size());
+    ASSERT_EQ(97U, simulcast.sendVersions[2].choices[0]);
+    ASSERT_EQ(98U, simulcast.sendVersions[2].choices[1]);
+
+    ASSERT_EQ(2U, simulcast.recvVersions.size());
+    ASSERT_EQ(2U, simulcast.recvVersions[0].choices.size());
+    ASSERT_EQ(101U, simulcast.recvVersions[0].choices[0]);
+    ASSERT_EQ(120U, simulcast.recvVersions[0].choices[1]);
+    ASSERT_EQ(1U, simulcast.recvVersions[1].choices.size());
+    ASSERT_EQ(97U, simulcast.recvVersions[1].choices[0]);
+
+    ASSERT_EQ(2U, simulcast.sendrecvVersions.size());
+    ASSERT_EQ(1U, simulcast.sendrecvVersions[0].choices.size());
+    ASSERT_EQ(101U, simulcast.sendrecvVersions[0].choices[0]);
+    ASSERT_EQ(1U, simulcast.sendrecvVersions[1].choices.size());
+    ASSERT_EQ(97U, simulcast.sendrecvVersions[1].choices[0]);
+  }
+}
+
+TEST(NewSdpTestNoFixture, CheckSimulcastInvalidParse)
+{
+  ParseInvalid<SdpSimulcastAttribute>("", 0);
+  ParseInvalid<SdpSimulcastAttribute>(" ", 1);
+  ParseInvalid<SdpSimulcastAttribute>("vcer ", 4);
+  ParseInvalid<SdpSimulcastAttribute>(" send x", 6);
+  ParseInvalid<SdpSimulcastAttribute>(" recv x", 6);
+  ParseInvalid<SdpSimulcastAttribute>(" sendrecv x", 10);
+  ParseInvalid<SdpSimulcastAttribute>(" send 8 send ", 12);
+  ParseInvalid<SdpSimulcastAttribute>(" recv 8 recv ", 12);
+  ParseInvalid<SdpSimulcastAttribute>(" sendrecv 8 sendrecv ", 20);
 }
 
 } // End namespace test.

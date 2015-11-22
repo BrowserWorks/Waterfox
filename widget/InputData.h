@@ -21,11 +21,11 @@ namespace mozilla {
 
 namespace dom {
 class Touch;
-}
+} // namespace dom
 
 namespace gfx {
 class Matrix4x4;
-}
+} // namespace gfx
 
 enum InputType
 {
@@ -239,7 +239,7 @@ public:
   // and rotation angle.
   explicit MultiTouchInput(const WidgetMouseEvent& aMouseEvent);
 
-  void TransformToLocal(const gfx::Matrix4x4& aTransform);
+  bool TransformToLocal(const gfx::Matrix4x4& aTransform);
 
   MultiTouchType mType;
   nsTArray<SingleTouchData> mTouches;
@@ -307,22 +307,44 @@ public:
     : InputData(PANGESTURE_INPUT, aTime, aTimeStamp, aModifiers),
       mType(aType),
       mPanStartPoint(aPanStartPoint),
-      mPanDisplacement(aPanDisplacement)
+      mPanDisplacement(aPanDisplacement),
+      mLineOrPageDeltaX(0),
+      mLineOrPageDeltaY(0),
+      mHandledByAPZ(false),
+      mRequiresContentResponseIfCannotScrollHorizontallyInStartDirection(false)
   {
   }
 
-  void TransformToLocal(const gfx::Matrix4x4& aTransform);
+  bool IsMomentum() const;
+
+  WidgetWheelEvent ToWidgetWheelEvent(nsIWidget* aWidget) const;
+
+  bool TransformToLocal(const gfx::Matrix4x4& aTransform);
 
   PanGestureType mType;
   ScreenPoint mPanStartPoint;
 
-  // Only non-zero if mType is PANGESTURE_PAN or PANGESTURE_MOMENTUMPAN.
+  // The delta. This can be non-zero on any type of event.
   ScreenPoint mPanDisplacement;
 
   // Versions of |mPanStartPoint| and |mPanDisplacement| in the local
   // coordinates of the APZC receiving the pan. These are set and used by APZ.
   ParentLayerPoint mLocalPanStartPoint;
   ParentLayerPoint mLocalPanDisplacement;
+
+  // See lineOrPageDeltaX/Y on WidgetWheelEvent.
+  int32_t mLineOrPageDeltaX;
+  int32_t mLineOrPageDeltaY;
+
+  bool mHandledByAPZ;
+
+  // If this is true, and this event started a new input block that couldn't
+  // find a scrollable target which is scrollable in the horizontal component
+  // of the scroll start direction, then this input block needs to be put on
+  // hold until a content response has arrived, even if the block has a
+  // confirmed target.
+  // This is used by events that can result in a swipe instead of a scroll.
+  bool mRequiresContentResponseIfCannotScrollHorizontallyInStartDirection;
 };
 
 /**
@@ -374,7 +396,7 @@ public:
   {
   }
 
-  void TransformToLocal(const gfx::Matrix4x4& aTransform);
+  bool TransformToLocal(const gfx::Matrix4x4& aTransform);
 
   PinchGestureType mType;
 
@@ -444,7 +466,7 @@ public:
   {
   }
 
-  void TransformToLocal(const gfx::Matrix4x4& aTransform);
+  bool TransformToLocal(const gfx::Matrix4x4& aTransform);
 
   TapGestureType mType;
 
@@ -502,19 +524,27 @@ public:
      mDeltaType(aDeltaType),
      mScrollMode(aScrollMode),
      mOrigin(aOrigin),
+     mHandledByAPZ(false),
      mDeltaX(aDeltaX),
-     mDeltaY(aDeltaY)
+     mDeltaY(aDeltaY),
+     mLineOrPageDeltaX(0),
+     mLineOrPageDeltaY(0),
+     mIsMomentum(false)
   {}
 
-  void TransformToLocal(const gfx::Matrix4x4& aTransform);
+  WidgetWheelEvent ToWidgetWheelEvent(nsIWidget* aWidget) const;
+  bool TransformToLocal(const gfx::Matrix4x4& aTransform);
 
   ScrollDeltaType mDeltaType;
   ScrollMode mScrollMode;
   ScreenPoint mOrigin;
 
+  bool mHandledByAPZ;
+
   // Deltas are in units corresponding to the delta type. For line deltas, they
   // are the number of line units to scroll. The number of device pixels for a
   // horizontal and vertical line unit are in FrameMetrics::mLineScrollAmount.
+  // For pixel deltas, these values are in ScreenCoords.
   //
   // The horizontal (X) delta is > 0 for scrolling right and < 0 for scrolling
   // left. The vertical (Y) delta is < 0 for scrolling up and > 0 for
@@ -525,8 +555,14 @@ public:
   // The location of the scroll in local coordinates. This is set and used by
   // APZ.
   ParentLayerPoint mLocalOrigin;
+
+  // See lineOrPageDeltaX/Y on WidgetWheelEvent.
+  int32_t mLineOrPageDeltaX;
+  int32_t mLineOrPageDeltaY;
+
+  bool mIsMomentum;
 };
 
-}
+} // namespace mozilla
 
 #endif // InputData_h__

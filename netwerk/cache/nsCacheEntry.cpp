@@ -17,7 +17,6 @@
 #include "nsCacheService.h"
 #include "nsCacheDevice.h"
 #include "nsHashKeys.h"
-#include "mozilla/VisualEventTracer.h"
 
 using namespace mozilla;
 
@@ -45,8 +44,6 @@ nsCacheEntry::nsCacheEntry(const nsACString &   key,
     SetStoragePolicy(storagePolicy);
 
     MarkPublic();
-
-    MOZ_EVENT_TRACER_NAME_OBJECT(this, key.BeginReading());
 }
 
 
@@ -385,7 +382,8 @@ nsCacheEntryHashTable::ops =
 
 
 nsCacheEntryHashTable::nsCacheEntryHashTable()
-    : initialized(false)
+    : table(&ops, sizeof(nsCacheEntryHashTableEntry), kInitialTableLength)
+    , initialized(false)
 {
     MOZ_COUNT_CTOR(nsCacheEntryHashTable);
 }
@@ -399,19 +397,18 @@ nsCacheEntryHashTable::~nsCacheEntryHashTable()
 }
 
 
-nsresult
+void
 nsCacheEntryHashTable::Init()
 {
-    PL_DHashTableInit(&table, &ops, sizeof(nsCacheEntryHashTableEntry), 256);
+    table.ClearAndPrepareForLength(kInitialTableLength);
     initialized = true;
-    return NS_OK;
 }
 
 void
 nsCacheEntryHashTable::Shutdown()
 {
     if (initialized) {
-        PL_DHashTableFinish(&table);
+        table.ClearAndPrepareForLength(kInitialTableLength);
         initialized = false;
     }
 }
@@ -423,7 +420,7 @@ nsCacheEntryHashTable::GetEntry( const nsCString * key)
     NS_ASSERTION(initialized, "nsCacheEntryHashTable not initialized");
     if (!initialized)  return nullptr;
 
-    PLDHashEntryHdr *hashEntry = PL_DHashTableSearch(&table, key);
+    PLDHashEntryHdr *hashEntry = table.Search(key);
     return hashEntry ? ((nsCacheEntryHashTableEntry *)hashEntry)->cacheEntry
                      : nullptr;
 }
@@ -438,7 +435,7 @@ nsCacheEntryHashTable::AddEntry( nsCacheEntry *cacheEntry)
     if (!initialized)  return NS_ERROR_NOT_INITIALIZED;
     if (!cacheEntry)   return NS_ERROR_NULL_POINTER;
 
-    hashEntry = PL_DHashTableAdd(&table, &(cacheEntry->mKey), fallible);
+    hashEntry = table.Add(&(cacheEntry->mKey), fallible);
 #ifndef DEBUG_dougt
     NS_ASSERTION(((nsCacheEntryHashTableEntry *)hashEntry)->cacheEntry == 0,
                  "### nsCacheEntryHashTable::AddEntry - entry already used");
@@ -462,18 +459,14 @@ nsCacheEntryHashTable::RemoveEntry( nsCacheEntry *cacheEntry)
     nsCacheEntry *check = GetEntry(&(cacheEntry->mKey));
     NS_ASSERTION(check == cacheEntry, "### Attempting to remove unknown cache entry!!!");
 #endif
-    PL_DHashTableRemove(&table, &(cacheEntry->mKey));
+    table.Remove(&(cacheEntry->mKey));
 }
 
-
-void
-nsCacheEntryHashTable::VisitEntries( PLDHashEnumerator etor, void *arg)
+PLDHashTable::Iterator
+nsCacheEntryHashTable::Iter()
 {
-    NS_ASSERTION(initialized, "nsCacheEntryHashTable not initialized");
-    if (!initialized)  return; // NS_ERROR_NOT_INITIALIZED
-    PL_DHashTableEnumerate(&table, etor, arg);
+    return PLDHashTable::Iterator(&table);
 }
-
 
 /**
  *  hash table operation callback functions

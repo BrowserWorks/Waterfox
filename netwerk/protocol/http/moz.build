@@ -21,6 +21,7 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'necko_http'
 
 EXPORTS += [
+    'nsCORSListenerProxy.h',
     'nsHttp.h',
     'nsHttpAtomList.h',
     'nsHttpHeaderArray.h',
@@ -34,6 +35,8 @@ EXPORTS.mozilla.net += [
     'HttpChannelParent.h',
     'HttpInfo.h',
     'NullHttpChannel.h',
+    'PackagedAppService.h',
+    'PackagedAppVerifier.h',
     'PHttpChannelParams.h',
     'PSpdyPush.h',
     'TimingStruct.h',
@@ -60,6 +63,7 @@ UNIFIED_SOURCES += [
     'HttpChannelParentListener.cpp',
     'HttpInfo.cpp',
     'InterceptedChannel.cpp',
+    'nsCORSListenerProxy.cpp',
     'nsHttp.cpp',
     'nsHttpActivityDistributor.cpp',
     'nsHttpAuthManager.cpp',
@@ -78,6 +82,8 @@ UNIFIED_SOURCES += [
     'nsHttpTransaction.cpp',
     'NullHttpChannel.cpp',
     'NullHttpTransaction.cpp',
+    'PackagedAppService.cpp',
+    'PackagedAppVerifier.cpp',
     'SpdyPush31.cpp',
     'SpdySession31.cpp',
     'SpdyStream31.cpp',
@@ -98,8 +104,6 @@ EXTRA_JS_MODULES += [
     'UserAgentOverrides.jsm',
     'UserAgentUpdates.jsm',
 ]
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

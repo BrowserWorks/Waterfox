@@ -16,7 +16,6 @@
 #include "nsContentUtils.h"
 #include "nsIPermissionManager.h"
 #include "nsIURI.h"
-#include "nsNetUtil.h"
 #include "nsPIDOMWindow.h"
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
@@ -63,8 +62,13 @@ public:
 };
 
 Telephony::Telephony(nsPIDOMWindow* aOwner)
-  : DOMEventTargetHelper(aOwner)
+  : DOMEventTargetHelper(aOwner),
+    mAudioAgentNotify(nsIAudioChannelAgent::AUDIO_AGENT_NOTIFY),
+    mIsAudioStartPlaying(false),
+    mHaveDispatchedInterruptBeginEvent(false),
+    mMuted(AudioChannelService::IsAudioChannelMutedByDefault())
 {
+  MOZ_ASSERT(aOwner);
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aOwner);
   MOZ_ASSERT(global);
 
@@ -167,8 +171,6 @@ bool
 Telephony::IsActiveState(uint16_t aCallState) {
   return aCallState == nsITelephonyService::CALL_STATE_DIALING ||
       aCallState == nsITelephonyService::CALL_STATE_ALERTING ||
-      aCallState == nsITelephonyService::CALL_STATE_HOLDING ||
-      aCallState == nsITelephonyService::CALL_STATE_DISCONNECTING ||
       aCallState == nsITelephonyService::CALL_STATE_CONNECTED;
 }
 
@@ -195,20 +197,6 @@ Telephony::GetServiceId(const Optional<uint32_t>& aServiceId,
   return serviceId;
 }
 
-bool
-Telephony::HasDialingCall()
-{
-  for (uint32_t i = 0; i < mCalls.Length(); i++) {
-    const nsRefPtr<TelephonyCall>& call = mCalls[i];
-    if (call->CallState() > nsITelephonyService::CALL_STATE_UNKNOWN &&
-        call->CallState() < nsITelephonyService::CALL_STATE_CONNECTED) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 already_AddRefed<Promise>
 Telephony::DialInternal(uint32_t aServiceId, const nsAString& aNumber,
                         bool aEmergency, ErrorResult& aRv)
@@ -225,12 +213,6 @@ Telephony::DialInternal(uint32_t aServiceId, const nsAString& aNumber,
 
   if (!IsValidNumber(aNumber) || !IsValidServiceId(aServiceId)) {
     promise->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR);
-    return promise.forget();
-  }
-
-  // We only support one outgoing call at a time.
-  if (HasDialingCall()) {
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
     return promise.forget();
   }
 
@@ -377,10 +359,14 @@ Telephony::HandleCallInfo(nsITelephonyCallInfo* aInfo)
     nsRefPtr<TelephonyCallId> id = call->Id();
     id->UpdateNumber(number);
 
+    nsAutoString disconnectedReason;
+    aInfo->GetDisconnectedReason(disconnectedReason);
+
     // State changed.
     if (call->CallState() != callState) {
       if (callState == nsITelephonyService::CALL_STATE_DISCONNECTED) {
-        call->ChangeStateInternal(callState, true);
+        call->UpdateDisconnectedReason(disconnectedReason);
+        call->ChangeState(nsITelephonyService::CALL_STATE_DISCONNECTED);
         return NS_OK;
       }
 
@@ -537,6 +523,73 @@ Telephony::StopTone(const Optional<uint32_t>& aServiceId, ErrorResult& aRv)
   aRv = mService->StopTone(serviceId);
 }
 
+void
+Telephony::OwnAudioChannel(ErrorResult& aRv)
+{
+  if (mAudioAgent) {
+    return;
+  }
+
+  mAudioAgent = do_CreateInstance("@mozilla.org/audiochannelagent;1");
+  MOZ_ASSERT(mAudioAgent);
+  aRv = mAudioAgent->Init(GetParentObject(),
+                         (int32_t)AudioChannel::Telephony, this);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
+  }
+  aRv = HandleAudioAgentState();
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
+  }
+}
+
+nsresult
+Telephony::HandleAudioAgentState()
+{
+  if (!mAudioAgent) {
+    return NS_OK;
+  }
+
+  Nullable<OwningTelephonyCallOrTelephonyCallGroup> activeCall;
+  GetActive(activeCall);
+  nsresult rv;
+  // Only stop the agent when there's no call.
+  if ((!mCalls.Length() && !mGroup->CallsArray().Length()) &&
+       mIsAudioStartPlaying) {
+    mIsAudioStartPlaying = false;
+    rv = mAudioAgent->NotifyStoppedPlaying(mAudioAgentNotify);
+    mAudioAgent = nullptr;
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+  } else if (!activeCall.IsNull() && !mIsAudioStartPlaying) {
+    mIsAudioStartPlaying = true;
+    float volume;
+    bool muted;
+    rv = mAudioAgent->NotifyStartedPlaying(mAudioAgentNotify, &volume, &muted);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    // In B2G, the system app manages audio playback policy. If there is a new
+    // sound want to be playback, it must wait for the permission from the
+    // system app. It means that the sound would be muted first, and then be
+    // unmuted. For telephony, the behaviors are hold() first, then resume().
+    // However, the telephony service can't handle all these requests within a
+    // short period. The telephony service would reject our resume request,
+    // because the modem have not changed the call state yet. It causes that
+    // the telephony can't be resumed. Therefore, we don't mute the telephony
+    // at the beginning.
+    volume = 1.0;
+    muted = false;
+    rv = WindowVolumeChanged(volume, muted);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+  }
+  return NS_OK;
+}
+
 bool
 Telephony::GetMuted(ErrorResult& aRv) const
 {
@@ -610,13 +663,77 @@ Telephony::GetReady(ErrorResult& aRv) const
   return promise.forget();
 }
 
+// nsIAudioChannelAgentCallback
+
+NS_IMETHODIMP
+Telephony::WindowVolumeChanged(float aVolume, bool aMuted)
+{
+  // It's impossible to put all the calls on-hold in the multi-call case.
+  if (mCalls.Length() > 1 ||
+     (mCalls.Length() == 1 && mGroup->CallsArray().Length())) {
+    return NS_ERROR_FAILURE;
+  }
+
+  ErrorResult rv;
+  nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(GetOwner());
+  nsRefPtr<Promise> promise = Promise::Create(global, rv);
+  if (NS_WARN_IF(rv.Failed())) {
+    return rv.StealNSResult();
+  }
+
+  bool isSingleCall = mCalls.Length();
+  nsCOMPtr<nsITelephonyCallback> callback = new TelephonyCallback(promise);
+  if (isSingleCall) {
+    rv = aMuted ? mCalls[0]->Hold(callback) : mCalls[0]->Resume(callback);
+  } else {
+    rv = aMuted ? mGroup->Hold(callback) : mGroup->Resume(callback);
+  }
+  if (NS_WARN_IF(rv.Failed())) {
+    return rv.StealNSResult();
+  }
+
+  // These events will be triggered when the telephony is interrupted by other
+  // audio channel.
+  if (mMuted != aMuted) {
+    mMuted = aMuted;
+    // We should not dispatch "mozinterruptend" when the system app initializes
+    // the telephony audio from muted to unmuted at the first time. The event
+    // "mozinterruptend" must be dispatched after the "mozinterruptbegin".
+    if (!mHaveDispatchedInterruptBeginEvent && mMuted) {
+      DispatchTrustedEvent(NS_LITERAL_STRING("mozinterruptbegin"));
+      mHaveDispatchedInterruptBeginEvent = mMuted;
+    } else if (mHaveDispatchedInterruptBeginEvent && !mMuted) {
+      DispatchTrustedEvent(NS_LITERAL_STRING("mozinterruptend"));
+      mHaveDispatchedInterruptBeginEvent = mMuted;
+    }
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+Telephony::WindowAudioCaptureChanged()
+{
+  // Do nothing, it's useless for the telephony object.
+  return NS_OK;
+}
+
 // nsITelephonyListener
 
 NS_IMETHODIMP
 Telephony::CallStateChanged(uint32_t aLength, nsITelephonyCallInfo** aAllInfo)
 {
+  nsresult rv;
   for (uint32_t i = 0; i < aLength; ++i) {
-    HandleCallInfo(aAllInfo[i]);
+    rv = HandleCallInfo(aAllInfo[i]);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+  }
+
+  rv = HandleAudioAgentState();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
   }
   return NS_OK;
 }
@@ -652,6 +769,7 @@ Telephony::EnumerateCallStateComplete()
     mGroup->ChangeState(callState);
   }
 
+  HandleAudioAgentState();
   if (mReadyPromise) {
     mReadyPromise->MaybeResolve(JS::UndefinedHandleValue);
   }
@@ -686,26 +804,6 @@ Telephony::SupplementaryServiceNotification(uint32_t aServiceId,
   }
 
   NS_ENSURE_SUCCESS(rv, rv);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-Telephony::NotifyError(uint32_t aServiceId,
-                       int32_t aCallIndex,
-                       const nsAString& aError)
-{
-  nsRefPtr<TelephonyCall> callToNotify =
-    GetCallFromEverywhere(aServiceId, aCallIndex);
-  if (!callToNotify) {
-    NS_ERROR("Don't call me with a bad call index!");
-    return NS_ERROR_UNEXPECTED;
-  }
-
-  // Set the call state to 'disconnected' and remove it from the calls list.
-  callToNotify->UpdateDisconnectedReason(aError);
-  callToNotify->NotifyError(aError);
-  callToNotify->ChangeState(nsITelephonyService::CALL_STATE_DISCONNECTED);
-
   return NS_OK;
 }
 
@@ -758,7 +856,7 @@ NS_CreateTelephonyService()
 {
   nsCOMPtr<nsITelephonyService> service;
 
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     service = new mozilla::dom::telephony::TelephonyIPCService();
   } else {
 #if defined(MOZ_WIDGET_GONK) && defined(MOZ_B2G_RIL)

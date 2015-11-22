@@ -207,7 +207,7 @@ class JitcodeGlobalEntry
             return startsBelowPointer(ptr) && endsAbovePointer(ptr);
         }
 
-        bool markJitcodeIfUnmarked(JSTracer* trc);
+        template <class ShouldMarkProvider> bool markJitcode(JSTracer* trc);
         bool isJitcodeMarkedFromAnyThread();
         bool isJitcodeAboutToBeFinalized();
     };
@@ -245,7 +245,7 @@ class JitcodeGlobalEntry
 
         struct SizedScriptList {
             uint32_t size;
-            ScriptNamePair pairs[0];
+            ScriptNamePair pairs[1];
             SizedScriptList(uint32_t sz, JSScript** scrs, char** strs) : size(sz) {
                 for (uint32_t i = 0; i < size; i++) {
                     pairs[i].script = scrs[i];
@@ -254,7 +254,7 @@ class JitcodeGlobalEntry
             }
 
             static uint32_t AllocSizeFor(uint32_t nscripts) {
-                return sizeof(SizedScriptList) + (nscripts * sizeof(ScriptNamePair));
+                return sizeof(SizedScriptList) + ((nscripts - 1) * sizeof(ScriptNamePair));
             }
         };
 
@@ -358,10 +358,18 @@ class JitcodeGlobalEntry
             return optsAllTypes_;
         }
 
-        mozilla::Maybe<uint8_t> trackedOptimizationIndexAtAddr(void* ptr, uint32_t* entryOffsetOut);
+        mozilla::Maybe<uint8_t> trackedOptimizationIndexAtAddr(
+            JSRuntime *rt,
+            void* ptr,
+            uint32_t* entryOffsetOut);
 
-        bool markIfUnmarked(JSTracer* trc);
-        void sweep();
+        void forEachOptimizationAttempt(JSRuntime* rt, uint8_t index,
+                                        JS::ForEachTrackedOptimizationAttemptOp& op);
+        void forEachOptimizationTypeInfo(JSRuntime* rt, uint8_t index,
+                                         IonTrackedOptimizationsTypeInfo::ForEachOpAdapter& op);
+
+        template <class ShouldMarkProvider> bool mark(JSTracer* trc);
+        void sweepChildren();
         bool isMarkedFromAnyThread();
     };
 
@@ -418,25 +426,30 @@ class JitcodeGlobalEntry
         void youngestFrameLocationAtAddr(JSRuntime* rt, void* ptr,
                                          JSScript** script, jsbytecode** pc) const;
 
-        bool markIfUnmarked(JSTracer* trc);
-        void sweep();
+        template <class ShouldMarkProvider> bool mark(JSTracer* trc);
+        void sweepChildren();
         bool isMarkedFromAnyThread();
     };
 
     struct IonCacheEntry : public BaseEntry
     {
         void* rejoinAddr_;
+        JS::TrackedOutcome trackedOutcome_;
 
         void init(JitCode* code, void* nativeStartAddr, void* nativeEndAddr,
-                  void* rejoinAddr)
+                  void* rejoinAddr, JS::TrackedOutcome trackedOutcome)
         {
             MOZ_ASSERT(rejoinAddr != nullptr);
             BaseEntry::init(IonCache, code, nativeStartAddr, nativeEndAddr);
             rejoinAddr_ = rejoinAddr;
+            trackedOutcome_ = trackedOutcome;
         }
 
         void* rejoinAddr() const {
             return rejoinAddr_;
+        }
+        JS::TrackedOutcome trackedOutcome() const {
+            return trackedOutcome_;
         }
 
         void destroy() {}
@@ -452,8 +465,18 @@ class JitcodeGlobalEntry
         void youngestFrameLocationAtAddr(JSRuntime* rt, void* ptr,
                                          JSScript** script, jsbytecode** pc) const;
 
-        bool markIfUnmarked(JSTracer* trc);
-        void sweep(JSRuntime* rt);
+        bool hasTrackedOptimizations() const { return true; }
+        mozilla::Maybe<uint8_t> trackedOptimizationIndexAtAddr(
+            JSRuntime *rt,
+            void* ptr,
+            uint32_t* entryOffsetOut);
+        void forEachOptimizationAttempt(JSRuntime* rt, uint8_t index,
+                                        JS::ForEachTrackedOptimizationAttemptOp& op);
+        void forEachOptimizationTypeInfo(JSRuntime* rt, uint8_t index,
+                                         IonTrackedOptimizationsTypeInfo::ForEachOpAdapter& op);
+
+        template <class ShouldMarkProvider> bool mark(JSTracer* trc);
+        void sweepChildren(JSRuntime* rt);
         bool isMarkedFromAnyThread(JSRuntime* rt);
     };
 
@@ -806,8 +829,9 @@ class JitcodeGlobalEntry
         switch (kind()) {
           case Ion:
             return ionEntry().hasTrackedOptimizations();
-          case Baseline:
           case IonCache:
+            return ionCacheEntry().hasTrackedOptimizations();
+          case Baseline:
           case Dummy:
             break;
           default:
@@ -816,18 +840,59 @@ class JitcodeGlobalEntry
         return false;
     }
 
-    mozilla::Maybe<uint8_t> trackedOptimizationIndexAtAddr(void* addr, uint32_t* entryOffsetOut) {
+    mozilla::Maybe<uint8_t> trackedOptimizationIndexAtAddr(
+            JSRuntime *rt,
+            void* addr,
+            uint32_t* entryOffsetOut)
+    {
         switch (kind()) {
           case Ion:
-            return ionEntry().trackedOptimizationIndexAtAddr(addr, entryOffsetOut);
-          case Baseline:
+            return ionEntry().trackedOptimizationIndexAtAddr(rt, addr, entryOffsetOut);
           case IonCache:
+            return ionCacheEntry().trackedOptimizationIndexAtAddr(rt, addr, entryOffsetOut);
+          case Baseline:
           case Dummy:
             break;
           default:
             MOZ_CRASH("Invalid JitcodeGlobalEntry kind.");
         }
         return mozilla::Nothing();
+    }
+
+    void forEachOptimizationAttempt(JSRuntime* rt, uint8_t index,
+                                    JS::ForEachTrackedOptimizationAttemptOp& op)
+    {
+        switch (kind()) {
+          case Ion:
+            ionEntry().forEachOptimizationAttempt(rt, index, op);
+            return;
+          case IonCache:
+            ionCacheEntry().forEachOptimizationAttempt(rt, index, op);
+            return;
+          case Baseline:
+          case Dummy:
+            break;
+          default:
+            MOZ_CRASH("Invalid JitcodeGlobalEntry kind.");
+        }
+    }
+
+    void forEachOptimizationTypeInfo(JSRuntime* rt, uint8_t index,
+                                     IonTrackedOptimizationsTypeInfo::ForEachOpAdapter& op)
+    {
+        switch (kind()) {
+          case Ion:
+            ionEntry().forEachOptimizationTypeInfo(rt, index, op);
+            return;
+          case IonCache:
+            ionCacheEntry().forEachOptimizationTypeInfo(rt, index, op);
+            return;
+          case Baseline:
+          case Dummy:
+            break;
+          default:
+            MOZ_CRASH("Invalid JitcodeGlobalEntry kind.");
+        }
     }
 
     IonTrackedOptimizationsAttempts trackedOptimizationAttempts(uint8_t index) {
@@ -846,17 +911,18 @@ class JitcodeGlobalEntry
         return baseEntry().jitcode()->zone();
     }
 
-    bool markIfUnmarked(JSTracer* trc) {
-        bool markedAny = baseEntry().markJitcodeIfUnmarked(trc);
+    template <class ShouldMarkProvider>
+    bool mark(JSTracer* trc) {
+        bool markedAny = baseEntry().markJitcode<ShouldMarkProvider>(trc);
         switch (kind()) {
           case Ion:
-            markedAny |= ionEntry().markIfUnmarked(trc);
+            markedAny |= ionEntry().mark<ShouldMarkProvider>(trc);
             break;
           case Baseline:
-            markedAny |= baselineEntry().markIfUnmarked(trc);
+            markedAny |= baselineEntry().mark<ShouldMarkProvider>(trc);
             break;
           case IonCache:
-            markedAny |= ionCacheEntry().markIfUnmarked(trc);
+            markedAny |= ionCacheEntry().mark<ShouldMarkProvider>(trc);
           case Dummy:
             break;
           default:
@@ -865,16 +931,16 @@ class JitcodeGlobalEntry
         return markedAny;
     }
 
-    void sweep(JSRuntime* rt) {
+    void sweepChildren(JSRuntime* rt) {
         switch (kind()) {
           case Ion:
-            ionEntry().sweep();
+            ionEntry().sweepChildren();
             break;
           case Baseline:
-            baselineEntry().sweep();
+            baselineEntry().sweepChildren();
             break;
           case IonCache:
-            ionCacheEntry().sweep(rt);
+            ionCacheEntry().sweepChildren(rt);
           case Dummy:
             break;
           default:
@@ -987,6 +1053,7 @@ class JitcodeGlobalTable
     void releaseEntry(JitcodeGlobalEntry& entry, JitcodeGlobalEntry** prevTower, JSRuntime* rt);
 
     void setAllEntriesAsExpired(JSRuntime* rt);
+    void markUnconditionally(JSTracer* trc);
     bool markIteratively(JSTracer* trc);
     void sweep(JSRuntime* rt);
 
@@ -1352,7 +1419,7 @@ class JitcodeIonTable
   private:
     /* Variable length payload section "below" here. */
     uint32_t numRegions_;
-    uint32_t regionOffsets_[0];
+    uint32_t regionOffsets_[1];
 
     const uint8_t* payloadEnd() const {
         return reinterpret_cast<const uint8_t*>(this);

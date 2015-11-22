@@ -87,7 +87,8 @@ class OptimizationTypeInfo
 
     HashNumber hash() const;
 
-    bool writeCompact(CompactBufferWriter& writer, UniqueTrackedTypes& uniqueTypes) const;
+    bool writeCompact(JSContext* cx, CompactBufferWriter& writer,
+                      UniqueTrackedTypes& uniqueTypes) const;
 };
 
 typedef Vector<OptimizationTypeInfo, 1, JitAllocPolicy> TempOptimizationTypeInfoVector;
@@ -489,7 +490,7 @@ class IonTrackedOptimizationsTypeInfo
     bool empty() const { return start_ == end_; }
 
     // Unlike IonTrackedOptimizationAttempts,
-    // JS::ForEachTrackedOptimizaitonTypeInfoOp cannot be used directly. The
+    // JS::ForEachTrackedOptimizationTypeInfoOp cannot be used directly. The
     // internal API needs to deal with engine-internal data structures (e.g.,
     // TypeSet::Type) directly.
     //

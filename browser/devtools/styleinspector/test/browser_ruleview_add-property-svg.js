@@ -4,20 +4,15 @@
 
 "use strict";
 
-// Tests editing SVG styles using the rules view
+// Tests editing SVG styles using the rules view.
 
-let TEST_URL = "chrome://global/skin/icons/warning.svg";
-let TEST_SELECTOR = "path";
+var TEST_URL = "chrome://global/skin/icons/warning.svg";
+var TEST_SELECTOR = "path";
 
 add_task(function*() {
   yield addTab(TEST_URL);
-
-  info("Opening the rule-view");
-  let {toolbox, inspector, view} = yield openRuleView();
-
-  info("Selecting the test element");
+  let {inspector, view} = yield openRuleView();
   yield selectNode(TEST_SELECTOR, inspector);
-
   yield testCreateNew(view);
 });
 
@@ -27,7 +22,7 @@ function* testCreateNew(ruleView) {
   let elementRuleEditor = getRuleViewRuleEditor(ruleView, 0);
 
   info("Focusing a new property name in the rule-view");
-  let editor = yield focusEditableField(elementRuleEditor.closeBrace);
+  let editor = yield focusEditableField(ruleView, elementRuleEditor.closeBrace);
 
   is(inplaceEditor(elementRuleEditor.newPropSpan), editor,
     "Next focused editor should be the new property editor.");
@@ -39,24 +34,28 @@ function* testCreateNew(ruleView) {
 
   info("Pressing RETURN and waiting for the value field focus");
   let onFocus = once(elementRuleEditor.element, "focus", true);
-  EventUtils.sendKey("return", ruleView.doc.defaultView);
+  EventUtils.sendKey("return", ruleView.styleWindow);
   yield onFocus;
   yield elementRuleEditor.rule._applyingModifications;
 
-  editor = inplaceEditor(ruleView.doc.activeElement);
+  editor = inplaceEditor(ruleView.styleDocument.activeElement);
 
-  is(elementRuleEditor.rule.textProps.length,  1, "Should have created a new text property.");
-  is(elementRuleEditor.propertyList.children.length, 1, "Should have created a property editor.");
+  is(elementRuleEditor.rule.textProps.length, 1,
+    "Should have created a new text property.");
+  is(elementRuleEditor.propertyList.children.length, 1,
+    "Should have created a property editor.");
   let textProp = elementRuleEditor.rule.textProps[0];
-  is(editor, inplaceEditor(textProp.editor.valueSpan), "Should be editing the value span now.");
+  is(editor, inplaceEditor(textProp.editor.valueSpan),
+    "Should be editing the value span now.");
 
   editor.input.value = "red";
   let onBlur = once(editor.input, "blur");
-  EventUtils.sendKey("return", ruleView.doc.defaultView);
+  EventUtils.sendKey("return", ruleView.styleWindow);
   yield onBlur;
   yield elementRuleEditor.rule._applyingModifications;
 
   is(textProp.value, "red", "Text prop should have been changed.");
 
-  is((yield getComputedStyleProperty(TEST_SELECTOR, null, "fill")), "rgb(255, 0, 0)", "The fill was changed to red");
+  is((yield getComputedStyleProperty(TEST_SELECTOR, null, "fill")),
+    "rgb(255, 0, 0)", "The fill was changed to red");
 }

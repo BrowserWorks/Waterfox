@@ -17,10 +17,11 @@ XPCSHELL_TESTS_MANIFESTS += [
     'test/unit/xpcshell-parent-process.ini'
 ]
 
+if CONFIG['ENABLE_INTL_API']:
+    MOCHITEST_MANIFESTS += ['test/mochitest-intl-api.ini']
+
 EXPORTS.mozilla.dom.indexedDB += [
     'ActorsParent.h',
-    'FileInfo.h',
-    'FileManager.h',
     'FileSnapshot.h',
     'IDBCursor.h',
     'IDBDatabase.h',
@@ -60,7 +61,6 @@ UNIFIED_SOURCES += [
     'IDBTransaction.cpp',
     'IDBWrapperCache.cpp',
     'IndexedDatabaseManager.cpp',
-    'Key.cpp',
     'KeyPath.cpp',
     'PermissionRequestBase.cpp',
     'ReportInternalError.cpp',
@@ -68,12 +68,14 @@ UNIFIED_SOURCES += [
 
 SOURCES += [
     'ActorsParent.cpp', # This file is huge.
+    'Key.cpp', # We disable a warning on this file only
 ]
 
 IPDL_SOURCES += [
     'PBackgroundIDBCursor.ipdl',
     'PBackgroundIDBDatabase.ipdl',
     'PBackgroundIDBDatabaseFile.ipdl',
+    'PBackgroundIDBDatabaseRequest.ipdl',
     'PBackgroundIDBFactory.ipdl',
     'PBackgroundIDBFactoryRequest.ipdl',
     'PBackgroundIDBRequest.ipdl',
@@ -87,7 +89,10 @@ include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CC']:
+    # Suppress gcc warning about a comparison being always false due to the
+    # range of the data type
+    SOURCES['Key.cpp'].flags += ['-Wno-error=type-limits']
 
 LOCAL_INCLUDES += [
     '/db/sqlite3/src',
@@ -96,4 +101,8 @@ LOCAL_INCLUDES += [
     '/dom/workers',
     '/ipc/glue',
     '/xpcom/build',
+    '/xpcom/threads',
 ]
+
+if CONFIG['ENABLE_INTL_API']:
+    CXXFLAGS += CONFIG['MOZ_ICU_CFLAGS']

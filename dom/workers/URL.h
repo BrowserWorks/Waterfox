@@ -12,13 +12,14 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/URLSearchParams.h"
+#include "nsWrapperCache.h"
 
 namespace mozilla {
 namespace dom {
-class File;
+class Blob;
 struct objectURLOptions;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 BEGIN_WORKERS_NAMESPACE
 
@@ -26,6 +27,7 @@ class URLProxy;
 class ConstructorRunnable;
 
 class URL final : public mozilla::dom::URLSearchParamsObserver
+                , public nsWrapperCache
 {
   typedef mozilla::dom::URLSearchParams URLSearchParams;
 
@@ -33,7 +35,7 @@ class URL final : public mozilla::dom::URLSearchParamsObserver
 
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_CLASS(URL)
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(URL)
 
   URL(WorkerPrivate* aWorkerPrivate, URLProxy* aURLProxy);
 
@@ -44,8 +46,8 @@ public:
     return nullptr;
   }
 
-  bool
-  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto, JS::MutableHandle<JSObject*> aReflector);
+  virtual JSObject*
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // Methods for WebIDL
 
@@ -61,7 +63,7 @@ public:
 
   static void
   CreateObjectURL(const GlobalObject& aGlobal,
-                  File& aArg, const objectURLOptions& aOptions,
+                  Blob& aArg, const objectURLOptions& aOptions,
                   nsAString& aResult, ErrorResult& aRv);
 
   static void
@@ -107,8 +109,6 @@ public:
   void SetSearch(const nsAString& aSearch, ErrorResult& aRv);
 
   URLSearchParams* SearchParams();
-
-  void SetSearchParams(URLSearchParams& aSearchParams);
 
   void GetHash(nsAString& aHost, ErrorResult& aRv) const;
 

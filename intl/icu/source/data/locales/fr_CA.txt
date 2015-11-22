@@ -1,0 +1,339 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2015 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/fr_CA.xml
+// *
+// ***************************************************************************
+fr_CA{
+    NumberElements{
+        latn{
+            patternsShort{
+                decimalFormat{
+                    1000000000{
+                        one{"0 G"}
+                        other{"0 G"}
+                    }
+                    10000000000{
+                        one{"00 G"}
+                        other{"00 G"}
+                    }
+                    100000000000{
+                        one{"000 G"}
+                        other{"000 G"}
+                    }
+                    1000000000000{
+                        one{"0 T"}
+                        other{"0 T"}
+                    }
+                    10000000000000{
+                        one{"00 T"}
+                        other{"00 T"}
+                    }
+                    100000000000000{
+                        one{"000 T"}
+                        other{"000 T"}
+                    }
+                }
+            }
+        }
+    }
+    Version{"2.1.13.23"}
+    calendar{
+        generic{
+            DateTimePatterns{
+                "HH:mm:ss zzzz",
+                "HH:mm:ss z",
+                "HH:mm:ss",
+                "HH:mm",
+                "EEEE d MMMM y G",
+                "d MMMM y G",
+                "d MMM y G",
+                "yy-MM-dd GGGGG",
+                "{1} {0}",
+                "{1} 'à' {0}",
+                "{1} 'à' {0}",
+                "{1} {0}",
+                "{1} {0}",
+            }
+            availableFormats{
+                MEd{"E M-d"}
+                MMd{"MM-d"}
+                MMdd{"MM-dd"}
+                Md{"M-d"}
+                yyyyM{"y-MM G"}
+                yyyyMEd{"E y-MM-dd G"}
+                yyyyMM{"y-MM G"}
+                yyyyMd{"y-MM-dd G"}
+            }
+            intervalFormats{
+                MEd{
+                    M{"E MM-dd – E MM-dd"}
+                    d{"E MM-dd – E MM-dd"}
+                }
+                MMMEd{
+                    d{"E d – E d MMM"}
+                }
+                Md{
+                    M{"MM-dd – MM-dd"}
+                    d{"MM-dd – MM-dd"}
+                }
+                yM{
+                    M{"y-MM – y-MM G"}
+                    y{"y-MM – y-MM G"}
+                }
+                yMEd{
+                    M{"E y-MM-dd – E y-MM-dd G"}
+                    d{"E y-MM-dd – E y-MM-dd G"}
+                    y{"E y-MM-dd – E y-MM-dd G"}
+                }
+                yMd{
+                    M{"y-MM-dd – y-MM-dd G"}
+                    d{"y-MM-dd – y-MM-dd G"}
+                    y{"y-MM-dd – y-MM-dd G"}
+                }
+            }
+        }
+        gregorian{
+            DateTimePatterns{
+                "HH:mm:ss zzzz",
+                "HH:mm:ss z",
+                "HH:mm:ss",
+                "HH:mm",
+                "EEEE d MMMM y",
+                "d MMMM y",
+                "d MMM y",
+                "yy-MM-dd",
+                "{1} {0}",
+                "{1} {0}",
+                "{1} {0}",
+                "{1} {0}",
+                "{1} {0}",
+            }
+            availableFormats{
+                MEd{"E M-d"}
+                MMd{"MM-d"}
+                MMdd{"MM-dd"}
+                Md{"M-d"}
+                yM{"y-MM"}
+                yMEd{"E y-MM-dd"}
+                yMM{"y-MM"}
+                yMd{"y-MM-dd"}
+            }
+            dayNames{
+                stand-alone{
+                    abbreviated{
+                        "dim.",
+                        "lun.",
+                        "mar.",
+                        "mer.",
+                        "jeu.",
+                        "ven.",
+                        "sam.",
+                    }
+                    wide{
+                        "dimanche",
+                        "lundi",
+                        "mardi",
+                        "mercredi",
+                        "jeudi",
+                        "vendredi",
+                        "samedi",
+                    }
+                }
+            }
+            intervalFormats{
+                MEd{
+                    M{"E MM-dd – E MM-dd"}
+                    d{"E MM-dd – E MM-dd"}
+                }
+                Md{
+                    M{"MM-dd – MM-dd"}
+                    d{"MM-dd – MM-dd"}
+                }
+                d{
+                    d{"d – d"}
+                }
+                hv{
+                    a{"h 'h' a – h 'h' a v"}
+                }
+                yM{
+                    M{"y-MM – y-MM"}
+                    y{"y-MM – y-MM"}
+                }
+                yMEd{
+                    M{"E y-MM-dd – E y-MM-dd"}
+                    d{"E y-MM-dd – E y-MM-dd"}
+                    y{"E y-MM-dd – E y-MM-dd"}
+                }
+                yMd{
+                    M{"y-MM-dd – y-MM-dd"}
+                    d{"y-MM-dd – y-MM-dd"}
+                    y{"y-MM-dd – y-MM-dd"}
+                }
+            }
+            monthNames{
+                stand-alone{
+                    abbreviated{
+                        "janv.",
+                        "févr.",
+                        "mars",
+                        "avr.",
+                        "mai",
+                        "juin",
+                        "juil.",
+                        "août",
+                        "sept.",
+                        "oct.",
+                        "nov.",
+                        "déc.",
+                    }
+                    wide{
+                        "janvier",
+                        "février",
+                        "mars",
+                        "avril",
+                        "mai",
+                        "juin",
+                        "juillet",
+                        "août",
+                        "septembre",
+                        "octobre",
+                        "novembre",
+                        "décembre",
+                    }
+                }
+            }
+        }
+        islamic{
+            DateTimePatterns{
+                "HH:mm:ss zzzz",
+                "HH:mm:ss z",
+                "HH:mm:ss",
+                "HH:mm",
+                "EEEE d MMMM y G",
+                "d MMMM y G",
+                "d MMM y G",
+                "y-MM-dd GGGGG",
+                "{1} {0}",
+                "{1} 'à' {0}",
+                "{1} 'à' {0}",
+                "{1} {0}",
+                "{1} {0}",
+            }
+            availableFormats{
+                MEd{"E d MMM"}
+                Md{"MM-dd"}
+                yyyyM{"y-MM GGGGG"}
+                yyyyMEd{"E y-MM-dd GGGGG"}
+                yyyyMd{"y-MM-dd GGGGG"}
+            }
+        }
+    }
+    fields{
+        day{
+            relativeTime{
+                future{
+                    one{"Dans {0} jour"}
+                    other{"Dans {0} jours"}
+                }
+                past{
+                    one{"Il y a {0} jour"}
+                    other{"Il y a {0} jours"}
+                }
+            }
+        }
+        day-short{
+            relativeTime{
+                future{
+                    one{"dans {0} j"}
+                    other{"dans {0} j"}
+                }
+            }
+        }
+        hour{
+            relativeTime{
+                future{
+                    one{"Dans {0} heure"}
+                    other{"Dans {0} heures"}
+                }
+                past{
+                    one{"Il y a {0} heure"}
+                    other{"Il y a {0} heures"}
+                }
+            }
+        }
+        minute{
+            relativeTime{
+                future{
+                    one{"Dans {0} minute"}
+                    other{"Dans {0} minutes"}
+                }
+                past{
+                    one{"Il y a {0} minute"}
+                    other{"Il y a {0} minutes"}
+                }
+            }
+        }
+        month{
+            relativeTime{
+                future{
+                    one{"Dans {0} mois"}
+                    other{"Dans {0} mois"}
+                }
+                past{
+                    one{"Il y a {0} mois"}
+                    other{"Il y a {0} mois"}
+                }
+            }
+        }
+        second{
+            relativeTime{
+                future{
+                    one{"Dans {0} seconde"}
+                    other{"Dans {0} secondes"}
+                }
+                past{
+                    one{"Il y a {0} seconde"}
+                    other{"Il y a {0} secondes"}
+                }
+            }
+        }
+        second-narrow{
+            relativeTime{
+                future{
+                    one{"+ {0} s"}
+                    other{"+{0} s"}
+                }
+            }
+        }
+        week{
+            relativeTime{
+                future{
+                    one{"Dans {0} semaine"}
+                    other{"Dans {0} semaines"}
+                }
+                past{
+                    one{"Il y a {0} semaine"}
+                    other{"Il y a {0} semaines"}
+                }
+            }
+        }
+        year{
+            relativeTime{
+                future{
+                    one{"Dans {0} an"}
+                    other{"Dans {0} ans"}
+                }
+                past{
+                    one{"Il y a {0} an"}
+                    other{"Il y a {0} ans"}
+                }
+            }
+        }
+    }
+    transformNames{
+        x-Publishing{"Édition"}
+    }
+}

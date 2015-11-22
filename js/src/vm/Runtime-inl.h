@@ -61,13 +61,16 @@ NewObjectCache::newObjectFromHit(JSContext* cx, EntryIndex entryIndex, gc::Initi
         return nullptr;
 
     NativeObject* obj = static_cast<NativeObject*>(Allocate<JSObject, NoGC>(cx, entry->kind, 0,
-                                                                             heap, group->clasp()));
+                                                                            heap, group->clasp()));
     if (!obj)
         return nullptr;
 
     copyCachedToObject(obj, templateObj, entry->kind);
 
-    SetNewObjectMetadata(cx, obj);
+    if (group->clasp()->shouldDelayMetadataCallback())
+        cx->compartment()->setObjectPendingMetadata(cx, obj);
+    else
+        SetNewObjectMetadata(cx, obj);
 
     probes::CreateObject(cx, obj);
     gc::TraceCreateObject(obj);

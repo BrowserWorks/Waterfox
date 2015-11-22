@@ -5,6 +5,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+XPCOMUtils.defineLazyGetter(this, "HarExporter", function() {
+  return require("devtools/netmonitor/har/har-exporter.js").HarExporter;
+});
+
+XPCOMUtils.defineLazyGetter(this, "NetworkHelper", function() {
+  return require("devtools/toolkit/webconsole/network-helper");
+});
+
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 const EPSILON = 0.001;
 const SOURCE_SYNTAX_HIGHLIGHT_MAX_FILE_SIZE = 102400; // 100 KB in bytes
@@ -22,7 +30,6 @@ const REQUESTS_WATERFALL_BACKGROUND_TICKS_SPACING_MIN = 10; // px
 const REQUESTS_WATERFALL_BACKGROUND_TICKS_COLOR_RGB = [128, 136, 144];
 const REQUESTS_WATERFALL_BACKGROUND_TICKS_OPACITY_MIN = 32; // byte
 const REQUESTS_WATERFALL_BACKGROUND_TICKS_OPACITY_ADD = 32; // byte
-const DEFAULT_HTTP_VERSION = "HTTP/1.1";
 const REQUEST_TIME_DECIMALS = 2;
 const HEADERS_SIZE_DECIMALS = 3;
 const CONTENT_SIZE_DECIMALS = 2;
@@ -62,10 +69,12 @@ const GENERIC_VARIABLES_VIEW_SETTINGS = {
 const NETWORK_ANALYSIS_PIE_CHART_DIAMETER = 200; // px
 const FREETEXT_FILTER_SEARCH_DELAY = 200; // ms
 
+const {DeferredTask} = Cu.import("resource://gre/modules/DeferredTask.jsm", {});
+
 /**
  * Object defining the network monitor view components.
  */
-let NetMonitorView = {
+var NetMonitorView = {
   /**
    * Initializes the network monitor view.
    */
@@ -82,6 +91,7 @@ let NetMonitorView = {
    * Destroys the network monitor view.
    */
   destroy: function() {
+    this._isDestroyed = true;
     this.Toolbar.destroy();
     this.RequestsMenu.destroy();
     this.NetworkDetails.destroy();
@@ -362,7 +372,6 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
 
     this.allowFocusOnRightClick = true;
     this.maintainSelectionVisible = true;
-    this.widget.autoscrollWithAppendedItems = true;
 
     this.widget.addEventListener("select", this._onSelect, false);
     this.widget.addEventListener("swap", this._onSwap, false);
@@ -381,6 +390,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
     this._onContextToggleRawHeadersCommand = this.toggleRawHeaders.bind(this);
     this._onContextPerfCommand = () => NetMonitorView.toggleFrontendMode();
     this._onReloadCommand = () => NetMonitorView.reloadPage();
+    this._flushRequestsTask = new DeferredTask(this._flushRequests, REQUESTS_REFRESH_RATE);
 
     this.sendCustomRequestEvent = this.sendCustomRequest.bind(this);
     this.closeCustomRequestEvent = this.closeCustomRequest.bind(this);
@@ -457,7 +467,10 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
     $("#requests-menu-clear-button").removeEventListener("click", this.reqeustsMenuClearEvent, false);
     this.freetextFilterBox.removeEventListener("input", this.requestsFreetextFilterEvent, false);
     this.freetextFilterBox.removeEventListener("command", this.requestsFreetextFilterEvent, false);
+
     this.userInputTimer.cancel();
+    this._flushRequestsTask.disarm();
+
     $("#network-request-popup").removeEventListener("popupshowing", this._onContextShowing, false);
     $("#request-menu-context-newtab").removeEventListener("command", this._onContextNewTabCommand, false);
     $("#request-menu-context-copy-url").removeEventListener("command", this._onContextCopyUrlCommand, false);
@@ -483,6 +496,8 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
    */
   reset: function() {
     this.empty();
+    this._addQueue = [];
+    this._updateQueue = [];
     this._firstRequestStartedMillis = -1;
     this._lastRequestEndedMillis = -1;
   },
@@ -490,7 +505,18 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
   /**
    * Specifies if this view may be updated lazily.
    */
-  lazyUpdate: true,
+  _lazyUpdate: true,
+
+  get lazyUpdate() {
+    return this._lazyUpdate;
+  },
+
+  set lazyUpdate(value) {
+    this._lazyUpdate = value;
+    if (!value) {
+      this._flushRequests();
+    }
+  },
 
   /**
    * Adds a network request to this container.
@@ -510,47 +536,14 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
    *        Indicates if the result came from the browser cache
    */
   addRequest: function(aId, aStartedDateTime, aMethod, aUrl, aIsXHR, aFromCache) {
-    // Convert the received date/time string to a unix timestamp.
-    let unixTime = Date.parse(aStartedDateTime);
+    this._addQueue.push([aId, aStartedDateTime, aMethod, aUrl, aIsXHR, aFromCache]);
 
-    // Create the element node for the network request item.
-    let menuView = this._createMenuView(aMethod, aUrl);
-
-    // Remember the first and last event boundaries.
-    this._registerFirstRequestStart(unixTime);
-    this._registerLastRequestEnd(unixTime);
-
-    // Append a network request item to this container.
-    let requestItem = this.push([menuView, aId], {
-      attachment: {
-        startedDeltaMillis: unixTime - this._firstRequestStartedMillis,
-        startedMillis: unixTime,
-        method: aMethod,
-        url: aUrl,
-        isXHR: aIsXHR,
-        fromCache: aFromCache
-      }
-    });
-
-    // Create a tooltip for the newly appended network request item.
-    let requestTooltip = requestItem.attachment.tooltip = new Tooltip(document, {
-      closeOnEvents: [{
-        emitter: $("#requests-menu-contents"),
-        event: "scroll",
-        useCapture: true
-      }]
-    });
-
-    $("#details-pane-toggle").disabled = false;
-    $("#requests-menu-empty-notice").hidden = true;
-
-    this.refreshSummary();
-    this.refreshZebra();
-    this.refreshTooltip(requestItem);
-
-    if (aId == this._preferredItemId) {
-      this.selectedItem = requestItem;
+    // Lazy updating is disabled in some tests.
+    if (!this.lazyUpdate) {
+      return void this._flushRequests();
     }
+
+    this._flushRequestsTask.arm();
   },
 
   /**
@@ -567,7 +560,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
    */
   copyUrl: function() {
     let selected = this.selectedItem.attachment;
-    clipboardHelper.copyString(selected.url, document);
+    clipboardHelper.copyString(selected.url);
   },
 
   /**
@@ -575,9 +568,9 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
    */
   copyUrlParams: function() {
     let selected = this.selectedItem.attachment;
-    let params = nsIURL(selected.url).query.split("&");
+    let params = NetworkHelper.nsIURL(selected.url).query.split("&");
     let string = params.join(Services.appinfo.OS === "WINNT" ? "\r\n" : "\n");
-    clipboardHelper.copyString(string, document);
+    clipboardHelper.copyString(string);
   },
 
   /**
@@ -635,7 +628,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
 
     let params = [];
     formDataSections.forEach(section => {
-      let paramsArray = parseQueryString(section);
+      let paramsArray = NetworkHelper.parseQueryString(section);
       if (paramsArray) {
         params = [...params, ...paramsArray];
       }
@@ -654,7 +647,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
       }
     }
 
-    clipboardHelper.copyString(string, document);
+    clipboardHelper.copyString(string);
   }),
 
   /**
@@ -685,8 +678,36 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
         data.postDataText = yield gNetwork.getString(postData);
       }
 
-      clipboardHelper.copyString(Curl.generateCommand(data), document);
+      clipboardHelper.copyString(Curl.generateCommand(data));
     });
+  },
+
+  /**
+   * Copy HAR from the network panel content to the clipboard.
+   */
+  copyAllAsHar: function() {
+    let options = this.getDefaultHarOptions();
+    return HarExporter.copy(options);
+  },
+
+  /**
+   * Save HAR from the network panel content to a file.
+   */
+  saveAllAsHar: function() {
+    let options = this.getDefaultHarOptions();
+    return HarExporter.save(options);
+  },
+
+  getDefaultHarOptions: function() {
+    let form = NetMonitorController._target.form;
+    let title = form.title || form.url;
+
+    return {
+      getString: gNetwork.getString.bind(gNetwork),
+      view: this,
+      items: NetMonitorView.RequestsMenu.items,
+      title: title
+    };
   },
 
   /**
@@ -698,7 +719,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
     if (Services.appinfo.OS !== "WINNT") {
       rawHeaders = rawHeaders.replace(/\r/g, "");
     }
-    clipboardHelper.copyString(rawHeaders, document);
+    clipboardHelper.copyString(rawHeaders);
   },
 
   /**
@@ -710,7 +731,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
     if (Services.appinfo.OS !== "WINNT") {
       rawHeaders = rawHeaders.replace(/\r/g, "");
     }
-    clipboardHelper.copyString(rawHeaders, document);
+    clipboardHelper.copyString(rawHeaders);
   },
 
   /**
@@ -722,7 +743,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
 
     gNetwork.getString(text).then(aString => {
       let data = "data:" + mimeType + ";" + encoding + "," + aString;
-      clipboardHelper.copyString(data, document);
+      clipboardHelper.copyString(data);
     });
   },
 
@@ -734,7 +755,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
     let text = selected.responseContent.content.text;
 
     gNetwork.getString(text).then(aString => {
-      clipboardHelper.copyString(aString, document);
+      clipboardHelper.copyString(aString);
     });
   },
 
@@ -952,19 +973,21 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
   /**
    * Returns an object with all the filter predicates as [key: function] pairs.
    */
-  get _allFilterPredicates() ({
-    all: () => true,
-    html: this.isHtml,
-    css: this.isCss,
-    js: this.isJs,
-    xhr: this.isXHR,
-    fonts: this.isFont,
-    images: this.isImage,
-    media: this.isMedia,
-    flash: this.isFlash,
-    other: this.isOther,
-    freetext: this.isFreetextMatch
-  }),
+  get _allFilterPredicates() {
+    return {
+      all: () => true,
+      html: this.isHtml,
+      css: this.isCss,
+      js: this.isJs,
+      xhr: this.isXHR,
+      fonts: this.isFont,
+      images: this.isImage,
+      media: this.isMedia,
+      flash: this.isFlash,
+      other: this.isOther,
+      freetext: this.isFreetextMatch
+    };
+  },
 
   /**
    * Sorts all network requests in this container by a specified detail.
@@ -1078,52 +1101,74 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
    * @return boolean
    *         True if the item should be visible, false otherwise.
    */
-  isHtml: function({ attachment: { mimeType } })
-    mimeType && mimeType.includes("/html"),
+  isHtml: function({ attachment: { mimeType } }) {
+    return mimeType && mimeType.includes("/html");
+  },
 
-  isCss: function({ attachment: { mimeType } })
-    mimeType && mimeType.includes("/css"),
+  isCss: function({ attachment: { mimeType } }) {
+    return mimeType && mimeType.includes("/css");
+  },
 
-  isJs: function({ attachment: { mimeType } })
-    mimeType && (
+  isJs: function({ attachment: { mimeType } }) {
+    return mimeType && (
       mimeType.includes("/ecmascript") ||
       mimeType.includes("/javascript") ||
-      mimeType.includes("/x-javascript")),
+      mimeType.includes("/x-javascript"));
+  },
 
-  isXHR: function({ attachment: { isXHR } })
-    isXHR,
+  isXHR: function({ attachment: { isXHR } }) {
+    return isXHR;
+  },
 
-  isFont: function({ attachment: { url, mimeType } }) // Fonts are a mess.
-    (mimeType && (
-      mimeType.includes("font/") ||
-      mimeType.includes("/font"))) ||
-    url.includes(".eot") ||
-    url.includes(".ttf") ||
-    url.includes(".otf") ||
-    url.includes(".woff"),
+  isFont: function({ attachment: { url, mimeType } }) {
+    // Fonts are a mess.
+    return (mimeType && (
+        mimeType.includes("font/") ||
+        mimeType.includes("/font"))) ||
+      url.includes(".eot") ||
+      url.includes(".ttf") ||
+      url.includes(".otf") ||
+      url.includes(".woff");
+  },
 
-  isImage: function({ attachment: { mimeType } })
-    mimeType && mimeType.includes("image/"),
+  isImage: function({ attachment: { mimeType } }) {
+    return mimeType && mimeType.includes("image/");
+  },
 
-  isMedia: function({ attachment: { mimeType } }) // Not including images.
-    mimeType && (
+  isMedia: function({ attachment: { mimeType } }) {
+    // Not including images.
+    return mimeType && (
       mimeType.includes("audio/") ||
       mimeType.includes("video/") ||
-      mimeType.includes("model/")),
+      mimeType.includes("model/"));
+  },
 
-  isFlash: function({ attachment: { url, mimeType } }) // Flash is a mess.
-    (mimeType && (
-      mimeType.includes("/x-flv") ||
-      mimeType.includes("/x-shockwave-flash"))) ||
-    url.includes(".swf") ||
-    url.includes(".flv"),
+  isFlash: function({ attachment: { url, mimeType } }) {
+    // Flash is a mess.
+    return (mimeType && (
+        mimeType.includes("/x-flv") ||
+        mimeType.includes("/x-shockwave-flash"))) ||
+      url.includes(".swf") ||
+      url.includes(".flv");
+  },
 
-  isOther: function(e)
-    !this.isHtml(e) && !this.isCss(e) && !this.isJs(e) && !this.isXHR(e) &&
-    !this.isFont(e) && !this.isImage(e) && !this.isMedia(e) && !this.isFlash(e),
+  isOther: function(e) {
+    return !this.isHtml(e) &&
+           !this.isCss(e) &&
+           !this.isJs(e) &&
+           !this.isXHR(e) &&
+           !this.isFont(e) &&
+           !this.isImage(e) &&
+           !this.isMedia(e) &&
+           !this.isFlash(e);
+  },
 
-  isFreetextMatch: function({ attachment: { url } }, text) //no text is a positive match
-    !text || url.includes(text),
+  isFreetextMatch: function({ attachment: { url } }, text) {
+    let lowerCaseUrl = url.toLowerCase();
+    let lowerCaseText = text.toLowerCase();
+    //no text is a positive match
+    return !text || lowerCaseUrl.includes(lowerCaseText);
+  },
 
   /**
    * Predicates used when sorting items.
@@ -1137,18 +1182,21 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
    *          0 to leave aFirst and aSecond unchanged with respect to each other
    *          1 to sort aSecond to a lower index than aFirst
    */
-  _byTiming: function({ attachment: first }, { attachment: second })
-    first.startedMillis > second.startedMillis,
+  _byTiming: function({ attachment: first }, { attachment: second }) {
+    return first.startedMillis > second.startedMillis;
+  },
 
-  _byStatus: function({ attachment: first }, { attachment: second })
-    first.status == second.status
-      ? first.startedMillis > second.startedMillis
-      : first.status > second.status,
+  _byStatus: function({ attachment: first }, { attachment: second }) {
+    return first.status == second.status
+           ? first.startedMillis > second.startedMillis
+           : first.status > second.status;
+  },
 
-  _byMethod: function({ attachment: first }, { attachment: second })
-    first.method == second.method
-      ? first.startedMillis > second.startedMillis
-      : first.method > second.method,
+  _byMethod: function({ attachment: first }, { attachment: second }) {
+    return first.method == second.method
+           ? first.startedMillis > second.startedMillis
+           : first.method > second.method;
+  },
 
   _byFile: function({ attachment: first }, { attachment: second }) {
     let firstUrl = this._getUriNameWithQuery(first.url).toLowerCase();
@@ -1260,30 +1308,80 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
    * @param object aData
    *        An object containing several { key: value } tuples of network info.
    *        Supported keys are "httpVersion", "status", "statusText" etc.
+   * @param function aCallback
+   *        A function to call once the request has been updated in the view.
    */
-  updateRequest: function(aId, aData) {
-    // Prevent interference from zombie updates received after target closed.
-    if (NetMonitorView._isDestroyed) {
-      return;
-    }
-    this._updateQueue.push([aId, aData]);
+  updateRequest: function(aId, aData, aCallback) {
+    this._updateQueue.push([aId, aData, aCallback]);
 
     // Lazy updating is disabled in some tests.
     if (!this.lazyUpdate) {
       return void this._flushRequests();
     }
-    // Allow requests to settle down first.
-    setNamedTimeout(
-      "update-requests", REQUESTS_REFRESH_RATE, () => this._flushRequests());
+
+    this._flushRequestsTask.arm();
   },
 
   /**
    * Starts adding all queued additional information about network requests.
    */
   _flushRequests: function() {
+    // Prevent displaying any updates received after the target closed.
+    if (NetMonitorView._isDestroyed) {
+      return;
+    }
+
+    let widget = NetMonitorView.RequestsMenu.widget;
+    let isScrolledToBottom = widget.isScrolledToBottom();
+
+    for (let [id, startedDateTime, method, url, isXHR, fromCache] of this._addQueue) {
+      // Convert the received date/time string to a unix timestamp.
+      let unixTime = Date.parse(startedDateTime);
+
+      // Create the element node for the network request item.
+      let menuView = this._createMenuView(method, url);
+
+      // Remember the first and last event boundaries.
+      this._registerFirstRequestStart(unixTime);
+      this._registerLastRequestEnd(unixTime);
+
+      // Append a network request item to this container.
+      let requestItem = this.push([menuView, id], {
+        attachment: {
+          startedDeltaMillis: unixTime - this._firstRequestStartedMillis,
+          startedMillis: unixTime,
+          method: method,
+          url: url,
+          isXHR: isXHR,
+          fromCache: fromCache
+        }
+      });
+
+      // Create a tooltip for the newly appended network request item.
+      let requestTooltip = requestItem.attachment.tooltip = new Tooltip(document, {
+        closeOnEvents: [{
+          emitter: $("#requests-menu-contents"),
+          event: "scroll",
+          useCapture: true
+        }]
+      });
+
+      this.refreshTooltip(requestItem);
+
+      if (id == this._preferredItemId) {
+        this.selectedItem = requestItem;
+      }
+
+      window.emit(EVENTS.REQUEST_ADDED, id);
+    }
+
+    if (isScrolledToBottom && this._addQueue.length) {
+      widget.scrollToBottom();
+    }
+
     // For each queued additional information packet, get the corresponding
     // request item in the view and update it based on the specified data.
-    for (let [id, data] of this._updateQueue) {
+    for (let [id, data, callback] of this._updateQueue) {
       let requestItem = this.getItemByValue(id);
       if (!requestItem) {
         // Packet corresponds to a dead request item, target navigated.
@@ -1416,6 +1514,10 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
         }
       }
       refreshNetworkDetailsPaneIfNecessary(requestItem);
+
+      if (callback) {
+        callback();
+      }
     }
 
     /**
@@ -1436,6 +1538,10 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
 
     // We're done flushing all the requests, clear the update queue.
     this._updateQueue = [];
+    this._addQueue = [];
+
+    $("#details-pane-toggle").disabled = !this.itemCount;
+    $("#requests-menu-empty-notice").hidden = !!this.itemCount;
 
     // Make sure all the requests are sorted and filtered.
     // Freshly added requests may not yet contain all the information required
@@ -1500,12 +1606,13 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
       case "url": {
         let uri;
         try {
-          uri = nsIURL(aValue);
+          uri = NetworkHelper.nsIURL(aValue);
         } catch(e) {
           break; // User input may not make a well-formed url yet.
         }
         let nameWithQuery = this._getUriNameWithQuery(uri);
         let hostPort = this._getUriHostPort(uri);
+        let host = this._getUriHost(uri);
         let unicodeUrl = NetworkHelper.convertToUnicode(unescape(uri.spec));
 
         let file = $(".requests-menu-file", target);
@@ -1515,6 +1622,27 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
         let domain = $(".requests-menu-domain", target);
         domain.setAttribute("value", hostPort);
         domain.setAttribute("tooltiptext", hostPort);
+
+        // Mark local hosts specially, where "local" is  as defined in the W3C
+        // spec for secure contexts.
+        // http://www.w3.org/TR/powerful-features/
+        //
+        //  * If the name falls under 'localhost'
+        //  * If the name is an IPv4 address within 127.0.0.0/8
+        //  * If the name is an IPv6 address within ::1/128
+        //
+        // IPv6 parsing is a little sloppy; it assumes that the address has
+        // been validated before it gets here.
+        let icon = $(".requests-security-state-icon", target);
+        icon.classList.remove("security-state-local");
+        if (host.match(/(.+\.)?localhost$/) ||
+            host.match(/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}/) ||
+            host.match(/\[[0:]+1\]/)) {
+          let tooltip = L10N.getStr("netmonitor.security.state.secure");
+          icon.classList.add("security-state-local");
+          icon.setAttribute("tooltiptext", tooltip);
+        }
+
         break;
       }
       case "remoteAddress":
@@ -1524,12 +1652,17 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
         domain.setAttribute("tooltiptext", tooltip);
         break;
       case "securityState": {
-        let tooltip = L10N.getStr("netmonitor.security.state." + aValue);
         let icon = $(".requests-security-state-icon", target);
+        this.attachSecurityIconClickListener(aItem);
+
+        // Security icon for local hosts is set in the "url" branch
+        if (icon.classList.contains("security-state-local")) {
+          break;
+        }
+
+        let tooltip = L10N.getStr("netmonitor.security.state." + aValue);
         icon.classList.add("security-state-" + aValue);
         icon.setAttribute("tooltiptext", tooltip);
-
-        this.attachSecurityIconClickListener(aItem);
         break;
       }
       case "status": {
@@ -1561,7 +1694,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
           text = L10N.getStr("networkMenu.sizeUnavailable");
         }
         else if(aValue === "cached") {
-          text = aValue;
+          text = L10N.getStr("networkMenu.sizeCached");
           node.classList.add('theme-comment');
         }
         else {
@@ -1584,9 +1717,9 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
       }
       case "responseContent": {
         let { mimeType } = aItem.attachment;
-        let { text, encoding } = aValue.content;
 
         if (mimeType.includes("image/")) {
+          let { text, encoding } = aValue.content;
           let responseBody = yield gNetwork.getString(text);
           let node = $(".requests-menu-icon", aItem.target);
           node.src = "data:" + mimeType + ";" + encoding + "," + responseBody;
@@ -1923,7 +2056,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
     copyUrlElement.hidden = !selectedItem;
 
     let copyUrlParamsElement = $("#request-menu-context-copy-url-params");
-    copyUrlParamsElement.hidden = !selectedItem || !nsIURL(selectedItem.attachment.url).query;
+    copyUrlParamsElement.hidden = !selectedItem || !NetworkHelper.nsIURL(selectedItem.attachment.url).query;
 
     let copyPostDataElement = $("#request-menu-context-copy-post-data");
     copyPostDataElement.hidden = !selectedItem || !selectedItem.attachment.requestPostData;
@@ -1950,6 +2083,12 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
 
     let separators = $all(".request-menu-context-separator");
     Array.forEach(separators, separator => separator.hidden = !selectedItem);
+
+    let copyAsHar = $("#request-menu-context-copy-all-as-har");
+    copyAsHar.hidden = !NetMonitorView.RequestsMenu.items.length;
+
+    let saveAsHar = $("#request-menu-context-save-all-as-har");
+    saveAsHar.hidden = !NetMonitorView.RequestsMenu.items.length;
 
     let newTabElement = $("#request-menu-context-newtab");
     newTabElement.hidden = !selectedItem;
@@ -1989,7 +2128,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
    */
   _getUriNameWithQuery: function(aUrl) {
     if (!(aUrl instanceof Ci.nsIURL)) {
-      aUrl = nsIURL(aUrl);
+      aUrl = NetworkHelper.nsIURL(aUrl);
     }
     let name = NetworkHelper.convertToUnicode(unescape(aUrl.fileName || aUrl.filePath || "/"));
     let query = NetworkHelper.convertToUnicode(unescape(aUrl.query));
@@ -1997,9 +2136,12 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
   },
   _getUriHostPort: function(aUrl) {
     if (!(aUrl instanceof Ci.nsIURL)) {
-      aUrl = nsIURL(aUrl);
+      aUrl = NetworkHelper.nsIURL(aUrl);
     }
     return NetworkHelper.convertToUnicode(unescape(aUrl.hostPort));
+  },
+  _getUriHost: function(aUrl) {
+    return this._getUriHostPort(aUrl).replace(/:\d+$/, "");
   },
 
   /**
@@ -2086,6 +2228,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
   _firstRequestStartedMillis: -1,
   _lastRequestEndedMillis: -1,
   _updateQueue: [],
+  _addQueue: [],
   _updateTimeout: null,
   _resizeTimeout: null,
   _activeFilters: ["all"],
@@ -2233,7 +2376,7 @@ CustomRequestView.prototype = {
    *        The URL to extract query string from.
    */
   updateCustomQuery: function(aUrl) {
-    let paramsArray = parseQueryString(nsIURL(aUrl).query);
+    let paramsArray = NetworkHelper.parseQueryString(NetworkHelper.nsIURL(aUrl).query);
     if (!paramsArray) {
       $("#custom-query").hidden = true;
       return;
@@ -2253,7 +2396,7 @@ CustomRequestView.prototype = {
     let queryString = writeQueryString(params);
 
     let url = $("#custom-url-value").value;
-    let oldQuery = nsIURL(url).query;
+    let oldQuery = NetworkHelper.nsIURL(url).query;
     let path = url.replace(oldQuery, queryString);
 
     $("#custom-url-value").value = path;
@@ -2362,14 +2505,14 @@ NetworkDetailsView.prototype = {
     let isHtml = RequestsMenuView.prototype.isHtml({ attachment: aData });
 
     // Show the "Preview" tabpanel only for plain HTML responses.
-    this.sidebar.toggleTab(isHtml, "preview-tab", "preview-tabpanel");
+    this.sidebar.toggleTab(isHtml, "preview-tab");
 
     // Show the "Security" tab only for requests that
     //   1) are https (state != insecure)
     //   2) come from a target that provides security information.
     let hasSecurityInfo = aData.securityState &&
                           aData.securityState !== "insecure";
-    this.sidebar.toggleTab(hasSecurityInfo, "security-tab", "security-tabpanel");
+    this.sidebar.toggleTab(hasSecurityInfo, "security-tab");
 
     // Switch to the "Headers" tabpanel if the "Preview" previously selected
     // and this is not an HTML response or "Security" was selected but this
@@ -2524,7 +2667,7 @@ NetworkDetailsView.prototype = {
       $("#headers-summary-status").setAttribute("hidden", "true");
     }
 
-    if (aData.httpVersion && aData.httpVersion != DEFAULT_HTTP_VERSION) {
+    if (aData.httpVersion) {
       $("#headers-summary-version-value").setAttribute("value", aData.httpVersion);
       $("#headers-summary-version").removeAttribute("hidden");
     } else {
@@ -2666,7 +2809,7 @@ NetworkDetailsView.prototype = {
    *        The request's url.
    */
   _setRequestGetParams: function(aUrl) {
-    let query = nsIURL(aUrl).query;
+    let query = NetworkHelper.nsIURL(aUrl).query;
     if (query) {
       this._addParams(this._paramsQueryString, query);
     }
@@ -2737,7 +2880,7 @@ NetworkDetailsView.prototype = {
    *        A query string of params (e.g. "?foo=bar&baz=42").
    */
   _addParams: function(aName, aQueryString) {
-    let paramsArray = parseQueryString(aQueryString);
+    let paramsArray = NetworkHelper.parseQueryString(aQueryString);
     if (!paramsArray) {
       return;
     }
@@ -2831,7 +2974,7 @@ NetworkDetailsView.prototype = {
 
       // Immediately display additional information about the image:
       // file name, mime type and encoding.
-      $("#response-content-image-name-value").setAttribute("value", nsIURL(aUrl).fileName);
+      $("#response-content-image-name-value").setAttribute("value", NetworkHelper.nsIURL(aUrl).fileName);
       $("#response-content-image-mime-value").setAttribute("value", mimeType);
       $("#response-content-image-encoding-value").setAttribute("value", encoding);
 
@@ -3260,46 +3403,8 @@ PerformanceStatisticsView.prototype = {
 /**
  * DOM query helper.
  */
-function $(aSelector, aTarget = document) aTarget.querySelector(aSelector);
-function $all(aSelector, aTarget = document) aTarget.querySelectorAll(aSelector);
-
-/**
- * Helper for getting an nsIURL instance out of a string.
- */
-function nsIURL(aUrl, aStore = nsIURL.store) {
-  if (aStore.has(aUrl)) {
-    return aStore.get(aUrl);
-  }
-  let uri = Services.io.newURI(aUrl, null, null).QueryInterface(Ci.nsIURL);
-  aStore.set(aUrl, uri);
-  return uri;
-}
-nsIURL.store = new Map();
-
-/**
- * Parse a url's query string into its components
- *
- * @param string aQueryString
- *        The query part of a url
- * @return array
- *         Array of query params {name, value}
- */
-function parseQueryString(aQueryString) {
-  // Make sure there's at least one param available.
-  // Be careful here, params don't necessarily need to have values, so
-  // no need to verify the existence of a "=".
-  if (!aQueryString) {
-    return;
-  }
-  // Turn the params string into an array containing { name: value } tuples.
-  let paramsArray = aQueryString.replace(/^[?&]/, "").split("&").map(e => {
-    let param = e.split("=");
-    return {
-      name: param[0] ? NetworkHelper.convertToUnicode(unescape(param[0])) : "",
-      value: param[1] ? NetworkHelper.convertToUnicode(unescape(param[1])) : ""
-    }});
-  return paramsArray;
-}
+var $ = (aSelector, aTarget = document) => aTarget.querySelector(aSelector);
+var $all = (aSelector, aTarget = document) => aTarget.querySelectorAll(aSelector);
 
 /**
  * Parse text representation of multiple HTTP headers.
@@ -3356,7 +3461,7 @@ function parseRequestText(aText, aName, aDivider) {
  *         List of headers in text format
  */
 function writeHeaderText(aHeaders) {
-  return [(name + ": " + value) for ({name, value} of aHeaders)].join("\n");
+  return aHeaders.map(({name, value}) => name + ": " + value).join("\n");
 }
 
 /**
@@ -3368,7 +3473,7 @@ function writeHeaderText(aHeaders) {
  *         List of query params in text format
  */
 function writeQueryText(aParams) {
-  return [(name + "=" + value) for ({name, value} of aParams)].join("\n");
+  return aParams.map(({name, value}) => name + "=" + value).join("\n");
 }
 
 /**
@@ -3380,7 +3485,7 @@ function writeQueryText(aParams) {
  *         Query string that can be appended to a url.
  */
 function writeQueryString(aParams) {
-  return [(name + "=" + value) for ({name, value} of aParams)].join("&");
+  return aParams.map(({name, value}) => name + "=" + value).join("&");
 }
 
 /**

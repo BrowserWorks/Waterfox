@@ -4,6 +4,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "GMPContentChild.h"
+#include "GMPChild.h"
+#include "GMPAudioDecoderChild.h"
+#include "GMPDecryptorChild.h"
+#include "GMPVideoDecoderChild.h"
+#include "GMPVideoEncoderChild.h"
 
 namespace mozilla {
 namespace gmp {
@@ -93,13 +98,15 @@ GMPContentChild::DeallocPGMPVideoDecoderChild(PGMPVideoDecoderChild* aActor)
 PGMPVideoEncoderChild*
 GMPContentChild::AllocPGMPVideoEncoderChild()
 {
-  return new GMPVideoEncoderChild(this);
+  GMPVideoEncoderChild* actor = new GMPVideoEncoderChild(this);
+  actor->AddRef();
+  return actor;
 }
 
 bool
 GMPContentChild::DeallocPGMPVideoEncoderChild(PGMPVideoEncoderChild* aActor)
 {
-  delete aActor;
+  static_cast<GMPVideoEncoderChild*>(aActor)->Release();
   return true;
 }
 
@@ -111,11 +118,6 @@ GMPContentChild::RecvPGMPDecryptorConstructor(PGMPDecryptorChild* aActor)
 
   void* session = nullptr;
   GMPErr err = mGMPChild->GetAPI(GMP_API_DECRYPTOR, host, &session);
-  if (err != GMPNoErr && !session) {
-    // XXX to remove in bug 1147692
-    err = mGMPChild->GetAPI(GMP_API_DECRYPTOR_COMPAT, host, &session);
-  }
-
   if (err != GMPNoErr || !session) {
     return false;
   }

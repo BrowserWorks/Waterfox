@@ -81,12 +81,16 @@ nsHTMLEditorEventListener::MouseDown(nsIDOMMouseEvent* aMouseEvent)
   // Contenteditable should disregard mousedowns outside it.
   // IsAcceptableInputEvent() checks it for a mouse event.
   if (!htmlEditor->IsAcceptableInputEvent(aMouseEvent)) {
-    return NS_OK;
+    // If it's not acceptable mousedown event (including when mousedown event
+    // is fired outside of the active editing host), we need to commit
+    // composition because it will be change the selection to the clicked
+    // point.  Then, we won't be able to commit the composition.
+    return nsEditorEventListener::MouseDown(aMouseEvent);
   }
 
   // Detect only "context menu" click
   // XXX This should be easier to do!
-  // But eDOMEvents_contextmenu and NS_CONTEXTMENU is not exposed in any event
+  // But eDOMEvents_contextmenu and eContextMenu is not exposed in any event
   // interface :-(
   int16_t buttonNumber;
   nsresult rv = aMouseEvent->GetButton(&buttonNumber);
@@ -183,7 +187,7 @@ nsHTMLEditorEventListener::MouseDown(nsIDOMMouseEvent* aMouseEvent)
     // the event; so we need to check resizing state ourselves
     htmlEditor->CheckSelectionStateForAnonymousButtons(selection);
 
-    // Prevent bubbling if we changed selection or 
+    // Prevent bubbling if we changed selection or
     //   for all context clicks
     if (element || isContextClick) {
       aMouseEvent->PreventDefault();

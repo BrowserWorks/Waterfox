@@ -34,11 +34,9 @@
 using namespace mozilla;
 using mozilla::dom::NodeInfo;
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo* gNodeInfoManagerLeakPRLog;
-#endif
 
 PLHashNumber
 nsNodeInfoManager::GetNodeInfoInnerHashValue(const void *key)
@@ -117,14 +115,12 @@ nsNodeInfoManager::nsNodeInfoManager()
 {
   nsLayoutStatics::AddRef();
 
-#ifdef PR_LOGGING
   if (!gNodeInfoManagerLeakPRLog)
     gNodeInfoManagerLeakPRLog = PR_NewLogModule("NodeInfoManagerLeak");
 
   if (gNodeInfoManagerLeakPRLog)
-    PR_LOG(gNodeInfoManagerLeakPRLog, PR_LOG_DEBUG,
+    MOZ_LOG(gNodeInfoManagerLeakPRLog, LogLevel::Debug,
            ("NODEINFOMANAGER %p created", this));
-#endif
 
   mNodeInfoHash = PL_NewHashTable(32, GetNodeInfoInnerHashValue,
                                   NodeInfoInnerKeyCompare,
@@ -142,11 +138,9 @@ nsNodeInfoManager::~nsNodeInfoManager()
 
   mBindingManager = nullptr;
 
-#ifdef PR_LOGGING
   if (gNodeInfoManagerLeakPRLog)
-    PR_LOG(gNodeInfoManagerLeakPRLog, PR_LOG_DEBUG,
+    MOZ_LOG(gNodeInfoManagerLeakPRLog, LogLevel::Debug,
            ("NODEINFOMANAGER %p destroyed", this));
-#endif
 
   nsLayoutStatics::Release();
 }
@@ -201,11 +195,9 @@ nsNodeInfoManager::Init(nsIDocument *aDocument)
 
   mDocument = aDocument;
 
-#ifdef PR_LOGGING
   if (gNodeInfoManagerLeakPRLog)
-    PR_LOG(gNodeInfoManagerLeakPRLog, PR_LOG_DEBUG,
+    MOZ_LOG(gNodeInfoManagerLeakPRLog, LogLevel::Debug,
            ("NODEINFOMANAGER %p Init document=%p", this, aDocument));
-#endif
 
   return NS_OK;
 }

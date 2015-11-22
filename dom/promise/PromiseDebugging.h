@@ -9,7 +9,7 @@
 
 #include "js/TypeDecls.h"
 #include "nsTArray.h"
-#include "nsRefPtr.h"
+#include "mozilla/nsRefPtr.h"
 
 namespace mozilla {
 
@@ -18,7 +18,7 @@ class ErrorResult;
 namespace dom {
 namespace workers {
 class WorkerPrivate;
-}
+} // namespace workers
 
 class Promise;
 struct PromiseDebuggingStateHolder;

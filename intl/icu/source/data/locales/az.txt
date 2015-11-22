@@ -1,0 +1,1190 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2015 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/az.xml
+// *
+// ***************************************************************************
+az{
+    AuxExemplarCharacters{"[w]"}
+    Ellipsis{
+        final{"{0}…"}
+        initial{"…{0}"}
+        medial{"{0}…{1}"}
+        word-final{"{0} …"}
+        word-initial{"… {0}"}
+        word-medial{"{0} … {1}"}
+    }
+    ExemplarCharacters{"[a b c ç d e ə f g ğ h x ı i İ j k q l m n o ö p r s ş t u ü v y z]"}
+    ExemplarCharactersIndex{"[A B C Ç D E Ə F G Ğ H X I İ J K Q L M N O Ö P R S Ş T U Ü V Y Z W]"}
+    ExemplarCharactersPunctuation{
+        "[\\- ‐ – — , ; \\: ! ? . … ' ‘ ’ \u0022 “ ” ( ) \\[ \\] § @ * / \\& # † ‡ ′ "
+        "″]"
+    }
+    MoreInformation{"?"}
+    NumberElements{
+        default{"latn"}
+        latn{
+            miscPatterns{
+                atLeast{"{0}+"}
+                range{"{0}–{1}"}
+            }
+            patterns{
+                accountingFormat{"¤ #,##0.00"}
+                currencyFormat{"¤ #,##0.00"}
+                decimalFormat{"#,##0.###"}
+                percentFormat{"#,##0%"}
+                scientificFormat{"#E0"}
+            }
+            patternsLong{
+                decimalFormat{
+                    1000{
+                        one{"0K"}
+                        other{"0K"}
+                    }
+                    10000{
+                        one{"00K"}
+                        other{"00K"}
+                    }
+                    100000{
+                        one{"000K"}
+                        other{"000K"}
+                    }
+                    1000000{
+                        one{"0M"}
+                        other{"0M"}
+                    }
+                    10000000{
+                        one{"00M"}
+                        other{"00M"}
+                    }
+                    100000000{
+                        one{"000M"}
+                        other{"000M"}
+                    }
+                    1000000000{
+                        one{"0G"}
+                        other{"0G"}
+                    }
+                    10000000000{
+                        one{"00G"}
+                        other{"00G"}
+                    }
+                    100000000000{
+                        one{"000G"}
+                        other{"000G"}
+                    }
+                    1000000000000{
+                        one{"0T"}
+                        other{"0T"}
+                    }
+                    10000000000000{
+                        one{"00T"}
+                        other{"00T"}
+                    }
+                    100000000000000{
+                        one{"000T"}
+                        other{"000T"}
+                    }
+                }
+            }
+            patternsShort{
+                decimalFormat{
+                    1000{
+                        one{"0K"}
+                        other{"0K"}
+                    }
+                    10000{
+                        one{"00K"}
+                        other{"00K"}
+                    }
+                    100000{
+                        one{"000K"}
+                        other{"000K"}
+                    }
+                    1000000{
+                        one{"0M"}
+                        other{"0M"}
+                    }
+                    10000000{
+                        one{"00M"}
+                        other{"00M"}
+                    }
+                    100000000{
+                        one{"000M"}
+                        other{"000M"}
+                    }
+                    1000000000{
+                        one{"0G"}
+                        other{"0G"}
+                    }
+                    10000000000{
+                        one{"00G"}
+                        other{"00G"}
+                    }
+                    100000000000{
+                        one{"000G"}
+                        other{"000G"}
+                    }
+                    1000000000000{
+                        one{"0T"}
+                        other{"0T"}
+                    }
+                    10000000000000{
+                        one{"00T"}
+                        other{"00T"}
+                    }
+                    100000000000000{
+                        one{"000T"}
+                        other{"000T"}
+                    }
+                }
+            }
+            symbols{
+                decimal{","}
+                exponential{"E"}
+                group{"."}
+                infinity{"∞"}
+                list{";"}
+                minusSign{"-"}
+                nan{"NaN"}
+                perMille{"‰"}
+                percentSign{"%"}
+                plusSign{"+"}
+                superscriptingExponent{"×"}
+                timeSeparator{":"}
+            }
+        }
+        minimumGroupingDigits{"1"}
+        native{"latn"}
+    }
+    Version{"2.1.12.94"}
+    calendar{
+        generic{
+            DateTimePatterns{
+                "HH:mm:ss zzzz",
+                "HH:mm:ss z",
+                "HH:mm:ss",
+                "HH:mm",
+                "G d MMMM y, EEEE",
+                "G d MMMM, y",
+                "G d MMM y",
+                "GGGGG dd.MM.y",
+                "{1} {0}",
+                "{1} {0}",
+                "{1} {0}",
+                "{1} {0}",
+                "{1} {0}",
+            }
+            availableFormats{
+                Ed{"d, E"}
+                Gy{"G y"}
+                GyMMM{"G MMM y"}
+                GyMMMEd{"G d MMM y, E"}
+                GyMMMd{"G d MMM y"}
+                M{"L"}
+                MEd{"dd.MM, E"}
+                MMM{"LLL"}
+                MMMEd{"d MMM, E"}
+                MMMd{"d MMM"}
+                Md{"dd.MM"}
+                d{"d"}
+                y{"G y"}
+                yyyy{"G y"}
+                yyyyM{"GGGGG MM y"}
+                yyyyMEd{"GGGGG dd.MM.y, E"}
+                yyyyMMM{"G MMM y"}
+                yyyyMMMEd{"G d MMM y, E"}
+                yyyyMMMd{"G d MMM y"}
+                yyyyMd{"GGGGG dd.MM.y"}
+                yyyyQQQ{"G y QQQ"}
+                yyyyQQQQ{"G y QQQQ"}
+            }
+            intervalFormats{
+                M{
+                    M{"MM–MM"}
+                }
+                MEd{
+                    M{"dd.MM, E – dd.MM, E"}
+                    d{"dd.MM, E – dd.MM, E"}
+                }
+                MMM{
+                    M{"LLL–LLL"}
+                }
+                MMMEd{
+                    M{"MMM d, E – MMM d, E"}
+                    d{"MMM d, E – MMM d, E"}
+                }
+                MMMd{
+                    M{"MMM d – MMM d"}
+                    d{"MMM d–d"}
+                }
+                Md{
+                    M{"dd.MM – dd.MM"}
+                    d{"dd.MM – dd.MM"}
+                }
+                d{
+                    d{"d–d"}
+                }
+                fallback{"{0} – {1}"}
+                y{
+                    y{"G y–y"}
+                }
+                yM{
+                    M{"GGGGG MM/y – MM/y"}
+                    y{"GGGGG MM/y – MM/y"}
+                }
+                yMEd{
+                    M{"GGGGG dd/MM/y , E – dd/MM/y, E"}
+                    d{"GGGGG dd/MM/y , E – dd/MM/y, E"}
+                    y{"GGGGG dd/MM/y , E – dd/MM/y, E"}
+                }
+                yMMM{
+                    M{"G MMM–MMM y"}
+                    y{"G MMM y – MMM y"}
+                }
+                yMMMEd{
+                    M{"G d MMM y, E – d MMM, E"}
+                    d{"G d MMM y, E – d MMM, E"}
+                    y{"G d MMM y, E – d MMM y, E"}
+                }
+                yMMMM{
+                    M{"G MMMM y –MMMM"}
+                    y{"G MMMM y – MMMM y"}
+                }
+                yMMMd{
+                    M{"G d MMM y – d MMM"}
+                    d{"G d–d MMM y"}
+                    y{"G d MMM y – d MMM y"}
+                }
+                yMd{
+                    M{"GGGGG dd/MM/y – dd/MM/y"}
+                    d{"GGGGG dd/MM/y – dd/MM/y"}
+                    y{"GGGGG dd/MM/y – dd/MM/y"}
+                }
+            }
+        }
+        gregorian{
+            AmPmMarkers{
+                "AM",
+                "PM",
+            }
+            AmPmMarkersNarrow{
+                "a",
+                "p",
+            }
+            DateTimePatterns{
+                "HH:mm:ss zzzz",
+                "HH:mm:ss z",
+                "HH:mm:ss",
+                "HH:mm",
+                "d MMMM y, EEEE",
+                "d MMMM y",
+                "d MMM y",
+                "dd.MM.yy",
+                "{1} {0}",
+                "{1} {0}",
+                "{1} {0}",
+                "{1} {0}",
+                "{1} {0}",
+            }
+            NoonMarker{"günorta"}
+            NoonMarkerNarrow{"g"}
+            appendItems{
+                Timezone{"{0} {1}"}
+            }
+            availableFormats{
+                E{"ccc"}
+                EHm{"E HH:mm"}
+                EHms{"E HH:mm:ss"}
+                Ed{"d E"}
+                Ehm{"E h:mm a"}
+                Ehms{"E h:mm:ss a"}
+                Gy{"G y"}
+                GyMMM{"G MMM y"}
+                GyMMMEd{"G d MMM y, E"}
+                GyMMMd{"G d MMM y"}
+                H{"HH"}
+                Hm{"HH:mm"}
+                Hms{"HH:mm:ss"}
+                M{"L"}
+                MEd{"dd.MM, E"}
+                MMM{"LLL"}
+                MMMEd{"d MMM, E"}
+                MMMd{"d MMM"}
+                Md{"dd.MM"}
+                d{"d"}
+                h{"h a"}
+                hm{"h:mm a"}
+                hms{"h:mm:ss a"}
+                ms{"mm:ss"}
+                y{"y"}
+                yM{"MM.y"}
+                yMEd{"dd.MM.y, E"}
+                yMMM{"MMM y"}
+                yMMMEd{"d MMM y, E"}
+                yMMMd{"d MMM y"}
+                yMd{"dd.MM.y"}
+                yQQQ{"y QQQ"}
+                yQQQQ{"y QQQQ"}
+            }
+            dayNames{
+                format{
+                    abbreviated{
+                        "B.",
+                        "B.E.",
+                        "Ç.A.",
+                        "Ç.",
+                        "C.A.",
+                        "C.",
+                        "Ş.",
+                    }
+                    narrow{
+                        "7",
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                    }
+                    short{
+                        "B.",
+                        "B.E.",
+                        "Ç.A.",
+                        "Ç.",
+                        "C.A.",
+                        "C.",
+                        "Ş.",
+                    }
+                    wide{
+                        "bazar",
+                        "bazar ertəsi",
+                        "çərşənbə axşamı",
+                        "çərşənbə",
+                        "cümə axşamı",
+                        "cümə",
+                        "şənbə",
+                    }
+                }
+                stand-alone{
+                    abbreviated{
+                        "B.",
+                        "B.E.",
+                        "Ç.A.",
+                        "Ç.",
+                        "C.A.",
+                        "C.",
+                        "Ş.",
+                    }
+                    narrow{
+                        "7",
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                    }
+                    short{
+                        "B.",
+                        "B.E.",
+                        "Ç.A.",
+                        "Ç.",
+                        "C.A.",
+                        "C.",
+                        "Ş.",
+                    }
+                    wide{
+                        "bazar",
+                        "bazar ertəsi",
+                        "çərşənbə axşamı",
+                        "çərşənbə",
+                        "cümə axşamı",
+                        "cümə",
+                        "şənbə",
+                    }
+                }
+            }
+            eras{
+                abbreviated{
+                    "e.ə.",
+                    "b.e.",
+                }
+                abbreviated%variant{
+                    "ü.e.ö.",
+                    "ü.e.",
+                }
+                wide{
+                    "eramızdan əvvəl",
+                    "bizim eramızın",
+                }
+                wide%variant{
+                    "ümumi eradan öncə",
+                    "ümumi eranın",
+                }
+            }
+            intervalFormats{
+                H{
+                    H{"HH–HH"}
+                }
+                Hm{
+                    H{"HH:mm–HH:mm"}
+                    m{"HH:mm–HH:mm"}
+                }
+                Hmv{
+                    H{"HH:mm–HH:mm v"}
+                    m{"HH:mm–HH:mm v"}
+                }
+                Hv{
+                    H{"HH–HH v"}
+                }
+                M{
+                    M{"MM–MM"}
+                }
+                MEd{
+                    M{"dd.MM, E – dd.MM, E"}
+                    d{"dd.MM, E – dd.MM, E"}
+                }
+                MMM{
+                    M{"LLL–LLL"}
+                }
+                MMMEd{
+                    M{"d MMM, E – d MMM, E"}
+                    d{"d MMM, E – d MMM, E"}
+                }
+                MMMd{
+                    M{"d MMM – d MMM"}
+                    d{"d–d MMM"}
+                }
+                Md{
+                    M{"dd.MM – dd.MM"}
+                    d{"dd.MM – dd.MM"}
+                }
+                d{
+                    d{"d–d"}
+                }
+                fallback{"{0} – {1}"}
+                h{
+                    a{"h a – h a"}
+                    h{"h–h a"}
+                }
+                hm{
+                    a{"h:mm a – h:mm a"}
+                    h{"h:mm–h:mm a"}
+                    m{"h:mm–h:mm a"}
+                }
+                hmv{
+                    a{"h:mm a – h:mm a v"}
+                    h{"h:mm–h:mm a v"}
+                    m{"h:mm–h:mm a v"}
+                }
+                hv{
+                    a{"h a – h a v"}
+                    h{"h–h a v"}
+                }
+                y{
+                    y{"y–y"}
+                }
+                yM{
+                    M{"MM.y – MM.y"}
+                    y{"MM.y – MM.y"}
+                }
+                yMEd{
+                    M{"dd.MM.y, E – dd.MM.y, E"}
+                    d{"dd.MM.y, E – dd.MM.y, E"}
+                    y{"dd.MM.y, E – dd.MM.y, E"}
+                }
+                yMMM{
+                    M{"MMM–MMM y"}
+                    y{"MMM y – MMM y"}
+                }
+                yMMMEd{
+                    M{"d MMM y, E – d MMM, E"}
+                    d{"d MMM y, E – d MMM, E"}
+                    y{"d MMM y, E – d MMM y, E"}
+                }
+                yMMMM{
+                    M{"MMMM–MMMM y"}
+                    y{"MMMM y – MMMM y"}
+                }
+                yMMMd{
+                    M{"d MMM y – d MMM"}
+                    d{"y MMM d–d"}
+                    y{"d MMM y – d MMM y"}
+                }
+                yMd{
+                    M{"dd.MM.y – dd.MM.y"}
+                    d{"dd.MM.y – dd.MM.y"}
+                    y{"dd.MM.y – dd.MM.y"}
+                }
+            }
+            monthNames{
+                format{
+                    abbreviated{
+                        "yan",
+                        "fev",
+                        "mar",
+                        "apr",
+                        "may",
+                        "iyn",
+                        "iyl",
+                        "avq",
+                        "sen",
+                        "okt",
+                        "noy",
+                        "dek",
+                    }
+                    narrow{
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9",
+                        "10",
+                        "11",
+                        "12",
+                    }
+                    wide{
+                        "yanvar",
+                        "fevral",
+                        "mart",
+                        "aprel",
+                        "may",
+                        "iyun",
+                        "iyul",
+                        "avqust",
+                        "sentyabr",
+                        "oktyabr",
+                        "noyabr",
+                        "dekabr",
+                    }
+                }
+                stand-alone{
+                    abbreviated{
+                        "yan",
+                        "fev",
+                        "mar",
+                        "apr",
+                        "may",
+                        "iyn",
+                        "iyl",
+                        "avq",
+                        "sen",
+                        "okt",
+                        "noy",
+                        "dek",
+                    }
+                    narrow{
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9",
+                        "10",
+                        "11",
+                        "12",
+                    }
+                    wide{
+                        "Yanvar",
+                        "Fevral",
+                        "Mart",
+                        "Aprel",
+                        "May",
+                        "İyun",
+                        "İyul",
+                        "Avqust",
+                        "Sentyabr",
+                        "Oktyabr",
+                        "Noyabr",
+                        "Dekabr",
+                    }
+                }
+            }
+            quarters{
+                format{
+                    abbreviated{
+                        "1-ci kv.",
+                        "2-ci kv.",
+                        "3-cü kv.",
+                        "4-cü kv.",
+                    }
+                    narrow{
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                    }
+                    wide{
+                        "1-ci kvartal",
+                        "2-ci kvartal",
+                        "3-cü kvartal",
+                        "4-cü kvartal",
+                    }
+                }
+                stand-alone{
+                    abbreviated{
+                        "1-ci kv.",
+                        "2-ci kv.",
+                        "3-cü kv.",
+                        "4-cü kv.",
+                    }
+                    narrow{
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                    }
+                    wide{
+                        "1-ci kvartal",
+                        "2-ci kvartal",
+                        "3-cü kvartal",
+                        "4-cü kvartal",
+                    }
+                }
+            }
+        }
+    }
+    delimiters{
+        alternateQuotationEnd{"’"}
+        alternateQuotationStart{"‘"}
+        quotationEnd{"”"}
+        quotationStart{"“"}
+    }
+    fields{
+        day{
+            dn{"Gün"}
+            relative{
+                "-1"{"dünən"}
+                "0"{"bu gün"}
+                "1"{"sabah"}
+            }
+            relativeTime{
+                future{
+                    one{"{0} gün ərzində"}
+                    other{"{0} gün ərzində"}
+                }
+                past{
+                    one{"{0} gün öncə"}
+                    other{"{0} gün öncə"}
+                }
+            }
+        }
+        day-narrow{
+            dn{"Gün"}
+            relativeTime{
+                future{
+                    one{"{0} gün ərzində"}
+                    other{"{0} gün ərzində"}
+                }
+                past{
+                    one{"{0} gün öncə"}
+                    other{"{0} gün öncə"}
+                }
+            }
+        }
+        day-short{
+            dn{"Gün"}
+            relativeTime{
+                future{
+                    one{"{0} gün ərzində"}
+                    other{"{0} gün ərzində"}
+                }
+                past{
+                    one{"{0} gün öncə"}
+                    other{"{0} gün öncə"}
+                }
+            }
+        }
+        dayperiod{
+            dn{"AM/PM"}
+        }
+        era{
+            dn{"Era"}
+        }
+        fri{
+            relative{
+                "-1"{"keçən cümə"}
+                "0"{"bu cümə"}
+                "1"{"gələn cümə"}
+            }
+        }
+        fri-narrow{
+            relative{
+                "-1"{"keçən cümə"}
+                "0"{"bu cümə"}
+                "1"{"gələn cümə"}
+            }
+        }
+        fri-short{
+            relative{
+                "-1"{"keçən cümə"}
+                "0"{"bu cümə"}
+                "1"{"gələn cümə"}
+            }
+        }
+        hour{
+            dn{"Saat"}
+            relativeTime{
+                future{
+                    one{"{0} saat ərzində"}
+                    other{"{0} saat ərzində"}
+                }
+                past{
+                    one{"{0} saat öncə"}
+                    other{"{0} saat öncə"}
+                }
+            }
+        }
+        hour-narrow{
+            dn{"saat"}
+            relativeTime{
+                future{
+                    one{"{0} saat ərzində"}
+                    other{"{0} saat ərzində"}
+                }
+                past{
+                    one{"{0} saat öncə"}
+                    other{"{0} saat öncə"}
+                }
+            }
+        }
+        hour-short{
+            dn{"saat"}
+            relativeTime{
+                future{
+                    one{"{0} saat ərzində"}
+                    other{"{0} saat ərzində"}
+                }
+                past{
+                    one{"{0} saat öncə"}
+                    other{"{0} saat öncə"}
+                }
+            }
+        }
+        minute{
+            dn{"Dəqiqə"}
+            relativeTime{
+                future{
+                    one{"{0} dəqiqə ərzində"}
+                    other{"{0} dəqiqə ərzində"}
+                }
+                past{
+                    one{"{0} dəqiqə öncə"}
+                    other{"{0} dəqiqə öncə"}
+                }
+            }
+        }
+        minute-narrow{
+            dn{"dəq."}
+            relativeTime{
+                future{
+                    one{"{0} dəqiqə ərzində"}
+                    other{"{0} dəqiqə ərzində"}
+                }
+                past{
+                    one{"{0} dəqiqə öncə"}
+                    other{"{0} dəqiqə öncə"}
+                }
+            }
+        }
+        minute-short{
+            dn{"dəq."}
+            relativeTime{
+                future{
+                    one{"{0} dəqiqə ərzində"}
+                    other{"{0} dəqiqə ərzində"}
+                }
+                past{
+                    one{"{0} dəqiqə öncə"}
+                    other{"{0} dəqiqə öncə"}
+                }
+            }
+        }
+        mon{
+            relative{
+                "-1"{"keçən bazar ertəsi"}
+                "0"{"bu bazar ertəsi"}
+                "1"{"gələn bazar ertəsi"}
+            }
+        }
+        mon-narrow{
+            relative{
+                "-1"{"keçən bazar ertəsi"}
+                "0"{"bu bazar ertəsi"}
+                "1"{"gələn bazar ertəsi"}
+            }
+        }
+        mon-short{
+            relative{
+                "-1"{"keçən bazar ertəsi"}
+                "0"{"bu bazar ertəsi"}
+                "1"{"gələn bazar ertəsi"}
+            }
+        }
+        month{
+            dn{"Ay"}
+            relative{
+                "-1"{"keçən ay"}
+                "0"{"bu ay"}
+                "1"{"gələn ay"}
+            }
+            relativeTime{
+                future{
+                    one{"{0} ay ərzində"}
+                    other{"{0} ay ərzində"}
+                }
+                past{
+                    one{"{0} ay öncə"}
+                    other{"{0} ay öncə"}
+                }
+            }
+        }
+        month-narrow{
+            dn{"ay"}
+            relativeTime{
+                future{
+                    one{"{0} ay ərzində"}
+                    other{"{0} ay ərzində"}
+                }
+                past{
+                    one{"{0} ay öncə"}
+                    other{"{0} ay öncə"}
+                }
+            }
+        }
+        month-short{
+            dn{"ay"}
+            relativeTime{
+                future{
+                    one{"{0} ay ərzində"}
+                    other{"{0} ay ərzində"}
+                }
+                past{
+                    one{"{0} ay öncə"}
+                    other{"{0} ay öncə"}
+                }
+            }
+        }
+        quarter{
+            dn{"Rüb"}
+            relativeTime{
+                future{
+                    one{"{0} rüb ərzində"}
+                    other{"{0} rüb ərzində"}
+                }
+                past{
+                    one{"{0} rüb öncə"}
+                    other{"{0} rüb öncə"}
+                }
+            }
+        }
+        quarter-narrow{
+            dn{"rüb"}
+            relativeTime{
+                future{
+                    one{"{0} rüb ərzində"}
+                    other{"{0} rüb ərzində"}
+                }
+                past{
+                    one{"{0} rüb öncə"}
+                    other{"{0} rüb öncə"}
+                }
+            }
+        }
+        quarter-short{
+            dn{"rüb"}
+            relativeTime{
+                future{
+                    one{"{0} rüb ərzində"}
+                    other{"{0} rüb ərzində"}
+                }
+                past{
+                    one{"{0} rüb öncə"}
+                    other{"{0} rüb öncə"}
+                }
+            }
+        }
+        sat{
+            relative{
+                "-1"{"keçən şənbə"}
+                "0"{"bu şənbə"}
+                "1"{"gələn şənbə"}
+            }
+        }
+        sat-narrow{
+            relative{
+                "-1"{"keçən şənbə"}
+                "0"{"bu şənbə"}
+                "1"{"gələn şənbə"}
+            }
+        }
+        sat-short{
+            relative{
+                "-1"{"keçən şənbə"}
+                "0"{"bu şənbə"}
+                "1"{"gələn şənbə"}
+            }
+        }
+        second{
+            dn{"Saniyə"}
+            relative{
+                "0"{"indi"}
+            }
+            relativeTime{
+                future{
+                    one{"{0} saniyə ərzində"}
+                    other{"{0} saniyə ərzində"}
+                }
+                past{
+                    one{"{0} saniyə öncə"}
+                    other{"{0} saniyə öncə"}
+                }
+            }
+        }
+        second-narrow{
+            dn{"san."}
+            relativeTime{
+                future{
+                    one{"{0} saniyə ərzində"}
+                    other{"{0} saniyə ərzində"}
+                }
+                past{
+                    one{"{0} saniyə öncə"}
+                    other{"{0} saniyə öncə"}
+                }
+            }
+        }
+        second-short{
+            dn{"san."}
+            relativeTime{
+                future{
+                    one{"{0} saniyə ərzində"}
+                    other{"{0} saniyə ərzində"}
+                }
+                past{
+                    one{"{0} saniyə öncə"}
+                    other{"{0} saniyə öncə"}
+                }
+            }
+        }
+        sun{
+            relative{
+                "-1"{"keçən bazar"}
+                "0"{"bu bazar"}
+                "1"{"gələn bazar"}
+            }
+        }
+        sun-narrow{
+            relative{
+                "-1"{"keçən bazar"}
+                "0"{"bu bazar"}
+                "1"{"gələn bazar"}
+            }
+        }
+        sun-short{
+            relative{
+                "-1"{"keçən bazar"}
+                "0"{"bu bazar"}
+                "1"{"gələn bazar"}
+            }
+        }
+        thu{
+            relative{
+                "-1"{"keçən cümə axşamı"}
+                "0"{"bu cümə axşamı"}
+                "1"{"gələn cümə axşamı"}
+            }
+        }
+        thu-narrow{
+            relative{
+                "-1"{"keçən cümə axşamı"}
+                "0"{"bu cümə axşamı"}
+                "1"{"gələn cümə axşamı"}
+            }
+        }
+        thu-short{
+            relative{
+                "-1"{"keçən cümə axşamı"}
+                "0"{"bu cümə axşamı"}
+                "1"{"gələn cümə axşamı"}
+            }
+        }
+        tue{
+            relative{
+                "-1"{"keçən çərşənbə axşamı"}
+                "0"{"bu çərşənbə axşamı"}
+                "1"{"gələn çərşənbə axşamı"}
+            }
+        }
+        tue-narrow{
+            relative{
+                "-1"{"keçən çərşənbə axşamı"}
+                "0"{"bu çərşənbə axşamı"}
+                "1"{"gələn çərşənbə axşamı"}
+            }
+        }
+        tue-short{
+            relative{
+                "-1"{"keçən çərşənbə axşamı"}
+                "0"{"bu çərşənbə axşamı"}
+                "1"{"gələn çərşənbə axşamı"}
+            }
+        }
+        wed{
+            relative{
+                "-1"{"keçən çərşənbə"}
+                "0"{"bu çərşənbə"}
+                "1"{"gələn çərşənbə"}
+            }
+        }
+        wed-narrow{
+            relative{
+                "-1"{"keçən çərşənbə"}
+                "0"{"bu çərşənbə"}
+                "1"{"gələn çərşənbə"}
+            }
+        }
+        wed-short{
+            relative{
+                "-1"{"keçən çərşənbə"}
+                "0"{"bu çərşənbə"}
+                "1"{"gələn çərşənbə"}
+            }
+        }
+        week{
+            dn{"Həftə"}
+            relative{
+                "-1"{"keçən həftə"}
+                "0"{"bu həftə"}
+                "1"{"gələn həftə"}
+            }
+            relativeTime{
+                future{
+                    one{"{0} həftə ərzində"}
+                    other{"{0} həftə ərzində"}
+                }
+                past{
+                    one{"{0} həftə öncə"}
+                    other{"{0} həftə öncə"}
+                }
+            }
+        }
+        week-narrow{
+            dn{"həftə"}
+            relativeTime{
+                future{
+                    one{"{0} həftə ərzində"}
+                    other{"{0} həftə ərzində"}
+                }
+                past{
+                    one{"{0} həftə öncə"}
+                    other{"{0} həftə öncə"}
+                }
+            }
+        }
+        week-short{
+            dn{"həftə"}
+            relativeTime{
+                future{
+                    one{"{0} həftə ərzində"}
+                    other{"{0} həftə ərzində"}
+                }
+                past{
+                    one{"{0} həftə öncə"}
+                    other{"{0} həftə öncə"}
+                }
+            }
+        }
+        weekday{
+            dn{"Həftənin Günü"}
+        }
+        year{
+            dn{"İl"}
+            relative{
+                "-1"{"keçən il"}
+                "0"{"bu il"}
+                "1"{"gələn il"}
+            }
+            relativeTime{
+                future{
+                    one{"{0} il ərzində"}
+                    other{"{0} il ərzində"}
+                }
+                past{
+                    one{"{0} il öncə"}
+                    other{"{0} il öncə"}
+                }
+            }
+        }
+        year-narrow{
+            dn{"il"}
+            relativeTime{
+                future{
+                    one{"{0} il ərzində"}
+                    other{"{0} il ərzində"}
+                }
+                past{
+                    one{"{0} il öncə"}
+                    other{"{0} il öncə"}
+                }
+            }
+        }
+        year-short{
+            dn{"il"}
+            relativeTime{
+                future{
+                    one{"{0} il ərzində"}
+                    other{"{0} il ərzində"}
+                }
+                past{
+                    one{"{0} il öncə"}
+                    other{"{0} il öncə"}
+                }
+            }
+        }
+        zone{
+            dn{"Saat Qurşağı"}
+        }
+    }
+    listPattern{
+        standard{
+            2{"{0} və {1}"}
+            end{"{0} və {1}"}
+            middle{"{0}, {1}"}
+            start{"{0}, {1}"}
+        }
+        unit{
+            2{"{0} və {1}"}
+            end{"{0} və {1}"}
+            middle{"{0}, {1}"}
+            start{"{0}, {1}"}
+        }
+        unit-narrow{
+            2{"{0}, {1}"}
+            end{"{0}, {1}"}
+            middle{"{0}, {1}"}
+            start{"{0}, {1}"}
+        }
+        unit-short{
+            2{"{0}, {1}"}
+            end{"{0}, {1}"}
+            middle{"{0}, {1}"}
+            start{"{0}, {1}"}
+        }
+    }
+    measurementSystemNames{
+        UK{"Britaniya"}
+        US{"ABŞ"}
+        metric{"Metrik"}
+    }
+}

@@ -20,7 +20,7 @@
 #include "nsIContentPolicy.h"
 #include "nsContentUtils.h"
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #include "nsString.h"
 #include "nsDirectoryServiceUtils.h"
@@ -28,6 +28,9 @@
 #include "imgITools.h"
 #include "nsStringStream.h"
 #include "nsNetUtil.h"
+#include "nsIOutputStream.h"
+#include "nsNetCID.h"
+#include "prtime.h"
 #ifdef MOZ_PLACES
 #include "mozIAsyncFavicons.h"
 #endif
@@ -40,10 +43,11 @@
 #include "nsIThread.h"
 #include "MainThreadUtils.h"
 #include "gfxColor.h"
+#include "nsLookAndFeel.h"
 
 #ifdef NS_ENABLE_TSF
 #include <textstor.h>
-#include "nsTextStore.h"
+#include "TSFTextStore.h"
 #endif // #ifdef NS_ENABLE_TSF
 
 PRLogModuleInfo* gWindowsLog = nullptr;
@@ -483,7 +487,7 @@ WinUtils::LogW(const wchar_t *fmt, ...)
       printf("%s\n", utf8);
       NS_ASSERTION(gWindowsLog, "Called WinUtils Log() but Widget "
                                    "log module doesn't exist!");
-      PR_LOG(gWindowsLog, PR_LOG_ALWAYS, (utf8));
+      MOZ_LOG(gWindowsLog, LogLevel::Error, (utf8));
     }
     delete[] utf8;
   }
@@ -517,7 +521,7 @@ WinUtils::Log(const char *fmt, ...)
 
   NS_ASSERTION(gWindowsLog, "Called WinUtils Log() but Widget "
                                "log module doesn't exist!");
-  PR_LOG(gWindowsLog, PR_LOG_ALWAYS, (buffer));
+  MOZ_LOG(gWindowsLog, LogLevel::Error, (buffer));
   delete[] buffer;
 }
 
@@ -568,7 +572,7 @@ WinUtils::PeekMessage(LPMSG aMsg, HWND aWnd, UINT aFirstMessage,
                       UINT aLastMessage, UINT aOption)
 {
 #ifdef NS_ENABLE_TSF
-  ITfMessagePump* msgPump = nsTextStore::GetMessagePump();
+  ITfMessagePump* msgPump = TSFTextStore::GetMessagePump();
   if (msgPump) {
     BOOL ret = FALSE;
     HRESULT hr = msgPump->PeekMessageW(aMsg, aWnd, aFirstMessage, aLastMessage,
@@ -586,7 +590,7 @@ WinUtils::GetMessage(LPMSG aMsg, HWND aWnd, UINT aFirstMessage,
                      UINT aLastMessage)
 {
 #ifdef NS_ENABLE_TSF
-  ITfMessagePump* msgPump = nsTextStore::GetMessagePump();
+  ITfMessagePump* msgPump = TSFTextStore::GetMessagePump();
   if (msgPump) {
     BOOL ret = FALSE;
     HRESULT hr = msgPump->GetMessageW(aMsg, aWnd, aFirstMessage, aLastMessage,
@@ -666,7 +670,8 @@ WinUtils::GetRegistryKey(HKEY aRoot,
     ::RegQueryValueExW(key, aValueName, nullptr, &type, (BYTE*) aBuffer,
                        &aBufferLength);
   ::RegCloseKey(key);
-  if (result != ERROR_SUCCESS || type != REG_SZ) {
+  if (result != ERROR_SUCCESS ||
+      (type != REG_SZ && type != REG_EXPAND_SZ)) {
     return false;
   }
   if (aBuffer) {
@@ -937,13 +942,12 @@ WinUtils::GetMouseInputSource()
 
 /* static */
 bool
-WinUtils::GetIsMouseFromTouch(uint32_t aEventType)
+WinUtils::GetIsMouseFromTouch(EventMessage aEventMessage)
 {
-  const int MOZ_T_I_SIGNATURE = TABLET_INK_TOUCH | TABLET_INK_SIGNATURE;
-  const int MOZ_T_I_CHECK_TCH = TABLET_INK_TOUCH | TABLET_INK_CHECK;
-  return ((aEventType == NS_MOUSE_MOVE ||
-           aEventType == NS_MOUSE_BUTTON_DOWN ||
-           aEventType == NS_MOUSE_BUTTON_UP) &&
+  const uint32_t MOZ_T_I_SIGNATURE = TABLET_INK_TOUCH | TABLET_INK_SIGNATURE;
+  const uint32_t MOZ_T_I_CHECK_TCH = TABLET_INK_TOUCH | TABLET_INK_CHECK;
+  return ((aEventMessage == eMouseMove || aEventMessage == eMouseDown ||
+           aEventMessage == eMouseUp) &&
          (GetMessageExtraInfo() & MOZ_T_I_SIGNATURE) == MOZ_T_I_CHECK_TCH);
 }
 
@@ -1103,7 +1107,7 @@ nsresult AsyncFaviconDataReady::OnFaviconDataNotAvailable(void)
   rv = NS_NewChannel(getter_AddRefs(channel),
                      mozIconURI,
                      nsContentUtils::GetSystemPrincipal(),
-                     nsILoadInfo::SEC_NORMAL,
+                     nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                      nsIContentPolicy::TYPE_IMAGE);
 
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1113,8 +1117,7 @@ nsresult AsyncFaviconDataReady::OnFaviconDataNotAvailable(void)
   rv = NS_NewDownloader(getter_AddRefs(listener), downloadObserver, icoFile);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  channel->AsyncOpen(listener, nullptr);
-  return NS_OK;
+  return channel->AsyncOpen2(listener);
 }
 
 NS_IMETHODIMP
@@ -1670,6 +1673,26 @@ bool
 WinUtils::ShouldHideScrollbars()
 {
   return false;
+}
+
+// This is in use here and in dom/events/TouchEvent.cpp
+/* static */
+uint32_t
+WinUtils::IsTouchDeviceSupportPresent()
+{
+  int32_t touchCapabilities = ::GetSystemMetrics(SM_DIGITIZER);
+  return (touchCapabilities & NID_READY) &&
+         (touchCapabilities & (NID_EXTERNAL_TOUCH | NID_INTEGRATED_TOUCH));
+}
+
+/* static */
+uint32_t
+WinUtils::GetMaxTouchPoints()
+{
+  if (IsWin7OrLater() && IsTouchDeviceSupportPresent()) {
+    return GetSystemMetrics(SM_MAXIMUMTOUCHES);
+  }
+  return 0;
 }
 
 } // namespace widget

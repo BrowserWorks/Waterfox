@@ -27,6 +27,7 @@ XPIDL_SOURCES += [
     'nsICacheInfoChannel.idl',
     'nsICachingChannel.idl',
     'nsICancelable.idl',
+    'nsICaptivePortalService.idl',
     'nsIChannel.idl',
     'nsIChannelEventSink.idl',
     'nsIChildChannel.idl',
@@ -67,6 +68,8 @@ XPIDL_SOURCES += [
     'nsINSSErrorsService.idl',
     'nsINullChannel.idl',
     'nsIPACGenerator.idl',
+    'nsIPackagedAppService.idl',
+    'nsIPackagedAppVerifier.idl',
     'nsIParentChannel.idl',
     'nsIParentRedirectingChannel.idl',
     'nsIPermission.idl',
@@ -84,21 +87,22 @@ XPIDL_SOURCES += [
     'nsIProxyInfo.idl',
     'nsIRandomGenerator.idl',
     'nsIRedirectChannelRegistrar.idl',
-    'nsIRedirectHistory.idl',
     'nsIRedirectResultListener.idl',
     'nsIRequest.idl',
     'nsIRequestObserver.idl',
     'nsIRequestObserverProxy.idl',
     'nsIResponseHeadProvider.idl',
     'nsIResumableChannel.idl',
+    'nsISchedulingContext.idl',
+    'nsISecCheckWrapChannel.idl',
     'nsISecretDecoderRing.idl',
     'nsISecureBrowserUI.idl',
     'nsISecurityEventSink.idl',
     'nsISecurityInfoProvider.idl',
+    'nsISensitiveInfoHiddenURI.idl',
     'nsISerializationHelper.idl',
     'nsIServerSocket.idl',
     'nsISimpleStreamListener.idl',
-    'nsISiteSecurityService.idl',
     'nsISocketTransport.idl',
     'nsISocketTransportService.idl',
     'nsISpeculativeConnect.idl',
@@ -144,8 +148,10 @@ EXPORTS += [
     'nsASocketHandler.h',
     'nsAsyncRedirectVerifyHelper.h',
     'nsFileStreams.h',
+    'nsInputStreamPump.h',
     'nsMIMEInputStream.h',
     'nsNetUtil.h',
+    'nsNetUtil.inl',
     'nsReadLine.h',
     'nsSerializationHelper.h',
     'nsSimpleNestedURI.h',
@@ -162,6 +168,7 @@ EXPORTS.mozilla += [
 ]
 
 EXPORTS.mozilla.net += [
+    'CaptivePortalService.h',
     'ChannelDiverterChild.h',
     'ChannelDiverterParent.h',
     'Dashboard.h',
@@ -179,8 +186,10 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
 UNIFIED_SOURCES += [
     'ArrayBufferInputStream.cpp',
     'BackgroundFileSaver.cpp',
+    'CaptivePortalService.cpp',
     'ChannelDiverterChild.cpp',
     'ChannelDiverterParent.cpp',
+    'ClosingService.cpp',
     'Dashboard.cpp',
     'EventTokenBucket.cpp',
     'LoadContextInfo.cpp',
@@ -213,6 +222,7 @@ UNIFIED_SOURCES += [
     'nsProtocolProxyService.cpp',
     'nsProxyInfo.cpp',
     'nsRequestObserverProxy.cpp',
+    'nsSecCheckWrapChannel.cpp',
     'nsSerializationHelper.cpp',
     'nsServerSocket.cpp',
     'nsSimpleNestedURI.cpp',
@@ -237,6 +247,7 @@ UNIFIED_SOURCES += [
     'Predictor.cpp',
     'ProxyAutoConfig.cpp',
     'RedirectChannelRegistrar.cpp',
+    'SchedulingContextService.cpp',
     'StreamingProtocolService.cpp',
     'Tickler.cpp',
     'TLSServerSocket.cpp',
@@ -270,8 +281,6 @@ EXTRA_COMPONENTS += [
 EXTRA_JS_MODULES += [
     'NetUtil.jsm',
 ]
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

@@ -18,11 +18,11 @@
            DownloadManager, getFileName, getPDFFileNameFromURL,
            PDFHistory, Preferences, SidebarView, ViewHistory, Stats,
            PDFThumbnailViewer, URL, noContextMenuHandler, SecondaryToolbar,
-           PasswordPrompt, PDFPresentationMode, HandTool, Promise,
-           PDFDocumentProperties, PDFOutlineView, PDFAttachmentView,
-           OverlayManager, PDFFindController, PDFFindBar, getVisibleElements,
-           watchScroll, PDFViewer, PDFRenderingQueue, PresentationModeState,
-           RenderingStates, DEFAULT_SCALE, UNKNOWN_SCALE,
+           PasswordPrompt, PDFPresentationMode, PDFDocumentProperties, HandTool,
+           Promise, PDFLinkService, PDFOutlineView, PDFAttachmentView,
+           OverlayManager, PDFFindController, PDFFindBar, PDFViewer,
+           PDFRenderingQueue, PresentationModeState, parseQueryString,
+           RenderingStates, UNKNOWN_SCALE, DEFAULT_SCALE_VALUE,
            IGNORE_CURRENT_POSITION_ON_ZOOM: true */
 
 'use strict';
@@ -46,7 +46,8 @@ var mozL10n = document.mozL10n || document.webL10n;
 
 
 var CSS_UNITS = 96.0 / 72.0;
-var DEFAULT_SCALE = 'auto';
+var DEFAULT_SCALE_VALUE = 'auto';
+var DEFAULT_SCALE = 1.0;
 var UNKNOWN_SCALE = 0;
 var MAX_AUTO_SCALE = 1.25;
 var SCROLLBAR_PADDING = 40;
@@ -102,6 +103,12 @@ var CustomStyle = (function CustomStyleClosure() {
 
   return CustomStyle;
 })();
+
+var NullCharactersRegExp = /\x00/g;
+
+function removeNullCharacters(str) {
+  return str.replace(NullCharactersRegExp, '');
+}
 
 function getFileName(url) {
   var anchor = url.indexOf('#');
@@ -206,6 +213,21 @@ function watchScroll(viewAreaElement, callback) {
   var rAF = null;
   viewAreaElement.addEventListener('scroll', debounceScroll, true);
   return state;
+}
+
+/**
+ * Helper function to parse query string (e.g. ?param1=value&parm2=...).
+ */
+function parseQueryString(query) {
+  var parts = query.split('&');
+  var params = {};
+  for (var i = 0, ii = parts.length; i < ii; ++i) {
+    var param = parts[i].split('=');
+    var key = param[0].toLowerCase();
+    var value = param.length > 1 ? param[1] : null;
+    params[decodeURIComponent(key)] = decodeURIComponent(value);
+  }
+  return params;
 }
 
 /**
@@ -586,7 +608,6 @@ var Preferences = {
 
 
 
-
 var FirefoxCom = (function FirefoxComClosure() {
   return {
     /**
@@ -714,7 +735,6 @@ Preferences._readFromStorage = function (prefObj) {
  * The way that the view parameters are stored depends on how PDF.js is built,
  * for 'node make <flag>' the following cases exist:
  *  - FIREFOX or MOZCENTRAL - uses sessionStorage.
- *  - B2G                   - uses asyncStorage.
  *  - GENERIC or CHROME     - uses localStorage, if it is available.
  */
 var ViewHistory = (function ViewHistoryClosure() {
@@ -753,7 +773,6 @@ var ViewHistory = (function ViewHistoryClosure() {
       return new Promise(function (resolve) {
         var databaseStr = JSON.stringify(this.database);
 
-
         sessionStorage.setItem('pdfjsHistory', databaseStr);
         resolve();
 
@@ -762,7 +781,6 @@ var ViewHistory = (function ViewHistoryClosure() {
 
     _readFromStorage: function ViewHistory_readFromStorage() {
       return new Promise(function (resolve) {
-
         resolve(sessionStorage.getItem('pdfjsHistory'));
 
       });
@@ -1330,356 +1348,657 @@ var PDFFindController = (function PDFFindControllerClosure() {
 })();
 
 
-var PDFHistory = {
-  initialized: false,
-  initialDestination: null,
-
+/**
+ * Performs navigation functions inside PDF, such as opening specified page,
+ * or destination.
+ * @class
+ * @implements {IPDFLinkService}
+ */
+var PDFLinkService = (function () {
   /**
-   * @param {string} fingerprint
-   * @param {IPDFLinkService} linkService
+   * @constructs PDFLinkService
    */
-  initialize: function pdfHistoryInitialize(fingerprint, linkService) {
-    this.initialized = true;
-    this.reInitialized = false;
-    this.allowHashChange = true;
-    this.historyUnlocked = true;
-    this.isViewerInPresentationMode = false;
+  function PDFLinkService() {
+    this.baseUrl = null;
+    this.pdfDocument = null;
+    this.pdfViewer = null;
+    this.pdfHistory = null;
 
-    this.previousHash = window.location.hash.substring(1);
-    this.currentBookmark = '';
-    this.currentPage = 0;
-    this.updatePreviousBookmark = false;
-    this.previousBookmark = '';
-    this.previousPage = 0;
-    this.nextHashParam = '';
+    this._pagesRefCache = null;
+  }
 
-    this.fingerprint = fingerprint;
-    this.linkService = linkService;
-    this.currentUid = this.uid = 0;
-    this.current = {};
+  PDFLinkService.prototype = {
+    setDocument: function PDFLinkService_setDocument(pdfDocument, baseUrl) {
+      this.baseUrl = baseUrl;
+      this.pdfDocument = pdfDocument;
+      this._pagesRefCache = Object.create(null);
+    },
 
-    var state = window.history.state;
-    if (this._isStateObjectDefined(state)) {
-      // This corresponds to navigating back to the document
-      // from another page in the browser history.
-      if (state.target.dest) {
-        this.initialDestination = state.target.dest;
-      } else {
-        linkService.setHash(state.target.hash);
-      }
-      this.currentUid = state.uid;
-      this.uid = state.uid + 1;
-      this.current = state.target;
-    } else {
-      // This corresponds to the loading of a new document.
-      if (state && state.fingerprint &&
-          this.fingerprint !== state.fingerprint) {
-        // Reinitialize the browsing history when a new document
-        // is opened in the web viewer.
-        this.reInitialized = true;
-      }
-      this._pushOrReplaceState({ fingerprint: this.fingerprint }, true);
-    }
+    setViewer: function PDFLinkService_setViewer(pdfViewer) {
+      this.pdfViewer = pdfViewer;
+    },
 
-    var self = this;
-    window.addEventListener('popstate', function pdfHistoryPopstate(evt) {
-      evt.preventDefault();
-      evt.stopPropagation();
+    setHistory: function PDFLinkService_setHistory(pdfHistory) {
+      this.pdfHistory = pdfHistory;
+    },
 
-      if (!self.historyUnlocked) {
-        return;
-      }
-      if (evt.state) {
-        // Move back/forward in the history.
-        self._goTo(evt.state);
-      } else {
-        // Handle the user modifying the hash of a loaded document.
-        self.previousHash = window.location.hash.substring(1);
+    /**
+     * @returns {number}
+     */
+    get pagesCount() {
+      return this.pdfDocument.numPages;
+    },
 
-        // If the history is empty when the hash changes,
-        // update the previous entry in the browser history.
-        if (self.uid === 0) {
-          var previousParams = (self.previousHash && self.currentBookmark &&
-                                self.previousHash !== self.currentBookmark) ?
-            { hash: self.currentBookmark, page: self.currentPage } :
-            { page: 1 };
-          self.historyUnlocked = false;
-          self.allowHashChange = false;
-          window.history.back();
-          self._pushToHistory(previousParams, false, true);
-          window.history.forward();
-          self.historyUnlocked = true;
+    /**
+     * @returns {number}
+     */
+    get page() {
+      return this.pdfViewer.currentPageNumber;
+    },
+
+    /**
+     * @param {number} value
+     */
+    set page(value) {
+      this.pdfViewer.currentPageNumber = value;
+    },
+
+    /**
+     * @param dest - The PDF destination object.
+     */
+    navigateTo: function PDFLinkService_navigateTo(dest) {
+      var destString = '';
+      var self = this;
+
+      var goToDestination = function(destRef) {
+        // dest array looks like that: <page-ref> </XYZ|FitXXX> <args..>
+        var pageNumber = destRef instanceof Object ?
+          self._pagesRefCache[destRef.num + ' ' + destRef.gen + ' R'] :
+          (destRef + 1);
+        if (pageNumber) {
+          if (pageNumber > self.pagesCount) {
+            pageNumber = self.pagesCount;
+          }
+          self.pdfViewer.scrollPageIntoView(pageNumber, dest);
+
+          if (self.pdfHistory) {
+            // Update the browsing history.
+            self.pdfHistory.push({
+              dest: dest,
+              hash: destString,
+              page: pageNumber
+            });
+          }
+        } else {
+          self.pdfDocument.getPageIndex(destRef).then(function (pageIndex) {
+            var pageNum = pageIndex + 1;
+            var cacheKey = destRef.num + ' ' + destRef.gen + ' R';
+            self._pagesRefCache[cacheKey] = pageNum;
+            goToDestination(destRef);
+          });
         }
-        self._pushToHistory({ hash: self.previousHash }, false, true);
-        self._updatePreviousBookmark();
+      };
+
+      var destinationPromise;
+      if (typeof dest === 'string') {
+        destString = dest;
+        destinationPromise = this.pdfDocument.getDestination(dest);
+      } else {
+        destinationPromise = Promise.resolve(dest);
       }
-    }, false);
+      destinationPromise.then(function(destination) {
+        dest = destination;
+        if (!(destination instanceof Array)) {
+          return; // invalid destination
+        }
+        goToDestination(destination[0]);
+      });
+    },
 
-    function pdfHistoryBeforeUnload() {
-      var previousParams = self._getPreviousParams(null, true);
-      if (previousParams) {
-        var replacePrevious = (!self.current.dest &&
-                               self.current.hash !== self.previousHash);
-        self._pushToHistory(previousParams, false, replacePrevious);
-        self._updatePreviousBookmark();
+    /**
+     * @param dest - The PDF destination object.
+     * @returns {string} The hyperlink to the PDF object.
+     */
+    getDestinationHash: function PDFLinkService_getDestinationHash(dest) {
+      if (typeof dest === 'string') {
+        return this.getAnchorUrl('#' + escape(dest));
       }
-      // Remove the event listener when navigating away from the document,
-      // since 'beforeunload' prevents Firefox from caching the document.
-      window.removeEventListener('beforeunload', pdfHistoryBeforeUnload, false);
+      if (dest instanceof Array) {
+        var destRef = dest[0]; // see navigateTo method for dest format
+        var pageNumber = destRef instanceof Object ?
+          this._pagesRefCache[destRef.num + ' ' + destRef.gen + ' R'] :
+          (destRef + 1);
+        if (pageNumber) {
+          var pdfOpenParams = this.getAnchorUrl('#page=' + pageNumber);
+          var destKind = dest[1];
+          if (typeof destKind === 'object' && 'name' in destKind &&
+              destKind.name === 'XYZ') {
+            var scale = (dest[4] || this.pdfViewer.currentScaleValue);
+            var scaleNumber = parseFloat(scale);
+            if (scaleNumber) {
+              scale = scaleNumber * 100;
+            }
+            pdfOpenParams += '&zoom=' + scale;
+            if (dest[2] || dest[3]) {
+              pdfOpenParams += ',' + (dest[2] || 0) + ',' + (dest[3] || 0);
+            }
+          }
+          return pdfOpenParams;
+        }
+      }
+      return '';
+    },
+
+    /**
+     * Prefix the full url on anchor links to make sure that links are resolved
+     * relative to the current URL instead of the one defined in <base href>.
+     * @param {String} anchor The anchor hash, including the #.
+     * @returns {string} The hyperlink to the PDF object.
+     */
+    getAnchorUrl: function PDFLinkService_getAnchorUrl(anchor) {
+      return (this.baseUrl || '') + anchor;
+    },
+
+    /**
+     * @param {string} hash
+     */
+    setHash: function PDFLinkService_setHash(hash) {
+      if (hash.indexOf('=') >= 0) {
+        var params = parseQueryString(hash);
+        // borrowing syntax from "Parameters for Opening PDF Files"
+        if ('nameddest' in params) {
+          if (this.pdfHistory) {
+            this.pdfHistory.updateNextHashParam(params.nameddest);
+          }
+          this.navigateTo(params.nameddest);
+          return;
+        }
+        var pageNumber, dest;
+        if ('page' in params) {
+          pageNumber = (params.page | 0) || 1;
+        }
+        if ('zoom' in params) {
+          // Build the destination array.
+          var zoomArgs = params.zoom.split(','); // scale,left,top
+          var zoomArg = zoomArgs[0];
+          var zoomArgNumber = parseFloat(zoomArg);
+
+          if (zoomArg.indexOf('Fit') === -1) {
+            // If the zoomArg is a number, it has to get divided by 100. If it's
+            // a string, it should stay as it is.
+            dest = [null, { name: 'XYZ' },
+                    zoomArgs.length > 1 ? (zoomArgs[1] | 0) : null,
+                    zoomArgs.length > 2 ? (zoomArgs[2] | 0) : null,
+                    (zoomArgNumber ? zoomArgNumber / 100 : zoomArg)];
+          } else {
+            if (zoomArg === 'Fit' || zoomArg === 'FitB') {
+              dest = [null, { name: zoomArg }];
+            } else if ((zoomArg === 'FitH' || zoomArg === 'FitBH') ||
+                       (zoomArg === 'FitV' || zoomArg === 'FitBV')) {
+              dest = [null, { name: zoomArg },
+                      zoomArgs.length > 1 ? (zoomArgs[1] | 0) : null];
+            } else if (zoomArg === 'FitR') {
+              if (zoomArgs.length !== 5) {
+                console.error('PDFLinkService_setHash: ' +
+                              'Not enough parameters for \'FitR\'.');
+              } else {
+                dest = [null, { name: zoomArg },
+                        (zoomArgs[1] | 0), (zoomArgs[2] | 0),
+                        (zoomArgs[3] | 0), (zoomArgs[4] | 0)];
+              }
+            } else {
+              console.error('PDFLinkService_setHash: \'' + zoomArg +
+                            '\' is not a valid zoom value.');
+            }
+          }
+        }
+        if (dest) {
+          this.pdfViewer.scrollPageIntoView(pageNumber || this.page, dest);
+        } else if (pageNumber) {
+          this.page = pageNumber; // simple page
+        }
+        if ('pagemode' in params) {
+          var event = document.createEvent('CustomEvent');
+          event.initCustomEvent('pagemode', true, true, {
+            mode: params.pagemode,
+          });
+          this.pdfViewer.container.dispatchEvent(event);
+        }
+      } else if (/^\d+$/.test(hash)) { // page number
+        this.page = hash;
+      } else { // named destination
+        if (this.pdfHistory) {
+          this.pdfHistory.updateNextHashParam(unescape(hash));
+        }
+        this.navigateTo(unescape(hash));
+      }
+    },
+
+    /**
+     * @param {string} action
+     */
+    executeNamedAction: function PDFLinkService_executeNamedAction(action) {
+      // See PDF reference, table 8.45 - Named action
+      switch (action) {
+        case 'GoBack':
+          if (this.pdfHistory) {
+            this.pdfHistory.back();
+          }
+          break;
+
+        case 'GoForward':
+          if (this.pdfHistory) {
+            this.pdfHistory.forward();
+          }
+          break;
+
+        case 'NextPage':
+          this.page++;
+          break;
+
+        case 'PrevPage':
+          this.page--;
+          break;
+
+        case 'LastPage':
+          this.page = this.pagesCount;
+          break;
+
+        case 'FirstPage':
+          this.page = 1;
+          break;
+
+        default:
+          break; // No action according to spec
+      }
+
+      var event = document.createEvent('CustomEvent');
+      event.initCustomEvent('namedaction', true, true, {
+        action: action
+      });
+      this.pdfViewer.container.dispatchEvent(event);
+    },
+
+    /**
+     * @param {number} pageNum - page number.
+     * @param {Object} pageRef - reference to the page.
+     */
+    cachePageRef: function PDFLinkService_cachePageRef(pageNum, pageRef) {
+      var refStr = pageRef.num + ' ' + pageRef.gen + ' R';
+      this._pagesRefCache[refStr] = pageNum;
     }
-    window.addEventListener('beforeunload', pdfHistoryBeforeUnload, false);
+  };
 
-    window.addEventListener('pageshow', function pdfHistoryPageShow(evt) {
-      // If the entire viewer (including the PDF file) is cached in the browser,
-      // we need to reattach the 'beforeunload' event listener since
-      // the 'DOMContentLoaded' event is not fired on 'pageshow'.
-      window.addEventListener('beforeunload', pdfHistoryBeforeUnload, false);
-    }, false);
+  return PDFLinkService;
+})();
 
-    window.addEventListener('presentationmodechanged', function(e) {
-      self.isViewerInPresentationMode = !!e.detail.active;
-    });
-  },
 
-  _isStateObjectDefined: function pdfHistory_isStateObjectDefined(state) {
-    return (state && state.uid >= 0 &&
-            state.fingerprint && this.fingerprint === state.fingerprint &&
-            state.target && state.target.hash) ? true : false;
-  },
+var PDFHistory = (function () {
+  function PDFHistory(options) {
+    this.linkService = options.linkService;
 
-  _pushOrReplaceState: function pdfHistory_pushOrReplaceState(stateObj,
-                                                              replace) {
-    if (replace) {
-      window.history.replaceState(stateObj, '');
-    } else {
-      window.history.pushState(stateObj, '');
-    }
-  },
+    this.initialized = false;
+    this.initialDestination = null;
+    this.initialBookmark = null;
+  }
 
-  get isHashChangeUnlocked() {
-    if (!this.initialized) {
-      return true;
-    }
-    // If the current hash changes when moving back/forward in the history,
-    // this will trigger a 'popstate' event *as well* as a 'hashchange' event.
-    // Since the hash generally won't correspond to the exact the position
-    // stored in the history's state object, triggering the 'hashchange' event
-    // can thus corrupt the browser history.
-    //
-    // When the hash changes during a 'popstate' event, we *only* prevent the
-    // first 'hashchange' event and immediately reset allowHashChange.
-    // If it is not reset, the user would not be able to change the hash.
+  PDFHistory.prototype = {
+    /**
+     * @param {string} fingerprint
+     * @param {IPDFLinkService} linkService
+     */
+    initialize: function pdfHistoryInitialize(fingerprint) {
+      this.initialized = true;
+      this.reInitialized = false;
+      this.allowHashChange = true;
+      this.historyUnlocked = true;
+      this.isViewerInPresentationMode = false;
 
-    var temp = this.allowHashChange;
-    this.allowHashChange = true;
-    return temp;
-  },
-
-  _updatePreviousBookmark: function pdfHistory_updatePreviousBookmark() {
-    if (this.updatePreviousBookmark &&
-        this.currentBookmark && this.currentPage) {
-      this.previousBookmark = this.currentBookmark;
-      this.previousPage = this.currentPage;
+      this.previousHash = window.location.hash.substring(1);
+      this.currentBookmark = '';
+      this.currentPage = 0;
       this.updatePreviousBookmark = false;
-    }
-  },
+      this.previousBookmark = '';
+      this.previousPage = 0;
+      this.nextHashParam = '';
 
-  updateCurrentBookmark: function pdfHistoryUpdateCurrentBookmark(bookmark,
-                                                                  pageNum) {
-    if (this.initialized) {
-      this.currentBookmark = bookmark.substring(1);
-      this.currentPage = pageNum | 0;
-      this._updatePreviousBookmark();
-    }
-  },
+      this.fingerprint = fingerprint;
+      this.currentUid = this.uid = 0;
+      this.current = {};
 
-  updateNextHashParam: function pdfHistoryUpdateNextHashParam(param) {
-    if (this.initialized) {
-      this.nextHashParam = param;
-    }
-  },
-
-  push: function pdfHistoryPush(params, isInitialBookmark) {
-    if (!(this.initialized && this.historyUnlocked)) {
-      return;
-    }
-    if (params.dest && !params.hash) {
-      params.hash = (this.current.hash && this.current.dest &&
-                     this.current.dest === params.dest) ?
-        this.current.hash :
-        this.linkService.getDestinationHash(params.dest).split('#')[1];
-    }
-    if (params.page) {
-      params.page |= 0;
-    }
-    if (isInitialBookmark) {
-      var target = window.history.state.target;
-      if (!target) {
-        // Invoked when the user specifies an initial bookmark,
-        // thus setting initialBookmark, when the document is loaded.
-        this._pushToHistory(params, false);
-        this.previousHash = window.location.hash.substring(1);
+      var state = window.history.state;
+      if (this._isStateObjectDefined(state)) {
+        // This corresponds to navigating back to the document
+        // from another page in the browser history.
+        if (state.target.dest) {
+          this.initialDestination = state.target.dest;
+        } else {
+          this.initialBookmark = state.target.hash;
+        }
+        this.currentUid = state.uid;
+        this.uid = state.uid + 1;
+        this.current = state.target;
+      } else {
+        // This corresponds to the loading of a new document.
+        if (state && state.fingerprint &&
+          this.fingerprint !== state.fingerprint) {
+          // Reinitialize the browsing history when a new document
+          // is opened in the web viewer.
+          this.reInitialized = true;
+        }
+        this._pushOrReplaceState({fingerprint: this.fingerprint}, true);
       }
-      this.updatePreviousBookmark = this.nextHashParam ? false : true;
-      if (target) {
-        // If the current document is reloaded,
-        // avoid creating duplicate entries in the history.
+
+      var self = this;
+      window.addEventListener('popstate', function pdfHistoryPopstate(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+
+        if (!self.historyUnlocked) {
+          return;
+        }
+        if (evt.state) {
+          // Move back/forward in the history.
+          self._goTo(evt.state);
+        } else {
+          // Handle the user modifying the hash of a loaded document.
+          self.previousHash = window.location.hash.substring(1);
+
+          // If the history is empty when the hash changes,
+          // update the previous entry in the browser history.
+          if (self.uid === 0) {
+            var previousParams = (self.previousHash && self.currentBookmark &&
+            self.previousHash !== self.currentBookmark) ?
+            {hash: self.currentBookmark, page: self.currentPage} :
+            {page: 1};
+            self.historyUnlocked = false;
+            self.allowHashChange = false;
+            window.history.back();
+            self._pushToHistory(previousParams, false, true);
+            window.history.forward();
+            self.historyUnlocked = true;
+          }
+          self._pushToHistory({hash: self.previousHash}, false, true);
+          self._updatePreviousBookmark();
+        }
+      }, false);
+
+      function pdfHistoryBeforeUnload() {
+        var previousParams = self._getPreviousParams(null, true);
+        if (previousParams) {
+          var replacePrevious = (!self.current.dest &&
+          self.current.hash !== self.previousHash);
+          self._pushToHistory(previousParams, false, replacePrevious);
+          self._updatePreviousBookmark();
+        }
+        // Remove the event listener when navigating away from the document,
+        // since 'beforeunload' prevents Firefox from caching the document.
+        window.removeEventListener('beforeunload', pdfHistoryBeforeUnload,
+                                   false);
+      }
+
+      window.addEventListener('beforeunload', pdfHistoryBeforeUnload, false);
+
+      window.addEventListener('pageshow', function pdfHistoryPageShow(evt) {
+        // If the entire viewer (including the PDF file) is cached in
+        // the browser, we need to reattach the 'beforeunload' event listener
+        // since the 'DOMContentLoaded' event is not fired on 'pageshow'.
+        window.addEventListener('beforeunload', pdfHistoryBeforeUnload, false);
+      }, false);
+
+      window.addEventListener('presentationmodechanged', function(e) {
+        self.isViewerInPresentationMode = !!e.detail.active;
+      });
+    },
+
+    clearHistoryState: function pdfHistory_clearHistoryState() {
+      this._pushOrReplaceState(null, true);
+    },
+
+    _isStateObjectDefined: function pdfHistory_isStateObjectDefined(state) {
+      return (state && state.uid >= 0 &&
+      state.fingerprint && this.fingerprint === state.fingerprint &&
+      state.target && state.target.hash) ? true : false;
+    },
+
+    _pushOrReplaceState: function pdfHistory_pushOrReplaceState(stateObj,
+                                                                replace) {
+      if (replace) {
+      window.history.replaceState(stateObj, '');
+      } else {
+      window.history.pushState(stateObj, '');
+      }
+    },
+
+    get isHashChangeUnlocked() {
+      if (!this.initialized) {
+        return true;
+      }
+      // If the current hash changes when moving back/forward in the history,
+      // this will trigger a 'popstate' event *as well* as a 'hashchange' event.
+      // Since the hash generally won't correspond to the exact the position
+      // stored in the history's state object, triggering the 'hashchange' event
+      // can thus corrupt the browser history.
+      //
+      // When the hash changes during a 'popstate' event, we *only* prevent the
+      // first 'hashchange' event and immediately reset allowHashChange.
+      // If it is not reset, the user would not be able to change the hash.
+
+      var temp = this.allowHashChange;
+      this.allowHashChange = true;
+      return temp;
+    },
+
+    _updatePreviousBookmark: function pdfHistory_updatePreviousBookmark() {
+      if (this.updatePreviousBookmark &&
+        this.currentBookmark && this.currentPage) {
+        this.previousBookmark = this.currentBookmark;
+        this.previousPage = this.currentPage;
+        this.updatePreviousBookmark = false;
+      }
+    },
+
+    updateCurrentBookmark: function pdfHistoryUpdateCurrentBookmark(bookmark,
+                                                                    pageNum) {
+      if (this.initialized) {
+        this.currentBookmark = bookmark.substring(1);
+        this.currentPage = pageNum | 0;
         this._updatePreviousBookmark();
       }
-      return;
-    }
-    if (this.nextHashParam) {
-      if (this.nextHashParam === params.hash) {
-        this.nextHashParam = null;
-        this.updatePreviousBookmark = true;
-        return;
-      } else {
-        this.nextHashParam = null;
-      }
-    }
+    },
 
-    if (params.hash) {
-      if (this.current.hash) {
-        if (this.current.hash !== params.hash) {
-          this._pushToHistory(params, true);
-        } else {
-          if (!this.current.page && params.page) {
-            this._pushToHistory(params, false, true);
-          }
-          this.updatePreviousBookmark = true;
+    updateNextHashParam: function pdfHistoryUpdateNextHashParam(param) {
+      if (this.initialized) {
+        this.nextHashParam = param;
+      }
+    },
+
+    push: function pdfHistoryPush(params, isInitialBookmark) {
+      if (!(this.initialized && this.historyUnlocked)) {
+        return;
+      }
+      if (params.dest && !params.hash) {
+        params.hash = (this.current.hash && this.current.dest &&
+        this.current.dest === params.dest) ?
+          this.current.hash :
+          this.linkService.getDestinationHash(params.dest).split('#')[1];
+      }
+      if (params.page) {
+        params.page |= 0;
+      }
+      if (isInitialBookmark) {
+        var target = window.history.state.target;
+        if (!target) {
+          // Invoked when the user specifies an initial bookmark,
+          // thus setting initialBookmark, when the document is loaded.
+          this._pushToHistory(params, false);
+          this.previousHash = window.location.hash.substring(1);
         }
-      } else {
+        this.updatePreviousBookmark = this.nextHashParam ? false : true;
+        if (target) {
+          // If the current document is reloaded,
+          // avoid creating duplicate entries in the history.
+          this._updatePreviousBookmark();
+        }
+        return;
+      }
+      if (this.nextHashParam) {
+        if (this.nextHashParam === params.hash) {
+          this.nextHashParam = null;
+          this.updatePreviousBookmark = true;
+          return;
+        } else {
+          this.nextHashParam = null;
+        }
+      }
+
+      if (params.hash) {
+        if (this.current.hash) {
+          if (this.current.hash !== params.hash) {
+            this._pushToHistory(params, true);
+          } else {
+            if (!this.current.page && params.page) {
+              this._pushToHistory(params, false, true);
+            }
+            this.updatePreviousBookmark = true;
+          }
+        } else {
+          this._pushToHistory(params, true);
+        }
+      } else if (this.current.page && params.page &&
+        this.current.page !== params.page) {
         this._pushToHistory(params, true);
       }
-    } else if (this.current.page && params.page &&
-               this.current.page !== params.page) {
-      this._pushToHistory(params, true);
-    }
-  },
+    },
 
-  _getPreviousParams: function pdfHistory_getPreviousParams(onlyCheckPage,
-                                                            beforeUnload) {
-    if (!(this.currentBookmark && this.currentPage)) {
-      return null;
-    } else if (this.updatePreviousBookmark) {
-      this.updatePreviousBookmark = false;
-    }
-    if (this.uid > 0 && !(this.previousBookmark && this.previousPage)) {
-      // Prevent the history from getting stuck in the current state,
-      // effectively preventing the user from going back/forward in the history.
-      //
-      // This happens if the current position in the document didn't change when
-      // the history was previously updated. The reasons for this are either:
-      // 1. The current zoom value is such that the document does not need to,
-      //    or cannot, be scrolled to display the destination.
-      // 2. The previous destination is broken, and doesn't actally point to a
-      //    position within the document.
-      //    (This is either due to a bad PDF generator, or the user making a
-      //     mistake when entering a destination in the hash parameters.)
-      return null;
-    }
-    if ((!this.current.dest && !onlyCheckPage) || beforeUnload) {
-      if (this.previousBookmark === this.currentBookmark) {
+    _getPreviousParams: function pdfHistory_getPreviousParams(onlyCheckPage,
+                                                              beforeUnload) {
+      if (!(this.currentBookmark && this.currentPage)) {
+        return null;
+      } else if (this.updatePreviousBookmark) {
+        this.updatePreviousBookmark = false;
+      }
+      if (this.uid > 0 && !(this.previousBookmark && this.previousPage)) {
+        // Prevent the history from getting stuck in the current state,
+        // effectively preventing the user from going back/forward in
+        // the history.
+        //
+        // This happens if the current position in the document didn't change
+        // when the history was previously updated. The reasons for this are
+        // either:
+        // 1. The current zoom value is such that the document does not need to,
+        //    or cannot, be scrolled to display the destination.
+        // 2. The previous destination is broken, and doesn't actally point to a
+        //    position within the document.
+        //    (This is either due to a bad PDF generator, or the user making a
+        //     mistake when entering a destination in the hash parameters.)
         return null;
       }
-    } else if (this.current.page || onlyCheckPage) {
-      if (this.previousPage === this.currentPage) {
+      if ((!this.current.dest && !onlyCheckPage) || beforeUnload) {
+        if (this.previousBookmark === this.currentBookmark) {
+          return null;
+        }
+      } else if (this.current.page || onlyCheckPage) {
+        if (this.previousPage === this.currentPage) {
+          return null;
+        }
+      } else {
         return null;
       }
-    } else {
-      return null;
-    }
-    var params = { hash: this.currentBookmark, page: this.currentPage };
-    if (this.isViewerInPresentationMode) {
-      params.hash = null;
-    }
-    return params;
-  },
-
-  _stateObj: function pdfHistory_stateObj(params) {
-    return { fingerprint: this.fingerprint, uid: this.uid, target: params };
-  },
-
-  _pushToHistory: function pdfHistory_pushToHistory(params,
-                                                    addPrevious, overwrite) {
-    if (!this.initialized) {
-      return;
-    }
-    if (!params.hash && params.page) {
-      params.hash = ('page=' + params.page);
-    }
-    if (addPrevious && !overwrite) {
-      var previousParams = this._getPreviousParams();
-      if (previousParams) {
-        var replacePrevious = (!this.current.dest &&
-                               this.current.hash !== this.previousHash);
-        this._pushToHistory(previousParams, false, replacePrevious);
+      var params = {hash: this.currentBookmark, page: this.currentPage};
+      if (this.isViewerInPresentationMode) {
+        params.hash = null;
       }
-    }
-    this._pushOrReplaceState(this._stateObj(params),
-                             (overwrite || this.uid === 0));
-    this.currentUid = this.uid++;
-    this.current = params;
-    this.updatePreviousBookmark = true;
-  },
+      return params;
+    },
 
-  _goTo: function pdfHistory_goTo(state) {
-    if (!(this.initialized && this.historyUnlocked &&
-          this._isStateObjectDefined(state))) {
-      return;
-    }
-    if (!this.reInitialized && state.uid < this.currentUid) {
-      var previousParams = this._getPreviousParams(true);
-      if (previousParams) {
-        this._pushToHistory(this.current, false);
-        this._pushToHistory(previousParams, false);
-        this.currentUid = state.uid;
-        window.history.back();
+    _stateObj: function pdfHistory_stateObj(params) {
+      return {fingerprint: this.fingerprint, uid: this.uid, target: params};
+    },
+
+    _pushToHistory: function pdfHistory_pushToHistory(params,
+                                                      addPrevious, overwrite) {
+      if (!this.initialized) {
         return;
       }
-    }
-    this.historyUnlocked = false;
+      if (!params.hash && params.page) {
+        params.hash = ('page=' + params.page);
+      }
+      if (addPrevious && !overwrite) {
+        var previousParams = this._getPreviousParams();
+        if (previousParams) {
+          var replacePrevious = (!this.current.dest &&
+          this.current.hash !== this.previousHash);
+          this._pushToHistory(previousParams, false, replacePrevious);
+        }
+      }
+      this._pushOrReplaceState(this._stateObj(params),
+        (overwrite || this.uid === 0));
+      this.currentUid = this.uid++;
+      this.current = params;
+      this.updatePreviousBookmark = true;
+    },
 
-    if (state.target.dest) {
-      this.linkService.navigateTo(state.target.dest);
-    } else {
-      this.linkService.setHash(state.target.hash);
-    }
-    this.currentUid = state.uid;
-    if (state.uid > this.uid) {
-      this.uid = state.uid;
-    }
-    this.current = state.target;
-    this.updatePreviousBookmark = true;
+    _goTo: function pdfHistory_goTo(state) {
+      if (!(this.initialized && this.historyUnlocked &&
+        this._isStateObjectDefined(state))) {
+        return;
+      }
+      if (!this.reInitialized && state.uid < this.currentUid) {
+        var previousParams = this._getPreviousParams(true);
+        if (previousParams) {
+          this._pushToHistory(this.current, false);
+          this._pushToHistory(previousParams, false);
+          this.currentUid = state.uid;
+          window.history.back();
+          return;
+        }
+      }
+      this.historyUnlocked = false;
 
-    var currentHash = window.location.hash.substring(1);
-    if (this.previousHash !== currentHash) {
-      this.allowHashChange = false;
-    }
-    this.previousHash = currentHash;
+      if (state.target.dest) {
+        this.linkService.navigateTo(state.target.dest);
+      } else {
+        this.linkService.setHash(state.target.hash);
+      }
+      this.currentUid = state.uid;
+      if (state.uid > this.uid) {
+        this.uid = state.uid;
+      }
+      this.current = state.target;
+      this.updatePreviousBookmark = true;
 
-    this.historyUnlocked = true;
-  },
+      var currentHash = window.location.hash.substring(1);
+      if (this.previousHash !== currentHash) {
+        this.allowHashChange = false;
+      }
+      this.previousHash = currentHash;
 
-  back: function pdfHistoryBack() {
-    this.go(-1);
-  },
+      this.historyUnlocked = true;
+    },
 
-  forward: function pdfHistoryForward() {
-    this.go(1);
-  },
+    back: function pdfHistoryBack() {
+      this.go(-1);
+    },
 
-  go: function pdfHistoryGo(direction) {
-    if (this.initialized && this.historyUnlocked) {
-      var state = window.history.state;
-      if (direction === -1 && state && state.uid > 0) {
-        window.history.back();
-      } else if (direction === 1 && state && state.uid < (this.uid - 1)) {
-        window.history.forward();
+    forward: function pdfHistoryForward() {
+      this.go(1);
+    },
+
+    go: function pdfHistoryGo(direction) {
+      if (this.initialized && this.historyUnlocked) {
+        var state = window.history.state;
+        if (direction === -1 && state && state.uid > 0) {
+          window.history.back();
+        } else if (direction === 1 && state && state.uid < (this.uid - 1)) {
+          window.history.forward();
+        }
       }
     }
-  }
-};
+  };
+
+  return PDFHistory;
+})();
 
 
 var SecondaryToolbar = {
@@ -1835,6 +2154,7 @@ var CONTROLS_SELECTOR = 'pdfPresentationModeControls';
  * @typedef {Object} PDFPresentationModeOptions
  * @property {HTMLDivElement} container - The container for the viewer element.
  * @property {HTMLDivElement} viewer - (optional) The viewer element.
+ * @property {PDFViewer} pdfViewer - The document viewer.
  * @property {PDFThumbnailViewer} pdfThumbnailViewer - (optional) The thumbnail
  *   viewer.
  * @property {Array} contextMenuItems - (optional) The menuitems that are added
@@ -1852,6 +2172,7 @@ var PDFPresentationMode = (function PDFPresentationModeClosure() {
   function PDFPresentationMode(options) {
     this.container = options.container;
     this.viewer = options.viewer || options.container.firstElementChild;
+    this.pdfViewer = options.pdfViewer;
     this.pdfThumbnailViewer = options.pdfThumbnailViewer || null;
     var contextMenuItems = options.contextMenuItems || null;
 
@@ -1899,8 +2220,8 @@ var PDFPresentationMode = (function PDFPresentationModeClosure() {
       }
 
       this.args = {
-        page: PDFViewerApplication.page,
-        previousScale: PDFViewerApplication.currentScaleValue
+        page: this.pdfViewer.currentPageNumber,
+        previousScale: this.pdfViewer.currentScaleValue,
       };
 
       return true;
@@ -1940,16 +2261,16 @@ var PDFPresentationMode = (function PDFPresentationModeClosure() {
       if (Math.abs(this.mouseScrollDelta) >= PAGE_SWITCH_THRESHOLD) {
         var pageSwitchDirection = (this.mouseScrollDelta > 0) ?
           PageSwitchDirection.UP : PageSwitchDirection.DOWN;
-        var page = PDFViewerApplication.page;
+        var page = this.pdfViewer.currentPageNumber;
         this._resetMouseScrollState();
 
         // If we're at the first/last page, we don't need to do anything.
         if ((page === 1 && pageSwitchDirection === PageSwitchDirection.UP) ||
-            (page === PDFViewerApplication.pagesCount &&
+            (page === this.pdfViewer.pagesCount &&
              pageSwitchDirection === PageSwitchDirection.DOWN)) {
           return;
         }
-        PDFViewerApplication.page = (page + pageSwitchDirection);
+        this.pdfViewer.currentPageNumber = (page + pageSwitchDirection);
         this.mouseScrollTimeStamp = currentTime;
       }
     },
@@ -2015,8 +2336,8 @@ var PDFPresentationMode = (function PDFPresentationModeClosure() {
       // Ensure that the correct page is scrolled into view when entering
       // Presentation Mode, by waiting until fullscreen mode in enabled.
       setTimeout(function enterPresentationModeTimeout() {
-        PDFViewerApplication.page = this.args.page;
-        PDFViewerApplication.setScale('page-fit', true);
+        this.pdfViewer.currentPageNumber = this.args.page;
+        this.pdfViewer.currentScaleValue = 'page-fit';
       }.bind(this), 0);
 
       this._addWindowListeners();
@@ -2034,7 +2355,7 @@ var PDFPresentationMode = (function PDFPresentationModeClosure() {
      * @private
      */
     _exit: function PDFPresentationMode_exit() {
-      var page = PDFViewerApplication.page;
+      var page = this.pdfViewer.currentPageNumber;
       this.container.classList.remove(ACTIVE_SELECTOR);
 
       // Ensure that the correct page is scrolled into view when exiting
@@ -2044,8 +2365,8 @@ var PDFPresentationMode = (function PDFPresentationModeClosure() {
         this._removeFullscreenChangeListeners();
         this._notifyStateChange();
 
-        PDFViewerApplication.setScale(this.args.previousScale, true);
-        PDFViewerApplication.page = page;
+        this.pdfViewer.currentScaleValue = this.args.previousScale;
+        this.pdfViewer.currentPageNumber = page;
         this.args = null;
       }.bind(this), 0);
 
@@ -2077,7 +2398,7 @@ var PDFPresentationMode = (function PDFPresentationModeClosure() {
         if (!isInternalLink) {
           // Unless an internal link was clicked, advance one page.
           evt.preventDefault();
-          PDFViewerApplication.page += (evt.shiftKey ? -1 : 1);
+          this.pdfViewer.currentPageNumber += (evt.shiftKey ? -1 : 1);
         }
       }
     },
@@ -3520,10 +3841,15 @@ var PDFPageView = (function PDFPageViewClosure() {
       // better output until bug 811002 is fixed in FF.
       var PRINT_OUTPUT_SCALE = 2;
       var canvas = document.createElement('canvas');
+
+      // The logical size of the canvas.
       canvas.width = Math.floor(viewport.width) * PRINT_OUTPUT_SCALE;
       canvas.height = Math.floor(viewport.height) * PRINT_OUTPUT_SCALE;
-      canvas.style.width = (PRINT_OUTPUT_SCALE * viewport.width) + 'pt';
-      canvas.style.height = (PRINT_OUTPUT_SCALE * viewport.height) + 'pt';
+
+      // The rendered size of the canvas, relative to the size of canvasWrapper.
+      canvas.style.width = (PRINT_OUTPUT_SCALE * 100) + '%';
+      canvas.style.height = (PRINT_OUTPUT_SCALE * 100) + '%';
+
       var cssScale = 'scale(' + (1 / PRINT_OUTPUT_SCALE) + ', ' +
                                 (1 / PRINT_OUTPUT_SCALE) + ')';
       CustomStyle.setProp('transform' , canvas, cssScale);
@@ -3752,7 +4078,7 @@ var TextLayerBuilder = (function TextLayerBuilderClosure() {
       // We don't bother scaling single-char text divs, because it has very
       // little effect on text highlighting. This makes scrolling on docs with
       // lots of such divs a lot faster.
-      if (textDiv.textContent.length > 1) {
+      if (geom.str.length > 1) {
         if (style.vertical) {
           textDiv.dataset.canvasWidth = geom.height * this.viewport.scale;
         } else {
@@ -4127,7 +4453,8 @@ DefaultAnnotationsLayerFactory.prototype = {
   createAnnotationsLayerBuilder: function (pageDiv, pdfPage) {
     return new AnnotationsLayerBuilder({
       pageDiv: pageDiv,
-      pdfPage: pdfPage
+      pdfPage: pdfPage,
+      linkService: new SimpleLinkService(),
     });
   }
 };
@@ -4170,6 +4497,18 @@ var PDFViewer = (function pdfViewer() {
     };
   }
 
+  function isSameScale(oldScale, newScale) {
+    if (newScale === oldScale) {
+      return true;
+    }
+    if (Math.abs(newScale - oldScale) < 1e-15) {
+      // Prevent unnecessary re-rendering of all pages when the scale
+      // changes only because of limited numerical precision.
+      return true;
+    }
+    return false;
+  }
+
   /**
    * @constructs PDFViewer
    * @param {PDFViewerOptions} options
@@ -4177,7 +4516,7 @@ var PDFViewer = (function pdfViewer() {
   function PDFViewer(options) {
     this.container = options.container;
     this.viewer = options.viewer || options.container.firstElementChild;
-    this.linkService = options.linkService || new SimpleLinkService(this);
+    this.linkService = options.linkService || new SimpleLinkService();
     this.removePageBorders = options.removePageBorders || false;
 
     this.defaultRenderingQueue = !options.renderingQueue;
@@ -4201,11 +4540,11 @@ var PDFViewer = (function pdfViewer() {
 
   PDFViewer.prototype = /** @lends PDFViewer.prototype */{
     get pagesCount() {
-      return this.pages.length;
+      return this._pages.length;
     },
 
     getPageView: function (index) {
-      return this.pages[index];
+      return this._pages[index];
     },
 
     get currentPageNumber() {
@@ -4233,13 +4572,20 @@ var PDFViewer = (function pdfViewer() {
       this._currentPageNumber = val;
       event.pageNumber = val;
       this.container.dispatchEvent(event);
+
+      // Check if the caller is `PDFViewer_update`, to avoid breaking scrolling.
+      if (this.updateInProgress) {
+        return;
+      }
+      this.scrollPageIntoView(val);
     },
 
     /**
      * @returns {number}
      */
     get currentScale() {
-      return this._currentScale;
+      return this._currentScale !== UNKNOWN_SCALE ? this._currentScale :
+                                                    DEFAULT_SCALE;
     },
 
     /**
@@ -4251,7 +4597,7 @@ var PDFViewer = (function pdfViewer() {
       }
       if (!this.pdfDocument) {
         this._currentScale = val;
-        this._currentScaleValue = val.toString();
+        this._currentScaleValue = val !== UNKNOWN_SCALE ? val.toString() : null;
         return;
       }
       this._setScale(val, false);
@@ -4289,12 +4635,16 @@ var PDFViewer = (function pdfViewer() {
     set pagesRotation(rotation) {
       this._pagesRotation = rotation;
 
-      for (var i = 0, l = this.pages.length; i < l; i++) {
-        var page = this.pages[i];
-        page.update(page.scale, rotation);
+      for (var i = 0, l = this._pages.length; i < l; i++) {
+        var pageView = this._pages[i];
+        pageView.update(pageView.scale, rotation);
       }
 
       this._setScale(this._currentScaleValue, true);
+
+      if (this.defaultRenderingQueue) {
+        this.update();
+      }
     },
 
     /**
@@ -4311,7 +4661,6 @@ var PDFViewer = (function pdfViewer() {
       }
 
       var pagesCount = pdfDocument.numPages;
-      var pagesRefMap = this.pagesRefMap = {};
       var self = this;
 
       var resolvePagesPromise;
@@ -4356,7 +4705,7 @@ var PDFViewer = (function pdfViewer() {
       // Fetch a single page so we can get a viewport that will be the default
       // viewport for all pages
       return firstPagePromise.then(function(pdfPage) {
-        var scale = this._currentScale || 1.0;
+        var scale = this.currentScale;
         var viewport = pdfPage.getViewport(scale * CSS_UNITS);
         for (var pageNum = 1; pageNum <= pagesCount; ++pageNum) {
           var textLayerFactory = null;
@@ -4373,8 +4722,10 @@ var PDFViewer = (function pdfViewer() {
             annotationsLayerFactory: this
           });
           bindOnAfterAndBeforeDraw(pageView);
-          this.pages.push(pageView);
+          this._pages.push(pageView);
         }
+
+        var linkService = this.linkService;
 
         // Fetch all the pages since the viewport is needed before printing
         // starts to create the correct size canvas. Wait until one page is
@@ -4384,12 +4735,11 @@ var PDFViewer = (function pdfViewer() {
             var getPagesLeft = pagesCount;
             for (var pageNum = 1; pageNum <= pagesCount; ++pageNum) {
               pdfDocument.getPage(pageNum).then(function (pageNum, pdfPage) {
-                var pageView = self.pages[pageNum - 1];
+                var pageView = self._pages[pageNum - 1];
                 if (!pageView.pdfPage) {
                   pageView.setPdfPage(pdfPage);
                 }
-                var refStr = pdfPage.ref.num + ' ' + pdfPage.ref.gen + ' R';
-                pagesRefMap[refStr] = pageNum;
+                linkService.cachePageRef(pageNum, pdfPage.ref);
                 getPagesLeft--;
                 if (!getPagesLeft) {
                   resolvePagesPromise();
@@ -4417,12 +4767,12 @@ var PDFViewer = (function pdfViewer() {
     },
 
     _resetView: function () {
-      this.pages = [];
+      this._pages = [];
       this._currentPageNumber = 1;
       this._currentScale = UNKNOWN_SCALE;
       this._currentScaleValue = null;
       this._buffer = new PDFPageViewBuffer(DEFAULT_CACHE_SIZE);
-      this.location = null;
+      this._location = null;
       this._pagesRotation = 0;
       this._pagesRequests = [];
 
@@ -4432,13 +4782,13 @@ var PDFViewer = (function pdfViewer() {
       }
     },
 
-    _scrollUpdate: function () {
+    _scrollUpdate: function PDFViewer_scrollUpdate() {
       if (this.pagesCount === 0) {
         return;
       }
       this.update();
-      for (var i = 0, ii = this.pages.length; i < ii; i++) {
-        this.pages[i].updatePosition();
+      for (var i = 0, ii = this._pages.length; i < ii; i++) {
+        this._pages[i].updatePosition();
       }
     },
 
@@ -4456,42 +4806,44 @@ var PDFViewer = (function pdfViewer() {
     _setScaleUpdatePages: function pdfViewer_setScaleUpdatePages(
         newScale, newValue, noScroll, preset) {
       this._currentScaleValue = newValue;
-      if (newScale === this._currentScale) {
+
+      if (isSameScale(this._currentScale, newScale)) {
         if (preset) {
           this._setScaleDispatchEvent(newScale, newValue, true);
         }
         return;
       }
 
-      for (var i = 0, ii = this.pages.length; i < ii; i++) {
-        this.pages[i].update(newScale);
+      for (var i = 0, ii = this._pages.length; i < ii; i++) {
+        this._pages[i].update(newScale);
       }
       this._currentScale = newScale;
 
       if (!noScroll) {
         var page = this._currentPageNumber, dest;
-        if (this.location && !IGNORE_CURRENT_POSITION_ON_ZOOM &&
+        if (this._location && !IGNORE_CURRENT_POSITION_ON_ZOOM &&
             !(this.isInPresentationMode || this.isChangingPresentationMode)) {
-          page = this.location.pageNumber;
-          dest = [null, { name: 'XYZ' }, this.location.left,
-            this.location.top, null];
+          page = this._location.pageNumber;
+          dest = [null, { name: 'XYZ' }, this._location.left,
+                  this._location.top, null];
         }
         this.scrollPageIntoView(page, dest);
       }
 
       this._setScaleDispatchEvent(newScale, newValue, preset);
+
+      if (this.defaultRenderingQueue) {
+        this.update();
+      }
     },
 
     _setScale: function pdfViewer_setScale(value, noScroll) {
-      if (value === 'custom') {
-        return;
-      }
       var scale = parseFloat(value);
 
       if (scale > 0) {
         this._setScaleUpdatePages(scale, value, noScroll, false);
       } else {
-        var currentPage = this.pages[this._currentPageNumber - 1];
+        var currentPage = this._pages[this._currentPageNumber - 1];
         if (!currentPage) {
           return;
         }
@@ -4541,17 +4893,17 @@ var PDFViewer = (function pdfViewer() {
      */
     scrollPageIntoView: function PDFViewer_scrollPageIntoView(pageNumber,
                                                               dest) {
-      var pageView = this.pages[pageNumber - 1];
+      var pageView = this._pages[pageNumber - 1];
 
       if (this.isInPresentationMode) {
-        if (this.linkService.page !== pageView.id) {
+        if (this._currentPageNumber !== pageView.id) {
           // Avoid breaking getVisiblePages in presentation mode.
-          this.linkService.page = pageView.id;
+          this.currentPageNumber = pageView.id;
           return;
         }
         dest = null;
         // Fixes the case when PDF has different page sizes.
-        this._setScale(this.currentScaleValue, true);
+        this._setScale(this._currentScaleValue, true);
       }
       if (!dest) {
         scrollIntoView(pageView.div);
@@ -4599,13 +4951,12 @@ var PDFViewer = (function pdfViewer() {
           y = dest[3];
           width = dest[4] - x;
           height = dest[5] - y;
-          var viewerContainer = this.container;
           var hPadding = this.removePageBorders ? 0 : SCROLLBAR_PADDING;
           var vPadding = this.removePageBorders ? 0 : VERTICAL_PADDING;
 
-          widthScale = (viewerContainer.clientWidth - hPadding) /
+          widthScale = (this.container.clientWidth - hPadding) /
             width / CSS_UNITS;
-          heightScale = (viewerContainer.clientHeight - vPadding) /
+          heightScale = (this.container.clientHeight - vPadding) /
             height / CSS_UNITS;
           scale = Math.min(Math.abs(widthScale), Math.abs(heightScale));
           break;
@@ -4613,10 +4964,10 @@ var PDFViewer = (function pdfViewer() {
           return;
       }
 
-      if (scale && scale !== this.currentScale) {
+      if (scale && scale !== this._currentScale) {
         this.currentScaleValue = scale;
-      } else if (this.currentScale === UNKNOWN_SCALE) {
-        this.currentScaleValue = DEFAULT_SCALE;
+      } else if (this._currentScale === UNKNOWN_SCALE) {
+        this.currentScaleValue = DEFAULT_SCALE_VALUE;
       }
 
       if (scale === 'page-fit' && !dest[4]) {
@@ -4644,7 +4995,7 @@ var PDFViewer = (function pdfViewer() {
       var pageNumber = firstPage.id;
       var pdfOpenParams = '#page=' + pageNumber;
       pdfOpenParams += '&zoom=' + normalizedScaleValue;
-      var currentPageView = this.pages[pageNumber - 1];
+      var currentPageView = this._pages[pageNumber - 1];
       var container = this.container;
       var topLeft = currentPageView.getPagePoint(
         (container.scrollLeft - firstPage.x),
@@ -4653,7 +5004,7 @@ var PDFViewer = (function pdfViewer() {
       var intTop = Math.round(topLeft[1]);
       pdfOpenParams += ',' + intLeft + ',' + intTop;
 
-      this.location = {
+      this._location = {
         pageNumber: pageNumber,
         scale: normalizedScaleValue,
         top: intTop,
@@ -4662,7 +5013,7 @@ var PDFViewer = (function pdfViewer() {
       };
     },
 
-    update: function () {
+    update: function PDFViewer_update() {
       var visible = this._getVisiblePages();
       var visiblePages = visible.views;
       if (visiblePages.length === 0) {
@@ -4677,7 +5028,7 @@ var PDFViewer = (function pdfViewer() {
 
       this.renderingQueue.renderHighestPriority(visible);
 
-      var currentId = this.currentPageNumber;
+      var currentId = this._currentPageNumber;
       var firstPage = visible.first;
 
       for (var i = 0, ii = visiblePages.length, stillFullyVisible = false;
@@ -4707,6 +5058,7 @@ var PDFViewer = (function pdfViewer() {
 
       var event = document.createEvent('UIEvents');
       event.initUIEvent('updateviewarea', true, true, window, 0);
+      event.location = this._location;
       this.container.dispatchEvent(event);
     },
 
@@ -4733,22 +5085,22 @@ var PDFViewer = (function pdfViewer() {
 
     _getVisiblePages: function () {
       if (!this.isInPresentationMode) {
-        return getVisibleElements(this.container, this.pages, true);
+        return getVisibleElements(this.container, this._pages, true);
       } else {
         // The algorithm in getVisibleElements doesn't work in all browsers and
         // configurations when presentation mode is active.
         var visible = [];
-        var currentPage = this.pages[this._currentPageNumber - 1];
+        var currentPage = this._pages[this._currentPageNumber - 1];
         visible.push({ id: currentPage.id, view: currentPage });
         return { first: currentPage, last: currentPage, views: visible };
       }
     },
 
     cleanup: function () {
-      for (var i = 0, ii = this.pages.length; i < ii; i++) {
-        if (this.pages[i] &&
-          this.pages[i].renderingState !== RenderingStates.FINISHED) {
-          this.pages[i].reset();
+      for (var i = 0, ii = this._pages.length; i < ii; i++) {
+        if (this._pages[i] &&
+            this._pages[i].renderingState !== RenderingStates.FINISHED) {
+          this._pages[i].reset();
         }
       }
     },
@@ -4779,7 +5131,7 @@ var PDFViewer = (function pdfViewer() {
     forceRendering: function (currentlyVisiblePages) {
       var visiblePages = currentlyVisiblePages || this._getVisiblePages();
       var pageView = this.renderingQueue.getHighestPriority(visiblePages,
-                                                            this.pages,
+                                                            this._pages,
                                                             this.scroll.down);
       if (pageView) {
         this._ensurePdfPageLoaded(pageView).then(function () {
@@ -4833,22 +5185,19 @@ var PDFViewer = (function pdfViewer() {
 })();
 
 var SimpleLinkService = (function SimpleLinkServiceClosure() {
-  function SimpleLinkService(pdfViewer) {
-    this.pdfViewer = pdfViewer;
-  }
+  function SimpleLinkService() {}
+
   SimpleLinkService.prototype = {
     /**
      * @returns {number}
      */
     get page() {
-      return this.pdfViewer.currentPageNumber;
+      return 0;
     },
     /**
      * @param {number} value
      */
-    set page(value) {
-      this.pdfViewer.currentPageNumber = value;
-    },
+    set page(value) {},
     /**
      * @param dest - The PDF destination object.
      */
@@ -4875,6 +5224,11 @@ var SimpleLinkService = (function SimpleLinkServiceClosure() {
      * @param {string} action
      */
     executeNamedAction: function (action) {},
+    /**
+     * @param {number} pageNum - page number.
+     * @param {Object} pageRef - reference to the page.
+     */
+    cachePageRef: function (pageNum, pageRef) {}
   };
   return SimpleLinkService;
 })();
@@ -5025,6 +5379,10 @@ var PDFThumbnailView = (function PDFThumbnailViewClosure() {
         this.canvas.height = 0;
         delete this.canvas;
       }
+      if (this.image) {
+        this.image.removeAttribute('src');
+        delete this.image;
+      }
     },
 
     update: function PDFThumbnailView_update(rotation) {
@@ -5042,21 +5400,54 @@ var PDFThumbnailView = (function PDFThumbnailViewClosure() {
     /**
      * @private
      */
-    _getPageDrawContext: function PDFThumbnailView_getPageDrawContext() {
+    _getPageDrawContext:
+        function PDFThumbnailView_getPageDrawContext(noCtxScale) {
       var canvas = document.createElement('canvas');
-      canvas.id = this.renderingId;
-
-      canvas.width = this.canvasWidth;
-      canvas.height = this.canvasHeight;
-      canvas.className = 'thumbnailImage';
-      canvas.setAttribute('aria-label', mozL10n.get('thumb_page_canvas',
-        {page: this.id}, 'Thumbnail of Page {{page}}'));
-
       this.canvas = canvas;
-      this.div.setAttribute('data-loaded', true);
-      this.ring.appendChild(canvas);
 
-      return canvas.getContext('2d');
+      var ctx = canvas.getContext('2d');
+      var outputScale = getOutputScale(ctx);
+
+      canvas.width = (this.canvasWidth * outputScale.sx) | 0;
+      canvas.height = (this.canvasHeight * outputScale.sy) | 0;
+      canvas.style.width = this.canvasWidth + 'px';
+      canvas.style.height = this.canvasHeight + 'px';
+
+      if (!noCtxScale && outputScale.scaled) {
+        ctx.scale(outputScale.sx, outputScale.sy);
+      }
+
+      var image = document.createElement('img');
+      this.image = image;
+
+      image.id = this.renderingId;
+      image.className = 'thumbnailImage';
+      image.setAttribute('aria-label', mozL10n.get('thumb_page_canvas',
+        { page: this.id }, 'Thumbnail of Page {{page}}'));
+
+      image.style.width = canvas.style.width;
+      image.style.height = canvas.style.height;
+
+      return ctx;
+    },
+
+    /**
+     * @private
+     */
+    _convertCanvasToImage: function PDFThumbnailView_convertCanvasToImage() {
+      if (!this.canvas) {
+        return;
+      }
+      this.image.src = this.canvas.toDataURL();
+
+      this.div.setAttribute('data-loaded', true);
+      this.ring.appendChild(this.image);
+
+      // Zeroing the width and height causes Firefox to release graphics
+      // resources immediately, which can greatly reduce memory consumption.
+      this.canvas.width = 0;
+      this.canvas.height = 0;
+      delete this.canvas;
     },
 
     draw: function PDFThumbnailView_draw() {
@@ -5088,6 +5479,7 @@ var PDFThumbnailView = (function PDFThumbnailViewClosure() {
           return;
         }
         self.renderingState = RenderingStates.FINISHED;
+        self._convertCanvasToImage();
 
         if (!error) {
           resolveRenderPromise(undefined);
@@ -5139,12 +5531,13 @@ var PDFThumbnailView = (function PDFThumbnailViewClosure() {
       this.hasImage = true;
       this.renderingState = RenderingStates.FINISHED;
 
-      var ctx = this._getPageDrawContext();
+      var ctx = this._getPageDrawContext(true);
       var canvas = ctx.canvas;
 
       if (img.width <= 2 * canvas.width) {
         ctx.drawImage(img, 0, 0, img.width, img.height,
                       0, 0, canvas.width, canvas.height);
+        this._convertCanvasToImage();
         return;
       }
       // drawImage does an awful job of rescaling the image, doing it gradually.
@@ -5169,6 +5562,7 @@ var PDFThumbnailView = (function PDFThumbnailViewClosure() {
       }
       ctx.drawImage(reducedImage, 0, 0, reducedWidth, reducedHeight,
                     0, 0, canvas.width, canvas.height);
+      this._convertCanvasToImage();
     }
   };
 
@@ -5380,6 +5774,7 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
     this.container = options.container;
     this.outline = options.outline;
     this.linkService = options.linkService;
+    this.lastToggleIsShow = true;
   }
 
   PDFOutlineView.prototype = {
@@ -5388,6 +5783,7 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
       while (container.firstChild) {
         container.removeChild(container.firstChild);
       }
+      this.lastToggleIsShow = true;
     },
 
     /**
@@ -5413,6 +5809,51 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
       };
     },
 
+    /**
+     * Prepend a button before an outline item which allows the user to toggle
+     * the visibility of all outline items at that level.
+     *
+     * @private
+     */
+    _addToggleButton: function PDFOutlineView_addToggleButton(div) {
+      var toggler = document.createElement('div');
+      toggler.className = 'outlineItemToggler';
+      toggler.onclick = function(event) {
+        event.stopPropagation();
+        toggler.classList.toggle('outlineItemsHidden');
+
+        if (event.shiftKey) {
+          var shouldShowAll = !toggler.classList.contains('outlineItemsHidden');
+          this._toggleOutlineItem(div, shouldShowAll);
+        }
+      }.bind(this);
+      div.insertBefore(toggler, div.firstChild);
+    },
+
+    /**
+     * Toggle the visibility of the subtree of an outline item.
+     *
+     * @param {Element} root - the root of the outline (sub)tree.
+     * @param {boolean} state - whether to show the outline (sub)tree. If false,
+     *   the outline subtree rooted at |root| will be collapsed.
+     *
+     * @private
+     */
+    _toggleOutlineItem: function PDFOutlineView_toggleOutlineItem(root, show) {
+      this.lastToggleIsShow = show;
+      var togglers = root.querySelectorAll('.outlineItemToggler');
+      for (var i = 0, ii = togglers.length; i < ii; ++i) {
+        togglers[i].classList[show ? 'remove' : 'add']('outlineItemsHidden');
+      }
+    },
+
+    /**
+     * Collapse or expand all subtrees of the outline.
+     */
+    toggleOutlineTree: function PDFOutlineView_toggleOutlineTree() {
+      this._toggleOutlineItem(this.container, !this.lastToggleIsShow);
+    },
+
     render: function PDFOutlineView_render() {
       var outline = this.outline;
       var outlineCount = 0;
@@ -5424,7 +5865,9 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
         return;
       }
 
-      var queue = [{ parent: this.container, items: this.outline }];
+      var fragment = document.createDocumentFragment();
+      var queue = [{ parent: fragment, items: this.outline }];
+      var hasAnyNesting = false;
       while (queue.length > 0) {
         var levelData = queue.shift();
         for (var i = 0, len = levelData.items.length; i < len; i++) {
@@ -5433,10 +5876,13 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
           div.className = 'outlineItem';
           var element = document.createElement('a');
           this._bindLink(element, item);
-          element.textContent = item.title;
+          element.textContent = removeNullCharacters(item.title);
           div.appendChild(element);
 
           if (item.items.length > 0) {
+            hasAnyNesting = true;
+            this._addToggleButton(div);
+
             var itemsDiv = document.createElement('div');
             itemsDiv.className = 'outlineItems';
             div.appendChild(itemsDiv);
@@ -5447,6 +5893,11 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
           outlineCount++;
         }
       }
+      if (hasAnyNesting) {
+        this.container.classList.add('outlineWithDeepNesting');
+      }
+
+      this.container.appendChild(fragment);
 
       this._dispatchEvent(outlineCount);
     }
@@ -5529,7 +5980,7 @@ var PDFAttachmentView = (function PDFAttachmentViewClosure() {
         div.className = 'attachmentsItem';
         var button = document.createElement('button');
         this._bindLink(button, item.content, filename);
-        button.textContent = filename;
+        button.textContent = removeNullCharacters(filename);
         div.appendChild(button);
         this.container.appendChild(div);
       }
@@ -5544,6 +5995,7 @@ var PDFAttachmentView = (function PDFAttachmentViewClosure() {
 
 var PDFViewerApplication = {
   initialBookmark: document.location.hash.substring(1),
+  initialDestination: null,
   initialized: false,
   fellback: false,
   pdfDocument: null,
@@ -5559,8 +6011,11 @@ var PDFViewerApplication = {
   pdfPresentationMode: null,
   /** @type {PDFDocumentProperties} */
   pdfDocumentProperties: null,
+  /** @type {PDFLinkService} */
+  pdfLinkService: null,
+  /** @type {PDFHistory} */
+  pdfHistory: null,
   pageRotation: 0,
-  updateScaleControls: true,
   isInitialViewSet: false,
   animationStartedPromise: null,
   preferenceSidebarViewOnLoad: SidebarView.NONE,
@@ -5576,25 +6031,34 @@ var PDFViewerApplication = {
     pdfRenderingQueue.onIdle = this.cleanup.bind(this);
     this.pdfRenderingQueue = pdfRenderingQueue;
 
+    var pdfLinkService = new PDFLinkService();
+    this.pdfLinkService = pdfLinkService;
+
     var container = document.getElementById('viewerContainer');
     var viewer = document.getElementById('viewer');
     this.pdfViewer = new PDFViewer({
       container: container,
       viewer: viewer,
       renderingQueue: pdfRenderingQueue,
-      linkService: this
+      linkService: pdfLinkService
     });
     pdfRenderingQueue.setViewer(this.pdfViewer);
+    pdfLinkService.setViewer(this.pdfViewer);
 
     var thumbnailContainer = document.getElementById('thumbnailView');
     this.pdfThumbnailViewer = new PDFThumbnailViewer({
       container: thumbnailContainer,
       renderingQueue: pdfRenderingQueue,
-      linkService: this
+      linkService: pdfLinkService
     });
     pdfRenderingQueue.setThumbnailViewer(this.pdfThumbnailViewer);
 
     Preferences.initialize();
+
+    this.pdfHistory = new PDFHistory({
+      linkService: pdfLinkService
+    });
+    pdfLinkService.setHistory(this.pdfHistory);
 
     this.findController = new PDFFindController({
       pdfViewer: this.pdfViewer,
@@ -5662,6 +6126,7 @@ var PDFViewerApplication = {
       this.pdfPresentationMode = new PDFPresentationMode({
         container: container,
         viewer: viewer,
+        pdfViewer: this.pdfViewer,
         pdfThumbnailViewer: this.pdfThumbnailViewer,
         contextMenuItems: [
           { element: document.getElementById('contextFirstPage'),
@@ -5713,6 +6178,12 @@ var PDFViewerApplication = {
         }
         PDFJS.disableRange = value;
       }),
+      Preferences.get('disableStream').then(function resolved(value) {
+        if (PDFJS.disableStream === true) {
+          return;
+        }
+        PDFJS.disableStream = value;
+      }),
       Preferences.get('disableAutoFetch').then(function resolved(value) {
         PDFJS.disableAutoFetch = value;
       }),
@@ -5739,8 +6210,8 @@ var PDFViewerApplication = {
       newScale = (newScale * DEFAULT_SCALE_DELTA).toFixed(2);
       newScale = Math.ceil(newScale * 10) / 10;
       newScale = Math.min(MAX_SCALE, newScale);
-    } while (--ticks && newScale < MAX_SCALE);
-    this.setScale(newScale, true);
+    } while (--ticks > 0 && newScale < MAX_SCALE);
+    this.pdfViewer.currentScaleValue = newScale;
   },
 
   zoomOut: function pdfViewZoomOut(ticks) {
@@ -5749,12 +6220,8 @@ var PDFViewerApplication = {
       newScale = (newScale / DEFAULT_SCALE_DELTA).toFixed(2);
       newScale = Math.floor(newScale * 10) / 10;
       newScale = Math.max(MIN_SCALE, newScale);
-    } while (--ticks && newScale > MIN_SCALE);
-    this.setScale(newScale, true);
-  },
-
-  get currentScaleValue() {
-    return this.pdfViewer.currentScaleValue;
+    } while (--ticks > 0 && newScale > MIN_SCALE);
+    this.pdfViewer.currentScaleValue = newScale;
   },
 
   get pagesCount() {
@@ -5762,11 +6229,11 @@ var PDFViewerApplication = {
   },
 
   set page(val) {
-    this.pdfViewer.currentPageNumber = val;
+    this.pdfLinkService.page = val;
   },
 
-  get page() {
-    return this.pdfViewer.currentPageNumber;
+  get page() { // TODO remove
+    return this.pdfLinkService.page;
   },
 
   get supportsPrinting() {
@@ -5915,6 +6382,7 @@ var PDFViewerApplication = {
 
     this.pdfThumbnailViewer.setDocument(null);
     this.pdfViewer.setDocument(null);
+    this.pdfLinkService.setDocument(null, null);
 
     if (typeof PDFBug !== 'undefined') {
       PDFBug.cleanup();
@@ -5947,7 +6415,6 @@ var PDFViewerApplication = {
     }
 
     var self = this;
-    self.loading = true;
     self.downloadComplete = false;
 
     var passwordNeeded = function passwordNeeded(updatePassword, reason) {
@@ -5964,7 +6431,6 @@ var PDFViewerApplication = {
                       getDocumentProgress).then(
       function getDocumentCallback(pdfDocument) {
         self.load(pdfDocument, scale);
-        self.loading = false;
       },
       function getDocumentError(exception) {
         var message = exception && exception.message;
@@ -5988,7 +6454,6 @@ var PDFViewerApplication = {
           message: message
         };
         self.error(loadingErrorMessage, moreInfo);
-        self.loading = false;
       }
     );
 
@@ -6045,130 +6510,6 @@ var PDFViewerApplication = {
         }
         PDFViewerApplication.download();
       });
-  },
-
-  navigateTo: function pdfViewNavigateTo(dest) {
-    var destString = '';
-    var self = this;
-
-    var goToDestination = function(destRef) {
-      self.pendingRefStr = null;
-      // dest array looks like that: <page-ref> </XYZ|FitXXX> <args..>
-      var pageNumber = destRef instanceof Object ?
-        self.pagesRefMap[destRef.num + ' ' + destRef.gen + ' R'] :
-        (destRef + 1);
-      if (pageNumber) {
-        if (pageNumber > self.pagesCount) {
-          pageNumber = self.pagesCount;
-        }
-        self.pdfViewer.scrollPageIntoView(pageNumber, dest);
-
-        // Update the browsing history.
-        PDFHistory.push({ dest: dest, hash: destString, page: pageNumber });
-      } else {
-        self.pdfDocument.getPageIndex(destRef).then(function (pageIndex) {
-          var pageNum = pageIndex + 1;
-          self.pagesRefMap[destRef.num + ' ' + destRef.gen + ' R'] = pageNum;
-          goToDestination(destRef);
-        });
-      }
-    };
-
-    var destinationPromise;
-    if (typeof dest === 'string') {
-      destString = dest;
-      destinationPromise = this.pdfDocument.getDestination(dest);
-    } else {
-      destinationPromise = Promise.resolve(dest);
-    }
-    destinationPromise.then(function(destination) {
-      dest = destination;
-      if (!(destination instanceof Array)) {
-        return; // invalid destination
-      }
-      goToDestination(destination[0]);
-    });
-  },
-
-  executeNamedAction: function pdfViewExecuteNamedAction(action) {
-    // See PDF reference, table 8.45 - Named action
-    switch (action) {
-      case 'GoToPage':
-        document.getElementById('pageNumber').focus();
-        break;
-
-      case 'GoBack':
-        PDFHistory.back();
-        break;
-
-      case 'GoForward':
-        PDFHistory.forward();
-        break;
-
-      case 'Find':
-        if (!this.supportsIntegratedFind) {
-          this.findBar.toggle();
-        }
-        break;
-
-      case 'NextPage':
-        this.page++;
-        break;
-
-      case 'PrevPage':
-        this.page--;
-        break;
-
-      case 'LastPage':
-        this.page = this.pagesCount;
-        break;
-
-      case 'FirstPage':
-        this.page = 1;
-        break;
-
-      default:
-        break; // No action according to spec
-    }
-  },
-
-  getDestinationHash: function pdfViewGetDestinationHash(dest) {
-    if (typeof dest === 'string') {
-      return this.getAnchorUrl('#' + escape(dest));
-    }
-    if (dest instanceof Array) {
-      var destRef = dest[0]; // see navigateTo method for dest format
-      var pageNumber = destRef instanceof Object ?
-        this.pagesRefMap[destRef.num + ' ' + destRef.gen + ' R'] :
-        (destRef + 1);
-      if (pageNumber) {
-        var pdfOpenParams = this.getAnchorUrl('#page=' + pageNumber);
-        var destKind = dest[1];
-        if (typeof destKind === 'object' && 'name' in destKind &&
-            destKind.name === 'XYZ') {
-          var scale = (dest[4] || this.currentScaleValue);
-          var scaleNumber = parseFloat(scale);
-          if (scaleNumber) {
-            scale = scaleNumber * 100;
-          }
-          pdfOpenParams += '&zoom=' + scale;
-          if (dest[2] || dest[3]) {
-            pdfOpenParams += ',' + (dest[2] || 0) + ',' + (dest[3] || 0);
-          }
-        }
-        return pdfOpenParams;
-      }
-    }
-    return '';
-  },
-
-  /**
-   * Prefix the full url on anchor links to make sure that links are resolved
-   * relative to the current URL instead of the one defined in <base href>.
-   * @param {String} anchor The anchor hash, including the #.
-   */
-  getAnchorUrl: function getAnchorUrl(anchor) {
-    return this.url.split('#')[0] + anchor;
   },
 
   /**
@@ -6260,6 +6601,9 @@ var PDFViewerApplication = {
     var id = this.documentFingerprint = pdfDocument.fingerprint;
     var store = this.store = new ViewHistory(id);
 
+    var baseDocumentUrl = this.url.split('#')[0];
+    this.pdfLinkService.setDocument(pdfDocument, baseDocumentUrl);
+
     var pdfViewer = this.pdfViewer;
     pdfViewer.currentScale = scale;
     pdfViewer.setDocument(pdfDocument);
@@ -6269,7 +6613,6 @@ var PDFViewerApplication = {
 
     this.pageRotation = 0;
     this.isInitialViewSet = false;
-    this.pagesRefMap = pdfViewer.pagesRefMap;
 
     this.pdfThumbnailViewer.setDocument(pdfDocument);
 
@@ -6285,10 +6628,16 @@ var PDFViewerApplication = {
       if (!PDFJS.disableHistory && !self.isViewerEmbedded) {
         // The browsing history is only enabled when the viewer is standalone,
         // i.e. not when it is embedded in a web page.
-        if (!self.preferenceShowPreviousViewOnLoad && window.history.state) {
-          window.history.replaceState(null, '');
+        if (!self.preferenceShowPreviousViewOnLoad) {
+          self.pdfHistory.clearHistoryState();
         }
-        PDFHistory.initialize(self.documentFingerprint, self);
+        self.pdfHistory.initialize(self.documentFingerprint);
+
+        if (self.pdfHistory.initialDestination) {
+          self.initialDestination = self.pdfHistory.initialDestination;
+        } else if (self.pdfHistory.initialBookmark) {
+          self.initialBookmark = self.pdfHistory.initialBookmark;
+        }
       }
 
       store.initializedPromise.then(function resolved() {
@@ -6297,7 +6646,7 @@ var PDFViewerApplication = {
             store.get('exists', false)) {
           var pageNum = store.get('page', '1');
           var zoom = self.preferenceDefaultZoomValue ||
-                     store.get('zoom', self.pdfViewer.currentScale);
+                     store.get('zoom', DEFAULT_SCALE_VALUE);
           var left = store.get('scrollLeft', '0');
           var top = store.get('scrollTop', '0');
 
@@ -6327,7 +6676,7 @@ var PDFViewerApplication = {
             self.fallback(PDFJS.UNSUPPORTED_FEATURES.javaScript);
           }
           // Hack to support auto printing.
-          var regex = /\bprint\s*\(/g;
+          var regex = /\bprint\s*\(/;
           for (var i = 0, ii = javaScript.length; i < ii; i++) {
             var js = javaScript[i];
             if (js && regex.test(js)) {
@@ -6349,7 +6698,7 @@ var PDFViewerApplication = {
         self.outline = new PDFOutlineView({
           container: container,
           outline: outline,
-          linkService: self
+          linkService: self.pdfLinkService
         });
         self.outline.render();
         document.getElementById('viewOutline').disabled = !outline;
@@ -6454,30 +6803,29 @@ var PDFViewerApplication = {
   setInitialView: function pdfViewSetInitialView(storedHash, scale) {
     this.isInitialViewSet = true;
 
-    // When opening a new file (when one is already loaded in the viewer):
-    // Reset 'currentPageNumber', since otherwise the page's scale will be wrong
-    // if 'currentPageNumber' is larger than the number of pages in the file.
+    // When opening a new file, when one is already loaded in the viewer,
+    // ensure that the 'pageNumber' element displays the correct value.
     document.getElementById('pageNumber').value =
-      this.pdfViewer.currentPageNumber = 1;
+      this.pdfViewer.currentPageNumber;
 
-    if (PDFHistory.initialDestination) {
-      this.navigateTo(PDFHistory.initialDestination);
-      PDFHistory.initialDestination = null;
+    if (this.initialDestination) {
+      this.pdfLinkService.navigateTo(this.initialDestination);
+      this.initialDestination = null;
     } else if (this.initialBookmark) {
-      this.setHash(this.initialBookmark);
-      PDFHistory.push({ hash: this.initialBookmark }, !!this.initialBookmark);
+      this.pdfLinkService.setHash(this.initialBookmark);
+      this.pdfHistory.push({ hash: this.initialBookmark }, true);
       this.initialBookmark = null;
     } else if (storedHash) {
-      this.setHash(storedHash);
+      this.pdfLinkService.setHash(storedHash);
     } else if (scale) {
-      this.setScale(scale, true);
+      this.pdfViewer.currentScaleValue = scale;
       this.page = 1;
     }
 
-    if (this.pdfViewer.currentScale === UNKNOWN_SCALE) {
+    if (!this.pdfViewer.currentScaleValue) {
       // Scale was not initialized: invalid bookmark or scale was not specified.
       // Setting the default one.
-      this.setScale(DEFAULT_SCALE, true);
+      this.pdfViewer.currentScaleValue = DEFAULT_SCALE_VALUE;
     }
   },
 
@@ -6491,84 +6839,6 @@ var PDFViewerApplication = {
     this.pdfRenderingQueue.printing = this.printing;
     this.pdfRenderingQueue.isThumbnailViewEnabled = this.sidebarOpen;
     this.pdfRenderingQueue.renderHighestPriority();
-  },
-
-  setHash: function pdfViewSetHash(hash) {
-    if (!this.isInitialViewSet) {
-      this.initialBookmark = hash;
-      return;
-    }
-    if (!hash) {
-      return;
-    }
-
-    if (hash.indexOf('=') >= 0) {
-      var params = this.parseQueryString(hash);
-      // borrowing syntax from "Parameters for Opening PDF Files"
-      if ('nameddest' in params) {
-        PDFHistory.updateNextHashParam(params.nameddest);
-        this.navigateTo(params.nameddest);
-        return;
-      }
-      var pageNumber, dest;
-      if ('page' in params) {
-        pageNumber = (params.page | 0) || 1;
-      }
-      if ('zoom' in params) {
-        // Build the destination array.
-        var zoomArgs = params.zoom.split(','); // scale,left,top
-        var zoomArg = zoomArgs[0];
-        var zoomArgNumber = parseFloat(zoomArg);
-
-        if (zoomArg.indexOf('Fit') === -1) {
-          // If the zoomArg is a number, it has to get divided by 100. If it's
-          // a string, it should stay as it is.
-          dest = [null, { name: 'XYZ' },
-                  zoomArgs.length > 1 ? (zoomArgs[1] | 0) : null,
-                  zoomArgs.length > 2 ? (zoomArgs[2] | 0) : null,
-                  (zoomArgNumber ? zoomArgNumber / 100 : zoomArg)];
-        } else {
-          if (zoomArg === 'Fit' || zoomArg === 'FitB') {
-            dest = [null, { name: zoomArg }];
-          } else if ((zoomArg === 'FitH' || zoomArg === 'FitBH') ||
-                     (zoomArg === 'FitV' || zoomArg === 'FitBV')) {
-            dest = [null, { name: zoomArg },
-                    zoomArgs.length > 1 ? (zoomArgs[1] | 0) : null];
-          } else if (zoomArg === 'FitR') {
-            if (zoomArgs.length !== 5) {
-              console.error('pdfViewSetHash: ' +
-                            'Not enough parameters for \'FitR\'.');
-            } else {
-              dest = [null, { name: zoomArg },
-                      (zoomArgs[1] | 0), (zoomArgs[2] | 0),
-                      (zoomArgs[3] | 0), (zoomArgs[4] | 0)];
-            }
-          } else {
-            console.error('pdfViewSetHash: \'' + zoomArg +
-                          '\' is not a valid zoom value.');
-          }
-        }
-      }
-      if (dest) {
-        this.pdfViewer.scrollPageIntoView(pageNumber || this.page, dest);
-      } else if (pageNumber) {
-        this.page = pageNumber; // simple page
-      }
-      if ('pagemode' in params) {
-        if (params.pagemode === 'thumbs' || params.pagemode === 'bookmarks' ||
-            params.pagemode === 'attachments') {
-          this.switchSidebarView((params.pagemode === 'bookmarks' ?
-                                  'outline' : params.pagemode), true);
-        } else if (params.pagemode === 'none' && this.sidebarOpen) {
-          document.getElementById('sidebarToggle').click();
-        }
-      }
-    } else if (/^\d+$/.test(hash)) { // page number
-      this.page = hash;
-    } else { // named destination
-      PDFHistory.updateNextHashParam(unescape(hash));
-      this.navigateTo(unescape(hash));
-    }
   },
 
   refreshThumbnailViewer: function pdfViewRefreshThumbnailViewer() {
@@ -6619,44 +6889,29 @@ var PDFViewerApplication = {
         break;
 
       case 'outline':
+        if (outlineButton.disabled) {
+          return;
+        }
         thumbsButton.classList.remove('toggled');
         outlineButton.classList.add('toggled');
         attachmentsButton.classList.remove('toggled');
         thumbsView.classList.add('hidden');
         outlineView.classList.remove('hidden');
         attachmentsView.classList.add('hidden');
-
-        if (outlineButton.getAttribute('disabled')) {
-          return;
-        }
         break;
 
       case 'attachments':
+        if (attachmentsButton.disabled) {
+          return;
+        }
         thumbsButton.classList.remove('toggled');
         outlineButton.classList.remove('toggled');
         attachmentsButton.classList.add('toggled');
         thumbsView.classList.add('hidden');
         outlineView.classList.add('hidden');
         attachmentsView.classList.remove('hidden');
-
-        if (attachmentsButton.getAttribute('disabled')) {
-          return;
-        }
         break;
     }
-  },
-
-  // Helper function to parse query string (e.g. ?param1=value&parm2=...).
-  parseQueryString: function pdfViewParseQueryString(query) {
-    var parts = query.split('&');
-    var params = {};
-    for (var i = 0, ii = parts.length; i < ii; ++i) {
-      var param = parts[i].split('=');
-      var key = param[0].toLowerCase();
-      var value = param.length > 1 ? param[1] : null;
-      params[decodeURIComponent(key)] = decodeURIComponent(value);
-    }
-    return params;
   },
 
   beforePrint: function pdfViewSetupBeforePrint() {
@@ -6669,7 +6924,7 @@ var PDFViewerApplication = {
 
     var alertNotReady = false;
     var i, ii;
-    if (!this.pagesCount) {
+    if (!this.pdfDocument || !this.pagesCount) {
       alertNotReady = true;
     } else {
       for (i = 0, ii = this.pagesCount; i < ii; ++i) {
@@ -6691,6 +6946,35 @@ var PDFViewerApplication = {
 
     var body = document.querySelector('body');
     body.setAttribute('data-mozPrintCallback', true);
+
+    if (!this.hasEqualPageSizes) {
+      console.warn('Not all pages have the same size. The printed result ' +
+          'may be incorrect!');
+    }
+
+    // Insert a @page + size rule to make sure that the page size is correctly
+    // set. Note that we assume that all pages have the same size, because
+    // variable-size pages are not supported yet (at least in Chrome & Firefox).
+    // TODO(robwu): Use named pages when size calculation bugs get resolved
+    // (e.g. https://crbug.com/355116) AND when support for named pages is
+    // added (http://www.w3.org/TR/css3-page/#using-named-pages).
+    // In browsers where @page + size is not supported (such as Firefox,
+    // https://bugzil.la/851441), the next stylesheet will be ignored and the
+    // user has to select the correct paper size in the UI if wanted.
+    this.pageStyleSheet = document.createElement('style');
+    var pageSize = this.pdfViewer.getPageView(0).pdfPage.getViewport(1);
+    this.pageStyleSheet.textContent =
+      // "size:<width> <height>" is what we need. But also add "A4" because
+      // Firefox incorrectly reports support for the other value.
+      '@supports ((size:A4) and (size:1pt 1pt)) {' +
+      '@page { size: ' + pageSize.width + 'pt ' + pageSize.height + 'pt;}' +
+      // The canvas and each ancestor node must have a height of 100% to make
+      // sure that each canvas is printed on exactly one page.
+      '#printContainer {height:100%}' +
+      '#printContainer > div {width:100% !important;height:100% !important;}' +
+      '}';
+    body.appendChild(this.pageStyleSheet);
+
     for (i = 0, ii = this.pagesCount; i < ii; ++i) {
       this.pdfViewer.getPageView(i).beforePrint();
     }
@@ -6700,20 +6984,32 @@ var PDFViewerApplication = {
     }));
   },
 
+  // Whether all pages of the PDF have the same width and height.
+  get hasEqualPageSizes() {
+    var firstPage = this.pdfViewer.getPageView(0);
+    for (var i = 1, ii = this.pagesCount; i < ii; ++i) {
+      var pageView = this.pdfViewer.getPageView(i);
+      if (pageView.width !== firstPage.width ||
+          pageView.height !== firstPage.height) {
+        return false;
+      }
+    }
+    return true;
+  },
+
   afterPrint: function pdfViewSetupAfterPrint() {
     var div = document.getElementById('printContainer');
     while (div.hasChildNodes()) {
       div.removeChild(div.lastChild);
     }
 
+    if (this.pageStyleSheet && this.pageStyleSheet.parentNode) {
+      this.pageStyleSheet.parentNode.removeChild(this.pageStyleSheet);
+      this.pageStyleSheet = null;
+    }
+
     this.printing = false;
     this.forceRendering();
-  },
-
-  setScale: function (value, resetAutoSettings) {
-    this.updateScaleControls = !!resetAutoSettings;
-    this.pdfViewer.currentScaleValue = value;
-    this.updateScaleControls = true;
   },
 
   rotatePages: function pdfViewRotatePages(delta) {
@@ -6760,7 +7056,7 @@ function webViewerInitialized() {
   if (PDFViewerApplication.preferencePdfBugEnabled) {
     // Special debugging flags in the hash section of the URL.
     var hash = document.location.hash.substring(1);
-    var hashParams = PDFViewerApplication.parseQueryString(hash);
+    var hashParams = parseQueryString(hash);
 
     if ('disableworker' in hashParams) {
       PDFJS.disableWorker = (hashParams['disableworker'] === 'true');
@@ -6877,6 +7173,11 @@ function webViewerInitialized() {
       PDFViewerApplication.switchSidebarView('outline');
     });
 
+  document.getElementById('viewOutline').addEventListener('dblclick',
+    function() {
+      PDFViewerApplication.outline.toggleOutlineTree();
+    });
+
   document.getElementById('viewAttachments').addEventListener('click',
     function() {
       PDFViewerApplication.switchSidebarView('attachments');
@@ -6915,10 +7216,12 @@ function webViewerInitialized() {
     }
   });
 
-  document.getElementById('scaleSelect').addEventListener('change',
-    function() {
-      PDFViewerApplication.setScale(this.value, false);
-    });
+  document.getElementById('scaleSelect').addEventListener('change', function() {
+    if (this.value === 'custom') {
+      return;
+    }
+    PDFViewerApplication.pdfViewer.currentScaleValue = this.value;
+  });
 
   document.getElementById('presentationMode').addEventListener('click',
     SecondaryToolbar.presentationModeClick.bind(SecondaryToolbar));
@@ -6994,6 +7297,50 @@ document.addEventListener('textlayerrendered', function (e) {
   }
 }, true);
 
+document.addEventListener('pagemode', function (evt) {
+  if (!PDFViewerApplication.initialized) {
+    return;
+  }
+  // Handle the 'pagemode' hash parameter, see also `PDFLinkService_setHash`.
+  var mode = evt.detail.mode;
+  switch (mode) {
+    case 'bookmarks':
+      // Note: Our code calls this property 'outline', even though the
+      //       Open Parameter specification calls it 'bookmarks'.
+      mode = 'outline';
+      /* falls through */
+    case 'thumbs':
+    case 'attachments':
+      PDFViewerApplication.switchSidebarView(mode, true);
+      break;
+    case 'none':
+      if (PDFViewerApplication.sidebarOpen) {
+        document.getElementById('sidebarToggle').click();
+      }
+      break;
+  }
+}, true);
+
+document.addEventListener('namedaction', function (e) {
+  if (!PDFViewerApplication.initialized) {
+    return;
+  }
+  // Processing couple of named actions that might be useful.
+  // See also PDFLinkService.executeNamedAction
+  var action = e.detail.action;
+  switch (action) {
+    case 'GoToPage':
+      document.getElementById('pageNumber').focus();
+      break;
+
+    case 'Find':
+      if (!PDFViewerApplication.supportsIntegratedFind) {
+        PDFViewerApplication.findBar.toggle();
+      }
+      break;
+  }
+}, true);
+
 window.addEventListener('presentationmodechanged', function (e) {
   var active = e.detail.active;
   var switchInProgress = e.detail.switchInProgress;
@@ -7002,19 +7349,11 @@ window.addEventListener('presentationmodechanged', function (e) {
     active ? PresentationModeState.FULLSCREEN : PresentationModeState.NORMAL;
 });
 
-function updateViewarea() {
+window.addEventListener('updateviewarea', function (evt) {
   if (!PDFViewerApplication.initialized) {
     return;
   }
-  PDFViewerApplication.pdfViewer.update();
-}
-
-window.addEventListener('updateviewarea', function () {
-  if (!PDFViewerApplication.initialized) {
-    return;
-  }
-
-  var location = PDFViewerApplication.pdfViewer.location;
+  var location = evt.location;
 
   PDFViewerApplication.store.initializedPromise.then(function() {
     PDFViewerApplication.store.setMultiple({
@@ -7027,12 +7366,14 @@ window.addEventListener('updateviewarea', function () {
       // unable to write to storage
     });
   });
-  var href = PDFViewerApplication.getAnchorUrl(location.pdfOpenParams);
+  var href =
+    PDFViewerApplication.pdfLinkService.getAnchorUrl(location.pdfOpenParams);
   document.getElementById('viewBookmark').href = href;
   document.getElementById('secondaryViewBookmark').href = href;
 
   // Update the current bookmark in the browsing history.
-  PDFHistory.updateCurrentBookmark(location.pdfOpenParams, location.pageNumber);
+  PDFViewerApplication.pdfHistory.updateCurrentBookmark(location.pdfOpenParams,
+                                                        location.pageNumber);
 
   // Show/hide the loading indicator in the page number input element.
   var pageNumberInput = document.getElementById('pageNumber');
@@ -7047,23 +7388,37 @@ window.addEventListener('updateviewarea', function () {
 }, true);
 
 window.addEventListener('resize', function webViewerResize(evt) {
-  if (PDFViewerApplication.initialized &&
-      (document.getElementById('pageAutoOption').selected ||
-       /* Note: the scale is constant for |pageActualOption|. */
-       document.getElementById('pageFitOption').selected ||
-       document.getElementById('pageWidthOption').selected)) {
-    var selectedScale = document.getElementById('scaleSelect').value;
-    PDFViewerApplication.setScale(selectedScale, false);
+  if (PDFViewerApplication.initialized) {
+    var currentScaleValue = PDFViewerApplication.pdfViewer.currentScaleValue;
+    if (currentScaleValue === 'auto' ||
+        currentScaleValue === 'page-fit' ||
+        currentScaleValue === 'page-width') {
+      // Note: the scale is constant for 'page-actual'.
+      PDFViewerApplication.pdfViewer.currentScaleValue = currentScaleValue;
+    } else if (!currentScaleValue) {
+      // Normally this shouldn't happen, but if the scale wasn't initialized
+      // we set it to the default value in order to prevent any issues.
+      // (E.g. the document being rendered with the wrong scale on load.)
+      PDFViewerApplication.pdfViewer.currentScaleValue = DEFAULT_SCALE_VALUE;
+    }
+    PDFViewerApplication.pdfViewer.update();
   }
-  updateViewarea();
 
   // Set the 'max-height' CSS property of the secondary toolbar.
   SecondaryToolbar.setMaxHeight(document.getElementById('viewerContainer'));
 });
 
 window.addEventListener('hashchange', function webViewerHashchange(evt) {
-  if (PDFHistory.isHashChangeUnlocked) {
-    PDFViewerApplication.setHash(document.location.hash.substring(1));
+  if (PDFViewerApplication.pdfHistory.isHashChangeUnlocked) {
+    var hash = document.location.hash.substring(1);
+    if (!hash) {
+      return;
+    }
+    if (!PDFViewerApplication.isInitialViewSet) {
+      PDFViewerApplication.initialBookmark = hash;
+    } else {
+      PDFViewerApplication.pdfLinkService.setHash(hash);
+    }
   }
 });
 
@@ -7071,7 +7426,7 @@ window.addEventListener('hashchange', function webViewerHashchange(evt) {
 function selectScaleOption(value) {
   var options = document.getElementById('scaleSelect').options;
   var predefinedValueFound = false;
-  for (var i = 0; i < options.length; i++) {
+  for (var i = 0, ii = options.length; i < ii; i++) {
     var option = options[i];
     if (option.value !== value) {
       option.selected = false;
@@ -7113,32 +7468,20 @@ window.addEventListener('scalechange', function scalechange(evt) {
   document.getElementById('zoomOut').disabled = (evt.scale === MIN_SCALE);
   document.getElementById('zoomIn').disabled = (evt.scale === MAX_SCALE);
 
-  var customScaleOption = document.getElementById('customScaleOption');
-  customScaleOption.selected = false;
-
-  if (!PDFViewerApplication.updateScaleControls &&
-      (document.getElementById('pageAutoOption').selected ||
-       document.getElementById('pageActualOption').selected ||
-       document.getElementById('pageFitOption').selected ||
-       document.getElementById('pageWidthOption').selected)) {
-    updateViewarea();
-    return;
-  }
-
-  if (evt.presetValue) {
-    selectScaleOption(evt.presetValue);
-    updateViewarea();
-    return;
-  }
-
-  var predefinedValueFound = selectScaleOption('' + evt.scale);
+  // Update the 'scaleSelect' DOM element.
+  var predefinedValueFound = selectScaleOption(evt.presetValue ||
+                                               '' + evt.scale);
   if (!predefinedValueFound) {
+    var customScaleOption = document.getElementById('customScaleOption');
     var customScale = Math.round(evt.scale * 10000) / 100;
     customScaleOption.textContent =
       mozL10n.get('page_scale_percent', { scale: customScale }, '{{scale}}%');
     customScaleOption.selected = true;
   }
-  updateViewarea();
+  if (!PDFViewerApplication.initialized) {
+    return;
+  }
+  PDFViewerApplication.pdfViewer.update();
 }, true);
 
 window.addEventListener('pagechange', function pagechange(evt) {
@@ -7164,16 +7507,6 @@ window.addEventListener('pagechange', function pagechange(evt) {
       Stats.add(page, pageView.stats);
     }
   }
-
-  // checking if the this.page was called from the updateViewarea function
-  if (evt.updateInProgress) {
-    return;
-  }
-  // Avoid scrolling the first page during loading
-  if (this.loading && page === 1) {
-    return;
-  }
-  PDFViewerApplication.pdfViewer.scrollPageIntoView(page);
 }, true);
 
 function handleMouseWheel(evt) {
@@ -7182,14 +7515,31 @@ function handleMouseWheel(evt) {
               evt.wheelDelta / MOUSE_WHEEL_DELTA_FACTOR;
   var direction = (ticks < 0) ? 'zoomOut' : 'zoomIn';
 
-  if (PDFViewerApplication.pdfViewer.isInPresentationMode) {
+  var pdfViewer = PDFViewerApplication.pdfViewer;
+  if (pdfViewer.isInPresentationMode) {
     evt.preventDefault();
     PDFViewerApplication.scrollPresentationMode(ticks *
                                                 MOUSE_WHEEL_DELTA_FACTOR);
   } else if (evt.ctrlKey || evt.metaKey) {
     // Only zoom the pages, not the entire viewer.
     evt.preventDefault();
+
+    var previousScale = pdfViewer.currentScale;
+
     PDFViewerApplication[direction](Math.abs(ticks));
+
+    var currentScale = pdfViewer.currentScale;
+    if (previousScale !== currentScale) {
+      // After scaling the page via zoomIn/zoomOut, the position of the upper-
+      // left corner is restored. When the mouse wheel is used, the position
+      // under the cursor should be restored instead.
+      var scaleCorrectionFactor = currentScale / previousScale - 1;
+      var rect = pdfViewer.container.getBoundingClientRect();
+      var dx = evt.clientX - rect.left;
+      var dy = evt.clientY - rect.top;
+      pdfViewer.container.scrollLeft += dx * scaleCorrectionFactor;
+      pdfViewer.container.scrollTop += dy * scaleCorrectionFactor;
+    }
   }
 }
 
@@ -7258,7 +7608,7 @@ window.addEventListener('keydown', function keydown(evt) {
           // keeping it unhandled (to restore page zoom to 100%)
           setTimeout(function () {
             // ... and resetting the scale after browser adjusts its scale
-            PDFViewerApplication.setScale(DEFAULT_SCALE, true);
+            pdfViewer.currentScaleValue = DEFAULT_SCALE_VALUE;
           });
           handled = false;
         }
@@ -7299,6 +7649,7 @@ window.addEventListener('keydown', function keydown(evt) {
       return;
     }
   }
+  var ensureViewerFocused = false;
 
   if (cmd === 0) { // no control key pressed at all.
     switch (evt.keyCode) {
@@ -7306,7 +7657,7 @@ window.addEventListener('keydown', function keydown(evt) {
       case 33: // pg up
       case 8: // backspace
         if (!isViewerInPresentationMode &&
-            PDFViewerApplication.currentScaleValue !== 'page-fit') {
+            pdfViewer.currentScaleValue !== 'page-fit') {
           break;
         }
         /* in presentation mode */
@@ -7337,7 +7688,7 @@ window.addEventListener('keydown', function keydown(evt) {
       case 34: // pg down
       case 32: // spacebar
         if (!isViewerInPresentationMode &&
-            PDFViewerApplication.currentScaleValue !== 'page-fit') {
+            pdfViewer.currentScaleValue !== 'page-fit') {
           break;
         }
         /* falls through */
@@ -7357,6 +7708,7 @@ window.addEventListener('keydown', function keydown(evt) {
         if (isViewerInPresentationMode || PDFViewerApplication.page > 1) {
           PDFViewerApplication.page = 1;
           handled = true;
+          ensureViewerFocused = true;
         }
         break;
       case 35: // end
@@ -7364,6 +7716,7 @@ window.addEventListener('keydown', function keydown(evt) {
             PDFViewerApplication.page < PDFViewerApplication.pagesCount)) {
           PDFViewerApplication.page = PDFViewerApplication.pagesCount;
           handled = true;
+          ensureViewerFocused = true;
         }
         break;
 
@@ -7382,7 +7735,7 @@ window.addEventListener('keydown', function keydown(evt) {
     switch (evt.keyCode) {
       case 32: // spacebar
         if (!isViewerInPresentationMode &&
-            PDFViewerApplication.currentScaleValue !== 'page-fit') {
+            pdfViewer.currentScaleValue !== 'page-fit') {
           break;
         }
         PDFViewerApplication.page--;
@@ -7398,17 +7751,10 @@ window.addEventListener('keydown', function keydown(evt) {
   if (!handled && !isViewerInPresentationMode) {
     // 33=Page Up  34=Page Down  35=End    36=Home
     // 37=Left     38=Up         39=Right  40=Down
-    if (evt.keyCode >= 33 && evt.keyCode <= 40 &&
-        !pdfViewer.containsElement(curElement)) {
-      // The page container is not focused, but a page navigation key has been
-      // pressed. Change the focus to the viewer container to make sure that
-      // navigation by keyboard works as expected.
-      pdfViewer.focus();
-    }
     // 32=Spacebar
-    if (evt.keyCode === 32 && curElementTagName !== 'BUTTON' &&
-        !pdfViewer.containsElement(curElement)) {
-      pdfViewer.focus();
+    if ((evt.keyCode >= 33 && evt.keyCode <= 40) ||
+        (evt.keyCode === 32 && curElementTagName !== 'BUTTON')) {
+      ensureViewerFocused = true;
     }
   }
 
@@ -7416,17 +7762,24 @@ window.addEventListener('keydown', function keydown(evt) {
     switch (evt.keyCode) {
       case 37: // left arrow
         if (isViewerInPresentationMode) {
-          PDFHistory.back();
+          PDFViewerApplication.pdfHistory.back();
           handled = true;
         }
         break;
       case 39: // right arrow
         if (isViewerInPresentationMode) {
-          PDFHistory.forward();
+          PDFViewerApplication.pdfHistory.forward();
           handled = true;
         }
         break;
     }
+  }
+
+  if (ensureViewerFocused && !pdfViewer.containsElement(curElement)) {
+    // The page container is not focused, but a page navigation key has been
+    // pressed. Change the focus to the viewer container to make sure that
+    // navigation by keyboard works as expected.
+    pdfViewer.focus();
   }
 
   if (handled) {
@@ -7450,5 +7803,4 @@ window.addEventListener('afterprint', function afterPrint(evt) {
     window.requestAnimationFrame(resolve);
   });
 })();
-
 

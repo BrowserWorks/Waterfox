@@ -21,6 +21,7 @@ EXPORTS.mozilla.dom.cache += [
     'CacheStorageParent.h',
     'CacheStreamControlChild.h',
     'CacheStreamControlParent.h',
+    'Connection.h',
     'Context.h',
     'DBAction.h',
     'DBSchema.h',
@@ -29,7 +30,6 @@ EXPORTS.mozilla.dom.cache += [
     'IPCUtils.h',
     'Manager.h',
     'ManagerId.h',
-    'OfflineStorage.h',
     'PrincipalVerifier.h',
     'QuotaClient.h',
     'ReadStream.h',
@@ -56,6 +56,7 @@ UNIFIED_SOURCES += [
     'CacheStorageParent.cpp',
     'CacheStreamControlChild.cpp',
     'CacheStreamControlParent.cpp',
+    'Connection.cpp',
     'Context.cpp',
     'DBAction.cpp',
     'DBSchema.cpp',
@@ -63,7 +64,6 @@ UNIFIED_SOURCES += [
     'FileUtils.cpp',
     'Manager.cpp',
     'ManagerId.cpp',
-    'OfflineStorage.cpp',
     'PrincipalVerifier.cpp',
     'QuotaClient.cpp',
     'ReadStream.cpp',
@@ -87,8 +87,6 @@ LOCAL_INCLUDES += [
     '../workers',
 ]
 
-FAIL_ON_WARNINGS = True
-
 FINAL_LIBRARY = 'xul'
 
 MOCHITEST_MANIFESTS += [
@@ -97,4 +95,12 @@ MOCHITEST_MANIFESTS += [
 
 MOCHITEST_CHROME_MANIFESTS += [
     'test/mochitest/chrome.ini',
+]
+
+BROWSER_CHROME_MANIFESTS += [
+    'test/mochitest/browser.ini',
+]
+
+XPCSHELL_TESTS_MANIFESTS += [
+    'test/xpcshell/xpcshell.ini',
 ]

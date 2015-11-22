@@ -6,12 +6,12 @@
 #include "nsRegion.h"
 #include "nsPrintfCString.h"
 #include "nsTArray.h"
-#include "gfx3DMatrix.h"
 #include "gfxUtils.h"
 
 bool nsRegion::Contains(const nsRegion& aRgn) const
 {
-  // XXX this could be made faster
+  // XXX this could be made faster by iterating over
+  // both regions at the same time some how
   nsRegionRectIterator iter(aRgn);
   while (const nsRect* r = iter.Next()) {
     if (!Contains (*r)) {
@@ -23,7 +23,7 @@ bool nsRegion::Contains(const nsRegion& aRgn) const
 
 bool nsRegion::Intersects(const nsRect& aRect) const
 {
-  // XXX this could be made faster
+  // XXX this could be made faster by using pixman_region32_contains_rect
   nsRegionRectIterator iter(*this);
   while (const nsRect* r = iter.Next()) {
     if (r->Intersects(aRect)) {
@@ -607,25 +607,25 @@ nsRegion& nsRegion::ScaleInverseRoundOut (float aXScale, float aYScale)
 }
 
 static mozilla::gfx::IntRect
-TransformRect(const mozilla::gfx::IntRect& aRect, const gfx3DMatrix& aTransform)
+TransformRect(const mozilla::gfx::IntRect& aRect, const mozilla::gfx::Matrix4x4& aTransform)
 {
     if (aRect.IsEmpty()) {
         return mozilla::gfx::IntRect();
     }
 
-    gfxRect rect(aRect.x, aRect.y, aRect.width, aRect.height);
-    rect = aTransform.TransformBounds(rect);
+    mozilla::gfx::RectDouble rect(aRect.x, aRect.y, aRect.width, aRect.height);
+    rect = aTransform.TransformAndClipBounds(rect, mozilla::gfx::RectDouble::MaxIntRect());
     rect.RoundOut();
 
     mozilla::gfx::IntRect intRect;
-    if (!gfxUtils::GfxRectToIntRect(rect, &intRect)) {
+    if (!gfxUtils::GfxRectToIntRect(ThebesRect(rect), &intRect)) {
         return mozilla::gfx::IntRect();
     }
 
     return intRect;
 }
 
-nsRegion& nsRegion::Transform (const gfx3DMatrix &aTransform)
+nsRegion& nsRegion::Transform (const mozilla::gfx::Matrix4x4 &aTransform)
 {
   int n;
   pixman_box32_t *boxes = pixman_region32_rectangles(&mImpl, &n);
@@ -1014,7 +1014,7 @@ namespace {
 
     return max;
   }
-}
+} // namespace
 
 nsRect nsRegion::GetLargestRectangle (const nsRect& aContainingRect) const {
   nsRect bestRect;
@@ -1144,5 +1144,5 @@ std::ostream& operator<<(std::ostream& stream, const nsRegion& m) {
 
 nsCString
 nsRegion::ToString() const {
-  return nsCString(mozilla::ToString(this).c_str());
+  return nsCString(mozilla::ToString(*this).c_str());
 }

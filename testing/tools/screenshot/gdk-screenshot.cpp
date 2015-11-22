@@ -60,11 +60,11 @@ int main(int argc, char** argv)
 {
   gdk_init(&argc, &argv);
 
-// TODO GTK3
-#if defined(HAVE_LIBXSS) && (MOZ_WIDGET_GTK == 2)
+#if defined(HAVE_LIBXSS) && defined(MOZ_WIDGET_GTK)
   int event_base, error_base;
   Bool have_xscreensaver =
-    XScreenSaverQueryExtension(GDK_DISPLAY(), &event_base, &error_base);
+    XScreenSaverQueryExtension(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()),
+                               &event_base, &error_base);
 
   if (!have_xscreensaver) {
     fprintf(stderr, "No XScreenSaver extension on display\n");
@@ -74,7 +74,8 @@ int main(int argc, char** argv)
       fprintf(stderr, "%s: Out of memory\n", argv[0]);
       return 1;
     }
-    XScreenSaverQueryInfo(GDK_DISPLAY(), GDK_ROOT_WINDOW(), info);
+    XScreenSaverQueryInfo(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()),
+                          GDK_ROOT_WINDOW(), info);
 
     const char* state;
     const char* til_or_since = nullptr;
@@ -127,13 +128,16 @@ int main(int argc, char** argv)
 #endif
 
   GdkPixbuf* screenshot = nullptr;
-// TODO GTK3
-#if (MOZ_WIDGET_GTK == 2)
   GdkWindow* window = gdk_get_default_root_window();
+#if (MOZ_WIDGET_GTK == 2)
   screenshot = gdk_pixbuf_get_from_drawable(nullptr, window, nullptr,
                                             0, 0, 0, 0,
                                             gdk_screen_width(),
                                             gdk_screen_height());
+#else
+  screenshot = gdk_pixbuf_get_from_window(window, 0, 0,
+                                          gdk_window_get_width(window),
+                                          gdk_window_get_height(window));
 #endif
   if (!screenshot) {
     fprintf(stderr, "%s: failed to create screenshot GdkPixbuf\n", argv[0]);

@@ -15,11 +15,8 @@ contains the code for converting executed mozbuild files into these data
 structures.
 """
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import os
-
-from collections import OrderedDict
 from mozbuild.util import (
     shell_quote,
     StrictOrderingOnAppendList,
@@ -160,22 +157,25 @@ class XPIDLFile(ContextDerived):
     """Describes an XPIDL file to be compiled."""
 
     __slots__ = (
+        'add_to_manifest',
         'basename',
         'install_target',
         'source_path',
     )
 
-    def __init__(self, context, source, module):
+    def __init__(self, context, source, module, add_to_manifest):
         ContextDerived.__init__(self, context)
 
         self.source_path = source
         self.basename = mozpath.basename(source)
         self.module = module
+        self.add_to_manifest = add_to_manifest
 
         self.install_target = context['FINAL_TARGET']
 
-class Defines(ContextDerived):
-    """Context derived container object for DEFINES, which is an OrderedDict.
+class BaseDefines(ContextDerived):
+    """Context derived container object for DEFINES/HOST_DEFINES,
+    which are OrderedDicts.
     """
     __slots__ = ('defines')
 
@@ -197,6 +197,12 @@ class Defines(ContextDerived):
             self.defines.update(more_defines.defines)
         else:
             self.defines.update(more_defines)
+
+class Defines(BaseDefines):
+    pass
+
+class HostDefines(BaseDefines):
+    pass
 
 class Exports(ContextDerived):
     """Context derived container object for EXPORTS, which is a
@@ -502,12 +508,14 @@ class StaticLibrary(Library):
     """Context derived container object for a static library"""
     __slots__ = (
         'link_into',
+        'no_expand_lib',
     )
 
     def __init__(self, context, basename, real_name=None, is_sdk=False,
-        link_into=None):
+        link_into=None, no_expand_lib=False):
         Library.__init__(self, context, basename, real_name, is_sdk)
         self.link_into = link_into
+        self.no_expand_lib = no_expand_lib
 
 
 class SharedLibrary(Library):
@@ -840,7 +848,7 @@ class InstallationTarget(ContextDerived):
         self.xpiname = context.get('XPI_NAME', '')
         self.subdir = context.get('DIST_SUBDIR', '')
         self.target = context['FINAL_TARGET']
-        self.enabled = not context.get('NO_DIST_INSTALL', False)
+        self.enabled = context['DIST_INSTALL'] is not False
 
     def is_custom(self):
         """Returns whether or not the target is not derived from the default
@@ -962,3 +970,53 @@ class AndroidEclipseProjectData(object):
         cpe.ignore_warnings = ignore_warnings
         self._classpathentries.append(cpe)
         return cpe
+
+
+class AndroidResDirs(ContextDerived):
+    """Represents Android resource directories."""
+
+    __slots__ = (
+        'paths',
+    )
+
+    def __init__(self, context, paths):
+        ContextDerived.__init__(self, context)
+        self.paths = paths
+
+class AndroidAssetsDirs(ContextDerived):
+    """Represents Android assets directories."""
+
+    __slots__ = (
+        'paths',
+    )
+
+    def __init__(self, context, paths):
+        ContextDerived.__init__(self, context)
+        self.paths = paths
+
+class AndroidExtraResDirs(ContextDerived):
+    """Represents Android extra resource directories.
+
+    Extra resources are resources provided by libraries and including in a
+    packaged APK, but not otherwise redistributed.  In practice, this means
+    resources included in Fennec but not in GeckoView.
+    """
+
+    __slots__ = (
+        'paths',
+    )
+
+    def __init__(self, context, paths):
+        ContextDerived.__init__(self, context)
+        self.paths = paths
+
+class AndroidExtraPackages(ContextDerived):
+    """Represents Android extra packages."""
+
+    __slots__ = (
+        'packages',
+    )
+
+    def __init__(self, context, packages):
+        ContextDerived.__init__(self, context)
+        self.packages = packages

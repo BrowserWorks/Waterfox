@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let Cc = Components.classes;
-let Ci = Components.interfaces;
-let Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -21,7 +21,14 @@ if (AppConstants.MOZ_CRASHREPORTER) {
                                      "nsICrashReporter");
 }
 
-let WebProgressListener = {
+function makeInputStream(aString) {
+  let stream = Cc["@mozilla.org/io/string-input-stream;1"].
+               createInstance(Ci.nsISupportsCString);
+  stream.data = aString;
+  return stream; // XPConnect will QI this to nsIInputStream for us.
+}
+
+var WebProgressListener = {
   init: function() {
     this._filter = Cc["@mozilla.org/appshell/component/browser-status-filter;1"]
                      .createInstance(Ci.nsIWebProgress);
@@ -147,6 +154,15 @@ let WebProgressListener = {
       json.mayEnableCharacterEncodingMenu = docShell.mayEnableCharacterEncodingMenu;
       json.principal = content.document.nodePrincipal;
       json.synthetic = content.document.mozSyntheticDocument;
+
+      if (AppConstants.MOZ_CRASHREPORTER && CrashReporter.enabled) {
+        let uri = aLocationURI.clone();
+        try {
+          // If the current URI contains a username/password, remove it.
+          uri.userPass = "";
+        } catch (ex) { /* Ignore failures on about: URIs. */ }
+        CrashReporter.annotateCrashReport("URL", uri.spec);
+      }
     }
 
     this._send("Content:LocationChange", json, objects);
@@ -193,7 +209,7 @@ addEventListener("unload", () => {
   WebProgressListener.uninit();
 });
 
-let WebNavigation =  {
+var WebNavigation =  {
   init: function() {
     addMessageListener("WebNavigation:GoBack", this);
     addMessageListener("WebNavigation:GoForward", this);
@@ -234,6 +250,7 @@ let WebNavigation =  {
       case "WebNavigation:LoadURI":
         this.loadURI(message.data.uri, message.data.flags,
                      message.data.referrer, message.data.referrerPolicy,
+                     message.data.postData, message.data.headers,
                      message.data.baseURI);
         break;
       case "WebNavigation:Reload":
@@ -260,15 +277,28 @@ let WebNavigation =  {
     this.webNavigation.gotoIndex(index);
   },
 
-  loadURI: function(uri, flags, referrer, referrerPolicy, baseURI) {
-    if (AppConstants.MOZ_CRASHREPORTER && CrashReporter.enabled)
-      CrashReporter.annotateCrashReport("URL", uri);
+  loadURI: function(uri, flags, referrer, referrerPolicy, postData, headers, baseURI) {
+    if (AppConstants.MOZ_CRASHREPORTER && CrashReporter.enabled) {
+      let annotation = uri;
+      try {
+        let url = Services.io.newURI(uri, null, null);
+        // If the current URI contains a username/password, remove it.
+        url.userPass = "";
+        annotation = url.spec;
+      } catch (ex) { /* Ignore failures to parse and failures
+                      on about: URIs. */ }
+      CrashReporter.annotateCrashReport("URL", annotation);
+    }
     if (referrer)
       referrer = Services.io.newURI(referrer, null, null);
+    if (postData)
+      postData = makeInputStream(postData);
+    if (headers)
+      headers = makeInputStream(headers);
     if (baseURI)
       baseURI = Services.io.newURI(baseURI, null, null);
     this.webNavigation.loadURIWithOptions(uri, flags, referrer, referrerPolicy,
-                                          null, null, baseURI);
+                                          postData, headers, baseURI);
   },
 
   reload: function(flags) {
@@ -282,7 +312,7 @@ let WebNavigation =  {
 
 WebNavigation.init();
 
-let SecurityUI = {
+var SecurityUI = {
   getSSLStatusAsString: function() {
     let status = docShell.securityUI.QueryInterface(Ci.nsISSLStatusProvider).SSLStatus;
 
@@ -298,7 +328,7 @@ let SecurityUI = {
   }
 };
 
-let ControllerCommands = {
+var ControllerCommands = {
   init: function () {
     addMessageListener("ControllerCommands:Do", this);
   },
@@ -471,10 +501,12 @@ addMessageListener("Browser:Thumbnail:CheckState", function (aMessage) {
 
 // The AddonsChild needs to be rooted so that it stays alive as long as
 // the tab.
-let AddonsChild = RemoteAddonsChild.init(this);
-addEventListener("unload", () => {
-  RemoteAddonsChild.uninit(AddonsChild);
-});
+var AddonsChild = RemoteAddonsChild.init(this);
+if (AddonsChild) {
+  addEventListener("unload", () => {
+    RemoteAddonsChild.uninit(AddonsChild);
+  });
+}
 
 addMessageListener("NetworkPrioritizer:AdjustPriority", (msg) => {
   let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
@@ -483,49 +515,7 @@ addMessageListener("NetworkPrioritizer:AdjustPriority", (msg) => {
   loadGroup.adjustPriority(msg.data.adjustment);
 });
 
-let DOMFullscreenManager = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
-                                         Ci.nsISupportsWeakReference]),
-
-  init: function() {
-    Services.obs.addObserver(this, "ask-parent-to-exit-fullscreen", false);
-    Services.obs.addObserver(this, "ask-parent-to-rollback-fullscreen", false);
-    addMessageListener("DOMFullscreen:ChildrenMustExit", () => {
-      let utils = content.QueryInterface(Ci.nsIInterfaceRequestor)
-                         .getInterface(Ci.nsIDOMWindowUtils);
-      utils.exitFullscreen();
-    });
-    addEventListener("unload", () => {
-      Services.obs.removeObserver(this, "ask-parent-to-exit-fullscreen");
-      Services.obs.removeObserver(this, "ask-parent-to-rollback-fullscreen");
-    });
-  },
-
-  observe: function(aSubject, aTopic, aData) {
-    // Observer notifications are global, which means that these notifications
-    // might be coming from elements that are not actually children within this
-    // windows' content. We should ignore those. This will not be necessary once
-    // we fix bug 1053413 and stop using observer notifications for this stuff.
-    if (aSubject.defaultView.top !== content) {
-      return;
-    }
-
-    switch (aTopic) {
-      case "ask-parent-to-exit-fullscreen": {
-        sendAsyncMessage("DOMFullscreen:RequestExit");
-        break;
-      }
-      case "ask-parent-to-rollback-fullscreen": {
-        sendAsyncMessage("DOMFullscreen:RequestRollback");
-        break;
-      }
-    }
-  },
-};
-
-DOMFullscreenManager.init();
-
-let AutoCompletePopup = {
+var AutoCompletePopup = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIAutoCompletePopup]),
 
   init: function() {
@@ -575,6 +565,12 @@ let AutoCompletePopup = {
   },
 
   openAutocompletePopup: function (input, element) {
+    if (!this._popupOpen) {
+      // The search itself normally opens the popup itself, but in some cases,
+      // nsAutoCompleteController tries to use cached results so notify our
+      // popup to reuse the last results.
+      sendAsyncMessage("FormAutoComplete:MaybeOpenPopup", {});
+    }
     this._input = input;
     this._popupOpen = true;
   },
@@ -597,10 +593,10 @@ let AutoCompletePopup = {
 
 // We may not get any responses to Browser:Init if the browser element
 // is torn down too quickly.
-let outerWindowID = content.QueryInterface(Ci.nsIInterfaceRequestor)
+var outerWindowID = content.QueryInterface(Ci.nsIInterfaceRequestor)
                            .getInterface(Ci.nsIDOMWindowUtils)
                            .outerWindowID;
-let initData = sendSyncMessage("Browser:Init", {outerWindowID: outerWindowID});
+var initData = sendSyncMessage("Browser:Init", {outerWindowID: outerWindowID});
 if (initData.length) {
   docShell.useGlobalHistory = initData[0].useGlobalHistory;
   if (initData[0].initPopup) {

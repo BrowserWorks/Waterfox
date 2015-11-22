@@ -54,9 +54,9 @@ this.Telemetry = function() {
 
 module.exports = Telemetry;
 
-let {Cc, Ci, Cu} = require("chrome");
-let {Services} = Cu.import("resource://gre/modules/Services.jsm", {});
-let {XPCOMUtils} = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
+var {Cc, Ci, Cu} = require("chrome");
+var {Services} = Cu.import("resource://gre/modules/Services.jsm", {});
+var {XPCOMUtils} = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
 
 Telemetry.prototype = {
   _histograms: {
@@ -151,9 +151,9 @@ Telemetry.prototype = {
       timerHistogram: "DEVTOOLS_NETMONITOR_TIME_ACTIVE_SECONDS"
     },
     storage: {
-       histogram: "DEVTOOLS_STORAGE_OPENED_BOOLEAN",
-       userHistogram: "DEVTOOLS_STORAGE_OPENED_PER_USER_FLAG",
-       timerHistogram: "DEVTOOLS_STORAGE_TIME_ACTIVE_SECONDS"
+      histogram: "DEVTOOLS_STORAGE_OPENED_BOOLEAN",
+      userHistogram: "DEVTOOLS_STORAGE_OPENED_PER_USER_FLAG",
+      timerHistogram: "DEVTOOLS_STORAGE_TIME_ACTIVE_SECONDS"
     },
     tilt: {
       histogram: "DEVTOOLS_TILT_OPENED_BOOLEAN",
@@ -197,6 +197,23 @@ Telemetry.prototype = {
       userHistogram: "DEVTOOLS_WEBIDE_OPENED_PER_USER_FLAG",
       timerHistogram: "DEVTOOLS_WEBIDE_TIME_ACTIVE_SECONDS"
     },
+    webideProjectEditor: {
+      histogram: "DEVTOOLS_WEBIDE_PROJECT_EDITOR_OPENED_BOOLEAN",
+      userHistogram: "DEVTOOLS_WEBIDE_PROJECT_EDITOR_OPENED_PER_USER_FLAG",
+      timerHistogram: "DEVTOOLS_WEBIDE_PROJECT_EDITOR_TIME_ACTIVE_SECONDS"
+    },
+    webideProjectEditorSave: {
+      histogram: "DEVTOOLS_WEBIDE_PROJECT_EDITOR_SAVE_BOOLEAN",
+      userHistogram: "DEVTOOLS_WEBIDE_PROJECT_EDITOR_SAVE_PER_USER_FLAG",
+    },
+    webideNewProject: {
+      histogram: "DEVTOOLS_WEBIDE_NEW_PROJECT_BOOLEAN",
+      userHistogram: "DEVTOOLS_WEBIDE_NEW_PROJECT_PER_USER_FLAG",
+    },
+    webideImportProject: {
+      histogram: "DEVTOOLS_WEBIDE_IMPORT_PROJECT_BOOLEAN",
+      userHistogram: "DEVTOOLS_WEBIDE_IMPORT_PROJECT_PER_USER_FLAG",
+    },
     custom: {
       histogram: "DEVTOOLS_CUSTOM_OPENED_BOOLEAN",
       userHistogram: "DEVTOOLS_CUSTOM_OPENED_PER_USER_FLAG",
@@ -225,6 +242,15 @@ Telemetry.prototype = {
     }
   },
 
+  /**
+   * Record that an action occurred.  Aliases to `toolOpened`, so it's just for
+   * readability at the call site for cases where we aren't actually opening
+   * tools.
+   */
+  actionOccurred(id) {
+    this.toolOpened(id);
+  },
+
   toolClosed: function(id) {
     let charts = this._histograms[id];
 
@@ -250,12 +276,18 @@ Telemetry.prototype = {
    *
    * @param String histogramId
    *        Histogram in which the data is to be stored.
+   * @param String key [optional]
+   *        Optional key for a keyed histogram.
    */
-  stopTimer: function(histogramId) {
+  stopTimer: function(histogramId, key) {
     let startTime = this._timers.get(histogramId);
     if (startTime) {
       let time = (new Date() - startTime) / 1000;
-      this.log(histogramId, time);
+      if (!key) {
+        this.log(histogramId, time);
+      } else {
+        this.logKeyed(histogramId, key, time);
+      }
       this._timers.delete(histogramId);
     }
   },

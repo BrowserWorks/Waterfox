@@ -5,14 +5,12 @@
 "use strict";
 
 const {Cc, Ci, Cu} = require("chrome");
-const {Promise: promise} = require("resource://gre/modules/Promise.jsm");
+const promise = require("promise");
 const EventEmitter = require("devtools/toolkit/event-emitter");
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "DebuggerServer",
-  "resource://gre/modules/devtools/dbg-server.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "DebuggerClient",
-  "resource://gre/modules/devtools/dbg-client.jsm");
+loader.lazyRequireGetter(this, "DebuggerServer", "devtools/server/main", true);
+loader.lazyRequireGetter(this, "DebuggerClient", "devtools/toolkit/client/main", true);
 
 const targets = new WeakMap();
 const promiseTargets = new WeakMap();
@@ -58,6 +56,15 @@ exports.TargetFactory = {
       promiseTargets.set(options, targetPromise);
     }
     return targetPromise;
+  },
+
+  forWorker: function TF_forWorker(workerClient) {
+    let target = targets.get(workerClient);
+    if (target == null) {
+      target = new WorkerTarget(workerClient);
+      targets.set(workerClient, target);
+    }
+    return target;
   },
 
   /**
@@ -798,4 +805,65 @@ WindowTarget.prototype = {
   toString: function() {
     return 'WindowTarget:' + this.window;
   },
+};
+
+function WorkerTarget(workerClient) {
+  EventEmitter.decorate(this);
+  this._workerClient = workerClient;
+}
+
+/**
+ * A WorkerTarget represents a worker. Unlike TabTarget, which can represent
+ * either a local or remote tab, WorkerTarget always represents a remote worker.
+ * Moreover, unlike TabTarget, which is constructed with a placeholder object
+ * for remote tabs (from which a TabClient can then be lazily obtained),
+ * WorkerTarget is constructed with a WorkerClient directly.
+ *
+ * The reason for this is that in order to get notifications when a worker
+ * closes/freezes/thaws, the UI needs to attach to each worker anyway, so by
+ * the time a WorkerTarget for a given worker is created, a WorkerClient for
+ * that worker will already be available. Consequently, there is no need to
+ * obtain a WorkerClient lazily.
+ *
+ * WorkerClient is designed to mimic the interface of TabClient as closely as
+ * possible. This allows us to debug workers as if they were ordinary tabs,
+ * requiring only minimal changes to the rest of the frontend.
+ */
+WorkerTarget.prototype = {
+  get isRemote() {
+    return true;
+  },
+
+  get isTabActor() {
+    return true;
+  },
+
+  get form() {
+    return {
+      from: this._workerClient.actor,
+      type: "attached",
+      isFrozen: this._workerClient.isFrozen,
+      url: this._workerClient.url
+    };
+  },
+
+  get activeTab() {
+    return this._workerClient;
+  },
+
+  get client() {
+    return this._workerClient.client;
+  },
+
+  destroy: function () {},
+
+  hasActor: function (name) {
+    return false;
+  },
+
+  getTrait: function (name) {
+    return undefined;
+  },
+
+  makeRemote: function () {}
 };

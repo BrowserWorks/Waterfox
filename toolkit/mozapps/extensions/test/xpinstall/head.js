@@ -244,6 +244,8 @@ var Harness = {
     ok(!!this.installDisabledCallback, "Installation shouldn't have been disabled");
     if (this.installDisabledCallback)
       this.installDisabledCallback(installInfo);
+    this.expectingCancelled = true;
+    this.expectingCancelled = false;
     this.endTest();
   },
 
@@ -305,15 +307,17 @@ var Harness = {
     if (this.finalContentEvent && !this.waitingForEvent) {
       this.waitingForEvent = true;
       info("Waiting for " + this.finalContentEvent);
+      let mm = gBrowser.selectedBrowser.messageManager;
+      mm.loadFrameScript(`data:,content.addEventListener("${this.finalContentEvent}", () => { sendAsyncMessage("Test:GotNewInstallEvent"); });`, false);
       let win = gBrowser.contentWindow;
       let listener = () => {
         info("Saw " + this.finalContentEvent);
-        win.removeEventListener(this.finalContentEvent, listener, false);
+        mm.removeMessageListener("Test:GotNewInstallEvent", listener);
         this.waitingForEvent = false;
         if (this.pendingCount == 0)
           this.endTest();
       }
-      win.addEventListener(this.finalContentEvent, listener, false);
+      mm.addMessageListener("Test:GotNewInstallEvent", listener);
     }
   },
 

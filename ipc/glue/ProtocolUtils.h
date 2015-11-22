@@ -38,23 +38,25 @@ namespace {
 // protocol 0.  Oops!  We can get away with this until protocol 0
 // starts approaching its 65,536th message.
 enum {
-    CHANNEL_OPENED_MESSAGE_TYPE = kuint16max - 5,
-    SHMEM_DESTROYED_MESSAGE_TYPE = kuint16max - 4,
-    SHMEM_CREATED_MESSAGE_TYPE = kuint16max - 3,
-    GOODBYE_MESSAGE_TYPE       = kuint16max - 2
+    CHANNEL_OPENED_MESSAGE_TYPE = kuint16max - 6,
+    SHMEM_DESTROYED_MESSAGE_TYPE = kuint16max - 5,
+    SHMEM_CREATED_MESSAGE_TYPE = kuint16max - 4,
+    GOODBYE_MESSAGE_TYPE       = kuint16max - 3,
+    CANCEL_MESSAGE_TYPE        = kuint16max - 2,
 
     // kuint16max - 1 is used by ipc_channel.h.
 };
-}
+
+} // namespace
 
 namespace mozilla {
 namespace dom {
 class ContentParent;
-}
+} // namespace dom
 
 namespace net {
 class NeckoParent;
-}
+} // namespace net
 
 namespace ipc {
 
@@ -126,19 +128,15 @@ class ProtocolCloneContext
   typedef mozilla::dom::ContentParent ContentParent;
   typedef mozilla::net::NeckoParent NeckoParent;
 
-  ContentParent* mContentParent;
+  nsRefPtr<ContentParent> mContentParent;
   NeckoParent* mNeckoParent;
 
 public:
-  ProtocolCloneContext()
-    : mContentParent(nullptr)
-    , mNeckoParent(nullptr)
-  {}
+  ProtocolCloneContext();
 
-  void SetContentParent(ContentParent* aContentParent)
-  {
-    mContentParent = aContentParent;
-  }
+  ~ProtocolCloneContext();
+
+  void SetContentParent(ContentParent* aContentParent);
 
   ContentParent* GetContentParent() { return mContentParent; }
 
@@ -151,7 +149,7 @@ public:
 };
 
 template<class ListenerT>
-class /*NS_INTERFACE_CLASS*/ IProtocolManager
+class IProtocolManager
 {
 public:
     enum ActorDestroyReason {
@@ -237,6 +235,8 @@ public:
 
     void GetOpenedActors(nsTArray<IToplevelProtocol*>& aActors);
 
+    virtual MessageChannel* GetIPCChannel() = 0;
+
     // This Unsafe version should only be used when all other threads are
     // frozen, since it performs no locking. It also takes a stack-allocated
     // array and its size (number of elements) rather than an nsTArray. The Nuwa
@@ -298,7 +298,7 @@ FatalError(const char* aProtocolName, const char* aMsg,
 
 struct PrivateIPDLInterface {};
 
-bool
+nsresult
 Bridge(const PrivateIPDLInterface&,
        MessageChannel*, base::ProcessId, MessageChannel*, base::ProcessId,
        ProtocolId, ProtocolId);

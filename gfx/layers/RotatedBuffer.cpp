@@ -24,7 +24,7 @@
 #include "mozilla/gfx/Types.h"          // for ExtendMode::ExtendMode::CLAMP, etc
 #include "mozilla/layers/ShadowLayers.h"  // for ShadowableLayer
 #include "mozilla/layers/TextureClient.h"  // for TextureClient
-#include "nsSize.h"                     // for nsIntSize
+#include "mozilla/gfx/Point.h"          // for IntSize
 #include "gfx2DGlue.h"
 #include "nsLayoutUtils.h"              // for invalidation debugging
 
@@ -113,13 +113,13 @@ RotatedBuffer::DrawBufferQuadrant(gfx::DrawTarget* aTarget,
     }
   }
 
-  if (aOperator == CompositionOp::OP_SOURCE) {
-    // OP_SOURCE is unbounded in Azure, and we really don't want that behaviour here.
-    // We also can't do a ClearRect+FillRect since we need the drawing to happen
-    // as an atomic operation (to prevent flickering).
-    aTarget->PushClipRect(gfx::Rect(fillRect.x, fillRect.y,
-                                    fillRect.width, fillRect.height));
-  }
+  // OP_SOURCE is unbounded in Azure, and we really don't want that behaviour here.
+  // We also can't do a ClearRect+FillRect since we need the drawing to happen
+  // as an atomic operation (to prevent flickering).
+  // We also need this clip in the case where we have a mask, since the mask surface
+  // might cover more than fillRect, but we only want to touch the pixels inside
+  // fillRect.
+  aTarget->PushClipRect(gfx::ToRect(fillRect));
 
   if (aMask) {
     Matrix oldTransform = aTarget->GetTransform();
@@ -155,9 +155,7 @@ RotatedBuffer::DrawBufferQuadrant(gfx::DrawTarget* aTarget,
                          DrawOptions(aOpacity, aOperator));
   }
 
-  if (aOperator == CompositionOp::OP_SOURCE) {
-    aTarget->PopClip();
-  }
+  aTarget->PopClip();
 }
 
 void
@@ -179,7 +177,7 @@ RotatedBuffer::DrawBufferWithRotation(gfx::DrawTarget *aTarget, ContextSource aS
   DrawBufferQuadrant(aTarget, RIGHT, BOTTOM, aSource, aOpacity, aOperator,aMask, aMaskTransform);
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 SourceRotatedBuffer::GetSourceSurface(ContextSource aSource) const
 {
   RefPtr<SourceSurface> surf;
@@ -191,7 +189,7 @@ SourceRotatedBuffer::GetSourceSurface(ContextSource aSource) const
   }
 
   MOZ_ASSERT(surf);
-  return surf;
+  return surf.forget();
 }
 
 /* static */ bool
@@ -332,7 +330,7 @@ RotatedContentBuffer::BufferContentType()
 }
 
 bool
-RotatedContentBuffer::BufferSizeOkFor(const nsIntSize& aSize)
+RotatedContentBuffer::BufferSizeOkFor(const IntSize& aSize)
 {
   return (aSize == mBufferRect.Size() ||
           (SizedToVisibleBounds != mBufferSizePolicy &&
@@ -736,6 +734,7 @@ RotatedContentBuffer::BorrowDrawTargetForPainting(PaintState& aPaintState,
   if (!result) {
     return nullptr;
   }
+
   nsIntRegion* drawPtr = &aPaintState.mRegionToDraw;
   if (aIter) {
     // The iterators draw region currently only contains the bounds of the region,
@@ -745,6 +744,8 @@ RotatedContentBuffer::BorrowDrawTargetForPainting(PaintState& aPaintState,
   }
   if (result->GetBackendType() == BackendType::DIRECT2D ||
       result->GetBackendType() == BackendType::DIRECT2D1_1) {
+    // Simplify the draw region to avoid hitting expensive drawing paths
+    // for complex regions.
     drawPtr->SimplifyOutwardByArea(100 * 100);
   }
 
@@ -775,7 +776,7 @@ RotatedContentBuffer::BorrowDrawTargetForPainting(PaintState& aPaintState,
   return result;
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 RotatedContentBuffer::GetSourceSurface(ContextSource aSource) const
 {
   MOZ_ASSERT(mDTBuffer);
@@ -788,6 +789,6 @@ RotatedContentBuffer::GetSourceSurface(ContextSource aSource) const
   }
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 

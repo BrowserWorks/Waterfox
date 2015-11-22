@@ -28,8 +28,7 @@ public:
   virtual void ChangeState(PlayState aState) override;
   virtual void CallSeek(const SeekTarget& aTarget) override;
   virtual void SetVolume(double aVolume) override;
-  virtual void PlaybackPositionChanged(MediaDecoderEventVisibility aEventVisibility =
-                                         MediaDecoderEventVisibility::Observable) override;
+  virtual int64_t CurrentPosition() override;
   virtual MediaDecoderOwner::NextFrameStatus NextFrameStatus() override;
   virtual void SetElementVisibility(bool aIsVisible) override;
   virtual void SetPlatformCanOffloadAudio(bool aCanOffloadAudio) override;
@@ -44,6 +43,8 @@ public:
 
   virtual MediaOmxCommonReader* CreateReader() = 0;
   virtual MediaDecoderStateMachine* CreateStateMachineFromReader(MediaOmxCommonReader* aReader) = 0;
+
+  void NotifyOffloadPlayerPositionChanged() { UpdateLogicalPosition(); }
 
 protected:
   virtual ~MediaOmxCommonDecoder();
@@ -63,6 +64,9 @@ protected:
   // Set when offload playback of current track fails in the middle and need to
   // fallback to state machine
   bool mFallbackToStateMachine;
+
+  // True if the media element is captured.
+  bool mIsCaptured;
 };
 
 } // namespace mozilla

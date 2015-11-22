@@ -29,7 +29,15 @@ XPCOMUtils.defineLazyServiceGetter(this, "gMobileConnectionService",
                                    "@mozilla.org/mobileconnection/mobileconnectionservice;1",
                                    "nsIGonkMobileConnectionService");
 
-let DEBUG = RIL.DEBUG_RIL;
+XPCOMUtils.defineLazyServiceGetter(this, "gIccMessenger",
+                                   "@mozilla.org/ril/system-messenger-helper;1",
+                                   "nsIIccMessenger");
+
+XPCOMUtils.defineLazyServiceGetter(this, "gStkCmdFactory",
+                                   "@mozilla.org/icc/stkcmdfactory;1",
+                                   "nsIStkCmdFactory");
+
+var DEBUG = RIL.DEBUG_RIL;
 function debug(s) {
   dump("IccService: " + s);
 }
@@ -70,6 +78,86 @@ CdmaIccInfo.prototype = {
 
   mdn: null,
   prlVersion: 0
+};
+
+function IccContact(aContact) {
+  this.id = aContact.contactId || null;
+  this._names = [];
+  this._numbers = [];
+  this._emails = [];
+
+  if (aContact.alphaId) {
+    this._names.push(aContact.alphaId);
+  }
+
+  if (aContact.number) {
+    this._numbers.push(aContact.number);
+  }
+
+  let anrLen = aContact.anr ? aContact.anr.length : 0;
+  for (let i = 0; i < anrLen; i++) {
+    this._numbers.push(aContact.anr[i]);
+  }
+
+  if (aContact.email) {
+    this._emails.push(aContact.email);
+  }
+}
+IccContact.prototype = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIIccContact]),
+
+  _names: null,
+  _numbers: null,
+  _emails: null,
+
+  // nsIIccContact
+
+  id: null,
+
+  getNames: function(aCount) {
+    if (!this._names) {
+      if (aCount) {
+        aCount.value = 0;
+      }
+      return null;
+    }
+
+    if (aCount) {
+      aCount.value = this._names.length;
+    }
+
+    return this._names.slice();
+  },
+
+  getNumbers: function(aCount) {
+    if (!this._numbers) {
+      if (aCount) {
+        aCount.value = 0;
+      }
+      return null;
+    }
+
+    if (aCount) {
+      aCount.value = this._numbers.length;
+    }
+
+    return this._numbers.slice();
+  },
+
+  getEmails: function(aCount) {
+    if (!this._emails) {
+      if (aCount) {
+        aCount.value = 0;
+      }
+      return null;
+    }
+
+    if (aCount) {
+      aCount.value = this._emails.length;
+    }
+
+    return this._emails.slice();
+  },
 };
 
 function IccService() {
@@ -124,6 +212,32 @@ IccService.prototype = {
   /**
    * nsIGonkIccService interface.
    */
+  notifyStkCommand: function(aServiceId, aStkcommand) {
+    if (DEBUG) {
+      debug("notifyStkCommand for service Id: " + aServiceId);
+    }
+
+    let icc = this.getIccByServiceId(aServiceId);
+
+    if (!icc.iccInfo || !icc.iccInfo.iccid) {
+      debug("Warning: got STK command when iccid is invalid.");
+      return;
+    }
+
+    gIccMessenger.notifyStkProactiveCommand(icc.iccInfo.iccid, aStkcommand);
+
+    icc._deliverListenerEvent("notifyStkCommand", [aStkcommand]);
+  },
+
+  notifyStkSessionEnd: function(aServiceId) {
+    if (DEBUG) {
+      debug("notifyStkSessionEnd for service Id: " + aServiceId);
+    }
+
+    this.getIccByServiceId(aServiceId)
+      ._deliverListenerEvent("notifyStkSessionEnd");
+  },
+
   notifyCardStateChanged: function(aServiceId, aCardState) {
     if (DEBUG) {
       debug("notifyCardStateChanged for service Id: " + aServiceId +
@@ -482,7 +596,151 @@ Icc.prototype = {
 
       aCallback.notifySuccessWithBoolean(aResponse.result);
     });
-  }
+  },
+
+  iccOpenChannel: function(aAid, aCallback) {
+    this._radioInterface.sendWorkerMessage("iccOpenChannel",
+                                           { aid: aAid },
+                                           (aResponse) => {
+      if (aResponse.errorMsg) {
+        aCallback.notifyError(aResponse.errorMsg);
+        return;
+      }
+
+      aCallback.notifyOpenChannelSuccess(aResponse.channel);
+    });
+  },
+
+  iccExchangeAPDU: function(aChannel, aCla, aIns, aP1, aP2, aP3, aData, aCallback) {
+    if (!aData) {
+      if (DEBUG) debug('data is not set , aP3 : ' + aP3);
+    }
+
+    let apdu = {
+      cla: aCla,
+      command: aIns,
+      p1: aP1,
+      p2: aP2,
+      p3: aP3,
+      data: aData
+    };
+
+    this._radioInterface.sendWorkerMessage("iccExchangeAPDU",
+                                           { channel: aChannel, apdu: apdu },
+                                           (aResponse) => {
+      if (aResponse.errorMsg) {
+        aCallback.notifyError(aResponse.errorMsg);
+        return;
+      }
+
+      aCallback.notifyExchangeAPDUResponse(aResponse.sw1,
+                                           aResponse.sw2,
+                                           aResponse.simResponse);
+    });
+  },
+
+  iccCloseChannel: function(aChannel, aCallback) {
+    this._radioInterface.sendWorkerMessage("iccCloseChannel",
+                                           { channel: aChannel },
+                                           (aResponse) => {
+      if (aResponse.errorMsg) {
+        aCallback.notifyError(aResponse.errorMsg);
+        return;
+      }
+
+      aCallback.notifyCloseChannelSuccess();
+    });
+  },
+
+  sendStkResponse: function(aCommand, aResponse) {
+    let response = gStkCmdFactory.createResponseMessage(aResponse);
+    response.command = gStkCmdFactory.createCommandMessage(aCommand);
+    this._radioInterface.sendWorkerMessage("sendStkTerminalResponse", response);
+  },
+
+  sendStkMenuSelection: function(aItemIdentifier, aHelpRequested) {
+    this._radioInterface
+      .sendWorkerMessage("sendStkMenuSelection", {
+        itemIdentifier: aItemIdentifier,
+        helpRequested: aHelpRequested
+      });
+  },
+
+  sendStkTimerExpiration: function(aTimerId, aTimerValue) {
+    this._radioInterface
+      .sendWorkerMessage("sendStkTimerExpiration",{
+        timer: {
+          timerId: aTimerId,
+          timerValue: aTimerValue
+        }
+      });
+  },
+
+  sendStkEventDownload: function(aEvent) {
+    this._radioInterface
+      .sendWorkerMessage("sendStkEventDownload",
+                         { event: gStkCmdFactory.createEventMessage(aEvent) });
+  },
+
+  readContacts: function(aContactType, aCallback) {
+    this._radioInterface
+      .sendWorkerMessage("readICCContacts",
+                         { contactType: aContactType },
+                         (aResponse) => {
+      if (aResponse.errorMsg) {
+        aCallback.notifyError(aResponse.errorMsg);
+        return;
+      }
+
+      let iccContacts = [];
+
+      aResponse.contacts.forEach(c => iccContacts.push(new IccContact(c)));
+
+      aCallback.notifyRetrievedIccContacts(iccContacts, iccContacts.length);
+    });
+  },
+
+  updateContact: function(aContactType, aContact, aPin2, aCallback) {
+    let iccContact = { contactId: aContact.id };
+    let count = { value: 0 };
+    let names = aContact.getNames(count);
+    if (count.value > 0) {
+      iccContact.alphaId = names[0];
+    }
+
+    let numbers = aContact.getNumbers(count);
+    if (count.value > 0) {
+      iccContact.number = numbers[0];
+
+      let anrArray = numbers.slice(1);
+      let length = anrArray.length;
+      if (length > 0) {
+        iccContact.anr = [];
+        for (let i = 0; i < length; i++) {
+          iccContact.anr.push(anrArray[i]);
+        }
+      }
+    }
+
+    let emails = aContact.getEmails(count);
+    if (count.value > 0) {
+      iccContact.email = emails[0];
+    }
+
+    this._radioInterface
+      .sendWorkerMessage("updateICCContact",
+                         { contactType: aContactType,
+                           contact: iccContact,
+                           pin2: aPin2 },
+                         (aResponse) => {
+      if (aResponse.errorMsg) {
+        aCallback.notifyError(aResponse.errorMsg);
+        return;
+      }
+
+      aCallback.notifyUpdatedIccContact(new IccContact(aResponse.contact));
+    });
+  },
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([IccService]);

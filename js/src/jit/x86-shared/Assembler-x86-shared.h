@@ -10,10 +10,38 @@
 #include <cstddef>
 
 #include "jit/shared/Assembler-shared.h"
-#include "jit/x86-shared/BaseAssembler-x86-shared.h"
+
+#if defined(JS_CODEGEN_X86)
+# include "jit/x86/BaseAssembler-x86.h"
+#elif defined(JS_CODEGEN_X64)
+# include "jit/x64/BaseAssembler-x64.h"
+#else
+# error "Unknown architecture!"
+#endif
 
 namespace js {
 namespace jit {
+
+struct ScratchFloat32Scope : public AutoFloatRegisterScope
+{
+    explicit ScratchFloat32Scope(MacroAssembler& masm)
+      : AutoFloatRegisterScope(masm, ScratchFloat32Reg)
+    { }
+};
+
+struct ScratchDoubleScope : public AutoFloatRegisterScope
+{
+    explicit ScratchDoubleScope(MacroAssembler& masm)
+      : AutoFloatRegisterScope(masm, ScratchDoubleReg)
+    { }
+};
+
+struct ScratchSimdScope : public AutoFloatRegisterScope
+{
+    explicit ScratchSimdScope(MacroAssembler& masm)
+      : AutoFloatRegisterScope(masm, ScratchSimdReg)
+    { }
+};
 
 class Operand
 {
@@ -229,15 +257,18 @@ class AssemblerX86Shared : public AssemblerShared
     CompactBufferWriter preBarriers_;
 
     void writeDataRelocation(ImmGCPtr ptr) {
-        if (ptr.value)
+        if (ptr.value) {
+            if (gc::IsInsideNursery(ptr.value))
+                embedsNurseryPointers_ = true;
             dataRelocations_.writeUnsigned(masm.currentOffset());
+        }
     }
     void writePrebarrierOffset(CodeOffsetLabel label) {
         preBarriers_.writeUnsigned(label.offset());
     }
 
   protected:
-    X86Encoding::BaseAssembler masm;
+    X86Encoding::BaseAssemblerSpecific masm;
 
     typedef X86Encoding::JmpSrc JmpSrc;
     typedef X86Encoding::JmpDst JmpDst;
@@ -347,9 +378,6 @@ class AssemblerX86Shared : public AssemblerShared
     }
 
     static void TraceDataRelocations(JSTracer* trc, JitCode* code, CompactBufferReader& reader);
-
-    static void FixupNurseryObjects(JSContext* cx, JitCode* code, CompactBufferReader& reader,
-                                    const ObjectVector& nurseryObjects);
 
     // MacroAssemblers hold onto gcthings, so they are traced by the GC.
     void trace(JSTracer* trc);
@@ -1129,6 +1157,24 @@ class AssemblerX86Shared : public AssemblerShared
             MOZ_CRASH("unexpected operand kind");
         }
     }
+    void addw(Imm32 imm, const Operand& op) {
+        switch (op.kind()) {
+          case Operand::REG:
+            masm.addw_ir(imm.value, op.reg());
+            break;
+          case Operand::MEM_REG_DISP:
+            masm.addw_im(imm.value, op.disp(), op.base());
+            break;
+          case Operand::MEM_ADDRESS32:
+            masm.addw_im(imm.value, op.address());
+            break;
+          case Operand::MEM_SCALE:
+            masm.addw_im(imm.value, op.disp(), op.base(), op.index(), op.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
     void subl(Imm32 imm, Register dest) {
         masm.subl_ir(imm.value, dest.encoding());
     }
@@ -1147,6 +1193,21 @@ class AssemblerX86Shared : public AssemblerShared
             MOZ_CRASH("unexpected operand kind");
         }
     }
+    void subw(Imm32 imm, const Operand& op) {
+        switch (op.kind()) {
+          case Operand::REG:
+            masm.subw_ir(imm.value, op.reg());
+            break;
+          case Operand::MEM_REG_DISP:
+            masm.subw_im(imm.value, op.disp(), op.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.subw_im(imm.value, op.disp(), op.base(), op.index(), op.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
     void addl(Register src, Register dest) {
         masm.addl_rr(src.encoding(), dest.encoding());
     }
@@ -1160,6 +1221,21 @@ class AssemblerX86Shared : public AssemblerShared
             break;
           case Operand::MEM_SCALE:
             masm.addl_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
+    void addw(Register src, const Operand& dest) {
+        switch (dest.kind()) {
+          case Operand::REG:
+            masm.addw_rr(src.encoding(), dest.reg());
+            break;
+          case Operand::MEM_REG_DISP:
+            masm.addw_rm(src.encoding(), dest.disp(), dest.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.addw_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
@@ -1195,6 +1271,21 @@ class AssemblerX86Shared : public AssemblerShared
             MOZ_CRASH("unexpected operand kind");
         }
     }
+    void subw(Register src, const Operand& dest) {
+        switch (dest.kind()) {
+          case Operand::REG:
+            masm.subw_rr(src.encoding(), dest.reg());
+            break;
+          case Operand::MEM_REG_DISP:
+            masm.subw_rm(src.encoding(), dest.disp(), dest.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.subw_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
     void orl(Register reg, Register dest) {
         masm.orl_rr(reg.encoding(), dest.encoding());
     }
@@ -1208,6 +1299,21 @@ class AssemblerX86Shared : public AssemblerShared
             break;
           case Operand::MEM_SCALE:
             masm.orl_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
+    void orw(Register src, const Operand& dest) {
+        switch (dest.kind()) {
+          case Operand::REG:
+            masm.orw_rr(src.encoding(), dest.reg());
+            break;
+          case Operand::MEM_REG_DISP:
+            masm.orw_rm(src.encoding(), dest.disp(), dest.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.orw_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
@@ -1231,6 +1337,21 @@ class AssemblerX86Shared : public AssemblerShared
             MOZ_CRASH("unexpected operand kind");
         }
     }
+    void orw(Imm32 imm, const Operand& op) {
+        switch (op.kind()) {
+          case Operand::REG:
+            masm.orw_ir(imm.value, op.reg());
+            break;
+          case Operand::MEM_REG_DISP:
+            masm.orw_im(imm.value, op.disp(), op.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.orw_im(imm.value, op.disp(), op.base(), op.index(), op.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
     void xorl(Register src, Register dest) {
         masm.xorl_rr(src.encoding(), dest.encoding());
     }
@@ -1244,6 +1365,21 @@ class AssemblerX86Shared : public AssemblerShared
             break;
           case Operand::MEM_SCALE:
             masm.xorl_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
+    void xorw(Register src, const Operand& dest) {
+        switch (dest.kind()) {
+          case Operand::REG:
+            masm.xorw_rr(src.encoding(), dest.reg());
+            break;
+          case Operand::MEM_REG_DISP:
+            masm.xorw_rm(src.encoding(), dest.disp(), dest.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.xorw_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
@@ -1267,6 +1403,21 @@ class AssemblerX86Shared : public AssemblerShared
             MOZ_CRASH("unexpected operand kind");
         }
     }
+    void xorw(Imm32 imm, const Operand& op) {
+        switch (op.kind()) {
+          case Operand::REG:
+            masm.xorw_ir(imm.value, op.reg());
+            break;
+          case Operand::MEM_REG_DISP:
+            masm.xorw_im(imm.value, op.disp(), op.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.xorw_im(imm.value, op.disp(), op.base(), op.index(), op.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
     void andl(Register src, Register dest) {
         masm.andl_rr(src.encoding(), dest.encoding());
     }
@@ -1285,6 +1436,21 @@ class AssemblerX86Shared : public AssemblerShared
             MOZ_CRASH("unexpected operand kind");
         }
     }
+    void andw(Register src, const Operand& dest) {
+        switch (dest.kind()) {
+          case Operand::REG:
+            masm.andw_rr(src.encoding(), dest.reg());
+            break;
+          case Operand::MEM_REG_DISP:
+            masm.andw_rm(src.encoding(), dest.disp(), dest.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.andw_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
     void andl(Imm32 imm, Register dest) {
         masm.andl_ir(imm.value, dest.encoding());
     }
@@ -1298,6 +1464,21 @@ class AssemblerX86Shared : public AssemblerShared
             break;
           case Operand::MEM_SCALE:
             masm.andl_im(imm.value, op.disp(), op.base(), op.index(), op.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
+    void andw(Imm32 imm, const Operand& op) {
+        switch (op.kind()) {
+          case Operand::REG:
+            masm.andw_ir(imm.value, op.reg());
+            break;
+          case Operand::MEM_REG_DISP:
+            masm.andw_im(imm.value, op.disp(), op.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.andw_im(imm.value, op.disp(), op.base(), op.index(), op.scale());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
@@ -1356,6 +1537,9 @@ class AssemblerX86Shared : public AssemblerShared
     }
     void imull(Register multiplier) {
         masm.imull_r(multiplier.encoding());
+    }
+    void umull(Register multiplier) {
+        masm.mull_r(multiplier.encoding());
     }
     void imull(Imm32 imm, Register dest) {
         masm.imull_ir(imm.value, dest.encoding(), dest.encoding());
@@ -1619,32 +1803,27 @@ class AssemblerX86Shared : public AssemblerShared
     template<typename T>
     void lock_addw(T src, const Operand& op) {
         masm.prefix_lock();
-        masm.prefix_16_for_32();
-        addl(src, op);
+        addw(src, op);
     }
     template<typename T>
     void lock_subw(T src, const Operand& op) {
         masm.prefix_lock();
-        masm.prefix_16_for_32();
-        subl(src, op);
+        subw(src, op);
     }
     template<typename T>
     void lock_andw(T src, const Operand& op) {
         masm.prefix_lock();
-        masm.prefix_16_for_32();
-        andl(src, op);
+        andw(src, op);
     }
     template<typename T>
     void lock_orw(T src, const Operand& op) {
         masm.prefix_lock();
-        masm.prefix_16_for_32();
-        orl(src, op);
+        orw(src, op);
     }
     template<typename T>
     void lock_xorw(T src, const Operand& op) {
         masm.prefix_lock();
-        masm.prefix_16_for_32();
-        xorl(src, op);
+        xorw(src, op);
     }
 
     // Note, lock_addl(imm, op) is used for a memory barrier on non-SSE2 systems,
@@ -1709,6 +1888,43 @@ class AssemblerX86Shared : public AssemblerShared
             break;
           case Operand::MEM_SCALE:
             masm.cmpxchgl(src.encoding(), mem.disp(), mem.base(), mem.index(), mem.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
+
+    void xchgb(Register src, const Operand& mem) {
+        switch (mem.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.xchgb_rm(src.encoding(), mem.disp(), mem.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.xchgb_rm(src.encoding(), mem.disp(), mem.base(), mem.index(), mem.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
+    void xchgw(Register src, const Operand& mem) {
+        switch (mem.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.xchgw_rm(src.encoding(), mem.disp(), mem.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.xchgw_rm(src.encoding(), mem.disp(), mem.base(), mem.index(), mem.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
+    void xchgl(Register src, const Operand& mem) {
+        switch (mem.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.xchgl_rm(src.encoding(), mem.disp(), mem.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.xchgl_rm(src.encoding(), mem.disp(), mem.base(), mem.index(), mem.scale());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
@@ -2003,6 +2219,7 @@ class AssemblerX86Shared : public AssemblerShared
     void vcmpps(uint8_t order, Operand src1, FloatRegister src0, FloatRegister dest) {
         MOZ_ASSERT(HasSSE2());
         // :TODO: (Bug 1132894) See LIRGeneratorX86Shared::lowerForFPU
+        // FIXME: This logic belongs in the MacroAssembler.
         if (!HasAVX() && !src0.aliases(dest)) {
             if (src1.kind() == Operand::FPREG &&
                 dest.aliases(FloatRegister::FromCode(src1.fpu())))
@@ -2766,7 +2983,7 @@ class AssemblerX86Shared : public AssemblerShared
         }
     }
     unsigned blendpsMask(bool x, bool y, bool z, bool w) {
-        return x | (y << 1) | (z << 2) | (w << 3);
+        return (x << 0) | (y << 1) | (z << 2) | (w << 3);
     }
     void vblendps(unsigned mask, FloatRegister src1, FloatRegister src0, FloatRegister dest) {
         MOZ_ASSERT(HasSSE41());

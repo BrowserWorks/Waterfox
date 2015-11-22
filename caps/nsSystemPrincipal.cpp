@@ -29,74 +29,17 @@ NS_IMPL_CI_INTERFACE_GETTER(nsSystemPrincipal,
                             nsIPrincipal,
                             nsISerializable)
 
-NS_IMETHODIMP_(MozExternalRefCountType)
-nsSystemPrincipal::AddRef()
-{
-  NS_PRECONDITION(int32_t(refcount) >= 0, "illegal refcnt");
-  nsrefcnt count = ++refcount;
-  NS_LOG_ADDREF(this, count, "nsSystemPrincipal", sizeof(*this));
-  return count;
-}
-
-NS_IMETHODIMP_(MozExternalRefCountType)
-nsSystemPrincipal::Release()
-{
-  NS_PRECONDITION(0 != refcount, "dup release");
-  nsrefcnt count = --refcount;
-  NS_LOG_RELEASE(this, count, "nsSystemPrincipal");
-  if (count == 0) {
-    delete this;
-  }
-
-  return count;
-}
-
-static const char SYSTEM_PRINCIPAL_SPEC[] = "[System Principal]";
+#define SYSTEM_PRINCIPAL_SPEC "[System Principal]"
 
 void
 nsSystemPrincipal::GetScriptLocation(nsACString &aStr)
 {
-    aStr.Assign(SYSTEM_PRINCIPAL_SPEC);
+    aStr.AssignLiteral(SYSTEM_PRINCIPAL_SPEC);
 }
-
-#ifdef DEBUG
-void nsSystemPrincipal::dumpImpl()
-{
-  fprintf(stderr, "nsSystemPrincipal (%p)\n", this);
-}
-#endif 
-
 
 ///////////////////////////////////////
 // Methods implementing nsIPrincipal //
 ///////////////////////////////////////
-
-NS_IMETHODIMP
-nsSystemPrincipal::Equals(nsIPrincipal *other, bool *result)
-{
-    *result = (other == this);
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-nsSystemPrincipal::EqualsConsideringDomain(nsIPrincipal *other, bool *result)
-{
-    return Equals(other, result);
-}
-
-NS_IMETHODIMP
-nsSystemPrincipal::Subsumes(nsIPrincipal *other, bool *result)
-{
-    *result = true;
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-nsSystemPrincipal::SubsumesConsideringDomain(nsIPrincipal *other, bool *result)
-{
-    *result = true;
-    return NS_OK;
-}
 
 NS_IMETHODIMP
 nsSystemPrincipal::CheckMayLoad(nsIURI* uri, bool aReport, bool aAllowIfInheritsPrincipal)
@@ -118,11 +61,11 @@ nsSystemPrincipal::GetURI(nsIURI** aURI)
     return NS_OK;
 }
 
-NS_IMETHODIMP 
-nsSystemPrincipal::GetOrigin(char** aOrigin)
+nsresult
+nsSystemPrincipal::GetOriginInternal(nsACString& aOrigin)
 {
-    *aOrigin = ToNewCString(NS_LITERAL_CSTRING(SYSTEM_PRINCIPAL_SPEC));
-    return *aOrigin ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
+    aOrigin.AssignLiteral(SYSTEM_PRINCIPAL_SPEC);
+    return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -153,59 +96,10 @@ nsSystemPrincipal::SetDomain(nsIURI* aDomain)
 }
 
 NS_IMETHODIMP
-nsSystemPrincipal::GetJarPrefix(nsACString& aJarPrefix)
-{
-  aJarPrefix.Truncate();
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsSystemPrincipal::GetAppStatus(uint16_t* aAppStatus)
-{
-  *aAppStatus = nsIPrincipal::APP_STATUS_NOT_INSTALLED;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsSystemPrincipal::GetAppId(uint32_t* aAppId)
-{
-  *aAppId = nsIScriptSecurityManager::NO_APP_ID;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsSystemPrincipal::GetIsInBrowserElement(bool* aIsInBrowserElement)
-{
-  *aIsInBrowserElement = false;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsSystemPrincipal::GetUnknownAppId(bool* aUnknownAppId)
-{
-  *aUnknownAppId = false;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsSystemPrincipal::GetIsNullPrincipal(bool* aIsNullPrincipal)
-{
-  *aIsNullPrincipal = false;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 nsSystemPrincipal::GetBaseDomain(nsACString& aBaseDomain)
 {
   // No base domain for chrome.
   return NS_OK;
-}
-
-bool
-nsSystemPrincipal::IsOnCSSUnprefixingWhitelist()
-{
-  // chrome stylesheets should not be fed to the CSS Unprefixing Service.
-  return false;
 }
 
 //////////////////////////////////////////
@@ -224,16 +118,4 @@ nsSystemPrincipal::Write(nsIObjectOutputStream* aStream)
 {
     // no-op: CID is sufficient to identify the mSystemPrincipal singleton
     return NS_OK;
-}
-
-/////////////////////////////////////////////
-// Constructor, Destructor, initialization //
-/////////////////////////////////////////////
-
-nsSystemPrincipal::nsSystemPrincipal()
-{
-}
-
-nsSystemPrincipal::~nsSystemPrincipal()
-{
 }

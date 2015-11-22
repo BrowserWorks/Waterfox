@@ -16,9 +16,18 @@
 #include "nsIStringBundle.h"
 #include "nsIStandardURL.h"
 #include "nsMimeTypes.h"
+#include "nsNetCID.h"
 #include "nsNetUtil.h"
+#include "nsServiceManagerUtils.h"
+#include "nsIURI.h"
+#include "nsIAuthPrompt.h"
+#include "nsIChannel.h"
+#include "nsIInputStream.h"
+#include "nsIProtocolHandler.h"
 #include "nsNullPrincipal.h"
 #include "mozilla/Monitor.h"
+#include "plstr.h"
+#include "prtime.h"
 #include <gio/gio.h>
 #include <algorithm>
 
@@ -28,12 +37,8 @@
 //-----------------------------------------------------------------------------
 
 // NSPR_LOG_MODULES=gio:5
-#ifdef PR_LOGGING
 static PRLogModuleInfo *sGIOLog;
-#define LOG(args) PR_LOG(sGIOLog, PR_LOG_DEBUG, args)
-#else
-#define LOG(args)
-#endif
+#define LOG(args) MOZ_LOG(sGIOLog, mozilla::LogLevel::Debug, args)
 
 
 //-----------------------------------------------------------------------------
@@ -906,9 +911,7 @@ NS_IMPL_ISUPPORTS(nsGIOProtocolHandler, nsIProtocolHandler, nsIObserver)
 nsresult
 nsGIOProtocolHandler::Init()
 {
-#ifdef PR_LOGGING
   sGIOLog = PR_NewLogModule("gio");
-#endif
 
   nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
   if (prefs)

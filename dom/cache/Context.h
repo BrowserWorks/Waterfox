@@ -21,11 +21,17 @@ class nsIThread;
 
 namespace mozilla {
 namespace dom {
+
+namespace quota {
+
+class DirectoryLock;
+
+} // namespace quota
+
 namespace cache {
 
 class Action;
 class Manager;
-class OfflineStorage;
 
 // The Context class is RAII-style class for managing IO operations within the
 // Cache.
@@ -41,8 +47,8 @@ class OfflineStorage;
 //  1) The Manager will call Context::AllowToClose() when all of the actors
 //     have removed themselves as listener.  This means an idle context with
 //     no active DOM objects will close gracefully.
-//  2) The QuotaManager invalidates the storage area so it can delete the
-//     files.  In this case the OfflineStorage calls Cache::Invalidate() which
+//  2) The QuotaManager aborts all operations so it can delete the files.
+//     In this case the QuotaManager calls Client::AbortOperations() which
 //     in turn cancels all existing Action objects and then marks the Manager
 //     as invalid.
 //  3) Browser shutdown occurs and the Manager calls Context::CancelAll().
@@ -59,6 +65,8 @@ class OfflineStorage;
 // via the code in ShutdownObserver.cpp.
 class Context final
 {
+  typedef mozilla::dom::quota::DirectoryLock DirectoryLock;
+
 public:
   // Define a class allowing other threads to hold the Context alive.  This also
   // allows these other threads to safely close or cancel the Context.
@@ -112,7 +120,7 @@ public:
   // be execute synchronously.
   static already_AddRefed<Context>
   Create(Manager* aManager, nsIThread* aTarget,
-         Action* aQuotaIOThreadAction, Context* aOldContext);
+         Action* aInitAction, Context* aOldContext);
 
   // Execute given action on the target once the quota manager has been
   // initialized.
@@ -152,6 +160,11 @@ public:
     return mQuotaInfo;
   }
 
+  // Tell the Context that some state information has been orphaned in the
+  // data store and won't be cleaned up.  The Context will leave the marker
+  // in place to trigger cleanup the next times its opened.
+  void NoteOrphanedData();
+
 private:
   class Data;
   class QuotaInitRunnable;
@@ -171,12 +184,13 @@ private:
     nsRefPtr<Action> mAction;
   };
 
-  Context(Manager* aManager, nsIThread* aTarget);
+  Context(Manager* aManager, nsIThread* aTarget, Action* aInitAction);
   ~Context();
+  void Init(Context* aOldContext);
   void Start();
   void DispatchAction(Action* aAction, bool aDoomData = false);
   void OnQuotaInit(nsresult aRv, const QuotaInfo& aQuotaInfo,
-                   nsMainThreadPtrHandle<OfflineStorage>& aOfflineStorage);
+                   nsMainThreadPtrHandle<DirectoryLock>& aDirectoryLock);
 
   already_AddRefed<ThreadsafeHandle>
   CreateThreadsafeHandle();
@@ -191,8 +205,10 @@ private:
   nsCOMPtr<nsIThread> mTarget;
   nsRefPtr<Data> mData;
   State mState;
+  bool mOrphanedData;
   QuotaInfo mQuotaInfo;
   nsRefPtr<QuotaInitRunnable> mInitRunnable;
+  nsRefPtr<Action> mInitAction;
   nsTArray<PendingAction> mPendingActions;
 
   // Weak refs since activites must remove themselves from this list before
@@ -205,7 +221,7 @@ private:
   // when ThreadsafeHandle::AllowToClose() is called.
   nsRefPtr<ThreadsafeHandle> mThreadsafeHandle;
 
-  nsMainThreadPtrHandle<OfflineStorage> mOfflineStorage;
+  nsMainThreadPtrHandle<DirectoryLock> mDirectoryLock;
   nsRefPtr<Context> mNextContext;
 
 public:

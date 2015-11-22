@@ -6,13 +6,17 @@
  * theme on load, and rerenders when changed.
  */
 
+const { setTheme } = require("devtools/shared/theme");
+
 const LIGHT_BG = "#fcfcfc";
 const DARK_BG = "#14171a";
 
 setTheme("dark");
 Services.prefs.setBoolPref(MEMORY_PREF, false);
 
-function spawnTest () {
+requestLongerTimeout(2);
+
+function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let { EVENTS, $, OverviewView, document: doc } = panel.panelWin;
 
@@ -69,20 +73,4 @@ function spawnTest () {
 
   yield teardown(panel);
   finish();
-}
-
-/**
- * Mimics selecting the theme selector in the toolbox;
- * sets the preference and emits an event on gDevTools to trigger
- * the themeing.
- */
-function setTheme (newTheme) {
-  let oldTheme = Services.prefs.getCharPref("devtools.theme");
-  info("Setting `devtools.theme` to \"" + newTheme + "\"");
-  Services.prefs.setCharPref("devtools.theme", newTheme);
-  gDevTools.emit("pref-changed", {
-    pref: "devtools.theme",
-    newValue: newTheme,
-    oldValue: oldTheme
-  });
 }

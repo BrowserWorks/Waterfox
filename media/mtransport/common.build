@@ -16,6 +16,7 @@ mtransport_lcppsrcs = [
     'rlogringbuffer.cpp',
     'simpletokenbucket.cpp',
     'stun_udp_socket_filter.cpp',
+    'test_nr_socket.cpp',
     'transportflow.cpp',
     'transportlayer.cpp',
     'transportlayerdtls.cpp',
@@ -31,7 +32,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     ]
 
 mtransport_cppsrcs = [
-    '%s/media/mtransport/%s' % (TOPSRCDIR, s) for s in sorted(mtransport_lcppsrcs)
+    '/media/mtransport/%s' % s for s in sorted(mtransport_lcppsrcs)
 ]
 
 LOCAL_INCLUDES += [
@@ -62,7 +63,6 @@ if CONFIG['OS_TARGET'] in ['Darwin', 'DragonFly', 'FreeBSD', 'NetBSD', 'OpenBSD'
     ]
 elif CONFIG['OS_TARGET'] == 'Linux':
     DEFINES['LINUX'] = True
-    DEFINES['USE_INTERFACE_PRIORITIZER'] = True
     LOCAL_INCLUDES += [
         '/media/mtransport/third_party/nrappkit/src/port/linux/include',
     ]
@@ -76,13 +76,9 @@ elif CONFIG['OS_TARGET'] == 'WINNT':
     DEFINES['WIN'] = True
     # for stun.h
     DEFINES['WIN32'] = True
-    DEFINES['NOMINMAX'] = True
     LOCAL_INCLUDES += [
         '/media/mtransport/third_party/nrappkit/src/port/win32/include',
     ]
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    DEFINES['USE_INTERFACE_PRIORITIZER'] = True
 
 for var in ('HAVE_STRDUP', 'NR_SOCKET_IS_VOID_PTR'):
     DEFINES[var] = True

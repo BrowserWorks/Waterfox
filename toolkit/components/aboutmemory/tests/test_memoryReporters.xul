@@ -24,10 +24,6 @@
   <script type="application/javascript">
   <![CDATA[
 
-  // Nb: this test is all JS and so should be done with an xpcshell test,
-  // but bug 671753 is preventing the memory-reporter-manager from being
-  // accessed from xpcshell.
-
   "use strict";
 
   const Cc = Components.classes;
@@ -42,6 +38,11 @@
   const COUNT = Ci.nsIMemoryReporter.UNITS_COUNT;
   const COUNT_CUMULATIVE = Ci.nsIMemoryReporter.UNITS_COUNT_CUMULATIVE;
   const PERCENTAGE = Ci.nsIMemoryReporter.UNITS_PERCENTAGE;
+
+  // Use backslashes instead of forward slashes due to memory reporting's hacky
+  // handling of URLs.
+  const XUL_NS =
+    "http:\\\\www.mozilla.org\\keymaster\\gatekeeper\\there.is.only.xul";
 
   let vsizeAmounts = [];
   let residentAmounts = [];
@@ -123,13 +124,16 @@
   function handleReportAnonymized(aProcess, aPath, aKind, aUnits, aAmount,
                                   aDescription)
   {
+    // Path might include an xmlns using http, which is safe to ignore.
+    let reducedPath = aPath.replace(XUL_NS, "");
+
     // Shouldn't get http: or https: in any paths.
-    if (aPath.includes('http:')) {
+    if (reducedPath.includes('http:')) {
         present.httpWhenAnonymized = aPath;
     }
 
     // file: URLs should have their path anonymized.
-    if (aPath.search('file:..[^<]') !== -1) {
+    if (reducedPath.search('file:..[^<]') !== -1) {
         present.unanonymizedFilePathWhenAnonymized = aPath;
     }
   }
@@ -395,4 +399,3 @@
   ]]>
   </script>
 </window>
-

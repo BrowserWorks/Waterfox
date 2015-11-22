@@ -27,7 +27,6 @@
 #include "nsDirectoryServiceUtils.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "private/pprio.h"
-#include "mozilla/VisualEventTracer.h"
 #include "mozilla/Preferences.h"
 #include "nsNetUtil.h"
 
@@ -111,7 +110,6 @@ NS_INTERFACE_MAP_END_THREADSAFE
 
 CacheFileHandle::CacheFileHandle(const SHA1Sum::Hash *aHash, bool aPriority)
   : mHash(aHash)
-  , mIsDoomed(false)
   , mPriority(aPriority)
   , mClosed(false)
   , mSpecialFile(false)
@@ -120,13 +118,17 @@ CacheFileHandle::CacheFileHandle(const SHA1Sum::Hash *aHash, bool aPriority)
   , mFileSize(-1)
   , mFD(nullptr)
 {
+  // If we initialize mDoomed in the initialization list, that initialization is
+  // not guaranteeded to be atomic.  Whereas this assignment here is guaranteed
+  // to be atomic.  TSan will see this (atomic) assignment and be satisfied
+  // that cross-thread accesses to mIsDoomed are properly synchronized.
+  mIsDoomed = false;
   LOG(("CacheFileHandle::CacheFileHandle() [this=%p, hash=%08x%08x%08x%08x%08x]"
        , this, LOGSHA1(aHash)));
 }
 
 CacheFileHandle::CacheFileHandle(const nsACString &aKey, bool aPriority)
   : mHash(nullptr)
-  , mIsDoomed(false)
   , mPriority(aPriority)
   , mClosed(false)
   , mSpecialFile(true)
@@ -136,6 +138,8 @@ CacheFileHandle::CacheFileHandle(const nsACString &aKey, bool aPriority)
   , mFD(nullptr)
   , mKey(aKey)
 {
+  // See comment above about the initialization of mIsDoomed.
+  mIsDoomed = false;
   LOG(("CacheFileHandle::CacheFileHandle() [this=%p, key=%s]", this,
        PromiseFlatCString(aKey).get()));
 }
@@ -163,13 +167,13 @@ CacheFileHandle::Log()
   if (mSpecialFile) {
     LOG(("CacheFileHandle::Log() - special file [this=%p, isDoomed=%d, "
          "priority=%d, closed=%d, invalid=%d, fileExists=%d, fileSize=%lld, "
-         "leafName=%s, key=%s]", this, mIsDoomed, mPriority, mClosed, mInvalid,
+         "leafName=%s, key=%s]", this, int(mIsDoomed), mPriority, mClosed, mInvalid,
          mFileExists, mFileSize, leafName.get(), mKey.get()));
   } else {
     LOG(("CacheFileHandle::Log() - entry file [this=%p, hash=%08x%08x%08x%08x"
          "%08x, isDoomed=%d, priority=%d, closed=%d, invalid=%d, fileExists=%d,"
          " fileSize=%lld, leafName=%s, key=%s]", this, LOGSHA1(mHash),
-         mIsDoomed, mPriority, mClosed, mInvalid, mFileExists, mFileSize,
+         int(mIsDoomed), mPriority, mClosed, mInvalid, mFileExists, mFileSize,
          leafName.get(), mKey.get()));
   }
 }
@@ -428,37 +432,13 @@ CacheFileHandles::RemoveHandle(CacheFileHandle *aHandle)
   }
 }
 
-static PLDHashOperator
-GetAllHandlesEnum(CacheFileHandles::HandleHashKey* aEntry, void *aClosure)
-{
-  nsTArray<nsRefPtr<CacheFileHandle> > *array =
-    static_cast<nsTArray<nsRefPtr<CacheFileHandle> > *>(aClosure);
-
-  aEntry->GetHandles(*array);
-  return PL_DHASH_NEXT;
-}
-
 void
 CacheFileHandles::GetAllHandles(nsTArray<nsRefPtr<CacheFileHandle> > *_retval)
 {
   MOZ_ASSERT(CacheFileIOManager::IsOnIOThreadOrCeased());
-  mTable.EnumerateEntries(&GetAllHandlesEnum, _retval);
-}
-
-static PLDHashOperator
-GetActiveHandlesEnum(CacheFileHandles::HandleHashKey* aEntry, void *aClosure)
-{
-  nsTArray<nsRefPtr<CacheFileHandle> > *array =
-    static_cast<nsTArray<nsRefPtr<CacheFileHandle> > *>(aClosure);
-
-  nsRefPtr<CacheFileHandle> handle = aEntry->GetNewestHandle();
-  MOZ_ASSERT(handle);
-
-  if (!handle->IsDoomed()) {
-    array->AppendElement(handle);
+  for (auto iter = mTable.Iter(); !iter.Done(); iter.Next()) {
+    iter.Get()->GetHandles(*_retval);
   }
-
-  return PL_DHASH_NEXT;
 }
 
 void
@@ -466,7 +446,14 @@ CacheFileHandles::GetActiveHandles(
   nsTArray<nsRefPtr<CacheFileHandle> > *_retval)
 {
   MOZ_ASSERT(CacheFileIOManager::IsOnIOThreadOrCeased());
-  mTable.EnumerateEntries(&GetActiveHandlesEnum, _retval);
+  for (auto iter = mTable.Iter(); !iter.Done(); iter.Next()) {
+    nsRefPtr<CacheFileHandle> handle = iter.Get()->GetNewestHandle();
+    MOZ_ASSERT(handle);
+
+    if (!handle->IsDoomed()) {
+      _retval->AppendElement(handle);
+    }
+  }
 }
 
 void
@@ -553,9 +540,6 @@ public:
   {
     MOZ_COUNT_CTOR(OpenFileEvent);
     mIOMan = CacheFileIOManager::gInstance;
-
-    MOZ_EVENT_TRACER_NAME_OBJECT(static_cast<nsIRunnable*>(this), aKey.BeginReading());
-    MOZ_EVENT_TRACER_WAIT(static_cast<nsIRunnable*>(this), "net::cache::open-background");
   }
 
 protected:
@@ -575,7 +559,6 @@ public:
       sum.finish(mHash);
     }
 
-    MOZ_EVENT_TRACER_EXEC(static_cast<nsIRunnable*>(this), "net::cache::open-background");
     if (!mIOMan) {
       rv = NS_ERROR_NOT_INITIALIZED;
     } else {
@@ -588,17 +571,12 @@ public:
       }
       mIOMan = nullptr;
       if (mHandle) {
-        MOZ_EVENT_TRACER_NAME_OBJECT(mHandle.get(), mKey.get());
         if (mHandle->Key().IsEmpty()) {
           mHandle->Key() = mKey;
         }
       }
     }
-    MOZ_EVENT_TRACER_DONE(static_cast<nsIRunnable*>(this), "net::cache::open-background");
-
-    MOZ_EVENT_TRACER_EXEC(static_cast<nsIRunnable*>(this), "net::cache::open-result");
     mCallback->OnFileOpened(mHandle, rv);
-    MOZ_EVENT_TRACER_DONE(static_cast<nsIRunnable*>(this), "net::cache::open-result");
 
     return NS_OK;
   }
@@ -623,9 +601,6 @@ public:
     , mCallback(aCallback)
   {
     MOZ_COUNT_CTOR(ReadEvent);
-
-    MOZ_EVENT_TRACER_NAME_OBJECT(static_cast<nsIRunnable*>(this), aHandle->Key().get());
-    MOZ_EVENT_TRACER_WAIT(static_cast<nsIRunnable*>(this), "net::cache::read-background");
   }
 
 protected:
@@ -639,19 +614,14 @@ public:
   {
     nsresult rv;
 
-    MOZ_EVENT_TRACER_EXEC(static_cast<nsIRunnable*>(this), "net::cache::read-background");
     if (mHandle->IsClosed()) {
       rv = NS_ERROR_NOT_INITIALIZED;
     } else {
       rv = CacheFileIOManager::gInstance->ReadInternal(
         mHandle, mOffset, mBuf, mCount);
     }
-    MOZ_EVENT_TRACER_DONE(static_cast<nsIRunnable*>(this), "net::cache::read-background");
 
-    MOZ_EVENT_TRACER_EXEC(static_cast<nsIRunnable*>(this), "net::cache::read-result");
     mCallback->OnDataRead(mHandle, mBuf, rv);
-    MOZ_EVENT_TRACER_DONE(static_cast<nsIRunnable*>(this), "net::cache::read-result");
-
     return NS_OK;
   }
 
@@ -677,9 +647,6 @@ public:
     , mCallback(aCallback)
   {
     MOZ_COUNT_CTOR(WriteEvent);
-
-    MOZ_EVENT_TRACER_NAME_OBJECT(static_cast<nsIRunnable*>(this), aHandle->Key().get());
-    MOZ_EVENT_TRACER_WAIT(static_cast<nsIRunnable*>(this), "net::cache::write-background");
   }
 
 protected:
@@ -697,7 +664,6 @@ public:
   {
     nsresult rv;
 
-    MOZ_EVENT_TRACER_EXEC(static_cast<nsIRunnable*>(this), "net::cache::write-background");
     if (mHandle->IsClosed()) {
       rv = NS_ERROR_NOT_INITIALIZED;
     } else {
@@ -708,16 +674,12 @@ public:
         CacheFileIOManager::gInstance->DoomFileInternal(mHandle);
       }
     }
-    MOZ_EVENT_TRACER_DONE(static_cast<nsIRunnable*>(this), "net::cache::write-background");
-
-    MOZ_EVENT_TRACER_EXEC(static_cast<nsIRunnable*>(this), "net::cache::write-result");
     if (mCallback) {
       mCallback->OnDataWritten(mHandle, mBuf, rv);
     } else {
       free(const_cast<char *>(mBuf));
       mBuf = nullptr;
     }
-    MOZ_EVENT_TRACER_DONE(static_cast<nsIRunnable*>(this), "net::cache::write-result");
 
     return NS_OK;
   }
@@ -740,9 +702,6 @@ public:
     , mHandle(aHandle)
   {
     MOZ_COUNT_CTOR(DoomFileEvent);
-
-    MOZ_EVENT_TRACER_NAME_OBJECT(static_cast<nsIRunnable*>(this), aHandle->Key().get());
-    MOZ_EVENT_TRACER_WAIT(static_cast<nsIRunnable*>(this), "net::cache::doom-background");
   }
 
 protected:
@@ -756,19 +715,15 @@ public:
   {
     nsresult rv;
 
-    MOZ_EVENT_TRACER_EXEC(static_cast<nsIRunnable*>(this), "net::cache::doom-background");
     if (mHandle->IsClosed()) {
       rv = NS_ERROR_NOT_INITIALIZED;
     } else {
       rv = CacheFileIOManager::gInstance->DoomFileInternal(mHandle);
     }
-    MOZ_EVENT_TRACER_DONE(static_cast<nsIRunnable*>(this), "net::cache::doom-background");
 
-    MOZ_EVENT_TRACER_EXEC(static_cast<nsIRunnable*>(this), "net::cache::doom-result");
     if (mCallback) {
       mCallback->OnFileDoomed(mHandle, rv);
     }
-    MOZ_EVENT_TRACER_DONE(static_cast<nsIRunnable*>(this), "net::cache::doom-result");
 
     return NS_OK;
   }
@@ -2752,7 +2707,7 @@ EvictionNotifierRunnable::Run()
   return NS_OK;
 }
 
-} // anonymous namespace
+} // namespace
 
 nsresult
 CacheFileIOManager::EvictAllInternal()
@@ -2802,7 +2757,7 @@ CacheFileIOManager::EvictAllInternal()
     return rv;
   }
 
-  rv = file->AppendNative(NS_LITERAL_CSTRING(kEntriesDir));
+  rv = file->AppendNative(NS_LITERAL_CSTRING(ENTRIES_DIR));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -2817,7 +2772,7 @@ CacheFileIOManager::EvictAllInternal()
   NS_DispatchToMainThread(r);
 
   // Create a new empty entries directory
-  rv = CheckAndCreateDir(mCacheDirectory, kEntriesDir, false);
+  rv = CheckAndCreateDir(mCacheDirectory, ENTRIES_DIR, false);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -3013,7 +2968,7 @@ CacheFileIOManager::TrashDirectory(nsIFile *aFile)
 
   srand(static_cast<unsigned>(PR_Now()));
   while (true) {
-    leaf = kTrashDir;
+    leaf = TRASH_DIR;
     leaf.AppendInt(rand());
     rv = trash->SetNativeLeafName(leaf);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -3256,11 +3211,11 @@ CacheFileIOManager::FindTrashDirToRemove()
       continue;
     }
 
-    if (leafName.Length() < strlen(kTrashDir)) {
+    if (leafName.Length() < strlen(TRASH_DIR)) {
       continue;
     }
 
-    if (!StringBeginsWith(leafName, NS_LITERAL_CSTRING(kTrashDir))) {
+    if (!StringBeginsWith(leafName, NS_LITERAL_CSTRING(TRASH_DIR))) {
       continue;
     }
 
@@ -3422,7 +3377,7 @@ CacheFileIOManager::GetFile(const SHA1Sum::Hash *aHash, nsIFile **_retval)
   rv = mCacheDirectory->Clone(getter_AddRefs(file));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = file->AppendNative(NS_LITERAL_CSTRING(kEntriesDir));
+  rv = file->AppendNative(NS_LITERAL_CSTRING(ENTRIES_DIR));
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsAutoCString leafName;
@@ -3458,7 +3413,7 @@ CacheFileIOManager::GetDoomedFile(nsIFile **_retval)
   rv = mCacheDirectory->Clone(getter_AddRefs(file));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = file->AppendNative(NS_LITERAL_CSTRING(kDoomedDir));
+  rv = file->AppendNative(NS_LITERAL_CSTRING(DOOMED_DIR));
   NS_ENSURE_SUCCESS(rv, rv);
 
   rv = file->AppendNative(NS_LITERAL_CSTRING("dummyleaf"));
@@ -3586,11 +3541,11 @@ CacheFileIOManager::CreateCacheTree()
   NS_ENSURE_SUCCESS(rv, rv);
 
   // ensure entries directory exists
-  rv = CheckAndCreateDir(mCacheDirectory, kEntriesDir, false);
+  rv = CheckAndCreateDir(mCacheDirectory, ENTRIES_DIR, false);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // ensure doomed directory exists
-  rv = CheckAndCreateDir(mCacheDirectory, kDoomedDir, true);
+  rv = CheckAndCreateDir(mCacheDirectory, DOOMED_DIR, true);
   NS_ENSURE_SUCCESS(rv, rv);
 
   mTreeCreated = true;
@@ -3782,8 +3737,8 @@ CacheFileIOManager::SyncRemoveAllCacheFiles()
 
   nsresult rv;
 
-  SyncRemoveDir(mCacheDirectory, kEntriesDir);
-  SyncRemoveDir(mCacheDirectory, kDoomedDir);
+  SyncRemoveDir(mCacheDirectory, ENTRIES_DIR);
+  SyncRemoveDir(mCacheDirectory, DOOMED_DIR);
 
   // Clear any intermediate state of trash dir enumeration.
   mFailedTrashDirs.Clear();
@@ -3916,7 +3871,7 @@ CacheFileIOManager::UpdateSmartCacheSize(int64_t aFreeSpace)
 
 // Memory reporting
 
-namespace { // anon
+namespace {
 
 // A helper class that dispatches and waits for an event that gets result of
 // CacheFileIOManager->mHandles.SizeOfExcludingThis() on the I/O thread
@@ -3977,7 +3932,7 @@ private:
   size_t mSize;
 };
 
-} // anon
+} // namespace
 
 size_t
 CacheFileIOManager::SizeOfExcludingThisInternal(mozilla::MallocSizeOf mallocSizeOf) const
@@ -4037,5 +3992,5 @@ CacheFileIOManager::SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf)
   return mallocSizeOf(gInstance) + SizeOfExcludingThis(mallocSizeOf);
 }
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla

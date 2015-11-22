@@ -360,7 +360,7 @@ DOMCameraControlListener::OnTakePictureComplete(const uint8_t* aData, uint32_t a
     RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
       nsCOMPtr<nsIDOMBlob> picture =
-        File::CreateMemoryFile(mDOMCameraControl.get(),
+        Blob::CreateMemoryBlob(mDOMCameraControl.get(),
                                static_cast<void*>(mData),
                                static_cast<uint64_t>(mLength),
                                mMimeType);
@@ -409,4 +409,28 @@ DOMCameraControlListener::OnUserError(UserContext aContext, nsresult aError)
   };
 
   NS_DispatchToMainThread(new Callback(mDOMCameraControl, aContext, aError));
+}
+
+void
+DOMCameraControlListener::OnPoster(BlobImpl* aBlobImpl)
+{
+  class Callback : public DOMCallback
+  {
+  public:
+    Callback(nsMainThreadPtrHandle<nsISupports> aDOMCameraControl, BlobImpl* aBlobImpl)
+      : DOMCallback(aDOMCameraControl)
+      , mBlobImpl(aBlobImpl)
+    { }
+
+    void
+    RunCallback(nsDOMCameraControl* aDOMCameraControl) override
+    {
+      aDOMCameraControl->OnPoster(mBlobImpl);
+    }
+
+  protected:
+    nsRefPtr<BlobImpl> mBlobImpl;
+  };
+
+  NS_DispatchToMainThread(new Callback(mDOMCameraControl, aBlobImpl));
 }

@@ -12,11 +12,13 @@
 // Tests that the Web Console doesn't leak when multiple tabs and windows are
 // opened and then closed.
 
+"use strict";
+
 const TEST_URI = "data:text/html;charset=utf-8,Web Console test for bug 595350";
 
-let win1 = window, win2;
-let openTabs = [];
-let loadedTabCount = 0;
+var win1 = window, win2;
+var openTabs = [];
+var loadedTabCount = 0;
 
 function test() {
   requestLongerTimeout(3);
@@ -98,4 +100,3 @@ function closeConsoles() {
 
   openTabs = win1 = win2 = null;
 }
-

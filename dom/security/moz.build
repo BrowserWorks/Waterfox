@@ -4,30 +4,41 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+TEST_DIRS += ['test']
+
 EXPORTS.mozilla.dom += [
+    'nsContentSecurityManager.h',
     'nsCSPContext.h',
     'nsCSPService.h',
     'nsCSPUtils.h',
     'nsMixedContentBlocker.h',
+    'SRICheck.h',
+    'SRIMetadata.h',
 ]
 
 EXPORTS += [
-    'nsCORSListenerProxy.h'
+    'nsContentSecurityManager.h',
 ]
 
 UNIFIED_SOURCES += [
-    'nsCORSListenerProxy.cpp',
+    'nsContentSecurityManager.cpp',
     'nsCSPContext.cpp',
     'nsCSPParser.cpp',
     'nsCSPService.cpp',
     'nsCSPUtils.cpp',
     'nsMixedContentBlocker.cpp',
+    'SRICheck.cpp',
+    'SRIMetadata.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
+include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/caps',
     '/netwerk/base',
 ]
+
+if CONFIG['GNU_CC']:
+    CFLAGS += ['-Wshadow', '-Wformat-security']
+    CXXFLAGS += ['-Wshadow', '-Wformat-security']

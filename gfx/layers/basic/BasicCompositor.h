@@ -50,22 +50,17 @@ public:
 
   virtual void Destroy() override;
 
-  virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() override
-  {
-    return TextureFactoryIdentifier(LayersBackend::LAYERS_BASIC,
-                                    XRE_GetProcessType(),
-                                    GetMaxTextureSize());
-  }
+  virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() override;
 
-  virtual TemporaryRef<CompositingRenderTarget>
+  virtual already_AddRefed<CompositingRenderTarget>
   CreateRenderTarget(const gfx::IntRect &aRect, SurfaceInitMode aInit) override;
 
-  virtual TemporaryRef<CompositingRenderTarget>
+  virtual already_AddRefed<CompositingRenderTarget>
   CreateRenderTargetFromSource(const gfx::IntRect &aRect,
                                const CompositingRenderTarget *aSource,
                                const gfx::IntPoint &aSourcePoint) override;
 
-  virtual TemporaryRef<DataTextureSource>
+  virtual already_AddRefed<DataTextureSource>
   CreateDataTextureSource(TextureFlags aFlags = TextureFlags::NO_FLAGS) override;
 
   virtual bool SupportsEffect(EffectTypes aEffect) override;
@@ -84,7 +79,8 @@ public:
                         const gfx::Rect& aClipRect,
                         const EffectChain &aEffectChain,
                         gfx::Float aOpacity,
-                        const gfx::Matrix4x4 &aTransform) override;
+                        const gfx::Matrix4x4& aTransform,
+                        const gfx::Rect& aVisibleRect) override;
 
   virtual void ClearRect(const gfx::Rect& aRect) override;
 
@@ -108,8 +104,6 @@ public:
   }
 
   virtual void MakeCurrent(MakeCurrentFlags aFlags = 0) override { }
-
-  virtual void PrepareViewport(const gfx::IntSize& aSize) override { }
 
 #ifdef MOZ_DUMP_PAINTING
   virtual const char* Name() const override { return "Basic"; }

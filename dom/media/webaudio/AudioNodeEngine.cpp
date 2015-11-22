@@ -12,39 +12,37 @@
 
 namespace mozilla {
 
-void
-AllocateAudioBlock(uint32_t aChannelCount, AudioChunk* aChunk)
+already_AddRefed<ThreadSharedFloatArrayBufferList>
+ThreadSharedFloatArrayBufferList::Create(uint32_t aChannelCount,
+                                         size_t aLength,
+                                         const mozilla::fallible_t&)
 {
-  CheckedInt<size_t> size = WEBAUDIO_BLOCK_SIZE;
-  size *= aChannelCount;
-  size *= sizeof(float);
-  if (!size.isValid()) {
-    MOZ_CRASH();
-  }
-  // XXX for SIMD purposes we should do something here to make sure the
-  // channel buffers are 16-byte aligned.
-  nsRefPtr<SharedBuffer> buffer = SharedBuffer::Create(size.value());
-  aChunk->mDuration = WEBAUDIO_BLOCK_SIZE;
-  aChunk->mChannelData.SetLength(aChannelCount);
-  float* data = static_cast<float*>(buffer->Data());
+  nsRefPtr<ThreadSharedFloatArrayBufferList> buffer =
+    new ThreadSharedFloatArrayBufferList(aChannelCount);
+
   for (uint32_t i = 0; i < aChannelCount; ++i) {
-    aChunk->mChannelData[i] = data + i*WEBAUDIO_BLOCK_SIZE;
+    float* channelData = js_pod_malloc<float>(aLength);
+    if (!channelData) {
+      return nullptr;
+    }
+
+    buffer->SetData(i, channelData, js_free, channelData);
   }
-  aChunk->mBuffer = buffer.forget();
-  aChunk->mVolume = 1.0f;
-  aChunk->mBufferFormat = AUDIO_FORMAT_FLOAT32;
+
+  return buffer.forget();
 }
 
 void
-WriteZeroesToAudioBlock(AudioChunk* aChunk, uint32_t aStart, uint32_t aLength)
+WriteZeroesToAudioBlock(AudioBlock* aChunk,
+                        uint32_t aStart, uint32_t aLength)
 {
   MOZ_ASSERT(aStart + aLength <= WEBAUDIO_BLOCK_SIZE);
   MOZ_ASSERT(!aChunk->IsNull(), "You should pass a non-null chunk");
   if (aLength == 0)
     return;
-  for (uint32_t i = 0; i < aChunk->mChannelData.Length(); ++i) {
-    memset(static_cast<float*>(const_cast<void*>(aChunk->mChannelData[i])) + aStart,
-           0, aLength*sizeof(float));
+
+  for (uint32_t i = 0; i < aChunk->ChannelCount(); ++i) {
+    PodZero(aChunk->ChannelFloatsForWrite(i) + aStart, aLength);
   }
 }
 
@@ -273,4 +271,25 @@ AudioBufferSumOfSquares(const float* aInput, uint32_t aLength)
   return sum;
 }
 
+void
+AudioNodeEngine::ProcessBlock(AudioNodeStream* aStream,
+                              const AudioBlock& aInput,
+                              AudioBlock* aOutput,
+                              bool* aFinished)
+{
+  MOZ_ASSERT(mInputCount <= 1 && mOutputCount <= 1);
+  *aOutput = aInput;
 }
+
+void
+AudioNodeEngine::ProcessBlocksOnPorts(AudioNodeStream* aStream,
+                                      const OutputChunks& aInput,
+                                      OutputChunks& aOutput,
+                                      bool* aFinished)
+{
+  MOZ_ASSERT(mInputCount > 1 || mOutputCount > 1);
+  // Only produce one output port, and drop all other input ports.
+  aOutput[0] = aInput[0];
+}
+
+} // namespace mozilla

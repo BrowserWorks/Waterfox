@@ -34,9 +34,11 @@ class ObjectWeakMap
 {
   private:
     ObjectValueMap map;
+    typedef gc::HashKeyRef<ObjectValueMap, JSObject*> StoreBufferRef;
 
   public:
     explicit ObjectWeakMap(JSContext* cx);
+    bool init();
     ~ObjectWeakMap();
 
     JSObject* lookup(const JSObject* obj);

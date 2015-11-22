@@ -63,7 +63,9 @@ configuration_tokens = ('branch',
                         'en_us_binary_url',
                         'update_platform',
                         'update_channel',
-                        'ssh_key_dir')
+                        'ssh_key_dir',
+                        'stage_product',
+                        )
 # some other values such as "%(version)s", "%(buildid)s", ...
 # are defined at run time and they cannot be enforced in the _pre_config_lock
 # phase
@@ -206,10 +208,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.l10n_dir = None
         self.package_urls = {}
         self.pushdate = None
-        # Each locale adds its list of files to upload_files - some will be
-        # duplicates (like the mar binaries), so we use a set to prune those
-        # when uploading to taskcluster.
-        self.upload_files = set()
+        # upload_files is a dictionary of files to upload, keyed by locale.
+        self.upload_files = {}
 
         if 'mock_target' in self.config:
             self.enable_mock()
@@ -415,7 +415,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
        """
         if self.revision:
             return self.revision
-        r = re.compile(r"^(gecko|fx)_revision ([0-9a-f]{12}\+?)$")
+        r = re.compile(r"^(gecko|fx)_revision ([0-9a-f]+\+?)$")
         output = self._query_make_ident_output()
         for line in output.splitlines():
             match = r.match(line)
@@ -723,14 +723,11 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         if locale not in self.package_urls:
             self.package_urls[locale] = {}
         self.package_urls[locale].update(parser.matches)
-        if 'partialMarUrl' in self.package_urls[locale]:
-            self.package_urls[locale]['partialInfo'] = self._get_partial_info(
-                self.package_urls[locale]['partialMarUrl'])
         if retval == SUCCESS:
-            self.info('Upload successful (%s)' % (locale))
+            self.info('Upload successful (%s)' % locale)
             ret = SUCCESS
         else:
-            self.error('failed to upload %s' % (locale))
+            self.error('failed to upload %s' % locale)
             ret = FAILURE
         return ret
 
@@ -749,9 +746,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             self.error('failed to get upload file list for locale %s' % (locale))
             return FAILURE
 
-        for f in files:
-            abs_file = os.path.abspath(os.path.join(cwd, f))
-            self.upload_files.update([abs_file])
+        self.upload_files[locale] = [
+            os.path.abspath(os.path.join(cwd, f)) for f in files
+        ]
         return SUCCESS
 
     def make_installers(self, locale):
@@ -810,29 +807,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                 abs_dirs[key] = dirs[key]
         self.abs_dirs = abs_dirs
         return self.abs_dirs
-
-    def _get_partial_info(self, partial_url):
-        """takes a partial url and returns a partial info dictionary"""
-        partial_file = partial_url.split('/')[-1]
-        # now get from_build...
-        # firefox-39.0a1.ar.win32.partial.20150320030211-20150320075143.mar
-        # partial file ^                  ^            ^
-        #                                 |            |
-        # we need ------------------------+------------+
-        from_buildid = partial_file.partition('partial.')[2]
-        from_buildid = from_buildid.partition('-')[0]
-        self.info('from buildid: {0}'.format(from_buildid))
-
-        dirs = self.query_abs_dirs()
-        abs_partial_file = os.path.join(dirs['abs_objdir'], 'dist',
-                                        'update', partial_file)
-
-        size = self.query_filesize(abs_partial_file)
-        hash_ = self.query_sha512sum(abs_partial_file)
-        return [{'from_buildid': from_buildid,
-                 'hash': hash_,
-                 'size': size,
-                 'url': partial_url}]
 
     def submit_to_balrog(self):
         """submit to barlog"""
@@ -1018,73 +992,50 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         branch = self.config['branch']
         platform = self.config['platform']
         revision = self._query_revision()
-        tc = Taskcluster(self.config['branch'],
-                         self.query_pushdate(),
-                         client_id,
-                         access_token,
-                         self.log_obj,
-                         )
-
-        index = self.config.get('taskcluster_index', 'index.garbage.staging')
-        # TODO: Bug 1165980 - these should be in tree. Note the '.l10n' suffix.
-        routes = [
-            "%s.buildbot.branches.%s.%s.l10n" % (index, branch, platform),
-            "%s.buildbot.revisions.%s.%s.%s.l10n" % (index, revision, branch, platform),
-        ]
-
-        task = tc.create_task(routes)
-        tc.claim_task(task)
-
-        self.info("Uploading files to S3: %s" % self.upload_files)
-        for upload_file in self.upload_files:
-            # Create an S3 artifact for each file that gets uploaded. We also
-            # check the uploaded file against the property conditions so that we
-            # can set the buildbot config with the correct URLs for package
-            # locations.
-            tc.create_artifact(task, upload_file)
-        tc.report_completed(task)
-
-    def query_pushdate(self):
-        if self.pushdate:
-            return self.pushdate
-
-        mozilla_dir = self.config['mozilla_dir']
-        repo = None
-        for repository in self.config['repos']:
-            if repository.get('dest') == mozilla_dir:
-                repo = repository['repo']
-                break
-
+        repo = self.query_l10n_repo()
         if not repo:
-            self.fatal("Unable to determine repository for querying the pushdate.")
-        try:
-            url = '%s/json-pushes?changeset=%s' % (
-                repo,
-                self._query_revision(),
-            )
-            self.info('Pushdate URL is: %s' % url)
-            contents = self.retry(self.load_json_from_url, args=(url,))
+            self.fatal("Unable to determine repository for querying the push info.")
+        pushinfo = self.vcs_query_pushinfo(repo, revision, vcs='hgtool')
 
-            # The contents should be something like:
-            # {
-            #   "28537": {
-            #    "changesets": [
-            #     "1d0a914ae676cc5ed203cdc05c16d8e0c22af7e5",
-            #    ],
-            #    "date": 1428072488,
-            #    "user": "user@mozilla.com"
-            #   }
-            # }
-            #
-            # So we grab the first element ("28537" in this case) and then pull
-            # out the 'date' field.
-            self.pushdate = contents.itervalues().next()['date']
-            self.info('Pushdate is: %s' % self.pushdate)
-        except Exception:
-            self.exception("Failed to get pushdate from hg.mozilla.org")
-            raise
+        routes_json = os.path.join(self.query_abs_dirs()['abs_mozilla_dir'],
+                                   'testing/taskcluster/routes.json')
+        with open(routes_json) as f:
+            contents = json.load(f)
+            templates = contents['l10n']
 
-        return self.pushdate
+        for locale, files in self.upload_files.iteritems():
+            self.info("Uploading files to S3 for locale '%s': %s" % (locale, files))
+            routes = []
+            for template in templates:
+                fmt = {
+                    'index': self.config.get('taskcluster_index', 'index.garbage.staging'),
+                    'project': branch,
+                    'head_rev': revision,
+                    'build_product': self.config['stage_product'],
+                    'build_name': self.query_build_name(),
+                    'build_type': self.query_build_type(),
+                    'locale': locale,
+                }
+                fmt.update(self.buildid_to_dict(self._query_buildid()))
+                routes.append(template.format(**fmt))
+
+            self.info('Using routes: %s' % routes)
+            tc = Taskcluster(branch,
+                             pushinfo.pushdate, # Use pushdate as the rank
+                             client_id,
+                             access_token,
+                             self.log_obj,
+                             )
+            task = tc.create_task(routes)
+            tc.claim_task(task)
+
+            for upload_file in files:
+                # Create an S3 artifact for each file that gets uploaded. We also
+                # check the uploaded file against the property conditions so that we
+                # can set the buildbot config with the correct URLs for package
+                # locations.
+                tc.create_artifact(task, upload_file)
+            tc.report_completed(task)
 
 # main {{{
 if __name__ == '__main__':

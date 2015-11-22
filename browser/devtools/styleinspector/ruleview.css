@@ -24,9 +24,32 @@ body {
   flex: 1;
 }
 
-#root .devtools-toolbar {
+.devtools-toolbar {
   width: 100%;
-  display: -moz-box;
+  display: flex;
+}
+
+#pseudo-class-panel {
+  position: relative;
+  margin-top: -1px;
+  margin-bottom: -1px;
+  overflow-y: hidden;
+  max-height: 24px;
+  outline: 0 !important;
+  transition-property: max-height;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+#pseudo-class-panel[hidden] {
+  max-height: 0px;
+}
+
+#pseudo-class-panel > label {
+  -moz-user-select: none;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
 }
 
 .ruleview {
@@ -42,14 +65,13 @@ body {
   pointer-events: none;
 }
 
-.ruleview-namecontainer,
-.ruleview-selectorcontainer {
+.ruleview-namecontainer {
   cursor: text;
 }
 
 .ruleview-propertyvaluecontainer {
   cursor: text;
-  padding-right: 15px;
+  padding-right: 5px;
 }
 
 .ruleview-propertyvaluecontainer a {
@@ -57,6 +79,7 @@ body {
 }
 
 .ruleview-computedlist,
+.ruleview-overridden-rule-filter[hidden],
 .ruleview-warning[hidden] {
   display: none;
 }

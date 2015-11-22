@@ -1,4 +1,4 @@
-== bug-364968.html bug-364968-ref.html
+random == bug-364968.html bug-364968-ref.html
 == bug-463204.html bug-463204-ref.html
 fails-if(Android&&AndroidVersion<15&&AndroidVersion!=10) == canvas-outside-document.html canvas-inside-document.html
 == mozsetimageelement-01.html mozsetimageelement-01-ref.html
@@ -17,8 +17,8 @@ fuzzy-if(d2d&&/^Windows\x20NT\x206\.1/.test(http.oscpu),16,90) == element-paint-
 == element-paint-background-size-02.html element-paint-background-size-02-ref.html
 == element-paint-transform-repeated.html element-paint-transform-repeated-ref.html
 fuzzy-if(d2d,255,24) == element-paint-transform-03.html element-paint-transform-03-ref.html
-== element-paint-native-widget.html element-paint-native-widget-ref.html
-== element-paint-subimage-sampling-restriction.html about:blank
+fuzzy-if(asyncPan,1,140) == element-paint-native-widget.html element-paint-native-widget-ref.html   # in -ref the scrollframe is active and layerized differently with APZ
+fails-if(usesRepeatResampling) == element-paint-subimage-sampling-restriction.html about:blank
 == element-paint-clippath.html element-paint-clippath-ref.html
 == element-paint-sharpness-01a.html element-paint-sharpness-01b.html
 == element-paint-sharpness-01b.html element-paint-sharpness-01c.html

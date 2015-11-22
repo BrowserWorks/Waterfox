@@ -7,18 +7,18 @@
 ///////////////////
 //
 // Whitelisting this test.
-// As part of bug 1077403, the leaking uncaught rejection should be fixed. 
+// As part of bug 1077403, the leaking uncaught rejection should be fixed.
 //
 thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Unknown sheet source");
 
-// Test the links from the computed view to the style editor
+// Tests the links from the computed view to the style editor.
 
-const STYLESHEET_URL = "data:text/css,"+encodeURIComponent(
+const STYLESHEET_URL = "data:text/css," + encodeURIComponent(
   [".highlight {",
    "color: blue",
    "}"].join("\n"));
 
-const DOCUMENT_URL = "data:text/html;charset=utf-8,"+encodeURIComponent(
+const DOCUMENT_URL = "data:text/html;charset=utf-8," + encodeURIComponent(
   ['<html>' +
    '<head>' +
    '<title>Computed view style editor link test</title>',
@@ -31,7 +31,7 @@ const DOCUMENT_URL = "data:text/html;charset=utf-8,"+encodeURIComponent(
    '<style>',
    'div { color: #f06; }',
    '</style>',
-   '<link rel="stylesheet" type="text/css" href="'+STYLESHEET_URL+'">',
+   '<link rel="stylesheet" type="text/css" href="' + STYLESHEET_URL + '">',
    '</head>',
    '<body>',
    '<h1>Some header text</h1>',
@@ -52,34 +52,30 @@ const DOCUMENT_URL = "data:text/html;charset=utf-8,"+encodeURIComponent(
 
 add_task(function*() {
   yield addTab(DOCUMENT_URL);
-
-  info("Opening the computed-view");
   let {toolbox, inspector, view} = yield openComputedView();
-
-  info("Selecting the test node");
   yield selectNode("span", inspector);
 
-  yield testInlineStyle(view, inspector);
+  yield testInlineStyle(view);
   yield testFirstInlineStyleSheet(view, toolbox);
   yield testSecondInlineStyleSheet(view, toolbox);
   yield testExternalStyleSheet(view, toolbox);
 });
 
-function* testInlineStyle(view, inspector) {
+function* testInlineStyle(view) {
   info("Testing inline style");
 
   yield expandComputedViewPropertyByIndex(view, 0);
 
-  let onWindow = waitForWindow();
+  let onTab = waitForTab();
   info("Clicking on the first rule-link in the computed-view");
   clickLinkByIndex(view, 0);
 
-  let win = yield onWindow;
+  let tab = yield onTab;
 
-  let windowType = win.document.documentElement.getAttribute("windowtype");
-  is(windowType, "navigator:view-source", "View source window is open");
-  info("Closing window");
-  win.close();
+  let tabURI = tab.linkedBrowser.documentURI.spec;
+  ok(tabURI.startsWith("view-source:"), "View source tab is open");
+  info("Closing tab");
+  gBrowser.removeTab(tab);
 }
 
 function* testFirstInlineStyleSheet(view, toolbox) {
@@ -111,7 +107,8 @@ function* testSecondInlineStyleSheet(view, toolbox) {
   clickLinkByIndex(view, 4);
   let editor = yield onSelected;
 
-  is(toolbox.currentToolId, "styleeditor", "The style editor is selected again");
+  is(toolbox.currentToolId, "styleeditor",
+    "The style editor is selected again");
   validateStyleEditorSheet(editor, 1);
 }
 
@@ -129,14 +126,16 @@ function* testExternalStyleSheet(view, toolbox) {
   clickLinkByIndex(view, 1);
   let editor = yield onSelected;
 
-  is(toolbox.currentToolId, "styleeditor", "The style editor is selected again");
+  is(toolbox.currentToolId, "styleeditor",
+    "The style editor is selected again");
   validateStyleEditorSheet(editor, 2);
 }
 
 function validateStyleEditorSheet(editor, expectedSheetIndex) {
   info("Validating style editor stylesheet");
   let sheet = content.document.styleSheets[expectedSheetIndex];
-  is(editor.styleSheet.href, sheet.href, "loaded stylesheet matches document stylesheet");
+  is(editor.styleSheet.href, sheet.href,
+    "loaded stylesheet matches document stylesheet");
 }
 
 function clickLinkByIndex(view, index) {

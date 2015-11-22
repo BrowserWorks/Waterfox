@@ -275,8 +275,20 @@ ExternalHelperAppParent::Open(nsIInputStream **aResult)
 }
 
 NS_IMETHODIMP
+ExternalHelperAppParent::Open2(nsIInputStream** aStream)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 ExternalHelperAppParent::AsyncOpen(nsIStreamListener *aListener,
                                    nsISupports *aContext)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+ExternalHelperAppParent::AsyncOpen2(nsIStreamListener *aListener)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -477,6 +489,18 @@ ExternalHelperAppParent::GetPartID(uint32_t* aPartID)
 
 NS_IMETHODIMP
 ExternalHelperAppParent::GetIsLastPart(bool* aIsLastPart)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+ExternalHelperAppParent::GetPreamble(nsACString & aPreamble)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+ExternalHelperAppParent::GetOriginalResponseHeader(nsACString & aOriginalResponseHeader)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }

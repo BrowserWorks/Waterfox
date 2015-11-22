@@ -32,12 +32,22 @@ NS_IMPL_ISUPPORTS(nsMenuGroupOwnerX, nsIMutationObserver)
 nsMenuGroupOwnerX::nsMenuGroupOwnerX()
 : mCurrentCommandID(eCommand_ID_Last)
 {
+  mInfoSet = [[NSMutableSet setWithCapacity:10] retain];
 }
 
 
 nsMenuGroupOwnerX::~nsMenuGroupOwnerX()
 {
   MOZ_ASSERT(mContentToObserverTable.Count() == 0, "have outstanding mutation observers!\n");
+
+  // The MenuItemInfo objects in mInfoSet may live longer than we do.  So when
+  // we get destroyed we need to invalidate all their mMenuGroupOwner pointers.
+  NSEnumerator* counter = [mInfoSet objectEnumerator];
+  MenuItemInfo* info;
+  while ((info = (MenuItemInfo*) [counter nextObject])) {
+    [info setMenuGroupOwner:nil];
+  }
+  [mInfoSet release];
 }
 
 
@@ -91,7 +101,8 @@ void nsMenuGroupOwnerX::AttributeWillChange(nsIDocument* aDocument,
                                             dom::Element* aContent,
                                             int32_t aNameSpaceID,
                                             nsIAtom* aAttribute,
-                                            int32_t aModType)
+                                            int32_t aModType,
+                                            const nsAttrValue* aNewValue)
 {
 }
 
@@ -100,7 +111,8 @@ void nsMenuGroupOwnerX::AttributeChanged(nsIDocument* aDocument,
                                          dom::Element* aElement,
                                          int32_t aNameSpaceID,
                                          nsIAtom* aAttribute,
-                                         int32_t aModType)
+                                         int32_t aModType,
+                                         const nsAttrValue* aOldValue)
 {
   nsCOMPtr<nsIMutationObserver> kungFuDeathGrip(this);
   nsChangeObserver* obs = LookupContentChangeObserver(aElement);
@@ -236,4 +248,9 @@ nsMenuItemX* nsMenuGroupOwnerX::GetMenuItemForCommandID(uint32_t inCommandID)
     return result;
   else
     return nullptr;
+}
+
+void nsMenuGroupOwnerX::AddMenuItemInfoToSet(MenuItemInfo* info)
+{
+  [mInfoSet addObject:info];
 }

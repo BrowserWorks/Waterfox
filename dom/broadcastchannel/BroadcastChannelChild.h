@@ -13,7 +13,7 @@ namespace mozilla {
 
 namespace ipc {
 class BackgroundChildImpl;
-}
+} // namespace ipc
 
 namespace dom {
 
@@ -39,7 +39,7 @@ public:
   }
 
 private:
-  explicit BroadcastChannelChild(const nsAString& aOrigin);
+  explicit BroadcastChannelChild(const nsACString& aOrigin);
   ~BroadcastChannelChild();
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
@@ -53,7 +53,7 @@ private:
   bool mActorDestroyed;
 };
 
-} // dom namespace
-} // mozilla namespace
+} // namespace dom
+} // namespace mozilla
 
 #endif // mozilla_dom_BroadcastChannelChild_h

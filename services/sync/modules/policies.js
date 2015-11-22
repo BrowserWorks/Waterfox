@@ -575,7 +575,7 @@ ErrorHandler.prototype = {
     root.level = Log.Level[Svc.Prefs.get("log.rootLogger")];
 
     let logs = ["Sync", "FirefoxAccounts", "Hawk", "Common.TokenServerClient",
-                "Sync.SyncMigration"];
+                "Sync.SyncMigration", "browserwindow.syncui"];
 
     this._logManager = new LogManager(Svc.Prefs, logs, "sync");
   },
@@ -596,13 +596,17 @@ ErrorHandler.prototype = {
         let exception = subject;  // exception thrown by engine's sync() method
         let engine_name = data;   // engine name that threw the exception
 
-        this.checkServerError(exception);
+        this.checkServerError(exception, "engines/" + engine_name);
 
         Status.engines = [engine_name, exception.failureCode || ENGINE_UNKNOWN_FAIL];
         this._log.debug(engine_name + " failed: " + Utils.exceptionStr(exception));
+
+        Services.telemetry.getKeyedHistogramById("WEAVE_ENGINE_SYNC_ERRORS")
+                          .add(engine_name);
         break;
       case "weave:service:login:error":
-        this.resetFileLog(this._logManager.REASON_ERROR);
+        this._log.error("Sync encountered a login error");
+        this.resetFileLog();
 
         if (this.shouldReportError()) {
           this.notifyOnNextTick("weave:ui:login:error");
@@ -617,7 +621,8 @@ ErrorHandler.prototype = {
           this.service.logout();
         }
 
-        this.resetFileLog(this._logManager.REASON_ERROR);
+        this._log.error("Sync encountered an error");
+        this.resetFileLog();
 
         if (this.shouldReportError()) {
           this.notifyOnNextTick("weave:ui:sync:error");
@@ -642,8 +647,8 @@ ErrorHandler.prototype = {
         }
 
         if (Status.service == SYNC_FAILED_PARTIAL) {
-          this._log.debug("Some engines did not sync correctly.");
-          this.resetFileLog(this._logManager.REASON_ERROR);
+          this._log.error("Some engines did not sync correctly.");
+          this.resetFileLog();
 
           if (this.shouldReportError()) {
             this.dontIgnoreErrors = false;
@@ -651,7 +656,7 @@ ErrorHandler.prototype = {
             break;
           }
         } else {
-          this.resetFileLog(this._logManager.REASON_SUCCESS);
+          this.resetFileLog();
         }
         this.dontIgnoreErrors = false;
         this.notifyOnNextTick("weave:ui:sync:finish");
@@ -681,19 +686,18 @@ ErrorHandler.prototype = {
   /**
    * Generate a log file for the sync that just completed
    * and refresh the input & output streams.
-   *
-   * @param reason
-   *        A constant from the LogManager that indicates the reason for the
-   *        reset.
    */
-  resetFileLog: function resetFileLog(reason) {
-    let onComplete = () => {
+  resetFileLog: function resetFileLog() {
+    let onComplete = logType => {
       Svc.Obs.notify("weave:service:reset-file-log");
       this._log.trace("Notified: " + Date.now());
+      if (logType == this._logManager.ERROR_LOG_WRITTEN) {
+        Cu.reportError("Sync encountered an error - see about:sync-log for the log file.");
+      }
     };
     // Note we do not return the promise here - the caller doesn't need to wait
     // for this to complete.
-    this._logManager.resetFileLog(reason).then(onComplete, onComplete);
+    this._logManager.resetFileLog().then(onComplete, onComplete);
   },
 
   /**
@@ -727,6 +731,9 @@ ErrorHandler.prototype = {
     }
   },
 
+  // A function to indicate if Sync errors should be "reported" - which in this
+  // context really means "should be notify observers of an error" - but note
+  // that since bug 1180587, no one is going to surface an error to the user.
   shouldReportError: function shouldReportError() {
     if (Status.login == MASTER_PASSWORD_LOCKED) {
       this._log.trace("shouldReportError: false (master password locked).");
@@ -842,7 +849,7 @@ ErrorHandler.prototype = {
    *
    * This method also looks for "side-channel" warnings.
    */
-  checkServerError: function (resp) {
+  checkServerError: function (resp, cause) {
     switch (resp.status) {
       case 200:
       case 404:
@@ -872,6 +879,9 @@ ErrorHandler.prototype = {
         break;
 
       case 401:
+        Services.telemetry.getKeyedHistogramById(
+          "WEAVE_STORAGE_AUTH_ERRORS").add(cause);
+
         this.service.logout();
         this._log.info("Got 401 response; resetting clusterURL.");
         Svc.Prefs.reset("clusterURL");

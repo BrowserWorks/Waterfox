@@ -6,17 +6,18 @@
 
 const {NetUtil} = Cu.import("resource://gre/modules/NetUtil.jsm", {});
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm", {});
-const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
-const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools;
-const {DevToolsUtils} = Cu.import("resource://gre/modules/devtools/DevToolsUtils.jsm", {});
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const {Services} = Cu.import("resource://gre/modules/Services.jsm", {});
+const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+const promise = require("promise");
 
-let gScratchpadWindow; // Reference to the Scratchpad chrome window object
 
-gDevTools.testing = true;
+var gScratchpadWindow; // Reference to the Scratchpad chrome window object
+
+DevToolsUtils.testing = true;
 SimpleTest.registerCleanupFunction(() => {
-  gDevTools.testing = false;
+  DevToolsUtils.testing = false;
 });
 
 /**

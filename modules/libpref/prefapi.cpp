@@ -23,9 +23,9 @@
 #endif /* _WIN32 */
 
 #include "plstr.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "plbase64.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prprf.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/PContent.h"
@@ -68,7 +68,7 @@ matchPrefEntry(PLDHashTable*, const PLDHashEntryHdr* entry,
     return (strcmp(prefEntry->key, otherKey) == 0);
 }
 
-PLDHashTable        gHashTable;
+PLDHashTable*       gHashTable;
 static PLArenaPool  gPrefNameArena;
 bool                gDirty = false;
 
@@ -80,9 +80,9 @@ static bool         gShouldCleanupDeadNodes = false;
 
 
 static PLDHashTableOps     pref_HashTableOps = {
-    PL_DHashStringKey,
+    PLDHashTable::HashStringKey,
     matchPrefEntry,
-    PL_DHashMoveEntryStub,
+    PLDHashTable::MoveEntryStub,
     clearPrefEntry,
     nullptr,
 };
@@ -147,16 +147,16 @@ static nsresult pref_HashPref(const char *key, PrefValue value, PrefType type, u
 
 #define PREF_HASHTABLE_INITIAL_LENGTH   1024
 
-nsresult PREF_Init()
+void PREF_Init()
 {
-    if (!gHashTable.IsInitialized()) {
-        PL_DHashTableInit(&gHashTable, &pref_HashTableOps,
-                          sizeof(PrefHashEntry), PREF_HASHTABLE_INITIAL_LENGTH);
+    if (!gHashTable) {
+        gHashTable = new PLDHashTable(&pref_HashTableOps,
+                                      sizeof(PrefHashEntry),
+                                      PREF_HASHTABLE_INITIAL_LENGTH);
 
         PL_INIT_ARENA_POOL(&gPrefNameArena, "PrefNameArena",
                            PREFNAME_ARENA_SIZE);
     }
-    return NS_OK;
 }
 
 /* Frees the callback list. */
@@ -182,8 +182,9 @@ void PREF_Cleanup()
 /* Frees up all the objects except the callback list. */
 void PREF_CleanupPrefs()
 {
-    if (gHashTable.IsInitialized()) {
-        PL_DHashTableFinish(&gHashTable);
+    if (gHashTable) {
+        delete gHashTable;
+        gHashTable = nullptr;
         PL_FinishArenaPool(&gPrefNameArena);
     }
 }
@@ -317,79 +318,54 @@ pref_SetPref(const dom::PrefSetting& aPref)
     return rv;
 }
 
-PLDHashOperator
-pref_savePref(PLDHashTable *table, PLDHashEntryHdr *heh, uint32_t i, void *arg)
+void
+pref_savePrefs(PLDHashTable* aTable, char** aPrefArray)
 {
-    pref_saveArgs *argData = static_cast<pref_saveArgs *>(arg);
-    PrefHashEntry *pref = static_cast<PrefHashEntry *>(heh);
+    int32_t j = 0;
+    for (auto iter = aTable->Iter(); !iter.Done(); iter.Next()) {
+        auto pref = static_cast<PrefHashEntry*>(iter.Get());
 
-    PR_ASSERT(pref);
-    if (!pref)
-        return PL_DHASH_NEXT;
+        nsAutoCString prefValue;
+        nsAutoCString prefPrefix;
+        prefPrefix.AssignLiteral("user_pref(\"");
 
-    nsAutoCString prefValue;
-    nsAutoCString prefPrefix;
-    prefPrefix.AssignLiteral("user_pref(\"");
+        // where we're getting our pref from
+        PrefValue* sourcePref;
 
-    // where we're getting our pref from
-    PrefValue* sourcePref;
-
-    if (PREF_HAS_USER_VALUE(pref) &&
-        (pref_ValueChanged(pref->defaultPref,
-                           pref->userPref,
-                           (PrefType) PREF_TYPE(pref)) ||
-         !(pref->flags & PREF_HAS_DEFAULT) ||
-         pref->flags & PREF_STICKY_DEFAULT)) {
-        sourcePref = &pref->userPref;
-    } else {
-        if (argData->saveTypes == SAVE_ALL_AND_DEFAULTS) {
-            prefPrefix.AssignLiteral("pref(\"");
-            sourcePref = &pref->defaultPref;
-        }
-        else
+        if (PREF_HAS_USER_VALUE(pref) &&
+            (pref_ValueChanged(pref->defaultPref,
+                               pref->userPref,
+                               (PrefType) PREF_TYPE(pref)) ||
+             !(pref->flags & PREF_HAS_DEFAULT) ||
+             pref->flags & PREF_STICKY_DEFAULT)) {
+            sourcePref = &pref->userPref;
+        } else {
             // do not save default prefs that haven't changed
-            return PL_DHASH_NEXT;
+            continue;
+        }
+
+        // strings are in quotes!
+        if (pref->flags & PREF_STRING) {
+            prefValue = '\"';
+            str_escape(sourcePref->stringVal, prefValue);
+            prefValue += '\"';
+
+        } else if (pref->flags & PREF_INT) {
+            prefValue.AppendInt(sourcePref->intVal);
+
+        } else if (pref->flags & PREF_BOOL) {
+            prefValue = (sourcePref->boolVal) ? "true" : "false";
+        }
+
+        nsAutoCString prefName;
+        str_escape(pref->key, prefName);
+
+        aPrefArray[j++] = ToNewCString(prefPrefix +
+                                       prefName +
+                                       NS_LITERAL_CSTRING("\", ") +
+                                       prefValue +
+                                       NS_LITERAL_CSTRING(");"));
     }
-
-    // strings are in quotes!
-    if (pref->flags & PREF_STRING) {
-        prefValue = '\"';
-        str_escape(sourcePref->stringVal, prefValue);
-        prefValue += '\"';
-    }
-
-    else if (pref->flags & PREF_INT)
-        prefValue.AppendInt(sourcePref->intVal);
-
-    else if (pref->flags & PREF_BOOL)
-        prefValue = (sourcePref->boolVal) ? "true" : "false";
-
-    nsAutoCString prefName;
-    str_escape(pref->key, prefName);
-
-    argData->prefArray[i] = ToNewCString(prefPrefix +
-                                         prefName +
-                                         NS_LITERAL_CSTRING("\", ") +
-                                         prefValue +
-                                         NS_LITERAL_CSTRING(");"));
-
-    return PL_DHASH_NEXT;
-}
-
-PLDHashOperator
-pref_GetPrefs(PLDHashTable *table,
-              PLDHashEntryHdr *heh,
-              uint32_t i,
-              void *arg)
-{
-    if (heh) {
-        PrefHashEntry *entry = static_cast<PrefHashEntry *>(heh);
-        dom::PrefSetting *pref =
-            static_cast<InfallibleTArray<dom::PrefSetting>*>(arg)->AppendElement();
-
-        pref_GetPrefFromEntry(entry, pref);
-    }
-    return PL_DHASH_NEXT;
 }
 
 static void
@@ -466,7 +442,7 @@ pref_CompareStrings(const void *v1, const void *v2, void *unused)
 
 bool PREF_HasUserPref(const char *pref_name)
 {
-    if (!gHashTable.IsInitialized())
+    if (!gHashTable)
         return false;
 
     PrefHashEntry *pref = pref_HashTableLookup(pref_name);
@@ -480,7 +456,7 @@ bool PREF_HasUserPref(const char *pref_name)
 nsresult
 PREF_CopyCharPref(const char *pref_name, char ** return_buffer, bool get_default)
 {
-    if (!gHashTable.IsInitialized())
+    if (!gHashTable)
         return NS_ERROR_NOT_INITIALIZED;
 
     nsresult rv = NS_ERROR_UNEXPECTED;
@@ -504,7 +480,7 @@ PREF_CopyCharPref(const char *pref_name, char ** return_buffer, bool get_default
 
 nsresult PREF_GetIntPref(const char *pref_name,int32_t * return_int, bool get_default)
 {
-    if (!gHashTable.IsInitialized())
+    if (!gHashTable)
         return NS_ERROR_NOT_INITIALIZED;
 
     nsresult rv = NS_ERROR_UNEXPECTED;
@@ -528,7 +504,7 @@ nsresult PREF_GetIntPref(const char *pref_name,int32_t * return_int, bool get_de
 
 nsresult PREF_GetBoolPref(const char *pref_name, bool * return_value, bool get_default)
 {
-    if (!gHashTable.IsInitialized())
+    if (!gHashTable)
         return NS_ERROR_NOT_INITIALIZED;
 
     nsresult rv = NS_ERROR_UNEXPECTED;
@@ -553,23 +529,6 @@ nsresult PREF_GetBoolPref(const char *pref_name, bool * return_value, bool get_d
     return rv;
 }
 
-/* Delete a branch. Used for deleting mime types */
-static PLDHashOperator
-pref_DeleteItem(PLDHashTable *table, PLDHashEntryHdr *heh, uint32_t i, void *arg)
-{
-    PrefHashEntry* he = static_cast<PrefHashEntry*>(heh);
-    const char *to_delete = (const char *) arg;
-    int len = strlen(to_delete);
-
-    /* note if we're deleting "ldap" then we want to delete "ldap.xxx"
-        and "ldap" (if such a leaf node exists) but not "ldap_1.xxx" */
-    if (to_delete && (PL_strncmp(he->key, to_delete, (uint32_t) len) == 0 ||
-        (len-1 == (int)strlen(he->key) && PL_strncmp(he->key, to_delete, (uint32_t)(len-1)) == 0)))
-        return PL_DHASH_REMOVE;
-
-    return PL_DHASH_NEXT;
-}
-
 nsresult
 PREF_DeleteBranch(const char *branch_name)
 {
@@ -579,7 +538,7 @@ PREF_DeleteBranch(const char *branch_name)
 
     int len = (int)strlen(branch_name);
 
-    if (!gHashTable.IsInitialized())
+    if (!gHashTable)
         return NS_ERROR_NOT_INITIALIZED;
 
     /* The following check insures that if the branch name already has a "."
@@ -592,8 +551,22 @@ PREF_DeleteBranch(const char *branch_name)
     if ((len > 1) && branch_name[len - 1] != '.')
         branch_dot += '.';
 
-    PL_DHashTableEnumerate(&gHashTable, pref_DeleteItem,
-                           (void*) branch_dot.get());
+    /* Delete a branch. Used for deleting mime types */
+    const char *to_delete = branch_dot.get();
+    MOZ_ASSERT(to_delete);
+    len = strlen(to_delete);
+    for (auto iter = gHashTable->Iter(); !iter.Done(); iter.Next()) {
+        auto entry = static_cast<PrefHashEntry*>(iter.Get());
+
+        /* note if we're deleting "ldap" then we want to delete "ldap.xxx"
+            and "ldap" (if such a leaf node exists) but not "ldap_1.xxx" */
+        if (PL_strncmp(entry->key, to_delete, (uint32_t) len) == 0 ||
+            (len-1 == (int)strlen(entry->key) &&
+             PL_strncmp(entry->key, to_delete, (uint32_t)(len-1)) == 0)) {
+            iter.Remove();
+        }
+    }
+
     gDirty = true;
     return NS_OK;
 }
@@ -602,7 +575,7 @@ PREF_DeleteBranch(const char *branch_name)
 nsresult
 PREF_ClearUserPref(const char *pref_name)
 {
-    if (!gHashTable.IsInitialized())
+    if (!gHashTable)
         return NS_ERROR_NOT_INITIALIZED;
 
     PrefHashEntry* pref = pref_HashTableLookup(pref_name);
@@ -611,33 +584,13 @@ PREF_ClearUserPref(const char *pref_name)
         pref->flags &= ~PREF_USERSET;
 
         if (!(pref->flags & PREF_HAS_DEFAULT)) {
-            PL_DHashTableRemove(&gHashTable, pref_name);
+            gHashTable->RemoveEntry(pref);
         }
 
         pref_DoCallback(pref_name);
         gDirty = true;
     }
     return NS_OK;
-}
-
-static PLDHashOperator
-pref_ClearUserPref(PLDHashTable *table, PLDHashEntryHdr *he, uint32_t,
-                   void *arg)
-{
-    PrefHashEntry *pref = static_cast<PrefHashEntry*>(he);
-
-    PLDHashOperator nextOp = PL_DHASH_NEXT;
-
-    if (PREF_HAS_USER_VALUE(pref))
-    {
-        pref->flags &= ~PREF_USERSET;
-
-        if (!(pref->flags & PREF_HAS_DEFAULT)) {
-            nextOp = PL_DHASH_REMOVE;
-        }
-        static_cast<std::vector<std::string>*>(arg)->push_back(std::string(pref->key));
-    }
-    return nextOp;
 }
 
 nsresult
@@ -647,11 +600,22 @@ PREF_ClearAllUserPrefs()
     MOZ_ASSERT(NS_IsMainThread());
 #endif
 
-    if (!gHashTable.IsInitialized())
+    if (!gHashTable)
         return NS_ERROR_NOT_INITIALIZED;
 
     std::vector<std::string> prefStrings;
-    PL_DHashTableEnumerate(&gHashTable, pref_ClearUserPref, static_cast<void*>(&prefStrings));
+    for (auto iter = gHashTable->Iter(); !iter.Done(); iter.Next()) {
+        auto pref = static_cast<PrefHashEntry*>(iter.Get());
+
+        if (PREF_HAS_USER_VALUE(pref)) {
+            prefStrings.push_back(std::string(pref->key));
+
+            pref->flags &= ~PREF_USERSET;
+            if (!(pref->flags & PREF_HAS_DEFAULT)) {
+                iter.Remove();
+            }
+        }
+    }
 
     for (std::string& prefString : prefStrings) {
         pref_DoCallback(prefString.c_str());
@@ -663,7 +627,7 @@ PREF_ClearAllUserPrefs()
 
 nsresult PREF_LockPref(const char *key, bool lockit)
 {
-    if (!gHashTable.IsInitialized())
+    if (!gHashTable)
         return NS_ERROR_NOT_INITIALIZED;
 
     PrefHashEntry* pref = pref_HashTableLookup(key);
@@ -728,13 +692,13 @@ static void pref_SetValue(PrefValue* existingValue, uint16_t *existingFlags,
     }
 }
 
-PrefHashEntry* pref_HashTableLookup(const void *key)
+PrefHashEntry* pref_HashTableLookup(const char *key)
 {
 #ifndef MOZ_B2G
     MOZ_ASSERT(NS_IsMainThread());
 #endif
 
-    return static_cast<PrefHashEntry*>(PL_DHashTableSearch(&gHashTable, key));
+    return static_cast<PrefHashEntry*>(gHashTable->Search(key));
 }
 
 nsresult pref_HashPref(const char *key, PrefValue value, PrefType type, uint32_t flags)
@@ -743,12 +707,10 @@ nsresult pref_HashPref(const char *key, PrefValue value, PrefType type, uint32_t
     MOZ_ASSERT(NS_IsMainThread());
 #endif
 
-    if (!gHashTable.IsInitialized())
+    if (!gHashTable)
         return NS_ERROR_OUT_OF_MEMORY;
 
-    PrefHashEntry* pref = static_cast<PrefHashEntry*>
-        (PL_DHashTableAdd(&gHashTable, key, fallible));
-
+    auto pref = static_cast<PrefHashEntry*>(gHashTable->Add(key, fallible));
     if (!pref)
         return NS_ERROR_OUT_OF_MEMORY;
 
@@ -839,8 +801,7 @@ pref_SizeOfPrivateData(MallocSizeOf aMallocSizeOf)
 PrefType
 PREF_GetPrefType(const char *pref_name)
 {
-    if (gHashTable.IsInitialized())
-    {
+    if (gHashTable) {
         PrefHashEntry* pref = pref_HashTableLookup(pref_name);
         if (pref)
         {
@@ -861,7 +822,7 @@ bool
 PREF_PrefIsLocked(const char *pref_name)
 {
     bool result = false;
-    if (gIsAnyPrefLocked && gHashTable.IsInitialized()) {
+    if (gIsAnyPrefLocked && gHashTable) {
         PrefHashEntry* pref = pref_HashTableLookup(pref_name);
         if (pref && PREF_IS_LOCKED(pref))
             result = true;

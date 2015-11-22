@@ -6,10 +6,11 @@
 #include "WebGL2Context.h"
 
 #include "GLContext.h"
+#include "GLScreenBuffer.h"
 #include "WebGLContextUtils.h"
+#include "WebGLFramebuffer.h"
 
-using namespace mozilla;
-using namespace mozilla::dom;
+namespace mozilla {
 
 // Returns one of FLOAT, INT, UNSIGNED_INT.
 // Fixed-points (normalized ints) are considered FLOAT.
@@ -188,9 +189,9 @@ WebGL2Context::BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY
     }
 
     GLsizei srcSamples;
-    GLenum srcColorFormat;
-    GLenum srcDepthFormat;
-    GLenum srcStencilFormat;
+    GLenum srcColorFormat = 0;
+    GLenum srcDepthFormat = 0;
+    GLenum srcStencilFormat = 0;
 
     if (mBoundReadFramebuffer) {
         if (!GetFBInfoForBlit(mBoundReadFramebuffer, this, "READ_FRAMEBUFFER",
@@ -219,9 +220,9 @@ WebGL2Context::BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY
     }
 
     GLsizei dstSamples;
-    GLenum dstColorFormat;
-    GLenum dstDepthFormat;
-    GLenum dstStencilFormat;
+    GLenum dstColorFormat = 0;
+    GLenum dstDepthFormat = 0;
+    GLenum dstStencilFormat = 0;
 
     if (mBoundDrawFramebuffer) {
         if (!GetFBInfoForBlit(mBoundDrawFramebuffer, this, "DRAW_FRAMEBUFFER",
@@ -329,40 +330,128 @@ WebGL2Context::BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY
                          mask, filter);
 }
 
-void
-WebGL2Context::FramebufferTextureLayer(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer)
+static bool
+ValidateTextureLayerAttachment(GLenum attachment)
 {
-    MOZ_CRASH("Not Implemented.");
+    if (LOCAL_GL_COLOR_ATTACHMENT0 < attachment &&
+        attachment <= LOCAL_GL_COLOR_ATTACHMENT15)
+    {
+        return true;
+    }
+
+    switch (attachment) {
+    case LOCAL_GL_DEPTH_ATTACHMENT:
+    case LOCAL_GL_DEPTH_STENCIL_ATTACHMENT:
+    case LOCAL_GL_STENCIL_ATTACHMENT:
+        return true;
+    }
+
+    return false;
 }
 
 void
-WebGL2Context::GetInternalformatParameter(JSContext*, GLenum target, GLenum internalformat, GLenum pname, JS::MutableHandleValue retval)
+WebGL2Context::FramebufferTextureLayer(GLenum target, GLenum attachment,
+                                       WebGLTexture* texture, GLint level, GLint layer)
 {
-    MOZ_CRASH("Not Implemented.");
+    if (IsContextLost())
+        return;
+
+    if (!ValidateFramebufferTarget(target, "framebufferTextureLayer"))
+        return;
+
+    if (!ValidateTextureLayerAttachment(attachment))
+        return ErrorInvalidEnumInfo("framebufferTextureLayer: attachment:", attachment);
+
+    if (texture) {
+        if (texture->IsDeleted()) {
+            return ErrorInvalidValue("framebufferTextureLayer: texture must be a valid "
+                                     "texture object.");
+        }
+
+        if (level < 0)
+            return ErrorInvalidValue("framebufferTextureLayer: layer must be >= 0.");
+
+        switch (texture->Target()) {
+        case LOCAL_GL_TEXTURE_3D:
+            if ((GLuint) layer >= mGLMax3DTextureSize) {
+                return ErrorInvalidValue("framebufferTextureLayer: layer must be < "
+                                         "MAX_3D_TEXTURE_SIZE");
+            }
+            break;
+
+        case LOCAL_GL_TEXTURE_2D_ARRAY:
+            if ((GLuint) layer >= mGLMaxArrayTextureLayers) {
+                return ErrorInvalidValue("framebufferTextureLayer: layer must be < "
+                                         "MAX_ARRAY_TEXTURE_LAYERS");
+            }
+            break;
+
+        default:
+            return ErrorInvalidOperation("framebufferTextureLayer: texture must be an "
+                                         "existing 3D texture, or a 2D texture array.");
+        }
+    } else {
+        return ErrorInvalidOperation("framebufferTextureLayer: texture must be an "
+                                     "existing 3D texture, or a 2D texture array.");
+    }
+
+    WebGLFramebuffer* fb;
+    switch (target) {
+    case LOCAL_GL_FRAMEBUFFER:
+    case LOCAL_GL_DRAW_FRAMEBUFFER:
+        fb = mBoundDrawFramebuffer;
+        break;
+
+    case LOCAL_GL_READ_FRAMEBUFFER:
+        fb = mBoundReadFramebuffer;
+        break;
+
+    default:
+        MOZ_CRASH("Bad target.");
+    }
+
+    if (!fb) {
+        return ErrorInvalidOperation("framebufferTextureLayer: cannot modify"
+                                     " framebuffer 0.");
+    }
+
+    fb->FramebufferTextureLayer(attachment, texture, level, layer);
 }
 
 // Map attachments intended for the default buffer, to attachments for a non-
 // default buffer.
-static void
+static bool
 TranslateDefaultAttachments(const dom::Sequence<GLenum>& in, dom::Sequence<GLenum>* out)
 {
     for (size_t i = 0; i < in.Length(); i++) {
         switch (in[i]) {
             case LOCAL_GL_COLOR:
-                out->AppendElement(LOCAL_GL_COLOR_ATTACHMENT0);
+                if (!out->AppendElement(LOCAL_GL_COLOR_ATTACHMENT0, fallible)) {
+                    return false;
+                }
                 break;
+
             case LOCAL_GL_DEPTH:
-                out->AppendElement(LOCAL_GL_DEPTH_ATTACHMENT);
+                if (!out->AppendElement(LOCAL_GL_DEPTH_ATTACHMENT, fallible)) {
+                    return false;
+                }
                 break;
+
             case LOCAL_GL_STENCIL:
-                out->AppendElement(LOCAL_GL_STENCIL_ATTACHMENT);
+                if (!out->AppendElement(LOCAL_GL_STENCIL_ATTACHMENT, fallible)) {
+                    return false;
+                }
                 break;
         }
     }
+
+    return true;
 }
 
 void
-WebGL2Context::InvalidateFramebuffer(GLenum target, const dom::Sequence<GLenum>& attachments)
+WebGL2Context::InvalidateFramebuffer(GLenum target,
+                                     const dom::Sequence<GLenum>& attachments,
+                                     ErrorResult& rv)
 {
     if (IsContextLost())
         return;
@@ -407,7 +496,11 @@ WebGL2Context::InvalidateFramebuffer(GLenum target, const dom::Sequence<GLenum>&
 
     if (!fb && !isDefaultFB) {
         dom::Sequence<GLenum> tmpAttachments;
-        TranslateDefaultAttachments(attachments, &tmpAttachments);
+        if (!TranslateDefaultAttachments(attachments, &tmpAttachments)) {
+            rv.Throw(NS_ERROR_OUT_OF_MEMORY);
+            return;
+        }
+
         gl->fInvalidateFramebuffer(target, tmpAttachments.Length(), tmpAttachments.Elements());
     } else {
         gl->fInvalidateFramebuffer(target, attachments.Length(), attachments.Elements());
@@ -416,7 +509,8 @@ WebGL2Context::InvalidateFramebuffer(GLenum target, const dom::Sequence<GLenum>&
 
 void
 WebGL2Context::InvalidateSubFramebuffer(GLenum target, const dom::Sequence<GLenum>& attachments,
-                                        GLint x, GLint y, GLsizei width, GLsizei height)
+                                        GLint x, GLint y, GLsizei width, GLsizei height,
+                                        ErrorResult& rv)
 {
     if (IsContextLost())
         return;
@@ -461,7 +555,11 @@ WebGL2Context::InvalidateSubFramebuffer(GLenum target, const dom::Sequence<GLenu
 
     if (!fb && !isDefaultFB) {
         dom::Sequence<GLenum> tmpAttachments;
-        TranslateDefaultAttachments(attachments, &tmpAttachments);
+        if (!TranslateDefaultAttachments(attachments, &tmpAttachments)) {
+            rv.Throw(NS_ERROR_OUT_OF_MEMORY);
+            return;
+        }
+
         gl->fInvalidateSubFramebuffer(target, tmpAttachments.Length(), tmpAttachments.Elements(),
                                       x, y, width, height);
     } else {
@@ -476,42 +574,42 @@ WebGL2Context::ReadBuffer(GLenum mode)
     if (IsContextLost())
         return;
 
-    MakeContextCurrent();
+    const bool isColorAttachment = (mode >= LOCAL_GL_COLOR_ATTACHMENT0 &&
+                                    mode <= LastColorAttachment());
+
+    if (mode != LOCAL_GL_NONE && mode != LOCAL_GL_BACK && !isColorAttachment) {
+        ErrorInvalidEnum("readBuffer: `mode` must be one of NONE, BACK, or "
+                         "COLOR_ATTACHMENTi. Was %s",
+                         EnumName(mode));
+        return;
+    }
 
     if (mBoundReadFramebuffer) {
-        bool isColorAttachment = (mode >= LOCAL_GL_COLOR_ATTACHMENT0 &&
-                                  mode <= LastColorAttachment());
         if (mode != LOCAL_GL_NONE &&
             !isColorAttachment)
         {
-            ErrorInvalidEnumInfo("readBuffer: If READ_FRAMEBUFFER is non-null,"
-                                 " `mode` must be COLOR_ATTACHMENTN or NONE."
-                                 " Was:", mode);
+            ErrorInvalidOperation("readBuffer: If READ_FRAMEBUFFER is non-null, `mode` "
+                                  "must be COLOR_ATTACHMENTi or NONE. Was %s",
+                                  EnumName(mode));
             return;
         }
 
+        MakeContextCurrent();
         gl->fReadBuffer(mode);
         return;
     }
 
     // Operating on the default framebuffer.
-
     if (mode != LOCAL_GL_NONE &&
         mode != LOCAL_GL_BACK)
     {
-        ErrorInvalidEnumInfo("readBuffer: If READ_FRAMEBUFFER is null, `mode`"
-                             " must be BACK or NONE. Was:", mode);
+        ErrorInvalidOperation("readBuffer: If READ_FRAMEBUFFER is null, `mode`"
+                              " must be BACK or NONE. Was %s",
+                              EnumName(mode));
         return;
     }
 
     gl->Screen()->SetReadBuffer(mode);
 }
 
-void
-WebGL2Context::RenderbufferStorageMultisample(GLenum target, GLsizei samples,
-                                              GLenum internalFormat,
-                                              GLsizei width, GLsizei height)
-{
-    RenderbufferStorage_base("renderbufferStorageMultisample", target, samples,
-                              internalFormat, width, height);
-}
+} // namespace mozilla

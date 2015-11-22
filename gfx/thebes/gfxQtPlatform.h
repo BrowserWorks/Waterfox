@@ -27,10 +27,10 @@ public:
     }
 
     virtual already_AddRefed<gfxASurface>
-      CreateOffscreenSurface(const IntSize& size,
-                             gfxContentType contentType) override;
+      CreateOffscreenSurface(const IntSize& aSize,
+                             gfxImageFormat aFormat) override;
 
-    virtual mozilla::TemporaryRef<mozilla::gfx::ScaledFont>
+    virtual already_AddRefed<mozilla::gfx::ScaledFont>
       GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont) override;
 
     virtual nsresult GetFontList(nsIAtom *aLangGroup,
@@ -41,9 +41,11 @@ public:
 
     virtual nsresult GetStandardFamilyName(const nsAString& aFontName, nsAString& aFamilyName) override;
 
-    virtual gfxFontGroup *CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
-                                          const gfxFontStyle *aStyle,
-                                          gfxUserFontSet* aUserFontSet) override;
+    gfxFontGroup*
+    CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
+                    const gfxFontStyle *aStyle,
+                    gfxTextPerfMetrics* aTextPerf,
+                    gfxUserFontSet *aUserFontSet) override;
 
     /**
      * Look up a local platform font using the full font face name (needed to
@@ -81,6 +83,10 @@ public:
 #endif
 
     virtual int GetScreenDepth() const override;
+
+    bool AccelerateLayersByDefault() override {
+      return true;
+    }
 
 protected:
     static gfxFontconfigUtils *sFontconfigUtils;

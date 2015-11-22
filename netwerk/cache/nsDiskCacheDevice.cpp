@@ -193,7 +193,6 @@ private:
 
 NS_IMPL_ISUPPORTS(nsDiskCacheDeviceInfo, nsICacheDeviceInfo)
 
-/* readonly attribute string description; */
 NS_IMETHODIMP nsDiskCacheDeviceInfo::GetDescription(char ** aDescription)
 {
     NS_ENSURE_ARG_POINTER(aDescription);
@@ -201,7 +200,6 @@ NS_IMETHODIMP nsDiskCacheDeviceInfo::GetDescription(char ** aDescription)
     return *aDescription ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
 }
 
-/* readonly attribute string usageReport; */
 NS_IMETHODIMP nsDiskCacheDeviceInfo::GetUsageReport(char ** usageReport)
 {
     NS_ENSURE_ARG_POINTER(usageReport);
@@ -228,7 +226,6 @@ NS_IMETHODIMP nsDiskCacheDeviceInfo::GetUsageReport(char ** usageReport)
     return NS_OK;
 }
 
-/* readonly attribute unsigned long entryCount; */
 NS_IMETHODIMP nsDiskCacheDeviceInfo::GetEntryCount(uint32_t *aEntryCount)
 {
     NS_ENSURE_ARG_POINTER(aEntryCount);
@@ -236,7 +233,6 @@ NS_IMETHODIMP nsDiskCacheDeviceInfo::GetEntryCount(uint32_t *aEntryCount)
     return NS_OK;
 }
 
-/* readonly attribute unsigned long totalSize; */
 NS_IMETHODIMP nsDiskCacheDeviceInfo::GetTotalSize(uint32_t *aTotalSize)
 {
     NS_ENSURE_ARG_POINTER(aTotalSize);
@@ -245,7 +241,6 @@ NS_IMETHODIMP nsDiskCacheDeviceInfo::GetTotalSize(uint32_t *aTotalSize)
     return NS_OK;
 }
 
-/* readonly attribute unsigned long maximumSize; */
 NS_IMETHODIMP nsDiskCacheDeviceInfo::GetMaximumSize(uint32_t *aMaximumSize)
 {
     NS_ENSURE_ARG_POINTER(aMaximumSize);
@@ -384,13 +379,11 @@ nsDiskCacheDevice::Init()
         NS_ERROR("Disk cache already initialized!");
         return NS_ERROR_UNEXPECTED;
     }
-       
+
     if (!mCacheDirectory)
         return NS_ERROR_FAILURE;
 
-    rv = mBindery.Init();
-    if (NS_FAILED(rv))
-        return rv;
+    mBindery.Init();
 
     // Open Disk Cache
     rv = OpenDiskCache();
@@ -995,8 +988,8 @@ nsDiskCacheDevice::OpenDiskCache()
     if (!exists) {
         nsCacheService::MarkStartingFresh();
         rv = mCacheDirectory->Create(nsIFile::DIRECTORY_TYPE, 0777);
-        CACHE_LOG_PATH(PR_LOG_ALWAYS, "\ncreate cache directory: %s\n", mCacheDirectory);
-        CACHE_LOG_ALWAYS(("mCacheDirectory->Create() = %x\n", rv));
+        CACHE_LOG_PATH(LogLevel::Info, "\ncreate cache directory: %s\n", mCacheDirectory);
+        CACHE_LOG_INFO(("mCacheDirectory->Create() = %x\n", rv));
         if (NS_FAILED(rv))
             return rv;
     

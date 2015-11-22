@@ -8,24 +8,20 @@
 #include "SourceSurfaceSkia.h"
 #include "ScaledFontBase.h"
 #include "ScaledFontCairo.h"
-#include "skia/SkGpuDevice.h"
-#include "skia/SkBitmapDevice.h"
+#include "skia/include/core/SkBitmapDevice.h"
 #include "FilterNodeSoftware.h"
+#include "HelpersSkia.h"
 
 #ifdef USE_SKIA_GPU
-#include "skia/SkGpuDevice.h"
-#include "skia/GrGLInterface.h"
+#include "skia/include/gpu/SkGpuDevice.h"
+#include "skia/include/gpu/gl/GrGLInterface.h"
 #endif
 
-#include "skia/SkTypeface.h"
-#include "skia/SkGradientShader.h"
-#include "skia/SkBlurDrawLooper.h"
-#include "skia/SkBlurMaskFilter.h"
-#include "skia/SkColorFilter.h"
-#include "skia/SkDropShadowImageFilter.h"
-#include "skia/SkLayerRasterizer.h"
-#include "skia/SkLayerDrawLooper.h"
-#include "skia/SkDashPathEffect.h"
+#include "skia/include/core/SkTypeface.h"
+#include "skia/include/effects/SkGradientShader.h"
+#include "skia/include/core/SkColorFilter.h"
+#include "skia/include/effects/SkBlurImageFilter.h"
+#include "skia/include/effects/SkLayerRasterizer.h"
 #include "Logging.h"
 #include "Tools.h"
 #include "DataSurfaceHelpers.h"
@@ -134,7 +130,7 @@ DrawTargetSkia::~DrawTargetSkia()
 {
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 DrawTargetSkia::Snapshot()
 {
   RefPtr<SourceSurfaceSkia> snapshot = mSnapshot;
@@ -146,6 +142,35 @@ DrawTargetSkia::Snapshot()
   }
 
   return snapshot.forget();
+}
+
+bool
+DrawTargetSkia::LockBits(uint8_t** aData, IntSize* aSize,
+                          int32_t* aStride, SurfaceFormat* aFormat)
+{
+  const SkBitmap &bitmap = mCanvas->getDevice()->accessBitmap(false);
+  if (!bitmap.lockPixelsAreWritable()) {
+    return false;
+  }
+
+  MarkChanged();
+
+  bitmap.lockPixels();
+  *aData = reinterpret_cast<uint8_t*>(bitmap.getPixels());
+  *aSize = IntSize(bitmap.width(), bitmap.height());
+  *aStride = int32_t(bitmap.rowBytes());
+  *aFormat = SkiaColorTypeToGfxFormat(bitmap.colorType());
+  return true;
+}
+
+void
+DrawTargetSkia::ReleaseBits(uint8_t* aData)
+{
+  const SkBitmap &bitmap = mCanvas->getDevice()->accessBitmap(false);
+  MOZ_ASSERT(bitmap.lockPixelsAreWritable());
+
+  bitmap.unlockPixels();
+  bitmap.notifyPixelsChanged();
 }
 
 static void
@@ -400,15 +425,37 @@ DrawTargetSkia::DrawSurfaceWithShadow(SourceSurface *aSurface,
   TempBitmap bitmap = GetBitmapForSurface(aSurface);
 
   SkPaint paint;
-
-  SkImageFilter* filter = SkDropShadowImageFilter::Create(aOffset.x, aOffset.y,
-                                                          aSigma, aSigma,
-                                                          ColorToSkColor(aColor, 1.0));
-
-  paint.setImageFilter(filter);
   paint.setXfermodeMode(GfxOpToSkiaOp(aOperator));
 
-  mCanvas->drawBitmap(bitmap.mBitmap, aDest.x, aDest.y, &paint);
+  // bug 1201272
+  // We can't use the SkDropShadowImageFilter here because it applies the xfer
+  // mode first to render the bitmap to a temporary layer, and then implicitly
+  // uses src-over to composite the resulting shadow.
+  // The canvas spec, however, states that the composite op must be used to
+  // composite the resulting shadow, so we must instead use a SkBlurImageFilter
+  // to blur the image ourselves.
+
+  SkPaint shadowPaint;
+  SkAutoTUnref<SkImageFilter> blurFilter(SkBlurImageFilter::Create(aSigma, aSigma));
+  SkAutoTUnref<SkColorFilter> colorFilter(
+    SkColorFilter::CreateModeFilter(ColorToSkColor(aColor, 1.0), SkXfermode::kSrcIn_Mode));
+
+  shadowPaint.setXfermode(paint.getXfermode());
+  shadowPaint.setImageFilter(blurFilter.get());
+  shadowPaint.setColorFilter(colorFilter.get());
+
+  // drawBitmap implicitly calls saveLayer with a src-over xfer mode if given
+  // an image filter, whereas the supplied xfer mode gets used to render into
+  // the layer, which is the wrong order. We instead must use drawSprite which
+  // applies the image filter directly to the bitmap without rendering it first,
+  // then uses the xfer mode to composite it.
+  IntPoint shadowDest = RoundedToInt(aDest + aOffset);
+  mCanvas->drawSprite(bitmap.mBitmap, shadowDest.x, shadowDest.y, &shadowPaint);
+
+  // Composite the original image after the shadow
+  IntPoint dest = RoundedToInt(aDest);
+  mCanvas->drawSprite(bitmap.mBitmap, dest.x, dest.y, &paint);
+
   mCanvas->restore();
 }
 
@@ -497,6 +544,26 @@ DrawTargetSkia::Fill(const Path *aPath,
   mCanvas->drawPath(skiaPath->GetPath(), paint.mPaint);
 }
 
+bool
+DrawTargetSkia::ShouldLCDRenderText(FontType aFontType, AntialiasMode aAntialiasMode)
+{
+  // For non-opaque surfaces, only allow subpixel AA if explicitly permitted.
+  if (!IsOpaque(mFormat) && !mPermitSubpixelAA) {
+    return false;
+  }
+
+  if (aAntialiasMode == AntialiasMode::DEFAULT) {
+    switch (aFontType) {
+      case FontType::MAC:
+        return true;
+      default:
+        // TODO: Figure out what to do for the other platforms.
+        return false;
+    }
+  }
+  return (aAntialiasMode == AntialiasMode::SUBPIXEL);
+}
+
 void
 DrawTargetSkia::FillGlyphs(ScaledFont *aFont,
                            const GlyphBuffer &aBuffer,
@@ -519,25 +586,25 @@ DrawTargetSkia::FillGlyphs(ScaledFont *aFont,
   paint.mPaint.setTextSize(SkFloatToScalar(skiaFont->mSize));
   paint.mPaint.setTextEncoding(SkPaint::kGlyphID_TextEncoding);
 
-  if (aRenderingOptions && aRenderingOptions->GetType() == FontType::CAIRO) {
-    switch (static_cast<const GlyphRenderingOptionsCairo*>(aRenderingOptions)->GetHinting()) {
-      case FontHinting::NONE:
-        paint.mPaint.setHinting(SkPaint::kNo_Hinting);
-        break;
-      case FontHinting::LIGHT:
-        paint.mPaint.setHinting(SkPaint::kSlight_Hinting);
-        break;
-      case FontHinting::NORMAL:
-        paint.mPaint.setHinting(SkPaint::kNormal_Hinting);
-        break;
-      case FontHinting::FULL:
-        paint.mPaint.setHinting(SkPaint::kFull_Hinting);
-        break;
-    }
+  bool shouldLCDRenderText = ShouldLCDRenderText(aFont->GetType(), aOptions.mAntialiasMode);
+  paint.mPaint.setLCDRenderText(shouldLCDRenderText);
 
-    if (static_cast<const GlyphRenderingOptionsCairo*>(aRenderingOptions)->GetAutoHinting()) {
+  if (aRenderingOptions && aRenderingOptions->GetType() == FontType::CAIRO) {
+    const GlyphRenderingOptionsCairo* cairoOptions =
+      static_cast<const GlyphRenderingOptionsCairo*>(aRenderingOptions);
+
+    paint.mPaint.setHinting(GfxHintingToSkiaHinting(cairoOptions->GetHinting()));
+
+    if (cairoOptions->GetAutoHinting()) {
       paint.mPaint.setAutohinted(true);
     }
+
+    if (cairoOptions->GetAntialiasMode() == AntialiasMode::NONE) {
+      paint.mPaint.setAntiAlias(false);
+    }
+  } else if (aFont->GetType() == FontType::MAC && shouldLCDRenderText) {
+    // SkFontHost_mac only supports subpixel antialiasing when hinting is turned off.
+    paint.mPaint.setHinting(SkPaint::kNo_Hinting);
   } else {
     paint.mPaint.setHinting(SkPaint::kNormal_Hinting);
   }
@@ -609,7 +676,7 @@ DrawTargetSkia::MaskSurface(const Pattern &aSource,
   }
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 DrawTargetSkia::CreateSourceSurfaceFromData(unsigned char *aData,
                                             const IntSize &aSize,
                                             int32_t aStride,
@@ -625,7 +692,7 @@ DrawTargetSkia::CreateSourceSurfaceFromData(unsigned char *aData,
   return newSurf.forget();
 }
 
-TemporaryRef<DrawTarget>
+already_AddRefed<DrawTarget>
 DrawTargetSkia::CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFormat) const
 {
   RefPtr<DrawTargetSkia> target = new DrawTargetSkia();
@@ -645,11 +712,12 @@ DrawTargetSkia::UsingSkiaGPU() const
 #endif
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 DrawTargetSkia::OptimizeSourceSurface(SourceSurface *aSurface) const
 {
   if (aSurface->GetType() == SurfaceType::SKIA) {
-    return aSurface;
+    RefPtr<SourceSurface> surface(aSurface);
+    return surface.forget();
   }
 
   if (!UsingSkiaGPU()) {
@@ -676,7 +744,7 @@ DrawTargetSkia::OptimizeSourceSurface(SourceSurface *aSurface) const
   return result.forget();
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 DrawTargetSkia::CreateSourceSurfaceFromNativeSurface(const NativeSurface &aSurface) const
 {
   if (aSurface.mType == NativeSurfaceType::CAIRO_SURFACE) {
@@ -686,13 +754,13 @@ DrawTargetSkia::CreateSourceSurfaceFromNativeSurface(const NativeSurface &aSurfa
       return nullptr;
     }
     cairo_surface_t* surf = static_cast<cairo_surface_t*>(aSurface.mSurface);
-    return new SourceSurfaceCairo(surf, aSurface.mSize, aSurface.mFormat);
+    return MakeAndAddRef<SourceSurfaceCairo>(surf, aSurface.mSize, aSurface.mFormat);
 #if USE_SKIA_GPU
-  } else if (aSurface.mType == NativeSurfaceType::OPENGL_TEXTURE) {
+  } else if (aSurface.mType == NativeSurfaceType::OPENGL_TEXTURE && UsingSkiaGPU()) {
     RefPtr<SourceSurfaceSkia> newSurf = new SourceSurfaceSkia();
     unsigned int texture = (unsigned int)((uintptr_t)aSurface.mSurface);
-    if (UsingSkiaGPU() && newSurf->InitFromTexture((DrawTargetSkia*)this, texture, aSurface.mSize, aSurface.mFormat)) {
-      return newSurf;
+    if (newSurf->InitFromTexture((DrawTargetSkia*)this, texture, aSurface.mSize, aSurface.mFormat)) {
+      return newSurf.forget();
     }
     return nullptr;
 #endif
@@ -870,10 +938,10 @@ DrawTargetSkia::GetNativeSurface(NativeSurfaceType aType)
 }
 
 
-TemporaryRef<PathBuilder>
+already_AddRefed<PathBuilder>
 DrawTargetSkia::CreatePathBuilder(FillRule aFillRule) const
 {
-  return new PathBuilderSkia(aFillRule);
+  return MakeAndAddRef<PathBuilderSkia>(aFillRule);
 }
 
 void
@@ -916,7 +984,7 @@ DrawTargetSkia::PopClip()
   mCanvas->restore();
 }
 
-TemporaryRef<GradientStops>
+already_AddRefed<GradientStops>
 DrawTargetSkia::CreateGradientStops(GradientStop *aStops, uint32_t aNumStops, ExtendMode aExtendMode) const
 {
   std::vector<GradientStop> stops;
@@ -926,10 +994,10 @@ DrawTargetSkia::CreateGradientStops(GradientStop *aStops, uint32_t aNumStops, Ex
   }
   std::stable_sort(stops.begin(), stops.end());
 
-  return new GradientStopsSkia(stops, aNumStops, aExtendMode);
+  return MakeAndAddRef<GradientStopsSkia>(stops, aNumStops, aExtendMode);
 }
 
-TemporaryRef<FilterNode>
+already_AddRefed<FilterNode>
 DrawTargetSkia::CreateFilter(FilterType aType)
 {
   return FilterNodeSoftware::Create(aType);
@@ -958,5 +1026,5 @@ DrawTargetSkia::SnapshotDestroyed()
   mSnapshot = nullptr;
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

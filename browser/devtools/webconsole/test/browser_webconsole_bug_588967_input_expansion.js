@@ -3,18 +3,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-console.html";
-
 "use strict";
 
-let test = asyncTest(function* () {
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-console.html";
+
+var test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();
 
   testInputExpansion(hud);
 });
-
 
 function testInputExpansion(hud) {
   let input = hud.jsterm.inputNode;
@@ -42,4 +42,3 @@ function testInputExpansion(hud) {
 
   input = length = null;
 }
-

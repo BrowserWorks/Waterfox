@@ -51,6 +51,10 @@ typedef enum {
   MOZ_GTK_STEPPER_VERTICAL    = 1 << 2
 } GtkScrollbarButtonFlags;
 
+typedef enum {
+  MOZ_GTK_TRACK_OPAQUE        = 1 << 0
+} GtkScrollbarTrackFlags;
+
 /** flags for tab state **/
 typedef enum {
   /* first eight bits are used to pass a margin */
@@ -85,6 +89,8 @@ typedef gint (*style_prop_t)(GtkStyle*, const gchar*, gint);
 typedef enum {
   /* Paints a GtkButton. flags is a GtkReliefStyle. */
   MOZ_GTK_BUTTON,
+  /* Paints a button with image and no text */
+  MOZ_GTK_TOOLBAR_BUTTON,
   /* Paints a GtkCheckButton. flags is a boolean, 1=checked, 0=not checked. */
   MOZ_GTK_CHECKBUTTON,
   /* Paints a GtkRadioButton. flags is a boolean, 1=checked, 0=not checked. */
@@ -179,7 +185,9 @@ typedef enum {
   /* Paints a GtkHPaned separator */
   MOZ_GTK_SPLITTER_VERTICAL,
   /* Paints the background of a window, dialog or page. */
-  MOZ_GTK_WINDOW
+  MOZ_GTK_WINDOW,
+  /* Paints a GtkInfoBar, for notifications. */
+  MOZ_GTK_INFO_BAR
 } GtkThemeWidgetType;
 
 /*** General library functions ***/
@@ -330,6 +338,16 @@ moz_gtk_button_get_default_overflow(gint* border_top, gint* border_left,
                                     gint* border_bottom, gint* border_right);
 
 /**
+ * Gets the minimum size of a GtkScale.
+ * orient:           [IN] the scale orientation
+ * scale_width:      [OUT] the width of the scale
+ * scale_height:     [OUT] the height of the scale
+ */
+void
+moz_gtk_get_scale_metrics(GtkOrientation orient, gint* scale_width,
+                          gint* scale_height);
+
+/**
  * Get the desired size of a GtkScale thumb
  * orient:           [IN] the scale orientation
  * thumb_length:     [OUT] the length of the thumb
@@ -439,6 +457,12 @@ gboolean moz_gtk_images_in_menus(void);
  * If TRUE, use images in buttons.
  */
 gboolean moz_gtk_images_in_buttons(void);
+
+/**
+ * Get a boolean which indicates whether the theme draws scrollbar buttons.
+ * If TRUE, draw scrollbar buttons.
+ */
+gboolean moz_gtk_has_scrollbar_buttons(void);
 
 #ifdef __cplusplus
 }

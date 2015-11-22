@@ -50,8 +50,7 @@ WaiveXrayWrapper::getOwnPropertyDescriptor(JSContext* cx, HandleObject wrapper,
 }
 
 bool
-WaiveXrayWrapper::get(JSContext* cx, HandleObject wrapper,
-                      HandleObject receiver, HandleId id,
+WaiveXrayWrapper::get(JSContext* cx, HandleObject wrapper, HandleValue receiver, HandleId id,
                       MutableHandleValue vp) const
 {
     return CrossCompartmentWrapper::get(cx, wrapper, receiver, id, vp) &&
@@ -84,7 +83,7 @@ WaiveXrayWrapper::construct(JSContext* cx, HandleObject wrapper, const JS::CallA
 // nsXBLProtoImplField.cpp.
 bool
 WaiveXrayWrapper::nativeCall(JSContext* cx, JS::IsAcceptableThis test,
-                             JS::NativeImpl impl, JS::CallArgs args) const
+                             JS::NativeImpl impl, const JS::CallArgs& args) const
 {
     return CrossCompartmentWrapper::nativeCall(cx, test, impl, args) &&
            WrapperFactory::WaiveXrayAndWrap(cx, args.rval());
@@ -97,4 +96,4 @@ WaiveXrayWrapper::getPrototype(JSContext* cx, HandleObject wrapper, MutableHandl
            (!protop || WrapperFactory::WaiveXrayAndWrap(cx, protop));
 }
 
-}
+} // namespace xpc

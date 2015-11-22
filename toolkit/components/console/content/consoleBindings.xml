@@ -295,7 +295,7 @@
             const clipI = Components.interfaces.nsIClipboardHelper;
             var clipboard = Components.classes[clipURI].getService(clipI);
 
-            clipboard.copyString(this.mSelectedItem.toString(), document);
+            clipboard.copyString(this.mSelectedItem.toString());
           } catch (ex) {
             // Unable to copy anything, die quietly
           }
@@ -538,7 +538,7 @@
           var url = document.getBindingParent(this).mSourceName;
           url = url.substring(url.lastIndexOf(" ") + 1);
           var line = getAttribute("line");
-          gViewSourceUtils.viewSource(url, null, null, line);
+          gViewSourceUtils.viewSource({URL: url, lineNumber: line});
         ]]>
       </handler>
     </handlers>

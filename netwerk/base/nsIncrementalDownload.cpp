@@ -14,8 +14,11 @@
 #include "nsIInterfaceRequestor.h"
 #include "nsIObserverService.h"
 #include "nsIObserver.h"
+#include "nsIStreamListener.h"
 #include "nsIFile.h"
 #include "nsITimer.h"
+#include "nsIURI.h"
+#include "nsIInputStream.h"
 #include "nsNetUtil.h"
 #include "nsAutoPtr.h"
 #include "nsWeakReference.h"
@@ -265,7 +268,7 @@ nsIncrementalDownload::ProcessTimeout()
   nsresult rv = NS_NewChannel(getter_AddRefs(channel),
                               mFinalURI,
                               nsContentUtils::GetSystemPrincipal(),
-                              nsILoadInfo::SEC_NORMAL,
+                              nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                               nsIContentPolicy::TYPE_OTHER,
                               nullptr,   // loadGroup
                               this,      // aCallbacks
@@ -307,7 +310,7 @@ nsIncrementalDownload::ProcessTimeout()
     }
   }
 
-  rv = channel->AsyncOpen(this, nullptr);
+  rv = channel->AsyncOpen2(this);
   if (NS_FAILED(rv))
     return rv;
 

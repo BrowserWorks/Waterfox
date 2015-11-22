@@ -8,6 +8,8 @@ processing jar.mn files.
 See the documentation for jar.mn on MDC for further details on the format.
 '''
 
+from __future__ import absolute_import
+
 import sys
 import os
 import errno
@@ -386,7 +388,7 @@ class JarMaker(object):
                 m.group('optPreprocess') or '',
                 m.group('optOverwrite') or '',
                 out,
-                m.group('locale') or '',
+                m.group('locale').replace('%', '%%') or '',
             )
             for _srcdir in src_base:
                 finder = FileFinder(_srcdir, find_executables=False)

@@ -7,13 +7,9 @@
 #define WaveReader_h_
 
 #include "MediaDecoderReader.h"
-#include "mozilla/dom/HTMLMediaElement.h"
+#include "MediaResource.h"
 
-namespace mozilla {
-namespace dom {
-class TimeRanges;
-}
-}
+#include "mozilla/dom/HTMLMediaElement.h"
 
 namespace mozilla {
 
@@ -46,7 +42,7 @@ public:
   virtual nsRefPtr<SeekPromise>
   Seek(int64_t aTime, int64_t aEndTime) override;
 
-  virtual nsresult GetBuffered(dom::TimeRanges* aBuffered) override;
+  virtual media::TimeIntervals GetBuffered() override;
 
   virtual bool IsMediaSeekable() override;
 
@@ -104,6 +100,8 @@ private:
   // Start offset of the PCM data in the media stream.  Extends mWaveLength
   // bytes.
   int64_t mWavePCMOffset;
+
+  MediaResourceIndex mResource;
 };
 
 } // namespace mozilla

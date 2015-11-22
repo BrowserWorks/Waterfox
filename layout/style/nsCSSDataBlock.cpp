@@ -10,6 +10,7 @@
 
 #include "nsCSSDataBlock.h"
 
+#include "CSSVariableImageTable.h"
 #include "mozilla/css/Declaration.h"
 #include "mozilla/css/ImageLoader.h"
 #include "mozilla/MemoryReporting.h"
@@ -20,6 +21,7 @@
 #include "nsStyleSet.h"
 
 using namespace mozilla;
+using namespace mozilla::css;
 
 /**
  * Does a fast move of aSource to aDest.  The previous value in
@@ -51,14 +53,16 @@ ShouldIgnoreColors(nsRuleData *aRuleData)
  */
 static void
 TryToStartImageLoadOnValue(const nsCSSValue& aValue, nsIDocument* aDocument,
-                           nsCSSValueTokenStream* aTokenStream)
+                           nsStyleContext* aContext, nsCSSProperty aProperty,
+                           bool aForTokenStream)
 {
   MOZ_ASSERT(aDocument);
 
   if (aValue.GetUnit() == eCSSUnit_URL) {
     aValue.StartImageLoad(aDocument);
-    if (aTokenStream) {
-      aTokenStream->mImageValues.PutEntry(aValue.GetImageStructValue());
+    if (aForTokenStream && aContext) {
+      CSSVariableImageTable::Add(aContext, aProperty,
+                                 aValue.GetImageStructValue());
     }
   }
   else if (aValue.GetUnit() == eCSSUnit_Image) {
@@ -66,10 +70,10 @@ TryToStartImageLoadOnValue(const nsCSSValue& aValue, nsIDocument* aDocument,
     imgIRequest* request = aValue.GetImageValue(nullptr);
 
     if (request) {
-      mozilla::css::ImageValue* imageValue = aValue.GetImageStructValue();
+      ImageValue* imageValue = aValue.GetImageStructValue();
       aDocument->StyleImageLoader()->MaybeRegisterCSSImage(imageValue);
-      if (aTokenStream) {
-        aTokenStream->mImageValues.PutEntry(imageValue);
+      if (aForTokenStream && aContext) {
+        CSSVariableImageTable::Add(aContext, aProperty, imageValue);
       }
     }
   }
@@ -78,27 +82,30 @@ TryToStartImageLoadOnValue(const nsCSSValue& aValue, nsIDocument* aDocument,
     MOZ_ASSERT(arguments->Count() == 6, "unexpected num of arguments");
 
     const nsCSSValue& image = arguments->Item(1);
-    TryToStartImageLoadOnValue(image, aDocument, aTokenStream);
+    TryToStartImageLoadOnValue(image, aDocument, aContext, aProperty,
+                               aForTokenStream);
   }
 }
 
 static void
 TryToStartImageLoad(const nsCSSValue& aValue, nsIDocument* aDocument,
-                    nsCSSProperty aProperty,
-                    nsCSSValueTokenStream* aTokenStream)
+                    nsStyleContext* aContext, nsCSSProperty aProperty,
+                    bool aForTokenStream)
 {
   if (aValue.GetUnit() == eCSSUnit_List) {
     for (const nsCSSValueList* l = aValue.GetListValue(); l; l = l->mNext) {
-      TryToStartImageLoad(l->mValue, aDocument, aProperty, aTokenStream);
+      TryToStartImageLoad(l->mValue, aDocument, aContext, aProperty,
+                          aForTokenStream);
     }
   } else if (nsCSSProps::PropHasFlags(aProperty,
                                       CSS_PROPERTY_IMAGE_IS_IN_ARRAY_0)) {
     if (aValue.GetUnit() == eCSSUnit_Array) {
       TryToStartImageLoadOnValue(aValue.GetArrayValue()->Item(0), aDocument,
-                                 aTokenStream);
+                                 aContext, aProperty, aForTokenStream);
     }
   } else {
-    TryToStartImageLoadOnValue(aValue, aDocument, aTokenStream);
+    TryToStartImageLoadOnValue(aValue, aDocument, aContext, aProperty,
+                               aForTokenStream);
   }
 }
 
@@ -129,22 +136,17 @@ MapSinglePropertyInto(nsCSSProperty aProp,
     // when aTarget is a token stream value, which is the case when we
     // have just re-parsed a property that had a variable reference (in
     // nsCSSParser::ParsePropertyWithVariableReferences).  TryToStartImageLoad
-    // then records any resulting ImageValue objects on the
-    // nsCSSValueTokenStream object we found on aTarget.  See the comment
-    // above nsCSSValueTokenStream::mImageValues for why.
+    // then records any resulting ImageValue objects in the
+    // CSSVariableImageTable, to give them the appropriate lifetime.
     MOZ_ASSERT(aTarget->GetUnit() == eCSSUnit_TokenStream ||
                aTarget->GetUnit() == eCSSUnit_Null,
                "aTarget must only be a token stream (when re-parsing "
                "properties with variable references) or null");
 
-    nsCSSValueTokenStream* tokenStream =
-        aTarget->GetUnit() == eCSSUnit_TokenStream ?
-            aTarget->GetTokenStreamValue() :
-            nullptr;
-
     if (ShouldStartImageLoads(aRuleData, aProp)) {
         nsIDocument* doc = aRuleData->mPresContext->Document();
-        TryToStartImageLoad(*aValue, doc, aProp, tokenStream);
+        TryToStartImageLoad(*aValue, doc, aRuleData->mStyleContext, aProp,
+                            aTarget->GetUnit() == eCSSUnit_TokenStream);
     }
     *aTarget = *aValue;
     if (nsCSSProps::PropHasFlags(aProp,
@@ -254,11 +256,21 @@ nsCSSCompressedDataBlock::MapRuleInfoInto(nsRuleData *aRuleData) const
                 // We can't cache anything on the rule tree if we use any data from
                 // the style context, since data cached in the rule tree could be
                 // used with a style context with a different value.
-                aRuleData->mCanStoreInRuleTree = false;
+                uint8_t wm = WritingMode(aRuleData->mStyleContext).GetBits();
+                aRuleData->mConditions.SetWritingModeDependency(wm);
             }
             nsCSSValue* target = aRuleData->ValueFor(iProp);
             if (target->GetUnit() == eCSSUnit_Null) {
                 const nsCSSValue *val = ValueAtIndex(i);
+                // In order for variable resolution to have the right information
+                // about the stylesheet level of a value, that level needs to be
+                // stored on the token stream. We can't do that at creation time
+                // because the CSS parser (which creates the object) has no idea
+                // about the stylesheet level, so we do it here instead, where
+                // the rule walking will have just updated aRuleData.
+                if (val->GetUnit() == eCSSUnit_TokenStream) {
+                  val->GetTokenStreamValue()->mLevel = aRuleData->mLevel;
+                }
                 MapSinglePropertyInto(iProp, val, target, aRuleData);
             }
         }
@@ -613,12 +625,14 @@ nsCSSExpandedDataBlock::TransferFromBlock(nsCSSExpandedDataBlock& aFromBlock,
                                           bool aIsImportant,
                                           bool aOverrideImportant,
                                           bool aMustCallValueAppended,
-                                          css::Declaration* aDeclaration)
+                                          css::Declaration* aDeclaration,
+                                          nsIDocument* aSheetDocument)
 {
     if (!nsCSSProps::IsShorthand(aPropID)) {
         return DoTransferFromBlock(aFromBlock, aPropID,
                                    aIsImportant, aOverrideImportant,
-                                   aMustCallValueAppended, aDeclaration);
+                                   aMustCallValueAppended, aDeclaration,
+                                   aSheetDocument);
     }
 
     // We can pass eIgnoreEnabledState (here, and in ClearProperty above) rather
@@ -630,7 +644,8 @@ nsCSSExpandedDataBlock::TransferFromBlock(nsCSSExpandedDataBlock& aFromBlock,
     CSSPROPS_FOR_SHORTHAND_SUBPROPERTIES(p, aPropID, aEnabledState) {
         changed |= DoTransferFromBlock(aFromBlock, *p,
                                        aIsImportant, aOverrideImportant,
-                                       aMustCallValueAppended, aDeclaration);
+                                       aMustCallValueAppended, aDeclaration,
+                                       aSheetDocument);
     }
     return changed;
 }
@@ -641,7 +656,8 @@ nsCSSExpandedDataBlock::DoTransferFromBlock(nsCSSExpandedDataBlock& aFromBlock,
                                             bool aIsImportant,
                                             bool aOverrideImportant,
                                             bool aMustCallValueAppended,
-                                            css::Declaration* aDeclaration)
+                                            css::Declaration* aDeclaration,
+                                            nsIDocument* aSheetDocument)
 {
   bool changed = false;
   MOZ_ASSERT(aFromBlock.HasPropertyBit(aPropID), "oops");
@@ -669,6 +685,13 @@ nsCSSExpandedDataBlock::DoTransferFromBlock(nsCSSExpandedDataBlock& aFromBlock,
     aDeclaration->ValueAppended(aPropID);
   }
 
+  if (aSheetDocument) {
+    UseCounter useCounter = nsCSSProps::UseCounterFor(aPropID);
+    if (useCounter != eUseCounter_UNKNOWN) {
+      aSheetDocument->SetDocumentAndPageUseCounter(useCounter);
+    }
+  }
+
   SetPropertyBit(aPropID);
   aFromBlock.ClearPropertyBit(aPropID);
 
@@ -693,14 +716,17 @@ nsCSSExpandedDataBlock::MapRuleInfoInto(nsCSSProperty aPropID,
   nsCSSProperty physicalProp = aPropID;
   if (nsCSSProps::PropHasFlags(aPropID, CSS_PROPERTY_LOGICAL)) {
     EnsurePhysicalProperty(physicalProp, aRuleData);
-    aRuleData->mCanStoreInRuleTree = false;
+    uint8_t wm = WritingMode(aRuleData->mStyleContext).GetBits();
+    aRuleData->mConditions.SetWritingModeDependency(wm);
   }
 
   nsCSSValue* dest = aRuleData->ValueFor(physicalProp);
   MOZ_ASSERT(dest->GetUnit() == eCSSUnit_TokenStream &&
              dest->GetTokenStreamValue()->mPropertyID == aPropID);
 
-  MapSinglePropertyInto(physicalProp, src, dest, aRuleData);
+  CSSVariableImageTable::ReplaceAll(aRuleData->mStyleContext, aPropID, [=] {
+    MapSinglePropertyInto(physicalProp, src, dest, aRuleData);
+  });
 }
 
 #ifdef DEBUG

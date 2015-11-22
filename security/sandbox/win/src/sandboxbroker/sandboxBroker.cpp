@@ -125,6 +125,25 @@ SandboxBroker::SetSecurityLevelForContentProcess(int32_t aSandboxLevel)
     ret = ret && (sandbox::SBOX_ALL_OK == result);
   }
 
+  if (aSandboxLevel >= 1) {
+    sandbox::MitigationFlags mitigations =
+      sandbox::MITIGATION_BOTTOM_UP_ASLR |
+      sandbox::MITIGATION_HEAP_TERMINATE |
+      sandbox::MITIGATION_SEHOP |
+      sandbox::MITIGATION_DEP_NO_ATL_THUNK |
+      sandbox::MITIGATION_DEP;
+
+    result = mPolicy->SetProcessMitigations(mitigations);
+    ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+    mitigations =
+      sandbox::MITIGATION_STRICT_HANDLE_CHECKS |
+      sandbox::MITIGATION_DLL_SEARCH_ORDER;
+
+    result = mPolicy->SetDelayedProcessMitigations(mitigations);
+    ret = ret && (sandbox::SBOX_ALL_OK == result);
+  }
+
   // Add the policy for the client side of a pipe. It is just a file
   // in the \pipe\ namespace. We restrict it to pipes that start with
   // "chrome." so the sandboxed process cannot connect to system services.
@@ -164,57 +183,49 @@ SandboxBroker::SetSecurityLevelForPluginProcess(int32_t aSandboxLevel)
     return false;
   }
 
-  sandbox::ResultCode result;
-  bool ret;
-  if (aSandboxLevel >= 2) {
-    result = mPolicy->SetJobLevel(sandbox::JOB_UNPROTECTED,
-                                     0 /* ui_exceptions */);
-    ret = (sandbox::SBOX_ALL_OK == result);
+  sandbox::JobLevel jobLevel;
+  sandbox::TokenLevel accessTokenLevel;
+  sandbox::IntegrityLevel initialIntegrityLevel;
+  sandbox::IntegrityLevel delayedIntegrityLevel;
 
-    sandbox::TokenLevel tokenLevel;
-    if (aSandboxLevel >= 3) {
-      tokenLevel = sandbox::USER_LIMITED;
-    } else {
-      tokenLevel = sandbox::USER_INTERACTIVE;
-    }
-
-    result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
-                                    tokenLevel);
-    ret = ret && (sandbox::SBOX_ALL_OK == result);
-
-    sandbox::MitigationFlags mitigations =
-      sandbox::MITIGATION_BOTTOM_UP_ASLR |
-      sandbox::MITIGATION_HEAP_TERMINATE |
-      sandbox::MITIGATION_SEHOP |
-      sandbox::MITIGATION_DEP_NO_ATL_THUNK |
-      sandbox::MITIGATION_DEP;
-
-    result = mPolicy->SetProcessMitigations(mitigations);
-    ret = ret && (sandbox::SBOX_ALL_OK == result);
-
-    mitigations =
-      sandbox::MITIGATION_STRICT_HANDLE_CHECKS;
-
-    result = mPolicy->SetDelayedProcessMitigations(mitigations);
-    ret = ret && (sandbox::SBOX_ALL_OK == result);
-
-    // The following is required for the Java plugin.
-    result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
-                              sandbox::TargetPolicy::FILES_ALLOW_ANY,
-                              L"\\??\\pipe\\jpi2_pid*_pipe*");
-    ret = ret && (sandbox::SBOX_ALL_OK == result);
-
+  if (aSandboxLevel > 2) {
+    jobLevel = sandbox::JOB_UNPROTECTED;
+    accessTokenLevel = sandbox::USER_LIMITED;
+    initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
+    delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
+  } else if (aSandboxLevel == 2) {
+    jobLevel = sandbox::JOB_UNPROTECTED;
+    accessTokenLevel = sandbox::USER_INTERACTIVE;
+    initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
+    delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
   } else {
-    result = mPolicy->SetJobLevel(sandbox::JOB_NONE,
-                                     0 /* ui_exceptions */);
-    ret = (sandbox::SBOX_ALL_OK == result);
-
-    result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
-                                    sandbox::USER_NON_ADMIN);
-    ret = ret && (sandbox::SBOX_ALL_OK == result);
+    jobLevel = sandbox::JOB_NONE;
+    accessTokenLevel = sandbox::USER_NON_ADMIN;
+    initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_MEDIUM;
+    delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_MEDIUM;
   }
 
-  result = mPolicy->SetDelayedIntegrityLevel(sandbox::INTEGRITY_LEVEL_MEDIUM);
+  sandbox::ResultCode result = mPolicy->SetJobLevel(jobLevel,
+                                                    0 /* ui_exceptions */);
+  bool ret = (sandbox::SBOX_ALL_OK == result);
+
+  result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
+                                  accessTokenLevel);
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+  result = mPolicy->SetIntegrityLevel(initialIntegrityLevel);
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+  result = mPolicy->SetDelayedIntegrityLevel(delayedIntegrityLevel);
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+  sandbox::MitigationFlags mitigations =
+    sandbox::MITIGATION_BOTTOM_UP_ASLR |
+    sandbox::MITIGATION_HEAP_TERMINATE |
+    sandbox::MITIGATION_SEHOP |
+    sandbox::MITIGATION_DEP_NO_ATL_THUNK |
+    sandbox::MITIGATION_DEP;
+
+  result = mPolicy->SetProcessMitigations(mitigations);
   ret = ret && (sandbox::SBOX_ALL_OK == result);
 
   // Add the policy for the client side of a pipe. It is just a file
@@ -225,11 +236,29 @@ SandboxBroker::SetSecurityLevelForPluginProcess(int32_t aSandboxLevel)
                             L"\\??\\pipe\\chrome.*");
   ret = ret && (sandbox::SBOX_ALL_OK == result);
 
+  // Add the policy for the client side of the crash server pipe.
+  result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
+                            sandbox::TargetPolicy::FILES_ALLOW_ANY,
+                            L"\\??\\pipe\\gecko-crash-server-pipe.*");
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+
   // The NPAPI process needs to be able to duplicate shared memory to the
-  // content process, which are Section type handles.
+  // content process and broker process, which are Section type handles.
+  // Content and broker are for e10s and non-e10s cases.
   result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_HANDLES,
                             sandbox::TargetPolicy::HANDLES_DUP_ANY,
                             L"Section");
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+  result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_HANDLES,
+                            sandbox::TargetPolicy::HANDLES_DUP_BROKER,
+                            L"Section");
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+  // The following is required for the Java plugin.
+  result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
+                            sandbox::TargetPolicy::FILES_ALLOW_ANY,
+                            L"\\??\\pipe\\jpi2_pid*_pipe*");
   ret = ret && (sandbox::SBOX_ALL_OK == result);
 
   return ret;
@@ -401,6 +430,13 @@ SandboxBroker::AllowDirectory(wchar_t const *dir)
     mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
                      sandbox::TargetPolicy::FILES_ALLOW_DIR_ANY,
                      dir);
+  return (sandbox::SBOX_ALL_OK == result);
+}
+
+bool
+SandboxBroker::AddTargetPeer(HANDLE aPeerProcess)
+{
+  sandbox::ResultCode result = sBrokerService->AddTargetPeer(aPeerProcess);
   return (sandbox::SBOX_ALL_OK == result);
 }
 

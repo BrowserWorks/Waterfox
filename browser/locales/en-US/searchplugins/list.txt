@@ -1,6 +1,7 @@
+amazondotcom
 bing
-startpage
+eBay
 google
-ddg
+twitter
 wikipedia
 yahoo

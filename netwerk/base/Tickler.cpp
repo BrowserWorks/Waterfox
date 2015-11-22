@@ -13,7 +13,8 @@
 #include "nsThreadUtils.h"
 #include "prnetdb.h"
 
-#include "AndroidBridge.h"
+#include "mozilla/jni/Utils.h"
+#include "GeneratedJNIWrappers.h"
 
 namespace mozilla {
 namespace net {
@@ -80,7 +81,7 @@ Tickler::Init()
   MOZ_ASSERT(!mThread);
   MOZ_ASSERT(!mFD);
 
-  if (AndroidBridge::HasEnv()) {
+  if (jni::IsAvailable()) {
       widget::GeckoAppShell::EnableNetworkNotifications();
   }
 
@@ -291,7 +292,7 @@ NS_IMETHODIMP TicklerTimer::Notify(nsITimer *timer)
 namespace mozilla {
 namespace net {
 NS_IMPL_ISUPPORTS0(Tickler)
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla
 
 #endif // defined MOZ_USE_WIFI_TICKLER

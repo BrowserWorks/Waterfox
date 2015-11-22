@@ -2,10 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/** 
+/**
   Styles for old GFX form widgets
- **/ 
- 
+ **/
+
 
 @namespace url(http://www.w3.org/1999/xhtml); /* set default namespace to HTML */
 @namespace xul url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
@@ -39,7 +39,7 @@ fieldset {
   padding-block-end: 0.75em;
   -moz-padding-start: 0.625em;
   -moz-padding-end: 0.625em;
-  border: 2px groove ThreeDFace;
+  border: 2px groove ThreeDLightShadow;
 }
 
 label {
@@ -48,7 +48,7 @@ label {
 
 /* default inputs, text inputs, and selects */
 
-/* Note: Values in nsNativeTheme IsWidgetStyled function 
+/* Note: Values in nsNativeTheme IsWidgetStyled function
    need to match textfield background/border values here */
 
 input {
@@ -57,7 +57,7 @@ input {
      must be the same here, for buttons, and for <select> (including its
      internal padding magic) */
   padding: 1px;
-  border: 2px inset ThreeDFace;
+  border: 2px inset ThreeDLightShadow;
   background-color: -moz-Field;
   color: -moz-FieldText;
   font: -moz-field;
@@ -99,7 +99,7 @@ input::-moz-placeholder {
 textarea {
   margin-block-start: 1px;
   margin-block-end: 1px;
-  border: 2px inset ThreeDFace;
+  border: 2px inset ThreeDLightShadow;
   /* The 1px inline padding is for parity with Win/IE */
   -moz-padding-start: 1px;
   -moz-padding-end: 1px;
@@ -192,9 +192,8 @@ textarea:-moz-read-write {
 }
 
 select {
-  writing-mode: horizontal-tb !important; /* XXX remove when bug 1112954 is fixed */
   margin: 0;
-  border-color: ThreeDFace;
+  border-color: ThreeDLightShadow;
   background-color: -moz-Combobox;
   color: -moz-ComboboxText;
   font: -moz-list;
@@ -207,7 +206,7 @@ select {
   line-height: normal !important;
   white-space: nowrap !important;
   word-wrap: normal !important;
-  text-align: start; 
+  text-align: start;
   cursor: default;
   box-sizing: border-box;
   -moz-user-select: none;
@@ -225,7 +224,7 @@ select {
 
 /* Need the "select[size][multiple]" selector to override the settings on
    'select[size="1"]', eg if one has <select size="1" multiple> */
-   
+
 select[size],
 select[multiple],
 select[size][multiple] {
@@ -275,6 +274,22 @@ select > button:active {
   background-image: url("arrowd.gif") !important;
 }
 
+select > button[orientation="left"] {
+  background-image: url("arrow-left.gif") !important;
+}
+
+select > button[orientation="right"] {
+  background-image: url("arrow-right.gif") !important;
+}
+
+select > button[orientation="left"]:active {
+  background-image: url("arrowd-left.gif") !important;
+}
+
+select > button[orientation="right"]:active {
+  background-image: url("arrowd-right.gif") !important;
+}
+
 select:empty {
   inline-size: 2.5em;
 }
@@ -282,7 +297,7 @@ select:empty {
 *|*::-moz-display-comboboxcontrol-frame {
   overflow: -moz-hidden-unscrollable;
   /* This block-start/end padding plus the combobox block-start/end border need to
-     add up to the block-start/end borderpadding of text inputs and buttons */ 
+     add up to the block-start/end borderpadding of text inputs and buttons */
   padding-block-start: 1px;
   padding-block-end: 1px;
   -moz-padding-start: 4px;
@@ -370,7 +385,7 @@ optgroup:before {
    */
   border: 1px outset black !important;
   -moz-border-start-width: 2px ! important;
-} 
+}
 
 input:disabled,
 textarea:disabled,
@@ -381,7 +396,7 @@ select:disabled:disabled /* Need the pseudo-class twice to have the specificity
 {
   -moz-user-input: disabled;
   color: GrayText;
-  background-color: ThreeDFace;
+  background-color: ThreeDLightShadow;
   cursor: inherit;
 }
 
@@ -528,7 +543,7 @@ input[type="checkbox"] {
   /* same colors as |input| rule, but |!important| this time. */
   background-color: -moz-Field ! important;
   color: -moz-FieldText ! important;
-  border: 2px inset ThreeDFace ! important;
+  border: 2px inset ThreeDLightShadow ! important;
 }
 
 input[type="radio"]:disabled,
@@ -544,7 +559,7 @@ input[type="checkbox"]:disabled:hover:active {
   /* same as above, but !important */
   color: GrayText ! important;
   background-color: ThreeDFace ! important;
-  cursor: inherit; 
+  cursor: inherit;
 }
 
 input[type="checkbox"]:-moz-focusring,
@@ -558,9 +573,13 @@ input[type="radio"]:hover:active {
   border-style: inset !important;
 }
 
+input[type="search"] {
+  box-sizing: border-box;
+}
+
 /* buttons */
 
-/* Note: Values in nsNativeTheme IsWidgetStyled function 
+/* Note: Values in nsNativeTheme IsWidgetStyled function
    need to match button background/border values here */
 
 /* Non text-related properties for buttons: these ones are shared with
@@ -578,7 +597,7 @@ input[type="submit"] {
   -moz-padding-end: 6px;
   padding-block-end: 0px;
   -moz-padding-start: 6px;
-  border: 2px outset ButtonFace;
+  border: 2px outset ThreeDLightShadow;
   background-color: ButtonFace;
   cursor: default;
   box-sizing: border-box;
@@ -592,7 +611,7 @@ button,
 input[type="reset"],
 input[type="button"],
 input[type="submit"] {
-  color: ButtonText; 
+  color: ButtonText;
   font: -moz-button;
   line-height: normal;
   white-space: pre;
@@ -692,8 +711,8 @@ input[type="submit"]:disabled {
   -moz-padding-end: 6px;
   padding-block-end: 0px;
   -moz-padding-start: 6px;
-  border: 2px outset ButtonFace;
-  cursor: inherit; 
+  border: 2px outset ThreeDLightShadow;
+  cursor: inherit;
 }
 
 button:disabled:active, button:disabled,
@@ -987,17 +1006,24 @@ input[type=number]::-moz-number-text {
 }
 
 input[type=number]::-moz-number-spin-box {
+  writing-mode: horizontal-tb;
   display: flex;
   flex-direction: column;
 %ifdef XP_WIN
   /* The Window's Theme's spin buttons have a very narrow minimum width, so
    * make it something reasonable:
-   * XXX What about vertical mode? How will the spin buttons be arranged?
-   * This may need to be adjusted when bug 1123299 is implemented.
    */
   width: 16px;
 %endif
-  height: 0;
+  /* If the spin-box has auto height, it ends up enlarging the default height
+   * of the control, so we limit it to 1em here. The height doesn't affect
+   * the rendering of the spinner-buttons; it's only for layout purposes.
+   *
+   * This is a temporary hack until we implement better positioning for the
+   * spin-box in vertical mode; it works OK at default size but less well
+   * if the font-size is made substantially larger or smaller. (Bug 1175074.)
+   */
+  max-height: 1em;
   align-self: center;
   justify-content: center;
 }

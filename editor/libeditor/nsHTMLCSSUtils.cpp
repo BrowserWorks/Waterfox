@@ -150,14 +150,14 @@ void ProcessMarginLeftValue(const nsAString * aInputString, nsAString & aOutputS
   if (aInputString) {
     if (aInputString->EqualsLiteral("center") ||
         aInputString->EqualsLiteral("-moz-center")) {
-      aOutputString.AppendLiteral("auto"); 
+      aOutputString.AppendLiteral("auto");
     }
     else if (aInputString->EqualsLiteral("right") ||
              aInputString->EqualsLiteral("-moz-right")) {
-      aOutputString.AppendLiteral("auto"); 
+      aOutputString.AppendLiteral("auto");
     }
     else {
-      aOutputString.AppendLiteral("0px"); 
+      aOutputString.AppendLiteral("0px");
     }
   }
 }
@@ -171,14 +171,14 @@ void ProcessMarginRightValue(const nsAString * aInputString, nsAString & aOutput
   if (aInputString) {
     if (aInputString->EqualsLiteral("center") ||
         aInputString->EqualsLiteral("-moz-center")) {
-      aOutputString.AppendLiteral("auto"); 
+      aOutputString.AppendLiteral("auto");
     }
     else if (aInputString->EqualsLiteral("left") ||
              aInputString->EqualsLiteral("-moz-left")) {
-      aOutputString.AppendLiteral("auto"); 
+      aOutputString.AppendLiteral("auto");
     }
     else {
-      aOutputString.AppendLiteral("0px"); 
+      aOutputString.AppendLiteral("0px");
     }
   }
 }
@@ -613,12 +613,19 @@ nsHTMLCSSUtils::GetDefaultLengthUnit(nsAString & aLengthUnit)
   }
 }
 
-// Unfortunately, CSSStyleDeclaration::GetPropertyCSSValue is not yet implemented...
-// We need then a way to determine the number part and the unit from aString, aString
-// being the result of a GetPropertyValue query...
+// Unfortunately, CSSStyleDeclaration::GetPropertyCSSValue is not yet
+// implemented... We need then a way to determine the number part and the unit
+// from aString, aString being the result of a GetPropertyValue query...
 void
-nsHTMLCSSUtils::ParseLength(const nsAString & aString, float * aValue, nsIAtom ** aUnit)
+nsHTMLCSSUtils::ParseLength(const nsAString& aString, float* aValue,
+                            nsIAtom** aUnit)
 {
+  if (aString.IsEmpty()) {
+    *aValue = 0;
+    *aUnit = NS_NewAtom(aString).take();
+    return;
+  }
+
   nsAString::const_iterator iter;
   aString.BeginReading(iter);
 
@@ -1190,7 +1197,7 @@ nsHTMLCSSUtils::IsCSSPrefChecked()
 }
 
 // ElementsSameStyle compares two elements and checks if they have the same
-// specified CSS declarations in the STYLE attribute 
+// specified CSS declarations in the STYLE attribute
 // The answer is always negative if at least one of them carries an ID or a class
 bool
 nsHTMLCSSUtils::ElementsSameStyle(nsIDOMNode *aFirstNode, nsIDOMNode *aSecondNode)

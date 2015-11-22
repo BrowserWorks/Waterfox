@@ -1,20 +1,15 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-let { DebuggerServer } =
-  Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
-let { DebuggerClient } =
-  Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
-let { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
-let { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
-let Pipe = CC("@mozilla.org/pipe;1", "nsIPipe", "init");
-let { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
+var { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
+var { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
+var Pipe = CC("@mozilla.org/pipe;1", "nsIPipe", "init");
 
 function run_test() {
   initTestDebuggerServer();
   add_test_bulk_actor();
 
-  add_task(function() {
+  add_task(function*() {
     yield test_string_error(socket_transport, json_reply);
     yield test_string_error(local_transport, json_reply);
     DebuggerServer.destroy();
@@ -51,7 +46,7 @@ function add_test_bulk_actor() {
 
 /*** Tests ***/
 
-let test_string_error = Task.async(function*(transportFactory, onReady) {
+var test_string_error = Task.async(function*(transportFactory, onReady) {
   let deferred = promise.defer();
   let transport = yield transportFactory();
 

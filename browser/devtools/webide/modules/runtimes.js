@@ -6,7 +6,7 @@ const {Cu, Ci} = require("chrome");
 const {Devices} = Cu.import("resource://gre/modules/devtools/Devices.jsm");
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
 const {Connection} = require("devtools/client/connection-manager");
-const {DebuggerServer} = require("resource://gre/modules/devtools/dbg-server.jsm");
+const {DebuggerServer} = require("devtools/server/main");
 const {Simulators} = require("devtools/webide/simulators");
 const discovery = require("devtools/toolkit/discovery/discovery");
 const EventEmitter = require("devtools/toolkit/event-emitter");
@@ -84,7 +84,7 @@ const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/
 
 /* SCANNER REGISTRY */
 
-let RuntimeScanners = {
+var RuntimeScanners = {
 
   _enabledCount: 0,
   _scanners: new Set(),
@@ -193,7 +193,7 @@ exports.RuntimeScanners = RuntimeScanners;
 
 /* SCANNERS */
 
-let SimulatorScanner = {
+var SimulatorScanner = {
 
   _runtimes: [],
 
@@ -242,7 +242,7 @@ RuntimeScanners.add(SimulatorScanner);
  * not actually connect (since the |DeprecatedUSBRuntime| assumes a Firefox OS
  * device).
  */
-let DeprecatedAdbScanner = {
+var DeprecatedAdbScanner = {
 
   _runtimes: [],
 
@@ -292,7 +292,36 @@ RuntimeScanners.add(DeprecatedAdbScanner);
 // ADB Helper 0.7.0 and later will replace this scanner on startup
 exports.DeprecatedAdbScanner = DeprecatedAdbScanner;
 
-let WiFiScanner = {
+/**
+ * This is a lazy ADB scanner shim which only tells the ADB Helper to start and
+ * stop as needed.  The real scanner that lists devices lives in ADB Helper.
+ * ADB Helper 0.8.0 and later wait until these signals are received before
+ * starting ADB polling.  For earlier versions, they have no effect.
+ */
+var LazyAdbScanner = {
+
+  enable() {
+    Devices.emit("adb-start-polling");
+  },
+
+  disable() {
+    Devices.emit("adb-stop-polling");
+  },
+
+  scan() {
+    return promise.resolve();
+  },
+
+  listRuntimes: function() {
+    return [];
+  }
+
+};
+
+EventEmitter.decorate(LazyAdbScanner);
+RuntimeScanners.add(LazyAdbScanner);
+
+var WiFiScanner = {
 
   _runtimes: [],
 
@@ -365,7 +394,7 @@ WiFiScanner.init();
 
 exports.WiFiScanner = WiFiScanner;
 
-let StaticScanner = {
+var StaticScanner = {
   enable() {},
   disable() {},
   scan() { return promise.resolve(); },
@@ -385,7 +414,7 @@ RuntimeScanners.add(StaticScanner);
 
 // These type strings are used for logging events to Telemetry.
 // You must update Histograms.json if new types are added.
-let RuntimeTypes = exports.RuntimeTypes = {
+var RuntimeTypes = exports.RuntimeTypes = {
   USB: "USB",
   WIFI: "WIFI",
   SIMULATOR: "SIMULATOR",
@@ -586,7 +615,7 @@ SimulatorRuntime.prototype = {
 // For testing use only
 exports._SimulatorRuntime = SimulatorRuntime;
 
-let gLocalRuntime = {
+var gLocalRuntime = {
   type: RuntimeTypes.LOCAL,
   connect: function(connection) {
     if (!DebuggerServer.initialized) {
@@ -610,7 +639,7 @@ let gLocalRuntime = {
 // For testing use only
 exports._gLocalRuntime = gLocalRuntime;
 
-let gRemoteRuntime = {
+var gRemoteRuntime = {
   type: RuntimeTypes.REMOTE,
   connect: function(connection) {
     let win = Services.wm.getMostRecentWindow("devtools:webide");

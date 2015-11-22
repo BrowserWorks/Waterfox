@@ -9,6 +9,27 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
   "resource://testing-common/PlacesTestUtils.jsm");
 
+/**
+ * Wait for a <notification> to be closed then call the specified callback.
+ */
+function waitForNotificationClose(notification, cb) {
+  let parent = notification.parentNode;
+
+  let observer = new MutationObserver(function onMutatations(mutations) {
+    for (let mutation of mutations) {
+      for (let i = 0; i < mutation.removedNodes.length; i++) {
+        let node = mutation.removedNodes.item(i);
+        if (node != notification) {
+          continue;
+        }
+        observer.disconnect();
+        cb();
+      }
+    }
+  });
+  observer.observe(parent, {childList: true});
+}
+
 function closeAllNotifications () {
   let notificationBox = document.getElementById("global-notificationbox");
 
@@ -177,7 +198,7 @@ function clearAllPermissionsByPrefix(aPrefix) {
   while (perms.hasMoreElements()) {
     let perm = perms.getNext();
     if (perm.type.startsWith(aPrefix)) {
-      Services.perms.remove(perm.host, perm.type);
+      Services.perms.removePermission(perm);
     }
   }
 }
@@ -463,7 +484,7 @@ function waitForDocLoadComplete(aBrowser=gBrowser) {
 waitForDocLoadComplete.listeners = new Set();
 registerCleanupFunction(() => waitForDocLoadComplete.listeners.clear());
 
-let FullZoomHelper = {
+var FullZoomHelper = {
 
   selectTabAndWaitForLocationChange: function selectTabAndWaitForLocationChange(tab) {
     if (!tab)
@@ -537,8 +558,8 @@ let FullZoomHelper = {
       let didPs = false;
       let didZoom = false;
 
-      gBrowser.addEventListener("pageshow", function (event) {
-        gBrowser.removeEventListener("pageshow", arguments.callee, true);
+      gBrowser.addEventListener("pageshow", function listener(event) {
+        gBrowser.removeEventListener("pageshow", listener, true);
         didPs = true;
         if (didZoom)
           resolve();
@@ -697,9 +718,9 @@ function assertWebRTCIndicatorStatus(expected) {
       let win = Services.wm.getMostRecentWindow("Browser:WebRTCGlobalIndicator");
       if (win) {
         yield new Promise((resolve, reject) => {
-          win.addEventListener("unload", (e) => {
+          win.addEventListener("unload", function listener(e) {
             if (e.target == win.document) {
-              win.removeEventListener("unload", arguments.callee);
+              win.removeEventListener("unload", listener);
               resolve();
             }
           }, false);
@@ -735,6 +756,149 @@ function assertWebRTCIndicatorStatus(expected) {
       ok(!indicator.hasMoreElements(), "only one global indicator window");
     }
   }
+}
+
+/**
+ * Test the state of the identity box and control center to make
+ * sure they are correctly showing the expected mixed content states.
+ *
+ * @param tabbrowser
+ * @param Object states
+ *        MUST include the following properties:
+ *        {
+ *           activeLoaded: true|false,
+ *           activeBlocked: true|false,
+ *           passiveLoaded: true|false,
+ *        }
+ */
+function assertMixedContentBlockingState(tabbrowser, states = {}) {
+  if (!tabbrowser || !("activeLoaded" in states) ||
+      !("activeBlocked" in states) || !("passiveLoaded" in states))  {
+    throw new Error("assertMixedContentBlockingState requires a browser and a states object");
+  }
+
+  let {passiveLoaded,activeLoaded,activeBlocked} = states;
+  let {gIdentityHandler} = tabbrowser.ownerGlobal;
+  let doc = tabbrowser.ownerDocument;
+  let identityBox = gIdentityHandler._identityBox;
+  let classList = identityBox.classList;
+  let identityBoxImage = tabbrowser.ownerGlobal.getComputedStyle(doc.getElementById("page-proxy-favicon"), "").
+                         getPropertyValue("list-style-image");
+
+  let stateSecure = gIdentityHandler._state & Ci.nsIWebProgressListener.STATE_IS_SECURE;
+  let stateBroken = gIdentityHandler._state & Ci.nsIWebProgressListener.STATE_IS_BROKEN;
+  let stateInsecure = gIdentityHandler._state & Ci.nsIWebProgressListener.STATE_IS_INSECURE;
+  let stateActiveBlocked = gIdentityHandler._state & Ci.nsIWebProgressListener.STATE_BLOCKED_MIXED_ACTIVE_CONTENT;
+  let stateActiveLoaded = gIdentityHandler._state & Ci.nsIWebProgressListener.STATE_LOADED_MIXED_ACTIVE_CONTENT;
+  let statePassiveLoaded = gIdentityHandler._state & Ci.nsIWebProgressListener.STATE_LOADED_MIXED_DISPLAY_CONTENT;
+
+  is(activeBlocked, !!stateActiveBlocked, "Expected state for activeBlocked matches UI state");
+  is(activeLoaded, !!stateActiveLoaded, "Expected state for activeLoaded matches UI state");
+  is(passiveLoaded, !!statePassiveLoaded, "Expected state for passiveLoaded matches UI state");
+
+  if (stateInsecure) {
+    // HTTP request, there should be no MCB classes for the identity box and the non secure icon
+    // should always be visible regardless of MCB state.
+    ok(classList.contains("unknownIdentity"), "unknownIdentity on HTTP page");
+    is(identityBoxImage, "url(\"chrome://browser/skin/identity-not-secure.svg\")", "Using 'non-secure' icon");
+
+    ok(!classList.contains("mixedActiveContent"), "No MCB icon on HTTP page");
+    ok(!classList.contains("mixedActiveBlocked"), "No MCB icon on HTTP page");
+    ok(!classList.contains("mixedDisplayContent"), "No MCB icon on HTTP page");
+    ok(!classList.contains("mixedDisplayContentLoadedActiveBlocked"), "No MCB icon on HTTP page");
+  } else {
+    // Make sure the identity box UI has the correct mixedcontent states and icons
+    is(classList.contains("mixedActiveContent"), activeLoaded,
+        "identityBox has expected class for activeLoaded");
+    is(classList.contains("mixedActiveBlocked"), activeBlocked && !passiveLoaded,
+        "identityBox has expected class for activeBlocked && !passiveLoaded");
+    is(classList.contains("mixedDisplayContent"), passiveLoaded && !(activeLoaded || activeBlocked),
+       "identityBox has expected class for passiveLoaded && !(activeLoaded || activeBlocked)");
+    is(classList.contains("mixedDisplayContentLoadedActiveBlocked"), passiveLoaded && activeBlocked,
+       "identityBox has expected class for passiveLoaded && activeBlocked");
+
+    if (activeLoaded) {
+      is(identityBoxImage, "url(\"chrome://browser/skin/identity-mixed-active-loaded.svg\")",
+        "Using active loaded icon");
+    }
+    if (activeBlocked && !passiveLoaded) {
+      is(identityBoxImage, "url(\"chrome://browser/skin/identity-mixed-active-blocked.svg\")",
+        "Using active blocked icon");
+    }
+    if (passiveLoaded && !(activeLoaded || activeBlocked)) {
+      is(identityBoxImage, "url(\"chrome://browser/skin/identity-mixed-passive-loaded.svg\")",
+        "Using passive loaded icon");
+    }
+    if (passiveLoaded && activeBlocked) {
+      is(identityBoxImage, "url(\"chrome://browser/skin/identity-mixed-passive-loaded.svg\")",
+        "Using active blocked and passive loaded icon");
+    }
+  }
+
+  // Make sure the identity popup has the correct mixedcontent states
+  gIdentityHandler._identityBox.click();
+  let popupAttr = doc.getElementById("identity-popup").getAttribute("mixedcontent");
+  let bodyAttr = doc.getElementById("identity-popup-securityView-body").getAttribute("mixedcontent");
+
+  is(popupAttr.includes("active-loaded"), activeLoaded,
+      "identity-popup has expected attr for activeLoaded");
+  is(bodyAttr.includes("active-loaded"), activeLoaded,
+      "securityView-body has expected attr for activeLoaded");
+
+  is(popupAttr.includes("active-blocked"), activeBlocked,
+      "identity-popup has expected attr for activeBlocked");
+  is(bodyAttr.includes("active-blocked"), activeBlocked,
+      "securityView-body has expected attr for activeBlocked");
+
+  is(popupAttr.includes("passive-loaded"), passiveLoaded,
+      "identity-popup has expected attr for passiveLoaded");
+  is(bodyAttr.includes("passive-loaded"), passiveLoaded,
+      "securityView-body has expected attr for passiveLoaded");
+
+  // Make sure the correct icon is visible in the Control Center.
+  // This logic is controlled with CSS, so this helps prevent regressions there.
+  let securityView = doc.getElementById("identity-popup-securityView");
+  let securityContent = doc.getElementById("identity-popup-security-content");
+  let securityViewBG = tabbrowser.ownerGlobal.getComputedStyle(securityView, "").
+                       getPropertyValue("background-image");
+  let securityContentBG = tabbrowser.ownerGlobal.getComputedStyle(securityView, "").
+                          getPropertyValue("background-image");
+
+  if (stateInsecure) {
+    is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/conn-not-secure.svg\")",
+      "CC using 'not secure' icon");
+    is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/conn-not-secure.svg\")",
+      "CC using 'not secure' icon");
+  }
+
+  if (stateSecure) {
+    is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/conn-secure.svg\")",
+      "CC using secure icon");
+    is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/conn-secure.svg\")",
+      "CC using secure icon");
+  }
+
+  if (stateBroken) {
+    if (activeLoaded) {
+      is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/mcb-disabled.svg\")",
+        "CC using active loaded icon");
+      is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/mcb-disabled.svg\")",
+        "CC using active loaded icon");
+    } else if (activeBlocked || passiveLoaded) {
+      is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/conn-degraded.svg\")",
+        "CC using degraded icon");
+      is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/conn-degraded.svg\")",
+        "CC using degraded icon");
+    } else {
+      // There is a case here with weak ciphers, but no bc tests are handling this yet.
+      is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/conn-degraded.svg\")",
+        "CC using degraded icon");
+      is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/conn-degraded.svg\")",
+        "CC using degraded icon");
+    }
+  }
+
+  gIdentityHandler._identityPopup.hidden = true;
 }
 
 function makeActionURI(action, params) {
@@ -860,4 +1024,52 @@ function promiseTopicObserved(aTopic)
         resolve({subject: aSubject, data: aData});
       }, aTopic, false);
   });
+}
+
+function promiseNewSearchEngine(basename) {
+  return new Promise((resolve, reject) => {
+    info("Waiting for engine to be added: " + basename);
+    let url = getRootDirectory(gTestPath) + basename;
+    Services.search.addEngine(url, Ci.nsISearchEngine.TYPE_MOZSEARCH, "",
+                              false, {
+      onSuccess: function (engine) {
+        info("Search engine added: " + basename);
+        registerCleanupFunction(() => Services.search.removeEngine(engine));
+        resolve(engine);
+      },
+      onError: function (errCode) {
+        Assert.ok(false, "addEngine failed with error code " + errCode);
+        reject();
+      },
+    });
+  });
+}
+
+// Compares the security state of the page with what is expected
+function isSecurityState(expectedState) {
+  let ui = gTestBrowser.securityUI;
+  if (!ui) {
+    ok(false, "No security UI to get the security state");
+    return;
+  }
+
+  const wpl = Components.interfaces.nsIWebProgressListener;
+
+  // determine the security state
+  let isSecure = ui.state & wpl.STATE_IS_SECURE;
+  let isBroken = ui.state & wpl.STATE_IS_BROKEN;
+  let isInsecure = ui.state & wpl.STATE_IS_INSECURE;
+
+  let actualState;
+  if (isSecure && !(isBroken || isInsecure)) {
+    actualState = "secure";
+  } else if (isBroken && !(isSecure || isInsecure)) {
+    actualState = "broken";
+  } else if (isInsecure && !(isSecure || isBroken)) {
+    actualState = "insecure";
+  } else {
+    actualState = "unknown";
+  }
+
+  is(expectedState, actualState, "Expected state " + expectedState + " and the actual state is " + actualState + ".");
 }

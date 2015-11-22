@@ -4,6 +4,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "LayerTreeInvalidation.h"
+
 #include <stdint.h>                     // for uint32_t
 #include "ImageContainer.h"             // for ImageContainer
 #include "ImageLayers.h"                // for ImageLayer, etc
@@ -23,6 +24,8 @@
 #include "nsISupportsImpl.h"            // for Layer::AddRef, etc
 #include "nsRect.h"                     // for IntRect
 #include "nsTArray.h"                   // for nsAutoTArray, nsTArray_Impl
+#include "mozilla/layers/ImageHost.h"
+#include "mozilla/layers/LayerManagerComposite.h"
 
 using namespace mozilla::gfx;
 
@@ -40,7 +43,7 @@ TransformRect(const IntRect& aRect, const Matrix4x4& aTransform)
   }
 
   Rect rect(aRect.x, aRect.y, aRect.width, aRect.height);
-  rect = aTransform.TransformBounds(rect);
+  rect = aTransform.TransformAndClipBounds(rect, Rect::MaxIntRect());
   rect.RoundOut();
 
   IntRect intRect;
@@ -83,6 +86,10 @@ NotifySubdocumentInvalidationRecursive(Layer* aLayer, NotifySubDocInvalidationFu
   if (aLayer->GetMaskLayer()) {
     NotifySubdocumentInvalidationRecursive(aLayer->GetMaskLayer(), aCallback);
   }
+  for (size_t i = 0; i < aLayer->GetAncestorMaskLayerCount(); i++) {
+    Layer* maskLayer = aLayer->GetAncestorMaskLayerAt(i);
+    NotifySubdocumentInvalidationRecursive(maskLayer, aCallback);
+  }
 
   if (!container) {
     return;
@@ -111,6 +118,10 @@ struct LayerPropertiesBase : public LayerProperties
     if (aLayer->GetMaskLayer()) {
       mMaskLayer = CloneLayerTreePropertiesInternal(aLayer->GetMaskLayer(), true);
     }
+    for (size_t i = 0; i < aLayer->GetAncestorMaskLayerCount(); i++) {
+      Layer* maskLayer = aLayer->GetAncestorMaskLayerAt(i);
+      mAncestorMaskLayers.AppendElement(CloneLayerTreePropertiesInternal(maskLayer, true));
+    }
     if (mUseClipRect) {
       mClipRect = *aLayer->GetClipRect();
     }
@@ -136,13 +147,25 @@ struct LayerPropertiesBase : public LayerProperties
   nsIntRegion ComputeChange(NotifySubDocInvalidationFunc aCallback,
                             bool& aGeometryChanged)
   {
-    bool transformChanged = !mTransform.FuzzyEqual(mLayer->GetLocalTransform()) ||
+    bool transformChanged = !mTransform.FuzzyEqualsMultiplicative(mLayer->GetLocalTransform()) ||
                             mLayer->GetPostXScale() != mPostXScale ||
                             mLayer->GetPostYScale() != mPostYScale;
-    Layer* otherMask = mLayer->GetMaskLayer();
     const Maybe<ParentLayerIntRect>& otherClip = mLayer->GetClipRect();
     nsIntRegion result;
+
+    bool ancestorMaskChanged = mAncestorMaskLayers.Length() != mLayer->GetAncestorMaskLayerCount();
+    if (!ancestorMaskChanged) {
+      for (size_t i = 0; i < mAncestorMaskLayers.Length(); i++) {
+        if (mLayer->GetAncestorMaskLayerAt(i) != mAncestorMaskLayers[i]->mLayer) {
+          ancestorMaskChanged = true;
+          break;
+        }
+      }
+    }
+
+    Layer* otherMask = mLayer->GetMaskLayer();
     if ((mMaskLayer ? mMaskLayer->mLayer : nullptr) != otherMask ||
+        ancestorMaskChanged ||
         (mUseClipRect != !!otherClip) ||
         mLayer->GetLocalOpacity() != mOpacity ||
         transformChanged) 
@@ -159,6 +182,15 @@ struct LayerPropertiesBase : public LayerProperties
 
     if (mMaskLayer && otherMask) {
       AddTransformedRegion(result, mMaskLayer->ComputeChange(aCallback, aGeometryChanged),
+                           mTransform);
+    }
+
+    for (size_t i = 0;
+         i < std::min(mAncestorMaskLayers.Length(), mLayer->GetAncestorMaskLayerCount());
+         i++)
+    {
+      AddTransformedRegion(result,
+                           mAncestorMaskLayers[i]->ComputeChange(aCallback, aGeometryChanged),
                            mTransform);
     }
 
@@ -193,6 +225,7 @@ struct LayerPropertiesBase : public LayerProperties
 
   nsRefPtr<Layer> mLayer;
   UniquePtr<LayerPropertiesBase> mMaskLayer;
+  nsTArray<UniquePtr<LayerPropertiesBase>> mAncestorMaskLayers;
   nsIntRegion mVisibleRegion;
   nsIntRegion mInvalidRegion;
   Matrix4x4 mTransform;
@@ -311,7 +344,7 @@ struct ContainerLayerProperties : public LayerPropertiesBase
       container->SetChildrenChanged(true);
     }
 
-    result.Transform(gfx::To3DMatrix(mLayer->GetLocalTransform()));
+    result.Transform(mLayer->GetLocalTransform());
 
     return result;
   }
@@ -353,16 +386,32 @@ struct ColorLayerProperties : public LayerPropertiesBase
   IntRect mBounds;
 };
 
+static ImageHost* GetImageHost(ImageLayer* aLayer)
+{
+  LayerComposite* composite = aLayer->AsLayerComposite();
+  if (composite) {
+    return static_cast<ImageHost*>(composite->GetCompositableHost());
+  }
+  return nullptr;
+}
+
 struct ImageLayerProperties : public LayerPropertiesBase
 {
   explicit ImageLayerProperties(ImageLayer* aImage, bool aIsMask)
     : LayerPropertiesBase(aImage)
     , mContainer(aImage->GetContainer())
+    , mImageHost(GetImageHost(aImage))
     , mFilter(aImage->GetFilter())
     , mScaleToSize(aImage->GetScaleToSize())
     , mScaleMode(aImage->GetScaleMode())
+    , mLastProducerID(-1)
+    , mLastFrameID(-1)
     , mIsMask(aIsMask)
   {
+    if (mImageHost) {
+      mLastProducerID = mImageHost->GetLastProducerID();
+      mLastFrameID = mImageHost->GetLastFrameID();
+    }
   }
 
   virtual nsIntRegion ComputeChangeInternal(NotifySubDocInvalidationFunc aCallback,
@@ -378,31 +427,42 @@ struct ImageLayerProperties : public LayerPropertiesBase
     }
 
     ImageContainer* container = imageLayer->GetContainer();
+    ImageHost* host = GetImageHost(imageLayer);
     if (mContainer != container ||
         mFilter != imageLayer->GetFilter() ||
         mScaleToSize != imageLayer->GetScaleToSize() ||
-        mScaleMode != imageLayer->GetScaleMode()) {
+        mScaleMode != imageLayer->GetScaleMode() ||
+        host != mImageHost ||
+        (host && host->GetProducerID() != mLastProducerID) ||
+        (host && host->GetFrameID() != mLastFrameID)) {
       aGeometryChanged = true;
 
       if (mIsMask) {
         // Mask layers have an empty visible region, so we have to
         // use the image size instead.
-        IntSize size = container->GetCurrentSize();
+        IntSize size;
+        if (container) {
+          size = container->GetCurrentSize();
+        }
+        if (host) {
+          size = host->GetImageSize();
+        }
         IntRect rect(0, 0, size.width, size.height);
         return TransformRect(rect, mLayer->GetLocalTransform());
-
-      } else {
-        return NewTransformedBounds();
       }
+      return NewTransformedBounds();
     }
 
     return IntRect();
   }
 
   nsRefPtr<ImageContainer> mContainer;
+  nsRefPtr<ImageHost> mImageHost;
   GraphicsFilter mFilter;
   gfx::IntSize mScaleToSize;
   ScaleMode mScaleMode;
+  int32_t mLastProducerID;
+  int32_t mLastFrameID;
   bool mIsMask;
 };
 
@@ -423,11 +483,15 @@ CloneLayerTreePropertiesInternal(Layer* aRoot, bool aIsMask /* = false */)
       return MakeUnique<ColorLayerProperties>(static_cast<ColorLayer*>(aRoot));
     case Layer::TYPE_IMAGE:
       return MakeUnique<ImageLayerProperties>(static_cast<ImageLayer*>(aRoot), aIsMask);
-    default:
+    case Layer::TYPE_CANVAS:
+    case Layer::TYPE_READBACK:
+    case Layer::TYPE_SHADOW:
+    case Layer::TYPE_PAINTED:
       return MakeUnique<LayerPropertiesBase>(aRoot);
   }
 
-  return UniquePtr<LayerPropertiesBase>(nullptr);
+  MOZ_ASSERT_UNREACHABLE("Unexpected root layer type");
+  return MakeUnique<LayerPropertiesBase>(aRoot);
 }
 
 /* static */ UniquePtr<LayerProperties>
@@ -442,6 +506,9 @@ LayerProperties::ClearInvalidations(Layer *aLayer)
   aLayer->ClearInvalidRect();
   if (aLayer->GetMaskLayer()) {
     ClearInvalidations(aLayer->GetMaskLayer());
+  }
+  for (size_t i = 0; i < aLayer->GetAncestorMaskLayerCount(); i++) {
+    ClearInvalidations(aLayer->GetAncestorMaskLayerAt(i));
   }
 
   ContainerLayer* container = aLayer->AsContainerLayer();

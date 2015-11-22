@@ -7,6 +7,7 @@ _DEST_DIR = $(DEPTH)/_tests/reftest
 
 _HARNESS_FILES = \
   $(srcdir)/runreftest.py \
+  $(srcdir)/reftestcommandline.py \
   $(srcdir)/remotereftest.py \
   $(srcdir)/runreftestb2g.py \
   $(srcdir)/b2g_desktop.py \
@@ -19,7 +20,6 @@ _HARNESS_FILES = \
   $(topsrcdir)/testing/mozbase/mozdevice/mozdevice/Zeroconf.py \
   $(topsrcdir)/testing/mozbase/moznetwork/moznetwork/moznetwork.py \
   $(topsrcdir)/build/mobile/b2gautomation.py \
-  $(topsrcdir)/build/automationutils.py \
   $(topsrcdir)/build/mobile/remoteautomation.py \
   $(topsrcdir)/testing/mochitest/server.js \
   $(topsrcdir)/build/pgo/server-locations.txt \

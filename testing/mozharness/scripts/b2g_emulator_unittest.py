@@ -212,21 +212,6 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
 
     @PreScriptAction('create-virtualenv')
     def _pre_create_virtualenv(self, action):
-        if self.tree_config.get('use_puppetagain_packages'):
-            requirements = [os.path.join('tests', 'b2g',
-                            'b2g-unittest-requirements.txt')]
-
-            self.register_virtualenv_module(
-                'mozinstall',
-                requirements=requirements
-            )
-            self.register_virtualenv_module(
-                'marionette',
-                url=os.path.join('tests', 'marionette'),
-                requirements=requirements
-            )
-            return
-
         dirs = self.query_abs_dirs()
         requirements = os.path.join(dirs['abs_test_install_dir'],
                                     'config',
@@ -262,6 +247,8 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
 
         raw_log_file = os.path.join(dirs['abs_blob_upload_dir'],
                                     '%s_raw.log' % suite)
+        error_summary_file = os.path.join(dirs['abs_blob_upload_dir'],
+                                          '%s_errorsummary.log' % suite)
         emulator_type = 'x86' if os.path.isdir(os.path.join(dirs['abs_b2g-distro_dir'],
                         'out', 'target', 'product', 'generic_x86')) else 'arm'
         self.info("The emulator type: %s" % emulator_type)
@@ -274,6 +261,7 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
             'modules_dir': dirs['abs_modules_dir'],
             'remote_webserver': self.config['remote_webserver'],
             'xre_path': os.path.join(dirs['abs_xre_dir'], 'bin'),
+            'utility_path': os.path.join(dirs['abs_test_install_dir'], 'bin'),
             'symbols_path': self.symbols_path,
             'busybox': self.busybox_path,
             'total_chunks': self.config.get('total_chunks'),
@@ -281,29 +269,23 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
             'test_path': self.config.get('test_path'),
             'certificate_path': dirs['abs_certs_dir'],
             'raw_log_file': raw_log_file,
+            'error_summary_file': error_summary_file,
         }
 
-        missing_key = True
-        if "suite_definitions" in self.tree_config: # new structure
-            if suite in self.tree_config["suite_definitions"]:
-                missing_key = False
-            options = self.tree_config["suite_definitions"][suite]["options"]
-        else:
-            suite_options = '%s_options' % suite
-            if suite_options in self.tree_config:
-                missing_key = False
-            options = self.tree_config[suite_options]
+        if suite not in self.config["suite_definitions"]:
+            self.fatal("Key '%s' not defined in the config!" % suite)
 
-        if missing_key:
-            self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'." \
-                       "See bug 981030 for more details." % (suite,
-                       os.path.join('gecko', 'testing', self.config['in_tree_config'])))
-
+        options = self.config["suite_definitions"][suite]["options"]
         if options:
             for option in options:
                 option = option % str_format_values
                 if not option.endswith('None'):
                     cmd.append(option)
+
+        tests = self.config["suite_definitions"][suite].get("tests", [])
+        if tests:
+            cmd.extend(tests)
+
         return cmd
 
     def _query_adb(self):
@@ -359,8 +341,9 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
             self.fatal("Don't know how to run --test-suite '%s'!" % suite)
 
         cmd = self._query_abs_base_cmd(suite)
-        cwd = dirs['abs_%s_dir' % suite]
         cmd = self.append_harness_extra_args(cmd)
+
+        cwd = dirs['abs_%s_dir' % suite]
 
         # TODO we probably have to move some of the code in
         # scripts/desktop_unittest.py and scripts/marionette.py to

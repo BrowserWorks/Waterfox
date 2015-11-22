@@ -29,7 +29,7 @@ public:
   OscillatorNodeEngine(AudioNode* aNode, AudioDestinationNode* aDestination)
     : AudioNodeEngine(aNode)
     , mSource(nullptr)
-    , mDestination(static_cast<AudioNodeStream*> (aDestination->Stream()))
+    , mDestination(aDestination->Stream())
     , mStart(-1)
     , mStop(STREAM_TIME_MAX)
     // Keep the default values in sync with OscillatorNode::OscillatorNode.
@@ -40,6 +40,8 @@ public:
     , mRecomputeParameters(true)
     , mCustomLength(0)
   {
+    MOZ_ASSERT(NS_IsMainThread());
+    mBasicWaveFormCache = aDestination->Context()->GetBasicWaveFormCache();
   }
 
   void SetSourceStream(AudioNodeStream* aSource)
@@ -104,13 +106,9 @@ public:
             mPhase = 0.0;
             break;
           case OscillatorType::Square:
-            mPeriodicWave = WebCore::PeriodicWave::createSquare(mSource->SampleRate());
-            break;
           case OscillatorType::Triangle:
-            mPeriodicWave = WebCore::PeriodicWave::createTriangle(mSource->SampleRate());
-            break;
           case OscillatorType::Sawtooth:
-            mPeriodicWave = WebCore::PeriodicWave::createSawtooth(mSource->SampleRate());
+            mPeriodicWave = mBasicWaveFormCache->GetBasicWaveForm(mType);
             break;
           case OscillatorType::Custom:
             break;
@@ -279,14 +277,14 @@ public:
     }
   }
 
-  void ComputeSilence(AudioChunk *aOutput)
+  void ComputeSilence(AudioBlock *aOutput)
   {
     aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioChunk& aInput,
-                            AudioChunk* aOutput,
+                            const AudioBlock& aInput,
+                            AudioBlock* aOutput,
                             bool* aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
@@ -309,9 +307,8 @@ public:
       return;
     }
 
-    AllocateAudioBlock(1, aOutput);
-    float* output = static_cast<float*>(
-        const_cast<void*>(aOutput->mChannelData[0]));
+    aOutput->AllocateChannels(1);
+    float* output = aOutput->ChannelFloatsForWrite(0);
 
     uint32_t start, end;
     FillBounds(output, ticks, start, end);
@@ -371,8 +368,9 @@ public:
   float mPhaseIncrement;
   bool mRecomputeParameters;
   nsRefPtr<ThreadSharedFloatArrayBufferList> mCustom;
+  nsRefPtr<BasicWaveFormCache> mBasicWaveFormCache;
   uint32_t mCustomLength;
-  nsAutoPtr<WebCore::PeriodicWave> mPeriodicWave;
+  nsRefPtr<WebCore::PeriodicWave> mPeriodicWave;
 };
 
 OscillatorNode::OscillatorNode(AudioContext* aContext)
@@ -384,11 +382,11 @@ OscillatorNode::OscillatorNode(AudioContext* aContext)
   , mFrequency(new AudioParam(this, SendFrequencyToStream, 440.0f, "frequency"))
   , mDetune(new AudioParam(this, SendDetuneToStream, 0.0f, "detune"))
   , mStartCalled(false)
-  , mStopped(false)
 {
   OscillatorNodeEngine* engine = new OscillatorNodeEngine(this, aContext->Destination());
-  mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::SOURCE_STREAM);
-  engine->SetSourceStream(static_cast<AudioNodeStream*> (mStream.get()));
+  mStream = AudioNodeStream::Create(aContext, engine,
+                                    AudioNodeStream::NEED_MAIN_THREAD_FINISHED);
+  engine->SetSourceStream(mStream);
   mStream->AddMainThreadListener(this);
 }
 
@@ -423,9 +421,21 @@ OscillatorNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 }
 
 void
+OscillatorNode::DestroyMediaStream()
+{
+  if (mStream) {
+    mStream->RemoveMainThreadListener(this);
+  }
+  AudioNode::DestroyMediaStream();
+}
+
+void
 OscillatorNode::SendFrequencyToStream(AudioNode* aNode)
 {
   OscillatorNode* This = static_cast<OscillatorNode*>(aNode);
+  if (!This->mStream) {
+    return;
+  }
   SendTimelineParameterToStream(This, OscillatorNodeEngine::FREQUENCY, *This->mFrequency);
 }
 
@@ -433,12 +443,18 @@ void
 OscillatorNode::SendDetuneToStream(AudioNode* aNode)
 {
   OscillatorNode* This = static_cast<OscillatorNode*>(aNode);
+  if (!This->mStream) {
+    return;
+  }
   SendTimelineParameterToStream(This, OscillatorNodeEngine::DETUNE, *This->mDetune);
 }
 
 void
 OscillatorNode::SendTypeToStream()
 {
+  if (!mStream) {
+    return;
+  }
   if (mType == OscillatorType::Custom) {
     // The engine assumes we'll send the custom data before updating the type.
     SendPeriodicWaveToStream();
@@ -450,14 +466,13 @@ void OscillatorNode::SendPeriodicWaveToStream()
 {
   NS_ASSERTION(mType == OscillatorType::Custom,
                "Sending custom waveform to engine thread with non-custom type");
-  AudioNodeStream* ns = static_cast<AudioNodeStream*>(mStream.get());
-  MOZ_ASSERT(ns, "Missing node stream.");
+  MOZ_ASSERT(mStream, "Missing node stream.");
   MOZ_ASSERT(mPeriodicWave, "Send called without PeriodicWave object.");
   SendInt32ParameterToStream(OscillatorNodeEngine::PERIODICWAVE,
                              mPeriodicWave->DataLength());
   nsRefPtr<ThreadSharedFloatArrayBufferList> data =
     mPeriodicWave->GetThreadSharedBuffer();
-  ns->SetBuffer(data.forget());
+  mStream->SetBuffer(data.forget());
 }
 
 void
@@ -474,15 +489,14 @@ OscillatorNode::Start(double aWhen, ErrorResult& aRv)
   }
   mStartCalled = true;
 
-  AudioNodeStream* ns = static_cast<AudioNodeStream*>(mStream.get());
-  if (!ns) {
+  if (!mStream) {
     // Nothing to play, or we're already dead for some reason
     return;
   }
 
   // TODO: Perhaps we need to do more here.
-  ns->SetStreamTimeParameter(OscillatorNodeEngine::START,
-                             Context(), aWhen);
+  mStream->SetStreamTimeParameter(OscillatorNodeEngine::START,
+                                  Context(), aWhen);
 
   MarkActive();
 }
@@ -500,51 +514,49 @@ OscillatorNode::Stop(double aWhen, ErrorResult& aRv)
     return;
   }
 
-  AudioNodeStream* ns = static_cast<AudioNodeStream*>(mStream.get());
-  if (!ns || !Context()) {
+  if (!mStream || !Context()) {
     // We've already stopped and had our stream shut down
     return;
   }
 
   // TODO: Perhaps we need to do more here.
-  ns->SetStreamTimeParameter(OscillatorNodeEngine::STOP,
-                             Context(), std::max(0.0, aWhen));
+  mStream->SetStreamTimeParameter(OscillatorNodeEngine::STOP,
+                                  Context(), std::max(0.0, aWhen));
 }
 
 void
-OscillatorNode::NotifyMainThreadStateChanged()
+OscillatorNode::NotifyMainThreadStreamFinished()
 {
-  if (mStream->IsFinished()) {
-    class EndedEventDispatcher final : public nsRunnable
-    {
-    public:
-      explicit EndedEventDispatcher(OscillatorNode* aNode)
-        : mNode(aNode) {}
-      NS_IMETHOD Run() override
-      {
-        // If it's not safe to run scripts right now, schedule this to run later
-        if (!nsContentUtils::IsSafeToRunScript()) {
-          nsContentUtils::AddScriptRunner(this);
-          return NS_OK;
-        }
+  MOZ_ASSERT(mStream->IsFinished());
 
-        mNode->DispatchTrustedEvent(NS_LITERAL_STRING("ended"));
+  class EndedEventDispatcher final : public nsRunnable
+  {
+  public:
+    explicit EndedEventDispatcher(OscillatorNode* aNode)
+      : mNode(aNode) {}
+    NS_IMETHOD Run() override
+    {
+      // If it's not safe to run scripts right now, schedule this to run later
+      if (!nsContentUtils::IsSafeToRunScript()) {
+        nsContentUtils::AddScriptRunner(this);
         return NS_OK;
       }
-    private:
-      nsRefPtr<OscillatorNode> mNode;
-    };
-    if (!mStopped) {
-      // Only dispatch the ended event once
-      NS_DispatchToMainThread(new EndedEventDispatcher(this));
-      mStopped = true;
+
+      mNode->DispatchTrustedEvent(NS_LITERAL_STRING("ended"));
+      // Release stream resources.
+      mNode->DestroyMediaStream();
+      return NS_OK;
     }
+  private:
+    nsRefPtr<OscillatorNode> mNode;
+  };
 
-    // Drop the playing reference
-    // Warning: The below line might delete this.
-    MarkInactive();
-  }
+  NS_DispatchToMainThread(new EndedEventDispatcher(this));
+
+  // Drop the playing reference
+  // Warning: The below line might delete this.
+  MarkInactive();
 }
 
-}
-}
+} // namespace dom
+} // namespace mozilla

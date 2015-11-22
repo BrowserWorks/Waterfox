@@ -38,7 +38,9 @@
 #endif
 
 static char _progname[1024] = "huh?";
-static unsigned int _gdb_sleep_duration = 300;
+
+// Note: some tests manipulate this value.
+unsigned int _gdb_sleep_duration = 300;
 
 #if defined(LINUX) && defined(DEBUG) && \
       (defined(__i386) || defined(__x86_64) || defined(PPC))
@@ -56,7 +58,7 @@ static unsigned int _gdb_sleep_duration = 300;
 
 #include <unistd.h>
 #include "nsISupportsUtils.h"
-#include "nsStackWalk.h"
+#include "mozilla/StackWalk.h"
 
 // NB: keep me up to date with the same variable in
 // ipc/chromium/chrome/common/ipc_channel_posix.cc
@@ -68,10 +70,10 @@ static void PrintStackFrame(uint32_t aFrameNumber, void *aPC, void *aSP,
                             void *aClosure)
 {
   char buf[1024];
-  nsCodeAddressDetails details;
+  MozCodeAddressDetails details;
 
-  NS_DescribeCodeAddress(aPC, &details);
-  NS_FormatCodeAddressDetails(buf, sizeof(buf), aFrameNumber, aPC, &details);
+  MozDescribeCodeAddress(aPC, &details);
+  MozFormatCodeAddressDetails(buf, sizeof(buf), aFrameNumber, aPC, &details);
   fprintf(stdout, "%s\n", buf);
   fflush(stdout);
 }
@@ -87,7 +89,7 @@ ah_crap_handler(int signum)
          signum);
 
   printf("Stack:\n");
-  NS_StackWalk(PrintStackFrame, /* skipFrames */ 2, /* maxFrames */ 0,
+  MozStackWalk(PrintStackFrame, /* skipFrames */ 2, /* maxFrames */ 0,
                nullptr, 0, nullptr);
 
   printf("Sleeping for %d seconds.\n",_gdb_sleep_duration);
@@ -259,7 +261,7 @@ void InstallSignalHandlers(const char *ProgramName)
   sigaction(SIGFPE, &sa, &osa);
 #endif
 
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     /*
      * If the user is debugging a Gecko parent process in gdb and hits ^C to
      * suspend, a SIGINT signal will be sent to the child. We ignore this signal

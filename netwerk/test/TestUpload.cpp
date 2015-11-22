@@ -10,17 +10,19 @@
 #endif
 
 #include "nsIComponentRegistrar.h"
+#include "nsIScriptSecurityManager.h"
+#include "nsServiceManagerUtils.h"
 #include "nsIServiceManager.h"
 #include "nsNetUtil.h"
 
 #include "nsIUploadChannel.h"
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 //
 // set NSPR_LOG_MODULES=Test:5
 //
 static PRLogModuleInfo *gTestLog = nullptr;
-#define LOG(args) PR_LOG(gTestLog, PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(gTestLog, mozilla::LogLevel::Debug, args)
 
 //-----------------------------------------------------------------------------
 // InputTestConsumer
@@ -138,7 +140,7 @@ main(int argc, char* argv[])
         rv = NS_NewChannel(getter_AddRefs(channel),
                            uri,
                            systemPrincipal,
-                           nsILoadInfo::SEC_NORMAL,
+                           nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
                            nsIContentPolicy::TYPE_OTHER);
         if (NS_FAILED(rv)) return -1;
 	
@@ -156,7 +158,7 @@ main(int argc, char* argv[])
         }
         NS_ADDREF(listener);
 
-        channel->AsyncOpen(listener, nullptr);
+        channel->AsyncOpen2(listener);
 
         PumpEvents();
     } // this scopes the nsCOMPtrs

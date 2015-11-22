@@ -8,20 +8,16 @@
 #include "jsapi-tests/tests.h"
 
 class CCWTestTracer : public JS::CallbackTracer {
-    static void staticCallback(JS::CallbackTracer* trc, void** thingp, JSGCTraceKind kind) {
-        static_cast<CCWTestTracer*>(trc)->callback(thingp, kind);
-    }
-
-    void callback(void** thingp, JSGCTraceKind kind) {
+    void onChild(const JS::GCCellPtr& thing) override {
         numberOfThingsTraced++;
 
-        printf("*thingp         = %p\n", *thingp);
+        printf("*thingp         = %p\n", thing.asCell());
         printf("*expectedThingp = %p\n", *expectedThingp);
 
-        printf("kind         = %d\n", kind);
-        printf("expectedKind = %d\n", expectedKind);
+        printf("kind         = %d\n", static_cast<int>(thing.kind()));
+        printf("expectedKind = %d\n", static_cast<int>(expectedKind));
 
-        if (*thingp != *expectedThingp || kind != expectedKind)
+        if (thing.asCell() != *expectedThingp || thing.kind() != expectedKind)
             okay = false;
     }
 
@@ -29,10 +25,10 @@ class CCWTestTracer : public JS::CallbackTracer {
     bool          okay;
     size_t        numberOfThingsTraced;
     void**        expectedThingp;
-    JSGCTraceKind expectedKind;
+    JS::TraceKind expectedKind;
 
-    CCWTestTracer(JSContext* cx, void** expectedThingp, JSGCTraceKind expectedKind)
-      : JS::CallbackTracer(JS_GetRuntime(cx), staticCallback),
+    CCWTestTracer(JSContext* cx, void** expectedThingp, JS::TraceKind expectedKind)
+      : JS::CallbackTracer(JS_GetRuntime(cx)),
         okay(true),
         numberOfThingsTraced(0),
         expectedThingp(expectedThingp),
@@ -69,7 +65,7 @@ BEGIN_TEST(testTracingIncomingCCWs)
     CHECK(zones.put(global1->zone()));
 
     void* thing = obj.get();
-    CCWTestTracer trc(cx, &thing, JSTRACE_OBJECT);
+    CCWTestTracer trc(cx, &thing, JS::TraceKind::Object);
     JS_TraceIncomingCCWs(&trc, zones);
     CHECK(trc.numberOfThingsTraced == 1);
     CHECK(trc.okay);

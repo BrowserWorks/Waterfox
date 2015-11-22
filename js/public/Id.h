@@ -141,9 +141,9 @@ JSID_TO_GCTHING(jsid id)
 {
     void* thing = (void*)(JSID_BITS(id) & ~(size_t)JSID_TYPE_MASK);
     if (JSID_IS_STRING(id))
-        return JS::GCCellPtr(thing, JSTRACE_STRING);
+        return JS::GCCellPtr(thing, JS::TraceKind::String);
     MOZ_ASSERT(JSID_IS_SYMBOL(id));
-    return JS::GCCellPtr(thing, JSTRACE_SYMBOL);
+    return JS::GCCellPtr(thing, JS::TraceKind::Symbol);
 }
 
 static MOZ_ALWAYS_INLINE bool
@@ -171,9 +171,7 @@ namespace js {
 template <> struct GCMethods<jsid>
 {
     static jsid initial() { return JSID_VOID; }
-    static bool needsPostBarrier(jsid id) { return false; }
-    static void postBarrier(jsid* idp) {}
-    static void relocate(jsid* idp) {}
+    static void postBarrier(jsid* idp, jsid prev, jsid next) {}
 };
 
 // If the jsid is a GC pointer type, convert to that type and call |f| with
@@ -193,6 +191,6 @@ DispatchIdTyped(F f, jsid& id, Args&&... args)
 
 #undef id
 
-}
+} // namespace js
 
 #endif /* js_Id_h */

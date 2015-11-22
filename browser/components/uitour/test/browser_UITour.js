@@ -3,25 +3,24 @@
 
 "use strict";
 
-let gTestTab;
-let gContentAPI;
-let gContentWindow;
+var gTestTab;
+var gContentAPI;
+var gContentWindow;
 
-Components.utils.import("resource:///modules/UITour.jsm");
 Components.utils.import("resource://testing-common/TelemetryArchiveTesting.jsm", this);
 
 function test() {
   UITourTest();
 }
 
-let tests = [
+var tests = [
   function test_untrusted_host(done) {
     loadUITourTestPage(function() {
       let bookmarksMenu = document.getElementById("bookmarks-menu-button");
-      ise(bookmarksMenu.open, false, "Bookmark menu should initially be closed");
+      is(bookmarksMenu.open, false, "Bookmark menu should initially be closed");
 
       gContentAPI.showMenu("bookmarks");
-      ise(bookmarksMenu.open, false, "Bookmark menu should not open on a untrusted host");
+      is(bookmarksMenu.open, false, "Bookmark menu should not open on a untrusted host");
 
       done();
     }, "http://mochi.test:8888/");
@@ -29,7 +28,7 @@ let tests = [
   function test_testing_host(done) {
     // Add two testing origins intentionally surrounded by whitespace to be ignored.
     Services.prefs.setCharPref("browser.uitour.testingOrigins",
-                               "https://test1.example.com, https://test2.example.com:443 ");
+                               "https://test1.example.org, https://test2.example.org:443 ");
 
     registerCleanupFunction(() => {
       Services.prefs.clearUserPref("browser.uitour.testingOrigins");
@@ -41,18 +40,18 @@ let tests = [
 
     loadUITourTestPage(function() {
       gContentAPI.getConfiguration("appinfo", callback);
-    }, "https://test2.example.com/");
+    }, "https://test2.example.org/");
   },
   function test_unsecure_host(done) {
     loadUITourTestPage(function() {
       let bookmarksMenu = document.getElementById("bookmarks-menu-button");
-      ise(bookmarksMenu.open, false, "Bookmark menu should initially be closed");
+      is(bookmarksMenu.open, false, "Bookmark menu should initially be closed");
 
       gContentAPI.showMenu("bookmarks");
-      ise(bookmarksMenu.open, false, "Bookmark menu should not open on a unsecure host");
+      is(bookmarksMenu.open, false, "Bookmark menu should not open on a unsecure host");
 
       done();
-    }, "http://example.com/");
+    }, "http://example.org/");
   },
   function test_unsecure_host_override(done) {
     Services.prefs.setBoolPref("browser.uitour.requireSecure", false);
@@ -64,16 +63,16 @@ let tests = [
       waitForElementToBeVisible(highlight, done, "Highlight should be shown on a unsecure host when override pref is set");
 
       Services.prefs.setBoolPref("browser.uitour.requireSecure", true);
-    }, "http://example.com/");
+    }, "http://example.org/");
   },
   function test_disabled(done) {
     Services.prefs.setBoolPref("browser.uitour.enabled", false);
 
     let bookmarksMenu = document.getElementById("bookmarks-menu-button");
-    ise(bookmarksMenu.open, false, "Bookmark menu should initially be closed");
+    is(bookmarksMenu.open, false, "Bookmark menu should initially be closed");
 
     gContentAPI.showMenu("bookmarks");
-    ise(bookmarksMenu.open, false, "Bookmark menu should not open when feature is disabled");
+    is(bookmarksMenu.open, false, "Bookmark menu should not open when feature is disabled");
 
     Services.prefs.setBoolPref("browser.uitour.enabled", true);
     done();
@@ -217,58 +216,6 @@ let tests = [
     gContentAPI.showHighlight("urlbar");
     waitForElementToBeVisible(highlight, checkDefaultEffect, "Highlight should be shown after showHighlight()");
   },
-  function test_highlight_search_engine(done) {
-    let highlight = document.getElementById("UITourHighlight");
-    gContentAPI.showHighlight("urlbar");
-    waitForElementToBeVisible(highlight, () => {
-
-      let searchbar = document.getElementById("searchbar");
-      if (searchbar.getAttribute("oneoffui")) {
-        done();
-        return; // The oneoffui removes the menu that's being tested here.
-      }
-
-      gContentAPI.showMenu("searchEngines", function() {
-        isnot(searchbar, null, "Should have found searchbar");
-        let searchPopup = document.getAnonymousElementByAttribute(searchbar,
-                                                                   "anonid",
-                                                                   "searchbar-popup");
-        isnot(searchPopup, null, "Should have found search popup");
-
-        function getEngineNode(identifier) {
-          let engineNode = null;
-          for (let node of searchPopup.children) {
-            if (node.engine.identifier == identifier) {
-              engineNode = node;
-              break;
-            }
-          }
-          isnot(engineNode, null, "Should have found search engine node in popup");
-          return engineNode;
-        }
-        let googleEngineNode = getEngineNode("google");
-        let bingEngineNode = getEngineNode("bing");
-
-        gContentAPI.showHighlight("searchEngine-google");
-        waitForCondition(() => googleEngineNode.getAttribute("_moz-menuactive") == "true", function() {
-          is_element_hidden(highlight, "Highlight panel should be hidden by highlighting search engine");
-
-          gContentAPI.showHighlight("searchEngine-bing");
-          waitForCondition(() => bingEngineNode.getAttribute("_moz-menuactive") == "true", function() {
-            isnot(googleEngineNode.getAttribute("_moz-menuactive"), "true", "Previous engine should no longer be highlighted");
-
-            gContentAPI.hideHighlight();
-            waitForCondition(() => bingEngineNode.getAttribute("_moz-menuactive") != "true", function() {
-              gContentAPI.hideMenu("searchEngines");
-              waitForCondition(() => searchPopup.state == "closed", function() {
-                done();
-              }, "Search dropdown should close");
-            }, "Menu item should get attribute removed");
-          }, "Menu item should get attribute to make it look active");
-        });
-      });
-    });
-  },
   function test_highlight_effect_unsupported(done) {
     function checkUnsupportedEffect() {
       is(highlight.getAttribute("active"), "none", "No effect should be used when an unsupported effect is requested");
@@ -370,7 +317,7 @@ let tests = [
       });
     });
   },
-  function test_select_search_engine(done) {
+  function test_search(done) {
     Services.search.init(rv => {
       if (!Components.isSuccessCode(rv)) {
         ok(false, "search service init failed: " + rv);
@@ -378,9 +325,21 @@ let tests = [
         return;
       }
       let defaultEngine = Services.search.defaultEngine;
-      gContentAPI.getConfiguration("availableTargets", data => {
-        let searchEngines = data.targets.filter(t => t.startsWith("searchEngine-"));
-        let someOtherEngineID = searchEngines.filter(t => t != "searchEngine-" + defaultEngine.identifier)[0];
+      gContentAPI.getConfiguration("search", data => {
+        let visibleEngines = Services.search.getVisibleEngines();
+        let expectedEngines = ["searchEngine-" + engine.identifier
+                               for (engine of visibleEngines)
+                                 if (engine.identifier)];
+
+        let engines = data.engines;
+        ok(Array.isArray(engines), "data.engines should be an array");
+        is(engines.sort().toString(), expectedEngines.sort().toString(),
+           "Engines should be as expected");
+
+        is(data.searchEngineIdentifier, defaultEngine.identifier,
+           "the searchEngineIdentifier property should contain the defaultEngine's identifier");
+
+        let someOtherEngineID = data.engines.filter(t => t != "searchEngine-" + defaultEngine.identifier)[0];
         someOtherEngineID = someOtherEngineID.replace(/^searchEngine-/, "");
 
         let observe = function (subject, topic, verb) {

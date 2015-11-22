@@ -87,7 +87,6 @@ WrapperFactory::CreateXrayWaiver(JSContext* cx, HandleObject obj)
     if (!scope->mWaiverWrapperMap) {
         scope->mWaiverWrapperMap =
           JSObject2JSObjectMap::newMap(XPC_WRAPPER_MAP_LENGTH);
-        MOZ_ASSERT(scope->mWaiverWrapperMap);
     }
     if (!scope->mWaiverWrapperMap->Add(cx, obj, waiver))
         return nullptr;
@@ -105,6 +104,20 @@ WrapperFactory::WaiveXray(JSContext* cx, JSObject* objArg)
     if (waiver)
         return waiver;
     return CreateXrayWaiver(cx, obj);
+}
+
+/* static */ bool
+WrapperFactory::AllowWaiver(JSCompartment* target, JSCompartment* origin)
+{
+    return CompartmentPrivate::Get(target)->allowWaivers &&
+           AccessCheck::subsumes(target, origin);
+}
+
+/* static */ bool
+WrapperFactory::AllowWaiver(JSObject* wrapper) {
+    MOZ_ASSERT(js::IsCrossCompartmentWrapper(wrapper));
+    return AllowWaiver(js::GetObjectCompartment(wrapper),
+                       js::GetObjectCompartment(js::UncheckedUnwrap(wrapper)));
 }
 
 inline bool
@@ -428,7 +441,7 @@ WrapperFactory::Rewrap(JSContext* cx, HandleObject existing, HandleObject obj)
         // here, but only in the content process.
         if ((IdentifyStandardInstance(obj) == JSProto_Function ||
             (jsipc::IsCPOW(obj) && JS::IsCallable(obj) &&
-             XRE_GetProcessType() == GeckoProcessType_Content)))
+             XRE_IsContentProcess())))
         {
             wrapper = &FilteringWrapper<CrossCompartmentSecurityWrapper, OpaqueWithCall>::singleton;
         }
@@ -469,8 +482,10 @@ WrapperFactory::Rewrap(JSContext* cx, HandleObject existing, HandleObject obj)
         bool wantXrays = !sameOrigin || sameOriginXrays;
 
         // If Xrays are warranted, the caller may waive them for non-security
-        // wrappers.
-        bool waiveXrays = wantXrays && !securityWrapper && HasWaiveXrayFlag(obj);
+        // wrappers (unless explicitly forbidden from doing so).
+        bool waiveXrays = wantXrays && !securityWrapper &&
+                          CompartmentPrivate::Get(target)->allowWaivers &&
+                          HasWaiveXrayFlag(obj);
 
         // We have slightly different behavior for the case when the object
         // being wrapped is in an XBL scope.
@@ -543,7 +558,7 @@ WrapperFactory::WaiveXrayAndWrap(JSContext* cx, MutableHandleObject argObj)
     // to things in |obj|'s compartment.
     JSCompartment* target = js::GetContextCompartment(cx);
     JSCompartment* origin = js::GetObjectCompartment(obj);
-    obj = AccessCheck::subsumes(target, origin) ? WaiveXray(cx, obj) : obj;
+    obj = AllowWaiver(target, origin) ? WaiveXray(cx, obj) : obj;
     if (!obj)
         return false;
 
@@ -631,4 +646,4 @@ NativeGlobal(JSObject* obj)
     return global;
 }
 
-}
+} // namespace xpc

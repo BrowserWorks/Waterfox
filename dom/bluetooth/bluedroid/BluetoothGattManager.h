@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_bluetooth_bluetoothgattmanager_h__
-#define mozilla_dom_bluetooth_bluetoothgattmanager_h__
+#ifndef mozilla_dom_bluetooth_bluedroid_BluetoothGattManager_h
+#define mozilla_dom_bluetooth_bluedroid_BluetoothGattManager_h
 
 #include "BluetoothCommon.h"
 #include "BluetoothInterface.h"
@@ -90,6 +90,19 @@ public:
     const nsTArray<uint8_t>& aValue,
     BluetoothReplyRunnable* aRunnable);
 
+  void ConnectPeripheral(
+    const nsAString& aAppUuid,
+    const nsAString& aAddress,
+    BluetoothReplyRunnable* aRunnable);
+
+  void DisconnectPeripheral(
+    const nsAString& aAppUuid,
+    const nsAString& aAddress,
+    BluetoothReplyRunnable* aRunnable);
+
+  void UnregisterServer(int aServerIf,
+                        BluetoothReplyRunnable* aRunnable);
+
 private:
   ~BluetoothGattManager();
 
@@ -110,6 +123,12 @@ private:
   class WriteCharacteristicValueResultHandler;
   class ReadDescriptorValueResultHandler;
   class WriteDescriptorValueResultHandler;
+  class ScanDeviceTypeResultHandler;
+
+  class RegisterServerResultHandler;
+  class ConnectPeripheralResultHandler;
+  class DisconnectPeripheralResultHandler;
+  class UnregisterServerResultHandler;
 
   BluetoothGattManager();
 
@@ -199,9 +218,18 @@ private:
   void ProceedDiscoverProcess(BluetoothGattClient* aClient,
                               const BluetoothGattServiceId& aServiceId);
 
+  void RegisterServerNotification(BluetoothGattStatus aStatus,
+                                  int aServerIf,
+                                  const BluetoothUuid& aAppUuid) override;
+
+  void ConnectionNotification(int aConnId,
+                              int aServerIf,
+                              bool aConnected,
+                              const nsAString& aBdAddr) override;
+
   static bool mInShutdown;
 };
 
 END_BLUETOOTH_NAMESPACE
 
-#endif
+#endif // mozilla_dom_bluetooth_bluedroid_BluetoothGattManager_h

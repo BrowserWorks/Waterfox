@@ -76,7 +76,7 @@ DynamicsCompressorKernel::DynamicsCompressorKernel(float sampleRate, unsigned nu
 size_t DynamicsCompressorKernel::sizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 {
     size_t amount = 0;
-    amount += m_preDelayBuffers.SizeOfExcludingThis(aMallocSizeOf);
+    amount += m_preDelayBuffers.ShallowSizeOfExcludingThis(aMallocSizeOf);
     for (size_t i = 0; i < m_preDelayBuffers.Length(); i++) {
         amount += m_preDelayBuffers[i].SizeOfExcludingThis(aMallocSizeOf);
     }
@@ -167,7 +167,7 @@ float DynamicsCompressorKernel::kAtSlope(float desiredSlope)
     float x = WebAudioUtils::ConvertDecibelsToLinear(xDb);
 
     // Approximate k given initial values.
-    float minK = 0.1;
+    float minK = 0.1f;
     float maxK = 10000;
     float k = 5;
 

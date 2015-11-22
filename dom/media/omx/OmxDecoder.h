@@ -10,7 +10,7 @@
 #include "mozilla/layers/FenceUtils.h"
 #include "MP3FrameParser.h"
 #include "MPAPI.h"
-#include "MediaResource.h"
+#include "MediaOmxCommonReader.h"
 #include "AbstractMediaDecoder.h"
 #include "OMXCodecProxy.h"
 
@@ -20,7 +20,7 @@ class OmxDecoder;
 
 namespace android {
 
-class OmxDecoder : public OMXCodecProxy::EventListener {
+class OmxDecoder : public OMXCodecProxy::CodecResourceListener {
   typedef MPAPI::AudioFrame AudioFrame;
   typedef MPAPI::VideoFrame VideoFrame;
   typedef mozilla::MP3FrameParser MP3FrameParser;
@@ -28,6 +28,7 @@ class OmxDecoder : public OMXCodecProxy::EventListener {
   typedef mozilla::AbstractMediaDecoder AbstractMediaDecoder;
   typedef mozilla::layers::FenceHandle FenceHandle;
   typedef mozilla::layers::TextureClient TextureClient;
+  typedef mozilla::MediaOmxCommonReader::MediaResourcePromise MediaResourcePromise;
 
   enum {
     kPreferSoftwareCodecs = 1,
@@ -37,11 +38,9 @@ class OmxDecoder : public OMXCodecProxy::EventListener {
 
   enum {
     kNotifyPostReleaseVideoBuffer = 'noti',
-    kNotifyStatusChanged = 'stat'
   };
 
   AbstractMediaDecoder *mDecoder;
-  nsRefPtr<MediaResource> mResource;
   sp<GonkNativeWindow> mNativeWindow;
   sp<GonkNativeWindowClient> mNativeWindowClient;
   sp<MediaSource> mVideoTrack;
@@ -120,6 +119,8 @@ class OmxDecoder : public OMXCodecProxy::EventListener {
   // 'true' if a read from the audio stream was done while reading the metadata
   bool mAudioMetadataRead;
 
+  mozilla::MozPromiseHolder<MediaResourcePromise> mMediaResourcePromise;
+
   void ReleaseVideoBuffer();
   void ReleaseAudioBuffer();
   // Call with mSeekLock held.
@@ -138,11 +139,12 @@ class OmxDecoder : public OMXCodecProxy::EventListener {
   bool mVideoPaused;
 
 public:
-  OmxDecoder(MediaResource *aResource, AbstractMediaDecoder *aDecoder);
+  explicit OmxDecoder(AbstractMediaDecoder *aDecoder);
   ~OmxDecoder();
 
-  // MediaResourceManagerClient::EventListener
-  virtual void statusChanged();
+  // OMXCodecProxy::CodecResourceListener
+  virtual void codecReserved();
+  virtual void codecCanceled();
 
   // The MediaExtractor provides essential information for creating OMXCodec
   // instance. Such as video/audio codec, we can retrieve them through the
@@ -158,11 +160,7 @@ public:
   // mDurationUs and video/audio metadata.
   bool EnsureMetadata();
 
-  // Only called by MediaOmxDecoder, do not call this function arbitrarily.
-  // See bug 1050667.
-  bool IsWaitingMediaResources();
-
-  bool AllocateMediaResources();
+  nsRefPtr<MediaResourcePromise> AllocateMediaResources();
   void ReleaseMediaResources();
   bool SetVideoFormat();
   bool SetAudioFormat();
@@ -198,10 +196,6 @@ public:
                  bool aKeyframeSkip = false,
                  bool aDoSeek = false);
   bool ReadAudio(AudioFrame *aFrame, int64_t aSeekTimeUs);
-
-  MediaResource *GetResource() {
-    return mResource;
-  }
 
   //Change decoder into a playing state
   nsresult Play();

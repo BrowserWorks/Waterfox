@@ -5,7 +5,7 @@ fails == other-float-outside-rule-3-left-2.html other-float-outside-rule-3-left-
 fails == other-float-outside-rule-3-right-2.html other-float-outside-rule-3-right-2-ref.html # bug 616334
 fails == other-float-outside-rule-7-left.html other-float-outside-rule-7-left-ref.html # bug 616334
 fails == other-float-outside-rule-7-right.html other-float-outside-rule-7-right-ref.html # bug 616334
-fuzzy-if(gtk2Widget,1,10) == float-outside-block-push.html float-outside-block-push-ref.html # bug 815612
+fuzzy-if(gtkWidget,1,10) == float-outside-block-push.html float-outside-block-push-ref.html # bug 815612
 == relative-float-1.html relative-float-1-ref.html
 == relative-float-2.html relative-float-2-ref.html
 == zero-height-float-base.html zero-height-float-ref.html
@@ -16,6 +16,7 @@ fails == 345369-2.html 345369-2-ref.html
 == 345369-4.html 345369-4-ref.html
 == 345369-5.html 345369-5-ref.html
 == 429974-1.html 429974-1-ref.html
+== 478834-1.html 478834-1-ref.html
 == 546048-1.html 546048-1-ref.html
 == 775350-1.html 775350-1-ref.html
 == 1114329.html 1114329-ref.html
@@ -36,6 +37,15 @@ fails == 345369-2.html 345369-2-ref.html
 == float-in-rtl-4c.html float-in-rtl-4-ref.html
 == float-in-rtl-4d.html float-in-rtl-4-ref.html
 
+== bfc-displace-1a.html bfc-displace-1a-ref.html
+== bfc-displace-1b.html bfc-displace-1b-ref.html
+== bfc-displace-2a.html bfc-displace-2a-ref.html
+== bfc-displace-2b.html bfc-displace-2b-ref.html
+== bfc-displace-3a.html bfc-displace-3a-ref.html
+== bfc-displace-3b.html bfc-displace-3b-ref.html
+== bfc-displace-4.html bfc-displace-4-ref.html
+== bfc-shrink-1.html bfc-shrink-1-ref.html
+
 # Testcases that involve vertical writing mode.
 #
 # XXX The default-preferences setting here can be removed after the
@@ -50,15 +60,15 @@ default-preferences pref(layout.css.vertical-text.enabled,true)
 == float-in-rtl-vlr-2a.html float-in-rtl-vlr-2-ref.html
 == float-in-rtl-vlr-2b.html float-in-rtl-vlr-2-ref.html
 == float-in-rtl-vlr-2c.html float-in-rtl-vlr-2-ref.html
-fails == float-in-rtl-vlr-2d.html float-in-rtl-vlr-2-ref.html # bug 1122253
-fails == float-in-rtl-vlr-3a.html float-in-rtl-vlr-3-ref.html # bug 1131451
-fails == float-in-rtl-vlr-3b.html float-in-rtl-vlr-3-ref.html # bug 1131451
-fails == float-in-rtl-vlr-3c.html float-in-rtl-vlr-3-ref.html # bug 1131451
-fails == float-in-rtl-vlr-3d.html float-in-rtl-vlr-3-ref.html # bug 1131451
-fails == float-in-rtl-vlr-4a.html float-in-rtl-vlr-4-ref.html # bug 1131451
-fails == float-in-rtl-vlr-4b.html float-in-rtl-vlr-4-ref.html # bug 1131451
-fails == float-in-rtl-vlr-4c.html float-in-rtl-vlr-4-ref.html # bug 1131451
-fails == float-in-rtl-vlr-4d.html float-in-rtl-vlr-4-ref.html # bug 1131451
+== float-in-rtl-vlr-2d.html float-in-rtl-vlr-2-ref.html
+== float-in-rtl-vlr-3a.html float-in-rtl-vlr-3-ref.html
+== float-in-rtl-vlr-3b.html float-in-rtl-vlr-3-ref.html
+== float-in-rtl-vlr-3c.html float-in-rtl-vlr-3-ref.html
+== float-in-rtl-vlr-3d.html float-in-rtl-vlr-3-ref.html
+== float-in-rtl-vlr-4a.html float-in-rtl-vlr-4-ref.html
+== float-in-rtl-vlr-4b.html float-in-rtl-vlr-4-ref.html
+== float-in-rtl-vlr-4c.html float-in-rtl-vlr-4-ref.html
+== float-in-rtl-vlr-4d.html float-in-rtl-vlr-4-ref.html
 == float-in-rtl-vrl-1a.html float-in-rtl-vrl-1-ref.html
 == float-in-rtl-vrl-1b.html float-in-rtl-vrl-1-ref.html
 == float-in-rtl-vrl-1c.html float-in-rtl-vrl-1-ref.html
@@ -66,15 +76,15 @@ fails == float-in-rtl-vlr-4d.html float-in-rtl-vlr-4-ref.html # bug 1131451
 == float-in-rtl-vrl-2a.html float-in-rtl-vrl-2-ref.html
 == float-in-rtl-vrl-2b.html float-in-rtl-vrl-2-ref.html
 == float-in-rtl-vrl-2c.html float-in-rtl-vrl-2-ref.html
-fails == float-in-rtl-vrl-2d.html float-in-rtl-vrl-2-ref.html # bug 1122253
-fails == float-in-rtl-vrl-3a.html float-in-rtl-vrl-3-ref.html # bug 1131451
-fails == float-in-rtl-vrl-3b.html float-in-rtl-vrl-3-ref.html # bug 1131451
-fails == float-in-rtl-vrl-3c.html float-in-rtl-vrl-3-ref.html # bug 1131451
-fails == float-in-rtl-vrl-3d.html float-in-rtl-vrl-3-ref.html # bug 1131451
-fails == float-in-rtl-vrl-4a.html float-in-rtl-vrl-4-ref.html # bug 1131451
-fails == float-in-rtl-vrl-4b.html float-in-rtl-vrl-4-ref.html # bug 1131451
-fails == float-in-rtl-vrl-4c.html float-in-rtl-vrl-4-ref.html # bug 1131451
-fails == float-in-rtl-vrl-4d.html float-in-rtl-vrl-4-ref.html # bug 1131451
+== float-in-rtl-vrl-2d.html float-in-rtl-vrl-2-ref.html
+== float-in-rtl-vrl-3a.html float-in-rtl-vrl-3-ref.html
+== float-in-rtl-vrl-3b.html float-in-rtl-vrl-3-ref.html
+== float-in-rtl-vrl-3c.html float-in-rtl-vrl-3-ref.html
+== float-in-rtl-vrl-3d.html float-in-rtl-vrl-3-ref.html
+== float-in-rtl-vrl-4a.html float-in-rtl-vrl-4-ref.html
+== float-in-rtl-vrl-4b.html float-in-rtl-vrl-4-ref.html
+== float-in-rtl-vrl-4c.html float-in-rtl-vrl-4-ref.html
+== float-in-rtl-vrl-4d.html float-in-rtl-vrl-4-ref.html
 fuzzy-if(OSX==1010,26,7) fuzzy-if(Android,16,2) == orthogonal-floats-1a.html orthogonal-floats-1-ref.html
 fuzzy-if(OSX==1010,26,7) == orthogonal-floats-1b.html orthogonal-floats-1-ref.html
 fuzzy-if(OSX==1010,103,802) fuzzy-if(winWidget,116,700) HTTP(..) == orthogonal-floats-1c.html orthogonal-floats-1-ref.html

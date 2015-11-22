@@ -37,16 +37,21 @@ class RasterImage;
 class nsIconDecoder : public Decoder
 {
 public:
-
-  explicit nsIconDecoder(RasterImage* aImage);
   virtual ~nsIconDecoder();
 
   virtual void WriteInternal(const char* aBuffer, uint32_t aCount) override;
 
-  uint8_t mWidth;
-  uint8_t mHeight;
+private:
+  friend class DecoderFactory;
+
+  // Decoders should only be instantiated via DecoderFactory.
+  explicit nsIconDecoder(RasterImage* aImage);
+
+  uint32_t mExpectedDataLength;
   uint32_t mPixBytesRead;
   uint32_t mState;
+  uint8_t mWidth;
+  uint8_t mHeight;
 };
 
 enum {

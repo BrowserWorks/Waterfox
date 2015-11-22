@@ -19,6 +19,7 @@
 #include "nsIPrefService.h"
 #include "nsIPrompt.h"
 #include "nsNetUtil.h"
+#include "nsContentSecurityManager.h"
 #include "nsExternalHelperAppService.h"
 
 // used to dispatch urls to default protocol handlers
@@ -175,14 +176,34 @@ NS_IMETHODIMP nsExtProtocolChannel::Open(nsIInputStream **_retval)
   return OpenURL();
 }
 
+NS_IMETHODIMP nsExtProtocolChannel::Open2(nsIInputStream** aStream)
+{
+  nsCOMPtr<nsIStreamListener> listener;
+  nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return Open(aStream);
+}
+
 NS_IMETHODIMP nsExtProtocolChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctxt)
 {
+  MOZ_ASSERT(!mLoadInfo || mLoadInfo->GetSecurityMode() == 0 ||
+             mLoadInfo->GetInitialSecurityCheckDone(),
+             "security flags in loadInfo but asyncOpen2() not called");
+
   NS_ENSURE_ARG_POINTER(listener);
   NS_ENSURE_TRUE(!mWasOpened, NS_ERROR_ALREADY_OPENED);
 
   mWasOpened = true;
 
   return OpenURL();
+}
+
+NS_IMETHODIMP nsExtProtocolChannel::AsyncOpen2(nsIStreamListener *aListener)
+{
+  nsCOMPtr<nsIStreamListener> listener = aListener;
+  nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return AsyncOpen(listener, nullptr);
 }
 
 NS_IMETHODIMP nsExtProtocolChannel::GetLoadFlags(nsLoadFlags *aLoadFlags)

@@ -13,7 +13,8 @@
 #include "nsCycleCollectionParticipant.h"
 
 #ifdef MOZ_WIDGET_GONK
-#include "nsINetworkManager.h"
+#include "nsINetworkInterface.h"
+#include "nsProxyRelease.h"
 #endif
 
 //-----------------------------------------------------------------------------
@@ -71,7 +72,7 @@ private:
   uint64_t   mByteReadCount;
   uint64_t   mByteWriteCount;
 #ifdef MOZ_WIDGET_GONK
-  nsMainThreadPtrHandle<nsINetworkInterface> mActiveNetwork;
+  nsMainThreadPtrHandle<nsINetworkInfo> mActiveNetworkInfo;
 #endif
 };
 

@@ -6,9 +6,9 @@
  * Test if getExecutableLines return correct information
  */
 
-let gDebuggee;
-let gClient;
-let gThreadClient;
+var gDebuggee;
+var gClient;
+var gThreadClient;
 
 const SOURCE_MAPPED_FILE = getFileUrl("sourcemapped.js");
 
@@ -31,7 +31,7 @@ function run_test() {
 }
 
 function test_executable_lines() {
-  gClient.addOneTimeListener("newSource", function _onNewSource(evt, packet) {
+  gThreadClient.addOneTimeListener("newSource", function _onNewSource(evt, packet) {
     do_check_eq(evt, "newSource");
 
     gThreadClient.getSources(function ({error, sources}) {

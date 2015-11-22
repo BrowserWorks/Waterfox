@@ -89,7 +89,6 @@ public:
   explicit RemoteContentController(RenderFrameParent* aRenderFrame)
     : mUILoop(MessageLoop::current())
     , mRenderFrame(aRenderFrame)
-    , mHaveZoomConstraints(false)
   { }
 
   virtual void RequestContentRepaint(const FrameMetrics& aFrameMetrics) override
@@ -198,7 +197,7 @@ public:
 
   void ClearRenderFrame() { mRenderFrame = nullptr; }
 
-  virtual void SendAsyncScrollDOMEvent(bool aIsRoot,
+  virtual void SendAsyncScrollDOMEvent(bool aIsRootContent,
                                        const CSSRect& aContentRect,
                                        const CSSSize& aContentSize) override
   {
@@ -207,10 +206,10 @@ public:
         FROM_HERE,
         NewRunnableMethod(this,
                           &RemoteContentController::SendAsyncScrollDOMEvent,
-                          aIsRoot, aContentRect, aContentSize));
+                          aIsRootContent, aContentRect, aContentSize));
       return;
     }
-    if (mRenderFrame && aIsRoot) {
+    if (mRenderFrame && aIsRootContent) {
       TabParent* browser = TabParent::GetFrom(mRenderFrame->Manager());
       BrowserElementParent::DispatchAsyncScrollEvent(browser, aContentRect,
                                                      aContentSize);
@@ -219,15 +218,8 @@ public:
 
   virtual void PostDelayedTask(Task* aTask, int aDelayMs) override
   {
-    MessageLoop::current()->PostDelayedTask(FROM_HERE, aTask, aDelayMs);
-  }
-
-  virtual bool GetRootZoomConstraints(ZoomConstraints* aOutConstraints) override
-  {
-    if (mHaveZoomConstraints && aOutConstraints) {
-      *aOutConstraints = mZoomConstraints;
-    }
-    return mHaveZoomConstraints;
+    (MessageLoop::current() ? MessageLoop::current() : mUILoop)->
+       PostDelayedTask(FROM_HERE, aTask, aDelayMs);
   }
 
   virtual bool GetTouchSensitiveRegion(CSSRect* aOutRegion) override
@@ -270,13 +262,15 @@ public:
     }
   }
 
-  // Methods used by RenderFrameParent to set fields stored here.
-
-  void SaveZoomConstraints(const ZoomConstraints& aConstraints)
-  {
-    mHaveZoomConstraints = true;
-    mZoomConstraints = aConstraints;
+  void NotifyFlushComplete() override {
+    MOZ_ASSERT(NS_IsMainThread());
+    if (mRenderFrame) {
+      TabParent* browser = TabParent::GetFrom(mRenderFrame->Manager());
+      browser->NotifyFlushComplete();
+    }
   }
+
+  // Methods used by RenderFrameParent to set fields stored here.
 
   void SetTouchSensitiveRegion(const nsRegion& aRegion)
   {
@@ -286,8 +280,6 @@ private:
   MessageLoop* mUILoop;
   RenderFrameParent* mRenderFrame;
 
-  bool mHaveZoomConstraints;
-  ZoomConstraints mZoomConstraints;
   nsRegion mTouchSensitiveRegion;
 };
 
@@ -299,15 +291,18 @@ RenderFrameParent::RenderFrameParent(nsFrameLoader* aFrameLoader,
   , mFrameLoader(aFrameLoader)
   , mFrameLoaderDestroyed(false)
   , mBackgroundColor(gfxRGBA(1, 1, 1))
+  , mAsyncPanZoomEnabled(false)
 {
+  *aId = 0;
   *aSuccess = false;
   if (!mFrameLoader) {
     return;
   }
 
-  *aId = 0;
-
   nsRefPtr<LayerManager> lm = GetFrom(mFrameLoader);
+
+  mAsyncPanZoomEnabled = lm && lm->AsyncPanZoomEnabled();
+
   // Perhaps the document containing this frame currently has no presentation?
   if (lm && lm->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
     *aTextureFactoryIdentifier =
@@ -316,7 +311,7 @@ RenderFrameParent::RenderFrameParent(nsFrameLoader* aFrameLoader,
     *aTextureFactoryIdentifier = TextureFactoryIdentifier();
   }
 
-  if (XRE_GetProcessType() == GeckoProcessType_Default) {
+  if (XRE_IsParentProcess()) {
     // Our remote frame will push layers updates to the compositor,
     // and we'll keep an indirect reference to that tree.
     *aId = mLayersId = CompositorParent::AllocateLayerTreeId();
@@ -325,17 +320,15 @@ RenderFrameParent::RenderFrameParent(nsFrameLoader* aFrameLoader,
         static_cast<ClientLayerManager*>(lm.get());
       clientManager->GetRemoteRenderer()->SendNotifyChildCreated(mLayersId);
     }
-    if (gfxPrefs::AsyncPanZoomEnabled()) {
+    if (mAsyncPanZoomEnabled) {
       mContentController = new RemoteContentController(this);
       CompositorParent::SetControllerForLayerTree(mLayersId, mContentController);
     }
-  } else if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  } else if (XRE_IsContentProcess()) {
     ContentChild::GetSingleton()->SendAllocateLayerTreeId(aId);
     mLayersId = *aId;
     CompositorChild::Get()->SendNotifyChildCreated(mLayersId);
   }
-  // Set a default RenderFrameParent
-  mFrameLoader->SetCurrentRemoteFrame(this);
   *aSuccess = true;
 }
 
@@ -346,7 +339,7 @@ RenderFrameParent::GetApzcTreeManager()
   // created and the static getter knows which CompositorParent is
   // instantiated with this layers ID. That's why try to fetch it when
   // we first need it and cache the result.
-  if (!mApzcTreeManager && gfxPrefs::AsyncPanZoomEnabled()) {
+  if (!mApzcTreeManager && mAsyncPanZoomEnabled) {
     mApzcTreeManager = CompositorParent::GetAPZCTreeManager(mLayersId);
   }
   return mApzcTreeManager.get();
@@ -421,23 +414,26 @@ RenderFrameParent::BuildLayer(nsDisplayListBuilder* aBuilder,
 void
 RenderFrameParent::OwnerContentChanged(nsIContent* aContent)
 {
-  MOZ_ASSERT(mFrameLoader->GetOwnerContent() == aContent,
+  MOZ_ASSERT(!mFrameLoader || mFrameLoader->GetOwnerContent() == aContent,
              "Don't build new map if owner is same!");
 
-  nsRefPtr<LayerManager> lm = GetFrom(mFrameLoader);
+  nsRefPtr<LayerManager> lm = mFrameLoader ? GetFrom(mFrameLoader) : nullptr;
   // Perhaps the document containing this frame currently has no presentation?
   if (lm && lm->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
     ClientLayerManager *clientManager =
       static_cast<ClientLayerManager*>(lm.get());
     clientManager->GetRemoteRenderer()->SendAdoptChild(mLayersId);
   }
+  // The APZCTreeManager associated with this RenderFrameParent may have changed
+  // so reset it and let GetApzcTreeManager() pick it up again.
+  mApzcTreeManager = nullptr;
 }
 
 void
 RenderFrameParent::ActorDestroy(ActorDestroyReason why)
 {
   if (mLayersId != 0) {
-    if (XRE_GetProcessType() == GeckoProcessType_Content) {
+    if (XRE_IsContentProcess()) {
       ContentChild::GetSingleton()->SendDeallocateLayerTreeId(mLayersId);
     } else {
       CompositorParent::DeallocateLayerTreeId(mLayersId);
@@ -450,15 +446,6 @@ RenderFrameParent::ActorDestroy(ActorDestroyReason why)
     }
   }
 
-  if (mFrameLoader && mFrameLoader->GetCurrentRemoteFrame() == this) {
-    // XXX this might cause some weird issues ... we'll just not
-    // redraw the part of the window covered by this until the "next"
-    // remote frame has a layer-tree transaction.  For
-    // why==NormalShutdown, we'll definitely want to do something
-    // better, especially as nothing guarantees another Update() from
-    // the "next" remote layer tree.
-    mFrameLoader->SetCurrentRemoteFrame(nullptr);
-  }
   mFrameLoader = nullptr;
 }
 
@@ -486,8 +473,6 @@ RenderFrameParent::RecvUpdateHitRegion(const nsRegion& aRegion)
 void
 RenderFrameParent::TriggerRepaint()
 {
-  mFrameLoader->SetCurrentRemoteFrame(this);
-
   nsIFrame* docFrame = mFrameLoader->GetPrimaryFrameOfOwningContent();
   if (!docFrame) {
     // Bad, but nothing we can do about it (XXX/cjones: or is there?
@@ -587,12 +572,8 @@ RenderFrameParent::SetAllowedTouchBehavior(uint64_t aInputBlockId,
 void
 RenderFrameParent::UpdateZoomConstraints(uint32_t aPresShellId,
                                          ViewID aViewId,
-                                         bool aIsRoot,
-                                         const ZoomConstraints& aConstraints)
+                                         const Maybe<ZoomConstraints>& aConstraints)
 {
-  if (mContentController && aIsRoot) {
-    mContentController->SaveZoomConstraints(aConstraints);
-  }
   if (GetApzcTreeManager()) {
     GetApzcTreeManager()->UpdateZoomConstraints(ScrollableLayerGuid(mLayersId, aPresShellId, aViewId),
                                                 aConstraints);
@@ -608,7 +589,7 @@ RenderFrameParent::HitTest(const nsRect& aRect)
 void
 RenderFrameParent::GetTextureFactoryIdentifier(TextureFactoryIdentifier* aTextureFactoryIdentifier)
 {
-  nsRefPtr<LayerManager> lm = GetFrom(mFrameLoader);
+  nsRefPtr<LayerManager> lm = mFrameLoader ? GetFrom(mFrameLoader) : nullptr;
   // Perhaps the document containing this frame currently has no presentation?
   if (lm && lm->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
     *aTextureFactoryIdentifier =
@@ -637,8 +618,8 @@ RenderFrameParent::TakeFocusForClick()
                         nsIFocusManager::FLAG_NOSCROLL);
 }
 
-}  // namespace layout
-}  // namespace mozilla
+} // namespace layout
+} // namespace mozilla
 
 nsDisplayRemote::nsDisplayRemote(nsDisplayListBuilder* aBuilder,
                                  nsSubDocumentFrame* aFrame,

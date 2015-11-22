@@ -7,7 +7,7 @@
 #ifndef MP4_STREAM_H_
 #define MP4_STREAM_H_
 
-#include "mp4_demuxer/mp4_demuxer.h"
+#include "mp4_demuxer/Stream.h"
 
 #include "MediaResource.h"
 
@@ -49,13 +49,13 @@ public:
 
   void Pin()
   {
-    mResource->Pin();
+    mResource.GetResource()->Pin();
     ++mPinCount;
   }
 
   void Unpin()
   {
-    mResource->Unpin();
+    mResource.GetResource()->Unpin();
     MOZ_ASSERT(mPinCount);
     --mPinCount;
     if (mPinCount == 0) {
@@ -64,7 +64,7 @@ public:
   }
 
 private:
-  nsRefPtr<MediaResource> mResource;
+  MediaResourceIndex mResource;
   Maybe<ReadRecord> mFailedRead;
   uint32_t mPinCount;
 
@@ -92,6 +92,6 @@ private:
   nsTArray<CacheBlock> mCache;
 };
 
-}
+} // namespace mozilla
 
 #endif

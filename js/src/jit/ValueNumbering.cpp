@@ -682,7 +682,7 @@ ValueNumberer::loopHasOptimizablePhi(MBasicBlock* header) const
     // values from backedges.
     for (MPhiIterator iter(header->phisBegin()), end(header->phisEnd()); iter != end; ++iter) {
         MPhi* phi = *iter;
-        MOZ_ASSERT(phi->hasUses(), "Missed an unused phi");
+        MOZ_ASSERT_IF(!phi->hasUses(), !DeadIfUnused(phi));
 
         if (phi->operandIfRedundant() || hasLeader(phi, header))
             return true; // Phi can be simplified.
@@ -756,8 +756,10 @@ ValueNumberer::visitDefinition(MDefinition* def)
         if (sim == nullptr)
             return false;
 
+        bool isNewInstruction = sim->block() == nullptr;
+
         // If |sim| doesn't belong to a block, insert it next to |def|.
-        if (sim->block() == nullptr)
+        if (isNewInstruction)
             def->block()->insertAfter(def->toInstruction(), sim->toInstruction());
 
 #ifdef DEBUG
@@ -783,6 +785,11 @@ ValueNumberer::visitDefinition(MDefinition* def)
 
         // Otherwise, procede to optimize with |sim| in place of |def|.
         def = sim;
+
+        // If the simplified instruction was already part of the graph, then we
+        // probably already visited and optimized this instruction.
+        if (!isNewInstruction)
+            return true;
     }
 
     // Now that foldsTo is done, re-enable the original dependency. Even though

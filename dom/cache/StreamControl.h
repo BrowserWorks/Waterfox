@@ -8,7 +8,7 @@
 #define mozilla_dom_cache_StreamControl_h
 
 #include "mozilla/dom/cache/ReadStream.h"
-#include "nsRefPtr.h"
+#include "mozilla/nsRefPtr.h"
 #include "nsTObserverArray.h"
 
 struct nsID;
@@ -16,7 +16,7 @@ struct nsID;
 namespace mozilla {
 namespace ipc {
  class FileDescriptor;
-}
+} // namespace ipc
 namespace dom {
 namespace cache {
 

@@ -2,14 +2,11 @@ BRANCH = "mozilla-central"
 MOZ_UPDATE_CHANNEL = "nightly"
 MOZILLA_DIR = BRANCH
 OBJDIR = "obj-l10n"
-EN_US_BINARY_URL = "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-%s-android/en-US" % (BRANCH)
-#STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
-STAGE_SERVER = "stage.mozilla.org"
-STAGE_USER = "ffxbld"
-STAGE_SSH_KEY = "~/.ssh/ffxbld_rsa"
+EN_US_BINARY_URL = "http://archive.mozilla.org/pub/mobile/nightly/latest-%s-android/en-US" % BRANCH
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 config = {
+    "branch": BRANCH,
     "log_name": "single_locale",
     "objdir": OBJDIR,
     "is_automation": True,
@@ -26,7 +23,6 @@ config = {
     "tooltool_config": {
         "manifest": "mobile/android/config/tooltool-manifests/android/releng.manifest",
         "output_dir": "%(abs_work_dir)s/" + MOZILLA_DIR,
-        "bootstrap_cmd": ["bash", "-xe", "setup.sh"],
     },
     "exes": {
         'tooltool.py': '/tools/tooltool.py',
@@ -60,20 +56,15 @@ config = {
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
     },
-    # TODO ideally we could get this info from a central location.
-    # However, the agility of these individual config files might trump that.
-    "upload_env": {
-        "UPLOAD_USER": STAGE_USER,
-        "UPLOAD_SSH_KEY": STAGE_SSH_KEY,
-        "UPLOAD_HOST": STAGE_SERVER,
-        "POST_UPLOAD_CMD": "post_upload.py -b mozilla-central-android-l10n -p mobile -i %(buildid)s --release-to-latest --release-to-dated",
-        "UPLOAD_TO_TEMP": "1",
-    },
+    "upload_branch": "%s-android" % BRANCH,
+    "ssh_key_dir": "~/.ssh",
     "merge_locales": True,
     "make_dirs": ['config'],
     "mozilla_dir": MOZILLA_DIR,
     "mozconfig": "%s/mobile/android/config/mozconfigs/android/l10n-nightly" % MOZILLA_DIR,
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",
+    "stage_product": "mobile",
+    "platform": "android",
 
     # Balrog
     "build_target": "Android_arm-eabi-gcc3",
@@ -102,5 +93,6 @@ config = {
                       ],
     "mock_files": [
         ("/home/cltbld/.ssh", "/home/mock_mozilla/.ssh"),
+        ('/usr/local/lib/hgext', '/usr/local/lib/hgext'),
     ],
 }

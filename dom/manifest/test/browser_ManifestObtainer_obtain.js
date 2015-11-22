@@ -1,7 +1,9 @@
 //Used by JSHint:
-/*global Cu, ManifestObtainer, BrowserTestUtils, add_task, SpecialPowers, todo_is, gBrowser, Assert*/
-'use strict';
-Cu.import('resource://gre/modules/ManifestObtainer.jsm', this);
+/*global requestLongerTimeout, Cu, BrowserTestUtils, add_task, SpecialPowers, gBrowser, Assert*/ 'use strict';
+const {
+  ManifestObtainer
+} = Cu.import('resource://gre/modules/ManifestObtainer.jsm', {});
+
 requestLongerTimeout(4); // e10s tests take time.
 const defaultURL =
   'http://example.org/tests/dom/manifest/test/resource.sjs';
@@ -44,7 +46,7 @@ const tests = [
       <link rel="manifest" href='resource.sjs?body={"name":"fail"}'>
       <link rel="manifest foo bar test" href='resource.sjs?body={"name":"fail"}'>`
   }, {
-    expected: 'By default, manifest load cross-origin.',
+    expected: 'By default, manifest cannot load cross-origin.',
     get tabURL() {
       let query = [
         `body=<h1>${this.expected}</h1>`,
@@ -53,9 +55,8 @@ const tests = [
       const URL = `${defaultURL}?${query.join('&')}`;
       return URL;
     },
-    run(manifest) {
-      // Waiting on https://bugzilla.mozilla.org/show_bug.cgi?id=1130924
-      todo_is(manifest.name, 'pass-3', this.expected);
+    run(err) {
+      Assert.strictEqual(err.name, 'TypeError', this.expected);
     },
     testData: `<link rel="manifest" href='${remoteURL}?body={"name":"pass-3"}'>`
   },
@@ -107,6 +108,51 @@ const tests = [
         href='${remoteURL}?${body}&${CORS}'>`;
       return link;
     }
+  },{
+    expected: 'Trying to load from about:whatever is a TypeError.',
+    get tabURL() {
+      let query = [
+        `body=<h1>${this.expected}</h1>`,
+        'Content-Type=text/html; charset=utf-8',
+      ];
+      const URL = `${defaultURL}?${query.join('&')}`;
+      return URL;
+    },
+    run(err) {
+      Assert.strictEqual(err.name, 'TypeError', this.expected);
+    },
+    testData: `<link rel="manifest" href='about:whatever'>`
+  },
+  {
+    expected: 'Trying to load from file://whatever is a TypeError.',
+    get tabURL() {
+      let query = [
+        `body=<h1>${this.expected}</h1>`,
+        'Content-Type=text/html; charset=utf-8',
+      ];
+      const URL = `${defaultURL}?${query.join('&')}`;
+      return URL;
+    },
+    run(err) {
+      Assert.strictEqual(err.name, 'TypeError', this.expected);
+    },
+    testData: `<link rel="manifest" href='file://manifest'>`
+  },
+  //URL parsing tests
+  {
+    expected: 'Trying to load invalid URL is a TypeError.',
+    get tabURL() {
+      let query = [
+        `body=<h1>${this.expected}</h1>`,
+        'Content-Type=text/html; charset=utf-8',
+      ];
+      const URL = `${defaultURL}?${query.join('&')}`;
+      return URL;
+    },
+    run(err) {
+      Assert.strictEqual(err.name, 'TypeError', this.expected);
+    },
+    testData: `<link rel="manifest" href='http://[12.1212.21.21.12.21.12]'>`
   },
 ];
 
@@ -130,10 +176,9 @@ add_task(function*() {
   }
 
   function* testObtainingManifest(aBrowser, aTest) {
-    const obtainer = new ManifestObtainer();
     aBrowser.contentWindowAsCPOW.document.head.innerHTML = aTest.testData;
     try {
-      const manifest = yield obtainer.obtainManifest(aBrowser);
+      const manifest = yield ManifestObtainer.browserObtainManifest(aBrowser);
       aTest.run(manifest);
     } catch (e) {
       aTest.run(e);
@@ -147,7 +192,6 @@ add_task(function*() {
  * in each tab. They should all return pass.
  */
 add_task(function*() {
-  const obtainer = new ManifestObtainer();
   const defaultPath = '/tests/dom/manifest/test/manifestLoader.html';
   const tabURLs = [
     `http://test:80${defaultPath}`,
@@ -190,7 +234,7 @@ add_task(function*() {
   // Flood random browsers with requests. Once promises settle, check that
   // responses all pass.
   const results = yield Promise.all((
-    for (browser of randBrowsers(browsers, 1000)) obtainer.obtainManifest(browser)
+    for (browser of randBrowsers(browsers, 100)) ManifestObtainer.browserObtainManifest(browser)
   ));
   const expected = 'Expect every manifest to have name equal to `pass`.';
   const pass = results.every(manifest => manifest.name === 'pass');

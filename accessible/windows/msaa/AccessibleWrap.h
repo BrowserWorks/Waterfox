@@ -26,6 +26,7 @@
 
 namespace mozilla {
 namespace a11y {
+class DocProxyAccessibleWrap;
 
 class AccessibleWrap : public Accessible,
                        public ia2Accessible,
@@ -158,6 +159,8 @@ public: // construction, destruction
   static int32_t GetChildIDFor(Accessible* aAccessible);
   static HWND GetHWNDFor(Accessible* aAccessible);
 
+  static void FireWinEvent(Accessible* aTarget, uint32_t aEventType);
+
   /**
    * System caret support: update the Windows caret position. 
    * The system caret works more universally than the MSAA caret
@@ -176,12 +179,22 @@ public: // construction, destruction
 
   static IDispatch* NativeAccessible(Accessible* aAccessible);
 
+#ifdef _WIN64
+  uint32_t GetExistingID() const { return mID; }
+  static const uint32_t kNoID = 0;
+#endif
+
 protected:
   virtual ~AccessibleWrap();
 
 #ifdef _WIN64
   uint32_t mID;
 #endif
+
+  /**
+   * Return the wrapper for the document's proxy.
+   */
+  DocProxyAccessibleWrap* DocProxyWrapper() const;
 
   /**
    * Creates ITypeInfo for LIBID_Accessibility if it's needed and returns it.
@@ -223,6 +236,7 @@ WrapperFor(ProxyAccessible* aProxy)
 {
   return reinterpret_cast<AccessibleWrap*>(aProxy->GetWrapper());
 }
+
 } // namespace a11y
 } // namespace mozilla
 

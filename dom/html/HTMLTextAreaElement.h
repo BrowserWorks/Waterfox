@@ -75,7 +75,7 @@ public:
   NS_IMETHOD SubmitNamesValues(nsFormSubmission* aFormSubmission) override;
   NS_IMETHOD SaveState() override;
   virtual bool RestoreState(nsPresState* aState) override;
-  virtual bool IsDisabledForEvents(uint32_t aMessage) override;
+  virtual bool IsDisabledForEvents(EventMessage aMessage) override;
 
   virtual void FieldSetDisabledChanged(bool aNotify) override;
 
@@ -140,7 +140,7 @@ public:
    * Called when an attribute is about to be changed
    */
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                 const nsAttrValueOrString* aValue,
+                                 nsAttrValueOrString* aValue,
                                  bool aNotify) override;
 
   // nsIMutationObserver
@@ -322,8 +322,14 @@ protected:
    */
   void GetValueInternal(nsAString& aValue, bool aIgnoreWrap) const;
 
-  nsresult SetValueInternal(const nsAString& aValue,
-                            bool aUserInput);
+  /**
+   * Setting the value.
+   *
+   * @param aValue      String to set.
+   * @param aFlags      See nsTextEditorState::SetValueFlags.
+   */
+  nsresult SetValueInternal(const nsAString& aValue, uint32_t aFlags);
+
   nsresult GetSelectionRange(int32_t* aSelectionStart, int32_t* aSelectionEnd);
 
   /**

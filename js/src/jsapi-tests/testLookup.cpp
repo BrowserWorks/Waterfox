@@ -19,7 +19,7 @@ BEGIN_TEST(testLookup_bug522590)
 
     // Calling mkobj() multiple times must create multiple functions in ES5.
     EVAL("mkobj().f !== mkobj().f", &x);
-    CHECK_SAME(x, JSVAL_TRUE);
+    CHECK(x.isTrue());
 
     // Now make x.f a method.
     EVAL("mkobj()", &x);
@@ -31,7 +31,7 @@ BEGIN_TEST(testLookup_bug522590)
     CHECK(r.isObject());
     JSObject* funobj = &r.toObject();
     CHECK(funobj->is<JSFunction>());
-    CHECK(!js::IsInternalFunctionObject(funobj));
+    CHECK(!js::IsInternalFunctionObject(*funobj));
 
     return true;
 }
@@ -61,7 +61,7 @@ document_resolve(JSContext* cx, JS::HandleObject obj, JS::HandleId id, bool* res
                 return false;
 
             JS::Rooted<JS::Value> allValue(cx, JS::ObjectValue(*docAll));
-            if (!JS_DefinePropertyById(cx, obj, id, allValue, 0))
+            if (!JS_DefinePropertyById(cx, obj, id, allValue, JSPROP_RESOLVING))
                 return false;
 
             *resolvedp = true;
@@ -86,9 +86,9 @@ BEGIN_TEST(testLookup_bug570195)
     CHECK(JS_DefineProperty(cx, global, "document", obj, 0));
     JS::RootedValue v(cx);
     EVAL("document.all ? true : false", &v);
-    CHECK_SAME(v, JSVAL_FALSE);
+    CHECK(v.isFalse());
     EVAL("document.hasOwnProperty('all')", &v);
-    CHECK_SAME(v, JSVAL_TRUE);
+    CHECK(v.isTrue());
     return true;
 }
 END_TEST(testLookup_bug570195)

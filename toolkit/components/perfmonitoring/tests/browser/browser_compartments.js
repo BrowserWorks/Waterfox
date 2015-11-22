@@ -3,38 +3,70 @@
 
 "use strict";
 
+/**
+ * Test that we see jank that takes place in a webpage,
+ * and that jank from several iframes are actually charged
+ * to the top window.
+ */
 Cu.import("resource://gre/modules/PerformanceStats.jsm", this);
+Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://testing-common/ContentTask.jsm", this);
 
+
 const URL = "http://example.com/browser/toolkit/components/perfmonitoring/tests/browser/browser_compartments.html?test=" + Math.random();
+const PARENT_TITLE = `Main frame for test browser_compartments.js ${Math.random()}`;
+const FRAME_TITLE = `Subframe for test browser_compartments.js ${Math.random()}`;
+
+const PARENT_PID = Services.appinfo.processID;
 
 // This function is injected as source as a frameScript
 function frameScript() {
-  "use strict";
+  try {
+    "use strict";
 
-  const { utils: Cu, classes: Cc, interfaces: Ci } = Components;
-  Cu.import("resource://gre/modules/PerformanceStats.jsm");
+    const { utils: Cu, classes: Cc, interfaces: Ci } = Components;
+    Cu.import("resource://gre/modules/PerformanceStats.jsm");
+    Cu.import("resource://gre/modules/Services.jsm");
+    let performanceStatsService =
+      Cc["@mozilla.org/toolkit/performance-stats-service;1"].
+      getService(Ci.nsIPerformanceStatsService);
 
-  let performanceStatsService =
-    Cc["@mozilla.org/toolkit/performance-stats-service;1"].
-    getService(Ci.nsIPerformanceStatsService);
+    // Make sure that the stopwatch is now active.
+    let monitor = PerformanceStats.getMonitor(["jank", "cpow", "ticks", "compartments"]);
 
-  // Make sure that the stopwatch is now active.
-  performanceStatsService.isStopwatchActive = true;
+    addMessageListener("compartments-test:getStatistics", () => {
+      try {
+        monitor.promiseSnapshot().then(snapshot => {
+          sendAsyncMessage("compartments-test:getStatistics", {snapshot, pid: Services.appinfo.processID});
+        });
+      } catch (ex) {
+        Cu.reportError("Error in content (getStatistics): " + ex);
+        Cu.reportError(ex.stack);
+      }
+    });
 
-  addMessageListener("compartments-test:getStatistics", () => {
-    try {
-      sendAsyncMessage("compartments-test:getStatistics", PerformanceStats.getSnapshot());
-    } catch (ex) {
-      Cu.reportError("Error in content: " + ex);
-      Cu.reportError(ex.stack);
-    }
-  });
+    addMessageListener("compartments-test:setTitles", titles => {
+      try {
+        content.document.title = titles.data.parent;
+        for (let i = 0; i < content.frames.length; ++i) {
+          content.frames[i].postMessage({title: titles.data.frames}, "*");
+        }
+        console.log("content", "Done setting titles", content.document.title);
+        sendAsyncMessage("compartments-test:setTitles");
+      } catch (ex) {
+        Cu.reportError("Error in content (setTitles): " + ex);
+        Cu.reportError(ex.stack);
+      }
+    });
+  } catch (ex) {
+    Cu.reportError("Error in content (setup): " + ex);
+    Cu.reportError(ex.stack);    
+  }
 }
 
 // A variant of `Assert` that doesn't spam the logs
 // in case of success.
-let SilentAssert = {
+var SilentAssert = {
   equal: function(a, b, msg) {
     if (a == b) {
       return;
@@ -58,7 +90,7 @@ let SilentAssert = {
   }
 };
 
-
+var isShuttingDown = false;
 function monotinicity_tester(source, testName) {
   // In the background, check invariants:
   // - numeric data can only ever increase;
@@ -72,66 +104,104 @@ function monotinicity_tester(source, testName) {
   };
 
   let sanityCheck = function(prev, next) {
-    info(`Sanity check: ${JSON.stringify(next, null, "\t")}`);
     if (prev == null) {
       return;
     }
-    for (let k of ["name", "addonId", "isSystem"]) {
-      SilentAssert.equal(prev[k], next[k], `Sanity check (${testName}): ${k} hasn't changed.`);
+    for (let k of ["groupId", "addonId", "isSystem"]) {
+      SilentAssert.equal(prev[k], next[k], `Sanity check (${testName}): ${k} hasn't changed (${prev.name}).`);
     }
-    for (let k of ["totalUserTime", "totalSystemTime", "totalCPOWTime", "ticks"]) {
-      SilentAssert.equal(typeof next[k], "number", `Sanity check (${testName}): ${k} is a number.`);
-      SilentAssert.leq(prev[k], next[k], `Sanity check (${testName}): ${k} is monotonic.`);
-      SilentAssert.leq(0, next[k], `Sanity check (${testName}): ${k} is >= 0.`)
+    for (let [probe, k] of [
+      ["jank", "totalUserTime"],
+      ["jank", "totalSystemTime"],
+      ["cpow", "totalCPOWTime"],
+      ["ticks", "ticks"]
+    ]) {
+      SilentAssert.equal(typeof next[probe][k], "number", `Sanity check (${testName}): ${k} is a number.`);
+      SilentAssert.leq(prev[probe][k], next[probe][k], `Sanity check (${testName}): ${k} is monotonic.`);
+      SilentAssert.leq(0, next[probe][k], `Sanity check (${testName}): ${k} is >= 0.`)
     }
-    SilentAssert.equal(prev.durations.length, next.durations.length);
-    for (let i = 0; i < next.durations.length; ++i) {
-      SilentAssert.ok(typeof next.durations[i] == "number" && next.durations[i] >= 0,
+    SilentAssert.equal(prev.jank.durations.length, next.jank.durations.length);
+    for (let i = 0; i < next.jank.durations.length; ++i) {
+      SilentAssert.ok(typeof next.jank.durations[i] == "number" && next.jank.durations[i] >= 0,
         `Sanity check (${testName}): durations[${i}] is a non-negative number.`);
-      SilentAssert.leq(prev.durations[i], next.durations[i],
-        `Sanity check (${testName}): durations[${i}] is monotonic.`)
+      SilentAssert.leq(prev.jank.durations[i], next.jank.durations[i],
+        `Sanity check (${testName}): durations[${i}] is monotonic.`);
     }
-    for (let i = 0; i < next.durations.length - 1; ++i) {
-      SilentAssert.leq(next.durations[i + 1], next.durations[i],
+    for (let i = 0; i < next.jank.durations.length - 1; ++i) {
+      SilentAssert.leq(next.jank.durations[i + 1], next.jank.durations[i],
         `Sanity check (${testName}): durations[${i}] >= durations[${i + 1}].`)
     }
   };
   let iteration = 0;
   let frameCheck = Task.async(function*() {
+    if (isShuttingDown) {
+      window.clearInterval(interval);
+      return;
+    }
     let name = `${testName}: ${iteration++}`;
-    let snapshot = yield source();
-    if (!snapshot) {
+    let result = yield source();
+    if (!result) {
       // This can happen at the end of the test when we attempt
       // to communicate too late with the content process.
       window.clearInterval(interval);
       return;
     }
+    let {pid, snapshot} = result;
 
     // Sanity check on the process data.
     sanityCheck(previous.processData, snapshot.processData);
     SilentAssert.equal(snapshot.processData.isSystem, true);
     SilentAssert.equal(snapshot.processData.name, "<process>");
     SilentAssert.equal(snapshot.processData.addonId, "");
+    SilentAssert.equal(snapshot.processData.processId, pid);
     previous.procesData = snapshot.processData;
 
     // Sanity check on components data.
-    let set = new Set();
-    let keys = [];
+    let map = new Map();
     for (let item of snapshot.componentsData) {
-      let key = `{name: ${item.name}, addonId: ${item.addonId}, isSystem: ${item.isSystem}}`;
-      keys.push(key);
-      set.add(key);
-      sanityCheck(previous.componentsMap.get(key), item);
-      previous.componentsMap.set(key, item);
+      for (let [probe, k] of [
+        ["jank", "totalUserTime"],
+        ["jank", "totalSystemTime"],
+        ["cpow", "totalCPOWTime"]
+      ]) {
+        // Note that we cannot expect components data to be always smaller
+        // than process data, as `getrusage` & co are not monotonic.
+        SilentAssert.leq(item[probe][k], 3 * snapshot.processData[probe][k],
+          `Sanity check (${name}): ${k} of component is not impossibly larger than that of process`);
+      }
 
-      for (let k of ["totalUserTime", "totalSystemTime", "totalCPOWTime"]) {
-        SilentAssert.leq(item[k], snapshot.processData[k],
-          `Sanity check (${testName}): component has a lower ${k} than process`);
+      let isCorrectPid = (item.processId == pid && !item.isChildProcess)
+        || (item.processId != pid && item.isChildProcess);
+      SilentAssert.ok(isCorrectPid, `Pid check (${name}): the item comes from the right process`);
+
+      let key = item.groupId;
+      if (map.has(key)) {
+        let old = map.get(key);
+        Assert.ok(false, `Component ${key} has already been seen. Latest: ${item.title||item.addonId||item.name}, previous: ${old.title||old.addonId||old.name}`);
+      }
+      map.set(key, item);
+    }
+    for (let item of snapshot.componentsData) {
+      if (!item.parentId) {
+        continue;
+      }
+      let parent = map.get(item.parentId);
+      SilentAssert.ok(parent, `The parent exists ${item.parentId}`);
+
+      for (let [probe, k] of [
+        ["jank", "totalUserTime"],
+        ["jank", "totalSystemTime"],
+        ["cpow", "totalCPOWTime"]
+      ]) {
+        // Note that we cannot expect components data to be always smaller
+        // than parent data, as `getrusage` & co are not monotonic.
+        SilentAssert.leq(item[probe][k], 2 * parent[probe][k],
+          `Sanity check (${testName}): ${k} of component is not impossibly larger than that of parent`);
       }
     }
-    info(`Deactivating deduplication check (Bug 1150045)`);
-    if (false) {
-      SilentAssert.equal(set.size, snapshot.componentsData.length);
+    for (let [key, item] of map) {
+      sanityCheck(previous.componentsMap.get(key), item);
+      previous.componentsMap.set(key, item);
     }
   });
   let interval = window.setInterval(frameCheck, 300);
@@ -141,8 +211,10 @@ function monotinicity_tester(source, testName) {
 }
 
 add_task(function* test() {
+  let monitor = PerformanceStats.getMonitor(["jank", "cpow", "ticks"]);
+
   info("Extracting initial state");
-  let stats0 = PerformanceStats.getSnapshot();
+  let stats0 = yield monitor.promiseSnapshot();
   Assert.notEqual(stats0.componentsData.length, 0, "There is more than one component");
   Assert.ok(!stats0.componentsData.find(stat => stat.name.indexOf(URL) != -1),
     "The url doesn't appear yet");
@@ -160,24 +232,61 @@ add_task(function* test() {
     info("Deactivating sanity checks under Windows (bug 1151240)");
   } else {
     info("Setting up sanity checks");
-    monotinicity_tester(() => PerformanceStats.getSnapshot(), "parent process");
+    monotinicity_tester(() => monitor.promiseSnapshot().then(snapshot => ({snapshot, pid: PARENT_PID})), "parent process");
     monotinicity_tester(() => promiseContentResponseOrNull(browser, "compartments-test:getStatistics", null), "content process" );
   }
 
   let skipTotalUserTime = hasLowPrecision();
 
+
   while (true) {
-    let stats = (yield promiseContentResponse(browser, "compartments-test:getStatistics", null));
-    let found = stats.componentsData.find(stat => {
-      return (stat.name.indexOf(URL) != -1)
-      && (skipTotalUserTime || stat.totalUserTime > 1000)
-    });
-    if (found) {
-      info(`Expected totalUserTime > 1000, got ${found.totalUserTime}`);
-      break;
-    }
     yield new Promise(resolve => setTimeout(resolve, 100));
+
+    // We may have race conditions with DOM loading.
+    // Don't waste too much brainpower here, let's just ask
+    // repeatedly for the title to be changed, until this works.
+    info("Setting titles");
+    yield promiseContentResponse(browser, "compartments-test:setTitles", {
+      parent: PARENT_TITLE,
+      frames: FRAME_TITLE
+    });
+    info("Titles set");
+
+    let {snapshot: stats} = (yield promiseContentResponse(browser, "compartments-test:getStatistics", null));
+
+    let titles = [for(stat of stats.componentsData) stat.title];
+
+    for (let stat of stats.componentsData) {
+      info(`Compartment: ${stat.name} => ${stat.title} (${stat.isSystem?"system":"web"})`);
+    }
+
+    // While the webpage consists in three compartments, we should see only
+    // one `PerformanceData` in `componentsData`. Its `name` is undefined
+    // (could be either the main frame or one of its subframes), but its
+    // `title` should be the title of the main frame.
+    info(`Searching for frame title '${FRAME_TITLE}' in ${JSON.stringify(titles)} (I hope not to find it)`);
+    Assert.ok(!titles.includes(FRAME_TITLE), "Searching by title, the frames don't show up in the list of components");
+
+    info(`Searching for window title '${PARENT_TITLE}' in ${JSON.stringify(titles)} (I hope to find it)`);
+    let parent = stats.componentsData.find(x => x.title == PARENT_TITLE);
+    if (!parent) {
+      info("Searching by title, we didn't find the main frame");
+      continue;
+    }
+    info("Found the main frame");
+
+    if (skipTotalUserTime) {
+      info("Not looking for total user time on this platform, we're done");
+      break;
+    } else if (parent.jank.totalUserTime > 1000) {
+      info("Enough CPU time detected, we're done");
+      break;
+    } else {
+      info(`Not enough CPU time detected: ${parent.jank.totalUserTime}`);
+      info(`Details: ${JSON.stringify(parent, null, "\t")}`);
+    }
   }
+  isShuttingDown = true;
 
   // Cleanup
   gBrowser.removeTab(newTab);

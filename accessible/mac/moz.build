@@ -30,6 +30,7 @@ LOCAL_INCLUDES += [
     '/accessible/base',
     '/accessible/generic',
     '/accessible/html',
+    '/accessible/ipc',
     '/accessible/xul',
     '/layout/generic',
     '/layout/xul',
@@ -39,4 +40,4 @@ LOCAL_INCLUDES += [
 
 FINAL_LIBRARY = 'xul'
 
-FAIL_ON_WARNINGS = True
+include('/ipc/chromium/chromium-config.mozbuild')

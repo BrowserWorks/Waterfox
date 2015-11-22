@@ -14,14 +14,13 @@ public class testSystemPages extends PixelTest {
         blockForGeckoReady();
 
         final String urls [] = { mStringHelper.ABOUT_FIREFOX_URL, mStringHelper.ABOUT_RIGHTS_URL,
-                mStringHelper.ABOUT_ADDONS_URL, mStringHelper.ABOUT_DOWNLOADS_URL, StringHelper.ABOUT_PASSWORDS_URL,
+                mStringHelper.ABOUT_ADDONS_URL, mStringHelper.ABOUT_DOWNLOADS_URL, StringHelper.ABOUT_LOGINS_URL,
                 mStringHelper.ABOUT_BUILDCONFIG_URL, mStringHelper.ABOUT_FEEDBACK_URL,
                 mStringHelper.ABOUT_HEALTHREPORT_URL, mStringHelper.ABOUT_SCHEME
         };
         // Pages to be tested from the menu and their expected urls. This if of the form { {{ <path to item> }, { <expected url> }}* }
-        String menuItems [][][] = {{{ mStringHelper.APPS_LABEL }, { mStringHelper.ABOUT_APPS_URL }},
-                                  {{ mStringHelper.DOWNLOADS_LABEL }, { mStringHelper.ABOUT_DOWNLOADS_URL}},
-                                  {{ mStringHelper.LOGINS_LABEL}, { StringHelper.ABOUT_PASSWORDS_URL }},
+        String menuItems [][][] = {{{ mStringHelper.DOWNLOADS_LABEL }, { mStringHelper.ABOUT_DOWNLOADS_URL}},
+                                  {{ mStringHelper.LOGINS_LABEL}, { StringHelper.ABOUT_LOGINS_URL }},
                                   {{ mStringHelper.ADDONS_LABEL }, { mStringHelper.ABOUT_ADDONS_URL }},
                                   {{ mStringHelper.SETTINGS_LABEL, mStringHelper.MOZILLA_SECTION_LABEL, mStringHelper.ABOUT_LABEL }, { mStringHelper.ABOUT_SCHEME }},
                                   {{ mStringHelper.SETTINGS_LABEL, mStringHelper.MOZILLA_SECTION_LABEL, mStringHelper.FEEDBACK_LABEL }, { mStringHelper.ABOUT_FEEDBACK_URL }},
@@ -35,7 +34,7 @@ public class testSystemPages extends PixelTest {
         loadAndPaint(mStringHelper.ABOUT_ABOUT_URL);
 
         // Press back to verify if the keyboard is dismissed or the previous about: page loads
-        mActions.sendSpecialKey(Actions.SpecialKey.BACK);
+        mSolo.goBack();
         // may not get a paint on Back...pause briefly to make sure it completes
         mSolo.sleep(AFTER_BACK_SLEEP_MS);
 
@@ -50,9 +49,6 @@ public class testSystemPages extends PixelTest {
     // Load from Url the about: pages,verify the Url and the tabs number
     public void checkUrl(String urls []) {
         for (String url:urls) {
-            if (skipItemURL(url)) {
-                continue;
-            }
             loadAndPaint(url);
             verifyTabCount(mExpectedTabCount);
             verifyUrl(url);
@@ -68,10 +64,6 @@ public class testSystemPages extends PixelTest {
         for (String[][] item : menuItems) {
             String [] pathToItem = item[0];
             String expectedUrl = item[1][0];
-
-            if (skipItemURL(expectedUrl)) {
-                continue;
-            }
 
             expectedTabCount++;
 
@@ -98,12 +90,5 @@ public class testSystemPages extends PixelTest {
             }
             verifyTabCount(expectedTabCount);
         }
-    }
-
-    private boolean skipItemURL(String item) {
-        if (StringHelper.ABOUT_PASSWORDS_URL.equals(item) && !AppConstants.NIGHTLY_BUILD) {
-            return true;
-        }
-        return false;
     }
 }

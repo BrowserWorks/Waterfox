@@ -61,12 +61,13 @@ const BinaryInputStream = CC("@mozilla.org/binaryinputstream;1",
                               "nsIBinaryInputStream",
                               "setInputStream");
 
-let gLastRequestPath;
+var gLastRequestPath;
 
-let suggestedTile1 = {
+var suggestedTile1 = {
   url: "http://turbotax.com",
   type: "affiliate",
   lastVisitDate: 4,
+  adgroup_name: "Adgroup1",
   frecent_sites: [
     "taxact.com",
     "hrblock.com",
@@ -74,10 +75,11 @@ let suggestedTile1 = {
     "taxslayer.com"
   ]
 };
-let suggestedTile2 = {
+var suggestedTile2 = {
   url: "http://irs.gov",
   type: "affiliate",
   lastVisitDate: 3,
+  adgroup_name: "Adgroup2",
   frecent_sites: [
     "taxact.com",
     "hrblock.com",
@@ -85,10 +87,11 @@ let suggestedTile2 = {
     "taxslayer.com"
   ]
 };
-let suggestedTile3 = {
+var suggestedTile3 = {
   url: "http://hrblock.com",
   type: "affiliate",
   lastVisitDate: 2,
+  adgroup_name: "Adgroup3",
   frecent_sites: [
     "taxact.com",
     "freetaxusa.com",
@@ -96,15 +99,16 @@ let suggestedTile3 = {
     "taxslayer.com"
   ]
 };
-let suggestedTile4 = {
+var suggestedTile4 = {
   url: "http://sponsoredtile.com",
   type: "sponsored",
   lastVisitDate: 1,
+  adgroup_name: "Adgroup4",
   frecent_sites: [
     "sponsoredtarget.com"
   ]
 }
-let suggestedTile5 = {
+var suggestedTile5 = {
   url: "http://eviltile.com",
   type: "affiliate",
   lastVisitDate: 5,
@@ -114,7 +118,7 @@ let suggestedTile5 = {
     "eviltarget.com"
   ]
 }
-let someOtherSite = {url: "http://someothersite.com", title: "Not_A_Suggested_Site"};
+var someOtherSite = {url: "http://someothersite.com", title: "Not_A_Suggested_Site"};
 
 function getHttpHandler(path) {
   let code = 200;
@@ -296,9 +300,6 @@ add_task(function test_updateSuggestedTile() {
   let testObserver = new TestFirstRun();
   DirectoryLinksProvider.addObserver(testObserver);
 
-  let origGetFrecentSitesName = DirectoryLinksProvider.getFrecentSitesName;
-  DirectoryLinksProvider.getFrecentSitesName = () => "";
-
   yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
   let links = yield fetchData();
 
@@ -413,16 +414,12 @@ add_task(function test_updateSuggestedTile() {
 
   // Cleanup
   yield promiseCleanDirectoryLinksProvider();
-  DirectoryLinksProvider.getFrecentSitesName = origGetFrecentSitesName;
   NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
   NewTabUtils.getProviderLinks = origGetProviderLinks;
   DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
 });
 
 add_task(function test_suggestedLinksMap() {
-  let origGetFrecentSitesName = DirectoryLinksProvider.getFrecentSitesName;
-  DirectoryLinksProvider.getFrecentSitesName = () => "testing map";
-
   let data = {"suggested": [suggestedTile1, suggestedTile2, suggestedTile3, suggestedTile4], "directory": [someOtherSite]};
   let dataURI = 'data:application/json,' + JSON.stringify(data);
 
@@ -452,20 +449,16 @@ add_task(function test_suggestedLinksMap() {
     let suggestedLinksItr = suggestedLinks.values();
     for (let link of expected_data[site]) {
       let linkCopy = JSON.parse(JSON.stringify(link));
-      linkCopy.targetedName = "testing map";
+      linkCopy.targetedName = link.adgroup_name;
       linkCopy.explanation = "";
       isIdentical(suggestedLinksItr.next().value, linkCopy);
     }
   })
 
   yield promiseCleanDirectoryLinksProvider();
-  DirectoryLinksProvider.getFrecentSitesName = origGetFrecentSitesName;
 });
 
 add_task(function test_topSitesWithSuggestedLinks() {
-  let origGetFrecentSitesName = DirectoryLinksProvider.getFrecentSitesName;
-  DirectoryLinksProvider.getFrecentSitesName = () => "";
-
   let topSites = ["site0.com", "1040.com", "site2.com", "hrblock.com", "site4.com", "freetaxusa.com", "site6.com"];
   let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
   NewTabUtils.isTopPlacesSite = function(site) {
@@ -513,7 +506,6 @@ add_task(function test_topSitesWithSuggestedLinks() {
   isIdentical([...DirectoryLinksProvider._topSitesWithSuggestedLinks], expectedTopSitesWithSuggestedLinks);
 
   // Cleanup.
-  DirectoryLinksProvider.getFrecentSitesName = origGetFrecentSitesName;
   NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
   NewTabUtils.getProviderLinks = origGetProviderLinks;
 });
@@ -530,13 +522,15 @@ add_task(function test_suggestedAttributes() {
   let title = "the title";
   let type = "affiliate";
   let url = "http://test.url/";
+  let adgroup_name = "Mozilla";
   let data = {
     suggested: [{
       frecent_sites,
       imageURI,
       title,
       type,
-      url
+      url,
+      adgroup_name
     }]
   };
   let dataURI = "data:application/json," + escape(JSON.stringify(data));
@@ -575,8 +569,6 @@ add_task(function test_suggestedAttributes() {
 
 add_task(function test_frequencyCappedSites_views() {
   Services.prefs.setCharPref(kPingUrlPref, "");
-  let origGetFrecentSitesName = DirectoryLinksProvider.getFrecentSitesName;
-  DirectoryLinksProvider.getFrecentSitesName = () => "";
   let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
   NewTabUtils.isTopPlacesSite = () => true;
 
@@ -590,7 +582,8 @@ add_task(function test_frequencyCappedSites_views() {
       type: "affiliate",
       frecent_sites: targets,
       url: testUrl,
-      frequency_caps: {daily: 5}
+      frequency_caps: {daily: 5},
+      adgroup_name: "Test"
     }],
     directory: [{
       type: "organic",
@@ -644,7 +637,6 @@ add_task(function test_frequencyCappedSites_views() {
   checkFirstTypeAndLength("organic", 1);
 
   // Cleanup.
-  DirectoryLinksProvider.getFrecentSitesName = origGetFrecentSitesName;
   NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
   DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
   gLinks.removeProvider(DirectoryLinksProvider);
@@ -654,8 +646,6 @@ add_task(function test_frequencyCappedSites_views() {
 
 add_task(function test_frequencyCappedSites_click() {
   Services.prefs.setCharPref(kPingUrlPref, "");
-  let origGetFrecentSitesName = DirectoryLinksProvider.getFrecentSitesName;
-  DirectoryLinksProvider.getFrecentSitesName = () => "";
   let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
   NewTabUtils.isTopPlacesSite = () => true;
 
@@ -668,7 +658,8 @@ add_task(function test_frequencyCappedSites_click() {
     suggested: [{
       type: "affiliate",
       frecent_sites: targets,
-      url: testUrl
+      url: testUrl,
+      adgroup_name: "Test"
     }],
     directory: [{
       type: "organic",
@@ -716,7 +707,6 @@ add_task(function test_frequencyCappedSites_click() {
   checkFirstTypeAndLength("organic", 1);
 
   // Cleanup.
-  DirectoryLinksProvider.getFrecentSitesName = origGetFrecentSitesName;
   NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
   DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
   gLinks.removeProvider(DirectoryLinksProvider);
@@ -1119,6 +1109,30 @@ add_task(function test_DirectoryLinksProvider_getAllowedImages() {
   do_check_eq(links[1].imageURI, data["directory"][5].imageURI);
 });
 
+add_task(function test_DirectoryLinksProvider_getAllowedImages_base() {
+  let data = {"directory": [
+    {url: "http://example1.com", imageURI: "https://example.com"},
+    {url: "http://example2.com", imageURI: "https://tiles.cdn.mozilla.net"},
+    {url: "http://example3.com", imageURI: "https://tiles2.cdn.mozilla.net"},
+    {url: "http://example4.com", enhancedImageURI: "https://mozilla.net"},
+    {url: "http://example5.com", imageURI: "data:text/plain,hi"},
+  ]};
+  let dataURI = 'data:application/json,' + JSON.stringify(data);
+  yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
+
+  // Pretend we're using the default pref to trigger base matching
+  DirectoryLinksProvider.__linksURLModified = false;
+
+  let links = yield fetchData();
+  do_check_eq(links.length, 4);
+
+  // The only remaining images should be https with mozilla.net or data URI
+  do_check_eq(links[0].url, data["directory"][1].url);
+  do_check_eq(links[1].url, data["directory"][2].url);
+  do_check_eq(links[2].url, data["directory"][3].url);
+  do_check_eq(links[3].url, data["directory"][4].url);
+});
+
 add_task(function test_DirectoryLinksProvider_getAllowedEnhancedImages() {
   let data = {"directory": [
     {url: "http://example.com", enhancedImageURI: "ftp://example.com"},
@@ -1193,8 +1207,6 @@ add_task(function test_DirectoryLinksProvider_getEnhancedLink() {
 });
 
 add_task(function test_DirectoryLinksProvider_enhancedURIs() {
-  let origGetFrecentSitesName = DirectoryLinksProvider.getFrecentSitesName;
-  DirectoryLinksProvider.getFrecentSitesName = () => "";
   let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
   NewTabUtils.isTopPlacesSite = () => true;
   let origCurrentTopSiteCount = DirectoryLinksProvider._getCurrentTopSiteCount;
@@ -1202,7 +1214,7 @@ add_task(function test_DirectoryLinksProvider_enhancedURIs() {
 
   let data = {
     "suggested": [
-      {url: "http://example.net", enhancedImageURI: "data:,net1", title:"SuggestedTitle", frecent_sites: ["test.com"]}
+      {url: "http://example.net", enhancedImageURI: "data:,net1", title:"SuggestedTitle", adgroup_name: "Test", frecent_sites: ["test.com"]}
     ],
     "directory": [
       {url: "http://example.net", enhancedImageURI: "data:,net2", title:"DirectoryTitle"}
@@ -1238,7 +1250,6 @@ add_task(function test_DirectoryLinksProvider_enhancedURIs() {
   do_check_eq(links[0].enhancedImageURI, "data:,net1");
 
   // Cleanup.
-  DirectoryLinksProvider.getFrecentSitesName = origGetFrecentSitesName;
   NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
   DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
   gLinks.removeProvider(DirectoryLinksProvider);
@@ -1287,9 +1298,6 @@ add_task(function test_timeSensetiveSuggestedTiles() {
 
   let testObserver = new TestTimingRun();
   DirectoryLinksProvider.addObserver(testObserver);
-
-  let origGetFrecentSitesName = DirectoryLinksProvider.getFrecentSitesName;
-  DirectoryLinksProvider.getFrecentSitesName = () => "";
 
   yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
   let links = yield fetchData();
@@ -1400,7 +1408,6 @@ add_task(function test_timeSensetiveSuggestedTiles() {
 
   // Cleanup
   yield promiseCleanDirectoryLinksProvider();
-  DirectoryLinksProvider.getFrecentSitesName = origGetFrecentSitesName;
   NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
   NewTabUtils.getProviderLinks = origGetProviderLinks;
   DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
@@ -1697,13 +1704,13 @@ add_task(function test_DirectoryLinksProvider_ClickRemoval() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
+add_task(function test_DirectoryLinksProvider_anonymous() {
+  do_check_true(DirectoryLinksProvider._newXHR().mozAnon);
+});
+
 add_task(function test_sanitizeExplanation() {
   // Note: this is a basic test to ensure we applied sanitization to the link explanation.
   // Full testing for appropriate sanitization is done in parser/xml/test/unit/test_sanitizer.js.
-
-  let origGetFrecentSitesName = DirectoryLinksProvider.getFrecentSitesName;
-  DirectoryLinksProvider.getFrecentSitesName = () => "testing map";
-
   let data = {"suggested": [suggestedTile5]};
   let dataURI = 'data:application/json,' + encodeURIComponent(JSON.stringify(data));
 
@@ -1731,9 +1738,6 @@ add_task(function test_inadjecentSites() {
 
   let testObserver = new TestFirstRun();
   DirectoryLinksProvider.addObserver(testObserver);
-
-  let origGetFrecentSitesName = DirectoryLinksProvider.getFrecentSitesName;
-  DirectoryLinksProvider.getFrecentSitesName = () => "";
 
   yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
   let links = yield fetchData();
@@ -1890,9 +1894,172 @@ add_task(function test_inadjecentSites() {
   // Cleanup
   gLinks.removeProvider(DirectoryLinksProvider);
   DirectoryLinksProvider._inadjacentSitesUrl = origInadjacentSitesUrl;
-  DirectoryLinksProvider.getFrecentSitesName = origGetFrecentSitesName;
   NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
   NewTabUtils.getProviderLinks = origGetProviderLinks;
   DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
   yield promiseCleanDirectoryLinksProvider();
+});
+
+add_task(function test_reportPastImpressions() {
+  let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
+  NewTabUtils.isTopPlacesSite = () => true;
+  let origCurrentTopSiteCount = DirectoryLinksProvider._getCurrentTopSiteCount;
+  DirectoryLinksProvider._getCurrentTopSiteCount = () => 8;
+
+  let testUrl = "http://frequency.capped/link";
+  let targets = ["top.site.com"];
+  let data = {
+    suggested: [{
+      type: "affiliate",
+      frecent_sites: targets,
+      url: testUrl,
+      adgroup_name: "Test"
+    }]
+  };
+  let dataURI = "data:application/json," + JSON.stringify(data);
+  yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
+
+  // make DirectoryLinksProvider load json
+  let loadPromise = Promise.defer();
+  DirectoryLinksProvider.getLinks(_ => {loadPromise.resolve();});
+  yield loadPromise.promise;
+
+  // setup ping handler
+  let deferred, expectedPath, expectedAction, expectedImpressions;
+  let done = false;
+  server.registerPrefixHandler(kPingPath, (aRequest, aResponse) => {
+    if (done) {
+      return;
+    }
+
+    do_check_eq(aRequest.path, expectedPath);
+
+    let bodyStream = new BinaryInputStream(aRequest.bodyInputStream);
+    let bodyObject = JSON.parse(NetUtil.readInputStreamToString(bodyStream, bodyStream.available()));
+    let expectedActionIndex = bodyObject[expectedAction];
+    if (bodyObject.unpin) {
+      // unpin should not report past_impressions
+      do_check_false(bodyObject.tiles[expectedActionIndex].hasOwnProperty("past_impressions"));
+    }
+    else if (expectedImpressions) {
+      do_check_eq(bodyObject.tiles[expectedActionIndex].past_impressions.total, expectedImpressions);
+      do_check_eq(bodyObject.tiles[expectedActionIndex].past_impressions.daily, expectedImpressions);
+    }
+    else {
+      do_check_eq(expectedPath, "/ping/view");
+      do_check_false(bodyObject.tiles[expectedActionIndex].hasOwnProperty("past_impressions"));
+    }
+
+    deferred.resolve();
+  });
+
+  // setup ping sender
+  function sendPingAndTest(path, action, index) {
+    deferred = Promise.defer();
+    expectedPath = kPingPath + path;
+    expectedAction = action;
+    DirectoryLinksProvider.reportSitesAction(sites, action, index);
+    return deferred.promise;
+  }
+
+  // Start with a view ping first
+  let site = {
+    isPinned: _ => false,
+    link: {
+      directoryId: 1,
+      frecency: 30000,
+      frecent_sites: targets,
+      targetedSite: targets[0],
+      url: testUrl
+    }
+  };
+  let sites = [,
+    {
+      isPinned: _ => false,
+      link: {type: "history", url: "https://foo.com"}
+    },
+    site
+  ];
+
+  yield sendPingAndTest("view", "view", 2);
+  yield sendPingAndTest("view", "view", 2);
+  yield sendPingAndTest("view", "view", 2);
+
+  expectedImpressions = DirectoryLinksProvider._frequencyCaps[testUrl].totalViews;
+  do_check_eq(expectedImpressions, 3);
+
+  // now report pin, unpin, block and click
+  sites.isPinned = _ => true;
+  yield sendPingAndTest("click", "pin", 2);
+  sites.isPinned = _ => false;
+  yield sendPingAndTest("click", "unpin", 2);
+  sites.isPinned = _ => false;
+  yield sendPingAndTest("click", "click", 2);
+  sites.isPinned = _ => false;
+  yield sendPingAndTest("click", "block", 2);
+
+  // Cleanup.
+  done = true;
+  NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
+  DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
+});
+
+add_task(function test_blockSuggestedTiles() {
+  // Initial setup
+  let suggestedTile = suggestedTile1;
+  let topSites = ["site0.com", "1040.com", "site2.com", "hrblock.com", "site4.com", "freetaxusa.com", "site6.com"];
+  let data = {"suggested": [suggestedTile1, suggestedTile2, suggestedTile3], "directory": [someOtherSite]};
+  let dataURI = 'data:application/json,' + JSON.stringify(data);
+
+  yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
+  let links = yield fetchData();
+
+  let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
+  NewTabUtils.isTopPlacesSite = function(site) {
+    return topSites.indexOf(site) >= 0;
+  }
+
+  let origGetProviderLinks = NewTabUtils.getProviderLinks;
+  NewTabUtils.getProviderLinks = function(provider) {
+    return links;
+  }
+
+  let origCurrentTopSiteCount = DirectoryLinksProvider._getCurrentTopSiteCount;
+  DirectoryLinksProvider._getCurrentTopSiteCount = () => 8;
+
+  // load the links
+  yield new Promise(resolve => {
+    DirectoryLinksProvider.getLinks(resolve);
+  });
+
+  // ensure that tile is suggested
+  let suggestedLink = DirectoryLinksProvider._updateSuggestedTile();
+  do_check_true(suggestedLink.frecent_sites);
+
+  // block suggested tile in a regular way
+  DirectoryLinksProvider.reportSitesAction([{
+      isPinned: function() {return false;},
+      link: Object.assign({frecency: 1000},suggestedLink)
+  }], "block", 0);
+
+  // suggested tile still must be recommended
+  suggestedLink = DirectoryLinksProvider._updateSuggestedTile();
+  do_check_true(suggestedLink.frecent_sites);
+
+  // timestamp suggested_block in the frequency cap object
+  DirectoryLinksProvider.handleSuggestedTileBlock();
+  // no more recommendations should be seen
+  do_check_eq(DirectoryLinksProvider._updateSuggestedTile(), undefined);
+
+  // move lastUpdated for suggested tile into the past
+  DirectoryLinksProvider._frequencyCaps["ignore://suggested_block"].lastUpdated = Date.now() - 25*60*60*1000;
+  // ensure that suggested tile updates again
+  suggestedLink = DirectoryLinksProvider._updateSuggestedTile();
+  do_check_true(suggestedLink.frecent_sites);
+
+  // Cleanup
+  yield promiseCleanDirectoryLinksProvider();
+  NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
+  NewTabUtils.getProviderLinks = origGetProviderLinks;
+  DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
 });

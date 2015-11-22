@@ -38,7 +38,7 @@ bool sCubebLatencyPrefSet;
 // visible on the querying thread/CPU.
 uint32_t sPreferredSampleRate;
 
-} // anonymous namespace
+} // namespace
 
 extern PRLogModuleInfo* gAudioStreamLog;
 
@@ -126,9 +126,7 @@ bool CubebLatencyPrefSet()
 
 void InitLibrary()
 {
-#ifdef PR_LOGGING
   gAudioStreamLog = PR_NewLogModule("AudioStream");
-#endif
   PrefChanged(PREF_VOLUME_SCALE, nullptr);
   Preferences::RegisterCallback(PrefChanged, PREF_VOLUME_SCALE);
   PrefChanged(PREF_CUBEB_LATENCY, nullptr);
@@ -183,6 +181,8 @@ cubeb_stream_type ConvertChannelToCubebType(dom::AudioChannel aChannel)
       return CUBEB_STREAM_TYPE_VOICE_CALL;
     case dom::AudioChannel::Ringer:
       return CUBEB_STREAM_TYPE_RING;
+    case dom::AudioChannel::System:
+      return CUBEB_STREAM_TYPE_SYSTEM;
     case dom::AudioChannel::Publicnotification:
       return CUBEB_STREAM_TYPE_SYSTEM_ENFORCED;
     default:

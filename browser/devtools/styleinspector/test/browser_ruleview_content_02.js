@@ -49,10 +49,10 @@ add_task(function*() {
   checkRuleViewContent(view);
 });
 
-function checkRuleViewContent({doc}) {
+function checkRuleViewContent({styleDocument}) {
   info("Making sure the rule-view contains the expected content");
 
-  let headers = [...doc.querySelectorAll(".ruleview-header")];
+  let headers = [...styleDocument.querySelectorAll(".ruleview-header")];
   is(headers.length, 3, "There are 3 headers for inherited rules");
 
   is(headers[0].textContent,
@@ -65,11 +65,11 @@ function checkRuleViewContent({doc}) {
     STRINGS.formatStringFromName("rule.inheritedFrom", ["body"], 1),
     "The third header is correct");
 
-  let rules = doc.querySelectorAll(".ruleview-rule");
+  let rules = styleDocument.querySelectorAll(".ruleview-rule");
   is(rules.length, 4, "There are 4 rules in the view");
 
   for (let rule of rules) {
-    let selector = rule.querySelector(".ruleview-selector");
+    let selector = rule.querySelector(".ruleview-selectorcontainer");
     is(selector.textContent,
       STRINGS.GetStringFromName("rule.sourceElement"),
       "The rule's selector is correct");

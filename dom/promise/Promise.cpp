@@ -6,32 +6,39 @@
 
 #include "mozilla/dom/Promise.h"
 
-#include "jsfriendapi.h"
 #include "js/Debug.h"
+
+#include "mozilla/Atomics.h"
+#include "mozilla/CycleCollectedJSRuntime.h"
+#include "mozilla/OwningNonNull.h"
+#include "mozilla/Preferences.h"
+
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/DOMException.h"
-#include "mozilla/dom/OwningNonNull.h"
+#include "mozilla/dom/MediaStreamError.h"
 #include "mozilla/dom/PromiseBinding.h"
 #include "mozilla/dom/ScriptSettings.h"
-#include "mozilla/dom/MediaStreamError.h"
-#include "mozilla/Atomics.h"
-#include "mozilla/CycleCollectedJSRuntime.h"
-#include "mozilla/Preferences.h"
+
+#include "jsfriendapi.h"
+#include "js/StructuredClone.h"
+#include "nsContentUtils.h"
+#include "nsGlobalWindow.h"
+#include "nsIScriptObjectPrincipal.h"
+#include "nsJSEnvironment.h"
+#include "nsJSPrincipals.h"
+#include "nsJSUtils.h"
+#include "nsPIDOMWindow.h"
 #include "PromiseCallback.h"
 #include "PromiseDebugging.h"
 #include "PromiseNativeHandler.h"
 #include "PromiseWorkerProxy.h"
-#include "nsContentUtils.h"
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
-#include "nsJSPrincipals.h"
-#include "nsJSUtils.h"
-#include "nsPIDOMWindow.h"
-#include "nsJSEnvironment.h"
-#include "nsIScriptObjectPrincipal.h"
 #include "xpcpublic.h"
-#include "nsGlobalWindow.h"
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+#endif
 
 namespace mozilla {
 namespace dom {
@@ -39,40 +46,38 @@ namespace dom {
 namespace {
 // Generator used by Promise::GetID.
 Atomic<uintptr_t> gIDGenerator(0);
-}
+} // namespace
 
 using namespace workers;
 
-NS_IMPL_ISUPPORTS0(PromiseNativeHandler)
-
 // This class processes the promise's callbacks with promise's result.
-class PromiseCallbackTask final : public nsRunnable
+class PromiseReactionJob final : public nsRunnable
 {
 public:
-  PromiseCallbackTask(Promise* aPromise,
-                      PromiseCallback* aCallback,
-                      const JS::Value& aValue)
+  PromiseReactionJob(Promise* aPromise,
+                     PromiseCallback* aCallback,
+                     const JS::Value& aValue)
     : mPromise(aPromise)
     , mCallback(aCallback)
     , mValue(CycleCollectedJSRuntime::Get()->Runtime(), aValue)
   {
     MOZ_ASSERT(aPromise);
     MOZ_ASSERT(aCallback);
-    MOZ_COUNT_CTOR(PromiseCallbackTask);
+    MOZ_COUNT_CTOR(PromiseReactionJob);
   }
 
   virtual
-  ~PromiseCallbackTask()
+  ~PromiseReactionJob()
   {
-    NS_ASSERT_OWNINGTHREAD(PromiseCallbackTask);
-    MOZ_COUNT_DTOR(PromiseCallbackTask);
+    NS_ASSERT_OWNINGTHREAD(PromiseReactionJob);
+    MOZ_COUNT_DTOR(PromiseReactionJob);
   }
 
 protected:
   NS_IMETHOD
   Run() override
   {
-    NS_ASSERT_OWNINGTHREAD(PromiseCallbackTask);
+    NS_ASSERT_OWNINGTHREAD(PromiseReactionJob);
     ThreadsafeAutoJSContext cx;
     JS::Rooted<JSObject*> wrapper(cx, mPromise->GetWrapper());
     MOZ_ASSERT(wrapper); // It was preserved!
@@ -169,36 +174,36 @@ GetPromise(JSContext* aCx, JS::Handle<JSObject*> aFunc)
   UNWRAP_OBJECT(Promise, &promiseVal.toObject(), promise);
   return promise;
 }
-};
+} // namespace
 
 // Runnable to resolve thenables.
 // Equivalent to the specification's ResolvePromiseViaThenableTask.
-class ThenableResolverTask final : public nsRunnable
+class PromiseResolveThenableJob final : public nsRunnable
 {
 public:
-  ThenableResolverTask(Promise* aPromise,
-                        JS::Handle<JSObject*> aThenable,
-                        PromiseInit* aThen)
+  PromiseResolveThenableJob(Promise* aPromise,
+                            JS::Handle<JSObject*> aThenable,
+                            PromiseInit* aThen)
     : mPromise(aPromise)
     , mThenable(CycleCollectedJSRuntime::Get()->Runtime(), aThenable)
     , mThen(aThen)
   {
     MOZ_ASSERT(aPromise);
-    MOZ_COUNT_CTOR(ThenableResolverTask);
+    MOZ_COUNT_CTOR(PromiseResolveThenableJob);
   }
 
   virtual
-  ~ThenableResolverTask()
+  ~PromiseResolveThenableJob()
   {
-    NS_ASSERT_OWNINGTHREAD(ThenableResolverTask);
-    MOZ_COUNT_DTOR(ThenableResolverTask);
+    NS_ASSERT_OWNINGTHREAD(PromiseResolveThenableJob);
+    MOZ_COUNT_DTOR(PromiseResolveThenableJob);
   }
 
 protected:
   NS_IMETHOD
   Run() override
   {
-    NS_ASSERT_OWNINGTHREAD(ThenableResolverTask);
+    NS_ASSERT_OWNINGTHREAD(PromiseResolveThenableJob);
     ThreadsafeAutoJSContext cx;
     JS::Rooted<JSObject*> wrapper(cx, mPromise->GetWrapper());
     MOZ_ASSERT(wrapper); // It was preserved!
@@ -274,16 +279,16 @@ private:
   NS_DECL_OWNINGTHREAD;
 };
 
-// Fast version of ThenableResolverTask for use in the cases when we know we're
+// Fast version of PromiseResolveThenableJob for use in the cases when we know we're
 // calling the canonical Promise.prototype.then on an actual DOM Promise.  In
 // that case we can just bypass the jumping into and out of JS and call
 // AppendCallbacks on that promise directly.
-class FastThenableResolverTask final : public nsRunnable
+class FastPromiseResolveThenableJob final : public nsRunnable
 {
 public:
-  FastThenableResolverTask(PromiseCallback* aResolveCallback,
-                           PromiseCallback* aRejectCallback,
-                           Promise* aNextPromise)
+  FastPromiseResolveThenableJob(PromiseCallback* aResolveCallback,
+                                PromiseCallback* aRejectCallback,
+                                Promise* aNextPromise)
     : mResolveCallback(aResolveCallback)
     , mRejectCallback(aRejectCallback)
     , mNextPromise(aNextPromise)
@@ -291,21 +296,21 @@ public:
     MOZ_ASSERT(aResolveCallback);
     MOZ_ASSERT(aRejectCallback);
     MOZ_ASSERT(aNextPromise);
-    MOZ_COUNT_CTOR(FastThenableResolverTask);
+    MOZ_COUNT_CTOR(FastPromiseResolveThenableJob);
   }
 
   virtual
-  ~FastThenableResolverTask()
+  ~FastPromiseResolveThenableJob()
   {
-    NS_ASSERT_OWNINGTHREAD(FastThenableResolverTask);
-    MOZ_COUNT_DTOR(FastThenableResolverTask);
+    NS_ASSERT_OWNINGTHREAD(FastPromiseResolveThenableJob);
+    MOZ_COUNT_DTOR(FastPromiseResolveThenableJob);
   }
 
 protected:
   NS_IMETHOD
   Run() override
   {
-    NS_ASSERT_OWNINGTHREAD(FastThenableResolverTask);
+    NS_ASSERT_OWNINGTHREAD(FastPromiseResolveThenableJob);
     mNextPromise->AppendCallbacks(mResolveCallback, mRejectCallback);
     return NS_OK;
   }
@@ -349,9 +354,7 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(Promise)
   if (tmp->IsBlack()) {
-    if (tmp->mResult.isObject()) {
-      JS::ExposeObjectToActiveJS(&(tmp->mResult.toObject()));
-    }
+    JS::ExposeValueToActiveJS(tmp->mResult);
     if (tmp->mAllocationStack) {
       JS::ExposeObjectToActiveJS(tmp->mAllocationStack);
     }
@@ -420,10 +423,11 @@ Promise::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 }
 
 already_AddRefed<Promise>
-Promise::Create(nsIGlobalObject* aGlobal, ErrorResult& aRv)
+Promise::Create(nsIGlobalObject* aGlobal, ErrorResult& aRv,
+                JS::Handle<JSObject*> aDesiredProto)
 {
   nsRefPtr<Promise> p = new Promise(aGlobal);
-  p->CreateWrapper(aRv);
+  p->CreateWrapper(aDesiredProto, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -431,7 +435,7 @@ Promise::Create(nsIGlobalObject* aGlobal, ErrorResult& aRv)
 }
 
 void
-Promise::CreateWrapper(ErrorResult& aRv)
+Promise::CreateWrapper(JS::Handle<JSObject*> aDesiredProto, ErrorResult& aRv)
 {
   AutoJSAPI jsapi;
   if (!jsapi.Init(mGlobal)) {
@@ -441,7 +445,7 @@ Promise::CreateWrapper(ErrorResult& aRv)
   JSContext* cx = jsapi.cx();
 
   JS::Rooted<JS::Value> wrapper(cx);
-  if (!GetOrCreateDOMReflector(cx, this, &wrapper)) {
+  if (!GetOrCreateDOMReflector(cx, this, &wrapper, aDesiredProto)) {
     JS_ClearPendingException(cx);
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return;
@@ -508,6 +512,7 @@ Promise::PerformMicroTaskCheckpoint()
     if (cx.isSome()) {
       JS_CheckForInterrupt(cx.ref());
     }
+    runtime->AfterProcessMicrotask();
   } while (!microtaskQueue.empty());
 
   return true;
@@ -532,10 +537,10 @@ Promise::JSCallback(JSContext* aCx, unsigned aArgc, JS::Value* aVp)
   PromiseCallback::Task task = static_cast<PromiseCallback::Task>(v.toInt32());
 
   if (task == PromiseCallback::Resolve) {
-    promise->MaybeResolveInternal(aCx, args.get(0));
     if (!promise->CaptureStack(aCx, promise->mFullfillmentStack)) {
       return false;
     }
+    promise->MaybeResolveInternal(aCx, args.get(0));
   } else {
     promise->MaybeRejectInternal(aCx, args.get(0));
     if (!promise->CaptureStack(aCx, promise->mRejectionStack)) {
@@ -608,6 +613,7 @@ Promise::CreateFunction(JSContext* aCx, Promise* aPromise, int32_t aTask)
     return nullptr;
   }
 
+  JS::ExposeValueToActiveJS(promiseObj);
   js::SetFunctionNativeReserved(obj, SLOT_PROMISE, promiseObj);
   js::SetFunctionNativeReserved(obj, SLOT_DATA, JS::Int32Value(aTask));
 
@@ -635,14 +641,15 @@ Promise::CreateThenableFunction(JSContext* aCx, Promise* aPromise, uint32_t aTas
     return nullptr;
   }
 
+  JS::ExposeValueToActiveJS(promiseObj);
   js::SetFunctionNativeReserved(obj, SLOT_PROMISE, promiseObj);
 
   return obj;
 }
 
 /* static */ already_AddRefed<Promise>
-Promise::Constructor(const GlobalObject& aGlobal,
-                     PromiseInit& aInit, ErrorResult& aRv)
+Promise::Constructor(const GlobalObject& aGlobal, PromiseInit& aInit,
+                     ErrorResult& aRv, JS::Handle<JSObject*> aDesiredProto)
 {
   nsCOMPtr<nsIGlobalObject> global;
   global = do_QueryInterface(aGlobal.GetAsSupports());
@@ -651,7 +658,7 @@ Promise::Constructor(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  nsRefPtr<Promise> promise = Create(global, aRv);
+  nsRefPtr<Promise> promise = Create(global, aRv, aDesiredProto);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -819,7 +826,7 @@ Promise::Catch(JSContext* aCx, AnyCallback* aRejectCallback, ErrorResult& aRv)
 /**
  * The CountdownHolder class encapsulates Promise.all countdown functions and
  * the countdown holder parts of the Promises spec. It maintains the result
- * array and AllResolveHandlers use SetValue() to set the array indices.
+ * array and AllResolveElementFunctions use SetValue() to set the array indices.
  */
 class CountdownHolder final : public nsISupports
 {
@@ -907,17 +914,18 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(CountdownHolder)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 /**
- * An AllResolveHandler is the per-promise part of the Promise.all() algorithm.
+ * An AllResolveElementFunction is the per-promise
+ * part of the Promise.all() algorithm.
  * Every Promise in the handler is handed an instance of this as a resolution
  * handler and it sets the relevant index in the CountdownHolder.
  */
-class AllResolveHandler final : public PromiseNativeHandler
+class AllResolveElementFunction final : public PromiseNativeHandler
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_CLASS(AllResolveHandler)
+  NS_DECL_CYCLE_COLLECTION_CLASS(AllResolveElementFunction)
 
-  AllResolveHandler(CountdownHolder* aHolder, uint32_t aIndex)
+  AllResolveElementFunction(CountdownHolder* aHolder, uint32_t aIndex)
     : mCountdownHolder(aHolder), mIndex(aIndex)
   {
     MOZ_ASSERT(aHolder);
@@ -933,11 +941,11 @@ public:
   RejectedCallback(JSContext* aCx, JS::Handle<JS::Value> aValue) override
   {
     // Should never be attached to Promise as a reject handler.
-    MOZ_ASSERT(false, "AllResolveHandler should never be attached to a Promise's reject handler!");
+    MOZ_CRASH("AllResolveElementFunction should never be attached to a Promise's reject handler!");
   }
 
 private:
-  ~AllResolveHandler()
+  ~AllResolveElementFunction()
   {
   }
 
@@ -945,13 +953,14 @@ private:
   uint32_t mIndex;
 };
 
-NS_IMPL_CYCLE_COLLECTING_ADDREF(AllResolveHandler)
-NS_IMPL_CYCLE_COLLECTING_RELEASE(AllResolveHandler)
+NS_IMPL_CYCLE_COLLECTING_ADDREF(AllResolveElementFunction)
+NS_IMPL_CYCLE_COLLECTING_RELEASE(AllResolveElementFunction)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(AllResolveHandler)
-NS_INTERFACE_MAP_END_INHERITING(PromiseNativeHandler)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(AllResolveElementFunction)
+  NS_INTERFACE_MAP_ENTRY(nsISupports)
+NS_INTERFACE_MAP_END
 
-NS_IMPL_CYCLE_COLLECTION(AllResolveHandler, mCountdownHolder)
+NS_IMPL_CYCLE_COLLECTION(AllResolveElementFunction, mCountdownHolder)
 
 /* static */ already_AddRefed<Promise>
 Promise::All(const GlobalObject& aGlobal,
@@ -1015,7 +1024,7 @@ Promise::All(const GlobalObject& aGlobal,
 
   for (uint32_t i = 0; i < aPromiseList.Length(); ++i) {
     nsRefPtr<PromiseNativeHandler> resolveHandler =
-      new AllResolveHandler(holder, i);
+      new AllResolveElementFunction(holder, i);
 
     nsRefPtr<PromiseCallback> resolveCb =
       new NativePromiseCallback(resolveHandler, Resolved);
@@ -1128,7 +1137,7 @@ Promise::AppendCallbacks(PromiseCallback* aResolveCallback,
   // callbacks with promise's result. If promise's state is rejected, queue a
   // task to process our reject callbacks with promise's result.
   if (mState != Pending) {
-    EnqueueCallbackTasks();
+    TriggerPromiseReactions();
   }
 }
 
@@ -1215,10 +1224,17 @@ Promise::MaybeReportRejected()
   // Now post an event to do the real reporting async
   // Since Promises preserve their wrapper, it is essential to nsRefPtr<> the
   // AsyncErrorReporter, otherwise if the call to DispatchToMainThread fails, it
-  // will leak. See Bug 958684.
-  nsRefPtr<AsyncErrorReporter> r =
-    new AsyncErrorReporter(CycleCollectedJSRuntime::Get()->Runtime(), xpcReport);
-  NS_DispatchToMainThread(r);
+  // will leak. See Bug 958684.  So... don't use DispatchToMainThread()
+  nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+  if (NS_WARN_IF(!mainThread)) {
+    // Would prefer NS_ASSERTION, but that causes failure in xpcshell tests
+    NS_WARNING("!!! Trying to report rejected Promise after MainThread shutdown");
+  }
+  if (mainThread) {
+    nsRefPtr<AsyncErrorReporter> r =
+      new AsyncErrorReporter(CycleCollectedJSRuntime::Get()->Runtime(), xpcReport);
+    mainThread->Dispatch(r.forget(), NS_DISPATCH_NORMAL);
+  }
 }
 #endif // defined(DOM_PROMISE_DEPRECATED_REPORTING)
 
@@ -1288,8 +1304,8 @@ Promise::ResolveInternal(JSContext* aCx,
       Promise* nextPromise;
       if (PromiseBinding::IsThenMethod(thenObj) &&
           NS_SUCCEEDED(UNWRAP_OBJECT(Promise, valueObj, nextPromise))) {
-        // If we were taking the codepath that involves ThenableResolverTask and
-        // PromiseInit below, then eventually, in ThenableResolverTask::Run, we
+        // If we were taking the codepath that involves PromiseResolveThenableJob and
+        // PromiseInit below, then eventually, in PromiseResolveThenableJob::Run, we
         // would create some JSFunctions in the compartment of
         // this->GetWrapper() and pass them to the PromiseInit. So by the time
         // we'd see the resolution value it would be wrapped into the
@@ -1299,16 +1315,16 @@ Promise::ResolveInternal(JSContext* aCx,
         JS::Rooted<JSObject*> glob(aCx, GlobalJSObject());
         nsRefPtr<PromiseCallback> resolveCb = new ResolvePromiseCallback(this, glob);
         nsRefPtr<PromiseCallback> rejectCb = new RejectPromiseCallback(this, glob);
-        nsRefPtr<FastThenableResolverTask> task =
-          new FastThenableResolverTask(resolveCb, rejectCb, nextPromise);
+        nsRefPtr<FastPromiseResolveThenableJob> task =
+          new FastPromiseResolveThenableJob(resolveCb, rejectCb, nextPromise);
         DispatchToMicroTask(task);
         return;
       }
 
       nsRefPtr<PromiseInit> thenCallback =
-        new PromiseInit(thenObj, mozilla::dom::GetIncumbentGlobal());
-      nsRefPtr<ThenableResolverTask> task =
-        new ThenableResolverTask(this, valueObj, thenCallback);
+        new PromiseInit(nullptr, thenObj, mozilla::dom::GetIncumbentGlobal());
+      nsRefPtr<PromiseResolveThenableJob> task =
+        new PromiseResolveThenableJob(this, valueObj, thenCallback);
       DispatchToMicroTask(task);
       return;
     }
@@ -1329,7 +1345,10 @@ Promise::RejectInternal(JSContext* aCx,
 void
 Promise::Settle(JS::Handle<JS::Value> aValue, PromiseState aState)
 {
-  if (mGlobal->IsDying()) {
+  MOZ_ASSERT(mGlobal,
+             "We really should have a global here.  Except we sometimes don't "
+             "in the wild for some odd reason");
+  if (!mGlobal || mGlobal->IsDying()) {
     return;
   }
 
@@ -1376,7 +1395,7 @@ Promise::Settle(JS::Handle<JS::Value> aValue, PromiseState aState)
   }
 #endif // defined(DOM_PROMISE_DEPRECATED_REPORTING)
 
-  EnqueueCallbackTasks();
+  TriggerPromiseReactions();
 }
 
 void
@@ -1394,7 +1413,7 @@ Promise::MaybeSettle(JS::Handle<JS::Value> aValue,
 }
 
 void
-Promise::EnqueueCallbackTasks()
+Promise::TriggerPromiseReactions()
 {
   nsTArray<nsRefPtr<PromiseCallback>> callbacks;
   callbacks.SwapElements(mState == Resolved ? mResolveCallbacks
@@ -1403,8 +1422,8 @@ Promise::EnqueueCallbackTasks()
   mRejectCallbacks.Clear();
 
   for (uint32_t i = 0; i < callbacks.Length(); ++i) {
-    nsRefPtr<PromiseCallbackTask> task =
-      new PromiseCallbackTask(this, callbacks[i], mResult);
+    nsRefPtr<PromiseReactionJob> task =
+      new PromiseReactionJob(this, callbacks[i], mResult);
     DispatchToMicroTask(task);
   }
 }
@@ -1469,19 +1488,15 @@ Promise::GetDependentPromises(nsTArray<nsRefPtr<Promise>>& aPromises)
 }
 
 // A WorkerRunnable to resolve/reject the Promise on the worker thread.
-
+// Calling thread MUST hold PromiseWorkerProxy's mutex before creating this.
 class PromiseWorkerProxyRunnable : public workers::WorkerRunnable
 {
 public:
   PromiseWorkerProxyRunnable(PromiseWorkerProxy* aPromiseWorkerProxy,
-                             const JSStructuredCloneCallbacks* aCallbacks,
-                             JSAutoStructuredCloneBuffer&& aBuffer,
                              PromiseWorkerProxy::RunCallbackFunc aFunc)
     : WorkerRunnable(aPromiseWorkerProxy->GetWorkerPrivate(),
                      WorkerThreadUnchangedBusyCount)
     , mPromiseWorkerProxy(aPromiseWorkerProxy)
-    , mCallbacks(aCallbacks)
-    , mBuffer(Move(aBuffer))
     , mFunc(aFunc)
   {
     MOZ_ASSERT(NS_IsMainThread());
@@ -1496,19 +1511,16 @@ public:
     MOZ_ASSERT(aWorkerPrivate == mWorkerPrivate);
 
     MOZ_ASSERT(mPromiseWorkerProxy);
-    nsRefPtr<Promise> workerPromise = mPromiseWorkerProxy->GetWorkerPromise();
-    MOZ_ASSERT(workerPromise);
+    nsRefPtr<Promise> workerPromise = mPromiseWorkerProxy->WorkerPromise();
 
     // Here we convert the buffer to a JS::Value.
     JS::Rooted<JS::Value> value(aCx);
-    if (!mBuffer.read(aCx, &value, mCallbacks, mPromiseWorkerProxy)) {
+    if (!mPromiseWorkerProxy->Read(aCx, &value)) {
       JS_ClearPendingException(aCx);
       return false;
     }
 
-    // TODO Bug 975246 - nsRefPtr should support operator |nsRefPtr->*funcType|.
-    (workerPromise.get()->*mFunc)(aCx,
-                                  value);
+    (workerPromise->*mFunc)(aCx, value);
 
     // Release the Promise because it has been resolved/rejected for sure.
     mPromiseWorkerProxy->CleanUp(aCx);
@@ -1520,8 +1532,6 @@ protected:
 
 private:
   nsRefPtr<PromiseWorkerProxy> mPromiseWorkerProxy;
-  const JSStructuredCloneCallbacks* mCallbacks;
-  JSAutoStructuredCloneBuffer mBuffer;
 
   // Function pointer for calling Promise::{ResolveInternal,RejectInternal}.
   PromiseWorkerProxy::RunCallbackFunc mFunc;
@@ -1531,58 +1541,111 @@ private:
 already_AddRefed<PromiseWorkerProxy>
 PromiseWorkerProxy::Create(workers::WorkerPrivate* aWorkerPrivate,
                            Promise* aWorkerPromise,
-                           const JSStructuredCloneCallbacks* aCb)
+                           const PromiseWorkerProxyStructuredCloneCallbacks* aCb)
 {
   MOZ_ASSERT(aWorkerPrivate);
   aWorkerPrivate->AssertIsOnWorkerThread();
   MOZ_ASSERT(aWorkerPromise);
+  MOZ_ASSERT_IF(aCb, !!aCb->Write && !!aCb->Read);
 
   nsRefPtr<PromiseWorkerProxy> proxy =
     new PromiseWorkerProxy(aWorkerPrivate, aWorkerPromise, aCb);
 
   // We do this to make sure the worker thread won't shut down before the
   // promise is resolved/rejected on the worker thread.
-  if (!aWorkerPrivate->AddFeature(aWorkerPrivate->GetJSContext(), proxy)) {
+  if (!proxy->AddRefObject()) {
     // Probably the worker is terminating. We cannot complete the operation
     // and we have to release all the resources.
-    proxy->mCleanedUp = true;
-    proxy->mWorkerPromise = nullptr;
+    proxy->CleanProperties();
     return nullptr;
   }
 
   return proxy.forget();
 }
 
+NS_IMPL_ISUPPORTS0(PromiseWorkerProxy)
+
 PromiseWorkerProxy::PromiseWorkerProxy(workers::WorkerPrivate* aWorkerPrivate,
                                        Promise* aWorkerPromise,
-                                       const JSStructuredCloneCallbacks* aCallbacks)
+                                       const PromiseWorkerProxyStructuredCloneCallbacks* aCallbacks)
   : mWorkerPrivate(aWorkerPrivate)
   , mWorkerPromise(aWorkerPromise)
   , mCleanedUp(false)
   , mCallbacks(aCallbacks)
   , mCleanUpLock("cleanUpLock")
+  , mFeatureAdded(false)
 {
 }
 
 PromiseWorkerProxy::~PromiseWorkerProxy()
 {
   MOZ_ASSERT(mCleanedUp);
+  MOZ_ASSERT(!mFeatureAdded);
   MOZ_ASSERT(!mWorkerPromise);
+  MOZ_ASSERT(!mWorkerPrivate);
+}
+
+void
+PromiseWorkerProxy::CleanProperties()
+{
+#ifdef DEBUG
+  workers::WorkerPrivate* worker = GetCurrentThreadWorkerPrivate();
+  MOZ_ASSERT(worker);
+  worker->AssertIsOnWorkerThread();
+#endif
+  // Ok to do this unprotected from Create().
+  // CleanUp() holds the lock before calling this.
+  mCleanedUp = true;
+  mWorkerPromise = nullptr;
+  mWorkerPrivate = nullptr;
+
+  // Shutdown the StructuredCloneHelperInternal class.
+  Shutdown();
+}
+
+bool
+PromiseWorkerProxy::AddRefObject()
+{
+  MOZ_ASSERT(mWorkerPrivate);
+  mWorkerPrivate->AssertIsOnWorkerThread();
+  MOZ_ASSERT(!mFeatureAdded);
+  if (!mWorkerPrivate->AddFeature(mWorkerPrivate->GetJSContext(),
+                                  this)) {
+    return false;
+  }
+
+  mFeatureAdded = true;
+  // Maintain a reference so that we have a valid object to clean up when
+  // removing the feature.
+  AddRef();
+  return true;
 }
 
 workers::WorkerPrivate*
 PromiseWorkerProxy::GetWorkerPrivate() const
 {
-  // It's ok to race on |mCleanedUp|, because it will never cause us to fire
-  // the assertion when we should not.
+#ifdef DEBUG
+  if (NS_IsMainThread()) {
+    mCleanUpLock.AssertCurrentThreadOwns();
+  }
+#endif
+  // Safe to check this without a lock since we assert lock ownership on the
+  // main thread above.
   MOZ_ASSERT(!mCleanedUp);
+  MOZ_ASSERT(mFeatureAdded);
 
   return mWorkerPrivate;
 }
 
 Promise*
-PromiseWorkerProxy::GetWorkerPromise() const
+PromiseWorkerProxy::WorkerPromise() const
 {
+#ifdef DEBUG
+  workers::WorkerPrivate* worker = GetCurrentThreadWorkerPrivate();
+  MOZ_ASSERT(worker);
+  worker->AssertIsOnWorkerThread();
+#endif
+  MOZ_ASSERT(mWorkerPromise);
   return mWorkerPromise;
 }
 
@@ -1596,14 +1659,6 @@ PromiseWorkerProxy::StoreISupports(nsISupports* aSupports)
   mSupportsArray.AppendElement(supports);
 }
 
-bool
-PromiseWorkerProxyControlRunnable::WorkerRun(JSContext* aCx,
-                                             workers::WorkerPrivate* aWorkerPrivate)
-{
-  mProxy->CleanUp(aCx);
-  return true;
-}
-
 void
 PromiseWorkerProxy::RunCallback(JSContext* aCx,
                                 JS::Handle<JS::Value> aValue,
@@ -1611,32 +1666,22 @@ PromiseWorkerProxy::RunCallback(JSContext* aCx,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  MutexAutoLock lock(mCleanUpLock);
+  MutexAutoLock lock(Lock());
   // If the worker thread's been cancelled we don't need to resolve the Promise.
-  if (mCleanedUp) {
+  if (CleanedUp()) {
     return;
   }
 
-  // The |aValue| is written into the buffer. Note that we also pass |this|
-  // into the structured-clone write in order to set its |mSupportsArray| to
-  // keep objects alive until the structured-clone read/write is done.
-  JSAutoStructuredCloneBuffer buffer;
-  if (!buffer.write(aCx, aValue, mCallbacks, this)) {
+  // The |aValue| is written into the StructuredCloneHelperInternal.
+  if (!Write(aCx, aValue)) {
     JS_ClearPendingException(aCx);
-    MOZ_ASSERT(false, "cannot write the JSAutoStructuredCloneBuffer!");
+    MOZ_ASSERT(false, "cannot serialize the value with the StructuredCloneAlgorithm!");
   }
 
   nsRefPtr<PromiseWorkerProxyRunnable> runnable =
-    new PromiseWorkerProxyRunnable(this,
-                                   mCallbacks,
-                                   Move(buffer),
-                                   aFunc);
+    new PromiseWorkerProxyRunnable(this, aFunc);
 
-  if (!runnable->Dispatch(aCx)) {
-    nsRefPtr<WorkerControlRunnable> runnable =
-      new PromiseWorkerProxyControlRunnable(mWorkerPrivate, this);
-    mWorkerPrivate->DispatchControlRunnable(runnable);
-  }
+  runnable->Dispatch(aCx);
 }
 
 void
@@ -1656,10 +1701,6 @@ PromiseWorkerProxy::RejectedCallback(JSContext* aCx,
 bool
 PromiseWorkerProxy::Notify(JSContext* aCx, Status aStatus)
 {
-  MOZ_ASSERT(mWorkerPrivate);
-  mWorkerPrivate->AssertIsOnWorkerThread();
-  MOZ_ASSERT(mWorkerPrivate->GetJSContext() == aCx);
-
   if (aStatus >= Canceling) {
     CleanUp(aCx);
   }
@@ -1670,24 +1711,54 @@ PromiseWorkerProxy::Notify(JSContext* aCx, Status aStatus)
 void
 PromiseWorkerProxy::CleanUp(JSContext* aCx)
 {
-  MutexAutoLock lock(mCleanUpLock);
+  // Can't release Mutex while it is still locked, so scope the lock.
+  {
+    MutexAutoLock lock(Lock());
 
-  // |mWorkerPrivate| might not be safe to use anymore if we have already
-  // cleaned up and RemoveFeature(), so we need to check |mCleanedUp| first.
-  if (mCleanedUp) {
-    return;
+    // |mWorkerPrivate| is not safe to use anymore if we have already
+    // cleaned up and RemoveFeature(), so we need to check |mCleanedUp| first.
+    if (CleanedUp()) {
+      return;
+    }
+
+    MOZ_ASSERT(mWorkerPrivate);
+    mWorkerPrivate->AssertIsOnWorkerThread();
+    MOZ_ASSERT(mWorkerPrivate->GetJSContext() == aCx);
+
+    // Release the Promise and remove the PromiseWorkerProxy from the features of
+    // the worker thread since the Promise has been resolved/rejected or the
+    // worker thread has been cancelled.
+    MOZ_ASSERT(mFeatureAdded);
+    mWorkerPrivate->RemoveFeature(mWorkerPrivate->GetJSContext(), this);
+    mFeatureAdded = false;
+    CleanProperties();
+  }
+  Release();
+}
+
+JSObject*
+PromiseWorkerProxy::ReadCallback(JSContext* aCx,
+                                 JSStructuredCloneReader* aReader,
+                                 uint32_t aTag,
+                                 uint32_t aIndex)
+{
+  if (NS_WARN_IF(!mCallbacks)) {
+    return nullptr;
   }
 
-  MOZ_ASSERT(mWorkerPrivate);
-  mWorkerPrivate->AssertIsOnWorkerThread();
-  MOZ_ASSERT(mWorkerPrivate->GetJSContext() == aCx);
+  return mCallbacks->Read(aCx, aReader, this, aTag, aIndex);
+}
 
-  // Release the Promise and remove the PromiseWorkerProxy from the features of
-  // the worker thread since the Promise has been resolved/rejected or the
-  // worker thread has been cancelled.
-  mWorkerPromise = nullptr;
-  mWorkerPrivate->RemoveFeature(aCx, this);
-  mCleanedUp = true;
+bool
+PromiseWorkerProxy::WriteCallback(JSContext* aCx,
+                                  JSStructuredCloneWriter* aWriter,
+                                  JS::Handle<JSObject*> aObj)
+{
+  if (NS_WARN_IF(!mCallbacks)) {
+    return false;
+  }
+
+  return mCallbacks->Write(aCx, aWriter, this, aObj);
 }
 
 // Specializations of MaybeRejectBrokenly we actually support.

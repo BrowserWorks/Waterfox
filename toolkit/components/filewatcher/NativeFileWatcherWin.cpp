@@ -15,7 +15,7 @@
 #include "nsIObserverService.h"
 #include "nsProxyRelease.h"
 #include "nsTArray.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 namespace mozilla {
 
@@ -130,7 +130,6 @@ private:
   nsString mChangedResource;
 };
 
-#if defined(PR_LOGGING)
 static PRLogModuleInfo* GetFileWatcherContextLog()
 {
   static PRLogModuleInfo *gNativeWatcherPRLog;
@@ -139,9 +138,8 @@ static PRLogModuleInfo* GetFileWatcherContextLog()
   }
   return gNativeWatcherPRLog;
 }
-#endif
 
-#define FILEWATCHERLOG(...) PR_LOG(GetFileWatcherContextLog(), PR_LOG_DEBUG, (__VA_ARGS__))
+#define FILEWATCHERLOG(...) MOZ_LOG(GetFileWatcherContextLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 // The number of notifications to store within WatchedResourceDescriptor:mNotificationBuffer.
 // If the buffer overflows, its contents are discarded and a change callback is dispatched
@@ -1230,7 +1228,7 @@ NativeFileWatcherIOTask::MakeResourcePath(
   return NS_OK;
 }
 
-} // anonymous namespace
+} // namespace
 
 // The NativeFileWatcherService component
 

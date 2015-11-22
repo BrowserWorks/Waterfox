@@ -6,13 +6,13 @@
  * creates the correct DOM nodes in the correct order.
  */
 
-let { CATEGORY_MASK } = devtools.require("devtools/performance/global");
+var { CATEGORY_MASK } = require("devtools/performance/global");
 
 function test() {
-  let { ThreadNode } = devtools.require("devtools/performance/tree-model");
-  let { CallView } = devtools.require("devtools/performance/tree-view");
+  let { ThreadNode } = require("devtools/performance/tree-model");
+  let { CallView } = require("devtools/performance/tree-view");
 
-  let threadNode = new ThreadNode(gThread);
+  let threadNode = new ThreadNode(gThread, { startTime: 0, endTime: 20 });
   // Don't display the synthesized (root) and the real (root) node twice.
   threadNode.calls = threadNode.calls[0].calls;
   let treeRoot = new CallView({ frame: threadNode });
@@ -81,7 +81,7 @@ function test() {
   finish();
 }
 
-let gThread = synthesizeProfileForTest([{
+var gThread = synthesizeProfileForTest([{
   time: 5,
   frames: [
     { category: CATEGORY_MASK('other'),  location: "(root)" },

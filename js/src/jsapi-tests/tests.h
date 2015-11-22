@@ -182,7 +182,7 @@ class JSAPITest
             return false; \
     } while (false)
 
-    bool checkSame(jsval actualArg, jsval expectedArg,
+    bool checkSame(JS::Value actualArg, JS::Value expectedArg,
                    const char* actualExpr, const char* expectedExpr,
                    const char* filename, int lineno) {
         bool same;
@@ -238,7 +238,7 @@ class JSAPITest
 
   protected:
     static bool
-    print(JSContext* cx, unsigned argc, jsval* vp)
+    print(JSContext* cx, unsigned argc, JS::Value* vp)
     {
         JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 
@@ -285,7 +285,6 @@ class JSAPITest
             return nullptr;
         JS_SetErrorReporter(rt, &reportError);
         setNativeStackQuota(rt);
-        JS::RuntimeOptionsRef(rt).setVarObjFix(true);
         return rt;
     }
 

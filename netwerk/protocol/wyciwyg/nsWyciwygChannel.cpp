@@ -8,6 +8,7 @@
 #include "nsWyciwygChannel.h"
 #include "nsILoadGroup.h"
 #include "nsNetUtil.h"
+#include "nsNetCID.h"
 #include "LoadContextInfo.h"
 #include "nsICacheService.h" // only to initialize
 #include "nsICacheStorageService.h"
@@ -26,6 +27,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/unused.h"
 #include "nsProxyRelease.h"
+#include "nsContentSecurityManager.h"
 
 typedef mozilla::net::LoadContextInfo LoadContextInfo;
 
@@ -418,8 +420,21 @@ nsWyciwygChannel::Open(nsIInputStream ** aReturn)
 }
 
 NS_IMETHODIMP
+nsWyciwygChannel::Open2(nsIInputStream** aStream)
+{
+  nsCOMPtr<nsIStreamListener> listener;
+  nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return Open(aStream);
+}
+
+NS_IMETHODIMP
 nsWyciwygChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctx)
 {
+  MOZ_ASSERT(!mLoadInfo || mLoadInfo->GetSecurityMode() == 0 ||
+             mLoadInfo->GetInitialSecurityCheckDone(),
+             "security flags in loadInfo but asyncOpen2() not called");
+
   LOG(("nsWyciwygChannel::AsyncOpen [this=%p]\n", this));
   MOZ_ASSERT(mMode == NONE, "nsWyciwygChannel already open");
 
@@ -451,6 +466,15 @@ nsWyciwygChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctx)
     mLoadGroup->AddRequest(this, nullptr);
 
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsWyciwygChannel::AsyncOpen2(nsIStreamListener *aListener)
+{
+  nsCOMPtr<nsIStreamListener> listener = aListener;
+  nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return AsyncOpen(listener, nullptr);
 }
 
 //////////////////////////////////////////////////////////////////////////////

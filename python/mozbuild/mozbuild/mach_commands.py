@@ -2,12 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
+import argparse
 import itertools
+import json
 import logging
 import operator
 import os
+import subprocess
 import sys
 
 import mozpack.path as mozpath
@@ -23,6 +26,7 @@ from mach.mixin.logging import LoggingMixin
 
 from mozbuild.base import (
     MachCommandBase,
+    MachCommandConditions as conditions,
     MozbuildObject,
     MozconfigFindException,
     MozconfigLoadException,
@@ -123,21 +127,17 @@ class BuildProgressFooter(object):
         # terminal is a blessings.Terminal.
         self._t = terminal
         self._fh = sys.stdout
-        self._monitor = monitor
-
-    def _clear_lines(self, n):
-        self._fh.write(self._t.move_x(0))
-        self._fh.write(self._t.clear_eos())
+        self.tiers = monitor.tiers.tier_status.viewitems()
 
     def clear(self):
         """Removes the footer from the current terminal."""
-        self._clear_lines(1)
+        self._fh.write(self._t.move_x(0))
+        self._fh.write(self._t.clear_eos())
 
     def draw(self):
         """Draws this footer in the terminal."""
-        tiers = self._monitor.tiers
 
-        if not tiers.tiers:
+        if not self.tiers:
             return
 
         # The drawn terminal looks something like:
@@ -146,15 +146,15 @@ class BuildProgressFooter(object):
         # This is a list of 2-tuples of (encoding function, input). None means
         # no encoding. For a full reason on why we do things this way, read the
         # big comment below.
-        parts = [('bold', 'TIER'), ':', ' ']
-
-        for tier, active, finished in tiers.tier_status():
-            if active:
-                parts.extend([('underline_yellow', tier), ' '])
-            elif finished:
-                parts.extend([('green', tier), ' '])
+        parts = [('bold', 'TIER:')]
+        append = parts.append
+        for tier, status in self.tiers:
+            if status is None:
+                append(tier)
+            elif status == 'finished':
+                append(('green', tier))
             else:
-                parts.extend([tier, ' '])
+                append(('underline_yellow', tier))
 
         # We don't want to write more characters than the current width of the
         # terminal otherwise wrapping may result in weird behavior. We can't
@@ -166,30 +166,25 @@ class BuildProgressFooter(object):
         written = 0
         write_pieces = []
         for part in parts:
-            if isinstance(part, tuple):
-                func, arg = part
+            try:
+                func, part = part
+                encoded = getattr(self._t, func)(part)
+            except ValueError:
+                encoded = part
 
-                if written + len(arg) > max_width:
-                    write_pieces.append(arg[0:max_width - written])
-                    written += len(arg)
-                    break
+            len_part = len(part)
+            len_spaces = len(write_pieces)
+            if written + len_part + len_spaces > max_width:
+                write_pieces.append(part[0:max_width - written - len_spaces])
+                written += len_part
+                break
 
-                encoded = getattr(self._t, func)(arg)
+            write_pieces.append(encoded)
+            written += len_part
 
-                write_pieces.append(encoded)
-                written += len(arg)
-            else:
-                if written + len(part) > max_width:
-                    write_pieces.append(part[0:max_width - written])
-                    written += len(part)
-                    break
-
-                write_pieces.append(part)
-                written += len(part)
         with self._t.location():
             self._t.move(self._t.height-1,0)
-            self._fh.write(''.join(write_pieces))
-        self._fh.flush()
+            self._fh.write(' '.join(write_pieces))
 
 
 class BuildOutputManager(LoggingMixin):
@@ -392,15 +387,20 @@ class Build(MachCommandBase):
                 # For universal builds, we need to run the automation steps in
                 # the first architecture from MOZ_BUILD_PROJECTS
                 projects = make_extra.get('MOZ_BUILD_PROJECTS')
+                append_env = None
                 if projects:
-                    subdir = os.path.join(self.topobjdir, projects.split()[0])
+                    project = projects.split()[0]
+                    append_env = {b'MOZ_CURRENT_PROJECT': project.encode('utf-8')}
+                    subdir = os.path.join(self.topobjdir, project)
                 else:
                     subdir = self.topobjdir
                 moz_automation = os.getenv('MOZ_AUTOMATION') or make_extra.get('export MOZ_AUTOMATION', None)
                 if moz_automation and status == 0:
                     status = self._run_make(target='automation/build', directory=subdir,
                         line_handler=output.on_line, log=False, print_directory=False,
-                        ensure_exit_code=False, num_jobs=jobs, silent=not verbose)
+                        ensure_exit_code=False, num_jobs=jobs, silent=not verbose,
+                        append_env=append_env
+                    )
 
                 self.log(logging.WARNING, 'warning_summary',
                     {'count': len(monitor.warnings_database)},
@@ -420,9 +420,16 @@ class Build(MachCommandBase):
                 self.log(logging.INFO, 'ccache',
                          {'msg': ccache_diff.hit_rate_message()}, "{msg}")
 
-        if monitor.elapsed > 300:
+        notify_minimum_time = 300
+        try:
+            notify_minimum_time = int(os.environ.get('MACH_NOTIFY_MINTIME', '300'))
+        except ValueError:
+            # Just stick with the default
+            pass
+
+        if monitor.elapsed > notify_minimum_time:
             # Display a notification when the build completes.
-            self.notify('Build complete')
+            self.notify('Build complete' if not status else 'Build failed')
 
         if status:
             return status
@@ -510,21 +517,40 @@ class Build(MachCommandBase):
         print('Hit CTRL+c to stop server.')
         server.run()
 
+    CLOBBER_CHOICES = ['objdir', 'python']
     @Command('clobber', category='build',
         description='Clobber the tree (delete the object directory).')
-    def clobber(self):
-        try:
-            self.remove_objdir()
-            return 0
-        except OSError as e:
-            if sys.platform.startswith('win'):
-                if isinstance(e, WindowsError) and e.winerror in (5,32):
-                    self.log(logging.ERROR, 'file_access_error', {'error': e},
-                        "Could not clobber because a file was in use. If the "
-                        "application is running, try closing it. {error}")
-                    return 1
+    @CommandArgument('what', default=['objdir'], nargs='*',
+        help='Target to clobber, must be one of {{{}}} (default objdir).'.format(
+             ', '.join(CLOBBER_CHOICES)))
+    def clobber(self, what):
+        invalid = set(what) - set(self.CLOBBER_CHOICES)
+        if invalid:
+            print('Unknown clobber target(s): {}'.format(', '.join(invalid)))
+            return 1
 
-            raise
+        ret = 0
+        if 'objdir' in what:
+            try:
+                self.remove_objdir()
+            except OSError as e:
+                if sys.platform.startswith('win'):
+                    if isinstance(e, WindowsError) and e.winerror in (5,32):
+                        self.log(logging.ERROR, 'file_access_error', {'error': e},
+                            "Could not clobber because a file was in use. If the "
+                            "application is running, try closing it. {error}")
+                        return 1
+                raise
+
+        if 'python' in what:
+            if os.path.isdir(mozpath.join(self.topsrcdir, '.hg')):
+                cmd = ['hg', 'purge', '--all', '-I', 'glob:**.py[co]']
+            elif os.path.isdir(mozpath.join(self.topsrcdir, '.git')):
+                cmd = ['git', 'clean', '-f', '-x', '*.py[co]']
+            else:
+                cmd = ['find', '.', '-type', 'f', '-name', '*.py[co]', '-delete']
+            ret = subprocess.call(cmd, cwd=self.topsrcdir)
+        return ret
 
     @Command('build-backend', category='build',
         description='Generate a backend used to build the tree.')
@@ -567,6 +593,65 @@ class Doctor(MachCommandBase):
         return doctor.check_all()
 
 @CommandProvider
+class Logs(MachCommandBase):
+    """Provide commands to read mach logs."""
+    NO_AUTO_LOG = True
+
+    @Command('show-log', category='post-build',
+        description='Display mach logs')
+    @CommandArgument('log_file', nargs='?', type=argparse.FileType('rb'),
+        help='Filename to read log data from. Defaults to the log of the last '
+             'mach command.')
+    def show_log(self, log_file=None):
+        if not log_file:
+            path = self._get_state_filename('last_log.json')
+            log_file = open(path, 'rb')
+
+        if self.log_manager.terminal:
+            env = dict(os.environ)
+            if 'LESS' not in env:
+                # Sensible default flags if none have been set in the user
+                # environment.
+                env['LESS'] = 'FRX'
+            less = subprocess.Popen(['less'], stdin=subprocess.PIPE, env=env)
+            # Various objects already have a reference to sys.stdout, so we
+            # can't just change it, we need to change the file descriptor under
+            # it to redirect to less's input.
+            # First keep a copy of the sys.stdout file descriptor.
+            output_fd = os.dup(sys.stdout.fileno())
+            os.dup2(less.stdin.fileno(), sys.stdout.fileno())
+
+        startTime = 0
+        for line in log_file:
+            created, action, params = json.loads(line)
+            if not startTime:
+                startTime = created
+                self.log_manager.terminal_handler.formatter.start_time = \
+                    created
+            if 'line' in params:
+                record = logging.makeLogRecord({
+                    'created': created,
+                    'name': self._logger.name,
+                    'levelno': logging.INFO,
+                    'msg': '{line}',
+                    'params': params,
+                    'action': action,
+                })
+                self._logger.handle(record)
+
+        if self.log_manager.terminal:
+            # Close less's input so that it knows that we're done sending data.
+            less.stdin.close()
+            # Since the less's input file descriptor is now also the stdout
+            # file descriptor, we still actually have a non-closed system file
+            # descriptor for less's input. Replacing sys.stdout's file
+            # descriptor with what it was before we replaced it will properly
+            # close less's input.
+            os.dup2(output_fd, sys.stdout.fileno())
+            less.wait()
+
+
+@CommandProvider
 class Warnings(MachCommandBase):
     """Provide commands for inspecting warnings."""
 
@@ -589,13 +674,22 @@ class Warnings(MachCommandBase):
 
     @Command('warnings-summary', category='post-build',
         description='Show a summary of compiler warnings.')
+    @CommandArgument('-C', '--directory', default=None,
+        help='Change to a subdirectory of the build directory first.')
     @CommandArgument('report', default=None, nargs='?',
         help='Warnings report to display. If not defined, show the most '
             'recent report.')
-    def summary(self, report=None):
+    def summary(self, directory=None, report=None):
         database = self.database
 
-        type_counts = database.type_counts
+        if directory:
+            dirpath = self.join_ensure_dir(self.topsrcdir, directory)
+            if not dirpath:
+                return 1
+        else:
+            dirpath = None
+
+        type_counts = database.type_counts(dirpath)
         sorted_counts = sorted(type_counts.iteritems(),
             key=operator.itemgetter(1))
 
@@ -608,19 +702,41 @@ class Warnings(MachCommandBase):
 
     @Command('warnings-list', category='post-build',
         description='Show a list of compiler warnings.')
+    @CommandArgument('-C', '--directory', default=None,
+        help='Change to a subdirectory of the build directory first.')
+    @CommandArgument('--flags', default=None, nargs='+',
+        help='Which warnings flags to match.')
     @CommandArgument('report', default=None, nargs='?',
         help='Warnings report to display. If not defined, show the most '
             'recent report.')
-    def list(self, report=None):
+    def list(self, directory=None, flags=None, report=None):
         database = self.database
 
         by_name = sorted(database.warnings)
 
-        for warning in by_name:
-            filename = warning['filename']
+        topsrcdir = mozpath.normpath(self.topsrcdir)
 
-            if filename.startswith(self.topsrcdir):
-                filename = filename[len(self.topsrcdir) + 1:]
+        if directory:
+            directory = mozpath.normsep(directory)
+            dirpath = self.join_ensure_dir(topsrcdir, directory)
+            if not dirpath:
+                return 1
+
+        if flags:
+            # Flatten lists of flags.
+            flags = set(itertools.chain(*[flaglist.split(',') for flaglist in flags]))
+
+        for warning in by_name:
+            filename = mozpath.normsep(warning['filename'])
+
+            if filename.startswith(topsrcdir):
+                filename = filename[len(topsrcdir) + 1:]
+
+            if directory and not filename.startswith(directory):
+                continue
+
+            if flags and warning['flag'] not in flags:
+                continue
 
             if warning['column'] is not None:
                 print('%s:%d:%d [%s] %s' % (filename, warning['line'],
@@ -628,6 +744,16 @@ class Warnings(MachCommandBase):
             else:
                 print('%s:%d [%s] %s' % (filename, warning['line'],
                     warning['flag'], warning['message']))
+
+    def join_ensure_dir(self, dir1, dir2):
+        dir1 = mozpath.normpath(dir1)
+        dir2 = mozpath.normsep(dir2)
+        joined_path = mozpath.join(dir1, dir2)
+        if os.path.isdir(joined_path):
+            return joined_path
+        else:
+            print('Specified directory not found.')
+            return None
 
 @CommandProvider
 class GTestCommands(MachCommandBase):
@@ -645,7 +771,7 @@ class GTestCommands(MachCommandBase):
 
     @CommandArgumentGroup('debugging')
     @CommandArgument('--debug', action='store_true', group='debugging',
-        help='Enable the debugger. Not specifying a --debugger option will result in the default debugger being used. The following arguments have no effect without this.')
+        help='Enable the debugger. Not specifying a --debugger option will result in the default debugger being used.')
     @CommandArgument('--debugger', default=None, type=str, group='debugging',
         help='Name of debugger to use.')
     @CommandArgument('--debugger-args', default=None, metavar='params', type=str,
@@ -656,12 +782,13 @@ class GTestCommands(MachCommandBase):
               debugger_args):
 
         # We lazy build gtest because it's slow to link
-        self._run_make(directory="testing/gtest", target='gtest', ensure_exit_code=True)
+        self._run_make(directory="testing/gtest", target='gtest',
+                       print_directory=False, ensure_exit_code=True)
 
         app_path = self.get_binary_path('app')
         args = [app_path, '-unittest'];
 
-        if debug:
+        if debug or debugger or debugger_args:
             args = self.prepend_debugger_args(args, debugger, debugger_args)
 
         cwd = os.path.join(self.topobjdir, '_tests', 'gtest')
@@ -837,6 +964,9 @@ class Install(MachCommandBase):
     @Command('install', category='post-build',
         description='Install the package on the machine, or on a device.')
     def install(self):
+        if conditions.is_android(self):
+            from mozrunner.devices.android_device import verify_android_device
+            verify_android_device(self)
         ret = self._run_make(directory=".", target='install', ensure_exit_code=False)
         if ret == 0:
             self.notify('Install complete')
@@ -862,7 +992,7 @@ class RunProgram(MachCommandBase):
 
     @CommandArgumentGroup('debugging')
     @CommandArgument('--debug', action='store_true', group='debugging',
-        help='Enable the debugger. Not specifying a --debugger option will result in the default debugger being used. The following arguments have no effect without this.')
+        help='Enable the debugger. Not specifying a --debugger option will result in the default debugger being used.')
     @CommandArgument('--debugger', default=None, type=str, group='debugging',
         help='Name of debugger to use.')
     @CommandArgument('--debugparams', default=None, metavar='params', type=str,
@@ -879,7 +1009,7 @@ class RunProgram(MachCommandBase):
     @CommandArgumentGroup('DMD')
     @CommandArgument('--dmd', action='store_true', group='DMD',
         help='Enable DMD. The following arguments have no effect without this.')
-    @CommandArgument('--mode', choices=['live', 'dark-matter', 'cumulative'], group='DMD',
+    @CommandArgument('--mode', choices=['live', 'dark-matter', 'cumulative', 'scan'], group='DMD',
          help='Profiling mode. The default is \'dark-matter\'.')
     @CommandArgument('--sample-below', default=None, type=str, group='DMD',
         help='Sample blocks smaller than this. Use 1 for no sampling. The default is 4093.')
@@ -921,7 +1051,7 @@ class RunProgram(MachCommandBase):
 
         extra_env = {}
 
-        if debug:
+        if debug or debugger or debugparams:
             import mozdebug
             if not debugger:
                 # No debugger name was provided. Look for the default ones on

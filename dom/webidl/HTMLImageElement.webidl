@@ -29,6 +29,8 @@ interface HTMLImageElement : HTMLElement {
            attribute DOMString? crossOrigin;
            [SetterThrows]
            attribute DOMString useMap;
+           [SetterThrows, Pref="network.http.enablePerElementReferrer"]
+           attribute DOMString referrer;
            [SetterThrows]
            attribute boolean isMap;
            [SetterThrows]

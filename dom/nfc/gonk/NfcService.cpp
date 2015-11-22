@@ -7,16 +7,22 @@
 #include "NfcService.h"
 #include <binder/Parcel.h>
 #include <cutils/properties.h>
-#include "mozilla/ModuleUtils.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/NfcOptionsBinding.h"
 #include "mozilla/dom/ToJSValue.h"
 #include "mozilla/dom/RootedDictionary.h"
+#include "mozilla/ipc/ListenSocket.h"
+#include "mozilla/ipc/ListenSocketConsumer.h"
+#include "mozilla/ipc/NfcConnector.h"
+#include "mozilla/ipc/StreamSocket.h"
+#include "mozilla/ipc/StreamSocketConsumer.h"
+#include "mozilla/ModuleUtils.h"
 #include "mozilla/unused.h"
+#include "NfcMessageHandler.h"
+#include "NfcOptions.h"
 #include "nsAutoPtr.h"
 #include "nsString.h"
 #include "nsXULAppAPI.h"
-#include "NfcOptions.h"
 
 #define NS_NFCSERVICE_CID \
   { 0x584c9a21, 0x4e17, 0x43b7, {0xb1, 0x6a, 0x87, 0xa0, 0x42, 0xef, 0xd4, 0x64} }
@@ -28,55 +34,149 @@ using namespace mozilla::ipc;
 
 namespace mozilla {
 
-static NfcService* gNfcService;
+static StaticRefPtr<NfcService> gNfcService;
 
 NS_IMPL_ISUPPORTS(NfcService, nsINfcService)
 
-void
-assertIsNfcServiceThread()
-{
-  nsCOMPtr<nsIThread> thread = do_GetCurrentThread();
-  MOZ_ASSERT(thread == gNfcService->GetThread());
-}
+//
+// NfcConsumer
+//
 
-// Runnable used to call Marshall on the NFC thread.
-class NfcCommandRunnable : public nsRunnable
+/**
+ * |NfcConsumer| implements the details of the connection to an NFC daemon
+ * as well as the message passing.
+ */
+class NfcConsumer
+  : public ListenSocketConsumer
+  , public StreamSocketConsumer
 {
 public:
-  NfcCommandRunnable(NfcMessageHandler* aHandler, NfcConsumer* aConsumer, CommandOptions aOptions)
-    : mHandler(aHandler), mConsumer(aConsumer), mOptions(aOptions)
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-  }
+  NfcConsumer(NfcService* aNfcService);
 
-  NS_IMETHOD Run()
-  {
-    assertIsNfcServiceThread();
+  nsresult Start();
+  void Shutdown();
 
-    Parcel parcel;
-    parcel.writeInt32(0); // Parcel Size.
-    mHandler->Marshall(parcel, mOptions);
-    parcel.setDataPosition(0);
-    uint32_t sizeBE = htonl(parcel.dataSize() - sizeof(int));
-    parcel.writeInt32(sizeBE);
-    mConsumer->PostToNfcDaemon(parcel.data(), parcel.dataSize());
-    return NS_OK;
-  }
+  nsresult Send(const CommandOptions& aCommandOptions);
+  nsresult Receive(UnixSocketBuffer* aBuffer);
+
+  // Methods for |StreamSocketConsumer| and |ListenSocketConsumer|
+  //
+
+  void ReceiveSocketData(
+    int aIndex, nsAutoPtr<mozilla::ipc::UnixSocketBuffer>& aBuffer) override;
+
+  void OnConnectSuccess(int aIndex) override;
+  void OnConnectError(int aIndex) override;
+  void OnDisconnect(int aIndex) override;
 
 private:
-   NfcMessageHandler* mHandler;
-   NfcConsumer* mConsumer;
-   CommandOptions mOptions;
+  class DispatchNfcEventRunnable;
+  class ShutdownServiceRunnable;
+
+  enum SocketType {
+    LISTEN_SOCKET,
+    STREAM_SOCKET
+  };
+
+  bool IsNfcServiceThread() const;
+
+  nsRefPtr<NfcService> mNfcService;
+  nsCOMPtr<nsIThread> mThread;
+  nsRefPtr<mozilla::ipc::ListenSocket> mListenSocket;
+  nsRefPtr<mozilla::ipc::StreamSocket> mStreamSocket;
+  nsAutoPtr<NfcMessageHandler> mHandler;
+  nsCString mListenSocketName;
 };
 
+NfcConsumer::NfcConsumer(NfcService* aNfcService)
+  : mNfcService(aNfcService)
+{
+  MOZ_ASSERT(mNfcService);
+}
+
+nsresult
+NfcConsumer::Start()
+{
+  static const char BASE_SOCKET_NAME[] = "nfcd";
+
+  MOZ_ASSERT(!mThread); // already started
+
+  // Store a pointer of the consumer's NFC thread for
+  // use with |IsNfcServiceThread|.
+  mThread = do_GetCurrentThread();
+
+  // If we could not cleanup properly before and an old
+  // instance of the daemon is still running, we kill it
+  // here.
+  unused << NS_WARN_IF(property_set("ctl.stop", "nfcd") < 0);
+
+  mHandler = new NfcMessageHandler();
+
+  mStreamSocket = new StreamSocket(this, STREAM_SOCKET);
+
+  mListenSocketName = BASE_SOCKET_NAME;
+
+  mListenSocket = new ListenSocket(this, LISTEN_SOCKET);
+  nsresult rv = mListenSocket->Listen(new NfcConnector(mListenSocketName),
+                                      mStreamSocket);
+  if (NS_FAILED(rv)) {
+    mStreamSocket = nullptr;
+    mHandler = nullptr;
+    mThread = nullptr;
+    return rv;
+  }
+
+  return NS_OK;
+}
+
+void
+NfcConsumer::Shutdown()
+{
+  MOZ_ASSERT(IsNfcServiceThread());
+
+  mListenSocket->Close();
+  mListenSocket = nullptr;
+  mStreamSocket->Close();
+  mStreamSocket = nullptr;
+
+  mHandler = nullptr;
+
+  mThread = nullptr;
+}
+
+nsresult
+NfcConsumer::Send(const CommandOptions& aOptions)
+{
+  MOZ_ASSERT(IsNfcServiceThread());
+
+  if (NS_WARN_IF(!mStreamSocket) ||
+      NS_WARN_IF(mStreamSocket->GetConnectionStatus() != SOCKET_CONNECTED)) {
+    return NS_OK; // Probably shutting down.
+  }
+
+  Parcel parcel;
+  parcel.writeInt32(0); // Parcel Size.
+  mHandler->Marshall(parcel, aOptions);
+  parcel.setDataPosition(0);
+  uint32_t sizeBE = htonl(parcel.dataSize() - sizeof(int));
+  parcel.writeInt32(sizeBE);
+
+  // TODO: Zero-copy buffer transfers
+  mStreamSocket->SendSocketData(
+    new UnixSocketRawData(parcel.data(), parcel.dataSize()));
+
+  return NS_OK;
+}
+
 // Runnable used dispatch the NfcEventOptions on the main thread.
-class NfcEventDispatcher : public nsRunnable
+class NfcConsumer::DispatchNfcEventRunnable final : public nsRunnable
 {
 public:
-  NfcEventDispatcher(EventOptions& aEvent)
-    : mEvent(aEvent)
+  DispatchNfcEventRunnable(NfcService* aNfcService, const EventOptions& aEvent)
+    : mNfcService(aNfcService)
+    , mEvent(aEvent)
   {
-    assertIsNfcServiceThread();
+    MOZ_ASSERT(mNfcService);
   }
 
   NS_IMETHOD Run()
@@ -126,14 +226,15 @@ public:
       int length = mEvent.mTechList.Length();
       event.mTechList.Construct();
 
-      if (!event.mTechList.Value().SetCapacity(length)) {
+      if (!event.mTechList.Value().SetCapacity(length, fallible)) {
         return NS_ERROR_FAILURE;
       }
 
       for (int i = 0; i < length; i++) {
         NFCTechType tech = static_cast<NFCTechType>(mEvent.mTechList[i]);
         MOZ_ASSERT(tech < NFCTechType::EndGuard_);
-        *event.mTechList.Value().AppendElement() = tech;
+        // FIXME: Make this infallible after bug 968520 is done.
+        *event.mTechList.Value().AppendElement(fallible) = tech;
       }
     }
 
@@ -145,13 +246,15 @@ public:
     if (mEvent.mRecords.Length() > 0) {
       int length = mEvent.mRecords.Length();
       event.mRecords.Construct();
-      if (!event.mRecords.Value().SetCapacity(length)) {
+      if (!event.mRecords.Value().SetCapacity(length, fallible)) {
         return NS_ERROR_FAILURE;
       }
 
       for (int i = 0; i < length; i++) {
         NDEFRecordStruct& recordStruct = mEvent.mRecords[i];
-        MozNDEFRecordOptions& record = *event.mRecords.Value().AppendElement();
+        // FIXME: Make this infallible after bug 968520 is done.
+        MozNDEFRecordOptions& record =
+          *event.mRecords.Value().AppendElement(fallible);
 
         record.mTnf = recordStruct.mTnf;
         MOZ_ASSERT(record.mTnf < TNF::EndGuard_);
@@ -212,53 +315,121 @@ public:
 #undef COPY_FIELD
 #undef COPY_OPT_FIELD
 
-    gNfcService->DispatchNfcEvent(event);
+    mNfcService->DispatchNfcEvent(event);
     return NS_OK;
   }
 
 private:
+  nsRefPtr<NfcService> mNfcService;
   EventOptions mEvent;
 };
 
-// Runnable used to call Unmarshall on the NFC thread.
-class NfcEventRunnable : public nsRunnable
+nsresult
+NfcConsumer::Receive(UnixSocketBuffer* aBuffer)
 {
-public:
-  NfcEventRunnable(NfcMessageHandler* aHandler, UnixSocketBuffer* aData)
-    : mHandler(aHandler), mData(aData)
-  {
-    MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(IsNfcServiceThread());
+  MOZ_ASSERT(mHandler);
+  MOZ_ASSERT(aBuffer);
+
+  while (aBuffer->GetSize()) {
+    const uint8_t* data = aBuffer->GetData();
+    uint32_t parcelSize = ((data[0] & 0xff) << 24) |
+                          ((data[1] & 0xff) << 16) |
+                          ((data[2] & 0xff) <<  8) |
+                           (data[3] & 0xff);
+    MOZ_ASSERT(parcelSize <= aBuffer->GetSize());
+
+    // TODO: Zero-copy buffer transfers
+    Parcel parcel;
+    parcel.setData(aBuffer->GetData(), parcelSize + sizeof(parcelSize));
+    aBuffer->Consume(parcelSize + sizeof(parcelSize));
+
+    EventOptions event;
+    mHandler->Unmarshall(parcel, event);
+
+    NS_DispatchToMainThread(new DispatchNfcEventRunnable(mNfcService, event));
   }
 
-  NS_IMETHOD Run()
-  {
-    assertIsNfcServiceThread();
+  return NS_OK;
+}
 
-    while (mData->GetSize()) {
-      EventOptions event;
-      const uint8_t* data = mData->GetData();
-      uint32_t parcelSize = ((data[0] & 0xff) << 24) |
-                            ((data[1] & 0xff) << 16) |
-                            ((data[2] & 0xff) <<  8) |
-                             (data[3] & 0xff);
-      MOZ_ASSERT(parcelSize <= mData->GetSize());
+bool
+NfcConsumer::IsNfcServiceThread() const
+{
+  return nsCOMPtr<nsIThread>(do_GetCurrentThread()) == mThread;
+}
 
-      Parcel parcel;
-      parcel.setData(mData->GetData(), parcelSize + sizeof(parcelSize));
-      mHandler->Unmarshall(parcel, event);
-      nsCOMPtr<nsIRunnable> runnable = new NfcEventDispatcher(event);
-      NS_DispatchToMainThread(runnable);
+// |StreamSocketConsumer|, |ListenSocketConsumer|
 
-      mData->Consume(parcelSize + sizeof(parcelSize));
+void
+NfcConsumer::ReceiveSocketData(
+  int aIndex, nsAutoPtr<mozilla::ipc::UnixSocketBuffer>& aBuffer)
+{
+  MOZ_ASSERT(IsNfcServiceThread());
+  MOZ_ASSERT(aIndex == STREAM_SOCKET);
+
+  Receive(aBuffer);
+}
+
+void
+NfcConsumer::OnConnectSuccess(int aIndex)
+{
+  MOZ_ASSERT(IsNfcServiceThread());
+
+  switch (aIndex) {
+    case LISTEN_SOCKET: {
+      nsCString value("nfcd:-S -a ");
+      value.Append(mListenSocketName);
+      if (NS_WARN_IF(property_set("ctl.start", value.get()) < 0)) {
+        OnConnectError(STREAM_SOCKET);
+      }
+      break;
     }
+    case STREAM_SOCKET:
+      /* nothing to do */
+      break;
+  }
+}
+
+class NfcConsumer::ShutdownServiceRunnable final : public nsRunnable
+{
+public:
+  ShutdownServiceRunnable(NfcService* aNfcService)
+    : mNfcService(aNfcService)
+  {
+    MOZ_ASSERT(mNfcService);
+  }
+
+  NS_IMETHOD Run() override
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    mNfcService->Shutdown();
 
     return NS_OK;
   }
 
 private:
-  NfcMessageHandler* mHandler;
-  nsAutoPtr<UnixSocketBuffer> mData;
+  nsRefPtr<NfcService> mNfcService;
 };
+
+void
+NfcConsumer::OnConnectError(int aIndex)
+{
+  MOZ_ASSERT(IsNfcServiceThread());
+
+  NS_DispatchToMainThread(new ShutdownServiceRunnable(mNfcService));
+}
+
+void
+NfcConsumer::OnDisconnect(int aIndex)
+{
+  MOZ_ASSERT(IsNfcServiceThread());
+}
+
+//
+// NfcService
+//
 
 NfcService::NfcService()
 {
@@ -274,7 +445,7 @@ NfcService::~NfcService()
 already_AddRefed<NfcService>
 NfcService::FactoryCreate()
 {
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     return nullptr;
   }
 
@@ -285,70 +456,172 @@ NfcService::FactoryCreate()
     ClearOnShutdown(&gNfcService);
   }
 
-  nsRefPtr<NfcService> service = gNfcService;
+  nsRefPtr<NfcService> service(gNfcService);
   return service.forget();
 }
+
+/**
+ * |StartConsumerRunnable| calls |NfcConsumer::Start| on the NFC thread.
+ */
+class NfcService::StartConsumerRunnable final : public nsRunnable
+{
+public:
+  StartConsumerRunnable(NfcConsumer* aNfcConsumer)
+    : mNfcConsumer(aNfcConsumer)
+  {
+    MOZ_ASSERT(mNfcConsumer);
+  }
+
+  NS_IMETHOD Run() override
+  {
+    mNfcConsumer->Start();
+
+    return NS_OK;
+  }
+
+private:
+  NfcConsumer* mNfcConsumer;
+};
 
 NS_IMETHODIMP
 NfcService::Start(nsINfcGonkEventListener* aListener)
 {
-  static const char BASE_SOCKET_NAME[] = "nfcd";
-
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aListener);
   MOZ_ASSERT(!mThread);
-  MOZ_ASSERT(!mListenSocket);
+  MOZ_ASSERT(!mNfcConsumer);
 
-  // If we could not cleanup properly before and an old
-  // instance of the daemon is still running, we kill it
-  // here.
-  unused << NS_WARN_IF(property_set("ctl.stop", "nfcd") < 0);
-
-  mListener = aListener;
-  mHandler = new NfcMessageHandler();
-  mConsumer = new NfcConsumer(this);
-
-  mListenSocketName = BASE_SOCKET_NAME;
-
-  mListenSocket = new NfcListenSocket(this);
-
-  bool success = mListenSocket->Listen(new NfcConnector(), mConsumer);
-  if (!success) {
-    mConsumer = nullptr;
-    return NS_ERROR_FAILURE;
-  }
+  nsAutoPtr<NfcConsumer> nfcConsumer(new NfcConsumer(this));
 
   nsresult rv = NS_NewNamedThread("NfcThread", getter_AddRefs(mThread));
   if (NS_FAILED(rv)) {
     NS_WARNING("Can't create Nfc worker thread.");
-    mListenSocket->Close();
-    mListenSocket = nullptr;
-    mConsumer->Shutdown();
-    mConsumer = nullptr;
-    return NS_ERROR_FAILURE;
+    return rv;
   }
+
+  rv = mThread->Dispatch(new StartConsumerRunnable(nfcConsumer),
+                         nsIEventTarget::DISPATCH_NORMAL);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  mListener = aListener;
+  mNfcConsumer = nfcConsumer.forget();
 
   return NS_OK;
 }
+
+/**
+ * |CleanupRunnable| deletes instances of the NFC consumer and
+ * thread on the main thread. This has to be down after shutting
+ * down the NFC consumer on the NFC thread.
+ */
+class NfcService::CleanupRunnable final : public nsRunnable
+{
+public:
+  CleanupRunnable(NfcConsumer* aNfcConsumer,
+                  already_AddRefed<nsIThread> aThread)
+    : mNfcConsumer(aNfcConsumer)
+    , mThread(aThread)
+  {
+    MOZ_ASSERT(mNfcConsumer);
+    MOZ_ASSERT(mThread);
+  }
+
+  NS_IMETHOD Run() override
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    mNfcConsumer = nullptr; // deletes NFC consumer
+
+    mThread->Shutdown();
+    mThread = nullptr; // deletes NFC worker thread
+
+    return NS_OK;
+  }
+
+private:
+  nsAutoPtr<NfcConsumer> mNfcConsumer;
+  nsCOMPtr<nsIThread> mThread;
+};
+
+/**
+ * |ShutdownConsumerRunnable| calls |NfcConsumer::Shutdown| on the
+ * NFC thread. Optionally, it can dispatch a |CleanupRunnable| to
+ * the main thread for cleaning up the NFC resources.
+ */
+class NfcService::ShutdownConsumerRunnable final : public nsRunnable
+{
+public:
+  ShutdownConsumerRunnable(NfcConsumer* aNfcConsumer, bool aCleanUp)
+    : mNfcConsumer(aNfcConsumer)
+    , mCleanUp(aCleanUp)
+  {
+    MOZ_ASSERT(mNfcConsumer);
+  }
+
+  NS_IMETHOD Run() override
+  {
+    mNfcConsumer->Shutdown();
+
+    if (mCleanUp) {
+      NS_DispatchToMainThread(
+        new CleanupRunnable(mNfcConsumer, do_GetCurrentThread()));
+    }
+
+    return NS_OK;
+  }
+
+private:
+  NfcConsumer* mNfcConsumer;
+  bool mCleanUp;
+};
 
 NS_IMETHODIMP
 NfcService::Shutdown()
 {
-  MOZ_ASSERT(NS_IsMainThread());
-
-  if (mThread) {
-    mThread->Shutdown();
-    mThread = nullptr;
+  if (!mNfcConsumer) {
+    return NS_OK; // NFC was shut down meanwhile; not an error
   }
 
-  mListenSocket->Close();
-  mListenSocket = nullptr;
+  nsresult rv = mThread->Dispatch(new ShutdownConsumerRunnable(mNfcConsumer,
+                                                               true),
+                                  nsIEventTarget::DISPATCH_NORMAL);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
 
-  mConsumer->Shutdown();
-  mConsumer = nullptr;
+  // |CleanupRunnable| will take care of these pointers
+  unused << mNfcConsumer.forget();
+  unused << mThread.forget();
 
   return NS_OK;
 }
+
+/**
+ * |SendRunnable| calls |NfcConsumer::Send| on the NFC thread.
+ */
+class NfcService::SendRunnable final : public nsRunnable
+{
+public:
+  SendRunnable(NfcConsumer* aNfcConsumer, const CommandOptions& aOptions)
+    : mNfcConsumer(aNfcConsumer)
+    , mOptions(aOptions)
+  {
+    MOZ_ASSERT(mNfcConsumer);
+  }
+
+  NS_IMETHOD Run() override
+  {
+    mNfcConsumer->Send(mOptions);
+
+    return NS_OK;
+  }
+
+private:
+   NfcConsumer* mNfcConsumer;
+   CommandOptions mOptions;
+};
 
 NS_IMETHODIMP
 NfcService::SendCommand(JS::HandleValue aOptions, JSContext* aCx)
@@ -363,9 +636,13 @@ NfcService::SendCommand(JS::HandleValue aOptions, JSContext* aCx)
   }
 
   // Dispatch the command to the NFC thread.
-  CommandOptions commandOptions(options);
-  nsCOMPtr<nsIRunnable> runnable = new NfcCommandRunnable(mHandler, mConsumer, commandOptions);
-  mThread->Dispatch(runnable, nsIEventTarget::DISPATCH_NORMAL);
+  nsresult rv = mThread->Dispatch(new SendRunnable(mNfcConsumer,
+                                                   CommandOptions(options)),
+                                  nsIEventTarget::DISPATCH_NORMAL);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
   return NS_OK;
 }
 
@@ -373,6 +650,11 @@ void
 NfcService::DispatchNfcEvent(const mozilla::dom::NfcEventOptions& aOptions)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(mListener);
+
+  if (!mNfcConsumer) {
+    return; // NFC has been shutdown meanwhile; not en error
+  }
 
   mozilla::AutoSafeJSContext cx;
   JS::RootedValue val(cx);
@@ -382,49 +664,6 @@ NfcService::DispatchNfcEvent(const mozilla::dom::NfcEventOptions& aOptions)
   }
 
   mListener->OnEvent(val);
-}
-
-void
-NfcService::ReceiveSocketData(nsAutoPtr<UnixSocketBuffer>& aBuffer)
-{
-  MOZ_ASSERT(mHandler);
-  nsCOMPtr<nsIRunnable> runnable =
-    new NfcEventRunnable(mHandler, aBuffer.forget());
-  mThread->Dispatch(runnable, nsIEventTarget::DISPATCH_NORMAL);
-}
-
-void
-NfcService::OnConnectSuccess(enum SocketType aSocketType)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-
-  switch (aSocketType) {
-    case LISTEN_SOCKET: {
-        nsCString value("nfcd:-a ");
-        value.Append(mListenSocketName);
-        if (NS_WARN_IF(property_set("ctl.start", value.get()) < 0)) {
-          OnConnectError(STREAM_SOCKET);
-        }
-      }
-      break;
-    case STREAM_SOCKET:
-      /* nothing to do */
-      break;
-  }
-}
-
-void
-NfcService::OnConnectError(enum SocketType aSocketType)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-
-  Shutdown();
-}
-
-void
-NfcService::OnDisconnect(enum SocketType aSocketType)
-{
-  MOZ_ASSERT(NS_IsMainThread());
 }
 
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(NfcService,

@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -109,7 +109,7 @@ HistoryDownload.prototype = {
       this.canceled = false;
 
       // These properties may be updated if the user interface is refreshed.
-      this.exists = false;
+      this.target.exists = false;
       this.target.size = undefined;
     }
   },
@@ -1208,7 +1208,7 @@ DownloadsPlacesView.prototype = {
 
     Cc["@mozilla.org/widget/clipboardhelper;1"]
       .getService(Ci.nsIClipboardHelper)
-      .copyString(urls.join("\n"), document);
+      .copyString(urls.join("\n"));
   },
 
   _getURLFromClipboardData() {

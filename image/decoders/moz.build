@@ -30,14 +30,11 @@ UNIFIED_SOURCES += [
     'nsIconDecoder.cpp',
     'nsJPEGDecoder.cpp',
     'nsPNGDecoder.cpp',
-    'nsWEBPDecoder.cpp',
 ]
-
-FAIL_ON_WARNINGS = True
 
 # Decoders need RasterImage.h
 LOCAL_INCLUDES += [
-    '/image/src',
+    '/image',
 ]
 
 FINAL_LIBRARY = 'xul'

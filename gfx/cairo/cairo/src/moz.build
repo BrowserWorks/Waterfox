@@ -56,7 +56,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         ]
     else:
         DEFINES['CAIRO_OMIT_WIN32_PRINTING'] = True
-elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] in {'cocoa', 'uikit'}:
     EXPORTS.cairo += [
         'cairo-quartz-image.h',
         'cairo-quartz.h',
@@ -185,6 +185,8 @@ UNIFIED_SOURCES += [
     'cairo.c',
 ]
 
+ALLOW_COMPILER_WARNINGS = True
+
 FINAL_LIBRARY = 'gkmedias'
 
 DEFINES['PACKAGE_VERSION'] = '"moz"'
@@ -198,7 +200,7 @@ for var in ('MOZ_TREE_CAIRO', 'MOZ_TREE_PIXMAN'):
         DEFINES[var] = True
 
 if CONFIG['GNU_CC']:
-    DEFINES['HAVE_INTEL_ATOMIC_PRIMITIVES'] = True
+    DEFINES['HAVE_CXX11_ATOMIC_PRIMITIVES'] = True
     # We would normally use autoconf to set these up, using AC_CHECK_SIZEOF.
     # But AC_CHECK_SIZEOF requires running programs to determine the sizes,
     # and that doesn't work so well with cross-compiling.  So instead we
@@ -231,7 +233,13 @@ if CONFIG['GNU_CC']:
             '-Wno-incompatible-pointer-types',
             '-Wno-tautological-compare',
             '-Wno-tautological-constant-out-of-range-compare',
+            '-Wno-error=uninitialized',
         ]
+
+# See bug 386897.
+if CONFIG['GNU_CC'] and CONFIG['OS_TARGET'] == 'Android' and CONFIG['MOZ_OPTIMIZE']:
+    CFLAGS += ['-O2']
+    CXXFLAGS += ['-O2']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
     CFLAGS += CONFIG['MOZ_QT_CFLAGS']

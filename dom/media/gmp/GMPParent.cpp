@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "GMPParent.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsComponentManagerUtils.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIInputStream.h"
@@ -24,6 +24,7 @@
 #if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
 #include "mozilla/SandboxInfo.h"
 #endif
+#include "GMPContentParent.h"
 
 #include "mozilla/dom/CrashReporterParent.h"
 using mozilla::dom::CrashReporterParent;
@@ -42,14 +43,14 @@ namespace mozilla {
 #undef LOG
 #undef LOGD
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* GetGMPLog();
-#define LOG(level, x, ...) PR_LOG(GetGMPLog(), (level), (x, ##__VA_ARGS__))
-#define LOGD(x, ...) LOG(PR_LOG_DEBUG, "GMPParent[%p|childPid=%d] " x, this, mChildPid, ##__VA_ARGS__)
-#else
-#define LOG(level, x, ...)
-#define LOGD(x, ...)
+#define LOG(level, x, ...) MOZ_LOG(GetGMPLog(), (level), (x, ##__VA_ARGS__))
+#define LOGD(x, ...) LOG(mozilla::LogLevel::Debug, "GMPParent[%p|childPid=%d] " x, this, mChildPid, ##__VA_ARGS__)
+
+#ifdef __CLASS__
+#undef __CLASS__
 #endif
+#define __CLASS__ "GMPParent"
 
 namespace gmp {
 
@@ -63,9 +64,7 @@ GMPParent::GMPParent()
   , mGMPContentChildCount(0)
   , mAsyncShutdownRequired(false)
   , mAsyncShutdownInProgress(false)
-#ifdef PR_LOGGING
   , mChildPid(0)
-#endif
   , mHoldingSelfRef(false)
 {
   LOGD("GMPParent ctor");
@@ -77,7 +76,7 @@ GMPParent::~GMPParent()
   // Can't Close or Destroy the process here, since destruction is MainThread only
   MOZ_ASSERT(NS_IsMainThread());
   LOGD("GMPParent dtor");
-  
+
   MOZ_ASSERT(!mProcess);
 }
 
@@ -149,9 +148,7 @@ GMPParent::LoadProcess()
       return NS_ERROR_FAILURE;
     }
 
-#ifdef PR_LOGGING
     mChildPid = base::GetProcId(mProcess->GetChildProcessHandle());
-#endif
     LOGD("%s: Launched new child process", __FUNCTION__);
 
     bool opened = Open(mProcess->GetChannel(),
@@ -167,17 +164,14 @@ GMPParent::LoadProcess()
     bool ok = SendSetNodeId(mNodeId);
     if (!ok) {
       LOGD("%s: Failed to send node id to child process", __FUNCTION__);
-      mProcess->Delete();
-      mProcess = nullptr;
       return NS_ERROR_FAILURE;
     }
     LOGD("%s: Sent node id to child process", __FUNCTION__);
 
-    ok = SendStartPlugin();
+    // Intr call to block initialization on plugin load.
+    ok = CallStartPlugin();
     if (!ok) {
       LOGD("%s: Failed to send start to child process", __FUNCTION__);
-      mProcess->Delete();
-      mProcess = nullptr;
       return NS_ERROR_FAILURE;
     }
     LOGD("%s: Sent StartPlugin to child process", __FUNCTION__);
@@ -876,8 +870,7 @@ GMPParent::ReadGMPMetaData()
       }
     }
 
-    if (cap->mAPIName.EqualsLiteral(GMP_API_DECRYPTOR) ||
-        cap->mAPIName.EqualsLiteral(GMP_API_DECRYPTOR_COMPAT)) {
+    if (cap->mAPIName.EqualsLiteral(GMP_API_DECRYPTOR)) {
       mCanDecrypt = true;
 
 #if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
@@ -1070,7 +1063,7 @@ GMPParent::EnsureProcessLoaded(base::ProcessId* aID)
 bool
 GMPParent::Bridge(GMPServiceParent* aGMPServiceParent)
 {
-  if (!PGMPContent::Bridge(aGMPServiceParent, this)) {
+  if (NS_FAILED(PGMPContent::Bridge(aGMPServiceParent, this))) {
     return false;
   }
   ++mGMPContentChildCount;

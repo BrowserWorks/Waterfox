@@ -121,7 +121,7 @@ public:
                        JSContext* aCx,
                        JS::Value* aValue);
   using dom::EventTarget::GetEventHandler;
-  virtual nsIDOMWindow* GetOwnerGlobal() override
+  virtual nsIDOMWindow* GetOwnerGlobalForBindings() override
   {
     return nsPIDOMWindow::GetOuterFromCurrentInner(GetOwner());
   }
@@ -140,7 +140,12 @@ public:
   void BindToOwner(nsPIDOMWindow* aOwner);
   void BindToOwner(DOMEventTargetHelper* aOther);
   virtual void DisconnectFromOwner();                   
-  nsIGlobalObject* GetParentObject() const {
+  nsIGlobalObject* GetParentObject() const
+  {
+    return GetOwnerGlobal();
+  }
+  virtual nsIGlobalObject* GetOwnerGlobal() const override
+  {
     nsCOMPtr<nsIGlobalObject> parentObject = do_QueryReferent(mParentObject);
     return parentObject;
   }
@@ -161,6 +166,14 @@ protected:
   virtual ~DOMEventTargetHelper();
 
   nsresult WantsUntrusted(bool* aRetVal);
+
+  // If this method returns true your object is kept alive until it returns
+  // false. You can use this method instead using
+  // NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN macro.
+  virtual bool IsCertainlyAliveForCC() const
+  {
+    return false;
+  }
 
   nsRefPtr<EventListenerManager> mListenerManager;
   // Make |event| trusted and dispatch |aEvent| to |this|.

@@ -29,8 +29,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "ContentSearch",
 XPCOMUtils.defineLazyModuleGetter(this, "SelfSupportBackend",
   "resource:///modules/SelfSupportBackend.jsm");
 
+var nativeConsole = console;
+XPCOMUtils.defineLazyModuleGetter(this, "console",
+  "resource://gre/modules/devtools/Console.jsm");
+
 const SIMPLETEST_OVERRIDES =
-  ["ok", "is", "isnot", "ise", "todo", "todo_is", "todo_isnot", "info", "expectAssertions", "requestCompleteLog"];
+  ["ok", "is", "isnot", "todo", "todo_is", "todo_isnot", "info", "expectAssertions", "requestCompleteLog"];
 
 window.addEventListener("load", function testOnLoad() {
   window.removeEventListener("load", testOnLoad);
@@ -49,7 +53,7 @@ function b2gStart() {
   webNav.loadURI(url, null, null, null, null);
 }
 
-let TabDestroyObserver = {
+var TabDestroyObserver = {
   outstanding: new Set(),
   promiseResolver: null,
 
@@ -155,6 +159,11 @@ function Tester(aTests, aDumper, aCallback) {
   this._scriptLoader.loadSubScript("chrome://mochikit/content/chrome-harness.js", simpleTestScope);
   this.SimpleTest = simpleTestScope.SimpleTest;
 
+  var extensionUtilsScope = {};
+  extensionUtilsScope.SimpleTest = this.SimpleTest;
+  this._scriptLoader.loadSubScript("chrome://mochikit/content/tests/SimpleTest/ExtensionTestUtils.js", extensionUtilsScope);
+  this.ExtensionTestUtils = extensionUtilsScope.ExtensionTestUtils;
+
   this.SimpleTest.harnessParameters = gConfig;
 
   this.MemoryStats = simpleTestScope.MemoryStats;
@@ -207,6 +216,7 @@ Tester.prototype = {
   SimpleTest: {},
   Task: null,
   ContentTask: null,
+  ExtensionTestUtils: null,
   Assert: null,
 
   repeat: 0,
@@ -350,7 +360,7 @@ Tester.prototype = {
         this.dumper.structuredLogger.testEnd("browser-test.js",
                                              "FAIL",
                                              "PASS",
-                                             "No tests to run. Did you pass an invalid --test-path?");
+                                             "No tests to run. Did you pass invalid test_paths?");
       }
       this.dumper.structuredLogger.info("*** End BrowserChrome Test Results ***");
 
@@ -461,7 +471,7 @@ Tester.prototype = {
         if (this._globalProperties.indexOf(prop) == -1) {
           this._globalProperties.push(prop);
           if (this._globalPropertyWhitelist.indexOf(prop) == -1)
-            this.currentTest.addResult(new testResult(false, "leaked window property: " + prop, "", false));
+            this.currentTest.addResult(new testResult(false, "test left unexpected property on window: " + prop, "", false));
         }
       }, this);
 
@@ -469,6 +479,8 @@ Tester.prototype = {
       // for its own purposes, nulling it out it will go back to the default
       // behavior of returning the last opened popup.
       document.popupNode = null;
+
+      yield new Promise(resolve => SpecialPowers.flushPrefEnv(resolve));
 
       // Notify a long running test problem if it didn't end up in a timeout.
       if (this.currentTest.unexpectedTimeouts && !this.currentTest.timedOut) {
@@ -682,6 +694,7 @@ Tester.prototype = {
     this.currentTest.scope.ContentTask = this.ContentTask;
     this.currentTest.scope.BrowserTestUtils = this.BrowserTestUtils;
     this.currentTest.scope.TestUtils = this.TestUtils;
+    this.currentTest.scope.ExtensionTestUtils = this.ExtensionTestUtils;
     // Pass a custom report function for mochitest style reporting.
     this.currentTest.scope.Assert = new this.Assert(function(err, message, stack) {
       let res;
@@ -766,8 +779,10 @@ Tester.prototype = {
         var result = this.currentTest.scope.generatorTest();
         this.currentTest.scope.__generator = result;
         result.next();
-      } else {
+      } else if (typeof this.currentTest.scope.test == "function") {
         this.currentTest.scope.test();
+      } else {
+        throw "This test didn't call add_task, nor did it define a generatorTest() function, nor did it define a test() function, so we don't know how to run it.";
       }
     } catch (ex) {
       let isExpected = !!this.SimpleTest.isExpectingUncaughtException();
@@ -929,10 +944,6 @@ function testScope(aTester, aTest, expected) {
     self.ok(a != b, name, "Didn't expect " + a + ", but got it", false,
             Components.stack.caller);
   };
-  this.ise = function test_ise(a, b, name) {
-    self.ok(a === b, name, "Got " + a + ", strictly expected " + b, false,
-            Components.stack.caller);
-  };
   this.todo = function test_todo(condition, name, diag, stack) {
     aTest.addResult(new testResult(!condition, name, diag, true,
                                    stack ? stack : Components.stack.caller));
@@ -1080,6 +1091,7 @@ testScope.prototype = {
   ContentTask: null,
   BrowserTestUtils: null,
   TestUtils: null,
+  ExtensionTestUtils: null,
   Assert: null,
 
   /**

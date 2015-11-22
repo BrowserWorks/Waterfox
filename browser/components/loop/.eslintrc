@@ -12,16 +12,16 @@
     "browser": true,
     "mocha": true
   },
+  "extends": "eslint:recommended",
   "globals": {
     "_": false,
-    "$": false,
     "Backbone": false,
     "chai": false,
     "console": false,
-    "jQuery": false,
-    "loop": false,
-    "MozActivity": false,
+    "loop": true,
+    "mozRTCSessionDescription": false,
     "OT": false,
+    "performance": false,
     "Promise": false,
     "React": false,
     "sinon": false
@@ -33,60 +33,101 @@
     // problems they find, one at a time.
 
     // Eslint built-in rules are documented at <http://eslint.org/docs/rules/>
-    "camelcase": 0,               // TODO: Remove (use default)
-    "consistent-return": 0,       // TODO: Remove (use default)
-    "curly": 0,                   // TODO: Remove (use default)
-    "dot-notation": 0,            // TODO: Remove (use default)
-    "eol-last": 0,                // TODO: Remove (use default)
-    "eqeqeq": 0,                  // TBD. Might need to be separate for content & chrome
-    "global-strict": 0,           // Leave as zero (this will be unsupported in eslint 1.0.0)
-    "key-spacing": 0,             // TODO: Remove (use default)
-    "new-cap": 0,                 // TODO: Remove (use default)
-    "no-catch-shadow": 0,         // TODO: Remove (use default)
+    "block-spacing": [2, "always"],
+    "callback-return": 0,         // TBD
+    "camelcase": 0,               // TODO: set to 2
+    "comma-spacing": 2,
+    "computed-property-spacing": [2, "never"],
+    "consistent-return": 0,       // TODO: set to 2
+    "curly": [2, "all"],
+    "dot-location": [2, "property"],
+    "eol-last": 2,
+    "eqeqeq": [2, "smart"],
+    "key-spacing": [2, {"beforeColon": false, "afterColon": true }],
+    "linebreak-style": [2, "unix"],
+    "new-cap": 0,                 // TODO: set to 2
+    "new-parens": 2,
+    "no-alert": 2,
+    "no-array-constructor": 2,
+    "no-caller": 2,
+    "no-catch-shadow": 0,         // TODO: set to 2
+    "no-class-assign": 2,
+    "no-const-assign": 2,
     "no-console": 0,              // Leave as 0. We use console logging in content code.
-    "no-empty": 0,                // TODO: Remove (use default)
+    "no-empty": 2,
+    "no-empty-label": 2,
+    "no-eval": 2,
+    "no-extend-native": 2, // XXX
     "no-extra-bind": 0,           // Leave as 0
-    "no-extra-boolean-cast": 0,   // TODO: Remove (use default)
+    "no-extra-parens": 0,         // TODO: (bug?) [2, "functions"],
+    "no-implied-eval": 2,
+    "no-invalid-this": 0,         // TBD
+    "no-iterator": 2,
+    "no-label-var": 2,
+    "no-labels": 2,
+    "no-lone-blocks": 2,
+    "no-loop-func": 2,
     "no-multi-spaces": 0,         // TBD.
-    "no-new": 0,                  // TODO: Remove (use default)
-    "no-redeclare": 0,            // TODO: Remove (use default)
-    "no-return-assign": 0,        // TODO: Remove (use default)
-    "no-shadow": 0,               // TODO: Remove (use default)
-    "no-spaced-func": 0,          // TODO: Remove (use default)
-    "no-undef": 0,                // TODO: Remove (use default)
+    "no-multi-str": 2,
+    "no-native-reassign": 2,
+    "no-new": 2,
+    "no-new-func": 2,
+    "no-new-object": 2,
+    "no-new-wrappers": 2,
+    "no-octal-escape": 2,
+    "no-process-exit": 2,
+    "no-proto": 2,
+    "no-return-assign": 2,
+    "no-script-url": 2,
+    "no-sequences": 2,
+    "no-shadow": 2,
+    "no-shadow-restricted-names": 2,
+    "no-spaced-func": 2,
+    "no-trailing-spaces": 2,
+    "no-undef-init": 2,
     "no-underscore-dangle": 0,    // Leave as 0. Commonly used for private variables.
-    "no-unused-expressions": 0,   // TODO: Remove (use default)
-    "no-unused-vars": 0,          // TODO: Remove (use default)
-    "no-use-before-define": 0,    // TODO: Remove (use default)
-    "no-wrap-func": 0,            // TODO: Remove (use default)
-    "quotes": 0,                  // [2, "double", "avoid-escape"],
-    "space-infix-ops": 0,         // TODO: Remove (use default)
-    "space-return-throw-case": 0, // TODO: Remove (use default)
-    "strict": 0,                  // [2, "function"],
-    "yoda": 0,                    // [2, "never"],
+    "no-unexpected-multiline": 2,
+    "no-unneeded-ternary": 2,
+    "no-unused-expressions": 0,   // TODO: Set to 2
+    "no-unused-vars": 0,          // TODO: Set to 2
+    "no-use-before-define": 0,    // TODO: Set to 2
+    "no-useless-call": 2,
+    "no-with": 2,
+    "object-curly-spacing": 0,    // [2, "always"],
+    "quotes": [2, "double", "avoid-escape"],
+    "semi": 2,
+    "semi-spacing": [2, {"before": false, "after": true}],
+    "space-infix-ops": 2,
+    "space-return-throw-case": 2,
+    "space-unary-ops": [2, {"words": true, "nonwords": false}],
+    "spaced-comment": [2, "always"],
+    "strict": [2, "function"],
+    "yoda": [2, "never"],
     // eslint-plugin-react rules. These are documented at
     // <https://github.com/yannickcr/eslint-plugin-react#list-of-supported-rules>
     "react/jsx-quotes": [2, "double", "avoid-escape"],
     "react/jsx-no-undef": 2,
-    // Need to fix instances where this is failing.
-    "react/jsx-sort-props": 0,
-    "react/jsx-sort-prop-types": 0,
+    "react/jsx-sort-props": 2,
+    "react/jsx-sort-prop-types": 2,
     "react/jsx-uses-vars": 2,
+    "react/jsx-no-duplicate-props": 2,
     // Need to fix the couple of instances which don't
     // currently pass this rule.
     "react/no-did-mount-set-state": 0,
     "react/no-did-update-set-state": 2,
     "react/no-unknown-property": 2,
-    // Need to fix instances where this is currently failing
-    "react/prop-types": 0,
+    "react/prop-types": 2,
     "react/self-closing-comp": 2,
     "react/wrap-multilines": 2,
+    // We would probably want to go with a variant of never.
+    "react/jsx-curly-spacing": 0,
     // Not worth it: React is defined globally
     "react/jsx-uses-react": 0,
     "react/react-in-jsx-scope": 0,
     // These ones we don't want to ever enable
     "react/display-name": 0,
     "react/jsx-boolean-value": 0,
+    "react/no-danger": 0,
     "react/no-multi-comp": 0
   }
 }

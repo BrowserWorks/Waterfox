@@ -6,19 +6,21 @@
 
 // Tests that the Console API implements the time() and timeEnd() methods.
 
+"use strict";
+
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
-         "test/test-bug-658368-time-methods.html";
+                 "test/test-bug-658368-time-methods.html";
 
 const TEST_URI2 = "data:text/html;charset=utf-8,<script>" +
-           "console.timeEnd('bTimer');</script>";
+                  "console.timeEnd('bTimer');</script>";
 
 const TEST_URI3 = "data:text/html;charset=utf-8,<script>" +
-                       "console.time('bTimer');</script>";
+                  "console.time('bTimer');</script>";
 
 const TEST_URI4 = "data:text/html;charset=utf-8," +
-                       "<script>console.timeEnd('bTimer');</script>";
+                  "<script>console.timeEnd('bTimer');</script>";
 
-let test = asyncTest(function* () {
+var test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud1 = yield openConsole();

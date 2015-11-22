@@ -2,11 +2,14 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const TEST_URI = "data:text/html;charset=utf8,<p>test Scratchpad panel linking</p>";
+"use strict";
 
-let { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-let { Tools } = require("main");
-let { isTargetSupported } = Tools.scratchpad;
+const TEST_URI = "data:text/html;charset=utf8,<p>test Scratchpad panel " +
+                 "linking</p>";
+
+var { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
+var { Tools } = require("main");
+var { isTargetSupported } = Tools.scratchpad;
 
 Tools.scratchpad.isTargetSupported = () => true;
 

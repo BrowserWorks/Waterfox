@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 
 import org.json.JSONException;
 import org.json.JSONArray;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.GeckoProfileDirectories.NoMozillaDirectoryException;
 import org.mozilla.gecko.GeckoProfileDirectories.NoSuchProfileException;
 import org.mozilla.gecko.db.BrowserDB;
@@ -28,8 +29,8 @@ import org.mozilla.gecko.db.LocalBrowserDB;
 import org.mozilla.gecko.db.StubBrowserDB;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.mozglue.ContextUtils;
-import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.firstrun.FirstrunPane;
+import org.mozilla.gecko.RestrictedProfiles;
 import org.mozilla.gecko.util.INIParser;
 import org.mozilla.gecko.util.INISection;
 
@@ -64,6 +65,7 @@ public final class GeckoProfile {
     // Caches the guest profile dir.
     private static File sGuestDir;
     private static GeckoProfile sGuestProfile;
+    private static boolean sShouldCheckForGuestProfile = true;
 
     public static boolean sIsUsingCustomProfile;
 
@@ -239,7 +241,6 @@ public final class GeckoProfile {
     // If the directory changes, the returned GeckoProfile instance will be mutated.
     // If the factory differs, it will be *ignored*.
     public static GeckoProfile get(Context context, String profileName, File profileDir, BrowserDB.Factory dbFactory) {
-        Log.v(LOGTAG, "Fetching profile: '" + profileName + "', '" + profileDir + "'");
         if (context == null) {
             throw new IllegalArgumentException("context must be non-null");
         }
@@ -253,6 +254,8 @@ public final class GeckoProfile {
                 // We're unable to do anything sane here.
                 throw new RuntimeException(e);
             }
+        } else {
+            Log.v(LOGTAG, "Fetching profile: '" + profileName + "', '" + profileDir + "'");
         }
 
         // Actually try to look up the profile.
@@ -319,6 +322,7 @@ public final class GeckoProfile {
             // We need to force the creation of a new guest profile if we want it outside of the normal profile path,
             // otherwise GeckoProfile.getDir will try to be smart and build it for us in the normal profiles dir.
             getGuestDir(context).mkdir();
+            sShouldCheckForGuestProfile = true;
             GeckoProfile profile = getGuestProfile(context);
 
             // If we're creating this guest session over the keyguard, don't lock it.
@@ -367,10 +371,14 @@ public final class GeckoProfile {
 
     public static GeckoProfile getGuestProfile(Context context) {
         if (sGuestProfile == null) {
-            File guestDir = getGuestDir(context);
-            if (guestDir.exists()) {
-                sGuestProfile = get(context, GUEST_PROFILE, guestDir);
-                sGuestProfile.mInGuestMode = true;
+            if (sShouldCheckForGuestProfile) {
+                File guestDir = getGuestDir(context);
+                if (guestDir.exists()) {
+                    sGuestProfile = get(context, GUEST_PROFILE, guestDir);
+                    sGuestProfile.mInGuestMode = true;
+                } else {
+                    sShouldCheckForGuestProfile = false;
+                }
             }
         }
 

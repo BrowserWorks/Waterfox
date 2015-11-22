@@ -1,0 +1,90 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2015 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/de_AT.xml
+// *
+// ***************************************************************************
+de_AT{
+    ExemplarCharactersIndex{"[A Ä B C D E F G H I J K L M N O Ö P Q R S T U Ü V W X Y Z]"}
+    NumberElements{
+        latn{
+            patterns{
+                currencyFormat{"¤ #,##0.00"}
+            }
+        }
+    }
+    Version{"2.1.12.50"}
+    calendar{
+        gregorian{
+            monthNames{
+                format{
+                    abbreviated{
+                        "Jän.",
+                        "Feb.",
+                        "März",
+                        "Apr.",
+                        "Mai",
+                        "Juni",
+                        "Juli",
+                        "Aug.",
+                        "Sep.",
+                        "Okt.",
+                        "Nov.",
+                        "Dez.",
+                    }
+                    wide{
+                        "Jänner",
+                        "Februar",
+                        "März",
+                        "April",
+                        "Mai",
+                        "Juni",
+                        "Juli",
+                        "August",
+                        "September",
+                        "Oktober",
+                        "November",
+                        "Dezember",
+                    }
+                }
+                stand-alone{
+                    abbreviated{
+                        "Jän",
+                        "Feb",
+                        "Mär",
+                        "Apr",
+                        "Mai",
+                        "Jun",
+                        "Jul",
+                        "Aug",
+                        "Sep",
+                        "Okt",
+                        "Nov",
+                        "Dez",
+                    }
+                    wide{
+                        "Jänner",
+                        "Februar",
+                        "März",
+                        "April",
+                        "Mai",
+                        "Juni",
+                        "Juli",
+                        "August",
+                        "September",
+                        "Oktober",
+                        "November",
+                        "Dezember",
+                    }
+                }
+            }
+        }
+    }
+    measurementSystemNames{
+        UK{"Englisches Maßsystem"}
+        US{"Angloamerikanisches Maßsystem"}
+        metric{"Internationales Maßsystem (SI)"}
+    }
+}

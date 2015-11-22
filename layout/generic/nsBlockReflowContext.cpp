@@ -136,6 +136,10 @@ nsBlockReflowContext::ComputeCollapsedBStartMargin(const nsHTMLReflowState& aRS,
             line->SetHasClearance();
             line->MarkDirty();
             dirtiedLine = true;
+            if (!setBlockIsEmpty && aBlockIsEmpty) {
+              setBlockIsEmpty = true;
+              *aBlockIsEmpty = false;
+            }
             goto done;
           }
           // Here is where we recur. Now that we have determined that a
@@ -164,7 +168,8 @@ nsBlockReflowContext::ComputeCollapsedBStartMargin(const nsHTMLReflowState& aRS,
                                                availSpace);
             // Record that we're being optimistic by assuming the kid
             // has no clearance
-            if (kid->StyleDisplay()->mBreakType != NS_STYLE_CLEAR_NONE) {
+            if (kid->StyleDisplay()->mBreakType != NS_STYLE_CLEAR_NONE ||
+                !nsBlockFrame::BlockCanIntersectFloats(kid)) {
               *aMayNeedRetry = true;
             }
             if (ComputeCollapsedBStartMargin(innerReflowState, aMargin,
@@ -228,7 +233,7 @@ nsBlockReflowContext::ReflowBlock(const LogicalRect&  aSpace,
 {
   mFrame = aFrameRS.frame;
   mWritingMode = aState.mReflowState.GetWritingMode();
-  mContainerWidth = aState.ContainerWidth();
+  mContainerSize = aState.ContainerSize();
   mSpace = aSpace;
 
   if (!aIsAdjacentWithBStart) {
@@ -256,6 +261,10 @@ nsBlockReflowContext::ReflowBlock(const LogicalRect&  aSpace,
         aFrameRS.AvailableBSize() -= mBStartMargin.get() + aClearance;
       }
     }
+  } else {
+    // nsBlockFrame::ReflowBlock might call us multiple times with
+    // *different* values of aApplyBStartMargin.
+    mBStartMargin.Zero();
   }
 
   nscoord tI = 0, tB = 0;
@@ -280,7 +289,7 @@ nsBlockReflowContext::ReflowBlock(const LogicalRect&  aSpace,
                       usedMargin.IStartEnd(mWritingMode),
                       mSpace.BSize(mWritingMode) -
                       usedMargin.BStartEnd(mWritingMode));
-    tI = space.LineLeft(mWritingMode, mContainerWidth);
+    tI = space.LineLeft(mWritingMode, mContainerSize);
     tB = mBCoord;
 
     if ((mFrame->GetStateBits() & NS_BLOCK_FLOAT_MGR) == 0)
@@ -299,8 +308,9 @@ nsBlockReflowContext::ReflowBlock(const LogicalRect&  aSpace,
 
 #ifdef DEBUG
   if (!NS_INLINE_IS_BREAK_BEFORE(aFrameReflowStatus)) {
-    if (CRAZY_SIZE(mMetrics.ISize(mWritingMode)) ||
-        CRAZY_SIZE(mMetrics.BSize(mWritingMode))) {
+    if ((CRAZY_SIZE(mMetrics.ISize(mWritingMode)) ||
+         CRAZY_SIZE(mMetrics.BSize(mWritingMode))) &&
+        !mFrame->GetParent()->IsCrazySizeAssertSuppressed()) {
       printf("nsBlockReflowContext: ");
       nsFrame::ListTag(stdout, mFrame);
       printf(" metrics=%d,%d!\n",
@@ -430,22 +440,23 @@ nsBlockReflowContext::PlaceBlock(const nsHTMLReflowState&  aReflowState,
   aLine->SetBounds(mWritingMode,
                    mICoord, mBCoord - backupContainingBlockAdvance,
                    mMetrics.ISize(mWritingMode), mMetrics.BSize(mWritingMode),
-                   mContainerWidth);
+                   mContainerSize);
 
   WritingMode frameWM = mFrame->GetWritingMode();
   LogicalPoint logPos =
     LogicalPoint(mWritingMode, mICoord, mBCoord).
-      ConvertTo(frameWM, mWritingMode, mContainerWidth - mMetrics.Width());
+      ConvertTo(frameWM, mWritingMode,
+                mContainerSize - mMetrics.PhysicalSize());
 
   // ApplyRelativePositioning in right-to-left writing modes needs to
   // know the updated frame width
   mFrame->SetSize(mWritingMode, mMetrics.Size(mWritingMode));
-  aReflowState.ApplyRelativePositioning(&logPos, mContainerWidth);
+  aReflowState.ApplyRelativePositioning(&logPos, mContainerSize);
 
   // Now place the frame and complete the reflow process
   nsContainerFrame::FinishReflowChild(mFrame, mPresContext, mMetrics,
                                       &aReflowState, frameWM, logPos,
-                                      mContainerWidth, 0);
+                                      mContainerSize, 0);
 
   aOverflowAreas = mMetrics.mOverflowAreas + mFrame->GetPosition();
 

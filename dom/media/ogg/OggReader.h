@@ -14,15 +14,11 @@
 #include <vorbis/codec.h>
 #endif
 #include "MediaDecoderReader.h"
+#include "MediaResource.h"
 #include "OggCodecState.h"
 #include "VideoUtils.h"
 #include "mozilla/Monitor.h"
-
-namespace mozilla {
-namespace dom {
-class TimeRanges;
-}
-}
+#include "OggDecoder.h"
 
 namespace mozilla {
 
@@ -62,7 +58,7 @@ public:
   // until one with a granulepos has been captured, to ensure that all packets
   // read have valid time info.
   virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
-                                  int64_t aTimeThreshold) override;
+                                int64_t aTimeThreshold) override;
 
   virtual bool HasAudio() override {
     return (mVorbisState != 0 && mVorbisState->mActive) ||
@@ -77,7 +73,7 @@ public:
                                 MetadataTags** aTags) override;
   virtual nsRefPtr<SeekPromise>
   Seek(int64_t aTime, int64_t aEndTime) override;
-  virtual nsresult GetBuffered(dom::TimeRanges* aBuffered) override;
+  virtual media::TimeIntervals GetBuffered() override;
 
   virtual bool IsMediaSeekable() override;
 
@@ -87,7 +83,8 @@ private:
   // we started playback at the current position. Returns the first video
   // frame, if we have video.
   VideoData* FindStartTime(int64_t& aOutStartTime);
-  AudioData* DecodeToFirstAudioData();
+  AudioData* SyncDecodeToFirstAudioData();
+  VideoData* SyncDecodeToFirstVideoData();
 
   // This monitor should be taken when reading or writing to mIsChained.
   ReentrantMonitor mMonitor;
@@ -320,6 +317,8 @@ private:
 
   // Number of audio frames decoded so far.
   int64_t mDecodedAudioFrames;
+
+  MediaResourceIndex mResource;
 };
 
 } // namespace mozilla

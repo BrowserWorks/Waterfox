@@ -121,13 +121,9 @@ public:
 
 #ifdef MOZ_NUWA_PROCESS
     if (IsNuwaProcess()) {
-      NS_ASSERTION(NuwaMarkCurrentThread != nullptr,
-                   "NuwaMarkCurrentThread is undefined!");
       NuwaMarkCurrentThread(nullptr, nullptr);
     }
 #endif
-
-    NS_SetIgnoreStatusOfCurrentThread();
 
     int lowMemFd = open("/sys/kernel/mm/lowmemkiller/notify_trigger_active",
                         O_RDONLY | O_CLOEXEC);
@@ -276,7 +272,7 @@ private:
 
 NS_IMPL_ISUPPORTS(MemoryPressureWatcher, nsIRunnable, nsIObserver);
 
-} // anonymous namespace
+} // namespace
 
 namespace mozilla {
 

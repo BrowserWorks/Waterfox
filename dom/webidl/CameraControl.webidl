@@ -109,6 +109,12 @@ dictionary CameraStartRecordingOptions
      will be left as-is on stopRecording(). If the camera does not
      support this setting, it will be ignored. */
   boolean autoEnableLowLightTorch = false;
+
+  /* If given, a poster JPG will be created from the recording and saved
+     at the given path. PosterCreated or PosterFailed recording state
+     changes will indicate whether or not it was created. */
+  DOMString posterFilepath = "";
+  DeviceStorage? posterStorageArea = null;
 };
 
 /*
@@ -243,7 +249,19 @@ interface CameraControl : MediaStream
      recording limits (see CameraStartRecordingOptions) was reached.
 
      event type is CameraStateChangeEvent where:
-         'newState' is the new recorder state */
+         'newState' is one of the following states:
+             'Started' if the recording has begun capturing data
+             'Stopped' when the recording has completed (success and failure)
+             'Paused' if the recording is paused
+             'Resumed' if the recording is resumed after pausing
+             'PosterCreated' if a poster was requested and created
+             'PosterFailed' if a poster was requested and failed to create
+             'FileSizeLimitReached' if stopped due to file size limit
+             'VideoLengthLimitReached' if stopped due to a time limit
+             'TrackCompleted' if audio or video track complete when stopping
+             'TrackFailed' if audio or video track incomplete when stopping
+             'MediaRecorderFailed' if failed due to local error
+             'MediaServerFailed' if failed due to media server */
   attribute EventHandler    onrecorderstatechange;
 
   /* the event dispatched when the viewfinder stops or starts,
@@ -340,9 +358,20 @@ interface CameraControl : MediaStream
                                DeviceStorage storageArea,
                                DOMString filename);
 
-  /* stop precording video. */
+  /* stop recording video. */
   [Throws]
   void stopRecording();
+
+  /* pause recording video. The camera remains active but audio and video
+     frames are no longer saved in the output file. If called when not
+     recording or already paused, it fails silently. */
+  [Throws]
+  void pauseRecording();
+
+  /* resume recording video while paused. If called when not recording or
+     not paused, it fails silently. */
+  [Throws]
+  void resumeRecording();
 
   /* call in or after the takePicture() onSuccess callback to
      resume the camera preview stream. */

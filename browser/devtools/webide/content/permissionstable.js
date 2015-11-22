@@ -4,7 +4,7 @@
 
 const Cu = Components.utils;
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
-const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools;
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const {AppManager} = require("devtools/webide/app-manager");
 const {Connection} = require("devtools/client/connection-manager");
 
@@ -59,7 +59,7 @@ function generateFields(json) {
   }
 }
 
-let getRawPermissionsTablePromise; // Used by tests
+var getRawPermissionsTablePromise; // Used by tests
 function BuildUI() {
   let table = document.querySelector("table");
   let lines = table.querySelectorAll(".line");

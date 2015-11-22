@@ -16,6 +16,7 @@
 #include "nsStringStream.h"
 #include "nsNetUtil.h"
 
+#include "nsIStreamListener.h"
 #include "nsIComponentManager.h"
 #include "nsIServiceManager.h"
 #include "nsIURI.h"
@@ -49,6 +50,7 @@
 #include "nsSandboxFlags.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "nsILoadInfo.h"
+#include "nsContentSecurityManager.h"
 
 #include "mozilla/ipc/URIUtils.h"
 
@@ -176,27 +178,15 @@ nsresult nsJSThunk::EvaluateScript(nsIChannel *aChannel,
     rv = principal->GetCsp(getter_AddRefs(csp));
     NS_ENSURE_SUCCESS(rv, rv);
     if (csp) {
-        bool allowsInline = true;
-        bool reportViolations = false;
-        rv = csp->GetAllowsInlineScript(&reportViolations, &allowsInline);
-        NS_ENSURE_SUCCESS(rv, rv);
-
-        if (reportViolations) {
-            // gather information to log with violation report
-            nsCOMPtr<nsIURI> uri;
-            principal->GetURI(getter_AddRefs(uri));
-            nsAutoCString asciiSpec;
-            uri->GetAsciiSpec(asciiSpec);
-            csp->LogViolationDetails(nsIContentSecurityPolicy::VIOLATION_TYPE_INLINE_SCRIPT,
-                                     NS_ConvertUTF8toUTF16(asciiSpec),
-                                     NS_ConvertUTF8toUTF16(mURL),
-                                     0,
-                                     EmptyString(),
-                                     EmptyString());
-        }
+        bool allowsInlineScript = true;
+        rv = csp->GetAllowsInline(nsIContentPolicy::TYPE_SCRIPT,
+                                  EmptyString(), // aNonce
+                                  EmptyString(), // aContent
+                                  0,             // aLineNumber
+                                  &allowsInlineScript);
 
         //return early if inline scripts are not allowed
-        if (!allowsInline) {
+        if (!allowsInlineScript) {
           return NS_ERROR_DOM_RETVAL_UNDEFINED;
         }
     }
@@ -249,8 +239,13 @@ nsresult nsJSThunk::EvaluateScript(nsIChannel *aChannel,
 
     // New script entry point required, due to the "Create a script" step of
     // http://www.whatwg.org/specs/web-apps/current-work/#javascript-protocol
+    nsAutoMicroTask mt;
     AutoEntryScript entryScript(innerGlobal, "javascript: URI", true,
                                 scriptContext->GetNativeContext());
+    // We want to make sure we report any exceptions that happen before we
+    // return, since whatever happens inside our execution shouldn't affect any
+    // other scripts that might happen to be running.
+    entryScript.TakeOwnershipOfErrorReporting();
     JSContext* cx = entryScript.cx();
     JS::Rooted<JSObject*> globalJSObject(cx, innerGlobal->GetGlobalJSObject());
     NS_ENSURE_TRUE(globalJSObject, NS_ERROR_UNEXPECTED);
@@ -278,20 +273,13 @@ nsresult nsJSThunk::EvaluateScript(nsIChannel *aChannel,
     rv = nsJSUtils::EvaluateString(cx, NS_ConvertUTF8toUTF16(script),
                                    globalJSObject, options, evalOptions, &v);
 
-    // If there's an error on cx as a result of that call, report
-    // it now -- either we're just running under the event loop,
-    // so we shouldn't propagate JS exceptions out of here, or we
-    // can't be sure that our caller is JS (and if it's not we'll
-    // lose the error), or it might be JS that then proceeds to
-    // cause an error of its own (which will also make us lose
-    // this error).
-    ::JS_ReportPendingException(cx);
-
     if (NS_FAILED(rv) || !(v.isString() || v.isUndefined())) {
         return NS_ERROR_MALFORMED_URI;
     } else if (v.isUndefined()) {
         return NS_ERROR_DOM_RETVAL_UNDEFINED;
     } else {
+        MOZ_ASSERT(rv != NS_SUCCESS_DOM_SCRIPT_EVALUATION_THREW,
+                   "How did we get a non-undefined return value?");
         nsAutoJSString result;
         if (!result.init(cx, v)) {
             return NS_ERROR_OUT_OF_MEMORY;
@@ -554,8 +542,26 @@ nsJSChannel::Open(nsIInputStream **aResult)
 }
 
 NS_IMETHODIMP
+nsJSChannel::Open2(nsIInputStream** aStream)
+{
+    nsCOMPtr<nsIStreamListener> listener;
+    nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
+    NS_ENSURE_SUCCESS(rv, rv);
+    return Open(aStream);
+}
+
+NS_IMETHODIMP
 nsJSChannel::AsyncOpen(nsIStreamListener *aListener, nsISupports *aContext)
 {
+#ifdef DEBUG
+    {
+    nsCOMPtr<nsILoadInfo> loadInfo = nsIChannel::GetLoadInfo();
+    MOZ_ASSERT(!loadInfo || loadInfo->GetSecurityMode() == 0 ||
+               loadInfo->GetInitialSecurityCheckDone(),
+               "security flags in loadInfo but asyncOpen2() not called");
+    }
+#endif
+
     NS_ENSURE_ARG(aListener);
 
     // First make sure that we have a usable inner window; we'll want to make
@@ -662,6 +668,15 @@ nsJSChannel::AsyncOpen(nsIStreamListener *aListener, nsISupports *aContext)
         CleanupStrongRefs();
     }
     return rv;
+}
+
+NS_IMETHODIMP
+nsJSChannel::AsyncOpen2(nsIStreamListener *aListener)
+{
+  nsCOMPtr<nsIStreamListener> listener = aListener;
+  nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return AsyncOpen(listener, nullptr);
 }
 
 void

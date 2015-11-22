@@ -20,6 +20,7 @@ this.DEBUG_ALL = false;
 
 // Set individually to debug specific layers
 this.DEBUG_CONNECTOR = DEBUG_ALL || false;
+this.DEBUG_ACE = DEBUG_ALL || false ;
 this.DEBUG_SE = DEBUG_ALL || false ;
 
 // Maximun logical channels per session.
@@ -58,6 +59,7 @@ this.ERROR_INVALIDCHANNEL     = "SEInvalidChannelError";
 this.ERROR_INVALIDAPPLICATION = "SEInvalidApplicationError";
 this.ERROR_GENERIC            = "SEGenericError";
 this.ERROR_NOTPRESENT         = "SENotPresentError";
+this.ERROR_ILLEGALPARAMETER   = "SEIllegalParameterError";
 
 this.TYPE_UICC = "uicc";
 this.TYPE_ESE = "eSE";

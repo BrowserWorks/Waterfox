@@ -146,7 +146,7 @@ CallProgressSocket.prototype = {
       return;
     }
 
-    if (msg.messageType && msg.messageType === 'hello') {
+    if (msg.messageType && msg.messageType === "hello") {
       this._handshakeComplete = true;
       this._onSuccess();
     }
@@ -192,7 +192,7 @@ CallProgressSocket.prototype = {
  * and register with the push server. Then we need to take the result of that
  * and register with the Loop server.
  */
-let LoopCallsInternal = {
+var LoopCallsInternal = {
   mocks: {
     webSocket: undefined
   },
@@ -209,11 +209,6 @@ let LoopCallsInternal = {
     if (MozLoopService.doNotDisturb) {
       return;
     }
-
-    // We set this here as it is assumed that once the user receives an incoming
-    // call, they'll have had enough time to see the terms of service. See
-    // bug 1046039 for background.
-    Services.prefs.setCharPref("loop.seenToS", "seen");
 
     // Request the information on the new call(s) associated with this version.
     // The registered FxA session is checked first, then the anonymous session.
@@ -324,8 +319,9 @@ let LoopCallsInternal = {
    * @return true if the call is opened, false if it is not opened (i.e. busy)
    */
   startDirectCall: function(contact, callType) {
-    if ("id" in this.conversationInProgress)
+    if ("id" in this.conversationInProgress) {
       return false;
+    }
 
     var callData = {
       contact: contact,

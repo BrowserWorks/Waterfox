@@ -23,6 +23,8 @@
 #include "nsEscape.h"
 #include "nsIURL.h"
 #include "nsNetUtil.h"
+#include "mozilla/Services.h"
+#include "nsIOutputStream.h"
 #include "nsXPCOMStrings.h"
 #include "nscore.h"
 #include "nsDirectoryServiceDefs.h"
@@ -72,14 +74,14 @@ nsresult nsDataObj::CStream::Init(nsIURI *pSourceURI,
   rv = NS_NewChannel(getter_AddRefs(mChannel),
                      pSourceURI,
                      aRequestingNode,
-                     nsILoadInfo::SEC_NORMAL,
+                     nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
                      nsIContentPolicy::TYPE_OTHER,
                      nullptr,   // loadGroup
                      nullptr,   // aCallbacks
                      nsIRequest::LOAD_FROM_CACHE);
 
   NS_ENSURE_SUCCESS(rv, rv);
-  rv = mChannel->AsyncOpen(this, nullptr);
+  rv = mChannel->AsyncOpen2(this);
   NS_ENSURE_SUCCESS(rv, rv);
   return NS_OK;
 }
@@ -546,7 +548,7 @@ STDMETHODIMP nsDataObj::GetData(LPFORMATETC aFormat, LPSTGMEDIUM pSTM)
           return GetFileContents ( *aFormat, *pSTM );
         if ( format == PreferredDropEffect )
           return GetPreferredDropEffect( *aFormat, *pSTM );
-        //PR_LOG(gWindowsLog, PR_LOG_ALWAYS, 
+        //MOZ_LOG(gWindowsLog, LogLevel::Info, 
         //       ("***** nsDataObj::GetData - Unknown format %u\n", format));
         return GetText(df, *aFormat, *pSTM);
       } //switch

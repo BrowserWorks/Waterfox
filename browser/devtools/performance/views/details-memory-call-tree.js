@@ -6,7 +6,7 @@
 /**
  * CallTree view containing memory allocation sites, controlled by DetailsView.
  */
-let MemoryCallTreeView = Heritage.extend(DetailsSubview, {
+var MemoryCallTreeView = Heritage.extend(DetailsSubview, {
 
   rerenderPrefs: [
     "invert-call-tree"
@@ -88,16 +88,20 @@ let MemoryCallTreeView = Heritage.extend(DetailsSubview, {
       inverted: inverted,
       // Root nodes are hidden in inverted call trees.
       hidden: inverted,
-      // Memory call trees should be sorted by allocations.
-      sortingPredicate: (a, b) => a.frame.allocations < b.frame.allocations ? 1 : -1,
       // Call trees should only auto-expand when not inverted. Passing undefined
       // will default to the CALL_TREE_AUTO_EXPAND depth.
       autoExpandDepth: inverted ? 0 : undefined,
       // Some cells like the time duration and cost percentage don't make sense
       // for a memory allocations call tree.
       visibleCells: {
-        allocations: true,
-        selfAllocations: true,
+        selfCount: true,
+        count: true,
+        selfSize: true,
+        size: true,
+        selfCountPercentage: true,
+        countPercentage: true,
+        selfSizePercentage: true,
+        sizePercentage: true,
         function: true
       }
     });
@@ -118,3 +122,5 @@ let MemoryCallTreeView = Heritage.extend(DetailsSubview, {
 
   toString: () => "[object MemoryCallTreeView]"
 });
+
+EventEmitter.decorate(MemoryCallTreeView);

@@ -13,6 +13,7 @@
 #include "Layers.h"                     // for Layer, ContainerLayer, etc
 #include "ShadowLayerParent.h"          // for ShadowLayerParent
 #include "CompositableTransactionParent.h"  // for EditReplyVector
+#include "gfxPrefs.h"
 #include "mozilla/gfx/BasePoint3D.h"    // for BasePoint3D
 #include "mozilla/layers/CanvasLayerComposite.h"
 #include "mozilla/layers/ColorLayerComposite.h"
@@ -50,7 +51,7 @@ using mozilla::layout::RenderFrameParent;
 namespace mozilla {
 namespace gfx {
 class VRHMDInfo;
-}
+} // namespace gfx
 
 namespace layers {
 
@@ -196,11 +197,12 @@ LayerTransactionParent::RecvUpdateNoSwap(InfallibleTArray<Edit>&& cset,
                                          const bool& scheduleComposite,
                                          const uint32_t& paintSequenceNumber,
                                          const bool& isRepeatTransaction,
-                                         const mozilla::TimeStamp& aTransactionStart)
+                                         const mozilla::TimeStamp& aTransactionStart,
+                                         const int32_t& aPaintSyncId)
 {
   return RecvUpdate(Move(cset), aTransactionId, targetConfig, Move(aPlugins), isFirstPaint,
       scheduleComposite, paintSequenceNumber, isRepeatTransaction,
-      aTransactionStart, nullptr);
+      aTransactionStart, aPaintSyncId, nullptr);
 }
 
 class MOZ_STACK_CLASS AutoLayerTransactionParentAsyncMessageSender
@@ -228,6 +230,7 @@ LayerTransactionParent::RecvUpdate(InfallibleTArray<Edit>&& cset,
                                    const uint32_t& paintSequenceNumber,
                                    const bool& isRepeatTransaction,
                                    const mozilla::TimeStamp& aTransactionStart,
+                                   const int32_t& aPaintSyncId,
                                    InfallibleTArray<EditReply>* reply)
 {
   profiler_tracing("Paint", "LayerTransaction", TRACING_INTERVAL_START);
@@ -242,11 +245,6 @@ LayerTransactionParent::RecvUpdate(InfallibleTArray<Edit>&& cset,
 
   if (mDestroyed || !layer_manager() || layer_manager()->IsDestroyed()) {
     return true;
-  }
-
-  if (mLayerManager && mLayerManager->GetCompositor() &&
-      !targetConfig.naturalBounds().IsEmpty()) {
-    mLayerManager->GetCompositor()->SetScreenRotation(targetConfig.rotation());
   }
 
   EditReplyVector replyv;
@@ -331,8 +329,11 @@ LayerTransactionParent::RecvUpdate(InfallibleTArray<Edit>&& cset,
       layer->SetBaseTransform(common.transform().value());
       layer->SetPostScale(common.postXScale(), common.postYScale());
       layer->SetIsFixedPosition(common.isFixedPosition());
-      layer->SetFixedPositionAnchor(common.fixedPositionAnchor());
-      layer->SetFixedPositionMargins(common.fixedPositionMargin());
+      if (common.isFixedPosition()) {
+        layer->SetFixedPositionData(common.fixedPositionScrollContainerId(),
+                                    common.fixedPositionAnchor(),
+                                    common.isClipFixed());
+      }
       if (common.isStickyPosition()) {
         layer->SetStickyPositionData(common.stickyScrollContainerId(),
                                      common.stickyScrollRangeOuter(),
@@ -351,6 +352,14 @@ LayerTransactionParent::RecvUpdate(InfallibleTArray<Edit>&& cset,
       layer->SetAnimations(common.animations());
       layer->SetInvalidRegion(common.invalidRegion());
       layer->SetFrameMetrics(common.metrics());
+      layer->SetDisplayListLog(common.displayListLog().get());
+
+      nsTArray<nsRefPtr<Layer>> maskLayers;
+      for (size_t i = 0; i < common.ancestorMaskLayersParent().Length(); i++) {
+        Layer* maskLayer = cast(common.ancestorMaskLayersParent().ElementAt(i))->AsLayer();
+        maskLayers.AppendElement(maskLayer);
+      }
+      layer->SetAncestorMaskLayers(maskLayers);
 
       typedef SpecificLayerAttributes Specific;
       const SpecificLayerAttributes& specific = attrs.specific();
@@ -574,7 +583,6 @@ LayerTransactionParent::RecvUpdate(InfallibleTArray<Edit>&& cset,
       if (!Attach(cast(op.layerParent()), host, true)) {
         return false;
       }
-
       host->SetCompositorID(mLayerManager->GetCompositor()->GetCompositorID());
       break;
     }
@@ -585,11 +593,12 @@ LayerTransactionParent::RecvUpdate(InfallibleTArray<Edit>&& cset,
 
   mShadowLayersManager->ShadowLayersUpdated(this, aTransactionId, targetConfig,
                                             aPlugins, isFirstPaint, scheduleComposite,
-                                            paintSequenceNumber, isRepeatTransaction);
+                                            paintSequenceNumber, isRepeatTransaction,
+                                            aPaintSyncId);
 
   {
     AutoResolveRefLayers resolve(mShadowLayersManager->GetCompositionManager(this));
-    layer_manager()->EndTransaction(nullptr, nullptr, LayerManager::END_NO_IMMEDIATE_REDRAW);
+    layer_manager()->EndTransaction(TimeStamp(), LayerManager::END_NO_IMMEDIATE_REDRAW);
   }
 
   if (reply) {
@@ -780,6 +789,29 @@ LayerTransactionParent::RecvSetAsyncScrollOffset(const FrameMetrics::ViewID& aSc
     return false;
   }
   controller->SetTestAsyncScrollOffset(CSSPoint(aX, aY));
+  return true;
+}
+
+bool
+LayerTransactionParent::RecvSetAsyncZoom(const FrameMetrics::ViewID& aScrollID,
+                                         const float& aValue)
+{
+  if (mDestroyed || !layer_manager() || layer_manager()->IsDestroyed()) {
+    return false;
+  }
+
+  AsyncPanZoomController* controller = GetAPZCForViewID(mRoot, aScrollID);
+  if (!controller) {
+    return false;
+  }
+  controller->SetTestAsyncZoom(LayerToParentLayerScale(aValue));
+  return true;
+}
+
+bool
+LayerTransactionParent::RecvFlushApzRepaints()
+{
+  mShadowLayersManager->FlushApzRepaints(this);
   return true;
 }
 

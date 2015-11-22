@@ -11,8 +11,6 @@
 
 #include "base/message_loop.h"
 #include "nsAutoPtr.h"
-#include "nsTArray.h"
-#include "nsThreadUtils.h"
 
 namespace mozilla {
 namespace ipc {
@@ -109,15 +107,38 @@ public:
   }
 
 protected:
+  UnixSocketBuffer();
 
-  /* This constructor copies aData of aSize bytes length into the
-   * new instance of |UnixSocketBuffer|.
+  /**
+   * Sets the raw memory. The caller is responsible for freeing
+   * this memory.
+   *
+   * @param aData A pointer to the buffer's raw memory.
+   * @param aOffset The start of valid bytes in |aData|.
+   * @param aSize The number of valid bytes in |aData|.
+   * @param aAvailableSpace The number of bytes in |aData|.
    */
-  UnixSocketBuffer(const void* aData, size_t aSize);
+  void ResetBuffer(uint8_t* aData,
+                   size_t aOffset, size_t aSize, size_t aAvailableSpace)
+  {
+    MOZ_ASSERT(aData || !aAvailableSpace);
+    MOZ_ASSERT((aOffset + aSize) <= aAvailableSpace);
 
-  /* This constructor reserves aAvailableSpace bytes of space.
+    mOffset = aOffset;
+    mSize = aSize;
+    mAvailableSpace = aAvailableSpace;
+    mData = aData;
+  }
+
+  /**
+   * Retrieves the memory buffer.
+   *
+   * @return A pointer to the buffer's raw memory.
    */
-  UnixSocketBuffer(size_t aAvailableSpace);
+  uint8_t* GetBuffer()
+  {
+    return mData;
+  }
 
   size_t GetLeadingSpace() const
   {
@@ -160,7 +181,7 @@ private:
   size_t mSize;
   size_t mOffset;
   size_t mAvailableSpace;
-  nsAutoArrayPtr<uint8_t> mData;
+  uint8_t* mData;
 };
 
 //
@@ -176,6 +197,7 @@ private:
 class UnixSocketIOBuffer : public UnixSocketBuffer
 {
 public:
+  UnixSocketIOBuffer();
   virtual ~UnixSocketIOBuffer();
 
   /**
@@ -190,17 +212,6 @@ public:
    * is the number of bytes written, or a negative value on error.
    */
   virtual ssize_t Send(int aFd) = 0;
-
-protected:
-
-  /* This constructor copies aData of aSize bytes length into the
-   * new instance of |UnixSocketIOBuffer|.
-   */
-  UnixSocketIOBuffer(const void* aData, size_t aSize);
-
-  /* This constructor reserves aAvailableSpace bytes of space.
-   */
-  UnixSocketIOBuffer(size_t aAvailableSpace);
 };
 
 //
@@ -210,15 +221,27 @@ protected:
 class UnixSocketRawData final : public UnixSocketIOBuffer
 {
 public:
-  /* This constructor copies aData of aSize bytes length into the
+  /**
+   * This constructor copies aData of aSize bytes length into the
    * new instance of |UnixSocketRawData|.
+   *
+   * @param aData The buffer to copy.
+   * @param aSize The number of bytes in |aData|.
    */
   UnixSocketRawData(const void* aData, size_t aSize);
 
-  /* This constructor reserves aSize bytes of space. Currently
+  /**
+   * This constructor reserves aSize bytes of space. Currently
    * it's only possible to fill this buffer by calling |Receive|.
+   *
+   * @param aSize The number of bytes to allocate.
    */
   UnixSocketRawData(size_t aSize);
+
+  /**
+   * The destructor releases the buffer's raw memory.
+   */
+  ~UnixSocketRawData();
 
   /**
    * Receives data from aFd at the end of the buffer. The returned value
@@ -256,23 +279,23 @@ public:
 
   /**
    * Queues the internal representation of socket for deletion. Can be called
-   * from main thread.
+   * from consumer thread.
    */
-  virtual void CloseSocket() = 0;
+  virtual void Close() = 0;
 
   /**
    * Callback for socket connect/accept success. Called after connect/accept has
-   * finished. Will be run on main thread, before any reads take place.
+   * finished. Will be run on consumer thread before any reads take place.
    */
   virtual void OnConnectSuccess() = 0;
 
   /**
-   * Callback for socket connect/accept error. Will be run on main thread.
+   * Callback for socket connect/accept error. Will be run on consumer thread.
    */
   virtual void OnConnectError() = 0;
 
   /**
-   * Callback for socket disconnect. Will be run on main thread.
+   * Callback for socket disconnect. Will be run on consumer thread.
    */
   virtual void OnDisconnect() = 0;
 
@@ -340,7 +363,7 @@ public:
    *
    * @return True if the socket class has been shut down, false otherwise.
    */
-  virtual bool IsShutdownOnMainThread() const = 0;
+  virtual bool IsShutdownOnConsumerThread() const = 0;
 
   /**
    * Signals to the socket I/O classes that it has been shut down.
@@ -351,24 +374,40 @@ public:
    * Signals to the socket I/O classes that the socket class has been
    * shut down.
    */
-  virtual void ShutdownOnMainThread() = 0;
+  virtual void ShutdownOnConsumerThread() = 0;
+
+  /**
+   * Returns the consumer thread.
+   *
+   * @return A pointer to the consumer thread.
+   */
+  MessageLoop* GetConsumerThread() const;
+
+  /**
+   * @return True if the current thread is the consumer thread, or false
+   *         otherwise.
+   */
+  bool IsConsumerThread() const;
 
 protected:
-  SocketIOBase();
+  SocketIOBase(MessageLoop* aConsumerLoop);
+
+private:
+  MessageLoop* mConsumerLoop;
 };
 
 //
-// Socket I/O runnables
+// Socket tasks
 //
 
-/* |SocketIORunnable| is a runnable for sending a message from
- * the I/O thread to the main thread.
+/* |SocketTask| is a task for sending a message from
+ * the I/O thread to the consumer thread.
  */
 template <typename T>
-class SocketIORunnable : public nsRunnable
+class SocketTask : public Task
 {
 public:
-  virtual ~SocketIORunnable()
+  virtual ~SocketTask()
   { }
 
   T* GetIO() const
@@ -377,8 +416,8 @@ public:
   }
 
 protected:
-  SocketIORunnable(T* aIO)
-  : mIO(aIO)
+  SocketTask(T* aIO)
+    : mIO(aIO)
   {
     MOZ_ASSERT(aIO);
   }
@@ -388,10 +427,10 @@ private:
 };
 
 /**
- * |SocketIOEventRunnable| reports the connection state on the
- * I/O thread back to the main thread.
+ * |SocketEventTask| reports the connection state on the
+ * I/O thread back to the consumer thread.
  */
-class SocketIOEventRunnable final : public SocketIORunnable<SocketIOBase>
+class SocketEventTask final : public SocketTask<SocketIOBase>
 {
 public:
   enum SocketEvent {
@@ -400,36 +439,38 @@ public:
     DISCONNECT
   };
 
-  SocketIOEventRunnable(SocketIOBase* aIO, SocketEvent aEvent);
+  SocketEventTask(SocketIOBase* aIO, SocketEvent aEvent);
+  ~SocketEventTask();
 
-  NS_IMETHOD Run() override;
+  void Run() override;
 
 private:
   SocketEvent mEvent;
 };
 
 /**
- * |SocketIORequestClosingRunnable| closes an instance of |SocketBase|
- * to the main thread.
+ * |SocketRequestClosingTask| closes an instance of |SocketBase|
+ * on the consumer thread.
  */
-class SocketIORequestClosingRunnable final
-  : public SocketIORunnable<SocketIOBase>
+class SocketRequestClosingTask final : public SocketTask<SocketIOBase>
 {
 public:
-  SocketIORequestClosingRunnable(SocketIOBase* aIO);
+  SocketRequestClosingTask(SocketIOBase* aIO);
+  ~SocketRequestClosingTask();
 
-  NS_IMETHOD Run() override;
+  void Run() override;
 };
 
 /**
- * |SocketIODeleteInstanceRunnable| deletes an object on the main thread.
+ * |SocketDeleteInstanceTask| deletes an object on the consumer thread.
  */
-class SocketIODeleteInstanceRunnable final : public nsRunnable
+class SocketDeleteInstanceTask final : public Task
 {
 public:
-  SocketIODeleteInstanceRunnable(SocketIOBase* aIO);
+  SocketDeleteInstanceTask(SocketIOBase* aIO);
+  ~SocketDeleteInstanceTask();
 
-  NS_IMETHOD Run() override;
+  void Run() override;
 
 private:
   nsAutoPtr<SocketIOBase> mIO;
@@ -477,12 +518,13 @@ private:
 
 /**
  * |SocketIOShutdownTask| signals shutdown to the socket I/O class on
- * the I/O thread and sends it to the main thread for destruction.
+ * the I/O thread and sends it to the consumer thread for destruction.
  */
 class SocketIOShutdownTask final : public SocketIOTask<SocketIOBase>
 {
 public:
   SocketIOShutdownTask(SocketIOBase* aIO);
+  ~SocketIOShutdownTask();
 
   void Run() override;
 };

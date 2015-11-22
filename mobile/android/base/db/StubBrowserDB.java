@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
-import org.mozilla.gecko.Tab;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.favicons.decoders.LoadFaviconResult;
-import org.mozilla.gecko.mozglue.RobocopTarget;
+import org.mozilla.gecko.Tab;
 
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
@@ -74,6 +74,10 @@ class StubReadingListAccessor implements ReadingListAccessor {
     }
 
     @Override
+    public void markAsUnread(ContentResolver cr, long itemID) {
+    }
+
+    @Override
     public void updateContent(ContentResolver cr, long itemID, String resolvedTitle, String resolvedURL, String excerpt) {
     }
 
@@ -114,8 +118,18 @@ class StubTabsAccessor implements TabsAccessor {
     }
 
     @Override
+    public List<RemoteClient> getClientsWithoutTabsByRecencyFromCursor(Cursor cursor) {
+        return new ArrayList<>();
+    }
+
+    @Override
     public List<RemoteClient> getClientsFromCursor(final Cursor cursor) {
         return new ArrayList<RemoteClient>();
+    }
+
+    @Override
+    public Cursor getRemoteClientsByRecencyCursor(Context context) {
+        return null;
     }
 
     public Cursor getRemoteTabsCursor(Context context) {
@@ -210,6 +224,11 @@ public class StubBrowserDB implements BrowserDB {
         return null;
     }
 
+    @Override
+    public Cursor getRecentHistoryBetweenTime(ContentResolver cr, int limit, long time, long end) {
+        return null;
+    }
+
     public void expireHistory(ContentResolver cr, BrowserContract.ExpirePriority priority) {
     }
 
@@ -250,7 +269,8 @@ public class StubBrowserDB implements BrowserDB {
     }
 
     @RobocopTarget
-    public void addBookmark(ContentResolver cr, String title, String uri) {
+    public boolean addBookmark(ContentResolver cr, String title, String uri) {
+        return false;
     }
 
     @RobocopTarget

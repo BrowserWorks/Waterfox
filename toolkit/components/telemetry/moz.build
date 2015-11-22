@@ -32,6 +32,8 @@ EXTRA_COMPONENTS += [
 EXTRA_JS_MODULES += [
     'TelemetryArchive.jsm',
     'TelemetryLog.jsm',
+    'TelemetryReportingPolicy.jsm',
+    'TelemetrySend.jsm',
     'TelemetryStopwatch.jsm',
     'TelemetryStorage.jsm',
     'TelemetryUtils.jsm',
@@ -49,18 +51,30 @@ TESTING_JS_MODULES += [
   'tests/unit/TelemetryArchiveTesting.jsm',
 ]
 
-FAIL_ON_WARNINGS = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 
 GENERATED_FILES = [
     'TelemetryHistogramData.inc',
+    'TelemetryHistogramEnums.h',
 ]
 
-if CONFIG['MOZILLA_OFFICIAL']:
-    DEFINES['MOZILLA_OFFICIAL'] = True
+histogram_files = [
+    'Histograms.json',
+    '/dom/base/UseCounters.conf',
+    '/dom/base/nsDeprecatedOperationList.h',
+]
+
+data = GENERATED_FILES['TelemetryHistogramData.inc']
+data.script = 'gen-histogram-data.py'
+data.inputs = histogram_files
+
+enums = GENERATED_FILES['TelemetryHistogramEnums.h']
+enums.script = 'gen-histogram-enum.py'
+enums.inputs = histogram_files
+
+DEFINES['MOZ_APP_VERSION'] = '"%s"' % CONFIG['MOZ_APP_VERSION']
 
 LOCAL_INCLUDES += [
     '/xpcom/build',

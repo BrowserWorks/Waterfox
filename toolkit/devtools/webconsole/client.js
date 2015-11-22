@@ -9,8 +9,8 @@
 const {Cc, Ci, Cu} = require("chrome");
 const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 const EventEmitter = require("devtools/toolkit/event-emitter");
-
-loader.lazyImporter(this, "LongStringClient", "resource://gre/modules/devtools/dbg-client.jsm");
+const promise = require("promise");
+const {LongStringClient} = require("devtools/toolkit/client/main");
 
 /**
  * A WebConsoleClient is used as a front end for the WebConsoleActor that is
@@ -224,7 +224,7 @@ WebConsoleClient.prototype = {
    *        you to bind |_self| to the D.O of the given OA, during string
    *        evaluation.
    *
-   *        See: Debugger.Object.evalInGlobalWithBindings() for information
+   *        See: Debugger.Object.executeInGlobalWithBindings() for information
    *        about bindings.
    *
    *        Use case: the variable view needs to update objects and it does so
@@ -614,5 +614,45 @@ WebConsoleClient.prototype = {
 
   clearNetworkRequests: function () {
     this._networkRequests.clear();
+  },
+
+  /**
+   * Fetches the full text of a LongString.
+   *
+   * @param object | string stringGrip
+   *        The long string grip containing the corresponding actor.
+   *        If you pass in a plain string (by accident or because you're lazy),
+   *        then a promise of the same string is simply returned.
+   * @return object Promise
+   *         A promise that is resolved when the full string contents
+   *         are available, or rejected if something goes wrong.
+   */
+  getString: function(stringGrip) {
+    // Make sure this is a long string.
+    if (typeof stringGrip != "object" || stringGrip.type != "longString") {
+      return promise.resolve(stringGrip); // Go home string, you're drunk.
+    }
+
+    // Fetch the long string only once.
+    if (stringGrip._fullText) {
+      return stringGrip._fullText.promise;
+    }
+
+    let deferred = stringGrip._fullText = promise.defer();
+    let { actor, initial, length } = stringGrip;
+    let longStringClient = this.longString(stringGrip);
+
+    longStringClient.substring(initial.length, length, aResponse => {
+      if (aResponse.error) {
+        DevToolsUtils.reportException("getString",
+            aResponse.error + ": " + aResponse.message);
+
+        deferred.reject(aResponse);
+        return;
+      }
+      deferred.resolve(initial + aResponse.substring);
+    });
+
+    return deferred.promise;
   }
 };

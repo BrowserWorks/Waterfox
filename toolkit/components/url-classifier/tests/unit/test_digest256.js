@@ -5,16 +5,16 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
                                   "resource://gre/modules/Promise.jsm");
 // Global test server for serving safebrowsing updates.
-let gHttpServ = null;
+var gHttpServ = null;
 // Global nsIUrlClassifierDBService
-let gDbService = Cc["@mozilla.org/url-classifier/dbservice;1"]
+var gDbService = Cc["@mozilla.org/url-classifier/dbservice;1"]
   .getService(Ci.nsIUrlClassifierDBService);
 // Security manager for creating nsIPrincipals from URIs
-let gSecMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
+var gSecMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
   .getService(Ci.nsIScriptSecurityManager);
 
 // A map of tables to arrays of update redirect urls.
-let gTables = {};
+var gTables = {};
 
 // Construct an update from a file.
 function readFileToString(aFilename) {
@@ -124,7 +124,7 @@ add_test(function test_update() {
 
 add_test(function test_url_not_whitelisted() {
   let uri = createURI("http://example.com");
-  let principal = gSecMan.getNoAppCodebasePrincipal(uri);
+  let principal = gSecMan.createCodebasePrincipal(uri, {});
   gDbService.lookup(principal, "goog-downloadwhite-digest256",
     function handleEvent(aEvent) {
       // This URI is not on any lists.
@@ -137,7 +137,7 @@ add_test(function test_url_whitelisted() {
   // Hash of "whitelisted.com/" (canonicalized URL) is:
   // 93CA5F48E15E9861CD37C2D95DB43D23CC6E6DE5C3F8FA6E8BE66F97CC518907
   let uri = createURI("http://whitelisted.com");
-  let principal = gSecMan.getNoAppCodebasePrincipal(uri);
+  let principal = gSecMan.createCodebasePrincipal(uri, {});
   gDbService.lookup(principal, "goog-downloadwhite-digest256",
     function handleEvent(aEvent) {
       do_check_eq("goog-downloadwhite-digest256", aEvent);

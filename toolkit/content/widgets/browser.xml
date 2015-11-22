@@ -17,7 +17,7 @@
     <content clickthrough="never">
       <children/>
     </content>
-    <implementation type="application/javascript" implements="nsIObserver, nsIDOMEventListener, nsIFrameRequestCallback, nsIMessageListener">
+    <implementation type="application/javascript" implements="nsIObserver, nsIDOMEventListener, nsIMessageListener">
       <property name="autoscrollEnabled">
         <getter>
           <![CDATA[
@@ -503,6 +503,12 @@
         ]]></getter>
       </property>
 
+      <property name="hasContentOpener">
+        <getter><![CDATA[
+          return !!this.contentWindow.opener;
+        ]]></getter>
+      </property>
+
       <field name="mPrefs" readonly="true">
         Components.classes['@mozilla.org/preferences-service;1']
                   .getService(Components.interfaces.nsIPrefBranch);
@@ -635,7 +641,7 @@
       <method name="updateBlockedPopups">
         <body>
           <![CDATA[
-            var event = document.createEvent("Events");
+            let event = document.createEvent("Events");
             event.initEvent("DOMUpdatePageReport", true, true);
             this.dispatchEvent(event);
           ]]>
@@ -656,6 +662,51 @@
       <property name="pageReport"
          onget="return this.blockedPopups;"
          readonly="true"/>
+
+      <method name="audioPlaybackStarted">
+        <body>
+          <![CDATA[
+            let event = document.createEvent("Events");
+            event.initEvent("DOMAudioPlaybackStarted", true, false);
+            this.dispatchEvent(event);
+          ]]>
+        </body>
+      </method>
+
+      <method name="audioPlaybackStopped">
+        <body>
+          <![CDATA[
+            let event = document.createEvent("Events");
+            event.initEvent("DOMAudioPlaybackStopped", true, false);
+            this.dispatchEvent(event);
+          ]]>
+        </body>
+      </method>
+
+      <field name="_audioMuted">false</field>
+      <property name="audioMuted"
+                onget="return this._audioMuted;"
+                readonly="true"/>
+
+      <method name="mute">
+        <body>
+          <![CDATA[
+            this._audioMuted = true;
+            this.messageManager.sendAsyncMessage("AudioPlaybackMute",
+                                                 {type: "mute"});
+          ]]>
+        </body>
+      </method>
+
+      <method name="unmute">
+        <body>
+          <![CDATA[
+            this._audioMuted = false;
+            this.messageManager.sendAsyncMessage("AudioPlaybackMute",
+                                                 {type: "unmute"});
+          ]]>
+        </body>
+      </method>
 
       <property name="securityUI">
         <getter>
@@ -807,6 +858,8 @@
             this.messageManager.addMessageListener("PopupBlocking:UpdateBlockedPopups", this);
             this.messageManager.addMessageListener("Autoscroll:Start", this);
             this.messageManager.addMessageListener("Autoscroll:Cancel", this);
+            this.messageManager.addMessageListener("AudioPlayback:Start", this);
+            this.messageManager.addMessageListener("AudioPlayback:Stop", this);
           }
         ]]>
       </constructor>
@@ -818,7 +871,10 @@
       </destructor>
 
       <!-- This is necessary because the destructor doesn't always get called when
-           we are removed from a tabbrowser. This will be explicitly called by tabbrowser -->
+           we are removed from a tabbrowser. This will be explicitly called by tabbrowser.
+
+           Note: this function is overriden in remote-browser.xml, so any clean-up that
+           also applies to browser.isRemoteBrowser = true must be duplicated there. -->
       <method name="destroy">
         <body>
           <![CDATA[
@@ -893,6 +949,12 @@
             case "Autoscroll:Cancel":
               this._autoScrollPopup.hidePopup();
               break;
+            case "AudioPlayback:Start":
+              this.audioPlaybackStarted();
+              break;
+            case "AudioPlayback:Stop":
+              this.audioPlaybackStopped();
+              break;
           }
         ]]></body>
       </method>
@@ -910,23 +972,18 @@
         <parameter name="aState"/>
         <body>
           <![CDATA[
-            if (aTopic != "browser:purge-session-history" || !this.sessionHistory)
+            if (aTopic != "browser:purge-session-history")
               return;
 
-            // place the entry at current index at the end of the history list, so it won't get removed
-            if (this.sessionHistory.index < this.sessionHistory.count - 1) {
-              var indexEntry = this.sessionHistory.getEntryAtIndex(this.sessionHistory.index, false);
-              this.sessionHistory.QueryInterface(Components.interfaces.nsISHistoryInternal);
-              indexEntry.QueryInterface(Components.interfaces.nsISHEntry);
-              this.sessionHistory.addEntry(indexEntry, true);
-            }
+            this.purgeSessionHistory();
+          ]]>
+        </body>
+      </method>
 
-            var purge = this.sessionHistory.count;
-            if (this.currentURI != "about:blank")
-              --purge; // Don't remove the page the user's staring at from shistory
-
-            if (purge > 0)
-              this.sessionHistory.PurgeHistory(purge);
+      <method name="purgeSessionHistory">
+        <body>
+          <![CDATA[
+            this.messageManager.sendAsyncMessage("Browser:PurgeSessionHistory");
           ]]>
         </body>
       </method>
@@ -996,6 +1053,7 @@
               this._autoScrollPopup.setAttribute("translucent", /Win|Mac/.test(navigator.platform));
             }
 
+            this._autoScrollPopup.setAttribute("noautofocus", "true");
             this._autoScrollPopup.setAttribute("scrolldir", scrolldir);
             this._autoScrollPopup.addEventListener("popuphidden", this, true);
             this._autoScrollPopup.showPopup(document.documentElement,
@@ -1036,8 +1094,12 @@
               case "mouseup":
               case "mousedown":
               case "contextmenu": {
-                if (!this._ignoreMouseEvents)
-                  this._autoScrollPopup.hidePopup();
+                if (!this._ignoreMouseEvents) {
+                  // Use a timeout to prevent the mousedown from opening the popup again.
+                  // Ideally, we could use preventDefault here, but contenteditable
+                  // and middlemouse paste don't interact well. See bug 1188536.
+                  setTimeout(() => this._autoScrollPopup.hidePopup(), 0);
+                }
                 this._ignoreMouseEvents = false;
                 break;
               }
@@ -1164,6 +1226,9 @@
         ]]>
         </body>
       </method>
+
+      <!-- This will go away if the binding has been removed for some reason. -->
+      <field name="_alive">true</field>
     </implementation>
 
     <handlers>

@@ -3,7 +3,7 @@
 
 /* Exercise prefix-based forwarding of packets to other transports. */
 
-const { RootActor } = devtools.require("devtools/server/actors/root");
+const { RootActor } = require("devtools/server/actors/root");
 
 var gMainConnection, gMainTransport;
 var gSubconnection1, gSubconnection2;
@@ -50,7 +50,7 @@ function newConnection(aPrefix)
 /* Create the main connection for these tests. */
 function createMainConnection()
 {
-  ({ conn: gMainConnection, transport: gMainTransport }) = newConnection();
+  ({ conn: gMainConnection, transport: gMainTransport } = newConnection());
   gClient = new DebuggerClient(gMainTransport);
   gClient.connect((aType, aTraits) => run_next_test());
 }

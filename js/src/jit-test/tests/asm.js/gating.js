@@ -10,11 +10,6 @@
 if (!isAsmJSCompilationAvailable())
     quit(0);
 
-/*
-
-// Commented out until we can fix bug #1172517, which makes this fail
-// for other reasons.
-
 function module_a(stdlib, foreign, heap) {
     "use asm";
 
@@ -34,8 +29,6 @@ function module_a(stdlib, foreign, heap) {
 
 if (this.SharedArrayBuffer)
     assertEq(isAsmJSModule(module_a), true);
-
-*/
 
 function module_b(stdlib, foreign, heap) {
     "use asm";

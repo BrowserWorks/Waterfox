@@ -14,7 +14,7 @@ const NDEF_MESSAGE = [new MozNDEFRecord({tnf: "well-known",
                                          type: new Uint8Array(0x84),
                                          payload: new Uint8Array(0x20)})];
 
-let nfcPeers = [];
+var nfcPeers = [];
 
 /**
  * Enables nfc and RE0 then registers onpeerready callback and once
@@ -25,8 +25,9 @@ let nfcPeers = [];
 function testNfcNotEnabledError() {
   log('testNfcNotEnabledError');
   toggleNFC(true)
-  .then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0))
+  .then(() => activateAndwaitForTechDiscovered(emulator.P2P_RE_INDEX_0))
   .then(registerAndFireOnpeerready)
+  .then(() => deactivateAndWaitForPeerLost())
   .then(() => toggleNFC(false))
   .then(() => sendNDEFExpectError(nfcPeers[0]))
   .then(endTest)
@@ -43,13 +44,14 @@ function testNfcNotEnabledError() {
 function testNfcBadSessionIdError() {
   log('testNfcBadSessionIdError');
   toggleNFC(true)
-  .then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0))
+  .then(() => activateAndwaitForTechDiscovered(emulator.P2P_RE_INDEX_0))
   .then(registerAndFireOnpeerready)
   .then(() => NCI.deactivate())
-  .then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0))
+  .then(() => activateAndwaitForTechDiscovered(emulator.P2P_RE_INDEX_0))
   .then(registerAndFireOnpeerready)
   // we have 2 peers in nfcPeers array, peer0 has old/invalid session token
   .then(() => sendNDEFExpectError(nfcPeers[0]))
+  .then(() => deactivateAndWaitForPeerLost())
   .then(() => toggleNFC(false))
   .then(endTest)
   .catch(handleRejectedPromise);
@@ -65,7 +67,7 @@ function testNoErrorInTechMsg() {
 
   let techDiscoveredHandler = function(msg) {
     ok('Message handler for nfc-manager-tech-discovered');
-    is(msg.type, 'techDiscovered');
+    ok(msg.peer, 'check for correct tech type');
     is(msg.errorMsg, undefined, 'Should not get error msg in tech discovered');
 
     setAndFireTechLostHandler()
@@ -108,13 +110,13 @@ function registerAndFireOnpeerready() {
 function sendNDEFExpectError(peer) {
   let deferred = Promise.defer();
 
-  try {
-    peer.sendNDEF(NDEF_MESSAGE);
+  peer.sendNDEF(NDEF_MESSAGE)
+  .then(() => {
     deferred.reject();
-  } catch (e) {
+  }).catch((e) => {
     ok(true, 'this should happen ' + e);
     deferred.resolve();
-  }
+  });
 
   return deferred.promise;
 }
@@ -124,7 +126,6 @@ function setAndFireTechLostHandler() {
 
   let techLostHandler = function(msg) {
     ok('Message handler for nfc-manager-tech-lost');
-    is(msg.type, 'techLost');
     is(msg.errorMsg, undefined, 'Should not get error msg in tech lost');
 
     deferred.resolve();
@@ -137,9 +138,10 @@ function setAndFireTechLostHandler() {
   return deferred.promise;
 }
 
-let tests = [
+var tests = [
   testNfcNotEnabledError,
-  testNfcBadSessionIdError,
+// This testcase is temporarily removed due to Bug 1055959, will reopen when it is fixed
+//  testNfcBadSessionIdError
   testNoErrorInTechMsg
 ];
 

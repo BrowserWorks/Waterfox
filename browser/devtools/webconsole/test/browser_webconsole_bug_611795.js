@@ -2,18 +2,19 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const TEST_URI = 'data:text/html;charset=utf-8,<div style="-moz-opacity:0;">test repeated' +
-                 ' css warnings</div><p style="-moz-opacity:0">hi</p>';
-let hud;
-
 "use strict";
+
+const TEST_URI = 'data:text/html;charset=utf-8,<div style="-moz-opacity:0;">' +
+                 'test repeated css warnings</div><p style="-moz-opacity:0">' +
+                 'hi</p>';
+var hud;
 
 /**
  * Unit test for bug 611795:
  * Repeated CSS messages get collapsed into one.
  */
 
-let test = asyncTest(function* () {
+var test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   hud = yield openConsole();
@@ -28,8 +29,7 @@ let test = asyncTest(function* () {
   hud = null;
 });
 
-function onContentLoaded()
-{
+function onContentLoaded() {
   let cssWarning = "Unknown property '-moz-opacity'.  Declaration dropped.";
 
   return waitForMessages({
@@ -43,13 +43,15 @@ function onContentLoaded()
   });
 }
 
-function testConsoleLogRepeats()
-{
+function testConsoleLogRepeats() {
   let jsterm = hud.jsterm;
 
   jsterm.clearOutput();
 
-  jsterm.setInputValue("for (let i = 0; i < 10; ++i) console.log('this is a line of reasonably long text that I will use to verify that the repeated text node is of an appropriate size.');");
+  jsterm.setInputValue("for (let i = 0; i < 10; ++i) console.log('this is a " +
+                       "line of reasonably long text that I will use to " +
+                       "verify that the repeated text node is of an " +
+                       "appropriate size.');");
   jsterm.execute();
 
   return waitForMessages({

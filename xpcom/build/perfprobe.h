@@ -18,7 +18,7 @@
 
 #include "nsError.h"
 #include "nsString.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsTArray.h"
 #include "nsAutoPtr.h"
 #include <windows.h>
@@ -198,7 +198,7 @@ protected:
                                       PVOID aBuffer);  // Sets |mSessionHandle|
 };
 
-}  // namespace probes
-}  // namespace mozilla
+} // namespace probes
+} // namespace mozilla
 
 #endif //mozilla_perfprobe_h

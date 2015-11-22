@@ -25,11 +25,13 @@ add_task(function*() {
     preventDefault: function() {}
   });
 
-  is(el.isDragging, false, "isDragging should not be set to true immedietly");
+  ok(!el.isDragging, "isDragging should not be set to true immediately");
 
   info("Waiting " + (GRAB_DELAY + 1) + "ms");
   yield wait(GRAB_DELAY + 1);
   ok(el.isDragging, "isDragging true after GRAB_DELAY has passed");
+
+  let dropCompleted = once(inspector.markup, "drop-completed");
 
   info("Simulating mouseUp on #test");
   el._onMouseUp({
@@ -38,5 +40,22 @@ add_task(function*() {
     pageY: rect.y
   });
 
-  is(el.isDragging, false, "isDragging false after mouseUp");
+  yield dropCompleted;
+
+  ok(!el.isDragging, "isDragging false after mouseUp");
+
+  info("Simulating middle click on #test");
+  el._onMouseDown({
+    target: el.tagLine,
+    button: 1,
+    pageX: rect.x,
+    pageY: rect.y,
+    stopPropagation: function() {},
+    preventDefault: function() {}
+  });
+  ok(!el.isDragging, "isDragging should not be set to true immediately");
+
+  info("Waiting " + (GRAB_DELAY + 1) + "ms");
+  yield wait(GRAB_DELAY + 1);
+  ok(!el.isDragging, "isDragging never starts after middle click after mouseUp");
 });

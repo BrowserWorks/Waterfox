@@ -8,14 +8,12 @@
 
 #include "mozilla/LinkedList.h"
 #include "nsWrapperCache.h"
-#include "WebGLBindableName.h"
 #include "WebGLObjectModel.h"
 
 namespace mozilla {
 
 class WebGLTransformFeedback final
     : public nsWrapperCache
-    , public WebGLBindableName<GLenum>
     , public WebGLRefCountedObject<WebGLTransformFeedback>
     , public LinkedListElement<WebGLTransformFeedback>
     , public WebGLContextBoundObject
@@ -28,13 +26,16 @@ public:
 
     void Delete();
     WebGLContext* GetParentObject() const;
-    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override;
+    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> givenProto) override;
+
+    const GLuint mGLName;
 
     NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(WebGLTransformFeedback)
     NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(WebGLTransformFeedback)
 
 private:
     ~WebGLTransformFeedback();
+
     GLenum mMode;
     bool mIsActive;
     bool mIsPaused;

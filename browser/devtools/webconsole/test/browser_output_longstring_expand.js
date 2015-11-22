@@ -4,15 +4,16 @@
 
 // Test that long strings can be expanded in the console output.
 
-const TEST_URI = "data:text/html;charset=utf8,test for bug 787981 - check that long strings can be expanded in the output.";
+"use strict";
 
-let test = asyncTest(function* () {
-  let tempScope = {};
-  Cu.import("resource://gre/modules/devtools/dbg-server.jsm", tempScope);
-  let DebuggerServer = tempScope.DebuggerServer;
+const TEST_URI = "data:text/html;charset=utf8,test for bug 787981 - check " +
+                 "that long strings can be expanded in the output.";
 
-  let longString = (new Array(DebuggerServer.LONG_STRING_LENGTH + 4)).join("a") +
-                   "foobar";
+var test = asyncTest(function* () {
+  let { DebuggerServer } = require("devtools/server/main");
+
+  let longString = (new Array(DebuggerServer.LONG_STRING_LENGTH + 4))
+                    .join("a") + "foobar";
   let initialString =
     longString.substring(0, DebuggerServer.LONG_STRING_INITIAL_LENGTH);
 
@@ -51,7 +52,7 @@ let test = asyncTest(function* () {
   });
 
   hud.jsterm.clearOutput(true);
-  let msg = yield execute(hud, "'" + longString +"'");
+  let msg = yield execute(hud, "'" + longString + "'");
 
   isnot(msg.textContent.indexOf(initialString), -1,
       "initial string is shown");
@@ -73,7 +74,7 @@ let test = asyncTest(function* () {
       category: CATEGORY_OUTPUT,
       longString: false,
     }],
-  })
+  });
 });
 
 function execute(hud, str) {

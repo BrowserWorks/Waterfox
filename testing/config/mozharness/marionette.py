@@ -2,6 +2,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# XXX Bug 1181261 - Please update config in testing/mozharness/config
+# instead. This file is still needed for taskcluster emulator tests,
+# but should be removed once bug 1188330 is finished.
+
 config = {
     "suite_definitions": {
         "gaiatest_desktop": {
@@ -16,6 +20,7 @@ config = {
                 "--xml-output=%(xml_output)s",
                 "--html-output=%(html_output)s",
                 "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
                 "--binary=%(binary)s",
                 "--address=%(address)s",
                 "--total-chunks=%(total_chunks)s",
@@ -35,6 +40,7 @@ config = {
                 "--xml-output=%(xml_output)s",
                 "--html-output=%(html_output)s",
                 "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
                 "--logcat-dir=%(logcat_dir)s",
                 "--emulator=%(emulator)s",
                 "--homedir=%(homedir)s"
@@ -46,6 +52,7 @@ config = {
             "options": [
                 "--type=%(type)s",
                 "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
                 "--binary=%(binary)s",
                 "--address=%(address)s",
                 "--symbols-path=%(symbols_path)s"
@@ -57,6 +64,7 @@ config = {
             "options": [
                 "--type=%(type)s",
                 "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
                 "--logcat-dir=%(logcat_dir)s",
                 "--emulator=%(emulator)s",
                 "--homedir=%(homedir)s",
@@ -74,6 +82,7 @@ config = {
             "options": [
                 "--type=%(type)s",
                 "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
                 "--symbols-path=%(symbols_path)s",
                 "--logcat-dir=%(logcat_dir)s",
                 "--emulator=%(emulator)s",

@@ -772,9 +772,7 @@ nsMathMLmtableOuterFrame::GetRowFrameAt(nsPresContext* aPresContext,
     nsIFrame* rgFrame = tableFrame->GetFirstPrincipalChild();
     if (!rgFrame || rgFrame->GetType() != nsGkAtoms::tableRowGroupFrame)
       return nullptr;
-    nsTableIterator rowIter(*rgFrame);
-    nsIFrame* rowFrame = rowIter.First();
-    for ( ; rowFrame; rowFrame = rowIter.Next()) {
+    for (nsIFrame* rowFrame : rgFrame->PrincipalChildList()) {
       if (aRowIndex == 0) {
         DEBUG_VERIFY_THAT_FRAME_IS(rowFrame, TABLE_ROW);
         if (rowFrame->GetType() != nsGkAtoms::tableRowFrame)
@@ -822,10 +820,11 @@ nsMathMLmtableOuterFrame::Reflow(nsPresContext*          aPresContext,
     if (rowFrame) {
       // translate the coordinates to be relative to us and in our writing mode
       nsIFrame* frame = rowFrame;
-      LogicalRect frameRect(wm, frame->GetRect(), aReflowState.ComputedWidth());
-      blockSize = frameRect.BSize(wm);
+      LogicalRect rect(wm, frame->GetRect(),
+                       aReflowState.ComputedSizeAsContainerIfConstrained());
+      blockSize = rect.BSize(wm);
       do {
-        dy += frameRect.BStart(wm);
+        dy += rect.BStart(wm);
         frame = frame->GetParent();
       } while (frame != this);
     }

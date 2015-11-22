@@ -25,7 +25,7 @@
 #include "nsPIWindowRoot.h"
 #include "nsRDFCID.h"
 #include "nsXULCommandDispatcher.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsContentUtils.h"
 #include "nsReadableUtils.h"
 #include "nsCRT.h"
@@ -37,9 +37,7 @@
 
 using namespace mozilla;
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo* gCommandLog;
-#endif
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -47,10 +45,8 @@ nsXULCommandDispatcher::nsXULCommandDispatcher(nsIDocument* aDocument)
     : mDocument(aDocument), mUpdaters(nullptr)
 {
 
-#ifdef PR_LOGGING
   if (! gCommandLog)
     gCommandLog = PR_NewLogModule("nsXULCommandDispatcher");
-#endif
 }
 
 nsXULCommandDispatcher::~nsXULCommandDispatcher()
@@ -272,13 +268,13 @@ nsXULCommandDispatcher::AddCommandUpdater(nsIDOMElement* aElement,
     if (updater->mElement == aElement) {
 
 #ifdef DEBUG
-      if (PR_LOG_TEST(gCommandLog, PR_LOG_NOTICE)) {
+      if (MOZ_LOG_TEST(gCommandLog, LogLevel::Debug)) {
         nsAutoCString eventsC, targetsC, aeventsC, atargetsC; 
         eventsC.AssignWithConversion(updater->mEvents);
         targetsC.AssignWithConversion(updater->mTargets);
         CopyUTF16toUTF8(aEvents, aeventsC);
         CopyUTF16toUTF8(aTargets, atargetsC);
-        PR_LOG(gCommandLog, PR_LOG_NOTICE,
+        MOZ_LOG(gCommandLog, LogLevel::Debug,
                ("xulcmd[%p] replace %p(events=%s targets=%s) with (events=%s targets=%s)",
                 this, aElement,
                 eventsC.get(),
@@ -300,12 +296,12 @@ nsXULCommandDispatcher::AddCommandUpdater(nsIDOMElement* aElement,
     updater = updater->mNext;
   }
 #ifdef DEBUG
-  if (PR_LOG_TEST(gCommandLog, PR_LOG_NOTICE)) {
+  if (MOZ_LOG_TEST(gCommandLog, LogLevel::Debug)) {
     nsAutoCString aeventsC, atargetsC; 
     CopyUTF16toUTF8(aEvents, aeventsC);
     CopyUTF16toUTF8(aTargets, atargetsC);
 
-    PR_LOG(gCommandLog, PR_LOG_NOTICE,
+    MOZ_LOG(gCommandLog, LogLevel::Debug,
            ("xulcmd[%p] add     %p(events=%s targets=%s)",
             this, aElement,
             aeventsC.get(),
@@ -314,11 +310,7 @@ nsXULCommandDispatcher::AddCommandUpdater(nsIDOMElement* aElement,
 #endif
 
   // If we get here, this is a new updater. Append it to the list.
-  updater = new Updater(aElement, aEvents, aTargets);
-  if (! updater)
-      return NS_ERROR_OUT_OF_MEMORY;
-
-  *link = updater;
+  *link = new Updater(aElement, aEvents, aTargets);
   return NS_OK;
 }
 
@@ -335,11 +327,11 @@ nsXULCommandDispatcher::RemoveCommandUpdater(nsIDOMElement* aElement)
   while (updater) {
     if (updater->mElement == aElement) {
 #ifdef DEBUG
-      if (PR_LOG_TEST(gCommandLog, PR_LOG_NOTICE)) {
+      if (MOZ_LOG_TEST(gCommandLog, LogLevel::Debug)) {
         nsAutoCString eventsC, targetsC; 
         eventsC.AssignWithConversion(updater->mEvents);
         targetsC.AssignWithConversion(updater->mTargets);
-        PR_LOG(gCommandLog, PR_LOG_NOTICE,
+        MOZ_LOG(gCommandLog, LogLevel::Debug,
                ("xulcmd[%p] remove  %p(events=%s targets=%s)",
                 this, aElement,
                 eventsC.get(),
@@ -395,17 +387,17 @@ nsXULCommandDispatcher::UpdateCommands(const nsAString& aEventName)
     nsIContent* content = updaters[u];
 
 #ifdef DEBUG
-    if (PR_LOG_TEST(gCommandLog, PR_LOG_NOTICE)) {
+    if (MOZ_LOG_TEST(gCommandLog, LogLevel::Debug)) {
       nsAutoCString aeventnameC; 
       CopyUTF16toUTF8(aEventName, aeventnameC);
-      PR_LOG(gCommandLog, PR_LOG_NOTICE,
+      MOZ_LOG(gCommandLog, LogLevel::Debug,
              ("xulcmd[%p] update %p event=%s",
               this, content,
               aeventnameC.get()));
     }
 #endif
 
-    WidgetEvent event(true, NS_XUL_COMMAND_UPDATE);
+    WidgetEvent event(true, eXULCommandUpdate);
     EventDispatcher::Dispatch(content, nullptr, &event);
   }
   return NS_OK;

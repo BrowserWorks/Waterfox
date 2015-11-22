@@ -4,37 +4,37 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-NO_DIST_INSTALL = True
-
-UNIFIED_SOURCES += [ '%s/%s' % (relative_path, p) for p in [
-    'nptest.cpp',
-    'nptest_utils.cpp',
-]]
+DIST_INSTALL = False
 
 UNIFIED_SOURCES += [
-    'nptest_name.cpp',
+    'nptest.cpp',
+    'nptest_utils.cpp',
+]
+
+UNIFIED_SOURCES += [
+    '%s/nptest_name.cpp' % relative_path,
 ]
 
 toolkit = CONFIG['MOZ_WIDGET_TOOLKIT']
 if toolkit == 'cocoa':
     UNIFIED_SOURCES += [
-        relative_path + '/nptest_macosx.mm'
+        'nptest_macosx.mm'
     ]
 elif toolkit in ('gtk2', 'gtk3'):
     UNIFIED_SOURCES += [
-        relative_path + '/nptest_gtk2.cpp',
+        'nptest_gtk2.cpp',
     ]
 elif toolkit == 'android':
     UNIFIED_SOURCES += [
-        relative_path + '/nptest_droid.cpp',
+        'nptest_droid.cpp',
     ]
 elif toolkit == 'qt':
     UNIFIED_SOURCES += [
-        relative_path + '/nptest_qt.cpp',
+        'nptest_qt.cpp',
     ]
 elif toolkit == 'windows':
     UNIFIED_SOURCES += [
-        relative_path + '/nptest_windows.cpp',
+        'nptest_windows.cpp',
     ]
     OS_LIBS += [
         'msimg32',

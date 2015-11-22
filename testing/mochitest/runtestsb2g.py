@@ -14,14 +14,14 @@ import traceback
 here = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, here)
 
-from automationutils import processLeakLog
 from runtests import Mochitest
 from runtests import MochitestUtilsMixin
 from mochitest_options import MochitestArgumentParser
 from marionette import Marionette
 from mozprofile import Profile, Preferences
-from mozlog import structured
+from mozrunner.utils import get_stack_fixer_function
 import mozinfo
+import mozleak
 
 
 class B2GMochitest(MochitestUtilsMixin):
@@ -73,12 +73,7 @@ class B2GMochitest(MochitestUtilsMixin):
 
     def buildTestPath(self, options, testsToFilter=None):
         if options.manifestFile != 'tests.json':
-            super(
-                B2GMochitest,
-                self).buildTestPath(
-                options,
-                testsToFilter,
-                disabled=False)
+            super(B2GMochitest, self).buildTestPath(options, testsToFilter, disabled=False)
         return self.buildTestURL(options)
 
     def build_profile(self, options):
@@ -125,6 +120,8 @@ class B2GMochitest(MochitestUtilsMixin):
 
     def run_tests(self, options):
         """ Prepare, configure, run tests and cleanup """
+
+        self.setTestRoot(options)
 
         manifest = self.build_profile(options)
         self.logPreamble(self.getActiveTests(options))
@@ -199,7 +196,17 @@ class B2GMochitest(MochitestUtilsMixin):
             self.killNamedOrphans('xpcshell')
 
             self.startServers(options, None)
+
+            # In desktop mochitests buildTestPath is called before buildURLOptions. This
+            # means options.manifestFile has already been converted to the proper json
+            # style manifest. Not so with B2G, that conversion along with updating the URL
+            # option will happen later. So backup and restore options.manifestFile to
+            # prevent us from trying to pass in an instance of TestManifest via url param.
+            manifestFile = options.manifestFile
+            options.manifestFile = None
             self.buildURLOptions(options, {'MOZ_HIDE_RESULTS_TABLE': '1'})
+            options.manifestFile = manifestFile
+
             self.test_script_args.append(not options.emulator)
             self.test_script_args.append(options.wifi)
             self.test_script_args.append(options.chrome)
@@ -218,6 +225,21 @@ class B2GMochitest(MochitestUtilsMixin):
                 Components.utils.import("resource://gre/modules/Services.jsm");
                 Services.io.manageOfflineStatus = false;
                 Services.io.offline = false;
+                """)
+
+            self.marionette.execute_script("""
+                let SECURITY_PREF = "security.turn_off_all_security_so_that_viruses_can_take_over_this_computer";
+                Services.prefs.setBoolPref(SECURITY_PREF, true);
+
+                if (!testUtils.hasOwnProperty("specialPowersObserver")) {
+                  let loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
+                    .getService(Components.interfaces.mozIJSSubScriptLoader);
+                  loader.loadSubScript("chrome://specialpowers/content/SpecialPowersObserver.js",
+                    testUtils);
+                  testUtils.specialPowersObserver = new testUtils.SpecialPowersObserver();
+                  testUtils.specialPowersObserver.init();
+                  testUtils.specialPowersObserver._loadFrameScript();
+                }
                 """)
 
             if options.chrome:
@@ -252,7 +274,14 @@ class B2GMochitest(MochitestUtilsMixin):
                 local_leak_file.name)
             self.app_ctx.dm.removeFile(self.leak_report_file)
 
-            processLeakLog(local_leak_file.name, options)
+            mozleak.process_leak_log(
+                local_leak_file.name,
+                leak_thresholds=options.leakThresholds,
+                ignore_missing_leaks=options.ignoreMissingLeaks,
+                log=self.log,
+                stack_fixer=get_stack_fixer_function(options.utilityPath,
+                                                     options.symbolsPath),
+            )
         except KeyboardInterrupt:
             self.log.info("runtests.py | Received keyboard interrupt.\n")
             status = -1
@@ -464,7 +493,7 @@ def run_remote_mochitests(options):
 
     mochitest.message_logger.finish()
 
-    sys.exit(retVal)
+    return retVal
 
 
 def run_desktop_mochitests(options):
@@ -491,11 +520,11 @@ def run_desktop_mochitests(options):
         raise Exception("must specify --profile when specifying --desktop")
 
     options.browserArgs += ['-marionette']
-
+    options.runByDir = False
     retVal = mochitest.runTests(options, onLaunch=mochitest.startTests)
     mochitest.message_logger.finish()
 
-    sys.exit(retVal)
+    return retVal
 
 
 def main():
@@ -503,9 +532,9 @@ def main():
     options = parser.parse_args()
 
     if options.desktop:
-        run_desktop_mochitests(options)
+        return run_desktop_mochitests(options)
     else:
-        run_remote_mochitests(options)
+        return run_remote_mochitests(options)
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

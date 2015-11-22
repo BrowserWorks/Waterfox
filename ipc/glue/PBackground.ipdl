@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+include protocol PAsmJSCacheEntry;
 include protocol PBackgroundIDBFactory;
 include protocol PBackgroundTest;
 include protocol PBlob;
@@ -10,22 +11,34 @@ include protocol PCache;
 include protocol PCacheStorage;
 include protocol PCacheStreamControl;
 include protocol PFileDescriptorSet;
+include protocol PMessagePort;
+include protocol PCameras;
+include protocol PNuwa;
+include protocol PServiceWorkerManager;
+include protocol PUDPSocket;
 include protocol PVsync;
-include protocol PMedia;
 
 include DOMTypes;
 include PBackgroundSharedTypes;
 include PBackgroundIDBSharedTypes;
-include ServiceWorkerRegistrarTypes;
 
-using mozilla::dom::cache::Namespace from "mozilla/dom/cache/Types.h";
 include "mozilla/dom/cache/IPCUtils.h";
+
+using mozilla::dom::cache::Namespace
+  from "mozilla/dom/cache/Types.h";
+
+using mozilla::dom::asmjscache::OpenMode
+  from "mozilla/dom/asmjscache/AsmJSCache.h";
+
+using mozilla::dom::asmjscache::WriteParams
+  from "mozilla/dom/asmjscache/AsmJSCache.h";
 
 namespace mozilla {
 namespace ipc {
 
 sync protocol PBackground
 {
+  manages PAsmJSCacheEntry;
   manages PBackgroundIDBFactory;
   manages PBackgroundTest;
   manages PBlob;
@@ -34,8 +47,12 @@ sync protocol PBackground
   manages PCacheStorage;
   manages PCacheStreamControl;
   manages PFileDescriptorSet;
+  manages PMessagePort;
+  manages PCameras;
+  manages PNuwa;
+  manages PServiceWorkerManager;
+  manages PUDPSocket;
   manages PVsync;
-  manages PMedia;
 
 parent:
   // Only called at startup during mochitests to check the basic infrastructure.
@@ -44,17 +61,28 @@ parent:
   PBackgroundIDBFactory(LoggingInfo loggingInfo);
 
   PVsync();
-  PMedia();
 
-  PBroadcastChannel(PrincipalInfo pInfo, nsString origin, nsString channel,
+  PCameras();
+
+  PUDPSocket(OptionalPrincipalInfo pInfo, nsCString filter);
+  PBroadcastChannel(PrincipalInfo pInfo, nsCString origin, nsString channel,
                     bool privateBrowsing);
 
-  RegisterServiceWorker(ServiceWorkerRegistrationData data);
-  UnregisterServiceWorker(PrincipalInfo principalInfo,
-                          nsString scope);
+  PServiceWorkerManager();
+
   ShutdownServiceWorkerRegistrar();
 
   PCacheStorage(Namespace aNamespace, PrincipalInfo aPrincipalInfo);
+
+  PMessagePort(nsID uuid, nsID destinationUuid, uint32_t sequenceId);
+
+  PNuwa();
+
+  MessagePortForceClose(nsID uuid, nsID destinationUuid, uint32_t sequenceId);
+
+  PAsmJSCacheEntry(OpenMode openMode,
+                   WriteParams write,
+                   PrincipalInfo principalInfo);
 
 child:
   PCache();

@@ -8,13 +8,6 @@ package org.mozilla.gecko;
 
 import android.os.Build;
 
-import org.mozilla.gecko.adjust.AdjustHelperInterface;
-//#ifdef MOZ_INSTALL_TRACKING
-import org.mozilla.gecko.adjust.AdjustHelper;
-//#else
-import org.mozilla.gecko.adjust.StubAdjustHelper;
-//#endif
-
 /**
  * A collection of constants that pertain to the build and runtime state of the
  * application. Typically these are sourced from build-time definitions (see
@@ -71,6 +64,8 @@ public class AppConstants {
          * If our MAX_SDK_VERSION is lower than ICS, we must not be an ICS device.
          * Otherwise, we need a range check.
          */
+	public static final boolean preM = MAX_SDK_VERSION < 23 ||
+                (MIN_SDK_VERSION < 23 && Build.VERSION.SDK_INT < 23 && !Build.VERSION.RELEASE.equals("M"));
         public static final boolean preLollipop = MAX_SDK_VERSION < 21 || (MIN_SDK_VERSION < 21 && Build.VERSION.SDK_INT < 21);
         public static final boolean preJBMR2 = MAX_SDK_VERSION < 18 || (MIN_SDK_VERSION < 18 && Build.VERSION.SDK_INT < 18);
         public static final boolean preJBMR1 = MAX_SDK_VERSION < 17 || (MIN_SDK_VERSION < 17 && Build.VERSION.SDK_INT < 17);
@@ -131,12 +126,14 @@ public class AppConstants {
     public static final String USER_AGENT_BOT_LIKE = "Redirector/" + AppConstants.MOZ_APP_VERSION +
         " (Android; rv:" + AppConstants.MOZ_APP_VERSION + ")";
 
-    public static final String USER_AGENT_FENNEC_MOBILE = "Mozilla/5.0 (Android; Mobile; rv:" +
+    public static final String USER_AGENT_FENNEC_MOBILE = "Mozilla/5.0 (Android " +
+        Build.VERSION.RELEASE + "; Mobile; rv:" +
         AppConstants.MOZ_APP_VERSION + ") Gecko/" +
         AppConstants.MOZ_APP_VERSION + " Firefox/" +
         AppConstants.MOZ_APP_VERSION;
 
-    public static final String USER_AGENT_FENNEC_TABLET = "Mozilla/5.0 (Android; Tablet; rv:" +
+    public static final String USER_AGENT_FENNEC_TABLET = "Mozilla/5.0 (Android " +
+        Build.VERSION.RELEASE + "; Tablet; rv:" +
         AppConstants.MOZ_APP_VERSION + ") Gecko/" +
         AppConstants.MOZ_APP_VERSION + " Firefox/" +
         AppConstants.MOZ_APP_VERSION;
@@ -177,6 +174,13 @@ public class AppConstants {
 
     public static final boolean MOZ_ANDROID_READING_LIST_SERVICE =
 //#ifdef MOZ_ANDROID_READING_LIST_SERVICE
+    true;
+//#else
+    false;
+//#endif
+
+    public static final boolean MOZ_ANDROID_FIREFOX_ACCOUNT_PROFILES =
+//#ifdef MOZ_ANDROID_FIREFOX_ACCOUNT_PROFILES
     true;
 //#else
     false;
@@ -320,18 +324,17 @@ public class AppConstants {
     false;
 //#endif
 
-    public static final String MOZ_INSTALL_TRACKING_ADJUST_SDK_APP_TOKEN =
-//#ifdef MOZ_INSTALL_TRACKING_ADJUST_SDK_APP_TOKEN
-    "@MOZ_INSTALL_TRACKING_ADJUST_SDK_APP_TOKEN@";
+    public static final boolean MOZ_SWITCHBOARD =
+//#ifdef MOZ_SWITCHBOARD
+    true;
 //#else
-    null;
+    false;
 //#endif
 
-    public static AdjustHelperInterface getAdjustHelper() {
-//#ifdef MOZ_INSTALL_TRACKING
-        return new AdjustHelper();
+    public static final boolean MOZ_ANDROID_NATIVE_ACCOUNT_UI =
+//#ifdef MOZ_ANDROID_NATIVE_ACCOUNT_UI
+    true;
 //#else
-        return new StubAdjustHelper();
+    false;
 //#endif
-    }
 }

@@ -49,6 +49,7 @@ GeneratorObject::create(JSContext* cx, AbstractFramePtr frame)
     GeneratorObject* genObj = &obj->as<GeneratorObject>();
     genObj->setCallee(*frame.callee());
     genObj->setThisValue(frame.thisValue());
+    genObj->setNewTarget(frame.newTarget());
     genObj->setScopeChain(*frame.scopeChain());
     if (frame.script()->needsArgsObj())
         genObj->setArgsObj(frame.argsObj());
@@ -68,7 +69,7 @@ GeneratorObject::suspend(JSContext* cx, HandleObject obj, AbstractFramePtr frame
 
     if (*pc == JSOP_YIELD && genObj->isClosing() && genObj->is<LegacyGeneratorObject>()) {
         RootedValue val(cx, ObjectValue(*frame.callee()));
-        ReportValueError(cx, JSMSG_BAD_GENERATOR_YIELD, JSDVG_IGNORE_STACK, val, NullPtr());
+        ReportValueError(cx, JSMSG_BAD_GENERATOR_YIELD, JSDVG_IGNORE_STACK, val, nullptr);
         return false;
     }
 
@@ -162,9 +163,11 @@ GeneratorObject::resume(JSContext* cx, InterpreterActivation& activation,
 
     RootedFunction callee(cx, &genObj->callee());
     RootedValue thisv(cx, genObj->thisValue());
+    RootedValue newTarget(cx, genObj->newTarget());
     RootedObject scopeChain(cx, &genObj->scopeChain());
-    if (!activation.resumeGeneratorFrame(callee, thisv, scopeChain))
+    if (!activation.resumeGeneratorFrame(callee, thisv, newTarget, scopeChain))
         return false;
+    activation.regs().fp()->setResumedGenerator();
 
     if (genObj->hasArgsObj())
         activation.regs().fp()->initArgsObj(genObj->argsObj());
@@ -312,7 +315,7 @@ GlobalObject::initGeneratorClasses(JSContext* cx, Handle<GlobalObject*> global)
         RootedObject proto(cx, &function.toObject());
         RootedAtom name(cx, cx->names().GeneratorFunction);
         RootedObject genFunction(cx, NewFunctionWithProto(cx, Generator, 1,
-                                                          JSFunction::NATIVE_CTOR, NullPtr(), name,
+                                                          JSFunction::NATIVE_CTOR, nullptr, name,
                                                           proto));
         if (!genFunction)
             return false;

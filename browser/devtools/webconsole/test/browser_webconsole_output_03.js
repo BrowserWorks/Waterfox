@@ -5,9 +5,12 @@
 
 // Test the webconsole output for various types of objects.
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-console-output-03.html";
+"use strict";
 
-let inputTests = [
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-console-output-03.html";
+
+var inputTests = [
 
   // 0
   {

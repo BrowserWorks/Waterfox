@@ -3,16 +3,9 @@
 
 "use strict";
 
-let dummyCallback = () => {};
-let mockWebSocket = new MockWebSocketChannel();
-let pushServerRequestCount = 0;
-
-add_test(function test_initalize_offline() {
-  Services.io.offline = true;
-  do_check_false(MozLoopPushHandler.initialize());
-  Services.io.offline = false;
-  run_next_test();
-});
+var dummyCallback = () => {};
+var mockWebSocket = new MockWebSocketChannel();
+var pushServerRequestCount = 0;
 
 add_test(function test_initalize_missing_chanid() {
   Assert.throws(() => MozLoopPushHandler.register(null, dummyCallback, dummyCallback));
@@ -30,7 +23,7 @@ add_test(function test_initalize_missing_notifycallback() {
 });
 
 add_test(function test_initalize_websocket() {
-  do_check_true(MozLoopPushHandler.initialize({mockWebSocket: mockWebSocket}));
+  MozLoopPushHandler.initialize({mockWebSocket: mockWebSocket});
   MozLoopPushHandler.register(
     "chan-1",
     function(err, url, id) {
@@ -69,9 +62,9 @@ add_test(function test_register_twice_same_channel() {
       // Register again for the same channel
       MozLoopPushHandler.register(
         "chan-2",
-        function(err, url, id) {
-          Assert.equal(err, null, "Should return null for success");
-          Assert.equal(id, "chan-2", "Should have channel id = chan-2");
+        function(error, newUrl, newId) {
+          Assert.equal(error, null, "Should return null for success");
+          Assert.equal(newId, "chan-2", "Should have channel id = chan-2");
           run_next_test();
         },
         dummyCallback
@@ -93,7 +86,8 @@ add_test(function test_reconnect_websocket() {
 // The uaID is cleared to force re-regsitration of all notification channels.
 add_test(function test_reopen_websocket() {
   MozLoopPushHandler.uaID = undefined;
-  MozLoopPushHandler.registeredChannels = {}; //Do this to force a new registration callback.
+  // Do this to force a new registration callback.
+  MozLoopPushHandler.registeredChannels = {};
   mockWebSocket.serverClose();
   // Previously registered onRegistration callbacks will fire and be checked (see above).
 });
@@ -160,28 +154,27 @@ add_test(function test_retry_pushurl() {
   loopServer.registerPathHandler("/push-server-config", (request, response) => {
     // The PushHandler should retry the request for the push-server-config for
     // each of these cases without throwing an error.
-    let n = 0;
     switch (++pushServerRequestCount) {
-    case ++n:
+    case 1:
       // Non-200 response
       response.setStatusLine(null, 500, "Retry");
       response.processAsync();
       response.finish();
       break;
-    case ++n:
+    case 2:
       // missing parameter
       response.setStatusLine(null, 200, "OK");
       response.write(JSON.stringify({pushServerURI: null}));
       response.processAsync();
       response.finish();
       break;
-    case ++n:
+    case 3:
       // json parse error
       response.setStatusLine(null, 200, "OK");
       response.processAsync();
       response.finish();
       break;
-    case ++n:
+    case 4:
       response.setStatusLine(null, 200, "OK");
       response.write(JSON.stringify({pushServerURI: kServerPushUrl}));
       response.processAsync();
@@ -192,7 +185,7 @@ add_test(function test_retry_pushurl() {
     }
   });
 
-  do_check_true(MozLoopPushHandler.initialize({mockWebSocket: mockWebSocket}));
+  MozLoopPushHandler.initialize({mockWebSocket: mockWebSocket});
 });
 
 function run_test() {

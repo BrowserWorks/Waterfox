@@ -23,10 +23,11 @@ import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.ViewHelper;
 import org.mozilla.gecko.favicons.Favicons;
 import org.mozilla.gecko.toolbar.BrowserToolbarTabletBase.ForwardButtonAnimation;
+import org.mozilla.gecko.util.ColorUtils;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.StringUtils;
-import org.mozilla.gecko.widget.ThemedLinearLayout;
-import org.mozilla.gecko.widget.ThemedTextView;
+import org.mozilla.gecko.widget.themed.ThemedLinearLayout;
+import org.mozilla.gecko.widget.themed.ThemedTextView;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -65,6 +66,7 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
                                   implements Animation.AnimationListener {
 
     private static final String LOGTAG = "GeckoToolbarDisplayLayout";
+    private boolean mTrackingProtectionEnabled;
 
     // To be used with updateFromTab() to allow the caller
     // to give enough context for the requested state change.
@@ -125,8 +127,12 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
     private final SiteIdentityPopup mSiteIdentityPopup;
     private int mSecurityImageLevel;
 
-    private final int LEVEL_SHIELD_ENABLED = 3;
-    private final int LEVEL_SHIELD_DISABLED = 4;
+    // Levels for displaying Mixed Content state icons.
+    private final int LEVEL_WARNING_MINOR = 3;
+    private final int LEVEL_LOCK_DISABLED = 4;
+    // Levels for displaying Tracking Protection state icons.
+    private final int LEVEL_SHIELD_ENABLED = 5;
+    private final int LEVEL_SHIELD_DISABLED = 6;
 
     private PropertyAnimator mForwardAnim;
 
@@ -148,10 +154,10 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
 
         final Resources res = getResources();
 
-        mUrlColor = new ForegroundColorSpan(res.getColor(R.color.url_bar_urltext));
-        mBlockedColor = new ForegroundColorSpan(res.getColor(R.color.url_bar_blockedtext));
-        mDomainColor = new ForegroundColorSpan(res.getColor(R.color.url_bar_domaintext));
-        mPrivateDomainColor = new ForegroundColorSpan(res.getColor(R.color.url_bar_domaintext_private));
+        mUrlColor = new ForegroundColorSpan(ColorUtils.getColor(context, R.color.url_bar_urltext));
+        mBlockedColor = new ForegroundColorSpan(ColorUtils.getColor(context, R.color.url_bar_blockedtext));
+        mDomainColor = new ForegroundColorSpan(ColorUtils.getColor(context, R.color.url_bar_domaintext));
+        mPrivateDomainColor = new ForegroundColorSpan(ColorUtils.getColor(context, R.color.url_bar_domaintext_private));
 
         mFavicon = (ImageButton) findViewById(R.id.favicon);
         mSiteSecurity = (ImageButton) findViewById(R.id.site_security);
@@ -173,6 +179,7 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
 
         mSiteIdentityPopup = new SiteIdentityPopup(mActivity);
         mSiteIdentityPopup.setAnchor(this);
+        mSiteIdentityPopup.setOnVisibilityChangeListener(mActivity);
 
         mStop = (ImageButton) findViewById(R.id.stop);
         mPageActionLayout = (PageActionLayout) findViewById(R.id.page_action_layout);
@@ -200,7 +207,7 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
                     // immediately based on the stopped tab.
                     final Tab tab = mStopListener.onStop();
                     if (tab != null) {
-                        updateUiMode(tab, UIMode.DISPLAY, EnumSet.noneOf(UpdateFlags.class));
+                        updateUiMode(UIMode.DISPLAY, EnumSet.noneOf(UpdateFlags.class));
                     }
                 }
             }
@@ -229,6 +236,7 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
 
     @Override
     public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
         mIsAttached = false;
     }
 
@@ -416,15 +424,18 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         mSiteIdentityPopup.setSiteIdentity(siteIdentity);
 
         final SecurityMode securityMode;
-        final MixedMode mixedMode;
+        final MixedMode activeMixedMode;
+        final MixedMode displayMixedMode;
         final TrackingMode trackingMode;
         if (siteIdentity == null) {
             securityMode = SecurityMode.UNKNOWN;
-            mixedMode = MixedMode.UNKNOWN;
+            activeMixedMode = MixedMode.UNKNOWN;
+            displayMixedMode = MixedMode.UNKNOWN;
             trackingMode = TrackingMode.UNKNOWN;
         } else {
             securityMode = siteIdentity.getSecurityMode();
-            mixedMode = siteIdentity.getMixedMode();
+            activeMixedMode = siteIdentity.getMixedModeActive();
+            displayMixedMode = siteIdentity.getMixedModeDisplay();
             trackingMode = siteIdentity.getTrackingMode();
         }
 
@@ -433,12 +444,14 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         int imageLevel = securityMode.ordinal();
 
         // Check to see if any protection was overridden first
-        if (trackingMode == TrackingMode.TRACKING_CONTENT_LOADED ||
-            mixedMode == MixedMode.MIXED_CONTENT_LOADED) {
-          imageLevel = LEVEL_SHIELD_DISABLED;
-        } else if (trackingMode == TrackingMode.TRACKING_CONTENT_BLOCKED ||
-                   mixedMode == MixedMode.MIXED_CONTENT_BLOCKED) {
-          imageLevel = LEVEL_SHIELD_ENABLED;
+        if (trackingMode == TrackingMode.TRACKING_CONTENT_LOADED) {
+            imageLevel = LEVEL_SHIELD_DISABLED;
+        } else if (trackingMode == TrackingMode.TRACKING_CONTENT_BLOCKED) {
+            imageLevel = LEVEL_SHIELD_ENABLED;
+        } else if (activeMixedMode == MixedMode.MIXED_CONTENT_LOADED) {
+            imageLevel = LEVEL_LOCK_DISABLED;
+        } else if (displayMixedMode == MixedMode.MIXED_CONTENT_LOADED) {
+            imageLevel = LEVEL_WARNING_MINOR;
         }
 
         if (mSecurityImageLevel != imageLevel) {
@@ -446,16 +459,22 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
             mSiteSecurity.setImageLevel(mSecurityImageLevel);
             updatePageActions(flags);
         }
+
+        mTrackingProtectionEnabled = trackingMode == TrackingMode.TRACKING_CONTENT_BLOCKED;
     }
 
     private void updateProgress(Tab tab, EnumSet<UpdateFlags> flags) {
         final boolean shouldShowThrobber = (tab != null &&
                                             tab.getState() == Tab.STATE_LOADING);
 
-        updateUiMode(tab, shouldShowThrobber ? UIMode.PROGRESS : UIMode.DISPLAY, flags);
+        updateUiMode(shouldShowThrobber ? UIMode.PROGRESS : UIMode.DISPLAY, flags);
+
+        if (Tab.STATE_SUCCESS == tab.getState() && mTrackingProtectionEnabled) {
+            mActivity.showTrackingProtectionPromptIfApplicable();
+        }
     }
 
-    private void updateUiMode(Tab tab, UIMode uiMode, EnumSet<UpdateFlags> flags) {
+    private void updateUiMode(UIMode uiMode, EnumSet<UpdateFlags> flags) {
         if (mUiMode == uiMode) {
             return;
         }
@@ -615,5 +634,9 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         }
 
         return false;
+    }
+
+    void destroy() {
+        mSiteIdentityPopup.destroy();
     }
 }

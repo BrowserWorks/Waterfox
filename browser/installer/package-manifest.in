@@ -38,7 +38,7 @@
 @APPNAME@/Contents/PkgInfo
 @RESPATH@/firefox.icns
 @RESPATH@/document.icns
-@RESPATH@/@AB@.lproj/*
+@RESPATH@/@LPROJ_ROOT@.lproj/*
 #endif
 
 [@AB_CD@]
@@ -123,14 +123,9 @@
 #endif
 #endif
 #endif
-#ifdef MOZ_REPLACE_MALLOC
-#ifndef MOZ_JEMALLOC3
-@BINPATH@/@DLL_PREFIX@replace_jemalloc@DLL_SUFFIX@
-#endif
-#endif
 #ifdef MOZ_GTK3
 @BINPATH@/@DLL_PREFIX@mozgtk@DLL_SUFFIX@
-@BINPATH@/@DLL_PREFIX@mozgtk2@DLL_SUFFIX@
+@BINPATH@/gtk2/@DLL_PREFIX@mozgtk@DLL_SUFFIX@
 #endif
 
 [browser]
@@ -151,6 +146,7 @@
 @BINPATH@/@DLL_PREFIX@mozsqlite3@DLL_SUFFIX@
 #endif
 #endif
+@BINPATH@/@DLL_PREFIX@lgpllibs@DLL_SUFFIX@
 @RESPATH@/browser/blocklist.xml
 #ifdef XP_UNIX
 #ifndef XP_MACOSX
@@ -206,7 +202,6 @@
 @RESPATH@/components/dom_alarm.xpt
 @RESPATH@/components/dom_core.xpt
 @RESPATH@/components/dom_css.xpt
-@RESPATH@/components/dom_devicestorage.xpt
 @RESPATH@/components/dom_events.xpt
 @RESPATH@/components/dom_geolocation.xpt
 @RESPATH@/components/dom_media.xpt
@@ -276,6 +271,9 @@
 @RESPATH@/components/layout_xul.xpt
 @RESPATH@/components/locale.xpt
 @RESPATH@/components/lwbrk.xpt
+#ifdef MOZ_ENABLE_PROFILER_SPS
+@RESPATH@/components/memory_profiler.xpt
+#endif
 @RESPATH@/browser/components/migration.xpt
 @RESPATH@/components/mimetype.xpt
 @RESPATH@/components/mozfind.xpt
@@ -287,6 +285,7 @@
 @RESPATH@/components/necko_file.xpt
 @RESPATH@/components/necko_ftp.xpt
 @RESPATH@/components/necko_http.xpt
+@RESPATH@/components/necko_mdns.xpt
 @RESPATH@/components/necko_res.xpt
 @RESPATH@/components/necko_socket.xpt
 @RESPATH@/components/necko_strconv.xpt
@@ -306,7 +305,6 @@
 @RESPATH@/components/plugin.xpt
 @RESPATH@/components/pref.xpt
 @RESPATH@/components/prefetch.xpt
-@RESPATH@/components/profile.xpt
 #ifdef MOZ_ENABLE_PROFILER_SPS
 @RESPATH@/components/profiler.xpt
 #endif
@@ -315,9 +313,7 @@
 @RESPATH@/components/saxparser.xpt
 @RESPATH@/browser/components/sessionstore.xpt
 @RESPATH@/components/services-crypto-component.xpt
-#ifdef MOZ_CAPTIVEDETECT
 @RESPATH@/components/captivedetect.xpt
-#endif
 @RESPATH@/browser/components/shellservice.xpt
 @RESPATH@/components/shistory.xpt
 @RESPATH@/components/spellchecker.xpt
@@ -390,7 +386,6 @@
 @RESPATH@/browser/components/webideComponents.manifest
 @RESPATH@/browser/components/Experiments.manifest
 @RESPATH@/browser/components/ExperimentsService.js
-@RESPATH@/browser/components/translation.manifest
 @RESPATH@/components/Downloads.manifest
 @RESPATH@/components/DownloadLegacy.js
 @RESPATH@/components/BrowserPageThumbs.manifest
@@ -438,7 +433,8 @@
 @RESPATH@/components/addoncompat.manifest
 @RESPATH@/components/multiprocessShims.js
 @RESPATH@/components/defaultShims.js
-@RESPATH@/components/remoteTagService.js
+@RESPATH@/components/utils.manifest
+@RESPATH@/components/simpleServices.js
 @RESPATH@/components/pluginGlue.manifest
 @RESPATH@/components/ProcessSingleton.manifest
 @RESPATH@/components/MainProcessSingleton.js
@@ -489,14 +485,13 @@
 @RESPATH@/browser/components/ChromeProfileMigrator.js
 @RESPATH@/browser/components/FirefoxProfileMigrator.js
 #ifdef XP_WIN
+@RESPATH@/browser/components/360seProfileMigrator.js
+@RESPATH@/browser/components/EdgeProfileMigrator.js
 @RESPATH@/browser/components/IEProfileMigrator.js
 @RESPATH@/browser/components/SafariProfileMigrator.js
 #endif
 #ifdef XP_MACOSX
 @RESPATH@/browser/components/SafariProfileMigrator.js
-#endif
-#ifdef MOZ_ENABLE_DBUS
-@RESPATH@/components/@DLL_PREFIX@dbusservice@DLL_SUFFIX@
 #endif
 #ifdef MOZ_ENABLE_GNOME_COMPONENT
 @RESPATH@/components/@DLL_PREFIX@mozgnome@DLL_SUFFIX@
@@ -521,10 +516,8 @@
 @RESPATH@/components/SyncComponents.manifest
 @RESPATH@/components/Weave.js
 #endif
-#ifdef MOZ_CAPTIVEDETECT
 @RESPATH@/components/CaptivePortalDetectComponents.manifest
 @RESPATH@/components/captivedetect.js
-#endif
 @RESPATH@/components/servicesComponents.manifest
 @RESPATH@/components/cryptoComponents.manifest
 @RESPATH@/components/TelemetryStartup.js
@@ -560,6 +553,7 @@
 @RESPATH@/components/AlarmsManager.manifest
 @RESPATH@/components/Push.js
 @RESPATH@/components/Push.manifest
+@RESPATH@/components/PushClient.js
 @RESPATH@/components/PushNotificationService.js
 
 @RESPATH@/components/SlowScriptDebug.manifest
@@ -571,11 +565,6 @@
 @RESPATH@/components/InterAppConnection.js
 @RESPATH@/components/InterAppMessagePort.js
 #endif
-
-@RESPATH@/components/TCPSocket.js
-@RESPATH@/components/TCPServerSocket.js
-@RESPATH@/components/TCPSocketParentIntermediary.js
-@RESPATH@/components/TCPSocket.manifest
 
 #ifdef MOZ_ACTIVITIES
 @RESPATH@/components/SystemMessageCache.js
@@ -623,6 +612,7 @@
 #ifdef MOZ_DEBUG
 @RESPATH@/components/TestInterfaceJS.js
 @RESPATH@/components/TestInterfaceJS.manifest
+@RESPATH@/components/TestInterfaceJSMaplike.js
 #endif
 
 @RESPATH@/components/PACGenerator.js
@@ -640,6 +630,11 @@
 @RESPATH@/components/nsUrlClassifierLib.js
 @RESPATH@/components/url-classifier.xpt
 #endif
+
+; Private Browsing
+@RESPATH@/components/privatebrowsing.xpt
+@RESPATH@/components/PrivateBrowsing.manifest
+@RESPATH@/components/PrivateBrowsingTrackingProtectionWhitelist.js
 
 ; ANGLE GLES-on-D3D rendering library
 #ifdef MOZ_ANGLE_RENDERER
@@ -802,7 +797,6 @@
 #endif
 @RESPATH@/chrome/pippki@JAREXT@
 @RESPATH@/chrome/pippki.manifest
-@RESPATH@/components/pipboot.xpt
 @RESPATH@/components/pipnss.xpt
 @RESPATH@/components/pippki.xpt
 
@@ -891,6 +885,8 @@ bin/libfreebl_32int64_3.so
 @RESPATH@/components/DataStoreImpl.js
 @RESPATH@/components/dom_datastore.xpt
 
+@RESPATH@/components/dom_audiochannel.xpt
+
 ; Shutdown Terminator
 @RESPATH@/components/nsTerminatorTelemetry.js
 @RESPATH@/components/terminator.manifest
@@ -910,4 +906,14 @@ bin/libfreebl_32int64_3.so
 #ifdef MOZ_EME
 @RESPATH@/gmp-clearkey/0.1/@DLL_PREFIX@clearkey@DLL_SUFFIX@
 @RESPATH@/gmp-clearkey/0.1/clearkey.info
+#endif
+
+; gfx
+#ifdef XP_WIN
+@RESPATH@/components/GfxSanityTest.manifest
+@RESPATH@/components/SanityTest.js
+#endif
+
+#ifdef MOZ_MULET
+#include ../../b2g/installer/package-manifest.in
 #endif

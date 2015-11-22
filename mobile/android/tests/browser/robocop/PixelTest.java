@@ -54,6 +54,7 @@ abstract class PixelTest extends BaseTest {
     public void addTab(String url, String title, boolean isPrivate) {
         Actions.EventExpecter tabEventExpecter = mActions.expectGeckoEvent("Tab:Added");
         Actions.EventExpecter contentEventExpecter = mActions.expectGeckoEvent("DOMContentLoaded");
+
         if (isPrivate) {
             selectMenuItem(mStringHelper.NEW_PRIVATE_TAB_LABEL);
         } else {
@@ -61,6 +62,7 @@ abstract class PixelTest extends BaseTest {
         }
         tabEventExpecter.blockForEvent();
         contentEventExpecter.blockForEvent();
+
         waitForText(mStringHelper.TITLE_PLACE_HOLDER);
         loadAndPaint(url);
         tabEventExpecter.unregisterListener();

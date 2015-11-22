@@ -81,8 +81,10 @@ class BaselineCompilerShared
             return nullptr;
 
         // Create the entry and add it to the vector.
-        if (!icEntries_.append(ICEntry(script->pcToOffset(pc), kind)))
+        if (!icEntries_.append(ICEntry(script->pcToOffset(pc), kind))) {
+            ReportOutOfMemory(cx);
             return nullptr;
+        }
         ICEntry& vecEntry = icEntries_.back();
 
         // Set the first stub for the IC entry to the fallback stub
@@ -96,7 +98,11 @@ class BaselineCompilerShared
     bool appendICEntry(ICEntry::Kind kind, uint32_t returnOffset) {
         ICEntry entry(script->pcToOffset(pc), kind);
         entry.setReturnOffset(CodeOffsetLabel(returnOffset));
-        return icEntries_.append(entry);
+        if (!icEntries_.append(entry)) {
+            ReportOutOfMemory(cx);
+            return false;
+        }
+        return true;
     }
 
     bool addICLoadLabel(CodeOffsetLabel label) {
@@ -104,7 +110,11 @@ class BaselineCompilerShared
         ICLoadLabel loadLabel;
         loadLabel.label = label;
         loadLabel.icEntry = icEntries_.length() - 1;
-        return icLoadLabels_.append(loadLabel);
+        if (!icLoadLabels_.append(loadLabel)) {
+            ReportOutOfMemory(cx);
+            return false;
+        }
+        return true;
     }
 
     JSFunction* function() const {
@@ -131,16 +141,7 @@ class BaselineCompilerShared
     void pushArg(const T& t) {
         masm.Push(t);
     }
-    void prepareVMCall() {
-        pushedBeforeCall_ = masm.framePushed();
-        inCall_ = true;
-
-        // Ensure everything is synced.
-        frame.syncStack(0);
-
-        // Save the frame pointer.
-        masm.Push(BaselineFrameReg);
-    }
+    void prepareVMCall();
 
     enum CallVMPhase {
         POST_INITIALIZE,

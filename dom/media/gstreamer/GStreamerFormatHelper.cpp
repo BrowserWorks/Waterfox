@@ -8,12 +8,17 @@
 #include "nsCharSeparatedTokenizer.h"
 #include "nsString.h"
 #include "GStreamerLoader.h"
+#include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
 
 #define ENTRY_FORMAT(entry) entry[0]
 #define ENTRY_CAPS(entry) entry[1]
 
 namespace mozilla {
+
+extern PRLogModuleInfo* gMediaDecoderLog;
+#define LOG(msg, ...) \
+    MOZ_LOG(gMediaDecoderLog, LogLevel::Debug, ("GStreamerFormatHelper " msg, ##__VA_ARGS__))
 
 GStreamerFormatHelper* GStreamerFormatHelper::gInstance = nullptr;
 bool GStreamerFormatHelper::sLoadOK = false;
@@ -35,8 +40,9 @@ void GStreamerFormatHelper::Shutdown() {
   gInstance = nullptr;
 }
 
-static char const *const sContainers[6][2] = {
+static char const *const sContainers[][2] = {
   {"video/mp4", "video/quicktime"},
+  {"video/x-m4v", "video/quicktime"},
   {"video/quicktime", "video/quicktime"},
   {"audio/mp4", "audio/x-m4a"},
   {"audio/x-m4a", "audio/x-m4a"},
@@ -58,6 +64,7 @@ static char const *const sCodecs[9][2] = {
 
 static char const * const sDefaultCodecCaps[][2] = {
   {"video/mp4", "video/x-h264"},
+  {"video/x-m4v", "video/x-h264"},
   {"video/quicktime", "video/x-h264"},
   {"audio/mp4", "audio/mpeg, mpegversion=(int)4"},
   {"audio/x-m4a", "audio/mpeg, mpegversion=(int)4"},
@@ -236,6 +243,7 @@ GStreamerFormatHelper::IsPluginFeatureBlacklisted(GstPluginFeature *aFeature)
 
   for (unsigned int i = 0; i < G_N_ELEMENTS(sPluginBlacklist); i++) {
     if (!strcmp(factoryName, sPluginBlacklist[i])) {
+      LOG("rejecting disabled plugin %s", factoryName);
       return true;
     }
   }
@@ -252,8 +260,9 @@ static gboolean FactoryFilter(GstPluginFeature *aFeature, gpointer)
   const gchar *className =
     gst_element_factory_get_klass(GST_ELEMENT_FACTORY_CAST(aFeature));
 
-  if (!strstr(className, "Decoder") && !strstr(className, "Demux") &&
-      !strstr(className, "Parser")) {
+  // NB: We skip filtering parsers here, because adding them to
+  // the list can give false decoder positives to canPlayType().
+  if (!strstr(className, "Decoder") && !strstr(className, "Demux")) {
     return FALSE;
   }
 

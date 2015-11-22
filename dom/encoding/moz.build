@@ -18,14 +18,12 @@ UNIFIED_SOURCES += [
     'TextEncoder.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
-
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/intl/locale',
 ]
 
-props2arrays = TOPSRCDIR + '/intl/locale/props2arrays.py'
+props2arrays = '/intl/locale/props2arrays.py'
 prefixes = (
     'domainsfallbacks',
     'encodingsgroups',

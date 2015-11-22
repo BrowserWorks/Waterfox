@@ -11,8 +11,9 @@
 #include <sys/un.h>
 #include "cert.h"
 #include "mozilla/ipc/ListenSocket.h"
+#include "mozilla/ipc/ListenSocketConsumer.h"
 #include "mozilla/ipc/StreamSocket.h"
-#include "mozilla/ipc/UnixSocketConnector.h"
+#include "mozilla/ipc/StreamSocketConsumer.h"
 #include "nsNSSShutDown.h"
 
 namespace mozilla {
@@ -79,27 +80,10 @@ typedef enum {
   STATE_PROCESSING
 } ProtocolHandlerState;
 
-class KeyStoreConnector : public mozilla::ipc::UnixSocketConnector
-{
-public:
-  KeyStoreConnector()
-  {}
-
-  virtual ~KeyStoreConnector()
-  {}
-
-  virtual int Create();
-  virtual bool CreateAddr(bool aIsServer,
-                          socklen_t& aAddrSize,
-                          sockaddr_any& aAddr,
-                          const char* aAddress);
-  virtual bool SetUp(int aFd);
-  virtual bool SetUpListenSocket(int aFd);
-  virtual void GetSocketAddr(const sockaddr_any& aAddr,
-                             nsAString& aAddrStr);
-};
-
-class KeyStore final : public nsNSSShutDownObject
+class KeyStore final
+  : public StreamSocketConsumer
+  , public ListenSocketConsumer
+  , public nsNSSShutDownObject
 {
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(KeyStore)
@@ -117,54 +101,7 @@ private:
     STREAM_SOCKET
   };
 
-  class ListenSocket final : public mozilla::ipc::ListenSocket
-  {
-  public:
-    ListenSocket(KeyStore* aKeyStore);
-    ListenSocket();
-
-    // SocketBase
-    //
-
-    void OnConnectSuccess() override;
-    void OnConnectError() override;
-    void OnDisconnect() override;
-
-  private:
-    KeyStore* mKeyStore;
-  };
-
-  class StreamSocket final : public mozilla::ipc::StreamSocket
-  {
-  public:
-    StreamSocket(KeyStore* aKeyStore);
-    ~StreamSocket();
-
-    // SocketConsumerBase
-    //
-
-    void OnConnectSuccess() override;
-    void OnConnectError() override;
-    void OnDisconnect() override;
-
-    void ReceiveSocketData(nsAutoPtr<UnixSocketBuffer>& aBuffer) override;
-
-    // ConnectionOrientedSocket
-    //
-
-    ConnectionOrientedSocketIO* GetIO() override;
-
-  private:
-    KeyStore* mKeyStore;
-  };
-
   ~KeyStore();
-
-  void ReceiveSocketData(nsAutoPtr<UnixSocketBuffer>& aMessage);
-
-  void OnConnectSuccess(enum SocketType aSocketType);
-  void OnConnectError(enum SocketType aSocketType);
-  void OnDisconnect(enum SocketType aSocketType);
 
   struct {
     ProtocolHandlerState          state;
@@ -182,6 +119,15 @@ private:
   ResponseCode ReadData(UnixSocketBuffer *aMessage);
   void SendResponse(ResponseCode response);
   void SendData(const uint8_t *data, int length);
+
+  // Methods for |StreamSocketConsumer|
+  //
+
+  void ReceiveSocketData(int aIndex,
+                         nsAutoPtr<UnixSocketBuffer>& aMessage) override;
+  void OnConnectSuccess(int aIndex) override;
+  void OnConnectError(int aIndex) override;
+  void OnDisconnect(int aIndex) override;
 
   bool mShutdown;
 

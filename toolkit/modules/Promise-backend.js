@@ -22,8 +22,41 @@
 ////////////////////////////////////////////////////////////////////////////////
 //// Globals
 
-Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+// Obtain an instance of Cu. How this instance is obtained depends on how this
+// file is loaded.
+//
+// This file can be loaded in three different ways:
+// 1. As a CommonJS module, by Loader.jsm, on the main thread.
+// 2. As a CommonJS module, by worker-loader.js, on a worker thread.
+// 3. As a subscript, by Promise.jsm, on the main thread.
+//
+// If require is defined, the file is loaded as a CommonJS module. Components
+// will not be defined in that case, but we can obtain an instance of Cu from
+// the chrome module. Otherwise, this file is loaded as a subscript, and we can
+// obtain an instance of Cu from Components directly.
+//
+// If the file is loaded as a CommonJS module on a worker thread, the instance
+// of Cu obtained from the chrome module will be null. The reason for this is
+// that Components is not defined in worker threads, so no instance of Cu can
+// be obtained.
+
+var Cu = this.require ? require("chrome").Cu : Components.utils;
+var Cc = this.require ? require("chrome").Cc : Components.classes;
+var Ci = this.require ? require("chrome").Ci : Components.interfaces;
+// If we can access Components, then we use it to capture an async
+// parent stack trace; see scheduleWalkerLoop.  However, as it might
+// not be available (see above), users of this must check it first.
+var Components_ = this.require ? require("chrome").components : Components;
+
+// If Cu is defined, use it to lazily define the FinalizationWitnessService.
+if (Cu) {
+  Cu.import("resource://gre/modules/Services.jsm");
+  Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+  XPCOMUtils.defineLazyServiceGetter(this, "FinalizationWitnessService",
+                                     "@mozilla.org/toolkit/finalizationwitness;1",
+                                     "nsIFinalizationWitnessService");
+}
 
 const STATUS_PENDING = 0;
 const STATUS_RESOLVED = 1;
@@ -38,7 +71,7 @@ const salt = Math.floor(Math.random() * 100);
 const N_INTERNALS = "{private:internals:" + salt + "}";
 
 // We use DOM Promise for scheduling the walker loop.
-const DOMPromise = Promise;
+const DOMPromise = Cu ? Promise : null;
 
 /////// Warn-upon-finalization mechanism
 //
@@ -71,11 +104,7 @@ const DOMPromise = Promise;
 // In this snippet, the error is reported both by p1 and by p2.
 //
 
-XPCOMUtils.defineLazyServiceGetter(this, "FinalizationWitnessService",
-                                   "@mozilla.org/toolkit/finalizationwitness;1",
-                                   "nsIFinalizationWitnessService");
-
-let PendingErrors = {
+var PendingErrors = {
   // An internal counter, used to generate unique id.
   _counter: 0,
   // Functions registered to be notified when a pending error
@@ -247,7 +276,12 @@ let PendingErrors = {
     this._observers.clear();
   }
 };
-PendingErrors.init();
+
+// Initialize the warn-upon-finalization mechanism if and only if Cu is defined.
+// Otherwise, FinalizationWitnessService won't be defined (see above).
+if (Cu) {
+  PendingErrors.init();
+}
 
 // Default mechanism for displaying errors
 PendingErrors.addObserver(function(details) {
@@ -618,6 +652,12 @@ Object.freeze(Promise.Debugging);
 
 Object.freeze(Promise);
 
+// If module is defined, this file is loaded as a CommonJS module. Make sure
+// Promise is exported in that case.
+if (this.module) {
+  module.exports = Promise;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //// PromiseWalker
 
@@ -669,7 +709,7 @@ this.PromiseWalker = {
     aPromise[N_INTERNALS].value = aValue;
     if (aPromise[N_INTERNALS].handlers.length > 0) {
       this.schedulePromise(aPromise);
-    } else if (aStatus == STATUS_REJECTED) {
+    } else if (Cu && aStatus == STATUS_REJECTED) {
       // This is a rejection and the promise is the last in the chain.
       // For the time being we therefore have an uncaught error.
       let id = PendingErrors.register(aValue);
@@ -685,7 +725,34 @@ this.PromiseWalker = {
   scheduleWalkerLoop: function()
   {
     this.walkerLoopScheduled = true;
-    DOMPromise.resolve().then(() => this.walkerLoop());
+
+    // If this file is loaded on a worker thread, DOMPromise will not behave as
+    // expected: because native promises are not aware of nested event loops
+    // created by the debugger, their respective handlers will not be called
+    // until after leaving the nested event loop. The debugger server relies
+    // heavily on the use promises, so this could cause the debugger to hang.
+    //
+    // To work around this problem, any use of native promises in the debugger
+    // server should be avoided when it is running on a worker thread. Because
+    // it is still necessary to be able to schedule runnables on the event
+    // queue, the worker loader defines the function setImmediate as a
+    // per-module global for this purpose.
+    //
+    // If Cu is defined, this file is loaded on the main thread. Otherwise, it
+    // is loaded on the worker thread.
+    if (Cu) {
+      let stack = Components_ ? Components_.stack : null;
+      if (stack) {
+        DOMPromise.resolve().then(() => {
+          Cu.callFunctionWithAsyncStack(this.walkerLoop.bind(this), stack,
+                                        "Promise")
+        });
+      } else {
+        DOMPromise.resolve().then(() => this.walkerLoop());
+      }
+    } else {
+      setImmediate(this.walkerLoop);
+    }
   },
 
   /**

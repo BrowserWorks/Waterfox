@@ -3,7 +3,7 @@
 
 'use strict';
 
-const {PushDB, PushService} = serviceExports;
+const {PushDB, PushService, PushServiceWebSocket} = serviceExports;
 
 function run_test() {
   do_get_profile();
@@ -14,14 +14,15 @@ function run_test() {
 }
 
 add_task(function* test_registrations_error() {
-  let db = new PushDB();
-  do_register_cleanup(() => cleanupDatabase(db));
+  let db = PushServiceWebSocket.newPushDB();
+  do_register_cleanup(() => {return db.drop().then(_ => db.close());});
 
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     db: makeStub(db, {
-      getByScope(prev, scope, successCb, failureCb) {
-        failureCb('oops');
+      getByIdentifiers(prev, scope) {
+        return Promise.reject('Database error');
       }
     }),
     makeWebSocket(uri) {
@@ -30,7 +31,8 @@ add_task(function* test_registrations_error() {
   });
 
   yield rejects(
-    PushNotificationService.registration('https://example.net/1'),
+    PushNotificationService.registration('https://example.net/1',
+      ChromeUtils.originAttributesToSuffix({ appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false })),
     function(error) {
       return error == 'Database error';
     },

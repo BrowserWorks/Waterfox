@@ -15,15 +15,15 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AppsUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 
-let Namespace = CC('@mozilla.org/network/application-cache-namespace;1',
+var Namespace = CC('@mozilla.org/network/application-cache-namespace;1',
                    'nsIApplicationCacheNamespace',
                    'init');
-let makeFile = CC('@mozilla.org/file/local;1',
+var makeFile = CC('@mozilla.org/file/local;1',
                 'nsIFile',
                 'initWithPath');
-let MutableArray = CC('@mozilla.org/array;1', 'nsIMutableArray');
+var MutableArray = CC('@mozilla.org/array;1', 'nsIMutableArray');
 
-let {LoadContextInfo} = Cu.import("resource://gre/modules/LoadContextInfo.jsm", {});
+var {LoadContextInfo} = Cu.import("resource://gre/modules/LoadContextInfo.jsm", {});
 
 const nsICacheStorage = Ci.nsICacheStorage;
 const nsIApplicationCache = Ci.nsIApplicationCache;
@@ -91,16 +91,12 @@ function storeCache(applicationCache, url, file, itemType, metadata) {
 
 function readFile(aFile, aPrincipal, aCallback) {
 
-  let channel = NetUtil.newChannel2(aFile,
-                                    null,
-                                    null,
-                                    null,      // aLoadingNode
-                                    aPrincipal,
-                                    null,      // aTriggeringPrincipal
-                                    Ci.nsILoadInfo.SEC_NORMAL,
-                                    Ci.nsIContentPolicy.TYPE_OTHER);
+  let channel = NetUtil.newChannel({
+    uri: NetUtil.newURI(aFile),
+    loadingPrincipal: aPrincipal,
+    contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER});
   channel.contentType = "plain/text";
-  NetUtil.asyncFetch2(channel, function(aStream, aResult) {
+  NetUtil.asyncFetch(channel, function(aStream, aResult) {
     if (!Components.isSuccessCode(aResult)) {
       Cu.reportError("OfflineCacheInstaller: Could not read file " + aFile.path);
       if (aCallback)
@@ -232,8 +228,8 @@ function installCache(app) {
   if (!cacheManifest.exists())
     return;
 
-  let principal = Services.scriptSecurityManager.getAppCodebasePrincipal(
-      app.origin, app.localId, false);
+  let principal =
+    Services.scriptSecurityManager.createCodebasePrincipal(app.origin, {appId: aApp.localId});
 
   // If the build has been correctly configured, this should not happen!
   // If we install the cache anyway, it won't be updateable. If we don't install

@@ -4,30 +4,41 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_bluetooth_bluedroid_bluetoothdaemoninterface_h__
-#define mozilla_dom_bluetooth_bluedroid_bluetoothdaemoninterface_h__
+#ifndef mozilla_dom_bluetooth_bluedroid_BluetoothDaemonInterface_h
+#define mozilla_dom_bluetooth_bluedroid_BluetoothDaemonInterface_h
 
 #include "BluetoothInterface.h"
+#include "mozilla/ipc/DaemonSocketConsumer.h"
+#include "mozilla/ipc/ListenSocketConsumer.h"
+
+namespace mozilla {
+namespace ipc {
+
+class DaemonSocket;
+class ListenSocket;
+
+}
+}
 
 BEGIN_BLUETOOTH_NAMESPACE
 
-class BluetoothDaemonListenSocket;
-class BluetoothDaemonChannel;
 class BluetoothDaemonA2dpInterface;
 class BluetoothDaemonAvrcpInterface;
+class BluetoothDaemonGattInterface;
 class BluetoothDaemonHandsfreeInterface;
 class BluetoothDaemonProtocol;
 class BluetoothDaemonSocketInterface;
 
-class BluetoothDaemonInterface final : public BluetoothInterface
+class BluetoothDaemonInterface final
+  : public BluetoothInterface
+  , public mozilla::ipc::DaemonSocketConsumer
+  , public mozilla::ipc::ListenSocketConsumer
 {
 public:
   class CleanupResultHandler;
   class InitResultHandler;
   class StartDaemonTask;
 
-  friend class BluetoothDaemonListenSocket;
-  friend class BluetoothDaemonChannel;
   friend class CleanupResultHandler;
   friend class InitResultHandler;
   friend class StartDaemonTask;
@@ -35,80 +46,82 @@ public:
   static BluetoothDaemonInterface* GetInstance();
 
   void Init(BluetoothNotificationHandler* aNotificationHandler,
-            BluetoothResultHandler* aRes);
-  void Cleanup(BluetoothResultHandler* aRes);
+            BluetoothResultHandler* aRes) override;
+  void Cleanup(BluetoothResultHandler* aRes) override;
 
-  void Enable(BluetoothResultHandler* aRes);
-  void Disable(BluetoothResultHandler* aRes);
+  void Enable(BluetoothResultHandler* aRes) override;
+  void Disable(BluetoothResultHandler* aRes) override;
 
   /* Adapter Properties */
 
-  void GetAdapterProperties(BluetoothResultHandler* aRes);
+  void GetAdapterProperties(BluetoothResultHandler* aRes) override;
   void GetAdapterProperty(const nsAString& aName,
-                          BluetoothResultHandler* aRes);
+                          BluetoothResultHandler* aRes) override;
   void SetAdapterProperty(const BluetoothNamedValue& aProperty,
-                          BluetoothResultHandler* aRes);
+                          BluetoothResultHandler* aRes) override;
 
   /* Remote Device Properties */
 
   void GetRemoteDeviceProperties(const nsAString& aRemoteAddr,
-                                 BluetoothResultHandler* aRes);
+                                 BluetoothResultHandler* aRes) override;
   void GetRemoteDeviceProperty(const nsAString& aRemoteAddr,
                                const nsAString& aName,
-                               BluetoothResultHandler* aRes);
+                               BluetoothResultHandler* aRes) override;
   void SetRemoteDeviceProperty(const nsAString& aRemoteAddr,
                                const BluetoothNamedValue& aProperty,
-                               BluetoothResultHandler* aRes);
+                               BluetoothResultHandler* aRes) override;
 
   /* Remote Services */
 
   void GetRemoteServiceRecord(const nsAString& aRemoteAddr,
                               const uint8_t aUuid[16],
-                              BluetoothResultHandler* aRes);
+                              BluetoothResultHandler* aRes) override;
   void GetRemoteServices(const nsAString& aRemoteAddr,
-                         BluetoothResultHandler* aRes);
+                         BluetoothResultHandler* aRes) override;
 
   /* Discovery */
 
-  void StartDiscovery(BluetoothResultHandler* aRes);
-  void CancelDiscovery(BluetoothResultHandler* aRes);
+  void StartDiscovery(BluetoothResultHandler* aRes) override;
+  void CancelDiscovery(BluetoothResultHandler* aRes) override;
 
   /* Bonds */
 
   void CreateBond(const nsAString& aBdAddr, BluetoothTransport aTransport,
-                  BluetoothResultHandler* aRes);
-  void RemoveBond(const nsAString& aBdAddr, BluetoothResultHandler* aRes);
-  void CancelBond(const nsAString& aBdAddr, BluetoothResultHandler* aRes);
+                  BluetoothResultHandler* aRes) override;
+  void RemoveBond(const nsAString& aBdAddr,
+                  BluetoothResultHandler* aRes) override;
+  void CancelBond(const nsAString& aBdAddr,
+                  BluetoothResultHandler* aRes) override;
 
   /* Connection */
 
   void GetConnectionState(const nsAString& aBdAddr,
-                          BluetoothResultHandler* aRes);
+                          BluetoothResultHandler* aRes) override;
 
   /* Authentication */
 
   void PinReply(const nsAString& aBdAddr, bool aAccept,
                 const nsAString& aPinCode,
-                BluetoothResultHandler* aRes);
+                BluetoothResultHandler* aRes) override;
 
   void SspReply(const nsAString& aBdAddr, BluetoothSspVariant aVariant,
                 bool aAccept, uint32_t aPasskey,
-                BluetoothResultHandler* aRes);
+                BluetoothResultHandler* aRes) override;
 
   /* DUT Mode */
 
   void DutModeConfigure(bool aEnable, BluetoothResultHandler* aRes);
   void DutModeSend(uint16_t aOpcode, uint8_t* aBuf, uint8_t aLen,
-                   BluetoothResultHandler* aRes);
+                   BluetoothResultHandler* aRes) override;
 
   /* LE Mode */
 
   void LeTestMode(uint16_t aOpcode, uint8_t* aBuf, uint8_t aLen,
-                  BluetoothResultHandler* aRes);
+                  BluetoothResultHandler* aRes) override;
 
   /* Energy Information */
 
-  void ReadEnergyInfo(BluetoothResultHandler* aRes);
+  void ReadEnergyInfo(BluetoothResultHandler* aRes) override;
 
   /* Profile Interfaces */
 
@@ -128,22 +141,21 @@ protected:
   BluetoothDaemonInterface();
   ~BluetoothDaemonInterface();
 
-  void OnConnectSuccess(enum Channel aChannel);
-  void OnConnectError(enum Channel aChannel);
-  void OnDisconnect(enum Channel aChannel);
+  // Methods for |DaemonSocketConsumer| and |ListenSocketConsumer|
+  //
 
-  nsresult CreateRandomAddressString(const nsACString& aPrefix,
-                                     unsigned long aPostfixLength,
-                                     nsACString& aAddress);
+  void OnConnectSuccess(int aIndex) override;
+  void OnConnectError(int aIndex) override;
+  void OnDisconnect(int aIndex) override;
 
 private:
   void DispatchError(BluetoothResultHandler* aRes, BluetoothStatus aStatus);
   void DispatchError(BluetoothResultHandler* aRes, nsresult aRv);
 
   nsCString mListenSocketName;
-  nsRefPtr<BluetoothDaemonListenSocket> mListenSocket;
-  nsRefPtr<BluetoothDaemonChannel> mCmdChannel;
-  nsRefPtr<BluetoothDaemonChannel> mNtfChannel;
+  nsRefPtr<mozilla::ipc::ListenSocket> mListenSocket;
+  nsRefPtr<mozilla::ipc::DaemonSocket> mCmdChannel;
+  nsRefPtr<mozilla::ipc::DaemonSocket> mNtfChannel;
   nsAutoPtr<BluetoothDaemonProtocol> mProtocol;
 
   nsTArray<nsRefPtr<BluetoothResultHandler> > mResultHandlerQ;
@@ -152,8 +164,9 @@ private:
   nsAutoPtr<BluetoothDaemonHandsfreeInterface> mHandsfreeInterface;
   nsAutoPtr<BluetoothDaemonA2dpInterface> mA2dpInterface;
   nsAutoPtr<BluetoothDaemonAvrcpInterface> mAvrcpInterface;
+  nsAutoPtr<BluetoothDaemonGattInterface> mGattInterface;
 };
 
 END_BLUETOOTH_NAMESPACE
 
-#endif
+#endif // mozilla_dom_bluetooth_bluedroid_BluetoothDaemonInterface_h

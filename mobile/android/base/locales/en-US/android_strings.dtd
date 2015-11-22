@@ -6,10 +6,21 @@
 <!ENTITY  no_space_to_start_error "There is not enough space available for &brandShortName; to start.">
 <!ENTITY  error_loading_file "An error occurred when trying to load files required to run &brandShortName;">
 
+<!ENTITY firstrun_panel_title_welcome "Welcome">
 <!ENTITY  onboard_start_message3 "Browse with &brandShortName;">
 <!ENTITY  onboard_start_subtext3 "Make your mobile Web browsing experience truly your own.">
 <!ENTITY  onboard_start_button_account "Sign in to &brandShortName;">
 <!ENTITY  onboard_start_button_browser "Start Browsing">
+<!ENTITY firstrun_button_next "Next">
+
+<!ENTITY  onboard_start_restricted1 "Stay safe and in control with this simplified version of &brandShortName;.">
+
+<!ENTITY firstrun_import_title "Import">
+<!ENTITY firstrun_import_message "Welcome to &brandShortName;">
+<!ENTITY firstrun_import_subtext "Import your bookmarks and history from another browser.">
+<!ENTITY firstrun_import_action "Transfer to &brandShortName;">
+<!ENTITY firstrun_import_dialog_button "Transfer">
+<!ENTITY firstrun_import_progress_title "Transferring">
 
 <!-- Localization note: These are used as the titles of different pages on the home screen.
      They are automatically converted to all caps by the Android platform. -->
@@ -44,14 +55,19 @@
 <!ENTITY bookmark "Bookmark">
 <!ENTITY bookmark_remove "Remove bookmark">
 <!ENTITY bookmark_added "Bookmark added">
+<!-- Localization note (bookmark_already_added) : This string is
+     used as a label in a toast. It is the verb "to bookmark", not
+     the noun "a bookmark". -->
+<!ENTITY bookmark_already_added "Already bookmarked">
 <!ENTITY bookmark_removed "Bookmark removed">
 <!ENTITY bookmark_updated "Bookmark updated">
 <!ENTITY bookmark_options "Options">
 
 <!ENTITY history_today_section "Today">
 <!ENTITY history_yesterday_section "Yesterday">
-<!ENTITY history_week_section2 "Last Week">
-<!ENTITY history_older_section2 "Last Month">
+<!ENTITY history_week_section3 "Last 7 days">
+<!ENTITY history_this_month_section "This month">
+<!ENTITY history_older_section3 "Older than 6 months">
 
 <!ENTITY go "Go">
 <!ENTITY search "Search">
@@ -74,9 +90,18 @@
      as possible because it's shown as a label in a toast.  Ideally, this string
      is upper-case, to match Google and Android's convention. -->
 <!ENTITY switch_button_message "SWITCH">
+<!-- Localization note (tab_title_prefix_is_playing_audio): This string is not
+     visible in the UI, but rather used as a text-to-speech content description
+     for sight-impaired a11y users. The content description is set on a tab
+     title in a list of open tabs when content in that tab is playing audio.
+     &formatS; will be replaced with the title of the tab, as received from the
+     web page. When audio is not playing in a tab, &formatS; will be used as
+     the content description. -->
+<!ENTITY tab_title_prefix_is_playing_audio "Playing audio – &formatS;">
 
 <!ENTITY settings "Settings">
 <!ENTITY settings_title "Settings">
+<!ENTITY pref_category_input_options "Input options">
 <!ENTITY pref_category_advanced "Advanced">
 <!ENTITY pref_category_customize "Customize">
 <!ENTITY pref_category_customize_summary "Home, search, tabs, import">
@@ -132,7 +157,7 @@
 <!ENTITY pref_category_display "Display">
 <!ENTITY pref_category_display_summary "Text, title bar, full-screen browsing">
 <!ENTITY pref_category_privacy_short "Privacy">
-<!ENTITY pref_category_privacy_summary "Control passwords, cookies, tracking, data">
+<!ENTITY pref_category_privacy_summary2 "Control logins, cookies, tracking, data">
 <!ENTITY pref_category_vendor "&vendorShortName;">
 <!ENTITY pref_category_vendor_summary "About &brandShortName;, FAQs, data choices">
 <!ENTITY pref_category_datareporting "Data choices">
@@ -150,8 +175,13 @@
 <!ENTITY pref_search_hint "TIP: Add any website to your list of search providers by long-pressing on its search field and then tapping the &formatI; icon.">
 <!ENTITY pref_category_devtools "Developer tools">
 <!ENTITY pref_developer_remotedebugging "Remote debugging">
+<!ENTITY pref_developer_remotedebugging_usb "Remote debugging via USB">
+<!ENTITY pref_developer_remotedebugging_wifi "Remote debugging via Wi-Fi">
+<!ENTITY pref_developer_remotedebugging_wifi_disabled_summary "Wi-Fi debugging requires your device to have a QR code reader app installed.">
 <!ENTITY pref_category_logins "Logins">
-<!ENTITY pref_remember_signons "Remember passwords">
+<!ENTITY pref_remember_signons2 "Remember logins">
+<!ENTITY pref_open_external_urls_privately_title "Open links in Private browsing">
+<!ENTITY pref_open_external_urls_privately_summary "For all external links opened in &brandShortName;">
 <!ENTITY pref_manage_logins "Manage logins">
 
 <!ENTITY pref_category_home "Home">
@@ -169,6 +199,9 @@
 <!ENTITY pref_home_updates_wifi "Only over Wi-Fi">
 <!ENTITY pref_home_suggested_sites "Show site suggestions">
 <!ENTITY pref_home_suggested_sites_summary "Display shortcuts to sites on your homepage that we think you might find interesting">
+<!ENTITY pref_category_home_homepage "Homepage">
+<!ENTITY home_homepage_title "Set a Homepage">
+<!ENTITY home_homepage_use_current_tab "Use current tab">
 
 <!-- Localization note: These are shown in the left sidebar on tablets -->
 <!ENTITY pref_header_customize "Customize">
@@ -185,15 +218,20 @@
 <!ENTITY pref_cookies_disabled "Disabled">
 
 <!ENTITY pref_tracking_protection_title "Tracking protection">
-<!ENTITY pref_tracking_protection_summary "&brandShortName; will prevent sites from tracking you">
+<!ENTITY pref_tracking_protection_summary3 "Enabled in Private Browsing">
 <!ENTITY pref_donottrack_title "Do not track">
 <!ENTITY pref_donottrack_summary "&brandShortName; will tell sites that you do not want to be tracked">
 
-<!ENTITY tab_queue_toast_message2 "Tab queued in &brandShortName;">
+<!ENTITY tracking_protection_prompt_title "Now with Tracking Protection">
+<!ENTITY tracking_protection_prompt_text "Actively block tracking elements so you don\'t have to worry.">
+<!ENTITY tracking_protection_prompt_tip_text "Visit Privacy settings to learn more">
+<!ENTITY tracking_protection_prompt_action_button "Got it!">
+
+<!ENTITY tab_queue_toast_message3 "Tab saved in &brandShortName;">
 <!ENTITY tab_queue_toast_action "Open now">
 <!ENTITY tab_queue_prompt_title "Opening multiple links?">
-<!ENTITY tab_queue_prompt_text2 "Open them without switching to &brandShortName; each time.">
-<!ENTITY tab_queue_prompt_tip_text "you can change this later in Settings">
+<!ENTITY tab_queue_prompt_text4 "Save them until the next time you open &brandShortName;.">
+<!ENTITY tab_queue_prompt_tip_text2 "You can change this later in Settings">
 <!ENTITY tab_queue_prompt_positive_action_button "Enable">
 <!ENTITY tab_queue_prompt_negative_action_button "Not now">
 <!ENTITY tab_queue_notification_title "&brandShortName;">
@@ -219,7 +257,6 @@
 <!ENTITY pref_plugins_tap_to_play "Tap to play">
 <!ENTITY pref_plugins_disabled "Disabled">
 <!ENTITY pref_text_size "Text size">
-<!ENTITY pref_reflow_on_zoom4 "Text reflow">
 <!ENTITY pref_restore "Tabs">
 <!ENTITY pref_restore_always "Always restore">
 <!ENTITY pref_restore_quit "Don\'t restore after quitting &brandShortName;">
@@ -244,10 +281,14 @@ size. -->
 <!ENTITY pref_media_autoplay_enabled_summary "Control if websites can autoplay videos and other media content">
 <!ENTITY pref_zoom_force_enabled "Always enable zoom">
 <!ENTITY pref_zoom_force_enabled_summary "Force override so you can zoom any page">
+<!ENTITY pref_voice_input "Voice input">
+<!ENTITY pref_voice_input_summary "Allow voice dictation in the title bar">
+<!ENTITY pref_qrcode_enabled "QR code reader">
+<!ENTITY pref_qrcode_enabled_summary "Allow QR scanner in the title bar">
 
 <!ENTITY pref_use_master_password "Use master password">
 <!ENTITY pref_sync "Sync">
-<!ENTITY pref_sync_summary "Sync your tabs, bookmarks, passwords, history">
+<!ENTITY pref_sync_summary2 "Sync your tabs, bookmarks, logins, history">
 <!ENTITY pref_search_suggestions "Show search suggestions">
 <!ENTITY pref_import_android "Import from Android">
 <!ENTITY pref_import_android_summary "Import bookmarks and history from the native browser">
@@ -255,11 +296,12 @@ size. -->
 <!ENTITY pref_private_data_searchHistory "Search history">
 <!ENTITY pref_private_data_formdata2 "Form history">
 <!ENTITY pref_private_data_cookies2 "Cookies &amp; active logins">
-<!ENTITY pref_private_data_passwords "Saved passwords">
+<!ENTITY pref_private_data_passwords2 "Saved logins">
 <!ENTITY pref_private_data_cache "Cache">
 <!ENTITY pref_private_data_offlineApps "Offline website data">
 <!ENTITY pref_private_data_siteSettings2 "Site settings">
 <!ENTITY pref_private_data_downloadFiles2 "Downloads">
+<!ENTITY pref_private_data_syncedTabs "Synced tabs">
 
 
 <!ENTITY pref_about_firefox "About &brandShortName;">
@@ -318,13 +360,13 @@ size. -->
 <!ENTITY addons "Add-ons">
 <!ENTITY logins "Logins">
 <!ENTITY downloads "Downloads">
-<!ENTITY apps "Apps">
 <!ENTITY char_encoding "Character Encoding">
 
 <!ENTITY share "Share">
 <!ENTITY share_title "Share via">
 <!ENTITY share_image_failed "Unable to share this image">
 <!ENTITY save_as_pdf "Save as PDF">
+<!ENTITY print "Print">
 <!ENTITY find_in_page "Find in Page">
 <!ENTITY desktop_mode "Request Desktop Site">
 <!ENTITY page "Page">
@@ -369,6 +411,8 @@ size. -->
 <!ENTITY contextmenu_top_sites_pin "Pin Site">
 <!ENTITY contextmenu_top_sites_unpin "Unpin Site">
 <!ENTITY contextmenu_add_search_engine "Add a Search Engine">
+<!ENTITY contextmenu_mark_read "Mark as read">
+<!ENTITY contextmenu_mark_unread "Mark as unread">
 
 <!-- Localization note (doorhanger_login_no_username): This string is used in the save-login doorhanger
      where normally a username would be displayed. In this case, no username was found, and this placeholder
@@ -379,10 +423,20 @@ size. -->
 <!ENTITY doorhanger_login_edit_password_hint "Password">
 <!ENTITY doorhanger_login_edit_toggle "Show password">
 <!ENTITY doorhanger_login_edit_toast_error "Failed to save login">
+<!ENTITY doorhanger_login_select_message "Copy password from &formatS;?">
+<!ENTITY doorhanger_login_select_toast_copy "Password copied to clipboard">
+<!ENTITY doorhanger_login_select_toast_copy_error "Couldn\'t copy password">
+<!ENTITY doorhanger_login_select_action_text "Select another login">
+<!ENTITY doorhanger_login_select_title "Copy password from">
 
 <!ENTITY pref_titlebar_mode "Title bar">
 <!ENTITY pref_titlebar_mode_title "Show page title">
 <!ENTITY pref_titlebar_mode_url "Show page address">
+
+<!-- Localization note (pref_prevent_magnifying_glass): Label for setting that controls
+     whether or not the magnifying glass is disabled. -->
+<!ENTITY pref_magnifying_glass_enabled "Magnify small areas">
+<!ENTITY pref_magnifying_glass_enabled_summary "Enlarge links and form fields when tapping near them">
 
 <!-- Localization note (pref_scroll_title_bar2): Label for setting that controls
      whether or not the dynamic toolbar is enabled. -->
@@ -390,7 +444,7 @@ size. -->
 <!ENTITY pref_scroll_title_bar_summary "Hide the &brandShortName; title bar when scrolling down a page">
 
 <!ENTITY pref_tab_queue_title2 "Open multiple links">
-<!ENTITY pref_tab_queue_summary2 "Queue links for later instead of switching to &brandShortName; each time">
+<!ENTITY pref_tab_queue_summary3 "Save them until the next time you open &brandShortName;">
 
 <!-- Localization note (page_removed): This string appears in a toast message when
      any page is removed frome about:home. This includes pages that are in history,
@@ -409,7 +463,9 @@ size. -->
 <!ENTITY site_settings_clear        "Clear">
 <!ENTITY site_settings_no_settings  "There are no settings to clear.">
 
-<!ENTITY reading_list_added "Page added to your Reading List">
+<!-- Localization note (reading_list_added3) : Used in a toast, please keep as short
+     as possible. -->
+<!ENTITY reading_list_added3 "Added to Reading List">
 <!ENTITY reading_list_removed "Page removed from your Reading List">
 <!-- Localization note (reading_list_remove) : Used to remove the currently open page from
      the user's reading list. The opposite of overlay_share_reading_list_btn_label. -->
@@ -438,9 +494,7 @@ size. -->
 <!ENTITY button_clear_data "Clear data">
 <!ENTITY button_set "Set">
 <!ENTITY button_clear "Clear">
-<!ENTITY button_remember "Remember">
-
-<!ENTITY firstrun_panel_title_welcome "Welcome">
+<!ENTITY button_copy "Copy">
 
 <!ENTITY home_top_sites_title "Top Sites">
 <!-- Localization note (home_top_sites_add): This string is used as placeholder
@@ -502,10 +556,6 @@ size. -->
      the text of a button; we expect more than one device. -->
 <!ENTITY home_remote_tabs_unhide_selected_devices "Unhide selected devices">
 
-<!ENTITY private_browsing_title "Private Browsing">
-<!ENTITY private_tabs_panel_empty_desc "Your private tabs will show up here. While we don\'t keep any of your browsing history or cookies, bookmarks and files that you download will still be saved on your device.">
-<!ENTITY private_tabs_panel_learn_more "Want to learn more?">
-
 <!ENTITY remote_tabs_panel_moved_title "Where did my tabs go?">
 <!ENTITY remote_tabs_panel_moved_desc "We\'ve moved your tabs from other devices into a panel on your home page that can be easily accessed every time you open a new tab.">
 <!ENTITY remote_tabs_panel_moved_link "Take me to my new panel.">
@@ -530,20 +580,21 @@ The layout of the identity dialog prevents combining this into a single string w
 substitution variables.  If it is difficult to translate the sense of the string
 with that structure, consider a translation which ignores the preceding domain and
 just addresses the organization to follow, e.g. "This site is run by " -->
-<!ENTITY identity_run_by "which is run by">
-<!ENTITY identity_no_info "This website does not supply identity information.">
-<!ENTITY identity_not_encrypted "Your connection to this website is not encrypted.">
+<!ENTITY identity_connection_secure "Secure Connection">
+<!ENTITY identity_connection_insecure "Insecure connection">
 
 <!-- Mixed content notifications in site identity popup -->
-<!ENTITY loaded_mixed_content_message "This page is displaying content that isn\'t secure.">
-<!ENTITY blocked_mixed_content_message_top "&brandShortName; has blocked content that isn\'t secure.">
-<!ENTITY blocked_mixed_content_message_bottom "Most websites will still work properly even when this content is blocked.">
+<!ENTITY mixed_content_blocked_all1 "&brandShortName; has blocked insecure content on this page.">
+<!ENTITY mixed_content_blocked_some1 "&brandShortName; has blocked some of the insecure content on this page.">
+<!ENTITY mixed_content_display_loaded1 "Parts of this page are not secure (such as images).">
+<!ENTITY mixed_content_protection_disabled1 "You have disabled protection from insecure content.">
 
 <!-- Tracking content notifications in site identity popup -->
-<!ENTITY loaded_tracking_content_message_top "Tracking protection disabled.">
-<!ENTITY loaded_tracking_content_message_bottom "Parts of this page may track your online activity.">
-<!ENTITY blocked_tracking_content_message_top2 "Tracking protection enabled.">
-<!ENTITY blocked_tracking_content_message_bottom2 "Parts of the page that track your online activity have been blocked.">
+<!ENTITY doorhanger_tracking_title "Tracking protection">
+<!ENTITY doorhanger_tracking_state_enabled "Enabled">
+<!ENTITY doorhanger_tracking_state_disabled "Disabled">
+<!ENTITY doorhanger_tracking_message_enabled1 "Attempts to track your online behavior have been blocked.">
+<!ENTITY doorhanger_tracking_message_disabled2 "This page includes elements that may track your browsing.">
 
 <!-- Common mixed and tracking content strings in site identity popup -->
 <!ENTITY learn_more "Learn More">
@@ -599,7 +650,7 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 <!ENTITY guest_session_dialog_continue "Continue">
 <!ENTITY guest_session_dialog_cancel "Cancel">
 <!ENTITY new_guest_session_title "&brandShortName; will now restart">
-<!ENTITY new_guest_session_text "The person using it will not be able to see any of your personal browsing data (like saved passwords, history or bookmarks).\n\nWhen your guest is done, their browsing data will be deleted and your session will be restored.">
+<!ENTITY new_guest_session_text2 "The person using it will not be able to see any of your personal browsing data (like saved logins, history or bookmarks).\n\nWhen your guest is done, their browsing data will be deleted and your session will be restored.">
 <!ENTITY guest_browsing_notification_title "Guest browsing is enabled">
 <!ENTITY guest_browsing_notification_text "Tap to exit">
 
@@ -629,10 +680,6 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 
 <!-- Voice search in the awesome bar -->
 <!ENTITY voicesearch_prompt "Speak now">
-<!ENTITY voicesearch_failed_title "&brandShortName; Voice Search">
-<!ENTITY voicesearch_failed_message "There is a problem with voice search right now. Please try later.">
-<!ENTITY voicesearch_failed_message_recoverable "Sorry! We could not recognize your words. Please try again.">
-<!ENTITY voicesearch_failed_retry "Try again">
 
 <!-- Localization note (remote_tabs_last_synced): the variable is replaced by a
      "relative time span string" produced by Android.  This string describes the
@@ -648,3 +695,41 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 <!-- LOCALIZATION NOTE (find_matchcase): This is meant to appear as an icon that changes color
      if match-case is activated. i.e. No more than two letters, one uppercase, one lowercase. -->
 <!ENTITY find_matchcase "Aa">
+
+<!ENTITY intent_uri_cannot_open "Cannot open link">
+
+<!-- DevTools Authentication -->
+<!-- LOCALIZATION NOTE (devtools_auth_scan_header): This header text appears
+     above a QR reader that is actively scanning for QR codes.  The expected QR
+     code has already been displayed by the client trying to connect (such as
+     desktop Firefox via WebIDE), so you just need to aim this device at the QR
+     code. -->
+<!ENTITY devtools_auth_scan_header "Scanning for the QR code displayed on your other device">
+
+<!-- Restrictions -->
+<!-- Localization note: These are restrictions the device owner (e.g. parent) can enable for
+     a restricted profile (e.g. child). Used inside the Android settings UI. -->
+<!ENTITY restriction_disallow_import_settings_title2 "Disable \'Import from Android\'">
+<!ENTITY restriction_disallow_addons_title2 "Disable add-on installation">
+<!ENTITY restriction_disallow_devtools_title2 "Disable developer tools">
+<!ENTITY restriction_disallow_customize_home_title2 "Disable Home customization">
+<!ENTITY restriction_disallow_private_browsing_title2 "Disable Private Browsing">
+<!ENTITY restriction_disallow_location_services_title2 "Disable Location Services">
+<!ENTITY restriction_disallow_display_settings_title2 "Disable Display settings">
+<!ENTITY restriction_disallow_clear_history_title2 "Disable \'Clear browsing history\'">
+<!ENTITY restriction_disallow_master_password_title2 "Disable master password">
+<!ENTITY restriction_disallow_guest_browsing_title2 "Disable Guest Browsing">
+
+<!-- Default Bookmarks titles-->
+<!-- LOCALIZATION NOTE (bookmarks_about_browser): link title for about:fennec -->
+<!ENTITY bookmarks_about_browser "Firefox: About your browser">
+<!-- LOCALIZATION NOTE (bookmarks_addons): link title for https://addons.mozilla.org/en-US/mobile -->
+<!ENTITY bookmarks_addons "Firefox: Customize with add-ons">
+<!-- LOCALIZATION NOTE (bookmarks_support): link title for https://support.mozilla.org/ -->
+<!ENTITY bookmarks_support "Firefox: Support">
+<!--LOCALIZATION NOTE (bookmarks_marketplace):link title for https://marketplace.firefox.com -->
+<!ENTITY bookmarks_marketplace "Firefox Marketplace">
+<!-- LOCALIZATION NOTE (bookmarks_restricted_support): link title for https://support.mozilla.org/kb/controlledaccess -->
+<!ENTITY bookmarks_restricted_support2 "Firefox Help and Support for restricted profiles on Android tablets">
+<!-- LOCALIZATION NOTE (bookmarks_restricted_webmaker):link title for https://webmaker.org -->
+<!ENTITY bookmarks_restricted_webmaker "Learn the Web: Mozilla Webmaker">

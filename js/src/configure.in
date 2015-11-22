@@ -238,6 +238,12 @@ else
     MOZ_ANDROID_NDK
 fi
 
+case "$target" in
+*-apple-darwin*)
+    MOZ_IOS_SDK
+    ;;
+esac
+
 dnl ========================================================
 dnl Checks for compilers.
 dnl ========================================================
@@ -384,6 +390,9 @@ case "$target" in
             # See http://blogs.msdn.com/b/vcblog/archive/2014/11/12/improvements-to-warnings-in-the-c-compiler.aspx
             CFLAGS="$CFLAGS -Wv:18"
             CXXFLAGS="$CXXFLAGS -Wv:18"
+
+            # -Zc:sizedDealloc- disables C++14 global sized deallocation (see bug 1160146)
+            CXXFLAGS="$CXXFLAGS -Zc:sizedDealloc-"
         else
             AC_MSG_ERROR([This version ($CC_VERSION) of the MSVC compiler is unsupported. See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
         fi
@@ -480,8 +489,6 @@ case "$target" in
     fi
 
     AC_DEFINE_UNQUOTED(MOZ_WINSDK_TARGETVER,0x$MOZ_WINSDK_TARGETVER)
-    # Definitions matching sdkddkver.h
-    AC_DEFINE_UNQUOTED(MOZ_NTDDI_WIN7, 0x06010000)
     ;;
 esac
 
@@ -965,7 +972,7 @@ arm*)
     ;;
 
 mips|mipsel)
-    CPU_ARCH="mips"
+    CPU_ARCH="mips32"
     ;;
 
 aarch64*)
@@ -1181,7 +1188,6 @@ if test "$GNU_CC"; then
     # -Waddress - catches suspicious uses of memory addresses
     # -Wchar-subscripts - catches array index using signed char
     # -Wcomment - catches nested comments
-    # -Wdeclaration-after-statement - MSVC doesn't like these
     # -Wempty-body - catches bugs, e.g. "if (c); foo();", few false positives
     # -Wendif-labels - catches `#else FOO` and `#endif FOO` not in comment
     # -Wenum-compare - catches comparison of different enum types
@@ -1206,7 +1212,6 @@ if test "$GNU_CC"; then
     # -Wwrite-strings - catches non-const char* pointers to string literals
     #
     _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wall"
-    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wdeclaration-after-statement"
     _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wsign-compare"
     _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wtype-limits"
 
@@ -1243,10 +1248,12 @@ if test "$GNU_CC"; then
     # Turn off the following warnings that -Wall turns on:
     # -Wno-unused - lots of violations in third-party code
     # -Wno-inline-new-delete - we inline 'new' and 'delete' in mozalloc
+    # -Wno-unused-local-typedef - catches unused typedefs, which are commonly used in assertion macros
     #
     _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wno-unused"
 
     MOZ_CXX_SUPPORTS_WARNING(-Wno-, inline-new-delete, ac_cxx_has_wno_inline_new_delete)
+    MOZ_CXX_SUPPORTS_WARNING(-Wno-, unused-local-typedef, ac_cxx_has_wno_unused_local_typedef)
 
     if test -z "$INTEL_CC" -a -z "$CLANG_CC"; then
        # Don't use -Wcast-align with ICC or clang
@@ -1305,6 +1312,7 @@ if test "$GNU_CXX"; then
     # -Wparentheses - catches `if (a=b)` and operator precedence bugs
     # -Wpointer-arith - catches pointer arithmetic using NULL or sizeof(void)
     # -Wpointer-to-int-cast - catches casts from pointer to different sized int
+    # -Wrange-loop-analysis - catches copies during range-based for loops.
     # -Wreorder - catches ctor initializer list not matching class definition order
     # -Wreturn-type - catches missing returns, zero false positives
     # -Wsequence-point - catches undefined order behavior like `a = a++`
@@ -1345,13 +1353,17 @@ if test "$GNU_CXX"; then
 
         MOZ_CXX_SUPPORTS_WARNING(-Werror=, conversion-null, ac_cxx_has_werror_conversion_null)
         MOZ_CXX_SUPPORTS_WARNING(-Werror=, non-literal-null-conversion, ac_cxx_has_werror_non_literal_null_conversion)
+        MOZ_CXX_SUPPORTS_WARNING(-Werror=, range-loop-analysis, ac_cxx_has_range_loop_analysis)
         MOZ_CXX_SUPPORTS_WARNING(-Werror=, sometimes-uninitialized, ac_cxx_has_sometimes_uninitialized)
     fi
 
     # Turn off the following warnings that -Wall turns on:
     # -Wno-invalid-offsetof - we use offsetof on non-POD types frequently
+    # -Wno-unused-local-typedef - catches unused typedefs, which are commonly used in assertion macros
     #
     _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wno-invalid-offsetof"
+
+    MOZ_CXX_SUPPORTS_WARNING(-Wno-, unused-local-typedef, ac_cxx_has_wno_unused_local_typedef)
 
     if test -z "$INTEL_CXX" -a -z "$CLANG_CXX"; then
        # Don't use -Wcast-align with ICC or clang
@@ -1382,46 +1394,6 @@ if test "$GNU_CXX"; then
 else
     _DEFINES_CXXFLAGS='-DMOZILLA_CLIENT -D_JS_CONFDEFS_H_ $(ACDEFINES)'
 fi
-
-dnl gcc can come with its own linker so it is better to use the pass-thru calls
-dnl MKSHLIB_FORCE_ALL is used to force the linker to include all object
-dnl files present in an archive. MKSHLIB_UNFORCE_ALL reverts the linker to
-dnl normal behavior.
-dnl ========================================================
-MKSHLIB_FORCE_ALL=
-MKSHLIB_UNFORCE_ALL=
-
-if test "$COMPILE_ENVIRONMENT"; then
-if test "$GNU_CC"; then
-  AC_MSG_CHECKING(whether ld has archive extraction flags)
-  AC_CACHE_VAL(ac_cv_mkshlib_force_and_unforce,
-   [_SAVE_LDFLAGS=$LDFLAGS; _SAVE_LIBS=$LIBS
-    ac_cv_mkshlib_force_and_unforce="no"
-    exec 3<&0 <<LOOP_INPUT
-	force="-Wl,--whole-archive";   unforce="-Wl,--no-whole-archive"
-	force="-Wl,-z -Wl,allextract"; unforce="-Wl,-z -Wl,defaultextract"
-	force="-Wl,-all";              unforce="-Wl,-none"
-LOOP_INPUT
-    while read line
-    do
-      eval $line
-      LDFLAGS=$force
-      LIBS=$unforce
-      AC_TRY_LINK(,, ac_cv_mkshlib_force_and_unforce=$line; break)
-    done
-    exec 0<&3 3<&-
-    LDFLAGS=$_SAVE_LDFLAGS; LIBS=$_SAVE_LIBS
-   ])
-  if test "$ac_cv_mkshlib_force_and_unforce" = "no"; then
-    AC_MSG_RESULT(no)
-  else
-    AC_MSG_RESULT(yes)
-    eval $ac_cv_mkshlib_force_and_unforce
-    MKSHLIB_FORCE_ALL=$force
-    MKSHLIB_UNFORCE_ALL=$unforce
-  fi
-fi # GNU_CC
-fi # COMPILE_ENVIRONMENT
 
 dnl ========================================================
 dnl Checking for 64-bit OS
@@ -1464,7 +1436,6 @@ case "$host" in
         HOST_CFLAGS="$HOST_CFLAGS -mwindows"
     fi
     HOST_CFLAGS="$HOST_CFLAGS -DXP_WIN32 -DXP_WIN -DWIN32 -D_WIN32 -DNO_X11 -D_CRT_SECURE_NO_WARNINGS"
-    HOST_NSPR_MDCPUCFG='\"md/_winnt.cfg\"'
     HOST_OPTIMIZE_FLAGS="${HOST_OPTIMIZE_FLAGS=-O2}"
     HOST_BIN_SUFFIX=.exe
     case "$host" in
@@ -1490,13 +1461,11 @@ case "$host" in
 
 *-darwin*)
     HOST_CFLAGS="$HOST_CFLAGS -DXP_UNIX -DXP_MACOSX -DNO_X11"
-    HOST_NSPR_MDCPUCFG='\"md/_darwin.cfg\"'
     HOST_OPTIMIZE_FLAGS="${HOST_OPTIMIZE_FLAGS=-O3}"
     ;;
 
 *-linux*|*-kfreebsd*-gnu|*-gnu*)
     HOST_CFLAGS="$HOST_CFLAGS -DXP_UNIX"
-    HOST_NSPR_MDCPUCFG='\"md/_linux.cfg\"'
     HOST_OPTIMIZE_FLAGS="${HOST_OPTIMIZE_FLAGS=-O3}"
     ;;
 
@@ -1758,13 +1727,11 @@ ia64*-hpux*)
         IMPORT_LIB_SUFFIX=lib
         MKSHLIB='$(LD) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
         MKCSHLIB='$(LD) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
-        MKSHLIB_FORCE_ALL=
-        MKSHLIB_UNFORCE_ALL=
         dnl Set subsystem version 5 for Windows XP.
         if test "$CPU_ARCH" = "x86"; then
             WIN32_SUBSYSTEM_VERSION=5.01
         else
-            WIN32_SUBSYSTEM_VERSION=5.02
+            WIN32_SUBSYSTEM_VERSION=6.01
         fi
         WIN32_CONSOLE_EXE_LDFLAGS=-SUBSYSTEM:CONSOLE,$WIN32_SUBSYSTEM_VERSION
         WIN32_GUI_EXE_LDFLAGS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
@@ -1774,8 +1741,10 @@ ia64*-hpux*)
         _DEFINES_CXXFLAGS='-FI $(DEPTH)/js/src/js-confdefs.h -DMOZILLA_CLIENT'
         CFLAGS="$CFLAGS -W3 -Gy"
         CXXFLAGS="$CXXFLAGS -W3 -Gy"
-        if test "$CPU_ARCH" = "x86"; then
+        if test "$CPU_ARCH" = "x86" -a -z "$CLANG_CL"; then
             dnl VS2012+ defaults to -arch:SSE2.
+            dnl Clang-cl gets confused by -arch:IA32, so don't add it.
+            dnl (See https://llvm.org/bugs/show_bug.cgi?id=24335)
             CFLAGS="$CFLAGS -arch:IA32"
             CXXFLAGS="$CXXFLAGS -arch:IA32"
         fi
@@ -1801,7 +1770,7 @@ ia64*-hpux*)
         CFLAGS="$CFLAGS -we4553"
         CXXFLAGS="$CXXFLAGS -we4553"
         LIBS="$LIBS kernel32.lib user32.lib gdi32.lib winmm.lib wsock32.lib advapi32.lib psapi.lib"
-        MOZ_DEBUG_LDFLAGS='-DEBUG'
+        MOZ_DEBUG_LDFLAGS='-DEBUG -DEBUGTYPE:CV'
         WARNINGS_AS_ERRORS='-WX'
         MOZ_OPTIMIZE_FLAGS="-O2"
         MOZ_FIX_LINK_PATHS=
@@ -1828,6 +1797,7 @@ ia64*-hpux*)
         dnl Probably also a compiler bug, but what can you do?
         PROFILE_USE_LDFLAGS="-LTCG:PGUPDATE"
         LDFLAGS="$LDFLAGS -DYNAMICBASE"
+        RCFLAGS="-nologo"
     fi
     AC_DEFINE(HAVE_SNPRINTF)
     AC_DEFINE(HAVE__MSIZE)
@@ -1904,8 +1874,6 @@ ia64*-hpux*)
     	DSO_LDOPTS='-shared'
     fi
     # This will fail on a.out systems prior to 1.5.1_ALPHA.
-    MKSHLIB_FORCE_ALL='-Wl,--whole-archive'
-    MKSHLIB_UNFORCE_ALL='-Wl,--no-whole-archive'
     if test "$LIBRUNPATH"; then
 	DSO_LDOPTS="-Wl,-R$LIBRUNPATH $DSO_LDOPTS"
     fi
@@ -1952,8 +1920,6 @@ ia64*-hpux*)
        MOZ_OPTIMIZE_FLAGS="-xO4"
        MKSHLIB='$(CXX) $(CXXFLAGS) $(DSO_PIC_FLAGS) $(DSO_LDOPTS) -h $(DSO_SONAME) -o $@'
        MKCSHLIB='$(CC) $(CFLAGS) $(DSO_PIC_FLAGS) $(DSO_LDOPTS) -h $(DSO_SONAME) -o $@'
-       MKSHLIB_FORCE_ALL='-z allextract'
-       MKSHLIB_UNFORCE_ALL='-z defaultextract'
        DSO_LDOPTS='-G'
        AR_LIST="$AR t"
        AR_EXTRACT="$AR x"
@@ -1994,8 +1960,6 @@ ia64*-hpux*)
     else
        LDFLAGS="$LDFLAGS -Wl,-z,ignore -Wl,-R,'\$\$ORIGIN:\$\$ORIGIN/..' -Wl,-z,lazyload -Wl,-z,combreloc -Wl,-z,muldefs"
        LIBS="-lc $LIBS"
-       MKSHLIB_FORCE_ALL='-Wl,-z -Wl,allextract'
-       MKSHLIB_UNFORCE_ALL='-Wl,-z -Wl,defaultextract'
        ASFLAGS="$ASFLAGS -fPIC"
        DSO_LDOPTS='-shared'
        WARNINGS_AS_ERRORS='-Werror'
@@ -2028,31 +1992,6 @@ esac
 dnl Only one oddball right now (QNX), but this gives us flexibility
 dnl if any other platforms need to override this in the future.
 AC_DEFINE_UNQUOTED(D_INO,$DIRENT_INO)
-
-dnl ========================================================
-dnl Any platform that doesn't have MKSHLIB_FORCE_ALL defined
-dnl by now will not have any way to link most binaries (tests
-dnl as well as viewer, apprunner, etc.), because some symbols
-dnl will be left out of the "composite" .so's by ld as unneeded.
-dnl So, by defining NO_LD_ARCHIVE_FLAGS for these platforms,
-dnl they can link in the static libs that provide the missing
-dnl symbols.
-dnl ========================================================
-NO_LD_ARCHIVE_FLAGS=
-if test -z "$MKSHLIB_FORCE_ALL" -o -z "$MKSHLIB_UNFORCE_ALL"; then
-    NO_LD_ARCHIVE_FLAGS=1
-fi
-case "$target" in
-*-aix4.3*|*-aix5*)
-    NO_LD_ARCHIVE_FLAGS=
-    ;;
-*-mingw*)
-    if test -z "$GNU_CC"; then
-        NO_LD_ARCHIVE_FLAGS=
-    fi
-    ;;
-esac
-AC_SUBST(NO_LD_ARCHIVE_FLAGS)
 
 dnl ========================================================
 dnl = Flags to strip unused symbols from .so components
@@ -2189,7 +2128,7 @@ if test "$GNU_CC" -a "$OS_TARGET" != WINNT; then
   AC_DEFINE(HAVE_VISIBILITY_ATTRIBUTE)
   case "$OS_TARGET" in
   Darwin)
-    VISIBILITY_FLAGS='-fvisibility=hidden'
+    VISIBILITY_FLAGS='-fvisibility=hidden -fvisibility-inlines-hidden'
     ;;
   *)
     case $GCC_VERSION in
@@ -2221,9 +2160,6 @@ esac
 
 AC_SUBST(WRAP_SYSTEM_INCLUDES)
 AC_SUBST(VISIBILITY_FLAGS)
-
-MOZ_GCC_PR49911
-MOZ_LLVM_PR8927
 
 dnl Checks for header files.
 dnl ========================================================
@@ -2440,11 +2376,34 @@ AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MEMCMP
 AC_CHECK_FUNCS([getc_unlocked _getc_nolock gmtime_r localtime_r])
 
+dnl check for clock_gettime(), the CLOCK_MONOTONIC clock
+AC_CACHE_CHECK(for clock_gettime(CLOCK_MONOTONIC),
+               ac_cv_clock_monotonic,
+               [for libs in "" -lrt; do
+                    _SAVE_LIBS="$LIBS"
+                    LIBS="$LIBS $libs"
+                    AC_TRY_LINK([#include <time.h>],
+                                 [ struct timespec ts;
+                                   clock_gettime(CLOCK_MONOTONIC, &ts); ],
+                                 ac_cv_clock_monotonic=$libs
+                                 LIBS="$_SAVE_LIBS"
+                                 break,
+                                 ac_cv_clock_monotonic=no)
+                    LIBS="$_SAVE_LIBS"
+                done])
+if test "$ac_cv_clock_monotonic" != "no"; then
+    HAVE_CLOCK_MONOTONIC=1
+    REALTIME_LIBS=$ac_cv_clock_monotonic
+    AC_DEFINE(HAVE_CLOCK_MONOTONIC)
+    AC_SUBST(HAVE_CLOCK_MONOTONIC)
+    AC_SUBST_LIST(REALTIME_LIBS)
+fi
 
 dnl Checks for math functions.
 dnl ========================================================
 AC_CHECK_LIB(m, sin)
-AC_CHECK_FUNCS([log2 log1p expm1 sqrt1pm1 acosh asinh atanh trunc cbrt])
+AC_CHECK_LIB(m, __sincos, AC_DEFINE(HAVE_SINCOS))
+AC_CHECK_FUNCS([log2 log1p expm1 sqrt1pm1 acosh asinh atanh cbrt])
 
 
 dnl check for wcrtomb/mbrtowc
@@ -2982,6 +2941,7 @@ Android|WINNT|Darwin)
 *)
   dnl On !Android !Windows !OSX, we only want to link executables against mozglue
   MOZ_GLUE_IN_PROGRAM=1
+  AC_DEFINE(MOZ_GLUE_IN_PROGRAM)
   ;;
 esac
 
@@ -3022,6 +2982,10 @@ if test "$MOZ_MEMORY"; then
   esac
 fi
 AC_SUBST(MOZ_MEMORY)
+AC_SUBST(MOZ_JEMALLOC4)
+if test -n "$MOZ_JEMALLOC4"; then
+  AC_DEFINE(MOZ_JEMALLOC4)
+fi
 AC_SUBST(MOZ_CRT)
 AC_SUBST(MOZ_GLUE_IN_PROGRAM)
 AC_SUBST_LIST(MOZ_GLUE_WRAP_LDFLAGS)
@@ -3097,40 +3061,56 @@ fi
 AC_SUBST(MOZ_VALGRIND)
 
 dnl ========================================================
-dnl = Use ARM JIT code simulator. Requires an x86 build.
+dnl = Use a JIT code simulator for a foreign architecture.
 dnl ========================================================
-dnl Also define JS_CODEGEN_ARM in this case. If the simulator is not used,
-dnl JS_CODEGEN_foo is defined if JS_CPU_foo is defined.
-MOZ_ARG_ENABLE_BOOL(arm-simulator,
-[  --enable-arm-simulator Enable ARM simulator for JIT code],
-    JS_ARM_SIMULATOR=1,
-    JS_ARM_SIMULATOR= )
-MOZ_ARG_ENABLE_BOOL(mips-simulator,
-[  --enable-mips-simulator Enable MIPS simulator for JIT code],
-    JS_MIPS_SIMULATOR=1,
-    JS_MIPS_SIMULATOR= )
+MOZ_ARG_ENABLE_STRING(simulator,
+[  --enable-simulator=ARCH
+                          Enable a JIT code simulator for the specified arch.
+                          (arm, arm64, mips32).],
+    JS_SIMULATOR="$enableval")
 
-if test -n "$JS_ARM_SIMULATOR" && test -n "$JS_MIPS_SIMULATOR"; then
-    AC_MSG_ERROR([Flags --enable-arm-simulator and --enable-mips-simulator cannot be used together.])
+if test -n "$JS_SIMULATOR"; then
+    case "$JS_SIMULATOR" in
+        arm|arm64|mips32) ;;
+        no)
+            JS_SIMULATOR=
+            ;;
+        *) AC_MSG_ERROR([Invalid simulator. Valid simulators are: arm, arm64, mips32.]) ;;
+    esac
 fi
 
 if test -z "$ENABLE_ION"; then
     AC_DEFINE(JS_CODEGEN_NONE)
     JS_CODEGEN_NONE=1
-elif test -n "$JS_ARM_SIMULATOR"; then
+elif test "$JS_SIMULATOR" = arm; then
     if test "$CPU_ARCH" != "x86"; then
         AC_MSG_ERROR([The ARM simulator only works on x86.])
     fi
-    AC_DEFINE(JS_ARM_SIMULATOR)
+    AC_DEFINE(JS_SIMULATOR)
+    AC_DEFINE(JS_SIMULATOR_ARM)
+    AC_DEFINE(JS_DISASM_ARM)
     AC_DEFINE(JS_CODEGEN_ARM)
+    JS_SIMULATOR_ARM=1
+    JS_DISASM_ARM=1
     JS_CODEGEN_ARM=1
-elif test -n "$JS_MIPS_SIMULATOR"; then
-    if test "$CPU_ARCH" != "x86"; then
-        AC_MSG_ERROR([The MIPS simulator only works on x86.])
+elif test "$JS_SIMULATOR" = arm64; then
+    if test "$CPU_ARCH" != "x86_64"; then
+        AC_MSG_ERROR([The ARM64 simulator only works on x86_64.])
     fi
-    AC_DEFINE(JS_MIPS_SIMULATOR)
-    AC_DEFINE(JS_CODEGEN_MIPS)
-    JS_CODEGEN_MIPS=1
+    AC_DEFINE(JS_SIMULATOR)
+    AC_DEFINE(JS_SIMULATOR_ARM64)
+    AC_DEFINE(JS_CODEGEN_ARM64)
+    JS_SIMULATOR_ARM64=1
+    JS_CODEGEN_ARM64=1
+elif test "$JS_SIMULATOR" = mips32; then
+    if test "$CPU_ARCH" != "x86"; then
+        AC_MSG_ERROR([The MIPS32 simulator only works on x86.])
+    fi
+    AC_DEFINE(JS_SIMULATOR)
+    AC_DEFINE(JS_SIMULATOR_MIPS32)
+    AC_DEFINE(JS_CODEGEN_MIPS32)
+    JS_SIMULATOR_MIPS32=1
+    JS_CODEGEN_MIPS32=1
 elif test "$CPU_ARCH" = "x86"; then
     AC_DEFINE(JS_CODEGEN_X86)
     JS_CODEGEN_X86=1
@@ -3145,18 +3125,26 @@ elif test "$CPU_ARCH" = "x86_64"; then
 elif test "$CPU_ARCH" = "arm"; then
     AC_DEFINE(JS_CODEGEN_ARM)
     JS_CODEGEN_ARM=1
-elif test "$CPU_ARCH" = "mips"; then
-    AC_DEFINE(JS_CODEGEN_MIPS)
-    JS_CODEGEN_MIPS=1
+    if test -n "$MOZ_DEBUG"; then
+        AC_DEFINE(JS_DISASM_ARM)
+        JS_DISASM_ARM=1
+    fi
+elif test "$CPU_ARCH" = "mips32"; then
+    AC_DEFINE(JS_CODEGEN_MIPS32)
+    JS_CODEGEN_MIPS32=1
 fi
 
-AC_SUBST(JS_ARM_SIMULATOR)
-AC_SUBST(JS_MIPS_SIMULATOR)
+AC_SUBST(JS_SIMULATOR)
+AC_SUBST(JS_SIMULATOR_ARM)
+AC_SUBST(JS_SIMULATOR_ARM64)
+AC_SUBST(JS_SIMULATOR_MIPS32)
 AC_SUBST(JS_CODEGEN_ARM)
-AC_SUBST(JS_CODEGEN_MIPS)
+AC_SUBST(JS_CODEGEN_ARM64)
+AC_SUBST(JS_CODEGEN_MIPS32)
 AC_SUBST(JS_CODEGEN_X86)
 AC_SUBST(JS_CODEGEN_X64)
 AC_SUBST(JS_CODEGEN_NONE)
+AC_SUBST(JS_DISASM_ARM)
 AC_SUBST(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
 
 dnl ========================================================
@@ -3169,18 +3157,6 @@ MOZ_ARG_ENABLE_BOOL(jprof,
 if test -n "$MOZ_JPROF"; then
     MOZ_PROFILING=1
     AC_DEFINE(MOZ_JPROF)
-fi
-
-dnl ========================================================
-dnl shark
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(shark,
-[  --enable-shark          Enable shark remote profiling. Implies --enable-profiling.],
-    MOZ_SHARK=1,
-    MOZ_SHARK= )
-if test -n "$MOZ_SHARK"; then
-    MOZ_PROFILING=1
-    AC_DEFINE(MOZ_SHARK)
 fi
 
 dnl ========================================================
@@ -3260,18 +3236,6 @@ MOZ_ARG_ENABLE_BOOL(perf,
   JS_ION_PERF= )
 if test -n "$JS_ION_PERF"; then
     AC_DEFINE(JS_ION_PERF)
-fi
-
-dnl ========================================================
-dnl JS opt-mode assertions and heap poisoning
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(js-diagnostics,
-[  --enable-js-diagnostics
-                          Enable JS diagnostic assertions heap poisoning],
-    JS_CRASH_DIAGNOSTICS=1,
-    JS_CRASH_DIAGNOSTICS= )
-if test -n "$JS_CRASH_DIAGNOSTICS"; then
-    AC_DEFINE(JS_CRASH_DIAGNOSTICS)
 fi
 
 dnl ========================================================
@@ -3662,7 +3626,6 @@ AC_SUBST(MOZ_DEBUG_DISABLE_DEFS)
 AC_SUBST(MOZ_DEBUG_LDFLAGS)
 AC_SUBST(WARNINGS_AS_ERRORS)
 AC_SUBST(MOZ_JPROF)
-AC_SUBST(MOZ_SHARK)
 AC_SUBST(MOZ_INSTRUMENTS)
 AC_SUBST(MOZ_CALLGRIND)
 AC_SUBST(MOZ_VTUNE)
@@ -3757,7 +3720,6 @@ AC_SUBST(HOST_AR)
 AC_SUBST(HOST_AR_FLAGS)
 AC_SUBST(HOST_LD)
 AC_SUBST(HOST_RANLIB)
-AC_SUBST(HOST_NSPR_MDCPUCFG)
 AC_SUBST(HOST_BIN_SUFFIX)
 AC_SUBST(HOST_OS_ARCH)
 
@@ -3777,8 +3739,6 @@ AC_SUBST(INTEL_ARCHITECTURE)
 AC_SUBST(WRAP_LDFLAGS)
 AC_SUBST(MKSHLIB)
 AC_SUBST(MKCSHLIB)
-AC_SUBST(MKSHLIB_FORCE_ALL)
-AC_SUBST(MKSHLIB_UNFORCE_ALL)
 AC_SUBST(DSO_CFLAGS)
 AC_SUBST(DSO_PIC_CFLAGS)
 AC_SUBST(DSO_LDOPTS)
@@ -3843,18 +3803,9 @@ dnl ========================================================
 dnl JavaScript shell
 dnl ========================================================
 
-MALLOC_HEADERS="malloc.h malloc_np.h malloc/malloc.h sys/malloc.h"
-MALLOC_H=
+MOZ_CHECK_ALLOCATOR
 
-for file in $MALLOC_HEADERS; do
-  MOZ_CHECK_HEADER($file, [MALLOC_H=$file])
-  if test "$MALLOC_H" != ""; then
-    AC_DEFINE_UNQUOTED(MALLOC_H, <$MALLOC_H>)
-    break
-  fi
-done
-
-AC_CHECK_FUNCS(setlocale localeconv malloc_size malloc_usable_size)
+AC_CHECK_FUNCS(setlocale localeconv)
 
 AC_SUBST(MOZILLA_VERSION)
 
@@ -3883,6 +3834,7 @@ if test -n "$MOZ_BUILD_NSPR"; then
     MOZ_SUBCONFIGURE_NSPR()
 fi
 MOZ_SUBCONFIGURE_FFI()
+MOZ_SUBCONFIGURE_JEMALLOC()
 
 dnl Spit out some output
 dnl ========================================================

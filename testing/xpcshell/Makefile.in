@@ -10,6 +10,7 @@ TEST_HARNESS_FILES := \
   runxpcshelltests.py \
   remotexpcshelltests.py \
   runtestsb2g.py \
+  xpcshellcommandline.py \
   head.js \
   node-spdy \
   moz-spdy \
@@ -19,7 +20,6 @@ TEST_HARNESS_FILES := \
 
 # Extra files needed from $(topsrcdir)/build
 EXTRA_BUILD_FILES := \
-  automationutils.py \
   manifestparser.py \
   $(NULL)
 

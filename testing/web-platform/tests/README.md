@@ -17,8 +17,8 @@ Running the Tests
 
 The tests are designed to be run from your local computer. The test
 environment requires Python 2.7+ (but not Python 3.x). You will also
-need a copy of OpenSSL. For users on Windows this is available from
-[the openssl website](https://www.openssl.org/related/binaries.html).
+need a copy of OpenSSL. Users on Windows should read the
+[Windows Notes](#windows-notes) section below.
 
 To get the tests running, you need to set up the test domains in your
 [`hosts` file](http://en.wikipedia.org/wiki/Hosts_%28file%29%23Location_in_the_file_system). The
@@ -70,6 +70,26 @@ like:
 ```
 "ssl": {"openssl": {"binary": "/path/to/openssl"}}
 ```
+
+<span id="windows-notes">Windows Notes</span>
+=============================================
+
+Running wptserve with SSL enabled on Windows typically requires
+installing an OpenSSL distribution.
+[Shining Light](http://slproweb.com/products/Win32OpenSSL.html)
+provide a convenient installer that is known to work, but requires a
+little extra setup.
+
+After installation ensure that the path to OpenSSL is on your `%Path%`
+environment variable.
+
+Then set the path to the default OpenSSL configuration file (usually
+something like `C:\OpenSSL-Win32\bin\openssl.cfg` in the server
+configuration. To do this copy `config.default.json` in the
+web-platform-tests root to `config.json`. Then edit the JSON so that
+the key `ssl/openssl/base_conf_path` has a value that is the path to
+the OpenSSL config file.
+
 
 Test Runner
 ===========
@@ -146,24 +166,35 @@ The way to contribute is just as usual:
 * Fork this repository (and make sure you're still relatively in sync
   with it if you forked a while ago).
 * Create a branch for your changes:
-  `git checkout -b your-name/topic`.
+  `git checkout -b topic`.
 * Make your changes.
 * Run the lint script described below.
 * Commit locally and push that to your repo.
 * Send in a pull request based on the above.
 
-A lint is available to test for common mistakes in testcases. It can
-be run with:
+Lint tool
+---------
+
+We have a lint tool for catching common mistakes in test files. You
+can run it manually by starting the `lint` executable from the root of
+your local web-platform-tests working directory like this:
 
 ```
 ./lint
 ```
 
-in the root of the checkout. It is also run for every submitted pull
-request, and branches with lint errors will not get merged. In the
-unusual case that the lint is reporting an error for something that is
-essential to your test, there is a whitelist at
-`tools/lint/lint.whitelist` that may be updated.
+The lint tool is also run automatically for every submitted pull
+request, and reviewers will not merge branches with tests that have
+lint errors, so you must fix any errors the lint tool reports. For
+details on doing that, see the [lint-tool documentation][lint-tool].
+
+But in the unusual case of error reports for things essential to a
+certain test or that for other exceptional reasons shouldn't prevent
+a merge of a test, update and commit the `lint.whitelist` file in the
+web-platform-tests root directory to suppress the error reports. For
+details on doing that, see the [lint-tool documentation][lint-tool].
+
+[lint-tool]: https://github.com/w3c/web-platform-tests/blob/master/docs/lint-tool.md
 
 Adding command-line scripts ("tools" subdirs)
 ---------------------------------------------

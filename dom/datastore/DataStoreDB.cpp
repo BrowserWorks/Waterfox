@@ -113,16 +113,10 @@ DataStoreDB::CreateFactoryIfNeeded()
     MOZ_ASSERT(xpc);
 
     AutoSafeJSContext cx;
-
-    nsCOMPtr<nsIXPConnectJSObjectHolder> globalHolder;
-    rv = xpc->CreateSandbox(cx, principal, getter_AddRefs(globalHolder));
+    JS::Rooted<JSObject*> global(cx);
+    rv = xpc->CreateSandbox(cx, principal, global.address());
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
-    }
-
-    JS::Rooted<JSObject*> global(cx, globalHolder->GetJSObject());
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return NS_ERROR_UNEXPECTED;
     }
 
     // The CreateSandbox call returns a proxy to the actual sandbox object. We
@@ -316,7 +310,10 @@ DataStoreDB::DatabaseOpened()
   }
 
   StringOrStringSequence objectStores;
-  objectStores.RawSetAsStringSequence().AppendElements(mObjectStores);
+  if (!objectStores.RawSetAsStringSequence().AppendElements(mObjectStores,
+                                                            fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
   nsRefPtr<IDBTransaction> txn;
   error = mDatabase->Transaction(objectStores,

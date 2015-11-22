@@ -32,7 +32,7 @@ using namespace mozilla::gfx;
 //----------------------------------------------------------------------
 // Helper classes
 
-class MOZ_STACK_CLASS nsSVGPatternFrame::AutoPatternReferencer
+class MOZ_RAII nsSVGPatternFrame::AutoPatternReferencer
 {
 public:
   explicit AutoPatternReferencer(nsSVGPatternFrame *aFrame
@@ -229,7 +229,7 @@ GetTargetGeometry(gfxRect *aBBox,
   return NS_OK;
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
                                 Matrix* patternMatrix,
                                 const Matrix &aContextMatrix,

@@ -26,7 +26,6 @@
 #include "nsIChannel.h"
 #include "nsIClassInfo.h"
 #include "nsIDirectoryService.h"
-#include "nsIJSRuntimeService.h"
 #include "nsIPrincipal.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIURI.h"
@@ -198,15 +197,6 @@ Version(JSContext *cx,
 }
 
 static bool
-BuildDate(JSContext *cx, unsigned argc, JS::Value *vp)
-{
-    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-    fprintf(stdout, "built on %s at %s\n", __DATE__, __TIME__);
-    args.rval().setUndefined();
-    return true;
-}
-
-static bool
 Quit(JSContext *cx,
      unsigned argc,
      JS::Value *vp)
@@ -275,7 +265,6 @@ const JSFunctionSpec gGlobalFunctions[] =
     JS_FS("load",            Load,           1,0),
     JS_FS("quit",            Quit,           0,0),
     JS_FS("version",         Version,        1,0),
-    JS_FS("build",           BuildDate,      0,0),
     JS_FS("dumpXPC",         DumpXPC,        1,0),
     JS_FS("dump",            Dump,           1,0),
     JS_FS("gc",              GC,             0,0),
@@ -378,7 +367,7 @@ XPCShellEnvironment::ProcessFile(JSContext *cx,
             JSErrorReporter older;
 
             ok = JS_ExecuteScript(cx, script, &result);
-            if (ok && result != JSVAL_VOID) {
+            if (ok && !result.isUndefined()) {
                 /* Suppress error reports from JS::ToString(). */
                 older = JS_SetErrorReporter(JS_GetRuntime(cx), nullptr);
                 str = JS::ToString(cx, result);
@@ -486,15 +475,8 @@ XPCShellEnvironment::Init()
     // is unbuffered by default
     setbuf(stdout, 0);
 
-    nsCOMPtr<nsIJSRuntimeService> rtsvc =
-        do_GetService("@mozilla.org/js/xpc/RuntimeService;1");
-    if (!rtsvc) {
-        NS_ERROR("failed to get nsJSRuntimeService!");
-        return false;
-    }
-
-    JSRuntime *rt;
-    if (NS_FAILED(rtsvc->GetRuntime(&rt)) || !rt) {
+    JSRuntime *rt = xpc::GetJSRuntime();
+    if (!rt) {
         NS_ERROR("failed to get JSRuntime from nsJSRuntimeService!");
         return false;
     }
@@ -602,7 +584,7 @@ XPCShellEnvironment::EvaluateString(const nsString& aString,
 
   JS::Rooted<JS::Value> result(cx);
   bool ok = JS_ExecuteScript(cx, script, &result);
-  if (ok && result != JSVAL_VOID) {
+  if (ok && !result.isUndefined()) {
       JSErrorReporter old = JS_SetErrorReporter(JS_GetRuntime(cx), nullptr);
       JSString* str = JS::ToString(cx, result);
       nsAutoJSString autoStr;

@@ -343,7 +343,7 @@ def _callCxxArrayLength(arr):
 
 def _callCxxCheckedArraySetLength(arr, lenexpr, sel='.'):
     ifbad = StmtIf(ExprNot(ExprCall(ExprSelect(arr, sel, 'SetLength'),
-                                    args=[ lenexpr ])))
+                                    args=[ lenexpr, ExprVar('mozilla::fallible') ])))
     ifbad.addifstmt(_fatalError('Error setting the array length'))
     ifbad.addifstmt(StmtReturn.FALSE)
     return ifbad
@@ -790,7 +790,7 @@ IPDL union type."""
         if self.recursive:
             return self.ptrToType()
         else:
-            return TypeArray(Type('char'), ExprSizeof(self.internalType()))
+            return Type('mozilla::AlignedStorage2', T=self.internalType())
 
     def unionValue(self):
         # NB: knows that Union's storage C union is named |mValue|
@@ -852,14 +852,14 @@ IPDL union type."""
         if self.recursive:
             return v
         else:
-            return ExprCast(ExprAddrOf(v), self.ptrToType(), reinterpret=1)
+            return ExprCall(ExprSelect(v, '.', 'addr'))
 
     def constptrToSelfExpr(self):
         """|*constptrToSelfExpr()| has type |self.constType()|"""
         v = self.unionValue()
         if self.recursive:
             return v
-        return ExprCast(ExprAddrOf(v), self.constPtrToType(), reinterpret=1)
+        return ExprCall(ExprSelect(v, '.', 'addr'))
 
     def ptrToInternalType(self):
         t = self.ptrToType()
@@ -1680,7 +1680,7 @@ class _GenerateProtocolCode(ipdl.ast.Visitor):
             'Bridge',
             params=[ Decl(parentHandleType, parentvar.name),
                      Decl(childHandleType, childvar.name) ],
-            ret=Type.BOOL))
+            ret=Type.NSRESULT))
         bridgefunc.addstmt(StmtReturn(ExprCall(
             ExprVar('mozilla::ipc::Bridge'),
             args=[ _backstagePass(),
@@ -2057,6 +2057,12 @@ def _generateCxxStruct(sd):
         # Struct()
         defctor = ConstructorDefn(ConstructorDecl(sd.name))
         defctor.addstmt(StmtExpr(callinit))
+        defctor.memberinits = []
+        for f in sd.fields:
+          # Only generate default values for primitives.
+          if not (f.ipdltype.isCxx() and f.ipdltype.isAtom()):
+            continue
+          defctor.memberinits.append(ExprMemberInit(f.memberVar()))
         struct.addstmts([ defctor, Whitespace.NL ])
 
     # Struct(const field1& _f1, ...)
@@ -2936,7 +2942,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                 ExprMemberInit(p.lastActorIdVar(),
                                [ p.actorIdInit(self.side) ]),
                 ExprMemberInit(p.otherPidVar(),
-                               [ ExprVar('ipc::kInvalidProcessId') ]),
+                               [ ExprVar('mozilla::ipc::kInvalidProcessId') ]),
                 ExprMemberInit(p.lastShmemIdVar(),
                                [ p.shmemIdInit(self.side) ]),
                 ExprMemberInit(p.stateVar(),

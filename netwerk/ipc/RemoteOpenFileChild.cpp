@@ -16,6 +16,7 @@
 #include "nsIRemoteOpenFileListener.h"
 #include "nsProxyRelease.h"
 #include "SerializedLoadContext.h"
+#include "nsNetUtil.h"
 
 // needed to alloc/free NSPR file descriptors
 #include "private/pprio.h"
@@ -209,10 +210,6 @@ RemoteOpenFileChild::AsyncRemoteFileOpen(int32_t aFlags,
 
   mTabChild = static_cast<TabChild*>(aTabChild);
 
-  if (MissingRequiredTabChild(mTabChild, "remoteopenfile")) {
-    return NS_ERROR_ILLEGAL_VALUE;
-  }
-
 #if defined(XP_WIN) || defined(MOZ_WIDGET_COCOA)
   // Windows/OSX desktop builds skip remoting, and just open file in child
   // process when asked for NSPR handle
@@ -227,6 +224,8 @@ RemoteOpenFileChild::AsyncRemoteFileOpen(int32_t aFlags,
   if (NS_FAILED(mFile->GetPath(path))) {
     MOZ_CRASH("Couldn't get path from file!");
   }
+
+  mListener = aListener;
 
   if (mTabChild) {
     if (mTabChild->GetCachedFileDescriptor(path, this)) {
@@ -247,7 +246,6 @@ RemoteOpenFileChild::AsyncRemoteFileOpen(int32_t aFlags,
   // The chrome process now has a logical ref to us until it calls Send__delete.
   AddIPDLReference();
 
-  mListener = aListener;
   mAsyncOpenCalled = true;
   return NS_OK;
 #endif
@@ -567,6 +565,19 @@ RemoteOpenFileChild::SetRelativeDescriptor(nsIFile *fromFile,
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+NS_IMETHODIMP
+RemoteOpenFileChild::GetRelativePath(nsIFile *fromFile, nsACString& _retval)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+RemoteOpenFileChild::SetRelativePath(nsIFile *fromFile,
+                                     const nsACString& relativePath)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 nsresult
 RemoteOpenFileChild::CopyTo(nsIFile *newParentDir, const nsAString &newName)
 {
@@ -607,6 +618,12 @@ RemoteOpenFileChild::MoveToNative(nsIFile *newParent, const nsACString &newName)
 
 NS_IMETHODIMP
 RemoteOpenFileChild::RenameTo(nsIFile *newParentDir, const nsAString &newName)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+RemoteOpenFileChild::RenameToNative(nsIFile *newParentDir, const nsACString &newName)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }

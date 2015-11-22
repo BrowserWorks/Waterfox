@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
  * vim: set ts=8 sw=4 et tw=78:
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -32,7 +32,6 @@
 #include "nsIDOMDataChannel.h"
 #endif
 #include "nsIDOMDataTransfer.h"
-#include "nsIDOMDeviceStorage.h"
 #include "nsIDOMDOMCursor.h"
 #include "nsIDOMDOMException.h"
 #include "nsIDOMDOMRequest.h"
@@ -281,9 +280,14 @@
 using namespace mozilla;
 
 struct ComponentsInterfaceShimEntry {
+  MOZ_CONSTEXPR
+  ComponentsInterfaceShimEntry(const char* aName, const nsIID& aIID,
+                               const dom::NativePropertyHooks* aNativePropHooks)
+    : geckoName(aName), iid(aIID), nativePropHooks(aNativePropHooks) {}
+
   const char *geckoName;
-  nsIID iid;
-  const mozilla::dom::NativePropertyHooks* nativePropHooks;
+  const nsIID& iid;
+  const dom::NativePropertyHooks* nativePropHooks;
 };
 
 #define DEFINE_SHIM_WITH_CUSTOM_INTERFACE(geckoName, domName) \
@@ -353,7 +357,6 @@ const ComponentsInterfaceShimEntry kComponentsInterfaceShimMap[] =
 #endif
   DEFINE_SHIM(DataContainerEvent),
   DEFINE_SHIM(DataTransfer),
-  DEFINE_SHIM(DeviceStorage),
   DEFINE_SHIM(DOMCursor),
   DEFINE_SHIM(DOMException),
   DEFINE_SHIM(DOMRequest),

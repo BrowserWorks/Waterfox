@@ -395,7 +395,7 @@ EnsureVibratorThreadInitialized()
   NS_NewThread(getter_AddRefs(thread), sVibratorRunnable);
 }
 
-} // anonymous namespace
+} // namespace
 
 void
 Vibrate(const nsTArray<uint32_t> &pattern, const hal::WindowIdentifier &)
@@ -472,7 +472,7 @@ public:
   }
 };
 
-} // anonymous namespace
+} // namespace
 
 class BatteryObserver final : public IUeventObserver
 {
@@ -632,6 +632,7 @@ GetCurrentBatteryInformation(hal::BatteryInformation* aBatteryInfo)
   if (aBatteryInfo->charging() != previousCharging){
     aBatteryInfo->remainingTime() = dom::battery::kUnknownRemainingTime;
     memset(&lastLevelChange, 0, sizeof(struct timespec));
+    remainingTime = 0.0;
   }
 
   if (aBatteryInfo->charging()) {
@@ -668,7 +669,37 @@ GetCurrentBatteryInformation(hal::BatteryInformation* aBatteryInfo)
     }
 
   } else {
-    aBatteryInfo->remainingTime() = dom::battery::kUnknownRemainingTime;
+    if (aBatteryInfo->level() == 0.0) {
+      aBatteryInfo->remainingTime() = dom::battery::kDefaultRemainingTime;
+    } else if (aBatteryInfo->level() != previousLevel){
+      if (lastLevelChange.tv_sec != 0) {
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        dtime = now.tv_sec - lastLevelChange.tv_sec;
+        dlevel = previousLevel - aBatteryInfo->level();
+
+        if (dlevel <= 0.0) {
+          aBatteryInfo->remainingTime() = dom::battery::kUnknownRemainingTime;
+        } else {
+          remainingTime = (double) round(dtime / dlevel * aBatteryInfo->level());
+          aBatteryInfo->remainingTime() = remainingTime;
+        }
+
+        lastLevelChange = now;
+      } else { // lastLevelChange.tv_sec == 0
+        clock_gettime(CLOCK_MONOTONIC, &lastLevelChange);
+        aBatteryInfo->remainingTime() = dom::battery::kUnknownRemainingTime;
+      }
+
+    } else {
+      clock_gettime(CLOCK_MONOTONIC, &now);
+      dtime = now.tv_sec - lastLevelChange.tv_sec;
+      if (dtime < remainingTime) {
+        aBatteryInfo->remainingTime() = round(remainingTime - dtime);
+      } else {
+        aBatteryInfo->remainingTime() = dom::battery::kUnknownRemainingTime;
+      }
+
+    }
   }
 
   previousCharging = aBatteryInfo->charging();
@@ -714,7 +745,7 @@ bool sCpuSleepAllowed = true;
 // when reading or writing this variable to ensure thread-safe.
 int32_t sInternalLockCpuCount = 0;
 
-} // anonymous namespace
+} // namespace
 
 bool
 GetScreenEnabled()
@@ -733,8 +764,11 @@ bool
 GetKeyLightEnabled()
 {
   LightConfiguration config;
-  GetLight(eHalLightID_Buttons, &config);
-  return (config.color != 0x00000000);
+  bool ok = GetLight(eHalLightID_Buttons, &config);
+  if (ok) {
+    return (config.color != 0x00000000);
+  }
+  return false;
 }
 
 void
@@ -767,10 +801,15 @@ GetScreenBrightness()
   LightConfiguration config;
   LightType light = eHalLightID_Backlight;
 
-  GetLight(light, &config);
-  // backlight is brightness only, so using one of the RGB elements as value.
-  int brightness = config.color & 0xFF;
-  return brightness / 255.0;
+  bool ok = GetLight(light, &config);
+  if (ok) {
+    // backlight is brightness only, so using one of the RGB elements as value.
+    int brightness = config.color & 0xFF;
+    return brightness / 255.0;
+  }
+  // If GetLight fails, it's because the light doesn't exist.  So return
+  // a value corresponding to "off".
+  return 0;
 }
 
 void
@@ -991,7 +1030,7 @@ GetCurrentScreenConfiguration(hal::ScreenConfiguration* aScreenConfiguration)
 }
 
 bool
-LockScreenOrientation(const dom::ScreenOrientation& aOrientation)
+LockScreenOrientation(const dom::ScreenOrientationInternal& aOrientation)
 {
   return OrientationObserver::GetInstance()->LockScreenOrientation(aOrientation);
 }
@@ -1616,8 +1655,12 @@ PriorityClass::PriorityClass(ProcessPriority aPriority)
 
 PriorityClass::~PriorityClass()
 {
-  close(mCpuCGroupProcsFd);
-  close(mMemCGroupProcsFd);
+  if (mCpuCGroupProcsFd != -1) {
+    close(mCpuCGroupProcsFd);
+  }
+  if (mMemCGroupProcsFd != -1) {
+    close(mMemCGroupProcsFd);
+  }
 }
 
 PriorityClass::PriorityClass(const PriorityClass& aOther)
@@ -1974,7 +2017,7 @@ private:
   hal::ThreadPriority mThreadPriority;
 };
 
-} // anonymous namespace
+} // namespace
 
 void
 SetCurrentThreadPriority(ThreadPriority aThreadPriority)

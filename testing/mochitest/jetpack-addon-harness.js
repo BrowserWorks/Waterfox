@@ -25,7 +25,7 @@ window.addEventListener("load", function testOnLoad() {
   });
 });
 
-let sdkpath = null;
+var sdkpath = null;
 
 // Strip off the chrome prefix to get the actual path of the test directory
 function realPath(chrome) {
@@ -129,7 +129,7 @@ function waitForResults() {
 }
 
 // Runs tests for the add-on available at URL.
-let testAddon = Task.async(function*({ url }) {
+var testAddon = Task.async(function*({ url }) {
   dump("TEST-INFO | jetpack-addon-harness.js | Installing test add-on " + realPath(url) + "\n");
   let addon = yield installAddon(url);
 
@@ -197,7 +197,7 @@ function testInit() {
       function finish() {
         if (passed + failed == 0) {
           dump("TEST-UNEXPECTED-FAIL | jetpack-addon-harness.js | " +
-               "No tests to run. Did you pass an invalid --test-path?\n");
+               "No tests to run. Did you pass invalid test_paths?\n");
         }
         else {
           dump("Jetpack Addon Test Summary\n");

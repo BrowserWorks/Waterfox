@@ -174,6 +174,9 @@ public:
     eColorID__moz_comboboxtext,
     eColorID__moz_combobox,
 
+    // GtkInfoBar
+    eColorID__moz_gtk_info_bar_text,
+
     // keep this one last, please
     eColorID_LAST_COLOR
   };
@@ -404,7 +407,14 @@ public:
       * Overlay scrollbar animation constants.
       */
      eIntID_ScrollbarFadeBeginDelay,
-     eIntID_ScrollbarFadeDuration
+     eIntID_ScrollbarFadeDuration,
+      
+     /**
+      * Distance in pixels to offset the context menu from the cursor
+      * on open.
+      */
+     eIntID_ContextMenuOffsetVertical,
+     eIntID_ContextMenuOffsetHorizontal
   };
 
   /**

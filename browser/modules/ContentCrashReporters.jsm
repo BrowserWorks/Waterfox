@@ -4,9 +4,9 @@
 
 "use strict";
 
-let Cc = Components.classes;
-let Ci = Components.interfaces;
-let Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 this.EXPORTED_SYMBOLS = [ "TabCrashReporter", "PluginCrashReporter" ];
 
@@ -88,7 +88,12 @@ this.TabCrashReporter = {
     }
   },
 
-  onAboutTabCrashedLoad: function (aBrowser) {
+  onAboutTabCrashedLoad: function (aBrowser, aParams) {
+    // If there was only one tab open that crashed, do not show the "restore all tabs" button
+    if (aParams.crashedTabCount == 1) {
+      this.hideRestoreAllButton(aBrowser);
+    }
+
     if (!this.childMap)
       return;
 
@@ -97,6 +102,11 @@ this.TabCrashReporter = {
       return;
 
     aBrowser.contentDocument.documentElement.classList.add("crashDumpAvailable");
+  },
+
+  hideRestoreAllButton: function (aBrowser) {
+    aBrowser.contentDocument.getElementById("restoreAll").setAttribute("hidden", true);
+    aBrowser.contentDocument.getElementById("restoreTab").setAttribute("class", "primary");
   }
 }
 

@@ -22,7 +22,7 @@ class WaiveXrayWrapper : public js::CrossCompartmentWrapper {
                                           JS::MutableHandle<JSPropertyDescriptor> desc) const override;
     virtual bool getPrototype(JSContext* cx, JS::Handle<JSObject*> wrapper,
                               JS::MutableHandle<JSObject*> protop) const override;
-    virtual bool get(JSContext* cx, JS::Handle<JSObject*> wrapper, JS::Handle<JSObject*> receiver,
+    virtual bool get(JSContext* cx, JS::Handle<JSObject*> wrapper, JS::Handle<JS::Value> receiver,
                      JS::Handle<jsid> id, JS::MutableHandle<JS::Value> vp) const override;
     virtual bool call(JSContext* cx, JS::Handle<JSObject*> wrapper,
                       const JS::CallArgs& args) const override;
@@ -32,7 +32,7 @@ class WaiveXrayWrapper : public js::CrossCompartmentWrapper {
     virtual bool enumerate(JSContext* cx, JS::Handle<JSObject*> proxy,
                            JS::MutableHandle<JSObject*> objp) const override;
     virtual bool nativeCall(JSContext* cx, JS::IsAcceptableThis test,
-                            JS::NativeImpl impl, JS::CallArgs args) const override;
+                            JS::NativeImpl impl, const JS::CallArgs& args) const override;
     virtual bool getPropertyDescriptor(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                        JS::Handle<jsid> id,
                                        JS::MutableHandle<JSPropertyDescriptor> desc) const override;
@@ -40,6 +40,6 @@ class WaiveXrayWrapper : public js::CrossCompartmentWrapper {
     static const WaiveXrayWrapper singleton;
 };
 
-}
+} // namespace xpc
 
 #endif

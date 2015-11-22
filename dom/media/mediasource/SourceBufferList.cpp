@@ -14,18 +14,13 @@
 #include "nsIRunnable.h"
 #include "nsString.h"
 #include "nsThreadUtils.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* GetMediaSourceLog();
 extern PRLogModuleInfo* GetMediaSourceAPILog();
 
-#define MSE_API(arg, ...) PR_LOG(GetMediaSourceAPILog(), PR_LOG_DEBUG, ("SourceBufferList(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
-#define MSE_DEBUG(arg, ...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, ("SourceBufferList(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
-#else
-#define MSE_API(...)
-#define MSE_DEBUG(...)
-#endif
+#define MSE_API(arg, ...) MOZ_LOG(GetMediaSourceAPILog(), mozilla::LogLevel::Debug, ("SourceBufferList(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
+#define MSE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Debug, ("SourceBufferList(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 
 struct JSContext;
 class JSObject;
@@ -43,7 +38,11 @@ SourceBufferList::IndexedGetter(uint32_t aIndex, bool& aFound)
 {
   MOZ_ASSERT(NS_IsMainThread());
   aFound = aIndex < mSourceBuffers.Length();
-  return aFound ? mSourceBuffers[aIndex] : nullptr;
+
+  if (!aFound) {
+    return nullptr;
+  }
+  return mSourceBuffers[aIndex];
 }
 
 uint32_t

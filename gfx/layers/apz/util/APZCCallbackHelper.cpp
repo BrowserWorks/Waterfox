@@ -7,18 +7,23 @@
 
 #include "ContentHelper.h"
 #include "gfxPlatform.h" // For gfxPlatform::UseTiling
+#include "gfxPrefs.h"
+#include "mozilla/dom/Element.h"
 #include "mozilla/dom/TabParent.h"
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/layers/LayerTransactionChild.h"
 #include "mozilla/layers/ShadowLayers.h"
+#include "mozilla/TouchEvents.h"
 #include "nsIScrollableFrame.h"
 #include "nsLayoutUtils.h"
-#include "nsIDOMElement.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIContent.h"
 #include "nsIDocument.h"
 #include "nsIDOMWindow.h"
 #include "nsRefreshDriver.h"
+#include "nsString.h"
 #include "nsView.h"
+#include "Layers.h"
 
 #define APZCCH_LOG(...)
 // #define APZCCH_LOG(...) printf_stderr("APZCCH: " __VA_ARGS__)
@@ -27,6 +32,8 @@ namespace mozilla {
 namespace layers {
 
 using dom::TabParent;
+
+uint64_t APZCCallbackHelper::sLastTargetAPZCNotificationInputBlock = uint64_t(-1);
 
 static void
 AdjustDisplayPortForScrollDelta(mozilla::layers::FrameMetrics& aFrameMetrics,
@@ -163,51 +170,6 @@ SetDisplayPortMargins(nsIPresShell* aPresShell,
   nsLayoutUtils::SetDisplayPortBaseIfNotSet(aContent, base);
 }
 
-void
-APZCCallbackHelper::UpdateRootFrame(nsIPresShell* aPresShell,
-                                    FrameMetrics& aMetrics)
-{
-  // Precondition checks
-  MOZ_ASSERT(aPresShell);
-  MOZ_ASSERT(aMetrics.GetUseDisplayPortMargins());
-  if (aMetrics.GetScrollId() == FrameMetrics::NULL_SCROLL_ID) {
-    return;
-  }
-
-  float presShellResolution = nsLayoutUtils::GetResolution(aPresShell);
-
-  // If the pres shell resolution has changed on the content side side
-  // the time this repaint request was fired, consider this request out of date
-  // and drop it; setting a zoom based on the out-of-date resolution can have
-  // the effect of getting us stuck with the stale resolution.
-  if (presShellResolution != aMetrics.GetPresShellResolution()) {
-    return;
-  }
-
-  // Set the scroll port size, which determines the scroll range. For example if
-  // a 500-pixel document is shown in a 100-pixel frame, the scroll port length would
-  // be 100, and gecko would limit the maximum scroll offset to 400 (so as to prevent
-  // overscroll). Note that if the content here was zoomed to 2x, the document would
-  // be 1000 pixels long but the frame would still be 100 pixels, and so the maximum
-  // scroll range would be 900. Therefore this calculation depends on the zoom applied
-  // to the content relative to the container.
-  // Note that this needs to happen before scrolling the frame (in UpdateFrameCommon),
-  // otherwise the scroll position may get clamped incorrectly.
-  CSSSize scrollPort = aMetrics.CalculateCompositedSizeInCssPixels();
-  nsLayoutUtils::SetScrollPositionClampingScrollPortSize(aPresShell, scrollPort);
-
-  nsIContent* content = nsLayoutUtils::FindContentFor(aMetrics.GetScrollId());
-  ScrollFrame(content, aMetrics);
-
-  // The pres shell resolution is updated by the the async zoom since the
-  // last paint.
-  presShellResolution = aMetrics.GetPresShellResolution()
-                      * aMetrics.GetAsyncZoom().scale;
-  nsLayoutUtils::SetResolutionAndScaleTo(aPresShell, presShellResolution);
-
-  SetDisplayPortMargins(aPresShell, content, aMetrics);
-}
-
 static already_AddRefed<nsIPresShell>
 GetPresShell(const nsIContent* aContent)
 {
@@ -219,18 +181,83 @@ GetPresShell(const nsIContent* aContent)
 }
 
 void
-APZCCallbackHelper::UpdateSubFrame(nsIContent* aContent,
-                                   FrameMetrics& aMetrics)
+APZCCallbackHelper::UpdateRootFrame(FrameMetrics& aMetrics)
 {
-  // Precondition checks
-  MOZ_ASSERT(aContent);
+  if (aMetrics.GetScrollId() == FrameMetrics::NULL_SCROLL_ID) {
+    return;
+  }
+  nsIContent* content = nsLayoutUtils::FindContentFor(aMetrics.GetScrollId());
+  if (!content) {
+    return;
+  }
+
+  nsCOMPtr<nsIPresShell> shell = GetPresShell(content);
+  if (!shell || aMetrics.GetPresShellId() != shell->GetPresShellId()) {
+    return;
+  }
+
+  MOZ_ASSERT(aMetrics.GetUseDisplayPortMargins());
+
+  if (gfxPrefs::APZAllowZooming()) {
+    // If zooming is disabled then we don't really want to let APZ fiddle
+    // with these things. In theory setting the resolution here should be a
+    // no-op, but setting the SPCSPS is bad because it can cause a stale value
+    // to be returned by window.innerWidth/innerHeight (see bug 1187792).
+
+    float presShellResolution = nsLayoutUtils::GetResolution(shell);
+
+    // If the pres shell resolution has changed on the content side side
+    // the time this repaint request was fired, consider this request out of date
+    // and drop it; setting a zoom based on the out-of-date resolution can have
+    // the effect of getting us stuck with the stale resolution.
+    if (presShellResolution != aMetrics.GetPresShellResolution()) {
+      return;
+    }
+
+    // Set the scroll port size, which determines the scroll range. For example if
+    // a 500-pixel document is shown in a 100-pixel frame, the scroll port length would
+    // be 100, and gecko would limit the maximum scroll offset to 400 (so as to prevent
+    // overscroll). Note that if the content here was zoomed to 2x, the document would
+    // be 1000 pixels long but the frame would still be 100 pixels, and so the maximum
+    // scroll range would be 900. Therefore this calculation depends on the zoom applied
+    // to the content relative to the container.
+    // Note that this needs to happen before scrolling the frame (in UpdateFrameCommon),
+    // otherwise the scroll position may get clamped incorrectly.
+    CSSSize scrollPort = aMetrics.CalculateCompositedSizeInCssPixels();
+    nsLayoutUtils::SetScrollPositionClampingScrollPortSize(shell, scrollPort);
+
+    // The pres shell resolution is updated by the the async zoom since the
+    // last paint.
+    presShellResolution = aMetrics.GetPresShellResolution()
+                        * aMetrics.GetAsyncZoom().scale;
+    nsLayoutUtils::SetResolutionAndScaleTo(shell, presShellResolution);
+  }
+
+  // Do this as late as possible since scrolling can flush layout. It also
+  // adjusts the display port margins, so do it before we set those.
+  ScrollFrame(content, aMetrics);
+
+  SetDisplayPortMargins(shell, content, aMetrics);
+}
+
+void
+APZCCallbackHelper::UpdateSubFrame(FrameMetrics& aMetrics)
+{
+  if (aMetrics.GetScrollId() == FrameMetrics::NULL_SCROLL_ID) {
+    return;
+  }
+  nsIContent* content = nsLayoutUtils::FindContentFor(aMetrics.GetScrollId());
+  if (!content) {
+    return;
+  }
+
   MOZ_ASSERT(aMetrics.GetUseDisplayPortMargins());
 
   // We don't currently support zooming for subframes, so nothing extra
   // needs to be done beyond the tasks common to this and UpdateRootFrame.
-  ScrollFrame(aContent, aMetrics);
-  if (nsCOMPtr<nsIPresShell> shell = GetPresShell(aContent)) {
-    SetDisplayPortMargins(shell, aContent, aMetrics);
+  ScrollFrame(content, aMetrics);
+  if (nsCOMPtr<nsIPresShell> shell = GetPresShell(content)) {
+    SetDisplayPortMargins(shell, content, aMetrics);
   }
 }
 
@@ -240,7 +267,7 @@ APZCCallbackHelper::GetOrCreateScrollIdentifiers(nsIContent* aContent,
                                                  FrameMetrics::ViewID* aViewIdOut)
 {
     if (!aContent) {
-        return false;
+      return false;
     }
     *aViewIdOut = nsLayoutUtils::FindOrCreateIDFor(aContent);
     if (nsCOMPtr<nsIPresShell> shell = GetPresShell(aContent)) {
@@ -248,6 +275,36 @@ APZCCallbackHelper::GetOrCreateScrollIdentifiers(nsIContent* aContent,
       return true;
     }
     return false;
+}
+
+void
+APZCCallbackHelper::InitializeRootDisplayport(nsIPresShell* aPresShell)
+{
+  // Create a view-id and set a zero-margin displayport for the root element
+  // of the root document in the chrome process. This ensures that the scroll
+  // frame for this element gets an APZC, which in turn ensures that all content
+  // in the chrome processes is covered by an APZC.
+  // The displayport is zero-margin because this element is generally not
+  // actually scrollable (if it is, APZC will set proper margins when it's
+  // scrolled).
+  if (!aPresShell) {
+    return;
+  }
+
+  MOZ_ASSERT(aPresShell->GetDocument());
+  nsIContent* content = aPresShell->GetDocument()->GetDocumentElement();
+  if (!content) {
+    return;
+  }
+
+  uint32_t presShellId;
+  FrameMetrics::ViewID viewId;
+  if (APZCCallbackHelper::GetOrCreateScrollIdentifiers(content, &presShellId, &viewId)) {
+    // Note that the base rect that goes with these margins is set in
+    // nsRootBoxFrame::BuildDisplayList.
+    nsLayoutUtils::SetDisplayPortMargins(content, aPresShell, ScreenMargin(), 0,
+        nsLayoutUtils::RepaintMode::DoNotRepaint);
+  }
 }
 
 class FlingSnapEvent : public nsRunnable
@@ -338,17 +395,49 @@ APZCCallbackHelper::AcknowledgeScrollUpdate(const FrameMetrics::ViewID& aScrollI
     }
 }
 
+nsIPresShell*
+APZCCallbackHelper::GetRootContentDocumentPresShellForContent(nsIContent* aContent)
+{
+    nsIDocument* doc = aContent->GetComposedDoc();
+    if (!doc) {
+        return nullptr;
+    }
+    nsIPresShell* shell = doc->GetShell();
+    if (!shell) {
+        return nullptr;
+    }
+    nsPresContext* context = shell->GetPresContext();
+    if (!context) {
+        return nullptr;
+    }
+    context = context->GetToplevelContentDocumentPresContext();
+    if (!context) {
+        return nullptr;
+    }
+    return context->PresShell();
+}
+
 CSSPoint
 APZCCallbackHelper::ApplyCallbackTransform(const CSSPoint& aInput,
-                                           const ScrollableLayerGuid& aGuid,
-                                           float aPresShellResolution)
+                                           const ScrollableLayerGuid& aGuid)
 {
-    // First, scale inversely by the pres shell resolution to cancel the
-    // scale-to-resolution transform that the compositor adds to the layer with
-    // the pres shell resolution. The points sent to Gecko by APZ don't have
-    // this transform unapplied (unlike other compositor-side transforms)
-    // because APZ doesn't know about it.
-    CSSPoint input = aInput / aPresShellResolution;
+    CSSPoint input = aInput;
+    if (aGuid.mScrollId == FrameMetrics::NULL_SCROLL_ID) {
+        return input;
+    }
+    nsCOMPtr<nsIContent> content = nsLayoutUtils::FindContentFor(aGuid.mScrollId);
+    if (!content) {
+        return input;
+    }
+
+    // First, scale inversely by the root content document's pres shell
+    // resolution to cancel the scale-to-resolution transform that the
+    // compositor adds to the layer with the pres shell resolution. The points
+    // sent to Gecko by APZ don't have this transform unapplied (unlike other
+    // compositor-side transforms) because APZ doesn't know about it.
+    if (nsIPresShell* shell = GetRootContentDocumentPresShellForContent(content)) {
+        input = input / shell->GetResolution();
+    }
 
     // Now apply the callback-transform.
     // XXX: technically we need to walk all the way up the layer tree from the layer
@@ -361,16 +450,10 @@ APZCCallbackHelper::ApplyCallbackTransform(const CSSPoint& aInput,
     // some things transformed improperly. In practice we should rarely hit scenarios
     // where any of this matters, so I'm skipping it for now and just doing the single
     // transform for the layer that the input hit.
-
-    if (aGuid.mScrollId != FrameMetrics::NULL_SCROLL_ID) {
-        nsCOMPtr<nsIContent> content = nsLayoutUtils::FindContentFor(aGuid.mScrollId);
-        if (content) {
-            void* property = content->GetProperty(nsGkAtoms::apzCallbackTransform);
-            if (property) {
-                CSSPoint delta = (*static_cast<CSSPoint*>(property));
-                return input + delta;
-            }
-        }
+    void* property = content->GetProperty(nsGkAtoms::apzCallbackTransform);
+    if (property) {
+        CSSPoint delta = (*static_cast<CSSPoint*>(property));
+        input += delta;
     }
     return input;
 }
@@ -378,23 +461,21 @@ APZCCallbackHelper::ApplyCallbackTransform(const CSSPoint& aInput,
 LayoutDeviceIntPoint
 APZCCallbackHelper::ApplyCallbackTransform(const LayoutDeviceIntPoint& aPoint,
                                            const ScrollableLayerGuid& aGuid,
-                                           const CSSToLayoutDeviceScale& aScale,
-                                           float aPresShellResolution)
+                                           const CSSToLayoutDeviceScale& aScale)
 {
     LayoutDevicePoint point = LayoutDevicePoint(aPoint.x, aPoint.y);
-    point = ApplyCallbackTransform(point / aScale, aGuid, aPresShellResolution) * aScale;
+    point = ApplyCallbackTransform(point / aScale, aGuid) * aScale;
     return gfx::RoundedToInt(point);
 }
 
 void
 APZCCallbackHelper::ApplyCallbackTransform(WidgetTouchEvent& aEvent,
                                            const ScrollableLayerGuid& aGuid,
-                                           const CSSToLayoutDeviceScale& aScale,
-                                           float aPresShellResolution)
+                                           const CSSToLayoutDeviceScale& aScale)
 {
   for (size_t i = 0; i < aEvent.touches.Length(); i++) {
     aEvent.touches[i]->mRefPoint = ApplyCallbackTransform(
-        aEvent.touches[i]->mRefPoint, aGuid, aScale, aPresShellResolution);
+        aEvent.touches[i]->mRefPoint, aGuid, aScale);
   }
 }
 
@@ -409,14 +490,14 @@ APZCCallbackHelper::DispatchWidgetEvent(WidgetGUIEvent& aEvent)
 }
 
 nsEventStatus
-APZCCallbackHelper::DispatchSynthesizedMouseEvent(uint32_t aMsg,
+APZCCallbackHelper::DispatchSynthesizedMouseEvent(EventMessage aMsg,
                                                   uint64_t aTime,
                                                   const LayoutDevicePoint& aRefPoint,
                                                   Modifiers aModifiers,
                                                   nsIWidget* aWidget)
 {
-  MOZ_ASSERT(aMsg == NS_MOUSE_MOVE || aMsg == NS_MOUSE_BUTTON_DOWN ||
-             aMsg == NS_MOUSE_BUTTON_UP || aMsg == NS_MOUSE_MOZLONGTAP);
+  MOZ_ASSERT(aMsg == eMouseMove || aMsg == eMouseDown ||
+             aMsg == eMouseUp || aMsg == eMouseLongTap);
 
   WidgetMouseEvent event(true, aMsg, nullptr,
                          WidgetMouseEvent::eReal, WidgetMouseEvent::eNormal);
@@ -425,7 +506,7 @@ APZCCallbackHelper::DispatchSynthesizedMouseEvent(uint32_t aMsg,
   event.button = WidgetMouseEvent::eLeftButton;
   event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_TOUCH;
   event.ignoreRootScrollFrame = true;
-  if (aMsg != NS_MOUSE_MOVE) {
+  if (aMsg != eMouseMove) {
     event.clickCount = 1;
   }
   event.modifiers = aModifiers;
@@ -465,9 +546,9 @@ APZCCallbackHelper::FireSingleTapEvent(const LayoutDevicePoint& aPoint,
   APZCCH_LOG("Dispatching single-tap component events to %s\n",
     Stringify(aPoint).c_str());
   int time = 0;
-  DispatchSynthesizedMouseEvent(NS_MOUSE_MOVE, time, aPoint, aModifiers, aWidget);
-  DispatchSynthesizedMouseEvent(NS_MOUSE_BUTTON_DOWN, time, aPoint, aModifiers, aWidget);
-  DispatchSynthesizedMouseEvent(NS_MOUSE_BUTTON_UP, time, aPoint, aModifiers, aWidget);
+  DispatchSynthesizedMouseEvent(eMouseMove, time, aPoint, aModifiers, aWidget);
+  DispatchSynthesizedMouseEvent(eMouseDown, time, aPoint, aModifiers, aWidget);
+  DispatchSynthesizedMouseEvent(eMouseUp, time, aPoint, aModifiers, aWidget);
 }
 
 static nsIScrollableFrame*
@@ -552,8 +633,23 @@ PrepareForSetTargetAPZCNotification(nsIWidget* aWidget,
     return false;
   }
 
+  if (!scrollAncestor) {
+    MOZ_ASSERT(false);  // If you hit this, please file a bug with STR.
+
+    // Attempt some sort of graceful handling based on a theory as to why we
+    // reach this point...
+    // If we get here, the document element is non-null, valid, but doesn't have
+    // a displayport. It's possible that the init code in ChromeProcessController
+    // failed for some reason, or the document element got swapped out at some
+    // later time. In this case let's try to set a displayport on the document
+    // element again and bail out on this operation.
+    APZCCH_LOG("Widget %p's document element %p didn't have a displayport\n",
+        aWidget, dpElement.get());
+    APZCCallbackHelper::InitializeRootDisplayport(aRootFrame->PresContext()->PresShell());
+    return false;
+  }
+
   APZCCH_LOG("%p didn't have a displayport, so setting one...\n", dpElement.get());
-  MOZ_ASSERT(scrollAncestor);
   return nsLayoutUtils::CalculateAndSetDisplayPortMargins(
       scrollAncestor, nsLayoutUtils::RepaintMode::Repaint);
 }
@@ -648,6 +744,16 @@ APZCCallbackHelper::SendSetTargetAPZCNotification(nsIWidget* aWidget,
   if (!aWidget || !aDocument) {
     return;
   }
+  if (aInputBlockId == sLastTargetAPZCNotificationInputBlock) {
+    // We have already confirmed the target APZC for a previous event of this
+    // input block. If we activated a scroll frame for this input block,
+    // sending another target APZC confirmation would be harmful, as it might
+    // race the original confirmation (which needs to go through a layers
+    // transaction).
+    APZCCH_LOG("Not resending target APZC confirmation for input block %" PRIu64 "\n", aInputBlockId);
+    return;
+  }
+  sLastTargetAPZCNotificationInputBlock = aInputBlockId;
   if (nsIPresShell* shell = aDocument->GetShell()) {
     if (nsIFrame* rootFrame = shell->GetRootFrame()) {
       bool waitForRefresh = false;
@@ -681,13 +787,13 @@ APZCCallbackHelper::SendSetAllowedTouchBehaviorNotification(
         nsIWidget* aWidget,
         const WidgetTouchEvent& aEvent,
         uint64_t aInputBlockId,
-        const nsRefPtr<SetAllowedTouchBehaviorCallback>& aCallback)
+        const SetAllowedTouchBehaviorCallback& aCallback)
 {
   nsTArray<TouchBehaviorFlags> flags;
   for (uint32_t i = 0; i < aEvent.touches.Length(); i++) {
     flags.AppendElement(widget::ContentHelper::GetAllowedTouchBehavior(aWidget, aEvent.touches[i]->mRefPoint));
   }
-  aCallback->Run(aInputBlockId, flags);
+  aCallback(aInputBlockId, flags);
 }
 
 void
@@ -708,6 +814,36 @@ APZCCallbackHelper::NotifyMozMouseScrollEvent(const FrameMetrics::ViewID& aScrol
     true, true);
 }
 
+void
+APZCCallbackHelper::NotifyFlushComplete()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
+  MOZ_ASSERT(observerService);
+  observerService->NotifyObservers(nullptr, "apz-repaints-flushed", nullptr);
 }
+
+static int32_t sActiveSuppressDisplayport = 0;
+
+void
+APZCCallbackHelper::SuppressDisplayport(const bool& aEnabled)
+{
+  if (aEnabled) {
+    sActiveSuppressDisplayport++;
+  } else {
+    sActiveSuppressDisplayport--;
+  }
+
+  MOZ_ASSERT(sActiveSuppressDisplayport >= 0);
 }
+
+bool
+APZCCallbackHelper::IsDisplayportSuppressed()
+{
+  return sActiveSuppressDisplayport > 0;
+}
+
+
+} // namespace layers
+} // namespace mozilla
 

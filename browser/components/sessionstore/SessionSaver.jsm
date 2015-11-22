@@ -59,9 +59,9 @@ function stopWatch(method) {
   };
 }
 
-let stopWatchStart = stopWatch("start");
-let stopWatchCancel = stopWatch("cancel");
-let stopWatchFinish = stopWatch("finish");
+var stopWatchStart = stopWatch("start");
+var stopWatchCancel = stopWatch("cancel");
+var stopWatchFinish = stopWatch("finish");
 
 /**
  * The external API implemented by the SessionSaver module.
@@ -92,14 +92,6 @@ this.SessionSaver = Object.freeze({
   },
 
   /**
-   * Sets the last save time to zero. This will cause us to
-   * immediately save the next time runDelayed() is called.
-   */
-  clearLastSaveTime: function () {
-    SessionSaverInternal.clearLastSaveTime();
-  },
-
-  /**
    * Cancels all pending session saves.
    */
   cancel: function () {
@@ -110,7 +102,7 @@ this.SessionSaver = Object.freeze({
 /**
  * The internal API.
  */
-let SessionSaverInternal = {
+var SessionSaverInternal = {
   /**
    * The timeout ID referencing an active timer for a delayed save. When no
    * save is pending, this is null.
@@ -159,14 +151,6 @@ let SessionSaverInternal = {
    */
   updateLastSaveTime: function () {
     this._lastSaveTime = Date.now();
-  },
-
-  /**
-   * Sets the last save time to zero. This will cause us to
-   * immediately save the next time runDelayed() is called.
-   */
-  clearLastSaveTime: function () {
-    this._lastSaveTime = 0;
   },
 
   /**

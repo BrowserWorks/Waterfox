@@ -15,11 +15,22 @@ this.EXPORTED_SYMBOLS = [ "EME_ADOBE_ID",
 
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
 
 // GMP IDs
 const OPEN_H264_ID  = "gmp-gmpopenh264";
 const EME_ADOBE_ID  = "gmp-eme-adobe";
 const GMP_PLUGIN_IDS = [ OPEN_H264_ID, EME_ADOBE_ID ];
+
+var GMPPluginUnsupportedReason = {
+  NOT_WINDOWS: 1,
+  WINDOWS_VERSION: 2,
+};
+
+var GMPPluginHiddenReason = {
+  UNSUPPORTED: 1,
+  EME_DISABLED: 2,
+};
 
 this.GMPUtils = {
   /**
@@ -29,14 +40,25 @@ this.GMPUtils = {
    *          The plugin to check.
    */
   isPluginHidden: function(aPlugin) {
-    if (aPlugin.isEME) {
-      if (this._isPluginSupported(aPlugin) ||
-          this._isPluginForcedVisible(aPlugin)) {
-        return !GMPPrefs.get(GMPPrefs.KEY_EME_ENABLED, true);
-      } else {
-        return true;
-      }
+    if (!aPlugin.isEME) {
+      return false;
     }
+
+    if (!this._isPluginSupported(aPlugin) &&
+        !this._isPluginForcedVisible(aPlugin)) {
+      this.maybeReportTelemetry(aPlugin.id,
+                                "VIDEO_EME_ADOBE_HIDDEN_REASON",
+                                GMPPluginHiddenReason.UNSUPPORTED);
+      return true;
+    }
+
+    if (!GMPPrefs.get(GMPPrefs.KEY_EME_ENABLED, true)) {
+      this.maybeReportTelemetry(aPlugin.id,
+                                "VIDEO_EME_ADOBE_HIDDEN_REASON",
+                                GMPPluginHiddenReason.EME_DISABLED);
+      return true;
+    }
+
     return false;
   },
 
@@ -46,13 +68,27 @@ this.GMPUtils = {
    *          The plugin to check.
    */
   _isPluginSupported: function(aPlugin) {
-    if (aPlugin.id == EME_ADOBE_ID) {
-      if (Services.appinfo.OS == "WINNT") {
-        return Services.sysinfo.getPropertyAsInt32("version") >= 6;
-      } else {
-        return false;
-      }
+    if (aPlugin.id != EME_ADOBE_ID) {
+      // Only checking Adobe EME at the moment.
+      return true;
     }
+
+    if (Services.appinfo.OS != "WINNT") {
+      // Non-Windows OSes currently unsupported.
+      this.maybeReportTelemetry(aPlugin.id,
+                                "VIDEO_EME_ADOBE_UNSUPPORTED_REASON",
+                                GMPPluginUnsupportedReason.NOT_WINDOWS);
+      return false;
+    }
+
+    if (Services.sysinfo.getPropertyAsInt32("version") < 6) {
+      // Windows versions before Vista are unsupported.
+      this.maybeReportTelemetry(aPlugin.id,
+                                "VIDEO_EME_ADOBE_UNSUPPORTED_REASON",
+                                GMPPluginUnsupportedReason.WINDOWS_VERSION);
+      return false;
+    }
+
     return true;
   },
 
@@ -65,6 +101,52 @@ this.GMPUtils = {
   _isPluginForcedVisible: function(aPlugin) {
     return GMPPrefs.get(GMPPrefs.KEY_PLUGIN_FORCEVISIBLE, false, aPlugin.id);
   },
+
+  /**
+   * Report telemetry value, but only for Adobe CDM and only once per key
+   * per session.
+   */
+  maybeReportTelemetry: function(aPluginId, key, value) {
+    if (aPluginId != EME_ADOBE_ID) {
+      // Only report for Adobe CDM.
+      return;
+    }
+
+    if (!this.reportedKeys) {
+      this.reportedKeys = [];
+    }
+    if (this.reportedKeys.indexOf(key) >= 0) {
+      // Only report each key once per session.
+      return;
+    }
+    this.reportedKeys.push(key);
+
+    let hist = Services.telemetry.getHistogramById(key);
+    if (hist) {
+      hist.add(value);
+    }
+  },
+
+  ABI: function() {
+    // This is copied directly from nsUpdateService.js
+    let abi = null;
+    try {
+      abi = Services.appinfo.XPCOMABI;
+    }
+    catch (e) {
+      return "unknown";
+    }
+    if (AppConstants.platform == "macosx") {
+      // Mac universal build should report a different ABI than either macppc
+      // or mactel.
+      let macutils = Cc["@mozilla.org/xpcom/mac-utils;1"].
+                     getService(Ci.nsIMacUtils);
+
+      if (macutils.isUniversalBinary)
+        abi += "-u-" + macutils.architecturesInBinary;
+    }
+    return abi;
+  }
 };
 
 /**
@@ -78,6 +160,7 @@ this.GMPPrefs = {
   KEY_PLUGIN_AUTOUPDATE:        "media.{0}.autoupdate",
   KEY_PLUGIN_FORCEVISIBLE:      "media.{0}.forcevisible",
   KEY_PLUGIN_TRIAL_CREATE:      "media.{0}.trial-create",
+  KEY_PLUGIN_ABI:               "media.{0}.abi",
   KEY_URL:                      "media.gmp-manager.url",
   KEY_URL_OVERRIDE:             "media.gmp-manager.url.override",
   KEY_CERT_CHECKATTRS:          "media.gmp-manager.cert.checkAttributes",

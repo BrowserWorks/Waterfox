@@ -12,7 +12,7 @@ Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
 
-let Experiments;
+var Experiments;
 try {
   Experiments = Cu.import("resource:///modules/experiments/Experiments.jsm").Experiments;
 }
@@ -90,6 +90,10 @@ const PREFS_WHITELIST = [
   "storage.vacuum.last.",
   "svg.",
   "toolkit.startup.recent_crashes",
+  "ui.osk.enabled",
+  "ui.osk.detect_physical_keyboard",
+  "ui.osk.require_tablet_mode",
+  "ui.osk.debug.keyboardDisplayReason",
   "webgl.",
 ];
 
@@ -99,6 +103,34 @@ const PREFS_BLACKLIST = [
   /[.]print_to_filename$/,
   /^print[.]macosx[.]pagesetup/,
 ];
+
+// Table of getters for various preference types.
+// It's important to use getComplexValue for strings: it returns Unicode (wchars), getCharPref returns UTF-8 encoded chars.
+const PREFS_GETTERS = {};
+
+PREFS_GETTERS[Ci.nsIPrefBranch.PREF_STRING] = (prefs, name) => prefs.getComplexValue(name, Ci.nsISupportsString).data;
+PREFS_GETTERS[Ci.nsIPrefBranch.PREF_INT] = (prefs, name) => prefs.getIntPref(name);
+PREFS_GETTERS[Ci.nsIPrefBranch.PREF_BOOL] = (prefs, name) => prefs.getBoolPref(name);
+
+// Return the preferences filtered by PREFS_BLACKLIST and PREFS_WHITELIST lists
+// and also by the custom 'filter'-ing function.
+function getPrefList(filter) {
+  filter = filter || (name => true);
+  function getPref(name) {
+    let type = Services.prefs.getPrefType(name);
+    if (!(type in PREFS_GETTERS))
+      throw new Error("Unknown preference type " + type + " for " + name);
+    return PREFS_GETTERS[type](Services.prefs, name);
+  }
+
+  return PREFS_WHITELIST.reduce(function(prefs, branch) {
+    Services.prefs.getChildList(branch).forEach(function(name) {
+      if (filter(name) && !PREFS_BLACKLIST.some(re => re.test(name)))
+        prefs[name] = getPref(name);
+    });
+    return prefs;
+  }, {});
+}
 
 this.Troubleshoot = {
 
@@ -139,16 +171,17 @@ this.Troubleshoot = {
 // generate the provider's data.  The function is passed a "done" callback, and
 // when done, it must pass its data to the callback.  The resulting snapshot
 // object will contain a name => data entry for each provider.
-let dataProviders = {
+var dataProviders = {
 
   application: function application(done) {
     let data = {
       name: Services.appinfo.name,
-      version: Services.appinfo.version,
+      version: AppConstants.MOZ_APP_VERSION_DISPLAY,
       buildID: Services.appinfo.appBuildID,
       userAgent: Cc["@mozilla.org/network/protocol;1?name=http"].
                  getService(Ci.nsIHttpProtocolHandler).
                  userAgent,
+      safeMode: Services.appinfo.inSafeMode,
     };
 
     if (AppConstants.MOZ_UPDATER)
@@ -220,45 +253,11 @@ let dataProviders = {
   },
 
   modifiedPreferences: function modifiedPreferences(done) {
-    function getPref(name) {
-      let table = {};
-      table[Ci.nsIPrefBranch.PREF_STRING] = "getCharPref";
-      table[Ci.nsIPrefBranch.PREF_INT] = "getIntPref";
-      table[Ci.nsIPrefBranch.PREF_BOOL] = "getBoolPref";
-      let type = Services.prefs.getPrefType(name);
-      if (!(type in table))
-        throw new Error("Unknown preference type " + type + " for " + name);
-      return Services.prefs[table[type]](name);
-    }
-    done(PREFS_WHITELIST.reduce(function (prefs, branch) {
-      Services.prefs.getChildList(branch).forEach(function (name) {
-        if (Services.prefs.prefHasUserValue(name) &&
-            !PREFS_BLACKLIST.some(function (re) re.test(name)))
-          prefs[name] = getPref(name);
-      });
-      return prefs;
-    }, {}));
+    done(getPrefList(name => Services.prefs.prefHasUserValue(name)));
   },
 
   lockedPreferences: function lockedPreferences(done) {
-    function getPref(name) {
-      let table = {};
-      table[Ci.nsIPrefBranch.PREF_STRING] = "getCharPref";
-      table[Ci.nsIPrefBranch.PREF_INT] = "getIntPref";
-      table[Ci.nsIPrefBranch.PREF_BOOL] = "getBoolPref";
-      let type = Services.prefs.getPrefType(name);
-      if (!(type in table))
-        throw new Error("Unknown preference type " + type + " for " + name);
-      return Services.prefs[table[type]](name);
-    }
-    done(PREFS_WHITELIST.reduce(function (prefs, branch) {
-      Services.prefs.getChildList(branch).forEach(function (name) {
-        if (Services.prefs.prefIsLocked(name) &&
-            !PREFS_BLACKLIST.some(function (re) re.test(name)))
-          prefs[name] = getPref(name);
-      });
-      return prefs;
-    }, {}));
+    done(getPrefList(name => Services.prefs.prefIsLocked(name)));
   },
 
   graphics: function graphics(done) {
@@ -289,6 +288,9 @@ let dataProviders = {
         msg = suggestedDriverVersion ?
               ["tryNewerDriver", suggestedDriverVersion] :
               ["blockedDriver"];
+        break;
+      case Ci.nsIGfxInfo.FEATURE_BLOCKED_MISMATCHED_VERSION:
+        msg = ["blockedMismatchedVersion"];
         break;
       }
       return msg;

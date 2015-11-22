@@ -3,18 +3,19 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const Cu = Components.utils;
-const {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const TargetFactory = devtools.TargetFactory;
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const {TargetFactory} = require("devtools/framework/target");
 const {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
-const promise = devtools.require("sdk/core/promise");
+const promise = require("promise");
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm", {});
 const {NetUtil} = Cu.import("resource://gre/modules/NetUtil.jsm", {});
-const ProjectEditor = devtools.require("projecteditor/projecteditor");
+const ProjectEditor = require("projecteditor/projecteditor");
+const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 
 const TEST_URL_ROOT = "http://mochi.test:8888/browser/browser/devtools/projecteditor/test/";
 const SAMPLE_WEBAPP_URL = TEST_URL_ROOT + "/helper_homepage.html";
-let TEMP_PATH;
-let TEMP_FOLDER_NAME = "ProjectEditor" + (new Date().getTime());
+var TEMP_PATH;
+var TEMP_FOLDER_NAME = "ProjectEditor" + (new Date().getTime());
 
 // All test are asynchronous
 waitForExplicitFinish();
@@ -22,9 +23,9 @@ waitForExplicitFinish();
 // Uncomment this pref to dump all devtools emitted events to the console.
 // Services.prefs.setBoolPref("devtools.dump.emit", true);
 
-// Set the testing flag on gDevTools and reset it when the test ends
-gDevTools.testing = true;
-registerCleanupFunction(() => gDevTools.testing = false);
+// Set the testing flag on DevToolsUtils and reset it when the test ends
+DevToolsUtils.testing = true;
+registerCleanupFunction(() => DevToolsUtils.testing = false);
 
 // Clear preferences that may be set during the course of tests.
 registerCleanupFunction(() => {
@@ -260,7 +261,10 @@ function* getFileData(file) {
   }
   let def = promise.defer();
 
-  NetUtil.asyncFetch2(file, function(inputStream, status) {
+  NetUtil.asyncFetch({
+    uri: NetUtil.newURI(file),
+    loadUsingSystemPrincipal: true
+  }, function(inputStream, status) {
     if (!Components.isSuccessCode(status)) {
       info("ERROR READING TEMP FILE", status);
     }
@@ -275,12 +279,7 @@ function* getFileData(file) {
 
     var data = NetUtil.readInputStreamToString(inputStream, inputStream.available());
     def.resolve(data);
-  },
-  null,      // aLoadingNode
-  Services.scriptSecurityManager.getSystemPrincipal(),
-  null,      // aTriggeringPrincipal
-  Ci.nsILoadInfo.SEC_NORMAL,
-  Ci.nsIContentPolicy.TYPE_OTHER);
+  });
 
   return def.promise;
 }
@@ -334,4 +333,3 @@ function onPopupHidden(menu) {
   });
   return defer.promise;
 }
-

@@ -17,6 +17,7 @@
 #include "js/Vector.h"
 #include "vm/ArrayBufferObject.h"
 #include "vm/ErrorObject.h"
+#include "vm/RegExpStatics.h"
 #include "vm/Runtime.h"
 
 namespace js {
@@ -69,47 +70,51 @@ class GlobalObject : public NativeObject
      */
     static const unsigned STANDARD_CLASS_SLOTS  = JSProto_LIMIT * 3;
 
-    /* Various function values needed by the engine. */
-    static const unsigned EVAL                    = APPLICATION_SLOTS + STANDARD_CLASS_SLOTS;
-    static const unsigned CREATE_DATAVIEW_FOR_THIS = EVAL + 1;
-    static const unsigned THROWTYPEERROR          = CREATE_DATAVIEW_FOR_THIS + 1;
+    enum : unsigned {
+        /* Various function values needed by the engine. */
+        EVAL = APPLICATION_SLOTS + STANDARD_CLASS_SLOTS,
+        CREATE_DATAVIEW_FOR_THIS,
+        THROWTYPEERROR,
 
-    /*
-     * Instances of the internal createArrayFromBuffer function used by the
-     * typed array code, one per typed array element type.
-     */
-    static const unsigned FROM_BUFFER_UINT8 = THROWTYPEERROR + 1;
-    static const unsigned FROM_BUFFER_INT8 = FROM_BUFFER_UINT8 + 1;
-    static const unsigned FROM_BUFFER_UINT16 = FROM_BUFFER_INT8 + 1;
-    static const unsigned FROM_BUFFER_INT16 = FROM_BUFFER_UINT16 + 1;
-    static const unsigned FROM_BUFFER_UINT32 = FROM_BUFFER_INT16 + 1;
-    static const unsigned FROM_BUFFER_INT32 = FROM_BUFFER_UINT32 + 1;
-    static const unsigned FROM_BUFFER_FLOAT32 = FROM_BUFFER_INT32 + 1;
-    static const unsigned FROM_BUFFER_FLOAT64 = FROM_BUFFER_FLOAT32 + 1;
-    static const unsigned FROM_BUFFER_UINT8CLAMPED = FROM_BUFFER_FLOAT64 + 1;
+        /*
+         * Instances of the internal createArrayFromBuffer function used by the
+         * typed array code, one per typed array element type.
+         */
+        FROM_BUFFER_UINT8,
+        FROM_BUFFER_INT8,
+        FROM_BUFFER_UINT16,
+        FROM_BUFFER_INT16,
+        FROM_BUFFER_UINT32,
+        FROM_BUFFER_INT32,
+        FROM_BUFFER_FLOAT32,
+        FROM_BUFFER_FLOAT64,
+        FROM_BUFFER_UINT8CLAMPED,
 
-    /* One-off properties stored after slots for built-ins. */
-    static const unsigned ARRAY_ITERATOR_PROTO  = FROM_BUFFER_UINT8CLAMPED + 1;
-    static const unsigned STRING_ITERATOR_PROTO  = ARRAY_ITERATOR_PROTO + 1;
-    static const unsigned LEGACY_GENERATOR_OBJECT_PROTO = STRING_ITERATOR_PROTO + 1;
-    static const unsigned STAR_GENERATOR_OBJECT_PROTO = LEGACY_GENERATOR_OBJECT_PROTO + 1;
-    static const unsigned MAP_ITERATOR_PROTO      = STAR_GENERATOR_OBJECT_PROTO + 1;
-    static const unsigned SET_ITERATOR_PROTO      = MAP_ITERATOR_PROTO + 1;
-    static const unsigned COLLATOR_PROTO          = SET_ITERATOR_PROTO + 1;
-    static const unsigned NUMBER_FORMAT_PROTO     = COLLATOR_PROTO + 1;
-    static const unsigned DATE_TIME_FORMAT_PROTO  = NUMBER_FORMAT_PROTO + 1;
-    static const unsigned REGEXP_STATICS          = DATE_TIME_FORMAT_PROTO + 1;
-    static const unsigned WARNED_ONCE_FLAGS       = REGEXP_STATICS + 1;
-    static const unsigned RUNTIME_CODEGEN_ENABLED = WARNED_ONCE_FLAGS + 1;
-    static const unsigned DEBUGGERS               = RUNTIME_CODEGEN_ENABLED + 1;
-    static const unsigned INTRINSICS              = DEBUGGERS + 1;
-    static const unsigned FLOAT32X4_TYPE_DESCR    = INTRINSICS + 1;
-    static const unsigned FLOAT64X2_TYPE_DESCR    = FLOAT32X4_TYPE_DESCR + 1;
-    static const unsigned INT32X4_TYPE_DESCR      = FLOAT64X2_TYPE_DESCR + 1;
-    static const unsigned FOR_OF_PIC_CHAIN        = INT32X4_TYPE_DESCR + 1;
+        /* One-off properties stored after slots for built-ins. */
+        ARRAY_ITERATOR_PROTO,
+        STRING_ITERATOR_PROTO,
+        LEGACY_GENERATOR_OBJECT_PROTO,
+        STAR_GENERATOR_OBJECT_PROTO,
+        MAP_ITERATOR_PROTO,
+        SET_ITERATOR_PROTO,
+        COLLATOR_PROTO,
+        NUMBER_FORMAT_PROTO,
+        DATE_TIME_FORMAT_PROTO,
+        REGEXP_STATICS,
+        WARNED_ONCE_FLAGS,
+        RUNTIME_CODEGEN_ENABLED,
+        DEBUGGERS,
+        INTRINSICS,
+        FLOAT32X4_TYPE_DESCR,
+        FLOAT64X2_TYPE_DESCR,
+        INT8X16_TYPE_DESCR,
+        INT16X8_TYPE_DESCR,
+        INT32X4_TYPE_DESCR,
+        FOR_OF_PIC_CHAIN,
 
-    /* Total reserved-slot count for global objects. */
-    static const unsigned RESERVED_SLOTS = FOR_OF_PIC_CHAIN + 1;
+        /* Total reserved-slot count for global objects. */
+        RESERVED_SLOTS
+    };
 
     /*
      * The slot count must be in the public API for JSCLASS_GLOBAL_FLAGS, and
@@ -142,11 +147,6 @@ class GlobalObject : public NativeObject
     void setOriginalEval(JSObject* evalobj) {
         MOZ_ASSERT(getSlotRef(EVAL).isUndefined());
         setSlot(EVAL, ObjectValue(*evalobj));
-    }
-
-    void setIntrinsicsHolder(JSObject* obj) {
-        MOZ_ASSERT(getSlotRef(INTRINSICS).isUndefined());
-        setSlot(INTRINSICS, ObjectValue(*obj));
     }
 
     Value getConstructor(JSProtoKey key) const {
@@ -299,7 +299,8 @@ class GlobalObject : public NativeObject
      */
     JSFunction*
     createConstructor(JSContext* cx, JSNative ctor, JSAtom* name, unsigned length,
-                      gc::AllocKind kind = gc::AllocKind::FUNCTION);
+                      gc::AllocKind kind = gc::AllocKind::FUNCTION,
+                      const JSJitInfo* jitInfo = nullptr);
 
     /*
      * Create an object to serve as [[Prototype]] for instances of the given
@@ -447,6 +448,26 @@ class GlobalObject : public NativeObject
         return getSlotRef(FLOAT64X2_TYPE_DESCR).toObject();
     }
 
+    void setInt8x16TypeDescr(JSObject& obj) {
+        MOZ_ASSERT(getSlotRef(INT8X16_TYPE_DESCR).isUndefined());
+        setSlot(INT8X16_TYPE_DESCR, ObjectValue(obj));
+    }
+
+    JSObject& int8x16TypeDescr() {
+        MOZ_ASSERT(getSlotRef(INT8X16_TYPE_DESCR).isObject());
+        return getSlotRef(INT8X16_TYPE_DESCR).toObject();
+    }
+
+    void setInt16x8TypeDescr(JSObject& obj) {
+        MOZ_ASSERT(getSlotRef(INT16X8_TYPE_DESCR).isUndefined());
+        setSlot(INT16X8_TYPE_DESCR, ObjectValue(obj));
+    }
+
+    JSObject& int16x8TypeDescr() {
+        MOZ_ASSERT(getSlotRef(INT16X8_TYPE_DESCR).isObject());
+        return getSlotRef(INT16X8_TYPE_DESCR).toObject();
+    }
+
     void setInt32x4TypeDescr(JSObject& obj) {
         MOZ_ASSERT(getSlotRef(INT32X4_TYPE_DESCR).isUndefined());
         setSlot(INT32X4_TYPE_DESCR, ObjectValue(obj));
@@ -580,48 +601,61 @@ class GlobalObject : public NativeObject
         return &self->getPrototype(JSProto_DataView).toObject();
     }
 
-    NativeObject* intrinsicsHolder() {
-        MOZ_ASSERT(!getSlot(INTRINSICS).isUndefined());
-        return &getSlot(INTRINSICS).toObject().as<NativeObject>();
+    static NativeObject* getIntrinsicsHolder(JSContext* cx, Handle<GlobalObject*> global);
+
+    Value existingIntrinsicValue(PropertyName* name) {
+        Value slot = getReservedSlot(INTRINSICS);
+        MOZ_ASSERT(slot.isObject(), "intrinsics holder must already exist");
+
+        NativeObject* holder = &slot.toObject().as<NativeObject>();
+
+        Shape* shape = holder->lookupPure(name);
+        MOZ_ASSERT(shape, "intrinsic must already have been added to holder");
+
+        return holder->getSlot(shape->slot());
     }
 
-    bool maybeGetIntrinsicValue(jsid id, Value* vp) {
-        NativeObject* holder = intrinsicsHolder();
+    static bool
+    maybeGetIntrinsicValue(JSContext* cx, Handle<GlobalObject*> global, Handle<PropertyName*> name,
+                           MutableHandleValue vp)
+    {
+        NativeObject* holder = getIntrinsicsHolder(cx, global);
+        if (!holder)
+            return false;
 
-        if (Shape* shape = holder->lookupPure(id)) {
-            *vp = holder->getSlot(shape->slot());
+        if (Shape* shape = holder->lookupPure(name)) {
+            vp.set(holder->getSlot(shape->slot()));
             return true;
         }
         return false;
-    }
-    bool maybeGetIntrinsicValue(PropertyName* name, Value* vp) {
-        return maybeGetIntrinsicValue(NameToId(name), vp);
     }
 
     static bool getIntrinsicValue(JSContext* cx, Handle<GlobalObject*> global,
                                   HandlePropertyName name, MutableHandleValue value)
     {
-        if (global->maybeGetIntrinsicValue(name, value.address()))
+        if (GlobalObject::maybeGetIntrinsicValue(cx, global, name, value))
             return true;
         if (!cx->runtime()->cloneSelfHostedValue(cx, name, value))
             return false;
-        RootedId id(cx, NameToId(name));
-        return global->addIntrinsicValue(cx, id, value);
+        return GlobalObject::addIntrinsicValue(cx, global, name, value);
     }
 
-    bool addIntrinsicValue(JSContext* cx, HandleId id, HandleValue value);
+    static bool addIntrinsicValue(JSContext* cx, Handle<GlobalObject*> global,
+                                  HandlePropertyName name, HandleValue value);
 
-    bool setIntrinsicValue(JSContext* cx, PropertyName* name, HandleValue value) {
-#ifdef DEBUG
-        RootedObject self(cx, this);
-        MOZ_ASSERT(cx->runtime()->isSelfHostingGlobal(self));
-#endif
-        RootedObject holder(cx, intrinsicsHolder());
+    static bool setIntrinsicValue(JSContext* cx, Handle<GlobalObject*> global,
+                                  HandlePropertyName name, HandleValue value)
+    {
+        MOZ_ASSERT(cx->runtime()->isSelfHostingGlobal(global));
+        RootedObject holder(cx, GlobalObject::getIntrinsicsHolder(cx, global));
+        if (!holder)
+            return false;
         return SetProperty(cx, holder, name, value);
     }
 
-    bool getSelfHostedFunction(JSContext* cx, HandleAtom selfHostedName, HandleAtom name,
-                               unsigned nargs, MutableHandleValue funVal);
+    static bool getSelfHostedFunction(JSContext* cx, Handle<GlobalObject*> global,
+                                      HandlePropertyName selfHostedName, HandleAtom name,
+                                      unsigned nargs, MutableHandleValue funVal);
 
     bool hasRegExpStatics() const;
     RegExpStatics* getRegExpStatics(ExclusiveContext* cx) const;
@@ -867,14 +901,14 @@ typedef HashSet<GlobalObject*, DefaultHasher<GlobalObject*>, SystemAllocPolicy> 
  * for ClassSpecs.
  */
 
-template<JSNative ctor, unsigned length, gc::AllocKind kind>
+template<JSNative ctor, unsigned length, gc::AllocKind kind, const JSJitInfo* jitInfo = nullptr>
 JSObject*
 GenericCreateConstructor(JSContext* cx, JSProtoKey key)
 {
     // Note - We duplicate the trick from ClassName() so that we don't need to
     // include jsatominlines.h here.
     PropertyName* name = (&cx->names().Null)[key];
-    return cx->global()->createConstructor(cx, ctor, name, length, kind);
+    return cx->global()->createConstructor(cx, ctor, name, length, kind, jitInfo);
 }
 
 inline JSObject*
@@ -882,6 +916,7 @@ GenericCreatePrototype(JSContext* cx, JSProtoKey key)
 {
     MOZ_ASSERT(key != JSProto_Object);
     const Class* clasp = ProtoKeyToClass(key);
+    MOZ_ASSERT(clasp);
     JSProtoKey parentKey = ParentKeyForStandardClass(key);
     if (!GlobalObject::ensureConstructor(cx, cx->global(), parentKey))
         return nullptr;

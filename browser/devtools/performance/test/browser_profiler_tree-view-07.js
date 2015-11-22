@@ -6,11 +6,11 @@
  * has the correct 'root', 'parent', 'level' etc. accessors on child nodes.
  */
 
-function spawnTest () {
-  let { ThreadNode } = devtools.require("devtools/performance/tree-model");
-  let { CallView } = devtools.require("devtools/performance/tree-view");
+function* spawnTest() {
+  let { ThreadNode } = require("devtools/performance/tree-model");
+  let { CallView } = require("devtools/performance/tree-view");
 
-  let threadNode = new ThreadNode(gThread);
+  let threadNode = new ThreadNode(gThread, { startTime: 0, endTime: 20 });
   // Don't display the synthesized (root) and the real (root) node twice.
   threadNode.calls = threadNode.calls[0].calls;
   let treeRoot = new CallView({ frame: threadNode });
@@ -35,7 +35,7 @@ function spawnTest () {
     "The .A.B.D node has the correct container node.");
 }
 
-let gThread = synthesizeProfileForTest([{
+var gThread = synthesizeProfileForTest([{
   time: 5,
   frames: [
     { category: 8,  location: "(root)" },

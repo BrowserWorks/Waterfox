@@ -5,18 +5,17 @@ var proto = Object.getPrototypeOf(global);
 var gets = 0, sets = 0;
 Object.setPrototypeOf(global, new Proxy(proto, {
     has(t, id) {
-        return id === "bareword" || id in t;
+        return id === "bareword" || Reflect.has(t, id);
     },
     get(t, id, r) {
         gets++;
         assertEq(r, global);
-        return t[id];  // wrong receiver
+        return Reflect.get(t, id, r);
     },
     set(t, id, v, r) {
         sets++;
         assertEq(r, global);
-        t[id] = v;  // wrong receiver
-        return true;
+        return Reflect.set(t, id, v, r);
     }
 }));
 

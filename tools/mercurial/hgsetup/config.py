@@ -11,50 +11,58 @@ import os
 
 
 HOST_FINGERPRINTS = {
-    'bitbucket.org': '45:ad:ae:1a:cf:0e:73:47:06:07:e0:88:f5:cc:10:e5:fa:1c:f7:99',
-    'bugzilla.mozilla.org': '47:13:a2:14:0c:46:45:53:12:0d:e5:36:16:a5:60:26:3e:da:3a:60',
+    'bitbucket.org': '46:de:34:e7:9b:18:cd:7f:ae:fd:8b:e3:bc:f4:1a:5e:38:d7:ac:24',
+    'bugzilla.mozilla.org': 'f9:7e:62:42:4e:38:79:96:ca:87:71:2a:f8:51:38:c8:16:92:5c:a7',
     'hg.mozilla.org': 'af:27:b9:34:47:4e:e5:98:01:f6:83:2b:51:c9:aa:d8:df:fb:1a:27',
 }
 
 
-class HgIncludeException(Exception):
-    pass
+def config_file(files):
+    """Select the most appropriate config file from a list."""
+    if not files:
+        return None
+
+    if len(files) > 1:
+        picky = [(os.path.getsize(f), f) for f in files if os.path.isfile(f)]
+        if picky:
+            return max(picky)[1]
+
+    return files[0]
+
+
+class ParseException(Exception):
+    def __init__(self, line, msg):
+        self.line = line
+        super(Exception, self).__init__(msg)
 
 
 class MercurialConfig(object):
     """Interface for manipulating a Mercurial config file."""
 
-    def __init__(self, infiles=None):
+    def __init__(self, path=None):
         """Create a new instance, optionally from an existing hgrc file."""
 
-        if infiles:
-            # If multiple files were specified, figure out which file we're using:
-            if len(infiles) > 1:
-                picky_infiles = filter(os.path.isfile, infiles)
-                if picky_infiles:
-                    picky_infiles = [(os.path.getsize(path), path) for path in picky_infiles]
-                    infiles = [max(picky_infiles)[1]]
-
-            infile = infiles[0]
-            self.config_path = infile
-        else:
-            infile = None
+        self.config_path = path
 
         # Mercurial configuration files allow an %include directive to include
         # other files, this is not supported by ConfigObj, so throw a useful
         # error saying this.
-        if os.path.exists(infile):
-            with codecs.open(infile, 'r', encoding='utf-8') as f:
-                for line in f:
+        if os.path.exists(path):
+            with codecs.open(path, 'r', encoding='utf-8') as f:
+                for i, line in enumerate(f):
                     if line.startswith('%include'):
-                        raise HgIncludeException(
+                        raise ParseException(i + 1,
                             '%include directive is not supported by MercurialConfig')
+                    if line.startswith(';'):
+                        raise ParseException(i + 1,
+                            'semicolon (;) comments are not supported; '
+                            'use # instead')
 
         # write_empty_values is necessary to prevent built-in extensions (which
         # have no value) from being dropped on write.
         # list_values aren't needed by Mercurial and disabling them prevents
         # quotes from being added.
-        self._c = ConfigObj(infile=infile, encoding='utf-8',
+        self._c = ConfigObj(infile=path, encoding='utf-8',
             write_empty_values=True, list_values=False)
 
     @property
@@ -175,14 +183,29 @@ class MercurialConfig(object):
 
     def get_bugzilla_credentials(self):
         if 'bugzilla' not in self._c:
-            return None, None
+            return None, None, None, None, None
 
         b = self._c['bugzilla']
-        return b.get('username', None), b.get('password', None)
+        return (
+            b.get('username', None),
+            b.get('password', None),
+            b.get('userid', None),
+            b.get('cookie', None),
+            b.get('apikey', None),
+        )
 
-    def set_bugzilla_credentials(self, username, password):
+    def set_bugzilla_credentials(self, username, api_key):
         b = self._c.setdefault('bugzilla', {})
         if username:
             b['username'] = username
-        if password:
-            b['password'] = password
+        if api_key:
+            b['apikey'] = api_key
+
+    def clear_legacy_bugzilla_credentials(self):
+        if 'bugzilla' not in self._c:
+            return
+
+        b = self._c['bugzilla']
+        for k in ('password', 'userid', 'cookie'):
+            if k in b:
+                del b[k]

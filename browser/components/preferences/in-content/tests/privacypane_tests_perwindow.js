@@ -315,14 +315,21 @@ function test_locbar_suggestion_retention(suggestion, autocomplete) {
   };
 }
 
-function reset_preferences(win) {
+const gPrefCache = new Map();
+
+function cache_preferences(win) {
   let prefs = win.document.querySelectorAll("#privacyPreferences > preference");
-  for (let i = 0; i < prefs.length; ++i)
-    if (prefs[i].hasUserValue)
-      prefs[i].reset();
+  for (let pref of prefs)
+    gPrefCache.set(pref.name, pref.value);
 }
 
-let testRunner;
+function reset_preferences(win) {
+  let prefs = win.document.querySelectorAll("#privacyPreferences > preference");
+  for (let pref of prefs)
+    pref.value = gPrefCache.get(pref.name);
+}
+
+var testRunner;
 function run_test_subset(subset) {
   Services.prefs.setBoolPref("browser.preferences.instantApply", true);
   dump("subset: " + [x.name for (x of subset)].join(",") + "\n");
@@ -334,7 +341,7 @@ function run_test_subset(subset) {
   });
 
   testRunner = {
-    tests: subset,
+    tests: [cache_preferences, ...subset, reset_preferences],
     counter: 0,
     runNext: function() {
       if (this.counter == this.tests.length) {

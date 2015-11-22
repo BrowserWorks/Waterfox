@@ -39,16 +39,16 @@ public:
   }
 
   // Write a WEBAUDIO_BLOCK_SIZE block for aChannelCount channels.
-  void Write(const AudioChunk& aInputChunk);
+  void Write(const AudioBlock& aInputChunk);
 
   // Read a block with an array of delays, in ticks, for each sample frame.
   // Each delay should be >= 0 and <= MaxDelayTicks().
   void Read(const double aPerFrameDelays[WEBAUDIO_BLOCK_SIZE],
-            AudioChunk* aOutputChunk,
+            AudioBlock* aOutputChunk,
             ChannelInterpretation aChannelInterpretation);
   // Read a block with a constant delay, which will be smoothed with the
   // previous delay.  The delay should be >= 0 and <= MaxDelayTicks().
-  void Read(double aDelayTicks, AudioChunk* aOutputChunk,
+  void Read(double aDelayTicks, AudioBlock* aOutputChunk,
             ChannelInterpretation aChannelInterpretation);
 
   // Read into one of the channels of aOutputChunk, given an array of
@@ -56,7 +56,7 @@ public:
   // channels.  aOutputChunk must have already been allocated with at least as
   // many channels as were in any of the blocks passed to Write().
   void ReadChannel(const double aPerFrameDelays[WEBAUDIO_BLOCK_SIZE],
-                   const AudioChunk* aOutputChunk, uint32_t aChannel,
+                   AudioBlock* aOutputChunk, uint32_t aChannel,
                    ChannelInterpretation aChannelInterpretation);
 
   // Advance the buffer pointer
@@ -80,7 +80,7 @@ public:
 
 private:
   void ReadChannels(const double aPerFrameDelays[WEBAUDIO_BLOCK_SIZE],
-                    const AudioChunk* aOutputChunk,
+                    AudioBlock* aOutputChunk,
                     uint32_t aFirstChannel, uint32_t aNumChannelsToRead,
                     ChannelInterpretation aChannelInterpretation);
   bool EnsureBuffer();
@@ -94,7 +94,7 @@ private:
   // Circular buffer for capturing delayed samples.
   FallibleTArray<AudioChunk> mChunks;
   // Cache upmixed channel arrays.
-  nsAutoTArray<const void*,GUESS_AUDIO_CHANNELS> mUpmixChannels;
+  nsAutoTArray<const float*,GUESS_AUDIO_CHANNELS> mUpmixChannels;
   double mSmoothingRate;
   // Current delay, in fractional ticks
   double mCurrentDelay;
@@ -110,6 +110,6 @@ private:
 #endif
 };
 
-} // mozilla
+} // namespace mozilla
 
 #endif // DelayBuffer_h_

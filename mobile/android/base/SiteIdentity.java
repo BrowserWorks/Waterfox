@@ -5,19 +5,23 @@
 
 package org.mozilla.gecko;
 
+import android.util.Log;
 import org.json.JSONObject;
 
 import android.text.TextUtils;
 
 public class SiteIdentity {
+    private final String LOGTAG = "GeckoSiteIdentity";
     private SecurityMode mSecurityMode;
-    private MixedMode mMixedMode;
+    private boolean mSecure;
+    private MixedMode mMixedModeActive;
+    private MixedMode mMixedModeDisplay;
     private TrackingMode mTrackingMode;
     private String mHost;
     private String mOwner;
     private String mSupplemental;
     private String mVerifier;
-    private String mEncrypted;
+    private String mOrigin;
 
     // The order of the items here relate to image levels in
     // site_security_level.xml
@@ -56,8 +60,8 @@ public class SiteIdentity {
     // site_security_level.xml
     public enum MixedMode {
         UNKNOWN("unknown"),
-        MIXED_CONTENT_BLOCKED("mixed_content_blocked"),
-        MIXED_CONTENT_LOADED("mixed_content_loaded");
+        MIXED_CONTENT_BLOCKED("blocked"),
+        MIXED_CONTENT_LOADED("loaded");
 
         private final String mId;
 
@@ -124,16 +128,18 @@ public class SiteIdentity {
 
     public void resetIdentity() {
         mSecurityMode = SecurityMode.UNKNOWN;
+        mOrigin = null;
         mHost = null;
         mOwner = null;
         mSupplemental = null;
         mVerifier = null;
-        mEncrypted = null;
+        mSecure = false;
     }
 
     public void reset() {
         resetIdentity();
-        mMixedMode = MixedMode.UNKNOWN;
+        mMixedModeActive = MixedMode.UNKNOWN;
+        mMixedModeDisplay = MixedMode.UNKNOWN;
         mTrackingMode = TrackingMode.UNKNOWN;
     }
 
@@ -147,9 +153,15 @@ public class SiteIdentity {
             JSONObject mode = identityData.getJSONObject("mode");
 
             try {
-                mMixedMode = MixedMode.fromString(mode.getString("mixed"));
+                mMixedModeDisplay = MixedMode.fromString(mode.getString("mixed_display"));
             } catch (Exception e) {
-                mMixedMode = MixedMode.UNKNOWN;
+                mMixedModeDisplay = MixedMode.UNKNOWN;
+            }
+
+            try {
+                mMixedModeActive = MixedMode.fromString(mode.getString("mixed_active"));
+            } catch (Exception e) {
+                mMixedModeActive = MixedMode.UNKNOWN;
             }
 
             try {
@@ -166,11 +178,12 @@ public class SiteIdentity {
             }
 
             try {
+                mOrigin = identityData.getString("origin");
                 mHost = identityData.getString("host");
                 mOwner = identityData.optString("owner", null);
                 mSupplemental = identityData.optString("supplemental", null);
                 mVerifier = identityData.getString("verifier");
-                mEncrypted = identityData.getString("encrypted");
+                mSecure = identityData.optBoolean("secure", false);
             } catch (Exception e) {
                 resetIdentity();
             }
@@ -181,6 +194,10 @@ public class SiteIdentity {
 
     public SecurityMode getSecurityMode() {
         return mSecurityMode;
+    }
+
+    public String getOrigin() {
+        return mOrigin;
     }
 
     public String getHost() {
@@ -199,12 +216,16 @@ public class SiteIdentity {
         return mVerifier;
     }
 
-    public String getEncrypted() {
-        return mEncrypted;
+    public boolean isSecure() {
+        return mSecure;
     }
 
-    public MixedMode getMixedMode() {
-        return mMixedMode;
+    public MixedMode getMixedModeActive() {
+        return mMixedModeActive;
+    }
+
+    public MixedMode getMixedModeDisplay() {
+        return mMixedModeDisplay;
     }
 
     public TrackingMode getTrackingMode() {

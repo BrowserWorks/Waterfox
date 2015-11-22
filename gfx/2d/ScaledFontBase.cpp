@@ -7,7 +7,7 @@
 
 #ifdef USE_SKIA
 #include "PathSkia.h"
-#include "skia/SkPaint.h"
+#include "skia/include/core/SkPaint.h"
 #endif
 
 #ifdef USE_CAIRO
@@ -74,13 +74,13 @@ ScaledFontBase::GetSkiaPathForGlyphs(const GlyphBuffer &aBuffer)
 }
 #endif
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 ScaledFontBase::GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget)
 {
 #ifdef USE_SKIA
   if (aTarget->GetBackendType() == BackendType::SKIA) {
     SkPath path = GetSkiaPathForGlyphs(aBuffer);
-    return new PathSkia(path, FillRule::FILL_WINDING);
+    return MakeAndAddRef<PathSkia>(path, FillRule::FILL_WINDING);
   }
 #endif
 #ifdef USE_CAIRO
@@ -185,5 +185,5 @@ ScaledFontBase::SetCairoScaledFont(cairo_scaled_font_t* font)
 }
 #endif
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

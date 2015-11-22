@@ -6,7 +6,10 @@
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
+const Cr = Components.results;
 const Cu = Components.utils;
+
+Cu.importGlobalProperties(['File']);
 
 this.EXPORTED_SYMBOLS = ["SettingsRequestManager"];
 
@@ -15,9 +18,9 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/PermissionsTable.jsm");
 
-let DEBUG = false;
-let VERBOSE = false;
-let TRACK = false;
+var DEBUG = false;
+var VERBOSE = false;
+var TRACK = false;
 
 try {
   DEBUG   =
@@ -28,7 +31,7 @@ try {
     Services.prefs.getBoolPref("dom.mozSettings.trackTasksUsage");
 } catch (ex) { }
 
-let allowForceReadOnly = false;
+var allowForceReadOnly = false;
 try {
   allowForceReadOnly = Services.prefs.getBoolPref("dom.mozSettings.allowForceReadOnly");
 } catch (ex) { }
@@ -36,6 +39,9 @@ try {
 function debug(s) {
   dump("-*- SettingsRequestManager: " + s + "\n");
 }
+
+var inParent = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime)
+                  .processType == Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
 
 const kXpcomShutdownObserverTopic      = "xpcom-shutdown";
 const kInnerWindowDestroyed            = "inner-window-destroyed";
@@ -52,8 +58,12 @@ const kAllSettingsWritePermission      = "settings" + kSettingsWriteSuffix;
 // will be allowed depends on the exact permissions the app has.
 const kSomeSettingsReadPermission      = "settings-api" + kSettingsReadSuffix;
 const kSomeSettingsWritePermission     = "settings-api" + kSettingsWriteSuffix;
+
 // Time, in seconds, to consider the API is starting to jam
-const kSoftLockupDelta                 = 30;
+var kSoftLockupDelta = 30;
+try {
+  kSoftLockupDelta = Services.prefs.getIntPref("dom.mozSettings.softLockupDelta");
+} catch (ex) { }
 
 XPCOMUtils.defineLazyServiceGetter(this, "mrm",
                                    "@mozilla.org/memory-reporter-manager;1",
@@ -68,7 +78,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gSettingsService",
                                    "@mozilla.org/settingsService;1",
                                    "nsISettingsService");
 
-let SettingsPermissions = {
+var SettingsPermissions = {
   checkPermission: function(aPrincipal, aPerm) {
     if (!aPrincipal) {
       Cu.reportError("SettingsPermissions.checkPermission was passed a null principal. Denying all permissions.");
@@ -198,7 +208,7 @@ function SettingsLockInfo(aDB, aMsgMgr, aPrincipal, aLockID, aIsServiceLock, aWi
   };
 }
 
-let SettingsRequestManager = {
+var SettingsRequestManager = {
   // Access to the settings DB
   settingsDB: new SettingsDB(),
   // Remote messages to listen for from child
@@ -245,7 +255,7 @@ let SettingsRequestManager = {
       if (!aValue || !aValue.constructor) {
         return false;
       }
-      return (aValue.constructor.name == "Date") || (aValue instanceof Ci.nsIDOMFile) ||
+      return (aValue.constructor.name == "Date") || (aValue instanceof File) ||
              (aValue instanceof Ci.nsIDOMBlob);
     }
     // We need to serialize settings objects, otherwise they can change between
@@ -1204,5 +1214,11 @@ let SettingsRequestManager = {
   }
 };
 
-this.SettingsRequestManager = SettingsRequestManager;
-SettingsRequestManager.init();
+// This code should ALWAYS be living only on the parent side.
+if (!inParent) {
+  debug("SettingsRequestManager should be living on parent side.");
+  throw Cr.NS_ERROR_ABORT;
+} else {
+  this.SettingsRequestManager = SettingsRequestManager;
+  SettingsRequestManager.init();
+}

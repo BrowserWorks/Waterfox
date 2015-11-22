@@ -20,15 +20,12 @@
 #include "nsCOMPtr.h"
 #include "plhash.h"
 
-#include "prlog.h"
-#ifdef PR_LOGGING
+#include "mozilla/Logging.h"
 extern PRLogModuleInfo* gXULTemplateLog;
 
 #include "nsString.h"
 #include "nsUnicharUtils.h"
 #include "nsXULContentUtils.h"
-
-#endif
 
 #include "nsRuleNetwork.h"
 #include "nsXULTemplateResultSetRDF.h"
@@ -297,7 +294,7 @@ nsresult
 TestNode::Propagate(InstantiationSet& aInstantiations,
                     bool aIsUpdate, bool& aTakenInstantiations)
 {
-    PR_LOG(gXULTemplateLog, PR_LOG_DEBUG,
+    MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
            ("TestNode[%p]: Propagate() begin", this));
 
     aTakenInstantiations = false;
@@ -316,7 +313,7 @@ TestNode::Propagate(InstantiationSet& aInstantiations,
     if (! aInstantiations.Empty()) {
         ReteNodeSet::Iterator last = mKids.Last();
         for (ReteNodeSet::Iterator kid = mKids.First(); kid != last; ++kid) {
-            PR_LOG(gXULTemplateLog, PR_LOG_DEBUG,
+            MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
                    ("TestNode[%p]: Propagate() passing to child %p", this, kid.operator->()));
 
             // create a copy of the instantiations
@@ -340,7 +337,7 @@ TestNode::Propagate(InstantiationSet& aInstantiations,
         }
     }
 
-    PR_LOG(gXULTemplateLog, PR_LOG_DEBUG,
+    MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
            ("TestNode[%p]: Propagate() end", this));
 
     return NS_OK;
@@ -352,7 +349,7 @@ TestNode::Constrain(InstantiationSet& aInstantiations)
 {
     nsresult rv;
 
-    PR_LOG(gXULTemplateLog, PR_LOG_DEBUG,
+    MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
            ("TestNode[%p]: Constrain() begin", this));
 
     // if the cantHandleYet flag is set by FilterInstantiations,
@@ -369,7 +366,7 @@ TestNode::Constrain(InstantiationSet& aInstantiations)
         // could not be filled in yet, then ride 'em on up to the
         // parent to narrow them.
 
-        PR_LOG(gXULTemplateLog, PR_LOG_DEBUG,
+        MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
                ("TestNode[%p]: Constrain() passing to parent %p", this, mParent));
 
         rv = mParent->Constrain(aInstantiations);
@@ -378,13 +375,13 @@ TestNode::Constrain(InstantiationSet& aInstantiations)
             rv = FilterInstantiations(aInstantiations, nullptr);
     }
     else {
-        PR_LOG(gXULTemplateLog, PR_LOG_DEBUG,
+        MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
                ("TestNode[%p]: Constrain() failed", this));
 
         rv = NS_OK;
     }
 
-    PR_LOG(gXULTemplateLog, PR_LOG_DEBUG,
+    MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
            ("TestNode[%p]: Constrain() end", this));
 
     return rv;

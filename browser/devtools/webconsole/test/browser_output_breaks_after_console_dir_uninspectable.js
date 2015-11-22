@@ -5,9 +5,11 @@
 // Make sure that the Web Console output does not break after we try to call
 // console.dir() for objects that are not inspectable.
 
+"use strict";
+
 const TEST_URI = "data:text/html;charset=utf8,test for bug 773466";
 
-let test = asyncTest(function* () {
+var test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();
@@ -29,7 +31,7 @@ let test = asyncTest(function* () {
       name: "console.dir output",
       consoleDir: "[object Object]",
     }],
-  })
+  });
 
   content.console.log("fooBug773466b");
 

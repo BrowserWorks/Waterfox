@@ -337,7 +337,7 @@ public:
       return mLayer->GetVisibleRegion();
     }
     nsIntRegion region = mLayer->GetVisibleRegion();
-    region.Transform(gfx::To3DMatrix(mLayer->GetTransform()));
+    region.Transform(mLayer->GetTransform());
     return region;
   }
 
@@ -429,7 +429,7 @@ private:
   uint32_t mIndex;
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif /* GFX_LAYERMETRICSWRAPPER_H */

@@ -6,7 +6,7 @@
 
 const { Cu } = require("chrome");
 
-const promise = require("resource://gre/modules/Promise.jsm").Promise;
+const promise = require("promise");
 loader.lazyGetter(this, "EventEmitter", () => require("devtools/toolkit/event-emitter"));
 loader.lazyGetter(this, "AutocompletePopup", () => require("devtools/shared/autocomplete-popup").AutocompletePopup);
 
@@ -46,6 +46,7 @@ function SelectorSearch(aInspector, aInputNode) {
   this._onHTMLSearch = this._onHTMLSearch.bind(this);
   this._onSearchKeypress = this._onSearchKeypress.bind(this);
   this._onListBoxKeypress = this._onListBoxKeypress.bind(this);
+  this._onMarkupMutation = this._onMarkupMutation.bind(this);
 
   // Options for the AutocompletePopup.
   let options = {
@@ -63,6 +64,7 @@ function SelectorSearch(aInspector, aInputNode) {
   // event listeners.
   this.searchBox.addEventListener("command", this._onHTMLSearch, true);
   this.searchBox.addEventListener("keypress", this._onSearchKeypress, true);
+  this.inspector.on("markupmutation", this._onMarkupMutation);
 
   // For testing, we need to be able to wait for the most recent node request
   // to finish.  Tests can watch this promise for that.
@@ -73,8 +75,9 @@ function SelectorSearch(aInspector, aInputNode) {
 exports.SelectorSearch = SelectorSearch;
 
 SelectorSearch.prototype = {
-
-  get walker() this.inspector.walker,
+  get walker() {
+    return this.inspector.walker;
+  },
 
   // The possible states of the query.
   States: {
@@ -169,6 +172,7 @@ SelectorSearch.prototype = {
     // event listeners.
     this.searchBox.removeEventListener("command", this._onHTMLSearch, true);
     this.searchBox.removeEventListener("keypress", this._onSearchKeypress, true);
+    this.inspector.off("markupmutation", this._onMarkupMutation);
     this.searchPopup.destroy();
     this.searchPopup = null;
     this.searchBox = null;
@@ -423,6 +427,15 @@ SelectorSearch.prototype = {
   },
 
   /**
+   * Reset previous search results on markup-mutations to make sure we search
+   * again after nodes have been added/removed/changed.
+   */
+  _onMarkupMutation: function() {
+    this._searchResults = null;
+    this._lastSearched = null;
+  },
+
+  /**
    * Populates the suggestions list and show the suggestion popup.
    */
   _showPopup: function(aList, aFirstPart, aState) {
@@ -452,7 +465,7 @@ SelectorSearch.prototype = {
         count: count
       };
 
-      // In case of tagNames, change te case to small
+      // In case of tagNames, change the case to small
       if (value.match(/.*[\.#][^\.#]{0,}$/) == null) {
         item.label = value.toLowerCase();
       }

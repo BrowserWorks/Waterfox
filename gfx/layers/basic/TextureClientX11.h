@@ -43,11 +43,13 @@ class TextureClientX11 : public TextureClient
 
   virtual gfx::DrawTarget* BorrowDrawTarget() override;
 
+  virtual void UpdateFromSurface(gfx::SourceSurface* aSurface) override;
+
   virtual gfx::SurfaceFormat GetFormat() const override { return mFormat; }
 
   virtual bool HasInternalBuffer() const override { return false; }
 
-  virtual TemporaryRef<TextureClient>
+  virtual already_AddRefed<TextureClient>
   CreateSimilar(TextureFlags aFlags = TextureFlags::DEFAULT,
                 TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT) const override;
 

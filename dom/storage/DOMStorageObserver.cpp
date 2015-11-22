@@ -75,7 +75,7 @@ DOMStorageObserver::Init()
 #ifdef DOM_STORAGE_TESTS
   // Testing
   obs->AddObserver(sSelf, "domstorage-test-flush-force", true);
-  if (XRE_GetProcessType() == GeckoProcessType_Default) {
+  if (XRE_IsParentProcess()) {
     // Only to forward to child process.
     obs->AddObserver(sSelf, "domstorage-test-flushed", true);
   }
@@ -196,8 +196,20 @@ DOMStorageObserver::Observe(nsISupports* aSubject,
       return NS_OK;
     }
 
+    nsCOMPtr<nsIPrincipal> principal;
+    perm->GetPrincipal(getter_AddRefs(principal));
+    if (!principal) {
+      return NS_OK;
+    }
+
+    nsCOMPtr<nsIURI> origin;
+    principal->GetURI(getter_AddRefs(origin));
+    if (!origin) {
+      return NS_OK;
+    }
+
     nsAutoCString host;
-    perm->GetHost(host);
+    origin->GetHost(host);
     if (host.IsEmpty()) {
       return NS_OK;
     }
@@ -342,5 +354,5 @@ DOMStorageObserver::Observe(nsISupports* aSubject,
   return NS_ERROR_UNEXPECTED;
 }
 
-} // ::dom
-} // ::mozilla
+} // namespace dom
+} // namespace mozilla

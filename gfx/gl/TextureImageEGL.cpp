@@ -8,7 +8,6 @@
 #include "GLContext.h"
 #include "GLUploadHelpers.h"
 #include "gfxPlatform.h"
-#include "gfx2DGlue.h"
 #include "mozilla/gfx/Types.h"
 
 namespace mozilla {
@@ -48,7 +47,7 @@ GLTypeForImage(gfx::SurfaceFormat aFormat)
 }
 
 TextureImageEGL::TextureImageEGL(GLuint aTexture,
-                                 const nsIntSize& aSize,
+                                 const gfx::IntSize& aSize,
                                  GLenum aWrapMode,
                                  ContentType aContentType,
                                  GLContext* aContext,
@@ -66,8 +65,8 @@ TextureImageEGL::TextureImageEGL(GLuint aTexture,
     , mBound(false)
 {
     if (mUpdateFormat == gfx::SurfaceFormat::UNKNOWN) {
-        mUpdateFormat = gfx::ImageFormatToSurfaceFormat(
-                gfxPlatform::GetPlatform()->OptimalFormatForContent(GetContentType()));
+        mUpdateFormat =
+                gfxPlatform::GetPlatform()->Optimal2DFormatForContent(GetContentType());
     }
 
     if (mUpdateFormat == gfx::SurfaceFormat::R5G6B5) {
@@ -318,7 +317,7 @@ CreateTextureImageEGL(GLContext *gl,
 
 already_AddRefed<TextureImage>
 TileGenFuncEGL(GLContext *gl,
-               const nsIntSize& aSize,
+               const gfx::IntSize& aSize,
                TextureImage::ContentType aContentType,
                TextureImage::Flags aFlags,
                TextureImage::ImageFormat aImageFormat)
@@ -343,5 +342,5 @@ TileGenFuncEGL(GLContext *gl,
   return teximage.forget();
 }
 
-}
-}
+} // namespace gl
+} // namespace mozilla

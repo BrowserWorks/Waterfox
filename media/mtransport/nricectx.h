@@ -99,9 +99,10 @@ class NrIceStunServer {
   }
 
    // The main function to use. Will take either an address or a hostname.
-  static NrIceStunServer* Create(const std::string& addr, uint16_t port) {
+  static NrIceStunServer* Create(const std::string& addr, uint16_t port,
+      const char *transport = kNrIceTransportUdp) {
     ScopedDeletePtr<NrIceStunServer> server(
-        new NrIceStunServer());
+        new NrIceStunServer(transport));
 
     nsresult rv = server->Init(addr, port);
     if (NS_FAILED(rv))
@@ -110,12 +111,11 @@ class NrIceStunServer {
     return server.forget();
   }
 
-  nsresult ToNicerStunStruct(nr_ice_stun_server* server,
-                             const std::string& transport =
-                             kNrIceTransportUdp) const;
+  nsresult ToNicerStunStruct(nr_ice_stun_server* server) const;
 
  protected:
-  NrIceStunServer() : addr_() {}
+  explicit NrIceStunServer(const char *transport) :
+      addr_(), transport_(transport) {}
 
   nsresult Init(const std::string& addr, uint16_t port) {
     PRStatus status = PR_StringToNetAddr(addr.c_str(), &addr_);
@@ -141,6 +141,7 @@ class NrIceStunServer {
   std::string host_;
   uint16_t port_;
   PRNetAddr addr_;
+  std::string transport_;
 };
 
 class NrIceTurnServer : public NrIceStunServer {
@@ -165,29 +166,29 @@ class NrIceTurnServer : public NrIceStunServer {
   NrIceTurnServer(const std::string& username,
                   const std::vector<unsigned char>& password,
                   const char *transport) :
-      username_(username), password_(password), transport_(transport) {}
+      NrIceStunServer(transport), username_(username), password_(password) {}
 
   std::string username_;
   std::vector<unsigned char> password_;
-  std::string transport_;
 };
 
 class NrIceProxyServer {
  public:
-  NrIceProxyServer() :
-    host_(), port_(0) {
+  NrIceProxyServer(const std::string& host, uint16_t port,
+                   const std::string& alpn) :
+    host_(host), port_(port), alpn_(alpn) {
   }
 
-  NrIceProxyServer(const std::string& host, uint16_t port) :
-    host_(host), port_(port) {
-  }
+  NrIceProxyServer() : NrIceProxyServer("", 0, "") {}
 
   const std::string& host() const { return host_; }
   uint16_t port() const { return port_; }
+  const std::string& alpn() const { return alpn_; }
 
  private:
   std::string host_;
   uint16_t port_;
+  std::string alpn_;
 };
 
 
@@ -208,10 +209,19 @@ class NrIceCtx {
                      ICE_CONTROLLED
   };
 
+  enum Policy { ICE_POLICY_NONE,
+                ICE_POLICY_RELAY,
+                ICE_POLICY_ALL
+  };
+
+  // TODO(ekr@rtfm.com): Too many bools here. Bug 1193437.
   static RefPtr<NrIceCtx> Create(const std::string& name,
                                  bool offerer,
-                                 bool set_interface_priorities = true,
-                                 bool allow_loopback = false);
+                                 bool allow_loopback = false,
+                                 bool tcp_enabled = true,
+                                 bool allow_link_local = false,
+                                 bool hide_non_default = false,
+                                 Policy policy = ICE_POLICY_ALL);
 
   // Deinitialize all ICE global state. Used only for testing.
   static void internal_DeinitializeGlobal();
@@ -270,6 +280,14 @@ class NrIceCtx {
 
   Controlling GetControlling();
 
+  // Set whether we're allowed to produce none, relay or all candidates.
+  // TODO(jib@mozilla.com): Work out what change means mid-connection (1181768)
+  nsresult SetPolicy(Policy policy);
+
+  Policy policy() const {
+    return policy_;
+  }
+
   // Set the STUN servers. Must be called before StartGathering
   // (if at all).
   nsresult SetStunServers(const std::vector<NrIceStunServer>& stun_servers);
@@ -313,7 +331,8 @@ class NrIceCtx {
 
  private:
   NrIceCtx(const std::string& name,
-           bool offerer)
+           bool offerer,
+           Policy policy)
   : connection_state_(ICE_CTX_INIT),
     gathering_state_(ICE_CTX_GATHER_INIT),
     name_(name),
@@ -323,7 +342,8 @@ class NrIceCtx {
     peer_(nullptr),
     ice_handler_vtbl_(nullptr),
     ice_handler_(nullptr),
-    trickle_(true) {
+    trickle_(true),
+    policy_(policy) {
     // XXX: offerer_ will be used eventually;  placate clang in the meantime.
     (void)offerer_;
   }
@@ -369,6 +389,7 @@ class NrIceCtx {
   nr_ice_handler* ice_handler_;  // Must be pointer
   bool trickle_;
   nsCOMPtr<nsIEventTarget> sts_target_; // The thread to run on
+  Policy policy_;
 };
 
 

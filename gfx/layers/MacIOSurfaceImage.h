@@ -24,7 +24,7 @@ public:
     return gfx::IntSize(mSurface->GetDevicePixelWidth(), mSurface->GetDevicePixelHeight());
   }
 
-  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
+  virtual already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
 
   virtual TextureClient* GetTextureClient(CompositableClient* aClient) override;
 
@@ -35,7 +35,7 @@ private:
   RefPtr<TextureClient> mTextureClient;
 };
 
-} // layers
-} // mozilla
+} // namespace layers
+} // namespace mozilla
 
 #endif // GFX_SHAREDTEXTUREIMAGE_H

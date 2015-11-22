@@ -2395,6 +2395,15 @@ nsCSSFrameConstructor::ConstructDocElementFrame(Element*                 aDocEle
   MOZ_ASSERT(!mDocElementContainingBlock,
              "Shouldn't have a doc element containing block here");
 
+  // Resolve a new style context for the viewport since it may be affected
+  // by a new root element style (e.g. a propagated 'direction').
+  // @see nsStyleContext::ApplyStyleFixups
+  {
+    nsRefPtr<nsStyleContext> sc = mPresShell->StyleSet()->
+      ResolveAnonymousBoxStyle(nsCSSAnonBoxes::viewport, nullptr);
+    GetRootFrame()->SetStyleContextWithoutNotification(sc);
+  }
+
   // Make sure to call PropagateScrollToViewport before
   // SetUpDocElementContainingBlock, since it sets up our scrollbar state
   // properly.
@@ -2647,7 +2656,7 @@ nsCSSFrameConstructor::ConstructDocElementFrame(Element*                 aDocEle
 
   SetInitialSingleChild(mDocElementContainingBlock, newFrame);
 
-  // Create touch caret frame if there is a canvas frame
+  // Create frames for anonymous contents if there is a canvas frame.
   if (mDocElementContainingBlock->GetType() == nsGkAtoms::canvasFrame) {
     ConstructAnonymousContentForCanvas(state, mDocElementContainingBlock,
                                        aDocElement);
@@ -2915,7 +2924,6 @@ nsCSSFrameConstructor::ConstructAnonymousContentForCanvas(nsFrameConstructorStat
   nsAutoTArray<nsIAnonymousContentCreator::ContentInfo, 4> anonymousItems;
   GetAnonymousContent(aDocElement, aFrame, anonymousItems);
   if (anonymousItems.IsEmpty()) {
-    // Touch caret is not enabled.
     return;
   }
 
@@ -5130,7 +5138,8 @@ nsCSSFrameConstructor::FindSVGData(Element* aElement,
   }
 
   if ((aTag != nsGkAtoms::svg && !parentIsSVG) ||
-      (aTag == nsGkAtoms::desc || aTag == nsGkAtoms::title)) {
+      (aTag == nsGkAtoms::desc || aTag == nsGkAtoms::title ||
+       aTag == nsGkAtoms::metadata)) {
     // Sections 5.1 and G.4 of SVG 1.1 say that SVG elements other than
     // svg:svg not contained within svg:svg are incorrect, although they
     // don't seem to specify error handling.  Ignore them, since many of
@@ -5141,7 +5150,7 @@ nsCSSFrameConstructor::FindSVGData(Element* aElement,
     // Style mutation can't change this situation, so don't bother
     // adding to the undisplayed content map.
     //
-    // We don't currently handle any UI for desc/title
+    // We don't currently handle any UI for desc/title/metadata
     return &sSuppressData;
   }
 
@@ -6557,7 +6566,8 @@ nsCSSFrameConstructor::GetInsertionPrevSibling(InsertionPoint* aInsertion,
   } else {
     // Prime the iterator for the call to FindPreviousSibling.
     iter.GetNextChild();
-    NS_WARNING("Someone passed native anonymous content directly into frame "
+    MOZ_ASSERT(aChild->GetProperty(nsGkAtoms::restylableAnonymousNode),
+               "Someone passed native anonymous content directly into frame "
                "construction.  Stop doing that!");
   }
 

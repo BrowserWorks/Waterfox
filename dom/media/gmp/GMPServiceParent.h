@@ -43,6 +43,8 @@ public:
                        const nsAString& aTopLevelOrigin,
                        bool aInPrivateBrowsingMode,
                        UniquePtr<GetNodeIdCallback>&& aCallback) override;
+  NS_IMETHOD UpdateTrialCreateState(const nsAString& aKeySystem,
+                                    uint32_t aState) override;
 
   NS_DECL_MOZIGECKOMEDIAPLUGINCHROMESERVICE
   NS_DECL_NSIOBSERVER
@@ -154,12 +156,6 @@ private:
     struct State { nsAutoCString mStateSequence; nsCString mLastStateDescription; };
     typedef nsClassHashtable<nsCStringHashKey, State> StatesByInstance;
     typedef nsClassHashtable<nsCStringHashKey, StatesByInstance> StateInstancesByPlugin;
-    static PLDHashOperator EnumReadPlugins(StateInstancesByPlugin::KeyType aKey,
-                                           StateInstancesByPlugin::UserDataType aData,
-                                           void* aUserArg);
-    static PLDHashOperator EnumReadInstances(StatesByInstance::KeyType aKey,
-                                             StatesByInstance::UserDataType aData,
-                                             void* aUserArg);
     StateInstancesByPlugin mStates;
   } mAsyncShutdownPluginStates;
 #endif // MOZ_CRASHREPORTER
@@ -225,6 +221,8 @@ public:
                                             nsTArray<nsCString>&& aTags,
                                             bool* aHasPlugin,
                                             nsCString* aVersion);
+  virtual bool RecvUpdateGMPTrialCreateState(const nsString& aKeySystem,
+                                             const uint32_t& aState) override;
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 

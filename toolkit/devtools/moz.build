@@ -10,7 +10,9 @@ DIRS += [
     'client',
     'discovery',
     'gcli',
+    'heapsnapshot',
     'jsbeautify',
+    'performance',
     'pretty-fast',
     'qrcode',
     'security',
@@ -19,8 +21,9 @@ DIRS += [
     'shared',
     'styleinspector',
     'tern',
+    'touch',
     'transport',
-    'webconsole',
+    'webconsole'
 ]
 
 MOCHITEST_CHROME_MANIFESTS += ['tests/mochitest/chrome.ini']
@@ -36,18 +39,22 @@ EXTRA_JS_MODULES.devtools += [
     'event-parsers.js',
     'output-parser.js',
     'path.js',
-    'touch-events.js',
     'worker-loader.js',
 ]
 
 EXTRA_JS_MODULES.devtools += [
     'Console.jsm',
-    'DevToolsUtils.jsm',
-    'LayoutHelpers.jsm',
     'Loader.jsm',
-    'Require.jsm',
 ]
 
 EXTRA_JS_MODULES.devtools.server.actors += [
-    'server/actors/highlighter.css'
+    'server/actors/highlighters.css'
+]
+
+EXTRA_JS_MODULES.devtools.layout += [
+    'layout/utils.js'
+]
+
+EXTRA_JS_MODULES.devtools.layout += [
+    'layout/utils.js'
 ]

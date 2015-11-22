@@ -7,6 +7,7 @@
 #import <Cocoa/Cocoa.h>
 
 #include "Platform.h"
+#include "ProxyAccessible.h"
 
 #include "nsAppShell.h"
 
@@ -34,21 +35,61 @@ PlatformShutdown()
 }
 
 void
-ProxyCreated(ProxyAccessible*, uint32_t)
+ProxyCreated(ProxyAccessible* aProxy, uint32_t)
 {
+  // Pass in dummy state for now as retrieving proxy state requires IPC.
+  Class type = GetTypeFromRole(aProxy->Role());
+  uintptr_t accWrap = reinterpret_cast<uintptr_t>(aProxy) | IS_PROXY;
+  mozAccessible* mozWrapper = [[type alloc] initWithAccessible:accWrap];
+  aProxy->SetWrapper(reinterpret_cast<uintptr_t>(mozWrapper));
 }
 
 void
-ProxyDestroyed(ProxyAccessible*)
+ProxyDestroyed(ProxyAccessible* aProxy)
 {
+  mozAccessible* wrapper = GetNativeFromProxy(aProxy);
+  [wrapper expire];
+  [wrapper release];
+  aProxy->SetWrapper(0);
 }
 
 void
-ProxyEvent(ProxyAccessible*, uint32_t)
+ProxyEvent(ProxyAccessible* aProxy, uint32_t aEventType)
+{
+  // ignore everything but focus-changed, value-changed, caret and selection
+  // events for now.
+  if (aEventType != nsIAccessibleEvent::EVENT_FOCUS &&
+      aEventType != nsIAccessibleEvent::EVENT_VALUE_CHANGE &&
+      aEventType != nsIAccessibleEvent::EVENT_TEXT_CARET_MOVED &&
+      aEventType != nsIAccessibleEvent::EVENT_TEXT_SELECTION_CHANGED)
+    return;
+
+  mozAccessible* wrapper = GetNativeFromProxy(aProxy);
+  if (wrapper)
+    FireNativeEvent(wrapper, aEventType);
+}
+
+void
+ProxyStateChangeEvent(ProxyAccessible* aProxy, uint64_t, bool)
+{
+  // mac doesn't care about state change events
+}
+
+void
+ProxyCaretMoveEvent(ProxyAccessible* aTarget, int32_t aOffset)
+{
+  mozAccessible* wrapper = GetNativeFromProxy(aTarget);
+  if (wrapper)
+    [wrapper selectedTextDidChange];
+}
+
+void
+ProxyTextChangeEvent(ProxyAccessible*, const nsString&, int32_t, uint32_t,
+                     bool, bool)
 {
 }
-}
-}
+} // namespace a11y
+} // namespace mozilla
 
 @interface GeckoNSApplication(a11y)
 -(void)accessibilitySetValue:(id)value forAttribute:(NSString*)attribute;

@@ -9,7 +9,6 @@
 #ifdef XP_MACOSX
 #include <QuartzCore/QuartzCore.h>
 #include <dlfcn.h>
-#include "mozilla/RefPtr.h"
 
 typedef CFTypeRef IOSurfacePtr;
 typedef IOSurfacePtr (*IOSurfaceCreateFunc) (CFDictionaryRef properties);
@@ -24,6 +23,7 @@ typedef void* (*IOSurfaceGetBaseAddressFunc)(IOSurfacePtr io_surface);
 typedef void* (*IOSurfaceGetBaseAddressOfPlaneFunc)(IOSurfacePtr io_surface,
                                                     size_t planeIndex);
 typedef size_t (*IOSurfaceSizeTFunc)(IOSurfacePtr io_surface);
+typedef size_t (*IOSurfaceSizePlaneTFunc)(IOSurfacePtr io_surface, size_t plane);
 typedef size_t (*IOSurfaceGetPropertyMaximumFunc) (CFStringRef property);
 typedef CGLError (*CGLTexImageIOSurface2DFunc) (CGLContextObj ctxt,
                              GLenum target, GLenum internalFormat,
@@ -39,6 +39,8 @@ typedef IOSurfacePtr (*IOSurfaceContextGetSurfaceFunc)(CGContextRef ref);
 
 typedef IOSurfacePtr (*CVPixelBufferGetIOSurfaceFunc)(
   CVPixelBufferRef pixelBuffer);
+
+typedef OSType (*IOSurfacePixelFormatFunc)(IOSurfacePtr io_surface);
 
 #import <OpenGL/OpenGL.h>
 #include "2D.h"
@@ -60,7 +62,7 @@ enum CGContextType {
 
 CGContextType GetContextType(CGContextRef ref);
 
-class MacIOSurface : public mozilla::RefCounted<MacIOSurface> {
+class MacIOSurface final : public mozilla::external::AtomicRefCounted<MacIOSurface> {
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(MacIOSurface)
   typedef mozilla::gfx::SourceSurface SourceSurface;
@@ -69,46 +71,48 @@ public:
   // of the MacIOSurface instance.
   // MacIOSurface holds a reference to the corresponding IOSurface.
 
-  static mozilla::TemporaryRef<MacIOSurface> CreateIOSurface(int aWidth, int aHeight,
+  static already_AddRefed<MacIOSurface> CreateIOSurface(int aWidth, int aHeight,
                                                              double aContentsScaleFactor = 1.0,
                                                              bool aHasAlpha = true);
   static void ReleaseIOSurface(MacIOSurface *aIOSurface);
-  static mozilla::TemporaryRef<MacIOSurface> LookupSurface(IOSurfaceID aSurfaceID,
+  static already_AddRefed<MacIOSurface> LookupSurface(IOSurfaceID aSurfaceID,
                                                            double aContentsScaleFactor = 1.0,
                                                            bool aHasAlpha = true);
 
   explicit MacIOSurface(const void *aIOSurfacePtr,
                         double aContentsScaleFactor = 1.0,
                         bool aHasAlpha = true);
-  virtual ~MacIOSurface();
+  ~MacIOSurface();
   IOSurfaceID GetIOSurfaceID();
   void *GetBaseAddress();
   void *GetBaseAddressOfPlane(size_t planeIndex);
   size_t GetPlaneCount();
+  OSType GetPixelFormat();
   // GetWidth() and GetHeight() return values in "display pixels".  A
   // "display pixel" is the smallest fully addressable part of a display.
   // But in HiDPI modes each "display pixel" corresponds to more than one
   // device pixel.  Use GetDevicePixel**() to get device pixels.
-  size_t GetWidth();
-  size_t GetHeight();
+  size_t GetWidth(size_t plane = 0);
+  size_t GetHeight(size_t plane = 0);
   double GetContentsScaleFactor() { return mContentsScaleFactor; }
-  size_t GetDevicePixelWidth();
-  size_t GetDevicePixelHeight();
-  size_t GetBytesPerRow();
+  size_t GetDevicePixelWidth(size_t plane = 0);
+  size_t GetDevicePixelHeight(size_t plane = 0);
+  size_t GetBytesPerRow(size_t plane = 0);
   void Lock();
   void Unlock();
   void IncrementUseCount();
   void DecrementUseCount();
   bool HasAlpha() { return mHasAlpha; }
+  mozilla::gfx::SurfaceFormat GetFormat();
   // We would like to forward declare NSOpenGLContext, but it is an @interface
   // and this file is also used from c++, so we use a void *.
-  CGLError CGLTexImageIOSurface2D(CGLContextObj ctxt);
-  mozilla::TemporaryRef<SourceSurface> GetAsSurface();
+  CGLError CGLTexImageIOSurface2D(CGLContextObj ctxt, size_t plane = 0);
+  already_AddRefed<SourceSurface> GetAsSurface();
   CGContextRef CreateIOSurfaceContext();
 
   // FIXME This doesn't really belong here
   static CGImageRef CreateImageFromIOSurfaceContext(CGContextRef aContext);
-  static mozilla::TemporaryRef<MacIOSurface> IOSurfaceContextGetSurface(CGContextRef aContext,
+  static already_AddRefed<MacIOSurface> IOSurfaceContextGetSurface(CGContextRef aContext,
                                                                         double aContentsScaleFactor = 1.0,
                                                                         bool aHasAlpha = true);
   static size_t GetMaxWidth();
@@ -121,9 +125,9 @@ private:
   bool mHasAlpha;
 };
 
-class MacIOSurfaceLib: public MacIOSurface {
+class MacIOSurfaceLib {
 public:
-  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(MacIOSurfaceLib)
+  MacIOSurfaceLib() = delete;
   static void                        *sIOSurfaceFramework;
   static void                        *sOpenGLFramework;
   static void                        *sCoreGraphicsFramework;
@@ -139,15 +143,16 @@ public:
   static IOSurfaceUnlockFunc          sUnlock;
   static IOSurfaceVoidFunc            sIncrementUseCount;
   static IOSurfaceVoidFunc            sDecrementUseCount;
-  static IOSurfaceSizeTFunc           sWidth;
-  static IOSurfaceSizeTFunc           sHeight;
-  static IOSurfaceSizeTFunc           sBytesPerRow;
+  static IOSurfaceSizePlaneTFunc      sWidth;
+  static IOSurfaceSizePlaneTFunc      sHeight;
+  static IOSurfaceSizePlaneTFunc      sBytesPerRow;
   static IOSurfaceGetPropertyMaximumFunc  sGetPropertyMaximum;
   static CGLTexImageIOSurface2DFunc   sTexImage;
   static IOSurfaceContextCreateFunc   sIOSurfaceContextCreate;
   static IOSurfaceContextCreateImageFunc  sIOSurfaceContextCreateImage;
   static IOSurfaceContextGetSurfaceFunc   sIOSurfaceContextGetSurface;
   static CVPixelBufferGetIOSurfaceFunc    sCVPixelBufferGetIOSurface;
+  static IOSurfacePixelFormatFunc     sPixelFormat;
   static CFStringRef                  kPropWidth;
   static CFStringRef                  kPropHeight;
   static CFStringRef                  kPropBytesPerElem;
@@ -163,9 +168,9 @@ public:
   static void*        IOSurfaceGetBaseAddressOfPlane(IOSurfacePtr aIOSurfacePtr,
                                                      size_t aPlaneIndex);
   static size_t       IOSurfaceGetPlaneCount(IOSurfacePtr aIOSurfacePtr);
-  static size_t       IOSurfaceGetWidth(IOSurfacePtr aIOSurfacePtr);
-  static size_t       IOSurfaceGetHeight(IOSurfacePtr aIOSurfacePtr);
-  static size_t       IOSurfaceGetBytesPerRow(IOSurfacePtr aIOSurfacePtr);
+  static size_t       IOSurfaceGetWidth(IOSurfacePtr aIOSurfacePtr, size_t plane);
+  static size_t       IOSurfaceGetHeight(IOSurfacePtr aIOSurfacePtr, size_t plane);
+  static size_t       IOSurfaceGetBytesPerRow(IOSurfacePtr aIOSurfacePtr, size_t plane);
   static size_t       IOSurfaceGetPropertyMaximum(CFStringRef property);
   static IOReturn     IOSurfaceLock(IOSurfacePtr aIOSurfacePtr,
                                     uint32_t options, uint32_t *seed);
@@ -185,6 +190,7 @@ public:
   static CGImageRef   IOSurfaceContextCreateImage(CGContextRef ref);
   static IOSurfacePtr IOSurfaceContextGetSurface(CGContextRef ref);
   static IOSurfacePtr CVPixelBufferGetIOSurface(CVPixelBufferRef apixelBuffer);
+  static OSType       IOSurfaceGetPixelFormat(IOSurfacePtr aIOSurfacePtr);
   static unsigned int (*sCGContextGetTypePtr) (CGContextRef);
   static void LoadLibrary();
   static void CloseLibrary();

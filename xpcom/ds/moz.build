@@ -36,7 +36,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'nsIWindowsRegKey.idl',
     ]
     EXPORTS += ['nsWindowsRegKey.h']
-    EXPORTS.mozilla += ['TimeStamp_windows.h']
     SOURCES += [
         'nsWindowsRegKey.cpp'
     ]
@@ -63,7 +62,7 @@ EXPORTS += [
 
 EXPORTS.mozilla += [
     'StickyTimeDuration.h',
-    'TimeStamp.h',
+    'Tokenizer.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -81,7 +80,7 @@ UNIFIED_SOURCES += [
     'nsSupportsArrayEnumerator.cpp',
     'nsSupportsPrimitives.cpp',
     'nsVariant.cpp',
-    'TimeStamp.cpp',
+    'Tokenizer.cpp',
 ]
 
 # These two files cannot be built in unified mode because they use the
@@ -91,30 +90,16 @@ SOURCES += [
     'nsStaticNameTable.cpp',
 ]
 
-if CONFIG['OS_ARCH'] == 'WINNT':
-    SOURCES += [
-        'TimeStamp_windows.cpp',
-    ]
-elif CONFIG['HAVE_CLOCK_MONOTONIC']:
-    SOURCES += [
-        'TimeStamp_posix.cpp',
-    ]
-elif CONFIG['OS_ARCH'] == 'Darwin':
-    SOURCES += [
-        'TimeStamp_darwin.cpp',
-    ]
-elif CONFIG['COMPILE_ENVIRONMENT']:
-    error('No TimeStamp implementation on this platform.  Build will not succeed')
-
 EXTRA_COMPONENTS += [
     'nsINIProcessor.js',
     'nsINIProcessor.manifest',
 ]
-
-FAIL_ON_WARNINGS = True
 
 LOCAL_INCLUDES += [
     '../io',
 ]
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

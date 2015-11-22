@@ -25,8 +25,8 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import org.mozilla.gecko.mozglue.JNITarget;
-import org.mozilla.gecko.mozglue.RobocopTarget;
+import org.mozilla.gecko.annotation.JNITarget;
+import org.mozilla.gecko.annotation.RobocopTarget;
 
 /**
  * We're not allowed to hold on to most events given to us
@@ -212,6 +212,7 @@ public class GeckoEvent {
     private int mNativeWindow;
 
     private short mScreenOrientation;
+    private short mScreenAngle;
 
     private ByteBuffer mBuffer;
 
@@ -244,9 +245,9 @@ public class GeckoEvent {
         return GeckoEvent.get(NativeGeckoEvent.NOOP);
     }
 
-    public static GeckoEvent createKeyEvent(KeyEvent k, int metaState) {
+    public static GeckoEvent createKeyEvent(KeyEvent k, int action, int metaState) {
         GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.KEY_EVENT);
-        event.initKeyEvent(k, metaState);
+        event.initKeyEvent(k, action, metaState);
         return event;
     }
 
@@ -265,8 +266,11 @@ public class GeckoEvent {
         return GeckoEvent.get(NativeGeckoEvent.COMPOSITOR_RESUME);
     }
 
-    private void initKeyEvent(KeyEvent k, int metaState) {
-        mAction = k.getAction();
+    private void initKeyEvent(KeyEvent k, int action, int metaState) {
+        // Use a separate action argument so we can override the key's original action,
+        // e.g. change ACTION_MULTIPLE to ACTION_DOWN. That way we don't have to allocate
+        // a new key event just to change its action field.
+        mAction = action;
         mTime = k.getEventTime();
         // Normally we expect k.getMetaState() to reflect the current meta-state; however,
         // some software-generated key events may not have k.getMetaState() set, e.g. key
@@ -606,7 +610,7 @@ public class GeckoEvent {
 
     public static GeckoEvent createIMEKeyEvent(KeyEvent k) {
         GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.IME_KEY_EVENT);
-        event.initKeyEvent(k, 0);
+        event.initKeyEvent(k, k.getAction(), 0);
         return event;
     }
 
@@ -688,10 +692,6 @@ public class GeckoEvent {
         sb.append("{ \"x\" : ").append(metrics.viewportRectLeft)
           .append(", \"y\" : ").append(metrics.viewportRectTop)
           .append(", \"zoom\" : ").append(metrics.zoomFactor)
-          .append(", \"fixedMarginLeft\" : ").append(metrics.marginLeft)
-          .append(", \"fixedMarginTop\" : ").append(metrics.marginTop)
-          .append(", \"fixedMarginRight\" : ").append(metrics.marginRight)
-          .append(", \"fixedMarginBottom\" : ").append(metrics.marginBottom)
           .append(", \"displayPort\" :").append(displayPort.toJSON())
           .append('}');
         event.mCharactersExtra = sb.toString();
@@ -746,9 +746,10 @@ public class GeckoEvent {
         return event;
     }
 
-    public static GeckoEvent createScreenOrientationEvent(short aScreenOrientation) {
+    public static GeckoEvent createScreenOrientationEvent(short aScreenOrientation, short aScreenAngle) {
         GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.SCREENORIENTATION_CHANGED);
         event.mScreenOrientation = aScreenOrientation;
+        event.mScreenAngle = aScreenAngle;
         return event;
     }
 

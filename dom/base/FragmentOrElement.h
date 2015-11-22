@@ -35,8 +35,8 @@ class nsIURI;
 namespace mozilla {
 namespace dom {
 class Element;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 /**
  * A class that implements nsIWeakReference
@@ -65,7 +65,7 @@ public:
 private:
   ~nsNodeWeakReference();
 
-  nsINode* mNode;
+  nsINode* MOZ_NON_OWNING_REF mNode;
 };
 
 /**

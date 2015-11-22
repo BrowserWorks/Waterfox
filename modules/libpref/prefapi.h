@@ -10,7 +10,7 @@
 #define PREFAPI_H
 
 #include "nscore.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +42,7 @@ struct PrefHashEntry : PLDHashEntryHdr
 // the preference hashtable.
 // </font>
 */
-nsresult    PREF_Init();
+void        PREF_Init();
 
 /*
 // Cleanup should be called at program exit to free the 

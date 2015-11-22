@@ -8,17 +8,22 @@
 
 #include "mozilla/Maybe.h"
 #include "mozilla/Move.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/Vector.h"
 
 #include <stdlib.h>
 
+#include "jsalloc.h"
+#include "jscntxt.h"
 #include "jscompartment.h"
 
+#include "builtin/MapObject.h"
 #include "gc/Marking.h"
 #include "js/Debug.h"
 #include "js/TracingAPI.h"
 #include "js/UbiNode.h"
-#include "js/UbiNodeTraverse.h"
+#include "js/UbiNodeCensus.h"
+#include "js/Utility.h"
 #include "vm/Debugger.h"
 #include "vm/GlobalObject.h"
 #include "vm/SavedStacks.h"
@@ -32,9 +37,11 @@ using JS::ubi::BreadthFirst;
 using JS::ubi::Edge;
 using JS::ubi::Node;
 
+using mozilla::Forward;
 using mozilla::Maybe;
 using mozilla::Move;
 using mozilla::Nothing;
+using mozilla::UniquePtr;
 
 /* static */ DebuggerMemory*
 DebuggerMemory::create(JSContext* cx, Debugger* dbg)
@@ -68,7 +75,7 @@ DebuggerMemory::construct(JSContext* cx, unsigned argc, Value* vp)
 
 /* static */ const Class DebuggerMemory::class_ = {
     "Memory",
-    JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS |
+    JSCLASS_HAS_PRIVATE |
     JSCLASS_HAS_RESERVED_SLOTS(JSSLOT_COUNT)
 };
 
@@ -178,7 +185,7 @@ DebuggerMemory::drainAllocationsLog(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    size_t length = dbg->allocationsLogLength;
+    size_t length = dbg->allocationsLog.length();
 
     RootedArrayObject result(cx, NewDenseFullyAllocatedArray(cx, length));
     if (!result)
@@ -190,20 +197,21 @@ DebuggerMemory::drainAllocationsLog(JSContext* cx, unsigned argc, Value* vp)
         if (!obj)
             return false;
 
-        // Don't pop the AllocationSite yet. The queue's links are followed by
-        // the GC to find the AllocationSite, but are not barriered, so we must
-        // edit them with great care. Use the queue entry in place, and then
-        // pop and delete together.
-        Debugger::AllocationSite* allocSite = dbg->allocationsLog.getFirst();
-        RootedValue frame(cx, ObjectOrNullValue(allocSite->frame));
+        // Don't pop the AllocationsLogEntry yet. The queue's links are followed
+        // by the GC to find the AllocationsLogEntry, but are not barriered, so
+        // we must edit them with great care. Use the queue entry in place, and
+        // then pop and delete together.
+        Debugger::AllocationsLogEntry& entry = dbg->allocationsLog.front();
+
+        RootedValue frame(cx, ObjectOrNullValue(entry.frame));
         if (!DefineProperty(cx, obj, cx->names().frame, frame))
             return false;
 
-        RootedValue timestampValue(cx, NumberValue(allocSite->when));
+        RootedValue timestampValue(cx, NumberValue(entry.when));
         if (!DefineProperty(cx, obj, cx->names().timestamp, timestampValue))
             return false;
 
-        RootedString className(cx, Atomize(cx, allocSite->className, strlen(allocSite->className)));
+        RootedString className(cx, Atomize(cx, entry.className, strlen(entry.className)));
         if (!className)
             return false;
         RootedValue classNameValue(cx, StringValue(className));
@@ -211,22 +219,31 @@ DebuggerMemory::drainAllocationsLog(JSContext* cx, unsigned argc, Value* vp)
             return false;
 
         RootedValue ctorName(cx, NullValue());
-        if (allocSite->ctorName)
-            ctorName.setString(allocSite->ctorName);
+        if (entry.ctorName)
+            ctorName.setString(entry.ctorName);
         if (!DefineProperty(cx, obj, cx->names().constructor, ctorName))
+            return false;
+
+        RootedValue size(cx, NumberValue(entry.size));
+        if (!DefineProperty(cx, obj, cx->names().size, size))
+            return false;
+
+        RootedValue inNursery(cx, BooleanValue(entry.inNursery));
+        if (!DefineProperty(cx, obj, cx->names().inNursery, inNursery))
             return false;
 
         result->setDenseElement(i, ObjectValue(*obj));
 
-        // Pop the front queue entry, and delete it immediately, so that
-        // the GC sees the AllocationSite's RelocatablePtr barriers run
-        // atomically with the change to the graph (the queue link).
-        MOZ_ALWAYS_TRUE(dbg->allocationsLog.popFirst() == allocSite);
-        js_delete(allocSite);
+        // Pop the front queue entry, and delete it immediately, so that the GC
+        // sees the AllocationsLogEntry's RelocatablePtr barriers run atomically
+        // with the change to the graph (the queeue link).
+        if (!dbg->allocationsLog.popFront()) {
+            ReportOutOfMemory(cx);
+            return false;
+        }
     }
 
     dbg->allocationsLogOverflowed = false;
-    dbg->allocationsLogLength = 0;
     args.rval().setObject(*result);
     return true;
 }
@@ -260,9 +277,11 @@ DebuggerMemory::setMaxAllocationsLogLength(JSContext* cx, unsigned argc, Value* 
     Debugger* dbg = memory->getDebugger();
     dbg->maxAllocationsLogLength = max;
 
-    while (dbg->allocationsLogLength > dbg->maxAllocationsLogLength) {
-        js_delete(dbg->allocationsLog.getFirst());
-        dbg->allocationsLogLength--;
+    while (dbg->allocationsLog.length() > dbg->maxAllocationsLogLength) {
+        if (!dbg->allocationsLog.popFront()) {
+            ReportOutOfMemory(cx);
+            return false;
+        }
     }
 
     args.rval().setUndefined();
@@ -309,6 +328,142 @@ DebuggerMemory::getAllocationsLogOverflowed(JSContext* cx, unsigned argc, Value*
 }
 
 /* static */ bool
+DebuggerMemory::setTrackingTenurePromotions(JSContext* cx, unsigned argc, Value* vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(set trackingTenurePromotions)", args, memory);
+    if (!args.requireAtLeast(cx, "(set trackingTenurePromotions)", 1))
+        return false;
+
+    Debugger* dbg = memory->getDebugger();
+    dbg->trackingTenurePromotions = ToBoolean(args[0]);
+    return undefined(args);
+}
+
+/* static */ bool
+DebuggerMemory::getTrackingTenurePromotions(JSContext* cx, unsigned argc, Value* vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(get trackingTenurePromotions)", args, memory);
+    args.rval().setBoolean(memory->getDebugger()->trackingTenurePromotions);
+    return true;
+}
+
+/* static */ bool
+DebuggerMemory::drainTenurePromotionsLog(JSContext* cx, unsigned argc, Value* vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "drainTenurePromotionsLog", args, memory);
+    Debugger* dbg = memory->getDebugger();
+
+    if (!dbg->trackingTenurePromotions) {
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_TRACKING_TENURINGS,
+                             "drainTenurePromotionsLog");
+        return false;
+    }
+
+    size_t length = dbg->tenurePromotionsLog.length();
+
+    RootedArrayObject result(cx, NewDenseFullyAllocatedArray(cx, length));
+    if (!result)
+        return false;
+    result->ensureDenseInitializedLength(cx, 0, length);
+
+    for (size_t i = 0; i < length; i++) {
+        RootedPlainObject obj(cx, NewBuiltinClassInstance<PlainObject>(cx));
+        if (!obj)
+            return false;
+
+        // Don't pop the TenurePromotionsEntry yet. The queue's links are
+        // followed by the GC to find the TenurePromotionsEntry, but are not
+        // barriered, so we must edit them with great care. Use the queue entry
+        // in place, and then pop and delete together.
+        auto& entry = dbg->tenurePromotionsLog.front();
+
+        RootedValue frame(cx, ObjectOrNullValue(entry.frame));
+        if (!cx->compartment()->wrap(cx, &frame) ||
+            !DefineProperty(cx, obj, cx->names().frame, frame))
+        {
+            return false;
+        }
+
+        RootedValue timestampValue(cx, NumberValue(entry.when));
+        if (!DefineProperty(cx, obj, cx->names().timestamp, timestampValue))
+            return false;
+
+        RootedString className(cx, Atomize(cx, entry.className, strlen(entry.className)));
+        if (!className)
+            return false;
+        RootedValue classNameValue(cx, StringValue(className));
+        if (!DefineProperty(cx, obj, cx->names().class_, classNameValue))
+            return false;
+
+        RootedValue sizeValue(cx, NumberValue(entry.size));
+        if (!DefineProperty(cx, obj, cx->names().size, sizeValue))
+            return false;
+
+        result->setDenseElement(i, ObjectValue(*obj));
+
+        // Pop the front queue entry, and delete it immediately, so that the GC
+        // sees the TenurePromotionsEntry's RelocatablePtr barriers run
+        // atomically with the change to the graph (the queue link).
+        if (!dbg->tenurePromotionsLog.popFront()) {
+            ReportOutOfMemory(cx);
+            return false;
+        }
+    }
+
+    dbg->tenurePromotionsLogOverflowed = false;
+    args.rval().setObject(*result);
+    return true;
+}
+
+/* static */ bool
+DebuggerMemory::getMaxTenurePromotionsLogLength(JSContext* cx, unsigned argc, Value* vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(get maxTenurePromotionsLogLength)", args, memory);
+    args.rval().setInt32(memory->getDebugger()->maxTenurePromotionsLogLength);
+    return true;
+}
+
+/* static */ bool
+DebuggerMemory::setMaxTenurePromotionsLogLength(JSContext* cx, unsigned argc, Value* vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(set maxTenurePromotionsLogLength)", args, memory);
+    if (!args.requireAtLeast(cx, "(set maxTenurePromotionsLogLength)", 1))
+        return false;
+
+    int32_t max;
+    if (!ToInt32(cx, args[0], &max))
+        return false;
+
+    if (max < 1) {
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
+                             "(set maxTenurePromotionsLogLength)'s parameter",
+                             "not a positive integer");
+        return false;
+    }
+
+    Debugger* dbg = memory->getDebugger();
+    dbg->maxTenurePromotionsLogLength = max;
+
+    while (dbg->tenurePromotionsLog.length() > dbg->maxAllocationsLogLength) {
+        if (!dbg->tenurePromotionsLog.popFront()) {
+            ReportOutOfMemory(cx);
+            return false;
+        }
+    }
+
+    args.rval().setUndefined();
+    return true;
+}
+
+/* static */ bool
+DebuggerMemory::getTenurePromotionsLogOverflowed(JSContext* cx, unsigned argc, Value* vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(get tenurePromotionsLogOverflowed)", args, memory);
+    args.rval().setBoolean(memory->getDebugger()->tenurePromotionsLogOverflowed);
+    return true;
+}
+
+/* static */ bool
 DebuggerMemory::getOnGarbageCollection(JSContext* cx, unsigned argc, Value* vp)
 {
     THIS_DEBUGGER_MEMORY(cx, argc, vp, "(get onGarbageCollection)", args, memory);
@@ -325,482 +480,61 @@ DebuggerMemory::setOnGarbageCollection(JSContext* cx, unsigned argc, Value* vp)
 
 /* Debugger.Memory.prototype.takeCensus */
 
-void
-JS::dbg::SetDebuggerMallocSizeOf(JSRuntime* rt, mozilla::MallocSizeOf mallocSizeOf) {
+JS_PUBLIC_API(void)
+JS::dbg::SetDebuggerMallocSizeOf(JSRuntime* rt, mozilla::MallocSizeOf mallocSizeOf)
+{
     rt->debuggerMallocSizeOf = mallocSizeOf;
 }
 
-namespace js {
-namespace dbg {
+JS_PUBLIC_API(mozilla::MallocSizeOf)
+JS::dbg::GetDebuggerMallocSizeOf(JSRuntime* rt)
+{
+    return rt->debuggerMallocSizeOf;
+}
 
-// Common data for census traversals.
-struct Census {
-    JSContext * const cx;
-    JS::ZoneSet debuggeeZones;
-    Zone* atomsZone;
+using JS::ubi::Census;
+using JS::ubi::CountTypePtr;
+using JS::ubi::CountBasePtr;
 
-    explicit Census(JSContext* cx) : cx(cx), atomsZone(nullptr) { }
-
-    bool init() {
-        AutoLockForExclusiveAccess lock(cx);
-        atomsZone = cx->runtime()->atomsCompartment()->zone();
-        return debuggeeZones.init();
-    }
-};
-
-// An *assorter* class is one with the following constructors, destructor,
-// and member functions:
+// The takeCensus function works in three phases:
 //
-//   Assorter(Census& census);
-//   Assorter(Assorter&&)
-//   Assorter& operator=(Assorter&&)
-//   ~Assorter()
-//      Construction given a Census; move construction and assignment, for being
-//      stored in containers; and destruction.
+// 1) We examine the 'breakdown' property of our 'options' argument, and
+//    use that to build a CountType tree.
 //
-//   bool init(Census& census);
-//      A fallible initializer.
+// 2) We create a count node for the root of our CountType tree, and then walk
+//    the heap, counting each node we find, expanding our tree of counts as we
+//    go.
 //
-//   bool count(Census& census, const Node& node);
-//      Categorize and count |node| as appropriate for this kind of assorter.
-//
-//   size_t total() const;
-//      Return the number of times 'count' has been called.
-//
-//   bool report(Census& census, MutableHandleValue report);
-//      Construct a JavaScript object reporting the counts this assorter has
-//      seen, and store it in |report|.
-//
-// In each of these, |census| provides ambient information needed for assorting,
-// like a JSContext for reporting errors.
-
-// The simplest assorter: count everything, and return a tally form.
-class Tally {
-    size_t total_;
-
-  public:
-    explicit Tally(Census& census) : total_(0) { }
-    Tally(Tally&& rhs) : total_(rhs.total_) { }
-    Tally& operator=(Tally&& rhs) { total_ = rhs.total_; return *this; }
-
-    bool init(Census& census) { return true; }
-
-    bool count(Census& census, const Node& node) {
-        total_++;
-        return true;
-    }
-
-    size_t total() const { return total_; }
-
-    bool report(Census& census, MutableHandleValue report) {
-        RootedPlainObject obj(census.cx, NewBuiltinClassInstance<PlainObject>(census.cx));
-        RootedValue countValue(census.cx, NumberValue(total_));
-        if (!obj ||
-            !DefineProperty(census.cx, obj, census.cx->names().count, countValue))
-        {
-            return false;
-        }
-        report.setObject(*obj);
-        return true;
-    }
-};
-
-// An assorter that breaks nodes down by their JavaScript type --- 'objects',
-// 'strings', 'scripts', and 'other' --- and then passes the nodes to
-// sub-assorters. The template arguments must themselves be assorter types.
-//
-// Implementation details of scripts like jitted code are counted under
-// 'scripts'.
-template<typename EachObject = Tally,
-         typename EachScript = Tally,
-         typename EachString = Tally,
-         typename EachOther  = Tally>
-class ByJSType {
-    size_t total_;
-    EachObject objects;
-    EachScript scripts;
-    EachString strings;
-    EachOther other;
-
-  public:
-    explicit ByJSType(Census& census)
-      : total_(0),
-        objects(census),
-        scripts(census),
-        strings(census),
-        other(census)
-    { }
-    ByJSType(ByJSType&& rhs)
-      : total_(rhs.total_),
-        objects(Move(rhs.objects)),
-        scripts(move(rhs.scripts)),
-        strings(move(rhs.strings)),
-        other(move(rhs.other))
-    { }
-    ByJSType& operator=(ByJSType&& rhs) {
-        MOZ_ASSERT(&rhs != this);
-        this->~ByJSType();
-        new (this) ByJSType(Move(rhs));
-        return *this;
-    }
-
-    bool init(Census& census) {
-        return objects.init(census) &&
-               scripts.init(census) &&
-               strings.init(census) &&
-               other.init(census);
-    }
-
-    bool count(Census& census, const Node& node) {
-        total_++;
-        if (node.is<JSObject>())
-            return objects.count(census, node);
-         if (node.is<JSScript>() || node.is<LazyScript>() || node.is<jit::JitCode>())
-            return scripts.count(census, node);
-        if (node.is<JSString>())
-            return strings.count(census, node);
-        return other.count(census, node);
-    }
-
-    bool report(Census& census, MutableHandleValue report) {
-        JSContext* cx = census.cx;
-
-        RootedPlainObject obj(cx, NewBuiltinClassInstance<PlainObject>(cx));
-        if (!obj)
-            return false;
-
-        RootedValue objectsReport(cx);
-        if (!objects.report(census, &objectsReport) ||
-            !DefineProperty(cx, obj, cx->names().objects, objectsReport))
-            return false;
-
-        RootedValue scriptsReport(cx);
-        if (!scripts.report(census, &scriptsReport) ||
-            !DefineProperty(cx, obj, cx->names().scripts, scriptsReport))
-            return false;
-
-        RootedValue stringsReport(cx);
-        if (!strings.report(census, &stringsReport) ||
-            !DefineProperty(cx, obj, cx->names().strings, stringsReport))
-            return false;
-
-        RootedValue otherReport(cx);
-        if (!other.report(census, &otherReport) ||
-            !DefineProperty(cx, obj, cx->names().other, otherReport))
-            return false;
-
-        report.setObject(*obj);
-        return true;
-    }
-};
-
-// An assorter that categorizes nodes that are JSObjects by their class name,
-// and places all other nodes in an 'other' category. The template arguments
-// must be assorter types; each JSObject class gets an EachClass assorter, and
-// the 'other' category gets an EachOther assorter.
-template<typename EachClass = Tally,
-         typename EachOther = Tally>
-class ByObjectClass {
-    size_t total_;
-
-    // A hash policy that compares C strings.
-    struct HashPolicy {
-        typedef const char* Lookup;
-        static js::HashNumber hash(Lookup l) { return mozilla::HashString(l); }
-        static bool match(const char* key, Lookup lookup) {
-            return strcmp(key, lookup) == 0;
-        }
-    };
-
-    // A table mapping class names to their counts. Note that we treat js::Class
-    // instances with the same name as equal keys. If you have several
-    // js::Classes with equal names (and we do; as of this writing there were
-    // six named "Object"), you will get several different js::Classes being
-    // counted in the same table entry.
-    typedef HashMap<const char*, EachClass, HashPolicy, SystemAllocPolicy> Table;
-    typedef typename Table::Entry Entry;
-    Table table;
-    EachOther other;
-
-    static int compareEntries(const void* lhsVoid, const void* rhsVoid) {
-        size_t lhs = (*static_cast<const Entry * const*>(lhsVoid))->value().total();
-        size_t rhs = (*static_cast<const Entry * const*>(rhsVoid))->value().total();
-
-        // qsort sorts in "ascending" order, so we should describe entries with
-        // smaller counts as being "greater than" entries with larger counts. We
-        // don't want to just subtract the counts, as they're unsigned.
-        if (lhs < rhs)
-            return 1;
-        if (lhs > rhs)
-            return -1;
-        return 0;
-    }
-
-  public:
-    explicit ByObjectClass(Census& census) : total_(0), other(census) { }
-    ByObjectClass(ByObjectClass&& rhs)
-      : total_(rhs.total_), table(Move(rhs.table)), other(Move(rhs.other))
-    { }
-    ByObjectClass& operator=(ByObjectClass&& rhs) {
-        MOZ_ASSERT(&rhs != this);
-        this->~ByObjectClass();
-        new (this) ByObjectClass(Move(rhs));
-        return *this;
-    }
-
-    bool init(Census& census) { return table.init() && other.init(census); }
-
-    bool count(Census& census, const Node& node) {
-        total_++;
-        const char* className = node.jsObjectClassName();
-
-        if (!className)
-            return other.count(census, node);
-
-        typename Table::AddPtr p = table.lookupForAdd(className);
-        if (!p) {
-            if (!table.add(p, className, EachClass(census)))
-                return false;
-            if (!p->value().init(census))
-                return false;
-        }
-        return p->value().count(census, node);
-    }
-
-    size_t total() const { return total_; }
-
-    bool report(Census& census, MutableHandleValue report) {
-        JSContext* cx = census.cx;
-
-        // Build a vector of pointers to entries; sort by total; and then use
-        // that to build the result object. This makes the ordering of entries
-        // more interesting, and a little less non-deterministic.
-        mozilla::Vector<Entry*> entries;
-        if (!entries.reserve(table.count()))
-            return false;
-        for (typename Table::Range r = table.all(); !r.empty(); r.popFront())
-            entries.infallibleAppend(&r.front());
-        qsort(entries.begin(), entries.length(), sizeof(*entries.begin()), compareEntries);
-
-        // Now build the result by iterating over the sorted vector.
-        RootedPlainObject obj(cx, NewBuiltinClassInstance<PlainObject>(cx));
-        if (!obj)
-            return false;
-        for (Entry** entryPtr = entries.begin(); entryPtr < entries.end(); entryPtr++) {
-            Entry& entry = **entryPtr;
-            EachClass& assorter = entry.value();
-            RootedValue assorterReport(cx);
-            if (!assorter.report(census, &assorterReport))
-                return false;
-
-            const char* name = entry.key();
-            MOZ_ASSERT(name);
-            JSAtom* atom = Atomize(census.cx, name, strlen(name));
-            if (!atom)
-                return false;
-            RootedId entryId(cx, AtomToId(atom));
-
-#ifdef DEBUG
-            // We have multiple js::Classes out there with the same name (for
-            // example, JSObject::class_, Debugger.Object, and CollatorClass are
-            // all "Object"), so let's make sure our hash table treats them all
-            // as equivalent.
-            bool has;
-            if (!HasOwnProperty(cx, obj, entryId, &has))
-                return false;
-            if (has) {
-                fprintf(stderr, "already has own property '%s'\n", name);
-                MOZ_ASSERT(!has);
-            }
-#endif
-
-            if (!DefineProperty(cx, obj, entryId, assorterReport))
-                return false;
-        }
-
-        report.setObject(*obj);
-        return true;
-    }
-};
-
-
-// An assorter that categorizes nodes by their ubi::Node::typeName.
-template<typename EachType = Tally>
-class ByUbinodeType {
-    size_t total_;
-
-    // Note that, because ubi::Node::typeName promises to return a specific
-    // pointer, not just any string whose contents are correct, we can use their
-    // addresses as hash table keys.
-    typedef HashMap<const char16_t*, EachType, DefaultHasher<const char16_t*>,
-                    SystemAllocPolicy> Table;
-    typedef typename Table::Entry Entry;
-    Table table;
-
-  public:
-    explicit ByUbinodeType(Census& census) : total_(0) { }
-    ByUbinodeType(ByUbinodeType&& rhs) : total_(rhs.total_), table(Move(rhs.table)) { }
-    ByUbinodeType& operator=(ByUbinodeType&& rhs) {
-        MOZ_ASSERT(&rhs != this);
-        this->~ByUbinodeType();
-        new (this) ByUbinodeType(Move(rhs));
-        return *this;
-    }
-
-    bool init(Census& census) { return table.init(); }
-
-    bool count(Census& census, const Node& node) {
-        total_++;
-        const char16_t* key = node.typeName();
-        typename Table::AddPtr p = table.lookupForAdd(key);
-        if (!p) {
-            if (!table.add(p, key, EachType(census)))
-                return false;
-            if (!p->value().init(census))
-                return false;
-        }
-        return p->value().count(census, node);
-    }
-
-    size_t total() const { return total_; }
-
-    static int compareEntries(const void* lhsVoid, const void* rhsVoid) {
-        size_t lhs = (*static_cast<const Entry * const*>(lhsVoid))->value().total();
-        size_t rhs = (*static_cast<const Entry * const*>(rhsVoid))->value().total();
-
-        // qsort sorts in "ascending" order, so we should describe entries with
-        // smaller counts as being "greater than" entries with larger counts. We
-        // don't want to just subtract the counts, as they're unsigned.
-        if (lhs < rhs)
-            return 1;
-        if (lhs > rhs)
-            return -1;
-        return 0;
-    }
-
-    bool report(Census& census, MutableHandleValue report) {
-        JSContext* cx = census.cx;
-
-        // Build a vector of pointers to entries; sort by total; and then use
-        // that to build the result object. This makes the ordering of entries
-        // more interesting, and a little less non-deterministic.
-        mozilla::Vector<Entry*> entries;
-        if (!entries.reserve(table.count()))
-            return false;
-        for (typename Table::Range r = table.all(); !r.empty(); r.popFront())
-            entries.infallibleAppend(&r.front());
-        qsort(entries.begin(), entries.length(), sizeof(*entries.begin()), compareEntries);
-
-        // Now build the result by iterating over the sorted vector.
-        RootedPlainObject obj(cx, NewBuiltinClassInstance<PlainObject>(cx));
-        if (!obj)
-            return false;
-        for (Entry** entryPtr = entries.begin(); entryPtr < entries.end(); entryPtr++) {
-            Entry& entry = **entryPtr;
-            EachType& assorter = entry.value();
-            RootedValue assorterReport(cx);
-            if (!assorter.report(census, &assorterReport))
-                return false;
-
-            const char16_t* name = entry.key();
-            MOZ_ASSERT(name);
-            JSAtom* atom = AtomizeChars(cx, name, js_strlen(name));
-            if (!atom)
-                return false;
-            RootedId entryId(cx, AtomToId(atom));
-
-            if (!DefineProperty(cx, obj, entryId, assorterReport))
-                return false;
-        }
-
-        report.setObject(*obj);
-        return true;
-    }
-};
-
-
-// A BreadthFirst handler type that conducts a census, using Assorter
-// to categorize and count each node.
-template<typename Assorter>
-class CensusHandler {
-    Census& census;
-    Assorter assorter;
-
-  public:
-    explicit CensusHandler(Census& census) : census(census), assorter(census) { }
-
-    bool init(Census& census) { return assorter.init(census); }
-    bool report(Census& census, MutableHandleValue report) {
-        return assorter.report(census, report);
-    }
-
-    // This class needs to retain no per-node data.
-    class NodeData { };
-
-    bool operator() (BreadthFirst<CensusHandler>& traversal,
-                     Node origin, const Edge& edge,
-                     NodeData* referentData, bool first)
-    {
-        // We're only interested in the first time we reach edge.referent, not
-        // in every edge arriving at that node.
-        if (!first)
-            return true;
-
-        // Don't count nodes outside the debuggee zones. Do count things in the
-        // special atoms zone, but don't traverse their outgoing edges, on the
-        // assumption that they are shared resources that debuggee is using.
-        // Symbols are always allocated in the atoms zone, even if they were
-        // created for exactly one compartment and never shared; this rule will
-        // include such nodes in the count.
-        const Node& referent = edge.referent;
-        Zone* zone = referent.zone();
-
-        if (census.debuggeeZones.has(zone)) {
-            return assorter.count(census, referent);
-        }
-
-        if (zone == census.atomsZone) {
-            traversal.abandonReferent();
-            return assorter.count(census, referent);
-        }
-
-        traversal.abandonReferent();
-        return true;
-    }
-};
-
-// The assorter that Debugger.Memory.prototype.takeCensus uses by default.
-// (Eventually, we hope to add parameters that let you specify dynamically how
-// the census should assort the nodes it finds.) Categorize nodes by JS type,
-// and then objects by object class.
-typedef ByJSType<ByObjectClass<Tally>, Tally, Tally, ByUbinodeType<Tally> > DefaultAssorter;
-
-// A traversal that conducts a census using DefaultAssorter.
-typedef CensusHandler<DefaultAssorter> DefaultCensusHandler;
-typedef BreadthFirst<DefaultCensusHandler> DefaultCensusTraversal;
-
-} // namespace dbg
-} // namespace js
-
+// 3) We walk the tree of counts and produce JavaScript objects reporting the
+//    accumulated results.
 bool
 DebuggerMemory::takeCensus(JSContext* cx, unsigned argc, Value* vp)
 {
     THIS_DEBUGGER_MEMORY(cx, argc, vp, "Debugger.Memory.prototype.census", args, memory);
 
-    dbg::Census census(cx);
+    Census census(cx);
     if (!census.init())
         return false;
+    CountTypePtr rootType;
 
-    dbg::DefaultCensusHandler handler(census);
-    if (!handler.init(census))
+    RootedObject options(cx);
+    if (args.get(0).isObject())
+        options = &args[0].toObject();
+
+    if (!JS::ubi::ParseCensusOptions(cx, census, options, rootType))
         return false;
+
+    JS::ubi::RootedCount rootCount(cx, rootType->makeCount());
+    if (!rootCount)
+        return false;
+    JS::ubi::CensusHandler handler(census, rootCount);
 
     Debugger* dbg = memory->getDebugger();
     RootedObject dbgObj(cx, dbg->object);
 
     // Populate our target set of debuggee zones.
     for (WeakGlobalObjectSet::Range r = dbg->allDebuggees(); !r.empty(); r.popFront()) {
-        if (!census.debuggeeZones.put(r.front()->zone()))
+        if (!census.targetZones.put(r.front()->zone()))
             return false;
     }
 
@@ -810,7 +544,7 @@ DebuggerMemory::takeCensus(JSContext* cx, unsigned argc, Value* vp)
         if (!rootList.init(dbgObj))
             return false;
 
-        dbg::DefaultCensusTraversal traversal(cx, handler, maybeNoGC.ref());
+        JS::ubi::CensusTraversal traversal(cx, handler, maybeNoGC.ref());
         if (!traversal.init())
             return false;
         traversal.wantNames = false;
@@ -822,9 +556,8 @@ DebuggerMemory::takeCensus(JSContext* cx, unsigned argc, Value* vp)
         }
     }
 
-    return handler.report(census, args.rval());
+    return handler.report(args.rval());
 }
-
 
 
 /* Debugger.Memory property and method tables. */
@@ -835,12 +568,18 @@ DebuggerMemory::takeCensus(JSContext* cx, unsigned argc, Value* vp)
     JS_PSGS("maxAllocationsLogLength", getMaxAllocationsLogLength, setMaxAllocationsLogLength, 0),
     JS_PSGS("allocationSamplingProbability", getAllocationSamplingProbability, setAllocationSamplingProbability, 0),
     JS_PSG("allocationsLogOverflowed", getAllocationsLogOverflowed, 0),
+
+    JS_PSGS("trackingTenurePromotions", getTrackingTenurePromotions, setTrackingTenurePromotions, 0),
+    JS_PSGS("maxTenurePromotionsLogLength", getMaxTenurePromotionsLogLength, setMaxTenurePromotionsLogLength, 0),
+    JS_PSG("tenurePromotionsLogOverflowed", getTenurePromotionsLogOverflowed, 0),
+
     JS_PSGS("onGarbageCollection", getOnGarbageCollection, setOnGarbageCollection, 0),
     JS_PS_END
 };
 
 /* static */ const JSFunctionSpec DebuggerMemory::methods[] = {
     JS_FN("drainAllocationsLog", DebuggerMemory::drainAllocationsLog, 0, 0),
+    JS_FN("drainTenurePromotionsLog", DebuggerMemory::drainTenurePromotionsLog, 0, 0),
     JS_FN("takeCensus", takeCensus, 0, 0),
     JS_FS_END
 };

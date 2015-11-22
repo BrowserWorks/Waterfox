@@ -71,8 +71,8 @@ include default-preferences-tests.list
 # test that all corners are visible
 != corners-1.html corners-1-ref.html
 != corners-2.html corners-2-ref.html
-!= corners-3.html corners-3-ref.html
-!= corners-4.html corners-4-ref.html
+skip-if(Android&&AndroidVersion==15) != corners-3.html corners-3-ref.html    # see bug 1192616; reenable once we're off the pandaboards
+skip-if(Android&&AndroidVersion==15) != corners-4.html corners-4-ref.html    # see bug 1192616; reenable once we're off the pandaboards
 
 # Test that the harness gives the correct page dimensions.
 != page-width-3.9in.html page-width-4in.html
@@ -90,16 +90,16 @@ fails == data:text/plain,HELLO about:blank
 needs-focus == data:text/plain, about:blank
 
 # Sanity check of viewport+displayport overrides
-skip-if(!browserIsRemote) != test-displayport-2.html test-displayport-ref.html # bug 593168
-skip-if(!browserIsRemote) fails-if(OSX&&layersGPUAccelerated) fuzzy-if(layersOMTC,1,1390) random-if(Android&&AndroidVersion<15) random-if(B2G||B2GDT||Mulet) == 647192-1.html 647192-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
+pref(dom.meta-viewport.enabled,true) skip-if(!browserIsRemote) != test-displayport-2.html test-displayport-ref.html # bug 593168
+skip-if(!browserIsRemote) fails-if(OSX&&layersGPUAccelerated) fuzzy-if(layersOMTC,1,1390) random-if(Android&&AndroidVersion<15) random-if(B2G||B2GDT||Mulet) random-if(transparentScrollbars) == 647192-1.html 647192-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 skip-if(!browserIsRemote||((B2G&&browserIsRemote)||Mulet)) == 656041-1.html 656041-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(!browserIsRemote||layersOMTC) == test-displayport-bg.html test-displayport-ref.html # bug 694706
+pref(dom.meta-viewport.enabled,true) skip-if(!browserIsRemote||layersOMTC) == test-displayport-bg.html test-displayport-ref.html # bug 694706
 
 # IPC Position-fixed frames/layers test
 # Fixed layers are temporarily disabled (bug 656167).
-#skip-if(!browserIsRemote) == test-pos-fixed.html test-pos-fixed-ref.html
-#skip-if(!browserIsRemote) == test-bg-attachment-fixed.html test-bg-attachment-fixed-ref.html
-skip-if(!browserIsRemote) == test-pos-fixed-transform.html test-pos-fixed-transform-ref.html
+#pref(dom.meta-viewport.enabled,true) skip-if(!browserIsRemote) == test-pos-fixed.html test-pos-fixed-ref.html
+#pref(dom.meta-viewport.enabled,true) skip-if(!browserIsRemote) == test-bg-attachment-fixed.html test-bg-attachment-fixed-ref.html
+pref(dom.meta-viewport.enabled,true) skip-if(!browserIsRemote) == test-pos-fixed-transform.html test-pos-fixed-transform-ref.html
 
 # reftest syntax: require-or
 require-or(unrecognizedCondition,skip) script scripttest-fail.html
@@ -158,13 +158,16 @@ fails fuzzy-if(false,2,1) random-if(Android) == fuzzy.html fuzzy-ref.html
 # Test that reftest-no-paint fails correctly
 fails == reftest-no-paint.html reftest-no-paint-ref.html
 
-skip-if(!asyncPanZoom||!browserIsRemote) == async-scroll-1a.html async-scroll-1-ref.html
+skip-if(!asyncPan||!browserIsRemote) == async-scroll-1a.html async-scroll-1-ref.html
 
 # Disable low-res painting for this test as it will cause more to
 # be drawn than we want.
 default-preferences pref(layers.low-precision-buffer,false)
-skip-if(!asyncPanZoom||!browserIsRemote) != async-scroll-1b.html async-scroll-1-ref.html
+skip-if(!asyncPan||!browserIsRemote) != async-scroll-1b.html async-scroll-1-ref.html
 default-preferences
+
+skip-if(!asyncZoom) != async-zoom-1.html async-zoom-1-ref.html
+fuzzy(112,1197) skip-if(!asyncZoom) == async-zoom-2.html async-zoom-2-ref.html
 
 # reftest-opaque-layer
 == reftest-opaque-layer-pass.html reftest-opaque-layer-pass.html

@@ -8,7 +8,7 @@
 #include "mp4_demuxer/MoofParser.h"
 #include "mp4_demuxer/SinfParser.h"
 #include "nsAutoPtr.h"
-#include "nsRefPtr.h"
+#include "mozilla/nsRefPtr.h"
 
 #include <algorithm>
 #include <limits>
@@ -91,6 +91,13 @@ already_AddRefed<MediaRawData> SampleIterator::GetNext()
     return nullptr;
   }
 
+  int64_t length = std::numeric_limits<int64_t>::max();
+  mIndex->mSource->Length(&length);
+  if (s->mByteRange.mEnd > length) {
+    // We don't have this complete sample.
+    return nullptr;
+  }
+
   nsRefPtr<MediaRawData> sample = new MediaRawData();
   sample->mTimecode= s->mDecodeTime;
   sample->mTime = s->mCompositionRange.start;
@@ -105,8 +112,8 @@ already_AddRefed<MediaRawData> SampleIterator::GetNext()
   }
 
   size_t bytesRead;
-  if (!mIndex->mSource->ReadAt(sample->mOffset, writer->mData, sample->mSize,
-                               &bytesRead) || bytesRead != sample->mSize) {
+  if (!mIndex->mSource->ReadAt(sample->mOffset, writer->Data(), sample->Size(),
+                               &bytesRead) || bytesRead != sample->Size()) {
     return nullptr;
   }
 
@@ -148,7 +155,7 @@ already_AddRefed<MediaRawData> SampleIterator::GetNext()
     } else {
       // No subsample information means the entire sample is encrypted.
       writer->mCrypto.mPlainSizes.AppendElement(0);
-      writer->mCrypto.mEncryptedSizes.AppendElement(sample->mSize);
+      writer->mCrypto.mEncryptedSizes.AppendElement(sample->Size());
     }
   }
 
@@ -237,7 +244,7 @@ Index::Index(const nsTArray<Indice>& aIndex,
   if (aIndex.IsEmpty()) {
     mMoofParser = new MoofParser(aSource, aTrackId, aIsAudio, aMonitor);
   } else {
-    if (!mIndex.SetCapacity(aIndex.Length())) {
+    if (!mIndex.SetCapacity(aIndex.Length(), fallible)) {
       // OOM.
       return;
     }
@@ -248,8 +255,10 @@ Index::Index(const nsTArray<Indice>& aIndex,
                                          indice.end_offset);
       sample.mCompositionRange = Interval<Microseconds>(indice.start_composition,
                                                         indice.end_composition);
+      sample.mDecodeTime = indice.start_decode;
       sample.mSync = indice.sync;
-      MOZ_ALWAYS_TRUE(mIndex.AppendElement(sample));
+      // FIXME: Make this infallible after bug 968520 is done.
+      MOZ_ALWAYS_TRUE(mIndex.AppendElement(sample, fallible));
     }
   }
 }

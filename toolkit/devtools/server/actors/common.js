@@ -6,6 +6,9 @@
 
 "use strict";
 
+const promise = require("promise");
+const { method } = require("devtools/server/protocol");
+
 /**
  * Creates "registered" actors factory meant for creating another kind of
  * factories, ObservedActorFactory, during the call to listTabs.
@@ -280,8 +283,8 @@ ActorPool.prototype = {
    * Run all actor cleanups.
    */
   cleanup: function AP_cleanup() {
-    for each (let actor in this._cleanups) {
-      actor.disconnect();
+    for (let id in this._cleanups) {
+      this._cleanups[id].disconnect();
     }
     this._cleanups = {};
   },
@@ -378,7 +381,7 @@ OriginalLocation.prototype = {
 exports.OriginalLocation = OriginalLocation;
 
 /**
- * A GeneratedLocation represents a location in an original source.
+ * A GeneratedLocation represents a location in a generated source.
  *
  * @param SourceActor actor
  *        A SourceActor representing a generated source.
@@ -484,3 +487,52 @@ exports.getOffsetColumn = function getOffsetColumn(aOffset, aScript) {
 
   return bestOffsetMapping.columnNumber;
 }
+
+/**
+ * A method decorator that ensures the actor is in the expected state before
+ * proceeding. If the actor is not in the expected state, the decorated method
+ * returns a rejected promise.
+ *
+ * The actor's state must be at this.state property.
+ *
+ * @param String expectedState
+ *        The expected state.
+ * @param String activity
+ *        Additional info about what's going on.
+ * @param Function method
+ *        The actor method to proceed with when the actor is in the expected
+ *        state.
+ *
+ * @returns Function
+ *          The decorated method.
+ */
+function expectState(expectedState, method, activity) {
+  return function(...args) {
+    if (this.state !== expectedState) {
+      const msg = `Wrong state while ${activity}:` +
+                  `Expected '${expectedState}', ` +
+                  `but current state is '${this.state}'.`;
+      return promise.reject(new Error(msg));
+    }
+
+    return method.apply(this, args);
+  };
+}
+
+exports.expectState = expectState;
+
+/**
+ * Proxies a call from an actor to an underlying module, stored
+ * as `bridge` on the actor. This allows a module to be defined in one
+ * place, usable by other modules/actors on the server, but a separate
+ * module defining the actor/RDP definition.
+ *
+ * @see Framerate implementation: toolkit/devtools/shared/framerate.js
+ * @see Framerate actor definition: toolkit/devtools/server/actors/framerate.js
+ */
+function actorBridge (methodName, definition={}) {
+  return method(function () {
+    return this.bridge[methodName].apply(this.bridge, arguments);
+  }, definition);
+}
+exports.actorBridge = actorBridge;

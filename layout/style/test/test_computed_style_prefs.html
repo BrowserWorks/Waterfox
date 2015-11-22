@@ -68,12 +68,14 @@ function step() {
 // ----
 
 var gProps = {
-  "layout.css.vertical-text.enabled": ["text-combine-upright", "text-orientation", "writing-mode"],
+  "layout.css.vertical-text.enabled": ["text-orientation", "writing-mode"],
+  "layout.css.text-combine-upright.enabled": ["text-combine-upright"],
   "layout.css.image-orientation.enabled": ["image-orientation"],
   "layout.css.mix-blend-mode.enabled": ["mix-blend-mode"],
   "layout.css.isolation.enabled": [ "isolation"],
   "layout.css.masking.enabled": ["mask-type"],
-  "layout.css.touch_action.enabled": ["touch-action"]
+  "layout.css.touch_action.enabled": ["touch-action"],
+  "svg.transform-box.enabled": ["transform-box"]
 };
 
 var gCS = getComputedStyle(document.body, "");

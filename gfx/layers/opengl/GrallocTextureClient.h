@@ -19,6 +19,10 @@ class MediaBuffer;
 };
 
 namespace mozilla {
+namespace gl {
+class SharedSurface;
+}
+
 namespace layers {
 
 /**
@@ -56,7 +60,7 @@ public:
 
   virtual bool ToSurfaceDescriptor(SurfaceDescriptor& aOutDescriptor) override;
 
-  virtual void SetRemoveFromCompositableTracker(AsyncTransactionTracker* aTracker) override;
+  virtual void SetRemoveFromCompositableWaiter(AsyncTransactionWaiter* aWaiter) override;
 
   virtual void WaitForBufferOwnership(bool aWaitReleaseFence = true) override;
 
@@ -77,6 +81,8 @@ public:
   virtual uint8_t* GetBuffer() const override;
 
   virtual gfx::DrawTarget* BorrowDrawTarget() override;
+
+  virtual void UpdateFromSurface(gfx::SourceSurface* aSurface) override;
 
   virtual bool AllocateForSurface(gfx::IntSize aSize,
                                   TextureAllocationFlags aFlags = ALLOC_DEFAULT) override;
@@ -110,11 +116,11 @@ public:
     return mMediaBuffer;
   }
 
-  virtual TemporaryRef<TextureClient>
+  virtual already_AddRefed<TextureClient>
   CreateSimilar(TextureFlags aFlags = TextureFlags::DEFAULT,
                 TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT) const override;
 
-  static TemporaryRef<TextureClient> FromSharedSurface(gl::SharedSurface* surf,
+  static already_AddRefed<TextureClient> FromSharedSurface(gl::SharedSurface* surf,
                                                        TextureFlags flags);
 
 protected:
@@ -123,7 +129,7 @@ protected:
    */
   MaybeMagicGrallocBufferHandle mGrallocHandle;
 
-  RefPtr<AsyncTransactionTracker> mRemoveFromCompositableTracker;
+  RefPtr<AsyncTransactionWaiter> mRemoveFromCompositableWaiter;
 
   android::sp<android::GraphicBuffer> mGraphicBuffer;
 
@@ -134,13 +140,6 @@ protected:
   uint8_t* mMappedBuffer;
 
   RefPtr<gfx::DrawTarget> mDrawTarget;
-
-  /**
-   * android::GraphicBuffer has a size information. But there are cases
-   * that GraphicBuffer's size and actual video's size are different.
-   * Extra size member is necessary. See Bug 850566.
-   */
-  gfx::IntSize mSize;
 
   android::MediaBuffer* mMediaBuffer;
 

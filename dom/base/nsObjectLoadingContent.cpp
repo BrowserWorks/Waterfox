@@ -20,6 +20,7 @@
 #include "nsIDOMHTMLObjectElement.h"
 #include "nsIDOMHTMLAppletElement.h"
 #include "nsIExternalProtocolHandler.h"
+#include "nsIInterfaceRequestorUtils.h"
 #include "nsIObjectFrame.h"
 #include "nsIPermissionManager.h"
 #include "nsPluginHost.h"
@@ -44,7 +45,7 @@
 
 // Util headers
 #include "prenv.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #include "nsAutoPtr.h"
 #include "nsCURILoader.h"
@@ -106,7 +107,6 @@ static const char *kPrefJavaMIME = "plugin.java.mime";
 using namespace mozilla;
 using namespace mozilla::dom;
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo*
 GetObjectLog()
 {
@@ -115,10 +115,9 @@ GetObjectLog()
     sLog = PR_NewLogModule("objlc");
   return sLog;
 }
-#endif
 
-#define LOG(args) PR_LOG(GetObjectLog(), PR_LOG_DEBUG, args)
-#define LOG_ENABLED() PR_LOG_TEST(GetObjectLog(), PR_LOG_DEBUG)
+#define LOG(args) MOZ_LOG(GetObjectLog(), mozilla::LogLevel::Debug, args)
+#define LOG_ENABLED() MOZ_LOG_TEST(GetObjectLog(), mozilla::LogLevel::Debug)
 
 static bool
 IsJavaMIME(const nsACString & aMIMEType)
@@ -558,6 +557,11 @@ IsPluginEnabledByExtension(nsIURI* uri, nsCString& mimeType)
     return false;
   }
 
+  // Disables any native SWF plugins, when internal SWF player is enabled.
+  if (ext.EqualsIgnoreCase("swf") && nsContentUtils::IsSWFPlayerEnabled()) {
+    return false;
+  }
+
   nsRefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
 
   if (!pluginHost) {
@@ -710,7 +714,6 @@ nsObjectLoadingContent::nsObjectLoadingContent()
   , mInstantiating(false)
   , mNetworkCreated(true)
   , mActivated(false)
-  , mPlayPreviewCanceled(false)
   , mIsStopping(false)
   , mIsLoading(false)
   , mScriptRequested(false) {}
@@ -1401,8 +1404,6 @@ nsObjectLoadingContent::ObjectState() const
           return NS_EVENT_STATE_USERDISABLED;
         case eFallbackClickToPlay:
           return NS_EVENT_STATE_TYPE_CLICK_TO_PLAY;
-        case eFallbackPlayPreview:
-          return NS_EVENT_STATE_TYPE_PLAY_PREVIEW;
         case eFallbackDisabled:
           return NS_EVENT_STATE_BROKEN | NS_EVENT_STATE_HANDLER_DISABLED;
         case eFallbackBlocklisted:
@@ -1472,6 +1473,45 @@ nsObjectLoadingContent::CheckJavaCodebase()
 }
 
 bool
+nsObjectLoadingContent::IsYoutubeEmbed()
+{
+  nsCOMPtr<nsIContent> thisContent =
+    do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
+  NS_ASSERTION(thisContent, "Must be an instance of content");
+
+  // We're only interested in switching out embed and object tags
+  if (!thisContent->NodeInfo()->Equals(nsGkAtoms::embed) &&
+      !thisContent->NodeInfo()->Equals(nsGkAtoms::object)) {
+    return false;
+  }
+  nsCOMPtr<nsIEffectiveTLDService> tldService =
+    do_GetService(NS_EFFECTIVETLDSERVICE_CONTRACTID);
+  // If we can't analyze the URL, just pass on through.
+  if(!tldService) {
+    NS_WARNING("Could not get TLD service!");
+    return false;
+  }
+  nsAutoCString currentBaseDomain;
+  bool ok = NS_SUCCEEDED(tldService->GetBaseDomain(mURI, 0, currentBaseDomain));
+  if (!ok) {
+    // Data URIs won't parse correctly, so just fail silently here.
+    return false;
+  }
+  // See if URL is referencing youtube
+  nsAutoCString domain("youtube.com");
+  if (!StringEndsWith(domain, currentBaseDomain)) {
+    return false;
+  }
+  // See if requester is planning on using the JS API.
+  nsAutoCString uri;
+  mURI->GetSpec(uri);
+  if (uri.Find("enablejsapi=1", true, 0, -1) == kNotFound) {
+    return false;
+  }
+  return true;
+}
+
+bool
 nsObjectLoadingContent::CheckLoadPolicy(int16_t *aContentPolicy)
 {
   if (!aContentPolicy || !mURI) {
@@ -1485,8 +1525,10 @@ nsObjectLoadingContent::CheckLoadPolicy(int16_t *aContentPolicy)
 
   nsIDocument* doc = thisContent->OwnerDoc();
 
+  nsContentPolicyType contentPolicyType = GetContentPolicyType();
+
   *aContentPolicy = nsIContentPolicy::ACCEPT;
-  nsresult rv = NS_CheckContentLoadPolicy(nsIContentPolicy::TYPE_OBJECT,
+  nsresult rv = NS_CheckContentLoadPolicy(contentPolicyType,
                                           mURI,
                                           doc->NodePrincipal(),
                                           thisContent,
@@ -1532,7 +1574,7 @@ nsObjectLoadingContent::CheckProcessPolicy(int16_t *aContentPolicy)
       objectType = nsIContentPolicy::TYPE_DOCUMENT;
       break;
     case eType_Plugin:
-      objectType = nsIContentPolicy::TYPE_OBJECT;
+      objectType = GetContentPolicyType();
       break;
     default:
       NS_NOTREACHED("Calling checkProcessPolicy with a unloadable type");
@@ -1847,7 +1889,7 @@ nsObjectLoadingContent::UpdateObjectParameters(bool aJavaURI)
       // end up trying to dispatch to a nsFrameLoader, which will complain that
       // it couldn't find a way to handle application/octet-stream
       nsAutoCString parsedMime, dummy;
-      NS_ParseContentType(newMime, parsedMime, dummy);
+      NS_ParseResponseContentType(newMime, parsedMime, dummy);
       if (!parsedMime.IsEmpty()) {
         mChannel->SetContentType(parsedMime);
       }
@@ -2116,6 +2158,11 @@ nsObjectLoadingContent::LoadObject(bool aNotify,
     // have originated from OnStartRequest
     NS_NOTREACHED("Loading with a channel, but state doesn't make sense");
     return NS_OK;
+  }
+
+  // Check whether this is a youtube embed.
+  if (IsYoutubeEmbed()) {
+    Telemetry::Accumulate(Telemetry::YOUTUBE_EMBED_SEEN, 1);
   }
 
   //
@@ -2485,15 +2532,18 @@ nsObjectLoadingContent::OpenChannel()
     securityFlags |= nsILoadInfo::SEC_SANDBOXED;
   }
 
+  nsContentPolicyType contentPolicyType = GetContentPolicyType();
+
   rv = NS_NewChannel(getter_AddRefs(chan),
                      mURI,
                      thisContent,
                      securityFlags,
-                     nsIContentPolicy::TYPE_OBJECT,
+                     contentPolicyType,
                      group, // aLoadGroup
                      shim,  // aCallbacks
                      nsIChannel::LOAD_CALL_CONTENT_SNIFFERS |
-                     nsIChannel::LOAD_CLASSIFY_URI);
+                     nsIChannel::LOAD_CLASSIFY_URI |
+                     nsIChannel::LOAD_BYPASS_SERVICE_WORKER);
 
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -2675,6 +2725,13 @@ nsObjectLoadingContent::GetTypeOfContent(const nsCString& aMIMEType)
   // when internal PDF viewer is enabled.
   if (aMIMEType.LowerCaseEqualsLiteral("application/pdf") &&
       nsContentUtils::IsPDFJSEnabled()) {
+    return eType_Document;
+  }
+
+  // Faking support of the SWF content as a document for EMBED tags
+  // when internal SWF player is enabled.
+  if (aMIMEType.LowerCaseEqualsLiteral("application/x-shockwave-flash") &&
+      nsContentUtils::IsSWFPlayerEnabled()) {
     return eType_Document;
   }
 
@@ -2942,7 +2999,8 @@ nsObjectLoadingContent::LoadFallback(FallbackType aType, bool aNotify) {
     aType = eFallbackAlternate;
   }
 
-  if (thisContent->IsHTMLElement(nsGkAtoms::object) &&
+  if ((thisContent->IsHTMLElement(nsGkAtoms::object) ||
+       thisContent->IsHTMLElement(nsGkAtoms::applet)) &&
       (aType == eFallbackUnsupported ||
        aType == eFallbackDisabled ||
        aType == eFallbackBlocklisted))
@@ -3099,7 +3157,7 @@ nsObjectLoadingContent::PlayPlugin()
     LOG(("OBJLC [%p]: Activated by user", this));
   }
 
-  // If we're in a click-to-play or play preview state, we need to reload
+  // If we're in a click-to-play state, reload.
   // Fallback types >= eFallbackClickToPlay are plugin-replacement types, see
   // header
   if (mType == eType_Null && mFallbackType >= eFallbackClickToPlay) {
@@ -3114,7 +3172,6 @@ nsObjectLoadingContent::Reload(bool aClearActivation)
 {
   if (aClearActivation) {
     mActivated = false;
-    mPlayPreviewCanceled = false;
   }
 
   return LoadObject(true, true);
@@ -3155,22 +3212,6 @@ nsObjectLoadingContent::GetHasRunningPlugin(bool *aHasPlugin)
 }
 
 NS_IMETHODIMP
-nsObjectLoadingContent::CancelPlayPreview()
-{
-  if (!nsContentUtils::IsCallerChrome())
-    return NS_ERROR_NOT_AVAILABLE;
-
-  mPlayPreviewCanceled = true;
-
-  // If we're in play preview state already, reload
-  if (mType == eType_Null && mFallbackType == eFallbackPlayPreview) {
-    return LoadObject(true, true);
-  }
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 nsObjectLoadingContent::GetRunID(uint32_t* aRunID)
 {
   if (NS_WARN_IF(!nsContentUtils::IsCallerChrome())) {
@@ -3205,7 +3246,7 @@ nsObjectLoadingContent::ShouldPlay(FallbackType &aReason, bool aIgnoreCurrentTyp
     sPrefsInitialized = true;
   }
 
-  if (XRE_GetProcessType() == GeckoProcessType_Default &&
+  if (XRE_IsParentProcess() &&
       BrowserTabsRemoteAutostart()) {
     // Plugins running OOP from the chrome process along with plugins running
     // OOP from the content process will hang. Let's prevent that situation.
@@ -3215,31 +3256,6 @@ nsObjectLoadingContent::ShouldPlay(FallbackType &aReason, bool aIgnoreCurrentTyp
 
   nsRefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
 
-  nsCOMPtr<nsIPluginPlayPreviewInfo> playPreviewInfo;
-  bool isPlayPreviewSpecified = NS_SUCCEEDED(pluginHost->GetPlayPreviewInfo(
-    mContentType, getter_AddRefs(playPreviewInfo)));
-  if (isPlayPreviewSpecified) {
-    // Checking PlayPreview whitelist as well.
-    nsCString uriSpec, baseSpec;
-    if (mURI) {
-      mURI->GetSpec(uriSpec);
-    }
-    if (mBaseURI) {
-      mBaseURI->GetSpec(baseSpec);
-    }
-    playPreviewInfo->CheckWhitelist(baseSpec, uriSpec, &isPlayPreviewSpecified);
-  }
-  bool ignoreCTP = false;
-  if (isPlayPreviewSpecified) {
-    playPreviewInfo->GetIgnoreCTP(&ignoreCTP);
-  }
-  if (isPlayPreviewSpecified && !mPlayPreviewCanceled &&
-      ignoreCTP) {
-    // play preview in ignoreCTP mode is shown even if the native plugin
-    // is not present/installed
-    aReason = eFallbackPlayPreview;
-    return false;
-  }
   // at this point if it's not a plugin, we let it play/fallback
   if (!aIgnoreCurrentType && mType != eType_Plugin) {
     return true;
@@ -3249,8 +3265,6 @@ nsObjectLoadingContent::ShouldPlay(FallbackType &aReason, bool aIgnoreCurrentTyp
   // * Assume a default of click-to-play
   // * If globally disabled, per-site permissions cannot override.
   // * If blocklisted, override the reason with the blocklist reason
-  // * If not blocklisted but playPreview, override the reason with the
-  //   playPreview reason.
   // * Check per-site permissions and follow those if specified.
   // * Honor per-plugin disabled permission
   // * Blocklisted plugins are forced to CtP
@@ -3284,12 +3298,6 @@ nsObjectLoadingContent::ShouldPlay(FallbackType &aReason, bool aIgnoreCurrentTyp
   }
   else if (blocklistState == nsIBlocklistService::STATE_VULNERABLE_NO_UPDATE) {
     aReason = eFallbackVulnerableNoUpdate;
-  }
-
-  if (aReason == eFallbackClickToPlay && isPlayPreviewSpecified &&
-      !mPlayPreviewCanceled && !ignoreCTP) {
-    // play preview in click-to-play mode is shown instead of standard CTP UI
-    aReason = eFallbackPlayPreview;
   }
 
   // Check the permission manager for permission based on the principal of

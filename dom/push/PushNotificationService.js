@@ -12,7 +12,7 @@ const Cr = Components.results;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-let isParent = Cc["@mozilla.org/xre/runtime;1"]
+var isParent = Cc["@mozilla.org/xre/runtime;1"]
                  .getService(Ci.nsIXULRuntime)
                  .processType == Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
 
@@ -38,20 +38,28 @@ PushNotificationService.prototype = {
                                          Ci.nsISupportsWeakReference,
                                          Ci.nsIPushNotificationService]),
 
-  register: function register(scope, pageURL) {
-    return PushService._register({scope, pageURL});
+  register: function register(scope, originAttributes) {
+    return PushService._register({
+      scope: scope,
+      originAttributes: originAttributes,
+      maxQuota: Infinity,
+    });
   },
 
-  unregister: function unregister(scope) {
-    return PushService._unregister({scope});
+  unregister: function unregister(scope, originAttributes) {
+    return PushService._unregister({scope, originAttributes});
   },
 
-  registration: function registration(scope) {
-    return PushService._registration({scope});
+  registration: function registration(scope, originAttributes) {
+    return PushService._registration({scope, originAttributes});
   },
 
   clearAll: function clearAll() {
     return PushService._clearAll();
+  },
+
+  clearForDomain: function(domain) {
+    return PushService._clearForDomain(domain);
   },
 
   observe: function observe(subject, topic, data) {

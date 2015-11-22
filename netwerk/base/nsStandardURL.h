@@ -20,6 +20,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/MemoryReporting.h"
 #include "nsIIPCSerializableURI.h"
+#include "nsISensitiveInfoHiddenURI.h"
 
 #ifdef NS_BUILD_REFCNT_LOGGING
 #define DEBUG_DUMP_URLS_AT_SHUTDOWN
@@ -42,6 +43,7 @@ class nsStandardURL : public nsIFileURL
                     , public nsIClassInfo
                     , public nsISizeOf
                     , public nsIIPCSerializableURI
+                    , public nsISensitiveInfoHiddenURI
 {
 protected:
     virtual ~nsStandardURL();
@@ -56,6 +58,7 @@ public:
     NS_DECL_NSICLASSINFO
     NS_DECL_NSIMUTABLE
     NS_DECL_NSIIPCSERIALIZABLEURI
+    NS_DECL_NSISENSITIVEINFOHIDDENURI
 
     // nsISizeOf
     virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
@@ -173,7 +176,7 @@ private:
     void     Clear();
     void     InvalidateCache(bool invalidateCachedFile = true);
 
-    bool     ValidIPv6orHostname(const char *host);
+    bool     ValidIPv6orHostname(const char *host, uint32_t aLen);
     bool     NormalizeIDN(const nsCSubstring &host, nsCString &result);
     void     CoalescePath(netCoalesceFlags coalesceFlag, char *path);
 
@@ -236,8 +239,6 @@ private:
 
     void FindHostLimit(nsACString::const_iterator& aStart,
                        nsACString::const_iterator& aEnd);
-    // Checks that the Ref contains only allowed characters
-    nsresult CheckRefCharacters(const nsACString &input);
 
     // mSpec contains the normalized version of the URL spec (UTF-8 encoded).
     nsCString mSpec;

@@ -50,7 +50,7 @@ SourceSurfaceD2DTarget::GetFormat() const
   return mFormat;
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 SourceSurfaceD2DTarget::GetDataSurface()
 {
   RefPtr<DataSourceSurfaceD2DTarget> dataSurf =
@@ -63,6 +63,11 @@ SourceSurfaceD2DTarget::GetDataSurface()
   desc.Usage = D3D10_USAGE_STAGING;
   desc.BindFlags = 0;
   desc.MiscFlags = 0;
+
+  if (!Factory::GetDirect3D10Device()) {
+    gfxCriticalError() << "Invalid D3D10 device in D2D target surface";
+    return nullptr;
+  }
 
   HRESULT hr = Factory::GetDirect3D10Device()->CreateTexture2D(&desc, nullptr, byRef(dataSurf->mTexture));
 

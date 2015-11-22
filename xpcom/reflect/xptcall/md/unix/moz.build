@@ -11,10 +11,8 @@ if CONFIG['OS_ARCH'] == 'Darwin':
     ]
     if CONFIG['OS_TEST'] == 'powerpc':
         SOURCES += [
+            '!xptcstubs_asm_ppc_darwin.s',
             'xptcinvoke_asm_ppc_rhapsody.s',
-        ]
-        GENERATED_SOURCES += [
-            'xptcstubs_asm_ppc_darwin.s',
         ]
     if '86' in CONFIG['OS_TEST'] and CONFIG['OS_TEST'] != 'x86_64':
         DEFINES['MOZ_NEED_LEADING_UNDERSCORE'] = True
@@ -33,14 +31,14 @@ if CONFIG['OS_ARCH'] in ('Linux', 'FreeBSD', 'NetBSD', 'OpenBSD') or \
             'xptcinvoke_x86_64_unix.cpp',
             'xptcstubs_x86_64_linux.cpp',
         ]
-    elif CONFIG['OS_TEST'].find('86') != -1:
+    elif '86' in CONFIG['OS_TEST']:
         SOURCES += [
             'xptcinvoke_gcc_x86_unix.cpp',
             'xptcstubs_gcc_x86_unix.cpp'
         ]
 
 if CONFIG['OS_ARCH'] in ('Linux', 'FreeBSD'):
-    if CONFIG['OS_TEST'].find('ia64') != -1:
+    if 'ia64' in CONFIG['OS_TEST']:
         SOURCES += [
             'xptcinvoke_asm_ipf64.s',
             'xptcinvoke_ipf64.cpp',
@@ -48,7 +46,10 @@ if CONFIG['OS_ARCH'] in ('Linux', 'FreeBSD'):
             'xptcstubs_ipf64.cpp'
         ]
 
-if CONFIG['OS_ARCH'] == 'SunOS':
+if CONFIG['OS_ARCH'] == 'SunOS' and '86' in CONFIG['OS_TEST']:
+    GENERATED_FILES = [
+        'xptcstubsdef_asm.solx86',
+    ]
     if CONFIG['OS_TEST'] == 'x86_64':
         if CONFIG['GNU_CC']:
             SOURCES += [
@@ -56,12 +57,13 @@ if CONFIG['OS_ARCH'] == 'SunOS':
                 'xptcstubs_x86_64_linux.cpp'
             ]
         else:
+            ASFLAGS += ['-xarch=amd64']
             SOURCES += [
                 'xptcinvoke_x86_64_solaris.cpp',
                 'xptcstubs_asm_x86_64_solaris_SUNW.s',
                 'xptcstubs_x86_64_solaris.cpp',
             ]
-    elif CONFIG['OS_TEST'].find('86') != -1:
+    else:
         if CONFIG['GNU_CC']:
             SOURCES += [
                 'xptcinvoke_gcc_x86_unix.cpp',
@@ -156,8 +158,8 @@ if CONFIG['OS_ARCH'] == 'Linux':
             'xptcinvoke_linux_m68k.cpp',
             'xptcstubs_linux_m68k.cpp',
         ]
-    if CONFIG['OS_TEST'].find('mips') != -1:
-        if CONFIG['OS_TEST'].find('mips64') != -1:
+    if 'mips' in CONFIG['OS_TEST']:
+        if 'mips64' in CONFIG['OS_TEST']:
             SOURCES += [
                 'xptcinvoke_asm_mips64.S',
                 'xptcinvoke_mips64.cpp',
@@ -175,15 +177,14 @@ if CONFIG['OS_ARCH'] == 'Linux':
 if CONFIG['OS_ARCH'] == 'AIX':
     if CONFIG['HAVE_64BIT_BUILD']:
         SOURCES += [
+            '!xptcstubs_asm_ppc_aix64.s',
             'xptcinvoke_asm_ppc_aix64.s',
             'xptcinvoke_ppc_aix64.cpp',
             'xptcstubs_ppc_aix64.cpp',
         ]
-        GENERATED_SOURCES += [
-            'xptcstubs_asm_ppc_aix64.s',
-        ]
     else:
         SOURCES += [
+            '!xptcstubs_asm_ppc_aix.s',
             'xptcinvoke_ppc_aix.cpp',
             'xptcstubs_ppc_aix.cpp',
         ]
@@ -195,9 +196,6 @@ if CONFIG['OS_ARCH'] == 'AIX':
             SOURCES += [
                 'xptcinvoke_asm_ppc_aix.s',
             ]
-        GENERATED_SOURCES += [
-            'xptcstubs_asm_ppc_aix.s',
-        ]
 
 if CONFIG['OS_TEST'] == 'powerpc':
     if CONFIG['OS_ARCH'] in ('Linux', 'FreeBSD'):
@@ -234,7 +232,7 @@ if CONFIG['OS_ARCH'] == 'OpenBSD' and CONFIG['OS_TEST'] == 'powerpc':
         'xptcstubs_ppc_openbsd.cpp',
     ]
 
-if CONFIG['OS_ARCH'] == 'Linux' and CONFIG['OS_TEST'].find('sparc') != -1:
+if CONFIG['OS_ARCH'] == 'Linux' and 'sparc' in CONFIG['OS_TEST']:
     SOURCES += [
         'xptcinvoke_asm_sparc_linux_GCC3.s',
         'xptcinvoke_sparc_solaris.cpp',
@@ -266,11 +264,9 @@ if CONFIG['OS_ARCH'] in ('OpenBSD', 'FreeBSD') and CONFIG['OS_TEST'] == 'sparc64
         'xptcstubs_sparc64_openbsd.cpp',
     ]
 
-if CONFIG['OS_ARCH'] == 'SunOS' and CONFIG['OS_TEST'].find('86') == -1:
-    GENERATED_FILES = [
-        'xptcstubsdef_asm.solx86',
-    ]
+if CONFIG['OS_ARCH'] == 'SunOS' and '86' not in CONFIG['OS_TEST']:
     if CONFIG['HAVE_64BIT_BUILD']:
+        ASFLAGS += ['-xarch=v9']
         SOURCES += [
             'xptcinvoke_sparcv9_solaris.cpp',
             'xptcstubs_sparcv9_solaris.cpp',
@@ -330,4 +326,5 @@ LOCAL_INCLUDES += [
 
 NO_PGO = True
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

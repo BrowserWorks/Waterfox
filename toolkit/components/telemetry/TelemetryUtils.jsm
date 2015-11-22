@@ -12,7 +12,21 @@ const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
+const IS_CONTENT_PROCESS = (function() {
+  // We cannot use Services.appinfo here because in telemetry xpcshell tests,
+  // appinfo is initially unavailable, and becomes available only later on.
+  let runtime = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
+  return runtime.processType == Ci.nsIXULRuntime.PROCESS_TYPE_CONTENT;
+})();
+
 this.TelemetryUtils = {
+  /**
+   * True if this is a content process.
+   */
+  get isContentProcess() {
+    return IS_CONTENT_PROCESS;
+  },
+
   /**
    * Turn a millisecond timestamp into a day timestamp.
    *
@@ -74,6 +88,12 @@ this.TelemetryUtils = {
       return nextMidnightDate;
     }
     return null;
+  },
+
+  generateUUID: function() {
+    let str = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator).generateUUID().toString();
+    // strip {}
+    return str.substring(1, str.length - 1);
   },
 
   /**

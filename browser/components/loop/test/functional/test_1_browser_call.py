@@ -89,7 +89,7 @@ class Test1BrowserCall(MarionetteTestCase):
         self.marionette.set_context("content")
 
     def local_start_a_conversation(self):
-        button = self.marionette.find_element(By.CSS_SELECTOR, ".rooms .btn-info")
+        button = self.marionette.find_element(By.CSS_SELECTOR, ".new-room-view .btn-info")
 
         self.wait_for_element_enabled(button, 120)
 
@@ -99,10 +99,10 @@ class Test1BrowserCall(MarionetteTestCase):
         self.switch_to_chatbox()
 
         # expect a video container on desktop side
-        media_container = self.wait_for_element_displayed(By.CLASS_NAME, "media")
+        media_container = self.wait_for_element_displayed(By.CLASS_NAME, "media-layout")
         self.assertEqual(media_container.tag_name, "div", "expect a video container")
 
-        self.check_video(".local .OT_publisher .OT_widget-container");
+        self.check_video(".local-video")
 
     def local_get_and_verify_room_url(self):
         self.switch_to_chatbox()
@@ -127,23 +127,20 @@ class Test1BrowserCall(MarionetteTestCase):
                                                       "btn-join")
         join_button.click()
 
-    # Assumes the standlone or the conversation window is selected first.
+    # Assumes the standalone or the conversation window is selected first.
     def check_video(self, selector):
-        video_wrapper = self.wait_for_element_displayed(By.CSS_SELECTOR,
+        video = self.wait_for_element_displayed(By.CSS_SELECTOR,
                                                         selector, 20)
-        video = self.wait_for_subelement_displayed(video_wrapper,
-                                                   By.TAG_NAME, "video")
-
         self.wait_for_element_attribute_to_be_false(video, "paused")
         self.assertEqual(video.get_attribute("ended"), "false")
 
     def standalone_check_remote_video(self):
         self.switch_to_standalone()
-        self.check_video(".remote .OT_subscriber .OT_widget-container")
+        self.check_video(".remote-video")
 
     def local_check_remote_video(self):
         self.switch_to_chatbox()
-        self.check_video(".remote .OT_subscriber .OT_widget-container")
+        self.check_video(".remote-video")
 
     def local_enable_screenshare(self):
         self.switch_to_chatbox()
@@ -153,17 +150,13 @@ class Test1BrowserCall(MarionetteTestCase):
 
     def standalone_check_remote_screenshare(self):
         self.switch_to_standalone()
-        self.check_video(".media .screen .OT_subscriber .OT_widget-container")
+        self.check_video(".screen-share-video")
 
-    def remote_leave_room_and_verify_feedback(self):
+    def remote_leave_room(self):
         self.switch_to_standalone()
         button = self.marionette.find_element(By.CLASS_NAME, "btn-hangup")
 
         button.click()
-
-        # check that the feedback form is displayed
-        feedback_form = self.wait_for_element_displayed(By.CLASS_NAME, "faces")
-        self.assertEqual(feedback_form.tag_name, "div", "expect feedback form")
 
         self.switch_to_chatbox()
         # check that the local view reverts to the preview mode
@@ -263,7 +256,7 @@ class Test1BrowserCall(MarionetteTestCase):
         # which means that the local_check_connection_length below
         # verifies that the connection is noted at the time the remote media
         # drops, rather than waiting until the window closes.
-        self.remote_leave_room_and_verify_feedback()
+        self.remote_leave_room()
 
         self.local_check_connection_length_noted()
 

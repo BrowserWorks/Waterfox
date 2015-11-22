@@ -44,6 +44,7 @@ using mozilla::DefaultXDisplay;
 #include "nsIFocusManager.h"
 #include "nsFocusManager.h"
 #include "nsIDOMDragEvent.h"
+#include "nsIScriptSecurityManager.h"
 #include "nsIScrollableFrame.h"
 #include "nsIDocShell.h"
 #include "ImageContainer.h"
@@ -480,7 +481,8 @@ NS_IMETHODIMP nsPluginInstanceOwner::GetURL(const char *aURL,
                                             const char *aTarget,
                                             nsIInputStream *aPostStream,
                                             void *aHeadersData,
-                                            uint32_t aHeadersDataLen)
+                                            uint32_t aHeadersDataLen,
+                                            bool aDoCheckLoadURIChecks)
 {
   nsCOMPtr<nsIContent> content = do_QueryReferent(mContent);
   if (!content) {
@@ -512,16 +514,34 @@ NS_IMETHODIMP nsPluginInstanceOwner::GetURL(const char *aURL,
   nsCOMPtr<nsILinkHandler> lh = do_QueryInterface(container);
   NS_ENSURE_TRUE(lh, NS_ERROR_FAILURE);
 
-  nsAutoString  unitarget;
-  unitarget.AssignASCII(aTarget); // XXX could this be nonascii?
+  nsAutoString unitarget;
+  if ((0 == PL_strcmp(aTarget, "newwindow")) ||
+      (0 == PL_strcmp(aTarget, "_new"))) {
+    unitarget.AssignASCII("_blank");
+  }
+  else if (0 == PL_strcmp(aTarget, "_current")) {
+    unitarget.AssignASCII("_self");
+  }
+  else {
+    unitarget.AssignASCII(aTarget); // XXX could this be nonascii?
+  }
 
   nsCOMPtr<nsIURI> baseURI = GetBaseURI();
 
   // Create an absolute URL
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NS_NewURI(getter_AddRefs(uri), aURL, baseURI);
-
   NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
+
+  if (aDoCheckLoadURIChecks) {
+    nsCOMPtr<nsIScriptSecurityManager> secMan(
+      do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv));
+    NS_ENSURE_TRUE(secMan, NS_ERROR_FAILURE);
+
+    rv = secMan->CheckLoadURIWithPrincipal(content->NodePrincipal(), uri,
+                                           nsIScriptSecurityManager::STANDARD);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
 
   nsCOMPtr<nsIInputStream> headersDataStream;
   if (aPostStream && aHeadersData) {
@@ -543,43 +563,6 @@ NS_IMETHODIMP nsPluginInstanceOwner::GetURL(const char *aURL,
 
   rv = lh->OnLinkClick(content, uri, unitarget.get(), NullString(),
                        aPostStream, headersDataStream, true);
-
-  return rv;
-}
-
-NS_IMETHODIMP nsPluginInstanceOwner::ShowStatus(const char *aStatusMsg)
-{
-  nsresult  rv = NS_ERROR_FAILURE;
-
-  rv = this->ShowStatus(NS_ConvertUTF8toUTF16(aStatusMsg).get());
-
-  return rv;
-}
-
-NS_IMETHODIMP nsPluginInstanceOwner::ShowStatus(const char16_t *aStatusMsg)
-{
-  nsresult  rv = NS_ERROR_FAILURE;
-
-  if (!mPluginFrame) {
-    return rv;
-  }
-  nsCOMPtr<nsIDocShellTreeItem> docShellItem = mPluginFrame->PresContext()->GetDocShell();
-  if (NS_FAILED(rv) || !docShellItem) {
-    return rv;
-  }
-
-  nsCOMPtr<nsIDocShellTreeOwner> treeOwner;
-  rv = docShellItem->GetTreeOwner(getter_AddRefs(treeOwner));
-  if (NS_FAILED(rv) || !treeOwner) {
-    return rv;
-  }
-
-  nsCOMPtr<nsIWebBrowserChrome> browserChrome(do_GetInterface(treeOwner, &rv));
-  if (NS_FAILED(rv) || !browserChrome) {
-    return rv;
-  }
-  rv = browserChrome->SetStatus(nsIWebBrowserChrome::STATUS_SCRIPT,
-                                aStatusMsg);
 
   return rv;
 }
@@ -659,23 +642,17 @@ nsPluginInstanceOwner::RedrawPlugin()
   return NS_OK;
 }
 
-NS_IMETHODIMP nsPluginInstanceOwner::GetNetscapeWindow(void *value)
-{
-  if (!mPluginFrame) {
-    NS_WARNING("plugin owner has no owner in getting doc's window handle");
-    return NS_ERROR_FAILURE;
-  }
-
 #if defined(XP_WIN)
-  void** pvalue = (void**)value;
-  nsViewManager* vm = mPluginFrame->PresContext()->GetPresShell()->GetViewManager();
-  if (!vm)
-    return NS_ERROR_FAILURE;
+nsIWidget*
+nsPluginInstanceOwner::GetContainingWidgetIfOffset()
+{
+  MOZ_ASSERT(mPluginFrame, "Caller should have checked for null mPluginFrame.");
+
   // This property is provided to allow a "windowless" plugin to determine the window it is drawing
   // in, so it can translate mouse coordinates it receives directly from the operating system
   // to coordinates relative to itself.
 
-  // The original code (outside this #if) returns the document's window, which is OK if the window the "windowless" plugin
+  // The original code returns the document's window, which is OK if the window the "windowless" plugin
   // is drawing into has the same origin as the document's window, but this is not the case for "windowless" plugins inside of scrolling DIVs etc
 
   // To make sure "windowless" plugins always get the right origin for translating mouse coordinates, this code
@@ -689,7 +666,7 @@ NS_IMETHODIMP nsPluginInstanceOwner::GetNetscapeWindow(void *value)
   // we only attempt to get the nearest window if this really is a "windowless" plugin so as not
   // to change any behaviour for the much more common windowed plugins,
   // though why this method would even be being called for a windowed plugin escapes me.
-  if (XRE_GetProcessType() != GeckoProcessType_Content &&
+  if (!XRE_IsContentProcess() &&
       mPluginWindow && mPluginWindow->type == NPWindowTypeDrawable) {
     // it turns out that flash also uses this window for determining focus, and is currently
     // unable to show a caret correctly if we return the enclosing window. Therefore for
@@ -709,17 +686,53 @@ NS_IMETHODIMP nsPluginInstanceOwner::GetNetscapeWindow(void *value)
       if (offset.x || offset.y) {
         // in the case the two windows are offset from eachother, we do go ahead and return the correct enclosing window
         // so that mouse co-ordinates are not messed up.
-        *pvalue = (void*)win->GetNativeData(NS_NATIVE_WINDOW);
-        if (*pvalue)
-          return NS_OK;
+        return win;
       }
     }
   }
+
+  return nullptr;
+}
+
+static already_AddRefed<nsIWidget>
+GetRootWidgetForPluginFrame(const nsPluginFrame* aPluginFrame)
+{
+  MOZ_ASSERT(aPluginFrame);
+
+  nsViewManager* vm =
+    aPluginFrame->PresContext()->GetPresShell()->GetViewManager();
+  if (!vm) {
+    NS_WARNING("Could not find view manager for plugin frame.");
+    return nullptr;
+  }
+
+  nsCOMPtr<nsIWidget> rootWidget;
+  vm->GetRootWidget(getter_AddRefs(rootWidget));
+  return rootWidget.forget();
+}
+#endif
+
+NS_IMETHODIMP nsPluginInstanceOwner::GetNetscapeWindow(void *value)
+{
+  if (!mPluginFrame) {
+    NS_WARNING("plugin owner has no owner in getting doc's window handle");
+    return NS_ERROR_FAILURE;
+  }
+
+#if defined(XP_WIN)
+  void** pvalue = (void**)value;
+  nsIWidget* offsetContainingWidget = GetContainingWidgetIfOffset();
+  if (offsetContainingWidget) {
+    *pvalue = (void*)offsetContainingWidget->GetNativeData(NS_NATIVE_WINDOW);
+    if (*pvalue) {
+      return NS_OK;
+    }
+  }
+
   // simply return the topmost document window
-  nsCOMPtr<nsIWidget> widget;
-  vm->GetRootWidget(getter_AddRefs(widget));
+  nsCOMPtr<nsIWidget> widget = GetRootWidgetForPluginFrame(mPluginFrame);
   if (widget) {
-    *pvalue = (void*)widget->GetNativeData(NS_NATIVE_SHAREABLE_WINDOW);
+    *pvalue = widget->GetNativeData(NS_NATIVE_SHAREABLE_WINDOW);
   } else {
     NS_ASSERTION(widget, "couldn't get doc's widget in getting doc's window handle");
   }
@@ -737,6 +750,48 @@ NS_IMETHODIMP nsPluginInstanceOwner::GetNetscapeWindow(void *value)
 #endif
 }
 
+#if defined(XP_WIN)
+void
+nsPluginInstanceOwner::SetWidgetWindowAsParent(HWND aWindowToAdopt)
+{
+  if (!mWidget) {
+    NS_ERROR("mWidget should exist before this gets called.");
+    return;
+  }
+
+  mWidget->SetNativeData(NS_NATIVE_CHILD_WINDOW,
+                         reinterpret_cast<uintptr_t>(aWindowToAdopt));
+}
+
+nsresult
+nsPluginInstanceOwner::SetNetscapeWindowAsParent(HWND aWindowToAdopt)
+{
+  if (!mPluginFrame) {
+    NS_WARNING("Plugin owner has no plugin frame.");
+    return NS_ERROR_FAILURE;
+  }
+
+  // If there is a containing window that is offset then ask that to adopt.
+  nsIWidget* offsetWidget = GetContainingWidgetIfOffset();
+  if (offsetWidget) {
+    offsetWidget->SetNativeData(NS_NATIVE_CHILD_WINDOW,
+                                reinterpret_cast<uintptr_t>(aWindowToAdopt));
+    return NS_OK;
+  }
+
+  // Otherwise ask the topmost document window to adopt.
+  nsCOMPtr<nsIWidget> rootWidget = GetRootWidgetForPluginFrame(mPluginFrame);
+  if (!rootWidget) {
+    NS_ASSERTION(rootWidget, "Couldn't get topmost document's widget.");
+    return NS_ERROR_FAILURE;
+  }
+
+  rootWidget->SetNativeData(NS_NATIVE_CHILD_OF_SHAREABLE_WINDOW,
+                            reinterpret_cast<uintptr_t>(aWindowToAdopt));
+  return NS_OK;
+}
+#endif
+
 NS_IMETHODIMP nsPluginInstanceOwner::SetEventModel(int32_t eventModel)
 {
 #ifdef XP_MACOSX
@@ -745,13 +800,6 @@ NS_IMETHODIMP nsPluginInstanceOwner::SetEventModel(int32_t eventModel)
 #else
   return NS_ERROR_NOT_IMPLEMENTED;
 #endif
-}
-
-// This is no longer used, just leaving it here so we don't have to change
-// the nsIPluginInstanceOwner interface.
-NPError nsPluginInstanceOwner::ShowNativeContextMenu(NPMenu* menu, void* event)
-{
-  return NPERR_GENERIC_ERROR;
 }
 
 #ifdef XP_MACOSX
@@ -1345,7 +1393,7 @@ bool nsPluginInstanceOwner::AddPluginView(const LayoutDeviceRect& aRect /* = Lay
     if (!mJavaView)
       return false;
 
-    mJavaView = (void*)AndroidBridge::GetJNIEnv()->NewGlobalRef((jobject)mJavaView);
+    mJavaView = (void*)jni::GetGeckoThreadEnv()->NewGlobalRef((jobject)mJavaView);
   }
 
   if (AndroidBridge::Bridge())
@@ -1364,7 +1412,7 @@ void nsPluginInstanceOwner::RemovePluginView()
 
   widget::GeckoAppShell::RemovePluginView(
       jni::Object::Ref::From(jobject(mJavaView)), mFullScreen);
-  AndroidBridge::GetJNIEnv()->DeleteGlobalRef((jobject)mJavaView);
+  jni::GetGeckoThreadEnv()->DeleteGlobalRef((jobject)mJavaView);
   mJavaView = nullptr;
 
   if (mFullScreen)
@@ -1445,7 +1493,7 @@ void nsPluginInstanceOwner::ExitFullScreen() {
 }
 
 void nsPluginInstanceOwner::ExitFullScreen(jobject view) {
-  JNIEnv* env = AndroidBridge::GetJNIEnv();
+  JNIEnv* env = jni::GetGeckoThreadEnv();
 
   if (sFullScreenInstance && sFullScreenInstance->mInstance &&
       env->IsSameObject(view, (jobject)sFullScreenInstance->mInstance->GetJavaSurface())) {
@@ -1526,7 +1574,7 @@ nsresult nsPluginInstanceOwner::DispatchFocusToPlugin(nsIDOMEvent* aFocusEvent)
 
   WidgetEvent* theEvent = aFocusEvent->GetInternalNSEvent();
   if (theEvent) {
-    WidgetGUIEvent focusEvent(theEvent->mFlags.mIsTrusted, theEvent->message,
+    WidgetGUIEvent focusEvent(theEvent->mFlags.mIsTrusted, theEvent->mMessage,
                               nullptr);
     nsEventStatus rv = ProcessEvent(focusEvent);
     if (nsEventStatus_eConsumeNoDefault == rv) {
@@ -1635,7 +1683,7 @@ nsresult nsPluginInstanceOwner::DispatchMouseToPlugin(nsIDOMEvent* aMouseEvent,
         aMouseEvent->StopPropagation();
       }
     }
-    if (mouseEvent->message == NS_MOUSE_BUTTON_UP) {
+    if (mouseEvent->mMessage == eMouseUp) {
       mLastMouseDownButtonType = -1;
     }
   }
@@ -1658,7 +1706,7 @@ nsPluginInstanceOwner::HandleEvent(nsIDOMEvent* aEvent)
   }
   if (eventType.EqualsLiteral("MozPerformDelayedBlur")) {
     if (mShouldBlurOnActivate) {
-      WidgetGUIEvent blurEvent(true, NS_BLUR_CONTENT, nullptr);
+      WidgetGUIEvent blurEvent(true, eBlur, nullptr);
       ProcessEvent(blurEvent);
       mShouldBlurOnActivate = false;
     }
@@ -1700,8 +1748,8 @@ nsPluginInstanceOwner::HandleEvent(nsIDOMEvent* aEvent)
   nsCOMPtr<nsIDOMDragEvent> dragEvent(do_QueryInterface(aEvent));
   if (dragEvent && mInstance) {
     WidgetEvent* ievent = aEvent->GetInternalNSEvent();
-    if ((ievent && ievent->mFlags.mIsTrusted) &&
-         ievent->message != NS_DRAGDROP_ENTER && ievent->message != NS_DRAGDROP_OVER) {
+    if (ievent && ievent->mFlags.mIsTrusted &&
+        ievent->mMessage != eDragEnter && ievent->mMessage != eDragOver) {
       aEvent->PreventDefault();
     }
 
@@ -1758,13 +1806,12 @@ CocoaEventTypeForEvent(const WidgetGUIEvent& anEvent, nsIFrame* aObjectFrame)
     return event->type;
   }
 
-  switch (anEvent.message) {
-    case NS_MOUSE_OVER:
+  switch (anEvent.mMessage) {
+    case eMouseOver:
       return NPCocoaEventMouseEntered;
-    case NS_MOUSE_OUT:
+    case eMouseOut:
       return NPCocoaEventMouseExited;
-    case NS_MOUSE_MOVE:
-    {
+    case eMouseMove: {
       // We don't know via information on events from the widget code whether or not
       // we're dragging. The widget code just generates mouse move events from native
       // drag events. If anybody is capturing, this is a drag event.
@@ -1774,18 +1821,18 @@ CocoaEventTypeForEvent(const WidgetGUIEvent& anEvent, nsIFrame* aObjectFrame)
 
       return NPCocoaEventMouseMoved;
     }
-    case NS_MOUSE_BUTTON_DOWN:
+    case eMouseDown:
       return NPCocoaEventMouseDown;
-    case NS_MOUSE_BUTTON_UP:
+    case eMouseUp:
       return NPCocoaEventMouseUp;
-    case NS_KEY_DOWN:
+    case eKeyDown:
       return NPCocoaEventKeyDown;
-    case NS_KEY_UP:
+    case eKeyUp:
       return NPCocoaEventKeyUp;
-    case NS_FOCUS_CONTENT:
-    case NS_BLUR_CONTENT:
+    case eFocus:
+    case eBlur:
       return NPCocoaEventFocusChanged;
-    case NS_MOUSE_SCROLL:
+    case eLegacyMouseLineOrPageScroll:
       return NPCocoaEventScrollWheel;
     default:
       return (NPCocoaEventType)0;
@@ -1799,12 +1846,12 @@ TranslateToNPCocoaEvent(WidgetGUIEvent* anEvent, nsIFrame* aObjectFrame)
   InitializeNPCocoaEvent(&cocoaEvent);
   cocoaEvent.type = CocoaEventTypeForEvent(*anEvent, aObjectFrame);
 
-  if (anEvent->message == NS_MOUSE_MOVE ||
-      anEvent->message == NS_MOUSE_BUTTON_DOWN ||
-      anEvent->message == NS_MOUSE_BUTTON_UP ||
-      anEvent->message == NS_MOUSE_SCROLL ||
-      anEvent->message == NS_MOUSE_OVER ||
-      anEvent->message == NS_MOUSE_OUT)
+  if (anEvent->mMessage == eMouseMove ||
+      anEvent->mMessage == eMouseDown ||
+      anEvent->mMessage == eMouseUp ||
+      anEvent->mMessage == eLegacyMouseLineOrPageScroll ||
+      anEvent->mMessage == eMouseOver ||
+      anEvent->mMessage == eMouseOut)
   {
     nsPoint pt = nsLayoutUtils::GetEventCoordinatesRelativeTo(anEvent, aObjectFrame) -
                  aObjectFrame->GetContentRectRelativeToSelf().TopLeft();
@@ -1820,10 +1867,9 @@ TranslateToNPCocoaEvent(WidgetGUIEvent* anEvent, nsIFrame* aObjectFrame)
     cocoaEvent.data.mouse.pluginY = double(ptPx.y);
   }
 
-  switch (anEvent->message) {
-    case NS_MOUSE_BUTTON_DOWN:
-    case NS_MOUSE_BUTTON_UP:
-    {
+  switch (anEvent->mMessage) {
+    case eMouseDown:
+    case eMouseUp: {
       WidgetMouseEvent* mouseEvent = anEvent->AsMouseEvent();
       if (mouseEvent) {
         switch (mouseEvent->button) {
@@ -1841,29 +1887,30 @@ TranslateToNPCocoaEvent(WidgetGUIEvent* anEvent, nsIFrame* aObjectFrame)
         }
         cocoaEvent.data.mouse.clickCount = mouseEvent->clickCount;
       } else {
-        NS_WARNING("NS_MOUSE_BUTTON_UP/DOWN is not a WidgetMouseEvent?");
+        NS_WARNING("eMouseUp/DOWN is not a WidgetMouseEvent?");
       }
       break;
     }
-    case NS_MOUSE_SCROLL:
-    {
+    case eLegacyMouseLineOrPageScroll: {
       WidgetWheelEvent* wheelEvent = anEvent->AsWheelEvent();
       if (wheelEvent) {
         cocoaEvent.data.mouse.deltaX = wheelEvent->lineOrPageDeltaX;
         cocoaEvent.data.mouse.deltaY = wheelEvent->lineOrPageDeltaY;
       } else {
-        NS_WARNING("NS_MOUSE_SCROLL is not a WidgetWheelEvent? (could be, haven't checked)");
+        NS_WARNING("eLegacyMouseLineOrPageScroll is not a WidgetWheelEvent? "
+                   "(could be, haven't checked)");
       }
       break;
     }
-    case NS_KEY_DOWN:
-    case NS_KEY_UP:
+    case eKeyDown:
+    case eKeyUp:
     {
       WidgetKeyboardEvent* keyEvent = anEvent->AsKeyboardEvent();
 
       // That keyEvent->mPluginTextEventString is non-empty is a signal that we should
       // create a text event for the plugin, instead of a key event.
-      if ((anEvent->message == NS_KEY_DOWN) && !keyEvent->mPluginTextEventString.IsEmpty()) {
+      if (anEvent->mMessage == eKeyDown &&
+          !keyEvent->mPluginTextEventString.IsEmpty()) {
         cocoaEvent.type = NPCocoaEventTextInput;
         const char16_t* pluginTextEventString = keyEvent->mPluginTextEventString.get();
         cocoaEvent.data.text.text = (NPNSString*)
@@ -1887,9 +1934,9 @@ TranslateToNPCocoaEvent(WidgetGUIEvent* anEvent, nsIFrame* aObjectFrame)
       }
       break;
     }
-    case NS_FOCUS_CONTENT:
-    case NS_BLUR_CONTENT:
-      cocoaEvent.data.focus.hasFocus = (anEvent->message == NS_FOCUS_CONTENT);
+    case eFocus:
+    case eBlur:
+      cocoaEvent.data.focus.hasFocus = (anEvent->mMessage == eFocus);
       break;
     default:
       break;
@@ -1927,8 +1974,7 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
   // focus unless it lost focus within the window. For example, ignore a blur
   // event if it's coming due to the plugin's window deactivating.
   nsCOMPtr<nsIContent> content = do_QueryReferent(mContent);
-  if (anEvent.message == NS_BLUR_CONTENT &&
-      ContentIsFocusedWithinWindow(content)) {
+  if (anEvent.mMessage == eBlur && ContentIsFocusedWithinWindow(content)) {
     mShouldBlurOnActivate = true;
     return nsEventStatus_eIgnore;
   }
@@ -1937,8 +1983,7 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
   // it focus. This might happen if it has focus, its window is blurred, then the
   // window is made active again. The plugin never lost in-window focus, so it
   // shouldn't get a focus event again.
-  if (anEvent.message == NS_FOCUS_CONTENT &&
-      mLastContentFocused == true) {
+  if (anEvent.mMessage == eFocus && mLastContentFocused == true) {
     mShouldBlurOnActivate = false;
     return nsEventStatus_eIgnore;
   }
@@ -1946,9 +1991,8 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
   // Now, if we're going to send a focus event, update mLastContentFocused and
   // tell any plugins in our window that we have taken focus, so they should
   // perform any delayed blurs.
-  if (anEvent.message == NS_FOCUS_CONTENT ||
-      anEvent.message == NS_BLUR_CONTENT) {
-    mLastContentFocused = (anEvent.message == NS_FOCUS_CONTENT);
+  if (anEvent.mMessage == eFocus || anEvent.mMessage == eBlur) {
+    mLastContentFocused = (anEvent.mMessage == eFocus);
     mShouldBlurOnActivate = false;
     PerformDelayedBlurs();
   }
@@ -1992,7 +2036,7 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
   }
 
   bool handled = (response == kNPEventHandled || response == kNPEventStartIME);
-  bool leftMouseButtonDown = (anEvent.message == NS_MOUSE_BUTTON_DOWN) &&
+  bool leftMouseButtonDown = (anEvent.mMessage == eMouseDown) &&
                              (anEvent.AsMouseEvent()->button == WidgetMouseEvent::eLeftButton);
   if (handled && !(leftMouseButtonDown && !mContentFocused)) {
     rv = nsEventStatus_eConsumeNoDefault;
@@ -2011,11 +2055,11 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
       // types
       pluginEvent.event = 0;
       const WidgetMouseEvent* mouseEvent = anEvent.AsMouseEvent();
-      switch (anEvent.message) {
-      case NS_MOUSE_MOVE:
+      switch (anEvent.mMessage) {
+      case eMouseMove:
         pluginEvent.event = WM_MOUSEMOVE;
         break;
-      case NS_MOUSE_BUTTON_DOWN: {
+      case eMouseDown: {
         static const int downMsgs[] =
           { WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN };
         static const int dblClickMsgs[] =
@@ -2027,13 +2071,13 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
         }
         break;
       }
-      case NS_MOUSE_BUTTON_UP: {
+      case eMouseUp: {
         static const int upMsgs[] =
           { WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP };
         pluginEvent.event = upMsgs[mouseEvent->button];
         break;
       }
-      // don't synthesize anything for NS_MOUSE_DOUBLECLICK, since that
+      // don't synthesize anything for eMouseDoubleClick, since that
       // is a synthetic event generated on mouse-up, and Windows WM_*DBLCLK
       // messages are sent on mouse-down
       default:
@@ -2056,12 +2100,12 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
       // not the widget they were received on.
       // See use of NPEvent in widget/windows/nsWindow.cpp
       // for why this assert should be safe
-      NS_ASSERTION(anEvent.message == NS_MOUSE_BUTTON_DOWN ||
-                   anEvent.message == NS_MOUSE_BUTTON_UP ||
-                   anEvent.message == NS_MOUSE_DOUBLECLICK ||
-                   anEvent.message == NS_MOUSE_OVER ||
-                   anEvent.message == NS_MOUSE_OUT ||
-                   anEvent.message == NS_MOUSE_MOVE,
+      NS_ASSERTION(anEvent.mMessage == eMouseDown ||
+                   anEvent.mMessage == eMouseUp ||
+                   anEvent.mMessage == eMouseDoubleClick ||
+                   anEvent.mMessage == eMouseOver ||
+                   anEvent.mMessage == eMouseOut ||
+                   anEvent.mMessage == eMouseMove,
                    "Incorrect event type for coordinate translation");
       nsPoint pt =
         nsLayoutUtils::GetEventCoordinatesRelativeTo(&anEvent, mPluginFrame) -
@@ -2074,18 +2118,20 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
     }
   }
   else if (!pPluginEvent) {
-    switch (anEvent.message) {
-      case NS_FOCUS_CONTENT:
+    switch (anEvent.mMessage) {
+      case eFocus:
         pluginEvent.event = WM_SETFOCUS;
         pluginEvent.wParam = 0;
         pluginEvent.lParam = 0;
         pPluginEvent = &pluginEvent;
         break;
-      case NS_BLUR_CONTENT:
+      case eBlur:
         pluginEvent.event = WM_KILLFOCUS;
         pluginEvent.wParam = 0;
         pluginEvent.lParam = 0;
         pPluginEvent = &pluginEvent;
+        break;
+      default:
         break;
     }
   }
@@ -2115,12 +2161,13 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
   switch(anEvent.mClass) {
     case eMouseEventClass:
       {
-        switch (anEvent.message)
-          {
-          case NS_MOUSE_CLICK:
-          case NS_MOUSE_DOUBLECLICK:
+        switch (anEvent.mMessage) {
+          case eMouseClick:
+          case eMouseDoubleClick:
             // Button up/down events sent instead.
             return rv;
+          default:
+            break;
           }
 
         // Get reference point relative to plugin origin.
@@ -2143,13 +2190,12 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
         Window root = None; // Could XQueryTree, but this is not important.
 #endif
 
-        switch (anEvent.message)
-          {
-          case NS_MOUSE_OVER:
-          case NS_MOUSE_OUT:
+        switch (anEvent.mMessage) {
+          case eMouseOver:
+          case eMouseOut:
             {
               XCrossingEvent& event = pluginEvent.xcrossing;
-              event.type = anEvent.message == NS_MOUSE_OVER ?
+              event.type = anEvent.mMessage == eMouseOver ?
                 EnterNotify : LeaveNotify;
               event.root = root;
               event.time = anEvent.time;
@@ -2166,7 +2212,7 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
               event.focus = mContentFocused;
             }
             break;
-          case NS_MOUSE_MOVE:
+          case eMouseMove:
             {
               XMotionEvent& event = pluginEvent.xmotion;
               event.type = MotionNotify;
@@ -2183,11 +2229,11 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
               event.same_screen = True;
             }
             break;
-          case NS_MOUSE_BUTTON_DOWN:
-          case NS_MOUSE_BUTTON_UP:
+          case eMouseDown:
+          case eMouseUp:
             {
               XButtonEvent& event = pluginEvent.xbutton;
-              event.type = anEvent.message == NS_MOUSE_BUTTON_DOWN ?
+              event.type = anEvent.mMessage == eMouseDown ?
                 ButtonPress : ButtonRelease;
               event.root = root;
               event.time = anEvent.time;
@@ -2213,6 +2259,8 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
               event.same_screen = True;
             }
             break;
+          default:
+            break;
           }
       }
       break;
@@ -2230,19 +2278,21 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
             static_cast<const GdkEventKey*>(anEvent.mPluginEvent);
           event.keycode = gdkEvent->hardware_keycode;
           event.state = gdkEvent->state;
-          switch (anEvent.message)
+          switch (anEvent.mMessage)
             {
-            case NS_KEY_DOWN:
-              // Handle NS_KEY_DOWN for modifier key presses
-              // For non-modifiers we get NS_KEY_PRESS
+            case eKeyDown:
+              // Handle eKeyDown for modifier key presses
+              // For non-modifiers we get eKeyPress
               if (gdkEvent->is_modifier)
                 event.type = XKeyPress;
               break;
-            case NS_KEY_PRESS:
+            case eKeyPress:
               event.type = XKeyPress;
               break;
-            case NS_KEY_UP:
+            case eKeyUp:
               event.type = KeyRelease;
+              break;
+            default:
               break;
             }
 #endif
@@ -2267,20 +2317,20 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
       break;
 
     default:
-      switch (anEvent.message)
-        {
-        case NS_FOCUS_CONTENT:
-        case NS_BLUR_CONTENT:
+      switch (anEvent.mMessage) {
+        case eFocus:
+        case eBlur:
           {
             XFocusChangeEvent &event = pluginEvent.xfocus;
-            event.type =
-              anEvent.message == NS_FOCUS_CONTENT ? FocusIn : FocusOut;
+            event.type = anEvent.mMessage == eFocus ? FocusIn : FocusOut;
             // information lost:
             event.mode = -1;
             event.detail = NotifyDetailNone;
           }
           break;
-        }
+        default:
+          break;
+      }
     }
 
   if (!pluginEvent.type) {
@@ -2315,12 +2365,13 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
   switch(anEvent.mClass) {
     case eMouseEventClass:
       {
-        switch (anEvent.message)
-          {
-          case NS_MOUSE_CLICK:
-          case NS_MOUSE_DOUBLECLICK:
+        switch (anEvent.mMessage) {
+          case eMouseClick:
+          case eMouseDoubleClick:
             // Button up/down events sent instead.
             return rv;
+          default:
+            break;
           }
 
         // Get reference point relative to plugin origin.
@@ -2331,16 +2382,15 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
         nsIntPoint pluginPoint(presContext->AppUnitsToDevPixels(appPoint.x),
                                presContext->AppUnitsToDevPixels(appPoint.y));
 
-        switch (anEvent.message)
-          {
-          case NS_MOUSE_MOVE:
+        switch (anEvent.mMessage) {
+          case eMouseMove:
             {
               // are these going to be touch events?
               // pluginPoint.x;
               // pluginPoint.y;
             }
             break;
-          case NS_MOUSE_BUTTON_DOWN:
+          case eMouseDown:
             {
               ANPEvent event;
               event.inSize = sizeof(ANPEvent);
@@ -2351,7 +2401,7 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
               mInstance->HandleEvent(&event, nullptr, NS_PLUGIN_CALL_SAFE_TO_REENTER_GECKO);
             }
             break;
-          case NS_MOUSE_BUTTON_UP:
+          case eMouseUp:
             {
               ANPEvent event;
               event.inSize = sizeof(ANPEvent);
@@ -2361,6 +2411,8 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
               event.data.mouse.y = pluginPoint.y;
               mInstance->HandleEvent(&event, nullptr, NS_PLUGIN_CALL_SAFE_TO_REENTER_GECKO);
             }
+            break;
+          default:
             break;
           }
       }
@@ -2884,7 +2936,7 @@ NS_IMETHODIMP nsPluginInstanceOwner::CreateWidget(void)
       parentWidget = nsContentUtils::WidgetForDocument(doc);
 #ifndef XP_MACOSX
       // If we're running in the content process, we need a remote widget created in chrome.
-      if (XRE_GetProcessType() == GeckoProcessType_Content) {
+      if (XRE_IsContentProcess()) {
         nsCOMPtr<nsIDOMWindow> window = doc->GetWindow();
         if (window) {
           nsCOMPtr<nsIDOMWindow> topWindow;
@@ -2903,6 +2955,15 @@ NS_IMETHODIMP nsPluginInstanceOwner::CreateWidget(void)
       }
 #endif // XP_MACOSX
     }
+
+#ifndef XP_MACOSX
+    // A failure here is terminal since we can't fall back on the non-e10s code
+    // path below.
+    if (!mWidget && XRE_IsContentProcess()) {
+      return NS_ERROR_UNEXPECTED;
+    }
+#endif // XP_MACOSX
+
     if (!mWidget) {
       // native (single process)
       mWidget = do_CreateInstance(kWidgetCID, &rv);
@@ -3006,7 +3067,7 @@ void nsPluginInstanceOwner::FixUpPluginWindow(int32_t inPaintState)
     mPluginWindow->clipRect.bottom = mPluginWindow->clipRect.top;
     mPluginWindow->clipRect.right  = mPluginWindow->clipRect.left;
   }
-  else if (XRE_GetProcessType() != GeckoProcessType_Default)
+  else if (!XRE_IsParentProcess())
   {
     // For e10s we only support async windowless plugin. This means that
     // we're always going to allocate a full window for the plugin to draw
@@ -3200,7 +3261,7 @@ nsPluginInstanceOwner::UpdateDocumentActiveState(bool aIsActive)
   // to be forwarded over after the active state is updated. If we
   // don't hide plugin widgets in hidden tabs, the native child window
   // in chrome will remain visible after a tab switch.
-  if (mWidget && XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (mWidget && XRE_IsContentProcess()) {
     mWidget->Show(aIsActive);
     mWidget->Enable(aIsActive);
   }

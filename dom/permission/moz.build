@@ -4,6 +4,18 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+EXPORTS.mozilla.dom += [
+    'Permissions.h',
+    'PermissionStatus.h',
+]
+
+UNIFIED_SOURCES += [
+    'PermissionObserver.cpp',
+    'Permissions.cpp',
+    'PermissionStatus.cpp',
+    'PermissionUtils.cpp',
+]
+
 EXTRA_COMPONENTS += [
     'PermissionPromptService.js',
     'PermissionPromptService.manifest',
@@ -33,3 +45,5 @@ if CONFIG['MOZ_WEBSMS_BACKEND']:
 
 if CONFIG['MOZ_TIME_MANAGER']:
     MOCHITEST_MANIFESTS += ['tests/mochitest-time.ini']
+
+FINAL_LIBRARY = 'xul'

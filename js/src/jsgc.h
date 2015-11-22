@@ -23,29 +23,9 @@
 
 #include "vm/NativeObject.h"
 
-#define FOR_EACH_GC_LAYOUT(D) \
- /* PrettyName       TypeName           AddToCCKind */ \
-    D(AccessorShape, js::AccessorShape, true) \
-    D(BaseShape,     js::BaseShape,     true) \
-    D(JitCode,       js::jit::JitCode,  true) \
-    D(LazyScript,    js::LazyScript,    true) \
-    D(Object,        JSObject,          true) \
-    D(ObjectGroup,   js::ObjectGroup,   true) \
-    D(Script,        JSScript,          true) \
-    D(Shape,         js::Shape,         true) \
-    D(String,        JSString,          false) \
-    D(Symbol,        JS::Symbol,        false)
-
 namespace js {
 
 unsigned GetCPUCount();
-
-enum HeapState {
-    Idle,             // doing nothing with the GC heap
-    Tracing,          // tracing the GC heap without collecting, e.g. IterateCompartments()
-    MajorCollecting,  // doing a GC of the major heap
-    MinorCollecting   // doing a GC of the minor heap (nursery)
-};
 
 enum ThreadType
 {
@@ -55,7 +35,7 @@ enum ThreadType
 
 namespace gcstats {
 struct Statistics;
-}
+} // namespace gcstats
 
 class Nursery;
 
@@ -88,7 +68,7 @@ template <> struct MapTypeToFinalizeKind<jit::JitCode>      { static const Alloc
 template <typename T> struct ParticipatesInCC {};
 #define EXPAND_PARTICIPATES_IN_CC(_, type, addToCCKind) \
     template <> struct ParticipatesInCC<type> { static const bool value = addToCCKind; };
-FOR_EACH_GC_LAYOUT(EXPAND_PARTICIPATES_IN_CC)
+JS_FOR_EACH_TRACEKIND(EXPAND_PARTICIPATES_IN_CC)
 #undef EXPAND_PARTICIPATES_IN_CC
 
 static inline bool
@@ -175,54 +155,6 @@ CanBeFinalizedInBackground(AllocKind kind, const Class* clasp)
     return (!IsBackgroundFinalized(kind) &&
             (!clasp->finalize || (clasp->flags & JSCLASS_BACKGROUND_FINALIZE)));
 }
-
-inline JSGCTraceKind
-GetGCThingTraceKind(const void* thing);
-
-// Fortunately, few places in the system need to deal with fully abstract
-// cells. In those places that do, we generally want to move to a layout
-// templated function as soon as possible. This template wraps the upcast
-// for that dispatch.
-//
-// Call the functor |F f| with template parameter of the layout type.
-
-// GCC and Clang require an explicit template declaration in front of the
-// specialization of operator() because it is a dependent template. MSVC, on
-// the other hand, gets very confused if we have a |template| token there.
-#if defined(_MSC_VER) && !defined(__ICL)
-# define DEPENDENT_TEMPLATE_HINT
-#else
-# define DEPENDENT_TEMPLATE_HINT template
-#endif
-template <typename F, typename... Args>
-auto
-CallTyped(F f, JSGCTraceKind traceKind, Args&&... args)
-  -> decltype(f. DEPENDENT_TEMPLATE_HINT operator()<JSObject>(mozilla::Forward<Args>(args)...))
-{
-    switch (traceKind) {
-      case JSTRACE_OBJECT:
-          return f. DEPENDENT_TEMPLATE_HINT operator()<JSObject>(mozilla::Forward<Args>(args)...);
-      case JSTRACE_SCRIPT:
-          return f. DEPENDENT_TEMPLATE_HINT operator()<JSScript>(mozilla::Forward<Args>(args)...);
-      case JSTRACE_STRING:
-          return f. DEPENDENT_TEMPLATE_HINT operator()<JSString>(mozilla::Forward<Args>(args)...);
-      case JSTRACE_SYMBOL:
-          return f. DEPENDENT_TEMPLATE_HINT operator()<JS::Symbol>(mozilla::Forward<Args>(args)...);
-      case JSTRACE_BASE_SHAPE:
-          return f. DEPENDENT_TEMPLATE_HINT operator()<BaseShape>(mozilla::Forward<Args>(args)...);
-      case JSTRACE_JITCODE:
-          return f. DEPENDENT_TEMPLATE_HINT operator()<jit::JitCode>(mozilla::Forward<Args>(args)...);
-      case JSTRACE_LAZY_SCRIPT:
-          return f. DEPENDENT_TEMPLATE_HINT operator()<LazyScript>(mozilla::Forward<Args>(args)...);
-      case JSTRACE_SHAPE:
-          return f. DEPENDENT_TEMPLATE_HINT operator()<Shape>(mozilla::Forward<Args>(args)...);
-      case JSTRACE_OBJECT_GROUP:
-          return f. DEPENDENT_TEMPLATE_HINT operator()<ObjectGroup>(mozilla::Forward<Args>(args)...);
-      default:
-          MOZ_CRASH("Invalid trace kind in CallTyped.");
-    }
-}
-#undef DEPENDENT_TEMPLATE_HINT
 
 /* Capacity for slotsToThingKind */
 const size_t SLOTS_TO_THING_KIND_LIMIT = 17;
@@ -871,7 +803,7 @@ class ArenaLists
         MOZ_ASSERT(freeLists[kind].isEmpty());
     }
 
-    bool relocateArenas(ArenaHeader*& relocatedListOut, JS::gcreason::Reason reason,
+    bool relocateArenas(Zone* zone, ArenaHeader*& relocatedListOut, JS::gcreason::Reason reason,
                         SliceBudget& sliceBudget, gcstats::Statistics& stats);
 
     void queueForegroundObjectsForSweep(FreeOp* fop);
@@ -1100,33 +1032,12 @@ class GCParallelTask
     virtual void runFromHelperThread();
 };
 
-struct GCChunkHasher {
-    typedef gc::Chunk* Lookup;
-
-    /*
-     * Strip zeros for better distribution after multiplying by the golden
-     * ratio.
-     */
-    static HashNumber hash(gc::Chunk* chunk) {
-        MOZ_ASSERT(!(uintptr_t(chunk) & gc::ChunkMask));
-        return HashNumber(uintptr_t(chunk) >> gc::ChunkShift);
-    }
-
-    static bool match(gc::Chunk* k, gc::Chunk* l) {
-        MOZ_ASSERT(!(uintptr_t(k) & gc::ChunkMask));
-        MOZ_ASSERT(!(uintptr_t(l) & gc::ChunkMask));
-        return k == l;
-    }
-};
-
-typedef HashSet<js::gc::Chunk*, GCChunkHasher, SystemAllocPolicy> GCChunkSet;
-
 typedef void (*IterateChunkCallback)(JSRuntime* rt, void* data, gc::Chunk* chunk);
 typedef void (*IterateZoneCallback)(JSRuntime* rt, void* data, JS::Zone* zone);
 typedef void (*IterateArenaCallback)(JSRuntime* rt, void* data, gc::Arena* arena,
-                                     JSGCTraceKind traceKind, size_t thingSize);
+                                     JS::TraceKind traceKind, size_t thingSize);
 typedef void (*IterateCellCallback)(JSRuntime* rt, void* data, void* thing,
-                                    JSGCTraceKind traceKind, size_t thingSize);
+                                    JS::TraceKind traceKind, size_t thingSize);
 
 /*
  * This function calls |zoneCallback| on every zone, |compartmentCallback| on
@@ -1189,23 +1100,20 @@ MergeCompartments(JSCompartment* source, JSCompartment* target);
  */
 class RelocationOverlay
 {
-    friend class MinorCollectionTracer;
-    friend class js::TenuringTracer;
-
     /* The low bit is set so this should never equal a normal pointer. */
     static const uintptr_t Relocated = uintptr_t(0xbad0bad1);
 
-    // Putting the magic value after the forwarding pointer is a terrible hack
-    // to make JSObject::zone() work on forwarded objects.
+    // Arrange the fields of the RelocationOverlay so that JSObject's group
+    // pointer is not overwritten during compacting.
 
-    /* The location |this| was moved to. */
-    Cell* newLocation_;
+    /* A list entry to track all relocated things. */
+    RelocationOverlay* next_;
 
     /* Set to Relocated when moved. */
     uintptr_t magic_;
 
-    /* A list entry to track all relocated things. */
-    RelocationOverlay* next_;
+    /* The location |this| was moved to. */
+    Cell* newLocation_;
 
   public:
     static RelocationOverlay* fromCell(Cell* cell) {
@@ -1223,15 +1131,20 @@ class RelocationOverlay
 
     void forwardTo(Cell* cell) {
         MOZ_ASSERT(!isForwarded());
-        static_assert(offsetof(JSObject, group_) == offsetof(RelocationOverlay, newLocation_),
-                      "forwarding pointer and group should be at same location, "
-                      "so that obj->zone() works on forwarded objects");
+        static_assert(offsetof(JSObject, group_) == offsetof(RelocationOverlay, next_),
+                      "next pointer and group should be at same location, "
+                      "so that group is not overwritten during compacting");
         newLocation_ = cell;
         magic_ = Relocated;
-        next_ = nullptr;
+    }
+
+    RelocationOverlay*& nextRef() {
+        MOZ_ASSERT(isForwarded());
+        return next_;
     }
 
     RelocationOverlay* next() const {
+        MOZ_ASSERT(isForwarded());
         return next_;
     }
 
@@ -1287,7 +1200,7 @@ Forwarded(T* t)
 
 struct ForwardedFunctor : public IdentityDefaultAdaptor<Value> {
     template <typename T> inline Value operator()(T* t) {
-        return js::gc::RewrapValueOrId<Value, T*>::wrap(Forwarded(t));
+        return js::gc::RewrapTaggedPointer<Value, T*>::wrap(Forwarded(t));
     }
 };
 
@@ -1314,6 +1227,13 @@ CheckGCThingAfterMovingGC(T* t)
         MOZ_RELEASE_ASSERT(!IsInsideNursery(t));
         MOZ_RELEASE_ASSERT(!RelocationOverlay::isCellForwarded(t));
     }
+}
+
+template <typename T>
+inline void
+CheckGCThingAfterMovingGC(const ReadBarriered<T*>& t)
+{
+    CheckGCThingAfterMovingGC(t.get());
 }
 
 struct CheckValueAfterMovingGCFunctor : public VoidDefaultAdaptor<Value> {
@@ -1377,7 +1297,7 @@ MaybeVerifyBarriers(JSContext* cx, bool always = false)
  * read the comment in vm/Runtime.h above |suppressGC| and take all appropriate
  * precautions before instantiating this class.
  */
-class AutoSuppressGC
+class MOZ_RAII AutoSuppressGC
 {
     int32_t& suppressGC_;
 
@@ -1394,27 +1314,30 @@ class AutoSuppressGC
 
 #ifdef DEBUG
 /* Disable OOM testing in sections which are not OOM safe. */
-class AutoEnterOOMUnsafeRegion
+class MOZ_RAII AutoEnterOOMUnsafeRegion
 {
-    uint32_t saved_;
+    bool oomEnabled_;
+    int64_t oomAfter_;
 
   public:
-    AutoEnterOOMUnsafeRegion() : saved_(OOM_maxAllocations) {
-        OOM_maxAllocations = UINT32_MAX;
+    AutoEnterOOMUnsafeRegion()
+      : oomEnabled_(OOM_maxAllocations != UINT32_MAX), oomAfter_(0)
+    {
+        if (oomEnabled_) {
+            oomAfter_ = OOM_maxAllocations - OOM_counter;
+            OOM_maxAllocations = UINT32_MAX;
+        }
     }
+
     ~AutoEnterOOMUnsafeRegion() {
-        OOM_maxAllocations = saved_;
+        MOZ_ASSERT(OOM_maxAllocations == UINT32_MAX);
+        if (oomEnabled_)
+            OOM_maxAllocations = OOM_counter + oomAfter_;
     }
 };
 #else
-class AutoEnterOOMUnsafeRegion {};
+class MOZ_RAII AutoEnterOOMUnsafeRegion {};
 #endif /* DEBUG */
-
-// This tests whether something is inside the GGC's nursery only;
-// use sparingly, mostly testing for any nursery, using IsInsideNursery,
-// is appropriate.
-bool
-IsInsideGGCNursery(const gc::Cell* cell);
 
 // A singly linked list of zones.
 class ZoneList
@@ -1451,24 +1374,22 @@ NewMemoryStatisticsObject(JSContext* cx);
 
 #ifdef DEBUG
 /* Use this to avoid assertions when manipulating the wrapper map. */
-class AutoDisableProxyCheck
+class MOZ_RAII AutoDisableProxyCheck
 {
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER;
     gc::GCRuntime& gc;
 
   public:
-    explicit AutoDisableProxyCheck(JSRuntime* rt
-                                   MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+    explicit AutoDisableProxyCheck(JSRuntime* rt);
     ~AutoDisableProxyCheck();
 };
 #else
-struct AutoDisableProxyCheck
+struct MOZ_RAII AutoDisableProxyCheck
 {
     explicit AutoDisableProxyCheck(JSRuntime* rt) {}
 };
 #endif
 
-struct AutoDisableCompactingGC
+struct MOZ_RAII AutoDisableCompactingGC
 {
     explicit AutoDisableCompactingGC(JSRuntime* rt);
     ~AutoDisableCompactingGC();

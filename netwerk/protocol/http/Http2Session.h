@@ -6,7 +6,8 @@
 #ifndef mozilla_net_Http2Session_h
 #define mozilla_net_Http2Session_h
 
-// HTTP/2
+// HTTP/2 - RFC 7540
+// https://www.rfc-editor.org/rfc/rfc7540.txt
 
 #include "ASpdySession.h"
 #include "mozilla/Attributes.h"
@@ -105,7 +106,8 @@ public:
     CONNECT_ERROR = 10,
     ENHANCE_YOUR_CALM = 11,
     INADEQUATE_SECURITY = 12,
-    HTTP_1_1_REQUIRED = 13
+    HTTP_1_1_REQUIRED = 13,
+    UNASSIGNED = 31
   };
 
   // These are frame flags. If they, or other undefined flags, are
@@ -221,7 +223,6 @@ public:
   nsISocketTransport *SocketTransport() { return mSocketTransport; }
   int64_t ServerSessionWindow() { return mServerSessionWindow; }
   void DecrementServerSessionWindow (uint32_t bytes) { mServerSessionWindow -= bytes; }
-  void GetNegotiatedToken(nsACString &s) { s.Assign(mNegotiatedToken); }
 
   void SendPing() override;
   bool MaybeReTunnel(nsAHttpTransaction *) override;
@@ -413,6 +414,11 @@ private:
   // only NO_HTTP_ERROR, PROTOCOL_ERROR, or INTERNAL_ERROR will be sent.
   errorType            mGoAwayReason;
 
+  // The error code sent/received on the session goaway frame. UNASSIGNED/31
+  // if not transmitted.
+  int32_t             mClientGoAwayReason;
+  int32_t             mPeerGoAwayReason;
+
   // If a GoAway message was received this is the ID of the last valid
   // stream. 0 otherwise. (0 is never a valid stream id.)
   uint32_t             mGoAwayID;
@@ -479,11 +485,7 @@ private:
   bool mWaitingForSettingsAck;
   bool mGoAwayOnPush;
 
-  // For caching whether we negotiated "h2" or "h2-<draft>"
-  nsCString mNegotiatedToken;
-
   bool mUseH2Deps;
-  uint32_t mVersion; // HTTP2_VERSION_ from nsHttp.h remove when draft support removed
 
 private:
 /// connect tunnels
@@ -495,7 +497,7 @@ private:
   nsDataHashtable<nsCStringHashKey, uint32_t> mTunnelHash;
 };
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla
 
 #endif // mozilla_net_Http2Session_h

@@ -22,6 +22,7 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "WindowIdentifier.h"
+#include "nsJSUtils.h"
 #include "mozilla/dom/ScreenOrientation.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/ContentParent.h"
@@ -110,7 +111,7 @@ void InitLastIDToVibrate()
   ClearOnShutdown(&gLastIDToVibrate);
 }
 
-} // anonymous namespace
+} // namespace
 
 void
 Vibrate(const nsTArray<uint32_t>& pattern, nsIDOMWindow* window)
@@ -202,7 +203,6 @@ public:
   void RemoveObserver(Observer<InfoType>* aObserver) {
     bool removed = mObservers && mObservers->RemoveObserver(aObserver);
     if (!removed) {
-      NS_WARNING("RemoveObserver() called for unregistered observer");
       return;
     }
 
@@ -486,6 +486,7 @@ UnregisterSystemTimezoneChangeObserver(SystemTimezoneChangeObserver* aObserver)
 void
 NotifySystemTimezoneChange(const SystemTimezoneChangeInformation& aSystemTimezoneChangeInfo)
 {
+  nsJSUtils::ResetTimeZone();
   sSystemTimezoneChangeObservers.BroadcastInformation(aSystemTimezoneChangeInfo);
 }
 
@@ -710,7 +711,7 @@ NotifyScreenConfigurationChange(const ScreenConfiguration& aScreenConfiguration)
 }
 
 bool
-LockScreenOrientation(const dom::ScreenOrientation& aOrientation)
+LockScreenOrientation(const dom::ScreenOrientationInternal& aOrientation)
 {
   AssertMainThread();
   RETURN_PROXY_IF_SANDBOXED(LockScreenOrientation(aOrientation), false);
@@ -888,8 +889,6 @@ ProcessPriorityToString(ProcessPriority aPriority)
     return "FOREGROUND_KEYBOARD";
   case PROCESS_PRIORITY_BACKGROUND_PERCEIVABLE:
     return "BACKGROUND_PERCEIVABLE";
-  case PROCESS_PRIORITY_BACKGROUND_HOMESCREEN:
-    return "BACKGROUND_HOMESCREEN";
   case PROCESS_PRIORITY_BACKGROUND:
     return "BACKGROUND";
   case PROCESS_PRIORITY_UNKNOWN:

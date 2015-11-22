@@ -43,6 +43,13 @@ HTMLAnchorElement::~HTMLAnchorElement()
 {
 }
 
+bool
+HTMLAnchorElement::IsInteractiveHTMLContent(bool aIgnoreTabindex) const
+{
+  return HasAttr(kNameSpaceID_None, nsGkAtoms::href) ||
+         nsGenericHTMLElement::IsInteractiveHTMLContent(aIgnoreTabindex);
+}
+
 NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(HTMLAnchorElement)
   NS_INTERFACE_TABLE_INHERITED(HTMLAnchorElement,
                                nsIDOMHTMLAnchorElement,
@@ -344,7 +351,7 @@ IMPL_URI_PART(Hash)
 NS_IMETHODIMP    
 HTMLAnchorElement::GetText(nsAString& aText)
 {
-  if(!nsContentUtils::GetNodeTextContent(this, true, aText)) {
+  if(!nsContentUtils::GetNodeTextContent(this, true, aText, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   return NS_OK;
@@ -464,5 +471,5 @@ HTMLAnchorElement::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) cons
          Link::SizeOfExcludingThis(aMallocSizeOf);
 }
 
-} // namespace mozilla
 } // namespace dom
+} // namespace mozilla

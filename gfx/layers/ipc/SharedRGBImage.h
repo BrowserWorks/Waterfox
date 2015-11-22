@@ -23,7 +23,7 @@ class ImageClient;
 class TextureClient;
 
 already_AddRefed<Image> CreateSharedRGBImage(ImageContainer* aImageContainer,
-                                             nsIntSize aSize,
+                                             gfx::IntSize aSize,
                                              gfxImageFormat aImageFormat);
 
 /**
@@ -47,7 +47,7 @@ public:
 
   size_t GetBufferSize();
 
-  TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
+  already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
 
   bool Allocate(gfx::IntSize aSize, gfx::SurfaceFormat aFormat);
 private:

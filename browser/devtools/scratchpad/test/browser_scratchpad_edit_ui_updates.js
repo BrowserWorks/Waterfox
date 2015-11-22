@@ -5,8 +5,8 @@
 
 "use strict";
 
-let WebConsoleUtils = require("devtools/toolkit/webconsole/utils").Utils;
-let DEVTOOLS_CHROME_ENABLED = "devtools.chrome.enabled";
+var WebConsoleUtils = require("devtools/toolkit/webconsole/utils").Utils;
+var DEVTOOLS_CHROME_ENABLED = "devtools.chrome.enabled";
 
 function test()
 {
@@ -119,7 +119,7 @@ function runTests()
   };
 
   let firstShow = function() {
-    ok(cutItem.hasAttribute("disabled"), "cut menuitem is disabled");
+    ok(!cutItem.hasAttribute("disabled"), "cut menuitem is enabled");
     closeMenu(firstHide);
   };
 
@@ -149,7 +149,7 @@ function runTests()
   };
 
   let showAfterCut = function() {
-    ok(cutItem.hasAttribute("disabled"), "cut menuitem is disabled after cut");
+    ok(!cutItem.hasAttribute("disabled"), "cut menuitem is enabled after cut");
     ok(!pasteItem.hasAttribute("disabled"), "paste menuitem is enabled after cut");
     closeMenu(hideAfterCut);
   };
@@ -167,7 +167,7 @@ function runTests()
   };
 
   let showAfterPaste = function() {
-    ok(cutItem.hasAttribute("disabled"), "cut menuitem is disabled after paste");
+    ok(!cutItem.hasAttribute("disabled"), "cut menuitem is enabled after paste");
     ok(!pasteItem.hasAttribute("disabled"), "paste menuitem is enabled after paste");
     closeMenu(hideAfterPaste);
   };

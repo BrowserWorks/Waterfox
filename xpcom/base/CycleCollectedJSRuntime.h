@@ -21,10 +21,11 @@
 class nsCycleCollectionNoteRootCallback;
 class nsIException;
 class nsIRunnable;
+class nsThread;
 
 namespace js {
 struct Class;
-}
+} // namespace js
 
 namespace mozilla {
 
@@ -102,6 +103,7 @@ struct CycleCollectorResults
   {
     mForcedGC = false;
     mMergedZones = false;
+    mAnyManual = false;
     mVisitedRefCounted = 0;
     mVisitedGCed = 0;
     mFreedRefCounted = 0;
@@ -114,6 +116,7 @@ struct CycleCollectorResults
 
   bool mForcedGC;
   bool mMergedZones;
+  bool mAnyManual; // true if any slice of the CC was manually triggered, or at shutdown.
   uint32_t mVisitedRefCounted;
   uint32_t mVisitedGCed;
   uint32_t mFreedRefCounted;
@@ -149,7 +152,6 @@ protected:
   }
 
 private:
-
   void
   DescribeGCThing(bool aIsMarked, JS::GCCellPtr aThing,
                   nsCycleCollectionTraversalCallback& aCb) const;
@@ -206,6 +208,11 @@ private:
   virtual void TraceNativeBlackRoots(JSTracer* aTracer) { };
   void TraceNativeGrayRoots(JSTracer* aTracer);
 
+  void AfterProcessMicrotask(uint32_t aRecursionDepth);
+  void ProcessStableStateQueue();
+  void ProcessMetastableStateQueue(uint32_t aRecursionDepth);
+
+public:
   enum DeferredFinalizeType {
     FinalizeIncrementally,
     FinalizeNow,
@@ -213,7 +220,6 @@ private:
 
   void FinalizeDeferredThings(DeferredFinalizeType aType);
 
-public:
   // Two conditions, JSOutOfMemory and JSLargeAllocationFailure, are noted in
   // crash reports. Here are the values that can appear in the reports:
   enum class OOMState : uint32_t {
@@ -221,7 +227,7 @@ public:
     OK,
 
     // We are currently reporting the given condition.
-    // 
+    //
     // Suppose a crash report contains "JSLargeAllocationFailure:
     // Reporting". This means we crashed while executing memory-pressure
     // observers, trying to shake loose some memory. The large allocation in
@@ -284,13 +290,28 @@ public:
   virtual void PrepareForForgetSkippable() = 0;
   virtual void BeginCycleCollectionCallback() = 0;
   virtual void EndCycleCollectionCallback(CycleCollectorResults& aResults) = 0;
-  virtual void DispatchDeferredDeletion(bool aContinuation) = 0;
+  virtual void DispatchDeferredDeletion(bool aContinuation, bool aPurge = false) = 0;
 
   JSRuntime* Runtime() const
   {
     MOZ_ASSERT(mJSRuntime);
     return mJSRuntime;
   }
+
+  // nsThread entrypoints
+  virtual void BeforeProcessTask(bool aMightBlock) { };
+  virtual void AfterProcessTask(uint32_t aRecursionDepth);
+
+  // microtask processor entry point
+  void AfterProcessMicrotask();
+
+  uint32_t RecursionDepth();
+
+  // Run in stable state (call through nsContentUtils)
+  void RunInStableState(already_AddRefed<nsIRunnable>&& aRunnable);
+  // This isn't in the spec at all yet, but this gets the behavior we want for IDB.
+  // Runs after the current microtask completes.
+  void RunInMetastableState(already_AddRefed<nsIRunnable>&& aRunnable);
 
   // Get the current thread's CycleCollectedJSRuntime.  Returns null if there
   // isn't one.
@@ -323,8 +344,20 @@ private:
   nsRefPtr<IncrementalFinalizeRunnable> mFinalizeRunnable;
 
   nsCOMPtr<nsIException> mPendingException;
+  nsThread* mOwningThread; // Manual refcounting to avoid include hell.
 
   std::queue<nsCOMPtr<nsIRunnable>> mPromiseMicroTaskQueue;
+
+  struct RunInMetastableStateData
+  {
+    nsCOMPtr<nsIRunnable> mRunnable;
+    uint32_t mRecursionDepth;
+  };
+
+  nsTArray<nsCOMPtr<nsIRunnable>> mStableStateEvents;
+  nsTArray<RunInMetastableStateData> mMetastableStateEvents;
+  uint32_t mBaseRecursionDepth;
+  bool mDoingStableStates;
 
   OOMState mOutOfMemoryState;
   OOMState mLargeAllocationFailureState;
@@ -332,10 +365,10 @@ private:
 
 void TraceScriptHolder(nsISupports* aHolder, JSTracer* aTracer);
 
-// Returns true if the JSGCTraceKind is one the cycle collector cares about.
-inline bool AddToCCKind(JSGCTraceKind aKind)
+// Returns true if the JS::TraceKind is one the cycle collector cares about.
+inline bool AddToCCKind(JS::TraceKind aKind)
 {
-  return aKind == JSTRACE_OBJECT || aKind == JSTRACE_SCRIPT;
+  return aKind == JS::TraceKind::Object || aKind == JS::TraceKind::Script;
 }
 
 } // namespace mozilla

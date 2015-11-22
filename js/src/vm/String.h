@@ -1121,7 +1121,11 @@ class StaticStrings
  *     private names).
  */
 class PropertyName : public JSAtom
-{};
+{
+  private:
+    /* Vacuous and therefore unimplemented. */
+    PropertyName* asPropertyName() = delete;
+};
 
 static_assert(sizeof(PropertyName) == sizeof(JSString),
               "string subclasses must be binary-compatible with JSString");
@@ -1132,23 +1136,7 @@ NameToId(PropertyName* name)
     return NON_INTEGER_ATOM_TO_JSID(name);
 }
 
-class AutoNameVector : public JS::AutoVectorRooterBase<PropertyName*>
-{
-    typedef AutoVectorRooterBase<PropertyName*> BaseType;
-  public:
-    explicit AutoNameVector(JSContext* cx
-                            MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-        : AutoVectorRooterBase<PropertyName*>(cx, NAMEVECTOR)
-    {
-        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-    }
-
-    HandlePropertyName operator[](size_t i) const {
-        return HandlePropertyName::fromMarkedLocation(&begin()[i]);
-    }
-
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-};
+using PropertyNameVector = js::TraceableVector<PropertyName*>;
 
 template <typename CharT>
 void

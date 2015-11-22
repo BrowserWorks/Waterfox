@@ -8,6 +8,7 @@
 
 #include <stdint.h>                     // for uint32_t, uint64_t
 #include "Units.h"                      // for CSSRect, CSSPixel, etc
+#include "mozilla/Maybe.h"
 #include "mozilla/gfx/BasePoint.h"      // for BasePoint
 #include "mozilla/gfx/Rect.h"           // for RoundedIn
 #include "mozilla/gfx/ScaleFactor.h"    // for ScaleFactor
@@ -46,7 +47,7 @@ public:
     , mScrollableRect(0, 0, 0, 0)
     , mCumulativeResolution()
     , mDevPixelsPerCSSPixel(1)
-    , mIsRoot(false)
+    , mIsRootContent(false)
     , mHasScrollgrab(false)
     , mScrollId(NULL_SCROLL_ID)
     , mScrollParentId(NULL_SCROLL_ID)
@@ -66,6 +67,8 @@ public:
     , mLineScrollAmount(0, 0)
     , mPageScrollAmount(0, 0)
     , mAllowVerticalScrollWithWheel(false)
+    , mIsLayersIdRoot(false)
+    , mUsesContainerScrolling(false)
   {
   }
 
@@ -85,7 +88,7 @@ public:
            mCumulativeResolution == aOther.mCumulativeResolution &&
            mDevPixelsPerCSSPixel == aOther.mDevPixelsPerCSSPixel &&
            mPresShellId == aOther.mPresShellId &&
-           mIsRoot == aOther.mIsRoot &&
+           mIsRootContent == aOther.mIsRootContent &&
            mScrollId == aOther.mScrollId &&
            mScrollParentId == aOther.mScrollParentId &&
            mScrollOffset == aOther.mScrollOffset &&
@@ -98,7 +101,11 @@ public:
            mDoSmoothScroll == aOther.mDoSmoothScroll &&
            mLineScrollAmount == aOther.mLineScrollAmount &&
            mPageScrollAmount == aOther.mPageScrollAmount &&
-           mAllowVerticalScrollWithWheel == aOther.mAllowVerticalScrollWithWheel;
+           mAllowVerticalScrollWithWheel == aOther.mAllowVerticalScrollWithWheel &&
+           mClipRect == aOther.mClipRect &&
+           mMaskLayerIndex == aOther.mMaskLayerIndex &&
+           mIsLayersIdRoot == aOther.mIsLayersIdRoot &&
+		   mUsesContainerScrolling == aOther.mUsesContainerScrolling;
   }
   bool operator!=(const FrameMetrics& aOther) const
   {
@@ -111,11 +118,6 @@ public:
 
     def.mPresShellId = mPresShellId;
     return (def == *this);
-  }
-
-  bool IsRootScrollable() const
-  {
-    return mIsRoot;
   }
 
   bool IsScrollable() const
@@ -171,15 +173,6 @@ public:
     }
 
     return scrollableRect;
-  }
-
-  // Return the scale factor needed to fit the viewport
-  // into its composition bounds.
-  CSSToParentLayerScale CalculateIntrinsicScale() const
-  {
-    return CSSToParentLayerScale(
-        std::max(mCompositionBounds.width / mViewport.width,
-                 mCompositionBounds.height / mViewport.height));
   }
 
   CSSSize CalculateCompositedSizeInCssPixels() const
@@ -300,14 +293,14 @@ public:
     return mDevPixelsPerCSSPixel;
   }
 
-  void SetIsRoot(bool aIsRoot)
+  void SetIsRootContent(bool aIsRootContent)
   {
-    mIsRoot = aIsRoot;
+    mIsRootContent = aIsRootContent;
   }
 
-  bool GetIsRoot() const
+  bool IsRootContent() const
   {
-    return mIsRoot;
+    return mIsRootContent;
   }
 
   void SetHasScrollgrab(bool aHasScrollgrab)
@@ -517,6 +510,42 @@ public:
     mAllowVerticalScrollWithWheel = true;
   }
 
+  void SetClipRect(const Maybe<ParentLayerIntRect>& aClipRect)
+  {
+    mClipRect = aClipRect;
+  }
+  const Maybe<ParentLayerIntRect>& GetClipRect() const
+  {
+    return mClipRect;
+  }
+  bool HasClipRect() const {
+    return mClipRect.isSome();
+  }
+  const ParentLayerIntRect& ClipRect() const {
+    return mClipRect.ref();
+  }
+
+  void SetMaskLayerIndex(const Maybe<size_t>& aIndex) {
+    mMaskLayerIndex = aIndex;
+  }
+  const Maybe<size_t>& GetMaskLayerIndex() const {
+    return mMaskLayerIndex;
+  }
+
+  void SetIsLayersIdRoot(bool aValue) {
+    mIsLayersIdRoot = aValue;
+  }
+  bool IsLayersIdRoot() const {
+    return mIsLayersIdRoot;
+  }
+
+  // Implemented out of line because the implementation needs gfxPrefs.h
+  // and we don't want to include that from FrameMetrics.h.
+  void SetUsesContainerScrolling(bool aValue);
+  bool UsesContainerScrolling() const {
+    return mUsesContainerScrolling;
+  }
+
 private:
 
   // The pres-shell resolution that has been induced on the document containing
@@ -598,7 +627,7 @@ private:
   CSSToLayoutDeviceScale mDevPixelsPerCSSPixel;
 
   // Whether or not this is the root scroll frame for the root content document.
-  bool mIsRoot;
+  bool mIsRootContent;
 
   // Whether or not this frame is for an element marked 'scrollgrab'.
   bool mHasScrollgrab;
@@ -687,6 +716,22 @@ private:
 
   // Whether or not the frame can be vertically scrolled with a mouse wheel.
   bool mAllowVerticalScrollWithWheel;
+
+  // The clip rect to use when compositing a layer with this FrameMetrics.
+  Maybe<ParentLayerIntRect> mClipRect;
+
+  // An extra clip mask layer to use when compositing a layer with this
+  // FrameMetrics. This is an index into the MetricsMaskLayers array on
+  // the Layer.
+  Maybe<size_t> mMaskLayerIndex;
+
+  // Whether these framemetrics are for the root scroll frame (root element if
+  // we don't have a root scroll frame) for its layers id.
+  bool mIsLayersIdRoot;
+
+  // True if scrolling using containers, false otherwise. This can be removed
+  // when containerful scrolling is eliminated.
+  bool mUsesContainerScrolling;
 
   // WARNING!!!!
   //
@@ -832,7 +877,9 @@ struct ZoomConstraints {
   }
 };
 
-}
-}
+typedef Maybe<ZoomConstraints> MaybeZoomConstraints;
+
+} // namespace layers
+} // namespace mozilla
 
 #endif /* GFX_FRAMEMETRICS_H */

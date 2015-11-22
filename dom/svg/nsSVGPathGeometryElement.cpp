@@ -75,7 +75,7 @@ nsSVGPathGeometryElement::GetMarkPoints(nsTArray<nsSVGMark> *aMarks)
 {
 }
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 nsSVGPathGeometryElement::GetOrBuildPath(const DrawTarget& aDrawTarget,
                                          FillRule aFillRule)
 {
@@ -89,7 +89,8 @@ nsSVGPathGeometryElement::GetOrBuildPath(const DrawTarget& aDrawTarget,
   // looking at the global variable that the pref's stored in.
   if (cacheable && mCachedPath) {
     if (aDrawTarget.GetBackendType() == mCachedPath->GetBackendType()) {
-      return mCachedPath;
+      RefPtr<Path> path(mCachedPath);
+      return path.forget();
     }
   }
   RefPtr<PathBuilder> builder = aDrawTarget.CreatePathBuilder(aFillRule);
@@ -100,7 +101,7 @@ nsSVGPathGeometryElement::GetOrBuildPath(const DrawTarget& aDrawTarget,
   return path.forget();
 }
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 nsSVGPathGeometryElement::GetOrBuildPathForMeasuring()
 {
   return nullptr;

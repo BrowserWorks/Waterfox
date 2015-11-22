@@ -9,8 +9,8 @@ const {Cc, Ci, Cu, Cr} = require("chrome");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
-let EventEmitter = require("devtools/toolkit/event-emitter");
+var promise = require("promise");
+var EventEmitter = require("devtools/toolkit/event-emitter");
 
 Cu.import("resource:///modules/devtools/StyleEditorUI.jsm");
 Cu.import("resource:///modules/devtools/StyleEditorUtil.jsm");
@@ -36,9 +36,13 @@ this.StyleEditorPanel = function StyleEditorPanel(panelWin, toolbox) {
 exports.StyleEditorPanel = StyleEditorPanel;
 
 StyleEditorPanel.prototype = {
-  get target() this._toolbox.target,
+  get target() {
+    return this._toolbox.target;
+  },
 
-  get panelWindow() this._panelWin,
+  get panelWindow() {
+    return this._panelWin;
+  },
 
   /**
    * open is effectively an asynchronous constructor
@@ -131,11 +135,13 @@ StyleEditorPanel.prototype = {
       this._target.off("close", this.destroy);
       this._target = null;
       this._toolbox = null;
+      this._panelWin = null;
       this._panelDoc = null;
       this._debuggee.destroy();
       this._debuggee = null;
 
       this.UI.destroy();
+      this.UI = null;
     }
 
     return promise.resolve(null);

@@ -111,7 +111,7 @@ class CPOWProxyHandler : public BaseProxyHandler
                                    ObjectOpResult& result) const override;
     virtual bool isExtensible(JSContext* cx, HandleObject proxy, bool* extensible) const override;
     virtual bool has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const override;
-    virtual bool get(JSContext* cx, HandleObject proxy, HandleObject receiver,
+    virtual bool get(JSContext* cx, HandleObject proxy, HandleValue receiver,
                      HandleId id, MutableHandleValue vp) const override;
     virtual bool set(JSContext* cx, JS::HandleObject proxy, JS::HandleId id, JS::HandleValue v,
                      JS::HandleValue receiver, JS::ObjectOpResult& result) const override;
@@ -149,7 +149,7 @@ const CPOWProxyHandler CPOWProxyHandler::singleton;
         return false;                                                   \
     }                                                                   \
     {                                                                   \
-        CPOWTimer timer;                                                \
+        CPOWTimer timer(cx);                                            \
         return owner->call args;                                        \
     }
 
@@ -341,7 +341,7 @@ WrapperOwner::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp)
 }
 
 bool
-CPOWProxyHandler::get(JSContext* cx, HandleObject proxy, HandleObject receiver,
+CPOWProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue receiver,
                       HandleId id, MutableHandleValue vp) const
 {
     FORWARD(get, (cx, proxy, receiver, id, vp));
@@ -458,13 +458,13 @@ WrapperOwner::DOMQI(JSContext* cx, JS::HandleObject proxy, JS::CallArgs& args)
 }
 
 bool
-WrapperOwner::get(JSContext* cx, HandleObject proxy, HandleObject receiver,
+WrapperOwner::get(JSContext* cx, HandleObject proxy, HandleValue receiver,
                   HandleId id, MutableHandleValue vp)
 {
     ObjectId objId = idOf(proxy);
 
-    ObjectVariant receiverVar;
-    if (!toObjectVariant(cx, receiver, &receiverVar))
+    JSVariant receiverVar;
+    if (!toVariant(cx, receiver, &receiverVar))
         return false;
 
     JSIDVariant idVar;
@@ -1000,7 +1000,7 @@ WrapperOwner::ActorDestroy(ActorDestroyReason why)
 bool
 WrapperOwner::ipcfail(JSContext* cx)
 {
-    JS_ReportError(cx, "child process crashed or timedout");
+    JS_ReportError(cx, "cross-process JS call failed");
     return false;
 }
 

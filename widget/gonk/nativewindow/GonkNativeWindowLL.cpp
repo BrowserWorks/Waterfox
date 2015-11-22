@@ -119,7 +119,7 @@ status_t GonkNativeWindow::setDefaultBufferFormat(uint32_t defaultFormat) {
     return mConsumer->setDefaultBufferFormat(defaultFormat);
 }
 
-TemporaryRef<TextureClient>
+already_AddRefed<TextureClient>
 GonkNativeWindow::getCurrentBuffer() {
     Mutex::Autolock _l(mMutex);
     BufferItem item;
@@ -137,7 +137,7 @@ GonkNativeWindow::getCurrentBuffer() {
         return NULL;
     }
     textureClient->SetRecycleCallback(GonkNativeWindow::RecycleCallback, this);
-    return textureClient;
+    return textureClient.forget();
 }
 
 /* static */ void
@@ -145,6 +145,7 @@ GonkNativeWindow::RecycleCallback(TextureClient* client, void* closure) {
     GonkNativeWindow* nativeWindow =
         static_cast<GonkNativeWindow*>(closure);
 
+    MOZ_ASSERT(client && !client->IsDead());
     client->ClearRecycleCallback();
     nativeWindow->returnBuffer(client);
 }
@@ -158,10 +159,9 @@ void GonkNativeWindow::returnBuffer(TextureClient* client) {
         return;
     }
 
-    sp<Fence> fence = client->GetReleaseFenceHandle().mFence;
-    if (!fence.get()) {
-        fence = Fence::NO_FENCE;
-    }
+    FenceHandle handle = client->GetAndResetReleaseFenceHandle();
+    nsRefPtr<FenceHandle::FdObj> fdObj = handle.GetAndResetFdObj();
+    sp<Fence> fence = new Fence(fdObj->GetAndResetFd());
 
     status_t err;
     err = addReleaseFenceLocked(index,
@@ -175,7 +175,7 @@ void GonkNativeWindow::returnBuffer(TextureClient* client) {
     }
 }
 
-TemporaryRef<TextureClient>
+already_AddRefed<TextureClient>
 GonkNativeWindow::getTextureClientFromBuffer(ANativeWindowBuffer* buffer) {
     Mutex::Autolock lock(mMutex);
     return mConsumer->getTextureClientFromBuffer(buffer);

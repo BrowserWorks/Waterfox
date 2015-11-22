@@ -17,7 +17,7 @@ config = {
             '.org/firefox/bundles',
         ],
         'symbol_server_host': "dev-stage01.srv.releng.scl3.mozilla.com",
-        'stage_server': 'dev-stage01.srv.releng.scl3.mozilla.com',
+        'stage_server': 'upload.ffxbld.productdelivery.stage.mozaws.net',
         "sendchange_masters": ["dev-master1.srv.releng.scl3.mozilla.com:9038"],
         'taskcluster_index': 'index.garbage.staging',
     },
@@ -31,16 +31,21 @@ config = {
             'https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/bundles'
         ],
         'symbol_server_host': "symbolpush.mozilla.org",
-        'stage_server': 'stage.mozilla.org',
+        # bug 1216907, set this at branch level
+        # 'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
         "sendchange_masters": ["buildbot-master81.build.mozilla.org:9301"],
         'taskcluster_index': 'index',
     },
     "taskcluster": {
         'graph_server': 'graphs.mozilla.org',
         'symbol_server_host': "symbolpush.mozilla.org",
-        'stage_server': 'stage.mozilla.org',
+        'stage_server': 'ignored',
         # use the relengapi proxy to talk to tooltool
         "tooltool_servers": ['http://relengapi/tooltool/'],
         "tooltool_url": 'http://relengapi/tooltool/',
+        'upload_env': {
+            'UPLOAD_HOST': 'localhost',
+            'UPLOAD_PATH': '/home/worker/artifacts',
+        },
     },
 }

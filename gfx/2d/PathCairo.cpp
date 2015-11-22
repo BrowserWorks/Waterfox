@@ -122,10 +122,10 @@ PathBuilderCairo::CurrentPoint() const
   return mCurrentPoint;
 }
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 PathBuilderCairo::Finish()
 {
-  return new PathCairo(mFillRule, mPathData, mCurrentPoint);
+  return MakeAndAddRef<PathCairo>(mFillRule, mPathData, mCurrentPoint);
 }
 
 PathCairo::PathCairo(FillRule aFillRule, std::vector<cairo_path_data_t> &aPathData, const Point &aCurrentPoint)
@@ -159,7 +159,7 @@ PathCairo::~PathCairo()
   }
 }
 
-TemporaryRef<PathBuilder>
+already_AddRefed<PathBuilder>
 PathCairo::CopyToBuilder(FillRule aFillRule) const
 {
   RefPtr<PathBuilderCairo> builder = new PathBuilderCairo(aFillRule);
@@ -170,7 +170,7 @@ PathCairo::CopyToBuilder(FillRule aFillRule) const
   return builder.forget();
 }
 
-TemporaryRef<PathBuilder>
+already_AddRefed<PathBuilder>
 PathCairo::TransformedCopyToBuilder(const Matrix &aTransform, FillRule aFillRule) const
 {
   RefPtr<PathBuilderCairo> builder = new PathBuilderCairo(aFillRule);
@@ -319,5 +319,5 @@ PathCairo::AppendPathToBuilder(PathBuilderCairo *aBuilder, const Matrix *aTransf
   }
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

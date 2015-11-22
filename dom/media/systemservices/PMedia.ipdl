@@ -3,28 +3,44 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 include protocol PContent;
-include protocol PBackground;
 
 namespace mozilla {
 namespace media {
 
 protocol PMedia
 {
-  manager PBackground;
+  manager PContent;
 
 parent:
   /**
-   * Requests a persistent unique secret key for each origin.
+   * Requests a potentially persistent unique secret key for each origin.
    * Has no expiry, but is cleared by age along with cookies.
    * This is needed by mediaDevices.enumerateDevices() to produce persistent
    * deviceIds that wont work cross-origin.
+   *
+   * If aPrivateBrowsing is false, a key for this origin is returned from a
+   * primary pool of temporal in-memory keys and persistent keys read from disk.
+   * If no key exists, a temporal one is created.
+   * If aPersist is true and key is temporal, the key is promoted to persistent.
+   * Once persistent, a key cannot become temporal again.
+   *
+   * If aPrivateBrowsing is true, a different key for this origin is returned
+   * from a secondary pool that is never persisted to disk, and aPersist is
+   * ignored.
    */
-  GetOriginKey(uint32_t aRequestId, nsCString aOrigin, bool aPrivateBrowsing);
+  GetOriginKey(uint32_t aRequestId, nsCString aOrigin, bool aPrivateBrowsing,
+               bool aPersist);
 
   /**
-   * On clear cookies. Fire and forget.
+   * Clear per-orgin list of persistent deviceIds stored for enumerateDevices
+   * Fire and forget.
+   *
+   * aSinceTime - milliseconds since 1 January 1970 00:00:00 UTC. 0 = clear all
+   *
+   * aOnlyPrivateBrowsing - if true then only purge the separate in-memory
+   *                        per-origin list used in Private Browsing.
    */
-  SanitizeOriginKeys(uint64_t aSinceWhen);
+  SanitizeOriginKeys(uint64_t aSinceWhen, bool aOnlyPrivateBrowsing);
 
 child:
   GetOriginKeyResponse(uint32_t aRequestId, nsCString key);

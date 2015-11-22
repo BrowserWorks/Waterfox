@@ -17,7 +17,7 @@ struct APZTestDataToJSConverter {
                                dom::Sequence<KeyValuePair>& aOutTo,
                                void (*aElementConverter)(const Key&, const Value&, KeyValuePair&)) {
     for (auto it = aFrom.begin(); it != aFrom.end(); ++it) {
-      aOutTo.AppendElement();
+      aOutTo.AppendElement(fallible);
       aElementConverter(it->first, it->second, aOutTo.LastElement());
     }
   }
@@ -62,5 +62,5 @@ APZTestData::ToJS(JS::MutableHandleValue aOutValue, JSContext* aContext) const
   return dom::ToJSValue(aContext, result, aOutValue);
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

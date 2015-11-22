@@ -9,6 +9,7 @@
 const Services = require("Services");
 const { Cc, Ci, Cu, components, ChromeWorker } = require("chrome");
 const { ActorPool, OriginalLocation, GeneratedLocation } = require("devtools/server/actors/common");
+const { ObjectActor, createValueGrip, longStringGrip } = require("devtools/server/actors/object");
 const { DebuggerServer } = require("devtools/server/main");
 const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 const { dbg_assert, dumpn, update, fetch } = DevToolsUtils;
@@ -17,8 +18,9 @@ const promise = require("promise");
 const PromiseDebugging = require("PromiseDebugging");
 const xpcInspector = require("xpcInspector");
 const ScriptStore = require("./utils/ScriptStore");
+const { DevToolsWorker } = require("devtools/toolkit/shared/worker.js");
 
-const { defer, resolve, reject, all } = require("devtools/toolkit/deprecated-sync-thenables");
+const { defer, resolve, reject, all } = promise;
 
 loader.lazyGetter(this, "Debugger", () => {
   let Debugger = require("Debugger");
@@ -30,41 +32,7 @@ loader.lazyRequireGetter(this, "SourceMapGenerator", "source-map", true);
 loader.lazyRequireGetter(this, "CssLogic", "devtools/styleinspector/css-logic", true);
 loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "mapURIToAddonID", "devtools/server/actors/utils/map-uri-to-addon-id");
-
-let TYPED_ARRAY_CLASSES = ["Uint8Array", "Uint8ClampedArray", "Uint16Array",
-      "Uint32Array", "Int8Array", "Int16Array", "Int32Array", "Float32Array",
-      "Float64Array"];
-
-// Number of items to preview in objects, arrays, maps, sets, lists,
-// collections, etc.
-let OBJECT_PREVIEW_MAX_ITEMS = 10;
-
-/**
- * Call PromiseDebugging.getState on this Debugger.Object's referent and wrap
- * the resulting `value` or `reason` properties in a Debugger.Object instance.
- *
- * See dom/webidl/PromiseDebugging.webidl
- *
- * @returns Object
- *          An object of one of the following forms:
- *          - { state: "pending" }
- *          - { state: "fulfilled", value }
- *          - { state: "rejected", reason }
- */
-function getPromiseState(obj) {
-  if (obj.class != "Promise") {
-    throw new Error(
-      "Can't call `getPromiseState` on `Debugger.Object`s that don't " +
-      "refer to Promise objects.");
-  }
-
-  const state = PromiseDebugging.getState(obj.unsafeDereference());
-  return {
-    state: state.state,
-    value: obj.makeDebuggeeValue(state.value),
-    reason: obj.makeDebuggeeValue(state.reason)
-  };
-};
+loader.lazyRequireGetter(this, "setTimeout", "sdk/timers", true);
 
 /**
  * A BreakpointActorMap is a map from locations to instances of BreakpointActor.
@@ -93,6 +61,13 @@ BreakpointActorMap.prototype = {
    *        The location for which matching BreakpointActors should be generated.
    */
   findActors: function* (location = new OriginalLocation()) {
+    // Fast shortcut for when we know we won't find any actors. Surprisingly
+    // enough, this speeds up refreshing when there are no breakpoints set by
+    // about 2x!
+    if (this.size === 0) {
+      return;
+    }
+
     function* findKeys(object, key) {
       if (key !== undefined) {
         if (key in object) {
@@ -454,6 +429,8 @@ function ThreadActor(aParent, aGlobal)
   this.breakpointActorMap = new BreakpointActorMap();
   this.sourceActorStore = new SourceActorStore();
 
+  this._debuggerSourcesSeen = null;
+
   // A map of actorID -> actor for breakpoints created and managed by the
   // server.
   this._hiddenBreakpoints = new Map();
@@ -466,6 +443,8 @@ function ThreadActor(aParent, aGlobal)
   this.uncaughtExceptionHook = this.uncaughtExceptionHook.bind(this);
   this.onDebuggerStatement = this.onDebuggerStatement.bind(this);
   this.onNewScript = this.onNewScript.bind(this);
+  this.objectGrip = this.objectGrip.bind(this);
+  this.pauseObjectGrip = this.pauseObjectGrip.bind(this);
   this._onWindowReady = this._onWindowReady.bind(this);
   events.on(this._parent, "window-ready", this._onWindowReady);
   // Set a wrappedJSObject property so |this| can be sent via the observer svc
@@ -493,13 +472,21 @@ ThreadActor.prototype = {
   },
 
   get globalDebugObject() {
+    if (!this._parent.window) {
+      return null;
+    }
     return this.dbg.makeGlobalObjectReference(this._parent.window);
   },
 
-  get state() { return this._state; },
-  get attached() this.state == "attached" ||
-                 this.state == "running" ||
-                 this.state == "paused",
+  get state() {
+    return this._state;
+  },
+
+  get attached() {
+    return this.state == "attached" ||
+           this.state == "running" ||
+           this.state == "paused";
+  },
 
   get threadLifetimePool() {
     if (!this._threadLifetimePool) {
@@ -532,33 +519,13 @@ ThreadActor.prototype = {
   _prettyPrintWorker: null,
   get prettyPrintWorker() {
     if (!this._prettyPrintWorker) {
-      this._prettyPrintWorker = new ChromeWorker(
-        "resource://gre/modules/devtools/server/actors/pretty-print-worker.js");
-
-      this._prettyPrintWorker.addEventListener(
-        "error", this._onPrettyPrintError, false);
-
-      if (dumpn.wantLogging) {
-        this._prettyPrintWorker.addEventListener("message", this._onPrettyPrintMsg, false);
-
-        const postMsg = this._prettyPrintWorker.postMessage;
-        this._prettyPrintWorker.postMessage = data => {
-          dumpn("Sending message to prettyPrintWorker: "
-                + JSON.stringify(data, null, 2) + "\n");
-          return postMsg.call(this._prettyPrintWorker, data);
-        };
-      }
+      this._prettyPrintWorker = new DevToolsWorker(
+        "resource://gre/modules/devtools/server/actors/pretty-print-worker.js",
+        { name: "pretty-print",
+          verbose: dumpn.wantLogging }
+      );
     }
     return this._prettyPrintWorker;
-  },
-
-  _onPrettyPrintError: function ({ message, filename, lineno }) {
-    reportError(new Error(message + " @ " + filename + ":" + lineno));
-  },
-
-  _onPrettyPrintMsg: function ({ data }) {
-    dumpn("Received message from prettyPrintWorker: "
-          + JSON.stringify(data, null, 2) + "\n");
   },
 
   /**
@@ -623,11 +590,7 @@ ThreadActor.prototype = {
     this._threadLifetimePool = null;
 
     if (this._prettyPrintWorker) {
-      this._prettyPrintWorker.removeEventListener(
-        "error", this._onPrettyPrintError, false);
-      this._prettyPrintWorker.removeEventListener(
-        "message", this._onPrettyPrintMsg, false);
-      this._prettyPrintWorker.terminate();
+      this._prettyPrintWorker.destroy();
       this._prettyPrintWorker = null;
     }
 
@@ -658,6 +621,7 @@ ThreadActor.prototype = {
     }
 
     this._state = "attached";
+    this._debuggerSourcesSeen = new Set();
 
     update(this._options, aRequest.options || {});
     this.sources.reconfigure(this._options);
@@ -705,6 +669,7 @@ ThreadActor.prototype = {
   onDetach: function (aRequest) {
     this.disconnect();
     this._state = "detached";
+    this._debuggerSourcesSeen = null;
 
     dumpn("ThreadActor.prototype.onDetach: returning 'detached' packet");
     return {
@@ -809,7 +774,7 @@ ThreadActor.prototype = {
   _makeOnEnterFrame: function ({ pauseAndRespond }) {
     return aFrame => {
       const generatedLocation = this.sources.getFrameLocation(aFrame);
-      let { originalSourceActor } = this.synchronize(this.sources.getOriginalLocation(
+      let { originalSourceActor } = this.unsafeSynchronize(this.sources.getOriginalLocation(
         generatedLocation));
       let url = originalSourceActor.url;
 
@@ -824,7 +789,7 @@ ThreadActor.prototype = {
       // onPop is called with 'this' set to the current frame.
 
       const generatedLocation = thread.sources.getFrameLocation(this);
-      const { originalSourceActor } = thread.synchronize(thread.sources.getOriginalLocation(
+      const { originalSourceActor } = thread.unsafeSynchronize(thread.sources.getOriginalLocation(
         generatedLocation));
       const url = originalSourceActor.url;
 
@@ -866,7 +831,7 @@ ThreadActor.prototype = {
       // onStep is called with 'this' set to the current frame.
 
       const generatedLocation = thread.sources.getFrameLocation(this);
-      const newLocation = thread.synchronize(thread.sources.getOriginalLocation(
+      const newLocation = thread.unsafeSynchronize(thread.sources.getOriginalLocation(
         generatedLocation));
 
       // Cases when we should pause because we have executed enough to consider
@@ -912,10 +877,11 @@ ThreadActor.prototype = {
     // binding in each _makeOnX method, just do it once here and pass it
     // in to each function.
     const steppingHookState = {
-      pauseAndRespond: (aFrame, onPacket=(k)=>k) => {
+      pauseAndRespond: (aFrame, onPacket=k=>k) => {
         return this._pauseAndRespond(aFrame, { type: "resumeLimit" }, onPacket);
       },
-      createValueGrip: this.createValueGrip.bind(this),
+      createValueGrip: v => createValueGrip(v, this._pausePool,
+        this.objectGrip),
       thread: this,
       startFrame: this.youngestFrame,
       startLocation: aStartLocation,
@@ -1087,11 +1053,15 @@ ThreadActor.prototype = {
   /**
    * Spin up a nested event loop so we can synchronously resolve a promise.
    *
+   * DON'T USE THIS UNLESS YOU ABSOLUTELY MUST! Nested event loops suck: the
+   * world's state can change out from underneath your feet because JS is no
+   * longer run-to-completion.
+   *
    * @param aPromise
    *        The promise we want to resolve.
    * @returns The promise's resolution.
    */
-  synchronize: function(aPromise) {
+  unsafeSynchronize: function(aPromise) {
     let needNest = true;
     let eventLoop;
     let returnVal;
@@ -1102,7 +1072,7 @@ ThreadActor.prototype = {
         returnVal = aResolvedVal;
       })
       .then(null, (aError) => {
-        reportError(aError, "Error inside synchronize:");
+        reportError(aError, "Error inside unsafeSynchronize:");
       })
       .then(() => {
         if (eventLoop) {
@@ -1329,7 +1299,7 @@ ThreadActor.prototype = {
     }
 
     let res;
-    for each (let actorID in aRequest.actors) {
+    for (let actorID of aRequest.actors) {
       let actor = this.threadLifetimePool.get(actorID);
       if (!actor) {
         if (!res) {
@@ -1357,14 +1327,20 @@ ThreadActor.prototype = {
       }
     }
 
-    return all([this.sources.createSourceActors(script.source)
-                for (script of sourcesToScripts.values())]);
+    return all([...sourcesToScripts.values()].map(script => {
+      return this.sources.createSourceActors(script.source);
+    }));
   },
 
   onSources: function (aRequest) {
     return this._discoverSources().then(() => {
+      // No need to flush the new source packets here, as we are sending the
+      // list of sources out immediately and we don't need to invoke the
+      // overhead of an RDP packet for every source right now. Let the default
+      // timeout flush the buffered packets.
+
       return {
-        sources: [s.form() for (s of this.sources.iter())]
+        sources: this.sources.iter().map(s => s.form())
       };
     });
   },
@@ -1399,7 +1375,19 @@ ThreadActor.prototype = {
     }
 
     try {
-      // Put ourselves in the paused state.
+      // If execution should pause just before the next JavaScript bytecode is
+      // executed, just set an onEnterFrame handler.
+      if (aRequest.when == "onNext") {
+        let onEnterFrame = (aFrame) => {
+          return this._pauseAndRespond(aFrame, { type: "interrupted", onNext: true });
+        };
+        this.dbg.onEnterFrame = onEnterFrame;
+
+        return { type: "willInterrupt" };
+      }
+
+      // If execution should pause immediately, just put ourselves in the paused
+      // state.
       let packet = this._paused();
       if (!packet) {
         return { error: "notInterrupted" };
@@ -1460,7 +1448,7 @@ ThreadActor.prototype = {
         let nodeDO = this.globalDebugObject.makeDebuggeeValue(node);
         listenerForm.node = {
           selector: selector,
-          object: this.createValueGrip(nodeDO)
+          object: createValueGrip(nodeDO, this._pausePool, this.objectGrip)
         };
         listenerForm.type = handler.type;
         listenerForm.capturing = handler.capturing;
@@ -1497,7 +1485,8 @@ ThreadActor.prototype = {
         while (listenerDO.isBoundFunction) {
           listenerDO = listenerDO.boundTargetFunction;
         }
-        listenerForm.function = this.createValueGrip(listenerDO);
+        listenerForm.function = createValueGrip(listenerDO, this._pausePool,
+          this.objectGrip);
         listeners.push(listenerForm);
       }
     }
@@ -1542,7 +1531,7 @@ ThreadActor.prototype = {
     // Clear DOM event breakpoints.
     // XPCShell tests don't use actual DOM windows for globals and cause
     // removeListenerForAllEvents to throw.
-    if (this.global && !this.global.toString().includes("Sandbox")) {
+    if (!isWorker && this.global && !this.global.toString().includes("Sandbox")) {
       let els = Cc["@mozilla.org/eventlistenerservice;1"]
                 .getService(Ci.nsIEventListenerService);
       els.removeListenerForAllEvents(this.global, this._allEventsListener, true);
@@ -1611,7 +1600,7 @@ ThreadActor.prototype = {
     let framePool = new ActorPool(this.conn);
     let frameList = [];
 
-    for each (let frameActor in this._frameActors) {
+    for (let frameActor of this._frameActors) {
       if (frameActor.frame.live) {
         framePool.addActor(frameActor);
         frameList.push(frameActor);
@@ -1673,74 +1662,6 @@ ThreadActor.prototype = {
   },
 
   /**
-   * Create a grip for the given debuggee value.  If the value is an
-   * object, will create an actor with the given lifetime.
-   */
-  createValueGrip: function (aValue, aPool=false) {
-    if (!aPool) {
-      aPool = this._pausePool;
-    }
-
-    switch (typeof aValue) {
-      case "boolean":
-        return aValue;
-
-      case "string":
-        if (this._stringIsLong(aValue)) {
-          return this.longStringGrip(aValue, aPool);
-        }
-        return aValue;
-
-      case "number":
-        if (aValue === Infinity) {
-          return { type: "Infinity" };
-        } else if (aValue === -Infinity) {
-          return { type: "-Infinity" };
-        } else if (Number.isNaN(aValue)) {
-          return { type: "NaN" };
-        } else if (!aValue && 1 / aValue === -Infinity) {
-          return { type: "-0" };
-        }
-        return aValue;
-
-      case "undefined":
-        return { type: "undefined" };
-
-      case "object":
-        if (aValue === null) {
-          return { type: "null" };
-        }
-      else if(aValue.optimizedOut ||
-              aValue.uninitialized ||
-              aValue.missingArguments) {
-          // The slot is optimized out, an uninitialized binding, or
-          // arguments on a dead scope
-          return {
-            type: "null",
-            optimizedOut: aValue.optimizedOut,
-            uninitialized: aValue.uninitialized,
-            missingArguments: aValue.missingArguments
-          };
-        }
-        return this.objectGrip(aValue, aPool);
-
-      case "symbol":
-        let form = {
-          type: "symbol"
-        };
-        let name = getSymbolName(aValue);
-        if (name !== undefined) {
-          form.name = this.createValueGrip(name);
-        }
-        return form;
-
-      default:
-        dbg_assert(false, "Failed to provide a grip for: " + aValue);
-        return null;
-    }
-  },
-
-  /**
    * Return a protocol completion value representing the given
    * Debugger-provided completion value.
    */
@@ -1749,11 +1670,14 @@ ThreadActor.prototype = {
     if (aCompletion == null) {
       protoValue.terminated = true;
     } else if ("return" in aCompletion) {
-      protoValue.return = this.createValueGrip(aCompletion.return);
+      protoValue.return = createValueGrip(aCompletion.return,
+        this._pausePool, this.objectGrip);
     } else if ("throw" in aCompletion) {
-      protoValue.throw = this.createValueGrip(aCompletion.throw);
+      protoValue.throw = createValueGrip(aCompletion.throw,
+        this._pausePool, this.objectGrip);
     } else {
-      protoValue.return = this.createValueGrip(aCompletion.yield);
+      protoValue.return = createValueGrip(aCompletion.yield,
+        this._pausePool, this.objectGrip);
     }
     return protoValue;
   },
@@ -1777,7 +1701,20 @@ ThreadActor.prototype = {
       return this.threadLifetimePool.objectActors.get(aValue).grip();
     }
 
-    let actor = new PauseScopedObjectActor(aValue, this);
+    let actor = new PauseScopedObjectActor(aValue, {
+      getGripDepth: () => this._gripDepth,
+      incrementGripDepth: () => this._gripDepth++,
+      decrementGripDepth: () => this._gripDepth--,
+      createValueGrip: v => createValueGrip(v, this._pausePool,
+        this.pauseObjectGrip),
+      sources: () => this.sources,
+      createEnvironmentActor: (env, pool) =>
+        this.createEnvironmentActor(env, pool),
+      promote: () => this.threadObjectGrip(actor),
+      isThreadLifetimePool: () =>
+        actor.registeredPool !== this.threadLifetimePool,
+      getGlobalDebugObject: () => this.globalDebugObject
+    });
     aPool.addActor(actor);
     aPool.objectActors.set(aValue, actor);
     return actor.grip();
@@ -1838,36 +1775,13 @@ ThreadActor.prototype = {
   },
 
   /**
-   * Create a grip for the given string.
-   *
-   * @param aString String
-   *        The string we are creating a grip for.
-   * @param aPool ActorPool
-   *        The actor pool where the new actor will be added.
-   */
-  longStringGrip: function (aString, aPool) {
-    if (!aPool.longStringActors) {
-      aPool.longStringActors = {};
-    }
-
-    if (aPool.longStringActors.hasOwnProperty(aString)) {
-      return aPool.longStringActors[aString].grip();
-    }
-
-    let actor = new LongStringActor(aString, this);
-    aPool.addActor(actor);
-    aPool.longStringActors[aString] = actor;
-    return actor.grip();
-  },
-
-  /**
    * Create a long string grip that is scoped to a pause.
    *
    * @param aString String
    *        The string we are creating a grip for.
    */
   pauseLongStringGrip: function (aString) {
-    return this.longStringGrip(aString, this._pausePool);
+    return longStringGrip(aString, this._pausePool);
   },
 
   /**
@@ -1877,18 +1791,7 @@ ThreadActor.prototype = {
    *        The string we are creating a grip for.
    */
   threadLongStringGrip: function (aString) {
-    return this.longStringGrip(aString, this._threadLifetimePool);
-  },
-
-  /**
-   * Returns true if the string is long enough to use a LongStringActor instead
-   * of passing the value directly over the protocol.
-   *
-   * @param aString String
-   *        The string we are checking the length of.
-   */
-  _stringIsLong: function (aString) {
-    return aString.length >= DebuggerServer.LONG_STRING_LENGTH;
+    return longStringGrip(aString, this._threadLifetimePool);
   },
 
   // JS Debugger API hooks.
@@ -1916,7 +1819,7 @@ ThreadActor.prototype = {
     // Don't pause if we are currently stepping (in or over) or the frame is
     // black-boxed.
     const generatedLocation = this.sources.getFrameLocation(aFrame);
-    const { originalSourceActor } = this.synchronize(this.sources.getOriginalLocation(
+    const { originalSourceActor } = this.unsafeSynchronize(this.sources.getOriginalLocation(
       generatedLocation));
     const url = originalSourceActor ? originalSourceActor.url : null;
 
@@ -1948,7 +1851,7 @@ ThreadActor.prototype = {
     }
 
     const generatedLocation = this.sources.getFrameLocation(aFrame);
-    const { sourceActor } = this.synchronize(this.sources.getOriginalLocation(
+    const { sourceActor } = this.unsafeSynchronize(this.sources.getOriginalLocation(
       generatedLocation));
     const url = sourceActor ? sourceActor.url : null;
 
@@ -1963,7 +1866,9 @@ ThreadActor.prototype = {
       }
 
       packet.why = { type: "exception",
-                     exception: this.createValueGrip(aValue) };
+                     exception: createValueGrip(aValue, this._pausePool,
+                                                this.objectGrip)
+                   };
       this.conn.send(packet);
 
       this._pushThreadPause();
@@ -1984,13 +1889,6 @@ ThreadActor.prototype = {
    *        A Debugger.Object instance whose referent is the global object.
    */
   onNewScript: function (aScript, aGlobal) {
-    // XXX: The scripts must be added to the ScriptStore before restoring
-    // breakpoints in _addScript. If we try to add them to the ScriptStore
-    // inside _addScript, we can accidentally set a breakpoint in a top level
-    // script as a "closest match" because we wouldn't have added the child
-    // scripts to the ScriptStore yet.
-    this.scripts.addScripts(this.dbg.findScripts({ source: aScript.source }));
-
     this._addSource(aScript.source);
   },
 
@@ -2023,9 +1921,15 @@ ThreadActor.prototype = {
    * @returns true, if the source was added; false otherwise.
    */
   _addSource: function (aSource) {
-    if (!this.sources.allowSource(aSource)) {
+    if (!this.sources.allowSource(aSource) || this._debuggerSourcesSeen.has(aSource)) {
       return false;
     }
+
+    // The scripts must be added to the ScriptStore before restoring
+    // breakpoints. If we try to add them to the ScriptStore any later, we can
+    // accidentally set a breakpoint in a top level script as a "closest match"
+    // because we wouldn't have added the child scripts to the ScriptStore yet.
+    this.scripts.addScripts(this.dbg.findScripts({ source: aSource }));
 
     let sourceActor = this.sources.createNonSourceMappedActor(aSource);
 
@@ -2033,20 +1937,19 @@ ThreadActor.prototype = {
     // fetches sourcemaps if available and sends onNewSource
     // notifications.
     //
-    // We need to use synchronize here because if the page is being reloaded,
+    // We need to use unsafeSynchronize here because if the page is being reloaded,
     // this call will replace the previous set of source actors for this source
     // with a new one. If the source actors have not been replaced by the time
     // we try to reset the breakpoints below, their location objects will still
     // point to the old set of source actors, which point to different scripts.
-    this.synchronize(this.sources.createSourceActors(aSource));
+    this.unsafeSynchronize(this.sources.createSourceActors(aSource));
 
     // Set any stored breakpoints.
     let promises = [];
 
     for (let _actor of this.breakpointActorMap.findActors()) {
-      // XXX bug 1142115: We do async work in here, so we need to
-      // create a fresh binding because for/of does not yet do that in
-      // SpiderMonkey
+      // XXX bug 1142115: We do async work in here, so we need to create a fresh
+      // binding because for/of does not yet do that in SpiderMonkey.
       let actor = _actor;
 
       if (actor.isPending) {
@@ -2066,9 +1969,10 @@ ThreadActor.prototype = {
     }
 
     if (promises.length > 0) {
-      this.synchronize(Promise.all(promises));
+      this.unsafeSynchronize(promise.all(promises));
     }
 
+    this._debuggerSourcesSeen.add(aSource);
     return true;
   },
 
@@ -2315,7 +2219,7 @@ SourceActor.prototype = {
   get breakpointActorMap() { return this.threadActor.breakpointActorMap; },
   get url() {
     if (this.source) {
-      return getSourceURL(this.source);
+      return getSourceURL(this.source, this.threadActor._parent.window);
     }
     return this._originalUrl;
   },
@@ -2400,6 +2304,37 @@ SourceActor.prototype = {
     }
   },
 
+  _reportLoadSourceError: function (error, map=null) {
+    try {
+      DevToolsUtils.reportException("SourceActor", error);
+
+      JSON.stringify(this.form(), null, 4).split(/\n/g)
+        .forEach(line => console.error("\t", line));
+
+      if (!map) {
+        return;
+      }
+
+      console.error("\t", "source map's sourceRoot =", map.sourceRoot);
+
+      console.error("\t", "source map's sources =");
+      map.sources.forEach(s => {
+        let hasSourceContent = map.sourceContentFor(s, true);
+        console.error("\t\t", s, "\t",
+                      hasSourceContent ? "has source content" : "no source content");
+      });
+
+      console.error("\t", "source map's sourcesContent =");
+      map.sourcesContent.forEach(c => {
+        if (c.length > 80) {
+          c = c.slice(0, 77) + "...";
+        }
+        c = c.replace(/\n/g, "\\n");
+        console.error("\t\t", c);
+      });
+    } catch (e) { }
+  },
+
   _getSourceText: function () {
     let toResolvedContent = t => ({
       content: t,
@@ -2408,9 +2343,16 @@ SourceActor.prototype = {
 
     let genSource = this.generatedSource || this.source;
     return this.threadActor.sources.fetchSourceMap(genSource).then(map => {
-      let sc;
-      if (map && (sc = map.sourceContentFor(this.url))) {
-        return toResolvedContent(sc);
+      if (map) {
+        try {
+          let sourceContent = map.sourceContentFor(this.url);
+          if (sourceContent) {
+            return toResolvedContent(sourceContent);
+          }
+        } catch (error) {
+          this._reportLoadSourceError(error, map);
+          throw error;
+        }
       }
 
       // Use `source.text` if it exists, is not the "no source"
@@ -2435,10 +2377,14 @@ SourceActor.prototype = {
         let sourceFetched = fetch(this.url, { loadFromCache: this.isInlineSource });
 
         // Record the contentType we just learned during fetching
-        return sourceFetched.then(result => {
-          this._contentType = result.contentType;
-          return result;
-        });
+        return sourceFetched
+          .then(result => {
+            this._contentType = result.contentType;
+            return result;
+          }, error => {
+            this._reportLoadSourceError(error, map);
+            throw error;
+          });
       }
     });
   },
@@ -2455,7 +2401,7 @@ SourceActor.prototype = {
 
     function sortLines(lines) {
       // Converting the Set into an array
-      lines = [line for (line of lines)];
+      lines = [...lines];
       lines.sort((a, b) => {
         return a - b;
       });
@@ -2515,8 +2461,8 @@ SourceActor.prototype = {
       .then(({ content, contentType }) => {
         return {
           from: this.actorID,
-          source: this.threadActor.createValueGrip(
-            content, this.threadActor.threadLifetimePool),
+          source: createValueGrip(content, this.threadActor.threadLifetimePool,
+            this.threadActor.objectGrip),
           contentType: contentType
         };
       })
@@ -2571,31 +2517,11 @@ SourceActor.prototype = {
    */
   _sendToPrettyPrintWorker: function (aIndent) {
     return ({ content }) => {
-      const deferred = promise.defer();
-      const id = Math.random();
-
-      const onReply = ({ data }) => {
-        if (data.id !== id) {
-          return;
-        }
-        this.prettyPrintWorker.removeEventListener("message", onReply, false);
-
-        if (data.error) {
-          deferred.reject(new Error(data.error));
-        } else {
-          deferred.resolve(data);
-        }
-      };
-
-      this.prettyPrintWorker.addEventListener("message", onReply, false);
-      this.prettyPrintWorker.postMessage({
-        id: id,
+      return this.prettyPrintWorker.performTask("pretty-print", {
         url: this.url,
         indent: aIndent,
         source: content
-      });
-
-      return deferred.promise;
+      })
     };
   },
 
@@ -3023,10 +2949,10 @@ SourceActor.prototype = {
         actor,
         GeneratedLocation.fromOriginalLocation(originalLocation)
       )) {
-        return Promise.resolve(null);
+        return promise.resolve(null);
       }
 
-      return Promise.resolve(originalLocation);
+      return promise.resolve(originalLocation);
     } else {
       return this.sources.getAllGeneratedLocations(originalLocation)
                          .then((generatedLocations) => {
@@ -3133,1358 +3059,13 @@ SourceActor.prototype.requestTypes = {
 exports.SourceActor = SourceActor;
 
 /**
- * Determine if a given value is non-primitive.
- *
- * @param Any aValue
- *        The value to test.
- * @return Boolean
- *         Whether the value is non-primitive.
- */
-function isObject(aValue) {
-  const type = typeof aValue;
-  return type == "object" ? aValue !== null : type == "function";
-}
-
-/**
- * Create a function that can safely stringify Debugger.Objects of a given
- * builtin type.
- *
- * @param Function aCtor
- *        The builtin class constructor.
- * @return Function
- *         The stringifier for the class.
- */
-function createBuiltinStringifier(aCtor) {
-  return aObj => aCtor.prototype.toString.call(aObj.unsafeDereference());
-}
-
-/**
- * Stringify a Debugger.Object-wrapped Error instance.
- *
- * @param Debugger.Object aObj
- *        The object to stringify.
- * @return String
- *         The stringification of the object.
- */
-function errorStringify(aObj) {
-  let name = DevToolsUtils.getProperty(aObj, "name");
-  if (name === "" || name === undefined) {
-    name = aObj.class;
-  } else if (isObject(name)) {
-    name = stringify(name);
-  }
-
-  let message = DevToolsUtils.getProperty(aObj, "message");
-  if (isObject(message)) {
-    message = stringify(message);
-  }
-
-  if (message === "" || message === undefined) {
-    return name;
-  }
-  return name + ": " + message;
-}
-
-/**
- * Stringify a Debugger.Object based on its class.
- *
- * @param Debugger.Object aObj
- *        The object to stringify.
- * @return String
- *         The stringification for the object.
- */
-function stringify(aObj) {
-  if (aObj.class == "DeadObject") {
-    const error = new Error("Dead object encountered.");
-    DevToolsUtils.reportException("stringify", error);
-    return "<dead object>";
-  }
-
-  const stringifier = stringifiers[aObj.class] || stringifiers.Object;
-
-  try {
-    return stringifier(aObj);
-  } catch (e) {
-    DevToolsUtils.reportException("stringify", e);
-    return "<failed to stringify object>";
-  }
-}
-
-// Used to prevent infinite recursion when an array is found inside itself.
-let seen = null;
-
-let stringifiers = {
-  Error: errorStringify,
-  EvalError: errorStringify,
-  RangeError: errorStringify,
-  ReferenceError: errorStringify,
-  SyntaxError: errorStringify,
-  TypeError: errorStringify,
-  URIError: errorStringify,
-  Boolean: createBuiltinStringifier(Boolean),
-  Function: createBuiltinStringifier(Function),
-  Number: createBuiltinStringifier(Number),
-  RegExp: createBuiltinStringifier(RegExp),
-  String: createBuiltinStringifier(String),
-  Object: obj => "[object " + obj.class + "]",
-  Array: obj => {
-    // If we're at the top level then we need to create the Set for tracking
-    // previously stringified arrays.
-    const topLevel = !seen;
-    if (topLevel) {
-      seen = new Set();
-    } else if (seen.has(obj)) {
-      return "";
-    }
-
-    seen.add(obj);
-
-    const len = DevToolsUtils.getProperty(obj, "length");
-    let string = "";
-
-    // The following check is only required because the debuggee could possibly
-    // be a Proxy and return any value. For normal objects, array.length is
-    // always a non-negative integer.
-    if (typeof len == "number" && len > 0) {
-      for (let i = 0; i < len; i++) {
-        const desc = obj.getOwnPropertyDescriptor(i);
-        if (desc) {
-          const { value } = desc;
-          if (value != null) {
-            string += isObject(value) ? stringify(value) : value;
-          }
-        }
-
-        if (i < len - 1) {
-          string += ",";
-        }
-      }
-    }
-
-    if (topLevel) {
-      seen = null;
-    }
-
-    return string;
-  },
-  DOMException: obj => {
-    const message = DevToolsUtils.getProperty(obj, "message") || "<no message>";
-    const result = (+DevToolsUtils.getProperty(obj, "result")).toString(16);
-    const code = DevToolsUtils.getProperty(obj, "code");
-    const name = DevToolsUtils.getProperty(obj, "name") || "<unknown>";
-
-    return '[Exception... "' + message + '" ' +
-           'code: "' + code +'" ' +
-           'nsresult: "0x' + result + ' (' + name + ')"]';
-  },
-  Promise: obj => {
-    const { state, value, reason } = getPromiseState(obj);
-    let statePreview = state;
-    if (state != "pending") {
-      const settledValue = state === "fulfilled" ? value : reason;
-      statePreview += ": " + (typeof settledValue === "object" && settledValue !== null
-                                ? stringify(settledValue)
-                                : settledValue);
-    }
-    return "Promise (" + statePreview + ")";
-  },
-};
-
-/**
- * Creates an actor for the specified object.
- *
- * @param aObj Debugger.Object
- *        The debuggee object.
- * @param aThreadActor ThreadActor
- *        The parent thread actor for this object.
- */
-function ObjectActor(aObj, aThreadActor)
-{
-  dbg_assert(!aObj.optimizedOut, "Should not create object actors for optimized out values!");
-  this.obj = aObj;
-  this.threadActor = aThreadActor;
-}
-
-ObjectActor.prototype = {
-  actorPrefix: "obj",
-
-  /**
-   * Returns a grip for this actor for returning in a protocol message.
-   */
-  grip: function () {
-    this.threadActor._gripDepth++;
-
-    let g = {
-      "type": "object",
-      "class": this.obj.class,
-      "actor": this.actorID,
-      "extensible": this.obj.isExtensible(),
-      "frozen": this.obj.isFrozen(),
-      "sealed": this.obj.isSealed()
-    };
-
-    if (this.obj.class != "DeadObject") {
-      // Expose internal Promise state.
-      if (this.obj.class == "Promise") {
-        const { state, value, reason } = getPromiseState(this.obj);
-        g.promiseState = { state };
-        if (state == "fulfilled") {
-          g.promiseState.value = this.threadActor.createValueGrip(value);
-        } else if (state == "rejected") {
-          g.promiseState.reason = this.threadActor.createValueGrip(reason);
-        }
-      }
-
-      let raw = this.obj.unsafeDereference();
-
-      // If Cu is not defined, we are running on a worker thread, where xrays
-      // don't exist.
-      if (Cu) {
-        raw = Cu.unwaiveXrays(raw);
-      }
-
-      if (!DevToolsUtils.isSafeJSObject(raw)) {
-        raw = null;
-      }
-
-      let previewers = DebuggerServer.ObjectActorPreviewers[this.obj.class] ||
-                       DebuggerServer.ObjectActorPreviewers.Object;
-      for (let fn of previewers) {
-        try {
-          if (fn(this, g, raw)) {
-            break;
-          }
-        } catch (e) {
-          DevToolsUtils.reportException("ObjectActor.prototype.grip previewer function", e);
-        }
-      }
-    }
-
-    this.threadActor._gripDepth--;
-    return g;
-  },
-
-  /**
-   * Releases this actor from the pool.
-   */
-  release: function () {
-    if (this.registeredPool.objectActors) {
-      this.registeredPool.objectActors.delete(this.obj);
-    }
-    this.registeredPool.removeActor(this);
-  },
-
-  /**
-   * Handle a protocol request to provide the definition site of this function
-   * object.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onDefinitionSite: function OA_onDefinitionSite(aRequest) {
-    if (this.obj.class != "Function") {
-      return {
-        from: this.actorID,
-        error: "objectNotFunction",
-        message: this.actorID + " is not a function."
-      };
-    }
-
-    if (!this.obj.script) {
-      return {
-        from: this.actorID,
-        error: "noScript",
-        message: this.actorID + " has no Debugger.Script"
-      };
-    }
-
-    return this.threadActor.sources.getOriginalLocation(new GeneratedLocation(
-      this.threadActor.sources.createNonSourceMappedActor(this.obj.script.source),
-      this.obj.script.startLine,
-      0 // TODO bug 901138: use Debugger.Script.prototype.startColumn
-    )).then((originalLocation) => {
-      return {
-        source: originalLocation.originalSourceActor.form(),
-        line: originalLocation.originalLine,
-        column: originalLocation.originalColumn
-      };
-    });
-  },
-
-  /**
-   * Handle a protocol request to provide the names of the properties defined on
-   * the object and not its prototype.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onOwnPropertyNames: function (aRequest) {
-    return { from: this.actorID,
-             ownPropertyNames: this.obj.getOwnPropertyNames() };
-  },
-
-  /**
-   * Handle a protocol request to provide the prototype and own properties of
-   * the object.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onPrototypeAndProperties: function (aRequest) {
-    let ownProperties = Object.create(null);
-    let names;
-    try {
-      names = this.obj.getOwnPropertyNames();
-    } catch (ex) {
-      // The above can throw if this.obj points to a dead object.
-      // TODO: we should use Cu.isDeadWrapper() - see bug 885800.
-      return { from: this.actorID,
-               prototype: this.threadActor.createValueGrip(null),
-               ownProperties: ownProperties,
-               safeGetterValues: Object.create(null) };
-    }
-    for (let name of names) {
-      ownProperties[name] = this._propertyDescriptor(name);
-    }
-    return { from: this.actorID,
-             prototype: this.threadActor.createValueGrip(this.obj.proto),
-             ownProperties: ownProperties,
-             safeGetterValues: this._findSafeGetterValues(ownProperties) };
-  },
-
-  /**
-   * Find the safe getter values for the current Debugger.Object, |this.obj|.
-   *
-   * @private
-   * @param object aOwnProperties
-   *        The object that holds the list of known ownProperties for
-   *        |this.obj|.
-   * @param number [aLimit=0]
-   *        Optional limit of getter values to find.
-   * @return object
-   *         An object that maps property names to safe getter descriptors as
-   *         defined by the remote debugging protocol.
-   */
-  _findSafeGetterValues: function (aOwnProperties, aLimit = 0)
-  {
-    let safeGetterValues = Object.create(null);
-    let obj = this.obj;
-    let level = 0, i = 0;
-
-    while (obj) {
-      let getters = this._findSafeGetters(obj);
-      for (let name of getters) {
-        // Avoid overwriting properties from prototypes closer to this.obj. Also
-        // avoid providing safeGetterValues from prototypes if property |name|
-        // is already defined as an own property.
-        if (name in safeGetterValues ||
-            (obj != this.obj && name in aOwnProperties)) {
-          continue;
-        }
-
-        // Ignore __proto__ on Object.prototye.
-        if (!obj.proto && name == "__proto__") {
-          continue;
-        }
-
-        let desc = null, getter = null;
-        try {
-          desc = obj.getOwnPropertyDescriptor(name);
-          getter = desc.get;
-        } catch (ex) {
-          // The above can throw if the cache becomes stale.
-        }
-        if (!getter) {
-          obj._safeGetters = null;
-          continue;
-        }
-
-        let result = getter.call(this.obj);
-        if (result && !("throw" in result)) {
-          let getterValue = undefined;
-          if ("return" in result) {
-            getterValue = result.return;
-          } else if ("yield" in result) {
-            getterValue = result.yield;
-          }
-          // WebIDL attributes specified with the LenientThis extended attribute
-          // return undefined and should be ignored.
-          if (getterValue !== undefined) {
-            safeGetterValues[name] = {
-              getterValue: this.threadActor.createValueGrip(getterValue),
-              getterPrototypeLevel: level,
-              enumerable: desc.enumerable,
-              writable: level == 0 ? desc.writable : true,
-            };
-            if (aLimit && ++i == aLimit) {
-              break;
-            }
-          }
-        }
-      }
-      if (aLimit && i == aLimit) {
-        break;
-      }
-
-      obj = obj.proto;
-      level++;
-    }
-
-    return safeGetterValues;
-  },
-
-  /**
-   * Find the safe getters for a given Debugger.Object. Safe getters are native
-   * getters which are safe to execute.
-   *
-   * @private
-   * @param Debugger.Object aObject
-   *        The Debugger.Object where you want to find safe getters.
-   * @return Set
-   *         A Set of names of safe getters. This result is cached for each
-   *         Debugger.Object.
-   */
-  _findSafeGetters: function (aObject)
-  {
-    if (aObject._safeGetters) {
-      return aObject._safeGetters;
-    }
-
-    let getters = new Set();
-    let names = [];
-    try {
-      names = aObject.getOwnPropertyNames()
-    } catch (ex) {
-      // Calling getOwnPropertyNames() on some wrapped native prototypes is not
-      // allowed: "cannot modify properties of a WrappedNative". See bug 952093.
-    }
-
-    for (let name of names) {
-      let desc = null;
-      try {
-        desc = aObject.getOwnPropertyDescriptor(name);
-      } catch (e) {
-        // Calling getOwnPropertyDescriptor on wrapped native prototypes is not
-        // allowed (bug 560072).
-      }
-      if (!desc || desc.value !== undefined || !("get" in desc)) {
-        continue;
-      }
-
-      if (DevToolsUtils.hasSafeGetter(desc)) {
-        getters.add(name);
-      }
-    }
-
-    aObject._safeGetters = getters;
-    return getters;
-  },
-
-  /**
-   * Handle a protocol request to provide the prototype of the object.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onPrototype: function (aRequest) {
-    return { from: this.actorID,
-             prototype: this.threadActor.createValueGrip(this.obj.proto) };
-  },
-
-  /**
-   * Handle a protocol request to provide the property descriptor of the
-   * object's specified property.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onProperty: function (aRequest) {
-    if (!aRequest.name) {
-      return { error: "missingParameter",
-               message: "no property name was specified" };
-    }
-
-    return { from: this.actorID,
-             descriptor: this._propertyDescriptor(aRequest.name) };
-  },
-
-  /**
-   * Handle a protocol request to provide the display string for the object.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onDisplayString: function (aRequest) {
-    const string = stringify(this.obj);
-    return { from: this.actorID,
-             displayString: this.threadActor.createValueGrip(string) };
-  },
-
-  /**
-   * A helper method that creates a property descriptor for the provided object,
-   * properly formatted for sending in a protocol response.
-   *
-   * @private
-   * @param string aName
-   *        The property that the descriptor is generated for.
-   * @param boolean [aOnlyEnumerable]
-   *        Optional: true if you want a descriptor only for an enumerable
-   *        property, false otherwise.
-   * @return object|undefined
-   *         The property descriptor, or undefined if this is not an enumerable
-   *         property and aOnlyEnumerable=true.
-   */
-  _propertyDescriptor: function (aName, aOnlyEnumerable) {
-    let desc;
-    try {
-      desc = this.obj.getOwnPropertyDescriptor(aName);
-    } catch (e) {
-      // Calling getOwnPropertyDescriptor on wrapped native prototypes is not
-      // allowed (bug 560072). Inform the user with a bogus, but hopefully
-      // explanatory, descriptor.
-      return {
-        configurable: false,
-        writable: false,
-        enumerable: false,
-        value: e.name
-      };
-    }
-
-    if (!desc || aOnlyEnumerable && !desc.enumerable) {
-      return undefined;
-    }
-
-    let retval = {
-      configurable: desc.configurable,
-      enumerable: desc.enumerable
-    };
-
-    if ("value" in desc) {
-      retval.writable = desc.writable;
-      retval.value = this.threadActor.createValueGrip(desc.value);
-    } else {
-      if ("get" in desc) {
-        retval.get = this.threadActor.createValueGrip(desc.get);
-      }
-      if ("set" in desc) {
-        retval.set = this.threadActor.createValueGrip(desc.set);
-      }
-    }
-    return retval;
-  },
-
-  /**
-   * Handle a protocol request to provide the source code of a function.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onDecompile: function (aRequest) {
-    if (this.obj.class !== "Function") {
-      return { error: "objectNotFunction",
-               message: "decompile request is only valid for object grips " +
-                        "with a 'Function' class." };
-    }
-
-    return { from: this.actorID,
-             decompiledCode: this.obj.decompile(!!aRequest.pretty) };
-  },
-
-  /**
-   * Handle a protocol request to provide the parameters of a function.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onParameterNames: function (aRequest) {
-    if (this.obj.class !== "Function") {
-      return { error: "objectNotFunction",
-               message: "'parameterNames' request is only valid for object " +
-                        "grips with a 'Function' class." };
-    }
-
-    return { parameterNames: this.obj.parameterNames };
-  },
-
-  /**
-   * Handle a protocol request to release a thread-lifetime grip.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onRelease: function (aRequest) {
-    this.release();
-    return {};
-  },
-
-  /**
-   * Handle a protocol request to provide the lexical scope of a function.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onScope: function (aRequest) {
-    if (this.obj.class !== "Function") {
-      return { error: "objectNotFunction",
-               message: "scope request is only valid for object grips with a" +
-                        " 'Function' class." };
-    }
-
-    let envActor = this.threadActor.createEnvironmentActor(this.obj.environment,
-                                                           this.registeredPool);
-    if (!envActor) {
-      return { error: "notDebuggee",
-               message: "cannot access the environment of this function." };
-    }
-
-    return { from: this.actorID, scope: envActor.form() };
-  }
-};
-
-ObjectActor.prototype.requestTypes = {
-  "definitionSite": ObjectActor.prototype.onDefinitionSite,
-  "parameterNames": ObjectActor.prototype.onParameterNames,
-  "prototypeAndProperties": ObjectActor.prototype.onPrototypeAndProperties,
-  "prototype": ObjectActor.prototype.onPrototype,
-  "property": ObjectActor.prototype.onProperty,
-  "displayString": ObjectActor.prototype.onDisplayString,
-  "ownPropertyNames": ObjectActor.prototype.onOwnPropertyNames,
-  "decompile": ObjectActor.prototype.onDecompile,
-  "release": ObjectActor.prototype.onRelease,
-  "scope": ObjectActor.prototype.onScope,
-};
-
-exports.ObjectActor = ObjectActor;
-
-/**
- * Functions for adding information to ObjectActor grips for the purpose of
- * having customized output. This object holds arrays mapped by
- * Debugger.Object.prototype.class.
- *
- * In each array you can add functions that take two
- * arguments:
- *   - the ObjectActor instance to make a preview for,
- *   - the grip object being prepared for the client,
- *   - the raw JS object after calling Debugger.Object.unsafeDereference(). This
- *   argument is only provided if the object is safe for reading properties and
- *   executing methods. See DevToolsUtils.isSafeJSObject().
- *
- * Functions must return false if they cannot provide preview
- * information for the debugger object, or true otherwise.
- */
-DebuggerServer.ObjectActorPreviewers = {
-  String: [function({obj, threadActor}, aGrip) {
-    let result = genericObjectPreviewer("String", String, obj, threadActor);
-    let length = DevToolsUtils.getProperty(obj, "length");
-
-    if (!result || typeof length != "number") {
-      return false;
-    }
-
-    aGrip.preview = {
-      kind: "ArrayLike",
-      length: length
-    };
-
-    if (threadActor._gripDepth > 1) {
-      return true;
-    }
-
-    let items = aGrip.preview.items = [];
-
-    const max = Math.min(result.value.length, OBJECT_PREVIEW_MAX_ITEMS);
-    for (let i = 0; i < max; i++) {
-      let value = threadActor.createValueGrip(result.value[i]);
-      items.push(value);
-    }
-
-    return true;
-  }],
-
-  Boolean: [function({obj, threadActor}, aGrip) {
-    let result = genericObjectPreviewer("Boolean", Boolean, obj, threadActor);
-    if (result) {
-      aGrip.preview = result;
-      return true;
-    }
-
-    return false;
-  }],
-
-  Number: [function({obj, threadActor}, aGrip) {
-    let result = genericObjectPreviewer("Number", Number, obj, threadActor);
-    if (result) {
-      aGrip.preview = result;
-      return true;
-    }
-
-    return false;
-  }],
-
-  Function: [function({obj, threadActor}, aGrip) {
-    if (obj.name) {
-      aGrip.name = obj.name;
-    }
-
-    if (obj.displayName) {
-      aGrip.displayName = obj.displayName.substr(0, 500);
-    }
-
-    if (obj.parameterNames) {
-      aGrip.parameterNames = obj.parameterNames;
-    }
-
-    // Check if the developer has added a de-facto standard displayName
-    // property for us to use.
-    let userDisplayName;
-    try {
-      userDisplayName = obj.getOwnPropertyDescriptor("displayName");
-    } catch (e) {
-      // Calling getOwnPropertyDescriptor with displayName might throw
-      // with "permission denied" errors for some functions.
-      dumpn(e);
-    }
-
-    if (userDisplayName && typeof userDisplayName.value == "string" &&
-        userDisplayName.value) {
-      aGrip.userDisplayName = threadActor.createValueGrip(userDisplayName.value);
-    }
-
-    return true;
-  }],
-
-  RegExp: [function({obj, threadActor}, aGrip) {
-    // Avoid having any special preview for the RegExp.prototype itself.
-    if (!obj.proto || obj.proto.class != "RegExp") {
-      return false;
-    }
-
-    let str = RegExp.prototype.toString.call(obj.unsafeDereference());
-    aGrip.displayString = threadActor.createValueGrip(str);
-    return true;
-  }],
-
-  Date: [function({obj, threadActor}, aGrip) {
-    if (!obj.proto || obj.proto.class != "Date") {
-      return false;
-    }
-
-    let time = Date.prototype.getTime.call(obj.unsafeDereference());
-
-    aGrip.preview = {
-      timestamp: threadActor.createValueGrip(time),
-    };
-    return true;
-  }],
-
-  Array: [function({obj, threadActor}, aGrip) {
-    let length = DevToolsUtils.getProperty(obj, "length");
-    if (typeof length != "number") {
-      return false;
-    }
-
-    aGrip.preview = {
-      kind: "ArrayLike",
-      length: length,
-    };
-
-    if (threadActor._gripDepth > 1) {
-      return true;
-    }
-
-    let raw = obj.unsafeDereference();
-    let items = aGrip.preview.items = [];
-
-    for (let i = 0; i < length; ++i) {
-      // Array Xrays filter out various possibly-unsafe properties (like
-      // functions, and claim that the value is undefined instead. This
-      // is generally the right thing for privileged code accessing untrusted
-      // objects, but quite confusing for Object previews. So we manually
-      // override this protection by waiving Xrays on the array, and re-applying
-      // Xrays on any indexed value props that we pull off of it.
-      let desc = Object.getOwnPropertyDescriptor(Cu.waiveXrays(raw), i);
-      if (desc && !desc.get && !desc.set) {
-        let value = Cu.unwaiveXrays(desc.value);
-        value = makeDebuggeeValueIfNeeded(obj, value);
-        items.push(threadActor.createValueGrip(value));
-      } else {
-        items.push(null);
-      }
-
-      if (items.length == OBJECT_PREVIEW_MAX_ITEMS) {
-        break;
-      }
-    }
-
-    return true;
-  }], // Array
-
-  Set: [function({obj, threadActor}, aGrip) {
-    let size = DevToolsUtils.getProperty(obj, "size");
-    if (typeof size != "number") {
-      return false;
-    }
-
-    aGrip.preview = {
-      kind: "ArrayLike",
-      length: size,
-    };
-
-    // Avoid recursive object grips.
-    if (threadActor._gripDepth > 1) {
-      return true;
-    }
-
-    let raw = obj.unsafeDereference();
-    let items = aGrip.preview.items = [];
-    // We currently lack XrayWrappers for Set, so when we iterate over
-    // the values, the temporary iterator objects get created in the target
-    // compartment. However, we _do_ have Xrays to Object now, so we end up
-    // Xraying those temporary objects, and filtering access to |it.value|
-    // based on whether or not it's Xrayable and/or callable, which breaks
-    // the for/of iteration.
-    //
-    // This code is designed to handle untrusted objects, so we can safely
-    // waive Xrays on the iterable, and relying on the Debugger machinery to
-    // make sure we handle the resulting objects carefully.
-    for (let item of Cu.waiveXrays(Set.prototype.values.call(raw))) {
-      item = Cu.unwaiveXrays(item);
-      item = makeDebuggeeValueIfNeeded(obj, item);
-      items.push(threadActor.createValueGrip(item));
-      if (items.length == OBJECT_PREVIEW_MAX_ITEMS) {
-        break;
-      }
-    }
-
-    return true;
-  }], // Set
-
-  Map: [function({obj, threadActor}, aGrip) {
-    let size = DevToolsUtils.getProperty(obj, "size");
-    if (typeof size != "number") {
-      return false;
-    }
-
-    aGrip.preview = {
-      kind: "MapLike",
-      size: size,
-    };
-
-    if (threadActor._gripDepth > 1) {
-      return true;
-    }
-
-    let raw = obj.unsafeDereference();
-    let entries = aGrip.preview.entries = [];
-    // Iterating over a Map via .entries goes through various intermediate
-    // objects - an Iterator object, then a 2-element Array object, then the
-    // actual values we care about. We don't have Xrays to Iterator objects,
-    // so we get Opaque wrappers for them. And even though we have Xrays to
-    // Arrays, the semantics often deny access to the entires based on the
-    // nature of the values. So we need waive Xrays for the iterator object
-    // and the tupes, and then re-apply them on the underlying values until
-    // we fix bug 1023984.
-    //
-    // Even then though, we might want to continue waiving Xrays here for the
-    // same reason we do so for Arrays above - this filtering behavior is likely
-    // to be more confusing than beneficial in the case of Object previews.
-    for (let keyValuePair of Cu.waiveXrays(Map.prototype.entries.call(raw))) {
-      let key = Cu.unwaiveXrays(keyValuePair[0]);
-      let value = Cu.unwaiveXrays(keyValuePair[1]);
-      key = makeDebuggeeValueIfNeeded(obj, key);
-      value = makeDebuggeeValueIfNeeded(obj, value);
-      entries.push([threadActor.createValueGrip(key),
-                    threadActor.createValueGrip(value)]);
-      if (entries.length == OBJECT_PREVIEW_MAX_ITEMS) {
-        break;
-      }
-    }
-
-    return true;
-  }], // Map
-
-  DOMStringMap: [function({obj, threadActor}, aGrip, aRawObj) {
-    if (!aRawObj) {
-      return false;
-    }
-
-    let keys = obj.getOwnPropertyNames();
-    aGrip.preview = {
-      kind: "MapLike",
-      size: keys.length,
-    };
-
-    if (threadActor._gripDepth > 1) {
-      return true;
-    }
-
-    let entries = aGrip.preview.entries = [];
-    for (let key of keys) {
-      let value = makeDebuggeeValueIfNeeded(obj, aRawObj[key]);
-      entries.push([key, threadActor.createValueGrip(value)]);
-      if (entries.length == OBJECT_PREVIEW_MAX_ITEMS) {
-        break;
-      }
-    }
-
-    return true;
-  }], // DOMStringMap
-
-}; // DebuggerServer.ObjectActorPreviewers
-
-/**
- * Generic previewer for "simple" classes like String, Number and Boolean.
- *
- * @param string aClassName
- *        Class name to expect.
- * @param object aClass
- *        The class to expect, eg. String. The valueOf() method of the class is
- *        invoked on the given object.
- * @param Debugger.Object aObj
- *        The debugger object we need to preview.
- * @param object aThreadActor
- *        The thread actor to use to create a value grip.
- * @return object|null
- *         An object with one property, "value", which holds the value grip that
- *         represents the given object. Null is returned if we cant preview the
- *         object.
- */
-function genericObjectPreviewer(aClassName, aClass, aObj, aThreadActor) {
-  if (!aObj.proto || aObj.proto.class != aClassName) {
-    return null;
-  }
-
-  let raw = aObj.unsafeDereference();
-  let v = null;
-  try {
-    v = aClass.prototype.valueOf.call(raw);
-  } catch (ex) {
-    // valueOf() can throw if the raw JS object is "misbehaved".
-    return null;
-  }
-
-  if (v !== null) {
-    v = aThreadActor.createValueGrip(makeDebuggeeValueIfNeeded(aObj, v));
-    return { value: v };
-  }
-
-  return null;
-}
-
-// Preview functions that do not rely on the object class.
-DebuggerServer.ObjectActorPreviewers.Object = [
-  function TypedArray({obj, threadActor}, aGrip) {
-    if (TYPED_ARRAY_CLASSES.indexOf(obj.class) == -1) {
-      return false;
-    }
-
-    let length = DevToolsUtils.getProperty(obj, "length");
-    if (typeof length != "number") {
-      return false;
-    }
-
-    aGrip.preview = {
-      kind: "ArrayLike",
-      length: length,
-    };
-
-    if (threadActor._gripDepth > 1) {
-      return true;
-    }
-
-    let raw = obj.unsafeDereference();
-    let global = Cu.getGlobalForObject(DebuggerServer);
-    let classProto = global[obj.class].prototype;
-    // The Xray machinery for TypedArrays denies indexed access on the grounds
-    // that it's slow, and advises callers to do a structured clone instead.
-    let safeView = Cu.cloneInto(classProto.subarray.call(raw, 0, OBJECT_PREVIEW_MAX_ITEMS), global);
-    let items = aGrip.preview.items = [];
-    for (let i = 0; i < safeView.length; i++) {
-      items.push(safeView[i]);
-    }
-
-    return true;
-  },
-
-  function Error({obj, threadActor}, aGrip) {
-    switch (obj.class) {
-      case "Error":
-      case "EvalError":
-      case "RangeError":
-      case "ReferenceError":
-      case "SyntaxError":
-      case "TypeError":
-      case "URIError":
-        let name = DevToolsUtils.getProperty(obj, "name");
-        let msg = DevToolsUtils.getProperty(obj, "message");
-        let stack = DevToolsUtils.getProperty(obj, "stack");
-        let fileName = DevToolsUtils.getProperty(obj, "fileName");
-        let lineNumber = DevToolsUtils.getProperty(obj, "lineNumber");
-        let columnNumber = DevToolsUtils.getProperty(obj, "columnNumber");
-        aGrip.preview = {
-          kind: "Error",
-          name: threadActor.createValueGrip(name),
-          message: threadActor.createValueGrip(msg),
-          stack: threadActor.createValueGrip(stack),
-          fileName: threadActor.createValueGrip(fileName),
-          lineNumber: threadActor.createValueGrip(lineNumber),
-          columnNumber: threadActor.createValueGrip(columnNumber),
-        };
-        return true;
-      default:
-        return false;
-    }
-  },
-
-  function CSSMediaRule({obj, threadActor}, aGrip, aRawObj) {
-    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMCSSMediaRule)) {
-      return false;
-    }
-    aGrip.preview = {
-      kind: "ObjectWithText",
-      text: threadActor.createValueGrip(aRawObj.conditionText),
-    };
-    return true;
-  },
-
-  function CSSStyleRule({obj, threadActor}, aGrip, aRawObj) {
-    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMCSSStyleRule)) {
-      return false;
-    }
-    aGrip.preview = {
-      kind: "ObjectWithText",
-      text: threadActor.createValueGrip(aRawObj.selectorText),
-    };
-    return true;
-  },
-
-  function ObjectWithURL({obj, threadActor}, aGrip, aRawObj) {
-    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMCSSImportRule ||
-                                  aRawObj instanceof Ci.nsIDOMCSSStyleSheet ||
-                                  aRawObj instanceof Ci.nsIDOMLocation ||
-                                  aRawObj instanceof Ci.nsIDOMWindow)) {
-      return false;
-    }
-
-    let url;
-    if (aRawObj instanceof Ci.nsIDOMWindow && aRawObj.location) {
-      url = aRawObj.location.href;
-    } else if (aRawObj.href) {
-      url = aRawObj.href;
-    } else {
-      return false;
-    }
-
-    aGrip.preview = {
-      kind: "ObjectWithURL",
-      url: threadActor.createValueGrip(url),
-    };
-
-    return true;
-  },
-
-  function ArrayLike({obj, threadActor}, aGrip, aRawObj) {
-    if (isWorker || !aRawObj ||
-        obj.class != "DOMStringList" &&
-        obj.class != "DOMTokenList" &&
-        !(aRawObj instanceof Ci.nsIDOMMozNamedAttrMap ||
-          aRawObj instanceof Ci.nsIDOMCSSRuleList ||
-          aRawObj instanceof Ci.nsIDOMCSSValueList ||
-          aRawObj instanceof Ci.nsIDOMFileList ||
-          aRawObj instanceof Ci.nsIDOMFontFaceList ||
-          aRawObj instanceof Ci.nsIDOMMediaList ||
-          aRawObj instanceof Ci.nsIDOMNodeList ||
-          aRawObj instanceof Ci.nsIDOMStyleSheetList)) {
-      return false;
-    }
-
-    if (typeof aRawObj.length != "number") {
-      return false;
-    }
-
-    aGrip.preview = {
-      kind: "ArrayLike",
-      length: aRawObj.length,
-    };
-
-    if (threadActor._gripDepth > 1) {
-      return true;
-    }
-
-    let items = aGrip.preview.items = [];
-
-    for (let i = 0; i < aRawObj.length &&
-                    items.length < OBJECT_PREVIEW_MAX_ITEMS; i++) {
-      let value = makeDebuggeeValueIfNeeded(obj, aRawObj[i]);
-      items.push(threadActor.createValueGrip(value));
-    }
-
-    return true;
-  }, // ArrayLike
-
-  function CSSStyleDeclaration({obj, threadActor}, aGrip, aRawObj) {
-    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMCSSStyleDeclaration)) {
-      return false;
-    }
-
-    aGrip.preview = {
-      kind: "MapLike",
-      size: aRawObj.length,
-    };
-
-    let entries = aGrip.preview.entries = [];
-
-    for (let i = 0; i < OBJECT_PREVIEW_MAX_ITEMS &&
-                    i < aRawObj.length; i++) {
-      let prop = aRawObj[i];
-      let value = aRawObj.getPropertyValue(prop);
-      entries.push([prop, threadActor.createValueGrip(value)]);
-    }
-
-    return true;
-  },
-
-  function DOMNode({obj, threadActor}, aGrip, aRawObj) {
-    if (isWorker || obj.class == "Object" || !aRawObj ||
-        !(aRawObj instanceof Ci.nsIDOMNode)) {
-      return false;
-    }
-
-    let preview = aGrip.preview = {
-      kind: "DOMNode",
-      nodeType: aRawObj.nodeType,
-      nodeName: aRawObj.nodeName,
-    };
-
-    if (aRawObj instanceof Ci.nsIDOMDocument && aRawObj.location) {
-      preview.location = threadActor.createValueGrip(aRawObj.location.href);
-    } else if (aRawObj instanceof Ci.nsIDOMDocumentFragment) {
-      preview.childNodesLength = aRawObj.childNodes.length;
-
-      if (threadActor._gripDepth < 2) {
-        preview.childNodes = [];
-        for (let node of aRawObj.childNodes) {
-          let actor = threadActor.createValueGrip(obj.makeDebuggeeValue(node));
-          preview.childNodes.push(actor);
-          if (preview.childNodes.length == OBJECT_PREVIEW_MAX_ITEMS) {
-            break;
-          }
-        }
-      }
-    } else if (aRawObj instanceof Ci.nsIDOMElement) {
-      // Add preview for DOM element attributes.
-      if (aRawObj instanceof Ci.nsIDOMHTMLElement) {
-        preview.nodeName = preview.nodeName.toLowerCase();
-      }
-
-      let i = 0;
-      preview.attributes = {};
-      preview.attributesLength = aRawObj.attributes.length;
-      for (let attr of aRawObj.attributes) {
-        preview.attributes[attr.nodeName] = threadActor.createValueGrip(attr.value);
-        if (++i == OBJECT_PREVIEW_MAX_ITEMS) {
-          break;
-        }
-      }
-    } else if (aRawObj instanceof Ci.nsIDOMAttr) {
-      preview.value = threadActor.createValueGrip(aRawObj.value);
-    } else if (aRawObj instanceof Ci.nsIDOMText ||
-               aRawObj instanceof Ci.nsIDOMComment) {
-      preview.textContent = threadActor.createValueGrip(aRawObj.textContent);
-    }
-
-    return true;
-  }, // DOMNode
-
-  function DOMEvent({obj, threadActor}, aGrip, aRawObj) {
-    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMEvent)) {
-      return false;
-    }
-
-    let preview = aGrip.preview = {
-      kind: "DOMEvent",
-      type: aRawObj.type,
-      properties: Object.create(null),
-    };
-
-    if (threadActor._gripDepth < 2) {
-      let target = obj.makeDebuggeeValue(aRawObj.target);
-      preview.target = threadActor.createValueGrip(target);
-    }
-
-    let props = [];
-    if (aRawObj instanceof Ci.nsIDOMMouseEvent) {
-      props.push("buttons", "clientX", "clientY", "layerX", "layerY");
-    } else if (aRawObj instanceof Ci.nsIDOMKeyEvent) {
-      let modifiers = [];
-      if (aRawObj.altKey) {
-        modifiers.push("Alt");
-      }
-      if (aRawObj.ctrlKey) {
-        modifiers.push("Control");
-      }
-      if (aRawObj.metaKey) {
-        modifiers.push("Meta");
-      }
-      if (aRawObj.shiftKey) {
-        modifiers.push("Shift");
-      }
-      preview.eventKind = "key";
-      preview.modifiers = modifiers;
-
-      props.push("key", "charCode", "keyCode");
-    } else if (aRawObj instanceof Ci.nsIDOMTransitionEvent) {
-      props.push("propertyName", "pseudoElement");
-    } else if (aRawObj instanceof Ci.nsIDOMAnimationEvent) {
-      props.push("animationName", "pseudoElement");
-    } else if (aRawObj instanceof Ci.nsIDOMClipboardEvent) {
-      props.push("clipboardData");
-    }
-
-    // Add event-specific properties.
-    for (let prop of props) {
-      let value = aRawObj[prop];
-      if (value && (typeof value == "object" || typeof value == "function")) {
-        // Skip properties pointing to objects.
-        if (threadActor._gripDepth > 1) {
-          continue;
-        }
-        value = obj.makeDebuggeeValue(value);
-      }
-      preview.properties[prop] = threadActor.createValueGrip(value);
-    }
-
-    // Add any properties we find on the event object.
-    if (!props.length) {
-      let i = 0;
-      for (let prop in aRawObj) {
-        let value = aRawObj[prop];
-        if (prop == "target" || prop == "type" || value === null ||
-            typeof value == "function") {
-          continue;
-        }
-        if (value && typeof value == "object") {
-          if (threadActor._gripDepth > 1) {
-            continue;
-          }
-          value = obj.makeDebuggeeValue(value);
-        }
-        preview.properties[prop] = threadActor.createValueGrip(value);
-        if (++i == OBJECT_PREVIEW_MAX_ITEMS) {
-          break;
-        }
-      }
-    }
-
-    return true;
-  }, // DOMEvent
-
-  function DOMException({obj, threadActor}, aGrip, aRawObj) {
-    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMDOMException)) {
-      return false;
-    }
-
-    aGrip.preview = {
-      kind: "DOMException",
-      name: threadActor.createValueGrip(aRawObj.name),
-      message: threadActor.createValueGrip(aRawObj.message),
-      code: threadActor.createValueGrip(aRawObj.code),
-      result: threadActor.createValueGrip(aRawObj.result),
-      filename: threadActor.createValueGrip(aRawObj.filename),
-      lineNumber: threadActor.createValueGrip(aRawObj.lineNumber),
-      columnNumber: threadActor.createValueGrip(aRawObj.columnNumber),
-    };
-
-    return true;
-  },
-
-  function PseudoArray({obj, threadActor}, aGrip, aRawObj) {
-    let length = 0;
-
-    // Making sure all keys are numbers from 0 to length-1
-    let keys = obj.getOwnPropertyNames();
-    if (keys.length == 0) {
-      return false;
-    }
-    for (let key of keys) {
-      if (isNaN(key) || key != length++) {
-        return false;
-      }
-    }
-
-    aGrip.preview = {
-      kind: "ArrayLike",
-      length: length,
-    };
-
-    // Avoid recursive object grips.
-    if (threadActor._gripDepth > 1) {
-      return true;
-    }
-
-    let items = aGrip.preview.items = [];
-
-    let i = 0;
-    for (let key of keys) {
-      if (aRawObj.hasOwnProperty(key) && i++ < OBJECT_PREVIEW_MAX_ITEMS) {
-        let value = makeDebuggeeValueIfNeeded(obj, aRawObj[key]);
-        items.push(threadActor.createValueGrip(value));
-      }
-    }
-
-    return true;
-  }, // PseudoArray
-
-  function GenericObject(aObjectActor, aGrip) {
-    let {obj, threadActor} = aObjectActor;
-    if (aGrip.preview || aGrip.displayString || threadActor._gripDepth > 1) {
-      return false;
-    }
-
-    let i = 0, names = [];
-    let preview = aGrip.preview = {
-      kind: "Object",
-      ownProperties: Object.create(null),
-    };
-
-    try {
-      names = obj.getOwnPropertyNames();
-    } catch (ex) {
-      // Calling getOwnPropertyNames() on some wrapped native prototypes is not
-      // allowed: "cannot modify properties of a WrappedNative". See bug 952093.
-    }
-
-    preview.ownPropertiesLength = names.length;
-
-    for (let name of names) {
-      let desc = aObjectActor._propertyDescriptor(name, true);
-      if (!desc) {
-        continue;
-      }
-
-      preview.ownProperties[name] = desc;
-      if (++i == OBJECT_PREVIEW_MAX_ITEMS) {
-        break;
-      }
-    }
-
-    if (i < OBJECT_PREVIEW_MAX_ITEMS) {
-      preview.safeGetterValues = aObjectActor.
-                                 _findSafeGetterValues(preview.ownProperties,
-                                                       OBJECT_PREVIEW_MAX_ITEMS - i);
-    }
-
-    return true;
-  }, // GenericObject
-]; // DebuggerServer.ObjectActorPreviewers.Object
-
-/**
  * Creates a pause-scoped actor for the specified object.
  * @see ObjectActor
  */
-function PauseScopedObjectActor()
-{
-  ObjectActor.apply(this, arguments);
+function PauseScopedObjectActor(obj, hooks) {
+  ObjectActor.call(this, obj, hooks);
+  this.hooks.promote = hooks.promote;
+  this.hooks.isThreadLifetimePool = hooks.isThreadLifetimePool;
 }
 
 PauseScopedObjectActor.prototype = Object.create(PauseScopedActor.prototype);
@@ -4519,7 +3100,7 @@ update(PauseScopedObjectActor.prototype, {
    *        The protocol request object.
    */
   onThreadGrip: PauseScopedActor.withPaused(function (aRequest) {
-    this.threadActor.threadObjectGrip(this);
+    this.hooks.promote();
     return {};
   }),
 
@@ -4530,7 +3111,7 @@ update(PauseScopedObjectActor.prototype, {
    *        The protocol request object.
    */
   onRelease: PauseScopedActor.withPaused(function (aRequest) {
-    if (this.registeredPool !== this.threadActor.threadLifetimePool) {
+    if (this.hooks.isThreadLifetimePool()) {
       return { error: "notReleasable",
                message: "Only thread-lifetime actors can be released." };
     }
@@ -4543,81 +3124,6 @@ update(PauseScopedObjectActor.prototype, {
 update(PauseScopedObjectActor.prototype.requestTypes, {
   "threadGrip": PauseScopedObjectActor.prototype.onThreadGrip,
 });
-
-
-/**
- * Creates an actor for the specied "very long" string. "Very long" is specified
- * at the server's discretion.
- *
- * @param aString String
- *        The string.
- */
-function LongStringActor(aString)
-{
-  this.string = aString;
-  this.stringLength = aString.length;
-}
-
-LongStringActor.prototype = {
-
-  actorPrefix: "longString",
-
-  disconnect: function () {
-    // Because longStringActors is not a weak map, we won't automatically leave
-    // it so we need to manually leave on disconnect so that we don't leak
-    // memory.
-    if (this.registeredPool && this.registeredPool.longStringActors) {
-      delete this.registeredPool.longStringActors[this.actorID];
-    }
-  },
-
-  /**
-   * Returns a grip for this actor for returning in a protocol message.
-   */
-  grip: function () {
-    return {
-      "type": "longString",
-      "initial": this.string.substring(
-        0, DebuggerServer.LONG_STRING_INITIAL_LENGTH),
-      "length": this.stringLength,
-      "actor": this.actorID
-    };
-  },
-
-  /**
-   * Handle a request to extract part of this actor's string.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onSubstring: function (aRequest) {
-    return {
-      "from": this.actorID,
-      "substring": this.string.substring(aRequest.start, aRequest.end)
-    };
-  },
-
-  /**
-   * Handle a request to release this LongStringActor instance.
-   */
-  onRelease: function () {
-    // TODO: also check if registeredPool === threadActor.threadLifetimePool
-    // when the web console moves aray from manually releasing pause-scoped
-    // actors.
-    if (this.registeredPool.longStringActors) {
-      delete this.registeredPool.longStringActors[this.actorID];
-    }
-    this.registeredPool.removeActor(this);
-    return {};
-  },
-};
-
-LongStringActor.prototype.requestTypes = {
-  "substring": LongStringActor.prototype.onSubstring,
-  "release": LongStringActor.prototype.onRelease
-};
-
-exports.LongStringActor = LongStringActor;
 
 /**
  * Creates an actor for the specified stack frame.
@@ -4665,7 +3171,8 @@ FrameActor.prototype = {
     let form = { actor: this.actorID,
                  type: this.frame.type };
     if (this.frame.type === "call") {
-      form.callee = threadActor.createValueGrip(this.frame.callee);
+      form.callee = createValueGrip(this.frame.callee, threadActor._pausePool,
+        threadActor.objectGrip);
     }
 
     if (this.frame.environment) {
@@ -4675,7 +3182,8 @@ FrameActor.prototype = {
       );
       form.environment = envActor.form();
     }
-    form.this = threadActor.createValueGrip(this.frame.this);
+    form.this = createValueGrip(this.frame.this, threadActor._pausePool,
+      threadActor.objectGrip);
     form.arguments = this._args();
     if (this.frame.script) {
       var generatedLocation = this.threadActor.sources.getFrameLocation(this.frame);
@@ -4698,8 +3206,8 @@ FrameActor.prototype = {
       return [];
     }
 
-    return [this.threadActor.createValueGrip(arg)
-            for each (arg in this.frame.arguments)];
+    return this.frame.arguments.map(arg => createValueGrip(arg,
+      this.threadActor._pausePool, this.threadActor.objectGrip));
   },
 
   /**
@@ -4841,7 +3349,7 @@ BreakpointActor.prototype = {
     // Don't pause if we are currently stepping (in or over) or the frame is
     // black-boxed.
     let generatedLocation = this.threadActor.sources.getFrameLocation(aFrame);
-    let { originalSourceActor } = this.threadActor.synchronize(
+    let { originalSourceActor } = this.threadActor.unsafeSynchronize(
       this.threadActor.sources.getOriginalLocation(generatedLocation));
     let url = originalSourceActor.url;
 
@@ -4940,12 +3448,14 @@ EnvironmentActor.prototype = {
 
     // Does this environment reflect the properties of an object as variables?
     if (this.obj.type == "object" || this.obj.type == "with") {
-      form.object = this.threadActor.createValueGrip(this.obj.object);
+      form.object = createValueGrip(this.obj.object,
+        this.registeredPool, this.threadActor.objectGrip);
     }
 
     // Is this the environment created for a function call?
     if (this.obj.callee) {
-      form.function = this.threadActor.createValueGrip(this.obj.callee);
+      form.function = createValueGrip(this.obj.callee,
+        this.registeredPool, this.threadActor.objectGrip);
     }
 
     // Shall we list this environment's bindings?
@@ -4973,8 +3483,10 @@ EnvironmentActor.prototype = {
     let parameterNames;
     if (this.obj.callee) {
       parameterNames = this.obj.callee.parameterNames;
+    } else {
+      parameterNames = [];
     }
-    for each (let name in parameterNames) {
+    for (let name of parameterNames) {
       let arg = {};
       let value = this.obj.getVariable(name);
 
@@ -4993,17 +3505,20 @@ EnvironmentActor.prototype = {
         configurable: desc.configurable
       };
       if ("value" in desc) {
-        descForm.value = this.threadActor.createValueGrip(desc.value);
+        descForm.value = createValueGrip(desc.value,
+          this.registeredPool, this.threadActor.objectGrip);
         descForm.writable = desc.writable;
       } else {
-        descForm.get = this.threadActor.createValueGrip(desc.get);
-        descForm.set = this.threadActor.createValueGrip(desc.set);
+        descForm.get = createValueGrip(desc.get, this.registeredPool,
+          this.threadActor.objectGrip);
+        descForm.set = createValueGrip(desc.set, this.registeredPool,
+          this.threadActor.objectGrip);
       }
       arg[name] = descForm;
       bindings.arguments.push(arg);
     }
 
-    for each (let name in this.obj.names()) {
+    for (let name of this.obj.names()) {
       if (bindings.arguments.some(function exists(element) {
                                     return !!element[name];
                                   })) {
@@ -5030,11 +3545,14 @@ EnvironmentActor.prototype = {
         configurable: desc.configurable
       };
       if ("value" in desc) {
-        descForm.value = this.threadActor.createValueGrip(desc.value);
+        descForm.value = createValueGrip(desc.value,
+          this.registeredPool, this.threadActor.objectGrip);
         descForm.writable = desc.writable;
       } else {
-        descForm.get = this.threadActor.createValueGrip(desc.get || undefined);
-        descForm.set = this.threadActor.createValueGrip(desc.set || undefined);
+        descForm.get = createValueGrip(desc.get || undefined,
+          this.registeredPool, this.threadActor.objectGrip);
+        descForm.set = createValueGrip(desc.set || undefined,
+          this.registeredPool, this.threadActor.objectGrip);
       }
       bindings.variables[name] = descForm;
     }
@@ -5062,10 +3580,14 @@ EnvironmentActor.prototype = {
 
     try {
       this.obj.setVariable(aRequest.name, aRequest.value);
-    } catch (e if e instanceof Debugger.DebuggeeWouldRun) {
+    } catch (e) {
+      if (e instanceof Debugger.DebuggeeWouldRun) {
         return { error: "threadWouldRun",
                  cause: e.cause ? e.cause : "setter",
                  message: "Assigning a value would cause the debuggee to run" };
+      } else {
+        throw e;
+      }
     }
     return { from: this.actorID };
   },
@@ -5207,39 +3729,12 @@ exports.AddonThreadActor = AddonThreadActor;
  * @param String aPrefix
  *        An optional prefix for the reported error message.
  */
-let oldReportError = reportError;
+var oldReportError = reportError;
 reportError = function(aError, aPrefix="") {
   dbg_assert(aError instanceof Error, "Must pass Error objects to reportError");
   let msg = aPrefix + aError.message + ":\n" + aError.stack;
   oldReportError(msg);
   dumpn(msg);
-}
-
-/**
- * Make a debuggee value for the given object, if needed. Primitive values
- * are left the same.
- *
- * Use case: you have a raw JS object (after unsafe dereference) and you want to
- * send it to the client. In that case you need to use an ObjectActor which
- * requires a debuggee value. The Debugger.Object.prototype.makeDebuggeeValue()
- * method works only for JS objects and functions.
- *
- * @param Debugger.Object obj
- * @param any value
- * @return object
- */
-function makeDebuggeeValueIfNeeded(obj, value) {
-  if (value && (typeof value == "object" || typeof value == "function")) {
-    return obj.makeDebuggeeValue(value);
-  }
-  return value;
-}
-
-const symbolProtoToString = Symbol.prototype.toString;
-
-function getSymbolName(symbol) {
-  const name = symbolProtoToString.call(symbol).slice("Symbol(".length, -1);
-  return name || undefined;
 }
 
 function isEvalSource(source) {
@@ -5254,20 +3749,34 @@ function isEvalSource(source) {
 }
 exports.isEvalSource = isEvalSource;
 
-function getSourceURL(source) {
-  if(isEvalSource(source)) {
+function getSourceURL(source, window) {
+  if (isEvalSource(source)) {
     // Eval sources have no urls, but they might have a `displayURL`
     // created with the sourceURL pragma. If the introduction script
     // is a non-eval script, generate an full absolute URL relative to it.
 
-    if(source.displayURL &&
-       source.introductionScript &&
+    if (source.displayURL && source.introductionScript &&
        !isEvalSource(source.introductionScript.source)) {
-      return joinURI(dirname(source.introductionScript.source.url),
-                     source.displayURL);
+
+      if (source.introductionScript.source.url === 'debugger eval code') {
+        if (window) {
+          // If this is a named eval script created from the console, make it
+          // relative to the current page. window is only available
+          // when we care about this.
+          return joinURI(window.location.href, source.displayURL);
+        }
+      }
+      else {
+        return joinURI(dirname(source.introductionScript.source.url),
+                       source.displayURL);
+      }
     }
 
     return source.displayURL;
+  }
+  else if (source.url === 'debugger eval code') {
+    // Treat code evaluated by the console as unnamed eval scripts
+    return null;
   }
   return source.url;
 }

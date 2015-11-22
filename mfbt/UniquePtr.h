@@ -238,6 +238,7 @@ public:
   }
 
   template<typename U, class E>
+  MOZ_IMPLICIT
   UniquePtr(UniquePtr<U, E>&& aOther,
             typename EnableIf<IsConvertible<typename UniquePtr<U, E>::Pointer,
                                             Pointer>::value &&
@@ -314,7 +315,6 @@ public:
     mTuple.swap(aOther.mTuple);
   }
 
-private:
   UniquePtr(const UniquePtr& aOther) = delete; // construct using Move()!
   void operator=(const UniquePtr& aOther) = delete; // assign using Move()!
 };
@@ -355,7 +355,6 @@ public:
     static_assert(!IsReference<D>::value, "must provide a deleter instance");
   }
 
-private:
   // delete[] knows how to handle *only* an array of a single class type.  For
   // delete[] to work correctly, it must know the size of each element, the
   // fields and base classes of each element requiring destruction, and so on.
@@ -368,7 +367,6 @@ private:
                               int>::Type aDummy = 0)
   = delete;
 
-public:
   UniquePtr(Pointer aPtr,
             typename Conditional<IsReference<D>::value,
                                  D,
@@ -388,7 +386,6 @@ public:
                   "rvalue deleter can't be stored by reference");
   }
 
-private:
   // Forbidden for the same reasons as stated above.
   template<typename U, typename V>
   UniquePtr(U&& aU, V&& aV,
@@ -397,7 +394,6 @@ private:
                               int>::Type aDummy = 0)
   = delete;
 
-public:
   UniquePtr(UniquePtr&& aOther)
     : mTuple(aOther.release(), Forward<DeleterType>(aOther.getDeleter()))
   {}
@@ -458,14 +454,11 @@ public:
     }
   }
 
-private:
   template<typename U>
   void reset(U) = delete;
 
-public:
   void swap(UniquePtr& aOther) { mTuple.swap(aOther.mTuple); }
 
-private:
   UniquePtr(const UniquePtr& aOther) = delete; // construct using Move()!
   void operator=(const UniquePtr& aOther) = delete; // assign using Move()!
 };
@@ -478,9 +471,9 @@ public:
   MOZ_CONSTEXPR DefaultDelete() {}
 
   template<typename U>
-  DefaultDelete(const DefaultDelete<U>& aOther,
-                typename EnableIf<mozilla::IsConvertible<U*, T*>::value,
-                                  int>::Type aDummy = 0)
+  MOZ_IMPLICIT DefaultDelete(const DefaultDelete<U>& aOther,
+                             typename EnableIf<mozilla::IsConvertible<U*, T*>::value,
+                                               int>::Type aDummy = 0)
   {}
 
   void operator()(T* aPtr) const
@@ -503,7 +496,6 @@ public:
     delete[] aPtr;
   }
 
-private:
   template<typename U>
   void operator()(U* aPtr) const = delete;
 };

@@ -70,6 +70,8 @@ public:
 
   void DestroyRequest(imgIRequest* aRequest);
 
+  void FlushUseCounters();
+
 private:
   ~ImageLoader() {}
 
@@ -92,14 +94,6 @@ private:
   nsPresContext* GetPresContext();
 
   void DoRedraw(FrameSet* aFrameSet, bool aForcePaint);
-
-  static PLDHashOperator
-  SetAnimationModeEnumerator(nsISupports* aKey, FrameSet* aValue,
-                             void* aClosure);
-
-  static PLDHashOperator
-  DeregisterRequestEnumerator(nsISupports* aKey, FrameSet* aValue,
-                              void* aClosure);
 
   nsresult OnSizeAvailable(imgIRequest* aRequest, imgIContainer* aImage);
   nsresult OnFrameComplete(imgIRequest* aRequest);

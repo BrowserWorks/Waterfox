@@ -24,8 +24,8 @@
 #include <media/stagefright/MediaExtractor.h>
 #include <media/stagefright/Utils.h>
 #include <utils/List.h>
-#include <utils/Vector.h>
 #include <utils/String8.h>
+#include "nsTArray.h"
 
 namespace stagefright {
 
@@ -88,6 +88,7 @@ private:
         uint32_t timescale;
         // Temporary storage for elst until we've
         // parsed mdhd and can interpret them.
+        uint64_t empty_duration;
         uint64_t segment_duration;
         int64_t media_time;
 
@@ -96,10 +97,10 @@ private:
         bool skipTrack;
     };
 
-    Vector<SidxEntry> mSidxEntries;
+    nsTArray<SidxEntry> mSidxEntries;
     uint64_t mSidxDuration;
 
-    Vector<PsshInfo> mPssh;
+    nsTArray<PsshInfo> mPssh;
 
     sp<DataSource> mDataSource;
     status_t mInitCheck;
@@ -110,7 +111,7 @@ private:
 
     sp<MetaData> mFileMetaData;
 
-    Vector<uint32_t> mPath;
+    nsTArray<uint32_t> mPath;
     String8 mLastCommentMean;
     String8 mLastCommentName;
     String8 mLastCommentData;

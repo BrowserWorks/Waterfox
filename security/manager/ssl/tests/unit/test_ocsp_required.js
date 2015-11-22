@@ -9,7 +9,7 @@
 // response with a bad signature. With security.OCSP.require set to true,
 // this should fail (but it also shouldn't cause assertion failures).
 
-let gOCSPRequestCount = 0;
+var gOCSPRequestCount = 0;
 
 function run_test() {
   do_get_profile();
@@ -47,7 +47,8 @@ function add_tests()
   add_connection_test("ocsp-stapling-none.example.com",
                       SEC_ERROR_OCSP_BAD_SIGNATURE);
   add_test(function () {
-    do_check_eq(gOCSPRequestCount, 1);
+    equal(gOCSPRequestCount, 1,
+          "OCSP request count should be 1 due to OCSP response caching");
     gOCSPRequestCount = 0;
     run_next_test();
   });

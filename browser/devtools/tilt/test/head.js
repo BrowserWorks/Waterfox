@@ -2,16 +2,15 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
 
-let {devtools} = Components.utils.import("resource://gre/modules/devtools/Loader.jsm", {});
-let TiltManager = devtools.require("devtools/tilt/tilt").TiltManager;
-let TiltGL = devtools.require("devtools/tilt/tilt-gl");
-let {EPSILON, TiltMath, vec3, mat3, mat4, quat4} = devtools.require("devtools/tilt/tilt-math");
-let TiltUtils = devtools.require("devtools/tilt/tilt-utils");
-let {TiltVisualizer} = devtools.require("devtools/tilt/tilt-visualizer");
+var {require} = Components.utils.import("resource://gre/modules/devtools/Loader.jsm", {});
+var TiltManager = require("devtools/tilt/tilt").TiltManager;
+var TiltGL = require("devtools/tilt/tilt-gl");
+var {EPSILON, TiltMath, vec3, mat3, mat4, quat4} = require("devtools/tilt/tilt-math");
+var TiltUtils = require("devtools/tilt/tilt-utils");
+var {TiltVisualizer} = require("devtools/tilt/tilt-visualizer");
+var DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+var {getRect, getIframeContentOffset} = require("devtools/toolkit/layout/utils");
 
-let tempScope = {};
-Components.utils.import("resource://gre/modules/devtools/LayoutHelpers.jsm", tempScope);
-let LayoutHelpers = tempScope.LayoutHelpers;
 
 const DEFAULT_HTML = "data:text/html," +
   "<DOCTYPE html>" +
@@ -39,7 +38,7 @@ const DEFAULT_HTML = "data:text/html," +
     "<body>" +
   "</html>";
 
-let Tilt = TiltManager.getTiltForBrowser(window);
+var Tilt = TiltManager.getTiltForBrowser(window);
 
 const STARTUP = Tilt.NOTIFICATIONS.STARTUP;
 const INITIALIZING = Tilt.NOTIFICATIONS.INITIALIZING;
@@ -55,9 +54,9 @@ const NODE_REMOVED = Tilt.NOTIFICATIONS.NODE_REMOVED;
 
 const TILT_ENABLED = Services.prefs.getBoolPref("devtools.tilt.enabled");
 
-gDevTools.testing = true;
+DevToolsUtils.testing = true;
 SimpleTest.registerCleanupFunction(() => {
-  gDevTools.testing = false;
+  DevToolsUtils.testing = false;
 });
 
 function isTiltEnabled() {

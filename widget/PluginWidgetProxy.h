@@ -18,7 +18,7 @@
 namespace mozilla {
 namespace plugins {
 class PluginWidgetChild;
-}
+} // namespace plugins
 namespace widget {
 
 class PluginWidgetProxy final : public PuppetWidget
@@ -43,6 +43,9 @@ public:
 
   virtual nsIWidget* GetParent(void) override;
   virtual void* GetNativeData(uint32_t aDataType) override;
+#if defined(XP_WIN)
+  void SetNativeData(uint32_t aDataType, uintptr_t aVal) override;
+#endif
   virtual nsTransparencyMode GetTransparencyMode() override
   { return eTransparencyOpaque; }
   virtual void GetWindowClipRegion(nsTArray<nsIntRect>* aRects) override;
@@ -65,6 +68,7 @@ private:
   nsCOMPtr<nsIWidget> mParent;
 };
 
-}  // namespace widget
-}  // namespace mozilla
+} // namespace widget
+} // namespace mozilla
+
 #endif

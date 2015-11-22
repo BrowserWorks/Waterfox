@@ -47,6 +47,8 @@
 
       <field name="_controller">null</field>
 
+      <field name="_selectParentHelper">null</field>
+
       <field name="_remoteWebNavigation">null</field>
 
       <property name="webNavigation"
@@ -198,6 +200,13 @@
         ]]></getter>
       </property>
 
+      <property name="hasContentOpener">
+        <getter><![CDATA[
+          let {frameLoader} = this.QueryInterface(Ci.nsIFrameLoaderOwner);
+          return frameLoader.tabParent.hasContentOpener;
+        ]]></getter>
+      </property>
+
       <field name="_outerWindowID">null</field>
       <property name="outerWindowID"
                 onget="return this._outerWindowID"
@@ -210,13 +219,14 @@
       <property name="docShellIsActive">
         <getter>
           <![CDATA[
-            throw new Error("not supported");
+            let {frameLoader} = this.QueryInterface(Ci.nsIFrameLoaderOwner);
+            return frameLoader.tabParent.docShellIsActive;
           ]]>
         </getter>
         <setter>
           <![CDATA[
             let {frameLoader} = this.QueryInterface(Ci.nsIFrameLoaderOwner);
-            frameLoader.tabParent.setIsDocShellActive(val);
+            frameLoader.tabParent.docShellIsActive = val;
             return val;
           ]]>
         </setter>
@@ -252,12 +262,14 @@
             this.messageManager.loadFrameScript("chrome://global/content/select-child.js", true);
           }
 
+          if (!this.hasAttribute("disablehistory")) {
+            Services.obs.addObserver(this, "browser:purge-session-history", false)
+          }
+
           jsm = "resource://gre/modules/RemoteController.jsm";
           let RemoteController = Components.utils.import(jsm, {}).RemoteController;
           this._controller = new RemoteController(this);
           this.controllers.appendController(this._controller);
-
-          Services.obs.addObserver(this, "ask-children-to-exit-fullscreen", false);
         ]]>
       </constructor>
 
@@ -268,7 +280,9 @@
       </destructor>
 
       <!-- This is necessary because the destructor doesn't always get called when
-           we are removed from a tabbrowser. This will be explicitly called by tabbrowser -->
+           we are removed from a tabbrowser. This will be explicitly called by tabbrowser.
+
+           Note: This overrides the destroy() method from browser.xml. -->
       <method name="destroy">
         <body><![CDATA[
           if (this.mDestroyed)
@@ -277,7 +291,13 @@
 
           this.controllers.removeController(this._controller);
 
-          Services.obs.removeObserver(this, "ask-children-to-exit-fullscreen");
+          if (!this.hasAttribute("disablehistory")) {
+            try {
+              Services.obs.removeObserver(this, "browser:purge-session-history");
+            } catch (ex) {
+              // It's not clear why this sometimes throws an exception.
+            }
+          }
         ]]></body>
       </method>
 
@@ -304,10 +324,15 @@
               break;
 
             case "Forms:ShowDropDown": {
-              Cu.import("resource://gre/modules/SelectParentHelper.jsm");
+              if (!this._selectParentHelper) {
+                this._selectParentHelper =
+                  Cu.import("resource://gre/modules/SelectParentHelper.jsm", {}).SelectParentHelper;
+              }
+
               let menulist = document.getElementById(this.getAttribute("selectmenulist"));
-              SelectParentHelper.populate(menulist, data.options, data.selectedIndex);
-              SelectParentHelper.open(this, menulist, data.rect);
+              menulist.menupopup.style.direction = data.direction;
+              this._selectParentHelper.populate(menulist, data.options, data.selectedIndex, this._fullZoom);
+              this._selectParentHelper.open(this, menulist, data.rect);
               break;
             }
 
@@ -335,9 +360,10 @@
             }
 
             case "Forms:HideDropDown": {
-              Cu.import("resource://gre/modules/SelectParentHelper.jsm");
-              let menulist = document.getElementById(this.getAttribute("selectmenulist"));
-              SelectParentHelper.hide(menulist);
+              if (this._selectParentHelper) {
+                let menulist = document.getElementById(this.getAttribute("selectmenulist"));
+                this._selectParentHelper.hide(menulist);
+              }
               break;
             }
 
@@ -363,19 +389,6 @@
         ]]></body>
       </method>
 
-      <method name="observe">
-        <parameter name="aSubject"/>
-        <parameter name="aTopic"/>
-        <parameter name="aData"/>
-        <body><![CDATA[
-          if (aTopic == "ask-children-to-exit-fullscreen") {
-            if (aSubject == window.document) {
-              this.messageManager.sendAsyncMessage("DOMFullscreen:ChildrenMustExit");
-            }
-          }
-        ]]></body>
-      </method>
-
       <method name="enableDisableCommands">
         <parameter name="aAction"/>
         <parameter name="aEnabledLength"/>
@@ -391,6 +404,19 @@
         </body>
       </method>
 
+      <method name="purgeSessionHistory">
+        <body>
+          <![CDATA[
+            try {
+              this.messageManager.sendAsyncMessage("Browser:PurgeSessionHistory");
+            } catch (ex if ex.result == Components.results.NS_ERROR_NOT_INITIALIZED) {
+              // This can throw if the browser has started to go away.
+            }
+            this.webNavigation.canGoBack = false;
+            this.webNavigation.canGoForward = false;
+          ]]>
+        </body>
+      </method>
     </implementation>
 
   </binding>

@@ -2,14 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import logging
 import mozpack.path as mozpath
-import os
-import sys
-import warnings
-import which
 
 from mozbuild.base import (
     MachCommandBase,
@@ -86,9 +81,9 @@ class SyncTestCommands(MachCommandBase):
             '-r', '%s/components/httpd.manifest' % self.bindir,
             '-m',
             '-s',
+            '-e', 'const _TESTING_MODULES_DIR = "%s/_tests/modules";' % topobjdir,
             '-f', '%s/testing/xpcshell/head.js' % topsrcdir,
             '-e', 'const _SERVER_ADDR = "%s";' % hostname,
-            '-e', 'const _TESTING_MODULES_DIR = "%s/_tests/modules";' % topobjdir,
             '-e', 'const SERVER_PORT = "%s";' % port,
             '-e', 'const INCLUDE_FILES = [%s];' % ', '.join(head_paths),
             '-e', '_register_protocol_handlers();',

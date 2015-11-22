@@ -17,9 +17,7 @@
 #include "WebGLVertexArray.h"
 #include "WebGLVertexAttribData.h"
 
-using namespace mozilla;
-using namespace mozilla::dom;
-using namespace mozilla::gl;
+namespace mozilla {
 
 // For a Tegra workaround.
 static const int MAX_DRAW_CALLS_SINCE_FLUSH = 100;
@@ -27,9 +25,8 @@ static const int MAX_DRAW_CALLS_SINCE_FLUSH = 100;
 bool
 WebGLContext::DrawInstanced_check(const char* info)
 {
-    // This restriction was removed in GLES3, so WebGL2 shouldn't have it.
-    if (!IsWebGL2() &&
-        IsExtensionEnabled(WebGLExtensionID::ANGLE_instanced_arrays) &&
+    if ((IsWebGL2() ||
+         IsExtensionEnabled(WebGLExtensionID::ANGLE_instanced_arrays)) &&
         !mBufferFetchingHasPerVertex)
     {
         /* http://www.khronos.org/registry/gles/extensions/ANGLE/ANGLE_instanced_arrays.txt
@@ -600,7 +597,7 @@ WebGLContext::DoFakeVertexAttrib0(GLuint vertexCount)
         }
         GLenum error = GetAndFlushUnderlyingGLErrors();
 
-        gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, mBoundArrayBuffer ? mBoundArrayBuffer->GLName() : 0);
+        gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, mBoundArrayBuffer ? mBoundArrayBuffer->mGLName : 0);
 
         // note that we do this error checking and early return AFTER having restored the buffer binding above
         if (error) {
@@ -626,7 +623,7 @@ WebGLContext::UndoFakeVertexAttrib0()
 
     if (mBoundVertexArray->HasAttrib(0) && mBoundVertexArray->mAttribs[0].buf) {
         const WebGLVertexAttribData& attrib0 = mBoundVertexArray->mAttribs[0];
-        gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, attrib0.buf->GLName());
+        gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, attrib0.buf->mGLName);
         if (attrib0.integer) {
             gl->fVertexAttribIPointer(0,
                                       attrib0.size,
@@ -645,7 +642,7 @@ WebGLContext::UndoFakeVertexAttrib0()
         gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, 0);
     }
 
-    gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, mBoundArrayBuffer ? mBoundArrayBuffer->GLName() : 0);
+    gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, mBoundArrayBuffer ? mBoundArrayBuffer->mGLName : 0);
 }
 
 WebGLContextFakeBlackStatus
@@ -737,18 +734,18 @@ WebGLContext::UnbindFakeBlackTextures()
     for (int32_t i = 0; i < mGLMaxTextureUnits; ++i) {
         if (mBound2DTextures[i] && mBound2DTextures[i]->ResolvedFakeBlackStatus() != WebGLTextureFakeBlackStatus::NotNeeded) {
             gl->fActiveTexture(LOCAL_GL_TEXTURE0 + i);
-            gl->fBindTexture(LOCAL_GL_TEXTURE_2D, mBound2DTextures[i]->GLName());
+            gl->fBindTexture(LOCAL_GL_TEXTURE_2D, mBound2DTextures[i]->mGLName);
         }
         if (mBoundCubeMapTextures[i] && mBoundCubeMapTextures[i]->ResolvedFakeBlackStatus() != WebGLTextureFakeBlackStatus::NotNeeded) {
             gl->fActiveTexture(LOCAL_GL_TEXTURE0 + i);
-            gl->fBindTexture(LOCAL_GL_TEXTURE_CUBE_MAP, mBoundCubeMapTextures[i]->GLName());
+            gl->fBindTexture(LOCAL_GL_TEXTURE_CUBE_MAP, mBoundCubeMapTextures[i]->mGLName);
         }
     }
 
     gl->fActiveTexture(LOCAL_GL_TEXTURE0 + mActiveTexture);
 }
 
-WebGLContext::FakeBlackTexture::FakeBlackTexture(GLContext* gl, TexTarget target, GLenum format)
+WebGLContext::FakeBlackTexture::FakeBlackTexture(gl::GLContext* gl, TexTarget target, GLenum format)
     : mGL(gl)
     , mGLName(0)
 {
@@ -788,3 +785,5 @@ WebGLContext::FakeBlackTexture::~FakeBlackTexture()
       mGL->fDeleteTextures(1, &mGLName);
   }
 }
+
+} // namespace mozilla

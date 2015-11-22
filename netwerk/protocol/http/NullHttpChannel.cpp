@@ -4,6 +4,7 @@
 
 #include "NullHttpChannel.h"
 #include "nsContentUtils.h"
+#include "nsContentSecurityManager.h"
 #include "nsIScriptSecurityManager.h"
 
 namespace mozilla {
@@ -94,6 +95,7 @@ NullHttpChannel::SetReferrerWithPolicy(nsIURI *referrer, uint32_t referrerPolicy
 NS_IMETHODIMP
 NullHttpChannel::GetRequestHeader(const nsACString & aHeader, nsACString & _retval)
 {
+  _retval.Truncate();
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -104,7 +106,19 @@ NullHttpChannel::SetRequestHeader(const nsACString & aHeader, const nsACString &
 }
 
 NS_IMETHODIMP
+NullHttpChannel::SetEmptyRequestHeader(const nsACString & aHeader)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 NullHttpChannel::VisitRequestHeaders(nsIHttpHeaderVisitor *aVisitor)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::VisitNonDefaultRequestHeaders(nsIHttpHeaderVisitor *aVisitor)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -166,6 +180,7 @@ NullHttpChannel::GetRequestSucceeded(bool *aRequestSucceeded)
 NS_IMETHODIMP
 NullHttpChannel::GetResponseHeader(const nsACString & header, nsACString & _retval)
 {
+  _retval.Truncate();
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -201,6 +216,18 @@ NullHttpChannel::IsPrivateResponse(bool *_retval)
 
 NS_IMETHODIMP
 NullHttpChannel::RedirectTo(nsIURI *aNewURI)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::GetSchedulingContextID(nsID *_retval)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::SetSchedulingContextID(const nsID scID)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -303,9 +330,27 @@ NullHttpChannel::Open(nsIInputStream * *_retval)
 }
 
 NS_IMETHODIMP
+NullHttpChannel::Open2(nsIInputStream** aStream)
+{
+  nsCOMPtr<nsIStreamListener> listener;
+  nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return Open(aStream);
+}
+
+NS_IMETHODIMP
 NullHttpChannel::AsyncOpen(nsIStreamListener *aListener, nsISupports *aContext)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::AsyncOpen2(nsIStreamListener *aListener)
+{
+  nsCOMPtr<nsIStreamListener> listener = aListener;
+  nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return AsyncOpen(listener, nullptr);
 }
 
 NS_IMETHODIMP

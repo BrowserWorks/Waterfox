@@ -6,14 +6,19 @@
 package org.mozilla.gecko.tabs;
 
 import org.mozilla.gecko.AboutPages;
+import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.widget.ResizablePathDrawable;
 import org.mozilla.gecko.widget.ResizablePathDrawable.NonScaledPathShape;
-import org.mozilla.gecko.widget.ThemedImageButton;
-import org.mozilla.gecko.widget.ThemedLinearLayout;
-import org.mozilla.gecko.widget.ThemedTextView;
+import org.mozilla.gecko.widget.themed.ThemedImageButton;
+import org.mozilla.gecko.widget.themed.ThemedLinearLayout;
+import org.mozilla.gecko.widget.themed.ThemedTextView;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -23,6 +28,7 @@ import android.graphics.Canvas;
 import android.graphics.Path;
 import android.graphics.Region;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -31,7 +37,6 @@ import android.widget.ImageView;
 
 public class TabStripItemView extends ThemedLinearLayout
                               implements Checkable {
-    @SuppressWarnings("unused")
     private static final String LOGTAG = "GeckoTabStripItem";
 
     private static final int[] STATE_CHECKED = {
@@ -67,7 +72,7 @@ public class TabStripItemView extends ThemedLinearLayout
         final Resources res = context.getResources();
 
         final ColorStateList tabColors =
-                res.getColorStateList(R.color.new_tablet_tab_strip_item_bg);
+                res.getColorStateList(R.color.tab_strip_item_bg);
         backgroundDrawable = new ResizablePathDrawable(new TabCurveShape(), tabColors);
         setBackgroundDrawable(backgroundDrawable);
 
@@ -204,6 +209,12 @@ public class TabStripItemView extends ThemedLinearLayout
             titleView.setText(tab.getDisplayTitle());
         }
 
+        // TODO: Set content description to indicate audio is playing.
+        if (tab.isAudioPlaying()) {
+            titleView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.tab_audio_playing, 0, 0, 0);
+        } else {
+            titleView.setCompoundDrawables(null, null, null, null);
+        }
     }
 
     private void updateFavicon(final Bitmap favicon) {

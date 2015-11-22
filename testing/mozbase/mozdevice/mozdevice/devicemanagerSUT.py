@@ -3,7 +3,7 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import datetime
-import mozlog
+import logging
 import moznetwork
 import select
 import socket
@@ -30,15 +30,14 @@ class DeviceManagerSUT(DeviceManager):
     _prompt_sep = '\x00'
     _prompt_regex = '.*(' + _base_prompt_re + _prompt_sep + ')'
     _agentErrorRE = re.compile('^##AGENT-WARNING##\ ?(.*)')
-    default_timeout = 300
 
     reboot_timeout = 600
     reboot_settling_time = 60
 
-    def __init__(self, host, port = 20701, retryLimit = 5,
-            deviceRoot = None, logLevel = mozlog.ERROR, **kwargs):
-        DeviceManager.__init__(self, logLevel = logLevel,
-                               deviceRoot = deviceRoot)
+    def __init__(self, host, port=20701, retryLimit=5, deviceRoot=None,
+                 logLevel=logging.ERROR, **kwargs):
+        DeviceManager.__init__(self, logLevel=logLevel,
+                               deviceRoot=deviceRoot)
         self.host = host
         self.port = port
         self.retryLimit = retryLimit

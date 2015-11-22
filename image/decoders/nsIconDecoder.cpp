@@ -12,15 +12,20 @@
 #include "RasterImage.h"
 #include <algorithm>
 
+using namespace mozilla::gfx;
+
+using std::min;
+
 namespace mozilla {
 namespace image {
 
 nsIconDecoder::nsIconDecoder(RasterImage* aImage)
- : Decoder(aImage),
-   mWidth(-1),
-   mHeight(-1),
-   mPixBytesRead(0),
-   mState(iconStateStart)
+ : Decoder(aImage)
+ , mExpectedDataLength(0)
+ , mPixBytesRead(0)
+ , mState(iconStateStart)
+ , mWidth(-1)
+ , mHeight(-1)
 {
   // Nothing to do
 }
@@ -32,10 +37,6 @@ void
 nsIconDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
 {
   MOZ_ASSERT(!HasError(), "Shouldn't call WriteInternal after error!");
-
-  // We put this here to avoid errors about crossing initialization with case
-  // jumps on linux.
-  uint32_t bytesToRead = 0;
 
   // Loop until the input data is gone
   while (aCount > 0) {
@@ -67,15 +68,38 @@ nsIconDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
           return;
         }
 
-        // If We're doing a size decode, we're done
-        if (IsSizeDecode()) {
+        // If we're doing a metadata decode, we're done.
+        if (IsMetadataDecode()) {
           mState = iconStateFinished;
           break;
         }
 
-        if (!mImageData) {
-          PostDecoderError(NS_ERROR_OUT_OF_MEMORY);
-          return;
+        // The input is 32bpp, so we expect 4 bytes of data per pixel.
+        mExpectedDataLength = mWidth * mHeight * 4;
+
+        {
+          MOZ_ASSERT(!mImageData, "Already have a buffer allocated?");
+          IntSize targetSize = mDownscaler ? mDownscaler->TargetSize()
+                                           : GetSize();
+          nsresult rv = AllocateFrame(0, targetSize,
+                                      IntRect(IntPoint(), targetSize),
+                                      gfx::SurfaceFormat::B8G8R8A8);
+          if (NS_FAILED(rv)) {
+            mState = iconStateFinished;
+            return;
+          }
+        }
+
+        MOZ_ASSERT(mImageData, "Should have a buffer now");
+
+        if (mDownscaler) {
+          nsresult rv = mDownscaler->BeginFrame(GetSize(), Nothing(),
+                                                mImageData,
+                                                /* aHasAlpha = */ true);
+          if (NS_FAILED(rv)) {
+            mState = iconStateFinished;
+            return;
+          }
         }
 
         // Book Keeping
@@ -87,25 +111,60 @@ nsIconDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
       case iconStateReadPixels: {
 
         // How many bytes are we reading?
-        bytesToRead = std::min(aCount, mImageDataLength - mPixBytesRead);
+        uint32_t bytesToRead = min(aCount, mExpectedDataLength - mPixBytesRead);
 
-        // Copy the bytes
-        memcpy(mImageData + mPixBytesRead, aBuffer, bytesToRead);
+        if (mDownscaler) {
+          uint8_t* row = mDownscaler->RowBuffer();
+          const uint32_t bytesPerRow = mWidth * 4;
+          const uint32_t rowOffset = mPixBytesRead % bytesPerRow;
 
-        // Performance isn't critical here, so our update rectangle is
-        // always the full icon
-        nsIntRect r(0, 0, mWidth, mHeight);
+          // Update global state; we're about to read |bytesToRead| bytes.
+          aCount -= bytesToRead;
+          mPixBytesRead += bytesToRead;
 
-        // Invalidate
-        PostInvalidation(r);
+          if (rowOffset > 0) {
+            // Finish the current row.
+            const uint32_t remaining = bytesPerRow - rowOffset;
+            memcpy(row + rowOffset, aBuffer, remaining);
+            aBuffer += remaining;
+            bytesToRead -= remaining;
+            mDownscaler->CommitRow();
+          }
 
-        // Book Keeping
-        aBuffer += bytesToRead;
-        aCount -= bytesToRead;
-        mPixBytesRead += bytesToRead;
+          // Copy the bytes a row at a time.
+          while (bytesToRead > bytesPerRow) {
+            memcpy(row, aBuffer, bytesPerRow);
+            aBuffer += bytesPerRow;
+            bytesToRead -= bytesPerRow;
+            mDownscaler->CommitRow();
+          }
+
+          // Copy any leftover bytes. (Leaving the current row incomplete.)
+          if (bytesToRead > 0) {
+            memcpy(row, aBuffer, bytesToRead);
+            aBuffer += bytesPerRow;
+            bytesToRead -= bytesPerRow;
+          }
+
+          if (mDownscaler->HasInvalidation()) {
+            DownscalerInvalidRect invalidRect = mDownscaler->TakeInvalidRect();
+            PostInvalidation(invalidRect.mOriginalSizeRect,
+                             Some(invalidRect.mTargetSizeRect));
+          }
+        } else {
+          // Copy all the bytes at once.
+          memcpy(mImageData + mPixBytesRead, aBuffer, bytesToRead);
+          aBuffer += bytesToRead;
+          aCount -= bytesToRead;
+          mPixBytesRead += bytesToRead;
+
+          // Invalidate. Performance isn't critical here, so our update
+          // rectangle is always the full icon.
+          PostInvalidation(IntRect(0, 0, mWidth, mHeight));
+        }
 
         // If we've got all the pixel bytes, we're finished
-        if (mPixBytesRead == mImageDataLength) {
+        if (mPixBytesRead == mExpectedDataLength) {
           PostFrameStop();
           PostDecodeDone();
           mState = iconStateFinished;

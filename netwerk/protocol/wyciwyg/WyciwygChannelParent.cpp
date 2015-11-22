@@ -186,7 +186,14 @@ WyciwygChannelParent::RecvAsyncOpen(const URIParams& aOriginal,
   if (NS_FAILED(rv))
     return SendCancelEarly(rv);
 
-  rv = mChannel->AsyncOpen(this, nullptr);
+  nsCOMPtr<nsILoadInfo> loadInfo = mChannel->GetLoadInfo();
+  if (loadInfo && loadInfo->GetEnforceSecurity()) {
+    rv = mChannel->AsyncOpen2(this);
+  }
+  else {
+    rv = mChannel->AsyncOpen(this, nullptr);
+  }
+
   if (NS_FAILED(rv))
     return SendCancelEarly(rv);
 
@@ -341,8 +348,8 @@ WyciwygChannelParent::GetInterface(const nsIID& uuid, void** result)
 {
   // Only support nsILoadContext if child channel's callbacks did too
   if (uuid.Equals(NS_GET_IID(nsILoadContext)) && mLoadContext) {
-    NS_ADDREF(mLoadContext);
-    *result = static_cast<nsILoadContext*>(mLoadContext);
+    nsCOMPtr<nsILoadContext> copy = mLoadContext;
+    copy.forget(result);
     return NS_OK;
   }
 
@@ -350,4 +357,5 @@ WyciwygChannelParent::GetInterface(const nsIID& uuid, void** result)
 }
 
 
-}} // mozilla::net
+} // namespace net
+} // namespace mozilla

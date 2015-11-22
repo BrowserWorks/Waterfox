@@ -6,11 +6,11 @@ const {utils: Cu, classes: Cc, interfaces: Ci} = Components;
 
 const {Promise: promise} =
   Cu.import("resource://gre/modules/devtools/deprecated-sync-thenables.js", {});
-const {devtools} =
+const {require} =
   Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const {require} = devtools;
 
 const {AppProjects} = require("devtools/app-manager/app-projects");
+const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 
 const APP_MANAGER_URL = "about:app-manager";
 const TEST_BASE =
@@ -19,9 +19,9 @@ const HOSTED_APP_MANIFEST = TEST_BASE + "hosted_app.manifest";
 
 const PACKAGED_APP_DIR_PATH = getTestFilePath(".");
 
-gDevTools.testing = true;
+DevToolsUtils.testing = true;
 SimpleTest.registerCleanupFunction(() => {
-  gDevTools.testing = false;
+  DevToolsUtils.testing = false;
 });
 
 function addTab(url, targetWindow = window) {
@@ -127,7 +127,7 @@ function waitForProjectsPanel(deferred = promise.defer()) {
 }
 
 function selectProjectsPanel() {
-  return Task.spawn(function() {
+  return Task.spawn(function*() {
     let projectsButton = content.document.querySelector(".projects-button");
     EventUtils.sendMouseEvent({ type: "click" }, projectsButton, content);
 
@@ -144,7 +144,7 @@ function waitForProjectSelection() {
 }
 
 function selectFirstProject() {
-  return Task.spawn(function() {
+  return Task.spawn(function*() {
     let projectsFrame = content.document.querySelector(".projects-panel");
     let projectsWindow = projectsFrame.contentWindow;
     let projectsDoc = projectsWindow.document;
@@ -156,7 +156,7 @@ function selectFirstProject() {
 }
 
 function showSampleProjectDetails() {
-  return Task.spawn(function() {
+  return Task.spawn(function*() {
     yield selectProjectsPanel();
     yield selectFirstProject();
   });

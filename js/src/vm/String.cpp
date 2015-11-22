@@ -14,6 +14,7 @@
 
 #include "gc/Marking.h"
 #include "js/UbiNode.h"
+#include "vm/SPSProfiler.h"
 
 #include "jscntxtinlines.h"
 #include "jscompartmentinlines.h"
@@ -67,7 +68,7 @@ JSString::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf)
            : mallocSizeOf(flat.rawTwoByteChars());
 }
 
-size_t
+JS::ubi::Node::Size
 JS::ubi::Concrete<JSString>::size(mozilla::MallocSizeOf mallocSizeOf) const
 {
     JSString &str = get();
@@ -475,8 +476,11 @@ JSRope::flattenInternal(ExclusiveContext* maybecx)
         }
     }
 
-    if (!AllocChars(this, wholeLength, &wholeChars, &wholeCapacity))
+    if (!AllocChars(this, wholeLength, &wholeChars, &wholeCapacity)) {
+        if (maybecx)
+            ReportOutOfMemory(maybecx);
         return nullptr;
+    }
 
     pos = wholeChars;
     first_visit_node: {
@@ -551,6 +555,10 @@ JSRope::flattenInternal(ExclusiveContext* maybecx)
 JSFlatString*
 JSRope::flatten(ExclusiveContext* maybecx)
 {
+    mozilla::Maybe<AutoSPSEntry> sps;
+    if (maybecx && maybecx->isJSContext())
+        sps.emplace(maybecx->asJSContext()->runtime(), "JSRope::flatten");
+
     if (zone()->needsIncrementalBarrier())
         return flattenInternal<WithIncrementalBarrier>(maybecx);
     return flattenInternal<NoBarrier>(maybecx);

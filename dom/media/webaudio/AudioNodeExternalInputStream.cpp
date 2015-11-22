@@ -12,8 +12,8 @@ using namespace mozilla::dom;
 
 namespace mozilla {
 
-AudioNodeExternalInputStream::AudioNodeExternalInputStream(AudioNodeEngine* aEngine, TrackRate aSampleRate, uint32_t aContextId)
-  : AudioNodeStream(aEngine, MediaStreamGraph::INTERNAL_STREAM, aSampleRate, aContextId)
+AudioNodeExternalInputStream::AudioNodeExternalInputStream(AudioNodeEngine* aEngine, TrackRate aSampleRate)
+  : AudioNodeStream(aEngine, NO_STREAM_FLAGS, aSampleRate)
 {
   MOZ_COUNT_CTOR(AudioNodeExternalInputStream);
 }
@@ -23,51 +23,53 @@ AudioNodeExternalInputStream::~AudioNodeExternalInputStream()
   MOZ_COUNT_DTOR(AudioNodeExternalInputStream);
 }
 
+/* static */ already_AddRefed<AudioNodeExternalInputStream>
+AudioNodeExternalInputStream::Create(MediaStreamGraph* aGraph,
+                                     AudioNodeEngine* aEngine)
+{
+  AudioContext* ctx = aEngine->NodeMainThread()->Context();
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aGraph->GraphRate() == ctx->SampleRate());
+
+  nsRefPtr<AudioNodeExternalInputStream> stream =
+    new AudioNodeExternalInputStream(aEngine, aGraph->GraphRate());
+  aGraph->AddStream(stream,
+    ctx->ShouldSuspendNewStream() ? MediaStreamGraph::ADD_STREAM_SUSPENDED : 0);
+  return stream.forget();
+}
+
 /**
  * Copies the data in aInput to aOffsetInBlock within aBlock.
  * aBlock must have been allocated with AllocateInputBlock and have a channel
  * count that's a superset of the channels in aInput.
  */
+template <typename T>
 static void
-CopyChunkToBlock(const AudioChunk& aInput, AudioChunk *aBlock,
+CopyChunkToBlock(AudioChunk& aInput, AudioBlock *aBlock,
                  uint32_t aOffsetInBlock)
 {
   uint32_t blockChannels = aBlock->ChannelCount();
-  nsAutoTArray<const void*,2> channels;
+  nsAutoTArray<const T*,2> channels;
   if (aInput.IsNull()) {
     channels.SetLength(blockChannels);
     PodZero(channels.Elements(), blockChannels);
   } else {
-    channels.SetLength(aInput.ChannelCount());
-    PodCopy(channels.Elements(), aInput.mChannelData.Elements(), channels.Length());
+    const nsTArray<const T*>& inputChannels = aInput.ChannelData<T>();
+    channels.SetLength(inputChannels.Length());
+    PodCopy(channels.Elements(), inputChannels.Elements(), channels.Length());
     if (channels.Length() != blockChannels) {
       // We only need to upmix here because aBlock's channel count has been
       // chosen to be a superset of the channel count of every chunk.
-      AudioChannelsUpMix(&channels, blockChannels, nullptr);
+      AudioChannelsUpMix(&channels, blockChannels, static_cast<T*>(nullptr));
     }
   }
 
-  uint32_t duration = aInput.GetDuration();
   for (uint32_t c = 0; c < blockChannels; ++c) {
-    float* outputData =
-      static_cast<float*>(const_cast<void*>(aBlock->mChannelData[c])) + aOffsetInBlock;
+    float* outputData = aBlock->ChannelFloatsForWrite(c) + aOffsetInBlock;
     if (channels[c]) {
-      switch (aInput.mBufferFormat) {
-      case AUDIO_FORMAT_FLOAT32:
-        ConvertAudioSamplesWithScale(
-            static_cast<const float*>(channels[c]), outputData, duration,
-            aInput.mVolume);
-        break;
-      case AUDIO_FORMAT_S16:
-        ConvertAudioSamplesWithScale(
-            static_cast<const int16_t*>(channels[c]), outputData, duration,
-            aInput.mVolume);
-        break;
-      default:
-        NS_ERROR("Unhandled format");
-      }
+      ConvertAudioSamplesWithScale(channels[c], outputData, aInput.GetDuration(), aInput.mVolume);
     } else {
-      PodZero(outputData, duration);
+      PodZero(outputData, aInput.GetDuration());
     }
   }
 }
@@ -78,7 +80,7 @@ CopyChunkToBlock(const AudioChunk& aInput, AudioChunk *aBlock,
  * channels in every chunk of aSegment. aBlock must be float format or null.
  */
 static void ConvertSegmentToAudioBlock(AudioSegment* aSegment,
-                                       AudioChunk* aBlock,
+                                       AudioBlock* aBlock,
                                        int32_t aFallbackChannelCount)
 {
   NS_ASSERTION(aSegment->GetDuration() == WEBAUDIO_BLOCK_SIZE, "Bad segment duration");
@@ -94,11 +96,26 @@ static void ConvertSegmentToAudioBlock(AudioSegment* aSegment,
     }
   }
 
-  AllocateAudioBlock(aFallbackChannelCount, aBlock);
+  aBlock->AllocateChannels(aFallbackChannelCount);
 
   uint32_t duration = 0;
   for (AudioSegment::ChunkIterator ci(*aSegment); !ci.IsEnded(); ci.Next()) {
-    CopyChunkToBlock(*ci, aBlock, duration);
+    switch (ci->mBufferFormat) {
+      case AUDIO_FORMAT_S16: {
+        CopyChunkToBlock<int16_t>(*ci, aBlock, duration);
+        break;
+      }
+      case AUDIO_FORMAT_FLOAT32: {
+        CopyChunkToBlock<float>(*ci, aBlock, duration);
+        break;
+      }
+      case AUDIO_FORMAT_SILENCE: {
+        // The actual type of the sample does not matter here, but we still need
+        // to send some audio to the graph.
+        CopyChunkToBlock<float>(*ci, aBlock, duration);
+        break;
+      }
+    }
     duration += ci->GetDuration();
   }
 }
@@ -141,6 +158,8 @@ AudioNodeExternalInputStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
         break;
       next = interval.mEnd;
 
+      // We know this stream does not block during the processing interval ---
+      // we're not finished, we don't underrun, and we're not suspended.
       StreamTime outputStart = GraphTimeToStreamTime(interval.mStart);
       StreamTime outputEnd = GraphTimeToStreamTime(interval.mEnd);
       StreamTime ticks = outputEnd - outputStart;
@@ -148,6 +167,8 @@ AudioNodeExternalInputStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
       if (interval.mInputIsBlocked) {
         segment.AppendNullData(ticks);
       } else {
+        // The input stream is not blocked in this interval, so no need to call
+        // GraphTimeToStreamTimeWithBlocking.
         StreamTime inputStart =
           std::min(inputSegment.GetDuration(),
                    source->GraphTimeToStreamTime(interval.mStart));
@@ -170,11 +191,11 @@ AudioNodeExternalInputStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
   if (inputChannels) {
     nsAutoTArray<float,GUESS_AUDIO_CHANNELS*WEBAUDIO_BLOCK_SIZE> downmixBuffer;
     for (uint32_t i = 0; i < audioSegments.Length(); ++i) {
-      AudioChunk tmpChunk;
+      AudioBlock tmpChunk;
       ConvertSegmentToAudioBlock(&audioSegments[i], &tmpChunk, inputChannels);
       if (!tmpChunk.IsNull()) {
         if (accumulateIndex == 0) {
-          AllocateAudioBlock(inputChannels, &mLastChunks[0]);
+          mLastChunks[0].AllocateChannels(inputChannels);
         }
         AccumulateInputChunk(accumulateIndex, tmpChunk, &mLastChunks[0], &downmixBuffer);
         accumulateIndex++;
@@ -195,4 +216,4 @@ AudioNodeExternalInputStream::IsEnabled()
   return ((MediaStreamAudioSourceNodeEngine*)Engine())->IsEnabled();
 }
 
-}
+} // namespace mozilla

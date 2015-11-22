@@ -13,6 +13,7 @@
 #include "nsIDocument.h"
 #include "nsWrapperCache.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/LayerAnimationInfo.h" // LayerAnimations::kRecords
 #include "mozilla/StickyTimeDuration.h"
 #include "mozilla/StyleAnimationValue.h"
 #include "mozilla/TimeStamp.h"
@@ -26,9 +27,8 @@ struct JSContext;
 class nsCSSPropertySet;
 
 namespace mozilla {
-namespace css {
+
 class AnimValuesStyleRule;
-} // namespace css
 
 /**
  * Input timing parameters.
@@ -72,24 +72,25 @@ struct AnimationTiming
 struct ComputedTiming
 {
   ComputedTiming()
-    : mTimeFraction(kNullTimeFraction)
+    : mProgress(kNullProgress)
     , mCurrentIteration(0)
     , mPhase(AnimationPhase_Null)
   { }
 
-  static const double kNullTimeFraction;
+  static const double kNullProgress;
 
   // The total duration of the animation including all iterations.
   // Will equal StickyTimeDuration::Forever() if the animation repeats
   // indefinitely.
   StickyTimeDuration mActiveDuration;
 
-  // Will be kNullTimeFraction if the animation is neither animating nor
+  // Progress towards the end of the current iteration. If the effect is
+  // being sampled backwards, this will go from 1.0 to 0.0.
+  // Will be kNullProgress if the animation is neither animating nor
   // filling at the sampled time.
-  double mTimeFraction;
+  double mProgress;
 
-  // Zero-based iteration index (meaningless if mTimeFraction is
-  // kNullTimeFraction).
+  // Zero-based iteration index (meaningless if mProgress is kNullProgress).
   uint64_t mCurrentIteration;
 
   enum {
@@ -168,13 +169,20 @@ struct AnimationProperty
   // **NOTE**: For CSS animations, we only bother setting mWinsInCascade
   // accurately for properties that we can animate on the compositor.
   // For other properties, we make it always be true.
+  // **NOTE 2**: This member is not included when comparing AnimationProperty
+  // objects for equality.
   bool mWinsInCascade;
 
   InfallibleTArray<AnimationPropertySegment> mSegments;
 
+  // NOTE: This operator does *not* compare the mWinsInCascade member.
+  // This is because AnimationProperty objects are compared when recreating
+  // CSS animations to determine if mutation observer change records need to
+  // be created or not. However, at the point when these objects are compared
+  // the mWinsInCascade will not have been set on the new objects so we ignore
+  // this member to avoid generating spurious change records.
   bool operator==(const AnimationProperty& aOther) const {
     return mProperty == aOther.mProperty &&
-           mWinsInCascade == aOther.mWinsInCascade &&
            mSegments == aOther.mSegments;
   }
   bool operator!=(const AnimationProperty& aOther) const {
@@ -192,17 +200,7 @@ public:
   KeyframeEffectReadOnly(nsIDocument* aDocument,
                          Element* aTarget,
                          nsCSSPseudoElements::Type aPseudoType,
-                         const AnimationTiming &aTiming,
-                         const nsSubstring& aName)
-    : AnimationEffectReadOnly(aDocument)
-    , mTarget(aTarget)
-    , mTiming(aTiming)
-    , mName(aName)
-    , mIsFinishedTransition(false)
-    , mPseudoType(aPseudoType)
-  {
-    MOZ_ASSERT(aTarget, "null animation target is not yet supported");
-  }
+                         const AnimationTiming& aTiming);
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(KeyframeEffectReadOnly,
@@ -212,37 +210,28 @@ public:
                                JS::Handle<JSObject*> aGivenProto) override;
 
   virtual ElementPropertyTransition* AsTransition() { return nullptr; }
-  virtual const ElementPropertyTransition* AsTransition() const {
+  virtual const ElementPropertyTransition* AsTransition() const
+  {
     return nullptr;
   }
 
   // KeyframeEffectReadOnly interface
   Element* GetTarget() const {
-    // Currently we only implement Element.getAnimations() which only
-    // returns animations targetting Elements so this should never
-    // be called for an animation that targets a pseudo-element.
+    // Currently we never return animations from the API whose effect
+    // targets a pseudo-element so this should never be called when
+    // mPseudoType is not 'none' (see bug 1174575).
     MOZ_ASSERT(mPseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement,
                "Requesting the target of a KeyframeEffect that targets a"
                " pseudo-element is not yet supported.");
     return mTarget;
   }
-  void GetName(nsString& aRetVal) const
-  {
-    aRetVal = Name();
-  }
 
   // Temporary workaround to return both the target element and pseudo-type
-  // until we implement PseudoElement.
+  // until we implement PseudoElement (bug 1174575).
   void GetTarget(Element*& aTarget,
                  nsCSSPseudoElements::Type& aPseudoType) const {
     aTarget = mTarget;
     aPseudoType = mPseudoType;
-  }
-  // Alternative to GetName that returns a reference to the member for
-  // more efficient internal usage.
-  virtual const nsString& Name() const
-  {
-    return mName;
   }
 
   void SetParentTime(Nullable<TimeDuration> aParentTime);
@@ -254,13 +243,9 @@ public:
     return mTiming;
   }
 
-  // Return the duration from the start the active interval to the point where
-  // the animation begins playback. This is zero unless the animation has
-  // a negative delay in which case it is the absolute value of the delay.
-  // This is used for setting the elapsedTime member of CSS AnimationEvents.
-  TimeDuration InitialAdvance() const {
-    return std::max(TimeDuration(), mTiming.mDelay * -1);
-  }
+  // FIXME: Drop |aOwningAnimation| once we make AnimationEffects track their
+  // owning animation.
+  void SetTiming(const AnimationTiming& aTiming, Animation& aOwningAnimtion);
 
   Nullable<TimeDuration> GetLocalTime() const {
     // Since the *animation* start time is currently always zero, the local
@@ -275,9 +260,9 @@ public:
   // active duration are calculated. All other members of the returned object
   // are given a null/initial value.
   //
-  // This function returns ComputedTiming::kNullTimeFraction for the
-  // mTimeFraction member of the return value if the animation should not be
-  // run (because it is not currently active and is not filling at this time).
+  // This function returns ComputedTiming::kNullProgress for the mProgress
+  // member of the return value if the animation should not be run
+  // (because it is not currently active and is not filling at this time).
   static ComputedTiming
   GetComputedTimingAt(const Nullable<TimeDuration>& aLocalTime,
                       const AnimationTiming& aTiming);
@@ -292,20 +277,6 @@ public:
   // Return the duration of the active interval for the given timing parameters.
   static StickyTimeDuration
   ActiveDuration(const AnimationTiming& aTiming);
-
-  // After transitions finish they need to be retained in order to
-  // address the issue described in
-  // https://lists.w3.org/Archives/Public/www-style/2015Jan/0444.html .
-  // However, finished transitions are ignored for many purposes.
-  bool IsFinishedTransition() const {
-    return mIsFinishedTransition;
-  }
-
-  void SetIsFinishedTransition(bool aIsFinished) {
-    MOZ_ASSERT(AsTransition(),
-               "Calling SetIsFinishedTransition but it's not a transition");
-    mIsFinishedTransition = aIsFinished;
-  }
 
   bool IsInPlay(const Animation& aAnimation) const;
   bool IsCurrent(const Animation& aAnimation) const;
@@ -329,23 +300,33 @@ public:
   // Animation for the current time except any properties already contained
   // in |aSetProperties|.
   // Any updated properties are added to |aSetProperties|.
-  void ComposeStyle(nsRefPtr<css::AnimValuesStyleRule>& aStyleRule,
+  void ComposeStyle(nsRefPtr<AnimValuesStyleRule>& aStyleRule,
                     nsCSSPropertySet& aSetProperties);
+  bool IsRunningOnCompositor() const;
+  void SetIsRunningOnCompositor(nsCSSProperty aProperty, bool aIsRunning);
 
 protected:
   virtual ~KeyframeEffectReadOnly() { }
+  void ResetIsRunningOnCompositor();
 
   nsCOMPtr<Element> mTarget;
   Nullable<TimeDuration> mParentTime;
 
   AnimationTiming mTiming;
-  nsString mName;
-  // A flag to mark transitions that have finished and are due to
-  // be removed on the next throttle-able cycle.
-  bool mIsFinishedTransition;
   nsCSSPseudoElements::Type mPseudoType;
 
   InfallibleTArray<AnimationProperty> mProperties;
+
+  // Parallel array corresponding to CommonAnimationManager::sLayerAnimationInfo
+  // such that mIsPropertyRunningOnCompositor[x] is true only if this effect has
+  // an animation of CommonAnimationManager::sLayerAnimationInfo[x].mProperty
+  // that is currently running on the compositor.
+  //
+  // Note that when the owning Animation requests a non-throttled restyle, in
+  // between calling RequestRestyle on its AnimationCollection and when the
+  // restyle is performed, this member may temporarily become false even if
+  // the animation remains on the layer after the restyle.
+  bool mIsPropertyRunningOnCompositor[LayerAnimationInfo::kRecords];
 };
 
 } // namespace dom

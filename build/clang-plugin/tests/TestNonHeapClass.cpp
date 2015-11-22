@@ -25,10 +25,10 @@ void misuseNonHeapClass(int len) {
   gobble(&validStatic);
   gobble(&alsoValid[0]);
 
-  gobble(new NonHeap); // expected-error {{variable of type 'NonHeap' is not valid on the heap}}
-  gobble(new NonHeap[10]); // expected-error {{variable of type 'NonHeap' is not valid on the heap}}
-  gobble(new TemplateClass<int>); // expected-error {{variable of type 'TemplateClass<int>' is not valid on the heap}}
-  gobble(len <= 5 ? &valid : new NonHeap); // expected-error {{variable of type 'NonHeap' is not valid on the heap}}
+  gobble(new NonHeap); // expected-error {{variable of type 'NonHeap' is not valid on the heap}} expected-note {{value incorrectly allocated on the heap}}
+  gobble(new NonHeap[10]); // expected-error {{variable of type 'NonHeap' is not valid on the heap}} expected-note {{value incorrectly allocated on the heap}}
+  gobble(new TemplateClass<int>); // expected-error {{variable of type 'TemplateClass<int>' is not valid on the heap}} expected-note {{value incorrectly allocated on the heap}}
+  gobble(len <= 5 ? &valid : new NonHeap); // expected-error {{variable of type 'NonHeap' is not valid on the heap}} expected-note {{value incorrectly allocated on the heap}}
 
   char buffer[sizeof(NonHeap)];
   gobble(new (buffer) NonHeap);
@@ -36,7 +36,7 @@ void misuseNonHeapClass(int len) {
 
 NonHeap validStatic;
 struct RandomClass {
-  NonHeap nonstaticMember; // expected-note {{'RandomClass' is a non-heap class because member 'nonstaticMember' is a non-heap class 'NonHeap'}}
+  NonHeap nonstaticMember; // expected-note {{'RandomClass' is a non-heap type because member 'nonstaticMember' is a non-heap type 'NonHeap'}}
   static NonHeap staticMember;
 };
 struct MOZ_NONHEAP_CLASS RandomNonHeapClass {
@@ -44,19 +44,19 @@ struct MOZ_NONHEAP_CLASS RandomNonHeapClass {
   static NonHeap staticMember;
 };
 
-struct BadInherit : NonHeap {}; // expected-note {{'BadInherit' is a non-heap class because it inherits from a non-heap class 'NonHeap'}}
+struct BadInherit : NonHeap {}; // expected-note {{'BadInherit' is a non-heap type because it inherits from a non-heap type 'NonHeap'}}
 struct MOZ_NONHEAP_CLASS GoodInherit : NonHeap {};
 
 void useStuffWrongly() {
-  gobble(new BadInherit); // expected-error {{variable of type 'BadInherit' is not valid on the heap}}
-  gobble(new RandomClass); // expected-error {{variable of type 'RandomClass' is not valid on the heap}}
+  gobble(new BadInherit); // expected-error {{variable of type 'BadInherit' is not valid on the heap}} expected-note {{value incorrectly allocated on the heap}}
+  gobble(new RandomClass); // expected-error {{variable of type 'RandomClass' is not valid on the heap}} expected-note {{value incorrectly allocated on the heap}}
 }
 
-// Stack class overrides non-heap classes.
+// Stack class overrides non-heap typees.
 struct MOZ_STACK_CLASS StackClass {};
 struct MOZ_NONHEAP_CLASS InferredStackClass : GoodInherit {
   NonHeap nonstaticMember;
-  StackClass stackClass; // expected-note {{'InferredStackClass' is a stack class because member 'stackClass' is a stack class 'StackClass'}}
+  StackClass stackClass; // expected-note {{'InferredStackClass' is a stack type because member 'stackClass' is a stack type 'StackClass'}}
 };
 
-InferredStackClass global; // expected-error {{variable of type 'InferredStackClass' only valid on the stack}}
+InferredStackClass global; // expected-error {{variable of type 'InferredStackClass' only valid on the stack}} expected-note {{value incorrectly allocated in a global variable}}

@@ -55,8 +55,9 @@ public:
 
   // nsSVGPathGeometryElement methods:
   virtual bool GetGeometryBounds(Rect* aBounds, const StrokeOptions& aStrokeOptions,
-                                 const Matrix& aTransform) override;
-  virtual TemporaryRef<Path> BuildPath(PathBuilder* aBuilder) override;
+                                 const Matrix& aToBoundsSpace,
+                                 const Matrix* aToNonScalingStrokeSpace = nullptr) override;
+  virtual already_AddRefed<Path> BuildPath(PathBuilder* aBuilder) override;
 
   // nsSVGSVGElement methods:
   virtual bool HasValidDimensions() const override;

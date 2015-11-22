@@ -22,6 +22,8 @@ namespace mozilla {
 enum class PixelCastJustification : uint8_t {
   // For the root layer, Screen Pixel = Parent Layer Pixel.
   ScreenIsParentLayerForRoot,
+  // On the layout side, Screen Pixel = LayoutDevice at the outer-window level.
+  LayoutDeviceIsScreenForBounds,
   // For the root layer, Render Target Pixel = Parent Layer Pixel.
   RenderTargetIsParentLayerForRoot,
   // For the root composition size we want to view it as layer pixels in any layer
@@ -37,7 +39,10 @@ enum class PixelCastJustification : uint8_t {
   // technically in screen pixels, as it has not yet accounted for any
   // asynchronous transforms. This justification is for viewing the initial
   // reference point as a screen point.
-  LayoutDeviceToScreenForUntransformedEvent
+  LayoutDeviceToScreenForUntransformedEvent,
+  // Similar to LayoutDeviceToScreenForUntransformedEvent, PBrowser handles
+  // some widget/tab dimension information as the OS does -- in screen units.
+  LayoutDeviceIsScreenForTabDims
 };
 
 template <class TargetUnits, class SourceUnits>
@@ -63,6 +68,14 @@ gfx::RectTyped<TargetUnits> ViewAs(const gfx::RectTyped<SourceUnits>& aRect, Pix
 template <class TargetUnits, class SourceUnits>
 gfx::IntRectTyped<TargetUnits> ViewAs(const gfx::IntRectTyped<SourceUnits>& aRect, PixelCastJustification) {
   return gfx::IntRectTyped<TargetUnits>(aRect.x, aRect.y, aRect.width, aRect.height);
+}
+template <class TargetUnits, class SourceUnits>
+gfx::MarginTyped<TargetUnits> ViewAs(const gfx::MarginTyped<SourceUnits>& aMargin, PixelCastJustification) {
+  return gfx::MarginTyped<TargetUnits>(aMargin.top, aMargin.right, aMargin.bottom, aMargin.left);
+}
+template <class TargetUnits, class SourceUnits>
+gfx::IntMarginTyped<TargetUnits> ViewAs(const gfx::IntMarginTyped<SourceUnits>& aMargin, PixelCastJustification) {
+  return gfx::IntMarginTyped<TargetUnits>(aMargin.top, aMargin.right, aMargin.bottom, aMargin.left);
 }
 template <class NewTargetUnits, class OldTargetUnits, class SourceUnits>
 gfx::ScaleFactor<SourceUnits, NewTargetUnits> ViewTargetAs(
@@ -140,6 +153,73 @@ static gfx::PointTyped<TargetUnits> TransformVector(const gfx::Matrix4x4& aTrans
   return transformedEnd - transformedStart;
 }
 
+// UntransformTo() and UntransformVector() are like TransformTo() and 
+// TransformVector(), respectively, but are intended for cases where
+// the transformation matrix is the inverse of a 3D projection. When
+// using such transforms, the resulting Point4D is only meaningful
+// if it has a positive w-coordinate. To handle this, these functions
+// return a Maybe object which contains a value if and only if the
+// result is meaningful
+template <typename TargetUnits, typename SourceUnits>
+static Maybe<gfx::PointTyped<TargetUnits>> UntransformTo(const gfx::Matrix4x4& aTransform,
+                                                const gfx::PointTyped<SourceUnits>& aPoint)
+{
+  gfx::Point4D point = aTransform.ProjectPoint(aPoint.ToUnknownPoint());
+  if (!point.HasPositiveWCoord()) {
+    return Nothing();
+  }
+  return Some(ViewAs<TargetUnits>(point.As2DPoint()));
 }
+template <typename TargetUnits, typename SourceUnits>
+static Maybe<gfx::IntPointTyped<TargetUnits>> UntransformTo(const gfx::Matrix4x4& aTransform,
+                                                const gfx::IntPointTyped<SourceUnits>& aPoint)
+{
+  gfx::Point4D point = aTransform.ProjectPoint(aPoint.ToUnknownPoint());
+  if (!point.HasPositiveWCoord()) {
+    return Nothing();
+  }
+  return Some(RoundedToInt(ViewAs<TargetUnits>(point.As2DPoint())));
+}
+
+// The versions of UntransformTo() that take a rectangle also take a clip,
+// which represents the bounds within which the target must fall. The
+// result of the transform is intersected with this clip, and is considered
+// meaningful if the intersection is not empty.
+template <typename TargetUnits, typename SourceUnits>
+static Maybe<gfx::RectTyped<TargetUnits>> UntransformTo(const gfx::Matrix4x4& aTransform,
+                                                const gfx::RectTyped<SourceUnits>& aRect,
+                                                const gfx::RectTyped<TargetUnits>& aClip)
+{
+  gfx::Rect rect = aTransform.ProjectRectBounds(aRect.ToUnknownRect(), aClip.ToUnknownRect());
+  if (rect.IsEmpty()) {
+    return Nothing();
+  }
+  return Some(ViewAs<TargetUnits>(rect));
+}
+template <typename TargetUnits, typename SourceUnits>
+static Maybe<gfx::IntRectTyped<TargetUnits>> UntransformTo(const gfx::Matrix4x4& aTransform,
+                                                const gfx::IntRectTyped<SourceUnits>& aRect,
+                                                const gfx::IntRectTyped<TargetUnits>& aClip)
+{
+  gfx::Rect rect = aTransform.ProjectRectBounds(aRect.ToUnknownRect(), aClip.ToUnknownRect());
+  if (rect.IsEmpty()) {
+    return Nothing();
+  }
+  return Some(RoundedToInt(ViewAs<TargetUnits>(rect)));
+}
+
+template <typename TargetUnits, typename SourceUnits>
+static Maybe<gfx::PointTyped<TargetUnits>> UntransformVector(const gfx::Matrix4x4& aTransform,
+                                                    const gfx::PointTyped<SourceUnits>& aVector,
+                                                    const gfx::PointTyped<SourceUnits>& aAnchor) {
+  gfx::Point4D projectedAnchor = aTransform.ProjectPoint(aAnchor.ToUnknownPoint());
+  gfx::Point4D projectedTarget = aTransform.ProjectPoint(aAnchor.ToUnknownPoint() + aVector.ToUnknownPoint());
+  if (!projectedAnchor.HasPositiveWCoord() || !projectedTarget.HasPositiveWCoord()){
+    return Nothing();
+  }
+  return Some(ViewAs<TargetUnits>(projectedAnchor.As2DPoint() - projectedTarget.As2DPoint()));
+}
+
+} // namespace mozilla
 
 #endif

@@ -36,7 +36,7 @@ struct ReferencePtr
   {}
 
   template <typename T>
-  ReferencePtr(const RefPtr<T>& aPtr)
+  MOZ_IMPLICIT ReferencePtr(const RefPtr<T>& aPtr)
     : mLongPtr(uint64_t(aPtr.get()))
   {}
 
@@ -1073,7 +1073,7 @@ private:
   MOZ_IMPLICIT RecordedFilterNodeSetInput(std::istream &aStream);
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif

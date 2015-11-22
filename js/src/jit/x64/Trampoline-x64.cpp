@@ -12,7 +12,9 @@
 # include "jit/PerfSpewer.h"
 #endif
 #include "jit/VMFunctions.h"
-#include "jit/x64/BaselineHelpers-x64.h"
+#include "jit/x64/SharedICHelpers-x64.h"
+
+#include "jit/MacroAssembler-inl.h"
 
 using namespace js;
 using namespace js::jit;
@@ -87,6 +89,18 @@ JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
 
     // Remember number of bytes occupied by argument vector
     masm.mov(reg_argc, r13);
+
+    // if we are constructing, that also needs to include newTarget
+    {
+        Label noNewTarget;
+        masm.branchTest32(Assembler::Zero, token, Imm32(CalleeToken_FunctionConstructing),
+                          &noNewTarget);
+
+        masm.addq(Imm32(1), r13);
+
+        masm.bind(&noNewTarget);
+    }
+
     masm.shll(Imm32(3), r13);   // r13 = argc * sizeof(Value)
     static_assert(sizeof(Value) == 1 << 3, "Constant is baked in assembly code");
 
@@ -111,7 +125,7 @@ JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
     ***************************************************************/
 
     // r13 still stores the number of bytes in the argument vector.
-    masm.addq(reg_argv, r13); // r13 points above last argument.
+    masm.addq(reg_argv, r13); // r13 points above last argument or newTarget
 
     // while r13 > rdx, push arguments.
     {
@@ -212,14 +226,14 @@ JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
         masm.push(valuesSize);
         masm.push(Imm32(0)); // Fake return address.
         // No GC things to mark, push a bare token.
-        masm.enterFakeExitFrame(ExitFrameLayout::BareToken());
+        masm.enterFakeExitFrame(ExitFrameLayoutBareToken);
 
         regs.add(valuesSize);
 
         masm.push(framePtr);
         masm.push(reg_code);
 
-        masm.setupUnalignedABICall(3, scratch);
+        masm.setupUnalignedABICall(scratch);
         masm.passABIArg(framePtr); // BaselineFrame
         masm.passABIArg(OsrFrameReg); // InterpreterFrame
         masm.passABIArg(numStackValues);
@@ -268,7 +282,7 @@ JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
     masm.assertStackAlignment(JitStackAlignment, sizeof(uintptr_t));
 
     // Call function.
-    masm.call(reg_code);
+    masm.callJitNoProfiler(reg_code);
 
     if (type == EnterJitBaseline) {
         // Baseline OSR will return here.
@@ -348,7 +362,7 @@ JitRuntime::generateInvalidator(JSContext* cx)
     masm.reserveStack(sizeof(void*));
     masm.movq(rsp, r9);
 
-    masm.setupUnalignedABICall(3, rdx);
+    masm.setupUnalignedABICall(rdx);
     masm.passABIArg(rax);
     masm.passABIArg(rbx);
     masm.passABIArg(r9);
@@ -397,9 +411,19 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
     masm.andq(Imm32(uint32_t(CalleeTokenMask)), rcx);
     masm.movzwl(Operand(rcx, JSFunction::offsetOfNargs()), rcx);
 
-    // Including |this|, there are (|nformals| + 1) arguments to push to the
-    // stack.  Then we push a JitFrameLayout.  We compute the padding expressed
-    // in the number of extra |undefined| values to push on the stack.
+    // Stash another copy in r11, since we are going to do destructive operations
+    // on rcx
+    masm.mov(rcx, r11);
+
+    static_assert(CalleeToken_FunctionConstructing == 1,
+      "Ensure that we can use the constructing bit to count the value");
+    masm.mov(rax, rdx);
+    masm.andq(Imm32(uint32_t(CalleeToken_FunctionConstructing)), rdx);
+
+    // Including |this|, and |new.target|, there are (|nformals| + 1 + isConstructing)
+    // arguments to push to the stack.  Then we push a JitFrameLayout.  We
+    // compute the padding expressed in the number of extra |undefined| values
+    // to push on the stack.
     static_assert(sizeof(JitFrameLayout) % JitStackAlignment == 0,
       "No need to consider the JitFrameLayout for aligning the stack");
     static_assert(JitStackAlignment % sizeof(Value) == 0,
@@ -407,6 +431,7 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
 
     MOZ_ASSERT(IsPowerOfTwo(JitStackValueAlignment));
     masm.addl(Imm32(JitStackValueAlignment - 1 /* for padding */ + 1 /* for |this| */), rcx);
+    masm.addl(rdx, rcx);
     masm.andl(Imm32(~(JitStackValueAlignment - 1)), rcx);
 
     // Load the number of |undefined|s to push into %rcx.
@@ -456,6 +481,28 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
         masm.j(Assembler::NonZero, &copyLoopTop);
     }
 
+    // if constructing, copy newTarget
+    {
+        Label notConstructing;
+
+        masm.branchTest32(Assembler::Zero, rax, Imm32(CalleeToken_FunctionConstructing),
+                          &notConstructing);
+
+        // thisFrame[numFormals] = prevFrame[argc]
+        ValueOperand newTarget(r10);
+
+        // +1 for |this|. We want vp[argc], so don't subtract 1
+        BaseIndex newTargetSrc(r9, rdx, TimesEight, sizeof(RectifierFrameLayout) + sizeof(Value));
+        masm.loadValue(newTargetSrc, newTarget);
+
+        // Again, 1 for |this|
+        BaseIndex newTargetDest(rsp, r11, TimesEight, sizeof(Value));
+        masm.storeValue(newTarget, newTargetDest);
+
+        masm.bind(&notConstructing);
+    }
+
+
     // Caller:
     // [arg2] [arg1] [this] [[argc] [callee] [descr] [raddr]] <- r9
     //
@@ -478,8 +525,7 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
     masm.andq(Imm32(uint32_t(CalleeTokenMask)), rax);
     masm.loadPtr(Address(rax, JSFunction::offsetOfNativeOrScript()), rax);
     masm.loadBaselineOrIonRaw(rax, rax, nullptr);
-    masm.call(rax);
-    uint32_t returnOffset = masm.currentOffset();
+    uint32_t returnOffset = masm.callJitNoProfiler(rax);
 
     // Remove the rectifier frame.
     masm.pop(r9);             // r9 <- descriptor with FrameType.
@@ -541,7 +587,7 @@ GenerateBailoutThunk(JSContext* cx, MacroAssembler& masm, uint32_t frameClass)
     masm.movq(rsp, r9);
 
     // Call the bailout function.
-    masm.setupUnalignedABICall(2, rax);
+    masm.setupUnalignedABICall(rax);
     masm.passABIArg(r8);
     masm.passABIArg(r9);
     masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, Bailout));
@@ -667,7 +713,7 @@ JitRuntime::generateVMWrapper(JSContext* cx, const VMFunction& f)
         break;
     }
 
-    masm.setupUnalignedABICall(f.argc(), regs.getAny());
+    masm.setupUnalignedABICall(regs.getAny());
     masm.passABIArg(cxreg);
 
     size_t argDisp = 0;
@@ -784,7 +830,7 @@ JitRuntime::generatePreBarrier(JSContext* cx, MIRType type)
     MOZ_ASSERT(PreBarrierReg == rdx);
     masm.mov(ImmPtr(cx->runtime()), rcx);
 
-    masm.setupUnalignedABICall(2, rax);
+    masm.setupUnalignedABICall(rax);
     masm.passABIArg(rcx);
     masm.passABIArg(rdx);
     masm.callWithABI(IonMarkFunction(type));
@@ -824,8 +870,8 @@ JitRuntime::generateDebugTrapHandler(JSContext* cx)
     // Enter a stub frame and call the HandleDebugTrap VM function. Ensure
     // the stub frame has a nullptr ICStub pointer, since this pointer is marked
     // during GC.
-    masm.movePtr(ImmPtr(nullptr), BaselineStubReg);
-    EmitEnterStubFrame(masm, scratch3);
+    masm.movePtr(ImmPtr(nullptr), ICStubReg);
+    EmitBaselineEnterStubFrame(masm, scratch3);
 
     JitCode* code = cx->runtime()->jitRuntime()->getVMWrapper(HandleDebugTrapInfo);
     if (!code)
@@ -833,9 +879,9 @@ JitRuntime::generateDebugTrapHandler(JSContext* cx)
 
     masm.push(scratch1);
     masm.push(scratch2);
-    EmitCallVM(code, masm);
+    EmitBaselineCallVM(code, masm);
 
-    EmitLeaveStubFrame(masm);
+    EmitBaselineLeaveStubFrame(masm);
 
     // If the stub returns |true|, we have to perform a forced return
     // (return from the JS frame). If the stub returns |false|, just return

@@ -209,8 +209,8 @@ BookmarkImporter.prototype = {
       let uri = NetUtil.newURI(spec);
       let channel = NetUtil.newChannel({
         uri,
-        loadingPrincipal: Services.scriptSecurityManager.getNoAppCodebasePrincipal(uri),
-        contentPolicyType: Ci.nsIContentPolicy.TYPE_DATAREQUEST
+        loadingPrincipal: Services.scriptSecurityManager.createCodebasePrincipal(uri, {}),
+        contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_XMLHTTPREQUEST
       });
       let streamLoader = Cc["@mozilla.org/network/stream-loader;1"]
                            .createInstance(Ci.nsIStreamLoader);
@@ -462,9 +462,16 @@ BookmarkImporter.prototype = {
           this._importPromises.push(kwPromise);
         }
         if (aData.tags) {
-          let tags = aData.tags.split(",");
-          if (tags.length)
-            PlacesUtils.tagging.tagURI(NetUtil.newURI(aData.uri), tags);
+          let tags = aData.tags.split(",").filter(aTag =>
+            aTag.length <= Ci.nsITaggingService.MAX_TAG_LENGTH);
+          if (tags.length) {
+            try {
+              PlacesUtils.tagging.tagURI(NetUtil.newURI(aData.uri), tags);
+            } catch (ex) {
+              // Invalid tag child, skip it.
+              Cu.reportError(`Unable to set tags "${tags.join(", ")}" for ${aData.uri}: ${ex}`);
+            }
+          }
         }
         if (aData.charset) {
           PlacesUtils.annotations.setPageAnnotation(

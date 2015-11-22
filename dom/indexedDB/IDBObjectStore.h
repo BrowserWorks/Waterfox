@@ -75,6 +75,7 @@ public:
                         const KeyPath& aKeyPath,
                         bool aUnique,
                         bool aMultiEntry,
+                        const nsCString& aLocale,
                         JSContext* aCx,
                         JS::Handle<JS::Value> aObject,
                         nsTArray<IndexUpdateInfo>& aUpdateInfoArray);
@@ -91,6 +92,13 @@ public:
   DeserializeIndexValue(JSContext* aCx,
                         StructuredCloneReadInfo& aCloneReadInfo,
                         JS::MutableHandle<JS::Value> aValue);
+
+#if !defined(MOZ_B2G)
+  static bool
+  DeserializeUpgradeValue(JSContext* aCx,
+                          StructuredCloneReadInfo& aCloneReadInfo,
+                          JS::MutableHandle<JS::Value> aValue);
+#endif
 
   static const JSClass*
   DummyPropClass()
@@ -267,6 +275,14 @@ public:
 
   void
   NoteDeletion();
+
+  bool
+  IsDeleted() const
+  {
+    AssertIsOnOwningThread();
+
+    return !!mDeletedSpec;
+  }
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(IDBObjectStore)

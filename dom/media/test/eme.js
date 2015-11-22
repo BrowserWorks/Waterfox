@@ -1,5 +1,16 @@
 const KEYSYSTEM_TYPE = "org.w3.clearkey";
 
+function IsMacOSSnowLeopardOrEarlier() {
+  var re = /Mac OS X (\d+)\.(\d+)/;
+  var ver = navigator.userAgent.match(re);
+  if (!ver || ver.length != 3) {
+    return false;
+  }
+  var major = ver[1] | 0;
+  var minor = ver[2] | 0;
+  return major == 10 && minor <= 6;
+}
+
 function bail(message)
 {
   return function(err) {
@@ -248,10 +259,10 @@ function LoadTest(test, elem, token, loadParams)
 
 // Same as LoadTest, but manage a token+"_load" start&finished.
 // Also finish main token if loading fails.
-function LoadTestWithManagedLoadToken(test, elem, manager, token)
+function LoadTestWithManagedLoadToken(test, elem, manager, token, loadParams)
 {
   manager.started(token + "_load");
-  return LoadTest(test, elem, token)
+  return LoadTest(test, elem, token, loadParams)
   .catch(function (reason) {
     ok(false, TimeStamp(token) + " - Error during load: " + reason);
     manager.finished(token + "_load");
@@ -266,6 +277,19 @@ function SetupEME(test, token, params)
 {
   var v = document.createElement("video");
   v.crossOrigin = test.crossOrigin || false;
+  v.sessions = [];
+
+  v.closeSessions = function() {
+    return Promise.all(v.sessions.map(s => s.close().then(() => s.closed))).then(
+      () => {
+        v.setMediaKeys(null);
+        if (v.parentNode) {
+          v.parentNode.removeChild(v);
+        }
+        v.onerror = null;
+        v.src = null;
+      });
+  };
 
   // Log events dispatched to make debugging easier...
   [ "canplay", "canplaythrough", "ended", "error", "loadeddata",
@@ -300,6 +324,7 @@ function SetupEME(test, token, params)
     if (params && params.onsessioncreated) {
       params.onsessioncreated(session);
     }
+    v.sessions.push(session);
 
     return new Promise(function (resolve, reject) {
       session.addEventListener("message", UpdateSessionFunc(test, token, sessionType, resolve, reject));
@@ -321,6 +346,11 @@ function SetupEME(test, token, params)
     });
   }
 
+  function streamType(type) {
+    var x = test.tracks.find(o => o.name == type);
+    return x ? x.type : undefined;
+  }
+
   // All 'initDataType's should be the same.
   // null indicates no 'encrypted' event received yet.
   var initDataType = null;
@@ -339,14 +369,15 @@ function SetupEME(test, token, params)
         })
       }
 
-      var options = [
-         {
-           initDataType: ev.initDataType,
-           videoType: test.type,
-           audioType: test.type,
-         }
-       ];
-      var p = navigator.requestMediaKeySystemAccess(KEYSYSTEM_TYPE, options);
+      var options = { initDataTypes: [ev.initDataType] };
+      if (streamType("video")) {
+        options.videoCapabilities = [{contentType: streamType("video")}];
+      }
+      if (streamType("audio")) {
+        options.audioCapabilities = [{contentType: streamType("audio")}];
+      }
+
+      var p = navigator.requestMediaKeySystemAccess(KEYSYSTEM_TYPE, [options]);
       var r = bail(token + " Failed to request key system access.");
       chain(p, r)
       .then(function(keySystemAccess) {
@@ -388,17 +419,13 @@ function SetupEME(test, token, params)
 function SetupEMEPref(callback) {
   var prefs = [
     [ "media.mediasource.enabled", true ],
-    [ "media.mediasource.whitelist", false ],
-    [ "media.fragmented-mp4.exposed", true ],
     [ "media.eme.apiVisible", true ],
   ];
 
-  if (/Linux/.test(manifestNavigator().userAgent)) {
-    prefs.push([ "media.fragmented-mp4.ffmpeg.enabled", true ]);
-  } else if (SpecialPowers.Services.appinfo.name == "B2G" ||
-             !manifestVideo().canPlayType("video/mp4")) {
-   // XXX remove once we have mp4 PlatformDecoderModules on all platforms.
-   prefs.push([ "media.fragmented-mp4.use-blank-decoder", true ]);
+  if (SpecialPowers.Services.appinfo.name == "B2G" ||
+      !manifestVideo().canPlayType("video/mp4")) {
+    // XXX remove once we have mp4 PlatformDecoderModules on all platforms.
+    prefs.push([ "media.fragmented-mp4.use-blank-decoder", true ]);
   }
 
   SpecialPowers.pushPrefEnv({ "set" : prefs }, callback);

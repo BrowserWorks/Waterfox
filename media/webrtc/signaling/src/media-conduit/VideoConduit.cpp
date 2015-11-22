@@ -80,6 +80,7 @@ WebrtcVideoConduit::WebrtcVideoConduit():
   mReceivingWidth(640),
   mReceivingHeight(480),
   mSendingFramerate(DEFAULT_VIDEO_MAX_FRAMERATE),
+  mLastFramerateTenths(DEFAULT_VIDEO_MAX_FRAMERATE*10),
   mNumReceivingStreams(1),
   mVideoLatencyTestEnable(false),
   mVideoLatencyAvg(0),
@@ -219,6 +220,24 @@ bool WebrtcVideoConduit::GetVideoEncoderStats(double* framerateMean,
   mVideoCodecStat->GetEncoderStats(framerateMean, framerateStdDev,
                                    bitrateMean, bitrateStdDev,
                                    droppedFrames);
+
+  // See if we need to adjust bandwidth.
+  // Avoid changing bandwidth constantly; use hysteresis.
+
+  // Note: mLastFramerate is a relaxed Atomic because we're setting it here, and
+  // reading it on whatever thread calls DeliverFrame/SendVideoFrame.  Alternately
+  // we could use a lock.  Note that we don't change it often, and read it once per frame.
+  // We scale by *10 because mozilla::Atomic<> doesn't do 'double' or 'float'.
+  double framerate = mLastFramerateTenths/10.0; // fetch once
+  if (std::abs(*framerateMean - framerate)/framerate > 0.1 &&
+      *framerateMean >= 0.5) {
+    // unchanged resolution, but adjust bandwidth limits to match camera fps
+    CSFLogDebug(logTag, "Encoder frame rate changed from %f to %f",
+                (mLastFramerateTenths/10.0), *framerateMean);
+    MutexAutoLock lock(mCodecMutex);
+    mLastFramerateTenths = *framerateMean * 10;
+    SelectSendResolution(mSendingWidth, mSendingHeight);
+  }
   return true;
 }
 
@@ -913,6 +932,72 @@ WebrtcVideoConduit::ConfigureRecvMediaCodecs(
   return kMediaConduitNoError;
 }
 
+void
+WebrtcVideoConduit::SelectBandwidth(webrtc::VideoCodec& vie_codec,
+                                    unsigned short width,
+                                    unsigned short height)
+{
+  // max bandwidth should be proportional (not linearly!) to resolution, and
+  // proportional (perhaps linearly, or close) to current frame rate.
+  unsigned int fs, mb_width, mb_height;
+
+  mb_width = (width + 15) >> 4;
+  mb_height = (height + 15) >> 4;
+  fs = mb_width * mb_height;
+
+  // For now, try to set the max rates well above the knee in the curve.
+  // Chosen somewhat arbitrarily; it's hard to find good data oriented for
+  // realtime interactive/talking-head recording.  These rates assume
+  // 30fps.
+#define MB_OF(w,h) ((unsigned int)((((w)>>4))*((unsigned int)((h)>>4))))
+
+  // XXX replace this with parsing a config var with roughly a format
+  // of "max_fs,min_bw,max_bw," repeated to populate a table (which we
+  // should consider sorting because people won't assume they need to).
+  // Then iterate through the sorted array comparing fs.
+  if (fs > MB_OF(1920, 1200)) {
+    // >HD (3K, 4K, etc)
+    vie_codec.minBitrate = 1500;
+    vie_codec.maxBitrate = 10000;
+  } else if (fs > MB_OF(1280, 720)) {
+    // HD ~1080-1200
+    vie_codec.minBitrate = 1200;
+    vie_codec.maxBitrate = 5000;
+  } else if (fs > MB_OF(800, 480)) {
+    // HD ~720
+    vie_codec.minBitrate = 600;
+    vie_codec.maxBitrate = 2500;
+  } else if (fs > std::max(MB_OF(400, 240), MB_OF(352, 288))) {
+    // WVGA
+    // VGA
+    vie_codec.minBitrate = 200;
+    vie_codec.maxBitrate = 1300;
+  } else if (fs > MB_OF(176, 144)) {
+    // WQVGA
+    // CIF
+    vie_codec.minBitrate = 100;
+    vie_codec.maxBitrate = 500;
+  } else {
+    // QCIF and below
+    vie_codec.minBitrate = 40;
+    vie_codec.maxBitrate = 250;
+  }
+
+  // mLastFramerateTenths is an atomic, and scaled by *10
+  double framerate = std::min((mLastFramerateTenths/10.),60.0);
+  MOZ_ASSERT(framerate > 0);
+  // Now linear reduction/increase based on fps (max 60fps i.e. doubling)
+  if (framerate >= 10) {
+    vie_codec.minBitrate = vie_codec.minBitrate * (framerate/30);
+    vie_codec.maxBitrate = vie_codec.maxBitrate * (framerate/30);
+  } else {
+    // At low framerates, don't reduce bandwidth as much - cut slope to 1/2.
+    // Mostly this would be ultra-low-light situations/mobile or screensharing.
+    vie_codec.minBitrate = vie_codec.minBitrate * ((10-(framerate/2))/30);
+    vie_codec.maxBitrate = vie_codec.maxBitrate * ((10-(framerate/2))/30);
+  }
+}
+
 // XXX we need to figure out how to feed back changes in preferred capture
 // resolution to the getUserMedia source
 // Invoked under lock of mCodecMutex!
@@ -989,7 +1074,7 @@ WebrtcVideoConduit::SelectSendResolution(unsigned short width,
   }
 
   // Adapt to getUserMedia resolution changes
-  // check if we need to reconfigure the sending resolution
+  // check if we need to reconfigure the sending resolution.
   bool changed = false;
   if (mSendingWidth != width || mSendingHeight != height)
   {
@@ -1025,6 +1110,7 @@ WebrtcVideoConduit::SelectSendResolution(unsigned short width,
       vie_codec.width = width;
       vie_codec.height = height;
       vie_codec.maxFramerate = mSendingFramerate;
+      SelectBandwidth(vie_codec, width, height);
 
       if ((err = mPtrViECodec->SetSendCodec(mChannel, vie_codec)) != 0)
       {
@@ -1034,7 +1120,7 @@ WebrtcVideoConduit::SelectSendResolution(unsigned short width,
       }
       CSFLogDebug(logTag, "%s: Encoder resolution changed to %ux%u @ %ufps, bitrate %u:%u",
                   __FUNCTION__, width, height, mSendingFramerate,
-                   vie_codec.minBitrate, vie_codec.maxBitrate);
+                  vie_codec.minBitrate, vie_codec.maxBitrate);
     } // else no change; mSendingWidth likely was 0
   }
   return true;
@@ -1124,7 +1210,7 @@ WebrtcVideoConduit::SendVideoFrame(unsigned char* video_frame,
   // RawVideoType == VideoType
   webrtc::RawVideoType type = static_cast<webrtc::RawVideoType>((int)video_type);
 
-  //Transmission should be enabled before we insert any frames.
+  // Transmission should be enabled before we insert any frames.
   if(!mEngineTransmitting)
   {
     CSFLogError(logTag, "%s Engine not transmitting ", __FUNCTION__);
@@ -1138,7 +1224,7 @@ WebrtcVideoConduit::SendVideoFrame(unsigned char* video_frame,
       return kMediaConduitCaptureError;
     }
   }
-  //insert the frame to video engine in I420 format only
+  // insert the frame to video engine in I420 format only
   MOZ_ASSERT(mPtrExtCapture);
   if(mPtrExtCapture->IncomingFrame(video_frame,
                                    video_frame_length,

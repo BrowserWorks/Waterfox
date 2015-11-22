@@ -32,7 +32,7 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'PoisonIOInterposerBase.cpp',
         'PoisonIOInterposerWin.cpp',
     ]
-elif CONFIG['OS_ARCH'] == 'Darwin':
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     UNIFIED_SOURCES += [
         'mach_override.c',
         'PoisonIOInterposerBase.cpp',
@@ -68,7 +68,9 @@ SOURCES += [
     'Omnijar.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CC']:
+    CFLAGS += ['-Wshadow']
+    CXXFLAGS += ['-Wshadow']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

@@ -8,9 +8,10 @@
 
 "use strict";
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-repeated-messages.html";
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-repeated-messages.html";
 
-let test = asyncTest(function* () {
+var test = asyncTest(function* () {
   yield loadTab(TEST_URI);
   let hud = yield openConsole();
 
@@ -46,8 +47,7 @@ let test = asyncTest(function* () {
     yield clickObject(clickable, i);
   }
 
-  function* clickObject(obj, i)
-  {
+  function* clickObject(obj, i) {
     executeSoon(() => {
       EventUtils.synthesizeMouse(obj, 2, 2, {}, hud.iframeWindow);
     });

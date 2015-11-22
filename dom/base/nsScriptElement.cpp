@@ -59,10 +59,10 @@ nsScriptElement::ScriptEvaluated(nsresult aResult,
       nsContentUtils::GetContextForContent(cont);
 
     nsEventStatus status = nsEventStatus_eIgnore;
-    uint32_t type = NS_SUCCEEDED(aResult) ? NS_LOAD : NS_LOAD_ERROR;
-    WidgetEvent event(true, type);
+    EventMessage message = NS_SUCCEEDED(aResult) ? eLoad : eLoadError;
+    WidgetEvent event(true, message);
     // Load event doesn't bubble.
-    event.mFlags.mBubbles = (type != NS_LOAD);
+    event.mFlags.mBubbles = (message != eLoad);
 
     EventDispatcher::Dispatch(cont, presContext, &event, nullptr, &status);
   }
@@ -83,7 +83,8 @@ nsScriptElement::AttributeChanged(nsIDocument* aDocument,
                                   Element* aElement,
                                   int32_t aNameSpaceID,
                                   nsIAtom* aAttribute,
-                                  int32_t aModType)
+                                  int32_t aModType,
+                                  const nsAttrValue* aOldValue)
 {
   MaybeProcessScript();
 }

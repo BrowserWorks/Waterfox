@@ -4,12 +4,16 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Tests that the console object still exists after a page reload.
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-console.html";
 
-let browser;
+"use strict";
+
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-console.html";
+
+var browser;
 
 function test() {
-  loadTab(TEST_URI).then({
+  loadTab(TEST_URI).then(() => {
     openConsole().then((tab) => {
       browser = tab.browser;
 
@@ -21,7 +25,6 @@ function test() {
 }
 
 function testPageReload() {
-
   browser.removeEventListener("DOMContentLoaded", testPageReload, false);
 
   let console = browser.contentWindow.wrappedJSObject.console;
@@ -36,4 +39,3 @@ function testPageReload() {
   browser = null;
   finishTest();
 }
-

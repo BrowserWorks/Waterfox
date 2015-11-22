@@ -83,7 +83,7 @@ Form History test: form field autocomplete
 
   <!-- form with input type='number' -->
   <form id="form12" onsubmit="return false;">
-    <input  type="number" name="field10">
+    <input  type="text" name="field10"> <!-- TODO: change back to type=number -->
     <button type="submit">Submit</button>
   </form>
 
@@ -176,8 +176,6 @@ function setForm(value) {
   input.focus();
 }
 
-var autocompleteMenu = getAutocompletePopup();
-
 // Restore the form to the default state.
 function restoreForm() {
   setForm("");
@@ -210,7 +208,7 @@ function popupShownListener()
   }
 }
 
-SpecialPowers.addAutoCompletePopupEventListener(window, "popupshown", popupShownListener);
+registerPopupShownListener(popupShownListener);
 
 /*
  * Main section of test...
@@ -678,7 +676,7 @@ function runTest() {
         input.focus();
         window.scrollTo(0, 0);
         sendChar("q");
-        waitForScroll();
+        waitForMenuChange(0);
         break;
 
     case 210:
@@ -702,9 +700,7 @@ function runTest() {
         checkMenuEntries(["aa a\xe6", "aba\xe6", "a\xe6"], testNum);
         input.focus();
 
-        // for this test, hide the popup first as it contains the same number of menu 
-
-        sendChar("\xc6");
+        sendChar("\xe6");
         waitForMenuChange(3, "a\xe6");
         break;
 
@@ -723,7 +719,7 @@ function runTest() {
         checkMenuEntries(["bc d\xe6"], testNum);
         input.focus();
         sendChar(" ");
-        setTimeout(runTest, 300);
+        waitForMenuChange(1);
         break;
 
     case 253:
@@ -872,6 +868,7 @@ function runTest() {
         } else if (testNum == 402) {
           input = $_(11, "field9");
         } else if (testNum == 403) {
+          todo(false, "Fix input type=number");
           input = $_(12, "field10");
         }
 
@@ -980,7 +977,6 @@ function runTest() {
 
     default:
         ok(false, "Unexpected invocation of test #" + testNum);
-        SpecialPowers.removeAutoCompletePopupEventListener(window, "popupshown", popupShownListener);
         SimpleTest.finish();
         return;
   }
@@ -999,22 +995,13 @@ function waitForScroll()
       return;
 
     removeEventListener("scroll", arguments.callee, false);
-    setTimeout(runTest, 50);
+    setTimeout(runTest, 100);
   }, false);
 }
 
 function waitForMenuChange(expectedCount, expectedFirstValue)
 {
-  if (autocompleteMenu.tree.view.rowCount != expectedCount) {
-    SimpleTest.executeSoon(function () waitForMenuChange(expectedCount, expectedFirstValue));
-  }
-  else if (expectedFirstValue && autocompleteMenu.tree.view.rowCount > 1 &&
-           autocompleteMenu.tree.view.getValueAt(0, autocompleteMenu.tree.columns[0]) != expectedFirstValue) {
-    SimpleTest.executeSoon(function () waitForMenuChange(expectedCount, expectedFirstValue));
-  }
-  else {
-    runTest();
-  }
+    notifyMenuChanged(expectedCount, expectedFirstValue, runTest);
 }
 
 function checkMenuEntries(expectedValues, testNum) {
@@ -1022,19 +1009,6 @@ function checkMenuEntries(expectedValues, testNum) {
     is(actualValues.length, expectedValues.length, testNum + " Checking length of expected menu");
     for (var i = 0; i < expectedValues.length; i++)
         is(actualValues[i], expectedValues[i], testNum + " Checking menu entry #"+i);
-}
-
-function getMenuEntries() {
-    var entries = [];
-
-    // Could perhaps pull values directly from the controller, but it seems
-    // more reliable to test the values that are actually in the tree?
-    var column = autocompleteMenu.tree.columns[0];
-    var numRows = autocompleteMenu.tree.view.rowCount;
-    for (var i = 0; i < numRows; i++) {
-        entries.push(autocompleteMenu.tree.view.getValueAt(i, column));
-    }
-    return entries;
 }
 
 function startTest() {
@@ -1046,6 +1020,7 @@ function startTest() {
 window.onload = startTest;
 
 SimpleTest.waitForExplicitFinish();
+SimpleTest.requestFlakyTimeout("untriaged");
 </script>
 </pre>
 </body>

@@ -12,10 +12,8 @@ import tempfile
 import xml.dom.minidom
 import zipfile
 
-import mozdevice
 import mozfile
 import mozlog
-from mozlog import structured
 
 import errors
 
@@ -27,9 +25,9 @@ class Version(object):
 
     def __init__(self):
         self._info = {}
-        self._logger = structured.get_default_logger(component='mozversion')
+        self._logger = mozlog.get_default_logger(component='mozversion')
         if not self._logger:
-            self._logger = mozlog.getLogger('mozversion')
+            self._logger = mozlog.unstructured.getLogger('mozversion')
 
     def get_gecko_info(self, path):
         for type, section in INI_DATA_MAPPING:
@@ -189,6 +187,13 @@ class RemoteB2GVersion(B2GVersion):
                  device_serial=None, adb_host=None, adb_port=None,
                  **kwargs):
         B2GVersion.__init__(self, sources, **kwargs)
+
+        try:
+            import mozdevice
+        except ImportError:
+            self._logger.critical("mozdevice is required to get the version"
+                                  " of a remote device")
+            raise
 
         if dm_type == 'adb':
             dm = mozdevice.DeviceManagerADB(deviceSerial=device_serial,

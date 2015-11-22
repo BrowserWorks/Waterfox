@@ -12,7 +12,7 @@
 #include <winsvc.h>
 #include "nsString.h"
 #include "nsAutodialWin.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsWindowsHelpers.h"
 
 #define AUTODIAL_DEFAULT AUTODIAL_NEVER
@@ -25,7 +25,7 @@
 //    set NSPR_LOG_MODULES=Autodial:5
 //    set NSPR_LOG_FILE=nspr.log
 //
-// this enables PR_LOG_DEBUG level information and places all output in
+// this enables LogLevel::Debug level information and places all output in
 // the file nspr.log
 //
 
@@ -33,8 +33,8 @@ static PRLogModuleInfo* gLog = nullptr;
 
 #undef LOGD
 #undef LOGE
-#define LOGD(args) PR_LOG(gLog, PR_LOG_DEBUG, args)
-#define LOGE(args) PR_LOG(gLog, PR_LOG_ERROR, args)
+#define LOGD(args) MOZ_LOG(gLog, mozilla::LogLevel::Debug, args)
+#define LOGE(args) MOZ_LOG(gLog, mozilla::LogLevel::Error, args)
 
 // Don't try to dial again within a few seconds of when user pressed cancel.
 #define NO_RETRY_PERIOD_SEC 5

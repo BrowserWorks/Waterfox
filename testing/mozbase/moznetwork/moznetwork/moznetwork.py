@@ -12,7 +12,6 @@ import sys
 
 import mozinfo
 import mozlog
-from mozlog import structured
 
 if mozinfo.isLinux:
     import fcntl
@@ -23,9 +22,9 @@ class NetworkError(Exception):
 
 
 def _get_logger():
-    logger = structured.get_default_logger(component='moznetwork')
+    logger = mozlog.get_default_logger(component='moznetwork')
     if not logger:
-        logger = mozlog.getLogger('moznetwork')
+        logger = mozlog.unstructured.getLogger('moznetwork')
     return logger
 
 
@@ -113,11 +112,19 @@ def get_ip():
         hostname = socket.gethostname()
         try:
             logger.debug('Retrieving IP for %s' % hostname)
-            ip = socket.gethostbyname(hostname)
+            ips = socket.gethostbyname_ex(hostname)[2]
         except socket.gaierror:  # for Mac OS X
             hostname += '.local'
             logger.debug('Retrieving IP for %s' % hostname)
-            ip = socket.gethostbyname(hostname)
+            ips = socket.gethostbyname_ex(hostname)[2]
+        if len(ips) == 1:
+            ip = ips[0]
+        elif len(ips) > 1:
+            logger.debug('Multiple addresses found: %s' % ips)
+            # no fallback on Windows so take the first address
+            ip = ips[0] if mozinfo.isWin else None
+        else:
+            ip = None
     except socket.gaierror:
         # sometimes the hostname doesn't resolve to an ip address, in which
         # case this will always fail

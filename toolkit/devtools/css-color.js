@@ -9,25 +9,6 @@ const {Services} = Cu.import("resource://gre/modules/Services.jsm", {});
 
 const COLOR_UNIT_PREF = "devtools.defaultColorUnit";
 
-const REGEX_JUST_QUOTES  = /^""$/;
-const REGEX_HSL_3_TUPLE  = /^\bhsl\(([\d.]+),\s*([\d.]+%),\s*([\d.]+%)\)$/i;
-
-/**
- * This regex matches:
- *  - #F00
- *  - #FF0000
- *  - hsl()
- *  - hsla()
- *  - rgb()
- *  - rgba()
- *  - red
- *
- *  It also matches css keywords e.g. "background-color" otherwise
- *  "background" would be replaced with #6363CE ("background" is a platform
- *  color).
- */
-const REGEX_ALL_COLORS = /#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|hsl\(.*?\)|hsla\(.*?\)|rgba?\(.*?\)|\b[a-zA-Z-]+\b/g;
-
 const SPECIALVALUES = new Set([
   "currentcolor",
   "initial",
@@ -40,8 +21,8 @@ const SPECIALVALUES = new Set([
  * This module is used to convert between various color types.
  *
  * Usage:
- *   let {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
- *   let {colorUtils} = devtools.require("devtools/css-color");
+ *   let {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+ *   let {colorUtils} = require("devtools/css-color");
  *   let color = new colorUtils.CssColor("red");
  *
  *   color.authored === "red"
@@ -66,9 +47,6 @@ const SPECIALVALUES = new Set([
  *   // Color objects can be reused
  *   color.newColor("green") === "#0F0"; // true
  *
- *   let processed = colorUtils.processCSSString("color:red; background-color:green;");
- *   // Returns "color:#F00; background-color:#0F0;"
- *
  *   Valid values for COLOR_UNIT_PREF are contained in CssColor.COLORUNIT.
  */
 
@@ -78,9 +56,9 @@ function CssColor(colorValue) {
 
 module.exports.colorUtils = {
   CssColor: CssColor,
-  processCSSString: processCSSString,
   rgbToHsl: rgbToHsl,
-  setAlpha: setAlpha
+  setAlpha: setAlpha,
+  classifyColor: classifyColor
 };
 
 /**
@@ -97,7 +75,10 @@ CssColor.COLORUNIT = {
 CssColor.prototype = {
   _colorUnit: null,
 
+  // The value as-authored.
   authored: null,
+  // A lower-cased copy of |authored|.
+  lowerCased: null,
 
   get colorUnit() {
     if (this._colorUnit === null) {
@@ -135,7 +116,7 @@ CssColor.prototype = {
   },
 
   get specialValue() {
-    return SPECIALVALUES.has(this.authored) ? this.authored : null;
+    return SPECIALVALUES.has(this.lowerCased) ? this.authored : null;
   },
 
   get name() {
@@ -183,9 +164,9 @@ CssColor.prototype = {
     if (this.hasAlpha) {
       return this.rgba;
     }
-    return this.rgb.replace(/\brgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)/gi, function(_, r, g, b) {
-      return "#" + ((1 << 24) + (r << 16) + (g << 8) + (b << 0)).toString(16).substr(-6).toUpperCase();
-    });
+
+    let tuple = this._getRGBATuple();
+    return "#" + ((1 << 24) + (tuple.r << 16) + (tuple.g << 8) + (tuple.b << 0)).toString(16).substr(-6).toUpperCase();
   },
 
   get rgb() {
@@ -194,8 +175,8 @@ CssColor.prototype = {
       return invalidOrSpecialValue;
     }
     if (!this.hasAlpha) {
-      if (this.authored.startsWith("rgb(")) {
-        // The color is valid and begins with rgb(. Return the authored value.
+      if (this.lowerCased.startsWith("rgb(")) {
+        // The color is valid and begins with rgb(.
         return this.authored;
       }
       let tuple = this._getRGBATuple();
@@ -209,8 +190,8 @@ CssColor.prototype = {
     if (invalidOrSpecialValue !== false) {
       return invalidOrSpecialValue;
     }
-    if (this.authored.startsWith("rgba(")) {
-      // The color is valid and begins with rgba(. Return the authored value.
+    if (this.lowerCased.startsWith("rgba(")) {
+      // The color is valid and begins with rgba(.
         return this.authored;
     }
     let components = this._getRGBATuple();
@@ -225,14 +206,14 @@ CssColor.prototype = {
     if (invalidOrSpecialValue !== false) {
       return invalidOrSpecialValue;
     }
-    if (this.authored.startsWith("hsl(")) {
-      // The color is valid and begins with hsl(. Return the authored value.
+    if (this.lowerCased.startsWith("hsl(")) {
+      // The color is valid and begins with hsl(.
       return this.authored;
     }
     if (this.hasAlpha) {
       return this.hsla;
     }
-    return this._hslNoAlpha();
+    return this._hsl();
   },
 
   get hsla() {
@@ -240,15 +221,15 @@ CssColor.prototype = {
     if (invalidOrSpecialValue !== false) {
       return invalidOrSpecialValue;
     }
-    if (this.authored.startsWith("hsla(")) {
-      // The color is valid and begins with hsla(. Return the authored value.
+    if (this.lowerCased.startsWith("hsla(")) {
+      // The color is valid and begins with hsla(.
       return this.authored;
     }
     if (this.hasAlpha) {
       let a = this._getRGBATuple().a;
-      return this._hslNoAlpha().replace("hsl", "hsla").replace(")", ", " + a + ")");
+      return this._hsl(a);
     }
-    return this._hslNoAlpha().replace("hsl", "hsla").replace(")", ", 1)");
+    return this._hsl(1);
   },
 
   /**
@@ -279,7 +260,11 @@ CssColor.prototype = {
    *         Any valid color string
    */
   newColor: function(color) {
-    this.authored = color.toLowerCase();
+    // Store a lower-cased version of the color to help with format
+    // testing.  The original text is kept as well so it can be
+    // returned when needed.
+    this.lowerCased = color.toLowerCase();
+    this.authored = color;
     return this;
   },
 
@@ -341,19 +326,19 @@ CssColor.prototype = {
     return tuple;
   },
 
-  _hslNoAlpha: function() {
-    let {r, g, b} = this._getRGBATuple();
-
-    if (this.authored.startsWith("hsl(")) {
-      // We perform string manipulations on our output so let's ensure that it
-      // is formatted as we expect.
-      let [, h, s, l] = this.authored.match(REGEX_HSL_3_TUPLE);
-      return "hsl(" + h + ", " + s + ", " + l + ")";
+  _hsl: function(maybeAlpha) {
+    if (this.lowerCased.startsWith("hsl(") && maybeAlpha === undefined) {
+      // We can use it as-is.
+      return this.authored;
     }
 
+    let {r, g, b} = this._getRGBATuple();
     let [h,s,l] = rgbToHsl([r,g,b]);
-
-    return "hsl(" + h + ", " + s + "%, " + l + "%)";
+    if (maybeAlpha !== undefined) {
+      return "hsla(" + h + ", " + s + "%, " + l + "%, " + maybeAlpha + ")";
+    } else {
+      return "hsl(" + h + ", " + s + "%, " + l + "%)";
+    }
   },
 
   /**
@@ -363,31 +348,6 @@ CssColor.prototype = {
     return this.rgba;
   },
 };
-
-/**
- * Process a CSS string
- *
- * @param  {String} value
- *         CSS string e.g. "color:red; background-color:green;"
- * @return {String}
- *         Converted CSS String e.g. "color:#F00; background-color:#0F0;"
- */
-function processCSSString(value) {
-  if (value && REGEX_JUST_QUOTES.test(value)) {
-    return value;
-  }
-
-  let colorPattern = REGEX_ALL_COLORS;
-
-  value = value.replace(colorPattern, function(match) {
-    let color = new CssColor(match);
-    if (color.valid) {
-      return color;
-    }
-    return match;
-  });
-  return value;
-}
 
 /**
  * Convert rgb value to hsl
@@ -408,7 +368,7 @@ function rgbToHsl([r,g,b]) {
   let s;
   let l = (max + min) / 2;
 
-  if(max == min){
+  if (max == min){
     h = s = 0;
   } else {
     let d = max - min;
@@ -461,6 +421,27 @@ function setAlpha(colorValue, alpha) {
 
   let { r, g, b } = color._getRGBATuple();
   return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+}
+
+/**
+ * Given a color, classify its type as one of the possible color
+ * units, as known by |CssColor.colorUnit|.
+ *
+ * @param  {String} value
+ *         The color, in any form accepted by CSS.
+ * @return {String}
+ *         The color classification, one of "rgb", "hsl", "hex", or "name".
+ */
+function classifyColor(value) {
+  value = value.toLowerCase();
+  if (value.startsWith("rgb(") || value.startsWith("rgba(")) {
+    return CssColor.COLORUNIT.rgb;
+  } else if (value.startsWith("hsl(") || value.startsWith("hsla(")) {
+    return CssColor.COLORUNIT.hsl;
+  } else if (/^#[0-9a-f]+$/.exec(value)) {
+    return CssColor.COLORUNIT.hex;
+  }
+  return CssColor.COLORUNIT.name;
 }
 
 loader.lazyGetter(this, "DOMUtils", function () {

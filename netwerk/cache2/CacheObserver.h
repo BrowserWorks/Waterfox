@@ -64,6 +64,9 @@ class CacheObserver : public nsIObserver
   static bool const CacheFSReported()
     { return sCacheFSReported; }
   static void SetCacheFSReported();
+  static bool const HashStatsReported()
+    { return sHashStatsReported; }
+  static void SetHashStatsReported();
   static void ParentDirOverride(nsIFile ** aDir);
 
   static bool const EntryIsTooBig(int64_t aSize, bool aUsingDisk);
@@ -73,6 +76,7 @@ private:
 
   void StoreDiskCacheCapacity();
   void StoreCacheFSReported();
+  void StoreHashStatsReported();
   void AttachToPreferences();
 
   static uint32_t sUseNewCache;
@@ -86,8 +90,8 @@ private:
   static uint32_t sDiskFreeSpaceHardLimit;
   static bool sSmartCacheSizeEnabled;
   static uint32_t sPreloadChunkCount;
-  static uint32_t sMaxMemoryEntrySize;
-  static uint32_t sMaxDiskEntrySize;
+  static int32_t sMaxMemoryEntrySize;
+  static int32_t sMaxDiskEntrySize;
   static uint32_t sMaxDiskChunksMemoryUsage;
   static uint32_t sMaxDiskPriorityChunksMemoryUsage;
   static uint32_t sCompressionLevel;
@@ -96,12 +100,13 @@ private:
   static bool sSanitizeOnShutdown;
   static bool sClearCacheOnShutdown;
   static bool sCacheFSReported;
+  static bool sHashStatsReported;
 
   // Non static properties, accessible via sSelf
   nsCOMPtr<nsIFile> mCacheParentDirectoryOverride;
 };
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla
 
 #endif

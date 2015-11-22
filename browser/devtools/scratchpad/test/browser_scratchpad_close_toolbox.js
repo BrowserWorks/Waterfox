@@ -4,8 +4,8 @@
 // Test that closing the toolbox after having opened a scratchpad leaves the
 // latter in a functioning state.
 
-let {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
-let {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+var {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
+var {TargetFactory} = require("devtools/framework/target");
 
 function test() {
   const options = {
@@ -24,7 +24,7 @@ function* runTests([win, sp]) {
   is(result, 7, "Display produced the expected output.");
 
   // Now open the toolbox and close it again.
-  let target = devtools.TargetFactory.forTab(gBrowser.selectedTab);
+  let target = TargetFactory.forTab(gBrowser.selectedTab);
   let toolbox = yield gDevTools.showToolbox(target, "webconsole");
   ok(toolbox, "Toolbox was opened.");
   let closed = yield gDevTools.closeToolbox(target);

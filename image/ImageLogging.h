@@ -4,18 +4,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_image_public_ImageLogging_h
-#define mozilla_image_public_ImageLogging_h
+#ifndef mozilla_image_ImageLogging_h
+#define mozilla_image_ImageLogging_h
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prinrval.h"
 #include "nsString.h"
 
-#if defined(PR_LOGGING)
 // Declared in imgRequest.cpp.
 extern PRLogModuleInfo* GetImgLog();
 
 #define GIVE_ME_MS_NOW() PR_IntervalToMilliseconds(PR_IntervalNow())
+
+using mozilla::LogLevel;
 
 class LogScope {
 public:
@@ -25,7 +26,7 @@ public:
     , mFrom(aFrom)
     , mFunc(aFunc)
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s {ENTER}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s {ENTER}\n",
                                 GIVE_ME_MS_NOW(), mFrom, mFunc));
   }
 
@@ -36,7 +37,7 @@ public:
     , mFrom(from)
     , mFunc(fn)
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%s\") {ENTER}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%s\") {ENTER}\n",
                                  GIVE_ME_MS_NOW(), mFrom, mFunc,
                                  paramName, paramValue));
   }
@@ -48,7 +49,7 @@ public:
     , mFrom(from)
     , mFunc(fn)
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=%p) {ENTER}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s (%s=%p) {ENTER}\n",
                                 GIVE_ME_MS_NOW(), mFrom, mFunc,
                                 paramName, paramValue));
   }
@@ -60,7 +61,7 @@ public:
     , mFrom(from)
     , mFunc(fn)
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%d\") {ENTER}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%d\") {ENTER}\n",
                                 GIVE_ME_MS_NOW(), mFrom, mFunc,
                                 paramName, paramValue));
   }
@@ -72,14 +73,14 @@ public:
     , mFrom(from)
     , mFunc(fn)
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%d\") {ENTER}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%d\") {ENTER}\n",
                                 GIVE_ME_MS_NOW(), mFrom, mFunc,
                                 paramName, paramValue));
   }
 
   ~LogScope()
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s {EXIT}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s {EXIT}\n",
                                 GIVE_ME_MS_NOW(), mFrom, mFunc));
   }
 
@@ -93,14 +94,14 @@ class LogFunc {
 public:
   LogFunc(PRLogModuleInfo* aLog, void* from, const char* fn)
   {
-    PR_LOG(aLog, PR_LOG_DEBUG, ("%d [this=%p] %s\n",
+    MOZ_LOG(aLog, LogLevel::Debug, ("%d [this=%p] %s\n",
                                 GIVE_ME_MS_NOW(), from, fn));
   }
 
   LogFunc(PRLogModuleInfo* aLog, void* from, const char* fn,
           const char* paramName, const char* paramValue)
   {
-    PR_LOG(aLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%s\")\n",
+    MOZ_LOG(aLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%s\")\n",
                                 GIVE_ME_MS_NOW(), from, fn,
                                 paramName, paramValue));
   }
@@ -108,7 +109,7 @@ public:
   LogFunc(PRLogModuleInfo* aLog, void* from, const char* fn,
           const char* paramName, const void* paramValue)
   {
-    PR_LOG(aLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%p\")\n",
+    MOZ_LOG(aLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%p\")\n",
                                 GIVE_ME_MS_NOW(), from, fn,
                                 paramName, paramValue));
   }
@@ -117,7 +118,7 @@ public:
   LogFunc(PRLogModuleInfo* aLog, void* from, const char* fn,
           const char* paramName, uint32_t paramValue)
   {
-    PR_LOG(aLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%d\")\n",
+    MOZ_LOG(aLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%d\")\n",
                                 GIVE_ME_MS_NOW(), from, fn,
                                 paramName, paramValue));
   }
@@ -130,7 +131,7 @@ public:
   LogMessage(PRLogModuleInfo* aLog, void* from, const char* fn,
              const char* msg)
   {
-    PR_LOG(aLog, PR_LOG_DEBUG, ("%d [this=%p] %s -- %s\n",
+    MOZ_LOG(aLog, LogLevel::Debug, ("%d [this=%p] %s -- %s\n",
                                 GIVE_ME_MS_NOW(), from, fn, msg));
   }
 };
@@ -157,18 +158,6 @@ public:
 
 #define LOG_MSG(l, s, m) LogMessage(l, this, s, m)
 
-#else
-
-#define LOG_SCOPE(l, s)
-#define LOG_SCOPE_WITH_PARAM(l, s, pn, pv)
-#define LOG_FUNC(l, s)
-#define LOG_FUNC_WITH_PARAM(l, s, pn, pv)
-#define LOG_STATIC_FUNC(l, s)
-#define LOG_STATIC_FUNC_WITH_PARAM(l, s, pn, pv)
-#define LOG_MSG(l, s, m)
-
-#endif // if defined(PR_LOGGING)
-
 #define LOG_MSG_WITH_PARAM LOG_FUNC_WITH_PARAM
 
-#endif // mozilla_image_public_ImageLogging_h
+#endif // mozilla_image_ImageLogging_h

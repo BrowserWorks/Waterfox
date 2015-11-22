@@ -27,7 +27,7 @@ XPCOMUtils.defineLazyGetter(this, "DATAREPORTING_PATH", function() {
   return OS.Path.join(OS.Constants.Path.profileDir, "datareporting");
 });
 
-let promiseValidateArchivedPings = Task.async(function*(aExpectedReasons) {
+var promiseValidateArchivedPings = Task.async(function*(aExpectedReasons) {
   // The list of ping reasons which mark the session end (and must reset the subsession
   // count).
   const SESSION_END_PING_REASONS = new Set([ REASON_ABORTED_SESSION, REASON_SHUTDOWN ]);
@@ -105,7 +105,7 @@ add_task(function* test_subsessionsChaining() {
 
   const PREF_TEST = PREF_BRANCH + "test.pref1";
   const PREFS_TO_WATCH = new Map([
-    [PREF_TEST, TelemetryEnvironment.RECORD_PREF_VALUE],
+    [PREF_TEST, {what: TelemetryEnvironment.RECORD_PREF_VALUE}],
   ]);
   Preferences.reset(PREF_TEST);
 
@@ -233,5 +233,6 @@ add_task(function* test_subsessionsChaining() {
 });
 
 add_task(function* () {
+  yield TelemetrySend.shutdown();
   do_test_finished();
 });

@@ -40,12 +40,8 @@
 #include "nsThreadUtils.h"
 #include "nsVideoFrame.h"
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo* gTrackElementLog;
-#define LOG(type, msg) PR_LOG(gTrackElementLog, type, msg)
-#else
-#define LOG(type, msg)
-#endif
+#define LOG(type, msg) MOZ_LOG(gTrackElementLog, type, msg)
 
 // Replace the usual NS_IMPL_NS_NEW_HTML_ELEMENT(Track) so
 // we can return an UnknownElement instead when pref'd off.
@@ -74,17 +70,15 @@ static MOZ_CONSTEXPR nsAttrValue::EnumTable kKindTable[] = {
 };
 
 // The default value for kKindTable is "subtitles"
-static MOZ_CONSTEXPR const char* kKindTableDefaultString = kKindTable->tag;
+static MOZ_CONSTEXPR const char* kKindTableDefaultString = kKindTable[0].tag;
 
 /** HTMLTrackElement */
 HTMLTrackElement::HTMLTrackElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsGenericHTMLElement(aNodeInfo)
 {
-#ifdef PR_LOGGING
   if (!gTrackElementLog) {
     gTrackElementLog = PR_NewLogModule("nsTrackElement");
   }
-#endif
 }
 
 HTMLTrackElement::~HTMLTrackElement()
@@ -127,7 +121,7 @@ bool
 HTMLTrackElement::IsWebVTTEnabled()
 {
   // Our callee does not use its arguments.
-  return HTMLTrackElementBinding::ConstructorEnabled(nullptr, JS::NullPtr());
+  return HTMLTrackElementBinding::ConstructorEnabled(nullptr, nullptr);
 }
 
 TextTrack*
@@ -201,32 +195,12 @@ HTMLTrackElement::LoadResource()
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NewURIFromString(src, getter_AddRefs(uri));
   NS_ENSURE_TRUE_VOID(NS_SUCCEEDED(rv));
-  LOG(PR_LOG_ALWAYS, ("%p Trying to load from src=%s", this,
+  LOG(LogLevel::Info, ("%p Trying to load from src=%s", this,
       NS_ConvertUTF16toUTF8(src).get()));
 
   if (mChannel) {
     mChannel->Cancel(NS_BINDING_ABORTED);
     mChannel = nullptr;
-  }
-
-  rv = nsContentUtils::GetSecurityManager()->
-    CheckLoadURIWithPrincipal(NodePrincipal(), uri,
-                              nsIScriptSecurityManager::STANDARD);
-  NS_ENSURE_TRUE_VOID(NS_SUCCEEDED(rv));
-
-  int16_t shouldLoad = nsIContentPolicy::ACCEPT;
-  rv = NS_CheckContentLoadPolicy(nsIContentPolicy::TYPE_MEDIA,
-                                 uri,
-                                 NodePrincipal(),
-                                 static_cast<Element*>(this),
-                                 NS_LITERAL_CSTRING("text/vtt"), // mime type
-                                 nullptr, // extra
-                                 &shouldLoad,
-                                 nsContentUtils::GetContentPolicy(),
-                                 nsContentUtils::GetSecurityManager());
-  NS_ENSURE_TRUE_VOID(NS_SUCCEEDED(rv));
-  if (NS_CP_REJECTED(shouldLoad)) {
-    return;
   }
 
   // We may already have a TextTrack at this point if GetTrack() has already
@@ -241,8 +215,8 @@ HTMLTrackElement::LoadResource()
   rv = NS_NewChannel(getter_AddRefs(channel),
                      uri,
                      static_cast<Element*>(this),
-                     nsILoadInfo::SEC_NORMAL,
-                     nsIContentPolicy::TYPE_MEDIA,
+                     nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
+                     nsIContentPolicy::TYPE_INTERNAL_TRACK,
                      loadGroup);
 
   NS_ENSURE_TRUE_VOID(NS_SUCCEEDED(rv));
@@ -252,8 +226,8 @@ HTMLTrackElement::LoadResource()
   NS_ENSURE_TRUE_VOID(NS_SUCCEEDED(rv));
   channel->SetNotificationCallbacks(mListener);
 
-  LOG(PR_LOG_DEBUG, ("opening webvtt channel"));
-  rv = channel->AsyncOpen(mListener, nullptr);
+  LOG(LogLevel::Debug, ("opening webvtt channel"));
+  rv = channel->AsyncOpen2(mListener);
   NS_ENSURE_TRUE_VOID(NS_SUCCEEDED(rv));
 
   mChannel = channel;
@@ -275,7 +249,7 @@ HTMLTrackElement::BindToTree(nsIDocument* aDocument,
     return NS_OK;
   }
 
-  LOG(PR_LOG_DEBUG, ("Track Element bound to tree."));
+  LOG(LogLevel::Debug, ("Track Element bound to tree."));
   if (!aParent || !aParent->IsNodeOfType(nsINode::eMEDIA)) {
     return NS_OK;
   }
@@ -287,7 +261,7 @@ HTMLTrackElement::BindToTree(nsIDocument* aDocument,
     HTMLMediaElement* media = static_cast<HTMLMediaElement*>(aParent);
     // TODO: separate notification for 'alternate' tracks?
     media->NotifyAddedSource();
-    LOG(PR_LOG_DEBUG, ("Track element sent notification to parent."));
+    LOG(LogLevel::Debug, ("Track element sent notification to parent."));
 
     mMediaParent->RunInStableState(
       NS_NewRunnableMethod(this, &HTMLTrackElement::LoadResource));

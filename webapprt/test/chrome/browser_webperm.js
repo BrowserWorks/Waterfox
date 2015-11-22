@@ -1,8 +1,8 @@
 Cu.import("resource://webapprt/modules/WebappRT.jsm");
-let { AppsUtils } = Cu.import("resource://gre/modules/AppsUtils.jsm", {});
-let { DOMApplicationRegistry } =
+var { AppsUtils } = Cu.import("resource://gre/modules/AppsUtils.jsm", {});
+var { DOMApplicationRegistry } =
   Cu.import("resource://gre/modules/Webapps.jsm", {});
-let { PermissionsTable } =
+var { PermissionsTable } =
   Cu.import("resource://gre/modules/PermissionsTable.jsm", {});
 
 function test() {
@@ -19,10 +19,6 @@ function test() {
     is(DOMApplicationRegistry.getAppLocalIdByManifestURL(app.manifestURL), principal.appId, "Principal app ID correct");
 
     let perms = [
-    {
-      manifestName: "storage",
-      permName: "indexedDB",
-    },
     {
       manifestName: "geolocation",
       permName: "geolocation",

@@ -6,10 +6,10 @@
 "use strict";
 
 const { Cc, Ci, Cu, Cr } = require("chrome");
-const promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
+const promise = require("promise");
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const { CanvasFront } = require("devtools/server/actors/canvas");
-const { DevToolsUtils } = Cu.import("resource://gre/modules/devtools/DevToolsUtils.jsm", {});
+const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 
 function CanvasDebuggerPanel(iframeWindow, toolbox) {
   this.panelWin = iframeWindow;
@@ -57,7 +57,9 @@ CanvasDebuggerPanel.prototype = {
 
   // DevToolPanel API
 
-  get target() this._toolbox.target,
+  get target() {
+    return this._toolbox.target;
+  },
 
   destroy: function() {
     // Make sure this panel is not already destroyed.

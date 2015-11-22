@@ -7,7 +7,10 @@ const Cc = Components.classes;
 const Cr = Components.results;
 const Cu = Components.utils;
 
+const FRECENCY_DEFAULT = 10000;
+
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://testing-common/httpd.js");
 
 // Import common head.
 {
@@ -29,9 +32,17 @@ function* cleanup() {
   Services.prefs.clearUserPref("browser.urlbar.autoFill");
   Services.prefs.clearUserPref("browser.urlbar.autoFill.typed");
   Services.prefs.clearUserPref("browser.urlbar.autoFill.searchEngines");
-  for (let type of ["history", "bookmark", "history.onlyTyped", "openpage"]) {
+  let suggestPrefs = [
+    "history",
+    "bookmark",
+    "history.onlyTyped",
+    "openpage",
+    "searches",
+  ];
+  for (let type of suggestPrefs) {
     Services.prefs.clearUserPref("browser.urlbar.suggest." + type);
   }
+  Services.prefs.clearUserPref("browser.search.suggest.enabled");
   yield PlacesUtils.bookmarks.eraseEverything();
   yield PlacesTestUtils.clearHistory();
 }
@@ -97,6 +108,38 @@ AutoCompleteInput.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIAutoCompleteInput])
 }
 
+// A helper for check_autocomplete to check a specific match against data from
+// the controller.
+function _check_autocomplete_matches(match, result) {
+  let { uri, title, tags, searchEngine, style } = match;
+  if (tags)
+    title += " \u2013 " + tags.sort().join(", ");
+  if (searchEngine)
+    title += TITLE_SEARCH_ENGINE_SEPARATOR + searchEngine;
+  if (style)
+    style = style.sort();
+  else
+    style = ["favicon"];
+
+  do_print("Checking against expected '" + uri.spec + "', '" + title + "'...");
+  // Got a match on both uri and title?
+  if (stripPrefix(uri.spec) != stripPrefix(result.value) || title != result.comment) {
+    return false;
+  }
+
+  let actualStyle = result.style.split(/\s+/).sort();
+  if (style)
+    Assert.equal(actualStyle.toString(), style.toString(), "Match should have expected style");
+  if (uri.spec.startsWith("moz-action:")) {
+    Assert.ok(actualStyle.indexOf("action") != -1, "moz-action results should always have 'action' in their style");
+  }
+
+  if (match.icon)
+    Assert.equal(result.image, match.icon, "Match should have expected image");
+
+  return true;
+}
+
 function* check_autocomplete(test) {
   // At this point frecency could still be updating due to latest pages
   // updates.
@@ -143,51 +186,56 @@ function* check_autocomplete(test) {
 
   Assert.equal(numSearchesStarted, expectedSearches, "All searches started");
 
-  // Check to see the expected uris and titles match up (in any order)
+  // Check to see the expected uris and titles match up. If 'enable-actions'
+  // is specified, we check that the first specified match is the first
+  // controller value (as this is the "special" always selected item), but the
+  // rest can match in any order.
+  // If 'enable-actions' is not specified, they can match in any order.
   if (test.matches) {
     // Do not modify the test original matches.
     let matches = test.matches.slice();
 
-    for (let i = 0; i < controller.matchCount; i++) {
-      let value = controller.getValueAt(i);
-      let comment = controller.getCommentAt(i);
-      do_print("Looking for '" + value + "', '" + comment + "' in expected results...");
-      let j;
-      for (j = 0; j < matches.length; j++) {
+    let firstIndexToCheck = 0;
+    if (test.searchParam && test.searchParam == "enable-actions") {
+      firstIndexToCheck = 1;
+      do_print("Checking first match is first autocomplete entry")
+      let result = {
+        value: controller.getValueAt(0),
+        comment: controller.getCommentAt(0),
+        style: controller.getStyleAt(0),
+        image: controller.getImageAt(0),
+      }
+      do_print(`First match is "${result.value}", " ${result.comment}"`);
+      Assert.ok(_check_autocomplete_matches(matches[0], result), "first item is correct");
+      do_print("Checking rest of the matches");
+    }
+
+    for (let i = firstIndexToCheck; i < controller.matchCount; i++) {
+      let result = {
+        value: controller.getValueAt(i),
+        comment: controller.getCommentAt(i),
+        style: controller.getStyleAt(i),
+        image: controller.getImageAt(i),
+      }
+      do_print(`Looking for "${result.value}", "${result.comment}" in expected results...`);
+      let lowerBound = test.checkSorting ? i : firstIndexToCheck;
+      let upperBound = test.checkSorting ? i + 1 : matches.length;
+      let found = false;
+      for (let j = lowerBound; j < upperBound; ++j) {
         // Skip processed expected results
         if (matches[j] == undefined)
           continue;
-
-        let { uri, title, tags, searchEngine, style } = matches[j];
-        if (tags)
-          title += " \u2013 " + tags.sort().join(", ");
-        if (searchEngine)
-          title += TITLE_SEARCH_ENGINE_SEPARATOR + searchEngine;
-        if (style)
-          style = style.sort();
-        else
-          style = ["favicon"];
-
-        do_print("Checking against expected '" + uri.spec + "', '" + title + "'...");
-        // Got a match on both uri and title?
-        if (stripPrefix(uri.spec) == stripPrefix(value) && title == comment) {
+        if (_check_autocomplete_matches(matches[j], result)) {
           do_print("Got a match at index " + j + "!");
-          let actualStyle = controller.getStyleAt(i).split(/\s+/).sort();
-          if (style)
-            Assert.equal(actualStyle.toString(), style.toString(), "Match should have expected style");
-
           // Make it undefined so we don't process it again
           matches[j] = undefined;
-          if (uri.spec.startsWith("moz-action:")) {
-            Assert.ok(actualStyle.indexOf("action") != -1, "moz-action results should always have 'action' in their style");
-          }
+          found = true;
           break;
         }
       }
 
-      // We didn't hit the break, so we must have not found it
-      if (j == matches.length)
-        do_throw("Didn't find the current result ('" + value + "', '" + comment + "') in matches");
+      if (!found)
+        do_throw(`Didn't find the current result ("${result.value}", "${result.comment}") in matches`); //' (Emacs syntax highlighting fix)
     }
 
     Assert.equal(controller.matchCount, matches.length,
@@ -213,7 +261,7 @@ function* check_autocomplete(test) {
   }
 }
 
-let addBookmark = Task.async(function* (aBookmarkObj) {
+var addBookmark = Task.async(function* (aBookmarkObj) {
   Assert.ok(!!aBookmarkObj.uri, "Bookmark object contains an uri");
   let parentId = aBookmarkObj.parentId ? aBookmarkObj.parentId
                                        : PlacesUtils.unfiledBookmarksFolderId;
@@ -302,11 +350,126 @@ function makeActionURI(action, params) {
   return NetUtil.newURI(url);
 }
 
-// Hide all the search engines so they don't influence tests results.
-add_task(function ensure_no_search_engines() {
-  let count = {};
-  let engines = Services.search.getEngines(count);
-  for (let i = 0; i < count.value; i++) {
-    engines[i].hidden = true;
+// Creates a full "match" entry for a search result, suitable for passing as
+// an entry to check_autocomplete.
+function makeSearchMatch(input, extra = {}) {
+  // Note that counter-intuitively, the order the object properties are defined
+  // in the object passed to makeActionURI is important for check_autocomplete
+  // to match them :(
+  let params = {
+    engineName: extra.engineName || "MozSearch",
+    input,
+    searchQuery: "searchQuery" in extra ? extra.searchQuery : input,
+    alias: extra.alias, // may be undefined which is expected.
   }
+  let style = [ "action", "searchengine" ];
+  if (extra.heuristic) {
+    style.push("heuristic");
+  }
+  return {
+    uri: makeActionURI("searchengine", params),
+    title: params.engineName,
+    style,
+  }
+}
+
+// Creates a full "match" entry for a search result, suitable for passing as
+// an entry to check_autocomplete.
+function makeVisitMatch(input, url, extra = {}) {
+  // Note that counter-intuitively, the order the object properties are defined
+  // in the object passed to makeActionURI is important for check_autocomplete
+  // to match them :(
+  let params = {
+    url,
+    input,
+  }
+  let style = [ "action", "visiturl" ];
+  if (extra.heuristic) {
+    style.push("heuristic");
+  }
+  return {
+    uri: makeActionURI("visiturl", params),
+    title: extra.title || url,
+    style,
+  }
+}
+
+function makeSwitchToTabMatch(url, extra = {}) {
+  return {
+    uri: makeActionURI("switchtab", {url}),
+    title: extra.title || url,
+    style: [ "action", "switchtab" ],
+  }
+}
+
+function setFaviconForHref(href, iconHref) {
+  return new Promise(resolve => {
+    PlacesUtils.favicons.setAndFetchFaviconForPage(
+      NetUtil.newURI(href),
+      NetUtil.newURI(iconHref),
+      true,
+      PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE,
+      resolve
+    );
+  });
+}
+
+function makeTestServer(port=-1) {
+  let httpServer = new HttpServer();
+  httpServer.start(port);
+  do_register_cleanup(() => httpServer.stop(() => {}));
+  return httpServer;
+}
+
+function* addTestEngine(basename, httpServer=undefined) {
+  httpServer = httpServer || makeTestServer();
+  httpServer.registerDirectory("/", do_get_cwd());
+  let dataUrl =
+    "http://localhost:" + httpServer.identity.primaryPort + "/data/";
+
+  do_print("Adding engine: " + basename);
+  return yield new Promise(resolve => {
+    Services.obs.addObserver(function obs(subject, topic, data) {
+      let engine = subject.QueryInterface(Ci.nsISearchEngine);
+      do_print("Observed " + data + " for " + engine.name);
+      if (data != "engine-added" || engine.name != basename) {
+        return;
+      }
+
+      Services.obs.removeObserver(obs, "browser-search-engine-modified");
+      do_register_cleanup(() => Services.search.removeEngine(engine));
+      resolve(engine);
+    }, "browser-search-engine-modified", false);
+
+    do_print("Adding engine from URL: " + dataUrl + basename);
+    Services.search.addEngine(dataUrl + basename,
+                              Ci.nsISearchEngine.DATA_XML, null, false);
+  });
+}
+
+// Ensure we have a default search engine and the keyword.enabled preference
+// set.
+add_task(function ensure_search_engine() {
+  // keyword.enabled is necessary for the tests to see keyword searches.
+  Services.prefs.setBoolPref("keyword.enabled", true);
+
+  // Initialize the search service, but first set this geo IP pref to a dummy
+  // string.  When the search service is initialized, it contacts the URI named
+  // in this pref, which breaks the test since outside connections aren't
+  // allowed.
+  let geoPref = "browser.search.geoip.url";
+  Services.prefs.setCharPref(geoPref, "");
+  do_register_cleanup(() => Services.prefs.clearUserPref(geoPref));
+  yield new Promise(resolve => {
+    Services.search.init(resolve);
+  });
+
+  // Remove any existing engines before adding ours.
+  for (let engine of Services.search.getEngines()) {
+    Services.search.removeEngine(engine);
+  }
+  Services.search.addEngineWithDetails("MozSearch", "", "", "", "GET",
+                                       "http://s.example.com/search");
+  let engine = Services.search.getEngineByName("MozSearch");
+  Services.search.currentEngine = engine;
 });

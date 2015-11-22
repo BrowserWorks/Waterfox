@@ -21,7 +21,6 @@ var Cc = require('chrome').Cc;
 var Ci = require('chrome').Ci;
 
 var OS = Cu.import('resource://gre/modules/osfile.jsm', {}).OS;
-var Promise = require('../util/promise').Promise;
 
 /**
  * A set of functions that don't really belong in 'fs' (because they're not
@@ -33,9 +32,14 @@ exports.join = OS.Path.join;
 exports.sep = OS.Path.sep;
 exports.dirname = OS.Path.dirname;
 
-var dirService = Cc['@mozilla.org/file/directory_service;1']
-                           .getService(Ci.nsIProperties);
-exports.home = dirService.get('Home', Ci.nsIFile).path;
+// On B2G, there is no home folder
+var home = null;
+try {
+  var dirService = Cc['@mozilla.org/file/directory_service;1']
+                     .getService(Ci.nsIProperties);
+  home = dirService.get('Home', Ci.nsIFile).path;
+} catch(e) {}
+exports.home = home;
 
 if ('winGetDrive' in OS.Path) {
   exports.sep = '\\';

@@ -2,7 +2,6 @@
 The test performs the static code analysis check by JSHint.
 
 Target js files:
-- RILContentHelper.js TODO: Bug 815526, deprecate RILContentHelper.
 - RadioInterfaceLayer.js
 - ril_worker.js
 - ril_consts.js
@@ -31,7 +30,7 @@ The above merge way ensures the correct scope of 'strict mode.'
 """
 
 
-from marionette_test import MarionetteTestCase
+from marionette.marionette_test import MarionetteTestCase
 import bisect
 import inspect
 import os
@@ -100,7 +99,6 @@ class ResourceUriFileReader:
 
     URI_PREFIX = 'resource://gre/'
     URI_PATH = {
-        'RILContentHelper.js':    'components/RILContentHelper.js', #TODO: Bug 815526, deprecate RILContentHelper.
         'RadioInterfaceLayer.js': 'components/RadioInterfaceLayer.js',
         'ril_worker.js':          'modules/ril_worker.js',
         'ril_consts.js':          'modules/ril_consts.js',
@@ -109,8 +107,8 @@ class ResourceUriFileReader:
     }
 
     CODE_OPEN_CHANNEL_BY_URI = '''
-    var Cc = SpecialPowers.Cc;
-    var Ci = SpecialPowers.Ci;
+    var Cc = Components.classes;
+    var Ci = Components.interfaces;
     var ios = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
     var secMan = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(Ci.nsIScriptSecurityManager);
     global.uri = '%(uri)s';
@@ -129,8 +127,8 @@ class ResourceUriFileReader:
     '''
 
     CODE_READ_CONTENT = '''
-    var Cc = SpecialPowers.Cc;
-    var Ci = SpecialPowers.Ci;
+    var Cc = Components.classes;
+    var Ci = Components.interfaces;
 
     var zipReader = Cc["@mozilla.org/libjar/zip-reader;1"].createInstance(Ci.nsIZipReader);
     var inputStream = Cc["@mozilla.org/scriptableinputstream;1"].createInstance(Ci.nsIScriptableInputStream);
@@ -155,7 +153,9 @@ class ResourceUriFileReader:
             return cls.URI_PREFIX + cls.URI_PATH[filename]
 
     def __init__(self, marionette):
-        self.runjs = lambda x: marionette.execute_script(x, new_sandbox=False)
+        self.runjs = lambda x: marionette.execute_script(x,
+                                                         new_sandbox=False,
+                                                         sandbox='system')
 
     def read_file(self, filename):
         """Read file and return the contents as string."""
@@ -210,7 +210,9 @@ class JSHintEngine:
                             for line in config.splitlines()])
 
         # Set global (JSHINT, options, global) in js environment.
-        self.runjs = lambda x: marionette.execute_script(x, new_sandbox=False)
+        self.runjs = lambda x: marionette.execute_script(x,
+                                                         new_sandbox=False,
+                                                         sandbox='system')
         self.runjs(self.CODE_INIT_JSHINT %
                    {'script': script, 'config_string': repr(config)})
 
@@ -353,10 +355,6 @@ class TestRILCodeQuality(MarionetteTestCase):
 
     def tearDown(self):
         MarionetteTestCase.tearDown(self)
-
-    # TODO: Bug 815526, deprecate RILContentHelper.
-    def test_RILContentHelper(self):
-        self._check('RILContentHelper.js')
 
     def test_RadioInterfaceLayer(self):
         self._check('RadioInterfaceLayer.js')

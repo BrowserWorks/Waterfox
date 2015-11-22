@@ -371,16 +371,16 @@ class nsAndroidDisplayport final : public nsIAndroidDisplayport
 {
 public:
     NS_DECL_ISUPPORTS
-    virtual nsresult GetLeft(float *aLeft) { *aLeft = mLeft; return NS_OK; }
-    virtual nsresult GetTop(float *aTop) { *aTop = mTop; return NS_OK; }
-    virtual nsresult GetRight(float *aRight) { *aRight = mRight; return NS_OK; }
-    virtual nsresult GetBottom(float *aBottom) { *aBottom = mBottom; return NS_OK; }
-    virtual nsresult GetResolution(float *aResolution) { *aResolution = mResolution; return NS_OK; }
-    virtual nsresult SetLeft(float aLeft) { mLeft = aLeft; return NS_OK; }
-    virtual nsresult SetTop(float aTop) { mTop = aTop; return NS_OK; }
-    virtual nsresult SetRight(float aRight) { mRight = aRight; return NS_OK; }
-    virtual nsresult SetBottom(float aBottom) { mBottom = aBottom; return NS_OK; }
-    virtual nsresult SetResolution(float aResolution) { mResolution = aResolution; return NS_OK; }
+    virtual nsresult GetLeft(float *aLeft) override { *aLeft = mLeft; return NS_OK; }
+    virtual nsresult GetTop(float *aTop) override { *aTop = mTop; return NS_OK; }
+    virtual nsresult GetRight(float *aRight) override { *aRight = mRight; return NS_OK; }
+    virtual nsresult GetBottom(float *aBottom) override { *aBottom = mBottom; return NS_OK; }
+    virtual nsresult GetResolution(float *aResolution) override { *aResolution = mResolution; return NS_OK; }
+    virtual nsresult SetLeft(float aLeft) override { mLeft = aLeft; return NS_OK; }
+    virtual nsresult SetTop(float aTop) override { mTop = aTop; return NS_OK; }
+    virtual nsresult SetRight(float aRight) override { mRight = aRight; return NS_OK; }
+    virtual nsresult SetBottom(float aBottom) override { mBottom = aBottom; return NS_OK; }
+    virtual nsresult SetResolution(float aResolution) override { mResolution = aResolution; return NS_OK; }
 
     nsAndroidDisplayport(AndroidRectF aRect, float aResolution):
         mLeft(aRect.Left()), mTop(aRect.Top()), mRight(aRect.Right()), mBottom(aRect.Bottom()), mResolution(aResolution) {}
@@ -562,6 +562,7 @@ public:
     bool IsWifi() { return mIsWifi; }
     int DHCPGateway() { return mDHCPGateway; }
     short ScreenOrientation() { return mScreenOrientation; }
+    short ScreenAngle() { return mScreenAngle; }
     RefCountedJavaObject* ByteBuffer() { return mByteBuffer; }
     int Width() { return mWidth; }
     int Height() { return mHeight; }
@@ -611,6 +612,7 @@ protected:
     bool mIsWifi;
     int mDHCPGateway;
     short mScreenOrientation;
+    short mScreenAngle;
     nsRefPtr<RefCountedJavaObject> mByteBuffer;
     int mWidth, mHeight;
     int mID;
@@ -696,6 +698,7 @@ protected:
     static jfieldID jDHCPGatewayField;
 
     static jfieldID jScreenOrientationField;
+    static jfieldID jScreenAngleField;
     static jfieldID jByteBufferField;
 
     static jfieldID jWidthField;

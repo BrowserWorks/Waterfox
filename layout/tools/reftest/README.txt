@@ -491,23 +491,26 @@ In a reftest-wait test, to disable testing of invalidation and force the final
 snapshot to be taken of the whole window, set the "reftest-snapshot-all"
 class on the root element.
 
+Avoid triggering flushes: class="reftest-no-flush"
+==================================================
+
+The reftest harness normally triggers flushes by calling
+getBoundingClientRect on the root element.  If the root element of the
+test has class="reftest-no-flush", it doesn't do this.
+
+This is useful for testing animations on the compositor thread, since
+the flushing will cause a main thread style update.
+
 Zoom Tests: reftest-zoom="<float>"
 ==================================
 
 When the root element of a test has a "reftest-zoom" attribute, that zoom
-factor is applied when rendering the test. The reftest document will be
-800 device pixels wide by 1000 device pixels high. The reftest harness assumes
-that the CSS pixel dimensions are 800/zoom and 1000/zoom. For best results
-therefore, choose zoom factors that do not require rounding when we calculate
-the number of appunits per device pixel; i.e. the zoom factor should divide 60,
-so 60/zoom is an integer.
-
-Setting Viewport Size: reftest-viewport-w/h="<int>"
-===================================================
-
-If either of the "reftest-viewport-w" and "reftest-viewport-h" attributes on
-the root element are non-zero, sets the CSS viewport to the given size in
-CSS pixels. This does not affect the size of the snapshot that is taken.
+factor is applied when rendering the test. The corresponds to the desktop "full
+zoom" style zoom. The reftest document will be 800 device pixels wide by 1000
+device pixels high. The reftest harness assumes that the CSS pixel dimensions
+are 800/zoom and 1000/zoom. For best results therefore, choose zoom factors
+that do not require rounding when we calculate the number of appunits per
+device pixel; i.e. the zoom factor should divide 60, so 60/zoom is an integer.
 
 Setting Scrollport Size: reftest-scrollport-w/h="<int>"
 =======================================================
@@ -521,7 +524,7 @@ Setting Async Scroll Mode: reftest-async-scroll attribute
 =========================================================
 
 If the "reftest-async-scroll" attribute is set on the root element, we try to
-enable async scrolling for the document. This is unsupported in many
+enable async scrolling and zooming for the document. This is unsupported in many
 configurations.
 
 Setting Displayport Dimensions: reftest-displayport-x/y/w/h="<int>"
@@ -543,6 +546,16 @@ When the "reftest-async-scroll" attribute is set on the root element, for any
 element where either the "reftest-async-scroll-x" or "reftest-async-scroll-y
 attributes are nonzero, at the end of the test take the snapshot with the given
 offset (in CSS pixels) added to the async scroll offset.
+
+Testing Async Zooming: reftest-async-zoom="<float>"
+=========================================================
+
+When the "reftest-async-zoom" attribute is present on the root element then at
+the end of the test take the snapshot with the given async zoom on top of any
+existing zoom. Content is not re-rendered at the new zoom level. This
+corresponds to the mobile style "pinch zoom" style of zoom. This is unsupported
+in many configurations, and any tests using this will probably want to have
+skip-if(!asyncPanZoom) on them.
 
 Printing Tests: class="reftest-print"
 =====================================

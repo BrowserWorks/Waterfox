@@ -9,8 +9,20 @@
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
+#include "mozilla/ipc/BackgroundChild.h"
+#include "mozilla/ipc/PBackgroundChild.h"
+#include "mozilla/ipc/BackgroundUtils.h"
+#include "mozilla/ipc/PBackgroundSharedTypes.h"
+#include "nsIIPCBackgroundChildCreateCallback.h"
 
 using mozilla::net::gNeckoChild;
+
+//
+// set NSPR_LOG_MODULES=UDPSocket:5
+//
+extern PRLogModuleInfo *gUDPSocketLog;
+#define UDPSOCKET_LOG(args)     MOZ_LOG(gUDPSocketLog, mozilla::LogLevel::Debug, args)
+#define UDPSOCKET_LOG_ENABLED() MOZ_LOG_TEST(gUDPSocketLog, mozilla::LogLevel::Debug)
 
 namespace mozilla {
 namespace dom {
@@ -54,7 +66,8 @@ NS_IMETHODIMP_(MozExternalRefCountType) UDPSocketChild::Release(void)
 }
 
 UDPSocketChild::UDPSocketChild()
-:mLocalPort(0)
+:mBackgroundManager(nullptr)
+,mLocalPort(0)
 {
 }
 
@@ -62,7 +75,95 @@ UDPSocketChild::~UDPSocketChild()
 {
 }
 
+class UDPSocketBackgroundChildCallback final :
+  public nsIIPCBackgroundChildCreateCallback
+{
+  bool* mDone;
+
+public:
+  explicit UDPSocketBackgroundChildCallback(bool* aDone)
+  : mDone(aDone)
+  {
+    MOZ_ASSERT(!NS_IsMainThread());
+    MOZ_ASSERT(mDone);
+    MOZ_ASSERT(!*mDone);
+  }
+
+  NS_DECL_ISUPPORTS
+
+private:
+  ~UDPSocketBackgroundChildCallback()
+  { }
+
+  virtual void
+  ActorCreated(PBackgroundChild* aActor) override
+  {
+    *mDone = true;
+  }
+
+  virtual void
+  ActorFailed() override
+  {
+    *mDone = true;
+  }
+};
+
+NS_IMPL_ISUPPORTS(UDPSocketBackgroundChildCallback, nsIIPCBackgroundChildCreateCallback)
+
+nsresult
+UDPSocketChild::CreatePBackgroundSpinUntilDone()
+{
+  using mozilla::ipc::BackgroundChild;
+
+  // Spinning the event loop in MainThread would be dangerous
+  MOZ_ASSERT(!NS_IsMainThread());
+  MOZ_ASSERT(!BackgroundChild::GetForCurrentThread());
+
+  bool done = false;
+  nsCOMPtr<nsIIPCBackgroundChildCreateCallback> callback =
+    new UDPSocketBackgroundChildCallback(&done);
+
+  if (NS_WARN_IF(!BackgroundChild::GetOrCreateForCurrentThread(callback))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsIThread* thread = NS_GetCurrentThread();
+  while (!done) {
+    if (NS_WARN_IF(!NS_ProcessNextEvent(thread, true /* aMayWait */))) {
+      return NS_ERROR_FAILURE;
+    }
+  }
+
+  if (NS_WARN_IF(!BackgroundChild::GetForCurrentThread())) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
+}
+
 // nsIUDPSocketChild Methods
+
+NS_IMETHODIMP
+UDPSocketChild::SetBackgroundSpinsEvents()
+{
+  using mozilla::ipc::BackgroundChild;
+
+  PBackgroundChild* existingBackgroundChild =
+    BackgroundChild::GetForCurrentThread();
+  // If it's not spun up yet, block until it is, and retry
+  if (!existingBackgroundChild) {
+    nsresult rv = CreatePBackgroundSpinUntilDone();
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+    existingBackgroundChild =
+      BackgroundChild::GetForCurrentThread();
+    MOZ_ASSERT(existingBackgroundChild);
+  }
+  // By now PBackground is guaranteed to be/have-been up
+  mBackgroundManager = existingBackgroundChild;
+  return NS_OK;
+}
 
 NS_IMETHODIMP
 UDPSocketChild::Bind(nsIUDPSocketInternal* aSocket,
@@ -72,13 +173,22 @@ UDPSocketChild::Bind(nsIUDPSocketInternal* aSocket,
                      bool aAddressReuse,
                      bool aLoopback)
 {
+  UDPSOCKET_LOG(("%s: %s:%u", __FUNCTION__, PromiseFlatCString(aHost).get(), aPort));
+
   NS_ENSURE_ARG(aSocket);
 
   mSocket = aSocket;
   AddIPDLReference();
 
-  gNeckoChild->SendPUDPSocketConstructor(this, IPC::Principal(aPrincipal),
-                                         mFilterName);
+  if (mBackgroundManager) {
+    // If we want to support a passed-in principal here we'd need to
+    // convert it to a PrincipalInfo
+    MOZ_ASSERT(!aPrincipal);
+    mBackgroundManager->SendPUDPSocketConstructor(this, void_t(), mFilterName);
+  } else {
+    gNeckoChild->SendPUDPSocketConstructor(this, IPC::Principal(aPrincipal),
+                                           mFilterName);
+  }
 
   SendBind(UDPAddressInfo(nsCString(aHost), aPort), aAddressReuse, aLoopback);
   return NS_OK;
@@ -99,6 +209,7 @@ UDPSocketChild::Send(const nsACString& aHost,
 {
   NS_ENSURE_ARG(aData);
 
+  UDPSOCKET_LOG(("%s: %s:%u - %u bytes", __FUNCTION__, PromiseFlatCString(aHost).get(), aPort, aByteLength));
   return SendDataInternal(UDPSocketAddr(UDPAddressInfo(nsCString(aHost), aPort)),
                           aData, aByteLength);
 }
@@ -114,6 +225,7 @@ UDPSocketChild::SendWithAddr(nsINetAddr* aAddr,
   NetAddr addr;
   aAddr->GetNetAddr(&addr);
 
+  UDPSOCKET_LOG(("%s: %u bytes", __FUNCTION__, aByteLength));
   return SendDataInternal(UDPSocketAddr(addr), aData, aByteLength);
 }
 
@@ -125,6 +237,7 @@ UDPSocketChild::SendWithAddress(const NetAddr* aAddr,
   NS_ENSURE_ARG(aAddr);
   NS_ENSURE_ARG(aData);
 
+  UDPSOCKET_LOG(("%s: %u bytes", __FUNCTION__, aByteLength));
   return SendDataInternal(UDPSocketAddr(*aAddr), aData, aByteLength);
 }
 
@@ -136,7 +249,7 @@ UDPSocketChild::SendDataInternal(const UDPSocketAddr& aAddr,
   NS_ENSURE_ARG(aData);
 
   FallibleTArray<uint8_t> fallibleArray;
-  if (!fallibleArray.InsertElementsAt(0, aData, aByteLength)) {
+  if (!fallibleArray.InsertElementsAt(0, aData, aByteLength, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -161,6 +274,7 @@ UDPSocketChild::SendBinaryStream(const nsACString& aHost,
 
   MOZ_ASSERT(fds.IsEmpty());
 
+  UDPSOCKET_LOG(("%s: %s:%u", __FUNCTION__, PromiseFlatCString(aHost).get(), aPort));
   SendOutgoingData(UDPData(stream), UDPSocketAddr(UDPAddressInfo(nsCString(aHost), aPort)));
 
   return NS_OK;
@@ -223,6 +337,7 @@ UDPSocketChild::RecvCallbackOpened(const UDPAddressInfo& aAddressInfo)
   mLocalAddress = aAddressInfo.addr();
   mLocalPort = aAddressInfo.port();
 
+  UDPSOCKET_LOG(("%s: %s:%u", __FUNCTION__, mLocalAddress.get(), mLocalPort));
   nsresult rv = mSocket->CallListenerOpened();
   mozilla::unused << NS_WARN_IF(NS_FAILED(rv));
 
@@ -242,6 +357,8 @@ bool
 UDPSocketChild::RecvCallbackReceivedData(const UDPAddressInfo& aAddressInfo,
                                          InfallibleTArray<uint8_t>&& aData)
 {
+  UDPSOCKET_LOG(("%s: %s:%u length %u", __FUNCTION__,
+                 aAddressInfo.addr().get(), aAddressInfo.port(), aData.Length()));
   nsresult rv = mSocket->CallListenerReceivedData(aAddressInfo.addr(), aAddressInfo.port(),
                                                   aData.Elements(), aData.Length());
   mozilla::unused << NS_WARN_IF(NS_FAILED(rv));
@@ -254,6 +371,7 @@ UDPSocketChild::RecvCallbackError(const nsCString& aMessage,
                                   const nsCString& aFilename,
                                   const uint32_t& aLineNumber)
 {
+  UDPSOCKET_LOG(("%s: %s:%s:%u", __FUNCTION__, aMessage.get(), aFilename.get(), aLineNumber));
   nsresult rv = mSocket->CallListenerError(aMessage, aFilename, aLineNumber);
   mozilla::unused << NS_WARN_IF(NS_FAILED(rv));
 

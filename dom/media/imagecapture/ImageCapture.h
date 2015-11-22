@@ -9,28 +9,18 @@
 
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/ImageCaptureBinding.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
-
 #ifndef IC_LOG
 PRLogModuleInfo* GetICLog();
-#define IC_LOG(...) PR_LOG(GetICLog(), PR_LOG_DEBUG, (__VA_ARGS__))
+#define IC_LOG(...) MOZ_LOG(GetICLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 #endif
-
-#else
-
-#ifndef IC_LOG
-#define IC_LOG(...)
-#endif
-
-#endif // PR_LOGGING
 
 namespace dom {
 
-class File;
+class Blob;
 class VideoStreamTrack;
 
 /**
@@ -78,7 +68,7 @@ public:
   ImageCapture(VideoStreamTrack* aVideoStreamTrack, nsPIDOMWindow* aOwnerWindow);
 
   // Post a Blob event to script.
-  nsresult PostBlobEvent(File* aBlob);
+  nsresult PostBlobEvent(Blob* aBlob);
 
   // Post an error event to script.
   // aErrorCode should be one of error codes defined in ImageCaptureError.h.

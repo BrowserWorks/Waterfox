@@ -22,7 +22,6 @@
 #include "nsIVariant.h"
 #include "nsJSON.h"
 #include "nsJSUtils.h"
-#include "nsRadioInterfaceLayer.h"
 #include "nsServiceManagerUtils.h"
 
 #define MOBILECONN_ERROR_INVALID_PARAMETER NS_LITERAL_STRING("InvalidParameter")
@@ -300,7 +299,7 @@ bool
 MobileConnection::IsValidCallBarringProgram(int32_t aProgram)
 {
   return aProgram >= nsIMobileConnection::CALL_BARRING_PROGRAM_ALL_OUTGOING &&
-         aProgram <= nsIMobileConnection::CALL_BARRING_PROGRAM_INCOMING_ROAMING;
+         aProgram <= nsIMobileConnection::CALL_BARRING_PROGRAM_INCOMING_SERVICE;
 }
 
 bool
@@ -876,7 +875,9 @@ MobileConnection::SetCallWaitingOption(bool aEnabled, ErrorResult& aRv)
   nsRefPtr<MobileConnectionCallback> requestCallback =
     new MobileConnectionCallback(GetOwner(), request);
 
-  nsresult rv = mMobileConnection->SetCallWaiting(aEnabled, requestCallback);
+  nsresult rv = mMobileConnection->SetCallWaiting(aEnabled,
+                                                  nsIMobileConnection::ICC_SERVICE_CLASS_VOICE,
+                                                  requestCallback);
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
     return nullptr;
@@ -1129,7 +1130,7 @@ MobileConnection::NotifyNetworkSelectionModeChanged()
 // nsIIccListener
 
 NS_IMETHODIMP
-MobileConnection::NotifyStkCommand(const nsAString& aMessage)
+MobileConnection::NotifyStkCommand(nsIStkProactiveCmd *aStkProactiveCmd)
 {
   return NS_OK;
 }

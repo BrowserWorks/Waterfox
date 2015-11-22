@@ -12,6 +12,8 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/dom/ipc/StructuredCloneData.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/TimeStamp.h"
 #ifdef XP_WIN
 #include "mozilla/TimeStamp_windows.h"
@@ -63,24 +65,11 @@ struct SerializedStructuredCloneBuffer
   : data(nullptr), dataLength(0)
   { }
 
-  explicit SerializedStructuredCloneBuffer(const JSAutoStructuredCloneBuffer& aOther)
-  {
-    *this = aOther;
-  }
-
   bool
   operator==(const SerializedStructuredCloneBuffer& aOther) const
   {
     return this->data == aOther.data &&
            this->dataLength == aOther.dataLength;
-  }
-
-  SerializedStructuredCloneBuffer&
-  operator=(const JSAutoStructuredCloneBuffer& aOther)
-  {
-    data = aOther.data();
-    dataLength = aOther.nbytes();
-    return *this;
   }
 
   uint64_t* data;
@@ -90,6 +79,11 @@ struct SerializedStructuredCloneBuffer
 } // namespace mozilla
 
 namespace IPC {
+
+/**
+ * Maximum size, in bytes, of a single IPC message.
+ */
+static const uint32_t MAX_MESSAGE_SIZE = 65536;
 
 /**
  * Generic enum serializer.
@@ -484,19 +478,19 @@ struct ParamTraits<FallibleTArray<E> >
         return false;
       }
 
-      E* elements = aResult->AppendElements(length);
+      E* elements = aResult->AppendElements(length, mozilla::fallible);
       if (!elements) {
         return false;
       }
 
       memcpy(elements, outdata, pickledLength);
     } else {
-      if (!aResult->SetCapacity(length)) {
+      if (!aResult->SetCapacity(length, mozilla::fallible)) {
         return false;
       }
 
       for (uint32_t index = 0; index < length; index++) {
-        E* element = aResult->AppendElement();
+        E* element = aResult->AppendElement(mozilla::fallible);
         MOZ_ASSERT(element);
         if (!ReadParam(aMsg, aIter, element)) {
           return false;
@@ -704,6 +698,27 @@ struct ParamTraits<mozilla::TimeStampValue>
 #endif
 
 template <>
+struct ParamTraits<mozilla::dom::ipc::StructuredCloneData>
+{
+  typedef mozilla::dom::ipc::StructuredCloneData paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam)
+  {
+    aParam.WriteIPCParams(aMsg);
+  }
+
+  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  {
+    return aResult->ReadIPCParams(aMsg, aIter);
+  }
+
+  static void Log(const paramType& aParam, std::wstring* aLog)
+  {
+    LogParam(aParam.DataLength(), aLog);
+  }
+};
+
+template <>
 struct ParamTraits<mozilla::SerializedStructuredCloneBuffer>
 {
   typedef mozilla::SerializedStructuredCloneBuffer paramType;
@@ -749,6 +764,40 @@ struct ParamTraits<nsIWidget::TouchPointerState>
   : public BitFlagsEnumSerializer<nsIWidget::TouchPointerState,
                                   nsIWidget::TouchPointerState::ALL_BITS>
 {
+};
+
+template<class T>
+struct ParamTraits< mozilla::Maybe<T> >
+{
+  typedef mozilla::Maybe<T> paramType;
+
+  static void Write(Message* msg, const paramType& param)
+  {
+    if (param.isSome()) {
+      WriteParam(msg, true);
+      WriteParam(msg, param.value());
+    } else {
+      WriteParam(msg, false);
+    }
+  }
+
+  static bool Read(const Message* msg, void** iter, paramType* result)
+  {
+    bool isSome;
+    if (!ReadParam(msg, iter, &isSome)) {
+      return false;
+    }
+    if (isSome) {
+      T tmp;
+      if (!ReadParam(msg, iter, &tmp)) {
+        return false;
+      }
+      *result = mozilla::Some(mozilla::Move(tmp));
+    } else {
+      *result = mozilla::Nothing();
+    }
+    return true;
+  }
 };
 
 } /* namespace IPC */

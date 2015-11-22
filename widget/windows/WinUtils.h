@@ -35,6 +35,7 @@
 #include "nsIThread.h"
 
 #include "mozilla/Attributes.h"
+#include "mozilla/EventForwards.h"
 
 /**
  * NS_INLINE_DECL_IUNKNOWN_REFCOUNTING should be used for defining and
@@ -123,7 +124,8 @@ public:
 };
 #endif
 
-class WinUtils {
+class WinUtils
+{
 public:
   /**
    * Functions to convert between logical pixels as used by most Windows APIs
@@ -307,7 +309,7 @@ public:
    */
   static uint16_t GetMouseInputSource();
 
-  static bool GetIsMouseFromTouch(uint32_t aEventType);
+  static bool GetIsMouseFromTouch(EventMessage aEventType);
 
   /**
    * SHCreateItemFromParsingName() calls native SHCreateItemFromParsingName()
@@ -370,7 +372,22 @@ public:
   static void SetupKeyModifiersSequence(nsTArray<KeyPair>* aArray,
                                         uint32_t aModifiers);
 
-  // dwmapi.dll function typedefs and declarations
+  /**
+  * Does device have touch support
+  */
+  static uint32_t IsTouchDeviceSupportPresent();
+
+  /**
+  * The maximum number of simultaneous touch contacts supported by the device.
+  * In the case of devices with multiple digitizers (e.g. multiple touch screens),
+  * the value will be the maximum of the set of maximum supported contacts by
+  * each individual digitizer.
+  */
+  static uint32_t GetMaxTouchPoints();
+
+  /**
+  * dwmapi.dll function typedefs and declarations
+  */
   typedef HRESULT (WINAPI*DwmExtendFrameIntoClientAreaProc)(HWND hWnd, const MARGINS *pMarInset);
   typedef HRESULT (WINAPI*DwmIsCompositionEnabledProc)(BOOL *pfEnabled);
   typedef HRESULT (WINAPI*DwmSetIconicThumbnailProc)(HWND hWnd, HBITMAP hBitmap, DWORD dwSITFlags);
@@ -514,8 +531,6 @@ public:
 
   static int32_t GetICOCacheSecondsTimeout();
 };
-
-
 
 } // namespace widget
 } // namespace mozilla

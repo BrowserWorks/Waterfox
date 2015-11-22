@@ -4,8 +4,8 @@
 
 "use strict";
 
-// Test that CSS property names are autocompleted and cycled correctly when
-// creating a new property in the ruleview
+// Tests that CSS property names are autocompleted and cycled correctly when
+// creating a new property in the rule view.
 
 const MAX_ENTRIES = 10;
 
@@ -16,7 +16,7 @@ const MAX_ENTRIES = 10;
 //    selectedIndex of the popup,
 //    total items in the popup
 //  ]
-let testData = [
+var testData = [
   ["d", "direction", 0, 3],
   ["VK_DOWN", "display", 1, 3],
   ["VK_DOWN", "dominant-baseline", 2, 3],
@@ -37,25 +37,33 @@ let testData = [
   ["VK_ESCAPE", null, -1, 0],
 ];
 
-let TEST_URL = "data:text/html;charset=utf-8,<h1 style='border: 1px solid red'>Filename:" +
-               "browser_bug893965_css_property_completion_new_property.js</h1>";
+const TEST_URI = "<h1 style='border: 1px solid red'>Header</h1>";
 
 add_task(function*() {
-  yield addTab(TEST_URL);
+  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {toolbox, inspector, view} = yield openRuleView();
 
+  info("Test autocompletion after 1st page load");
+  yield runAutocompletionTest(toolbox, inspector, view);
+
+  info("Test autocompletion after page navigation");
+  yield reloadPage(inspector);
+  yield runAutocompletionTest(toolbox, inspector, view);
+});
+
+function* runAutocompletionTest(toolbox, inspector, view) {
   info("Selecting the test node");
   yield selectNode("h1", inspector);
 
   info("Focusing the css property editable field");
-  let brace = view.doc.querySelector(".ruleview-ruleclose");
-  let editor = yield focusEditableField(brace);
+  let brace = view.styleDocument.querySelector(".ruleview-ruleclose");
+  let editor = yield focusEditableField(view, brace);
 
   info("Starting to test for css property completion");
-  for (let i = 0; i < testData.length; i ++) {
+  for (let i = 0; i < testData.length; i++) {
     yield testCompletion(testData[i], editor, view);
   }
-});
+}
 
 function* testCompletion([key, completion, index, total], editor, view) {
   info("Pressing key " + key);
@@ -72,7 +80,7 @@ function* testCompletion([key, completion, index, total], editor, view) {
   }
 
   info("Synthesizing key " + key);
-  EventUtils.synthesizeKey(key, {}, view.doc.defaultView);
+  EventUtils.synthesizeKey(key, {}, view.styleWindow);
 
   yield onSuggest;
   yield wait(1); // Equivalent of executeSoon
@@ -84,7 +92,8 @@ function* testCompletion([key, completion, index, total], editor, view) {
   if (total == 0) {
     ok(!(editor.popup && editor.popup.isOpen), "Popup is closed");
   } else {
-    ok(editor.popup._panel.state == "open" || editor.popup._panel.state == "showing", "Popup is open");
+    ok(editor.popup._panel.state == "open" ||
+       editor.popup._panel.state == "showing", "Popup is open");
     is(editor.popup.getItems().length, total, "Number of suggestions match");
     is(editor.popup.selectedIndex, index, "Correct item is selected");
   }

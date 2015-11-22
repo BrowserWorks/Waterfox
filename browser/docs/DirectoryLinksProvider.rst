@@ -23,7 +23,7 @@ data from the server.
 
 For the directory source and ping endpoints, the default preference values point
 to Mozilla key-pinned servers with encryption. No cookies are set by the servers
-but not enforced by Firefox.
+and Firefox enforces this by making anonymous requests.
 
 - default directory source endpoint:
   https://tiles.services.mozilla.com/v3/links/fetch/%LOCALE%/%CHANNEL%
@@ -90,7 +90,9 @@ Users can turn off the ping with in-new-tab-page controls.
 
 As the new tab page is rendered, any images for tiles are downloaded if not
 already cached. The default servers hosting the images are Mozilla CDN that
-don't use cookies: https://tiles.cdn.mozilla.net/
+don't use cookies: https://tiles.cdn.mozilla.net/ and Firefox enforces that the
+images come from mozilla.net or data URIs when using the default directory
+source.
 
 
 Source JSON Format
@@ -192,8 +194,7 @@ A suggested link has additional values:
   %2$S is replaced by the triggering site.
 - ``frecent_sites`` - array of strings of the sites that can trigger showing a
   Suggested Tile if the user has the site in one of the top 100 most-frecent
-  pages. Only preapproved array of strings that are hardcoded into the
-  DirectoryLinksProvider module are allowed.
+  pages.
 - ``frequency_caps`` - an object consisting of daily and total frequency caps
   that limit the number of times a Suggested Tile can be shown in the new tab
   per day and overall.
@@ -244,6 +245,7 @@ blocked::
           {
               "id": 702,
               "pin": 1,
+              "past_impressions": {"total": 5, "daily": 1},
           },
           {},
           {
@@ -262,6 +264,12 @@ none of the following optional values:
 - ``id`` - id that was provided as part of the downloaded link object (for all
   types of links: directory, suggested, enhanced); not present if the tile was
   created from user behavior, e.g., visiting pages
+- ``past_impressions`` - number of impressions (new tab "views") a suggested
+  tile was shown before it was clicked, pinned or blocked. Where the "total"
+  counter is the overall number of impressions accumulated prior to a click action,
+  and "daily" counter is the number impressions occurred on same calendar day of
+  a click. This infomration is submitted once per a suggested tile upon click,
+  pin or block
 - ``pinned`` - 1 if the tile is pinned; not present otherwise
 - ``pos`` - integer position if the tile is not in the natural order, e.g., a
   pinned tile after an empty slot; not present otherwise

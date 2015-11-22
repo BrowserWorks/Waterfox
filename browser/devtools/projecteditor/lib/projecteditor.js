@@ -15,7 +15,7 @@ const { EventTarget } = require("sdk/event/target");
 const { on, forget } = require("projecteditor/helpers/event");
 const { emit } = require("sdk/event/core");
 const { merge } = require("sdk/util/object");
-const promise = require("projecteditor/helpers/promise");
+const promise = require("promise");
 const { ViewHelpers } = Cu.import("resource:///modules/devtools/ViewHelpers.jsm", {});
 const { DOMHelpers } = Cu.import("resource:///modules/devtools/DOMHelpers.jsm");
 const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
@@ -554,6 +554,7 @@ var ProjectEditor = Class({
     this._editorListenAndDispatch(editor, "change", "onEditorChange");
     this._editorListenAndDispatch(editor, "cursorActivity", "onEditorCursorActivity");
     this._editorListenAndDispatch(editor, "load", "onEditorLoad");
+    this._editorListenAndDispatch(editor, "saveRequested", "onEditorSaveRequested");
     this._editorListenAndDispatch(editor, "save", "onEditorSave");
 
     editor.on("focus", () => {

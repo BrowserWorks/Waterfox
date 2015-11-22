@@ -37,7 +37,6 @@
 #include "nsPIDOMWindow.h"
 #include "nsIStyleRule.h"
 #include "nsIURL.h"
-#include "nsNetUtil.h"
 #include "nsEscape.h"
 #include "nsIFrameInlines.h"
 #include "nsIScrollableFrame.h"
@@ -526,6 +525,14 @@ nsGenericHTMLElement::IntrinsicState() const
   return state;
 }
 
+uint32_t
+nsGenericHTMLElement::EditableInclusiveDescendantCount()
+{
+  bool isEditable = IsInUncomposedDoc() && HasFlag(NODE_IS_EDITABLE) &&
+    GetContentEditableValue() == eTrue;
+  return EditableDescendantCount() + isEditable;
+}
+
 nsresult
 nsGenericHTMLElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                                  nsIContent* aBindingParent,
@@ -549,6 +556,7 @@ nsGenericHTMLElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
       aDocument->
         AddToNameTable(this, GetParsedAttr(nsGkAtoms::name)->GetAtomValue());
     }
+
     if (HasFlag(NODE_IS_EDITABLE) && GetContentEditableValue() == eTrue) {
       nsCOMPtr<nsIHTMLDocument> htmlDocument = do_QueryInterface(aDocument);
       if (htmlDocument) {
@@ -995,6 +1003,10 @@ nsGenericHTMLElement::ParseAttribute(int32_t aNamespaceID,
       return aResult.ParseIntValue(aValue);
     }
 
+    if (aAttribute == nsGkAtoms::referrer) {
+      return ParseReferrerAttribute(aValue, aResult);
+    }
+
     if (aAttribute == nsGkAtoms::name) {
       // Store name as an atom.  name="" means that the element has no name,
       // not that it has an emptystring as the name.
@@ -1260,6 +1272,19 @@ nsGenericHTMLElement::ParseImageAttribute(nsIAtom* aAttribute,
     return aResult.ParseIntWithBounds(aString, 0);
   }
   return false;
+}
+
+bool
+nsGenericHTMLElement::ParseReferrerAttribute(const nsAString& aString,
+                                             nsAttrValue& aResult)
+{
+  static const nsAttrValue::EnumTable kReferrerTable[] = {
+    { "no-referrer", net::RP_No_Referrer },
+    { "origin", net::RP_Origin },
+    { "unsafe-url", net::RP_Unsafe_URL },
+    { 0 }
+  };
+  return aResult.ParseEnumValue(aString, kReferrerTable, false);
 }
 
 bool
@@ -1732,35 +1757,51 @@ nsGenericHTMLElement::GetURIListAttr(nsIAtom* aAttr, nsAString& aResult)
   nsIDocument* doc = OwnerDoc(); 
   nsCOMPtr<nsIURI> baseURI = GetBaseURI();
 
-  // Value contains relative URIs split on spaces (U+0020)
-  const char16_t *start = value.BeginReading();
-  const char16_t *end   = value.EndReading();
-  const char16_t *iter  = start;
-  for (;;) {
-    if (iter < end && *iter != ' ') {
+  nsString::const_iterator end;
+  value.EndReading(end);
+
+  nsAString::const_iterator iter;
+  value.BeginReading(iter);
+
+  while (iter != end) {
+    while (*iter == ' ' && iter != end) {
       ++iter;
-    } else {  // iter is pointing at either end or a space
-      while (*start == ' ' && start < iter)
-        ++start;
-      if (iter != start) {
-        if (!aResult.IsEmpty())
-          aResult.Append(char16_t(' '));
-        const nsSubstring& uriPart = Substring(start, iter);
-        nsCOMPtr<nsIURI> attrURI;
-        nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(attrURI),
-                                                  uriPart, doc, baseURI);
-        if (attrURI) {
-          nsAutoCString spec;
-          attrURI->GetSpec(spec);
-          AppendUTF8toUTF16(spec, aResult);
-        } else {
-          aResult.Append(uriPart);
-        }
-      }
-      start = iter = iter + 1;
-      if (iter >= end)
-        break;
     }
+
+    if (iter == end) {
+      break;
+    }
+
+    nsAString::const_iterator start = iter;
+
+    while (iter != end && *iter != ' ') {
+      ++iter;
+    }
+
+    if (!aResult.IsEmpty()) {
+      aResult.Append(NS_LITERAL_STRING(" "));
+    }
+
+    const nsSubstring& uriPart = Substring(start, iter);
+    nsCOMPtr<nsIURI> attrURI;
+    nsresult rv =
+      nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(attrURI),
+                                                uriPart, doc, baseURI);
+    if (NS_FAILED(rv)) {
+      aResult.Append(uriPart);
+      continue;
+    }
+
+    MOZ_ASSERT(attrURI);
+
+    nsAutoCString spec;
+    rv = attrURI->GetSpec(spec);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      aResult.Append(uriPart);
+      continue;
+    }
+
+    AppendUTF8toUTF16(spec, aResult);
   }
 
   return NS_OK;
@@ -2087,7 +2128,7 @@ nsGenericHTMLFormElement::UnbindFromTree(bool aDeep, bool aNullParent)
 
 nsresult
 nsGenericHTMLFormElement::BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                        const nsAttrValueOrString* aValue,
+                                        nsAttrValueOrString* aValue,
                                         bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None) {
@@ -2209,9 +2250,8 @@ nsresult
 nsGenericHTMLFormElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
   if (aVisitor.mEvent->mFlags.mIsTrusted) {
-    switch (aVisitor.mEvent->message) {
-      case NS_FOCUS_CONTENT:
-      {
+    switch (aVisitor.mEvent->mMessage) {
+      case eFocus: {
         // Check to see if focus has bubbled up from a form control's
         // child textfield or button.  If that's the case, don't focus
         // this parent file control -- leave focus on the child.
@@ -2221,13 +2261,14 @@ nsGenericHTMLFormElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
           formControlFrame->SetFocus(true, true);
         break;
       }
-      case NS_BLUR_CONTENT:
-      {
+      case eBlur: {
         nsIFormControlFrame* formControlFrame = GetFormControlFrame(true);
         if (formControlFrame)
           formControlFrame->SetFocus(false, false);
         break;
       }
+      default:
+        break;
     }
   }
 
@@ -2413,8 +2454,8 @@ nsGenericHTMLFormElement::FormIdUpdated(Element* aOldElement,
 }
 
 bool 
-nsGenericHTMLFormElement::IsElementDisabledForEvents(uint32_t aMessage, 
-                                                    nsIFrame* aFrame)
+nsGenericHTMLFormElement::IsElementDisabledForEvents(EventMessage aMessage,
+                                                     nsIFrame* aFrame)
 {
   bool disabled = IsDisabled();
   if (!disabled && aFrame) {
@@ -2423,7 +2464,7 @@ nsGenericHTMLFormElement::IsElementDisabledForEvents(uint32_t aMessage,
       uiStyle->mUserInput == NS_STYLE_USER_INPUT_DISABLED;
 
   }
-  return disabled && aMessage != NS_MOUSE_MOVE;
+  return disabled && aMessage != eMouseMove;
 }
 
 void
@@ -2612,7 +2653,7 @@ nsGenericHTMLElement::Click()
   // called from chrome JS. Mark this event trusted if Click()
   // is called from chrome code.
   WidgetMouseEvent event(nsContentUtils::IsCallerChrome(),
-                         NS_MOUSE_CLICK, nullptr, WidgetMouseEvent::eReal);
+                         eMouseClick, nullptr, WidgetMouseEvent::eReal);
   event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN;
 
   EventDispatcher::Dispatch(static_cast<nsIContent*>(this), context, &event);
@@ -2698,23 +2739,29 @@ nsGenericHTMLElement::RegUnRegAccessKey(bool aDoReg)
   }
 }
 
-void
+bool
 nsGenericHTMLElement::PerformAccesskey(bool aKeyCausesActivation,
                                        bool aIsTrustedEvent)
 {
   nsPresContext* presContext = GetPresContext(eForUncomposedDoc);
-  if (!presContext)
-    return;
+  if (!presContext) {
+    return false;
+  }
 
   // It's hard to say what HTML4 wants us to do in all cases.
-  nsIFocusManager* fm = nsFocusManager::GetFocusManager();
+  bool focused = true;
+  nsFocusManager* fm = nsFocusManager::GetFocusManager();
   if (fm) {
     fm->SetFocus(this, nsIFocusManager::FLAG_BYKEY);
+
+    // Return true if the element became the current focus within its window.
+    nsPIDOMWindow* window = OwnerDoc()->GetWindow();
+    focused = (window && window->GetFocusedNode());
   }
 
   if (aKeyCausesActivation) {
     // Click on it if the users prefs indicate to do so.
-    WidgetMouseEvent event(aIsTrustedEvent, NS_MOUSE_CLICK, nullptr,
+    WidgetMouseEvent event(aIsTrustedEvent, eMouseClick, nullptr,
                            WidgetMouseEvent::eReal);
     event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD;
 
@@ -2724,6 +2771,8 @@ nsGenericHTMLElement::PerformAccesskey(bool aKeyCausesActivation,
     EventDispatcher::Dispatch(static_cast<nsIContent*>(this),
                               presContext, &event);
   }
+
+  return focused;
 }
 
 const nsAttrName*
@@ -2884,6 +2933,12 @@ nsGenericHTMLElement::ChangeEditableState(int32_t aChange)
       do_QueryInterface(document);
     if (htmlDocument) {
       htmlDocument->ChangeContentEditableCount(this, aChange);
+    }
+
+    nsIContent* parent = GetParent();
+    while (parent) {
+      parent->ChangeEditableDescendantCount(aChange);
+      parent = parent->GetParent();
     }
   }
 
@@ -3194,7 +3249,7 @@ nsGenericHTMLElement::IsEventAttributeName(nsIAtom *aName)
  * would be set to. Helper for the media elements.
  */
 nsresult
-nsGenericHTMLElement::NewURIFromString(const nsAutoString& aURISpec,
+nsGenericHTMLElement::NewURIFromString(const nsAString& aURISpec,
                                        nsIURI** aURI)
 {
   NS_ENSURE_ARG_POINTER(aURI);

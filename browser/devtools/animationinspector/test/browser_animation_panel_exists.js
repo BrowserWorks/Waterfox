@@ -15,4 +15,5 @@ add_task(function*() {
 
   ok(panel, "The animation panel exists");
   ok(panel.playersEl, "The animation panel has been initialized");
+  ok(panel.animationsTimelineComponent, "The animation panel has been initialized");
 });

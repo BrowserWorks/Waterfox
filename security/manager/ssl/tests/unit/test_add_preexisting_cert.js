@@ -2,12 +2,18 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+"use strict";
+
+// Tests that adding a certificate already present in the certificate database
+// with different trust bits than those stored in the database does not result
+// in the new trust bits being ignored.
+
 do_get_profile();
-let certDB = Cc["@mozilla.org/security/x509certdb;1"]
+var certDB = Cc["@mozilla.org/security/x509certdb;1"]
                .getService(Ci.nsIX509CertDB);
 
 function load_cert(cert, trust) {
-  let file = "test_intermediate_basic_usage_constraints/" + cert + ".der";
+  let file = "test_intermediate_basic_usage_constraints/" + cert + ".pem";
   addCertFromFile(certDB, file, trust);
 }
 
@@ -25,23 +31,18 @@ function getDERString(cert)
 function run_test() {
   load_cert("ca", "CTu,CTu,CTu");
   load_cert("int-limited-depth", "CTu,CTu,CTu");
-  let file = "test_intermediate_basic_usage_constraints/ee-int-limited-depth.der";
-  let cert_der = readFile(do_get_file(file));
-  let ee = certDB.constructX509(cert_der, cert_der.length);
-  let hasEVPolicy = {};
-  let verifiedChain = {};
-  equal(PRErrorCodeSuccess, certDB.verifyCertNow(ee, certificateUsageSSLServer,
-                                                 NO_FLAGS, verifiedChain,
-                                                 hasEVPolicy));
+  let file = "test_intermediate_basic_usage_constraints/ee-int-limited-depth.pem";
+  let cert_pem = readFile(do_get_file(file));
+  let ee = certDB.constructX509FromBase64(pemToBase64(cert_pem));
+  checkCertErrorGeneric(certDB, ee, PRErrorCodeSuccess,
+                        certificateUsageSSLServer);
   // Change the already existing intermediate certificate's trust using
   // addCertFromBase64(). We use findCertByNickname first to ensure that the
   // certificate already exists.
   let int_cert = certDB.findCertByNickname(null, "int-limited-depth");
-  ok(int_cert);
+  notEqual(int_cert, null, "Intermediate cert should be in the cert DB");
   let base64_cert = btoa(getDERString(int_cert));
   certDB.addCertFromBase64(base64_cert, "p,p,p", "ignored_argument");
-  equal(SEC_ERROR_UNTRUSTED_ISSUER, certDB.verifyCertNow(ee,
-                                                         certificateUsageSSLServer,
-                                                         NO_FLAGS, verifiedChain,
-                                                         hasEVPolicy));
+  checkCertErrorGeneric(certDB, ee, SEC_ERROR_UNTRUSTED_ISSUER,
+                        certificateUsageSSLServer);
 }

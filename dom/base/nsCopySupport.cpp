@@ -11,6 +11,7 @@
 #include "nsIComponentManager.h" 
 #include "nsIServiceManager.h"
 #include "nsIClipboard.h"
+#include "nsIFormControl.h"
 #include "nsISelection.h"
 #include "nsWidgetsCID.h"
 #include "nsXPCOM.h"
@@ -620,9 +621,18 @@ IsSelectionInsideRuby(nsISelection* aSelection)
 }
 
 bool
-nsCopySupport::FireClipboardEvent(int32_t aType, int32_t aClipboardType, nsIPresShell* aPresShell, nsISelection* aSelection)
+nsCopySupport::FireClipboardEvent(EventMessage aEventMessage,
+                                  int32_t aClipboardType,
+                                  nsIPresShell* aPresShell,
+                                  nsISelection* aSelection,
+                                  bool* aActionTaken)
 {
-  NS_ASSERTION(aType == NS_CUT || aType == NS_COPY || aType == NS_PASTE,
+  if (aActionTaken) {
+    *aActionTaken = false;
+  }
+
+  NS_ASSERTION(aEventMessage == eCut || aEventMessage == eCopy ||
+               aEventMessage == ePaste,
                "Invalid clipboard event type");
 
   nsCOMPtr<nsIPresShell> presShell = aPresShell;
@@ -646,14 +656,6 @@ nsCopySupport::FireClipboardEvent(int32_t aType, int32_t aClipboardType, nsIPres
   // retrieve the event target node from the start of the selection
   nsresult rv;
   if (sel) {
-    // Only cut or copy when there is an uncollapsed selection
-    if (aType == NS_CUT || aType == NS_COPY) {
-      bool isCollapsed;
-      sel->GetIsCollapsed(&isCollapsed);
-      if (isCollapsed)
-        return false;
-    }
-
     nsCOMPtr<nsIDOMRange> range;
     rv = sel->GetRangeAt(0, getter_AddRefs(range));
     if (NS_SUCCEEDED(rv) && range) {
@@ -686,21 +688,22 @@ nsCopySupport::FireClipboardEvent(int32_t aType, int32_t aClipboardType, nsIPres
   nsRefPtr<DataTransfer> clipboardData;
   if (chromeShell || Preferences::GetBool("dom.event.clipboardevents.enabled", true)) {
     clipboardData =
-      new DataTransfer(piWindow, aType, aType == NS_PASTE, aClipboardType);
+      new DataTransfer(piWindow, aEventMessage, aEventMessage == ePaste,
+                       aClipboardType);
 
     nsEventStatus status = nsEventStatus_eIgnore;
-    InternalClipboardEvent evt(true, aType);
+    InternalClipboardEvent evt(true, aEventMessage);
     evt.clipboardData = clipboardData;
     EventDispatcher::Dispatch(content, presShell->GetPresContext(), &evt,
                               nullptr, &status);
     // If the event was cancelled, don't do the clipboard operation
     doDefault = (status != nsEventStatus_eConsumeNoDefault);
   }
-  
+
   // No need to do anything special during a paste. Either an event listener
   // took care of it and cancelled the event, or the caller will handle it.
   // Return true to indicate that the event wasn't cancelled.
-  if (aType == NS_PASTE) {
+  if (aEventMessage == ePaste) {
     // Clear and mark the clipboardData as readonly. This prevents someone
     // from reading the clipboard contents after the paste event has fired.
     if (clipboardData) {
@@ -708,6 +711,9 @@ nsCopySupport::FireClipboardEvent(int32_t aType, int32_t aClipboardType, nsIPres
       clipboardData->SetReadOnly();
     }
 
+    if (aActionTaken) {
+      *aActionTaken = true;
+    }
     return doDefault;
   }
 
@@ -721,20 +727,43 @@ nsCopySupport::FireClipboardEvent(int32_t aType, int32_t aClipboardType, nsIPres
   // use the data added to the data transfer and copy that instead.
   uint32_t count = 0;
   if (doDefault) {
-    // get the data from the selection if any
-    bool isCollapsed;
-    sel->GetIsCollapsed(&isCollapsed);
-    if (isCollapsed) {
-      return false;
+    // find the focused node
+    nsCOMPtr<nsIContent> srcNode = content;
+    if (content->IsInNativeAnonymousSubtree()) {
+      srcNode = content->FindFirstNonChromeOnlyAccessContent();
     }
-    // XXX Code which decides whether we should copy text with ruby
-    // annotation is currenct depending on whether each range of the
-    // selection is inside a same ruby container. But we really should
-    // expose the full functionality in browser. See bug 1130891.
-    bool withRubyAnnotation = IsSelectionInsideRuby(sel);
-    // call the copy code
-    rv = HTMLCopy(sel, doc, aClipboardType, withRubyAnnotation);
-    if (NS_FAILED(rv)) {
+
+    // check if we are looking at a password input
+    nsCOMPtr<nsIFormControl> formControl = do_QueryInterface(srcNode);
+    if (formControl) {
+      if (formControl->GetType() == NS_FORM_INPUT_PASSWORD) {
+        return false;
+      }
+    }
+
+    // when cutting non-editable content, do nothing
+    // XXX this is probably the wrong editable flag to check
+    if (aEventMessage != eCut || content->IsEditable()) {
+      // get the data from the selection if any
+      bool isCollapsed;
+      sel->GetIsCollapsed(&isCollapsed);
+      if (isCollapsed) {
+        if (aActionTaken) {
+          *aActionTaken = true;
+        }
+        return false;
+      }
+      // XXX Code which decides whether we should copy text with ruby
+      // annotation is currenct depending on whether each range of the
+      // selection is inside a same ruby container. But we really should
+      // expose the full functionality in browser. See bug 1130891.
+      bool withRubyAnnotation = IsSelectionInsideRuby(sel);
+      // call the copy code
+      rv = HTMLCopy(sel, doc, aClipboardType, withRubyAnnotation);
+      if (NS_FAILED(rv)) {
+        return false;
+      }
+    } else {
       return false;
     }
   } else if (clipboardData) {
@@ -763,5 +792,8 @@ nsCopySupport::FireClipboardEvent(int32_t aType, int32_t aClipboardType, nsIPres
     piWindow->UpdateCommands(NS_LITERAL_STRING("clipboard"), nullptr, 0);
   }
 
+  if (aActionTaken) {
+    *aActionTaken = true;
+  }
   return doDefault;
 }

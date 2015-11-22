@@ -51,7 +51,7 @@
 
 #define CRASH_IN_CHILD_PROCESS(_msg)                                           \
   do {                                                                         \
-    if (IsMainProcess()) {                                                     \
+    if (XRE_IsParentProcess()) {                                                     \
       MOZ_ASSERT(false, _msg);                                                 \
     } else {                                                                   \
       MOZ_CRASH(_msg);                                                         \
@@ -69,32 +69,17 @@ namespace {
 // Utility Functions
 // -----------------------------------------------------------------------------
 
-bool
-IsMainProcess()
-{
-  static const bool isMainProcess =
-    XRE_GetProcessType() == GeckoProcessType_Default;
-  return isMainProcess;
-}
-
-#ifdef DEBUG
-bool
-IsChildProcess()
-{
-  return !IsMainProcess();
-}
-#endif
 
 void
 AssertIsInMainProcess()
 {
-  MOZ_ASSERT(IsMainProcess());
+  MOZ_ASSERT(XRE_IsParentProcess());
 }
 
 void
 AssertIsInChildProcess()
 {
-  MOZ_ASSERT(IsChildProcess());
+  MOZ_ASSERT(!XRE_IsParentProcess());
 }
 
 void
@@ -799,7 +784,7 @@ private:
   NS_DECL_NSIRUNNABLE
 };
 
-} // anonymous namespace
+} // namespace
 
 namespace mozilla {
 namespace ipc {
@@ -845,7 +830,7 @@ BackgroundParent::GetContentParent(PBackgroundParent* aBackgroundActor)
 PBlobParent*
 BackgroundParent::GetOrCreateActorForBlobImpl(
                                             PBackgroundParent* aBackgroundActor,
-                                            FileImpl* aBlobImpl)
+                                            BlobImpl* aBlobImpl)
 {
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(aBackgroundActor);
@@ -914,17 +899,27 @@ PBlobChild*
 BackgroundChild::GetOrCreateActorForBlob(PBackgroundChild* aBackgroundActor,
                                          nsIDOMBlob* aBlob)
 {
-  MOZ_ASSERT(aBackgroundActor);
   MOZ_ASSERT(aBlob);
+
+  nsRefPtr<BlobImpl> blobImpl = static_cast<Blob*>(aBlob)->Impl();
+  MOZ_ASSERT(blobImpl);
+
+  return GetOrCreateActorForBlobImpl(aBackgroundActor, blobImpl);
+}
+
+// static
+PBlobChild*
+BackgroundChild::GetOrCreateActorForBlobImpl(PBackgroundChild* aBackgroundActor,
+                                             BlobImpl* aBlobImpl)
+{
+  MOZ_ASSERT(aBackgroundActor);
+  MOZ_ASSERT(aBlobImpl);
   MOZ_ASSERT(GetForCurrentThread(),
              "BackgroundChild not created on this thread yet!");
   MOZ_ASSERT(aBackgroundActor == GetForCurrentThread(),
              "BackgroundChild is bound to a different thread!");
 
-  nsRefPtr<FileImpl> blobImpl = static_cast<File*>(aBlob)->Impl();
-  MOZ_ASSERT(blobImpl);
-
-  BlobChild* actor = BlobChild::GetOrCreate(aBackgroundActor, blobImpl);
+  BlobChild* actor = BlobChild::GetOrCreate(aBackgroundActor, aBlobImpl);
   if (NS_WARN_IF(!actor)) {
     return nullptr;
   }
@@ -2047,7 +2042,7 @@ ChildImpl::OpenProtocolOnMainThread(nsIEventTarget* aEventTarget)
               "shutdown has started!");
   }
 
-  if (IsMainProcess()) {
+  if (XRE_IsParentProcess()) {
     nsRefPtr<ParentImpl::CreateCallback> parentCallback =
       new ParentCreateCallback(aEventTarget);
 

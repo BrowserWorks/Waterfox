@@ -18,6 +18,13 @@
 
 struct JSContext;
 
+//
+// set NSPR_LOG_MODULES=UDPSocket:5
+//
+extern PRLogModuleInfo *gUDPSocketLog;
+#define UDPSOCKET_LOG(args)     MOZ_LOG(gUDPSocketLog, mozilla::LogLevel::Debug, args)
+#define UDPSOCKET_LOG_ENABLED() MOZ_LOG_TEST(gUDPSocketLog, mozilla::LogLevel::Debug)
+
 namespace mozilla {
 namespace dom {
 

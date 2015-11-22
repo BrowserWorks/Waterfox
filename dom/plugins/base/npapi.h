@@ -351,6 +351,8 @@ typedef enum {
   /* In the NPDrawingModelCoreAnimation drawing model, the browser asks the plug-in for a Core Animation layer. */
   , NPPVpluginCoreAnimationLayer = 1003
 #endif
+  /* Notification that the plugin just started or stopped playing audio */
+  , NPPVpluginIsPlayingAudio = 4000
 
 } NPPVariable;
 
@@ -409,6 +411,9 @@ typedef enum {
   , NPNVsupportsCocoaBool = 3001 /* TRUE if the browser supports the Cocoa event model */
   , NPNVsupportsUpdatedCocoaTextInputBool = 3002 /* TRUE if the browser supports the updated
                                                     Cocoa text input specification. */
+#endif
+  , NPNVmuteAudioBool = 4000 /* Request that the browser wants to mute or unmute the plugin */
+#if defined(XP_MACOSX)
   , NPNVsupportsCompositingCoreAnimationPluginsBool = 74656 /* TRUE if the browser supports
                                                                CA model compositing */
 #endif

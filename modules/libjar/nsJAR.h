@@ -9,7 +9,7 @@
 #include "nscore.h"
 #include "prio.h"
 #include "plstr.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prinrval.h"
 
 #include "mozilla/Mutex.h"
@@ -196,10 +196,6 @@ public:
 
   nsresult ReleaseZip(nsJAR* reader);
 
-  bool IsMustCacheFdEnabled() {
-    return mMustCacheFd;
-  }
-
   typedef nsRefPtrHashtable<nsCStringHashKey, nsJAR> ZipsHashtable;
 
 protected:
@@ -209,7 +205,6 @@ protected:
   mozilla::Mutex        mLock;
   uint32_t              mCacheSize;
   ZipsHashtable         mZips;
-  bool                  mMustCacheFd;
 
 #ifdef ZIP_CACHE_HIT_RATE
   uint32_t              mZipCacheLookups;

@@ -8,6 +8,7 @@
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
 #include "mozilla/Attributes.h"
+#include "nsNetUtil.h"
 
 #include "mock_Link.h"
 using namespace mozilla;
@@ -140,7 +141,7 @@ test_wait_checkpoint()
 namespace test_unvisited_does_not_notify {
   nsCOMPtr<nsIURI> testURI;
   nsRefPtr<Link> testLink;
-}
+} // namespace test_unvisited_does_not_notify
 void
 test_unvisited_does_not_notify_part1()
 {
@@ -372,7 +373,7 @@ namespace test_observer_topic_dispatched_helpers {
     statusObserver,
     nsIObserver
   )
-}
+} // namespace test_observer_topic_dispatched_helpers
 void
 test_observer_topic_dispatched()
 {

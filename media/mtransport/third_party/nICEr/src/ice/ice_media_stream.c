@@ -140,6 +140,7 @@ int nr_ice_media_stream_initialize(nr_ice_ctx *ctx, nr_ice_media_stream *stream)
     return(_status);
   }
 
+
 int nr_ice_media_stream_get_attributes(nr_ice_media_stream *stream, char ***attrsp, int *attrctp)
   {
     int attrct=0;
@@ -157,7 +158,7 @@ int nr_ice_media_stream_get_attributes(nr_ice_media_stream *stream, char ***attr
       if (comp->state != NR_ICE_COMPONENT_DISABLED) {
         cand = TAILQ_FIRST(&comp->candidates);
         while(cand){
-          if (cand->state == NR_ICE_CAND_STATE_INITIALIZED) {
+          if (!nr_ice_ctx_hide_candidate(stream->ctx, cand)) {
             ++attrct;
           }
 
@@ -189,7 +190,7 @@ int nr_ice_media_stream_get_attributes(nr_ice_media_stream *stream, char ***attr
 
         cand=TAILQ_FIRST(&comp->candidates);
         while(cand){
-          if (cand->state == NR_ICE_CAND_STATE_INITIALIZED) {
+          if (!nr_ice_ctx_hide_candidate(stream->ctx, cand)) {
             assert(index < attrct);
 
             if (index >= attrct)
@@ -223,14 +224,11 @@ int nr_ice_media_stream_get_attributes(nr_ice_media_stream *stream, char ***attr
     return(_status);
   }
 
-
 /* Get a default candidate per 4.1.4 */
 int nr_ice_media_stream_get_default_candidate(nr_ice_media_stream *stream, int component, nr_ice_candidate **candp)
   {
-    int _status;
+    int r,_status;
     nr_ice_component *comp;
-    nr_ice_candidate *cand;
-    nr_ice_candidate *best_cand = NULL;
 
     comp=STAILQ_FIRST(&stream->components);
     while(comp){
@@ -243,35 +241,11 @@ int nr_ice_media_stream_get_default_candidate(nr_ice_media_stream *stream, int c
     if (!comp)
       ABORT(R_NOT_FOUND);
 
-    /* We have the component. Now find the "best" candidate, making
-       use of the fact that more "reliable" candidate types have
-       higher numbers. So, we sort by type and then priority within
-       type
-    */
-    cand=TAILQ_FIRST(&comp->candidates);
-    while(cand){
-      if (cand->state == NR_ICE_CAND_STATE_INITIALIZED) {
-        if (!best_cand) {
-          best_cand = cand;
-        }
-        else {
-          if (best_cand->type < cand->type) {
-            best_cand = cand;
-          } else if (best_cand->type == cand->type) {
-            if (best_cand->priority < cand->priority)
-              best_cand = cand;
-          }
-        }
-      }
-
-      cand=TAILQ_NEXT(cand,entry_comp);
+    /* If there aren't any IPV4 candidates, try IPV6 */
+    if((r=nr_ice_component_get_default_candidate(comp, candp, NR_IPV4)) &&
+       (r=nr_ice_component_get_default_candidate(comp, candp, NR_IPV6))) {
+      ABORT(r);
     }
-
-    /* No candidates */
-    if (!best_cand)
-      ABORT(R_NOT_FOUND);
-
-    *candp = best_cand;
 
     _status=0;
   abort:

@@ -15,6 +15,7 @@
 #include "ApplicationAccessible.h"
 #include "nsEventShell.h"
 #include "nsTextEquivUtils.h"
+#include "DocAccessibleChild.h"
 #include "Relation.h"
 #include "Role.h"
 #include "RootAccessible.h"
@@ -65,7 +66,6 @@
 #include "nsIServiceManager.h"
 #include "nsWhitespaceTokenizer.h"
 #include "nsAttrName.h"
-#include "nsNetUtil.h"
 
 #ifdef DEBUG
 #include "nsIDOMCharacterData.h"
@@ -537,7 +537,7 @@ Accessible::ChildAtPoint(int32_t aX, int32_t aY,
   nsIntRect rootRect;
   rootWidget->GetScreenBounds(rootRect);
 
-  WidgetMouseEvent dummyEvent(true, NS_MOUSE_MOVE, rootWidget,
+  WidgetMouseEvent dummyEvent(true, eMouseMove, rootWidget,
                               WidgetMouseEvent::eSynthesized);
   dummyEvent.refPoint = LayoutDeviceIntPoint(aX - rootRect.x, aY - rootRect.y);
 
@@ -832,6 +832,55 @@ nsresult
 Accessible::HandleAccEvent(AccEvent* aEvent)
 {
   NS_ENSURE_ARG_POINTER(aEvent);
+
+  if (IPCAccessibilityActive() && Document()) {
+    DocAccessibleChild* ipcDoc = mDoc->IPCDoc();
+    MOZ_ASSERT(ipcDoc);
+    if (ipcDoc) {
+      uint64_t id = aEvent->GetAccessible()->IsDoc() ? 0 :
+        reinterpret_cast<uintptr_t>(aEvent->GetAccessible());
+
+      switch(aEvent->GetEventType()) {
+        case nsIAccessibleEvent::EVENT_SHOW:
+          ipcDoc->ShowEvent(downcast_accEvent(aEvent));
+          break;
+
+        case nsIAccessibleEvent::EVENT_HIDE:
+          ipcDoc->SendHideEvent(id);
+          break;
+
+        case nsIAccessibleEvent::EVENT_REORDER:
+          // reorder events on the application acc aren't necessary to tell the parent
+          // about new top level documents.
+          if (!aEvent->GetAccessible()->IsApplication())
+            ipcDoc->SendEvent(id, aEvent->GetEventType());
+          break;
+        case nsIAccessibleEvent::EVENT_STATE_CHANGE: {
+                                                       AccStateChangeEvent* event = downcast_accEvent(aEvent);
+                                                       ipcDoc->SendStateChangeEvent(id, event->GetState(),
+                                                                                    event->IsStateEnabled());
+                                                       break;
+                                                     }
+        case nsIAccessibleEvent::EVENT_TEXT_CARET_MOVED: {
+          AccCaretMoveEvent* event = downcast_accEvent(aEvent);
+          ipcDoc->SendCaretMoveEvent(id, event->GetCaretOffset());
+          break;
+        }
+        case nsIAccessibleEvent::EVENT_TEXT_INSERTED:
+        case nsIAccessibleEvent::EVENT_TEXT_REMOVED: {
+          AccTextChangeEvent* event = downcast_accEvent(aEvent);
+          ipcDoc->SendTextChangeEvent(id, event->ModifiedText(),
+                                      event->GetStartOffset(),
+                                      event->GetLength(),
+                                      event->IsTextInserted(),
+                                      event->IsFromUserInput());
+          break;
+                                                     }
+        default:
+                                                         ipcDoc->SendEvent(id, aEvent->GetEventType());
+      }
+    }
+  }
 
   nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
   NS_ENSURE_TRUE(obsService, NS_ERROR_FAILURE);
@@ -1785,10 +1834,14 @@ Accessible::DispatchClickEvent(nsIContent *aContent, uint32_t aActionIndex)
   int32_t y = presContext->AppUnitsToDevPixels(point.y + size.height / 2);
 
   // Simulate a touch interaction by dispatching touch events with mouse events.
-  nsCoreUtils::DispatchTouchEvent(NS_TOUCH_START, x, y, aContent, frame, presShell, widget);
-  nsCoreUtils::DispatchMouseEvent(NS_MOUSE_BUTTON_DOWN, x, y, aContent, frame, presShell, widget);
-  nsCoreUtils::DispatchTouchEvent(NS_TOUCH_END, x, y, aContent, frame, presShell, widget);
-  nsCoreUtils::DispatchMouseEvent(NS_MOUSE_BUTTON_UP, x, y, aContent, frame, presShell, widget);
+  nsCoreUtils::DispatchTouchEvent(eTouchStart, x, y, aContent, frame,
+                                  presShell, widget);
+  nsCoreUtils::DispatchMouseEvent(eMouseDown, x, y, aContent, frame,
+                                  presShell, widget);
+  nsCoreUtils::DispatchTouchEvent(eTouchEnd, x, y, aContent, frame,
+                                  presShell, widget);
+  nsCoreUtils::DispatchMouseEvent(eMouseUp, x, y, aContent, frame,
+                                  presShell, widget);
 }
 
 void

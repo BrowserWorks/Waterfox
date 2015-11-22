@@ -1,5 +1,5 @@
 $inherits:
-  from: 'tasks/build.yml'
+  from: 'tasks/builds/b2g_base.yml'
   variables:
     build_name: 'mulet'
     build_type: 'opt'
@@ -15,16 +15,21 @@ task:
     - 'index.buildbot.revisions.{{head_rev}}.{{project}}.linux64-mulet'
 
   scopes:
-    - 'docker-worker:cache:build-mulet-linux-workspace'
+    - 'docker-worker:cache:build-mulet-linux-{{project}}-workspace'
     - 'docker-worker:cache:tooltool-cache'
+    - 'docker-worker:relengapi-proxy:tooltool.download.public'
 
   payload:
     cache:
-      build-mulet-linux-workspace: '/home/worker/workspace'
+      build-mulet-linux-{{project}}-workspace: '/home/worker/workspace'
       tooltool-cache: '/home/worker/tools/tooltool-cache'
+
+    features:
+      relengAPIProxy: true
 
     env:
       MOZCONFIG: 'b2g/dev/config/mozconfigs/linux64/mulet'
+      TOOLTOOL_MANIFEST: 'b2g/dev/config/tooltool-manifests/linux64/releng.manifest'
 
     maxRunTime: 3600
 

@@ -4,7 +4,7 @@
 /**
  * Tests that the js call tree view renders the correct columns.
  */
-function spawnTest () {
+function* spawnTest() {
   // This test seems to take a long time to cleanup on Ubuntu VMs.
   requestLongerTimeout(2);
 

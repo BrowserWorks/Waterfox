@@ -67,9 +67,10 @@ SpeechRecognitionResult::Item(uint32_t aIndex)
 }
 
 bool
-SpeechRecognitionResult::Final() const
+SpeechRecognitionResult::IsFinal() const
 {
   return true; // TODO
 }
+
 } // namespace dom
 } // namespace mozilla

@@ -3,11 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 %endif
-%filter substitution
-%define smallSeparatorDark linear-gradient(transparent 15%, #5a6169 15%, #5a6169 85%, transparent 85%)
-%define smallSeparatorLight linear-gradient(transparent 15%, #aaa 15%, #aaa 85%, transparent 85%)
-%define solidSeparatorDark linear-gradient(#2d5b7d, #2d5b7d)
-%define solidSeparatorLight linear-gradient(#aaa, #aaa)
 
 /* CSS Variables specific to the devtools toolbar that aren't defined by the themes */
 .theme-light {
@@ -266,6 +261,7 @@
 .devtools-button {
   border: 0 solid var(--theme-splitter-color);
   background: var(--theme-toolbar-background);
+  color: var(--theme-body-color);
   margin: 0;
   padding: 0;
   min-width: 32px;
@@ -316,7 +312,12 @@
   background-repeat: no-repeat;
 }
 
-@media (min-resolution: 1.25dppx) {
+.devtools-button[disabled]::before,
+.devtools-button:disabled::before {
+  opacity: 0.5;
+}
+
+@media (min-resolution: 1.1dppx) {
   .devtools-button::before {
     background-size: 32px;
   }
@@ -368,8 +369,8 @@
 
 /* Searchbox is a div container element for a search input element */
 .devtools-searchbox {
-  display: -moz-box;
-  -moz-box-flex: 1;
+  display: flex;
+  flex: 1;
   position: relative;
 }
 
@@ -437,7 +438,7 @@
   -moz-image-region: rect(0, 32px, 16px, 16px);
 }
 
-@media (min-resolution: 1.25dppx) {
+@media (min-resolution: 1.1dppx) {
   .theme-dark .devtools-searchinput {
     background-image: url(magnifying-glass@2x.png);
   }
@@ -548,73 +549,57 @@
   text-shadow: none;
 }
 
+.devtools-sidebar-tabs tabs > tab {
+  border-image: linear-gradient(transparent 15%, var(--theme-splitter-color) 15%, var(--theme-splitter-color) 85%, transparent 85%) 1 1;
+}
+
+.devtools-sidebar-tabs tabs > tab[selected],
+.devtools-sidebar-tabs tabs > tab[selected] + tab {
+  border-image: linear-gradient(var(--theme-splitter-color), var(--theme-splitter-color)) 1 1;
+}
+
 .devtools-sidebar-tabs tabs > tab:first-child {
   -moz-border-start-width: 0;
 }
 
-.theme-dark .devtools-sidebar-tabs tabs > tab {
-  border-image: @smallSeparatorDark@ 1 1;
-}
-
 .theme-dark .devtools-sidebar-tabs tabs > tab:hover {
   background: hsla(206,37%,4%,.2);
-  border-image: @smallSeparatorDark@ 1 1;
 }
 
 .theme-dark .devtools-sidebar-tabs tabs > tab:hover:active {
   background: hsla(206,37%,4%,.4);
-  border-image: @smallSeparatorDark@ 1 1;
-}
-
-.theme-dark .devtools-sidebar-tabs tabs > tab[selected] + tab {
-  border-image: @solidSeparatorDark@ 1 1;
 }
 
 .theme-dark .devtools-sidebar-tabs tabs > tab[selected] + tab:hover {
   background: hsla(206,37%,4%,.2);
-  border-image: @solidSeparatorDark@ 1 1;
 }
 
 .theme-dark .devtools-sidebar-tabs tabs > tab[selected] + tab:hover:active {
   background: hsla(206,37%,4%,.4);
-  border-image: @solidSeparatorDark@ 1 1;
 }
 
 .theme-dark .devtools-sidebar-tabs tabs > tab[selected],
 .theme-dark .devtools-sidebar-tabs tabs > tab[selected]:hover:active {
   color: var(--theme-selection-color);
   background: #1d4f73;
-  border-image: @solidSeparatorDark@ 1 1;
-}
-
-.theme-light .devtools-sidebar-tabs tabs > tab {
-  border-image: @smallSeparatorLight@ 1 1;
 }
 
 .theme-light .devtools-sidebar-tabs tabs > tab:hover {
   background: #ddd;
-  border-image: @smallSeparatorLight@ 1 1;
 }
 
 .theme-light .devtools-sidebar-tabs tabs > tab:hover:active {
   background: #ddd;
-  border-image: @smallSeparatorLight@ 1 1;
-}
-
-.theme-light .devtools-sidebar-tabs tabs > tab[selected] + tab {
-  border-image: @solidSeparatorLight@;
 }
 
 .theme-light .devtools-sidebar-tabs tabs > tab[selected] + tab:hover {
   background: #ddd;
-  border-image: @solidSeparatorLight@;
 }
 
 .theme-light .devtools-sidebar-tabs tabs > tab[selected],
 .theme-light .devtools-sidebar-tabs tabs > tab[selected]:hover:active {
   color: var(--theme-selection-color);
   background: #4c9ed9;
-  border-image: @solidSeparatorLight@;
 }
 
 /* Toolbox - moved from toolbox.css.
@@ -655,6 +640,20 @@
 
 #toolbox-dock-window > image {
   background-image: url("chrome://browser/skin/devtools/undock@2x.png");
+}
+
+#toolbox-dock-bottom-minimize {
+  /* Bug 1177463 - The minimize button is currently hidden until we agree on
+     the UI for it, and until bug 1173849 is fixed too. */
+  display: none;
+}
+
+#toolbox-dock-bottom-minimize > image {
+  background-image: url("chrome://browser/skin/devtools/dock-bottom-minimize@2x.png");
+}
+
+#toolbox-dock-bottom-minimize.minimized > image {
+  background-image: url("chrome://browser/skin/devtools/dock-bottom-maximize@2x.png");
 }
 
 #toolbox-dock-window,
@@ -769,7 +768,7 @@
   background-image: url("chrome://browser/skin/devtools/command-rulers.png");
 }
 
-@media (min-resolution: 1.25dppx) {
+@media (min-resolution: 1.1dppx) {
   #command-button-paintflashing > image {
     background-image: url("chrome://browser/skin/devtools/command-paintflashing@2x.png");
   }

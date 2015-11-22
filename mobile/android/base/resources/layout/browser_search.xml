@@ -19,4 +19,17 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
+    <!-- listSelector is too slow for showing pressed state
+         so we set the pressed colors on the child. -->
+    <org.mozilla.gecko.home.SearchEngineBar
+          android:id="@+id/search_engine_bar"
+          android:layout_width="match_parent"
+          android:layout_height="48dp"
+          android:paddingTop="1dp"
+          android:orientation="horizontal"
+          android:layout_gravity="center_horizontal"
+          android:choiceMode="singleChoice"
+          android:listSelector="@android:color/transparent"
+          android:cacheColorHint="@android:color/transparent" />
+
 </LinearLayout>

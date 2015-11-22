@@ -25,7 +25,7 @@ load 321224.xul
 load 322780-1.xul
 load 323381-1.html
 load 323381-2.html
-asserts-if(gtk2Widget,1) load 323386-1.html # Bug 718883
+asserts-if(gtkWidget,1) load 323386-1.html # Bug 718883
 load 323389-1.html
 load 323389-2.html
 load 323493-1.html
@@ -110,8 +110,8 @@ load 379917-1.xhtml
 load 380012-1.html
 load 381152-1.html
 load 381786-1.html
-asserts-if(gtk2Widget,0-2) load 382129-1.xhtml # Bug 540078
-asserts-if(gtk2Widget,0-1) load 382131-1.html # Bug 540078
+asserts-if(gtkWidget,0-2) load 382129-1.xhtml # Bug 540078
+asserts-if(gtkWidget,0-1) load 382131-1.html # Bug 540078
 load 382199-1.html
 load 382208-1.xhtml
 load 382262-1.html
@@ -540,7 +540,7 @@ load 862947-1.html
 load 863935.html
 needs-focus pref(accessibility.browsewithcaret,true) load 868906.html
 load 866547-1.html
-asserts-if(Android,0-4) asserts-if(!Android,1-4) load 876074-1.html # bug 876749
+asserts(0-5) load 876074-1.html # bug 876749
 load 885009-1.html
 load 893496-1.html
 load 893523.html
@@ -573,8 +573,8 @@ load 1054010-1.html
 load 1058954-1.html
 load 1134531.html
 load 1134667.html
-asserts(3-4) load 1137723-1.html # bug 1019192, bug 1138133
-asserts(3-7) load 1137723-2.html # bug 1019192, bug 1138133
+load 1137723-1.html
+load 1137723-2.html
 # The tests for bug 1137723 above causes delayed assertions too,
 # the next 3 lines can be removed once that is fixed.
 asserts(0-3) load 1134667.html
@@ -585,3 +585,7 @@ load 1146107.html
 load 1146114.html
 load 1156222.html
 load 1157011.html
+load 1169420-1.html
+load 1169420-2.html
+load 1183431.html
+load 1222783.xhtml

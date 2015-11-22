@@ -32,9 +32,10 @@ import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceHolder;
 import android.view.WindowManager;
 
+import org.mozilla.gecko.annotation.WebRTCJNITarget;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoAppShell.AppStateListener;
-import org.mozilla.gecko.mozglue.WebRTCJNITarget;
+
 
 // Wrapper for android Camera, with support for direct local preview rendering.
 // Threading notes: this class is called from ViE C++ code, and from Camera &
@@ -56,7 +57,7 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback, AppStateL
   private Handler cameraThreadHandler;
   private Context context;
   private final int id;
-  private final long native_capturer;  // |VideoCaptureAndroid*| in C++.
+  private volatile long native_capturer;  // |VideoCaptureAndroid*| in C++.
   private SurfaceTexture cameraSurfaceTexture;
   private int[] cameraGlTextures = null;
 
@@ -269,7 +270,8 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback, AppStateL
 
       // Check if requested fps range is supported by camera,
       // otherwise calculate frame drop ratio.
-      List<int[]> supportedFpsRanges = parameters.getSupportedPreviewFpsRange();
+      List<int[]> supportedFpsRanges =
+          VideoCaptureDeviceInfoAndroid.getFpsRangesRobust(parameters);
       frameDropRatio = Integer.MAX_VALUE;
       for (int i = 0; i < supportedFpsRanges.size(); i++) {
         int[] range = supportedFpsRanges.get(i);
@@ -371,6 +373,15 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback, AppStateL
     cameraThread = null;
     Log.d(TAG, "stopCapture done");
     return status;
+  }
+
+  @WebRTCJNITarget
+  private void unlinkCapturer() {
+    // stopCapture might fail. That might leave the callbacks dangling, so make
+    // sure those don't call into dead code.
+    // Note that onPreviewCameraFrame isn't synchronized, so there's no point in
+    // synchronizing us either. ProvideCameraFrame has to do the null check.
+    native_capturer = 0;
   }
 
   private void stopCaptureOnCameraThread(

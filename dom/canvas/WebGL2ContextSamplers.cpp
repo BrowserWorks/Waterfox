@@ -7,8 +7,7 @@
 #include "WebGLSampler.h"
 #include "GLContext.h"
 
-using namespace mozilla;
-using namespace mozilla::dom;
+namespace mozilla {
 
 already_AddRefed<WebGLSampler>
 WebGL2Context::CreateSampler()
@@ -36,6 +35,12 @@ WebGL2Context::DeleteSampler(WebGLSampler* sampler)
     if (!sampler || sampler->IsDeleted())
         return;
 
+    for (int n = 0; n < mGLMaxTextureUnits; n++) {
+        if (mBoundSamplers[n] == sampler) {
+            mBoundSamplers[n] = nullptr;
+        }
+    }
+
     sampler->RequestDelete();
 }
 
@@ -54,7 +59,8 @@ WebGL2Context::IsSampler(WebGLSampler* sampler)
     if (sampler->IsDeleted())
         return false;
 
-    return !sampler->HasEverBeenBound();
+    MakeContextCurrent();
+    return gl->fIsSampler(sampler->mGLName);
 }
 
 void
@@ -73,6 +79,8 @@ WebGL2Context::BindSampler(GLuint unit, WebGLSampler* sampler)
         return ErrorInvalidOperation("bindSampler: binding deleted sampler");
 
     WebGLContextUnchecked::BindSampler(unit, sampler);
+
+    mBoundSamplers[unit] = sampler;
 }
 
 void
@@ -216,3 +224,5 @@ WebGL2Context::GetSamplerParameter(JSContext*, WebGLSampler* sampler, GLenum pna
         return;
     }
 }
+
+} // namespace mozilla

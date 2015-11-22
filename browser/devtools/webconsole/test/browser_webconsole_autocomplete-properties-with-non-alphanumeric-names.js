@@ -9,12 +9,12 @@
 // Test that properties starting with underscores or dollars can be
 // autocompleted (bug 967468).
 
-
-let test = asyncTest(function*() {
-  const TEST_URI = "data:text/html;charset=utf8,test autocompletion with $ or _";
+var test = asyncTest(function*() {
+  const TEST_URI = "data:text/html;charset=utf8,test autocompletion with " +
+                   "$ or _";
   yield loadTab(TEST_URI);
 
-  function autocomplete(term) {
+  function* autocomplete(term) {
     let deferred = promise.defer();
 
     jsterm.setInputValue(term);

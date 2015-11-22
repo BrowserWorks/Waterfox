@@ -21,11 +21,12 @@ function run_test() {
 
 add_task(function* test_register_wrong_type() {
   let registers = 0;
-  let helloDefer = Promise.defer();
-  let helloDone = after(2, helloDefer.resolve);
+  let helloDone;
+  let helloPromise = new Promise(resolve => helloDone = after(2, resolve));
 
   PushService._generateID = () => '1234';
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -54,14 +55,15 @@ add_task(function* test_register_wrong_type() {
   let promise =
 
   yield rejects(
-    PushNotificationService.register('https://example.com/mistyped'),
+    PushNotificationService.register('https://example.com/mistyped',
+      ChromeUtils.originAttributesToSuffix({ appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false })),
     function(error) {
       return error == 'TimeoutError';
     },
     'Wrong error for non-string channel ID'
   );
 
-  yield waitForPromise(helloDefer.promise, DEFAULT_TIMEOUT,
+  yield waitForPromise(helloPromise, DEFAULT_TIMEOUT,
     'Reconnect after sending non-string channel ID timed out');
   equal(registers, 1, 'Wrong register count');
 });

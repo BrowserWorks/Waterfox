@@ -9,7 +9,7 @@
 namespace mozilla {
 namespace gfx {
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 FilterProcessing::ExtractAlpha(DataSourceSurface* aSource)
 {
   IntSize size = aSource->GetSize();
@@ -17,10 +17,17 @@ FilterProcessing::ExtractAlpha(DataSourceSurface* aSource)
   if (MOZ2D_WARN_IF(!alpha)) {
     return nullptr;
   }
-  uint8_t* sourceData = aSource->GetData();
-  int32_t sourceStride = aSource->Stride();
-  uint8_t* alphaData = alpha->GetData();
-  int32_t alphaStride = alpha->Stride();
+
+  DataSourceSurface::ScopedMap sourceMap(aSource, DataSourceSurface::READ);
+  DataSourceSurface::ScopedMap alphaMap(alpha, DataSourceSurface::WRITE);
+  if (MOZ2D_WARN_IF(!sourceMap.IsMapped() || !alphaMap.IsMapped())) {
+    return nullptr;
+  }
+
+  uint8_t* sourceData = sourceMap.GetData();
+  int32_t sourceStride = sourceMap.GetStride();
+  uint8_t* alphaData = alphaMap.GetData();
+  int32_t alphaStride = alphaMap.GetStride();
 
   if (Factory::HasSSE2()) {
 #ifdef USE_SSE2
@@ -33,7 +40,7 @@ FilterProcessing::ExtractAlpha(DataSourceSurface* aSource)
   return alpha.forget();
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 FilterProcessing::ConvertToB8G8R8A8(SourceSurface* aSurface)
 {
   if (Factory::HasSSE2()) {
@@ -44,7 +51,7 @@ FilterProcessing::ConvertToB8G8R8A8(SourceSurface* aSurface)
   return ConvertToB8G8R8A8_Scalar(aSurface);
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 FilterProcessing::ApplyBlending(DataSourceSurface* aInput1, DataSourceSurface* aInput2,
                                 BlendMode aBlendMode)
 {
@@ -90,7 +97,7 @@ FilterProcessing::ApplyMorphologyVertical(uint8_t* aSourceData, int32_t aSourceS
   }
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 FilterProcessing::ApplyColorMatrix(DataSourceSurface* aInput, const Matrix5x4 &aMatrix)
 {
   if (Factory::HasSSE2()) {
@@ -130,13 +137,23 @@ FilterProcessing::SeparateColorChannels(DataSourceSurface* aSource,
     return;
   }
 
-  uint8_t* sourceData = aSource->GetData();
-  int32_t sourceStride = aSource->Stride();
-  uint8_t* channel0Data = aChannel0->GetData();
-  uint8_t* channel1Data = aChannel1->GetData();
-  uint8_t* channel2Data = aChannel2->GetData();
-  uint8_t* channel3Data = aChannel3->GetData();
-  int32_t channelStride = aChannel0->Stride();
+  DataSourceSurface::ScopedMap sourceMap(aSource, DataSourceSurface::READ);
+  DataSourceSurface::ScopedMap channel0Map(aChannel0, DataSourceSurface::WRITE);
+  DataSourceSurface::ScopedMap channel1Map(aChannel1, DataSourceSurface::WRITE);
+  DataSourceSurface::ScopedMap channel2Map(aChannel2, DataSourceSurface::WRITE);
+  DataSourceSurface::ScopedMap channel3Map(aChannel3, DataSourceSurface::WRITE);
+  if (MOZ2D_WARN_IF(!(sourceMap.IsMapped() &&
+                      channel0Map.IsMapped() && channel1Map.IsMapped() &&
+                      channel2Map.IsMapped() && channel3Map.IsMapped()))) {
+    return;
+  }
+  uint8_t* sourceData = sourceMap.GetData();
+  int32_t sourceStride = sourceMap.GetStride();
+  uint8_t* channel0Data = channel0Map.GetData();
+  uint8_t* channel1Data = channel1Map.GetData();
+  uint8_t* channel2Data = channel2Map.GetData();
+  uint8_t* channel3Data = channel3Map.GetData();
+  int32_t channelStride = channel0Map.GetStride();
 
   if (Factory::HasSSE2()) {
 #ifdef USE_SSE2
@@ -147,7 +164,7 @@ FilterProcessing::SeparateColorChannels(DataSourceSurface* aSource,
   }
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 FilterProcessing::CombineColorChannels(DataSourceSurface* aChannel0, DataSourceSurface* aChannel1,
                                        DataSourceSurface* aChannel2, DataSourceSurface* aChannel3)
 {
@@ -157,13 +174,23 @@ FilterProcessing::CombineColorChannels(DataSourceSurface* aChannel0, DataSourceS
   if (MOZ2D_WARN_IF(!result)) {
     return nullptr;
   }
-  int32_t resultStride = result->Stride();
-  uint8_t* resultData = result->GetData();
-  int32_t channelStride = aChannel0->Stride();
-  uint8_t* channel0Data = aChannel0->GetData();
-  uint8_t* channel1Data = aChannel1->GetData();
-  uint8_t* channel2Data = aChannel2->GetData();
-  uint8_t* channel3Data = aChannel3->GetData();
+  DataSourceSurface::ScopedMap resultMap(result, DataSourceSurface::WRITE);
+  DataSourceSurface::ScopedMap channel0Map(aChannel0, DataSourceSurface::READ);
+  DataSourceSurface::ScopedMap channel1Map(aChannel1, DataSourceSurface::READ);
+  DataSourceSurface::ScopedMap channel2Map(aChannel2, DataSourceSurface::READ);
+  DataSourceSurface::ScopedMap channel3Map(aChannel3, DataSourceSurface::READ);
+  if (MOZ2D_WARN_IF(!(resultMap.IsMapped() &&
+                      channel0Map.IsMapped() && channel1Map.IsMapped() &&
+                      channel2Map.IsMapped() && channel3Map.IsMapped()))) {
+    return nullptr;
+  }
+  int32_t resultStride = resultMap.GetStride();
+  uint8_t* resultData = resultMap.GetData();
+  int32_t channelStride = channel0Map.GetStride();
+  uint8_t* channel0Data = channel0Map.GetData();
+  uint8_t* channel1Data = channel1Map.GetData();
+  uint8_t* channel2Data = channel2Map.GetData();
+  uint8_t* channel3Data = channel3Map.GetData();
 
   if (Factory::HasSSE2()) {
 #ifdef USE_SSE2
@@ -208,7 +235,7 @@ FilterProcessing::DoUnpremultiplicationCalculation(const IntSize& aSize,
   }
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 FilterProcessing::RenderTurbulence(const IntSize &aSize, const Point &aOffset, const Size &aBaseFrequency,
                                    int32_t aSeed, int aNumOctaves, TurbulenceType aType, bool aStitch, const Rect &aTileRect)
 {
@@ -220,7 +247,7 @@ FilterProcessing::RenderTurbulence(const IntSize &aSize, const Point &aOffset, c
   return RenderTurbulence_Scalar(aSize, aOffset, aBaseFrequency, aSeed, aNumOctaves, aType, aStitch, aTileRect);
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 FilterProcessing::ApplyArithmeticCombine(DataSourceSurface* aInput1, DataSourceSurface* aInput2, Float aK1, Float aK2, Float aK3, Float aK4)
 {
   if (Factory::HasSSE2()) {

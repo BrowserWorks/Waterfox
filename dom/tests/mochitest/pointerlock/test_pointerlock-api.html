@@ -28,21 +28,17 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=633602
 
         SimpleTest.waitForExplicitFinish();
 
-        // Ensure the full-screen api is enabled, and will be disabled on test exit.
-        SpecialPowers.setBoolPref("full-screen-api.enabled", true);
-
-        // Disable the requirement for trusted contexts only, so the tests are easier to write.
-        SpecialPowers.setBoolPref("full-screen-api.allow-trusted-requests-only", false);
-
-        // Grant "fullscreen" permission on the test domain. This means fullscreen will be
-        // automatically approved, so pointer lock in the tests will be too.
-        SpecialPowers.setFullscreenAllowed(document);
+        SpecialPowers.pushPrefEnv({"set": [
+          ["full-screen-api.enabled", true],
+          ["full-screen-api.allow-trusted-requests-only", false],
+          ["full-screen-api.transition-duration.enter", "0 0"],
+          ["full-screen-api.transition-duration.leave", "0 0"]
+        ]}, nextTest);
 
         // Run the tests which go full-screen in new window, as Mochitests
         // normally run in an iframe, which by default will not have the
         // allowfullscreen attribute set, so full-screen won't work.
         var gTestFiles = [
-          "file_approval.html",
           "file_screenClientXYConst.html",
           "file_childIframe.html",
           "file_doubleLock.html",
@@ -62,40 +58,16 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=633602
           "file_allowPointerLockSandboxFlag.html"
         ];
 
+        var gDisableList = [
+          // Bug 1174323
+          { file: "file_screenClientXYConst.html",
+            platform: "MacIntel" }
+        ];
+
         var gTestWindow = null;
         var gTestIndex = 0;
 
-        // TODO: if ever we remove these checks for XP and Lion, we should do the same
-        // in dom/html/test/test_fullscreen-api.html, which uses the same pattern.
-        const isWinXP = navigator.userAgent.indexOf("Windows NT 5.1") != -1;
-        const isOSXLion = navigator.userAgent.indexOf("Mac OS X 10.7") != -1;
-        const isOSXMtnLion = navigator.userAgent.indexOf("Mac OS X 10.8") != -1;
-        const isOSXYosemite = navigator.userAgent.indexOf("Mac OS X 10.10") != -1;
-        const isWin8 = navigator.userAgent.indexOf("Windows NT 6.2") != -1;
-
-        function finish() {
-          SpecialPowers.clearUserPref("full-screen-api.enabled");
-          SpecialPowers.clearUserPref("full-screen-api.allow-trusted-requests-only");
-          SpecialPowers.removeFullscreenAllowed(document)
-          SimpleTest.finish();
-        }
-
         function nextTest() {
-          if (isWinXP) {
-            todo(false, "Can't reliably run full-screen tests on Windows XP due to bug 704010");
-            finish();
-            return;
-          }
-          if (isWin8) {
-            todo(false, "Can't reliably run full-screen + pointer lock tests on Windows 8");
-            finish();
-            return;
-          }
-          if (isOSXLion || isOSXMtnLion || isOSXYosemite) {
-            todo(false, "Can't reliably run full-screen tests on OS X Lion or Mountain Lion or Yosemite, see bug 744125");
-            finish();
-            return;
-          }
           if (gTestWindow) {
             gTestWindow.close();
           }
@@ -104,14 +76,26 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=633602
 
         function runNextTest() {
           if (gTestIndex < gTestFiles.length) {
-            gTestWindow = window.open(gTestFiles[gTestIndex], "", "width=500,height=500");
+            var file = gTestFiles[gTestIndex];
             gTestIndex++;
+
+            var skipTest = false;
+            for (var item of gDisableList) {
+              if (item.file == file && navigator.platform == item.platform) {
+                skipTest = true;
+                break;
+              }
+            }
+            if (!skipTest) {
+              info(`Testing ${file}`);
+              gTestWindow = window.open(file, "", "width=500,height=500");
+            } else {
+              nextTest();
+            }
           } else {
-            finish();
+            SimpleTest.finish();
           }
         }
-
-        addLoadEvent(nextTest);
       </script>
     </pre>
   </body>

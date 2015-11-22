@@ -125,6 +125,10 @@
   padding-top: 0;
 }
 
+.category[selected="true"]:hover {
+  background-color:#1A2533;
+}
+
 .category[disabled] {
   overflow: hidden;
   height: 0;
@@ -348,8 +352,16 @@
 .list {
   -moz-appearance: none;
   margin: 0;
-  border-color: transparent;
+  border-width: 0 !important;
   background-color: transparent;
+}
+
+.list > scrollbox > .scrollbox-innerbox {
+  border: 1px dotted transparent;
+}
+
+.list:-moz-focusring > scrollbox > .scrollbox-innerbox {
+  border-color: #0095dd;
 }
 
 .addon {
@@ -668,14 +680,13 @@
 
 #detail-screenshot-box {
   -moz-margin-end: 2em;
-  padding: 10px;
-  background-color: white;
-  box-shadow: 0 1px 2px #666;
 }
 
 #detail-screenshot {
   max-width: 300px;
   max-height: 300px;
+  background-color: white;
+  box-shadow: 0 1px 2px #666;
 }
 
 #detail-screenshot[loading] {
@@ -963,7 +974,7 @@ button.button-link {
   color: #0095dd;
   cursor: pointer;
   min-width: 0;
-  height: 20px;
+  min-height: 20px;
   margin: 0 6px;
 }
 
@@ -1032,4 +1043,9 @@ button.button-link:not([disabled="true"]):active:hover {
 
 #signing-dev-info {
   font-style: italic;
+}
+
+#detail-findUpdates-btn[hidden] {
+  display: -moz-box;
+  visibility: hidden;
 }

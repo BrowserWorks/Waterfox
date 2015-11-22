@@ -55,9 +55,9 @@
 #include "nsGkAtoms.h"
 #include "nsXULElement.h"
 #include "jsapi.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "rdf.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "plhash.h"
 #include "nsDOMClassInfoID.h"
 #include "nsPIDOMWindow.h"
@@ -86,9 +86,7 @@ nsIScriptSecurityManager* nsXULTemplateBuilder::gScriptSecurityManager;
 nsIPrincipal*             nsXULTemplateBuilder::gSystemPrincipal;
 nsIObserverService*       nsXULTemplateBuilder::gObserverService;
 
-#ifdef PR_LOGGING
 PRLogModuleInfo* gXULTemplateLog;
-#endif
 
 #define NS_QUERY_PROCESSOR_CONTRACTID_PREFIX "@mozilla.org/xul/xul-query-processor;1?name="
 
@@ -167,10 +165,8 @@ nsXULTemplateBuilder::InitGlobals()
             return rv;
     }
 
-#ifdef PR_LOGGING
     if (! gXULTemplateLog)
         gXULTemplateLog = PR_NewLogModule("nsXULTemplateBuilder");
-#endif
 
     return NS_OK;
 }
@@ -506,7 +502,7 @@ nsXULTemplateBuilder::UpdateResult(nsIXULTemplateResult* aOldResult,
                                    nsIXULTemplateResult* aNewResult,
                                    nsIDOMNode* aQueryNode)
 {
-    PR_LOG(gXULTemplateLog, PR_LOG_ALWAYS,
+    MOZ_LOG(gXULTemplateLog, LogLevel::Info,
            ("nsXULTemplateBuilder::UpdateResult %p %p %p",
            aOldResult, aNewResult, aQueryNode));
 
@@ -1097,7 +1093,8 @@ nsXULTemplateBuilder::AttributeChanged(nsIDocument* aDocument,
                                        Element*     aElement,
                                        int32_t      aNameSpaceID,
                                        nsIAtom*     aAttribute,
-                                       int32_t      aModType)
+                                       int32_t      aModType,
+                                       const nsAttrValue* aOldValue)
 {
     if (aElement == mRoot && aNameSpaceID == kNameSpaceID_None) {
         // Check for a change to the 'ref' attribute on an atom, in which
@@ -1714,11 +1711,9 @@ nsXULTemplateBuilder::CompileQueries()
         mFlags |= eLoggingEnabled;
     }
 
-#ifdef PR_LOGGING
     // always enable logging if the debug setting is used
-    if (PR_LOG_TEST(gXULTemplateLog, PR_LOG_DEBUG))
+    if (MOZ_LOG_TEST(gXULTemplateLog, LogLevel::Debug))
         mFlags |= eLoggingEnabled;
-#endif
 
     nsCOMPtr<nsIDOMNode> rootnode = do_QueryInterface(mRoot);
     nsresult rv =

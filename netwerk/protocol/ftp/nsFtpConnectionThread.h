@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __nsFtpState__h_
-#define __nsFtpState__h_
+#ifndef __nsFtpConnectionThread__h_
+#define __nsFtpConnectionThread__h_
 
 #include "nsBaseContentStream.h"
 
@@ -18,7 +18,7 @@
 #include "nsIProtocolProxyCallback.h"
 
 #ifdef MOZ_WIDGET_GONK
-#include "nsINetworkManager.h"
+#include "nsINetworkInterface.h"
 #include "nsProxyRelease.h"
 #endif
 
@@ -203,8 +203,6 @@ private:
     bool                    mServerIsIPv6;
     bool                    mUseUTF8;
 
-    static uint32_t         mSessionStartTime;
-
     mozilla::net::NetAddr   mServerAddress;
 
     // ***** control read gvars
@@ -220,7 +218,7 @@ private:
 // Currently, they are only available on gonk.
     uint64_t                           mCountRecv;
 #ifdef MOZ_WIDGET_GONK
-    nsMainThreadPtrHandle<nsINetworkInterface> mActiveNetwork;
+    nsMainThreadPtrHandle<nsINetworkInfo> mActiveNetworkInfo;
 #endif
     nsresult                           SaveNetworkStats(bool);
     void                               CountRecvBytes(uint64_t recvBytes)
@@ -230,4 +228,4 @@ private:
     }
 };
 
-#endif //__nsFtpState__h_
+#endif //__nsFtpConnectionThread__h_

@@ -318,6 +318,25 @@
   ERROR(NS_NET_STATUS_SENDING_TO,      FAILURE(5)),
   ERROR(NS_NET_STATUS_WAITING_FOR,     FAILURE(10)),
   ERROR(NS_NET_STATUS_RECEIVING_FROM,  FAILURE(6)),
+
+  /* nsIInterceptedChannel */
+  /* Generic error for non-specific failures during service worker interception */
+  ERROR(NS_ERROR_INTERCEPTION_FAILED,                  FAILURE(100)),
+  /* Service worker intercepted with an opaque response while
+     dom.serviceWorkers.interception.opaque.enabled pref was set to false */
+  ERROR(NS_ERROR_OPAQUE_INTERCEPTION_DISABLED,         FAILURE(101)),
+  /* Attempt to return opaque response for anything but "non-cors" request */
+  ERROR(NS_ERROR_BAD_OPAQUE_INTERCEPTION_REQUEST_MODE, FAILURE(102)),
+  /* Service worker intercepted with an error response */
+  ERROR(NS_ERROR_INTERCEPTED_ERROR_RESPONSE,           FAILURE(103)),
+  /* Service worker intercepted with a response with bodyUsed set to true */
+  ERROR(NS_ERROR_INTERCEPTED_USED_RESPONSE,            FAILURE(104)),
+  /* Service worker intercepted a client request with an opaque response */
+  ERROR(NS_ERROR_CLIENT_REQUEST_OPAQUE_INTERCEPTION,   FAILURE(105)),
+  /* Service worker intercepted a non-navigation with an opaque redirect */
+  ERROR(NS_ERROR_BAD_OPAQUE_REDIRECT_INTERCEPTION,     FAILURE(106)),
+  /* Service worker intentionally canceled load via preventDefault(). */
+  ERROR(NS_ERROR_INTERCEPTION_CANCELED,                FAILURE(107)),
 #undef MODULE
 
 
@@ -527,6 +546,12 @@
    * the second assignment throws NS_SUCCESS_DOM_NO_OPERATION.
    */
   ERROR(NS_SUCCESS_DOM_NO_OPERATION,               SUCCESS(1)),
+
+  /*
+   * A success code that indicates that evaluating a string of JS went
+   * just fine except it threw an exception.
+   */
+  ERROR(NS_SUCCESS_DOM_SCRIPT_EVALUATION_THREW,    SUCCESS(2)),
 #undef MODULE
 
 
@@ -635,6 +660,11 @@
   /* Error code for CSP */
   ERROR(NS_ERROR_CSP_FORM_ACTION_VIOLATION,        FAILURE(98)),
   ERROR(NS_ERROR_CSP_FRAME_ANCESTOR_VIOLATION,     FAILURE(99)),
+
+  /* Error code for Sub-Resource Integrity */
+  ERROR(NS_ERROR_SRI_CORRUPT,                      FAILURE(200)),
+  ERROR(NS_ERROR_SRI_DISABLED,                     FAILURE(201)),
+  ERROR(NS_ERROR_SRI_NOT_ELIGIBLE,                 FAILURE(202)),
 
   /* CMS specific nsresult error codes.  Note: the numbers used here correspond
    * to the values in nsICMSMessageErrors.idl. */
@@ -758,10 +788,25 @@
   ERROR(NS_ERROR_XPATH_UNBALANCED_CURLY_BRACE,        FAILURE(29)),
   ERROR(NS_ERROR_XSLT_BAD_NODE_NAME,                  FAILURE(30)),
   ERROR(NS_ERROR_XSLT_VAR_ALREADY_SET,                FAILURE(31)),
+  ERROR(NS_ERROR_XSLT_CALL_TO_KEY_NOT_ALLOWED,        FAILURE(32)),
 
   ERROR(NS_XSLT_GET_NEW_HANDLER,  SUCCESS(1)),
 #undef MODULE
 
+
+  /* ======================================================================= */
+  /* 28: NS_ERROR_MODULE_IPC */
+  /* ======================================================================= */
+#define MODULE NS_ERROR_MODULE_IPC
+  // Initial creation of a Transport object failed internally for unknown reasons.
+  ERROR(NS_ERROR_TRANSPORT_INIT,          FAILURE(1)),
+  // Generic error related to duplicating handle failures.
+  ERROR(NS_ERROR_DUPLICATE_HANDLE,        FAILURE(2)),
+  // Bridging: failure trying to open the connection to the parent
+  ERROR(NS_ERROR_BRIDGE_OPEN_PARENT,      FAILURE(3)),
+  // Bridging: failure trying to open the connection to the child
+  ERROR(NS_ERROR_BRIDGE_OPEN_CHILD,       FAILURE(4)),
+#undef MODULE
 
   /* ======================================================================= */
   /* 29: NS_ERROR_MODULE_SVG */

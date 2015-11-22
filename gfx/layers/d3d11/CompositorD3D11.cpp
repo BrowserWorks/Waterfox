@@ -11,6 +11,7 @@
 
 #include "gfxWindowsPlatform.h"
 #include "nsIWidget.h"
+#include "nsIGfxInfo.h"
 #include "mozilla/layers/ImageHost.h"
 #include "mozilla/layers/ContentHost.h"
 #include "mozilla/layers/Effects.h"
@@ -18,6 +19,8 @@
 #include "gfxPrefs.h"
 #include "gfxCrashReporterUtils.h"
 #include "gfxVR.h"
+#include "mozilla/gfx/StackArray.h"
+#include "mozilla/Services.h"
 
 #include "mozilla/EnumeratedArray.h"
 
@@ -45,6 +48,13 @@ const FLOAT sBlendFactor[] = { 0, 0, 0, 0 };
 
 struct DeviceAttachmentsD3D11
 {
+  DeviceAttachmentsD3D11(ID3D11Device* device)
+   : mDevice(device),
+     mInitOkay(true)
+  {}
+
+  bool CreateShaders();
+
   typedef EnumeratedArray<MaskType, MaskType::NumMaskTypes, RefPtr<ID3D11VertexShader>>
           VertexShaderArray;
   typedef EnumeratedArray<MaskType, MaskType::NumMaskTypes, RefPtr<ID3D11PixelShader>>
@@ -56,6 +66,7 @@ struct DeviceAttachmentsD3D11
   VertexShaderArray mVSQuadShader;
   PixelShaderArray mSolidColorShader;
   PixelShaderArray mRGBAShader;
+  PixelShaderArray mRGBAShaderPremul;
   PixelShaderArray mRGBShader;
   PixelShaderArray mYCbCrShader;
   PixelShaderArray mComponentAlphaShader;
@@ -66,6 +77,8 @@ struct DeviceAttachmentsD3D11
   RefPtr<ID3D11SamplerState> mPointSamplerState;
   RefPtr<ID3D11BlendState> mPremulBlendState;
   RefPtr<ID3D11BlendState> mNonPremulBlendState;
+  RefPtr<ID3D11BlendState> mPremulBlendMultiplyState;
+  RefPtr<ID3D11BlendState> mPremulBlendScreenState;
   RefPtr<ID3D11BlendState> mComponentBlendState;
   RefPtr<ID3D11BlendState> mDisabledBlendState;
   RefPtr<IDXGIResource> mSyncTexture;
@@ -92,6 +105,34 @@ struct DeviceAttachmentsD3D11
   RefPtr<ID3D11Buffer> mVRDistortionVertices[2]; // one for each eye
   RefPtr<ID3D11Buffer> mVRDistortionIndices[2];
   uint32_t mVRDistortionIndexCount[2];
+
+private:
+  void InitVertexShader(const ShaderBytes& aShader, VertexShaderArray& aArray, MaskType aMaskType) {
+    InitVertexShader(aShader, byRef(aArray[aMaskType]));
+  }
+  void InitPixelShader(const ShaderBytes& aShader, PixelShaderArray& aArray, MaskType aMaskType) {
+    InitPixelShader(aShader, byRef(aArray[aMaskType]));
+  }
+  void InitVertexShader(const ShaderBytes& aShader, ID3D11VertexShader** aOut) {
+    if (!mInitOkay) {
+      return;
+    }
+    if (FAILED(mDevice->CreateVertexShader(aShader.mData, aShader.mLength, nullptr, aOut))) {
+      mInitOkay = false;
+    }
+  }
+  void InitPixelShader(const ShaderBytes& aShader, ID3D11PixelShader** aOut) {
+    if (!mInitOkay) {
+      return;
+    }
+    if (FAILED(mDevice->CreatePixelShader(aShader.mData, aShader.mLength, nullptr, aOut))) {
+      mInitOkay = false;
+    }
+  }
+
+  // Only used during initialization.
+  RefPtr<ID3D11Device> mDevice;
+  bool mInitOkay;
 };
 
 CompositorD3D11::CompositorD3D11(nsIWidget* aWidget)
@@ -135,10 +176,7 @@ CompositorD3D11::Initialize()
 
   ScopedGfxFeatureReporter reporter("D3D11 Layers", force);
 
-  if (!gfxPlatform::CanUseDirect3D11()) {
-    NS_WARNING("Direct3D 11-accelerated layers are not supported on this system.");
-    return false;
-  }
+  MOZ_ASSERT(gfxPlatform::CanUseDirect3D11());
 
   HRESULT hr;
 
@@ -173,7 +211,7 @@ CompositorD3D11::Initialize()
   if (FAILED(mDevice->GetPrivateData(sDeviceAttachmentsD3D11,
                                      &size,
                                      &mAttachments))) {
-    mAttachments = new DeviceAttachmentsD3D11;
+    mAttachments = new DeviceAttachmentsD3D11(mDevice);
     mDevice->SetPrivateData(sDeviceAttachmentsD3D11,
                             sizeof(mAttachments),
                             &mAttachments);
@@ -204,7 +242,7 @@ CompositorD3D11::Initialize()
       return false;
     }
 
-    if (!CreateShaders()) {
+    if (!mAttachments->CreateShaders()) {
       return false;
     }
 
@@ -254,6 +292,30 @@ CompositorD3D11::Initialize()
     };
     blendDesc.RenderTarget[0] = rtBlendPremul;
     hr = mDevice->CreateBlendState(&blendDesc, byRef(mAttachments->mPremulBlendState));
+    if (FAILED(hr)) {
+      return false;
+    }
+
+    D3D11_RENDER_TARGET_BLEND_DESC rtBlendMultiplyPremul = {
+      TRUE,
+      D3D11_BLEND_DEST_COLOR, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_OP_ADD,
+      D3D11_BLEND_ONE, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_OP_ADD,
+      D3D11_COLOR_WRITE_ENABLE_ALL
+    };
+    blendDesc.RenderTarget[0] = rtBlendMultiplyPremul;
+    hr = mDevice->CreateBlendState(&blendDesc, byRef(mAttachments->mPremulBlendMultiplyState));
+    if (FAILED(hr)) {
+      return false;
+    }
+
+    D3D11_RENDER_TARGET_BLEND_DESC rtBlendScreenPremul = {
+      TRUE,
+      D3D11_BLEND_ONE, D3D11_BLEND_INV_SRC_COLOR, D3D11_BLEND_OP_ADD,
+      D3D11_BLEND_ONE, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_OP_ADD,
+      D3D11_COLOR_WRITE_ENABLE_ALL
+    };
+    blendDesc.RenderTarget[0] = rtBlendScreenPremul;
+    hr = mDevice->CreateBlendState(&blendDesc, byRef(mAttachments->mPremulBlendScreenState));
     if (FAILED(hr)) {
       return false;
     }
@@ -334,13 +396,13 @@ CompositorD3D11::Initialize()
 
     hr = mDevice->CreateInputLayout(vrlayout,
                                     sizeof(vrlayout) / sizeof(D3D11_INPUT_ELEMENT_DESC),
-                                    OculusVRDistortionVS,
-                                    sizeof(OculusVRDistortionVS),
-                                    byRef(mAttachments->mVRDistortionInputLayout[VRHMDType::Oculus]));
+                                    Oculus050VRDistortionVS,
+                                    sizeof(Oculus050VRDistortionVS),
+                                    byRef(mAttachments->mVRDistortionInputLayout[VRHMDType::Oculus050]));
 
     // XXX shared for now, rename
     mAttachments->mVRDistortionInputLayout[VRHMDType::Cardboard] =
-      mAttachments->mVRDistortionInputLayout[VRHMDType::Oculus];
+      mAttachments->mVRDistortionInputLayout[VRHMDType::Oculus050];
 
     cBufferDesc.ByteWidth = sizeof(gfx::VRDistortionConstants);
     hr = mDevice->CreateBuffer(&cBufferDesc, nullptr, byRef(mAttachments->mVRDistortionConstants));
@@ -399,7 +461,7 @@ CompositorD3D11::Initialize()
   return true;
 }
 
-TemporaryRef<DataTextureSource>
+already_AddRefed<DataTextureSource>
 CompositorD3D11::CreateDataTextureSource(TextureFlags aFlags)
 {
   RefPtr<DataTextureSource> result = new DataTextureSourceD3D11(gfx::SurfaceFormat::UNKNOWN,
@@ -417,10 +479,13 @@ CompositorD3D11::GetTextureFactoryIdentifier()
   if (mAttachments->mSyncTexture) {
     HRESULT hr = mAttachments->mSyncTexture->GetSharedHandle(&ident.mSyncHandle);
     if (FAILED(hr) || !ident.mSyncHandle) {
-      gfxCriticalError() << "Failed to get SharedHandle for sync texture. Result: " << hr;
+      gfxCriticalError() << "Failed to get SharedHandle for sync texture. Result: "
+                         << hexa(hr);
       MOZ_CRASH();
     }
   }
+  ident.mSupportedBlendModes += gfx::CompositionOp::OP_SCREEN;
+  ident.mSupportedBlendModes += gfx::CompositionOp::OP_MULTIPLY;
   return ident;
 }
 
@@ -442,7 +507,7 @@ CompositorD3D11::GetMaxTextureSize() const
   return GetMaxTextureSizeForFeatureLevel(mFeatureLevel);
 }
 
-TemporaryRef<CompositingRenderTarget>
+already_AddRefed<CompositingRenderTarget>
 CompositorD3D11::CreateRenderTarget(const gfx::IntRect& aRect,
                                     SurfaceInitMode aInit)
 {
@@ -458,6 +523,7 @@ CompositorD3D11::CreateRenderTarget(const gfx::IntRect& aRect,
   RefPtr<ID3D11Texture2D> texture;
   HRESULT hr = mDevice->CreateTexture2D(&desc, nullptr, byRef(texture));
   if (Failed(hr) || !texture) {
+    gfxCriticalError(gfxCriticalError::DefaultOptions(false)) << "Failed in CreateRenderTarget";
     return nullptr;
   }
 
@@ -469,10 +535,10 @@ CompositorD3D11::CreateRenderTarget(const gfx::IntRect& aRect,
     mContext->ClearRenderTargetView(rt->mRTView, clear);
   }
 
-  return rt;
+  return rt.forget();
 }
 
-TemporaryRef<CompositingRenderTarget>
+already_AddRefed<CompositingRenderTarget>
 CompositorD3D11::CreateRenderTargetFromSource(const gfx::IntRect &aRect,
                                               const CompositingRenderTarget* aSource,
                                               const gfx::IntPoint &aSourcePoint)
@@ -491,6 +557,7 @@ CompositorD3D11::CreateRenderTargetFromSource(const gfx::IntRect &aRect,
   HRESULT hr = mDevice->CreateTexture2D(&desc, nullptr, byRef(texture));
   NS_ASSERTION(texture, "Could not create texture");
   if (Failed(hr) || !texture) {
+    gfxCriticalError(gfxCriticalError::DefaultOptions(false)) << "Failed in CreateRenderTargetFromSource";
     return nullptr;
   }
 
@@ -528,7 +595,7 @@ CompositorD3D11::CreateRenderTargetFromSource(const gfx::IntRect &aRect,
     new CompositingRenderTargetD3D11(texture, aRect.TopLeft());
   rt->SetSize(aRect.Size());
 
-  return rt;
+  return rt.forget();
 }
 
 void
@@ -537,9 +604,20 @@ CompositorD3D11::SetRenderTarget(CompositingRenderTarget* aRenderTarget)
   MOZ_ASSERT(aRenderTarget);
   CompositingRenderTargetD3D11* newRT =
     static_cast<CompositingRenderTargetD3D11*>(aRenderTarget);
-  mCurrentRT = newRT;
-  mCurrentRT->BindRenderTarget(mContext);
-  PrepareViewport(newRT->GetSize());
+  if (mCurrentRT != newRT) {
+    mCurrentRT = newRT;
+    mCurrentRT->BindRenderTarget(mContext);
+  }
+
+  if (newRT->HasComplexProjection()) {
+    gfx::Matrix4x4 projection;
+    bool depthEnable;
+    float zNear, zFar;
+    newRT->GetProjection(projection, depthEnable, zNear, zFar);
+    PrepareViewport(newRT->GetSize(), projection, zNear, zFar);
+  } else {
+    PrepareViewport(newRT->GetSize());
+  }
 }
 
 void
@@ -549,14 +627,6 @@ CompositorD3D11::SetPSForEffect(Effect* aEffect, MaskType aMaskType, gfx::Surfac
   case EffectTypes::SOLID_COLOR:
     mContext->PSSetShader(mAttachments->mSolidColorShader[aMaskType], nullptr, 0);
     return;
-  case EffectTypes::RENDER_TARGET:
-    mContext->PSSetShader(mAttachments->mRGBAShader[aMaskType], nullptr, 0);
-    return;
-  case EffectTypes::RGB:
-    mContext->PSSetShader((aFormat == SurfaceFormat::B8G8R8A8 || aFormat == SurfaceFormat::R8G8B8A8)
-                          ? mAttachments->mRGBAShader[aMaskType]
-                          : mAttachments->mRGBShader[aMaskType], nullptr, 0);
-    return;
   case EffectTypes::YCBCR:
     mContext->PSSetShader(mAttachments->mYCbCrShader[aMaskType], nullptr, 0);
     return;
@@ -564,6 +634,7 @@ CompositorD3D11::SetPSForEffect(Effect* aEffect, MaskType aMaskType, gfx::Surfac
     mContext->PSSetShader(mAttachments->mComponentAlphaShader[aMaskType], nullptr, 0);
     return;
   default:
+    // Note: the RGB and RENDER_TARGET cases are handled in-line in DrawQuad().
     NS_WARNING("No shader to load");
     return;
   }
@@ -628,10 +699,17 @@ CompositorD3D11::DrawVRDistortion(const gfx::Rect& aRect,
     static_cast<EffectVRDistortion*>(aEffectChain.mPrimaryEffect.get());
 
   TextureSourceD3D11* source = vrEffect->mTexture->AsSourceD3D11();
-  gfx::IntSize size = vrEffect->mRenderTarget->GetSize(); // XXX source->GetSize()
 
   VRHMDInfo* hmdInfo = vrEffect->mHMD;
   VRHMDType hmdType = hmdInfo->GetType();
+
+  if (!mAttachments->mVRDistortionVS[hmdType] ||
+      !mAttachments->mVRDistortionPS[hmdType])
+  {
+    NS_WARNING("No VS/PS for hmd type for VR distortion!");
+    return;
+  }
+
   VRDistortionConstants shaderConstants;
 
   // do we need to recreate the VR buffers, since the config has changed?
@@ -685,27 +763,26 @@ CompositorD3D11::DrawVRDistortion(const gfx::Rect& aRect,
   mContext->PSSetShader(mAttachments->mVRDistortionPS[hmdType], nullptr, 0);
 
   // This is the source texture SRV for the pixel shader
-  // XXX, um should we cache this SRV on the source?
-  RefPtr<ID3D11ShaderResourceView> view;
-  mDevice->CreateShaderResourceView(source->GetD3D11Texture(), nullptr, byRef(view));
-  ID3D11ShaderResourceView* srView = view;
+  ID3D11ShaderResourceView* srView = source->GetShaderResourceView();
   mContext->PSSetShaderResources(0, 1, &srView);
 
-  gfx::IntSize vpSizeInt = mCurrentRT->GetSize();
-  gfx::Size vpSize(vpSizeInt.width, vpSizeInt.height);
+  Rect destRect = aTransform.TransformBounds(aRect);
+  gfx::IntSize preDistortionSize = vrEffect->mRenderTarget->GetSize(); // XXX source->GetSize()
+  gfx::Size vpSize = destRect.Size();
+
   ID3D11Buffer* vbuffer;
   UINT vsize, voffset;
 
   for (uint32_t eye = 0; eye < 2; eye++) {
     gfx::IntRect eyeViewport;
-    eyeViewport.x = eye * size.width / 2;
+    eyeViewport.x = eye * preDistortionSize.width / 2;
     eyeViewport.y = 0;
-    eyeViewport.width = size.width / 2;
-    eyeViewport.height = size.height;
+    eyeViewport.width = preDistortionSize.width / 2;
+    eyeViewport.height = preDistortionSize.height;
 
     hmdInfo->FillDistortionConstants(eye,
-                                     size, eyeViewport,
-                                     vpSize, aRect,
+                                     preDistortionSize, eyeViewport,
+                                     vpSize, destRect,
                                      shaderConstants);
 
     // D3D has clip space top-left as -1,1 so we need to flip the Y coordinate offset here
@@ -713,9 +790,14 @@ CompositorD3D11::DrawVRDistortion(const gfx::Rect& aRect,
 
     // XXX I really want to write a templated helper for these next 4 lines
     D3D11_MAPPED_SUBRESOURCE resource;
-    mContext->Map(mAttachments->mVRDistortionConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+    hr = mContext->Map(mAttachments->mVRDistortionConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+    if (FAILED(hr) || !resource.pData) {
+      gfxCriticalError() << "Failed to map VRDistortionConstants. Result: " << hr;
+      return;
+    }
     *(gfx::VRDistortionConstants*)resource.pData = shaderConstants;
     mContext->Unmap(mAttachments->mVRDistortionConstants, 0);
+    resource.pData = nullptr;
 
     // XXX is there a better way to change a bunch of these things from what they were set to
     // in BeginFrame/etc?
@@ -745,7 +827,8 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
                           const gfx::Rect& aClipRect,
                           const EffectChain& aEffectChain,
                           gfx::Float aOpacity,
-                          const gfx::Matrix4x4& aTransform)
+                          const gfx::Matrix4x4& aTransform,
+                          const gfx::Rect& aVisibleRect)
 {
   if (mCurrentClip.IsEmpty()) {
     return;
@@ -786,15 +869,7 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
       return;
     }
 
-    RefPtr<ID3D11ShaderResourceView> view;
-    HRESULT hr = mDevice->CreateShaderResourceView(source->GetD3D11Texture(), nullptr, byRef(view));
-    if (Failed(hr)) {
-      // XXX - There's a chance we won't be able to render anything, should we
-      // just crash release builds?
-      return;
-    }
-
-    ID3D11ShaderResourceView* srView = view;
+    ID3D11ShaderResourceView* srView = source->GetShaderResourceView();
     mContext->PSSetShaderResources(3, 1, &srView);
 
     const gfx::Matrix4x4& maskTransform = maskEffect->mMaskTransform;
@@ -826,6 +901,11 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
 
   const Rect* pTexCoordRect = nullptr;
 
+  gfx::CompositionOp blendMode = gfx::CompositionOp::OP_OVER;
+  if (Effect* effect = aEffectChain.mSecondaryEffects[EffectTypes::BLEND_MODE].get()) {
+    blendMode = static_cast<EffectBlendMode*>(effect)->mBlendMode;
+  }
+
   switch (aEffectChain.mPrimaryEffect->mType) {
   case EffectTypes::SOLID_COLOR: {
       SetPSForEffect(aEffectChain.mPrimaryEffect, maskType, SurfaceFormat::UNKNOWN);
@@ -836,6 +916,8 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
       mPSConstants.layerColor[1] = color.g * color.a * aOpacity;
       mPSConstants.layerColor[2] = color.b * color.a * aOpacity;
       mPSConstants.layerColor[3] = color.a * aOpacity;
+
+      restoreBlendMode = SetBlendMode(blendMode);
     }
     break;
   case EffectTypes::RGB:
@@ -853,23 +935,27 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
         return;
       }
 
-      SetPSForEffect(aEffectChain.mPrimaryEffect, maskType, texturedEffect->mTexture->GetFormat());
+      SurfaceFormat format = texturedEffect->mTexture->GetFormat();
+      bool useRGBAShader = (format == SurfaceFormat::B8G8R8A8 || format == SurfaceFormat::R8G8B8A8) ||
+                           (texturedEffect->mType == EffectTypes::RENDER_TARGET);
 
-      RefPtr<ID3D11ShaderResourceView> view;
-      HRESULT hr = mDevice->CreateShaderResourceView(source->GetD3D11Texture(), nullptr, byRef(view));
-      if (Failed(hr)) {
-        // XXX - There's a chance we won't be able to render anything, should we
-        // just crash release builds?
-        return;
+      bool premultiplied = texturedEffect->mPremultiplied;
+      if (!premultiplied && useRGBAShader &&
+          (blendMode == CompositionOp::OP_MULTIPLY ||
+           blendMode == CompositionOp::OP_SCREEN))
+      {
+        mContext->PSSetShader(mAttachments->mRGBAShaderPremul[maskType], nullptr, 0);
+        premultiplied = true;
+      } else if (useRGBAShader) {
+        mContext->PSSetShader(mAttachments->mRGBAShader[maskType], nullptr, 0);
+      } else {
+        mContext->PSSetShader(mAttachments->mRGBShader[maskType], nullptr, 0);
       }
 
-      ID3D11ShaderResourceView* srView = view;
+      ID3D11ShaderResourceView* srView = source->GetShaderResourceView();
       mContext->PSSetShaderResources(0, 1, &srView);
 
-      if (!texturedEffect->mPremultiplied) {
-        mContext->OMSetBlendState(mAttachments->mNonPremulBlendState, sBlendFactor, 0xFFFFFFFF);
-        restoreBlendMode = true;
-      }
+      restoreBlendMode = SetBlendMode(blendMode, premultiplied);
 
       SetSamplerForFilter(texturedEffect->mFilter);
     }
@@ -902,30 +988,12 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
       TextureSourceD3D11* sourceCb = source->GetSubSource(Cb)->AsSourceD3D11();
       TextureSourceD3D11* sourceCr = source->GetSubSource(Cr)->AsSourceD3D11();
 
-      HRESULT hr;
-
-      RefPtr<ID3D11ShaderResourceView> views[3];
-
-      hr = mDevice->CreateShaderResourceView(sourceY->GetD3D11Texture(),
-                                             nullptr, byRef(views[0]));
-      if (Failed(hr)) {
-        return;
-      }
-
-      hr = mDevice->CreateShaderResourceView(sourceCb->GetD3D11Texture(),
-                                             nullptr, byRef(views[1]));
-      if (Failed(hr)) {
-        return;
-      }
-
-      hr = mDevice->CreateShaderResourceView(sourceCr->GetD3D11Texture(),
-                                             nullptr, byRef(views[2]));
-      if (Failed(hr)) {
-        return;
-      }
-
-      ID3D11ShaderResourceView* srViews[3] = { views[0], views[1], views[2] };
+      ID3D11ShaderResourceView* srViews[3] = { sourceY->GetShaderResourceView(),
+                                               sourceCb->GetShaderResourceView(),
+                                               sourceCr->GetShaderResourceView() };
       mContext->PSSetShaderResources(0, 3, srViews);
+
+      restoreBlendMode = SetBlendMode(blendMode);
     }
     break;
   case EffectTypes::COMPONENT_ALPHA:
@@ -949,22 +1017,11 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
 
       pTexCoordRect = &effectComponentAlpha->mTextureCoords;
 
-      RefPtr<ID3D11ShaderResourceView> views[2];
-
-      HRESULT hr;
-
-      hr = mDevice->CreateShaderResourceView(sourceOnBlack->GetD3D11Texture(), nullptr, byRef(views[0]));
-      if (Failed(hr)) {
-        return;
-      }
-      hr = mDevice->CreateShaderResourceView(sourceOnWhite->GetD3D11Texture(), nullptr, byRef(views[1]));
-      if (Failed(hr)) {
-        return;
-      }
-
-      ID3D11ShaderResourceView* srViews[2] = { views[0], views[1] };
+      ID3D11ShaderResourceView* srViews[2] = { sourceOnBlack->GetShaderResourceView(),
+                                               sourceOnWhite->GetShaderResourceView() };
       mContext->PSSetShaderResources(0, 2, srViews);
 
+      // Note: component alpha is never used in blend containers.
       mContext->OMSetBlendState(mAttachments->mComponentBlendState, sBlendFactor, 0xFFFFFFFF);
       restoreBlendMode = true;
     }
@@ -1006,6 +1063,39 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
   }
 }
 
+bool
+CompositorD3D11::SetBlendMode(gfx::CompositionOp aOp, bool aPremultiplied)
+{
+  if (aOp == gfx::CompositionOp::OP_OVER && aPremultiplied) {
+    return false;
+  }
+
+  ID3D11BlendState* blendState = nullptr;
+
+  switch (aOp) {
+    case gfx::CompositionOp::OP_OVER:
+      MOZ_ASSERT(!aPremultiplied);
+      blendState = mAttachments->mNonPremulBlendState;
+      break;
+    case gfx::CompositionOp::OP_MULTIPLY:
+      // Premultiplication is handled in the shader.
+      MOZ_ASSERT(aPremultiplied);
+      blendState = mAttachments->mPremulBlendMultiplyState;
+      break;
+    case gfx::CompositionOp::OP_SCREEN:
+      // Premultiplication is handled in the shader.
+      MOZ_ASSERT(aPremultiplied);
+      blendState = mAttachments->mPremulBlendScreenState;
+      break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unsupported blend mode!");
+      return false;
+  }
+
+  mContext->OMSetBlendState(blendState, sBlendFactor, 0xFFFFFFFF);
+  return true;
+}
+
 void
 CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
                             const Rect* aClipRectIn,
@@ -1022,7 +1112,7 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
     return;
   }
 
-  nsIntSize oldSize = mSize;
+  IntSize oldSize = mSize;
   UpdateRenderTarget();
 
   // Failed to create a render target or the view.
@@ -1094,7 +1184,7 @@ CompositorD3D11::EndFrame()
     return;
   }
 
-  nsIntSize oldSize = mSize;
+  IntSize oldSize = mSize;
   EnsureSize();
   if (mSize.width <= 0 || mSize.height <= 0) {
     return;
@@ -1112,27 +1202,30 @@ CompositorD3D11::EndFrame()
   if (oldSize == mSize) {
     RefPtr<IDXGISwapChain1> chain;
     HRESULT hr = mSwapChain->QueryInterface((IDXGISwapChain1**)byRef(chain));
-    if (SUCCEEDED(hr) && chain) {
+    nsString vendorID;
+    nsCOMPtr<nsIGfxInfo> gfxInfo = services::GetGfxInfo();
+    gfxInfo->GetAdapterVendorID(vendorID);
+    bool isNvidia = vendorID.EqualsLiteral("0x10de") && !gfxWindowsPlatform::GetPlatform()->IsWARP();
+    if (SUCCEEDED(hr) && chain && !isNvidia) {
+        // Avoid partial present on Nvidia hardware to try to work around
+        // bug 1189940
       DXGI_PRESENT_PARAMETERS params;
       PodZero(&params);
       params.DirtyRectsCount = mInvalidRegion.GetNumRects();
-      std::vector<RECT> rects;
-      rects.reserve(params.DirtyRectsCount);
+      StackArray<RECT, 4> rects(params.DirtyRectsCount);
 
       nsIntRegionRectIterator iter(mInvalidRegion);
       const IntRect* r;
       uint32_t i = 0;
       while ((r = iter.Next()) != nullptr) {
-        RECT rect;
-        rect.left = r->x;
-        rect.top = r->y;
-        rect.bottom = r->YMost();
-        rect.right = r->XMost();
-
-        rects.push_back(rect);
+        rects[i].left = r->x;
+        rects[i].top = r->y;
+        rects[i].bottom = r->YMost();
+        rects[i].right = r->XMost();
+        i++;
       }
 
-      params.pDirtyRects = &rects.front();
+      params.pDirtyRects = params.DirtyRectsCount ? rects.data() : nullptr;
       chain->Present1(presentInterval, mDisableSequenceForNextFrame ? DXGI_PRESENT_DO_NOT_SEQUENCE : 0, &params);
     } else {
       mSwapChain->Present(presentInterval, mDisableSequenceForNextFrame ? DXGI_PRESENT_DO_NOT_SEQUENCE : 0);
@@ -1149,16 +1242,6 @@ CompositorD3D11::EndFrame()
 void
 CompositorD3D11::PrepareViewport(const gfx::IntSize& aSize)
 {
-  D3D11_VIEWPORT viewport;
-  viewport.MaxDepth = 1.0f;
-  viewport.MinDepth = 0.0f;
-  viewport.Width = aSize.width;
-  viewport.Height = aSize.height;
-  viewport.TopLeftX = 0;
-  viewport.TopLeftY = 0;
-
-  mContext->RSSetViewports(1, &viewport);
-
   // This view matrix translates coordinates from 0..width and 0..height to
   // -1..1 on the X axis, and -1..1 on the Y axis (flips the Y coordinate)
   Matrix viewMatrix = Matrix::Translation(-1.0, 1.0);
@@ -1168,7 +1251,25 @@ CompositorD3D11::PrepareViewport(const gfx::IntSize& aSize)
   Matrix4x4 projection = Matrix4x4::From2D(viewMatrix);
   projection._33 = 0.0f;
 
-  memcpy(&mVSConstants.projection, &projection, sizeof(mVSConstants.projection));
+  PrepareViewport(aSize, projection, 0.0f, 1.0f);
+}
+
+void
+CompositorD3D11::PrepareViewport(const gfx::IntSize& aSize,
+                                 const gfx::Matrix4x4& aProjection,
+                                 float aZNear, float aZFar)
+{
+  D3D11_VIEWPORT viewport;
+  viewport.MaxDepth = aZFar;
+  viewport.MinDepth = aZNear;
+  viewport.Width = aSize.width;
+  viewport.Height = aSize.height;
+  viewport.TopLeftX = 0;
+  viewport.TopLeftY = 0;
+
+  mContext->RSSetViewports(1, &viewport);
+
+  memcpy(&mVSConstants.projection, &aProjection._11, sizeof(mVSConstants.projection));
 }
 
 void
@@ -1220,7 +1321,7 @@ CompositorD3D11::UpdateRenderTarget()
 {
   EnsureSize();
   if (!VerifyBufferSize()) {
-    gfxCriticalError(gfxCriticalError::DefaultOptions(false)) << "Failed VerifyBufferSize in UpdateRenderTarget";
+    gfxCriticalError(gfxCriticalError::DefaultOptions(false)) << "Failed VerifyBufferSize in UpdateRenderTarget " << mSize;
     return;
   }
 
@@ -1246,6 +1347,7 @@ CompositorD3D11::UpdateRenderTarget()
     }
   }
   if (Failed(hr)) {
+    gfxCriticalError(gfxCriticalError::DefaultOptions(false)) << "Failed in UpdateRenderTarget";
     return;
   }
 
@@ -1254,86 +1356,37 @@ CompositorD3D11::UpdateRenderTarget()
 }
 
 bool
-CompositorD3D11::CreateShaders()
+DeviceAttachmentsD3D11::CreateShaders()
 {
-  HRESULT hr;
+  InitVertexShader(sLayerQuadVS, mVSQuadShader, MaskType::MaskNone);
+  InitVertexShader(sLayerQuadMaskVS, mVSQuadShader, MaskType::Mask2d);
+  InitVertexShader(sLayerQuadMask3DVS, mVSQuadShader, MaskType::Mask3d);
 
-  hr = mDevice->CreateVertexShader(LayerQuadVS,
-                                   sizeof(LayerQuadVS),
-                                   nullptr,
-                                   byRef(mAttachments->mVSQuadShader[MaskType::MaskNone]));
-  if (FAILED(hr)) {
-    return false;
-  }
-
-  hr = mDevice->CreateVertexShader(LayerQuadMaskVS,
-                                   sizeof(LayerQuadMaskVS),
-                                   nullptr,
-                                   byRef(mAttachments->mVSQuadShader[MaskType::Mask2d]));
-  if (FAILED(hr)) {
-    return false;
-  }
-
-  hr = mDevice->CreateVertexShader(LayerQuadMask3DVS,
-                                   sizeof(LayerQuadMask3DVS),
-                                   nullptr,
-                                   byRef(mAttachments->mVSQuadShader[MaskType::Mask3d]));
-  if (FAILED(hr)) {
-    return false;
-  }
-
-#define LOAD_PIXEL_SHADER(x) hr = mDevice->CreatePixelShader(x, sizeof(x), nullptr, byRef(mAttachments->m##x[MaskType::MaskNone])); \
-  if (FAILED(hr)) { \
-    return false; \
-  } \
-  hr = mDevice->CreatePixelShader(x##Mask, sizeof(x##Mask), nullptr, byRef(mAttachments->m##x[MaskType::Mask2d])); \
-  if (FAILED(hr)) { \
-    return false; \
-  }
-
-  LOAD_PIXEL_SHADER(SolidColorShader);
-  LOAD_PIXEL_SHADER(RGBShader);
-  LOAD_PIXEL_SHADER(RGBAShader);
-  LOAD_PIXEL_SHADER(YCbCrShader);
+  InitPixelShader(sSolidColorShader, mSolidColorShader, MaskType::MaskNone);
+  InitPixelShader(sSolidColorShaderMask, mSolidColorShader, MaskType::Mask2d);
+  InitPixelShader(sRGBShader, mRGBShader, MaskType::MaskNone);
+  InitPixelShader(sRGBShaderMask, mRGBShader, MaskType::Mask2d);
+  InitPixelShader(sRGBAShader, mRGBAShader, MaskType::MaskNone);
+  InitPixelShader(sRGBAShaderMask, mRGBAShader, MaskType::Mask2d);
+  InitPixelShader(sRGBAShaderMask3D, mRGBAShader, MaskType::Mask3d);
+  InitPixelShader(sRGBAShaderPremul, mRGBAShaderPremul, MaskType::MaskNone);
+  InitPixelShader(sRGBAShaderMaskPremul, mRGBAShaderPremul, MaskType::Mask2d);
+  InitPixelShader(sRGBAShaderMask3DPremul, mRGBAShaderPremul, MaskType::Mask3d);
+  InitPixelShader(sYCbCrShader, mYCbCrShader, MaskType::MaskNone);
+  InitPixelShader(sYCbCrShaderMask, mYCbCrShader, MaskType::Mask2d);
   if (gfxPrefs::ComponentAlphaEnabled()) {
-    LOAD_PIXEL_SHADER(ComponentAlphaShader);
+    InitPixelShader(sComponentAlphaShader, mComponentAlphaShader, MaskType::MaskNone);
+    InitPixelShader(sComponentAlphaShaderMask, mComponentAlphaShader, MaskType::Mask2d);
   }
 
-#undef LOAD_PIXEL_SHADER
-
-  hr = mDevice->CreatePixelShader(RGBAShaderMask3D,
-                                  sizeof(RGBAShaderMask3D),
-                                  nullptr,
-                                  byRef(mAttachments->mRGBAShader[MaskType::Mask3d]));
-  if (FAILED(hr)) {
-    return false;
-  }
-
-
-  /* VR stuff */
-
-  hr = mDevice->CreateVertexShader(OculusVRDistortionVS,
-                                   sizeof(OculusVRDistortionVS),
-                                   nullptr,
-                                   byRef(mAttachments->mVRDistortionVS[VRHMDType::Oculus]));
-  if (FAILED(hr)) {
-    return false;
-  }
-
-  hr = mDevice->CreatePixelShader(OculusVRDistortionPS,
-                                  sizeof(OculusVRDistortionPS),
-                                  nullptr,
-                                  byRef(mAttachments->mVRDistortionPS[VRHMDType::Oculus]));
-  if (FAILED(hr)) {
-    return false;
-  }
+  InitVertexShader(sOculus050VRDistortionVS, byRef(mVRDistortionVS[VRHMDType::Oculus050]));
+  InitPixelShader(sOculus050VRDistortionPS, byRef(mVRDistortionPS[VRHMDType::Oculus050]));
 
   // These are shared
-  // XXX rename Oculus shaders to something more generic
-  mAttachments->mVRDistortionVS[VRHMDType::Cardboard] = mAttachments->mVRDistortionVS[VRHMDType::Oculus];
-  mAttachments->mVRDistortionPS[VRHMDType::Cardboard] = mAttachments->mVRDistortionPS[VRHMDType::Oculus];
-
-  return true;
+  // XXX rename Oculus050 shaders to something more generic
+  mVRDistortionVS[VRHMDType::Cardboard] = mVRDistortionVS[VRHMDType::Oculus050];
+  mVRDistortionPS[VRHMDType::Cardboard] = mVRDistortionPS[VRHMDType::Oculus050];
+  return mInitOkay;
 }
 
 bool
@@ -1345,7 +1398,7 @@ CompositorD3D11::UpdateConstantBuffers()
 
   hr = mContext->Map(mAttachments->mVSConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
   if (Failed(hr) || !resource.pData) {
-    gfxCriticalError() << "Failed to map VSConstantBuffer. Result: " << hr;
+    gfxCriticalError() << "Failed to map VSConstantBuffer. Result: " << hexa(hr);
     return false;
   }
   *(VertexShaderConstants*)resource.pData = mVSConstants;
@@ -1354,7 +1407,7 @@ CompositorD3D11::UpdateConstantBuffers()
 
   hr = mContext->Map(mAttachments->mPSConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
   if (Failed(hr) || !resource.pData) {
-    gfxCriticalError() << "Failed to map PSConstantBuffer. Result: " << hr;
+    gfxCriticalError() << "Failed to map PSConstantBuffer. Result: " << hexa(hr);
     return false;
   }
   *(PixelShaderConstants*)resource.pData = mPSConstants;
@@ -1394,6 +1447,7 @@ CompositorD3D11::PaintToTarget()
 
   hr = mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)backBuf.StartAssignment());
   if (Failed(hr)) {
+    gfxCriticalErrorOnce(gfxCriticalError::DefaultOptions(false)) << "Failed in PaintToTarget 1";
     return;
   }
 
@@ -1410,6 +1464,7 @@ CompositorD3D11::PaintToTarget()
 
   hr = mDevice->CreateTexture2D(&softDesc, nullptr, getter_AddRefs(readTexture));
   if (Failed(hr)) {
+    gfxCriticalErrorOnce(gfxCriticalError::DefaultOptions(false)) << "Failed in PaintToTarget 2";
     return;
   }
   mContext->CopyResource(readTexture, backBuf);
@@ -1417,6 +1472,7 @@ CompositorD3D11::PaintToTarget()
   D3D11_MAPPED_SUBRESOURCE map;
   hr = mContext->Map(readTexture, 0, D3D11_MAP_READ, 0, &map);
   if (Failed(hr)) {
+    gfxCriticalErrorOnce(gfxCriticalError::DefaultOptions(false)) << "Failed in PaintToTarget 3";
     return;
   }
   RefPtr<DataSourceSurface> sourceSurface =

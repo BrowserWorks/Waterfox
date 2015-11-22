@@ -13,11 +13,10 @@
 #include "PlatformDecoderModule.h"
 #include "mozilla/Monitor.h"
 
-#include "mp4_demuxer/mp4_demuxer.h"
 #include "MediaInfo.h"
 #include "MediaData.h"
 
-class MediaTaskQueue;
+class TaskQueue;
 
 namespace mozilla {
 
@@ -29,7 +28,8 @@ class IntelWebMVideoDecoder : public WebMVideoDecoder, public MediaDataDecoderCa
 {
 public:
   static WebMVideoDecoder* Create(WebMReader* aReader);
-  virtual nsresult Init(unsigned int aWidth, unsigned int aHeight) override;
+  virtual nsRefPtr<InitPromise> Init(unsigned int aWidth = 0,
+                                     unsigned int aHeight = 0) override;
   virtual nsresult Flush() override;
   virtual void Shutdown() override;
 
@@ -70,7 +70,7 @@ private:
 
   // TaskQueue on which decoder can choose to decode.
   // Only non-null up until the decoder is created.
-  nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
+  nsRefPtr<FlushableTaskQueue> mTaskQueue;
 
   // Monitor that protects all non-threadsafe state; the primitives
   // that follow.

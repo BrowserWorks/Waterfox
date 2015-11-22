@@ -14,18 +14,20 @@
 
 "use strict";
 
-const { PrefObserver } = devtools.require("devtools/styleeditor/utils");
-const PREF_ENABLE_MDN_DOCS_TOOLTIP = "devtools.inspector.mdnDocsTooltip.enabled";
+const { PrefObserver } = require("devtools/styleeditor/utils");
+const PREF_ENABLE_MDN_DOCS_TOOLTIP =
+  "devtools.inspector.mdnDocsTooltip.enabled";
 const PROPERTY_NAME_CLASS = "ruleview-propertyname";
 
 const TEST_DOC = `
-<html>
-  <body>
-    <div style="color: red">
-      Test the pref to enable/disable the "Show MDN Docs" context menu option
-    </div>
-  </body>
-</html>`;
+  <html>
+    <body>
+      <div style="color: red">
+        Test the pref to enable/disable the "Show MDN Docs" context menu option
+      </div>
+    </body>
+  </html>
+`;
 
 add_task(function* () {
   info("Ensure the pref is true to begin with");
@@ -95,17 +97,17 @@ function* setBooleanPref(pref, state) {
  * menu item to be visible or not.
  */
 function* testMdnContextMenuItemVisibility(view, shouldBeVisible) {
-  let message = shouldBeVisible? "shown": "hidden";
+  let message = shouldBeVisible ? "shown" : "hidden";
   info("Test that MDN context menu item is " + message);
 
   info("Set a CSS property name as popupNode");
   let root = rootElement(view);
   let node = root.querySelector("." + PROPERTY_NAME_CLASS).firstChild;
-  view.doc.popupNode = node;
+  view.styleDocument.popupNode = node;
 
   info("Update context menu state");
-  view._contextMenuUpdate();
-  let isVisible = !view.menuitemShowMdnDocs.hidden;
+  view._contextmenu._updateMenuItems();
+  let isVisible = !view._contextmenu.menuitemShowMdnDocs.hidden;
   is(isVisible, shouldBeVisible,
      "The MDN context menu item is " + message);
 }
@@ -113,4 +115,4 @@ function* testMdnContextMenuItemVisibility(view, shouldBeVisible) {
 /**
  * Returns the root element for the rule view.
  */
-let rootElement = view => (view.element) ? view.element : view.styleDocument;
+var rootElement = view => (view.element) ? view.element : view.styleDocument;

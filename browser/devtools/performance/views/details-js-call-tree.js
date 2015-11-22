@@ -6,12 +6,12 @@
 /**
  * CallTree view containing profiler call tree, controlled by DetailsView.
  */
-let JsCallTreeView = Heritage.extend(DetailsSubview, {
+var JsCallTreeView = Heritage.extend(DetailsSubview, {
 
   rerenderPrefs: [
     "invert-call-tree",
     "show-platform-data",
-    "flatten-tree-recursion"
+    "flatten-tree-recursion",
   ],
 
   rangeChangeDebounceTime: 75, // ms
@@ -22,19 +22,21 @@ let JsCallTreeView = Heritage.extend(DetailsSubview, {
   initialize: function () {
     DetailsSubview.initialize.call(this);
 
-    this._onPrefChanged = this._onPrefChanged.bind(this);
     this._onLink = this._onLink.bind(this);
+    this._onFocus = this._onFocus.bind(this);
 
     this.container = $("#js-calltree-view .call-tree-cells-container");
-    JITOptimizationsView.initialize();
+
+    OptimizationsListView.initialize();
   },
 
   /**
    * Unbinds events.
    */
   destroy: function () {
+    OptimizationsListView.destroy();
     this.container = null;
-    JITOptimizationsView.destroy();
+    this.threadNode = null;
     DetailsSubview.destroy.call(this);
   },
 
@@ -45,16 +47,44 @@ let JsCallTreeView = Heritage.extend(DetailsSubview, {
    *        The { startTime, endTime }, in milliseconds.
    */
   render: function (interval={}) {
+    let recording = PerformanceController.getCurrentRecording();
+    let profile = recording.getProfile();
+    let optimizations = recording.getConfiguration().withJITOptimizations;
+
     let options = {
       contentOnly: !PerformanceController.getOption("show-platform-data"),
       invertTree: PerformanceController.getOption("invert-call-tree"),
-      flattenRecursion: PerformanceController.getOption("flatten-tree-recursion")
+      flattenRecursion: PerformanceController.getOption("flatten-tree-recursion"),
+      showOptimizationHint: optimizations
     };
-    let recording = PerformanceController.getCurrentRecording();
-    let profile = recording.getProfile();
-    let threadNode = this._prepareCallTree(profile, interval, options);
+    let threadNode = this.threadNode = this._prepareCallTree(profile, interval, options);
     this._populateCallTree(threadNode, options);
+
+    if (optimizations) {
+      this.showOptimizations();
+    } else {
+      this.hideOptimizations();
+    }
+    OptimizationsListView.reset();
+
     this.emit(EVENTS.JS_CALL_TREE_RENDERED);
+  },
+
+  showOptimizations: function () {
+    $("#jit-optimizations-view").classList.remove("hidden");
+  },
+
+  hideOptimizations: function () {
+    $("#jit-optimizations-view").classList.add("hidden");
+  },
+
+  _onFocus: function (_, treeItem) {
+    if (PerformanceController.getCurrentRecording().getConfiguration().withJITOptimizations) {
+      OptimizationsListView.setCurrentFrame(this.threadNode, treeItem.frame);
+      OptimizationsListView.render();
+    }
+
+    this.emit("focus", treeItem);
   },
 
   /**
@@ -107,15 +137,13 @@ let JsCallTreeView = Heritage.extend(DetailsSubview, {
       hidden: inverted,
       // Call trees should only auto-expand when not inverted. Passing undefined
       // will default to the CALL_TREE_AUTO_EXPAND depth.
-      autoExpandDepth: inverted ? 0 : undefined
+      autoExpandDepth: inverted ? 0 : undefined,
+      showOptimizationHint: options.showOptimizationHint
     });
 
     // Bind events.
     root.on("link", this._onLink);
-
-    // Pipe "focus" events to the view, used by
-    // tests and JITOptimizationsView.
-    root.on("focus", (_, node) => this.emit("focus", node));
+    root.on("focus", this._onFocus);
 
     // Clear out other call trees.
     this.container.innerHTML = "";
@@ -131,3 +159,5 @@ let JsCallTreeView = Heritage.extend(DetailsSubview, {
 
   toString: () => "[object JsCallTreeView]"
 });
+
+EventEmitter.decorate(JsCallTreeView);

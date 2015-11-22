@@ -1,4 +1,4 @@
-﻿<!DOCTYPE HTML>
+<!DOCTYPE HTML>
 <html>
 <head>
   <title>Test for bug 879717, check that a video element can be drawn into a canvas at various states of playback</title>
@@ -9,6 +9,11 @@
 <body>
 <pre id="test">
 <script class="testbody" type="text/javascript">
+//longer timeout for slow platforms
+if (isSlowPlatform()) {
+  SimpleTest.requestLongerTimeout(1.5);
+}
+
 var manager = new MediaTestManager;
 
 var canvas = document.createElement('canvas');
@@ -67,9 +72,15 @@ var startTest = function(media, token) {
   v2.onplay = checkDrawImageEventHandler;
   v3.onplay = checkDrawImageEventHandler;
 
-  v1.onplaying = checkDrawImageEventHandler;
-  v2.onplaying = checkDrawImageEventHandler;
-  v3.onplaying = checkDrawImageEventHandler;
+  function onplaying(ev) {
+    if (!ev.target.gotPlaying) {
+      ev.target.gotPlaying = true;
+      checkDrawImageEventHandler(ev);
+    }
+  }
+  v1.onplaying = onplaying;
+  v2.onplaying = onplaying;
+  v3.onplaying = onplaying;
 
   var onloadeddata = function(ev) {
     ev.target.gotLoadeddata = true;
@@ -109,7 +120,7 @@ var startTest = function(media, token) {
 
   v1.src = media.name;
   v2.src = media.name;
-  v3.mozSrcObject = v2.mozCaptureStreamUntilEnded();
+  v3.srcObject = v2.mozCaptureStreamUntilEnded();
 }
 
 manager.runTests(getPlayableVideos(gSmallTests), startTest);

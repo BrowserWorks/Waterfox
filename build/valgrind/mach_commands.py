@@ -2,10 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import os
-import re
 import subprocess
 
 from mach.decorators import (
@@ -93,6 +92,8 @@ class MachCommands(MachCommandBase):
             env['MOZ_CRASHREPORTER_NO_REPORT'] = '1'
             env['XPCOM_DEBUG_BREAK'] = 'warn'
 
+            env.update(self.extra_environment_variables)
+
             outputHandler = OutputHandler()
             kp_kwargs = {'processOutputLine': [outputHandler]}
 
@@ -110,6 +111,14 @@ class MachCommands(MachCommandBase):
                 '--show-possibly-lost=no',
                 '--track-origins=yes',
                 '--trace-children=yes',
+                # The gstreamer plugin scanner can run as part of executing
+                # firefox, but is an external program. In some weird cases,
+                # valgrind finds errors while executing __libc_freeres when
+                # it runs, but those are not relevant, as it's related to
+                # executing third party code. So don't trace
+                # gst-plugin-scanner.
+                '--trace-children-skip=*/gst-plugin-scanner',
+                '-v',  # Enable verbosity to get the list of used suppressions
             ]
 
             for s in suppressions:

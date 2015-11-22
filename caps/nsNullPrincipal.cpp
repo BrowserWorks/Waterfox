@@ -15,10 +15,8 @@
 #include "nsNullPrincipal.h"
 #include "nsNullPrincipalURI.h"
 #include "nsMemory.h"
-#include "nsNetUtil.h"
+#include "nsIURIWithPrincipal.h"
 #include "nsIClassInfoImpl.h"
-#include "nsIObjectInputStream.h"
-#include "nsIObjectOutputStream.h"
 #include "nsNetCID.h"
 #include "nsError.h"
 #include "nsIScriptSecurityManager.h"
@@ -37,61 +35,28 @@ NS_IMPL_CI_INTERFACE_GETTER(nsNullPrincipal,
                             nsIPrincipal,
                             nsISerializable)
 
-NS_IMETHODIMP_(MozExternalRefCountType)
-nsNullPrincipal::AddRef()
-{
-  NS_PRECONDITION(int32_t(refcount) >= 0, "illegal refcnt");
-  nsrefcnt count = ++refcount;
-  NS_LOG_ADDREF(this, count, "nsNullPrincipal", sizeof(*this));
-  return count;
-}
-
-NS_IMETHODIMP_(MozExternalRefCountType)
-nsNullPrincipal::Release()
-{
-  NS_PRECONDITION(0 != refcount, "dup release");
-  nsrefcnt count = --refcount;
-  NS_LOG_RELEASE(this, count, "nsNullPrincipal");
-  if (count == 0) {
-    delete this;
-  }
-
-  return count;
-}
-
-nsNullPrincipal::nsNullPrincipal()
-{
-}
-
-nsNullPrincipal::~nsNullPrincipal()
-{
-}
-
 /* static */ already_AddRefed<nsNullPrincipal>
 nsNullPrincipal::CreateWithInheritedAttributes(nsIPrincipal* aInheritFrom)
 {
   nsRefPtr<nsNullPrincipal> nullPrin = new nsNullPrincipal();
-  nsresult rv = nullPrin->Init(aInheritFrom->GetAppId(),
-                               aInheritFrom->GetIsInBrowserElement());
+  nsresult rv = nullPrin->Init(Cast(aInheritFrom)->OriginAttributesRef());
   return NS_SUCCEEDED(rv) ? nullPrin.forget() : nullptr;
 }
 
 /* static */ already_AddRefed<nsNullPrincipal>
-nsNullPrincipal::Create(uint32_t aAppId, bool aInMozBrowser)
+nsNullPrincipal::Create(const OriginAttributes& aOriginAttributes)
 {
   nsRefPtr<nsNullPrincipal> nullPrin = new nsNullPrincipal();
-  nsresult rv = nullPrin->Init(aAppId, aInMozBrowser);
+  nsresult rv = nullPrin->Init(aOriginAttributes);
   NS_ENSURE_SUCCESS(rv, nullptr);
 
   return nullPrin.forget();
 }
 
 nsresult
-nsNullPrincipal::Init(uint32_t aAppId, bool aInMozBrowser)
+nsNullPrincipal::Init(const OriginAttributes& aOriginAttributes)
 {
-  MOZ_ASSERT(aAppId != nsIScriptSecurityManager::UNKNOWN_APP_ID);
-  mAppId = aAppId;
-  mInMozBrowser = aInMozBrowser;
+  mOriginAttributes = aOriginAttributes;
 
   mURI = nsNullPrincipalURI::Create();
   NS_ENSURE_TRUE(mURI, NS_ERROR_NOT_AVAILABLE);
@@ -105,33 +70,9 @@ nsNullPrincipal::GetScriptLocation(nsACString &aStr)
   mURI->GetSpec(aStr);
 }
 
-#ifdef DEBUG
-void nsNullPrincipal::dumpImpl()
-{
-  nsAutoCString str;
-  mURI->GetSpec(str);
-  fprintf(stderr, "nsNullPrincipal (%p) = %s\n", this, str.get());
-}
-#endif 
-
 /**
  * nsIPrincipal implementation
  */
-
-NS_IMETHODIMP
-nsNullPrincipal::Equals(nsIPrincipal *aOther, bool *aResult)
-{
-  // Just equal to ourselves.  Note that nsPrincipal::Equals will return false
-  // for us since we have a unique domain/origin/etc.
-  *aResult = (aOther == this);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNullPrincipal::EqualsConsideringDomain(nsIPrincipal *aOther, bool *aResult)
-{
-  return Equals(aOther, aResult);
-}
 
 NS_IMETHODIMP
 nsNullPrincipal::GetHashValue(uint32_t *aResult)
@@ -140,29 +81,10 @@ nsNullPrincipal::GetHashValue(uint32_t *aResult)
   return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsNullPrincipal::GetURI(nsIURI** aURI)
 {
   return NS_EnsureSafeToReturn(mURI, aURI);
-}
-
-NS_IMETHODIMP
-nsNullPrincipal::GetCsp(nsIContentSecurityPolicy** aCsp)
-{
-  NS_IF_ADDREF(*aCsp = mCSP);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNullPrincipal::SetCsp(nsIContentSecurityPolicy* aCsp)
-{
-  // If CSP was already set, it should not be destroyed!  Instead, it should
-  // get set anew when a new principal is created.
-  if (mCSP)
-    return NS_ERROR_ALREADY_INITIALIZED;
-
-  mCSP = aCsp;
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -179,35 +101,10 @@ nsNullPrincipal::SetDomain(nsIURI* aDomain)
   return NS_ERROR_NOT_AVAILABLE;
 }
 
-NS_IMETHODIMP 
-nsNullPrincipal::GetOrigin(char** aOrigin)
+nsresult
+nsNullPrincipal::GetOriginInternal(nsACString& aOrigin)
 {
-  *aOrigin = nullptr;
-  
-  nsAutoCString str;
-  nsresult rv = mURI->GetSpec(str);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  *aOrigin = ToNewCString(str);
-  NS_ENSURE_TRUE(*aOrigin, NS_ERROR_OUT_OF_MEMORY);
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNullPrincipal::Subsumes(nsIPrincipal *aOther, bool *aResult)
-{
-  // We don't subsume anything except ourselves.  Note that nsPrincipal::Equals
-  // will return false for us, since we're not about:blank and not Equals to
-  // reasonable nsPrincipals.
-  *aResult = (aOther == this);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNullPrincipal::SubsumesConsideringDomain(nsIPrincipal *aOther, bool *aResult)
-{
-  return Subsumes(aOther, aResult);
+  return mURI->GetSpec(aOrigin);
 }
 
 NS_IMETHODIMP
@@ -239,41 +136,6 @@ nsNullPrincipal::CheckMayLoad(nsIURI* aURI, bool aReport, bool aAllowIfInheritsP
 }
 
 NS_IMETHODIMP
-nsNullPrincipal::GetJarPrefix(nsACString& aJarPrefix)
-{
-  aJarPrefix.Truncate();
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNullPrincipal::GetAppStatus(uint16_t* aAppStatus)
-{
-  *aAppStatus = nsScriptSecurityManager::AppStatusForPrincipal(this);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNullPrincipal::GetAppId(uint32_t* aAppId)
-{
-  *aAppId = mAppId;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNullPrincipal::GetIsInBrowserElement(bool* aIsInBrowserElement)
-{
-  *aIsInBrowserElement = mInMozBrowser;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNullPrincipal::GetUnknownAppId(bool* aUnknownAppId)
-{
-  *aUnknownAppId = false;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 nsNullPrincipal::GetIsNullPrincipal(bool* aIsNullPrincipal)
 {
   *aIsNullPrincipal = true;
@@ -287,12 +149,6 @@ nsNullPrincipal::GetBaseDomain(nsACString& aBaseDomain)
   return mURI->GetPath(aBaseDomain);
 }
 
-bool
-nsNullPrincipal::IsOnCSSUnprefixingWhitelist()
-{
-  return false;
-}
-
 /**
  * nsISerializable implementation
  */
@@ -303,11 +159,12 @@ nsNullPrincipal::Read(nsIObjectInputStream* aStream)
   // that the Init() method has already been invoked by the time we deserialize.
   // This is in contrast to nsPrincipal, which uses NS_GENERIC_FACTORY_CONSTRUCTOR,
   // in which case ::Read needs to invoke Init().
-  nsresult rv = aStream->Read32(&mAppId);
+  nsAutoCString suffix;
+  nsresult rv = aStream->ReadCString(suffix);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = aStream->ReadBoolean(&mInMozBrowser);
-  NS_ENSURE_SUCCESS(rv, rv);
+  bool ok = mOriginAttributes.PopulateFromSuffix(suffix);
+  NS_ENSURE_TRUE(ok, NS_ERROR_FAILURE);
 
   return NS_OK;
 }
@@ -315,8 +172,12 @@ nsNullPrincipal::Read(nsIObjectInputStream* aStream)
 NS_IMETHODIMP
 nsNullPrincipal::Write(nsIObjectOutputStream* aStream)
 {
-  aStream->Write32(mAppId);
-  aStream->WriteBoolean(mInMozBrowser);
+  nsAutoCString suffix;
+  OriginAttributesRef().CreateSuffix(suffix);
+
+  nsresult rv = aStream->WriteStringZ(suffix.get());
+  NS_ENSURE_SUCCESS(rv, rv);
+
   return NS_OK;
 }
 

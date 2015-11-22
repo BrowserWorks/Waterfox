@@ -51,15 +51,15 @@ class EventChainPreVisitor;
 class EventListenerManager;
 namespace css {
 class StyleRule;
-}
+} // namespace css
 namespace dom {
 class BoxObject;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 namespace JS {
 class SourceBufferHolder;
-}
+} // namespace JS
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -399,7 +399,7 @@ public:
     }
 #endif
 
-    virtual void PerformAccesskey(bool aKeyCausesActivation,
+    virtual bool PerformAccesskey(bool aKeyCausesActivation,
                                   bool aIsTrustedEvent) override;
     nsresult ClickWithInputSource(uint16_t aInputSource);
 
@@ -657,7 +657,7 @@ protected:
     nsresult MakeHeavyweight(nsXULPrototypeElement* aPrototype);
 
     virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                   const nsAttrValueOrString* aValue,
+                                   nsAttrValueOrString* aValue,
                                    bool aNotify) override;
     virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                   const nsAttrValue* aValue, bool aNotify) override;

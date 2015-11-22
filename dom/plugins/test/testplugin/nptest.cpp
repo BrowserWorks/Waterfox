@@ -168,6 +168,10 @@ static bool getNPNVdocumentOrigin(NPObject* npobj, const NPVariant* args, uint32
 static bool getMouseUpEventCount(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool queryContentsScaleFactor(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool echoString(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
+static bool startAudioPlayback(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
+static bool stopAudioPlayback(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
+static bool getAudioMuted(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
+static bool nativeWidgetIsVisible(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 
 static const NPUTF8* sPluginMethodIdentifierNames[] = {
   "npnEvaluateTest",
@@ -234,6 +238,10 @@ static const NPUTF8* sPluginMethodIdentifierNames[] = {
   "getMouseUpEventCount",
   "queryContentsScaleFactor",
   "echoString",
+  "startAudioPlayback",
+  "stopAudioPlayback",
+  "audioMuted",
+  "nativeWidgetIsVisible",
 };
 static NPIdentifier sPluginMethodIdentifiers[MOZ_ARRAY_LENGTH(sPluginMethodIdentifierNames)];
 static const ScriptableFunction sPluginMethodFunctions[] = {
@@ -301,6 +309,10 @@ static const ScriptableFunction sPluginMethodFunctions[] = {
   getMouseUpEventCount,
   queryContentsScaleFactor,
   echoString,
+  startAudioPlayback,
+  stopAudioPlayback,
+  getAudioMuted,
+  nativeWidgetIsVisible,
 };
 
 static_assert(MOZ_ARRAY_LENGTH(sPluginMethodIdentifierNames) ==
@@ -784,6 +796,8 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
   instanceData->npnNewStream = false;
   instanceData->invalidateDuringPaint = false;
   instanceData->slowPaint = false;
+  instanceData->playingAudio = false;
+  instanceData->audioMuted = false;
   instanceData->writeCount = 0;
   instanceData->writeReadyCount = 0;
   memset(&instanceData->window, 0, sizeof(instanceData->window));
@@ -1438,6 +1452,11 @@ NPP_SetValue(NPP instance, NPNVariable variable, void* value)
   if (variable == NPNVprivateModeBool) {
     InstanceData* instanceData = (InstanceData*)(instance->pdata);
     instanceData->lastReportedPrivateModeState = bool(*static_cast<NPBool*>(value));
+    return NPERR_NO_ERROR;
+  }
+  if (variable == NPNVmuteAudioBool) {
+    InstanceData* instanceData = (InstanceData*)(instance->pdata);
+    instanceData->audioMuted = bool(*static_cast<NPBool*>(value));
     return NPERR_NO_ERROR;
   }
   return NPERR_GENERIC_ERROR;
@@ -3305,6 +3324,27 @@ destroySharedGfxStuff(NPObject* npobj, const NPVariant* args,
 }
 #endif
 
+#if defined(XP_WIN)
+bool
+nativeWidgetIsVisible(NPObject* npobj, const NPVariant* args,
+                        uint32_t argCount, NPVariant* result)
+{
+  NPP npp = static_cast<TestNPObject*>(npobj)->npp;
+  InstanceData* id = static_cast<InstanceData*>(npp->pdata);
+  bool visible = pluginNativeWidgetIsVisible(id);
+  BOOLEAN_TO_NPVARIANT(visible, *result);
+  return true;
+}
+#else
+bool
+nativeWidgetIsVisible(NPObject* npobj, const NPVariant* args,
+                      uint32_t argCount, NPVariant* result)
+{
+  // XXX Not implemented!
+  return false;
+}
+#endif
+
 bool
 callOnDestroy(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result)
 {
@@ -3704,6 +3744,48 @@ bool echoString(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVar
   std::copy(arg.UTF8Characters, arg.UTF8Characters + arg.UTF8Length, buffer);
   STRINGN_TO_NPVARIANT(buffer, arg.UTF8Length, *result);
 
+  return true;
+}
+
+static bool
+toggleAudioPlayback(NPObject* npobj, uint32_t argCount, bool playingAudio, NPVariant* result)
+{
+  if (argCount != 0) {
+    return false;
+  }
+
+  NPP npp = static_cast<TestNPObject*>(npobj)->npp;
+  InstanceData* id = static_cast<InstanceData*>(npp->pdata);
+  id->playingAudio = playingAudio;
+
+  NPN_SetValue(npp, NPPVpluginIsPlayingAudio, (void*)playingAudio);
+
+  VOID_TO_NPVARIANT(*result);
+  return true;
+}
+
+static bool
+startAudioPlayback(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result)
+{
+  return toggleAudioPlayback(npobj, argCount, true, result);
+}
+
+static bool
+stopAudioPlayback(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result)
+{
+  return toggleAudioPlayback(npobj, argCount, false, result);
+}
+
+static bool
+getAudioMuted(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result)
+{
+  if (argCount != 0) {
+    return false;
+  }
+
+  NPP npp = static_cast<TestNPObject*>(npobj)->npp;
+  InstanceData* id = static_cast<InstanceData*>(npp->pdata);
+  BOOLEAN_TO_NPVARIANT(id->audioMuted, *result);
   return true;
 }
 

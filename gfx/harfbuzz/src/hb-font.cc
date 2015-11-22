@@ -604,7 +604,7 @@ hb_font_get_glyph_contour_point (hb_font_t *font,
  *
  * Return value: 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_bool_t
 hb_font_get_glyph_name (hb_font_t *font,
@@ -625,7 +625,7 @@ hb_font_get_glyph_name (hb_font_t *font,
  *
  * Return value: 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_bool_t
 hb_font_get_glyph_from_name (hb_font_t *font,
@@ -800,7 +800,7 @@ hb_font_get_glyph_contour_point_for_origin (hb_font_t *font,
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 void
 hb_font_glyph_to_string (hb_font_t *font,
@@ -814,7 +814,7 @@ hb_font_glyph_to_string (hb_font_t *font,
 /**
  * hb_font_glyph_from_string:
  * @font: a font.
- * @s: (array length=len): 
+ * @s: (array length=len) (element-type uint8_t): 
  * @len: 
  * @glyph: (out): 
  *
@@ -822,7 +822,7 @@ hb_font_glyph_to_string (hb_font_t *font,
  *
  * Return value: 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_bool_t
 hb_font_glyph_from_string (hb_font_t *font,
@@ -854,8 +854,6 @@ hb_font_create (hb_face_t *face)
 
   if (unlikely (!face))
     face = hb_face_get_empty ();
-  if (unlikely (hb_object_is_inert (face)))
-    return hb_font_get_empty ();
   if (!(font = hb_object_create<hb_font_t> ()))
     return hb_font_get_empty ();
 
@@ -880,7 +878,7 @@ hb_font_t *
 hb_font_create_sub_font (hb_font_t *parent)
 {
   if (unlikely (!parent))
-    return hb_font_get_empty ();
+    parent = hb_font_get_empty ();
 
   hb_font_t *font = hb_font_create (parent->face);
 
@@ -1080,7 +1078,7 @@ hb_font_get_parent (hb_font_t *font)
  *
  * Return value: (transfer none): 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_face_t *
 hb_font_get_face (hb_font_t *font)
@@ -1098,7 +1096,7 @@ hb_font_get_face (hb_font_t *font)
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 void
 hb_font_set_funcs (hb_font_t         *font,
@@ -1133,7 +1131,7 @@ hb_font_set_funcs (hb_font_t         *font,
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 void
 hb_font_set_funcs_data (hb_font_t         *font,

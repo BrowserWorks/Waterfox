@@ -40,8 +40,6 @@ interface HTMLInputElement : HTMLElement {
   readonly attribute HTMLFormElement? form;
   [Pure]
   readonly attribute FileList? files;
-  [Throws, Pref="dom.input.dirpicker"]
-  void openDirectoryPicker();
   [Pure, SetterThrows]
            attribute DOMString formAction;
   [Pure, SetterThrows]
@@ -148,7 +146,7 @@ partial interface HTMLInputElement {
   [GetterThrows]
   readonly attribute long                  textLength;
 
-  [ChromeOnly]
+  [Throws, ChromeOnly]
   sequence<DOMString> mozGetFileNameArray();
 
   [ChromeOnly, Throws]
@@ -189,6 +187,20 @@ partial interface HTMLInputElement {
   // for example will be dispatched when focusing out the element.
   [ChromeOnly]
   void setUserInput(DOMString input);
+};
+
+partial interface HTMLInputElement {
+  [Pref="dom.input.dirpicker", BinaryName="DirectoryAttr", SetterThrows]
+  attribute boolean directory;
+
+  [Pref="dom.input.dirpicker"]
+  readonly attribute boolean isFilesAndDirectoriesSupported;
+
+  [Throws, Pref="dom.input.dirpicker"]
+  Promise<sequence<(File or Directory)>> getFilesAndDirectories();
+
+  [Throws, Pref="dom.input.dirpicker"]
+  void chooseDirectory();
 };
 
 [NoInterfaceObject]

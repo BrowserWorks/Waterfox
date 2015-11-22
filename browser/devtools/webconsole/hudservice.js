@@ -8,29 +8,30 @@
 
 const {Cc, Ci, Cu} = require("chrome");
 
-let WebConsoleUtils = require("devtools/toolkit/webconsole/utils").Utils;
-let Heritage = require("sdk/core/heritage");
+var WebConsoleUtils = require("devtools/toolkit/webconsole/utils").Utils;
+var Heritage = require("sdk/core/heritage");
+var {TargetFactory} = require("devtools/framework/target");
+var {Tools} = require("definitions");
+var promise = require("promise");
 
 loader.lazyGetter(this, "Telemetry", () => require("devtools/shared/telemetry"));
 loader.lazyGetter(this, "WebConsoleFrame", () => require("devtools/webconsole/webconsole").WebConsoleFrame);
-loader.lazyImporter(this, "promise", "resource://gre/modules/Promise.jsm", "Promise");
 loader.lazyImporter(this, "gDevTools", "resource:///modules/devtools/gDevTools.jsm");
-loader.lazyImporter(this, "devtools", "resource://gre/modules/devtools/Loader.jsm");
 loader.lazyImporter(this, "Services", "resource://gre/modules/Services.jsm");
-loader.lazyImporter(this, "DebuggerServer", "resource://gre/modules/devtools/dbg-server.jsm");
-loader.lazyImporter(this, "DebuggerClient", "resource://gre/modules/devtools/dbg-client.jsm");
+loader.lazyRequireGetter(this, "DebuggerServer", "devtools/server/main", true);
+loader.lazyRequireGetter(this, "DebuggerClient", "devtools/toolkit/client/main", true);
 loader.lazyGetter(this, "showDoorhanger", () => require("devtools/shared/doorhanger").showDoorhanger);
 loader.lazyRequireGetter(this, "sourceUtils", "devtools/shared/source-utils");
 
 const STRINGS_URI = "chrome://browser/locale/devtools/webconsole.properties";
-let l10n = new WebConsoleUtils.l10n(STRINGS_URI);
+var l10n = new WebConsoleUtils.l10n(STRINGS_URI);
 
 const BROWSER_CONSOLE_WINDOW_FEATURES = "chrome,titlebar,toolbar,centerscreen,resizable,dialog=no";
 
 // The preference prefix for all of the Browser Console filters.
 const BROWSER_CONSOLE_FILTER_PREFS_PREFIX = "devtools.browserconsole.filter.";
 
-let gHudId = 0;
+var gHudId = 0;
 
 ///////////////////////////////////////////////////////////////////////////
 //// The HUD service
@@ -155,10 +156,10 @@ HUD_SERVICE.prototype =
   getOpenWebConsole: function HS_getOpenWebConsole()
   {
     let tab = this.currentContext().gBrowser.selectedTab;
-    if (!tab || !devtools.TargetFactory.isKnownTab(tab)) {
+    if (!tab || !TargetFactory.isKnownTab(tab)) {
       return null;
     }
-    let target = devtools.TargetFactory.forTab(tab);
+    let target = TargetFactory.forTab(tab);
     let toolbox = gDevTools.getToolbox(target);
     let panel = toolbox ? toolbox.getPanel("webconsole") : null;
     return panel ? panel.hud : null;
@@ -205,7 +206,7 @@ HUD_SERVICE.prototype =
     let target;
     function getTarget(aConnection)
     {
-      return devtools.TargetFactory.forRemoteTab(aConnection);
+      return TargetFactory.forRemoteTab(aConnection);
     }
 
     function openWindow(aTarget)
@@ -214,7 +215,7 @@ HUD_SERVICE.prototype =
 
       let deferred = promise.defer();
 
-      let win = Services.ww.openWindow(null, devtools.Tools.webConsole.url, "_blank",
+      let win = Services.ww.openWindow(null, Tools.webConsole.url, "_blank",
                                        BROWSER_CONSOLE_WINDOW_FEATURES, null);
       win.addEventListener("DOMContentLoaded", function onLoad() {
         win.removeEventListener("DOMContentLoaded", onLoad);
@@ -320,7 +321,10 @@ WebConsole.prototype = {
    *
    * @type function
    */
-  get lastFinishedRequestCallback() HUDService.lastFinishedRequest.callback,
+  get lastFinishedRequestCallback()
+  {
+    return HUDService.lastFinishedRequest.callback;
+  },
 
   /**
    * Getter for the window that can provide various utilities that the web
@@ -434,6 +438,15 @@ WebConsole.prototype = {
    *        The line number which should be highlighted.
    */
   viewSource: function WC_viewSource(aSourceURL, aSourceLine) {
+    // Attempt to access view source via a browser first, which may display it in
+    // a tab, if enabled.
+    let browserWin = Services.wm.getMostRecentWindow("navigator:browser");
+    if (browserWin && browserWin.BrowserViewSourceOfDocument) {
+      return browserWin.BrowserViewSourceOfDocument({
+        URL: aSourceURL,
+        lineNumber: aSourceLine
+      });
+    }
     this.gViewSourceUtils.viewSource(aSourceURL, null, this.iframeWindow.document, aSourceLine || 0);
   },
 

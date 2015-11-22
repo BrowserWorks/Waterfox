@@ -19,7 +19,7 @@
 #include <netioapi.h>
 #include <iprtrmib.h>
 #include "plstr.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsThreadUtils.h"
 #include "nsIObserverService.h"
 #include "nsServiceManagerUtils.h"
@@ -36,7 +36,7 @@
 using namespace mozilla;
 
 static PRLogModuleInfo *gNotifyAddrLog = nullptr;
-#define LOG(args) PR_LOG(gNotifyAddrLog, PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(gNotifyAddrLog, mozilla::LogLevel::Debug, args)
 
 static HMODULE sNetshell;
 static decltype(NcFreeNetconProperties)* sNcFreeNetconProperties;

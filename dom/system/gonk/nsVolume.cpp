@@ -66,6 +66,22 @@ nsVolume::nsVolume(const Volume* aVolume)
 {
 }
 
+nsVolume::nsVolume(const nsVolume* aVolume)
+  : mName(aVolume->mName),
+    mMountPoint(aVolume->mMountPoint),
+    mState(aVolume->mState),
+    mMountGeneration(aVolume->mMountGeneration),
+    mMountLocked(aVolume->mMountLocked),
+    mIsFake(aVolume->mIsFake),
+    mIsMediaPresent(aVolume->mIsMediaPresent),
+    mIsSharing(aVolume->mIsSharing),
+    mIsFormatting(aVolume->mIsFormatting),
+    mIsUnmounting(aVolume->mIsUnmounting),
+    mIsRemovable(aVolume->mIsRemovable),
+    mIsHotSwappable(aVolume->mIsHotSwappable)
+{
+}
+
 void nsVolume::Dump(const char* aLabel) const
 {
   LOG("%s: Volume: %s is %s and %s @ %s gen %d locked %d",
@@ -246,7 +262,7 @@ NS_IMETHODIMP nsVolume::GetIsHotSwappable(bool *aIsHotSwappable)
 
 NS_IMETHODIMP nsVolume::Format()
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   XRE_GetIOMessageLoop()->PostTask(
       FROM_HERE,
@@ -258,7 +274,7 @@ NS_IMETHODIMP nsVolume::Format()
 /* static */
 void nsVolume::FormatVolumeIOThread(const nsCString& aVolume)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   if (VolumeManager::State() != VolumeManager::VOLUMES_READY) {
@@ -270,7 +286,7 @@ void nsVolume::FormatVolumeIOThread(const nsCString& aVolume)
 
 NS_IMETHODIMP nsVolume::Mount()
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   XRE_GetIOMessageLoop()->PostTask(
       FROM_HERE,
@@ -282,7 +298,7 @@ NS_IMETHODIMP nsVolume::Mount()
 /* static */
 void nsVolume::MountVolumeIOThread(const nsCString& aVolume)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   if (VolumeManager::State() != VolumeManager::VOLUMES_READY) {
@@ -294,7 +310,7 @@ void nsVolume::MountVolumeIOThread(const nsCString& aVolume)
 
 NS_IMETHODIMP nsVolume::Unmount()
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   XRE_GetIOMessageLoop()->PostTask(
       FROM_HERE,
@@ -306,7 +322,7 @@ NS_IMETHODIMP nsVolume::Unmount()
 /* static */
 void nsVolume::UnmountVolumeIOThread(const nsCString& aVolume)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   if (VolumeManager::State() != VolumeManager::VOLUMES_READY) {
@@ -333,40 +349,28 @@ nsVolume::LogState() const
   LOG("nsVolume: %s state %s", NameStr().get(), StateStr());
 }
 
-void nsVolume::Set(nsIVolume* aVolume)
+void nsVolume::UpdateMountLock(nsVolume* aOldVolume)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  aVolume->GetName(mName);
-  aVolume->GetMountPoint(mMountPoint);
-  aVolume->GetState(&mState);
-  aVolume->GetIsFake(&mIsFake);
-  aVolume->GetIsMediaPresent(&mIsMediaPresent);
-  aVolume->GetIsSharing(&mIsSharing);
-  aVolume->GetIsFormatting(&mIsFormatting);
-  aVolume->GetIsUnmounting(&mIsUnmounting);
-  aVolume->GetIsRemovable(&mIsRemovable);
-  aVolume->GetIsHotSwappable(&mIsHotSwappable);
-
-  int32_t volMountGeneration;
-  aVolume->GetMountGeneration(&volMountGeneration);
-
+  bool oldMountLocked = aOldVolume ? aOldVolume->mMountLocked : false;
   if (mState != nsIVolume::STATE_MOUNTED) {
     // Since we're not in the mounted state, we need to
     // forgot whatever mount generation we may have had.
     mMountGeneration = -1;
+    mMountLocked = oldMountLocked;
     return;
   }
-  if (mMountGeneration == volMountGeneration) {
+
+  int32_t oldMountGeneration = aOldVolume ? aOldVolume->mMountGeneration : -1;
+  if (mMountGeneration == oldMountGeneration) {
     // No change in mount generation, nothing else to do
+    mMountLocked = oldMountLocked;
     return;
   }
 
-  mMountGeneration = volMountGeneration;
-
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     // Child processes just track the state, not maintain it.
-    aVolume->GetIsMountLocked(&mMountLocked);
     return;
   }
 
@@ -386,7 +390,7 @@ void nsVolume::Set(nsIVolume* aVolume)
 void
 nsVolume::UpdateMountLock(const nsAString& aMountLockState)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(NS_IsMainThread());
 
   // There are 3 states, unlocked, locked-background, and locked-foreground
@@ -397,7 +401,7 @@ nsVolume::UpdateMountLock(const nsAString& aMountLockState)
 void
 nsVolume::UpdateMountLock(bool aMountLocked)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(NS_IsMainThread());
 
   if (aMountLocked == mMountLocked) {
@@ -447,7 +451,7 @@ nsVolume::SetState(int32_t aState)
 {
   static int32_t sMountGeneration = 0;
 
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(IsFake());
 

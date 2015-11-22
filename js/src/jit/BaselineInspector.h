@@ -104,6 +104,7 @@ class BaselineInspector
     MIRType expectedResultType(jsbytecode* pc);
     MCompare::CompareType expectedCompareType(jsbytecode* pc);
     MIRType expectedBinaryArithSpecialization(jsbytecode* pc);
+    MIRType expectedPropertyAccessInputType(jsbytecode* pc);
 
     bool hasSeenNonNativeGetElement(jsbytecode* pc);
     bool hasSeenNegativeIndexGetElement(jsbytecode* pc);
@@ -112,7 +113,7 @@ class BaselineInspector
     bool hasSeenNonStringIterMore(jsbytecode* pc);
 
     bool isOptimizableCallStringSplit(jsbytecode* pc, JSString** stringOut, JSString** stringArg,
-                                      NativeObject** objOut);
+                                      JSObject** objOut);
     JSObject* getTemplateObject(jsbytecode* pc);
     JSObject* getTemplateObjectForNative(jsbytecode* pc, Native native);
     JSObject* getTemplateObjectForClassHook(jsbytecode* pc, const Class* clasp);

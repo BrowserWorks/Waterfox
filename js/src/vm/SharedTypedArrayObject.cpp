@@ -7,6 +7,7 @@
 #include "vm/SharedTypedArrayObject.h"
 
 #include "mozilla/Alignment.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/PodOperations.h"
 
 #include <string.h>
@@ -97,7 +98,7 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
     typedef SharedTypedArrayObjectTemplate<NativeType> ThisTypedArrayObject;
     typedef SharedArrayBufferObject BufferType;
 
-    static Scalar::Type ArrayTypeID() { return TypeIDOfType<NativeType>(); }
+    static MOZ_CONSTEXPR Scalar::Type ArrayTypeID() { return TypeIDOfType<NativeType>::id; }
     static bool ArrayTypeIsUnsigned() { return TypeIsUnsigned<NativeType>(); }
     static bool ArrayTypeIsFloatingPoint() { return TypeIsFloatingPoint<NativeType>(); }
 
@@ -308,7 +309,7 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
 
     template<Value ValueGetter(SharedTypedArrayObject* tarr)>
     static bool
-    GetterImpl(JSContext* cx, CallArgs args)
+    GetterImpl(JSContext* cx, const CallArgs& args)
     {
         MOZ_ASSERT(is(args.thisv()));
         args.rval().set(ValueGetter(&args.thisv().toObject().as<SharedTypedArrayObject>()));
@@ -327,7 +328,7 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
     }
 
     static bool
-    BufferGetterImpl(JSContext* cx, CallArgs args)
+    BufferGetterImpl(JSContext* cx, const CallArgs& args)
     {
         MOZ_ASSERT(is(args.thisv()));
         Rooted<SharedTypedArrayObject*> tarray(cx, &args.thisv().toObject().as<SharedTypedArrayObject>());
@@ -350,7 +351,7 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
         unsigned attrs = JSPROP_SHARED | JSPROP_GETTER;
 
         Rooted<GlobalObject*> global(cx, cx->compartment()->maybeGlobal());
-        JSObject* getter = NewNativeFunction(cx, native, 0, NullPtr());
+        JSObject* getter = NewNativeFunction(cx, native, 0, nullptr);
         if (!getter)
             return false;
 
@@ -725,7 +726,7 @@ IMPL_SHARED_TYPED_ARRAY_COMBINED_UNWRAPPERS(Float64, double, double)
 {                                                                              \
     "Shared" #_typedArray,                                                     \
     JSCLASS_HAS_RESERVED_SLOTS(SharedTypedArrayObject::RESERVED_SLOTS) |       \
-    JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS |                        \
+    JSCLASS_HAS_PRIVATE |                                                      \
     JSCLASS_HAS_CACHED_PROTO(JSProto_Shared##_typedArray),                     \
     nullptr,                 /* addProperty */                                 \
     nullptr,                 /* delProperty */                                 \
@@ -997,6 +998,105 @@ SharedTypedArrayObject::setElement(SharedTypedArrayObject& obj, uint32_t index, 
       default:
         MOZ_CRASH("Unknown SharedTypedArray type");
     }
+}
+
+JS_FRIEND_API(int8_t*)
+JS_GetSharedInt8ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
+{
+    obj = CheckedUnwrap(obj);
+    if (!obj)
+        return nullptr;
+    SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
+    MOZ_ASSERT((int32_t) tarr->type() == Scalar::Int8);
+    return static_cast<int8_t*>(tarr->viewData());
+}
+
+JS_FRIEND_API(uint8_t*)
+JS_GetSharedUint8ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
+{
+    obj = CheckedUnwrap(obj);
+    if (!obj)
+        return nullptr;
+    SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
+    MOZ_ASSERT((int32_t) tarr->type() == Scalar::Uint8);
+    return static_cast<uint8_t*>(tarr->viewData());
+}
+
+JS_FRIEND_API(uint8_t*)
+JS_GetSharedUint8ClampedArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
+{
+    obj = CheckedUnwrap(obj);
+    if (!obj)
+        return nullptr;
+    SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
+    MOZ_ASSERT((int32_t) tarr->type() == Scalar::Uint8Clamped);
+    return static_cast<uint8_t*>(tarr->viewData());
+}
+
+JS_FRIEND_API(int16_t*)
+JS_GetSharedInt16ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
+{
+    obj = CheckedUnwrap(obj);
+    if (!obj)
+        return nullptr;
+    SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
+    MOZ_ASSERT((int32_t) tarr->type() == Scalar::Int16);
+    return static_cast<int16_t*>(tarr->viewData());
+}
+
+JS_FRIEND_API(uint16_t*)
+JS_GetSharedUint16ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
+{
+    obj = CheckedUnwrap(obj);
+    if (!obj)
+        return nullptr;
+    SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
+    MOZ_ASSERT((int32_t) tarr->type() == Scalar::Uint16);
+    return static_cast<uint16_t*>(tarr->viewData());
+}
+
+JS_FRIEND_API(int32_t*)
+JS_GetSharedInt32ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
+{
+    obj = CheckedUnwrap(obj);
+    if (!obj)
+        return nullptr;
+    SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
+    MOZ_ASSERT((int32_t) tarr->type() == Scalar::Int32);
+    return static_cast<int32_t*>(tarr->viewData());
+}
+
+JS_FRIEND_API(uint32_t*)
+JS_GetSharedUint32ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
+{
+    obj = CheckedUnwrap(obj);
+    if (!obj)
+        return nullptr;
+    SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
+    MOZ_ASSERT((int32_t) tarr->type() == Scalar::Uint32);
+    return static_cast<uint32_t*>(tarr->viewData());
+}
+
+JS_FRIEND_API(float*)
+JS_GetSharedFloat32ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
+{
+    obj = CheckedUnwrap(obj);
+    if (!obj)
+        return nullptr;
+    SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
+    MOZ_ASSERT((int32_t) tarr->type() == Scalar::Float32);
+    return static_cast<float*>(tarr->viewData());
+}
+
+JS_FRIEND_API(double*)
+JS_GetSharedFloat64ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
+{
+    obj = CheckedUnwrap(obj);
+    if (!obj)
+        return nullptr;
+    SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
+    MOZ_ASSERT((int32_t) tarr->type() == Scalar::Float64);
+    return static_cast<double*>(tarr->viewData());
 }
 
 #undef IMPL_SHARED_TYPED_ARRAY_STATICS

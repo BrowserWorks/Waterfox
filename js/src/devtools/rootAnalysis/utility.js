@@ -111,26 +111,25 @@ function getSuccessors(body)
 // no mangled name was given, use the unmangled name as its mangled name
 function splitFunction(func)
 {
-    var split = func.indexOf("|");
-    if (split == -1)
-        return [ func, func ];
-    return [ func.substr(0, split), func.substr(split+1) ];
+    var split = func.indexOf("$");
+    if (split != -1)
+        return [ func.substr(0, split), func.substr(split+1) ];
+    split = func.indexOf("|");
+    if (split != -1)
+        return [ func.substr(0, split), func.substr(split+1) ];
+    return [ func, func ];
 }
 
 function mangled(fullname)
 {
-    var split = fullname.indexOf("|");
-    if (split == -1)
-        return fullname;
-    return fullname.substr(0, split);
+    var [ mangled, unmangled ] = splitFunction(fullname);
+    return mangled;
 }
 
 function readable(fullname)
 {
-    var split = fullname.indexOf("|");
-    if (split == -1)
-        return fullname;
-    return fullname.substr(split+1);
+    var [ mangled, unmangled ] = splitFunction(fullname);
+    return unmangled;
 }
 
 function xdbLibrary()
@@ -144,4 +143,33 @@ function xdbLibrary()
         read_entry: lib.declare("xdb_read_entry", ctypes.default_abi, ctypes.char.ptr, ctypes.char.ptr),
         free_string: lib.declare("xdb_free", ctypes.default_abi, ctypes.void_t, ctypes.char.ptr)
     };
+}
+
+function cLibrary()
+{
+    var lib;
+    try {
+        lib = ctypes.open("libc.so.6");
+    } catch(e) {
+        lib = ctypes.open("libc.so");
+    }
+
+    return {
+        fopen: lib.declare("fopen", ctypes.default_abi, ctypes.void_t.ptr, ctypes.char.ptr, ctypes.char.ptr),
+        getline: lib.declare("getline", ctypes.default_abi, ctypes.ssize_t, ctypes.char.ptr.ptr, ctypes.size_t.ptr, ctypes.void_t.ptr),
+        fclose: lib.declare("fopen", ctypes.default_abi, ctypes.int, ctypes.void_t.ptr),
+        setvbuf: lib.declare("setvbuf", ctypes.default_abi, ctypes.int, ctypes.void_t.ptr, ctypes.char.ptr, ctypes.int, ctypes.size_t),
+    };
+}
+
+function* readFileLines_gen(filename)
+{
+  var libc = cLibrary();
+  var linebuf = ctypes.char.array(4096)();
+  var bufsize = ctypes.size_t(4096);
+  var fp = libc.fopen(filename, "r");
+  var bufp = ctypes.char.ptr(linebuf.addressOfElement(0));
+  while (libc.getline(bufp.address(), bufsize.address(), fp) > 0)
+    yield bufp.readString();
+  libc.fclose(fp);
 }

@@ -22,7 +22,7 @@ namespace js {
 
 namespace jit {
 class JitZone;
-}
+} // namespace jit
 
 namespace gc {
 
@@ -187,7 +187,7 @@ struct Zone : public JS::shadow::Zone,
     // tracer.
     bool requireGCTracer() const {
         JSRuntime* rt = runtimeFromAnyThread();
-        return rt->isHeapMajorCollecting() && !rt->isHeapCompacting() && gcState_ != NoGC;
+        return rt->isHeapMajorCollecting() && !rt->gc.isHeapCompacting() && gcState_ != NoGC;
     }
 
     bool isGCMarking() {
@@ -222,13 +222,25 @@ struct Zone : public JS::shadow::Zone,
     js::jit::JitZone* getJitZone(JSContext* cx) { return jitZone_ ? jitZone_ : createJitZone(cx); }
     js::jit::JitZone* jitZone() { return jitZone_; }
 
+    bool isAtomsZone() const { return runtimeFromAnyThread()->isAtomsZone(this); }
+    bool isSelfHostingZone() const { return runtimeFromAnyThread()->isSelfHostingZone(this); }
+
+    void prepareForCompacting();
+
 #ifdef DEBUG
     // For testing purposes, return the index of the zone group which this zone
     // was swept in in the last GC.
     unsigned lastZoneGroupIndex() { return gcLastZoneGroupIndex; }
 #endif
 
+    using DebuggerVector = js::Vector<js::Debugger*, 0, js::SystemAllocPolicy>;
+
   private:
+    DebuggerVector* debuggers;
+
+    using LogTenurePromotionQueue = js::Vector<JSObject*, 0, js::SystemAllocPolicy>;
+    LogTenurePromotionQueue awaitingTenureLogging;
+
     void sweepBreakpoints(js::FreeOp* fop);
     void sweepCompartments(js::FreeOp* fop, bool keepAtleastOne, bool lastGC);
 
@@ -239,6 +251,18 @@ struct Zone : public JS::shadow::Zone,
     }
 
   public:
+    bool hasDebuggers() const { return debuggers && debuggers->length(); }
+    DebuggerVector* getDebuggers() const { return debuggers; }
+    DebuggerVector* getOrCreateDebuggers(JSContext* cx);
+
+    void enqueueForPromotionToTenuredLogging(JSObject& obj) {
+        MOZ_ASSERT(hasDebuggers());
+        MOZ_ASSERT(!IsInsideNursery(&obj));
+        if (!awaitingTenureLogging.append(&obj))
+            js::CrashAtUnhandlableOOM("Zone::enqueueForPromotionToTenuredLogging");
+    }
+    void logPromotionsToTenured();
+
     js::gc::ArenaLists arenas;
 
     js::TypeZone types;
@@ -451,10 +475,6 @@ class CompartmentsIterT
 };
 
 typedef CompartmentsIterT<ZonesIter> CompartmentsIter;
-
-// Return the Zone* of a Value. Asserts if the Value is not a GC thing.
-Zone*
-ZoneOfValue(const JS::Value& value);
 
 } // namespace js
 

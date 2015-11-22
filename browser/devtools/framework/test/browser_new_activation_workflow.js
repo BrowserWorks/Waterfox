@@ -3,11 +3,9 @@
 
 // Tests devtools API
 
-const Cu = Components.utils;
+var toolbox, target;
 
-let toolbox, target;
-
-let tempScope = {};
+var tempScope = {};
 
 function test() {
   addTab("about:blank").then(function(aTab) {

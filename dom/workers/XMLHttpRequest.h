@@ -14,18 +14,18 @@
 
 #include "mozilla/dom/TypedArray.h"
 
-#include "js/StructuredClone.h"
 #include "nsXMLHttpRequest.h"
 
 namespace mozilla {
 namespace dom {
-class File;
-}
-}
+class Blob;
+} // namespace dom
+} // namespace mozilla
 
 BEGIN_WORKERS_NAMESPACE
 
 class Proxy;
+class SendRunnable;
 class XMLHttpRequestUpload;
 class WorkerPrivate;
 
@@ -171,7 +171,7 @@ public:
   Send(JS::Handle<JSObject*> aBody, ErrorResult& aRv);
 
   void
-  Send(File& aBody, ErrorResult& aRv);
+  Send(Blob& aBody, ErrorResult& aRv);
 
   void
   Send(nsFormData& aBody, ErrorResult& aRv);
@@ -250,7 +250,7 @@ public:
   NullResponseText()
   {
     mStateData.mResponseText.SetIsVoid(true);
-    mStateData.mResponse = JSVAL_NULL;
+    mStateData.mResponse.setNull();
   }
 
   bool MozAnon() const
@@ -290,9 +290,7 @@ private:
                               ErrorResult& aRv);
 
   void
-  SendInternal(const nsAString& aStringBody,
-               JSAutoStructuredCloneBuffer&& aBody,
-               nsTArray<nsCOMPtr<nsISupports> >& aClonedObjects,
+  SendInternal(SendRunnable* aRunnable,
                ErrorResult& aRv);
 };
 

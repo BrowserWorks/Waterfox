@@ -11,6 +11,7 @@
 #include "nsLookAndFeel.h"
 #include "nsCRT.h"
 #include "nsFont.h"
+#include "mozilla/dom/ContentChild.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/widget/WidgetMessageUtils.h"
@@ -116,6 +117,12 @@ nsLookAndFeelIntPref nsXPLookAndFeel::sIntPrefs[] =
   { "ui.physicalHomeButton",
     eIntID_PhysicalHomeButton,
     false, 0 },
+  { "ui.contextMenuOffsetVertical",
+    eIntID_ContextMenuOffsetVertical,
+    false, 0 },
+  { "ui.contextMenuOffsetHorizontal",
+    eIntID_ContextMenuOffsetHorizontal,
+    false, 0 }
 };
 
 nsLookAndFeelFloatPref nsXPLookAndFeel::sFloatPrefs[] =
@@ -455,12 +462,12 @@ nsXPLookAndFeel::Init()
     sUseNativeColors = val;
   }
 
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     mozilla::dom::ContentChild* cc =
       mozilla::dom::ContentChild::GetSingleton();
 
     nsTArray<LookAndFeelInt> lookAndFeelIntCache;
-    cc->SendGetLookAndFeelCache(lookAndFeelIntCache);
+    cc->SendGetLookAndFeelCache(&lookAndFeelIntCache);
     LookAndFeel::SetIntCache(lookAndFeelIntCache);
   }
 }

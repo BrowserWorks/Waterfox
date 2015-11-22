@@ -18,6 +18,8 @@
 
 // Implementation of nsIFinalizationWitnessService
 
+static bool gShuttingDown = false;
+
 namespace mozilla {
 
 namespace {
@@ -99,14 +101,17 @@ ExtractFinalizationEvent(JSObject *objSelf)
 void Finalize(JSFreeOp *fop, JSObject *objSelf)
 {
   nsRefPtr<FinalizationEvent> event = ExtractFinalizationEvent(objSelf);
-  if (event == nullptr) {
-    // Forget() has been called
+  if (event == nullptr || gShuttingDown) {
+    // NB: event will be null if Forget() has been called
     return;
   }
 
   // Notify observers. Since we are executed during garbage-collection,
   // we need to dispatch the notification to the main thread.
-  (void)NS_DispatchToMainThread(event);
+  nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+  if (mainThread) {
+    mainThread->Dispatch(event.forget(), NS_DISPATCH_NORMAL);
+  }
   // We may fail at dispatching to the main thread if we arrive too late
   // during shutdown. In that case, there is not much we can do.
 }
@@ -139,7 +144,7 @@ bool IsWitness(JS::Handle<JS::Value> v)
  *  Neutralize the witness. Once this method is called, the witness will
  *  never report any error.
  */
-bool ForgetImpl(JSContext* cx, JS::CallArgs args)
+bool ForgetImpl(JSContext* cx, const JS::CallArgs& args)
 {
   if (args.length() != 0) {
     JS_ReportError(cx, "forget() takes no arguments");
@@ -169,9 +174,9 @@ static const JSFunctionSpec sWitnessClassFunctions[] = {
   JS_FS_END
 };
 
-}
+} // namespace
 
-NS_IMPL_ISUPPORTS(FinalizationWitnessService, nsIFinalizationWitnessService)
+NS_IMPL_ISUPPORTS(FinalizationWitnessService, nsIFinalizationWitnessService, nsIObserver)
 
 /**
  * Create a new Finalization Witness.
@@ -207,6 +212,32 @@ FinalizationWitnessService::Make(const char* aTopic,
 
   aRetval.setObject(*objResult);
   return NS_OK;
+}
+
+NS_IMETHODIMP
+FinalizationWitnessService::Observe(nsISupports* aSubject,
+                                    const char* aTopic,
+                                    const char16_t* aValue)
+{
+  MOZ_ASSERT(strcmp(aTopic, NS_XPCOM_SHUTDOWN_OBSERVER_ID) == 0);
+  gShuttingDown = true;
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (obs) {
+    obs->RemoveObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID);
+  }
+
+  return NS_OK;
+}
+
+nsresult
+FinalizationWitnessService::Init()
+{
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (!obs) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return obs->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
 }
 
 } // namespace mozilla

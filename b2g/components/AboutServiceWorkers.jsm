@@ -4,7 +4,7 @@
 
 "use strict"
 
-this.EXPORTED_SYMBOLS = [];
+this.EXPORTED_SYMBOLS = ["AboutServiceWorkers"];
 
 const { interfaces: Ci, utils: Cu } = Components;
 
@@ -19,7 +19,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gServiceWorkerManager",
                                   "nsIServiceWorkerManager");
 
 function debug(aMsg) {
-  //dump("AboutServiceWorkers - " + aMsg + "\n");
+  dump("AboutServiceWorkers - " + aMsg + "\n");
 }
 
 function serializeServiceWorkerInfo(aServiceWorkerInfo) {
@@ -36,8 +36,7 @@ function serializeServiceWorkerInfo(aServiceWorkerInfo) {
     if (property === "principal") {
       result.principal = {
         origin: aServiceWorkerInfo.principal.origin,
-        appId: aServiceWorkerInfo.principal.appId,
-        isInBrowser: aServiceWorkerInfo.principal.isInBrowser
+        originAttributes: aServiceWorkerInfo.principal.originAttributes
       };
       return;
     }
@@ -47,19 +46,6 @@ function serializeServiceWorkerInfo(aServiceWorkerInfo) {
   return result;
 }
 
-function sendResult(aId, aResult) {
-  SystemAppProxy._sendCustomEvent("mozAboutServiceWorkersChromeEvent", {
-    id: aId,
-    result: aResult
-  });
-}
-
-function sendError(aId, aError) {
-  SystemAppProxy._sendCustomEvent("mozAboutServiceWorkersChromeEvent", {
-    id: aId,
-    error: aError
-  });
-}
 
 this.AboutServiceWorkers = {
   get enabled() {
@@ -75,7 +61,21 @@ this.AboutServiceWorkers = {
 
   init: function() {
     SystemAppProxy.addEventListener("mozAboutServiceWorkersContentEvent",
-                                   AboutServiceWorkers);
+                                    AboutServiceWorkers);
+  },
+
+  sendResult: function(aId, aResult) {
+    SystemAppProxy._sendCustomEvent("mozAboutServiceWorkersChromeEvent", {
+      id: aId,
+      result: aResult
+    });
+  },
+
+  sendError: function(aId, aError) {
+    SystemAppProxy._sendCustomEvent("mozAboutServiceWorkersChromeEvent", {
+      id: aId,
+      error: aError
+    });
   },
 
   handleEvent: function(aEvent) {
@@ -88,10 +88,12 @@ this.AboutServiceWorkers = {
       return;
     }
 
+    let self = AboutServiceWorkers;
+
     switch(message.name) {
       case "init":
-        if (!this.enabled) {
-          sendResult({
+        if (!self.enabled) {
+          self.sendResult(message.id, {
             enabled: false,
             registrations: []
           });
@@ -100,7 +102,7 @@ this.AboutServiceWorkers = {
 
         let data = gServiceWorkerManager.getAllRegistrations();
         if (!data) {
-          sendError(message.id, "NoServiceWorkersRegistrations");
+          self.sendError(message.id, "NoServiceWorkersRegistrations");
           return;
         }
 
@@ -116,56 +118,68 @@ this.AboutServiceWorkers = {
           registrations.push(serializeServiceWorkerInfo(info));
         }
 
-        sendResult(message.id, {
-          enabled: this.enabled,
+        self.sendResult(message.id, {
+          enabled: self.enabled,
           registrations: registrations
         });
         break;
 
       case "update":
         if (!message.scope) {
-          sendError(message.id, "MissingScope");
+          self.sendError(message.id, "MissingScope");
           return;
         }
-        gServiceWorkerManager.update(message.scope);
-        sendResult(message.id, true);
+
+        if (!message.principal ||
+            !message.principal.originAttributes) {
+          self.sendError(message.id, "MissingOriginAttributes");
+          return;
+        }
+
+        gServiceWorkerManager.propagateSoftUpdate(
+          message.principal.originAttributes,
+          message.scope
+        );
+
+        self.sendResult(message.id, true);
         break;
 
       case "unregister":
         if (!message.principal ||
             !message.principal.origin ||
-            !message.principal.appId) {
-          sendError("MissingPrincipal");
+            !message.principal.originAttributes ||
+            !message.principal.originAttributes.appId ||
+            (message.principal.originAttributes.inBrowser == null)) {
+          self.sendError(message.id, "MissingPrincipal");
           return;
         }
 
-        let principal = Services.scriptSecurityManager.getAppCodebasePrincipal(
+        let principal = Services.scriptSecurityManager.createCodebasePrincipal(
+          // TODO: Bug 1196652. use originNoSuffix
           Services.io.newURI(message.principal.origin, null, null),
-          message.principal.appId,
-          message.principal.isInBrowser
-        );
+          message.principal.originAttributes);
 
         if (!message.scope) {
-          sendError("MissingScope");
+          self.sendError(message.id, "MissingScope");
           return;
         }
 
         let serviceWorkerUnregisterCallback = {
           unregisterSucceeded: function() {
-            sendResult(message.id, true);
+            self.sendResult(message.id, true);
           },
 
           unregisterFailed: function() {
-            sendError(message.id, "UnregisterError");
+            self.sendError(message.id, "UnregisterError");
           },
 
           QueryInterface: XPCOMUtils.generateQI([
             Ci.nsIServiceWorkerUnregisterCallback
           ])
         };
-        gServiceWorkerManager.unregister(principal,
-                                         serviceWorkerUnregisterCallback,
-                                         message.scope);
+        gServiceWorkerManager.propagateUnregister(principal,
+                                                  serviceWorkerUnregisterCallback,
+                                                  message.scope);
         break;
     }
   }

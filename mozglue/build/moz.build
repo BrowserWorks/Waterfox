@@ -26,6 +26,10 @@ if CONFIG['MOZ_ASAN']:
 
 if CONFIG['OS_TARGET'] == 'WINNT':
     DEFFILE = 'mozglue.def'
+    # We'll break the DLL blocklist if we immediately load user32.dll
+    DELAYLOAD_DLLS += [
+        'user32.dll',
+    ]
 
 if not CONFIG['JS_STANDALONE']:
 
@@ -90,9 +94,6 @@ DEFINES['IMPL_MFBT'] = True
 
 LDFLAGS += CONFIG['MOZ_GLUE_WRAP_LDFLAGS']
 
-if not CONFIG['_MSC_VER']:
-    FAIL_ON_WARNINGS = True
-
 if CONFIG['OS_TARGET'] == 'Darwin':
     # On OSX 10.10.3, a dead lock happens in some cases involving dynamic
     # symbol resolution for symbols that jemalloc itself uses. While it
@@ -102,3 +103,5 @@ if CONFIG['OS_TARGET'] == 'Darwin':
     # because somehow clang doesn't want to accept the __thread keyword
     # for TLS.
     LDFLAGS += ['-Wl,-bind_at_load']
+
+DIST_INSTALL = True

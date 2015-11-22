@@ -15,7 +15,7 @@
 #include "nsIWifiListener.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/ReentrantMonitor.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsIObserver.h"
 #include "nsTArray.h"
 #include "nsITimer.h"
@@ -27,7 +27,7 @@
 #endif
 
 extern PRLogModuleInfo *gWifiMonitorLog;
-#define LOG(args)     PR_LOG(gWifiMonitorLog, PR_LOG_DEBUG, args)
+#define LOG(args)     MOZ_LOG(gWifiMonitorLog, mozilla::LogLevel::Debug, args)
 
 class nsWifiAccessPoint;
 
@@ -76,7 +76,7 @@ class nsWifiMonitor final : nsIRunnable, nsIWifiMonitor, nsIObserver
   mozilla::ReentrantMonitor mReentrantMonitor;
 
 #ifdef XP_WIN
-  nsAutoPtr<WinWifiScanner> mWinWifiScanner;
+  nsAutoPtr<WindowsWifiScannerInterface> mWinWifiScanner;
 #endif
 };
 #else

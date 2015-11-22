@@ -4,7 +4,6 @@
 
 #include "LoadContextInfo.h"
 
-#include "nsNetUtil.h"
 #include "nsIChannel.h"
 #include "nsILoadContext.h"
 
@@ -111,5 +110,5 @@ GetLoadContextInfo(bool const aIsPrivate,
                              aIsAnonymous);
 }
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla

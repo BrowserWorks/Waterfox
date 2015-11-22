@@ -11,8 +11,8 @@ const kWhitelist = new Set([
 ]);
 
 
-let moduleLocation = gTestPath.replace(/\/[^\/]*$/i, "/parsingTestHelpers.jsm");
-let {generateURIsFromDirTree} = Cu.import(moduleLocation, {});
+var moduleLocation = gTestPath.replace(/\/[^\/]*$/i, "/parsingTestHelpers.jsm");
+var {generateURIsFromDirTree} = Cu.import(moduleLocation, {});
 
 // Normally we would use reflect.jsm to get Reflect.parse. However, if
 // we do that, then all the AST data is allocated in reflect.jsm's
@@ -87,8 +87,8 @@ add_task(function* checkAllTheJS() {
                " browser/base/content/test/general/browser_parsable_script.js");
       return;
     }
-    // Request a 10 minutes timeout (30 seconds * 20) for debug builds.
-    requestLongerTimeout(20);
+    // Request a 15 minutes timeout (30 seconds * 30) for debug builds.
+    requestLongerTimeout(30);
   }
 
   let uris;

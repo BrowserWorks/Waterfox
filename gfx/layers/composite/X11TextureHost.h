@@ -15,6 +15,14 @@
 namespace mozilla {
 namespace layers {
 
+class X11TextureSource : public TextureSource
+{
+public:
+  // Called when the underlying X surface has been changed.
+  // Useful for determining whether to rebind a GLXPixmap to a texture.
+  virtual void Updated() = 0;
+};
+
 // TextureHost for Xlib-backed TextureSources.
 class X11TextureHost : public TextureHost
 {
@@ -36,18 +44,21 @@ public:
     return !!aTexture;
   }
 
-  virtual TemporaryRef<gfx::DataSourceSurface> GetAsSurface() override
-  {
-    return nullptr; // XXX - implement this (for MOZ_DUMP_PAINTING)
-  }
+  virtual already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override;
 
 #ifdef MOZ_LAYERS_HAVE_LOG
   virtual const char* Name() override { return "X11TextureHost"; }
 #endif
 
 protected:
+  virtual void UpdatedInternal(const nsIntRegion*) override
+  {
+    if (mTextureSource)
+      mTextureSource->Updated();
+  }
+
   RefPtr<Compositor> mCompositor;
-  RefPtr<TextureSource> mTextureSource;
+  RefPtr<X11TextureSource> mTextureSource;
   RefPtr<gfxXlibSurface> mSurface;
 };
 

@@ -16,8 +16,8 @@ var IOService = Cc["@mozilla.org/network/io-service;1"]
 
 
 Service.engineManager.register(BookmarksEngine);
-let engine = Service.engineManager.get("bookmarks");
-let store = engine._store;
+var engine = Service.engineManager.get("bookmarks");
+var store = engine._store;
 
 // Clean up after other tests. Only necessary in XULRunner.
 store.wipe();
@@ -112,7 +112,7 @@ add_test(function test_annotation_uploaded() {
   try {
     engine.sync();
     let wbos = collection.keys(function (id) {
-                 return ["menu", "toolbar", "mobile"].indexOf(id) == -1;
+                 return ["menu", "toolbar", "mobile", "unfiled"].indexOf(id) == -1;
                });
     do_check_eq(wbos.length, 1);
 

@@ -8,7 +8,7 @@
  */
 
 typedef long long GLint64; // Should this be int64?
-typedef unsigned long long GLuint64; // Should this be uint64?
+typedef unsigned long long GLuint64;
 
 [Pref="webgl.enable-prototype-webgl2"]
 interface WebGLQuery {
@@ -26,11 +26,9 @@ interface WebGLSync {
 interface WebGLTransformFeedback {
 };
 
-/*
 [Pref="webgl.enable-prototype-webgl2"]
 interface WebGLVertexArrayObject {
 };
-*/
 
 [Pref="webgl.enable-prototype-webgl2"]
 interface WebGL2RenderingContext : WebGLRenderingContext
@@ -238,7 +236,6 @@ interface WebGL2RenderingContext : WebGLRenderingContext
     const GLenum RGB8_SNORM                                    = 0x8F96;
     const GLenum RGBA8_SNORM                                   = 0x8F97;
     const GLenum SIGNED_NORMALIZED                             = 0x8F9C;
-    const GLenum PRIMITIVE_RESTART_FIXED_INDEX                 = 0x8D69;
     const GLenum COPY_READ_BUFFER                              = 0x8F36;
     const GLenum COPY_WRITE_BUFFER                             = 0x8F37;
     const GLenum COPY_READ_BUFFER_BINDING                      = 0x8F36; /* Same as COPY_READ_BUFFER */
@@ -291,10 +288,6 @@ interface WebGL2RenderingContext : WebGLRenderingContext
     const GLenum ANY_SAMPLES_PASSED_CONSERVATIVE               = 0x8D6A;
     const GLenum SAMPLER_BINDING                               = 0x8919;
     const GLenum RGB10_A2UI                                    = 0x906F;
-    const GLenum TEXTURE_SWIZZLE_R                             = 0x8E42;
-    const GLenum TEXTURE_SWIZZLE_G                             = 0x8E43;
-    const GLenum TEXTURE_SWIZZLE_B                             = 0x8E44;
-    const GLenum TEXTURE_SWIZZLE_A                             = 0x8E45;
     const GLenum GREEN                                         = 0x1904;
     const GLenum BLUE                                          = 0x1905;
     const GLenum INT_2_10_10_10_REV                            = 0x8D9F;
@@ -319,6 +312,9 @@ interface WebGL2RenderingContext : WebGLRenderingContext
 
     const GLint64 TIMEOUT_IGNORED                              = -1;
 
+    /* WebGL-specific enums */
+    const GLenum MAX_CLIENT_WAIT_TIMEOUT_WEBGL                 = 0x9247;
+
     /* Buffer objects */
     void copyBufferSubData(GLenum readTarget, GLenum writeTarget, GLintptr readOffset,
                            GLintptr writeOffset, GLsizeiptr size);
@@ -327,14 +323,20 @@ interface WebGL2RenderingContext : WebGLRenderingContext
     /* Framebuffer objects */
     void blitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0,
                          GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-    void framebufferTextureLayer(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
-    any getInternalformatParameter(GLenum target, GLenum internalformat, GLenum pname);
+    void framebufferTextureLayer(GLenum target, GLenum attachment, WebGLTexture? texture, GLint level, GLint layer);
+
+    [Throws]
     void invalidateFramebuffer(GLenum target, sequence<GLenum> attachments);
+
+    [Throws]
     void invalidateSubFramebuffer (GLenum target, sequence<GLenum> attachments,
                                    GLint x, GLint y, GLsizei width, GLsizei height);
+
     void readBuffer(GLenum src);
 
     /* Renderbuffer objects */
+    [Throws]
+    any getInternalformatParameter(GLenum target, GLenum internalformat, GLenum pname);
     void renderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
 
     /* Texture objects */
@@ -470,10 +472,8 @@ interface WebGL2RenderingContext : WebGLRenderingContext
     void uniformBlockBinding(WebGLProgram? program, GLuint uniformBlockIndex, GLuint uniformBlockBinding);
 
     /* Vertex Array Objects */
-    /*
     WebGLVertexArrayObject? createVertexArray();
     void deleteVertexArray(WebGLVertexArrayObject? vertexArray);
     [WebGLHandlesContextLoss] GLboolean isVertexArray(WebGLVertexArrayObject? vertexArray);
     void bindVertexArray(WebGLVertexArrayObject? array);
-    */
 };

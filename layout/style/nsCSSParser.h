@@ -34,8 +34,8 @@ class Rule;
 class Declaration;
 class Loader;
 class StyleRule;
-}
-}
+} // namespace css
+} // namespace mozilla
 
 // Interface to the css parser.
 
@@ -308,6 +308,11 @@ public:
   // Check whether a given value can be applied to a property.
   bool IsValueValidForProperty(const nsCSSProperty aPropID,
                                const nsAString&    aPropValue);
+
+  // Return the default value to be used for -moz-control-character-visibility,
+  // from preferences (cached by our Startup(), so that both nsStyleText and
+  // nsRuleNode can have fast access to it).
+  static uint8_t ControlCharVisibilityDefault();
 
 protected:
   // This is a CSSParserImpl*, but if we expose that type name in this

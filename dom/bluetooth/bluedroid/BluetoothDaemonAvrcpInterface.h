@@ -4,16 +4,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_bluetooth_bluetoothdaemonavrcpinterface_h
-#define mozilla_dom_bluetooth_bluetoothdaemonavrcpinterface_h
+#ifndef mozilla_dom_bluetooth_bluedroid_BluetoothDaemonAvrcpInterface_h
+#define mozilla_dom_bluetooth_bluedroid_BluetoothDaemonAvrcpInterface_h
 
 #include "BluetoothDaemonHelpers.h"
 #include "BluetoothInterface.h"
-#include "BluetoothInterfaceHelpers.h"
+#include "mozilla/ipc/DaemonRunnables.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
 
-class BluetoothSetupResultHandler;
+using mozilla::ipc::DaemonSocketPDU;
+using mozilla::ipc::DaemonSocketPDUHeader;
+using mozilla::ipc::DaemonSocketResultHandler;
 
 class BluetoothDaemonAvrcpModule
 {
@@ -62,7 +64,8 @@ public:
 
   static const int MAX_NUM_CLIENTS;
 
-  virtual nsresult Send(BluetoothDaemonPDU* aPDU, void* aUserData) = 0;
+  virtual nsresult Send(DaemonSocketPDU* aPDU,
+                        DaemonSocketResultHandler* aRes) = 0;
 
   virtual nsresult RegisterModule(uint8_t aId, uint8_t aMode,
                                   uint32_t aMaxNumClients,
@@ -116,70 +119,68 @@ public:
   nsresult SetVolumeCmd(uint8_t aVolume, BluetoothAvrcpResultHandler* aRes);
 
 protected:
-  nsresult Send(BluetoothDaemonPDU* aPDU,
-                BluetoothAvrcpResultHandler* aRes);
-
-  void HandleSvc(const BluetoothDaemonPDUHeader& aHeader,
-                 BluetoothDaemonPDU& aPDU, void* aUserData);
+  void HandleSvc(const DaemonSocketPDUHeader& aHeader,
+                 DaemonSocketPDU& aPDU, DaemonSocketResultHandler* aRes);
 
   //
   // Responses
   //
 
-  typedef BluetoothResultRunnable0<BluetoothAvrcpResultHandler, void>
+  typedef mozilla::ipc::DaemonResultRunnable0<
+    BluetoothAvrcpResultHandler, void>
     ResultRunnable;
 
-  typedef BluetoothResultRunnable1<BluetoothAvrcpResultHandler, void,
-                                   BluetoothStatus, BluetoothStatus>
+  typedef mozilla::ipc::DaemonResultRunnable1<
+    BluetoothAvrcpResultHandler, void, BluetoothStatus, BluetoothStatus>
     ErrorRunnable;
 
-  void ErrorRsp(const BluetoothDaemonPDUHeader& aHeader,
-                BluetoothDaemonPDU& aPDU,
+  void ErrorRsp(const DaemonSocketPDUHeader& aHeader,
+                DaemonSocketPDU& aPDU,
                 BluetoothAvrcpResultHandler* aRes);
 
-  void GetPlayStatusRspRsp(const BluetoothDaemonPDUHeader& aHeader,
-                           BluetoothDaemonPDU& aPDU,
+  void GetPlayStatusRspRsp(const DaemonSocketPDUHeader& aHeader,
+                           DaemonSocketPDU& aPDU,
                            BluetoothAvrcpResultHandler* aRes);
 
-  void ListPlayerAppAttrRspRsp(const BluetoothDaemonPDUHeader& aHeader,
-                               BluetoothDaemonPDU& aPDU,
+  void ListPlayerAppAttrRspRsp(const DaemonSocketPDUHeader& aHeader,
+                               DaemonSocketPDU& aPDU,
                                BluetoothAvrcpResultHandler* aRes);
 
-  void ListPlayerAppValueRspRsp(const BluetoothDaemonPDUHeader& aHeader,
-                                BluetoothDaemonPDU& aPDU,
+  void ListPlayerAppValueRspRsp(const DaemonSocketPDUHeader& aHeader,
+                                DaemonSocketPDU& aPDU,
                                 BluetoothAvrcpResultHandler* aRes);
 
-  void GetPlayerAppValueRspRsp(const BluetoothDaemonPDUHeader& aHeader,
-                               BluetoothDaemonPDU& aPDU,
+  void GetPlayerAppValueRspRsp(const DaemonSocketPDUHeader& aHeader,
+                               DaemonSocketPDU& aPDU,
                                BluetoothAvrcpResultHandler* aRes);
 
-  void GetPlayerAppAttrTextRspRsp(const BluetoothDaemonPDUHeader& aHeader,
-                                  BluetoothDaemonPDU& aPDU,
+  void GetPlayerAppAttrTextRspRsp(const DaemonSocketPDUHeader& aHeader,
+                                  DaemonSocketPDU& aPDU,
                                   BluetoothAvrcpResultHandler* aRes);
 
-  void GetPlayerAppValueTextRspRsp(const BluetoothDaemonPDUHeader& aHeader,
-                                   BluetoothDaemonPDU& aPDU,
+  void GetPlayerAppValueTextRspRsp(const DaemonSocketPDUHeader& aHeader,
+                                   DaemonSocketPDU& aPDU,
                                    BluetoothAvrcpResultHandler* aRes);
 
-  void GetElementAttrRspRsp(const BluetoothDaemonPDUHeader& aHeader,
-                            BluetoothDaemonPDU& aPDU,
+  void GetElementAttrRspRsp(const DaemonSocketPDUHeader& aHeader,
+                            DaemonSocketPDU& aPDU,
                             BluetoothAvrcpResultHandler* aRes);
 
-  void SetPlayerAppValueRspRsp(const BluetoothDaemonPDUHeader& aHeader,
-                               BluetoothDaemonPDU& aPDU,
+  void SetPlayerAppValueRspRsp(const DaemonSocketPDUHeader& aHeader,
+                               DaemonSocketPDU& aPDU,
                                BluetoothAvrcpResultHandler* aRes);
 
-  void RegisterNotificationRspRsp(const BluetoothDaemonPDUHeader& aHeader,
-                                  BluetoothDaemonPDU& aPDU,
+  void RegisterNotificationRspRsp(const DaemonSocketPDUHeader& aHeader,
+                                  DaemonSocketPDU& aPDU,
                                   BluetoothAvrcpResultHandler* aRes);
 
-  void SetVolumeRsp(const BluetoothDaemonPDUHeader& aHeader,
-                    BluetoothDaemonPDU& aPDU,
+  void SetVolumeRsp(const DaemonSocketPDUHeader& aHeader,
+                    DaemonSocketPDU& aPDU,
                     BluetoothAvrcpResultHandler* aRes);
 
-  void HandleRsp(const BluetoothDaemonPDUHeader& aHeader,
-                 BluetoothDaemonPDU& aPDU,
-                 void* aUserData);
+  void HandleRsp(const DaemonSocketPDUHeader& aHeader,
+                 DaemonSocketPDU& aPDU,
+                 DaemonSocketResultHandler* aRes);
 
   //
   // Notifications
@@ -187,57 +188,61 @@ protected:
 
   class NotificationHandlerWrapper;
 
-  typedef BluetoothNotificationRunnable2<NotificationHandlerWrapper, void,
-                                         nsString, unsigned long,
-                                         const nsAString&>
+  typedef mozilla::ipc::DaemonNotificationRunnable2<
+    NotificationHandlerWrapper, void, nsString, unsigned long,
+    const nsAString&>
     RemoteFeatureNotification;
 
-  typedef BluetoothNotificationRunnable0<NotificationHandlerWrapper, void>
+  typedef mozilla::ipc::DaemonNotificationRunnable0<
+    NotificationHandlerWrapper, void>
     GetPlayStatusNotification;
 
-  typedef BluetoothNotificationRunnable0<NotificationHandlerWrapper, void>
+  typedef mozilla::ipc::DaemonNotificationRunnable0<
+    NotificationHandlerWrapper, void>
     ListPlayerAppAttrNotification;
 
-  typedef BluetoothNotificationRunnable1<NotificationHandlerWrapper, void,
-                                         BluetoothAvrcpPlayerAttribute>
+  typedef mozilla::ipc::DaemonNotificationRunnable1<
+    NotificationHandlerWrapper, void, BluetoothAvrcpPlayerAttribute>
     ListPlayerAppValuesNotification;
 
-  typedef BluetoothNotificationRunnable2<NotificationHandlerWrapper, void,
-    uint8_t, nsAutoArrayPtr<BluetoothAvrcpPlayerAttribute>,
+  typedef mozilla::ipc::DaemonNotificationRunnable2<
+    NotificationHandlerWrapper, void, uint8_t,
+    nsAutoArrayPtr<BluetoothAvrcpPlayerAttribute>,
     uint8_t, const BluetoothAvrcpPlayerAttribute*>
     GetPlayerAppValueNotification;
 
-  typedef BluetoothNotificationRunnable2<NotificationHandlerWrapper, void,
-    uint8_t, nsAutoArrayPtr<BluetoothAvrcpPlayerAttribute>,
+  typedef mozilla::ipc::DaemonNotificationRunnable2<
+    NotificationHandlerWrapper, void, uint8_t,
+    nsAutoArrayPtr<BluetoothAvrcpPlayerAttribute>,
     uint8_t, const BluetoothAvrcpPlayerAttribute*>
     GetPlayerAppAttrsTextNotification;
 
-  typedef BluetoothNotificationRunnable3<NotificationHandlerWrapper, void,
-                                         uint8_t, uint8_t,
-                                         nsAutoArrayPtr<uint8_t>, uint8_t,
-                                         uint8_t, const uint8_t*>
+  typedef mozilla::ipc::DaemonNotificationRunnable3<
+    NotificationHandlerWrapper, void, uint8_t, uint8_t,
+    nsAutoArrayPtr<uint8_t>, uint8_t, uint8_t, const uint8_t*>
     GetPlayerAppValuesTextNotification;
 
-  typedef BluetoothNotificationRunnable1<NotificationHandlerWrapper, void,
-                                         BluetoothAvrcpPlayerSettings,
-                                         const BluetoothAvrcpPlayerSettings&>
+  typedef mozilla::ipc::DaemonNotificationRunnable1<
+    NotificationHandlerWrapper, void, BluetoothAvrcpPlayerSettings,
+    const BluetoothAvrcpPlayerSettings&>
     SetPlayerAppValueNotification;
 
-  typedef BluetoothNotificationRunnable2<NotificationHandlerWrapper, void,
-    uint8_t, nsAutoArrayPtr<BluetoothAvrcpMediaAttribute>,
+  typedef mozilla::ipc::DaemonNotificationRunnable2<
+    NotificationHandlerWrapper, void, uint8_t,
+    nsAutoArrayPtr<BluetoothAvrcpMediaAttribute>,
     uint8_t, const BluetoothAvrcpMediaAttribute*>
     GetElementAttrNotification;
 
-  typedef BluetoothNotificationRunnable2<NotificationHandlerWrapper, void,
-                                         BluetoothAvrcpEvent, uint32_t>
+  typedef mozilla::ipc::DaemonNotificationRunnable2<
+    NotificationHandlerWrapper, void, BluetoothAvrcpEvent, uint32_t>
     RegisterNotificationNotification;
 
-  typedef BluetoothNotificationRunnable2<NotificationHandlerWrapper, void,
-                                         uint8_t, uint8_t>
+  typedef mozilla::ipc::DaemonNotificationRunnable2<
+    NotificationHandlerWrapper, void, uint8_t, uint8_t>
     VolumeChangeNotification;
 
-  typedef BluetoothNotificationRunnable2<NotificationHandlerWrapper, void,
-                                         int, int>
+  typedef mozilla::ipc::DaemonNotificationRunnable2<
+    NotificationHandlerWrapper, void, int, int>
     PassthroughCmdNotification;
 
   class GetElementAttrInitOp;
@@ -247,45 +252,45 @@ protected:
   class PassthroughCmdInitOp;
   class RemoteFeatureInitOp;
 
-  void RemoteFeatureNtf(const BluetoothDaemonPDUHeader& aHeader,
-                        BluetoothDaemonPDU& aPDU);
+  void RemoteFeatureNtf(const DaemonSocketPDUHeader& aHeader,
+                        DaemonSocketPDU& aPDU);
 
-  void GetPlayStatusNtf(const BluetoothDaemonPDUHeader& aHeader,
-                        BluetoothDaemonPDU& aPDU);
+  void GetPlayStatusNtf(const DaemonSocketPDUHeader& aHeader,
+                        DaemonSocketPDU& aPDU);
 
-  void ListPlayerAppAttrNtf(const BluetoothDaemonPDUHeader& aHeader,
-                            BluetoothDaemonPDU& aPDU);
+  void ListPlayerAppAttrNtf(const DaemonSocketPDUHeader& aHeader,
+                            DaemonSocketPDU& aPDU);
 
-  void ListPlayerAppValuesNtf(const BluetoothDaemonPDUHeader& aHeader,
-                              BluetoothDaemonPDU& aPDU);
+  void ListPlayerAppValuesNtf(const DaemonSocketPDUHeader& aHeader,
+                              DaemonSocketPDU& aPDU);
 
-  void GetPlayerAppValueNtf(const BluetoothDaemonPDUHeader& aHeader,
-                            BluetoothDaemonPDU& aPDU);
+  void GetPlayerAppValueNtf(const DaemonSocketPDUHeader& aHeader,
+                            DaemonSocketPDU& aPDU);
 
-  void GetPlayerAppAttrsTextNtf(const BluetoothDaemonPDUHeader& aHeader,
-                                BluetoothDaemonPDU& aPDU);
+  void GetPlayerAppAttrsTextNtf(const DaemonSocketPDUHeader& aHeader,
+                                DaemonSocketPDU& aPDU);
 
-  void GetPlayerAppValuesTextNtf(const BluetoothDaemonPDUHeader& aHeader,
-                                 BluetoothDaemonPDU& aPDU);
+  void GetPlayerAppValuesTextNtf(const DaemonSocketPDUHeader& aHeader,
+                                 DaemonSocketPDU& aPDU);
 
-  void SetPlayerAppValueNtf(const BluetoothDaemonPDUHeader& aHeader,
-                            BluetoothDaemonPDU& aPDU);
+  void SetPlayerAppValueNtf(const DaemonSocketPDUHeader& aHeader,
+                            DaemonSocketPDU& aPDU);
 
-  void GetElementAttrNtf(const BluetoothDaemonPDUHeader& aHeader,
-                         BluetoothDaemonPDU& aPDU);
+  void GetElementAttrNtf(const DaemonSocketPDUHeader& aHeader,
+                         DaemonSocketPDU& aPDU);
 
-  void RegisterNotificationNtf(const BluetoothDaemonPDUHeader& aHeader,
-                               BluetoothDaemonPDU& aPDU);
+  void RegisterNotificationNtf(const DaemonSocketPDUHeader& aHeader,
+                               DaemonSocketPDU& aPDU);
 
-  void VolumeChangeNtf(const BluetoothDaemonPDUHeader& aHeader,
-                       BluetoothDaemonPDU& aPDU);
+  void VolumeChangeNtf(const DaemonSocketPDUHeader& aHeader,
+                       DaemonSocketPDU& aPDU);
 
-  void PassthroughCmdNtf(const BluetoothDaemonPDUHeader& aHeader,
-                         BluetoothDaemonPDU& aPDU);
+  void PassthroughCmdNtf(const DaemonSocketPDUHeader& aHeader,
+                         DaemonSocketPDU& aPDU);
 
-  void HandleNtf(const BluetoothDaemonPDUHeader& aHeader,
-                 BluetoothDaemonPDU& aPDU,
-                 void* aUserData);
+  void HandleNtf(const DaemonSocketPDUHeader& aHeader,
+                 DaemonSocketPDU& aPDU,
+                 DaemonSocketResultHandler* aRes);
 
   static BluetoothAvrcpNotificationHandler* sNotificationHandler;
 };
@@ -353,4 +358,4 @@ private:
 
 END_BLUETOOTH_NAMESPACE
 
-#endif
+#endif // mozilla_dom_bluetooth_bluedroid_BluetoothDaemonAvrcpInterface_h

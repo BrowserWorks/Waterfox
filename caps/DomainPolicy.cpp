@@ -22,7 +22,7 @@ static nsresult
 BroadcastDomainSetChange(DomainSetType aSetType, DomainSetChangeType aChangeType,
                          nsIURI* aDomain = nullptr)
 {
-    MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default,
+    MOZ_ASSERT(XRE_IsParentProcess(),
                "DomainPolicy should only be exposed to the chrome process.");
 
     nsTArray<ContentParent*> parents;
@@ -45,7 +45,7 @@ DomainPolicy::DomainPolicy() : mBlacklist(new DomainSet(BLACKLIST))
                              , mWhitelist(new DomainSet(WHITELIST))
                              , mSuperWhitelist(new DomainSet(SUPER_WHITELIST))
 {
-    if (XRE_GetProcessType() == GeckoProcessType_Default) {
+    if (XRE_IsParentProcess()) {
         BroadcastDomainSetChange(NO_TYPE, ACTIVATE_POLICY);
     }
 }
@@ -62,7 +62,7 @@ DomainPolicy::~DomainPolicy()
 NS_IMETHODIMP
 DomainPolicy::GetBlacklist(nsIDomainSet** aSet)
 {
-    nsCOMPtr<nsIDomainSet> set = mBlacklist;
+    nsCOMPtr<nsIDomainSet> set = mBlacklist.get();
     set.forget(aSet);
     return NS_OK;
 }
@@ -70,7 +70,7 @@ DomainPolicy::GetBlacklist(nsIDomainSet** aSet)
 NS_IMETHODIMP
 DomainPolicy::GetSuperBlacklist(nsIDomainSet** aSet)
 {
-    nsCOMPtr<nsIDomainSet> set = mSuperBlacklist;
+    nsCOMPtr<nsIDomainSet> set = mSuperBlacklist.get();
     set.forget(aSet);
     return NS_OK;
 }
@@ -78,7 +78,7 @@ DomainPolicy::GetSuperBlacklist(nsIDomainSet** aSet)
 NS_IMETHODIMP
 DomainPolicy::GetWhitelist(nsIDomainSet** aSet)
 {
-    nsCOMPtr<nsIDomainSet> set = mWhitelist;
+    nsCOMPtr<nsIDomainSet> set = mWhitelist.get();
     set.forget(aSet);
     return NS_OK;
 }
@@ -86,7 +86,7 @@ DomainPolicy::GetWhitelist(nsIDomainSet** aSet)
 NS_IMETHODIMP
 DomainPolicy::GetSuperWhitelist(nsIDomainSet** aSet)
 {
-    nsCOMPtr<nsIDomainSet> set = mSuperWhitelist;
+    nsCOMPtr<nsIDomainSet> set = mSuperWhitelist.get();
     set.forget(aSet);
     return NS_OK;
 }
@@ -112,7 +112,7 @@ DomainPolicy::Deactivate()
     if (ssm) {
         ssm->DeactivateDomainPolicy();
     }
-    if (XRE_GetProcessType() == GeckoProcessType_Default) {
+    if (XRE_IsParentProcess()) {
         BroadcastDomainSetChange(NO_TYPE, DEACTIVATE_POLICY);
     }
     return NS_OK;
@@ -122,10 +122,10 @@ void
 DomainPolicy::CloneDomainPolicy(DomainPolicyClone* aClone)
 {
     aClone->active() = true;
-    static_cast<DomainSet*>(mBlacklist.get())->CloneSet(&aClone->blacklist());
-    static_cast<DomainSet*>(mSuperBlacklist.get())->CloneSet(&aClone->superBlacklist());
-    static_cast<DomainSet*>(mWhitelist.get())->CloneSet(&aClone->whitelist());
-    static_cast<DomainSet*>(mSuperWhitelist.get())->CloneSet(&aClone->superWhitelist());
+    mBlacklist->CloneSet(&aClone->blacklist());
+    mSuperBlacklist->CloneSet(&aClone->superBlacklist());
+    mWhitelist->CloneSet(&aClone->whitelist());
+    mSuperWhitelist->CloneSet(&aClone->superWhitelist());
 }
 
 static
@@ -170,7 +170,7 @@ DomainSet::Add(nsIURI* aDomain)
     nsCOMPtr<nsIURI> clone = GetCanonicalClone(aDomain);
     NS_ENSURE_TRUE(clone, NS_ERROR_FAILURE);
     mHashTable.PutEntry(clone);
-    if (XRE_GetProcessType() == GeckoProcessType_Default)
+    if (XRE_IsParentProcess())
         return BroadcastDomainSetChange(mType, ADD_DOMAIN, aDomain);
 
     return NS_OK;
@@ -182,7 +182,7 @@ DomainSet::Remove(nsIURI* aDomain)
     nsCOMPtr<nsIURI> clone = GetCanonicalClone(aDomain);
     NS_ENSURE_TRUE(clone, NS_ERROR_FAILURE);
     mHashTable.RemoveEntry(clone);
-    if (XRE_GetProcessType() == GeckoProcessType_Default)
+    if (XRE_IsParentProcess())
         return BroadcastDomainSetChange(mType, REMOVE_DOMAIN, aDomain);
 
     return NS_OK;
@@ -192,7 +192,7 @@ NS_IMETHODIMP
 DomainSet::Clear()
 {
     mHashTable.Clear();
-    if (XRE_GetProcessType() == GeckoProcessType_Default)
+    if (XRE_IsParentProcess())
         return BroadcastDomainSetChange(mType, CLEAR_DOMAINS);
 
     return NS_OK;
@@ -246,24 +246,17 @@ DomainSet::GetType(uint32_t* aType)
     return NS_OK;
 }
 
-static
-PLDHashOperator
-DomainEnumerator(nsURIHashKey* aEntry, void* aUserArg)
-{
-    InfallibleTArray<URIParams>* uris = static_cast<InfallibleTArray<URIParams>*>(aUserArg);
-    nsIURI* key = aEntry->GetKey();
-
-    URIParams uri;
-    SerializeURI(key, uri);
-
-    uris->AppendElement(uri);
-    return PL_DHASH_NEXT;
-}
-
 void
 DomainSet::CloneSet(InfallibleTArray<URIParams>* aDomains)
 {
-    mHashTable.EnumerateEntries(DomainEnumerator, aDomains);
+    for (auto iter = mHashTable.Iter(); !iter.Done(); iter.Next()) {
+        nsIURI* key = iter.Get()->GetKey();
+
+        URIParams uri;
+        SerializeURI(key, uri);
+
+        aDomains->AppendElement(uri);
+    }
 }
 
 } /* namespace mozilla */

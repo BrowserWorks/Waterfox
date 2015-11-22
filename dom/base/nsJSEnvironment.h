@@ -26,12 +26,12 @@ namespace JS {
 template <typename T>
 class AutoVectorRooter;
 typedef AutoVectorRooter<Value> AutoValueVector;
-}
+} // namespace JS
 
 namespace mozilla {
 template <class> class Maybe;
 struct CycleCollectorResults;
-}
+} // namespace mozilla
 
 // The amount of time we wait between a request to GC (due to leaving
 // a page) and doing the actual GC.
@@ -229,15 +229,5 @@ public:
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsIJSArgArray, NS_IJSARGARRAY_IID)
-
-JSObject* NS_DOMReadStructuredClone(JSContext* cx,
-                                    JSStructuredCloneReader* reader, uint32_t tag,
-                                    uint32_t data, void* closure);
-
-bool NS_DOMWriteStructuredClone(JSContext* cx,
-                                JSStructuredCloneWriter* writer,
-                                JS::Handle<JSObject*> obj, void *closure);
-
-void NS_DOMStructuredCloneError(JSContext* cx, uint32_t errorid);
 
 #endif /* nsJSEnvironment_h */

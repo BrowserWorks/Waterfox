@@ -9,6 +9,8 @@
 
 #include "prio.h"
 #include "private/pprio.h"
+#include "nsDebug.h"
+#include "nscore.h"
 
 namespace {
 
@@ -100,7 +102,7 @@ interposedFileInfo64(PRFileDesc* aFd, PRFileInfo64* aInfo)
   return sFileInfo64Fn(aFd, aInfo);
 }
 
-} // anonymous namespace
+} // namespace
 
 namespace mozilla {
 

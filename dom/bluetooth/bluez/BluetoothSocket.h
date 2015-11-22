@@ -4,17 +4,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_bluetooth_BluetoothSocket_h
-#define mozilla_dom_bluetooth_BluetoothSocket_h
+#ifndef mozilla_dom_bluetooth_bluez_BluetoothSocket_h
+#define mozilla_dom_bluetooth_bluez_BluetoothSocket_h
 
 #include "BluetoothCommon.h"
-#include <stdlib.h>
 #include "mozilla/ipc/DataSocket.h"
 #include "mozilla/ipc/UnixSocketWatcher.h"
-#include "mozilla/RefPtr.h"
 #include "nsAutoPtr.h"
 #include "nsString.h"
-#include "nsThreadUtils.h"
+
+class MessageLoop;
 
 BEGIN_BLUETOOTH_NAMESPACE
 
@@ -24,31 +23,24 @@ class BluetoothUnixSocketConnector;
 class BluetoothSocket final : public mozilla::ipc::DataSocket
 {
 public:
-  BluetoothSocket(BluetoothSocketObserver* aObserver,
-                  BluetoothSocketType aType,
-                  bool aAuth,
-                  bool aEncrypt);
+  BluetoothSocket(BluetoothSocketObserver* aObserver);
   ~BluetoothSocket();
 
-  bool Connect(const nsAString& aDeviceAddress,
-               const BluetoothUuid& aServiceUuid,
-               int aChannel);
-  bool Listen(const nsAString& aServiceName,
-              const BluetoothUuid& aServiceUuid,
-              int aChannel);
-  inline void Disconnect()
-  {
-    CloseSocket();
-  }
+  nsresult Connect(const nsAString& aDeviceAddress,
+                   const BluetoothUuid& aServiceUuid,
+                   BluetoothSocketType aType,
+                   int aChannel,
+                   bool aAuth, bool aEncrypt);
 
-  inline void GetAddress(nsAString& aDeviceAddress)
-  {
-    GetSocketAddr(aDeviceAddress);
-  }
+  nsresult Listen(const nsAString& aServiceName,
+                  const BluetoothUuid& aServiceUuid,
+                  BluetoothSocketType aType,
+                  int aChannel,
+                  bool aAuth, bool aEncrypt);
 
   /**
    * Method to be called whenever data is received. This is only called on the
-   * main thread.
+   * consumer thread.
    *
    * @param aBuffer Data received from the socket.
    */
@@ -70,29 +62,52 @@ public:
    * non-blocking manner.
    *
    * @param aConnector Connector object for socket type specific functions
-   * @param aAddress Address to connect to.
    * @param aDelayMs Time delay in milli-seconds.
-   *
-   * @return true on connect task started, false otherwise.
+   * @param aConsumerLoop The socket's consumer thread.
+   * @param aIOLoop The socket's I/O thread.
+   * @return NS_OK on success, or an XPCOM error code otherwise.
    */
-  bool ConnectSocket(BluetoothUnixSocketConnector* aConnector,
-                     const char* aAddress,
-                     int aDelayMs = 0);
+  nsresult Connect(BluetoothUnixSocketConnector* aConnector, int aDelayMs,
+                   MessageLoop* aConsumerLoop, MessageLoop* aIOLoop);
+
+  /**
+   * Starts a task on the socket that will try to connect to a socket in a
+   * non-blocking manner.
+   *
+   * @param aConnector Connector object for socket type specific functions
+   * @param aDelayMs Time delay in milli-seconds.
+   * @return NS_OK on success, or an XPCOM error code otherwise.
+   */
+  nsresult Connect(BluetoothUnixSocketConnector* aConnector,
+                   int aDelayMs = 0);
 
   /**
    * Starts a task on the socket that will try to accept a new connection in a
    * non-blocking manner.
    *
    * @param aConnector Connector object for socket type specific functions
-   *
-   * @return true on listen started, false otherwise
+   * @param aConsumerLoop The socket's consumer thread.
+   * @param aIOLoop The socket's I/O thread.
+   * @return NS_OK on success, or an XPCOM error code otherwise.
    */
-  bool ListenSocket(BluetoothUnixSocketConnector* aConnector);
+  nsresult Listen(BluetoothUnixSocketConnector* aConnector,
+                  MessageLoop* aConsumerLoop, MessageLoop* aIOLoop);
 
   /**
-   * Get the current sockaddr for the socket
+   * Starts a task on the socket that will try to accept a new connection in a
+   * non-blocking manner.
+   *
+   * @param aConnector Connector object for socket type specific functions
+   * @return NS_OK on success, or an XPCOM error code otherwise.
    */
-  void GetSocketAddr(nsAString& aAddrStr);
+  nsresult Listen(BluetoothUnixSocketConnector* aConnector);
+
+  /**
+   * Get the current socket address.
+   *
+   * @param[out] aDeviceAddress Returns the address string.
+   */
+  void GetAddress(nsAString& aDeviceAddress);
 
   // Methods for |DataSocket|
   //
@@ -102,7 +117,7 @@ public:
   // Methods for |SocketBase|
   //
 
-  void CloseSocket() override;
+  void Close() override;
 
   void OnConnectSuccess() override;
   void OnConnectError() override;
@@ -115,12 +130,9 @@ private:
   class ListenTask;
 
   BluetoothSocketObserver* mObserver;
-  BluetoothSocketType mType;
-  bool mAuth;
-  bool mEncrypt;
   BluetoothSocketIO* mIO;
 };
 
 END_BLUETOOTH_NAMESPACE
 
-#endif
+#endif // mozilla_dom_bluetooth_bluez_BluetoothSocket_h

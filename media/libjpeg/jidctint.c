@@ -1,11 +1,9 @@
 /*
  * jidctint.c
  *
- * This file was part of the Independent JPEG Group's software.
  * Copyright (C) 1991-1998, Thomas G. Lane.
  * Modification developed 2002-2009 by Guido Vollbeding.
- * libjpeg-turbo Modifications:
- * Copyright (C) 2015, D. R. Commander
+ * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
  * This file contains a slow-but-accurate integer implementation of the
@@ -207,8 +205,7 @@ jpeg_idct_islow (j_decompress_ptr cinfo, jpeg_component_info * compptr,
         inptr[DCTSIZE*5] == 0 && inptr[DCTSIZE*6] == 0 &&
         inptr[DCTSIZE*7] == 0) {
       /* AC terms all zero */
-      int dcval = LEFT_SHIFT(DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]),
-                             PASS1_BITS);
+      int dcval = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]) << PASS1_BITS;
 
       wsptr[DCTSIZE*0] = dcval;
       wsptr[DCTSIZE*1] = dcval;
@@ -238,8 +235,8 @@ jpeg_idct_islow (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     z2 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
     z3 = DEQUANTIZE(inptr[DCTSIZE*4], quantptr[DCTSIZE*4]);
 
-    tmp0 = LEFT_SHIFT(z2 + z3, CONST_BITS);
-    tmp1 = LEFT_SHIFT(z2 - z3, CONST_BITS);
+    tmp0 = (z2 + z3) << CONST_BITS;
+    tmp1 = (z2 - z3) << CONST_BITS;
 
     tmp10 = tmp0 + tmp3;
     tmp13 = tmp0 - tmp3;
@@ -340,8 +337,8 @@ jpeg_idct_islow (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     tmp2 = z1 + MULTIPLY(z3, - FIX_1_847759065);
     tmp3 = z1 + MULTIPLY(z2, FIX_0_765366865);
 
-    tmp0 = LEFT_SHIFT((INT32) wsptr[0] + (INT32) wsptr[4], CONST_BITS);
-    tmp1 = LEFT_SHIFT((INT32) wsptr[0] - (INT32) wsptr[4], CONST_BITS);
+    tmp0 = ((INT32) wsptr[0] + (INT32) wsptr[4]) << CONST_BITS;
+    tmp1 = ((INT32) wsptr[0] - (INT32) wsptr[4]) << CONST_BITS;
 
     tmp10 = tmp0 + tmp3;
     tmp13 = tmp0 - tmp3;
@@ -447,7 +444,7 @@ jpeg_idct_7x7 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     tmp13 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    tmp13 = LEFT_SHIFT(tmp13, CONST_BITS);
+    tmp13 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     tmp13 += ONE << (CONST_BITS-PASS1_BITS-1);
 
@@ -502,7 +499,7 @@ jpeg_idct_7x7 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     tmp13 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    tmp13 = LEFT_SHIFT(tmp13, CONST_BITS);
+    tmp13 <<= CONST_BITS;
 
     z1 = (INT32) wsptr[2];
     z2 = (INT32) wsptr[4];
@@ -596,7 +593,7 @@ jpeg_idct_6x6 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     tmp0 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    tmp0 = LEFT_SHIFT(tmp0, CONST_BITS);
+    tmp0 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     tmp0 += ONE << (CONST_BITS-PASS1_BITS-1);
     tmp2 = DEQUANTIZE(inptr[DCTSIZE*4], quantptr[DCTSIZE*4]);
@@ -614,9 +611,9 @@ jpeg_idct_6x6 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     z2 = DEQUANTIZE(inptr[DCTSIZE*3], quantptr[DCTSIZE*3]);
     z3 = DEQUANTIZE(inptr[DCTSIZE*5], quantptr[DCTSIZE*5]);
     tmp1 = MULTIPLY(z1 + z3, FIX(0.366025404)); /* c5 */
-    tmp0 = tmp1 + LEFT_SHIFT(z1 + z2, CONST_BITS);
-    tmp2 = tmp1 + LEFT_SHIFT(z3 - z2, CONST_BITS);
-    tmp1 = LEFT_SHIFT(z1 - z2 - z3, PASS1_BITS);
+    tmp0 = tmp1 + ((z1 + z2) << CONST_BITS);
+    tmp2 = tmp1 + ((z3 - z2) << CONST_BITS);
+    tmp1 = (z1 - z2 - z3) << PASS1_BITS;
 
     /* Final output stage */
 
@@ -638,7 +635,7 @@ jpeg_idct_6x6 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     tmp0 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    tmp0 = LEFT_SHIFT(tmp0, CONST_BITS);
+    tmp0 <<= CONST_BITS;
     tmp2 = (INT32) wsptr[4];
     tmp10 = MULTIPLY(tmp2, FIX(0.707106781));   /* c4 */
     tmp1 = tmp0 + tmp10;
@@ -654,9 +651,9 @@ jpeg_idct_6x6 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     z2 = (INT32) wsptr[3];
     z3 = (INT32) wsptr[5];
     tmp1 = MULTIPLY(z1 + z3, FIX(0.366025404)); /* c5 */
-    tmp0 = tmp1 + LEFT_SHIFT(z1 + z2, CONST_BITS);
-    tmp2 = tmp1 + LEFT_SHIFT(z3 - z2, CONST_BITS);
-    tmp1 = LEFT_SHIFT(z1 - z2 - z3, CONST_BITS);
+    tmp0 = tmp1 + ((z1 + z2) << CONST_BITS);
+    tmp2 = tmp1 + ((z3 - z2) << CONST_BITS);
+    tmp1 = (z1 - z2 - z3) << CONST_BITS;
 
     /* Final output stage */
 
@@ -717,7 +714,7 @@ jpeg_idct_5x5 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     tmp12 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    tmp12 = LEFT_SHIFT(tmp12, CONST_BITS);
+    tmp12 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     tmp12 += ONE << (CONST_BITS-PASS1_BITS-1);
     tmp0 = DEQUANTIZE(inptr[DCTSIZE*2], quantptr[DCTSIZE*2]);
@@ -727,7 +724,7 @@ jpeg_idct_5x5 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     z3 = tmp12 + z2;
     tmp10 = z3 + z1;
     tmp11 = z3 - z1;
-    tmp12 -= LEFT_SHIFT(z2, 2);
+    tmp12 -= z2 << 2;
 
     /* Odd part */
 
@@ -757,7 +754,7 @@ jpeg_idct_5x5 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     tmp12 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    tmp12 = LEFT_SHIFT(tmp12, CONST_BITS);
+    tmp12 <<= CONST_BITS;
     tmp0 = (INT32) wsptr[2];
     tmp1 = (INT32) wsptr[4];
     z1 = MULTIPLY(tmp0 + tmp1, FIX(0.790569415)); /* (c2+c4)/2 */
@@ -765,7 +762,7 @@ jpeg_idct_5x5 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     z3 = tmp12 + z2;
     tmp10 = z3 + z1;
     tmp11 = z3 - z1;
-    tmp12 -= LEFT_SHIFT(z2, 2);
+    tmp12 -= z2 << 2;
 
     /* Odd part */
 
@@ -831,7 +828,7 @@ jpeg_idct_3x3 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     tmp0 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    tmp0 = LEFT_SHIFT(tmp0, CONST_BITS);
+    tmp0 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     tmp0 += ONE << (CONST_BITS-PASS1_BITS-1);
     tmp2 = DEQUANTIZE(inptr[DCTSIZE*2], quantptr[DCTSIZE*2]);
@@ -861,7 +858,7 @@ jpeg_idct_3x3 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     tmp0 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    tmp0 = LEFT_SHIFT(tmp0, CONST_BITS);
+    tmp0 <<= CONST_BITS;
     tmp2 = (INT32) wsptr[2];
     tmp12 = MULTIPLY(tmp2, FIX(0.707106781)); /* c2 */
     tmp10 = tmp0 + tmp12;
@@ -922,7 +919,7 @@ jpeg_idct_9x9 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     tmp0 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    tmp0 = LEFT_SHIFT(tmp0, CONST_BITS);
+    tmp0 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     tmp0 += ONE << (CONST_BITS-PASS1_BITS-1);
 
@@ -986,7 +983,7 @@ jpeg_idct_9x9 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     tmp0 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    tmp0 = LEFT_SHIFT(tmp0, CONST_BITS);
+    tmp0 <<= CONST_BITS;
 
     z1 = (INT32) wsptr[2];
     z2 = (INT32) wsptr[4];
@@ -1094,7 +1091,7 @@ jpeg_idct_10x10 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     z3 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    z3 = LEFT_SHIFT(z3, CONST_BITS);
+    z3 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     z3 += ONE << (CONST_BITS-PASS1_BITS-1);
     z4 = DEQUANTIZE(inptr[DCTSIZE*4], quantptr[DCTSIZE*4]);
@@ -1103,8 +1100,8 @@ jpeg_idct_10x10 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     tmp10 = z3 + z1;
     tmp11 = z3 - z2;
 
-    tmp22 = RIGHT_SHIFT(z3 - LEFT_SHIFT(z1 - z2, 1),
-                        CONST_BITS-PASS1_BITS);  /* c0 = (c4-c8)*2 */
+    tmp22 = RIGHT_SHIFT(z3 - ((z1 - z2) << 1),   /* c0 = (c4-c8)*2 */
+                        CONST_BITS-PASS1_BITS);
 
     z2 = DEQUANTIZE(inptr[DCTSIZE*2], quantptr[DCTSIZE*2]);
     z3 = DEQUANTIZE(inptr[DCTSIZE*6], quantptr[DCTSIZE*6]);
@@ -1129,7 +1126,7 @@ jpeg_idct_10x10 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     tmp13 = z2 - z4;
 
     tmp12 = MULTIPLY(tmp13, FIX(0.309016994));        /* (c3-c7)/2 */
-    z5 = LEFT_SHIFT(z3, CONST_BITS);
+    z5 = z3 << CONST_BITS;
 
     z2 = MULTIPLY(tmp11, FIX(0.951056516));           /* (c3+c7)/2 */
     z4 = z5 + tmp12;
@@ -1138,9 +1135,9 @@ jpeg_idct_10x10 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     tmp14 = MULTIPLY(z1, FIX(0.221231742)) - z2 + z4; /* c9 */
 
     z2 = MULTIPLY(tmp11, FIX(0.587785252));           /* (c1-c9)/2 */
-    z4 = z5 - tmp12 - LEFT_SHIFT(tmp13, CONST_BITS - 1);
+    z4 = z5 - tmp12 - (tmp13 << (CONST_BITS - 1));
 
-    tmp12 = LEFT_SHIFT(z1 - tmp13 - z3, PASS1_BITS);
+    tmp12 = (z1 - tmp13 - z3) << PASS1_BITS;
 
     tmp11 = MULTIPLY(z1, FIX(1.260073511)) - z2 - z4; /* c3 */
     tmp13 = MULTIPLY(z1, FIX(0.642039522)) - z2 + z4; /* c7 */
@@ -1169,14 +1166,14 @@ jpeg_idct_10x10 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     z3 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    z3 = LEFT_SHIFT(z3, CONST_BITS);
+    z3 <<= CONST_BITS;
     z4 = (INT32) wsptr[4];
     z1 = MULTIPLY(z4, FIX(1.144122806));         /* c4 */
     z2 = MULTIPLY(z4, FIX(0.437016024));         /* c8 */
     tmp10 = z3 + z1;
     tmp11 = z3 - z2;
 
-    tmp22 = z3 - LEFT_SHIFT(z1 - z2, 1);         /* c0 = (c4-c8)*2 */
+    tmp22 = z3 - ((z1 - z2) << 1);               /* c0 = (c4-c8)*2 */
 
     z2 = (INT32) wsptr[2];
     z3 = (INT32) wsptr[6];
@@ -1195,7 +1192,7 @@ jpeg_idct_10x10 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     z1 = (INT32) wsptr[1];
     z2 = (INT32) wsptr[3];
     z3 = (INT32) wsptr[5];
-    z3 = LEFT_SHIFT(z3, CONST_BITS);
+    z3 <<= CONST_BITS;
     z4 = (INT32) wsptr[7];
 
     tmp11 = z2 + z4;
@@ -1210,9 +1207,9 @@ jpeg_idct_10x10 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     tmp14 = MULTIPLY(z1, FIX(0.221231742)) - z2 + z4; /* c9 */
 
     z2 = MULTIPLY(tmp11, FIX(0.587785252));           /* (c1-c9)/2 */
-    z4 = z3 - tmp12 - LEFT_SHIFT(tmp13, CONST_BITS - 1);
+    z4 = z3 - tmp12 - (tmp13 << (CONST_BITS - 1));
 
-    tmp12 = LEFT_SHIFT(z1 - tmp13, CONST_BITS) - z3;
+    tmp12 = ((z1 - tmp13) << CONST_BITS) - z3;
 
     tmp11 = MULTIPLY(z1, FIX(1.260073511)) - z2 - z4; /* c3 */
     tmp13 = MULTIPLY(z1, FIX(0.642039522)) - z2 + z4; /* c7 */
@@ -1289,7 +1286,7 @@ jpeg_idct_11x11 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     tmp10 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    tmp10 = LEFT_SHIFT(tmp10, CONST_BITS);
+    tmp10 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     tmp10 += ONE << (CONST_BITS-PASS1_BITS-1);
 
@@ -1362,7 +1359,7 @@ jpeg_idct_11x11 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     tmp10 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    tmp10 = LEFT_SHIFT(tmp10, CONST_BITS);
+    tmp10 <<= CONST_BITS;
 
     z1 = (INT32) wsptr[2];
     z2 = (INT32) wsptr[4];
@@ -1483,7 +1480,7 @@ jpeg_idct_12x12 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     z3 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    z3 = LEFT_SHIFT(z3, CONST_BITS);
+    z3 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     z3 += ONE << (CONST_BITS-PASS1_BITS-1);
 
@@ -1495,9 +1492,9 @@ jpeg_idct_12x12 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     z1 = DEQUANTIZE(inptr[DCTSIZE*2], quantptr[DCTSIZE*2]);
     z4 = MULTIPLY(z1, FIX(1.366025404)); /* c2 */
-    z1 = LEFT_SHIFT(z1, CONST_BITS);
+    z1 <<= CONST_BITS;
     z2 = DEQUANTIZE(inptr[DCTSIZE*6], quantptr[DCTSIZE*6]);
-    z2 = LEFT_SHIFT(z2, CONST_BITS);
+    z2 <<= CONST_BITS;
 
     tmp12 = z1 - z2;
 
@@ -1566,7 +1563,7 @@ jpeg_idct_12x12 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     z3 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    z3 = LEFT_SHIFT(z3, CONST_BITS);
+    z3 <<= CONST_BITS;
 
     z4 = (INT32) wsptr[4];
     z4 = MULTIPLY(z4, FIX(1.224744871)); /* c4 */
@@ -1576,9 +1573,9 @@ jpeg_idct_12x12 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     z1 = (INT32) wsptr[2];
     z4 = MULTIPLY(z1, FIX(1.366025404)); /* c2 */
-    z1 = LEFT_SHIFT(z1, CONST_BITS);
+    z1 <<= CONST_BITS;
     z2 = (INT32) wsptr[6];
-    z2 = LEFT_SHIFT(z2, CONST_BITS);
+    z2 <<= CONST_BITS;
 
     tmp12 = z1 - z2;
 
@@ -1699,7 +1696,7 @@ jpeg_idct_13x13 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     z1 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    z1 = LEFT_SHIFT(z1, CONST_BITS);
+    z1 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     z1 += ONE << (CONST_BITS-PASS1_BITS-1);
 
@@ -1787,7 +1784,7 @@ jpeg_idct_13x13 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     z1 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    z1 = LEFT_SHIFT(z1, CONST_BITS);
+    z1 <<= CONST_BITS;
 
     z2 = (INT32) wsptr[2];
     z3 = (INT32) wsptr[4];
@@ -1927,7 +1924,7 @@ jpeg_idct_14x14 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     z1 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    z1 = LEFT_SHIFT(z1, CONST_BITS);
+    z1 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     z1 += ONE << (CONST_BITS-PASS1_BITS-1);
     z4 = DEQUANTIZE(inptr[DCTSIZE*4], quantptr[DCTSIZE*4]);
@@ -1939,8 +1936,8 @@ jpeg_idct_14x14 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     tmp11 = z1 + z3;
     tmp12 = z1 - z4;
 
-    tmp23 = RIGHT_SHIFT(z1 - LEFT_SHIFT(z2 + z3 - z4, 1),
-                        CONST_BITS-PASS1_BITS);  /* c0 = (c4+c12-c8)*2 */
+    tmp23 = RIGHT_SHIFT(z1 - ((z2 + z3 - z4) << 1), /* c0 = (c4+c12-c8)*2 */
+                        CONST_BITS-PASS1_BITS);
 
     z1 = DEQUANTIZE(inptr[DCTSIZE*2], quantptr[DCTSIZE*2]);
     z2 = DEQUANTIZE(inptr[DCTSIZE*6], quantptr[DCTSIZE*6]);
@@ -1965,7 +1962,7 @@ jpeg_idct_14x14 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     z2 = DEQUANTIZE(inptr[DCTSIZE*3], quantptr[DCTSIZE*3]);
     z3 = DEQUANTIZE(inptr[DCTSIZE*5], quantptr[DCTSIZE*5]);
     z4 = DEQUANTIZE(inptr[DCTSIZE*7], quantptr[DCTSIZE*7]);
-    tmp13 = LEFT_SHIFT(z4, CONST_BITS);
+    tmp13 = z4 << CONST_BITS;
 
     tmp14 = z1 + z3;
     tmp11 = MULTIPLY(z1 + z2, FIX(1.334852607));           /* c3 */
@@ -1984,7 +1981,7 @@ jpeg_idct_14x14 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     tmp14 += z4 + tmp13 - MULTIPLY(z3, FIX(1.6906431334)); /* c1+c9-c11 */
     tmp15 += z4 + MULTIPLY(z2, FIX(0.674957567));          /* c1+c11-c5 */
 
-    tmp13 = LEFT_SHIFT(z1 - z3, PASS1_BITS);
+    tmp13 = (z1 - z3) << PASS1_BITS;
 
     /* Final output stage */
 
@@ -2014,7 +2011,7 @@ jpeg_idct_14x14 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     z1 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    z1 = LEFT_SHIFT(z1, CONST_BITS);
+    z1 <<= CONST_BITS;
     z4 = (INT32) wsptr[4];
     z2 = MULTIPLY(z4, FIX(1.274162392));         /* c4 */
     z3 = MULTIPLY(z4, FIX(0.314692123));         /* c12 */
@@ -2024,7 +2021,7 @@ jpeg_idct_14x14 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     tmp11 = z1 + z3;
     tmp12 = z1 - z4;
 
-    tmp23 = z1 - LEFT_SHIFT(z2 + z3 - z4, 1);    /* c0 = (c4+c12-c8)*2 */
+    tmp23 = z1 - ((z2 + z3 - z4) << 1);          /* c0 = (c4+c12-c8)*2 */
 
     z1 = (INT32) wsptr[2];
     z2 = (INT32) wsptr[6];
@@ -2049,7 +2046,7 @@ jpeg_idct_14x14 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     z2 = (INT32) wsptr[3];
     z3 = (INT32) wsptr[5];
     z4 = (INT32) wsptr[7];
-    z4 = LEFT_SHIFT(z4, CONST_BITS);
+    z4 <<= CONST_BITS;
 
     tmp14 = z1 + z3;
     tmp11 = MULTIPLY(z1 + z2, FIX(1.334852607));           /* c3 */
@@ -2067,7 +2064,7 @@ jpeg_idct_14x14 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     tmp14 += tmp13 + z4 - MULTIPLY(z3, FIX(1.6906431334)); /* c1+c9-c11 */
     tmp15 += tmp13 + MULTIPLY(z2, FIX(0.674957567));       /* c1+c11-c5 */
 
-    tmp13 = LEFT_SHIFT(z1 - z3, CONST_BITS) + z4;
+    tmp13 = ((z1 - z3) << CONST_BITS) + z4;
 
     /* Final output stage */
 
@@ -2153,7 +2150,7 @@ jpeg_idct_15x15 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     z1 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    z1 = LEFT_SHIFT(z1, CONST_BITS);
+    z1 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     z1 += ONE << (CONST_BITS-PASS1_BITS-1);
 
@@ -2166,7 +2163,7 @@ jpeg_idct_15x15 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     tmp12 = z1 - tmp10;
     tmp13 = z1 + tmp11;
-    z1 -= LEFT_SHIFT(tmp11 - tmp10, 1);     /* c0 = (c6-c12)*2 */
+    z1 -= (tmp11 - tmp10) << 1;             /* c0 = (c6-c12)*2 */
 
     z4 = z2 - z3;
     z3 += z2;
@@ -2246,7 +2243,7 @@ jpeg_idct_15x15 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     z1 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    z1 = LEFT_SHIFT(z1, CONST_BITS);
+    z1 <<= CONST_BITS;
 
     z2 = (INT32) wsptr[2];
     z3 = (INT32) wsptr[4];
@@ -2257,7 +2254,7 @@ jpeg_idct_15x15 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     tmp12 = z1 - tmp10;
     tmp13 = z1 + tmp11;
-    z1 -= LEFT_SHIFT(tmp11 - tmp10, 1);     /* c0 = (c6-c12)*2 */
+    z1 -= (tmp11 - tmp10) << 1;             /* c0 = (c6-c12)*2 */
 
     z4 = z2 - z3;
     z3 += z2;
@@ -2395,7 +2392,7 @@ jpeg_idct_16x16 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     /* Even part */
 
     tmp0 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
-    tmp0 = LEFT_SHIFT(tmp0, CONST_BITS);
+    tmp0 <<= CONST_BITS;
     /* Add fudge factor here for final descale. */
     tmp0 += 1 << (CONST_BITS-PASS1_BITS-1);
 
@@ -2497,7 +2494,7 @@ jpeg_idct_16x16 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
     /* Add fudge factor here for final descale. */
     tmp0 = (INT32) wsptr[0] + (ONE << (PASS1_BITS+2));
-    tmp0 = LEFT_SHIFT(tmp0, CONST_BITS);
+    tmp0 <<= CONST_BITS;
 
     z1 = (INT32) wsptr[4];
     tmp1 = MULTIPLY(z1, FIX(1.306562965));      /* c4[16] = c2[8] */

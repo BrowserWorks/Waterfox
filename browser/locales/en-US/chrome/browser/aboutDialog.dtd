@@ -30,20 +30,20 @@
 <!ENTITY community.exp.creditsLink  "global community">
 <!ENTITY community.exp.end          " working together to keep the Web open, public and accessible to all.">
 
-<!ENTITY community.start2           "&brandShortName; is made by ">
+<!ENTITY community.start2           "&brandShortName; is designed by ">
 <!-- LOCALIZATION NOTE (community.mozillaLink): This is a link title that links to http://www.mozilla.org/. -->
-<!ENTITY community.mozillaLink      "one person">
-<!ENTITY community.middle2          ", using ">
+<!ENTITY community.mozillaLink      "&vendorShortName;">
+<!ENTITY community.middle2          ", a ">
 <!-- LOCALIZATION NOTE (community.creditsLink): This is a link title that links to about:credits. -->
-<!ENTITY community.creditsLink      "the works of the kind people at Mozilla,">
-<!ENTITY community.end3             " inspired by what they have accomplished.">
+<!ENTITY community.creditsLink      "global community">
+<!ENTITY community.end3             " working together to keep the Web open, public and accessible to all.">
 
-<!ENTITY helpus.start               "">
+<!ENTITY helpus.start               "Want to help? ">
 <!-- LOCALIZATION NOTE (helpus.donateLink): This is a link title that links to https://sendto.mozilla.org/page/contribute/Give-Now?source=mozillaorg_default_footer&ref=firefox_about&utm_campaign=firefox_about&utm_source=firefox&utm_medium=referral&utm_content=20140929_FireFoxAbout. -->
-<!ENTITY helpus.donateLink          "">
-<!ENTITY helpus.middle              "">
+<!ENTITY helpus.donateLink          "Make a donation">
+<!ENTITY helpus.middle              " or ">
 <!-- LOCALIZATION NOTE (helpus.getInvolvedLink): This is a link title that links to http://www.mozilla.org/contribute/. -->
-<!ENTITY helpus.getInvolvedLink     "Get involved!">
+<!ENTITY helpus.getInvolvedLink     "get involved!">
 <!ENTITY helpus.end                 "">
 
 <!-- LOCALIZATION NOTE (bottomLinks.license): This is a link title that links to about:license. -->

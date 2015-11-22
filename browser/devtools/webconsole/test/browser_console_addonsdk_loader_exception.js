@@ -11,8 +11,7 @@
 
 const TEST_URI = "data:text/html;charset=utf8,<p>hello world from bug 866950";
 
-function test()
-{
+function test() {
   requestLongerTimeout(2);
 
   let webconsole, browserconsole;
@@ -30,7 +29,8 @@ function test()
     // Cause an exception in a script loaded with the addon-sdk loader.
     let toolbox = gDevTools.getToolbox(webconsole.target);
     let oldPanels = toolbox._toolPanels;
-    toolbox._toolPanels = {}; // non-iterable
+    // non-iterable
+    toolbox._toolPanels = {};
 
     function fixToolbox() {
       toolbox._toolPanels = oldPanels;
@@ -57,7 +57,7 @@ function test()
 
     let msg = [...result.matched][0];
     ok(msg, "message element found");
-    let locationNode = msg.querySelector(".message-location");
+    let locationNode = msg.querySelector(".message > .message-location");
     ok(locationNode, "message location element found");
 
     let title = locationNode.getAttribute("title");
@@ -78,7 +78,7 @@ function test()
                                browserconsole.iframeWindow);
 
     info("wait for click on locationNode");
-    yield clickPromise;
+    yield clickPromise.promise;
 
     info("view-source url: " + URL);
     ok(URL, "we have some source URL after the click");

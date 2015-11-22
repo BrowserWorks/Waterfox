@@ -33,9 +33,7 @@ public:
 
   void PostMessage(BroadcastChannelParent* aParent,
                    const ClonedMessageData& aData,
-                   const nsAString& aOrigin,
-                   uint64_t aAppId,
-                   bool aIsInBrowserElement,
+                   const nsACString& aOrigin,
                    const nsAString& aChannel,
                    bool aPrivateBrowsing);
 
@@ -46,7 +44,7 @@ private:
   nsTHashtable<nsPtrHashKey<BroadcastChannelParent>> mAgents;
 };
 
-} // dom namespace
-} // mozilla namespace
+} // namespace dom
+} // namespace mozilla
 
 #endif // mozilla_dom_BroadcastChannelService_h

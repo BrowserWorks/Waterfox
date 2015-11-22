@@ -5,7 +5,7 @@
 
 #include "ImageDataSerializer.h"
 #include "gfx2DGlue.h"                  // for SurfaceFormatToImageFormat
-#include "gfxPoint.h"                   // for gfxIntSize
+#include "mozilla/gfx/Point.h"          // for IntSize
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
 #include "mozilla/gfx/2D.h"             // for DataSourceSurface, Factory
 #include "mozilla/gfx/Logging.h"        // for gfxDebug
@@ -44,7 +44,7 @@ struct SurfaceBufferInfo
     return GetAlignedStride<16>(sizeof(SurfaceBufferInfo));
   }
 };
-} // anonymous namespace
+} // namespace
 
 static SurfaceBufferInfo*
 GetBufferInfo(uint8_t* aData, size_t aDataSize)
@@ -147,16 +147,20 @@ ImageDataSerializerBase::GetFormat() const
   return GetBufferInfo(mData, mDataSize)->format;
 }
 
-TemporaryRef<DrawTarget>
+already_AddRefed<DrawTarget>
 ImageDataSerializerBase::GetAsDrawTarget(gfx::BackendType aBackend)
 {
   MOZ_ASSERT(IsValid());
-  return gfx::Factory::CreateDrawTargetForData(aBackend,
+  RefPtr<DrawTarget> dt = gfx::Factory::CreateDrawTargetForData(aBackend,
                                                GetData(), GetSize(),
                                                GetStride(), GetFormat());
+  if (!dt) {
+    gfxCriticalNote << "Failed GetAsDrawTarget " << IsValid() << ", " << hexa(size_t(mData)) << " + " << SurfaceBufferInfo::GetOffset() << ", " << GetSize() << ", " << GetStride() << ", " << (int)GetFormat();
+  }
+  return dt.forget();
 }
 
-TemporaryRef<gfx::DataSourceSurface>
+already_AddRefed<gfx::DataSourceSurface>
 ImageDataSerializerBase::GetAsSurface()
 {
   MOZ_ASSERT(IsValid());

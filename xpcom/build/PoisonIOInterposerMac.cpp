@@ -16,7 +16,7 @@
 #include "mozilla/Scoped.h"
 #include "mozilla/Telemetry.h"
 #include "nsPrintfCString.h"
-#include "nsStackWalk.h"
+#include "mozilla/StackWalk.h"
 #include "nsTraceRefcnt.h"
 #include "plstr.h"
 #include "prio.h"
@@ -31,6 +31,7 @@
 #include <aio.h>
 #include <dlfcn.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #ifdef MOZ_REPLACE_MALLOC
 #include "replace_malloc_bridge.h"
@@ -323,7 +324,7 @@ FuncData* Functions[] = {
 
 const int NumFunctions = ArrayLength(Functions);
 
-} // anonymous namespace
+} // namespace
 
 /******************************** IO Poisoning ********************************/
 

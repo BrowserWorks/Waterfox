@@ -16,6 +16,7 @@ function run_test() {
 // Should not open a connection if the client has no registrations.
 add_task(function* test_registration_none() {
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     makeWebSocket(uri) {
       return new MockWebSocket(uri);
@@ -23,6 +24,7 @@ add_task(function* test_registration_none() {
   });
 
   let registration = yield PushNotificationService.registration(
-    'https://example.net/1');
+    'https://example.net/1',
+    ChromeUtils.originAttributesToSuffix({ appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }));
   ok(!registration, 'Should not open a connection without registration');
 });

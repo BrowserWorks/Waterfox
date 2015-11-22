@@ -2,6 +2,8 @@
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 function test() {
+  requestLongerTimeout(2);
+
   let loader = Cc["@mozilla.org/moz/jssubscript-loader;1"].
                getService(Ci.mozIJSSubScriptLoader);
 
@@ -19,8 +21,5 @@ function test() {
     test_dependent_cookie_elements,
     test_dependent_clearonclose_elements,
     test_dependent_prefs,
-
-    // reset all preferences to their default values once we're done
-    reset_preferences
   ]);
 }

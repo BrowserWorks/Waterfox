@@ -8,10 +8,15 @@
 #define nsScriptSecurityManager_h__
 
 #include "nsIScriptSecurityManager.h"
+
+#include "nsIAddonPolicyService.h"
+#include "mozilla/Maybe.h"
+#include "nsIAddonPolicyService.h"
 #include "nsIPrincipal.h"
 #include "nsCOMPtr.h"
 #include "nsIChannelEventSink.h"
 #include "nsIObserver.h"
+#include "nsServiceManagerUtils.h"
 #include "plstr.h"
 #include "js/TypeDecls.h"
 
@@ -21,6 +26,10 @@ class nsCString;
 class nsIIOService;
 class nsIStringBundle;
 class nsSystemPrincipal;
+
+namespace mozilla {
+class OriginAttributes;
+} // namespace mozilla
 
 /////////////////////////////
 // nsScriptSecurityManager //
@@ -80,22 +89,6 @@ public:
         return sStrictFileOriginPolicy;
     }
 
-    /**
-     * Returns true if the two principals share the same app attributes.
-     *
-     * App attributes are appId and the inBrowserElement flag.
-     * Two principals have the same app attributes if those information are
-     * equals.
-     * This method helps keeping principals from different apps isolated from
-     * each other. Also, it helps making sure mozbrowser (web views) and their
-     * parent are isolated from each other. All those entities do not share the
-     * same data (cookies, IndexedDB, localStorage, etc.) so we shouldn't allow
-     * violating that principle.
-     */
-    static bool
-    AppAttributesEqual(nsIPrincipal* aFirst,
-                       nsIPrincipal* aSecond);
-
     void DeactivateDomainPolicy();
 
 private:
@@ -116,15 +109,6 @@ private:
     static nsIPrincipal* doGetObjectPrincipal(JSObject* obj);
 
     nsresult
-    GetCodebasePrincipalInternal(nsIURI* aURI, uint32_t aAppId,
-                                 bool aInMozBrowser,
-                                 nsIPrincipal** result);
-
-    nsresult
-    CreateCodebasePrincipal(nsIURI* aURI, uint32_t aAppId, bool aInMozBrowser,
-                            nsIPrincipal** result);
-
-    nsresult
     Init();
 
     nsresult
@@ -136,6 +120,9 @@ private:
     inline void
     AddSitesToFileURIWhitelist(const nsCString& aSiteList);
 
+    // If aURI is a moz-extension:// URI, set mAddonId to the associated addon.
+    nsresult MaybeSetAddonIdFromURI(mozilla::OriginAttributes& aAttrs, nsIURI* aURI);
+
     nsCOMPtr<nsIPrincipal> mSystemPrincipal;
     bool mPrefInitialized;
     bool mIsJavaScriptEnabled;
@@ -144,6 +131,17 @@ private:
     // This machinery controls new-style domain policies. The old-style
     // policy machinery will be removed soon.
     nsCOMPtr<nsIDomainPolicy> mDomainPolicy;
+
+    // Cached addon policy service. We can't generate this in Init() because
+    // that's too early to get a service.
+    mozilla::Maybe<nsCOMPtr<nsIAddonPolicyService>> mAddonPolicyService;
+    nsIAddonPolicyService* GetAddonPolicyService()
+    {
+        if (mAddonPolicyService.isNothing()) {
+            mAddonPolicyService.emplace(do_GetService("@mozilla.org/addons/policy-service;1"));
+        }
+        return mAddonPolicyService.ref();
+    }
 
     static bool sStrictFileOriginPolicy;
 

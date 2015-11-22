@@ -105,8 +105,8 @@ public:
                              NPError* aError) override;
 
     virtual nsresult NPP_ClearSiteData(const char* aSite, uint64_t aFlags,
-                                       uint64_t aMaxAge) override;
-    virtual nsresult NPP_GetSitesWithData(InfallibleTArray<nsCString>& aResult) override;
+                                       uint64_t aMaxAge, nsCOMPtr<nsIClearSiteDataCallback> callback) override;
+    virtual nsresult NPP_GetSitesWithData(nsCOMPtr<nsIGetSitesWithDataCallback> callback) override;
 
     virtual nsresult AsyncSetWindow(NPP aInstance, NPWindow* aWindow) override;
     virtual nsresult GetImageContainer(NPP aInstance, mozilla::layers::ImageContainer** aContainer) override;
@@ -123,6 +123,7 @@ public:
                                          gfxContext* aCtx, const nsIntRect&) override;
     virtual void GetLibraryPath(nsACString& aPath) { aPath.Assign(mFilePath); }
     virtual nsresult GetRunID(uint32_t* aRunID) override { return NS_ERROR_NOT_IMPLEMENTED; }
+    virtual void SetHasLocalInstance() override { }
 
 private:
     NP_InitializeFunc mNP_Initialize;

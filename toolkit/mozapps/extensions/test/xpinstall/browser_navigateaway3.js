@@ -31,7 +31,7 @@ function install_ended(install, addon) {
 function finish_test(count) {
   is(count, 0, "No add-ons should have been successfully installed");
 
-  Services.perms.remove("http://example.com", "install");
+  Services.perms.remove(makeURI("http://example.com"), "install");
 
   gBrowser.removeCurrentTab();
   Harness.finish();

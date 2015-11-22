@@ -14,7 +14,7 @@ Cu.import("resource://gre/modules/Log.jsm");
 
 this.EXPORTED_SYMBOLS = ["CardDavImporter"];
 
-let log = Log.repository.getLogger("Loop.Importer.CardDAV");
+var log = Log.repository.getLogger("Loop.Importer.CardDAV");
 log.level = Log.Level.Debug;
 log.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
 
@@ -109,8 +109,8 @@ this.CardDavImporter.prototype = {
                                          DEPTH_RESOURCE_AND_CHILDREN, body);
 
       // Build multiget REPORT body from URLs in PROPFIND result
-      let contactElements = abook.responseXML.
-                            getElementsByTagNameNS("DAV:", "href");
+      let contactElements = abook.responseXML.getElementsByTagNameNS(
+                            "DAV:", "href");
 
       body = "<c:addressbook-multiget xmlns:d='DAV:' " +
              "xmlns:c='urn:ietf:params:xml:ns:carddav'>" +
@@ -430,8 +430,8 @@ this.CardDavImporter.prototype = {
    */
   _davPromise: function(method, url, auth, depth, body) {
     return new Promise((resolve, reject) => {
-      let req = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].
-                createInstance(Ci.nsIXMLHttpRequest);
+      let req = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance(
+                Ci.nsIXMLHttpRequest);
       let user = "";
       let password = "";
 

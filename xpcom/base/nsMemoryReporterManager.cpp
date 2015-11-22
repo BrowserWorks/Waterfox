@@ -48,6 +48,7 @@ using namespace mozilla;
 
 #if defined(XP_LINUX)
 
+#include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -174,6 +175,26 @@ public:
   }
 };
 NS_IMPL_ISUPPORTS(ResidentUniqueReporter, nsIMemoryReporter)
+
+#define HAVE_SYSTEM_HEAP_REPORTER 1
+nsresult
+SystemHeapSize(int64_t* aSizeOut)
+{
+    struct mallinfo info = mallinfo();
+
+    // The documentation in the glibc man page makes it sound like |uordblks|
+    // would suffice, but that only gets the small allocations that are put in
+    // the brk heap. We need |hblkhd| as well to get the larger allocations
+    // that are mmapped.
+    //
+    // The fields in |struct mallinfo| are all |int|, <sigh>, so it is
+    // unreliable if memory usage gets high. However, the system heap size on
+    // Linux should usually be zero (so long as jemalloc is enabled) so that
+    // shouldn't be a problem. Nonetheless, cast the |int|s to |size_t| before
+    // adding them to provide a small amount of extra overflow protection.
+    *aSizeOut = size_t(info.hblkhd) + size_t(info.uordblks);
+    return NS_OK;
+}
 
 #elif defined(__DragonFly__) || defined(__FreeBSD__) \
     || defined(__NetBSD__) || defined(__OpenBSD__) \
@@ -436,10 +457,12 @@ static nsresult
 ResidentDistinguishedAmountHelper(int64_t* aN, bool aDoPurge)
 {
 #ifdef HAVE_JEMALLOC_STATS
+#ifndef MOZ_JEMALLOC4
   if (aDoPurge) {
     Telemetry::AutoTimer<Telemetry::MEMORY_FREE_PURGED_PAGES_MS> timer;
     jemalloc_purge_freed_pages();
   }
+#endif
 #endif
 
   task_basic_info ti;
@@ -545,6 +568,57 @@ PrivateDistinguishedAmount(int64_t* aN)
   }
 
   *aN = pmcex.PrivateUsage;
+  return NS_OK;
+}
+
+#define HAVE_SYSTEM_HEAP_REPORTER 1
+// Windows can have multiple separate heaps. During testing there were multiple
+// heaps present but the non-default ones had sizes no more than a few 10s of
+// KiBs. So we combine their sizes into a single measurement.
+nsresult
+SystemHeapSize(int64_t* aSizeOut)
+{
+  // Get the number of heaps.
+  DWORD nHeaps = GetProcessHeaps(0, nullptr);
+  NS_ENSURE_TRUE(nHeaps != 0, NS_ERROR_FAILURE);
+
+  // Get handles to all heaps, checking that the number of heaps hasn't
+  // changed in the meantime.
+  UniquePtr<HANDLE[]> heaps(new HANDLE[nHeaps]);
+  DWORD nHeaps2 = GetProcessHeaps(nHeaps, heaps.get());
+  NS_ENSURE_TRUE(nHeaps2 != 0 && nHeaps2 == nHeaps, NS_ERROR_FAILURE);
+
+  // Lock and iterate over each heap to get its size.
+  int64_t heapsSize = 0;
+  for (DWORD i = 0; i < nHeaps; i++) {
+    HANDLE heap = heaps[i];
+
+    NS_ENSURE_TRUE(HeapLock(heap), NS_ERROR_FAILURE);
+
+    int64_t heapSize = 0;
+    PROCESS_HEAP_ENTRY entry;
+    entry.lpData = nullptr;
+    while (HeapWalk(heap, &entry)) {
+      // We don't count entry.cbOverhead, because we just want to measure the
+      // space available to the program.
+      if (entry.wFlags & PROCESS_HEAP_ENTRY_BUSY) {
+        heapSize += entry.cbData;
+      }
+    }
+
+    // Check this result only after unlocking the heap, so that we don't leave
+    // the heap locked if there was an error.
+    DWORD lastError = GetLastError();
+
+    // I have no idea how things would proceed if unlocking this heap failed...
+    NS_ENSURE_TRUE(HeapUnlock(heap), NS_ERROR_FAILURE);
+
+    NS_ENSURE_TRUE(lastError == ERROR_NO_MORE_ITEMS, NS_ERROR_FAILURE);
+
+    heapsSize += heapSize;
+  }
+
+  *aSizeOut = heapsSize;
   return NS_OK;
 }
 
@@ -802,6 +876,34 @@ public:
 NS_IMPL_ISUPPORTS(ResidentReporter, nsIMemoryReporter)
 
 #endif  // HAVE_VSIZE_AND_RESIDENT_REPORTERS
+
+#ifdef HAVE_SYSTEM_HEAP_REPORTER
+
+class SystemHeapReporter final : public nsIMemoryReporter
+{
+  ~SystemHeapReporter() {}
+
+public:
+  NS_DECL_ISUPPORTS
+
+  NS_METHOD CollectReports(nsIHandleReportCallback* aHandleReport,
+                           nsISupports* aData, bool aAnonymize) override
+  {
+    int64_t amount;
+    nsresult rv = SystemHeapSize(&amount);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    return MOZ_COLLECT_REPORT(
+      "system-heap-allocated", KIND_OTHER, UNITS_BYTES, amount,
+"Memory used by the system allocator that is currently allocated to the "
+"application. This is distinct from the jemalloc heap that Firefox uses for "
+"most or all of its heap allocations. Ideally this number is zero, but "
+"on some platforms we cannot force every heap allocation through jemalloc.");
+  }
+};
+NS_IMPL_ISUPPORTS(SystemHeapReporter, nsIMemoryReporter)
+
+#endif // HAVE_SYSTEM_HEAP_REPORTER
 
 #ifdef XP_UNIX
 
@@ -1221,6 +1323,10 @@ nsMemoryReporterManager::Init()
   RegisterStrongReporter(new PrivateReporter());
 #endif
 
+#ifdef HAVE_SYSTEM_HEAP_REPORTER
+  RegisterStrongReporter(new SystemHeapReporter());
+#endif
+
   RegisterStrongReporter(new AtomTablesReporter());
 
 #ifdef DEBUG
@@ -1400,24 +1506,6 @@ nsMemoryReporterManager::StartGettingReports()
   return NS_OK;
 }
 
-typedef nsCOMArray<nsIMemoryReporter> MemoryReporterArray;
-
-static PLDHashOperator
-StrongEnumerator(nsRefPtrHashKey<nsIMemoryReporter>* aElem, void* aData)
-{
-  MemoryReporterArray* allReporters = static_cast<MemoryReporterArray*>(aData);
-  allReporters->AppendElement(aElem->GetKey());
-  return PL_DHASH_NEXT;
-}
-
-static PLDHashOperator
-WeakEnumerator(nsPtrHashKey<nsIMemoryReporter>* aElem, void* aData)
-{
-  MemoryReporterArray* allReporters = static_cast<MemoryReporterArray*>(aData);
-  allReporters->AppendElement(aElem->GetKey());
-  return PL_DHASH_NEXT;
-}
-
 NS_IMETHODIMP
 nsMemoryReporterManager::GetReportsForThisProcess(
   nsIHandleReportCallback* aHandleReport,
@@ -1448,11 +1536,17 @@ nsMemoryReporterManager::GetReportsForThisProcessExtended(
   MOZ_ASSERT(!aDMDFile);
 #endif
 
-  MemoryReporterArray allReporters;
+  nsCOMArray<nsIMemoryReporter> allReporters;
   {
     mozilla::MutexAutoLock autoLock(mMutex);
-    mStrongReporters->EnumerateEntries(StrongEnumerator, &allReporters);
-    mWeakReporters->EnumerateEntries(WeakEnumerator, &allReporters);
+    for (auto iter = mStrongReporters->Iter(); !iter.Done(); iter.Next()) {
+      nsRefPtrHashKey<nsIMemoryReporter>* entry = iter.Get();
+      allReporters.AppendElement(entry->GetKey());
+    }
+    for (auto iter = mWeakReporters->Iter(); !iter.Done(); iter.Next()) {
+      nsPtrHashKey<nsIMemoryReporter>* entry = iter.Get();
+      allReporters.AppendElement(entry->GetKey());
+    }
   }
   for (uint32_t i = 0; i < allReporters.Length(); i++) {
     allReporters[i]->CollectReports(aHandleReport, aHandleReportData,
@@ -2212,7 +2306,7 @@ private:
   uint32_t mRemainingIters;
 };
 
-} // anonymous namespace
+} // namespace
 
 NS_IMETHODIMP
 nsMemoryReporterManager::MinimizeMemoryUsage(nsIRunnable* aCallback)
@@ -2306,6 +2400,17 @@ RegisterWeakMemoryReporter(nsIMemoryReporter* aReporter)
 }
 
 nsresult
+UnregisterStrongMemoryReporter(nsIMemoryReporter* aReporter)
+{
+  nsCOMPtr<nsIMemoryReporterManager> mgr =
+    do_GetService("@mozilla.org/memory-reporter-manager;1");
+  if (!mgr) {
+    return NS_ERROR_FAILURE;
+  }
+  return mgr->UnregisterStrongReporter(aReporter);
+}
+
+nsresult
 UnregisterWeakMemoryReporter(nsIMemoryReporter* aReporter)
 {
   nsCOMPtr<nsIMemoryReporterManager> mgr =
@@ -2377,7 +2482,7 @@ DEFINE_REGISTER_SIZE_OF_TAB(NonJS);
 
 #undef GET_MEMORY_REPORTER_MANAGER
 
-}
+} // namespace mozilla
 
 #if defined(MOZ_DMD)
 
@@ -2392,7 +2497,7 @@ public:
   NS_IMETHOD Callback(const nsACString& aProcess, const nsACString& aPath,
                       int32_t aKind, int32_t aUnits, int64_t aAmount,
                       const nsACString& aDescription,
-                      nsISupports* aData)
+                      nsISupports* aData) override
   {
     // Do nothing;  the reporter has already reported to DMD.
     return NS_OK;

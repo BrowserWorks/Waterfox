@@ -8,15 +8,27 @@ const {Cc, Ci, Cu, Cr} = require("chrome");
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-let promise = require("resource://gre/modules/Promise.jsm").Promise;
-let EventEmitter = require("devtools/toolkit/event-emitter");
-let clipboard = require("sdk/clipboard");
-let {HostType} = require("devtools/framework/toolbox").Toolbox;
+var promise = require("promise");
+var EventEmitter = require("devtools/toolkit/event-emitter");
+var clipboard = require("sdk/clipboard");
+var {HostType} = require("devtools/framework/toolbox").Toolbox;
 
 loader.lazyGetter(this, "MarkupView", () => require("devtools/markupview/markup-view").MarkupView);
 loader.lazyGetter(this, "HTMLBreadcrumbs", () => require("devtools/inspector/breadcrumbs").HTMLBreadcrumbs);
 loader.lazyGetter(this, "ToolSidebar", () => require("devtools/framework/sidebar").ToolSidebar);
 loader.lazyGetter(this, "SelectorSearch", () => require("devtools/inspector/selector-search").SelectorSearch);
+
+loader.lazyGetter(this, "strings", () => {
+  return Services.strings.createBundle("chrome://browser/locale/devtools/inspector.properties");
+});
+loader.lazyGetter(this, "toolboxStrings", () => {
+  return Services.strings.createBundle("chrome://browser/locale/devtools/toolbox.properties");
+});
+loader.lazyGetter(this, "clipboardHelper", () => {
+  return Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
+});
+
+loader.lazyImporter(this, "CommandUtils", "resource:///modules/devtools/DeveloperToolbar.jsm");
 
 const LAYOUT_CHANGE_TIMER = 250;
 
@@ -77,7 +89,7 @@ InspectorPanel.prototype = {
   /**
    * open is effectively an asynchronous constructor
    */
-  open: function InspectorPanel_open() {
+  open: function() {
     return this.target.makeRemote().then(() => {
       return this._getPageStyle();
     }).then(() => {
@@ -161,7 +173,7 @@ InspectorPanel.prototype = {
         let notification = notificationBox.getNotificationWithValue("inspector-script-paused");
         if (!notification && this._toolbox.currentToolId == "inspector" &&
             this.target.isThreadPaused) {
-          let message = this.strings.GetStringFromName("debuggerPausedWarning.message");
+          let message = strings.GetStringFromName("debuggerPausedWarning.message");
           notificationBox.appendNotification(message,
             "inspector-script-paused", "", notificationBox.PRIORITY_WARNING_HIGH);
         }
@@ -288,14 +300,14 @@ InspectorPanel.prototype = {
    * decide whether to show the "are you sure you want to navigate"
    * notification.
    */
-  markDirty: function InspectorPanel_markDirty() {
+  markDirty: function() {
     this.isDirty = true;
   },
 
   /**
    * Hooks the searchbar to show result and auto completion suggestions.
    */
-  setupSearchBox: function InspectorPanel_setupSearchBox() {
+  setupSearchBox: function() {
     // Initiate the selectors search object.
     if (this.searchSuggestions) {
       this.searchSuggestions.destroy();
@@ -308,7 +320,7 @@ InspectorPanel.prototype = {
   /**
    * Build the sidebar.
    */
-  setupSidebar: function InspectorPanel_setupSidebar() {
+  setupSidebar: function() {
     let tabbox = this.panelDoc.querySelector("#inspector-sidebar");
     this.sidebar = new ToolSidebar(tabbox, this, "inspector", {
       showAllTabsMenu: true
@@ -365,7 +377,7 @@ InspectorPanel.prototype = {
   /**
    * Reset the inspector on new root mutation.
    */
-  onNewRoot: function InspectorPanel_onNewRoot() {
+  onNewRoot: function() {
     this._defaultNode = null;
     this.selection.setNodeFront(null);
     this._destroyMarkup();
@@ -428,7 +440,7 @@ InspectorPanel.prototype = {
   /**
    * When a new node is selected.
    */
-  onNewSelection: function InspectorPanel_onNewSelection(event, value, reason) {
+  onNewSelection: function(event, value, reason) {
     if (reason === "selection-destroy") {
       return;
     }
@@ -441,8 +453,7 @@ InspectorPanel.prototype = {
 
     // On any new selection made by the user, store the unique css selector
     // of the selected node so it can be restored after reload of the same page
-    if (reason !== "navigateaway" &&
-        this.canGetUniqueSelector &&
+    if (this.canGetUniqueSelector &&
         this.selection.isElementNode()) {
       selection.getUniqueSelector().then(selector => {
         this.selectionCssSelector = selector;
@@ -522,8 +533,7 @@ InspectorPanel.prototype = {
   /**
    * When a new node is selected, before the selection has changed.
    */
-  onBeforeNewSelection: function InspectorPanel_onBeforeNewSelection(event,
-                                                                     node) {
+  onBeforeNewSelection: function(event, node) {
     if (this.breadcrumbs.indexOf(node) == -1) {
       // only clear locks if we'd have to update breadcrumbs
       this.clearPseudoClasses();
@@ -535,7 +545,7 @@ InspectorPanel.prototype = {
    * parent is found (may happen when deleting an iframe inside which the
    * node was selected).
    */
-  onDetached: function InspectorPanel_onDetached(event, parentNode) {
+  onDetached: function(event, parentNode) {
     this.cancelLayoutChange();
     this.breadcrumbs.cutAfter(this.breadcrumbs.indexOf(parentNode));
     this.selection.setNodeFront(parentNode ? parentNode : this._defaultNode, "detached");
@@ -544,7 +554,7 @@ InspectorPanel.prototype = {
   /**
    * Destroy the inspector.
    */
-  destroy: function InspectorPanel__destroy() {
+  destroy: function() {
     if (this._panelDestroyer) {
       return this._panelDestroyer;
     }
@@ -607,7 +617,7 @@ InspectorPanel.prototype = {
   /**
    * Show the node menu.
    */
-  showNodeMenu: function InspectorPanel_showNodeMenu(aButton, aPosition, aExtraItems) {
+  showNodeMenu: function(aButton, aPosition, aExtraItems) {
     if (aExtraItems) {
       for (let item of aExtraItems) {
         this.nodemenu.appendChild(item);
@@ -616,7 +626,7 @@ InspectorPanel.prototype = {
     this.nodemenu.openPopup(aButton, aPosition, 0, 0, true, false);
   },
 
-  hideNodeMenu: function InspectorPanel_hideNodeMenu() {
+  hideNodeMenu: function() {
     this.nodemenu.hidePopup();
   },
 
@@ -624,7 +634,7 @@ InspectorPanel.prototype = {
    * Returns the clipboard content if it is appropriate for pasting
    * into the current node's outer HTML, otherwise returns null.
    */
-  _getClipboardContentForPaste: function Inspector_getClipboardContentForPaste() {
+  _getClipboardContentForPaste: function() {
     let flavors = clipboard.currentFlavors;
     if (flavors.indexOf("text") != -1 ||
         (flavors.indexOf("html") != -1 && flavors.indexOf("image") == -1)) {
@@ -639,11 +649,14 @@ InspectorPanel.prototype = {
   /**
    * Disable the delete item if needed. Update the pseudo classes.
    */
-  _setupNodeMenu: function InspectorPanel_setupNodeMenu() {
+  _setupNodeMenu: function() {
     let isSelectionElement = this.selection.isElementNode() &&
                              !this.selection.isPseudoElementNode();
     let isEditableElement = isSelectionElement &&
                             !this.selection.isAnonymousNode();
+    let isScreenshotable = isSelectionElement &&
+                           this.canGetUniqueSelector &&
+                           this.selection.nodeFront.isTreeDisplayed;
 
     // Set the pseudo classes
     for (let name of ["hover", "active", "focus"]) {
@@ -667,11 +680,25 @@ InspectorPanel.prototype = {
     }
 
     // Disable / enable "Copy Unique Selector", "Copy inner HTML",
-    // "Copy outer HTML" & "Scroll Into View" as appropriate
+    // "Copy outer HTML", "Scroll Into View" & "Screenshot Node" as appropriate
     let unique = this.panelDoc.getElementById("node-menu-copyuniqueselector");
+    let screenshot = this.panelDoc.getElementById("node-menu-screenshotnode");
     let copyInnerHTML = this.panelDoc.getElementById("node-menu-copyinner");
     let copyOuterHTML = this.panelDoc.getElementById("node-menu-copyouter");
     let scrollIntoView = this.panelDoc.getElementById("node-menu-scrollnodeintoview");
+    let expandAll = this.panelDoc.getElementById("node-menu-expand");
+    let collapse = this.panelDoc.getElementById("node-menu-collapse");
+
+    expandAll.setAttribute("disabled", "true");
+    collapse.setAttribute("disabled", "true");
+
+    let markUpContainer = this.markup.importNode(this.selection.nodeFront, false);
+    if (this.selection.isNode() && markUpContainer.hasChildren) {
+      if (markUpContainer.expanded) {
+        collapse.removeAttribute("disabled");
+      }
+      expandAll.removeAttribute("disabled");
+    }
 
     this._target.actorHasMethod("domnode", "scrollIntoView").then(value => {
       scrollIntoView.hidden = !value;
@@ -690,6 +717,12 @@ InspectorPanel.prototype = {
     }
     if (!this.canGetUniqueSelector) {
       unique.hidden = true;
+    }
+
+    if (isScreenshotable) {
+      screenshot.removeAttribute("disabled");
+    } else {
+      screenshot.setAttribute("disabled", "true");
     }
 
     // Enable/Disable the link open/copy items.
@@ -745,7 +778,7 @@ InspectorPanel.prototype = {
     }
   },
 
-  _resetNodeMenu: function InspectorPanel_resetNodeMenu() {
+  _resetNodeMenu: function() {
     // Remove any extra items
     while (this.lastNodemenuItem.nextSibling) {
       let toDelete = this.lastNodemenuItem.nextSibling;
@@ -757,7 +790,7 @@ InspectorPanel.prototype = {
    * Link menu items can be shown or hidden depending on the context and
    * selected node, and their labels can vary.
    */
-  _setupNodeLinkMenu: function InspectorPanel_setupNodeLinkMenu() {
+  _setupNodeLinkMenu: function() {
     let linkSeparator = this.panelDoc.getElementById("node-menu-link-separator");
     let linkFollow = this.panelDoc.getElementById("node-menu-link-follow");
     let linkCopy = this.panelDoc.getElementById("node-menu-link-copy");
@@ -786,31 +819,31 @@ InspectorPanel.prototype = {
         // Links can't be opened in new tabs in the browser toolbox.
         if (type === "uri" && !this.target.chrome) {
           linkFollow.removeAttribute("hidden");
-          linkFollow.setAttribute("label", this.strings.GetStringFromName(
+          linkFollow.setAttribute("label", strings.GetStringFromName(
             "inspector.menu.openUrlInNewTab.label"));
         } else if (type === "cssresource") {
           linkFollow.removeAttribute("hidden");
-          linkFollow.setAttribute("label", this.toolboxStrings.GetStringFromName(
+          linkFollow.setAttribute("label", toolboxStrings.GetStringFromName(
             "toolbox.viewCssSourceInStyleEditor.label"));
         } else if (type === "jsresource") {
           linkFollow.removeAttribute("hidden");
-          linkFollow.setAttribute("label", this.toolboxStrings.GetStringFromName(
+          linkFollow.setAttribute("label", toolboxStrings.GetStringFromName(
             "toolbox.viewJsSourceInDebugger.label"));
         }
 
         linkCopy.removeAttribute("hidden");
-        linkCopy.setAttribute("label", this.strings.GetStringFromName(
+        linkCopy.setAttribute("label", strings.GetStringFromName(
           "inspector.menu.copyUrlToClipboard.label"));
       }, console.error);
     } else if (type === "idref") {
       linkSeparator.removeAttribute("hidden");
       linkFollow.removeAttribute("hidden");
-      linkFollow.setAttribute("label", this.strings.formatStringFromName(
+      linkFollow.setAttribute("label", strings.formatStringFromName(
         "inspector.menu.selectElement.label", [popupNode.dataset.link], 1));
     }
   },
 
-  _initMarkup: function InspectorPanel_initMarkup() {
+  _initMarkup: function() {
     let doc = this.panelDoc;
 
     this._markupBox = doc.getElementById("markup-box");
@@ -828,10 +861,10 @@ InspectorPanel.prototype = {
     this._markupBox.setAttribute("collapsed", true);
     this._markupBox.appendChild(this._markupFrame);
     this._markupFrame.setAttribute("src", "chrome://browser/content/devtools/markup-view.xhtml");
-    this._markupFrame.setAttribute("aria-label", this.strings.GetStringFromName("inspector.panelLabel.markupView"));
+    this._markupFrame.setAttribute("aria-label", strings.GetStringFromName("inspector.panelLabel.markupView"));
   },
 
-  _onMarkupFrameLoad: function InspectorPanel__onMarkupFrameLoad() {
+  _onMarkupFrameLoad: function() {
     this._markupFrame.removeEventListener("load", this._boundMarkupFrameLoad, true);
     delete this._boundMarkupFrameLoad;
 
@@ -845,7 +878,7 @@ InspectorPanel.prototype = {
     this.emit("markuploaded");
   },
 
-  _destroyMarkup: function InspectorPanel__destroyMarkup() {
+  _destroyMarkup: function() {
     let destroyPromise;
 
     if (this._boundMarkupFrameLoad) {
@@ -900,12 +933,10 @@ InspectorPanel.prototype = {
 
     if (isVisible) {
       button.setAttribute("pane-collapsed", "");
-      button.setAttribute("tooltiptext",
-        this.strings.GetStringFromName("inspector.expandPane"));
+      button.setAttribute("tooltiptext", strings.GetStringFromName("inspector.expandPane"));
     } else {
       button.removeAttribute("pane-collapsed");
-      button.setAttribute("tooltiptext",
-        this.strings.GetStringFromName("inspector.collapsePane"));
+      button.setAttribute("tooltiptext", strings.GetStringFromName("inspector.collapsePane"));
     }
   },
 
@@ -920,7 +951,7 @@ InspectorPanel.prototype = {
   /**
    * Toggle a pseudo class.
    */
-  togglePseudoClass: function InspectorPanel_togglePseudoClass(aPseudo) {
+  togglePseudoClass: function(aPseudo) {
     if (this.selection.isElementNode()) {
       let node = this.selection.nodeFront;
       if (node.hasPseudoClassLock(aPseudo)) {
@@ -935,7 +966,7 @@ InspectorPanel.prototype = {
   /**
    * Show DOM properties
    */
-  showDOMProperties: function InspectorPanel_showDOMProperties() {
+  showDOMProperties: function() {
     this._toolbox.openSplitConsole().then(() => {
       let panel = this._toolbox.getPanel("webconsole");
       let jsterm = panel.hud.jsterm;
@@ -946,9 +977,39 @@ InspectorPanel.prototype = {
   },
 
   /**
+   * Use in Console.
+   *
+   * Takes the currently selected node in the inspector and assigns it to a
+   * temp variable on the content window.  Also opens the split console and
+   * autofills it with the temp variable.
+   */
+  useInConsole: function() {
+    this._toolbox.openSplitConsole().then(() => {
+      let panel = this._toolbox.getPanel("webconsole");
+      let jsterm = panel.hud.jsterm;
+
+      let evalString = `let i = 0;
+        while (window.hasOwnProperty("temp" + i) && i < 1000) {
+          i++;
+        }
+        window["temp" + i] = $0;
+        "temp" + i;
+      `;
+
+      let options = {
+        selectedNodeActor: this.selection.nodeFront.actorID,
+      };
+      jsterm.requestEvaluation(evalString, options).then((res) => {
+        jsterm.setInputValue(res.result);
+        this.emit("console-var-ready");
+      });
+    });
+  },
+
+  /**
    * Clear any pseudo-class locks applied to the current hierarchy.
    */
-  clearPseudoClasses: function InspectorPanel_clearPseudoClasses() {
+  clearPseudoClasses: function() {
     if (!this.walker) {
       return;
     }
@@ -958,7 +1019,7 @@ InspectorPanel.prototype = {
   /**
    * Edit the outerHTML of the selected Node.
    */
-  editHTML: function InspectorPanel_editHTML() {
+  editHTML: function() {
     if (!this.selection.isNode()) {
       return;
     }
@@ -970,7 +1031,7 @@ InspectorPanel.prototype = {
   /**
    * Paste the contents of the clipboard into the selected Node's outer HTML.
    */
-  pasteOuterHTML: function InspectorPanel_pasteOuterHTML() {
+  pasteOuterHTML: function() {
     let content = this._getClipboardContentForPaste();
     if (!content)
       return promise.reject("No clipboard content for paste");
@@ -984,7 +1045,7 @@ InspectorPanel.prototype = {
   /**
    * Paste the contents of the clipboard into the selected Node's inner HTML.
    */
-  pasteInnerHTML: function InspectorPanel_pasteInnerHTML() {
+  pasteInnerHTML: function() {
     let content = this._getClipboardContentForPaste();
     if (!content)
       return promise.reject("No clipboard content for paste");
@@ -1000,7 +1061,7 @@ InspectorPanel.prototype = {
    * @param position The position as specified for Element.insertAdjacentHTML
    *        (i.e. "beforeBegin", "afterBegin", "beforeEnd", "afterEnd").
    */
-  pasteAdjacentHTML: function InspectorPanel_pasteAdjacent(position) {
+  pasteAdjacentHTML: function(position) {
     let content = this._getClipboardContentForPaste();
     if (!content)
       return promise.reject("No clipboard content for paste");
@@ -1012,51 +1073,76 @@ InspectorPanel.prototype = {
   /**
    * Copy the innerHTML of the selected Node to the clipboard.
    */
-  copyInnerHTML: function InspectorPanel_copyInnerHTML() {
+  copyInnerHTML: function() {
     if (!this.selection.isNode()) {
       return;
     }
-    this._copyLongStr(this.walker.innerHTML(this.selection.nodeFront));
+    this._copyLongString(this.walker.innerHTML(this.selection.nodeFront));
   },
 
   /**
    * Copy the outerHTML of the selected Node to the clipboard.
    */
-  copyOuterHTML: function InspectorPanel_copyOuterHTML()
-  {
+  copyOuterHTML: function() {
     if (!this.selection.isNode()) {
       return;
     }
+    let node = this.selection.nodeFront;
 
-    this._copyLongStr(this.walker.outerHTML(this.selection.nodeFront));
+    switch (node.nodeType) {
+      case Ci.nsIDOMNode.ELEMENT_NODE :
+        this._copyLongString(this.walker.outerHTML(node));
+        break;
+      case Ci.nsIDOMNode.COMMENT_NODE :
+        this._getLongString(node.getNodeValue()).then(comment => {
+          clipboardHelper.copyString("<!--" + comment + "-->");
+        });
+        break;
+      case Ci.nsIDOMNode.DOCUMENT_TYPE_NODE :
+        clipboardHelper.copyString(node.doctypeString);
+        break;
+    }
   },
 
   /**
    * Copy the data-uri for the currently selected image in the clipboard.
    */
-  copyImageDataUri: function InspectorPanel_copyImageDataUri()
-  {
+  copyImageDataUri: function() {
     let container = this.markup.getContainer(this.selection.nodeFront);
     if (container && container.isPreviewable()) {
       container.copyImageDataUri();
     }
   },
 
-  _copyLongStr: function InspectorPanel_copyLongStr(promise)
-  {
-    return promise.then(longstr => {
-      return longstr.string().then(toCopy => {
-        longstr.release().then(null, console.error);
-        clipboardHelper.copyString(toCopy);
+  /**
+   * Copy the content of a longString (via a promise resolving a LongStringActor) to the clipboard
+   * @param  {Promise} longStringActorPromise promise expected to resolve a LongStringActor instance
+   * @return {Promise} promise resolving (with no argument) when the string is sent to the clipboard
+   */
+  _copyLongString: function(longStringActorPromise) {
+    return this._getLongString(longStringActorPromise).then(string => {
+      clipboardHelper.copyString(string);
+    }).catch(Cu.reportError);
+  },
+
+  /**
+   * Retrieve the content of a longString (via a promise resolving a LongStringActor)
+   * @param  {Promise} longStringActorPromise promise expected to resolve a LongStringActor instance
+   * @return {Promise} promise resolving with the retrieved string as argument
+   */
+  _getLongString: function(longStringActorPromise) {
+    return longStringActorPromise.then(longStringActor => {
+      return longStringActor.string().then(string => {
+        longStringActor.release().catch(Cu.reportError);
+        return string;
       });
-    }).then(null, console.error);
+    }).catch(Cu.reportError);
   },
 
   /**
    * Copy a unique selector of the selected Node to the clipboard.
    */
-  copyUniqueSelector: function InspectorPanel_copyUniqueSelector()
-  {
+  copyUniqueSelector: function() {
     if (!this.selection.isNode()) {
       return;
     }
@@ -1067,10 +1153,23 @@ InspectorPanel.prototype = {
   },
 
   /**
+   * Initiate gcli screenshot command on selected node
+   */
+  screenshotNode: function() {
+    CommandUtils.createRequisition(this._target, {
+      environment: CommandUtils.createEnvironment(this, '_target')
+    }).then(requisition => {
+      // Bug 1180314 -  CssSelector might contain white space so need to make sure it is
+      // passed to screenshot as a single parameter.  More work *might* be needed if
+      // CssSelector could contain escaped single- or double-quotes, backslashes, etc.
+      requisition.updateExec("screenshot --selector '" + this.selectionCssSelector + "'");
+    });
+  },
+
+  /**
    * Scroll the node into view.
    */
-  scrollNodeIntoView: function InspectorPanel_scrollNodeIntoView()
-  {
+  scrollNodeIntoView: function() {
     if (!this.selection.isNode()) {
       return;
     }
@@ -1081,7 +1180,7 @@ InspectorPanel.prototype = {
   /**
    * Delete the selected node.
    */
-  deleteNode: function IUI_deleteNode() {
+  deleteNode: function() {
     if (!this.selection.isNode() ||
          this.selection.isRoot()) {
       return;
@@ -1097,14 +1196,34 @@ InspectorPanel.prototype = {
     }
   },
 
+  expandNode: function() {
+    this.markup.expandAll(this.selection.nodeFront);
+  },
+
+  collapseNode: function() {
+    this.markup.collapseNode(this.selection.nodeFront);
+  },
+
   /**
    * This method is here for the benefit of the node-menu-link-follow menu item
-   * in the inspector contextual-menu. It's behavior depends on which node was
-   * right-clicked when the menu was opened.
+   * in the inspector contextual-menu.
    */
-  followAttributeLink: function InspectorPanel_followLink(e) {
+  onFollowLink: function() {
     let type = this.panelDoc.popupNode.dataset.type;
     let link = this.panelDoc.popupNode.dataset.link;
+
+    this.followAttributeLink(type, link);
+  },
+
+  /**
+   * Given a type and link found in a node's attribute in the markup-view,
+   * attempt to follow that link (which may result in opening a new tab, the
+   * style editor or debugger).
+   */
+  followAttributeLink: function(type, link) {
+    if (!type || !link) {
+      return;
+    }
 
     if (type === "uri" || type === "cssresource" || type === "jsresource") {
       // Open link in a new tab.
@@ -1136,11 +1255,18 @@ InspectorPanel.prototype = {
 
   /**
    * This method is here for the benefit of the node-menu-link-copy menu item
-   * in the inspector contextual-menu. It's behavior depends on which node was
-   * right-clicked when the menu was opened.
+   * in the inspector contextual-menu.
    */
-  copyAttributeLink: function InspectorPanel_copyLink(e) {
+  onCopyLink: function() {
     let link = this.panelDoc.popupNode.dataset.link;
+
+    this.copyAttributeLink(link);
+  },
+
+  /**
+   * This method is here for the benefit of copying links.
+   */
+  copyAttributeLink: function(link) {
     // When the inspector menu was setup on click (see _setupNodeLinkMenu), we
     // already checked that resolveRelativeURL existed.
     this.inspector.resolveRelativeURL(link, this.selection.nodeFront).then(url => {
@@ -1149,11 +1275,10 @@ InspectorPanel.prototype = {
   },
 
   /**
-  * Trigger a high-priority layout change for things that need to be
-  * updated immediately
-  */
-  immediateLayoutChange: function Inspector_immediateLayoutChange()
-  {
+   * Trigger a high-priority layout change for things that need to be
+   * updated immediately
+   */
+  immediateLayoutChange: function() {
     this.emit("layout-change");
   },
 
@@ -1161,8 +1286,7 @@ InspectorPanel.prototype = {
    * Schedule a low-priority change event for things like paint
    * and resize.
    */
-  scheduleLayoutChange: function Inspector_scheduleLayoutChange(event)
-  {
+  scheduleLayoutChange: function(event) {
     // Filter out non browser window resize events (i.e. triggered by iframes)
     if (this.browser.contentWindow === event.target) {
       if (this._timer) {
@@ -1179,33 +1303,10 @@ InspectorPanel.prototype = {
    * Cancel a pending low-priority change event if any is
    * scheduled.
    */
-  cancelLayoutChange: function Inspector_cancelLayoutChange()
-  {
+  cancelLayoutChange: function() {
     if (this._timer) {
       this.panelWin.clearTimeout(this._timer);
       delete this._timer;
     }
   }
 };
-
-/////////////////////////////////////////////////////////////////////////
-//// Initializers
-
-loader.lazyGetter(InspectorPanel.prototype, "strings", function () {
-  return Services.strings.createBundle(
-    "chrome://browser/locale/devtools/inspector.properties");
-});
-
-loader.lazyGetter(InspectorPanel.prototype, "toolboxStrings", function () {
-  return Services.strings.createBundle(
-    "chrome://browser/locale/devtools/toolbox.properties");
-});
-
-loader.lazyGetter(this, "clipboardHelper", function() {
-  return Cc["@mozilla.org/widget/clipboardhelper;1"].
-    getService(Ci.nsIClipboardHelper);
-});
-
-loader.lazyGetter(this, "DOMUtils", function () {
-  return Cc["@mozilla.org/inspector/dom-utils;1"].getService(Ci.inIDOMUtils);
-});

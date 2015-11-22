@@ -26,7 +26,7 @@
 class nsOverflowContinuationTracker;
 namespace mozilla {
 class FramePropertyTable;
-}
+} // namespace mozilla
 
 // Some macros for container classes to do sanity checking on
 // width/height/x/y values computed during reflow.
@@ -241,7 +241,7 @@ public:
    * If the reflow status after reflowing the child is FULLY_COMPLETE then any
    * next-in-flows are deleted using DeleteNextInFlowChild().
    *
-   * @param aContainerWidth  width of the border-box of the containing frame
+   * @param aContainerSize  size of the border-box of the containing frame
    *
    * Flags:
    * NS_FRAME_NO_MOVE_VIEW - don't position the frame's view. Set this if you
@@ -255,7 +255,7 @@ public:
                    const nsHTMLReflowState&       aReflowState,
                    const mozilla::WritingMode&    aWM,
                    const mozilla::LogicalPoint&   aPos,
-                   nscoord                        aContainerWidth,
+                   const nsSize&                  aContainerSize,
                    uint32_t                       aFlags,
                    nsReflowStatus&                aStatus,
                    nsOverflowContinuationTracker* aTracker = nullptr);
@@ -270,7 +270,7 @@ public:
    * - sets the view's visibility, opacity, content transparency, and clip
    * - invoked the DidReflow() function
    *
-   * @param aContainerWidth  width of the border-box of the containing frame
+   * @param aContainerSize  size of the border-box of the containing frame
    *
    * Flags:
    * NS_FRAME_NO_MOVE_FRAME - don't move the frame. aPos is ignored in this
@@ -285,7 +285,7 @@ public:
                                 const nsHTMLReflowState*     aReflowState,
                                 const mozilla::WritingMode&  aWM,
                                 const mozilla::LogicalPoint& aPos,
-                                nscoord                      aContainerWidth,
+                                const nsSize&                aContainerSize,
                                 uint32_t                     aFlags);
 
   //XXX temporary: hold on to a copy of the old physical versions of
@@ -454,6 +454,14 @@ public:
   NS_DECLARE_FRAME_PROPERTY_FRAMELIST(OverflowProperty)
   NS_DECLARE_FRAME_PROPERTY_FRAMELIST(OverflowContainersProperty)
   NS_DECLARE_FRAME_PROPERTY_FRAMELIST(ExcessOverflowContainersProperty)
+
+#ifdef DEBUG
+  // Use this to suppress the CRAZY_SIZE assertions.
+  NS_DECLARE_FRAME_PROPERTY(DebugReflowingWithInfiniteISize, nullptr)
+  bool IsCrazySizeAssertSuppressed() const {
+    return Properties().Get(DebugReflowingWithInfiniteISize()) != nullptr;
+  }
+#endif
 
 protected:
   explicit nsContainerFrame(nsStyleContext* aContext) : nsSplittableFrame(aContext) {}

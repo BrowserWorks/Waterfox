@@ -236,6 +236,7 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
         str_format_values = {
             'browser_path': self.binary_path,
             'raw_log_file': os.path.join(dirs['abs_work_dir'], 'luciddream_raw.log'),
+            'error_summary_file': os.path.join(dirs['abs_work_dir'], 'luciddream_errorsummary.log'),
             'test_manifest': os.path.join(ld_dir, 'example-tests', 'luciddream.ini')
         }
 
@@ -249,7 +250,7 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
             str_format_values['gaia_profile'] = os.path.join(dirs['abs_gaia_dir'], 'profile')
 
         suite = 'luciddream-emulator' if self.config.get('emulator_url') else 'luciddream-b2gdt'
-        options = self.tree_config['suite_definitions'][suite]['options']
+        options = self.config['suite_definitions'][suite]['options']
         for option in options:
             option = option % str_format_values
             if not option.endswith('None'):

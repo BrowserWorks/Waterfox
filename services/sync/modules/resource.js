@@ -324,6 +324,7 @@ AsyncResource.prototype = {
     }
 
     let ret     = new String(data);
+    ret.url     = channel.URI.spec;
     ret.status  = status;
     ret.success = success;
     ret.headers = headers;
@@ -403,7 +404,7 @@ Resource.prototype = {
     try {
       this._doRequest(action, data, callback);
       return Async.waitForSyncCallback(cb);
-    } catch(ex) {
+    } catch (ex if !Async.isShutdownException(ex)) {
       // Combine the channel stack with this request stack.  Need to create
       // a new error object for that.
       let error = Error(ex.message);
@@ -556,7 +557,7 @@ ChannelListener.prototype = {
 
     try {
       this._onProgress();
-    } catch (ex) {
+    } catch (ex if !Async.isShutdownException(ex)) {
       this._log.warn("Got exception calling onProgress handler during fetch of "
                      + req.URI.spec);
       this._log.debug(CommonUtils.exceptionStr(ex));

@@ -29,7 +29,7 @@
                           key="key_privatebrowsing"/>
 #ifdef E10S_TESTING_ONLY
                 <menuitem id="menu_newNonRemoteWindow"
-                          label="New Non-e10s Window"
+                          label="&newNonRemoteWindow.label;"
                           hidden="true"
                           command="Tools:NonRemoteWindow"/>
 #endif
@@ -210,10 +210,6 @@
                               key="key_gotoHistory"
                               observes="viewHistorySidebar"
                               label="&historyButton.label;"/>
-                    <menuitem id="menu_readingListSidebar"
-                              key="key_readingListSidebar"
-                              observes="readingListSidebar"
-                              label="&readingList.label;"/>
 
                     <!-- Service providers with sidebars are inserted between these two menuseperators -->
                     <menuseparator hidden="true"/>
@@ -443,30 +439,6 @@
                    onpopupshowing="if (!this.parentNode._placesView)
                                      new PlacesMenu(event, 'place:folder=TOOLBAR');"/>
       </menu>
-#ifndef XP_MACOSX
-# Disabled on Mac because we can't fill native menupopups asynchronously
-      <menuseparator id="menu_readingListSeparator">
-        <observes element="readingListSidebar" attribute="hidden"/>
-      </menuseparator>
-      <menu id="menu_readingList"
-            class="menu-iconic bookmark-item"
-            label="&readingList.label;"
-            container="true">
-        <observes element="readingListSidebar" attribute="hidden"/>
-        <menupopup id="readingListPopup"
-#ifndef XP_MACOSX
-                   placespopup="true"
-#endif
-                   onpopupshowing="ReadingListUI.onReadingListPopupShowing(this);">
-          <menuseparator id="viewReadingListSidebarSeparator"/>
-          <menuitem id="viewReadingListSidebar" class="subviewbutton"
-                    oncommand="SidebarUI.toggle('readingListSidebar');"
-                    label="&readingList.showSidebar.label;">
-            <observes element="readingListSidebar" attribute="checked"/>
-          </menuitem>
-        </menupopup>
-      </menu>
-#endif
       <menuseparator id="bookmarksMenuItemsSeparator"/>
       <!-- Bookmarks menu items -->
       <menuseparator builder="end"
@@ -504,10 +476,10 @@
                         accesskey="&webapps.accesskey;"
                         oncommand="BrowserOpenApps();"/>
 #ifdef MOZ_SERVICES_SYNC
-              <!-- only one of sync-setup or sync-menu will be showing at once -->
+              <!-- only one of sync-setup, sync-syncnowitem or sync-reauthitem will be showing at once -->
               <menuitem id="sync-setup"
-                        label="&syncSetup.label;"
-                        accesskey="&syncSetup.accesskey;"
+                        label="&syncSignIn.label;"
+                        accesskey="&syncSignIn.accesskey;"
                         observes="sync-setup-state"
                         oncommand="gSyncUI.openSetup(null, 'menubar')"/>
               <menuitem id="sync-syncnowitem"
@@ -543,7 +515,8 @@
                             observes="devtoolsMenuBroadcaster_BrowserToolbox"
                             accesskey="&browserToolboxMenu.accesskey;"/>
                   <menuitem id="menu_browserContentToolbox"
-                            observes="devtoolsMenuBroadcaster_BrowserContentToolbox"/>
+                            observes="devtoolsMenuBroadcaster_BrowserContentToolbox"
+                            accesskey="&browserContentToolboxMenu.accesskey;" />
                   <menuitem id="menu_browserConsole"
                             observes="devtoolsMenuBroadcaster_BrowserConsole"
                             accesskey="&browserConsoleCmd.accesskey;"/>

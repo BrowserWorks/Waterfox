@@ -9,7 +9,7 @@
  * about account state changes.
  */
 
-this.EXPORTED_SYMBOLS = ["FxAccountsWebChannel"];
+this.EXPORTED_SYMBOLS = ["EnsureFxAccountsWebChannel"];
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
@@ -26,6 +26,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
 const COMMAND_PROFILE_CHANGE       = "profile:change";
 const COMMAND_CAN_LINK_ACCOUNT     = "fxaccounts:can_link_account";
 const COMMAND_LOGIN                = "fxaccounts:login";
+const COMMAND_LOGOUT               = "fxaccounts:logout";
+const COMMAND_DELETE               = "fxaccounts:delete";
 
 const PREF_LAST_FXA_USER           = "identity.fxaccounts.lastSignedInUserHash";
 const PREF_SYNC_SHOW_CUSTOMIZATION = "services.sync-setup.ui.showCustomizationDialog";
@@ -145,6 +147,10 @@ this.FxAccountsWebChannel.prototype = {
           case COMMAND_LOGIN:
             this._helpers.login(data);
             break;
+          case COMMAND_LOGOUT:
+          case COMMAND_DELETE:
+            this._helpers.logout(data.uid);
+            break;
           case COMMAND_CAN_LINK_ACCOUNT:
             let canLinkAccount = this._helpers.shouldAllowRelink(data.email);
 
@@ -233,6 +239,19 @@ this.FxAccountsWebChannelHelpers.prototype = {
   },
 
   /**
+   * logoust the fxaccounts service
+   *
+   * @param the uid of the account which have been logged out
+   */
+  logout(uid) {
+    return fxAccounts.getSignedInUser().then(userData => {
+      if (userData.uid === uid) {
+        return fxAccounts.signOut();
+      }
+    });
+  },
+
+  /**
    * Get the hash of account name of the previously signed in account
    */
   getPreviousAccountNameHashPref() {
@@ -311,3 +330,21 @@ this.FxAccountsWebChannelHelpers.prototype = {
     return pressed === 0; // 0 is the "continue" button
   }
 };
+
+var singleton;
+// The entry-point for this module, which ensures only one of our channels is
+// ever created - we require this because the WebChannel is global in scope
+// (eg, it uses the observer service to tell interested parties of interesting
+// things) and allowing multiple channels would cause such notifications to be
+// sent multiple times.
+this.EnsureFxAccountsWebChannel = function() {
+  if (!singleton) {
+    let contentUri = Services.urlFormatter.formatURLPref("identity.fxaccounts.remote.webchannel.uri");
+    // The FxAccountsWebChannel listens for events and updates
+    // the state machine accordingly.
+    singleton = new this.FxAccountsWebChannel({
+      content_uri: contentUri,
+      channel_id: WEBCHANNEL_ID,
+    });
+  }
+}

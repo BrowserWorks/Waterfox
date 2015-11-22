@@ -99,8 +99,7 @@ private:
   bool mLowDiskSpace;
   bool IsLowDiskSpace() const { return mLowDiskSpace; };
 
-  static PLDHashOperator ClearCacheEnumerator(DOMStorageCacheHashKey* aCache,
-                                              void* aClosure);
+  void ClearCaches(uint32_t aUnloadFlags, const nsACString& aKeyPrefix);
 
 protected:
   // Keeps usage cache objects for eTLD+1 scopes we have touched.
@@ -126,6 +125,9 @@ public:
   // Global getter of localStorage manager service
   static DOMLocalStorageManager* Self() { return sSelf; }
 
+  // Like Self, but creates an instance if we're not yet initialized.
+  static DOMLocalStorageManager* Ensure();
+
 private:
   static DOMLocalStorageManager* sSelf;
 };
@@ -136,7 +138,7 @@ public:
   DOMSessionStorageManager();
 };
 
-} // ::dom
-} // ::mozilla
+} // namespace dom
+} // namespace mozilla
 
 #endif /* nsDOMStorageManager_h__ */

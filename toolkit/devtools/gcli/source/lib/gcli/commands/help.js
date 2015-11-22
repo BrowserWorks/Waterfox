@@ -16,7 +16,6 @@
 
 'use strict';
 
-var Promise = require('../util/promise').Promise;
 var l10n = require('../util/l10n');
 var cli = require('../cli');
 
@@ -45,6 +44,11 @@ function addParamGroups(command) {
  * Get a data block for the help_man.html/help_man.txt templates
  */
 function getHelpManData(commandData, context) {
+  // Filter out hidden parameters
+  commandData.command.params = commandData.command.params.filter(
+    param => !param.hidden
+  );
+
   addParamGroups(commandData.command);
   commandData.subcommands.forEach(addParamGroups);
 

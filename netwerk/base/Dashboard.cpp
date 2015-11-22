@@ -298,7 +298,6 @@ LookupHelper::OnLookupComplete(nsICancelable *aRequest,
 nsresult
 LookupHelper::ConstructAnswer(LookupArgument *aArgument)
 {
-
     nsIDNSRecord *aRecord = aArgument->mRecord;
     AutoSafeJSContext cx;
 
@@ -312,10 +311,15 @@ LookupHelper::ConstructAnswer(LookupArgument *aArgument)
         bool hasMore;
         aRecord->HasMore(&hasMore);
         while (hasMore) {
-           nsCString nextAddress;
-           aRecord->GetNextAddrAsString(nextAddress);
-           CopyASCIItoUTF16(nextAddress, *addresses.AppendElement());
-           aRecord->HasMore(&hasMore);
+            nsString* nextAddress = addresses.AppendElement(fallible);
+            if (!nextAddress) {
+                return NS_ERROR_OUT_OF_MEMORY;
+            }
+
+            nsCString nextAddressASCII;
+            aRecord->GetNextAddrAsString(nextAddressASCII);
+            CopyASCIItoUTF16(nextAddressASCII, *nextAddress);
+            aRecord->HasMore(&hasMore);
         }
     } else {
         dict.mAnswer = false;
@@ -387,13 +391,13 @@ Dashboard::GetSockets(SocketData *aSocketData)
     Sequence<mozilla::dom::SocketElement> &sockets = dict.mSockets.Value();
 
     uint32_t length = socketData->mData.Length();
-    if (!sockets.SetCapacity(length)) {
+    if (!sockets.SetCapacity(length, fallible)) {
             JS_ReportOutOfMemory(cx);
             return NS_ERROR_OUT_OF_MEMORY;
     }
 
     for (uint32_t i = 0; i < socketData->mData.Length(); i++) {
-        mozilla::dom::SocketElement &mSocket = *sockets.AppendElement();
+        dom::SocketElement &mSocket = *sockets.AppendElement(fallible);
         CopyASCIItoUTF16(socketData->mData[i].host, mSocket.mHost);
         mSocket.mPort = socketData->mData[i].port;
         mSocket.mActive = socketData->mData[i].active;
@@ -457,13 +461,13 @@ Dashboard::GetHttpConnections(HttpData *aHttpData)
     Sequence<HttpConnectionElement> &connections = dict.mConnections.Value();
 
     uint32_t length = httpData->mData.Length();
-    if (!connections.SetCapacity(length)) {
+    if (!connections.SetCapacity(length, fallible)) {
             JS_ReportOutOfMemory(cx);
             return NS_ERROR_OUT_OF_MEMORY;
     }
 
     for (uint32_t i = 0; i < httpData->mData.Length(); i++) {
-        HttpConnectionElement &connection = *connections.AppendElement();
+        HttpConnectionElement &connection = *connections.AppendElement(fallible);
 
         CopyASCIItoUTF16(httpData->mData[i].host, connection.mHost);
         connection.mPort = httpData->mData[i].port;
@@ -478,15 +482,16 @@ Dashboard::GetHttpConnections(HttpData *aHttpData)
         Sequence<HttpConnInfo> &idle = connection.mIdle.Value();
         Sequence<HalfOpenInfoDict> &halfOpens = connection.mHalfOpens.Value();
 
-        if (!active.SetCapacity(httpData->mData[i].active.Length()) ||
-            !idle.SetCapacity(httpData->mData[i].idle.Length()) ||
-            !halfOpens.SetCapacity(httpData->mData[i].halfOpens.Length())) {
+        if (!active.SetCapacity(httpData->mData[i].active.Length(), fallible) ||
+            !idle.SetCapacity(httpData->mData[i].idle.Length(), fallible) ||
+            !halfOpens.SetCapacity(httpData->mData[i].halfOpens.Length(),
+                                   fallible)) {
                 JS_ReportOutOfMemory(cx);
                 return NS_ERROR_OUT_OF_MEMORY;
         }
 
         for (uint32_t j = 0; j < httpData->mData[i].active.Length(); j++) {
-            HttpConnInfo &info = *active.AppendElement();
+            HttpConnInfo &info = *active.AppendElement(fallible);
             info.mRtt = httpData->mData[i].active[j].rtt;
             info.mTtl = httpData->mData[i].active[j].ttl;
             info.mProtocolVersion =
@@ -494,14 +499,14 @@ Dashboard::GetHttpConnections(HttpData *aHttpData)
         }
 
         for (uint32_t j = 0; j < httpData->mData[i].idle.Length(); j++) {
-            HttpConnInfo &info = *idle.AppendElement();
+            HttpConnInfo &info = *idle.AppendElement(fallible);
             info.mRtt = httpData->mData[i].idle[j].rtt;
             info.mTtl = httpData->mData[i].idle[j].ttl;
             info.mProtocolVersion = httpData->mData[i].idle[j].protocolVersion;
         }
 
         for (uint32_t j = 0; j < httpData->mData[i].halfOpens.Length(); j++) {
-            HalfOpenInfoDict &info = *halfOpens.AppendElement();
+            HalfOpenInfoDict &info = *halfOpens.AppendElement(fallible);
             info.mSpeculative = httpData->mData[i].halfOpens[j].speculative;
         }
     }
@@ -619,13 +624,13 @@ Dashboard::GetWebSocketConnections(WebSocketRequest *aWsRequest)
 
     mozilla::MutexAutoLock lock(mWs.lock);
     uint32_t length = mWs.data.Length();
-    if (!websockets.SetCapacity(length)) {
+    if (!websockets.SetCapacity(length, fallible)) {
         JS_ReportOutOfMemory(cx);
         return NS_ERROR_OUT_OF_MEMORY;
     }
 
     for (uint32_t i = 0; i < mWs.data.Length(); i++) {
-        mozilla::dom::WebSocketElement &websocket = *websockets.AppendElement();
+        dom::WebSocketElement &websocket = *websockets.AppendElement(fallible);
         CopyASCIItoUTF16(mWs.data[i].mHost, websocket.mHostport);
         websocket.mMsgsent = mWs.data[i].mMsgSent;
         websocket.mMsgreceived = mWs.data[i].mMsgReceived;
@@ -692,17 +697,17 @@ Dashboard::GetDNSCacheEntries(DnsData *dnsData)
     Sequence<mozilla::dom::DnsCacheEntry> &entries = dict.mEntries.Value();
 
     uint32_t length = dnsData->mData.Length();
-    if (!entries.SetCapacity(length)) {
+    if (!entries.SetCapacity(length, fallible)) {
         JS_ReportOutOfMemory(cx);
         return NS_ERROR_OUT_OF_MEMORY;
     }
 
     for (uint32_t i = 0; i < dnsData->mData.Length(); i++) {
-        mozilla::dom::DnsCacheEntry &entry = *entries.AppendElement();
+        dom::DnsCacheEntry &entry = *entries.AppendElement(fallible);
         entry.mHostaddr.Construct();
 
         Sequence<nsString> &addrs = entry.mHostaddr.Value();
-        if (!addrs.SetCapacity(dnsData->mData[i].hostaddr.Length())) {
+        if (!addrs.SetCapacity(dnsData->mData[i].hostaddr.Length(), fallible)) {
             JS_ReportOutOfMemory(cx);
             return NS_ERROR_OUT_OF_MEMORY;
         }
@@ -712,7 +717,7 @@ Dashboard::GetDNSCacheEntries(DnsData *dnsData)
 
         for (uint32_t j = 0; j < dnsData->mData[i].hostaddr.Length(); j++) {
             CopyASCIItoUTF16(dnsData->mData[i].hostaddr[j],
-                *addrs.AppendElement());
+                             *addrs.AppendElement(fallible));
         }
 
         if (dnsData->mData[i].family == PR_AF_INET6) {
@@ -780,10 +785,6 @@ HttpConnInfo::SetHTTP2ProtocolVersion(uint8_t pv)
 {
     if (pv == SPDY_VERSION_31) {
         protocolVersion.AssignLiteral(MOZ_UTF16("spdy/3.1"));
-    } else if (pv == HTTP_VERSION_2_DRAFT_15) {
-        protocolVersion.AssignLiteral(MOZ_UTF16("h2-14/15"));
-    } else if (pv == HTTP_VERSION_2_DRAFT_LATEST) {
-        protocolVersion.Assign(NS_LITERAL_STRING(HTTP2_DRAFT_LATEST_TOKEN));
     } else {
         MOZ_ASSERT (pv == HTTP_VERSION_2);
         protocolVersion.Assign(MOZ_UTF16("h2"));
@@ -917,4 +918,5 @@ GetErrorString(nsresult rv, nsAString& errorString)
     CopyUTF8toUTF16(errorCString, errorString);
 }
 
-} } // namespace mozilla::net
+} // namespace net
+} // namespace mozilla

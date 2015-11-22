@@ -8,14 +8,12 @@
 #include "nsMimeTypes.h"
 #include "MediaDecoderStateMachine.h"
 #include "AbstractMediaDecoder.h"
-#include "MediaResource.h"
 #include "GStreamerReader.h"
 #if GST_VERSION_MAJOR >= 1
 #include "GStreamerAllocator.h"
 #endif
 #include "GStreamerFormatHelper.h"
 #include "VideoUtils.h"
-#include "mozilla/dom/TimeRanges.h"
 #include "mozilla/Endian.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/unused.h"
@@ -26,17 +24,14 @@ namespace mozilla {
 
 using namespace gfx;
 using namespace layers;
+using namespace media;
 
 // Un-comment to enable logging of seek bisections.
 //#define SEEK_LOGGING
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gMediaDecoderLog;
 #define LOG(type, msg, ...) \
-  PR_LOG(gMediaDecoderLog, type, ("GStreamerReader(%p) " msg, this, ##__VA_ARGS__))
-#else
-#define LOG(type, msg, ...)
-#endif
+  MOZ_LOG(gMediaDecoderLog, type, ("GStreamerReader(%p) " msg, this, ##__VA_ARGS__))
 
 #if DEBUG
 static const unsigned int MAX_CHANNELS = 4;
@@ -92,7 +87,8 @@ GStreamerReader::GStreamerReader(AbstractMediaDecoder* aDecoder)
   mConfigureAlignment(true),
 #endif
   fpsNum(0),
-  fpsDen(0)
+  fpsDen(0),
+  mResource(aDecoder->GetResource())
 {
   MOZ_COUNT_CTOR(GStreamerReader);
 
@@ -136,7 +132,7 @@ nsresult GStreamerReader::Init(MediaDecoderReader* aCloneDonor)
   mPlayBin = gst_element_factory_make("playbin2", nullptr);
 #endif
   if (!mPlayBin) {
-    LOG(PR_LOG_ERROR, "couldn't create playbin");
+    LOG(LogLevel::Error, "couldn't create playbin");
     return NS_ERROR_FAILURE;
   }
   g_object_set(mPlayBin, "buffer-size", 0, nullptr);
@@ -229,10 +225,14 @@ void GStreamerReader::ElementAddedCb(GstBin *aPlayBin,
                                      GstElement *aElement,
                                      gpointer aUserData)
 {
-  const gchar *name =
-    gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(gst_element_get_factory(aElement)));
+  GstElementFactory *factory = gst_element_get_factory(aElement);
 
-  if (!strcmp(name, "uridecodebin")) {
+  if (!factory)
+    return;
+
+  const gchar *name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
+
+  if (name && !strcmp(name, "uridecodebin")) {
     g_signal_connect(G_OBJECT(aElement), "autoplug-sort",
                      G_CALLBACK(GStreamerReader::ElementFilterCb), aUserData);
   }
@@ -281,30 +281,29 @@ void GStreamerReader::PlayBinSourceSetup(GstAppSrc* aSource)
 {
   mSource = GST_APP_SRC(aSource);
   gst_app_src_set_callbacks(mSource, &mSrcCallbacks, (gpointer) this, nullptr);
-  MediaResource* resource = mDecoder->GetResource();
 
   /* do a short read to trigger a network request so that GetLength() below
    * returns something meaningful and not -1
    */
   char buf[512];
   unsigned int size = 0;
-  resource->Read(buf, sizeof(buf), &size);
-  resource->Seek(SEEK_SET, 0);
+  mResource.Read(buf, sizeof(buf), &size);
+  mResource.Seek(SEEK_SET, 0);
 
   /* now we should have a length */
   int64_t resourceLength = GetDataLength();
   gst_app_src_set_size(mSource, resourceLength);
-  if (resource->IsDataCachedToEndOfResource(0) ||
+  if (mResource.GetResource()->IsDataCachedToEndOfResource(0) ||
       (resourceLength != -1 && resourceLength <= SHORT_FILE_SIZE)) {
     /* let the demuxer work in pull mode for local files (or very short files)
      * so that we get optimal seeking accuracy/performance
      */
-    LOG(PR_LOG_DEBUG, "configuring random access, len %lld", resourceLength);
+    LOG(LogLevel::Debug, "configuring random access, len %lld", resourceLength);
     gst_app_src_set_stream_type(mSource, GST_APP_STREAM_TYPE_RANDOM_ACCESS);
   } else {
     /* make the demuxer work in push mode so that seeking is kept to a minimum
      */
-    LOG(PR_LOG_DEBUG, "configuring push mode, len %lld", resourceLength);
+    LOG(LogLevel::Debug, "configuring push mode, len %lld", resourceLength);
     gst_app_src_set_stream_type(mSource, GST_APP_STREAM_TYPE_SEEKABLE);
   }
 
@@ -323,19 +322,17 @@ void GStreamerReader::PlayBinSourceSetup(GstAppSrc* aSource)
  */
 nsresult GStreamerReader::ParseMP3Headers()
 {
-  MediaResource *resource = mDecoder->GetResource();
-
   const uint32_t MAX_READ_BYTES = 4096;
 
   uint64_t offset = 0;
   char bytes[MAX_READ_BYTES];
   uint32_t bytesRead;
   do {
-    nsresult rv = resource->ReadAt(offset, bytes, MAX_READ_BYTES, &bytesRead);
+    nsresult rv = mResource.ReadAt(offset, bytes, MAX_READ_BYTES, &bytesRead);
     NS_ENSURE_SUCCESS(rv, rv);
     NS_ENSURE_TRUE(bytesRead, NS_ERROR_FAILURE);
 
-    mMP3FrameParser.Parse(bytes, bytesRead, offset);
+    mMP3FrameParser.Parse(reinterpret_cast<uint8_t*>(bytes), bytesRead, offset);
     offset += bytesRead;
   } while (!mMP3FrameParser.ParsedHeaders());
 
@@ -354,7 +351,7 @@ nsresult GStreamerReader::ParseMP3Headers()
 int64_t
 GStreamerReader::GetDataLength()
 {
-  int64_t streamLen = mDecoder->GetResource()->GetLength();
+  int64_t streamLen = mResource.GetLength();
 
   if (streamLen < 0) {
     return streamLen;
@@ -374,6 +371,9 @@ nsresult GStreamerReader::ReadMetadata(MediaInfo* aInfo,
    * might be concurrent stream operations happening on both decoding and gstreamer
    * threads which will screw the GStreamer state machine.
    */
+  LOG(LogLevel::Debug, "content-type: %s %s",
+      mDecoder->GetResource()->GetContentType().get(),
+      mDecoder->GetResource()->GetContentURL().get());
   bool isMP3 = mDecoder->GetResource()->GetContentType().EqualsASCII(AUDIO_MP3);
   if (isMP3) {
     ParseMP3Headers();
@@ -421,9 +421,9 @@ nsresult GStreamerReader::ReadMetadata(MediaInfo* aInfo,
       gst_object_unref(filter);
     }
 
-    LOG(PR_LOG_DEBUG, "starting metadata pipeline");
+    LOG(LogLevel::Debug, "starting metadata pipeline");
     if (gst_element_set_state(mPlayBin, GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE) {
-      LOG(PR_LOG_DEBUG, "metadata pipeline state change failed");
+      LOG(LogLevel::Debug, "metadata pipeline state change failed");
       ret = NS_ERROR_FAILURE;
       continue;
     }
@@ -434,19 +434,19 @@ nsresult GStreamerReader::ReadMetadata(MediaInfo* aInfo,
     message = gst_bus_timed_pop_filtered(mBus, GST_CLOCK_TIME_NONE,
                  (GstMessageType)(GST_MESSAGE_ASYNC_DONE | GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
     if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_ASYNC_DONE) {
-      LOG(PR_LOG_DEBUG, "read metadata pipeline prerolled");
+      LOG(LogLevel::Debug, "read metadata pipeline prerolled");
       gst_message_unref(message);
       ret = NS_OK;
       break;
     } else {
-      LOG(PR_LOG_DEBUG, "read metadata pipeline failed to preroll: %s",
+      LOG(LogLevel::Debug, "read metadata pipeline failed to preroll: %s",
             gst_message_type_get_name (GST_MESSAGE_TYPE (message)));
 
       if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_ERROR) {
         GError* error;
         gchar* debug;
         gst_message_parse_error(message, &error, &debug);
-        LOG(PR_LOG_ERROR, "read metadata error: %s: %s", error->message, debug);
+        LOG(LogLevel::Error, "read metadata error: %s: %s", error->message, debug);
         g_error_free(error);
         g_free(debug);
       }
@@ -471,12 +471,11 @@ nsresult GStreamerReader::ReadMetadata(MediaInfo* aInfo,
   if (isMP3 && mMP3FrameParser.IsMP3()) {
     // The MP3FrameParser has reported a duration; use that over the gstreamer
     // reported duration for inter-platform consistency.
-    ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
     mUseParserDuration = true;
     mLastParserDuration = mMP3FrameParser.GetDuration();
-    mDecoder->SetMediaDuration(mLastParserDuration);
+    mInfo.mMetadataDuration.emplace(TimeUnit::FromMicroseconds(mLastParserDuration));
   } else {
-    LOG(PR_LOG_DEBUG, "querying duration");
+    LOG(LogLevel::Debug, "querying duration");
     // Otherwise use the gstreamer duration.
 #if GST_VERSION_MAJOR >= 1
     if (gst_element_query_duration(GST_ELEMENT(mPlayBin),
@@ -486,10 +485,9 @@ nsresult GStreamerReader::ReadMetadata(MediaInfo* aInfo,
     if (gst_element_query_duration(GST_ELEMENT(mPlayBin),
       &format, &duration) && format == GST_FORMAT_TIME) {
 #endif
-      ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
-      LOG(PR_LOG_DEBUG, "have duration %" GST_TIME_FORMAT, GST_TIME_ARGS(duration));
+      LOG(LogLevel::Debug, "have duration %" GST_TIME_FORMAT, GST_TIME_ARGS(duration));
       duration = GST_TIME_AS_USECONDS (duration);
-      mDecoder->SetMediaDuration(duration);
+      mInfo.mMetadataDuration.emplace(TimeUnit::FromMicroseconds(duration));
     }
   }
 
@@ -619,7 +617,7 @@ nsresult GStreamerReader::ResetDecode()
 {
   nsresult res = NS_OK;
 
-  LOG(PR_LOG_DEBUG, "reset decode");
+  LOG(LogLevel::Debug, "reset decode");
 
   if (NS_FAILED(MediaDecoderReader::ResetDecode())) {
     res = NS_ERROR_FAILURE;
@@ -636,7 +634,7 @@ nsresult GStreamerReader::ResetDecode()
   mConfigureAlignment = true;
 #endif
 
-  LOG(PR_LOG_DEBUG, "reset decode done");
+  LOG(LogLevel::Debug, "reset decode done");
 
   return res;
 }
@@ -799,7 +797,7 @@ bool GStreamerReader::DecodeVideoFrame(bool &aKeyFrameSkip,
     duration = gst_util_uint64_scale(GST_USECOND, fpsDen, fpsNum);
 
   if (timestamp < aTimeThreshold) {
-    LOG(PR_LOG_DEBUG, "skipping frame %" GST_TIME_FORMAT
+    LOG(LogLevel::Debug, "skipping frame %" GST_TIME_FORMAT
                       " threshold %" GST_TIME_FORMAT,
                       GST_TIME_ARGS(timestamp * 1000),
                       GST_TIME_ARGS(aTimeThreshold * 1000));
@@ -833,7 +831,7 @@ bool GStreamerReader::DecodeVideoFrame(bool &aKeyFrameSkip,
     buffer = tmp;
   }
 
-  int64_t offset = mDecoder->GetResource()->Tell(); // Estimate location in media.
+  int64_t offset = mResource.Tell(); // Estimate location in media.
   nsRefPtr<VideoData> video = VideoData::CreateFromImage(mInfo.mVideo,
                                                          mDecoder->GetImageContainer(),
                                                          offset, timestamp, duration,
@@ -852,7 +850,7 @@ GStreamerReader::Seek(int64_t aTarget, int64_t aEndTime)
   MOZ_ASSERT(OnTaskQueue());
 
   gint64 seekPos = aTarget * GST_USECOND;
-  LOG(PR_LOG_DEBUG, "%p About to seek to %" GST_TIME_FORMAT,
+  LOG(LogLevel::Debug, "%p About to seek to %" GST_TIME_FORMAT,
         mDecoder, GST_TIME_ARGS(seekPos));
 
   int flags = GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT;
@@ -860,22 +858,27 @@ GStreamerReader::Seek(int64_t aTarget, int64_t aEndTime)
                                GST_FORMAT_TIME,
                                static_cast<GstSeekFlags>(flags),
                                seekPos)) {
-    LOG(PR_LOG_ERROR, "seek failed");
+    LOG(LogLevel::Error, "seek failed");
     return SeekPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
   }
-  LOG(PR_LOG_DEBUG, "seek succeeded");
+  LOG(LogLevel::Debug, "seek succeeded");
   GstMessage* message = gst_bus_timed_pop_filtered(mBus, GST_CLOCK_TIME_NONE,
                (GstMessageType)(GST_MESSAGE_ASYNC_DONE | GST_MESSAGE_ERROR));
   gst_message_unref(message);
-  LOG(PR_LOG_DEBUG, "seek completed");
+  LOG(LogLevel::Debug, "seek completed");
 
   return SeekPromise::CreateAndResolve(aTarget, __func__);
 }
 
-nsresult GStreamerReader::GetBuffered(dom::TimeRanges* aBuffered)
+media::TimeIntervals GStreamerReader::GetBuffered()
 {
+  MOZ_ASSERT(OnTaskQueue());
+  if (!HaveStartTime()) {
+    return media::TimeIntervals();
+  }
+  media::TimeIntervals buffered;
   if (!mInfo.HasValidMedia()) {
-    return NS_OK;
+    return buffered;
   }
 
 #if GST_VERSION_MAJOR == 0
@@ -887,24 +890,21 @@ nsresult GStreamerReader::GetBuffered(dom::TimeRanges* aBuffered)
 
   if (resource->IsDataCachedToEndOfResource(0)) {
     /* fast path for local or completely cached files */
-    gint64 duration = 0;
-
-    {
-      ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
-      duration = mDecoder->GetMediaDuration();
-    }
-
-    double end = (double) duration / GST_MSECOND;
-    LOG(PR_LOG_DEBUG, "complete range [0, %f] for [0, %li]",
-          end, GetDataLength());
-    aBuffered->Add(0, end);
-    return NS_OK;
+    gint64 duration =
+       mDuration.Ref().refOr(media::TimeUnit::FromMicroseconds(0)).ToMicroseconds();
+    LOG(LogLevel::Debug, "complete range [0, %f] for [0, %li]",
+        (double) duration / GST_MSECOND, GetDataLength());
+    buffered +=
+      media::TimeInterval(media::TimeUnit::FromMicroseconds(0),
+                          media::TimeUnit::FromMicroseconds(duration));
+    return buffered;
   }
 
   for(uint32_t index = 0; index < ranges.Length(); index++) {
     int64_t startOffset = ranges[index].mStart;
     int64_t endOffset = ranges[index].mEnd;
-    gint64 startTime, endTime;
+    gint64 startTime, endTime, duration;
+    bool haveDuration = false;
 
 #if GST_VERSION_MAJOR >= 1
     if (!gst_element_query_convert(GST_ELEMENT(mPlayBin), GST_FORMAT_BYTES,
@@ -913,6 +913,10 @@ nsresult GStreamerReader::GetBuffered(dom::TimeRanges* aBuffered)
     if (!gst_element_query_convert(GST_ELEMENT(mPlayBin), GST_FORMAT_BYTES,
       endOffset, GST_FORMAT_TIME, &endTime))
       continue;
+    if (gst_element_query_duration(GST_ELEMENT(mPlayBin),
+      GST_FORMAT_TIME, &duration)) {
+      haveDuration = true;
+    }
 #else
     if (!gst_element_query_convert(GST_ELEMENT(mPlayBin), GST_FORMAT_BYTES,
       startOffset, &format, &startTime) || format != GST_FORMAT_TIME)
@@ -920,23 +924,34 @@ nsresult GStreamerReader::GetBuffered(dom::TimeRanges* aBuffered)
     if (!gst_element_query_convert(GST_ELEMENT(mPlayBin), GST_FORMAT_BYTES,
       endOffset, &format, &endTime) || format != GST_FORMAT_TIME)
       continue;
+    if (gst_element_query_duration(GST_ELEMENT(mPlayBin),
+      &format, &duration) && format == GST_FORMAT_TIME) {
+      haveDuration = true;
+    }
 #endif
+    // Check that the estimated time doesn't go beyond known duration
+    // as this indicates a buggy gst plugin.
+    if (haveDuration && endTime > duration) {
+      LOG(LogLevel::Debug, "Have duration %" GST_TIME_FORMAT "contradicting endTime %" GST_TIME_FORMAT,
+          GST_TIME_ARGS(duration), GST_TIME_ARGS(endTime));
+      endTime = std::min(endTime, duration);
+    }
 
-    double start = (double) GST_TIME_AS_USECONDS (startTime) / GST_MSECOND;
-    double end = (double) GST_TIME_AS_USECONDS (endTime) / GST_MSECOND;
-    LOG(PR_LOG_DEBUG, "adding range [%f, %f] for [%li %li] size %li",
-          start, end, startOffset, endOffset, GetDataLength());
-    aBuffered->Add(start, end);
+    LOG(LogLevel::Debug, "adding range [%f, %f] for [%li %li] size %li",
+        (double) GST_TIME_AS_USECONDS (startTime) / GST_MSECOND,
+        (double) GST_TIME_AS_USECONDS (endTime) / GST_MSECOND,
+        startOffset, endOffset, GetDataLength());
+    buffered +=
+      media::TimeInterval(media::TimeUnit::FromMicroseconds(GST_TIME_AS_USECONDS(startTime)),
+                          media::TimeUnit::FromMicroseconds(GST_TIME_AS_USECONDS(endTime)));
   }
 
-  return NS_OK;
+  return buffered;
 }
 
 void GStreamerReader::ReadAndPushData(guint aLength)
 {
-  MediaResource* resource = mDecoder->GetResource();
-  NS_ASSERTION(resource, "Decoder has no media resource");
-  int64_t offset1 = resource->Tell();
+  int64_t offset1 = mResource.Tell();
   unused << offset1;
   nsresult rv = NS_OK;
 
@@ -950,15 +965,15 @@ void GStreamerReader::ReadAndPushData(guint aLength)
 #endif
   uint32_t size = 0, bytesRead = 0;
   while(bytesRead < aLength) {
-    rv = resource->Read(reinterpret_cast<char*>(data + bytesRead),
-        aLength - bytesRead, &size);
+    rv = mResource.Read(reinterpret_cast<char*>(data + bytesRead),
+                        aLength - bytesRead, &size);
     if (NS_FAILED(rv) || size == 0)
       break;
 
     bytesRead += size;
   }
 
-  int64_t offset2 = resource->Tell();
+  int64_t offset2 = mResource.Tell();
   unused << offset2;
 
 #if GST_VERSION_MAJOR >= 1
@@ -970,16 +985,16 @@ void GStreamerReader::ReadAndPushData(guint aLength)
 
   GstFlowReturn ret = gst_app_src_push_buffer(mSource, gst_buffer_ref(buffer));
   if (ret != GST_FLOW_OK) {
-    LOG(PR_LOG_ERROR, "ReadAndPushData push ret %s(%d)", gst_flow_get_name(ret), ret);
+    LOG(LogLevel::Error, "ReadAndPushData push ret %s(%d)", gst_flow_get_name(ret), ret);
   }
 
   if (NS_FAILED(rv)) {
     /* Terminate the stream if there is an error in reading */
-    LOG(PR_LOG_ERROR, "ReadAndPushData read error, rv=%x", rv);
+    LOG(LogLevel::Error, "ReadAndPushData read error, rv=%x", rv);
     gst_app_src_end_of_stream(mSource);
   } else if (bytesRead < aLength) {
     /* If we read less than what we wanted, we reached the end */
-    LOG(PR_LOG_WARNING, "ReadAndPushData read underflow, "
+    LOG(LogLevel::Warning, "ReadAndPushData read underflow, "
         "bytesRead=%u, aLength=%u, offset(%lld,%lld)",
         bytesRead, aLength, offset1, offset2);
     gst_app_src_end_of_stream(mSource);
@@ -1032,8 +1047,7 @@ gboolean GStreamerReader::SeekData(GstAppSrc* aSrc, guint64 aOffset)
   aOffset += mDataOffset;
 
   ReentrantMonitorAutoEnter mon(mGstThreadsMonitor);
-  MediaResource* resource = mDecoder->GetResource();
-  int64_t resourceLength = resource->GetLength();
+  int64_t resourceLength = mResource.GetLength();
 
   if (gst_app_src_get_size(mSource) == -1) {
     /* It's possible that we didn't know the length when we initialized mSource
@@ -1044,13 +1058,7 @@ gboolean GStreamerReader::SeekData(GstAppSrc* aSrc, guint64 aOffset)
 
   nsresult rv = NS_ERROR_FAILURE;
   if (aOffset < static_cast<guint64>(resourceLength)) {
-    rv = resource->Seek(SEEK_SET, aOffset);
-  }
-
-  if (NS_FAILED(rv)) {
-    LOG(PR_LOG_ERROR, "seek at %lu failed", aOffset);
-  } else {
-    MOZ_ASSERT(aOffset == static_cast<guint64>(resource->Tell()));
+    rv = mResource.Seek(SEEK_SET, aOffset);
   }
 
   return NS_SUCCEEDED(rv);
@@ -1071,7 +1079,7 @@ GstFlowReturn GStreamerReader::NewPrerollCb(GstAppSink* aSink,
 void GStreamerReader::AudioPreroll()
 {
   /* The first audio buffer has reached the audio sink. Get rate and channels */
-  LOG(PR_LOG_DEBUG, "Audio preroll");
+  LOG(LogLevel::Debug, "Audio preroll");
   GstPad* sinkpad = gst_element_get_static_pad(GST_ELEMENT(mAudioAppSink), "sink");
 #if GST_VERSION_MAJOR >= 1
   GstCaps *caps = gst_pad_get_current_caps(sinkpad);
@@ -1093,7 +1101,7 @@ void GStreamerReader::AudioPreroll()
 void GStreamerReader::VideoPreroll()
 {
   /* The first video buffer has reached the video sink. Get width and height */
-  LOG(PR_LOG_DEBUG, "Video preroll");
+  LOG(LogLevel::Debug, "Video preroll");
   GstPad* sinkpad = gst_element_get_static_pad(GST_ELEMENT(mVideoAppSink), "sink");
   int PARNumerator, PARDenominator;
 #if GST_VERSION_MAJOR >= 1
@@ -1127,7 +1135,7 @@ void GStreamerReader::VideoPreroll()
     gst_structure_get_fraction(structure, "framerate", &fpsNum, &fpsDen);
     mInfo.mVideo.mDisplay = displaySize;
   } else {
-    LOG(PR_LOG_DEBUG, "invalid video region");
+    LOG(LogLevel::Debug, "invalid video region");
     Eos();
   }
   gst_caps_unref(caps);
@@ -1273,11 +1281,10 @@ GStreamerReader::AutoplugSortCb(GstElement* aElement, GstPad* aPad,
  * If this is an MP3 stream, pass any new data we get to the MP3 frame parser
  * for duration estimation.
  */
-void GStreamerReader::NotifyDataArrived(const char *aBuffer,
-                                        uint32_t aLength,
-                                        int64_t aOffset)
+void GStreamerReader::NotifyDataArrivedInternal(uint32_t aLength,
+                                                int64_t aOffset)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(OnTaskQueue());
   if (HasVideo()) {
     return;
   }
@@ -1285,17 +1292,32 @@ void GStreamerReader::NotifyDataArrived(const char *aBuffer,
     return;
   }
 
-  mMP3FrameParser.Parse(aBuffer, aLength, aOffset);
-  if (!mMP3FrameParser.IsMP3()) {
+  AutoPinned<MediaResource> resource(mResource.GetResource());
+  nsTArray<MediaByteRange> byteRanges;
+  nsresult rv = resource->GetCachedRanges(byteRanges);
+
+  if (NS_FAILED(rv)) {
     return;
   }
 
+  IntervalSet<int64_t> intervals;
+  for (auto& range : byteRanges) {
+    intervals += mFilter.NotifyDataArrived(range.Length(), range.mStart);
+  }
+  for (const auto& interval : intervals) {
+    nsRefPtr<MediaByteBuffer> bytes =
+      resource->MediaReadAt(interval.mStart, interval.Length());
+    NS_ENSURE_TRUE_VOID(bytes);
+    mMP3FrameParser.Parse(bytes->Elements(), interval.Length(), interval.mStart);
+    if (!mMP3FrameParser.IsMP3()) {
+      return;
+    }
+  }
   int64_t duration = mMP3FrameParser.GetDuration();
   if (duration != mLastParserDuration && mUseParserDuration) {
     MOZ_ASSERT(mDecoder);
-    ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
     mLastParserDuration = duration;
-    mDecoder->UpdateEstimatedMediaDuration(mLastParserDuration);
+    mDecoder->DispatchUpdateEstimatedMediaDuration(mLastParserDuration);
   }
 }
 
@@ -1361,7 +1383,7 @@ GstPadProbeReturn GStreamerReader::EventProbe(GstPad *aPad, GstEvent *aEvent)
 {
   GstElement* parent = GST_ELEMENT(gst_pad_get_parent(aPad));
 
-  LOG(PR_LOG_DEBUG, "event probe %s", GST_EVENT_TYPE_NAME (aEvent));
+  LOG(LogLevel::Debug, "event probe %s", GST_EVENT_TYPE_NAME (aEvent));
 
   switch(GST_EVENT_TYPE(aEvent)) {
     case GST_EVENT_SEGMENT:

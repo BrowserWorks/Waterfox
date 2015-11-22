@@ -5,10 +5,11 @@
 
 package org.mozilla.gecko.distribution;
 
+import org.mozilla.gecko.AdjustConstants;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
-import org.mozilla.gecko.mozglue.RobocopTarget;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,7 +61,7 @@ public class ReferrerReceiver extends BroadcastReceiver {
             if (AppConstants.MOZ_INSTALL_TRACKING) {
                 // Allow the Adjust handler to process the intent.
                 try {
-                    AppConstants.getAdjustHelper().onReceive(context, intent);
+                    AdjustConstants.getAdjustHelper().onReceive(context, intent);
                 } catch (Exception e) {
                     Log.e(LOGTAG, "Got exception in Adjust's onReceive; ignoring referrer intent.", e);
                 }

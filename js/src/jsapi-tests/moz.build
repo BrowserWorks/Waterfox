@@ -12,7 +12,6 @@ UNIFIED_SOURCES += [
     'testArgumentsObject.cpp',
     'testArrayBuffer.cpp',
     'testArrayBufferView.cpp',
-    'testBindCallable.cpp',
     'testBug604087.cpp',
     'testCallNonGenericMethodOnProxy.cpp',
     'testChromeBuffer.cpp',
@@ -24,6 +23,7 @@ UNIFIED_SOURCES += [
     'testDefineGetterSetterNonEnumerable.cpp',
     'testDefineProperty.cpp',
     'testDefinePropertyIgnoredAttributes.cpp',
+    'testDifferentNewTargetInvokeConstructor.cpp',
     'testEnclosingFunction.cpp',
     'testErrorCopying.cpp',
     'testException.cpp',
@@ -46,6 +46,7 @@ UNIFIED_SOURCES += [
     'testHashTable.cpp',
     'testIndexToString.cpp',
     'testIntern.cpp',
+    'testIntlAvailableLocales.cpp',
     'testIntString.cpp',
     'testIntTypesABI.cpp',
     'testIsInsideNursery.cpp',
@@ -55,6 +56,7 @@ UNIFIED_SOURCES += [
     'testMappedArrayBuffer.cpp',
     'testMutedErrors.cpp',
     'testNewObject.cpp',
+    'testNewTargetInvokeConstructor.cpp',
     'testNullRoot.cpp',
     'testObjectEmulatingUndefined.cpp',
     'testOOM.cpp',
@@ -91,7 +93,7 @@ if CONFIG['ENABLE_ION']:
         'testJitDCEinGVN.cpp',
         'testJitFoldsTo.cpp',
         'testJitGVN.cpp',
-        'testJitMoveEmitterCycles-mips.cpp',
+        'testJitMoveEmitterCycles-mips32.cpp',
         'testJitMoveEmitterCycles.cpp',
         'testJitRangeAnalysis.cpp',
         'testJitRegisterSet.cpp',
@@ -109,5 +111,5 @@ USE_LIBS += [
 
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
 
-if CONFIG['GNU_CXX']:
-    FAIL_ON_WARNINGS = True
+if not CONFIG['GNU_CXX']:
+    ALLOW_COMPILER_WARNINGS = True

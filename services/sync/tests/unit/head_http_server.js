@@ -505,7 +505,7 @@ function track_collections_helper() {
  * find out what it needs without monkeypatching. Use this object as your
  * prototype, and override as appropriate.
  */
-let SyncServerCallback = {
+var SyncServerCallback = {
   onCollectionDeleted: function onCollectionDeleted(user, collection) {},
   onItemDeleted: function onItemDeleted(user, collection, wboID) {},
 
@@ -545,13 +545,13 @@ SyncServer.prototype = {
    * Start the SyncServer's underlying HTTP server.
    *
    * @param port
-   *        The numeric port on which to start. A falsy value implies the
-   *        default, a randomly chosen port.
+   *        The numeric port on which to start. -1 implies the default, a
+   *        randomly chosen port.
    * @param cb
    *        A callback function (of no arguments) which is invoked after
    *        startup.
    */
-  start: function start(port, cb) {
+  start: function start(port = -1, cb) {
     if (this.started) {
       this._log.warn("Warning: server already started on " + this.port);
       return;

@@ -129,7 +129,7 @@ function display(panel, options, anchor) {
 
     let viewportRect = document.defaultView.gBrowser.getBoundingClientRect();
 
-    ({x, y, width, height}) = calculateRegion(options, viewportRect);
+    ({x, y, width, height} = calculateRegion(options, viewportRect));
   }
   else {
     // The XUL Panel has an arrow, so the margin needs to be reset
@@ -145,7 +145,7 @@ function display(panel, options, anchor) {
     // chrome browser window, and therefore there is no need for this check.
     if (CustomizableUI) {
       let node = anchor;
-      ({anchor}) = CustomizableUI.getWidget(anchor.id).forWindow(window);
+      ({anchor} = CustomizableUI.getWidget(anchor.id).forWindow(window));
 
       // if `node` is not the `anchor` itself, it means the widget is
       // positioned in a panel, therefore we have to hide it before show
@@ -222,6 +222,20 @@ function show(panel, options, anchor) {
   open(panel, options, anchor);
 }
 exports.show = show
+
+function onPanelClick(event) {
+  let { target, metaKey, ctrlKey, shiftKey, button } = event;
+  let accel = platform === "darwin" ? metaKey : ctrlKey;
+  let isLeftClick = button === 0;
+  let isMiddleClick = button === 1;
+
+  if ((isLeftClick && (accel || shiftKey)) || isMiddleClick) {
+    let link = target.closest('a');
+
+    if (link && link.href)
+       getMostRecentBrowserWindow().openUILink(link.href, event)
+  }
+}
 
 function setupPanelFrame(frame) {
   frame.setAttribute("flex", 1);
@@ -309,6 +323,8 @@ function make(document, options) {
   panel.addEventListener("popuphiding", onDisplayChange, false);
   panel.addEventListener("popupshown", onPanelStateChange, false);
   panel.addEventListener("popuphidden", onPanelStateChange, false);
+
+  panel.addEventListener("click", onPanelClick, false);
 
   // Panel content document can be either in panel `viewFrame` or in
   // a `backgroundFrame` depending on panel state. Listeners are set
@@ -407,7 +423,7 @@ function style(panel) {
 }
 exports.style = style;
 
-let getContentFrame = panel =>
+var getContentFrame = panel =>
     (isOpen(panel) || isOpening(panel)) ?
     panel.firstChild :
     panel.backgroundFrame

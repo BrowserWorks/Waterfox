@@ -6,10 +6,11 @@
 
 // Test that if a tooltip is visible when a new selection is made, it closes
 
-add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8,<div class='one'>el 1</div><div class='two'>el 2</div>");
+const TEST_URI = "<div class='one'>el 1</div><div class='two'>el 2</div>";
 
-  let {toolbox, inspector, view} = yield openRuleView();
+add_task(function*() {
+  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+  let {inspector, view} = yield openRuleView();
   yield selectNode(".one", inspector);
 
   info("Testing rule view tooltip closes on new selection");
@@ -22,28 +23,46 @@ add_task(function*() {
 
 function* testRuleView(ruleView, inspector) {
   info("Showing the tooltip");
+
   let tooltip = ruleView.tooltips.previewTooltip;
+  tooltip.setTextContent({messages: ["rule-view tooltip"]});
+  // Stop listening for mouse movements because it's not needed for this test,
+  // and causes intermittent failures on Linux. When this test runs in the suite
+  // sometimes a mouseleave event is dispatched at the start, which causes the
+  // tooltip to hide in the middle of being shown, which causes timeouts later.
+  tooltip.stopTogglingOnHover();
+
   let onShown = tooltip.once("shown");
-  tooltip.show();
+  tooltip.show(ruleView.styleDocument.firstElementChild);
   yield onShown;
 
   info("Selecting a new node");
   let onHidden = tooltip.once("hidden");
   yield selectNode(".two", inspector);
+  yield onHidden;
 
   ok(true, "Rule view tooltip closed after a new node got selected");
 }
 
 function* testComputedView(computedView, inspector) {
   info("Showing the tooltip");
+
   let tooltip = computedView.tooltips.previewTooltip;
+  tooltip.setTextContent({messages: ["computed-view tooltip"]});
+  // Stop listening for mouse movements because it's not needed for this test,
+  // and causes intermittent failures on Linux. When this test runs in the suite
+  // sometimes a mouseleave event is dispatched at the start, which causes the
+  // tooltip to hide in the middle of being shown, which causes timeouts later.
+  tooltip.stopTogglingOnHover();
+
   let onShown = tooltip.once("shown");
-  tooltip.show();
+  tooltip.show(computedView.styleDocument.firstElementChild);
   yield onShown;
 
   info("Selecting a new node");
   let onHidden = tooltip.once("hidden");
   yield selectNode(".one", inspector);
+  yield onHidden;
 
   ok(true, "Computed view tooltip closed after a new node got selected");
 }

@@ -10,9 +10,9 @@
 #include "mozilla/Alignment.h"
 
 #include "jit/BaselineFrame.h"
-#include "jit/BaselineRegisters.h"
 #include "jit/FixedList.h"
 #include "jit/MacroAssembler.h"
+#include "jit/SharedICRegisters.h"
 
 namespace js {
 namespace jit {
@@ -54,7 +54,8 @@ class StackValue
         Stack,
         LocalSlot,
         ArgSlot,
-        ThisSlot
+        ThisSlot,
+        EvalNewTargetSlot
 #ifdef DEBUG
         // In debug builds, assert Kind is initialized.
         , Uninitialized
@@ -150,6 +151,10 @@ class StackValue
         kind_ = ThisSlot;
         knownType_ = JSVAL_TYPE_UNKNOWN;
     }
+    void setEvalNewTarget() {
+        kind_ = EvalNewTargetSlot;
+        knownType_ = JSVAL_TYPE_UNKNOWN;
+    }
     void setStack() {
         kind_ = Stack;
         knownType_ = JSVAL_TYPE_UNKNOWN;
@@ -223,7 +228,7 @@ class FrameInfo
         StackValue* popped = &stack[spIndex];
 
         if (adjust == AdjustStack && popped->kind() == StackValue::Stack)
-            masm.addPtr(Imm32(sizeof(Value)), BaselineStackReg);
+            masm.addToStackPtr(Imm32(sizeof(Value)));
 
         // Assert when anything uses this value.
         popped->reset();
@@ -236,7 +241,7 @@ class FrameInfo
             pop(DontAdjustStack);
         }
         if (adjust == AdjustStack && poppedStack > 0)
-            masm.addPtr(Imm32(sizeof(Value) * poppedStack), BaselineStackReg);
+            masm.addToStackPtr(Imm32(sizeof(Value) * poppedStack));
     }
     inline void push(const Value& val) {
         StackValue* sv = rawPush();
@@ -259,6 +264,12 @@ class FrameInfo
         StackValue* sv = rawPush();
         sv->setThis();
     }
+    inline void pushEvalNewTarget() {
+        MOZ_ASSERT(script->isForEval());
+        StackValue* sv = rawPush();
+        sv->setEvalNewTarget();
+    }
+
     inline void pushScratchValue() {
         masm.pushValue(addressOfScratchValue());
         StackValue* sv = rawPush();
@@ -274,6 +285,9 @@ class FrameInfo
     }
     Address addressOfThis() const {
         return Address(BaselineFrameReg, BaselineFrame::offsetOfThis());
+    }
+    Address addressOfEvalNewTarget() const {
+        return Address(BaselineFrameReg, BaselineFrame::offsetOfEvalNewTarget());
     }
     Address addressOfCalleeToken() const {
         return Address(BaselineFrameReg, BaselineFrame::offsetOfCalleeToken());

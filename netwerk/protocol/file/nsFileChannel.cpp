@@ -13,13 +13,19 @@
 #include "nsStreamUtils.h"
 #include "nsMimeTypes.h"
 #include "nsNetUtil.h"
+#include "nsNetCID.h"
+#include "nsIOutputStream.h"
+#include "nsIFileStreams.h"
+#include "nsFileProtocolHandler.h"
 #include "nsProxyRelease.h"
 #include "nsAutoPtr.h"
 #include "nsIContentPolicy.h"
 #include "nsContentUtils.h"
 
 #include "nsIFileURL.h"
+#include "nsIFile.h"
 #include "nsIMIMEService.h"
+#include "prio.h"
 #include <algorithm>
 
 using namespace mozilla;
@@ -140,8 +146,8 @@ nsFileCopyEvent::Dispatch(nsIRunnable *callback,
   mCallbackTarget = target;
 
   // Build a coalescing proxy for progress events
-  nsresult rv = net_NewTransportEventSinkProxy(getter_AddRefs(mSink), sink,
-                                               target, true);
+  nsresult rv = net_NewTransportEventSinkProxy(getter_AddRefs(mSink), sink, target);
+
   if (NS_FAILED(rv))
     return rv;
 

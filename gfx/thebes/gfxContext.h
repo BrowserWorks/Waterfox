@@ -25,8 +25,10 @@ template <typename T> class FallibleTArray;
 namespace mozilla {
 namespace gfx {
 struct RectCornerRadii;
-}
-}
+} // namespace gfx
+} // namespace mozilla
+
+class ClipExporter;
 
 /**
  * This is the main class for doing actual drawing. It is initialized using
@@ -123,7 +125,7 @@ public:
     /**
      * Returns the current path.
      */
-    mozilla::TemporaryRef<Path> GetPath();
+    already_AddRefed<Path> GetPath();
 
     /**
      * Sets the given path as the current path.
@@ -446,11 +448,21 @@ public:
     gfxRect GetClipExtents();
 
     /**
+     * Whether the current clip is not a simple rectangle.
+     */
+    bool HasComplexClip() const;
+
+    /**
      * Returns true if the given rectangle is fully contained in the current clip. 
      * This is conservative; it may return false even when the given rectangle is 
      * fully contained by the current clip.
      */
     bool ClipContainsRect(const gfxRect& aRect);
+
+     /**
+      * Exports the current clip using the provided exporter.
+      */
+    bool ExportClip(ClipExporter& aExporter);
 
     /**
      * Groups
@@ -471,7 +483,7 @@ public:
     already_AddRefed<gfxPattern> PopGroup();
     void PopGroupToSource();
 
-    mozilla::TemporaryRef<mozilla::gfx::SourceSurface>
+    already_AddRefed<mozilla::gfx::SourceSurface>
     PopGroupToSurface(mozilla::gfx::Matrix* aMatrix);
 
     mozilla::gfx::Point GetDeviceOffset() const;
@@ -721,6 +733,14 @@ private:
 
   gfxContext *mContext;
   mozilla::gfx::Pattern *mPattern;
+};
+
+/* This interface should be implemented to handle exporting the clip from a context.
+ */
+class ClipExporter : public mozilla::gfx::PathSink {
+public:
+  virtual void BeginClip(const mozilla::gfx::Matrix& aMatrix) = 0;
+  virtual void EndClip() = 0;
 };
 
 #endif /* GFX_CONTEXT_H */

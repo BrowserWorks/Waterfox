@@ -13,7 +13,7 @@ const prefs = require("sdk/preferences/service");
 const { LocalStore } = require("projecteditor/stores/local");
 const { OS } = Cu.import("resource://gre/modules/osfile.jsm", {});
 const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-const promise = require("projecteditor/helpers/promise");
+const promise = require("promise");
 const { TextEncoder, TextDecoder } = require('sdk/io/buffer');
 const url = require('sdk/url');
 
@@ -149,7 +149,7 @@ var Project = Class({
    *          A list of all file paths
    */
   allPaths: function() {
-    return [path for (path of this.localStores.keys())];
+    return [...this.localStores.keys()];
   },
 
   /**

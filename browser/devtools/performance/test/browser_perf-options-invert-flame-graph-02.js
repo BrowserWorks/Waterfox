@@ -4,11 +4,11 @@
 /**
  * Tests that the memory Flamegraphs gets rerendered when toggling `invert-flame-graph`
  */
-function spawnTest () {
+function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let { EVENTS, DetailsView, MemoryFlameGraphView } = panel.panelWin;
 
-  Services.prefs.setBoolPref(MEMORY_PREF, true);
+  Services.prefs.setBoolPref(ALLOCATIONS_PREF, true);
   Services.prefs.setBoolPref(INVERT_FLAME_PREF, true);
 
   yield startRecording(panel);

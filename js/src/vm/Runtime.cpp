@@ -12,6 +12,15 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/ThreadLocal.h"
 
+#if defined(XP_MACOSX)
+#include <mach/mach.h>
+#elif defined(XP_UNIX)
+#include <sys/resource.h>
+#elif defined(XP_WIN)
+#include <processthreadsapi.h>
+#include <windows.h>
+#endif // defined(XP_MACOSX) || defined(XP_UNIX) || defined(XP_WIN)
+
 #include <locale.h>
 #include <string.h>
 
@@ -32,8 +41,9 @@
 
 #include "asmjs/AsmJSSignalHandlers.h"
 #include "jit/arm/Simulator-arm.h"
+#include "jit/arm64/vixl/Simulator-vixl.h"
 #include "jit/JitCompartment.h"
-#include "jit/mips/Simulator-mips.h"
+#include "jit/mips32/Simulator-mips32.h"
 #include "jit/PcScriptCache.h"
 #include "js/MemoryMetrics.h"
 #include "js/SliceBudget.h"
@@ -60,7 +70,7 @@ using JS::DoubleNaNValue;
 
 namespace js {
     bool gCanUseExtraThreads = true;
-};
+} // namespace js
 
 void
 js::DisableExtraThreads()
@@ -81,6 +91,7 @@ PerThreadData::PerThreadData(JSRuntime* runtime)
     suppressGC(0),
 #ifdef DEBUG
     ionCompiling(false),
+    ionCompilingSafeForMinorGC(false),
     gcSweeping(false),
 #endif
     activeCompilations(0)
@@ -124,8 +135,9 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
     profilerSampleBufferGen_(0),
     profilerSampleBufferLapCount_(1),
     asmJSActivationStack_(nullptr),
-    asyncStackForNewActivations(nullptr),
-    asyncCauseForNewActivations(nullptr),
+    asyncStackForNewActivations(this),
+    asyncCauseForNewActivations(this),
+    asyncCallIsExplicit(false),
     entryMonitor(nullptr),
     parentRuntime(parentRuntime),
     interrupt_(false),
@@ -160,7 +172,7 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
 #endif
     gc(thisFromCtor()),
     gcInitialized(false),
-#if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
+#ifdef JS_SIMULATOR
     simulator_(nullptr),
 #endif
     scriptAndCountsVector(nullptr),
@@ -172,6 +184,7 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
     profilingScripts(false),
     suppressProfilerSampling(false),
     hadOutOfMemory(false),
+    handlingInitFailure(false),
     haveCreatedContext(false),
     allowRelazificationForTesting(false),
     data(nullptr),
@@ -207,17 +220,19 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
     jitSupportsFloatingPoint(false),
     jitSupportsSimd(false),
     ionPcScriptCache(nullptr),
-    defaultJSContextCallback(nullptr),
+    scriptEnvironmentPreparer(nullptr),
     ctypesActivityCallback(nullptr),
     offthreadIonCompilationEnabled_(true),
     parallelParsingEnabled_(true),
+    autoWritableJitCodeActive_(false),
 #ifdef DEBUG
     enteredPolicy(nullptr),
 #endif
     largeAllocationFailureCallback(nullptr),
     oomCallback(nullptr),
     debuggerMallocSizeOf(ReturnZeroSize),
-    lastAnimationTime(0)
+    lastAnimationTime(0),
+    stopwatch(thisFromCtor())
 {
     setGCStoreBufferPtr(&gc.storeBuffer);
 
@@ -268,10 +283,10 @@ JSRuntime::init(uint32_t maxbytes, uint32_t maxNurseryBytes)
     if (!regexpStack.init())
         return false;
 
-    js::TlsPerThreadData.set(&mainThread);
+    if (CanUseExtraThreads() && !EnsureHelperThreadsInitialized())
+        return false;
 
-    if (CanUseExtraThreads())
-        EnsureHelperThreadsInitialized();
+    js::TlsPerThreadData.set(&mainThread);
 
     if (!gc.init(maxbytes, maxNurseryBytes))
         return false;
@@ -317,7 +332,7 @@ JSRuntime::init(uint32_t maxbytes, uint32_t maxNurseryBytes)
 
     dateTimeInfo.updateTimeZoneAdjustment();
 
-#if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
+#ifdef JS_SIMULATOR
     simulator_ = js::jit::Simulator::Create();
     if (!simulator_)
         return false;
@@ -363,6 +378,13 @@ JSRuntime::~JSRuntime()
             if (WatchpointMap* wpmap = comp->watchpointMap)
                 wpmap->clear();
         }
+
+        /*
+         * Clear script counts map, to remove the strong reference on the
+         * JSScript key.
+         */
+        for (CompartmentsIter comp(this, SkipAtoms); !comp.done(); comp.next())
+            comp->clearScriptCounts();
 
         /* Clear atoms to remove GC roots and heap allocations. */
         finishAtoms();
@@ -438,7 +460,7 @@ JSRuntime::~JSRuntime()
     gc.storeBuffer.disable();
     gc.nursery.disable();
 
-#if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
+#ifdef JS_SIMULATOR
     js::jit::Simulator::Destroy(simulator_);
 #endif
 
@@ -594,7 +616,7 @@ JSRuntime::resetJitStackLimit()
     // Note that, for now, we use the untrusted limit for ion. This is fine,
     // because it's the most conservative limit, and if we hit it, we'll bail
     // out of ion into the interpeter, which will do a proper recursion check.
-#if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
+#ifdef JS_SIMULATOR
     jitStackLimit_ = jit::Simulator::StackLimit();
 #else
     jitStackLimit_ = mainThread.nativeStackLimit[StackForUntrustedScript];
@@ -731,12 +753,6 @@ JSRuntime::updateMallocCounter(JS::Zone* zone, size_t nbytes)
     gc.updateMallocCounter(zone, nbytes);
 }
 
-JS_FRIEND_API(void)
-JSRuntime::onTooMuchMalloc()
-{
-    gc.onTooMuchMalloc();
-}
-
 JS_FRIEND_API(void*)
 JSRuntime::onOutOfMemory(AllocFunction allocFunc, size_t nbytes, void* reallocPtr,
                          JSContext* maybecx)
@@ -746,27 +762,29 @@ JSRuntime::onOutOfMemory(AllocFunction allocFunc, size_t nbytes, void* reallocPt
     if (isHeapBusy())
         return nullptr;
 
-    /*
-     * Retry when we are done with the background sweeping and have stopped
-     * all the allocations and released the empty GC chunks.
-     */
-    gc.onOutOfMallocMemory();
-    void* p;
-    switch (allocFunc) {
-      case AllocFunction::Malloc:
-        p = js_malloc(nbytes);
-        break;
-      case AllocFunction::Calloc:
-        p = js_calloc(nbytes);
-        break;
-      case AllocFunction::Realloc:
-        p = js_realloc(reallocPtr, nbytes);
-        break;
-      default:
-        MOZ_CRASH();
+    if (!oom::IsSimulatedOOMAllocation()) {
+        /*
+         * Retry when we are done with the background sweeping and have stopped
+         * all the allocations and released the empty GC chunks.
+         */
+        gc.onOutOfMallocMemory();
+        void* p;
+        switch (allocFunc) {
+          case AllocFunction::Malloc:
+            p = js_malloc(nbytes);
+            break;
+          case AllocFunction::Calloc:
+            p = js_calloc(nbytes);
+            break;
+          case AllocFunction::Realloc:
+            p = js_realloc(reallocPtr, nbytes);
+            break;
+          default:
+            MOZ_CRASH();
+        }
+        if (p)
+            return p;
     }
-    if (p)
-        return p;
 
     if (maybecx)
         ReportOutOfMemory(maybecx);
@@ -870,25 +888,338 @@ JS::IsProfilingEnabledForRuntime(JSRuntime* runtime)
     return runtime->spsProfiler.enabled();
 }
 
+JS_PUBLIC_API(void)
+js::FlushPerformanceMonitoring(JSRuntime* runtime)
+{
+    MOZ_ASSERT(runtime);
+    return runtime->stopwatch.commit();
+}
+JS_PUBLIC_API(void)
+js::ResetPerformanceMonitoring(JSRuntime* runtime)
+{
+    MOZ_ASSERT(runtime);
+    return runtime->stopwatch.reset();
+}
+
 void
-js::ResetStopwatches(JSRuntime* rt)
+JSRuntime::Stopwatch::reset()
 {
-    MOZ_ASSERT(rt);
-    rt->stopwatch.reset();
+    // All ongoing measures are dependent on the current iteration#.
+    // By incrementing it, we mark all data as stale. Stale data will
+    // be overwritten progressively during the execution.
+    ++iteration_;
+    touchedGroups.clear();
+}
+
+void
+JSRuntime::Stopwatch::start()
+{
+    if (!isMonitoringJank_) {
+        return;
+    }
+
+    if (iteration_ == startedAtIteration_) {
+        // The stopwatch is already started for this iteration.
+        return;
+    }
+
+    startedAtIteration_ = iteration_;
+    if (!getResources(&userTimeStart_, &systemTimeStart_))
+        return;
+}
+
+// Commit the data that has been collected during the iteration
+// into the actual `PerformanceData`.
+//
+// We use the proportion of cycles-spent-in-group over
+// cycles-spent-in-toplevel-group as an approximation to allocate
+// system (kernel) time and user (CPU) time to each group. Note
+// that cycles are not an exact measure:
+//
+// 1. if the computer has gone to sleep, the clock may be reset to 0;
+// 2. if the process is moved between CPUs/cores, it may end up on a CPU
+//    or core with an unsynchronized clock;
+// 3. the mapping between clock cycles and walltime varies with the current
+//    frequency of the CPU;
+// 4. other threads/processes using the same CPU will also increment
+//    the counter.
+//
+// ** Effect of 1. (computer going to sleep)
+//
+// We assume that this will happen very seldom. Since the final numbers
+// are bounded by the CPU time and Kernel time reported by `getresources`,
+// the effect will be contained to a single iteration of the event loop.
+//
+// ** Effect of 2. (moving between CPUs/cores)
+//
+// On platforms that support it, we only measure the number of cycles
+// if we start and end execution of a group on the same
+// CPU/core. While there is a small window (a few cycles) during which
+// the thread can be migrated without us noticing, we expect that this
+// will happen rarely enough that this won't affect the statistics
+// meaningfully.
+//
+// On other platforms, assuming that the probability of jumping
+// between CPUs/cores during a given (real) cycle is constant, and
+// that the distribution of differences between clocks is even, the
+// probability that the number of cycles reported by a measure is
+// modified by X cycles should be a gaussian distribution, with groups
+// with longer execution having a larger amplitude than groups with
+// shorter execution. Since we discard measures that result in a
+// negative number of cycles, this distribution is actually skewed
+// towards over-estimating the number of cycles of groups that already
+// have many cycles and under-estimating the number of cycles that
+// already have fewer cycles.
+//
+// Since the final numbers are bounded by the CPU time and Kernel time
+// reported by `getresources`, we accept this bias.
+//
+// ** Effect of 3. (mapping between clock cycles and walltime)
+//
+// Assuming that this is evenly distributed, we expect that this will
+// eventually balance out.
+//
+// ** Effect of 4. (cycles increase with system activity)
+//
+// Assuming that, within an iteration of the event loop, this happens
+// unformly over time, this will skew towards over-estimating the number
+// of cycles of groups that already have many cycles and under-estimating
+// the number of cycles that already have fewer cycles.
+//
+// Since the final numbers are bounded by the CPU time and Kernel time
+// reported by `getresources`, we accept this bias.
+//
+// ** Big picture
+//
+// Computing the number of cycles is fast and should be accurate
+// enough in practice. Alternatives (such as calling `getresources`
+// all the time or sampling from another thread) are very expensive
+// in system calls and/or battery and not necessarily more accurate.
+void
+JSRuntime::Stopwatch::commit()
+{
+#if !defined(MOZ_HAVE_RDTSC)
+    // The AutoStopwatch is only executed if `MOZ_HAVE_RDTSC`.
+    return;
+#endif // !defined(MOZ_HAVE_RDTSC)
+
+    if (!isMonitoringJank_) {
+        // Either we have not started monitoring or monitoring has
+        // been cancelled during the iteration.
+        return;
+    }
+
+    if (startedAtIteration_ != iteration_) {
+        // No JS code has been monitored during this iteration.
+        return;
+    }
+
+    uint64_t userTimeStop, systemTimeStop;
+    if (!getResources(&userTimeStop, &systemTimeStop))
+        return;
+
+    // `getResources` is not guaranteed to be monotonic, so round up
+    // any negative result to 0 milliseconds.
+    uint64_t userTimeDelta = 0;
+    if (userTimeStop > userTimeStart_)
+        userTimeDelta = userTimeStop - userTimeStart_;
+
+    uint64_t systemTimeDelta = 0;
+    if (systemTimeStop > systemTimeStart_)
+        systemTimeDelta = systemTimeStop - systemTimeStart_;
+
+    mozilla::RefPtr<js::PerformanceGroup> group = performance.getOwnGroup();
+    const uint64_t totalRecentCycles = group->recentCycles;
+
+    mozilla::Vector<mozilla::RefPtr<js::PerformanceGroup>> recentGroups;
+    touchedGroups.swap(recentGroups);
+    MOZ_ASSERT(recentGroups.length() > 0);
+
+    // We should only reach this stage if `group` has had some activity.
+    MOZ_ASSERT(group->recentTicks > 0);
+    for (mozilla::RefPtr<js::PerformanceGroup>* iter = recentGroups.begin(); iter != recentGroups.end(); ++iter) {
+        transferDeltas(userTimeDelta, systemTimeDelta, totalRecentCycles, *iter);
+    }
+
+    // Make sure that `group` was treated along with the other items of `recentGroups`.
+    MOZ_ASSERT(group->recentTicks == 0);
+
+    // Finally, reset immediately, to make sure that we're not hit by the
+    // end of a nested event loop (which would cause `commit` to be called
+    // twice in succession).
+    reset();
+}
+
+void
+JSRuntime::Stopwatch::transferDeltas(uint64_t totalUserTimeDelta, uint64_t totalSystemTimeDelta,
+                                     uint64_t totalCyclesDelta, js::PerformanceGroup* group) {
+
+    const uint64_t ticksDelta = group->recentTicks;
+    const uint64_t cpowTimeDelta = group->recentCPOW;
+    const uint64_t cyclesDelta = group->recentCycles;
+    group->resetRecentData();
+
+    // We have now performed all cleanup and may `return` at any time without fear of leaks.
+
+    if (group->iteration() != iteration_) {
+        // Stale data, don't commit.
+        return;
+    }
+
+    // When we add a group as changed, we immediately set its
+    // `recentTicks` from 0 to 1.  If we have `ticksDelta == 0` at
+    // this stage, we have already called `resetRecentData` but we
+    // haven't removed it from the list.
+    MOZ_ASSERT(ticksDelta != 0);
+    MOZ_ASSERT(cyclesDelta <= totalCyclesDelta);
+    if (cyclesDelta == 0 || totalCyclesDelta == 0) {
+        // Nothing useful, don't commit.
+        return;
+    }
+
+    double proportion = (double)cyclesDelta / (double)totalCyclesDelta;
+    MOZ_ASSERT(proportion <= 1);
+
+    const uint64_t userTimeDelta = proportion * totalUserTimeDelta;
+    const uint64_t systemTimeDelta = proportion * totalSystemTimeDelta;
+
+    group->data.totalUserTime += userTimeDelta;
+    group->data.totalSystemTime += systemTimeDelta;
+    group->data.totalCPOWTime += cpowTimeDelta;
+    group->data.ticks += ticksDelta;
+
+    const uint64_t totalTimeDelta = userTimeDelta + systemTimeDelta;
+
+    size_t i = 0;
+    uint64_t duration = 1000; // 1ms in µs
+    for (i = 0, duration = 1000;
+         i < mozilla::ArrayLength(group->data.durations) && duration < totalTimeDelta;
+         ++i, duration *= 2) {
+        group->data.durations[i]++;
+    }
+}
+
+// Get the OS-reported time spent in userland/systemland, in
+// microseconds. On most platforms, this data is per-thread,
+// but on some platforms we need to fall back to per-process.
+// Data is not guaranteed to be monotonic.
+bool
+JSRuntime::Stopwatch::getResources(uint64_t* userTime,
+                                   uint64_t* systemTime) const {
+    MOZ_ASSERT(userTime);
+    MOZ_ASSERT(systemTime);
+
+#if defined(XP_MACOSX)
+    // On MacOS X, to get we per-thread data, we need to
+    // reach into the kernel.
+
+    mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
+    thread_basic_info_data_t info;
+    mach_port_t port = mach_thread_self();
+    kern_return_t err =
+        thread_info(/* [in] targeted thread*/ port,
+                    /* [in] nature of information*/ THREAD_BASIC_INFO,
+                    /* [out] thread information */  (thread_info_t)&info,
+                    /* [inout] number of items */   &count);
+
+    // We do not need ability to communicate with the thread, so
+    // let's release the port.
+    mach_port_deallocate(mach_task_self(), port);
+
+    if (err != KERN_SUCCESS)
+        return false;
+
+    *userTime = info.user_time.microseconds + info.user_time.seconds * 1000000;
+    *systemTime = info.system_time.microseconds + info.system_time.seconds * 1000000;
+
+#elif defined(XP_UNIX)
+    struct rusage rusage;
+#if defined(RUSAGE_THREAD)
+    // Under Linux, we can obtain per-thread statistics
+    int err = getrusage(RUSAGE_THREAD, &rusage);
+#else
+    // Under other Unices, we need to do with more noisy
+    // per-process statistics.
+    int err = getrusage(RUSAGE_SELF, &rusage);
+#endif // defined(RUSAGE_THREAD)
+
+    if (err)
+        return false;
+
+    *userTime = rusage.ru_utime.tv_usec + rusage.ru_utime.tv_sec * 1000000;
+    *systemTime = rusage.ru_stime.tv_usec + rusage.ru_stime.tv_sec * 1000000;
+
+#elif defined(XP_WIN)
+    // Under Windows, we can obtain per-thread statistics,
+    // although experience seems to suggest that they are
+    // not very good under Windows XP.
+    FILETIME creationFileTime; // Ignored
+    FILETIME exitFileTime; // Ignored
+    FILETIME kernelFileTime;
+    FILETIME userFileTime;
+    BOOL success = GetThreadTimes(GetCurrentThread(),
+                                  &creationFileTime, &exitFileTime,
+                                  &kernelFileTime, &userFileTime);
+
+    if (!success)
+        return false;
+
+    ULARGE_INTEGER kernelTimeInt;
+    kernelTimeInt.LowPart = kernelFileTime.dwLowDateTime;
+    kernelTimeInt.HighPart = kernelFileTime.dwHighDateTime;
+    // Convert 100 ns to 1 us.
+    *systemTime = kernelTimeInt.QuadPart / 10;
+
+    ULARGE_INTEGER userTimeInt;
+    userTimeInt.LowPart = userFileTime.dwLowDateTime;
+    userTimeInt.HighPart = userFileTime.dwHighDateTime;
+    // Convert 100 ns to 1 us.
+    *userTime = userTimeInt.QuadPart / 10;
+
+#endif // defined(XP_MACOSX) || defined(XP_UNIX) || defined(XP_WIN)
+
+    return true;
+}
+
+
+bool
+js::SetStopwatchIsMonitoringJank(JSRuntime* rt, bool value)
+{
+    return rt->stopwatch.setIsMonitoringJank(value);
+}
+bool
+js::GetStopwatchIsMonitoringJank(JSRuntime* rt)
+{
+    return rt->stopwatch.isMonitoringJank();
 }
 
 bool
-js::SetStopwatchActive(JSRuntime* rt, bool isActive)
+js::SetStopwatchIsMonitoringCPOW(JSRuntime* rt, bool value)
 {
-    MOZ_ASSERT(rt);
-    return rt->stopwatch.setIsActive(isActive);
+    return rt->stopwatch.setIsMonitoringCPOW(value);
+}
+bool
+js::GetStopwatchIsMonitoringCPOW(JSRuntime* rt)
+{
+    return rt->stopwatch.isMonitoringCPOW();
 }
 
 bool
-js::IsStopwatchActive(JSRuntime* rt)
+js::SetStopwatchIsMonitoringPerCompartment(JSRuntime* rt, bool value)
 {
-    MOZ_ASSERT(rt);
-    return rt->stopwatch.isActive();
+    return rt->stopwatch.setIsMonitoringPerCompartment(value);
+}
+bool
+js::GetStopwatchIsMonitoringPerCompartment(JSRuntime* rt)
+{
+    return rt->stopwatch.isMonitoringPerCompartment();
+}
+
+void
+js::GetPerfMonitoringTestCpuRescheduling(JSRuntime* rt, uint64_t* stayed, uint64_t* moved)
+{
+    *stayed = rt->stopwatch.testCpuRescheduling.stayed;
+    *moved = rt->stopwatch.testCpuRescheduling.moved;
 }
 
 js::PerformanceGroupHolder::~PerformanceGroupHolder()
@@ -897,65 +1228,115 @@ js::PerformanceGroupHolder::~PerformanceGroupHolder()
 }
 
 void*
-js::PerformanceGroupHolder::getHashKey()
+js::PerformanceGroupHolder::getHashKey(JSContext* cx)
 {
-    return compartment_->isSystem() ?
-        (void*)compartment_->addonId :
-        (void*)JS_GetCompartmentPrincipals(compartment_);
-    // This key may be `nullptr` if we have `isSystem() == true`
-    // and `compartment_->addonId`. This is absolutely correct,
-    // and this represents the `PerformanceGroup` used to track
-    // the performance of the the platform compartments.
+    if (runtime_->stopwatch.currentPerfGroupCallback) {
+        return (*runtime_->stopwatch.currentPerfGroupCallback)(cx);
+    }
+
+    // As a fallback, put everything in the same PerformanceGroup.
+    return nullptr;
 }
 
 void
 js::PerformanceGroupHolder::unlink()
 {
-    if (!group_) {
-        // The group has never been instantiated.
-        return;
-    }
-
-    js::PerformanceGroup* group = group_;
-    group_ = nullptr;
-
-    if (group->decRefCount() > 0) {
-        // The group has at least another owner.
-        return;
-    }
-
-
-    JSRuntime::Stopwatch::Groups::Ptr ptr =
-        runtime_->stopwatch.groups_.lookup(getHashKey());
-    MOZ_ASSERT(ptr);
-    runtime_->stopwatch.groups_.remove(ptr);
-    js_delete(group);
+    ownGroup_ = nullptr;
+    sharedGroup_ = nullptr;
 }
 
 PerformanceGroup*
-js::PerformanceGroupHolder::getGroup()
+js::PerformanceGroupHolder::getOwnGroup()
 {
-    if (group_)
-        return group_;
+    if (ownGroup_)
+        return ownGroup_;
 
-    void* key = getHashKey();
-    JSRuntime::Stopwatch::Groups::AddPtr ptr =
-        runtime_->stopwatch.groups_.lookupForAdd(key);
-    if (ptr) {
-        group_ = ptr->value();
-        MOZ_ASSERT(group_);
-    } else {
-        group_ = runtime_->new_<PerformanceGroup>();
-        runtime_->stopwatch.groups_.add(ptr, key, group_);
-    }
-
-    group_->incRefCount();
-
-    return group_;
+    return ownGroup_ = runtime_->new_<PerformanceGroup>(runtime_);
 }
 
-PerformanceData*
-js::GetPerformanceData(JSRuntime* rt)
+PerformanceGroup*
+js::PerformanceGroupHolder::getSharedGroup(JSContext* cx)
 {
-    return &rt->stopwatch.performance;
+    if (sharedGroup_)
+        return sharedGroup_;
+
+    if (!runtime_->stopwatch.groups().initialized())
+        return nullptr;
+
+    void* key = getHashKey(cx);
+    JSRuntime::Stopwatch::Groups::AddPtr ptr = runtime_->stopwatch.groups().lookupForAdd(key);
+    if (ptr) {
+        sharedGroup_ = ptr->value();
+        MOZ_ASSERT(sharedGroup_);
+    } else {
+        sharedGroup_ = runtime_->new_<PerformanceGroup>(cx, key);
+        if (!sharedGroup_)
+          return nullptr;
+        runtime_->stopwatch.groups().add(ptr, key, sharedGroup_);
+    }
+
+    return sharedGroup_;
+}
+
+void
+js::AddCPOWPerformanceDelta(JSRuntime* rt, uint64_t delta)
+{
+    rt->stopwatch.totalCPOWTime += delta;
+}
+
+js::PerformanceGroup::PerformanceGroup(JSRuntime* rt)
+  : uid(rt->stopwatch.uniqueId()),
+    recentCycles(0),
+    recentTicks(0),
+    recentCPOW(0),
+    runtime_(rt),
+    stopwatch_(nullptr),
+    iteration_(0),
+    key_(nullptr),
+    refCount_(0),
+    isSharedGroup_(false)
+{
+}
+
+js::PerformanceGroup::PerformanceGroup(JSContext* cx, void* key)
+  : uid(cx->runtime()->stopwatch.uniqueId()),
+    recentCycles(0),
+    recentTicks(0),
+    recentCPOW(0),
+    runtime_(cx->runtime()),
+    stopwatch_(nullptr),
+    iteration_(0),
+    key_(key),
+    refCount_(0),
+    isSharedGroup_(true)
+{
+}
+
+void
+js::PerformanceGroup::AddRef()
+{
+    ++refCount_;
+}
+
+void
+js::PerformanceGroup::Release()
+{
+    MOZ_ASSERT(refCount_ > 0);
+    --refCount_;
+    if (refCount_ > 0)
+        return;
+
+    if (isSharedGroup_) {
+        JSRuntime::Stopwatch::Groups::Ptr ptr = runtime_->stopwatch.groups().lookup(key_);
+        MOZ_ASSERT(ptr);
+        runtime_->stopwatch.groups().remove(ptr);
+    }
+
+    js_delete(this);
+}
+
+void
+JS_SetCurrentPerfGroupCallback(JSRuntime *rt, JSCurrentPerfGroupCallback cb)
+{
+    rt->stopwatch.currentPerfGroupCallback = cb;
 }

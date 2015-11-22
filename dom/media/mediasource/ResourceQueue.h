@@ -12,6 +12,8 @@
 
 namespace mozilla {
 
+class ErrorResult;
+
 // A SourceBufferResource has a queue containing the data that is appended
 // to it. The queue holds instances of ResourceItem which is an array of the
 // bytes. Appending data to the SourceBufferResource pushes this onto the
@@ -24,9 +26,9 @@ namespace mozilla {
 // timepoint.
 
 struct ResourceItem {
-  explicit ResourceItem(MediaLargeByteBuffer* aData);
+  explicit ResourceItem(MediaByteBuffer* aData);
   size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const;
-  nsRefPtr<MediaLargeByteBuffer> mData;
+  nsRefPtr<MediaByteBuffer> mData;
 };
 
 class ResourceQueue : private nsDeque {
@@ -43,13 +45,14 @@ public:
   // Copies aCount bytes from aOffset in the queue into aDest.
   void CopyData(uint64_t aOffset, uint32_t aCount, char* aDest);
 
-  void AppendItem(MediaLargeByteBuffer* aData);
+  void AppendItem(MediaByteBuffer* aData);
 
   // Tries to evict at least aSizeToEvict from the queue up until
   // aOffset. Returns amount evicted.
-  uint32_t Evict(uint64_t aOffset, uint32_t aSizeToEvict);
+  uint32_t Evict(uint64_t aOffset, uint32_t aSizeToEvict,
+                 ErrorResult& aRv);
 
-  uint32_t EvictBefore(uint64_t aOffset);
+  uint32_t EvictBefore(uint64_t aOffset, ErrorResult& aRv);
 
   uint32_t EvictAll();
 
@@ -79,4 +82,5 @@ private:
 };
 
 } // namespace mozilla
+
 #endif /* MOZILLA_RESOURCEQUEUE_H_ */

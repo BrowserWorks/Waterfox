@@ -9,7 +9,6 @@
 #define __mozilla_widget_GfxInfo_h__
 
 #include "GfxInfoBase.h"
-#include "nsIGfxInfo2.h"
 
 namespace mozilla {
 namespace widget {
@@ -51,11 +50,12 @@ public:
 
   virtual uint32_t OperatingSystemVersion() override { return mWindowsVersion; }
 
-  NS_DECL_ISUPPORTS_INHERITED
+  nsresult FindMonitors(JSContext* cx, JS::HandleObject array) override;
+
 #ifdef DEBUG
+  NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIGFXINFODEBUG
 #endif
-  NS_DECL_NSIGFXINFO2
 
 protected:
 
@@ -66,12 +66,12 @@ protected:
                                         OperatingSystem* aOS = nullptr);
   virtual const nsTArray<GfxDriverInfo>& GetGfxDriverInfo();
 
+  void DescribeFeatures(JSContext* cx, JS::Handle<JSObject*> aOut) override;
+
 private:
 
   void AddCrashReportAnnotations();
-  void GetCountryCode();
 
-  nsString mCountryCode;
   nsString mDeviceString;
   nsString mDeviceID;
   nsString mDriverVersion;

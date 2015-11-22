@@ -80,7 +80,7 @@ function forbidCPOW(arg, func, argname)
 // - A linked document using Alt-click Save Link As...
 //
 function saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
-                 aSkipPrompt, aReferrer, aSourceDocument)
+                 aSkipPrompt, aReferrer, aSourceDocument, aIsContentWindowPrivate)
 {
   forbidCPOW(aURL, "saveURL", "aURL");
   forbidCPOW(aReferrer, "saveURL", "aReferrer");
@@ -88,7 +88,7 @@ function saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
 
   internalSave(aURL, null, aFileName, null, null, aShouldBypassCache,
                aFilePickerTitleKey, null, aReferrer, aSourceDocument,
-               aSkipPrompt, null);
+               aSkipPrompt, null, aIsContentWindowPrivate);
 }
 
 // Just like saveURL, but will get some info off the image before
@@ -126,46 +126,92 @@ function saveImageURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
                aDoc, aSkipPrompt, null);
 }
 
+// This is like saveDocument, but takes any browser/frame-like element
+// (nsIFrameLoaderOwner) and saves the current document inside it,
+// whether in-process or out-of-process.
+function saveBrowser(aBrowser, aSkipPrompt, aOuterWindowID=0)
+{
+  if (!aBrowser) {
+    throw "Must have a browser when calling saveBrowser";
+  }
+  let persistable = aBrowser.QueryInterface(Ci.nsIFrameLoaderOwner)
+                    .frameLoader
+                    .QueryInterface(Ci.nsIWebBrowserPersistable);
+  let stack = Components.stack.caller;
+  persistable.startPersistence(aOuterWindowID, {
+    onDocumentReady: function (document) {
+      saveDocument(document, aSkipPrompt);
+    },
+    onError: function (status) {
+      throw new Components.Exception("saveBrowser failed asynchronously in startPersistence",
+                                     status, stack);
+    }
+  });
+}
+
+// Saves a document; aDocument can be an nsIWebBrowserPersistDocument
+// (see saveBrowser, above) or an nsIDOMDocument.
+//
+// aDocument can also be a CPOW for a remote nsIDOMDocument, in which
+// case "save as" modes that serialize the document's DOM are
+// unavailable.  This is a temporary measure for the "Save Frame As"
+// command (bug 1141337) and pre-e10s add-ons.
 function saveDocument(aDocument, aSkipPrompt)
 {
+  const Ci = Components.interfaces;
+
   if (!aDocument)
     throw "Must have a document when calling saveDocument";
 
-  // We want to use cached data because the document is currently visible.
-  var ifreq =
-    aDocument.defaultView
-             .QueryInterface(Components.interfaces.nsIInterfaceRequestor);
+  let contentDisposition = null;
+  let cacheKeyInt = null;
 
-  var contentDisposition = null;
-  try {
-    contentDisposition =
-      ifreq.getInterface(Components.interfaces.nsIDOMWindowUtils)
-           .getDocumentMetadata("content-disposition");
-  } catch (ex) {
-    // Failure to get a content-disposition is ok
+  if (aDocument instanceof Ci.nsIWebBrowserPersistDocument) {
+    // nsIWebBrowserPersistDocument exposes these directly.
+    contentDisposition = aDocument.contentDisposition;
+    cacheKeyInt = aDocument.cacheKey;
+  } else if (aDocument instanceof Ci.nsIDOMDocument) {
+    // Otherwise it's an actual nsDocument (and possibly a CPOW).
+    // We want to use cached data because the document is currently visible.
+    let ifreq =
+      aDocument.defaultView
+               .QueryInterface(Ci.nsIInterfaceRequestor);
+
+    try {
+      contentDisposition =
+        ifreq.getInterface(Ci.nsIDOMWindowUtils)
+             .getDocumentMetadata("content-disposition");
+    } catch (ex) {
+      // Failure to get a content-disposition is ok
+    }
+
+    try {
+      let shEntry =
+        ifreq.getInterface(Ci.nsIWebNavigation)
+             .QueryInterface(Ci.nsIWebPageDescriptor)
+             .currentDescriptor
+             .QueryInterface(Ci.nsISHEntry);
+
+      let cacheKey = shEntry.cacheKey
+                            .QueryInterface(Ci.nsISupportsPRUint32)
+                            .data;
+      // cacheKey might be a CPOW, which can't be passed to native
+      // code, but the data attribute is just a number.
+      cacheKeyInt = cacheKey.data;
+    } catch (ex) {
+      // We might not find it in the cache.  Oh, well.
+    }
   }
 
+  // Convert the cacheKey back into an XPCOM object.
   let cacheKey = null;
-  try {
-    let shEntry =
-      ifreq.getInterface(Components.interfaces.nsIWebNavigation)
-           .QueryInterface(Components.interfaces.nsIWebPageDescriptor)
-           .currentDescriptor
-           .QueryInterface(Components.interfaces.nsISHEntry);
-
-    shEntry.cacheKey.QueryInterface(Components.interfaces.nsISupportsPRUint32);
-
-    // In the event that the cacheKey is a CPOW, we cannot pass it to
-    // nsIWebBrowserPersist, so we create a new one and copy the value
-    // over. This is a workaround until bug 1101100 is fixed.
+  if (cacheKeyInt) {
     cacheKey = Cc["@mozilla.org/supports-PRUint32;1"]
-                 .createInstance(Ci.nsISupportsPRUint32);
-    cacheKey.data = shEntry.cacheKey.data;
-  } catch (ex) {
-    // We might not find it in the cache.  Oh, well.
+      .createInstance(Ci.nsISupportsPRUint32);
+    cacheKey.data = cacheKeyInt;
   }
 
-  internalSave(aDocument.location.href, aDocument, null, contentDisposition,
+  internalSave(aDocument.documentURI, aDocument, null, contentDisposition,
                aDocument.contentType, false, null, null,
                aDocument.referrer ? makeURI(aDocument.referrer) : null,
                aDocument, aSkipPrompt, cacheKey);
@@ -264,19 +310,24 @@ const kSaveAsType_Text     = 2; // Save document, converting to plain text.
  * @param aReferrer
  *        the referrer URI object (not URL string) to use, or null
  *        if no referrer should be sent.
- * @param aInitiatingDocument
+ * @param aInitiatingDocument [optional]
  *        The document from which the save was initiated.
+ *        If this is omitted then aIsContentWindowPrivate has to be provided.
  * @param aSkipPrompt [optional]
  *        If set to true, we will attempt to save the file to the
  *        default downloads folder without prompting.
  * @param aCacheKey [optional]
  *        If set will be passed to saveURI.  See nsIWebBrowserPersist for
  *        allowed values.
+ * @param aIsContentWindowPrivate [optional]
+ *        This parameter is provided when the aInitiatingDocument is not a
+ *        real document object. Stores whether aInitiatingDocument.defaultView
+ *        was private or not.
  */
 function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
                       aContentType, aShouldBypassCache, aFilePickerTitleKey,
                       aChosenData, aReferrer, aInitiatingDocument, aSkipPrompt,
-                      aCacheKey)
+                      aCacheKey, aIsContentWindowPrivate)
 {
   forbidCPOW(aURL, "internalSave", "aURL");
   forbidCPOW(aReferrer, "internalSave", "aReferrer");
@@ -348,6 +399,13 @@ function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
     let nonCPOWDocument =
       aDocument && !Components.utils.isCrossProcessWrapper(aDocument);
 
+    let isPrivate = aIsContentWindowPrivate;
+    if (isPrivate === undefined) {
+      isPrivate = aInitiatingDocument instanceof Components.interfaces.nsIDOMDocument
+        ? PrivateBrowsingUtils.isContentWindowPrivate(aInitiatingDocument.defaultView)
+        : aInitiatingDocument.isPrivate;
+    }
+
     var persistArgs = {
       sourceURI         : sourceURI,
       sourceReferrer    : aReferrer,
@@ -357,7 +415,7 @@ function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
       sourceCacheKey    : aCacheKey,
       sourcePostData    : nonCPOWDocument ? getPostData(aDocument) : null,
       bypassCache       : aShouldBypassCache,
-      initiatingWindow  : aInitiatingDocument.defaultView
+      isPrivate         : isPrivate,
     };
 
     // Start the actual save process
@@ -392,8 +450,8 @@ function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
  *        "text/plain" is meaningful.
  * @param persistArgs.bypassCache
  *        If true, the document will always be refetched from the server
- * @param persistArgs.initiatingWindow
- *        The window from which the save operation was initiated.
+ * @param persistArgs.isPrivate
+ *        Indicates whether this is taking place in a private browsing context.
  */
 function internalPersist(persistArgs)
 {
@@ -414,12 +472,10 @@ function internalPersist(persistArgs)
   // Find the URI associated with the target file
   var targetFileURL = makeFileURI(persistArgs.targetFile);
 
-  let isPrivate = PrivateBrowsingUtils.isContentWindowPrivate(persistArgs.initiatingWindow);
-
   // Create download and initiate it (below)
   var tr = Components.classes["@mozilla.org/transfer;1"].createInstance(Components.interfaces.nsITransfer);
   tr.init(persistArgs.sourceURI,
-          targetFileURL, "", null, null, null, persist, isPrivate);
+          targetFileURL, "", null, null, null, persist, persistArgs.isPrivate);
   persist.progressListener = new DownloadListener(window, tr);
 
   if (persistArgs.sourceDocument) {
@@ -458,7 +514,7 @@ function internalPersist(persistArgs)
                                 persistArgs.sourcePostData,
                                 null,
                                 targetFileURL,
-                                isPrivate);
+                                persistArgs.isPrivate);
   }
 }
 
@@ -815,17 +871,22 @@ function appendFiltersForContentType(aFilePicker, aContentType, aFileExtension, 
 
 function getPostData(aDocument)
 {
+  const Ci = Components.interfaces;
+
+  if (aDocument instanceof Ci.nsIWebBrowserPersistDocument) {
+    return aDocument.postData;
+  }
   try {
     // Find the session history entry corresponding to the given document. In
     // the current implementation, nsIWebPageDescriptor.currentDescriptor always
     // returns a session history entry.
-    var sessionHistoryEntry =
+    let sessionHistoryEntry =
         aDocument.defaultView
-                 .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-                 .getInterface(Components.interfaces.nsIWebNavigation)
-                 .QueryInterface(Components.interfaces.nsIWebPageDescriptor)
+                 .QueryInterface(Ci.nsIInterfaceRequestor)
+                 .getInterface(Ci.nsIWebNavigation)
+                 .QueryInterface(Ci.nsIWebPageDescriptor)
                  .currentDescriptor
-                 .QueryInterface(Components.interfaces.nsISHEntry);
+                 .QueryInterface(Ci.nsISHEntry);
     return sessionHistoryEntry.postData;
   }
   catch (e) {

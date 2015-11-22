@@ -3,12 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const Cu = Components.utils;
-const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools;
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const {AppManager} = require("devtools/webide/app-manager");
 const {Connection} = require("devtools/client/connection-manager");
 const ConfigView = require("devtools/webide/config-view");
 
-let configView = new ConfigView(window);
+var configView = new ConfigView(window);
 
 window.addEventListener("load", function onLoad() {
   window.removeEventListener("load", onLoad);
@@ -62,7 +62,7 @@ function SearchField(event) {
   configView.search(event);
 }
 
-let getAllSettings; // Used by tests
+var getAllSettings; // Used by tests
 function BuildUI() {
   configView.resetTable();
 

@@ -5,7 +5,7 @@
  * Tests if the a function call's stack is properly displayed in the UI.
  */
 
-function ifTestingSupported() {
+function* ifTestingSupported() {
   let { target, panel } = yield initCanvasDebuggerFrontend(SIMPLE_CANVAS_DEEP_STACK_URL);
   let { window, $, $all, EVENTS, SnapshotsListView, CallsListView } = panel.panelWin;
 
@@ -28,8 +28,10 @@ function ifTestingSupported() {
 
   isnot($(".call-item-stack", callItem.target), null,
     "There should be a stack container available now for the draw call.");
-  is($all(".call-item-stack-fn", callItem.target).length, 4,
-    "There should be 4 functions on the stack for the draw call.");
+  // We may have more than 4 functions, depending on whether async
+  // stacks are available.
+  ok($all(".call-item-stack-fn", callItem.target).length >= 4,
+     "There should be at least 4 functions on the stack for the draw call.");
 
   ok($all(".call-item-stack-fn-name", callItem.target)[0].getAttribute("value")
     .includes("C()"),

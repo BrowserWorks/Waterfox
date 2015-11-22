@@ -31,7 +31,7 @@ WebGLContextLossHandler::~WebGLContextLossHandler()
 void
 WebGLContextLossHandler::StartTimer(unsigned long delayMS)
 {
-    // We can't pass a TemporaryRef through InitWithFuncCallback, so we
+    // We can't pass an already_AddRefed through InitWithFuncCallback, so we
     // should do the AddRef/Release manually.
     this->AddRef();
 
@@ -57,12 +57,11 @@ void
 WebGLContextLossHandler::TimerCallback()
 {
     MOZ_ASSERT(NS_GetCurrentThread() == mThread);
+    MOZ_ASSERT(mIsTimerRunning);
+    mIsTimerRunning = false;
 
     if (mIsDisabled)
         return;
-
-    MOZ_ASSERT(mIsTimerRunning);
-    mIsTimerRunning = false;
 
     // If we need to run the timer again, restart it immediately.
     // Otherwise, the code we call into below might *also* try to
@@ -100,7 +99,7 @@ WebGLContextLossHandler::RunTimer()
 void
 WebGLContextLossHandler::DisableTimer()
 {
-    if (!mIsDisabled)
+    if (mIsDisabled)
         return;
 
     mIsDisabled = true;

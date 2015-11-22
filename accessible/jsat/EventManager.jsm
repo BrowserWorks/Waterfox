@@ -18,8 +18,6 @@ XPCOMUtils.defineLazyModuleGetter(this, 'Logger',
   'resource://gre/modules/accessibility/Utils.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Presentation',
   'resource://gre/modules/accessibility/Presentation.jsm');
-XPCOMUtils.defineLazyModuleGetter(this, 'TraversalRules',
-  'resource://gre/modules/accessibility/TraversalRules.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Roles',
   'resource://gre/modules/accessibility/Constants.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Events',
@@ -174,10 +172,17 @@ this.EventManager.prototype = {
         let event = aEvent.QueryInterface(Ci.nsIAccessibleStateChangeEvent);
         let state = Utils.getState(event);
         if (state.contains(States.CHECKED)) {
-          this.present(
-            Presentation.
-              actionInvoked(aEvent.accessible,
-                            event.isEnabled ? 'check' : 'uncheck'));
+          if (aEvent.accessible.role === Roles.SWITCH) {
+            this.present(
+              Presentation.
+                actionInvoked(aEvent.accessible,
+                              event.isEnabled ? 'on' : 'off'));
+          } else {
+            this.present(
+              Presentation.
+                actionInvoked(aEvent.accessible,
+                              event.isEnabled ? 'check' : 'uncheck'));
+          }
         } else if (state.contains(States.SELECTED)) {
           this.present(
             Presentation.

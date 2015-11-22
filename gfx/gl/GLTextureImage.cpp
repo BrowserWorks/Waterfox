@@ -46,7 +46,7 @@ CreateTextureImage(GLContext* gl,
 
 static already_AddRefed<TextureImage>
 TileGenFunc(GLContext* gl,
-            const nsIntSize& aSize,
+            const IntSize& aSize,
             TextureImage::ContentType aContentType,
             TextureImage::Flags aFlags,
             TextureImage::ImageFormat aImageFormat)
@@ -185,7 +185,7 @@ BasicTextureImage::BindTexture(GLenum aTextureUnit)
     mGLContext->fActiveTexture(LOCAL_GL_TEXTURE0);
 }
 
-TemporaryRef<gfx::DrawTarget>
+already_AddRefed<gfx::DrawTarget>
 BasicTextureImage::GetDrawTargetForUpdate(const gfx::IntSize& aSize, gfx::SurfaceFormat aFmt)
 {
     return gfx::Factory::CreateDrawTarget(gfx::BackendType::CAIRO, aSize, aFmt);
@@ -633,7 +633,7 @@ void TiledTextureImage::Resize(const gfx::IntSize& aSize)
 
         int col;
         for (col = 0; col < (int)columns; col++) {
-            nsIntSize size( // use tilesize first, then the remainder
+            IntSize size( // use tilesize first, then the remainder
                     (col+1) * mTileSize > (unsigned int)aSize.width  ? aSize.width  % mTileSize : mTileSize,
                     (row+1) * mTileSize > (unsigned int)aSize.height ? aSize.height % mTileSize : mTileSize);
 
@@ -729,5 +729,5 @@ CreateBasicTextureImage(GLContext* aGL,
     return texImage.forget();
 }
 
-} // namespace
-} // namespace
+} // namespace gl
+} // namespace mozilla

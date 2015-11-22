@@ -6,6 +6,8 @@
 #ifndef WEBGL_STRONG_TYPES_H_
 #define WEBGL_STRONG_TYPES_H_
 
+#include <algorithm>
+
 #include "GLDefs.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
@@ -453,5 +455,11 @@ STRONG_GLENUM_BEGIN(BufferBinding)
     STRONG_GLENUM_VALUE(UNIFORM_BUFFER),            // 0x8A11
     STRONG_GLENUM_VALUE(TRANSFORM_FEEDBACK_BUFFER), // 0x8C8E
 STRONG_GLENUM_END(BufferBinding)
+
+STRONG_GLENUM_BEGIN(QueryBinding)
+    STRONG_GLENUM_VALUE(NONE),
+    STRONG_GLENUM_VALUE(TIME_ELAPSED_EXT),
+    STRONG_GLENUM_VALUE(TIMESTAMP_EXT),
+STRONG_GLENUM_END(QueryBinding)
 
 #endif // WEBGL_STRONG_TYPES_H_

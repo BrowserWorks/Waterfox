@@ -19,7 +19,7 @@
 namespace mozilla {
 
 // Forward declarations
-struct JsepCodecDescription;
+class JsepCodecDescription;
 class JsepTrack;
 struct JsepTrackPair;
 
@@ -36,6 +36,7 @@ enum JsepSdpType {
   kJsepSdpOffer,
   kJsepSdpAnswer,
   kJsepSdpPranswer,
+  kJsepSdpRollback
 };
 
 struct JsepOAOptions {};
@@ -45,6 +46,12 @@ struct JsepOfferOptions : public JsepOAOptions {
   Maybe<bool> mDontOfferDataChannel;
 };
 struct JsepAnswerOptions : public JsepOAOptions {};
+
+enum JsepBundlePolicy {
+  kBundleBalanced,
+  kBundleMaxCompat,
+  kBundleMaxBundle
+};
 
 class JsepSession
 {
@@ -72,6 +79,7 @@ public:
   // Set up the ICE And DTLS data.
   virtual nsresult SetIceCredentials(const std::string& ufrag,
                                      const std::string& pwd) = 0;
+  virtual nsresult SetBundlePolicy(JsepBundlePolicy policy) = 0;
   virtual bool RemoteIsIceLite() const = 0;
   virtual std::vector<std::string> GetIceOptions() const = 0;
 
@@ -127,8 +135,8 @@ public:
                                          const std::string& mid,
                                          uint16_t level) = 0;
   virtual nsresult AddLocalIceCandidate(const std::string& candidate,
-                                        const std::string& mid,
                                         uint16_t level,
+                                        std::string* mid,
                                         bool* skipped) = 0;
   virtual nsresult EndOfLocalCandidates(
       const std::string& defaultCandidateAddr,

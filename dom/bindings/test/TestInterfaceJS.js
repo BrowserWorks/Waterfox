@@ -64,13 +64,29 @@ TestInterfaceJS.prototype = {
   testSequenceOverload: function(arg) {},
   testSequenceUnion: function(arg) {},
 
-  testThrowDOMError: function() {
-    throw new this._win.DOMError("NotSupportedError", "We are a DOMError");
+  testThrowError: function() {
+    throw new this._win.Error("We are an Error");
   },
 
   testThrowDOMException: function() {
     throw new this._win.DOMException("We are a DOMException",
                                      "NotSupportedError");
+  },
+
+  testThrowTypeError: function() {
+    throw new this._win.TypeError("We are a TypeError");
+  },
+
+  testThrowCallbackError: function(callback) {
+    callback();
+  },
+
+  testThrowXraySelfHosted: function() {
+    this._win.Array.indexOf();
+  },
+
+  testThrowSelfHosted: function() {
+    Array.indexOf();
   },
 
   testPromiseWithThrowingChromePromiseInit: function() {
@@ -140,6 +156,13 @@ TestInterfaceJS.prototype = {
     });
   },
 
+  get onsomething() {
+    return this.__DOM_IMPL__.getEventHandler("onsomething");
+  },
+
+  set onsomething(val) {
+    this.__DOM_IMPL__.setEventHandler("onsomething", val);
+  }
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([TestInterfaceJS])

@@ -99,6 +99,16 @@ ContentPermissionPrompt.prototype = {
     let entityName = kEntities[perm.type];
 
     let buttons = [{
+      label: browserBundle.GetStringFromName(entityName + ".dontAllow"),
+      callback: function(aChecked) {
+        // If the user checked "Don't ask again", make a permanent exception
+        if (aChecked)
+          Services.perms.addFromPrincipal(request.principal, access, Ci.nsIPermissionManager.DENY_ACTION);
+
+        request.cancel();
+      }
+    },
+    {
       label: browserBundle.GetStringFromName(entityName + ".allow"),
       callback: function(aChecked) {
         // If the user checked "Don't ask again", make a permanent exception
@@ -110,24 +120,15 @@ ContentPermissionPrompt.prototype = {
         }
 
         request.allow();
-      }
-    },
-    {
-      label: browserBundle.GetStringFromName(entityName + ".dontAllow"),
-      callback: function(aChecked) {
-        // If the user checked "Don't ask again", make a permanent exception
-        if (aChecked)
-          Services.perms.addFromPrincipal(request.principal, access, Ci.nsIPermissionManager.DENY_ACTION);
-
-        request.cancel();
-      }
+      },
+      positive: true
     }];
 
     let requestor = chromeWin.BrowserApp.manifest ? "'" + chromeWin.BrowserApp.manifest.name + "'" : request.principal.URI.host;
     let message = browserBundle.formatStringFromName(entityName + ".ask", [requestor], 1);
     let options = { checkbox: browserBundle.GetStringFromName(entityName + ".dontAskAgain") };
 
-    chromeWin.NativeWindow.doorhanger.show(message, entityName + request.principal.URI.host, buttons, tab.id, options);
+    chromeWin.NativeWindow.doorhanger.show(message, entityName + request.principal.URI.host, buttons, tab.id, options, entityName.toUpperCase());
   }
 };
 

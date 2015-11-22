@@ -9,8 +9,6 @@ var gDebuggee;
 var gClient;
 var gThreadClient;
 
-Components.utils.import('resource:///modules/devtools/SourceMap.jsm');
-
 function run_test()
 {
   initTestDebuggerServer();
@@ -29,7 +27,7 @@ function test_minified()
 {
   let newSourceFired = false;
 
-  gClient.addOneTimeListener("newSource", function _onNewSource(aEvent, aPacket) {
+  gThreadClient.addOneTimeListener("newSource", function _onNewSource(aEvent, aPacket) {
     do_check_eq(aEvent, "newSource");
     do_check_eq(aPacket.type, "newSource");
     do_check_true(!!aPacket.source);

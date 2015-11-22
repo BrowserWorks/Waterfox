@@ -9,13 +9,13 @@ const { LoopCallsInternal } = Cu.import("resource:///modules/loop/LoopCalls.jsm"
 XPCOMUtils.defineLazyModuleGetter(this, "Chat",
                                   "resource:///modules/Chat.jsm");
 
-let actionReceived = false;
-let openChatOrig = Chat.open;
+var actionReceived = false;
+var openChatOrig = Chat.open;
 
 const firstCallId = 4444333221;
 const secondCallId = 1001100101;
 
-let msgHandler = function(msg) {
+var msgHandler = function(msg) {
   if (msg.messageType &&
       msg.messageType === "action" &&
       msg.event === "terminate" &&
@@ -55,9 +55,9 @@ function run_test() {
   // Setup fake login state so we get FxA requests.
   const MozLoopServiceInternal = Cu.import("resource:///modules/loop/MozLoopService.jsm", {}).MozLoopServiceInternal;
   MozLoopServiceInternal.fxAOAuthTokenData = {
-    token_type:"bearer",
-    access_token:"1bad3e44b12f77a88fe09f016f6a37c42e40f974bc7a8b432bb0d2f0e37e1752",
-    scope:"profile"
+    token_type: "bearer",
+    access_token: "1bad3e44b12f77a88fe09f016f6a37c42e40f974bc7a8b432bb0d2f0e37e1752",
+    scope: "profile"
   };
   MozLoopServiceInternal.fxAOAuthProfile = {email: "test@example.com", uid: "abcd1234"};
 
@@ -114,9 +114,6 @@ function run_test() {
 
     // Revert fake login state
     MozLoopServiceInternal.fxAOAuthTokenData = null;
-
-    // clear test pref
-    Services.prefs.clearUserPref("loop.seenToS");
 
     LoopCallsInternal.mocks.webSocket = undefined;
   });

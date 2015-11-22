@@ -10,7 +10,7 @@ const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 const { dbg_assert, fetch } = DevToolsUtils;
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const { OriginalLocation, GeneratedLocation, getOffsetColumn } = require("devtools/server/actors/common");
-const { resolve } = Promise;
+const { resolve } = require("promise");
 
 loader.lazyRequireGetter(this, "SourceActor", "devtools/server/actors/script", true);
 loader.lazyRequireGetter(this, "isEvalSource", "devtools/server/actors/script", true);
@@ -57,11 +57,11 @@ TabSources.prototype = {
    * Update preferences and clear out existing sources
    */
   reconfigure: function(options) {
-    if('useSourceMaps' in options) {
+    if ('useSourceMaps' in options) {
       this._useSourceMaps = options.useSourceMaps;
     }
 
-    if('autoBlackBox' in options) {
+    if ('autoBlackBox' in options) {
       this._autoBlackBox = options.autoBlackBox;
     }
 
@@ -80,7 +80,7 @@ TabSources.prototype = {
     this._sourceMaps = new Map();
     this._sourceMappedSourceActors = Object.create(null);
 
-    if(opts.sourceMaps) {
+    if (opts.sourceMaps) {
       this._sourceMapCache = Object.create(null);
     }
   },
@@ -185,7 +185,7 @@ TabSources.prototype = {
   },
 
   _emitNewSource: function(actor) {
-    if(!actor.source) {
+    if (!actor.source) {
       // Always notify if we don't have a source because that means
       // it's something that has been sourcemapped, or it represents
       // the HTML file that contains inline sources.
@@ -201,7 +201,7 @@ TabSources.prototype = {
       // `Debugger.Source` instance and a valid source map (meaning
       // it's a generated source), don't send the notification.
       this.fetchSourceMap(actor.source).then(map => {
-        if(!map) {
+        if (!map) {
           this.emit('newSource', actor);
         }
       });
@@ -292,15 +292,19 @@ TabSources.prototype = {
       if (url) {
         try {
           let urlInfo = Services.io.newURI(url, null, null).QueryInterface(Ci.nsIURL);
-          if (urlInfo.fileExtension === "js") {
+          if (urlInfo.fileExtension === "xml") {
+            // XUL inline scripts may not correctly have the
+            // `source.element` property, so do a blunt check here if
+            // it's an xml page.
+            spec.isInlineSource = true;
+          }
+          else if (urlInfo.fileExtension === "js") {
             spec.contentType = "text/javascript";
           }
         } catch(ex) {
-          // Not a valid URI.
-
-          // bug 1124536: fix getSourceText on scripts associated "javascript:SOURCE" urls
-          // (e.g. 'evaluate(sandbox, sourcecode, "javascript:"+sourcecode)' )
-          if (url.indexOf("javascript:") === 0) {
+          // There are a few special URLs that we know are JavaScript:
+          // inline `javascript:` and code coming from the console
+          if (url.indexOf("javascript:") === 0 || url === 'debugger eval code') {
             spec.contentType = "text/javascript";
           }
         }
@@ -333,10 +337,9 @@ TabSources.prototype = {
     return this.fetchSourceMap(aSource)
       .then(map => {
         if (map) {
-          return [
-            this.source({ originalUrl: s, generatedSource: aSource })
-            for (s of map.sources)
-          ].filter(isNotNull);
+          return map.sources.map(s => {
+            return this.source({ originalUrl: s, generatedSource: aSource });
+          }).filter(isNotNull);
         }
         return null;
       });

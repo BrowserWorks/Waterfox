@@ -23,10 +23,40 @@ enum nsEventStatus
   // The event is consumed, don't do default processing
   nsEventStatus_eConsumeNoDefault,
   // The event is consumed, but do default processing
-  nsEventStatus_eConsumeDoDefault
+  nsEventStatus_eConsumeDoDefault,
+  // Value is not for use, only for serialization
+  nsEventStatus_eSentinel
 };
 
 namespace mozilla {
+
+/**
+ * Event messages
+ */
+
+typedef uint16_t EventMessageType;
+
+enum EventMessage : EventMessageType
+{
+
+#define NS_EVENT_MESSAGE(aMessage) aMessage,
+#define NS_EVENT_MESSAGE_FIRST_LAST(aMessage, aFirst, aLast) \
+  aMessage##First = aFirst, aMessage##Last = aLast,
+
+#include "mozilla/EventMessageList.h"
+
+#undef NS_EVENT_MESSAGE
+#undef NS_EVENT_MESSAGE_FIRST_LAST
+
+  // For preventing bustage due to "," after the last item.
+  eEventMessage_MaxValue
+};
+
+const char* ToChar(EventMessage aEventMessage);
+
+/**
+ * Event class IDs
+ */
 
 typedef uint8_t EventClassIDType;
 
@@ -43,6 +73,8 @@ enum EventClassID : EventClassIDType
 #undef NS_EVENT_CLASS
 #undef NS_ROOT_EVENT_CLASS
 };
+
+const char* ToChar(EventClassID aEventClassID);
 
 typedef uint16_t Modifiers;
 

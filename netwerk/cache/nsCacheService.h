@@ -254,6 +254,7 @@ private:
      * Internal Methods
      */
 
+    static void      Lock();
     static void      Lock(::mozilla::Telemetry::ID mainThreadLockerID);
     static void      Unlock();
     void             LockAcquired();
@@ -309,17 +310,6 @@ private:
     void             DoomActiveEntries(DoomCheckFn check);
     void             CloseAllStreams();
     void             FireClearNetworkCacheStoredAnywhereNotification();
-
-    static
-    PLDHashOperator  GetActiveEntries(PLDHashTable *    table,
-                                      PLDHashEntryHdr * hdr,
-                                      uint32_t          number,
-                                      void *            arg);
-    static
-    PLDHashOperator  RemoveActiveEntry(PLDHashTable *    table,
-                                       PLDHashEntryHdr * hdr,
-                                       uint32_t          number,
-                                       void *            arg);
 
     static
     PLDHashOperator  ShutdownCustomCacheDeviceEnum(const nsAString& aProfileDir,
@@ -391,6 +381,9 @@ private:
 // execution scope.
 class nsCacheServiceAutoLock {
 public:
+    nsCacheServiceAutoLock() {
+        nsCacheService::Lock();
+    }
     explicit nsCacheServiceAutoLock(mozilla::Telemetry::ID mainThreadLockerID) {
         nsCacheService::Lock(mainThreadLockerID);
     }

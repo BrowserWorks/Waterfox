@@ -9,14 +9,14 @@
 #include "nsRequestObserverProxy.h"
 #include "nsIRequest.h"
 #include "nsAutoPtr.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 using namespace mozilla;
 
 static PRLogModuleInfo *gRequestObserverProxyLog;
 
 #undef LOG
-#define LOG(args) PR_LOG(gRequestObserverProxyLog, PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(gRequestObserverProxyLog, mozilla::LogLevel::Debug, args)
 
 //-----------------------------------------------------------------------------
 // nsARequestObserverEvent internal class...

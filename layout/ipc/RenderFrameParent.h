@@ -26,10 +26,9 @@ class InputEvent;
 namespace layers {
 class APZCTreeManager;
 class TargetConfig;
-class LayerTransactionParent;
 struct TextureFactoryIdentifier;
 struct ScrollableLayerGuid;
-}
+} // namespace layers
 
 namespace layout {
 
@@ -42,7 +41,6 @@ class RenderFrameParent : public PRenderFrameParent
   typedef mozilla::layers::Layer Layer;
   typedef mozilla::layers::LayerManager LayerManager;
   typedef mozilla::layers::TargetConfig TargetConfig;
-  typedef mozilla::layers::LayerTransactionParent LayerTransactionParent;
   typedef mozilla::ContainerLayerParameters ContainerLayerParameters;
   typedef mozilla::layers::TextureFactoryIdentifier TextureFactoryIdentifier;
   typedef mozilla::layers::ScrollableLayerGuid ScrollableLayerGuid;
@@ -93,8 +91,7 @@ public:
 
   void UpdateZoomConstraints(uint32_t aPresShellId,
                              ViewID aViewId,
-                             bool aIsRoot,
-                             const ZoomConstraints& aConstraints);
+                             const Maybe<ZoomConstraints>& aConstraints);
 
   bool HitTest(const nsRect& aRect);
 
@@ -151,6 +148,8 @@ private:
   gfxRGBA mBackgroundColor;
 
   nsRegion mTouchRegion;
+
+  bool mAsyncPanZoomEnabled;
 };
 
 } // namespace layout

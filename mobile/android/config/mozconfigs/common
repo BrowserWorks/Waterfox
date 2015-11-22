@@ -3,9 +3,24 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # This file is included at the top of all native android mozconfigs
+if [ "x$IS_NIGHTLY" = "xyes" ]; then
+  MOZ_AUTOMATION_UPLOAD_SYMBOLS=${MOZ_AUTOMATION_UPLOAD_SYMBOLS-1}
+fi
 
 MOZ_AUTOMATION_L10N_CHECK=0
 . "$topsrcdir/build/mozconfig.common"
+
+# In TaskCluster, the Java JRE/JDK are installed from tooltool, but that
+# install doesn't work on the old Buildbot mock builders (CentOS 6.2), so
+# the relevant env vars are not set up in that case, leaving the build to
+# run from the JRE/JDK in /usr/lib/jvm.
+if [ ! -f /etc/redhat-release ] || [ "$(< /etc/redhat-release)" != "CentOS release 6.2 (Final)" ]; then
+    # set JAVA_HOME to find the JRE/JDK from tooltool.  Several scripts in the JDK
+    # assume `java` is in PATH, so set that too.  To see how this tarball is built,
+    # see testing/taskcluster/scripts/misc/repackage-jdk.sh
+    export JAVA_HOME="$topsrcdir/java_home"
+    export PATH="$PATH:$topsrcdir/java_home/bin"
+fi
 
 # Set the most aggressive settings for szip. Not the default because it's
 # much slower and we didn't want to slow down developers builds.
@@ -16,7 +31,7 @@ ac_add_options --enable-elf-hack
 
 ANDROID_NDK_VERSION="r8e"
 ANDROID_NDK_VERSION_32BIT="r8c"
-ANDROID_SDK_VERSION="21"
+ANDROID_SDK_VERSION="22"
 
 # Build Fennec
 ac_add_options --enable-application=mobile/android
@@ -29,12 +44,12 @@ else
   ac_add_options --with-android-sdk="/tools/android-sdk-r$ANDROID_SDK_VERSION/platforms/android-$ANDROID_SDK_VERSION"
 fi
 
-ac_add_options --with-android-gnu-compiler-version=4.7
+ac_add_options --with-android-gnu-compiler-version=4.9
 ac_add_options --with-android-version=9
 ac_add_options --with-system-zlib
 ac_add_options --enable-update-channel=${MOZ_UPDATE_CHANNEL}
 
-# Treat warnings as errors in directories with FAIL_ON_WARNINGS.
+# Treat warnings as errors (modulo ALLOW_COMPILER_WARNINGS).
 ac_add_options --enable-warnings-as-errors
 
 ac_add_options --with-mozilla-api-keyfile=/builds/mozilla-fennec-geoloc-api.key

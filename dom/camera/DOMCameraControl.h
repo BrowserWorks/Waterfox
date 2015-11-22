@@ -36,9 +36,10 @@ namespace dom {
   struct CameraRegion;
   struct CameraSize;
   template<typename T> class Optional;
-}
+} // namespace dom
 class ErrorResult;
 class StartRecordingHelper;
+class RecorderPosterHelper;
 
 #define NS_DOM_CAMERA_CONTROL_CID \
 { 0x3700c096, 0xf920, 0x438d, \
@@ -119,6 +120,8 @@ public:
                                                 const nsAString& filename,
                                                 ErrorResult& aRv);
   void StopRecording(ErrorResult& aRv);
+  void PauseRecording(ErrorResult& aRv);
+  void ResumeRecording(ErrorResult& aRv);
   void ResumePreview(ErrorResult& aRv);
   already_AddRefed<dom::Promise> ReleaseHardware(ErrorResult& aRv);
   void ResumeContinuousFocus(ErrorResult& aRv);
@@ -163,6 +166,7 @@ protected:
 
   friend class DOMCameraControlListener;
   friend class mozilla::StartRecordingHelper;
+  friend class mozilla::RecorderPosterHelper;
 
   void OnCreatedFileDescriptor(bool aSucceeded);
 
@@ -170,6 +174,7 @@ protected:
   void OnAutoFocusMoving(bool aIsMoving);
   void OnTakePictureComplete(nsIDOMBlob* aPicture);
   void OnFacesDetected(const nsTArray<ICameraControl::Face>& aFaces);
+  void OnPoster(dom::BlobImpl* aPoster);
 
   void OnGetCameraComplete();
   void OnHardwareStateChange(DOMCameraControlListener::HardwareState aState, nsresult aReason);
@@ -182,6 +187,7 @@ protected:
   bool IsWindowStillActive();
   nsresult SelectPreviewSize(const dom::CameraSize& aRequestedPreviewSize, ICameraControl::Size& aSelectedPreviewSize);
 
+  void ReleaseAudioChannelAgent();
   nsresult NotifyRecordingStatusChange(const nsString& aMsg);
 
   already_AddRefed<dom::Promise> CreatePromise(ErrorResult& aRv);
@@ -223,7 +229,8 @@ protected:
   dom::CameraStartRecordingOptions mOptions;
   nsRefPtr<DeviceStorageFileDescriptor> mDSFileDescriptor;
   DOMCameraControlListener::PreviewState mPreviewState;
-
+  bool mRecording;
+  bool mRecordingStoppedDeferred;
   bool mSetInitialConfig;
 
 #ifdef MOZ_WIDGET_GONK

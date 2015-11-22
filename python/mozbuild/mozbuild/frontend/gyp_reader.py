@@ -2,7 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import gyp
 import sys
 import time
@@ -11,6 +12,7 @@ import mozpack.path as mozpath
 from mozpack.files import FileFinder
 from .sandbox import alphabetical_sorted
 from .context import (
+    SourcePath,
     TemplateContext,
     VARIABLES,
 )
@@ -61,20 +63,8 @@ class GypContext(TemplateContext):
     """
     def __init__(self, config, relobjdir):
         self._relobjdir = relobjdir
-        TemplateContext.__init__(self, allowed_variables=self.VARIABLES(),
-            config=config)
-
-    @classmethod
-    @memoize
-    def VARIABLES(cls):
-        """Returns the allowed variables for a GypContext."""
-        # Using a class method instead of a class variable to hide the content
-        # from sphinx.
-        return dict(VARIABLES,
-        IS_GYP_DIR=(bool, bool, '', None),
-        EXTRA_ASSEMBLER_FLAGS=(List, list, '', None),
-        EXTRA_COMPILE_FLAGS=(List, list, '', None),
-    )
+        TemplateContext.__init__(self, template='Gyp',
+            allowed_variables=VARIABLES, config=config)
 
 
 def encode(value):
@@ -94,7 +84,6 @@ def read_from_gyp(config, path, output, vars, non_unified_sources = set()):
     """
 
     time_start = time.time()
-    all_sources = set()
 
     # gyp expects plain str instead of unicode. The frontend code gives us
     # unicode strings, so convert them.
@@ -148,8 +137,6 @@ def read_from_gyp(config, path, output, vars, non_unified_sources = set()):
             context.add_source(mozpath.abspath(mozpath.join(
                 mozpath.dirname(build_file), f)))
 
-        context['IS_GYP_DIR'] = True
-
         spec = targets[target]
 
         # Derive which gyp configuration to use based on MOZ_DEBUG.
@@ -170,14 +157,20 @@ def read_from_gyp(config, path, output, vars, non_unified_sources = set()):
             # The context expects an unicode string.
             context['LIBRARY_NAME'] = name.decode('utf-8')
             # gyp files contain headers and asm sources in sources lists.
-            sources = set(mozpath.normpath(mozpath.join(context.srcdir, f))
-                for f in spec.get('sources', [])
-                if mozpath.splitext(f)[-1] != '.h')
-            asm_sources = set(f for f in sources if f.endswith('.S'))
+            sources = []
+            unified_sources = []
+            extensions = set()
+            for f in spec.get('sources', []):
+                ext = mozpath.splitext(f)[-1]
+                extensions.add(ext)
+                s = SourcePath(context, f)
+                if ext == '.h':
+                    continue
+                if ext != '.S' and s not in non_unified_sources:
+                    unified_sources.append(s)
+                else:
+                    sources.append(s)
 
-            unified_sources = sources - non_unified_sources - asm_sources
-            sources -= unified_sources
-            all_sources |= sources
             # The context expects alphabetical order when adding sources
             context['SOURCES'] = alphabetical_sorted(sources)
             context['UNIFIED_SOURCES'] = alphabetical_sorted(unified_sources)
@@ -206,8 +199,22 @@ def read_from_gyp(config, path, output, vars, non_unified_sources = set()):
                     continue
                 context['LOCAL_INCLUDES'] += [include]
 
-            context['EXTRA_ASSEMBLER_FLAGS'] = target_conf.get('asflags_mozilla', [])
-            context['EXTRA_COMPILE_FLAGS'] = target_conf.get('cflags_mozilla', [])
+            context['ASFLAGS'] = target_conf.get('asflags_mozilla', [])
+            flags = target_conf.get('cflags_mozilla', [])
+            if flags:
+                suffix_map = {
+                    '.c': 'CFLAGS',
+                    '.cpp': 'CXXFLAGS',
+                    '.cc': 'CXXFLAGS',
+                    '.m': 'CMFLAGS',
+                    '.mm': 'CMMFLAGS',
+                }
+                variables = (
+                    suffix_map[e]
+                    for e in extensions if e in suffix_map
+                )
+                for var in variables:
+                    context[var].extend(flags)
         else:
             # Ignore other types than static_library because we don't have
             # anything using them, and we're not testing them. They can be
@@ -230,7 +237,3 @@ def read_from_gyp(config, path, output, vars, non_unified_sources = set()):
         context.execution_time = time.time() - time_start
         yield context
         time_start = time.time()
-#    remainder = non_unified_sources - all_sources
-#    if remainder:
-#        raise SandboxValidationError('%s defined as non_unified_source, but is '
-#            'not defined as a source' % ', '.join(remainder))

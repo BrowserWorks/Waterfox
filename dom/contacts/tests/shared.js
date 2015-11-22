@@ -5,10 +5,6 @@ if (SpecialPowers.isMainProcess()) {
   SpecialPowers.Cu.import("resource://gre/modules/ContactService.jsm");
 }
 
-SpecialPowers.addPermission("contacts-write", true, document);
-SpecialPowers.addPermission("contacts-read", true, document);
-SpecialPowers.addPermission("contacts-create", true, document);
-
 // Some helpful global vars
 var isAndroid = (navigator.userAgent.indexOf("Android") !== -1);
 
@@ -16,7 +12,12 @@ var defaultOptions = {
   sortBy: "givenName",
 };
 
-var mozContacts = navigator.mozContacts;
+// Make sure we only touch |navigator.mozContacts| after we have the necessary
+// permissions, or we'll race when checking the listen permission needed for the
+// oncontactchange event. This is only needed for tests because at first we have
+// the permission set to UNKNOWN_ACTION. That should never happen for real apps,
+// see dom/apps/PermissionsTable.jsm.
+var mozContacts;
 
 // To test sorting
 var c1 = {
@@ -249,7 +250,7 @@ function checkStrArray(str1, str2, msg) {
   }
   str1 = optArray(str1).map(normalize_falsy).filter(v => v != "");
   str2 = optArray(str2).map(normalize_falsy).filter(v => v != "");
-  ise(JSON.stringify(str1), JSON.stringify(str2), msg);
+  is(JSON.stringify(str1), JSON.stringify(str2), msg);
 }
 
 function checkPref(pref1, pref2) {
@@ -260,7 +261,7 @@ function checkPref(pref1, pref2) {
       pref2 = false;
     }
   }
-  ise(!!pref1, !!pref2, "Same pref");
+  is(!!pref1, !!pref2, "Same pref");
 }
 
 function checkAddress(adr1, adr2) {
@@ -332,7 +333,7 @@ function checkArrayField(array1, array2, func, msg) {
     ok(true, msg);
     return;
   }
-  ise(array1.length, array2.length, "Same length");
+  is(array1.length, array2.length, "Same length");
   for (var i = 0; i < array1.length; ++i) {
     func(array1[i], array2[i], msg);
   }
@@ -495,7 +496,14 @@ function start_tests() {
                                     .getService(SpecialPowers.Ci.nsIPropertyBag2)
                                     .getProperty('version');
   if (!isAndroid || androidVersion >= 14) {
-    next();
+    SpecialPowers.pushPermissions([
+      {type: "contacts-write", allow: 1, context: document},
+      {type: "contacts-read", allow: 1, context: document},
+      {type: "contacts-create", allow: 1, context: document},
+    ], function() {
+      mozContacts = navigator.mozContacts;
+      next();
+    });
   } else {
     ok(true, "Skip tests on Android < 4.0 (bugs 897924 & 888891");
     SimpleTest.finish();

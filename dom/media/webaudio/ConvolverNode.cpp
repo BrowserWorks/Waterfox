@@ -102,20 +102,20 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioChunk& aInput,
-                            AudioChunk* aOutput,
+                            const AudioBlock& aInput,
+                            AudioBlock* aOutput,
                             bool* aFinished) override
   {
     if (!mReverb) {
-      *aOutput = aInput;
+      aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
       return;
     }
 
-    AudioChunk input = aInput;
+    AudioBlock input = aInput;
     if (aInput.IsNull()) {
       if (mLeftOverData > 0) {
         mLeftOverData -= WEBAUDIO_BLOCK_SIZE;
-        AllocateAudioBlock(1, &input);
+        input.AllocateChannels(1);
         WriteZeroesToAudioBlock(&input, 0, WEBAUDIO_BLOCK_SIZE);
       } else {
         if (mLeftOverData != INT32_MIN) {
@@ -131,11 +131,11 @@ public:
     } else {
       if (aInput.mVolume != 1.0f) {
         // Pre-multiply the input's volume
-        uint32_t numChannels = aInput.mChannelData.Length();
-        AllocateAudioBlock(numChannels, &input);
+        uint32_t numChannels = aInput.ChannelCount();
+        input.AllocateChannels(numChannels);
         for (uint32_t i = 0; i < numChannels; ++i) {
           const float* src = static_cast<const float*>(aInput.mChannelData[i]);
-          float* dest = static_cast<float*>(const_cast<void*>(input.mChannelData[i]));
+          float* dest = input.ChannelFloatsForWrite(i);
           AudioBlockCopyChannelWithScale(src, aInput.mVolume, dest);
         }
       }
@@ -149,7 +149,7 @@ public:
       mLeftOverData = mBufferLength;
       MOZ_ASSERT(mLeftOverData > 0);
     }
-    AllocateAudioBlock(2, aOutput);
+    aOutput->AllocateChannels(2);
 
     mReverb->process(&input, aOutput, WEBAUDIO_BLOCK_SIZE);
   }
@@ -191,7 +191,8 @@ ConvolverNode::ConvolverNode(AudioContext* aContext)
   , mNormalize(true)
 {
   ConvolverNodeEngine* engine = new ConvolverNodeEngine(this, mNormalize);
-  mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);
+  mStream = AudioNodeStream::Create(aContext, engine,
+                                    AudioNodeStream::NO_STREAM_FLAGS);
 }
 
 ConvolverNode::~ConvolverNode()
@@ -241,7 +242,7 @@ ConvolverNode::SetBuffer(JSContext* aCx, AudioBuffer* aBuffer, ErrorResult& aRv)
   mBuffer = aBuffer;
 
   // Send the buffer to the stream
-  AudioNodeStream* ns = static_cast<AudioNodeStream*>(mStream.get());
+  AudioNodeStream* ns = mStream;
   MOZ_ASSERT(ns, "Why don't we have a stream here?");
   if (mBuffer) {
     uint32_t length = mBuffer->Length();
@@ -278,6 +279,6 @@ ConvolverNode::SetNormalize(bool aNormalize)
   SendInt32ParameterToStream(ConvolverNodeEngine::NORMALIZE, aNormalize);
 }
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 

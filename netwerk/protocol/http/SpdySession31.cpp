@@ -18,7 +18,7 @@
 #include "nsHttp.h"
 #include "nsHttpHandler.h"
 #include "nsHttpConnection.h"
-#include "nsILoadGroup.h"
+#include "nsISchedulingContext.h"
 #include "nsISupportsPriority.h"
 #include "prprf.h"
 #include "prnetdb.h"
@@ -798,20 +798,6 @@ SpdySession31::GenerateSettings()
     numberOfEntries++;
   }
 
-  nsRefPtr<nsHttpConnectionInfo> ci;
-  uint32_t cwnd = 0;
-  GetConnectionInfo(getter_AddRefs(ci));
-  if (ci)
-    cwnd = gHttpHandler->ConnMgr()->GetSpdyCWNDSetting(ci);
-  if (cwnd) {
-    packet[12 + 8 * numberOfEntries] = PERSISTED_VALUE;
-    packet[15 + 8 * numberOfEntries] = SETTINGS_TYPE_CWND;
-    LOG(("SpdySession31::GenerateSettings %p sending CWND %u\n", this, cwnd));
-    cwnd = PR_htonl(cwnd);
-    memcpy(packet + 16 + 8 * numberOfEntries, &cwnd, 4);
-    numberOfEntries++;
-  }
-
   // Advertise the Push RWIN and on each client SYN_STREAM pipeline
   // a window update with it in order to use larger initial windows with pulled
   // streams.
@@ -1081,12 +1067,12 @@ SpdySession31::HandleSynStream(SpdySession31 *self)
     self->GenerateRstStream(RST_INVALID_STREAM, streamID);
 
   } else {
-    nsILoadGroupConnectionInfo *loadGroupCI = associatedStream->LoadGroupConnectionInfo();
-    if (loadGroupCI) {
-      loadGroupCI->GetSpdyPushCache(&cache);
+    nsISchedulingContext *schedulingContext = associatedStream->SchedulingContext();
+    if (schedulingContext) {
+      schedulingContext->GetSpdyPushCache(&cache);
       if (!cache) {
         cache = new SpdyPushCache();
-        if (!cache || NS_FAILED(loadGroupCI->SetSpdyPushCache(cache))) {
+        if (!cache || NS_FAILED(schedulingContext->SetSpdyPushCache(cache))) {
           delete cache;
           cache = nullptr;
         }
@@ -1094,7 +1080,7 @@ SpdySession31::HandleSynStream(SpdySession31 *self)
     }
     if (!cache) {
       // this is unexpected, but we can handle it just be refusing the push
-      LOG3(("SpdySession31::HandleSynStream Push Recevied without loadgroup cache\n"));
+      LOG3(("SpdySession31::HandleSynStream Push Recevied without push cache\n"));
       self->GenerateRstStream(RST_REFUSED_STREAM, streamID);
     }
     else {
@@ -1445,41 +1431,12 @@ SpdySession31::HandleSettings(SpdySession31 *self)
 
     switch (id)
     {
-    case SETTINGS_TYPE_UPLOAD_BW:
-      Telemetry::Accumulate(Telemetry::SPDY_SETTINGS_UL_BW, value);
-      break;
-
-    case SETTINGS_TYPE_DOWNLOAD_BW:
-      Telemetry::Accumulate(Telemetry::SPDY_SETTINGS_DL_BW, value);
-      break;
-
-    case SETTINGS_TYPE_RTT:
-      Telemetry::Accumulate(Telemetry::SPDY_SETTINGS_RTT, value);
-      break;
-
     case SETTINGS_TYPE_MAX_CONCURRENT:
       self->mMaxConcurrent = value;
-      Telemetry::Accumulate(Telemetry::SPDY_SETTINGS_MAX_STREAMS, value);
       self->ProcessPending();
       break;
 
-    case SETTINGS_TYPE_CWND:
-      if (flags & PERSIST_VALUE)
-      {
-        nsRefPtr<nsHttpConnectionInfo> ci;
-        self->GetConnectionInfo(getter_AddRefs(ci));
-        if (ci)
-          gHttpHandler->ConnMgr()->ReportSpdyCWNDSetting(ci, value);
-      }
-      Telemetry::Accumulate(Telemetry::SPDY_SETTINGS_CWND, value);
-      break;
-
-    case SETTINGS_TYPE_DOWNLOAD_RETRANS_RATE:
-      Telemetry::Accumulate(Telemetry::SPDY_SETTINGS_RETRANS, value);
-      break;
-
     case SETTINGS_TYPE_INITIAL_WINDOW:
-      Telemetry::Accumulate(Telemetry::SPDY_SETTINGS_IW, value >> 10);
       {
         int32_t delta = value - self->mServerInitialStreamWindow;
         self->mServerInitialStreamWindow = value;
@@ -3094,5 +3051,5 @@ SpdySession31::SendPing()
   gHttpHandler->ConnMgr()->ActivateTimeoutTick();
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

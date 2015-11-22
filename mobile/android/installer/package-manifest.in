@@ -42,6 +42,7 @@
 @BINPATH@/@DLL_PREFIX@plds4@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@nspr4@DLL_SUFFIX@
 #endif
+@BINPATH@/@DLL_PREFIX@lgpllibs@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@omxplugin@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@omxplugingb@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@omxplugingb235@DLL_SUFFIX@
@@ -76,7 +77,8 @@
 [lib destdir="lib/@ANDROID_CPU_ARCH@"]
 @BINPATH@/@DLL_PREFIX@mozglue@DLL_SUFFIX@
 # This should be MOZ_CHILD_PROCESS_NAME, but that has a "lib/" prefix.
-@BINPATH@/@DLL_PREFIX@plugin-container@DLL_SUFFIX@
+@BINPATH@/@MOZ_CHILD_PROCESS_NAME@
+@BINPATH@/@MOZ_CHILD_PROCESS_NAME_PIE@
 
 [xpcom]
 @BINPATH@/dependentlibs.list
@@ -130,6 +132,7 @@
 @BINPATH@/components/content_webrtc.xpt
 @BINPATH@/components/content_xslt.xpt
 @BINPATH@/components/cookie.xpt
+@BINPATH@/components/devtools_security.xpt
 @BINPATH@/components/directory.xpt
 @BINPATH@/components/docshell.xpt
 @BINPATH@/components/dom.xpt
@@ -139,7 +142,6 @@
 @BINPATH@/components/dom_canvas.xpt
 @BINPATH@/components/dom_core.xpt
 @BINPATH@/components/dom_css.xpt
-@BINPATH@/components/dom_devicestorage.xpt
 @BINPATH@/components/dom_events.xpt
 @BINPATH@/components/dom_geolocation.xpt
 @BINPATH@/components/dom_media.xpt
@@ -203,6 +205,9 @@
 @BINPATH@/components/layout_xul.xpt
 @BINPATH@/components/locale.xpt
 @BINPATH@/components/lwbrk.xpt
+#ifdef MOZ_ENABLE_PROFILER_SPS
+@BINPATH@/components/memory_profiler.xpt
+#endif
 @BINPATH@/components/migration.xpt
 @BINPATH@/components/mimetype.xpt
 @BINPATH@/components/mozfind.xpt
@@ -214,6 +219,7 @@
 @BINPATH@/components/necko_file.xpt
 @BINPATH@/components/necko_ftp.xpt
 @BINPATH@/components/necko_http.xpt
+@BINPATH@/components/necko_mdns.xpt
 @BINPATH@/components/necko_res.xpt
 @BINPATH@/components/necko_socket.xpt
 @BINPATH@/components/necko_strconv.xpt
@@ -230,7 +236,6 @@
 @BINPATH@/components/plugin.xpt
 @BINPATH@/components/pref.xpt
 @BINPATH@/components/prefetch.xpt
-@BINPATH@/components/profile.xpt
 #ifdef MOZ_ENABLE_PROFILER_SPS
 @BINPATH@/components/profiler.xpt
 #endif
@@ -240,9 +245,7 @@
 @BINPATH@/components/saxparser.xpt
 @BINPATH@/components/sessionstore.xpt
 @BINPATH@/components/services-crypto-component.xpt
-#ifdef MOZ_CAPTIVEDETECT
 @BINPATH@/components/captivedetect.xpt
-#endif
 @BINPATH@/components/shellservice.xpt
 @BINPATH@/components/shistory.xpt
 @BINPATH@/components/spellchecker.xpt
@@ -321,6 +324,8 @@
 @BINPATH@/components/BrowserComponents.manifest
 @BINPATH@/components/nsBrowserContentHandler.js
 @BINPATH@/components/nsBrowserGlue.js
+@BINPATH@/components/nsDNSServiceDiscovery.manifest
+@BINPATH@/components/nsDNSServiceDiscovery.js
 @BINPATH@/components/nsSetDefaultBrowser.manifest
 @BINPATH@/components/nsSetDefaultBrowser.js
 @BINPATH@/components/toolkitsearch.manifest
@@ -332,8 +337,6 @@
 @BINPATH@/components/nsLoginManagerPrompter.js
 @BINPATH@/components/storage-mozStorage.js
 @BINPATH@/components/crypto-SDR.js
-@BINPATH@/components/jsconsole-clhandler.manifest
-@BINPATH@/components/jsconsole-clhandler.js
 @BINPATH@/components/nsHelperAppDlg.manifest
 @BINPATH@/components/nsHelperAppDlg.js
 @BINPATH@/components/NetworkGeolocationProvider.manifest
@@ -372,8 +375,6 @@
 @BINPATH@/components/@DLL_PREFIX@browsercomps@DLL_SUFFIX@
 @BINPATH@/components/txEXSLTRegExFunctions.manifest
 @BINPATH@/components/txEXSLTRegExFunctions.js
-@BINPATH@/components/nsDefaultCLH.manifest
-@BINPATH@/components/nsDefaultCLH.js
 @BINPATH@/components/nsContentPrefService.manifest
 @BINPATH@/components/nsContentPrefService.js
 @BINPATH@/components/nsContentDispatchChooser.manifest
@@ -396,9 +397,6 @@
 @BINPATH@/components/contentAreaDropListener.js
 @BINPATH@/components/messageWakeupService.js
 @BINPATH@/components/messageWakeupService.manifest
-#ifdef MOZ_ENABLE_DBUS
-@BINPATH@/components/@DLL_PREFIX@dbusservice@DLL_SUFFIX@
-#endif
 @BINPATH@/components/nsINIProcessor.manifest
 @BINPATH@/components/nsINIProcessor.js
 @BINPATH@/components/nsPrompter.manifest
@@ -416,16 +414,16 @@
 @BINPATH@/components/htmlMenuBuilder.manifest
 
 @BINPATH@/components/Activities.manifest
-@BINPATH@/components/ActivitiesGlue.js
+@BINPATH@/components/AndroidActivitiesGlue.js
 @BINPATH@/components/ActivityProxy.js
 @BINPATH@/components/ActivityRequestHandler.js
 @BINPATH@/components/ActivityWrapper.js
 @BINPATH@/components/ActivityMessageConfigurator.js
 
-@BINPATH@/components/TCPSocket.js
-@BINPATH@/components/TCPSocketParentIntermediary.js
-@BINPATH@/components/TCPServerSocket.js
-@BINPATH@/components/TCPSocket.manifest
+@BINPATH@/components/SystemMessageInternal.js
+@BINPATH@/components/SystemMessageManager.js
+@BINPATH@/components/SystemMessageCache.js
+@BINPATH@/components/SystemMessageManager.manifest
 
 #ifdef MOZ_WEBRTC
 @BINPATH@/components/PeerConnection.js
@@ -437,10 +435,8 @@
 @BINPATH@/components/HealthReportService.js
 #endif
 
-#ifdef MOZ_CAPTIVEDETECT
 @BINPATH@/components/CaptivePortalDetectComponents.manifest
 @BINPATH@/components/captivedetect.js
-#endif
 
 #ifdef MOZ_WEBSPEECH
 @BINPATH@/components/dom_webspeechsynth.xpt
@@ -449,6 +445,7 @@
 #ifdef MOZ_DEBUG
 @BINPATH@/components/TestInterfaceJS.js
 @BINPATH@/components/TestInterfaceJS.manifest
+@BINPATH@/components/TestInterfaceJSMaplike.js
 #endif
 
 @BINPATH@/components/nsAsyncShutdown.manifest
@@ -476,6 +473,11 @@
 @BINPATH@/components/nsUrlClassifierLib.js
 @BINPATH@/components/url-classifier.xpt
 #endif
+
+; Private Browsing
+@BINPATH@/components/privatebrowsing.xpt
+@BINPATH@/components/PrivateBrowsing.manifest
+@BINPATH@/components/PrivateBrowsingTrackingProtectionWhitelist.js
 
 ; GNOME hooks
 #ifdef MOZ_ENABLE_GNOME_COMPONENT
@@ -512,6 +514,7 @@
 @BINPATH@/@PREF_DIR@/mobile.js
 @BINPATH@/@PREF_DIR@/mobile-branding.js
 @BINPATH@/@PREF_DIR@/channel-prefs.js
+@BINPATH@/ua-update.json
 @BINPATH@/greprefs.js
 @BINPATH@/defaults/autoconfig/prefcalls.js
 @BINPATH@/defaults/profile/prefs.js
@@ -546,6 +549,20 @@
 @BINPATH@/res/html/*
 @BINPATH@/res/language.properties
 @BINPATH@/res/entityTables/*
+#ifdef NIGHTLY_BUILD
+@BINPATH@/res/text_caret.png
+@BINPATH@/res/text_caret@1.5x.png
+@BINPATH@/res/text_caret@2.25x.png
+@BINPATH@/res/text_caret@2x.png
+@BINPATH@/res/text_caret_tilt_left.png
+@BINPATH@/res/text_caret_tilt_left@1.5x.png
+@BINPATH@/res/text_caret_tilt_left@2.25x.png
+@BINPATH@/res/text_caret_tilt_left@2x.png
+@BINPATH@/res/text_caret_tilt_right.png
+@BINPATH@/res/text_caret_tilt_right@1.5x.png
+@BINPATH@/res/text_caret_tilt_right@2.25x.png
+@BINPATH@/res/text_caret_tilt_right@2x.png
+#endif
 
 #ifndef MOZ_ANDROID_EXCLUDE_FONTS
 @BINPATH@/res/fonts/*
@@ -560,9 +577,6 @@
 ;
 @BINPATH@/components/pipboot.xpt
 @BINPATH@/components/pipnss.xpt
-@BINPATH@/components/pippki.xpt
-@BINPATH@/chrome/pippki@JAREXT@
-@BINPATH@/chrome/pippki.manifest
 
 ; For process sandboxing
 #if defined(MOZ_SANDBOX)
@@ -647,3 +661,7 @@ bin/libfreebl_32int64_3.so
 @BINPATH@/components/DataStore.manifest
 @BINPATH@/components/DataStoreImpl.js
 @BINPATH@/components/dom_datastore.xpt
+
+#ifdef PKG_LOCALE_MANIFEST
+#include @PKG_LOCALE_MANIFEST@
+#endif

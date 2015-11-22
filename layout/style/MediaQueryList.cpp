@@ -103,10 +103,11 @@ MediaQueryList::AddListener(MediaQueryListListener& aListener)
     }
   }
 
-  mCallbacks.AppendElement(&aListener);
-  if (!HasListeners()) {
-    // Append failed; undo the AddRef above.
-    NS_RELEASE_THIS();
+  if (!mCallbacks.AppendElement(&aListener, fallible)) {
+    if (!HasListeners()) {
+      // Append failed; undo the AddRef above.
+      NS_RELEASE_THIS();
+    }
   }
 }
 
@@ -170,7 +171,8 @@ MediaQueryList::RecomputeMatches()
 }
 
 void
-MediaQueryList::MediumFeaturesChanged(NotifyList &aListenersToNotify)
+MediaQueryList::MediumFeaturesChanged(
+    nsTArray<HandleChangeData>& aListenersToNotify)
 {
   mMatchesValid = false;
 
@@ -179,7 +181,7 @@ MediaQueryList::MediumFeaturesChanged(NotifyList &aListenersToNotify)
     RecomputeMatches();
     if (mMatches != oldMatches) {
       for (uint32_t i = 0, i_end = mCallbacks.Length(); i != i_end; ++i) {
-        HandleChangeData *d = aListenersToNotify.AppendElement();
+        HandleChangeData *d = aListenersToNotify.AppendElement(fallible);
         if (d) {
           d->mql = this;
           d->callback = mCallbacks[i];

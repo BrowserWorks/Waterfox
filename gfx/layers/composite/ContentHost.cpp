@@ -20,7 +20,7 @@
 namespace mozilla {
 namespace gfx {
 class Matrix4x4;
-}
+} // namespace gfx
 using namespace gfx;
 
 namespace layers {
@@ -35,7 +35,8 @@ ContentHostBase::~ContentHostBase()
 }
 
 void
-ContentHostTexture::Composite(EffectChain& aEffectChain,
+ContentHostTexture::Composite(LayerComposite* aLayer,
+                              EffectChain& aEffectChain,
                               float aOpacity,
                               const gfx::Matrix4x4& aTransform,
                               const Filter& aFilter,
@@ -63,7 +64,8 @@ ContentHostTexture::Composite(EffectChain& aEffectChain,
 
   RefPtr<TexturedEffect> effect = CreateTexturedEffect(mTextureSource.get(),
                                                        mTextureSourceOnWhite.get(),
-                                                       aFilter, true);
+                                                       aFilter, true,
+                                                       GetRenderState());
   if (!effect) {
     return;
   }
@@ -217,10 +219,20 @@ ContentHostTexture::Composite(EffectChain& aEffectChain,
 }
 
 void
-ContentHostTexture::UseTextureHost(TextureHost* aTexture)
+ContentHostTexture::UseTextureHost(const nsTArray<TimedTexture>& aTextures)
 {
-  ContentHostBase::UseTextureHost(aTexture);
-  mTextureHost = aTexture;
+  ContentHostBase::UseTextureHost(aTextures);
+  MOZ_ASSERT(aTextures.Length() == 1);
+  const TimedTexture& t = aTextures[0];
+  MOZ_ASSERT(t.mPictureRect.IsEqualInterior(
+      nsIntRect(nsIntPoint(0, 0), nsIntSize(t.mTexture->GetSize()))),
+      "Only default picture rect supported");
+
+  if (t.mTexture != mTextureHost) {
+    mReceivedNewHost = true;
+  }
+
+  mTextureHost = t.mTexture;
   mTextureHostOnWhite = nullptr;
   mTextureSourceOnWhite = nullptr;
   if (mTextureHost) {
@@ -261,29 +273,46 @@ ContentHostTexture::Dump(std::stringstream& aStream,
                          bool aDumpHtml)
 {
 #ifdef MOZ_DUMP_PAINTING
-  if (!aDumpHtml) {
-    return;
+  if (aDumpHtml) {
+    aStream << "<ul>";
   }
-  aStream << "<ul>";
   if (mTextureHost) {
     aStream << aPrefix;
-    aStream << "<li> <a href=";
+    if (aDumpHtml) {
+      aStream << "<li> <a href=";
+    } else {
+      aStream << "Front buffer: ";
+    }
     DumpTextureHost(aStream, mTextureHost);
-    aStream << "> Front buffer </a></li> ";
+    if (aDumpHtml) {
+      aStream << "> Front buffer </a></li> ";
+    } else {
+      aStream << "\n";
+    }
   }
   if (mTextureHostOnWhite) {
-    aStream <<  aPrefix;
-    aStream << "<li> <a href=";
+    aStream << aPrefix;
+    if (aDumpHtml) {
+      aStream << "<li> <a href=";
+    } else {
+      aStream << "Front buffer on white: ";
+    }
     DumpTextureHost(aStream, mTextureHostOnWhite);
-    aStream << "> Front buffer on white </a> </li> ";
+    if (aDumpHtml) {
+      aStream << "> Front buffer on white </a> </li> ";
+    } else {
+      aStream << "\n";
+    }
   }
-  aStream << "</ul>";
+  if (aDumpHtml) {
+    aStream << "</ul>";
+  }
 #endif
 }
 
 static inline void
 AddWrappedRegion(const nsIntRegion& aInput, nsIntRegion& aOutput,
-                 const nsIntSize& aSize, const nsIntPoint& aShift)
+                 const IntSize& aSize, const nsIntPoint& aShift)
 {
   nsIntRegion tempRegion;
   tempRegion.And(IntRect(aShift, aSize), aInput);
@@ -306,6 +335,11 @@ ContentHostSingleBuffered::UpdateThebes(const ThebesBufferData& aData,
 
   // updated is in screen coordinates. Convert it to buffer coordinates.
   nsIntRegion destRegion(aUpdated);
+
+  if (mReceivedNewHost) {
+    destRegion.Or(destRegion, aOldValidRegionBack);
+    mReceivedNewHost = false;
+  }
   destRegion.MoveBy(-aData.rect().TopLeft());
 
   if (!aData.rect().Contains(aUpdated.GetBounds()) ||
@@ -323,7 +357,7 @@ ContentHostSingleBuffered::UpdateThebes(const ThebesBufferData& aData,
   // Shift to the rotation point
   destRegion.MoveBy(aData.rotation());
 
-  nsIntSize bufferSize = aData.rect().Size();
+  IntSize bufferSize = aData.rect().Size();
 
   // Select only the pixels that are still within the buffer.
   nsIntRegion finalRegion;
@@ -426,7 +460,7 @@ ContentHostTexture::GetRenderState()
   return result;
 }
 
-TemporaryRef<TexturedEffect>
+already_AddRefed<TexturedEffect>
 ContentHostTexture::GenEffect(const gfx::Filter& aFilter)
 {
   if (!mTextureHost) {
@@ -443,10 +477,11 @@ ContentHostTexture::GenEffect(const gfx::Filter& aFilter)
   }
   return CreateTexturedEffect(mTextureSource.get(),
                               mTextureSourceOnWhite.get(),
-                              aFilter, true);
+                              aFilter, true,
+                              GetRenderState());
 }
 
-TemporaryRef<gfx::DataSourceSurface>
+already_AddRefed<gfx::DataSourceSurface>
 ContentHostTexture::GetAsSurface()
 {
   if (!mTextureHost) {

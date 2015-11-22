@@ -32,7 +32,6 @@ namespace mozilla {
 #undef LOG
 #endif
 
-#ifdef PR_LOGGING
 #ifdef MOZILLA_INTERNAL_API
 extern PRLogModuleInfo* GetGMPLog();
 #else
@@ -46,12 +45,8 @@ GetGMPLog()
   return sLog;
 }
 #endif
-#define LOGD(msg) PR_LOG(GetGMPLog(), PR_LOG_DEBUG, msg)
-#define LOG(level, msg) PR_LOG(GetGMPLog(), (level), msg)
-#else
-#define LOGD(msg)
-#define LOG(level, msg)
-#endif
+#define LOGD(msg) MOZ_LOG(GetGMPLog(), mozilla::LogLevel::Debug, msg)
+#define LOG(level, msg) MOZ_LOG(GetGMPLog(), (level), msg)
 
 WebrtcGmpPCHandleSetter::WebrtcGmpPCHandleSetter(const std::string& aPCHandle)
 {
@@ -571,7 +566,7 @@ WebrtcGmpVideoEncoder::Encoded(GMPVideoEncodedFrame* aEncodedFrame,
         break;
       default:
         // Really that it's not in the enum
-        LOG(PR_LOG_ERROR,
+        LOG(LogLevel::Error,
             ("GMP plugin returned incorrect type (%d)", aEncodedFrame->BufferType()));
         // XXX Bug 1041232 - need a better API for interfacing to the
         // plugin so we can kill it here
@@ -616,7 +611,7 @@ WebrtcGmpVideoEncoder::Encoded(GMPVideoEncodedFrame* aEncodedFrame,
       }
       if (buffer+size > end) {
         // XXX see above - should we kill the plugin for returning extra bytes?  Probably
-        LOG(PR_LOG_ERROR,
+        LOG(LogLevel::Error,
             ("GMP plugin returned badly formatted encoded data: end is %td bytes past buffer end",
              buffer+size - end));
         return;
@@ -794,14 +789,13 @@ WebrtcGmpVideoDecoder::Decode(const webrtc::EncodedImage& aInputImage,
   // Would be really nice to avoid this sync dispatch, but it would require a
   // copy of the frame, since it doesn't appear to actually have a refcount.
   mozilla::SyncRunnable::DispatchToThread(mGMPThread,
-                WrapRunnableRet(this,
+                WrapRunnableRet(&ret, this,
                                 &WebrtcGmpVideoDecoder::Decode_g,
                                 aInputImage,
                                 aMissingFrames,
                                 aFragmentation,
                                 aCodecSpecificInfo,
-                                aRenderTimeMs,
-                                &ret));
+                                aRenderTimeMs));
 
   return ret;
 }

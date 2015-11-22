@@ -87,21 +87,9 @@ TelephonyCallGroup::ChangeState(uint16_t aCallState)
   if (mCallState == aCallState) {
     return;
   }
-  // Update the internal state.
-  mCallState = aCallState;
 
-  // Indicate whether the external state should be changed.
-  bool externalStateChanged = true;
+  mCallState = aCallState;
   switch (aCallState) {
-    // These states are used internally to mark this CallGroup is currently
-    // being controlled, and we should block consecutive requests of the same
-    // type according to these states.
-    case nsITelephonyService::CALL_STATE_HOLDING:
-    case nsITelephonyService::CALL_STATE_RESUMING:
-      externalStateChanged = false;
-      break;
-    // These states will be translated into literal strings which are used to
-    // show the current status of this CallGroup.
     case nsITelephonyService::CALL_STATE_UNKNOWN:
       mState.AssignLiteral("");
       break;
@@ -115,19 +103,17 @@ TelephonyCallGroup::ChangeState(uint16_t aCallState)
       NS_NOTREACHED("Unknown state!");
   }
 
-  if (externalStateChanged) {
-    nsresult rv = DispatchCallEvent(NS_LITERAL_STRING("statechange"), nullptr);
-    if (NS_FAILED(rv)) {
-      NS_WARNING("Failed to dispatch specific event!");
-    }
-    if (!mState.IsEmpty()) {
-      // This can change if the statechange handler called back here... Need to
-      // figure out something smarter.
-      if (mCallState == aCallState) {
-        rv = DispatchCallEvent(mState, nullptr);
-        if (NS_FAILED(rv)) {
-          NS_WARNING("Failed to dispatch specific event!");
-        }
+  nsresult rv = DispatchCallEvent(NS_LITERAL_STRING("statechange"), nullptr);
+  if (NS_FAILED(rv)) {
+    NS_WARNING("Failed to dispatch specific event!");
+  }
+  if (!mState.IsEmpty()) {
+    // This can change if the statechange handler called back here... Need to
+    // figure out something smarter.
+    if (mCallState == aCallState) {
+      rv = DispatchCallEvent(mState, nullptr);
+      if (NS_FAILED(rv)) {
+        NS_WARNING("Failed to dispatch specific event!");
       }
     }
   }
@@ -348,7 +334,6 @@ TelephonyCallGroup::HangUp(ErrorResult& aRv)
   aRv = mTelephony->Service()->HangUpConference(mCalls[0]->ServiceId(),
                                                 callback);
   NS_ENSURE_TRUE(!aRv.Failed(), nullptr);
-
   return promise.forget();
 }
 
@@ -362,18 +347,13 @@ TelephonyCallGroup::Hold(ErrorResult& aRv)
     return nullptr;
   }
 
-  if (mCallState != nsITelephonyService::CALL_STATE_CONNECTED) {
-    NS_WARNING("Holding a non-connected call is rejected!");
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return promise.forget();
+  nsCOMPtr<nsITelephonyCallback> callback = new TelephonyCallback(promise);
+  aRv = Hold(callback);
+  if (NS_WARN_IF(aRv.Failed() &&
+                 !aRv.ErrorCodeIs(NS_ERROR_DOM_INVALID_STATE_ERR))) {
+    return nullptr;
   }
 
-  nsCOMPtr<nsITelephonyCallback> callback = new TelephonyCallback(promise);
-  aRv = mTelephony->Service()->HoldConference(mCalls[0]->ServiceId(),
-                                              callback);
-  NS_ENSURE_TRUE(!aRv.Failed(), nullptr);
-
-  ChangeState(nsITelephonyService::CALL_STATE_HOLDING);
   return promise.forget();
 }
 
@@ -387,17 +367,48 @@ TelephonyCallGroup::Resume(ErrorResult& aRv)
     return nullptr;
   }
 
-  if (mCallState != nsITelephonyService::CALL_STATE_HELD) {
-    NS_WARNING("Resuming a non-held call is rejected!");
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return promise.forget();
+  nsCOMPtr<nsITelephonyCallback> callback = new TelephonyCallback(promise);
+  aRv = Resume(callback);
+  if (NS_WARN_IF(aRv.Failed() &&
+                 !aRv.ErrorCodeIs(NS_ERROR_DOM_INVALID_STATE_ERR))) {
+    return nullptr;
   }
 
-  nsCOMPtr<nsITelephonyCallback> callback = new TelephonyCallback(promise);
-  aRv = mTelephony->Service()->ResumeConference(mCalls[0]->ServiceId(),
-                                                callback);
-  NS_ENSURE_TRUE(!aRv.Failed(), nullptr);
-
-  ChangeState(nsITelephonyService::CALL_STATE_RESUMING);
   return promise.forget();
+}
+
+nsresult
+TelephonyCallGroup::Hold(nsITelephonyCallback* aCallback)
+{
+  if (mCallState != nsITelephonyService::CALL_STATE_CONNECTED) {
+    NS_WARNING("Holding a non-connected call is rejected!");
+    aCallback->NotifyError(NS_LITERAL_STRING("InvalidStateError"));
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
+  }
+
+  nsresult rv = mTelephony->Service()->HoldConference(mCalls[0]->ServiceId(),
+                                                      aCallback);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
+}
+
+nsresult
+TelephonyCallGroup::Resume(nsITelephonyCallback* aCallback)
+{
+  if (mCallState != nsITelephonyService::CALL_STATE_HELD) {
+    NS_WARNING("Resuming a non-held call is rejected!");
+    aCallback->NotifyError(NS_LITERAL_STRING("InvalidStateError"));
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
+  }
+
+  nsresult rv = mTelephony->Service()->ResumeConference(mCalls[0]->ServiceId(),
+                                                        aCallback);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
 }

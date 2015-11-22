@@ -6,14 +6,22 @@
 
 this.EXPORTED_SYMBOLS = [];
 
-let Cc = Components.classes;
-let Ci = Components.interfaces;
-let Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-function handleRequest(aSubject, aTopic, aData) {
+function handlePCRequest(aSubject, aTopic, aData) {
+  aSubject = aSubject.wrappedJSObject;
+  let { windowID, innerWindowID, callID, isSecure } = aSubject;
+  let contentWindow = Services.wm.getOuterWindowWithId(windowID);
+
+  Services.obs.notifyObservers(null, "PeerConnection:response:allow", callID);
+}
+
+function handleGumRequest(aSubject, aTopic, aData) {
   let { windowID, callID } = aSubject;
   let constraints = aSubject.getConstraints();
   let contentWindow = Services.wm.getOuterWindowWithId(windowID);
@@ -100,4 +108,5 @@ function denyRequest(aCallID, aError) {
   Services.obs.notifyObservers(msg, "getUserMedia:response:deny", aCallID);
 }
 
-Services.obs.addObserver(handleRequest, "getUserMedia:request", false);
+Services.obs.addObserver(handleGumRequest, "getUserMedia:request", false);
+Services.obs.addObserver(handlePCRequest, "PeerConnection:request", false);

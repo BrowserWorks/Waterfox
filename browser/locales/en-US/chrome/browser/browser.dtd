@@ -110,13 +110,11 @@ These should match what Safari and other Apple applications use on OS X Lion. --
 <!ENTITY showAllTabsCmd.accesskey "A">
 
 <!ENTITY fxaSignIn.label "Sign in to &syncBrand.shortName.label;">
+<!ENTITY fxaSignedIn.tooltip "Open &syncBrand.shortName.label; preferences">
 <!ENTITY fxaSignInError.label "Reconnect to &syncBrand.shortName.label;">
+<!ENTITY fxaUnverified.label "Verify Your Account">
 <!ENTITY syncStartPanel2.heading "&syncBrand.shortName.label; enabled">
 <!ENTITY syncStartPanel2.subTitle "&brandShortName; will begin syncing momentarily.">
-<!ENTITY syncErrorPanel.heading "Cannot connect to &syncBrand.shortName.label;">
-<!ENTITY syncErrorPanel.subTitle "Please sign in to resume syncing.">
-<!ENTITY syncErrorPanel.signInButton.label "Sign In">
-<!ENTITY syncErrorPanel.signInButton.accesskey "S">
 
 
 <!ENTITY fullScreenMinimize.tooltip "Minimize">
@@ -126,10 +124,20 @@ These should match what Safari and other Apple applications use on OS X Lion. --
 <!ENTITY fullScreenAutohide.accesskey "H">
 <!ENTITY fullScreenExit.label "Exit Full Screen Mode">
 <!ENTITY fullScreenExit.accesskey "F">
-<!ENTITY fullscreenAllowButton.label "Allow">
-<!ENTITY fullscreenExitButton.label "Deny">
 
-<!ENTITY fullscreenExitHint2.value "Press ESC at any time to exit.">
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "is now full screen">
+<!ENTITY fullscreenWarning.generic.label "This document is now full screen">
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Exit Full Screen (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Exit Full Screen (esc)">
 <!ENTITY leaveDOMFullScreen.label "Exit Full Screen">
 <!ENTITY leaveDOMFullScreen.accesskey "u">
 
@@ -275,6 +283,7 @@ These should match what Safari and other Apple applications use on OS X Lion. --
   -  application menu item that opens the browser content toolbox UI in the Tools menu.
   -  This toolbox allows to debug the chrome of the content process in multiprocess builds.  -->
 <!ENTITY browserContentToolboxMenu.label     "Browser Content Toolbox">
+<!ENTITY browserContentToolboxMenu.accesskey "x">
 
 <!ENTITY devToolbarCloseButton.tooltiptext "Close Developer Toolbar">
 <!ENTITY devToolbarMenu.label              "Developer Toolbar">
@@ -304,6 +313,7 @@ These should match what Safari and other Apple applications use on OS X Lion. --
 <!ENTITY newNavigatorCmd.accesskey      "N">
 <!ENTITY newPrivateWindow.label     "New Private Window">
 <!ENTITY newPrivateWindow.accesskey "W">
+<!ENTITY newNonRemoteWindow.label   "New Non-e10s Window">
 
 <!ENTITY editMenu.label         "Edit"> 
 <!ENTITY editMenu.accesskey       "E"> 
@@ -394,6 +404,14 @@ These should match what Safari and other Apple applications use on OS X Lion. --
 <!ENTITY urlbar.accesskey             "d">
 <!ENTITY urlbar.switchToTab.label     "Switch to tab:">
 
+<!ENTITY urlbar.searchSuggestionsNotification.question "Would you like to improve your search experience with suggestions?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Learn more…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "l">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "No">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "n">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Yes">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "y">
+
 <!-- 
   Comment duplicated from browser-sets.inc:
 
@@ -417,6 +435,12 @@ These should match what Safari and other Apple applications use on OS X Lion. --
 <!ENTITY searchFocus.commandkey       "k">
 <!ENTITY searchFocus.commandkey2      "e">
 <!ENTITY searchFocusUnix.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (contentSearchInput.label, contentSearchSubmit.label):
+     These are set as the aria-label attribute for the search input box and
+     submit button in the in-content search UI, to be used by screen readers. -->
+<!ENTITY contentSearchInput.label     "Search query">
+<!ENTITY contentSearchSubmit.label    "Submit search">
 
 <!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
      These two strings are used to build the header above the list of one-click
@@ -442,6 +466,11 @@ These should match what Safari and other Apple applications use on OS X Lion. --
      This string won't wrap, so if the translated string is longer,
      consider translating it as if it said only "Search Settings". -->
 <!ENTITY changeSearchSettings.button  "Change Search Settings">
+
+<!ENTITY searchInNewTab.label         "Search in New Tab">
+<!ENTITY searchInNewTab.accesskey     "T">
+<!ENTITY searchSetAsDefault.label     "Set As Default Search Engine">
+<!ENTITY searchSetAsDefault.accesskey "D">
 
 <!ENTITY tabView.commandkey           "e">
 
@@ -631,6 +660,8 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY closeCmd.key                   "W">  
 <!ENTITY closeCmd.accesskey             "C">
 
+<!ENTITY toggleMuteCmd.key              "M">
+
 <!ENTITY pageStyleMenu.label "Page Style">
 <!ENTITY pageStyleMenu.accesskey "y">
 <!ENTITY pageStyleNoStyle.label "No Style">
@@ -671,29 +702,41 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY editBookmark.cancel.label                   "Cancel">
 <!ENTITY editBookmark.removeBookmark.accessKey       "R">
 
-<!ENTITY identity.unverifiedsite2 "This website does not supply identity information.">
-<!ENTITY identity.connectedTo "You are connected to">
-<!-- Localization note (identity.runBy) : This string appears between a
-domain name (above) and an organization name (below). E.g.
+<!ENTITY identity.connectionSecure "Secure Connection">
+<!ENTITY identity.connectionNotSecure "Connection is Not Secure">
+<!ENTITY identity.connectionFile "This page is stored on your computer.">
+<!ENTITY identity.connectionVerified1 "You are securely connected to this site, run by:">
+<!ENTITY identity.connectionInternal "This is a secure &brandShortName; page.">
+<!ENTITY identity.insecureLoginForms "Your login could be compromised.">
 
-example.com
-which is run by
-Example Enterprises, Inc.
+<!-- Strings for connection state warnings. -->
+<!ENTITY identity.activeBlocked "&brandShortName; has blocked parts of this page that are not secure.">
+<!ENTITY identity.passiveLoaded "Parts of this page are not secure (such as images).">
+<!ENTITY identity.activeLoaded "You have disabled protection on this page.">
+<!ENTITY identity.weakEncryption "This page uses weak encryption.">
 
-The layout of the identity dialog prevents combining this into a single string with
-substitution variables.  If it is difficult to translate the sense of the string
-with that structure, consider a translation which ignores the preceding domain and
-just addresses the organization to follow, e.g. "This site is run by " -->
-<!ENTITY identity.runBy "which is run by">
+<!-- Strings for connection state warnings in the subview. -->
+<!ENTITY identity.description.insecure "Your connection to this site is not private. Information you submit could be viewed by others (like passwords, messages, credit cards, etc.).">
+<!ENTITY identity.description.insecureLoginForms "The login information you enter on this page is not secure and could be compromised.">
+<!ENTITY identity.description.weakCipher "Your connection to this website uses weak encryption and is not private.">
+<!ENTITY identity.description.weakCipher2 "Other people can view your information or modify the website's behavior.">
+<!ENTITY identity.description.activeBlocked "&brandShortName; has blocked parts of this page that are not secure.">
+<!ENTITY identity.description.passiveLoaded "Your connection is not private and information you share with the site could be viewed by others.">
+<!ENTITY identity.description.passiveLoaded2 "This website contains content that is not secure (such as images).">
+<!ENTITY identity.description.passiveLoaded3 "Although &brandShortName; has blocked some content, there is still content on the page that is not secure (such as images).">
+<!ENTITY identity.description.activeLoaded "This website contains content that is not secure (such as scripts) and your connection to it is not private.">
+<!ENTITY identity.description.activeLoaded2 "Information you share with this site could be viewed by others (like passwords, messages, credit cards, etc.).">
 
-<!ENTITY identity.moreInfoLinkText "More Information…">
+<!ENTITY identity.enableMixedContentBlocking.label "Enable protection">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "E">
+<!ENTITY identity.disableMixedContentBlocking.label "Disable protection for now">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "D">
+<!ENTITY identity.learnMore "Learn More">
+
+<!ENTITY identity.moreInfoLinkText2 "More Information">
 
 <!ENTITY identity.permissions "Permissions">
-
-<!-- LOCALIZATION NOTE (identity.help.tooltip) : This string should be the
-     localized title of this SUMO article
-     https://support.mozilla.org/kb/how-do-i-tell-if-my-connection-is-secure -->
-<!ENTITY identity.help.tooltip "How do I tell if my connection to a website is secure?">
+<!ENTITY identity.permissionsEmpty "You have not granted this site any special permissions.">
 
 <!-- Name for the tabs toolbar as spoken by screen readers.
      The word "toolbar" is appended automatically and should not be contained below! -->
@@ -704,8 +747,8 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 
 <!ENTITY syncBrand.shortName.label    "Sync">
 
-<!ENTITY syncSetup.label              "Set Up &syncBrand.shortName.label;…">
-<!ENTITY syncSetup.accesskey          "Y">
+<!ENTITY syncSignIn.label             "Sign In To &syncBrand.shortName.label;…">
+<!ENTITY syncSignIn.accesskey         "Y">
 <!ENTITY syncSyncNowItem.label        "Sync Now">
 <!ENTITY syncSyncNowItem.accesskey    "S">
 <!ENTITY syncReAuthItem.label         "Reconnect to &syncBrand.shortName.label;…">
@@ -766,20 +809,25 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 <!ENTITY getUserMedia.selectCamera.accesskey "C">
 <!ENTITY getUserMedia.selectMicrophone.label "Microphone to share:">
 <!ENTITY getUserMedia.selectMicrophone.accesskey "M">
+<!ENTITY getUserMedia.audioCapture.label "Audio from the tab will be shared.">
 <!ENTITY getUserMedia.allWindowsShared.message "All visible windows on your screen will be shared.">
 
-<!-- Bad Content Blocker Doorhanger Notification -->
-<!ENTITY badContentBlocked.moreinfo "Most websites will work properly even if content is blocked.">
-
-<!ENTITY mixedContentBlocked2.message "Insecure content">
-<!ENTITY mixedContentBlocked2.moreinfo "Some unencrypted elements on this website have been blocked.">
-<!ENTITY mixedContentBlocked2.learnMore "Learn More">
-<!ENTITY mixedContentBlocked2.options "Options">
-<!ENTITY mixedContentBlocked2.unblock.label "Disable protection for now">
-<!ENTITY mixedContentBlocked2.unblock.accesskey "D">
-<!ENTITY mixedContentBlocked2.block.label "Enable protection">
-<!ENTITY mixedContentBlocked2.block.accesskey "E">
-<!ENTITY mixedContentBlocked2.disabled.message "Protection is disabled">
+<!ENTITY trackingProtection.title "Tracking Protection">
+<!ENTITY trackingProtection.detectedBlocked3 "&brandShortName; is blocking parts of the page that may track your browsing.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "This site includes elements that may track your browsing. You have disabled protection.">
+<!ENTITY trackingProtection.notDetected3 "No tracking elements detected on this page.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Disable protection for this site">
+<!ENTITY trackingProtection.unblock.accesskey "D">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Disable protection for this session">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "D">
+<!ENTITY trackingProtection.block2.label "Enable protection">
+<!ENTITY trackingProtection.block2.accesskey "E">
 
 <!ENTITY trackingContentBlocked.message "Tracking">
 <!ENTITY trackingContentBlocked.moreinfo "Parts of the page that track your online activity have been blocked.">
@@ -853,14 +901,9 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 <!ENTITY emeNotificationsDontAskAgain.label       "Don't ask me again">
 <!ENTITY emeNotificationsDontAskAgain.accesskey   "D">
 
-<!ENTITY readingList.label                        "Reading List">
-<!ENTITY readingList.sidebar.commandKey           "R">
-<!ENTITY readingList.showSidebar.label            "Show Reading List Sidebar">
-<!-- Pre-landed string for bug 1124153 -->
-<!ENTITY readingList.sidebar.showMore.label       "Show more…">
-<!-- Pre-landed string for bug 1133662 -->
-<!ENTITY readingList.sidebar.emptyText            "Add articles to your Reading List to save them for later and find them easily when you need them.">
-<!ENTITY readingList.sidebar.delete.tooltip       "Remove this from your Reading List">
-<!-- Pre-landed strings for bug 1123519 -->
-<!ENTITY readingList.sidebar.add.label            "Add to Reading List">
-<!ENTITY readingList.sidebar.add.tooltip          "Add this page to your Reading List">
+<!-- LOCALIZATION NOTE (saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label): Pocket is a brand name -->
+<!ENTITY saveToPocketCmd.label     "Save Page to Pocket">
+<!ENTITY saveToPocketCmd.accesskey "k">
+<!ENTITY saveLinkToPocketCmd.label     "Save Link to Pocket">
+<!ENTITY saveLinkToPocketCmd.accesskey "o">
+<!ENTITY pocketMenuitem.label      "View Pocket List">

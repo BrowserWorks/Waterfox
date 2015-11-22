@@ -186,7 +186,14 @@ ifneq (,$(MOZ_DEBUG)$(MOZ_DEBUG_SYMBOLS))
   _DEBUG_LDFLAGS += $(MOZ_DEBUG_LDFLAGS)
 endif
 
+ifeq ($(YASM),$(AS))
+# yasm doesn't like the GNU as flags we may already have in ASFLAGS, so reset.
+ASFLAGS := $(_DEBUG_ASFLAGS)
+# yasm doesn't like -c
+AS_DASH_C_FLAG=
+else
 ASFLAGS += $(_DEBUG_ASFLAGS)
+endif
 OS_CFLAGS += $(_DEBUG_CFLAGS)
 OS_CXXFLAGS += $(_DEBUG_CFLAGS)
 OS_LDFLAGS += $(_DEBUG_LDFLAGS)
@@ -230,19 +237,10 @@ endif # MOZ_DEBUG
 
 endif # WINNT && !GNU_CC
 
-ifdef MOZ_GLUE_IN_PROGRAM
-DEFINES += -DMOZ_GLUE_IN_PROGRAM
-endif
-
 #
 # Build using PIC by default
 #
 _ENABLE_PIC=1
-
-# No sense in profiling tools
-ifdef INTERNAL_TOOLS
-NO_PROFILE_GUIDED_OPTIMIZE = 1
-endif
 
 # Don't build SIMPLE_PROGRAMS with PGO, since they don't need it anyway,
 # and we don't have the same build logic to re-link them in the second pass.
@@ -313,7 +311,6 @@ OS_INCLUDES := \
   $(NSPR_CFLAGS) $(NSS_CFLAGS) \
   $(MOZ_JPEG_CFLAGS) \
   $(MOZ_PNG_CFLAGS) \
-  $(MOZ_WEBP_CFLAGS) \
   $(MOZ_ZLIB_CFLAGS) \
   $(MOZ_PIXMAN_CFLAGS) \
   $(NULL)
@@ -325,15 +322,8 @@ CFLAGS		= $(OS_CPPFLAGS) $(OS_CFLAGS)
 CXXFLAGS	= $(OS_CPPFLAGS) $(OS_CXXFLAGS)
 LDFLAGS		= $(OS_LDFLAGS) $(MOZBUILD_LDFLAGS) $(MOZ_FIX_LINK_PATHS)
 
-# Allow each module to override the *default* optimization settings
-# by setting MODULE_OPTIMIZE_FLAGS if the developer has not given
-# arguments to --enable-optimize
 ifdef MOZ_OPTIMIZE
 ifeq (1,$(MOZ_OPTIMIZE))
-ifdef MODULE_OPTIMIZE_FLAGS
-CFLAGS		+= $(MODULE_OPTIMIZE_FLAGS)
-CXXFLAGS	+= $(MODULE_OPTIMIZE_FLAGS)
-else
 ifneq (,$(if $(MOZ_PROFILE_GENERATE)$(MOZ_PROFILE_USE),$(MOZ_PGO_OPTIMIZE_FLAGS)))
 CFLAGS		+= $(MOZ_PGO_OPTIMIZE_FLAGS)
 CXXFLAGS	+= $(MOZ_PGO_OPTIMIZE_FLAGS)
@@ -341,12 +331,12 @@ else
 CFLAGS		+= $(MOZ_OPTIMIZE_FLAGS)
 CXXFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
 endif # neq (,$(MOZ_PROFILE_GENERATE)$(MOZ_PROFILE_USE))
-endif # MODULE_OPTIMIZE_FLAGS
 else
 CFLAGS		+= $(MOZ_OPTIMIZE_FLAGS)
 CXXFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
 endif # MOZ_OPTIMIZE == 1
 LDFLAGS		+= $(MOZ_OPTIMIZE_LDFLAGS)
+RUSTFLAGS	+= $(MOZ_OPTIMIZE_RUSTFLAGS)
 endif # MOZ_OPTIMIZE
 
 ifdef CROSS_COMPILE
@@ -354,11 +344,7 @@ HOST_CFLAGS	+= $(HOST_OPTIMIZE_FLAGS)
 else
 ifdef MOZ_OPTIMIZE
 ifeq (1,$(MOZ_OPTIMIZE))
-ifdef MODULE_OPTIMIZE_FLAGS
-HOST_CFLAGS	+= $(MODULE_OPTIMIZE_FLAGS)
-else
 HOST_CFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
-endif # MODULE_OPTIMIZE_FLAGS
 else
 HOST_CFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
 endif # MOZ_OPTIMIZE == 1
@@ -368,31 +354,39 @@ endif # CROSS_COMPILE
 CFLAGS += $(MOZ_FRAMEPTR_FLAGS)
 CXXFLAGS += $(MOZ_FRAMEPTR_FLAGS)
 
-# Check for FAIL_ON_WARNINGS (Shorthand for Makefiles to request that we use
-# the 'warnings as errors' compile flags)
+# Check for ALLOW_COMPILER_WARNINGS (shorthand for Makefiles to request that we
+# *don't* use the warnings-as-errors compile flags)
 
-# NOTE: First, we clear FAIL_ON_WARNINGS[_DEBUG] if we're doing a Windows PGO
-# build, since WARNINGS_AS_ERRORS has been suspected of causing isuses in that
-# situation. (See bug 437002.)
+# Don't use warnings-as-errors in Windows PGO builds because it is suspected of
+# causing problems in that situation. (See bug 437002.)
 ifeq (WINNT_1,$(OS_ARCH)_$(MOZ_PROFILE_GENERATE)$(MOZ_PROFILE_USE))
-FAIL_ON_WARNINGS=
+ALLOW_COMPILER_WARNINGS=1
 endif # WINNT && (MOS_PROFILE_GENERATE ^ MOZ_PROFILE_USE)
 
-# Check for normal version of flag, and add WARNINGS_AS_ERRORS if it's set to 1.
-ifdef FAIL_ON_WARNINGS
-# Never treat warnings as errors in clang-cl, because it warns about many more
+# Don't use warnings-as-errors in clang-cl because it warns about many more
 # things than MSVC does.
-ifndef CLANG_CL
+ifdef CLANG_CL
+ALLOW_COMPILER_WARNINGS=1
+endif # CLANG_CL
+
+# Use warnings-as-errors if ALLOW_COMPILER_WARNINGS is not set to 1 (which
+# includes the case where it's undefined).
+ifneq (1,$(ALLOW_COMPILER_WARNINGS))
 CXXFLAGS += $(WARNINGS_AS_ERRORS)
 CFLAGS   += $(WARNINGS_AS_ERRORS)
-endif # CLANG_CL
-endif # FAIL_ON_WARNINGS
+endif # ALLOW_COMPILER_WARNINGS
 
 ifeq ($(OS_ARCH)_$(GNU_CC),WINNT_)
 #// Currently, unless USE_STATIC_LIBS is defined, the multithreaded
 #// DLL version of the RTL is used...
 #//
 #//------------------------------------------------------------------------
+ifdef MOZ_ASAN
+# ASAN-instrumented code tries to link against the dynamic CRT, which can't be
+# used in the same link as the static CRT.
+USE_STATIC_LIBS=
+endif # MOZ_ASAN
+
 ifdef USE_STATIC_LIBS
 RTL_FLAGS=-MT          # Statically linked multithreaded RTL
 ifdef MOZ_DEBUG
@@ -425,15 +419,18 @@ OS_COMPILE_CMMFLAGS += -fobjc-abi-version=2 -fobjc-legacy-dispatch
 endif
 endif
 
-COMPILE_CFLAGS	= $(VISIBILITY_FLAGS) $(DEFINES) $(INCLUDES) $(OS_INCLUDES) $(DSO_CFLAGS) $(DSO_PIC_CFLAGS) $(RTL_FLAGS) $(OS_CPPFLAGS) $(OS_COMPILE_CFLAGS) $(CFLAGS) $(MOZBUILD_CFLAGS) $(EXTRA_COMPILE_FLAGS)
-COMPILE_CXXFLAGS = $(if $(DISABLE_STL_WRAPPING),,$(STL_FLAGS)) $(VISIBILITY_FLAGS) $(DEFINES) $(INCLUDES) $(OS_INCLUDES) $(DSO_CFLAGS) $(DSO_PIC_CFLAGS) $(RTL_FLAGS) $(OS_CPPFLAGS) $(OS_COMPILE_CXXFLAGS) $(CXXFLAGS) $(MOZBUILD_CXXFLAGS) $(EXTRA_COMPILE_FLAGS)
-COMPILE_CMFLAGS = $(OS_COMPILE_CMFLAGS) $(MOZBUILD_CMFLAGS) $(EXTRA_COMPILE_FLAGS)
-COMPILE_CMMFLAGS = $(OS_COMPILE_CMMFLAGS) $(MOZBUILD_CMMFLAGS) $(EXTRA_COMPILE_FLAGS)
-ASFLAGS += $(EXTRA_ASSEMBLER_FLAGS)
+COMPILE_CFLAGS	= $(VISIBILITY_FLAGS) $(DEFINES) $(INCLUDES) $(OS_INCLUDES) $(DSO_CFLAGS) $(DSO_PIC_CFLAGS) $(RTL_FLAGS) $(OS_CPPFLAGS) $(OS_COMPILE_CFLAGS) $(CFLAGS) $(MOZBUILD_CFLAGS)
+COMPILE_CXXFLAGS = $(if $(DISABLE_STL_WRAPPING),,$(STL_FLAGS)) $(VISIBILITY_FLAGS) $(DEFINES) $(INCLUDES) $(OS_INCLUDES) $(DSO_CFLAGS) $(DSO_PIC_CFLAGS) $(RTL_FLAGS) $(OS_CPPFLAGS) $(OS_COMPILE_CXXFLAGS) $(CXXFLAGS) $(MOZBUILD_CXXFLAGS)
+COMPILE_CMFLAGS = $(OS_COMPILE_CMFLAGS) $(MOZBUILD_CMFLAGS)
+COMPILE_CMMFLAGS = $(OS_COMPILE_CMMFLAGS) $(MOZBUILD_CMMFLAGS)
+ASFLAGS += $(MOZBUILD_ASFLAGS)
 
 ifndef CROSS_COMPILE
 HOST_CFLAGS += $(RTL_FLAGS)
 endif
+
+HOST_CFLAGS += $(HOST_DEFINES) $(MOZBUILD_HOST_CFLAGS)
+HOST_CXXFLAGS += $(HOST_DEFINES) $(MOZBUILD_HOST_CXXFLAGS)
 
 #
 # Name of the binary code directories
@@ -481,7 +478,7 @@ endif # WINNT
 ifdef _MSC_VER
 ifeq ($(CPU_ARCH),x86_64)
 # set stack to 2MB on x64 build.  See bug 582910
-WIN32_EXE_LDFLAGS	+= -STACK:2097152 -FORCE
+WIN32_EXE_LDFLAGS	+= -STACK:2097152
 endif
 endif
 
@@ -629,7 +626,7 @@ EXPAND_MKSHLIB = $(EXPAND_LIBS_EXEC) $(EXPAND_MKSHLIB_ARGS) -- $(MKSHLIB)
 
 ifneq (,$(MOZ_LIBSTDCXX_TARGET_VERSION)$(MOZ_LIBSTDCXX_HOST_VERSION))
 ifneq ($(OS_ARCH),Darwin)
-CHECK_STDCXX = @$(TOOLCHAIN_PREFIX)objdump -p $(1) | grep -e 'GLIBCXX_3\.4\.\(9\|[1-9][0-9]\)' > /dev/null && echo 'TEST-UNEXPECTED-FAIL | check_stdcxx | We do not want these libstdc++ symbols to be used:' && $(TOOLCHAIN_PREFIX)objdump -T $(1) | grep -e 'GLIBCXX_3\.4\.\(9\|[1-9][0-9]\)' && exit 1 || true
+CHECK_STDCXX = @$(TOOLCHAIN_PREFIX)objdump -p $(1) | grep -e 'GLIBCXX_3\.4\.\(1[1-9]\|[2-9][0-9]\)' > /dev/null && echo 'TEST-UNEXPECTED-FAIL | check_stdcxx | We do not want these libstdc++ symbols to be used:' && $(TOOLCHAIN_PREFIX)objdump -T $(1) | grep -e 'GLIBCXX_3\.4\.\(1[1-9]\|[2-9][0-9]\)' && exit 1 || true
 endif
 endif
 

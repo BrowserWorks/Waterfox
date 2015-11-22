@@ -9,6 +9,7 @@ package mozilla.layers.layerscope;
 // ===============================
 message FramePacket {
   optional uint64 value = 1;
+  optional float  scale = 2;
 }
 
 message ColorPacket {
@@ -97,6 +98,11 @@ message LayersPacket {
     optional ScrollingDirect direct = 17;
     optional uint64 barID = 18;
     optional uint64 mask = 19;    // mask layer
+    optional Region hitRegion = 20;
+    optional Region dispatchRegion = 21;
+    optional Region noActionRegion = 22;
+    optional Region hPanRegion = 23;
+    optional Region vPanRegion = 24;
 
     // Specific info (100 to max)
     // Painted Layer
@@ -109,12 +115,32 @@ message LayersPacket {
     optional uint64 refID = 103;
     // Readback Layer
     optional Size size = 104;
+    optional uint32 displayListLogLength = 105;
+    optional bytes displayListLog = 106;
   }
   repeated Layer layer = 1;
 }
 
 message MetaPacket {
   optional bool composedByHwc = 1;
+}
+
+message DrawPacket {
+  message Rect {
+    required float x = 1;
+    required float y = 2;
+    required float w = 3;
+    required float h = 4;
+  }
+
+  required float  offsetX = 1;
+  required float  offsetY = 2;
+  repeated float  mvMatrix = 3;
+  required uint32 totalRects = 4;
+  repeated Rect   layerRect = 5;
+  required uint64 layerref = 6;
+  repeated uint32 texIDs = 7;
+  repeated Rect   textureRect = 8;
 }
 
 // We only need to use this Packet.
@@ -127,6 +153,7 @@ message Packet {
     TEXTURE = 4;
     LAYERS = 5;
     META = 6;
+    DRAW = 7;
   }
   required DataType type = 1;
 
@@ -135,6 +162,7 @@ message Packet {
   optional TexturePacket texture = 4;
   optional LayersPacket layers = 5;
   optional MetaPacket meta = 6;
+  optional DrawPacket draw = 7;
 }
 
 

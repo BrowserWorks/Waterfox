@@ -29,11 +29,11 @@ namespace js {
  *
  *  https://developer.mozilla.org/en-US/docs/SpiderMonkey/Internals/Bytecode
  */
-static const uint32_t XDR_BYTECODE_VERSION_SUBTRAHEND = 283;
+static const uint32_t XDR_BYTECODE_VERSION_SUBTRAHEND = 307;
 static const uint32_t XDR_BYTECODE_VERSION =
     uint32_t(0xb973c0de - XDR_BYTECODE_VERSION_SUBTRAHEND);
 
-static_assert(JSErr_Limit == 394,
+static_assert(JSErr_Limit == 408,
               "GREETINGS, POTENTIAL SUBTRAHEND INCREMENTER! If you added or "
               "removed MSG_DEFs from js.msg, you should increment "
               "XDR_BYTECODE_VERSION_SUBTRAHEND and update this assertion's "
@@ -83,10 +83,6 @@ class XDRBuffer {
         uint8_t* ptr = cursor;
         cursor += n;
         return ptr;
-    }
-
-    static bool isUint32Overflow(size_t n) {
-        return size_t(-1) > size_t(UINT32_MAX) && n > size_t(UINT32_MAX);
     }
 
     void freeBuffer();

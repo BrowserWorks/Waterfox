@@ -125,6 +125,10 @@ typedef int64_t GMPTimestamp;
 #define GMP_EME_CAP_DECRYPT_AND_DECODE_AUDIO (uint64_t(1) << 2)
 #define GMP_EME_CAP_DECRYPT_AND_DECODE_VIDEO (uint64_t(1) << 3)
 
+// Capability; CDM can decrypt and then decode and render encrypted buffers
+#define GMP_EME_CAP_RENDER_AUDIO (uint64_t(1) << 4)
+#define GMP_EME_CAP_RENDER_VIDEO (uint64_t(1) << 5)
+
 // Callbacks to be called from the CDM. Threadsafe.
 class GMPDecryptorCallback {
 public:
@@ -239,9 +243,6 @@ enum GMPSessionType {
 };
 
 #define GMP_API_DECRYPTOR "eme-decrypt-v7"
-
-// XXX remove in bug 1147692
-#define GMP_API_DECRYPTOR_COMPAT "eme-decrypt-v6"
 
 // API exposed by plugin library to manage decryption sessions.
 // When the Host requests this by calling GMPGetAPIFunc().

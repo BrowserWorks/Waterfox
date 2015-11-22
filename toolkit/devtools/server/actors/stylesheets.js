@@ -4,36 +4,38 @@
 
 "use strict";
 
-let { components, Cc, Ci, Cu } = require("chrome");
-let Services = require("Services");
+var { components, Cc, Ci, Cu } = require("chrome");
+var Services = require("Services");
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
-Cu.import("resource://gre/modules/devtools/SourceMap.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
-const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const promise = require("promise");
 const events = require("sdk/event/core");
 const protocol = require("devtools/server/protocol");
 const {Arg, Option, method, RetVal, types} = protocol;
 const {LongStringActor, ShortLongString} = require("devtools/server/actors/string");
+const {fetch} = require("devtools/toolkit/DevToolsUtils");
+const {listenOnce} = require("devtools/async-utils");
+const {SourceMapConsumer} = require("source-map");
 
 loader.lazyGetter(this, "CssLogic", () => require("devtools/styleinspector/css-logic").CssLogic);
 
-let TRANSITION_CLASS = "moz-styleeditor-transitioning";
-let TRANSITION_DURATION_MS = 500;
-let TRANSITION_BUFFER_MS = 1000;
-let TRANSITION_RULE_SELECTOR =
+var TRANSITION_CLASS = "moz-styleeditor-transitioning";
+var TRANSITION_DURATION_MS = 500;
+var TRANSITION_BUFFER_MS = 1000;
+var TRANSITION_RULE_SELECTOR =
 ".moz-styleeditor-transitioning:root, .moz-styleeditor-transitioning:root *";
-let TRANSITION_RULE = TRANSITION_RULE_SELECTOR + " {\
+var TRANSITION_RULE = TRANSITION_RULE_SELECTOR + " {\
 transition-duration: " + TRANSITION_DURATION_MS + "ms !important; \
 transition-delay: 0ms !important;\
 transition-timing-function: ease-out !important;\
 transition-property: all !important;\
 }";
 
-let LOAD_ERROR = "error-load";
+var LOAD_ERROR = "error-load";
 
 types.addActorType("stylesheet");
 types.addActorType("originalsource");
@@ -42,18 +44,22 @@ types.addActorType("originalsource");
  * Creates a StyleSheetsActor. StyleSheetsActor provides remote access to the
  * stylesheets of a document.
  */
-let StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
+var StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
   typeName: "stylesheets",
 
   /**
    * The window we work with, taken from the parent actor.
    */
-  get window() this.parentActor.window,
+  get window() {
+    return this.parentActor.window;
+  },
 
   /**
    * The current content document of the window we work with.
    */
-  get document() this.window.document,
+  get document() {
+    return this.window.document;
+  },
 
   form: function()
   {
@@ -70,55 +76,30 @@ let StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
    * Protocol method for getting a list of StyleSheetActors representing
    * all the style sheets in this document.
    */
-  getStyleSheets: method(function() {
-    let deferred = promise.defer();
+  getStyleSheets: method(Task.async(function* () {
+    // Iframe document can change during load (bug 1171919). Track their windows
+    // instead.
+    let windows = [this.window];
+    let actors = [];
 
-    let window = this.window;
-    var domReady = () => {
-      window.removeEventListener("DOMContentLoaded", domReady, true);
-      this._addAllStyleSheets().then(deferred.resolve, Cu.reportError);
-    };
+    for (let win of windows) {
+      let sheets = yield this._addStyleSheets(win);
+      actors = actors.concat(sheets);
 
-    if (window.document.readyState === "loading") {
-      window.addEventListener("DOMContentLoaded", domReady, true);
-    } else {
-      domReady();
+      // Recursively handle style sheets of the documents in iframes.
+      for (let iframe of win.document.querySelectorAll("iframe, browser, frame")) {
+        if (iframe.contentDocument && iframe.contentWindow) {
+          // Sometimes, iframes don't have any document, like the
+          // one that are over deeply nested (bug 285395)
+          windows.push(iframe.contentWindow);
+        }
+      }
     }
-
-    return deferred.promise;
-  }, {
+    return actors;
+  }), {
     request: {},
     response: { styleSheets: RetVal("array:stylesheet") }
   }),
-
-  /**
-   * Add all the stylesheets in this document and its subframes.
-   * Assumes the document is loaded.
-   *
-   * @return {Promise}
-   *         Promise that resolves with an array of StyleSheetActors
-   */
-  _addAllStyleSheets: function() {
-    return Task.spawn(function*() {
-      let documents = [this.document];
-      let actors = [];
-
-      for (let doc of documents) {
-        let sheets = yield this._addStyleSheets(doc);
-        actors = actors.concat(sheets);
-
-        // Recursively handle style sheets of the documents in iframes.
-        for (let iframe of doc.querySelectorAll("iframe, browser, frame")) {
-          if (iframe.contentDocument) {
-            // Sometimes, iframes don't have any document, like the
-            // one that are over deeply nested (bug 285395)
-            documents.push(iframe.contentDocument);
-          }
-        }
-      }
-      return actors;
-    }.bind(this));
-  },
 
   /**
    * Check if we should be showing this stylesheet.
@@ -143,18 +124,31 @@ let StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
   },
 
   /**
-   * Add all the stylesheets for this document to the map and create an actor
-   * for each one if not already created.
+   * Add all the stylesheets for the document in this window to the map and
+   * create an actor for each one if not already created.
    *
-   * @param {Document} doc
-   *        Document for which to add stylesheets
+   * @param {Window} win
+   *        Window for which to add stylesheets
    *
    * @return {Promise}
    *         Promise that resolves to an array of StyleSheetActors
    */
-  _addStyleSheets: function(doc)
+  _addStyleSheets: function(win)
   {
     return Task.spawn(function*() {
+      let doc = win.document;
+      // readyState can be uninitialized if an iframe has just been created but
+      // it has not started to load yet.
+      if (doc.readyState === "loading" || doc.readyState === "uninitialized") {
+        // Wait for the document to load first.
+        yield listenOnce(win, "DOMContentLoaded", true);
+
+        // Make sure we have the actual document for this window. If the
+        // readyState was initially uninitialized, the initial dummy document
+        // was replaced with the actual document (bug 1171919).
+        doc = win.document;
+      }
+
       let isChrome = Services.scriptSecurityManager.isSystemPrincipal(doc.nodePrincipal);
       let styleSheets = isChrome ? DOMUtils.getAllStyleSheets(doc) : doc.styleSheets;
       let actors = [];
@@ -246,7 +240,7 @@ let StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
 /**
  * The corresponding Front object for the StyleSheetsActor.
  */
-let StyleSheetsFront = protocol.FrontClass(StyleSheetsActor, {
+var StyleSheetsFront = protocol.FrontClass(StyleSheetsActor, {
   initialize: function(client, tabForm) {
     protocol.Front.prototype.initialize.call(this, client);
     this.actorID = tabForm.styleSheetsActor;
@@ -258,7 +252,7 @@ let StyleSheetsFront = protocol.FrontClass(StyleSheetsActor, {
  * A MediaRuleActor lives on the server and provides access to properties
  * of a DOM @media rule and emits events when it changes.
  */
-let MediaRuleActor = protocol.ActorClass({
+var MediaRuleActor = protocol.ActorClass({
   typeName: "mediarule",
 
   events: {
@@ -268,9 +262,13 @@ let MediaRuleActor = protocol.ActorClass({
     }
   },
 
-  get window() this.parentActor.window,
+  get window() {
+    return this.parentActor.window;
+  },
 
-  get document() this.window.document,
+  get document() {
+    return this.window.document;
+  },
 
   get matches() {
     return this.mql ? this.mql.matches : null;
@@ -333,7 +331,7 @@ let MediaRuleActor = protocol.ActorClass({
 /**
  * Cooresponding client-side front for a MediaRuleActor.
  */
-let MediaRuleFront = protocol.FrontClass(MediaRuleActor, {
+var MediaRuleFront = protocol.FrontClass(MediaRuleActor, {
   initialize: function(client, form) {
     protocol.Front.prototype.initialize.call(this, client, form);
 
@@ -354,11 +352,21 @@ let MediaRuleFront = protocol.FrontClass(MediaRuleActor, {
     this._form = form;
   },
 
-  get mediaText() this._form.mediaText,
-  get conditionText() this._form.conditionText,
-  get matches() this._form.matches,
-  get line() this._form.line || -1,
-  get column() this._form.column || -1,
+  get mediaText() {
+    return this._form.mediaText;
+  },
+  get conditionText() {
+    return this._form.conditionText;
+  },
+  get matches() {
+    return this._form.matches;
+  },
+  get line() {
+    return this._form.line || -1;
+  },
+  get column() {
+    return this._form.column || -1;
+  },
   get parentStyleSheet() {
     return this.conn.getActor(this._form.parentStyleSheet);
   }
@@ -367,7 +375,7 @@ let MediaRuleFront = protocol.FrontClass(MediaRuleActor, {
 /**
  * A StyleSheetActor represents a stylesheet on the server.
  */
-let StyleSheetActor = protocol.ActorClass({
+var StyleSheetActor = protocol.ActorClass({
   typeName: "stylesheet",
 
   events: {
@@ -395,19 +403,27 @@ let StyleSheetActor = protocol.ActorClass({
   /**
    * Window of target
    */
-  get window() this._window || this.parentActor.window,
+  get window() {
+    return this._window || this.parentActor.window;
+  },
 
   /**
    * Document of target.
    */
-  get document() this.window.document,
+  get document() {
+    return this.window.document;
+  },
 
-  get ownerNode() this.rawSheet.ownerNode,
+  get ownerNode() {
+    return this.rawSheet.ownerNode;
+  },
 
   /**
    * URL of underlying stylesheet.
    */
-  get href() this.rawSheet.href,
+  get href() {
+    return this.rawSheet.href;
+  },
 
   /**
    * Retrieve the index (order) of stylesheet in the document.
@@ -589,8 +605,9 @@ let StyleSheetActor = protocol.ActorClass({
     }
 
     let options = {
-      window: this.window,
       loadFromCache: true,
+      policy: Ci.nsIContentPolicy.TYPE_STYLESHEET,
+      window: this.window,
       charset: this._getCSSCharset()
     };
 
@@ -673,8 +690,12 @@ let StyleSheetActor = protocol.ActorClass({
       };
 
       url = normalize(url, this.href);
-
-      let map = fetch(url, { loadFromCache: false, window: this.window })
+      let options = {
+        loadFromCache: false,
+        policy: Ci.nsIContentPolicy.TYPE_STYLESHEET,
+        window: this.window
+      };
+      let map = fetch(url, options)
         .then(({content}) => {
           let map = new SourceMapConsumer(content);
           this._setSourceMapRoot(map, url, this.href);
@@ -912,53 +933,6 @@ let StyleSheetActor = protocol.ActorClass({
 })
 
 /**
- * Find the line/column for a rule.
- * This is like DOMUtils.getRule[Line|Column] except for inline <style> sheets,
- * the line number returned here is relative to the <style> tag rather than the
- * containing HTML document (which is what DOMUtils does).
- * This is hacky, but we don't know of a better implementation right now.
- */
-const getRuleLocation = exports.getRuleLocation = function(rule) {
-  let reply = {
-    line: DOMUtils.getRuleLine(rule),
-    column: DOMUtils.getRuleColumn(rule)
-  };
-
-  let sheet = rule.parentStyleSheet;
-  if (sheet.ownerNode && sheet.ownerNode.localName === "style") {
-     // For inline sheets, the line is relative to HTML not the stylesheet, so
-     // Get the location of the first { to know the line num of the first rule,
-     // relative to this sheet, to get the offset
-     let text = sheet.ownerNode.textContent;
-     // Hacky for now, because this will fail if { appears in a comment before
-     // but better than nothing, and faster than parsing the whole text
-     let start = text.substring(0, text.indexOf("{"));
-     let relativeStartLine = start.split("\n").length;
-
-     let absoluteStartLine;
-     let i = 0;
-     while (absoluteStartLine == null) {
-       let irule = sheet.cssRules[i];
-       if (irule instanceof Ci.nsIDOMCSSStyleRule) {
-         absoluteStartLine = DOMUtils.getRuleLine(irule);
-       }
-       else if (irule == null) {
-         break;
-       }
-
-       i++;
-     }
-
-     if (absoluteStartLine != null) {
-       let offset = absoluteStartLine - relativeStartLine;
-       reply.line -= offset;
-     }
-  }
-
-  return reply;
-};
-
-/**
  * StyleSheetFront is the client-side counterpart to a StyleSheetActor.
  */
 var StyleSheetFront = protocol.FrontClass(StyleSheetActor, {
@@ -987,20 +961,34 @@ var StyleSheetFront = protocol.FrontClass(StyleSheetActor, {
     this._form = form;
   },
 
-  get href() this._form.href,
-  get nodeHref() this._form.nodeHref,
-  get disabled() !!this._form.disabled,
-  get title() this._form.title,
-  get isSystem() this._form.system,
-  get styleSheetIndex() this._form.styleSheetIndex,
-  get ruleCount() this._form.ruleCount
+  get href() {
+    return this._form.href;
+  },
+  get nodeHref() {
+    return this._form.nodeHref;
+  },
+  get disabled() {
+    return !!this._form.disabled;
+  },
+  get title() {
+    return this._form.title;
+  },
+  get isSystem() {
+    return this._form.system;
+  },
+  get styleSheetIndex() {
+    return this._form.styleSheetIndex;
+  },
+  get ruleCount() {
+    return this._form.ruleCount;
+  }
 });
 
 /**
  * Actor representing an original source of a style sheet that was specified
  * in a source map.
  */
-let OriginalSourceActor = protocol.ActorClass({
+var OriginalSourceActor = protocol.ActorClass({
   typeName: "originalsource",
 
   initialize: function(aUrl, aSourceMap, aParentActor) {
@@ -1031,7 +1019,11 @@ let OriginalSourceActor = protocol.ActorClass({
       this.text = content;
       return promise.resolve(content);
     }
-    return fetch(this.url, { window: this.window }).then(({content}) => {
+    let options = {
+      policy: Ci.nsIContentPolicy.TYPE_STYLESHEET,
+      window: this.window
+    };
+    return fetch(this.url, options).then(({content}) => {
       this.text = content;
       return content;
     });
@@ -1054,7 +1046,7 @@ let OriginalSourceActor = protocol.ActorClass({
 /**
  * The client-side counterpart for an OriginalSourceActor.
  */
-let OriginalSourceFront = protocol.FrontClass(OriginalSourceActor, {
+var OriginalSourceFront = protocol.FrontClass(OriginalSourceActor, {
   initialize: function(client, form) {
     protocol.Front.prototype.initialize.call(this, client, form);
 
@@ -1070,8 +1062,12 @@ let OriginalSourceFront = protocol.FrontClass(OriginalSourceActor, {
     this._form = form;
   },
 
-  get href() this._form.url,
-  get url() this._form.url
+  get href() {
+    return this._form.url;
+  },
+  get url() {
+    return this._form.url;
+  }
 });
 
 
@@ -1085,157 +1081,6 @@ exports.StyleSheetsFront = StyleSheetsFront;
 exports.StyleSheetActor = StyleSheetActor;
 exports.StyleSheetFront = StyleSheetFront;
 
-
-/**
- * Performs a request to load the desired URL and returns a promise.
- *
- * @param aURL String
- *        The URL we will request.
- * @returns Promise
- *        A promise of the document at that URL, as a string.
- */
-function fetch(aURL, aOptions={ loadFromCache: true, window: null,
-                                charset: null}) {
-  let deferred = promise.defer();
-  let scheme;
-  let url = aURL.split(" -> ").pop();
-  let charset;
-  let contentType;
-
-  try {
-    scheme = Services.io.extractScheme(url);
-  } catch (e) {
-    // In the xpcshell tests, the script url is the absolute path of the test
-    // file, which will make a malformed URI error be thrown. Add the file
-    // scheme prefix ourselves.
-    url = "file://" + url;
-    scheme = Services.io.extractScheme(url);
-  }
-
-  switch (scheme) {
-    case "file":
-    case "chrome":
-    case "resource":
-      try {
-        NetUtil.asyncFetch2(
-          url,
-          function onFetch(aStream, aStatus, aRequest) {
-            if (!components.isSuccessCode(aStatus)) {
-              deferred.reject(new Error("Request failed with status code = "
-                                        + aStatus
-                                        + " after NetUtil.asyncFetch2 for url = "
-                                        + url));
-              return;
-            }
-
-            let source = NetUtil.readInputStreamToString(aStream, aStream.available());
-            contentType = aRequest.contentType;
-            deferred.resolve(source);
-            aStream.close();
-          },
-          null,      // aLoadingNode
-          Services.scriptSecurityManager.getSystemPrincipal(),
-          null,      // aTriggeringPrincipal
-          Ci.nsILoadInfo.SEC_NORMAL,
-          Ci.nsIContentPolicy.TYPE_STYLESHEET);
-      } catch (ex) {
-        deferred.reject(ex);
-      }
-      break;
-
-    default:
-      let channel;
-      try {
-        channel = Services.io.newChannel2(url,
-                                          null,
-                                          null,
-                                          null,      // aLoadingNode
-                                          Services.scriptSecurityManager.getSystemPrincipal(),
-                                          null,      // aTriggeringPrincipal
-                                          Ci.nsILoadInfo.SEC_NORMAL,
-                                          Ci.nsIContentPolicy.TYPE_STYLESHEET);
-      } catch (e if e.name == "NS_ERROR_UNKNOWN_PROTOCOL") {
-        // On Windows xpcshell tests, c:/foo/bar can pass as a valid URL, but
-        // newChannel won't be able to handle it.
-        url = "file:///" + url;
-        channel = Services.io.newChannel2(url,
-                                          null,
-                                          null,
-                                          null,      // aLoadingNode
-                                          Services.scriptSecurityManager.getSystemPrincipal(),
-                                          null,      // aTriggeringPrincipal
-                                          Ci.nsILoadInfo.SEC_NORMAL,
-                                          Ci.nsIContentPolicy.TYPE_STYLESHEET);
-      }
-      let chunks = [];
-      let streamListener = {
-        onStartRequest: function(aRequest, aContext, aStatusCode) {
-          if (!components.isSuccessCode(aStatusCode)) {
-            deferred.reject(new Error("Request failed with status code = "
-                                      + aStatusCode
-                                      + " in onStartRequest handler for url = "
-                                      + url));
-          }
-        },
-        onDataAvailable: function(aRequest, aContext, aStream, aOffset, aCount) {
-          chunks.push(NetUtil.readInputStreamToString(aStream, aCount));
-        },
-        onStopRequest: function(aRequest, aContext, aStatusCode) {
-          if (!components.isSuccessCode(aStatusCode)) {
-            deferred.reject(new Error("Request failed with status code = "
-                                      + aStatusCode
-                                      + " in onStopRequest handler for url = "
-                                      + url));
-            return;
-          }
-
-          charset = channel.contentCharset || charset;
-          contentType = channel.contentType;
-          deferred.resolve(chunks.join(""));
-        }
-      };
-
-      if (aOptions.window) {
-        // respect private browsing
-        channel.loadGroup = aOptions.window.QueryInterface(Ci.nsIInterfaceRequestor)
-                              .getInterface(Ci.nsIWebNavigation)
-                              .QueryInterface(Ci.nsIDocumentLoader)
-                              .loadGroup;
-      }
-      channel.loadFlags = aOptions.loadFromCache
-        ? channel.LOAD_FROM_CACHE
-        : channel.LOAD_BYPASS_CACHE;
-      channel.asyncOpen(streamListener, null);
-      break;
-  }
-
-  return deferred.promise.then(source => {
-    return {
-      content: convertToUnicode(source, charset),
-      contentType: contentType
-    };
-  });
-}
-
-/**
- * Convert a given string, encoded in a given character set, to unicode.
- *
- * @param string aString
- *        A string.
- * @param string aCharset
- *        A character set.
- */
-function convertToUnicode(aString, aCharset=null) {
-  // Decoding primitives.
-  let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
-    .createInstance(Ci.nsIScriptableUnicodeConverter);
-  try {
-    converter.charset = aCharset || "UTF-8";
-    return converter.ConvertToUnicode(aString);
-  } catch(e) {
-    return aString;
-  }
-}
 
 /**
  * Normalize multiple relative paths towards the base paths on the right.

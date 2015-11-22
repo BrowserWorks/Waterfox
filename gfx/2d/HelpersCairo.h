@@ -88,10 +88,24 @@ GfxAntialiasToCairoAntialias(AntialiasMode antialias)
       return CAIRO_ANTIALIAS_GRAY;
     case AntialiasMode::SUBPIXEL:
       return CAIRO_ANTIALIAS_SUBPIXEL;
-    case AntialiasMode::DEFAULT:
+    default:
       return CAIRO_ANTIALIAS_DEFAULT;
   }
-  return CAIRO_ANTIALIAS_DEFAULT;
+}
+
+static inline AntialiasMode
+CairoAntialiasToGfxAntialias(cairo_antialias_t aAntialias)
+{
+  switch(aAntialias) {
+    case CAIRO_ANTIALIAS_NONE:
+      return AntialiasMode::NONE;
+    case CAIRO_ANTIALIAS_GRAY:
+      return AntialiasMode::GRAY;
+    case CAIRO_ANTIALIAS_SUBPIXEL:
+      return AntialiasMode::SUBPIXEL;
+    default:
+      return AntialiasMode::DEFAULT;
+  }
 }
 
 static inline cairo_filter_t
@@ -140,8 +154,7 @@ GfxFormatToCairoFormat(SurfaceFormat format)
     case SurfaceFormat::R5G6B5:
       return CAIRO_FORMAT_RGB16_565;
     default:
-      gfxWarning() << "Unknown image format";
-      MOZ_ASSERT(false, "Unknown image format");
+      gfxCriticalError() << "Unknown image format " << (int)format;
       return CAIRO_FORMAT_ARGB32;
   }
 }
@@ -159,8 +172,7 @@ GfxFormatToCairoContent(SurfaceFormat format)
     case SurfaceFormat::A8:
       return CAIRO_CONTENT_ALPHA;
     default:
-      gfxWarning() << "Unknown image format";
-      MOZ_ASSERT(false, "Unknown image format");
+      gfxCriticalError() << "Unknown image content format " << (int)format;
       return CAIRO_CONTENT_COLOR_ALPHA;
   }
 }
@@ -234,15 +246,24 @@ CairoFormatToGfxFormat(cairo_format_t format)
   }
 }
 
-static inline SurfaceFormat
-GfxFormatForCairoSurface(cairo_surface_t* surface)
+static inline FontHinting
+CairoHintingToGfxHinting(cairo_hint_style_t aHintStyle)
 {
-  if (cairo_surface_get_type(surface) == CAIRO_SURFACE_TYPE_IMAGE) {
-    return CairoFormatToGfxFormat(cairo_image_surface_get_format(surface));
+  switch (aHintStyle) {
+    case CAIRO_HINT_STYLE_NONE:
+      return FontHinting::NONE;
+    case CAIRO_HINT_STYLE_SLIGHT:
+      return FontHinting::LIGHT;
+    case CAIRO_HINT_STYLE_MEDIUM:
+      return FontHinting::NORMAL;
+    case CAIRO_HINT_STYLE_FULL:
+      return FontHinting::FULL;
+    default:
+      return FontHinting::NORMAL;
   }
-
-  return CairoContentToGfxFormat(cairo_surface_get_content(surface));
 }
+
+SurfaceFormat GfxFormatForCairoSurface(cairo_surface_t* surface);
 
 static inline void
 GfxMatrixToCairoMatrix(const Matrix& mat, cairo_matrix_t& retval)
@@ -260,11 +281,18 @@ SetCairoStrokeOptions(cairo_t* aCtx, const StrokeOptions& aStrokeOptions)
   if (aStrokeOptions.mDashPattern) {
     // Convert array of floats to array of doubles
     std::vector<double> dashes(aStrokeOptions.mDashLength);
+    bool nonZero = false;
     for (size_t i = 0; i < aStrokeOptions.mDashLength; ++i) {
+      if (aStrokeOptions.mDashPattern[i] != 0) {
+        nonZero = true;
+      }
       dashes[i] = aStrokeOptions.mDashPattern[i];
     }
-    cairo_set_dash(aCtx, &dashes[0], aStrokeOptions.mDashLength,
-                   aStrokeOptions.mDashOffset);
+    // Avoid all-zero patterns that would trigger the CAIRO_STATUS_INVALID_DASH context error state.
+    if (nonZero) {
+      cairo_set_dash(aCtx, &dashes[0], aStrokeOptions.mDashLength,
+                     aStrokeOptions.mDashOffset);
+    }
   }
 
   cairo_set_line_join(aCtx, GfxLineJoinToCairoLineJoin(aStrokeOptions.mLineJoin));
@@ -312,7 +340,7 @@ private:
   cairo_matrix_t mSaveMatrix;
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif /* MOZILLA_GFX_HELPERSCAIRO_H_ */

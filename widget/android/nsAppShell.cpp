@@ -24,7 +24,11 @@
 #include "nsIDOMWakeLockListener.h"
 #include "nsIPowerManagerService.h"
 #include "nsINetworkLinkService.h"
+#include "nsISpeculativeConnect.h"
+#include "nsIURIFixup.h"
 #include "nsCategoryManagerUtils.h"
+#include "nsCDefaultURIFixup.h"
+#include "nsToolkitCompsCID.h"
 
 #include "mozilla/HangMonitor.h"
 #include "mozilla/Services.h"
@@ -35,6 +39,7 @@
 
 #include "AndroidBridge.h"
 #include "AndroidBridgeUtilities.h"
+#include "GeneratedJNINatives.h"
 #include <android/log.h>
 #include <pthread.h>
 #include <wchar.h>
@@ -48,12 +53,15 @@
 #include "GeckoProfiler.h"
 #ifdef MOZ_ANDROID_HISTORY
 #include "nsNetUtil.h"
+#include "nsIURI.h"
 #include "IHistory.h"
 #endif
 
 #ifdef MOZ_LOGGING
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #endif
+
+#include "ANRReporter.h"
 
 #ifdef DEBUG_ANDROID_EVENTS
 #define EVLOG(args...)  ALOG(args)
@@ -115,7 +123,7 @@ private:
 public:
   NS_DECL_ISUPPORTS;
 
-  nsresult Callback(const nsAString& topic, const nsAString& state) {
+  nsresult Callback(const nsAString& topic, const nsAString& state) override {
     widget::GeckoAppShell::NotifyWakeLockChanged(topic, state);
     return NS_OK;
   }
@@ -125,6 +133,57 @@ NS_IMPL_ISUPPORTS(WakeLockListener, nsIDOMMozWakeLockListener)
 nsCOMPtr<nsIPowerManagerService> sPowerManagerService = nullptr;
 StaticRefPtr<WakeLockListener> sWakeLockListener;
 
+namespace {
+
+already_AddRefed<nsIURI>
+ResolveURI(const nsCString& uriStr)
+{
+    nsCOMPtr<nsIIOService> ioServ = do_GetIOService();
+    nsCOMPtr<nsIURI> uri;
+
+    if (NS_SUCCEEDED(ioServ->NewURI(uriStr, nullptr,
+                                    nullptr, getter_AddRefs(uri)))) {
+        return uri.forget();
+    }
+
+    nsCOMPtr<nsIURIFixup> fixup = do_GetService(NS_URIFIXUP_CONTRACTID);
+    if (fixup && NS_SUCCEEDED(
+            fixup->CreateFixupURI(uriStr, 0, nullptr, getter_AddRefs(uri)))) {
+        return uri.forget();
+    }
+    return nullptr;
+}
+
+} // namespace
+
+class GeckoThreadNatives final
+    : public widget::GeckoThread::Natives<GeckoThreadNatives>
+{
+public:
+    static void SpeculativeConnect(jni::String::Param uriStr)
+    {
+        if (!NS_IsMainThread()) {
+            // We will be on the main thread if the call was queued on the Java
+            // side during startup. Otherwise, the call was not queued, which
+            // means Gecko is already sufficiently loaded, and we don't really
+            // care about speculative connections at this point.
+            return;
+        }
+
+        nsCOMPtr<nsIIOService> ioServ = do_GetIOService();
+        nsCOMPtr<nsISpeculativeConnect> specConn = do_QueryInterface(ioServ);
+        if (!specConn) {
+            return;
+        }
+
+        nsCOMPtr<nsIURI> uri = ResolveURI(nsCString(uriStr));
+        if (!uri) {
+            return;
+        }
+        specConn->SpeculativeConnect(uri, nullptr);
+    }
+};
+
 nsAppShell::nsAppShell()
     : mQueueLock("nsAppShell.mQueueLock"),
       mCondLock("nsAppShell.mCondLock"),
@@ -133,8 +192,17 @@ nsAppShell::nsAppShell()
 {
     gAppShell = this;
 
-    if (XRE_GetProcessType() != GeckoProcessType_Default) {
+    if (!XRE_IsParentProcess()) {
         return;
+    }
+
+    if (jni::IsAvailable()) {
+        // Initialize JNI and Set the corresponding state in GeckoThread.
+        AndroidBridge::ConstructBridge();
+        GeckoThreadNatives::Init();
+        mozilla::ANRReporter::Init();
+
+        widget::GeckoThread::SetState(widget::GeckoThread::State::JNI_READY());
     }
 
     sPowerManagerService = do_GetService(POWERMANAGERSERVICE_CONTRACTID);
@@ -144,7 +212,6 @@ nsAppShell::nsAppShell()
     } else {
         NS_WARNING("Failed to retrieve PowerManagerService, wakelocks will be broken!");
     }
-
 }
 
 nsAppShell::~nsAppShell()
@@ -156,6 +223,10 @@ nsAppShell::~nsAppShell()
 
         sPowerManagerService = nullptr;
         sWakeLockListener = nullptr;
+    }
+
+    if (jni::IsAvailable()) {
+        AndroidBridge::DeconstructBridge();
     }
 }
 
@@ -182,8 +253,9 @@ nsAppShell::Init()
     nsCOMPtr<nsIObserverService> obsServ =
         mozilla::services::GetObserverService();
     if (obsServ) {
-        obsServ->AddObserver(this, "xpcom-shutdown", false);
         obsServ->AddObserver(this, "browser-delayed-startup-finished", false);
+        obsServ->AddObserver(this, "profile-do-change", false);
+        obsServ->AddObserver(this, "xpcom-shutdown", false);
     }
 
     if (sPowerManagerService)
@@ -204,14 +276,38 @@ nsAppShell::Observe(nsISupports* aSubject,
         // or we'll see crashes, as the app shell outlives XPConnect.
         mObserversHash.Clear();
         return nsBaseAppShell::Observe(aSubject, aTopic, aData);
+
     } else if (!strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID) &&
                aData &&
                nsDependentString(aData).Equals(NS_LITERAL_STRING(PREFNAME_COALESCE_TOUCHES))) {
         mAllowCoalescingTouches = Preferences::GetBool(PREFNAME_COALESCE_TOUCHES, true);
         return NS_OK;
+
     } else if (!strcmp(aTopic, "browser-delayed-startup-finished")) {
         NS_CreateServicesFromCategory("browser-delayed-startup-finished", nullptr,
                                       "browser-delayed-startup-finished");
+
+    } else if (!strcmp(aTopic, "profile-do-change")) {
+        if (jni::IsAvailable()) {
+            widget::GeckoThread::SetState(
+                    widget::GeckoThread::State::PROFILE_READY());
+
+            // Gecko on Android follows the Android app model where it never
+            // stops until it is killed by the system or told explicitly to
+            // quit. Therefore, we should *not* exit Gecko when there is no
+            // window or the last window is closed. nsIAppStartup::Quit will
+            // still force Gecko to exit.
+            nsCOMPtr<nsIAppStartup> appStartup =
+                do_GetService(NS_APPSTARTUP_CONTRACTID);
+            if (appStartup) {
+                appStartup->EnterLastWindowClosingSurvivalArea();
+            }
+        }
+        nsCOMPtr<nsIObserverService> obsServ =
+            mozilla::services::GetObserverService();
+        if (obsServ) {
+            obsServ->RemoveObserver(this, "profile-do-change");
+        }
     }
     return NS_OK;
 }
@@ -244,7 +340,7 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
             // (bug 750713). Looper messages effectively have the lowest
             // priority because we only process them before we're about to
             // wait for new events.
-            if (AndroidBridge::HasEnv() &&
+            if (jni::IsAvailable() &&
                     AndroidBridge::Bridge()->PumpMessageLoop()) {
                 return true;
             }
@@ -574,7 +670,8 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
 
         nsIntRect rect;
         int32_t colorDepth, pixelDepth;
-        dom::ScreenOrientation orientation;
+        int16_t angle;
+        dom::ScreenOrientationInternal orientation;
         nsCOMPtr<nsIScreen> screen;
 
         screenMgr->GetPrimaryScreen(getter_AddRefs(screen));
@@ -582,10 +679,11 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
         screen->GetColorDepth(&colorDepth);
         screen->GetPixelDepth(&pixelDepth);
         orientation =
-            static_cast<dom::ScreenOrientation>(curEvent->ScreenOrientation());
+            static_cast<dom::ScreenOrientationInternal>(curEvent->ScreenOrientation());
+        angle = curEvent->ScreenAngle();
 
         hal::NotifyScreenConfigurationChange(
-            hal::ScreenConfiguration(rect, orientation, colorDepth, pixelDepth));
+            hal::ScreenConfiguration(rect, orientation, angle, colorDepth, pixelDepth));
         break;
     }
 

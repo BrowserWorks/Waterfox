@@ -7,9 +7,11 @@
 #define WEBGL_CONTEXT_UTILS_H_
 
 #include "WebGLContext.h"
-#include "WebGLStrongTypes.h"
+
 #include "mozilla/Assertions.h"
 #include "mozilla/dom/BindingUtils.h"
+
+#include "WebGLStrongTypes.h"
 
 namespace mozilla {
 
@@ -38,6 +40,8 @@ TexType TypeFromInternalFormat(TexInternalFormat internalformat);
 TexInternalFormat
 UnsizedInternalFormatFromInternalFormat(TexInternalFormat internalformat);
 
+void SetLegacyTextureSwizzle(gl::GLContext* gl, GLenum target, GLenum internalformat);
+
 size_t GetBitsPerTexel(TexInternalFormat effectiveinternalformat);
 
 // For use with the different texture calls, i.e.
@@ -53,6 +57,12 @@ size_t GetBitsPerTexel(TexInternalFormat effectiveinternalformat);
 //
 // Returns GL_NONE if passed an invalid texture image target
 TexTarget TexImageTargetToTexTarget(TexImageTarget texImageTarget);
+
+// Helper function to create a JS::Value from a C string
+JS::Value StringValue(JSContext* cx, const char* str, ErrorResult& rv);
+
+bool IsCompressedTextureFormat(GLenum format);
+bool IsTextureFormatCompressed(TexInternalFormat format);
 
 struct GLComponents
 {

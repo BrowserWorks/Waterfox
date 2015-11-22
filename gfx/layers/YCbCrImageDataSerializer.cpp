@@ -10,7 +10,9 @@
 #include "mozilla/gfx/Logging.h"        // for gfxDebug
 #include "mozilla/gfx/Types.h"
 #include "mozilla/mozalloc.h"           // for operator delete
+#include "nsDebug.h"                    // for NS_WARN_IF
 #include "yuv_convert.h"                // for ConvertYCbCrToRGB32, etc
+#include "nsDebug.h"
 
 #define MOZ_ALIGN_WORD(x) (((x) + 3) & ~3)
 
@@ -276,7 +278,7 @@ YCbCrImageDataSerializer::CopyData(const uint8_t* aYData,
   return true;
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 YCbCrImageDataDeserializer::ToDataSourceSurface()
 {
   RefPtr<DataSourceSurface> result =
@@ -302,5 +304,5 @@ YCbCrImageDataDeserializer::ToDataSourceSurface()
 }
 
 
-} // namespace
-} // namespace
+} // namespace layers
+} // namespace mozilla

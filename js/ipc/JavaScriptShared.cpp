@@ -265,7 +265,7 @@ JavaScriptShared::toVariant(JSContext* cx, JS::HandleValue from, JSVariant* to)
       {
         RootedObject obj(cx, from.toObjectOrNull());
         if (!obj) {
-            MOZ_ASSERT(from == JSVAL_NULL);
+            MOZ_ASSERT(from.isNull());
             *to = NullVariant();
             return true;
         }
@@ -357,7 +357,7 @@ JavaScriptShared::fromVariant(JSContext* cx, const JSVariant& from, MutableHandl
           return true;
 
         case JSVariant::Tbool:
-          to.set(BOOLEAN_TO_JSVAL(from.get_bool()));
+          to.setBoolean(from.get_bool());
           return true;
 
         case JSVariant::TnsString:
@@ -729,8 +729,8 @@ JavaScriptShared::Wrap(JSContext* cx, HandleObject aObj, InfallibleTArray<CpowEn
     if (!aObj)
         return true;
 
-    AutoIdArray ids(cx, JS_Enumerate(cx, aObj));
-    if (!ids)
+    Rooted<IdVector> ids(cx, IdVector(cx));
+    if (!JS_Enumerate(cx, aObj, &ids))
         return false;
 
     RootedId id(cx);

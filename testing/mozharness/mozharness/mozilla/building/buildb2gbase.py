@@ -184,7 +184,7 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
             if repo_type == 'hg':
                 hg = self.query_exe('hg', return_type='list')
                 revision = self.get_output_from_command(
-                    hg + ['parent', '--template', '{node|short}'], cwd=repo
+                    hg + ['parent', '--template', '{node}'], cwd=repo
                 )
             elif repo_type == 'git':
                 git = self.query_exe('git', return_type='list')
@@ -193,7 +193,7 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
                 )
             else:
                 return None
-        return revision[0:12] if revision else None
+        return revision
 
     def query_gecko_config_path(self):
         conf_file = self.config.get('gecko_config')
@@ -366,10 +366,12 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
         b2g_manifest_intree = gecko_config.get('b2g_manifest_intree')
+        b2g_repo = gecko_config.get('b2g_repo','https://git.mozilla.org/b2g/B2G.git')
+        b2g_branch = gecko_config.get('b2g_branch','master')
 
         if gecko_config.get('config_version') >= 2:
             repos = [
-                {'vcs': 'gittool', 'repo': 'https://git.mozilla.org/b2g/B2G.git', 'dest': dirs['work_dir']},
+                {'vcs': 'gittool', 'repo': b2g_repo, 'branch': b2g_branch, 'dest': dirs['work_dir']},
             ]
 
             if b2g_manifest_intree:

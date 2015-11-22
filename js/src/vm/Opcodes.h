@@ -391,9 +391,9 @@
      *   Category: Statements
      *   Type: Function
      *   Operands:
-     *   Stack: callee, this, args => rval
+     *   Stack: callee, this, args, newTarget => rval
      */ \
-    macro(JSOP_SPREADNEW, 42, "spreadnew",  NULL,         1,  3,  1, JOF_BYTE|JOF_INVOKE|JOF_TYPESET) \
+    macro(JSOP_SPREADNEW, 42, "spreadnew",  NULL,         1,  4,  1, JOF_BYTE|JOF_INVOKE|JOF_TYPESET) \
     /*
      * spreadcall variant of JSOP_EVAL
      *
@@ -766,10 +766,10 @@
      *   Category: Statements
      *   Type: Function
      *   Operands: uint16_t argc
-     *   Stack: callee, this, args[0], ..., args[argc-1] => rval
-     *   nuses: (argc+2)
+     *   Stack: callee, this, args[0], ..., args[argc-1], newTarget => rval
+     *   nuses: (argc+3)
      */ \
-    macro(JSOP_NEW,       82, js_new_str,   NULL,         3, -1,  1,  JOF_UINT16|JOF_INVOKE|JOF_TYPESET) \
+    macro(JSOP_NEW,       82, "new",   NULL,         3, -1,  1,  JOF_UINT16|JOF_INVOKE|JOF_TYPESET) \
     /*
      * Pushes newly created object onto the stack with provided [[Prototype]].
      *
@@ -1340,7 +1340,7 @@
      *   Operands: uint32_t funcIndex
      *   Stack: this => obj
      */ \
-    macro(JSOP_LAMBDA_ARROW, 131, "lambda_arrow", NULL,   5,  1,  1, JOF_OBJECT) \
+    macro(JSOP_LAMBDA_ARROW, 131, "lambda_arrow", NULL,   5,  2,  1, JOF_OBJECT) \
     \
     /*
      * Pushes current callee onto the stack.
@@ -1514,8 +1514,15 @@
      *   Stack: obj, val => obj
      */ \
     macro(JSOP_INITHIDDENPROP, 147,"inithiddenprop", NULL, 5,  2,  1,  JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING) \
-    /* Unused. */ \
-    macro(JSOP_UNUSED148,     148,"unused148", NULL,      1,  0,  0,  JOF_BYTE) \
+    /*
+     * Push "new.target"
+     *
+     *   Category: Variables and Scopes
+     *   Type: Arguments
+     *   Operands:
+     *   Stack: => new.target
+     */ \
+    macro(JSOP_NEWTARGET,  148, "newtarget", NULL,      1,  0,  1,  JOF_BYTE) \
     \
     /*
      * Placeholder opcode used during bytecode generation. This never
@@ -1526,7 +1533,15 @@
      *   Stack: =>
      */ \
     macro(JSOP_BACKPATCH,     149,"backpatch", NULL,      5,  0,  0,  JOF_JUMP) \
-    macro(JSOP_UNUSED150,     150,"unused150", NULL,      1,  0,  0,  JOF_BYTE) \
+    /*
+     * Pops the top two values 'lval' and 'rval' from the stack, then pushes
+     * the result of 'Math.pow(lval, rval)'.
+     *   Category: Operators
+     *   Type: Arithmetic Operators
+     *   Operands:
+     *   Stack: lval, rval => (lval ** rval)
+     */ \
+    macro(JSOP_POW,           150, "pow",     "**",       1,  2,  1, JOF_BYTE|JOF_ARITH) \
     \
     /*
      * Pops the top of stack value as 'v', sets pending exception as 'v',
@@ -1563,9 +1578,9 @@
     macro(JSOP_RETRVAL,       153,"retrval",    NULL,       1,  0,  0,  JOF_BYTE) \
     \
     /*
-     * Looks up name on global scope and pushes its value onto the stack, unless
-     * the script has a polluted global, in which case it acts just like
-     * JSOP_NAME.
+     * Looks up name on global scope and pushes its value onto the stack,
+     * unless the script has a non-syntactic global scope, in which case it
+     * acts just like JSOP_NAME.
      *
      * Free variable references that must either be found on the global or a
      * ReferenceError.
@@ -1579,7 +1594,7 @@
      * Pops the top two values on the stack as 'val' and 'scope', sets property
      * of 'scope' as 'val' and pushes 'val' back on the stack.
      *
-     * 'scope' should be the global scope unless the script has a polluted
+     * 'scope' should be the global scope unless the script has a non-syntactic
      * global scope, in which case acts like JSOP_SETNAME.
      *   Category: Variables and Scopes
      *   Type: Free Variables
@@ -1593,7 +1608,7 @@
      * of 'scope' as 'val' and pushes 'val' back on the stack. Throws a
      * TypeError if the set fails, per strict mode semantics.
      *
-     * 'scope' should be the global scope unless the script has a polluted
+     * 'scope' should be the global scope unless the script has a non-syntactic
      * global scope, in which case acts like JSOP_STRICTSETNAME.
      *   Category: Variables and Scopes
      *   Type: Free Variables
@@ -1864,7 +1879,7 @@
     macro(JSOP_UNUSED213,     213, "unused213",    NULL,  1,  0,  0,  JOF_BYTE) \
     /*
      * Pushes the global scope onto the stack if the script doesn't have a
-     * polluted global scope.  Otherwise will act like JSOP_BINDNAME.
+     * non-syntactic global scope.  Otherwise will act like JSOP_BINDNAME.
      *
      * 'nameIndex' is only used when acting like JSOP_BINDNAME.
      *   Category: Variables and Scopes

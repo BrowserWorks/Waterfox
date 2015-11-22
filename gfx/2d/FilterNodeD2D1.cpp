@@ -150,7 +150,7 @@ D2D1_CHANNEL_SELECTOR D2DChannelSelector(uint32_t aMode)
   return D2D1_CHANNEL_SELECTOR_R;
 }
 
-TemporaryRef<ID2D1Image> GetImageForSourceSurface(DrawTarget *aDT, SourceSurface *aSurface)
+already_AddRefed<ID2D1Image> GetImageForSourceSurface(DrawTarget *aDT, SourceSurface *aSurface)
 {
   if (aDT->IsTiledDrawTarget() || aDT->IsDualDrawTarget()) {
       MOZ_CRASH("Incompatible draw target type!");
@@ -537,11 +537,11 @@ IsTransferFilterType(FilterType aType)
 }
 
 /* static */
-TemporaryRef<FilterNode>
+already_AddRefed<FilterNode>
 FilterNodeD2D1::Create(ID2D1DeviceContext *aDC, FilterType aType)
 {
   if (aType == FilterType::CONVOLVE_MATRIX) {
-    return new FilterNodeConvolveD2D1(aDC);
+    return MakeAndAddRef<FilterNodeConvolveD2D1>(aDC);
   }
 
   RefPtr<ID2D1Effect> effect;
@@ -859,7 +859,7 @@ FilterNodeConvolveD2D1::FilterNodeConvolveD2D1(ID2D1DeviceContext *aDC)
   
   hr = aDC->CreateEffect(CLSID_D2D1ConvolveMatrix, byRef(mEffect));
 
-  if (FAILED(hr)) {
+  if (FAILED(hr) || !mEffect) {
     gfxWarning() << "Failed to create ConvolveMatrix filter!";
     return;
   }
@@ -868,14 +868,14 @@ FilterNodeConvolveD2D1::FilterNodeConvolveD2D1(ID2D1DeviceContext *aDC)
 
   hr = aDC->CreateEffect(CLSID_ExtendInputEffect, byRef(mExtendInputEffect));
 
-  if (FAILED(hr)) {
+  if (FAILED(hr) || !mExtendInputEffect) {
     gfxWarning() << "Failed to create ConvolveMatrix filter!";
     return;
   }
 
   hr = aDC->CreateEffect(CLSID_D2D1Border, byRef(mBorderEffect));
 
-  if (FAILED(hr)) {
+  if (FAILED(hr) || !mBorderEffect) {
     gfxWarning() << "Failed to create ConvolveMatrix filter!";
     return;
   }
@@ -1018,7 +1018,7 @@ FilterNodeExtendInputAdapterD2D1::FilterNodeExtendInputAdapterD2D1(ID2D1DeviceCo
 
   hr = aDC->CreateEffect(CLSID_ExtendInputEffect, byRef(mExtendInputEffect));
 
-  if (FAILED(hr)) {
+  if (FAILED(hr) || !mExtendInputEffect) {
     gfxWarning() << "Failed to create extend input effect for filter: " << hexa(hr);
     return;
   }
@@ -1062,14 +1062,14 @@ FilterNodePremultiplyAdapterD2D1::FilterNodePremultiplyAdapterD2D1(ID2D1DeviceCo
 
   hr = aDC->CreateEffect(CLSID_D2D1Premultiply, byRef(mPrePremultiplyEffect));
 
-  if (FAILED(hr)) {
+  if (FAILED(hr) || !mPrePremultiplyEffect) {
     gfxWarning() << "Failed to create ComponentTransfer filter!";
     return;
   }
 
   hr = aDC->CreateEffect(CLSID_D2D1UnPremultiply, byRef(mPostUnpremultiplyEffect));
 
-  if (FAILED(hr)) {
+  if (FAILED(hr) || !mPostUnpremultiplyEffect) {
     gfxWarning() << "Failed to create ComponentTransfer filter!";
     return;
   }

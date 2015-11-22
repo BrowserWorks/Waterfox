@@ -12,11 +12,11 @@ import types
 import weakref
 
 from marionette_driver.marionette import Marionette
-from marionette_test import MarionetteTestCase
+from .marionette_test import MarionetteTestCase
 from marionette_transport import MarionetteTransport
 
 from b2ginstance import B2GInstance
-from runtests import MarionetteTestRunner, cli
+from .runtests import MarionetteTestRunner, cli
 
 class B2GUpdateMarionetteClient(MarionetteTransport):
     RETRY_TIMEOUT   = 5
@@ -238,8 +238,7 @@ class B2GUpdateTestCase(MarionetteTestCase):
         self.print_status(status, os.path.basename(path))
 
         results = self.marionette.execute_async_script(data,
-                                                       script_args=[self.testvars],
-                                                       special_powers=True)
+                                                       script_args=[self.testvars])
         self.handle_results(path, stage, results)
 
     def handle_results(self, path, stage, results):

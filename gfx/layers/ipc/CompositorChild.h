@@ -24,7 +24,7 @@ namespace mozilla {
 
 namespace dom {
   class TabChild;
-}
+} // namespace dom
 
 namespace layers {
 
@@ -71,7 +71,12 @@ public:
   void AddOverfillObserver(ClientLayerManager* aLayerManager);
 
   virtual bool
-  RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId) override;
+  RecvClearCachedResources(const uint64_t& id) override;
+
+  virtual bool
+  RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId,
+                   const TimeStamp& aCompositeStart,
+                   const TimeStamp& aCompositeEnd) override;
 
   virtual bool
   RecvInvalidateAll() override;
@@ -85,7 +90,7 @@ public:
                                  nsTArray<PluginWindowData>&& aPlugins) override;
 
   virtual bool
-  RecvUpdatePluginVisibility(nsTArray<uintptr_t>&& aWindowList) override;
+  RecvHideAllPlugins(const uintptr_t& aParentWidget) override;
 
   /**
    * Request that the parent tell us when graphics are ready on GPU.
@@ -106,6 +111,8 @@ public:
   bool SendWillStop();
   bool SendPause();
   bool SendResume();
+  bool SendNotifyHidden(const uint64_t& id);
+  bool SendNotifyVisible(const uint64_t& id);
   bool SendNotifyChildCreated(const uint64_t& id);
   bool SendAdoptChild(const uint64_t& id);
   bool SendMakeSnapshot(const SurfaceDescriptor& inSnapshot, const gfx::IntRect& dirtyRect);
@@ -198,7 +205,7 @@ private:
   bool mCanSend;
 };
 
-} // layers
-} // mozilla
+} // namespace layers
+} // namespace mozilla
 
 #endif // mozilla_layers_CompositorChild_h

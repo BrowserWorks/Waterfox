@@ -32,6 +32,7 @@ namespace mozilla { namespace pkix {
 
 extern Result CheckSignatureAlgorithm(
                 TrustDomain& trustDomain, EndEntityOrCA endEntityOrCA,
+                Time notBefore,
                 const der::SignedDataWithSignature& signedData,
                 Input signatureValue);
 
@@ -203,7 +204,8 @@ public:
   {
   }
 
-  Result CheckSignatureDigestAlgorithm(DigestAlgorithm) override
+  Result CheckSignatureDigestAlgorithm(DigestAlgorithm, EndEntityOrCA, Time)
+    override
   {
     checkedDigestAlgorithm = true;
     return Success;
@@ -226,6 +228,7 @@ public:
 
 TEST_P(pkixcheck_CheckSignatureAlgorithm, CheckSignatureAlgorithm)
 {
+  const Time now(Now());
   const CheckSignatureAlgorithmTestParams& params(GetParam());
 
   Input signatureValueInput;
@@ -248,7 +251,7 @@ TEST_P(pkixcheck_CheckSignatureAlgorithm, CheckSignatureAlgorithm)
 
   ASSERT_EQ(params.expectedResult,
             CheckSignatureAlgorithm(trustDomain, EndEntityOrCA::MustBeEndEntity,
-                                    signedData, signatureValueInput));
+                                    now, signedData, signatureValueInput));
   ASSERT_EQ(params.expectedResult == Success,
             trustDomain.checkedDigestAlgorithm);
   ASSERT_EQ(params.expectedResult == Success,
@@ -292,7 +295,7 @@ public:
     return Success;
   }
 
-  Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
+  Result CheckRevocation(EndEntityOrCA, const CertID&, Time, Duration,
                          /*optional*/ const Input*,
                          /*optional*/ const Input*) override
   {

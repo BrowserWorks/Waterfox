@@ -24,7 +24,7 @@ typedef unsigned long nsContentPolicyType;
  * by launching a dialog to prompt the user for something).
  */
 
-[scriptable,uuid(21bb54b0-ab3c-11e4-bcd8-0800200c9a66)]
+[scriptable,uuid(8527ae0d-0c43-4413-bc46-85c0bcb66876)]
 interface nsIContentPolicyBase : nsISupports
 {
   /**
@@ -57,6 +57,10 @@ interface nsIContentPolicyBase : nsISupports
    * Implementations of nsIContentPolicy should treat this the same way they
    * treat unknown types, because existing users of TYPE_OTHER may be converted
    * to use new content types.
+   *
+   * Note that the TYPE_INTERNAL_* constants are never passed to content
+   * policy implementations.  They are mapped to other TYPE_* constants, and
+   * are only intended for internal usage inside Gecko.
    */
   const nsContentPolicyType TYPE_OTHER = 1;
 
@@ -172,10 +176,115 @@ interface nsIContentPolicyBase : nsISupports
    */
   const nsContentPolicyType TYPE_IMAGESET = 21;
 
+  /**
+   * Indicates a web manifest.
+   */
+  const nsContentPolicyType TYPE_WEB_MANIFEST = 22;
+
+  /**
+   * Indicates an internal constant for scripts loaded through script
+   * elements.
+   *
+   * This will be mapped to TYPE_SCRIPT before being passed to content policy
+   * implementations.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_SCRIPT = 23;
+
+  /**
+   * Indicates an internal constant for scripts loaded through a dedicated
+   * worker.
+   *
+   * This will be mapped to TYPE_SCRIPT before being passed to content policy
+   * implementations.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_WORKER = 24;
+
+  /**
+   * Indicates an internal constant for scripts loaded through a shared
+   * worker.
+   *
+   * This will be mapped to TYPE_SCRIPT before being passed to content policy
+   * implementations.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_SHARED_WORKER = 25;
+
+  /**
+   * Indicates an internal constant for content loaded from embed elements.
+   *
+   * This will be mapped to TYPE_OBJECT.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_EMBED = 26;
+
+  /**
+   * Indicates an internal constant for content loaded from object elements.
+   *
+   * This will be mapped to TYPE_OBJECT.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_OBJECT = 27;
+
+  /**
+   * Indicates an internal constant for content loaded from frame elements.
+   *
+   * This will be mapped to TYPE_SUBDOCUMENT.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_FRAME = 28;
+
+  /**
+   * Indicates an internal constant for content loaded from iframe elements.
+   *
+   * This will be mapped to TYPE_SUBDOCUMENT.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_IFRAME = 29;
+
+  /**
+   * Indicates an internal constant for content loaded from audio elements.
+   *
+   * This will be mapped to TYPE_MEDIA.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_AUDIO = 30;
+
+  /**
+   * Indicates an internal constant for content loaded from video elements.
+   *
+   * This will be mapped to TYPE_MEDIA.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_VIDEO = 31;
+
+  /**
+   * Indicates an internal constant for content loaded from track elements.
+   *
+   * This will be mapped to TYPE_MEDIA.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_TRACK = 32;
+
+  /**
+   * Indicates an internal constant for an XMLHttpRequest.
+   *
+   * This will be mapped to TYPE_XMLHTTPREQUEST.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_XMLHTTPREQUEST = 33;
+
+  /**
+   * Indicates an internal constant for EventSource.
+   *
+   * This will be mapped to TYPE_DATAREQUEST.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_EVENTSOURCE = 34;
+
+  /**
+   * Indicates an internal constant for scripts loaded through a service
+   * worker.
+   *
+   * This will be mapped to TYPE_SCRIPT before being passed to content policy
+   * implementations.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_SERVICE_WORKER = 35;
+
   /* When adding new content types, please update nsContentBlocker,
    * NS_CP_ContentTypeName, nsCSPContext, all nsIContentPolicy
-   * implementations, and other things that are not listed here that are
-   * related to nsIContentPolicy. */
+   * implementations, the static_assert in dom/cache/DBSchema.cpp,
+   * and other things that are not listed here that are related to
+   * nsIContentPolicy. */
 
   //////////////////////////////////////////////////////////////////////
 

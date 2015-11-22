@@ -36,20 +36,25 @@
                android:src="@drawable/url_bar_translating_edge"
                android:scaleType="fitXY"/>
 
-    <org.mozilla.gecko.toolbar.ShapedButton android:id="@+id/menu"
-                                            style="@style/UrlBar.ImageButton"
-                                            android:layout_alignParentRight="true"
-                                            android:contentDescription="@string/menu"
-                                            android:background="@drawable/shaped_button"
-                                            android:visibility="gone"/>
+    <org.mozilla.gecko.toolbar.ShapedButtonFrameLayout
+            android:id="@+id/menu"
+            style="@style/UrlBar.ImageButton"
+            android:layout_alignParentRight="true"
+            android:contentDescription="@string/menu"
+            android:background="@drawable/shaped_button"
+            android:visibility="gone">
 
-    <org.mozilla.gecko.widget.ThemedImageView android:id="@+id/menu_icon"
-                                              style="@style/UrlBar.ImageButton"
-                                              android:layout_alignLeft="@id/menu"
-                                              android:layout_alignRight="@id/menu"
-                                              android:gravity="center_vertical"
-                                              android:src="@drawable/menu_level"
-                                              android:visibility="gone"/>
+        <org.mozilla.gecko.widget.themed.ThemedImageView
+                android:id="@+id/menu_icon"
+                style="@style/UrlBar.ImageButton"
+                android:layout_height="@dimen/browser_toolbar_menu_icon_height"
+                android:layout_width="wrap_content"
+                android:scaleType="centerInside"
+                android:layout_gravity="center"
+                android:src="@drawable/menu"
+                android:tint="@color/tabs_tray_icon_grey"/>
+
+    </org.mozilla.gecko.toolbar.ShapedButtonFrameLayout>
 
     <org.mozilla.gecko.toolbar.PhoneTabsButton android:id="@+id/tabs"
                                                style="@style/UrlBar.ImageButton"
@@ -65,16 +70,20 @@
          The margins will be 40dp on left, 8dp on right, instead of ideal 30dp
          and 12dp. -->
     <org.mozilla.gecko.toolbar.TabCounter android:id="@+id/tabs_counter"
-                        style="@style/UrlBar.ImageButton.TabCount"
+                        style="@style/UrlBar.ImageButton"
                         android:layout_width="24dip"
                         android:layout_height="24dip"
                         android:layout_centerVertical="true"
                         android:layout_marginRight="8dip"
-                        android:layout_alignRight="@id/tabs"/>
+                        android:layout_alignRight="@id/tabs"
+                        android:background="@drawable/tabs_count"
+                        android:gravity="center_horizontal"
+                        android:clipChildren="false"
+                        android:clipToPadding="false"/>
 
     <!-- Note that the edit components are invisible so that the views
          depending on their location can properly layout. -->
-    <org.mozilla.gecko.widget.ThemedImageView
+    <org.mozilla.gecko.widget.themed.ThemedImageView
             android:id="@+id/edit_cancel"
             style="@style/UrlBar.ImageButton"
             android:layout_alignParentRight="true"

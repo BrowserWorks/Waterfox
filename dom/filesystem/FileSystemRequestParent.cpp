@@ -7,6 +7,7 @@
 
 #include "CreateDirectoryTask.h"
 #include "CreateFileTask.h"
+#include "GetDirectoryListingTask.h"
 #include "GetFileOrDirectoryTask.h"
 #include "RemoveTask.h"
 
@@ -42,6 +43,7 @@ FileSystemRequestParent::Dispatch(ContentParent* aParent,
 
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(CreateDirectory)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(CreateFile)
+    FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(GetDirectoryListing)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(GetFileOrDirectory)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(Remove)
 
@@ -56,7 +58,7 @@ FileSystemRequestParent::Dispatch(ContentParent* aParent,
     return false;
   }
 
-  if (!mFileSystem->IsTesting()) {
+  if (mFileSystem->RequiresPermissionChecks()) {
     // Check the content process permission.
 
     nsCString access;

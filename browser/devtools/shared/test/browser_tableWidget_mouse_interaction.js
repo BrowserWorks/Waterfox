@@ -7,16 +7,17 @@
 const TEST_URI = "data:text/xml;charset=UTF-8,<?xml version='1.0'?>" +
   "<?xml-stylesheet href='chrome://global/skin/global.css'?>" +
   "<?xml-stylesheet href='chrome://browser/skin/devtools/common.css'?>" +
+  "<?xml-stylesheet href='chrome://browser/skin/devtools/light-theme.css'?>" +
   "<?xml-stylesheet href='chrome://browser/skin/devtools/widgets.css'?>" +
   "<window xmlns='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul'" +
-  " title='Table Widget' width='600' height='500'><box flex='1'/></window>";
+  " title='Table Widget' width='600' height='500'>" +
+  "<box flex='1' class='theme-light'/></window>";
 const TEST_OPT = "chrome,titlebar,toolbar,centerscreen,resizable,dialog=no";
 
-const {TableWidget} = devtools.require("devtools/shared/widgets/TableWidget");
-let {Task} = devtools.require("resource://gre/modules/Task.jsm");
-let {Promise} = devtools.require("resource://gre/modules/Promise.jsm");
+const {TableWidget} = require("devtools/shared/widgets/TableWidget");
+const Promise = require("promise");
 
-let doc, table;
+var doc, table;
 
 function test() {
   waitForExplicitFinish();
@@ -51,7 +52,7 @@ function endTests() {
   finish();
 }
 
-let startTests = Task.async(function*() {
+var startTests = Task.async(function*() {
   populateTable();
   yield testMouseInteraction();
   endTests();
@@ -132,7 +133,7 @@ function click(node, button = 0) {
 /**
  * Tests if clicking the table items does the expected behavior
  */
-let testMouseInteraction = Task.async(function*() {
+var testMouseInteraction = Task.async(function*() {
   info("Testing mouse interaction with the table");
   ok(!table.selectedRow, "Nothing should be selected beforehand");
 

@@ -19,6 +19,7 @@ loader.lazyGetter(this, "StyleEditorPanel", () => require("devtools/styleeditor/
 loader.lazyGetter(this, "ShaderEditorPanel", () => require("devtools/shadereditor/panel").ShaderEditorPanel);
 loader.lazyGetter(this, "CanvasDebuggerPanel", () => require("devtools/canvasdebugger/panel").CanvasDebuggerPanel);
 loader.lazyGetter(this, "WebAudioEditorPanel", () => require("devtools/webaudioeditor/panel").WebAudioEditorPanel);
+loader.lazyGetter(this, "MemoryPanel", () => require("devtools/memory/panel").MemoryPanel);
 loader.lazyGetter(this, "PerformancePanel", () => require("devtools/performance/panel").PerformancePanel);
 loader.lazyGetter(this, "NetMonitorPanel", () => require("devtools/netmonitor/panel").NetMonitorPanel);
 loader.lazyGetter(this, "StoragePanel", () => require("devtools/storage/panel").StoragePanel);
@@ -33,13 +34,13 @@ const styleEditorProps = "chrome://browser/locale/devtools/styleeditor.propertie
 const shaderEditorProps = "chrome://browser/locale/devtools/shadereditor.properties";
 const canvasDebuggerProps = "chrome://browser/locale/devtools/canvasdebugger.properties";
 const webAudioEditorProps = "chrome://browser/locale/devtools/webaudioeditor.properties";
-const profilerProps = "chrome://browser/locale/devtools/profiler.properties";
+const performanceProps = "chrome://browser/locale/devtools/performance.properties";
 const netMonitorProps = "chrome://browser/locale/devtools/netmonitor.properties";
 const storageProps = "chrome://browser/locale/devtools/storage.properties";
 const scratchpadProps = "chrome://browser/locale/devtools/scratchpad.properties";
 
 loader.lazyGetter(this, "toolboxStrings", () => Services.strings.createBundle(toolboxProps));
-loader.lazyGetter(this, "profilerStrings",() => Services.strings.createBundle(profilerProps));
+loader.lazyGetter(this, "performanceStrings",() => Services.strings.createBundle(performanceProps));
 loader.lazyGetter(this, "webConsoleStrings", () => Services.strings.createBundle(webConsoleProps));
 loader.lazyGetter(this, "debuggerStrings", () => Services.strings.createBundle(debuggerProps));
 loader.lazyGetter(this, "styleEditorStrings", () => Services.strings.createBundle(styleEditorProps));
@@ -51,7 +52,7 @@ loader.lazyGetter(this, "netMonitorStrings", () => Services.strings.createBundle
 loader.lazyGetter(this, "storageStrings", () => Services.strings.createBundle(storageProps));
 loader.lazyGetter(this, "scratchpadStrings", () => Services.strings.createBundle(scratchpadProps));
 
-let Tools = {};
+var Tools = {};
 exports.Tools = Tools;
 
 // Definitions
@@ -88,10 +89,13 @@ Tools.inspector = {
   url: "chrome://browser/content/devtools/inspector/inspector.xul",
   label: l10n("inspector.label", inspectorStrings),
   panelLabel: l10n("inspector.panelLabel", inspectorStrings),
-  tooltip: l10n("inspector.tooltip", inspectorStrings),
+  get tooltip() {
+    return l10n("inspector.tooltip2", inspectorStrings,
+    ( osString == "Darwin" ? "Cmd+Opt+" : "Ctrl+Shift+" ) + this.key);
+  },
   inMenu: true,
   commands: [
-    "devtools/resize-commands",
+    "devtools/responsivedesign/resize-commands",
     "devtools/inspector/inspector-commands",
     "devtools/eyedropper/commands.js"
   ],
@@ -122,7 +126,10 @@ Tools.webConsole = {
   label: l10n("ToolboxTabWebconsole.label", webConsoleStrings),
   menuLabel: l10n("MenuWebconsole.label", webConsoleStrings),
   panelLabel: l10n("ToolboxWebConsole.panelLabel", webConsoleStrings),
-  tooltip: l10n("ToolboxWebconsole.tooltip", webConsoleStrings),
+  get tooltip() {
+    return l10n("ToolboxWebconsole.tooltip2", webConsoleStrings,
+    ( osString == "Darwin" ? "Cmd+Opt+" : "Ctrl+Shift+" ) + this.key);
+  },
   inMenu: true,
   commands: "devtools/webconsole/console-commands",
 
@@ -155,7 +162,10 @@ Tools.jsdebugger = {
   url: "chrome://browser/content/devtools/debugger.xul",
   label: l10n("ToolboxDebugger.label", debuggerStrings),
   panelLabel: l10n("ToolboxDebugger.panelLabel", debuggerStrings),
-  tooltip: l10n("ToolboxDebugger.tooltip", debuggerStrings),
+  get tooltip() {
+    return l10n("ToolboxDebugger.tooltip2", debuggerStrings,
+    ( osString == "Darwin" ? "Cmd+Opt+" : "Ctrl+Shift+" ) + this.key);
+  },
   inMenu: true,
   commands: "devtools/debugger/debugger-commands",
 
@@ -179,7 +189,10 @@ Tools.styleEditor = {
   url: "chrome://browser/content/devtools/styleeditor.xul",
   label: l10n("ToolboxStyleEditor.label", styleEditorStrings),
   panelLabel: l10n("ToolboxStyleEditor.panelLabel", styleEditorStrings),
-  tooltip: l10n("ToolboxStyleEditor.tooltip2", styleEditorStrings),
+  get tooltip() {
+    return l10n("ToolboxStyleEditor.tooltip3", styleEditorStrings,
+    "Shift+" + functionkey(this.key));
+  },
   inMenu: true,
   commands: "devtools/styleeditor/styleeditor-commands",
 
@@ -196,7 +209,7 @@ Tools.shaderEditor = {
   id: "shadereditor",
   ordinal: 5,
   visibilityswitch: "devtools.shadereditor.enabled",
-  icon: "chrome://browser/skin/devtools/tool-styleeditor.svg",
+  icon: "chrome://browser/skin/devtools/tool-shadereditor.svg",
   invertIconForLightTheme: true,
   url: "chrome://browser/content/devtools/shadereditor.xul",
   label: l10n("ToolboxShaderEditor.label", shaderEditorStrings),
@@ -242,11 +255,14 @@ Tools.performance = {
   highlightedicon: "chrome://browser/skin/devtools/tool-profiler-active.svg",
   url: "chrome://browser/content/devtools/performance.xul",
   visibilityswitch: "devtools.performance.enabled",
-  label: l10n("profiler.label2", profilerStrings),
-  panelLabel: l10n("profiler.panelLabel2", profilerStrings),
-  tooltip: l10n("profiler.tooltip2", profilerStrings),
-  accesskey: l10n("profiler.accesskey", profilerStrings),
-  key: l10n("profiler.commandkey2", profilerStrings),
+  label: l10n("performance.label", performanceStrings),
+  panelLabel: l10n("performance.panelLabel", performanceStrings),
+  get tooltip() {
+    return l10n("performance.tooltip", performanceStrings,
+    "Shift+" + functionkey(this.key));
+  },
+  accesskey: l10n("performance.accesskey", performanceStrings),
+  key: l10n("performance.commandkey", performanceStrings),
   modifiers: "shift",
   inMenu: true,
 
@@ -256,6 +272,31 @@ Tools.performance = {
 
   build: function (frame, target) {
     return new PerformancePanel(frame, target);
+  }
+};
+
+Tools.memory = {
+  id: "memory",
+  ordinal: 8,
+  icon: "chrome://browser/skin/devtools/tool-styleeditor.svg",
+  invertIconForLightTheme: true,
+  url: "chrome://browser/content/devtools/memory.xhtml",
+  visibilityswitch: "devtools.memory.enabled",
+  label: "Memory",
+  panelLabel: "Memory Panel",
+  tooltip: "Memory (keyboardshortcut)",
+  hiddenInOptions: true,
+
+  isTargetSupported: function (target) {
+    // TODO 1201907
+    // Once Fx44 lands, we should add a root trait `heapSnapshots`
+    // to indicate that the memory actor can handle this.
+    // Shouldn't make this change until Fx44, however.
+    return true; // target.getTrait("heapSnapshots");
+  },
+
+  build: function (frame, target) {
+    return new MemoryPanel(frame, target);
   }
 };
 
@@ -271,7 +312,10 @@ Tools.netMonitor = {
   url: "chrome://browser/content/devtools/netmonitor.xul",
   label: l10n("netmonitor.label", netMonitorStrings),
   panelLabel: l10n("netmonitor.panelLabel", netMonitorStrings),
-  tooltip: l10n("netmonitor.tooltip", netMonitorStrings),
+  get tooltip() {
+    return l10n("netmonitor.tooltip2", netMonitorStrings,
+    ( osString == "Darwin" ? "Cmd+Opt+" : "Ctrl+Shift+" ) + this.key);
+  },
   inMenu: true,
 
   isTargetSupported: function(target) {
@@ -296,7 +340,10 @@ Tools.storage = {
   label: l10n("storage.label", storageStrings),
   menuLabel: l10n("storage.menuLabel", storageStrings),
   panelLabel: l10n("storage.panelLabel", storageStrings),
-  tooltip: l10n("storage.tooltip2", storageStrings),
+  get tooltip() {
+    return l10n("storage.tooltip3", storageStrings,
+    "Shift+" + functionkey(this.key));
+  },
   inMenu: true,
 
   isTargetSupported: function(target) {
@@ -352,7 +399,7 @@ Tools.scratchpad = {
   }
 };
 
-let defaultTools = [
+var defaultTools = [
   Tools.options,
   Tools.webConsole,
   Tools.inspector,
@@ -364,7 +411,8 @@ let defaultTools = [
   Tools.performance,
   Tools.netMonitor,
   Tools.storage,
-  Tools.scratchpad
+  Tools.scratchpad,
+  Tools.memory,
 ];
 
 exports.defaultTools = defaultTools;
@@ -399,12 +447,18 @@ exports.defaultThemes = [
  *        The key to lookup.
  * @returns A localized version of the given key.
  */
-function l10n(name, bundle)
+function l10n(name, bundle, arg)
 {
   try {
-    return bundle.GetStringFromName(name);
+    return arg ? bundle.formatStringFromName(name, [arg], 1)
+    : bundle.GetStringFromName(name);
   } catch (ex) {
     Services.console.logStringMessage("Error reading '" + name + "'");
     throw new Error("l10n error with " + name);
   }
+}
+
+function functionkey(shortkey)
+{
+  return shortkey.split("_")[1];
 }

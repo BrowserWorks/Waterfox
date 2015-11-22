@@ -70,7 +70,7 @@ public:
     return !!aTexture;
   }
 
-  virtual TemporaryRef<gfx::DataSourceSurface> GetAsSurface() override
+  virtual already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override
   {
     return nullptr; // XXX - implement this (for MOZ_DUMP_PAINTING)
   }
@@ -87,7 +87,7 @@ protected:
   RefPtr<MacIOSurface> mSurface;
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif // MOZILLA_GFX_MACIOSURFACETEXTUREHOSTOGL_BASIC_H

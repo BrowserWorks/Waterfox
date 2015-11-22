@@ -17,7 +17,7 @@
 
 namespace js {
     struct PerformanceGroup;
-}
+} // namespace js
 
 struct JSPrincipals {
     /* Don't call "destroy"; use reference counting macros below. */
@@ -86,7 +86,7 @@ JS_GetSecurityCallbacks(JSRuntime* rt);
  * called again, passing nullptr for 'prin'.
  */
 extern JS_PUBLIC_API(void)
-JS_SetTrustedPrincipals(JSRuntime* rt, const JSPrincipals* prin);
+JS_SetTrustedPrincipals(JSRuntime* rt, JSPrincipals* prin);
 
 typedef void
 (* JSDestroyPrincipalsOp)(JSPrincipals* principals);

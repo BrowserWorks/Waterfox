@@ -477,9 +477,9 @@ nsSliderFrame::HandleEvent(nsPresContext* aPresContext,
 
   if (isDraggingThumb())
   {
-    switch (aEvent->message) {
-    case NS_TOUCH_MOVE:
-    case NS_MOUSE_MOVE: {
+    switch (aEvent->mMessage) {
+    case eTouchMove:
+    case eMouseMove: {
       nsPoint eventPoint;
       if (!GetEventPoint(aEvent, eventPoint)) {
         break;
@@ -540,13 +540,16 @@ nsSliderFrame::HandleEvent(nsPresContext* aPresContext,
     }
     break;
 
-    case NS_TOUCH_END:
-    case NS_MOUSE_BUTTON_UP:
+    case eTouchEnd:
+    case eMouseUp:
       if (ShouldScrollForEvent(aEvent)) {
         StopDrag();
         //we MUST call nsFrame HandleEvent for mouse ups to maintain the selection state and capture state.
         return nsFrame::HandleEvent(aPresContext, aEvent, aEventStatus);
       }
+
+    default:
+      break;
     }
 
     //return nsFrame::HandleEvent(aPresContext, aEvent, aEventStatus);
@@ -596,9 +599,9 @@ nsSliderFrame::HandleEvent(nsPresContext* aPresContext,
            aEvent->AsMouseEvent()->button == WidgetMouseEvent::eRightButton) {
     // HandlePress and HandleRelease are usually called via
     // nsFrame::HandleEvent, but only for the left mouse button.
-    if (aEvent->message == NS_MOUSE_BUTTON_DOWN) {
+    if (aEvent->mMessage == eMouseDown) {
       HandlePress(aPresContext, aEvent, aEventStatus);
-    } else if (aEvent->message == NS_MOUSE_BUTTON_UP) {
+    } else if (aEvent->mMessage == eMouseUp) {
       HandleRelease(aPresContext, aEvent, aEventStatus);
     }
 
@@ -607,10 +610,13 @@ nsSliderFrame::HandleEvent(nsPresContext* aPresContext,
 #endif
 
   // XXX hack until handle release is actually called in nsframe.
-//  if (aEvent->message == NS_MOUSE_OUT || aEvent->message == NS_MOUSE_RIGHT_BUTTON_UP || aEvent->message == NS_MOUSE_LEFT_BUTTON_UP)
-  //   HandleRelease(aPresContext, aEvent, aEventStatus);
+  //  if (aEvent->mMessage == eMouseOut ||
+  //      aEvent->mMessage == NS_MOUSE_RIGHT_BUTTON_UP ||
+  //      aEvent->mMessage == NS_MOUSE_LEFT_BUTTON_UP) {
+  //    HandleRelease(aPresContext, aEvent, aEventStatus);
+  //  }
 
-  if (aEvent->message == NS_MOUSE_OUT && mChange)
+  if (aEvent->mMessage == eMouseOut && mChange)
      HandleRelease(aPresContext, aEvent, aEventStatus);
 
   return nsFrame::HandleEvent(aPresContext, aEvent, aEventStatus);
@@ -727,21 +733,23 @@ nsSliderFrame::CurrentPositionChanged()
 
   // avoid putting the scroll thumb at subpixel positions which cause needless invalidations
   nscoord appUnitsPerPixel = PresContext()->AppUnitsPerDevPixel();
-  nsRect snappedThumbRect = ToAppUnits(newThumbRect.ToNearestPixels(appUnitsPerPixel), appUnitsPerPixel);
+  nsPoint snappedThumbLocation = ToAppUnits(
+      newThumbRect.TopLeft().ToNearestPixels(appUnitsPerPixel),
+      appUnitsPerPixel);
   if (IsHorizontal()) {
-    newThumbRect.x = snappedThumbRect.x;
-    newThumbRect.width = snappedThumbRect.width;
+    newThumbRect.x = snappedThumbLocation.x;
   } else {
-    newThumbRect.y = snappedThumbRect.y;
-    newThumbRect.height = snappedThumbRect.height;
+    newThumbRect.y = snappedThumbLocation.y;
   }
-  newThumbRect = newThumbRect.Intersect(clientRect);
 
   // set the rect
   thumbFrame->SetRect(newThumbRect);
 
   // Request a repaint of the scrollbar
-  SchedulePaint();
+  nsIScrollableFrame* scrollableFrame = do_QueryFrame(GetScrollbar()->GetParent());
+  if (!scrollableFrame || scrollableFrame->LastScrollOrigin() != nsGkAtoms::apz) {
+    SchedulePaint();
+  }
 
   mCurPos = curPos;
 
@@ -1040,12 +1048,12 @@ nsSliderFrame::RemoveListener()
 bool
 nsSliderFrame::ShouldScrollForEvent(WidgetGUIEvent* aEvent)
 {
-  switch (aEvent->message) {
-    case NS_TOUCH_START:
-    case NS_TOUCH_END:
+  switch (aEvent->mMessage) {
+    case eTouchStart:
+    case eTouchEnd:
       return true;
-    case NS_MOUSE_BUTTON_DOWN:
-    case NS_MOUSE_BUTTON_UP: {
+    case eMouseDown:
+    case eMouseUp: {
       uint16_t button = aEvent->AsMouseEvent()->button;
 #ifdef MOZ_WIDGET_GTK
       return (button == WidgetMouseEvent::eLeftButton) ||
@@ -1068,11 +1076,11 @@ nsSliderFrame::ShouldScrollToClickForEvent(WidgetGUIEvent* aEvent)
     return false;
   }
 
-  if (aEvent->message == NS_TOUCH_START) {
+  if (aEvent->mMessage == eTouchStart) {
     return GetScrollToClick();
   }
 
-  if (aEvent->message != NS_MOUSE_BUTTON_DOWN) {
+  if (aEvent->mMessage != eMouseDown) {
     return false;
   }
 

@@ -7,6 +7,7 @@ if [ "$1" == "--help" ]; then
   exit 0;
 fi
 
+# Causes script to abort immediately if error code is not checked.
 set -e
 
 # Main tests
@@ -22,6 +23,16 @@ if [ -x "${LOOPDIR}/${ESLINT}" ]; then
   echo 'eslint run finished.'
 fi
 
+# Build tests coverage.
+MISSINGDEPSMSG="\nMake sure all dependencies are up to date by running
+'npm install' inside the 'browser/components/loop/test/' directory.\n"
+(
+cd ${LOOPDIR}/test
+if ! npm run-script build-coverage ; then
+  echo $MISSINGDEPSMSG && exit 1
+fi
+)
+
 ./mach xpcshell-test ${LOOPDIR}/
 ./mach marionette-test ${LOOPDIR}/manifest.ini
 
@@ -35,6 +46,7 @@ TESTS="
   ${LOOPDIR}/test/mochitest
   browser/components/uitour/test/browser_UITour_loop.js
   browser/base/content/test/general/browser_devices_get_user_media_about_urls.js
+  browser/base/content/test/general/browser_parsable_css.js
 "
 
 ./mach mochitest $TESTS
@@ -42,9 +54,3 @@ TESTS="
 if [ "$1" != "--skip-e10s" ]; then
   ./mach mochitest --e10s $TESTS
 fi
-
-# This is currently disabled because the test itself is busted.  Once bug
-# 1062821 is landed, we should see if things work again, and then re-enable it.
-# The re-enabling is tracked in bug 1113350.
-#
-#  browser/base/content/test/general/browser_parsable_css.js \

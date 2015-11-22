@@ -56,7 +56,7 @@ public:
     StackScopedCloneOptions* mOptions;
     AutoObjectVector mReflectors;
     AutoObjectVector mFunctions;
-    nsTArray<nsRefPtr<FileImpl>> mBlobImpls;
+    nsTArray<nsRefPtr<BlobImpl>> mBlobImpls;
 };
 
 static JSObject*
@@ -116,8 +116,8 @@ StackScopedCloneRead(JSContext* cx, JSStructuredCloneReader* reader, uint32_t ta
         // otherwise the static analysis thinks it can gc the JSObject via the stack.
         JS::Rooted<JS::Value> val(cx);
         {
-            nsRefPtr<File> blob = new File(global, cloneData->mBlobImpls[idx]);
-            if (!GetOrCreateDOMReflector(cx, blob, &val)) {
+            nsRefPtr<Blob> blob = Blob::Create(global, cloneData->mBlobImpls[idx]);
+            if (!ToJSValue(cx, blob, &val)) {
                 return nullptr;
             }
         }
@@ -137,7 +137,7 @@ StackScopedCloneRead(JSContext* cx, JSStructuredCloneReader* reader, uint32_t ta
       {
         nsRefPtr<MozNDEFRecord> ndefRecord = new MozNDEFRecord(global);
         result = ndefRecord->ReadStructuredClone(cx, reader) ?
-                 ndefRecord->WrapObject(cx, JS::NullPtr()) : nullptr;
+                 ndefRecord->WrapObject(cx, nullptr) : nullptr;
       }
       return result;
 #else
@@ -178,9 +178,9 @@ StackScopedCloneWrite(JSContext* cx, JSStructuredCloneWriter* writer,
     StackScopedCloneData* cloneData = static_cast<StackScopedCloneData*>(closure);
 
     {
-        File* blob = nullptr;
+        Blob* blob = nullptr;
         if (NS_SUCCEEDED(UNWRAP_OBJECT(Blob, obj, blob))) {
-            FileImpl* blobImpl = blob->Impl();
+            BlobImpl* blobImpl = blob->Impl();
             MOZ_ASSERT(blobImpl);
 
             if (!cloneData->mBlobImpls.AppendElement(blobImpl))
@@ -271,7 +271,17 @@ StackScopedClone(JSContext* cx, StackScopedCloneOptions& options,
     }
 
     // Now recreate the clones in the target compartment.
-    return buffer.read(cx, val, &gStackScopedCloneCallbacks, &data);
+    if (!buffer.read(cx, val, &gStackScopedCloneCallbacks, &data))
+        return false;
+
+    // Deep-freeze if requested.
+    if (options.deepFreeze && val.isObject()) {
+        RootedObject obj(cx, &val.toObject());
+        if (!JS_DeepFreezeObject(cx, obj))
+            return false;
+    }
+
+    return true;
 }
 
 // Note - This function mirrors the logic of CheckPassToChrome in
@@ -436,7 +446,7 @@ ExportFunction(JSContext* cx, HandleValue vfunction, HandleValue vscope, HandleV
             JSFunction* fun = JS_GetObjectFunction(funObj);
             RootedString funName(cx, JS_GetFunctionId(fun));
             if (!funName)
-                funName = JS_InternString(cx, "");
+                funName = JS_AtomizeAndPinString(cx, "");
 
             if (!JS_StringToId(cx, funName, &id))
                 return false;

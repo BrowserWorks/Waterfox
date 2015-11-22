@@ -69,6 +69,9 @@ public:
                          aShiftKey, aMetaKey, aButton,
                          aRelatedTarget);
   }
+
+  void InitializeExtraMouseEventDictionaryMembers(const MouseEventInit& aParam);
+
   bool GetModifierState(const nsAString& aKeyArg)
   {
     return GetModifierStateInternal(aKeyArg);
@@ -77,11 +80,11 @@ public:
                                                   const nsAString& aType,
                                                   const MouseEventInit& aParam,
                                                   ErrorResult& aRv);
-  int32_t MozMovementX()
+  int32_t MovementX()
   {
     return GetMovementPoint().x;
   }
-  int32_t MozMovementY()
+  int32_t MovementY()
   {
     return GetMovementPoint().y;
   }
@@ -128,5 +131,10 @@ protected:
 #define NS_FORWARD_TO_MOUSEEVENT \
   NS_FORWARD_NSIDOMMOUSEEVENT(MouseEvent::) \
   NS_FORWARD_TO_UIEVENT
+
+already_AddRefed<mozilla::dom::MouseEvent>
+NS_NewDOMMouseEvent(mozilla::dom::EventTarget* aOwner,
+                    nsPresContext* aPresContext,
+                    mozilla::WidgetMouseEvent* aEvent);
 
 #endif // mozilla_dom_MouseEvent_h_

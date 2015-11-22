@@ -164,8 +164,6 @@ ViewportFrame::AdjustReflowStateAsContainingBlock(nsHTMLReflowState* aReflowStat
     rect.SizeTo(ps->GetScrollPositionClampingScrollPortSize());
   }
 
-  // Make sure content document fixed-position margins are respected.
-  rect.Deflate(ps->GetContentDocumentFixedPositionMargins());
   return rect;
 }
 
@@ -183,9 +181,9 @@ ViewportFrame::Reflow(nsPresContext*           aPresContext,
   // Initialize OUT parameters
   aStatus = NS_FRAME_COMPLETE;
 
-  // Because |Reflow| sets mComputedHeight on the child to
-  // availableHeight.
-  AddStateBits(NS_FRAME_CONTAINS_RELATIVE_HEIGHT);
+  // Because |Reflow| sets ComputedBSize() on the child to our
+  // ComputedBSize().
+  AddStateBits(NS_FRAME_CONTAINS_RELATIVE_BSIZE);
 
   // Set our size up front, since some parts of reflow depend on it
   // being already set.  Note that the computed height may be

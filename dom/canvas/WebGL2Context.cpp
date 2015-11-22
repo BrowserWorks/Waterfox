@@ -6,12 +6,13 @@
 #include "WebGL2Context.h"
 
 #include "GLContext.h"
-#include "WebGLBuffer.h"
-#include "WebGLTransformFeedback.h"
 #include "mozilla/dom/WebGL2RenderingContextBinding.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Telemetry.h"
+#include "WebGLBuffer.h"
+#include "WebGLFormats.h"
+#include "WebGLTransformFeedback.h"
 
 namespace mozilla {
 
@@ -27,6 +28,12 @@ WebGL2Context::~WebGL2Context()
 
 }
 
+UniquePtr<webgl::FormatUsageAuthority>
+WebGL2Context::CreateFormatUsage() const
+{
+    return webgl::FormatUsageAuthority::CreateForWebGL2();
+}
+
 /*static*/ bool
 WebGL2Context::IsSupported()
 {
@@ -40,9 +47,9 @@ WebGL2Context::Create()
 }
 
 JSObject*
-WebGL2Context::WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto)
+WebGL2Context::WrapObject(JSContext* cx, JS::Handle<JSObject*> givenProto)
 {
-    return dom::WebGL2RenderingContextBinding::Wrap(cx, this, aGivenProto);
+    return dom::WebGL2RenderingContextBinding::Wrap(cx, this, givenProto);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,9 +62,7 @@ static const WebGLExtensionID kNativelySupportedExtensions[] = {
     WebGLExtensionID::EXT_sRGB,
     WebGLExtensionID::OES_element_index_uint,
     WebGLExtensionID::OES_standard_derivatives,
-    WebGLExtensionID::OES_texture_float,
     WebGLExtensionID::OES_texture_float_linear,
-    WebGLExtensionID::OES_texture_half_float,
     WebGLExtensionID::OES_texture_half_float_linear,
     WebGLExtensionID::OES_vertex_array_object,
     WebGLExtensionID::WEBGL_depth_texture,
@@ -74,8 +79,7 @@ static const gl::GLFeature kRequiredFeatures[] = {
     gl::GLFeature::element_index_uint,
     gl::GLFeature::frag_color_float,
     gl::GLFeature::frag_depth,
-    gl::GLFeature::framebuffer_blit,
-    gl::GLFeature::framebuffer_multisample,
+    gl::GLFeature::framebuffer_object,
     gl::GLFeature::get_integer_indexed,
     gl::GLFeature::get_integer64_indexed,
     gl::GLFeature::gpu_shader4,
@@ -128,6 +132,14 @@ WebGLContext::InitWebGL2()
             missingList.push_back(kRequiredFeatures[i]);
     }
 
+#ifdef XP_MACOSX
+    // On OSX, GL core profile is used. This requires texture swizzle
+    // support to emulate legacy texture formats: ALPHA, LUMINANCE,
+    // and LUMINANCE_ALPHA.
+    if (!gl->IsSupported(gl::GLFeature::texture_swizzle))
+        missingList.push_back(gl::GLFeature::texture_swizzle);
+#endif
+
     if (missingList.size()) {
         nsAutoCString exts;
         for (auto itr = missingList.begin(); itr != missingList.end(); ++itr) {
@@ -151,6 +163,16 @@ WebGLContext::InitWebGL2()
                      &mGLMaxTransformFeedbackSeparateAttribs);
     gl->GetUIntegerv(LOCAL_GL_MAX_UNIFORM_BUFFER_BINDINGS,
                      &mGLMaxUniformBufferBindings);
+
+    if (MinCapabilityMode()) {
+        mGLMax3DTextureSize = MINVALUE_GL_MAX_3D_TEXTURE_SIZE;
+        mGLMaxArrayTextureLayers = MINVALUE_GL_MAX_ARRAY_TEXTURE_LAYERS;
+    } else {
+        gl->fGetIntegerv(LOCAL_GL_MAX_3D_TEXTURE_SIZE,
+                         (GLint*) &mGLMax3DTextureSize);
+        gl->fGetIntegerv(LOCAL_GL_MAX_ARRAY_TEXTURE_LAYERS,
+                         (GLint*) &mGLMaxArrayTextureLayers);
+    }
 
     mBoundTransformFeedbackBuffers.SetLength(mGLMaxTransformFeedbackSeparateAttribs);
     mBoundUniformBuffers.SetLength(mGLMaxUniformBufferBindings);

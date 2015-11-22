@@ -45,10 +45,12 @@ DeviceStorageRequestParent::Dispatch()
         new DeviceStorageFile(p.type(), p.storageName(), p.relpath());
 
       BlobParent* bp = static_cast<BlobParent*>(p.blobParent());
-      nsRefPtr<FileImpl> blobImpl = bp->GetBlobImpl();
+      nsRefPtr<BlobImpl> blobImpl = bp->GetBlobImpl();
 
+      ErrorResult rv;
       nsCOMPtr<nsIInputStream> stream;
-      blobImpl->GetInternalStream(getter_AddRefs(stream));
+      blobImpl->GetInternalStream(getter_AddRefs(stream), rv);
+      MOZ_ASSERT(!rv.Failed());
 
       nsRefPtr<CancelableRunnable> r = new WriteFileEvent(this, dsf, stream,
                                                           DEVICE_STORAGE_REQUEST_CREATE);
@@ -68,10 +70,12 @@ DeviceStorageRequestParent::Dispatch()
         new DeviceStorageFile(p.type(), p.storageName(), p.relpath());
 
       BlobParent* bp = static_cast<BlobParent*>(p.blobParent());
-      nsRefPtr<FileImpl> blobImpl = bp->GetBlobImpl();
+      nsRefPtr<BlobImpl> blobImpl = bp->GetBlobImpl();
 
+      ErrorResult rv;
       nsCOMPtr<nsIInputStream> stream;
-      blobImpl->GetInternalStream(getter_AddRefs(stream));
+      blobImpl->GetInternalStream(getter_AddRefs(stream), rv);
+      MOZ_ASSERT(!rv.Failed());
 
       nsRefPtr<CancelableRunnable> r = new WriteFileEvent(this, dsf, stream,
                                                           DEVICE_STORAGE_REQUEST_APPEND);
@@ -523,12 +527,12 @@ DeviceStorageRequestParent::PostBlobSuccessEvent::CancelableRun() {
 
   nsString fullPath;
   mFile->GetFullPath(fullPath);
-  nsRefPtr<File> blob = new File(nullptr,
-    new FileImplFile(fullPath, mime, mLength, mFile->mFile,
-                     mLastModificationDate));
+  nsRefPtr<BlobImpl> blob =
+    new BlobImplFile(fullPath, mime, mLength, mFile->mFile,
+                     mLastModificationDate);
 
   ContentParent* cp = static_cast<ContentParent*>(mParent->Manager());
-  BlobParent* actor = cp->GetOrCreateActorForBlob(blob);
+  BlobParent* actor = cp->GetOrCreateActorForBlobImpl(blob);
   if (!actor) {
     ErrorResponse response(NS_LITERAL_STRING(POST_ERROR_EVENT_UNKNOWN));
     unused << mParent->Send__delete__(mParent, response);
@@ -724,7 +728,7 @@ DeviceStorageRequestParent::FreeSpaceFileEvent::CancelableRun()
 
   int64_t freeSpace = 0;
   if (mFile) {
-    mFile->GetDiskFreeSpace(&freeSpace);
+    mFile->GetStorageFreeSpace(&freeSpace);
   }
 
   nsCOMPtr<nsIRunnable> r;

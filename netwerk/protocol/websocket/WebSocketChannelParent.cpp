@@ -66,13 +66,12 @@ WebSocketChannelParent::RecvAsyncOpen(const URIParams& aURI,
                                       const bool& aClientSetPingInterval,
                                       const uint32_t& aPingTimeout,
                                       const bool& aClientSetPingTimeout,
-                                      const WebSocketLoadInfoArgs& aLoadInfoArgs)
+                                      const OptionalLoadInfoArgs& aLoadInfoArgs)
 {
   LOG(("WebSocketChannelParent::RecvAsyncOpen() %p\n", this));
 
   nsresult rv;
   nsCOMPtr<nsIURI> uri;
-  nsCOMPtr<nsIPrincipal> requestingPrincipal, triggeringPrincipal;
   nsCOMPtr<nsILoadInfo> loadInfo;
 
   bool appOffline = false;
@@ -95,23 +94,10 @@ WebSocketChannelParent::RecvAsyncOpen(const URIParams& aURI,
   if (NS_FAILED(rv))
     goto fail;
 
-  requestingPrincipal =
-    mozilla::ipc::PrincipalInfoToPrincipal(aLoadInfoArgs.requestingPrincipalInfo(), &rv);
-  if (NS_FAILED(rv)) {
+  rv = LoadInfoArgsToLoadInfo(aLoadInfoArgs, getter_AddRefs(loadInfo));
+  if (NS_FAILED(rv))
     goto fail;
-  }
 
-  triggeringPrincipal =
-    mozilla::ipc::PrincipalInfoToPrincipal(aLoadInfoArgs.triggeringPrincipalInfo(), &rv);
-  if (NS_FAILED(rv)) {
-    goto fail;
-  }
-
-  loadInfo = new LoadInfo(requestingPrincipal,
-                          triggeringPrincipal,
-                          aLoadInfoArgs.securityFlags(),
-                          aLoadInfoArgs.contentPolicyType(),
-                          aLoadInfoArgs.innerWindowID());
   rv = mChannel->SetLoadInfo(loadInfo);
   if (NS_FAILED(rv)) {
     goto fail;
@@ -304,8 +290,8 @@ WebSocketChannelParent::GetInterface(const nsIID & iid, void **result)
 
   // Only support nsILoadContext if child channel's callbacks did too
   if (iid.Equals(NS_GET_IID(nsILoadContext)) && mLoadContext) {
-    NS_ADDREF(mLoadContext);
-    *result = static_cast<nsILoadContext*>(mLoadContext);
+    nsCOMPtr<nsILoadContext> copy = mLoadContext;
+    copy.forget(result);
     return NS_OK;
   }
 

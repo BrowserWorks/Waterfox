@@ -22,7 +22,7 @@ add_task(function*() {
 
   info("Follow the link and wait for the new tab to open");
   let onTabOpened = once(gBrowser.tabContainer, "TabOpen");
-  inspector.followAttributeLink();
+  inspector.onFollowLink();
   let {target: tab} = yield onTabOpened;
   yield waitForTabLoad(tab);
 
@@ -35,13 +35,13 @@ add_task(function*() {
   yield selectNode("label", inspector);
 
   info("Set the popupNode to the node that contains the ref");
-  ({editor}) = yield getContainerForSelector("label", inspector);
+  ({editor} = yield getContainerForSelector("label", inspector));
   popupNode = editor.attrElements.get("for").querySelector(".link");
   inspector.panelDoc.popupNode = popupNode;
 
   info("Follow the link and wait for the new node to be selected");
   let onSelection = inspector.selection.once("new-node-front");
-  inspector.followAttributeLink();
+  inspector.onFollowLink();
   yield onSelection;
 
   ok(true, "A new node was selected");
@@ -51,13 +51,13 @@ add_task(function*() {
   yield selectNode("output", inspector);
 
   info("Set the popupNode to the node that contains the ref");
-  ({editor}) = yield getContainerForSelector("output", inspector);
+  ({editor} = yield getContainerForSelector("output", inspector));
   popupNode = editor.attrElements.get("for").querySelectorAll(".link")[2];
   inspector.panelDoc.popupNode = popupNode;
 
   info("Try to follow the link and check that no new node were selected");
   let onFailed = inspector.once("idref-attribute-link-failed");
-  inspector.followAttributeLink();
+  inspector.onFollowLink();
   yield onFailed;
 
   ok(true, "The node selection failed");

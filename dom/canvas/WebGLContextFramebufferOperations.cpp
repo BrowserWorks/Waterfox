@@ -8,8 +8,9 @@
 #include "WebGLRenderbuffer.h"
 #include "WebGLFramebuffer.h"
 #include "GLContext.h"
+#include "GLScreenBuffer.h"
 
-using namespace mozilla;
+namespace mozilla {
 
 void
 WebGLContext::Clear(GLbitfield mask)
@@ -94,7 +95,7 @@ WebGLContext::ClearDepth(GLclampf v)
 
     MakeContextCurrent();
     mDepthClearValue = GLClampFloat(v);
-    gl->fClearDepth(v);
+    gl->fClearDepth(mDepthClearValue);
 }
 
 void
@@ -160,16 +161,8 @@ WebGLContext::DrawBuffers(const dom::Sequence<GLenum>& buffers)
             return ErrorInvalidValue("drawBuffers: invalid <buffers> (main framebuffer: buffers.length must be 1)");
         }
 
-        MakeContextCurrent();
-
-        if (buffers[0] == LOCAL_GL_NONE) {
-            const GLenum drawBuffersCommand = LOCAL_GL_NONE;
-            gl->fDrawBuffers(1, &drawBuffersCommand);
-            return;
-        }
-        else if (buffers[0] == LOCAL_GL_BACK) {
-            const GLenum drawBuffersCommand = LOCAL_GL_COLOR_ATTACHMENT0;
-            gl->fDrawBuffers(1, &drawBuffersCommand);
+        if (buffers[0] == LOCAL_GL_NONE || buffers[0] == LOCAL_GL_BACK) {
+            gl->Screen()->SetDrawBuffer(buffers[0]);
             return;
         }
         return ErrorInvalidOperation("drawBuffers: invalid operation (main framebuffer: buffers[0] must be GL_NONE or GL_BACK)");
@@ -250,6 +243,4 @@ WebGLContext::StencilMaskSeparate(GLenum face, GLuint mask)
     gl->fStencilMaskSeparate(face, mask);
 }
 
-
-
-
+} // namespace mozilla

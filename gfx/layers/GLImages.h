@@ -16,14 +16,14 @@
 namespace mozilla {
 namespace gl {
 class AndroidSurfaceTexture;
-}
+} // namespace gl
 namespace layers {
 
 class GLImage : public Image {
 public:
   explicit GLImage(ImageFormat aFormat) : Image(nullptr, aFormat){}
 
-  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
+  virtual already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
 };
 
 class EGLImageImage : public GLImage {
@@ -78,7 +78,7 @@ private:
 
 #endif // MOZ_WIDGET_ANDROID
 
-} // layers
-} // mozilla
+} // namespace layers
+} // namespace mozilla
 
 #endif // GFX_GLIMAGES_H

@@ -6,19 +6,19 @@
  * have memory data (withMemory: false), and that when a memory panel is selected,
  * switching to a panel that does not have memory goes to a default panel instead.
  */
-function spawnTest () {
+function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
-  let { EVENTS, PerformanceController, OverviewView, DetailsView } = panel.panelWin;
+  let { EVENTS, PerformanceController, DetailsView } = panel.panelWin;
   let { $, RecordingsView, WaterfallView, MemoryCallTreeView, MemoryFlameGraphView } = panel.panelWin;
 
-  Services.prefs.setBoolPref(MEMORY_PREF, false);
+  Services.prefs.setBoolPref(ALLOCATIONS_PREF, false);
   yield startRecording(panel);
   yield stopRecording(panel);
 
   ok(DetailsView.isViewSelected(WaterfallView),
     "The waterfall view is selected by default in the details view.");
 
-  Services.prefs.setBoolPref(MEMORY_PREF, true);
+  Services.prefs.setBoolPref(ALLOCATIONS_PREF, true);
   // The toolbar buttons will always be hidden when a recording isn't available,
   // so make sure we have one that's finished.
   yield startRecording(panel);

@@ -18,6 +18,10 @@
 #include "ipc/Nuwa.h"
 #endif
 
+#ifdef MOZ_B2G_LOADER
+#include "ProcessUtils.h"
+#endif
+
 // This number is fairly arbitrary ... the intention is to put off
 // launching another app process until the last one has finished
 // loading its content, to reduce CPU/memory/IO contention.
@@ -133,7 +137,14 @@ PreallocatedProcessManagerImpl::Init()
     os->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID,
                     /* weakRef = */ false);
   }
-  RereadPrefs();
+#ifdef MOZ_B2G_LOADER
+  if (!mozilla::ipc::ProcLoaderIsInitialized()) {
+    Disable();
+  } else
+#endif
+  {
+    RereadPrefs();
+  }
 }
 
 NS_IMETHODIMP
@@ -267,8 +278,13 @@ PreallocatedProcessManagerImpl::GetSpareProcess()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (mSpareProcesses.IsEmpty()) {
+  if (!mIsNuwaReady) {
     return nullptr;
+  }
+
+  if (mSpareProcesses.IsEmpty()) {
+    // After this call, there should be a spare process.
+    mPreallocatedAppProcess->ForkNewProcess(true);
   }
 
   nsRefPtr<ContentParent> process = mSpareProcesses.LastElement();
@@ -358,7 +374,7 @@ PreallocatedProcessManagerImpl::PreallocatedProcessReady()
 void
 PreallocatedProcessManagerImpl::NuwaFork()
 {
-  mozilla::unused << mPreallocatedAppProcess->SendNuwaFork();
+  mPreallocatedAppProcess->ForkNewProcess(false);
 }
 #endif
 
@@ -417,7 +433,7 @@ inline PreallocatedProcessManagerImpl* GetPPMImpl()
   return PreallocatedProcessManagerImpl::Singleton();
 }
 
-} // anonymous namespace
+} // namespace
 
 namespace mozilla {
 

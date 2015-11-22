@@ -53,7 +53,7 @@
 #include "nsRDFCID.h"
 #include "nsTArray.h"
 #include "nsXPIDLString.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "rdf.h"
 #include "rdfutil.h"
 #include "nsReadableUtils.h"
@@ -223,7 +223,7 @@ protected:
 
     nsAutoTArray<RDFContextStackElement, 8>* mContextStack;
 
-    nsIURI*      mDocumentURL;
+    nsCOMPtr<nsIURI> mDocumentURL;
 
 private:
     static PRLogModuleInfo* gLog;
@@ -263,8 +263,7 @@ RDFContentSinkImpl::RDFContentSinkImpl()
       mTextSize(0),
       mState(eRDFContentSinkState_InProlog),
       mParseMode(eRDFContentSinkParseMode_Literal),
-      mContextStack(nullptr),
-      mDocumentURL(nullptr)
+      mContextStack(nullptr)
 {
     if (gRefCnt++ == 0) {
         NS_DEFINE_CID(kRDFServiceCID, NS_RDFSERVICE_CID);
@@ -304,10 +303,8 @@ RDFContentSinkImpl::~RDFContentSinkImpl()
     fprintf(stdout, "%d - RDF: RDFContentSinkImpl\n", gInstanceCount);
 #endif
 
-    NS_IF_RELEASE(mDocumentURL);
-
     if (mContextStack) {
-        PR_LOG(gLog, PR_LOG_WARNING,
+        MOZ_LOG(gLog, LogLevel::Warning,
                ("rdfxml: warning! unclosed tag"));
 
         // XXX we should never need to do this, but, we'll write the
@@ -323,10 +320,10 @@ RDFContentSinkImpl::~RDFContentSinkImpl()
             // print some fairly useless debugging info
             // XXX we should save line numbers on the context stack: this'd
             // be about 1000x more helpful.
-            if (resource && PR_LOG_TEST(gLog, PR_LOG_NOTICE)) {
+            if (resource && MOZ_LOG_TEST(gLog, LogLevel::Debug)) {
                 nsXPIDLCString uri;
                 resource->GetValue(getter_Copies(uri));
-                PR_LOG(gLog, PR_LOG_NOTICE,
+                MOZ_LOG(gLog, LogLevel::Debug,
                        ("rdfxml:   uri=%s", (const char*) uri));
             }
 
@@ -421,7 +418,7 @@ RDFContentSinkImpl::HandleStartElement(const char16_t *aName,
       break;
 
   case eRDFContentSinkState_InEpilog:
-      PR_LOG(gLog, PR_LOG_WARNING,
+      MOZ_LOG(gLog, LogLevel::Warning,
              ("rdfxml: unexpected content in epilog at line %d",
               aLineNumber));
       break;
@@ -438,7 +435,7 @@ RDFContentSinkImpl::HandleEndElement(const char16_t *aName)
   nsIRDFResource* resource;
   if (NS_FAILED(PopContext(resource, mState, mParseMode))) {
       // XXX parser didn't catch unmatched tags?
-      if (PR_LOG_TEST(gLog, PR_LOG_WARNING)) {
+      if (MOZ_LOG_TEST(gLog, LogLevel::Warning)) {
           nsAutoString tagStr(aName);
           char* tagCStr = ToNewCString(tagStr);
 
@@ -608,8 +605,6 @@ RDFContentSinkImpl::Init(nsIURI* aURL)
         return NS_ERROR_NULL_POINTER;
 
     mDocumentURL = aURL;
-    NS_ADDREF(aURL);
-
     mState = eRDFContentSinkState_InProlog;
     return NS_OK;
 }
@@ -850,7 +845,7 @@ RDFContentSinkImpl::GetIdAboutAttribute(const char16_t** aAttributes,
         }
         else if (localName == kAboutEachAtom) {
             // XXX we don't deal with aboutEach...
-            //PR_LOG(gLog, PR_LOG_WARNING,
+            //MOZ_LOG(gLog, LogLevel::Warning,
             //       ("rdfxml: ignoring aboutEach at line %d",
             //        aNode.GetSourceLineNumber()));
         }
@@ -1039,7 +1034,7 @@ RDFContentSinkImpl::OpenRDF(const char16_t* aName)
         SplitExpatName(aName, getter_AddRefs(localName));
 
     if (!nameSpaceURI.EqualsLiteral(RDF_NAMESPACE_URI) || localName != kRDFAtom) {
-       // PR_LOG(gLog, PR_LOG_ALWAYS,
+       // MOZ_LOG(gLog, LogLevel::Info,
        //        ("rdfxml: expected RDF:RDF at line %d",
        //         aNode.GetSourceLineNumber()));
 
@@ -1213,7 +1208,7 @@ RDFContentSinkImpl::OpenMember(const char16_t* aName,
 
     if (!nameSpaceURI.EqualsLiteral(RDF_NAMESPACE_URI) ||
         localName != kLiAtom) {
-        PR_LOG(gLog, PR_LOG_ALWAYS,
+        MOZ_LOG(gLog, LogLevel::Error,
                ("rdfxml: expected RDF:li at line %d",
                 -1)); // XXX pass in line number
 

@@ -7,21 +7,19 @@
 #include "nsDOMDataChannel.h"
 
 #include "base/basictypes.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* GetDataChannelLog();
-#endif
 #undef LOG
-#define LOG(args) PR_LOG(GetDataChannelLog(), PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(GetDataChannelLog(), mozilla::LogLevel::Debug, args)
 
 
 #include "nsDOMDataChannelDeclarations.h"
 #include "nsDOMDataChannel.h"
 #include "nsIDOMDataChannel.h"
-#include "nsIDOMMessageEvent.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/File.h"
+#include "mozilla/dom/MessageEvent.h"
 #include "mozilla/dom/ScriptSettings.h"
 
 #include "nsError.h"
@@ -29,7 +27,6 @@ extern PRLogModuleInfo* GetDataChannelLog();
 #include "nsContentUtils.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIScriptObjectPrincipal.h"
-#include "nsNetUtil.h"
 
 #include "DataChannel.h"
 
@@ -267,21 +264,18 @@ nsDOMDataChannel::Send(const nsAString& aData, ErrorResult& aRv)
 }
 
 void
-nsDOMDataChannel::Send(File& aData, ErrorResult& aRv)
+nsDOMDataChannel::Send(Blob& aData, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread(), "Not running on main thread");
 
   nsCOMPtr<nsIInputStream> msgStream;
-  nsresult rv = aData.GetInternalStream(getter_AddRefs(msgStream));
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  aData.GetInternalStream(getter_AddRefs(msgStream), aRv);
+  if (NS_WARN_IF(aRv.Failed())){
     return;
   }
 
-  uint64_t msgLength;
-  rv = aData.GetSize(&msgLength);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+  uint64_t msgLength = aData.GetSize(aRv);
+  if (NS_WARN_IF(aRv.Failed())){
     return;
   }
 
@@ -394,7 +388,7 @@ nsDOMDataChannel::DoOnMessageAvailable(const nsACString& aData,
       JS::Rooted<JSObject*> arrayBuf(cx);
       rv = nsContentUtils::CreateArrayBuffer(cx, aData, arrayBuf.address());
       NS_ENSURE_SUCCESS(rv, rv);
-      jsData = OBJECT_TO_JSVAL(arrayBuf);
+      jsData.setObject(*arrayBuf);
     } else {
       NS_RUNTIMEABORT("Unknown binary type!");
       return NS_ERROR_UNEXPECTED;
@@ -404,23 +398,18 @@ nsDOMDataChannel::DoOnMessageAvailable(const nsACString& aData,
     JSString* jsString = JS_NewUCStringCopyN(cx, utf16data.get(), utf16data.Length());
     NS_ENSURE_TRUE(jsString, NS_ERROR_FAILURE);
 
-    jsData = STRING_TO_JSVAL(jsString);
+    jsData.setString(jsString);
   }
 
-  nsCOMPtr<nsIDOMEvent> event;
-  rv = NS_NewDOMMessageEvent(getter_AddRefs(event), this, nullptr, nullptr);
-  NS_ENSURE_SUCCESS(rv,rv);
+  nsRefPtr<MessageEvent> event = NS_NewDOMMessageEvent(this, nullptr, nullptr);
 
-  nsCOMPtr<nsIDOMMessageEvent> messageEvent = do_QueryInterface(event);
-  rv = messageEvent->InitMessageEvent(NS_LITERAL_STRING("message"),
-                                      false, false,
-                                      jsData, mOrigin, EmptyString(),
-                                      nullptr);
+  rv = event->InitMessageEvent(NS_LITERAL_STRING("message"), false, false,
+                               jsData, mOrigin, EmptyString(), nullptr);
   NS_ENSURE_SUCCESS(rv,rv);
   event->SetTrusted(true);
 
   LOG(("%p(%p): %s - Dispatching\n",this,(void*)mDataChannel,__FUNCTION__));
-  rv = DispatchDOMEvent(nullptr, event, nullptr, nullptr);
+  rv = DispatchDOMEvent(nullptr, static_cast<Event*>(event), nullptr, nullptr);
   if (NS_FAILED(rv)) {
     NS_WARNING("Failed to dispatch the message event!!!");
   }
@@ -453,9 +442,7 @@ nsDOMDataChannel::OnSimpleEvent(nsISupports* aContext, const nsAString& aName)
     return NS_OK;
   }
 
-  nsCOMPtr<nsIDOMEvent> event;
-  rv = NS_NewDOMEvent(getter_AddRefs(event), this, nullptr, nullptr);
-  NS_ENSURE_SUCCESS(rv,rv);
+  nsRefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
 
   rv = event->InitEvent(aName, false, false);
   NS_ENSURE_SUCCESS(rv,rv);

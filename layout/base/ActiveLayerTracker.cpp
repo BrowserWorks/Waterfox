@@ -5,6 +5,7 @@
 #include "ActiveLayerTracker.h"
 
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/gfx/Matrix.h"
 #include "nsExpirationTracker.h"
 #include "nsContainerFrame.h"
 #include "nsIContent.h"
@@ -12,10 +13,13 @@
 #include "nsPIDOMWindow.h"
 #include "nsIDocument.h"
 #include "nsAnimationManager.h"
+#include "nsStyleTransformMatrix.h"
 #include "nsTransitionManager.h"
 #include "nsDisplayList.h"
 
 namespace mozilla {
+
+using namespace gfx;
 
 /**
  * This tracks the state of a frame that may need active layers due to
@@ -34,6 +38,7 @@ public:
     , mContent(nullptr)
     , mOpacityRestyleCount(0)
     , mTransformRestyleCount(0)
+    , mScaleRestyleCount(0)
     , mLeftRestyleCount(0)
     , mTopRestyleCount(0)
     , mRightRestyleCount(0)
@@ -71,9 +76,14 @@ public:
   nsIContent* mContent;
 
   nsExpirationState mState;
+
+  // Previous scale due to the CSS transform property.
+  Maybe<gfxSize> mPreviousTransformScale;
+
   // Number of restyle operations detected
   uint8_t mOpacityRestyleCount;
   uint8_t mTransformRestyleCount;
+  uint8_t mScaleRestyleCount;
   uint8_t mLeftRestyleCount;
   uint8_t mTopRestyleCount;
   uint8_t mRightRestyleCount;
@@ -90,7 +100,9 @@ public:
   // 75-100ms is a good timeout period. We use 4 generations of 25ms each.
   enum { GENERATION_MS = 100 };
   LayerActivityTracker()
-    : nsExpirationTracker<LayerActivity,4>(GENERATION_MS) {}
+    : nsExpirationTracker<LayerActivity,4>(GENERATION_MS,
+                                           "LayerActivityTracker")
+  {}
   ~LayerActivityTracker() {
     AgeAllGenerations();
   }
@@ -206,12 +218,54 @@ ActiveLayerTracker::TransferActivityToFrame(nsIContent* aContent, nsIFrame* aFra
   aFrame->Properties().Set(LayerActivityProperty(), layerActivity);
 }
 
+static void
+IncrementScaleRestyleCountIfNeeded(nsIFrame* aFrame, LayerActivity* aActivity)
+{
+  const nsStyleDisplay* display = aFrame->StyleDisplay();
+  if (!display->mSpecifiedTransform) {
+    // The transform was removed.
+    aActivity->mPreviousTransformScale = Nothing();
+    IncrementMutationCount(&aActivity->mScaleRestyleCount);
+    return;
+  }
+
+  // Compute the new scale due to the CSS transform property.
+  nsPresContext* presContext = aFrame->PresContext();
+  RuleNodeCacheConditions dummy;
+  nsStyleTransformMatrix::TransformReferenceBox refBox(aFrame);
+  Matrix4x4 transform =
+    nsStyleTransformMatrix::ReadTransforms(display->mSpecifiedTransform->mHead,
+                                           aFrame->StyleContext(),
+                                           presContext,
+                                           dummy, refBox,
+                                           presContext->AppUnitsPerCSSPixel());
+  Matrix transform2D;
+  if (!transform.Is2D(&transform2D)) {
+    // We don't attempt to handle 3D transforms; just assume the scale changed.
+    aActivity->mPreviousTransformScale = Nothing();
+    IncrementMutationCount(&aActivity->mScaleRestyleCount);
+    return;
+  }
+
+  gfxSize scale = ThebesMatrix(transform2D).ScaleFactors(true);
+  if (aActivity->mPreviousTransformScale == Some(scale)) {
+    return;  // Nothing changed.
+  }
+
+  aActivity->mPreviousTransformScale = Some(scale);
+  IncrementMutationCount(&aActivity->mScaleRestyleCount);
+}
+
 /* static */ void
 ActiveLayerTracker::NotifyRestyle(nsIFrame* aFrame, nsCSSProperty aProperty)
 {
   LayerActivity* layerActivity = GetLayerActivityForUpdate(aFrame);
   uint8_t& mutationCount = layerActivity->RestyleCountForProperty(aProperty);
   IncrementMutationCount(&mutationCount);
+
+  if (aProperty == eCSSProperty_transform) {
+    IncrementScaleRestyleCountIfNeeded(aFrame, layerActivity);
+  }
 }
 
 /* static */ void
@@ -268,12 +322,12 @@ ActiveLayerTracker::IsStyleAnimated(nsDisplayListBuilder* aBuilder,
   // TODO: Add some abuse restrictions
   if ((aFrame->StyleDisplay()->mWillChangeBitField & NS_STYLE_WILL_CHANGE_TRANSFORM) &&
       aProperty == eCSSProperty_transform &&
-      (!aBuilder || aBuilder->IsInWillChangeBudget(aFrame))) {
+      (!aBuilder || aBuilder->IsInWillChangeBudget(aFrame, aFrame->GetSize()))) {
     return true;
   }
   if ((aFrame->StyleDisplay()->mWillChangeBitField & NS_STYLE_WILL_CHANGE_OPACITY) &&
       aProperty == eCSSProperty_opacity &&
-      (!aBuilder || aBuilder->IsInWillChangeBudget(aFrame))) {
+      (!aBuilder || aBuilder->IsInWillChangeBudget(aFrame, aFrame->GetSize()))) {
     return true;
   }
 
@@ -286,12 +340,7 @@ ActiveLayerTracker::IsStyleAnimated(nsDisplayListBuilder* aBuilder,
   if (aProperty == eCSSProperty_transform && aFrame->Preserves3D()) {
     return IsStyleAnimated(aBuilder, aFrame->GetParent(), aProperty);
   }
-  nsIContent* content = aFrame->GetContent();
-  if (content) {
-    return nsLayoutUtils::HasCurrentAnimationsForProperties(content, &aProperty, 1);
-  }
-
-  return false;
+  return nsLayoutUtils::HasCurrentAnimationsForProperties(aFrame, &aProperty, 1);
 }
 
 /* static */ bool
@@ -318,6 +367,76 @@ ActiveLayerTracker::IsOffsetOrMarginStyleAnimated(nsIFrame* aFrame)
   return false;
 }
 
+// A helper function for IsScaleSubjectToAnimation which returns true if the
+// given AnimationCollection contains a current effect that animates scale.
+static bool
+ContainsAnimatedScale(AnimationCollection* aCollection, nsIFrame* aFrame)
+{
+  if (!aCollection) {
+    return false;
+  }
+
+  for (dom::Animation* anim : aCollection->mAnimations) {
+    if (!anim->HasCurrentEffect()) {
+      continue;
+    }
+    KeyframeEffectReadOnly* effect = anim->GetEffect();
+    for (const AnimationProperty& prop : effect->Properties()) {
+      if (prop.mProperty != eCSSProperty_transform) {
+        continue;
+      }
+      for (AnimationPropertySegment segment : prop.mSegments) {
+        gfxSize from = segment.mFromValue.GetScaleValue(aFrame);
+        if (from != gfxSize(1.0f, 1.0f)) {
+          return true;
+        }
+        gfxSize to = segment.mToValue.GetScaleValue(aFrame);
+        if (to != gfxSize(1.0f, 1.0f)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+/* static */ bool
+ActiveLayerTracker::IsScaleSubjectToAnimation(nsIFrame* aFrame)
+{
+  // Check whether JavaScript is animating this frame's scale.
+  LayerActivity* layerActivity = GetLayerActivity(aFrame);
+  if (layerActivity && layerActivity->mScaleRestyleCount >= 2) {
+    return true;
+  }
+
+  nsIContent* content = aFrame->GetContent();
+  if (!content || !content->IsElement()) {
+    return false;
+  }
+
+  nsCSSPseudoElements::Type pseudoType =
+    aFrame->StyleContext()->GetPseudoType();
+
+  // Check if any transitions associated with this frame may animate its scale.
+  AnimationCollection* transitions =
+    aFrame->PresContext()->TransitionManager()->GetAnimations(
+      content->AsElement(), pseudoType, false /* don't create */);
+  if (ContainsAnimatedScale(transitions, aFrame)) {
+    return true;
+  }
+
+  // Check if any animations associated with this frame may animate its scale.
+  AnimationCollection* animations =
+    aFrame->PresContext()->AnimationManager()->GetAnimations(
+      content->AsElement(), pseudoType, false /* don't create */);
+  if (ContainsAnimatedScale(animations, aFrame)) {
+    return true;
+  }
+
+  return false;
+}
+
 /* static */ void
 ActiveLayerTracker::NotifyContentChange(nsIFrame* aFrame)
 {
@@ -339,4 +458,4 @@ ActiveLayerTracker::Shutdown()
   gLayerActivityTracker = nullptr;
 }
 
-}
+} // namespace mozilla

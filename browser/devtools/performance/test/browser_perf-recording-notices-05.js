@@ -5,9 +5,12 @@
  * Tests that when a recording overlaps the circular buffer, that
  * a class is assigned to the recording notices.
  */
-function spawnTest () {
-  let { panel } = yield initPerformance(SIMPLE_URL, void 0, { TEST_MOCK_PROFILER_CHECK_TIMER: 10 });
-  let { EVENTS, $, PerformanceController, PerformanceView } = panel.panelWin;
+function* spawnTest() {
+  let { panel } = yield initPerformance(SIMPLE_URL);
+  let { gFront, EVENTS, $, PerformanceController, PerformanceView } = panel.panelWin;
+
+  // Set a fast profiler-status update interval
+  yield gFront.setProfilerStatusInterval(10);
 
   let supported = false;
   let enabled = false;

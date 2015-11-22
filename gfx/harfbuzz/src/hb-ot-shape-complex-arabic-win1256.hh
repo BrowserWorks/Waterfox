@@ -133,7 +133,6 @@
  */
 
 #define OT_LOOKUP_TYPE_SUBST_SINGLE	1u
-#define OT_LOOKUP_TYPE_SUBST_MULTIPLE	2u
 #define OT_LOOKUP_TYPE_SUBST_LIGATURE	4u
 
 #define OT_SUBLOOKUP_SINGLE_SUBST_FORMAT2(Name, FromGlyphs, ToGlyphs) \
@@ -143,7 +142,7 @@
 		OT_UARRAY(Name##Substitute, OT_LIST(ToGlyphs)) \
 	) \
 	OT_COVERAGE1(Name##Coverage, OT_LIST(FromGlyphs)) \
-	/* ASSERT_STATIC_EXPR len(FromGlyphs) == len(ToGlyphs) */
+	/* ASSERT_STATIC_EXPR_ZERO (len(FromGlyphs) == len(ToGlyphs)) */
 
 #define OT_SUBLOOKUP_LIGATURE_SUBST_FORMAT1(Name, FirstGlyphs, LigatureSetOffsets) \
 	OT_SUBLOOKUP(Name, 1, \
@@ -152,7 +151,7 @@
 		OT_UARRAY(Name##LigatureSetOffsetsArray, OT_LIST(LigatureSetOffsets)) \
 	) \
 	OT_COVERAGE1(Name##Coverage, OT_LIST(FirstGlyphs)) \
-	/* ASSERT_STATIC_EXPR len(FirstGlyphs) == len(LigatureSetOffsets) */
+	/* ASSERT_STATIC_EXPR_ZERO (len(FirstGlyphs) == len(LigatureSetOffsets)) */
 
 #define OT_LIGATURE_SET(Name, LigatureSetOffsets) \
 	OT_UARRAY(Name, OT_LIST(LigatureSetOffsets))

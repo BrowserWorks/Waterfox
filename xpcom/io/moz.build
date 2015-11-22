@@ -123,7 +123,9 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'CocoaFileUtils.mm',
     ]
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CC']:
+    CFLAGS += ['-Wshadow']
+    CXXFLAGS += ['-Wshadow']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

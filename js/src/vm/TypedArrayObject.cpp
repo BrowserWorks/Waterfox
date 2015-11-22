@@ -68,15 +68,6 @@ TypedArrayLayout TypedArrayObject::layout_(false, // shared
                                            &TypedArrayObject::classes[0],
                                            &TypedArrayObject::classes[Scalar::MaxTypedArrayViewType]);
 
-TypedArrayLayout::TypedArrayLayout(bool isShared, bool isNeuterable, const Class* firstClass,
-                                   const Class* maxClass)
-    : isShared_(isShared)
-    , isNeuterable_(isNeuterable)
-    , firstClass_(firstClass)
-    , maxClass_(maxClass)
-{
-}
-
 /* static */ int
 TypedArrayLayout::lengthOffset()
 {
@@ -206,7 +197,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
   public:
     typedef NativeType ElementType;
 
-    static Scalar::Type ArrayTypeID() { return TypeIDOfType<NativeType>(); }
+    static MOZ_CONSTEXPR Scalar::Type ArrayTypeID() { return TypeIDOfType<NativeType>::id; }
     static bool ArrayTypeIsUnsigned() { return TypeIsUnsigned<NativeType>(); }
     static bool ArrayTypeIsFloatingPoint() { return TypeIsFloatingPoint<NativeType>(); }
 
@@ -233,7 +224,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
             return nullptr;
 
         return NewFunctionWithProto(cx, class_constructor, 3,
-                                    JSFunction::NATIVE_CTOR, NullPtr(),
+                                    JSFunction::NATIVE_CTOR, nullptr,
                                     ClassName(key, cx),
                                     ctorProto, gc::AllocKind::FUNCTION,
                                     SingletonObject);
@@ -253,7 +244,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
 
         RootedFunction fun(cx);
         fun = NewNativeFunction(cx, ArrayBufferObject::createTypedArrayFromBuffer<NativeType>,
-                                0, NullPtr());
+                                0, nullptr);
         if (!fun)
             return false;
 
@@ -352,6 +343,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
                                   ? GetGCObjectKind(instanceClass())
                                   : AllocKindForLazyBuffer(len * sizeof(NativeType));
 
+        AutoSetNewObjectMetadata metadata(cx);
         Rooted<TypedArrayObject*> obj(cx);
         if (proto)
             obj = makeProtoInstance(cx, proto, allocKind);
@@ -489,8 +481,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
   public:
     static JSObject*
     fromBuffer(JSContext* cx, HandleObject bufobj, uint32_t byteOffset, int32_t lengthInt) {
-        RootedObject proto(cx, nullptr);
-        return fromBufferWithProto(cx, bufobj, byteOffset, lengthInt, proto);
+        return fromBufferWithProto(cx, bufobj, byteOffset, lengthInt, nullptr);
     }
 
     static JSObject*
@@ -672,8 +663,8 @@ template<typename T>
 TypedArrayObjectTemplate<T>::fromArray(JSContext* cx, HandleObject other)
 {
     uint32_t len;
-    if (other->is<TypedArrayObject>()) {
-        len = other->as<TypedArrayObject>().length();
+    if (IsAnyTypedArray(other)) {
+        len = AnyTypedArrayLength(other);
     } else if (!GetLengthProperty(cx, other, &len)) {
         return nullptr;
     }
@@ -747,7 +738,7 @@ TypedArray_byteOffsetGetter(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-BufferGetterImpl(JSContext* cx, CallArgs args)
+BufferGetterImpl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(TypedArrayObject::is(args.thisv()));
     Rooted<TypedArrayObject*> tarray(cx, &args.thisv().toObject().as<TypedArrayObject>());
@@ -810,9 +801,7 @@ TypedArrayObject::protoFunctions[] = {
     // Both of these are actually defined to the same object in FinishTypedArrayInit.
     JS_SELF_HOSTED_FN("values", "TypedArrayValues", 0, JSPROP_DEFINE_LATE),
     JS_SELF_HOSTED_SYM_FN(iterator, "TypedArrayValues", 0, JSPROP_DEFINE_LATE),
-#ifdef NIGHTLY_BUILD
     JS_SELF_HOSTED_FN("includes", "TypedArrayIncludes", 2, 0),
-#endif
     JS_FS_END
 };
 
@@ -860,7 +849,7 @@ TypedArrayObject::sharedTypedArrayPrototypeClass = {
 
 template<typename T>
 bool
-ArrayBufferObject::createTypedArrayFromBufferImpl(JSContext* cx, CallArgs args)
+ArrayBufferObject::createTypedArrayFromBufferImpl(JSContext* cx, const CallArgs& args)
 {
     typedef TypedArrayObjectTemplate<T> ArrayType;
     MOZ_ASSERT(IsArrayBuffer(args.thisv()));
@@ -977,16 +966,10 @@ DataViewObject::create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
 {
     MOZ_ASSERT(byteOffset <= INT32_MAX);
     MOZ_ASSERT(byteLength <= INT32_MAX);
+    MOZ_ASSERT(byteOffset + byteLength < UINT32_MAX);
 
     RootedObject proto(cx, protoArg);
     RootedObject obj(cx);
-
-    // This is overflow-safe: 2 * INT32_MAX is still a valid uint32_t.
-    if (byteOffset + byteLength > arrayBuffer->byteLength()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_ARG_INDEX_OUT_OF_RANGE, "1");
-        return nullptr;
-
-    }
 
     NewObjectKind newKind = DataViewNewObjectKind(cx, byteLength, proto);
     obj = NewBuiltinClassInstance(cx, &class_, newKind);
@@ -1010,12 +993,17 @@ DataViewObject::create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
         }
     }
 
+    // Caller should have established these preconditions, and no
+    // (non-self-hosted) JS code has had an opportunity to run so nothing can
+    // have invalidated them.
+    MOZ_ASSERT(byteOffset <= arrayBuffer->byteLength());
+    MOZ_ASSERT(byteOffset + byteLength <= arrayBuffer->byteLength());
+
     DataViewObject& dvobj = obj->as<DataViewObject>();
     dvobj.setFixedSlot(TypedArrayLayout::BYTEOFFSET_SLOT, Int32Value(byteOffset));
     dvobj.setFixedSlot(TypedArrayLayout::LENGTH_SLOT, Int32Value(byteLength));
     dvobj.setFixedSlot(TypedArrayLayout::BUFFER_SLOT, ObjectValue(*arrayBuffer));
     dvobj.initPrivate(arrayBuffer->dataPointer() + byteOffset);
-    MOZ_ASSERT(byteOffset + byteLength <= arrayBuffer->byteLength());
 
     // Include a barrier if the data view's data pointer is in the nursery, as
     // is done for typed arrays.
@@ -1041,9 +1029,8 @@ DataViewObject::construct(JSContext* cx, JSObject* bufobj, const CallArgs& args,
     }
 
     Rooted<ArrayBufferObject*> buffer(cx, &AsArrayBuffer(bufobj));
-    uint32_t bufferLength = buffer->byteLength();
     uint32_t byteOffset = 0;
-    uint32_t byteLength = bufferLength;
+    uint32_t byteLength = buffer->byteLength();
 
     if (args.length() > 1) {
         if (!ToUint32(cx, args[1], &byteOffset))
@@ -1063,6 +1050,8 @@ DataViewObject::construct(JSContext* cx, JSObject* bufobj, const CallArgs& args,
                 return false;
             }
         } else {
+            uint32_t bufferLength = buffer->byteLength();
+
             if (byteOffset > bufferLength) {
                 JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                                      JSMSG_ARG_INDEX_OUT_OF_RANGE, "1");
@@ -1077,7 +1066,7 @@ DataViewObject::construct(JSContext* cx, JSObject* bufobj, const CallArgs& args,
     MOZ_ASSERT(byteOffset <= INT32_MAX);
     MOZ_ASSERT(byteLength <= INT32_MAX);
 
-    if (byteOffset + byteLength > bufferLength) {
+    if (byteOffset + byteLength > buffer->byteLength()) {
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_ARG_INDEX_OUT_OF_RANGE, "1");
         return false;
     }
@@ -1120,7 +1109,7 @@ DataViewObject::class_constructor(JSContext* cx, unsigned argc, Value* vp)
         return true;
     }
 
-    return construct(cx, bufobj, args, NullPtr());
+    return construct(cx, bufobj, args, nullptr);
 }
 
 template <typename NativeType>
@@ -1213,7 +1202,7 @@ struct DataViewIO
 template<typename NativeType>
 /* static */ bool
 DataViewObject::read(JSContext* cx, Handle<DataViewObject*> obj,
-                     CallArgs& args, NativeType* val, const char* method)
+                     const CallArgs& args, NativeType* val, const char* method)
 {
     if (args.length() < 1) {
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
@@ -1270,7 +1259,7 @@ WebIDLCast<double>(JSContext* cx, HandleValue value, double* out)
 template<typename NativeType>
 /* static */ bool
 DataViewObject::write(JSContext* cx, Handle<DataViewObject*> obj,
-                      CallArgs& args, const char* method)
+                      const CallArgs& args, const char* method)
 {
     if (args.length() < 2) {
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
@@ -1297,7 +1286,7 @@ DataViewObject::write(JSContext* cx, Handle<DataViewObject*> obj,
 }
 
 bool
-DataViewObject::getInt8Impl(JSContext* cx, CallArgs args)
+DataViewObject::getInt8Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1318,7 +1307,7 @@ DataViewObject::fun_getInt8(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getUint8Impl(JSContext* cx, CallArgs args)
+DataViewObject::getUint8Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1339,7 +1328,7 @@ DataViewObject::fun_getUint8(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getInt16Impl(JSContext* cx, CallArgs args)
+DataViewObject::getInt16Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1360,7 +1349,7 @@ DataViewObject::fun_getInt16(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getUint16Impl(JSContext* cx, CallArgs args)
+DataViewObject::getUint16Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1381,7 +1370,7 @@ DataViewObject::fun_getUint16(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getInt32Impl(JSContext* cx, CallArgs args)
+DataViewObject::getInt32Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1402,7 +1391,7 @@ DataViewObject::fun_getInt32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getUint32Impl(JSContext* cx, CallArgs args)
+DataViewObject::getUint32Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1423,7 +1412,7 @@ DataViewObject::fun_getUint32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getFloat32Impl(JSContext* cx, CallArgs args)
+DataViewObject::getFloat32Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1445,7 +1434,7 @@ DataViewObject::fun_getFloat32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getFloat64Impl(JSContext* cx, CallArgs args)
+DataViewObject::getFloat64Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1467,7 +1456,7 @@ DataViewObject::fun_getFloat64(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setInt8Impl(JSContext* cx, CallArgs args)
+DataViewObject::setInt8Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1487,7 +1476,7 @@ DataViewObject::fun_setInt8(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setUint8Impl(JSContext* cx, CallArgs args)
+DataViewObject::setUint8Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1507,7 +1496,7 @@ DataViewObject::fun_setUint8(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setInt16Impl(JSContext* cx, CallArgs args)
+DataViewObject::setInt16Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1527,7 +1516,7 @@ DataViewObject::fun_setInt16(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setUint16Impl(JSContext* cx, CallArgs args)
+DataViewObject::setUint16Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1547,7 +1536,7 @@ DataViewObject::fun_setUint16(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setInt32Impl(JSContext* cx, CallArgs args)
+DataViewObject::setInt32Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1567,7 +1556,7 @@ DataViewObject::fun_setInt32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setUint32Impl(JSContext* cx, CallArgs args)
+DataViewObject::setUint32Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1587,7 +1576,7 @@ DataViewObject::fun_setUint32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setFloat32Impl(JSContext* cx, CallArgs args)
+DataViewObject::setFloat32Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1607,7 +1596,7 @@ DataViewObject::fun_setFloat32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setFloat64Impl(JSContext* cx, CallArgs args)
+DataViewObject::setFloat64Impl(JSContext* cx, const CallArgs& args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1797,8 +1786,9 @@ IMPL_TYPED_ARRAY_COMBINED_UNWRAPPERS(Float64, double, double)
 {                                                                              \
     #_typedArray,                                                              \
     JSCLASS_HAS_RESERVED_SLOTS(TypedArrayLayout::RESERVED_SLOTS) |             \
-    JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS |                        \
-    JSCLASS_HAS_CACHED_PROTO(JSProto_##_typedArray),                           \
+    JSCLASS_HAS_PRIVATE |                                                      \
+    JSCLASS_HAS_CACHED_PROTO(JSProto_##_typedArray) |                          \
+    JSCLASS_DELAY_METADATA_CALLBACK,                                           \
     nullptr,                 /* addProperty */                                 \
     nullptr,                 /* delProperty */                                 \
     nullptr,                 /* getProperty */                                 \
@@ -1833,8 +1823,8 @@ const Class TypedArrayObject::classes[Scalar::MaxTypedArrayViewType] = {
 // @@toStringTag) a custom class.  The third requirement mandates that each
 // prototype's class have the relevant typed array's cached JSProtoKey in them.
 // Thus we need one class with cached prototype per kind of typed array, with a
-// dummy createConstructor to placate js::ClassSpec::defined().
-#define IMPL_TYPED_ARRAY_PROTO_CLASS(typedArray) \
+// delegated ClassSpec.
+#define IMPL_TYPED_ARRAY_PROTO_CLASS(typedArray, i) \
 { \
     /*
      * Actually ({}).toString.call(Uint8Array.prototype) should throw, because
@@ -1859,27 +1849,27 @@ const Class TypedArrayObject::classes[Scalar::MaxTypedArrayViewType] = {
     nullptr, /* construct */ \
     nullptr, /* trace  */ \
     { \
-        typedArray::createConstructor, \
-        typedArray::createPrototype, \
+        DELEGATED_CLASSSPEC(&TypedArrayObject::classes[i].spec), \
         nullptr, \
         nullptr, \
         nullptr, \
         nullptr, \
         nullptr, \
-        JSProto_TypedArray \
+        nullptr, \
+        JSProto_TypedArray | ClassSpec::IsDelegated \
     } \
 }
 
 const Class TypedArrayObject::protoClasses[Scalar::MaxTypedArrayViewType] = {
-    IMPL_TYPED_ARRAY_PROTO_CLASS(Int8Array),
-    IMPL_TYPED_ARRAY_PROTO_CLASS(Uint8Array),
-    IMPL_TYPED_ARRAY_PROTO_CLASS(Int16Array),
-    IMPL_TYPED_ARRAY_PROTO_CLASS(Uint16Array),
-    IMPL_TYPED_ARRAY_PROTO_CLASS(Int32Array),
-    IMPL_TYPED_ARRAY_PROTO_CLASS(Uint32Array),
-    IMPL_TYPED_ARRAY_PROTO_CLASS(Float32Array),
-    IMPL_TYPED_ARRAY_PROTO_CLASS(Float64Array),
-    IMPL_TYPED_ARRAY_PROTO_CLASS(Uint8ClampedArray)
+    IMPL_TYPED_ARRAY_PROTO_CLASS(Int8Array, 0),
+    IMPL_TYPED_ARRAY_PROTO_CLASS(Uint8Array, 1),
+    IMPL_TYPED_ARRAY_PROTO_CLASS(Int16Array, 2),
+    IMPL_TYPED_ARRAY_PROTO_CLASS(Uint16Array, 3),
+    IMPL_TYPED_ARRAY_PROTO_CLASS(Int32Array, 4),
+    IMPL_TYPED_ARRAY_PROTO_CLASS(Uint32Array, 5),
+    IMPL_TYPED_ARRAY_PROTO_CLASS(Float32Array, 6),
+    IMPL_TYPED_ARRAY_PROTO_CLASS(Float64Array, 7),
+    IMPL_TYPED_ARRAY_PROTO_CLASS(Uint8ClampedArray, 8)
 };
 
 /* static */ bool
@@ -1898,7 +1888,6 @@ const Class DataViewObject::protoClass = {
 const Class DataViewObject::class_ = {
     "DataView",
     JSCLASS_HAS_PRIVATE |
-    JSCLASS_IMPLEMENTS_BARRIERS |
     JSCLASS_HAS_RESERVED_SLOTS(TypedArrayLayout::RESERVED_SLOTS) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_DataView),
     nullptr, /* addProperty */
@@ -1938,7 +1927,7 @@ const JSFunctionSpec DataViewObject::jsfuncs[] = {
 
 template<Value ValueGetter(DataViewObject* view)>
 bool
-DataViewObject::getterImpl(JSContext* cx, CallArgs args)
+DataViewObject::getterImpl(JSContext* cx, const CallArgs& args)
 {
     args.rval().set(ValueGetter(&args.thisv().toObject().as<DataViewObject>()));
     return true;
@@ -1961,7 +1950,7 @@ DataViewObject::defineGetter(JSContext* cx, PropertyName* name, HandleNativeObje
 
     Rooted<GlobalObject*> global(cx, cx->compartment()->maybeGlobal());
     JSObject* getter =
-        NewNativeFunction(cx, DataViewObject::getter<ValueGetter>, 0, NullPtr());
+        NewNativeFunction(cx, DataViewObject::getter<ValueGetter>, 0, nullptr);
     if (!getter)
         return false;
 
@@ -2006,7 +1995,7 @@ DataViewObject::initClass(JSContext* cx)
      * global for use by the DataViewObject constructor.
      */
     RootedFunction fun(cx, NewNativeFunction(cx, ArrayBufferObject::createDataViewForThis,
-                                             0, NullPtr()));
+                                             0, nullptr));
     if (!fun)
         return false;
 
@@ -2211,6 +2200,18 @@ JS_GetArrayBufferViewType(JSObject* obj)
     MOZ_CRASH("invalid ArrayBufferView type");
 }
 
+JS_FRIEND_API(js::Scalar::Type)
+JS_GetSharedArrayBufferViewType(JSObject* obj)
+{
+    obj = CheckedUnwrap(obj);
+    if (!obj)
+        return Scalar::MaxTypedArrayViewType;
+
+    if (obj->is<SharedTypedArrayObject>())
+        return obj->as<SharedTypedArrayObject>().type();
+    MOZ_CRASH("invalid SharedArrayBufferView type");
+}
+
 JS_FRIEND_API(int8_t*)
 JS_GetInt8ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
 {
@@ -2342,4 +2343,28 @@ JS_GetDataViewByteLength(JSObject* obj)
     if (!obj)
         return 0;
     return obj->as<DataViewObject>().byteLength();
+}
+
+JS_FRIEND_API(JSObject*)
+JS_NewDataView(JSContext* cx, HandleObject arrayBuffer, uint32_t byteOffset, int32_t byteLength)
+{
+    ConstructArgs cargs(cx);
+    if (!cargs.init(3))
+        return nullptr;
+
+    RootedObject constructor(cx);
+    JSProtoKey key = JSCLASS_CACHED_PROTO_KEY(&DataViewObject::class_);
+    if (!GetBuiltinConstructor(cx, key, &constructor))
+        return nullptr;
+
+    cargs[0].setObject(*arrayBuffer);
+    cargs[1].setNumber(byteOffset);
+    cargs[2].setInt32(byteLength);
+
+    RootedValue fun(cx, ObjectValue(*constructor));
+    RootedValue rval(cx);
+    if (!Construct(cx, fun, cargs, fun, &rval))
+        return nullptr;
+    MOZ_ASSERT(rval.isObject());
+    return &rval.toObject();
 }

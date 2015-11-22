@@ -106,16 +106,16 @@
 
 namespace js {
 
-class ProfileEntry;
-
 typedef HashMap<JSScript*, const char*, DefaultHasher<JSScript*>, SystemAllocPolicy>
         ProfileStringMap;
 
+class AutoSPSEntry;
 class SPSEntryMarker;
 class SPSBaselineOSRMarker;
 
 class SPSProfiler
 {
+    friend class AutoSPSEntry;
     friend class SPSEntryMarker;
     friend class SPSBaselineOSRMarker;
 
@@ -130,7 +130,8 @@ class SPSProfiler
     void                (*eventMarker_)(const char*);
 
     const char* allocProfileString(JSScript* script, JSFunction* function);
-    void push(const char* string, void* sp, JSScript* script, jsbytecode* pc, bool copy);
+    void push(const char* string, void* sp, JSScript* script, jsbytecode* pc, bool copy,
+              ProfileEntry::Category category = ProfileEntry::Category::JS);
     void pop();
 
   public:
@@ -227,7 +228,7 @@ class AutoSPSLock
  * This class is used to suppress profiler sampling during
  * critical sections where stack state is not valid.
  */
-class AutoSuppressProfilerSampling
+class MOZ_RAII AutoSuppressProfilerSampling
 {
   public:
     explicit AutoSuppressProfilerSampling(JSContext* cx MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
@@ -260,7 +261,7 @@ SPSProfiler::stringsReset()
  * that we're about to enter JS function calls. This is the only time in which a
  * valid stack pointer is pushed to the sampling stack.
  */
-class SPSEntryMarker
+class MOZ_RAII SPSEntryMarker
 {
   public:
     explicit SPSEntryMarker(JSRuntime* rt,
@@ -275,11 +276,30 @@ class SPSEntryMarker
 };
 
 /*
+ * RAII class to automatically add SPS psuedo frame entries.
+ *
+ * NB: The `label` string must be statically allocated.
+ */
+class MOZ_NONHEAP_CLASS AutoSPSEntry
+{
+  public:
+    explicit AutoSPSEntry(JSRuntime* rt, const char* label,
+                          ProfileEntry::Category category = ProfileEntry::Category::JS
+                          MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+    ~AutoSPSEntry();
+
+  private:
+    SPSProfiler* profiler_;
+    mozilla::DebugOnly<uint32_t> sizeBefore_;
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+};
+
+/*
  * This class is used in the interpreter to bound regions where the baseline JIT
  * being entered via OSR.  It marks the current top pseudostack entry as
  * OSR-ed
  */
-class SPSBaselineOSRMarker
+class MOZ_RAII SPSBaselineOSRMarker
 {
   public:
     explicit SPSBaselineOSRMarker(JSRuntime* rt, bool hasSPSFrame

@@ -6,25 +6,22 @@
 
 try {
 
-let chromeGlobal = this;
+var chromeGlobal = this;
 
 // Encapsulate in its own scope to allows loading this frame script
 // more than once.
 (function () {
   let Cu = Components.utils;
-  let { devtools } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-  const DevToolsUtils = devtools.require("devtools/toolkit/DevToolsUtils.js");
+  let { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+  const DevToolsUtils = require("devtools/toolkit/DevToolsUtils.js");
   const { dumpn } = DevToolsUtils;
-  const { DebuggerServer, ActorPool } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
+  const { DebuggerServer, ActorPool } = require("devtools/server/main");
 
+  // Note that this frame script may be evaluated in non-e10s build
+  // In such case, DebuggerServer is already going to be initialized.
   if (!DebuggerServer.initialized) {
     DebuggerServer.init();
-
-    // message manager helpers provided for actor module parent/child message exchange
-    DebuggerServer.parentMessageManager = {
-      sendSyncMessage: sendSyncMessage,
-      addMessageListener: addMessageListener
-    };
+    DebuggerServer.isInChildProcess = true;
   }
 
   // In case of apps being loaded in parent process, DebuggerServer is already
@@ -42,6 +39,7 @@ let chromeGlobal = this;
     let prefix = msg.data.prefix;
 
     let conn = DebuggerServer.connectToParent(prefix, mm);
+    conn.parentMessageManager = mm;
     connections.set(prefix, conn);
 
     let actor = new DebuggerServer.ContentActor(conn, chromeGlobal, prefix);
@@ -61,7 +59,7 @@ let chromeGlobal = this;
     let m, fn;
 
     try {
-      m = devtools.require(module);
+      m = require(module);
 
       if (!setupChild in m) {
         dumpn("ERROR: module '" + module + "' does not export '" +
@@ -104,7 +102,7 @@ let chromeGlobal = this;
     // (gInspectingNode). Later we'll fetch this variable again using
     // the findInspectingNode request over the remote debugging
     // protocol.
-    let inspector = devtools.require("devtools/server/actors/inspector");
+    let inspector = require("devtools/server/actors/inspector");
     inspector.setInspectingNode(msg.objects.node);
   });
   addMessageListener("debug:inspect", onInspect);

@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import org.json.JSONObject;
+import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.util.ThreadUtils;
 
@@ -53,8 +54,11 @@ public final class ANRReporter extends BroadcastReceiver
     private Handler mHandler;
     private volatile boolean mPendingANR;
 
+    @WrapForJNI
     private static native boolean requestNativeStack(boolean unwind);
+    @WrapForJNI
     private static native String getNativeStack();
+    @WrapForJNI
     private static native void releaseNativeStack();
 
     public static void register(Context context) {
@@ -475,7 +479,7 @@ public final class ANRReporter extends BroadcastReceiver
         // Only get native stack if Gecko is running.
         // Also, unwinding is memory intensive, so only unwind if we have enough memory.
         final boolean haveNativeStack =
-            GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning) ?
+            GeckoThread.isRunning() ?
             requestNativeStack(/* unwind */ SysInfo.getMemSize() >= 640) : false;
 
         try {

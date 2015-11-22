@@ -4,23 +4,23 @@
 
 "use strict";
 
+const { Cc, Ci, Cu, components } = require("chrome");
+const { openFileStream } = require("devtools/toolkit/DevToolsUtils");
 const protocol = require("devtools/server/protocol");
 const { method, RetVal, Arg, types } = protocol;
-const { MemoryBridge } = require("./utils/memory-bridge");
+const { Memory } = require("devtools/toolkit/shared/memory");
+const { actorBridge } = require("devtools/server/actors/common");
 loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "StackFrameCache",
                          "devtools/server/actors/utils/stack", true);
-
-/**
- * Proxies a call to the MemoryActor to the underlying MemoryBridge,
- * allowing access to MemoryBridge features by defining the RDP
- * request/response signature.
- */
-function linkBridge (methodName, definition) {
-  return method(function () {
-    return this.bridge[methodName].apply(this.bridge, arguments);
-  }, definition);
-}
+loader.lazyRequireGetter(this, "FileUtils",
+                         "resource://gre/modules/FileUtils.jsm", true);
+loader.lazyRequireGetter(this, "NetUtil", "resource://gre/modules/NetUtil.jsm", true);
+loader.lazyRequireGetter(this, "Task", "resource://gre/modules/Task.jsm", true);
+loader.lazyRequireGetter(this, "OS", "resource://gre/modules/osfile.jsm", true);
+loader.lazyRequireGetter(this, "HeapSnapshotFileUtils",
+                         "devtools/toolkit/heapsnapshot/HeapSnapshotFileUtils");
+loader.lazyRequireGetter(this, "ThreadSafeChromeUtils");
 
 types.addDictType("AllocationsRecordingOptions", {
   // The probability we sample any given allocation when recording
@@ -39,8 +39,13 @@ types.addDictType("AllocationsRecordingOptions", {
  * A tab-scoped instance of this actor will measure the memory footprint of its
  * parent tab. A global-scoped instance however, will measure the memory
  * footprint of the chrome window referenced by the root actor.
+ *
+ * This actor wraps the Memory module at toolkit/devtools/shared/memory.js
+ * and provides RDP definitions.
+ *
+ * @see toolkit/devtools/shared/memory.js for documentation.
  */
-let MemoryActor = protocol.ActorClass({
+var MemoryActor = exports.MemoryActor = protocol.ActorClass({
   typeName: "memory",
 
   /**
@@ -56,71 +61,95 @@ let MemoryActor = protocol.ActorClass({
       type: "garbage-collection",
       data: Arg(0, "json"),
     },
+
+    // Same data as the data from `getAllocations` -- only fired if
+    // `autoDrain` set during `startRecordingAllocations`.
+    "allocations": {
+      type: "allocations",
+      data: Arg(0, "json"),
+    },
   },
 
   initialize: function(conn, parent, frameCache = new StackFrameCache()) {
     protocol.Actor.prototype.initialize.call(this, conn);
 
     this._onGarbageCollection = this._onGarbageCollection.bind(this);
-    this.bridge = new MemoryBridge(parent, frameCache);
+    this._onAllocations = this._onAllocations.bind(this);
+    this.bridge = new Memory(parent, frameCache);
     this.bridge.on("garbage-collection", this._onGarbageCollection);
+    this.bridge.on("allocations", this._onAllocations);
   },
 
   destroy: function() {
     this.bridge.off("garbage-collection", this._onGarbageCollection);
+    this.bridge.off("allocations", this._onAllocations);
     this.bridge.destroy();
     protocol.Actor.prototype.destroy.call(this);
   },
 
-  /**
-   * Attach to this MemoryActor.
-   *
-   * This attaches the MemoryActor's Debugger instance so that you can start
-   * recording allocations or take a census of the heap. In addition, the
-   * MemoryActor will start emitting GC events.
-   */
-  attach: linkBridge("attach", {
+  attach: actorBridge("attach", {
     request: {},
     response: {
       type: "attached"
     }
   }),
 
-  /**
-   * Detach from this MemoryActor.
-   */
-  detach: linkBridge("detach", {
+  detach: actorBridge("detach", {
     request: {},
     response: {
       type: "detached"
     }
   }),
 
-  /**
-   * Gets the current MemoryActor attach/detach state.
-   */
-  getState: linkBridge("getState", {
+  getState: actorBridge("getState", {
     response: {
       state: RetVal(0, "string")
     }
   }),
 
-  /**
-   * Take a census of the heap. See js/src/doc/Debugger/Debugger.Memory.md for
-   * more information.
-   */
-  takeCensus: linkBridge("takeCensus", {
+  saveHeapSnapshot: method(function () {
+    return this.bridge.saveHeapSnapshot();
+  }, {
+    response: {
+      snapshotId: RetVal("string")
+    }
+  }),
+
+  transferHeapSnapshot: method(Task.async(function* (snapshotId) {
+    const snapshotFilePath =
+      HeapSnapshotFileUtils.getHeapSnapshotTempFilePath(snapshotId);
+    if (!snapshotFilePath) {
+      throw new Error(`No heap snapshot with id: ${snapshotId}`);
+    }
+
+    const streamPromise = openFileStream(snapshotFilePath);
+
+    const { size } = yield OS.File.stat(snapshotFilePath);
+    const bulkPromise = this.conn.startBulkSend({
+      actor: this.actorID,
+      type: "heap-snapshot",
+      length: size
+    });
+
+    const [bulk, stream] = yield Promise.all([bulkPromise, streamPromise]);
+
+    try {
+      yield bulk.copyFrom(stream);
+    } finally {
+      stream.close();
+    }
+  }), {
+    request: {
+      snapshotId: Arg(0, "string")
+    }
+  }),
+
+  takeCensus: actorBridge("takeCensus", {
     request: {},
     response: RetVal("json")
   }),
 
-  /**
-   * Start recording allocation sites.
-   *
-   * @param AllocationsRecordingOptions options
-   *        See the protocol.js definition of AllocationsRecordingOptions above.
-   */
-  startRecordingAllocations: linkBridge("startRecordingAllocations", {
+  startRecordingAllocations: actorBridge("startRecordingAllocations", {
     request: {
       options: Arg(0, "nullable:AllocationsRecordingOptions")
     },
@@ -130,10 +159,7 @@ let MemoryActor = protocol.ActorClass({
     }
   }),
 
-  /**
-   * Stop recording allocation sites.
-   */
-  stopRecordingAllocations: linkBridge("stopRecordingAllocations", {
+  stopRecordingAllocations: actorBridge("stopRecordingAllocations", {
     request: {},
     response: {
       // Accept `nullable` in the case of server Gecko <= 37, handled on the front
@@ -141,71 +167,114 @@ let MemoryActor = protocol.ActorClass({
     }
   }),
 
-  /**
-   * Return settings used in `startRecordingAllocations` for `probability`
-   * and `maxLogLength`. Currently only uses in tests.
-   */
-  getAllocationsSettings: linkBridge("getAllocationsSettings", {
+  getAllocationsSettings: actorBridge("getAllocationsSettings", {
     request: {},
     response: {
       options: RetVal(0, "json")
     }
   }),
 
-  getAllocations: linkBridge("getAllocations", {
+  getAllocations: actorBridge("getAllocations", {
     request: {},
     response: RetVal("json")
   }),
 
-  /*
-   * Force a browser-wide GC.
-   */
-  forceGarbageCollection: linkBridge("forceGarbageCollection", {
+  forceGarbageCollection: actorBridge("forceGarbageCollection", {
     request: {},
     response: {}
   }),
 
-  /**
-   * Force an XPCOM cycle collection. For more information on XPCOM cycle
-   * collection, see
-   * https://developer.mozilla.org/en-US/docs/Interfacing_with_the_XPCOM_cycle_collector#What_the_cycle_collector_does
-   */
-  forceCycleCollection: linkBridge("forceCycleCollection", {
+  forceCycleCollection: actorBridge("forceCycleCollection", {
     request: {},
     response: {}
   }),
 
-  /**
-   * A method that returns a detailed breakdown of the memory consumption of the
-   * associated window.
-   *
-   * @returns object
-   */
-  measure: linkBridge("measure", {
+  measure: actorBridge("measure", {
     request: {},
     response: RetVal("json"),
   }),
 
-  residentUnique: linkBridge("residentUnique", {
+  residentUnique: actorBridge("residentUnique", {
     request: {},
     response: { value: RetVal("number") }
   }),
 
-  /**
-   * Called when the underlying MemoryBridge fires a "garbage-collection" events.
-   * Propagates over RDP.
-   */
   _onGarbageCollection: function (data) {
-    events.emit(this, "garbage-collection", data);
+    if (this.conn.transport) {
+      events.emit(this, "garbage-collection", data);
+    }
+  },
+
+  _onAllocations: function (data) {
+    if (this.conn.transport) {
+      events.emit(this, "allocations", data);
+    }
   },
 });
-
-exports.MemoryActor = MemoryActor;
 
 exports.MemoryFront = protocol.FrontClass(MemoryActor, {
   initialize: function(client, form) {
     protocol.Front.prototype.initialize.call(this, client, form);
+    this._client = client;
     this.actorID = form.memoryActor;
     this.manage(this);
-  }
+  },
+
+  /**
+   * Save a heap snapshot, transfer it from the server to the client if the
+   * server and client do not share a file system, and return the local file
+   * path to the heap snapshot.
+   *
+   * NB: This will not work with sandboxed child processes, as they do not have
+   * access to the filesystem and the hep snapshot APIs do not support that use
+   * case yet.
+   *
+   * @params Boolean options.forceCopy
+   *         Always force a bulk data copy of the saved heap snapshot, even when
+   *         the server and client share a file system.
+   *
+   * @returns Promise<String>
+   */
+  saveHeapSnapshot: protocol.custom(Task.async(function* (options = {}) {
+    const snapshotId = yield this._saveHeapSnapshotImpl();
+
+    if (!options.forceCopy &&
+        (yield HeapSnapshotFileUtils.haveHeapSnapshotTempFile(snapshotId))) {
+      return HeapSnapshotFileUtils.getHeapSnapshotTempFilePath(snapshotId);
+    }
+
+    return yield this.transferHeapSnapshot(snapshotId);
+  }), {
+    impl: "_saveHeapSnapshotImpl"
+  }),
+
+  /**
+   * Given that we have taken a heap snapshot with the given id, transfer the
+   * heap snapshot file to the client. The path to the client's local file is
+   * returned.
+   *
+   * @param {String} snapshotId
+   *
+   * @returns Promise<String>
+   */
+  transferHeapSnapshot: protocol.custom(function (snapshotId) {
+    const request = this._client.request({
+      to: this.actorID,
+      type: "transferHeapSnapshot",
+      snapshotId
+    });
+
+    return new Promise((resolve, reject) => {
+      const outFilePath =
+        HeapSnapshotFileUtils.getNewUniqueHeapSnapshotTempFilePath();
+      const outFile = new FileUtils.File(outFilePath);
+
+      const outFileStream = FileUtils.openSafeFileOutputStream(outFile);
+      request.on("bulk-reply", Task.async(function* ({ copyTo }) {
+        yield copyTo(outFileStream);
+        FileUtils.closeSafeFileOutputStream(outFileStream);
+        resolve(outFilePath);
+      }));
+    });
+  })
 });

@@ -7,7 +7,7 @@
 const kHidden1Id = "test-hidden-button-1";
 const kHidden2Id = "test-hidden-button-2";
 
-let navbar = document.getElementById(CustomizableUI.AREA_NAVBAR);
+var navbar = document.getElementById(CustomizableUI.AREA_NAVBAR);
 
 // When we drag an item onto a customizable area, and not over a specific target, we
 // should assume that we're appending them to the area. If doing so, we should scan
@@ -51,32 +51,6 @@ add_task(function() {
 
   is(downloadsButton.previousSibling.id, lastVisible.id,
      "The downloads button should be placed after the last visible item.");
-
-  yield resetCustomization();
-});
-
-// When we drag an item onto a target that has a hidden element before it, we should
-// instead place the new item before the hidden elements.
-add_task(function() {
-  ok(CustomizableUI.inDefaultState, "Should be in the default state");
-
-  let hidden1 = createDummyXULButton(kHidden1Id, "You can't see me");
-  hidden1.hidden = true;
-
-  let homeButton = document.getElementById("home-button");
-  CustomizableUI.addWidgetToArea(kHidden1Id, CustomizableUI.AREA_NAVBAR,
-                                 CustomizableUI.getPlacementOfWidget(homeButton.id).position);
-
-  hidden1 = document.getElementById(kHidden1Id);
-  is(hidden1.nextSibling.id, homeButton.id, "The hidden item should be before the home button");
-
-  yield startCustomizing();
-  let downloadsButton = document.getElementById("downloads-button");
-  simulateItemDrag(downloadsButton.parentNode, homeButton.parentNode);
-  yield endCustomizing();
-
-  is(hidden1.nextSibling.id, homeButton.id, "The hidden item should still be before the home button");
-  is(downloadsButton.nextSibling.id, hidden1.id, "The downloads button should now be before the hidden button");
 
   yield resetCustomization();
 });

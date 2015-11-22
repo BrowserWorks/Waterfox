@@ -9,7 +9,6 @@
 #include <stdint.h>                     // for uint32_t
 #include "ClientLayerManager.h"         // for ClientLayerManager, etc
 #include "Layers.h"                     // for Layer, ContainerLayer, etc
-#include "gfxPrefs.h"                   // for gfxPrefs
 #include "nsDebug.h"                    // for NS_ASSERTION
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsISupportsUtils.h"           // for NS_ADDREF, NS_RELEASE
@@ -47,9 +46,7 @@ protected:
 public:
   virtual void RenderLayer() override
   {
-    if (GetMaskLayer()) {
-      ToClientLayer(GetMaskLayer())->RenderLayer();
-    }
+    RenderMaskLayers(this);
     
     DefaultComputeSupportsComponentAlphaChildren();
 
@@ -184,7 +181,7 @@ private:
   }
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif

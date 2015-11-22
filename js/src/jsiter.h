@@ -147,9 +147,6 @@ class StringIteratorObject : public JSObject
 };
 
 bool
-VectorToIdArray(JSContext* cx, AutoIdVector& props, JSIdArray** idap);
-
-bool
 GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleObject objp);
 
 JSObject*
@@ -192,9 +189,6 @@ SuppressDeletedProperty(JSContext* cx, HandleObject obj, jsid id);
 
 extern bool
 SuppressDeletedElement(JSContext* cx, HandleObject obj, uint32_t index);
-
-extern bool
-SuppressDeletedElements(JSContext* cx, HandleObject obj, uint32_t begin, uint32_t end);
 
 /*
  * IteratorMore() returns the next iteration value. If no value is available,

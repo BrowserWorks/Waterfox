@@ -25,10 +25,13 @@ class PBackgroundChild;
 
 namespace dom {
 
+class Blob;
+class BlobImpl;
 class ContentChild;
-class FileImpl;
 class nsIContentChild;
 class PBlobStreamChild;
+
+enum BlobDirState : uint32_t;
 
 class BlobChild final
   : public PBlobChild
@@ -41,7 +44,7 @@ class BlobChild final
   class RemoteBlobSliceImpl;
   friend class RemoteBlobSliceImpl;
 
-  FileImpl* mBlobImpl;
+  BlobImpl* mBlobImpl;
   RemoteBlobImpl* mRemoteBlobImpl;
 
   // One of these will be null and the other non-null.
@@ -62,10 +65,10 @@ public:
 
   // These create functions are called on the sending side.
   static BlobChild*
-  GetOrCreate(nsIContentChild* aManager, FileImpl* aBlobImpl);
+  GetOrCreate(nsIContentChild* aManager, BlobImpl* aBlobImpl);
 
   static BlobChild*
-  GetOrCreate(PBackgroundChild* aManager, FileImpl* aBlobImpl);
+  GetOrCreate(PBackgroundChild* aManager, BlobImpl* aBlobImpl);
 
   // These create functions are called on the receiving side.
   static BlobChild*
@@ -102,11 +105,11 @@ public:
   const nsID&
   ParentID() const;
 
-  // Get the FileImpl associated with this actor. This may always be called
+  // Get the BlobImpl associated with this actor. This may always be called
   // on the sending side. It may also be called on the receiving side unless
   // this is a "mystery" blob that has not yet received a SetMysteryBlobInfo()
   // call.
-  already_AddRefed<FileImpl>
+  already_AddRefed<BlobImpl>
   GetBlobImpl();
 
   // Use this for files.
@@ -114,7 +117,8 @@ public:
   SetMysteryBlobInfo(const nsString& aName,
                      const nsString& aContentType,
                      uint64_t aLength,
-                     int64_t aLastModifiedDate);
+                     int64_t aLastModifiedDate,
+                     BlobDirState aDirState);
 
   // Use this for non-file blobs.
   bool
@@ -130,13 +134,13 @@ public:
 
 private:
   // These constructors are called on the sending side.
-  BlobChild(nsIContentChild* aManager, FileImpl* aBlobImpl);
+  BlobChild(nsIContentChild* aManager, BlobImpl* aBlobImpl);
 
-  BlobChild(PBackgroundChild* aManager, FileImpl* aBlobImpl);
+  BlobChild(PBackgroundChild* aManager, BlobImpl* aBlobImpl);
 
   BlobChild(nsIContentChild* aManager, BlobChild* aOther);
 
-  BlobChild(PBackgroundChild* aManager, BlobChild* aOther, FileImpl* aBlobImpl);
+  BlobChild(PBackgroundChild* aManager, BlobChild* aOther, BlobImpl* aBlobImpl);
 
   // These constructors are called on the receiving side.
   BlobChild(nsIContentChild* aManager,
@@ -158,10 +162,10 @@ private:
   ~BlobChild();
 
   void
-  CommonInit(FileImpl* aBlobImpl);
+  CommonInit(BlobImpl* aBlobImpl);
 
   void
-  CommonInit(BlobChild* aOther, FileImpl* aBlobImpl);
+  CommonInit(BlobChild* aOther, BlobImpl* aBlobImpl);
 
   void
   CommonInit(const ChildBlobConstructorParams& aParams);
@@ -171,7 +175,7 @@ private:
 
   template <class ChildManagerType>
   static BlobChild*
-  GetOrCreateFromImpl(ChildManagerType* aManager, FileImpl* aBlobImpl);
+  GetOrCreateFromImpl(ChildManagerType* aManager, BlobImpl* aBlobImpl);
 
   template <class ChildManagerType>
   static BlobChild*
@@ -187,12 +191,12 @@ private:
   static BlobChild*
   MaybeGetActorFromRemoteBlob(nsIRemoteBlob* aRemoteBlob,
                               nsIContentChild* aManager,
-                              FileImpl* aBlobImpl);
+                              BlobImpl* aBlobImpl);
 
   static BlobChild*
   MaybeGetActorFromRemoteBlob(nsIRemoteBlob* aRemoteBlob,
                               PBackgroundChild* aManager,
-                              FileImpl* aBlobImpl);
+                              BlobImpl* aBlobImpl);
 
   void
   NoteDyingRemoteBlobImpl();

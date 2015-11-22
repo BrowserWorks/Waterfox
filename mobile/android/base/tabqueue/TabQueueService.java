@@ -9,6 +9,8 @@ import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.Telemetry;
+import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.mozglue.ContextUtils;
 import org.mozilla.gecko.preferences.GeckoPreferences;
 
@@ -29,6 +31,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -143,6 +146,8 @@ public class TabQueueService extends Service {
                             TabQueueHelper.removeURLFromFile(applicationContext, intentUrl, TabQueueHelper.FILE_NAME);
                         }
                         openNow(safeIntent.getUnsafe());
+
+                        Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.INTENT, "tabqueue-doubletap");
                         stopSelfResult(startId);
                     }
                 });
@@ -161,7 +166,11 @@ public class TabQueueService extends Service {
             tabQueueHandler.removeCallbacks(stopServiceRunnable);
             stopServiceRunnable.run(false);
         } else {
-            windowManager.addView(toastLayout, toastLayoutParams);
+            try {
+                windowManager.addView(toastLayout, toastLayoutParams);
+            } catch (final SecurityException e) {
+                Toast.makeText(this, getText(R.string.tab_queue_toast_message), Toast.LENGTH_SHORT).show();
+            }
         }
 
         stopServiceRunnable = new StopServiceRunnable(startId) {
@@ -179,6 +188,8 @@ public class TabQueueService extends Service {
                 stopServiceRunnable = null;
                 removeView();
                 openNow(intent);
+
+                Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.INTENT, "tabqueue-now");
                 stopSelfResult(startId);
             }
         });
@@ -199,10 +210,25 @@ public class TabQueueService extends Service {
         GeckoSharedPrefs.forApp(getApplicationContext()).edit().remove(GeckoPreferences.PREFS_TAB_QUEUE_LAST_SITE)
                                                                .remove(GeckoPreferences.PREFS_TAB_QUEUE_LAST_TIME)
                                                                .apply();
+
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                int queuedTabCount = TabQueueHelper.getTabQueueLength(TabQueueService.this);
+                Telemetry.addToHistogram("FENNEC_TABQUEUE_QUEUESIZE", queuedTabCount);
+            }
+        });
+
     }
 
     private void removeView() {
-        windowManager.removeView(toastLayout);
+        try {
+            windowManager.removeView(toastLayout);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // This can happen if the Service is killed by the system.  If this happens the View will have already
+            // been removed but the runnable will have been kept alive.
+            Log.e(LOGTAG, "Error removing Tab Queue toast from service", e);
+        }
     }
 
     private void addURLToTabQueue(final Intent intent, final String filename) {

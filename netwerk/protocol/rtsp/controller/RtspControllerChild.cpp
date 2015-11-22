@@ -10,15 +10,14 @@
 #include "mozilla/net/NeckoChild.h"
 #include "nsITabChild.h"
 #include "nsILoadContext.h"
-#include "nsNetUtil.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "nsStringStream.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 PRLogModuleInfo* gRtspChildLog = nullptr;
 #undef LOG
-#define LOG(args) PR_LOG(gRtspChildLog, PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(gRtspChildLog, mozilla::LogLevel::Debug, args)
 
 const uint32_t kRtspTotalTracks = 2;
 const unsigned long kRtspCommandDelayMs = 200;

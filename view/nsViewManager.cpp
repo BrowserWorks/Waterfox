@@ -197,7 +197,8 @@ void
 nsViewManager::SetWindowDimensions(nscoord aWidth, nscoord aHeight)
 {
   if (mRootView) {
-    if (mRootView->IsEffectivelyVisible() && mPresShell && mPresShell->IsVisible()) {
+    if (mRootView->IsEffectivelyVisible() && mPresShell &&
+        mPresShell->IsVisible() && !mPresShell->IsInFullscreenChange()) {
       if (mDelayedResize != nsSize(NSCOORD_NONE, NSCOORD_NONE) &&
           mDelayedResize != nsSize(aWidth, aHeight)) {
         // We have a delayed resize; that now obsolete size may already have
@@ -440,8 +441,17 @@ nsViewManager::ProcessPendingUpdatesPaint(nsIWidget* aWidget)
       }
     }
     nsView* view = nsView::GetViewFor(aWidget);
+
     if (!view) {
       NS_ERROR("FlushDelayedResize destroyed the nsView?");
+      return;
+    }
+
+    nsIWidgetListener* previousListener = aWidget->GetPreviouslyAttachedWidgetListener();
+
+    if (previousListener &&
+        previousListener != view &&
+        view->IsPrimaryFramePaintSuppressed()) {
       return;
     }
 
@@ -487,7 +497,7 @@ void nsViewManager::FlushDirtyRegionToWidget(nsView* aView)
   // for it to make it on screen
   if (gfxPrefs::DrawFrameCounter()) {
     nsRect counterBounds = ToAppUnits(gfxPlatform::FrameCounterBounds(), AppUnitsPerDevPixel());
-    r = r.Or(r, counterBounds);
+    r.OrWith(counterBounds);
   }
 
   nsViewManager* widgetVM = nearestViewWithWidget->GetViewManager();
@@ -744,11 +754,11 @@ nsViewManager::DispatchEvent(WidgetGUIEvent *aEvent,
        // Ignore mouse exit and enter (we'll get moves if the user
        // is really moving the mouse) since we get them when we
        // create and destroy widgets.
-       mouseEvent->message != NS_MOUSE_EXIT_WIDGET &&
-       mouseEvent->message != NS_MOUSE_ENTER_WIDGET) ||
+       mouseEvent->mMessage != eMouseExitFromWidget &&
+       mouseEvent->mMessage != eMouseEnterIntoWidget) ||
       aEvent->HasKeyEventMessage() ||
       aEvent->HasIMEEventMessage() ||
-      aEvent->message == NS_PLUGIN_INPUT_EVENT) {
+      aEvent->mMessage == ePluginInputEvent) {
     gLastUserEventTime = PR_IntervalToMicroseconds(PR_IntervalNow());
   }
 
@@ -1149,3 +1159,4 @@ nsViewManager::InvalidateHierarchy()
     }
   }
 }
+

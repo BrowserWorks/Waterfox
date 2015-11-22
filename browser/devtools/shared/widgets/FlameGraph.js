@@ -19,12 +19,12 @@ loader.lazyRequireGetter(this, "CATEGORY_MAPPINGS",
 loader.lazyRequireGetter(this, "FrameUtils",
   "devtools/performance/frame-utils");
 
-loader.lazyImporter(this, "AbstractCanvasGraph",
-  "resource:///modules/devtools/Graphs.jsm");
-loader.lazyImporter(this, "GraphArea",
-  "resource:///modules/devtools/Graphs.jsm");
-loader.lazyImporter(this, "GraphAreaDragger",
-  "resource:///modules/devtools/Graphs.jsm");
+loader.lazyRequireGetter(this, "AbstractCanvasGraph",
+  "devtools/shared/widgets/Graphs", true);
+loader.lazyRequireGetter(this, "GraphArea",
+  "devtools/shared/widgets/Graphs", true);
+loader.lazyRequireGetter(this, "GraphAreaDragger",
+  "devtools/shared/widgets/Graphs", true);
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 const GRAPH_SRC = "chrome://browser/content/devtools/graphs-frame.xhtml";
@@ -1003,7 +1003,7 @@ FlameGraph.prototype = {
  * A collection of utility functions converting various data sources
  * into a format drawable by the FlameGraph.
  */
-let FlameGraphUtils = {
+var FlameGraphUtils = {
   _cache: new WeakMap(),
 
   /**

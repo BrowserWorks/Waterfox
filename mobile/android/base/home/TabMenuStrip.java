@@ -6,6 +6,7 @@
 package org.mozilla.gecko.home;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.util.ColorUtils;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -40,6 +41,10 @@ public class TabMenuStrip extends HorizontalScrollView
     private final Paint shadowPaint;
     private final int shadowSize;
 
+    public interface OnTitleClickListener {
+        void onTitleClicked(int index);
+    }
+
     public TabMenuStrip(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -56,7 +61,7 @@ public class TabMenuStrip extends HorizontalScrollView
         shadowSize = res.getDimensionPixelSize(R.dimen.tabs_strip_shadow_size);
 
         shadowPaint = new Paint();
-        shadowPaint.setColor(res.getColor(R.color.url_bar_shadow));
+        shadowPaint.setColor(ColorUtils.getColor(context, R.color.url_bar_shadow));
         shadowPaint.setStrokeWidth(0.0f);
     }
 
@@ -65,7 +70,7 @@ public class TabMenuStrip extends HorizontalScrollView
         super.draw(canvas);
 
         final int height = getHeight();
-        canvas.drawRect(0, height - shadowSize, getWidth(), height, shadowPaint);
+        canvas.drawRect(0, height - shadowSize, layout.getWidth(), height, shadowPaint);
     }
 
     @Override
@@ -115,7 +120,7 @@ public class TabMenuStrip extends HorizontalScrollView
     }
 
     @Override
-    public void setOnTitleClickListener(HomePager.OnTitleClickListener onTitleClickListener) {
+    public void setOnTitleClickListener(OnTitleClickListener onTitleClickListener) {
         layout.setOnTitleClickListener(onTitleClickListener);
     }
 }

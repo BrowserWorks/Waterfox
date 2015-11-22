@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-let state = {windows:[{tabs:[
+var state = {windows:[{tabs:[
   {entries:[{url:"http://example.com#1"}]},
   {entries:[{url:"http://example.com#2"}]},
   {entries:[{url:"http://example.com#3"}]},
@@ -14,6 +14,7 @@ let state = {windows:[{tabs:[
 
 function test() {
   waitForExplicitFinish();
+  requestLongerTimeout(2);
 
   registerCleanupFunction(function () {
     Services.prefs.clearUserPref("browser.sessionstore.restore_hidden_tabs");
@@ -54,7 +55,7 @@ function test_loadTabs(restoreHiddenTabs, callback) {
   });
 }
 
-let TabsProgressListener = {
+var TabsProgressListener = {
   init: function (win) {
     this.window = win;
     Services.obs.addObserver(this, "sessionstore-debug-tab-restored", false);

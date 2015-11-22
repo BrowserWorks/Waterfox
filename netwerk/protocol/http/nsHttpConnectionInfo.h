@@ -11,6 +11,7 @@
 #include "nsProxyInfo.h"
 #include "nsCOMPtr.h"
 #include "nsStringFwd.h"
+#include "mozilla/Logging.h"
 
 extern PRLogModuleInfo *gHttpLog;
 
@@ -53,7 +54,7 @@ public:
 private:
     virtual ~nsHttpConnectionInfo()
     {
-        PR_LOG(gHttpLog, 4, ("Destroying nsHttpConnectionInfo @%x\n", this));
+        MOZ_LOG(gHttpLog, LogLevel::Debug, ("Destroying nsHttpConnectionInfo @%x\n", this));
     }
 
     void BuildHashKey();
@@ -165,6 +166,7 @@ private:
     NS_INLINE_DECL_THREADSAFE_REFCOUNTING(nsHttpConnectionInfo)
 };
 
-}} // namespace mozilla::net
+} // namespace net
+} // namespace mozilla
 
 #endif // nsHttpConnectionInfo_h__

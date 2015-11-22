@@ -45,7 +45,8 @@ public:
       caps.preserve = false;
       caps.bpp16 = false;
       nsRefPtr<GLContext> context = GLContextProvider::CreateOffscreen(
-        gfxIntSize(gCompWidth, gCompHeight), caps, true);
+        IntSize(gCompWidth, gCompHeight), caps,
+        CreateContextFlags::REQUIRE_COMPAT_PROFILE);
       return context.forget().take();
     }
     return nullptr;
@@ -96,7 +97,7 @@ struct LayerManagerData {
   {}
 };
 
-static TemporaryRef<Compositor> CreateTestCompositor(LayersBackend backend, MockWidget* widget)
+static already_AddRefed<Compositor> CreateTestCompositor(LayersBackend backend, MockWidget* widget)
 {
   gfxPrefs::GetSingleton();
 
@@ -125,7 +126,7 @@ static TemporaryRef<Compositor> CreateTestCompositor(LayersBackend backend, Mock
     abort();
   }
 
-  return compositor;
+  return compositor.forget();
 }
 
 /**
@@ -170,12 +171,10 @@ static std::vector<LayersBackend> GetPlatformBackends()
   return backends;
 }
 
-static TemporaryRef<DrawTarget> CreateDT()
+static already_AddRefed<DrawTarget> CreateDT()
 {
-  RefPtr<DrawTarget> dt = gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(
+  return gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(
     IntSize(gCompWidth, gCompHeight), SurfaceFormat::B8G8R8A8);
-
-  return dt;
 }
 
 static bool CompositeAndCompare(nsRefPtr<LayerManagerComposite> layerManager, DrawTarget* refDT)
@@ -183,7 +182,7 @@ static bool CompositeAndCompare(nsRefPtr<LayerManagerComposite> layerManager, Dr
   RefPtr<DrawTarget> drawTarget = CreateDT();
 
   layerManager->BeginTransactionWithDrawTarget(drawTarget, IntRect(0, 0, gCompWidth, gCompHeight));
-  layerManager->EndEmptyTransaction();
+  layerManager->EndTransaction(TimeStamp::Now());
 
   RefPtr<SourceSurface> ss = drawTarget->Snapshot();
   RefPtr<DataSourceSurface> dss = ss->GetDataSurface();

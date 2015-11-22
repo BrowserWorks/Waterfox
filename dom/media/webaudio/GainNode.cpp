@@ -29,7 +29,7 @@ public:
   GainNodeEngine(AudioNode* aNode, AudioDestinationNode* aDestination)
     : AudioNodeEngine(aNode)
     , mSource(nullptr)
-    , mDestination(static_cast<AudioNodeStream*> (aDestination->Stream()))
+    , mDestination(aDestination->Stream())
     // Keep the default value in sync with the default value in GainNode::GainNode.
     , mGain(1.f)
   {
@@ -59,8 +59,8 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioChunk& aInput,
-                            AudioChunk* aOutput,
+                            const AudioBlock& aInput,
+                            AudioBlock* aOutput,
                             bool* aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
@@ -81,7 +81,7 @@ public:
       // First, compute a vector of gains for each track tick based on the
       // timeline at hand, and then for each channel, multiply the values
       // in the buffer with the gain vector.
-      AllocateAudioBlock(aInput.mChannelData.Length(), aOutput);
+      aOutput->AllocateChannels(aInput.ChannelCount());
 
       // Compute the gain values for the duration of the input AudioChunk
       StreamTime tick = aStream->GetCurrentPosition();
@@ -93,10 +93,9 @@ public:
       }
 
       // Apply the gain to the output buffer
-      for (size_t channel = 0; channel < aOutput->mChannelData.Length(); ++channel) {
+      for (size_t channel = 0; channel < aOutput->ChannelCount(); ++channel) {
         const float* inputBuffer = static_cast<const float*> (aInput.mChannelData[channel]);
-        float* buffer = static_cast<float*> (const_cast<void*>
-                          (aOutput->mChannelData[channel]));
+        float* buffer = aOutput->ChannelFloatsForWrite(channel);
         AudioBlockCopyChannelWithScale(inputBuffer, computedGain, buffer);
       }
     }
@@ -129,8 +128,9 @@ GainNode::GainNode(AudioContext* aContext)
   , mGain(new AudioParam(this, SendGainToStream, 1.0f, "gain"))
 {
   GainNodeEngine* engine = new GainNodeEngine(this, aContext->Destination());
-  mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);
-  engine->SetSourceStream(static_cast<AudioNodeStream*> (mStream.get()));
+  mStream = AudioNodeStream::Create(aContext, engine,
+                                    AudioNodeStream::NO_STREAM_FLAGS);
+  engine->SetSourceStream(mStream);
 }
 
 GainNode::~GainNode()
@@ -164,5 +164,5 @@ GainNode::SendGainToStream(AudioNode* aNode)
   SendTimelineParameterToStream(This, GainNodeEngine::GAIN, *This->mGain);
 }
 
-}
-}
+} // namespace dom
+} // namespace mozilla

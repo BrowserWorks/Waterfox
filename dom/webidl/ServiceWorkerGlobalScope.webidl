@@ -16,8 +16,13 @@ interface ServiceWorkerGlobalScope : WorkerGlobalScope {
   readonly attribute Clients clients;
   readonly attribute ServiceWorkerRegistration registration;
 
+  [Throws]
+  Promise<boolean> skipWaiting();
+
   attribute EventHandler oninstall;
   attribute EventHandler onactivate;
+
+  [Func="mozilla::dom::workers::ServiceWorkerGlobalScope::InterceptionEnabled"]
   attribute EventHandler onfetch;
   attribute EventHandler onbeforeevicted;
   attribute EventHandler onevicted;

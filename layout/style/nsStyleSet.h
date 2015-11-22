@@ -83,19 +83,17 @@ public:
 // then handed off to the PresShell.  Only the PresShell should delete a
 // style set.
 
-class nsStyleSet
+class nsStyleSet final
 {
  public:
   nsStyleSet();
+  ~nsStyleSet();
 
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
   void Init(nsPresContext *aPresContext);
 
   nsRuleNode* GetRuleTree() { return mRuleTree; }
-
-  // enable / disable the Quirk style sheet
-  void EnableQuirkStyleSheet(bool aEnable);
 
   // get a style context for a non-pseudo frame.
   already_AddRefed<nsStyleContext>
@@ -192,10 +190,30 @@ class nsStyleSet
                           TreeMatchContext& aTreeMatchContext,
                           mozilla::dom::Element* aPseudoElement = nullptr);
 
+  /**
+   * Bit-flags that can be passed to ResolveAnonymousBoxStyle and GetContext
+   * in their parameter 'aFlags'.
+   */
+  enum {
+    eNoFlags =          0,
+    eIsLink =           1 << 0,
+    eIsVisitedLink =    1 << 1,
+    eDoAnimation =      1 << 2,
+
+    // Indicates that we should skip the flex/grid item specific chunk of
+    // ApplyStyleFixups().  This is useful if our parent has "display: flex"
+    // or "display: grid" but we can tell we're not going to honor that (e.g. if
+    // it's the outer frame of a button widget, and we're the inline frame for
+    // the button's label).
+    eSkipParentDisplayBasedStyleFixup = 1 << 3
+  };
+
   // Get a style context for an anonymous box.  aPseudoTag is the
-  // pseudo-tag to use and must be non-null.
+  // pseudo-tag to use and must be non-null.  aFlags will be forwarded
+  // to a GetContext call internally.
   already_AddRefed<nsStyleContext>
-  ResolveAnonymousBoxStyle(nsIAtom* aPseudoTag, nsStyleContext* aParentContext);
+  ResolveAnonymousBoxStyle(nsIAtom* aPseudoTag, nsStyleContext* aParentContext,
+                           uint32_t aFlags = eNoFlags);
 
 #ifdef MOZ_XUL
   // Get a style context for a XUL tree pseudo.  aPseudoTag is the
@@ -267,7 +285,10 @@ class nsStyleSet
   nsRestyleHint HasAttributeDependentStyle(mozilla::dom::Element* aElement,
                                            nsIAtom*       aAttribute,
                                            int32_t        aModType,
-                                           bool           aAttrHasChanged);
+                                           bool           aAttrHasChanged,
+                                           const nsAttrValue* aOtherValue,
+                                           mozilla::RestyleHintData&
+                                             aRestyleHintDataResult);
 
   /*
    * Do any processing that needs to happen as a result of a change in
@@ -326,6 +347,12 @@ class nsStyleSet
     return mSheets[aType].ObjectAt(aIndex);
   }
 
+  void AppendAllXBLStyleSheets(nsTArray<mozilla::CSSStyleSheet*>& aArray) const {
+    if (mBindingManager) {
+      mBindingManager->AppendAllSheets(aArray);
+    }
+  }
+
   nsresult RemoveDocStyleSheet(nsIStyleSheet* aSheet);
   nsresult AddDocStyleSheet(nsIStyleSheet* aSheet, nsIDocument* aDocument);
 
@@ -342,11 +369,6 @@ class nsStyleSet
   bool IsInRuleTreeReconstruct() const {
     return mInReconstruct;
   }
-
-  // Let the style set know that a particular sheet is the quirks sheet.  This
-  // sheet must already have been added to the UA sheets.  The pointer must not
-  // be null.  This should only be called once for a given style set.
-  void SetQuirkStyleSheet(nsIStyleSheet* aQuirkStyleSheet);
 
   // Return whether the rule tree has cached data such that we need to
   // do dynamic change handling for changes that change the results of
@@ -369,9 +391,23 @@ class nsStyleSet
     --mUnusedRuleNodeCount;
   }
 
-  mozilla::CSSStyleSheet::EnsureUniqueInnerResult EnsureUniqueInnerOnCSSSheets();
+  // Returns true if a restyle of the document is needed due to cloning
+  // sheet inners.
+  bool EnsureUniqueInnerOnCSSSheets();
+
+  // Called by CSSStyleSheet::EnsureUniqueInner to let us know it cloned
+  // its inner.
+  void SetNeedsRestyleAfterEnsureUniqueInner() {
+    mNeedsRestyleAfterEnsureUniqueInner = true;
+  }
 
   nsIStyleRule* InitialStyleRule();
+
+  bool HasRuleProcessorUsedByMultipleStyleSets(sheetType aSheetType);
+
+  // Tells the RestyleManager for the document using this style set
+  // to drop any nsCSSSelector pointers it has.
+  void ClearSelectors();
 
  private:
   nsStyleSet(const nsStyleSet& aCopy) = delete;
@@ -433,23 +469,6 @@ class nsStyleSet
                                       nsCSSPseudoElements::Type aPseudoType,
                                       nsRestyleHint aReplacements);
 
-  /**
-   * Bit-flags that can be passed to GetContext() in its parameter 'aFlags'.
-   */
-  enum {
-    eNoFlags =          0,
-    eIsLink =           1 << 0,
-    eIsVisitedLink =    1 << 1,
-    eDoAnimation =      1 << 2,
-
-    // Indicates that we should skip the flex/grid item specific chunk of
-    // ApplyStyleFixups().  This is useful if our parent has "display: flex"
-    // or "display: grid" but we can tell we're not going to honor that (e.g. if
-    // it's the outer frame of a button widget, and we're the inline frame for
-    // the button's label).
-    eSkipParentDisplayBasedStyleFixup = 1 << 3
-  };
-
   already_AddRefed<nsStyleContext>
   GetContext(nsStyleContext* aParentContext,
              nsRuleNode* aRuleNode,
@@ -464,8 +483,8 @@ class nsStyleSet
   // The sheets in each array in mSheets are stored with the most significant
   // sheet last.
   // The arrays for ePresHintSheet, eStyleAttrSheet, eTransitionSheet,
-  // and eAnimationSheet are always empty.  (FIXME:  We should reduce
-  // the storage needed for them.)
+  // eAnimationSheet and eSVGAttrAnimationSheet are always empty.
+  // (FIXME:  We should reduce the storage needed for them.)
   nsCOMArray<nsIStyleSheet> mSheets[eSheetTypeCount];
 
   // mRuleProcessors[eScopedDocSheet] is always null; rule processors
@@ -474,9 +493,6 @@ class nsStyleSet
 
   // Rule processors for HTML5 scoped style sheets, one per scope.
   nsTArray<nsCOMPtr<nsIStyleRuleProcessor> > mScopedDocSheetRuleProcessors;
-
-  // cached instance for enabling/disabling
-  nsCOMPtr<nsIStyleSheet> mQuirkStyleSheet;
 
   nsRefPtr<nsBindingManager> mBindingManager;
 
@@ -490,6 +506,7 @@ class nsStyleSet
   unsigned mAuthorStyleDisabled: 1;
   unsigned mInReconstruct : 1;
   unsigned mInitFontFeatureValuesLookup : 1;
+  unsigned mNeedsRestyleAfterEnsureUniqueInner : 1;
   unsigned mDirty : 10;  // one dirty bit is used per sheet type
 
   uint32_t mUnusedRuleNodeCount; // used to batch rule node GC

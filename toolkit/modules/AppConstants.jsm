@@ -66,6 +66,13 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
+  MOZ_ANDROID_NATIVE_ACCOUNT_UI:
+#ifdef MOZ_ANDROID_NATIVE_ACCOUNT_UI
+  true,
+#else
+  false,
+#endif
+
   MOZ_SAFE_BROWSING:
 #ifdef MOZ_SAFE_BROWSING
   true,
@@ -76,17 +83,6 @@ this.AppConstants = Object.freeze({
   MOZ_SANDBOX:
 #ifdef MOZ_SANDBOX
   true,
-#else
-  false,
-#endif
-
-  MOZ_SHARK:
-#ifdef XP_MACOSX
-#ifdef MOZ_SHARK
-  true,
-#else
-  false,
-#endif
 #else
   false,
 #endif
@@ -105,8 +101,23 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
+  MOZ_SWITCHBOARD:
+#ifdef MOZ_SWITCHBOARD
+  true,
+#else
+  false,
+#endif
+
   MOZ_WEBRTC:
 #ifdef MOZ_WEBRTC
+  true,
+#else
+  false,
+#endif
+
+# MOZ_B2G covers both device and desktop b2g
+  MOZ_B2G:
+#ifdef MOZ_B2G
   true,
 #else
   false,
@@ -139,8 +150,21 @@ this.AppConstants = Object.freeze({
            Services.vc.compare(platformVersion, version) >= 0;
   },
 
+  isPlatformAndVersionAtMost(platform, version) {
+    let platformVersion = Services.sysinfo.getProperty("version");
+    return platform == this.platform &&
+           Services.vc.compare(platformVersion, version) <= 0;
+  },
+
   MOZ_CRASHREPORTER:
 #ifdef MOZ_CRASHREPORTER
+  true,
+#else
+  false,
+#endif
+
+  MOZ_VERIFY_MAR_SIGNATURE:
+#ifdef MOZ_VERIFY_MAR_SIGNATURE
   true,
 #else
   false,
@@ -167,13 +191,35 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
+  MOZ_B2G:
+#ifdef MOZ_B2G
+  true,
+#else
+  false,
+#endif
+
+  MOZ_B2GDROID:
+#ifdef MOZ_B2GDROID
+  true,
+#else
+  false,
+#endif
+
   DLL_PREFIX: "@DLL_PREFIX@",
   DLL_SUFFIX: "@DLL_SUFFIX@",
 
   MOZ_APP_NAME: "@MOZ_APP_NAME@",
   MOZ_APP_VERSION: "@MOZ_APP_VERSION@",
+  MOZ_APP_VERSION_DISPLAY: "@MOZ_APP_VERSION_DISPLAY@",
   MOZ_BUILD_APP: "@MOZ_BUILD_APP@",
   MOZ_UPDATE_CHANNEL: "@MOZ_UPDATE_CHANNEL@",
   MOZ_WIDGET_TOOLKIT: "@MOZ_WIDGET_TOOLKIT@",
   ANDROID_PACKAGE_NAME: "@ANDROID_PACKAGE_NAME@",
+  MOZ_ANDROID_APZ:
+#ifdef MOZ_ANDROID_APZ
+    true,
+#else
+    false,
+#endif
+  DEBUG_JS_MODULES: "@DEBUG_JS_MODULES@"
 });

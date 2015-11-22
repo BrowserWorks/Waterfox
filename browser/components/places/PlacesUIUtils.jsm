@@ -31,17 +31,11 @@ Cu.import("resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesTransactions",
                                   "resource://gre/modules/PlacesTransactions.jsm");
 
-#ifdef MOZ_SERVICES_CLOUDSYNC
 XPCOMUtils.defineLazyModuleGetter(this, "CloudSync",
                                   "resource://gre/modules/CloudSync.jsm");
-#else
-let CloudSync = null;
-#endif
 
-#ifdef MOZ_SERVICES_SYNC
 XPCOMUtils.defineLazyModuleGetter(this, "Weave",
                                   "resource://services-sync/main.js");
-#endif
 
 // copied from utilityOverlay.js
 const TAB_DROP_TYPE = "application/x-moz-tabbrowser-tab";
@@ -200,14 +194,21 @@ this.PlacesUIUtils = {
    *       annotations are synced from the old one.
    * @see this._copyableAnnotations for the list of copyable annotations.
    */
-  _getFolderCopyTransaction:
-  function PUIU__getFolderCopyTransaction(aData, aContainer, aIndex)
-  {
-    function getChildItemsTransactions(aChildren)
-    {
+  _getFolderCopyTransaction(aData, aContainer, aIndex) {
+    function getChildItemsTransactions(aRoot) {
       let transactions = [];
       let index = aIndex;
-      aChildren.forEach(function (node, i) {
+      for (let i = 0; i < aRoot.childCount; ++i) {
+        let child = aRoot.getChild(i);
+        // Temporary hacks until we switch to PlacesTransactions.jsm.
+        let isLivemark =
+          PlacesUtils.annotations.itemHasAnnotation(child.itemId,
+                                                    PlacesUtils.LMANNO_FEEDURI);
+        let [node] = PlacesUtils.unwrapNodes(
+          PlacesUtils.wrapNode(child, PlacesUtils.TYPE_X_MOZ_PLACE, isLivemark),
+          PlacesUtils.TYPE_X_MOZ_PLACE
+        );
+
         // Make sure that items are given the correct index, this will be
         // passed by the transaction manager to the backend for the insertion.
         // Insertion behaves differently for DEFAULT_INDEX (append).
@@ -238,19 +239,21 @@ this.PlacesUIUtils = {
         else {
           throw new Error("Unexpected item under a bookmarks folder");
         }
-      });
+      }
       return transactions;
     }
 
-    if (aContainer == PlacesUtils.tagsFolderId) { // Copying a tag folder.
+    if (aContainer == PlacesUtils.tagsFolderId) { // Copying into a tag folder.
       let transactions = [];
-      if (aData.children) {
-        aData.children.forEach(function(aChild) {
+      if (!aData.livemark && aData.type == PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER) {
+        let {root} = PlacesUtils.getFolderContents(aData.id, false, false);
+        let urls = PlacesUtils.getURLsForContainerNode(root);
+        root.containerOpen = false;
+        for (let { uri } of urls) {
           transactions.push(
-            new PlacesTagURITransaction(PlacesUtils._uri(aChild.uri),
-                                        [aData.title])
+            new PlacesTagURITransaction(NetUtil.newURI(uri), [aData.title])
           );
-        });
+        }
       }
       return new PlacesAggregatedTransaction("addTags", transactions);
     }
@@ -259,7 +262,10 @@ this.PlacesUIUtils = {
       return this._getLivemarkCopyTransaction(aData, aContainer, aIndex);
     }
 
-    let transactions = getChildItemsTransactions(aData.children);
+    let {root} = PlacesUtils.getFolderContents(aData.id, false, false);
+    let transactions = getChildItemsTransactions(root);
+    root.containerOpen = false;
+
     if (aData.dateAdded) {
       transactions.push(
         new PlacesEditItemDateAddedTransaction(null, aData.dateAdded)
@@ -455,21 +461,17 @@ this.PlacesUIUtils = {
   showBookmarkDialog:
   function PUIU_showBookmarkDialog(aInfo, aParentWindow) {
     // Preserve size attributes differently based on the fact the dialog has
-    // a folder picker or not.  If the picker is visible, the dialog should
-    // be resizable since it may not show enough content for the folders
-    // hierarchy.
+    // a folder picker or not, since it needs more horizontal space than the
+    // other controls.
     let hasFolderPicker = !("hiddenRows" in aInfo) ||
                           aInfo.hiddenRows.indexOf("folderPicker") == -1;
-    // Use a different chrome url, since this allows to persist different sizes,
-    // based on resizability of the dialog.
+    // Use a different chrome url to persist different sizes.
     let dialogURL = hasFolderPicker ?
                     "chrome://browser/content/places/bookmarkProperties2.xul" :
                     "chrome://browser/content/places/bookmarkProperties.xul";
 
-    let features =
-      "centerscreen,chrome,modal,resizable=" + (hasFolderPicker ? "yes" : "no");
-
-    aParentWindow.openDialog(dialogURL, "",  features, aInfo);
+    let features = "centerscreen,chrome,modal,resizable=yes";
+    aParentWindow.openDialog(dialogURL, "", features, aInfo);
     return ("performed" in aInfo && aInfo.performed);
   },
 
@@ -779,15 +781,33 @@ this.PlacesUIUtils = {
     browserWindow.gBrowser.loadTabs(urls, loadInBackground, false);
   },
 
+  openLiveMarkNodesInTabs:
+  function PUIU_openLiveMarkNodesInTabs(aNode, aEvent, aView) {
+    let window = aView.ownerWindow;
+
+    PlacesUtils.livemarks.getLivemark({id: aNode.itemId})
+      .then(aLivemark => {
+        urlsToOpen = [];
+
+        let nodes = aLivemark.getNodesForContainer(aNode);
+        for (let node of nodes) {
+          urlsToOpen.push({uri: node.uri, isBookmark: false});
+        }
+
+        if (this._confirmOpenInTabs(urlsToOpen.length, window)) {
+          this._openTabset(urlsToOpen, aEvent, window);
+        }
+      }, Cu.reportError);
+  },
+
   openContainerNodeInTabs:
   function PUIU_openContainerInTabs(aNode, aEvent, aView) {
     let window = aView.ownerWindow;
 
     let urlsToOpen = PlacesUtils.getURLsForContainerNode(aNode);
-    if (!this._confirmOpenInTabs(urlsToOpen.length, window))
-      return;
-
-    this._openTabset(urlsToOpen, aEvent, window);
+    if (this._confirmOpenInTabs(urlsToOpen.length, window)) {
+      this._openTabset(urlsToOpen, aEvent, window);
+    }
   },
 
   openURINodesInTabs: function PUIU_openURINodesInTabs(aNodes, aEvent, aView) {
@@ -856,6 +876,7 @@ this.PlacesUIUtils = {
       }
 
       aWindow.openUILinkIn(aNode.uri, aWhere, {
+        allowPopups: aNode.uri.startsWith("javascript:"),
         inBackground: Services.prefs.getBoolPref("browser.tabs.loadBookmarksInBackground"),
         private: aPrivate,
       });

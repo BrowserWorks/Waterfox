@@ -8,7 +8,7 @@
 // locally) with and without OCSP stapling enabled to determine that good
 // things happen and bad things don't.
 
-let gExpectOCSPRequest;
+var gExpectOCSPRequest;
 
 function add_ocsp_test(aHost, aExpectedResult, aStaplingEnabled) {
   add_connection_test(aHost, aExpectedResult,
@@ -109,7 +109,7 @@ function add_tests(certDB, otherTestCA) {
   add_ocsp_test("ocsp-stapling-unknown.example.com",
                 SEC_ERROR_OCSP_UNKNOWN_CERT, true);
   add_ocsp_test("ocsp-stapling-good-other.example.com",
-                SEC_ERROR_OCSP_UNKNOWN_CERT, true);
+                MOZILLA_PKIX_ERROR_OCSP_RESPONSE_FOR_CERT_MISSING, true);
   // If the server doesn't staple an OCSP response, we continue as normal
   // (this means that even though stapling is enabled, we expect an OCSP
   // request).
@@ -170,11 +170,16 @@ function check_ocsp_stapling_telemetry() {
                     .getService(Ci.nsITelemetry)
                     .getHistogramById("SSL_OCSP_STAPLING")
                     .snapshot();
-  do_check_eq(histogram.counts[0], 0); // histogram bucket 0 is unused
-  do_check_eq(histogram.counts[1], 5); // 5 connections with a good response
-  do_check_eq(histogram.counts[2], 18); // 18 connections with no stapled resp.
-  do_check_eq(histogram.counts[3], 0); // 0 connections with an expired response
-  do_check_eq(histogram.counts[4], 21); // 21 connections with bad responses
+  equal(histogram.counts[0], 0,
+        "Should have 0 connections for unused histogram bucket 0");
+  equal(histogram.counts[1], 5,
+        "Actual and expected connections with a good response should match");
+  equal(histogram.counts[2], 18,
+        "Actual and expected connections with no stapled response should match");
+  equal(histogram.counts[3], 0,
+        "Actual and expected connections with an expired response should match");
+  equal(histogram.counts[4], 21,
+        "Actual and expected connections with bad responses should match");
   run_next_test();
 }
 
@@ -190,7 +195,8 @@ function run_test() {
   let fakeOCSPResponder = new HttpServer();
   fakeOCSPResponder.registerPrefixHandler("/", function (request, response) {
     response.setStatusLine(request.httpVersion, 500, "Internal Server Error");
-    do_check_true(gExpectOCSPRequest);
+    ok(gExpectOCSPRequest,
+       "Should be getting an OCSP request only when expected");
   });
   fakeOCSPResponder.start(8888);
 

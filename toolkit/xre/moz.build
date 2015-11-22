@@ -40,12 +40,15 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'MacLaunchHelper.mm',
         'nsNativeAppSupportCocoa.mm',
     ]
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'uikit':
+    UNIFIED_SOURCES += [
+        'nsNativeAppSupportDefault.cpp',
+        'UIKitDirProvider.mm',
+    ]
 elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
     EXPORTS += ['nsQAppInstance.h']
-    GENERATED_SOURCES += [
-        'moc_nsNativeAppSupportQt.cpp',
-    ]
     SOURCES += [
+        '!moc_nsNativeAppSupportQt.cpp',
         'nsNativeAppSupportQt.cpp',
         'nsQAppInstance.cpp',
     ]
@@ -142,9 +145,6 @@ DEFINES['GRE_MILESTONE'] = CONFIG['GRE_MILESTONE']
 for var in ('APP_VERSION', 'APP_ID'):
     DEFINES[var] = CONFIG['MOZ_%s' % var]
 
-if CONFIG['MOZILLA_OFFICIAL']:
-    DEFINES['MOZILLA_OFFICIAL'] = True
-
 if CONFIG['MOZ_BUILD_APP'] == 'browser':
     DEFINES['MOZ_BUILD_APP_IS_BROWSER'] = True
 
@@ -178,5 +178,3 @@ CXXFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
 
 if CONFIG['MOZ_WIDGET_GTK']:
     CXXFLAGS += CONFIG['MOZ_PANGO_CFLAGS']
-
-FAIL_ON_WARNINGS = True

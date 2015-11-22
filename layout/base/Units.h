@@ -164,6 +164,11 @@ struct CSSPixel {
                     NSAppUnitsToFloatPixels(aPoint.y, float(AppUnitsPerCSSPixel())));
   }
 
+  static CSSSize FromAppUnits(const nsSize& aSize) {
+    return CSSSize(NSAppUnitsToFloatPixels(aSize.width, float(AppUnitsPerCSSPixel())),
+                   NSAppUnitsToFloatPixels(aSize.height, float(AppUnitsPerCSSPixel())));
+  }
+
   static CSSRect FromAppUnits(const nsRect& aRect) {
     return CSSRect(NSAppUnitsToFloatPixels(aRect.x, float(AppUnitsPerCSSPixel())),
                    NSAppUnitsToFloatPixels(aRect.y, float(AppUnitsPerCSSPixel())),
@@ -256,6 +261,13 @@ struct LayoutDevicePixel {
   static LayoutDevicePoint FromAppUnits(const nsPoint& aPoint, nscoord aAppUnitsPerDevPixel) {
     return LayoutDevicePoint(NSAppUnitsToFloatPixels(aPoint.x, aAppUnitsPerDevPixel),
                              NSAppUnitsToFloatPixels(aPoint.y, aAppUnitsPerDevPixel));
+  }
+
+  static LayoutDeviceMargin FromAppUnits(const nsMargin& aMargin, nscoord aAppUnitsPerDevPixel) {
+    return LayoutDeviceMargin(NSAppUnitsToFloatPixels(aMargin.top, aAppUnitsPerDevPixel),
+                              NSAppUnitsToFloatPixels(aMargin.right, aAppUnitsPerDevPixel),
+                              NSAppUnitsToFloatPixels(aMargin.bottom, aAppUnitsPerDevPixel),
+                              NSAppUnitsToFloatPixels(aMargin.left, aAppUnitsPerDevPixel));
   }
 
   static LayoutDeviceIntPoint FromAppUnitsRounded(const nsPoint& aPoint, nscoord aAppUnitsPerDevPixel) {
@@ -373,6 +385,10 @@ struct RenderTargetPixel {
  * generally be represented in ScreenPixel units.
  */
 struct ScreenPixel {
+  static nsIntSize ToUntyped(const ScreenIntSize& aSize) {
+    return nsIntSize(aSize.width, aSize.height);
+  }
+
   static ScreenIntPoint FromUntyped(const nsIntPoint& aPoint) {
     return ScreenIntPoint(aPoint.x, aPoint.y);
   }
@@ -576,6 +592,21 @@ gfx::MarginTyped<dst> operator/(const gfx::MarginTyped<src>& aMargin, const gfx:
                                aMargin.left / aScale.xScale);
 }
 
+// Calculate the max or min or the ratios of the widths and heights of two
+// sizes, returning a scale factor in the correct units.
+
+template<class src, class dst>
+gfx::ScaleFactor<src, dst> MaxScaleRatio(const gfx::SizeTyped<dst>& aDestSize, const gfx::SizeTyped<src>& aSrcSize) {
+  return gfx::ScaleFactor<src, dst>(std::max(aDestSize.width / aSrcSize.width,
+                                             aDestSize.height / aSrcSize.height));
 }
+
+template<class src, class dst>
+gfx::ScaleFactor<src, dst> MinScaleRatio(const gfx::SizeTyped<dst>& aDestSize, const gfx::SizeTyped<src>& aSrcSize) {
+  return gfx::ScaleFactor<src, dst>(std::min(aDestSize.width / aSrcSize.width,
+                                             aDestSize.height / aSrcSize.height));
+}
+
+} // namespace mozilla
 
 #endif

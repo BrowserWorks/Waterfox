@@ -16,13 +16,23 @@ public class FxAccountConstants {
   public static final String DEFAULT_AUTH_SERVER_ENDPOINT = "https://api.accounts.firefox.com/v1";
   public static final String DEFAULT_TOKEN_SERVER_ENDPOINT = "https://token.services.mozilla.com/1.0/sync/1.5";
   public static final String DEFAULT_OAUTH_SERVER_ENDPOINT = "https://oauth.accounts.firefox.com/v1";
+  public static final String DEFAULT_PROFILE_SERVER_ENDPOINT = "https://profile.accounts.firefox.com/v1";
 
   public static final String STAGE_AUTH_SERVER_ENDPOINT = "https://stable.dev.lcip.org/auth/v1";
   public static final String STAGE_TOKEN_SERVER_ENDPOINT = "https://stable.dev.lcip.org/syncserver/token/1.0/sync/1.5";
   public static final String STAGE_OAUTH_SERVER_ENDPOINT = "https://oauth-stable.dev.lcip.org/v1";
+  public static final String STAGE_PROFILE_SERVER_ENDPOINT = "https://latest.dev.lcip.org/profile/v1";
+
+  // Action to update on cached profile information.
+  public static final String ACCOUNT_PROFILE_JSON_UPDATED_ACTION = "org.mozilla.gecko.fxa.profile.JSON.updated";
 
   // You must be at least 13 years old, on the day of creation, to create a Firefox Account.
   public static final int MINIMUM_AGE_TO_CREATE_AN_ACCOUNT = 13;
+
+  // Key for avatar URI in profile JSON.
+  public static final String KEY_PROFILE_JSON_AVATAR = "avatar";
+  // Key for username in profile JSON.
+  public static final String KEY_PROFILE_JSON_USERNAME = "displayName";
 
   // You must wait 15 minutes after failing an age check before trying to create a different account.
   public static final long MINIMUM_TIME_TO_WAIT_AFTER_AGE_CHECK_FAILED_IN_MILLISECONDS = 15 * 60 * 1000;
@@ -84,4 +94,14 @@ public class FxAccountConstants {
    * Account type.
    */
   public static final String ACCOUNT_STATE_CHANGED_ACTION = AppConstants.MOZ_ANDROID_SHARED_FXACCOUNT_TYPE + ".accounts.ACCOUNT_STATE_CHANGED_ACTION";
+
+  public static final String ACTION_FXA_CONFIRM_ACCOUNT            = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_CONFIRM_ACCOUNT";
+  public static final String ACTION_FXA_FINISH_MIGRATING           = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_FINISH_MIGRATING";
+  public static final String ACTION_FXA_GET_STARTED                = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_GET_STARTED";
+  public static final String ACTION_FXA_STATUS                     = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_STATUS";
+  public static final String ACTION_FXA_UPDATE_CREDENTIALS         = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_UPDATE_CREDENTIALS";
+
+  public static final String ENDPOINT_PREFERENCES  = "preferences";
+  public static final String ENDPOINT_NOTIFICATION = "notification";
+  public static final String ENDPOINT_FIRSTRUN = "firstrun";
 }

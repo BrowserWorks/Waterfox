@@ -4,16 +4,16 @@
 
 Components.utils.import("resource://gre/modules/Promise.jsm", this);
 
-let {AddonTestUtils} = Components.utils.import("resource://testing-common/AddonManagerTesting.jsm", {});
-let {HttpServer} = Components.utils.import("resource://testing-common/httpd.js", {});
+var {AddonTestUtils} = Components.utils.import("resource://testing-common/AddonManagerTesting.jsm", {});
+var {HttpServer} = Components.utils.import("resource://testing-common/httpd.js", {});
 
-let gManagerWindow;
-let gCategoryUtilities;
-let gExperiments;
-let gHttpServer;
+var gManagerWindow;
+var gCategoryUtilities;
+var gExperiments;
+var gHttpServer;
 
-let gSavedManifestURI;
-let gIsEnUsLocale;
+var gSavedManifestURI;
+var gIsEnUsLocale;
 
 const SEC_IN_ONE_DAY = 24 * 60 * 60;
 const MS_IN_ONE_DAY  = SEC_IN_ONE_DAY * 1000;
@@ -459,7 +459,7 @@ add_task(function testActivateRealExperiments() {
   is_element_hidden(el, "warning-container should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "anonid", "pending-container");
   is_element_hidden(el, "pending-container should be hidden.");
-  ({ version }) = yield get_tooltip_info(item);
+  ({ version } = yield get_tooltip_info(item));
   Assert.equal(version, undefined, "version should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "class", "disabled-postfix");
   is_element_hidden(el, "disabled-postfix should be hidden.");

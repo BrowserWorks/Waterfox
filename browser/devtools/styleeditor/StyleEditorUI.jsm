@@ -21,15 +21,15 @@ Cu.import("resource:///modules/devtools/gDevTools.jsm");
 Cu.import("resource:///modules/devtools/StyleEditorUtil.jsm");
 Cu.import("resource:///modules/devtools/SplitView.jsm");
 Cu.import("resource:///modules/devtools/StyleSheetEditor.jsm");
-const { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
 
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
                                   "resource://gre/modules/PluralForm.jsm");
 
-const require = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools.require;
+const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const { PrefObserver, PREF_ORIG_SOURCES } = require("devtools/styleeditor/utils");
 const csscoverage = require("devtools/server/actors/csscoverage");
 const console = require("resource://gre/modules/devtools/Console.jsm").console;
+const promise = require("promise");
 
 const LOAD_ERROR = "error-load";
 const STYLE_EDITOR_TEMPLATE = "stylesheet";
@@ -364,7 +364,11 @@ StyleEditorUI.prototype = {
         // nothing selected
         return;
       }
-      NetUtil.asyncFetch2(file, (stream, status) => {
+      NetUtil.asyncFetch({
+        uri: NetUtil.newURI(file),
+        loadingNode: this._window.document,
+        contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER
+      }, (stream, status) => {
         if (!Components.isSuccessCode(status)) {
           this.emit("error", { key: LOAD_ERROR });
           return;
@@ -375,12 +379,7 @@ StyleEditorUI.prototype = {
         this._debuggee.addStyleSheet(source).then((styleSheet) => {
           this._onStyleSheetCreated(styleSheet, file);
         });
-      },
-      this._window.document,
-      null,  // aLoadingPrincipal
-      null,  // aTriggeringPrincipal
-      Ci.nsILoadInfo.SEC_NORMAL,
-      Ci.nsIContentPolicy.TYPE_OTHER);
+      });
     };
 
     showFilePicker(file, false, parentWindow, onFileSelected);

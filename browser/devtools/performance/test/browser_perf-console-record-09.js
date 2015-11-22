@@ -6,8 +6,8 @@
  * an in-progress console profile.
  */
 
-function spawnTest () {
-  loadFrameScripts();
+function* spawnTest() {
+  PMM_loadFrameScripts(gBrowser);
   let { target, toolbox, panel } = yield initPerformance(SIMPLE_URL);
   let win = panel.panelWin;
   let { gFront, PerformanceController } = win;

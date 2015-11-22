@@ -153,7 +153,6 @@ nsIDNService::~nsIDNService()
   idn_nameprep_destroy(mNamePrepHandle);
 }
 
-/* ACString ConvertUTF8toACE (in AUTF8String input); */
 NS_IMETHODIMP nsIDNService::ConvertUTF8toACE(const nsACString & input, nsACString & ace)
 {
   return UTF8toACE(input, ace, true, true);
@@ -213,7 +212,6 @@ nsresult nsIDNService::UTF8toACE(const nsACString & input, nsACString & ace, boo
   return NS_OK;
 }
 
-/* AUTF8String convertACEtoUTF8(in ACString input); */
 NS_IMETHODIMP nsIDNService::ConvertACEtoUTF8(const nsACString & input, nsACString & _retval)
 {
   return ACEtoUTF8(input, _retval, true, true);
@@ -267,7 +265,6 @@ nsresult nsIDNService::ACEtoUTF8(const nsACString & input, nsACString & _retval,
   return NS_OK;
 }
 
-/* boolean isACE(in ACString input); */
 NS_IMETHODIMP nsIDNService::IsACE(const nsACString & input, bool *_retval)
 {
   nsACString::const_iterator begin;
@@ -286,7 +283,6 @@ NS_IMETHODIMP nsIDNService::IsACE(const nsACString & input, bool *_retval)
   return NS_OK;
 }
 
-/* AUTF8String normalize(in AUTF8String input); */
 NS_IMETHODIMP nsIDNService::Normalize(const nsACString & input, nsACString & output)
 {
   // protect against bogus input
@@ -775,18 +771,14 @@ bool nsIDNService::isLabelSafe(const nsAString &label)
 
     // Check for restricted characters; aspirational scripts are permitted
     XidmodType xm = GetIdentifierModification(ch);
-    int32_t script = GetScriptCode(ch);
-    if (xm > XIDMOD_RECOMMENDED &&
-        !(xm == XIDMOD_LIMITED_USE &&
-          (script == MOZ_SCRIPT_CANADIAN_ABORIGINAL ||
-           script == MOZ_SCRIPT_MIAO ||
-           script == MOZ_SCRIPT_MONGOLIAN ||
-           script == MOZ_SCRIPT_TIFINAGH ||
-           script == MOZ_SCRIPT_YI))) {
+    if (xm != XIDMOD_RECOMMENDED &&
+        xm != XIDMOD_INCLUSION &&
+        xm != XIDMOD_ASPIRATIONAL) {
       return false;
     }
 
     // Check for mixed script
+    int32_t script = GetScriptCode(ch);
     if (script != MOZ_SCRIPT_COMMON &&
         script != MOZ_SCRIPT_INHERITED &&
         script != lastScript) {

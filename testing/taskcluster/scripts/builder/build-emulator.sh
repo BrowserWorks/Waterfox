@@ -11,19 +11,9 @@ test -d $WORKSPACE
 test $GECKO_HEAD_REPOSITORY # Should be an hg repository url to pull from
 test $GECKO_BASE_REPOSITORY # Should be an hg repository url to clone from
 test $GECKO_HEAD_REV # Should be an hg revision to pull down
-test $MOZHARNESS_REPOSITORY # mozharness repository
-test $MOZHARNESS_REV # mozharness revision
-test $MOZHARNESS_REF # mozharness ref
 test $TARGET
 
 . setup-ccache.sh
-
-# First check if the mozharness directory is available. This is intended to be
-# used locally in development to test mozharness changes:
-#
-#   $ docker -v your_mozharness:/home/worker/mozharness ...
-#
-tc-vcs checkout mozharness $MOZHARNESS_REPOSITORY $MOZHARNESS_REPOSITORY $MOZHARNESS_REV $MOZHARNESS_REF
 
 # Figure out where the remote manifest is so we can use caches for it.
 
@@ -37,12 +27,19 @@ tc-vcs repo-checkout $WORKSPACE/B2G https://git.mozilla.org/b2g/B2G.git $MANIFES
 rm -f $WORKSPACE/B2G/gecko
 ln -s $WORKSPACE/gecko $WORKSPACE/B2G/gecko
 
+### Install package dependencies
+install-packages.sh $WORKSPACE/gecko
+
 debug_flag=""
 if [ 0$B2G_DEBUG -ne 0 ]; then
   debug_flag='--debug'
 fi
 
-./mozharness/scripts/b2g_build.py \
+rm -rf $WORKSPACE/B2G/out/target/product/generic/tests/
+
+gecko_objdir=/home/worker/objdir-gecko/objdir
+
+$WORKSPACE/gecko/testing/mozharness/scripts/b2g_build.py \
   --config b2g/taskcluster-emulator.py \
   "$debug_flag" \
   --disable-mock \
@@ -51,19 +48,23 @@ fi
   --target=$TARGET \
   --b2g-config-dir=$TARGET \
   --checkout-revision=$GECKO_HEAD_REV \
-  --base-repo=$GECKO_BASE_REPOSITORY \
-  --repo=$GECKO_HEAD_REPOSITORY
+  --repo=$WORKSPACE/gecko \
+  --gecko-objdir=$gecko_objdir
 
 # Move files into artifact locations!
 mkdir -p $HOME/artifacts
 
 ls -lah $WORKSPACE/B2G/out
-ls -lah $WORKSPACE/B2G/objdir-gecko/dist/
+ls -lah $gecko_objdir/dist/
 
 mv $WORKSPACE/B2G/sources.xml $HOME/artifacts/sources.xml
 mv $WORKSPACE/B2G/out/target/product/generic/tests/gaia-tests.zip $HOME/artifacts/gaia-tests.zip
-mv $WORKSPACE/B2G/out/target/product/generic/tests/b2g-*.zip $HOME/artifacts
+for name in common cppunittest reftest mochitest xpcshell web-platform; do
+    mv $gecko_objdir/dist/*.$name.tests.zip  $HOME/artifacts/target.$name.tests.zip ;
+done
+mv $gecko_objdir/dist/test_packages_tc.json $HOME/artifacts/test_packages.json
 mv $WORKSPACE/B2G/out/emulator.tar.gz $HOME/artifacts/emulator.tar.gz
-mv $WORKSPACE/B2G/objdir-gecko/dist/b2g-*.crashreporter-symbols.zip $HOME/artifacts/b2g-crashreporter-symbols.zip
+mv $gecko_objdir/dist/b2g-*.crashreporter-symbols.zip $HOME/artifacts/b2g-crashreporter-symbols.zip
+mv $gecko_objdir/dist/mozharness.zip $HOME/artifacts/mozharness.zip
 
 ccache -s

@@ -137,7 +137,7 @@ HTMLTextAreaElement::Select()
   }
 
   nsEventStatus status = nsEventStatus_eIgnore;
-  WidgetGUIEvent event(true, NS_FORM_SELECTED, nullptr);
+  WidgetGUIEvent event(true, eFormSelect, nullptr);
   // XXXbz HTMLInputElement guards against this reentering; shouldn't we?
   EventDispatcher::Dispatch(static_cast<nsIContent*>(this), presContext,
                             &event, nullptr, &status);
@@ -297,13 +297,14 @@ HTMLTextAreaElement::GetPlaceholderVisibility()
 
 nsresult
 HTMLTextAreaElement::SetValueInternal(const nsAString& aValue,
-                                      bool aUserInput)
+                                      uint32_t aFlags)
 {
   // Need to set the value changed flag here, so that
   // nsTextControlFrame::UpdateValueDisplay retrieves the correct value
   // if needed.
   SetValueChanged(true);
-  if (!mState.SetValue(aValue, aUserInput, true)) {
+  aFlags |= nsTextEditorState::eSetValue_Notify;
+  if (!mState.SetValue(aValue, aFlags)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -323,7 +324,8 @@ HTMLTextAreaElement::SetValue(const nsAString& aValue)
   nsAutoString currentValue;
   GetValueInternal(currentValue, true);
 
-  nsresult rv = SetValueInternal(aValue, false);
+  nsresult rv =
+    SetValueInternal(aValue, nsTextEditorState::eSetValue_ByContent);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (mFocusedValue.Equals(currentValue)) {
@@ -339,7 +341,7 @@ HTMLTextAreaElement::SetUserInput(const nsAString& aValue)
   if (!nsContentUtils::IsCallerChrome()) {
     return NS_ERROR_DOM_SECURITY_ERR;
   }
-  return SetValueInternal(aValue, true);
+  return SetValueInternal(aValue, nsTextEditorState::eSetValue_BySetUserInput);
 }
 
 NS_IMETHODIMP
@@ -362,7 +364,7 @@ HTMLTextAreaElement::SetValueChanged(bool aValueChanged)
 NS_IMETHODIMP
 HTMLTextAreaElement::GetDefaultValue(nsAString& aDefaultValue)
 {
-  if (!nsContentUtils::GetNodeTextContent(this, false, aDefaultValue)) {
+  if (!nsContentUtils::GetNodeTextContent(this, false, aDefaultValue, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   return NS_OK;
@@ -467,7 +469,7 @@ HTMLTextAreaElement::GetAttributeMappingFunction() const
 }
 
 bool
-HTMLTextAreaElement::IsDisabledForEvents(uint32_t aMessage)
+HTMLTextAreaElement::IsDisabledForEvents(EventMessage aMessage)
 {
   nsIFormControlFrame* formControlFrame = GetFormControlFrame(false);
   nsIFrame* formFrame = do_QueryFrame(formControlFrame);
@@ -478,13 +480,13 @@ nsresult
 HTMLTextAreaElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mCanHandle = false;
-  if (IsDisabledForEvents(aVisitor.mEvent->message)) {
+  if (IsDisabledForEvents(aVisitor.mEvent->mMessage)) {
     return NS_OK;
   }
 
   // Don't dispatch a second select event if we are already handling
   // one.
-  if (aVisitor.mEvent->message == NS_FORM_SELECTED) {
+  if (aVisitor.mEvent->mMessage == eFormSelect) {
     if (mHandlingSelect) {
       return NS_OK;
     }
@@ -497,14 +499,14 @@ HTMLTextAreaElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
   if (aVisitor.mEvent->mFlags.mNoContentDispatch) {
     aVisitor.mItemFlags |= NS_NO_CONTENT_DISPATCH;
   }
-  if (aVisitor.mEvent->message == NS_MOUSE_CLICK &&
+  if (aVisitor.mEvent->mMessage == eMouseClick &&
       aVisitor.mEvent->AsMouseEvent()->button ==
         WidgetMouseEvent::eMiddleButton) {
     aVisitor.mEvent->mFlags.mNoContentDispatch = false;
   }
 
   // Fire onchange (if necessary), before we do the blur, bug 370521.
-  if (aVisitor.mEvent->message == NS_BLUR_CONTENT) {
+  if (aVisitor.mEvent->mMessage == eBlur) {
     FireChangeEventIfNeeded();
   }
 
@@ -532,13 +534,13 @@ HTMLTextAreaElement::FireChangeEventIfNeeded()
 nsresult
 HTMLTextAreaElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
 {
-  if (aVisitor.mEvent->message == NS_FORM_SELECTED) {
+  if (aVisitor.mEvent->mMessage == eFormSelect) {
     mHandlingSelect = false;
   }
 
-  if (aVisitor.mEvent->message == NS_FOCUS_CONTENT ||
-      aVisitor.mEvent->message == NS_BLUR_CONTENT) {
-    if (aVisitor.mEvent->message == NS_FOCUS_CONTENT) {
+  if (aVisitor.mEvent->mMessage == eFocus ||
+      aVisitor.mEvent->mMessage == eBlur) {
+    if (aVisitor.mEvent->mMessage == eFocus) {
       // If the invalid UI is shown, we should show it while focusing (and
       // update). Otherwise, we should not.
       GetValueInternal(mFocusedValue, true);
@@ -547,7 +549,7 @@ HTMLTextAreaElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
       // If neither invalid UI nor valid UI is shown, we shouldn't show the valid
       // UI while typing.
       mCanShowValidUI = ShouldShowValidityUI();
-    } else { // NS_BLUR_CONTENT
+    } else { // eBlur
       mCanShowInvalidUI = true;
       mCanShowValidUI = true;
     }
@@ -968,7 +970,8 @@ HTMLTextAreaElement::SetRangeText(const nsAString& aReplacement,
 
   if (aStart <= aEnd) {
     value.Replace(aStart, aEnd - aStart, aReplacement);
-    nsresult rv = SetValueInternal(value, false);
+    nsresult rv =
+      SetValueInternal(value, nsTextEditorState::eSetValue_ByContent);
     if (NS_FAILED(rv)) {
       aRv.Throw(rv);
       return;
@@ -1209,7 +1212,7 @@ HTMLTextAreaElement::UnbindFromTree(bool aDeep, bool aNullParent)
 
 nsresult
 HTMLTextAreaElement::BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                   const nsAttrValueOrString* aValue,
+                                   nsAttrValueOrString* aValue,
                                    bool aNotify)
 {
   if (aNotify && aName == nsGkAtoms::disabled &&

@@ -3,13 +3,14 @@
 
 'use strict';
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 Cu.import('resource://gre/modules/Timer.jsm');
 Cu.import('resource://gre/modules/Promise.jsm');
 Cu.import('resource://gre/modules/Preferences.jsm');
+Cu.import('resource://gre/modules/PlacesUtils.jsm');
 
 const serviceExports = Cu.import('resource://gre/modules/PushService.jsm', {});
 const servicePrefs = new Preferences('dom.push.');
@@ -62,42 +63,21 @@ function after(times, func) {
 }
 
 /**
- * Wraps a Push database in a proxy that returns promises for all asynchronous
- * methods. This makes it easier to test the database code with Task.jsm.
+ * Updates the places database.
  *
- * @param {PushDB} db A Push database.
- * @returns {Proxy} A proxy that traps function property gets and returns
- *  promisified functions.
+ * @param {mozIPlaceInfo} place A place record to insert.
+ * @returns {Promise} A promise that fulfills when the database is updated.
  */
-function promisifyDatabase(db) {
-  return new Proxy(db, {
-    get(target, property) {
-      let method = target[property];
-      if (typeof method != 'function') {
-        return method;
-      }
-      return function(...params) {
-        return new Promise((resolve, reject) => {
-          method.call(target, ...params, resolve, reject);
-        });
-      };
+function addVisit(place) {
+  return new Promise((resolve, reject) => {
+    if (typeof place.uri == 'string') {
+      place.uri = Services.io.newURI(place.uri, null, null);
     }
-  });
-}
-
-/**
- * Clears and closes an open Push database.
- *
- * @param {PushDB} db A Push database.
- * @returns {Promise} A promise that fulfills when the database is closed.
- */
-function cleanupDatabase(db) {
-  return new Promise(resolve => {
-    function close() {
-      db.close();
-      resolve();
-    }
-    db.drop(close, close);
+    PlacesUtils.asyncHistory.updatePlaces(place, {
+      handleCompletion: resolve,
+      handleError: reject,
+      handleResult() {},
+    });
   });
 }
 
@@ -236,7 +216,11 @@ function setPrefs(prefs = {}) {
     'adaptive.gap': 60000,
     'adaptive.upperLimit': 29 * 60 * 1000,
     // Misc. defaults.
-    'adaptive.mobile': ''
+    'adaptive.mobile': '',
+    'http2.maxRetries': 2,
+    'http2.retryInterval': 500,
+    'http2.reset_retry_count_after_ms': 60000,
+    maxQuotaPerSubscription: 16,
   }, prefs);
   for (let pref in defaultPrefs) {
     servicePrefs.set(pref, defaultPrefs[pref]);

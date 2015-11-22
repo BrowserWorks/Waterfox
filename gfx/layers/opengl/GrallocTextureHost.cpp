@@ -8,6 +8,7 @@
 #include "gfx2DGlue.h"
 #include <ui/GraphicBuffer.h>
 #include "GrallocImages.h"  // for GrallocImage
+#include "GLLibraryEGL.h"   // for GLLibraryEGL
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
 #include "mozilla/layers/GrallocTextureHost.h"
@@ -19,6 +20,7 @@ namespace mozilla {
 namespace layers {
 
 using namespace android;
+using namespace mozilla::gl;
 
 static gfx::SurfaceFormat
 SurfaceFormatForAndroidPixelFormat(android::PixelFormat aFormat,
@@ -101,7 +103,7 @@ GrallocTextureHostOGL::GrallocTextureHostOGL(TextureFlags aFlags,
   : TextureHost(aFlags)
   , mGrallocHandle(aDescriptor)
   , mSize(0, 0)
-  , mDescriptorSize(aDescriptor.size())
+  , mCropSize(0, 0)
   , mFormat(gfx::SurfaceFormat::UNKNOWN)
   , mEGLImage(EGL_NO_IMAGE)
   , mIsOpaque(aDescriptor.isOpaque())
@@ -114,6 +116,7 @@ GrallocTextureHostOGL::GrallocTextureHostOGL(TextureFlags aFlags,
       SurfaceFormatForAndroidPixelFormat(graphicBuffer->getPixelFormat(),
                                          aFlags & TextureFlags::RB_SWAPPED);
     mSize = gfx::IntSize(graphicBuffer->getWidth(), graphicBuffer->getHeight());
+    mCropSize = mSize;
   } else {
     printf_stderr("gralloc buffer is nullptr");
   }
@@ -220,7 +223,7 @@ GrallocTextureHostOGL::GetRenderState()
       flags |= LayerRenderStateFlags::FORMAT_RB_SWAP;
     }
     return LayerRenderState(graphicBuffer,
-                            mDescriptorSize,
+                            mCropSize,
                             flags,
                             this);
   }
@@ -228,15 +231,25 @@ GrallocTextureHostOGL::GetRenderState()
   return LayerRenderState();
 }
 
-TemporaryRef<gfx::DataSourceSurface>
+already_AddRefed<gfx::DataSourceSurface>
 GrallocTextureHostOGL::GetAsSurface() {
   android::GraphicBuffer* graphicBuffer = GetGraphicBufferFromDesc(mGrallocHandle).get();
+  if (!graphicBuffer) {
+    return nullptr;
+  }
   uint8_t* grallocData;
-  graphicBuffer->lock(GRALLOC_USAGE_SW_READ_OFTEN, reinterpret_cast<void**>(&grallocData));
+  int32_t rv = graphicBuffer->lock(GRALLOC_USAGE_SW_READ_OFTEN, reinterpret_cast<void**>(&grallocData));
+  if (rv) {
+    return nullptr;
+  }
   RefPtr<gfx::DataSourceSurface> grallocTempSurf =
     gfx::Factory::CreateWrappingDataSourceSurface(grallocData,
                                                   graphicBuffer->getStride() * android::bytesPerPixel(graphicBuffer->getPixelFormat()),
                                                   GetSize(), GetFormat());
+  if (!grallocTempSurf) {
+    graphicBuffer->unlock();
+    return nullptr;
+  }
   RefPtr<gfx::DataSourceSurface> surf = CreateDataSourceSurfaceByCloning(grallocTempSurf);
 
   graphicBuffer->unlock();
@@ -258,19 +271,6 @@ GrallocTextureHostOGL::UnbindTextureSource()
   // TextureSource, which has the effect of unlocking the gralloc buffer. So when
   // this is called we know we are going to be unlocked soon.
   mGLTextureSource = nullptr;
-}
-
-FenceHandle
-GrallocTextureHostOGL::GetAndResetReleaseFenceHandle()
-{
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-  android::sp<android::Fence> fence = GetAndResetReleaseFence();
-  if (fence.get() && fence->isValid()) {
-    FenceHandle handle = FenceHandle(fence);
-    return handle;
-  }
-#endif
-  return FenceHandle();
 }
 
 GLenum GetTextureTarget(gl::GLContext* aGL, android::PixelFormat aFormat) {
@@ -352,8 +352,12 @@ GrallocTextureHostOGL::PrepareTextureSource(CompositableTextureSourceRef& aTextu
   }
 
   if (mEGLImage == EGL_NO_IMAGE) {
+    gfx::IntSize cropSize(0, 0);
+    if (mCropSize != mSize) {
+      cropSize = mCropSize;
+    }
     // Should only happen the first time.
-    mEGLImage = EGLImageCreateFromNativeBuffer(gl, graphicBuffer->getNativeBuffer());
+    mEGLImage = EGLImageCreateFromNativeBuffer(gl, graphicBuffer->getNativeBuffer(), cropSize);
   }
 
   GLenum textureTarget = GetTextureTarget(gl, graphicBuffer->getPixelFormat());
@@ -386,6 +390,59 @@ GrallocTextureHostOGL::PrepareTextureSource(CompositableTextureSourceRef& aTextu
   }
 }
 
+void
+GrallocTextureHostOGL::WaitAcquireFenceHandleSyncComplete()
+{
+  if (!mAcquireFenceHandle.IsValid()) {
+    return;
+  }
+
+  nsRefPtr<FenceHandle::FdObj> fence = mAcquireFenceHandle.GetAndResetFdObj();
+  int fenceFd = fence->GetAndResetFd();
+
+  EGLint attribs[] = {
+              LOCAL_EGL_SYNC_NATIVE_FENCE_FD_ANDROID, fenceFd,
+              LOCAL_EGL_NONE
+          };
+
+  EGLSync sync = sEGLLibrary.fCreateSync(EGL_DISPLAY(),
+                                         LOCAL_EGL_SYNC_NATIVE_FENCE_ANDROID,
+                                         attribs);
+  if (!sync) {
+    NS_WARNING("failed to create native fence sync");
+    return;
+  }
+
+  // Wait sync complete with timeout.
+  // If a source of the fence becomes invalid because of error,
+  // fene complete is not signaled. See Bug 1061435.
+  EGLint status = sEGLLibrary.fClientWaitSync(EGL_DISPLAY(),
+                                              sync,
+                                              0,
+                                              400000000 /*400 usec*/);
+  if (status != LOCAL_EGL_CONDITION_SATISFIED) {
+    NS_ERROR("failed to wait native fence sync");
+  }
+  MOZ_ALWAYS_TRUE( sEGLLibrary.fDestroySync(EGL_DISPLAY(), sync) );
+}
+
+void
+GrallocTextureHostOGL::SetCropRect(nsIntRect aCropRect)
+{
+  MOZ_ASSERT(aCropRect.TopLeft() == IntPoint(0, 0));
+  MOZ_ASSERT(!aCropRect.IsEmpty());
+  MOZ_ASSERT(aCropRect.width <= mSize.width);
+  MOZ_ASSERT(aCropRect.height <= mSize.height);
+
+  gfx::IntSize cropSize(aCropRect.width, aCropRect.height);
+  if (mCropSize == cropSize) {
+    return;
+  }
+
+  mCropSize = cropSize;
+  mGLTextureSource = nullptr;
+}
+
 bool
 GrallocTextureHostOGL::BindTextureSource(CompositableTextureSourceRef& aTextureSource)
 {
@@ -404,7 +461,7 @@ GrallocTextureHostOGL::BindTextureSource(CompositableTextureSourceRef& aTextureS
 
 #if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
   // Wait until it's ready.
-  WaitAcquireFenceSyncComplete();
+  WaitAcquireFenceHandleSyncComplete();
 #endif
   return true;
 }

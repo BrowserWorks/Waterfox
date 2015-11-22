@@ -16,8 +16,8 @@ class nsPlaintextEditor;
 namespace mozilla {
 namespace dom {
 class Selection;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 /***************************************************************************
  * base for an object to encapsulate any additional info needed to be passed
@@ -26,22 +26,22 @@ class Selection;
 class nsRulesInfo
 {
   public:
-  
+
   explicit nsRulesInfo(EditAction aAction) : action(aAction) {}
   virtual ~nsRulesInfo() {}
-  
+
   EditAction action;
 };
 
 /***************************************************************************
  * Interface of editing rules.
- *  
+ *
  */
 class nsIEditRules : public nsISupports
 {
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_IEDITRULES_IID)
-  
+
 //Interfaces for addref and release and queryinterface
 //NOTE: Use   NS_DECL_ISUPPORTS_INHERITED in any class inherited from nsIEditRules
 

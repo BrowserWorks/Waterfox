@@ -201,10 +201,11 @@ gfxContext::ClosePath()
   mPathBuilder->Close();
 }
 
-TemporaryRef<Path> gfxContext::GetPath()
+already_AddRefed<Path> gfxContext::GetPath()
 {
   EnsurePath();
-  return mPath;
+  RefPtr<Path> path(mPath);
+  return path.forget();
 }
 
 void gfxContext::SetPath(Path* path)
@@ -461,7 +462,7 @@ gfxContext::CurrentDash(FallibleTArray<gfxFloat>& dashes, gfxFloat* offset) cons
   const AzureState &state = CurrentState();
   int count = state.strokeOptions.mDashLength;
 
-  if (count <= 0 || !dashes.SetLength(count)) {
+  if (count <= 0 || !dashes.SetLength(count, fallible)) {
     return false;
   }
 
@@ -616,6 +617,57 @@ gfxContext::GetClipExtents()
   rect = mat.TransformBounds(rect);
 
   return ThebesRect(rect);
+}
+
+bool
+gfxContext::HasComplexClip() const
+{
+  for (int i = mStateStack.Length() - 1; i >= 0; i--) {
+    for (unsigned int c = 0; c < mStateStack[i].pushedClips.Length(); c++) {
+      const AzureState::PushedClip &clip = mStateStack[i].pushedClips[c];
+      if (clip.path || !clip.transform.IsRectilinear()) {
+        return true;
+      }
+    }
+    if (mStateStack[i].clipWasReset) {
+      break;
+    }
+  }
+  return false;
+}
+
+bool
+gfxContext::ExportClip(ClipExporter& aExporter)
+{
+  unsigned int lastReset = 0;
+  for (int i = mStateStack.Length() - 1; i > 0; i--) {
+    if (mStateStack[i].clipWasReset) {
+      lastReset = i;
+      break;
+    }
+  }
+
+  for (unsigned int i = lastReset; i < mStateStack.Length(); i++) {
+    for (unsigned int c = 0; c < mStateStack[i].pushedClips.Length(); c++) {
+      AzureState::PushedClip &clip = mStateStack[i].pushedClips[c];
+      gfx::Matrix transform = clip.transform;
+      transform.PostTranslate(-GetDeviceOffset());
+
+      aExporter.BeginClip(transform);
+      if (clip.path) {
+        clip.path->StreamToSink(&aExporter);
+      } else {
+        aExporter.MoveTo(clip.rect.TopLeft());
+        aExporter.LineTo(clip.rect.TopRight());
+        aExporter.LineTo(clip.rect.BottomRight());
+        aExporter.LineTo(clip.rect.BottomLeft());
+        aExporter.Close();
+      }
+      aExporter.EndClip();
+    }
+  }
+
+  return true;
 }
 
 bool
@@ -917,7 +969,7 @@ gfxContext::PopGroup()
   return pat.forget();
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 gfxContext::PopGroupToSurface(Matrix* aTransform)
 {
   RefPtr<SourceSurface> src = mDT->Snapshot();
@@ -932,7 +984,7 @@ gfxContext::PopGroupToSurface(Matrix* aTransform)
   deviceOffsetTranslation.PreTranslate(deviceOffset.x, deviceOffset.y);
 
   *aTransform = deviceOffsetTranslation * mat;
-  return src;
+  return src.forget();
 }
 
 void
@@ -1318,6 +1370,15 @@ gfxContext::GetRoundOffsetsToPixels(bool *aRoundX, bool *aRoundY)
 
     cairo_t *cr = GetCairo();
     cairo_scaled_font_t *scaled_font = cairo_get_scaled_font(cr);
+
+    // bug 1198921 - this sometimes fails under Windows for whatver reason
+    NS_ASSERTION(scaled_font, "null cairo scaled font should never be returned "
+                 "by cairo_get_scaled_font");
+    if (!scaled_font) {
+        *aRoundX = true; // default to the same as the fallback path below
+        return;
+    }
+
     // Sometimes hint metrics gets set for us, most notably for printing.
     cairo_font_options_t *font_options = cairo_font_options_create();
     cairo_scaled_font_get_font_options(scaled_font, font_options);

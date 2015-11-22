@@ -22,6 +22,7 @@
 #include "vm/ScopeObject-inl.h"
 #include "vm/Stack-inl.h"
 #include "vm/String-inl.h"
+#include "vm/UnboxedObject-inl.h"
 
 namespace js {
 
@@ -159,37 +160,6 @@ CheckUninitializedLexical(JSContext* cx, HandleScript script, jsbytecode* pc, Ha
     return true;
 }
 
-/*
- * Return an object on which we should look for the properties of |value|.
- * This helps us implement the custom [[Get]] method that ES5's GetValue
- * algorithm uses for primitive values, without actually constructing the
- * temporary object that the specification does.
- *
- * For objects, return the object itself. For string, boolean, and number
- * primitive values, return the appropriate constructor's prototype. For
- * undefined and null, throw an error and return nullptr, attributing the
- * problem to the value at |spindex| on the stack.
- */
-MOZ_ALWAYS_INLINE JSObject*
-ValuePropertyBearer(JSContext* cx, InterpreterFrame* fp, HandleValue v, int spindex)
-{
-    if (v.isObject())
-        return &v.toObject();
-
-    Rooted<GlobalObject*> global(cx, &fp->global());
-
-    if (v.isString())
-        return GlobalObject::getOrCreateStringPrototype(cx, global);
-    if (v.isNumber())
-        return GlobalObject::getOrCreateNumberPrototype(cx, global);
-    if (v.isBoolean())
-        return GlobalObject::getOrCreateBooleanPrototype(cx, global);
-
-    MOZ_ASSERT(v.isNull() || v.isUndefined());
-    ReportIsNullOrUndefined(cx, spindex, v, NullPtr());
-    return nullptr;
-}
-
 inline bool
 GetLengthProperty(const Value& lval, MutableHandleValue vp)
 {
@@ -276,7 +246,7 @@ inline bool
 SetIntrinsicOperation(JSContext* cx, JSScript* script, jsbytecode* pc, HandleValue val)
 {
     RootedPropertyName name(cx, script->getName(pc));
-    return cx->global()->setIntrinsicValue(cx, name, val);
+    return GlobalObject::setIntrinsicValue(cx, cx->global(), name, val);
 }
 
 inline void
@@ -303,9 +273,9 @@ SetNameOperation(JSContext* cx, JSScript* script, jsbytecode* pc, HandleObject s
                *pc == JSOP_STRICTSETNAME ||
                *pc == JSOP_SETGNAME ||
                *pc == JSOP_STRICTSETGNAME);
-    MOZ_ASSERT_IF(*pc == JSOP_SETGNAME && !script->hasPollutedGlobalScope(),
+    MOZ_ASSERT_IF(*pc == JSOP_SETGNAME && !script->hasNonSyntacticScope(),
                   scope == cx->global());
-    MOZ_ASSERT_IF(*pc == JSOP_STRICTSETGNAME && !script->hasPollutedGlobalScope(),
+    MOZ_ASSERT_IF(*pc == JSOP_STRICTSETGNAME && !script->hasNonSyntacticScope(),
                   scope == cx->global());
 
     bool strict = *pc == JSOP_STRICTSETNAME || *pc == JSOP_STRICTSETGNAME;
@@ -483,41 +453,42 @@ GetObjectElementOperation(JSContext* cx, JSOp op, JS::HandleObject obj, JS::Hand
 }
 
 static MOZ_ALWAYS_INLINE bool
-GetPrimitiveElementOperation(JSContext* cx, JSOp op, JS::HandleValue receiver,
+GetPrimitiveElementOperation(JSContext* cx, JSOp op, JS::HandleValue receiver_,
                              HandleValue key, MutableHandleValue res)
 {
     MOZ_ASSERT(op == JSOP_GETELEM || op == JSOP_CALLELEM);
 
     // FIXME: We shouldn't be boxing here or exposing the boxed object as
     //        receiver anywhere below (bug 603201).
-    RootedObject boxed(cx, ToObjectFromStack(cx, receiver));
+    RootedObject boxed(cx, ToObjectFromStack(cx, receiver_));
     if (!boxed)
         return false;
+    RootedValue receiver(cx, ObjectValue(*boxed));
 
     do {
         uint32_t index;
         if (IsDefinitelyIndex(key, &index)) {
-            if (GetElementNoGC(cx, boxed, boxed, index, res.address()))
+            if (GetElementNoGC(cx, boxed, receiver, index, res.address()))
                 break;
 
-            if (!GetElement(cx, boxed, boxed, index, res))
+            if (!GetElement(cx, boxed, receiver, index, res))
                 return false;
             break;
         }
 
         if (IsSymbolOrSymbolWrapper(key)) {
             RootedId id(cx, SYMBOL_TO_JSID(ToSymbolPrimitive(key)));
-            if (!GetProperty(cx, boxed, boxed, id, res))
+            if (!GetProperty(cx, boxed, receiver, id, res))
                 return false;
             break;
         }
 
         if (JSAtom* name = ToAtom<NoGC>(cx, key)) {
             if (name->isIndex(&index)) {
-                if (GetElementNoGC(cx, boxed, boxed, index, res.address()))
+                if (GetElementNoGC(cx, boxed, receiver, index, res.address()))
                     break;
             } else {
-                if (GetPropertyNoGC(cx, boxed, boxed, name->asPropertyName(), res.address()))
+                if (GetPropertyNoGC(cx, boxed, receiver, name->asPropertyName(), res.address()))
                     break;
             }
         }
@@ -527,10 +498,10 @@ GetPrimitiveElementOperation(JSContext* cx, JSOp op, JS::HandleValue receiver,
             return false;
 
         if (name->isIndex(&index)) {
-            if (!GetElement(cx, boxed, boxed, index, res))
+            if (!GetElement(cx, boxed, receiver, index, res))
                 return false;
         } else {
-            if (!GetProperty(cx, boxed, boxed, name->asPropertyName(), res))
+            if (!GetProperty(cx, boxed, receiver, name->asPropertyName(), res))
                 return false;
         }
     } while (false);
@@ -585,8 +556,10 @@ GetElementOperation(JSContext* cx, JSOp op, MutableHandleValue lref, HandleValue
         }
     }
 
-    if (lref.isPrimitive())
-        return GetPrimitiveElementOperation(cx, op, lref, rref, res);
+    if (lref.isPrimitive()) {
+        RootedValue thisv(cx, lref);
+        return GetPrimitiveElementOperation(cx, op, thisv, rref, res);
+    }
 
     RootedObject thisv(cx, &lref.toObject());
     return GetObjectElementOperation(cx, op, thisv, thisv, rref, res);

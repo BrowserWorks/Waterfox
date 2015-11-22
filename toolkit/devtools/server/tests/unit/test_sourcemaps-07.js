@@ -9,7 +9,7 @@ var gDebuggee;
 var gClient;
 var gThreadClient;
 
-Components.utils.import("resource:///modules/devtools/SourceMap.jsm");
+const {SourceNode} = require("source-map");
 
 function run_test()
 {
@@ -29,7 +29,7 @@ function test_cached_original_sources()
 {
   writeFile("temp.js", "initial content");
 
-  gClient.addOneTimeListener("newSource", onNewSource);
+  gThreadClient.addOneTimeListener("newSource", onNewSource);
 
   let node = new SourceNode(1, 0,
                             getFileUrl("temp.js"),

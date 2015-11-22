@@ -28,14 +28,22 @@ EXPORTS += [
 ]
 
 EXPORTS.mozilla += [
+    'AbstractThread.h',
     'BackgroundHangMonitor.h',
     'HangAnnotations.h',
     'HangMonitor.h',
     'LazyIdleThread.h',
+    'MozPromise.h',
+    'SharedThreadPool.h',
+    'StateMirroring.h',
+    'StateWatching.h',
     'SyncRunnable.h',
+    'TaskDispatcher.h',
+    'TaskQueue.h',
 ]
 
 UNIFIED_SOURCES += [
+    'AbstractThread.cpp',
     'BackgroundHangMonitor.cpp',
     'HangAnnotations.cpp',
     'HangMonitor.cpp',
@@ -48,6 +56,8 @@ UNIFIED_SOURCES += [
     'nsThreadManager.cpp',
     'nsThreadPool.cpp',
     'nsTimerImpl.cpp',
+    'SharedThreadPool.cpp',
+    'TaskQueue.cpp',
     'ThreadStackHelper.cpp',
     'TimerThread.cpp',
 ]
@@ -61,10 +71,13 @@ LOCAL_INCLUDES += [
 
 # BHR disabled for Release builds because of bug 965392.
 # BHR disabled for debug builds because of bug 979069.
-if CONFIG['MOZ_UPDATE_CHANNEL'] not in ('release') and not CONFIG['MOZ_DEBUG']:
+# BHR disabled on gonk because of bug 1180533
+# BHR disabled for TSan builds because of bug 1121216.
+if CONFIG['MOZ_UPDATE_CHANNEL'] not in ('release') and \
+   not CONFIG['MOZ_DEBUG'] and \
+   not CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk' and \
+   not CONFIG['MOZ_TSAN']:
     DEFINES['MOZ_ENABLE_BACKGROUND_HANG_MONITOR'] = 1
-
-FAIL_ON_WARNINGS = True
 
 FINAL_LIBRARY = 'xul'
 

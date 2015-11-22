@@ -102,7 +102,17 @@ SVGDocument::EnsureNonSVGUserAgentStyleSheetsLoaded()
     return;
   }
 
+  if (IsStaticDocument()) {
+    // If we're a static clone of a document, then
+    // nsIDocument::CreateStaticClone will handle cloning the original
+    // document's sheets, including the on-demand non-SVG UA sheets,
+    // for us.
+    return;
+  }
+
   mHasLoadedNonSVGUserAgentStyleSheets = true;
+
+  BeginUpdate(UPDATE_STYLE);
 
   if (IsBeingUsedAsImage()) {
     // nsDocumentViewer::CreateStyleSet skipped loading all user-agent/user
@@ -165,7 +175,15 @@ SVGDocument::EnsureNonSVGUserAgentStyleSheetsLoaded()
   EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::FormsSheet());
   EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::CounterStylesSheet());
   EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::HTMLSheet());
+  if (nsLayoutUtils::ShouldUseNoFramesSheet(this)) {
+    EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::NoFramesSheet());
+  }
+  if (nsLayoutUtils::ShouldUseNoScriptSheet(this)) {
+    EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::NoScriptSheet());
+  }
   EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::UASheet());
+
+  EndUpdate(UPDATE_STYLE);
 }
 
 JSObject*

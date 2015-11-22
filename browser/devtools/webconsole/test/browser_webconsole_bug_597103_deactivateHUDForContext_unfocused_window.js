@@ -8,10 +8,13 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-console.html";
+"use strict";
 
-let tab1, tab2, win1, win2;
-let noErrors = true;
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-console.html";
+
+var tab1, tab2, win1, win2;
+var noErrors = true;
 
 function tab1Loaded() {
   win2 = OpenBrowserWindow();
@@ -39,8 +42,7 @@ function tab2Loaded(aEvent) {
     try {
       let target1 = TargetFactory.forTab(tab1);
       gDevTools.showToolbox(target1, "webconsole").then(onWebConsoleOpen);
-    }
-    catch (ex) {
+    } catch (ex) {
       ok(false, "gDevTools.showToolbox(target1) exception: " + ex);
       noErrors = false;
     }
@@ -48,8 +50,7 @@ function tab2Loaded(aEvent) {
     try {
       let target2 = TargetFactory.forTab(tab2);
       gDevTools.showToolbox(target2, "webconsole").then(onWebConsoleOpen);
-    }
-    catch (ex) {
+    } catch (ex) {
       ok(false, "gDevTools.showToolbox(target2) exception: " + ex);
       noErrors = false;
     }
@@ -62,14 +63,12 @@ function tab2Loaded(aEvent) {
         try {
           let target2 = TargetFactory.forTab(tab2);
           gDevTools.closeToolbox(target2).then(testEnd);
-        }
-        catch (ex) {
+        } catch (ex) {
           ok(false, "gDevTools.closeToolbox(target2) exception: " + ex);
           noErrors = false;
         }
       });
-    }
-    catch (ex) {
+    } catch (ex) {
       ok(false, "gDevTools.closeToolbox(target1) exception: " + ex);
       noErrors = false;
     }
@@ -101,4 +100,3 @@ function test() {
     tab1Loaded();
   });
 }
-

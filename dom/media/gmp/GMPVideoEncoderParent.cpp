@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "GMPVideoEncoderParent.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "GMPVideoi420FrameImpl.h"
 #include "GMPVideoEncodedFrameImpl.h"
 #include "mozilla/unused.h"
@@ -23,15 +23,10 @@ namespace mozilla {
 #undef LOG
 #endif
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* GetGMPLog();
 
-#define LOGD(msg) PR_LOG(GetGMPLog(), PR_LOG_DEBUG, msg)
-#define LOG(level, msg) PR_LOG(GetGMPLog(), (level), msg)
-#else
-#define LOGD(msg)
-#define LOG(level, msg)
-#endif
+#define LOGD(msg) MOZ_LOG(GetGMPLog(), mozilla::LogLevel::Debug, msg)
+#define LOG(level, msg) MOZ_LOG(GetGMPLog(), (level), msg)
 
 #ifdef __CLASS__
 #undef __CLASS__
@@ -352,7 +347,7 @@ GMPVideoEncoderParent::AnswerNeedShmem(const uint32_t& aEncodedBufferSize,
                                                 aEncodedBufferSize,
                                                 ipc::SharedMemory::TYPE_BASIC, &mem))
   {
-    LOG(PR_LOG_ERROR, ("%s::%s: Failed to get a shared mem buffer for Child! size %u",
+    LOG(LogLevel::Error, ("%s::%s: Failed to get a shared mem buffer for Child! size %u",
                        __CLASS__, __FUNCTION__, aEncodedBufferSize));
     return false;
   }

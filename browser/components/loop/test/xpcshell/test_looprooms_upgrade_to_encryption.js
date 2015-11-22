@@ -9,14 +9,14 @@ Cu.import("resource://services-common/utils.js");
 const loopCrypto = Cu.import("resource:///modules/loop/crypto.js", {}).LoopCrypto;
 const { LOOP_ROOMS_CACHE_FILENAME } = Cu.import("resource:///modules/loop/LoopRoomsCache.jsm", {});
 
-let gTimerArgs = [];
+var gTimerArgs = [];
 
 timerHandlers.startTimer = function(callback, delay) {
   gTimerArgs.push({callback, delay});
   return gTimerArgs.length;
 };
 
-let gRoomPatches = [];
+var gRoomPatches = [];
 
 const kContextEnabledPref = "loop.contextInConverations.enabled";
 
@@ -52,14 +52,6 @@ add_task(function* setup_server() {
     res.processAsync();
     res.finish();
   });
-
-  function returnRoomDetails(res, roomName) {
-    roomDetail.roomName = roomName;
-    res.setStatusLine(null, 200, "OK");
-    res.write(JSON.stringify(roomDetail));
-    res.processAsync();
-    res.finish();
-  }
 
   function getJSONData(body) {
     return JSON.parse(CommonUtils.readBytesFromInputStream(body));

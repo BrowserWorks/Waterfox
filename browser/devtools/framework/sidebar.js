@@ -10,7 +10,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
-var {Promise: promise} = require("resource://gre/modules/Promise.jsm");
 var EventEmitter = require("devtools/toolkit/event-emitter");
 var Telemetry = require("devtools/shared/telemetry");
 
@@ -329,14 +328,11 @@ ToolSidebar.prototype = {
   }),
 
   /**
-   * Show or hide a specific tab and tabpanel.
+   * Show or hide a specific tab.
    * @param {Boolean} isVisible True to show the tab/tabpanel, False to hide it.
    * @param {String} id The ID of the tab to be hidden.
-   * @param {String} tabPanelId Optionally pass the ID for the tabPanel if it
-   * can't be retrieved using the tab ID. This is useful when tabs and tabpanels
-   * existed before the widget was created.
    */
-  toggleTab: function(isVisible, id, tabPanelId) {
+  toggleTab: function(isVisible, id) {
     // Toggle the tab.
     let tab = this.getTab(id);
     if (!tab) {
@@ -347,16 +343,6 @@ ToolSidebar.prototype = {
     // Toggle the item in the allTabs menu.
     if (this._allTabsBtn) {
       this._allTabsBtn.querySelector("#sidebar-alltabs-item-" + id).hidden = !isVisible;
-    }
-
-    // Toggle the corresponding tabPanel, if one can be found either with the id
-    // or the provided tabPanelId.
-    let tabPanel = this.getTabPanel(id);
-    if (!tabPanel && tabPanelId) {
-      tabPanel = this.getTabPanel(tabPanelId);
-    }
-    if (tabPanel) {
-      tabPanel.hidden = !isVisible;
     }
   },
 

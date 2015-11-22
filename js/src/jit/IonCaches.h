@@ -9,11 +9,16 @@
 
 #if defined(JS_CODEGEN_ARM)
 # include "jit/arm/Assembler-arm.h"
-#elif defined(JS_CODEGEN_MIPS)
-# include "jit/mips/Assembler-mips.h"
+#elif defined(JS_CODEGEN_ARM64)
+# include "jit/arm64/Assembler-arm64.h"
+#elif defined(JS_CODEGEN_MIPS32)
+# include "jit/mips32/Assembler-mips32.h"
 #endif
+#include "jit/JitCompartment.h"
 #include "jit/Registers.h"
 #include "jit/shared/Assembler-shared.h"
+#include "js/TrackedOptimizationInfo.h"
+
 #include "vm/TypedArrayCommon.h"
 
 namespace js {
@@ -46,15 +51,6 @@ class IonCacheVisitor
 #undef VISIT_INS
 };
 
-// Common shared temporary state needed during codegen between the different
-// kinds of caches. Used by OutOfLineUpdateCache.
-struct AddCacheState
-{
-    RepatchLabel repatchEntry;
-    Register dispatchScratch;
-};
-
-
 // Common structure encoding the state of a polymorphic inline cache contained
 // in the code for an IonScript. IonCaches are used for polymorphic operations
 // where multiple implementations may be required.
@@ -64,13 +60,70 @@ struct AddCacheState
 // may generate a stub to perform the operation in certain cases (e.g. a
 // particular shape for an input object) and attach the stub to existing
 // stubs, forming a daisy chain of tests for how to perform the operation in
-// different circumstances. The details of how stubs are linked up as
-// described in comments below for the classes RepatchIonCache and
-// DispatchIonCache.
+// different circumstances.
 //
 // Eventually, if too many stubs are generated the cache function may disable
 // the cache, by generating a stub to make a call and perform the operation
 // within the VM.
+//
+// The caches initially generate a patchable jump to an out of line call
+// to the cache function. Stubs are attached by appending: when attaching a
+// new stub, we patch the any failure conditions in last generated stub to
+// jump to the new stub. Failure conditions in the new stub jump to the cache
+// function which may generate new stubs.
+//
+//        Control flow               Pointers
+//      =======#                 ----.     .---->
+//             #                     |     |
+//             #======>              \-----/
+//
+// Initial state:
+//
+//  JIT Code
+// +--------+   .---------------.
+// |        |   |               |
+// |========|   v +----------+  |
+// |== IC ==|====>| Cache Fn |  |
+// |========|     +----------+  |
+// |        |<=#       #        |
+// |        |  #=======#        |
+// +--------+  Rejoin path      |
+//     |________                |
+//             |                |
+//     IC      |                |
+//   Entry     |                |
+// +------------+               |
+// | lastJump_  |---------------/
+// +------------+
+// |    ...     |
+// +------------+
+//
+// Attaching stubs:
+//
+//   Patch the jump pointed to by lastJump_ to jump to the new stub. Update
+//   lastJump_ to be the new stub's failure jump. The failure jump of the new
+//   stub goes to the fallback label, which is the cache function. In this
+//   fashion, new stubs are _appended_ to the chain of stubs, as lastJump_
+//   points to the _tail_ of the stub chain.
+//
+//  JIT Code
+// +--------+ #=======================#
+// |        | #                       v
+// |========| #   +----------+     +------+
+// |== IC ==|=#   | Cache Fn |<====| Stub |
+// |========|     +----------+  ^  +------+
+// |        |<=#      #         |     #
+// |        |  #======#=========|=====#
+// +--------+      Rejoin path  |
+//     |________                |
+//             |                |
+//     IC      |                |
+//   Entry     |                |
+// +------------+               |
+// | lastJump_  |---------------/
+// +------------+
+// |    ...     |
+// +------------+
 //
 // While calls may be made to the cache function and other VM functions, the
 // cache may still be treated as pure during optimization passes, such that
@@ -166,6 +219,10 @@ class IonCache
     // IC code to enter a callee.
     jsbytecode* profilerLeavePc_;
 
+    CodeLocationJump initialJump_;
+    CodeLocationJump lastJump_;
+    CodeLocationLabel rejoinLabel_;
+
   private:
     static const size_t MAX_STUBS;
     void incrementStubCount() {
@@ -184,11 +241,14 @@ class IonCache
         fallbackLabel_(),
         script_(nullptr),
         pc_(nullptr),
-        profilerLeavePc_(nullptr)
+        profilerLeavePc_(nullptr),
+        initialJump_(),
+        lastJump_(),
+        rejoinLabel_()
     {
     }
 
-    virtual void disable();
+    void disable();
     inline bool isDisabled() const {
         return disabled_;
     }
@@ -206,21 +266,15 @@ class IonCache
     }
 
     // Get the address at which IC rejoins the mainline jitcode.
-    virtual void* rejoinAddress() = 0;
+    void* rejoinAddress() const {
+        return rejoinLabel_.raw();
+    }
 
-    virtual void emitInitialJump(MacroAssembler& masm, AddCacheState& addState) = 0;
-    virtual void bindInitialJump(MacroAssembler& masm, AddCacheState& addState) = 0;
-    virtual void updateBaseAddress(JitCode* code, MacroAssembler& masm);
-
-    // Initialize the AddCacheState depending on the kind of cache, like
-    // setting a scratch register. Defaults to doing nothing.
-    virtual void initializeAddCacheState(LInstruction* ins, AddCacheState* addState);
+    void emitInitialJump(MacroAssembler& masm, RepatchLabel& entry);
+    void updateBaseAddress(JitCode* code, MacroAssembler& masm);
 
     // Reset the cache around garbage collection.
-    virtual void reset();
-
-    // Destroy any extra resources the cache uses upon IonScript finalization.
-    virtual void destroy();
+    virtual void reset(ReprotectCode reprotect);
 
     bool canAttachStub() const {
         return stubCount_ < MAX_STUBS;
@@ -247,7 +301,8 @@ class IonCache
     // Combine both linkStub and attachStub into one function. In addition, it
     // produces a spew augmented with the attachKind string.
     bool linkAndAttachStub(JSContext* cx, MacroAssembler& masm, StubAttacher& attacher,
-                           IonScript* ion, const char* attachKind);
+                           IonScript* ion, const char* attachKind,
+                           JS::TrackedOutcome = JS::TrackedOutcome::ICOptStub_GenericSuccess);
 
 #ifdef DEBUG
     bool isAllocated() {
@@ -285,223 +340,6 @@ class IonCache
     }
 };
 
-//
-// Repatch caches initially generate a patchable jump to an out of line call
-// to the cache function. Stubs are attached by appending: when attaching a
-// new stub, we patch the any failure conditions in last generated stub to
-// jump to the new stub. Failure conditions in the new stub jump to the cache
-// function which may generate new stubs.
-//
-//        Control flow               Pointers
-//      =======#                 ----.     .---->
-//             #                     |     |
-//             #======>              \-----/
-//
-// Initial state:
-//
-//  JIT Code
-// +--------+   .---------------.
-// |        |   |               |
-// |========|   v +----------+  |
-// |== IC ==|====>| Cache Fn |  |
-// |========|     +----------+  |
-// |        |<=#       #        |
-// |        |  #=======#        |
-// +--------+  Rejoin path      |
-//     |________                |
-//             |                |
-//   Repatch   |                |
-//     IC      |                |
-//   Entry     |                |
-// +------------+               |
-// | lastJump_  |---------------/
-// +------------+
-// |    ...     |
-// +------------+
-//
-// Attaching stubs:
-//
-//   Patch the jump pointed to by lastJump_ to jump to the new stub. Update
-//   lastJump_ to be the new stub's failure jump. The failure jump of the new
-//   stub goes to the fallback label, which is the cache function. In this
-//   fashion, new stubs are _appended_ to the chain of stubs, as lastJump_
-//   points to the _tail_ of the stub chain.
-//
-//  JIT Code
-// +--------+ #=======================#
-// |        | #                       v
-// |========| #   +----------+     +------+
-// |== IC ==|=#   | Cache Fn |<====| Stub |
-// |========|     +----------+  ^  +------+
-// |        |<=#      #         |     #
-// |        |  #======#=========|=====#
-// +--------+      Rejoin path  |
-//     |________                |
-//             |                |
-//   Repatch   |                |
-//     IC      |                |
-//   Entry     |                |
-// +------------+               |
-// | lastJump_  |---------------/
-// +------------+
-// |    ...     |
-// +------------+
-//
-class RepatchIonCache : public IonCache
-{
-  protected:
-    class RepatchStubAppender;
-
-    CodeLocationJump initialJump_;
-    CodeLocationJump lastJump_;
-
-    // Offset from the initial jump to the rejoin label.
-#ifdef JS_CODEGEN_ARM
-    static const size_t REJOIN_LABEL_OFFSET = 4;
-#elif defined(JS_CODEGEN_MIPS)
-    // The size of jump created by MacroAssemblerMIPSCompat::jumpWithPatch.
-    static const size_t REJOIN_LABEL_OFFSET = 4 * sizeof(void*);
-#else
-    static const size_t REJOIN_LABEL_OFFSET = 0;
-#endif
-
-    CodeLocationLabel rejoinLabel() const {
-        uint8_t* ptr = initialJump_.raw();
-#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS)
-        uint32_t i = 0;
-        while (i < REJOIN_LABEL_OFFSET)
-            ptr = Assembler::NextInstruction(ptr, &i);
-#endif
-        return CodeLocationLabel(ptr);
-    }
-
-  public:
-    RepatchIonCache()
-      : initialJump_(),
-        lastJump_()
-    {
-    }
-
-    virtual void reset() override;
-
-    // Set the initial jump state of the cache. The initialJump is the inline
-    // jump that will point to out-of-line code (such as the slow path, or
-    // stubs), and the rejoinLabel is the position that all out-of-line paths
-    // will rejoin to.
-    void emitInitialJump(MacroAssembler& masm, AddCacheState& addState) override;
-    void bindInitialJump(MacroAssembler& masm, AddCacheState& addState) override;
-
-    // Update the labels once the code is finalized.
-    void updateBaseAddress(JitCode* code, MacroAssembler& masm) override;
-
-    virtual void* rejoinAddress() override {
-        return rejoinLabel().raw();
-    }
-};
-
-//
-// Dispatch caches avoid patching already-running code. Instead, the jump to
-// the stub chain is indirect by way of the firstStub_ pointer
-// below. Initially the pointer points to the cache function which may attach
-// new stubs. Stubs are attached by prepending: when attaching a new stub, we
-// jump to the previous stub on failure conditions, then overwrite the
-// firstStub_ pointer with the newly generated stub.
-//
-// This style does not patch the already executing instruction stream, does
-// not need to worry about cache coherence of cached jump addresses, and does
-// not have to worry about aligning the exit jumps to ensure atomic patching,
-// at the expense of an extra memory read to load the very first stub.
-//
-// ICs that need to work in parallel execution need to be dispatch
-// style. Since PJS's removal, nothing else yet uses this style of ICs.
-//
-//        Control flow               Pointers             Memory load
-//      =======#                 ----.     .---->         ******
-//             #                     |     |                   *
-//             #======>              \-----/                   *******
-//
-// Initial state:
-//
-//    The first stub points to the cache function.
-//
-//  JIT Code
-// +--------+                                 .-------.
-// |        |                                 v       |
-// |========|     +---------------+     +----------+  |
-// |== IC ==|====>| Load and jump |====>| Cache Fn |  |
-// |========|     +---------------+     +----------+  |
-// |        |<=#           *                #         |
-// |        |  #===========*================#         |
-// +--------+       Rejoin * path                     |
-//     |________           *                          |
-//             |           *                          |
-//   Dispatch  |           *                          |
-//     IC    **|************                          |
-//   Entry   * |                                      |
-// +------------+                                     |
-// | firstStub_ |-------------------------------------/
-// +------------+
-// |    ...     |
-// +------------+
-//
-// Attaching stubs:
-//
-//   Assign the address of the new stub to firstStub_. The new stub jumps to
-//   the old address held in firstStub_ on failure. Note that there is no
-//   concept of a fallback label here, new stubs are _prepended_, as
-//   firstStub_ always points to the _head_ of the stub chain.
-//
-//  JIT Code
-// +--------+                        #=====================#   .-----.
-// |        |                        #                     v   v     |
-// |========|     +---------------+  #  +----------+     +------+    |
-// |== IC ==|====>| Load and jump |==#  | Cache Fn |<====| Stub |    |
-// |========|     +---------------+     +----------+     +------+    |
-// |        |<=#           *                #                #       |
-// |        |  #===========*================#================#       |
-// +--------+       Rejoin * path                                    |
-//     |________           *                                         |
-//             |           *                                         |
-//   Dispatch  |           *                                         |
-//     IC    **|************                                         |
-//   Entry   * |                                                     |
-// +------------+                                                    |
-// | firstStub_ |----------------------------------------------------/
-// +------------+
-// |    ...     |
-// +------------+
-//
-class DispatchIonCache : public IonCache
-{
-  protected:
-    class DispatchStubPrepender;
-
-    uint8_t* firstStub_;
-    CodeLocationLabel rejoinLabel_;
-    CodeOffsetLabel dispatchLabel_;
-
-  public:
-    DispatchIonCache()
-      : firstStub_(nullptr),
-        rejoinLabel_(),
-        dispatchLabel_()
-    {
-    }
-
-    virtual void reset() override;
-    virtual void initializeAddCacheState(LInstruction* ins, AddCacheState* addState) override;
-
-    void emitInitialJump(MacroAssembler& masm, AddCacheState& addState) override;
-    void bindInitialJump(MacroAssembler& masm, AddCacheState& addState) override;
-
-    // Fix up the first stub pointer once the code is finalized.
-    void updateBaseAddress(JitCode* code, MacroAssembler& masm) override;
-
-    virtual void* rejoinAddress() override {
-        return rejoinLabel_.raw();
-    }
-};
-
 // Define the cache kind and pre-declare data structures used for calling inline
 // caches.
 #define CACHE_HEADER(ickind)                                        \
@@ -536,7 +374,7 @@ struct CacheLocation {
     { }
 };
 
-class GetPropertyIC : public RepatchIonCache
+class GetPropertyIC : public IonCache
 {
   protected:
     // Registers live after the cache, excluding output registers. The initial
@@ -554,8 +392,8 @@ class GetPropertyIC : public RepatchIonCache
     bool monitoredResult_ : 1;
     bool hasTypedArrayLengthStub_ : 1;
     bool hasSharedTypedArrayLengthStub_ : 1;
-    bool hasStrictArgumentsLengthStub_ : 1;
-    bool hasNormalArgumentsLengthStub_ : 1;
+    bool hasMappedArgumentsLengthStub_ : 1;
+    bool hasUnmappedArgumentsLengthStub_ : 1;
     bool hasGenericProxyStub_ : 1;
 
   public:
@@ -572,15 +410,15 @@ class GetPropertyIC : public RepatchIonCache
         monitoredResult_(monitoredResult),
         hasTypedArrayLengthStub_(false),
         hasSharedTypedArrayLengthStub_(false),
-        hasStrictArgumentsLengthStub_(false),
-        hasNormalArgumentsLengthStub_(false),
+        hasMappedArgumentsLengthStub_(false),
+        hasUnmappedArgumentsLengthStub_(false),
         hasGenericProxyStub_(false)
     {
     }
 
     CACHE_HEADER(GetProperty)
 
-    void reset();
+    void reset(ReprotectCode reprotect);
 
     Register object() const {
         return object_;
@@ -597,8 +435,8 @@ class GetPropertyIC : public RepatchIonCache
     bool hasAnyTypedArrayLengthStub(HandleObject obj) const {
         return obj->is<TypedArrayObject>() ? hasTypedArrayLengthStub_ : hasSharedTypedArrayLengthStub_;
     }
-    bool hasArgumentsLengthStub(bool strict) const {
-        return strict ? hasStrictArgumentsLengthStub_ : hasNormalArgumentsLengthStub_;
+    bool hasArgumentsLengthStub(bool mapped) const {
+        return mapped ? hasMappedArgumentsLengthStub_ : hasUnmappedArgumentsLengthStub_;
     }
     bool hasGenericProxyStub() const {
         return hasGenericProxyStub_;
@@ -635,7 +473,7 @@ class GetPropertyIC : public RepatchIonCache
     };
 
     // Helpers for CanAttachNativeGetProp
-    bool allowArrayLength(JSContext* cx, HandleObject obj) const;
+    bool allowArrayLength(JSContext* cx) const;
     bool allowGetters() const {
         return monitoredResult() && !idempotent();
     }
@@ -671,6 +509,10 @@ class GetPropertyIC : public RepatchIonCache
                                  HandleObject obj, HandlePropertyName name,
                                  void* returnAddr, bool* emitted);
 
+    bool tryAttachUnboxedArrayLength(JSContext* cx, HandleScript outerScript, IonScript* ion,
+                                     HandleObject obj, HandlePropertyName name,
+                                     void* returnAddr, bool* emitted);
+
     bool tryAttachTypedArrayLength(JSContext* cx, HandleScript outerScript, IonScript* ion,
                                    HandleObject obj, HandlePropertyName name, bool* emitted);
 
@@ -681,7 +523,7 @@ class GetPropertyIC : public RepatchIonCache
                        HandleObject obj, MutableHandleValue vp);
 };
 
-class SetPropertyIC : public RepatchIonCache
+class SetPropertyIC : public IonCache
 {
   protected:
     // Registers live after the cache, excluding output registers. The initial
@@ -711,7 +553,7 @@ class SetPropertyIC : public RepatchIonCache
 
     CACHE_HEADER(SetProperty)
 
-    void reset();
+    void reset(ReprotectCode reprotect);
 
     Register object() const {
         return object_;
@@ -768,27 +610,27 @@ class SetPropertyIC : public RepatchIonCache
                        HandleObject obj, HandleValue value);
 };
 
-class GetElementIC : public RepatchIonCache
+class GetElementIC : public IonCache
 {
   protected:
     LiveRegisterSet liveRegs_;
 
     Register object_;
-    ConstantOrRegister index_;
+    TypedOrValueRegister index_;
     TypedOrValueRegister output_;
 
     bool monitoredResult_ : 1;
     bool allowDoubleResult_ : 1;
     bool hasDenseStub_ : 1;
-    bool hasStrictArgumentsStub_ : 1;
-    bool hasNormalArgumentsStub_ : 1;
+    bool hasMappedArgumentsStub_ : 1;
+    bool hasUnmappedArgumentsStub_ : 1;
 
     size_t failedUpdates_;
 
     static const size_t MAX_FAILED_UPDATES;
 
   public:
-    GetElementIC(LiveRegisterSet liveRegs, Register object, ConstantOrRegister index,
+    GetElementIC(LiveRegisterSet liveRegs, Register object, TypedOrValueRegister index,
                  TypedOrValueRegister output, bool monitoredResult, bool allowDoubleResult)
       : liveRegs_(liveRegs),
         object_(object),
@@ -797,20 +639,20 @@ class GetElementIC : public RepatchIonCache
         monitoredResult_(monitoredResult),
         allowDoubleResult_(allowDoubleResult),
         hasDenseStub_(false),
-        hasStrictArgumentsStub_(false),
-        hasNormalArgumentsStub_(false),
+        hasMappedArgumentsStub_(false),
+        hasUnmappedArgumentsStub_(false),
         failedUpdates_(0)
     {
     }
 
     CACHE_HEADER(GetElement)
 
-    void reset();
+    void reset(ReprotectCode reprotect);
 
     Register object() const {
         return object_;
     }
-    ConstantOrRegister index() const {
+    TypedOrValueRegister index() const {
         return index_;
     }
     TypedOrValueRegister output() const {
@@ -825,8 +667,8 @@ class GetElementIC : public RepatchIonCache
     bool hasDenseStub() const {
         return hasDenseStub_;
     }
-    bool hasArgumentsStub(bool strict) const {
-        return strict ? hasStrictArgumentsStub_ : hasNormalArgumentsStub_;
+    bool hasArgumentsStub(bool mapped) const {
+        return mapped ? hasMappedArgumentsStub_ : hasUnmappedArgumentsStub_;
     }
     void setHasDenseStub() {
         MOZ_ASSERT(!hasDenseStub());
@@ -836,7 +678,7 @@ class GetElementIC : public RepatchIonCache
     // Helpers for CanAttachNativeGetProp
     typedef JSContext * Context;
     bool allowGetters() const { MOZ_ASSERT(!idempotent()); return true; }
-    bool allowArrayLength(Context, HandleObject) const { return false; }
+    bool allowArrayLength(Context) const { return false; }
     bool canMonitorSingletonUndefinedSlot(HandleObject holder, HandleShape shape) const {
         return monitoredResult();
     }
@@ -845,8 +687,8 @@ class GetElementIC : public RepatchIonCache
     static bool canAttachDenseElement(JSObject* obj, const Value& idval);
     static bool canAttachDenseElementHole(JSObject* obj, const Value& idval,
                                           TypedOrValueRegister output);
-    static bool canAttachTypedArrayElement(JSObject* obj, const Value& idval,
-                                           TypedOrValueRegister output);
+    static bool canAttachTypedOrUnboxedArrayElement(JSObject* obj, const Value& idval,
+                                                    TypedOrValueRegister output);
 
     bool attachGetProp(JSContext* cx, HandleScript outerScript, IonScript* ion,
                        HandleObject obj, const Value& idval, HandlePropertyName name);
@@ -857,8 +699,8 @@ class GetElementIC : public RepatchIonCache
     bool attachDenseElementHole(JSContext* cx, HandleScript outerScript, IonScript* ion,
                                 HandleObject obj, const Value& idval);
 
-    bool attachTypedArrayElement(JSContext* cx, HandleScript outerScript, IonScript* ion,
-                                 HandleObject tarr, const Value& idval);
+    bool attachTypedOrUnboxedArrayElement(JSContext* cx, HandleScript outerScript, IonScript* ion,
+                                          HandleObject tarr, const Value& idval);
 
     bool attachArgumentsElement(JSContext* cx, HandleScript outerScript, IonScript* ion,
                                 HandleObject obj);
@@ -879,7 +721,7 @@ class GetElementIC : public RepatchIonCache
     }
 };
 
-class SetElementIC : public RepatchIonCache
+class SetElementIC : public IonCache
 {
   protected:
     Register object_;
@@ -914,7 +756,7 @@ class SetElementIC : public RepatchIonCache
 
     CACHE_HEADER(SetElement)
 
-    void reset();
+    void reset(ReprotectCode reprotect);
 
     Register object() const {
         return object_;
@@ -963,7 +805,7 @@ class SetElementIC : public RepatchIonCache
            HandleValue idval, HandleValue value);
 };
 
-class BindNameIC : public RepatchIonCache
+class BindNameIC : public IonCache
 {
   protected:
     Register scopeChain_;
@@ -1000,7 +842,7 @@ class BindNameIC : public RepatchIonCache
     update(JSContext* cx, HandleScript outerScript, size_t cacheIndex, HandleObject scopeChain);
 };
 
-class NameIC : public RepatchIonCache
+class NameIC : public IonCache
 {
   protected:
     // Registers live after the cache, excluding output registers. The initial

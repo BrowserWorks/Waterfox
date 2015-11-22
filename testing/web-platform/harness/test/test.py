@@ -8,9 +8,9 @@ import threading
 import time
 from StringIO import StringIO
 
-from mozlog.structured import structuredlog, reader
-from mozlog.structured.handlers import BaseHandler, StreamHandler, StatusHandler
-from mozlog.structured.formatters import MachFormatter
+from mozlog import structuredlog, reader
+from mozlog.handlers import BaseHandler, StreamHandler, StatusHandler
+from mozlog.formatters import MachFormatter
 from wptrunner import wptcommandline, wptrunner
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -101,6 +101,8 @@ def settings_to_argv(settings):
 def set_from_args(settings, args):
     if args.test:
         settings["include"] = args.test
+    if args.tags:
+        settings["tags"] = args.tags
 
 def run(config, args):
     logger = structuredlog.StructuredLogger("web-platform-tests")
@@ -139,6 +141,8 @@ def get_parser():
                         help="Specific product to include in test run")
     parser.add_argument("--pdb", action="store_true",
                         help="Invoke pdb on uncaught exception")
+    parser.add_argument("--tag", action="append", dest="tags",
+                        help="tags to select tests")
     parser.add_argument("test", nargs="*",
                         help="Specific tests to include in test run")
     return parser

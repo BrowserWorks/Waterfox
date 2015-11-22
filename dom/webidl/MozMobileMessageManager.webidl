@@ -72,7 +72,7 @@ dictionary MobileMessageFilter
   boolean? read = null;
 
   // Filtering by a message's threadId attribute.
-  [EnforceRange] unsigned long long? threadId = 0;
+  [EnforceRange] unsigned long long? threadId = null;
 };
 
 /**
@@ -115,7 +115,7 @@ dictionary SmscAddress {
 };
 
 [Pref="dom.sms.enabled",
- CheckPermissions="sms",
+ CheckAnyPermissions="sms",
  AvailableIn="CertifiedApps"]
 interface MozMobileMessageManager : EventTarget
 {
@@ -194,7 +194,7 @@ interface MozMobileMessageManager : EventTarget
   DOMRequest retrieveMMS(MozMmsMessage message);
 
   [Throws]
-  DOMRequest getSmscAddress(optional unsigned long serviceId);
+  Promise<SmscAddress> getSmscAddress(optional unsigned long serviceId);
 
   /**
    * Set the SMSC address.

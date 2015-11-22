@@ -43,13 +43,13 @@ namespace mozilla {
   extern const char kProxyType_SOCKS4[];
   extern const char kProxyType_SOCKS5[];
   extern const char kProxyType_DIRECT[];
-}
+} // namespace mozilla
 
 using namespace mozilla;
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #undef LOG
-#define LOG(args) PR_LOG(net::GetProxyLog(), PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(net::GetProxyLog(), mozilla::LogLevel::Debug, args)
 
 //----------------------------------------------------------------------------
 
@@ -737,7 +737,7 @@ nsProtocolProxyService::CanUseProxy(nsIURI *aURI, int32_t defaultPort)
     }
 
     // Don't use proxy for local hosts (plain hostname, no dots)
-    if (!is_ipaddr && mFilterLocalHosts && (kNotFound == host.FindChar('.'))) {
+    if (!is_ipaddr && mFilterLocalHosts && !host.Contains('.')) {
         LOG(("Not using proxy for this local host [%s]!\n", host.get()));
         return false; // don't allow proxying
     }
@@ -788,7 +788,7 @@ const char kProxyType_SOCKS[]   = "socks";
 const char kProxyType_SOCKS4[]  = "socks4";
 const char kProxyType_SOCKS5[]  = "socks5";
 const char kProxyType_DIRECT[]  = "direct";
-}
+} // namespace mozilla
 
 const char *
 nsProtocolProxyService::ExtractProxyInfo(const char *start,
@@ -1663,7 +1663,7 @@ nsProtocolProxyService::GetProtocolInfo(nsIURI *uri, nsProtocolInfo *info)
     if (NS_FAILED(rv))
         return rv;
 
-    rv = handler->GetProtocolFlags(&info->flags);
+    rv = handler->DoGetProtocolFlags(uri, &info->flags);
     if (NS_FAILED(rv))
         return rv;
 

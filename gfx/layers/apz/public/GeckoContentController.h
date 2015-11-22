@@ -79,7 +79,7 @@ public:
    * |aContentRect| is in CSS pixels, relative to the current cssPage.
    * |aScrollableSize| is the current content width/height in CSS pixels.
    */
-  virtual void SendAsyncScrollDOMEvent(bool aIsRoot,
+  virtual void SendAsyncScrollDOMEvent(bool aIsRootContent,
                                        const CSSRect &aContentRect,
                                        const CSSSize &aScrollableSize) = 0;
 
@@ -89,16 +89,6 @@ public:
    * This method must always be called on the controller thread.
    */
   virtual void PostDelayedTask(Task* aTask, int aDelayMs) = 0;
-
-  /**
-   * Retrieves the last known zoom constraints for the root scrollable layer
-   * for this layers tree. This function should return false if there are no
-   * last known zoom constraints.
-   */
-  virtual bool GetRootZoomConstraints(ZoomConstraints* aOutConstraints)
-  {
-    return false;
-  }
 
   /**
    * APZ uses |FrameMetrics::mCompositionBounds| for hit testing. Sometimes,
@@ -158,6 +148,11 @@ public:
   virtual void NotifyMozMouseScrollEvent(const FrameMetrics::ViewID& aScrollId, const nsString& aEvent)
   {}
 
+  /**
+   * Notify content that the repaint requests have been flushed.
+   */
+  virtual void NotifyFlushComplete() = 0;
+
   GeckoContentController() {}
   virtual void Destroy() {}
 
@@ -166,7 +161,7 @@ protected:
   virtual ~GeckoContentController() {}
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif // mozilla_layers_GeckoContentController_h

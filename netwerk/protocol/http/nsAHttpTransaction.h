@@ -11,7 +11,7 @@
 
 class nsIInterfaceRequestor;
 class nsITransport;
-class nsILoadGroupConnectionInfo;
+class nsISchedulingContext;
 
 namespace mozilla { namespace net {
 
@@ -144,8 +144,8 @@ public:
     // other types
     virtual SpdyConnectTransaction *QuerySpdyConnectTransaction() { return nullptr; }
 
-    // return the load group connection information associated with the transaction
-    virtual nsILoadGroupConnectionInfo *LoadGroupConnectionInfo() { return nullptr; }
+    // return the scheduling context associated with the transaction
+    virtual nsISchedulingContext *SchedulingContext() { return nullptr; }
 
     // return the connection information associated with the transaction
     virtual nsHttpConnectionInfo *ConnectionInfo() = 0;
@@ -265,6 +265,7 @@ public:
 #define NS_DECL_NSAHTTPSEGMENTWRITER \
     nsresult OnWriteSegment(char *, uint32_t, uint32_t *) override;
 
-}} // namespace mozilla::net
+} // namespace net
+} // namespace mozilla
 
 #endif // nsAHttpTransaction_h__

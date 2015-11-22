@@ -8,6 +8,7 @@
 #define jit_shared_CodeGenerator_shared_h
 
 #include "mozilla/Alignment.h"
+#include "mozilla/Move.h"
 
 #include "jit/JitFrames.h"
 #include "jit/LIR.h"
@@ -44,7 +45,7 @@ struct PatchableBackedgeInfo
 };
 
 struct ReciprocalMulConstants {
-    int32_t multiplier;
+    int64_t multiplier;
     int32_t shiftAmount;
 };
 
@@ -83,6 +84,11 @@ class CodeGeneratorShared : public LElementVisitor
     SafepointWriter safepoints_;
     Label invalidate_;
     CodeOffsetLabel invalidateEpilogueData_;
+
+    // Label for the common return path.
+    NonAssertingLabel returnLabel_;
+
+    FallbackICStubSpace stubSpace_;
 
     js::Vector<SafepointIndex, 0, SystemAllocPolicy> safepointIndices_;
     js::Vector<OsiIndex, 0, SystemAllocPolicy> osiIndices_;
@@ -189,61 +195,27 @@ class CodeGeneratorShared : public LElementVisitor
     FrameSizeClass frameClass_;
 
     // For arguments to the current function.
-    inline int32_t ArgToStackOffset(int32_t slot) const {
-        return masm.framePushed() +
-               (gen->compilingAsmJS() ? sizeof(AsmJSFrame) : sizeof(JitFrameLayout)) +
-               slot;
-    }
+    inline int32_t ArgToStackOffset(int32_t slot) const;
 
     // For the callee of the current function.
-    inline int32_t CalleeStackOffset() const {
-        return masm.framePushed() + JitFrameLayout::offsetOfCalleeToken();
-    }
+    inline int32_t CalleeStackOffset() const;
 
-    inline int32_t SlotToStackOffset(int32_t slot) const {
-        MOZ_ASSERT(slot > 0 && slot <= int32_t(graph.localSlotCount()));
-        int32_t offset = masm.framePushed() - frameInitialAdjustment_ - slot;
-        MOZ_ASSERT(offset >= 0);
-        return offset;
-    }
-    inline int32_t StackOffsetToSlot(int32_t offset) const {
-        // See: SlotToStackOffset. This is used to convert pushed arguments
-        // to a slot index that safepoints can use.
-        //
-        // offset = framePushed - frameInitialAdjustment - slot
-        // offset + slot = framePushed - frameInitialAdjustment
-        // slot = framePushed - frameInitialAdjustement - offset
-        return masm.framePushed() - frameInitialAdjustment_ - offset;
-    }
+    inline int32_t SlotToStackOffset(int32_t slot) const;
+    inline int32_t StackOffsetToSlot(int32_t offset) const;
 
     // For argument construction for calls. Argslots are Value-sized.
-    inline int32_t StackOffsetOfPassedArg(int32_t slot) const {
-        // A slot of 0 is permitted only to calculate %esp offset for calls.
-        MOZ_ASSERT(slot >= 0 && slot <= int32_t(graph.argumentSlotCount()));
-        int32_t offset = masm.framePushed() -
-                       graph.paddedLocalSlotsSize() -
-                       (slot * sizeof(Value));
+    inline int32_t StackOffsetOfPassedArg(int32_t slot) const;
 
-        // Passed arguments go below A function's local stack storage.
-        // When arguments are being pushed, there is nothing important on the stack.
-        // Therefore, It is safe to push the arguments down arbitrarily.  Pushing
-        // by sizeof(Value) is desirable since everything on the stack is a Value.
-        // Note that paddedLocalSlotCount() aligns to at least a Value boundary
-        // specifically to support this.
-        MOZ_ASSERT(offset >= 0);
-        MOZ_ASSERT(offset % sizeof(Value) == 0);
-        return offset;
-    }
-
-    inline int32_t ToStackOffset(const LAllocation* a) const {
-        if (a->isArgument())
-            return ArgToStackOffset(a->toArgument()->index());
-        return SlotToStackOffset(a->toStackSlot()->slot());
-    }
+    inline int32_t ToStackOffset(LAllocation a) const;
+    inline int32_t ToStackOffset(const LAllocation* a) const;
 
     uint32_t frameSize() const {
         return frameClass_ == FrameSizeClass::None() ? frameDepth_ : frameClass_.frameSize();
     }
+
+    inline Operand ToOperand(const LAllocation& a);
+    inline Operand ToOperand(const LAllocation* a);
+    inline Operand ToOperand(const LDefinition* def);
 
   protected:
     // Ensure the cache is an IonCache while expecting the size of the derived
@@ -480,9 +452,12 @@ class CodeGeneratorShared : public LElementVisitor
 
     void addCache(LInstruction* lir, size_t cacheIndex);
     size_t addCacheLocations(const CacheLocationList& locs, size_t* numLocs);
-    ReciprocalMulConstants computeDivisionConstants(int d);
+    ReciprocalMulConstants computeDivisionConstants(uint32_t d, int maxLog);
 
   protected:
+    bool generatePrologue();
+    bool generateEpilogue();
+
     void addOutOfLineCode(OutOfLineCode* code, const MInstruction* mir);
     void addOutOfLineCode(OutOfLineCode* code, const BytecodeSite* site);
     bool generateOutOfLineCode();
@@ -496,7 +471,7 @@ class CodeGeneratorShared : public LElementVisitor
     void jumpToBlock(MBasicBlock* mir);
 
 // This function is not used for MIPS. MIPS has branchToBlock.
-#ifndef JS_CODEGEN_MIPS
+#ifndef JS_CODEGEN_MIPS32
     void jumpToBlock(MBasicBlock* mir, Assembler::Condition cond);
 #endif
 
@@ -612,69 +587,57 @@ class OutOfLineCodeBase : public OutOfLineCode
 // ArgSeq store arguments for OutOfLineCallVM.
 //
 // OutOfLineCallVM are created with "oolCallVM" function. The third argument of
-// this function is an instance of a class which provides a "generate" function
-// to call the "pushArg" needed by the VMFunction call.  The list of argument
-// can be created by using the ArgList function which create an empty list of
-// arguments.  Arguments are added to this list by using the comma operator.
-// The type of the argument list is returned by the comma operator, and due to
-// templates arguments, it is quite painful to write by hand.  It is recommended
-// to use it directly as argument of a template function which would get its
-// arguments infered by the compiler (such as oolCallVM).  The list of arguments
-// must be written in the same order as if you were calling the function in C++.
+// this function is an instance of a class which provides a "generate" in charge
+// of pushing the argument, with "pushArg", for a VMFunction.
+//
+// Such list of arguments can be created by using the "ArgList" function which
+// creates one instance of "ArgSeq", where the type of the arguments are inferred
+// from the type of the arguments.
+//
+// The list of arguments must be written in the same order as if you were
+// calling the function in C++.
 //
 // Example:
-//   (ArgList(), ToRegister(lir->lhs()), ToRegister(lir->rhs()))
+//   ArgList(ToRegister(lir->lhs()), ToRegister(lir->rhs()))
 
-template <class SeqType, typename LastType>
-class ArgSeq : public SeqType
-{
-  private:
-    typedef ArgSeq<SeqType, LastType> ThisType;
-    LastType last_;
+template <typename... ArgTypes>
+class ArgSeq;
 
-  public:
-    ArgSeq(const SeqType& seq, const LastType& last)
-      : SeqType(seq),
-        last_(last)
-    { }
-
-    template <typename NextType>
-    inline ArgSeq<ThisType, NextType>
-    operator, (const NextType& last) const {
-        return ArgSeq<ThisType, NextType>(*this, last);
-    }
-
-    inline void generate(CodeGeneratorShared* codegen) const {
-        codegen->pushArg(last_);
-        this->SeqType::generate(codegen);
-    }
-};
-
-// Mark the end of an argument list.
 template <>
-class ArgSeq<void, void>
+class ArgSeq<>
 {
-  private:
-    typedef ArgSeq<void, void> ThisType;
-
   public:
     ArgSeq() { }
-    ArgSeq(const ThisType&) { }
-
-    template <typename NextType>
-    inline ArgSeq<ThisType, NextType>
-    operator, (const NextType& last) const {
-        return ArgSeq<ThisType, NextType>(*this, last);
-    }
 
     inline void generate(CodeGeneratorShared* codegen) const {
     }
 };
 
-inline ArgSeq<void, void>
-ArgList()
+template <typename HeadType, typename... TailTypes>
+class ArgSeq<HeadType, TailTypes...> : public ArgSeq<TailTypes...>
 {
-    return ArgSeq<void, void>();
+  private:
+    HeadType head_;
+
+  public:
+    explicit ArgSeq(HeadType&& head, TailTypes&&... tail)
+      : ArgSeq<TailTypes...>(mozilla::Move(tail)...),
+        head_(mozilla::Move(head))
+    { }
+
+    // Arguments are pushed in reverse order, from last argument to first
+    // argument.
+    inline void generate(CodeGeneratorShared* codegen) const {
+        this->ArgSeq<TailTypes...>::generate(codegen);
+        codegen->pushArg(head_);
+    }
+};
+
+template <typename... ArgTypes>
+inline ArgSeq<ArgTypes...>
+ArgList(ArgTypes... args)
+{
+    return ArgSeq<ArgTypes...>(mozilla::Move(args)...);
 }
 
 // Store wrappers, to generate the right move of data after the VM call.

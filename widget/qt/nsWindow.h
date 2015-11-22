@@ -21,7 +21,7 @@
 
 #ifdef MOZ_LOGGING
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsTArray.h"
 
 extern PRLogModuleInfo *gWidgetLog;
@@ -29,10 +29,10 @@ extern PRLogModuleInfo *gWidgetFocusLog;
 extern PRLogModuleInfo *gWidgetIMLog;
 extern PRLogModuleInfo *gWidgetDrawLog;
 
-#define LOG(args) PR_LOG(gWidgetLog, 4, args)
-#define LOGFOCUS(args) PR_LOG(gWidgetFocusLog, 4, args)
-#define LOGIM(args) PR_LOG(gWidgetIMLog, 4, args)
-#define LOGDRAW(args) PR_LOG(gWidgetDrawLog, 4, args)
+#define LOG(args) MOZ_LOG(gWidgetLog, mozilla::LogLevel::Debug, args)
+#define LOGFOCUS(args) MOZ_LOG(gWidgetFocusLog, mozilla::LogLevel::Debug, args)
+#define LOGIM(args) MOZ_LOG(gWidgetIMLog, mozilla::LogLevel::Debug, args)
+#define LOGDRAW(args) MOZ_LOG(gWidgetDrawLog, mozilla::LogLevel::Debug, args)
 
 #else
 
@@ -142,7 +142,7 @@ public:
 
     virtual uint32_t GetGLFrameBufferFormat() override;
 
-    mozilla::TemporaryRef<mozilla::gfx::DrawTarget> StartRemoteDrawing() override;
+    already_AddRefed<mozilla::gfx::DrawTarget> StartRemoteDrawing() override;
 
     // Widget notifications
     virtual void OnPaint();
@@ -201,7 +201,7 @@ public:
     NS_IMETHOD         PlaceBehind(nsTopLevelWidgetZPlacement  aPlacement,
                                    nsIWidget                  *aWidget,
                                    bool                        aActivate);
-    NS_IMETHOD         SetSizeMode(int32_t aMode);
+    NS_IMETHOD         SetSizeMode(nsSizeMode aMode);
     NS_IMETHOD         GetScreenBounds(nsIntRect &aRect);
     NS_IMETHOD         SetHasTransparentBackground(bool aTransparent);
     NS_IMETHOD         GetHasTransparentBackground(bool& aTransparent);
@@ -259,7 +259,7 @@ private:
     void               SetDefaultIcon(void);
 
     nsEventStatus      DispatchCommandEvent(nsIAtom* aCommand);
-    nsEventStatus      DispatchContentCommandEvent(int32_t aMsg);
+    nsEventStatus      DispatchContentCommandEvent(mozilla::EventMessage aMsg);
     void               SetSoftwareKeyboardState(bool aOpen, const InputContextAction& aAction);
     void               ClearCachedResources();
 

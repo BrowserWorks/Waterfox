@@ -27,6 +27,8 @@ public:
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
   void DeferredDestroy();
+  virtual bool IsContentBridgeParent() override { return true; }
+  void NotifyTabDestroyed();
 
   static ContentBridgeParent*
   Create(Transport* aTransport, ProcessId aOtherProcess);
@@ -80,7 +82,7 @@ protected:
                                const ClonedMessageData& aData,
                                InfallibleTArray<jsipc::CpowEntry>&& aCpows,
                                const IPC::Principal& aPrincipal,
-                               InfallibleTArray<nsString>* aRetvals) override;
+                               nsTArray<StructuredCloneData>* aRetvals) override;
   virtual bool RecvAsyncMessage(const nsString& aMsg,
                                 const ClonedMessageData& aData,
                                 InfallibleTArray<jsipc::CpowEntry>&& aCpows,
@@ -117,7 +119,7 @@ private:
   friend class ContentParent;
 };
 
-} // dom
-} // mozilla
+} // namespace dom
+} // namespace mozilla
 
 #endif // mozilla_dom_ContentBridgeParent_h

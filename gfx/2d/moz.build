@@ -24,6 +24,7 @@ EXPORTS.mozilla.gfx += [
     'DrawTargetTiled.h',
     'Filters.h',
     'Helpers.h',
+    'HelpersCairo.h',
     'Logging.h',
     'Matrix.h',
     'NumericTools.h',
@@ -36,6 +37,7 @@ EXPORTS.mozilla.gfx += [
     'ScaleFactor.h',
     'ScaleFactors2D.h',
     'SourceSurfaceCairo.h',
+    'StackArray.h',
     'Tools.h',
     'Types.h',
     'UserData.h',
@@ -80,6 +82,7 @@ if CONFIG['MOZ_ENABLE_SKIA']:
     ]
     EXPORTS.mozilla.gfx += [
         'HelpersSkia.h',
+        'RefPtrSkia.h',
     ]
 
 # Are we targeting x86 or x64?  If so, build SSE2 files.
@@ -101,6 +104,14 @@ if CONFIG['INTEL_ARCHITECTURE']:
     SOURCES['ImageScalingSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
     if CONFIG['MOZ_ENABLE_SKIA']:
         SOURCES['convolverSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
+elif CONFIG['CPU_ARCH'].startswith('mips'):
+    SOURCES += [
+        'BlurLS3.cpp',
+    ]
+    if CONFIG['MOZ_ENABLE_SKIA']:
+        SOURCES += [
+            'convolverLS3.cpp',
+        ]
 
 UNIFIED_SOURCES += [
     'Blur.cpp',
@@ -145,8 +156,6 @@ if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
     SOURCES += ['BlurNEON.cpp']
     SOURCES['BlurNEON.cpp'].flags += ['-mfpu=neon']
 
-FAIL_ON_WARNINGS = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -172,6 +181,8 @@ CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gtk3', 'gonk', 'qt'):
     CXXFLAGS += CONFIG['CAIRO_FT_CFLAGS']
+
+LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     # Due to bug 796023, we can't have -DUNICODE and -D_UNICODE; defining those

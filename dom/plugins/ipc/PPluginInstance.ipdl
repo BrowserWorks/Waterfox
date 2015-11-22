@@ -68,6 +68,14 @@ intr protocol PPluginInstance
 child:
   intr __delete__();
 
+  // This is only used on Windows and, for windowed plugins, must be called
+  // before the first call to NPP_SetWindow.
+  intr CreateChildPluginWindow()
+    returns (NativeWindowHandle childPluginWindow);
+
+  // This is only used on Windows and, for windowless plugins.
+  async CreateChildPopupSurrogate(NativeWindowHandle netscapeWindow);
+
   intr NPP_SetWindow(NPRemoteWindow window);
 
   intr NPP_GetValue_NPPVpluginWantsAllNetworkStreams()
@@ -83,6 +91,8 @@ child:
   intr NPP_SetValue_NPNVprivateModeBool(bool value) returns (NPError result);
   intr NPP_GetValue_NPPVpluginNativeAccessibleAtkPlugId()
     returns (nsCString plug_id, NPError result);
+
+  intr NPP_SetValue_NPNVmuteAudioBool(bool muted) returns (NPError result);
 
   intr NPP_HandleEvent(NPRemoteEvent event)
     returns (int16_t handled);
@@ -147,6 +157,8 @@ parent:
     returns (NPError result);
   intr NPN_SetValue_NPPVpluginEventModel(int eventModel)
     returns (NPError result);
+  intr NPN_SetValue_NPPVpluginIsPlayingAudio(bool isAudioPlaying)
+    returns (NPError result);
 
   intr NPN_GetURL(nsCString url, nsCString target)
     returns (NPError result);
@@ -209,6 +221,10 @@ parent:
 
   // Notifies the parent of its NPP_New result code.
   async AsyncNPP_NewResult(NPError aResult);
+
+  // Sends a native window to be adopted by the native window that would be
+  // returned by NPN_GetValue_NPNVnetscapeWindow. Only used on Windows.
+  async SetNetscapeWindowAsParent(NativeWindowHandle childWindow);
 
 both:
   async PPluginScriptableObject();

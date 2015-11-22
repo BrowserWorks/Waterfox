@@ -99,6 +99,9 @@ be used. For example:
 
     object.some_event = t.unreached_func("some_event should not fire");
 
+Keep in mind that other tests could start executing before an Asynchronous
+Test is finished.
+
 ## Promise Tests ##
 
 `promise_test` can be used to test APIs that are based on Promises:
@@ -128,6 +131,9 @@ a resolve reaction that verifies the returned value.
 
 Note that in the promise chain constructed in `test_function` assertions don't
 need to wrapped in `step` or `step_func` calls.
+
+Unlike Asynchronous Tests, Promise Tests don't start running until after the
+previous Promise Test finishes.
 
 `promise_rejects` can be used to test Promises that need to reject:
 
@@ -242,6 +248,33 @@ the test result is known. For example
              this.add_cleanup(function() {delete window.some_global});
              assert_true(false);
          });
+
+## Timeouts in Tests ##
+
+In general the use of timeouts in tests is discouraged because this is
+an observed source of instability in real tests when run on CI
+infrastructure. In particular if a test should fail when something
+doesn't happen, it is good practice to simply let the test run to the
+full timeout rather than trying to guess an appropriate shorter
+timeout to use.
+
+In other cases it may be necessary to use a timeout (e.g., for a test
+that only passes if some event is *not* fired). In this case it is
+*not* permitted to use the standard `setTimeout` function. Instead one
+must use the `step_timeout` function:
+
+    var t = async_test("Some test that does something after a timeout");
+
+    t.step_timeout(function() {assert_true(true); this.done()}, 2000);
+
+The difference between `setTimeout` and `step_timeout` is that the
+latter takes account of the timeout multiplier when computing the
+delay; e.g., in the above case a timeout multiplier of 2 would cause a
+pause of 4000ms before calling the callback. This makes it less likely
+to produce unstable results in slow configurations.
+
+For single-page tests, `step_timeout` is also available as a global
+function.
 
 ## Harness Timeout ##
 

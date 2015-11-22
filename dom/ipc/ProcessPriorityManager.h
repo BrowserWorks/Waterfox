@@ -12,7 +12,7 @@
 namespace mozilla {
 namespace dom {
 class ContentParent;
-}
+} // namespace dom
 
 /**
  * This class sets the priority of subprocesses in response to explicit
@@ -73,17 +73,6 @@ public:
    * present, false otherwise.
    */
   static bool AnyProcessHasHighPriority();
-
-  /**
-   * Prevents processes from changing priority until unfrozen.
-   */
-  static void Freeze();
-
-  /**
-   * Allow process' priorities to change again.  This will immediately adjust
-   * processes whose priority change did not happen because of the freeze.
-   */
-  static void Unfreeze();
 
 private:
   ProcessPriorityManager();

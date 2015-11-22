@@ -30,6 +30,7 @@
 #include "ssl.h"
 #include "sslproto.h"
 #include "plhash.h"
+#include "mozilla/Snprintf.h"
 
 using namespace mozilla;
 using namespace mozilla::psm;
@@ -514,7 +515,7 @@ bool AdjustWebSocketHost(relayBuffer& buffer, connection_info_t *ci)
   char newhost[40];
   PR_NetAddrToString(&inet_addr, newhost, sizeof(newhost));
   assert(strlen(newhost) < sizeof(newhost) - 7);
-  sprintf(newhost, "%s:%d", newhost, PR_ntohs(inet_addr.inet.port));
+  snprintf_literal(newhost, "%s:%d", newhost, PR_ntohs(inet_addr.inet.port));
 
   int diff = strlen(newhost) - (endhost-host);
   if (diff > 0)
@@ -784,17 +785,20 @@ void HandleConnection(void* data)
                   LOG_DEBUG((" accepted CONNECT request with redirection, "
                              "sending location and 302 to the client\n"));
                   client_done = true;
-                  sprintf(buffers[s2].buffer, 
-                          "HTTP/1.1 302 Moved\r\n"
-                          "Location: https://%s/\r\n"
-                          "Connection: close\r\n\r\n",
-                          locationHeader.c_str());
+                  snprintf(buffers[s2].buffer,
+                           buffers[s2].bufferend - buffers[s2].buffer,
+                           "HTTP/1.1 302 Moved\r\n"
+                           "Location: https://%s/\r\n"
+                           "Connection: close\r\n\r\n",
+                           locationHeader.c_str());
               }
               else
               {
                 LOG_ERRORD((" could not read the connect request, closing connection with %d", response));
                 client_done = true;
-                sprintf(buffers[s2].buffer, "HTTP/1.1 %d ERROR\r\nConnection: close\r\n\r\n", response);
+                snprintf(buffers[s2].buffer,
+                         buffers[s2].bufferend - buffers[s2].buffer,
+                         "HTTP/1.1 %d ERROR\r\nConnection: close\r\n\r\n", response);
 
                 break;
               }
@@ -1252,6 +1256,7 @@ int processConfigLine(char* configLine)
       else
       {
         LOG_ERROR(("Incorrect client auth option modifier for host '%s'", hostname));
+        delete authoption;
         return 1;
       }
 
@@ -1260,6 +1265,7 @@ int processConfigLine(char* configLine)
       char *hostname_copy = new char[strlen(hostname)+strlen(hostportstring)+2];
       if (!hostname_copy) {
         LOG_ERROR(("Out of memory"));
+        delete authoption;
         return 1;
       }
 
@@ -1270,6 +1276,7 @@ int processConfigLine(char* configLine)
       PLHashEntry* entry = PL_HashTableAdd(existingServer->host_clientauth_table, hostname_copy, authoption);
       if (!entry) {
         LOG_ERROR(("Out of memory"));
+        delete authoption;
         return 1;
       }
     }
@@ -1315,6 +1322,8 @@ int processConfigLine(char* configLine)
       PLHashEntry* entry = PL_HashTableAdd(existingServer->host_redir_table, hostname_copy, redir_copy);
       if (!entry) {
         LOG_ERROR(("Out of memory"));
+        delete[] hostname_copy;
+        delete[] redir_copy;
         return 1;
       }
     }
@@ -1360,13 +1369,20 @@ int parseConfigFile(const char* filePath)
   while (!feof(f))
   {
     char c;
-    fscanf(f, "%c", &c);
+
+    if (fscanf(f, "%c", &c) != 1) {
+      break;
+    }
+
     switch (c)
     {
     case '\n':
       *b++ = 0;
       if (processConfigLine(buffer))
+      {
+        fclose(f);
         return 1;
+      }
       b = buffer;
     case '\r':
       continue;

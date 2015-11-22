@@ -14,6 +14,8 @@
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/ClientBinding.h"
 
+class nsIDocument;
+
 namespace mozilla {
 namespace dom {
 namespace workers {

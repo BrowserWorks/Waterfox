@@ -8,13 +8,18 @@ EXPORTS += [
     'jemalloc_types.h',
 ]
 
-if not CONFIG['MOZ_JEMALLOC3']:
+if not CONFIG['MOZ_JEMALLOC4']:
     SOURCES += [
         'jemalloc.c',
     ]
     Library('mozjemalloc')
     STATIC_LIBRARY_NAME = 'jemalloc'
     FORCE_STATIC_LIB = True
+
+    # See bug 422055.
+    if CONFIG['OS_ARCH'] == 'SunOS' and not CONFIG['GNU_CC'] \
+            and CONFIG['MOZ_OPTIMIZE']:
+        CFLAGS += ['-xO5']
 
 # For non release/esr builds, enable (some) fatal jemalloc assertions.  This
 # helps us catch memory errors.
@@ -37,3 +42,8 @@ LOCAL_INCLUDES += [
     '/memory/build',
 ]
 
+# XXX: We should fix these warnings.
+ALLOW_COMPILER_WARNINGS = True
+
+if CONFIG['GNU_CC']:
+    CFLAGS += ['-Wshadow']

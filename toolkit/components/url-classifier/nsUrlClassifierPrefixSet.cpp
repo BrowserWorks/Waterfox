@@ -18,19 +18,14 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/FileUtils.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 using namespace mozilla;
 
 // NSPR_LOG_MODULES=UrlClassifierPrefixSet:5
-#if defined(PR_LOGGING)
 static const PRLogModuleInfo *gUrlClassifierPrefixSetLog = nullptr;
-#define LOG(args) PR_LOG(gUrlClassifierPrefixSetLog, PR_LOG_DEBUG, args)
-#define LOG_ENABLED() PR_LOG_TEST(gUrlClassifierPrefixSetLog, 4)
-#else
-#define LOG(args)
-#define LOG_ENABLED() (false)
-#endif
+#define LOG(args) MOZ_LOG(gUrlClassifierPrefixSetLog, mozilla::LogLevel::Debug, args)
+#define LOG_ENABLED() MOZ_LOG_TEST(gUrlClassifierPrefixSetLog, mozilla::LogLevel::Debug)
 
 NS_IMPL_ISUPPORTS(
   nsUrlClassifierPrefixSet, nsIUrlClassifierPrefixSet, nsIMemoryReporter)
@@ -42,10 +37,8 @@ nsUrlClassifierPrefixSet::nsUrlClassifierPrefixSet()
   , mMemoryInUse(0)
   , mMemoryReportPath()
 {
-#if defined(PR_LOGGING)
   if (!gUrlClassifierPrefixSetLog)
     gUrlClassifierPrefixSetLog = PR_NewLogModule("UrlClassifierPrefixSet");
-#endif
 }
 
 NS_IMETHODIMP
@@ -140,7 +133,7 @@ nsUrlClassifierPrefixSet::MakePrefixSet(const uint32_t* aPrefixes, uint32_t aLen
 nsresult
 nsUrlClassifierPrefixSet::GetPrefixesNative(FallibleTArray<uint32_t>& outArray)
 {
-  if (!outArray.SetLength(mTotalPrefixes)) {
+  if (!outArray.SetLength(mTotalPrefixes, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -269,11 +262,11 @@ nsUrlClassifierPrefixSet::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeO
 {
   size_t n = 0;
   n += aMallocSizeOf(this);
-  n += mIndexDeltas.SizeOfExcludingThis(aMallocSizeOf);
+  n += mIndexDeltas.ShallowSizeOfExcludingThis(aMallocSizeOf);
   for (uint32_t i = 0; i < mIndexDeltas.Length(); i++) {
-    n += mIndexDeltas[i].SizeOfExcludingThis(aMallocSizeOf);
+    n += mIndexDeltas[i].ShallowSizeOfExcludingThis(aMallocSizeOf);
   }
-  n += mIndexPrefixes.SizeOfExcludingThis(aMallocSizeOf);
+  n += mIndexPrefixes.ShallowSizeOfExcludingThis(aMallocSizeOf);
   return n;
 }
 
@@ -329,6 +322,9 @@ nsUrlClassifierPrefixSet::LoadFromFd(AutoFDClose& fileFd)
     for (uint32_t i = 0; i < indexSize; i++) {
       uint32_t numInDelta = i == indexSize - 1 ? deltaSize - indexStarts[i]
                                : indexStarts[i + 1] - indexStarts[i];
+      if (numInDelta > DELTAS_LIMIT) {
+        return NS_ERROR_FILE_CORRUPTED;
+      }
       if (numInDelta > 0) {
         mIndexDeltas[i].SetLength(numInDelta);
         mTotalPrefixes += numInDelta;

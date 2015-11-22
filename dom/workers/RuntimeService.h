@@ -43,6 +43,7 @@ class RuntimeService final : public nsIObserver
   {
     nsCString mDomain;
     nsTArray<WorkerPrivate*> mActiveWorkers;
+    nsTArray<WorkerPrivate*> mActiveServiceWorkers;
     nsTArray<WorkerPrivate*> mQueuedWorkers;
     nsClassHashtable<nsCStringHashKey, SharedWorkerInfo> mSharedWorkerInfos;
     uint32_t mChildWorkerCount;
@@ -54,7 +55,21 @@ class RuntimeService final : public nsIObserver
     uint32_t
     ActiveWorkerCount() const
     {
-      return mActiveWorkers.Length() + mChildWorkerCount;
+      return mActiveWorkers.Length() +
+             mChildWorkerCount;
+    }
+
+    uint32_t
+    ActiveServiceWorkerCount() const
+    {
+      return mActiveServiceWorkers.Length();
+    }
+
+    bool
+    HasNoWorkers() const
+    {
+      return ActiveWorkerCount() == 0 &&
+             ActiveServiceWorkerCount() == 0;
     }
   };
 

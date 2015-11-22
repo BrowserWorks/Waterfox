@@ -8,12 +8,35 @@
  * and parsing out the blueprint to generate correct values for markers.
  */
 
+const { Cu, Ci } = require("chrome");
+
 loader.lazyRequireGetter(this, "L10N",
   "devtools/performance/global", true);
-loader.lazyRequireGetter(this, "TIMELINE_BLUEPRINT",
+loader.lazyRequireGetter(this, "PREFS",
   "devtools/performance/global", true);
+loader.lazyRequireGetter(this, "TIMELINE_BLUEPRINT",
+  "devtools/performance/markers", true);
 loader.lazyRequireGetter(this, "WebConsoleUtils",
   "devtools/toolkit/webconsole/utils");
+
+// String used to fill in platform data when it should be hidden.
+const GECKO_SYMBOL = "(Gecko)";
+
+/**
+ * Takes a marker, blueprint, and filter list and
+ * determines if this marker should be filtered or not.
+ */
+function isMarkerValid (marker, filter) {
+  if (!filter || filter.length === 0) {
+    return true;
+  }
+
+  let isUnknown = !(marker.name in TIMELINE_BLUEPRINT);
+  if (isUnknown) {
+    return filter.indexOf("UNKNOWN") === -1;
+  }
+  return filter.indexOf(marker.name) === -1;
+}
 
 /**
  * Returns the correct label to display for passed in marker, based
@@ -23,7 +46,7 @@ loader.lazyRequireGetter(this, "WebConsoleUtils",
  * @return {string}
  */
 function getMarkerLabel (marker) {
-  let blueprint = TIMELINE_BLUEPRINT[marker.name];
+  let blueprint = getBlueprintFor(marker);
   // Either use the label function in the blueprint, or use it directly
   // as a string.
   return typeof blueprint.label === "function" ? blueprint.label(marker) : blueprint.label;
@@ -37,7 +60,7 @@ function getMarkerLabel (marker) {
  * @return {string}
  */
 function getMarkerClassName (type) {
-  let blueprint = TIMELINE_BLUEPRINT[type];
+  let blueprint = getBlueprintFor({ name: type });
   // Either use the label function in the blueprint, or use it directly
   // as a string.
   let className = typeof blueprint.label === "function" ? blueprint.label() : blueprint.label;
@@ -65,17 +88,13 @@ function getMarkerClassName (type) {
  * @return {Array<object>}
  */
 function getMarkerFields (marker) {
-  let blueprint = TIMELINE_BLUEPRINT[marker.name];
+  let blueprint = getBlueprintFor(marker);
 
   // If blueprint.fields is a function, use that
   if (typeof blueprint.fields === "function") {
     let fields = blueprint.fields(marker);
-    // Add a ":" to the label since the localization files contain the ":"
-    // if not present. This should be changed, ugh.
     return Object.keys(fields || []).map(label => {
-      // TODO revisit localization strings for markers bug 1163763
-      let normalizedLabel = label.indexOf(":") !== -1 ? label : (label + ":");
-      return { label: normalizedLabel, value: fields[label] };
+      return { label, value: fields[label] };
     });
   }
 
@@ -104,7 +123,7 @@ const DOM = {
    * @return {Array<Element>}
    */
   buildFields: function (doc, marker) {
-    let blueprint = TIMELINE_BLUEPRINT[marker.name];
+    let blueprint = getBlueprintFor(marker);
     let fields = getMarkerFields(marker);
 
     return fields.map(({ label, value }) => DOM.buildNameValueLabel(doc, label, value));
@@ -118,7 +137,7 @@ const DOM = {
    * @return {Element}
    */
   buildTitle: function (doc, marker) {
-    let blueprint = TIMELINE_BLUEPRINT[marker.name];
+    let blueprint = getBlueprintFor(marker);
 
     let hbox = doc.createElement("hbox");
     hbox.setAttribute("align", "center");
@@ -145,7 +164,7 @@ const DOM = {
    * @return {Element}
    */
   buildDuration: function (doc, marker) {
-    let label = L10N.getStr("timeline.markerDetail.duration");
+    let label = L10N.getStr("marker.field.duration");
     let start = L10N.getFormatStrWithNumbers("timeline.tick", marker.start);
     let end = L10N.getFormatStrWithNumbers("timeline.tick", marker.end);
     let duration = L10N.getFormatStrWithNumbers("timeline.tick", marker.end - marker.start);
@@ -168,6 +187,7 @@ const DOM = {
    */
   buildNameValueLabel: function (doc, field, value) {
     let hbox = doc.createElement("hbox");
+    hbox.className = "marker-details-labelcontainer";
     let labelName = doc.createElement("label");
     let labelValue = doc.createElement("label");
     labelName.className = "plain marker-details-labelname";
@@ -193,7 +213,9 @@ const DOM = {
     let container = doc.createElement("vbox");
     let labelName = doc.createElement("label");
     labelName.className = "plain marker-details-labelname";
-    labelName.setAttribute("value", L10N.getStr(`timeline.markerDetail.${type}`));
+    labelName.setAttribute("value", L10N.getStr(`marker.field.${type}`));
+    container.setAttribute("type", type);
+    container.className = "marker-details-stack";
     container.appendChild(labelName);
 
     let wasAsyncParent = false;
@@ -209,7 +231,7 @@ const DOM = {
         let asyncBox = doc.createElement("hbox");
         let asyncLabel = doc.createElement("label");
         asyncLabel.className = "devtools-monospace";
-        asyncLabel.setAttribute("value", L10N.getFormatStr("timeline.markerDetail.asyncStack",
+        asyncLabel.setAttribute("value", L10N.getFormatStr("marker.field.asyncStack",
                                                            frame.asyncCause));
         asyncBox.appendChild(asyncLabel);
         container.appendChild(asyncBox);
@@ -252,7 +274,7 @@ const DOM = {
 
       if (!displayName && !url) {
         let label = doc.createElement("label");
-        label.setAttribute("value", L10N.getStr("timeline.markerDetail.unknownFrame"));
+        label.setAttribute("value", L10N.getStr("marker.value.unknownFrame"));
         hbox.appendChild(label);
       }
 
@@ -267,10 +289,185 @@ const DOM = {
     }
 
     return container;
-  }
+  },
+
+  /**
+   * Builds any custom fields specific to the marker.
+   *
+   * @param {Document} doc
+   * @param {ProfileTimelineMarker} marker
+   * @param {object} options
+   * @return {Array<Element>}
+   */
+  buildCustom: function (doc, marker, options) {
+    let elements = [];
+
+    if (options.allocations && showAllocationsTrigger(marker)) {
+      let hbox = doc.createElement("hbox");
+      hbox.className = "marker-details-customcontainer";
+
+      let label = doc.createElement("label");
+      label.className = "custom-button devtools-button";
+      label.setAttribute("value", "Show allocation triggers");
+      label.setAttribute("type", "show-allocations");
+      label.setAttribute("data-action", JSON.stringify({
+        endTime: marker.start, action: "show-allocations"
+      }));
+
+      hbox.appendChild(label);
+      elements.push(hbox);
+    }
+
+    return elements;
+  },
 };
 
+/**
+ * Mapping of JS marker causes to a friendlier form. Only
+ * markers that are considered "from content" should be labeled here.
+ */
+const JS_MARKER_MAP = {
+  "<script> element":          L10N.getStr("marker.label.javascript.scriptElement"),
+  "promise callback":          L10N.getStr("marker.label.javascript.promiseCallback"),
+  "promise initializer":       L10N.getStr("marker.label.javascript.promiseInit"),
+  "Worker runnable":           L10N.getStr("marker.label.javascript.workerRunnable"),
+  "javascript: URI":           L10N.getStr("marker.label.javascript.jsURI"),
+  // The difference between these two event handler markers are differences
+  // in their WebIDL implementation, so distinguishing them is not necessary.
+  "EventHandlerNonNull":       L10N.getStr("marker.label.javascript.eventHandler"),
+  "EventListener.handleEvent": L10N.getStr("marker.label.javascript.eventHandler"),
+  // These markers do not get L10N'd because they're JS names.
+  "setInterval handler":       "setInterval",
+  "setTimeout handler":        "setTimeout",
+  "FrameRequestCallback":      "requestAnimationFrame",
+};
+
+/**
+ * A series of formatters used by the blueprint.
+ */
+const Formatters = {
+  /**
+   * Uses the marker name as the label for markers that do not have
+   * a blueprint entry. Uses "Other" in the marker filter menu.
+   */
+  UnknownLabel: function (marker={}) {
+    return marker.name || L10N.getStr("marker.label.unknown");
+  },
+
+  GCLabel: function (marker) {
+    if (!marker) {
+      return L10N.getStr("marker.label.garbageCollection2");
+    }
+    // Only if a `nonincrementalReason` exists, do we want to label
+    // this as a non incremental GC event.
+    if ("nonincrementalReason" in marker) {
+      return L10N.getStr("marker.label.garbageCollection.nonIncremental");
+    }
+    return L10N.getStr("marker.label.garbageCollection.incremental");
+  },
+
+  JSLabel: function (marker={}) {
+    let generic = L10N.getStr("marker.label.javascript");
+    if ("causeName" in marker) {
+      return JS_MARKER_MAP[marker.causeName] || generic;
+    }
+    return generic;
+  },
+
+  DOMJSLabel: function (marker={}) {
+    return `Event (${marker.type})`;
+  },
+
+  /**
+   * Returns a hash for computing a fields object for a JS marker. If the cause
+   * is considered content (so an entry exists in the JS_MARKER_MAP), do not display it
+   * since it's redundant with the label. Otherwise for Gecko code, either display
+   * the cause, or "(Gecko)", depending on if "show-platform-data" is set.
+   */
+  JSFields: function (marker) {
+    if ("causeName" in marker && !JS_MARKER_MAP[marker.causeName]) {
+      let cause = PREFS["show-platform-data"] ? marker.causeName : GECKO_SYMBOL;
+      return {
+        [L10N.getStr("marker.field.causeName")]: cause
+      };
+    }
+  },
+
+  GCFields: function (marker) {
+    let fields = Object.create(null);
+    let cause = marker.causeName;
+    let label = L10N.getStr(`marker.gcreason.label.${cause}`) || cause;
+
+    fields[L10N.getStr("marker.field.causeName")] = label;
+
+    if ("nonincrementalReason" in marker) {
+      fields[L10N.getStr("marker.field.nonIncrementalCause")] = marker.nonincrementalReason;
+    }
+
+    return fields;
+  },
+
+  DOMEventFields: function (marker) {
+    let fields = Object.create(null);
+    if ("type" in marker) {
+      fields[L10N.getStr("marker.field.DOMEventType")] = marker.type;
+    }
+    if ("eventPhase" in marker) {
+      let phase;
+      if (marker.eventPhase === Ci.nsIDOMEvent.AT_TARGET) {
+        phase = L10N.getStr("marker.value.DOMEventTargetPhase");
+      } else if (marker.eventPhase === Ci.nsIDOMEvent.CAPTURING_PHASE) {
+        phase = L10N.getStr("marker.value.DOMEventCapturingPhase");
+      } else if (marker.eventPhase === Ci.nsIDOMEvent.BUBBLING_PHASE) {
+        phase = L10N.getStr("marker.value.DOMEventBubblingPhase");
+      }
+      fields[L10N.getStr("marker.field.DOMEventPhase")] = phase;
+    }
+    return fields;
+  },
+
+  StylesFields: function (marker) {
+    if ("restyleHint" in marker) {
+      return {
+        [L10N.getStr("marker.field.restyleHint")]: marker.restyleHint.replace(/eRestyle_/g, "")
+      };
+    }
+  },
+
+  CycleCollectionFields: function (marker) {
+    return {
+      [L10N.getStr("marker.field.type")]: marker.name.replace(/nsCycleCollector::/g, "")
+    };
+  },
+};
+
+/**
+ * Takes a marker and returns the definition for that marker type,
+ * falling back to the UNKNOWN definition if undefined.
+ *
+ * @param {Marker} marker
+ * @return {object}
+ */
+function getBlueprintFor (marker) {
+  return TIMELINE_BLUEPRINT[marker.name] || TIMELINE_BLUEPRINT.UNKNOWN;
+}
+
+/**
+ * Takes a marker and determines if this marker should display
+ * the allocations trigger button.
+ *
+ * @param {Marker} marker
+ * @return {boolean}
+ */
+function showAllocationsTrigger (marker) {
+  return marker.name === "GarbageCollection" &&
+         PREFS["show-triggers-for-gc-types"].split(" ").indexOf(marker.causeName) !== -1;
+}
+
+exports.isMarkerValid = isMarkerValid;
 exports.getMarkerLabel = getMarkerLabel;
 exports.getMarkerClassName = getMarkerClassName;
 exports.getMarkerFields = getMarkerFields;
 exports.DOM = DOM;
+exports.Formatters = Formatters;
+exports.getBlueprintFor = getBlueprintFor;

@@ -9,17 +9,21 @@
 
 add_task(function*() {
   yield addTab(TEST_URL_ROOT + "doc_simple_animation.html");
-  let {toolbox, inspector, panel} = yield openAnimationInspector();
 
+  let ui = yield openAnimationInspector();
+  yield testTargetNode(ui);
+});
+
+function* testTargetNode({toolbox, inspector, panel}) {
   info("Select the simple animated node");
-  yield selectNode(".animated", inspector);
 
-  // Make sure to wait for the target-retrieved event if the nodeFront hasn't
-  // yet been retrieved by the TargetNodeComponent.
-  let targetNodeComponent = panel.playerWidgets[0].targetNodeComponent;
-  if (!targetNodeComponent.nodeFront) {
-    yield targetNodeComponent.once("target-retrieved");
-  }
+  let onPanelUpdated = panel.once(panel.UI_UPDATED_EVENT);
+  yield selectNode(".animated", inspector);
+  yield onPanelUpdated;
+
+  let targets = yield waitForAllAnimationTargets(panel);
+  // Arbitrary select the first one
+  let targetNodeComponent = targets[0];
 
   info("Retrieve the part of the widget that highlights the node on hover");
   let highlightingEl = targetNodeComponent.previewEl;
@@ -30,26 +34,34 @@ add_task(function*() {
                              highlightingEl.ownerDocument.defaultView);
   let nodeFront = yield onHighlight;
 
+  // Do not forget to mouseout, otherwise we get random mouseover event
+  // when selecting another node, which triggers some requests in animation
+  // inspector
+  EventUtils.synthesizeMouse(highlightingEl, 10, 5, {type: "mouseout"},
+                             highlightingEl.ownerDocument.defaultView);
+
   ok(true, "The node-highlight event was fired");
   is(targetNodeComponent.nodeFront, nodeFront,
     "The highlighted node is the one stored on the animation widget");
-  is(nodeFront.tagName, "DIV", "The highlighted node has the correct tagName");
-  is(nodeFront.attributes[0].name, "class", "The highlighted node has the correct attributes");
-  is(nodeFront.attributes[0].value, "ball animated", "The highlighted node has the correct class");
+  is(nodeFront.tagName, "DIV",
+    "The highlighted node has the correct tagName");
+  is(nodeFront.attributes[0].name, "class",
+    "The highlighted node has the correct attributes");
+  is(nodeFront.attributes[0].value, "ball animated",
+    "The highlighted node has the correct class");
 
   info("Select the body node in order to have the list of all animations");
+  onPanelUpdated = panel.once(panel.UI_UPDATED_EVENT);
   yield selectNode("body", inspector);
+  yield onPanelUpdated;
 
-  // Make sure to wait for the target-retrieved event if the nodeFront hasn't
-  // yet been retrieved by the TargetNodeComponent.
-  targetNodeComponent = panel.playerWidgets[0].targetNodeComponent;
-  if (!targetNodeComponent.nodeFront) {
-    yield targetNodeComponent.once("target-retrieved");
-  }
+  targets = yield waitForAllAnimationTargets(panel);
+  targetNodeComponent = targets[0];
 
-  info("Click on the first animation widget's selector icon and wait for the selection to change");
+  info("Click on the first animation widget's selector icon and wait for the " +
+    "selection to change");
   let onSelection = inspector.selection.once("new-node-front");
-  let onPanelUpdated = panel.once(panel.UI_UPDATED_EVENT);
+  onPanelUpdated = panel.once(panel.UI_UPDATED_EVENT);
   let selectIconEl = targetNodeComponent.selectNodeEl;
   EventUtils.sendMouseEvent({type: "click"}, selectIconEl,
                             selectIconEl.ownerDocument.defaultView);
@@ -59,4 +71,6 @@ add_task(function*() {
     "The selected node is the one stored on the animation widget");
 
   yield onPanelUpdated;
-});
+
+  yield waitForAllAnimationTargets(panel);
+}

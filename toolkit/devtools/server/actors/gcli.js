@@ -244,7 +244,7 @@ const GcliActor = ActorClass({
     this._system = createSystem({ location: "server" });
     this._system.commands.onCommandsChange.add(this._commandsChanged);
 
-    const gcliInit = require("gcli/commands/index");
+    const gcliInit = require("devtools/toolkit/gcli/commands/index");
     gcliInit.addAllItemsByModule(this._system);
 
     // this._requisitionPromise should be created synchronously with the call
@@ -260,8 +260,13 @@ const GcliActor = ActorClass({
           throw new Error("environment.chromeDocument is not available in runAt:server commands");
         },
 
-        get window() tabActor.window,
-        get document() tabActor.window.document
+        get window() {
+          return tabActor.window;
+        },
+
+        get document() {
+          return tabActor.window && tabActor.window.document;
+        }
       };
 
       return new Requisition(this._system, { environment: environment });

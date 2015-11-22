@@ -27,8 +27,6 @@
 
 namespace mozilla {
 
-using namespace gl;
-
 bool
 IsGLDepthFormat(TexInternalFormat internalformat)
 {
@@ -73,6 +71,18 @@ TexImageTargetToTexTarget(TexImageTarget texImageTarget)
         // Should be caught by the constructor for TexTarget
         return LOCAL_GL_NONE;
     }
+}
+
+JS::Value
+StringValue(JSContext* cx, const char* chars, ErrorResult& rv)
+{
+    JSString* str = JS_NewStringCopyZ(cx, chars);
+    if (!str) {
+        rv.Throw(NS_ERROR_OUT_OF_MEMORY);
+        return JS::NullValue();
+    }
+
+    return JS::StringValue(str);
 }
 
 GLComponents::GLComponents(TexInternalFormat internalformat)
@@ -249,7 +259,7 @@ DriverFormatsFromEffectiveInternalFormat(gl::GLContext* gl,
     // in some cases we must pass a different value. On ES, they are equal by definition
     // as it is an error to pass internalformat!=format.
     GLenum driverInternalFormat = driverFormat;
-    if (!gl->IsGLES()) {
+    if (gl->IsCompatibilityProfile()) {
         // Cases where desktop OpenGL requires a tweak to 'format'
         if (driverFormat == LOCAL_GL_SRGB)
             driverFormat = LOCAL_GL_RGB;
@@ -284,9 +294,64 @@ DriverFormatsFromEffectiveInternalFormat(gl::GLContext* gl,
         }
     }
 
+    // OpenGL core profile removed texture formats ALPHA, LUMINANCE and LUMINANCE_ALPHA
+    if (gl->IsCoreProfile()) {
+        switch (driverFormat) {
+        case LOCAL_GL_ALPHA:
+        case LOCAL_GL_LUMINANCE:
+            driverInternalFormat = driverFormat = LOCAL_GL_RED;
+            break;
+
+        case LOCAL_GL_LUMINANCE_ALPHA:
+            driverInternalFormat = driverFormat = LOCAL_GL_RG;
+            break;
+        }
+    }
+
     *out_driverInternalFormat = driverInternalFormat;
     *out_driverFormat = driverFormat;
     *out_driverType = driverType;
+}
+
+// Map R to A
+static const GLenum kLegacyAlphaSwizzle[4] = {
+    LOCAL_GL_ZERO, LOCAL_GL_ZERO, LOCAL_GL_ZERO, LOCAL_GL_RED
+};
+// Map R to RGB
+static const GLenum kLegacyLuminanceSwizzle[4] = {
+    LOCAL_GL_RED, LOCAL_GL_RED, LOCAL_GL_RED, LOCAL_GL_ONE
+};
+// Map R to RGB, G to A
+static const GLenum kLegacyLuminanceAlphaSwizzle[4] = {
+    LOCAL_GL_RED, LOCAL_GL_RED, LOCAL_GL_RED, LOCAL_GL_GREEN
+};
+
+void
+SetLegacyTextureSwizzle(gl::GLContext* gl, GLenum target, GLenum internalformat)
+{
+    if (!gl->IsCoreProfile())
+        return;
+
+    /* Only support swizzling on core profiles. */
+    // Bug 1159117: Fix this.
+    // MOZ_RELEASE_ASSERT(gl->IsSupported(gl::GLFeature::texture_swizzle));
+
+    switch (internalformat) {
+    case LOCAL_GL_ALPHA:
+        gl->fTexParameteriv(target, LOCAL_GL_TEXTURE_SWIZZLE_RGBA,
+                            (GLint*) kLegacyAlphaSwizzle);
+        break;
+
+    case LOCAL_GL_LUMINANCE:
+        gl->fTexParameteriv(target, LOCAL_GL_TEXTURE_SWIZZLE_RGBA,
+                            (GLint*) kLegacyLuminanceSwizzle);
+        break;
+
+    case LOCAL_GL_LUMINANCE_ALPHA:
+        gl->fTexParameteriv(target, LOCAL_GL_TEXTURE_SWIZZLE_RGBA,
+                            (GLint*) kLegacyLuminanceAlphaSwizzle);
+        break;
+    }
 }
 
 /**
@@ -425,7 +490,18 @@ WebGLContext::GenerateWarning(const char* fmt, va_list ap)
 
     // no need to print to stderr, as JS_ReportWarning takes care of this for us.
 
-    AutoJSContext cx;
+    if (!mCanvasElement) {
+        return;
+    }
+
+    dom::AutoJSAPI api;
+    if (!api.Init(mCanvasElement->OwnerDoc()->GetScopeObject())) {
+        return;
+    }
+
+    api.TakeOwnershipOfErrorReporting();
+
+    JSContext* cx = api.cx();
     JS_ReportWarning(cx, "WebGL: %s", buf);
     if (!ShouldGenerateWarnings()) {
         JS_ReportWarning(cx,
@@ -927,7 +1003,7 @@ WebGLContext::EnumName(GLenum glenum, nsACString* out_name)
 }
 
 bool
-WebGLContext::IsCompressedTextureFormat(GLenum format)
+IsCompressedTextureFormat(GLenum format)
 {
     switch (format) {
     case LOCAL_GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
@@ -960,7 +1036,7 @@ WebGLContext::IsCompressedTextureFormat(GLenum format)
 
 
 bool
-WebGLContext::IsTextureFormatCompressed(TexInternalFormat format)
+IsTextureFormatCompressed(TexInternalFormat format)
 {
     return IsCompressedTextureFormat(format.get());
 }
@@ -1043,15 +1119,15 @@ WebGLContext::AssertCachedBindings()
 
     // Bound object state
     if (IsWebGL2()) {
-        GLuint bound = mBoundDrawFramebuffer ? mBoundDrawFramebuffer->GLName()
+        GLuint bound = mBoundDrawFramebuffer ? mBoundDrawFramebuffer->mGLName
                                              : 0;
         AssertUintParamCorrect(gl, LOCAL_GL_DRAW_FRAMEBUFFER_BINDING, bound);
 
-        bound = mBoundReadFramebuffer ? mBoundReadFramebuffer->GLName() : 0;
+        bound = mBoundReadFramebuffer ? mBoundReadFramebuffer->mGLName : 0;
         AssertUintParamCorrect(gl, LOCAL_GL_READ_FRAMEBUFFER_BINDING, bound);
     } else {
         MOZ_ASSERT(mBoundDrawFramebuffer == mBoundReadFramebuffer);
-        GLuint bound = mBoundDrawFramebuffer ? mBoundDrawFramebuffer->GLName()
+        GLuint bound = mBoundDrawFramebuffer ? mBoundDrawFramebuffer->mGLName
                                              : 0;
         AssertUintParamCorrect(gl, LOCAL_GL_FRAMEBUFFER_BINDING, bound);
     }
@@ -1064,20 +1140,20 @@ WebGLContext::AssertCachedBindings()
     AssertUintParamCorrect(gl, LOCAL_GL_ACTIVE_TEXTURE, activeTexture);
 
     WebGLTexture* curTex = ActiveBoundTextureForTarget(LOCAL_GL_TEXTURE_2D);
-    bound = curTex ? curTex->GLName() : 0;
+    bound = curTex ? curTex->mGLName : 0;
     AssertUintParamCorrect(gl, LOCAL_GL_TEXTURE_BINDING_2D, bound);
 
     curTex = ActiveBoundTextureForTarget(LOCAL_GL_TEXTURE_CUBE_MAP);
-    bound = curTex ? curTex->GLName() : 0;
+    bound = curTex ? curTex->mGLName : 0;
     AssertUintParamCorrect(gl, LOCAL_GL_TEXTURE_BINDING_CUBE_MAP, bound);
 
     // Buffers
-    bound = mBoundArrayBuffer ? mBoundArrayBuffer->GLName() : 0;
+    bound = mBoundArrayBuffer ? mBoundArrayBuffer->mGLName : 0;
     AssertUintParamCorrect(gl, LOCAL_GL_ARRAY_BUFFER_BINDING, bound);
 
     MOZ_ASSERT(mBoundVertexArray);
     WebGLBuffer* curBuff = mBoundVertexArray->mElementArrayBuffer;
-    bound = curBuff ? curBuff->GLName() : 0;
+    bound = curBuff ? curBuff->mGLName : 0;
     AssertUintParamCorrect(gl, LOCAL_GL_ELEMENT_ARRAY_BUFFER_BINDING, bound);
 
     MOZ_ASSERT(!GetAndFlushUnderlyingGLErrors());
@@ -1143,12 +1219,11 @@ WebGLContext::AssertCachedState()
     //   supported by the GL implementation.
     const int maxStencilBits = 8;
     const GLuint maxStencilBitsMask = (1 << maxStencilBits) - 1;
-
     AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_VALUE_MASK,      maxStencilBitsMask, mStencilValueMaskFront);
     AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_VALUE_MASK, maxStencilBitsMask, mStencilValueMaskBack);
 
-    AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_WRITEMASK,      mStencilWriteMaskFront);
-    AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_WRITEMASK, mStencilWriteMaskBack);
+    AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_WRITEMASK,       maxStencilBitsMask, mStencilWriteMaskFront);
+    AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_WRITEMASK,  maxStencilBitsMask, mStencilWriteMaskBack);
 
     // Viewport
     GLint int4[4] = {0, 0, 0, 0};

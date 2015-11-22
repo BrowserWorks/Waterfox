@@ -361,9 +361,7 @@ nsXBLPrototypeBinding::AttributeChanged(nsIAtom* aAttribute,
         // Check to see if the src attribute is xbl:text.  If so, then we need to obtain the
         // children of the real element and get the text nodes' values.
         if (aAttribute == nsGkAtoms::text && aNameSpaceID == kNameSpaceID_XBL) {
-          if (!nsContentUtils::GetNodeTextContent(aChangedElement, false, value)) {
-            NS_RUNTIMEABORT("OOM");
-          }
+          nsContentUtils::GetNodeTextContent(aChangedElement, false, value);
           value.StripChar(char16_t('\n'));
           value.StripChar(char16_t('\r'));
           nsAutoString stripVal(value);
@@ -514,10 +512,8 @@ SetAttrs(nsISupports* aKey, nsXBLAttributeEntry* aEntry, void* aClosure)
   bool attrPresent = true;
 
   if (src == nsGkAtoms::text && srcNs == kNameSpaceID_XBL) {
-    if (!nsContentUtils::GetNodeTextContent(changeData->mBoundElement, false,
-                                       value)) {
-      NS_RUNTIMEABORT("OOM");
-    }
+    nsContentUtils::GetNodeTextContent(changeData->mBoundElement, false,
+                                       value);
     value.StripChar(char16_t('\n'));
     value.StripChar(char16_t('\r'));
     nsAutoString stripVal(value);
@@ -884,8 +880,8 @@ nsXBLPrototypeBinding::Read(nsIObjectInputStream* aStream,
     mBaseTag = do_GetAtom(baseTag);
   }
 
-  aDocument->CreateElem(NS_LITERAL_STRING("binding"), nullptr, kNameSpaceID_XBL,
-                        getter_AddRefs(mBinding));
+  mBinding = aDocument->CreateElem(NS_LITERAL_STRING("binding"), nullptr,
+                                   kNameSpaceID_XBL);
 
   nsCOMPtr<nsIContent> child;
   rv = ReadContentNode(aStream, aDocument, aDocument->NodeInfoManager(), getter_AddRefs(child));
@@ -905,7 +901,8 @@ nsXBLPrototypeBinding::Read(nsIObjectInputStream* aStream,
 
   for (; interfaceCount > 0; interfaceCount--) {
     nsIID iid;
-    aStream->ReadID(&iid);
+    rv = aStream->ReadID(&iid);
+    NS_ENSURE_SUCCESS(rv, rv);
     mInterfaceTable.Put(iid, mBinding);
   }
 

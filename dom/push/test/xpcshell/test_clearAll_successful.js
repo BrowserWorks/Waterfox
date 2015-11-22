@@ -3,7 +3,7 @@
 
 'use strict';
 
-const {PushDB, PushService} = serviceExports;
+const {PushDB, PushService, PushServiceWebSocket} = serviceExports;
 
 const channelID = 'db0a7021-ec2d-4bd3-8802-7a6966f10ed8';
 
@@ -14,18 +14,19 @@ function run_test() {
 }
 
 add_task(function* test_unregister_success() {
-  let db = new PushDB();
-  let promiseDB = promisifyDatabase(db);
-  do_register_cleanup(() => cleanupDatabase(db));
-  yield promiseDB.put({
+  let db = PushServiceWebSocket.newPushDB();
+  do_register_cleanup(() => {return db.drop().then(_ => db.close());});
+  yield db.put({
     channelID,
     pushEndpoint: 'https://example.org/update/unregister-success',
     scope: 'https://example.com/page/unregister-success',
-    version: 1
+    version: 1,
+    originAttributes: '',
+    quota: Infinity,
   });
 
-  let unregisterDefer = Promise.defer();
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
@@ -42,6 +43,6 @@ add_task(function* test_unregister_success() {
   });
 
   yield PushNotificationService.clearAll();
-  let record = yield promiseDB.getByChannelID(channelID);
+  let record = yield db.getByKeyID(channelID);
   ok(!record, 'Unregister did not remove record');
 });

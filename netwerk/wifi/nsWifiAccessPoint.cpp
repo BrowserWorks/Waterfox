@@ -5,10 +5,10 @@
 #include "nsWifiAccessPoint.h"
 #include "nsString.h"
 #include "nsMemory.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 extern PRLogModuleInfo *gWifiMonitorLog;
-#define LOG(args)     PR_LOG(gWifiMonitorLog, PR_LOG_DEBUG, args)
+#define LOG(args)     MOZ_LOG(gWifiMonitorLog, mozilla::LogLevel::Debug, args)
 
 
 NS_IMPL_ISUPPORTS(nsWifiAccessPoint, nsIWifiAccessPoint)

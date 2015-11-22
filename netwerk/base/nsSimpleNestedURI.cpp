@@ -5,10 +5,11 @@
 
 #include "base/basictypes.h"
 
+#include "nsNetCID.h"
+#include "nsNetUtil.h"
 #include "nsSimpleNestedURI.h"
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
-#include "nsNetUtil.h"
 
 #include "mozilla/ipc/URIUtils.h"
 

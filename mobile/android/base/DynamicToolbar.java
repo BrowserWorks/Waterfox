@@ -22,10 +22,12 @@ public class DynamicToolbar {
     private final EnumSet<PinReason> pinFlags = EnumSet.noneOf(PinReason.class);
     private LayerView layerView;
     private OnEnabledChangedListener enabledChangedListener;
+    private boolean temporarilyVisible;
 
     public enum PinReason {
         RELAYOUT,
-        ACTION_MODE
+        ACTION_MODE,
+        FULL_SCREEN
     }
 
     public enum VisibilityTransition {
@@ -106,11 +108,46 @@ public class DynamicToolbar {
             return;
         }
 
-        final boolean immediate = transition == VisibilityTransition.IMMEDIATE;
+        // Don't hide the ActionBar/Toolbar, if it's pinned open by TextSelection.
+        if (visible == false && pinFlags.contains(PinReason.ACTION_MODE)) {
+            return;
+        }
+
+        final boolean isImmediate = transition == VisibilityTransition.IMMEDIATE;
         if (visible) {
-            layerView.getLayerMarginsAnimator().showMargins(immediate);
+            layerView.getDynamicToolbarAnimator().showToolbar(isImmediate);
         } else {
-            layerView.getLayerMarginsAnimator().hideMargins(immediate);
+            layerView.getDynamicToolbarAnimator().hideToolbar(isImmediate);
+        }
+    }
+
+    public void setTemporarilyVisible(boolean visible, VisibilityTransition transition) {
+        ThreadUtils.assertOnUiThread();
+
+        if (layerView == null) {
+            return;
+        }
+
+        if (visible == temporarilyVisible) {
+            // nothing to do
+            return;
+        }
+
+        temporarilyVisible = visible;
+        final boolean isImmediate = transition == VisibilityTransition.IMMEDIATE;
+        if (visible) {
+            layerView.getDynamicToolbarAnimator().showToolbar(isImmediate);
+        } else {
+            layerView.getDynamicToolbarAnimator().hideToolbar(isImmediate);
+        }
+    }
+
+    public void persistTemporaryVisibility() {
+        ThreadUtils.assertOnUiThread();
+
+        if (temporarilyVisible) {
+            temporarilyVisible = false;
+            setVisible(true, VisibilityTransition.IMMEDIATE);
         }
     }
 
@@ -127,7 +164,7 @@ public class DynamicToolbar {
             pinFlags.remove(reason);
         }
 
-        layerView.getLayerMarginsAnimator().setMarginsPinned(!pinFlags.isEmpty());
+        layerView.getDynamicToolbarAnimator().setPinned(!pinFlags.isEmpty());
     }
 
     private void triggerEnabledListener() {

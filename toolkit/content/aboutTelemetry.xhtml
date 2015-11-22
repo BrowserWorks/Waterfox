@@ -32,43 +32,43 @@
       <table id="settings">
         <tr>
           <td>
-            <p id="description-upload-enabled" class="description-enabled">FHR data upload is <span>enabled</span>.</p>
-            <p id="description-upload-disabled" class="description-disabled">FHR data upload is <span>disabled</span>.</p>
+            <p id="description-upload-enabled" class="description-enabled">&aboutTelemetry.uploadEnabled;</p>
+            <p id="description-upload-disabled" class="description-disabled">&aboutTelemetry.uploadDisabled;</p>
           </td>
           <td>
-            <a href="" class="change-data-choices-link">Change</a>
+            <a href="" class="change-data-choices-link">&aboutTelemetry.changeDataChoices;</a>
           </td>
         </tr>
         <tr>
           <td>
-            <p id="description-extended-recording-enabled" class="description-enabled">Extended Telemetry recording is <span>enabled</span>.</p>
-            <p id="description-extended-recording-disabled" class="description-disabled">Extended Telemetry recording is <span>disabled</span>.</p>
+            <p id="description-extended-recording-enabled" class="description-enabled">&aboutTelemetry.extendedRecordingEnabled;</p>
+            <p id="description-extended-recording-disabled" class="description-disabled">&aboutTelemetry.extendedRecordingDisabled;</p>
           </td>
           <td>
-            <a href="" class="change-data-choices-link">Change</a>
+            <a href="" class="change-data-choices-link">&aboutTelemetry.changeDataChoices;</a>
           </td>
         </tr>
       </table>
 
       <div id="ping-picker">
         <div id="ping-source-picker">
-          Ping data source:<br/>
+          &aboutTelemetry.pingDataSource;<br/>
           <input type="radio" id="ping-source-current" name="choose-ping-source" value="current" checked="checked" />
-          Current ping data<br />
+          &aboutTelemetry.showCurrentPingData;<br />
           <input type="radio" id="ping-source-archive" name="choose-ping-source" value="archive" />
-          Archived ping data<br />
+          &aboutTelemetry.showArchivedPingData;<br />
         </div>
         <div id="current-ping-picker">
-          <input id="show-subsession-data" type="checkbox" />Show subsession data
+          <input id="show-subsession-data" type="checkbox" />&aboutTelemetry.showSubsessionData;
         </div>
         <div id="archived-ping-picker" class="hidden">
-          Choose ping:<br />
-          <button id="newer-ping" type="button">&lt;&lt; Newer ping</button>
-          <button id="older-ping" type="button">Older ping &gt;&gt;</button><br />
+          &aboutTelemetry.choosePing;<br />
+          <button id="newer-ping" type="button">&aboutTelemetry.showNewerPing;</button>
+          <button id="older-ping" type="button">&aboutTelemetry.showOlderPing;</button><br />
           <table>
             <tr>
-                <th>Week</th>
-                <th>Ping</th>
+                <th>&aboutTelemetry.archiveWeekHeader;</th>
+                <th>&aboutTelemetry.archivePingHeader;</th>
             </tr>
             <tr>
                 <td>
@@ -96,7 +96,7 @@
 
     <section id="environment-data-section" class="data-section">
       <input type="checkbox" class="statebox"/>
-      <h1 class="section-name">Environment Data</h1>
+      <h1 class="section-name">&aboutTelemetry.environmentDataSection;</h1>
       <span class="toggle-caption">&aboutTelemetry.toggle;</span>
       <span class="empty-caption">&aboutTelemetry.emptySection;</span>
       <div id="environment-data" class="data">

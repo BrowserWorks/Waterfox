@@ -26,7 +26,7 @@
 #include "mozilla/Monitor.h"
 #include "nsMimeTypes.h"
 #include "MPAPI.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #include "GonkNativeWindow.h"
 #include "GonkNativeWindowClient.h"
@@ -37,12 +37,8 @@
 #define OD_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "OmxDecoder", __VA_ARGS__)
 
 #undef LOG
-#ifdef PR_LOGGING
 PRLogModuleInfo *gOmxDecoderLog;
-#define LOG(type, msg...) PR_LOG(gOmxDecoderLog, type, (msg))
-#else
-#define LOG(x...)
-#endif
+#define LOG(type, msg...) MOZ_LOG(gOmxDecoderLog, type, (msg))
 
 using namespace MPAPI;
 using namespace mozilla;
@@ -50,10 +46,8 @@ using namespace mozilla::gfx;
 using namespace mozilla::layers;
 using namespace android;
 
-OmxDecoder::OmxDecoder(MediaResource *aResource,
-                       AbstractMediaDecoder *aDecoder) :
+OmxDecoder::OmxDecoder(AbstractMediaDecoder *aDecoder) :
   mDecoder(aDecoder),
-  mResource(aResource),
   mDisplayWidth(0),
   mDisplayHeight(0),
   mVideoWidth(0),
@@ -95,12 +89,13 @@ OmxDecoder::~OmxDecoder()
   mLooper->stop();
 }
 
-void OmxDecoder::statusChanged()
+void OmxDecoder::codecReserved()
 {
-  sp<AMessage> notify =
-           new AMessage(kNotifyStatusChanged, mReflector->id());
- // post AMessage to OmxDecoder via ALooper.
- notify->post();
+  mMediaResourcePromise.ResolveIfExists(true, __func__);
+}
+void OmxDecoder::codecCanceled()
+{
+  mMediaResourcePromise.RejectIfExists(true, __func__);
 }
 
 static sp<IOMX> sOMX = nullptr;
@@ -113,11 +108,9 @@ static sp<IOMX> GetOMX()
 }
 
 bool OmxDecoder::Init(sp<MediaExtractor>& extractor) {
-#ifdef PR_LOGGING
   if (!gOmxDecoderLog) {
     gOmxDecoderLog = PR_NewLogModule("OmxDecoder");
   }
-#endif
 
   sp<MetaData> meta = extractor->getMetaData();
 
@@ -147,8 +140,6 @@ bool OmxDecoder::Init(sp<MediaExtractor>& extractor) {
     NS_WARNING("OMX decoder could not find video or audio tracks");
     return false;
   }
-
-  mResource->SetReadMode(MediaCacheStream::MODE_PLAYBACK);
 
   if (videoTrackIndex != -1 && mDecoder->GetImageContainer()) {
     mVideoTrack = extractor->getTrack(videoTrackIndex);
@@ -219,14 +210,6 @@ bool OmxDecoder::EnsureMetadata() {
   return true;
 }
 
-bool OmxDecoder::IsWaitingMediaResources()
-{
-  if (mVideoSource.get()) {
-    return mVideoSource->IsWaitingResources();
-  }
-  return false;
-}
-
 static bool isInEmulator()
 {
   char propQemu[PROPERTY_VALUE_MAX];
@@ -234,8 +217,10 @@ static bool isInEmulator()
   return !strncmp(propQemu, "1", 1);
 }
 
-bool OmxDecoder::AllocateMediaResources()
+nsRefPtr<mozilla::MediaOmxCommonReader::MediaResourcePromise> OmxDecoder::AllocateMediaResources()
 {
+  nsRefPtr<MediaResourcePromise> p = mMediaResourcePromise.Ensure(__func__);
+
   if ((mVideoTrack != nullptr) && (mVideoSource == nullptr)) {
     // OMXClient::connect() always returns OK and abort's fatally if
     // it can't connect.
@@ -286,10 +271,11 @@ bool OmxDecoder::AllocateMediaResources()
                                 mNativeWindowClient);
     if (mVideoSource == nullptr) {
       NS_WARNING("Couldn't create OMX video source");
-      return false;
+      mMediaResourcePromise.Reject(true, __func__);
+      return p;
     } else {
-      sp<OMXCodecProxy::EventListener> listener = this;
-      mVideoSource->setEventListener(listener);
+      sp<OMXCodecProxy::CodecResourceListener> listener = this;
+      mVideoSource->setListener(listener);
       mVideoSource->requestResource();
     }
   }
@@ -305,7 +291,8 @@ bool OmxDecoder::AllocateMediaResources()
     const char *audioMime = nullptr;
     sp<MetaData> meta = mAudioTrack->getFormat();
     if (!meta->findCString(kKeyMIMEType, &audioMime)) {
-      return false;
+      mMediaResourcePromise.Reject(true, __func__);
+      return p;
     }
     if (!strcasecmp(audioMime, "audio/raw")) {
       mAudioSource = mAudioTrack;
@@ -331,20 +318,28 @@ bool OmxDecoder::AllocateMediaResources()
                                      flags);
       if (mAudioSource == nullptr) {
         NS_WARNING("Couldn't create OMX audio source");
-        return false;
+        mMediaResourcePromise.Reject(true, __func__);
+        return p;
       }
     }
     if (mAudioSource->start() != OK) {
       NS_WARNING("Couldn't start OMX audio source");
       mAudioSource.clear();
-      return false;
+      mMediaResourcePromise.Reject(true, __func__);
+      return p;
     }
   }
-  return true;
+  if (!mVideoSource.get()) {
+    // No resource allocation wait.
+    mMediaResourcePromise.Resolve(true, __func__);
+  }
+  return p;
 }
 
 
 void OmxDecoder::ReleaseMediaResources() {
+  mMediaResourcePromise.RejectIfExists(true, __func__);
+
   ReleaseVideoBuffer();
   ReleaseAudioBuffer();
 
@@ -361,7 +356,7 @@ void OmxDecoder::ReleaseMediaResources() {
         GrallocTextureClientOGL* client = static_cast<GrallocTextureClientOGL*>(*it);
         client->ClearRecycleCallback();
         if (client->GetMediaBuffer()) {
-          mPendingVideoBuffers.push(BufferItem(client->GetMediaBuffer(), client->GetReleaseFenceHandle()));
+          mPendingVideoBuffers.push(BufferItem(client->GetMediaBuffer(), client->GetAndResetReleaseFenceHandle()));
         }
       }
       mPendingRecycleTexutreClients.clear();
@@ -441,7 +436,7 @@ bool OmxDecoder::SetVideoFormat() {
     NS_WARNING("rotation not available, assuming 0");
   }
 
-  LOG(PR_LOG_DEBUG, "display width: %d display height %d width: %d height: %d component: %s format: %d stride: %d sliceHeight: %d rotation: %d",
+  LOG(LogLevel::Debug, "display width: %d display height %d width: %d height: %d component: %s format: %d stride: %d sliceHeight: %d rotation: %d",
       mDisplayWidth, mDisplayHeight, mVideoWidth, mVideoHeight, componentName,
       mVideoColorFormat, mVideoStride, mVideoSliceHeight, mVideoRotation);
 
@@ -455,7 +450,7 @@ bool OmxDecoder::SetAudioFormat() {
     return false;
   }
 
-  LOG(PR_LOG_DEBUG, "channelCount: %d sampleRate: %d",
+  LOG(LogLevel::Debug, "channelCount: %d sampleRate: %d",
       mAudioChannels, mAudioSampleRate);
 
   return true;
@@ -536,7 +531,7 @@ bool OmxDecoder::ToVideoFrame(VideoFrame *aFrame, int64_t aTimeUs, void *aData, 
     SemiPlanarYVU420Frame(aFrame, aTimeUs, aData, aSize, aKeyFrame);
     break;
   default:
-    LOG(PR_LOG_DEBUG, "Unknown video color format %08x", mVideoColorFormat);
+    LOG(LogLevel::Debug, "Unknown video color format %08x", mVideoColorFormat);
     return false;
   }
   return true;
@@ -669,7 +664,7 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
       char *data = static_cast<char *>(mVideoBuffer->data()) + mVideoBuffer->range_offset();
 
       if (unreadable) {
-        LOG(PR_LOG_DEBUG, "video frame is unreadable");
+        LOG(LogLevel::Debug, "video frame is unreadable");
       }
 
       if (!ToVideoFrame(aFrame, timeUs, data, length, keyFrame)) {
@@ -693,13 +688,13 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
     return false;
   }
   else if (err == -ETIMEDOUT) {
-    LOG(PR_LOG_DEBUG, "OmxDecoder::ReadVideo timed out, will retry");
+    LOG(LogLevel::Debug, "OmxDecoder::ReadVideo timed out, will retry");
     return true;
   }
   else {
     // UNKNOWN_ERROR is sometimes is used to mean "out of memory", but
     // regardless, don't keep trying to decode if the decoder doesn't want to.
-    LOG(PR_LOG_DEBUG, "OmxDecoder::ReadVideo failed, err=%d", err);
+    LOG(LogLevel::Debug, "OmxDecoder::ReadVideo failed, err=%d", err);
     return false;
   }
 
@@ -754,11 +749,11 @@ bool OmxDecoder::ReadAudio(AudioFrame *aFrame, int64_t aSeekTimeUs)
     }
   }
   else if (err == -ETIMEDOUT) {
-    LOG(PR_LOG_DEBUG, "OmxDecoder::ReadAudio timed out, will retry");
+    LOG(LogLevel::Debug, "OmxDecoder::ReadAudio timed out, will retry");
     return true;
   }
   else if (err != OK) {
-    LOG(PR_LOG_DEBUG, "OmxDecoder::ReadAudio failed, err=%d", err);
+    LOG(LogLevel::Debug, "OmxDecoder::ReadAudio failed, err=%d", err);
     return false;
   }
 
@@ -831,15 +826,6 @@ void OmxDecoder::onMessageReceived(const sp<AMessage> &msg)
       }
       break;
     }
-
-    case kNotifyStatusChanged:
-    {
-      // Our decode may have acquired the hardware resource that it needs
-      // to start. Notify the state machine to resume loading metadata.
-      mDecoder->NotifyWaitingForResourcesStatusChanged();
-      break;
-    }
-
     default:
       TRESPASS();
       break;
@@ -879,12 +865,9 @@ void OmxDecoder::ReleaseAllPendingVideoBuffersLocked()
     MediaBuffer *buffer;
     buffer = releasingVideoBuffers[i].mMediaBuffer;
 #if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-    android::sp<Fence> fence;
-    int fenceFd = -1;
-    fence = releasingVideoBuffers[i].mReleaseFenceHandle.mFence;
-    if (fence.get() && fence->isValid()) {
-      fenceFd = fence->dup();
-    }
+    nsRefPtr<FenceHandle::FdObj> fdObj = releasingVideoBuffers.editItemAt(i).mReleaseFenceHandle.GetAndResetFdObj();
+    int fenceFd = fdObj->GetAndResetFd();
+
     MOZ_ASSERT(buffer->refcount() == 1);
     // This code expect MediaBuffer's ref count is 1.
     // Return gralloc buffer to ANativeWindow
@@ -916,7 +899,7 @@ void OmxDecoder::RecycleCallbackImp(TextureClient* aClient)
     mPendingRecycleTexutreClients.erase(aClient);
     GrallocTextureClientOGL* client = static_cast<GrallocTextureClientOGL*>(aClient);
     if (client->GetMediaBuffer()) {
-      mPendingVideoBuffers.push(BufferItem(client->GetMediaBuffer(), client->GetReleaseFenceHandle()));
+      mPendingVideoBuffers.push(BufferItem(client->GetMediaBuffer(), client->GetAndResetReleaseFenceHandle()));
     }
   }
   sp<AMessage> notify =
@@ -928,6 +911,7 @@ void OmxDecoder::RecycleCallbackImp(TextureClient* aClient)
 /* static */ void
 OmxDecoder::RecycleCallback(TextureClient* aClient, void* aClosure)
 {
+  MOZ_ASSERT(aClient && !aClient->IsDead());
   OmxDecoder* decoder = static_cast<OmxDecoder*>(aClosure);
   decoder->RecycleCallbackImp(aClient);
 }

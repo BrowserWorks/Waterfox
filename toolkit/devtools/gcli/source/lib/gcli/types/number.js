@@ -16,7 +16,6 @@
 
 'use strict';
 
-var Promise = require('../util/promise').Promise;
 var l10n = require('../util/l10n');
 var Status = require('./types').Status;
 var Conversion = require('./types').Conversion;
@@ -70,7 +69,7 @@ exports.items = [
     },
 
     getMin: function(context) {
-      if (this.min) {
+      if (this.min != null) {
         if (typeof this.min === 'function') {
           return this.min(context);
         }
@@ -82,7 +81,7 @@ exports.items = [
     },
 
     getMax: function(context) {
-      if (this.max) {
+      if (this.max != null) {
         if (typeof this.max === 'function') {
           return this.max(context);
         }

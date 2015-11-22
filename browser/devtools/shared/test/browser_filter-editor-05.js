@@ -22,7 +22,7 @@ add_task(function*() {
   const container = doc.querySelector("#container");
   let widget = new CSSFilterEditorWidget(container, "grayscale(0%) url(test.svg)");
 
-  const filters = widget.el.querySelector(".filters");
+  const filters = widget.el.querySelector("#filters");
   const grayscale = filters.children[0],
         url = filters.children[1];
 
@@ -127,6 +127,6 @@ add_task(function*() {
     shiftKey: true
   });
 
-  is(widget.getValueAt(1), "\"chrome://browser/content/devtools/test.svg\"",
+  is(widget.getValueAt(1), "chrome://browser/content/devtools/test.svg",
      "Label-dragging on string-type filters shouldn't affect their value");
 });

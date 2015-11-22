@@ -11,6 +11,7 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/PodOperations.h"
+#include "mozilla/ThreadLocal.h"
 
 #include <stdio.h>
 
@@ -31,7 +32,31 @@ using mozilla::PodArrayZero;
 /* For JS_OOM_POSSIBLY_FAIL in jsutil.h. */
 JS_PUBLIC_DATA(uint32_t) OOM_maxAllocations = UINT32_MAX;
 JS_PUBLIC_DATA(uint32_t) OOM_counter = 0;
-#endif
+JS_PUBLIC_DATA(bool) OOM_failAlways = true;
+namespace js {
+namespace oom {
+
+JS_PUBLIC_DATA(uint32_t) targetThread = 0;
+JS_PUBLIC_DATA(mozilla::ThreadLocal<uint32_t>) threadType;
+
+bool
+InitThreadType(void) {
+    return threadType.initialized() || threadType.init();
+}
+
+void
+SetThreadType(ThreadType type) {
+    threadType.set(type);
+}
+
+uint32_t
+GetThreadType(void) {
+    return threadType.get();
+}
+
+} // namespace oom
+} // namespace js
+#endif // defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
 
 JS_PUBLIC_API(void)
 JS_Assert(const char* s, const char* file, int ln)

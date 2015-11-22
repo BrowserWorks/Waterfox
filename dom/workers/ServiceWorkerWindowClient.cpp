@@ -7,11 +7,18 @@
 
 #include "ServiceWorkerWindowClient.h"
 
+#include "mozilla/Mutex.h"
 #include "mozilla/dom/ClientBinding.h"
+#include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseWorkerProxy.h"
+#include "mozilla/UniquePtr.h"
+#include "nsGlobalWindow.h"
+#include "WorkerPrivate.h"
 
 using namespace mozilla::dom;
 using namespace mozilla::dom::workers;
+
+using mozilla::UniquePtr;
 
 JSObject*
 ServiceWorkerWindowClient::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
@@ -44,7 +51,7 @@ public:
     MOZ_ASSERT(aWorkerPrivate);
     aWorkerPrivate->AssertIsOnWorkerThread();
 
-    Promise* promise = mPromiseProxy->GetWorkerPromise();
+    nsRefPtr<Promise> promise = mPromiseProxy->WorkerPromise();
     MOZ_ASSERT(promise);
 
     if (mClientInfo) {
@@ -73,21 +80,24 @@ public:
     , mPromiseProxy(aPromiseProxy)
   {
     MOZ_ASSERT(mPromiseProxy);
-    MOZ_ASSERT(mPromiseProxy->GetWorkerPromise());
   }
 
   NS_IMETHOD
   Run() override
   {
     AssertIsOnMainThread();
-    nsGlobalWindow* window = nsGlobalWindow::GetOuterWindowWithId(mWindowId);
+    nsGlobalWindow* window = nsGlobalWindow::GetInnerWindowWithId(mWindowId);
     UniquePtr<ServiceWorkerClientInfo> clientInfo;
 
     if (window) {
-      ErrorResult result;
-      //FIXME(catalinb): Bug 1144660 - check if we are allowed to focus here.
-      window->Focus(result);
-      clientInfo.reset(new ServiceWorkerClientInfo(window->GetDocument()));
+      nsCOMPtr<nsIDocument> doc = window->GetDocument();
+      if (doc) {
+        nsContentUtils::DispatchChromeEvent(doc,
+                                            window->GetOuterWindow(),
+                                            NS_LITERAL_STRING("DOMServiceWorkerFocusClient"),
+                                            true, true);
+        clientInfo.reset(new ServiceWorkerClientInfo(doc));
+      }
     }
 
     DispatchResult(Move(clientInfo));
@@ -98,27 +108,23 @@ private:
   void
   DispatchResult(UniquePtr<ServiceWorkerClientInfo>&& aClientInfo)
   {
-    WorkerPrivate* workerPrivate = mPromiseProxy->GetWorkerPrivate();
-    MOZ_ASSERT(workerPrivate);
+    AssertIsOnMainThread();
+    MutexAutoLock lock(mPromiseProxy->Lock());
+    if (mPromiseProxy->CleanedUp()) {
+      return;
+    }
 
     nsRefPtr<ResolveOrRejectPromiseRunnable> resolveRunnable =
-      new ResolveOrRejectPromiseRunnable(workerPrivate, mPromiseProxy,
-                                         Move(aClientInfo));
+      new ResolveOrRejectPromiseRunnable(mPromiseProxy->GetWorkerPrivate(),
+                                         mPromiseProxy, Move(aClientInfo));
 
     AutoJSAPI jsapi;
     jsapi.Init();
-    JSContext* cx = jsapi.cx();
-    if (!resolveRunnable->Dispatch(cx)) {
-      nsRefPtr<PromiseWorkerProxyControlRunnable> controlRunnable =
-        new PromiseWorkerProxyControlRunnable(workerPrivate, mPromiseProxy);
-      if (!controlRunnable->Dispatch(cx)) {
-        NS_RUNTIMEABORT("Failed to dispatch Focus promise control runnable.");
-      }
-    }
+    resolveRunnable->Dispatch(jsapi.cx());
   }
 };
 
-} // anonymous namespace
+} // namespace
 
 already_AddRefed<Promise>
 ServiceWorkerWindowClient::Focus(ErrorResult& aRv) const
@@ -135,18 +141,19 @@ ServiceWorkerWindowClient::Focus(ErrorResult& aRv) const
     return nullptr;
   }
 
-  nsRefPtr<PromiseWorkerProxy> promiseProxy =
-    PromiseWorkerProxy::Create(workerPrivate, promise);
-  if (!promiseProxy->GetWorkerPromise()) {
-    // Don't dispatch if adding the worker feature failed.
-    return promise.forget();
-  }
+  if (workerPrivate->GlobalScope()->WindowInteractionAllowed()) {
+    nsRefPtr<PromiseWorkerProxy> promiseProxy =
+      PromiseWorkerProxy::Create(workerPrivate, promise);
+    if (promiseProxy) {
+      nsRefPtr<ClientFocusRunnable> r = new ClientFocusRunnable(mWindowId,
+                                                                promiseProxy);
+      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(r)));
+    } else {
+      promise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
+    }
 
-  nsRefPtr<ClientFocusRunnable> r = new ClientFocusRunnable(mWindowId,
-                                                            promiseProxy);
-  aRv = NS_DispatchToMainThread(r);
-  if (NS_WARN_IF(aRv.Failed())) {
-    promise->MaybeReject(aRv);
+  } else {
+    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
   }
 
   return promise.forget();

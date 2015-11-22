@@ -84,6 +84,26 @@ TextEventDispatcher::BeginInputTransactionInternal(
 }
 
 void
+TextEventDispatcher::EndInputTransaction(TextEventDispatcherListener* aListener)
+{
+  if (NS_WARN_IF(IsComposing()) || NS_WARN_IF(IsDispatchingEvent())) {
+    return;
+  }
+
+  nsCOMPtr<TextEventDispatcherListener> listener = do_QueryReferent(mListener);
+  if (NS_WARN_IF(!listener)) {
+    return;
+  }
+
+  if (NS_WARN_IF(listener != aListener)) {
+    return;
+  }
+
+  mListener = nullptr;
+  listener->OnRemovedFrom(this);
+}
+
+void
 TextEventDispatcher::OnDestroyWidget()
 {
   mWidget = nullptr;
@@ -121,15 +141,33 @@ TextEventDispatcher::DispatchEvent(nsIWidget* aWidget,
                                    WidgetGUIEvent& aEvent,
                                    nsEventStatus& aStatus)
 {
+  MOZ_ASSERT(!aEvent.AsInputEvent(), "Use DispatchInputEvent()");
+
+  nsRefPtr<TextEventDispatcher> kungFuDeathGrip(this);
+  nsCOMPtr<nsIWidget> widget(aWidget);
+  mDispatchingEvent++;
+  nsresult rv = widget->DispatchEvent(&aEvent, aStatus);
+  mDispatchingEvent--;
+  return rv;
+}
+
+nsresult
+TextEventDispatcher::DispatchInputEvent(nsIWidget* aWidget,
+                                        WidgetInputEvent& aEvent,
+                                        nsEventStatus& aStatus,
+                                        DispatchTo aDispatchTo)
+{
   nsRefPtr<TextEventDispatcher> kungFuDeathGrip(this);
   nsCOMPtr<nsIWidget> widget(aWidget);
   mDispatchingEvent++;
 
+  // If the event is dispatched via nsIWidget::DispatchInputEvent(), it
+  // sends the event to the parent process first since APZ needs to handle it
+  // first.  However, some callers (e.g., keyboard apps on B2G and tests
+  // expecting synchronous dispatch) don't want this to do that.
   nsresult rv = NS_OK;
-  if (aEvent.AsInputEvent() &&
-      (!aEvent.mFlags.mIsSynthesizedForTests || gfxPrefs::TestEventsAsyncEnabled()))
-  {
-    aStatus = widget->DispatchInputEvent(aEvent.AsInputEvent());
+  if (aDispatchTo == eDispatchToParentProcess) {
+    aStatus = widget->DispatchInputEvent(&aEvent);
   } else {
     rv = widget->DispatchEvent(&aEvent, aStatus);
   }
@@ -153,7 +191,7 @@ TextEventDispatcher::StartComposition(nsEventStatus& aStatus)
   }
 
   mIsComposing = true;
-  WidgetCompositionEvent compositionStartEvent(true, NS_COMPOSITION_START,
+  WidgetCompositionEvent compositionStartEvent(true, eCompositionStart,
                                                mWidget);
   InitEvent(compositionStartEvent);
   rv = DispatchEvent(mWidget, compositionStartEvent, aStatus);
@@ -230,11 +268,11 @@ TextEventDispatcher::CommitComposition(nsEventStatus& aStatus,
   // End current composition and make this free for other IMEs.
   mIsComposing = false;
 
-  uint32_t message = aCommitString ? NS_COMPOSITION_COMMIT :
-                                     NS_COMPOSITION_COMMIT_AS_IS;
+  EventMessage message = aCommitString ? eCompositionCommit :
+                                         eCompositionCommitAsIs;
   WidgetCompositionEvent compositionCommitEvent(true, message, widget);
   InitEvent(compositionCommitEvent);
-  if (message == NS_COMPOSITION_COMMIT) {
+  if (message == eCompositionCommit) {
     compositionCommitEvent.mData = *aCommitString;
   }
   rv = DispatchEvent(widget, compositionCommitEvent, aStatus);
@@ -264,29 +302,32 @@ TextEventDispatcher::NotifyIME(const IMENotification& aIMENotification)
 
 bool
 TextEventDispatcher::DispatchKeyboardEvent(
-                       uint32_t aMessage,
+                       EventMessage aMessage,
                        const WidgetKeyboardEvent& aKeyboardEvent,
-                       nsEventStatus& aStatus)
+                       nsEventStatus& aStatus,
+                       DispatchTo aDispatchTo)
 {
-  return DispatchKeyboardEventInternal(aMessage, aKeyboardEvent, aStatus);
+  return DispatchKeyboardEventInternal(aMessage, aKeyboardEvent, aStatus,
+                                       aDispatchTo);
 }
 
 bool
 TextEventDispatcher::DispatchKeyboardEventInternal(
-                       uint32_t aMessage,
+                       EventMessage aMessage,
                        const WidgetKeyboardEvent& aKeyboardEvent,
                        nsEventStatus& aStatus,
+                       DispatchTo aDispatchTo,
                        uint32_t aIndexOfKeypress)
 {
-  MOZ_ASSERT(aMessage == NS_KEY_DOWN || aMessage == NS_KEY_UP ||
-             aMessage == NS_KEY_PRESS, "Invalid aMessage value");
+  MOZ_ASSERT(aMessage == eKeyDown || aMessage == eKeyUp ||
+             aMessage == eKeyPress, "Invalid aMessage value");
   nsresult rv = GetState();
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return false;
   }
 
   // If the key shouldn't cause keypress events, don't this patch them.
-  if (aMessage == NS_KEY_PRESS && !aKeyboardEvent.ShouldCauseKeypressEvents()) {
+  if (aMessage == eKeyPress && !aKeyboardEvent.ShouldCauseKeypressEvents()) {
     return false;
   }
 
@@ -295,7 +336,7 @@ TextEventDispatcher::DispatchKeyboardEventInternal(
     // However, if we need to behave like other browsers, we need the keydown
     // and keyup events.  Note that this behavior is also allowed by D3E spec.
     // FYI: keypress events must not be fired during composition.
-    if (!sDispatchKeyEventsDuringComposition || aMessage == NS_KEY_PRESS) {
+    if (!sDispatchKeyEventsDuringComposition || aMessage == eKeyPress) {
       return false;
     }
     // XXX If there was mOnlyContentDispatch for this case, it might be useful
@@ -315,14 +356,14 @@ TextEventDispatcher::DispatchKeyboardEventInternal(
   }
 
   // Corrects each member for the specific key event type.
-  if (aMessage == NS_KEY_DOWN || aMessage == NS_KEY_UP) {
+  if (aMessage == eKeyDown || aMessage == eKeyUp) {
     MOZ_ASSERT(!aIndexOfKeypress,
-      "aIndexOfKeypress must be 0 for either NS_KEY_DOWN or NS_KEY_UP");
+      "aIndexOfKeypress must be 0 for either eKeyDown or eKeyUp");
     // charCode of keydown and keyup should be 0.
     keyEvent.charCode = 0;
   } else if (keyEvent.mKeyNameIndex != KEY_NAME_INDEX_USE_STRING) {
     MOZ_ASSERT(!aIndexOfKeypress,
-      "aIndexOfKeypress must be 0 for NS_KEY_PRESS of non-printable key");
+      "aIndexOfKeypress must be 0 for eKeyPress of non-printable key");
     // If keypress event isn't caused by printable key, its charCode should
     // be 0.
     keyEvent.charCode = 0;
@@ -340,7 +381,7 @@ TextEventDispatcher::DispatchKeyboardEventInternal(
       keyEvent.mKeyValue.Truncate();
     }
   }
-  if (aMessage == NS_KEY_UP) {
+  if (aMessage == eKeyUp) {
     // mIsRepeat of keyup event must be false.
     keyEvent.mIsRepeat = false;
   }
@@ -354,14 +395,15 @@ TextEventDispatcher::DispatchKeyboardEventInternal(
   keyEvent.mPluginEvent.Clear();
   // TODO: Manage mUniqueId here.
 
-  DispatchEvent(mWidget, keyEvent, aStatus);
+  DispatchInputEvent(mWidget, keyEvent, aStatus, aDispatchTo);
   return true;
 }
 
 bool
 TextEventDispatcher::MaybeDispatchKeypressEvents(
                        const WidgetKeyboardEvent& aKeyboardEvent,
-                       nsEventStatus& aStatus)
+                       nsEventStatus& aStatus,
+                       DispatchTo aDispatchTo)
 {
   // If the key event was consumed, keypress event shouldn't be fired.
   if (aStatus == nsEventStatus_eConsumeNoDefault) {
@@ -380,8 +422,8 @@ TextEventDispatcher::MaybeDispatchKeypressEvents(
   bool consumed = false;
   for (size_t i = 0; i < keypressCount; i++) {
     aStatus = nsEventStatus_eIgnore;
-    if (!DispatchKeyboardEventInternal(NS_KEY_PRESS, aKeyboardEvent,
-                                       aStatus, i)) {
+    if (!DispatchKeyboardEventInternal(eKeyPress, aKeyboardEvent,
+                                       aStatus, aDispatchTo, i)) {
       // The widget must have been gone.
       break;
     }
@@ -499,7 +541,7 @@ TextEventDispatcher::PendingComposition::Flush(TextEventDispatcher* aDispatcher,
 
   nsRefPtr<TextEventDispatcher> kungFuDeathGrip(aDispatcher);
   nsCOMPtr<nsIWidget> widget(aDispatcher->mWidget);
-  WidgetCompositionEvent compChangeEvent(true, NS_COMPOSITION_CHANGE, widget);
+  WidgetCompositionEvent compChangeEvent(true, eCompositionChange, widget);
   aDispatcher->InitEvent(compChangeEvent);
   compChangeEvent.mData = mString;
   if (mClauses) {

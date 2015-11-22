@@ -65,7 +65,14 @@ class PluginInstanceChild : public PPluginInstanceChild
 #endif
 
 protected:
-    virtual bool AnswerNPP_SetWindow(const NPRemoteWindow& window) override;
+    virtual bool
+    AnswerCreateChildPluginWindow(NativeWindowHandle* aChildPluginWindow) override;
+
+    virtual bool
+    RecvCreateChildPopupSurrogate(const NativeWindowHandle& aNetscapeWindow) override;
+
+    virtual bool
+    AnswerNPP_SetWindow(const NPRemoteWindow& window) override;
 
     virtual bool
     AnswerNPP_GetValue_NPPVpluginWantsAllNetworkStreams(bool* wantsAllStreams, NPError* rv) override;
@@ -79,6 +86,8 @@ protected:
                                                            NPError* aResult) override;
     virtual bool
     AnswerNPP_SetValue_NPNVprivateModeBool(const bool& value, NPError* result) override;
+    virtual bool
+    AnswerNPP_SetValue_NPNVmuteAudioBool(const bool& value, NPError* result) override;
 
     virtual bool
     AnswerNPP_HandleEvent(const NPRemoteEvent& event, int16_t* handled) override;
@@ -278,7 +287,6 @@ private:
     static bool RegisterWindowClass();
     bool CreatePluginWindow();
     void DestroyPluginWindow();
-    void ReparentPluginWindow(HWND hWndParent);
     void SizePluginWindow(int width, int height);
     int16_t WinlessHandleEvent(NPEvent& event);
     void CreateWinlessPopupSurrogate();
@@ -374,7 +382,7 @@ private:
     InfallibleTArray<nsCString> mValues;
     NPP_t mData;
     NPWindow mWindow;
-#if defined(XP_MACOSX)
+#if defined(XP_DARWIN)
     double mContentsScaleFactor;
 #endif
     int16_t               mDrawingModel;

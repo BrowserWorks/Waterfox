@@ -15,16 +15,19 @@
 #include "nsIHttpChannel.h"
 #include "nsIIOService.h"
 #include "nsIPrefService.h"
-#include "nsIScriptSecurityManager.h"
+#include "nsISimpleEnumerator.h"
 #include "nsIStreamListener.h"
 #include "nsIStringStream.h"
+#include "nsITimer.h"
 #include "nsIUploadChannel2.h"
 #include "nsIURI.h"
+#include "nsIURL.h"
 #include "nsIUrlClassifierDBService.h"
 #include "nsIX509Cert.h"
 #include "nsIX509CertDB.h"
 #include "nsIX509CertList.h"
 
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/Telemetry.h"
@@ -47,6 +50,8 @@
 #include "nsILoadInfo.h"
 #include "nsContentUtils.h"
 
+using mozilla::BasePrincipal;
+using mozilla::OriginAttributes;
 using mozilla::Preferences;
 using mozilla::TimeStamp;
 using mozilla::Telemetry::Accumulate;
@@ -60,19 +65,15 @@ using safe_browsing::ClientDownloadRequest_SignatureInfo;
 #define PREF_SB_MALWARE_ENABLED "browser.safebrowsing.malware.enabled"
 #define PREF_SB_DOWNLOADS_ENABLED "browser.safebrowsing.downloads.enabled"
 #define PREF_SB_DOWNLOADS_REMOTE_ENABLED "browser.safebrowsing.downloads.remote.enabled"
+#define PREF_SB_DOWNLOADS_REMOTE_TIMEOUT "browser.safebrowsing.downloads.remote.timeout_ms"
 #define PREF_GENERAL_LOCALE "general.useragent.locale"
 #define PREF_DOWNLOAD_BLOCK_TABLE "urlclassifier.downloadBlockTable"
 #define PREF_DOWNLOAD_ALLOW_TABLE "urlclassifier.downloadAllowTable"
 
 // NSPR_LOG_MODULES=ApplicationReputation:5
-#if defined(PR_LOGGING)
 PRLogModuleInfo *ApplicationReputationService::prlog = nullptr;
-#define LOG(args) PR_LOG(ApplicationReputationService::prlog, PR_LOG_DEBUG, args)
-#define LOG_ENABLED() PR_LOG_TEST(ApplicationReputationService::prlog, 4)
-#else
-#define LOG(args)
-#define LOG_ENABLED() (false)
-#endif
+#define LOG(args) MOZ_LOG(ApplicationReputationService::prlog, mozilla::LogLevel::Debug, args)
+#define LOG_ENABLED() MOZ_LOG_TEST(ApplicationReputationService::prlog, mozilla::LogLevel::Debug)
 
 class PendingDBLookup;
 
@@ -80,12 +81,14 @@ class PendingDBLookup;
 // nsIApplicationReputationQuery and an nsIApplicationReputationCallback. Once
 // created by ApplicationReputationService, it is guaranteed to call mCallback.
 // This class is private to ApplicationReputationService.
-class PendingLookup final : public nsIStreamListener
+class PendingLookup final : public nsIStreamListener,
+                            public nsITimerCallback
 {
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIREQUESTOBSERVER
   NS_DECL_NSISTREAMLISTENER
+  NS_DECL_NSITIMERCALLBACK
 
   // Constructor and destructor.
   PendingLookup(nsIApplicationReputationQuery* aQuery,
@@ -129,6 +132,12 @@ private:
 
   // When we started this query
   TimeStamp mStartTime;
+
+  // The channel used to talk to the remote lookup server
+  nsCOMPtr<nsIChannel> mChannel;
+
+  // Timer to abort this lookup if it takes too long
+  nsCOMPtr<nsITimer> mTimeoutTimer;
 
   // A protocol buffer for storing things we need in the remote request. We
   // store the resource chain (redirect information) as well as signature
@@ -286,13 +295,12 @@ PendingDBLookup::LookupSpecInternal(const nsACString& aSpec)
   rv = ios->NewURI(aSpec, nullptr, nullptr, getter_AddRefs(uri));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsIPrincipal> principal;
-  nsCOMPtr<nsIScriptSecurityManager> secMan =
-    do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = secMan->GetNoAppCodebasePrincipal(uri, getter_AddRefs(principal));
-  NS_ENSURE_SUCCESS(rv, rv);
+  OriginAttributes attrs;
+  nsCOMPtr<nsIPrincipal> principal =
+    BasePrincipal::CreateCodebasePrincipal(uri, attrs);
+  if (!principal) {
+    return NS_ERROR_FAILURE;
+  }
 
   // Check local lists to see if the URI has already been whitelisted or
   // blacklisted.
@@ -746,11 +754,14 @@ PendingLookup::DoLookupInternal()
 nsresult
 PendingLookup::OnComplete(bool shouldBlock, nsresult rv)
 {
+  if (mTimeoutTimer) {
+    mTimeoutTimer->Cancel();
+    mTimeoutTimer = nullptr;
+  }
+
   Accumulate(mozilla::Telemetry::APPLICATION_REPUTATION_SHOULD_BLOCK,
     shouldBlock);
-#if defined(PR_LOGGING)
   double t = (TimeStamp::Now() - mStartTime).ToMilliseconds();
-#endif
   if (shouldBlock) {
     LOG(("Application Reputation check failed, blocking bad binary in %f ms "
          "[this = %p]", t, this));
@@ -936,7 +947,6 @@ PendingLookup::SendRemoteQueryInternal()
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Set up the channel to transmit the request to the service.
-  nsCOMPtr<nsIChannel> channel;
   nsCOMPtr<nsIIOService> ios = do_GetService(NS_IOSERVICE_CONTRACTID, &rv);
   rv = ios->NewChannel2(serviceUrl,
                         nullptr,
@@ -944,16 +954,16 @@ PendingLookup::SendRemoteQueryInternal()
                         nullptr, // aLoadingNode
                         nsContentUtils::GetSystemPrincipal(),
                         nullptr, // aTriggeringPrincipal
-                        nsILoadInfo::SEC_NORMAL,
+                        nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                         nsIContentPolicy::TYPE_OTHER,
-                        getter_AddRefs(channel));
+                        getter_AddRefs(mChannel));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(channel, &rv));
+  nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(mChannel, &rv));
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Upload the protobuf to the application reputation service.
-  nsCOMPtr<nsIUploadChannel2> uploadChannel = do_QueryInterface(channel, &rv);
+  nsCOMPtr<nsIUploadChannel2> uploadChannel = do_QueryInterface(mChannel, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
   rv = uploadChannel->ExplicitSetUploadStream(sstream,
@@ -965,12 +975,26 @@ PendingLookup::SendRemoteQueryInternal()
   // sent with this request. See bug 897516.
   nsCOMPtr<nsIInterfaceRequestor> loadContext =
     new mozilla::LoadContext(NECKO_SAFEBROWSING_APP_ID);
-  rv = channel->SetNotificationCallbacks(loadContext);
+  rv = mChannel->SetNotificationCallbacks(loadContext);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = channel->AsyncOpen(this, nullptr);
+  uint32_t timeoutMs = Preferences::GetUint(PREF_SB_DOWNLOADS_REMOTE_TIMEOUT, 10000);
+  mTimeoutTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
+  mTimeoutTimer->InitWithCallback(this, timeoutMs, nsITimer::TYPE_ONE_SHOT);
+
+  rv = mChannel->AsyncOpen2(this);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+PendingLookup::Notify(nsITimer* aTimer)
+{
+  LOG(("Remote lookup timed out [this = %p]", this));
+  MOZ_ASSERT(aTimer == mTimeoutTimer);
+  mChannel->Cancel(NS_ERROR_NET_TIMEOUT);
+  mTimeoutTimer->Cancel();
   return NS_OK;
 }
 
@@ -1105,11 +1129,9 @@ ApplicationReputationService::GetSingleton()
 
 ApplicationReputationService::ApplicationReputationService()
 {
-#if defined(PR_LOGGING)
   if (!prlog) {
     prlog = PR_NewLogModule("ApplicationReputation");
   }
-#endif
   LOG(("Application reputation service started up"));
 }
 

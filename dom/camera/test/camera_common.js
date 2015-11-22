@@ -80,12 +80,14 @@ function CameraTestSuite() {
   this.rejectTakePicture = this._rejectTakePicture.bind(this);
   this.rejectStartRecording = this._rejectStartRecording.bind(this);
   this.rejectStopRecording = this._rejectStopRecording.bind(this);
+  this.rejectPauseRecording = this._rejectPauseRecording.bind(this);
+  this.rejectResumeRecording = this._rejectResumeRecording.bind(this);
   this.rejectPreviewStarted = this._rejectPreviewStarted.bind(this);
 
   var self = this;
   this._window.addEventListener('beforeunload', function() {
     if (isDefinedObj(self.viewfinder)) {
-      self.viewfinder.mozSrcObject = null;
+      self.viewfinder.srcObject = null;
     }
 
     self.hw = null;
@@ -211,7 +213,7 @@ CameraTestSuite.prototype = {
       function postTest(pass) {
         ok(pass, test.name + ' finished');
         var camera = self.camera;
-        self.viewfinder.mozSrcObject = null;
+        self.viewfinder.srcObject = null;
         self.camera = null;
 
         if (!isDefinedObj(camera)) {
@@ -325,7 +327,7 @@ CameraTestSuite.prototype = {
         return;
       }
 
-      self.viewfinder.mozSrcObject = self.camera;
+      self.viewfinder.srcObject = self.camera;
       self.viewfinder.play();
       self.camera.addEventListener('previewstatechange', onPreviewStateChange);
     });
@@ -409,6 +411,14 @@ CameraTestSuite.prototype = {
     return this.logError('stop recording failed', e);
   },
 
+  _rejectPauseRecording: function(e) {
+    return this.logError('pause recording failed', e);
+  },
+
+  _rejectResumeRecording: function(e) {
+    return this.logError('resume recording failed', e);
+  },
+
   _rejectPreviewStarted: function(e) {
     return this.logError('preview start failed', e);
   },
@@ -454,4 +464,4 @@ CameraTestSuite.prototype = {
   },
 };
 
-ise(SpecialPowers.sanityCheck(), "foo", "SpecialPowers passed sanity check");
+is(SpecialPowers.sanityCheck(), "foo", "SpecialPowers passed sanity check");

@@ -24,11 +24,11 @@ class nsIPresShell;
 namespace mozilla {
 namespace layers {
 struct PlanarYCbCrData;
-}
+} // namespace layers
 namespace image {
 class ImageRegion;
-}
-}
+} // namespace image
+} // namespace mozilla
 
 class gfxUtils {
 public:
@@ -55,9 +55,9 @@ public:
     static bool UnpremultiplyDataSurface(DataSourceSurface* srcSurf,
                                          DataSourceSurface* destSurf);
 
-    static mozilla::TemporaryRef<DataSourceSurface>
+    static already_AddRefed<DataSourceSurface>
       CreatePremultipliedDataSurface(DataSourceSurface* srcSurf);
-    static mozilla::TemporaryRef<DataSourceSurface>
+    static already_AddRefed<DataSourceSurface>
       CreateUnpremultipliedDataSurface(DataSourceSurface* srcSurf);
 
     static void ConvertBGRAtoRGBA(uint8_t* aData, uint32_t aLength);
@@ -144,7 +144,7 @@ public:
     static void
     GetYCbCrToRGBDestFormatAndSize(const mozilla::layers::PlanarYCbCrData& aData,
                                    gfxImageFormat& aSuggestedFormat,
-                                   gfxIntSize& aSuggestedSize);
+                                   mozilla::gfx::IntSize& aSuggestedSize);
 
     /**
      * Convert YCbCrImage into RGB aDestBuffer
@@ -154,7 +154,7 @@ public:
     static void
     ConvertYCbCrToRGB(const mozilla::layers::PlanarYCbCrData& aData,
                       const gfxImageFormat& aDestFormat,
-                      const gfxIntSize& aDestSize,
+                      const mozilla::gfx::IntSize& aDestSize,
                       unsigned char* aDestBuffer,
                       int32_t aStride);
 
@@ -206,7 +206,7 @@ public:
      * realize format conversion may involve expensive copying/uploading/
      * readback.)
      */
-    static mozilla::TemporaryRef<DataSourceSurface>
+    static already_AddRefed<DataSourceSurface>
     CopySurfaceToDataSourceSurfaceWithFormat(SourceSurface* aSurface,
                                              SurfaceFormat aFormat);
 
@@ -293,7 +293,9 @@ public:
     static bool DumpDisplayList();
 
     static bool sDumpPainting;
+    static bool sDumpPaintingIntermediate;
     static bool sDumpPaintingToFile;
+    static bool sDumpPaintItems;
     static FILE* sDumpPaintFile;
 };
 

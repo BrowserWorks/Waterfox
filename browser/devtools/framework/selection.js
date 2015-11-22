@@ -6,9 +6,9 @@
 
 "use strict";
 
-const {Cu, Ci} = require("chrome");
-let EventEmitter = require("devtools/toolkit/event-emitter");
-Cu.import("resource://gre/modules/devtools/LayoutHelpers.jsm");
+const { Cu, Ci } = require("chrome");
+const { getRootBindingParent } = require("devtools/toolkit/layout/utils");
+var EventEmitter = require("devtools/toolkit/event-emitter");
 
 /**
  * API
@@ -228,7 +228,7 @@ Selection.prototype = {
         let doc = this.document;
         if (doc && doc.defaultView) {
           let docEl = doc.documentElement;
-          let bindingParent = LayoutHelpers.getRootBindingParent(rawNode);
+          let bindingParent = getRootBindingParent(rawNode);
 
           if (docEl.contains(bindingParent)) {
             return true;

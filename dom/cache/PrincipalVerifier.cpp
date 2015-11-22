@@ -131,6 +131,19 @@ PrincipalVerifier::VerifyOnMainThread()
     return;
   }
 
+  nsCOMPtr<nsIScriptSecurityManager> ssm = nsContentUtils::GetSecurityManager();
+  if (NS_WARN_IF(!ssm)) {
+    DispatchToInitiatingThread(NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
+    return;
+  }
+
+  // Verify if a child process uses system principal, which is not allowed
+  // to prevent system principal is spoofed.
+  if (NS_WARN_IF(actor && ssm->IsSystemPrincipal(principal))) {
+    DispatchToInitiatingThread(NS_ERROR_FAILURE);
+    return;
+  }
+
   // Verify that a child process claims to own the app for this principal
   if (NS_WARN_IF(actor && !AssertAppPrincipal(actor, principal))) {
     DispatchToInitiatingThread(NS_ERROR_FAILURE);
@@ -138,19 +151,13 @@ PrincipalVerifier::VerifyOnMainThread()
   }
   actor = nullptr;
 
-  nsCOMPtr<nsIScriptSecurityManager> ssm = nsContentUtils::GetSecurityManager();
-  if (NS_WARN_IF(!ssm)) {
-    DispatchToInitiatingThread(NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
-    return;
-  }
-
 #ifdef DEBUG
   // Sanity check principal origin by using it to construct a URI and security
   // checking it.  Don't do this for the system principal, though, as its origin
   // is a synthetic [System Principal] string.
   if (!ssm->IsSystemPrincipal(principal)) {
     nsAutoCString origin;
-    rv = principal->GetOrigin(getter_Copies(origin));
+    rv = principal->GetOriginNoSuffix(origin);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       DispatchToInitiatingThread(rv);
       return;
@@ -209,6 +216,6 @@ PrincipalVerifier::DispatchToInitiatingThread(nsresult aRv)
   }
 }
 
-} // namesapce cache
+} // namespace cache
 } // namespace dom
 } // namespace mozilla

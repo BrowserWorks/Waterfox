@@ -6,12 +6,11 @@
 // Test that the "browser console" menu item opens or focuses (if already open)
 // the console window instead of toggling it open/close.
 
-
 "use strict";
 
-let test = asyncTest(function* () {
-  let wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                   .getService(Components.interfaces.nsIWindowMediator);
+var {Tools} = require("definitions");
+
+var test = asyncTest(function* () {
   let currWindow, hud, mainWindow;
 
   mainWindow = Services.wm.getMostRecentWindow(null);
@@ -29,7 +28,7 @@ let test = asyncTest(function* () {
   });
 
   currWindow = Services.wm.getMostRecentWindow(null);
-  is(currWindow.document.documentURI, devtools.Tools.webConsole.url,
+  is(currWindow.document.documentURI, Tools.webConsole.url,
      "The Browser Console is open and has focus");
 
   mainWindow.focus();
@@ -37,7 +36,7 @@ let test = asyncTest(function* () {
   yield HUDService.openBrowserConsoleOrFocus();
 
   currWindow = Services.wm.getMostRecentWindow(null);
-  is(currWindow.document.documentURI, devtools.Tools.webConsole.url,
+  is(currWindow.document.documentURI, Tools.webConsole.url,
      "The Browser Console is open and has focus");
 
   yield HUDService.toggleBrowserConsole();

@@ -7,155 +7,291 @@
 #include "FileSnapshot.h"
 
 #include "IDBFileHandle.h"
-#include "MainThreadUtils.h"
 #include "mozilla/Assertions.h"
-#include "mozilla/dom/MetadataHelper.h"
-
-#ifdef DEBUG
-#include "nsXULAppAPI.h"
-#endif
+#include "nsIIPCSerializableInputStream.h"
 
 namespace mozilla {
 namespace dom {
 namespace indexedDB {
 
-// Create as a stored file
-FileImplSnapshot::FileImplSnapshot(const nsAString& aName,
-                                   const nsAString& aContentType,
-                                   MetadataParameters* aMetadataParams,
-                                   nsIFile* aFile,
-                                   IDBFileHandle* aFileHandle,
-                                   FileInfo* aFileInfo)
-  : FileImplBase(aName,
-                 aContentType,
-                 aMetadataParams->Size(),
-                 aMetadataParams->LastModified())
-  , mFile(aFile)
-  , mWholeFile(true)
-{
-  AssertSanity();
-  MOZ_ASSERT(aMetadataParams);
-  MOZ_ASSERT(aMetadataParams->Size() != UINT64_MAX);
-  MOZ_ASSERT(aMetadataParams->LastModified() != INT64_MAX);
-  MOZ_ASSERT(aFile);
-  MOZ_ASSERT(aFileHandle);
-  MOZ_ASSERT(aFileInfo);
+using namespace mozilla::ipc;
 
-  mFileInfos.AppendElement(aFileInfo);
+namespace {
+
+class StreamWrapper final
+  : public nsIInputStream
+  , public nsIIPCSerializableInputStream
+{
+  class CloseRunnable;
+
+  nsCOMPtr<nsIEventTarget> mOwningThread;
+  nsCOMPtr<nsIInputStream> mInputStream;
+  nsRefPtr<IDBFileHandle> mFileHandle;
+  bool mFinished;
+
+public:
+  StreamWrapper(nsIInputStream* aInputStream,
+                IDBFileHandle* aFileHandle)
+    : mOwningThread(NS_GetCurrentThread())
+    , mInputStream(aInputStream)
+    , mFileHandle(aFileHandle)
+    , mFinished(false)
+  {
+    AssertIsOnOwningThread();
+    MOZ_ASSERT(aInputStream);
+    MOZ_ASSERT(aFileHandle);
+    aFileHandle->AssertIsOnOwningThread();
+
+    mFileHandle->OnNewRequest();
+  }
+
+private:
+  virtual ~StreamWrapper();
+
+  bool
+  IsOnOwningThread() const
+  {
+    MOZ_ASSERT(mOwningThread);
+
+    bool current;
+    return NS_SUCCEEDED(mOwningThread->
+                        IsOnCurrentThread(&current)) && current;
+  }
+
+  void
+  AssertIsOnOwningThread() const
+  {
+    MOZ_ASSERT(IsOnOwningThread());
+  }
+
+  void
+  Finish()
+  {
+    AssertIsOnOwningThread();
+
+    if (mFinished) {
+      return;
+    }
+
+    mFinished = true;
+
+    mFileHandle->OnRequestFinished(/* aActorDestroyedNormally */ true);
+  }
+
+  void
+  Destroy()
+  {
+    if (IsOnOwningThread()) {
+      delete this;
+      return;
+    }
+
+    nsCOMPtr<nsIRunnable> destroyRunnable =
+      NS_NewNonOwningRunnableMethod(this, &StreamWrapper::Destroy);
+
+    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(mOwningThread->Dispatch(destroyRunnable,
+                                                         NS_DISPATCH_NORMAL)));
+  }
+
+  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSIINPUTSTREAM
+  NS_DECL_NSIIPCSERIALIZABLEINPUTSTREAM
+};
+
+class StreamWrapper::CloseRunnable final
+  : public nsRunnable
+{
+  friend class StreamWrapper;
+
+  nsRefPtr<StreamWrapper> mStreamWrapper;
+
+public:
+  NS_DECL_ISUPPORTS_INHERITED
+
+private:
+  explicit
+  CloseRunnable(StreamWrapper* aStreamWrapper)
+    : mStreamWrapper(aStreamWrapper)
+  { }
+
+  ~CloseRunnable()
+  { }
+
+  NS_IMETHOD
+  Run() override;
+};
+
+} // anonymous namespace
+
+BlobImplSnapshot::BlobImplSnapshot(BlobImpl* aFileImpl,
+                                   IDBFileHandle* aFileHandle)
+  : mBlobImpl(aFileImpl)
+{
+  MOZ_ASSERT(aFileImpl);
+  MOZ_ASSERT(aFileHandle);
 
   mFileHandle =
     do_GetWeakReference(NS_ISUPPORTS_CAST(EventTarget*, aFileHandle));
 }
 
-// Create slice
-FileImplSnapshot::FileImplSnapshot(const FileImplSnapshot* aOther,
-                                   uint64_t aStart,
-                                   uint64_t aLength,
-                                   const nsAString& aContentType)
-  : FileImplBase(aContentType, aOther->mStart + aStart, aLength)
-  , mFile(aOther->mFile)
-  , mFileHandle(aOther->mFileHandle)
-  , mWholeFile(false)
+BlobImplSnapshot::BlobImplSnapshot(BlobImpl* aFileImpl,
+                                   nsIWeakReference* aFileHandle)
+  : mBlobImpl(aFileImpl)
+  , mFileHandle(aFileHandle)
 {
-  AssertSanity();
-  MOZ_ASSERT(aOther);
-
-  FileInfo* fileInfo;
-
-  if (IndexedDatabaseManager::IsClosed()) {
-    fileInfo = aOther->GetFileInfo();
-  } else {
-    MutexAutoLock lock(IndexedDatabaseManager::FileMutex());
-    fileInfo = aOther->GetFileInfo();
-  }
-
-  mFileInfos.AppendElement(fileInfo);
+  MOZ_ASSERT(aFileImpl);
+  MOZ_ASSERT(aFileHandle);
 }
 
-FileImplSnapshot::~FileImplSnapshot()
+BlobImplSnapshot::~BlobImplSnapshot()
 {
 }
 
-#ifdef DEBUG
+NS_IMPL_ISUPPORTS_INHERITED(BlobImplSnapshot, BlobImpl, PIBlobImplSnapshot)
 
-// static
-void
-FileImplSnapshot::AssertSanity()
-{
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
-  MOZ_ASSERT(NS_IsMainThread());
-}
-
-#endif // DEBUG
-
-NS_IMPL_ISUPPORTS_INHERITED(FileImplSnapshot, FileImpl, PIFileImplSnapshot)
-
-nsresult
-FileImplSnapshot::GetInternalStream(nsIInputStream** aStream)
-{
-  AssertSanity();
-
-  nsCOMPtr<EventTarget> et = do_QueryReferent(mFileHandle);
-  nsRefPtr<IDBFileHandle> fileHandle = static_cast<IDBFileHandle*>(et.get());
-  if (!fileHandle) {
-    return NS_ERROR_DOM_FILEHANDLE_INACTIVE_ERR;
-  }
-
-  nsresult rv = fileHandle->OpenInputStream(mWholeFile, mStart, mLength,
-                                            aStream);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  return NS_OK;
-}
-
-already_AddRefed<FileImpl>
-FileImplSnapshot::CreateSlice(uint64_t aStart,
+already_AddRefed<BlobImpl>
+BlobImplSnapshot::CreateSlice(uint64_t aStart,
                               uint64_t aLength,
                               const nsAString& aContentType,
                               ErrorResult& aRv)
 {
-  AssertSanity();
+  nsRefPtr<BlobImpl> blobImpl =
+    mBlobImpl->CreateSlice(aStart, aLength, aContentType, aRv);
 
-  nsRefPtr<FileImpl> impl =
-    new FileImplSnapshot(this, aStart, aLength, aContentType);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
 
-  return impl.forget();
+  blobImpl = new BlobImplSnapshot(blobImpl, mFileHandle);
+  return blobImpl.forget();
 }
 
 void
-FileImplSnapshot::GetMozFullPathInternal(nsAString& aFilename,
-                                         ErrorResult& aRv)
+BlobImplSnapshot::GetInternalStream(nsIInputStream** aStream, ErrorResult& aRv)
 {
-  AssertSanity();
-  MOZ_ASSERT(mIsFile);
+  nsCOMPtr<EventTarget> et = do_QueryReferent(mFileHandle);
+  nsRefPtr<IDBFileHandle> fileHandle = static_cast<IDBFileHandle*>(et.get());
+  if (!fileHandle || !fileHandle->IsOpen()) {
+    aRv.Throw(NS_ERROR_DOM_FILEHANDLE_INACTIVE_ERR);
+    return;
+  }
 
-  aRv = mFile->GetPath(aFilename);
+  nsCOMPtr<nsIInputStream> stream;
+  mBlobImpl->GetInternalStream(getter_AddRefs(stream), aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
+  }
+
+  nsRefPtr<StreamWrapper> wrapper = new StreamWrapper(stream, fileHandle);
+
+  wrapper.forget(aStream);
+}
+
+BlobImpl*
+BlobImplSnapshot::GetBlobImpl() const
+{
+  nsCOMPtr<EventTarget> et = do_QueryReferent(mFileHandle);
+  nsRefPtr<IDBFileHandle> fileHandle = static_cast<IDBFileHandle*>(et.get());
+  if (!fileHandle || !fileHandle->IsOpen()) {
+    return nullptr;
+  }
+
+  return mBlobImpl;
+}
+
+StreamWrapper::~StreamWrapper()
+{
+  AssertIsOnOwningThread();
+
+  Finish();
+}
+
+NS_IMPL_ADDREF(StreamWrapper)
+NS_IMPL_RELEASE_WITH_DESTROY(StreamWrapper, Destroy())
+NS_IMPL_QUERY_INTERFACE(StreamWrapper,
+                        nsIInputStream,
+                        nsIIPCSerializableInputStream)
+
+NS_IMETHODIMP
+StreamWrapper::Close()
+{
+  MOZ_ASSERT(!IsOnOwningThread());
+
+  nsRefPtr<CloseRunnable> closeRunnable = new CloseRunnable(this);
+
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(mOwningThread->Dispatch(closeRunnable,
+                                                       NS_DISPATCH_NORMAL)));
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+StreamWrapper::Available(uint64_t* _retval)
+{
+  // Can't assert here, this method is sometimes called on the owning thread
+  // (nsInputStreamChannel::OpenContentStream calls Available before setting
+  // the content length property).
+
+  return mInputStream->Available(_retval);
+}
+
+NS_IMETHODIMP
+StreamWrapper::Read(char* aBuf, uint32_t aCount, uint32_t* _retval)
+{
+  MOZ_ASSERT(!IsOnOwningThread());
+  return mInputStream->Read(aBuf, aCount, _retval);
+}
+
+NS_IMETHODIMP
+StreamWrapper::ReadSegments(nsWriteSegmentFun aWriter, void* aClosure,
+                            uint32_t aCount, uint32_t* _retval)
+{
+  MOZ_ASSERT(!IsOnOwningThread());
+  return mInputStream->ReadSegments(aWriter, aClosure, aCount, _retval);
+}
+
+NS_IMETHODIMP
+StreamWrapper::IsNonBlocking(bool* _retval)
+{
+  return mInputStream->IsNonBlocking(_retval);
+}
+
+void
+StreamWrapper::Serialize(InputStreamParams& aParams,
+                         FileDescriptorArray& aFileDescriptors)
+{
+  nsCOMPtr<nsIIPCSerializableInputStream> stream =
+    do_QueryInterface(mInputStream);
+
+  if (stream) {
+    stream->Serialize(aParams, aFileDescriptors);
+  }
 }
 
 bool
-FileImplSnapshot::IsStoredFile() const
+StreamWrapper::Deserialize(const InputStreamParams& aParams,
+                           const FileDescriptorArray& aFileDescriptors)
 {
-  AssertSanity();
+  nsCOMPtr<nsIIPCSerializableInputStream> stream =
+    do_QueryInterface(mInputStream);
 
-  return true;
+  if (stream) {
+    return stream->Deserialize(aParams, aFileDescriptors);
+  }
+
+  return false;
 }
 
-bool
-FileImplSnapshot::IsWholeFile() const
+NS_IMPL_ISUPPORTS_INHERITED0(StreamWrapper::CloseRunnable,
+                             nsRunnable)
+
+NS_IMETHODIMP
+StreamWrapper::
+CloseRunnable::Run()
 {
-  AssertSanity();
+  mStreamWrapper->Finish();
 
-  return mWholeFile;
-}
-
-bool
-FileImplSnapshot::IsSnapshot() const
-{
-  AssertSanity();
-
-  return true;
+  return NS_OK;
 }
 
 } // namespace indexedDB

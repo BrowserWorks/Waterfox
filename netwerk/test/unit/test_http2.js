@@ -26,7 +26,7 @@ var bigListenerMD5 = '8f607cfdd2c87d6a7eedb657dafbd836';
 
 function checkIsHttp2(request) {
   try {
-    if (request.getResponseHeader("X-Firefox-Spdy") == "h2-16") {
+    if (request.getResponseHeader("X-Firefox-Spdy") == "h2") {
       if (request.getResponseHeader("X-Connection-Http2") == "yes") {
         return true;
       }
@@ -781,8 +781,9 @@ var tests = [ test_http2_post_big
             , test_http2_patch
             , test_http2_pushapi_1
             , test_http2_continuations
+            // Add new tests above here - best to add new tests before h1
+            // streams get too involved
             // These next two must always come in this order
-	    // best to add new tests before h1 streams get too involved
             , test_http2_h11required_stream
             , test_http2_h11required_session
             , test_http2_retry_rst
@@ -859,7 +860,6 @@ var prefs;
 var spdypref;
 var spdy3pref;
 var spdypush;
-var http2draftpref;
 var http2pref;
 var tlspref;
 var altsvcpref1;
@@ -871,7 +871,6 @@ function resetPrefs() {
   prefs.setBoolPref("network.http.spdy.enabled", spdypref);
   prefs.setBoolPref("network.http.spdy.enabled.v3-1", spdy3pref);
   prefs.setBoolPref("network.http.spdy.allow-push", spdypush);
-  prefs.setBoolPref("network.http.spdy.enabled.http2draft", http2draftpref);
   prefs.setBoolPref("network.http.spdy.enabled.http2", http2pref);
   prefs.setBoolPref("network.http.spdy.enforce-tls-profile", tlspref);
   prefs.setBoolPref("network.http.altsvc.enabled", altsvcpref1);
@@ -901,7 +900,6 @@ function run_test() {
   spdypref = prefs.getBoolPref("network.http.spdy.enabled");
   spdy3pref = prefs.getBoolPref("network.http.spdy.enabled.v3-1");
   spdypush = prefs.getBoolPref("network.http.spdy.allow-push");
-  http2draftpref = prefs.getBoolPref("network.http.spdy.enabled.http2draft");
   http2pref = prefs.getBoolPref("network.http.spdy.enabled.http2");
   tlspref = prefs.getBoolPref("network.http.spdy.enforce-tls-profile");
   altsvcpref1 = prefs.getBoolPref("network.http.altsvc.enabled");
@@ -910,7 +908,6 @@ function run_test() {
   prefs.setBoolPref("network.http.spdy.enabled", true);
   prefs.setBoolPref("network.http.spdy.enabled.v3-1", true);
   prefs.setBoolPref("network.http.spdy.allow-push", true);
-  prefs.setBoolPref("network.http.spdy.enabled.http2draft", true);
   prefs.setBoolPref("network.http.spdy.enabled.http2", true);
   prefs.setBoolPref("network.http.spdy.enforce-tls-profile", false);
   prefs.setBoolPref("network.http.altsvc.enabled", true);

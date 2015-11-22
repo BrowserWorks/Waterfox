@@ -22,7 +22,6 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/unused.h"
 #include "nsIGlobalObject.h"
-#include "nsNetUtil.h"
 
 namespace mozilla {
 namespace dom {
@@ -39,16 +38,16 @@ IsValidPutRequestURL(const nsAString& aUrl, ErrorResult& aRv)
   bool validScheme = false;
 
   // make a copy because ProcessURL strips the fragmet
-  nsAutoString url(aUrl);
+  NS_ConvertUTF16toUTF8 url(aUrl);
 
-  TypeUtils::ProcessURL(url, &validScheme, nullptr, aRv);
+  TypeUtils::ProcessURL(url, &validScheme, nullptr, nullptr, aRv);
   if (aRv.Failed()) {
     return false;
   }
 
   if (!validScheme) {
     NS_NAMED_LITERAL_STRING(label, "Request");
-    aRv.ThrowTypeError(MSG_INVALID_URL_SCHEME, &label, &url);
+    aRv.ThrowTypeError(MSG_INVALID_URL_SCHEME, &label, &aUrl);
     return false;
   }
 
@@ -80,7 +79,7 @@ IsValidPutRequestMethod(const RequestOrUSVString& aRequest, ErrorResult& aRv)
   return IsValidPutRequestMethod(aRequest.GetAsRequest(), aRv);
 }
 
-} // anonymous namespace
+} // namespace
 
 // Helper class to wait for Add()/AddAll() fetch requests to complete and
 // then perform a PutAll() with the responses.  This class holds a Feature

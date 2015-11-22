@@ -29,6 +29,8 @@ LOCAL_INCLUDES += [
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     LOCAL_INCLUDES += ['/toolkit/xre']
+    # this is an awful workaround - glandium
+    USE_LIBS += ['mfbt_staticruntime']
 
 if CONFIG['_MSC_VER']:
     WIN32_EXE_LDFLAGS += ['-ENTRY:wmainCRTStartup']
@@ -47,5 +49,3 @@ DISABLE_STL_WRAPPING = True
 # Need to link with CoreFoundation on Mac
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     OS_LIBS += CONFIG['TK_LIBS']
-
-FAIL_ON_WARNINGS = True

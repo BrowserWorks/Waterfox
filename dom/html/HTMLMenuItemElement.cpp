@@ -254,7 +254,7 @@ HTMLMenuItemElement::SetChecked(bool aChecked)
 nsresult
 HTMLMenuItemElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
-  if (aVisitor.mEvent->message == NS_MOUSE_CLICK) {
+  if (aVisitor.mEvent->mMessage == eMouseClick) {
 
     bool originalCheckedValue = false;
     switch (mType) {
@@ -290,7 +290,7 @@ nsresult
 HTMLMenuItemElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
 {
   // Check to see if the event was cancelled.
-  if (aVisitor.mEvent->message == NS_MOUSE_CLICK &&
+  if (aVisitor.mEvent->mMessage == eMouseClick &&
       aVisitor.mItemFlags & NS_CHECKED_IS_TOGGLED &&
       aVisitor.mEventStatus == nsEventStatus_eConsumeNoDefault) {
     bool originalCheckedValue =
@@ -372,9 +372,7 @@ void
 HTMLMenuItemElement::GetText(nsAString& aText)
 {
   nsAutoString text;
-  if (!nsContentUtils::GetNodeTextContent(this, false, text)) {
-    NS_RUNTIMEABORT("OOM");
-  }
+  nsContentUtils::GetNodeTextContent(this, false, text);
 
   text.CompressWhitespace(true, true);
   aText = text;

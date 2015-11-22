@@ -20,6 +20,7 @@ UNIFIED_SOURCES += [
     'AudioSession.cpp',
     'GfxInfo.cpp',
     'IEnumFE.cpp',
+    'IMMHandler.cpp',
     'InkCollector.cpp',
     'JumpListItem.cpp',
     'KeyboardLayout.cpp',
@@ -31,7 +32,6 @@ UNIFIED_SOURCES += [
     'nsDragService.cpp',
     'nsIdleServiceWin.cpp',
     'nsImageClipboard.cpp',
-    'nsIMM32Handler.cpp',
     'nsLookAndFeel.cpp',
     'nsNativeDragSource.cpp',
     'nsNativeDragTarget.cpp',
@@ -81,10 +81,8 @@ if CONFIG['NS_PRINTING']:
 
 if CONFIG['NS_ENABLE_TSF']:
     SOURCES += [
-        'nsTextStore.cpp',
+        'TSFTextStore.cpp',
     ]
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

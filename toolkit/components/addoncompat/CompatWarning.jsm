@@ -21,7 +21,7 @@ function section(number, url)
   return { number, url: baseURL + url };
 }
 
-let CompatWarning = {
+var CompatWarning = {
   // Sometimes we want to generate a warning, but put off issuing it
   // until later. For example, if someone registers a listener, we
   // might only want to warn about it if the listener actually
@@ -74,6 +74,15 @@ let CompatWarning = {
                  /*flags*/ Ci.nsIScriptError.warningFlag,
                  /*category*/ "chrome javascript");
       Services.console.logMessage(error);
+
+      if (Preferences.get("dom.ipc.shims.dumpWarnings", false)) {
+        dump(message + "\n");
+        while (stack) {
+          dump(stack + "\n");
+          stack = stack.caller;
+        }
+        dump("\n");
+      }
     };
   },
 

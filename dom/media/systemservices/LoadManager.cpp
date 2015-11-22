@@ -6,7 +6,7 @@
 #include "LoadManager.h"
 #include "LoadMonitor.h"
 #include "nsString.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prtime.h"
 #include "prinrval.h"
 #include "prsystem.h"
@@ -14,20 +14,14 @@
 #include "nsString.h"
 #include "nsThreadUtils.h"
 #include "nsReadableUtils.h"
-#include "nsNetUtil.h"
 #include "nsIObserverService.h"
 
 // NSPR_LOG_MODULES=LoadManager:5
 PRLogModuleInfo *gLoadManagerLog = nullptr;
 #undef LOG
 #undef LOG_ENABLED
-#if defined(PR_LOGGING)
-#define LOG(args) PR_LOG(gLoadManagerLog, PR_LOG_DEBUG, args)
-#define LOG_ENABLED() PR_LOG_TEST(gLoadManagerLog, 5)
-#else
-#define LOG(args)
-#define LOG_ENABLED() (false)
-#endif
+#define LOG(args) MOZ_LOG(gLoadManagerLog, mozilla::LogLevel::Debug, args)
+#define LOG_ENABLED() MOZ_LOG_TEST(gLoadManagerLog, mozilla::LogLevel::Verbose)
 
 namespace mozilla {
 
@@ -50,10 +44,8 @@ LoadManagerSingleton::LoadManagerSingleton(int aLoadMeasurementInterval,
     mHighLoadThreshold(aHighLoadThreshold),
     mLowLoadThreshold(aLowLoadThreshold)
 {
-#if defined(PR_LOGGING)
   if (!gLoadManagerLog)
     gLoadManagerLog = PR_NewLogModule("LoadManager");
-#endif
   LOG(("LoadManager - Initializing (%dms x %d, %f, %f)",
        mLoadMeasurementInterval, mAveragingMeasurements,
        mHighLoadThreshold, mLowLoadThreshold));

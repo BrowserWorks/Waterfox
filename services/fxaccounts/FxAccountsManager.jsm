@@ -127,7 +127,15 @@ this.FxAccountsManager = {
             user: this._user
           });
         }
-        return client[aMethod](aEmail, aPassword);
+        let syncEnabled = false;
+        try {
+          syncEnabled = Services.prefs.getBoolPref("services.sync.enabled");
+        } catch(e) {
+          dump(e + "\n");
+        }
+        // XXX Refetch FxA credentials if services.sync.enabled preference
+        //     changes. Bug 1183103
+        return client[aMethod](aEmail, aPassword, syncEnabled);
       }
     ).then(
       user => {
@@ -213,7 +221,7 @@ this.FxAccountsManager = {
         }
       );
     }
-    return Promise.reject(reason);
+    return Promise.reject(reason.message ? { error: reason.message } : reason);
   },
 
   _getAssertion: function(aAudience, aPrincipal) {
@@ -510,14 +518,9 @@ this.FxAccountsManager = {
       return this._error(ERROR_INVALID_AUDIENCE);
     }
 
-    let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
-                   .getService(Ci.nsIScriptSecurityManager);
-    let uri = Services.io.newURI(aPrincipal.origin, null, null);
+    let principal = aPrincipal;
     log.debug("FxAccountsManager.getAssertion() aPrincipal: ",
-              aPrincipal.origin, aPrincipal.appId,
-              aPrincipal.isInBrowserElement);
-    let principal = secMan.getAppCodebasePrincipal(uri,
-      aPrincipal.appId, aPrincipal.isInBrowserElement);
+              principal.origin, principal.appId, principal.isInBrowserElement);
 
     return this.getAccount().then(
       user => {
@@ -582,8 +585,37 @@ this.FxAccountsManager = {
         return this._uiRequest(UI_REQUEST_SIGN_IN_FLOW, aAudience, principal);
       }
     );
-  }
+  },
 
+  getKeys: function() {
+    let syncEnabled = false;
+    try {
+      syncEnabled = Services.prefs.getBoolPref("services.sync.enabled");
+    } catch(e) {
+      dump("Sync is disabled, so you won't get the keys. " + e + "\n");
+    }
+
+    if (!syncEnabled) {
+      return Promise.reject(ERROR_SYNC_DISABLED);
+    }
+
+    return this.getAccount().then(
+      user => {
+        if (!user) {
+          log.debug("No signed in user");
+          return Promise.resolve(null);
+        }
+
+        if (!user.verified) {
+          return this._error(ERROR_UNVERIFIED_ACCOUNT, {
+            user: user
+          });
+        }
+
+        return this._fxAccounts.getKeys();
+      }
+    );
+  }
 };
 
 FxAccountsManager.init();

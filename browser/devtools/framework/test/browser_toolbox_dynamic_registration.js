@@ -2,7 +2,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-let toolbox;
+var toolbox;
 
 function test()
 {
@@ -26,7 +26,7 @@ function testRegister(aToolbox)
     id: "test-tool",
     label: "Test Tool",
     inMenu: true,
-    isTargetSupported: function() true,
+    isTargetSupported: () => true,
     build: function() {}
   });
 }

@@ -317,7 +317,8 @@ private:
 
 NS_IMETHODIMP
 nsMenuBarFrame::ChangeMenuItem(nsMenuFrame* aMenuItem,
-                               bool aSelectFirstItem)
+                               bool aSelectFirstItem,
+                               bool aFromKey)
 {
   if (mCurrentMenu == aMenuItem)
     return NS_OK;
@@ -418,6 +419,7 @@ nsMenuBarFrame::DestroyFrom(nsIFrame* aDestructRoot)
   mTarget->RemoveEventListener(NS_LITERAL_STRING("mousedown"), mMenuBarListener, false);
   mTarget->RemoveEventListener(NS_LITERAL_STRING("blur"), mMenuBarListener, true);
 
+  mMenuBarListener->OnDestroyMenuBarFrame();
   mMenuBarListener = nullptr;
 
   nsBoxFrame::DestroyFrom(aDestructRoot);

@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "RtspMetaData.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 using namespace mozilla;
 
@@ -139,7 +139,6 @@ RtspMetaData::SetWidth(uint32_t aWidth)
   return NS_OK;
 }
 
-/* attribute unsigned long height; */
 NS_IMETHODIMP
 RtspMetaData::GetHeight(uint32_t *aHeight)
 {
@@ -155,7 +154,6 @@ RtspMetaData::SetHeight(uint32_t aHeight)
   return NS_OK;
 }
 
-/* attribute unsigned long long duration; */
 NS_IMETHODIMP
 RtspMetaData::GetDuration(uint64_t *aDuration)
 {
@@ -171,7 +169,6 @@ RtspMetaData::SetDuration(uint64_t aDuration)
   return NS_OK;
 }
 
-/* attribute unsigned long sampleRate; */
 NS_IMETHODIMP
 RtspMetaData::GetSampleRate(uint32_t *aSampleRate)
 {

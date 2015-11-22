@@ -65,7 +65,7 @@
 #ifdef MOZ_LOGGING
 #define FORCE_PR_LOG 1 /* Allow logging in the release build */
 #endif /* MOZ_LOGGING */
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #ifdef XP_MACOSX
 #include "gfxQuartzNativeDrawing.h"
@@ -93,7 +93,6 @@ using mozilla::DefaultXDisplay;
 #undef CreateEvent
 #endif
 
-#ifdef PR_LOGGING 
 static PRLogModuleInfo *
 GetObjectFrameLog()
 {
@@ -102,7 +101,6 @@ GetObjectFrameLog()
     sLog = PR_NewLogModule("nsPluginFrame");
   return sLog;
 }
-#endif /* PR_LOGGING */
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -157,15 +155,16 @@ protected:
 
 nsPluginFrame::nsPluginFrame(nsStyleContext* aContext)
   : nsPluginFrameSuper(aContext)
+  , mInstanceOwner(nullptr)
   , mReflowCallbackPosted(false)
 {
-  PR_LOG(GetObjectFrameLog(), PR_LOG_DEBUG,
+  MOZ_LOG(GetObjectFrameLog(), LogLevel::Debug,
          ("Created new nsPluginFrame %p\n", this));
 }
 
 nsPluginFrame::~nsPluginFrame()
 {
-  PR_LOG(GetObjectFrameLog(), PR_LOG_DEBUG,
+  MOZ_LOG(GetObjectFrameLog(), LogLevel::Debug,
          ("nsPluginFrame %p deleted\n", this));
 }
 
@@ -195,7 +194,7 @@ nsPluginFrame::Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
                     nsIFrame*         aPrevInFlow)
 {
-  PR_LOG(GetObjectFrameLog(), PR_LOG_DEBUG,
+  MOZ_LOG(GetObjectFrameLog(), LogLevel::Debug,
          ("Initializing nsPluginFrame %p for content %p\n", this, aContent));
 
   nsPluginFrameSuper::Init(aContent, aParent, aPrevInFlow);
@@ -307,8 +306,8 @@ nsPluginFrame::PrepForDrawing(nsIWidget *aWidget)
     viewMan->InsertChild(view, mInnerView, nullptr, true);
 
     mWidget->SetParent(parentWidget);
-    mWidget->Show(true);
     mWidget->Enable(true);
+    mWidget->Show(true);
 
     // Set the plugin window to have an empty clip region until we know
     // what our true position, size and clip region are. These
@@ -417,7 +416,7 @@ nsPluginFrame::GetWidgetConfiguration(nsTArray<nsIWidget::Configuration>* aConfi
   configuration->mBounds = mNextConfigurationBounds;
   configuration->mClipRegion = mNextConfigurationClipRegion;
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     configuration->mWindowID = (uintptr_t)mWidget->GetNativeData(NS_NATIVE_PLUGIN_PORT);
     configuration->mVisible = mWidget->IsVisible();
   }
@@ -769,7 +768,7 @@ mozilla::LayoutDeviceIntPoint
 nsPluginFrame::GetRemoteTabChromeOffset()
 {
   LayoutDeviceIntPoint offset;
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     nsCOMPtr<nsIDOMWindow> window = do_QueryInterface(GetContent()->OwnerDoc()->GetWindow());
     if (window) {
       nsCOMPtr<nsIDOMWindow> topWindow;
@@ -1762,13 +1761,13 @@ nsPluginFrame::HandleEvent(nsPresContext* aPresContext,
 
   mInstanceOwner->ConsiderNewEventloopNestingLevel();
 
-  if (anEvent->message == NS_PLUGIN_ACTIVATE) {
+  if (anEvent->mMessage == ePluginActivate) {
     nsIFocusManager* fm = nsFocusManager::GetFocusManager();
     nsCOMPtr<nsIDOMElement> elem = do_QueryInterface(GetContent());
     if (fm && elem)
       return fm->SetFocus(elem, 0);
   }
-  else if (anEvent->message == NS_PLUGIN_FOCUS) {
+  else if (anEvent->mMessage == ePluginFocus) {
     nsIFocusManager* fm = nsFocusManager::GetFocusManager();
     if (fm)
       return fm->FocusPlugin(GetContent());
@@ -1789,8 +1788,8 @@ nsPluginFrame::HandleEvent(nsPresContext* aPresContext,
 
 #ifdef XP_MACOSX
   // we want to process some native mouse events in the cocoa event model
-  if ((anEvent->message == NS_MOUSE_ENTER_WIDGET ||
-       anEvent->message == NS_WHEEL_WHEEL) &&
+  if ((anEvent->mMessage == eMouseEnterIntoWidget ||
+       anEvent->mMessage == eWheel) &&
       mInstanceOwner->GetEventModel() == NPEventModelCocoa) {
     *anEventStatus = mInstanceOwner->ProcessEvent(*anEvent);
     // Due to plugin code reentering Gecko, this frame may be dead at this
@@ -1802,7 +1801,7 @@ nsPluginFrame::HandleEvent(nsPresContext* aPresContext,
   // and mouse-up) are needed to make the routing of mouse events while
   // dragging conform to standard OS X practice, and to the Cocoa NPAPI spec.
   // See bug 525078 and bug 909678.
-  if (anEvent->message == NS_MOUSE_BUTTON_DOWN) {
+  if (anEvent->mMessage == eMouseDown) {
     nsIPresShell::SetCapturingContent(GetContent(), CAPTURE_IGNOREALLOWED);
   }
 #endif
@@ -1813,7 +1812,7 @@ nsPluginFrame::HandleEvent(nsPresContext* aPresContext,
   // nsPluginFrameSuper::HandleEvent() might have killed us.
 
 #ifdef XP_MACOSX
-  if (anEvent->message == NS_MOUSE_BUTTON_UP) {
+  if (anEvent->mMessage == eMouseUp) {
     nsIPresShell::SetCapturingContent(nullptr, 0);
   }
 #endif

@@ -15,11 +15,11 @@
 namespace js {
 namespace gc {
 class GCRuntime;
-}
+} // namespace gc
 namespace gcstats {
 struct Statistics;
-}
-}
+} // namespace gcstats
+} // namespace js
 
 typedef enum JSGCMode {
     /* Perform only global GCs. */
@@ -108,7 +108,8 @@ using mozilla::UniquePtr;
     D(FULL_GC_TIMER)                            \
     D(SHUTDOWN_CC)                              \
     D(FINISH_LARGE_EVALUATE)                    \
-    D(USER_INACTIVE)
+    D(USER_INACTIVE)                            \
+    D(XPCONNECT_SHUTDOWN)
 
 namespace gcreason {
 
@@ -212,9 +213,6 @@ GCForReason(JSRuntime* rt, JSGCInvocationKind gckind, gcreason::Reason reason);
  *    JS_GC().
  *  - The GC mode must have been set to JSGC_MODE_INCREMENTAL with
  *    JS_SetGCParameter().
- *  - All native objects that have their own trace hook must indicate that they
- *    implement read and write barriers with the JSCLASS_IMPLEMENTS_BARRIERS
- *    flag.
  *
  * Note: Even if incremental GC is enabled and working correctly,
  *       non-incremental collections can still happen when low on memory.
@@ -284,8 +282,8 @@ class GarbageCollectionEvent
     // Represents a single slice of a possibly multi-slice incremental garbage
     // collection.
     struct Collection {
-        int64_t startTimestamp;
-        int64_t endTimestamp;
+        double startTimestamp;
+        double endTimestamp;
     };
 
     // The set of garbage collection slices that made up this GC cycle.
@@ -332,11 +330,13 @@ enum GCProgress {
 struct JS_PUBLIC_API(GCDescription) {
     bool isCompartment_;
     JSGCInvocationKind invocationKind_;
+    gcreason::Reason reason_;
 
-    GCDescription(bool isCompartment, JSGCInvocationKind kind)
-      : isCompartment_(isCompartment), invocationKind_(kind) {}
+    GCDescription(bool isCompartment, JSGCInvocationKind kind, gcreason::Reason reason)
+      : isCompartment_(isCompartment), invocationKind_(kind), reason_(reason) {}
 
-    char16_t* formatMessage(JSRuntime* rt) const;
+    char16_t* formatSliceMessage(JSRuntime* rt) const;
+    char16_t* formatSummaryMessage(JSRuntime* rt) const;
     char16_t* formatJSON(JSRuntime* rt, uint64_t timestamp) const;
 
     JS::dbg::GarbageCollectionEvent::Ptr toGCEvent(JSRuntime* rt) const;
@@ -553,7 +553,7 @@ class JS_PUBLIC_API(AutoCheckCannotGC) : public AutoAssertOnGC
 
 /*
  * Unsets the gray bit for anything reachable from |thing|. |kind| should not be
- * JSTRACE_SHAPE. |thing| should be non-null.
+ * JS::TraceKind::Shape. |thing| should be non-null.
  */
 extern JS_FRIEND_API(bool)
 UnmarkGrayGCThingRecursively(GCCellPtr thing);
@@ -566,7 +566,7 @@ namespace gc {
 static MOZ_ALWAYS_INLINE void
 ExposeGCThingToActiveJS(JS::GCCellPtr thing)
 {
-    MOZ_ASSERT(thing.kind() != JSTRACE_SHAPE);
+    MOZ_ASSERT(thing.kind() != JS::TraceKind::Shape);
 
     /*
      * GC things residing in the nursery cannot be gray: they have no mark bits.

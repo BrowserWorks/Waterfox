@@ -57,18 +57,20 @@ LIRGraph::noteNeedsSafepoint(LInstruction* ins)
 }
 
 void
-LIRGraph::dump(FILE* fp)
+LIRGraph::dump(GenericPrinter& out)
 {
     for (size_t i = 0; i < numBlocks(); i++) {
-        getBlock(i)->dump(fp);
-        fprintf(fp, "\n");
+        getBlock(i)->dump(out);
+        out.printf("\n");
     }
 }
 
 void
 LIRGraph::dump()
 {
-    dump(stderr);
+    Fprinter out(stderr);
+    dump(out);
+    out.finish();
 }
 
 LBlock::LBlock(MBasicBlock* from)
@@ -105,11 +107,10 @@ LBlock::init(TempAllocator& alloc)
 
         int numPhis = (phi->type() == MIRType_Value) ? BOX_PIECES : 1;
         for (int i = 0; i < numPhis; i++) {
-			LAllocation* inputs = alloc.allocateArray<LAllocation>(numPreds);
+            LAllocation* inputs = alloc.allocateArray<LAllocation>(numPreds);
             if (!inputs)
                 return false;
 
-            // MSVC 2015 cannot handle "new (&phis_[phiIndex++])"
             void* addr = &phis_[phiIndex++];
             LPhi* lphi = new (addr) LPhi(phi, inputs);
             lphi->setBlock(this);
@@ -149,23 +150,25 @@ LBlock::getExitMoveGroup(TempAllocator& alloc)
 }
 
 void
-LBlock::dump(FILE* fp)
+LBlock::dump(GenericPrinter& out)
 {
-    fprintf(fp, "block%u:\n", mir()->id());
+    out.printf("block%u:\n", mir()->id());
     for (size_t i = 0; i < numPhis(); ++i) {
-        getPhi(i)->dump(fp);
-        fprintf(fp, "\n");
+        getPhi(i)->dump(out);
+        out.printf("\n");
     }
     for (LInstructionIterator iter = begin(); iter != end(); iter++) {
-        iter->dump(fp);
-        fprintf(fp, "\n");
+        iter->dump(out);
+        out.printf("\n");
     }
 }
 
 void
 LBlock::dump()
 {
-    dump(stderr);
+    Fprinter out(stderr);
+    dump(out);
+    out.finish();
 }
 
 static size_t
@@ -308,7 +311,7 @@ LSnapshot::rewriteRecoveredInput(LUse input)
 }
 
 void
-LNode::printName(FILE* fp, Opcode op)
+LNode::printName(GenericPrinter& out, Opcode op)
 {
     static const char * const names[] =
     {
@@ -319,13 +322,13 @@ LNode::printName(FILE* fp, Opcode op)
     const char* name = names[op];
     size_t len = strlen(name);
     for (size_t i = 0; i < len; i++)
-        fprintf(fp, "%c", tolower(name[i]));
+        out.printf("%c", tolower(name[i]));
 }
 
 void
-LNode::printName(FILE* fp)
+LNode::printName(GenericPrinter& out)
 {
-    printName(fp, op());
+    printName(out, op());
 }
 
 bool
@@ -336,7 +339,6 @@ LAllocation::aliases(const LAllocation& other) const
     return *this == other;
 }
 
-#ifdef DEBUG
 static const char * const TypeChars[] =
 {
     "g",            // GENERAL
@@ -347,6 +349,7 @@ static const char * const TypeChars[] =
     "d",            // DOUBLE
     "i32x4",        // INT32X4
     "f32x4",        // FLOAT32X4
+    "sincos",       // SINCOS
 #ifdef JS_NUNBOX32
     "t",            // TYPE
     "p"             // PAYLOAD
@@ -440,7 +443,6 @@ LAllocation::toString() const
         MOZ_CRASH("what?");
     }
 }
-#endif // DEBUG
 
 void
 LAllocation::dump() const
@@ -455,12 +457,12 @@ LDefinition::dump() const
 }
 
 void
-LNode::printOperands(FILE* fp)
+LNode::printOperands(GenericPrinter& out)
 {
     for (size_t i = 0, e = numOperands(); i < e; i++) {
-        fprintf(fp, " (%s)", getOperand(i)->toString());
+        out.printf(" (%s)", getOperand(i)->toString());
         if (i != numOperands() - 1)
-            fprintf(fp, ",");
+            out.printf(",");
     }
 }
 
@@ -473,56 +475,59 @@ LInstruction::assignSnapshot(LSnapshot* snapshot)
 #ifdef DEBUG
     if (JitSpewEnabled(JitSpew_IonSnapshots)) {
         JitSpewHeader(JitSpew_IonSnapshots);
-        fprintf(JitSpewFile, "Assigning snapshot %p to instruction %p (",
-                (void*)snapshot, (void*)this);
-        printName(JitSpewFile);
-        fprintf(JitSpewFile, ")\n");
+        Fprinter& out = JitSpewPrinter();
+        out.printf("Assigning snapshot %p to instruction %p (",
+                   (void*)snapshot, (void*)this);
+        printName(out);
+        out.printf(")\n");
     }
 #endif
 }
 
 void
-LNode::dump(FILE* fp)
+LNode::dump(GenericPrinter& out)
 {
     if (numDefs() != 0) {
-        fprintf(fp, "{");
+        out.printf("{");
         for (size_t i = 0; i < numDefs(); i++) {
-            fprintf(fp, "%s", getDef(i)->toString());
+            out.printf("%s", getDef(i)->toString());
             if (i != numDefs() - 1)
-                fprintf(fp, ", ");
+                out.printf(", ");
         }
-        fprintf(fp, "} <- ");
+        out.printf("} <- ");
     }
 
-    printName(fp);
-    printOperands(fp);
+    printName(out);
+    printOperands(out);
 
     if (numTemps()) {
-        fprintf(fp, " t=(");
+        out.printf(" t=(");
         for (size_t i = 0; i < numTemps(); i++) {
-            fprintf(fp, "%s", getTemp(i)->toString());
+            out.printf("%s", getTemp(i)->toString());
             if (i != numTemps() - 1)
-                fprintf(fp, ", ");
+                out.printf(", ");
         }
-        fprintf(fp, ")");
+        out.printf(")");
     }
 
     if (numSuccessors()) {
-        fprintf(fp, " s=(");
+        out.printf(" s=(");
         for (size_t i = 0; i < numSuccessors(); i++) {
-            fprintf(fp, "block%u", getSuccessor(i)->id());
+            out.printf("block%u", getSuccessor(i)->id());
             if (i != numSuccessors() - 1)
-                fprintf(fp, ", ");
+                out.printf(", ");
         }
-        fprintf(fp, ")");
+        out.printf(")");
     }
 }
 
 void
 LNode::dump()
 {
-    dump(stderr);
-    fprintf(stderr, "\n");
+    Fprinter out(stderr);
+    dump(out);
+    out.printf("\n");
+    out.finish();
 }
 
 void
@@ -534,28 +539,28 @@ LInstruction::initSafepoint(TempAllocator& alloc)
 }
 
 bool
-LMoveGroup::add(LAllocation* from, LAllocation* to, LDefinition::Type type)
+LMoveGroup::add(LAllocation from, LAllocation to, LDefinition::Type type)
 {
 #ifdef DEBUG
-    MOZ_ASSERT(*from != *to);
+    MOZ_ASSERT(from != to);
     for (size_t i = 0; i < moves_.length(); i++)
-        MOZ_ASSERT(*to != *moves_[i].to());
+        MOZ_ASSERT(to != moves_[i].to());
 
     // Check that SIMD moves are aligned according to ABI requirements.
     if (LDefinition(type).isSimdType()) {
-        MOZ_ASSERT(from->isMemory() || from->isFloatReg());
-        if (from->isMemory()) {
-            if (from->isArgument())
-                MOZ_ASSERT(from->toArgument()->index() % SimdMemoryAlignment == 0);
+        MOZ_ASSERT(from.isMemory() || from.isFloatReg());
+        if (from.isMemory()) {
+            if (from.isArgument())
+                MOZ_ASSERT(from.toArgument()->index() % SimdMemoryAlignment == 0);
             else
-                MOZ_ASSERT(from->toStackSlot()->slot() % SimdMemoryAlignment == 0);
+                MOZ_ASSERT(from.toStackSlot()->slot() % SimdMemoryAlignment == 0);
         }
-        MOZ_ASSERT(to->isMemory() || to->isFloatReg());
-        if (to->isMemory()) {
-            if (to->isArgument())
-                MOZ_ASSERT(to->toArgument()->index() % SimdMemoryAlignment == 0);
+        MOZ_ASSERT(to.isMemory() || to.isFloatReg());
+        if (to.isMemory()) {
+            if (to.isArgument())
+                MOZ_ASSERT(to.toArgument()->index() % SimdMemoryAlignment == 0);
             else
-                MOZ_ASSERT(to->toStackSlot()->slot() % SimdMemoryAlignment == 0);
+                MOZ_ASSERT(to.toStackSlot()->slot() % SimdMemoryAlignment == 0);
         }
     }
 #endif
@@ -563,24 +568,24 @@ LMoveGroup::add(LAllocation* from, LAllocation* to, LDefinition::Type type)
 }
 
 bool
-LMoveGroup::addAfter(LAllocation* from, LAllocation* to, LDefinition::Type type)
+LMoveGroup::addAfter(LAllocation from, LAllocation to, LDefinition::Type type)
 {
     // Transform the operands to this move so that performing the result
     // simultaneously with existing moves in the group will have the same
     // effect as if the original move took place after the existing moves.
 
     for (size_t i = 0; i < moves_.length(); i++) {
-        if (*moves_[i].to() == *from) {
+        if (moves_[i].to() == from) {
             from = moves_[i].from();
             break;
         }
     }
 
-    if (*from == *to)
+    if (from == to)
         return true;
 
     for (size_t i = 0; i < moves_.length(); i++) {
-        if (*to == *moves_[i].to()) {
+        if (to == moves_[i].to()) {
             moves_[i] = LMove(from, to, type);
             return true;
         }
@@ -590,18 +595,18 @@ LMoveGroup::addAfter(LAllocation* from, LAllocation* to, LDefinition::Type type)
 }
 
 void
-LMoveGroup::printOperands(FILE* fp)
+LMoveGroup::printOperands(GenericPrinter& out)
 {
     for (size_t i = 0; i < numMoves(); i++) {
         const LMove& move = getMove(i);
         // Use two printfs, as LAllocation::toString is not reentrant.
-        fprintf(fp, " [%s", move.from()->toString());
-        fprintf(fp, " -> %s", move.to()->toString());
+        out.printf(" [%s", move.from().toString());
+        out.printf(" -> %s", move.to().toString());
 #ifdef DEBUG
-        fprintf(fp, ", %s", TypeChars[move.type()]);
+        out.printf(", %s", TypeChars[move.type()]);
 #endif
-        fprintf(fp, "]");
+        out.printf("]");
         if (i != numMoves() - 1)
-            fprintf(fp, ",");
+            out.printf(",");
     }
 }

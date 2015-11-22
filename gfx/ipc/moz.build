@@ -17,13 +17,17 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         'SharedDIBSurface.h',
         'SharedDIBWin.h',
     ]
-    SOURCES += [
+    UNIFIED_SOURCES += [
         'SharedDIBSurface.cpp',
         'SharedDIBWin.cpp',
     ]
 
-SOURCES += [
+UNIFIED_SOURCES += [
     'SharedDIB.cpp',
+]
+
+IPDL_SOURCES = [
+    'GraphicsMessages.ipdlh',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')

@@ -12,6 +12,8 @@
 #include "jsobj.h"
 #include "jspubtd.h"
 
+#include "vm/ArrayObject.h"
+
 namespace js {
 /* 2^32-2, inclusive */
 const uint32_t MAX_ARRAY_INDEX = 4294967294u;
@@ -35,11 +37,11 @@ IdIsIndex(jsid id, uint32_t* indexp)
 extern JSObject*
 InitArrayClass(JSContext* cx, js::HandleObject obj);
 
-class ArrayObject;
+// The methods below only create dense boxed arrays.
 
 /* Create a dense array with no capacity allocated, length set to 0. */
 extern ArrayObject * JS_FASTCALL
-NewDenseEmptyArray(JSContext* cx, HandleObject proto = NullPtr(),
+NewDenseEmptyArray(JSContext* cx, HandleObject proto = nullptr,
                    NewObjectKind newKind = GenericObject);
 
 /*
@@ -47,7 +49,7 @@ NewDenseEmptyArray(JSContext* cx, HandleObject proto = NullPtr(),
  * contents. This is useful, e.g., when accepting length from the user.
  */
 extern ArrayObject * JS_FASTCALL
-NewDenseUnallocatedArray(ExclusiveContext* cx, uint32_t length, HandleObject proto = NullPtr(),
+NewDenseUnallocatedArray(ExclusiveContext* cx, uint32_t length, HandleObject proto = nullptr,
                          NewObjectKind newKind = GenericObject);
 
 /*
@@ -55,37 +57,18 @@ NewDenseUnallocatedArray(ExclusiveContext* cx, uint32_t length, HandleObject pro
  * but with only |EagerAllocationMaxLength| elements allocated.
  */
 extern ArrayObject * JS_FASTCALL
-NewDensePartlyAllocatedArray(ExclusiveContext* cx, uint32_t length, HandleObject proto = NullPtr(),
+NewDensePartlyAllocatedArray(ExclusiveContext* cx, uint32_t length, HandleObject proto = nullptr,
                              NewObjectKind newKind = GenericObject);
 
 /* Create a dense array with length and capacity == 'length', initialized length set to 0. */
 extern ArrayObject * JS_FASTCALL
-NewDenseFullyAllocatedArray(ExclusiveContext* cx, uint32_t length, HandleObject proto = NullPtr(),
+NewDenseFullyAllocatedArray(ExclusiveContext* cx, uint32_t length, HandleObject proto = nullptr,
                             NewObjectKind newKind = GenericObject);
-
-enum AllocatingBehaviour {
-    NewArray_Unallocating,
-    NewArray_PartlyAllocating,
-    NewArray_FullyAllocating
-};
-
-/*
- * Create a dense array with a set length, but only allocates space for the
- * contents if the length is not excessive.
- */
-extern ArrayObject*
-NewDenseArray(ExclusiveContext* cx, uint32_t length, HandleObjectGroup group,
-              AllocatingBehaviour allocating, bool convertDoubleElements = false);
-
-/* Create a dense array with a copy of the dense array elements in src. */
-extern ArrayObject*
-NewDenseCopiedArray(JSContext* cx, uint32_t length, HandleArrayObject src,
-                    uint32_t elementOffset, HandleObject proto = NullPtr());
 
 /* Create a dense array from the given array values, which must be rooted */
 extern ArrayObject*
-NewDenseCopiedArray(JSContext* cx, uint32_t length, const Value* values,
-                    HandleObject proto = NullPtr(), NewObjectKind newKind = GenericObject);
+NewDenseCopiedArray(ExclusiveContext* cx, uint32_t length, const Value* values,
+                    HandleObject proto = nullptr, NewObjectKind newKind = GenericObject);
 
 /* Create a dense array based on templateObject with the given length. */
 extern ArrayObject*
@@ -94,6 +77,46 @@ NewDenseFullyAllocatedArrayWithTemplate(JSContext* cx, uint32_t length, JSObject
 /* Create a dense array with the same copy-on-write elements as another object. */
 extern JSObject*
 NewDenseCopyOnWriteArray(JSContext* cx, HandleArrayObject templateObject, gc::InitialHeap heap);
+
+// The methods below can create either boxed or unboxed arrays.
+
+extern JSObject*
+NewFullyAllocatedArrayTryUseGroup(ExclusiveContext* cx, HandleObjectGroup group, size_t length,
+                                  NewObjectKind newKind = GenericObject, bool forceAnalyze = false);
+
+extern JSObject*
+NewPartlyAllocatedArrayTryUseGroup(ExclusiveContext* cx, HandleObjectGroup group, size_t length);
+
+extern JSObject*
+NewFullyAllocatedArrayTryReuseGroup(JSContext* cx, JSObject* obj, size_t length,
+                                    NewObjectKind newKind = GenericObject,
+                                    bool forceAnalyze = false);
+
+extern JSObject*
+NewPartlyAllocatedArrayTryReuseGroup(JSContext* cx, JSObject* obj, size_t length);
+
+extern JSObject*
+NewFullyAllocatedArrayForCallingAllocationSite(JSContext* cx, size_t length,
+                                               NewObjectKind newKind = GenericObject,
+                                               bool forceAnalyze = false);
+
+extern JSObject*
+NewPartlyAllocatedArrayForCallingAllocationSite(JSContext* cx, size_t length);
+
+enum class ShouldUpdateTypes
+{
+    Update,
+    DontUpdate
+};
+
+extern JSObject*
+NewCopiedArrayTryUseGroup(ExclusiveContext* cx, HandleObjectGroup group,
+                          const Value* vp, size_t length,
+                          NewObjectKind newKind = GenericObject,
+                          ShouldUpdateTypes updateTypes = ShouldUpdateTypes::Update);
+
+extern JSObject*
+NewCopiedArrayForCallingAllocationSite(JSContext* cx, const Value* vp, size_t length);
 
 /*
  * Determines whether a write to the given element on |obj| should fail because
@@ -140,9 +163,6 @@ extern bool
 array_pop(JSContext* cx, unsigned argc, js::Value* vp);
 
 extern bool
-array_splice(JSContext* cx, unsigned argc, js::Value* vp);
-
-extern bool
 array_splice_impl(JSContext* cx, unsigned argc, js::Value* vp, bool pop);
 
 extern bool
@@ -153,17 +173,17 @@ JSString*
 ArrayJoin(JSContext* cx, HandleObject obj, HandleLinearString sepstr, uint32_t length);
 
 extern bool
-array_concat_dense(JSContext* cx, Handle<ArrayObject*> arr1, Handle<ArrayObject*> arr2,
-                   Handle<ArrayObject*> result);
+array_concat_dense(JSContext* cx, HandleObject arr1, HandleObject arr2,
+                   HandleObject result);
 
-bool
+extern bool
 array_join(JSContext* cx, unsigned argc, js::Value* vp);
 
 extern JSString*
 array_join_impl(JSContext* cx, HandleValue array, HandleString sep);
 
 extern void
-ArrayShiftMoveElements(ArrayObject* obj);
+ArrayShiftMoveElements(JSObject* obj);
 
 extern bool
 array_shift(JSContext* cx, unsigned argc, js::Value* vp);
@@ -173,6 +193,9 @@ array_unshift(JSContext* cx, unsigned argc, js::Value* vp);
 
 extern bool
 array_slice(JSContext* cx, unsigned argc, js::Value* vp);
+
+extern JSObject*
+array_slice_dense(JSContext* cx, HandleObject obj, int32_t begin, int32_t end, HandleObject result);
 
 /*
  * Append the given (non-hole) value to the end of an array.  The array must be
@@ -184,7 +207,7 @@ array_slice(JSContext* cx, unsigned argc, js::Value* vp);
 extern bool
 NewbornArrayPush(JSContext* cx, HandleObject obj, const Value& v);
 
-extern ArrayObject*
+extern JSObject*
 ArrayConstructorOneArg(JSContext* cx, HandleObjectGroup group, int32_t lengthInt);
 
 #ifdef DEBUG

@@ -4,7 +4,7 @@
 
 "use strict";
 
-let originalWindowWidth;
+var originalWindowWidth;
 
 // Drag to overflow chevron should open the overflow panel.
 add_task(function*() {
@@ -26,8 +26,20 @@ add_task(function*() {
   // async-ness of the 'shown' yield...
   let panelHiddenPromise = promisePanelElementHidden(window, widgetOverflowPanel);
 
-  ChromeUtils.synthesizeDrop(identityBox, overflowChevron, [], null);
-  yield panelShownPromise;
+  var ds = Components.classes["@mozilla.org/widget/dragservice;1"].
+           getService(Components.interfaces.nsIDragService);
+
+  ds.startDragSession();
+  try {
+    var [result, dataTransfer] = ChromeUtils.synthesizeDragOver(identityBox, overflowChevron);
+
+    // Wait for showing panel before ending drag session.
+    yield panelShownPromise;
+
+    ChromeUtils.synthesizeDropAfterDragOver(result, dataTransfer, overflowChevron);
+  } finally {
+    ds.endDragSession(true);
+  }
 
   info("Overflow panel is shown.");
 

@@ -48,7 +48,10 @@ elif CONFIG['OS_ARCH'] == 'SunOS':
         'google-breakpad/src/tools/solaris/dump_syms',
     ]
 
-DIRS += ['client']
+DIRS += [
+    'breakpad-logging',
+    'client',
+]
 
 if CONFIG['MOZ_CRASHREPORTER_INJECTOR']:
     DIRS += ['injector']
@@ -102,8 +105,6 @@ LOCAL_INCLUDES += [
 ]
 
 include('/toolkit/crashreporter/crashreporter.mozbuild')
-
-FAIL_ON_WARNINGS = True
 
 with Files('**'):
     BUG_COMPONENT = ('Toolkit', 'Breakpad Integration')

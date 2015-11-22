@@ -59,7 +59,7 @@ public:
   bool operator==(const SVGLengthList& rhs) const;
 
   bool SetCapacity(uint32_t size) {
-    return mLengths.SetCapacity(size);
+    return mLengths.SetCapacity(size, fallible);
   }
 
   void Compact() {
@@ -90,7 +90,7 @@ protected:
    * increased, in which case the list will be left unmodified.
    */
   bool SetLength(uint32_t aNumberOfItems) {
-    return mLengths.SetLength(aNumberOfItems);
+    return mLengths.SetLength(aNumberOfItems, fallible);
   }
 
 private:
@@ -107,7 +107,7 @@ private:
 
   bool InsertItem(uint32_t aIndex, const SVGLength &aLength) {
     if (aIndex >= mLengths.Length()) aIndex = mLengths.Length();
-    return !!mLengths.InsertElementAt(aIndex, aLength);
+    return !!mLengths.InsertElementAt(aIndex, aLength, fallible);
   }
 
   void ReplaceItem(uint32_t aIndex, const SVGLength &aLength) {
@@ -123,7 +123,7 @@ private:
   }
 
   bool AppendItem(SVGLength aLength) {
-    return !!mLengths.AppendElement(aLength);
+    return !!mLengths.AppendElement(aLength, fallible);
   }
 
 protected:

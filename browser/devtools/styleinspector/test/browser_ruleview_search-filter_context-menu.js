@@ -7,17 +7,14 @@
 // Test rule view search filter context menu works properly.
 
 const TEST_INPUT = "h1";
+const TEST_URI = "<h1>test filter context menu</h1>";
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8,<h1>test filter context menu</h1>");
-
-  info("Opening the rule-view");
+  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {toolbox, inspector, view} = yield openRuleView();
-
-  info("Selecting the test node");
   yield selectNode("h1", inspector);
 
-  let win = view.doc.defaultView;
+  let win = view.styleWindow;
   let searchField = view.searchField;
   let searchContextMenu = toolbox.textboxContextMenuPopup;
   ok(searchContextMenu,
@@ -39,8 +36,8 @@ add_task(function*() {
   is(cmdUndo.getAttribute("disabled"), "true", "cmdUndo is disabled");
   is(cmdDelete.getAttribute("disabled"), "true", "cmdDelete is disabled");
   is(cmdSelectAll.getAttribute("disabled"), "", "cmdSelectAll is enabled");
-  is(cmdCut.getAttribute("disabled"), "true", "cmdCut is disabled");
-  is(cmdCopy.getAttribute("disabled"), "true", "cmdCopy is disabled");
+  is(cmdCut.getAttribute("disabled"), "", "cmdCut is enabled");
+  is(cmdCopy.getAttribute("disabled"), "", "cmdCopy is enabled");
   is(cmdPaste.getAttribute("disabled"), "true", "cmdPaste is disabled");
 
   info("Closing context menu");

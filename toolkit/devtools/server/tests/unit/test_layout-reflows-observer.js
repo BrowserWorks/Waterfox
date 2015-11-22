@@ -3,11 +3,11 @@
 
 // Test the LayoutChangesObserver
 
-let {
+var {
   getLayoutChangesObserver,
   releaseLayoutChangesObserver,
   LayoutChangesObserver
-} = devtools.require("devtools/server/actors/layout");
+} = require("devtools/server/actors/layout");
 
 // Override set/clearTimeout on LayoutChangesObserver to avoid depending on
 // time in this unit test. This means that LayoutChangesObserver.eventLoopTimer

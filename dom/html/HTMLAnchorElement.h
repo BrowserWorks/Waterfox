@@ -43,10 +43,7 @@ public:
   virtual bool Draggable() const override;
 
   // Element
-  virtual bool IsInteractiveHTMLContent(bool aIgnoreTabindex) const override
-  {
-    return true;
-  }
+  virtual bool IsInteractiveHTMLContent(bool aIgnoreTabindex) const override;
 
   // nsIDOMHTMLAnchorElement
   NS_DECL_NSIDOMHTMLANCHORELEMENT
@@ -125,6 +122,14 @@ public:
   void SetRel(const nsAString& aValue, mozilla::ErrorResult& rv)
   {
     SetHTMLAttr(nsGkAtoms::rel, aValue, rv);
+  }
+  void SetReferrer(const nsAString& aValue, mozilla::ErrorResult& rv)
+  {
+    SetHTMLAttr(nsGkAtoms::referrer, aValue, rv);
+  }
+  void GetReferrer(nsAString& aReferrer)
+  {
+    GetHTMLAttr(nsGkAtoms::referrer, aReferrer);
   }
   nsDOMTokenList* RelList();
   void GetHreflang(DOMString& aValue)

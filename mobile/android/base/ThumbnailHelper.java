@@ -5,9 +5,9 @@
 
 package org.mozilla.gecko;
 
+import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.gfx.BitmapUtils;
 import org.mozilla.gecko.mozglue.DirectBufferAllocator;
-import org.mozilla.gecko.mozglue.generatorannotations.WrapElementForJNI;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -30,9 +30,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class ThumbnailHelper {
     private static final String LOGTAG = "GeckoThumbnailHelper";
 
-    public static final float THUMBNAIL_ASPECT_RATIO = 0.571f;  // this is a 4:7 ratio (as per UX decision)
+    public static final float TABS_PANEL_THUMBNAIL_ASPECT_RATIO = 0.8333333f;
+    public static final float TOP_SITES_THUMBNAIL_ASPECT_RATIO = 0.571428571f;  // this is a 4:7 ratio (as per UX decision)
+    public static final float THUMBNAIL_ASPECT_RATIO;
 
-    public static enum CachePolicy {
+    static {
+      // As we only want to generate one thumbnail for each tab, we calculate the
+      // largest aspect ratio required and create the thumbnail based off that.
+      // Any views with a smaller aspect ratio will use a cropped version of the
+      // same image.
+      THUMBNAIL_ASPECT_RATIO = Math.max(TABS_PANEL_THUMBNAIL_ASPECT_RATIO, TOP_SITES_THUMBNAIL_ASPECT_RATIO);
+    }
+
+    public enum CachePolicy {
         STORE,
         NO_STORE
     }
@@ -55,14 +65,10 @@ public final class ThumbnailHelper {
     private int mWidth;
     private int mHeight;
     private ByteBuffer mBuffer;
-    private final float mThumbnailAspectRatio;
 
     private ThumbnailHelper() {
         final Resources res = GeckoAppShell.getContext().getResources();
 
-        final TypedValue outValue = new TypedValue();
-        res.getValue(R.dimen.thumbnail_aspect_ratio, outValue, true);
-        mThumbnailAspectRatio = outValue.getFloat();
 
         mPendingThumbnails = new LinkedList<Tab>();
         try {
@@ -73,7 +79,7 @@ public final class ThumbnailHelper {
     }
 
     public void getAndProcessThumbnailFor(Tab tab) {
-        if (AboutPages.isAboutHome(tab.getURL())) {
+        if (AboutPages.isAboutHome(tab.getURL()) || AboutPages.isAboutPrivateBrowsing(tab.getURL())) {
             tab.updateThumbnail(null, CachePolicy.NO_STORE);
             return;
         }
@@ -111,7 +117,7 @@ public final class ThumbnailHelper {
     private void updateThumbnailSize() {
         // Apply any pending width updates.
         mWidth = mPendingWidth.get();
-        mHeight = Math.round(mWidth * mThumbnailAspectRatio);
+        mHeight = Math.round(mWidth * THUMBNAIL_ASPECT_RATIO);
 
         int pixelSize = (GeckoAppShell.getScreenDepth() == 24) ? 4 : 2;
         int capacity = mWidth * mHeight * pixelSize;
@@ -153,7 +159,7 @@ public final class ThumbnailHelper {
     }
 
     /* This method is invoked by JNI once the thumbnail data is ready. */
-    @WrapElementForJNI(stubName = "SendThumbnail")
+    @WrapForJNI(stubName = "SendThumbnail")
     public static void notifyThumbnail(ByteBuffer data, int tabId, boolean success, boolean shouldStore) {
         Tab tab = Tabs.getInstance().getTab(tabId);
         ThumbnailHelper helper = ThumbnailHelper.getInstance();

@@ -37,12 +37,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
                                   "resource://gre/modules/LightweightThemeManager.jsm");
 
 
-let gModuleName = "[CustomizeMode]";
+var gModuleName = "[CustomizeMode]";
 #include logging.js
 
-let gDisableAnimation = null;
+var gDisableAnimation = null;
 
-let gDraggingInToolbars;
+var gDraggingInToolbars;
 
 function CustomizeMode(aWindow) {
   if (gDisableAnimation === null) {
@@ -1643,7 +1643,6 @@ CustomizeMode.prototype = {
         if (!targetIsToolbar) {
           dragValue = "before";
         } else {
-          dragOverItem = this._findVisiblePreviousSiblingNode(targetParent.children[position]);
           // Check if the aDraggedItem is hovered past the first half of dragOverItem
           let window = dragOverItem.ownerDocument.defaultView;
           let direction = window.getComputedStyle(dragOverItem, null).direction;

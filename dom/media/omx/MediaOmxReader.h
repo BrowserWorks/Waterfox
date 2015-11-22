@@ -12,6 +12,7 @@
 #include "nsMimeTypes.h"
 #include "MP3FrameParser.h"
 #include "nsRect.h"
+
 #include <ui/GraphicBuffer.h>
 #include <stagefright/MediaSource.h>
 
@@ -26,6 +27,8 @@ class AbstractMediaDecoder;
 
 class MediaOmxReader : public MediaOmxCommonReader
 {
+  typedef MediaOmxCommonReader::MediaResourcePromise MediaResourcePromise;
+
   // This mutex is held when accessing the mIsShutdown variable, which is
   // modified on the decode task queue and read on main and IO threads.
   Mutex mShutdownMutex;
@@ -41,14 +44,15 @@ class MediaOmxReader : public MediaOmxCommonReader
   // If mIsShutdown is false, and mShutdownMutex is held, then
   // AbstractMediaDecoder::mDecoder will be non-null.
   bool mIsShutdown;
+  MozPromiseHolder<MediaDecoderReader::MetadataPromise> mMetadataPromise;
+  MozPromiseRequestHolder<MediaResourcePromise> mMediaResourceRequest;
+
+  MozPromiseHolder<MediaDecoderReader::SeekPromise> mSeekPromise;
+  MozPromiseRequestHolder<MediaDecoderReader::VideoDataPromise> mSeekRequest;
 protected:
   android::sp<android::OmxDecoder> mOmxDecoder;
   android::sp<android::MediaExtractor> mExtractor;
   MP3FrameParser mMP3FrameParser;
-
-  // A cache value updated by UpdateIsWaitingMediaResources(), makes the
-  // "waiting resources state" is synchronous to StateMachine.
-  bool mIsWaitingResources;
 
   // Called by ReadMetadata() during MediaDecoderStateMachine::DecodeMetadata()
   // on decode thread. It create and initialize the OMX decoder including
@@ -60,10 +64,7 @@ protected:
   // to activate the decoder automatically.
   virtual void EnsureActive();
 
-  // Check the underlying HW resources are available and store the result in
-  // mIsWaitingResources. The result might be changed by binder thread,
-  // Can only called by ReadMetadata.
-  void UpdateIsWaitingMediaResources();
+  virtual void HandleResourceAllocated();
 
 public:
   MediaOmxReader(AbstractMediaDecoder* aDecoder);
@@ -71,7 +72,16 @@ public:
 
   virtual nsresult Init(MediaDecoderReader* aCloneDonor);
 
-  virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset);
+protected:
+  virtual void NotifyDataArrivedInternal(uint32_t aLength, int64_t aOffset) override;
+public:
+
+  virtual nsresult ResetDecode()
+  {
+    mSeekRequest.DisconnectIfExists();
+    mSeekPromise.RejectIfExists(NS_OK, __func__);
+    return MediaDecoderReader::ResetDecode();
+  }
 
   virtual bool DecodeAudioData();
   virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
@@ -87,15 +97,10 @@ public:
     return mHasVideo;
   }
 
-  // Return mIsWaitingResources.
-  virtual bool IsWaitingMediaResources() override;
-
-  virtual bool IsDormantNeeded() { return true;}
   virtual void ReleaseMediaResources();
 
-  virtual void PreReadMetadata() override;
-  virtual nsresult ReadMetadata(MediaInfo* aInfo,
-                                MetadataTags** aTags);
+  virtual nsRefPtr<MediaDecoderReader::MetadataPromise> AsyncReadMetadata() override;
+
   virtual nsRefPtr<SeekPromise>
   Seek(int64_t aTime, int64_t aEndTime) override;
 
@@ -108,7 +113,7 @@ public:
   android::sp<android::MediaSource> GetAudioOffloadTrack();
 
   // This method is intended only for private use but public only for
-  // MediaPromise::InvokeCallbackMethod().
+  // MozPromise::InvokeCallbackMethod().
   void ReleaseDecoder();
 
 private:
@@ -120,9 +125,11 @@ private:
     return mIsShutdown;
   }
 
-  int64_t ProcessCachedData(int64_t aOffset, bool aWaitForCompletion);
+  int64_t ProcessCachedData(int64_t aOffset);
 
   already_AddRefed<AbstractMediaDecoder> SafeGetDecoder();
+
+  NotifyDataArrivedFilter mFilter;
 };
 
 } // namespace mozilla

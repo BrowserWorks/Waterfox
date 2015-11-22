@@ -1,7 +1,6 @@
 "use strict";
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
-const { devtools } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const { require } = devtools;
+const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 
 
 function isObject(value) {
@@ -41,8 +40,8 @@ function checkEquivalentASTs(expected, actual, prop = []) {
 
 // Register a console listener, so console messages don't just disappear
 // into the ether.
-let errorCount = 0;
-let listener = {
+var errorCount = 0;
+var listener = {
   observe: function (aMessage) {
     errorCount++;
     try {
@@ -67,5 +66,5 @@ let listener = {
   }
 };
 
-let consoleService = Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
+var consoleService = Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
 consoleService.registerListener(listener);

@@ -6,12 +6,13 @@
  * Tests that all components can get rerendered for a profile when switching.
  */
 
-let test = Task.async(function*() {
+var test = Task.async(function*() {
   let { target, panel, toolbox } = yield initPerformance(SIMPLE_URL);
   let { $, EVENTS, PerformanceController, DetailsView, DetailsSubview, RecordingsView } = panel.panelWin;
 
-  // Enable memory to test the memory-calltree and memory-flamegraph.
+  // Enable allocations to test the memory-calltree and memory-flamegraph.
   Services.prefs.setBoolPref(MEMORY_PREF, true);
+  Services.prefs.setBoolPref(ALLOCATIONS_PREF, true);
 
   // Need to allow widgets to be updated while hidden, otherwise we can't use
   // `waitForWidgetsRendered`.

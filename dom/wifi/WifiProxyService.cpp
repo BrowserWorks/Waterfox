@@ -67,9 +67,6 @@ public:
   NS_IMETHOD Run()
   {
     MOZ_ASSERT(!NS_IsMainThread());
-#ifdef MOZ_NUWA_PROCESS
-    NS_SetIgnoreStatusOfCurrentThread();
-#endif
     nsAutoString event;
     gWpaSupplicant->WaitForEvent(event, mInterface);
     if (!event.IsEmpty()) {
@@ -153,7 +150,7 @@ WifiProxyService::~WifiProxyService()
 already_AddRefed<WifiProxyService>
 WifiProxyService::FactoryCreate()
 {
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     return nullptr;
   }
 

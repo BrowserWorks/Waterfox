@@ -17,16 +17,17 @@ import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
+import android.util.Log;
 
 public final class HomeConfig {
     /**
@@ -107,6 +108,7 @@ public final class HomeConfig {
         private final List<ViewConfig> mViews;
         private final AuthConfig mAuthConfig;
         private final EnumSet<Flags> mFlags;
+        private final int mPosition;
 
         static final String JSON_KEY_TYPE = "type";
         static final String JSON_KEY_TITLE = "title";
@@ -116,6 +118,7 @@ public final class HomeConfig {
         static final String JSON_KEY_AUTH_CONFIG = "authConfig";
         static final String JSON_KEY_DEFAULT = "default";
         static final String JSON_KEY_DISABLED = "disabled";
+        static final String JSON_KEY_POSITION = "position";
 
         public enum Flags {
             DEFAULT_PANEL,
@@ -171,6 +174,8 @@ public final class HomeConfig {
                 mFlags.add(Flags.DISABLED_PANEL);
             }
 
+            mPosition = json.optInt(JSON_KEY_POSITION, -1);
+
             validate();
         }
 
@@ -187,6 +192,7 @@ public final class HomeConfig {
             mAuthConfig = (AuthConfig) in.readParcelable(getClass().getClassLoader());
 
             mFlags = (EnumSet<Flags>) in.readSerializable();
+            mPosition = in.readInt();
 
             validate();
         }
@@ -207,6 +213,7 @@ public final class HomeConfig {
 
             mAuthConfig = panelConfig.mAuthConfig;
             mFlags = panelConfig.mFlags.clone();
+            mPosition = panelConfig.mPosition;
 
             validate();
         }
@@ -216,11 +223,11 @@ public final class HomeConfig {
         }
 
         public PanelConfig(PanelType type, String title, String id, EnumSet<Flags> flags) {
-            this(type, title, id, null, null, null, flags);
+            this(type, title, id, null, null, null, flags, -1);
         }
 
         public PanelConfig(PanelType type, String title, String id, LayoutType layoutType,
-                List<ViewConfig> views, AuthConfig authConfig, EnumSet<Flags> flags) {
+                List<ViewConfig> views, AuthConfig authConfig, EnumSet<Flags> flags, int position) {
             mType = type;
             mTitle = title;
             mId = id;
@@ -228,6 +235,7 @@ public final class HomeConfig {
             mViews = views;
             mAuthConfig = authConfig;
             mFlags = flags;
+            mPosition = position;
 
             validate();
         }
@@ -314,6 +322,10 @@ public final class HomeConfig {
             return mAuthConfig;
         }
 
+        public int getPosition() {
+            return mPosition;
+        }
+
         public JSONObject toJSON() throws JSONException {
             final JSONObject json = new JSONObject();
 
@@ -349,6 +361,8 @@ public final class HomeConfig {
             if (mFlags.contains(Flags.DISABLED_PANEL)) {
                 json.put(JSON_KEY_DISABLED, true);
             }
+
+            json.put(JSON_KEY_POSITION, mPosition);
 
             return json;
         }
@@ -390,6 +404,7 @@ public final class HomeConfig {
             dest.writeTypedList(mViews);
             dest.writeParcelable(mAuthConfig, 0);
             dest.writeSerializable(mFlags);
+            dest.writeInt(mPosition);
         }
 
         public static final Creator<PanelConfig> CREATOR = new Creator<PanelConfig>() {
@@ -510,7 +525,8 @@ public final class HomeConfig {
 
     public static enum ItemType implements Parcelable {
         ARTICLE("article"),
-        IMAGE("image");
+        IMAGE("image"),
+        ICON("icon");
 
         private final String mId;
 
@@ -621,6 +637,7 @@ public final class HomeConfig {
         private final String mBackImageUrl;
         private final String mFilter;
         private final EmptyViewConfig mEmptyViewConfig;
+        private final HeaderConfig mHeaderConfig;
         private final EnumSet<Flags> mFlags;
 
         static final String JSON_KEY_TYPE = "type";
@@ -630,6 +647,7 @@ public final class HomeConfig {
         static final String JSON_KEY_BACK_IMAGE_URL = "backImageUrl";
         static final String JSON_KEY_FILTER = "filter";
         static final String JSON_KEY_EMPTY = "empty";
+        static final String JSON_KEY_HEADER = "header";
         static final String JSON_KEY_REFRESH_ENABLED = "refreshEnabled";
 
         public enum Flags {
@@ -652,6 +670,9 @@ public final class HomeConfig {
                 mEmptyViewConfig = null;
             }
 
+            final JSONObject jsonHeaderConfig = json.optJSONObject(JSON_KEY_HEADER);
+            mHeaderConfig = jsonHeaderConfig != null ? new HeaderConfig(jsonHeaderConfig) : null;
+
             mFlags = EnumSet.noneOf(Flags.class);
             if (json.optBoolean(JSON_KEY_REFRESH_ENABLED, false)) {
                 mFlags.add(Flags.REFRESH_ENABLED);
@@ -670,6 +691,7 @@ public final class HomeConfig {
             mBackImageUrl = in.readString();
             mFilter = in.readString();
             mEmptyViewConfig = (EmptyViewConfig) in.readParcelable(getClass().getClassLoader());
+            mHeaderConfig = (HeaderConfig) in.readParcelable(getClass().getClassLoader());
             mFlags = (EnumSet<Flags>) in.readSerializable();
 
             validate();
@@ -684,23 +706,8 @@ public final class HomeConfig {
             mBackImageUrl = viewConfig.mBackImageUrl;
             mFilter = viewConfig.mFilter;
             mEmptyViewConfig = viewConfig.mEmptyViewConfig;
+            mHeaderConfig = viewConfig.mHeaderConfig;
             mFlags = viewConfig.mFlags.clone();
-
-            validate();
-        }
-
-        public ViewConfig(int index, ViewType type, String datasetId, ItemType itemType,
-                          ItemHandler itemHandler, String backImageUrl, String filter,
-                          EmptyViewConfig emptyViewConfig, EnumSet<Flags> flags) {
-            mIndex = index;
-            mType = type;
-            mDatasetId = datasetId;
-            mItemType = itemType;
-            mItemHandler = itemHandler;
-            mBackImageUrl = backImageUrl;
-            mFilter = filter;
-            mEmptyViewConfig = emptyViewConfig;
-            mFlags = flags;
 
             validate();
         }
@@ -759,6 +766,14 @@ public final class HomeConfig {
             return mEmptyViewConfig;
         }
 
+        public HeaderConfig getHeaderConfig() {
+            return mHeaderConfig;
+        }
+
+        public boolean hasHeaderConfig() {
+            return mHeaderConfig != null;
+        }
+
         public boolean isRefreshEnabled() {
             return mFlags.contains(Flags.REFRESH_ENABLED);
         }
@@ -783,6 +798,10 @@ public final class HomeConfig {
                 json.put(JSON_KEY_EMPTY, mEmptyViewConfig.toJSON());
             }
 
+            if (mHeaderConfig != null) {
+                json.put(JSON_KEY_HEADER, mHeaderConfig.toJSON());
+            }
+
             if (mFlags.contains(Flags.REFRESH_ENABLED)) {
                 json.put(JSON_KEY_REFRESH_ENABLED, true);
             }
@@ -805,6 +824,7 @@ public final class HomeConfig {
             dest.writeString(mBackImageUrl);
             dest.writeString(mFilter);
             dest.writeParcelable(mEmptyViewConfig, 0);
+            dest.writeParcelable(mHeaderConfig, 0);
             dest.writeSerializable(mFlags);
         }
 
@@ -885,6 +905,64 @@ public final class HomeConfig {
             @Override
             public EmptyViewConfig[] newArray(final int size) {
                 return new EmptyViewConfig[size];
+            }
+        };
+    }
+
+    public static class HeaderConfig implements Parcelable {
+        static final String JSON_KEY_IMAGE_URL = "image_url";
+        static final String JSON_KEY_URL = "url";
+
+        private final String mImageUrl;
+        private final String mUrl;
+
+        public HeaderConfig(JSONObject json) {
+            mImageUrl = json.optString(JSON_KEY_IMAGE_URL);
+            mUrl = json.optString(JSON_KEY_URL);
+        }
+
+        public HeaderConfig(Parcel in) {
+            mImageUrl = in.readString();
+            mUrl = in.readString();
+        }
+
+        public String getImageUrl() {
+            return mImageUrl;
+        }
+
+        public String getUrl() {
+            return mUrl;
+        }
+
+        public JSONObject toJSON() throws JSONException {
+            JSONObject json = new JSONObject();
+
+            json.put(JSON_KEY_IMAGE_URL, mImageUrl);
+            json.put(JSON_KEY_URL, mUrl);
+
+            return json;
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeString(mImageUrl);
+            dest.writeString(mUrl);
+        }
+
+        public static final Creator<HeaderConfig> CREATOR = new Creator<HeaderConfig>() {
+            @Override
+            public HeaderConfig createFromParcel(Parcel source) {
+                return new HeaderConfig(source);
+            }
+
+            @Override
+            public HeaderConfig[] newArray(int size) {
+                return new HeaderConfig[size];
             }
         };
     }
@@ -1141,7 +1219,7 @@ public final class HomeConfig {
         private void findNewDefault() {
             // Pick the first panel that is neither disabled nor currently
             // set as default.
-            for (PanelConfig panelConfig : mConfigMap.values()) {
+            for (PanelConfig panelConfig : makeOrderedCopy(false)) {
                 if (!panelConfig.isDefault() && !panelConfig.isDisabled()) {
                     setDefault(panelConfig.getId());
                     return;
@@ -1272,7 +1350,13 @@ public final class HomeConfig {
             final String id = panelConfig.getId();
             if (!mConfigMap.containsKey(id)) {
                 mConfigMap.put(id, panelConfig);
-                mConfigOrder.add(id);
+
+                final int position = panelConfig.getPosition();
+                if (position < 0 || position >= mConfigOrder.size()) {
+                    mConfigOrder.add(id);
+                } else {
+                    mConfigOrder.add(position, id);
+                }
 
                 mEnabledCount++;
                 if (mEnabledCount == 1 || panelConfig.isDefault()) {

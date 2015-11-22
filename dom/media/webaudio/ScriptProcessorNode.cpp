@@ -240,66 +240,84 @@ private:
 class ScriptProcessorNodeEngine final : public AudioNodeEngine
 {
 public:
-  typedef nsAutoTArray<nsAutoArrayPtr<float>, 2> InputChannels;
-
   ScriptProcessorNodeEngine(ScriptProcessorNode* aNode,
                             AudioDestinationNode* aDestination,
                             uint32_t aBufferSize,
                             uint32_t aNumberOfInputChannels)
     : AudioNodeEngine(aNode)
-    , mSharedBuffers(aNode->GetSharedBuffers())
     , mSource(nullptr)
-    , mDestination(static_cast<AudioNodeStream*> (aDestination->Stream()))
+    , mDestination(aDestination->Stream())
     , mBufferSize(aBufferSize)
+    , mInputChannelCount(aNumberOfInputChannels)
     , mInputWriteIndex(0)
-    , mSeenNonSilenceInput(false)
   {
-    mInputChannels.SetLength(aNumberOfInputChannels);
-    AllocateInputBlock();
   }
 
   void SetSourceStream(AudioNodeStream* aSource)
   {
     mSource = aSource;
+    mSharedBuffers = new SharedBuffers(mSource->SampleRate());
+  }
+
+  SharedBuffers* GetSharedBuffers() const
+  {
+    return mSharedBuffers;
+  }
+
+  enum {
+    IS_CONNECTED,
+  };
+
+  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aParam) override
+  {
+    switch (aIndex) {
+      case IS_CONNECTED:
+        mIsConnected = aParam;
+        break;
+      default:
+        NS_ERROR("Bad Int32Parameter");
+    } // End index switch.
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioChunk& aInput,
-                            AudioChunk* aOutput,
+                            const AudioBlock& aInput,
+                            AudioBlock* aOutput,
                             bool* aFinished) override
   {
-    MutexAutoLock lock(NodeMutex());
-
-    // If our node is dead, just output silence.
-    if (!Node()) {
-      aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
-      return;
-    }
-
     // This node is not connected to anything. Per spec, we don't fire the
     // onaudioprocess event. We also want to clear out the input and output
     // buffer queue, and output a null buffer.
-    if (!(aStream->ConsumerCount() ||
-          aStream->AsProcessedStream()->InputPortCount())) {
+    if (!mIsConnected) {
       aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
       mSharedBuffers->Reset();
-      mSeenNonSilenceInput = false;
       mInputWriteIndex = 0;
       return;
     }
 
-    // First, record our input buffer
-    for (uint32_t i = 0; i < mInputChannels.Length(); ++i) {
+    // The input buffer is allocated lazily when non-null input is received.
+    if (!aInput.IsNull() && !mInputBuffer) {
+      mInputBuffer = ThreadSharedFloatArrayBufferList::
+        Create(mInputChannelCount, mBufferSize, fallible);
+      if (mInputBuffer && mInputWriteIndex) {
+        // Zero leading for null chunks that were skipped.
+        for (uint32_t i = 0; i < mInputChannelCount; ++i) {
+          float* channelData = mInputBuffer->GetDataForWrite(i);
+          PodZero(channelData, mInputWriteIndex);
+        }
+      }
+    }
+
+    // First, record our input buffer, if its allocation succeeded.
+    uint32_t inputChannelCount = mInputBuffer ? mInputBuffer->GetChannels() : 0;
+    for (uint32_t i = 0; i < inputChannelCount; ++i) {
+      float* writeData = mInputBuffer->GetDataForWrite(i) + mInputWriteIndex;
       if (aInput.IsNull()) {
-        PodZero(mInputChannels[i] + mInputWriteIndex,
-                aInput.GetDuration());
+        PodZero(writeData, aInput.GetDuration());
       } else {
-        mSeenNonSilenceInput = true;
         MOZ_ASSERT(aInput.GetDuration() == WEBAUDIO_BLOCK_SIZE, "sanity check");
-        MOZ_ASSERT(aInput.mChannelData.Length() == mInputChannels.Length());
+        MOZ_ASSERT(aInput.ChannelCount() == inputChannelCount);
         AudioBlockCopyChannelWithScale(static_cast<const float*>(aInput.mChannelData[i]),
-                                       aInput.mVolume,
-                                       mInputChannels[i] + mInputWriteIndex);
+                                       aInput.mVolume, writeData);
       }
     }
     mInputWriteIndex += aInput.GetDuration();
@@ -312,21 +330,18 @@ public:
     if (mInputWriteIndex >= mBufferSize) {
       SendBuffersToMainThread(aStream);
       mInputWriteIndex -= mBufferSize;
-      mSeenNonSilenceInput = false;
-      AllocateInputBlock();
     }
   }
 
   virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     // Not owned:
-    // - mSharedBuffers
     // - mSource (probably)
     // - mDestination (probably)
     size_t amount = AudioNodeEngine::SizeOfExcludingThis(aMallocSizeOf);
-    amount += mInputChannels.SizeOfExcludingThis(aMallocSizeOf);
-    for (size_t i = 0; i < mInputChannels.Length(); i++) {
-      amount += mInputChannels[i].SizeOfExcludingThis(aMallocSizeOf);
+    amount += mSharedBuffers->SizeOfIncludingThis(aMallocSizeOf);
+    if (mInputBuffer) {
+      amount += mInputBuffer->SizeOfIncludingThis(aMallocSizeOf);
     }
 
     return amount;
@@ -338,15 +353,6 @@ public:
   }
 
 private:
-  void AllocateInputBlock()
-  {
-    for (unsigned i = 0; i < mInputChannels.Length(); ++i) {
-      if (!mInputChannels[i]) {
-        mInputChannels[i] = new float[mBufferSize];
-      }
-    }
-  }
-
   void SendBuffersToMainThread(AudioNodeStream* aStream)
   {
     MOZ_ASSERT(!NS_IsMainThread());
@@ -365,53 +371,66 @@ private:
     {
     public:
       Command(AudioNodeStream* aStream,
-              InputChannels& aInputChannels,
-              double aPlaybackTime,
-              bool aNullInput)
+              already_AddRefed<ThreadSharedFloatArrayBufferList> aInputBuffer,
+              double aPlaybackTime)
         : mStream(aStream)
+        , mInputBuffer(aInputBuffer)
         , mPlaybackTime(aPlaybackTime)
-        , mNullInput(aNullInput)
       {
-        mInputChannels.SetLength(aInputChannels.Length());
-        if (!aNullInput) {
-          for (uint32_t i = 0; i < mInputChannels.Length(); ++i) {
-            mInputChannels[i] = aInputChannels[i].forget();
-          }
-        }
       }
 
       NS_IMETHOD Run() override
       {
-        nsRefPtr<ScriptProcessorNode> node = static_cast<ScriptProcessorNode*>
-          (mStream->Engine()->NodeMainThread());
-        if (!node) {
-          return NS_OK;
+        nsRefPtr<ThreadSharedFloatArrayBufferList> output;
+
+        auto engine =
+          static_cast<ScriptProcessorNodeEngine*>(mStream->Engine());
+        {
+          auto node = static_cast<ScriptProcessorNode*>
+            (engine->NodeMainThread());
+          if (!node) {
+            return NS_OK;
+          }
+
+          if (node->HasListenersFor(nsGkAtoms::onaudioprocess)) {
+            output = DispatchAudioProcessEvent(node);
+          }
+          // The node may have been destroyed during event dispatch.
         }
-        AudioContext* context = node->Context();
+
+        // Append it to our output buffer queue
+        engine->GetSharedBuffers()->
+          FinishProducingOutputBuffer(output, engine->mBufferSize);
+
+        return NS_OK;
+      }
+
+      // Returns the output buffers if set in event handlers.
+      ThreadSharedFloatArrayBufferList*
+        DispatchAudioProcessEvent(ScriptProcessorNode* aNode)
+      {
+        AudioContext* context = aNode->Context();
         if (!context) {
-          return NS_OK;
+          return nullptr;
         }
 
         AutoJSAPI jsapi;
-        if (NS_WARN_IF(!jsapi.Init(node->GetOwner()))) {
-          return NS_OK;
+        if (NS_WARN_IF(!jsapi.Init(aNode->GetOwner()))) {
+          return nullptr;
         }
         JSContext* cx = jsapi.cx();
+        uint32_t inputChannelCount = aNode->ChannelCount();
 
         // Create the input buffer
         nsRefPtr<AudioBuffer> inputBuffer;
-        if (!mNullInput) {
+        if (mInputBuffer) {
           ErrorResult rv;
           inputBuffer =
-            AudioBuffer::Create(context, mInputChannels.Length(),
-                                node->BufferSize(),
-                                context->SampleRate(), cx, rv);
+            AudioBuffer::Create(context, inputChannelCount,
+                                aNode->BufferSize(), context->SampleRate(),
+                                mInputBuffer.forget(), cx, rv);
           if (rv.Failed()) {
-            return NS_OK;
-          }
-          // Put the channel data inside it
-          for (uint32_t i = 0; i < mInputChannels.Length(); ++i) {
-            inputBuffer->SetRawChannelContents(i, mInputChannels[i]);
+            return nullptr;
           }
         }
 
@@ -420,53 +439,49 @@ private:
         // avoid creating the input buffer as well.  The AudioProcessingEvent class
         // knows how to lazily create them if needed once the script tries to access
         // them.  Otherwise, we may be able to get away without creating them!
-        nsRefPtr<AudioProcessingEvent> event = new AudioProcessingEvent(node, nullptr, nullptr);
+        nsRefPtr<AudioProcessingEvent> event =
+          new AudioProcessingEvent(aNode, nullptr, nullptr);
         event->InitEvent(inputBuffer,
-                         mInputChannels.Length(),
+                         inputChannelCount,
                          context->StreamTimeToDOMTime(mPlaybackTime));
-        node->DispatchTrustedEvent(event);
+        aNode->DispatchTrustedEvent(event);
 
         // Steal the output buffers if they have been set.
         // Don't create a buffer if it hasn't been used to return output;
         // FinishProducingOutputBuffer() will optimize output = null.
         // GetThreadSharedChannelsForRate() may also return null after OOM.
-        nsRefPtr<ThreadSharedFloatArrayBufferList> output;
         if (event->HasOutputBuffer()) {
           ErrorResult rv;
           AudioBuffer* buffer = event->GetOutputBuffer(rv);
           // HasOutputBuffer() returning true means that GetOutputBuffer()
           // will not fail.
           MOZ_ASSERT(!rv.Failed());
-          output = buffer->GetThreadSharedChannelsForRate(cx);
+          return buffer->GetThreadSharedChannelsForRate(cx);
         }
 
-        // Append it to our output buffer queue
-        node->GetSharedBuffers()->FinishProducingOutputBuffer(output, node->BufferSize());
-
-        return NS_OK;
+        return nullptr;
       }
     private:
       nsRefPtr<AudioNodeStream> mStream;
-      InputChannels mInputChannels;
+      nsRefPtr<ThreadSharedFloatArrayBufferList> mInputBuffer;
       double mPlaybackTime;
-      bool mNullInput;
     };
 
-    NS_DispatchToMainThread(new Command(aStream, mInputChannels,
-                                        playbackTime,
-                                        !mSeenNonSilenceInput));
+    NS_DispatchToMainThread(new Command(aStream, mInputBuffer.forget(),
+                                        playbackTime));
   }
 
   friend class ScriptProcessorNode;
 
-  SharedBuffers* mSharedBuffers;
+  nsAutoPtr<SharedBuffers> mSharedBuffers;
   AudioNodeStream* mSource;
   AudioNodeStream* mDestination;
-  InputChannels mInputChannels;
+  nsRefPtr<ThreadSharedFloatArrayBufferList> mInputBuffer;
   const uint32_t mBufferSize;
+  const uint32_t mInputChannelCount;
   // The write index into the current input buffer
   uint32_t mInputWriteIndex;
-  bool mSeenNonSilenceInput;
+  bool mIsConnected = false;
 };
 
 ScriptProcessorNode::ScriptProcessorNode(AudioContext* aContext,
@@ -477,7 +492,6 @@ ScriptProcessorNode::ScriptProcessorNode(AudioContext* aContext,
               aNumberOfInputChannels,
               mozilla::dom::ChannelCountMode::Explicit,
               mozilla::dom::ChannelInterpretation::Speakers)
-  , mSharedBuffers(new SharedBuffers(aContext->SampleRate()))
   , mBufferSize(aBufferSize ?
                   aBufferSize : // respect what the web developer requested
                   4096)         // choose our own buffer size -- 4KB for now
@@ -489,8 +503,9 @@ ScriptProcessorNode::ScriptProcessorNode(AudioContext* aContext,
                                   aContext->Destination(),
                                   BufferSize(),
                                   aNumberOfInputChannels);
-  mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);
-  engine->SetSourceStream(static_cast<AudioNodeStream*> (mStream.get()));
+  mStream = AudioNodeStream::Create(aContext, engine,
+                                    AudioNodeStream::NO_STREAM_FLAGS);
+  engine->SetSourceStream(mStream);
 }
 
 ScriptProcessorNode::~ScriptProcessorNode()
@@ -501,7 +516,6 @@ size_t
 ScriptProcessorNode::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 {
   size_t amount = AudioNode::SizeOfExcludingThis(aMallocSizeOf);
-  amount += mSharedBuffers->SizeOfIncludingThis(aMallocSizeOf);
   return amount;
 }
 
@@ -511,12 +525,49 @@ ScriptProcessorNode::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
   return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
 }
 
+void
+ScriptProcessorNode::EventListenerAdded(nsIAtom* aType)
+{
+  AudioNode::EventListenerAdded(aType);
+  if (aType == nsGkAtoms::onaudioprocess) {
+    UpdateConnectedStatus();
+  }
+}
+
+void
+ScriptProcessorNode::EventListenerRemoved(nsIAtom* aType)
+{
+  AudioNode::EventListenerRemoved(aType);
+  if (aType == nsGkAtoms::onaudioprocess) {
+    UpdateConnectedStatus();
+  }
+}
+
 JSObject*
 ScriptProcessorNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   return ScriptProcessorNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
+void
+ScriptProcessorNode::UpdateConnectedStatus()
+{
+  bool isConnected = mHasPhantomInput ||
+    !(OutputNodes().IsEmpty() && OutputParams().IsEmpty()
+      && InputNodes().IsEmpty());
+
+  // Events are queued even when there is no listener because a listener
+  // may be added while events are in the queue.
+  SendInt32ParameterToStream(ScriptProcessorNodeEngine::IS_CONNECTED,
+                             isConnected);
+
+  if (isConnected && HasListenersFor(nsGkAtoms::onaudioprocess)) {
+    MarkActive();
+  } else {
+    MarkInactive();
+  }
 }
-}
+
+} // namespace dom
+} // namespace mozilla
 

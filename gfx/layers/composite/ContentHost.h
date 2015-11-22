@@ -36,11 +36,10 @@
 namespace mozilla {
 namespace gfx {
 class Matrix4x4;
-}
+} // namespace gfx
 namespace layers {
 class Compositor;
 class ThebesBufferData;
-class TiledLayerComposer;
 struct EffectChain;
 
 struct TexturedEffect;
@@ -54,10 +53,6 @@ struct TexturedEffect;
 class ContentHost : public CompositableHost
 {
 public:
-  // Subclasses should implement this method if they support being used as a
-  // tiling.
-  virtual TiledLayerComposer* AsTiledLayerComposer() { return nullptr; }
-
   virtual bool UpdateThebes(const ThebesBufferData& aData,
                             const nsIntRegion& aUpdated,
                             const nsIntRegion& aOldValidRegionBack,
@@ -117,9 +112,11 @@ public:
   explicit ContentHostTexture(const TextureInfo& aTextureInfo)
     : ContentHostBase(aTextureInfo)
     , mLocked(false)
+    , mReceivedNewHost(false)
   { }
 
-  virtual void Composite(EffectChain& aEffectChain,
+  virtual void Composite(LayerComposite* aLayer,
+                         EffectChain& aEffectChain,
                          float aOpacity,
                          const gfx::Matrix4x4& aTransform,
                          const gfx::Filter& aFilter,
@@ -128,7 +125,7 @@ public:
 
   virtual void SetCompositor(Compositor* aCompositor) override;
 
-  virtual TemporaryRef<gfx::DataSourceSurface> GetAsSurface() override;
+  virtual already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override;
 
   virtual void Dump(std::stringstream& aStream,
                     const char* aPrefix="",
@@ -136,7 +133,7 @@ public:
 
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix) override;
 
-  virtual void UseTextureHost(TextureHost* aTexture) override;
+  virtual void UseTextureHost(const nsTArray<TimedTexture>& aTextures) override;
   virtual void UseComponentAlphaTextures(TextureHost* aTextureOnBlack,
                                          TextureHost* aTextureOnWhite) override;
 
@@ -167,7 +164,7 @@ public:
 
   LayerRenderState GetRenderState() override;
 
-  virtual TemporaryRef<TexturedEffect> GenEffect(const gfx::Filter& aFilter) override;
+  virtual already_AddRefed<TexturedEffect> GenEffect(const gfx::Filter& aFilter) override;
 
 protected:
   CompositableTextureHostRef mTextureHost;
@@ -175,6 +172,7 @@ protected:
   CompositableTextureSourceRef mTextureSource;
   CompositableTextureSourceRef mTextureSourceOnWhite;
   bool mLocked;
+  bool mReceivedNewHost;
 };
 
 /**
@@ -222,7 +220,7 @@ public:
                             nsIntRegion* aUpdatedRegionBack);
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif

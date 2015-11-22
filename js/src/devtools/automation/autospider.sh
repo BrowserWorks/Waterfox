@@ -15,7 +15,8 @@ function usage() {
 
 clean=1
 platform=""
-TIMEOUT=3h
+# 3 hours. OS X doesn't support the "sleep 3h" syntax.
+TIMEOUT=10800
 while [ $# -gt 1 ]; do
     case "$1" in
         --dep)
@@ -91,6 +92,8 @@ elif [ "$OSTYPE" = "linux-gnu" ]; then
   MAKEFLAGS=-j4
   if [ "$VARIANT" = "arm-sim" ]; then
     USE_64BIT=false
+  elif [ "$VARIANT" = "arm64-sim" ]; then
+    USE_64BIT=true
   else
     case "$platform" in
     linux64)
@@ -168,6 +171,8 @@ if type setarch >/dev/null 2>&1; then
 fi
 
 RUN_JSTESTS=true
+RUN_JITTEST=true
+RUN_JSAPITESTS=true
 
 PARENT=$$
 
@@ -185,33 +190,42 @@ trap "kill $KILLER" EXIT
 
 if [[ "$VARIANT" = "rootanalysis" ]]; then
     export JS_GC_ZEAL=7
-
+    export JSTESTS_EXTRA_ARGS=--jitflags=debug
 elif [[ "$VARIANT" = "compacting" ]]; then
     export JS_GC_ZEAL=14
 
-    # Ignore timeouts from tests that are known to take too long with this zeal mode
-    export JITTEST_EXTRA_ARGS=--ignore-timeouts=$ABSDIR/cgc-jittest-timeouts.txt
-    export JSTESTS_EXTRA_ARGS=--exclude-file=$ABSDIR/cgc-jstests-slow.txt
+    # Ignore timeouts from tests that are known to take too long with this zeal mode.
+    # Run jittests with reduced jitflags option (3 configurations).
+    # Run jstests with default jitflags option (1 configuration).
+    export JITTEST_EXTRA_ARGS="--jitflags=debug --ignore-timeouts=$ABSDIR/cgc-jittest-timeouts.txt"
+    export JSTESTS_EXTRA_ARGS="--exclude-file=$ABSDIR/cgc-jstests-slow.txt"
 
     case "$platform" in
     win*)
         RUN_JSTESTS=false
     esac
-fi
-
-if [[ "$VARIANT" = "warnaserr" ||
-      "$VARIANT" = "warnaserrdebug" ||
-      "$VARIANT" = "plain" ]]; then
+elif [[ "$VARIANT" = "warnaserr" ||
+        "$VARIANT" = "warnaserrdebug" ||
+        "$VARIANT" = "plain" ]]; then
     export JSTESTS_EXTRA_ARGS=--jitflags=all
 elif [[ "$VARIANT" = "arm-sim" ||
-        "$VARIANT" = "rootanalysis" ||
         "$VARIANT" = "plaindebug" ]]; then
     export JSTESTS_EXTRA_ARGS=--jitflags=debug
+elif [[ "$VARIANT" = arm64* ]]; then
+    # The ARM64 JIT is not yet fully functional, and asm.js does not work.
+    # Just run "make check". We mostly care about not breaking the build at this point.
+    RUN_JITTEST=false
+    RUN_JSAPITESTS=false
+    RUN_JSTESTS=false
 fi
 
 $COMMAND_PREFIX $MAKE check || exit 1
-$COMMAND_PREFIX $MAKE check-jit-test || exit 1
-$COMMAND_PREFIX $OBJDIR/dist/bin/jsapi-tests || exit 1
+if $RUN_JITTEST; then
+    $COMMAND_PREFIX $MAKE check-jit-test || exit 1
+fi
+if $RUN_JSAPITESTS; then
+    $COMMAND_PREFIX $OBJDIR/dist/bin/jsapi-tests || exit 1
+fi
 if $RUN_JSTESTS; then
     $COMMAND_PREFIX $MAKE check-jstests || exit 1
 fi

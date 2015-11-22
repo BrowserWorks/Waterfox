@@ -6,7 +6,7 @@
 /**
  * A base class from which all detail views inherit.
  */
-let DetailsSubview = {
+var DetailsSubview = {
   /**
    * Sets up the view with event binding.
    */
@@ -16,11 +16,10 @@ let DetailsSubview = {
     this._onDetailsViewSelected = this._onDetailsViewSelected.bind(this);
     this._onPrefChanged = this._onPrefChanged.bind(this);
 
-    PerformanceController.on(EVENTS.RECORDING_STOPPED, this._onRecordingStoppedOrSelected);
+    PerformanceController.on(EVENTS.RECORDING_STATE_CHANGE, this._onRecordingStoppedOrSelected);
     PerformanceController.on(EVENTS.RECORDING_SELECTED, this._onRecordingStoppedOrSelected);
     PerformanceController.on(EVENTS.PREF_CHANGED, this._onPrefChanged);
     OverviewView.on(EVENTS.OVERVIEW_RANGE_SELECTED, this._onOverviewRangeChange);
-    OverviewView.on(EVENTS.OVERVIEW_RANGE_CLEARED, this._onOverviewRangeChange);
     DetailsView.on(EVENTS.DETAILS_VIEW_SELECTED, this._onDetailsViewSelected);
   },
 
@@ -30,11 +29,10 @@ let DetailsSubview = {
   destroy: function () {
     clearNamedTimeout("range-change-debounce");
 
-    PerformanceController.off(EVENTS.RECORDING_STOPPED, this._onRecordingStoppedOrSelected);
+    PerformanceController.off(EVENTS.RECORDING_STATE_CHANGE, this._onRecordingStoppedOrSelected);
     PerformanceController.off(EVENTS.RECORDING_SELECTED, this._onRecordingStoppedOrSelected);
     PerformanceController.off(EVENTS.PREF_CHANGED, this._onPrefChanged);
     OverviewView.off(EVENTS.OVERVIEW_RANGE_SELECTED, this._onOverviewRangeChange);
-    OverviewView.off(EVENTS.OVERVIEW_RANGE_CLEARED, this._onOverviewRangeChange);
     DetailsView.off(EVENTS.DETAILS_VIEW_SELECTED, this._onDetailsViewSelected);
   },
 
@@ -43,6 +41,15 @@ let DetailsSubview = {
    * when the range is changed in the overview.
    */
   rangeChangeDebounceTime: 0,
+
+  /**
+   * When the overview range changes, all details views will require a
+   * rerendering at a later point, determined by `shouldUpdateWhenShown` and
+   * `canUpdateWhileHidden` and whether or not its the current view.
+   * Set `requiresUpdateOnRangeChange` to false to not invalidate the view
+   * when the range changes.
+   */
+  requiresUpdateOnRangeChange: true,
 
   /**
    * Flag specifying if this view should be updated when selected. This will
@@ -78,12 +85,19 @@ let DetailsSubview = {
   /**
    * Called when recording stops or is selected.
    */
-  _onRecordingStoppedOrSelected: function(_, recording) {
+  _onRecordingStoppedOrSelected: function(_, state, recording) {
+    if (typeof state !== "string") {
+      recording = state;
+    }
+    if (arguments.length === 3 && state !== "recording-stopped") {
+      return;
+    }
+
     if (!recording || !recording.isCompleted()) {
       return;
     }
     if (DetailsView.isViewSelected(this) || this.canUpdateWhileHidden) {
-      this.render();
+      this.render(OverviewView.getTimeInterval());
     } else {
       this.shouldUpdateWhenShown = true;
     }
@@ -93,6 +107,9 @@ let DetailsSubview = {
    * Fired when a range is selected or cleared in the OverviewView.
    */
   _onOverviewRangeChange: function (_, interval) {
+    if (!this.requiresUpdateOnRangeChange) {
+      return;
+    }
     if (DetailsView.isViewSelected(this)) {
       let debounced = () => {
         if (!this.shouldUpdateWhileMouseIsActive && OverviewView.isMouseActive) {
@@ -148,8 +165,3 @@ let DetailsSubview = {
     }
   }
 };
-
-/**
- * Convenient way of emitting events from the view.
- */
-EventEmitter.decorate(DetailsSubview);

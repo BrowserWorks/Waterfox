@@ -28,8 +28,7 @@
         SimpleTest.waitForExplicitFinish();
 
         Task.spawn(function* () {
-          Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
-          Services.prefs.setBoolPref("devtools.webide.sidebars", true);
+          const { DebuggerServer } = require("devtools/server/main");
           let win = yield openWebIDE();
           let docProject = getProjectDocument(win);
           let docRuntime = getRuntimeDocument(win);
@@ -51,7 +50,7 @@
           ok(win.UI.toolboxIframe, "Toolbox iframe exists");
 
           let nbox = win.document.querySelector("#notificationbox");
-          ok(nbox.hasAttribute("toolboxfullscreen"), "Toolbox is fullsreen");
+          ok(!nbox.hasAttribute("toolboxfullscreen"), "Toolbox is not fullscreen");
 
           win.Cmds.showRuntimeDetails();
 
@@ -61,7 +60,6 @@
 
           yield closeWebIDE(win);
 
-          const { DebuggerServer } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
           DebuggerServer.destroy();
 
           SimpleTest.finish();

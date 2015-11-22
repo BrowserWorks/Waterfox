@@ -13,12 +13,18 @@ task:
 
   scopes:
     - 'docker-worker:image:{{#docker_image}}tester{{/docker_image}}'
-    - 'queue:define-task:aws-provisioner/test-c4-2xlarge'
-    - 'queue:create-task:aws-provisioner/test-c4-2xlarge'
+    - 'queue:define-task:aws-provisioner-v1/test-c4-2xlarge'
+    - 'queue:create-task:aws-provisioner-v1/test-c4-2xlarge'
     - 'docker-worker:cache:tc-vcs'
     - 'docker-worker:cache:linux-cache'
+    - 'docker-worker:capability:device:loopbackVideo'
+    - 'docker-worker:capability:device:loopbackAudio'
 
   payload:
+    capabilities:
+      devices:
+        loopbackVideo: true
+        loopbackAudio: true
     image: '{{#docker_image}}tester{{/docker_image}}'
     maxRunTime: 3600
     cache:
@@ -30,9 +36,8 @@ task:
       GAIA_BASE_REPOSITORY: '{{{gaia_base_repository}}}'
       GAIA_REF: '{{{gaia_ref}}}'
       GAIA_REV: '{{{gaia_rev}}}'
-      MOZHARNESS_REPOSITORY: '{{mozharness_repository}}'
-      MOZHARNESS_REV: '{{mozharness_rev}}'
       MOZILLA_BUILD_URL: '{{build_url}}'
+      MOZHARNESS_URL: '{{mozharness_url}}'
 
     # All builds share a common artifact directory for ease of uploading.
     artifacts:

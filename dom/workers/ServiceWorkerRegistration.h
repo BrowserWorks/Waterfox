@@ -12,6 +12,9 @@
 #include "mozilla/dom/ServiceWorkerCommon.h"
 #include "mozilla/dom/workers/bindings/WorkerFeature.h"
 
+// Support for Notification API extension.
+#include "mozilla/dom/NotificationBinding.h"
+
 class nsPIDOMWindow;
 
 namespace mozilla {
@@ -19,15 +22,19 @@ namespace dom {
 
 class Promise;
 class PushManager;
+class WorkerPushManager;
 class WorkerListener;
 
 namespace workers {
 class ServiceWorker;
 class WorkerPrivate;
-}
+} // namespace workers
 
 bool
 ServiceWorkerRegistrationVisible(JSContext* aCx, JSObject* aObj);
+
+bool
+ServiceWorkerNotificationAPIVisible(JSContext* aCx, JSObject* aObj);
 
 // This class exists solely so that we can satisfy some WebIDL Func= attribute
 // constraints. Func= converts the function name to a header file to include, in
@@ -66,8 +73,6 @@ class ServiceWorkerRegistrationBase : public DOMEventTargetHelper
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ServiceWorkerRegistrationBase,
-                                           DOMEventTargetHelper)
 
   IMPL_EVENT_HANDLER(updatefound)
 
@@ -91,8 +96,6 @@ protected:
   { }
 
   const nsString mScope;
-private:
-  nsCOMPtr<nsISupports> mCCDummy;
 };
 
 class ServiceWorkerRegistrationMainThread final : public ServiceWorkerRegistrationBase,
@@ -106,8 +109,8 @@ public:
   ServiceWorkerRegistrationMainThread(nsPIDOMWindow* aWindow,
                                       const nsAString& aScope);
 
-  void
-  Update();
+  already_AddRefed<Promise>
+  Update(ErrorResult& aRv);
 
   already_AddRefed<Promise>
   Unregister(ErrorResult& aRv);
@@ -115,15 +118,25 @@ public:
   JSObject*
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
+  // Partial interface from Notification API.
+  already_AddRefed<Promise>
+  ShowNotification(JSContext* aCx,
+                   const nsAString& aTitle,
+                   const NotificationOptions& aOptions,
+                   ErrorResult& aRv);
+
+  already_AddRefed<Promise>
+  GetNotifications(const GetNotificationOptions& aOptions, ErrorResult& aRv);
+
   already_AddRefed<workers::ServiceWorker>
   GetInstalling() override;
 
   already_AddRefed<workers::ServiceWorker>
   GetWaiting() override;
-  
+
   already_AddRefed<workers::ServiceWorker>
   GetActive() override;
-  
+
   already_AddRefed<PushManager>
   GetPushManager(ErrorResult& aRv);
 
@@ -185,14 +198,24 @@ public:
   ServiceWorkerRegistrationWorkerThread(workers::WorkerPrivate* aWorkerPrivate,
                                         const nsAString& aScope);
 
-  void
-  Update();
+  already_AddRefed<Promise>
+  Update(ErrorResult& aRv);
 
   already_AddRefed<Promise>
   Unregister(ErrorResult& aRv);
 
   JSObject*
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+
+  // Partial interface from Notification API.
+  already_AddRefed<Promise>
+  ShowNotification(JSContext* aCx,
+                   const nsAString& aTitle,
+                   const NotificationOptions& aOptions,
+                   ErrorResult& aRv);
+
+  already_AddRefed<Promise>
+  GetNotifications(const GetNotificationOptions& aOptions, ErrorResult& aRv);
 
   already_AddRefed<workers::ServiceWorker>
   GetInstalling() override;
@@ -212,6 +235,9 @@ public:
   bool
   Notify(JSContext* aCx, workers::Status aStatus) override;
 
+  already_AddRefed<WorkerPushManager>
+  GetPushManager(ErrorResult& aRv);
+
 private:
   enum Reason
   {
@@ -229,6 +255,10 @@ private:
 
   workers::WorkerPrivate* mWorkerPrivate;
   nsRefPtr<WorkerListener> mListener;
+
+#ifndef MOZ_SIMPLEPUSH
+  nsRefPtr<WorkerPushManager> mPushManager;
+#endif
 };
 
 } // namespace dom

@@ -8,7 +8,6 @@
 #include "apz/src/AsyncPanZoomController.h"  // for AsyncPanZoomController
 #include "FrameMetrics.h"               // for FrameMetrics
 #include "Units.h"                      // for LayerRect, LayerPixel, etc
-#include "gfx2DGlue.h"                  // for ToMatrix4x4
 #include "gfxPrefs.h"                   // for gfxPrefs
 #include "gfxUtils.h"                   // for gfxUtils, etc
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
@@ -25,7 +24,7 @@
 #include "mozilla/layers/AsyncCompositionManager.h" // for ViewTransform
 #include "mozilla/layers/LayerMetricsWrapper.h" // for LayerMetricsWrapper
 #include "mozilla/mozalloc.h"           // for operator delete, etc
-#include "nsRefPtr.h"                   // for nsRefPtr
+#include "mozilla/nsRefPtr.h"                   // for nsRefPtr
 #include "nsDebug.h"                    // for NS_ASSERTION
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsISupportsUtils.h"           // for NS_ADDREF, NS_RELEASE
@@ -40,6 +39,11 @@
 
 #define CULLING_LOG(...)
 // #define CULLING_LOG(...) printf_stderr("CULLING: " __VA_ARGS__)
+
+#define DUMP(...) do { if (getenv("DUMP_DEBUG")) { printf_stderr(__VA_ARGS__); } } while(0)
+#define XYWH(k)  (k).x, (k).y, (k).width, (k).height
+#define XY(k)    (k).x, (k).y
+#define WH(k)    (k).width, (k).height
 
 namespace mozilla {
 namespace layers {
@@ -142,69 +146,140 @@ ContainerRenderVR(ContainerT* aContainer,
 
   RefPtr<CompositingRenderTarget> previousTarget = compositor->GetCurrentRenderTarget();
 
-  gfx::IntRect visibleRect = aContainer->GetEffectiveVisibleRegion().GetBounds();
-
   float opacity = aContainer->GetEffectiveOpacity();
 
-  gfx::IntRect surfaceRect = gfx::IntRect(visibleRect.x, visibleRect.y,
-                                          visibleRect.width, visibleRect.height);
-  // we're about to create a framebuffer backed by textures to use as an intermediate
-  // surface. What to do if its size (as given by framebufferRect) would exceed the
-  // maximum texture size supported by the GL? The present code chooses the compromise
-  // of just clamping the framebuffer's size to the max supported size.
-  // This gives us a lower resolution rendering of the intermediate surface (children layers).
-  // See bug 827170 for a discussion.
+  // The size of each individual eye surface
+  gfx::IntSize eyeResolution = aHMD->SuggestedEyeResolution();
+  gfx::IntRect eyeRect[2];
+  eyeRect[0] = gfx::IntRect(0, 0, eyeResolution.width, eyeResolution.height);
+  eyeRect[1] = gfx::IntRect(eyeResolution.width, 0, eyeResolution.width, eyeResolution.height);
+
+  // The intermediate surface size; we're going to assume that we're not going to run
+  // into max texture size limits
+  gfx::IntRect surfaceRect = gfx::IntRect(0, 0, eyeResolution.width * 2, eyeResolution.height);
+
   int32_t maxTextureSize = compositor->GetMaxTextureSize();
   surfaceRect.width = std::min(maxTextureSize, surfaceRect.width);
   surfaceRect.height = std::min(maxTextureSize, surfaceRect.height);
 
-  // use NONE here, because we draw black to clear below
-  surface = compositor->CreateRenderTarget(surfaceRect, INIT_MODE_NONE);
-  if (!surface) {
-    return;
+  gfx::VRHMDRenderingSupport *vrRendering = aHMD->GetRenderingSupport();
+  if (PR_GetEnv("NO_VR_RENDERING")) vrRendering = nullptr;
+  if (vrRendering) {
+    if (!aContainer->mVRRenderTargetSet || aContainer->mVRRenderTargetSet->size != surfaceRect.Size()) {
+      aContainer->mVRRenderTargetSet = vrRendering->CreateRenderTargetSet(compositor, surfaceRect.Size());
+    }
+
+    surface = aContainer->mVRRenderTargetSet->GetNextRenderTarget();
+    if (!surface) {
+      NS_WARNING("GetNextRenderTarget failed");
+      return;
+    }
+  } else {
+    surface = compositor->CreateRenderTarget(surfaceRect, INIT_MODE_CLEAR);
+    if (!surface) {
+      return;
+    }
   }
+
+  gfx::IntRect rtBounds = previousTarget->GetRect();
+  DUMP("eyeResolution: %d %d targetRT: %d %d %d %d\n", WH(eyeResolution), XYWH(rtBounds));
 
   compositor->SetRenderTarget(surface);
 
   nsAutoTArray<Layer*, 12> children;
   aContainer->SortChildrenBy3DZOrder(children);
 
-  /**
-   * Render this container's contents.
-   */
-  gfx::IntRect surfaceClipRect(0, 0, surfaceRect.width, surfaceRect.height);
-  RenderTargetIntRect rtClipRect(0, 0, surfaceRect.width, surfaceRect.height);
+  gfx::Matrix4x4 origTransform = aContainer->GetEffectiveTransform();
+
   for (uint32_t i = 0; i < children.Length(); i++) {
     LayerComposite* layerToRender = static_cast<LayerComposite*>(children.ElementAt(i)->ImplData());
     Layer* layer = layerToRender->GetLayer();
+    uint32_t contentFlags = layer->GetContentFlags();
 
     if (layer->GetEffectiveVisibleRegion().IsEmpty() &&
         !layer->AsContainerLayer()) {
       continue;
     }
 
-    RenderTargetIntRect clipRect = layer->CalculateScissorRect(rtClipRect);
-    if (clipRect.IsEmpty()) {
-      continue;
-    }
+    // We flip between pre-rendered and Gecko-rendered VR based on whether
+    // the child layer of this VR container layer has PRESERVE_3D or not.
+    if ((contentFlags & Layer::CONTENT_PRESERVE_3D) == 0) {
+      // This layer is native VR
+      DUMP("%p Switching to pre-rendered VR\n", aContainer);
 
-    layerToRender->Prepare(rtClipRect);
-    layerToRender->RenderLayer(surfaceClipRect);
+      // XXX we still need depth test here, but we have no way of preserving
+      // depth anyway in native VR layers until we have a way to save them
+      // from WebGL (and maybe depth video?)
+      compositor->SetRenderTarget(surface);
+      aContainer->ReplaceEffectiveTransform(origTransform);
+
+      // If this native-VR child layer does not have sizes that match
+      // the eye resolution (that is, returned by the recommended
+      // render rect from the HMD device), then we need to scale it
+      // up/down.
+      Rect layerBounds;
+      // XXX this is a hack! Canvas layers aren't reporting the
+      // proper bounds here (visible region bounds are 0,0,0,0)
+      // and I'm not sure if this is the bounds we want anyway.
+      if (layer->GetType() == Layer::TYPE_CANVAS) {
+        layerBounds = ToRect(static_cast<CanvasLayer*>(layer)->GetBounds());
+      } else {
+        layerBounds = ToRect(layer->GetEffectiveVisibleRegion().GetBounds());
+      }
+      const gfx::Matrix4x4 childTransform = layer->GetEffectiveTransform();
+      layerBounds = childTransform.TransformBounds(layerBounds);
+
+      DUMP("  layer %p [type %d] bounds [%f %f %f %f] surfaceRect [%d %d %d %d]\n", layer, (int) layer->GetType(),
+           XYWH(layerBounds), XYWH(surfaceRect));
+
+      bool restoreTransform = false;
+      if ((layerBounds.width != 0 && layerBounds.height != 0) &&
+          (layerBounds.width != surfaceRect.width ||
+           layerBounds.height != surfaceRect.height))
+      {
+        DUMP("  layer %p doesn't match, prescaling by %f %f\n", layer,
+             surfaceRect.width / float(layerBounds.width),
+             surfaceRect.height / float(layerBounds.height));
+        gfx::Matrix4x4 scaledChildTransform(childTransform);
+        scaledChildTransform.PreScale(surfaceRect.width / layerBounds.width,
+                                      surfaceRect.height / layerBounds.height,
+                                      1.0f);
+
+        layer->ReplaceEffectiveTransform(scaledChildTransform);
+        restoreTransform = true;
+      }
+
+      // XXX these are both clip rects, which end up as scissor rects in the compositor.  So we just
+      // pass the full target surface rect here.
+      layerToRender->Prepare(RenderTargetIntRect(surfaceRect.x, surfaceRect.y,
+                                                 surfaceRect.width, surfaceRect.height));
+      layerToRender->RenderLayer(surfaceRect);
+
+      if (restoreTransform) {
+        layer->ReplaceEffectiveTransform(childTransform);
+      }
+    } else {
+      // Gecko-rendered CSS VR -- not supported yet, so just don't render this layer!
+    }
   }
 
-  // Unbind the current surface and rebind the previous one.
-#ifdef MOZ_DUMP_PAINTING
-  if (gfxUtils::sDumpPainting) {
-    RefPtr<gfx::DataSourceSurface> surf = surface->Dump(aManager->GetCompositor());
-    if (surf) {
-      WriteSnapshotToDumpFile(aContainer, surf);
-    }
-  }
-#endif
+  DUMP(" -- ContainerRenderVR [%p] after child layers\n", aContainer);
 
+  // Now put back the original transfom on this container
+  aContainer->ReplaceEffectiveTransform(origTransform);
+
+  // then bind the original target and draw with distortion
   compositor->SetRenderTarget(previousTarget);
 
-  gfx::Rect rect(visibleRect.x, visibleRect.y, visibleRect.width, visibleRect.height);
+  if (vrRendering) {
+    vrRendering->SubmitFrame(aContainer->mVRRenderTargetSet);
+    DUMP("<<< ContainerRenderVR [used vrRendering] [%p]\n", aContainer);
+    if (!gfxPrefs::VRMirrorTextures()) {
+      return;
+    }
+  }
+
+  gfx::Rect rect(surfaceRect.x, surfaceRect.y, surfaceRect.width, surfaceRect.height);
   gfx::Rect clipRect(aClipRect.x, aClipRect.y, aClipRect.width, aClipRect.height);
 
   // The VR geometry may not cover the entire area; we need to fill with a solid color
@@ -214,18 +289,29 @@ ContainerRenderVR(ContainerT* aContainer,
   // the entire rect)
   EffectChain solidEffect(aContainer);
   solidEffect.mPrimaryEffect = new EffectSolidColor(Color(0.0, 0.0, 0.0, 1.0));
-  aManager->GetCompositor()->DrawQuad(rect, clipRect, solidEffect, opacity,
-                                      aContainer->GetEffectiveTransform());
+  aManager->GetCompositor()->DrawQuad(rect, rect, solidEffect, 1.0, gfx::Matrix4x4());
 
   // draw the temporary surface with VR distortion to the original destination
   EffectChain vrEffect(aContainer);
-  vrEffect.mPrimaryEffect = new EffectVRDistortion(aHMD, surface);
+  bool skipDistortion = vrRendering || PR_GetEnv("MOZ_GFX_VR_NO_DISTORTION");
+  if (skipDistortion) {
+    vrEffect.mPrimaryEffect = new EffectRenderTarget(surface);
+  } else {
+    vrEffect.mPrimaryEffect = new EffectVRDistortion(aHMD, surface);
+  }
+
+  gfx::Matrix4x4 scaleTransform = aContainer->GetEffectiveTransform();
+  scaleTransform.PreScale(rtBounds.width / float(surfaceRect.width),
+                          rtBounds.height / float(surfaceRect.height),
+                          1.0f);
 
   // XXX we shouldn't use visibleRect here -- the VR distortion needs to know the
   // full rect, not just the visible one.  Luckily, right now, VR distortion is only
   // rendered when the element is fullscreen, so the visibleRect will be right anyway.
   aManager->GetCompositor()->DrawQuad(rect, clipRect, vrEffect, opacity,
-                                      aContainer->GetEffectiveTransform());
+                                      scaleTransform);
+
+  DUMP("<<< ContainerRenderVR [%p]\n", aContainer);
 }
 
 /* all of the prepared data that we need in RenderLayer() */
@@ -331,6 +417,96 @@ ContainerPrepare(ContainerT* aContainer,
 }
 
 template<class ContainerT> void
+RenderMinimap(ContainerT* aContainer, LayerManagerComposite* aManager,
+                   const RenderTargetIntRect& aClipRect, Layer* aLayer)
+{
+  Compositor* compositor = aManager->GetCompositor();
+
+  if (aLayer->GetFrameMetricsCount() < 1) {
+    return;
+  }
+
+  AsyncPanZoomController* controller = aLayer->GetAsyncPanZoomController(0);
+  if (!controller) {
+    return;
+  }
+
+  ViewTransform asyncTransformWithoutOverscroll;
+  ParentLayerPoint scrollOffset;
+  controller->SampleContentTransformForFrame(&asyncTransformWithoutOverscroll,
+                                           scrollOffset);
+
+  // Options
+  const int verticalPadding = 10;
+  const int horizontalPadding = 5;
+  gfx::Color backgroundColor(0.3f, 0.3f, 0.3f, 0.3f);
+  gfx::Color tileActiveColor(1, 1, 1, 0.5f);
+  gfx::Color tileBorderColor(0, 0, 0, 0.1f);
+  gfx::Color pageBorderColor(0, 0, 0);
+  gfx::Color displayPortColor(0, 1.f, 0);
+  gfx::Color viewPortColor(0, 0, 1.f);
+
+  // Rects
+  const FrameMetrics& fm = aLayer->GetFrameMetrics(0);
+  ParentLayerRect compositionBounds = fm.GetCompositionBounds();
+  LayerRect scrollRect = fm.GetScrollableRect() * fm.LayersPixelsPerCSSPixel();
+  LayerRect viewRect = ParentLayerRect(scrollOffset, compositionBounds.Size()) / LayerToParentLayerScale(1);
+  LayerRect dp = (fm.GetDisplayPort() + fm.GetScrollOffset()) * fm.LayersPixelsPerCSSPixel();
+
+  // Don't render trivial minimap. They can show up from textboxes and other tiny frames.
+  if (viewRect.width < 64 && viewRect.height < 64) {
+    return;
+  }
+
+  // Compute a scale with an appropriate aspect ratio
+  // We allocate up to 100px of width and the height of this layer.
+  float scaleFactor;
+  float scaleFactorX;
+  float scaleFactorY;
+  scaleFactorX = 100.f / scrollRect.width;
+  scaleFactorY = ((viewRect.height) - 2 * verticalPadding) / scrollRect.height;
+  scaleFactor = std::min(scaleFactorX, scaleFactorY);
+
+  Matrix4x4 transform = Matrix4x4::Scaling(scaleFactor, scaleFactor, 1);
+  transform.PostTranslate(horizontalPadding + compositionBounds.x, verticalPadding + compositionBounds.y, 0);
+
+  Rect clipRect = aContainer->GetEffectiveTransform().TransformBounds(
+                    transform.TransformBounds(scrollRect.ToUnknownRect()));
+  clipRect.width++;
+  clipRect.height++;
+
+  Rect r;
+  r = transform.TransformBounds(scrollRect.ToUnknownRect());
+  compositor->FillRect(r, backgroundColor, clipRect, aContainer->GetEffectiveTransform());
+
+  /* Disabled because on long pages SlowDrawRect becomes a bottleneck.
+  int tileW = gfxPrefs::LayersTileWidth();
+  int tileH = gfxPrefs::LayersTileHeight();
+
+  for (int x = scrollRect.x; x < scrollRect.XMost(); x += tileW) {
+    for (int y = scrollRect.y; y < scrollRect.YMost(); y += tileH) {
+      LayerRect tileRect = LayerRect(x - x % tileW, y - y % tileH, tileW, tileH);
+      r = transform.TransformBounds(tileRect.ToUnknownRect());
+      if (tileRect.Intersects(dp)) {
+        compositor->FillRect(r, tileActiveColor, clipRect, aContainer->GetEffectiveTransform());
+      }
+      compositor->SlowDrawRect(r, tileBorderColor, clipRect, aContainer->GetEffectiveTransform());
+    }
+  }
+  */
+
+  r = transform.TransformBounds(scrollRect.ToUnknownRect());
+  compositor->SlowDrawRect(r, pageBorderColor, clipRect, aContainer->GetEffectiveTransform());
+  r = transform.TransformBounds(dp.ToUnknownRect());
+  compositor->FillRect(r, tileActiveColor, clipRect, aContainer->GetEffectiveTransform());
+  r = transform.TransformBounds(dp.ToUnknownRect());
+  compositor->SlowDrawRect(r, displayPortColor, clipRect, aContainer->GetEffectiveTransform());
+  r = transform.TransformBounds(viewRect.ToUnknownRect());
+  compositor->SlowDrawRect(r, viewPortColor, clipRect, aContainer->GetEffectiveTransform(), 2);
+}
+
+
+template<class ContainerT> void
 RenderLayers(ContainerT* aContainer,
 	     LayerManagerComposite* aManager,
 	     const RenderTargetIntRect& aClipRect)
@@ -345,7 +521,11 @@ RenderLayers(ContainerT* aContainer,
 
     gfxRGBA color;
     if ((layer->GetContentFlags() & Layer::CONTENT_OPAQUE) &&
+        layer->IsOpaqueForVisibility() &&
         LayerHasCheckerboardingAPZC(layer, &color)) {
+      if (gfxPrefs::APZHighlightCheckerboardedAreas()) {
+        color = gfxRGBA(255 / 255.0, 188 / 255.0, 217 / 255.0, 1);  // "Cotton Candy"
+      }
       // Ideally we would want to intersect the checkerboard region from the APZ with the layer bounds
       // and only fill in that area. However the layer bounds takes into account the base translation
       // for the painted layer whereas the checkerboard region does not. One does not simply
@@ -406,6 +586,10 @@ RenderLayers(ContainerT* aContainer,
                          * asyncTransform;
         }
       }
+    }
+
+    if (gfxPrefs::APZMinimap()) {
+      RenderMinimap(aContainer, aManager, aClipRect, layer);
     }
 
     // invariant: our GL context should be current here, I don't think we can
@@ -513,34 +697,25 @@ ContainerRender(ContainerT* aContainer,
       return;
     }
 
-    float opacity = aContainer->GetEffectiveOpacity();
-
-    gfx::IntRect visibleRect = aContainer->GetEffectiveVisibleRegion().GetBounds();
+    gfx::Rect visibleRect(aContainer->GetEffectiveVisibleRegion().GetBounds());
+    nsRefPtr<Compositor> compositor = aManager->GetCompositor();
 #ifdef MOZ_DUMP_PAINTING
     if (gfxUtils::sDumpPainting) {
-      RefPtr<gfx::DataSourceSurface> surf = surface->Dump(aManager->GetCompositor());
+      RefPtr<gfx::DataSourceSurface> surf = surface->Dump(compositor);
       if (surf) {
         WriteSnapshotToDumpFile(aContainer, surf);
       }
     }
 #endif
 
-    EffectChain effectChain(aContainer);
-    LayerManagerComposite::AutoAddMaskEffect autoMaskEffect(aContainer->GetMaskLayer(),
-                                                            effectChain,
-                                                            !aContainer->GetTransform().CanDraw2D());
-    if (autoMaskEffect.Failed()) {
-      NS_WARNING("Failed to apply a mask effect.");
-      return;
-    }
-
-    aContainer->AddBlendModeEffect(effectChain);
-    effectChain.mPrimaryEffect = new EffectRenderTarget(surface);
-
-    gfx::Rect rect(visibleRect.x, visibleRect.y, visibleRect.width, visibleRect.height);
-    gfx::Rect clipRect(aClipRect.x, aClipRect.y, aClipRect.width, aClipRect.height);
-    aManager->GetCompositor()->DrawQuad(rect, clipRect, effectChain, opacity,
-                                        aContainer->GetEffectiveTransform());
+    nsRefPtr<ContainerT> container = aContainer;
+    RenderWithAllMasks(aContainer, compositor, aClipRect,
+                       [&, surface, compositor, container](EffectChain& effectChain, const Rect& clipRect) {
+      effectChain.mPrimaryEffect = new EffectRenderTarget(surface);
+      compositor->DrawQuad(visibleRect, clipRect, effectChain,
+                           container->GetEffectiveOpacity(),
+                           container->GetEffectiveTransform());
+    });
   } else {
     RenderLayers(aContainer, aManager, RenderTargetPixel::FromUntyped(aClipRect));
   }
@@ -683,6 +858,5 @@ RefLayerComposite::CleanupResources()
   mLastIntermediateSurface = nullptr;
 }
 
-} /* layers */
-} /* mozilla */
-
+} // namespace layers
+} // namespace mozilla

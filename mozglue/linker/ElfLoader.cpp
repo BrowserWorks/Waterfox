@@ -252,7 +252,7 @@ LibHandle::MappableMUnmap(void *addr, size_t length) const
 /**
  * SystemElf
  */
-TemporaryRef<LibHandle>
+already_AddRefed<LibHandle>
 SystemElf::Load(const char *path, int flags)
 {
   /* The Android linker returns a handle when the file name matches an
@@ -268,7 +268,8 @@ SystemElf::Load(const char *path, int flags)
   if (handle) {
     SystemElf *elf = new SystemElf(path, handle);
     ElfLoader::Singleton.Register(elf);
-    return elf;
+    RefPtr<LibHandle> lib(elf);
+    return lib.forget();
   }
   return nullptr;
 }
@@ -330,7 +331,7 @@ SystemElf::FindExidx(int *pcount) const
 /* Unique ElfLoader instance */
 ElfLoader ElfLoader::Singleton;
 
-TemporaryRef<LibHandle>
+already_AddRefed<LibHandle>
 ElfLoader::Load(const char *path, int flags, LibHandle *parent)
 {
   /* Ensure logging is initialized or refresh if environment changed. */
@@ -345,7 +346,7 @@ ElfLoader::Load(const char *path, int flags, LibHandle *parent)
   /* Handle dlopen(nullptr) directly. */
   if (!path) {
     handle = SystemElf::Load(nullptr, flags);
-    return handle;
+    return handle.forget();
   }
 
   /* TODO: Handle relative paths correctly */
@@ -355,12 +356,16 @@ ElfLoader::Load(const char *path, int flags, LibHandle *parent)
    * path is not absolute, compare file names, otherwise compare full paths. */
   if (name == path) {
     for (LibHandleList::iterator it = handles.begin(); it < handles.end(); ++it)
-      if ((*it)->GetName() && (strcmp((*it)->GetName(), name) == 0))
-        return *it;
+      if ((*it)->GetName() && (strcmp((*it)->GetName(), name) == 0)) {
+        handle = *it;
+        return handle.forget();
+      }
   } else {
     for (LibHandleList::iterator it = handles.begin(); it < handles.end(); ++it)
-      if ((*it)->GetPath() && (strcmp((*it)->GetPath(), path) == 0))
-        return *it;
+      if ((*it)->GetPath() && (strcmp((*it)->GetPath(), path) == 0)) {
+        handle = *it;
+        return handle.forget();
+      }
   }
 
   char *abs_path = nullptr;
@@ -398,16 +403,18 @@ ElfLoader::Load(const char *path, int flags, LibHandle *parent)
             reinterpret_cast<void *>(parent), parent ? parent->GetPath() : "",
             static_cast<void *>(handle));
 
-  return handle;
+  return handle.forget();
 }
 
-mozilla::TemporaryRef<LibHandle>
+already_AddRefed<LibHandle>
 ElfLoader::GetHandleByPtr(void *addr)
 {
   /* Scan the list of handles we already have for a match */
   for (LibHandleList::iterator it = handles.begin(); it < handles.end(); ++it) {
-    if ((*it)->Contains(addr))
-      return *it;
+    if ((*it)->Contains(addr)) {
+      RefPtr<LibHandle> lib = *it;
+      return lib.forget();
+    }
   }
   return nullptr;
 }

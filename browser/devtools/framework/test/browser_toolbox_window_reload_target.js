@@ -5,9 +5,9 @@ const TEST_URL = "data:text/html;charset=utf-8,"+
                  "<html><head><title>Test reload</title></head>"+
                  "<body><h1>Testing reload from devtools</h1></body></html>";
 
-let Toolbox = devtools.Toolbox;
+var {Toolbox} = require("devtools/framework/toolbox");
 
-let target, toolbox, description, reloadsSent, toolIDs;
+var target, toolbox, description, reloadsSent, toolIDs;
 
 function test() {
   addTab(TEST_URL).then(() => {
@@ -68,15 +68,6 @@ function testAllTheTools(docked, callback, toolNum=0) {
   });
 }
 
-function synthesizeKeyForToolbox(keyId) {
-  let el = toolbox.doc.getElementById(keyId);
-  let key = el.getAttribute("key") || el.getAttribute("keycode");
-  let mod = {};
-  el.getAttribute("modifiers").split(" ").forEach((m) => mod[m+"Key"] = true);
-  info("Synthesizing: key="+key+", mod="+JSON.stringify(mod));
-  EventUtils.synthesizeKey(key, mod, toolbox.doc.defaultView);
-}
-
 function testReload(key, docked, toolID, callback) {
   let complete = () => {
     gBrowser.selectedBrowser.messageManager.removeMessageListener("devtools:test:load", complete);
@@ -86,7 +77,8 @@ function testReload(key, docked, toolID, callback) {
 
   description = docked+" devtools with tool "+toolID+", key #" + key;
   info("Testing reload in "+description);
-  synthesizeKeyForToolbox(key);
+  let el = toolbox.doc.getElementById(key);
+  synthesizeKeyElement(el);
   reloadsSent++;
 }
 

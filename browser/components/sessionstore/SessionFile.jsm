@@ -89,10 +89,10 @@ this.SessionFile = {
 
 Object.freeze(SessionFile);
 
-let Path = OS.Path;
-let profileDir = OS.Constants.Path.profileDir;
+var Path = OS.Path;
+var profileDir = OS.Constants.Path.profileDir;
 
-let SessionFileInternal = {
+var SessionFileInternal = {
   Paths: Object.freeze({
     // The path to the latest version of sessionstore written during a clean
     // shutdown. After startup, it is renamed `cleanBackup`.
@@ -172,6 +172,10 @@ let SessionFileInternal = {
       return order;
     },
   }),
+
+  // `true` once `write` has succeeded at last once.
+  // Used for error-reporting.
+  _hasWriteEverSucceeded: false,
 
   // The ID of the latest version of Gecko for which we have an upgrade backup
   // or |undefined| if no upgrade backup was ever written.
@@ -275,7 +279,7 @@ let SessionFileInternal = {
     promise = promise.then(msg => {
       // Record how long the write took.
       this._recordTelemetry(msg.telemetry);
-
+      this._hasWriteEverSucceeded = true;
       if (msg.result.upgradeBackup) {
         // We have just completed a backup-on-upgrade, store the information
         // in preferences.
@@ -293,7 +297,14 @@ let SessionFileInternal = {
     // Ensure that we can write sessionstore.js cleanly before the profile
     // becomes unaccessible.
     AsyncShutdown.profileBeforeChange.addBlocker(
-      "SessionFile: Finish writing Session Restore data", promise);
+      "SessionFile: Finish writing Session Restore data",
+      promise,
+      {
+        fetchState: () => ({
+          options,
+          hasEverSucceeded: this._hasWriteEverSucceeded
+        })
+      });
 
     // This code will always be executed because |promise| can't fail anymore.
     // We ensured that by having a reject handler that reports the failure but

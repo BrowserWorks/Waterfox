@@ -91,54 +91,6 @@ const NOTIFICATION_CHUNK_SIZE = 300;
 const ONRESULT_CHUNK_SIZE = 300;
 
 /**
- * Private shutdown barrier blocked by ongoing operations.
- */
-XPCOMUtils.defineLazyGetter(this, "operationsBarrier", () =>
-  new AsyncShutdown.Barrier("History.jsm: wait until all connections are closed")
-);
-
-/**
- * Shared connection
- */
- XPCOMUtils.defineLazyGetter(this, "DBConnPromised", () =>
-  Task.spawn(function*() {
-    let db = yield PlacesUtils.promiseWrappedConnection();
-    try {
-      Sqlite.shutdown.addBlocker(
-        "Places History.jsm: Closing database wrapper",
-        Task.async(function*() {
-          yield operationsBarrier.wait();
-          gIsClosed = true;
-          yield db.close();
-        }),
-        () => ({
-          fetchState: () => ({
-            isClosed: gIsClosed,
-            operations: operationsBarrier.state,
-          })
-        })
-      );
-    } catch (ex) {
-      // It's too late to block shutdown of Sqlite, so close the connection
-      // immediately.
-      db.close();
-      throw ex;
-    }
-    return db;
-  })
-);
-
-/**
- * `true` once this module has been shutdown.
- */
-let gIsClosed = false;
-function ensureModuleIsOpen() {
-  if (gIsClosed) {
-    throw new Error("History.jsm has been shutdown");
-  }
-}
-
-/**
  * Sends a bookmarks notification through the given observers.
  *
  * @param observers
@@ -262,8 +214,6 @@ this.History = Object.freeze({
    *       is an empty array.
    */
   remove: function (pages, onResult = null) {
-    ensureModuleIsOpen();
-
     // Normalize and type-check arguments
     if (Array.isArray(pages)) {
       if (pages.length == 0) {
@@ -294,29 +244,8 @@ this.History = Object.freeze({
       throw new TypeError("Invalid function: " + onResult);
     }
 
-    return Task.spawn(function*() {
-      let promise = remove(normalizedPages, onResult);
-
-      operationsBarrier.client.addBlocker(
-        "History.remove",
-        promise,
-        {
-          // In case of crash, we do not want to upload information on
-          // which urls are being cleared, for privacy reasons. GUIDs
-          // are safe wrt privacy, but useless.
-          fetchState: () => ({
-            guids: guids.length,
-            urls: normalizedPages.urls.map(u => u.protocol),
-          })
-        });
-
-      try {
-        return (yield promise);
-      } finally {
-        // Cleanup the barrier.
-        operationsBarrier.client.removeBlocker(promise);
-      }
-    });
+    return PlacesUtils.withConnectionWrapper("History.jsm: remove",
+      db => remove(db, normalizedPages, onResult));
   },
 
   /**
@@ -349,8 +278,6 @@ this.History = Object.freeze({
    *      particular if the `object` is empty.
    */
   removeVisitsByFilter: function(filter, onResult = null) {
-    ensureModuleIsOpen();
-
     if (!filter || typeof filter != "object") {
       throw new TypeError("Expected a filter");
     }
@@ -374,21 +301,9 @@ this.History = Object.freeze({
       throw new TypeError("Invalid function: " + onResult);
     }
 
-    return Task.spawn(function*() {
-      let promise = removeVisitsByFilter(filter, onResult);
-
-      operationsBarrier.client.addBlocker(
-        "History.removeVisitsByFilter",
-        promise
-      );
-
-      try {
-        return (yield promise);
-      } finally {
-        // Cleanup the barrier.
-        operationsBarrier.client.removeBlocker(promise);
-      }
-    });
+    return PlacesUtils.withConnectionWrapper("History.jsm: removeVisitsByFilter",
+      db => removeVisitsByFilter(db, filter, onResult)
+    );
   },
 
   /**
@@ -418,19 +333,9 @@ this.History = Object.freeze({
    *      A promise resolved once the operation is complete.
    */
   clear() {
-    ensureModuleIsOpen();
-
-    return Task.spawn(function* () {
-      let promise = clear();
-      operationsBarrier.client.addBlocker("History.clear", promise);
-
-      try {
-        return (yield promise);
-      } finally {
-        // Cleanup the barrier.
-        operationsBarrier.client.removeBlocker(promise);
-      }
-    });
+    return PlacesUtils.withConnectionWrapper("History.jsm: clear",
+      clear
+    );
   },
 
   /**
@@ -537,7 +442,7 @@ function sqlList(list) {
  *      The `moz_places` identifiers for the places to invalidate.
  * @return (Promise)
  */
-let invalidateFrecencies = Task.async(function*(db, idList) {
+var invalidateFrecencies = Task.async(function*(db, idList) {
   if (idList.length == 0) {
     return;
   }
@@ -557,9 +462,7 @@ let invalidateFrecencies = Task.async(function*(db, idList) {
 });
 
 // Inner implementation of History.clear().
-let clear = Task.async(function* () {
-  let db = yield DBConnPromised;
-
+var clear = Task.async(function* (db) {
   // Remove all history.
   yield db.execute("DELETE FROM moz_historyvisits");
 
@@ -594,7 +497,7 @@ let clear = Task.async(function* () {
  *      The `moz_places` identifiers for the places to remove.
  * @return (Promise)
  */
-let removePagesById = Task.async(function*(db, idList) {
+var removePagesById = Task.async(function*(db, idList) {
   if (idList.length == 0) {
     return;
   }
@@ -623,7 +526,7 @@ let removePagesById = Task.async(function*(db, idList) {
  *              be kept and its frecency updated.
  * @return (Promise)
  */
-let cleanupPages = Task.async(function*(db, pages) {
+var cleanupPages = Task.async(function*(db, pages) {
   yield invalidateFrecencies(db, [p.id for (p of pages) if (p.hasForeign || p.hasVisits)]);
   yield removePagesById(db, [p.id for (p of pages) if (!p.hasForeign && !p.hasVisits)]);
 });
@@ -645,7 +548,7 @@ let cleanupPages = Task.async(function*(db, pages) {
  *              be kept and its frecency updated.
  * @return (Promise)
  */
-let notifyCleanup = Task.async(function*(db, pages) {
+var notifyCleanup = Task.async(function*(db, pages) {
   let notifiedCount = 0;
   let observers = PlacesUtils.history.getObservers();
 
@@ -687,7 +590,7 @@ let notifyCleanup = Task.async(function*(db, pages) {
  *      If provided, call `onResult` with `data[0]`, `data[1]`, etc.
  *      Otherwise, do nothing.
  */
-let notifyOnResult = Task.async(function*(data, onResult) {
+var notifyOnResult = Task.async(function*(data, onResult) {
   if (!onResult) {
     return;
   }
@@ -708,9 +611,7 @@ let notifyOnResult = Task.async(function*(data, onResult) {
 });
 
 // Inner implementation of History.removeVisitsByFilter.
-let removeVisitsByFilter = Task.async(function*(filter, onResult = null) {
-  let db = yield DBConnPromised;
-
+var removeVisitsByFilter = Task.async(function*(db, filter, onResult = null) {
   // 1. Determine visits that took place during the interval.  Note
   // that the database uses microseconds, while JS uses milliseconds,
   // so we need to *1000 one way and /1000 the other way.
@@ -797,8 +698,7 @@ let removeVisitsByFilter = Task.async(function*(filter, onResult = null) {
 
 
 // Inner implementation of History.remove.
-let remove = Task.async(function*({guids, urls}, onResult = null) {
-  let db = yield DBConnPromised;
+var remove = Task.async(function*(db, {guids, urls}, onResult = null) {
   // 1. Find out what needs to be removed
   let query =
     `SELECT id, url, guid, foreign_count, title, frecency FROM moz_places

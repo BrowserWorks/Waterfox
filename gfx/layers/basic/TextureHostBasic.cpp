@@ -14,7 +14,7 @@ using namespace mozilla::gfx;
 namespace mozilla {
 namespace layers {
 
-TemporaryRef<TextureHost>
+already_AddRefed<TextureHost>
 CreateTextureHostBasic(const SurfaceDescriptor& aDesc,
                        ISurfaceAllocator* aDeallocator,
                        TextureFlags aFlags)
@@ -23,12 +23,11 @@ CreateTextureHostBasic(const SurfaceDescriptor& aDesc,
   if (aDesc.type() == SurfaceDescriptor::TSurfaceDescriptorMacIOSurface) {
     const SurfaceDescriptorMacIOSurface& desc =
       aDesc.get_SurfaceDescriptorMacIOSurface();
-    RefPtr<TextureHost> result = new MacIOSurfaceTextureHostBasic(aFlags, desc);
-    return result;
+    return MakeAndAddRef<MacIOSurfaceTextureHostBasic>(aFlags, desc);
   }
 #endif
   return CreateBackendIndependentTextureHost(aDesc, aDeallocator, aFlags);
 }
 
 } // namespace layers
-} // namespace gfx
+} // namespace mozilla

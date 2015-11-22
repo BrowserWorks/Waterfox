@@ -33,7 +33,7 @@ protected:
   {
   }
 
-  explicit TypedArrayObjectStorage(TypedArrayObjectStorage&& aOther)
+  TypedArrayObjectStorage(TypedArrayObjectStorage&& aOther)
     : mTypedObj(aOther.mTypedObj),
       mWrappedObj(aOther.mWrappedObj)
   {
@@ -75,7 +75,7 @@ struct TypedArray_base : public TypedArrayObjectStorage {
   {
   }
 
-  explicit TypedArray_base(TypedArray_base&& aOther)
+  TypedArray_base(TypedArray_base&& aOther)
     : TypedArrayObjectStorage(Move(aOther)),
       mData(aOther.mData),
       mLength(aOther.mLength),
@@ -150,7 +150,7 @@ public:
     : Base()
   {}
 
-  explicit TypedArray(TypedArray&& aOther)
+  TypedArray(TypedArray&& aOther)
     : Base(Move(aOther))
   {
   }
@@ -190,6 +190,48 @@ private:
   TypedArray(const TypedArray&) = delete;
 };
 
+template<JSObject* UnwrapArray(JSObject*),
+         void GetLengthAndData(JSObject*, uint32_t*, uint8_t**),
+         js::Scalar::Type GetViewType(JSObject*)>
+struct ArrayBufferView_base : public TypedArray_base<uint8_t, UnwrapArray,
+                                                     GetLengthAndData> {
+private:
+  typedef TypedArray_base<uint8_t, UnwrapArray, GetLengthAndData> Base;
+
+public:
+  ArrayBufferView_base()
+    : Base()
+  {
+  }
+
+  ArrayBufferView_base(ArrayBufferView_base&& aOther)
+    : Base(Move(aOther)),
+      mType(aOther.mType)
+  {
+    aOther.mType = js::Scalar::MaxTypedArrayViewType;
+  }
+
+private:
+  js::Scalar::Type mType;
+
+public:
+  inline bool Init(JSObject* obj)
+  {
+    if (!Base::Init(obj)) {
+      return false;
+    }
+
+    mType = GetViewType(this->Obj());
+    return true;
+  }
+
+  inline js::Scalar::Type Type() const
+  {
+    MOZ_ASSERT(this->inited());
+    return mType;
+  }
+};
+
 typedef TypedArray<int8_t, js::UnwrapInt8Array, JS_GetInt8ArrayData,
                    js::GetInt8ArrayLengthAndData, JS_NewInt8Array>
         Int8Array;
@@ -217,11 +259,48 @@ typedef TypedArray<float, js::UnwrapFloat32Array, JS_GetFloat32ArrayData,
 typedef TypedArray<double, js::UnwrapFloat64Array, JS_GetFloat64ArrayData,
                    js::GetFloat64ArrayLengthAndData, JS_NewFloat64Array>
         Float64Array;
-typedef TypedArray_base<uint8_t, js::UnwrapArrayBufferView, js::GetArrayBufferViewLengthAndData>
+typedef ArrayBufferView_base<js::UnwrapArrayBufferView,
+                             js::GetArrayBufferViewLengthAndData,
+                             JS_GetArrayBufferViewType>
         ArrayBufferView;
 typedef TypedArray<uint8_t, js::UnwrapArrayBuffer, JS_GetArrayBufferData,
                    js::GetArrayBufferLengthAndData, JS_NewArrayBuffer>
         ArrayBuffer;
+
+typedef TypedArray<int8_t, js::UnwrapSharedInt8Array, JS_GetSharedInt8ArrayData,
+                   js::GetSharedInt8ArrayLengthAndData, JS_NewSharedInt8Array>
+        SharedInt8Array;
+typedef TypedArray<uint8_t, js::UnwrapSharedUint8Array, JS_GetSharedUint8ArrayData,
+                   js::GetSharedUint8ArrayLengthAndData, JS_NewSharedUint8Array>
+        SharedUint8Array;
+typedef TypedArray<uint8_t, js::UnwrapSharedUint8ClampedArray, JS_GetSharedUint8ClampedArrayData,
+                   js::GetSharedUint8ClampedArrayLengthAndData, JS_NewSharedUint8ClampedArray>
+        SharedUint8ClampedArray;
+typedef TypedArray<int16_t, js::UnwrapSharedInt16Array, JS_GetSharedInt16ArrayData,
+                   js::GetSharedInt16ArrayLengthAndData, JS_NewSharedInt16Array>
+        SharedInt16Array;
+typedef TypedArray<uint16_t, js::UnwrapSharedUint16Array, JS_GetSharedUint16ArrayData,
+                   js::GetSharedUint16ArrayLengthAndData, JS_NewSharedUint16Array>
+        SharedUint16Array;
+typedef TypedArray<int32_t, js::UnwrapSharedInt32Array, JS_GetSharedInt32ArrayData,
+                   js::GetSharedInt32ArrayLengthAndData, JS_NewSharedInt32Array>
+        SharedInt32Array;
+typedef TypedArray<uint32_t, js::UnwrapSharedUint32Array, JS_GetSharedUint32ArrayData,
+                   js::GetSharedUint32ArrayLengthAndData, JS_NewSharedUint32Array>
+        SharedUint32Array;
+typedef TypedArray<float, js::UnwrapSharedFloat32Array, JS_GetSharedFloat32ArrayData,
+                   js::GetSharedFloat32ArrayLengthAndData, JS_NewSharedFloat32Array>
+        SharedFloat32Array;
+typedef TypedArray<double, js::UnwrapSharedFloat64Array, JS_GetSharedFloat64ArrayData,
+                   js::GetSharedFloat64ArrayLengthAndData, JS_NewSharedFloat64Array>
+        SharedFloat64Array;
+typedef ArrayBufferView_base<js::UnwrapSharedArrayBufferView,
+                             js::GetSharedArrayBufferViewLengthAndData,
+                             JS_GetSharedArrayBufferViewType>
+        SharedArrayBufferView;
+typedef TypedArray<uint8_t, js::UnwrapSharedArrayBuffer, JS_GetSharedArrayBufferData,
+                   js::GetSharedArrayBufferLengthAndData, JS_NewSharedArrayBuffer>
+        SharedArrayBuffer;
 
 // A class for converting an nsTArray to a TypedArray
 // Note: A TypedArrayCreator must not outlive the nsTArray it was created from.
@@ -248,7 +327,7 @@ class TypedArrayCreator
 
 // A class for rooting an existing TypedArray struct
 template<typename ArrayType>
-class MOZ_STACK_CLASS TypedArrayRooter : private JS::CustomAutoRooter
+class MOZ_RAII TypedArrayRooter : private JS::CustomAutoRooter
 {
 public:
   TypedArrayRooter(JSContext* cx,
@@ -270,7 +349,7 @@ private:
 // And a specialization for dealing with nullable typed arrays
 template<typename Inner> struct Nullable;
 template<typename ArrayType>
-class MOZ_STACK_CLASS TypedArrayRooter<Nullable<ArrayType> > :
+class MOZ_RAII TypedArrayRooter<Nullable<ArrayType> > :
     private JS::CustomAutoRooter
 {
 public:
@@ -294,8 +373,8 @@ private:
 
 // Class for easily setting up a rooted typed array object on the stack
 template<typename ArrayType>
-class MOZ_STACK_CLASS RootedTypedArray : public ArrayType,
-                                         private TypedArrayRooter<ArrayType>
+class MOZ_RAII RootedTypedArray : public ArrayType,
+                                  private TypedArrayRooter<ArrayType>
 {
 public:
   explicit RootedTypedArray(JSContext* cx MOZ_GUARD_OBJECT_NOTIFIER_PARAM) :

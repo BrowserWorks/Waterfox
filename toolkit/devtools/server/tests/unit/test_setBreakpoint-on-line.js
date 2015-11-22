@@ -1,6 +1,6 @@
 "use strict";
 
-let SOURCE_URL = getFileUrl("setBreakpoint-on-line.js");
+var SOURCE_URL = getFileUrl("setBreakpoint-on-line.js");
 
 function run_test() {
   return Task.spawn(function* () {
@@ -22,7 +22,7 @@ function run_test() {
     let [, threadClient] = yield attachThread(tabClient);
     yield resume(threadClient);
 
-    let promise = waitForNewSource(client, SOURCE_URL);
+    let promise = waitForNewSource(threadClient, SOURCE_URL);
     loadSubScript(SOURCE_URL, global);
     let { source } = yield promise;
     let sourceClient = threadClient.source(source);

@@ -5,6 +5,10 @@
 
 package org.mozilla.gecko.home;
 
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+
+import android.content.res.ColorStateList;
 import org.mozilla.gecko.R;
 
 import android.content.Context;
@@ -16,7 +20,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.accessibility.AccessibilityEvent;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
@@ -26,23 +29,34 @@ import android.widget.TextView;
 class TabMenuStripLayout extends LinearLayout
                          implements View.OnFocusChangeListener {
 
-    private HomePager.OnTitleClickListener onTitleClickListener;
+    private TabMenuStrip.OnTitleClickListener onTitleClickListener;
     private Drawable strip;
-    private View selectedView;
+    private TextView selectedView;
 
     // Data associated with the scrolling of the strip drawable.
     private View toTab;
     private View fromTab;
+    private int fromPosition;
+    private int toPosition;
     private float progress;
 
     // This variable is used to predict the direction of scroll.
     private float prevProgress;
+    private int tabContentStart;
+    private boolean titlebarFill;
+    private int activeTextColor;
+    private ColorStateList inactiveTextColor;
 
     TabMenuStripLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TabMenuStrip);
         final int stripResId = a.getResourceId(R.styleable.TabMenuStrip_strip, -1);
+
+        titlebarFill = a.getBoolean(R.styleable.TabMenuStrip_titlebarFill, false);
+        tabContentStart = a.getDimensionPixelSize(R.styleable.TabMenuStrip_tabContentStart, 0);
+        activeTextColor = a.getColor(R.styleable.TabMenuStrip_activeTextColor, R.color.text_and_tabs_tray_grey);
+        inactiveTextColor = a.getColorStateList(R.styleable.TabMenuStrip_inactiveTextColor);
         a.recycle();
 
         if (stripResId != -1) {
@@ -55,6 +69,21 @@ class TabMenuStripLayout extends LinearLayout
     void onAddPagerView(String title) {
         final TextView button = (TextView) LayoutInflater.from(getContext()).inflate(R.layout.tab_menu_strip, this, false);
         button.setText(title.toUpperCase());
+        button.setTextColor(inactiveTextColor);
+
+        // Set titles width to weight, or wrap text width.
+        if (titlebarFill) {
+            button.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f));
+        } else {
+            button.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+
+        if (getChildCount() == 0) {
+            button.setPadding(button.getPaddingLeft() + tabContentStart,
+                              button.getPaddingTop(),
+                              button.getPaddingRight(),
+                              button.getPaddingBottom());
+        }
 
         addView(button);
         button.setOnClickListener(new ViewClickListener(getChildCount() - 1));
@@ -62,7 +91,12 @@ class TabMenuStripLayout extends LinearLayout
     }
 
     void onPageSelected(final int position) {
-        selectedView = getChildAt(position);
+        if (selectedView != null) {
+            selectedView.setTextColor(inactiveTextColor);
+        }
+
+        selectedView = (TextView) getChildAt(position);
+        selectedView.setTextColor(activeTextColor);
 
         // Callback to measure and draw the strip after the view is visible.
         ViewTreeObserver vto = selectedView.getViewTreeObserver();
@@ -73,7 +107,7 @@ class TabMenuStripLayout extends LinearLayout
                     selectedView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
 
                     if (strip != null) {
-                        strip.setBounds(selectedView.getLeft(),
+                        strip.setBounds(selectedView.getLeft() + (position == 0 ? tabContentStart : 0),
                                         selectedView.getTop(),
                                         selectedView.getRight(),
                                         selectedView.getBottom());
@@ -103,10 +137,25 @@ class TabMenuStripLayout extends LinearLayout
         final int toTabLeft =  toTab.getLeft();
         final int toTabRight = toTab.getRight();
 
-        strip.setBounds((int) (fromTabLeft + ((toTabLeft - fromTabLeft) * progress)),
-                         0,
-                         (int) (fromTabRight + ((toTabRight - fromTabRight) * progress)),
-                         getHeight());
+        // The first tab has a padding applied (tabContentStart). We don't want the 'strip' to jump around so we remove
+        // this padding slowly (modifier) when scrolling to or from the first tab.
+        final int modifier;
+
+        if (fromPosition == 0 && toPosition == 1) {
+            // Slowly remove extra padding (tabContentStart) based on scroll progress
+            modifier = (int) (tabContentStart * (1 - progress));
+        } else if (fromPosition == 1 && toPosition == 0) {
+            // Slowly add extra padding (tabContentStart) based on scroll progress
+            modifier = (int) (tabContentStart * progress);
+        } else {
+            // We are not scrolling tab 0 in any way, no modifier needed
+            modifier = 0;
+        }
+
+        strip.setBounds((int) (fromTabLeft + ((toTabLeft - fromTabLeft) * progress)) + modifier,
+                0,
+                (int) (fromTabRight + ((toTabRight - fromTabRight) * progress)),
+                getHeight());
         invalidate();
     }
 
@@ -123,14 +172,17 @@ class TabMenuStripLayout extends LinearLayout
         final float currProgress = position + positionOffset;
 
         if (prevProgress > currProgress) {
-            toTab = getChildAt(position);
-            fromTab = getChildAt(position + 1);
+            toPosition = position;
+            fromPosition = position + 1;
             progress = 1 - positionOffset;
         } else {
-            toTab = getChildAt(position + 1);
-            fromTab = getChildAt(position);
+            toPosition = position + 1;
+            fromPosition = position;
             progress = positionOffset;
         }
+
+        toTab = getChildAt(toPosition);
+        fromTab = getChildAt(fromPosition);
 
         prevProgress = currProgress;
     }
@@ -173,7 +225,7 @@ class TabMenuStripLayout extends LinearLayout
         }
     }
 
-    void setOnTitleClickListener(HomePager.OnTitleClickListener onTitleClickListener) {
+    void setOnTitleClickListener(TabMenuStrip.OnTitleClickListener onTitleClickListener) {
         this.onTitleClickListener = onTitleClickListener;
     }
 

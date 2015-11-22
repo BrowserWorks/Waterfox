@@ -32,8 +32,14 @@ interface EventTarget {
 // Mozilla extensions for use by JS-implemented event targets to
 // implement on* properties.
 partial interface EventTarget {
+  // The use of [TreatNonCallableAsNull] here is a bit of a hack: it just makes
+  // the codegen check whether the type involved is either
+  // [TreatNonCallableAsNull] or [TreatNonObjectAsNull] and if it is handle it
+  // accordingly.  In particular, it will NOT actually treat a non-null
+  // non-callable object as null here.
   [ChromeOnly, Throws]
-  void setEventHandler(DOMString type, EventHandler handler);
+  void setEventHandler(DOMString type,
+                       [TreatNonCallableAsNull] EventHandler handler);
 
   [ChromeOnly]
   EventHandler getEventHandler(DOMString type);
@@ -43,6 +49,6 @@ partial interface EventTarget {
 // chrome easier.  This returns the window which can be used to create
 // events to fire at this EventTarget, or null if there isn't one.
 partial interface EventTarget {
-  [ChromeOnly, Exposed=Window]
+  [ChromeOnly, Exposed=Window, BinaryName="ownerGlobalForBindings"]
   readonly attribute WindowProxy? ownerGlobal;
 };

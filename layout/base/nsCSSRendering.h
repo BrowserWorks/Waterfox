@@ -26,11 +26,11 @@ namespace mozilla {
 
 namespace gfx {
 class DrawTarget;
-}
+} // namespace gfx
 
 namespace layers {
 class ImageContainer;
-}
+} // namespace layers
 
 // A CSSSizeOrRatio represents a (possibly partially specified) size for use
 // in computing image sizes. Either or both of the width and height might be
@@ -98,7 +98,7 @@ struct CSSSizeOrRatio
   bool mHasHeight;
 };
 
-}
+} // namespace mozilla
 
 /**
  * This is a small wrapper class to encapsulate image drawing that can draw an
@@ -237,7 +237,19 @@ public:
 
   bool IsRasterImage();
   bool IsAnimatedImage();
-  already_AddRefed<ImageContainer> GetContainer(LayerManager* aManager);
+
+  /**
+   * @return true if this nsImageRenderer wraps an image which has an
+   * ImageContainer available.
+   *
+   * If IsContainerAvailable() returns true, GetImage() will return a non-null
+   * imgIContainer which callers can use to retrieve the ImageContainer.
+   */
+  bool IsContainerAvailable(LayerManager* aManager,
+                            nsDisplayListBuilder* aBuilder);
+
+  /// Retrieves the image associated with this nsImageRenderer, if there is one.
+  already_AddRefed<imgIContainer> GetImage();
 
   bool IsReady() { return mIsReady; }
 

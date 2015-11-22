@@ -11,6 +11,7 @@
 #include "InterfaceInitFuncs.h"
 #include "nsAccUtils.h"
 #include "mozilla/a11y/PDocAccessible.h"
+#include "OuterDocAccessible.h"
 #include "ProxyAccessible.h"
 #include "RootAccessible.h"
 #include "nsMai.h"
@@ -33,7 +34,7 @@
 using namespace mozilla;
 using namespace mozilla::a11y;
 
-AccessibleWrap::EAvailableAtkSignals AccessibleWrap::gAvailableAtkSignals =
+MaiAtkObject::EAvailableAtkSignals MaiAtkObject::gAvailableAtkSignals =
   eUnknown;
 
 //defined in ApplicationAccessibleWrap.cpp
@@ -96,7 +97,7 @@ static GType GetAtkTypeForMai(MaiInterfaceType type)
   return G_TYPE_INVALID;
 }
 
-static const char* kNonUserInputEvent = ":system";
+#define NON_USER_EVENT ":system"
     
 static const GInterfaceInfo atk_if_infos[] = {
     {(GInterfaceInitFunc)componentInterfaceInitCB,
@@ -682,12 +683,12 @@ getRoleCB(AtkObject *aAtkObj)
   else if (aAtkObj->role == ATK_ROLE_TABLE_ROW && !IsAtkVersionAtLeast(2, 1))
     aAtkObj->role = ATK_ROLE_LIST_ITEM;
   else if (aAtkObj->role == ATK_ROLE_MATH && !IsAtkVersionAtLeast(2, 12))
-    aAtkObj->role = ATK_ROLE_PANEL;
+    aAtkObj->role = ATK_ROLE_SECTION;
   else if (aAtkObj->role == ATK_ROLE_STATIC && !IsAtkVersionAtLeast(2, 16))
     aAtkObj->role = ATK_ROLE_TEXT;
   else if ((aAtkObj->role == ATK_ROLE_MATH_FRACTION ||
             aAtkObj->role == ATK_ROLE_MATH_ROOT) && !IsAtkVersionAtLeast(2, 16))
-    aAtkObj->role = ATK_ROLE_UNKNOWN;
+    aAtkObj->role = ATK_ROLE_SECTION;
 
   return aAtkObj->role;
 }
@@ -800,7 +801,16 @@ getParentCB(AtkObject *aAtkObj)
     atkParent = parent ? AccessibleWrap::GetAtkObject(parent) : nullptr;
   } else if (ProxyAccessible* proxy = GetProxy(aAtkObj)) {
     ProxyAccessible* parent = proxy->Parent();
-    atkParent = parent ? GetWrapperFor(parent) : nullptr;
+    if (parent) {
+      atkParent = GetWrapperFor(parent);
+    } else {
+      // Otherwise this should be the proxy for the tab's top level document.
+      Accessible* outerDocParent = proxy->OuterDocOfRemoteBrowser();
+      NS_ASSERTION(outerDocParent, "this document should have an outerDoc as a parent");
+      if (outerDocParent) {
+        atkParent = AccessibleWrap::GetAtkObject(outerDocParent);
+      }
+    }
   }
 
   if (atkParent)
@@ -812,37 +822,64 @@ getParentCB(AtkObject *aAtkObj)
 gint
 getChildCountCB(AtkObject *aAtkObj)
 {
-    AccessibleWrap* accWrap = GetAccessibleWrap(aAtkObj);
-    if (!accWrap || nsAccUtils::MustPrune(accWrap)) {
-        return 0;
+  if (AccessibleWrap* accWrap = GetAccessibleWrap(aAtkObj)) {
+    if (nsAccUtils::MustPrune(accWrap)) {
+      return 0;
     }
 
     return static_cast<gint>(accWrap->EmbeddedChildCount());
+  }
+
+  ProxyAccessible* proxy = GetProxy(aAtkObj);
+  if (proxy && !proxy->MustPruneChildren()) {
+    return proxy->EmbeddedChildCount();
+  }
+
+  return 0;
 }
 
 AtkObject *
 refChildCB(AtkObject *aAtkObj, gint aChildIndex)
 {
-    // aChildIndex should not be less than zero
-    if (aChildIndex < 0) {
+  // aChildIndex should not be less than zero
+  if (aChildIndex < 0) {
+    return nullptr;
+  }
+
+  AtkObject* childAtkObj = nullptr;
+  AccessibleWrap* accWrap = GetAccessibleWrap(aAtkObj);
+  if (accWrap) {
+    if (nsAccUtils::MustPrune(accWrap)) {
       return nullptr;
     }
 
-    AccessibleWrap* accWrap = GetAccessibleWrap(aAtkObj);
-    if (!accWrap || nsAccUtils::MustPrune(accWrap)) {
-        return nullptr;
-    }
-
     Accessible* accChild = accWrap->GetEmbeddedChildAt(aChildIndex);
-    if (!accChild)
-        return nullptr;
+    if (accChild) {
+      childAtkObj = AccessibleWrap::GetAtkObject(accChild);
+    } else {
+      OuterDocAccessible* docOwner = accWrap->AsOuterDoc();
+      if (docOwner) {
+        ProxyAccessible* proxyDoc = docOwner->RemoteChildDoc();
+        if (proxyDoc)
+          childAtkObj = GetWrapperFor(proxyDoc);
+      }
+    }
+  } else if (ProxyAccessible* proxy = GetProxy(aAtkObj)) {
+    if (proxy->MustPruneChildren())
+      return nullptr;
 
-    AtkObject* childAtkObj = AccessibleWrap::GetAtkObject(accChild);
+    ProxyAccessible* child = proxy->EmbeddedChildAt(aChildIndex);
+    if (child)
+      childAtkObj = GetWrapperFor(child);
+  } else {
+    return nullptr;
+  }
 
-    NS_ASSERTION(childAtkObj, "Fail to get AtkObj");
-    if (!childAtkObj)
-        return nullptr;
-    g_object_ref(childAtkObj);
+  NS_ASSERTION(childAtkObj, "Fail to get AtkObj");
+  if (!childAtkObj)
+    return nullptr;
+
+  g_object_ref(childAtkObj);
 
   if (aAtkObj != childAtkObj->accessible_parent)
     atk_object_set_parent(childAtkObj, aAtkObj);
@@ -858,6 +895,9 @@ getIndexInParentCB(AtkObject* aAtkObj)
   if (ProxyAccessible* proxy = GetProxy(aAtkObj)) {
     if (ProxyAccessible* parent = proxy->Parent())
       return parent->IndexOfEmbeddedChild(proxy);
+
+    if (proxy->OuterDocOfRemoteBrowser())
+      return 0;
 
     return -1;
   }
@@ -1002,14 +1042,17 @@ refRelationSetCB(AtkObject *aAtkObj)
 AccessibleWrap*
 GetAccessibleWrap(AtkObject* aAtkObj)
 {
-  NS_ENSURE_TRUE(IS_MAI_OBJECT(aAtkObj), nullptr);
+  bool isMAIObject = IS_MAI_OBJECT(aAtkObj);
+  NS_ENSURE_TRUE(isMAIObject || MAI_IS_ATK_SOCKET(aAtkObj),
+                 nullptr);
 
-  // Make sure its native is an AccessibleWrap not a proxy.
-  if (MAI_ATK_OBJECT(aAtkObj)->accWrap & IS_PROXY)
+  uintptr_t accWrapPtr = isMAIObject ?
+    MAI_ATK_OBJECT(aAtkObj)->accWrap :
+    reinterpret_cast<uintptr_t>(MAI_ATK_SOCKET(aAtkObj)->accWrap);
+  if (accWrapPtr & IS_PROXY)
     return nullptr;
 
-    AccessibleWrap* accWrap =
-      reinterpret_cast<AccessibleWrap*>(MAI_ATK_OBJECT(aAtkObj)->accWrap);
+  AccessibleWrap* accWrap = reinterpret_cast<AccessibleWrap*>(accWrapPtr);
 
   // Check if the accessible was deconstructed.
   if (!accWrap)
@@ -1027,7 +1070,8 @@ GetAccessibleWrap(AtkObject* aAtkObj)
 ProxyAccessible*
 GetProxy(AtkObject* aObj)
 {
-  if (!aObj || !(MAI_ATK_OBJECT(aObj)->accWrap & IS_PROXY))
+  if (!aObj || !IS_MAI_OBJECT(aObj) ||
+      !(MAI_ATK_OBJECT(aObj)->accWrap & IS_PROXY))
     return nullptr;
 
   return reinterpret_cast<ProxyAccessible*>(MAI_ATK_OBJECT(aObj)->accWrap
@@ -1049,19 +1093,19 @@ GetInterfacesForProxy(ProxyAccessible* aProxy, uint32_t aInterfaces)
         | (1 << MAI_INTERFACE_EDITABLE_TEXT);
 
   if (aInterfaces & Interfaces::HYPERLINK)
-    interfaces |= MAI_INTERFACE_HYPERLINK_IMPL;
+    interfaces |= 1 << MAI_INTERFACE_HYPERLINK_IMPL;
 
   if (aInterfaces & Interfaces::VALUE)
-    interfaces |= MAI_INTERFACE_VALUE;
+    interfaces |= 1 << MAI_INTERFACE_VALUE;
 
   if (aInterfaces & Interfaces::TABLE)
-    interfaces |= MAI_INTERFACE_TABLE;
+    interfaces |= 1 << MAI_INTERFACE_TABLE;
 
   if (aInterfaces & Interfaces::IMAGE)
-    interfaces |= MAI_INTERFACE_IMAGE;
+    interfaces |= 1 << MAI_INTERFACE_IMAGE;
 
   if (aInterfaces & Interfaces::DOCUMENT)
-    interfaces |= MAI_INTERFACE_DOCUMENT;
+    interfaces |= 1 << MAI_INTERFACE_DOCUMENT;
 
   return interfaces;
 }
@@ -1100,6 +1144,10 @@ AccessibleWrap::HandleAccEvent(AccEvent* aEvent)
   nsresult rv = Accessible::HandleAccEvent(aEvent);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  if (IPCAccessibilityActive()) {
+    return NS_OK;
+  }
+
     Accessible* accessible = aEvent->GetAccessible();
     NS_ENSURE_TRUE(accessible, NS_ERROR_FAILURE);
 
@@ -1128,11 +1176,27 @@ AccessibleWrap::HandleAccEvent(AccEvent* aEvent)
 
     switch (type) {
     case nsIAccessibleEvent::EVENT_STATE_CHANGE:
-        return FireAtkStateChangeEvent(aEvent, atkObj);
+      {
+        AccStateChangeEvent* event = downcast_accEvent(aEvent);
+        MAI_ATK_OBJECT(atkObj)->FireStateChangeEvent(event->GetState(),
+                                                     event->IsStateEnabled());
+        break;
+      }
 
     case nsIAccessibleEvent::EVENT_TEXT_REMOVED:
     case nsIAccessibleEvent::EVENT_TEXT_INSERTED:
-        return FireAtkTextChangedEvent(aEvent, atkObj);
+      {
+        AccTextChangeEvent* event = downcast_accEvent(aEvent);
+        NS_ENSURE_TRUE(event, NS_ERROR_FAILURE);
+
+        MAI_ATK_OBJECT(atkObj)-> FireTextChangeEvent(event->ModifiedText(),
+                                                     event->GetStartOffset(),
+                                                     event->GetLength(),
+                                                     event->IsTextInserted(),
+                                                     event->IsFromUserInput());
+
+        return NS_OK;
+      }
 
     case nsIAccessibleEvent::EVENT_FOCUS:
       {
@@ -1353,21 +1417,52 @@ void
 a11y::ProxyEvent(ProxyAccessible* aTarget, uint32_t aEventType)
 {
   AtkObject* wrapper = GetWrapperFor(aTarget);
-  if (aEventType == nsIAccessibleEvent::EVENT_FOCUS) {
+
+  switch (aEventType) {
+  case nsIAccessibleEvent::EVENT_FOCUS:
     atk_focus_tracker_notify(wrapper);
     atk_object_notify_state_change(wrapper, ATK_STATE_FOCUSED, true);
+    break;
+  case nsIAccessibleEvent::EVENT_DOCUMENT_LOAD_COMPLETE:
+    g_signal_emit_by_name(wrapper, "load_complete");
+    break;
+  case nsIAccessibleEvent::EVENT_DOCUMENT_RELOAD:
+    g_signal_emit_by_name(wrapper, "reload");
+    break;
+  case nsIAccessibleEvent::EVENT_DOCUMENT_LOAD_STOPPED:
+    g_signal_emit_by_name(wrapper, "load_stopped");
+    break;
+  case nsIAccessibleEvent::EVENT_MENUPOPUP_START:
+    atk_focus_tracker_notify(wrapper); // fire extra focus event
+    atk_object_notify_state_change(wrapper, ATK_STATE_VISIBLE, true);
+    atk_object_notify_state_change(wrapper, ATK_STATE_SHOWING, true);
+    break;
+  case nsIAccessibleEvent::EVENT_MENUPOPUP_END:
+    atk_object_notify_state_change(wrapper, ATK_STATE_VISIBLE, false);
+    atk_object_notify_state_change(wrapper, ATK_STATE_SHOWING, false);
+    break;
   }
 }
 
-nsresult
-AccessibleWrap::FireAtkStateChangeEvent(AccEvent* aEvent,
-                                        AtkObject* aObject)
+void
+a11y::ProxyStateChangeEvent(ProxyAccessible* aTarget, uint64_t aState,
+                            bool aEnabled)
 {
-    AccStateChangeEvent* event = downcast_accEvent(aEvent);
-    NS_ENSURE_TRUE(event, NS_ERROR_FAILURE);
+  MaiAtkObject* atkObj = MAI_ATK_OBJECT(GetWrapperFor(aTarget));
+  atkObj->FireStateChangeEvent(aState, aEnabled);
+}
 
-    bool isEnabled = event->IsStateEnabled();
-    int32_t stateIndex = AtkStateMap::GetStateIndexFor(event->GetState());
+void
+a11y::ProxyCaretMoveEvent(ProxyAccessible* aTarget, int32_t aOffset)
+{
+  AtkObject* wrapper = GetWrapperFor(aTarget);
+  g_signal_emit_by_name(wrapper, "text_caret_moved", aOffset);
+}
+
+void
+MaiAtkObject::FireStateChangeEvent(uint64_t aState, bool aEnabled)
+{
+    int32_t stateIndex = AtkStateMap::GetStateIndexFor(aState);
     if (stateIndex >= 0) {
         NS_ASSERTION(gAtkStateMap[stateIndex].stateMapEntryType != kNoSuchState,
                      "No such state");
@@ -1377,56 +1472,72 @@ AccessibleWrap::FireAtkStateChangeEvent(AccEvent* aEvent,
                          "State changes should not fired for this state");
 
             if (gAtkStateMap[stateIndex].stateMapEntryType == kMapOpposite)
-                isEnabled = !isEnabled;
+                aEnabled = !aEnabled;
 
             // Fire state change for first state if there is one to map
-            atk_object_notify_state_change(aObject,
+            atk_object_notify_state_change(&parent,
                                            gAtkStateMap[stateIndex].atkState,
-                                           isEnabled);
+                                           aEnabled);
         }
     }
-
-    return NS_OK;
 }
 
-nsresult
-AccessibleWrap::FireAtkTextChangedEvent(AccEvent* aEvent,
-                                        AtkObject* aObject)
+void
+a11y::ProxyTextChangeEvent(ProxyAccessible* aTarget, const nsString& aStr,
+                           int32_t aStart, uint32_t aLen, bool aIsInsert,
+                           bool aFromUser)
 {
-    AccTextChangeEvent* event = downcast_accEvent(aEvent);
-    NS_ENSURE_TRUE(event, NS_ERROR_FAILURE);
+  MaiAtkObject* atkObj = MAI_ATK_OBJECT(GetWrapperFor(aTarget));
+  atkObj->FireTextChangeEvent(aStr, aStart, aLen, aIsInsert, aFromUser);
+}
 
-    int32_t start = event->GetStartOffset();
-    uint32_t length = event->GetLength();
-    bool isInserted = event->IsTextInserted();
-    bool isFromUserInput = aEvent->IsFromUserInput();
-    char* signal_name = nullptr;
+#define OLD_TEXT_INSERTED "text_changed::insert"
+#define OLD_TEXT_REMOVED "text_changed::delete"
+static const char* oldTextChangeStrings[2][2] = {
+  { OLD_TEXT_REMOVED NON_USER_EVENT, OLD_TEXT_INSERTED NON_USER_EVENT },
+  { OLD_TEXT_REMOVED, OLD_TEXT_INSERTED }
+};
 
+#define TEXT_INSERTED "text-insert"
+#define TEXT_REMOVED "text-remove"
+#define NON_USER_DETAIL "::system"
+static const char* textChangedStrings[2][2] = {
+  { TEXT_REMOVED NON_USER_DETAIL, TEXT_INSERTED NON_USER_DETAIL },
+  { TEXT_REMOVED, TEXT_INSERTED}
+};
+
+void
+MaiAtkObject::FireTextChangeEvent(const nsString& aStr, int32_t aStart,
+                                  uint32_t aLen, bool aIsInsert,
+                                  bool aFromUser)
+{
   if (gAvailableAtkSignals == eUnknown)
     gAvailableAtkSignals =
-      g_signal_lookup("text-insert", G_OBJECT_TYPE(aObject)) ?
+      g_signal_lookup("text-insert", G_OBJECT_TYPE(this)) ?
         eHaveNewAtkTextSignals : eNoNewAtkSignals;
 
   if (gAvailableAtkSignals == eNoNewAtkSignals) {
     // XXX remove this code and the gHaveNewTextSignals check when we can
     // stop supporting old atk since it doesn't really work anyway
     // see bug 619002
-    signal_name = g_strconcat(isInserted ? "text_changed::insert" :
-                              "text_changed::delete",
-                              isFromUserInput ? "" : kNonUserInputEvent, nullptr);
-    g_signal_emit_by_name(aObject, signal_name, start, length);
+    const char* signal_name =
+      oldTextChangeStrings[aFromUser][aIsInsert];
+    g_signal_emit_by_name(this, signal_name, aStart, aLen);
   } else {
-    nsAutoString text;
-    event->GetModifiedText(text);
-    signal_name = g_strconcat(isInserted ? "text-insert" : "text-remove",
-                              isFromUserInput ? "" : "::system", nullptr);
-    g_signal_emit_by_name(aObject, signal_name, start, length,
-                          NS_ConvertUTF16toUTF8(text).get());
+    const char* signal_name =
+      textChangedStrings[aFromUser][aIsInsert];
+    g_signal_emit_by_name(this, signal_name, aStart, aLen,
+                          NS_ConvertUTF16toUTF8(aStr).get());
   }
-
-  g_free(signal_name);
-  return NS_OK;
 }
+
+#define ADD_EVENT "children_changed::add"
+#define HIDE_EVENT "children_changed::remove"
+
+static const char *kMutationStrings[2][2] = {
+  { HIDE_EVENT NON_USER_EVENT, ADD_EVENT NON_USER_EVENT },
+  { HIDE_EVENT, ADD_EVENT },
+};
 
 nsresult
 AccessibleWrap::FireAtkShowHideEvent(AccEvent* aEvent,
@@ -1437,10 +1548,8 @@ AccessibleWrap::FireAtkShowHideEvent(AccEvent* aEvent,
     NS_ENSURE_STATE(parentObject);
 
     bool isFromUserInput = aEvent->IsFromUserInput();
-    char *signal_name = g_strconcat(aIsAdded ? "children_changed::add" :  "children_changed::remove",
-                                    isFromUserInput ? "" : kNonUserInputEvent, nullptr);
+    const char *signal_name = kMutationStrings[isFromUserInput][aIsAdded];
     g_signal_emit_by_name(parentObject, signal_name, indexInParent, aObject, nullptr);
-    g_free(signal_name);
 
     return NS_OK;
 }

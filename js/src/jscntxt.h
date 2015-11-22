@@ -11,6 +11,7 @@
 
 #include "mozilla/MemoryReporting.h"
 
+#include "js/TraceableVector.h"
 #include "js/Vector.h"
 #include "vm/Runtime.h"
 
@@ -26,13 +27,13 @@ namespace js {
 namespace jit {
 class JitContext;
 class DebugModeOSRVolatileJitFrameIterator;
-}
+} // namespace jit
 
 typedef HashSet<JSObject*> ObjectSet;
 typedef HashSet<Shape*> ShapeSet;
 
 /* Detects cycles when traversing an object graph. */
-class AutoCycleDetector
+class MOZ_RAII AutoCycleDetector
 {
     JSContext* cx;
     RootedObject obj;
@@ -292,6 +293,9 @@ struct JSContext : public js::ExclusiveContext,
     static size_t offsetOfRuntime() {
         return offsetof(JSContext, runtime_);
     }
+    static size_t offsetOfCompartment() {
+        return offsetof(JSContext, compartment_);
+    }
 
     friend class js::ExclusiveContext;
     friend class JS::AutoSaveExceptionState;
@@ -301,7 +305,7 @@ struct JSContext : public js::ExclusiveContext,
   private:
     /* Exception state -- the exception member is a GC root by definition. */
     bool                throwing;            /* is there a pending exception? */
-    js::Value           unwrappedException_; /* most-recently-thrown exception */
+    JS::PersistentRooted<JS::Value> unwrappedException_; /* most-recently-thrown exception */
 
     /* Per-context options. */
     JS::ContextOptions  options_;
@@ -462,7 +466,7 @@ struct JSContext : public js::ExclusiveContext,
 
 namespace js {
 
-struct AutoResolving {
+struct MOZ_RAII AutoResolving {
   public:
     enum Kind {
         LOOKUP,
@@ -501,10 +505,11 @@ struct AutoResolving {
 /*
  * Enumerate all contexts in a runtime.
  */
-class ContextIter {
+class ContextIter
+{
     JSContext* iter;
 
-public:
+  public:
     explicit ContextIter(JSRuntime* rt) {
         iter = rt->contextList.getFirst();
     }
@@ -659,51 +664,13 @@ CheckForInterrupt(JSContext* cx)
 
 /************************************************************************/
 
-typedef JS::AutoVectorRooter<JSString*> AutoStringVector;
 typedef JS::AutoVectorRooter<PropertyName*> AutoPropertyNameVector;
-typedef JS::AutoVectorRooter<Shape*> AutoShapeVector;
 
-class AutoObjectObjectHashMap : public AutoHashMapRooter<JSObject*, JSObject*>
-{
-  public:
-    explicit AutoObjectObjectHashMap(JSContext* cx
-                                     MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : AutoHashMapRooter<JSObject*, JSObject*>(cx, OBJOBJHASHMAP)
-    {
-        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-    }
-
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-};
-
-class AutoObjectUnsigned32HashMap : public AutoHashMapRooter<JSObject*, uint32_t>
-{
-  public:
-    explicit AutoObjectUnsigned32HashMap(JSContext* cx
-                                         MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : AutoHashMapRooter<JSObject*, uint32_t>(cx, OBJU32HASHMAP)
-    {
-        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-    }
-
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-};
-
-class AutoObjectHashSet : public AutoHashSetRooter<JSObject*>
-{
-  public:
-    explicit AutoObjectHashSet(JSContext* cx
-                               MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : AutoHashSetRooter<JSObject*>(cx, OBJHASHSET)
-    {
-        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-    }
-
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-};
+using ShapeVector = js::TraceableVector<Shape*>;
+using StringVector = js::TraceableVector<JSString*>;
 
 /* AutoArrayRooter roots an external array of Values. */
-class AutoArrayRooter : private JS::AutoGCRooter
+class MOZ_RAII AutoArrayRooter : private JS::AutoGCRooter
 {
   public:
     AutoArrayRooter(JSContext* cx, size_t len, Value* vec
@@ -779,47 +746,10 @@ class AutoAssertNoException
     }
 };
 
-/* Exposed intrinsics so that Ion may inline them. */
-bool intrinsic_ToObject(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_IsObject(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_ToInteger(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_ToString(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_IsCallable(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_ThrowRangeError(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_ThrowTypeError(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_NewDenseArray(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_IsConstructing(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_SubstringKernel(JSContext* cx, unsigned argc, Value* vp);
-
-bool intrinsic_UnsafePutElements(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_DefineDataProperty(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_UnsafeSetReservedSlot(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_UnsafeGetReservedSlot(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_UnsafeGetObjectFromReservedSlot(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_UnsafeGetInt32FromReservedSlot(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_UnsafeGetStringFromReservedSlot(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_UnsafeGetBooleanFromReservedSlot(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_IsPackedArray(JSContext* cx, unsigned argc, Value* vp);
-
+/* Exposed intrinsics for the JITs. */
 bool intrinsic_IsSuspendedStarGenerator(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_IsArrayIterator(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_IsStringIterator(JSContext* cx, unsigned argc, Value* vp);
 
-bool intrinsic_IsArrayBuffer(JSContext* cx, unsigned argc, Value* vp);
-
-bool intrinsic_IsTypedArray(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_IsPossiblyWrappedTypedArray(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_TypedArrayBuffer(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_TypedArrayByteOffset(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_TypedArrayElementShift(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_TypedArrayLength(JSContext* cx, unsigned argc, Value* vp);
-
-bool intrinsic_MoveTypedArrayElements(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_SetFromTypedArrayApproach(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_SetDisjointTypedElements(JSContext* cx, unsigned argc, Value* vp);
-bool intrinsic_SetOverlappingTypedElements(JSContext* cx, unsigned argc, Value* vp);
-
-class AutoLockForExclusiveAccess
+class MOZ_RAII AutoLockForExclusiveAccess
 {
     JSRuntime* runtime;
 

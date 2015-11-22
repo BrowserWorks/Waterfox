@@ -4,7 +4,7 @@
 
 const Cu = Components.utils;
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
-const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools;
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const {AppManager} = require("devtools/webide/app-manager");
 const {Connection} = require("devtools/client/connection-manager");
 const {RuntimeTypes} = require("devtools/webide/runtimes");
@@ -55,7 +55,7 @@ function generateFields(json) {
   };
 }
 
-let getDescriptionPromise; // Used by tests
+var getDescriptionPromise; // Used by tests
 function BuildUI() {
   let table = document.querySelector("table");
   table.innerHTML = "";

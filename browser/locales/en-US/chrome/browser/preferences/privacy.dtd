@@ -4,12 +4,17 @@
 
 <!ENTITY tracking.label                 "Tracking">
 
-<!ENTITY dntTrackingNotOkay.label2      "Tell sites that I do not want to be tracked">
-<!ENTITY dntTrackingNotOkay.accesskey   "n">
-<!ENTITY trackingProtection.label       "Prevent sites from tracking me">
-<!ENTITY trackingProtection.accesskey   "m">
+<!ENTITY dntTrackingNotOkay4.label     "Request that sites not track you">
+<!ENTITY dntTrackingNotOkay4.accesskey "n">
+<!ENTITY doNotTrackInfo.label          "Learn More">
+<!ENTITY trackingProtection5.label     "Use Tracking Protection">
+<!ENTITY trackingProtection5.accesskey "i">
 <!ENTITY trackingProtectionLearnMore.label "Learn more">
-<!ENTITY doNotTrackInfo.label           "Learn More">
+<!ENTITY trackingProtectionPBM5.label         "Use Tracking Protection in Private Windows">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Learn more">
+<!ENTITY changeBlockList.label          "Change Block List">
+<!ENTITY changeBlockList.accesskey      "C">
 
 <!ENTITY  history.label                 "History">
 
@@ -22,6 +27,11 @@
 <!ENTITY  locbar.bookmarks.accesskey    "k">
 <!ENTITY  locbar.openpage.label         "Open tabs">
 <!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Related searches from the default search engine">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Change preferences for search engine suggestions…">
+<!ENTITY  suggestionSettings.accesskey  "g">
 
 <!ENTITY  acceptCookies.label           "Accept cookies from sites">
 <!ENTITY  acceptCookies.accesskey       "A">

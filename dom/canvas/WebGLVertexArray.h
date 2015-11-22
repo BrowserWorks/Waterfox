@@ -6,9 +6,10 @@
 #ifndef WEBGL_VERTEX_ARRAY_H_
 #define WEBGL_VERTEX_ARRAY_H_
 
+#include "nsTArray.h"
 #include "mozilla/LinkedList.h"
 #include "nsWrapperCache.h"
-#include "WebGLBindableName.h"
+
 #include "WebGLBuffer.h"
 #include "WebGLObjectModel.h"
 #include "WebGLStrongTypes.h"
@@ -20,7 +21,6 @@ class WebGLVertexArrayFake;
 
 class WebGLVertexArray
     : public nsWrapperCache
-    , public WebGLBindable<VAOBinding>
     , public WebGLRefCountedObject<WebGLVertexArray>
     , public LinkedListElement<WebGLVertexArray>
     , public WebGLContextBoundObject
@@ -31,13 +31,8 @@ public:
     void BindVertexArray() {
         // Bind to dummy value to signal that this vertex array has ever been
         // bound.
-        BindTo(LOCAL_GL_VERTEX_ARRAY_BINDING);
         BindVertexArrayImpl();
     };
-
-    virtual void GenVertexArray() = 0;
-    virtual void BindVertexArrayImpl() = 0;
-    virtual void DeleteImpl() = 0;
 
     void EnsureAttrib(GLuint index);
     bool HasAttrib(GLuint index) const {
@@ -49,12 +44,13 @@ public:
 
     // Implement parent classes:
     void Delete();
+    bool IsVertexArray();
 
     WebGLContext* GetParentObject() const {
         return Context();
     }
 
-    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override;
+    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> givenProto) override;
 
     NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(WebGLVertexArray)
     NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(WebGLVertexArray)
@@ -67,6 +63,11 @@ protected:
     virtual ~WebGLVertexArray() {
         MOZ_ASSERT(IsDeleted());
     }
+
+    virtual void GenVertexArray() = 0;
+    virtual void BindVertexArrayImpl() = 0;
+    virtual void DeleteImpl() = 0;
+    virtual bool IsVertexArrayImpl() = 0;
 
     GLuint mGLName;
     nsTArray<WebGLVertexAttribData> mAttribs;

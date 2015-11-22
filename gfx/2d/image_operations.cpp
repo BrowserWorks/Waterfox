@@ -37,10 +37,10 @@
 
 #include "base/stack_container.h"
 #include "convolver.h"
-#include "skia/SkColorPriv.h"
-#include "skia/SkBitmap.h"
-#include "skia/SkRect.h"
-#include "skia/SkFontHost.h"
+#include "skia/include/core/SkColorPriv.h"
+#include "skia/include/core/SkBitmap.h"
+#include "skia/include/core/SkRect.h"
+#include "skia/include/core/SkFontHost.h"
 
 namespace skia {
 
@@ -155,7 +155,7 @@ void ComputeFilters(ImageOperations::ResizeMethod method,
   output->PaddingForSIMD(8);
 }
 
-}
+} // namespace resize
 
 ImageOperations::ResizeMethod ResizeMethodToAlgorithmMethod(
     ImageOperations::ResizeMethod method) {
@@ -388,4 +388,4 @@ SkBitmap ImageOperations::Resize(const SkBitmap& source,
                 dest_pixels);
 }
 
-}  // namespace skia
+} // namespace skia

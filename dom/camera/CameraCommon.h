@@ -7,24 +7,12 @@
 #ifndef DOM_CAMERA_CAMERACOMMON_H
 #define DOM_CAMERA_CAMERACOMMON_H
 
-#ifndef __func__
-#ifdef __FUNCTION__
-#define __func__ __FUNCTION__
-#else
-#define __func__ __FILE__
-#endif
-#endif
+#include "mozilla/Logging.h"
 
-#include "prlog.h"
-
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* GetCameraLog();
-#define DOM_CAMERA_LOG( type, ... ) PR_LOG(GetCameraLog(), (PRLogModuleLevel)type, ( __VA_ARGS__ ))
-#else
-#define DOM_CAMERA_LOG( type, ... )
-#endif
+#define DOM_CAMERA_LOG( type, ... ) MOZ_LOG(GetCameraLog(), (mozilla::LogLevel)type, ( __VA_ARGS__ ))
 
-#define DOM_CAMERA_LOGA( ... )      DOM_CAMERA_LOG( 0, __VA_ARGS__ )
+#define DOM_CAMERA_LOGA( ... )      DOM_CAMERA_LOG( mozilla::LogLevel::Error, __VA_ARGS__ )
 
 /**
  * From the least to the most output.
@@ -42,16 +30,12 @@ enum {
  * DOM_CAMERA_LOGR() can be called before 'gCameraLog' is set, so
  * we need to handle this one a little differently.
  */
-#ifdef PR_LOGGING
 #define DOM_CAMERA_LOGR( ... )                                  \
   do {                                                          \
     if (GetCameraLog()) {                                       \
       DOM_CAMERA_LOG( DOM_CAMERA_LOG_REFERENCES, __VA_ARGS__ ); \
     }                                                           \
   } while (0)
-#else
-#define DOM_CAMERA_LOGR( ... )
-#endif
 #define DOM_CAMERA_LOGT( ... )      DOM_CAMERA_LOG( DOM_CAMERA_LOG_TRACE, __VA_ARGS__ )
 #define DOM_CAMERA_LOGI( ... )      DOM_CAMERA_LOG( DOM_CAMERA_LOG_INFO, __VA_ARGS__ )
 #define DOM_CAMERA_LOGW( ... )      DOM_CAMERA_LOG( DOM_CAMERA_LOG_WARNING, __VA_ARGS__ )

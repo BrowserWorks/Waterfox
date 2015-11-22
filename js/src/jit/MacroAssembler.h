@@ -7,6 +7,7 @@
 #ifndef jit_MacroAssembler_h
 #define jit_MacroAssembler_h
 
+#include "mozilla/MacroForEach.h"
 #include "mozilla/MathAlgorithms.h"
 
 #include "jscompartment.h"
@@ -17,8 +18,10 @@
 # include "jit/x64/MacroAssembler-x64.h"
 #elif defined(JS_CODEGEN_ARM)
 # include "jit/arm/MacroAssembler-arm.h"
-#elif defined(JS_CODEGEN_MIPS)
-# include "jit/mips/MacroAssembler-mips.h"
+#elif defined(JS_CODEGEN_ARM64)
+# include "jit/arm64/MacroAssembler-arm64.h"
+#elif defined(JS_CODEGEN_MIPS32)
+# include "jit/mips32/MacroAssembler-mips32.h"
 #elif defined(JS_CODEGEN_NONE)
 # include "jit/none/MacroAssembler-none.h"
 #else
@@ -32,25 +35,133 @@
 #include "vm/Shape.h"
 #include "vm/UnboxedObject.h"
 
-// This Macro is only a hint for code readers that the function is defined in a
-// specific macro assembler, and not in the generic macro assembler.  Thus, when
-// looking for the implementation one might find if the function is implemented
-// and where it is supposed to be implemented.
-# define PER_ARCH
+// * How to read/write MacroAssembler method declarations:
+//
+// The following macros are made to avoid #ifdef around each method declarations
+// of the Macro Assembler, and they are also used as an hint on the location of
+// the implementations of each method.  For example, the following declaration
+//
+//   void Pop(FloatRegister t) DEFINED_ON(x86_shared, arm);
+//
+// suggests the MacroAssembler::Pop(FloatRegister) method is implemented in
+// x86-shared/MacroAssembler-x86-shared.h, and also in arm/MacroAssembler-arm.h.
+//
+// - If there is no annotation, then there is only one generic definition in
+//   MacroAssembler.cpp.
+//
+// - If the declaration is "inline", then the method definition(s) would be in
+//   the "-inl.h" variant of the same file(s).
+//
+// The script check_macroassembler_style.py (check-masm target of the Makefile)
+// is used to verify that method definitions are matching the annotation added
+// to the method declarations.  If there is any difference, then you either
+// forgot to define the method in one of the macro assembler, or you forgot to
+// update the annotation of the macro assembler declaration.
+//
+// Some convenient short-cuts are used to avoid repeating the same list of
+// architectures on each method declaration, such as PER_ARCH and
+// PER_SHARED_ARCH.
 
+# define ALL_ARCH mips32, arm, arm64, x86, x64
+# define ALL_SHARED_ARCH mips32, arm, arm64, x86_shared
+
+// * How this macro works:
+//
+// DEFINED_ON is a macro which check if, for the current architecture, the
+// method is defined on the macro assembler or not.
+//
+// For each architecutre, we have a macro named DEFINED_ON_arch.  This macro is
+// empty if this is not the current architecture.  Otherwise it must be either
+// set to "define" or "crash" (only use for the none target so-far).
+//
+// The DEFINED_ON macro maps the list of architecture names given as argument to
+// a list of macro names.  For example,
+//
+//   DEFINED_ON(arm, x86_shared)
+//
+// is expanded to
+//
+//   DEFINED_ON_none DEFINED_ON_arm DEFINED_ON_x86_shared
+//
+// which are later expanded on ARM, x86, x64 by DEFINED_ON_EXPAND_ARCH_RESULTS
+// to
+//
+//   define
+//
+// or if the JIT is disabled or set to no architecture to
+//
+//   crash
+//
+// or to nothing, if the current architecture is not lsited in the list of
+// arguments of DEFINED_ON.  Note, only one of the DEFINED_ON_arch macro
+// contributes to the non-empty result, which is the macro of the current
+// architecture if it is listed in the arguments of DEFINED_ON.
+//
+// This result is appended to DEFINED_ON_RESULT_ before expanding the macro,
+// which result is either no annotation, a MOZ_CRASH(), or a "= delete"
+// annotation on the method declaration.
+
+# define DEFINED_ON_x86
+# define DEFINED_ON_x64
+# define DEFINED_ON_x86_shared
+# define DEFINED_ON_arm
+# define DEFINED_ON_arm64
+# define DEFINED_ON_mips32
+# define DEFINED_ON_none
+
+// Specialize for each architecture.
 #if defined(JS_CODEGEN_X86)
-# define ONLY_X86_X64
+# undef DEFINED_ON_x86
+# define DEFINED_ON_x86 define
+# undef DEFINED_ON_x86_shared
+# define DEFINED_ON_x86_shared define
 #elif defined(JS_CODEGEN_X64)
-# define ONLY_X86_X64
+# undef DEFINED_ON_x64
+# define DEFINED_ON_x64 define
+# undef DEFINED_ON_x86_shared
+# define DEFINED_ON_x86_shared define
 #elif defined(JS_CODEGEN_ARM)
-# define ONLY_X86_X64 = delete
-#elif defined(JS_CODEGEN_MIPS)
-# define ONLY_X86_X64 = delete
+# undef DEFINED_ON_arm
+# define DEFINED_ON_arm define
+#elif defined(JS_CODEGEN_ARM64)
+# undef DEFINED_ON_arm64
+# define DEFINED_ON_arm64 define
+#elif defined(JS_CODEGEN_MIPS32)
+# undef DEFINED_ON_mips32
+# define DEFINED_ON_mips32 define
 #elif defined(JS_CODEGEN_NONE)
-# define ONLY_X86_X64 = delete
+# undef DEFINED_ON_none
+# define DEFINED_ON_none crash
 #else
 # error "Unknown architecture!"
 #endif
+
+# define DEFINED_ON_RESULT_crash   { MOZ_CRASH(); }
+# define DEFINED_ON_RESULT_define
+# define DEFINED_ON_RESULT_        = delete
+
+# define DEFINED_ON_DISPATCH_RESULT(Result)     \
+    DEFINED_ON_RESULT_ ## Result
+
+// We need to let the evaluation of MOZ_FOR_EACH terminates.
+# define DEFINED_ON_EXPAND_ARCH_RESULTS_3(ParenResult)  \
+    DEFINED_ON_DISPATCH_RESULT ParenResult
+# define DEFINED_ON_EXPAND_ARCH_RESULTS_2(ParenResult)  \
+    DEFINED_ON_EXPAND_ARCH_RESULTS_3 (ParenResult)
+# define DEFINED_ON_EXPAND_ARCH_RESULTS(ParenResult)    \
+    DEFINED_ON_EXPAND_ARCH_RESULTS_2 (ParenResult)
+
+# define DEFINED_ON_FWDARCH(Arch) DEFINED_ON_ ## Arch
+# define DEFINED_ON_MAP_ON_ARCHS(ArchList)              \
+    DEFINED_ON_EXPAND_ARCH_RESULTS(                     \
+      (MOZ_FOR_EACH(DEFINED_ON_FWDARCH, (), ArchList)))
+
+# define DEFINED_ON(...)                                \
+    DEFINED_ON_MAP_ON_ARCHS((none, __VA_ARGS__))
+
+# define PER_ARCH DEFINED_ON(ALL_ARCH)
+# define PER_SHARED_ARCH DEFINED_ON(ALL_SHARED_ARCH)
+
 
 #ifdef IS_LITTLE_ENDIAN
 #define IMM32_16ADJ(X) X << 16
@@ -60,6 +171,9 @@
 
 namespace js {
 namespace jit {
+
+// Defined in JitFrames.h
+enum ExitFrameTokenValues;
 
 // The public entrypoint for emitting assembly. Note that a MacroAssembler can
 // use cx->lifoAlloc, so take care not to interleave masm use with other
@@ -209,17 +323,16 @@ class MacroAssembler : public MacroAssemblerSpecific
     mozilla::Maybe<AutoJitContextAlloc> alloc_;
 
   private:
-    // This field is used to manage profiling instrumentation output. If
-    // provided and enabled, then instrumentation will be emitted around call
-    // sites.
-    bool emitProfilingInstrumentation_;
-
     // Labels for handling exceptions and failures.
     NonAssertingLabel failureLabel_;
 
   public:
     MacroAssembler()
-      : emitProfilingInstrumentation_(false)
+      : framePushed_(0),
+#ifdef DEBUG
+        inCall_(false),
+#endif
+        emitProfilingInstrumentation_(false)
     {
         JitContext* jcx = GetJitContext();
         JSContext* cx = jcx->cx;
@@ -232,53 +345,40 @@ class MacroAssembler : public MacroAssemblerSpecific
         }
 
         moveResolver_.setAllocator(*jcx->temp);
-#ifdef JS_CODEGEN_ARM
+
+#if defined(JS_CODEGEN_ARM)
         initWithAllocator();
         m_buffer.id = jcx->getNextAssemblerId();
+#elif defined(JS_CODEGEN_ARM64)
+        initWithAllocator();
+        armbuffer_.id = jcx->getNextAssemblerId();
 #endif
     }
 
     // This constructor should only be used when there is no JitContext active
     // (for example, Trampoline-$(ARCH).cpp and IonCaches.cpp).
     explicit MacroAssembler(JSContext* cx, IonScript* ion = nullptr,
-                            JSScript* script = nullptr, jsbytecode* pc = nullptr)
-      : emitProfilingInstrumentation_(false)
-    {
-        constructRoot(cx);
-        jitContext_.emplace(cx, (js::jit::TempAllocator*)nullptr);
-        alloc_.emplace(cx);
-        moveResolver_.setAllocator(*jitContext_->temp);
-#ifdef JS_CODEGEN_ARM
-        initWithAllocator();
-        m_buffer.id = GetJitContext()->getNextAssemblerId();
-#endif
-        if (ion) {
-            setFramePushed(ion->frameSize());
-            if (pc && cx->runtime()->spsProfiler.enabled())
-                emitProfilingInstrumentation_ = true;
-        }
-    }
+                            JSScript* script = nullptr, jsbytecode* pc = nullptr);
 
     // asm.js compilation handles its own JitContext-pushing
     struct AsmJSToken {};
     explicit MacroAssembler(AsmJSToken)
-      : emitProfilingInstrumentation_(false)
+      : framePushed_(0),
+#ifdef DEBUG
+        inCall_(false),
+#endif
+        emitProfilingInstrumentation_(false)
     {
-#ifdef JS_CODEGEN_ARM
+#if defined(JS_CODEGEN_ARM)
         initWithAllocator();
         m_buffer.id = 0;
+#elif defined(JS_CODEGEN_ARM64)
+        initWithAllocator();
+        armbuffer_.id = 0;
 #endif
     }
 
-    void enableProfilingInstrumentation() {
-        emitProfilingInstrumentation_ = true;
-    }
-
-    void resetForNewCodeGenerator(TempAllocator& alloc) {
-        setFramePushed(0);
-        moveResolver_.clearTempObjectPool();
-        moveResolver_.setAllocator(alloc);
-    }
+    void resetForNewCodeGenerator(TempAllocator& alloc);
 
     void constructRoot(JSContext* cx) {
         autoRooter_.emplace(cx, this);
@@ -292,24 +392,45 @@ class MacroAssembler : public MacroAssemblerSpecific
         return size();
     }
 
+    //{{{ check_macroassembler_style
+  public:
+    // ===============================================================
+    // Frame manipulation functions.
+
+    inline uint32_t framePushed() const;
+    inline void setFramePushed(uint32_t framePushed);
+    inline void adjustFrame(int32_t value);
+
+    // Adjust the frame, to account for implicit modification of the stack
+    // pointer, such that callee can remove arguments on the behalf of the
+    // caller.
+    inline void implicitPop(uint32_t bytes);
+
+  private:
+    // This field is used to statically (at compilation time) emulate a frame
+    // pointer by keeping track of stack manipulations.
+    //
+    // It is maintained by all stack manipulation functions below.
+    uint32_t framePushed_;
+
   public:
     // ===============================================================
     // Stack manipulation functions.
 
-    void PushRegsInMask(LiveRegisterSet set) PER_ARCH;
+    void PushRegsInMask(LiveRegisterSet set) PER_SHARED_ARCH;
     void PushRegsInMask(LiveGeneralRegisterSet set);
 
     void PopRegsInMask(LiveRegisterSet set);
     void PopRegsInMask(LiveGeneralRegisterSet set);
-    void PopRegsInMaskIgnore(LiveRegisterSet set, LiveRegisterSet ignore) PER_ARCH;
+    void PopRegsInMaskIgnore(LiveRegisterSet set, LiveRegisterSet ignore) PER_SHARED_ARCH;
 
-    void Push(const Operand op) PER_ARCH ONLY_X86_X64;
-    void Push(Register reg) PER_ARCH;
-    void Push(const Imm32 imm) PER_ARCH;
-    void Push(const ImmWord imm) PER_ARCH;
-    void Push(const ImmPtr imm) PER_ARCH;
-    void Push(const ImmGCPtr ptr) PER_ARCH;
-    void Push(FloatRegister reg) PER_ARCH;
+    void Push(const Operand op) DEFINED_ON(x86_shared);
+    void Push(Register reg) PER_SHARED_ARCH;
+    void Push(const Imm32 imm) PER_SHARED_ARCH;
+    void Push(const ImmWord imm) PER_SHARED_ARCH;
+    void Push(const ImmPtr imm) PER_SHARED_ARCH;
+    void Push(const ImmGCPtr ptr) PER_SHARED_ARCH;
+    void Push(FloatRegister reg) PER_SHARED_ARCH;
     void Push(jsid id, Register scratchReg);
     void Push(TypedOrValueRegister v);
     void Push(ConstantOrRegister v);
@@ -318,27 +439,290 @@ class MacroAssembler : public MacroAssemblerSpecific
     void Push(JSValueType type, Register reg);
     void PushValue(const Address& addr);
     void PushEmptyRooted(VMFunction::RootType rootType);
+    inline CodeOffsetLabel PushWithPatch(ImmWord word);
+    inline CodeOffsetLabel PushWithPatch(ImmPtr imm);
 
-    void Pop(const Operand op) PER_ARCH ONLY_X86_X64;
-    void Pop(Register reg) PER_ARCH;
-    void Pop(FloatRegister t) PER_ARCH ONLY_X86_X64;
-    void Pop(const ValueOperand& val) PER_ARCH;
+    void Pop(const Operand op) DEFINED_ON(x86_shared);
+    void Pop(Register reg) PER_SHARED_ARCH;
+    void Pop(FloatRegister t) DEFINED_ON(x86_shared);
+    void Pop(const ValueOperand& val) PER_SHARED_ARCH;
     void popRooted(VMFunction::RootType rootType, Register cellReg, const ValueOperand& valueReg);
 
+    // Move the stack pointer based on the requested amount.
     void adjustStack(int amount);
+    void reserveStack(uint32_t amount) PER_ARCH;
+    void freeStack(uint32_t amount);
 
+    // Warning: This method does not update the framePushed() counter.
+    void freeStack(Register amount);
+
+  private:
+    // ===============================================================
+    // Register allocation fields.
+#ifdef DEBUG
+    friend AutoRegisterScope;
+    friend AutoFloatRegisterScope;
+    // Used to track register scopes for debug builds.
+    // Manipulated by the AutoGenericRegisterScope class.
+    AllocatableRegisterSet debugTrackedRegisters_;
+#endif // DEBUG
+
+  public:
+    // ===============================================================
+    // Simple call functions.
+
+    void call(Register reg) PER_SHARED_ARCH;
+    void call(const Address& addr) DEFINED_ON(x86_shared);
+    void call(Label* label) PER_SHARED_ARCH;
+    void call(ImmWord imm) PER_SHARED_ARCH;
+    // Call a target native function, which is neither traceable nor movable.
+    void call(ImmPtr imm) PER_SHARED_ARCH;
+    void call(AsmJSImmPtr imm) PER_SHARED_ARCH;
+    // Call a target JitCode, which must be traceable, and may be movable.
+    void call(JitCode* c) PER_SHARED_ARCH;
+
+    inline void call(const CallSiteDesc& desc, const Register reg);
+    inline void call(const CallSiteDesc& desc, Label* label);
+
+    // Push the return address and make a call. On platforms where this function
+    // is not defined, push the link register (pushReturnAddress) at the entry
+    // point of the callee.
+    void callAndPushReturnAddress(Register reg) DEFINED_ON(mips32, x86_shared);
+    void callAndPushReturnAddress(Label* label) DEFINED_ON(mips32, x86_shared);
+
+    void pushReturnAddress() DEFINED_ON(arm, arm64);
+
+  public:
+    // ===============================================================
+    // ABI function calls.
+
+    // Setup a call to C/C++ code, given the assumption that the framePushed
+    // accruately define the state of the stack, and that the top of the stack
+    // was properly aligned. Note that this only supports cdecl.
+    void setupAlignedABICall(); // CRASH_ON(arm64)
+
+    // Setup an ABI call for when the alignment is not known. This may need a
+    // scratch register.
+    void setupUnalignedABICall(Register scratch) PER_ARCH;
+
+    // Arguments must be assigned to a C/C++ call in order. They are moved
+    // in parallel immediately before performing the call. This process may
+    // temporarily use more stack, in which case esp-relative addresses will be
+    // automatically adjusted. It is extremely important that esp-relative
+    // addresses are computed *after* setupABICall(). Furthermore, no
+    // operations should be emitted while setting arguments.
+    void passABIArg(const MoveOperand& from, MoveOp::Type type);
+    inline void passABIArg(Register reg);
+    inline void passABIArg(FloatRegister reg, MoveOp::Type type);
+
+    template <typename T>
+    inline void callWithABI(const T& fun, MoveOp::Type result = MoveOp::GENERAL);
+
+  private:
+    // Reinitialize the variables which have to be cleared before making a call
+    // with callWithABI.
+    void setupABICall();
+
+    // Reserve the stack and resolve the arguments move.
+    void callWithABIPre(uint32_t* stackAdjust, bool callFromAsmJS = false) PER_ARCH;
+
+    // Emits a call to a C/C++ function, resolving all argument moves.
+    void callWithABINoProfiler(void* fun, MoveOp::Type result);
+    void callWithABINoProfiler(AsmJSImmPtr imm, MoveOp::Type result);
+    void callWithABINoProfiler(Register fun, MoveOp::Type result) PER_ARCH;
+    void callWithABINoProfiler(const Address& fun, MoveOp::Type result) PER_ARCH;
+
+    // Restore the stack to its state before the setup function call.
+    void callWithABIPost(uint32_t stackAdjust, MoveOp::Type result) PER_ARCH;
+
+    // Create the signature to be able to decode the arguments of a native
+    // function, when calling a function within the simulator.
+    inline void appendSignatureType(MoveOp::Type type);
+    inline ABIFunctionType signature() const;
+
+    // Private variables used to handle moves between registers given as
+    // arguments to passABIArg and the list of ABI registers expected for the
+    // signature of the function.
+    MoveResolver moveResolver_;
+
+    // Architecture specific implementation which specify how registers & stack
+    // offsets are used for calling a function.
+    ABIArgGenerator abiArgs_;
+
+#ifdef DEBUG
+    // Flag use to assert that we use ABI function in the right context.
+    bool inCall_;
+#endif
+
+    // If set by setupUnalignedABICall then callWithABI will pop the stack
+    // register which is on the stack.
+    bool dynamicAlignment_;
+
+#ifdef JS_SIMULATOR
+    // The signature is used to accumulate all types of arguments which are used
+    // by the caller. This is used by the simulators to decode the arguments
+    // properly, and cast the function pointer to the right type.
+    uint32_t signature_;
+#endif
+
+  public:
+    // ===============================================================
+    // Jit Frames.
+    //
+    // These functions are used to build the content of the Jit frames.  See
+    // CommonFrameLayout class, and all its derivatives. The content should be
+    // pushed in the opposite order as the fields of the structures, such that
+    // the structures can be used to interpret the content of the stack.
+
+    // Call the Jit function, and push the return address (or let the callee
+    // push the return address).
+    //
+    // These functions return the offset of the return address, in order to use
+    // the return address to index the safepoints, which are used to list all
+    // live registers.
+    inline uint32_t callJitNoProfiler(Register callee);
+    inline uint32_t callJit(Register callee);
+    inline uint32_t callJit(JitCode* code);
+
+    // The frame descriptor is the second field of all Jit frames, pushed before
+    // calling the Jit function.  It is a composite value defined in JitFrames.h
+    inline void makeFrameDescriptor(Register frameSizeReg, FrameType type);
+
+    // Push the frame descriptor, based on the statically known framePushed.
+    inline void pushStaticFrameDescriptor(FrameType type);
+
+    // Push the callee token of a JSFunction which pointer is stored in the
+    // |callee| register. The callee token is packed with a |constructing| flag
+    // which correspond to the fact that the JS function is called with "new" or
+    // not.
+    inline void PushCalleeToken(Register callee, bool constructing);
+
+    // Unpack a callee token located at the |token| address, and return the
+    // JSFunction pointer in the |dest| register.
+    inline void loadFunctionFromCalleeToken(Address token, Register dest);
+
+    // This function emulates a call by pushing an exit frame on the stack,
+    // except that the fake-function is inlined within the body of the caller.
+    //
+    // This function assumes that the current frame is an IonJS frame.
+    //
+    // This function returns the offset of the /fake/ return address, in order to use
+    // the return address to index the safepoints, which are used to list all
+    // live registers.
+    //
+    // This function should be balanced with a call to adjustStack, to pop the
+    // exit frame and emulate the return statement of the inlined function.
+    inline uint32_t buildFakeExitFrame(Register scratch);
+
+  private:
+    // This function is used by buildFakeExitFrame to push a fake return address
+    // on the stack. This fake return address should never be used for resuming
+    // any execution, and can even be an invalid pointer into the instruction
+    // stream, as long as it does not alias any other.
+    uint32_t pushFakeReturnAddress(Register scratch) PER_SHARED_ARCH;
+
+  public:
+    // ===============================================================
+    // Exit frame footer.
+    //
+    // When calling outside the Jit we push an exit frame. To mark the stack
+    // correctly, we have to push additional information, called the Exit frame
+    // footer, which is used to identify how the stack is marked.
+    //
+    // See JitFrames.h, and MarkJitExitFrame in JitFrames.cpp.
+
+    // If the current piece of code might be garbage collected, then the exit
+    // frame footer must contain a pointer to the current JitCode, such that the
+    // garbage collector can keep the code alive as long this code is on the
+    // stack. This function pushes a placeholder which is replaced when the code
+    // is linked.
+    inline void PushStubCode();
+
+    // Return true if the code contains a self-reference which needs to be
+    // patched when the code is linked.
+    inline bool hasSelfReference() const;
+
+    // Push stub code and the VMFunction pointer.
+    inline void enterExitFrame(const VMFunction* f = nullptr);
+
+    // Push an exit frame token to identify which fake exit frame this footer
+    // corresponds to.
+    inline void enterFakeExitFrame(enum ExitFrameTokenValues token);
+
+    // Pop ExitFrame footer in addition to the extra frame.
+    inline void leaveExitFrame(size_t extraFrame = 0);
+
+  private:
+    // Save the top of the stack into PerThreadData::jitTop of the main thread,
+    // which should be the location of the latest exit frame.
+    void linkExitFrame();
+
+    // Patch the value of PushStubCode with the pointer to the finalized code.
+    void linkSelfReference(JitCode* code);
+
+    // If the JitCode that created this assembler needs to transition into the VM,
+    // we want to store the JitCode on the stack in order to mark it during a GC.
+    // This is a reference to a patch location where the JitCode* will be written.
+    CodeOffsetLabel selfReferencePatch_;
+
+  public:
+    // ===============================================================
+    // Logical instructions
+
+    inline void not32(Register reg) PER_SHARED_ARCH;
+
+    inline void and32(Register src, Register dest) PER_SHARED_ARCH;
+    inline void and32(Imm32 imm, Register dest) PER_SHARED_ARCH;
+    inline void and32(Imm32 imm, Register src, Register dest) DEFINED_ON(arm64);
+    inline void and32(Imm32 imm, const Address& dest) PER_SHARED_ARCH;
+    inline void and32(const Address& src, Register dest) PER_SHARED_ARCH;
+
+    inline void andPtr(Register src, Register dest) PER_ARCH;
+    inline void andPtr(Imm32 imm, Register dest) PER_ARCH;
+
+    inline void and64(Imm64 imm, Register64 dest) PER_ARCH;
+
+    inline void or32(Register src, Register dest) PER_SHARED_ARCH;
+    inline void or32(Imm32 imm, Register dest) PER_SHARED_ARCH;
+    inline void or32(Imm32 imm, const Address& dest) PER_SHARED_ARCH;
+
+    inline void orPtr(Register src, Register dest) PER_ARCH;
+    inline void orPtr(Imm32 imm, Register dest) PER_ARCH;
+
+    inline void or64(Register64 src, Register64 dest) PER_ARCH;
+
+    inline void xor32(Register src, Register dest) DEFINED_ON(x86_shared);
+    inline void xor32(Imm32 imm, Register dest) PER_SHARED_ARCH;
+
+    inline void xorPtr(Register src, Register dest) PER_ARCH;
+    inline void xorPtr(Imm32 imm, Register dest) PER_ARCH;
+
+    // ===============================================================
+    // Shift functions
+
+    inline void lshiftPtr(Imm32 imm, Register dest) PER_ARCH;
+
+    inline void lshift64(Imm32 imm, Register64 dest) PER_ARCH;
+
+    inline void rshiftPtr(Imm32 imm, Register dest) PER_ARCH;
+    inline void rshiftPtr(Imm32 imm, Register src, Register dest) DEFINED_ON(arm64);
+
+    inline void rshiftPtrArithmetic(Imm32 imm, Register dest) PER_ARCH;
+
+    inline void rshift64(Imm32 imm, Register64 dest) PER_ARCH;
+
+    //}}} check_macroassembler_style
   public:
 
     // Emits a test of a value against all types in a TypeSet. A scratch
     // register is required.
-    template <typename Source, typename TypeSet>
-    void guardTypeSet(const Source& address, const TypeSet* types, BarrierKind kind, Register scratch, Label* miss);
-    template <typename TypeSet>
-    void guardObjectType(Register obj, const TypeSet* types, Register scratch, Label* miss);
     template <typename Source>
-    void guardType(const Source& address, TypeSet::Type type, Register scratch, Label* miss);
+    void guardTypeSet(const Source& address, const TypeSet* types, BarrierKind kind, Register scratch, Label* miss);
 
-    void guardTypeSetMightBeIncomplete(Register obj, Register scratch, Label* label);
+    void guardObjectType(Register obj, const TypeSet* types, Register scratch, Label* miss);
+
+    template <typename TypeSet>
+    void guardTypeSetMightBeIncomplete(TypeSet* types, Register obj, Register scratch, Label* label);
 
     void loadObjShape(Register objReg, Register dest) {
         loadPtr(Address(objReg, JSObject::offsetOfShape()), dest);
@@ -421,21 +805,6 @@ class MacroAssembler : public MacroAssemblerSpecific
 
     void loadStringLength(Register str, Register dest) {
         load32(Address(str, JSString::offsetOfLength()), dest);
-    }
-
-    void loadFunctionFromCalleeToken(Address token, Register dest) {
-        loadPtr(token, dest);
-        andPtr(Imm32(uint32_t(CalleeTokenMask)), dest);
-    }
-    void PushCalleeToken(Register callee, bool constructing) {
-        if (constructing) {
-            orPtr(Imm32(CalleeToken_FunctionConstructing), callee);
-            Push(callee);
-            andPtr(Imm32(uint32_t(CalleeTokenMask)), callee);
-        } else {
-            static_assert(CalleeToken_Function == 0, "Non-constructing call requires no tagging");
-            Push(callee);
-        }
     }
 
     void loadStringChars(Register str, Register dest);
@@ -554,7 +923,7 @@ class MacroAssembler : public MacroAssemblerSpecific
         }
 #elif defined(JS_PUNBOX64)
         if (dest.valueReg() != JSReturnReg)
-            movq(JSReturnReg, dest.valueReg());
+            mov(JSReturnReg, dest.valueReg());
 #else
 #error "Bad architecture"
 #endif
@@ -704,14 +1073,9 @@ class MacroAssembler : public MacroAssemblerSpecific
     void compareExchangeToTypedIntArray(Scalar::Type arrayType, const T& mem, Register oldval, Register newval,
                                         Register temp, AnyRegister output);
 
-    // Generating a result.
-    template<typename S, typename T>
-    void atomicBinopToTypedIntArray(AtomicOp op, Scalar::Type arrayType, const S& value,
-                                    const T& mem, Register temp1, Register temp2, AnyRegister output);
-
-    // Generating no result.
-    template<typename S, typename T>
-    void atomicBinopToTypedIntArray(AtomicOp op, Scalar::Type arrayType, const S& value, const T& mem);
+    template<typename T>
+    void atomicExchangeToTypedIntArray(Scalar::Type arrayType, const T& mem, Register value,
+                                       Register temp, AnyRegister output);
 
     void storeToTypedFloatArray(Scalar::Type arrayType, FloatRegister value, const BaseIndex& dest,
                                 unsigned numElems = 0);
@@ -757,7 +1121,7 @@ class MacroAssembler : public MacroAssemblerSpecific
 
     // Inline version of js_TypedArray_uint8_clamp_double.
     // This function clobbers the input register.
-    void clampDoubleToUint8(FloatRegister input, Register output);
+    void clampDoubleToUint8(FloatRegister input, Register output) PER_ARCH;
 
     using MacroAssemblerSpecific::ensureDouble;
 
@@ -818,96 +1182,9 @@ class MacroAssembler : public MacroAssemblerSpecific
     void compareStrings(JSOp op, Register left, Register right, Register result,
                         Label* fail);
 
-    // If the JitCode that created this assembler needs to transition into the VM,
-    // we want to store the JitCode on the stack in order to mark it during a GC.
-    // This is a reference to a patch location where the JitCode* will be written.
-  private:
-    CodeOffsetLabel exitCodePatch_;
-
-  private:
-    void linkExitFrame();
-
   public:
-    void PushStubCode() {
-        exitCodePatch_ = PushWithPatch(ImmWord(-1));
-    }
-
-    void enterExitFrame(const VMFunction* f = nullptr) {
-        linkExitFrame();
-        // Push the ioncode. (Bailout or VM wrapper)
-        PushStubCode();
-        // Push VMFunction pointer, to mark arguments.
-        Push(ImmPtr(f));
-    }
-
-    // The JitCode * argument here is one of the tokens defined in the various
-    // exit frame layout classes, e.g. NativeExitFrameLayout::Token().
-    void enterFakeExitFrame(JitCode* codeVal) {
-        linkExitFrame();
-        Push(ImmPtr(codeVal));
-        Push(ImmPtr(nullptr));
-    }
-
-    void leaveExitFrame(size_t extraFrame = 0) {
-        freeStack(ExitFooterFrame::Size() + extraFrame);
-    }
-
-    bool hasEnteredExitFrame() const {
-        return exitCodePatch_.offset() != 0;
-    }
-
     // Generates code used to complete a bailout.
     void generateBailoutTail(Register scratch, Register bailoutInfo);
-
-    // These functions exist as small wrappers around sites where execution can
-    // leave the currently running stream of instructions. They exist so that
-    // instrumentation may be put in place around them if necessary and the
-    // instrumentation is enabled. For the functions that return a uint32_t,
-    // they are returning the offset of the assembler just after the call has
-    // been made so that a safepoint can be made at that location.
-
-    template <typename T>
-    void callWithABI(const T& fun, MoveOp::Type result = MoveOp::GENERAL) {
-        profilerPreCall();
-        MacroAssemblerSpecific::callWithABI(fun, result);
-        profilerPostReturn();
-    }
-
-    // see above comment for what is returned
-    uint32_t callJit(Register callee) {
-        profilerPreCall();
-        MacroAssemblerSpecific::callJit(callee);
-        uint32_t ret = currentOffset();
-        profilerPostReturn();
-        return ret;
-    }
-
-    // see above comment for what is returned
-    uint32_t callWithExitFrame(Label* target) {
-        profilerPreCall();
-        MacroAssemblerSpecific::callWithExitFrame(target);
-        uint32_t ret = currentOffset();
-        profilerPostReturn();
-        return ret;
-    }
-
-    // see above comment for what is returned
-    uint32_t callWithExitFrame(JitCode* target) {
-        profilerPreCall();
-        MacroAssemblerSpecific::callWithExitFrame(target);
-        uint32_t ret = currentOffset();
-        profilerPostReturn();
-        return ret;
-    }
-
-    // see above comment for what is returned
-    uint32_t callWithExitFrame(JitCode* target, Register dynStack) {
-        profilerPreCall();
-        MacroAssemblerSpecific::callWithExitFrame(target, dynStack);
-        uint32_t ret = currentOffset();
-        profilerPostReturn();
-        return ret;
-    }
 
     void branchTestObjectTruthy(bool truthy, Register objReg, Register scratch,
                                 Label* slowCheck, Label* checked)
@@ -936,6 +1213,9 @@ class MacroAssembler : public MacroAssemblerSpecific
         loadObjClass(object, scratch);
         branchTestClassIsProxy(proxy, scratch, label);
     }
+
+    inline void branchFunctionKind(Condition cond, JSFunction::FunctionKind kind, Register fun,
+                                   Register scratch, Label* label);
 
   public:
 #ifndef JS_CODEGEN_ARM64
@@ -984,21 +1264,40 @@ class MacroAssembler : public MacroAssemblerSpecific
     }
 #endif // !JS_CODEGEN_ARM64
 
-  private:
-    // These two functions are helpers used around call sites throughout the
-    // assembler. They are called from the above call wrappers to emit the
-    // necessary instrumentation.
-    void profilerPreCall() {
-        if (!emitProfilingInstrumentation_)
-            return;
-        profilerPreCallImpl();
+  public:
+    void enableProfilingInstrumentation() {
+        emitProfilingInstrumentation_ = true;
     }
 
-    void profilerPostReturn() {
-        if (!emitProfilingInstrumentation_)
-            return;
-        profilerPostReturnImpl();
+  private:
+    // This class is used to surround call sites throughout the assembler. This
+    // is used by callWithABI, and callJit functions, except if suffixed by
+    // NoProfiler.
+    class AutoProfilerCallInstrumentation {
+        MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER;
+
+      public:
+        explicit AutoProfilerCallInstrumentation(MacroAssembler& masm
+                                                 MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+        ~AutoProfilerCallInstrumentation() {}
+    };
+    friend class AutoProfilerCallInstrumentation;
+
+    void appendProfilerCallSite(CodeOffsetLabel label) {
+        propagateOOM(profilerCallSites_.append(label));
     }
+
+    // Fix up the code pointers to be written for locations where profilerCallSite
+    // emitted moves of RIP to a register.
+    void linkProfilerCallSites(JitCode* code);
+
+    // This field is used to manage profiling instrumentation output. If
+    // provided and enabled, then instrumentation will be emitted around call
+    // sites.
+    bool emitProfilingInstrumentation_;
+
+    // Record locations of the call sites.
+    Vector<CodeOffsetLabel, 0, SystemAllocPolicy> profilerCallSites_;
 
   public:
     void loadBaselineOrIonRaw(Register script, Register dest, Label* failure);
@@ -1272,25 +1571,12 @@ class MacroAssembler : public MacroAssemblerSpecific
         uint32_t alignmentPadding;
     };
 
-    void alignFrameForICArguments(AfterICSaveLive& aic);
-    void restoreFrameAlignmentForICArguments(AfterICSaveLive& aic);
+    void alignFrameForICArguments(AfterICSaveLive& aic) PER_ARCH;
+    void restoreFrameAlignmentForICArguments(AfterICSaveLive& aic) PER_ARCH;
 
-    AfterICSaveLive icSaveLive(LiveRegisterSet& liveRegs) {
-        PushRegsInMask(liveRegs);
-        AfterICSaveLive aic(framePushed());
-        alignFrameForICArguments(aic);
-        return aic;
-    }
-
-    bool icBuildOOLFakeExitFrame(void* fakeReturnAddr, AfterICSaveLive& aic) {
-        return buildOOLFakeExitFrame(fakeReturnAddr);
-    }
-
-    void icRestoreLive(LiveRegisterSet& liveRegs, AfterICSaveLive& aic) {
-        restoreFrameAlignmentForICArguments(aic);
-        MOZ_ASSERT(framePushed() == aic.initialStack);
-        PopRegsInMask(liveRegs);
-    }
+    AfterICSaveLive icSaveLive(LiveRegisterSet& liveRegs);
+    bool icBuildOOLFakeExitFrame(void* fakeReturnAddr, AfterICSaveLive& aic);
+    void icRestoreLive(LiveRegisterSet& liveRegs, AfterICSaveLive& aic);
 
     // Align the stack pointer based on the number of arguments which are pushed
     // on the stack, such that the JitFrameLayout would be correctly aligned on
@@ -1324,10 +1610,6 @@ class MacroAssembler : public MacroAssemblerSpecific
         bind(&ok);
 #endif
     }
-
-    void profilerPreCallImpl();
-    void profilerPreCallImpl(Register reg, Register reg2);
-    void profilerPostReturnImpl() {}
 };
 
 static inline Assembler::DoubleCondition

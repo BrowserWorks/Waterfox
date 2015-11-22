@@ -4,50 +4,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const Cu = Components.utils;
-const Ci = Components.interfaces;
-const Cc = Components.classes;
+// shared-head.js handles imports, constants, and utility functions
+Services.scriptloader.loadSubScript("chrome://mochitests/content/browser/browser/devtools/framework/test/shared-head.js", this);
 
-const { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
-
-let {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-let TargetFactory = devtools.TargetFactory;
-
-// All test are asynchronous
-waitForExplicitFinish();
-
-gDevTools.testing = true;
-SimpleTest.registerCleanupFunction(() => {
-  gDevTools.testing = false;
-});
-
-registerCleanupFunction(function*() {
-  let target = TargetFactory.forTab(gBrowser.selectedTab);
-  yield gDevTools.closeToolbox(target);
-
-  while (gBrowser.tabs.length > 1) {
-    gBrowser.removeCurrentTab();
-  }
-});
-
-/**
- * Add a new test tab in the browser and load the given url.
- * @param {String} url The url to be loaded in the new tab
- * @return a promise that resolves to the tab object when the url is loaded
- */
-function loadTab(url) {
-  let deferred = promise.defer();
-
-  let tab = gBrowser.selectedTab = gBrowser.addTab(url);
-  let browser = gBrowser.getBrowserForTab(tab);
-
-  browser.addEventListener("load", function onLoad() {
-    browser.removeEventListener("load", onLoad, true);
-    deferred.resolve({tab: tab, browser: browser});
-  }, true);
-
-  return deferred.promise;
-}
+const BASE_URI = "http://mochi.test:8888/browser/browser/devtools/fontinspector/test/"
 
 /**
  * Open the toolbox, with the inspector tool visible.
@@ -55,7 +15,7 @@ function loadTab(url) {
  * promise
  * @return a promise that resolves when the inspector is ready
  */
-let openInspector = Task.async(function*(cb) {
+var openInspector = Task.async(function*(cb) {
   info("Opening the inspector");
   let target = TargetFactory.forTab(gBrowser.selectedTab);
 
@@ -99,9 +59,55 @@ let openInspector = Task.async(function*(cb) {
 });
 
 /**
+ * Adds a new tab with the given URL, opens the inspector and selects the
+ * font-inspector tab.
+ *
+ * @return Object
+ *  {
+ *    toolbox,
+ *    inspector,
+ *    fontInspector
+ *  }
+ */
+var openFontInspectorForURL = Task.async(function* (url) {
+  info("Opening tab " + url);
+  yield addTab(url);
+
+  let { toolbox, inspector } = yield openInspector();
+
+  /**
+   * Call selectNode to trigger font-inspector update so that we don't timeout
+   * if following conditions hold
+   * a) the initial 'fontinspector-updated' was emitted while we were waiting
+   *    for openInspector to resolve
+   * b) the font-inspector tab was selected by default which means the call to
+   *    select will not trigger another update.
+   *
+   * selectNode calls setNodeFront which always emits 'new-node' which calls
+   * FontInspector.update that emits the 'fontinspector-updated' event.
+   */
+  let onUpdated = inspector.once("fontinspector-updated");
+
+  yield selectNode("body", inspector);
+  inspector.sidebar.select("fontinspector");
+
+  info("Waiting for font-inspector to update.");
+  yield onUpdated;
+
+  info("Font Inspector ready.");
+
+  let { fontInspector } = inspector.sidebar.getWindowForTab("fontinspector");
+  return {
+    fontInspector,
+    inspector,
+    toolbox
+  };
+});
+
+/**
  * Select a node in the inspector given its selector.
  */
-let selectNode = Task.async(function*(selector, inspector, reason="test") {
+var selectNode = Task.async(function*(selector, inspector, reason="test") {
   info("Selecting the node for '" + selector + "'");
   let nodeFront = yield getNodeFront(selector, inspector);
   let updated = inspector.once("inspector-updated");
@@ -134,4 +140,38 @@ function waitForToolboxFrameFocus(toolbox) {
   let win = toolbox.frame.contentWindow;
   waitForFocus(def.resolve, win);
   return def.promise;
+}
+
+/**
+ * Clears the preview input field, types new text into it and waits for the
+ * preview images to be updated.
+ *
+ * @param {FontInspector} fontInspector - The FontInspector instance.
+ * @param {String} text - The text to preview.
+ */
+function* updatePreviewText(fontInspector, text) {
+  info(`Changing the preview text to '${text}'`);
+
+  let doc = fontInspector.chromeDoc;
+  let input = doc.getElementById("preview-text-input");
+  let update = fontInspector.inspector.once("fontinspector-updated");
+
+  info("Focusing the input field.");
+  input.focus();
+
+  is(doc.activeElement, input, "The input was focused.");
+
+  info("Blanking the input field.");
+  for (let i = input.value.length; i >= 0; i--) {
+    EventUtils.sendKey("BACK_SPACE", doc.defaultView);
+  }
+
+  is(input.value, "", "The input is now blank.");
+
+  info("Typing the specified text to the input field.");
+  EventUtils.sendString(text, doc.defaultView);
+  is(input.value, text, "The input now contains the correct text.");
+
+  info("Waiting for the font-inspector to update.");
+  yield update;
 }

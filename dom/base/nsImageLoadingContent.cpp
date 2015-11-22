@@ -41,11 +41,14 @@
 #include "nsIContentPolicy.h"
 #include "nsSVGEffects.h"
 
+#include "gfxPrefs.h"
+
 #include "mozAutoDocUpdate.h"
 #include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/Preferences.h"
 
 #ifdef LoadImage
 // Undefine LoadImage to prevent naming conflict with Windows.
@@ -87,7 +90,6 @@ nsImageLoadingContent::nsImageLoadingContent()
     mBroken(true),
     mUserDisabled(false),
     mSuppressed(false),
-    mFireEventsOnDecode(false),
     mNewRequestsWillNeedAnimationReset(false),
     mStateChangerDepth(0),
     mCurrentRequestRegistered(false),
@@ -98,6 +100,9 @@ nsImageLoadingContent::nsImageLoadingContent()
   if (!nsContentUtils::GetImgLoaderForChannel(nullptr, nullptr)) {
     mLoadingEnabled = false;
   }
+
+  bool isInconsistent;
+  mMostRecentRequestChange = TimeStamp::ProcessCreation(isInconsistent);
 }
 
 void
@@ -186,16 +191,10 @@ nsImageLoadingContent::Notify(imgIRequest* aRequest,
   }
 
   if (aType == imgINotificationObserver::DECODE_COMPLETE) {
-    if (mFireEventsOnDecode) {
-      mFireEventsOnDecode = false;
-
-      uint32_t reqStatus;
-      aRequest->GetImageStatus(&reqStatus);
-      if (reqStatus & imgIRequest::STATUS_ERROR) {
-        FireEvent(NS_LITERAL_STRING("error"));
-      } else {
-        FireEvent(NS_LITERAL_STRING("load"));
-      }
+    nsCOMPtr<imgIContainer> container;
+    aRequest->GetImage(getter_AddRefs(container));
+    if (container) {
+      container->PropagateUseCounters(GetOurOwnerDoc());
     }
 
     UpdateImageState(true);
@@ -277,23 +276,11 @@ nsImageLoadingContent::OnLoadComplete(imgIRequest* aRequest, nsresult aStatus)
     }
   }
 
-  // We want to give the decoder a chance to find errors. If we haven't found
-  // an error yet and we've started decoding, either from the above
-  // StartDecoding or from some other place, we must only fire these events
-  // after we finish decoding.
-  uint32_t reqStatus;
-  aRequest->GetImageStatus(&reqStatus);
-  if (NS_SUCCEEDED(aStatus) && !(reqStatus & imgIRequest::STATUS_ERROR) &&
-      (reqStatus & imgIRequest::STATUS_DECODE_STARTED) &&
-      !(reqStatus & imgIRequest::STATUS_DECODE_COMPLETE)) {
-    mFireEventsOnDecode = true;
+  // Fire the appropriate DOM event.
+  if (NS_SUCCEEDED(aStatus)) {
+    FireEvent(NS_LITERAL_STRING("load"));
   } else {
-    // Fire the appropriate DOM event.
-    if (NS_SUCCEEDED(aStatus)) {
-      FireEvent(NS_LITERAL_STRING("load"));
-    } else {
-      FireEvent(NS_LITERAL_STRING("error"));
-    }
+    FireEvent(NS_LITERAL_STRING("error"));
   }
 
   nsCOMPtr<nsINode> thisNode = do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
@@ -302,11 +289,39 @@ nsImageLoadingContent::OnLoadComplete(imgIRequest* aRequest, nsresult aStatus)
   return NS_OK;
 }
 
+static bool
+ImageIsAnimated(imgIRequest* aRequest)
+{
+  if (!aRequest) {
+    return false;
+  }
+
+  nsCOMPtr<imgIContainer> image;
+  if (NS_SUCCEEDED(aRequest->GetImage(getter_AddRefs(image)))) {
+    bool isAnimated = false;
+    nsresult rv = image->GetAnimated(&isAnimated);
+    if (NS_SUCCEEDED(rv) && isAnimated) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void
 nsImageLoadingContent::OnUnlockedDraw()
 {
   if (mVisibleCount > 0) {
     // We should already be marked as visible, there is nothing more we can do.
+    return;
+  }
+
+  // It's OK for non-animated images to wait until the next image visibility
+  // update to become locked. (And that's preferable, since in the case of
+  // scrolling it keeps memory usage minimal.) For animated images, though, we
+  // want to mark them visible right away so we can call
+  // IncrementAnimationConsumers() on them and they'll start animating.
+  if (!ImageIsAnimated(mCurrentRequest) && !ImageIsAnimated(mPendingRequest)) {
     return;
   }
 
@@ -927,19 +942,27 @@ nsImageLoadingContent::LoadImage(nsIURI* aNewURI,
     loadFlags |= imgILoader::LOAD_CORS_USE_CREDENTIALS;
   }
 
+  // get document wide referrer policy
+  // if referrer attributes are enabled in preferences, load img referrer attribute
+  // if the image does not provide a referrer attribute, ignore this
+  net::ReferrerPolicy referrerPolicy = aDocument->GetReferrerPolicy();
+  net::ReferrerPolicy imgReferrerPolicy = GetImageReferrerPolicy();
+  if (imgReferrerPolicy != net::RP_Unset) {
+    referrerPolicy = imgReferrerPolicy;
+  }
+
   // Not blocked. Do the load.
   nsRefPtr<imgRequestProxy>& req = PrepareNextRequest(aImageLoadType);
   nsCOMPtr<nsIContent> content =
       do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
-  nsresult rv;
-  rv = nsContentUtils::LoadImage(aNewURI, aDocument,
-                                 aDocument->NodePrincipal(),
-                                 aDocument->GetDocumentURI(),
-                                 aDocument->GetReferrerPolicy(),
-                                 this, loadFlags,
-                                 content->LocalName(),
-                                 getter_AddRefs(req),
-                                 policyType);
+  nsresult rv = nsContentUtils::LoadImage(aNewURI, aDocument,
+                                          aDocument->NodePrincipal(),
+                                          aDocument->GetDocumentURI(),
+                                          referrerPolicy,
+                                          this, loadFlags,
+                                          content->LocalName(),
+                                          getter_AddRefs(req),
+                                          policyType);
 
   // Tell the document to forget about the image preload, if any, for
   // this URI, now that we might have another imgRequestProxy for it.
@@ -1219,6 +1242,22 @@ nsImageLoadingContent::FireEvent(const nsAString& aEventType)
 nsRefPtr<imgRequestProxy>&
 nsImageLoadingContent::PrepareNextRequest(ImageLoadType aImageLoadType)
 {
+  nsImageFrame* frame = do_QueryFrame(GetOurPrimaryFrame());
+  if (frame) {
+    // Detect JavaScript-based animations created by changing the |src|
+    // attribute on a timer.
+    TimeStamp now = TimeStamp::Now();
+    TimeDuration threshold =
+      TimeDuration::FromMilliseconds(
+        gfxPrefs::ImageInferSrcAnimationThresholdMS());
+
+    // If the length of time between request changes is less than the threshold,
+    // then force sync decoding to eliminate flicker from the animation.
+    frame->SetForceSyncDecoding(now - mMostRecentRequestChange < threshold);
+
+    mMostRecentRequestChange = now;
+  }
+
   // If we don't have a usable current request, get rid of any half-baked
   // request that might be sitting there and make this one current.
   if (!HaveSize(mCurrentRequest))
@@ -1324,7 +1363,7 @@ private:
   nsCOMPtr<imgIRequest> mRequest;
 };
 
-} // anonymous namespace
+} // namespace
 
 void
 nsImageLoadingContent::MakePendingRequestCurrent()
@@ -1475,6 +1514,15 @@ nsImageLoadingContent::TrackImage(imgIRequest* aImage)
   nsIDocument* doc = GetOurCurrentDoc();
   if (doc && (mFrameCreateCalled || GetOurPrimaryFrame()) &&
       (mVisibleCount > 0)) {
+
+    if (mVisibleCount == 1) {
+      // Since we're becoming visible, request a decode.
+      nsImageFrame* f = do_QueryFrame(GetOurPrimaryFrame());
+      if (f) {
+        f->MaybeDecodeForPredictedSize();
+      }
+    }
+
     if (aImage == mCurrentRequest && !(mCurrentRequestFlags & REQUEST_IS_TRACKED)) {
       mCurrentRequestFlags |= REQUEST_IS_TRACKED;
       doc->AddImage(mCurrentRequest);
@@ -1563,3 +1611,11 @@ nsImageLoadingContent::ImageObserver::~ImageObserver()
   MOZ_COUNT_DTOR(ImageObserver);
   NS_CONTENT_DELETE_LIST_MEMBER(ImageObserver, this, mNext);
 }
+
+// Only HTMLInputElement.h overrides this for <img> tags
+// all other subclasses use this one, i.e. ignore referrer attributes
+mozilla::net::ReferrerPolicy
+nsImageLoadingContent::GetImageReferrerPolicy()
+{
+  return mozilla::net::RP_Unset;
+};

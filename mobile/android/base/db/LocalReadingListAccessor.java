@@ -13,11 +13,11 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 import org.mozilla.gecko.AboutPages;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.ReaderModeUtils;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
-import org.mozilla.gecko.mozglue.RobocopTarget;
 
 
 @RobocopTarget
@@ -74,7 +74,7 @@ public class LocalReadingListAccessor implements ReadingListAccessor {
 
     @Override
     public boolean isReadingListItem(final ContentResolver cr, String uri) {
-        uri = stripURI(uri);
+        uri = ReaderModeUtils.stripAboutReaderUrl(uri);
 
         final Cursor c = cr.query(mReadingListUriWithProfile,
                                   new String[] { ReadingListItems._ID },
@@ -105,7 +105,7 @@ public class LocalReadingListAccessor implements ReadingListAccessor {
         }
 
         // URL is a required field so no key check needed.
-        final String url = stripURI(values.getAsString(ReadingListItems.URL));
+        final String url = ReaderModeUtils.stripAboutReaderUrl(values.getAsString(ReadingListItems.URL));
         values.put(ReadingListItems.URL, url);
 
         // We're adding locally, so we can specify these.
@@ -144,7 +144,7 @@ public class LocalReadingListAccessor implements ReadingListAccessor {
         }
 
         if (values.containsKey(ReadingListItems.URL)) {
-            values.put(ReadingListItems.URL, stripURI(values.getAsString(ReadingListItems.URL)));
+            values.put(ReadingListItems.URL, ReaderModeUtils.stripAboutReaderUrl(values.getAsString(ReadingListItems.URL)));
         }
 
         final int updated = cr.update(mReadingListUriWithProfile,
@@ -190,6 +190,14 @@ public class LocalReadingListAccessor implements ReadingListAccessor {
     }
 
     @Override
+    public void markAsUnread(ContentResolver cr, long itemID) {
+        final ContentValues values = new ContentValues();
+        values.put(ReadingListItems.IS_UNREAD, 1);
+
+        cr.update(mReadingListUriWithProfile, values, ReadingListItems._ID + " = " + itemID, null);
+    }
+
+    @Override
     public void updateContent(ContentResolver cr, long itemID, String resolvedTitle, String resolvedURL, String excerpt) {
         final ContentValues values = new ContentValues();
         values.put(ReadingListItems.CONTENT_STATUS, ReadingListItems.STATUS_FETCHED_ARTICLE);
@@ -199,12 +207,5 @@ public class LocalReadingListAccessor implements ReadingListAccessor {
 
         // The ContentProvider will take care of updating the sync metadata.
         cr.update(mReadingListUriWithProfile, values, ReadingListItems._ID + " = " + itemID, null);
-    }
-
-    /**
-     * Gets the URI from an about:reader URI if applicable, else returns the URI.
-     */
-    private String stripURI(final String uri) {
-        return !AboutPages.isAboutReader(uri) ? uri : ReaderModeUtils.getUrlFromAboutReader(uri);
     }
 }

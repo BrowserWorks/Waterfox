@@ -26,7 +26,7 @@ namespace dom {
 DOMStorageDBBridge* DOMStorageCache::sDatabase = nullptr;
 bool DOMStorageCache::sDatabaseDown = false;
 
-namespace { // anon
+namespace {
 
 const uint32_t kDefaultSet = 0;
 const uint32_t kPrivateSet = 1;
@@ -52,7 +52,7 @@ GetDataSetIndex(const DOMStorage* aStorage)
   return GetDataSetIndex(aStorage->IsPrivate(), aStorage->IsSessionOnly());
 }
 
-} // anon
+} // namespace
 
 // DOMStorageCacheBridge
 
@@ -151,7 +151,7 @@ DOMStorageCache::Persist(const DOMStorage* aStorage) const
          !aStorage->IsPrivate();
 }
 
-namespace { // anon
+namespace {
 
 PLDHashOperator
 CloneSetData(const nsAString& aKey, const nsString aValue, void* aArg)
@@ -162,7 +162,7 @@ CloneSetData(const nsAString& aKey, const nsString aValue, void* aArg)
   return PL_DHASH_NEXT;
 }
 
-} // anon
+} // namespace
 
 DOMStorageCache::Data&
 DOMStorageCache::DataSet(const DOMStorage* aStorage)
@@ -237,7 +237,7 @@ DOMStorageCache::Preload()
   sDatabase->AsyncPreload(this);
 }
 
-namespace { // anon
+namespace {
 
 // This class is passed to timer as a tick observer.  It refers the cache
 // and keeps it alive for a time.
@@ -262,7 +262,7 @@ public:
 
 NS_IMPL_ISUPPORTS(DOMStorageCacheHolder, nsITimerCallback)
 
-} // anon
+} // namespace
 
 void
 DOMStorageCache::KeepAlive()
@@ -294,7 +294,7 @@ DOMStorageCache::KeepAlive()
   mKeepAliveTimer.swap(timer);
 }
 
-namespace { // anon
+namespace {
 
 // The AutoTimer provided by telemetry headers is only using static,
 // i.e. compile time known ID, but here we know the ID only at run time.
@@ -311,7 +311,7 @@ private:
   const TimeStamp start;
 };
 
-} // anon
+} // namespace
 
 void
 DOMStorageCache::WaitForPreload(Telemetry::ID aTelemetryID)
@@ -363,7 +363,7 @@ DOMStorageCache::GetLength(const DOMStorage* aStorage, uint32_t* aRetval)
   return NS_OK;
 }
 
-namespace { // anon
+namespace {
 
 class IndexFinderData
 {
@@ -391,7 +391,7 @@ FindKeyOrder(const nsAString& aKey, const nsString aValue, void* aArg)
   return PL_DHASH_STOP;
 }
 
-} // anon
+} // namespace
 
 nsresult
 DOMStorageCache::GetKey(const DOMStorage* aStorage, uint32_t aIndex, nsAString& aRetval)
@@ -412,7 +412,7 @@ DOMStorageCache::GetKey(const DOMStorage* aStorage, uint32_t aIndex, nsAString& 
   return NS_OK;
 }
 
-namespace { // anon
+namespace {
 
 static PLDHashOperator
 KeysArrayBuilder(const nsAString& aKey, const nsString aValue, void* aArg)
@@ -423,7 +423,7 @@ KeysArrayBuilder(const nsAString& aKey, const nsString aValue, void* aArg)
   return PL_DHASH_NEXT;
 }
 
-} // anon
+} // namespace
 
 void
 DOMStorageCache::GetKeys(const DOMStorage* aStorage, nsTArray<nsString>& aKeys)
@@ -465,6 +465,9 @@ nsresult
 DOMStorageCache::SetItem(const DOMStorage* aStorage, const nsAString& aKey,
                          const nsString& aValue, nsString& aOld)
 {
+  // Size of the cache that will change after this action.
+  int64_t delta = 0;
+
   if (Persist(aStorage)) {
     WaitForPreload(Telemetry::LOCALDOMSTORAGE_SETVALUE_BLOCKING_MS);
     if (NS_FAILED(mLoadResult)) {
@@ -475,11 +478,14 @@ DOMStorageCache::SetItem(const DOMStorage* aStorage, const nsAString& aKey,
   Data& data = DataSet(aStorage);
   if (!data.mKeys.Get(aKey, &aOld)) {
     SetDOMStringToNull(aOld);
+
+    // We only consider key size if the key doesn't exist before.
+    delta += static_cast<int64_t>(aKey.Length());
   }
 
-  // Check the quota first
-  const int64_t delta = static_cast<int64_t>(aValue.Length()) -
-                        static_cast<int64_t>(aOld.Length());
+  delta += static_cast<int64_t>(aValue.Length()) -
+           static_cast<int64_t>(aOld.Length());
+
   if (!ProcessUsageDelta(aStorage, delta)) {
     return NS_ERROR_DOM_QUOTA_REACHED;
   }
@@ -525,7 +531,8 @@ DOMStorageCache::RemoveItem(const DOMStorage* aStorage, const nsAString& aKey,
   }
 
   // Recalculate the cached data size
-  const int64_t delta = -(static_cast<int64_t>(aOld.Length()));
+  const int64_t delta = -(static_cast<int64_t>(aOld.Length()) +
+                          static_cast<int64_t>(aKey.Length()));
   unused << ProcessUsageDelta(aStorage, delta);
   data.mKeys.Remove(aKey);
 
@@ -700,7 +707,7 @@ DOMStorageUsage::DOMStorageUsage(const nsACString& aScope)
   mUsage[kDefaultSet] = mUsage[kPrivateSet] = mUsage[kSessionSet] = 0LL;
 }
 
-namespace { // anon
+namespace {
 
 class LoadUsageRunnable : public nsRunnable
 {
@@ -717,7 +724,7 @@ private:
   NS_IMETHOD Run() { *mTarget = mDelta; return NS_OK; }
 };
 
-} // anon
+} // namespace
 
 void
 DOMStorageUsage::LoadUsage(const int64_t aUsage)
@@ -761,7 +768,7 @@ DOMStorageCache::StartDatabase()
     return sDatabase;
   }
 
-  if (XRE_GetProcessType() == GeckoProcessType_Default) {
+  if (XRE_IsParentProcess()) {
     nsAutoPtr<DOMStorageDBThread> db(new DOMStorageDBThread());
 
     nsresult rv = db->Init();
@@ -771,8 +778,11 @@ DOMStorageCache::StartDatabase()
 
     sDatabase = db.forget();
   } else {
+    // Use DOMLocalStorageManager::Ensure in case we're called from
+    // DOMSessionStorageManager's initializer and we haven't yet initialized the
+    // local storage manager.
     nsRefPtr<DOMStorageDBChild> db = new DOMStorageDBChild(
-        DOMLocalStorageManager::Self());
+        DOMLocalStorageManager::Ensure());
 
     nsresult rv = db->Init();
     if (NS_FAILED(rv)) {
@@ -803,7 +813,7 @@ DOMStorageCache::StopDatabase()
   sDatabaseDown = true;
 
   nsresult rv = sDatabase->Shutdown();
-  if (XRE_GetProcessType() == GeckoProcessType_Default) {
+  if (XRE_IsParentProcess()) {
     delete sDatabase;
   } else {
     DOMStorageDBChild* child = static_cast<DOMStorageDBChild*>(sDatabase);
@@ -814,5 +824,5 @@ DOMStorageCache::StopDatabase()
   return rv;
 }
 
-} // ::dom
-} // ::mozilla
+} // namespace dom
+} // namespace mozilla

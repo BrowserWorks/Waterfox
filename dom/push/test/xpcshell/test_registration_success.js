@@ -3,7 +3,7 @@
 
 'use strict';
 
-const {PushDB, PushService} = serviceExports;
+const {PushDB, PushService, PushServiceWebSocket} = serviceExports;
 
 const userAgentID = '997ee7ba-36b1-4526-ae9e-2d3f38d6efe8';
 
@@ -14,30 +14,38 @@ function run_test() {
 }
 
 add_task(function* test_registration_success() {
-  let db = new PushDB();
-  let promiseDB = promisifyDatabase(db);
-  do_register_cleanup(() => cleanupDatabase(db));
+  let db = PushServiceWebSocket.newPushDB();
+  do_register_cleanup(() => {return db.drop().then(_ => db.close());});
   let records = [{
     channelID: 'bf001fe0-2684-42f2-bc4d-a3e14b11dd5b',
     pushEndpoint: 'https://example.com/update/same-manifest/1',
     scope: 'https://example.net/a',
-    version: 5
+    originAttributes: '',
+    version: 5,
+    quota: Infinity,
   }, {
     channelID: 'f6edfbcd-79d6-49b8-9766-48b9dcfeff0f',
     pushEndpoint: 'https://example.com/update/same-manifest/2',
     scope: 'https://example.net/b',
-    version: 10
+    originAttributes: ChromeUtils.originAttributesToSuffix({ appId: 42 }),
+    version: 10,
+    quota: Infinity,
   }, {
     channelID: 'b1cf38c9-6836-4d29-8a30-a3e98d59b728',
     pushEndpoint: 'https://example.org/update/different-manifest',
     scope: 'https://example.org/c',
-    version: 15
+    originAttributes: ChromeUtils.originAttributesToSuffix({ appId: 42, inBrowser: true }),
+    version: 15,
+    quota: Infinity,
   }];
   for (let record of records) {
-    yield promiseDB.put(record);
+    yield db.put(record);
   }
 
+  let handshakeDone;
+  let handshakePromise = new Promise(resolve => handshakeDone = resolve);
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -53,13 +61,20 @@ add_task(function* test_registration_success() {
             status: 200,
             uaid: userAgentID
           }));
+          handshakeDone();
         }
       });
     }
   });
 
+  yield waitForPromise(
+    handshakePromise,
+    DEFAULT_TIMEOUT,
+    'Timed out waiting for handshake'
+  );
+
   let registration = yield PushNotificationService.registration(
-    'https://example.net/a');
+    'https://example.net/a', '');
   equal(
     registration.pushEndpoint,
     'https://example.com/update/same-manifest/1',

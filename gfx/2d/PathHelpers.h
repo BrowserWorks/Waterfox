@@ -13,74 +13,127 @@
 namespace mozilla {
 namespace gfx {
 
+// Kappa constant for 90-degree angle
+const Float kKappaFactor = 0.55191497064665766025f;
+
+// Calculate kappa constant for partial curve. The sign of angle in the
+// tangent will actually ensure this is negative for a counter clockwise
+// sweep, so changing signs later isn't needed.
+inline Float ComputeKappaFactor(Float aAngle)
+{
+  return (4.0f / 3.0f) * tanf(aAngle / 4.0f);
+}
+
+/**
+ * Draws a partial arc <= 90 degrees given exact start and end points.
+ * Assumes that it is continuing from an already specified start point.
+ */
+template <typename T>
+inline void PartialArcToBezier(T* aSink,
+                               const Size& aRadius,
+                               const Point& aStartPoint, const Point& aEndPoint,
+                               const Point& aStartOffset, const Point& aEndOffset,
+                               Float aKappaFactor = kKappaFactor)
+{
+  Float kappaX = aKappaFactor * aRadius.width;
+  Float kappaY = aKappaFactor * aRadius.height;
+
+  Point cp1 =
+    aStartPoint + Point(-aStartOffset.y * kappaX, aStartOffset.x * kappaY);
+
+  Point cp2 =
+    aEndPoint + Point(aEndOffset.y * kappaX, -aEndOffset.x * kappaY);
+
+  aSink->BezierTo(cp1, cp2, aEndPoint);
+}
+
+/**
+ * Draws an acute arc (<= 90 degrees) given exact start and end points.
+ * Specialized version avoiding kappa calculation.
+ */
+template <typename T>
+inline void AcuteArcToBezier(T* aSink,
+                             const Point& aOrigin, const Size& aRadius,
+                             const Point& aStartPoint, const Point& aEndPoint,
+                             Float aKappaFactor = kKappaFactor)
+{
+  aSink->LineTo(aStartPoint);
+  if (!aRadius.IsEmpty()) {
+    Point startOffset = aStartPoint - aOrigin;
+    startOffset.x /= aRadius.width;
+    startOffset.y /= aRadius.height;
+    Point endOffset = aEndPoint - aOrigin;
+    endOffset.x /= aRadius.width;
+    endOffset.y /= aRadius.height;
+    PartialArcToBezier(aSink, aRadius,
+                       aStartPoint, aEndPoint,
+                       startOffset, endOffset,
+                       aKappaFactor);
+  } else if (aEndPoint != aStartPoint) {
+    aSink->LineTo(aEndPoint);
+  }
+}
+
+/**
+ * Draws an acute arc (<= 90 degrees) given exact start and end points.
+ */
+template <typename T>
+inline void AcuteArcToBezier(T* aSink,
+                             const Point& aOrigin, const Size& aRadius,
+                             const Point& aStartPoint, const Point& aEndPoint,
+                             Float aStartAngle, Float aEndAngle)
+{
+  AcuteArcToBezier(aSink, aOrigin, aRadius, aStartPoint, aEndPoint,
+                   ComputeKappaFactor(aEndAngle - aStartAngle));
+}
+
 template <typename T>
 void ArcToBezier(T* aSink, const Point &aOrigin, const Size &aRadius,
                  float aStartAngle, float aEndAngle, bool aAntiClockwise)
 {
-  Point startPoint(aOrigin.x + cosf(aStartAngle) * aRadius.width,
-                   aOrigin.y + sinf(aStartAngle) * aRadius.height);
+  Float sweepDirection = aAntiClockwise ? -1.0f : 1.0f;
 
-  aSink->LineTo(startPoint);
+  // Calculate the total arc we're going to sweep.
+  Float arcSweepLeft = (aEndAngle - aStartAngle) * sweepDirection;
 
   // Clockwise we always sweep from the smaller to the larger angle, ccw
   // it's vice versa.
-  if (!aAntiClockwise && (aEndAngle < aStartAngle)) {
-    Float correction = Float(ceil((aStartAngle - aEndAngle) / (2.0f * M_PI)));
-    aEndAngle += float(correction * 2.0f * M_PI);
-  } else if (aAntiClockwise && (aStartAngle < aEndAngle)) {
-    Float correction = (Float)ceil((aEndAngle - aStartAngle) / (2.0f * M_PI));
-    aStartAngle += float(correction * 2.0f * M_PI);
+  if (arcSweepLeft < 0) {
+    // Rerverse sweep is modulo'd into range rather than clamped.
+    arcSweepLeft = Float(2.0f * M_PI) + fmodf(arcSweepLeft, Float(2.0f * M_PI));
+    // Recalculate the start angle to land closer to end angle.
+    aStartAngle = aEndAngle - arcSweepLeft * sweepDirection;
+  } else if (arcSweepLeft > Float(2.0f * M_PI)) {
+    // Sweeping more than 2 * pi is a full circle.
+    arcSweepLeft = Float(2.0f * M_PI);
   }
-
-  // Sweeping more than 2 * pi is a full circle.
-  if (!aAntiClockwise && (aEndAngle - aStartAngle > 2 * M_PI)) {
-    aEndAngle = float(aStartAngle + 2.0f * M_PI);
-  } else if (aAntiClockwise && (aStartAngle - aEndAngle > 2.0f * M_PI)) {
-    aEndAngle = float(aStartAngle - 2.0f * M_PI);
-  }
-
-  // Calculate the total arc we're going to sweep.
-  Float arcSweepLeft = fabs(aEndAngle - aStartAngle);
-
-  Float sweepDirection = aAntiClockwise ? -1.0f : 1.0f;
 
   Float currentStartAngle = aStartAngle;
+  Point currentStartOffset(cosf(aStartAngle), sinf(aStartAngle));
+  Point currentStartPoint(aOrigin.x + currentStartOffset.x * aRadius.width,
+                          aOrigin.y + currentStartOffset.y * aRadius.height);
+
+  aSink->LineTo(currentStartPoint);
 
   while (arcSweepLeft > 0) {
+    Float currentEndAngle =
+      currentStartAngle + std::min(arcSweepLeft, Float(M_PI / 2.0f)) * sweepDirection;
+
+    Point currentEndOffset(cosf(currentEndAngle), sinf(currentEndAngle));
+    Point currentEndPoint(aOrigin.x + currentEndOffset.x * aRadius.width,
+                          aOrigin.y + currentEndOffset.y * aRadius.height);
+
+    PartialArcToBezier(aSink, aRadius,
+                       currentStartPoint, currentEndPoint,
+                       currentStartOffset, currentEndOffset,
+                       ComputeKappaFactor(currentEndAngle - currentStartAngle));
+
     // We guarantee here the current point is the start point of the next
     // curve segment.
-    Float currentEndAngle;
-
-    if (arcSweepLeft > M_PI / 2.0f) {
-      currentEndAngle = Float(currentStartAngle + M_PI / 2.0f * sweepDirection);
-    } else {
-      currentEndAngle = currentStartAngle + arcSweepLeft * sweepDirection;
-    }
-
-    Point currentStartPoint(aOrigin.x + cosf(currentStartAngle) * aRadius.width,
-                            aOrigin.y + sinf(currentStartAngle) * aRadius.height);
-    Point currentEndPoint(aOrigin.x + cosf(currentEndAngle) * aRadius.width,
-                          aOrigin.y + sinf(currentEndAngle) * aRadius.height);
-
-    // Calculate kappa constant for partial curve. The sign of angle in the
-    // tangent will actually ensure this is negative for a counter clockwise
-    // sweep, so changing signs later isn't needed.
-    Float kappaFactor = (4.0f / 3.0f) * tan((currentEndAngle - currentStartAngle) / 4.0f);
-    Float kappaX = kappaFactor * aRadius.width;
-    Float kappaY = kappaFactor * aRadius.height;
-
-    Point tangentStart(-sin(currentStartAngle), cos(currentStartAngle));
-    Point cp1 = currentStartPoint;
-    cp1 += Point(tangentStart.x * kappaX, tangentStart.y * kappaY);
-
-    Point revTangentEnd(sin(currentEndAngle), -cos(currentEndAngle));
-    Point cp2 = currentEndPoint;
-    cp2 += Point(revTangentEnd.x * kappaX, revTangentEnd.y * kappaY);
-
-    aSink->BezierTo(cp1, cp2, currentEndPoint);
-
     arcSweepLeft -= Float(M_PI / 2.0f);
     currentStartAngle = currentEndAngle;
+    currentStartOffset = currentEndOffset;
+    currentStartPoint = currentEndPoint;
   }
 }
 
@@ -90,42 +143,26 @@ void ArcToBezier(T* aSink, const Point &aOrigin, const Size &aRadius,
 template <typename T>
 void EllipseToBezier(T* aSink, const Point &aOrigin, const Size &aRadius)
 {
-  Point startPoint(aOrigin.x + aRadius.width,
-                   aOrigin.y);
+  Point currentStartOffset(1, 0);
+  Point currentStartPoint(aOrigin.x + aRadius.width, aOrigin.y);
 
-  aSink->LineTo(startPoint);
+  aSink->LineTo(currentStartPoint);
 
-  // Calculate kappa constant for partial curve. The sign of angle in the
-  // tangent will actually ensure this is negative for a counter clockwise
-  // sweep, so changing signs later isn't needed.
-  Float kappaFactor = (4.0f / 3.0f) * tan((M_PI/2.0f) / 4.0f);
-  Float kappaX = kappaFactor * aRadius.width;
-  Float kappaY = kappaFactor * aRadius.height;
-  Float cosStartAngle = 1;
-  Float sinStartAngle = 0;
   for (int i = 0; i < 4; i++) {
-    // We guarantee here the current point is the start point of the next
-    // curve segment.
-    Point currentStartPoint(aOrigin.x + cosStartAngle * aRadius.width,
-                            aOrigin.y + sinStartAngle * aRadius.height);
-    Point currentEndPoint(aOrigin.x + -sinStartAngle * aRadius.width,
-                          aOrigin.y + cosStartAngle * aRadius.height);
-
-    Point tangentStart(-sinStartAngle, cosStartAngle);
-    Point cp1 = currentStartPoint;
-    cp1 += Point(tangentStart.x * kappaX, tangentStart.y * kappaY);
-
-    Point revTangentEnd(cosStartAngle, sinStartAngle);
-    Point cp2 = currentEndPoint;
-    cp2 += Point(revTangentEnd.x * kappaX, revTangentEnd.y * kappaY);
-
-    aSink->BezierTo(cp1, cp2, currentEndPoint);
-
     // cos(x+pi/2) == -sin(x)
     // sin(x+pi/2) == cos(x)
-    Float tmp = cosStartAngle;
-    cosStartAngle = -sinStartAngle;
-    sinStartAngle = tmp;
+    Point currentEndOffset(-currentStartOffset.y, currentStartOffset.x);
+    Point currentEndPoint(aOrigin.x + currentEndOffset.x * aRadius.width,
+                          aOrigin.y + currentEndOffset.y * aRadius.height);
+
+    PartialArcToBezier(aSink, aRadius,
+                       currentStartPoint, currentEndPoint,
+                       currentStartOffset, currentEndOffset);
+
+    // We guarantee here the current point is the start point of the next
+    // curve segment.
+    currentStartOffset = currentEndOffset;
+    currentStartPoint = currentEndPoint;
   }
 }
 
@@ -143,7 +180,7 @@ GFX2D_API void AppendRectToPath(PathBuilder* aPathBuilder,
                                 const Rect& aRect,
                                 bool aDrawClockwise = true);
 
-inline TemporaryRef<Path> MakePathForRect(const DrawTarget& aDrawTarget,
+inline already_AddRefed<Path> MakePathForRect(const DrawTarget& aDrawTarget,
                                           const Rect& aRect,
                                           bool aDrawClockwise = true)
 {
@@ -192,6 +229,13 @@ struct RectCornerRadii {
     return radii[aCorner];
   }
 
+  bool operator==(const RectCornerRadii& aOther) const {
+    for (size_t i = 0; i < RectCorner::Count; i++) {
+      if (radii[i] != aOther.radii[i]) return false;
+    }
+    return true;
+  }
+
   void Scale(Float aXScale, Float aYScale) {
     for (int i = 0; i < RectCorner::Count; i++) {
       radii[i].Scale(aXScale, aYScale);
@@ -228,7 +272,7 @@ GFX2D_API void AppendRoundedRectToPath(PathBuilder* aPathBuilder,
                                        const RectCornerRadii& aRadii,
                                        bool aDrawClockwise = true);
 
-inline TemporaryRef<Path> MakePathForRoundedRect(const DrawTarget& aDrawTarget,
+inline already_AddRefed<Path> MakePathForRoundedRect(const DrawTarget& aDrawTarget,
                                                  const Rect& aRect,
                                                  const RectCornerRadii& aRadii,
                                                  bool aDrawClockwise = true)
@@ -249,7 +293,7 @@ GFX2D_API void AppendEllipseToPath(PathBuilder* aPathBuilder,
                                    const Point& aCenter,
                                    const Size& aDimensions);
 
-inline TemporaryRef<Path> MakePathForEllipse(const DrawTarget& aDrawTarget,
+inline already_AddRefed<Path> MakePathForEllipse(const DrawTarget& aDrawTarget,
                                              const Point& aCenter,
                                              const Size& aDimensions)
 {
@@ -269,7 +313,8 @@ inline TemporaryRef<Path> MakePathForEllipse(const DrawTarget& aDrawTarget,
  *   false.
  */
 GFX2D_API bool SnapLineToDevicePixelsForStroking(Point& aP1, Point& aP2,
-                                                 const DrawTarget& aDrawTarget);
+                                                 const DrawTarget& aDrawTarget,
+                                                 Float aLineWidth);
 
 /**
  * This function paints each edge of aRect separately, snapping the edges using
@@ -354,16 +399,19 @@ inline bool UserToDevicePixelSnapped(Rect& aRect, const DrawTarget& aDrawTarget,
  * This function has the same behavior as UserToDevicePixelSnapped except that
  * aRect is not transformed to device space.
  */
-inline void MaybeSnapToDevicePixels(Rect& aRect, const DrawTarget& aDrawTarget,
-                                    bool aIgnoreScale = false)
+inline bool MaybeSnapToDevicePixels(Rect& aRect, const DrawTarget& aDrawTarget,
+                                    bool aAllowScaleOr90DegreeRotate = false)
 {
-  if (UserToDevicePixelSnapped(aRect, aDrawTarget, aIgnoreScale)) {
+  if (UserToDevicePixelSnapped(aRect, aDrawTarget,
+                               aAllowScaleOr90DegreeRotate)) {
     // Since UserToDevicePixelSnapped returned true we know there is no
     // rotation/skew in 'mat', so we can just use TransformBounds() here.
     Matrix mat = aDrawTarget.GetTransform();
     mat.Invert();
     aRect = mat.TransformBounds(aRect);
+    return true;
   }
+  return false;
 }
 
 } // namespace gfx

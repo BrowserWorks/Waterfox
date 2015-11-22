@@ -13,6 +13,7 @@
 #include "nsILoadContext.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIInterfaceRequestor.h"
+#include "nsNetUtil.h"
 
 namespace mozilla {
 namespace net {
@@ -98,8 +99,8 @@ protected:
   bool mPrivateBrowsing;
 };
 
-}
-}
+} // namespace net
+} // namespace mozilla
 
 #endif
 

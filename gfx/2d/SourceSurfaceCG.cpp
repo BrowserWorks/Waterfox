@@ -36,7 +36,7 @@ SourceSurfaceCG::GetFormat() const
   return mFormat;
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 SourceSurfaceCG::GetDataSurface()
 {
   //XXX: we should be more disciplined about who takes a reference and where
@@ -45,7 +45,7 @@ SourceSurfaceCG::GetDataSurface()
 
   // We also need to make sure that the returned surface has
   // surface->GetType() == SurfaceType::DATA.
-  return new DataSourceSurfaceWrapper(dataSurf);
+  return MakeAndAddRef<DataSourceSurfaceWrapper>(dataSurf);
 }
 
 static void releaseCallback(void *info, const void *data, size_t size) {
@@ -453,5 +453,5 @@ SourceSurfaceCGIOSurfaceContext::GetData()
   return (unsigned char*)mData;
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

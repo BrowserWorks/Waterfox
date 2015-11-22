@@ -17,7 +17,7 @@
 #include "nsIFile.h"
 #include "nsThreadUtils.h"
 #include "prenv.h"
-
+#include "mozilla/Preferences.h"
 #include "mozilla/DebugOnly.h"
 #include <dlfcn.h>
 
@@ -409,6 +409,12 @@ PicoCallbackRunnable::OnCancel()
   return NS_OK;
 }
 
+NS_IMETHODIMP
+PicoCallbackRunnable::OnVolumeChanged(float aVolume)
+{
+  return NS_OK;
+}
+
 NS_INTERFACE_MAP_BEGIN(nsPicoService)
   NS_INTERFACE_MAP_ENTRY(nsISpeechService)
   NS_INTERFACE_MAP_ENTRY(nsIObserver)
@@ -451,7 +457,14 @@ nsPicoService::Observe(nsISupports* aSubject, const char* aTopic,
                        const char16_t* aData)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  NS_ENSURE_TRUE(!strcmp(aTopic, "profile-after-change"), NS_ERROR_UNEXPECTED);
+  if(NS_WARN_IF(!(!strcmp(aTopic, "profile-after-change")))) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  if (!Preferences::GetBool("media.webspeech.synth.enabled") ||
+      Preferences::GetBool("media.webspeech.synth.test")) {
+    return NS_OK;
+  }
 
   DebugOnly<nsresult> rv = NS_NewNamedThread("Pico Worker", getter_AddRefs(mThread));
   MOZ_ASSERT(NS_SUCCEEDED(rv));
@@ -465,12 +478,16 @@ nsPicoService::Speak(const nsAString& aText, const nsAString& aUri,
                      float aVolume, float aRate, float aPitch,
                      nsISpeechTask* aTask)
 {
-  NS_ENSURE_TRUE(mInitialized, NS_ERROR_NOT_AVAILABLE);
+  if(NS_WARN_IF(!(mInitialized))) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
 
   MonitorAutoLock autoLock(mVoicesMonitor);
   bool found = false;
   PicoVoice* voice = mVoices.GetWeak(aUri, &found);
-  NS_ENSURE_TRUE(found, NS_ERROR_NOT_AVAILABLE);
+  if(NS_WARN_IF(!(found))) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
 
   mCurrentTask = aTask;
   nsRefPtr<PicoCallbackRunnable> cb = new PicoCallbackRunnable(aText, voice, aRate, aPitch, aTask, this);
@@ -508,9 +525,11 @@ PicoAddVoiceTraverser(const nsAString& aUri,
   name.AssignLiteral("Pico ");
   name.Append(aVoice->mLanguage);
 
+  // This service is multi-threaded and can handle more than one utterance at a
+  // time before previous utterances end. So, aQueuesUtterances == false
   DebugOnly<nsresult> rv =
     data->mRegistry->AddVoice(
-      data->mService, aUri, name, aVoice->mLanguage, true);
+      data->mService, aUri, name, aVoice->mLanguage, true, false);
   NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to add voice");
 
   return PL_DHASH_NEXT;
@@ -718,7 +737,7 @@ nsPicoService*
 nsPicoService::GetInstance()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     MOZ_ASSERT(false, "nsPicoService can only be started on main gecko process");
     return nullptr;
   }

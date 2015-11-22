@@ -74,6 +74,7 @@ const LOG_SWITCH_SUCCESS = "rename_file: proceeding to rename the directory\n" +
 const ERR_RENAME_FILE = "rename_file: failed to rename file";
 const ERR_UNABLE_OPEN_DEST = "unable to open destination file";
 const ERR_BACKUP_DISCARD = "backup_discard: unable to remove";
+const ERR_MOVE_DESTDIR_7 = "Moving destDir to tmpDir failed, err: 7";
 
 const LOG_SVC_SUCCESSFUL_LAUNCH = "Process was started... waiting on result.";
 
@@ -144,7 +145,6 @@ var gCallbackArgs = ["./", "callback.log", "Test Arg 2", "Test Arg 3"];
 var gPostUpdateBinFile = "postup_app" + BIN_SUFFIX;
 var gStageUpdate = false;
 var gSwitchApp = false;
-var gDisableReplaceFallback = false;
 var gUseTestAppDir = true;
 
 var gTimeoutRuns = 0;
@@ -1619,20 +1619,10 @@ function runUpdate(aExpectedExitValue, aExpectedStatus, aCallback) {
   }
   debugDump("running the updater: " + updateBin.path + " " + args.join(" "));
 
-  let env = Cc["@mozilla.org/process/environment;1"].
-            getService(Ci.nsIEnvironment);
-  if (gDisableReplaceFallback) {
-    env.set("MOZ_NO_REPLACE_FALLBACK", "1");
-  }
-
   let process = Cc["@mozilla.org/process/util;1"].
                 createInstance(Ci.nsIProcess);
   process.init(updateBin);
   process.run(true, args, args.length);
-
-  if (gDisableReplaceFallback) {
-    env.set("MOZ_NO_REPLACE_FALLBACK", "");
-  }
 
   let status = readStatusFile();
   if (process.exitValue != aExpectedExitValue || status != aExpectedStatus) {
@@ -1837,7 +1827,7 @@ function setupAppFiles() {
                      inGreDir : true } ];
 
   // On Linux the updater.png must also be copied
-  if (IS_UNIX && !IS_MACOSX) {
+  if (IS_UNIX && !IS_MACOSX && !IS_TOOLKIT_GONK) {
     appFiles.push( { relPath  : "icons/updater.png",
                      inGreDir : true } );
   }
@@ -1924,14 +1914,16 @@ function copyFileToTestAppDir(aFileRelPath, aInGreDir) {
     fileRelPath = fileRelPath + ".app";
   }
 
-  Assert.ok(srcFile.exists(), MSG_SHOULD_EXIST);
+  Assert.ok(srcFile.exists(),
+            MSG_SHOULD_EXIST + ", leafName: " + srcFile.leafName);
 
   // Symlink libraries. Note that the XUL library on Mac OS X doesn't have a
   // file extension and shouldSymlink will always be false on Windows.
   let shouldSymlink = (pathParts[pathParts.length - 1] == "XUL" ||
                        fileRelPath.substr(fileRelPath.length - 3) == ".so" ||
                        fileRelPath.substr(fileRelPath.length - 6) == ".dylib");
-  if (!shouldSymlink) {
+  // The tests don't support symlinks on gonk.
+  if (!shouldSymlink || IS_TOOLKIT_GONK) {
     if (!destFile.exists()) {
       try {
         srcFile.copyToFollowingLinks(destFile.parent, destFile.leafName);
@@ -2137,7 +2129,7 @@ function runUpdateUsingService(aInitialStatus, aExpectedStatus, aCheckSvcLog) {
 
   gServiceLaunchedCallbackArgs = [
     "-no-remote",
-    "-process-updates",
+    "-test-process-updates",
     "-dump-args",
     appArgsLogPath
   ];
@@ -2354,7 +2346,6 @@ function setupUpdaterTest(aMarFile) {
   helperBin.copyToFollowingLinks(afterApplyBinDir, gCallbackBinFile);
   helperBin.copyToFollowingLinks(afterApplyBinDir, gPostUpdateBinFile);
 
-  let applyToDir = getApplyDirFile(null, true);
   gTestFiles.forEach(function SUT_TF_FE(aTestFile) {
     if (aTestFile.originalFile || aTestFile.originalContents) {
       let testDir = getApplyDirFile(aTestFile.relPathDir, true);
@@ -3223,7 +3214,7 @@ function UpdatePrompt(aCallback) {
   let fns = ["checkForUpdates", "showUpdateAvailable", "showUpdateDownloaded",
              "showUpdateError", "showUpdateHistory", "showUpdateInstalled"];
 
-  fns.forEach(function(aPromptFn) {
+  fns.forEach(function UP_fns(aPromptFn) {
     UpdatePrompt.prototype[aPromptFn] = function() {
       if (!this._callback) {
         return;
@@ -3397,8 +3388,8 @@ function createAppInfo(aID, aName, aVersion, aPlatformVersion) {
  * Command line arguments used when launching the application:
  * -no-remote prevents shell integration from being affected by an existing
  * application process.
- * -process-updates makes the application exits after being relaunched by the
- * updater.
+ * -test-process-updates makes the application exit after being relaunched by
+ * the updater.
  * the platform specific string defined by PIPE_TO_NULL to output both stdout
  * and stderr to null. This is needed to prevent output from the application
  * from ending up in the xpchsell log.
@@ -3420,14 +3411,14 @@ function getProcessArgs(aExtraArgs) {
     launchScript.create(Ci.nsILocalFile.NORMAL_FILE_TYPE, PERMS_DIRECTORY);
 
     let scriptContents = "#! /bin/sh\n";
-    scriptContents += appBinPath + " -no-remote -process-updates " +
+    scriptContents += appBinPath + " -no-remote -test-process-updates " +
                       aExtraArgs.join(" ") + " " + PIPE_TO_NULL;
     writeFile(launchScript, scriptContents);
     debugDump("created " + launchScript.path + " containing:\n" +
               scriptContents);
     args = [launchScript.path];
   } else {
-    args = ["/D", "/Q", "/C", appBinPath, "-no-remote", "-process-updates"].
+    args = ["/D", "/Q", "/C", appBinPath, "-no-remote", "-test-process-updates"].
            concat(aExtraArgs).concat([PIPE_TO_NULL]);
   }
   return args;

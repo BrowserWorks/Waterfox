@@ -31,12 +31,12 @@ Components.utils.import("resource://gre/modules/AsyncShutdown.jsm");
 Components.utils.import("resource://testing-common/MockRegistrar.jsm");
 
 // We need some internal bits of AddonManager
-let AMscope = Components.utils.import("resource://gre/modules/AddonManager.jsm");
-let AddonManager = AMscope.AddonManager;
-let AddonManagerInternal = AMscope.AddonManagerInternal;
+var AMscope = Components.utils.import("resource://gre/modules/AddonManager.jsm");
+var AddonManager = AMscope.AddonManager;
+var AddonManagerInternal = AMscope.AddonManagerInternal;
 // Mock out AddonManager's reference to the AsyncShutdown module so we can shut
 // down AddonManager from the test
-let MockAsyncShutdown = {
+var MockAsyncShutdown = {
   hook: null,
   status: null,
   profileBeforeChange: {
@@ -378,7 +378,7 @@ function do_check_icons(aActual, aExpected) {
 
 // Record the error (if any) from trying to save the XPI
 // database at shutdown time
-let gXPISaveError = null;
+var gXPISaveError = null;
 
 /**
  * Starts up the add-on manager as if it was started by the application.
@@ -770,6 +770,62 @@ function writeInstallRDFForExtension(aData, aDir, aId, aExtraFile) {
 }
 
 /**
+ * Writes a manifest.json manifest into an extension using the properties passed
+ * in a JS object.
+ *
+ * @param   aManifest
+ *          The data to write
+ * @param   aDir
+ *          The install directory to add the extension to
+ * @param   aId
+ *          An optional string to override the default installation aId
+ * @return  A file pointing to where the extension was installed
+ */
+function writeWebManifestForExtension(aData, aDir, aId = undefined) {
+  if (!aId)
+    aId = aData.applications.gecko.id;
+
+  if (TEST_UNPACKED) {
+    let dir = aDir.clone();
+    dir.append(aId);
+    if (!dir.exists())
+      dir.create(AM_Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+
+    let file = dir.clone();
+    file.append("manifest.json");
+    if (file.exists())
+      file.remove(true);
+
+    let data = JSON.stringify(aData);
+    let fos = AM_Cc["@mozilla.org/network/file-output-stream;1"].
+              createInstance(AM_Ci.nsIFileOutputStream);
+    fos.init(file,
+             FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_TRUNCATE,
+             FileUtils.PERMS_FILE, 0);
+    fos.write(data, data.length);
+    fos.close();
+
+    return dir;
+  }
+  else {
+    let file = aDir.clone();
+    file.append(aId + ".xpi");
+
+    let stream = AM_Cc["@mozilla.org/io/string-input-stream;1"].
+                 createInstance(AM_Ci.nsIStringInputStream);
+    stream.setData(JSON.stringify(aData), -1);
+    let zipW = AM_Cc["@mozilla.org/zipwriter;1"].
+               createInstance(AM_Ci.nsIZipWriter);
+    zipW.open(file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_TRUNCATE);
+    zipW.addEntryStream("manifest.json", 0, AM_Ci.nsIZipWriter.COMPRESSION_NONE,
+                        stream, false);
+    zipW.close();
+
+    return file;
+  }
+}
+
+/**
  * Writes an install.rdf manifest into a packed extension using the properties passed
  * in a JS object. The objects should contain a property for each property to
  * appear in the RDF. The object may contain an array of objects with id,
@@ -829,7 +885,7 @@ function writeInstallRDFToXPIFile(aData, aFile, aExtraFile) {
   zipW.close();
 }
 
-let temp_xpis = [];
+var temp_xpis = [];
 /**
  * Creates an XPI file for some manifest data in the temporary directory and
  * returns the nsIFile for it. The file will be deleted when the test completes.
@@ -970,7 +1026,7 @@ function getFileForAddon(aDir, aId) {
 function registerDirectory(aKey, aDir) {
   var dirProvider = {
     getFile: function(aProp, aPersistent) {
-      aPersistent.value = true;
+      aPersistent.value = false;
       if (aProp == aKey)
         return aDir.clone();
       return null;
@@ -1108,9 +1164,13 @@ const AddonListener = {
 const InstallListener = {
   onNewInstall: function(install) {
     if (install.state != AddonManager.STATE_DOWNLOADED &&
+        install.state != AddonManager.STATE_DOWNLOAD_FAILED &&
         install.state != AddonManager.STATE_AVAILABLE)
       do_throw("Bad install state " + install.state);
-    do_check_eq(install.error, 0);
+    if (install.state != AddonManager.STATE_DOWNLOAD_FAILED)
+      do_check_eq(install.error, 0);
+    else
+      do_check_neq(install.error, 0);
     do_check_eq("onNewInstall", getExpectedInstall());
     return check_test_completed(arguments);
   },
@@ -1414,11 +1474,11 @@ if ("nsIWindowsRegKey" in AM_Ci) {
 const gProfD = do_get_profile();
 
 const EXTENSIONS_DB = "extensions.json";
-let gExtensionsJSON = gProfD.clone();
+var gExtensionsJSON = gProfD.clone();
 gExtensionsJSON.append(EXTENSIONS_DB);
 
 const EXTENSIONS_INI = "extensions.ini";
-let gExtensionsINI = gProfD.clone();
+var gExtensionsINI = gProfD.clone();
 gExtensionsINI.append(EXTENSIONS_INI);
 
 // Enable more extensive EM logging

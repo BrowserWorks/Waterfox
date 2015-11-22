@@ -7,7 +7,6 @@
 #ifndef nsPrintSettingsImpl_h__
 #define nsPrintSettingsImpl_h__
 
-#include "gfxCore.h"
 #include "nsIPrintSettings.h"  
 #include "nsMargin.h"  
 #include "nsString.h"
@@ -81,7 +80,6 @@ protected:
   nsString      mFooterStrs[NUM_HEAD_FOOT];
 
   nsString      mPaperName;
-  nsString      mPlexName;
   int16_t       mPaperData;
   int16_t       mPaperSizeType;
   double        mPaperWidth;
@@ -91,12 +89,8 @@ protected:
   bool          mPrintReversed;
   bool          mPrintInColor; // a false means grayscale
   int32_t       mOrientation;  // see orientation consts
-  nsString      mColorspace;
-  nsString      mResolutionName;
   int32_t       mResolution;
   int32_t       mDuplex;
-  bool          mDownloadFonts;
-  nsString      mPrintCommand;
   int32_t       mNumCopies;
   nsXPIDLString mPrinter;
   bool          mPrintToFile;

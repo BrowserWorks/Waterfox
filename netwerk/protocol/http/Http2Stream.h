@@ -6,6 +6,9 @@
 #ifndef mozilla_net_Http2Stream_h
 #define mozilla_net_Http2Stream_h
 
+// HTTP/2 - RFC7540
+// https://www.rfc-editor.org/rfc/rfc7540.txt
+
 #include "mozilla/Attributes.h"
 #include "nsAHttpTransaction.h"
 #include "nsISupportsPriority.h"
@@ -67,9 +70,9 @@ public:
   bool HasRegisteredID() { return mStreamID != 0; }
 
   nsAHttpTransaction *Transaction() { return mTransaction; }
-  virtual nsILoadGroupConnectionInfo *LoadGroupConnectionInfo()
+  virtual nsISchedulingContext *SchedulingContext()
   {
-    return mTransaction ? mTransaction->LoadGroupConnectionInfo() : nullptr;
+    return mTransaction ? mTransaction->SchedulingContext() : nullptr;
   }
 
   void Close(nsresult reason);
@@ -321,7 +324,7 @@ private:
   bool mPlainTextTunnel;
 };
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla
 
 #endif // mozilla_net_Http2Stream_h

@@ -18,7 +18,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ClearKeyAsyncShutdown.h"
 #include "ClearKeySessionManager.h"
+#include "gmp-api/gmp-async-shutdown.h"
 #include "gmp-api/gmp-decryption.h"
 #include "gmp-api/gmp-platform.h"
 
@@ -60,7 +62,7 @@ GMPGetAPI(const char* aApiName, void* aHostAPI, void** aPluginAPI)
     *aPluginAPI = new ClearKeySessionManager();
   }
 #if defined(ENABLE_WMF)
-  if (!strcmp(aApiName, GMP_API_AUDIO_DECODER) &&
+  else if (!strcmp(aApiName, GMP_API_AUDIO_DECODER) &&
       wmf::EnsureLibs()) {
     *aPluginAPI = new AudioDecoder(static_cast<GMPAudioHost*>(aHostAPI));
   } else if (!strcmp(aApiName, GMP_API_VIDEO_DECODER) &&
@@ -68,7 +70,9 @@ GMPGetAPI(const char* aApiName, void* aHostAPI, void** aPluginAPI)
     *aPluginAPI = new VideoDecoder(static_cast<GMPVideoHost*>(aHostAPI));
   }
 #endif
-  else {
+  else if (!strcmp(aApiName, GMP_API_ASYNC_SHUTDOWN)) {
+    *aPluginAPI = new ClearKeyAsyncShutdown(static_cast<GMPAsyncShutdownHost*> (aHostAPI));
+  } else {
     CK_LOGE("GMPGetAPI couldn't resolve API name |%s|\n", aApiName);
   }
 

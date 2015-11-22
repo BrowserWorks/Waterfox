@@ -26,8 +26,8 @@ namespace mozilla {
 class RestyleTracker;
 namespace dom {
 class SVGAnimationElement;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 //----------------------------------------------------------------------
 // nsSMILAnimationController
@@ -103,8 +103,8 @@ public:
 
   // Helper to check if we have any animation elements at all
   bool HasRegisteredAnimations() const
-  { 
-	return mAnimationElementTable.Count() != 0;
+  {
+    return mAnimationElementTable.Count() != 0;
   }
 
   void AddStyleUpdatesTo(mozilla::RestyleTracker& aTracker);
@@ -122,28 +122,6 @@ protected:
   typedef nsPtrHashKey<mozilla::dom::SVGAnimationElement> AnimationElementPtrKey;
   typedef nsTHashtable<AnimationElementPtrKey> AnimationElementHashtable;
 
-  struct SampleTimeContainerParams
-  {
-    TimeContainerHashtable* mActiveContainers;
-    bool                    mSkipUnchangedContainers;
-  };
-
-  struct SampleAnimationParams
-  {
-    TimeContainerHashtable* mActiveContainers;
-    nsSMILCompositorTable*  mCompositorTable;
-  };
-
-  struct GetMilestoneElementsParams
-  {
-    nsTArray<nsRefPtr<mozilla::dom::SVGAnimationElement> > mElements;
-    nsSMILMilestone                                        mMilestone;
-  };
-
-  // Cycle-collection implementation helpers
-  static PLDHashOperator CompositorTableEntryTraverse(
-      nsSMILCompositor* aCompositor, void* aArg);
-
   // Returns mDocument's refresh driver, if it's got one.
   nsRefreshDriver* GetRefreshDriver();
 
@@ -159,32 +137,15 @@ protected:
   void DoSample(bool aSkipUnchangedContainers);
 
   void RewindElements();
-  static PLDHashOperator RewindNeeded(
-      TimeContainerPtrKey* aKey, void* aData);
-  static PLDHashOperator RewindAnimation(
-      AnimationElementPtrKey* aKey, void* aData);
-  static PLDHashOperator ClearRewindNeeded(
-      TimeContainerPtrKey* aKey, void* aData);
 
   void DoMilestoneSamples();
-  static PLDHashOperator GetNextMilestone(
-      TimeContainerPtrKey* aKey, void* aData);
-  static PLDHashOperator GetMilestoneElements(
-      TimeContainerPtrKey* aKey, void* aData);
 
-  static PLDHashOperator SampleTimeContainer(
-      TimeContainerPtrKey* aKey, void* aData);
-  static PLDHashOperator SampleAnimation(
-      AnimationElementPtrKey* aKey, void* aData);
   static void SampleTimedElement(mozilla::dom::SVGAnimationElement* aElement,
                                  TimeContainerHashtable* aActiveContainers);
   static void AddAnimationToCompositorTable(
     mozilla::dom::SVGAnimationElement* aElement, nsSMILCompositorTable* aCompositorTable);
   static bool GetTargetIdentifierForAnimation(
       mozilla::dom::SVGAnimationElement* aAnimElem, nsSMILTargetIdentifier& aResult);
-
-  static PLDHashOperator
-    AddStyleUpdate(AnimationElementPtrKey* aKey, void* aData);
 
   // Methods for adding/removing time containers
   virtual nsresult AddChild(nsSMILTimeContainer& aChild) override;
@@ -228,9 +189,8 @@ protected:
 
   // Are we registered with our document's refresh driver?
   bool                       mRegisteredWithRefreshDriver;
-  
-  // Have we updated animated values without adding them to the restyle tracker?
 
+  // Have we updated animated values without adding them to the restyle tracker?
   bool                       mMightHavePendingStyleUpdates;
 
   // Store raw ptr to mDocument.  It owns the controller, so controller

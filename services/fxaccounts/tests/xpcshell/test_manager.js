@@ -14,20 +14,26 @@ Cu.import("resource://testing-common/MockRegistrar.jsm");
 // === Mocks ===
 
 // Globals representing server state
-let passwordResetOnServer = false;
-let deletedOnServer = false;
+var passwordResetOnServer = false;
+var deletedOnServer = false;
 
 // Global representing FxAccounts state
-let certExpired = false;
+var certExpired = false;
 
 // Mock RP
-let principal = {origin: 'app://settings.gaiamobile.org', appId: 27}
+function makePrincipal(origin, appId) {
+  let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
+                 .getService(Ci.nsIScriptSecurityManager);
+  let uri = Services.io.newURI(origin, null, null);
+  return secMan.createCodebasePrincipal(uri, {appId: appId});
+}
+var principal = makePrincipal('app://settings.gaiamobile.org', 27, false);
 
 // For override FxAccountsUIGlue.
-let fakeFxAccountsUIGlueCID;
+var fakeFxAccountsUIGlueCID;
 
 // FxAccountsUIGlue fake component.
-let FxAccountsUIGlue = {
+var FxAccountsUIGlue = {
   _reject: false,
 
   _error: 'error',
@@ -95,6 +101,7 @@ FxAccountsManager._fxAccounts = {
 
   _error: 'error',
   _assertion: 'assertion',
+  _keys: 'keys',
   _signedInUser: null,
 
   _reset: function() {
@@ -133,6 +140,13 @@ FxAccountsManager._fxAccounts = {
     return deferred.promise;
   },
 
+  getKeys: function() {
+    let deferred = Promise.defer();
+    this._reject ? deferred.reject(this._error)
+                 : deferred.resolve(this._keys);
+    return deferred.promise;
+  },
+
   resendVerificationEmail: function() {
     return this.getSignedInUser().then(data => {
       if (data) {
@@ -163,7 +177,7 @@ FxAccountsManager._fxAccounts = {
 const kFxAccountsClient = FxAccountsManager._getFxAccountsClient;
 
 // and change it for a fake client factory.
-let FakeFxAccountsClient = {
+var FakeFxAccountsClient = {
   _reject: false,
   _recoveryEmailStatusCalled: false,
   _signInCalled: false,
@@ -382,6 +396,7 @@ add_test(function() {
       do_throw("Unexpected success");
     },
     error => {
+      do_check_eq(error.error, ERROR_OFFLINE);
       FxAccountsManager._fxAccounts._reset();
       Services.io.offline = false;
       certExpired = false;
@@ -443,15 +458,10 @@ add_test(function(test_getAssertion_refreshAuth) {
 add_test(function(test_getAssertion_no_permissions) {
   do_print("= getAssertion no permissions =");
 
-  let noPermissionsPrincipal = {origin: 'app://dummy', appId: 28};
-  let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
-                 .getService(Ci.nsIScriptSecurityManager);
-  let uri = Services.io.newURI(noPermissionsPrincipal.origin, null, null);
-  let _principal = secMan.getAppCodebasePrincipal(uri,
-    noPermissionsPrincipal.appId, false);
+  let noPermissionsPrincipal = makePrincipal('app://dummy', 28);
   let permMan = Cc["@mozilla.org/permissionmanager;1"]
                   .getService(Ci.nsIPermissionManager);
-  permMan.addFromPrincipal(_principal, FXACCOUNTS_PERMISSION,
+  permMan.addFromPrincipal(noPermissionsPrincipal, FXACCOUNTS_PERMISSION,
                            Ci.nsIPermissionManager.DENY_ACTION);
 
   FxAccountsUIGlue._activeSession = {
@@ -477,15 +487,10 @@ add_test(function(test_getAssertion_no_permissions) {
 add_test(function(test_getAssertion_permission_prompt_action) {
   do_print("= getAssertion PROMPT_ACTION permission =");
 
-  let promptPermissionsPrincipal = {origin: 'app://dummy-prompt', appId: 29};
-  let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
-                 .getService(Ci.nsIScriptSecurityManager);
-  let uri = Services.io.newURI(promptPermissionsPrincipal.origin, null, null);
-  let _principal = secMan.getAppCodebasePrincipal(uri,
-    promptPermissionsPrincipal.appId, false);
+  let promptPermissionsPrincipal = makePrincipal('app://dummy-prompt', 29);
   let permMan = Cc["@mozilla.org/permissionmanager;1"]
                   .getService(Ci.nsIPermissionManager);
-  permMan.addFromPrincipal(_principal, FXACCOUNTS_PERMISSION,
+  permMan.addFromPrincipal(promptPermissionsPrincipal, FXACCOUNTS_PERMISSION,
                            Ci.nsIPermissionManager.PROMPT_ACTION);
 
   FxAccountsUIGlue._activeSession = {
@@ -501,7 +506,7 @@ add_test(function(test_getAssertion_permission_prompt_action) {
       do_check_eq(result, "assertion");
 
       let permission = permMan.testPermissionFromPrincipal(
-        _principal,
+        promptPermissionsPrincipal,
         FXACCOUNTS_PERMISSION
       );
       do_check_eq(permission, Ci.nsIPermissionManager.ALLOW_ACTION);
@@ -518,15 +523,10 @@ add_test(function(test_getAssertion_permission_prompt_action) {
 add_test(function(test_getAssertion_permission_prompt_action_refreshing) {
   do_print("= getAssertion PROMPT_ACTION permission already refreshing =");
 
-  let promptPermissionsPrincipal = {origin: 'app://dummy-prompt-2', appId: 30};
-  let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
-                 .getService(Ci.nsIScriptSecurityManager);
-  let uri = Services.io.newURI(promptPermissionsPrincipal.origin, null, null);
-  let _principal = secMan.getAppCodebasePrincipal(uri,
-    promptPermissionsPrincipal.appId, false);
+  let promptPermissionsPrincipal = makePrincipal('app://dummy-prompt-2', 30);
   let permMan = Cc["@mozilla.org/permissionmanager;1"]
                   .getService(Ci.nsIPermissionManager);
-  permMan.addFromPrincipal(_principal, FXACCOUNTS_PERMISSION,
+  permMan.addFromPrincipal(promptPermissionsPrincipal, FXACCOUNTS_PERMISSION,
                            Ci.nsIPermissionManager.PROMPT_ACTION);
 
   FxAccountsUIGlue._activeSession = {
@@ -544,7 +544,7 @@ add_test(function(test_getAssertion_permission_prompt_action_refreshing) {
       do_check_null(result);
 
       let permission = permMan.testPermissionFromPrincipal(
-        _principal,
+        promptPermissionsPrincipal,
         FXACCOUNTS_PERMISSION
       );
       do_check_eq(permission, Ci.nsIPermissionManager.PROMPT_ACTION);
@@ -907,4 +907,74 @@ add_test(function() {
     do_check_null(FxAccountsManager._activeSession);
     run_next_test();
   });
+});
+
+add_test(function(test_getKeys_sync_disabled) {
+  do_print("= getKeys sync disabled =");
+  Services.prefs.setBoolPref("services.sync.enabled", false);
+  FxAccountsManager.getKeys().then(
+    result => {
+      do_throw("Unexpected success");
+    },
+    error => {
+      do_check_eq(error, ERROR_SYNC_DISABLED);
+      Services.prefs.clearUserPref("services.sync.enabled");
+      run_next_test();
+    }
+  );
+});
+
+add_test(function(test_getKeys_no_session) {
+  do_print("= getKeys no session =");
+  Services.prefs.setBoolPref("services.sync.enabled", true);
+  FxAccountsManager._fxAccounts._signedInUser = null;
+  FxAccountsManager._activeSession = null;
+  FxAccountsManager.getKeys().then(
+    result => {
+      do_check_null(result);
+      FxAccountsManager._fxAccounts._reset();
+      Services.prefs.clearUserPref("services.sync.enabled");
+      run_next_test();
+    },
+    error => {
+      do_throw("Unexpected error: " + error);
+    }
+  );
+});
+
+add_test(function(test_getKeys_unverified_account) {
+  do_print("= getKeys unverified =");
+  Services.prefs.setBoolPref("services.sync.enabled", true);
+  FakeFxAccountsClient._verified = false;
+  FxAccountsManager.signIn("user@domain.org", "password").then(result => {
+    do_check_false(result.verified);
+    return FxAccountsManager.getKeys();
+  }).then(result => {
+      do_throw("Unexpected success");
+    },
+    error => {
+      do_check_eq(error.error, ERROR_UNVERIFIED_ACCOUNT);
+      FxAccountsManager._fxAccounts._reset();
+      Services.prefs.clearUserPref("services.sync.enabled");
+      FxAccountsManager.signOut().then(run_next_test)
+    }
+  );
+});
+
+add_test(function(test_getKeys_success) {
+  do_print("= getKeys success =");
+  Services.prefs.setBoolPref("services.sync.enabled", true);
+  FakeFxAccountsClient._verified = true;
+  FxAccountsManager.signIn("user@domain.org", "password").then(result => {
+    return FxAccountsManager.getKeys();
+  }).then(result => {
+      do_check_eq(result, FxAccountsManager._fxAccounts._keys);
+      FxAccountsManager._fxAccounts._reset();
+      Services.prefs.clearUserPref("services.sync.enabled");
+      run_next_test();
+    },
+    error => {
+      do_throw("Unexpected error " + error);
+    }
+  );
 });

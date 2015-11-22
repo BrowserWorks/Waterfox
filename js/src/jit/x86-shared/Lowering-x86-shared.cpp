@@ -274,6 +274,26 @@ LIRGeneratorX86Shared::visitAsmJSNeg(MAsmJSNeg* ins)
 void
 LIRGeneratorX86Shared::lowerUDiv(MDiv* div)
 {
+    if (div->rhs()->isConstant()) {
+        uint32_t rhs = div->rhs()->toConstant()->value().toInt32();
+        int32_t shift = FloorLog2(rhs);
+
+        LAllocation lhs = useRegisterAtStart(div->lhs());
+        if (rhs != 0 && uint32_t(1) << shift == rhs) {
+            LDivPowTwoI* lir = new(alloc()) LDivPowTwoI(lhs, lhs, shift, false);
+            if (div->fallible())
+                assignSnapshot(lir, Bailout_DoubleOutput);
+            defineReuseInput(lir, div, 0);
+        } else {
+            LUDivOrModConstant* lir = new(alloc()) LUDivOrModConstant(useRegister(div->lhs()),
+                                                                      rhs, tempFixed(eax));
+            if (div->fallible())
+                assignSnapshot(lir, Bailout_DoubleOutput);
+            defineFixed(lir, div, LAllocation(AnyRegister(edx)));
+        }
+        return;
+    }
+
     LUDivOrMod* lir = new(alloc()) LUDivOrMod(useRegister(div->lhs()),
                                               useRegister(div->rhs()),
                                               tempFixed(edx));
@@ -285,6 +305,25 @@ LIRGeneratorX86Shared::lowerUDiv(MDiv* div)
 void
 LIRGeneratorX86Shared::lowerUMod(MMod* mod)
 {
+    if (mod->rhs()->isConstant()) {
+        uint32_t rhs = mod->rhs()->toConstant()->value().toInt32();
+        int32_t shift = FloorLog2(rhs);
+
+        if (rhs != 0 && uint32_t(1) << shift == rhs) {
+            LModPowTwoI* lir = new(alloc()) LModPowTwoI(useRegisterAtStart(mod->lhs()), shift);
+            if (mod->fallible())
+                assignSnapshot(lir, Bailout_DoubleOutput);
+            defineReuseInput(lir, mod, 0);
+        } else {
+            LUDivOrModConstant* lir = new(alloc()) LUDivOrModConstant(useRegister(mod->lhs()),
+                                                                      rhs, tempFixed(edx));
+            if (mod->fallible())
+                assignSnapshot(lir, Bailout_DoubleOutput);
+            defineFixed(lir, mod, LAllocation(AnyRegister(eax)));
+        }
+        return;
+    }
+
     LUDivOrMod* lir = new(alloc()) LUDivOrMod(useRegister(mod->lhs()),
                                               useRegister(mod->rhs()),
                                               tempFixed(eax));
@@ -312,31 +351,6 @@ LIRGeneratorX86Shared::lowerUrshD(MUrsh* mir)
 
     LUrshD* lir = new(alloc()) LUrshD(lhsUse, rhsAlloc, tempCopy(lhs, 0));
     define(lir, mir);
-}
-
-void
-LIRGeneratorX86Shared::lowerConstantDouble(double d, MInstruction* mir)
-{
-    define(new(alloc()) LDouble(d), mir);
-}
-
-void
-LIRGeneratorX86Shared::lowerConstantFloat32(float f, MInstruction* mir)
-{
-    define(new(alloc()) LFloat32(f), mir);
-}
-
-void
-LIRGeneratorX86Shared::visitConstant(MConstant* ins)
-{
-    if (ins->type() == MIRType_Double)
-        lowerConstantDouble(ins->value().toDouble(), ins);
-    else if (ins->type() == MIRType_Float32)
-        lowerConstantFloat32(ins->value().toDouble(), ins);
-    else if (ins->canEmitAtUses())
-        emitAtUses(ins); // Emit non-double constants at their uses.
-    else
-        LIRGeneratorShared::visitConstant(ins);
 }
 
 void
@@ -407,6 +421,45 @@ LIRGeneratorX86Shared::lowerCompareExchangeTypedArrayElement(MCompareExchangeTyp
         new(alloc()) LCompareExchangeTypedArrayElement(elements, index, oldval, newval, tempDef);
 
     if (fixedOutput)
+        defineFixed(lir, ins, LAllocation(AnyRegister(eax)));
+    else
+        define(lir, ins);
+}
+
+void
+LIRGeneratorX86Shared::lowerAtomicExchangeTypedArrayElement(MAtomicExchangeTypedArrayElement* ins,
+                                                            bool useI386ByteRegisters)
+{
+    MOZ_ASSERT(ins->arrayType() <= Scalar::Uint32);
+
+    MOZ_ASSERT(ins->elements()->type() == MIRType_Elements);
+    MOZ_ASSERT(ins->index()->type() == MIRType_Int32);
+
+    const LUse elements = useRegister(ins->elements());
+    const LAllocation index = useRegisterOrConstant(ins->index());
+    const LAllocation value = useRegister(ins->value());
+
+    // The underlying instruction is XCHG, which can operate on any
+    // register.
+    //
+    // If the target is a floating register (for Uint32) then we need
+    // a temp into which to exchange.
+    //
+    // If the source is a byte array then we need a register that has
+    // a byte size; in this case -- on x86 only -- pin the output to
+    // an appropriate register and use that as a temp in the back-end.
+
+    LDefinition tempDef = LDefinition::BogusTemp();
+    if (ins->arrayType() == Scalar::Uint32) {
+        // This restriction is bug 1077305.
+        MOZ_ASSERT(ins->type() == MIRType_Double);
+        tempDef = temp();
+    }
+
+    LAtomicExchangeTypedArrayElement* lir =
+        new(alloc()) LAtomicExchangeTypedArrayElement(elements, index, value, tempDef);
+
+    if (useI386ByteRegisters && ins->isByteArray())
         defineFixed(lir, ins, LAllocation(AnyRegister(eax)));
     else
         define(lir, ins);

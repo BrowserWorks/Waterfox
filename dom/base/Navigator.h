@@ -18,6 +18,7 @@
 #include "nsInterfaceHashtable.h"
 #include "nsString.h"
 #include "nsTArray.h"
+#include "nsWeakPtr.h"
 #ifdef MOZ_EME
 #include "mozilla/dom/MediaKeySystemAccessManager.h"
 #endif
@@ -41,8 +42,8 @@ class WakeLock;
 class ArrayBufferViewOrBlobOrStringOrFormData;
 struct MobileIdOptions;
 class ServiceWorkerContainer;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 //*****************************************************************************
 // Navigator: Script "navigator" object
@@ -50,6 +51,8 @@ class ServiceWorkerContainer;
 
 namespace mozilla {
 namespace dom {
+
+class Permissions;
 
 namespace battery {
 class BatteryManager;
@@ -75,7 +78,7 @@ class MozGetUserMediaDevicesSuccessCallback;
 
 namespace network {
 class Connection;
-} // namespace Connection;
+} // namespace network
 
 #ifdef MOZ_B2G_BT
 namespace bluetooth {
@@ -95,6 +98,8 @@ class Voicemail;
 class TVManager;
 class InputPortManager;
 class DeviceStorageAreaListener;
+class Presentation;
+class LegacyMozTCPSocket;
 
 namespace time {
 class TimeManager;
@@ -153,9 +158,11 @@ public:
                               const nsAString& aTitle, ErrorResult& aRv);
   nsMimeTypeArray* GetMimeTypes(ErrorResult& aRv);
   nsPluginArray* GetPlugins(ErrorResult& aRv);
+  Permissions* GetPermissions(ErrorResult& aRv);
   // The XPCOM GetDoNotTrack is ok
   Geolocation* GetGeolocation(ErrorResult& aRv);
-  battery::BatteryManager* GetBattery(ErrorResult& aRv);
+  Promise* GetBattery(ErrorResult& aRv);
+  battery::BatteryManager* GetDeprecatedBattery(ErrorResult& aRv);
 
   static already_AddRefed<Promise> GetDataStores(nsPIDOMWindow* aWindow,
                                                  const nsAString& aName,
@@ -216,14 +223,18 @@ public:
   already_AddRefed<WakeLock> RequestWakeLock(const nsAString &aTopic,
                                              ErrorResult& aRv);
   DeviceStorageAreaListener* GetDeviceStorageAreaListener(ErrorResult& aRv);
-  nsDOMDeviceStorage* GetDeviceStorage(const nsAString& aType,
-                                       ErrorResult& aRv);
+
+  already_AddRefed<nsDOMDeviceStorage> GetDeviceStorage(const nsAString& aType,
+                                                        ErrorResult& aRv);
+
   void GetDeviceStorages(const nsAString& aType,
                          nsTArray<nsRefPtr<nsDOMDeviceStorage> >& aStores,
                          ErrorResult& aRv);
-  nsDOMDeviceStorage* GetDeviceStorageByNameAndType(const nsAString& aName,
-                                                    const nsAString& aType,
-                                                    ErrorResult& aRv);
+
+  already_AddRefed<nsDOMDeviceStorage>
+  GetDeviceStorageByNameAndType(const nsAString& aName, const nsAString& aType,
+                                ErrorResult& aRv);
+
   DesktopNotificationCenter* GetMozNotification(ErrorResult& aRv);
   CellBroadcast* GetMozCellBroadcast(ErrorResult& aRv);
   IccManager* GetMozIccManager(ErrorResult& aRv);
@@ -232,6 +243,7 @@ public:
   Voicemail* GetMozVoicemail(ErrorResult& aRv);
   TVManager* GetTv();
   InputPortManager* GetInputPortManager(ErrorResult& aRv);
+  already_AddRefed<LegacyMozTCPSocket> MozTCPSocket();
   network::Connection* GetConnection(ErrorResult& aRv);
   nsDOMCameraManager* GetMozCameras(ErrorResult& aRv);
   MediaDevices* GetMediaDevices(ErrorResult& aRv);
@@ -264,6 +276,8 @@ public:
 #ifdef MOZ_AUDIO_CHANNEL_MANAGER
   system::AudioChannelManager* GetMozAudioChannelManager(ErrorResult& aRv);
 #endif // MOZ_AUDIO_CHANNEL_MANAGER
+
+  Presentation* GetPresentation(ErrorResult& aRv);
 
   bool SendBeacon(const nsAString& aUrl,
                   const Nullable<ArrayBufferViewOrBlobOrStringOrFormData>& aData,
@@ -311,8 +325,6 @@ public:
                                   JSObject* /* unused */);
 #endif // MOZ_MEDIA_NAVIGATOR
 
-  static bool HasInputMethodSupport(JSContext* /* unused */, JSObject* aGlobal);
-
   static bool HasDataStoreSupport(nsIPrincipal* aPrincipal);
 
   static bool HasDataStoreSupport(JSContext* cx, JSObject* aGlobal);
@@ -339,7 +351,7 @@ public:
 #ifdef MOZ_EME
   already_AddRefed<Promise>
   RequestMediaKeySystemAccess(const nsAString& aKeySystem,
-                              const Optional<Sequence<MediaKeySystemOptions>>& aOptions,
+                              const Sequence<MediaKeySystemConfiguration>& aConfig,
                               ErrorResult& aRv);
 private:
   nsRefPtr<MediaKeySystemAccessManager> mMediaKeySystemAccessManager;
@@ -351,11 +363,16 @@ private:
   bool CheckPermission(const char* type);
   static bool CheckPermission(nsPIDOMWindow* aWindow, const char* aType);
 
+  already_AddRefed<nsDOMDeviceStorage> FindDeviceStorage(const nsAString& aName,
+                                                         const nsAString& aType);
+
   nsRefPtr<nsMimeTypeArray> mMimeTypes;
   nsRefPtr<nsPluginArray> mPlugins;
+  nsRefPtr<Permissions> mPermissions;
   nsRefPtr<Geolocation> mGeolocation;
   nsRefPtr<DesktopNotificationCenter> mNotification;
   nsRefPtr<battery::BatteryManager> mBatteryManager;
+  nsRefPtr<Promise> mBatteryPromise;
 #ifdef MOZ_B2G_FM
   nsRefPtr<FMRadio> mFMRadio;
 #endif
@@ -380,11 +397,12 @@ private:
   nsRefPtr<nsDOMCameraManager> mCameraManager;
   nsRefPtr<MediaDevices> mMediaDevices;
   nsCOMPtr<nsIDOMNavigatorSystemMessages> mMessagesManager;
-  nsTArray<nsRefPtr<nsDOMDeviceStorage> > mDeviceStorageStores;
+  nsTArray<nsWeakPtr> mDeviceStorageStores;
   nsRefPtr<time::TimeManager> mTimeManager;
   nsRefPtr<ServiceWorkerContainer> mServiceWorkerContainer;
   nsCOMPtr<nsPIDOMWindow> mWindow;
   nsRefPtr<DeviceStorageAreaListener> mDeviceStorageAreaListener;
+  nsRefPtr<Presentation> mPresentation;
 
   // Hashtable for saving cached objects DoResolve created, so we don't create
   // the object twice if asked for it twice, whether due to use of "delete" or

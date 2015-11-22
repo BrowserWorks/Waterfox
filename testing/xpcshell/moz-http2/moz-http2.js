@@ -111,6 +111,9 @@ function handleRequest(req, res) {
   var content = getHttpContent(u.pathname);
   var push, push1, push1a, push2, push3;
 
+  // PushService tests.
+  var pushPushServer1, pushPushServer2, pushPushServer3;
+
   if (req.httpVersionMajor === 2) {
     res.setHeader('X-Connection-Http2', 'yes');
     res.setHeader('X-Http2-StreamId', '' + req.stream.id);
@@ -400,6 +403,142 @@ function handleRequest(req, res) {
   else if (u.pathname === "/altsvc-test") {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Alt-Svc', 'h2=' + req.headers['x-altsvc']);
+  }
+
+  // for PushService tests.
+  else if (u.pathname === "/pushSubscriptionSuccess/subscribe") {
+    res.setHeader("Location",
+                  'https://localhost:' + serverPort + '/pushSubscriptionSuccesss');
+    res.setHeader("Link",
+                  '</pushEndpointSuccess>; rel="urn:ietf:params:push", ' +
+                  '</receiptPushEndpointSuccess>; rel="urn:ietf:params:push:receipt"');
+    res.writeHead(201, "OK");
+    res.end("");
+    return;
+  }
+
+  else if (u.pathname === "/pushSubscriptionSuccesss") {
+    // do nothing.
+    return;
+  }
+
+  else if (u.pathname === "/pushSubscriptionMissingLocation/subscribe") {
+    res.setHeader("Link",
+                  '</pushEndpointMissingLocation>; rel="urn:ietf:params:push", ' +
+                  '</receiptPushEndpointMissingLocation>; rel="urn:ietf:params:push:receipt"');
+    res.writeHead(201, "OK");
+    res.end("");
+    return;
+  }
+
+  else if (u.pathname === "/pushSubscriptionMissingLink/subscribe") {
+    res.setHeader("Location",
+                  'https://localhost:' + serverPort + '/subscriptionMissingLink');
+    res.writeHead(201, "OK");
+    res.end("");
+    return;
+  }
+
+  else if (u.pathname === "/pushSubscriptionLocationBogus/subscribe") {
+    res.setHeader("Location", '1234');
+    res.setHeader("Link",
+                  '</pushEndpointLocationBogus; rel="urn:ietf:params:push", ' +
+                  '</receiptPushEndpointLocationBogus>; rel="urn:ietf:params:push:receipt"');
+    res.writeHead(201, "OK");
+    res.end("");
+    return;
+  }
+
+  else if (u.pathname === "/pushSubscriptionMissingLink1/subscribe") {
+    res.setHeader("Location",
+                  'https://localhost:' + serverPort + '/subscriptionMissingLink1');
+    res.setHeader("Link",
+                  '</receiptPushEndpointMissingLink1>; rel="urn:ietf:params:push:receipt"');
+    res.writeHead(201, "OK");
+    res.end("");
+    return;
+  }
+
+  else if (u.pathname === "/pushSubscriptionMissingLink2/subscribe") {
+    res.setHeader("Location",
+                  'https://localhost:' + serverPort + '/subscriptionMissingLink2');
+    res.setHeader("Link",
+                  '</pushEndpointMissingLink2>; rel="urn:ietf:params:push"');
+    res.writeHead(201, "OK");
+    res.end("");
+    return;
+  }
+
+  else if (u.pathname === "/subscriptionMissingLink2") {
+    // do nothing.
+    return;
+  }
+
+  else if (u.pathname === "/pushSubscriptionNot201Code/subscribe") {
+    res.setHeader("Location",
+                  'https://localhost:' + serverPort + '/subscriptionNot2xxCode');
+    res.setHeader("Link",
+                  '</pushEndpointNot201Code>; rel="urn:ietf:params:push", ' +
+                  '</receiptPushEndpointNot201Code>; rel="urn:ietf:params:push:receipt"');
+    res.writeHead(200, "OK");
+    res.end("");
+    return;
+  }
+
+  else if (u.pathname ==="/pushNotifications/subscription1") {
+    pushPushServer1 = res.push(
+      { hostname: 'localhost:' + serverPort, port: serverPort,
+        path : '/pushNotificationsDeliver1', method : 'GET',
+        headers: { 'Encryption-Key': 'keyid="notification1"; dh="BO_tgGm-yvYAGLeRe16AvhzaUcpYRiqgsGOlXpt0DRWDRGGdzVLGlEVJMygqAUECarLnxCiAOHTP_znkedrlWoU"',
+                   'Encryption': 'keyid="notification1";salt="uAZaiXpOSfOLJxtOCZ09dA"'
+                 }
+      });
+    pushPushServer1.writeHead(200, {
+      'subresource' : '1'
+      });
+
+    pushPushServer1.end('370aeb3963f12c4f12bf946bd0a7a9ee7d3eaff8f7aec62b530fc25cfa', 'hex');
+    return;
+  }
+
+  else if (u.pathname ==="/pushNotifications/subscription2") {
+    pushPushServer2 = res.push(
+      { hostname: 'localhost:' + serverPort, port: serverPort,
+        path : '/pushNotificationsDeliver3', method : 'GET',
+        headers: { 'Encryption-Key': 'keyid="notification2"; dh="BKVdQcgfncpNyNWsGrbecX0zq3eHIlHu5XbCGmVcxPnRSbhjrA6GyBIeGdqsUL69j5Z2CvbZd-9z1UBH0akUnGQ"',
+                   'Encryption': 'keyid="notification2";salt="vFn3t3M_k42zHBdpch3VRw"'
+                 }
+      });
+    pushPushServer2.writeHead(200, {
+      'subresource' : '1'
+      });
+
+    pushPushServer2.end('66df5d11daa01e5c802ff97cdf7f39684b5bf7c6418a5cf9b609c6826c04b25e403823607ac514278a7da945', 'hex');
+    return;
+  }
+
+  else if (u.pathname ==="/pushNotifications/subscription3") {
+    pushPushServer3 = res.push(
+      { hostname: 'localhost:' + serverPort, port: serverPort,
+        path : '/pushNotificationsDeliver3', method : 'GET',
+        headers: { 'Encryption-Key': 'keyid="notification3";dh="BD3xV_ACT8r6hdIYES3BJj1qhz9wyv7MBrG9vM2UCnjPzwE_YFVpkD-SGqE-BR2--0M-Yf31wctwNsO1qjBUeMg"',
+                   'Encryption': 'keyid="notification3"; salt="DFq188piWU7osPBgqn4Nlg"; rs=24'
+                 }
+      });
+    pushPushServer3.writeHead(200, {
+      'subresource' : '1'
+      });
+
+    pushPushServer3.end('2caaeedd9cf1059b80c58b6c6827da8ff7de864ac8bea6d5775892c27c005209cbf9c4de0c3fbcddb9711d74eaeebd33f7275374cb42dd48c07168bc2cc9df63e045ce2d2a2408c66088a40c', 'hex');
+    return;
+  }
+
+  else if ((u.pathname === "/pushNotificationsDeliver1") ||
+           (u.pathname === "/pushNotificationsDeliver2") ||
+           (u.pathname === "/pushNotificationsDeliver3")) {
+    res.writeHead(410, "GONE");
+    res.end("");
+    return;
   }
 
   res.setHeader('Content-Type', 'text/html');

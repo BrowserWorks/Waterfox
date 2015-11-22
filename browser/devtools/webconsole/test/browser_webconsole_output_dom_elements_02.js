@@ -6,35 +6,54 @@
 // Test the inspector links in the webconsole output for DOM Nodes actually
 // open the inspector and select the right node
 
-const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-console-output-dom-elements.html";
+"use strict";
+
+const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
+                 "test/test-console-output-dom-elements.html";
 
 const TEST_DATA = [
   {
     // The first test shouldn't be returning the body element as this is the
-    // default selected node, so re-selecting it won't fire the inspector-updated
-    // event
+    // default selected node, so re-selecting it won't fire the
+    // inspector-updated event
     input: "testNode()",
     output: '<p some-attribute="some-value">',
-    tagName: 'P',
+    tagName: "P",
     attrs: [{name: "some-attribute", value: "some-value"}]
   },
   {
     input: "testBodyNode()",
     output: '<body id="body-id" class="body-class">',
-    tagName: 'BODY',
-    attrs: [{name: "id", value: "body-id"}, {name: "class", value: "body-class"}]
+    tagName: "BODY",
+    attrs: [
+      {
+        name: "id", value: "body-id"
+      },
+      {
+        name: "class", value: "body-class"
+      }
+    ]
   },
   {
     input: "testNodeInIframe()",
-    output: '<p>',
-    tagName: 'P',
+    output: "<p>",
+    tagName: "P",
     attrs: []
   },
   {
     input: "testDocumentElement()",
     output: '<html lang="en-US" dir="ltr">',
-    tagName: 'HTML',
-    attrs: [{name: "lang", value: "en-US"}, {name: "dir", value: "ltr"}]
+    tagName: "HTML",
+    attrs: [
+      {
+        name: "lang",
+        value: "en-US"
+      },
+      {
+        name: "dir",
+        value: "ltr"
+      }
+    ]
   }
 ];
 
@@ -53,20 +72,23 @@ function test() {
     info("Iterating over the test data");
     for (let data of TEST_DATA) {
       let [result] = yield jsEval(data.input, hud, {text: data.output});
-      let {widget, msg} = yield getWidgetAndMessage(result);
+      let {msg} = yield getWidgetAndMessage(result);
 
       let inspectorIcon = msg.querySelector(".open-inspector");
       ok(inspectorIcon, "Inspector icon found in the ElementNode widget");
 
-      info("Clicking on the inspector icon and waiting for the inspector to be selected");
+      info("Clicking on the inspector icon and waiting for the " +
+           "inspector to be selected");
       let onInspectorSelected = toolbox.once("inspector-selected");
       let onInspectorUpdated = inspector.once("inspector-updated");
       let onNewNode = toolbox.selection.once("new-node-front");
+      let onNodeHighlight = toolbox.once("node-highlight");
 
       EventUtils.synthesizeMouseAtCenter(inspectorIcon, {},
         inspectorIcon.ownerDocument.defaultView);
       yield onInspectorSelected;
       yield onInspectorUpdated;
+      yield onNodeHighlight;
       let nodeFront = yield onNewNode;
 
       ok(true, "Inspector selected and new node got selected");
@@ -75,9 +97,18 @@ function test() {
 
       let attrs = nodeFront.attributes;
       for (let i in data.attrs) {
-        is(attrs[i].name, data.attrs[i].name, "The correct node was highlighted");
-        is(attrs[i].value, data.attrs[i].value, "The correct node was highlighted");
+        is(attrs[i].name, data.attrs[i].name,
+           "The correct node was highlighted");
+        is(attrs[i].value, data.attrs[i].value,
+           "The correct node was highlighted");
       }
+
+      info("Unhighlight the node by moving away from the markup view");
+      let onNodeUnhighlight = toolbox.once("node-unhighlight");
+      let btn = inspector.toolbox.doc.querySelector(".toolbox-dock-button");
+      EventUtils.synthesizeMouseAtCenter(btn, {type: "mousemove"},
+        inspector.toolbox.doc.defaultView);
+      yield onNodeUnhighlight;
 
       info("Switching back to the console");
       yield toolbox.selectTool("webconsole");

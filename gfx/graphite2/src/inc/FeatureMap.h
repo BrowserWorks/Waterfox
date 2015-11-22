@@ -56,7 +56,7 @@ class FeatureRef
     static const uint8  SIZEOF_CHUNK = sizeof(chunk_t)*8;
 
 public:
-    FeatureRef() : m_nameValues(0) {}
+    FeatureRef();
     FeatureRef(const Face & face, unsigned short & bits_offset, uint32 max_val,
                uint32 name, uint16 uiName, uint16 flags,
                FeatureSetting *settings, uint16 num_set) throw();
@@ -99,6 +99,16 @@ private:        //unimplemented
 };
 
 
+inline
+FeatureRef::FeatureRef()
+: m_pFace(0), m_nameValues(0),
+  m_mask(0), m_max(0), m_id(0),
+  m_nameid(0), m_flags(0), m_numSet(0),
+  m_bits(0), m_index(0)
+{
+}
+
+
 class NameAndFeatureRef
 {
   public:
@@ -117,9 +127,8 @@ class NameAndFeatureRef
 class FeatureMap
 {
 public:
-    FeatureMap() : m_numFeats(0), m_feats(NULL), m_pNamedFeats(NULL),
-        m_defaultFeatures(NULL) {}
-    ~FeatureMap() { delete [] m_feats; delete[] m_pNamedFeats; delete m_defaultFeatures; }
+    FeatureMap() : m_numFeats(0), m_feats(NULL), m_pNamedFeats(NULL) {}
+    ~FeatureMap() { delete [] m_feats; delete[] m_pNamedFeats; }
 
     bool readFeats(const Face & face);
     const FeatureRef *findFeatureRef(uint32 name) const;
@@ -135,7 +144,7 @@ friend class SillMap;
 
     FeatureRef *m_feats;
     NameAndFeatureRef* m_pNamedFeats;   //owned
-    FeatureVal* m_defaultFeatures;        //owned
+    FeatureVal m_defaultFeatures;        //owned
     
 private:        //defensive on m_feats, m_pNamedFeats, and m_defaultFeatures
     FeatureMap(const FeatureMap&);

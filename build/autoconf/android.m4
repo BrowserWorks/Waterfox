@@ -64,7 +64,7 @@ case "$target" in
 
         kernel_name=`uname -s | tr "[[:upper:]]" "[[:lower:]]"`
 
-        for version in $android_gnu_compiler_version 4.8 4.7 4.6 4.4.3; do
+        for version in $android_gnu_compiler_version 4.9 4.8 4.7; do
             case "$target_cpu" in
             arm)
                 target_name=arm-linux-androideabi-$version
@@ -132,17 +132,6 @@ case "$target" in
     else
         AC_MSG_ERROR([not found. Please check your NDK. With the current configuration, it should be in $android_platform])
     fi
-
-    dnl Old NDK support. If minimum requirement is changed to NDK r8b,
-    dnl please remove this.
-    case "$target_cpu" in
-    i?86)
-        if ! test -e "$android_toolchain"/bin/"$android_tool_prefix"-gcc; then
-            dnl Old NDK toolchain name
-            android_tool_prefix="i686-android-linux"
-        fi
-        ;;
-    esac
 
     dnl set up compilers
     TOOLCHAIN_PREFIX="$android_toolchain/bin/$android_tool_prefix-"
@@ -223,18 +212,14 @@ if test "$OS_TARGET" = "Android" -a -z "$gonkdir"; then
 
     if test -z "$STLPORT_CPPFLAGS$STLPORT_LIBS"; then
         if test -n "$MOZ_ANDROID_LIBSTDCXX" ; then
-            if test -e "$android_ndk/sources/cxx-stl/gnu-libstdc++/$android_gnu_compiler_version/libs/$ANDROID_CPU_ARCH/libgnustl_static.a"; then
-                # android-ndk-r8b
-                STLPORT_LIBS="-L$android_ndk/sources/cxx-stl/gnu-libstdc++/$android_gnu_compiler_version/libs/$ANDROID_CPU_ARCH/ -lgnustl_static"
-                STLPORT_CPPFLAGS="-I$android_ndk/sources/cxx-stl/gnu-libstdc++/$android_gnu_compiler_version/include -I$android_ndk/sources/cxx-stl/gnu-libstdc++/$android_gnu_compiler_version/libs/$ANDROID_CPU_ARCH/include -I$android_ndk/sources/cxx-stl/gnu-libstdc++/$android_gnu_compiler_version/include/backward"
-            elif test -e "$android_ndk/sources/cxx-stl/gnu-libstdc++/libs/$ANDROID_CPU_ARCH/libgnustl_static.a"; then
-                # android-ndk-r7, android-ndk-r7b, android-ndk-r8
-                STLPORT_LIBS="-L$android_ndk/sources/cxx-stl/gnu-libstdc++/libs/$ANDROID_CPU_ARCH/ -lgnustl_static"
-                STLPORT_CPPFLAGS="-I$android_ndk/sources/cxx-stl/gnu-libstdc++/include -I$android_ndk/sources/cxx-stl/gnu-libstdc++/libs/$ANDROID_CPU_ARCH/include"
-            elif test -e "$android_ndk/sources/cxx-stl/gnu-libstdc++/libs/$ANDROID_CPU_ARCH/libstdc++.a"; then
-                # android-ndk-r5c, android-ndk-r6, android-ndk-r6b
-                STLPORT_CPPFLAGS="-I$android_ndk/sources/cxx-stl/gnu-libstdc++/include -I$android_ndk/sources/cxx-stl/gnu-libstdc++/libs/$ANDROID_CPU_ARCH/include"
-                STLPORT_LIBS="-L$android_ndk/sources/cxx-stl/gnu-libstdc++/libs/$ANDROID_CPU_ARCH/ -lstdc++"
+            # android-ndk-r8b and later
+            ndk_base="$android_ndk/sources/cxx-stl/gnu-libstdc++/$android_gnu_compiler_version"
+            ndk_libs="$ndk_base/libs/$ANDROID_CPU_ARCH"
+            ndk_include="$ndk_base/include"
+
+            if test -e "$ndk_libs/libgnustl_static.a"; then
+                STLPORT_LIBS="-L$ndk_libs -lgnustl_static"
+                STLPORT_CPPFLAGS="-I$ndk_include -I$ndk_include/backward -I$ndk_libs/include"
             else
                 AC_MSG_ERROR([Couldn't find path to gnu-libstdc++ in the android ndk])
             fi
@@ -394,6 +379,16 @@ case "$target" in
         AC_MSG_ERROR([You must download the Android v4 support library when targeting Android.  Run the Android SDK tool and install Android Support Library under Extras.  See https://developer.android.com/tools/extras/support-library.html for more info. (looked for $ANDROID_COMPAT_LIB)])
     fi
     AC_MSG_RESULT([$ANDROID_COMPAT_LIB])
+
+    ANDROID_RECYCLERVIEW_LIB="$ANDROID_COMPAT_DIR_BASE/v7/recyclerview/libs/android-support-v7-recyclerview.jar"
+    ANDROID_RECYCLERVIEW_RES="$ANDROID_COMPAT_DIR_BASE/v7/recyclerview/res"
+    AC_MSG_CHECKING([for v7 recyclerview library])
+    if ! test -e $ANDROID_RECYCLERVIEW_LIB ; then
+        AC_MSG_ERROR([You must download the v7 recyclerview Android support library.  Run the Android SDK tool and install Android Support Library under Extras.  See https://developer.android.com/tools/extras/support-library.html for more info. (looked for $ANDROID_RECYCLERVIEW_LIB)])
+    fi
+    AC_MSG_RESULT([$ANDROID_RECYCLERVIEW_LIB])
+    AC_SUBST(ANDROID_RECYCLERVIEW_LIB)
+    AC_SUBST(ANDROID_RECYCLERVIEW_RES)
 
     dnl Google has a history of moving the Android tools around.  We don't
     dnl care where they are, so let's try to find them anywhere we can.

@@ -11,6 +11,7 @@ EXPORTS.mozilla.dom += [
     'FileSystemRequestParent.h',
     'FileSystemTaskBase.h',
     'FileSystemUtils.h',
+    'OSFileSystem.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -23,7 +24,9 @@ UNIFIED_SOURCES += [
     'FileSystemRequestParent.cpp',
     'FileSystemTaskBase.cpp',
     'FileSystemUtils.cpp',
+    'GetDirectoryListingTask.cpp',
     'GetFileOrDirectoryTask.cpp',
+    'OSFileSystem.cpp',
     'RemoveTask.cpp',
 ]
 
@@ -38,6 +41,3 @@ include('/ipc/chromium/chromium-config.mozbuild')
 LOCAL_INCLUDES += [
     '/dom/base',
 ]
-
-if not CONFIG['CLANG_CXX']:
-    FAIL_ON_WARNINGS = True

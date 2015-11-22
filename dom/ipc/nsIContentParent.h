@@ -33,10 +33,12 @@ class CpowEntry;
 
 namespace dom {
 
+class Blob;
 class BlobConstructorParams;
+class BlobImpl;
 class BlobParent;
 class ContentParent;
-class File;
+class ContentBridgeParent;
 class IPCTabContext;
 class PBlobParent;
 class PBrowserParent;
@@ -50,7 +52,8 @@ public:
 
   nsIContentParent();
 
-  BlobParent* GetOrCreateActorForBlob(File* aBlob);
+  BlobParent* GetOrCreateActorForBlob(Blob* aBlob);
+  BlobParent* GetOrCreateActorForBlobImpl(BlobImpl* aImpl);
 
   virtual ContentParentId ChildID() = 0;
   virtual bool IsForApp() = 0;
@@ -73,6 +76,8 @@ public:
 
   virtual bool IsContentParent() { return false; }
   ContentParent* AsContentParent();
+  virtual bool IsContentBridgeParent() { return false; }
+  ContentBridgeParent* AsContentBridgeParent();
 
 protected: // methods
   bool CanOpenBrowser(const IPCTabContext& aContext);
@@ -97,12 +102,12 @@ protected: // IPDL methods
                                const ClonedMessageData& aData,
                                InfallibleTArray<jsipc::CpowEntry>&& aCpows,
                                const IPC::Principal& aPrincipal,
-                               InfallibleTArray<nsString>* aRetvals);
+                               nsTArray<ipc::StructuredCloneData>* aRetvals);
   virtual bool RecvRpcMessage(const nsString& aMsg,
                               const ClonedMessageData& aData,
                               InfallibleTArray<jsipc::CpowEntry>&& aCpows,
                               const IPC::Principal& aPrincipal,
-                              InfallibleTArray<nsString>* aRetvals);
+                              nsTArray<ipc::StructuredCloneData>* aRetvals);
   virtual bool RecvAsyncMessage(const nsString& aMsg,
                                 const ClonedMessageData& aData,
                                 InfallibleTArray<jsipc::CpowEntry>&& aCpows,

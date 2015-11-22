@@ -8,7 +8,7 @@
 
 #include "mozilla/layout/PVsyncChild.h"
 #include "nsISupportsImpl.h"
-#include "nsRefPtr.h"
+#include "mozilla/nsRefPtr.h"
 
 namespace mozilla {
 
@@ -16,7 +16,7 @@ class VsyncObserver;
 
 namespace ipc {
 class BackgroundChildImpl;
-}
+} // namespace ipc
 
 namespace layout {
 
@@ -54,6 +54,6 @@ private:
 };
 
 } // namespace layout
-} // namespatce mozilla
+} // namespace mozilla
 
 #endif  // mozilla_layout_ipc_VsyncChild_h

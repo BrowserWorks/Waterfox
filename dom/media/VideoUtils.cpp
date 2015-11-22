@@ -3,19 +3,27 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "VideoUtils.h"
+
+#include "mozilla/Preferences.h"
+#include "mozilla/Base64.h"
+#include "mozilla/TaskQueue.h"
+#include "mozilla/Telemetry.h"
+#include "mozilla/Function.h"
+
 #include "MediaResource.h"
-#include "mozilla/dom/TimeRanges.h"
+#include "TimeUnits.h"
 #include "nsMathUtils.h"
 #include "nsSize.h"
 #include "VorbisUtils.h"
 #include "ImageContainer.h"
-#include "SharedThreadPool.h"
-#include "mozilla/Preferences.h"
-#include "mozilla/Base64.h"
-#include "mozilla/Telemetry.h"
+#include "mozilla/SharedThreadPool.h"
 #include "nsIRandomGenerator.h"
 #include "nsIServiceManager.h"
-#include "MediaTaskQueue.h"
+#include "nsServiceManagerUtils.h"
+#include "nsIConsoleService.h"
+#include "nsThreadUtils.h"
+#include "nsCharSeparatedTokenizer.h"
+#include "nsContentTypeParser.h"
 
 #include <stdint.h>
 
@@ -23,16 +31,34 @@ namespace mozilla {
 
 using layers::PlanarYCbCrImage;
 
+static inline CheckedInt64 SaferMultDiv(int64_t aValue, uint32_t aMul, uint32_t aDiv) {
+  int64_t major = aValue / aDiv;
+  int64_t remainder = aValue % aDiv;
+  return CheckedInt64(remainder) * aMul / aDiv + major * aMul;
+}
+
 // Converts from number of audio frames to microseconds, given the specified
 // audio rate.
 CheckedInt64 FramesToUsecs(int64_t aFrames, uint32_t aRate) {
-  return (CheckedInt64(aFrames) * USECS_PER_S) / aRate;
+  return SaferMultDiv(aFrames, USECS_PER_S, aRate);
+}
+
+media::TimeUnit FramesToTimeUnit(int64_t aFrames, uint32_t aRate) {
+  int64_t major = aFrames / aRate;
+  int64_t remainder = aFrames % aRate;
+  return media::TimeUnit::FromMicroseconds(major) * USECS_PER_S +
+    (media::TimeUnit::FromMicroseconds(remainder) * USECS_PER_S) / aRate;
 }
 
 // Converts from microseconds to number of audio frames, given the specified
 // audio rate.
 CheckedInt64 UsecsToFrames(int64_t aUsecs, uint32_t aRate) {
-  return (CheckedInt64(aUsecs) * aRate) / USECS_PER_S;
+  return SaferMultDiv(aUsecs, aRate, USECS_PER_S);
+}
+
+// Format TimeUnit as number of frames at given rate.
+CheckedInt64 TimeUnitToFrames(const media::TimeUnit& aTime, uint32_t aRate) {
+  return UsecsToFrames(aTime.ToMicroseconds(), aRate);
 }
 
 nsresult SecondsToUsecs(double aSeconds, int64_t& aOutUsecs) {
@@ -70,18 +96,20 @@ static int64_t BytesToTime(int64_t offset, int64_t length, int64_t durationUs) {
   return int64_t(double(durationUs) * r);
 }
 
-void GetEstimatedBufferedTimeRanges(mozilla::MediaResource* aStream,
-                                    int64_t aDurationUsecs,
-                                    mozilla::dom::TimeRanges* aOutBuffered)
+media::TimeIntervals GetEstimatedBufferedTimeRanges(mozilla::MediaResource* aStream,
+                                                    int64_t aDurationUsecs)
 {
+  media::TimeIntervals buffered;
   // Nothing to cache if the media takes 0us to play.
-  if (aDurationUsecs <= 0 || !aStream || !aOutBuffered)
-    return;
+  if (aDurationUsecs <= 0 || !aStream)
+    return buffered;
 
   // Special case completely cached files.  This also handles local files.
   if (aStream->IsDataCachedToEndOfResource(0)) {
-    aOutBuffered->Add(0, double(aDurationUsecs) / USECS_PER_S);
-    return;
+    buffered +=
+      media::TimeInterval(media::TimeUnit::FromMicroseconds(0),
+                          media::TimeUnit::FromMicroseconds(aDurationUsecs));
+    return buffered;
   }
 
   int64_t totalBytes = aStream->GetLength();
@@ -90,7 +118,7 @@ void GetEstimatedBufferedTimeRanges(mozilla::MediaResource* aStream,
   // buffered. This will put us in a state of eternally-low-on-undecoded-data
   // which is not great, but about the best we can do.
   if (totalBytes <= 0)
-    return;
+    return buffered;
 
   int64_t startOffset = aStream->GetNextCachedData(0);
   while (startOffset >= 0) {
@@ -102,12 +130,14 @@ void GetEstimatedBufferedTimeRanges(mozilla::MediaResource* aStream,
     int64_t startUs = BytesToTime(startOffset, totalBytes, aDurationUsecs);
     int64_t endUs = BytesToTime(endOffset, totalBytes, aDurationUsecs);
     if (startUs != endUs) {
-      aOutBuffered->Add(double(startUs) / USECS_PER_S,
-                        double(endUs) / USECS_PER_S);
+      buffered +=
+        media::TimeInterval(media::TimeUnit::FromMicroseconds(startUs),
+
+                              media::TimeUnit::FromMicroseconds(endUs));
     }
     startOffset = aStream->GetNextCachedData(endOffset);
   }
-  return;
+  return buffered;
 }
 
 int DownmixAudioToStereo(mozilla::AudioDataValue* buffer,
@@ -197,7 +227,7 @@ IsValidVideoRegion(const nsIntSize& aFrame, const nsIntRect& aPicture,
     aDisplay.width * aDisplay.height != 0;
 }
 
-TemporaryRef<SharedThreadPool> GetMediaThreadPool(MediaThreadType aType)
+already_AddRefed<SharedThreadPool> GetMediaThreadPool(MediaThreadType aType)
 {
   const char *name;
   switch (aType) {
@@ -312,46 +342,188 @@ GenerateRandomPathName(nsCString& aOutSalt, uint32_t aLength)
   return NS_OK;
 }
 
-class CreateTaskQueueTask : public nsRunnable {
-public:
-  NS_IMETHOD Run() {
-    MOZ_ASSERT(NS_IsMainThread());
-    mTaskQueue =
-      new MediaTaskQueue(GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER));
-    return NS_OK;
-  }
-  nsRefPtr<MediaTaskQueue> mTaskQueue;
-};
-
-class CreateFlushableTaskQueueTask : public nsRunnable {
-public:
-  NS_IMETHOD Run() {
-    MOZ_ASSERT(NS_IsMainThread());
-    mTaskQueue =
-      new FlushableMediaTaskQueue(GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER));
-    return NS_OK;
-  }
-  nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
-};
-
-already_AddRefed<MediaTaskQueue>
+already_AddRefed<TaskQueue>
 CreateMediaDecodeTaskQueue()
 {
-  // We must create the MediaTaskQueue/SharedThreadPool on the main thread.
-  nsRefPtr<CreateTaskQueueTask> t(new CreateTaskQueueTask());
-  nsresult rv = NS_DispatchToMainThread(t, NS_DISPATCH_SYNC);
-  NS_ENSURE_SUCCESS(rv, nullptr);
-  return t->mTaskQueue.forget();
+  nsRefPtr<TaskQueue> queue = new TaskQueue(
+    GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER));
+  return queue.forget();
 }
 
-already_AddRefed<FlushableMediaTaskQueue>
+already_AddRefed<FlushableTaskQueue>
 CreateFlushableMediaDecodeTaskQueue()
 {
-  // We must create the MediaTaskQueue/SharedThreadPool on the main thread.
-  nsRefPtr<CreateFlushableTaskQueueTask> t(new CreateFlushableTaskQueueTask());
-  nsresult rv = NS_DispatchToMainThread(t, NS_DISPATCH_SYNC);
-  NS_ENSURE_SUCCESS(rv, nullptr);
-  return t->mTaskQueue.forget();
+  nsRefPtr<FlushableTaskQueue> queue = new FlushableTaskQueue(
+    GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER));
+  return queue.forget();
+}
+
+void
+SimpleTimer::Cancel() {
+  if (mTimer) {
+#ifdef DEBUG
+    nsCOMPtr<nsIEventTarget> target;
+    mTimer->GetTarget(getter_AddRefs(target));
+    nsCOMPtr<nsIThread> thread(do_QueryInterface(target));
+    MOZ_ASSERT(NS_GetCurrentThread() == thread);
+#endif
+    mTimer->Cancel();
+    mTimer = nullptr;
+  }
+  mTask = nullptr;
+}
+
+NS_IMETHODIMP
+SimpleTimer::Notify(nsITimer *timer) {
+  nsRefPtr<SimpleTimer> deathGrip(this);
+  if (mTask) {
+    mTask->Run();
+    mTask = nullptr;
+  }
+  return NS_OK;
+}
+
+nsresult
+SimpleTimer::Init(nsIRunnable* aTask, uint32_t aTimeoutMs, nsIThread* aTarget)
+{
+  nsresult rv;
+
+  // Get target thread first, so we don't have to cancel the timer if it fails.
+  nsCOMPtr<nsIThread> target;
+  if (aTarget) {
+    target = aTarget;
+  } else {
+    rv = NS_GetMainThread(getter_AddRefs(target));
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+  }
+
+  nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID, &rv);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  // Note: set target before InitWithCallback in case the timer fires before
+  // we change the event target.
+  rv = timer->SetTarget(aTarget);
+  if (NS_FAILED(rv)) {
+    timer->Cancel();
+    return rv;
+  }
+  rv = timer->InitWithCallback(this, aTimeoutMs, nsITimer::TYPE_ONE_SHOT);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  mTimer = timer.forget();
+  mTask = aTask;
+  return NS_OK;
+}
+
+NS_IMPL_ISUPPORTS(SimpleTimer, nsITimerCallback)
+
+already_AddRefed<SimpleTimer>
+SimpleTimer::Create(nsIRunnable* aTask, uint32_t aTimeoutMs, nsIThread* aTarget)
+{
+  nsRefPtr<SimpleTimer> t(new SimpleTimer());
+  if (NS_FAILED(t->Init(aTask, aTimeoutMs, aTarget))) {
+    return nullptr;
+  }
+  return t.forget();
+}
+
+void
+LogToBrowserConsole(const nsAString& aMsg)
+{
+  if (!NS_IsMainThread()) {
+    nsAutoString msg(aMsg);
+    nsCOMPtr<nsIRunnable> task =
+      NS_NewRunnableFunction([msg]() { LogToBrowserConsole(msg); });
+    NS_DispatchToMainThread(task.forget(), NS_DISPATCH_NORMAL);
+    return;
+  }
+  nsCOMPtr<nsIConsoleService> console(
+    do_GetService("@mozilla.org/consoleservice;1"));
+  if (!console) {
+    NS_WARNING("Failed to log message to console.");
+    return;
+  }
+  nsAutoString msg(aMsg);
+  console->LogStringMessage(msg.get());
+}
+
+bool
+ParseCodecsString(const nsAString& aCodecs, nsTArray<nsString>& aOutCodecs)
+{
+  aOutCodecs.Clear();
+  bool expectMoreTokens = false;
+  nsCharSeparatedTokenizer tokenizer(aCodecs, ',');
+  while (tokenizer.hasMoreTokens()) {
+    const nsSubstring& token = tokenizer.nextToken();
+    expectMoreTokens = tokenizer.separatorAfterCurrentToken();
+    aOutCodecs.AppendElement(token);
+  }
+  if (expectMoreTokens) {
+    // Last codec name was empty
+    return false;
+  }
+  return true;
+}
+
+static bool
+CheckContentType(const nsAString& aContentType,
+                 mozilla::Function<bool(const nsAString&)> aSubtypeFilter,
+                 mozilla::Function<bool(const nsAString&)> aCodecFilter)
+{
+  nsContentTypeParser parser(aContentType);
+  nsAutoString mimeType;
+  nsresult rv = parser.GetType(mimeType);
+  if (NS_FAILED(rv) || !aSubtypeFilter(mimeType)) {
+    return false;
+  }
+
+  nsString codecsStr;
+  parser.GetParameter("codecs", codecsStr);
+  nsTArray<nsString> codecs;
+  if (!ParseCodecsString(codecsStr, codecs)) {
+    return false;
+  }
+  for (const nsString& codec : codecs) {
+    if (!aCodecFilter(codec)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool
+IsH264ContentType(const nsAString& aContentType)
+{
+  return CheckContentType(aContentType,
+    [](const nsAString& type) {
+      return type.EqualsLiteral("video/mp4");
+    },
+    [](const nsAString& codec) {
+      int16_t profile = 0;
+      int16_t level = 0;
+      return ExtractH264CodecDetails(codec, profile, level);
+    }
+  );
+}
+
+bool
+IsAACContentType(const nsAString& aContentType)
+{
+  return CheckContentType(aContentType,
+    [](const nsAString& type) {
+      return type.EqualsLiteral("audio/mp4") ||
+             type.EqualsLiteral("audio/x-m4a");
+    },
+    [](const nsAString& codec) {
+      return codec.EqualsLiteral("mp4a.40.2") || // MPEG4 AAC-LC
+             codec.EqualsLiteral("mp4a.40.5") || // MPEG4 HE-AAC
+             codec.EqualsLiteral("mp4a.67");     // MPEG2 AAC-LC
+    });
 }
 
 } // end namespace mozilla

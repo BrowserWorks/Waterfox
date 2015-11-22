@@ -29,6 +29,10 @@ struct InputContext;
 struct InputContextAction;
 }
 
+namespace mozilla {
+class HwcComposer2D;
+}
+
 class nsScreenGonk;
 
 class nsWindow : public nsBaseWidget
@@ -98,7 +102,7 @@ public:
 
     NS_IMETHOD MakeFullScreen(bool aFullScreen, nsIScreen* aTargetScreen = nullptr) /*override*/;
 
-    virtual mozilla::TemporaryRef<mozilla::gfx::DrawTarget>
+    virtual already_AddRefed<mozilla::gfx::DrawTarget>
         StartRemoteDrawing() override;
     virtual void EndRemoteDrawing() override;
 
@@ -109,6 +113,9 @@ public:
                         LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
                         LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT,
                         bool* aAllowRetaining = nullptr);
+    virtual void DestroyCompositor();
+
+    virtual CompositorParent* NewCompositorParent(int aSurfaceWidth, int aSurfaceHeight);
 
     NS_IMETHOD_(void) SetInputContext(const InputContext& aContext,
                                       const InputContextAction& aAction);
@@ -122,6 +129,8 @@ public:
     virtual Composer2D* GetComposer2D() override;
 
     void ConfigureAPZControllerThread() override;
+
+    nsScreenGonk* GetScreen();
 
 protected:
     nsWindow* mParent;
@@ -157,6 +166,8 @@ private:
     nsAutoPtr<mozilla::MultiTouchInput> mSynthesizedTouchInput;
 
     nsRefPtr<nsScreenGonk> mScreen;
+
+    nsRefPtr<mozilla::HwcComposer2D> mComposer2D;
 };
 
 #endif /* nsWindow_h */

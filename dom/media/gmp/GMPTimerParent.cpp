@@ -13,15 +13,10 @@ namespace mozilla {
 #undef LOG
 #endif
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* GetGMPLog();
 
-#define LOGD(msg) PR_LOG(GetGMPLog(), PR_LOG_DEBUG, msg)
-#define LOG(level, msg) PR_LOG(GetGMPLog(), (level), msg)
-#else
-#define LOGD(msg)
-#define LOG(level, msg)
-#endif
+#define LOGD(msg) MOZ_LOG(GetGMPLog(), mozilla::LogLevel::Debug, msg)
+#define LOG(level, msg) MOZ_LOG(GetGMPLog(), (level), msg)
 
 #ifdef __CLASS__
 #undef __CLASS__
@@ -75,19 +70,15 @@ GMPTimerParent::Shutdown()
   LOGD(("%s::%s: %p mIsOpen=%d", __CLASS__, __FUNCTION__, this, mIsOpen));
 
   MOZ_ASSERT(mGMPThread == NS_GetCurrentThread());
-  mTimers.EnumerateEntries(GMPTimerParent::CancelTimers, nullptr);
+
+  for (auto iter = mTimers.Iter(); !iter.Done(); iter.Next()) {
+    Context* context = iter.Get()->GetKey();
+    context->mTimer->Cancel();
+    delete context;
+  }
+
   mTimers.Clear();
   mIsOpen = false;
-}
-
-/*static */
-PLDHashOperator
-GMPTimerParent::CancelTimers(nsPtrHashKey<Context>* aContext, void* aClosure)
-{
-  auto context = aContext->GetKey();
-  context->mTimer->Cancel();
-  delete context;
-  return PL_DHASH_NEXT;
 }
 
 void

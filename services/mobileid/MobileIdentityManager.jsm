@@ -233,8 +233,9 @@ this.MobileIdentityManager = {
     }
 
     return this._iccInfo;
-#endif
+#else
     return null;
+#endif
   },
 
   get iccIds() {
@@ -253,8 +254,9 @@ this.MobileIdentityManager = {
     }
 
     return this._iccIds;
-#endif
+#else
     return null;
+#endif
   },
 
   get credStore() {
@@ -784,7 +786,7 @@ this.MobileIdentityManager = {
         if (promptResult.serviceId) {
           let creds = this.iccInfo[promptResult.serviceId].credentials;
           if (creds) {
-            this.credStore.add(creds.iccId, creds.msisdn, aPrincipal.origin,
+            this.credStore.add(creds.iccId, creds.msisdn, aPrincipal.originNoSuffix,
                                creds.sessionToken, this.iccIds);
             return creds;
           }
@@ -797,13 +799,13 @@ this.MobileIdentityManager = {
         .then(
           (creds) => {
             if (creds) {
-              this.credStore.add(creds.iccId, creds.msisdn, aPrincipal.origin,
+              this.credStore.add(creds.iccId, creds.msisdn, aPrincipal.originNoSuffix,
                                  creds.sessionToken, this.iccIds);
               return creds;
             }
             // Otherwise, we need to verify the new number selected by the
             // user.
-            return this.verificationFlow(promptResult, aPrincipal.origin);
+            return this.verificationFlow(promptResult, aPrincipal.originNoSuffix);
           }
         );
       }
@@ -895,9 +897,7 @@ this.MobileIdentityManager = {
   getMobileIdAssertion: function(aPrincipal, aPromiseId, aOptions) {
     log.debug("getMobileIdAssertion ${}", aPrincipal);
 
-    let uri = Services.io.newURI(aPrincipal.origin, null, null);
-    let principal = securityManager.getAppCodebasePrincipal(
-      uri, aPrincipal.appId, aPrincipal.isInBrowserElement);
+    let principal = aPrincipal;
     let manifestURL = appsService.getManifestURLByLocalId(aPrincipal.appId);
 
     let permission = permissionManager.testPermissionFromPrincipal(
@@ -916,11 +916,11 @@ this.MobileIdentityManager = {
     // First of all we look if we already have credentials for this origin.
     // If we don't have credentials it means that it is the first time that
     // the caller requested an assertion.
-    this.credStore.getByOrigin(aPrincipal.origin)
+    this.credStore.getByOrigin(aPrincipal.originNoSuffix)
     .then(
       (creds) => {
         log.debug("creds ${creds} - ${origin}", { creds: creds,
-                                                  origin: aPrincipal.origin });
+                                                  origin: aPrincipal.originNoSuffix });
         if (!creds || !creds.sessionToken) {
           log.debug("No credentials");
           return;
@@ -935,7 +935,7 @@ this.MobileIdentityManager = {
           .then(
             (newCreds) => {
               return this.checkNewCredentials(creds, newCreds,
-                                              principal.origin);
+                                              principal.originNoSuffix);
             }
           );
         }
@@ -979,7 +979,7 @@ this.MobileIdentityManager = {
         .then(
           (newCreds) => {
             return this.checkNewCredentials(creds, newCreds,
-                                            principal.origin);
+                                            principal.originNoSuffix);
           }
         );
       }
@@ -1009,7 +1009,7 @@ this.MobileIdentityManager = {
     .then(
       (creds) => {
         if (creds) {
-          return this.generateAssertion(creds, principal.origin);
+          return this.generateAssertion(creds, principal.originNoSuffix);
         }
         return Promise.reject(ERROR_INTERNAL_CANNOT_GENERATE_ASSERTION);
       }

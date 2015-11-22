@@ -17,6 +17,7 @@
 #include "jit/BaselineJIT.h"
 #include "jit/CompileWrappers.h"
 #include "vm/Runtime.h"
+#include "vm/Time.h"
 #include "vm/TraceLoggingGraph.h"
 
 #include "jit/JitFrames-inl.h"
@@ -29,29 +30,12 @@ using mozilla::NativeEndian;
 
 TraceLoggerThreadState* traceLoggerState = nullptr;
 
-#if defined(_WIN32)
-#include <intrin.h>
-static __inline uint64_t
-rdtsc(void)
-{
-    return __rdtsc();
+#if defined(MOZ_HAVE_RDTSC)
+
+uint64_t inline rdtsc() {
+    return ReadTimestampCounter();
 }
-#elif defined(__i386__)
-static __inline__ uint64_t
-rdtsc(void)
-{
-    uint64_t x;
-    __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
-    return x;
-}
-#elif defined(__x86_64__)
-static __inline__ uint64_t
-rdtsc(void)
-{
-    unsigned hi, lo;
-    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-    return ( (uint64_t)lo)|( ((uint64_t)hi)<<32 );
-}
+
 #elif defined(__powerpc__)
 static __inline__ uint64_t
 rdtsc(void)
@@ -72,14 +56,32 @@ rdtsc(void)
     result = result|lower;
 
     return result;
+
 }
+#elif defined(__arm__)
+
+#include <sys/time.h>
+
+static __inline__ uint64_t
+rdtsc(void)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    uint64_t ret = tv.tv_sec;
+    ret *= 1000000;
+    ret += tv.tv_usec;
+    return ret;
+}
+
 #else
+
 static __inline__ uint64_t
 rdtsc(void)
 {
     return 0;
 }
-#endif
+
+#endif // defined(MOZ_HAVE_RDTSC)
 
 class AutoTraceLoggerThreadStateLock
 {
@@ -670,6 +672,7 @@ TraceLoggerThreadState::init()
         enabledTextIds[TraceLogger_ParserCompileFunction] = true;
         enabledTextIds[TraceLogger_ParserCompileLazy] = true;
         enabledTextIds[TraceLogger_ParserCompileScript] = true;
+        enabledTextIds[TraceLogger_ParserCompileModule] = true;
         enabledTextIds[TraceLogger_IrregexpCompile] = true;
         enabledTextIds[TraceLogger_IrregexpExecute] = true;
         enabledTextIds[TraceLogger_Scripts] = true;

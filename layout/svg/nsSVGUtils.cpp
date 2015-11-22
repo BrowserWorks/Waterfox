@@ -298,6 +298,22 @@ nsSVGUtils::NotifyAncestorsOfFilterRegionChange(nsIFrame *aFrame)
   }
 }
 
+Size
+nsSVGUtils::GetContextSize(const nsIFrame* aFrame)
+{
+  Size size;
+
+  MOZ_ASSERT(aFrame->GetContent()->IsSVGElement(), "bad cast");
+  const nsSVGElement* element = static_cast<nsSVGElement*>(aFrame->GetContent());
+
+  SVGSVGElement* ctx = element->GetCtx();
+  if (ctx) {
+    size.width = ctx->GetLength(SVGContentUtils::X);
+    size.height = ctx->GetLength(SVGContentUtils::Y);
+  }
+  return size;
+}
+
 float
 nsSVGUtils::ObjectSpace(const gfxRect &aRect, const nsSVGLength2 *aLength)
 {
@@ -1155,7 +1171,7 @@ PathExtentsToMaxStrokeExtents(const gfxRect& aPathExtents,
   gfxMatrix outerSVGToUser;
   if (nsSVGUtils::GetNonScalingStrokeTransform(aFrame, &outerSVGToUser)) {
     outerSVGToUser.Invert();
-    matrix *= outerSVGToUser;
+    matrix.PreMultiply(outerSVGToUser);
   }
 
   double dx = style_expansion * (fabs(matrix._11) + fabs(matrix._21));
@@ -1181,8 +1197,7 @@ nsSVGUtils::PathExtentsToMaxStrokeExtents(const gfxRect& aPathExtents,
                                           const gfxMatrix& aMatrix)
 {
   bool strokeMayHaveCorners =
-    !aFrame->GetContent()->IsAnyOfSVGElements(nsGkAtoms::circle,
-                                              nsGkAtoms::ellipse);
+    !SVGContentUtils::ShapeTypeHasNoCorners(aFrame->GetContent());
 
   // For a shape without corners the stroke can only extend half the stroke
   // width from the path in the x/y-axis directions. For shapes with corners
@@ -1454,7 +1469,7 @@ GetStrokeDashData(nsIFrame* aFrame,
 
   } else {
     uint32_t count = style->mStrokeDasharrayLength;
-    if (!count || !aDashes.SetLength(count)) {
+    if (!count || !aDashes.SetLength(count, fallible)) {
       return false;
     }
 

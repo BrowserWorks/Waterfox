@@ -10,12 +10,15 @@
  * via XMLHttpRequest).
  */
 
+#include "nsContentUtils.h"
 #include "nsDataDocumentContentPolicy.h"
 #include "nsNetUtil.h"
+#include "nsIProtocolHandler.h"
 #include "nsScriptSecurityManager.h"
 #include "nsIDocument.h"
 #include "nsINode.h"
 #include "nsIDOMWindow.h"
+#include "nsIURI.h"
 
 NS_IMPL_ISUPPORTS(nsDataDocumentContentPolicy, nsIContentPolicy)
 
@@ -43,6 +46,9 @@ nsDataDocumentContentPolicy::ShouldLoad(uint32_t aContentType,
                                         nsIPrincipal *aRequestPrincipal,
                                         int16_t *aDecision)
 {
+  MOZ_ASSERT(aContentType == nsContentUtils::InternalContentPolicyTypeToExternal(aContentType),
+             "We should only see external content policy types here.");
+
   *aDecision = nsIContentPolicy::ACCEPT;
   // Look for the document.  In most cases, aRequestingContext is a node.
   nsCOMPtr<nsIDocument> doc;
@@ -77,12 +83,12 @@ nsDataDocumentContentPolicy::ShouldLoad(uint32_t aContentType,
     //   OR
     //  - URI loadable by subsumers, e.g. blob URIs
     // Any URI that doesn't meet these requirements will be rejected below.
-    if (!HasFlags(aContentLocation,
-                  nsIProtocolHandler::URI_IS_LOCAL_RESOURCE) ||
-        (!HasFlags(aContentLocation,
-                   nsIProtocolHandler::URI_INHERITS_SECURITY_CONTEXT) &&
-         !HasFlags(aContentLocation,
-                   nsIProtocolHandler::URI_LOADABLE_BY_SUBSUMERS))) {
+    if (!(HasFlags(aContentLocation,
+                   nsIProtocolHandler::URI_IS_LOCAL_RESOURCE) &&
+          (HasFlags(aContentLocation,
+                    nsIProtocolHandler::URI_INHERITS_SECURITY_CONTEXT) ||
+           HasFlags(aContentLocation,
+                    nsIProtocolHandler::URI_LOADABLE_BY_SUBSUMERS)))) {
       *aDecision = nsIContentPolicy::REJECT_TYPE;
 
       // Report error, if we can.
@@ -123,7 +129,8 @@ nsDataDocumentContentPolicy::ShouldLoad(uint32_t aContentType,
       aContentType == nsIContentPolicy::TYPE_SUBDOCUMENT ||
       aContentType == nsIContentPolicy::TYPE_SCRIPT ||
       aContentType == nsIContentPolicy::TYPE_XSLT ||
-      aContentType == nsIContentPolicy::TYPE_FETCH) {
+      aContentType == nsIContentPolicy::TYPE_FETCH ||
+      aContentType == nsIContentPolicy::TYPE_WEB_MANIFEST) {
     *aDecision = nsIContentPolicy::REJECT_TYPE;
   }
 

@@ -16,13 +16,15 @@
 
 namespace mozilla {
 
+class ThreadSharedFloatArrayBufferList;
+
 namespace dom {
 class AudioBuffer;
 class AudioContext;
 class DecodeErrorCallback;
 class DecodeSuccessCallback;
 class Promise;
-}
+} // namespace dom
 
 struct WebAudioDecodeJob final
 {
@@ -46,7 +48,6 @@ struct WebAudioDecodeJob final
   };
 
   typedef void (WebAudioDecodeJob::*ResultFn)(ErrorCode);
-  typedef nsAutoArrayPtr<float> ChannelBuffer;
 
   void OnSuccess(ErrorCode /* ignored */);
   void OnFailure(ErrorCode aErrorCode);
@@ -63,7 +64,7 @@ struct WebAudioDecodeJob final
   nsRefPtr<dom::DecodeSuccessCallback> mSuccessCallback;
   nsRefPtr<dom::DecodeErrorCallback> mFailureCallback; // can be null
   nsRefPtr<dom::AudioBuffer> mOutput;
-  FallibleTArray<ChannelBuffer> mChannelBuffers;
+  nsRefPtr<ThreadSharedFloatArrayBufferList> mBuffer;
 
 private:
   ~WebAudioDecodeJob();
@@ -72,7 +73,7 @@ private:
 void AsyncDecodeWebAudio(const char* aContentType, uint8_t* aBuffer,
                          uint32_t aLength, WebAudioDecodeJob& aDecodeJob);
 
-}
+} // namespace mozilla
 
 #endif
 

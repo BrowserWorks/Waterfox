@@ -4,13 +4,12 @@
 #include <jni.h>
 
 #include "mozilla/jni/Refs.h"
-#include "AndroidBridge.h"
 
 namespace mozilla {
 namespace jni {
-namespace {
+namespace detail {
 
-// TypeAdapter specializations are the interfaces between naive (C++) types such
+// TypeAdapter specializations are the interfaces between native/C++ types such
 // as int32_t and JNI types such as jint. The template parameter T is the native
 // type, and each TypeAdapter specialization can have the following members:
 //
@@ -28,20 +27,36 @@ template<typename T> struct TypeAdapter;
 
 // TypeAdapter<LocalRef<Cls>> applies when jobject is a return value.
 template<class Cls> struct TypeAdapter<LocalRef<Cls>> {
+    typedef decltype(Ref<Cls>(nullptr).Get()) JNIType;
+
     static constexpr auto Call = &JNIEnv::CallObjectMethodA;
     static constexpr auto StaticCall = &JNIEnv::CallStaticObjectMethodA;
     static constexpr auto Get = &JNIEnv::GetObjectField;
     static constexpr auto StaticGet = &JNIEnv::GetStaticObjectField;
 
+    // Declare instance as jobject because JNI methods return
+    // jobject even if the return value is really jstring, etc.
     static LocalRef<Cls> ToNative(JNIEnv* env, jobject instance) {
         return LocalRef<Cls>::Adopt(env, instance);
     }
+
+    static JNIType FromNative(JNIEnv*, LocalRef<Cls>&& instance) {
+        return instance.Forget();
+    }
 };
 
+// clang is picky about function types, including attributes that modify the calling
+// convention, lining up.  GCC appears to be somewhat less so.
+#ifdef __clang__
+#define MOZ_JNICALL_ABI JNICALL
+#else
+#define MOZ_JNICALL_ABI
+#endif
+
 template<class Cls> constexpr jobject
-    (JNIEnv::*TypeAdapter<LocalRef<Cls>>::Call)(jobject, jmethodID, jvalue*);
+    (JNIEnv::*TypeAdapter<LocalRef<Cls>>::Call)(jobject, jmethodID, jvalue*) MOZ_JNICALL_ABI;
 template<class Cls> constexpr jobject
-    (JNIEnv::*TypeAdapter<LocalRef<Cls>>::StaticCall)(jclass, jmethodID, jvalue*);
+    (JNIEnv::*TypeAdapter<LocalRef<Cls>>::StaticCall)(jclass, jmethodID, jvalue*) MOZ_JNICALL_ABI;
 template<class Cls> constexpr jobject
     (JNIEnv::*TypeAdapter<LocalRef<Cls>>::Get)(jobject, jfieldID);
 template<class Cls> constexpr jobject
@@ -50,10 +65,16 @@ template<class Cls> constexpr jobject
 
 // TypeAdapter<Ref<Cls>> applies when jobject is a parameter value.
 template<class Cls> struct TypeAdapter<Ref<Cls>> {
+    typedef decltype(Ref<Cls>(nullptr).Get()) JNIType;
+
     static constexpr auto Set = &JNIEnv::SetObjectField;
     static constexpr auto StaticSet = &JNIEnv::SetStaticObjectField;
 
-    static jobject FromNative(JNIEnv*, const Ref<Cls>& instance) {
+    static Ref<Cls> ToNative(JNIEnv* env, JNIType instance) {
+        return Ref<Cls>::From(instance);
+    }
+
+    static JNIType FromNative(JNIEnv*, const Ref<Cls>& instance) {
         return instance.Get();
     }
 };
@@ -65,14 +86,20 @@ template<class Cls> constexpr void
 
 
 // jstring has its own Param type.
-template<> struct TypeAdapter<class Param<String>::Type>
+template<> struct TypeAdapter<Param<String>>
         : public TypeAdapter<String::Ref>
+{};
+
+template<class Cls> struct TypeAdapter<const Cls&>
+        : public TypeAdapter<Cls>
 {};
 
 
 #define DEFINE_PRIMITIVE_TYPE_ADAPTER(NativeType, JNIType, JNIName) \
     \
     template<> struct TypeAdapter<NativeType> { \
+        typedef JNIType JNI##Type; \
+    \
         static constexpr auto Call = &JNIEnv::Call ## JNIName ## MethodA; \
         static constexpr auto StaticCall = &JNIEnv::CallStatic ## JNIName ## MethodA; \
         static constexpr auto Get = &JNIEnv::Get ## JNIName ## Field; \
@@ -86,20 +113,7 @@ template<> struct TypeAdapter<class Param<String>::Type>
         static NativeType ToNative(JNIEnv*, JNIType val) { \
             return static_cast<NativeType>(val); \
         } \
-    }; \
-    \
-    constexpr JNIType (JNIEnv::*TypeAdapter<NativeType>::Call) \
-            (jobject, jmethodID, jvalue*); \
-    constexpr JNIType (JNIEnv::*TypeAdapter<NativeType>::StaticCall) \
-            (jclass, jmethodID, jvalue*); \
-    constexpr JNIType (JNIEnv::*TypeAdapter<NativeType>::Get) \
-            (jobject, jfieldID); \
-    constexpr JNIType (JNIEnv::*TypeAdapter<NativeType>::StaticGet) \
-            (jclass, jfieldID); \
-    constexpr void (JNIEnv::*TypeAdapter<NativeType>::Set) \
-            (jobject, jfieldID, JNIType); \
-    constexpr void (JNIEnv::*TypeAdapter<NativeType>::StaticSet) \
-            (jclass, jfieldID, JNIType)
+    }
 
 
 DEFINE_PRIMITIVE_TYPE_ADAPTER(bool,     jboolean, Boolean);
@@ -113,7 +127,10 @@ DEFINE_PRIMITIVE_TYPE_ADAPTER(double,   jdouble,  Double);
 
 #undef DEFINE_PRIMITIVE_TYPE_ADAPTER
 
-} // namespace
+} // namespace detail
+
+using namespace detail;
+
 } // namespace jni
 } // namespace mozilla
 

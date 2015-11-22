@@ -49,11 +49,11 @@ EXTN(jsimd_h2v1_downsample_sse2):
         mov     rbp,rsp
         collect_args
 
-        mov ecx, r13d
+        mov rcx, r13
         shl     rcx,3                   ; imul rcx,DCTSIZE (rcx = output_cols)
         jz      near .return
 
-        mov edx, r10d
+        mov rdx, r10
 
         ; -- expand_right_edge
 
@@ -90,7 +90,7 @@ EXTN(jsimd_h2v1_downsample_sse2):
 
         ; -- h2v1_downsample
 
-        mov     eax, r12d        ; rowctr
+        mov     rax, r12        ; rowctr
         test    eax,eax
         jle     near .return
 
@@ -193,11 +193,11 @@ EXTN(jsimd_h2v2_downsample_sse2):
         mov     rbp,rsp
         collect_args
 
-        mov     ecx, r13d
+        mov     rcx, r13
         shl     rcx,3                   ; imul rcx,DCTSIZE (rcx = output_cols)
         jz      near .return
 
-        mov     edx, r10d
+        mov     rdx, r10
 
         ; -- expand_right_edge
 
@@ -234,7 +234,7 @@ EXTN(jsimd_h2v2_downsample_sse2):
 
         ; -- h2v2_downsample
 
-        mov     eax, r12d        ; rowctr
+        mov     rax, r12        ; rowctr
         test    rax,rax
         jle     near .return
 

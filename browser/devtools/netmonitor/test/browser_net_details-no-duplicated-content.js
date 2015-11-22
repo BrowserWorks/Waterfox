@@ -5,7 +5,7 @@
 
 // A test to ensure that the content in details pane is not duplicated.
 
-let test = Task.async(function* () {
+var test = Task.async(function* () {
   info("Initializing test");
   let [tab, debuggee, monitor] = yield initNetMonitor(CUSTOM_GET_URL);
   let panel = monitor.panelWin;
@@ -94,6 +94,11 @@ let test = Task.async(function* () {
 
     info("Waiting for NETWORK_EVENT");
     yield onNetworkEvent;
+
+    if (!RequestsMenu.getItemAtIndex(0)) {
+      info("Waiting for the request to be added to the view")
+      yield monitor.panelWin.once(monitor.panelWin.EVENTS.REQUEST_ADDED);
+    }
 
     ok(true, "Received NETWORK_EVENT. Selecting the item.");
     let item = RequestsMenu.getItemAtIndex(0);

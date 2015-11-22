@@ -37,6 +37,24 @@ its prototype:
     Debugger API (e.g, [`Debugger.Source`][source]) for purposes other than
     step debugging a target JavaScript program.
 
+`collectCoverageInfo`
+:   A boolean value indicating whether code coverage should be enabled inside
+    each debuggee of this `Debugger` instance. Changing this flag value will
+    recompile all JIT code to add or remove code coverage
+    instrumentation. Changing this flag when any frame of the debuggee is
+    currently active on the stack will produce an exception.
+
+    Setting this to `true` enables code coverage instrumentation, which can be
+    accessed via the [`Debugger.Script`][script] `getOffsetsCoverage`
+    function. In some cases, the code coverage might expose information which
+    pre-date the modification of this flag. Code coverage reports are monotone,
+    thus one can take a snapshot when the Debugger is enabled, and output the
+    difference.
+
+    Setting this to `false` prevents this `Debugger` instance from requiring any
+    code coverage instrumentation, but it does not guarantee that the
+    instrumentation is not present.
+
 `uncaughtExceptionHook`
 :   Either `null` or a function that SpiderMonkey calls when a call to a
     debug event handler, breakpoint handler, watchpoint handler, or similar
@@ -102,10 +120,21 @@ compartment.
     *promise*, has been allocated in the scope of the debuggees.
 
     This handler method should return a [resumption value][rv] specifying how
-    the debuggee's execution should proceed. However, note that a <code>{ return:
-    <i>value</i> }</code> resumption value is treated like `undefined` ("continue
-    normally"); <i>value</i> is ignored. (Allowing the handler to substitute
-    its own value for the new global object doesn't seem useful.)
+    the debuggee's execution should proceed. However, note that a <code>{
+    return: <i>value</i> }</code> resumption value is treated like `undefined`
+    ("continue normally"); <i>value</i> is ignored.
+
+<code>onPromiseSettled(<i>promise</i>)</code>
+:   A Promise object, referenced by the [`Debugger.Object`][object] instance
+    *promise* that was allocated within a debuggee scope, has settled (either
+    fulfilled or rejected). The Promise's state and fulfillment or rejection
+    value can be obtained via the
+    [PromiseDebugging webidl interface][promise-debugging].
+
+    This handler method should return a [resumption value][rv] specifying how
+    the debuggee's execution should proceed. However, note that a <code>{
+    return: <i>value</i> }</code> resumption value is treated like `undefined`
+    ("continue normally"); <i>value</i> is ignored.
 
 <code>onDebuggerStatement(<i>frame</i>)</code>
 :   Debuggee code has executed a <i>debugger</i> statement in <i>frame</i>.
@@ -224,6 +253,45 @@ compartment.
     within the JavaScript system (the "JSRuntime", in SpiderMonkey terms),
     thereby escaping the capability-based limits. For this reason,
     `onNewGlobalObject` is only available to privileged code.
+
+<code>onIonCompilation(<i>graph</i>)</code>
+:   A new IonMonkey compilation result is attached to a script instance of
+    the Debuggee, the <i>graph</i> contains the internal intermediate
+    representations of the compiler.
+
+    The value <i>graph</i> is an object composed of the following properties:
+
+    `json`
+    :   String containing a JSON of the intermediate representation used by
+        the compiler. This JSON string content is composed of 2 intermediate
+        representation of the graph, a `mir` (Middle-level IR), and a
+        `lir` (Low-level IR).
+
+        Both have a property `blocks`, which is an array of basic
+        blocks in [SSA form][ssa-form] which are used to construct the
+        control flow graph. All elements of these arrays are objects which
+        have a `number`, and an `instructions` properties.
+
+        The MIR blocks have additional properties such as the
+        `predecessors` and `successors` of each block, which can
+        be used to reconstruct the control flow graph, with the
+        `number` properties of the blocks.
+
+        The `instructions` properties are array of objects which have
+        an `id` and an `opcode`. The `id` corresponds to the
+        [SSA form][ssa-form] identifier (number) of each instruction, and the
+        `opcode` is a string which represents the instruction.
+
+        This JSON string contains even more detailed internal information
+        which remains undocummented, as it is potentially subject to
+        frequent modifications.
+
+    `scripts`
+    :   Array of [`Debugger.Script`][script] instances. For a block at
+        `mir.blocks[i]` or `lir.blocks[i]` in the JSON, `scripts[i]` is the
+        [`Debugger.Script`][script] containing that block's code.
+
+    This method's return value is ignored.
 
 
 

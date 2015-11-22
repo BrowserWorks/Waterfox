@@ -21,7 +21,7 @@
 
 #include "nsXPCOMStrings.h"
 #include "nsISupportsImpl.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsTArray.h"
 
 /**
@@ -1224,6 +1224,14 @@ public:
     NS_UTF16ToCString(nsDependentString(aData, aLength),
                       NS_CSTRING_ENCODING_UTF8, *this);
   }
+
+#ifdef MOZ_USE_CHAR16_WRAPPER
+  explicit NS_ConvertUTF16toUTF8(char16ptr_t aString,
+                                 uint32_t aLength = UINT32_MAX)
+    : NS_ConvertUTF16toUTF8(static_cast<const char16_t*>(aString), aLength)
+  {
+  }
+#endif
 
 private:
   self_type& operator=(const self_type& aString) = delete;

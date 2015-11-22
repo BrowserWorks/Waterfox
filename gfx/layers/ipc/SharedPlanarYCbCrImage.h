@@ -34,9 +34,9 @@ public:
   virtual TextureClient* GetTextureClient(CompositableClient* aClient) override;
   virtual uint8_t* GetBuffer() override;
 
-  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
-  virtual void SetData(const PlanarYCbCrData& aData) override;
-  virtual void SetDataNoCopy(const Data &aData) override;
+  virtual already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
+  virtual bool SetData(const PlanarYCbCrData& aData) override;
+  virtual bool SetDataNoCopy(const Data &aData) override;
 
   virtual bool Allocate(PlanarYCbCrData& aData);
   virtual uint8_t* AllocateBuffer(uint32_t aSize) override;
@@ -58,7 +58,7 @@ private:
   RefPtr<ImageClient> mCompositable;
 };
 
-} // namespace
-} // namespace
+} // namespace layers
+} // namespace mozilla
 
 #endif

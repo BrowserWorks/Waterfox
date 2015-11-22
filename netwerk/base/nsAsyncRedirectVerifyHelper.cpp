@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsAsyncRedirectVerifyHelper.h"
 #include "nsThreadUtils.h"
 #include "nsNetUtil.h"
@@ -22,7 +22,7 @@ GetRedirectLog()
         sLog = PR_NewLogModule("nsRedirect");
     return sLog;
 }
-#define LOG(args) PR_LOG(GetRedirectLog(), PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(GetRedirectLog(), mozilla::LogLevel::Debug, args)
 
 NS_IMPL_ISUPPORTS(nsAsyncRedirectVerifyHelper,
                   nsIAsyncVerifyRedirectCallback,

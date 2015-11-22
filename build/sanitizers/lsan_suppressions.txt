@@ -38,18 +38,13 @@ leak:nr_reg_local_init
 leak:r_log_register
 leak:nr_reg_set
 
-# Additional WebRTC leak suppressions added for Mochitest 3.
-leak:mozilla::TransportLayerDtls::Setup
+# Bug 1187518 - SCTP leaks in child process while running WebRTC tests.
+leak:recv_function_udp
+
 
 ###
 ### Many leaks only affect some test suites.  The suite annotations are not checked.
 ###
-
-# Bug 981195 - Small leak in the parser. m4
-leak:ObjectGroup::fixPlainObjectGroup
-
-# Bug 982111 - WebM is leaking. m1
-leak:nestegg_read_packet
 
 # Bug 987385 - Various plugin leaks. m3
 leak:mozilla::plugins::PPluginInstanceParent::CallNPP_HandleEvent
@@ -75,7 +70,7 @@ leak:_render_glyph_outline
 # Bug 1023548 - Small leak under SECITEM_AllocItem_Util. bc1, bc3
 leak:SECITEM_AllocItem_Util
 
-# This is a one-time leak, so it is probably okay to ignore. bc1, oth
+# This is a one-time leak, so it is probably okay to ignore. bc3, oth
 leak:GlobalPrinters::InitializeGlobalPrinters
 leak:nsPSPrinterList::GetPrinterList
 
@@ -84,6 +79,30 @@ leak:_PR_Getfd
 
 # Bug 1028483 - The XML parser sometimes leaks an object. bc3
 leak:processInternalEntity
+
+# Bug 1187421 - With e10s, NSS does not always free the error stack. m1.
+leak:nss_ClearErrorStack
+
+# Bug 1090570 - IPC Transport lifetime is not always managed correctly.
+leak:mozilla::ipc::OpenDescriptor
+leak:IPC::Channel::ChannelImpl::OutputQueuePush
+leak:IPC::Channel::Channel
+leak:base::MessagePumpLibevent::WatchFileDescriptor
+
+# Bug 1122045 - Leaks in MessageLoop::MessageLoop()
+leak:MessageLoop::MessageLoop
+# This may not actually be related to MessageLoop.
+leak:base::WaitableEvent::TimedWait
+leak:MessageLoop::PostTask_Helper
+
+# Bug 1189430 - DNS leaks in mochitest-chrome.
+leak:nsDNSService::AsyncResolveExtended
+leak:_GetAddrInfo_Portable
+
+# Bug 1189568 - Indirect leaks of IMContextWrapper and nsIntRect.
+leak:nsWindow::Create
+leak:nsBaseWidget::StoreWindowClipRegion
+
 
 ###
 ### Leaks with system libraries in their stacks. These show up across a number of tests.

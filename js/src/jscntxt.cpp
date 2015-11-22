@@ -154,9 +154,10 @@ js::DestroyContext(JSContext* cx, DestroyContextMode mode)
     JS_AbortIfWrongThread(rt);
 
     if (cx->outstandingRequests != 0)
-        MOZ_CRASH();
+        MOZ_CRASH("Attempted to destroy a context while it is in a request.");
 
-    cx->checkNoGCRooters();
+    cx->roots.checkNoGCRooters();
+    FinishPersistentRootedChains(cx->roots);
 
     if (mode != DCM_NEW_FAILED) {
         if (JSContextCallback cxCallback = rt->cxCallback) {
@@ -188,10 +189,10 @@ js::DestroyContext(JSContext* cx, DestroyContextMode mode)
 }
 
 void
-ContextFriendFields::checkNoGCRooters() {
+RootLists::checkNoGCRooters() {
 #ifdef DEBUG
     for (int i = 0; i < THING_ROOT_LIMIT; ++i)
-        MOZ_ASSERT(thingGCRooters[i] == nullptr);
+        MOZ_ASSERT(stackRoots_[i] == nullptr);
 #endif
 }
 
@@ -233,7 +234,7 @@ ReportError(JSContext* cx, const char* message, JSErrorReport* reportp,
          * The AutoJSAPI error reporter only allows warnings to be reported so
          * just ignore this error rather than try to report it.
          */
-        if (cx->options().autoJSAPIOwnsErrorReporting())
+        if (cx->options().autoJSAPIOwnsErrorReporting() && !JSREPORT_IS_WARNING(reportp->flags))
             return;
     }
 
@@ -253,14 +254,18 @@ PopulateReportBlame(JSContext* cx, JSErrorReport* report)
 {
     /*
      * Walk stack until we find a frame that is associated with a non-builtin
-     * rather than a builtin frame.
+     * rather than a builtin frame and which we're allowed to know about.
      */
-    NonBuiltinFrameIter iter(cx);
+    NonBuiltinFrameIter iter(cx, cx->compartment()->principals());
     if (iter.done())
         return;
 
     report->filename = iter.scriptFilename();
     report->lineno = iter.computeLine(&report->column);
+    // XXX: Make the column 1-based as in other browsers, instead of 0-based
+    // which is how SpiderMonkey stores it internally. This will be
+    // unnecessary once bug 1144340 is fixed.
+    report->column++;
     report->isMuted = iter.mutedErrors();
 }
 
@@ -560,8 +565,7 @@ js::ExpandErrorArgumentsVA(ExclusiveContext* cx, JSErrorCallback callback,
                            ErrorArgumentsType argumentsType, va_list ap)
 {
     const JSErrorFormatString* efs;
-    int i;
-    int argCount;
+    uint16_t argCount;
     bool messageArgsPassed = !!reportp->messageArgs;
 
     *messagep = nullptr;
@@ -578,9 +582,9 @@ js::ExpandErrorArgumentsVA(ExclusiveContext* cx, JSErrorCallback callback,
         reportp->exnType = efs->exnType;
 
         size_t totalArgsLength = 0;
-        size_t argLengths[10]; /* only {0} thru {9} supported */
+        size_t argLengths[JS::MaxNumErrorArguments]; /* only {0} thru {9} supported */
         argCount = efs->argCount;
-        MOZ_ASSERT(argCount <= 10);
+        MOZ_RELEASE_ASSERT(argCount <= JS::MaxNumErrorArguments);
         if (argCount > 0) {
             /*
              * Gather the arguments into an array, and accumulate
@@ -597,7 +601,7 @@ js::ExpandErrorArgumentsVA(ExclusiveContext* cx, JSErrorCallback callback,
                 /* nullptr-terminate for easy copying. */
                 reportp->messageArgs[argCount] = nullptr;
             }
-            for (i = 0; i < argCount; i++) {
+            for (uint16_t i = 0; i < argCount; i++) {
                 if (messageArgsPassed) {
                     /* Do nothing. */
                 } else if (argumentsType == ArgumentsAreASCII) {
@@ -639,6 +643,7 @@ js::ExpandErrorArgumentsVA(ExclusiveContext* cx, JSErrorCallback callback,
                 */
                 reportp->ucmessage = out = cx->pod_malloc<char16_t>(expandedLength + 1);
                 if (!out) {
+                    ReportOutOfMemory(cx);
                     js_free(buffer);
                     goto error;
                 }
@@ -646,7 +651,7 @@ js::ExpandErrorArgumentsVA(ExclusiveContext* cx, JSErrorCallback callback,
                     if (*fmt == '{') {
                         if (isdigit(fmt[1])) {
                             int d = JS7_UNDEC(fmt[1]);
-                            MOZ_ASSERT(d < argCount);
+                            MOZ_RELEASE_ASSERT(d < argCount);
                             js_strncpy(out, reportp->messageArgs[d],
                                        argLengths[d]);
                             out += argLengths[d];
@@ -702,7 +707,7 @@ error:
     if (!messageArgsPassed && reportp->messageArgs) {
         /* free the arguments only if we allocated them */
         if (argumentsType == ArgumentsAreASCII) {
-            i = 0;
+            uint16_t i = 0;
             while (reportp->messageArgs[i])
                 js_free((void*)reportp->messageArgs[i++]);
         }
@@ -942,7 +947,7 @@ ExclusiveContext::recoverFromOutOfMemory()
 JSContext::JSContext(JSRuntime* rt)
   : ExclusiveContext(rt, &rt->mainThread, Context_JS),
     throwing(false),
-    unwrappedException_(UndefinedValue()),
+    unwrappedException_(this),
     options_(),
     overRecursed_(false),
     propagatingForcedReturn_(false),
@@ -1131,10 +1136,6 @@ JSContext::mark(JSTracer* trc)
 {
     /* Stack frames and slots are traced by StackSpace::mark. */
 
-    /* Mark other roots-by-definition in the JSContext. */
-    if (isExceptionPending())
-        TraceRoot(trc, &unwrappedException_, "unwrapped exception");
-
     TraceCycleDetectionSet(trc, cycleDetectorSet);
 
     if (compartment_)
@@ -1144,7 +1145,7 @@ JSContext::mark(JSTracer* trc)
 void*
 ExclusiveContext::stackLimitAddressForJitCode(StackKind kind)
 {
-#if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
+#ifdef JS_SIMULATOR
     return runtime_->addressOfSimulatorStackLimit();
 #else
     return stackLimitAddress(kind);

@@ -168,22 +168,16 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   gPrototypeProperties['Array'] =
     ["length", "toSource", "toString", "toLocaleString", "join", "reverse", "sort", "push",
       "pop", "shift", "unshift", "splice", "concat", "slice", "lastIndexOf", "indexOf",
-      "forEach", "map", "reduce", "reduceRight", "filter", "some", "every", "find",
+      "includes", "forEach", "map", "reduce", "reduceRight", "filter", "some", "every", "find",
       "findIndex", "copyWithin", "fill", Symbol.iterator, "entries", "keys", "constructor"];
-  if (isNightlyBuild) {
-    gPrototypeProperties['Array'].push('includes');
-  }
   for (var c of typedArrayClasses) {
     gPrototypeProperties[c] = ["constructor", "BYTES_PER_ELEMENT"];
   }
   gPrototypeProperties['TypedArray'] =
     ["length", "buffer", "byteLength", "byteOffset", Symbol.iterator, "subarray",
-     "set", "copyWithin", "find", "findIndex", "forEach","indexOf", "lastIndexOf", "reverse",
-     "join", "every", "some", "reduce", "reduceRight", "entries", "keys", "values", "slice",
-     "map", "filter"];
-  if (isNightlyBuild) {
-    gPrototypeProperties['TypedArray'].push('includes');
-  }
+     "set", "copyWithin", "find", "findIndex", "forEach","indexOf", "lastIndexOf", "includes",
+     "reverse", "join", "every", "some", "reduce", "reduceRight", "entries", "keys", "values",
+     "slice", "map", "filter"];
   for (var c of errorObjectClasses) {
       gPrototypeProperties[c] = ["constructor", "name",
                                  // We don't actually resolve these empty data properties
@@ -206,10 +200,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     ["constructor", "toSource", "toString", "compile", "exec", "test",
      "flags", "global", "ignoreCase", "multiline", "source", "sticky",
      "lastIndex"];
-
-  if (isNightlyBuild) {
-    gPrototypeProperties['TypedArray'].push('includes');
-  }
 
   // Sort an array that may contain symbols as well as strings.
   function sortProperties(arr) {
@@ -579,9 +569,9 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
         is(e[name], undefined, name + " property censored after suspicious replacement");
       }
       testProperty('message', x => x == 'some message', 'some other message', 42);
-      testProperty('fileName', x => /xul/.test(x), 'otherFilename.html', new iwin.Object());
-      testProperty('columnNumber', x => x > 5 && x < 100, 99, 99.5);
-      testProperty('lineNumber', x => x > 100 && x < 10000, 50, 'foo');
+      testProperty('fileName', x => x == '', 'otherFilename.html', new iwin.Object());
+      testProperty('columnNumber', x => x == 1, 99, 99.5);
+      testProperty('lineNumber', x => x == 0, 50, 'foo');
 
       // Note - an Exception newed via Xrays is going to have an empty stack given the
       // current semantics and implementation. This tests the current behavior, but that
@@ -616,7 +606,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
 
       // Test with modified flags accessors
       iwin.eval(`
-var props = ["global", "ignoreCase", "multiline", "sticky"];
+var props = ["global", "ignoreCase", "multiline", "sticky", "source"];
 var origDescs = {};
 for (var prop of props) {
   origDescs[prop] = Object.getOwnPropertyDescriptor(RegExp.prototype, prop);

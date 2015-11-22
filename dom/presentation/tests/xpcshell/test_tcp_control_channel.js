@@ -9,7 +9,7 @@ const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 
-let tps;
+var tps;
 
 // Call |run_next_test| if all functions in |names| are called
 function makeJointSuccess(names) {
@@ -29,8 +29,8 @@ function TestDescription(aType, aTcpAddress, aTcpPort) {
   this.tcpAddress = Cc["@mozilla.org/array;1"]
                       .createInstance(Ci.nsIMutableArray);
   for (let address of aTcpAddress) {
-    let wrapper = Cc["@mozilla.org/supports-string;1"]
-                    .createInstance(Ci.nsISupportsString);
+    let wrapper = Cc["@mozilla.org/supports-cstring;1"]
+                    .createInstance(Ci.nsISupportsCString);
     wrapper.data = address;
     this.tcpAddress.appendElement(wrapper, false);
   }
@@ -41,30 +41,34 @@ TestDescription.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationChannelDescription]),
 }
 
-function loopOfferAnser()
-{
-  const CONTROLLER_CONTROL_CHANNEL_PORT = 36777;
-  const PRESENTER_CONTROL_CHANNEL_PORT = 36888;
+const CONTROLLER_CONTROL_CHANNEL_PORT = 36777;
+const PRESENTER_CONTROL_CHANNEL_PORT = 36888;
 
-  // presenter's presentation channel description
-  const OFFER_ADDRESS = '192.168.123.123';
-  const OFFER_PORT = 123;
+// presenter's presentation channel description
+const OFFER_ADDRESS = '192.168.123.123';
+const OFFER_PORT = 123;
 
-  // controller's presentation channel description
-  const ANSWER_ADDRESS = '192.168.321.321';
-  const ANSWER_PORT = 321;
+// controller's presentation channel description
+const ANSWER_ADDRESS = '192.168.321.321';
+const ANSWER_PORT = 321;
 
+function loopOfferAnser() {
+  tps = Cc["@mozilla.org/presentation-device/tcp-presentation-server;1"]
+        .createInstance(Ci.nsITCPPresentationServer);
+  tps.init(null, PRESENTER_CONTROL_CHANNEL_PORT);
+  tps.id = 'controllerID';
+
+  testPresentationServer();
+}
+
+
+function testPresentationServer() {
   let yayFuncs = makeJointSuccess(['controllerControlChannelClose',
                                    'presenterControlChannelClose']);
   let controllerDevice, controllerControlChannel;
   let presenterDevice, presenterControlChannel;
 
-  Services.prefs.setBoolPref("dom.presentation.tcp_server.debug", true);
 
-  tps = Cc["@mozilla.org/presentation-device/tcp-presentation-server;1"]
-        .createInstance(Ci.nsITCPPresentationServer);
-  tps.init(null, PRESENTER_CONTROL_CHANNEL_PORT);
-  tps.id = 'controllerID';
   controllerDevice = tps.createTCPDevice('controllerID',
                                          'controllerName',
                                          'testType',
@@ -87,7 +91,7 @@ function loopOfferAnser()
           this.status = 'onOffer';
 
           let offer = aOffer.QueryInterface(Ci.nsIPresentationChannelDescription);
-          Assert.strictEqual(offer.tcpAddress.queryElementAt(0,Ci.nsISupportsString).data,
+          Assert.strictEqual(offer.tcpAddress.queryElementAt(0,Ci.nsISupportsCString).data,
                              OFFER_ADDRESS,
                              'expected offer address array');
           Assert.equal(offer.tcpPort, OFFER_PORT, 'expected offer port');
@@ -144,7 +148,7 @@ function loopOfferAnser()
       Assert.equal(this.status, 'opened', '2. presenterControlChannel: get answer, close channel');
 
       let answer = aAnswer.QueryInterface(Ci.nsIPresentationChannelDescription);
-      Assert.strictEqual(answer.tcpAddress.queryElementAt(0,Ci.nsISupportsString).data,
+      Assert.strictEqual(answer.tcpAddress.queryElementAt(0,Ci.nsISupportsCString).data,
                          ANSWER_ADDRESS,
                          'expected answer address array');
       Assert.equal(answer.tcpPort, ANSWER_PORT, 'expected answer port');
@@ -171,20 +175,58 @@ function loopOfferAnser()
   };
 }
 
+function setOffline() {
+  let expectedReason;
+  tps.listener = {
+    onClose: function(aReason) {
+      Assert.equal(aReason, Cr.NS_ERROR_ABORT, 'TCPPresentationServer close as expected');
+      Services.io.offline = false;
+      run_next_test();
+    },
+  }
+
+  // Let the server socket be closed non-manually
+  Services.io.offline = true;
+}
+
+function oneMoreLoop() {
+  try {
+    tps.init('controllerID', PRESENTER_CONTROL_CHANNEL_PORT);
+    testPresentationServer();
+  } catch (e) {
+    Assert.ok(false, 'TCP presentation init fail:' + e);
+    run_next_test();
+  }
+}
+
+
 function shutdown()
 {
   tps.listener = {
     onClose: function(aReason) {
       Assert.equal(aReason, Cr.NS_OK, 'TCPPresentationServer close success');
-      Services.prefs.clearUserPref("dom.presentation.tcp_server.debug");
       run_next_test();
     },
   }
   tps.close();
 }
 
+function setPref() {
+  Services.prefs.setBoolPref("dom.presentation.tcp_server.debug", true);
+  run_next_test();
+}
+
+function clearPref() {
+  Services.prefs.clearUserPref("dom.presentation.tcp_server.debug");
+  run_next_test();
+}
+
+add_test(setPref);
 add_test(loopOfferAnser);
+add_test(setOffline);
+add_test(oneMoreLoop);
 add_test(shutdown);
+add_test(clearPref);
 
 function run_test() {
   run_next_test();

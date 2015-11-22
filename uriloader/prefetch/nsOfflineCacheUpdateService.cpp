@@ -29,14 +29,12 @@
 #include "nsICryptoHash.h"
 #include "nsIPermissionManager.h"
 #include "nsIPrincipal.h"
-#include "nsIScriptSecurityManager.h"
 #include "nsNetCID.h"
-#include "nsNetUtil.h"
 #include "nsServiceManagerUtils.h"
 #include "nsStreamUtils.h"
 #include "nsThreadUtils.h"
 #include "nsProxyRelease.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Attributes.h"
@@ -76,18 +74,18 @@ typedef mozilla::docshell::OfflineCacheUpdateGlue OfflineCacheUpdateGlue;
 //    set NSPR_LOG_MODULES=nsOfflineCacheUpdate:5
 //    set NSPR_LOG_FILE=offlineupdate.log
 //
-// this enables PR_LOG_ALWAYS level information and places all output in
+// this enables LogLevel::Debug level information and places all output in
 // the file offlineupdate.log
 //
 PRLogModuleInfo *gOfflineCacheUpdateLog;
 
 #undef LOG
-#define LOG(args) PR_LOG(gOfflineCacheUpdateLog, 4, args)
+#define LOG(args) MOZ_LOG(gOfflineCacheUpdateLog, mozilla::LogLevel::Debug, args)
 
 #undef LOG_ENABLED
-#define LOG_ENABLED() PR_LOG_TEST(gOfflineCacheUpdateLog, 4)
+#define LOG_ENABLED() MOZ_LOG_TEST(gOfflineCacheUpdateLog, mozilla::LogLevel::Debug)
 
-namespace { // anon
+namespace {
 
 nsresult
 GetAppIDAndInBrowserFromWindow(nsIDOMWindow *aWindow,
@@ -117,7 +115,7 @@ GetAppIDAndInBrowserFromWindow(nsIDOMWindow *aWindow,
     return NS_OK;
 }
 
-} // anon
+} // namespace
 
 //-----------------------------------------------------------------------------
 // nsOfflineCachePendingUpdate
@@ -719,9 +717,9 @@ nsOfflineCacheUpdateService::OfflineAppAllowedForURI(nsIURI *aURI,
                                                      nsIPrefBranch *aPrefBranch,
                                                      bool *aAllowed)
 {
-    nsCOMPtr<nsIPrincipal> principal;
-    nsContentUtils::GetSecurityManager()->
-        GetNoAppCodebasePrincipal(aURI, getter_AddRefs(principal));
+    OriginAttributes attrs;
+    nsCOMPtr<nsIPrincipal> principal =
+        BasePrincipal::CreateCodebasePrincipal(aURI, attrs);
     return OfflineAppPermForPrincipal(principal, aPrefBranch, false, aAllowed);
 }
 
@@ -730,9 +728,9 @@ nsOfflineCacheUpdateService::OfflineAppPinnedForURI(nsIURI *aDocumentURI,
                                                     nsIPrefBranch *aPrefBranch,
                                                     bool *aPinned)
 {
-    nsCOMPtr<nsIPrincipal> principal;
-    nsContentUtils::GetSecurityManager()->
-        GetNoAppCodebasePrincipal(aDocumentURI, getter_AddRefs(principal));
+    OriginAttributes attrs;
+    nsCOMPtr<nsIPrincipal> principal =
+        BasePrincipal::CreateCodebasePrincipal(aDocumentURI, attrs);
     return OfflineAppPermForPrincipal(principal, aPrefBranch, true, aPinned);
 }
 

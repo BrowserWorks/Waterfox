@@ -11,7 +11,7 @@ const { Class } = require('./core/heritage');
 const { on, emit, off, setListeners } = require('./event/core');
 const { filter, pipe, map, merge: streamMerge, stripListeners } = require('./event/utils');
 const { detach, attach, destroy, WorkerHost } = require('./content/utils');
-const { Worker } = require('./content/worker');
+const { Worker } = require('./deprecated/sync-worker');
 const { Disposable } = require('./core/disposable');
 const { WeakReference } = require('./core/reference');
 const { EventTarget } = require('./event/target');
@@ -44,7 +44,7 @@ function pageFor(view) pages.get(view)
 function viewFor(page) views.get(page)
 function isDisposed (page) !views.get(page, false)
 
-let pageContract = contract(merge({
+var pageContract = contract(merge({
   allow: {
     is: ['object', 'undefined', 'null'],
     map: function (allow) { return { script: !allow || allow.script !== false }}
@@ -105,6 +105,7 @@ const Page = Class({
       allowPlugins: true,
       allowAuth: true
     });
+    view.setAttribute('data-src', uri);
 
     ['contentScriptFile', 'contentScript', 'contentScriptWhen']
       .forEach(prop => page[prop] = options[prop]);
@@ -155,12 +156,12 @@ const Page = Class({
 
 exports.Page = Page;
 
-let pageEvents = streamMerge([events, streamEventsFrom(window)]);
-let readyEvents = filter(pageEvents, isReadyEvent);
-let formattedEvents = map(readyEvents, function({target, type}) {
+var pageEvents = streamMerge([events, streamEventsFrom(window)]);
+var readyEvents = filter(pageEvents, isReadyEvent);
+var formattedEvents = map(readyEvents, function({target, type}) {
   return { type: type, page: pageFromDoc(target) };
 });
-let pageReadyEvents = filter(formattedEvents, function({page, type}) {
+var pageReadyEvents = filter(formattedEvents, function({page, type}) {
   return getAttachEventType(page) === type});
 on(pageReadyEvents, 'data', injectWorker);
 

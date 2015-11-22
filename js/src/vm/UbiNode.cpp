@@ -10,7 +10,8 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/Range.h"
 #include "mozilla/Scoped.h"
-#include "mozilla/UniquePtr.h"
+
+#include <algorithm>
 
 #include "jscntxt.h"
 #include "jsobj.h"
@@ -23,6 +24,7 @@
 #include "js/TypeDecls.h"
 #include "js/Utility.h"
 #include "js/Vector.h"
+#include "vm/Debugger.h"
 #include "vm/GlobalObject.h"
 #include "vm/ScopeObject.h"
 #include "vm/Shape.h"
@@ -33,58 +35,144 @@
 #include "vm/Debugger-inl.h"
 
 using mozilla::Some;
+using mozilla::RangedPtr;
 using mozilla::UniquePtr;
+using JS::DispatchTraceKindTyped;
 using JS::HandleValue;
 using JS::Value;
 using JS::ZoneSet;
+using JS::ubi::AtomOrTwoByteChars;
+using JS::ubi::CoarseType;
 using JS::ubi::Concrete;
 using JS::ubi::Edge;
 using JS::ubi::EdgeRange;
 using JS::ubi::Node;
 using JS::ubi::SimpleEdge;
 using JS::ubi::SimpleEdgeVector;
+using JS::ubi::StackFrame;
 using JS::ubi::TracerConcrete;
 using JS::ubi::TracerConcreteWithCompartment;
 
-// All operations on null ubi::Nodes crash.
-const char16_t* Concrete<void>::typeName() const          { MOZ_CRASH("null ubi::Node"); }
-EdgeRange* Concrete<void>::edges(JSContext*, bool) const { MOZ_CRASH("null ubi::Node"); }
-JS::Zone* Concrete<void>::zone() const                    { MOZ_CRASH("null ubi::Node"); }
-JSCompartment* Concrete<void>::compartment() const        { MOZ_CRASH("null ubi::Node"); }
+template<typename CharT>
+static size_t
+copyToBuffer(const CharT* src, RangedPtr<char16_t> dest, size_t length)
+{
+    size_t i = 0;
+    for ( ; i < length; i++)
+        dest[i] = src[i];
+    return i;
+}
+
+struct CopyToBufferMatcher
+{
+    using ReturnType = size_t;
+
+    RangedPtr<char16_t> destination;
+    size_t              maxLength;
+
+    CopyToBufferMatcher(RangedPtr<char16_t> destination, size_t maxLength)
+      : destination(destination)
+      , maxLength(maxLength)
+    { }
+
+    size_t
+    match(JSAtom* atom)
+    {
+        if (!atom)
+            return 0;
+
+        size_t length = std::min(atom->length(), maxLength);
+        JS::AutoCheckCannotGC noGC;
+        return atom->hasTwoByteChars()
+            ? copyToBuffer(atom->twoByteChars(noGC), destination, length)
+            : copyToBuffer(atom->latin1Chars(noGC), destination, length);
+    }
+
+    size_t
+    match(const char16_t* chars)
+    {
+        if (!chars)
+            return 0;
+
+        size_t length = std::min(js_strlen(chars), maxLength);
+        return copyToBuffer(chars, destination, length);
+    }
+};
 
 size_t
+StackFrame::source(RangedPtr<char16_t> destination, size_t length) const
+{
+    CopyToBufferMatcher m(destination, length);
+    return source().match(m);
+}
+
+size_t
+StackFrame::functionDisplayName(RangedPtr<char16_t> destination, size_t length) const
+{
+    CopyToBufferMatcher m(destination, length);
+    return functionDisplayName().match(m);
+}
+
+struct LengthMatcher
+{
+    using ReturnType = size_t;
+
+    size_t
+    match(JSAtom* atom)
+    {
+        return atom ? atom->length() : 0;
+    }
+
+    size_t
+    match(const char16_t* chars)
+    {
+        return chars ? js_strlen(chars) : 0;
+    }
+};
+
+size_t
+StackFrame::sourceLength()
+{
+    LengthMatcher m;
+    return source().match(m);
+}
+
+size_t
+StackFrame::functionDisplayNameLength()
+{
+    LengthMatcher m;
+    return functionDisplayName().match(m);
+}
+
+// All operations on null ubi::Nodes crash.
+CoarseType Concrete<void>::coarseType() const      { MOZ_CRASH("null ubi::Node"); }
+const char16_t* Concrete<void>::typeName() const   { MOZ_CRASH("null ubi::Node"); }
+JS::Zone* Concrete<void>::zone() const             { MOZ_CRASH("null ubi::Node"); }
+JSCompartment* Concrete<void>::compartment() const { MOZ_CRASH("null ubi::Node"); }
+
+UniquePtr<EdgeRange>
+Concrete<void>::edges(JSContext*, bool) const {
+    MOZ_CRASH("null ubi::Node");
+}
+
+Node::Size
 Concrete<void>::size(mozilla::MallocSizeOf mallocSizeof) const
 {
     MOZ_CRASH("null ubi::Node");
 }
 
-Node::Node(JSGCTraceKind kind, void* ptr)
-{
-    switch (kind) {
-      case JSTRACE_OBJECT:       construct(static_cast<JSObject*>(ptr));         break;
-      case JSTRACE_SCRIPT:       construct(static_cast<JSScript*>(ptr));         break;
-      case JSTRACE_STRING:       construct(static_cast<JSString*>(ptr));         break;
-      case JSTRACE_SYMBOL:       construct(static_cast<JS::Symbol*>(ptr));       break;
-      case JSTRACE_BASE_SHAPE:   construct(static_cast<js::BaseShape*>(ptr));    break;
-      case JSTRACE_JITCODE:      construct(static_cast<js::jit::JitCode*>(ptr)); break;
-      case JSTRACE_LAZY_SCRIPT:  construct(static_cast<js::LazyScript*>(ptr));   break;
-      case JSTRACE_SHAPE:        construct(static_cast<js::Shape*>(ptr));        break;
-      case JSTRACE_OBJECT_GROUP: construct(static_cast<js::ObjectGroup*>(ptr));  break;
+struct Node::ConstructFunctor : public js::BoolDefaultAdaptor<Value, false> {
+    template <typename T> bool operator()(T* t, Node* node) { node->construct(t); return true; }
+};
 
-      default:
-        MOZ_CRASH("bad JSGCTraceKind passed to JS::ubi::Node::Node");
-    }
+Node::Node(const JS::GCCellPtr &thing)
+{
+    DispatchTraceKindTyped(ConstructFunctor(), thing.asCell(), thing.kind(), this);
 }
 
 Node::Node(HandleValue value)
 {
-    if (value.isObject())
-        construct(&value.toObject());
-    else if (value.isString())
-        construct(value.toString());
-    else if (value.isSymbol())
-        construct(value.toSymbol());
-    else
+    if (!DispatchValueTyped(ConstructFunctor(), value, this))
         construct<void>(nullptr);
 }
 
@@ -97,7 +185,7 @@ Node::exposeToJS() const
         JSObject& obj = *as<JSObject>();
         if (obj.is<js::ScopeObject>()) {
             v.setUndefined();
-        } else if (obj.is<JSFunction>() && js::IsInternalFunctionObject(&obj)) {
+        } else if (obj.is<JSFunction>() && js::IsInternalFunctionObject(obj)) {
             v.setUndefined();
         } else {
             v.setObject(obj);
@@ -123,12 +211,15 @@ class SimpleEdgeVectorTracer : public JS::CallbackTracer {
     // True if we should populate the edge's names.
     bool wantNames;
 
-    static void staticCallback(JS::CallbackTracer* trc, void** thingp, JSGCTraceKind kind) {
-        static_cast<SimpleEdgeVectorTracer*>(trc)->callback(thingp, kind);
-    }
-
-    void callback(void** thingp, JSGCTraceKind kind) {
+    void onChild(const JS::GCCellPtr& thing) override {
         if (!okay)
+            return;
+
+        // Don't trace permanent atoms and well-known symbols that are owned by
+        // a parent JSRuntime.
+        if (thing.is<JSString>() && thing.as<JSString>().isPermanentAtom())
+            return;
+        if (thing.is<JS::Symbol>() && thing.as<JS::Symbol>().isWellKnownSymbol())
             return;
 
         char16_t* name16 = nullptr;
@@ -155,7 +246,7 @@ class SimpleEdgeVectorTracer : public JS::CallbackTracer {
         // ownership of name; if the append succeeds, the vector element
         // then takes ownership; if the append fails, then the temporary
         // retains it, and its destructor will free it.
-        if (!vec->append(mozilla::Move(SimpleEdge(name16, Node(kind, *thingp))))) {
+        if (!vec->append(mozilla::Move(SimpleEdge(name16, Node(thing))))) {
             okay = false;
             return;
         }
@@ -166,7 +257,7 @@ class SimpleEdgeVectorTracer : public JS::CallbackTracer {
     bool okay;
 
     SimpleEdgeVectorTracer(JSContext* cx, SimpleEdgeVector* vec, bool wantNames)
-      : JS::CallbackTracer(JS_GetRuntime(cx), staticCallback),
+      : JS::CallbackTracer(JS_GetRuntime(cx)),
         vec(vec),
         wantNames(wantNames),
         okay(true)
@@ -187,9 +278,9 @@ class SimpleEdgeRange : public EdgeRange {
   public:
     explicit SimpleEdgeRange(JSContext* cx) : edges(cx), i(0) { }
 
-    bool init(JSContext* cx, void* thing, JSGCTraceKind kind, bool wantNames = true) {
+    bool init(JSContext* cx, void* thing, JS::TraceKind kind, bool wantNames = true) {
         SimpleEdgeVectorTracer tracer(cx, &edges, wantNames);
-        JS_TraceChildren(&tracer, thing, kind);
+        js::TraceChildren(&tracer, thing, kind);
         settle();
         return tracer.okay;
     }
@@ -202,20 +293,21 @@ template<typename Referent>
 JS::Zone*
 TracerConcrete<Referent>::zone() const
 {
-    return get().zone();
+    return get().zoneFromAnyThread();
 }
 
 template<typename Referent>
-EdgeRange*
+UniquePtr<EdgeRange>
 TracerConcrete<Referent>::edges(JSContext* cx, bool wantNames) const {
-    js::ScopedJSDeletePtr<SimpleEdgeRange> r(js_new<SimpleEdgeRange>(cx));
-    if (!r)
+    UniquePtr<SimpleEdgeRange, JS::DeletePolicy<SimpleEdgeRange>> range(
+      cx->new_<SimpleEdgeRange>(cx));
+    if (!range)
         return nullptr;
 
-    if (!r->init(cx, ptr, ::js::gc::MapTypeToTraceKind<Referent>::kind, wantNames))
+    if (!range->init(cx, ptr, JS::MapTypeToTraceKind<Referent>::kind, wantNames))
         return nullptr;
 
-    return r.forget();
+    return UniquePtr<EdgeRange>(range.release());
 }
 
 template<typename Referent>
@@ -223,6 +315,19 @@ JSCompartment*
 TracerConcreteWithCompartment<Referent>::compartment() const
 {
     return TracerBase::get().compartment();
+}
+
+bool
+Concrete<JSObject>::hasAllocationStack() const
+{
+    return !!js::Debugger::getObjectAllocationSite(get());
+}
+
+StackFrame
+Concrete<JSObject>::allocationStack() const
+{
+    MOZ_ASSERT(hasAllocationStack());
+    return StackFrame(js::Debugger::getObjectAllocationSite(get()));
 }
 
 const char*
@@ -285,9 +390,8 @@ template class TracerConcrete<js::jit::JitCode>;
 template class TracerConcreteWithCompartment<js::Shape>;
 template class TracerConcreteWithCompartment<js::BaseShape>;
 template class TracerConcrete<js::ObjectGroup>;
-}
-}
-
+} // namespace ubi
+} // namespace JS
 
 namespace JS {
 namespace ubi {
@@ -340,8 +444,8 @@ RootList::init(ZoneSet& debuggees)
 bool
 RootList::init(HandleObject debuggees)
 {
-    MOZ_ASSERT(debuggees && JS::dbg::IsDebugger(ObjectValue(*debuggees)));
-    js::Debugger* dbg = js::Debugger::fromJSObject(debuggees);
+    MOZ_ASSERT(debuggees && JS::dbg::IsDebugger(*debuggees));
+    js::Debugger* dbg = js::Debugger::fromJSObject(debuggees.get());
 
     ZoneSet debuggeeZones;
     if (!debuggeeZones.init())
@@ -373,7 +477,7 @@ RootList::addRoot(Node node, const char16_t* edgeName)
     MOZ_ASSERT(noGC.isSome());
     MOZ_ASSERT_IF(wantNames, edgeName);
 
-    mozilla::UniquePtr<char16_t[], JS::FreePolicy> name;
+    UniquePtr<char16_t[], JS::FreePolicy> name;
     if (edgeName) {
         name = DuplicateString(cx, edgeName);
         if (!name)
@@ -383,32 +487,12 @@ RootList::addRoot(Node node, const char16_t* edgeName)
     return edges.append(mozilla::Move(SimpleEdge(name.release(), node)));
 }
 
-// An EdgeRange concrete class that holds a pre-existing vector of SimpleEdges.
-class PreComputedEdgeRange : public EdgeRange {
-    SimpleEdgeVector& edges;
-    size_t           i;
-
-    void settle() {
-        front_ = i < edges.length() ? &edges[i] : nullptr;
-    }
-
-  public:
-    explicit PreComputedEdgeRange(JSContext* cx, SimpleEdgeVector& edges)
-      : edges(edges),
-        i(0)
-    {
-        settle();
-    }
-
-    void popFront() override { i++; settle(); }
-};
-
 const char16_t Concrete<RootList>::concreteTypeName[] = MOZ_UTF16("RootList");
 
-EdgeRange*
+UniquePtr<EdgeRange>
 Concrete<RootList>::edges(JSContext* cx, bool wantNames) const {
     MOZ_ASSERT_IF(wantNames, get().wantNames);
-    return js_new<PreComputedEdgeRange>(cx, get().edges);
+    return UniquePtr<EdgeRange>(cx->new_<PreComputedEdgeRange>(cx, get().edges));
 }
 
 } // namespace ubi

@@ -12,7 +12,6 @@
 #include "mozilla/Attributes.h"
 #include "AudioContext.h"
 #include "AudioNodeEngine.h"
-#include "nsAutoPtr.h"
 
 namespace mozilla {
 
@@ -58,7 +57,7 @@ private:
   uint32_t mLength;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif

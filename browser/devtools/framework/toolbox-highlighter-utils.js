@@ -5,9 +5,9 @@
 "use strict";
 
 const {Cc, Ci, Cu} = require("chrome");
-const {Promise: promise} = require("resource://gre/modules/Promise.jsm");
+const promise = require("promise");
 Cu.import("resource://gre/modules/Task.jsm");
-Cu.import("resource:///modules/devtools/gDevTools.jsm");
+const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 
 /**
  * Client-side highlighter shared module.
@@ -43,6 +43,10 @@ exports.getHighlighterUtils = function(toolbox) {
 
   // Is the highlighter currently in pick mode
   let isPicking = false;
+
+  // Is the box model already displayed, used to prevent dispatching
+  // unnecessary requests, especially during toolbox shutdown
+  let isNodeFrontHighlighted = false;
 
   /**
    * Release this utils, nullifying the references to the toolbox
@@ -203,6 +207,7 @@ exports.getHighlighterUtils = function(toolbox) {
       return;
     }
 
+    isNodeFrontHighlighted = true;
     if (isRemoteHighlightable()) {
       yield toolbox.highlighter.showBoxModel(nodeFront, options);
     } else {
@@ -244,19 +249,20 @@ exports.getHighlighterUtils = function(toolbox) {
   /**
    * Hide the highlighter.
    * @param {Boolean} forceHide Only really matters in test mode (when
-   * gDevTools.testing is true). In test mode, hovering over several nodes in
-   * the markup view doesn't hide/show the highlighter to ease testing. The
+   * DevToolsUtils.testing is true). In test mode, hovering over several nodes
+   * in the markup view doesn't hide/show the highlighter to ease testing. The
    * highlighter stays visible at all times, except when the mouse leaves the
    * markup view, which is when this param is passed to true
    * @return a promise that resolves when the highlighter is hidden
    */
   let unhighlight = exported.unhighlight = Task.async(
   function*(forceHide=false) {
-    forceHide = forceHide || !gDevTools.testing;
+    forceHide = forceHide || !DevToolsUtils.testing;
 
     // Note that if isRemoteHighlightable is true, there's no need to hide the
     // highlighter as the walker uses setTimeout to hide it after some time
-    if (forceHide && toolbox.highlighter && isRemoteHighlightable()) {
+    if (isNodeFrontHighlighted && forceHide && toolbox.highlighter && isRemoteHighlightable()) {
+      isNodeFrontHighlighted = false;
       yield toolbox.highlighter.hideBoxModel();
     }
 

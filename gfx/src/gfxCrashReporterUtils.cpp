@@ -98,7 +98,7 @@ ScopedGfxFeatureReporter::WriteAppNote(char statusChar)
   nsAutoCString featureString;
   featureString.AppendPrintf("%s%c ",
                              mFeature,
-                             mStatusChar);
+                             statusChar);
 
   if (!gFeaturesAlreadyReported->Contains(featureString)) {
     gFeaturesAlreadyReported->AppendElement(featureString);
@@ -112,6 +112,6 @@ ScopedGfxFeatureReporter::WriteAppNote(char statusChar)
 
 namespace mozilla {
 void ScopedGfxFeatureReporter::WriteAppNote(char) {}
-}
+} // namespace mozilla
 
 #endif

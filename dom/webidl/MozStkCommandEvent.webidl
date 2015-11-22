@@ -55,7 +55,7 @@ dictionary MozStkIconContainer
 };
 
 [Pref="dom.icc.enabled",
- CheckPermissions="mobileconnection",
+ CheckAnyPermissions="mobileconnection",
  AvailableIn="CertifiedApps",
  Constructor(DOMString type, optional MozStkCommandEventInit eventInitDict)]
 interface MozStkCommandEvent : Event
@@ -342,12 +342,12 @@ dictionary MozStkLocationInfo
   /**
    * Mobile Country Code (MCC) of the current serving operator.
    */
-  unsigned short mcc;
+  DOMString mcc;
 
   /**
    * Mobile Network Code (MNC) of the current serving operator.
    */
-  unsigned short mnc;
+  DOMString mnc;
 
   /**
    * Mobile Location Area Code (LAC) for the current serving operator.

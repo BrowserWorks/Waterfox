@@ -174,7 +174,6 @@ public:
 
 NS_IMPL_ISUPPORTS(nsSelectionCommandsBase, nsIControllerCommand)
 
-/* boolean isCommandEnabled (in string aCommandName, in nsISupports aCommandContext); */
 NS_IMETHODIMP
 nsSelectionCommandsBase::IsCommandEnabled(const char * aCommandName,
                                       nsISupports *aCommandContext,
@@ -186,7 +185,6 @@ nsSelectionCommandsBase::IsCommandEnabled(const char * aCommandName,
   return NS_OK;
 }
 
-/* void getCommandStateParams (in string aCommandName, in nsICommandParams aParams, in nsISupports aCommandContext); */
 NS_IMETHODIMP
 nsSelectionCommandsBase::GetCommandStateParams(const char *aCommandName,
                                             nsICommandParams *aParams, nsISupports *aCommandContext)
@@ -195,7 +193,6 @@ nsSelectionCommandsBase::GetCommandStateParams(const char *aCommandName,
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-/* void doCommandParams (in string aCommandName, in nsICommandParams aParams, in nsISupports aCommandContext); */
 NS_IMETHODIMP
 nsSelectionCommandsBase::DoCommandParams(const char *aCommandName,
                                        nsICommandParams *aParams, nsISupports *aCommandContext)
@@ -486,21 +483,31 @@ nsClipboardCommand::IsCommandEnabled(const char* aCommandName, nsISupports *aCon
   *outCmdEnabled = false;
 
   if (strcmp(aCommandName, "cmd_copy") &&
-      strcmp(aCommandName, "cmd_copyAndCollapseToEnd"))
+      strcmp(aCommandName, "cmd_copyAndCollapseToEnd") &&
+      strcmp(aCommandName, "cmd_cut"))
     return NS_OK;
 
   nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aContext);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
   nsCOMPtr<nsIDocument> doc = window->GetExtantDoc();
-  *outCmdEnabled = nsCopySupport::CanCopy(doc);
+  if (doc->IsHTMLOrXHTML()) {
+    // In HTML and XHTML documents, we always want cut and copy commands to be enabled.
+    *outCmdEnabled = true;
+  } else {
+    // Cut isn't enabled in xul documents which use nsClipboardCommand
+    if (strcmp(aCommandName, "cmd_cut")) {
+      *outCmdEnabled = nsCopySupport::CanCopy(doc);
+    }
+  }
   return NS_OK;
 }
 
 nsresult
 nsClipboardCommand::DoCommand(const char *aCommandName, nsISupports *aContext)
 {
-  if (strcmp(aCommandName, "cmd_copy") &&
+  if (strcmp(aCommandName, "cmd_cut") &&
+      strcmp(aCommandName, "cmd_copy") &&
       strcmp(aCommandName, "cmd_copyAndCollapseToEnd"))
     return NS_OK;
 
@@ -513,7 +520,15 @@ nsClipboardCommand::DoCommand(const char *aCommandName, nsISupports *aContext)
   nsCOMPtr<nsIPresShell> presShell = docShell->GetPresShell();
   NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
 
-  nsCopySupport::FireClipboardEvent(NS_COPY, nsIClipboard::kGlobalClipboard, presShell, nullptr);
+  EventMessage eventMessage = eCopy;
+  if (strcmp(aCommandName, "cmd_cut") == 0) {
+    eventMessage = eCut;
+  }
+
+  bool actionTaken = false;
+  nsCopySupport::FireClipboardEvent(eventMessage,
+                                    nsIClipboard::kGlobalClipboard,
+                                    presShell, nullptr, &actionTaken);
 
   if (!strcmp(aCommandName, "cmd_copyAndCollapseToEnd")) {
     dom::Selection *sel =
@@ -522,7 +537,10 @@ nsClipboardCommand::DoCommand(const char *aCommandName, nsISupports *aContext)
     sel->CollapseToEnd();
   }
 
-  return NS_OK;
+  if (actionTaken) {
+    return NS_OK;
+  }
+  return NS_ERROR_FAILURE;
 }
 
 NS_IMETHODIMP
@@ -826,7 +844,6 @@ nsWebNavigationBaseCommand::DoCommand(const char *aCommandName,
   return DoWebNavCommand(aCommandName, webNav);
 }
 
-/* void doCommandParams (in string aCommandName, in nsICommandParams aParams, in nsISupports aCommandContext); */
 NS_IMETHODIMP
 nsWebNavigationBaseCommand::DoCommandParams(const char *aCommandName,
                                        nsICommandParams *aParams, nsISupports *aCommandContext)

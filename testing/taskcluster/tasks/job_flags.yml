@@ -9,11 +9,18 @@ flags:
     - emulator-jb
     - emulator-kk
     - emulator-x86-kk
-    - linux32_gecko  # b2g desktop linux 32 bit
-    - linux64_gecko  # b2g desktop linux 64 bit
-    - linux64-mulet  # Firefox desktop - b2g gecko linux 64 bit
-    - macosx64_gecko # b2g desktop osx 64 bit
-    - win32_gecko    # b2g desktop win 32 bit
+    - linux32_gecko   # b2g desktop linux 32 bit
+    - linux64_gecko   # b2g desktop linux 64 bit
+    - linux64-mulet   # Firefox desktop - b2g gecko linux 64 bit
+    - macosx64_gecko  # b2g desktop osx 64 bit
+    - win32_gecko     # b2g desktop win 32 bit
+    - sm-plain        # spidermonkey plain
+    - sm-arm-sim      # spidermonkey arm-sim
+    - sm-arm-sim-osx  # spidermonkey arm-sim-osx
+    - sm-compacting   # spidermonkey compacting
+    - sm-generational # spidermonkey generational
+    - sm-rootanalysis # spidermonkey rootanalysis
+    - sm-warnaserr    # spidermonkey warnings-as-errors
 
   tests:
     - cppunit
@@ -79,7 +86,7 @@ builds:
       opt:
         task: tasks/builds/mulet_linux.yml
   emulator-kk:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:
@@ -87,7 +94,7 @@ builds:
       debug:
         task: tasks/builds/b2g_emulator_kk_debug.yml
   emulator-jb:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:
@@ -95,7 +102,7 @@ builds:
       debug:
         task: tasks/builds/b2g_emulator_jb_debug.yml
   emulator:
-    platfoms:
+    platforms:
       - b2g
     types:
       opt:

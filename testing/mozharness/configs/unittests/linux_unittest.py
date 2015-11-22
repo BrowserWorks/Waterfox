@@ -2,14 +2,14 @@ import os
 import platform
 
 # OS Specifics
-ABS_WORK_DIR = os.path.join(os.getcwd(), 'build')
+ABS_WORK_DIR = os.path.join(os.getcwd(), "build")
 BINARY_PATH = os.path.join(ABS_WORK_DIR, "firefox", "firefox-bin")
 INSTALLER_PATH = os.path.join(ABS_WORK_DIR, "installer.tar.bz2")
 XPCSHELL_NAME = "xpcshell"
-EXE_SUFFIX = ''
+EXE_SUFFIX = ""
 DISABLE_SCREEN_SAVER = True
 ADJUST_MOUSE_AND_SCREEN = False
-if platform.architecture()[0] == '64bit':
+if platform.architecture()[0] == "64bit":
     TOOLTOOL_MANIFEST_PATH = "config/tooltool-manifests/linux64/releng.manifest"
     MINIDUMP_STACKWALK_PATH = "linux64-minidump_stackwalk"
 else:
@@ -20,9 +20,9 @@ else:
 config = {
     "buildbot_json_path": "buildprops.json",
     "exes": {
-        'python': '/tools/buildbot/bin/python',
-        'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
-        'tooltool.py': "/tools/tooltool.py",
+        "python": "/tools/buildbot/bin/python",
+        "virtualenv": ["/tools/buildbot/bin/python", "/tools/misc-python/virtualenv.py"],
+        "tooltool.py": "/tools/tooltool.py",
     },
     "find_links": [
         "http://pypi.pvt.build.mozilla.org/pub",
@@ -40,6 +40,7 @@ config = {
         "reftest": "runreftest.py",
         "xpcshell": "runxpcshelltests.py",
         "cppunittest": "runcppunittests.py",
+        "gtest": "rungtests.py",
         "jittest": "jit_test.py",
         "mozbase": "test.py",
         "mozmill": "runtestlist.py",
@@ -51,34 +52,146 @@ config = {
         "reftest": ["reftest/*", "jsreftest/*"],
         "xpcshell": ["xpcshell/*"],
         "cppunittest": ["cppunittest/*"],
+        "gtest": ["gtest/*"],
         "jittest": ["jit-test/*"],
         "mozbase": ["mozbase/*"],
         "mozmill": ["mozmill/*"],
     },
-    # test harness options are located in the gecko tree
-    "in_tree_config": "config/mozharness/linux_config.py",
+    "suite_definitions": {
+        "cppunittest": {
+            "options": [
+                "--symbols-path=%(symbols_path)s",
+                "--xre-path=%(abs_app_dir)s"
+            ],
+            "run_filename": "runcppunittests.py",
+            "testsdir": "cppunittest"
+        },
+        "jittest": {
+            "options": [
+                "tests/bin/js",
+                "--no-slow",
+                "--no-progress",
+                "--format=automation",
+                "--jitflags=all"
+            ],
+            "run_filename": "jit_test.py",
+            "testsdir": "jit-test/jit-test"
+        },
+        "luciddream-emulator": {
+            "options": [
+                "--startup-timeout=300",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
+                "--browser-path=%(browser_path)s",
+                "--b2gpath=%(emulator_path)s",
+                "%(test_manifest)s"
+            ],
+        },
+        "luciddream-b2gdt": {
+            "options": [
+                "--startup-timeout=300",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
+                "--browser-path=%(browser_path)s",
+                "--b2g-desktop-path=%(fxos_desktop_path)s",
+                "--gaia-profile=%(gaia_profile)s",
+                "%(test_manifest)s"
+            ],
+        },
+        "mochitest": {
+            "options": [
+                "--appname=%(binary_path)s",
+                "--utility-path=tests/bin",
+                "--extra-profile-file=tests/bin/plugins",
+                "--symbols-path=%(symbols_path)s",
+                "--certificate-path=tests/certs",
+                "--setpref=webgl.force-enabled=true",
+                "--quiet",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
+                "--use-test-media-devices",
+                "--screenshot-on-fail",
+            ],
+            "run_filename": "runtests.py",
+            "testsdir": "mochitest"
+        },
+        "mozbase": {
+            "options": [
+                "-b",
+                "%(binary_path)s"
+            ],
+            "run_filename": "test.py",
+            "testsdir": "mozbase"
+        },
+        "mozmill": {
+            "options": [
+                "--binary=%(binary_path)s",
+                "--testing-modules-dir=test/modules",
+                "--symbols-path=%(symbols_path)s"
+            ],
+            "run_filename": "runtestlist.py",
+            "testsdir": "mozmill"
+        },
+        "reftest": {
+            "options": [
+                "--appname=%(binary_path)s",
+                "--utility-path=tests/bin",
+                "--extra-profile-file=tests/bin/plugins",
+                "--symbols-path=%(symbols_path)s"
+            ],
+            "run_filename": "runreftest.py",
+            "testsdir": "reftest"
+        },
+        "webapprt": {
+            "options": [
+                "--app=%(app_path)s",
+                "--utility-path=tests/bin",
+                "--extra-profile-file=tests/bin/plugins",
+                "--symbols-path=%(symbols_path)s",
+                "--certificate-path=tests/certs",
+                "--console-level=INFO",
+                "--testing-modules-dir=tests/modules",
+                "--quiet"
+            ],
+            "run_filename": "runtests.py",
+            "testsdir": "mochitest"
+        },
+        "xpcshell": {
+            "options": [
+                "--symbols-path=%(symbols_path)s",
+                "--test-plugin-path=%(test_plugin_path)s",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
+                "--utility-path=tests/bin",
+            ],
+            "run_filename": "runxpcshelltests.py",
+            "testsdir": "xpcshell"
+        },
+        "gtest": {
+            "options": [
+                "--xre-path=%(abs_res_dir)s",
+                "--cwd=%(gtest_dir)s",
+                "--symbols-path=%(symbols_path)s",
+                "%(binary_path)s",
+            ],
+            "run_filename": "rungtests.py",
+        },
+    },
     # local mochi suites
     "all_mochitest_suites": {
-        "plain1": ["--total-chunks=5", "--this-chunk=1", "--chunk-by-dir=4"],
-        "plain2": ["--total-chunks=5", "--this-chunk=2", "--chunk-by-dir=4"],
-        "plain3": ["--total-chunks=5", "--this-chunk=3", "--chunk-by-dir=4"],
-        "plain4": ["--total-chunks=5", "--this-chunk=4", "--chunk-by-dir=4"],
-        "plain5": ["--total-chunks=5", "--this-chunk=5", "--chunk-by-dir=4"],
         "plain": [],
         "plain-chunked": ["--chunk-by-dir=4"],
         "mochitest-push": ["--subsuite=push"],
         "chrome": ["--chrome"],
         "browser-chrome": ["--browser-chrome"],
         "browser-chrome-chunked": ["--browser-chrome", "--chunk-by-runtime"],
+        "browser-chrome-addons": ["--browser-chrome", "--chunk-by-runtime", "--tag=addons"],
         "mochitest-gl": ["--subsuite=webgl"],
         "mochitest-devtools-chrome": ["--browser-chrome", "--subsuite=devtools"],
         "mochitest-devtools-chrome-chunked": ["--browser-chrome", "--subsuite=devtools", "--chunk-by-runtime"],
         "jetpack-package": ["--jetpack-package"],
         "jetpack-addon": ["--jetpack-addon"],
         "a11y": ["--a11y"],
-        "plugins": ['--setpref=dom.ipc.plugins.enabled=false',
-                    '--setpref=dom.ipc.plugins.enabled.x86_64=false',
-                    '--ipcplugins']
     },
     # local webapprt suites
     "all_webapprt_suites": {
@@ -87,32 +200,66 @@ config = {
     },
     # local reftest suites
     "all_reftest_suites": {
-        "reftest": ["tests/reftest/tests/layout/reftests/reftest.list"],
-        "crashtest": ["tests/reftest/tests/testing/crashtest/crashtests.list"],
-        "jsreftest": ["--extra-profile-file=tests/jsreftest/tests/user.js", "tests/jsreftest/tests/jstests.list"],
-        "reftest-ipc": {'env': {'MOZ_OMTC_ENABLED': '1',
-                                'MOZ_DISABLE_CONTEXT_SHARING_GLX': '1'},
-                        'options': ['--setpref=browser.tabs.remote=true',
-                                    '--setpref=browser.tabs.remote.autostart=true',
-                                    '--setpref=layers.offmainthreadcomposition.testing.enabled=true',
-                                    '--setpref=layers.async-pan-zoom.enabled=true',
-                                    'tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list']},
-        "reftest-no-accel": ['--setpref=layers.acceleration.force-enabled=disabled',
-                             'tests/reftest/tests/layout/reftests/reftest.list'],
-        "crashtest-ipc": {'env': {'MOZ_OMTC_ENABLED': '1',
-                                  'MOZ_DISABLE_CONTEXT_SHARING_GLX': '1'},
-                          'options': ['--setpref=browser.tabs.remote=true',
-                                      '--setpref=browser.tabs.remote.autostart=true',
-                                      '--setpref=layers.offmainthreadcomposition.testing.enabled=true',
-                                      '--setpref=layers.async-pan-zoom.enabled=true',
-                                      'tests/reftest/tests/testing/crashtest/crashtests.list']},
+        "reftest": {
+            "options": ["--suite=reftest"],
+            "tests": ["tests/reftest/tests/layout/reftests/reftest.list"]
+        },
+        "crashtest": {
+            "options": ["--suite=crashtest"],
+            "tests": ["tests/reftest/tests/testing/crashtest/crashtests.list"]
+        },
+        "jsreftest": {
+            "options":["--extra-profile-file=tests/jsreftest/tests/user.js",
+                       "--suite=jstestbrowser"],
+            "tests": ["tests/jsreftest/tests/jstests.list"]
+        },
+        "reftest-ipc": {
+            "env": {
+                "MOZ_OMTC_ENABLED": "1",
+                "MOZ_DISABLE_CONTEXT_SHARING_GLX": "1"
+            },
+            "options": ["--suite=reftest",
+                        "--setpref=browser.tabs.remote=true",
+                        "--setpref=browser.tabs.remote.autostart=true",
+                        "--setpref=layers.offmainthreadcomposition.testing.enabled=true",
+                        "--setpref=layers.async-pan-zoom.enabled=true"],
+            "tests": ["tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list"]
+        },
+        "reftest-no-accel": {
+            "options": ["--suite=reftest",
+                        "--setpref=layers.acceleration.force-enabled=disabled"],
+            "tests": ["tests/reftest/tests/layout/reftests/reftest.list"]},
+        "crashtest-ipc": {
+            "env": {
+                "MOZ_OMTC_ENABLED": "1",
+                "MOZ_DISABLE_CONTEXT_SHARING_GLX": "1"
+            },
+            "options": ["--suite=crashtest",
+                        "--setpref=browser.tabs.remote=true",
+                        "--setpref=browser.tabs.remote.autostart=true",
+                        "--setpref=layers.offmainthreadcomposition.testing.enabled=true",
+                        "--setpref=layers.async-pan-zoom.enabled=true"],
+            "tests": ["tests/reftest/tests/testing/crashtest/crashtests.list"]
+        },
     },
     "all_xpcshell_suites": {
-        "xpcshell": ["--manifest=tests/xpcshell/tests/all-test-dirs.list",
-                     "%(abs_app_dir)s/" + XPCSHELL_NAME]
+        "xpcshell": {
+            "options": ["--xpcshell=%(abs_app_dir)s/" + XPCSHELL_NAME,
+                        "--manifest=tests/xpcshell/tests/all-test-dirs.list"],
+            "tests": []
+        },
+        "xpcshell-addons": {
+            "options": ["--xpcshell=%(abs_app_dir)s/" + XPCSHELL_NAME,
+                        "--tag=addons",
+                        "--manifest=tests/xpcshell/tests/all-test-dirs.list"],
+            "tests": []
+        },
     },
     "all_cppunittest_suites": {
-        "cppunittest": ['tests/cppunittest']
+        "cppunittest": ["tests/cppunittest"]
+    },
+    "all_gtest_suites": {
+        "gtest": []
     },
     "all_jittest_suites": {
         "jittest": [],

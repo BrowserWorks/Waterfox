@@ -5,24 +5,20 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "MP4Decoder.h"
-#include "MP4Reader.h"
 #include "MediaDecoderStateMachine.h"
+#include "MediaFormatReader.h"
+#include "MP4Demuxer.h"
 #include "mozilla/Preferences.h"
 #include "nsCharSeparatedTokenizer.h"
 #ifdef MOZ_EME
 #include "mozilla/CDMProxy.h"
 #endif
-#include "prlog.h"
+#include "mozilla/Logging.h"
+#include "nsMimeTypes.h"
+#include "nsContentTypeParser.h"
 
 #ifdef XP_WIN
 #include "mozilla/WindowsVersion.h"
-#include "WMFDecoderModule.h"
-#endif
-#ifdef MOZ_FFMPEG
-#include "FFmpegRuntimeLinker.h"
-#endif
-#ifdef MOZ_APPLEMEDIA
-#include "apple/AppleDecoderModule.h"
 #endif
 #ifdef MOZ_WIDGET_ANDROID
 #include "nsIGfxInfo.h"
@@ -30,11 +26,30 @@
 #endif
 #include "mozilla/layers/LayersTypes.h"
 
+#ifdef MOZ_FFMPEG
+#include "FFmpegRuntimeLinker.h"
+#endif
+
 namespace mozilla {
+
+#if defined(MOZ_GONK_MEDIACODEC) || defined(XP_WIN) || defined(MOZ_APPLEMEDIA) || defined(MOZ_FFMPEG)
+#define MP4_READER_DORMANT_HEURISTIC
+#else
+#undef MP4_READER_DORMANT_HEURISTIC
+#endif
+
+MP4Decoder::MP4Decoder()
+{
+#if defined(MP4_READER_DORMANT_HEURISTIC)
+  mDormantSupported = Preferences::GetBool("media.decoder.heuristic.dormant.enabled", false);
+#endif
+}
 
 MediaDecoderStateMachine* MP4Decoder::CreateStateMachine()
 {
-  return new MediaDecoderStateMachine(this, new MP4Reader(this));
+  MediaDecoderReader* reader = new MediaFormatReader(this, new MP4Demuxer(GetResource()));
+
+  return new MediaDecoderStateMachine(this, reader);
 }
 
 #ifdef MOZ_EME
@@ -44,8 +59,8 @@ MP4Decoder::SetCDMProxy(CDMProxy* aProxy)
   nsresult rv = MediaDecoder::SetCDMProxy(aProxy);
   NS_ENSURE_SUCCESS(rv, rv);
   if (aProxy) {
-    // The MP4Reader can't decrypt EME content until it has a CDMProxy,
-    // and the CDMProxy knows the capabilities of the CDM. The MP4Reader
+    // The MediaFormatReader can't decrypt EME content until it has a CDMProxy,
+    // and the CDMProxy knows the capabilities of the CDM. The MediaFormatReader
     // remains in "waiting for resources" state until then.
     CDMCaps::AutoLock caps(aProxy->Capabilites());
     nsCOMPtr<nsIRunnable> task(
@@ -62,8 +77,9 @@ IsSupportedAudioCodec(const nsAString& aCodec,
                       bool& aOutContainsMP3)
 {
   // AAC-LC or HE-AAC in M4A.
-  aOutContainsAAC = aCodec.EqualsASCII("mp4a.40.2") ||
-                    aCodec.EqualsASCII("mp4a.40.5");
+  aOutContainsAAC = aCodec.EqualsASCII("mp4a.40.2")     // MPEG4 AAC-LC
+                    || aCodec.EqualsASCII("mp4a.40.5")  // MPEG4 HE-AAC
+                    || aCodec.EqualsASCII("mp4a.67");   // MPEG2 AAC-LC
   if (aOutContainsAAC) {
     return true;
   }
@@ -131,35 +147,55 @@ MP4Decoder::CanHandleMediaType(const nsACString& aType,
                                   aOutContainsMP3));
   }
 
-  if (!aType.EqualsASCII("video/mp4") ||
+#ifdef MOZ_GONK_MEDIACODEC
+  if (aType.EqualsASCII(VIDEO_3GPP)) {
+    return Preferences::GetBool("media.fragmented-mp4.gonk.enabled", false);
+  }
+#endif
+  if ((!aType.EqualsASCII("video/mp4") && !aType.EqualsASCII("video/x-m4v")) ||
       !MP4Decoder::CanCreateH264Decoder()) {
     return false;
   }
 
   // Verify that all the codecs specifed are ones that we expect that
   // we can play.
-  nsCharSeparatedTokenizer tokenizer(aCodecs, ',');
-  bool expectMoreTokens = false;
-  while (tokenizer.hasMoreTokens()) {
-    const nsSubstring& token = tokenizer.nextToken();
-    expectMoreTokens = tokenizer.separatorAfterCurrentToken();
-    if (IsSupportedAudioCodec(token,
+  nsTArray<nsString> codecs;
+  if (!ParseCodecsString(aCodecs, codecs)) {
+    return false;
+  }
+  for (const nsString& codec : codecs) {
+    if (IsSupportedAudioCodec(codec,
                               aOutContainsAAC,
                               aOutContainsMP3)) {
       continue;
     }
-    if (IsSupportedH264Codec(token)) {
+    if (IsSupportedH264Codec(codec)) {
       aOutContainsH264 = true;
       continue;
     }
-    return false;
-  }
-  if (expectMoreTokens) {
-    // Last codec name was empty
+    // Some unsupported codec.
     return false;
   }
 
   return true;
+}
+
+/* static */ bool
+MP4Decoder::CanHandleMediaType(const nsAString& aContentType)
+{
+  nsContentTypeParser parser(aContentType);
+  nsAutoString mimeType;
+  nsresult rv = parser.GetType(mimeType);
+  if (NS_FAILED(rv)) {
+    return false;
+  }
+  nsString codecs;
+  parser.GetParameter("codecs", codecs);
+
+  bool ignoreAAC, ignoreH264, ignoreMP3;
+  return CanHandleMediaType(NS_ConvertUTF16toUTF8(mimeType),
+                            codecs,
+                            ignoreAAC, ignoreH264, ignoreMP3);
 }
 
 static bool
@@ -169,12 +205,10 @@ IsFFmpegAvailable()
   return false;
 #else
   if (!Preferences::GetBool("media.fragmented-mp4.ffmpeg.enabled", false)) {
-    return false;
+    return  false;
   }
-
-  // If we can link to FFmpeg, then we can almost certainly play H264 and AAC
-  // with it.
-  return FFmpegRuntimeLinker::Link();
+  nsRefPtr<PlatformDecoderModule> m = FFmpegRuntimeLinker::CreateDecoderModule();
+  return !!m;
 #endif
 }
 
@@ -185,11 +219,7 @@ IsAppleAvailable()
   // Not the right platform.
   return false;
 #else
-  if (!Preferences::GetBool("media.apple.mp4.enabled", false)) {
-    // Disabled by preference.
-    return false;
-  }
-  return NS_SUCCEEDED(AppleDecoderModule::CanDecode());
+  return Preferences::GetBool("media.apple.mp4.enabled", false);
 #endif
 }
 
@@ -200,7 +230,7 @@ IsAndroidAvailable()
   return false;
 #else
   // We need android.media.MediaCodec which exists in API level 16 and higher.
-  return AndroidBridge::Bridge()->GetAPIVersion() >= 16;
+  return AndroidBridge::Bridge() && (AndroidBridge::Bridge()->GetAPIVersion() >= 16);
 #endif
 }
 
@@ -260,7 +290,8 @@ CreateTestH264Decoder(layers::LayersBackend aBackend,
   aConfig.mId = 1;
   aConfig.mDuration = 40000;
   aConfig.mMediaTime = 0;
-  aConfig.mDisplay = aConfig.mImage = nsIntSize(64, 64);
+  aConfig.mDisplay = nsIntSize(64, 64);
+  aConfig.mImage = nsIntRect(0, 0, 64, 64);
   aConfig.mExtraData = new MediaByteBuffer();
   aConfig.mExtraData->AppendElements(sTestH264ExtraData,
                                      MOZ_ARRAY_LENGTH(sTestH264ExtraData));
@@ -268,7 +299,7 @@ CreateTestH264Decoder(layers::LayersBackend aBackend,
   PlatformDecoderModule::Init();
 
   nsRefPtr<PlatformDecoderModule> platform = PlatformDecoderModule::Create();
-  if (!platform) {
+  if (!platform || !platform->SupportsMimeType(NS_LITERAL_CSTRING("video/mp4"))) {
     return nullptr;
   }
 
@@ -277,22 +308,20 @@ CreateTestH264Decoder(layers::LayersBackend aBackend,
   if (!decoder) {
     return nullptr;
   }
-  nsresult rv = decoder->Init();
-  NS_ENSURE_SUCCESS(rv, nullptr);
 
   return decoder.forget();
 }
 
 /* static */ bool
-MP4Decoder::IsVideoAccelerated(layers::LayersBackend aBackend)
+MP4Decoder::IsVideoAccelerated(layers::LayersBackend aBackend, nsACString& aFailureReason)
 {
   VideoInfo config;
   nsRefPtr<MediaDataDecoder> decoder(CreateTestH264Decoder(aBackend, config));
   if (!decoder) {
+    aFailureReason.AssignLiteral("Failed to create H264 decoder");
     return false;
   }
-  bool result = decoder->IsHardwareAccelerated();
-  decoder->Shutdown();
+  bool result = decoder->IsHardwareAccelerated(aFailureReason);
   return result;
 }
 
@@ -326,7 +355,7 @@ CreateTestAACDecoder(AudioInfo& aConfig)
   PlatformDecoderModule::Init();
 
   nsRefPtr<PlatformDecoderModule> platform = PlatformDecoderModule::Create();
-  if (!platform) {
+  if (!platform || !platform->SupportsMimeType(NS_LITERAL_CSTRING("audio/mp4a-latm"))) {
     return nullptr;
   }
 
@@ -335,8 +364,6 @@ CreateTestAACDecoder(AudioInfo& aConfig)
   if (!decoder) {
     return nullptr;
   }
-  nsresult rv = decoder->Init();
-  NS_ENSURE_SUCCESS(rv, nullptr);
 
   return decoder.forget();
 }
@@ -375,7 +402,6 @@ MP4Decoder::CanCreateAACDecoder()
                                     MOZ_ARRAY_LENGTH(sTestAACExtraData));
   nsRefPtr<MediaDataDecoder> decoder(CreateTestAACDecoder(config));
   if (decoder) {
-    decoder->Shutdown();
     result = true;
   }
   haveCachedResult = true;

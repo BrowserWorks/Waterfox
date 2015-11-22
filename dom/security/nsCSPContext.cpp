@@ -29,20 +29,22 @@
 #include "nsIUploadChannel.h"
 #include "nsIScriptError.h"
 #include "nsIWebNavigation.h"
+#include "nsMimeTypes.h"
 #include "nsNetUtil.h"
 #include "nsNullPrincipal.h"
 #include "nsIContentPolicy.h"
 #include "nsSupportsPrimitives.h"
 #include "nsThreadUtils.h"
 #include "nsString.h"
-#include "prlog.h"
+#include "nsStringStream.h"
+#include "mozilla/Logging.h"
 #include "mozilla/dom/CSPReportBinding.h"
+#include "mozilla/dom/CSPDictionariesBinding.h"
 #include "mozilla/net/ReferrerPolicy.h"
 #include "nsINetworkInterceptController.h"
 
 using namespace mozilla;
 
-#if defined(PR_LOGGING)
 static PRLogModuleInfo *
 GetCspContextLog()
 {
@@ -51,9 +53,9 @@ GetCspContextLog()
     gCspContextPRLog = PR_NewLogModule("CSPContext");
   return gCspContextPRLog;
 }
-#endif
 
-#define CSPCONTEXTLOG(args) PR_LOG(GetCspContextLog(), 4, args)
+#define CSPCONTEXTLOG(args) MOZ_LOG(GetCspContextLog(), mozilla::LogLevel::Debug, args)
+#define CSPCONTEXTLOGENABLED() MOZ_LOG_TEST(GetCspContextLog(), mozilla::LogLevel::Debug)
 
 static const uint32_t CSP_CACHE_URI_CUTOFF_SIZE = 512;
 
@@ -107,13 +109,11 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
                          nsISupports*        aExtra,
                          int16_t*            outDecision)
 {
-#ifdef PR_LOGGING
-  {
-  nsAutoCString spec;
-  aContentLocation->GetSpec(spec);
-  CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, aContentLocation: %s", spec.get()));
+  if (CSPCONTEXTLOGENABLED()) {
+    nsAutoCString spec;
+    aContentLocation->GetSpec(spec);
+    CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, aContentLocation: %s", spec.get()));
   }
-#endif
 
   nsresult rv = NS_OK;
 
@@ -197,13 +197,11 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
     mShouldLoadCache.Put(cacheKey, *outDecision);
   }
 
-#ifdef PR_LOGGING
-  {
-  nsAutoCString spec;
-  aContentLocation->GetSpec(spec);
-  CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, decision: %s, aContentLocation: %s", *outDecision ? "load" : "deny", spec.get()));
+  if (CSPCONTEXTLOGENABLED()) {
+    nsAutoCString spec;
+    aContentLocation->GetSpec(spec);
+    CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, decision: %s, aContentLocation: %s", *outDecision ? "load" : "deny", spec.get()));
   }
-#endif
   return NS_OK;
 }
 
@@ -309,6 +307,19 @@ nsCSPContext::GetPolicyCount(uint32_t *outPolicyCount)
 }
 
 NS_IMETHODIMP
+nsCSPContext::GetUpgradeInsecureRequests(bool *outUpgradeRequest)
+{
+  *outUpgradeRequest = false;
+  for (uint32_t i = 0; i < mPolicies.Length(); i++) {
+    if (mPolicies[i]->hasDirective(nsIContentSecurityPolicy::UPGRADE_IF_INSECURE_DIRECTIVE)) {
+      *outUpgradeRequest = true;
+      return NS_OK;
+    }
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsCSPContext::GetReferrerPolicy(uint32_t* outPolicy, bool* outIsSet)
 {
   *outIsSet = false;
@@ -366,105 +377,121 @@ nsCSPContext::AppendPolicy(const nsAString& aPolicyString,
   return NS_OK;
 }
 
-// aNonceOrContent either holds the nonce-value or otherwise the content
-// of the element to be hashed.
-NS_IMETHODIMP
-nsCSPContext::getAllowsInternal(nsContentPolicyType aContentType,
-                                enum CSPKeyword aKeyword,
-                                const nsAString& aNonceOrContent,
-                                bool* outShouldReportViolation,
-                                bool* outIsAllowed) const
-{
-  *outShouldReportViolation = false;
-  *outIsAllowed = true;
-
-  // Skip things that aren't hash/nonce compatible
-  if (aKeyword == CSP_NONCE || aKeyword == CSP_HASH) {
-    if (!(aContentType == nsIContentPolicy::TYPE_SCRIPT ||
-          aContentType == nsIContentPolicy::TYPE_STYLESHEET)) {
-      *outIsAllowed = false;
-      return NS_OK;
-    }
-  }
-
-  for (uint32_t i = 0; i < mPolicies.Length(); i++) {
-    if (!mPolicies[i]->allows(aContentType,
-                              aKeyword,
-                              aNonceOrContent)) {
-      // policy is violated: must report the violation and allow the inline
-      // script if the policy is report-only.
-      *outShouldReportViolation = true;
-      if (!mPolicies[i]->getReportOnlyFlag()) {
-        *outIsAllowed = false;
-      }
-    }
-  }
-  CSPCONTEXTLOG(("nsCSPContext::getAllowsInternal, aContentType: %d, aKeyword: %s, aNonceOrContent: %s, isAllowed: %s",
-                aContentType,
-                aKeyword == CSP_HASH ? "hash" : CSP_EnumToKeyword(aKeyword),
-                NS_ConvertUTF16toUTF8(aNonceOrContent).get(),
-                *outIsAllowed ? "load" : "deny"));
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsCSPContext::GetAllowsInlineScript(bool* outShouldReportViolation,
-                                    bool* outAllowsInlineScript)
-{
-  return getAllowsInternal(nsIContentPolicy::TYPE_SCRIPT,
-                           CSP_UNSAFE_INLINE,
-                           EmptyString(),
-                           outShouldReportViolation,
-                           outAllowsInlineScript);
-}
-
 NS_IMETHODIMP
 nsCSPContext::GetAllowsEval(bool* outShouldReportViolation,
                             bool* outAllowsEval)
 {
-  return getAllowsInternal(nsIContentPolicy::TYPE_SCRIPT,
-                           CSP_UNSAFE_EVAL,
-                           EmptyString(),
-                           outShouldReportViolation,
-                           outAllowsEval);
+  *outShouldReportViolation = false;
+  *outAllowsEval = true;
+
+  for (uint32_t i = 0; i < mPolicies.Length(); i++) {
+    if (!mPolicies[i]->allows(nsIContentPolicy::TYPE_SCRIPT,
+                              CSP_UNSAFE_EVAL, EmptyString())) {
+      // policy is violated: must report the violation and allow the inline
+      // script if the policy is report-only.
+      *outShouldReportViolation = true;
+      if (!mPolicies[i]->getReportOnlyFlag()) {
+        *outAllowsEval = false;
+      }
+    }
+  }
+  return NS_OK;
+}
+
+// Helper function to report inline violations
+void
+nsCSPContext::reportInlineViolation(nsContentPolicyType aContentType,
+                                    const nsAString& aNonce,
+                                    const nsAString& aContent,
+                                    const nsAString& aViolatedDirective,
+                                    uint32_t aViolatedPolicyIndex, // TODO, use report only flag for that
+                                    uint32_t aLineNumber)
+{
+  nsString observerSubject;
+  // if the nonce is non empty, then we report the nonce error, otherwise
+  // let's report the hash error; no need to report the unsafe-inline error
+  // anymore.
+  if (!aNonce.IsEmpty()) {
+    observerSubject = (aContentType == nsIContentPolicy::TYPE_SCRIPT)
+                      ? NS_LITERAL_STRING(SCRIPT_NONCE_VIOLATION_OBSERVER_TOPIC)
+                      : NS_LITERAL_STRING(STYLE_NONCE_VIOLATION_OBSERVER_TOPIC);
+  }
+  else {
+    observerSubject = (aContentType == nsIContentPolicy::TYPE_SCRIPT)
+                      ? NS_LITERAL_STRING(SCRIPT_HASH_VIOLATION_OBSERVER_TOPIC)
+                      : NS_LITERAL_STRING(STYLE_HASH_VIOLATION_OBSERVER_TOPIC);
+  }
+
+  nsCOMPtr<nsISupportsCString> selfICString(do_CreateInstance(NS_SUPPORTS_CSTRING_CONTRACTID));
+  if (selfICString) {
+    selfICString->SetData(nsDependentCString("self"));
+  }
+  nsCOMPtr<nsISupports> selfISupports(do_QueryInterface(selfICString));
+
+  // use selfURI as the sourceFile
+  nsAutoCString sourceFile;
+  mSelfURI->GetSpec(sourceFile);
+
+  nsAutoString codeSample(aContent);
+  // cap the length of the script sample at 40 chars
+  if (codeSample.Length() > 40) {
+    codeSample.Truncate(40);
+    codeSample.AppendLiteral("...");
+  }
+  AsyncReportViolation(selfISupports,                      // aBlockedContentSource
+                       mSelfURI,                           // aOriginalURI
+                       aViolatedDirective,                 // aViolatedDirective
+                       aViolatedPolicyIndex,               // aViolatedPolicyIndex
+                       observerSubject,                    // aObserverSubject
+                       NS_ConvertUTF8toUTF16(sourceFile),  // aSourceFile
+                       codeSample,                         // aScriptSample
+                       aLineNumber);                       // aLineNum
 }
 
 NS_IMETHODIMP
-nsCSPContext::GetAllowsInlineStyle(bool* outShouldReportViolation,
-                                   bool* outAllowsInlineStyle)
+nsCSPContext::GetAllowsInline(nsContentPolicyType aContentType,
+                              const nsAString& aNonce,
+                              const nsAString& aContent,
+                              uint32_t aLineNumber,
+                              bool* outAllowsInline)
 {
-  return getAllowsInternal(nsIContentPolicy::TYPE_STYLESHEET,
-                           CSP_UNSAFE_INLINE,
-                           EmptyString(),
-                           outShouldReportViolation,
-                           outAllowsInlineStyle);
+  *outAllowsInline = true;
+
+  MOZ_ASSERT(aContentType == nsContentUtils::InternalContentPolicyTypeToExternal(aContentType),
+             "We should only see external content policy types here.");
+
+  if (aContentType != nsIContentPolicy::TYPE_SCRIPT &&
+      aContentType != nsIContentPolicy::TYPE_STYLESHEET) {
+    MOZ_ASSERT(false, "can only allow inline for script or style");
+    return NS_OK;
+  }
+
+  // always iterate all policies, otherwise we might not send out all reports
+  for (uint32_t i = 0; i < mPolicies.Length(); i++) {
+    bool allowed =
+      mPolicies[i]->allows(aContentType, CSP_UNSAFE_INLINE, EmptyString()) ||
+      mPolicies[i]->allows(aContentType, CSP_NONCE, aNonce) ||
+      mPolicies[i]->allows(aContentType, CSP_HASH, aContent);
+
+    if (!allowed) {
+      // policy is violoated: deny the load unless policy is report only and
+      // report the violation.
+      if (!mPolicies[i]->getReportOnlyFlag()) {
+        *outAllowsInline = false;
+      }
+      nsAutoString violatedDirective;
+      mPolicies[i]->getDirectiveStringForContentType(aContentType, violatedDirective);
+      reportInlineViolation(aContentType,
+                            aNonce,
+                            aContent,
+                            violatedDirective,
+                            i,
+                            aLineNumber);
+    }
+  }
+  return NS_OK;
 }
 
-NS_IMETHODIMP
-nsCSPContext::GetAllowsNonce(const nsAString& aNonce,
-                             uint32_t aContentType,
-                             bool* outShouldReportViolation,
-                             bool* outAllowsNonce)
-{
-  return getAllowsInternal(aContentType,
-                           CSP_NONCE,
-                           aNonce,
-                           outShouldReportViolation,
-                           outAllowsNonce);
-}
-
-NS_IMETHODIMP
-nsCSPContext::GetAllowsHash(const nsAString& aContent,
-                            uint16_t aContentType,
-                            bool* outShouldReportViolation,
-                            bool* outAllowsHash)
-{
-  return getAllowsInternal(aContentType,
-                           CSP_HASH,
-                           aContent,
-                           outShouldReportViolation,
-                           outAllowsHash);
-}
 
 /**
  * Reduces some code repetition for the various logging situations in
@@ -1113,13 +1140,11 @@ nsCSPContext::PermitsAncestry(nsIDocShell* aDocShell, bool* outPermitsAncestry)
       // there was one.
       uriClone->SetUserPass(EmptyCString());
 
-#ifdef PR_LOGGING
-      {
-      nsAutoCString spec;
-      uriClone->GetSpec(spec);
-      CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, found ancestor: %s", spec.get()));
+      if (CSPCONTEXTLOGENABLED()) {
+        nsAutoCString spec;
+        uriClone->GetSpec(spec);
+        CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, found ancestor: %s", spec.get()));
       }
-#endif
       ancestorsArray.AppendElement(uriClone);
     }
 
@@ -1135,13 +1160,11 @@ nsCSPContext::PermitsAncestry(nsIDocShell* aDocShell, bool* outPermitsAncestry)
   // restriction not placed on subresource loads.
 
   for (uint32_t a = 0; a < ancestorsArray.Length(); a++) {
-#ifdef PR_LOGGING
-    {
-    nsAutoCString spec;
-    ancestorsArray[a]->GetSpec(spec);
-    CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, checking ancestor: %s", spec.get()));
+    if (CSPCONTEXTLOGENABLED()) {
+      nsAutoCString spec;
+      ancestorsArray[a]->GetSpec(spec);
+      CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, checking ancestor: %s", spec.get()));
     }
-#endif
     // omit the ancestor URI in violation reports if cross-origin as per spec
     // (it is a violation of the same-origin policy).
     bool okToSendAncestor = NS_SecurityCompareURIs(ancestorsArray[a], mSelfURI, true);
@@ -1184,16 +1207,34 @@ nsCSPContext::Permits(nsIURI* aURI,
                                 true,     // send violation reports
                                 true);    // send blocked URI in violation reports
 
-#ifdef PR_LOGGING
-  {
-    nsAutoCString spec;
-    aURI->GetSpec(spec);
-    CSPCONTEXTLOG(("nsCSPContext::Permits, aUri: %s, aDir: %d, isAllowed: %s",
-                  spec.get(), aDir,
-                  *outPermits ? "allow" : "deny"));
+  if (CSPCONTEXTLOGENABLED()) {
+      nsAutoCString spec;
+      aURI->GetSpec(spec);
+      CSPCONTEXTLOG(("nsCSPContext::Permits, aUri: %s, aDir: %d, isAllowed: %s",
+                    spec.get(), aDir,
+                    *outPermits ? "allow" : "deny"));
   }
-#endif
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsCSPContext::ToJSON(nsAString& outCSPinJSON)
+{
+  outCSPinJSON.Truncate();
+  dom::CSPPolicies jsonPolicies;
+  jsonPolicies.mCsp_policies.Construct();
+
+  for (uint32_t p = 0; p < mPolicies.Length(); p++) {
+    dom::CSP jsonCSP;
+    mPolicies[p]->toDomCSPStruct(jsonCSP);
+    jsonPolicies.mCsp_policies.Value().AppendElement(jsonCSP, fallible);
+  }
+
+  // convert the gathered information to JSON
+  if (!jsonPolicies.ToJSON(outCSPinJSON)) {
+    return NS_ERROR_FAILURE;
+  }
   return NS_OK;
 }
 

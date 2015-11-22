@@ -350,7 +350,7 @@ nsresult
 nsDOMClassInfo::DefineStaticJSVals(JSContext *cx)
 {
 #define SET_JSID_TO_STRING(_id, _cx, _str)                                    \
-  if (JSString *str = ::JS_InternString(_cx, _str))                           \
+  if (JSString *str = ::JS_AtomizeAndPinString(_cx, _str))                             \
       _id = INTERNED_STRING_TO_JSID(_cx, str);                                \
   else                                                                        \
       return NS_ERROR_OUT_OF_MEMORY;
@@ -684,6 +684,7 @@ nsDOMClassInfo::Init()
   DOM_CLASSINFO_MAP_BEGIN_NO_CLASS_IF(ChromeMessageBroadcaster, nsISupports)
     DOM_CLASSINFO_MAP_ENTRY(nsIFrameScriptLoader)
     DOM_CLASSINFO_MAP_ENTRY(nsIProcessScriptLoader)
+    DOM_CLASSINFO_MAP_ENTRY(nsIGlobalProcessScriptLoader)
     DOM_CLASSINFO_MAP_ENTRY(nsIMessageListenerManager)
     DOM_CLASSINFO_MAP_ENTRY(nsIMessageBroadcaster)
   DOM_CLASSINFO_MAP_END
@@ -901,7 +902,7 @@ nsDOMClassInfo::AddProperty(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
 
 NS_IMETHODIMP
 nsDOMClassInfo::GetProperty(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
-                            JSObject *obj, jsid id, jsval *vp,
+                            JSObject *obj, jsid id, JS::Value *vp,
                             bool *_retval)
 {
   NS_WARNING("nsDOMClassInfo::GetProperty Don't call me!");
@@ -911,7 +912,7 @@ nsDOMClassInfo::GetProperty(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
 
 NS_IMETHODIMP
 nsDOMClassInfo::SetProperty(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
-                            JSObject *obj, jsid id, jsval *vp,
+                            JSObject *obj, jsid id, JS::Value *vp,
                             bool *_retval)
 {
   NS_WARNING("nsDOMClassInfo::SetProperty Don't call me!");
@@ -1151,10 +1152,12 @@ nsDOMClassInfo::PostCreatePrototype(JSContext * cx, JSObject * aProto)
                                  mData, nullptr, nameSpaceManager, proto,
                                  &desc);
   NS_ENSURE_SUCCESS(rv, rv);
-  if (!contentDefinedProperty && desc.object() && !desc.value().isUndefined() &&
-      !JS_DefineUCProperty(cx, global, mData->mNameUTF16,
-                           NS_strlen(mData->mNameUTF16), desc)) {
-    return NS_ERROR_UNEXPECTED;
+  if (!contentDefinedProperty && desc.object() && !desc.value().isUndefined()) {
+    desc.attributesRef() |= JSPROP_RESOLVING;
+    if (!JS_DefineUCProperty(cx, global, mData->mNameUTF16,
+                             NS_strlen(mData->mNameUTF16), desc)) {
+      return NS_ERROR_UNEXPECTED;
+    }
   }
 
   return NS_OK;
@@ -1336,7 +1339,7 @@ public:
                      bool *_retval);
 
   nsresult HasInstance(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
-                       JS::Handle<JSObject*> obj, const jsval &val, bool *bp,
+                       JS::Handle<JSObject*> obj, const JS::Value &val, bool *bp,
                        bool *_retval);
 
   nsresult ResolveInterfaceConstants(JSContext *cx, JS::Handle<JSObject*> obj);
@@ -1496,7 +1499,7 @@ nsDOMConstructor::Construct(nsIXPConnectWrappedNative *wrapper, JSContext * cx,
 nsresult
 nsDOMConstructor::HasInstance(nsIXPConnectWrappedNative *wrapper,
                               JSContext * cx, JS::Handle<JSObject*> obj,
-                              const jsval &v, bool *bp, bool *_retval)
+                              const JS::Value &v, bool *bp, bool *_retval)
 
 {
   // No need to look these up in the hash.
@@ -1721,13 +1724,10 @@ GetXPCProto(nsIXPConnect *aXPConnect, JSContext *cx, nsGlobalWindow *aWin,
   }
   NS_ENSURE_TRUE(ci, NS_ERROR_UNEXPECTED);
 
-  nsCOMPtr<nsIXPConnectJSObjectHolder> proto_holder;
   nsresult rv =
-    aXPConnect->GetWrappedNativePrototype(cx, aWin->GetGlobalJSObject(), ci,
-                                          getter_AddRefs(proto_holder));
+    aXPConnect->GetWrappedNativePrototype(cx, aWin->GetGlobalJSObject(), ci, aProto.address());
   NS_ENSURE_SUCCESS(rv, rv);
 
-  aProto.set(proto_holder->GetJSObject());
   return JS_WrapObject(cx, aProto) ? NS_OK : NS_ERROR_FAILURE;
 }
 
@@ -1882,7 +1882,7 @@ ResolvePrototype(nsIXPConnect *aXPConnect, nsGlobalWindow *aWin, JSContext *cx,
     }
   }
 
-  v = OBJECT_TO_JSVAL(dot_prototype);
+  v.setObject(*dot_prototype);
 
   JSAutoCompartment ac(cx, class_obj);
 

@@ -125,7 +125,7 @@ int nr_ice_candidate_pair_create(nr_ice_peer_ctx *pctx, nr_ice_candidate *lcand,
     /* TODO(ekr@rtfm.com): Do we need to frob this when we change role. Bug 890667 */
     pair->stun_client->params.ice_binding_request.control = pctx->controlling?
       NR_ICE_CONTROLLING:NR_ICE_CONTROLLED;
-    pair->stun_client->params.ice_use_candidate.priority=t_priority;
+    pair->stun_client->params.ice_binding_request.priority=t_priority;
 
     pair->stun_client->params.ice_binding_request.tiebreaker=pctx->tiebreaker;
 
@@ -260,10 +260,15 @@ static void nr_ice_candidate_pair_stun_cb(NR_SOCKET s, int how, void *cb_arg)
           }
 
           /* OK, nothing found, must be peer reflexive */
-          if(!cand){
+          if(!cand) {
+            if (pair->pctx->ctx->flags & NR_ICE_CTX_FLAGS_RELAY_ONLY) {
+              /* Any STUN response with a reflexive address in it is unwanted
+                 when we'll send on relay only. Bail since cand is used below. */
+              goto done;
+            }
             if(r=nr_ice_candidate_create(pair->pctx->ctx,
               pair->local->component,pair->local->isock,pair->local->osock,
-              PEER_REFLEXIVE,0,pair->local->component->component_id,&cand))
+              PEER_REFLEXIVE,pair->local->tcp_type,0,pair->local->component->component_id,&cand))
               ABORT(r);
             if(r=nr_transport_addr_copy(&cand->addr,&pair->stun_client->results.ice_binding_response.mapped_addr))
               ABORT(r);

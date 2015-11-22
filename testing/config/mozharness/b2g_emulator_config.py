@@ -2,6 +2,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# XXX Bug 1181261 - Please update config in testing/mozharness/config
+# instead. This file is still needed for taskcluster emulator tests,
+# but should be removed once bug 1188330 is finished.
+
 config = {
     "suite_definitions": {
         "cppunittest": {
@@ -12,7 +16,6 @@ config = {
                 "--addEnv",
                 "LD_LIBRARY_PATH=/vendor/lib:/system/lib:/system/b2g",
                 "--with-b2g-emulator=%(b2gpath)s",
-                "--skip-manifest=b2g_cppunittest_manifest.txt",
                 "."
             ],
             "run_filename": "remotecppunittests.py",
@@ -71,8 +74,10 @@ config = {
                 "--this-chunk=%(this_chunk)s",
                 "--quiet",
                 "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
                 "--certificate-path=%(certificate_path)s",
-                "--test-path=%(test_path)s"
+                "--screenshot-on-fail",
+                "%(test_path)s"
             ],
             "run_filename": "runtestsb2g.py",
             "testsdir": "mochitest"
@@ -92,8 +97,10 @@ config = {
                 "--quiet",
                 "--chrome",
                 "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
                 "--certificate-path=%(certificate_path)s",
-                "--test-path=%(test_path)s"
+                "--screenshot-on-fail",
+                "%(test_path)s"
             ],
             "run_filename": "runtestsb2g.py",
             "testsdir": "mochitest"
@@ -131,7 +138,8 @@ config = {
                 "--busybox=%(busybox)s",
                 "--total-chunks=%(total_chunks)s",
                 "--this-chunk=%(this_chunk)s",
-                "--log-raw=%(raw_log_file)s"
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
             ],
             "run_filename": "runtestsb2g.py",
             "testsdir": "xpcshell"

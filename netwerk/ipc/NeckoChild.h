@@ -23,7 +23,6 @@ public:
   virtual ~NeckoChild();
 
   static void InitNeckoChild();
-  static void DestroyNeckoChild();
 
 protected:
   virtual PHttpChannelChild*
@@ -49,7 +48,7 @@ protected:
   virtual PTCPServerSocketChild*
     AllocPTCPServerSocketChild(const uint16_t& aLocalPort,
                                const uint16_t& aBacklog,
-                               const nsString& aBinaryType) override;
+                               const bool& aUseArrayBuffers) override;
   virtual bool DeallocPTCPServerSocketChild(PTCPServerSocketChild*) override;
   virtual PUDPSocketChild* AllocPUDPSocketChild(const Principal& aPrincipal,
                                                 const nsCString& aFilter) override;
@@ -80,6 +79,10 @@ protected:
                                                  const nsString& aRealm,
                                                  const uint64_t& aCallbackId) override;
   virtual bool RecvAppOfflineStatus(const uint32_t& aId, const bool& aOffline) override;
+
+  /* Predictor Messsages */
+  virtual bool RecvPredOnPredictPreconnect(const URIParams& aURI) override;
+  virtual bool RecvPredOnPredictDNS(const URIParams& aURI) override;
 };
 
 /**

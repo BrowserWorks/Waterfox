@@ -199,6 +199,14 @@ function loadView(aViewId) {
   }
 }
 
+function isCorrectlySigned(aAddon) {
+  if (aAddon.signedState <= AddonManager.SIGNEDSTATE_MISSING)
+    return false;
+  if (aAddon.foreignInstall && aAddon.signedState < AddonManager.SIGNEDSTATE_SIGNED)
+    return false;
+  return true;
+}
+
 function isDiscoverEnabled() {
   if (Services.prefs.getPrefType(PREF_DISCOVERURL) == Services.prefs.PREF_INVALID)
     return false;
@@ -1254,7 +1262,7 @@ var gViewController = {
                                  getService(Ci.amIWebInstallListener);
               webInstaller.onWebInstallRequested(getBrowserElement(),
                                                  document.documentURIObject,
-                                                 installs, installs.length);
+                                                 installs);
             }
             return;
           }
@@ -1967,18 +1975,6 @@ var gHeader = {
 
   onKeyPress: function gHeader_onKeyPress(aEvent) {
     if (String.fromCharCode(aEvent.charCode) == "/") {
-      this.focusSearchBox();
-      return;
-    }
-
-    // XXXunf Temporary until bug 371900 is fixed.
-    let key = document.getElementById("focusSearch").getAttribute("key");
-#ifdef XP_MACOSX
-    let keyModifier = aEvent.metaKey;
-#else
-    let keyModifier = aEvent.ctrlKey;
-#endif
-    if (String.fromCharCode(aEvent.charCode) == key && keyModifier) {
       this.focusSearchBox();
       return;
     }
@@ -2716,13 +2712,13 @@ var gListView = {
   filterDisabledUnsigned: function gListView_filterDisabledUnsigned(aFilter = true) {
     let foundDisabledUnsigned = false;
 
-    for (let item of this._listBox.childNodes) {
-      let isDisabledUnsigned = item.mAddon.appDisabled &&
-                               item.mAddon.signedState <= AddonManager.SIGNEDSTATE_MISSING;
-      if (isDisabledUnsigned)
-        foundDisabledUnsigned = true;
-      else
-        item.hidden = aFilter;
+    if (SIGNING_REQUIRED) {
+      for (let item of this._listBox.childNodes) {
+        if (!isCorrectlySigned(item.mAddon))
+          foundDisabledUnsigned = true;
+        else
+          item.hidden = aFilter;
+      }
     }
 
     document.getElementById("show-disabled-unsigned-extensions").hidden =
@@ -3170,17 +3166,15 @@ var gDetailView = {
         errorLink.value = gStrings.ext.GetStringFromName("details.notification.blocked.link");
         errorLink.href = this._addon.blocklistURL;
         errorLink.hidden = false;
-      } else if (this._addon.signedState <= AddonManager.SIGNEDSTATE_MISSING) {
-        let msgType = this._addon.appDisabled ? "error" : "warning";
-        this.node.setAttribute("notification", msgType);
-        document.getElementById("detail-" + msgType).textContent = gStrings.ext.formatStringFromName(
-          "details.notification.unsigned" + (this._addon.appDisabled ? "AndDisabled" : ""),
-          [this._addon.name, gStrings.brandShortName], 2
+      } else if (!isCorrectlySigned(this._addon) && SIGNING_REQUIRED) {
+        this.node.setAttribute("notification", "error");
+        document.getElementById("detail-error").textContent = gStrings.ext.formatStringFromName(
+          "details.notification.unsignedAndDisabled", [this._addon.name, gStrings.brandShortName], 2
         );
-        var infoLink = document.getElementById("detail-" + msgType + "-link");
-        infoLink.value = gStrings.ext.GetStringFromName("details.notification.unsigned.link");
-        infoLink.href = Services.urlFormatter.formatURLPref("app.support.baseURL") + "unsigned-addons";
-        infoLink.hidden = false;
+        var errorLink = document.getElementById("detail-error-link");
+        errorLink.value = gStrings.ext.GetStringFromName("details.notification.unsigned.link");
+        errorLink.href = Services.urlFormatter.formatURLPref("app.support.baseURL") + "unsigned-addons";
+        errorLink.hidden = false;
       } else if (!this._addon.isCompatible && (AddonManager.checkCompatibility ||
         (this._addon.blocklistState != Ci.nsIBlocklistService.STATE_SOFTBLOCKED))) {
         this.node.setAttribute("notification", "warning");
@@ -3189,6 +3183,15 @@ var gDetailView = {
           [this._addon.name, gStrings.brandShortName, gStrings.appVersion], 3
         );
         document.getElementById("detail-warning-link").hidden = true;
+      } else if (!isCorrectlySigned(this._addon)) {
+        this.node.setAttribute("notification", "warning");
+        document.getElementById("detail-warning").textContent = gStrings.ext.formatStringFromName(
+          "details.notification.unsigned", [this._addon.name, gStrings.brandShortName], 2
+        );
+        var warningLink = document.getElementById("detail-warning-link");
+        warningLink.value = gStrings.ext.GetStringFromName("details.notification.unsigned.link");
+        warningLink.href = Services.urlFormatter.formatURLPref("app.support.baseURL") + "unsigned-addons";
+        warningLink.hidden = false;
       } else if (this._addon.blocklistState == Ci.nsIBlocklistService.STATE_SOFTBLOCKED) {
         this.node.setAttribute("notification", "warning");
         document.getElementById("detail-warning").textContent = gStrings.ext.formatStringFromName(
@@ -3745,7 +3748,7 @@ var gDragDrop = {
                              getService(Ci.amIWebInstallListener);
           webInstaller.onWebInstallRequested(getBrowserElement(),
                                              document.documentURIObject,
-                                             installs, installs.length);
+                                             installs);
         }
         return;
       }
@@ -3761,3 +3764,9 @@ var gDragDrop = {
     aEvent.preventDefault();
   }
 };
+
+#ifdef MOZ_REQUIRE_SIGNING
+const SIGNING_REQUIRED = true;
+#else
+const SIGNING_REQUIRED = Services.prefs.getBoolPref("xpinstall.signatures.required");
+#endif

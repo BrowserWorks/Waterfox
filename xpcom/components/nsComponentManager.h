@@ -15,6 +15,7 @@
 #include "nsIMemoryReporter.h"
 #include "nsIServiceManager.h"
 #include "nsIFile.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Module.h"
 #include "mozilla/ModuleLoader.h"
@@ -24,7 +25,7 @@
 #include "nsIFactory.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "prtime.h"
 #include "nsCOMPtr.h"
 #include "nsAutoPtr.h"
@@ -124,7 +125,7 @@ public:
 
 private:
   mozilla::Mutex mMutex;
-  volatile PRThread* mOwnerThread;
+  mozilla::Atomic<PRThread*, mozilla::Relaxed> mOwnerThread;
 };
 
 typedef mozilla::BaseAutoLock<SafeMutex> SafeMutexAutoLock;
@@ -337,7 +338,7 @@ public:
 
   nsTArray<PendingServiceInfo> mPendingServices;
 
-  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf);
+  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
 #ifdef MOZ_B2G_LOADER
   // Preload XPT interface info for B2G loader.

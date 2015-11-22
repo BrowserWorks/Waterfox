@@ -19,7 +19,7 @@ namespace mozilla {
 namespace gfx {
 
 static inline CGAffineTransform
-GfxMatrixToCGAffineTransform(Matrix m)
+GfxMatrixToCGAffineTransform(const Matrix &m)
 {
   CGAffineTransform t;
   t.a = m._11;
@@ -113,13 +113,14 @@ class DrawTargetCG : public DrawTarget
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(DrawTargetCG, override)
   friend class BorrowedCGContext;
+  friend class UnboundnessFixer;
   friend class SourceSurfaceCGBitmapContext;
   DrawTargetCG();
   virtual ~DrawTargetCG();
 
   virtual DrawTargetType GetType() const override;
   virtual BackendType GetBackendType() const override;
-  virtual TemporaryRef<SourceSurface> Snapshot() override;
+  virtual already_AddRefed<SourceSurface> Snapshot() override;
 
   virtual void DrawSurface(SourceSurface *aSurface,
                            const Rect &aDest,
@@ -162,24 +163,25 @@ public:
   virtual void PushClip(const Path *) override;
   virtual void PushClipRect(const Rect &aRect) override;
   virtual void PopClip() override;
-  virtual TemporaryRef<SourceSurface> CreateSourceSurfaceFromNativeSurface(const NativeSurface&) const override { return nullptr;}
-  virtual TemporaryRef<DrawTarget> CreateSimilarDrawTarget(const IntSize &, SurfaceFormat) const override;
-  virtual TemporaryRef<PathBuilder> CreatePathBuilder(FillRule) const override;
-  virtual TemporaryRef<GradientStops> CreateGradientStops(GradientStop *, uint32_t,
+  virtual already_AddRefed<SourceSurface> CreateSourceSurfaceFromNativeSurface(const NativeSurface&) const override { return nullptr;}
+  virtual already_AddRefed<DrawTarget> CreateSimilarDrawTarget(const IntSize &, SurfaceFormat) const override;
+  virtual already_AddRefed<PathBuilder> CreatePathBuilder(FillRule) const override;
+  virtual already_AddRefed<GradientStops> CreateGradientStops(GradientStop *, uint32_t,
                                                           ExtendMode aExtendMode = ExtendMode::CLAMP) const override;
-  virtual TemporaryRef<FilterNode> CreateFilter(FilterType aType) override;
+  virtual already_AddRefed<FilterNode> CreateFilter(FilterType aType) override;
 
   virtual void *GetNativeSurface(NativeSurfaceType) override;
 
   virtual IntSize GetSize() override { return mSize; }
 
+  virtual void SetTransform(const Matrix &aTransform) override;
 
   /* This is for creating good compatible surfaces */
-  virtual TemporaryRef<SourceSurface> CreateSourceSurfaceFromData(unsigned char *aData,
+  virtual already_AddRefed<SourceSurface> CreateSourceSurfaceFromData(unsigned char *aData,
                                                             const IntSize &aSize,
                                                             int32_t aStride,
                                                             SurfaceFormat aFormat) const override;
-  virtual TemporaryRef<SourceSurface> OptimizeSourceSurface(SourceSurface *aSurface) const override;
+  virtual already_AddRefed<SourceSurface> OptimizeSourceSurface(SourceSurface *aSurface) const override;
   CGContextRef GetCGContext() {
       return mCg;
   }
@@ -196,6 +198,7 @@ private:
   IntSize mSize;
   CGColorSpaceRef mColorSpace;
   CGContextRef mCg;
+  CGAffineTransform mOriginalTransform;
 
   /**
    * The image buffer, if the buffer is owned by this class.
@@ -207,14 +210,10 @@ private:
 
   RefPtr<SourceSurfaceCGContext> mSnapshot;
   bool mMayContainInvalidPremultipliedData;
-
-#ifdef DEBUG
-  std::vector<CGRect> mSavedClipBounds;
-#endif
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif
 

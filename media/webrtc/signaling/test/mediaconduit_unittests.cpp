@@ -301,12 +301,15 @@ void AudioSendAndReceive::GenerateAndReadSamples()
    FILE* inFile = fopen( iFile.c_str(), "wb+");
    if(!inFile) {
      cerr << "Input File Creation Failed " << endl;
+     free(inbuf);
      return;
    }
 
    FILE* outFile = fopen( oFile.c_str(), "wb+");
    if(!outFile) {
      cerr << "Output File Creation Failed " << endl;
+     free(inbuf);
+     fclose(inFile);
      return;
    }
 
@@ -323,6 +326,8 @@ void AudioSendAndReceive::GenerateAndReadSamples()
    {
     if(!memcpy(audioInput.get(), inbuf, sampleLengthInBytes))
     {
+      free(inbuf);
+      fclose(outFile);
       return;
     }
 
@@ -350,6 +355,7 @@ void AudioSendAndReceive::GenerateAndReadSamples()
    }while(numSamplesReadFromInput < SAMPLES);
 
    FinishWaveHeader(outFile);
+   free(inbuf);
    fclose(outFile);
 }
 
@@ -526,16 +532,14 @@ class TransportConduitTest : public ::testing::Test
     //get pointer to AudioSessionConduit
     int err=0;
     mozilla::SyncRunnable::DispatchToThread(gMainThread,
-                                            WrapRunnableNMRet(
-                                                &mozilla::AudioSessionConduit::Create,
-                                                &mAudioSession));
+                                            WrapRunnableNMRet(&mAudioSession,
+                                                &mozilla::AudioSessionConduit::Create));
     if( !mAudioSession )
       ASSERT_NE(mAudioSession, (void*)nullptr);
 
     mozilla::SyncRunnable::DispatchToThread(gMainThread,
-                                            WrapRunnableNMRet(
-                                                &mozilla::AudioSessionConduit::Create,
-                                                &mAudioSession2));
+                                            WrapRunnableNMRet(&mAudioSession2,
+                                                &mozilla::AudioSessionConduit::Create));
     if( !mAudioSession2 )
       ASSERT_NE(mAudioSession2, (void*)nullptr);
 
@@ -590,17 +594,15 @@ class TransportConduitTest : public ::testing::Test
     int err = 0;
     //get pointer to VideoSessionConduit
     mozilla::SyncRunnable::DispatchToThread(gMainThread,
-                                            WrapRunnableNMRet(
-                                                &mozilla::VideoSessionConduit::Create,
-                                                &mVideoSession));
+                                            WrapRunnableNMRet(&mVideoSession,
+                                                &mozilla::VideoSessionConduit::Create));
     if( !mVideoSession )
       ASSERT_NE(mVideoSession, (void*)nullptr);
 
    // This session is for other one
     mozilla::SyncRunnable::DispatchToThread(gMainThread,
-                                            WrapRunnableNMRet(
-                                                &mozilla::VideoSessionConduit::Create,
-                                                &mVideoSession2));
+                                            WrapRunnableNMRet(&mVideoSession2,
+                                                &mozilla::VideoSessionConduit::Create));
     if( !mVideoSession2 )
       ASSERT_NE(mVideoSession2,(void*)nullptr);
 
@@ -688,9 +690,8 @@ class TransportConduitTest : public ::testing::Test
     mozilla::RefPtr<mozilla::VideoSessionConduit> videoSession;
     //get pointer to VideoSessionConduit
     mozilla::SyncRunnable::DispatchToThread(gMainThread,
-                                            WrapRunnableNMRet(
-                                                &mozilla::VideoSessionConduit::Create,
-                                                &videoSession));
+                                            WrapRunnableNMRet(&videoSession,
+                                                &mozilla::VideoSessionConduit::Create));
     if( !videoSession )
       ASSERT_NE(videoSession, (void*)nullptr);
 
@@ -799,9 +800,8 @@ class TransportConduitTest : public ::testing::Test
 
     // Get pointer to VideoSessionConduit.
     mozilla::SyncRunnable::DispatchToThread(gMainThread,
-                                            WrapRunnableNMRet(
-                                                &mozilla::VideoSessionConduit::Create,
-                                                &mVideoSession));
+                                            WrapRunnableNMRet(&mVideoSession,
+                                                &mozilla::VideoSessionConduit::Create));
     if( !mVideoSession )
       ASSERT_NE(mVideoSession, (void*)nullptr);
 
@@ -1040,7 +1040,7 @@ int main(int argc, char **argv)
 
   int result;
   gGtestThread->Dispatch(
-    mozilla::WrapRunnableNMRet(gtest_main, argc, argv, &result), NS_DISPATCH_NORMAL);
+    mozilla::WrapRunnableNMRet(&result, gtest_main, argc, argv), NS_DISPATCH_NORMAL);
 
   // Here we handle the event queue for dispatches to the main thread
   // When the GTest thread is complete it will send one more dispatch

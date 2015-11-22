@@ -18,7 +18,7 @@ using namespace mozilla;
 /* static */ StaticRefPtr<nsIThread> CameraControlImpl::sCameraThread;
 
 CameraControlImpl::CameraControlImpl()
-  : mListenerLock(PR_NewRWLock(PR_RWLOCK_RANK_NONE, "CameraControlImpl.Listeners.Lock"))
+  : mListenerLock("mozilla::camera::CameraControlImpl.Listeners")
   , mPreviewState(CameraControlListener::kPreviewStopped)
   , mHardwareState(CameraControlListener::kHardwareUninitialized)
   , mHardwareStateChangeReason(NS_OK)
@@ -50,32 +50,11 @@ CameraControlImpl::CameraControlImpl()
     mCameraThread->Dispatch(new Delegate(), NS_DISPATCH_NORMAL);
     sCameraThread = mCameraThread;
   }
-
-  // Care must be taken with the mListenerLock read-write lock to prevent
-  // deadlocks. Currently this is handled by ensuring that any attempts to
-  // acquire the lock for writing (as in Add/RemoveListener()) happen in a
-  // runnable dispatched to the Camera Thread--even if the method is being
-  // called from that thread. This ensures that if a registered listener
-  // (which is invoked with a read-lock) tries to call Add/RemoveListener(),
-  // the lock-for-writing attempt won't happen until the listener has
-  // completed.
-  //
-  // Multiple parallel listeners being invoked are not a problem because
-  // the read-write lock allows multiple simultaneous read-locks.
-  if (!mListenerLock) {
-    MOZ_CRASH("Out of memory getting new PRRWLock");
-  }
 }
 
 CameraControlImpl::~CameraControlImpl()
 {
   DOM_CAMERA_LOGT("%s:%d : this=%p\n", __func__, __LINE__, this);
-
-  MOZ_ASSERT(mListenerLock, "mListenerLock missing in ~CameraControlImpl()");
-  if (mListenerLock) {
-    PR_DestroyRWLock(mListenerLock);
-    mListenerLock = nullptr;
-  }
 }
 
 void
@@ -85,14 +64,13 @@ CameraControlImpl::OnHardwareStateChange(CameraControlListener::HardwareState aN
   // This callback can run on threads other than the Main Thread and
   //  the Camera Thread. On Gonk, it may be called from the camera's
   //  local binder thread, should the mediaserver process die.
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   if (aNewState == mHardwareState) {
     DOM_CAMERA_LOGI("OnHardwareStateChange: state did not change from %d\n", mHardwareState);
     return;
   }
 
-#ifdef PR_LOGGING
   const char* state[] = { "uninitialized", "closed", "open", "failed" };
   MOZ_ASSERT(aNewState >= 0);
   if (static_cast<unsigned int>(aNewState) < sizeof(state) / sizeof(state[0])) {
@@ -101,7 +79,6 @@ CameraControlImpl::OnHardwareStateChange(CameraControlListener::HardwareState aN
   } else {
     DOM_CAMERA_LOGE("OnHardwareStateChange: got invalid HardwareState value %d\n", aNewState);
   }
-#endif
 
   mHardwareState = aNewState;
   mHardwareStateChangeReason = aReason;
@@ -116,7 +93,7 @@ void
 CameraControlImpl::OnConfigurationChange()
 {
   MOZ_ASSERT(NS_GetCurrentThread() == mCameraThread);
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   DOM_CAMERA_LOGI("OnConfigurationChange : %zu listeners\n", mListeners.Length());
 
@@ -132,7 +109,7 @@ CameraControlImpl::OnAutoFocusComplete(bool aAutoFocusSucceeded)
   // This callback can run on threads other than the Main Thread and
   //  the Camera Thread. On Gonk, it is called from the camera
   //  library's auto focus thread.
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   for (uint32_t i = 0; i < mListeners.Length(); ++i) {
     CameraControlListener* l = mListeners[i];
@@ -143,7 +120,7 @@ CameraControlImpl::OnAutoFocusComplete(bool aAutoFocusSucceeded)
 void
 CameraControlImpl::OnAutoFocusMoving(bool aIsMoving)
 {
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   for (uint32_t i = 0; i < mListeners.Length(); ++i) {
     CameraControlListener* l = mListeners[i];
@@ -157,7 +134,7 @@ CameraControlImpl::OnFacesDetected(const nsTArray<Face>& aFaces)
   // This callback can run on threads other than the Main Thread and
   //  the Camera Thread. On Gonk, it is called from the camera
   //  library's face detection thread.
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   for (uint32_t i = 0; i < mListeners.Length(); ++i) {
     CameraControlListener* l = mListeners[i];
@@ -171,11 +148,24 @@ CameraControlImpl::OnTakePictureComplete(const uint8_t* aData, uint32_t aLength,
   // This callback can run on threads other than the Main Thread and
   //  the Camera Thread. On Gonk, it is called from the camera
   //  library's snapshot thread.
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   for (uint32_t i = 0; i < mListeners.Length(); ++i) {
     CameraControlListener* l = mListeners[i];
     l->OnTakePictureComplete(aData, aLength, aMimeType);
+  }
+}
+
+void
+CameraControlImpl::OnPoster(dom::BlobImpl* aBlobImpl)
+{
+  // This callback can run on threads other than the Main Thread and
+  //  the Camera Thread.
+  MutexAutoLock lock(mListenerLock);
+
+  for (uint32_t i = 0; i < mListeners.Length(); ++i) {
+    CameraControlListener* l = mListeners[i];
+    l->OnPoster(aBlobImpl);
   }
 }
 
@@ -185,7 +175,7 @@ CameraControlImpl::OnShutter()
   // This callback can run on threads other than the Main Thread and
   //  the Camera Thread. On Gonk, it is called from the camera driver's
   //  preview thread.
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   for (uint32_t i = 0; i < mListeners.Length(); ++i) {
     CameraControlListener* l = mListeners[i];
@@ -200,7 +190,7 @@ CameraControlImpl::OnRecorderStateChange(CameraControlListener::RecorderState aS
   // This callback can run on threads other than the Main Thread and
   //  the Camera Thread. On Gonk, it is called from the media encoder
   //  thread.
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   for (uint32_t i = 0; i < mListeners.Length(); ++i) {
     CameraControlListener* l = mListeners[i];
@@ -214,14 +204,13 @@ CameraControlImpl::OnPreviewStateChange(CameraControlListener::PreviewState aNew
   // This callback runs on the Main Thread and the Camera Thread, and
   //  may run on the local binder thread, should the mediaserver
   //  process die.
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   if (aNewState == mPreviewState) {
     DOM_CAMERA_LOGI("OnPreviewStateChange: state did not change from %d\n", mPreviewState);
     return;
   }
 
-#ifdef PR_LOGGING
   const char* state[] = { "stopped", "paused", "started" };
   MOZ_ASSERT(aNewState >= 0);
   if (static_cast<unsigned int>(aNewState) < sizeof(state) / sizeof(state[0])) {
@@ -229,7 +218,6 @@ CameraControlImpl::OnPreviewStateChange(CameraControlListener::PreviewState aNew
   } else {
     DOM_CAMERA_LOGE("OnPreviewStateChange: got unknown PreviewState value %d\n", aNewState);
   }
-#endif
 
   mPreviewState = aNewState;
 
@@ -243,7 +231,7 @@ void
 CameraControlImpl::OnRateLimitPreview(bool aLimit)
 {
   // This function runs on neither the Main Thread nor the Camera Thread.
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   DOM_CAMERA_LOGI("OnRateLimitPreview: %d\n", aLimit);
 
@@ -258,7 +246,7 @@ CameraControlImpl::OnNewPreviewFrame(layers::Image* aImage, uint32_t aWidth, uin
 {
   // This function runs on neither the Main Thread nor the Camera Thread.
   //  On Gonk, it is called from the camera driver's preview thread.
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   DOM_CAMERA_LOGI("OnNewPreviewFrame: we have %zu preview frame listener(s)\n",
     mListeners.Length());
@@ -278,9 +266,8 @@ CameraControlImpl::OnUserError(CameraControlListener::UserContext aContext,
 {
   // This callback can run on threads other than the Main Thread and
   //  the Camera Thread.
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
-#ifdef PR_LOGGING
   const char* context[] = {
     "StartCamera",
     "StopCamera",
@@ -290,6 +277,8 @@ CameraControlImpl::OnUserError(CameraControlListener::UserContext aContext,
     "TakePicture",
     "StartRecording",
     "StopRecording",
+    "PauseRecording",
+    "ResumeRecording",
     "SetConfiguration",
     "StartPreview",
     "StopPreview",
@@ -305,7 +294,6 @@ CameraControlImpl::OnUserError(CameraControlListener::UserContext aContext,
     DOM_CAMERA_LOGE("CameraControlImpl::OnUserError : aContext=%d, aError=0x%x\n",
       aContext, aError);
   }
-#endif
 
   for (uint32_t i = 0; i < mListeners.Length(); ++i) {
     CameraControlListener* l = mListeners[i];
@@ -319,9 +307,8 @@ CameraControlImpl::OnSystemError(CameraControlListener::SystemContext aContext,
 {
   // This callback can run on threads other than the Main Thread and
   //  the Camera Thread.
-  RwLockAutoEnterRead lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
-#ifdef PR_LOGGING
   const char* context[] = {
     "Camera Service"
   };
@@ -332,7 +319,6 @@ CameraControlImpl::OnSystemError(CameraControlListener::SystemContext aContext,
     DOM_CAMERA_LOGE("CameraControlImpl::OnSystemError : aContext=%d, aError=0x%x\n",
       aContext, aError);
   }
-#endif
 
   for (uint32_t i = 0; i < mListeners.Length(); ++i) {
     CameraControlListener* l = mListeners[i];
@@ -598,6 +584,48 @@ CameraControlImpl::StopRecording()
 }
 
 nsresult
+CameraControlImpl::PauseRecording()
+{
+  class Message : public ControlMessage
+  {
+  public:
+    Message(CameraControlImpl* aCameraControl,
+            CameraControlListener::UserContext aContext)
+      : ControlMessage(aCameraControl, aContext)
+    { }
+
+    nsresult
+    RunImpl() override
+    {
+      return mCameraControl->PauseRecordingImpl();
+    }
+  };
+
+  return Dispatch(new Message(this, CameraControlListener::kInPauseRecording));
+}
+
+nsresult
+CameraControlImpl::ResumeRecording()
+{
+  class Message : public ControlMessage
+  {
+  public:
+    Message(CameraControlImpl* aCameraControl,
+            CameraControlListener::UserContext aContext)
+      : ControlMessage(aCameraControl, aContext)
+    { }
+
+    nsresult
+    RunImpl() override
+    {
+      return mCameraControl->ResumeRecordingImpl();
+    }
+  };
+
+  return Dispatch(new Message(this, CameraControlListener::kInResumeRecording));
+}
+
+nsresult
 CameraControlImpl::StartPreview()
 {
   class Message : public ControlMessage
@@ -697,7 +725,7 @@ protected:
 void
 CameraControlImpl::AddListenerImpl(already_AddRefed<CameraControlListener> aListener)
 {
-  RwLockAutoEnterWrite lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   CameraControlListener* l = *mListeners.AppendElement() = aListener;
   DOM_CAMERA_LOGI("Added camera control listener %p\n", l);
@@ -735,7 +763,7 @@ CameraControlImpl::AddListener(CameraControlListener* aListener)
 void
 CameraControlImpl::RemoveListenerImpl(CameraControlListener* aListener)
 {
-  RwLockAutoEnterWrite lock(mListenerLock);
+  MutexAutoLock lock(mListenerLock);
 
   nsRefPtr<CameraControlListener> l(aListener);
   mListeners.RemoveElement(l);

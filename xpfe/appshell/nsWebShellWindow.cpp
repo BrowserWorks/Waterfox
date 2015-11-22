@@ -306,7 +306,7 @@ nsWebShellWindow::RequestWindowClose(nsIWidget* aWidget)
     nsRefPtr<nsPresContext> presContext = presShell->GetPresContext();
 
     nsEventStatus status = nsEventStatus_eIgnore;
-    WidgetMouseEvent event(true, NS_XUL_CLOSE, nullptr,
+    WidgetMouseEvent event(true, eWindowClose, nullptr,
                            WidgetMouseEvent::eReal);
     if (NS_SUCCEEDED(eventTarget->DispatchDOMEvent(&event, nullptr, presContext, &status)) &&
         status == nsEventStatus_eConsumeNoDefault)
@@ -341,8 +341,8 @@ nsWebShellWindow::SizeModeChanged(nsSizeMode sizeMode)
   if (ourWindow) {
     MOZ_ASSERT(ourWindow->IsOuterWindow());
 
-    // Let the application know if it's in fullscreen mode so it
-    // can update its UI.
+    // Ensure that the fullscreen state is synchronized between
+    // the widget and the outer window object.
     if (sizeMode == nsSizeMode_Fullscreen) {
       ourWindow->SetFullScreen(true);
     }
@@ -359,6 +359,16 @@ nsWebShellWindow::SizeModeChanged(nsSizeMode sizeMode)
   // the state and pass the event on to the OS. The day is coming
   // when we'll handle the event here, and the return result will
   // then need to be different.
+}
+
+void
+nsWebShellWindow::FullscreenChanged(bool aInFullscreen)
+{
+  if (mDocShell) {
+    if (nsCOMPtr<nsPIDOMWindow> ourWindow = mDocShell->GetWindow()) {
+      ourWindow->FinishFullscreenChange(aInFullscreen);
+    }
+  }
 }
 
 void
@@ -707,7 +717,7 @@ bool nsWebShellWindow::ExecuteCloseHandler()
       contentViewer->GetPresContext(getter_AddRefs(presContext));
 
       nsEventStatus status = nsEventStatus_eIgnore;
-      WidgetMouseEvent event(true, NS_XUL_CLOSE, nullptr,
+      WidgetMouseEvent event(true, eWindowClose, nullptr,
                              WidgetMouseEvent::eReal);
 
       nsresult rv =

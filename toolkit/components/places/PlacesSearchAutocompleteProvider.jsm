@@ -17,6 +17,9 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "SearchSuggestionController",
+  "resource://gre/modules/SearchSuggestionController.jsm");
+
 const SEARCH_ENGINE_TOPIC = "browser-search-engine-modified";
 
 const SearchAutocompleteProviderInternal = {
@@ -110,11 +113,76 @@ const SearchAutocompleteProviderInternal = {
     }
   },
 
+  getSuggestionController(searchToken, inPrivateContext, maxResults) {
+    let engine = Services.search.currentEngine;
+    if (!engine) {
+      return null;
+    }
+    return new SearchSuggestionControllerWrapper(engine, searchToken,
+                                                 inPrivateContext, maxResults);
+  },
+
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
                                          Ci.nsISupportsWeakReference]),
 }
 
-let gInitializationPromise = null;
+function SearchSuggestionControllerWrapper(engine, searchToken,
+                                           inPrivateContext, maxResults) {
+  this._controller = new SearchSuggestionController();
+  this._controller.maxLocalResults = 0;
+  this._controller.maxRemoteResults = maxResults;
+  let promise = this._controller.fetch(searchToken, inPrivateContext, engine);
+  this._suggestions = [];
+  this._success = false;
+  this._promise = promise.then(results => {
+    this._success = true;
+    this._suggestions = (results ? results.remote : null) || [];
+  }).catch(err => {
+    // fetch() rejects its promise if there's a pending request.
+  });
+}
+
+SearchSuggestionControllerWrapper.prototype = {
+
+  /**
+   * Resolved when all suggestions have been fetched.
+   */
+  get fetchCompletePromise() {
+    return this._promise;
+  },
+
+  /**
+   * Returns one suggestion, if any are available.  The returned value is an
+   * array [match, suggestion].  If none are available, returns [null, null].
+   * Note that there are two reasons that suggestions might not be available:
+   * all suggestions may have been fetched and consumed, or the fetch may not
+   * have completed yet.
+   *
+   * @return An array [match, suggestion].
+   */
+  consume() {
+    return !this._suggestions.length ? [null, null] :
+           [SearchAutocompleteProviderInternal.defaultMatch,
+            this._suggestions.shift()];
+  },
+
+  /**
+   * Returns the number of fetched suggestions, or -1 if the fetching was
+   * incomplete or failed.
+   */
+  get resultsCount() {
+    return this._success ? this._suggestions.length : -1;
+  },
+
+  /**
+   * Stops the fetch.
+   */
+  stop() {
+    this._controller.stop();
+  },
+};
+
+var gInitializationPromise = null;
 
 this.PlacesSearchAutocompleteProvider = Object.freeze({
   /**
@@ -213,5 +281,13 @@ this.PlacesSearchAutocompleteProvider = Object.freeze({
       engineName: parseUrlResult.engine.name,
       terms: parseUrlResult.terms,
     };
+  },
+
+  getSuggestionController(searchToken, inPrivateContext, maxResults) {
+    if (!SearchAutocompleteProviderInternal.initialized) {
+      throw new Error("The component has not been initialized.");
+    }
+    return SearchAutocompleteProviderInternal.getSuggestionController(
+             searchToken, inPrivateContext, maxResults);
   },
 });

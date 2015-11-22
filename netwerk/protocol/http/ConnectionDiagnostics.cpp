@@ -14,6 +14,7 @@
 #include "nsHttpHandler.h"
 #include "nsIConsoleService.h"
 #include "nsHttpRequestHead.h"
+#include "nsServiceManagerUtils.h"
 
 extern PRThread *gSocketThread;
 
@@ -250,5 +251,5 @@ nsHttpTransaction::PrintDiagnostics(nsCString &log)
   log.AppendPrintf("     classification = 0x%x\n", mClassification);
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

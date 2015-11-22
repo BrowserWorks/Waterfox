@@ -72,7 +72,7 @@ ForOfIterator::init(HandleValue iterable, NonIterableBehavior nonIterableBehavio
     // one about |obj|.
     if (!callee.isObject() || !callee.toObject().isCallable()) {
         UniquePtr<char[], JS::FreePolicy> bytes = DecompileValueGenerator(cx, JSDVG_SEARCH_STACK,
-                                                                          iterable, NullPtr());
+                                                                          iterable, nullptr);
         if (!bytes)
             return false;
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_ITERABLE, bytes.get());
@@ -88,14 +88,6 @@ ForOfIterator::init(HandleValue iterable, NonIterableBehavior nonIterableBehavio
         return false;
 
     return true;
-}
-
-bool
-ForOfIterator::initWithIterator(HandleValue aIterator)
-{
-    JSContext* cx = cx_;
-    RootedObject iteratorObj(cx, ToObject(cx, aIterator));
-    return iterator = iteratorObj;
 }
 
 inline bool
@@ -178,14 +170,9 @@ ForOfIterator::materializeArrayIterator()
 {
     MOZ_ASSERT(index != NOT_ARRAY);
 
-    const char* nameString = "ArrayValuesAt";
-
-    RootedAtom name(cx_, Atomize(cx_, nameString, strlen(nameString)));
-    if (!name)
-        return false;
-
+    HandlePropertyName name = cx_->names().ArrayValuesAt;
     RootedValue val(cx_);
-    if (!cx_->global()->getSelfHostedFunction(cx_, name, name, 1, &val))
+    if (!GlobalObject::getSelfHostedFunction(cx_, cx_->global(), name, name, 1, &val))
         return false;
 
     InvokeArgs args(cx_);

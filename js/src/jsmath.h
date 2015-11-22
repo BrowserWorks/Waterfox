@@ -80,6 +80,25 @@ class MathCache
         return e.out = f(x);
     }
 
+    bool isCached(double x, MathFuncId id, double *r, unsigned *index) {
+        *index = hash(x, id);
+        Entry& e = table[*index];
+        if (e.in == x && e.id == id) {
+            *r = e.out;
+            return true;
+        }
+        return false;
+    }
+
+    void store(MathFuncId id, double x, double v, unsigned index) {
+        Entry &e = table[index];
+        if (e.in == x && e.id == id)
+            return;
+        e.in = x;
+        e.id = id;
+        e.out = v;
+    }
+
     size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf);
 };
 
@@ -97,11 +116,18 @@ extern uint64_t
 random_next(uint64_t* rngState, int bits);
 
 static const double RNG_DSCALE = double(1LL << 53);
+static const int RNG_STATE_WIDTH = 48;
+static const int RNG_HIGH_BITS = 26;
+static const int RNG_LOW_BITS = 27;
+static const uint64_t RNG_MULTIPLIER = 0x5DEECE66DLL;
+static const uint64_t RNG_ADDEND = 0xBLL;
+static const uint64_t RNG_MASK = (1LL << RNG_STATE_WIDTH) - 1;
 
 inline double
 random_nextDouble(uint64_t* rng)
 {
-    return double((random_next(rng, 26) << 27) + random_next(rng, 27)) / RNG_DSCALE;
+    return double((random_next(rng, RNG_HIGH_BITS) << RNG_LOW_BITS) +
+                  random_next(rng, RNG_LOW_BITS)) / RNG_DSCALE;
 }
 
 extern double
@@ -141,6 +167,12 @@ math_pow(JSContext* cx, unsigned argc, js::Value* vp);
 extern bool
 minmax_impl(JSContext* cx, bool max, js::HandleValue a, js::HandleValue b,
             js::MutableHandleValue res);
+
+extern void
+math_sincos_uncached(double x, double *sin, double *cos);
+
+extern void
+math_sincos_impl(MathCache* mathCache, double x, double *sin, double *cos);
 
 extern bool
 math_sqrt_handle(JSContext* cx, js::HandleValue number, js::MutableHandleValue result);

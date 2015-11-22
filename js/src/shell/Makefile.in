@@ -26,11 +26,6 @@ SHELL_INSTALL_AUTOLOAD_DEST := $(DIST)/bin
 
 include $(topsrcdir)/config/rules.mk
 
-CC = cl
-CXX = cl
-CFLAGS = -O2
-CXXFLAGS = -O2
-
 # People expect the js shell to wind up in the top-level JS dir.
 libs::
 	$(INSTALL) $(IFLAGS2) $(PROGRAM) ..

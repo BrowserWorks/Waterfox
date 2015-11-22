@@ -7,7 +7,7 @@
  * FlameGraph view containing a pyramid-like visualization of a profile,
  * controlled by DetailsView.
  */
-let JsFlameGraphView = Heritage.extend(DetailsSubview, {
+var JsFlameGraphView = Heritage.extend(DetailsSubview, {
 
   shouldUpdateWhileMouseIsActive: true,
 
@@ -86,7 +86,13 @@ let JsFlameGraphView = Heritage.extend(DetailsSubview, {
    */
   _onRangeChangeInGraph: function () {
     let interval = this.graph.getViewRange();
-    OverviewView.setTimeInterval(interval, { stopPropagation: true });
+
+    // Squelch rerendering this view when we update the range here
+    // to avoid recursion, as our FlameGraph handles rerendering itself
+    // when originating from within the graph.
+    this.requiresUpdateOnRangeChange = false;
+    OverviewView.setTimeInterval(interval);
+    this.requiresUpdateOnRangeChange = true;
   },
 
   /**
@@ -109,3 +115,5 @@ let JsFlameGraphView = Heritage.extend(DetailsSubview, {
 
   toString: () => "[object JsFlameGraphView]"
 });
+
+EventEmitter.decorate(JsFlameGraphView);

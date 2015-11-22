@@ -9,6 +9,8 @@
 #include "jit/JitFrames.h"
 #include "jit/MacroAssembler.h"
 
+#include "jit/MacroAssembler-inl.h"
+
 using namespace js;
 using namespace js::jit;
 
@@ -16,12 +18,13 @@ using namespace js::jit;
 void
 MacroAssembler::clampDoubleToUint8(FloatRegister input, Register output)
 {
-    MOZ_ASSERT(input != ScratchDoubleReg);
+    ScratchDoubleScope scratch(*this);
+    MOZ_ASSERT(input != scratch);
     Label positive, done;
 
     // <= 0 or NaN --> 0
-    zeroDouble(ScratchDoubleReg);
-    branchDouble(DoubleGreaterThan, input, ScratchDoubleReg, &positive);
+    zeroDouble(scratch);
+    branchDouble(DoubleGreaterThan, input, scratch, &positive);
     {
         move32(Imm32(0), output);
         jump(&done);
@@ -30,8 +33,8 @@ MacroAssembler::clampDoubleToUint8(FloatRegister input, Register output)
     bind(&positive);
 
     // Add 0.5 and truncate.
-    loadConstantDouble(0.5, ScratchDoubleReg);
-    addDouble(ScratchDoubleReg, input);
+    loadConstantDouble(0.5, scratch);
+    addDouble(scratch, input);
 
     Label outOfRange;
 
@@ -42,8 +45,8 @@ MacroAssembler::clampDoubleToUint8(FloatRegister input, Register output)
     branch32(Assembler::Above, output, Imm32(255), &outOfRange);
     {
         // Check if we had a tie.
-        convertInt32ToDouble(output, ScratchDoubleReg);
-        branchDouble(DoubleNotEqual, input, ScratchDoubleReg, &done);
+        convertInt32ToDouble(output, scratch);
+        branchDouble(DoubleNotEqual, input, scratch, &done);
 
         // It was a tie. Mask out the ones bit to get an even value.
         // See also js_TypedArray_uint8_clamp_double.
@@ -58,43 +61,6 @@ MacroAssembler::clampDoubleToUint8(FloatRegister input, Register output)
     }
 
     bind(&done);
-}
-
-// Builds an exit frame on the stack, with a return address to an internal
-// non-function. Returns offset to be passed to markSafepointAt().
-void
-MacroAssemblerX86Shared::buildFakeExitFrame(Register scratch, uint32_t* offset)
-{
-    mozilla::DebugOnly<uint32_t> initialDepth = framePushed();
-
-    CodeLabel cl;
-    mov(cl.dest(), scratch);
-
-    uint32_t descriptor = MakeFrameDescriptor(framePushed(), JitFrame_IonJS);
-    asMasm().Push(Imm32(descriptor));
-    asMasm().Push(scratch);
-
-    bind(cl.src());
-    *offset = currentOffset();
-
-    MOZ_ASSERT(framePushed() == initialDepth + ExitFrameLayout::Size());
-    addCodeLabel(cl);
-}
-
-void
-MacroAssemblerX86Shared::callWithExitFrame(Label* target)
-{
-    uint32_t descriptor = MakeFrameDescriptor(framePushed(), JitFrame_IonJS);
-    asMasm().Push(Imm32(descriptor));
-    call(target);
-}
-
-void
-MacroAssemblerX86Shared::callWithExitFrame(JitCode* target)
-{
-    uint32_t descriptor = MakeFrameDescriptor(framePushed(), JitFrame_IonJS);
-    asMasm().Push(Imm32(descriptor));
-    call(target);
 }
 
 void
@@ -112,7 +78,7 @@ MacroAssembler::restoreFrameAlignmentForICArguments(AfterICSaveLive& aic)
 bool
 MacroAssemblerX86Shared::buildOOLFakeExitFrame(void* fakeReturnAddr)
 {
-    uint32_t descriptor = MakeFrameDescriptor(framePushed(), JitFrame_IonJS);
+    uint32_t descriptor = MakeFrameDescriptor(asMasm().framePushed(), JitFrame_IonJS);
     asMasm().Push(Imm32(descriptor));
     asMasm().Push(ImmPtr(fakeReturnAddr));
     return true;
@@ -132,11 +98,13 @@ MacroAssemblerX86Shared::branchNegativeZero(FloatRegister reg,
 
     // if not already compared to zero
     if (maybeNonZero) {
+        ScratchDoubleScope scratchDouble(asMasm());
+
         // Compare to zero. Lets through {0, -0}.
-        zeroDouble(ScratchDoubleReg);
+        zeroDouble(scratchDouble);
 
         // If reg is non-zero, jump to nonZero.
-        branchDouble(DoubleNotEqual, reg, ScratchDoubleReg, &nonZero);
+        branchDouble(DoubleNotEqual, reg, scratchDouble, &nonZero);
     }
     // Input register is either zero or negative zero. Retrieve sign of input.
     vmovmskpd(reg, scratch);
@@ -175,6 +143,7 @@ MacroAssemblerX86Shared::asMasm() const
     return *static_cast<const MacroAssembler*>(this);
 }
 
+//{{{ check_macroassembler_style
 // ===============================================================
 // Stack manipulation functions.
 
@@ -348,3 +317,81 @@ MacroAssembler::Pop(const ValueOperand& val)
     popValue(val);
     framePushed_ -= sizeof(Value);
 }
+
+// ===============================================================
+// Simple call functions.
+
+void
+MacroAssembler::call(Register reg)
+{
+    Assembler::call(reg);
+}
+
+void
+MacroAssembler::call(Label* label)
+{
+    Assembler::call(label);
+}
+
+void
+MacroAssembler::call(const Address& addr)
+{
+    Assembler::call(Operand(addr.base, addr.offset));
+}
+
+void
+MacroAssembler::call(AsmJSImmPtr target)
+{
+    mov(target, eax);
+    Assembler::call(eax);
+}
+
+void
+MacroAssembler::call(ImmWord target)
+{
+    mov(target, eax);
+    Assembler::call(eax);
+}
+
+void
+MacroAssembler::call(ImmPtr target)
+{
+    call(ImmWord(uintptr_t(target.value)));
+}
+
+void
+MacroAssembler::call(JitCode* target)
+{
+    Assembler::call(target);
+}
+
+void
+MacroAssembler::callAndPushReturnAddress(Register reg)
+{
+    call(reg);
+}
+
+void
+MacroAssembler::callAndPushReturnAddress(Label* label)
+{
+    call(label);
+}
+
+// ===============================================================
+// Jit Frames.
+
+uint32_t
+MacroAssembler::pushFakeReturnAddress(Register scratch)
+{
+    CodeLabel cl;
+
+    mov(cl.dest(), scratch);
+    Push(scratch);
+    bind(cl.src());
+    uint32_t retAddr = currentOffset();
+
+    addCodeLabel(cl);
+    return retAddr;
+}
+
+//}}} check_macroassembler_style

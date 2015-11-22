@@ -54,17 +54,23 @@ function cleanUp() {
   delFile("safebrowsing/test-phish-simple.sbstore");
   delFile("safebrowsing/test-malware-simple.sbstore");
   delFile("safebrowsing/test-unwanted-simple.sbstore");
+  delFile("safebrowsing/test-track-simple.sbstore");
+  delFile("safebrowsing/test-trackwhite-simple.sbstore");
   delFile("safebrowsing/test-phish-simple.cache");
   delFile("safebrowsing/test-malware-simple.cache");
   delFile("safebrowsing/test-unwanted-simple.cache");
+  delFile("safebrowsing/test-track-simple.cache");
+  delFile("safebrowsing/test-trackwhite-simple.cache");
   delFile("safebrowsing/test-phish-simple.pset");
   delFile("safebrowsing/test-malware-simple.pset");
   delFile("safebrowsing/test-unwanted-simple.pset");
+  delFile("safebrowsing/test-track-simple.pset");
+  delFile("safebrowsing/test-trackwhite-simple.pset");
   delFile("testLarge.pset");
   delFile("testNoDelta.pset");
 }
 
-var allTables = "test-phish-simple,test-malware-simple,test-unwanted-simple";
+var allTables = "test-phish-simple,test-malware-simple,test-unwanted-simple,test-track-simple,test-trackwhite-simple";
 
 var dbservice = Cc["@mozilla.org/url-classifier/dbservice;1"].getService(Ci.nsIUrlClassifierDBService);
 var streamUpdater = Cc["@mozilla.org/url-classifier/streamupdater;1"]
@@ -144,8 +150,7 @@ function doSimpleUpdate(updateText, success, failure) {
     updateSuccess: function(requestedTimeout) { success(requestedTimeout); }
   };
 
-  dbservice.beginUpdate(listener,
-                        "test-phish-simple,test-malware-simple,test-unwanted-simple");
+  dbservice.beginUpdate(listener, allTables);
   dbservice.beginStream("", "");
   dbservice.updateStream(updateText);
   dbservice.finishStream();
@@ -187,7 +192,7 @@ function doStreamUpdate(updateText, success, failure, downloadFailure) {
     downloadFailure = failure;
   }
 
-  streamUpdater.downloadUpdates("test-phish-simple,test-malware-simple,test-unwanted-simple", "",
+  streamUpdater.downloadUpdates(allTables, "",
                                 dataUpdate, success, failure, downloadFailure);
 }
 
@@ -216,7 +221,7 @@ checkUrls: function(urls, expected, cb)
   var doLookup = function() {
     if (urls.length > 0) {
       var fragment = urls.shift();
-      var principal = secMan.getNoAppCodebasePrincipal(iosvc.newURI("http://" + fragment, null, null));
+      var principal = secMan.createCodebasePrincipal(iosvc.newURI("http://" + fragment, null, null), {});
       dbservice.lookup(principal, allTables,
                                 function(arg) {
                                   do_check_eq(expected, arg);

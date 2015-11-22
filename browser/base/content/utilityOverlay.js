@@ -9,32 +9,16 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Components.utils.import("resource:///modules/RecentWindow.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "BROWSER_NEW_TAB_URL", function () {
-  const PREF = "browser.newtab.url";
+XPCOMUtils.defineLazyModuleGetter(this, "NewTabURL",
+  "resource:///modules/NewTabURL.jsm");
 
-  function getNewTabPageURL() {
-    if (PrivateBrowsingUtils.isWindowPrivate(window) &&
-        !PrivateBrowsingUtils.permanentPrivateBrowsing &&
-        !Services.prefs.prefHasUserValue(PREF)) {
-      return "about:privatebrowsing";
-    }
-
-    let url = Services.prefs.getComplexValue(PREF, Ci.nsISupportsString).data;
-    return url || "about:blank";
+this.__defineGetter__("BROWSER_NEW_TAB_URL", () => {
+  if (PrivateBrowsingUtils.isWindowPrivate(window) &&
+      !PrivateBrowsingUtils.permanentPrivateBrowsing &&
+      !NewTabURL.overridden) {
+    return "about:privatebrowsing";
   }
-
-  function update() {
-    BROWSER_NEW_TAB_URL = getNewTabPageURL();
-  }
-
-  Services.prefs.addObserver(PREF, update, false);
-
-  addEventListener("unload", function onUnload() {
-    removeEventListener("unload", onUnload);
-    Services.prefs.removeObserver(PREF, update);
-  });
-
-  return getNewTabPageURL();
+  return NewTabURL.get();
 });
 
 var TAB_DROP_TYPE = "application/x-moz-tabbrowser-tab";
@@ -188,6 +172,7 @@ function whereToOpenLink( e, ignoreButton, ignoreAlt )
  *   relatedToCurrent     (boolean)
  *   skipTabAnimation     (boolean)
  *   allowPinnedTabHostChange (boolean)
+ *   allowPopups          (boolean)
  */
 function openUILinkIn(url, where, aAllowThirdPartyFixup, aPostData, aReferrerURI) {
   var params;
@@ -230,6 +215,7 @@ function openLinkIn(url, where, params) {
   var aSkipTabAnimation     = params.skipTabAnimation;
   var aAllowPinnedTabHostChange = !!params.allowPinnedTabHostChange;
   var aNoReferrer           = params.noReferrer;
+  var aAllowPopups          = !!params.allowPopups;
 
   if (where == "save") {
     if (!aInitiatingDoc) {
@@ -342,8 +328,13 @@ function openLinkIn(url, where, params) {
     // i.e. it causes them not to load at all. Callers should strip
     // "javascript:" from pasted strings to protect users from malicious URIs
     // (see stripUnsafeProtocolOnPaste).
-    if (aDisallowInheritPrincipal && !(uriObj && uriObj.schemeIs("javascript")))
+    if (aDisallowInheritPrincipal && !(uriObj && uriObj.schemeIs("javascript"))) {
       flags |= Ci.nsIWebNavigation.LOAD_FLAGS_DISALLOW_INHERIT_OWNER;
+    }
+
+    if (aAllowPopups) {
+      flags |= Ci.nsIWebNavigation.LOAD_FLAGS_ALLOW_POPUPS;
+    }
 
     w.gBrowser.loadURIWithFlags(url, {
       flags: flags,
@@ -538,64 +529,55 @@ function openPreferences(paneID, extraArgs)
     return (aName || "").replace(/^pane./, function(toReplace) { return toReplace[4].toLowerCase(); });
   }
 
-  if (getBoolPref("browser.preferences.inContent")) {
-    let win = Services.wm.getMostRecentWindow("navigator:browser");
-    let friendlyCategoryName = internalPrefCategoryNameToFriendlyName(paneID);
-    let preferencesURL = "about:preferences" +
-                         (friendlyCategoryName ? "#" + friendlyCategoryName : "");
-    let newLoad = true;
-    let browser = null;
-    if (!win) {
-      const Cc = Components.classes;
-      const Ci = Components.interfaces;
-      let windowArguments = Cc["@mozilla.org/supports-array;1"]
-                              .createInstance(Ci.nsISupportsArray);
-      let supportsStringPrefURL = Cc["@mozilla.org/supports-string;1"]
-                                    .createInstance(Ci.nsISupportsString);
-      supportsStringPrefURL.data = preferencesURL;
-      windowArguments.AppendElement(supportsStringPrefURL);
-
-      win = Services.ww.openWindow(null, Services.prefs.getCharPref("browser.chromeURL"),
-                                   "_blank", "chrome,dialog=no,all", windowArguments);
-    } else {
-      newLoad = !win.switchToTabHavingURI(preferencesURL, true, {ignoreFragment: true});
-      browser = win.gBrowser.selectedBrowser;
-    }
-
-    if (newLoad) {
-      Services.obs.addObserver(function advancedPaneLoadedObs(prefWin, topic, data) {
-        if (!browser) {
-          browser = win.gBrowser.selectedBrowser;
-        }
-        if (prefWin != browser.contentWindow) {
-          return;
-        }
-        Services.obs.removeObserver(advancedPaneLoadedObs, "advanced-pane-loaded");
-        switchToAdvancedSubPane(browser.contentDocument);
-      }, "advanced-pane-loaded", false);
-    } else {
-      if (paneID) {
-        browser.contentWindow.gotoPref(paneID);
+  let win = Services.wm.getMostRecentWindow("navigator:browser");
+  let friendlyCategoryName = internalPrefCategoryNameToFriendlyName(paneID);
+  let params;
+  if (extraArgs && extraArgs["urlParams"]) {
+    params = new URLSearchParams();
+    let urlParams = extraArgs["urlParams"];
+    for (let name in urlParams) {
+      if (urlParams[name] !== undefined) {
+        params.set(name, urlParams[name]);
       }
-      switchToAdvancedSubPane(browser.contentDocument);
     }
+  }
+  let preferencesURL = "about:preferences" + (params ? "?" + params : "") +
+                       (friendlyCategoryName ? "#" + friendlyCategoryName : "");
+  let newLoad = true;
+  let browser = null;
+  if (!win) {
+    const Cc = Components.classes;
+    const Ci = Components.interfaces;
+    let windowArguments = Cc["@mozilla.org/supports-array;1"]
+                            .createInstance(Ci.nsISupportsArray);
+    let supportsStringPrefURL = Cc["@mozilla.org/supports-string;1"]
+                                  .createInstance(Ci.nsISupportsString);
+    supportsStringPrefURL.data = preferencesURL;
+    windowArguments.AppendElement(supportsStringPrefURL);
+
+    win = Services.ww.openWindow(null, Services.prefs.getCharPref("browser.chromeURL"),
+                                 "_blank", "chrome,dialog=no,all", windowArguments);
   } else {
-    var instantApply = getBoolPref("browser.preferences.instantApply", false);
-    var features = "chrome,titlebar,toolbar,centerscreen" + (instantApply ? ",dialog=no" : ",modal");
+    newLoad = !win.switchToTabHavingURI(preferencesURL, true, {ignoreFragment: true});
+    browser = win.gBrowser.selectedBrowser;
+  }
 
-    var win = Services.wm.getMostRecentWindow("Browser:Preferences");
-    if (win) {
-      win.focus();
-      if (paneID) {
-        var pane = win.document.getElementById(paneID);
-        win.document.documentElement.showPane(pane);
+  if (newLoad) {
+    Services.obs.addObserver(function advancedPaneLoadedObs(prefWin, topic, data) {
+      if (!browser) {
+        browser = win.gBrowser.selectedBrowser;
       }
-
-      switchToAdvancedSubPane(win.document);
-    } else {
-      openDialog("chrome://browser/content/preferences/preferences.xul",
-                 "Preferences", features, paneID, extraArgs);
+      if (prefWin != browser.contentWindow) {
+        return;
+      }
+      Services.obs.removeObserver(advancedPaneLoadedObs, "advanced-pane-loaded");
+      switchToAdvancedSubPane(browser.contentDocument);
+    }, "advanced-pane-loaded", false);
+  } else {
+    if (paneID) {
+      browser.contentWindow.gotoPref(paneID);
     }
+    switchToAdvancedSubPane(browser.contentDocument);
   }
 }
 

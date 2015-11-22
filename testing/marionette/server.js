@@ -21,7 +21,7 @@ Cu.import("chrome://marionette/content/simpletest.js");
 loader.loadSubScript("resource://gre/modules/devtools/transport/transport.js");
 
 // Preserve this import order:
-let events = {};
+var events = {};
 loader.loadSubScript("chrome://marionette/content/EventUtils.js", events);
 loader.loadSubScript("chrome://marionette/content/ChromeUtils.js", events);
 loader.loadSubScript("chrome://marionette/content/frame-manager.js");
@@ -29,7 +29,6 @@ loader.loadSubScript("chrome://marionette/content/frame-manager.js");
 const logger = Log.repository.getLogger("Marionette");
 
 this.EXPORTED_SYMBOLS = ["MarionetteServer"];
-const SPECIAL_POWERS_PREF = "security.turn_off_all_security_so_that_viruses_can_take_over_this_computer";
 const CONTENT_LISTENER_PREF = "marionette.contentListener";
 
 /**

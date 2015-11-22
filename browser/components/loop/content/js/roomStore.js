@@ -2,8 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* global loop:true */
-
 var loop = loop || {};
 loop.store = loop.store || {};
 
@@ -29,13 +27,13 @@ loop.store = loop.store || {};
    * @type {Object}
    */
   var roomSchema = {
-    roomToken:    String,
-    roomUrl:      String,
-    // roomName:     String - Optional.
-    // roomKey:      String - Optional.
-    maxSize:      Number,
+    roomToken: String,
+    roomUrl: String,
+    // roomName: String - Optional.
+    // roomKey: String - Optional.
+    maxSize: Number,
     participants: Array,
-    ctime:        Number
+    ctime: Number
   };
 
   /**
@@ -116,7 +114,7 @@ loop.store = loop.store || {};
         activeRoom: this.activeRoomStore ? this.activeRoomStore.getStoreState() : {},
         error: null,
         pendingCreation: false,
-        pendingInitialRetrieval: false,
+        pendingInitialRetrieval: true,
         rooms: [],
         savingContext: false
       };
@@ -264,10 +262,9 @@ loop.store = loop.store || {};
 
       var roomCreationData = {
         decryptedContext: {
-          roomName:  this._generateNewRoomName(actionData.nameTemplate)
+          roomName: this._generateNewRoomName(actionData.nameTemplate)
         },
-        roomOwner: actionData.roomOwner,
-        maxSize:   this.maxRoomCreationSize
+        maxSize: this.maxRoomCreationSize
       };
 
       if ("urls" in actionData) {
@@ -277,7 +274,9 @@ loop.store = loop.store || {};
       this._notifications.remove("create-room-error");
 
       this._mozLoop.rooms.create(roomCreationData, function(err, createdRoom) {
+        var buckets = this._mozLoop.ROOM_CREATE;
         if (err) {
+          this._mozLoop.telemetryAddValue("LOOP_ROOM_CREATE", buckets.CREATE_FAIL);
           this.dispatchAction(new sharedActions.CreateRoomError({error: err}));
           return;
         }
@@ -285,6 +284,16 @@ loop.store = loop.store || {};
         this.dispatchAction(new sharedActions.CreatedRoom({
           roomToken: createdRoom.roomToken
         }));
+        this._mozLoop.telemetryAddValue("LOOP_ROOM_CREATE", buckets.CREATE_SUCCESS);
+
+        // Since creating a room with context is only possible from the panel,
+        // we can record that as the action here.
+        var URLs = roomCreationData.decryptedContext.urls;
+        if (URLs && URLs.length) {
+          buckets = this._mozLoop.ROOM_CONTEXT_ADD;
+          this._mozLoop.telemetryAddValue("LOOP_ROOM_CONTEXT_ADD",
+            buckets.ADD_FROM_PANEL);
+        }
       }.bind(this));
     },
 
@@ -315,7 +324,7 @@ loop.store = loop.store || {};
       this._notifications.set({
         id: "create-room-error",
         level: "error",
-        message: mozL10n.get("generic_failure_title")
+        message: mozL10n.get("generic_failure_message")
       });
     },
 
@@ -327,6 +336,14 @@ loop.store = loop.store || {};
     copyRoomUrl: function(actionData) {
       this._mozLoop.copyString(actionData.roomUrl);
       this._mozLoop.notifyUITour("Loop:RoomURLCopied");
+
+      var from = actionData.from;
+      var bucket = this._mozLoop.SHARING_ROOM_URL["COPY_FROM_" + from.toUpperCase()];
+      if (typeof bucket === "undefined") {
+        console.error("No URL sharing type bucket found for '" + from + "'");
+        return;
+      }
+      this._mozLoop.telemetryAddValue("LOOP_SHARING_ROOM_URL", bucket);
     },
 
     /**
@@ -336,7 +353,7 @@ loop.store = loop.store || {};
      */
     emailRoomUrl: function(actionData) {
       loop.shared.utils.composeCallUrlEmail(actionData.roomUrl, null,
-        actionData.roomDescription);
+        actionData.roomDescription, actionData.from);
       this._mozLoop.notifyUITour("Loop:RoomURLEmailed");
     },
 
@@ -352,16 +369,11 @@ loop.store = loop.store || {};
 
       switch (providerOrigin) {
         case "mail.google.com":
-          shareTitle = mozL10n.get("share_email_subject5", {
-            clientShortname2: mozL10n.get("clientShortname2")
+          shareTitle = mozL10n.get("share_email_subject6");
+          shareBody = mozL10n.get("share_email_body6", {
+            callUrl: actionData.roomUrl
           });
-          shareBody = mozL10n.get("share_email_body5", {
-            callUrl: actionData.roomUrl,
-            brandShortname: mozL10n.get("brandShortname"),
-            clientShortname2: mozL10n.get("clientShortname2"),
-            clientSuperShortname: mozL10n.get("clientSuperShortname"),
-            learnMoreUrl: this._mozLoop.getLoopPref("learnMoreUrl")
-          });
+          shareBody += mozL10n.get("share_email_footer");
           break;
         case "twitter.com":
         default:
@@ -392,9 +404,12 @@ loop.store = loop.store || {};
      */
     deleteRoom: function(actionData) {
       this._mozLoop.rooms.delete(actionData.roomToken, function(err) {
+        var buckets = this._mozLoop.ROOM_DELETE;
         if (err) {
-         this.dispatchAction(new sharedActions.DeleteRoomError({error: err}));
+          this.dispatchAction(new sharedActions.DeleteRoomError({error: err}));
         }
+        this._mozLoop.telemetryAddValue("LOOP_ROOM_DELETE", buckets[err ?
+          "DELETE_FAIL" : "DELETE_SUCCESS"]);
       }.bind(this));
     },
 
@@ -411,7 +426,6 @@ loop.store = loop.store || {};
      * Gather the list of all available rooms from the MozLoop API.
      */
     getAllRooms: function() {
-      this.setStoreState({pendingInitialRetrieval: true});
       this._mozLoop.rooms.getAll(null, function(err, rawRoomList) {
         var action;
 
@@ -480,7 +494,7 @@ loop.store = loop.store || {};
         var context = room.decryptedContext;
         var oldRoomName = context.roomName;
         var newRoomName = actionData.newRoomName.trim();
-        if (newRoomName && oldRoomName != newRoomName) {
+        if (newRoomName && oldRoomName !== newRoomName) {
           roomData.roomName = newRoomName;
         }
         var oldRoomURLs = context.urls;
@@ -503,7 +517,9 @@ loop.store = loop.store || {};
           var isValidURL = false;
           try {
             isValidURL = new URL(newRoomURL.location);
-          } catch(ex) {}
+          } catch(ex) {
+            // URL may throw, default to false;
+          }
           if (isValidURL) {
             roomData.urls = [newRoomURL];
           }
@@ -523,13 +539,24 @@ loop.store = loop.store || {};
           return;
         }
 
+        var hadContextBefore = !!oldRoomURL;
+
         this.setStoreState({error: null});
         this._mozLoop.rooms.update(actionData.roomToken, roomData,
-          function(err, data) {
-            var action = err ?
-              new sharedActions.UpdateRoomContextError({ error: err }) :
+          function(error, data) {
+            var action = error ?
+              new sharedActions.UpdateRoomContextError({ error: error }) :
               new sharedActions.UpdateRoomContextDone();
             this.dispatchAction(action);
+
+            if (!err && !hadContextBefore) {
+              // Since updating the room context data is only possible from the
+              // conversation window, we can assume that any newly added URL was
+              // done from there.
+              var buckets = this._mozLoop.ROOM_CONTEXT_ADD;
+              this._mozLoop.telemetryAddValue("LOOP_ROOM_CONTEXT_ADD",
+                buckets.ADD_FROM_CONVERSATION);
+            }
           }.bind(this));
       }.bind(this));
     },

@@ -20,7 +20,7 @@
 #include "nsAutoPtr.h"
 #include "nsString.h"
 #include "nsTArray.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsHashKeys.h"
 #ifdef MOZ_CRASHREPORTER
 #  include "nsExceptionHandler.h"
@@ -62,9 +62,9 @@ extern PRLogModuleInfo* GetPluginLog();
 #define FULLFUNCTION __FUNCTION__
 #endif
 
-#define PLUGIN_LOG_DEBUG(args) PR_LOG(GetPluginLog(), PR_LOG_DEBUG, args)
-#define PLUGIN_LOG_DEBUG_FUNCTION PR_LOG(GetPluginLog(), PR_LOG_DEBUG, ("%s", FULLFUNCTION))
-#define PLUGIN_LOG_DEBUG_METHOD PR_LOG(GetPluginLog(), PR_LOG_DEBUG, ("%s [%p]", FULLFUNCTION, (void*) this))
+#define PLUGIN_LOG_DEBUG(args) MOZ_LOG(GetPluginLog(), mozilla::LogLevel::Debug, args)
+#define PLUGIN_LOG_DEBUG_FUNCTION MOZ_LOG(GetPluginLog(), mozilla::LogLevel::Debug, ("%s", FULLFUNCTION))
+#define PLUGIN_LOG_DEBUG_METHOD MOZ_LOG(GetPluginLog(), mozilla::LogLevel::Debug, ("%s [%p]", FULLFUNCTION, (void*) this))
 
 /**
  * This is NPByteRange without the linked list.
@@ -105,7 +105,7 @@ struct NPRemoteWindow
 typedef HWND NativeWindowHandle;
 #elif defined(MOZ_X11)
 typedef XID NativeWindowHandle;
-#elif defined(XP_MACOSX) || defined(ANDROID) || defined(MOZ_WIDGET_QT)
+#elif defined(XP_DARWIN) || defined(ANDROID) || defined(MOZ_WIDGET_QT)
 typedef intptr_t NativeWindowHandle; // never actually used, will always be 0
 #else
 #error Need NativeWindowHandle for this platform
@@ -200,7 +200,7 @@ inline bool IsPluginThread()
 
 inline void AssertPluginThread()
 {
-  NS_ASSERTION(IsPluginThread(), "Should be on the plugin's main thread!");
+  MOZ_RELEASE_ASSERT(IsPluginThread(), "Should be on the plugin's main thread!");
 }
 
 #define ENSURE_PLUGIN_THREAD(retval) \

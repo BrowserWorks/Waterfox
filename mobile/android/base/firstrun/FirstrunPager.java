@@ -11,17 +11,28 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
+import android.view.View;
+import android.view.ViewGroup;
 import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.AnimatorSet;
 import com.nineoldandroids.animation.ObjectAnimator;
 import com.nineoldandroids.view.ViewHelper;
+
+import org.mozilla.gecko.RestrictedProfiles;
+import org.mozilla.gecko.Telemetry;
+import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.animation.TransitionsTracker;
+import org.mozilla.gecko.home.HomePager.Decor;
+import org.mozilla.gecko.home.TabMenuStrip;
 
 import java.util.List;
 
 public class FirstrunPager extends ViewPager {
+
     private Context context;
-    protected FirstrunPane.OnFinishListener listener;
+    protected FirstrunPanel.PagerNavigation pagerNavigation;
+    private Decor mDecor;
+    private View mTabStrip;
 
     public FirstrunPager(Context context) {
         this(context, null);
@@ -32,9 +43,65 @@ public class FirstrunPager extends ViewPager {
         this.context = context;
     }
 
-    public void load(FragmentManager fm, FirstrunPane.OnFinishListener listener) {
-        setAdapter(new ViewPagerAdapter(fm, FirstrunPagerConfig.getDefault()));
-        this.listener = listener;
+    @Override
+    public void addView(View child, int index, ViewGroup.LayoutParams params) {
+        if (child instanceof Decor) {
+            ((ViewPager.LayoutParams) params).isDecor = true;
+            mDecor = (Decor) child;
+            mTabStrip = child;
+
+            mDecor.setOnTitleClickListener(new TabMenuStrip.OnTitleClickListener() {
+                @Override
+                public void onTitleClicked(int index) {
+                    setCurrentItem(index, true);
+                }
+            });
+        }
+
+        super.addView(child, index, params);
+    }
+
+    public void load(Context appContext, FragmentManager fm, final FirstrunPane.OnFinishListener onFinishListener) {
+        final List<FirstrunPagerConfig.FirstrunPanelConfig> panels;
+
+        if (RestrictedProfiles.isUserRestricted(context)) {
+            panels = FirstrunPagerConfig.getRestricted();
+        } else {
+            panels = FirstrunPagerConfig.getDefault(appContext);
+        }
+
+        setAdapter(new ViewPagerAdapter(fm, panels));
+        this.pagerNavigation = new FirstrunPanel.PagerNavigation() {
+            @Override
+            public void next() {
+                final int currentPage = FirstrunPager.this.getCurrentItem();
+                if (currentPage < FirstrunPager.this.getChildCount() - 1) {
+                    FirstrunPager.this.setCurrentItem(currentPage + 1);
+                }
+            }
+
+            @Override
+            public void finish() {
+                if (onFinishListener != null) {
+                    onFinishListener.onFinish();
+                }
+            }
+        };
+        addOnPageChangeListener(new OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                mDecor.onPageScrolled(position, positionOffset, positionOffsetPixels);
+            }
+
+            @Override
+            public void onPageSelected(int i) {
+                mDecor.onPageSelected(i);
+                Telemetry.sendUIEvent(TelemetryContract.Event.SHOW, TelemetryContract.Method.PANEL, "onboarding." + i);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int i) {}
+        });
 
         animateLoad();
     }
@@ -63,17 +130,30 @@ public class FirstrunPager extends ViewPager {
     }
 
     private class ViewPagerAdapter extends FragmentPagerAdapter {
-        private List<FirstrunPagerConfig.FirstrunPanel> panels;
+        private final List<FirstrunPagerConfig.FirstrunPanelConfig> panels;
+        private final Fragment[] fragments;
 
-        public ViewPagerAdapter(FragmentManager fm, List<FirstrunPagerConfig.FirstrunPanel> panels) {
+        public ViewPagerAdapter(FragmentManager fm, List<FirstrunPagerConfig.FirstrunPanelConfig> panels) {
             super(fm);
             this.panels = panels;
+            this.fragments = new Fragment[panels.size()];
+            for (FirstrunPagerConfig.FirstrunPanelConfig panel : panels) {
+                mDecor.onAddPagerView(context.getString(panel.getTitleRes()));
+            }
+
+            if (panels.size() > 0) {
+                mDecor.onPageSelected(0);
+            }
         }
 
         @Override
         public Fragment getItem(int i) {
-            final Fragment fragment = Fragment.instantiate(context, panels.get(i).getClassname());
-            ((FirstrunPanel) fragment).setOnFinishListener(listener);
+            Fragment fragment = this.fragments[i];
+            if (fragment == null) {
+                fragment = Fragment.instantiate(context, panels.get(i).getClassname());
+                ((FirstrunPanel) fragment).setPagerNavigation(pagerNavigation);
+                fragments[i] = fragment;
+            }
             return fragment;
         }
 
@@ -84,6 +164,7 @@ public class FirstrunPager extends ViewPager {
 
         @Override
         public CharSequence getPageTitle(int i) {
+            // Unused now that we use TabMenuStrip.
             return context.getString(panels.get(i).getTitleRes()).toUpperCase();
         }
     }

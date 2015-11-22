@@ -13,9 +13,10 @@ import org.json.JSONObject;
 import org.mozilla.gecko.Actions;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.home.HomePager;
+import org.mozilla.gecko.home.SearchEngineBar;
+import org.mozilla.gecko.R;
 
 import android.widget.ImageView;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import com.jayway.android.robotium.solo.Condition;
@@ -145,20 +146,26 @@ public class testAddSearchEngine extends AboutHomeTest {
         boolean correctNumSearchEnginesDisplayed = waitForCondition(new Condition() {
             @Override
             public boolean isSatisfied() {
-                ListView list = findListViewWithTag(HomePager.LIST_TAG_BROWSER_SEARCH);
-                if (list == null) {
+                ListView searchResultList = findListViewWithTag(HomePager.LIST_TAG_BROWSER_SEARCH);
+                if (searchResultList == null || searchResultList.getAdapter() == null) {
                     return false;
                 }
-                ListAdapter adapter = list.getAdapter();
-                if (adapter == null) {
+
+                SearchEngineBar searchEngineBar = (SearchEngineBar) mSolo.getView(R.id.search_engine_bar);
+                if (searchEngineBar == null || searchEngineBar.getAdapter() == null) {
                     return false;
                 }
-                return (adapter.getCount() == expectedCount);
+
+                final int actualCount = searchResultList.getAdapter().getCount()
+                        + searchEngineBar.getAdapter().getItemCount()
+                        - 1; // Subtract one for the search engine bar label (Bug 1172071)
+
+                return (actualCount == expectedCount);
             }
         }, MAX_WAIT_TEST_MS);
 
         // Exit about:home
-        mActions.sendSpecialKey(Actions.SpecialKey.BACK);
+        mSolo.goBack();
         waitForText(mStringHelper.ROBOCOP_BLANK_PAGE_01_TITLE);
         mAsserter.ok(correctNumSearchEnginesDisplayed, expectedCount + " Search Engines should be displayed" , "The correct number of Search Engines has been displayed");
     }

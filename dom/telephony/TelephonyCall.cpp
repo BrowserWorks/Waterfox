@@ -87,23 +87,8 @@ TelephonyCall::ChangeStateInternal(uint16_t aCallState, bool aFireEvents)
 {
   nsRefPtr<TelephonyCall> kungFuDeathGrip(this);
 
-  // Update the internal state.
   mCallState = aCallState;
-
-  // Indicate whether the external state have been changed.
-  bool externalStateChanged = true;
   switch (aCallState) {
-    // These states are used internally to mark this call is currently being
-    // controlled, and we should block consecutive requests of the same type
-    // according to these states.
-    case nsITelephonyService::CALL_STATE_CONNECTING:
-    case nsITelephonyService::CALL_STATE_DISCONNECTING:
-    case nsITelephonyService::CALL_STATE_HOLDING:
-    case nsITelephonyService::CALL_STATE_RESUMING:
-      externalStateChanged = false;
-      break;
-    // These states will be translated into literal strings which are used to
-    // show the current status of this call.
     case nsITelephonyService::CALL_STATE_DIALING:
       mState.AssignLiteral("dialing");
       break;
@@ -134,7 +119,6 @@ TelephonyCall::ChangeStateInternal(uint16_t aCallState, bool aFireEvents)
     } else {
       mTelephony->RemoveCall(this);
     }
-    UpdateDisconnectedReason(NS_LITERAL_STRING("NormalCallClearingError"));
   } else if (!mLive) {
     mLive = true;
     if (mGroup) {
@@ -144,7 +128,7 @@ TelephonyCall::ChangeStateInternal(uint16_t aCallState, bool aFireEvents)
     }
   }
 
-  if (aFireEvents && externalStateChanged) {
+  if (aFireEvents) {
     nsresult rv = DispatchCallEvent(NS_LITERAL_STRING("statechange"), this);
     if (NS_FAILED(rv)) {
       NS_WARNING("Failed to dispatch specific event!");
@@ -211,16 +195,23 @@ TelephonyCall::NotifyError(const nsAString& aError)
 void
 TelephonyCall::UpdateDisconnectedReason(const nsAString& aDisconnectedReason)
 {
-  NS_ASSERTION(Substring(aDisconnectedReason, aDisconnectedReason.Length() - 5).EqualsLiteral("Error"),
+  NS_ASSERTION(Substring(aDisconnectedReason,
+                         aDisconnectedReason.Length() - 5).EqualsLiteral("Error"),
                "Disconnected reason should end with 'Error'");
 
-  if (mDisconnectedReason.IsNull()) {
-    // There is no 'Error' suffix in the corresponding enum. We should skip
-    // that part for comparison.
-    CONVERT_STRING_TO_NULLABLE_ENUM(
-        Substring(aDisconnectedReason, 0, aDisconnectedReason.Length() - 5),
-        TelephonyCallDisconnectedReason,
-        mDisconnectedReason);
+  if (!mDisconnectedReason.IsNull()) {
+    return;
+  }
+
+  // There is no 'Error' suffix in the corresponding enum. We should skip
+  // that part for comparison.
+  CONVERT_STRING_TO_NULLABLE_ENUM(
+      Substring(aDisconnectedReason, 0, aDisconnectedReason.Length() - 5),
+      TelephonyCallDisconnectedReason,
+      mDisconnectedReason);
+
+  if (!aDisconnectedReason.EqualsLiteral("NormalCallClearingError")) {
+    NotifyError(aDisconnectedReason);
   }
 }
 
@@ -298,7 +289,6 @@ TelephonyCall::Answer(ErrorResult& aRv)
   aRv = mTelephony->Service()->AnswerCall(mServiceId, mCallIndex, callback);
   NS_ENSURE_TRUE(!aRv.Failed(), nullptr);
 
-  ChangeStateInternal(nsITelephonyService::CALL_STATE_CONNECTING, false);
   return promise.forget();
 }
 
@@ -310,8 +300,7 @@ TelephonyCall::HangUp(ErrorResult& aRv)
     return nullptr;
   }
 
-  if (mCallState == nsITelephonyService::CALL_STATE_DISCONNECTING ||
-      mCallState == nsITelephonyService::CALL_STATE_DISCONNECTED) {
+  if (mCallState == nsITelephonyService::CALL_STATE_DISCONNECTED) {
     NS_WARNING(nsPrintfCString("HangUp on previously disconnected call"
                                " is rejected! (State: %u)", mCallState).get());
     promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
@@ -324,7 +313,6 @@ TelephonyCall::HangUp(ErrorResult& aRv)
     mTelephony->Service()->HangUpCall(mServiceId, mCallIndex, callback);
   NS_ENSURE_TRUE(!aRv.Failed(), nullptr);
 
-  ChangeStateInternal(nsITelephonyService::CALL_STATE_DISCONNECTING, false);
   return promise.forget();
 }
 
@@ -336,37 +324,13 @@ TelephonyCall::Hold(ErrorResult& aRv)
     return nullptr;
   }
 
-  if (mCallState != nsITelephonyService::CALL_STATE_CONNECTED) {
-    NS_WARNING(nsPrintfCString("Hold non-connected call is rejected!"
-                               " (State: %u)", mCallState).get());
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return promise.forget();
-  }
-
-  if (mGroup) {
-    NS_WARNING("Hold a call in conference is rejected!");
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return promise.forget();
-  }
-
-  if (!mSwitchable) {
-    NS_WARNING("Hold a non-switchable call is rejected!");
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return promise.forget();
-  }
-
   nsCOMPtr<nsITelephonyCallback> callback = new TelephonyCallback(promise);
-  aRv = mTelephony->Service()->HoldCall(mServiceId, mCallIndex, callback);
-  NS_ENSURE_TRUE(!aRv.Failed(), nullptr);
-
-  if (mSecondId) {
-    // No state transition when we switch two numbers within one TelephonyCall
-    // object. Otherwise, the state here will be inconsistent with the backend
-    // RIL and will never be right.
-    return promise.forget();
+  aRv = Hold(callback);
+  if (NS_WARN_IF(aRv.Failed() &&
+                 !aRv.ErrorCodeIs(NS_ERROR_DOM_INVALID_STATE_ERR))) {
+    return nullptr;
   }
 
-  ChangeStateInternal(nsITelephonyService::CALL_STATE_HOLDING, false);
   return promise.forget();
 }
 
@@ -378,29 +342,78 @@ TelephonyCall::Resume(ErrorResult& aRv)
     return nullptr;
   }
 
-  if (mCallState != nsITelephonyService::CALL_STATE_HELD) {
-    NS_WARNING(nsPrintfCString("Resume non-held call is rejected!"
+  nsCOMPtr<nsITelephonyCallback> callback = new TelephonyCallback(promise);
+  aRv = Resume(callback);
+  if (NS_WARN_IF(aRv.Failed() &&
+                 !aRv.ErrorCodeIs(NS_ERROR_DOM_INVALID_STATE_ERR))) {
+    return nullptr;
+  }
+
+  return promise.forget();
+}
+
+nsresult
+TelephonyCall::Hold(nsITelephonyCallback* aCallback)
+{
+  if (mCallState != nsITelephonyService::CALL_STATE_CONNECTED) {
+    NS_WARNING(nsPrintfCString("Hold non-connected call is rejected!"
                                " (State: %u)", mCallState).get());
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return promise.forget();
+    aCallback->NotifyError(NS_LITERAL_STRING("InvalidStateError"));
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
+  }
+
+  if (mGroup) {
+    NS_WARNING("Hold a call in conference is rejected!");
+    aCallback->NotifyError(NS_LITERAL_STRING("InvalidStateError"));
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
+  }
+
+  if (!mSwitchable) {
+    NS_WARNING("Hold a non-switchable call is rejected!");
+    aCallback->NotifyError(NS_LITERAL_STRING("InvalidStateError"));
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
+  }
+
+  nsresult rv = mTelephony->Service()->HoldCall(mServiceId, mCallIndex, aCallback);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  if (mSecondId) {
+    // No state transition when we switch two numbers within one TelephonyCall
+    // object. Otherwise, the state here will be inconsistent with the backend
+    // RIL and will never be right.
+    return NS_OK;
+  }
+
+  return NS_OK;
+}
+
+nsresult
+TelephonyCall::Resume(nsITelephonyCallback* aCallback)
+{
+  if (mCallState != nsITelephonyService::CALL_STATE_HELD) {
+    NS_WARNING("Resume non-held call is rejected!");
+    aCallback->NotifyError(NS_LITERAL_STRING("InvalidStateError"));
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
   }
 
   if (mGroup) {
     NS_WARNING("Resume a call in conference is rejected!");
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return promise.forget();
+    aCallback->NotifyError(NS_LITERAL_STRING("InvalidStateError"));
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
   }
 
   if (!mSwitchable) {
     NS_WARNING("Resume a non-switchable call is rejected!");
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return promise.forget();
+    aCallback->NotifyError(NS_LITERAL_STRING("InvalidStateError"));
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
   }
 
-  nsCOMPtr<nsITelephonyCallback> callback = new TelephonyCallback(promise);
-  aRv = mTelephony->Service()->ResumeCall(mServiceId, mCallIndex, callback);
-  NS_ENSURE_TRUE(!aRv.Failed(), nullptr);
+  nsresult rv = mTelephony->Service()->ResumeCall(mServiceId, mCallIndex, aCallback);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return NS_ERROR_FAILURE;
+  }
 
-  ChangeStateInternal(nsITelephonyService::CALL_STATE_RESUMING, false);
-  return promise.forget();
+  return NS_OK;
 }

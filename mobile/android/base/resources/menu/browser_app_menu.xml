@@ -39,6 +39,10 @@
     <item android:id="@+id/save_as_pdf"
           android:title="@string/save_as_pdf" />
 
+    <item android:id="@+id/print"
+          android:visible="false"
+          android:title="@string/print" />
+
     <item android:id="@+id/find_in_page"
           android:title="@string/find_in_page" />
 
@@ -55,9 +59,6 @@
     <item android:id="@+id/logins"
           android:title="@string/logins"/>
 
-    <item android:id="@+id/apps"
-          android:title="@string/apps"/>
-
     <item android:id="@+id/char_encoding"
           android:visible="false"
           android:title="@string/char_encoding"/>
@@ -69,12 +70,10 @@
           android:title="@string/help_menu" />
 
     <item android:id="@+id/new_guest_session"
-          android:icon="@drawable/ic_menu_guest"
           android:visible="false"
           android:title="@string/new_guest_session"/>
 
     <item android:id="@+id/exit_guest_session"
-          android:icon="@drawable/ic_menu_guest"
           android:visible="false"
           android:title="@string/exit_guest_session"/>
 

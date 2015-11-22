@@ -12,11 +12,9 @@ do_register_cleanup(() => {
   Services.prefs.clearUserPref("devtools.discovery.log");
 });
 
-const { devtools } =
+const { require } =
   Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const { Promise: promise } =
-  Cu.import("resource://gre/modules/Promise.jsm", {});
-const { require } = devtools;
+const promise = require("promise");
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const discovery = require("devtools/toolkit/discovery/discovery");
 const { setTimeout, clearTimeout } = require("sdk/timers");
@@ -26,7 +24,7 @@ function log(msg) {
 }
 
 // Global map of actively listening ports to TestTransport instances
-let gTestTransports = {};
+var gTestTransports = {};
 
 /**
  * Implements the same API as Transport in discovery.js.  Here, no UDP sockets

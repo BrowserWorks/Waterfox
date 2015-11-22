@@ -67,7 +67,7 @@ EXTN(jsimd_h2v1_fancy_upsample_sse2):
         mov     rbp,rsp
         collect_args
 
-        mov     eax, r11d  ; colctr
+        mov     rax, r11  ; colctr
         test    rax,rax
         jz      near .return
 
@@ -214,7 +214,7 @@ EXTN(jsimd_h2v2_fancy_upsample_sse2):
         collect_args
         push    rbx
 
-        mov     eax, r11d  ; colctr
+        mov     rax, r11  ; colctr
         test    rax,rax
         jz      near .return
 
@@ -506,7 +506,7 @@ EXTN(jsimd_h2v1_upsample_sse2):
         mov     rbp,rsp
         collect_args
 
-        mov     edx, r11d
+        mov     rdx, r11
         add     rdx, byte (2*SIZEOF_XMMWORD)-1
         and     rdx, byte -(2*SIZEOF_XMMWORD)
         jz      near .return
@@ -596,7 +596,7 @@ EXTN(jsimd_h2v2_upsample_sse2):
         collect_args
         push    rbx
 
-        mov     edx, r11d
+        mov     rdx, r11
         add     rdx, byte (2*SIZEOF_XMMWORD)-1
         and     rdx, byte -(2*SIZEOF_XMMWORD)
         jz      near .return

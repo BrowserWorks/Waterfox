@@ -11,18 +11,16 @@
 
 <!ENTITY abouthome.pageTitle "&brandFullName; Start Page">
 
-<!ENTITY abouthome.searchEngineButton.label "Search">
-
 <!-- LOCALIZATION NOTE (abouthome.defaultSnippet1.v1):
      text in <a/> will be linked to the Firefox features page on mozilla.com
 -->
-<!ENTITY abouthome.defaultSnippet1.v1 "Thanks for choosing Waterfox! We share the same features as Firefox. To get the most out of your browser, learn more about the <a>latest features</a>.">
+<!ENTITY abouthome.defaultSnippet1.v1 "Thanks for choosing Firefox! To get the most out of your browser, learn more about the <a>latest features</a>.">
 <!-- LOCALIZATION NOTE (abouthome.defaultSnippet2.v1):
      text in <a/> will be linked to the featured add-ons on addons.mozilla.org
 -->
-<!ENTITY abouthome.defaultSnippet2.v1 "It's easy to customize your Waterfox exactly the way you want it, thanks to Mozilla. <a>Choose from thousands of add-ons</a>.">
+<!ENTITY abouthome.defaultSnippet2.v1 "It's easy to customize your Firefox exactly the way you want it. <a>Choose from thousands of add-ons</a>.">
 <!-- LOCALIZATION NOTE (abouthome.rightsSnippet): text in <a/> will be linked to about:rights -->
-<!ENTITY abouthome.rightsSnippet "Waterfox is free and open source software. <a>Know your rights…</a>">
+<!ENTITY abouthome.rightsSnippet "&brandFullName; is free and open source software from the non-profit Mozilla Foundation. <a>Know your rights…</a>">
 
 <!ENTITY abouthome.bookmarksButton.label "Bookmarks">
 <!ENTITY abouthome.historyButton.label   "History">
@@ -33,6 +31,9 @@
      preferences/options item on about:home on Linux and OS X -->
 <!ENTITY abouthome.preferencesButtonUnix.label  "Preferences">
 <!ENTITY abouthome.addonsButton.label    "Add-ons">
-<!ENTITY abouthome.appsButton.label      "Marketplace">
+<!-- LOCALIZATION NOTE (abouthome.appsButton2.label): This string should be consistent with
+     the Apps menu item in the Tools menu (webapps.label in browser.dtd) and the Apps toolbar button in
+     Firefox's customization palette (web-apps-button.label in customizableWidgets.properties) -->
+<!ENTITY abouthome.appsButton2.label     "Apps">
 <!ENTITY abouthome.downloadsButton.label "Downloads">
 <!ENTITY abouthome.syncButton.label      "&syncBrand.shortName.label;">

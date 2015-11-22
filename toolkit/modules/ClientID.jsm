@@ -11,6 +11,7 @@ const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Preferences.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "CommonUtils",
                                   "resource://services-common/utils.js");
@@ -22,6 +23,8 @@ XPCOMUtils.defineLazyGetter(this, "gDatareportingPath", () => {
 XPCOMUtils.defineLazyGetter(this, "gStateFilePath", () => {
   return OS.Path.join(gDatareportingPath, "state.json");
 });
+
+const PREF_CACHED_CLIENTID = "toolkit.telemetry.cachedClientID";
 
 this.ClientID = Object.freeze({
   /**
@@ -35,12 +38,15 @@ this.ClientID = Object.freeze({
     return ClientIDImpl.getClientID();
   },
 
-  /**
-   * Generates a new client ID.
-   * @return {Promise<string>} A promise resolved with the new client id.
+/**
+   * Get the client id synchronously without hitting the disk.
+   * This returns:
+   *  - the current on-disk client id if it was already loaded
+   *  - the client id that we cached into preferences (if any)
+   *  - null otherwise
    */
-  resetClientID: function() {
-    return ClientIDImpl.resetClientID();
+  getCachedClientID: function() {
+    return ClientIDImpl.getCachedClientID();
   },
 
   /**
@@ -52,7 +58,7 @@ this.ClientID = Object.freeze({
   },
 });
 
-let ClientIDImpl = {
+var ClientIDImpl = {
   _clientID: null,
   _loadClientIdTask: null,
   _saveClientIdTask: null,
@@ -79,6 +85,7 @@ let ClientIDImpl = {
       let state = yield CommonUtils.readJSON(gStateFilePath);
       if (state && 'clientID' in state && typeof(state.clientID) == 'string') {
         this._clientID = state.clientID;
+        Preferences.set(PREF_CACHED_CLIENTID, this._clientID);
         return this._clientID;
       }
     } catch (e) {
@@ -91,6 +98,7 @@ let ClientIDImpl = {
       let state = yield CommonUtils.readJSON(fhrStatePath);
       if (state && 'clientID' in state && typeof(state.clientID) == 'string') {
         this._clientID = state.clientID;
+        Preferences.set(PREF_CACHED_CLIENTID, this._clientID);
         this._saveClientID();
         return this._clientID;
       }
@@ -100,6 +108,7 @@ let ClientIDImpl = {
 
     // We dont have an id from FHR yet, generate a new ID.
     this._clientID = CommonUtils.generateUUID();
+    Preferences.set(PREF_CACHED_CLIENTID, this._clientID);
     this._saveClientIdTask = this._saveClientID();
 
     // Wait on persisting the id. Otherwise failure to save the ID would result in
@@ -139,20 +148,21 @@ let ClientIDImpl = {
   },
 
   /**
-   * Reset the stable client id.
-   *
-   * @return {Promise<string>} The new client ID.
+   * Get the client id synchronously without hitting the disk.
+   * This returns:
+   *  - the current on-disk client id if it was already loaded
+   *  - the client id that we cached into preferences (if any)
+   *  - null otherwise
    */
-  resetClientID: Task.async(function* () {
-    yield this._loadClientIdTask;
-    yield this._saveClientIdTask;
+  getCachedClientID: function() {
+    if (this._clientID) {
+      // Already loaded the client id from disk.
+      return this._clientID;
+    }
 
-    this._clientID = CommonUtils.generateUUID();
-    this._saveClientIdTask = this._saveClientID();
-    yield this._saveClientIdTask;
-
-    return this._clientID;
-  }),
+    // Not yet loaded, return the cached client id if we have one.
+    return Preferences.get(PREF_CACHED_CLIENTID, null);
+  },
 
   /*
    * Resets the provider. This is for testing only.

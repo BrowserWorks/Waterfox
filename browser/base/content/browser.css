@@ -6,6 +6,10 @@
 @namespace html url("http://www.w3.org/1999/xhtml");
 @namespace svg url("http://www.w3.org/2000/svg");
 
+:root {
+  --panelui-subview-transition-duration: 150ms;
+}
+
 #main-window:not([chromehidden~="toolbar"]) {
 %ifdef XP_MACOSX
   min-width: 335px;
@@ -34,8 +38,8 @@
   * along any dimension beyond the point at which an overflow event would
   * occur".  But none of -moz-{fit,max,min}-content do what we want here. So..
   */
-  min-width: 320px;
-  min-height: 280px;
+  min-width: 260px;
+  min-height: 315px;
 }
 
 #main-window[customize-entered] {
@@ -110,11 +114,12 @@ panelview {
 }
 
 .panel-mainview {
-  transition: transform 150ms;
+  transition: transform var(--panelui-subview-transition-duration);
 }
 
 panelview:not([mainview]):not([current]) {
-  display: none;
+  transition: visibility 0s linear var(--panelui-subview-transition-duration);
+  visibility: collapse;
 }
 
 tabbrowser {
@@ -375,8 +380,7 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
 
 /* Apply crisp rendering for favicons at exactly 2dppx resolution */
 @media (resolution: 2dppx) {
-  .searchbar-engine-image,
-  .searchbar-engine-menuitem > .menu-iconic-left > .menu-iconic-icon {
+  .searchbar-engine-image {
     image-rendering: -moz-crisp-edges;
   }
 }
@@ -454,22 +458,39 @@ panel[noactions] > richlistbox > richlistitem.overridable-action > .ac-url-box >
 }
 
 #PopupSearchAutoComplete {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#browser-search-autocomplete-result-popup");
+  -moz-binding: url("chrome://browser/content/search/search.xml#browser-search-autocomplete-result-popup");
 }
 
 /* Overlay a badge on top of the icon of additional open search providers
    in the search panel. */
 .addengine-item > .button-box > .button-icon {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#addengine-icon");
+  -moz-binding: url("chrome://browser/content/search/search.xml#addengine-icon");
   display: -moz-stack;
-}
-
-searchbar[oneoffui] {
-  -moz-binding: url("chrome://browser/content/search/search.xml#searchbar-flare") !important;
 }
 
 #PopupAutoCompleteRichResult {
   -moz-binding: url("chrome://browser/content/urlbarBindings.xml#urlbar-rich-result-popup");
+}
+
+#PopupAutoCompleteRichResult.showSearchSuggestionsNotification {
+  transition: height 100ms;
+}
+
+#PopupAutoCompleteRichResult > hbox[anonid="search-suggestions-notification"] {
+  visibility: collapse;
+  transition: margin-top 100ms;
+}
+
+#PopupAutoCompleteRichResult.showSearchSuggestionsNotification > hbox[anonid="search-suggestions-notification"] {
+  visibility: visible;
+}
+
+#PopupAutoCompleteRichResult > richlistbox {
+  transition: height 100ms;
+}
+
+#PopupAutoCompleteRichResult.showSearchSuggestionsNotification > richlistbox {
+  transition: none;
 }
 
 #urlbar[pageproxystate="invalid"] > #urlbar-icons > .urlbar-icon,
@@ -550,7 +571,7 @@ toolbarbutton.bookmark-item {
 
 /* Apply crisp rendering for favicons at exactly 2dppx resolution */
 @media (resolution: 2dppx) {
-  .alltabs-popup > .menuitem-iconic > .menu-iconic-left > .menu-iconic-icon,
+  #alltabs-popup > .menuitem-iconic > .menu-iconic-left > .menu-iconic-icon,
   .menuitem-with-favicon > .menu-iconic-left > .menu-iconic-icon {
     image-rendering: -moz-crisp-edges;
   }
@@ -571,8 +592,7 @@ toolbarbutton.bookmark-item {
 toolbar[mode="text"] #bookmarks-menu-button > .toolbarbutton-menubutton-button > .toolbarbutton-icon {
   display: -moz-box !important;
 }
-toolbar[mode="text"] #bookmarks-menu-button > .toolbarbutton-menubutton-button > .toolbarbutton-text,
-toolbar[mode="full"] #bookmarks-menu-button.bookmark-item > .toolbarbutton-menubutton-button > .toolbarbutton-text {
+toolbar[mode="text"] #bookmarks-menu-button > .toolbarbutton-menubutton-button > .toolbarbutton-text {
   display: none;
 }
 
@@ -636,22 +656,6 @@ window[chromehidden~="toolbar"] toolbar:not(#nav-bar):not(#TabsToolbar):not(#pri
   background-image: -moz-element(#historySwipeAnimationNextPageSnapshot);
 }
 
-/* Identity UI */
-#identity-popup-content-box:not(.chromeUI) > #identity-popup-brandName,
-#identity-popup-content-box:not(.chromeUI) > #identity-popup-chromeLabel,
-#identity-popup-content-box.chromeUI > .identity-popup-label:not(#identity-popup-brandName):not(#identity-popup-chromeLabel),
-#identity-popup-content-box.chromeUI > .identity-popup-description,
-#identity-popup.chromeUI > #identity-popup-button-container,
-#identity-popup-content-box.unknownIdentity > #identity-popup-connectedToLabel ,
-#identity-popup-content-box.unknownIdentity > #identity-popup-runByLabel ,
-#identity-popup-content-box.unknownIdentity > #identity-popup-content-host ,
-#identity-popup-content-box.unknownIdentity > #identity-popup-content-owner ,
-#identity-popup-content-box.verifiedIdentity > #identity-popup-connectedToLabel2 ,
-#identity-popup-content-box.verifiedDomain > #identity-popup-connectedToLabel2 ,
-#identity-popup-content-box.verifiedDomain > #identity-popup-runByLabel {
-  display: none;
-}
-
 /*  Full Screen UI */
 
 #fullscr-toggler {
@@ -659,40 +663,43 @@ window[chromehidden~="toolbar"] toolbar:not(#nav-bar):not(#TabsToolbar):not(#pri
   background: black;
 }
 
-#full-screen-warning-container {
+html|*#fullscreen-warning {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
   z-index: 2147483647 !important;
-}
-
-#full-screen-warning-container[fade-warning-out] {
-  transition-property: opacity !important;
-  transition-duration: 500ms !important;
-  opacity: 0.0;
-}
-
-/* When the modal fullscreen approval UI is showing, don't allow interaction
-   with the page, but when we're just showing the warning upon entering
-   fullscreen on an already approved page, do allow interaction with the page.
- */
-#full-screen-warning-container:not([obscure-browser]) {
+  visibility: visible;
+  transition: transform 300ms ease-in;
+  /* To center the warning box horizontally,
+     we use left: 50% with translateX(-50%). */
+  top: 0; left: 50%;
+  transform: translate(-50%, -100%);
+  box-sizing: border-box;
+  width: -moz-max-content;
+  max-width: 95%;
   pointer-events: none;
 }
-
-#full-screen-warning-message {
-  /* We must specify a max-width, otherwise word-wrap:break-word doesn't
-     work in descendant <description> and <label> elements. Bug 630864. */
-  max-width: 800px;
+html|*#fullscreen-warning:not([hidden]) {
+  display: flex;
+}
+html|*#fullscreen-warning[onscreen] {
+  transform: translate(-50%, 50px);
+}
+html|*#fullscreen-warning[ontop] {
+  /* Use -10px to hide the border and border-radius on the top */
+  transform: translate(-50%, -10px);
 }
 
-#full-screen-domain-text,
-#full-screen-remember-decision > .checkbox-label-box > .checkbox-label {
+html|*#fullscreen-domain-text,
+html|*#fullscreen-generic-text {
   word-wrap: break-word;
   /* We must specify a min-width, otherwise word-wrap:break-word doesn't work. Bug 630864. */
-  min-width: 1px;
+  min-width: 1px
+}
+html|*#fullscreen-domain-text:not([hidden]) + html|*#fullscreen-generic-text {
+  display: none;
+}
+
+html|*#fullscreen-exit-button {
+  pointer-events: auto;
 }
 
 /* ::::: Ctrl-Tab Panel ::::: */
@@ -755,6 +762,7 @@ window[chromehidden~="toolbar"] toolbar:not(#nav-bar):not(#TabsToolbar):not(#pri
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  -moz-stack-sizing: ignore;
 }
 
 #addon-progress-notification {
@@ -765,16 +773,12 @@ window[chromehidden~="toolbar"] toolbar:not(#nav-bar):not(#TabsToolbar):not(#pri
   -moz-binding: url("chrome://browser/content/urlbarBindings.xml#identity-request-notification");
 }
 
-#bad-content-notification {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#bad-content-notification");
-}
-
 #click-to-play-plugins-notification {
   -moz-binding: url("chrome://browser/content/urlbarBindings.xml#click-to-play-plugins-notification");
 }
 
-#password-fill-notification {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#password-fill-notification");
+#login-fill-notification {
+  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#login-fill-notification");
 }
 
 .login-fill-item {
@@ -923,8 +927,32 @@ chatbox {
   width: 260px; /* CHAT_WIDTH_OPEN in socialchat.xml */
 }
 
-chatbox[large="true"] {
-  width: 300px;
+chatbox[customSize] {
+  width: 300px; /* CHAT_WIDTH_OPEN_ALT in socialchat.xml */
+}
+
+#chat-window[customSize] {
+  min-width: 300px;
+}
+
+chatbox[customSize="loopChatEnabled"] {
+  /* 325px as defined per UX */
+  height: 325px;
+}
+
+#chat-window[customSize="loopChatEnabled"] {
+  /* 325px + 30px top bar height. */
+  min-height: calc(325px + 30px);
+}
+
+chatbox[customSize="loopChatMessageAppended"] {
+  /* 445px as defined per UX */
+  height: 445px;
+}
+
+#chat-window[customSize="loopChatMessageAppended"] {
+  /* 445px + 30px top bar height. */
+  min-height: calc(445px + 30px);
 }
 
 chatbox[minimized="true"] {
@@ -936,6 +964,15 @@ chatbar {
   -moz-binding: url("chrome://browser/content/socialchat.xml#chatbar");
   height: 0;
   max-height: 0;
+}
+
+.chatbar-innerbox {
+  margin: -285px 0 0;
+}
+
+chatbar[customSize] > .chatbar-innerbox {
+  /* 425px to make room for the maximum custom-size chatbox; currently 'loopChatMessageAppended'. */
+  margin-top: -425px;
 }
 
 /* Apply crisp rendering for favicons at exactly 2dppx resolution */
@@ -1033,16 +1070,14 @@ chatbox:-moz-full-screen-ancestor > .chat-titlebar {
 /* Combobox dropdown renderer */
 #ContentSelectDropdown > menupopup {
   max-height: 350px;
+  /* The menupopup itself should always be rendered LTR to ensure the scrollbar aligns with
+   * the dropdown arrow on the dropdown widget. If a menuitem is RTL, its style will be set accordingly */
+  direction: ltr;
 }
 
-.contentSelectDropdown-optgroup {
-  font-weight: bold;
-  /* color: menutext used to overwrite the disabled color */
-  color: menutext;
-}
-
-.contentSelectDropdown-ingroup {
-  -moz-margin-start: 2em;
+/* Indent options in optgroups */
+.contentSelectDropdown-ingroup .menu-iconic-text {
+  -moz-padding-start: 2em;
 }
 
 /* Give this menupopup an arrow panel styling */
@@ -1300,14 +1335,8 @@ toolbarpaletteitem[place="palette"][hidden] {
   display: none;
 }
 
-/* Tracking protection doorhanger */
-.popup-notification-footer[popupid="bad-content"] {
-  display: none;
-}
-
-.popup-notification-footer[popupid="bad-content"][mixedblockdisabled],
-.popup-notification-footer[popupid="bad-content"][trackingblockdisabled] {
-  display: block;
+#login-fill-doorhanger:not([inDetailView]) > #login-fill-clickcapturer {
+  pointer-events: none;
 }
 
 .popup-notification-invalid-input {
@@ -1316,4 +1345,28 @@ toolbarpaletteitem[place="palette"][hidden] {
 
 .popup-notification-invalid-input[focused] {
   box-shadow: 0 0 2px 2px rgba(255,0,0,0.4);
+}
+
+#password-notification-password::after {
+  color: hsl(0,0%,60%);
+  content: attr(show-content);
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  transition: color 250ms;
+}
+
+#password-notification-password:hover::after {
+  color: hsl(210,100%,50%);
+}
+
+#password-notification-password[focused]::after {
+  content: none;
+}
+
+/* Bug 1175941: Disable the transition on 10.10 due to flickering, possibly due to an OS X bug. */
+@media (-moz-mac-yosemite-theme) {
+  #password-notification-password::after {
+    transition: none;
+  }
 }

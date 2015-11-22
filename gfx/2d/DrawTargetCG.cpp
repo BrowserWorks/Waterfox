@@ -186,21 +186,22 @@ DrawTargetCG::GetBackendType() const
   }
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 DrawTargetCG::Snapshot()
 {
   if (!mSnapshot) {
     if (GetContextType(mCg) == CG_CONTEXT_TYPE_IOSURFACE) {
-      return new SourceSurfaceCGIOSurfaceContext(this);
+      return MakeAndAddRef<SourceSurfaceCGIOSurfaceContext>(this);
     }
     Flush();
     mSnapshot = new SourceSurfaceCGBitmapContext(this);
   }
 
-  return mSnapshot;
+  RefPtr<SourceSurface> snapshot(mSnapshot);
+  return snapshot.forget();
 }
 
-TemporaryRef<DrawTarget>
+already_AddRefed<DrawTarget>
 DrawTargetCG::CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFormat) const
 {
   // XXX: in thebes we use CGLayers to do this kind of thing. It probably makes sense
@@ -212,7 +213,7 @@ DrawTargetCG::CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aForma
   return nullptr;
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 DrawTargetCG::CreateSourceSurfaceFromData(unsigned char *aData,
                                            const IntSize &aSize,
                                            int32_t aStride,
@@ -251,7 +252,7 @@ GetRetainedImageFromSourceSurface(SourceSurface *aSurface)
       if (!data) {
         MOZ_CRASH("unsupported source surface");
       }
-      data->AddRef();
+      data.get()->AddRef();
       return CreateCGImage(releaseDataSurface, data.get(),
                            data->GetData(), data->GetSize(),
                            data->Stride(), data->GetFormat());
@@ -259,10 +260,11 @@ GetRetainedImageFromSourceSurface(SourceSurface *aSurface)
   }
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 DrawTargetCG::OptimizeSourceSurface(SourceSurface *aSurface) const
 {
-  return aSurface;
+  RefPtr<SourceSurface> surface(aSurface);
+  return surface.forget();
 }
 
 class UnboundnessFixer
@@ -273,16 +275,20 @@ class UnboundnessFixer
   public:
     UnboundnessFixer() : mLayerCg(nullptr) {}
 
-    CGContextRef Check(CGContextRef baseCg, CompositionOp blend, const Rect* maskBounds = nullptr)
+    CGContextRef Check(DrawTargetCG* dt, CompositionOp blend, const Rect* maskBounds = nullptr)
     {
-      MOZ_ASSERT(baseCg);
+      MOZ_ASSERT(dt->mCg);
       if (!IsOperatorBoundByMask(blend)) {
-        mClipBounds = CGContextGetClipBoundingBox(baseCg);
+        // The clip bounding box will be in user space so we need to clear our transform first
+        CGContextSetCTM(dt->mCg, dt->mOriginalTransform);
+        mClipBounds = CGContextGetClipBoundingBox(dt->mCg);
+
         // If we're entirely clipped out or if the drawing operation covers the entire clip then
         // we don't need to create a temporary surface.
         if (CGRectIsEmpty(mClipBounds) ||
             (maskBounds && maskBounds->Contains(CGRectToRect(mClipBounds)))) {
-          return baseCg;
+          CGContextConcatCTM(dt->mCg, GfxMatrixToCGAffineTransform(dt->mTransform));
+          return dt->mCg;
         }
 
         // TransparencyLayers aren't blended using the blend mode so
@@ -290,7 +296,7 @@ class UnboundnessFixer
 
         //XXX: The size here is in default user space units, of the layer relative to the graphics context.
         // is the clip bounds still correct if, for example, we have a scale applied to the context?
-        mLayer = CGLayerCreateWithContext(baseCg, mClipBounds.size, nullptr);
+        mLayer = CGLayerCreateWithContext(dt->mCg, mClipBounds.size, nullptr);
         mLayerCg = CGLayerGetContext(mLayer);
         // CGContext's default to have the origin at the bottom left
         // so flip it to the top left and adjust for the origin
@@ -300,23 +306,27 @@ class UnboundnessFixer
         }
         CGContextTranslateCTM(mLayerCg, -mClipBounds.origin.x, mClipBounds.origin.y + mClipBounds.size.height);
         CGContextScaleCTM(mLayerCg, 1, -1);
+        CGContextConcatCTM(mLayerCg, GfxMatrixToCGAffineTransform(dt->mTransform));
 
         return mLayerCg;
       } else {
-        return baseCg;
+        return dt->mCg;
       }
     }
 
-    void Fix(CGContextRef baseCg)
+    void Fix(DrawTargetCG *dt)
     {
         if (mLayerCg) {
-            // we pushed a layer so draw it to baseCg
-            MOZ_ASSERT(baseCg);
-            CGContextTranslateCTM(baseCg, 0, mClipBounds.size.height);
-            CGContextScaleCTM(baseCg, 1, -1);
+            // we pushed a layer so draw it to dt->mCg
+            MOZ_ASSERT(dt->mCg);
+            CGContextTranslateCTM(dt->mCg, 0, mClipBounds.size.height);
+            CGContextScaleCTM(dt->mCg, 1, -1);
             mClipBounds.origin.y *= -1;
-            CGContextDrawLayerAtPoint(baseCg, mClipBounds.origin, mLayer);
+            CGContextDrawLayerAtPoint(dt->mCg, mClipBounds.origin, mLayer);
             CGContextRelease(mLayerCg);
+
+            // Reset the transform
+            CGContextConcatCTM(dt->mCg, GfxMatrixToCGAffineTransform(dt->mTransform));
         }
     }
 };
@@ -337,14 +347,12 @@ DrawTargetCG::DrawSurface(SourceSurface *aSurface,
 
   CGContextSetBlendMode(mCg, ToBlendMode(aDrawOptions.mCompositionOp));
   UnboundnessFixer fixer;
-  CGContextRef cg = fixer.Check(mCg, aDrawOptions.mCompositionOp, &aDest);
+  CGContextRef cg = fixer.Check(this, aDrawOptions.mCompositionOp, &aDest);
   if (MOZ2D_ERROR_IF(!cg)) {
     return;
   }
   CGContextSetAlpha(cg, aDrawOptions.mAlpha);
   CGContextSetShouldAntialias(cg, aDrawOptions.mAntialiasMode != AntialiasMode::NONE);
-
-  CGContextConcatCTM(cg, GfxMatrixToCGAffineTransform(mTransform));
 
   CGContextSetInterpolationQuality(cg, InterpolationQualityFromFilter(aSurfOptions.mFilter));
 
@@ -379,12 +387,12 @@ DrawTargetCG::DrawSurface(SourceSurface *aSurface,
     CGImageRelease(image);
   }
 
-  fixer.Fix(mCg);
+  fixer.Fix(this);
 
   CGContextRestoreGState(mCg);
 }
 
-TemporaryRef<FilterNode>
+already_AddRefed<FilterNode>
 DrawTargetCG::CreateFilter(FilterType aType)
 {
   return FilterNodeSoftware::Create(aType);
@@ -460,12 +468,12 @@ class GradientStopsCG : public GradientStops
   ExtendMode mExtend;
 };
 
-TemporaryRef<GradientStops>
+already_AddRefed<GradientStops>
 DrawTargetCG::CreateGradientStops(GradientStop *aStops, uint32_t aNumStops,
                                   ExtendMode aExtendMode) const
 {
   std::vector<GradientStop> stops(aStops, aStops+aNumStops);
-  return new GradientStopsCG(mColorSpace, stops, aExtendMode);
+  return MakeAndAddRef<GradientStopsCG>(mColorSpace, stops, aExtendMode);
 }
 
 static void
@@ -892,7 +900,7 @@ DrawTargetCG::MaskSurface(const Pattern &aSource,
 
   CGContextSetBlendMode(mCg, ToBlendMode(aDrawOptions.mCompositionOp));
   UnboundnessFixer fixer;
-  CGContextRef cg = fixer.Check(mCg, aDrawOptions.mCompositionOp);
+  CGContextRef cg = fixer.Check(this, aDrawOptions.mCompositionOp);
   if (MOZ2D_ERROR_IF(!cg)) {
     return;
   }
@@ -900,7 +908,6 @@ DrawTargetCG::MaskSurface(const Pattern &aSource,
   CGContextSetAlpha(cg, aDrawOptions.mAlpha);
   CGContextSetShouldAntialias(cg, aDrawOptions.mAntialiasMode != AntialiasMode::NONE);
 
-  CGContextConcatCTM(cg, GfxMatrixToCGAffineTransform(mTransform));
   CGImageRef image = GetRetainedImageFromSourceSurface(aMask);
 
   // use a negative-y so that the mask image draws right ways up
@@ -922,12 +929,18 @@ DrawTargetCG::MaskSurface(const Pattern &aSource,
 
   CGImageRelease(image);
 
-  fixer.Fix(mCg);
+  fixer.Fix(this);
 
   CGContextRestoreGState(mCg);
 }
 
-
+void
+DrawTargetCG::SetTransform(const Matrix &aTransform)
+{
+  mTransform = aTransform;
+  CGContextSetCTM(mCg, mOriginalTransform);
+  CGContextConcatCTM(mCg, GfxMatrixToCGAffineTransform(aTransform));
+}
 
 void
 DrawTargetCG::FillRect(const Rect &aRect,
@@ -943,7 +956,7 @@ DrawTargetCG::FillRect(const Rect &aRect,
   CGContextSaveGState(mCg);
 
   UnboundnessFixer fixer;
-  CGContextRef cg = fixer.Check(mCg, aDrawOptions.mCompositionOp, &aRect);
+  CGContextRef cg = fixer.Check(this, aDrawOptions.mCompositionOp, &aRect);
   if (MOZ2D_ERROR_IF(!cg)) {
     return;
   }
@@ -951,8 +964,6 @@ DrawTargetCG::FillRect(const Rect &aRect,
   CGContextSetAlpha(mCg, aDrawOptions.mAlpha);
   CGContextSetShouldAntialias(cg, aDrawOptions.mAntialiasMode != AntialiasMode::NONE);
   CGContextSetBlendMode(mCg, ToBlendMode(aDrawOptions.mCompositionOp));
-
-  CGContextConcatCTM(cg, GfxMatrixToCGAffineTransform(mTransform));
 
   if (isGradient(aPattern)) {
     CGContextClipToRect(cg, RectToCGRect(aRect));
@@ -987,7 +998,7 @@ DrawTargetCG::FillRect(const Rect &aRect,
     CGContextFillRect(cg, RectToCGRect(aRect));
   }
 
-  fixer.Fix(mCg);
+  fixer.Fix(this);
   CGContextRestoreGState(mCg);
 }
 
@@ -1167,15 +1178,13 @@ DrawTargetCG::StrokeLine(const Point &aP1, const Point &aP2, const Pattern &aPat
   CGContextSaveGState(mCg);
 
   UnboundnessFixer fixer;
-  CGContextRef cg = fixer.Check(mCg, aDrawOptions.mCompositionOp);
+  CGContextRef cg = fixer.Check(this, aDrawOptions.mCompositionOp);
   if (MOZ2D_ERROR_IF(!cg)) {
     return;
   }
   CGContextSetAlpha(mCg, aDrawOptions.mAlpha);
   CGContextSetShouldAntialias(cg, aDrawOptions.mAntialiasMode != AntialiasMode::NONE);
   CGContextSetBlendMode(mCg, ToBlendMode(aDrawOptions.mCompositionOp));
-
-  CGContextConcatCTM(cg, GfxMatrixToCGAffineTransform(mTransform));
 
   CGContextBeginPath(cg);
   CGContextMoveToPoint(cg, p1.x, p1.y);
@@ -1194,7 +1203,7 @@ DrawTargetCG::StrokeLine(const Point &aP1, const Point &aP2, const Pattern &aPat
     CGContextStrokePath(cg);
   }
 
-  fixer.Fix(mCg);
+  fixer.Fix(this);
   CGContextRestoreGState(mCg);
 }
 
@@ -1245,7 +1254,7 @@ DrawTargetCG::StrokeRect(const Rect &aRect,
   CGContextSaveGState(mCg);
 
   UnboundnessFixer fixer;
-  CGContextRef cg = fixer.Check(mCg, aDrawOptions.mCompositionOp);
+  CGContextRef cg = fixer.Check(this, aDrawOptions.mCompositionOp);
   if (MOZ2D_ERROR_IF(!cg)) {
     return;
   }
@@ -1264,8 +1273,6 @@ DrawTargetCG::StrokeRect(const Rect &aRect,
     IsPixelAlignedStroke(rect, aStrokeOptions.mLineWidth);
   CGContextSetShouldAntialias(cg,
     aDrawOptions.mAntialiasMode != AntialiasMode::NONE && !pixelAlignedStroke);
-
-  CGContextConcatCTM(cg, GfxMatrixToCGAffineTransform(mTransform));
 
   SetStrokeOptions(cg, aStrokeOptions);
 
@@ -1294,7 +1301,7 @@ DrawTargetCG::StrokeRect(const Rect &aRect,
     CGContextStrokePath(cg);
   }
 
-  fixer.Fix(mCg);
+  fixer.Fix(this);
   CGContextRestoreGState(mCg);
 }
 
@@ -1308,12 +1315,7 @@ DrawTargetCG::ClearRect(const Rect &aRect)
 
   MarkChanged();
 
-  CGContextSaveGState(mCg);
-  CGContextConcatCTM(mCg, GfxMatrixToCGAffineTransform(mTransform));
-
   CGContextClearRect(mCg, RectToCGRect(aRect));
-
-  CGContextRestoreGState(mCg);
 }
 
 void
@@ -1332,7 +1334,7 @@ DrawTargetCG::Stroke(const Path *aPath, const Pattern &aPattern, const StrokeOpt
   CGContextSaveGState(mCg);
 
   UnboundnessFixer fixer;
-  CGContextRef cg = fixer.Check(mCg, aDrawOptions.mCompositionOp);
+  CGContextRef cg = fixer.Check(this, aDrawOptions.mCompositionOp);
   if (MOZ2D_ERROR_IF(!cg)) {
     return;
   }
@@ -1340,8 +1342,6 @@ DrawTargetCG::Stroke(const Path *aPath, const Pattern &aPattern, const StrokeOpt
   CGContextSetAlpha(mCg, aDrawOptions.mAlpha);
   CGContextSetShouldAntialias(cg, aDrawOptions.mAntialiasMode != AntialiasMode::NONE);
   CGContextSetBlendMode(mCg, ToBlendMode(aDrawOptions.mCompositionOp));
-
-  CGContextConcatCTM(cg, GfxMatrixToCGAffineTransform(mTransform));
 
 
   CGContextBeginPath(cg);
@@ -1365,7 +1365,7 @@ DrawTargetCG::Stroke(const Path *aPath, const Pattern &aPattern, const StrokeOpt
     CGContextStrokePath(cg);
   }
 
-  fixer.Fix(mCg);
+  fixer.Fix(this);
   CGContextRestoreGState(mCg);
 }
 
@@ -1384,15 +1384,13 @@ DrawTargetCG::Fill(const Path *aPath, const Pattern &aPattern, const DrawOptions
 
   CGContextSetBlendMode(mCg, ToBlendMode(aDrawOptions.mCompositionOp));
   UnboundnessFixer fixer;
-  CGContextRef cg = fixer.Check(mCg, aDrawOptions.mCompositionOp);
+  CGContextRef cg = fixer.Check(this, aDrawOptions.mCompositionOp);
   if (MOZ2D_ERROR_IF(!cg)) {
     return;
   }
 
   CGContextSetAlpha(cg, aDrawOptions.mAlpha);
   CGContextSetShouldAntialias(cg, aDrawOptions.mAntialiasMode != AntialiasMode::NONE);
-
-  CGContextConcatCTM(cg, GfxMatrixToCGAffineTransform(mTransform));
 
   CGContextBeginPath(cg);
   // XXX: we could put fill mode into the path fill rule if we wanted
@@ -1427,7 +1425,7 @@ DrawTargetCG::Fill(const Path *aPath, const Pattern &aPattern, const DrawOptions
       CGContextFillPath(cg);
   }
 
-  fixer.Fix(mCg);
+  fixer.Fix(this);
   CGContextRestoreGState(mCg);
 }
 
@@ -1513,7 +1511,7 @@ DrawTargetCG::FillGlyphs(ScaledFont *aFont, const GlyphBuffer &aBuffer, const Pa
 
   CGContextSetBlendMode(mCg, ToBlendMode(aDrawOptions.mCompositionOp));
   UnboundnessFixer fixer;
-  CGContextRef cg = fixer.Check(mCg, aDrawOptions.mCompositionOp);
+  CGContextRef cg = fixer.Check(this, aDrawOptions.mCompositionOp);
   if (MOZ2D_ERROR_IF(!cg)) {
     return;
   }
@@ -1523,8 +1521,6 @@ DrawTargetCG::FillGlyphs(ScaledFont *aFont, const GlyphBuffer &aBuffer, const Pa
   if (aDrawOptions.mAntialiasMode != AntialiasMode::DEFAULT) {
     CGContextSetShouldSmoothFonts(cg, aDrawOptions.mAntialiasMode == AntialiasMode::SUBPIXEL);
   }
-
-  CGContextConcatCTM(cg, GfxMatrixToCGAffineTransform(mTransform));
 
   ScaledFontMac* macFont = static_cast<ScaledFontMac*>(aFont);
 
@@ -1595,7 +1591,7 @@ DrawTargetCG::FillGlyphs(ScaledFont *aFont, const GlyphBuffer &aBuffer, const Pa
     }
   }
 
-  fixer.Fix(mCg);
+  fixer.Fix(this);
   CGContextRestoreGState(cg);
 }
 
@@ -1615,38 +1611,35 @@ DrawTargetCG::CopySurface(SourceSurface *aSurface,
 
   MarkChanged();
 
-  if (aSurface->GetType() == SurfaceType::COREGRAPHICS_IMAGE ||
-      aSurface->GetType() == SurfaceType::COREGRAPHICS_CGCONTEXT ||
-      aSurface->GetType() == SurfaceType::DATA) {
-    CGImageRef image = GetRetainedImageFromSourceSurface(aSurface);
+  CGImageRef image = GetRetainedImageFromSourceSurface(aSurface);
 
-    // XXX: it might be more efficient for us to do the copy directly if we have access to the bits
+  // XXX: it might be more efficient for us to do the copy directly if we have access to the bits
 
-    CGContextSaveGState(mCg);
+  CGContextSaveGState(mCg);
+  CGContextSetCTM(mCg, mOriginalTransform);
 
-    // CopySurface ignores the clip, so we need to use private API to temporarily reset it
-    CGContextResetClip(mCg);
-    CGRect destRect = CGRectMake(aDestination.x, aDestination.y,
-                                 aSourceRect.width, aSourceRect.height);
-    CGContextClipToRect(mCg, destRect);
+  // CopySurface ignores the clip, so we need to use private API to temporarily reset it
+  CGContextResetClip(mCg);
+  CGRect destRect = CGRectMake(aDestination.x, aDestination.y,
+                               aSourceRect.width, aSourceRect.height);
+  CGContextClipToRect(mCg, destRect);
 
-    CGContextSetBlendMode(mCg, kCGBlendModeCopy);
+  CGContextSetBlendMode(mCg, kCGBlendModeCopy);
 
-    CGContextScaleCTM(mCg, 1, -1);
+  CGContextScaleCTM(mCg, 1, -1);
 
-    CGRect flippedRect = CGRectMake(aDestination.x - aSourceRect.x, -(aDestination.y - aSourceRect.y + double(CGImageGetHeight(image))),
-                                    CGImageGetWidth(image), CGImageGetHeight(image));
+  CGRect flippedRect = CGRectMake(aDestination.x - aSourceRect.x, -(aDestination.y - aSourceRect.y + double(CGImageGetHeight(image))),
+                                  CGImageGetWidth(image), CGImageGetHeight(image));
 
-    // Quartz seems to copy A8 surfaces incorrectly if we don't initialize them
-    // to transparent first.
-    if (mFormat == SurfaceFormat::A8) {
-      CGContextClearRect(mCg, flippedRect);
-    }
-    CGContextDrawImage(mCg, flippedRect, image);
-
-    CGContextRestoreGState(mCg);
-    CGImageRelease(image);
+  // Quartz seems to copy A8 surfaces incorrectly if we don't initialize them
+  // to transparent first.
+  if (mFormat == SurfaceFormat::A8) {
+    CGContextClearRect(mCg, flippedRect);
   }
+  CGContextDrawImage(mCg, flippedRect, image);
+
+  CGContextRestoreGState(mCg);
+  CGImageRelease(image);
 }
 
 void
@@ -1662,6 +1655,7 @@ DrawTargetCG::DrawSurfaceWithShadow(SourceSurface *aSurface, const Point &aDest,
 
   IntSize size = aSurface->GetSize();
   CGContextSaveGState(mCg);
+  CGContextSetCTM(mCg, mOriginalTransform);
   //XXX do we need to do the fixup here?
   CGContextSetBlendMode(mCg, ToBlendMode(aOperator));
 
@@ -1680,7 +1674,6 @@ DrawTargetCG::DrawSurfaceWithShadow(SourceSurface *aSurface, const Point &aDest,
 
   CGImageRelease(image);
   CGContextRestoreGState(mCg);
-
 }
 
 bool
@@ -1764,7 +1757,7 @@ DrawTargetCG::Init(BackendType aType,
 
   assert(mCg);
   if (!mCg) {
-    gfxCriticalError() << "Failed to create CG context";
+    gfxCriticalError() << "Failed to create CG context" << mSize << ", " << aStride;
     return false;
   }
 
@@ -1772,6 +1765,7 @@ DrawTargetCG::Init(BackendType aType,
   // so flip it to the top left
   CGContextTranslateCTM(mCg, 0, mSize.height);
   CGContextScaleCTM(mCg, 1, -1);
+  mOriginalTransform = CGContextGetCTM(mCg);
   // See Bug 722164 for performance details
   // Medium or higher quality lead to expensive interpolation
   // for canvas we want to use low quality interpolation
@@ -1866,7 +1860,7 @@ DrawTargetCG::Init(CGContextRef cgContext, const IntSize &aSize)
 
   assert(mCg);
   if (!mCg) {
-    gfxCriticalError() << "Invalid CG context at Init";
+    gfxCriticalError() << "Invalid CG context at Init " << aSize;
     return false;
   }
 
@@ -1877,6 +1871,7 @@ DrawTargetCG::Init(CGContextRef cgContext, const IntSize &aSize)
   //
   // CGContextTranslateCTM(mCg, 0, mSize.height);
   // CGContextScaleCTM(mCg, 1, -1);
+  mOriginalTransform = CGContextGetCTM(mCg);
 
   mFormat = SurfaceFormat::B8G8R8A8;
   if (GetContextType(mCg) == CG_CONTEXT_TYPE_BITMAP) {
@@ -1902,10 +1897,10 @@ DrawTargetCG::Init(BackendType aType, const IntSize &aSize, SurfaceFormat &aForm
   return Init(aType, nullptr, aSize, stride, aFormat);
 }
 
-TemporaryRef<PathBuilder>
+already_AddRefed<PathBuilder>
 DrawTargetCG::CreatePathBuilder(FillRule aFillRule) const
 {
-  return new PathBuilderCG(aFillRule);
+  return MakeAndAddRef<PathBuilderCG>(aFillRule);
 }
 
 void*
@@ -1961,18 +1956,9 @@ DrawTargetCG::PushClipRect(const Rect &aRect)
     return;
   }
 
-#ifdef DEBUG
-  mSavedClipBounds.push_back(CGContextGetClipBoundingBox(mCg));
-#endif
-
   CGContextSaveGState(mCg);
 
-  /* We go through a bit of trouble to temporarilly set the transform
-   * while we add the path */
-  CGAffineTransform previousTransform = CGContextGetCTM(mCg);
-  CGContextConcatCTM(mCg, GfxMatrixToCGAffineTransform(mTransform));
   CGContextClipToRect(mCg, RectToCGRect(aRect));
-  CGContextSetCTM(mCg, previousTransform);
 }
 
 
@@ -1982,10 +1968,6 @@ DrawTargetCG::PushClip(const Path *aPath)
   if (MOZ2D_ERROR_IF(!mCg)) {
     return;
   }
-
-#ifdef DEBUG
-  mSavedClipBounds.push_back(CGContextGetClipBoundingBox(mCg));
-#endif
 
   CGContextSaveGState(mCg);
 
@@ -2007,7 +1989,6 @@ DrawTargetCG::PushClip(const Path *aPath)
    * while we add the path. XXX: this could be improved if we keep
    * the CTM as resident state on the DrawTarget. */
   CGContextSaveGState(mCg);
-  CGContextConcatCTM(mCg, GfxMatrixToCGAffineTransform(mTransform));
   CGContextAddPath(mCg, cgPath->GetPath());
   CGContextRestoreGState(mCg);
 
@@ -2021,13 +2002,6 @@ void
 DrawTargetCG::PopClip()
 {
   CGContextRestoreGState(mCg);
-
-#ifdef DEBUG
-  MOZ_ASSERT(!mSavedClipBounds.empty(), "Unbalanced PopClip");
-  MOZ_ASSERT(CGRectEqualToRect(mSavedClipBounds.back(), CGContextGetClipBoundingBox(mCg)),
-             "PopClip didn't restore original clip");
-  mSavedClipBounds.pop_back();
-#endif
 }
 
 void
@@ -2062,8 +2036,6 @@ BorrowedCGContext::BorrowCGContextFromDrawTarget(DrawTarget *aDT)
     // save the state to make it easier for callers to avoid mucking with things
     CGContextSaveGState(cg);
 
-    CGContextConcatCTM(cg, GfxMatrixToCGAffineTransform(cgDT->mTransform));
-
     return cg;
   }
   return nullptr;
@@ -2079,5 +2051,5 @@ BorrowedCGContext::ReturnCGContextToDrawTarget(DrawTarget *aDT, CGContextRef cg)
 }
 
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

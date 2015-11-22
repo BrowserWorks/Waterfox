@@ -5,7 +5,7 @@
 
 #include "domstubs.idl"
 
-[scriptable, uuid(b19038ba-0d75-40d2-be35-742e26d33bf9)]
+[scriptable, uuid(3dd203e4-66ec-40fd-acde-43f0b35c98e9)]
 interface nsITabParent : nsISupports
 {
   void injectTouchEvent(in AString aType,
@@ -23,7 +23,29 @@ interface nsITabParent : nsISupports
 
   readonly attribute boolean useAsyncPanZoom;
 
-  void setIsDocShellActive(in bool aIsActive);
+  /**
+    * Manages the docshell active state of the remote browser.
+    */
+  attribute boolean docShellIsActive;
+
+  /**
+   * During interactions where painting performance
+   * is more important than scrolling, we may temporarily
+   * suppress the displayport. Each enable called must be matched
+   * with a disable call.
+   */
+  void suppressDisplayport(in bool aEnabled);
 
   readonly attribute uint64_t tabId;
+
+  /**
+   * Navigate by key. If aForDocumentNavigation is true, navigate by document.
+   * If aForDocumentNavigation is false, navigate by element.
+   *
+   * If aForward is true, navigate to the first focusable element or document.
+   * If aForward is false, navigate to the last focusable element or document.
+   */
+  void navigateByKey(in bool aForward, in bool aForDocumentNavigation);
+
+  readonly attribute boolean hasContentOpener;
 };

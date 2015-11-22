@@ -18,7 +18,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Log",
 
 this.EXPORTED_SYMBOLS = ["GoogleImporter"];
 
-let log = Log.repository.getLogger("Loop.Importer.Google");
+var log = Log.repository.getLogger("Loop.Importer.Google");
 log.level = Log.Level.Debug;
 log.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
 
@@ -106,14 +106,15 @@ const getPreferred = function(contact, which = "email") {
  * @param {Boolean} encode     Whether to URLEncode the param string
  */
 const getUrlParam = function(paramValue, prefName, encode = true) {
-  if (Services.prefs.getPrefType(prefName))
+  if (Services.prefs.getPrefType(prefName)) {
     paramValue = Services.prefs.getCharPref(prefName);
+  }
   paramValue = Services.urlFormatter.formatURL(paramValue);
 
   return encode ? encodeURIComponent(paramValue) : paramValue;
 };
 
-let gAuthWindow, gProfileId;
+var gAuthWindow, gProfileId;
 const kAuthWindowSize = {
   width: 420,
   height: 460
@@ -546,14 +547,18 @@ this.GoogleImporter.prototype = {
           let email;
           try {
             email = getPreferred(contact);
-          } catch (ex) {}
+          } catch (ex) {
+            // Do nothing
+          }
           if (email) {
             contact.name = [email.value];
           } else {
             let tel;
             try {
               tel = getPreferred(contact, "tel");
-            } catch (ex) {}
+            } catch (ex) {
+              // Do nothing
+            }
             if (tel) {
               contact.name = [tel.value];
             }

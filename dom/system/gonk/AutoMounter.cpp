@@ -1056,18 +1056,23 @@ AutoMounter::UpdateState()
           LOG("UpdateState: Volume %s is %s", vol->NameStr(), vol->StateStr());
           if (vol->IsFormatting() && !vol->IsFormatRequested()) {
             vol->SetFormatRequested(false);
-            LOG("UpdateState: Mounting %s", vol->NameStr());
-            vol->StartMount(mResponseCallback);
-            break;
+            if (!(tryToShare && vol->IsSharingEnabled()) && volState == nsIVolume::STATE_IDLE) {
+              LOG("UpdateState: Mounting %s", vol->NameStr());
+              vol->StartMount(mResponseCallback);
+              break;
+            }
           }
-          if (tryToShare && vol->IsSharingEnabled() && volState == nsIVolume::STATE_IDLE) {
-            // Volume is unmounted. We can go ahead and share.
-            LOG("UpdateState: Sharing %s", vol->NameStr());
-            vol->StartShare(mResponseCallback);
-          } else if (vol->IsFormatRequested()){
+
+          // If there are format and share requests in the same time,
+          // we should do format first then share.
+          if (vol->IsFormatRequested()) {
             // Volume is unmounted. We can go ahead and format.
             LOG("UpdateState: Formatting %s", vol->NameStr());
             vol->StartFormat(mResponseCallback);
+          } else if (tryToShare && vol->IsSharingEnabled() && volState == nsIVolume::STATE_IDLE) {
+            // Volume is unmounted. We can go ahead and share.
+            LOG("UpdateState: Sharing %s", vol->NameStr());
+            vol->StartShare(mResponseCallback);
           }
           return; // UpdateState will be called again when the Share/Format command completes
         }
@@ -1298,7 +1303,7 @@ ShutdownAutoMounterIOThread()
 static void
 SetAutoMounterModeIOThread(const int32_t& aMode)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   MOZ_ASSERT(sAutoMounter);
 
@@ -1308,7 +1313,7 @@ SetAutoMounterModeIOThread(const int32_t& aMode)
 static void
 SetAutoMounterSharingModeIOThread(const nsCString& aVolumeName, const bool& aAllowSharing)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   MOZ_ASSERT(sAutoMounter);
 
@@ -1318,7 +1323,7 @@ SetAutoMounterSharingModeIOThread(const nsCString& aVolumeName, const bool& aAll
 static void
 AutoMounterFormatVolumeIOThread(const nsCString& aVolumeName)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   MOZ_ASSERT(sAutoMounter);
 
@@ -1328,7 +1333,7 @@ AutoMounterFormatVolumeIOThread(const nsCString& aVolumeName)
 static void
 AutoMounterMountVolumeIOThread(const nsCString& aVolumeName)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   MOZ_ASSERT(sAutoMounter);
 
@@ -1338,7 +1343,7 @@ AutoMounterMountVolumeIOThread(const nsCString& aVolumeName)
 static void
 AutoMounterUnmountVolumeIOThread(const nsCString& aVolumeName)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   MOZ_ASSERT(sAutoMounter);
 

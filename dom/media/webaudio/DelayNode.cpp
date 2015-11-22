@@ -33,7 +33,7 @@ public:
                   double aMaxDelayTicks)
     : AudioNodeEngine(aNode)
     , mSource(nullptr)
-    , mDestination(static_cast<AudioNodeStream*> (aDestination->Stream()))
+    , mDestination(aDestination->Stream())
     // Keep the default value in sync with the default value in DelayNode::DelayNode.
     , mDelay(0.f)
     // Use a smoothing range of 20ms
@@ -76,8 +76,8 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioChunk& aInput,
-                            AudioChunk* aOutput,
+                            const AudioBlock& aInput,
+                            AudioBlock* aOutput,
                             bool* aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
@@ -119,7 +119,7 @@ public:
     mBuffer.NextBlock();
   }
 
-  void UpdateOutputBlock(AudioChunk* aOutput, double minDelay)
+  void UpdateOutputBlock(AudioBlock* aOutput, double minDelay)
   {
     double maxDelay = mMaxDelay;
     double sampleRate = mSource->SampleRate();
@@ -151,7 +151,7 @@ public:
     }
   }
 
-  virtual void ProduceBlockBeforeInput(AudioChunk* aOutput) override
+  virtual void ProduceBlockBeforeInput(AudioBlock* aOutput) override
   {
     if (mLeftOverData <= 0) {
       aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
@@ -198,8 +198,9 @@ DelayNode::DelayNode(AudioContext* aContext, double aMaxDelay)
   DelayNodeEngine* engine =
     new DelayNodeEngine(this, aContext->Destination(),
                         aContext->SampleRate() * aMaxDelay);
-  mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);
-  engine->SetSourceStream(static_cast<AudioNodeStream*> (mStream.get()));
+  mStream = AudioNodeStream::Create(aContext, engine,
+                                    AudioNodeStream::NO_STREAM_FLAGS);
+  engine->SetSourceStream(mStream);
 }
 
 DelayNode::~DelayNode()
@@ -233,5 +234,5 @@ DelayNode::SendDelayToStream(AudioNode* aNode)
   SendTimelineParameterToStream(This, DelayNodeEngine::DELAY, *This->mDelay);
 }
 
-}
-}
+} // namespace dom
+} // namespace mozilla

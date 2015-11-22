@@ -2,21 +2,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
-let isMulet = "ResponsiveUI" in browserWindow;
+var browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
+var isMulet = "ResponsiveUI" in browserWindow;
 
 // Enable touch event shim on desktop that translates mouse events
 // into touch ones
 function enableTouch() {
   let require = Cu.import('resource://gre/modules/devtools/Loader.jsm', {})
                   .devtools.require;
-  let { TouchEventHandler } = require('devtools/touch-events');
-  let chromeEventHandler = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                                 .getInterface(Ci.nsIWebNavigation)
-                                 .QueryInterface(Ci.nsIDocShell)
-                                 .chromeEventHandler || window;
-  let touchEventHandler = new TouchEventHandler(chromeEventHandler);
-  touchEventHandler.start();
+  let { TouchEventSimulator } = require('devtools/toolkit/touch/simulator');
+  let touchEventSimulator = new TouchEventSimulator(shell.contentBrowser);
+  touchEventSimulator.start();
 }
 
 function setupButtons() {
@@ -26,16 +22,13 @@ function setupButtons() {
     // FXOS_SIMULATOR turned on.
     return;
   }
-  // The touch event helper is enabled on shell.html document,
-  // so that click events are delayed and it is better to
-  // listen for touch events.
-  homeButton.addEventListener('touchstart', function() {
+  homeButton.addEventListener('mousedown', function() {
     let window = shell.contentBrowser.contentWindow;
     let e = new window.KeyboardEvent('keydown', {key: 'Home'});
     window.dispatchEvent(e);
     homeButton.classList.add('active');
   });
-  homeButton.addEventListener('touchend', function() {
+  homeButton.addEventListener('mouseup', function() {
     let window = shell.contentBrowser.contentWindow;
     let e = new window.KeyboardEvent('keyup', {key: 'Home'});
     window.dispatchEvent(e);
@@ -44,10 +37,10 @@ function setupButtons() {
 
   Cu.import("resource://gre/modules/GlobalSimulatorScreen.jsm");
   let rotateButton = document.getElementById('rotate-button');
-  rotateButton.addEventListener('touchstart', function () {
+  rotateButton.addEventListener('mousedown', function() {
     rotateButton.classList.add('active');
   });
-  rotateButton.addEventListener('touchend', function() {
+  rotateButton.addEventListener('mouseup', function() {
     GlobalSimulatorScreen.flipScreen();
     rotateButton.classList.remove('active');
   });

@@ -12,7 +12,7 @@ const FRAME_SCRIPTS = [
   ROOT + "content-forms.js"
 ];
 
-let mm = Cc["@mozilla.org/globalmessagemanager;1"]
+var mm = Cc["@mozilla.org/globalmessagemanager;1"]
            .getService(Ci.nsIMessageListenerManager);
 
 for (let script of FRAME_SCRIPTS) {
@@ -25,16 +25,14 @@ registerCleanupFunction(() => {
   }
 });
 
-let tmp = {};
-Cu.import("resource://gre/modules/Promise.jsm", tmp);
-Cu.import("resource://gre/modules/Task.jsm", tmp);
-Cu.import("resource:///modules/sessionstore/SessionStore.jsm", tmp);
-Cu.import("resource:///modules/sessionstore/SessionSaver.jsm", tmp);
-Cu.import("resource:///modules/sessionstore/SessionFile.jsm", tmp);
-Cu.import("resource:///modules/sessionstore/TabState.jsm", tmp);
-let {Promise, Task, SessionStore, SessionSaver, SessionFile, TabState} = tmp;
+const {Promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const {SessionStore} = Cu.import("resource:///modules/sessionstore/SessionStore.jsm", {});
+const {SessionSaver} = Cu.import("resource:///modules/sessionstore/SessionSaver.jsm", {});
+const {SessionFile} = Cu.import("resource:///modules/sessionstore/SessionFile.jsm", {});
+const {TabState} = Cu.import("resource:///modules/sessionstore/TabState.jsm", {});
+const {TabStateFlusher} = Cu.import("resource:///modules/sessionstore/TabStateFlusher.jsm", {});
 
-let ss = Cc["@mozilla.org/browser/sessionstore;1"].getService(Ci.nsISessionStore);
+const ss = Cc["@mozilla.org/browser/sessionstore;1"].getService(Ci.nsISessionStore);
 
 // Some tests here assume that all restored tabs are loaded without waiting for
 // the user to bring them to the foreground. We ensure this by resetting the
@@ -270,7 +268,7 @@ function promiseRecoveryFileContents() {
   });
 }
 
-let promiseForEachSessionRestoreFile = Task.async(function*(cb) {
+var promiseForEachSessionRestoreFile = Task.async(function*(cb) {
   for (let key of SessionFile.Paths.loadOrder) {
     let data = "";
     try {
@@ -284,14 +282,7 @@ let promiseForEachSessionRestoreFile = Task.async(function*(cb) {
 });
 
 function promiseBrowserLoaded(aBrowser, ignoreSubFrames = true) {
-  return new Promise(resolve => {
-    aBrowser.messageManager.addMessageListener("ss-test:loadEvent", function onLoad(msg) {
-      if (!ignoreSubFrames || !msg.data.subframe) {
-        aBrowser.messageManager.removeMessageListener("ss-test:loadEvent", onLoad);
-        resolve();
-      }
-    });
-  });
+  return BrowserTestUtils.browserLoaded(aBrowser, !ignoreSubFrames);
 }
 
 function whenWindowLoaded(aWindow, aCallback = next) {
@@ -321,7 +312,7 @@ function BrowserWindowIterator() {
   }
 }
 
-let gWebProgressListener = {
+var gWebProgressListener = {
   _callback: null,
 
   setCallback: function (aCallback) {
@@ -352,7 +343,7 @@ registerCleanupFunction(function () {
   gWebProgressListener.unsetCallback();
 });
 
-let gProgressListener = {
+var gProgressListener = {
   _callback: null,
 
   setCallback: function (callback) {
@@ -437,8 +428,21 @@ function whenNewWindowLoaded(aOptions, aCallback) {
   }
 
   let win = openDialog(getBrowserURL(), "", "chrome,all,dialog=no" + features, url);
-  whenDelayedStartupFinished(win, () => aCallback(win));
-  return win;
+  let delayedStartup = promiseDelayedStartupFinished(win);
+
+  let browserLoaded = new Promise(resolve => {
+    if (url == "about:blank") {
+      resolve();
+      return;
+    }
+
+    win.addEventListener("load", function onLoad() {
+      win.removeEventListener("load", onLoad);
+      resolve(promiseBrowserLoaded(win.gBrowser.selectedBrowser));
+    });
+  });
+
+  Promise.all([delayedStartup, browserLoaded]).then(() => aCallback(win));
 }
 function promiseNewWindowLoaded(aOptions) {
   return new Promise(resolve => whenNewWindowLoaded(aOptions, resolve));
@@ -532,6 +536,112 @@ for (let name of FORM_HELPERS) {
 // all pending status updates (messages) of the closing tab have been received.
 function promiseRemoveTab(tab) {
   return BrowserTestUtils.removeTab(tab);
+}
+
+/**
+ * Returns a Promise that resolves once a remote <xul:browser> has experienced
+ * a crash. Also does the job of cleaning up the minidump of the crash.
+ *
+ * @param browser
+ *        The <xul:browser> that will crash
+ * @return Promise
+ */
+function crashBrowser(browser) {
+  /**
+   * Returns the directory where crash dumps are stored.
+   *
+   * @return nsIFile
+   */
+  function getMinidumpDirectory() {
+    let dir = Services.dirsvc.get('ProfD', Ci.nsIFile);
+    dir.append("minidumps");
+    return dir;
+  }
+
+  /**
+   * Removes a file from a directory. This is a no-op if the file does not
+   * exist.
+   *
+   * @param directory
+   *        The nsIFile representing the directory to remove from.
+   * @param filename
+   *        A string for the file to remove from the directory.
+   */
+  function removeFile(directory, filename) {
+    let file = directory.clone();
+    file.append(filename);
+    if (file.exists()) {
+      file.remove(false);
+    }
+  }
+
+  // This frame script is injected into the remote browser, and used to
+  // intentionally crash the tab. We crash by using js-ctypes and dereferencing
+  // a bad pointer. The crash should happen immediately upon loading this
+  // frame script.
+  let frame_script = () => {
+    const Cu = Components.utils;
+    Cu.import("resource://gre/modules/ctypes.jsm");
+
+    let dies = function() {
+      privateNoteIntentionalCrash();
+      let zero = new ctypes.intptr_t(8);
+      let badptr = ctypes.cast(zero, ctypes.PointerType(ctypes.int32_t));
+      badptr.contents
+    };
+
+    dump("Et tu, Brute?");
+    dies();
+  }
+
+  let crashCleanupPromise = new Promise((resolve, reject) => {
+    let observer = (subject, topic, data) => {
+      is(topic, 'ipc:content-shutdown', 'Received correct observer topic.');
+      ok(subject instanceof Ci.nsIPropertyBag2,
+         'Subject implements nsIPropertyBag2.');
+      // we might see this called as the process terminates due to previous tests.
+      // We are only looking for "abnormal" exits...
+      if (!subject.hasKey("abnormal")) {
+        info("This is a normal termination and isn't the one we are looking for...");
+        return;
+      }
+
+      let dumpID;
+      if ('nsICrashReporter' in Ci) {
+        dumpID = subject.getPropertyAsAString('dumpID');
+        ok(dumpID, "dumpID is present and not an empty string");
+      }
+
+      if (dumpID) {
+        let minidumpDirectory = getMinidumpDirectory();
+        removeFile(minidumpDirectory, dumpID + '.dmp');
+        removeFile(minidumpDirectory, dumpID + '.extra');
+      }
+
+      Services.obs.removeObserver(observer, 'ipc:content-shutdown');
+      info("Crash cleaned up");
+      resolve();
+    };
+
+    Services.obs.addObserver(observer, 'ipc:content-shutdown');
+  });
+
+  let aboutTabCrashedLoadPromise = new Promise((resolve, reject) => {
+    browser.addEventListener("AboutTabCrashedLoad", function onCrash() {
+      browser.removeEventListener("AboutTabCrashedLoad", onCrash, false);
+      info("about:tabcrashed loaded");
+      resolve();
+    }, false, true);
+  });
+
+  // This frame script will crash the remote browser as soon as it is
+  // evaluated.
+  let mm = browser.messageManager;
+  mm.loadFrameScript("data:,(" + frame_script.toString() + ")();", false);
+  return Promise.all([crashCleanupPromise, aboutTabCrashedLoadPromise]).then(() => {
+    let tab = gBrowser.getTabForBrowser(browser);
+    is(tab.getAttribute("crashed"), "true", "Tab should be marked as crashed");
+  });
 }
 
 // Write DOMSessionStorage data to the given browser.

@@ -9,6 +9,7 @@ interface nsIArray;
 interface nsIDocument;
 interface nsIInterceptedChannel;
 interface nsIPrincipal;
+interface nsIRunnable;
 interface nsIURI;
 
 [scriptable, uuid(52ee2c9d-ee87-4caf-9588-23ae77ff8798)]
@@ -20,7 +21,7 @@ interface nsIServiceWorkerUnregisterCallback : nsISupports
   void unregisterFailed();
 };
 
-[scriptable, builtinclass, uuid(8ce0d197-5740-4ddf-aa4a-e5a63e611d03)]
+[scriptable, builtinclass, uuid(e633b73b-a734-4d04-a09c-b7779a439f3f)]
 interface nsIServiceWorkerInfo : nsISupports
 {
   readonly attribute nsIPrincipal principal;
@@ -33,7 +34,7 @@ interface nsIServiceWorkerInfo : nsISupports
   readonly attribute DOMString waitingCacheName;
 };
 
-[scriptable, builtinclass, uuid(384c9aec-29e5-4bdb-abc2-fba10da83e17)]
+[scriptable, builtinclass, uuid(471b2d5d-64c3-4dea-bde1-219853dcaac8)]
 interface nsIServiceWorkerManager : nsISupports
 {
   /**
@@ -66,16 +67,6 @@ interface nsIServiceWorkerManager : nsISupports
   // Remove ready pending Promise
   void removeReadyPromise(in nsIDOMWindow aWindow);
 
-  // Returns true if a ServiceWorker is available for the scope of aURI.
-  bool isAvailableForURI(in nsIURI aURI);
-
-  // Returns true if a given document is currently controlled by a ServiceWorker
-  bool isControlled(in nsIDocument aDocument);
-
-  // Cause a fetch event to be dispatched to the worker global associated with the given document.
-  void dispatchFetchEvent(in nsIDocument aDoc, in nsIInterceptedChannel aChannel,
-                          in boolean aIsReload);
-
   /**
    * Call this to request that document `aDoc` be controlled by a ServiceWorker
    * if a registration exists for it's scope.
@@ -103,13 +94,11 @@ interface nsIServiceWorkerManager : nsISupports
 
   /*
    * Returns a ServiceWorker.
+   *  - aLoadFailedRunnable is an optional callback that will fire on main thread if
+   *    a ServiceWorker object is returned, but later fails to load for some reason.
    */
-  [noscript] nsISupports GetDocumentController(in nsIDOMWindow aWindow);
-
-  /*
-   * This implements the soft update algorithm.
-   */
-  void softUpdate(in DOMString aScope);
+  [noscript] nsISupports GetDocumentController(in nsIDOMWindow aWindow,
+                                               in nsIRunnable aLoadFailedRunnable);
 
   /*
    * Clears ServiceWorker registrations from memory and disk for the specified
@@ -120,22 +109,44 @@ interface nsIServiceWorkerManager : nsISupports
    * - Unregister jobs will be queued for all registrations.
    *   This eventually results in the registration being deleted from disk too.
    */
-  void remove(in AUTF8String aHost);
-
-  /*
-   * Clear all registrations for all hosts. See remove().
-   */
-  void removeAll();
+  void removeAndPropagate(in AUTF8String aHost);
 
   // Testing
-  DOMString getScopeForUrl(in DOMString path);
+  DOMString getScopeForUrl(in nsIPrincipal aPrincipal, in DOMString aPath);
 
-  // This is meant to be used only by about:serviceworkers. It returns an array
-  // of nsIServiceWorkerInfo.
+  // Note: This is meant to be used only by about:serviceworkers.
+  //It returns an array of nsIServiceWorkerInfo.
   nsIArray getAllRegistrations();
 
-  void sendPushEvent(in ACString scope, in DOMString data);
-  void sendPushSubscriptionChangeEvent(in ACString scope);
+  // Note: This is meant to be used only by about:serviceworkers.
+  // It calls softUpdate() for each child process.
+  [implicit_jscontext] void propagateSoftUpdate(in jsval aOriginAttributes,
+                                                in DOMString aScope);
+
+  // Note: This is meant to be used only by about:serviceworkers.
+  // It calls unregister() in each child process. The callback is used to
+  // inform when unregister() is completed on the current process.
+  void propagateUnregister(in nsIPrincipal aPrincipal,
+                           in nsIServiceWorkerUnregisterCallback aCallback,
+                           in DOMString aScope);
+
+  void sendNotificationClickEvent(in ACString aOriginSuffix,
+                                  in ACString scope,
+                                  in AString aID,
+                                  in AString aTitle,
+                                  in AString aDir,
+                                  in AString aLang,
+                                  in AString aBody,
+                                  in AString aTag,
+                                  in AString aIcon,
+                                  in AString aData,
+                                  in AString aBehavior);
+  [optional_argc] void sendPushEvent(in ACString aOriginAttributes,
+                                     in ACString aScope,
+                                     [optional] in uint32_t aDataLength,
+                                     [optional, array, size_is(aDataLength)] in uint8_t aDataBytes);
+  void sendPushSubscriptionChangeEvent(in ACString aOriginAttributes,
+                                       in ACString scope);
 
   void updateAllRegistrations();
 };

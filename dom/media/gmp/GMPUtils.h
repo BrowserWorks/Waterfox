@@ -7,6 +7,10 @@
 #define GMPUtils_h_
 
 #include "mozilla/UniquePtr.h"
+#include "nsTArray.h"
+
+class nsIFile;
+class nsCString;
 
 namespace mozilla {
 
@@ -24,6 +28,20 @@ using GMPUniquePtr = mozilla::UniquePtr<T, DestroyPolicy<T>>;
 bool GetEMEVoucherPath(nsIFile** aPath);
 
 bool EMEVoucherFileExists();
+
+void
+SplitAt(const char* aDelims,
+        const nsACString& aInput,
+        nsTArray<nsCString>& aOutTokens);
+
+nsCString
+ToBase64(const nsTArray<uint8_t>& aBytes);
+
+bool
+FileExists(nsIFile* aFile);
+
+bool
+FileExists(nsIFile* aFile);
 
 } // namespace mozilla
 

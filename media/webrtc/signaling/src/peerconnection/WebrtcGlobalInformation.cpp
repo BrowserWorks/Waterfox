@@ -261,7 +261,7 @@ OnStatsReport_m(WebrtcGlobalChild* aThisChild,
   }
 
   // This is the last stats report to be collected. (Must be the gecko process).
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   StatsRequest* request = StatsRequest::Get(aRequestId);
 
@@ -271,14 +271,14 @@ OnStatsReport_m(WebrtcGlobalChild* aThisChild,
   }
 
   for (auto&& query : *aQueryList) {
-    request->mResult.mReports.Value().AppendElement(*(query->report));
+    request->mResult.mReports.Value().AppendElement(*(query->report), fallible);
   }
 
   // Reports saved for closed/destroyed PeerConnections
   auto ctx = PeerConnectionCtx::GetInstance();
   if (ctx) {
     for (auto&& pc : ctx->mStatsForClosedPeerConnections) {
-      request->mResult.mReports.Value().AppendElement(pc);
+      request->mResult.mReports.Value().AppendElement(pc, fallible);
     }
   }
 
@@ -322,9 +322,9 @@ static void OnGetLogging_m(WebrtcGlobalChild* aThisChild,
 
     if (!aLogList->empty()) {
       for (auto& line : *aLogList) {
-        nsLogs.AppendElement(NS_ConvertUTF8toUTF16(line.c_str()));
+        nsLogs.AppendElement(NS_ConvertUTF8toUTF16(line.c_str()), fallible);
       }
-      nsLogs.AppendElement(NS_LITERAL_STRING("+++++++ END ++++++++"));
+      nsLogs.AppendElement(NS_LITERAL_STRING("+++++++ END ++++++++"), fallible);
     }
 
     unused << aThisChild->SendGetLogResult(aRequestId, nsLogs);
@@ -332,7 +332,7 @@ static void OnGetLogging_m(WebrtcGlobalChild* aThisChild,
   }
 
   // This is the last log to be collected. (Must be the gecko process).
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   LogRequest* request = LogRequest::Get(aRequestId);
 
@@ -343,9 +343,11 @@ static void OnGetLogging_m(WebrtcGlobalChild* aThisChild,
 
   if (!aLogList->empty()) {
     for (auto& line : *aLogList) {
-      request->mResult.AppendElement(NS_ConvertUTF8toUTF16(line.c_str()));
+      request->mResult.AppendElement(NS_ConvertUTF8toUTF16(line.c_str()),
+                                     fallible);
     }
-    request->mResult.AppendElement(NS_LITERAL_STRING("+++++++ END ++++++++"));
+    request->mResult.AppendElement(NS_LITERAL_STRING("+++++++ END ++++++++"),
+                                   fallible);
   }
 
   request->Complete();
@@ -441,7 +443,7 @@ WebrtcGlobalInformation::GetAllStats(
     return;
   }
 
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   // CallbackObject does not support threadsafe refcounting, and must be
   // destroyed on main.
@@ -532,7 +534,7 @@ WebrtcGlobalInformation::GetLogging(
     return;
   }
 
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   // CallbackObject does not support threadsafe refcounting, and must be
   // destroyed on main.
@@ -626,7 +628,7 @@ WebrtcGlobalParent::RecvGetStatsResult(const int& aRequestId,
   }
 
   for (auto&& s : Stats) {
-    request->mResult.mReports.Value().AppendElement(s);
+    request->mResult.mReports.Value().AppendElement(s, fallible);
   }
 
   auto next = request->GetNextParent();
@@ -662,7 +664,7 @@ WebrtcGlobalParent::RecvGetLogResult(const int& aRequestId,
     CSFLogError(logTag, "Bad RequestId");
     return false;
   }
-  request->mResult.AppendElements(aLog);
+  request->mResult.AppendElements(aLog, fallible);
 
   auto next = request->GetNextParent();
   if (next) {
@@ -823,7 +825,8 @@ struct StreamResult {
 
 static void StoreLongTermICEStatisticsImpl_m(
     nsresult result,
-    nsAutoPtr<RTCStatsQuery> query) {
+    nsAutoPtr<RTCStatsQuery> query,
+    bool aIsLoop) {
 
   using namespace Telemetry;
 
@@ -923,10 +926,12 @@ static void StoreLongTermICEStatisticsImpl_m(
 
   for (auto i = streamResults.begin(); i != streamResults.end(); ++i) {
     if (i->second.streamSucceeded) {
-      Telemetry::Accumulate(Telemetry::WEBRTC_CANDIDATE_TYPES_GIVEN_SUCCESS,
+      Telemetry::Accumulate(aIsLoop ? Telemetry::LOOP_CANDIDATE_TYPES_GIVEN_SUCCESS :
+                                      Telemetry::WEBRTC_CANDIDATE_TYPES_GIVEN_SUCCESS,
                             i->second.candidateTypeBitpattern);
     } else {
-      Telemetry::Accumulate(Telemetry::WEBRTC_CANDIDATE_TYPES_GIVEN_FAILURE,
+      Telemetry::Accumulate(aIsLoop ? Telemetry::LOOP_CANDIDATE_TYPES_GIVEN_FAILURE :
+                                      Telemetry::WEBRTC_CANDIDATE_TYPES_GIVEN_FAILURE,
                             i->second.candidateTypeBitpattern);
     }
   }
@@ -942,25 +947,30 @@ static void StoreLongTermICEStatisticsImpl_m(
         continue;
       }
       if (s.mBitrateMean.WasPassed()) {
-        Accumulate(WEBRTC_VIDEO_ENCODER_BITRATE_AVG_PER_CALL_KBPS,
+        Accumulate(aIsLoop ? LOOP_VIDEO_ENCODER_BITRATE_AVG_PER_CALL_KBPS :
+                             WEBRTC_VIDEO_ENCODER_BITRATE_AVG_PER_CALL_KBPS,
                    uint32_t(s.mBitrateMean.Value() / 1000));
       }
       if (s.mBitrateStdDev.WasPassed()) {
-        Accumulate(WEBRTC_VIDEO_ENCODER_BITRATE_STD_DEV_PER_CALL_KBPS,
+        Accumulate(aIsLoop? LOOP_VIDEO_ENCODER_BITRATE_STD_DEV_PER_CALL_KBPS :
+                            WEBRTC_VIDEO_ENCODER_BITRATE_STD_DEV_PER_CALL_KBPS,
                    uint32_t(s.mBitrateStdDev.Value() / 1000));
       }
       if (s.mFramerateMean.WasPassed()) {
-        Accumulate(WEBRTC_VIDEO_ENCODER_FRAMERATE_AVG_PER_CALL,
+        Accumulate(aIsLoop ? LOOP_VIDEO_ENCODER_FRAMERATE_AVG_PER_CALL :
+                             WEBRTC_VIDEO_ENCODER_FRAMERATE_AVG_PER_CALL,
                    uint32_t(s.mFramerateMean.Value()));
       }
       if (s.mFramerateStdDev.WasPassed()) {
-        Accumulate(WEBRTC_VIDEO_ENCODER_FRAMERATE_10X_STD_DEV_PER_CALL,
+        Accumulate(aIsLoop ? LOOP_VIDEO_ENCODER_FRAMERATE_10X_STD_DEV_PER_CALL :
+                             WEBRTC_VIDEO_ENCODER_FRAMERATE_10X_STD_DEV_PER_CALL,
                    uint32_t(s.mFramerateStdDev.Value() * 10));
       }
       if (s.mDroppedFrames.WasPassed() && !query->iceStartTime.IsNull()) {
         double mins = (TimeStamp::Now() - query->iceStartTime).ToSeconds() / 60;
         if (mins > 0) {
-          Accumulate(WEBRTC_VIDEO_ENCODER_DROPPED_FRAMES_PER_CALL_FPM,
+          Accumulate(aIsLoop ? LOOP_VIDEO_ENCODER_DROPPED_FRAMES_PER_CALL_FPM :
+                               WEBRTC_VIDEO_ENCODER_DROPPED_FRAMES_PER_CALL_FPM,
                      uint32_t(double(s.mDroppedFrames.Value()) / mins));
         }
       }
@@ -976,25 +986,30 @@ static void StoreLongTermICEStatisticsImpl_m(
         continue;
       }
       if (s.mBitrateMean.WasPassed()) {
-        Accumulate(WEBRTC_VIDEO_DECODER_BITRATE_AVG_PER_CALL_KBPS,
+        Accumulate(aIsLoop ? LOOP_VIDEO_DECODER_BITRATE_AVG_PER_CALL_KBPS :
+                             WEBRTC_VIDEO_DECODER_BITRATE_AVG_PER_CALL_KBPS,
                    uint32_t(s.mBitrateMean.Value() / 1000));
       }
       if (s.mBitrateStdDev.WasPassed()) {
-        Accumulate(WEBRTC_VIDEO_DECODER_BITRATE_STD_DEV_PER_CALL_KBPS,
+        Accumulate(aIsLoop ? LOOP_VIDEO_DECODER_BITRATE_STD_DEV_PER_CALL_KBPS :
+                             WEBRTC_VIDEO_DECODER_BITRATE_STD_DEV_PER_CALL_KBPS,
                    uint32_t(s.mBitrateStdDev.Value() / 1000));
       }
       if (s.mFramerateMean.WasPassed()) {
-        Accumulate(WEBRTC_VIDEO_DECODER_FRAMERATE_AVG_PER_CALL,
+        Accumulate(aIsLoop ? LOOP_VIDEO_DECODER_FRAMERATE_AVG_PER_CALL :
+                             WEBRTC_VIDEO_DECODER_FRAMERATE_AVG_PER_CALL,
                    uint32_t(s.mFramerateMean.Value()));
       }
       if (s.mFramerateStdDev.WasPassed()) {
-        Accumulate(WEBRTC_VIDEO_DECODER_FRAMERATE_10X_STD_DEV_PER_CALL,
+        Accumulate(aIsLoop ? LOOP_VIDEO_DECODER_FRAMERATE_10X_STD_DEV_PER_CALL :
+                             WEBRTC_VIDEO_DECODER_FRAMERATE_10X_STD_DEV_PER_CALL,
                    uint32_t(s.mFramerateStdDev.Value() * 10));
       }
       if (s.mDiscardedPackets.WasPassed() && !query->iceStartTime.IsNull()) {
         double mins = (TimeStamp::Now() - query->iceStartTime).ToSeconds() / 60;
         if (mins > 0) {
-          Accumulate(WEBRTC_VIDEO_DECODER_DISCARDED_PACKETS_PER_CALL_PPM,
+          Accumulate(aIsLoop ? LOOP_VIDEO_DECODER_DISCARDED_PACKETS_PER_CALL_PPM :
+                               WEBRTC_VIDEO_DECODER_DISCARDED_PACKETS_PER_CALL_PPM,
                      uint32_t(double(s.mDiscardedPackets.Value()) / mins));
         }
       }
@@ -1005,12 +1020,13 @@ static void StoreLongTermICEStatisticsImpl_m(
 
   PeerConnectionCtx *ctx = GetPeerConnectionCtx();
   if (ctx) {
-    ctx->mStatsForClosedPeerConnections.AppendElement(*query->report);
+    ctx->mStatsForClosedPeerConnections.AppendElement(*query->report, fallible);
   }
 }
 
 static void GetStatsForLongTermStorage_s(
-    nsAutoPtr<RTCStatsQuery> query) {
+    nsAutoPtr<RTCStatsQuery> query,
+    bool aIsLoop) {
 
   MOZ_ASSERT(query);
 
@@ -1046,13 +1062,15 @@ static void GetStatsForLongTermStorage_s(
       WrapRunnableNM(
           &StoreLongTermICEStatisticsImpl_m,
           rv,
-          query),
+          query,
+          aIsLoop),
       NS_DISPATCH_NORMAL);
 }
 
 void WebrtcGlobalInformation::StoreLongTermICEStatistics(
     PeerConnectionImpl& aPc) {
-  Telemetry::Accumulate(Telemetry::WEBRTC_ICE_FINAL_CONNECTION_STATE,
+  Telemetry::Accumulate(aPc.IsLoop() ? Telemetry::LOOP_ICE_FINAL_CONNECTION_STATE :
+                                       Telemetry::WEBRTC_ICE_FINAL_CONNECTION_STATE,
                         static_cast<uint32_t>(aPc.IceConnectionState()));
 
   if (aPc.IceConnectionState() == PCImplIceConnectionState::New) {
@@ -1069,7 +1087,7 @@ void WebrtcGlobalInformation::StoreLongTermICEStatistics(
 
   RUN_ON_THREAD(aPc.GetSTSThread(),
                 WrapRunnableNM(&GetStatsForLongTermStorage_s,
-                               query),
+                               query, aPc.IsLoop()),
                 NS_DISPATCH_NORMAL);
 }
 

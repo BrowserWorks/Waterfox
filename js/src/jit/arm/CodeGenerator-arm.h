@@ -23,27 +23,9 @@ class CodeGeneratorARM : public CodeGeneratorShared
     CodeGeneratorARM* thisFromCtor() {return this;}
 
   protected:
-    // Label for the common return path.
-    NonAssertingLabel returnLabel_;
     NonAssertingLabel deoptLabel_;
-    // Ugh. This is not going to be pretty to move over. Stack slotted variables
-    // are not useful on arm. It looks like this will need to return one of two
-    // types.
-    inline Operand ToOperand(const LAllocation& a) {
-        if (a.isGeneralReg())
-            return Operand(a.toGeneralReg()->reg());
-        if (a.isFloatReg())
-            return Operand(a.toFloatReg()->reg());
-        return Operand(StackPointer, ToStackOffset(&a));
-    }
-    inline Operand ToOperand(const LAllocation* a) {
-        return ToOperand(*a);
-    }
-    inline Operand ToOperand(const LDefinition* def) {
-        return ToOperand(def->output());
-    }
 
-    MoveOperand toMoveOperand(const LAllocation* a) const;
+    MoveOperand toMoveOperand(LAllocation a) const;
 
     void bailoutIf(Assembler::Condition condition, LSnapshot* snapshot);
     void bailoutFrom(Label* label, LSnapshot* snapshot);
@@ -78,8 +60,6 @@ class CodeGeneratorARM : public CodeGeneratorShared
                                   T* mir);
 
   protected:
-    bool generatePrologue();
-    bool generateEpilogue();
     bool generateOutOfLineCode();
 
     void emitRoundDouble(FloatRegister src, Register dest, Label* fail);
@@ -155,8 +135,8 @@ class CodeGeneratorARM : public CodeGeneratorShared
     virtual void visitCompareFAndBranch(LCompareFAndBranch* comp);
     virtual void visitCompareB(LCompareB* lir);
     virtual void visitCompareBAndBranch(LCompareBAndBranch* lir);
-    virtual void visitCompareV(LCompareV* lir);
-    virtual void visitCompareVAndBranch(LCompareVAndBranch* lir);
+    virtual void visitCompareBitwise(LCompareBitwise* lir);
+    virtual void visitCompareBitwiseAndBranch(LCompareBitwiseAndBranch* lir);
     virtual void visitBitAndAndBranch(LBitAndAndBranch* baab);
     virtual void visitAsmJSUInt32ToDouble(LAsmJSUInt32ToDouble* lir);
     virtual void visitAsmJSUInt32ToFloat32(LAsmJSUInt32ToFloat32* lir);
@@ -214,11 +194,15 @@ class CodeGeneratorARM : public CodeGeneratorShared
     void visitNegF(LNegF* lir);
     void visitLoadTypedArrayElementStatic(LLoadTypedArrayElementStatic* ins);
     void visitStoreTypedArrayElementStatic(LStoreTypedArrayElementStatic* ins);
+    void visitAtomicTypedArrayElementBinop(LAtomicTypedArrayElementBinop* lir);
+    void visitAtomicTypedArrayElementBinopForEffect(LAtomicTypedArrayElementBinopForEffect* lir);
     void visitAsmJSCall(LAsmJSCall* ins);
     void visitAsmJSLoadHeap(LAsmJSLoadHeap* ins);
     void visitAsmJSStoreHeap(LAsmJSStoreHeap* ins);
     void visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap* ins);
     void visitAsmJSCompareExchangeCallout(LAsmJSCompareExchangeCallout* ins);
+    void visitAsmJSAtomicExchangeHeap(LAsmJSAtomicExchangeHeap* ins);
+    void visitAsmJSAtomicExchangeCallout(LAsmJSAtomicExchangeCallout* ins);
     void visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins);
     void visitAsmJSAtomicBinopHeapForEffect(LAsmJSAtomicBinopHeapForEffect* ins);
     void visitAsmJSAtomicBinopCallout(LAsmJSAtomicBinopCallout* ins);
@@ -231,6 +215,19 @@ class CodeGeneratorARM : public CodeGeneratorShared
     void visitMemoryBarrier(LMemoryBarrier* ins);
 
     void generateInvalidateEpilogue();
+
+    void setReturnDoubleRegs(LiveRegisterSet* regs);
+
+    // Generating a result.
+    template<typename S, typename T>
+    void atomicBinopToTypedIntArray(AtomicOp op, Scalar::Type arrayType, const S& value,
+                                    const T& mem, Register flagTemp, Register outTemp,
+                                    AnyRegister output);
+
+    // Generating no result.
+    template<typename S, typename T>
+    void atomicBinopToTypedIntArray(AtomicOp op, Scalar::Type arrayType, const S& value,
+                                    const T& mem, Register flagTemp);
 
   protected:
     void visitEffectiveAddress(LEffectiveAddress* ins);

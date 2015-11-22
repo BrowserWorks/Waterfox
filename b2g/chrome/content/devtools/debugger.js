@@ -6,15 +6,15 @@
 
 "use strict";
 
-XPCOMUtils.defineLazyGetter(this, "DebuggerServer", function() {
-  Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
-  return DebuggerServer;
-});
-
 XPCOMUtils.defineLazyGetter(this, "devtools", function() {
   const { devtools } =
     Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
   return devtools;
+});
+
+XPCOMUtils.defineLazyGetter(this, "DebuggerServer", function() {
+  const { DebuggerServer } = devtools.require("devtools/server/main");
+  return DebuggerServer;
 });
 
 XPCOMUtils.defineLazyGetter(this, "B2GTabList", function() {
@@ -28,7 +28,7 @@ XPCOMUtils.defineLazyGetter(this, "B2GTabList", function() {
 // that only happens once DevTools is enabled.
 devtools.require("devtools/toolkit/discovery/discovery");
 
-let RemoteDebugger = {
+var RemoteDebugger = {
   _listening: false,
 
   /**
@@ -232,7 +232,7 @@ RemoteDebugger.allowConnection =
 RemoteDebugger.receiveOOB =
   RemoteDebugger.receiveOOB.bind(RemoteDebugger);
 
-let USBRemoteDebugger = {
+var USBRemoteDebugger = {
 
   get isDebugging() {
     if (!this._listener) {
@@ -286,7 +286,7 @@ let USBRemoteDebugger = {
 
 };
 
-let WiFiRemoteDebugger = {
+var WiFiRemoteDebugger = {
 
   start: function() {
     if (this._listener) {

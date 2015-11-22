@@ -24,14 +24,15 @@ class TestStunServer {
  public:
   // Generally, you should only call API in this class from the same thread that
   // the initial |GetInstance| call was made from.
-  static TestStunServer *GetInstance();
+  static TestStunServer *GetInstance(int address_family = AF_INET);
   static void ShutdownInstance();
   // |ConfigurePort| will only have an effect if called before the first call
   // to |GetInstance| (possibly following a |ShutdownInstance| call)
   static void ConfigurePort(uint16_t port);
-  static TestStunServer *Create();
+  // AF_INET, AF_INET6
+  static TestStunServer *Create(int address_family);
 
-  ~TestStunServer();
+  virtual ~TestStunServer();
 
   void SetActive(bool active);
   void SetDelay(uint32_t delay_ms);
@@ -46,40 +47,64 @@ class TestStunServer {
 
   void Reset();
 
- private:
+ protected:
   TestStunServer()
-      : listen_sock_(nullptr),
+      : listen_port_(0),
+        listen_sock_(nullptr),
         send_sock_(nullptr),
         stun_server_(nullptr),
         active_(true),
         delay_ms_(0),
         initial_ct_(0),
         response_addr_(nullptr),
-        timer_handle_(nullptr),
-        listen_port_(0) {}
+        timer_handle_(nullptr) {}
 
-  void Process(const uint8_t *msg, size_t len, nr_transport_addr *addr_in);
-  int TryOpenListenSocket(nr_local_addr* addr, uint16_t port);
-
+  int SetInternalPort(nr_local_addr* addr, uint16_t port);
+  int Initialize(int address_family);
   static void readable_cb(NR_SOCKET sock, int how, void *cb_arg);
+
+ private:
+  void Process(const uint8_t *msg, size_t len, nr_transport_addr *addr_in);
+  virtual int TryOpenListenSocket(nr_local_addr* addr, uint16_t port);
   static void process_cb(NR_SOCKET sock, int how, void *cb_arg);
 
+ protected:
+  std::string listen_addr_;
+  uint16_t listen_port_;
   nr_socket *listen_sock_;
   nr_socket *send_sock_;
   nr_stun_server_ctx *stun_server_;
+ private:
   bool active_;
   uint32_t delay_ms_;
   uint32_t initial_ct_;
   nr_transport_addr *response_addr_;
   void *timer_handle_;
   std::map<std::string, uint32_t> received_ct_;
-  std::string listen_addr_;
-  uint16_t listen_port_;
 
   static TestStunServer* instance;
+  static TestStunServer* instance6;
   static uint16_t instance_port;
 };
 
-}  // End of namespace mozilla
+class TestStunTcpServer: public TestStunServer {
+ public:
+  static TestStunTcpServer *GetInstance(int address_family);
+  static void ShutdownInstance();
+  static void ConfigurePort(uint16_t port);
+  virtual ~TestStunTcpServer();
+ protected:
+  TestStunTcpServer()
+      : ice_ctx_(nullptr) {}
 
+  nsRefPtr<NrIceCtx> ice_ctx_;
+ private:
+  virtual int TryOpenListenSocket(nr_local_addr* addr, uint16_t port);
+  static TestStunTcpServer *Create(int address_family);
+
+  static TestStunTcpServer* instance;
+  static TestStunTcpServer* instance6;
+  static uint16_t instance_port;
+};
+} // End of namespace mozilla
 #endif

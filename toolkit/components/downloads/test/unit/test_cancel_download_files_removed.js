@@ -8,8 +8,8 @@ Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/NetUtil.jsm");
 do_load_manifest("test_downloads.manifest");
 
-let httpserver = null;
-let currentTest = 0;
+var httpserver = null;
+var currentTest = 0;
 
 function WindowContext() { }
 WindowContext.prototype = {
@@ -26,7 +26,7 @@ WindowContext.prototype = {
   removeRequest: function (request, context, status) { }
 };
 
-let DownloadListener = {
+var DownloadListener = {
   set : null,
   init: function () {
     Services.obs.addObserver(this, "dl-start", true);
@@ -90,14 +90,7 @@ function runNextTest()
   let uri = "http://localhost:" +
              httpserver.identity.primaryPort +
              set.serverPath;
-  let channel = NetUtil.newChannel2(uri,
-                                    null,
-                                    null,
-                                    null,      // aLoadingNode
-                                    Services.scriptSecurityManager.getSystemPrincipal(),
-                                    null,      // aTriggeringPrincipal
-                                    Ci.nsILoadInfo.SEC_NORMAL,
-                                    Ci.nsIContentPolicy.TYPE_OTHER);
+  let channel = NetUtil.newChannel({uri, loadUsingSystemPrincipal: true});
   let uriloader = Cc["@mozilla.org/uriloader;1"].getService(Ci.nsIURILoader);
   uriloader.openURI(channel, Ci.nsIURILoader.IS_CONTENT_PREFERRED,
                     new WindowContext());
@@ -124,7 +117,7 @@ function getResponse(aSet) {
 //   1.) during the download
 //   2.) while they are paused
 //   3.) after they have been resumed
-let tests = [
+var tests = [
   { serverPath: "/test1.html", data: "Test data 1" },
   { serverPath: "/test2.html", data: "Test data 2", doPause: true },
   { serverPath: "/test3.html", data: "Test data 3", doPause: true, doResume: true},

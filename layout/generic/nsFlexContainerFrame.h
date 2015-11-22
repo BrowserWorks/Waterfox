@@ -15,7 +15,7 @@
 namespace mozilla {
 template <class T> class LinkedList;
 class LogicalPoint;
-}
+} // namespace mozilla
 
 nsContainerFrame* NS_NewFlexContainerFrame(nsIPresShell* aPresShell,
                                            nsStyleContext* aContext);
@@ -86,7 +86,7 @@ protected:
                     const nsHTMLReflowState& aReflowState,
                     nsReflowStatus&          aStatus,
                     nscoord aContentBoxMainSize,
-                    nscoord aAvailableHeightForContent,
+                    nscoord aAvailableBSizeForContent,
                     nsTArray<StrutInfo>& aStruts,
                     const FlexboxAxisTracker& aAxisTracker);
 
@@ -151,7 +151,7 @@ protected:
   void GenerateFlexLines(nsPresContext* aPresContext,
                          const nsHTMLReflowState& aReflowState,
                          nscoord aContentBoxMainSize,
-                         nscoord aAvailableHeightForContent,
+                         nscoord aAvailableBSizeForContent,
                          const nsTArray<StrutInfo>& aStruts,
                          const FlexboxAxisTracker& aAxisTracker,
                          mozilla::LinkedList<FlexLine>& aLines);
@@ -162,7 +162,7 @@ protected:
   nscoord ComputeCrossSize(const nsHTMLReflowState& aReflowState,
                            const FlexboxAxisTracker& aAxisTracker,
                            nscoord aSumLineCrossSizes,
-                           nscoord aAvailableHeightForContent,
+                           nscoord aAvailableBSizeForContent,
                            bool* aIsDefinite,
                            nsReflowStatus& aStatus);
 
@@ -183,13 +183,13 @@ protected:
    * @param aItem           The flex item whose frame should be moved.
    * @param aFramePos       The position where the flex item's frame should
    *                        be placed. (pre-relative positioning)
-   * @param aContainerWidth The flex container's width (required by some methods
+   * @param aContainerSize  The flex container's size (required by some methods
    *                        that we call, to interpret aFramePos correctly).
    */
   void MoveFlexItemToFinalPosition(const nsHTMLReflowState& aReflowState,
                                    const FlexItem& aItem,
                                    mozilla::LogicalPoint& aFramePos,
-                                   nscoord aContainerWidth);
+                                   const nsSize& aContainerSize);
   /**
    * Helper-function to reflow a child frame, at its final position determined
    * by flex layout.
@@ -200,7 +200,7 @@ protected:
    * @param aItem           The flex item to be reflowed.
    * @param aFramePos       The position where the flex item's frame should
    *                        be placed. (pre-relative positioning)
-   * @param aContainerWidth The flex container's width (required by some methods
+   * @param aContainerSize  The flex container's size (required by some methods
    *                        that we call, to interpret aFramePos correctly).
    */
   void ReflowFlexItem(nsPresContext* aPresContext,
@@ -208,7 +208,7 @@ protected:
                       const nsHTMLReflowState& aReflowState,
                       const FlexItem& aItem,
                       mozilla::LogicalPoint& aFramePos,
-                      nscoord aContainerWidth);
+                      const nsSize& aContainerSize);
 
   bool mChildrenHaveBeenReordered; // Have we ever had to reorder our kids
                                    // to satisfy their 'order' values?

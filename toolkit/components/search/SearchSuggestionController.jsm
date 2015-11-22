@@ -23,7 +23,7 @@ const BROWSER_SUGGEST_PREF = "browser.search.suggest.enabled";
  * Remote search suggestions will be shown if gRemoteSuggestionsEnabled
  * is true. Global because only one pref observer is needed for all instances.
  */
-let gRemoteSuggestionsEnabled = Services.prefs.getBoolPref(BROWSER_SUGGEST_PREF);
+var gRemoteSuggestionsEnabled = Services.prefs.getBoolPref(BROWSER_SUGGEST_PREF);
 Services.prefs.addObserver(BROWSER_SUGGEST_PREF, function(aSubject, aTopic, aData) {
   gRemoteSuggestionsEnabled = Services.prefs.getBoolPref(BROWSER_SUGGEST_PREF);
 }, false);
@@ -128,7 +128,7 @@ this.SearchSuggestionController.prototype = {
     if (!this.maxLocalResults && !this.maxRemoteResults) {
       throw new Error("Zero results expected, what are you trying to do?");
     }
-    if (this.maxLocalResults < 0 || this.remoteResult < 0) {
+    if (this.maxLocalResults < 0 || this.maxRemoteResults < 0) {
       throw new Error("Number of requested results must be positive");
     }
 

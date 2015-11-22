@@ -9,14 +9,14 @@ const Ci = Components.interfaces;
 Cu.import("resource:///modules/devtools/gDevTools.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
-const {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const {require} = devtools;
+const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const {Toolbox} = require("devtools/framework/toolbox");
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
 const {AppProjects} = require("devtools/app-manager/app-projects");
 const {Connection} = require("devtools/client/connection-manager");
 const {AppManager} = require("devtools/webide/app-manager");
 const EventEmitter = require("devtools/toolkit/event-emitter");
-const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const promise = require("promise");
 const ProjectEditor = require("projecteditor/projecteditor");
 const {GetAvailableAddons} = require("devtools/webide/addons");
 const {getJSON} = require("devtools/shared/getjson");
@@ -35,6 +35,8 @@ const HELP_URL = "https://developer.mozilla.org/docs/Tools/WebIDE/Troubleshootin
 
 const MAX_ZOOM = 1.4;
 const MIN_ZOOM = 0.6;
+
+const MS_PER_DAY = 86400000;
 
 // Download remote resources early
 getJSON("devtools.webide.addonsURL", true);
@@ -56,10 +58,10 @@ window.addEventListener("unload", function onUnload() {
   UI.destroy();
 });
 
-let projectList;
-let runtimeList;
+var projectList;
+var runtimeList;
 
-let UI = {
+var UI = {
   init: function() {
     this._telemetry = new Telemetry();
     this._telemetry.toolOpened("webide");
@@ -75,6 +77,16 @@ let UI = {
     projectList = new ProjectList(window, window);
     if (projectList.sidebarsEnabled) {
       ProjectPanel.toggleSidebar();
+
+      // TODO: Remove if/when dropdown layout is removed.
+      let toolbarNode = document.querySelector("#main-toolbar");
+      toolbarNode.classList.add("sidebar-layout");
+      let projectNode = document.querySelector("#project-panel-button");
+      projectNode.setAttribute("hidden", "true");
+      let runtimeNode = document.querySelector("#runtime-panel-button");
+      runtimeNode.setAttribute("hidden", "true");
+      let openAppNode = document.querySelector("#menuitem-show_projectPanel");
+      openAppNode.setAttribute("hidden", "true");
     }
     runtimeList = new RuntimeList(window, window);
     if (runtimeList.sidebarsEnabled) {
@@ -145,6 +157,8 @@ let UI = {
     window.removeEventListener("message", this.onMessage);
     this.updateConnectionTelemetry();
     this._telemetry.toolClosed("webide");
+    this._telemetry.toolClosed("webideProjectEditor");
+    this._telemetry.destroy();
   },
 
   canCloseProject: function() {
@@ -190,7 +204,7 @@ let UI = {
         }
         break;
       case "project":
-        this._updatePromise = Task.spawn(function() {
+        this._updatePromise = Task.spawn(function*() {
           UI.updateTitle();
           yield UI.destroyToolbox();
           UI.updateCommands();
@@ -211,6 +225,9 @@ let UI = {
         this.updateCommands();
         break;
       case "runtime-global-actors":
+        // Check runtime version only on runtime-global-actors,
+        // as we expect to use device actor
+        this.checkRuntimeVersion();
         this.updateCommands();
         break;
       case "runtime-details":
@@ -455,12 +472,51 @@ let UI = {
       }
     }
 
+    // Runtime commands
+    let monitorCmd = document.querySelector("#cmd_showMonitor");
+    let screenshotCmd = document.querySelector("#cmd_takeScreenshot");
+    let permissionsCmd = document.querySelector("#cmd_showPermissionsTable");
+    let detailsCmd = document.querySelector("#cmd_showRuntimeDetails");
+    let disconnectCmd = document.querySelector("#cmd_disconnectRuntime");
+    let devicePrefsCmd = document.querySelector("#cmd_showDevicePrefs");
+    let settingsCmd = document.querySelector("#cmd_showSettings");
+
+    if (AppManager.connected) {
+      if (AppManager.deviceFront) {
+        monitorCmd.removeAttribute("disabled");
+        detailsCmd.removeAttribute("disabled");
+        permissionsCmd.removeAttribute("disabled");
+        screenshotCmd.removeAttribute("disabled");
+      }
+      if (AppManager.preferenceFront) {
+        devicePrefsCmd.removeAttribute("disabled");
+      }
+      if (AppManager.settingsFront) {
+        settingsCmd.removeAttribute("disabled");
+      }
+      disconnectCmd.removeAttribute("disabled");
+    } else {
+      monitorCmd.setAttribute("disabled", "true");
+      detailsCmd.setAttribute("disabled", "true");
+      permissionsCmd.setAttribute("disabled", "true");
+      screenshotCmd.setAttribute("disabled", "true");
+      disconnectCmd.setAttribute("disabled", "true");
+      devicePrefsCmd.setAttribute("disabled", "true");
+      settingsCmd.setAttribute("disabled", "true");
+    }
+
     let runtimePanelButton = document.querySelector("#runtime-panel-button");
 
     if (AppManager.connected) {
       runtimePanelButton.setAttribute("active", "true");
+      if (projectList.sidebarsEnabled) {
+        runtimePanelButton.removeAttribute("hidden");
+      }
     } else {
       runtimePanelButton.removeAttribute("active");
+      if (projectList.sidebarsEnabled) {
+        runtimePanelButton.setAttribute("hidden", "true");
+      }
     }
 
     projectPanelCmd.removeAttribute("disabled");
@@ -632,13 +688,18 @@ let UI = {
     }
   },
 
-  updateProjectEditorMenusVisibility: function() {
+  /**
+   * Called when selecting or deselecting the project editor panel.
+   */
+  onChangeProjectEditorSelected: function() {
     if (this.projecteditor) {
       let panel = document.querySelector("#deck").selectedPanel;
       if (panel && panel.id == "deck-panel-projecteditor") {
         this.projecteditor.menuEnabled = true;
+        this._telemetry.toolOpened("webideProjectEditor");
       } else {
         this.projecteditor.menuEnabled = false;
+        this._telemetry.toolClosed("webideProjectEditor");
       }
     }
   },
@@ -653,8 +714,9 @@ let UI = {
       menubar: document.querySelector("#main-menubar"),
       menuindex: 1
     });
-    this.projecteditor.on("onEditorSave", (editor, resource) => {
+    this.projecteditor.on("onEditorSave", () => {
       AppManager.validateAndUpdateProject(AppManager.selectedProject);
+      this._telemetry.actionOccurred("webideProjectEditorSave");
     });
     return this.projecteditor.loaded;
   },
@@ -680,10 +742,6 @@ let UI = {
 
   isProjectEditorEnabled: function() {
     return Services.prefs.getBoolPref("devtools.webide.showProjectEditor");
-  },
-
-  isRuntimeConfigurationEnabled: function() {
-    return Services.prefs.getBoolPref("devtools.webide.enableRuntimeConfiguration");
   },
 
   openProject: function() {
@@ -714,11 +772,11 @@ let UI = {
 
     // Show ProjectEditor
 
-    this.selectDeckPanel("projecteditor");
-
     this.getProjectEditor().then(() => {
       this.updateProjectEditorHeader();
     }, console.error);
+
+    this.selectDeckPanel("projecteditor");
   },
 
   autoStartProject: Task.async(function*() {
@@ -772,6 +830,8 @@ let UI = {
 
     // Select project
     AppManager.selectedProject = project;
+
+    this._telemetry.actionOccurred("webideImportProject");
   }),
 
   // Remember the last selected project on the runtime
@@ -885,7 +945,7 @@ let UI = {
       panel.setAttribute("src", lazysrc);
     }
     deck.selectedPanel = panel;
-    this.updateProjectEditorMenusVisibility();
+    this.onChangeProjectEditorSelected();
     this.updateToolboxFullscreenState();
   },
 
@@ -893,8 +953,33 @@ let UI = {
     this.resetFocus();
     let deck = document.querySelector("#deck");
     deck.selectedPanel = null;
-    this.updateProjectEditorMenusVisibility();
+    this.onChangeProjectEditorSelected();
   },
+
+  buildIDToDate(buildID) {
+    let fields = buildID.match(/(\d{4})(\d{2})(\d{2})/);
+    // Date expects 0 - 11 for months
+    return new Date(fields[1], Number.parseInt(fields[2]) - 1, fields[3]);
+  },
+
+  checkRuntimeVersion: Task.async(function* () {
+    if (AppManager.connected && AppManager.deviceFront) {
+      let desc = yield AppManager.deviceFront.getDescription();
+      // Compare device and firefox build IDs
+      // and only compare by day (strip hours/minutes) to prevent
+      // warning against builds of the same day.
+      let deviceID = desc.appbuildid.substr(0, 8);
+      let localID = Services.appinfo.appBuildID.substr(0, 8);
+      let deviceDate = this.buildIDToDate(deviceID);
+      let localDate = this.buildIDToDate(localID);
+      // Allow device to be newer by up to a week.  This accommodates those with
+      // local device builds, since their devices will almost always be newer
+      // than the client.
+      if (deviceDate - localDate > 7 * MS_PER_DAY) {
+        this.reportError("error_runtimeVersionTooRecent", deviceID, localID);
+      }
+    }
+  }),
 
   /********** TOOLBOX **********/
 
@@ -959,7 +1044,7 @@ let UI = {
     iframe.uid = new Date().getTime();
 
     document.querySelector("notificationbox").insertBefore(iframe, splitter.nextSibling);
-    let host = devtools.Toolbox.HostType.CUSTOM;
+    let host = Toolbox.HostType.CUSTOM;
     let options = { customIframe: iframe, zoom: false, uid: iframe.uid };
     this.toolboxIframe = iframe;
 
@@ -973,6 +1058,10 @@ let UI = {
   },
 
   updateToolboxFullscreenState: function() {
+    if (projectList.sidebarsEnabled) {
+      return;
+    }
+
     let panel = document.querySelector("#deck").selectedPanel;
     let nbox = document.querySelector("#notificationbox");
     if (panel && panel.id == "deck-panel-details" &&
@@ -1013,7 +1102,7 @@ let UI = {
 
 EventEmitter.decorate(UI);
 
-let Cmds = {
+var Cmds = {
   quit: function() {
     if (UI.canCloseProject()) {
       window.close();
@@ -1046,14 +1135,9 @@ let Cmds = {
       ProjectPanel.showPopup();
     }
 
-    // There are currently no available events to listen for when an unselected
-    // tab navigates.  Since we show every tab's location in the project menu,
-    // we re-list all the tabs each time the menu is displayed.
-    // TODO: An event-based solution will be needed for the sidebar UI.
+    // TODO: Remove this check if/when we remove the dropdown view.
     if (!projectList.sidebarsEnabled && AppManager.connected) {
-      return AppManager.listTabs().then(() => {
-        projectList.updateTabs();
-      }).catch(console.error);
+      projectList.refreshTabs();
     }
 
     return promise.resolve();

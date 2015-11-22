@@ -18,7 +18,7 @@ const MSG_INSTALL_ADDONS   = "WebInstallerInstallAddonsFromWebpage";
 const MSG_INSTALL_CALLBACK = "WebInstallerInstallCallback";
 
 
-let log = Log.repository.getLogger("AddonManager.InstallTrigger");
+var log = Log.repository.getLogger("AddonManager.InstallTrigger");
 log.level = Log.Level[Preferences.get("extensions.logging.enabled", false) ? "Warn" : "Trace"];
 
 function CallbackObject(id, callback, urls, mediator) {
@@ -67,17 +67,38 @@ RemoteMediator.prototype = {
   },
 
   install: function(installs, principal, callback, window) {
-    let messageManager = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                         .getInterface(Ci.nsIWebNavigation)
-                         .QueryInterface(Ci.nsIDocShell)
-                         .QueryInterface(Ci.nsIInterfaceRequestor)
-                         .getInterface(Ci.nsIContentFrameMessageManager);
-
     let callbackID = this._addCallback(callback, installs.uris);
 
     installs.mimetype = XPINSTALL_MIMETYPE;
     installs.triggeringPrincipal = principal;
     installs.callbackID = callbackID;
+
+    if (Services.appinfo.processType == Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT) {
+      // When running in the main process this might be a frame inside an
+      // in-content UI page, walk up to find the first frame element in a chrome
+      // privileged document
+      let element = window.frameElement;
+      let ssm = Services.scriptSecurityManager;
+      while (element && !ssm.isSystemPrincipal(element.ownerDocument.nodePrincipal))
+        element = element.ownerDocument.defaultView.frameElement;
+
+      if (element) {
+        let listener = Cc["@mozilla.org/addons/integration;1"].
+                       getService(Ci.nsIMessageListener);
+        return listener.wrappedJSObject.receiveMessage({
+          name: MSG_INSTALL_ADDONS,
+          target: element,
+          data: installs,
+        });
+      }
+    }
+
+    // Fall back to sending through the message manager
+    let messageManager = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                               .getInterface(Ci.nsIWebNavigation)
+                               .QueryInterface(Ci.nsIDocShell)
+                               .QueryInterface(Ci.nsIInterfaceRequestor)
+                               .getInterface(Ci.nsIContentFrameMessageManager);
 
     return messageManager.sendSyncMessage(MSG_INSTALL_ADDONS, installs)[0];
   },
@@ -144,12 +165,12 @@ InstallTrigger.prototype = {
         item = { URL: item };
       }
       if (!item.URL) {
-        throw new this._window.DOMError("Error", "Missing URL property for '" + name + "'");
+        throw new this._window.Error("Missing URL property for '" + name + "'");
       }
 
       let url = this._resolveURL(item.URL);
       if (!this._checkLoadURIFromScript(url)) {
-        throw new this._window.DOMError("SecurityError", "Insufficient permissions to install: " + url.spec);
+        throw new this._window.Error("Insufficient permissions to install: " + url.spec);
       }
 
       let iconUrl = null;

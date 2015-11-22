@@ -35,6 +35,12 @@ UnboxedTypeNeedsPreBarrier(JSValueType type)
     return type == JSVAL_TYPE_STRING || type == JSVAL_TYPE_OBJECT;
 }
 
+static inline bool
+UnboxedTypeNeedsPostBarrier(JSValueType type)
+{
+    return type == JSVAL_TYPE_OBJECT;
+}
+
 // Class tracking information specific to unboxed objects.
 class UnboxedLayout : public mozilla::LinkedListElement<UnboxedLayout>
 {
@@ -58,6 +64,17 @@ class UnboxedLayout : public mozilla::LinkedListElement<UnboxedLayout>
     HeapPtrObjectGroup nativeGroup_;
     HeapPtrShape nativeShape_;
 
+    // Any script/pc which the associated group is created for.
+    HeapPtrScript allocationScript_;
+    jsbytecode* allocationPc_;
+
+    // If nativeGroup is set and this object originally had a TypeNewScript or
+    // was keyed to an allocation site, this points to the group which replaced
+    // this one. This link is only needed to keep the replacement group from
+    // being GC'ed. If it were GC'ed and a new one regenerated later, that new
+    // group might have a different allocation kind from this group.
+    HeapPtrObjectGroup replacementGroup_;
+
     // The following members are only used for unboxed plain objects.
 
     // All properties on objects with this layout, in enumeration order.
@@ -73,14 +90,6 @@ class UnboxedLayout : public mozilla::LinkedListElement<UnboxedLayout>
     // structure as the trace list on a TypeDescr.
     int32_t* traceList_;
 
-    // If nativeGroup is set and this object originally had a TypeNewScript,
-    // this points to the default 'new' group which replaced this one (and
-    // which might itself have been cleared since). This link is only needed to
-    // keep the replacement group from being GC'ed. If it were GC'ed and a new
-    // one regenerated later, that new group might have a different allocation
-    // kind from this group.
-    HeapPtrObjectGroup replacementNewGroup_;
-
     // If this layout has been used to construct script or JSON constant
     // objects, this code might be filled in to more quickly fill in objects
     // from an array of values.
@@ -93,8 +102,9 @@ class UnboxedLayout : public mozilla::LinkedListElement<UnboxedLayout>
 
   public:
     UnboxedLayout()
-      : nativeGroup_(nullptr), nativeShape_(nullptr), size_(0), newScript_(nullptr),
-        traceList_(nullptr), replacementNewGroup_(nullptr), constructorCode_(nullptr),
+      : nativeGroup_(nullptr), nativeShape_(nullptr),
+        allocationScript_(nullptr), allocationPc_(nullptr), replacementGroup_(nullptr),
+        size_(0), newScript_(nullptr), traceList_(nullptr), constructorCode_(nullptr),
         elementType_(JSVAL_TYPE_MAGIC)
     {}
 
@@ -108,11 +118,18 @@ class UnboxedLayout : public mozilla::LinkedListElement<UnboxedLayout>
     }
 
     ~UnboxedLayout() {
+        if (newScript_)
+            newScript_->clear();
         js_delete(newScript_);
         js_free(traceList_);
+
+        nativeGroup_.init(nullptr);
+        nativeShape_.init(nullptr);
+        replacementGroup_.init(nullptr);
+        constructorCode_.init(nullptr);
     }
 
-    bool isArray() {
+    bool isArray() const {
         return elementType_ != JSVAL_TYPE_MAGIC;
     }
 
@@ -127,6 +144,19 @@ class UnboxedLayout : public mozilla::LinkedListElement<UnboxedLayout>
     }
 
     void setNewScript(TypeNewScript* newScript, bool writeBarrier = true);
+
+    JSScript* allocationScript() const {
+        return allocationScript_;
+    }
+
+    jsbytecode* allocationPc() const {
+        return allocationPc_;
+    }
+
+    void setAllocationSite(JSScript* script, jsbytecode* pc) {
+        allocationScript_ = script;
+        allocationPc_ = pc;
+    }
 
     const int32_t* traceList() const {
         return traceList_;
@@ -220,7 +250,7 @@ class UnboxedPlainObject : public JSObject
 
     static bool obj_hasProperty(JSContext* cx, HandleObject obj, HandleId id, bool* foundp);
 
-    static bool obj_getProperty(JSContext* cx, HandleObject obj, HandleObject receiver,
+    static bool obj_getProperty(JSContext* cx, HandleObject obj, HandleValue receiver,
                                 HandleId id, MutableHandleValue vp);
 
     static bool obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
@@ -232,12 +262,11 @@ class UnboxedPlainObject : public JSObject
     static bool obj_deleteProperty(JSContext* cx, HandleObject obj, HandleId id,
                                    ObjectOpResult& result);
 
-    static bool obj_enumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties);
+    static bool obj_enumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties,
+                              bool enumerableOnly);
     static bool obj_watch(JSContext* cx, HandleObject obj, HandleId id, HandleObject callable);
 
-    const UnboxedLayout& layout() const {
-        return group()->unboxedLayout();
-    }
+    inline const UnboxedLayout& layout() const;
 
     const UnboxedLayout& layoutDontCheckGeneration() const {
         return group()->unboxedLayoutDontCheckGeneration();
@@ -357,7 +386,7 @@ class UnboxedArrayObject : public JSObject
 
     static bool obj_hasProperty(JSContext* cx, HandleObject obj, HandleId id, bool* foundp);
 
-    static bool obj_getProperty(JSContext* cx, HandleObject obj, HandleObject receiver,
+    static bool obj_getProperty(JSContext* cx, HandleObject obj, HandleValue receiver,
                                 HandleId id, MutableHandleValue vp);
 
     static bool obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
@@ -369,12 +398,11 @@ class UnboxedArrayObject : public JSObject
     static bool obj_deleteProperty(JSContext* cx, HandleObject obj, HandleId id,
                                    ObjectOpResult& result);
 
-    static bool obj_enumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties);
+    static bool obj_enumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties,
+                              bool enumerableOnly);
     static bool obj_watch(JSContext* cx, HandleObject obj, HandleId id, HandleObject callable);
 
-    const UnboxedLayout& layout() const {
-        return group()->unboxedLayout();
-    }
+    inline const UnboxedLayout& layout() const;
 
     const UnboxedLayout& layoutDontCheckGeneration() const {
         return group()->unboxedLayoutDontCheckGeneration();
@@ -390,7 +418,12 @@ class UnboxedArrayObject : public JSObject
 
     static bool convertToNative(JSContext* cx, JSObject* obj);
     static UnboxedArrayObject* create(ExclusiveContext* cx, HandleObjectGroup group,
-                                      uint32_t length, NewObjectKind newKind);
+                                      uint32_t length, NewObjectKind newKind,
+                                      uint32_t maxLength = MaximumCapacity);
+
+    static bool convertToNativeWithGroup(ExclusiveContext* cx, JSObject* obj,
+                                         ObjectGroup* group, Shape* shape);
+    bool convertInt32ToDouble(ExclusiveContext* cx, ObjectGroup* group);
 
     void fillAfterConvert(ExclusiveContext* cx,
                           const AutoValueVector& values, size_t* valueCursor);
@@ -426,13 +459,21 @@ class UnboxedArrayObject : public JSObject
         return computeCapacity(capacityIndex(), length());
     }
 
-    bool containsProperty(JSContext* cx, jsid id);
+    bool containsProperty(ExclusiveContext* cx, jsid id);
 
     bool setElement(ExclusiveContext* cx, size_t index, const Value& v);
     bool initElement(ExclusiveContext* cx, size_t index, const Value& v);
+    void initElementNoTypeChange(size_t index, const Value& v);
     Value getElement(size_t index);
 
-    bool appendElementNoTypeChange(ExclusiveContext* cx, size_t index, const Value& v);
+    template <JSValueType Type> inline bool setElementSpecific(ExclusiveContext* cx, size_t index,
+                                                               const Value& v);
+    template <JSValueType Type> inline void setElementNoTypeChangeSpecific(size_t index, const Value& v);
+    template <JSValueType Type> inline bool initElementSpecific(ExclusiveContext* cx, size_t index,
+                                                                const Value& v);
+    template <JSValueType Type> inline void initElementNoTypeChangeSpecific(size_t index, const Value& v);
+    template <JSValueType Type> inline Value getElementSpecific(size_t index);
+    template <JSValueType Type> inline void triggerPreBarrier(size_t index);
 
     bool growElements(ExclusiveContext* cx, size_t cap);
     void shrinkElements(ExclusiveContext* cx, size_t cap);
@@ -450,20 +491,22 @@ class UnboxedArrayObject : public JSObject
         return offsetof(UnboxedArrayObject, inlineElements_);
     }
 
-  private:
-    void setInlineElements() {
-        elements_ = &inlineElements_[0];
+    void setLengthInt32(uint32_t length) {
+        MOZ_ASSERT(length <= INT32_MAX);
+        length_ = length;
     }
 
-    void setLength(uint32_t len) {
-        MOZ_ASSERT(len <= INT32_MAX);
-        length_ = len;
-    }
+    inline void setLength(ExclusiveContext* cx, uint32_t len);
 
     void setInitializedLength(uint32_t initlen) {
         MOZ_ASSERT(initlen <= InitializedLengthMask);
         capacityIndexAndInitializedLength_ =
             (capacityIndexAndInitializedLength_ & CapacityMask) | initlen;
+    }
+
+  private:
+    void setInlineElements() {
+        elements_ = &inlineElements_[0];
     }
 
     void setCapacityIndex(uint32_t index) {

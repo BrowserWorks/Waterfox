@@ -127,22 +127,22 @@ PathBuilderCG::EnsureActive(const Point &aPoint)
 {
 }
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 PathBuilderCG::Finish()
 {
-  return new PathCG(mCGPath, mFillRule);
+  return MakeAndAddRef<PathCG>(mCGPath, mFillRule);
 }
 
-TemporaryRef<PathBuilder>
+already_AddRefed<PathBuilder>
 PathCG::CopyToBuilder(FillRule aFillRule) const
 {
   CGMutablePathRef path = CGPathCreateMutableCopy(mPath);
-  return new PathBuilderCG(path, aFillRule);
+  return MakeAndAddRef<PathBuilderCG>(path, aFillRule);
 }
 
 
 
-TemporaryRef<PathBuilder>
+already_AddRefed<PathBuilder>
 PathCG::TransformedCopyToBuilder(const Matrix &aTransform, FillRule aFillRule) const
 {
   // 10.7 adds CGPathCreateMutableCopyByTransformingPath it might be faster than doing
@@ -197,7 +197,7 @@ PathCG::TransformedCopyToBuilder(const Matrix &aTransform, FillRule aFillRule) c
   ta.transform = GfxMatrixToCGAffineTransform(aTransform);
 
   CGPathApply(mPath, &ta, TransformApplier::TranformCGPathApplierFunc);
-  return new PathBuilderCG(ta.path, aFillRule);
+  return MakeAndAddRef<PathBuilderCG>(ta.path, aFillRule);
 }
 
 static void
@@ -358,6 +358,6 @@ PathCG::GetStrokedBounds(const StrokeOptions &aStrokeOptions,
 }
 
 
-}
+} // namespace gfx
 
-}
+} // namespace mozilla

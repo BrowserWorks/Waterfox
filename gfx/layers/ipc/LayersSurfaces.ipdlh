@@ -38,6 +38,12 @@ struct SurfaceDescriptorD3D9 {
   uintptr_t texture;
 };
 
+struct SurfaceDescriptorFileMapping {
+  WindowsHandle handle;
+  SurfaceFormat format;
+  IntSize size;
+};
+
 struct SurfaceDescriptorDIB {
   // gfxWindowsSurface*
   uintptr_t surface;
@@ -59,7 +65,7 @@ struct SurfaceDescriptorDXGIYCbCr {
 };
 
 struct SurfaceDescriptorMacIOSurface {
-  uint32_t surface;
+  uint32_t surfaceId;
   double scaleFactor;
   bool isOpaque;
 };
@@ -73,21 +79,12 @@ struct EGLImageDescriptor {
   uintptr_t image; // `EGLImage` is a `void*`.
   uintptr_t fence;
   IntSize size;
+  bool hasAlpha;
 };
 
 struct NewSurfaceDescriptorGralloc {
   MaybeMagicGrallocBufferHandle buffer;
-  /**
-   * android::GraphicBuffer has a size information. But there are cases
-   * that GraphicBuffer's size and actual video's size are different.
-   * Extra size member is necessary. See Bug 850566.
-   */
-  IntSize size;
   bool isOpaque;
-};
-
-struct SharedSurfaceDescriptor {
-  uintptr_t surf;
 };
 
 /**
@@ -101,7 +98,7 @@ struct SurfaceDescriptorShmem {
 /**
  * Used for "raw memory"-backed YCbCr and (flavors of) RGBA textures
  */
- struct SurfaceDescriptorMemory {
+struct SurfaceDescriptorMemory {
   uintptr_t data;
   SurfaceFormat format;
 };
@@ -112,13 +109,13 @@ union SurfaceDescriptor {
   SurfaceDescriptorD3D9;
   SurfaceDescriptorDIB;
   SurfaceDescriptorD3D10;
+  SurfaceDescriptorFileMapping;
   SurfaceDescriptorDXGIYCbCr;
   SurfaceDescriptorX11;
   SurfaceTextureDescriptor;
   EGLImageDescriptor;
   SurfaceDescriptorMacIOSurface;
   NewSurfaceDescriptorGralloc;
-  SharedSurfaceDescriptor;
   null_t;
 };
 

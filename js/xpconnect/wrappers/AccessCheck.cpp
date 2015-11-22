@@ -228,7 +228,7 @@ AccessCheck::checkPassToPrivilegedCode(JSContext* cx, HandleObject wrapper, Hand
     // pass any objects at all to CPOWs.
     if (mozilla::jsipc::IsWrappedCPOW(obj) &&
         js::GetObjectCompartment(wrapper) == js::GetObjectCompartment(xpc::UnprivilegedJunkScope()) &&
-        XRE_GetProcessType() == GeckoProcessType_Default)
+        XRE_IsParentProcess())
     {
         return true;
     }
@@ -445,4 +445,4 @@ ExposedPropertiesOnly::deny(js::Wrapper::Action act, HandleId id)
     return false;
 }
 
-}
+} // namespace xpc

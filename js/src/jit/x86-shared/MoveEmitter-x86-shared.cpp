@@ -6,8 +6,12 @@
 
 #include "jit/x86-shared/MoveEmitter-x86-shared.h"
 
+#include "jit/MacroAssembler-inl.h"
+
 using namespace js;
 using namespace js::jit;
+
+using mozilla::Maybe;
 
 MoveEmitterX86::MoveEmitterX86(MacroAssembler& masm)
   : inCycle_(false),
@@ -99,11 +103,19 @@ MoveEmitterX86::emit(const MoveResolver& moves)
 {
 #if defined(JS_CODEGEN_X86) && defined(DEBUG)
     // Clobber any scratch register we have, to make regalloc bugs more visible.
-    if (hasScratchRegister())
-        masm.mov(ImmWord(0xdeadbeef), scratchRegister());
+    if (scratchRegister_.isSome())
+        masm.mov(ImmWord(0xdeadbeef), scratchRegister_.value());
 #endif
 
     for (size_t i = 0; i < moves.numMoves(); i++) {
+#if defined(JS_CODEGEN_X86) && defined(DEBUG)
+        if (!scratchRegister_.isSome()) {
+            Maybe<Register> reg = findScratchRegister(moves, i);
+            if (reg.isSome())
+                masm.mov(ImmWord(0xdeadbeef), reg.value());
+        }
+#endif
+
         const MoveOp& move = moves.getMove(i);
         const MoveOperand& from = move.from();
         const MoveOperand& to = move.to();
@@ -142,10 +154,10 @@ MoveEmitterX86::emit(const MoveResolver& moves)
             emitDoubleMove(from, to);
             break;
           case MoveOp::INT32:
-            emitInt32Move(from, to);
+            emitInt32Move(from, to, moves, i);
             break;
           case MoveOp::GENERAL:
-            emitGeneralMove(from, to);
+            emitGeneralMove(from, to, moves, i);
             break;
           case MoveOp::INT32X4:
             emitInt32X4Move(from, to);
@@ -239,32 +251,36 @@ MoveEmitterX86::breakCycle(const MoveOperand& to, MoveOp::Type type)
     switch (type) {
       case MoveOp::INT32X4:
         if (to.isMemory()) {
-            masm.loadAlignedInt32x4(toAddress(to), ScratchSimdReg);
-            masm.storeAlignedInt32x4(ScratchSimdReg, cycleSlot());
+            ScratchSimdScope scratch(masm);
+            masm.loadAlignedInt32x4(toAddress(to), scratch);
+            masm.storeAlignedInt32x4(scratch, cycleSlot());
         } else {
             masm.storeAlignedInt32x4(to.floatReg(), cycleSlot());
         }
         break;
       case MoveOp::FLOAT32X4:
         if (to.isMemory()) {
-            masm.loadAlignedFloat32x4(toAddress(to), ScratchSimdReg);
-            masm.storeAlignedFloat32x4(ScratchSimdReg, cycleSlot());
+            ScratchSimdScope scratch(masm);
+            masm.loadAlignedFloat32x4(toAddress(to), scratch);
+            masm.storeAlignedFloat32x4(scratch, cycleSlot());
         } else {
             masm.storeAlignedFloat32x4(to.floatReg(), cycleSlot());
         }
         break;
       case MoveOp::FLOAT32:
         if (to.isMemory()) {
-            masm.loadFloat32(toAddress(to), ScratchFloat32Reg);
-            masm.storeFloat32(ScratchFloat32Reg, cycleSlot());
+            ScratchFloat32Scope scratch(masm);
+            masm.loadFloat32(toAddress(to), scratch);
+            masm.storeFloat32(scratch, cycleSlot());
         } else {
             masm.storeFloat32(to.floatReg(), cycleSlot());
         }
         break;
       case MoveOp::DOUBLE:
         if (to.isMemory()) {
-            masm.loadDouble(toAddress(to), ScratchDoubleReg);
-            masm.storeDouble(ScratchDoubleReg, cycleSlot());
+            ScratchDoubleScope scratch(masm);
+            masm.loadDouble(toAddress(to), scratch);
+            masm.storeDouble(scratch, cycleSlot());
         } else {
             masm.storeDouble(to.floatReg(), cycleSlot());
         }
@@ -302,8 +318,9 @@ MoveEmitterX86::completeCycle(const MoveOperand& to, MoveOp::Type type)
         MOZ_ASSERT(pushedAtCycle_ != -1);
         MOZ_ASSERT(pushedAtCycle_ - pushedAtStart_ >= Simd128DataSize);
         if (to.isMemory()) {
-            masm.loadAlignedInt32x4(cycleSlot(), ScratchSimdReg);
-            masm.storeAlignedInt32x4(ScratchSimdReg, toAddress(to));
+            ScratchSimdScope scratch(masm);
+            masm.loadAlignedInt32x4(cycleSlot(), scratch);
+            masm.storeAlignedInt32x4(scratch, toAddress(to));
         } else {
             masm.loadAlignedInt32x4(cycleSlot(), to.floatReg());
         }
@@ -312,8 +329,9 @@ MoveEmitterX86::completeCycle(const MoveOperand& to, MoveOp::Type type)
         MOZ_ASSERT(pushedAtCycle_ != -1);
         MOZ_ASSERT(pushedAtCycle_ - pushedAtStart_ >= Simd128DataSize);
         if (to.isMemory()) {
-            masm.loadAlignedFloat32x4(cycleSlot(), ScratchSimdReg);
-            masm.storeAlignedFloat32x4(ScratchSimdReg, toAddress(to));
+            ScratchSimdScope scratch(masm);
+            masm.loadAlignedFloat32x4(cycleSlot(), scratch);
+            masm.storeAlignedFloat32x4(scratch, toAddress(to));
         } else {
             masm.loadAlignedFloat32x4(cycleSlot(), to.floatReg());
         }
@@ -322,8 +340,9 @@ MoveEmitterX86::completeCycle(const MoveOperand& to, MoveOp::Type type)
         MOZ_ASSERT(pushedAtCycle_ != -1);
         MOZ_ASSERT(pushedAtCycle_ - pushedAtStart_ >= sizeof(float));
         if (to.isMemory()) {
-            masm.loadFloat32(cycleSlot(), ScratchFloat32Reg);
-            masm.storeFloat32(ScratchFloat32Reg, toAddress(to));
+            ScratchFloat32Scope scratch(masm);
+            masm.loadFloat32(cycleSlot(), scratch);
+            masm.storeFloat32(scratch, toAddress(to));
         } else {
             masm.loadFloat32(cycleSlot(), to.floatReg());
         }
@@ -332,8 +351,9 @@ MoveEmitterX86::completeCycle(const MoveOperand& to, MoveOp::Type type)
         MOZ_ASSERT(pushedAtCycle_ != -1);
         MOZ_ASSERT(pushedAtCycle_ - pushedAtStart_ >= sizeof(double));
         if (to.isMemory()) {
-            masm.loadDouble(cycleSlot(), ScratchDoubleReg);
-            masm.storeDouble(ScratchDoubleReg, toAddress(to));
+            ScratchDoubleScope scratch(masm);
+            masm.loadDouble(cycleSlot(), scratch);
+            masm.storeDouble(scratch, toAddress(to));
         } else {
             masm.loadDouble(cycleSlot(), to.floatReg());
         }
@@ -361,7 +381,8 @@ MoveEmitterX86::completeCycle(const MoveOperand& to, MoveOp::Type type)
 }
 
 void
-MoveEmitterX86::emitInt32Move(const MoveOperand& from, const MoveOperand& to)
+MoveEmitterX86::emitInt32Move(const MoveOperand& from, const MoveOperand& to,
+                              const MoveResolver& moves, size_t i)
 {
     if (from.isGeneralReg()) {
         masm.move32(from.reg(), toOperand(to));
@@ -371,10 +392,10 @@ MoveEmitterX86::emitInt32Move(const MoveOperand& from, const MoveOperand& to)
     } else {
         // Memory to memory gpr move.
         MOZ_ASSERT(from.isMemory());
-        if (hasScratchRegister()) {
-            Register reg = scratchRegister();
-            masm.load32(toAddress(from), reg);
-            masm.move32(reg, toOperand(to));
+        Maybe<Register> reg = findScratchRegister(moves, i);
+        if (reg.isSome()) {
+            masm.load32(toAddress(from), reg.value());
+            masm.move32(reg.value(), toOperand(to));
         } else {
             // No scratch register available; bounce it off the stack.
             masm.Push(toOperand(from));
@@ -384,7 +405,8 @@ MoveEmitterX86::emitInt32Move(const MoveOperand& from, const MoveOperand& to)
 }
 
 void
-MoveEmitterX86::emitGeneralMove(const MoveOperand& from, const MoveOperand& to)
+MoveEmitterX86::emitGeneralMove(const MoveOperand& from, const MoveOperand& to,
+                                const MoveResolver& moves, size_t i)
 {
     if (from.isGeneralReg()) {
         masm.mov(from.reg(), toOperand(to));
@@ -396,10 +418,10 @@ MoveEmitterX86::emitGeneralMove(const MoveOperand& from, const MoveOperand& to)
             masm.lea(toOperand(from), to.reg());
     } else if (from.isMemory()) {
         // Memory to memory gpr move.
-        if (hasScratchRegister()) {
-            Register reg = scratchRegister();
-            masm.loadPtr(toAddress(from), reg);
-            masm.mov(reg, toOperand(to));
+        Maybe<Register> reg = findScratchRegister(moves, i);
+        if (reg.isSome()) {
+            masm.loadPtr(toAddress(from), reg.value());
+            masm.mov(reg.value(), toOperand(to));
         } else {
             // No scratch register available; bounce it off the stack.
             masm.Push(toOperand(from));
@@ -408,10 +430,10 @@ MoveEmitterX86::emitGeneralMove(const MoveOperand& from, const MoveOperand& to)
     } else {
         // Effective address to memory move.
         MOZ_ASSERT(from.isEffectiveAddress());
-        if (hasScratchRegister()) {
-            Register reg = scratchRegister();
-            masm.lea(toOperand(from), reg);
-            masm.mov(reg, toOperand(to));
+        Maybe<Register> reg = findScratchRegister(moves, i);
+        if (reg.isSome()) {
+            masm.lea(toOperand(from), reg.value());
+            masm.mov(reg.value(), toOperand(to));
         } else {
             // This is tricky without a scratch reg. We can't do an lea. Bounce the
             // base register off the stack, then add the offset in place. Note that
@@ -439,8 +461,9 @@ MoveEmitterX86::emitFloat32Move(const MoveOperand& from, const MoveOperand& to)
     } else {
         // Memory to memory move.
         MOZ_ASSERT(from.isMemory());
-        masm.loadFloat32(toAddress(from), ScratchFloat32Reg);
-        masm.storeFloat32(ScratchFloat32Reg, toAddress(to));
+        ScratchFloat32Scope scratch(masm);
+        masm.loadFloat32(toAddress(from), scratch);
+        masm.storeFloat32(scratch, toAddress(to));
     }
 }
 
@@ -460,8 +483,9 @@ MoveEmitterX86::emitDoubleMove(const MoveOperand& from, const MoveOperand& to)
     } else {
         // Memory to memory move.
         MOZ_ASSERT(from.isMemory());
-        masm.loadDouble(toAddress(from), ScratchDoubleReg);
-        masm.storeDouble(ScratchDoubleReg, toAddress(to));
+        ScratchDoubleScope scratch(masm);
+        masm.loadDouble(toAddress(from), scratch);
+        masm.storeDouble(scratch, toAddress(to));
     }
 }
 
@@ -481,8 +505,9 @@ MoveEmitterX86::emitInt32X4Move(const MoveOperand& from, const MoveOperand& to)
     } else {
         // Memory to memory move.
         MOZ_ASSERT(from.isMemory());
-        masm.loadAlignedInt32x4(toAddress(from), ScratchSimdReg);
-        masm.storeAlignedInt32x4(ScratchSimdReg, toAddress(to));
+        ScratchSimdScope scratch(masm);
+        masm.loadAlignedInt32x4(toAddress(from), scratch);
+        masm.storeAlignedInt32x4(scratch, toAddress(to));
     }
 }
 
@@ -502,8 +527,9 @@ MoveEmitterX86::emitFloat32X4Move(const MoveOperand& from, const MoveOperand& to
     } else {
         // Memory to memory move.
         MOZ_ASSERT(from.isMemory());
-        masm.loadAlignedFloat32x4(toAddress(from), ScratchSimdReg);
-        masm.storeAlignedFloat32x4(ScratchSimdReg, toAddress(to));
+        ScratchSimdScope scratch(masm);
+        masm.loadAlignedFloat32x4(toAddress(from), scratch);
+        masm.storeAlignedFloat32x4(scratch, toAddress(to));
     }
 }
 
@@ -521,3 +547,34 @@ MoveEmitterX86::finish()
     masm.freeStack(masm.framePushed() - pushedAtStart_);
 }
 
+Maybe<Register>
+MoveEmitterX86::findScratchRegister(const MoveResolver& moves, size_t initial)
+{
+#ifdef JS_CODEGEN_X86
+    if (scratchRegister_.isSome())
+        return scratchRegister_;
+
+    // All registers are either in use by this move group or are live
+    // afterwards. Look through the remaining moves for a register which is
+    // clobbered before it is used, and is thus dead at this point.
+    AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
+    for (size_t i = initial; i < moves.numMoves(); i++) {
+        const MoveOp& move = moves.getMove(i);
+        if (move.from().isGeneralReg())
+            regs.takeUnchecked(move.from().reg());
+        else if (move.from().isMemoryOrEffectiveAddress())
+            regs.takeUnchecked(move.from().base());
+        if (move.to().isGeneralReg()) {
+            if (i != initial && !move.isCycleBegin() && regs.has(move.to().reg()))
+                return mozilla::Some(move.to().reg());
+            regs.takeUnchecked(move.to().reg());
+        } else if (move.to().isMemoryOrEffectiveAddress()) {
+            regs.takeUnchecked(move.to().base());
+        }
+    }
+
+    return mozilla::Nothing();
+#else
+    return mozilla::Some(ScratchReg);
+#endif
+}

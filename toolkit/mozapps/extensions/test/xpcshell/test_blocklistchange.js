@@ -483,7 +483,7 @@ function Pmanual_update(aVersion) {
     // the add-on is valid or not.
     let webInstaller = Cc["@mozilla.org/addons/web-install-listener;1"]
                        .getService(Ci.amIWebInstallListener);
-    webInstaller.onWebInstallRequested(null, null, installs, installs.length);
+    webInstaller.onWebInstallRequested(null, null, installs);
 
     return Promise.all(completePromises);
   });

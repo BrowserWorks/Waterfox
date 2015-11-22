@@ -135,7 +135,7 @@ BookmarkSeparator.prototype = {
 Utils.deferGetSet(BookmarkSeparator, "cleartext", "pos");
 
 
-let kSpecialIds = {
+var kSpecialIds = {
 
   // Special IDs. Note that mobile can attempt to create a record on
   // dereference; special accessors are provided to prevent recursion within
@@ -240,6 +240,32 @@ BookmarksEngine.prototype = {
     }
   },
 
+  // A diagnostic helper to get the string value for a bookmark's URL given
+  // its ID. Always returns a string - on error will return a string in the
+  // form of "<description of error>" as this is purely for, eg, logging.
+  // (This means hitting the DB directly and we don't bother using a cached
+  // statement - we should rarely hit this.)
+  _getStringUrlForId(id) {
+    let url;
+    try {
+      let stmt = this._store._getStmt(`
+            SELECT h.url
+            FROM moz_places h
+            JOIN moz_bookmarks b ON h.id = b.fk
+            WHERE b.id = :id`);
+      stmt.params.id = id;
+      let rows = Async.querySpinningly(stmt, ["url"]);
+      url = rows.length == 0 ? "<not found>" : rows[0].url;
+    } catch (ex if !Async.isShutdownException(ex)) {
+      if (ex instanceof Ci.mozIStorageError) {
+        url = `<failed: Storage error: ${ex.message} (${ex.result})>`;
+      } else {
+        url = `<failed: ${ex.toString()}>`;
+      }
+    }
+    return url;
+  },
+
   _guidMapFailed: false,
   _buildGUIDMap: function _buildGUIDMap() {
     let guidMap = {};
@@ -269,11 +295,26 @@ BookmarksEngine.prototype = {
               id, SMART_BOOKMARKS_ANNO);
           } catch(ex) {}
 
-          if (queryId)
+          if (queryId) {
             key = "q" + queryId;
-          else
-            key = "b" + PlacesUtils.bookmarks.getBookmarkURI(id).spec + ":" +
-                  PlacesUtils.bookmarks.getItemTitle(id);
+          } else {
+            let uri;
+            try {
+              uri = PlacesUtils.bookmarks.getBookmarkURI(id);
+            } catch (ex) {
+              // Bug 1182366 - NS_ERROR_MALFORMED_URI here stops bookmarks sync.
+              // Try and get the string value of the URL for diagnostic purposes.
+              let url = this._getStringUrlForId(id);
+              this._log.warn(`Deleting bookmark with invalid URI. url="${url}", id=${id}`);
+              try {
+                PlacesUtils.bookmarks.removeItem(id);
+              } catch (ex) {
+                this._log.warn("Failed to delete invalid bookmark", ex);
+              }
+              continue;
+            }
+            key = "b" + uri.spec + ":" + PlacesUtils.bookmarks.getItemTitle(id);
+          }
           break;
         case PlacesUtils.bookmarks.TYPE_FOLDER:
           key = "f" + PlacesUtils.bookmarks.getItemTitle(id);
@@ -400,7 +441,7 @@ BookmarksEngine.prototype = {
       let guidMap;
       try {
         guidMap = this._buildGUIDMap();
-      } catch (ex) {
+      } catch (ex if !Async.isShutdownException(ex)) {
         this._log.warn("Got exception \"" + Utils.exceptionStr(ex) +
                        "\" building GUID map." +
                        " Skipping all other incoming items.");
@@ -1154,6 +1195,7 @@ BookmarksStore.prototype = {
     stmt.params.guid = guid;
     stmt.params.item_id = id;
     Async.querySpinningly(stmt);
+    PlacesUtils.invalidateCachedGuidFor(id);
     return guid;
   },
 
@@ -1310,7 +1352,15 @@ BookmarksStore.prototype = {
 
   getAllIDs: function BStore_getAllIDs() {
     let items = {"menu": true,
-                 "toolbar": true};
+                 "toolbar": true,
+                 "unfiled": true,
+                };
+    // We also want "mobile" but only if a local mobile folder already exists
+    // (otherwise we'll later end up creating it, which we want to avoid until
+    // we actually need it.)
+    if (kSpecialIds.findMobileRoot(false)) {
+      items["mobile"] = true;
+    }
     for each (let guid in kSpecialIds.guids) {
       if (guid != "places" && guid != "tags")
         this._getChildren(guid, items);

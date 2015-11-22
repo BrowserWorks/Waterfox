@@ -29,7 +29,6 @@
 #include "nsCOMPtr.h"
 #include "nsNetCID.h"
 #include "prprf.h"
-#include "nsNetUtil.h"
 #include "nsAsyncRedirectVerifyHelper.h"
 #include "nsSocketTransportService2.h"
 #include "nsAlgorithm.h"
@@ -49,6 +48,8 @@
 #include "nsIParentalControlsService.h"
 #include "nsINetworkLinkService.h"
 #include "nsHttpChannelAuthProvider.h"
+#include "nsServiceManagerUtils.h"
+#include "nsComponentManagerUtils.h"
 
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/ipc/URIUtils.h"
@@ -173,7 +174,6 @@ nsHttpHandler::nsHttpHandler()
     , mProduct("Gecko")
     , mCompatFirefoxEnabled(false)
     , mUserAgentIsDirty(true)
-    , mUseCache(true)
     , mPromptTempRedirect(true)
     , mSendSecureXSiteReferrer(true)
     , mEnablePersistentHttpsCaching(false)
@@ -182,10 +182,10 @@ nsHttpHandler::nsHttpHandler()
     , mParentalControlEnabled(false)
     , mTelemetryEnabled(false)
     , mAllowExperiments(true)
+    , mDebugObservations(false)
     , mHandlerActive(false)
     , mEnableSpdy(false)
     , mSpdyV31(true)
-    , mHttp2DraftEnabled(true)
     , mHttp2Enabled(true)
     , mUseH2Deps(true)
     , mEnforceHttp2TlsProfile(true)
@@ -285,11 +285,17 @@ nsHttpHandler::Init()
         PrefsChanged(prefBranch, nullptr);
     }
 
+    rv = Preferences::AddBoolVarCache(&mPackagedAppsEnabled,
+        "network.http.enable-packaged-apps", false);
+    if (NS_FAILED(rv)) {
+        mPackagedAppsEnabled = false;
+    }
+
     nsHttpChannelAuthProvider::InitializePrefs();
 
     mMisc.AssignLiteral("rv:" MOZILLA_UAVERSION);
 
-    mCompatFirefox.AssignLiteral("Waterfox/" MOZ_APP_UA_VERSION);
+    mCompatFirefox.AssignLiteral("Firefox/" MOZILLA_UAVERSION);
 
     nsCOMPtr<nsIXULAppInfo> appInfo =
         do_GetService("@mozilla.org/xre/app-info;1");
@@ -319,6 +325,9 @@ nsHttpHandler::Init()
     rv = InitConnectionMgr();
     if (NS_FAILED(rv)) return rv;
 
+    mSchedulingContextService =
+        do_GetService("@mozilla.org/network/scheduling-context-service;1");
+
 #ifdef ANDROID
     mProductSub.AssignLiteral(MOZILLA_UAVERSION);
 #else
@@ -347,21 +356,20 @@ nsHttpHandler::Init()
                                   NS_HTTP_STARTUP_TOPIC);
 
     nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
-    mObserverService = new nsMainThreadPtrHolder<nsIObserverService>(obsService);
-    if (mObserverService) {
+    if (obsService) {
         // register the handler object as a weak callback as we don't need to worry
         // about shutdown ordering.
-        mObserverService->AddObserver(this, "profile-change-net-teardown", true);
-        mObserverService->AddObserver(this, "profile-change-net-restore", true);
-        mObserverService->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, true);
-        mObserverService->AddObserver(this, "net:clear-active-logins", true);
-        mObserverService->AddObserver(this, "net:prune-dead-connections", true);
-        mObserverService->AddObserver(this, "net:failed-to-process-uri-content", true);
-        mObserverService->AddObserver(this, "last-pb-context-exited", true);
-        mObserverService->AddObserver(this, "webapps-clear-data", true);
-        mObserverService->AddObserver(this, "browser:purge-session-history", true);
-        mObserverService->AddObserver(this, NS_NETWORK_LINK_TOPIC, true);
-        mObserverService->AddObserver(this, "application-background", true);
+        obsService->AddObserver(this, "profile-change-net-teardown", true);
+        obsService->AddObserver(this, "profile-change-net-restore", true);
+        obsService->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, true);
+        obsService->AddObserver(this, "net:clear-active-logins", true);
+        obsService->AddObserver(this, "net:prune-dead-connections", true);
+        obsService->AddObserver(this, "net:failed-to-process-uri-content", true);
+        obsService->AddObserver(this, "last-pb-context-exited", true);
+        obsService->AddObserver(this, "webapps-clear-data", true);
+        obsService->AddObserver(this, "browser:purge-session-history", true);
+        obsService->AddObserver(this, NS_NETWORK_LINK_TOPIC, true);
+        obsService->AddObserver(this, "application-background", true);
     }
 
     MakeNewRequestTokenBucket();
@@ -414,34 +422,40 @@ nsHttpHandler::AddStandardRequestHeaders(nsHttpHeaderArray *request)
     nsresult rv;
 
     // Add the "User-Agent" header
-    rv = request->SetHeader(nsHttp::User_Agent, UserAgent());
+    rv = request->SetHeader(nsHttp::User_Agent, UserAgent(),
+                            false, nsHttpHeaderArray::eVarietyDefault);
     if (NS_FAILED(rv)) return rv;
 
     // MIME based content negotiation lives!
     // Add the "Accept" header
-    rv = request->SetHeader(nsHttp::Accept, mAccept);
+    rv = request->SetHeader(nsHttp::Accept, mAccept,
+                            false, nsHttpHeaderArray::eVarietyDefault);
     if (NS_FAILED(rv)) return rv;
 
     // Add the "Accept-Language" header
     if (!mAcceptLanguages.IsEmpty()) {
         // Add the "Accept-Language" header
-        rv = request->SetHeader(nsHttp::Accept_Language, mAcceptLanguages);
+        rv = request->SetHeader(nsHttp::Accept_Language, mAcceptLanguages,
+                                false, nsHttpHeaderArray::eVarietyDefault);
         if (NS_FAILED(rv)) return rv;
     }
 
     // Add the "Accept-Encoding" header
-    rv = request->SetHeader(nsHttp::Accept_Encoding, mAcceptEncodings);
+    rv = request->SetHeader(nsHttp::Accept_Encoding, mAcceptEncodings,
+                            false, nsHttpHeaderArray::eVarietyDefault);
     if (NS_FAILED(rv)) return rv;
 
     // Add the "Do-Not-Track" header
     if (mDoNotTrackEnabled) {
-      rv = request->SetHeader(nsHttp::DoNotTrack, NS_LITERAL_CSTRING("1"));
+      rv = request->SetHeader(nsHttp::DoNotTrack, NS_LITERAL_CSTRING("1"),
+                              false, nsHttpHeaderArray::eVarietyDefault);
       if (NS_FAILED(rv)) return rv;
     }
 
     // add the "Send Hint" header
     if (mSafeHintEnabled || mParentalControlEnabled) {
-      rv = request->SetHeader(nsHttp::Prefer, NS_LITERAL_CSTRING("safe"));
+      rv = request->SetHeader(nsHttp::Prefer, NS_LITERAL_CSTRING("safe"),
+                              false, nsHttpHeaderArray::eVarietyDefault);
       if (NS_FAILED(rv)) return rv;
     }
     return NS_OK;
@@ -557,8 +571,9 @@ void
 nsHttpHandler::NotifyObservers(nsIHttpChannel *chan, const char *event)
 {
     LOG(("nsHttpHandler::NotifyObservers [chan=%x event=\"%s\"]\n", chan, event));
-    if (mObserverService)
-        mObserverService->NotifyObservers(chan, event, nullptr);
+    nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
+    if (obsService)
+        obsService->NotifyObservers(chan, event, nullptr);
 }
 
 nsresult
@@ -661,20 +676,19 @@ nsHttpHandler::BuildUserAgent()
     mUserAgent += '/';
     mUserAgent += mProductSub;
 
-    bool isFirefox = mAppName.EqualsLiteral("Waterfox");
+    bool isFirefox = mAppName.EqualsLiteral("Firefox");
     if (isFirefox || mCompatFirefoxEnabled) {
-		// App portion
+        // "Firefox/x.y" (compatibility) app token
+        mUserAgent += ' ';
+        mUserAgent += mCompatFirefox;
+    }
+    if (!isFirefox) {
+        // App portion
         mUserAgent += ' ';
         mUserAgent += mAppName;
         mUserAgent += '/';
         mUserAgent += mAppVersion;
-
     }
-    if (!isFirefox) {
-        // "Firefox/x.y" (compatibility) app token
-        mUserAgent += ' ';
-        mUserAgent += mCompatFirefox;
-	}
 }
 
 #ifdef XP_WIN
@@ -704,14 +718,32 @@ nsHttpHandler::InitUserAgentComponents()
     );
 #endif
 
-   // Add the `Mobile` or `Tablet` token when running on device or in the
-   // b2g desktop simulator.
+
 #if defined(ANDROID) || defined(FXOS_SIMULATOR)
     nsCOMPtr<nsIPropertyBag2> infoService = do_GetService("@mozilla.org/system-info;1");
     MOZ_ASSERT(infoService, "Could not find a system info service");
-
+    nsresult rv;
+    // Add the Android version number to the Fennec platform identifier.
+#if defined MOZ_WIDGET_ANDROID
+    nsAutoString androidVersion;
+    rv = infoService->GetPropertyAsAString(
+        NS_LITERAL_STRING("release_version"), androidVersion);
+    if (NS_SUCCEEDED(rv)) {
+      mPlatform += " ";
+      // If the 2nd character is a ".", we know the major version is a single
+      // digit. If we're running on a version below 4 we pretend to be on
+      // Android KitKat (4.4) to work around scripts sniffing for low versions.
+      if (androidVersion[1] == 46 && androidVersion[0] < 52) {
+        mPlatform += "4.4";
+      } else {
+        mPlatform += NS_LossyConvertUTF16toASCII(androidVersion);
+      }
+    }
+#endif
+    // Add the `Mobile` or `Tablet` token when running on device or in the
+    // b2g desktop simulator.
     bool isTablet;
-    nsresult rv = infoService->GetPropertyAsBool(NS_LITERAL_STRING("tablet"), &isTablet);
+    rv = infoService->GetPropertyAsBool(NS_LITERAL_STRING("tablet"), &isTablet);
     if (NS_SUCCEEDED(rv) && isTablet)
         mCompatDevice.AssignLiteral("Tablet");
     else
@@ -1127,13 +1159,6 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
             SetAcceptEncodings(acceptEncodings);
     }
 
-    if (PREF_CHANGED(HTTP_PREF("use-cache"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("use-cache"), &cVar);
-        if (NS_SUCCEEDED(rv)) {
-            mUseCache = cVar;
-        }
-    }
-
     if (PREF_CHANGED(HTTP_PREF("default-socket-type"))) {
         nsXPIDLCString sval;
         rv = prefs->GetCharPref(HTTP_PREF("default-socket-type"),
@@ -1195,12 +1220,6 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         rv = prefs->GetBoolPref(HTTP_PREF("spdy.enabled.v3-1"), &cVar);
         if (NS_SUCCEEDED(rv))
             mSpdyV31 = cVar;
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("spdy.enabled.http2draft"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("spdy.enabled.http2draft"), &cVar);
-        if (NS_SUCCEEDED(rv))
-            mHttp2DraftEnabled = cVar;
     }
 
     if (PREF_CHANGED(HTTP_PREF("spdy.enabled.http2"))) {
@@ -1420,6 +1439,15 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         rv = prefs->GetBoolPref(ALLOW_EXPERIMENTS, &cVar);
         if (NS_SUCCEEDED(rv)) {
             mAllowExperiments = cVar;
+        }
+    }
+
+    // network.http.debug-observations
+    if (PREF_CHANGED("network.http.debug-observations")) {
+        cVar = false;
+        rv = prefs->GetBoolPref("network.http.debug-observations", &cVar);
+        if (NS_SUCCEEDED(rv)) {
+            mDebugObservations = cVar;
         }
     }
 
@@ -2038,6 +2066,18 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     if (!mHandlerActive)
         return NS_OK;
 
+    MOZ_ASSERT(NS_IsMainThread());
+    nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
+    if (mDebugObservations && obsService) {
+        // this is basically used for test coverage of an otherwise 'hintable' feature
+        nsAutoCString spec;
+        aURI->GetSpec(spec);
+        spec.Append(anonymous ? NS_LITERAL_CSTRING("[A]") : NS_LITERAL_CSTRING("[.]"));
+        obsService->NotifyObservers(nullptr,
+                                    "speculative-connect-request",
+                                    NS_ConvertUTF8toUTF16(spec).get());
+    }
+
     nsISiteSecurityService* sss = gHttpHandler->GetSSService();
     bool isStsHost = false;
     if (!sss)
@@ -2231,5 +2271,5 @@ nsHttpsHandler::AllowPort(int32_t aPort, const char *aScheme, bool *_retval)
     return NS_OK;
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

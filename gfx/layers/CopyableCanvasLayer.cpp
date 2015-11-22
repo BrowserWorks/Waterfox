@@ -3,8 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "BasicLayersImpl.h"            // for FillWithMask, etc
 #include "CopyableCanvasLayer.h"
+
+#include "BasicLayersImpl.h"            // for FillWithMask, etc
 #include "GLContext.h"                  // for GLContext
 #include "GLScreenBuffer.h"             // for GLScreenBuffer
 #include "SharedSurface.h"              // for SharedSurface
@@ -16,11 +17,13 @@
 #include "gfx2DGlue.h"                  // for thebes --> moz2d transition
 #include "mozilla/gfx/BaseSize.h"       // for BaseSize
 #include "mozilla/gfx/Tools.h"
+#include "mozilla/gfx/Point.h"          // for IntSize
+#include "mozilla/layers/PersistentBufferProvider.h"
 #include "nsDebug.h"                    // for NS_ASSERTION, NS_WARNING, etc
 #include "nsISupportsImpl.h"            // for gfxContext::AddRef, etc
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
-#include "nsSize.h"                     // for nsIntSize
 #include "gfxUtils.h"
+#include "client/TextureClientSharedSurface.h"
 
 namespace mozilla {
 namespace layers {
@@ -56,15 +59,11 @@ CopyableCanvasLayer::Initialize(const Data& aData)
 
     if (aData.mFrontbufferGLTex) {
       gfx::IntSize size(aData.mSize.width, aData.mSize.height);
-      mGLFrontbuffer = SharedSurface_GLTexture::Create(aData.mGLContext,
-                                                       nullptr,
-                                                       aData.mGLContext->GetGLFormats(),
-                                                       size, aData.mHasAlpha,
-                                                       aData.mFrontbufferGLTex);
+      mGLFrontbuffer = SharedSurface_Basic::Wrap(aData.mGLContext, size, aData.mHasAlpha,
+                                                 aData.mFrontbufferGLTex);
     }
-  } else if (aData.mDrawTarget) {
-    mDrawTarget = aData.mDrawTarget;
-    mSurface = mDrawTarget->Snapshot();
+  } else if (aData.mBufferProvider) {
+    mBufferProvider = aData.mBufferProvider;
   } else {
     MOZ_CRASH("CanvasLayer created without mSurface, mDrawTarget or mGLContext?");
   }
@@ -81,9 +80,8 @@ CopyableCanvasLayer::IsDataValid(const Data& aData)
 void
 CopyableCanvasLayer::UpdateTarget(DrawTarget* aDestTarget)
 {
-  if (mDrawTarget) {
-    mDrawTarget->Flush();
-    mSurface = mDrawTarget->Snapshot();
+  if (mBufferProvider) {
+    mSurface = mBufferProvider->GetSnapshot();
   }
 
   if (!mGLContext && aDestTarget) {
@@ -97,7 +95,7 @@ CopyableCanvasLayer::UpdateTarget(DrawTarget* aDestTarget)
     return;
   }
 
-  if (mDrawTarget) {
+  if (mBufferProvider) {
     return;
   }
 
@@ -108,7 +106,7 @@ CopyableCanvasLayer::UpdateTarget(DrawTarget* aDestTarget)
     frontbuffer = mGLFrontbuffer.get();
   } else {
     GLScreenBuffer* screen = mGLContext->Screen();
-    ShSurfHandle* front = screen->Front();
+    const auto& front = screen->Front();
     if (front) {
       frontbuffer = front->Surf();
     }
@@ -137,7 +135,7 @@ CopyableCanvasLayer::UpdateTarget(DrawTarget* aDestTarget)
           Factory::CreateWrappingDataSourceSurface(destData, destStride, destSize, destFormat);
         mGLContext->Readback(frontbuffer, data);
         if (needsPremult) {
-            gfxUtils::PremultiplyDataSurface(data, data);
+          gfxUtils::PremultiplyDataSurface(data, data);
         }
         aDestTarget->ReleaseBits(destData);
         return;
@@ -193,5 +191,5 @@ CopyableCanvasLayer::DiscardTempSurface()
   mCachedTempSurface = nullptr;
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

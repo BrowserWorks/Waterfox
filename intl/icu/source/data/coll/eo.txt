@@ -1,0 +1,24 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2015 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/collation/eo.xml
+// *
+// ***************************************************************************
+eo{
+    Version{"2.0.89.0"}
+    collations{
+        standard{
+            Sequence{
+                "&C<ĉ<<<Ĉ"
+                "&G<ĝ<<<Ĝ"
+                "&H<ĥ<<<Ĥ"
+                "&J<ĵ<<<Ĵ"
+                "&S<ŝ<<<Ŝ"
+                "&U<ŭ<<<Ŭ"
+            }
+            Version{"27.0.1"}
+        }
+    }
+}

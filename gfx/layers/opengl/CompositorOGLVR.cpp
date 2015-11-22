@@ -19,7 +19,6 @@
 #include "Layers.h"                     // for WriteSnapshotToDumpFile
 #include "LayerScope.h"                 // for LayerScope
 #include "gfx2DGlue.h"                  // for ThebesFilter
-#include "gfx3DMatrix.h"                // for gfx3DMatrix
 #include "gfxCrashReporterUtils.h"      // for ScopedGfxFeatureReporter
 #include "gfxMatrix.h"                  // for gfxMatrix
 #include "GraphicsFilter.h"             // for GraphicsFilter
@@ -231,8 +230,6 @@ CompositorOGL::DrawVRDistortion(const gfx::Rect& aRect,
   RefPtr<CompositingRenderTargetOGL> surface =
     static_cast<CompositingRenderTargetOGL*>(vrEffect->mRenderTarget.get());
 
-  gfx::IntSize size = surface->GetInitSize(); // XXX source->GetSize()
-
   VRHMDInfo* hmdInfo = vrEffect->mHMD;
   VRDistortionConstants shaderConstants;
 
@@ -283,19 +280,20 @@ CompositorOGL::DrawVRDistortion(const gfx::Rect& aRect,
   surface->BindTexture(LOCAL_GL_TEXTURE0, mFBOTextureTarget);
   gl()->fUniform1i(mVR.mUTexture[programIndex], 0);
 
-  gfx::IntSize vpSizeInt = mCurrentRenderTarget->GetInitSize();
-  gfx::Size vpSize(vpSizeInt.width, vpSizeInt.height);
+  Rect destRect = aTransform.TransformBounds(aRect);
+  gfx::IntSize preDistortionSize = surface->GetInitSize(); // XXX source->GetSize()
+  gfx::Size vpSize = destRect.Size();
 
   for (uint32_t eye = 0; eye < 2; eye++) {
     gfx::IntRect eyeViewport;
-    eyeViewport.x = eye * size.width / 2;
+    eyeViewport.x = eye * preDistortionSize.width / 2;
     eyeViewport.y = 0;
-    eyeViewport.width = size.width / 2;
-    eyeViewport.height = size.height;
+    eyeViewport.width = preDistortionSize.width / 2;
+    eyeViewport.height = preDistortionSize.height;
 
     hmdInfo->FillDistortionConstants(eye,
-                                     size, eyeViewport,
-                                     vpSize, aRect,
+                                     preDistortionSize, eyeViewport,
+                                     vpSize, destRect,
                                      shaderConstants);
 
     float height = 1.0f;
@@ -304,11 +302,11 @@ CompositorOGL::DrawVRDistortion(const gfx::Rect& aRect,
                                    shaderConstants.eyeToSourceScaleAndOffset[2],
                                    shaderConstants.eyeToSourceScaleAndOffset[3] };
     if (textureTarget == LOCAL_GL_TEXTURE_RECTANGLE_ARB) {
-      texScaleAndOffset[0] *= size.width;
-      texScaleAndOffset[1] *= size.height;
-      texScaleAndOffset[2] *= size.width;
-      texScaleAndOffset[3] *= size.height;
-      height = size.height;
+      texScaleAndOffset[0] *= preDistortionSize.width;
+      texScaleAndOffset[1] *= preDistortionSize.height;
+      texScaleAndOffset[2] *= preDistortionSize.width;
+      texScaleAndOffset[3] *= preDistortionSize.height;
+      height = preDistortionSize.height;
     }
 
     gl()->fUniform4fv(mVR.mUVRDestionatinScaleAndOffset[programIndex], 1, shaderConstants.destinationScaleAndOffset);
@@ -338,5 +336,5 @@ CompositorOGL::DrawVRDistortion(const gfx::Rect& aRect,
   gl()->fDisableVertexAttribArray(mVR.mAGenericAttribs);
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

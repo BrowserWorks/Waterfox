@@ -204,3 +204,25 @@ if (typeof assertDeepEq === 'undefined') {
         };
     })();
 }
+
+if (typeof assertWarning === 'undefined') {
+    function assertWarning(func, name) {
+        enableLastWarning();
+        func();
+        var warning = getLastWarning();
+        assertEq(warning !== null, true);
+        assertEq(warning.name, name);
+        disableLastWarning();
+    }
+}
+
+function classesEnabled(testCode = "class Foo { constructor() {} }") {
+    try {
+        new Function(testCode);
+        return true;
+    } catch (e) {
+        if (!(e instanceof SyntaxError))
+            throw e;
+        return false;
+    }
+}

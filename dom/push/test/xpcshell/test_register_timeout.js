@@ -3,7 +3,7 @@
 
 'use strict';
 
-const {PushDB, PushService} = serviceExports;
+const {PushDB, PushService, PushServiceWebSocket} = serviceExports;
 
 const userAgentID = 'a4be0df9-b16d-4b5f-8f58-0f93b6f1e23d';
 const channelID = 'e1944e0b-48df-45e7-bdc0-d1fbaa7986d3';
@@ -22,15 +22,16 @@ function run_test() {
 
 add_task(function* test_register_timeout() {
   let handshakes = 0;
-  let timeoutDefer = Promise.defer();
+  let timeoutDone;
+  let timeoutPromise = new Promise(resolve => timeoutDone = resolve);
   let registers = 0;
 
-  let db = new PushDB();
-  let promiseDB = promisifyDatabase(db);
-  do_register_cleanup(() => cleanupDatabase(db));
+  let db = PushServiceWebSocket.newPushDB();
+  do_register_cleanup(() => {return db.drop().then(_ => db.close());});
 
-  PushService._generateID = () => channelID;
+  PushServiceWebSocket._generateID = () => channelID;
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
@@ -74,7 +75,7 @@ add_task(function* test_register_timeout() {
               uaid: userAgentID,
               pushEndpoint: 'https://example.com/update/timeout',
             }));
-            timeoutDefer.resolve();
+            timeoutDone();
           }, 2000);
           registers++;
         }
@@ -83,18 +84,19 @@ add_task(function* test_register_timeout() {
   });
 
   yield rejects(
-    PushNotificationService.register('https://example.net/page/timeout'),
+    PushNotificationService.register('https://example.net/page/timeout',
+      ChromeUtils.originAttributesToSuffix({ appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false })),
     function(error) {
       return error == 'TimeoutError';
     },
     'Wrong error for request timeout'
   );
 
-  let record = yield promiseDB.getByChannelID(channelID);
+  let record = yield db.getByKeyID(channelID);
   ok(!record, 'Should not store records for timed-out responses');
 
   yield waitForPromise(
-    timeoutDefer.promise,
+    timeoutPromise,
     DEFAULT_TIMEOUT,
     'Reconnect timed out'
   );

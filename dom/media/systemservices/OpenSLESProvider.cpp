@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "OpenSLESProvider.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsDebug.h"
 
 #include <dlfcn.h>
@@ -14,14 +14,9 @@
 // NSPR_LOG_MODULES=OpenSLESProvider:5
 #undef LOG
 #undef LOG_ENABLED
-#if defined(PR_LOGGING)
 PRLogModuleInfo *gOpenSLESProviderLog;
-#define LOG(args) PR_LOG(gOpenSLESProviderLog, PR_LOG_DEBUG, args)
-#define LOG_ENABLED() PR_LOG_TEST(gLoadManagerLog, 5)
-#else
-#define LOG(args)
-#define LOG_ENABLED() (false)
-#endif
+#define LOG(args) MOZ_LOG(gOpenSLESProviderLog, mozilla::LogLevel::Debug, args)
+#define LOG_ENABLED() MOZ_LOG_TEST(gOpenSLESProviderLog, mozilla::LogLevel::Debug)
 
 namespace mozilla {
 
@@ -32,11 +27,9 @@ OpenSLESProvider::OpenSLESProvider()
     mIsRealized(false),
     mOpenSLESLib(nullptr)
 {
-#if defined(PR_LOGGING)
   if (!gOpenSLESProviderLog)
     gOpenSLESProviderLog = PR_NewLogModule("OpenSLESProvider");
   LOG(("OpenSLESProvider being initialized"));
-#endif
 }
 
 OpenSLESProvider::~OpenSLESProvider()

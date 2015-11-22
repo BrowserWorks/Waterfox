@@ -13,7 +13,7 @@ SOURCES += [
 ]
 
 DEFINES['XULRUNNER_PROGNAME'] = '"xulrunner"'
-if CONFIG['DEBUG']:
+if CONFIG['MOZ_DEBUG']:
     DEFINES['DEBUG'] = True
 
 LOCAL_INCLUDES += [
@@ -53,8 +53,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     ]
 
 DISABLE_STL_WRAPPING = True
-
-FAIL_ON_WARNINGS = True
 
 JS_PREFERENCE_FILES += [
     'xulrunner.js',

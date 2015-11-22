@@ -39,6 +39,8 @@ class Matrix;
 } // namespace gfx
 } // namespace mozilla
 
+#define SVG_ZERO_LENGTH_PATH_FIX_FACTOR 512
+
 inline bool
 IsSVGWhitespace(char aChar)
 {
@@ -61,6 +63,8 @@ class SVGContentUtils
 {
 public:
   typedef mozilla::gfx::Float Float;
+  typedef mozilla::gfx::Matrix Matrix;
+  typedef mozilla::gfx::Rect Rect;
   typedef mozilla::gfx::StrokeOptions StrokeOptions;
   typedef mozilla::SVGAnimatedPreserveAspectRatio SVGAnimatedPreserveAspectRatio;
   typedef mozilla::SVGPreserveAspectRatio SVGPreserveAspectRatio;
@@ -178,7 +182,23 @@ public:
                                   const char16_t **aParams,
                                   uint32_t aParamsLength);
 
-  static mozilla::gfx::Matrix GetCTM(nsSVGElement *aElement, bool aScreenCTM);
+  static Matrix GetCTM(nsSVGElement *aElement, bool aScreenCTM);
+
+  /**
+   * Gets the tight bounds-space stroke bounds of the non-scaling-stroked rect
+   * aRect.
+   * @param aToBoundsSpace transforms from source space to the space aBounds
+   *        should be computed in.  Must be rectilinear.
+   * @param aToNonScalingStrokeSpace transforms from source
+   *        space to the space in which non-scaling stroke should be applied.
+   *        Must be rectilinear.
+   */
+  static void
+  RectilinearGetStrokeBounds(const Rect& aRect,
+                             const Matrix& aToBoundsSpace,
+                             const Matrix& aToNonScalingStrokeSpace,
+                             float aStrokeWidth,
+                             Rect* aBounds);
 
   /**
    * Check if this is one of the SVG elements that SVG 1.1 Full says
@@ -203,13 +223,13 @@ public:
 
   /* Generate a viewbox to viewport tranformation matrix */
 
-  static mozilla::gfx::Matrix
+  static Matrix
   GetViewBoxTransform(float aViewportWidth, float aViewportHeight,
                       float aViewboxX, float aViewboxY,
                       float aViewboxWidth, float aViewboxHeight,
                       const SVGAnimatedPreserveAspectRatio &aPreserveAspectRatio);
 
-  static mozilla::gfx::Matrix
+  static Matrix
   GetViewBoxTransform(float aViewportWidth, float aViewportHeight,
                       float aViewboxX, float aViewboxY,
                       float aViewboxWidth, float aViewboxHeight,
@@ -321,8 +341,14 @@ public:
    * Returns a path
    * string formatted as an SVG path
    */
-  static mozilla::TemporaryRef<mozilla::gfx::Path>
+  static already_AddRefed<mozilla::gfx::Path>
   GetPath(const nsAString& aPathString);
+
+  /**
+   *  Returns true if aContent is one of the elements whose stroke is guaranteed
+   *  to have no corners: circle or ellipse
+   */
+  static bool ShapeTypeHasNoCorners(const nsIContent* aContent);
 };
 
 #endif

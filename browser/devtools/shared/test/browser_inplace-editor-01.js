@@ -4,8 +4,8 @@
 
 "use strict";
 
-let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
-let {editableField, getInplaceEditorForSpan: inplaceEditor} = devtools.require("devtools/shared/inplace-editor");
+var promise = require("promise");
+var {editableField, getInplaceEditorForSpan: inplaceEditor} = require("devtools/shared/inplace-editor");
 
 // Test the inplace-editor behavior.
 
@@ -17,6 +17,7 @@ add_task(function*() {
   yield testReturnCommit(doc);
   yield testBlurCommit(doc);
   yield testAdvanceCharCommit(doc);
+  yield testAdvanceCharsFunction(doc);
 
   host.destroy();
   gBrowser.removeCurrentTab();
@@ -81,11 +82,40 @@ function testAdvanceCharCommit(doc) {
     advanceChars: ":",
     start: function(editor) {
       let input = editor.input;
-      for each (let ch in "Test:") {
+      EventUtils.sendString("Test:");
+    },
+    done: onDone("Test", true, def)
+  }, doc);
+
+  return def.promise;
+}
+
+function testAdvanceCharsFunction(doc) {
+  info("Testing advanceChars as a function");
+  let def = promise.defer();
+
+  let firstTime = true;
+
+  createInplaceEditorAndClick({
+    initial: "",
+    advanceChars: function(aCharCode, aText, aInsertionPoint) {
+      if (aCharCode !== Components.interfaces.nsIDOMKeyEvent.DOM_VK_COLON) {
+        return false;
+      }
+      if (firstTime) {
+        firstTime = false;
+        return false;
+      }
+
+      // Just to make sure we check it somehow.
+      return aText.length > 0;
+    },
+    start: function(editor) {
+      for (let ch of ":Test:") {
         EventUtils.sendChar(ch);
       }
     },
-    done: onDone("Test", true, def)
+    done: onDone(":Test", true, def)
   }, doc);
 
   return def.promise;

@@ -4,7 +4,6 @@
 
 package org.mozilla.gecko.tests;
 
-import org.mozilla.gecko.Actions;
 import org.mozilla.gecko.R;
 
 import com.jayway.android.robotium.solo.Condition;
@@ -38,7 +37,7 @@ public class testClearPrivateData extends PixelTest {
 
         loadUrlAndWait(blank1);
         verifyUrlBarTitle(blank1);
-        mDatabaseHelper.addOrUpdateMobileBookmark(mStringHelper.ROBOCOP_BLANK_PAGE_02_TITLE, blank2);
+        mDatabaseHelper.addMobileBookmark(mStringHelper.ROBOCOP_BLANK_PAGE_02_TITLE, blank2);
 
         // Checking that the history list is not empty
         verifyHistoryCount(1);
@@ -90,10 +89,10 @@ public class testClearPrivateData extends PixelTest {
     public void checkDevice(final String title, final String url) {
         clearPrivateData();
         if (mDevice.type.equals("phone")) {
-            mActions.sendSpecialKey(Actions.SpecialKey.BACK);
+            mSolo.goBack();
             mAsserter.ok(waitForText(mStringHelper.PRIVACY_SECTION_LABEL), "waiting to perform one back", "one back");
         }
-        mActions.sendSpecialKey(Actions.SpecialKey.BACK);
+        mSolo.goBack();
         verifyUrlBarTitle(url);
     }
 

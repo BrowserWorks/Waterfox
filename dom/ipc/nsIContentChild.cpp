@@ -10,13 +10,13 @@
 #include "mozilla/dom/DOMTypes.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
-#include "mozilla/dom/StructuredCloneUtils.h"
 #include "mozilla/dom/TabChild.h"
 #include "mozilla/dom/ipc/BlobChild.h"
+#include "mozilla/dom/ipc/StructuredCloneData.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 
-#include "nsIJSRuntimeService.h"
 #include "nsPrintfCString.h"
+#include "xpcpublic.h"
 
 using namespace mozilla::ipc;
 using namespace mozilla::jsipc;
@@ -27,14 +27,7 @@ namespace dom {
 PJavaScriptChild*
 nsIContentChild::AllocPJavaScriptChild()
 {
-  nsCOMPtr<nsIJSRuntimeService> svc = do_GetService("@mozilla.org/js/xpc/RuntimeService;1");
-  NS_ENSURE_TRUE(svc, nullptr);
-
-  JSRuntime *rt;
-  svc->GetRuntime(&rt);
-  NS_ENSURE_TRUE(svc, nullptr);
-
-  return NewJavaScriptChild(rt);
+  return NewJavaScriptChild(xpc::GetJSRuntime());
 }
 
 bool
@@ -93,15 +86,24 @@ nsIContentChild::DeallocPBlobChild(PBlobChild* aActor)
 }
 
 BlobChild*
-nsIContentChild::GetOrCreateActorForBlob(File* aBlob)
+nsIContentChild::GetOrCreateActorForBlob(Blob* aBlob)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aBlob);
 
-  nsRefPtr<FileImpl> blobImpl = aBlob->Impl();
+  nsRefPtr<BlobImpl> blobImpl = aBlob->Impl();
   MOZ_ASSERT(blobImpl);
 
-  BlobChild* actor = BlobChild::GetOrCreate(this, blobImpl);
+  return GetOrCreateActorForBlobImpl(blobImpl);
+}
+
+BlobChild*
+nsIContentChild::GetOrCreateActorForBlobImpl(BlobImpl* aImpl)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aImpl);
+
+  BlobChild* actor = BlobChild::GetOrCreate(this, aImpl);
   NS_ENSURE_TRUE(actor, nullptr);
 
   return actor;
@@ -115,13 +117,15 @@ nsIContentChild::RecvAsyncMessage(const nsString& aMsg,
 {
   nsRefPtr<nsFrameMessageManager> cpm = nsFrameMessageManager::GetChildProcessManager();
   if (cpm) {
-    StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForChild(aData);
+    ipc::StructuredCloneData data;
+    ipc::UnpackClonedMessageDataForChild(aData, data);
+
     CrossProcessCpowHolder cpows(this, aCpows);
     cpm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(cpm.get()), nullptr,
-                        aMsg, false, &cloneData, &cpows, aPrincipal, nullptr);
+                        aMsg, false, &data, &cpows, aPrincipal, nullptr);
   }
   return true;
 }
 
-} // dom
-} // mozilla
+} // namespace dom
+} // namespace mozilla

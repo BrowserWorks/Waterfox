@@ -1,11 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
-Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
-
-let gPort;
-let gExtraListener;
+var gPort;
+var gExtraListener;
 
 function run_test()
 {
@@ -88,12 +85,16 @@ function* test_socket_shutdown()
       host: "127.0.0.1",
       port: gPort
     });
-  } catch(e if e.result == Cr.NS_ERROR_CONNECTION_REFUSED ||
-               e.result == Cr.NS_ERROR_NET_TIMEOUT) {
-    // The connection should be refused here, but on slow or overloaded
-    // machines it may just time out.
-    do_check_true(true);
-    return;
+  } catch (e) {
+    if (e.result == Cr.NS_ERROR_CONNECTION_REFUSED ||
+        e.result == Cr.NS_ERROR_NET_TIMEOUT) {
+      // The connection should be refused here, but on slow or overloaded
+      // machines it may just time out.
+      do_check_true(true);
+      return;
+    } else {
+      throw e;
+    }
   }
 
   // Shouldn't reach this, should never connect.

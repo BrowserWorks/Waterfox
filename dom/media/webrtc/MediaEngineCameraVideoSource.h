@@ -16,7 +16,8 @@
 
 namespace mozilla {
 
-class MediaEngineCameraVideoSource : public MediaEngineVideoSource
+class MediaEngineCameraVideoSource : public MediaEngineVideoSource,
+                                     private MediaConstraintsHelper
 {
 public:
   explicit MediaEngineCameraVideoSource(int aIndex,
@@ -27,14 +28,14 @@ public:
     , mHeight(0)
     , mInitDone(false)
     , mHasDirectListeners(false)
+    , mNrAllocations(0)
     , mCaptureIndex(aIndex)
     , mTrackID(0)
-    , mFps(-1)
   {}
 
 
   virtual void GetName(nsAString& aName) override;
-  virtual void GetUUID(nsAString& aUUID) override;
+  virtual void GetUUID(nsACString& aUUID) override;
   virtual void SetDirectListeners(bool aHasListeners) override;
   virtual nsresult Config(bool aEchoOn, uint32_t aEcho,
                           bool aAgcOn, uint32_t aAGC,
@@ -49,17 +50,16 @@ public:
     return false;
   }
 
-  virtual const dom::MediaSourceEnum GetMediaSource() override {
-      return dom::MediaSourceEnum::Camera;
-  }
-
   virtual nsresult TakePhoto(PhotoCallback* aCallback) override
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
 
   uint32_t GetBestFitnessDistance(
-      const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets) override;
+      const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets,
+      const nsString& aDeviceId) override;
+
+  virtual void Shutdown() override {};
 
 protected:
   struct CapabilityCandidate {
@@ -78,23 +78,24 @@ protected:
                              layers::Image* aImage,
                              TrackID aID,
                              StreamTime delta);
-  template<class ValueType, class ConstrainRange>
-  static uint32_t FitnessDistance(ValueType n, const ConstrainRange& aRange);
-  static uint32_t FitnessDistance(int32_t n,
-      const dom::OwningLongOrConstrainLongRange& aConstraint, bool aAdvanced);
-  static uint32_t FitnessDistance(double n,
-      const dom::OwningDoubleOrConstrainDoubleRange& aConstraint, bool aAdvanced);
-
-  static uint32_t GetFitnessDistance(const webrtc::CaptureCapability& aCandidate,
-                                     const dom::MediaTrackConstraintSet &aConstraints,
-                                     bool aAdvanced);
+  uint32_t GetFitnessDistance(const webrtc::CaptureCapability& aCandidate,
+                              const dom::MediaTrackConstraintSet &aConstraints,
+                              bool aAdvanced,
+                              const nsString& aDeviceId);
   static void TrimLessFitCandidates(CapabilitySet& set);
   static void LogConstraints(const dom::MediaTrackConstraintSet& aConstraints,
                              bool aAdvanced);
+static void LogCapability(const char* aHeader,
+                          const webrtc::CaptureCapability &aCapability,
+                          uint32_t aDistance);
   virtual size_t NumCapabilities();
   virtual void GetCapability(size_t aIndex, webrtc::CaptureCapability& aOut);
   bool ChooseCapability(const dom::MediaTrackConstraints &aConstraints,
-                        const MediaEnginePrefs &aPrefs);
+                        const MediaEnginePrefs &aPrefs,
+                        const nsString& aDeviceId);
+  void SetName(nsString aName);
+  void SetUUID(const char* aUUID);
+  const nsCString& GetUUID(); // protected access
 
   // Engine variables.
 
@@ -115,17 +116,20 @@ protected:
 
   bool mInitDone;
   bool mHasDirectListeners;
+  int mNrAllocations; // When this becomes 0, we shut down HW
   int mCaptureIndex;
   TrackID mTrackID;
-  int mFps; // Track rate (30 fps by default)
 
   webrtc::CaptureCapability mCapability; // Doesn't work on OS X.
 
   nsTArray<webrtc::CaptureCapability> mHardcodedCapabilities; // For OSX & B2G
+private:
   nsString mDeviceName;
-  nsString mUniqueId;
+  nsCString mUniqueId;
+  nsString mFacingMode;
 };
 
 
 } // namespace mozilla
+
 #endif // MediaEngineCameraVideoSource_h

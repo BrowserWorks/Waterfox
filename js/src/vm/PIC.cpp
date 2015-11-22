@@ -295,7 +295,7 @@ ForOfPIC_traceObject(JSTracer* trc, JSObject* obj)
 }
 
 const Class ForOfPIC::jsclass = {
-    "ForOfPIC", JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS,
+    "ForOfPIC", JSCLASS_HAS_PRIVATE,
     nullptr, nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, ForOfPIC_finalize,
     nullptr,              /* call        */
@@ -308,7 +308,7 @@ const Class ForOfPIC::jsclass = {
 js::ForOfPIC::createForOfPICObject(JSContext* cx, Handle<GlobalObject*> global)
 {
     assertSameCompartment(cx, global);
-    NativeObject* obj = NewNativeObjectWithGivenProto(cx, &ForOfPIC::jsclass, NullPtr());
+    NativeObject* obj = NewNativeObjectWithGivenProto(cx, &ForOfPIC::jsclass, nullptr);
     if (!obj)
         return nullptr;
     ForOfPIC::Chain* chain = cx->new_<ForOfPIC::Chain>();

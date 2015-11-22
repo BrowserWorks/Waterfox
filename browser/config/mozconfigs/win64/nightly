@@ -2,12 +2,10 @@
 . "$topsrcdir/browser/config/mozconfigs/win64/common-win64"
 . "$topsrcdir/browser/config/mozconfigs/win64/common-opt"
 
-ac_add_options --enable-signmar
 
+ac_add_options --enable-verify-mar
 
-# Nightlies only since this has a cost in performance
-ac_add_options --enable-js-diagnostics
-
-. "$topsrcdir/build/mozconfig.cache"
+ac_add_options --with-branding=browser/branding/nightly
 
 . "$topsrcdir/build/mozconfig.common.override"
+. "$topsrcdir/build/mozconfig.cache"

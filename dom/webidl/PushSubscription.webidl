@@ -7,11 +7,24 @@
 * https://w3c.github.io/push-api/
 */
 
-[JSImplementation="@mozilla.org/push/PushSubscription;1",
- Constructor(DOMString pushEndpoint, DOMString scope, DOMString pageURL), ChromeOnly]
+interface Principal;
+
+enum PushEncryptionKeyName
+{
+  "p256dh"
+};
+
+[Exposed=(Window,Worker), Func="nsContentUtils::PushEnabled",
+ ChromeConstructor(DOMString pushEndpoint, DOMString scope, ArrayBuffer? key)]
 interface PushSubscription
 {
     readonly attribute USVString endpoint;
+    ArrayBuffer? getKey(PushEncryptionKeyName name);
+    [Throws, UseCounter]
     Promise<boolean> unsubscribe();
     jsonifier;
+
+    // Used to set the principal from the JS implemented PushManager.
+    [Exposed=Window,ChromeOnly]
+    void setPrincipal(Principal principal);
 };

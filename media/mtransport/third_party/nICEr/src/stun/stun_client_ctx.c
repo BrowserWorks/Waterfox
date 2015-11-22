@@ -337,7 +337,7 @@ static int nr_stun_client_send_request(nr_stun_client_ctx *ctx)
 
 #ifdef USE_ICE
         case NR_ICE_CLIENT_MODE_USE_CANDIDATE:
-            if ((r=nr_stun_build_use_candidate(&ctx->params.ice_use_candidate, &ctx->request)))
+            if ((r=nr_stun_build_use_candidate(&ctx->params.ice_binding_request, &ctx->request)))
                 ABORT(r);
             break;
         case NR_ICE_CLIENT_MODE_BINDING_REQUEST:
@@ -379,6 +379,8 @@ static int nr_stun_client_send_request(nr_stun_client_ctx *ctx)
 
     snprintf(string, sizeof(string)-1, "STUN-CLIENT(%s): Sending to %s ", ctx->label, ctx->peer_addr.as_string);
     r_dump(NR_LOG_STUN, LOG_DEBUG, string, (char*)ctx->request->buffer, ctx->request->length);
+
+    assert(ctx->my_addr.protocol==ctx->peer_addr.protocol);
 
     if(r=nr_socket_sendto(ctx->sock, ctx->request->buffer, ctx->request->length, 0, &ctx->peer_addr))
       ABORT(r);
@@ -444,6 +446,8 @@ int nr_stun_client_process_response(nr_stun_client_ctx *ctx, UCHAR *msg, int len
     UCHAR hmac_key_d[16];
     Data hmac_key;
     int compute_lt_key=0;
+    /* TODO(bcampen@mozilla.com): Bug 1023619, refactor this. */
+    int response_matched=0;
 
     ATTACH_DATA(hmac_key, hmac_key_d);
 
@@ -452,7 +456,7 @@ int nr_stun_client_process_response(nr_stun_client_ctx *ctx, UCHAR *msg, int len
     if (ctx->state != NR_STUN_CLIENT_STATE_RUNNING)
       ABORT(R_REJECTED);
 
-    r_log(NR_LOG_STUN,LOG_DEBUG,"STUN-CLIENT(%s): Received check response (my_addr=%s,peer_addr=%s)",ctx->label,ctx->my_addr.as_string,peer_addr->as_string);
+    r_log(NR_LOG_STUN,LOG_DEBUG,"STUN-CLIENT(%s): Inspecting STUN response (my_addr=%s, peer_addr=%s)",ctx->label,ctx->my_addr.as_string,peer_addr->as_string);
 
     snprintf(string, sizeof(string)-1, "STUN-CLIENT(%s): Received ", ctx->label);
     r_dump(NR_LOG_STUN, LOG_DEBUG, string, (char*)msg, len);
@@ -535,6 +539,7 @@ int nr_stun_client_process_response(nr_stun_client_ctx *ctx, UCHAR *msg, int len
       nr_stun_message_destroy(&ctx->response);
     }
 
+    /* TODO(bcampen@mozilla.com): Bug 1023619, refactor this. */
     if ((r=nr_stun_message_create2(&ctx->response, msg, len)))
         ABORT(r);
 
@@ -546,12 +551,13 @@ int nr_stun_client_process_response(nr_stun_client_ctx *ctx, UCHAR *msg, int len
     /* This will return an error if request and response don't match,
        which is how we reject responses that match other contexts. */
     if ((r=nr_stun_receive_message(ctx->request, ctx->response))) {
-        r_log(NR_LOG_STUN,LOG_DEBUG,"STUN-CLIENT(%s): error receiving response",ctx->label);
+        r_log(NR_LOG_STUN,LOG_DEBUG,"STUN-CLIENT(%s): Response is not for us",ctx->label);
         ABORT(r);
     }
 
-    r_log(NR_LOG_STUN,LOG_DEBUG,
-          "STUN-CLIENT(%s): successfully received response; processing",ctx->label);
+    r_log(NR_LOG_STUN,LOG_INFO,
+          "STUN-CLIENT(%s): Received response; processing",ctx->label);
+    response_matched=1;
 
 /* TODO: !nn! currently using password!=0 to mean that auth is required,
  * TODO: !nn! but we should probably pass that in explicitly via the
@@ -717,6 +723,12 @@ int nr_stun_client_process_response(nr_stun_client_ctx *ctx, UCHAR *msg, int len
         else
             ABORT(R_BAD_DATA);
 
+        // STUN doesn't distinguish protocol in mapped address, therefore
+        // assign used protocol from peer_addr
+        if (mapped_addr->protocol!=peer_addr->protocol){
+          mapped_addr->protocol=peer_addr->protocol;
+          nr_transport_addr_fmt_addr_string(mapped_addr);
+        }
 
         r_log(NR_LOG_STUN,LOG_DEBUG,"STUN-CLIENT(%s): Received mapped address: %s", ctx->label, mapped_addr->as_string);
     }
@@ -725,6 +737,10 @@ int nr_stun_client_process_response(nr_stun_client_ctx *ctx, UCHAR *msg, int len
 
     _status=0;
   abort:
+    if(_status && response_matched){
+      r_log(NR_LOG_STUN,LOG_WARNING,"STUN-CLIENT(%s): Error processing response: %s, stun error code %d.", ctx->label, nr_strerror(_status), (int)ctx->error_code);
+    }
+
     if (ctx->state != NR_STUN_CLIENT_STATE_RUNNING) {
         /* Cancel the timer firing */
         if (ctx->timer_handle) {

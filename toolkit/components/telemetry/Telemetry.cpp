@@ -10,6 +10,7 @@
 
 #include <prio.h>
 
+#include "mozilla/dom/ToJSValue.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Likely.h"
@@ -84,10 +85,8 @@ using base::Histogram;
 using base::LinearHistogram;
 using base::StatisticsRecorder;
 
-const char KEYED_HISTOGRAM_NAME_SEPARATOR[] = "#";
-#if !defined(MOZ_WIDGET_GONK) && !defined(MOZ_WIDGET_ANDROID)
-const char SUBSESSION_HISTOGRAM_PREFIX[] = "sub#";
-#endif
+#define KEYED_HISTOGRAM_NAME_SEPARATOR "#"
+#define SUBSESSION_HISTOGRAM_PREFIX "sub#"
 
 enum reflectStatus {
   REFLECT_OK,
@@ -107,33 +106,16 @@ template<class EntryType>
 class AutoHashtable : public nsTHashtable<EntryType>
 {
 public:
-  explicit AutoHashtable(uint32_t initLength = PL_DHASH_DEFAULT_INITIAL_LENGTH);
+  explicit AutoHashtable(uint32_t initLength =
+                         PLDHashTable::kDefaultInitialLength);
   typedef bool (*ReflectEntryFunc)(EntryType *entry, JSContext *cx, JS::Handle<JSObject*> obj);
   bool ReflectIntoJS(ReflectEntryFunc entryFunc, JSContext *cx, JS::Handle<JSObject*> obj);
-private:
-  struct EnumeratorArgs {
-    JSContext *cx;
-    JS::Handle<JSObject*> obj;
-    ReflectEntryFunc entryFunc;
-  };
-  static PLDHashOperator ReflectEntryStub(EntryType *entry, void *arg);
 };
 
 template<class EntryType>
 AutoHashtable<EntryType>::AutoHashtable(uint32_t initLength)
   : nsTHashtable<EntryType>(initLength)
 {
-}
-
-template<typename EntryType>
-PLDHashOperator
-AutoHashtable<EntryType>::ReflectEntryStub(EntryType *entry, void *arg)
-{
-  EnumeratorArgs *args = static_cast<EnumeratorArgs *>(arg);
-  if (!args->entryFunc(entry, args->cx, args->obj)) {
-    return PL_DHASH_STOP;
-  }
-  return PL_DHASH_NEXT;
 }
 
 /**
@@ -145,9 +127,12 @@ bool
 AutoHashtable<EntryType>::ReflectIntoJS(ReflectEntryFunc entryFunc,
                                         JSContext *cx, JS::Handle<JSObject*> obj)
 {
-  EnumeratorArgs args = { cx, obj, entryFunc };
-  uint32_t num = this->EnumerateEntries(ReflectEntryStub, static_cast<void*>(&args));
-  return num == this->Count();
+  for (auto iter = this->Iter(); !iter.Done(); iter.Next()) {
+    if (!entryFunc(iter.Get(), cx, obj)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // This class is conceptually a list of ProcessedStack objects, but it represents them
@@ -236,6 +221,27 @@ CombinedStacks::SizeOfExcludingThis() const {
   return n;
 }
 
+// This utility function generates a string key that is used to index the annotations
+// in a hash map from |HangReports::AddHang|.
+nsresult
+ComputeAnnotationsKey(const HangAnnotationsPtr& aAnnotations, nsAString& aKeyOut)
+{
+  UniquePtr<HangAnnotations::Enumerator> annotationsEnum = aAnnotations->GetEnumerator();
+  if (!annotationsEnum) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // Append all the attributes to the key, to uniquely identify this annotation.
+  nsAutoString  key;
+  nsAutoString  value;
+  while (annotationsEnum->Next(key, value)) {
+    aKeyOut.Append(key);
+    aKeyOut.Append(value);
+  }
+
+  return NS_OK;
+}
+
 class HangReports {
 public:
   /**
@@ -245,21 +251,24 @@ public:
   struct AnnotationInfo {
     AnnotationInfo(uint32_t aHangIndex,
                    HangAnnotationsPtr aAnnotations)
-      : mHangIndex(aHangIndex)
-      , mAnnotations(Move(aAnnotations))
-    {}
+      : mAnnotations(Move(aAnnotations))
+    {
+      mHangIndices.AppendElement(aHangIndex);
+    }
     AnnotationInfo(AnnotationInfo&& aOther)
-      : mHangIndex(aOther.mHangIndex)
+      : mHangIndices(aOther.mHangIndices)
       , mAnnotations(Move(aOther.mAnnotations))
     {}
     ~AnnotationInfo() {}
     AnnotationInfo& operator=(AnnotationInfo&& aOther)
     {
-      mHangIndex = aOther.mHangIndex;
+      mHangIndices = aOther.mHangIndices;
       mAnnotations = Move(aOther.mAnnotations);
       return *this;
     }
-    uint32_t mHangIndex;
+    // To save memory, a single AnnotationInfo can be associated to multiple chrome
+    // hangs. The following array holds the index of each related chrome hang.
+    nsTArray<uint32_t> mHangIndices;
     HangAnnotationsPtr mAnnotations;
 
   private:
@@ -274,7 +283,7 @@ public:
   uint32_t GetDuration(unsigned aIndex) const;
   int32_t GetSystemUptime(unsigned aIndex) const;
   int32_t GetFirefoxUptime(unsigned aIndex) const;
-  const nsTArray<AnnotationInfo>& GetAnnotationInfo() const;
+  const nsClassHashtable<nsStringHashKey, AnnotationInfo>& GetAnnotationInfo() const;
   const CombinedStacks& GetStacks() const;
 private:
   /**
@@ -290,7 +299,7 @@ private:
     int32_t mFirefoxUptime;
   };
   std::vector<HangInfo> mHangInfo;
-  nsTArray<AnnotationInfo> mAnnotationInfo;
+  nsClassHashtable<nsStringHashKey, AnnotationInfo> mAnnotationInfo;
   CombinedStacks mStacks;
 };
 
@@ -302,12 +311,31 @@ HangReports::AddHang(const Telemetry::ProcessedStack& aStack,
                      HangAnnotationsPtr aAnnotations) {
   HangInfo info = { aDuration, aSystemUptime, aFirefoxUptime };
   mHangInfo.push_back(info);
-  if (aAnnotations) {
-    AnnotationInfo ainfo(static_cast<uint32_t>(mHangInfo.size() - 1),
-                         Move(aAnnotations));
-    mAnnotationInfo.AppendElement(Move(ainfo));
-  }
   mStacks.AddStack(aStack);
+
+  if (!aAnnotations) {
+    return;
+  }
+
+  nsAutoString annotationsKey;
+  uint32_t hangIndex = static_cast<uint32_t>(mHangInfo.size() - 1);
+
+  // Generate a key to index aAnnotations in the hash map.
+  nsresult rv = ComputeAnnotationsKey(aAnnotations, annotationsKey);
+  if (NS_FAILED(rv)) {
+    return;
+  }
+
+  AnnotationInfo* annotationsEntry = mAnnotationInfo.Get(annotationsKey);
+  if (annotationsEntry) {
+    // If the key is already in the hash map, append the index of the chrome hang
+    // to its indices.
+    annotationsEntry->mHangIndices.AppendElement(hangIndex);
+    return;
+  }
+
+  // If the key was not found, add the annotations to the hash map.
+  mAnnotationInfo.Put(annotationsKey, new AnnotationInfo(hangIndex, Move(aAnnotations)));
 }
 
 size_t
@@ -317,9 +345,11 @@ HangReports::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const {
   // This is a crude approximation. See comment on
   // CombinedStacks::SizeOfExcludingThis.
   n += mHangInfo.capacity() * sizeof(HangInfo);
-  n += mAnnotationInfo.Capacity() * sizeof(AnnotationInfo);
-  for (int32_t i = 0, l = mAnnotationInfo.Length(); i < l; ++i) {
-    n += mAnnotationInfo[i].mAnnotations->SizeOfIncludingThis(aMallocSizeOf);
+  n += mAnnotationInfo.ShallowSizeOfExcludingThis(aMallocSizeOf);
+  n += mAnnotationInfo.Count() * sizeof(AnnotationInfo);
+  for (auto iter = mAnnotationInfo.ConstIter(); !iter.Done(); iter.Next()) {
+    n += iter.Key().SizeOfExcludingThisIfUnshared(aMallocSizeOf);
+    n += iter.Data()->mAnnotations->SizeOfIncludingThis(aMallocSizeOf);
   }
   return n;
 }
@@ -344,7 +374,7 @@ HangReports::GetFirefoxUptime(unsigned aIndex) const {
   return mHangInfo[aIndex].mFirefoxUptime;
 }
 
-const nsTArray<HangReports::AnnotationInfo>&
+const nsClassHashtable<nsStringHashKey, HangReports::AnnotationInfo>&
 HangReports::GetAnnotationInfo() const {
   return mAnnotationInfo;
 }
@@ -415,10 +445,12 @@ public:
   }
 
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const {
-    size_t size;
-    size = mFileStats.SizeOfExcludingThis(SizeOfFileIOEntryTypeExcludingThis,
-                                          aMallocSizeOf) +
-           mSafeDirs.SizeOfExcludingThis(aMallocSizeOf);
+    size_t size = 0;
+    size += mFileStats.ShallowSizeOfExcludingThis(aMallocSizeOf);
+    for (auto iter = mFileStats.ConstIter(); !iter.Done(); iter.Next()) {
+      size += iter.Get()->GetKey().SizeOfExcludingThisIfUnshared(aMallocSizeOf);
+    }
+    size += mSafeDirs.ShallowSizeOfExcludingThis(aMallocSizeOf);
     uint32_t safeDirsLen = mSafeDirs.Length();
     for (uint32_t i = 0; i < safeDirsLen; ++i) {
       size += mSafeDirs[i].SizeOfExcludingThis(aMallocSizeOf);
@@ -467,13 +499,6 @@ private:
    */
   static bool ReflectFileStats(FileIOEntryType* entry, JSContext *cx,
                                JS::Handle<JSObject*> obj);
-
-  static size_t SizeOfFileIOEntryTypeExcludingThis(FileIOEntryType* aEntry,
-                                                   mozilla::MallocSizeOf mallocSizeOf,
-                                                   void*)
-  {
-    return aEntry->GetKey().SizeOfExcludingThisIfUnshared(mallocSizeOf);
-  }
 };
 
 TelemetryIOInterposeObserver::TelemetryIOInterposeObserver(nsIFile* aXreDir)
@@ -738,9 +763,6 @@ private:
   static TelemetryImpl *sTelemetry;
   AutoHashtable<SlowSQLEntryType> mPrivateSQL;
   AutoHashtable<SlowSQLEntryType> mSanitizedSQL;
-  // This gets marked immutable in debug builds, so we can't use
-  // AutoHashtable here.
-  nsTHashtable<nsCStringHashKey> mTrackedDBs;
   Mutex mHashMutex;
   HangReports mHangReports;
   Mutex mHangReportsMutex;
@@ -803,17 +825,9 @@ private:
   KeyedHistogramMapType mSubsessionMap;
 #endif
 
-  struct ReflectKeysArgs {
-    JSContext* jsContext;
-    JS::AutoValueVector* vector;
-  };
-  static PLDHashOperator ReflectKeys(KeyedHistogramEntry* entry, void* arg);
-
   static bool ReflectKeyedHistogram(KeyedHistogramEntry* entry,
                                     JSContext* cx,
                                     JS::Handle<JSObject*> obj);
-
-  static PLDHashOperator ClearHistogramEnumerator(KeyedHistogramEntry*, void*);
 
   const nsCString mName;
   const nsCString mExpiration;
@@ -871,7 +885,7 @@ IsExpired(const Histogram *histogram){
 bool
 IsValidHistogramName(const nsACString& name)
 {
-  return !FindInReadable(nsCString(KEYED_HISTOGRAM_NAME_SEPARATOR), name);
+  return !FindInReadable(NS_LITERAL_CSTRING(KEYED_HISTOGRAM_NAME_SEPARATOR), name);
 }
 
 bool
@@ -1144,7 +1158,7 @@ FillRanges(JSContext *cx, JS::Handle<JSObject*> array, Histogram *h)
 {
   JS::Rooted<JS::Value> range(cx);
   for (size_t i = 0; i < h->bucket_count(); i++) {
-    range = INT_TO_JSVAL(h->ranges(i));
+    range.setInt32(h->ranges(i));
     if (!JS_DefineElement(cx, array, i, range, JSPROP_ENUMERATE))
       return false;
   }
@@ -1853,10 +1867,8 @@ TelemetryImpl::AsyncFetchTelemetryData(nsIFetchTelemetryDataCallback *aCallback)
 
 TelemetryImpl::TelemetryImpl():
 mHistogramMap(Telemetry::HistogramCount),
-mCanRecordBase(XRE_GetProcessType() == GeckoProcessType_Default ||
-               XRE_GetProcessType() == GeckoProcessType_Content),
-mCanRecordExtended(XRE_GetProcessType() == GeckoProcessType_Default ||
-                   XRE_GetProcessType() == GeckoProcessType_Content),
+mCanRecordBase(XRE_IsParentProcess() || XRE_IsContentProcess()),
+mCanRecordExtended(XRE_IsParentProcess() || XRE_IsContentProcess()),
 mHashMutex("Telemetry::mHashMutex"),
 mHangReportsMutex("Telemetry::mHangReportsMutex"),
 mThreadHangStatsMutex("Telemetry::mThreadHangStatsMutex"),
@@ -1864,35 +1876,6 @@ mCachedTelemetryData(false),
 mLastShutdownTime(0),
 mFailedLockCount(0)
 {
-  // A whitelist to prevent Telemetry reporting on Addon & Thunderbird DBs
-  const char *trackedDBs[] = {
-    "818200132aebmoouht.sqlite", // IndexedDB for about:home, see aboutHome.js
-    "addons.sqlite",
-    "content-prefs.sqlite",
-    "cookies.sqlite",
-    "downloads.sqlite",
-    "extensions.sqlite",
-    "formhistory.sqlite",
-    "healthreport.sqlite",
-    "index.sqlite",
-    "netpredictions.sqlite",
-    "permissions.sqlite",
-    "places.sqlite",
-    "reading-list.sqlite",
-    "search.sqlite",
-    "signons.sqlite",
-    "urlclassifier3.sqlite",
-    "webappsstore.sqlite"
-  };
-
-  for (size_t i = 0; i < ArrayLength(trackedDBs); i++)
-    mTrackedDBs.PutEntry(nsDependentCString(trackedDBs[i]));
-
-#ifdef DEBUG
-  // Mark immutable to prevent asserts on simultaneous access from multiple threads
-  mTrackedDBs.MarkImmutable();
-#endif
-
   // Populate the static histogram name->id cache.
   // Note that the histogram names are statically allocated.
   for (uint32_t i = 0; i < Telemetry::HistogramCount; i++) {
@@ -2599,30 +2582,46 @@ TelemetryImpl::GetChromeHangs(JSContext *cx, JS::MutableHandle<JS::Value> ret)
                           JSPROP_ENUMERATE)) {
       return NS_ERROR_FAILURE;
     }
-    const nsTArray<HangReports::AnnotationInfo>& annotationInfo =
-                                                mHangReports.GetAnnotationInfo();
-    for (uint32_t iterIndex = 0, arrayLen = annotationInfo.Length();
-         iterIndex < arrayLen; ++iterIndex) {
+
+    size_t annotationIndex = 0;
+    const nsClassHashtable<nsStringHashKey, HangReports::AnnotationInfo>& annotationInfo =
+      mHangReports.GetAnnotationInfo();
+
+    for (auto iter = annotationInfo.ConstIter(); !iter.Done(); iter.Next()) {
+      const HangReports::AnnotationInfo* info = iter.Data();
+
       JS::Rooted<JSObject*> keyValueArray(cx, JS_NewArrayObject(cx, 0));
       if (!keyValueArray) {
         return NS_ERROR_FAILURE;
       }
-      JS::RootedValue indexValue(cx);
-      indexValue.setNumber(annotationInfo[iterIndex].mHangIndex);
-      if (!JS_DefineElement(cx, keyValueArray, 0, indexValue, JSPROP_ENUMERATE)) {
+
+      // Create an array containing all the indices of the chrome hangs relative to this
+      // annotation.
+      JS::Rooted<JS::Value> indicesArray(cx);
+      if (!mozilla::dom::ToJSValue(cx, info->mHangIndices, &indicesArray)) {
+        return NS_ERROR_OUT_OF_MEMORY;
+      }
+
+      // We're saving the annotation as [[indices], {annotation-data}], so add the indices
+      // array as the first element of that structure.
+      if (!JS_DefineElement(cx, keyValueArray, 0, indicesArray, JSPROP_ENUMERATE)) {
         return NS_ERROR_FAILURE;
       }
+
+      // Create the annotations object...
       JS::Rooted<JSObject*> jsAnnotation(cx, JS_NewPlainObject(cx));
       if (!jsAnnotation) {
         return NS_ERROR_FAILURE;
       }
       UniquePtr<HangAnnotations::Enumerator> annotationsEnum =
-        annotationInfo[iterIndex].mAnnotations->GetEnumerator();
+        info->mAnnotations->GetEnumerator();
       if (!annotationsEnum) {
         return NS_ERROR_FAILURE;
       }
-      nsAutoString  key;
-      nsAutoString  value;
+
+      // ... fill it with key:value pairs...
+      nsAutoString key;
+      nsAutoString value;
       while (annotationsEnum->Next(key, value)) {
         JS::RootedValue jsValue(cx);
         jsValue.setString(JS_NewUCStringCopyN(cx, value.get(), value.Length()));
@@ -2631,10 +2630,12 @@ TelemetryImpl::GetChromeHangs(JSContext *cx, JS::MutableHandle<JS::Value> ret)
           return NS_ERROR_FAILURE;
         }
       }
+
+      // ... and append it after the indices array.
       if (!JS_DefineElement(cx, keyValueArray, 1, jsAnnotation, JSPROP_ENUMERATE)) {
         return NS_ERROR_FAILURE;
       }
-      if (!JS_DefineElement(cx, annotationsArray, iterIndex,
+      if (!JS_DefineElement(cx, annotationsArray, annotationIndex++,
                          keyValueArray, JSPROP_ENUMERATE)) {
         return NS_ERROR_FAILURE;
       }
@@ -2902,13 +2903,18 @@ CreateJSHangStack(JSContext* cx, const Telemetry::HangStack& stack)
   return ret;
 }
 
-static JSObject*
-CreateJSHangAnnotations(JSContext* cx, const HangAnnotationsVector& annotations)
+static void
+CreateJSHangAnnotations(JSContext* cx, const HangAnnotationsVector& annotations,
+                        JS::MutableHandleObject returnedObject)
 {
   JS::RootedObject annotationsArray(cx, JS_NewArrayObject(cx, 0));
   if (!annotationsArray) {
-    return nullptr;
+    returnedObject.set(nullptr);
+    return;
   }
+  // We keep track of the annotations we reported in this hash set, so we can
+  // discard duplicated ones.
+  nsTHashtable<nsStringHashKey> reportedAnnotations;
   size_t annotationIndex = 0;
   for (const HangAnnotationsPtr *i = annotations.begin(), *e = annotations.end();
        i != e; ++i) {
@@ -2917,6 +2923,18 @@ CreateJSHangAnnotations(JSContext* cx, const HangAnnotationsVector& annotations)
       continue;
     }
     const HangAnnotationsPtr& curAnnotations = *i;
+    // Build a key to index the current annotations in our hash set.
+    nsAutoString annotationsKey;
+    nsresult rv = ComputeAnnotationsKey(curAnnotations, annotationsKey);
+    if (NS_FAILED(rv)) {
+      continue;
+    }
+    // Check if the annotations are in the set. If that's the case, don't double report.
+    if (reportedAnnotations.GetEntry(annotationsKey)) {
+      continue;
+    }
+    // If not, report them.
+    reportedAnnotations.PutEntry(annotationsKey);
     UniquePtr<HangAnnotations::Enumerator> annotationsEnum =
       curAnnotations->GetEnumerator();
     if (!annotationsEnum) {
@@ -2929,7 +2947,8 @@ CreateJSHangAnnotations(JSContext* cx, const HangAnnotationsVector& annotations)
       jsValue.setString(JS_NewUCStringCopyN(cx, value.get(), value.Length()));
       if (!JS_DefineUCProperty(cx, jsAnnotation, key.get(), key.Length(),
                                jsValue, JSPROP_ENUMERATE)) {
-        return nullptr;
+        returnedObject.set(nullptr);
+        return;
       }
     }
     if (!JS_SetElement(cx, annotationsArray, annotationIndex, jsAnnotation)) {
@@ -2937,7 +2956,9 @@ CreateJSHangAnnotations(JSContext* cx, const HangAnnotationsVector& annotations)
     }
     ++annotationIndex;
   }
-  return annotationsArray;
+  // Return the array using a |MutableHandleObject| to avoid triggering a false
+  // positive rooting issue in the hazard analysis build.
+  returnedObject.set(annotationsArray);
 }
 
 static JSObject*
@@ -2951,7 +2972,8 @@ CreateJSHangHistogram(JSContext* cx, const Telemetry::HangHistogram& hang)
   JS::RootedObject stack(cx, CreateJSHangStack(cx, hang.GetStack()));
   JS::RootedObject time(cx, CreateJSTimeHistogram(cx, hang));
   auto& hangAnnotations = hang.GetAnnotations();
-  JS::RootedObject annotations(cx, CreateJSHangAnnotations(cx, hangAnnotations));
+  JS::RootedObject annotations(cx);
+  CreateJSHangAnnotations(cx, hangAnnotations, &annotations);
 
   if (!stack ||
       !time ||
@@ -3428,6 +3450,57 @@ TelemetryImpl::SanitizeSQL(const nsACString &sql) {
   return output;
 }
 
+// A whitelist mechanism to prevent Telemetry reporting on Addon & Thunderbird
+// DBs.
+struct TrackedDBEntry
+{
+  const char* mName;
+  const uint32_t mNameLength;
+
+  // This struct isn't meant to be used beyond the static arrays below.
+  MOZ_CONSTEXPR
+  TrackedDBEntry(const char* aName, uint32_t aNameLength)
+    : mName(aName)
+    , mNameLength(aNameLength)
+  { }
+
+  TrackedDBEntry() = delete;
+  TrackedDBEntry(TrackedDBEntry&) = delete;
+};
+
+#define TRACKEDDB_ENTRY(_name) { _name, (sizeof(_name) - 1) }
+
+// A whitelist of database names. If the database name exactly matches one of
+// these then its SQL statements will always be recorded.
+static MOZ_CONSTEXPR_VAR TrackedDBEntry kTrackedDBs[] = {
+  // IndexedDB for about:home, see aboutHome.js
+  TRACKEDDB_ENTRY("818200132aebmoouht.sqlite"),
+  TRACKEDDB_ENTRY("addons.sqlite"),
+  TRACKEDDB_ENTRY("content-prefs.sqlite"),
+  TRACKEDDB_ENTRY("cookies.sqlite"),
+  TRACKEDDB_ENTRY("downloads.sqlite"),
+  TRACKEDDB_ENTRY("extensions.sqlite"),
+  TRACKEDDB_ENTRY("formhistory.sqlite"),
+  TRACKEDDB_ENTRY("healthreport.sqlite"),
+  TRACKEDDB_ENTRY("index.sqlite"),
+  TRACKEDDB_ENTRY("netpredictions.sqlite"),
+  TRACKEDDB_ENTRY("permissions.sqlite"),
+  TRACKEDDB_ENTRY("places.sqlite"),
+  TRACKEDDB_ENTRY("reading-list.sqlite"),
+  TRACKEDDB_ENTRY("search.sqlite"),
+  TRACKEDDB_ENTRY("signons.sqlite"),
+  TRACKEDDB_ENTRY("urlclassifier3.sqlite"),
+  TRACKEDDB_ENTRY("webappsstore.sqlite")
+};
+
+// A whitelist of database name prefixes. If the database name begins with
+// one of these prefixes then its SQL statements will always be recorded.
+static const TrackedDBEntry kTrackedDBPrefixes[] = {
+  TRACKEDDB_ENTRY("indexedDB-")
+};
+
+#undef TRACKEDDB_ENTRY
+
 // Slow SQL statements will be automatically
 // trimmed to kMaxSlowStatementLength characters.
 // This limit doesn't include the ellipsis and DB name,
@@ -3439,11 +3512,36 @@ TelemetryImpl::RecordSlowStatement(const nsACString &sql,
                                    const nsACString &dbName,
                                    uint32_t delay)
 {
+  MOZ_ASSERT(!sql.IsEmpty());
+  MOZ_ASSERT(!dbName.IsEmpty());
+
   if (!sTelemetry || !sTelemetry->mCanRecordExtended)
     return;
 
-  bool isFirefoxDB = sTelemetry->mTrackedDBs.Contains(dbName);
-  if (isFirefoxDB) {
+  bool recordStatement = false;
+
+  for (const TrackedDBEntry& nameEntry : kTrackedDBs) {
+    MOZ_ASSERT(nameEntry.mNameLength);
+    const nsDependentCString name(nameEntry.mName, nameEntry.mNameLength);
+    if (dbName == name) {
+      recordStatement = true;
+      break;
+    }
+  }
+
+  if (!recordStatement) {
+    for (const TrackedDBEntry& prefixEntry : kTrackedDBPrefixes) {
+      MOZ_ASSERT(prefixEntry.mNameLength);
+      const nsDependentCString prefix(prefixEntry.mName,
+                                      prefixEntry.mNameLength);
+      if (StringBeginsWith(dbName, prefix)) {
+        recordStatement = true;
+        break;
+      }
+    }
+  }
+
+  if (recordStatement) {
     nsAutoCString sanitizedSQL(SanitizeSQL(sql));
     if (sanitizedSQL.Length() > kMaxSlowStatementLength) {
       sanitizedSQL.SetLength(kMaxSlowStatementLength);
@@ -3566,14 +3664,13 @@ TelemetryImpl::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
   size_t n = aMallocSizeOf(this);
 
   // Ignore the hashtables in mAddonMap; they are not significant.
-  n += mAddonMap.SizeOfExcludingThis(nullptr, aMallocSizeOf);
-  n += mHistogramMap.SizeOfExcludingThis(nullptr, aMallocSizeOf);
+  n += mAddonMap.ShallowSizeOfExcludingThis(aMallocSizeOf);
+  n += mHistogramMap.ShallowSizeOfExcludingThis(aMallocSizeOf);
   { // Scope for mHashMutex lock
     MutexAutoLock lock(mHashMutex);
     n += mPrivateSQL.SizeOfExcludingThis(aMallocSizeOf);
     n += mSanitizedSQL.SizeOfExcludingThis(aMallocSizeOf);
   }
-  n += mTrackedDBs.SizeOfExcludingThis(aMallocSizeOf);
   { // Scope for mHangReportsMutex lock
     MutexAutoLock lock(mHangReportsMutex);
     n += mHangReports.SizeOfExcludingThis(aMallocSizeOf);
@@ -3598,7 +3695,7 @@ TelemetryImpl::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
   return n;
 }
 
-} // anonymous namespace
+} // namespace
 
 namespace mozilla {
 void
@@ -3737,6 +3834,13 @@ GetHistogramById(ID id)
   Histogram *h = nullptr;
   GetHistogramByEnumId(id, &h);
   return h;
+}
+
+const char*
+GetHistogramName(Telemetry::ID id)
+{
+  const TelemetryHistogram& h = gHistograms[id];
+  return h.id();
 }
 
 void
@@ -4148,11 +4252,11 @@ KeyedHistogram::GetHistogram(const nsCString& key, Histogram** histogram,
   nsCString histogramName;
 #if !defined(MOZ_WIDGET_GONK) && !defined(MOZ_WIDGET_ANDROID)
   if (subsession) {
-    histogramName.Append(SUBSESSION_HISTOGRAM_PREFIX);
+    histogramName.AppendLiteral(SUBSESSION_HISTOGRAM_PREFIX);
   }
 #endif
   histogramName.Append(mName);
-  histogramName.Append(KEYED_HISTOGRAM_NAME_SEPARATOR);
+  histogramName.AppendLiteral(KEYED_HISTOGRAM_NAME_SEPARATOR);
   histogramName.Append(key);
 
   Histogram* h;
@@ -4194,14 +4298,6 @@ KeyedHistogram::GetDataset(uint32_t* dataset) const
   return NS_OK;
 }
 
-/* static */
-PLDHashOperator
-KeyedHistogram::ClearHistogramEnumerator(KeyedHistogramEntry* entry, void*)
-{
-  entry->mData->Clear();
-  return PL_DHASH_NEXT;
-}
-
 nsresult
 KeyedHistogram::Add(const nsCString& key, uint32_t sample)
 {
@@ -4233,29 +4329,19 @@ void
 KeyedHistogram::Clear(bool onlySubsession)
 {
 #if !defined(MOZ_WIDGET_GONK) && !defined(MOZ_WIDGET_ANDROID)
-  mSubsessionMap.EnumerateEntries(&KeyedHistogram::ClearHistogramEnumerator, nullptr);
+  for (auto iter = mSubsessionMap.Iter(); !iter.Done(); iter.Next()) {
+    iter.Get()->mData->Clear();
+  }
   mSubsessionMap.Clear();
   if (onlySubsession) {
     return;
   }
 #endif
 
-  mHistogramMap.EnumerateEntries(&KeyedHistogram::ClearHistogramEnumerator, nullptr);
+  for (auto iter = mHistogramMap.Iter(); !iter.Done(); iter.Next()) {
+    iter.Get()->mData->Clear();
+  }
   mHistogramMap.Clear();
-}
-
-/* static */
-PLDHashOperator
-KeyedHistogram::ReflectKeys(KeyedHistogramEntry* entry, void* arg)
-{
-  ReflectKeysArgs* args = static_cast<ReflectKeysArgs*>(arg);
-
-  JS::RootedValue jsKey(args->jsContext);
-  const NS_ConvertUTF8toUTF16 key(entry->GetKey());
-  jsKey.setString(JS_NewUCStringCopyN(args->jsContext, key.Data(), key.Length()));
-  args->vector->append(jsKey);
-
-  return PL_DHASH_NEXT;
 }
 
 nsresult
@@ -4266,11 +4352,11 @@ KeyedHistogram::GetJSKeys(JSContext* cx, JS::CallArgs& args)
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  ReflectKeysArgs reflectArgs = { cx, &keys };
-  const uint32_t num = mHistogramMap.EnumerateEntries(&KeyedHistogram::ReflectKeys,
-                                                      static_cast<void*>(&reflectArgs));
-  if (num != mHistogramMap.Count()) {
-    return NS_ERROR_FAILURE;
+  for (auto iter = mHistogramMap.Iter(); !iter.Done(); iter.Next()) {
+    JS::RootedValue jsKey(cx);
+    const NS_ConvertUTF8toUTF16 key(iter.Get()->GetKey());
+    jsKey.setString(JS_NewUCStringCopyN(cx, key.Data(), key.Length()));
+    keys.append(jsKey);
   }
 
   JS::RootedObject jsKeys(cx, JS_NewArrayObject(cx, keys));

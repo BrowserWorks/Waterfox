@@ -39,7 +39,7 @@ var provider = {
   _seenHigh: false
 };
 
-let runningInParent = true;
+var runningInParent = true;
 try {
   runningInParent = Components.classes["@mozilla.org/xre/runtime;1"].
                     getService(Components.interfaces.nsIXULRuntime).processType
@@ -97,6 +97,7 @@ function run_test()
 function stop_high_accuracy_watch() {
     geolocation.clearWatch(watchID2);
     check_results();
+    do_test_finished();
 }
 
 function check_results()

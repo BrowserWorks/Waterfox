@@ -11,13 +11,14 @@
 #include "xrecore.h"
 #include "nsXPCOM.h"
 #include "nsISupports.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsXREAppData.h"
 #include "js/TypeDecls.h"
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Vector.h"
+#include "mozilla/TimeStamp.h"
 
 /**
  * A directory service key which provides the platform-correct "application
@@ -394,7 +395,7 @@ namespace mozilla {
 namespace gmp {
 class GMPLoader;
 } // namespace gmp
-} // namepsace mozilla
+} // namespace mozilla
 
 XRE_API(nsresult,
         XRE_InitChildProcess, (int aArgc,
@@ -406,6 +407,9 @@ XRE_API(GeckoProcessType,
 
 XRE_API(bool,
         XRE_IsParentProcess, ())
+
+XRE_API(bool,
+        XRE_IsContentProcess, ())
 
 typedef void (*MainFunction)(void* aData);
 
@@ -450,7 +454,7 @@ XRE_API(void,
         XRE_TelemetryAccumulate, (int aID, uint32_t aSample))
 
 XRE_API(void,
-        XRE_StartupTimelineRecord, (int aEvent, PRTime aWhen))
+        XRE_StartupTimelineRecord, (int aEvent, mozilla::TimeStamp aWhen))
 
 XRE_API(void,
         XRE_InitOmnijar, (nsIFile* aGreOmni,
@@ -472,5 +476,10 @@ XRE_API(void,
 
 XRE_API(int,
         XRE_XPCShellMain, (int argc, char** argv, char** envp))
+
+#if MOZ_WIDGET_GTK == 2
+XRE_API(void,
+        XRE_GlibInit, ())
+#endif
 
 #endif // _nsXULAppAPI_h__

@@ -162,7 +162,7 @@ CompositorChild::OpenSameProcess(CompositorParent* aParent)
 CompositorChild::Get()
 {
   // This is only expected to be used in child processes.
-  MOZ_ASSERT(XRE_GetProcessType() != GeckoProcessType_Default);
+  MOZ_ASSERT(!XRE_IsParentProcess());
   return sCompositor;
 }
 
@@ -217,14 +217,14 @@ static void CalculatePluginClip(const gfx::IntRect& aBounds,
                                 bool& aPluginIsVisible)
 {
   aPluginIsVisible = true;
-  // aBounds (content origin)
-  nsIntRegion contentVisibleRegion(aBounds);
-  // aPluginClipRects (plugin widget origin)
+  nsIntRegion contentVisibleRegion;
+  // aPluginClipRects (plugin widget origin) - contains *visible* rects
   for (uint32_t idx = 0; idx < aPluginClipRects.Length(); idx++) {
     gfx::IntRect rect = aPluginClipRects[idx];
     // shift to content origin
     rect.MoveBy(aBounds.x, aBounds.y);
-    contentVisibleRegion.AndWith(rect);
+    // accumulate visible rects
+    contentVisibleRegion.OrWith(rect);
   }
   // apply layers clip (window origin)
   nsIntRegion region = aParentLayerVisibleRegion;
@@ -262,13 +262,16 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
 
   // Tracks visible plugins we update, so we can hide any plugins we don't.
   nsTArray<uintptr_t> visiblePluginIds;
-
+  nsIWidget* parent = nullptr;
   for (uint32_t pluginsIdx = 0; pluginsIdx < aPlugins.Length(); pluginsIdx++) {
     nsIWidget* widget =
       nsIWidget::LookupRegisteredPluginWindow(aPlugins[pluginsIdx].windowId());
     if (!widget) {
       NS_WARNING("Unexpected, plugin id not found!");
       continue;
+    }
+    if (!parent) {
+      parent = widget->GetParent();
     }
     bool isVisible = aPlugins[pluginsIdx].visible();
     if (widget && !widget->Destroyed()) {
@@ -304,8 +307,6 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
       // Handle invalidation, this can be costly, avoid if it is not needed.
       if (isVisible) {
         // invalidate region (widget origin)
-        gfx::IntRect bounds = aPlugins[pluginsIdx].bounds();
-        gfx::IntRect rect(0, 0, bounds.width, bounds.height);
 #if defined(XP_WIN)
         // Work around for flash's crummy sandbox. See bug 762948. This call
         // digs down into the window hirearchy, invalidating regions on
@@ -321,35 +322,38 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
   }
   // Any plugins we didn't update need to be hidden, as they are
   // not associated with visible content.
-  nsIWidget::UpdateRegisteredPluginWindowVisibility(visiblePluginIds);
+  nsIWidget::UpdateRegisteredPluginWindowVisibility((uintptr_t)parent, visiblePluginIds);
   return true;
 #endif // !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
 }
 
 bool
-CompositorChild::RecvUpdatePluginVisibility(nsTArray<uintptr_t>&& aVisibleIdList)
+CompositorChild::RecvHideAllPlugins(const uintptr_t& aParentWidget)
 {
 #if !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
-  NS_NOTREACHED("CompositorChild::RecvUpdatePluginVisibility calls "
+  NS_NOTREACHED("CompositorChild::RecvHideAllPlugins calls "
                 "unexpected on this platform.");
   return false;
 #else
   MOZ_ASSERT(NS_IsMainThread());
-  nsIWidget::UpdateRegisteredPluginWindowVisibility(aVisibleIdList);
+  nsTArray<uintptr_t> list;
+  nsIWidget::UpdateRegisteredPluginWindowVisibility(aParentWidget, list);
   return true;
 #endif // !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
 }
 
 bool
-CompositorChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId)
+CompositorChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId,
+                                  const TimeStamp& aCompositeStart,
+                                  const TimeStamp& aCompositeEnd)
 {
   if (mLayerManager) {
     MOZ_ASSERT(aId == 0);
-    mLayerManager->DidComposite(aTransactionId);
+    mLayerManager->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
   } else if (aId != 0) {
     dom::TabChild *child = dom::TabChild::GetFrom(aId);
     if (child) {
-      child->DidComposite(aTransactionId);
+      child->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
     }
   }
   return true;
@@ -370,6 +374,16 @@ CompositorChild::AddOverfillObserver(ClientLayerManager* aLayerManager)
 {
   MOZ_ASSERT(aLayerManager);
   mOverfillObservers.AppendElement(aLayerManager);
+}
+
+bool
+CompositorChild::RecvClearCachedResources(const uint64_t& aId)
+{
+  dom::TabChild* child = dom::TabChild::GetFrom(aId);
+  if (child) {
+    child->ClearCachedResources();
+  }
+  return true;
 }
 
 void
@@ -547,6 +561,26 @@ CompositorChild::SendResume()
     return true;
   }
   return PCompositorChild::SendResume();
+}
+
+bool
+CompositorChild::SendNotifyHidden(const uint64_t& id)
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendNotifyHidden(id);
+}
+
+bool
+CompositorChild::SendNotifyVisible(const uint64_t& id)
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendNotifyVisible(id);
 }
 
 bool

@@ -4,28 +4,20 @@
 
 "use strict";
 
-// Testing various inplace-editor behaviors in the rule-view
+// Tests adding a new property and escapes the new empty property value editor.
 
-let TEST_URL = 'url("' + TEST_URL_ROOT + 'doc_test_image.png")';
-let PAGE_CONTENT = [
-  '<style type="text/css">',
-  '  #testid {',
-  '    background-color: blue;',
-  '  }',
-  '</style>',
-  '<div id="testid">Styled Node</div>'
-].join("\n");
+const TEST_URI = `
+  <style type='text/css'>
+    #testid {
+      background-color: blue;
+    }
+  </style>
+  <div id='testid'>Styled Node</div>
+`;
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8,test rule view user changes");
-
-  info("Creating the test document");
-  content.document.body.innerHTML = PAGE_CONTENT;
-
-  info("Opening the rule-view");
-  let {toolbox, inspector, view} = yield openRuleView();
-
-  info("Selecting the test element");
+  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+  let {inspector, view} = yield openRuleView();
   yield selectNode("#testid", inspector);
 
   info("Test creating a new property and escaping");
@@ -33,47 +25,45 @@ add_task(function*() {
   let elementRuleEditor = getRuleViewRuleEditor(view, 1);
 
   info("Focusing a new property name in the rule-view");
-  let editor = yield focusEditableField(elementRuleEditor.closeBrace);
+  let editor = yield focusEditableField(view, elementRuleEditor.closeBrace);
 
-  is(inplaceEditor(elementRuleEditor.newPropSpan), editor, "The new property editor got focused.");
-  let input = editor.input;
+  is(inplaceEditor(elementRuleEditor.newPropSpan), editor,
+    "The new property editor got focused.");
 
   info("Entering a value in the property name editor");
-  let onModifications = elementRuleEditor.rule._applyingModifications;
-  input.value = "color";
-  yield onModifications;
+  editor.input.value = "color";
 
   info("Pressing return to commit and focus the new value field");
   let onValueFocus = once(elementRuleEditor.element, "focus", true);
-  onModifications = elementRuleEditor.rule._applyingModifications;
-  EventUtils.synthesizeKey("VK_RETURN", {}, view.doc.defaultView);
+  let onRuleViewChanged = view.once("ruleview-changed");
+  EventUtils.synthesizeKey("VK_RETURN", {}, view.styleWindow);
   yield onValueFocus;
-  yield onModifications;
+  yield onRuleViewChanged;
 
   // Getting the new value editor after focus
-  editor = inplaceEditor(view.doc.activeElement);
+  editor = inplaceEditor(view.styleDocument.activeElement);
   let textProp = elementRuleEditor.rule.textProps[1];
 
-  is(elementRuleEditor.rule.textProps.length,  2, "Created a new text property.");
-  is(elementRuleEditor.propertyList.children.length, 2, "Created a property editor.");
-  is(editor, inplaceEditor(textProp.editor.valueSpan), "Editing the value span now.");
+  is(elementRuleEditor.rule.textProps.length, 2,
+    "Created a new text property.");
+  is(elementRuleEditor.propertyList.children.length, 2,
+    "Created a property editor.");
+  is(editor, inplaceEditor(textProp.editor.valueSpan),
+    "Editing the value span now.");
 
   info("Entering a property value");
   editor.input.value = "red";
 
   info("Escaping out of the field");
-  onModifications = elementRuleEditor.rule._applyingModifications;
-  EventUtils.synthesizeKey("VK_ESCAPE", {}, view.doc.defaultView);
-  yield onModifications;
+  onRuleViewChanged = view.once("ruleview-changed");
+  EventUtils.synthesizeKey("VK_ESCAPE", {}, view.styleWindow);
+  yield onRuleViewChanged;
 
-  info("Checking that the previous field is focused");
-  let focusedElement = inplaceEditor(elementRuleEditor.rule.textProps[0].editor.valueSpan).input;
-  is(focusedElement, focusedElement.ownerDocument.activeElement, "Correct element has focus");
+  is(view.styleDocument.body, view.styleDocument.activeElement,
+    "Correct element has focus");
 
-  onModifications = elementRuleEditor.rule._applyingModifications;
-  EventUtils.synthesizeKey("VK_ESCAPE", {}, view.doc.defaultView);
-  yield onModifications;
-
-  is(elementRuleEditor.rule.textProps.length,  1, "Removed the new text property.");
-  is(elementRuleEditor.propertyList.children.length, 1, "Removed the property editor.");
+  is(elementRuleEditor.rule.textProps.length, 1,
+    "Removed the new text property.");
+  is(elementRuleEditor.propertyList.children.length, 1,
+    "Removed the property editor.");
 });

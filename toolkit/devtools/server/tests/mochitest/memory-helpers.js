@@ -1,6 +1,6 @@
-let Cu = Components.utils;
-let Cc = Components.classes;
-let Ci = Components.interfaces;
+var Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
@@ -10,14 +10,12 @@ SimpleTest.registerCleanupFunction(function() {
   Services.prefs.clearUserPref("devtools.debugger.log");
 });
 
-Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
-Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
-
 Cu.import("resource://gre/modules/Task.jsm");
-Cu.import("resource://gre/modules/devtools/Loader.jsm");
-let { require } = devtools;
+var { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+var { DebuggerClient } = require("devtools/toolkit/client/main");
+var { DebuggerServer } = require("devtools/server/main");
 
-let { MemoryFront } = require("devtools/server/actors/memory");
+var { MemoryFront } = require("devtools/server/actors/memory");
 
 function startServerAndGetSelectedTabMemory() {
   DebuggerServer.init();
@@ -57,4 +55,11 @@ function waitForTime(ms) {
   return new Promise((resolve, reject) => {
     setTimeout(resolve, ms);
   });
+}
+
+function waitUntil(predicate) {
+  if (predicate()) {
+    return Promise.resolve(true);
+  }
+  return new Promise(resolve => setTimeout(() => waitUntil(predicate).then(() => resolve(true)), 10));
 }

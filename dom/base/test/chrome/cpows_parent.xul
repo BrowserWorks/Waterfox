@@ -64,9 +64,12 @@
          "getOwnPropertyDescriptor.value works");
       let obj = new data.ctor();
       ok(obj.a === 3, "constructor call");
-      ok(document.title === "Hello, Kitty", "document node");
+      is(document.title, "Hello, Kitty", "document node");
       is(typeof document.cookie, "string", "can get document.cookie");
       is(typeof document.defaultView.navigator.userAgent, "string", "can get navigator.userAgent");
+
+      // Don't crash.
+      document.defaultView.screen;
 
       data.i = 6;
       data.b = false;
@@ -138,6 +141,7 @@
 
     function recvAsyncMessage(message) {
       testCpowMessage(message);
+      savedMM.sendAsyncMessage("cpows:async_done");
     }
 
     function recvSyncMessage(message) {
@@ -360,6 +364,32 @@
       });
     }
 
+    function recvCancelTest(msg) {
+      let failed = false;
+      try {
+        msg.objects.f();
+      } catch (e if /cross-process JS call failed/.test(String(e))) {
+        failed = true;
+      }
+      ok(failed, "CPOW should fail due to cancelation");
+      msg.target.messageManager.sendAsyncMessage("cpows:cancel_test_done");
+    }
+
+    function recvCancelSyncMessage() {
+      return 12;
+    }
+
+    function recvCancelTest2(msg) {
+      let failed = false;
+      try {
+        msg.objects.f();
+      } catch (e if /cross-process JS call failed/.test(String(e))) {
+        failed = true;
+      }
+      ok(failed, "CPOW should fail due to cancelation");
+      msg.target.messageManager.sendAsyncMessage("cpows:cancel_test2_done");
+    }
+
     function run_tests(type) {
       info("Running tests: " + type);
       var node = document.getElementById('cpowbrowser_' + type);
@@ -396,6 +426,9 @@
       mm.addMessageListener("cpows:postmessage_test", recvPostMessageTest);
       mm.addMessageListener("cpows:lifetime_test_1", recvLifetimeTest1);
       mm.addMessageListener("cpows:lifetime_test_2", recvLifetimeTest2);
+      mm.addMessageListener("cpows:cancel_test", recvCancelTest);
+      mm.addMessageListener("cpows:cancel_sync_message", recvCancelSyncMessage);
+      mm.addMessageListener("cpows:cancel_test2", recvCancelTest2);
       mm.loadFrameScript("chrome://mochitests/content/chrome/dom/base/test/chrome/cpows_child.js", true);
     }
 

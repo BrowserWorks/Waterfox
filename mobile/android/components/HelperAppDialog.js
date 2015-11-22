@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/*globals ContentAreaUtils */
+
 const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 const APK_MIME_TYPE = "application/vnd.android.package-archive";
@@ -19,6 +21,12 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 // -----------------------------------------------------------------------
 // HelperApp Launcher Dialog
 // -----------------------------------------------------------------------
+
+XPCOMUtils.defineLazyGetter(this, "ContentAreaUtils", function() {
+  let ContentAreaUtils = {};
+  Services.scriptloader.loadSubScript("chrome://global/content/contentAreaUtils.js", ContentAreaUtils);
+  return ContentAreaUtils;
+});
 
 function HelperAppLauncherDialog() { }
 
@@ -55,7 +63,8 @@ HelperAppLauncherDialog.prototype = {
     if (url.schemeIs("chrome") ||
         url.schemeIs("jar") ||
         url.schemeIs("resource") ||
-        url.schemeIs("wyciwyg")) {
+        url.schemeIs("wyciwyg") ||
+        url.schemeIs("file")) {
       return false;
     }
 
@@ -71,31 +80,6 @@ HelperAppLauncherDialog.prototype = {
       if (!url.equals(innerURI)) {
         return this._canDownload(innerURI, true);
       }
-    }
-
-    if (url.schemeIs("file")) {
-      // If it's in our app directory or profile directory, we never ever
-      // want to do anything with it, including saving to disk or passing the
-      // file to another application.
-      let file = url.QueryInterface(Ci.nsIFileURL).file;
-
-      // Normalize the nsILocalFile in-place. This will ensure that paths
-      // can be correctly compared via `contains`, below.
-      file.normalize();
-
-      // TODO: pref blacklist?
-
-      let appRoot = FileUtils.getFile("XREExeF", []);
-      if (appRoot.contains(file, true)) {
-        return false;
-      }
-
-      let profileRoot = FileUtils.getFile("ProfD", []);
-      if (profileRoot.contains(file, true)) {
-        return false;
-      }
-
-      return true;
     }
 
     // Anything else is fine to download.

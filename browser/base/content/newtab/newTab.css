@@ -2,6 +2,25 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+html {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font: message-box;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  background-color: #F9F9F9;
+  display: -moz-box;
+  position: relative;
+  -moz-box-flex: 1;
+  -moz-user-focus: normal;
+  -moz-box-orient: vertical;
+}
+
 input {
   font: message-box !important;
   font-size: 16px !important;
@@ -11,23 +30,9 @@ input[type=button] {
   cursor: pointer;
 }
 
-/* SCROLLBOX */
-#newtab-scrollbox {
-  display: -moz-box;
-  position: relative;
-  -moz-box-flex: 1;
-  -moz-user-focus: normal;
-  -moz-box-orient: vertical;
-}
-
-#newtab-scrollbox:not([page-disabled]) {
-  overflow: auto;
-}
-
 /* UNDO */
 #newtab-undo-container {
   transition: opacity 100ms ease-out;
-  display: -moz-box;
   -moz-box-align: center;
   -moz-box-pack: center;
 }
@@ -45,53 +50,9 @@ input[type=button] {
   z-index: 101;
 }
 
-#newtab-customize-button:-moz-locale-dir(rtl) {
+#newtab-customize-button:-moz-dir(rtl) {
   left: 20px;
   right: auto;
-}
-
-#newtab-intro-what {
-  cursor: pointer;
-  position: absolute;
-  right: 70px;
-  top: 20px;
-  display: none;
-}
-
-#newtab-intro-what:-moz-locale-dir(rtl) {
-  left: 70px;
-  right: auto;
-}
-
-#newtab-scrollbox[page-disabled] #newtab-intro-what {
-  display: none;
-}
-
-#newtab-intro-panel {
-  color: #6a7b86;
-  font-size: 15px;
-  line-height: 19px;
-  width: 520px;
-}
-
-#newtab-intro-panel h1 {
-  color: #343f48;
-  font-family: Open Sans, sans-serif;
-  font-size: 30px;
-  margin: 20px;
-}
-
-#newtab-intro-panel p {
-  margin: 10px 20px;
-}
-
-#newtab-intro-panel p:last-child {
-  margin-bottom: 30px;
-}
-
-#newtab-intro-what:hover,
-#newtab-intro-panel a {
-  color: #4a90e2;
 }
 
 /* MARGINS */
@@ -110,9 +71,13 @@ input[type=button] {
   z-index: 1;
 }
 
-#newtab-margin-undo-container:-moz-locale-dir(rtl) {
+#newtab-margin-undo-container:-moz-dir(rtl) {
   left: auto;
   right: 6px;
+}
+
+#newtab-undo-close-button:-moz-dir(rtl) {
+  float:left;
 }
 
 #newtab-horizontal-margin {
@@ -248,6 +213,8 @@ input[type=button] {
 .newtab-title {
   left: 0;
   padding: 0 4px;
+  border: 1px solid #FFFFFF;
+  border-radius: 0px 0px 8px 8px;
 }
 
 .newtab-sponsored {
@@ -282,7 +249,7 @@ input[type=button] {
   background-color: #000000;
 }
 
-.newtab-sponsored:-moz-locale-dir(rtl) {
+.newtab-sponsored:-moz-dir(rtl) {
   right: 0;
   left: auto;
 }
@@ -312,7 +279,6 @@ input[type=button] {
   text-align: start;
 }
 
-#newtab-intro-panel input,
 .sponsored-explain input,
 .suggested-explain input {
   background-size: 18px;
@@ -347,13 +313,13 @@ input[type=button] {
   }
 }
 
-.newtab-control-pin:-moz-locale-dir(ltr),
-.newtab-control-block:-moz-locale-dir(rtl) {
+.newtab-control-pin:-moz-dir(ltr),
+.newtab-control-block:-moz-dir(rtl) {
   left: 4px;
 }
 
-.newtab-control-block:-moz-locale-dir(ltr),
-.newtab-control-pin:-moz-locale-dir(rtl) {
+.newtab-control-block:-moz-dir(ltr),
+.newtab-control-pin:-moz-dir(rtl) {
   right: 4px;
 }
 
@@ -375,8 +341,8 @@ input[type=button] {
 #newtab-search-container {
   display: -moz-box;
   position: relative;
-  -moz-box-align: center;
   -moz-box-pack: center;
+  margin: 40px 0 15px;
 }
 
 #newtab-search-container[page-disabled] {
@@ -386,104 +352,76 @@ input[type=button] {
 
 #newtab-search-form {
   display: -moz-box;
+  position: relative;
+  height: 36px;
   -moz-box-flex: 1;
-  -moz-box-orient: horizontal;
-  -moz-box-align: center;
-  height: 44px; /* 32 + 6 logo top "padding" + 6 logo bottom "padding" */
-  margin: 26px 20px 10px; /* top: 32 - 6 search form top "padding", bottom: 32 - 16 tiles top margin - 6 logo bottom "padding" */
   max-width: 600px; /* 2 * (290 cell width + 10 cell margin) */
 }
 
-#newtab-search-logo {
-  display: -moz-box;
-  width: 38px;
-  height: 38px; /* 26 image height + 6 top "padding" + 6 bottom "padding" */
-  border: 1px solid transparent;
-  -moz-margin-end: 8px;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-image: url(chrome://global/skin/icons/autocomplete-search.svg#search-icon);
-  background-size: 26px 26px;
-}
-
-#newtab-search-logo.magnifier {
-  width: 38px; /* 26 image width + 6 left "padding" + 6 right "padding" */
-  -moz-margin-end: 5px;
-  background-size: 26px;
-  background-image: url("chrome://browser/skin/magnifier.png");
-}
-
-@media not all and (max-resolution: 1dppx) {
-  #newtab-search-logo.magnifier {
-    background-image: url("chrome://browser/skin/magnifier@2x.png");
-  }
-}
-
-#newtab-search-logo[type="logo"] {
-  background-size: 65px 26px;
-  width: 77px; /* 65 image width + 6 left "padding" + 6 right "padding" */
-}
-
-#newtab-search-logo[type="favicon"] {
-  background-size: 16px 16px;
-}
-
-#newtab-search-logo[hidden] {
-  display: none;
-}
-
-#newtab-search-logo[active],
-#newtab-search-logo:hover {
-  background-color: #e9e9e9;
-  border: 1px solid rgb(226, 227, 229);
-  border-radius: 2.5px;
+#newtab-search-icon {
+  border: 1px transparent;
+  padding: 0;
+  margin: 0;
+  width: 36px;
+  height: 36px;
+  background: url("chrome://browser/skin/search-indicator-magnifying-glass.svg") center center no-repeat;
+  position: absolute;
 }
 
 #newtab-search-text {
-  height: 38px; /* same height as #newtab-search-logo */
   -moz-box-flex: 1;
-
-  padding: 0 8px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-left: 34px;
+  padding-right: 8px;
   background: hsla(0,0%,100%,.9) padding-box;
   border: 1px solid;
+  border-spacing: 0;
+  border-radius: 2px 0 0 2px;
   border-color: hsla(210,54%,20%,.15) hsla(210,54%,20%,.17) hsla(210,54%,20%,.2);
   box-shadow: 0 1px 0 hsla(210,65%,9%,.02) inset,
               0 0 2px hsla(210,65%,9%,.1) inset,
               0 1px 0 hsla(0,0%,100%,.2);
-  border-radius: 2.5px 0 0 2.5px;
   color: inherit;
 }
 
 #newtab-search-text:-moz-dir(rtl) {
-  border-radius: 0 2.5px 2.5px 0;
+  border-radius: 0 2px 2px 0;
 }
 
+#newtab-search-text[aria-expanded="true"] {
+  border-radius: 2px 0 0 0;
+}
+
+#newtab-search-text[aria-expanded="true"]:-moz-dir(rtl) {
+  border-radius: 0 2px 0 0;
+}
+
+#newtab-search-text[keepfocus],
 #newtab-search-text:focus,
 #newtab-search-text[autofocus] {
   border-color: hsla(206,100%,60%,.6) hsla(206,76%,52%,.6) hsla(204,100%,40%,.6);
 }
 
 #newtab-search-submit {
-  height: 38px; /* same height as #newtab-search-logo */
-  font-size: 13px !important;
-
   -moz-margin-start: -1px;
-  background: linear-gradient(hsla(0,0%,100%,.8), hsla(0,0%,100%,.1)) padding-box;
-  padding: 0 9px;
+  background: url("chrome://browser/skin/search-arrow-go.svg#search-arrow-go") center center no-repeat, linear-gradient(hsla(0,0%,100%,.8), hsla(0,0%,100%,.1)) padding-box;
+  padding: 0;
   border: 1px solid;
   border-color: hsla(210,54%,20%,.15) hsla(210,54%,20%,.17) hsla(210,54%,20%,.2);
+  border-radius: 0 2px 2px 0;
   -moz-border-start: 1px solid transparent;
-  border-radius: 0 2.5px 2.5px 0;
   box-shadow: 0 0 2px hsla(0,0%,100%,.5) inset,
               0 1px 0 hsla(0,0%,100%,.2);
   color: inherit;
   cursor: pointer;
   transition-property: background-color, border-color, box-shadow;
   transition-duration: 150ms;
+  width: 50px;
 }
 
 #newtab-search-submit:-moz-dir(rtl) {
-  border-radius: 2.5px 0 0 2.5px;
+  border-radius: 2px 0 0 2px;
 }
 
 #newtab-search-text:focus + #newtab-search-submit,
@@ -494,15 +432,16 @@ input[type=button] {
 }
 
 #newtab-search-text:focus + #newtab-search-submit,
+#newtab-search-text[keepfocus] + #newtab-search-submit,
 #newtab-search-text[autofocus] + #newtab-search-submit {
-  background-image: linear-gradient(#4cb1ff, #1793e5);
+  background: url("chrome://browser/skin/search-arrow-go.svg#search-arrow-go-inverted") center center no-repeat, linear-gradient(#4cb1ff, #1793e5);
   box-shadow: 0 1px 0 hsla(0,0%,100%,.2) inset,
               0 0 0 1px hsla(0,0%,100%,.1) inset,
               0 1px 0 hsla(210,54%,20%,.03);
 }
 
 #newtab-search-text + #newtab-search-submit:hover {
-  background-image: linear-gradient(#66bdff, #0d9eff);
+  background: url("chrome://browser/skin/search-arrow-go.svg#search-arrow-go-inverted") center center no-repeat, linear-gradient(#4cb1ff, #1793e5);
   box-shadow: 0 1px 0 hsla(0,0%,100%,.2) inset,
               0 0 0 1px hsla(0,0%,100%,.1) inset,
               0 1px 0 hsla(210,54%,20%,.03),
@@ -515,6 +454,7 @@ input[type=button] {
   transition-duration: 0ms;
 }
 
+/* CUSTOMIZE */
 #newtab-customize-overlay {
   opacity: 0;
   display: none;
@@ -526,10 +466,52 @@ input[type=button] {
   transition: opacity .07s linear;
 }
 
+.newtab-customize-panel-container {
+  position: absolute;
+  margin-right: 40px;
+  right: 0;
+}
+
+.newtab-customize-panel-container:-moz-dir(rtl) {
+  right: auto;
+  left: 0;
+}
+
 #newtab-customize-panel {
-  z-index: 101;
-  margin-top: -5px;
+  z-index: 999;
+  margin-top: 55px;
   min-width: 270px;
+  position: absolute;
+  top: 100%;
+  right: -25px;
+  filter: drop-shadow(0 0 1px rgba(0,0,0,0.4)) drop-shadow(0 3px 4px rgba(0,0,0,0.4));
+  transition: all 200ms ease-in-out;
+  transform-origin: top right;
+  transform: translate(-30px, -20px) scale(0) translate(30px, 20px);
+}
+
+#newtab-customize-panel:-moz-dir(rtl) {
+  transform-origin: 40px top 20px;
+}
+
+#newtab-customize-panel:-moz-dir(rtl),
+#newtab-customize-panel-anchor:-moz-dir(rtl) {
+  left: 15px;
+  right: auto;
+}
+
+#newtab-customize-panel[open="true"] {
+  transform: translate(-30px, -20px) scale(1) translate(30px, 20px);
+}
+
+#newtab-customize-panel-anchor {
+  width: 18px;
+  height: 18px;
+  background-color: white;
+  transform: rotate(45deg);
+  position: absolute;
+  top: -6px;
+  right: 15px;
 }
 
 #newtab-customize-title {
@@ -539,55 +521,43 @@ input[type=button] {
   line-height: 25px;
   padding: 15px;
   font-weight: 600;
-  text-transform: uppercase;
   cursor: default;
   border-radius: 5px 5px 0px 0px;
   max-width: 300px;
   overflow: hidden;
   display: table-cell;
+  border-top: none;
+}
 
+#newtab-customize-panel-inner-wrapper {
+  background-color: #FFFFFF;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 #newtab-customize-title > label {
   cursor: default;
 }
 
-#newtab-customize-panel > .panel-arrowcontainer > .panel-arrowcontent,
-#newtab-search-panel > .panel-arrowcontainer > .panel-arrowcontent {
+#newtab-customize-panel > .panel-arrowcontainer > .panel-arrowcontent {
   padding: 0;
-}
-
-.newtab-customize-panel-item,
-.newtab-search-panel-engine,
-#newtab-search-manage {
-  line-height: 54px;
-  padding: 4px 24px;
-  font-size: 14px;
-  cursor: pointer;
 }
 
 .newtab-customize-panel-item {
   line-height: 25px;
   padding: 15px;
   -moz-padding-start: 40px;
+  font-size: 14px;
+  cursor: pointer;
+  max-width: 300px;
 }
 
-.newtab-customize-panel-item:not(:first-child),
-.newtab-search-panel-engine {
+.newtab-customize-panel-item:not(:first-child) {
   border-top: 1px solid threedshadow;
-}
-
-.newtab-search-panel-engine > image {
-  -moz-margin-end: 8px;
-  width: 16px;
-  height: 16px;
-  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.png");
 }
 
 .newtab-customize-panel-subitem > label,
 .newtab-customize-panel-item > label,
-.newtab-search-panel-engine > label,
-#newtab-search-manage > label,
 .newtab-customize-complex-option {
   padding: 0;
   margin: 0;
@@ -596,10 +566,8 @@ input[type=button] {
 
 .newtab-customize-panel-item,
 .newtab-customize-complex-option {
-  width: 100%;
   display: block;
   text-align: start;
-  max-width: 300px;
   background-color: #F9F9F9;
 }
 
@@ -639,8 +607,7 @@ input[type=button] {
   background-color: #FFFFFF;
 }
 
-.newtab-customize-panel-item[selected],
-.newtab-search-panel-engine[selected] {
+.newtab-customize-panel-item[selected] {
   background: url("chrome://global/skin/menu/shared-menu-check-active.svg") no-repeat transparent;
   background-size: 16px 16px;
   background-position: 15px 15px;
@@ -667,6 +634,7 @@ input[type=button] {
   padding: 0px 15px 15px 15px;
   -moz-padding-start: 40px;
   display: block;
+  max-width: 300px;
 }
 
 .newtab-customize-panel-subitem > label {
@@ -684,7 +652,7 @@ input[type=button] {
   border-top: 1px solid threedshadow;
 }
 
-.searchSuggestionTable {
+.contentSearchSuggestionTable {
   font: message-box;
   font-size: 16px;
 }
@@ -775,6 +743,10 @@ input[type=button] {
   color: #4A90E2;
 }
 
+#newtab-intro-footer > ul > li > a:hover {
+  color: #000000;
+}
+
 #newtab-intro-body {
   position: relative;
   display: block;
@@ -818,6 +790,10 @@ input[type=button] {
 #newtab-intro-text > p > a {
   text-decoration: none;
   color: #4A90E2;
+}
+
+#newtab-intro-text > p > a:hover {
+  color: #000000;
 }
 
 #newtab-intro-text .newtab-control {

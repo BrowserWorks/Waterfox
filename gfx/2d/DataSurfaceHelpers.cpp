@@ -16,7 +16,9 @@ namespace mozilla {
 namespace gfx {
 
 uint8_t*
-DataAtOffset(DataSourceSurface* aSurface, IntPoint aPoint)
+DataAtOffset(DataSourceSurface* aSurface,
+             DataSourceSurface::MappedSurface* aMap,
+             IntPoint aPoint)
 {
   if (!SurfaceContainsPoint(aSurface, aPoint)) {
     MOZ_CRASH("sample position needs to be inside surface!");
@@ -25,10 +27,10 @@ DataAtOffset(DataSourceSurface* aSurface, IntPoint aPoint)
   MOZ_ASSERT(Factory::CheckSurfaceSize(aSurface->GetSize()),
              "surface size overflows - this should have been prevented when the surface was created");
 
-  uint8_t* data = aSurface->GetData() + aPoint.y * aSurface->Stride() +
+  uint8_t* data = aMap->mData + aPoint.y * aMap->mStride +
     aPoint.x * BytesPerPixel(aSurface->GetFormat());
 
-  if (data < aSurface->GetData()) {
+  if (data < aMap->mData) {
     MOZ_CRASH("out-of-range data access");
   }
 
@@ -95,7 +97,7 @@ CopyBGRXSurfaceDataToPackedBGRArray(uint8_t* aSrc, uint8_t* aDst,
   uint8_t* dstPx = aDst;
 
   for (int row = 0; row < aSrcSize.height; ++row) {
-    for (int col = 0; col < aSrcSize.height; ++col) {
+    for (int col = 0; col < aSrcSize.width; ++col) {
       dstPx[0] = srcPx[0];
       dstPx[1] = srcPx[1];
       dstPx[2] = srcPx[2];
@@ -250,10 +252,16 @@ CopyRect(DataSourceSurface* aSrc, DataSourceSurface* aDest,
     return;
   }
 
-  uint8_t* sourceData = DataAtOffset(aSrc, aSrcRect.TopLeft());
-  uint32_t sourceStride = aSrc->Stride();
-  uint8_t* destData = DataAtOffset(aDest, aDestPoint);
-  uint32_t destStride = aDest->Stride();
+  DataSourceSurface::ScopedMap srcMap(aSrc, DataSourceSurface::READ);
+  DataSourceSurface::ScopedMap destMap(aDest, DataSourceSurface::WRITE);
+  if (MOZ2D_WARN_IF(!srcMap.IsMapped() || !destMap.IsMapped())) {
+    return;
+  }
+
+  uint8_t* sourceData = DataAtOffset(aSrc, srcMap.GetMappedSurface(), aSrcRect.TopLeft());
+  uint32_t sourceStride = srcMap.GetStride();
+  uint8_t* destData = DataAtOffset(aDest, destMap.GetMappedSurface(), aDestPoint);
+  uint32_t destStride = destMap.GetStride();
 
   if (BytesPerPixel(aSrc->GetFormat()) == 4) {
     for (int32_t y = 0; y < aSrcRect.height; y++) {
@@ -270,7 +278,7 @@ CopyRect(DataSourceSurface* aSrc, DataSourceSurface* aDest,
   }
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 CreateDataSourceSurfaceByCloning(DataSourceSurface* aSource)
 {
   RefPtr<DataSourceSurface> copy =
@@ -281,5 +289,5 @@ CreateDataSourceSurfaceByCloning(DataSourceSurface* aSource)
   return copy.forget();
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

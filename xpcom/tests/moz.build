@@ -18,8 +18,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
 if CONFIG['DEHYDRA_PATH']:
     TEST_DIRS += ['static-checker']
 
-FAIL_ON_WARNINGS = True
-
 EXPORTS.testing += [
     'TestHarness.h',
 ]
@@ -66,7 +64,6 @@ GeckoCppUnitTests([
     'TestObserverArray',
     'TestObserverService',
     'TestPipe',
-    'TestPLDHash',
     'TestStringAPI',
     'TestTArray',
     'TestTextFormatter',
@@ -101,6 +98,9 @@ XPIDL_SOURCES += [
     'NotXPCOMTest.idl',
 ]
 
+# Don't add our test-only .xpt files to the normal manifests
+XPIDL_NO_MANIFEST = True
+
 LOCAL_INCLUDES += [
     '../ds',
 ]
@@ -108,3 +108,6 @@ LOCAL_INCLUDES += [
 RESOURCE_FILES += [
     'test.properties',
 ]
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

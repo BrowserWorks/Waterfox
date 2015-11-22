@@ -116,8 +116,12 @@ status_t SampleIterator::seekTo(uint32_t sampleIndex) {
         }
     }
 
+    CHECK(mCurrentChunkSampleSizes.size() == mSamplesPerChunk);
+
     uint32_t chunkRelativeSampleIndex =
         (sampleIndex - mFirstChunkSampleIndex) % mSamplesPerChunk;
+
+    CHECK(chunkRelativeSampleIndex < mSamplesPerChunk);
 
     mCurrentSampleOffset = mCurrentChunkOffset;
     for (uint32_t i = 0; i < chunkRelativeSampleIndex; ++i) {
@@ -173,7 +177,7 @@ status_t SampleIterator::findChunkRange(uint32_t sampleIndex) {
             mStopChunkSampleIndex =
                 mFirstChunkSampleIndex
                     + (mStopChunk - mFirstChunk) * mSamplesPerChunk;
-        } else {
+        } else if (mSamplesPerChunk) {
             mStopChunk = 0xffffffff;
             mStopChunkSampleIndex = 0xffffffff;
         }

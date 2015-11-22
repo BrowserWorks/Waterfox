@@ -16,6 +16,7 @@
 #include "nsPresContext.h"
 #include "nsIWidget.h"
 #include "nsCRTGlue.h"
+#include "nsCSSParser.h"
 #include "nsCSSProps.h"
 
 #include "nsCOMPtr.h"
@@ -152,7 +153,7 @@ nsStyleFont::Init(nsPresContext* aPresContext)
   // Content-Language may be a comma-separated list of language codes,
   // in which case the HTML5 spec says to treat it as unknown
   if (!language.IsEmpty() &&
-      language.FindChar(char16_t(',')) == kNotFound) {
+      !language.Contains(char16_t(','))) {
     mLanguage = do_GetAtom(language);
     // NOTE:  This does *not* count as an explicit language; in other
     // words, it doesn't trigger language-specific hyphenation.
@@ -167,7 +168,7 @@ void
 nsStyleFont::Destroy(nsPresContext* aContext) {
   this->~nsStyleFont();
   aContext->PresShell()->
-    FreeByObjectID(nsPresArena::nsStyleFont_id, this);
+    FreeByObjectID(eArenaObjectID_nsStyleFont, this);
 }
 
 void
@@ -310,7 +311,7 @@ void
 nsStyleMargin::Destroy(nsPresContext* aContext) {
   this->~nsStyleMargin();
   aContext->PresShell()->
-    FreeByObjectID(nsPresArena::nsStyleMargin_id, this);
+    FreeByObjectID(eArenaObjectID_nsStyleMargin, this);
 }
 
 
@@ -333,8 +334,9 @@ nsChangeHint nsStyleMargin::CalcDifference(const nsStyleMargin& aOther) const
   }
   // Margin differences can't affect descendant intrinsic sizes and
   // don't need to force children to reflow.
-  return NS_CombineHint(nsChangeHint_NeedReflow,
-                        nsChangeHint_ClearAncestorIntrinsics);
+  return nsChangeHint_NeedReflow |
+         nsChangeHint_ReflowChangesSizeOrPosition |
+         nsChangeHint_ClearAncestorIntrinsics;
 }
 
 nsStylePadding::nsStylePadding()
@@ -360,7 +362,7 @@ void
 nsStylePadding::Destroy(nsPresContext* aContext) {
   this->~nsStylePadding();
   aContext->PresShell()->
-    FreeByObjectID(nsPresArena::nsStylePadding_id, this);
+    FreeByObjectID(eArenaObjectID_nsStylePadding, this);
 }
 
 void nsStylePadding::RecalcData()
@@ -512,7 +514,7 @@ nsStyleBorder::Destroy(nsPresContext* aContext) {
   UntrackImage(aContext);
   this->~nsStyleBorder();
   aContext->PresShell()->
-    FreeByObjectID(nsPresArena::nsStyleBorder_id, this);
+    FreeByObjectID(eArenaObjectID_nsStyleBorder, this);
 }
 
 nsChangeHint nsStyleBorder::CalcDifference(const nsStyleBorder& aOther) const
@@ -1119,6 +1121,8 @@ nsStyleClipPath::ReleaseRef()
     NS_ASSERTION(mURL, "expected pointer");
     mURL->Release();
   }
+  // mBasicShap, mURL, etc. are all pointers in a union of pointers. Nulling
+  // one of them nulls all of them:
   mURL = nullptr;
 }
 
@@ -1494,7 +1498,9 @@ IsAutonessEqual(const nsStyleSides& aSides1, const nsStyleSides& aSides2)
   return true;
 }
 
-nsChangeHint nsStylePosition::CalcDifference(const nsStylePosition& aOther) const
+nsChangeHint
+nsStylePosition::CalcDifference(const nsStylePosition& aOther,
+                                nsStyleContext* aContext) const
 {
   nsChangeHint hint = nsChangeHint(0);
 
@@ -1579,46 +1585,39 @@ nsChangeHint nsStylePosition::CalcDifference(const nsStylePosition& aOther) cons
     NS_UpdateHint(hint, nsChangeHint_NeedReflow);
   }
 
-  // Properties that apply only to multi-line flex containers:
-  // 'align-content' can change the positioning & sizing of a multi-line flex
-  // container's children when there's extra space in the cross axis, but it
-  // shouldn't affect the container's own sizing.
-  //
-  // NOTE: If we get here, we know that mFlexWrap == aOther.mFlexWrap
-  // (otherwise, we would've returned earlier). So it doesn't matter which one
-  // of those we check to see if we're multi-line.
-  if (mFlexWrap != NS_STYLE_FLEX_WRAP_NOWRAP &&
-      mAlignContent != aOther.mAlignContent) {
+  // 'align-content' doesn't apply to a single-line flexbox but we don't know
+  // if we're a flex container at this point so we can't optimize for that.
+  if (mAlignContent != aOther.mAlignContent) {
     NS_UpdateHint(hint, nsChangeHint_NeedReflow);
   }
 
-  if (mHeight != aOther.mHeight ||
-      mMinHeight != aOther.mMinHeight ||
-      mMaxHeight != aOther.mMaxHeight) {
-    // Height changes can affect descendant intrinsic sizes due to replaced
-    // elements with percentage heights in descendants which also have
-    // percentage heights.  And due to our not-so-great computation of mVResize
-    // in nsHTMLReflowState, they do need to force reflow of the whole subtree.
-    // XXXbz due to XUL caching heights as well, height changes also need to
-    // clear ancestor intrinsics!
-    return NS_CombineHint(hint, nsChangeHint_AllReflowHints);
+  bool widthChanged = mWidth != aOther.mWidth ||
+                      mMinWidth != aOther.mMinWidth ||
+                      mMaxWidth != aOther.mMaxWidth;
+  bool heightChanged = mHeight != aOther.mHeight ||
+                       mMinHeight != aOther.mMinHeight ||
+                       mMaxHeight != aOther.mMaxHeight;
+  bool isVertical = WritingMode(aContext).IsVertical();
+  if (isVertical ? widthChanged : heightChanged) {
+    // Block-size changes can affect descendant intrinsic sizes due to replaced
+    // elements with percentage bsizes in descendants which also have
+    // percentage bsizes. This is handled via nsChangeHint_UpdateComputedBSize
+    // which clears intrinsic sizes for frames that have such replaced elements.
+    NS_UpdateHint(hint, nsChangeHint_NeedReflow |
+        nsChangeHint_UpdateComputedBSize |
+        nsChangeHint_ReflowChangesSizeOrPosition);
   }
 
-  if (mWidth != aOther.mWidth ||
-      mMinWidth != aOther.mMinWidth ||
-      mMaxWidth != aOther.mMaxWidth) {
-    // None of our width differences can affect descendant intrinsic
+  if (isVertical ? heightChanged : widthChanged) {
+    // None of our inline-size differences can affect descendant intrinsic
     // sizes and none of them need to force children to reflow.
-    return
-      NS_CombineHint(hint,
-                     NS_SubtractHint(nsChangeHint_AllReflowHints,
-                                     NS_CombineHint(nsChangeHint_ClearDescendantIntrinsics,
-                                                    nsChangeHint_NeedDirtyReflow)));
+    NS_UpdateHint(hint, NS_SubtractHint(nsChangeHint_AllReflowHints,
+                                        NS_CombineHint(nsChangeHint_ClearDescendantIntrinsics,
+                                                       nsChangeHint_NeedDirtyReflow)));
   }
 
-  // If width and height have not changed, but any of the offsets have changed,
-  // then return the respective hints so that we would hopefully be able to
-  // avoid reflowing.
+  // If any of the offsets have changed, then return the respective hints
+  // so that we would hopefully be able to avoid reflowing.
   // Note that it is possible that we'll need to reflow when processing
   // restyles, but we don't have enough information to make a good decision
   // right now.
@@ -1629,7 +1628,7 @@ nsChangeHint nsStylePosition::CalcDifference(const nsStylePosition& aOther) cons
       NS_UpdateHint(hint, nsChangeHint(nsChangeHint_RecomputePosition |
                                        nsChangeHint_UpdateParentOverflow));
     } else {
-      return NS_CombineHint(hint, nsChangeHint_AllReflowHints);
+      NS_UpdateHint(hint, nsChangeHint_AllReflowHints);
     }
   }
   return hint;
@@ -2216,7 +2215,7 @@ nsStyleBackground::Destroy(nsPresContext* aContext)
 
   this->~nsStyleBackground();
   aContext->PresShell()->
-    FreeByObjectID(nsPresArena::nsStyleBackground_id, this);
+    FreeByObjectID(eArenaObjectID_nsStyleBackground, this);
 }
 
 nsChangeHint nsStyleBackground::CalcDifference(const nsStyleBackground& aOther) const
@@ -2582,6 +2581,7 @@ nsStyleDisplay::nsStyleDisplay()
   mAppearance = NS_THEME_NONE;
   mDisplay = NS_STYLE_DISPLAY_INLINE;
   mOriginalDisplay = mDisplay;
+  mContain = NS_STYLE_CONTAIN_NONE;
   mPosition = NS_STYLE_POSITION_STATIC;
   mFloats = NS_STYLE_FLOAT_NONE;
   mOriginalFloats = mFloats;
@@ -2605,6 +2605,7 @@ nsStyleDisplay::nsStyleDisplay()
   mChildPerspective.SetNoneValue();
   mBackfaceVisibility = NS_STYLE_BACKFACE_VISIBILITY_VISIBLE;
   mTransformStyle = NS_STYLE_TRANSFORM_STYLE_FLAT;
+  mTransformBox = NS_STYLE_TRANSFORM_BOX_BORDER_BOX;
   mOrient = NS_STYLE_ORIENT_INLINE;
   mMixBlendMode = NS_STYLE_BLEND_NORMAL;
   mIsolation = NS_STYLE_ISOLATION_AUTO;
@@ -2646,6 +2647,7 @@ nsStyleDisplay::nsStyleDisplay(const nsStyleDisplay& aSource)
   , mOpacity(aSource.mOpacity)
   , mDisplay(aSource.mDisplay)
   , mOriginalDisplay(aSource.mOriginalDisplay)
+  , mContain(aSource.mContain)
   , mAppearance(aSource.mAppearance)
   , mPosition(aSource.mPosition)
   , mFloats(aSource.mFloats)
@@ -2674,6 +2676,7 @@ nsStyleDisplay::nsStyleDisplay(const nsStyleDisplay& aSource)
   , mScrollSnapCoordinate(aSource.mScrollSnapCoordinate)
   , mBackfaceVisibility(aSource.mBackfaceVisibility)
   , mTransformStyle(aSource.mTransformStyle)
+  , mTransformBox(aSource.mTransformBox)
   , mSpecifiedTransform(aSource.mSpecifiedTransform)
   , mChildPerspective(aSource.mChildPerspective)
   , mTransitions(aSource.mTransitions)
@@ -2708,6 +2711,7 @@ nsChangeHint nsStyleDisplay::CalcDifference(const nsStyleDisplay& aOther) const
   if (!EqualURIs(mBinding, aOther.mBinding)
       || mPosition != aOther.mPosition
       || mDisplay != aOther.mDisplay
+      || mContain != aOther.mContain
       || (mFloats == NS_STYLE_FLOAT_NONE) != (aOther.mFloats == NS_STYLE_FLOAT_NONE)
       || mOverflowX != aOther.mOverflowX
       || mOverflowY != aOther.mOverflowY
@@ -2797,7 +2801,7 @@ nsChangeHint nsStyleDisplay::CalcDifference(const nsStyleDisplay& aOther) const
     // We do not need to apply nsChangeHint_UpdateTransformLayer since
     // nsChangeHint_RepaintFrame will forcibly invalidate the frame area and
     // ensure layers are rebuilt (or removed).
-    NS_UpdateHint(hint, NS_CombineHint(nsChangeHint_AddOrRemoveTransform,
+    NS_UpdateHint(hint, NS_CombineHint(nsChangeHint_UpdateContainingBlock,
                           NS_CombineHint(nsChangeHint_UpdateOverflow,
                                          nsChangeHint_RepaintFrame)));
   } else {
@@ -2830,7 +2834,8 @@ nsChangeHint nsStyleDisplay::CalcDifference(const nsStyleDisplay& aOther) const
       NS_CombineHint(nsChangeHint_UpdateOverflow, nsChangeHint_RepaintFrame);
     for (uint8_t index = 0; index < 3; ++index)
       if (mTransformOrigin[index] != aOther.mTransformOrigin[index]) {
-        NS_UpdateHint(transformHint, kUpdateOverflowAndRepaintHint);
+        NS_UpdateHint(transformHint, NS_CombineHint(nsChangeHint_UpdateTransformLayer,
+                                                    nsChangeHint_UpdatePostTransformOverflow));
         break;
       }
     
@@ -2840,8 +2845,14 @@ nsChangeHint nsStyleDisplay::CalcDifference(const nsStyleDisplay& aOther) const
         break;
       }
 
+    if (HasPerspectiveStyle() != aOther.HasPerspectiveStyle()) {
+      // A change from/to being a containing block for position:fixed.
+      NS_UpdateHint(hint, nsChangeHint_UpdateContainingBlock);
+    }
+
     if (mChildPerspective != aOther.mChildPerspective ||
-        mTransformStyle != aOther.mTransformStyle)
+        mTransformStyle != aOther.mTransformStyle ||
+        mTransformBox != aOther.mTransformBox)
       NS_UpdateHint(transformHint, kUpdateOverflowAndRepaintHint);
 
     if (mBackfaceVisibility != aOther.mBackfaceVisibility)
@@ -2946,6 +2957,9 @@ nsChangeHint nsStyleVisibility::CalcDifference(const nsStyleVisibility& aOther) 
   nsChangeHint hint = nsChangeHint(0);
 
   if (mDirection != aOther.mDirection || mWritingMode != aOther.mWritingMode) {
+    // It's important that a change in mWritingMode results in frame
+    // reconstruction, because it may affect intrinsic size (see
+    // nsSubDocumentFrame::GetIntrinsicISize/BSize).
     NS_UpdateHint(hint, nsChangeHint_ReconstructFrame);
   } else {
     if ((mImageOrientation != aOther.mImageOrientation)) {
@@ -3114,7 +3128,7 @@ nsStyleContent::Destroy(nsPresContext* aContext)
 
   this->~nsStyleContent();
   aContext->PresShell()->
-    FreeByObjectID(nsPresArena::nsStyleContent_id, this);
+    FreeByObjectID(eArenaObjectID_nsStyleContent, this);
 }
 
 nsStyleContent::nsStyleContent(const nsStyleContent& aSource)
@@ -3395,7 +3409,7 @@ nsStyleText::nsStyleText(void)
   mRubyPosition = NS_STYLE_RUBY_POSITION_OVER;
   mTextSizeAdjust = NS_STYLE_TEXT_SIZE_ADJUST_AUTO;
   mTextCombineUpright = NS_STYLE_TEXT_COMBINE_UPRIGHT_NONE;
-  mControlCharacterVisibility = NS_STYLE_CONTROL_CHARACTER_VISIBILITY_HIDDEN;
+  mControlCharacterVisibility = nsCSSParser::ControlCharVisibilityDefault();
 
   mLetterSpacing.SetNormalValue();
   mLineHeight.SetNormalValue();

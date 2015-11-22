@@ -377,14 +377,14 @@ txExecutionState::getEvalContext()
 const txXPathNode*
 txExecutionState::retrieveDocument(const nsAString& aUri)
 {
-    NS_ASSERTION(aUri.FindChar(char16_t('#')) == kNotFound,
+    NS_ASSERTION(!aUri.Contains(char16_t('#')),
                  "Remove the fragment.");
 
     if (mDisableLoads) {
         return nullptr;
     }
 
-    PR_LOG(txLog::xslt, PR_LOG_DEBUG,
+    MOZ_LOG(txLog::xslt, LogLevel::Debug,
            ("Retrieve Document %s", NS_LossyConvertUTF16toASCII(aUri).get()));
 
     // try to get already loaded document

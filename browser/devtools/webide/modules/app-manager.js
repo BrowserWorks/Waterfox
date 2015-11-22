@@ -4,9 +4,8 @@
 
 const {Cu} = require("chrome");
 
-let { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
-
-const {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const promise = require("promise");
+const {TargetFactory} = require("devtools/framework/target");
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm");
 const EventEmitter = require("devtools/toolkit/event-emitter");
@@ -28,7 +27,7 @@ const {ProjectBuilding} = require("./build");
 
 const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
 
-let AppManager = exports.AppManager = {
+var AppManager = exports.AppManager = {
 
   // FIXME: will break when devtools/app-manager will be removed:
   DEFAULT_PROJECT_ICON: "chrome://browser/skin/devtools/app-manager/default-app-icon.png",
@@ -294,7 +293,7 @@ let AppManager = exports.AppManager = {
       if (this.connection.client.mainRoot.traits.allowChromeProcess) {
         return this.connection.client.getProcess()
                    .then(aResponse => {
-                     return devtools.TargetFactory.forRemoteTab({
+                     return TargetFactory.forRemoteTab({
                        form: aResponse.form,
                        client: this.connection.client,
                        chrome: true
@@ -302,7 +301,7 @@ let AppManager = exports.AppManager = {
                    });
       } else {
         // Fx <39 exposes tab actors on the root actor
-        return devtools.TargetFactory.forRemoteTab({
+        return TargetFactory.forRemoteTab({
           form: this._listTabsResponse,
           client: this.connection.client,
           chrome: true,
@@ -660,7 +659,7 @@ let AppManager = exports.AppManager = {
 
       // Addons don't have any document to load (yet?)
       // So that there is no need to run them, installing is enough
-      if (project.manifest.role && project.manifest.role === "addon") {
+      if (project.manifest.manifest_version || project.manifest.role === "addon") {
         return;
       }
 
@@ -708,7 +707,7 @@ let AppManager = exports.AppManager = {
         let manifest = validation.manifest;
         let iconPath;
         if (manifest.icons) {
-          let size = Object.keys(manifest.icons).sort(function(a, b) b - a)[0];
+          let size = Object.keys(manifest.icons).sort((a, b) => b - a)[0];
           if (size) {
             iconPath = manifest.icons[size];
           }

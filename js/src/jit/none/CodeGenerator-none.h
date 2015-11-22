@@ -15,16 +15,13 @@ namespace jit {
 class CodeGeneratorNone : public CodeGeneratorShared
 {
   public:
-    NonAssertingLabel returnLabel_;
-
     CodeGeneratorNone(MIRGenerator* gen, LIRGraph* graph, MacroAssembler* masm)
       : CodeGeneratorShared(gen, graph, masm)
     {
         MOZ_CRASH();
     }
 
-    template <typename T> inline Register ToOperand(T) { MOZ_CRASH(); }
-    MoveOperand toMoveOperand(const LAllocation*) const { MOZ_CRASH(); }
+    MoveOperand toMoveOperand(LAllocation) const { MOZ_CRASH(); }
     template <typename T1, typename T2>
     void bailoutCmp32(Assembler::Condition, T1, T2, LSnapshot*) { MOZ_CRASH(); }
     template<typename T>
@@ -36,8 +33,6 @@ class CodeGeneratorNone : public CodeGeneratorShared
     void bailoutFrom(Label*, LSnapshot*) { MOZ_CRASH(); }
     void bailout(LSnapshot*) { MOZ_CRASH(); }
     void bailoutIf(Assembler::Condition, LSnapshot*) { MOZ_CRASH(); }
-    bool generatePrologue() { MOZ_CRASH(); }
-    bool generateEpilogue() { MOZ_CRASH(); }
     bool generateOutOfLineCode() { MOZ_CRASH(); }
     void testNullEmitBranch(Assembler::Condition, ValueOperand, MBasicBlock*, MBasicBlock*) {
         MOZ_CRASH();
@@ -56,6 +51,7 @@ class CodeGeneratorNone : public CodeGeneratorShared
     ValueOperand ToOutValue(LInstruction*) { MOZ_CRASH(); }
     ValueOperand ToTempValue(LInstruction*, size_t) { MOZ_CRASH(); }
     void generateInvalidateEpilogue() { MOZ_CRASH(); }
+    void setReturnDoubleRegs(LiveRegisterSet* regs) { MOZ_CRASH(); }
 };
 
 typedef CodeGeneratorNone CodeGeneratorSpecific;

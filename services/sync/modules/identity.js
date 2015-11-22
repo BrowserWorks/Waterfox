@@ -13,6 +13,7 @@ Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-sync/util.js");
+Cu.import("resource://services-common/async.js");
 
 // Lazy import to prevent unnecessary load on startup.
 for (let symbol of ["BulkKeyBundle", "SyncKeyBundle"]) {
@@ -84,18 +85,14 @@ IdentityManager.prototype = {
   _syncKeyBundle: null,
 
   /**
-   * Initialize the identity provider.  Returns a promise that is resolved
-   * when initialization is complete and the provider can be queried for
-   * its state
+   * Initialize the identity provider.
    */
   initialize: function() {
     // Nothing to do for this identity provider.
-    return Promise.resolve();
   },
 
   finalize: function() {
     // Nothing to do for this identity provider.
-    return Promise.resolve();
   },
 
   /**
@@ -112,14 +109,6 @@ IdentityManager.prototype = {
   ensureLoggedIn: function() {
     // nothing to do for this identity provider
     return Promise.resolve();
-  },
-
-  /**
-   * Indicates if the identity manager is still initializing
-   */
-  get readyToAuthenticate() {
-    // We initialize in a fully sync manner, so we are always finished.
-    return true;
   },
 
   get account() {
@@ -457,7 +446,7 @@ IdentityManager.prototype = {
     // cache.
     try {
       service.recordManager.get(service.storageURL + "meta/fxa_credentials");
-    } catch (ex) {
+    } catch (ex if !Async.isShutdownException(ex)) {
       this._log.warn("Failed to pre-fetch the migration sentinel", ex);
     }
   },

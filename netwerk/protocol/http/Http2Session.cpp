@@ -25,7 +25,7 @@
 #include "nsHttp.h"
 #include "nsHttpHandler.h"
 #include "nsHttpConnection.h"
-#include "nsILoadGroup.h"
+#include "nsISchedulingContext.h"
 #include "nsISSLSocketControl.h"
 #include "nsISSLStatus.h"
 #include "nsISSLStatusProvider.h"
@@ -95,6 +95,8 @@ Http2Session::Http2Session(nsISocketTransport *aSocketTransport, uint32_t versio
   , mCleanShutdown(false)
   , mTLSProfileConfirmed(false)
   , mGoAwayReason(NO_HTTP_ERROR)
+  , mClientGoAwayReason(UNASSIGNED)
+  , mPeerGoAwayReason(UNASSIGNED)
   , mGoAwayID(0)
   , mOutgoingGoAwayID(0)
   , mConcurrent(0)
@@ -111,7 +113,6 @@ Http2Session::Http2Session(nsISocketTransport *aSocketTransport, uint32_t versio
   , mWaitingForSettingsAck(false)
   , mGoAwayOnPush(false)
   , mUseH2Deps(false)
-  , mVersion(version)
 {
   MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
 
@@ -134,8 +135,6 @@ Http2Session::Http2Session(nsISocketTransport *aSocketTransport, uint32_t versio
 
   mPingThreshold = gHttpHandler->SpdyPingThreshold();
   mPreviousPingThreshold = mPingThreshold;
-
-  mNegotiatedToken.AssignLiteral(HTTP2_DRAFT_LATEST_TOKEN);
 }
 
 PLDHashOperator
@@ -195,6 +194,8 @@ Http2Session::~Http2Session()
   Telemetry::Accumulate(Telemetry::SPDY_REQUEST_PER_CONN, (mNextStreamID - 1) / 2);
   Telemetry::Accumulate(Telemetry::SPDY_SERVER_INITIATED_STREAMS,
                         mServerPushedResources);
+  Telemetry::Accumulate(Telemetry::SPDY_GOAWAY_LOCAL, mClientGoAwayReason);
+  Telemetry::Accumulate(Telemetry::SPDY_GOAWAY_PEER, mPeerGoAwayReason);
 }
 
 void
@@ -805,6 +806,7 @@ Http2Session::GenerateGoAway(uint32_t aStatusCode)
   MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
   LOG3(("Http2Session::GenerateGoAway %p code=%X\n", this, aStatusCode));
 
+  mClientGoAwayReason = aStatusCode;
   uint32_t frameSize = kFrameHeaderBytes + 8;
   char *packet = EnsureOutputBuffer(frameSize);
   mOutputQueueUsed += frameSize;
@@ -907,11 +909,7 @@ Http2Session::SendHello()
     LogIO(this, nullptr, "Session Window Bump ", packet, kFrameHeaderBytes + 4);
   }
 
-  // draft-14 and draft-15 are the only versions we support that do not
-  // allow our priority scheme. Blacklist them here - they are aliased
-  // as draft-15
-  if ((mVersion != HTTP_VERSION_2_DRAFT_15) &&
-      gHttpHandler->UseH2Deps() && gHttpHandler->CriticalRequestPrioritization()) {
+  if (gHttpHandler->UseH2Deps() && gHttpHandler->CriticalRequestPrioritization()) {
     mUseH2Deps = true;
     MOZ_ASSERT(mNextStreamID == kLeaderGroupID);
     CreatePriorityNode(kLeaderGroupID, 0, 200, "leader");
@@ -1054,10 +1052,10 @@ Http2Session::CleanupStream(Http2Stream *aStream, nsresult aResult,
       Http2PushedStream *pushStream = static_cast<Http2PushedStream *>(aStream);
       nsAutoCString hashKey;
       pushStream->GetHashKey(hashKey);
-      nsILoadGroupConnectionInfo *loadGroupCI = aStream->LoadGroupConnectionInfo();
-      if (loadGroupCI) {
+      nsISchedulingContext *schedulingContext = aStream->SchedulingContext();
+      if (schedulingContext) {
         SpdyPushCache *cache = nullptr;
-        loadGroupCI->GetSpdyPushCache(&cache);
+        schedulingContext->GetSpdyPushCache(&cache);
         if (cache) {
           Http2PushedStream *trash = cache->RemovePushedStreamHttp2(hashKey);
           LOG3(("Http2Session::CleanupStream %p aStream=%p pushStream=%p trash=%p",
@@ -1159,9 +1157,12 @@ Http2Session::ParsePadding(uint8_t &paddingControlBytes, uint16_t &paddingLength
   if (mInputFrameFlags & kFlag_PADDED) {
     paddingLength = *reinterpret_cast<uint8_t *>(mInputFrameBuffer + kFrameHeaderBytes);
     paddingControlBytes = 1;
+  } else {
+    paddingLength = 0;
+    paddingControlBytes = 0;
   }
 
-  if (paddingLength > mInputFrameDataSize) {
+  if (static_cast<uint32_t>(paddingLength + paddingControlBytes) > mInputFrameDataSize) {
     // This is fatal to the session
     LOG3(("Http2Session::ParsePadding %p stream 0x%x PROTOCOL_ERROR "
           "paddingLength %d > frame size %d\n",
@@ -1218,6 +1219,11 @@ Http2Session::RecvHeaders(Http2Session *self)
         self->mInputFrameFlags & kFlag_PRIORITY,
         paddingLength,
         self->mInputFrameFlags & kFlag_PADDED));
+
+  if ((paddingControlBytes + priorityLen + paddingLength) > self->mInputFrameDataSize) {
+    // This is fatal to the session
+    RETURN_SESSION_ERROR(self, PROTOCOL_ERROR);
+  }
 
   if (!self->mInputFrameDataStream) {
     // Cannot find stream. We can continue the session, but we need to
@@ -1564,11 +1570,11 @@ Http2Session::RecvPushPromise(Http2Session *self)
     self->mContinuedPromiseStream = promisedID;
   }
 
-  if (paddingLength > self->mInputFrameDataSize) {
+  if ((paddingControlBytes + promiseLen + paddingLength) > self->mInputFrameDataSize) {
     // This is fatal to the session
     LOG3(("Http2Session::RecvPushPromise %p ID 0x%X assoc ID 0x%X "
-          "PROTOCOL_ERROR paddingLength %d > frame size %d\n",
-          self, promisedID, associatedID, paddingLength,
+          "PROTOCOL_ERROR extra %d > frame size %d\n",
+          self, promisedID, associatedID, (paddingControlBytes + promiseLen + paddingLength),
           self->mInputFrameDataSize));
     RETURN_SESSION_ERROR(self, PROTOCOL_ERROR);
   }
@@ -1615,12 +1621,12 @@ Http2Session::RecvPushPromise(Http2Session *self)
     LOG3(("Http2Session::RecvPushPromise %p lookup associated ID failed.\n", self));
     self->GenerateRstStream(PROTOCOL_ERROR, promisedID);
   } else {
-    nsILoadGroupConnectionInfo *loadGroupCI = associatedStream->LoadGroupConnectionInfo();
-    if (loadGroupCI) {
-      loadGroupCI->GetSpdyPushCache(&cache);
+    nsISchedulingContext *schedulingContext = associatedStream->SchedulingContext();
+    if (schedulingContext) {
+      schedulingContext->GetSpdyPushCache(&cache);
       if (!cache) {
         cache = new SpdyPushCache();
-        if (!cache || NS_FAILED(loadGroupCI->SetSpdyPushCache(cache))) {
+        if (!cache || NS_FAILED(schedulingContext->SetSpdyPushCache(cache))) {
           delete cache;
           cache = nullptr;
         }
@@ -1628,7 +1634,7 @@ Http2Session::RecvPushPromise(Http2Session *self)
     }
     if (!cache) {
       // this is unexpected, but we can handle it just by refusing the push
-      LOG3(("Http2Session::RecvPushPromise Push Recevied without loadgroup cache\n"));
+      LOG3(("Http2Session::RecvPushPromise Push Recevied without push cache\n"));
       self->GenerateRstStream(REFUSED_STREAM_ERROR, promisedID);
     } else {
       resetStream = false;
@@ -1816,7 +1822,7 @@ Http2Session::RecvGoAway(Http2Session *self)
       self->mInputFrameBuffer.get() + kFrameHeaderBytes);
   self->mGoAwayID &= 0x7fffffff;
   self->mCleanShutdown = true;
-  uint32_t statusCode = NetworkEndian::readUint32(
+  self->mPeerGoAwayReason = NetworkEndian::readUint32(
       self->mInputFrameBuffer.get() + kFrameHeaderBytes + 4);
 
   // Find streams greater than the last-good ID and mark them for deletion
@@ -1830,7 +1836,7 @@ Http2Session::RecvGoAway(Http2Session *self)
     Http2Stream *stream =
       static_cast<Http2Stream *>(self->mGoAwayStreamsToRestart.PopFront());
 
-    if (statusCode == HTTP_1_1_REQUIRED) {
+    if (self->mPeerGoAwayReason == HTTP_1_1_REQUIRED) {
       stream->Transaction()->DisableSpdy();
     }
     self->CloseStream(stream, NS_ERROR_NET_RESET);
@@ -1848,7 +1854,7 @@ Http2Session::RecvGoAway(Http2Session *self)
       static_cast<Http2Stream *>(self->mQueuedStreams.PopFront());
     MOZ_ASSERT(stream->Queued());
     stream->SetQueued(false);
-    if (statusCode == HTTP_1_1_REQUIRED) {
+    if (self->mPeerGoAwayReason == HTTP_1_1_REQUIRED) {
       stream->Transaction()->DisableSpdy();
     }
     self->CloseStream(stream, NS_ERROR_NET_RESET);
@@ -1856,7 +1862,7 @@ Http2Session::RecvGoAway(Http2Session *self)
   }
 
   LOG3(("Http2Session::RecvGoAway %p GOAWAY Last-Good-ID 0x%X status 0x%X "
-        "live streams=%d\n", self, self->mGoAwayID, statusCode,
+        "live streams=%d\n", self, self->mGoAwayID, self->mPeerGoAwayReason,
         self->mStreamTransactionHash.Count()));
 
   self->ResetDownstreamState();
@@ -3438,14 +3444,6 @@ Http2Session::ConfirmTLSProfile()
    * anyway, so it'll never be on. All the same, see https://bugzil.la/965881
    * for the possibility for an interface to ensure it never gets turned on. */
 
-  nsresult rv = ssl->GetNegotiatedNPN(mNegotiatedToken);
-  if (NS_FAILED(rv)) {
-    // Fallback to showing the draft version, just in case
-    LOG3(("Http2Session::ConfirmTLSProfile %p could not get negotiated token. "
-          "Falling back to draft token.", this));
-    mNegotiatedToken.AssignLiteral(HTTP2_DRAFT_LATEST_TOKEN);
-  }
-
   mTLSProfileConfirmed = true;
   return NS_OK;
 }
@@ -3735,5 +3733,5 @@ Http2Session::SendPing()
   ResumeRecv();
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

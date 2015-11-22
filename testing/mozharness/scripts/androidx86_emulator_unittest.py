@@ -124,7 +124,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         dirs = self.query_abs_dirs()
         suite_category = self.test_suite_definitions[suite_name]["category"]
         try:
-            test_dir = self.tree_config["suite_definitions"][suite_category]["testsdir"]
+            test_dir = self.config["suite_definitions"][suite_category]["testsdir"]
         except:
             test_dir = suite_category
 
@@ -404,21 +404,22 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         dirs = self.query_abs_dirs()
         suite_category = self.test_suite_definitions[suite_name]["category"]
 
-        if suite_category not in self.tree_config["suite_definitions"]:
-            self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'. "
-                       "See bug 981030 for more details." % (suite_category,
-                       os.path.join('gecko', 'testing', self.config['in_tree_config'])))
+        if suite_category not in c["suite_definitions"]:
+            self.fatal("Key '%s' not defined in the config!" % suite_category)
+
         cmd = [
             self.query_python_path('python'),
             '-u',
             os.path.join(
                 self._query_tests_dir(suite_name),
-                self.tree_config["suite_definitions"][suite_category]["run_filename"]
+                c["suite_definitions"][suite_category]["run_filename"]
             ),
         ]
 
         raw_log_file = os.path.join(dirs['abs_blob_upload_dir'],
                                     '%s_raw.log' % suite_name)
+        error_summary_file = os.path.join(dirs['abs_blob_upload_dir'],
+                                          '%s_errorsummary.log' % suite_name)
         str_format_values = {
             'app': self._query_package_name(),
             'remote_webserver': c['remote_webserver'],
@@ -433,6 +434,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             'modules_dir': dirs['abs_modules_dir'],
             'installer_path': self.installer_path,
             'raw_log_file': raw_log_file,
+            'error_summary_file': error_summary_file,
             'dm_trans': c['device_manager'],
         }
         if self.config["device_manager"] == "sut":
@@ -440,7 +442,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
                 'device_ip': c['device_ip'],
                 'device_port': str(emulator['sut_port1']),
             })
-        for option in self.tree_config["suite_definitions"][suite_category]["options"]:
+        for option in c["suite_definitions"][suite_category]["options"]:
             cmd.extend([option % str_format_values])
 
         for arg in self.test_suite_definitions[suite_name]["extra_args"]:
@@ -449,6 +451,11 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             if any(a.split('=')[0] == argname for a in cmd):
                 continue
             cmd.append(arg)
+
+        if "tests" in self.test_suite_definitions[suite_name]:
+            cmd.extend(self.suite_definitions[suite_name]["tests"])
+        elif "tests" in c["suite_definitions"][suite_category]:
+            cmd.extend(self.config["suite_definitions"][suite_category]["tests"])
 
         return cmd
 

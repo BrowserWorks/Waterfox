@@ -8,12 +8,12 @@
 #ifndef mozilla_${HEADER}_h
 #define mozilla_${HEADER}_h
 
+#ifndef MOZ_HAVE_INCLUDED_ALLOC
+#define MOZ_HAVE_INCLUDED_ALLOC
+
 #if _HAS_EXCEPTIONS
 #  error "STL code can only be used with -fno-exceptions"
 #endif
-
-// Suppress windef.h min and max macros - they make std::min/max not compile.
-#define NOMINMAX 1
 
 // Code built with !_HAS_EXCEPTIONS calls std::_Throw(), but the win2k
 // CRT doesn't export std::_Throw().  So we define it.
@@ -35,6 +35,7 @@
 #else
 #  error "STL code can only be used with infallible ::operator new()"
 #endif
+#endif /* MOZ_HAVE_INCLUDED_ALLOC */
 
 #ifdef _DEBUG
 // From

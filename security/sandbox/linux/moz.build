@@ -4,8 +4,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-FAIL_ON_WARNINGS = True
-
 if CONFIG['OS_TARGET'] == 'Android':
     SharedLibrary('mozsandbox')
     USE_LIBS += [
@@ -25,6 +23,7 @@ SOURCES += [
     '../chromium/base/lazy_instance.cc',
     '../chromium/base/memory/ref_counted.cc',
     '../chromium/base/memory/singleton.cc',
+    '../chromium/base/strings/safe_sprintf.cc',
     '../chromium/base/strings/string16.cc',
     '../chromium/base/strings/string_piece.cc',
     '../chromium/base/strings/string_util.cc',
@@ -47,6 +46,7 @@ SOURCES += [
     '../chromium/base/time/time_posix.cc',
     '../chromium/sandbox/linux/bpf_dsl/bpf_dsl.cc',
     '../chromium/sandbox/linux/bpf_dsl/dump_bpf.cc',
+    '../chromium/sandbox/linux/bpf_dsl/policy.cc',
     '../chromium/sandbox/linux/bpf_dsl/policy_compiler.cc',
     '../chromium/sandbox/linux/seccomp-bpf/basicblock.cc',
     '../chromium/sandbox/linux/seccomp-bpf/codegen.cc',
@@ -54,13 +54,20 @@ SOURCES += [
     '../chromium/sandbox/linux/seccomp-bpf/errorcode.cc',
     '../chromium/sandbox/linux/seccomp-bpf/syscall.cc',
     '../chromium/sandbox/linux/seccomp-bpf/syscall_iterator.cc',
+    '../chromium/sandbox/linux/seccomp-bpf/trap.cc',
     'LinuxCapabilities.cpp',
     'Sandbox.cpp',
-    'SandboxAssembler.cpp',
     'SandboxChroot.cpp',
     'SandboxFilter.cpp',
+    'SandboxFilterUtil.cpp',
+    'SandboxLogging.cpp',
     'SandboxUtil.cpp',
 ]
+
+# This copy of SafeSPrintf doesn't need to avoid the Chromium logging
+# dependency like the one in libxul does, but this way the behavior is
+# consistent.  See also the comment in SandboxLogging.h.
+SOURCES['../chromium/base/strings/safe_sprintf.cc'].flags += ['-DNDEBUG']
 
 # gcc lto likes to put the top level asm in syscall.cc in a different partition
 # from the function using it which breaks the build.  Work around that by

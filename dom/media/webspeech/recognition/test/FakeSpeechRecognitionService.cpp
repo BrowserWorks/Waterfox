@@ -52,7 +52,7 @@ FakeSpeechRecognitionService::SoundEnd()
 }
 
 NS_IMETHODIMP
-FakeSpeechRecognitionService::ValidateAndSetGrammarList(mozilla::dom::SpeechGrammarList*, nsISpeechGrammarCompilationCallback*)
+FakeSpeechRecognitionService::ValidateAndSetGrammarList(mozilla::dom::SpeechGrammar*, nsISpeechGrammarCompilationCallback*)
 {
   return NS_OK;
 }
@@ -102,12 +102,14 @@ FakeSpeechRecognitionService::BuildMockResultList()
 {
   SpeechRecognitionResultList* resultList = new SpeechRecognitionResultList(mRecognition);
   SpeechRecognitionResult* result = new SpeechRecognitionResult(mRecognition);
-  SpeechRecognitionAlternative* alternative = new SpeechRecognitionAlternative(mRecognition);
+  if (0 < mRecognition->MaxAlternatives()) {
+    SpeechRecognitionAlternative* alternative = new SpeechRecognitionAlternative(mRecognition);
 
-  alternative->mTranscript = NS_LITERAL_STRING("Mock final result");
-  alternative->mConfidence = 0.0f;
+    alternative->mTranscript = NS_LITERAL_STRING("Mock final result");
+    alternative->mConfidence = 0.0f;
 
-  result->mItems.AppendElement(alternative);
+    result->mItems.AppendElement(alternative);
+  }
   resultList->mItems.AppendElement(result);
 
   return resultList;

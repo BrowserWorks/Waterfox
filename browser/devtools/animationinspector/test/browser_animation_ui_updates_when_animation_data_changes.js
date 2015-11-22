@@ -9,36 +9,48 @@
 
 add_task(function*() {
   yield addTab(TEST_URL_ROOT + "doc_simple_animation.html");
-  let {panel, inspector} = yield openAnimationInspector();
 
+  let ui = yield openAnimationInspector();
+  yield testDataUpdates(ui);
+});
+
+function* testDataUpdates({panel, controller, inspector}) {
   info("Select the test node");
   yield selectNode(".animated", inspector);
 
-  info("Get the player widget");
-  let widget = panel.playerWidgets[0];
+  let animation = controller.animationPlayers[0];
+  yield setStyle(animation, panel, "animationDuration", "5.5s");
+  yield setStyle(animation, panel, "animationIterationCount", "300");
+  yield setStyle(animation, panel, "animationDelay", "45s");
 
-  yield setStyle(widget, "animationDuration", "5.5s");
-  is(widget.metaDataComponent.durationValue.textContent, "5.50s",
-    "The widget shows the new duration");
+  let animationsEl = panel.animationsTimelineComponent.animationsEl;
+  let timeBlockEl = animationsEl.querySelector(".time-block");
 
-  yield setStyle(widget, "animationIterationCount", "300");
-  is(widget.metaDataComponent.iterationValue.textContent, "300",
-    "The widget shows the new iteration count");
+  // 45s delay + (300 * 5.5)s duration
+  let expectedTotalDuration = 1695 * 1000;
+  let timeRatio = expectedTotalDuration / timeBlockEl.offsetWidth;
 
-  yield setStyle(widget, "animationDelay", "45s");
-  is(widget.metaDataComponent.delayValue.textContent, "45s",
-    "The widget shows the new delay");
-});
+  // XXX: the nb and size of each iteration cannot be tested easily (displayed
+  // using a linear-gradient background and capped at 2px wide). They should
+  // be tested in bug 1173761.
+  let delayWidth = parseFloat(timeBlockEl.querySelector(".delay").style.width);
+  is(Math.round(delayWidth * timeRatio), 45 * 1000,
+    "The timeline has the right delay");
+}
 
-function* setStyle(widget, name, value) {
+function* setStyle(animation, panel, name, value) {
   info("Change the animation style via the content DOM. Setting " +
     name + " to " + value);
+
+  let onAnimationChanged = once(animation, "changed");
   yield executeInContent("devtools:test:setStyle", {
     selector: ".animated",
     propertyName: name,
     propertyValue: value
   });
+  yield onAnimationChanged;
 
-  info("Wait for the next state update");
-  yield onceNextPlayerRefresh(widget.player);
+  // Also wait for the target node previews to be loaded if the panel got
+  // refreshed as a result of this animation mutation.
+  yield waitForAllAnimationTargets(panel);
 }

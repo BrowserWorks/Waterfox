@@ -28,6 +28,8 @@
 #include "NullHttpTransaction.h"
 #include "nsIDNSRecord.h"
 #include "nsITransport.h"
+#include "nsInterfaceRequestorAgg.h"
+#include "nsISchedulingContext.h"
 #include "nsISocketTransportService.h"
 #include <algorithm>
 #include "mozilla/ChaosMode.h"
@@ -55,7 +57,7 @@ InsertTransactionSorted(nsTArray<nsHttpTransaction*> &pendingQ, nsHttpTransactio
     for (int32_t i=pendingQ.Length()-1; i>=0; --i) {
         nsHttpTransaction *t = pendingQ[i];
         if (trans->Priority() >= t->Priority()) {
-	  if (ChaosMode::isActive(ChaosMode::NetworkScheduling)) {
+	  if (ChaosMode::isActive(ChaosFeature::NetworkScheduling)) {
                 int32_t samePriorityCount;
                 for (samePriorityCount = 0; i - samePriorityCount >= 0; ++samePriorityCount) {
                     if (pendingQ[i - samePriorityCount]->Priority() != trans->Priority()) {
@@ -743,67 +745,6 @@ nsHttpConnectionMgr::ReportSpdyConnection(nsHttpConnection *conn,
 
     ProcessPendingQ(ent->mConnInfo);
     PostEvent(&nsHttpConnectionMgr::OnMsgProcessAllSpdyPendingQ);
-}
-
-void
-nsHttpConnectionMgr::ReportSpdyCWNDSetting(nsHttpConnectionInfo *ci,
-                                           uint32_t cwndValue)
-{
-    MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
-
-    if (!gHttpHandler->UseSpdyPersistentSettings())
-        return;
-
-    if (!ci)
-        return;
-
-    nsConnectionEntry *ent = mCT.Get(ci->HashKey());
-    if (!ent)
-        return;
-
-    ent = GetSpdyPreferredEnt(ent);
-    if (!ent) // just to be thorough - but that map should always exist
-        return;
-
-    cwndValue = std::max(2U, cwndValue);
-    cwndValue = std::min(128U, cwndValue);
-
-    ent->mSpdyCWND = cwndValue;
-    ent->mSpdyCWNDTimeStamp = TimeStamp::Now();
-    return;
-}
-
-// a value of 0 means no setting is available
-uint32_t
-nsHttpConnectionMgr::GetSpdyCWNDSetting(nsHttpConnectionInfo *ci)
-{
-    MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
-
-    if (!gHttpHandler->UseSpdyPersistentSettings())
-        return 0;
-
-    if (!ci)
-        return 0;
-
-    nsConnectionEntry *ent = mCT.Get(ci->HashKey());
-    if (!ent)
-        return 0;
-
-    ent = GetSpdyPreferredEnt(ent);
-    if (!ent) // just to be thorough - but that map should always exist
-        return 0;
-
-    if (ent->mSpdyCWNDTimeStamp.IsNull())
-        return 0;
-
-    // For privacy tracking reasons, and the fact that CWND is not
-    // meaningful after some time, we don't honor stored CWND after 8
-    // hours.
-    TimeDuration age = TimeStamp::Now() - ent->mSpdyCWNDTimeStamp;
-    if (age.ToMilliseconds() > (1000 * 60 * 60 * 8))
-        return 0;
-
-    return ent->mSpdyCWND;
 }
 
 nsHttpConnectionMgr::nsConnectionEntry *
@@ -1780,20 +1721,20 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
         }
     }
 
-    // If this is not a blocking transaction and the loadgroup for it is
+    // If this is not a blocking transaction and the scheduling context for it is
     // currently processing one or more blocking transactions then we
     // need to just leave it in the queue until those are complete unless it is
     // explicitly marked as unblocked.
     if (!(caps & NS_HTTP_LOAD_AS_BLOCKING)) {
         if (!(caps & NS_HTTP_LOAD_UNBLOCKED)) {
-            nsILoadGroupConnectionInfo *loadGroupCI = trans->LoadGroupConnectionInfo();
-            if (loadGroupCI) {
+            nsISchedulingContext *schedulingContext = trans->SchedulingContext();
+            if (schedulingContext) {
                 uint32_t blockers = 0;
-                if (NS_SUCCEEDED(loadGroupCI->GetBlockingTransactionCount(&blockers)) &&
+                if (NS_SUCCEEDED(schedulingContext->GetBlockingTransactionCount(&blockers)) &&
                     blockers) {
                     // need to wait for blockers to clear
-                    LOG(("   blocked by load group: [lgci=%p trans=%p blockers=%d]\n",
-                         loadGroupCI, trans, blockers));
+                    LOG(("   blocked by scheduling context: [sc=%p trans=%p blockers=%d]\n",
+                         schedulingContext, trans, blockers));
                     return NS_ERROR_NOT_AVAILABLE;
                 }
             }
@@ -1875,6 +1816,7 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
     if (!attemptedOptimisticPipeline &&
         (classification == nsHttpTransaction::CLASS_REVALIDATION ||
          classification == nsHttpTransaction::CLASS_SCRIPT)) {
+        // Assignation kept here for documentation purpose; Never read after
         attemptedOptimisticPipeline = true;
         if (AddToShortestPipeline(ent, trans,
                                   classification,
@@ -3667,7 +3609,6 @@ nsConnectionEntry::nsConnectionEntry(nsHttpConnectionInfo *ci)
     , mYellowConnection(nullptr)
     , mGreenDepth(kPipelineOpen)
     , mPipeliningPenalty(0)
-    , mSpdyCWND(0)
     , mUsingSpdy(false)
     , mTestedSpdy(false)
     , mInPreferredHash(false)
@@ -4102,5 +4043,5 @@ nsHttpConnectionMgr::MoveToWildCardConnEntry(nsHttpConnectionInfo *specificCI,
     }
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

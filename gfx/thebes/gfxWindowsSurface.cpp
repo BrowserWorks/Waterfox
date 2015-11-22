@@ -47,15 +47,15 @@ gfxWindowsSurface::gfxWindowsSurface(IDirect3DSurface9 *surface, uint32_t flags)
 
 
 void
-gfxWindowsSurface::MakeInvalid(gfxIntSize& size)
+gfxWindowsSurface::MakeInvalid(mozilla::gfx::IntSize& size)
 {
-    size = gfxIntSize(-1, -1);
+    size = mozilla::gfx::IntSize(-1, -1);
 }
 
-gfxWindowsSurface::gfxWindowsSurface(const gfxIntSize& realSize, gfxImageFormat imageFormat) :
+gfxWindowsSurface::gfxWindowsSurface(const mozilla::gfx::IntSize& realSize, gfxImageFormat imageFormat) :
     mOwnsDC(false), mForPrinting(false), mWnd(nullptr)
 {
-    gfxIntSize size(realSize);
+    mozilla::gfx::IntSize size(realSize);
     if (!CheckSurfaceSize(size))
         MakeInvalid(size);
 
@@ -72,10 +72,10 @@ gfxWindowsSurface::gfxWindowsSurface(const gfxIntSize& realSize, gfxImageFormat 
     }
 }
 
-gfxWindowsSurface::gfxWindowsSurface(HDC dc, const gfxIntSize& realSize, gfxImageFormat imageFormat) :
+gfxWindowsSurface::gfxWindowsSurface(HDC dc, const mozilla::gfx::IntSize& realSize, gfxImageFormat imageFormat) :
     mOwnsDC(false), mForPrinting(false), mWnd(nullptr)
 {
-    gfxIntSize size(realSize);
+    mozilla::gfx::IntSize size(realSize);
     if (!CheckSurfaceSize(size))
         MakeInvalid(size);
 
@@ -122,7 +122,7 @@ gfxWindowsSurface::InitWithDC(uint32_t flags)
 
 already_AddRefed<gfxASurface>
 gfxWindowsSurface::CreateSimilarSurface(gfxContentType aContent,
-                                        const gfxIntSize& aSize)
+                                        const mozilla::gfx::IntSize& aSize)
 {
     if (!mSurface || !mSurfaceValid) {
         return nullptr;
@@ -287,22 +287,16 @@ gfxWindowsSurface::EndPage()
 #endif
 }
 
-const gfxIntSize 
+const mozilla::gfx::IntSize
 gfxWindowsSurface::GetSize() const
 {
     if (!mSurfaceValid) {
         NS_WARNING ("GetImageSurface on an invalid (null) surface; who's calling this without checking for surface errors?");
-        return gfxIntSize(-1, -1);
+        return mozilla::gfx::IntSize(-1, -1);
     }
 
     NS_ASSERTION(mSurface != nullptr, "CairoSurface() shouldn't be nullptr when mSurfaceValid is TRUE!");
 
-    return gfxIntSize(cairo_win32_surface_get_width(mSurface),
+    return mozilla::gfx::IntSize(cairo_win32_surface_get_width(mSurface),
                       cairo_win32_surface_get_height(mSurface));
-}
-
-gfxMemoryLocation
-gfxWindowsSurface::GetMemoryLocation() const
-{
-    return gfxMemoryLocation::IN_PROCESS_NONHEAP;
 }

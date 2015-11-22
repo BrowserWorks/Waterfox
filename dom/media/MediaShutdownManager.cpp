@@ -8,17 +8,12 @@
 #include "nsContentUtils.h"
 #include "mozilla/StaticPtr.h"
 #include "MediaDecoder.h"
-#include "SharedThreadPool.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gMediaDecoderLog;
-#define DECODER_LOG(type, msg) PR_LOG(gMediaDecoderLog, type, msg)
-#else
-#define DECODER_LOG(type, msg)
-#endif
+#define DECODER_LOG(type, msg) MOZ_LOG(gMediaDecoderLog, type, msg)
 
 NS_IMPL_ISUPPORTS(MediaShutdownManager, nsIObserver)
 
@@ -104,20 +99,13 @@ MediaShutdownManager::Observe(nsISupports *aSubjet,
   return NS_OK;
 }
 
-static PLDHashOperator
-ShutdownMediaDecoder(nsRefPtrHashKey<MediaDecoder>* aEntry, void*)
-{
-  aEntry->GetKey()->Shutdown();
-  return PL_DHASH_REMOVE;
-}
-
 void
 MediaShutdownManager::Shutdown()
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(sInstance);
 
-  DECODER_LOG(PR_LOG_DEBUG, ("MediaShutdownManager::Shutdown() start..."));
+  DECODER_LOG(LogLevel::Debug, ("MediaShutdownManager::Shutdown() start..."));
 
   // Mark that we're shutting down, so that Unregister(*) calls don't remove
   // hashtable entries. If Unregsiter(*) was to remove from the hash table,
@@ -126,12 +114,10 @@ MediaShutdownManager::Shutdown()
 
   // Iterate over the decoders and shut them down, and remove them from the
   // hashtable.
-  mDecoders.EnumerateEntries(ShutdownMediaDecoder, nullptr);
-
-  // Ensure all media shared thread pools are shutdown. This joins with all
-  // threads in the state machine thread pool, the decoder thread pool, and
-  // any others.
-  SharedThreadPool::SpinUntilShutdown();
+  for (auto iter = mDecoders.Iter(); !iter.Done(); iter.Next()) {
+    iter.Get()->GetKey()->Shutdown();
+    iter.Remove();
+  }
 
   // Remove the MediaShutdownManager instance from the shutdown observer
   // list.
@@ -143,7 +129,7 @@ MediaShutdownManager::Shutdown()
   // up after it finishes its notifications.
   sInstance = nullptr;
 
-  DECODER_LOG(PR_LOG_DEBUG, ("MediaShutdownManager::Shutdown() end."));
+  DECODER_LOG(LogLevel::Debug, ("MediaShutdownManager::Shutdown() end."));
 }
 
 } // namespace mozilla

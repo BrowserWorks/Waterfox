@@ -304,6 +304,39 @@ gfxGDIFont::Initialize()
             mMetrics->maxAdvance = mMetrics->aveCharWidth;
         }
 
+        // For fonts with USE_TYPO_METRICS set in the fsSelection field,
+        // let the OS/2 sTypo* metrics override the previous values.
+        // (see http://www.microsoft.com/typography/otspec/os2.htm#fss)
+        // Using the equivalent values from oMetrics provides inconsistent
+        // results with CFF fonts, so we instead rely on OS2Table.
+        gfxFontEntry::AutoTable os2Table(mFontEntry,
+                                         TRUETYPE_TAG('O','S','/','2'));
+        if (os2Table) {
+            uint32_t len;
+            const OS2Table *os2 =
+                reinterpret_cast<const OS2Table*>(hb_blob_get_data(os2Table,
+                                                                   &len));
+            if (len >= offsetof(OS2Table, sTypoLineGap) + sizeof(int16_t)) {
+                const uint16_t kUseTypoMetricsMask = 1 << 7;
+                if ((uint16_t(os2->fsSelection) & kUseTypoMetricsMask)) {
+                    double ascent = int16_t(os2->sTypoAscender);
+                    double descent = int16_t(os2->sTypoDescender);
+                    double lineGap = int16_t(os2->sTypoLineGap);
+                    mMetrics->maxAscent = ROUND(ascent * mFUnitsConvFactor);
+                    mMetrics->maxDescent = -ROUND(descent * mFUnitsConvFactor);
+                    mMetrics->maxHeight =
+                        mMetrics->maxAscent + mMetrics->maxDescent;
+                    mMetrics->internalLeading =
+                        mMetrics->maxHeight - mMetrics->emHeight;
+                    gfxFloat lineHeight =
+                        ROUND((ascent - descent + lineGap) * mFUnitsConvFactor);
+                    lineHeight = std::max(lineHeight, mMetrics->maxHeight);
+                    mMetrics->externalLeading =
+                        lineHeight - mMetrics->maxHeight;
+                }
+            }
+        }
+
         WORD glyph;
         SIZE size;
         DWORD ret = GetGlyphIndicesW(dc.GetDC(), L" ", 1, &glyph,
@@ -447,13 +480,22 @@ gfxGDIFont::GetGlyph(uint32_t aUnicode, uint32_t aVarSelector)
     wchar_t ch = aUnicode;
     WORD glyph;
     DWORD ret = ScriptGetCMap(nullptr, &mScriptCache, &ch, 1, 0, &glyph);
-    if (ret == E_PENDING) {
+    if (ret != S_OK) {
         AutoDC dc;
         AutoSelectFont fs(dc.GetDC(), GetHFONT());
-        ret = ScriptGetCMap(dc.GetDC(), &mScriptCache, &ch, 1, 0, &glyph);
-    }
-    if (ret != S_OK) {
-        glyph = 0;
+        if (ret == E_PENDING) {
+            // Try ScriptGetCMap again now that we've set up the font.
+            ret = ScriptGetCMap(dc.GetDC(), &mScriptCache, &ch, 1, 0, &glyph);
+        }
+        if (ret != S_OK) {
+            // If ScriptGetCMap still failed, fall back to GetGlyphIndicesW
+            // (see bug 1105807).
+            ret = GetGlyphIndicesW(dc.GetDC(), &ch, 1, &glyph,
+                                   GGI_MARK_NONEXISTING_GLYPHS);
+            if (ret == GDI_ERROR || glyph == 0xFFFF) {
+                glyph = 0;
+            }
+        }
     }
 
     mGlyphIDs->Put(aUnicode, glyph);
@@ -495,7 +537,7 @@ gfxGDIFont::AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
     aSizes->mFontInstances += aMallocSizeOf(mMetrics);
     if (mGlyphWidths) {
         aSizes->mFontInstances +=
-            mGlyphWidths->SizeOfIncludingThis(nullptr, aMallocSizeOf);
+            mGlyphWidths->ShallowSizeOfIncludingThis(aMallocSizeOf);
     }
 }
 

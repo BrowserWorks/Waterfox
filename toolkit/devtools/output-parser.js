@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* globals DOMUtils */
+
 "use strict";
 
 const {Cc, Ci, Cu} = require("chrome");
@@ -11,30 +13,22 @@ const {Services} = Cu.import("resource://gre/modules/Services.jsm", {});
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 
 const MAX_ITERATIONS = 100;
-const REGEX_QUOTES = /^".*?"|^".*|^'.*?'|^'.*/;
-const REGEX_WHITESPACE = /^\s+/;
-const REGEX_FIRST_WORD_OR_CHAR = /^\w+|^./;
-const REGEX_CUBIC_BEZIER = /^linear|^ease-in-out|^ease-in|^ease-out|^ease|^cubic-bezier\(([0-9.\- ]+,){3}[0-9.\- ]+\)/;
 
-// CSS variable names are identifiers which the spec defines as follows:
-//   In CSS, identifiers (including element names, classes, and IDs in
-//   selectors) can contain only the characters [a-zA-Z0-9] and ISO 10646
-//   characters U+00A0 and higher, plus the hyphen (-) and the underscore (_).
-const REGEX_CSS_VAR = /^\bvar\(\s*--[-_a-zA-Z0-9\u00A0-\u10FFFF]+\s*\)/;
+const BEZIER_KEYWORDS = ["linear", "ease-in-out", "ease-in", "ease-out",
+                         "ease"];
 
-/**
- * This regex matches:
- *  - #F00
- *  - #FF0000
- *  - hsl()
- *  - hsla()
- *  - rgb()
- *  - rgba()
- *  - color names
- */
-const REGEX_ALL_COLORS = /^#[0-9a-fA-F]{3}\b|^#[0-9a-fA-F]{6}\b|^hsl\(.*?\)|^hsla\(.*?\)|^rgba?\(.*?\)|^[a-zA-Z-]+/;
+// Functions that accept a color argument.
+const COLOR_TAKING_FUNCTIONS = ["linear-gradient",
+                                "-moz-linear-gradient",
+                                "repeating-linear-gradient",
+                                "-moz-repeating-linear-gradient",
+                                "radial-gradient",
+                                "-moz-radial-gradient",
+                                "repeating-radial-gradient",
+                                "-moz-repeating-radial-gradient",
+                                "drop-shadow"];
 
-loader.lazyGetter(this, "DOMUtils", function () {
+loader.lazyGetter(this, "DOMUtils", function() {
   return Cc["@mozilla.org/inspector/dom-utils;1"].getService(Ci.inIDOMUtils);
 });
 
@@ -46,15 +40,17 @@ loader.lazyGetter(this, "DOMUtils", function () {
  * border radius, cubic-bezier etc.).
  *
  * Usage:
- *   const {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
- *   const {OutputParser} = devtools.require("devtools/output-parser");
+ *   const {require} =
+ *      Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+ *   const {OutputParser} = require("devtools/output-parser");
  *
- *   let parser = new OutputParser();
+ *   let parser = new OutputParser(document);
  *
  *   parser.parseCssProperty("color", "red"); // Returns document fragment.
  */
-function OutputParser() {
+function OutputParser(document) {
   this.parsed = [];
+  this.doc = document;
   this.colorSwatches = new WeakMap();
   this._onSwatchMouseDown = this._onSwatchMouseDown.bind(this);
 }
@@ -94,29 +90,44 @@ OutputParser.prototype = {
   },
 
   /**
-   * Matches the beginning of the provided string to a css background-image url
-   * and return both the whole url(...) match and the url itself.
-   * This isn't handled via a regular expression to make sure we can match urls
-   * that contain parenthesis easily
+   * Given an initial FUNCTION token, read tokens from |tokenStream|
+   * and collect all the (non-comment) text.  Return the collected
+   * text.  The function token and the close paren are included in the
+   * result.
+   *
+   * @param  {CSSToken} initialToken
+   *         The FUNCTION token.
+   * @param  {String} text
+   *         The original CSS text.
+   * @param  {CSSLexer} tokenStream
+   *         The token stream from which to read.
+   * @return {String}
+   *         The text of body of the function call.
    */
-  _matchBackgroundUrl: function(text) {
-    let startToken = "url(";
-    if (text.indexOf(startToken) !== 0) {
-      return null;
+  _collectFunctionText: function(initialToken, text, tokenStream) {
+    let result = text.substring(initialToken.startOffset,
+                                initialToken.endOffset);
+    let depth = 1;
+    while (depth > 0) {
+      let token = tokenStream.nextToken();
+      if (!token) {
+        break;
+      }
+      if (token.tokenType === "comment") {
+        continue;
+      }
+      result += text.substring(token.startOffset, token.endOffset);
+      if (token.tokenType === "symbol") {
+        if (token.text === "(") {
+          ++depth;
+        } else if (token.text === ")") {
+          --depth;
+        }
+      } else if (token.tokenType === "function") {
+        ++depth;
+      }
     }
-
-    let uri = text.substring(startToken.length).trim();
-    let quote = uri.substring(0, 1);
-    if (quote === "'" || quote === '"') {
-      uri = uri.substring(1, uri.search(new RegExp(quote + "\\s*\\)")));
-    } else {
-      uri = uri.substring(0, uri.indexOf(")"));
-      quote = "";
-    }
-    let end = startToken + quote + uri;
-    text = text.substring(0, text.indexOf(")", end.length) + 1);
-
-    return [text, uri.trim()];
+    return result;
   },
 
   /**
@@ -133,140 +144,115 @@ OutputParser.prototype = {
   _parse: function(text, options={}) {
     text = text.trim();
     this.parsed.length = 0;
-    let i = 0;
 
-    while (text.length > 0) {
-      let matched = null;
+    let tokenStream = DOMUtils.getCSSLexer(text);
+    let i = 0;
+    let parenDepth = 0;
+    let outerMostFunctionTakesColor = false;
+
+    let colorOK = function() {
+      return options.supportsColor ||
+        (options.expectFilter && parenDepth === 1 &&
+         outerMostFunctionTakesColor);
+    };
+
+    while (true) {
+      let token = tokenStream.nextToken();
+      if (!token) {
+        break;
+      }
+      if (token.tokenType === "comment") {
+        continue;
+      }
 
       // Prevent this loop from slowing down the browser with too
       // many nodes being appended into output. In practice it is very unlikely
       // that this will ever happen.
       i++;
       if (i > MAX_ITERATIONS) {
-        this._appendTextNode(text);
-        text = "";
-        break;
-      }
-
-      if (options.expectFilter) {
-        this._appendFilter(text, options);
-        break;
-      }
-
-      matched = text.match(REGEX_QUOTES);
-      if (matched) {
-        let match = matched[0];
-
-        text = this._trimMatchFromStart(text, match);
-        this._appendTextNode(match);
+        this._appendTextNode(text.substring(token.startOffset,
+                                            token.endOffset));
         continue;
       }
 
-      matched = text.match(REGEX_CSS_VAR);
-      if (matched) {
-        let match = matched[0];
+      switch (token.tokenType) {
+        case "function": {
+          if (COLOR_TAKING_FUNCTIONS.indexOf(token.text) >= 0) {
+            // The function can accept a color argument, and we know
+            // it isn't special in some other way.  So, we let it
+            // through to the ordinary parsing loop so that colors
+            // can be handled in a single place.
+            this._appendTextNode(text.substring(token.startOffset,
+                                                token.endOffset));
+            if (parenDepth === 0) {
+              outerMostFunctionTakesColor = true;
+            }
+            ++parenDepth;
+          } else {
+            let functionText = this._collectFunctionText(token, text,
+                                                         tokenStream);
 
-        text = this._trimMatchFromStart(text, match);
-        this._appendTextNode(match);
-        continue;
-      }
-
-      matched = text.match(REGEX_WHITESPACE);
-      if (matched) {
-        let match = matched[0];
-
-        text = this._trimMatchFromStart(text, match);
-        this._appendTextNode(match);
-        continue;
-      }
-
-      matched = this._matchBackgroundUrl(text);
-      if (matched) {
-        let [match, url] = matched;
-        text = this._trimMatchFromStart(text, match);
-
-        this._appendURL(match, url, options);
-        continue;
-      }
-
-      if (options.expectCubicBezier) {
-        matched = text.match(REGEX_CUBIC_BEZIER);
-        if (matched) {
-          let match = matched[0];
-          text = this._trimMatchFromStart(text, match);
-
-          this._appendCubicBezier(match, options);
-          continue;
+            if (options.expectCubicBezier && token.text === "cubic-bezier") {
+              this._appendCubicBezier(functionText, options);
+            } else if (colorOK() && DOMUtils.isValidCSSColor(functionText)) {
+              this._appendColor(functionText, options);
+            } else {
+              this._appendTextNode(functionText);
+            }
+          }
+          break;
         }
-      }
 
-      if (options.supportsColor) {
-        let dirty;
+        case "ident":
+          if (options.expectCubicBezier &&
+              BEZIER_KEYWORDS.indexOf(token.text) >= 0) {
+            this._appendCubicBezier(token.text, options);
+          } else if (colorOK() && DOMUtils.isValidCSSColor(token.text)) {
+            this._appendColor(token.text, options);
+          } else {
+            this._appendTextNode(text.substring(token.startOffset,
+                                                token.endOffset));
+          }
+          break;
 
-        [text, dirty] = this._appendColorOnMatch(text, options);
-
-        if (dirty) {
-          continue;
+        case "id":
+        case "hash": {
+          let original = text.substring(token.startOffset, token.endOffset);
+          if (colorOK() && DOMUtils.isValidCSSColor(original)) {
+            this._appendColor(original, options);
+          } else {
+            this._appendTextNode(original);
+          }
+          break;
         }
-      }
 
-      // This test must always be last as it indicates use of an unknown
-      // character that needs to be removed to prevent infinite loops.
-      matched = text.match(REGEX_FIRST_WORD_OR_CHAR);
-      if (matched) {
-        let match = matched[0];
+        case "url":
+        case "bad_url":
+          this._appendURL(text.substring(token.startOffset, token.endOffset),
+                          token.text, options);
+          break;
 
-        text = this._trimMatchFromStart(text, match);
-        this._appendTextNode(match);
+        case "symbol":
+          if (token.text === "(") {
+            ++parenDepth;
+          } else if (token.token === ")") {
+            --parenDepth;
+          }
+          // falls through
+        default:
+          this._appendTextNode(text.substring(token.startOffset,
+                                              token.endOffset));
+          break;
       }
     }
 
-    return this._toDOM();
-  },
+    let result = this._toDOM();
 
-  /**
-   * Convenience function to make the parser a little more readable.
-   *
-   * @param  {String} text
-   *         Main text
-   * @param  {String} match
-   *         Text to remove from the beginning
-   *
-   * @return {String}
-   *         The string passed as 'text' with 'match' stripped from the start.
-   */
-  _trimMatchFromStart: function(text, match) {
-    return text.substr(match.length);
-  },
-
-  /**
-   * Check if there is a color match and append it if it is valid.
-   *
-   * @param  {String} text
-   *         Main text
-   * @param  {Object} options
-   *         Options object. For valid options and default values see
-   *         _mergeOptions().
-   *
-   * @return {Array}
-   *         An array containing the remaining text and a dirty flag. This array
-   *         is designed for deconstruction using [text, dirty].
-   */
-  _appendColorOnMatch: function(text, options) {
-    let dirty;
-    let matched = text.match(REGEX_ALL_COLORS);
-
-    if (matched) {
-      let match = matched[0];
-      if (this._appendColor(match, options)) {
-        text = this._trimMatchFromStart(text, match);
-        dirty = true;
-      }
-    } else {
-      dirty = false;
+    if (options.expectFilter && !options.filterSwatch) {
+      result = this._wrapFilter(text, options, result);
     }
 
-    return [text, dirty];
+    return result;
   },
 
   /**
@@ -328,9 +314,6 @@ OutputParser.prototype = {
    * @param  {Object} [options]
    *         Options object. For valid options and default values see
    *         _mergeOptions().
-   * @returns {Boolean}
-   *          true if the color passed in was valid, false otherwise. Special
-   *          values such as transparent also return false.
    */
   _appendColor: function(color, options={}) {
     let colorObj = new colorUtils.CssColor(color);
@@ -361,12 +344,25 @@ OutputParser.prototype = {
 
       container.appendChild(value);
       this.parsed.push(container);
-      return true;
+    } else {
+      this._appendTextNode(color);
     }
-    return false;
   },
 
-  _appendFilter: function(filters, options={}) {
+  /**
+   * Wrap some existing nodes in a filter editor.
+   *
+   * @param {String} filters
+   *        The full text of the "filter" property.
+   * @param {object} options
+   *        The options object passed to parseCssProperty().
+   * @param {object} nodes
+   *        Nodes created by _toDOM().
+   *
+   * @returns {object}
+   *        A new node that supplies a filter swatch and that wraps |nodes|.
+   */
+  _wrapFilter: function(filters, options, nodes) {
     let container = this._createNode("span", {
       "data-filters": filters
     });
@@ -380,10 +376,11 @@ OutputParser.prototype = {
 
     let value = this._createNode("span", {
       class: options.filterClass
-    }, filters);
-
+    });
+    value.appendChild(nodes);
     container.appendChild(value);
-    this.parsed.push(container);
+
+    return container;
   },
 
   _onSwatchMouseDown: function(event) {
@@ -421,7 +418,7 @@ OutputParser.prototype = {
         href = options.baseURI.resolve(url);
       }
 
-      this._appendNode("a",  {
+      this._appendNode("a", {
         target: "_blank",
         class: options.urlClass,
         href: href
@@ -443,12 +440,10 @@ OutputParser.prototype = {
    * @param  {String} [value]
    *         If a value is included it will be appended as a text node inside
    *         the tag. This is useful e.g. for span tags.
-   * @return {Node} Newly created Node.
+   * @return {Node} Newly created Node.
    */
   _createNode: function(tagName, attributes, value="") {
-    let win = Services.appShell.hiddenDOMWindow;
-    let doc = win.document;
-    let node = doc.createElementNS(HTML_NS, tagName);
+    let node = this.doc.createElementNS(HTML_NS, tagName);
     let attrs = Object.getOwnPropertyNames(attributes);
 
     for (let attr of attrs) {
@@ -458,7 +453,7 @@ OutputParser.prototype = {
     }
 
     if (value) {
-      let textNode = doc.createTextNode(value);
+      let textNode = this.doc.createTextNode(value);
       node.appendChild(textNode);
     }
 
@@ -504,13 +499,11 @@ OutputParser.prototype = {
    *         Document Fragment
    */
   _toDOM: function() {
-    let win = Services.appShell.hiddenDOMWindow;
-    let doc = win.document;
-    let frag = doc.createDocumentFragment();
+    let frag = this.doc.createDocumentFragment();
 
     for (let item of this.parsed) {
       if (typeof item === "string") {
-        frag.appendChild(doc.createTextNode(item));
+        frag.appendChild(this.doc.createTextNode(item));
       } else {
         frag.appendChild(item);
       }
@@ -539,6 +532,11 @@ OutputParser.prototype = {
    *           - urlClass: ""           // The class to be used for url() links.
    *           - baseURI: ""            // A string or nsIURI used to resolve
    *                                    // relative links.
+   *           - filterSwatch: false    // A special case for parsing a
+   *                                    // "filter" property, causing the
+   *                                    // parser to skip the call to
+   *                                    // _wrapFilter.  Used only for
+   *                                    // previewing with the filter swatch.
    * @return {Object}
    *         Overridden options object
    */
@@ -551,7 +549,8 @@ OutputParser.prototype = {
       bezierClass: "",
       supportsColor: false,
       urlClass: "",
-      baseURI: ""
+      baseURI: "",
+      filterSwatch: false
     };
 
     if (typeof overrides.baseURI === "string") {

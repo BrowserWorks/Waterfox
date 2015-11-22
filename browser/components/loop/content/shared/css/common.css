@@ -75,6 +75,87 @@ p {
   width: 100%;
 }
 
+/* Buttons */
+
+.button-group {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  padding-top: 6px;
+}
+
+.button-group > .button {
+  flex: 1;
+  margin: 0 5px;
+  min-height: 3rem;
+  font-size: 1.2rem;
+  line-height: 1rem;
+  font-weight: 300;
+  border-radius: 4px;
+}
+
+.button-group > .button:first-child {
+  -moz-margin-start: 0;
+}
+
+.button-group > .button:last-child {
+  -moz-margin-end: 0;
+}
+
+.button {
+  padding: 2px 5px;
+  background-color: #fbfbfb;
+  color: #333;
+  border-radius: 2px;
+  min-height: 26px;
+  font-size: 1.2rem;
+  line-height: 1.2rem;
+  border: none;
+}
+
+.button:hover {
+  background-color: #ebebeb;
+}
+
+.button:active {
+  background-color: #ccc;
+  color: #fff;
+}
+
+.button.button-accept {
+  background-color: #00a9dc;
+  color: #fff;
+}
+
+.button.button-accept:hover,
+.button.button-accept:hover:active {
+  background-color: #5cccee;
+  color: #fff;
+}
+
+.button.button-cancel {
+  background-color: #ebebeb;
+  border: 0;
+  color: #000;
+}
+
+.button.button-cancel:hover,
+.button.button-cancel:hover:active {
+  background-color: #dcd6d6;
+  color: #000;
+}
+
+.button.button-cancel:disabled {
+  background-color: #ebebeb;
+  color: #c3c3c3;
+}
+
+.button.button-accept:active {
+  background-color: #3aa689;
+  border-color: #3aa689;
+  color: #fff;
+}
+
 /* A reset for all button-appearing elements, with the lowest-common
  * denominator of the needed rules.  Intended to be used as a base class
  * together with .btn-*
@@ -100,33 +181,33 @@ p {
 }
 
 .btn-info {
-  background-color: #0096dd;
-  border: 1px solid #0095dd;
+  background-color: #00a9dc;
+  border: 1px solid #00a9dc;
   color: #fff;
 }
 
   .btn-info:hover {
-    background-color: #008acb;
-    border: 1px solid #008acb;
+    background-color: #5cccee;
+    border: 1px solid #5cccee;
   }
 
   .btn-info:active {
-    background-color: #006b9d;
-    border: 1px solid #006b9d;
+    background-color: #5cccee;
+    border: 1px solid #5cccee;
   }
 
 .btn-accept,
 .btn-success,
 .btn-accept + .btn-chevron {
-  background-color: #5bc0a4;
-  border: 1px solid #5bc0a4;
+  background-color: #56b397;
+  border: 1px solid #56b397;
 }
 
   .btn-accept:hover,
   .btn-success:hover,
   .btn-accept + .btn-chevron:hover {
-    background-color: #47b396;
-    border: 1px solid #47b396;
+    background-color: #50e3c2;
+    border: 1px solid #50e3c2;
   }
 
   .btn-accept:active,
@@ -232,6 +313,7 @@ p {
   border-radius: 2px;
   border-bottom-right-radius: 0;
   border-top-right-radius: 0;
+  line-height: 0.9rem;
 }
 
 /* Alerts/Notifications */
@@ -336,6 +418,16 @@ p {
   background-position: 80% center;
 }
 
+.pseudo-icon:before {
+  content: "";
+  display: inline-block;
+  background-repeat: no-repeat;
+  width: 14px;
+  height: 14px;
+  vertical-align: top;
+  margin: 0 .7rem;
+}
+
 .icon-small {
   background-size: 10px;
 }
@@ -419,37 +511,49 @@ p {
   position: absolute;
   bottom: 0;
   left: 0;
-  background-color: #fdfdfd;
+  background-color: #fbfbfb;
   box-shadow: 0 1px 3px rgba(0,0,0,.3);
   list-style: none;
-  padding: 5px;
   border-radius: 2px;
 }
 
-body[dir=rtl] .dropdown-menu {
+html[dir="rtl"] .dropdown-menu {
   left: auto;
   right: 0;
 }
 
 .dropdown-menu-item {
+  width: 100%;
   text-align: start;
-  margin: .3em 0;
-  padding: .2em .5em;
+  padding: .3rem .8rem;
   cursor: pointer;
   border: 1px solid transparent;
-  border-radius: 2px;
-  font-size: 1em;
+  font-size: 1.2rem;
+  line-height: 22px;
   white-space: nowrap;
+  color: #4a4a4a;
+}
+
+.dropdown-menu-item:first-child {
+  padding-top: .5rem;
+}
+
+.dropdown-menu-item:last-child {
+  padding-bottom: .5rem;
+}
+
+.dropdown-menu-item:first-child:hover {
+  border-top-right-radius: 2px;
+  border-top-left-radius: 2px;
+}
+
+.dropdown-menu-item:last-child {
+  border-bottom-right-radius: 2px;
+  border-bottom-left-radius: 2px;
 }
 
 .dropdown-menu-item:hover {
-  border: 1px solid #ccc;
-  background-color: #eee;
-}
-
-.dropdown-menu-item > .icon {
-  background-repeat: no-repeat;
-  display: inline-block;
+  background-color: #dbf7ff;
 }
 
 .dropdown-menu-separator {
@@ -468,8 +572,8 @@ body[dir=rtl] .dropdown-menu {
 
 .checkbox {
   float: left;
-  width: 1em;
-  height: 1em;
+  width: 2rem;
+  height: 2rem;
   -moz-margin-end: .5em;
   margin-top: .1em;
   border: 1px solid #999;
@@ -481,7 +585,7 @@ body[dir=rtl] .dropdown-menu {
   background-size: 1em 1em;
 }
 
-body[dir="rtl"] .checkbox {
+html[dir="rtl"] .checkbox {
   float: right;
 }
 
@@ -500,4 +604,88 @@ body[dir="rtl"] .checkbox {
 
 .checkbox.checked.disabled {
   background-image: url("../img/check.svg#check-disabled");
+}
+
+.checkbox-label.ellipsis {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-align: left;
+}
+
+html[dir="rtl"] .checkbox-label.ellipsis {
+  text-align: right;
+}
+
+/* ContextUrlView classes */
+
+.context-content {
+  color: black;
+  text-align: left;
+}
+
+html[dir="rtl"] .context-content {
+  text-align: right;
+}
+
+.context-content > p {
+  font-weight: bold;
+  margin-bottom: .8em;
+  margin-top: 0;
+}
+
+.context-wrapper {
+  border: 1px solid #5cccee;
+  border-radius: 4px;
+  background: #fff;
+  padding: .8em;
+  /* Use the flex row mode to position the elements next to each other. */
+  display: flex;
+  flex-flow: row nowrap;
+  line-height: 1.1em;
+  /* No underline for the text in the context view. */
+  text-decoration: none;
+}
+
+.context-wrapper > .context-preview {
+  float: left;
+  /* 16px is standard height/width for a favicon */
+  width: 16px;
+  max-height: 16px;
+  margin-right: .8em;
+  flex: 0 0 auto;
+}
+
+html[dir="rtl"] .context-wrapper > .context-preview {
+  float: left;
+  margin-left: .8em;
+  margin-right: 0;
+}
+
+.context-wrapper > .context-info {
+  flex: 0 1 auto;
+  display: block;
+  color: black;
+  /* 16px for the preview, plus its .8em margin */
+  max-width: calc(100% - 16px - .8em);
+  word-wrap: break-word;
+}
+
+.context-wrapper > .context-info > .context-url {
+  display: block;
+  color: #00a9dc;
+  font-weight: 700;
+  clear: both;
+}
+
+.clicks-allowed.context-wrapper:hover {
+  border: 2px solid #5cccee;
+  /* Due to the increased border width, reduce the padding accordingly so that
+     the text doesn't move. */
+  padding: calc(.8em - 1px);
+}
+
+/* Only underline the url, not the associated text */
+.clicks-allowed.context-wrapper:hover > .context-info > .context-url {
+  text-decoration: underline;
 }

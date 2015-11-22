@@ -6,23 +6,21 @@
  * whether already loaded, or via console.profile with an unloaded performance tools.
  */
 
-let { getPerformanceActorsConnection } = devtools.require("devtools/performance/front");
-
-function spawnTest () {
-  let profilerConnected = waitForProfilerConnection();
+function* spawnTest() {
   let { target, toolbox, console } = yield initConsole(SIMPLE_URL);
-  yield profilerConnected;
-  let connection = getPerformanceActorsConnection(target);
+  let front = toolbox.performance;
   let tab = toolbox.doc.getElementById("toolbox-tab-performance");
 
-  let profileStart = once(connection, "recording-started");
+  let profileStart = once(front, "recording-started");
   console.profile("rust");
   yield profileStart;
+
+  yield waitUntil(() => tab.hasAttribute("highlighted"));
 
   ok(tab.hasAttribute("highlighted"),
     "performance tab is highlighted during recording from console.profile when unloaded");
 
-  let profileEnd = once(connection, "recording-stopped");
+  let profileEnd = once(front, "recording-stopped");
   console.profileEnd("rust");
   yield profileEnd;
 

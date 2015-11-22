@@ -48,15 +48,46 @@ HTMLMetaElement::SetItemValueText(const nsAString& aValue)
   SetContent(aValue);
 }
 
+nsresult
+HTMLMetaElement::SetMetaReferrer(nsIDocument* aDocument)
+{
+  if (!aDocument ||
+      !AttrValueIs(kNameSpaceID_None, nsGkAtoms::name, nsGkAtoms::referrer, eIgnoreCase)) {
+    return NS_OK;
+  }
+  nsAutoString content;
+  nsresult rv = GetContent(content);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+  Element* headElt = aDocument->GetHeadElement();
+  if (headElt && nsContentUtils::ContentIsDescendantOf(this, headElt)) {
+      content = nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(content);
+      aDocument->SetHeaderData(nsGkAtoms::referrer, content);
+  }
+  return NS_OK;
+}
 
 nsresult
 HTMLMetaElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                               const nsAttrValue* aValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None) {
+    nsIDocument *document = GetUncomposedDoc();
     if (aName == nsGkAtoms::content) {
-      nsIDocument *document = GetUncomposedDoc();
+      if (document && AttrValueIs(kNameSpaceID_None, nsGkAtoms::name,
+                                  nsGkAtoms::viewport, eIgnoreCase)) {
+        nsAutoString content;
+        nsresult rv = GetContent(content);
+        NS_ENSURE_SUCCESS(rv, rv);
+        nsContentUtils::ProcessViewportInfo(document, content);
+      }
       CreateAndDispatchEvent(document, NS_LITERAL_STRING("DOMMetaChanged"));
+    }
+    // Update referrer policy when it got changed from JS
+    nsresult rv = SetMetaReferrer(document);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
     }
   }
 
@@ -80,19 +111,11 @@ HTMLMetaElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     NS_ENSURE_SUCCESS(rv, rv);
     nsContentUtils::ProcessViewportInfo(aDocument, content);
   }
-  if (aDocument &&
-      AttrValueIs(kNameSpaceID_None, nsGkAtoms::name, nsGkAtoms::referrer, eIgnoreCase)) {
-    nsAutoString content;
-    rv = GetContent(content);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    // Referrer Policy spec requires a <meta name="referrer" tag to be in the
-    // <head> element.
-    Element* headElt = aDocument->GetHeadElement();
-    if (headElt && nsContentUtils::ContentIsDescendantOf(this, headElt)) {
-      content = nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(content);
-      aDocument->SetHeaderData(nsGkAtoms::referrer, content);
-    }
+  // Referrer Policy spec requires a <meta name="referrer" tag to be in the
+  // <head> element.
+  rv = SetMetaReferrer(aDocument);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
   }
   CreateAndDispatchEvent(aDocument, NS_LITERAL_STRING("DOMMetaAdded"));
   return rv;
@@ -115,7 +138,7 @@ HTMLMetaElement::CreateAndDispatchEvent(nsIDocument* aDoc,
 
   nsRefPtr<AsyncEventDispatcher> asyncDispatcher =
     new AsyncEventDispatcher(this, aEventName, true, true);
-  asyncDispatcher->PostDOMEvent();
+  asyncDispatcher->RunDOMEventWhenSafe();
 }
 
 JSObject*

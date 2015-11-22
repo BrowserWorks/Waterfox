@@ -3,31 +3,42 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "AboutReader", "resource://gre/modules/AboutReader.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode", "resource://gre/modules/ReaderMode.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerContent", "resource://gre/modules/LoginManagerContent.jsm");
 
-let dump = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.d.bind(null, "Content");
+var dump = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.d.bind(null, "Content");
 
-let global = this;
+var global = this;
 
-let AboutReaderListener = {
-  _savedArticle: null,
+// This is copied from desktop's tab-content.js. See bug 1153485 about sharing this code somehow.
+var AboutReaderListener = {
+
+  _articlePromise: null,
 
   init: function() {
     addEventListener("AboutReaderContentLoaded", this, false, true);
+    addEventListener("DOMContentLoaded", this, false);
     addEventListener("pageshow", this, false);
-    addMessageListener("Reader:SavedArticleGet", this);
+    addEventListener("pagehide", this, false);
+    addMessageListener("Reader:ParseDocument", this);
+    addMessageListener("Reader:PushState", this);
   },
 
   receiveMessage: function(message) {
     switch (message.name) {
-      case "Reader:SavedArticleGet":
-        sendAsyncMessage("Reader:SavedArticleData", { article: this._savedArticle });
+      case "Reader:ParseDocument":
+        this._articlePromise = ReaderMode.parseDocument(content.document).catch(Cu.reportError);
+        content.document.location = "about:reader?url=" + encodeURIComponent(message.data.url);
+        break;
+
+      case "Reader:PushState":
+        this.updateReaderButton(!!(message.data && message.data.isArticle));
         break;
     }
   },
@@ -36,12 +47,12 @@ let AboutReaderListener = {
     return content.document.documentURI.startsWith("about:reader");
   },
 
-  handleEvent: function(event) {
-    if (event.originalTarget.defaultView != content) {
+  handleEvent: function(aEvent) {
+    if (aEvent.originalTarget.defaultView != content) {
       return;
     }
 
-    switch (event.type) {
+    switch (aEvent.type) {
       case "AboutReaderContentLoaded":
         if (!this.isAboutReader) {
           return;
@@ -52,38 +63,44 @@ let AboutReaderListener = {
         // document body is available, so we avoid instantiating an AboutReader object, expecting that a
         // valid message will follow. See bug 925983.
         if (content.document.body) {
-          new AboutReader(global, content);
+          new AboutReader(global, content, this._articlePromise);
+          this._articlePromise = null;
         }
+        break;
+
+      case "pagehide":
+        sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: false });
         break;
 
       case "pageshow":
-        if (!ReaderMode.isEnabledForParseOnLoad || this.isAboutReader) {
-          return;
+        // If a page is loaded from the bfcache, we won't get a "DOMContentLoaded"
+        // event, so we need to rely on "pageshow" in this case.
+        if (aEvent.persisted) {
+          this.updateReaderButton();
         }
-
-        // Reader mode is disabled until proven enabled.
-        this._savedArticle = null;
-        sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: false });
-
-        ReaderMode.parseDocument(content.document).then(article => {
-          // Do nothing if there is no article, or if the content window has been destroyed.
-          if (article === null || content === null) {
-            return;
-          }
-
-          // The loaded page may have changed while we were parsing the document.
-          // Make sure we've got the current one.
-          let url = Services.io.newURI(content.document.documentURI, null, null).spec;
-          if (article.url !== url) {
-            return;
-          }
-
-          this._savedArticle = article;
-          sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: true });
-
-        }).catch(e => Cu.reportError("Error parsing document: " + e));
+        break;
+      case "DOMContentLoaded":
+        this.updateReaderButton();
         break;
     }
-  }
+  },
+  updateReaderButton: function(forceNonArticle) {
+    if (!ReaderMode.isEnabledForParseOnLoad || this.isAboutReader ||
+        !(content.document instanceof content.HTMLDocument) ||
+        content.document.mozSyntheticDocument) {
+      return;
+    }
+    // Only send updates when there are articles; there's no point updating with
+    // |false| all the time.
+    if (ReaderMode.isProbablyReaderable(content.document)) {
+      sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: true });
+    } else if (forceNonArticle) {
+      sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: false });
+    }
+  },
 };
 AboutReaderListener.init();
+
+addMessageListener("RemoteLogins:fillForm", function(message) {
+  LoginManagerContent.receiveMessage(message, content);
+});

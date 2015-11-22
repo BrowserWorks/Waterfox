@@ -38,12 +38,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include "p_buf.h"
 #include "nr_socket.h"
 #include "stun.h"
 #include "nr_socket_buffered_stun.h"
 
+#define NR_MAX_FRAME_SIZE 0xFFFF
+
+typedef struct nr_frame_header_ {
+  UINT2 frame_length;
+  char  data[0];
+} nr_frame_header;
 
 typedef struct nr_socket_buffered_stun_ {
   nr_socket *inner;
@@ -65,6 +72,7 @@ typedef struct nr_socket_buffered_stun_ {
   nr_p_buf_head pending_writes;
   size_t pending;
   size_t max_pending;
+  nr_framing_type framing_type;
 } nr_socket_buffered_stun;
 
 static int nr_socket_buffered_stun_destroy(void **objp);
@@ -80,7 +88,7 @@ static int nr_socket_buffered_stun_write(void *obj,const void *msg, size_t len, 
 static void nr_socket_buffered_stun_writable_cb(NR_SOCKET s, int how, void *arg);
 
 static nr_socket_vtbl nr_socket_buffered_stun_vtbl={
-  1,
+  2,
   nr_socket_buffered_stun_destroy,
   nr_socket_buffered_stun_sendto,
   nr_socket_buffered_stun_recvfrom,
@@ -89,7 +97,9 @@ static nr_socket_vtbl nr_socket_buffered_stun_vtbl={
   nr_socket_buffered_stun_connect,
   0,
   0,
-  nr_socket_buffered_stun_close
+  nr_socket_buffered_stun_close,
+  0,
+  0
 };
 
 int nr_socket_buffered_set_connected_to(nr_socket *sock, nr_transport_addr *remote_addr)
@@ -107,40 +117,56 @@ abort:
   return(_status);
 }
 
-int nr_socket_buffered_stun_create(nr_socket *inner, int max_pending, nr_socket **sockp)
+int nr_socket_buffered_stun_create(nr_socket *inner, int max_pending,
+  nr_framing_type framing_type, nr_socket **sockp)
 {
   int r, _status;
   nr_socket_buffered_stun *sock = 0;
+  size_t frame_size;
 
   if (!(sock = RCALLOC(sizeof(nr_socket_buffered_stun))))
     ABORT(R_NO_MEMORY);
 
   sock->inner = inner;
+  sock->framing_type = framing_type;
 
   if ((r=nr_ip4_port_to_transport_addr(INADDR_ANY, 0, IPPROTO_UDP, &sock->remote_addr)))
     ABORT(r);
 
+  switch (framing_type) {
+    case ICE_TCP_FRAMING:
+      frame_size = sizeof(nr_frame_header);
+      sock->buffer_size = sizeof(nr_frame_header) + NR_MAX_FRAME_SIZE;
+      sock->bytes_needed = sizeof(nr_frame_header);
+      break;
+    case TURN_TCP_FRAMING:
+      frame_size = 0;
+      sock->buffer_size = NR_STUN_MAX_MESSAGE_SIZE;
+      sock->bytes_needed = sizeof(nr_stun_message_header);
+      break;
+    default:
+      assert(0);
+      ABORT(R_BAD_ARGS);
+  }
+
   /* TODO(ekr@rtfm.com): Check this */
-  if (!(sock->buffer = RMALLOC(NR_STUN_MAX_MESSAGE_SIZE)))
+  if (!(sock->buffer = RMALLOC(sock->buffer_size)))
     ABORT(R_NO_MEMORY);
 
   sock->read_state = NR_ICE_SOCKET_READ_NONE;
-  sock->buffer_size = NR_STUN_MAX_MESSAGE_SIZE;
-  sock->bytes_needed = sizeof(nr_stun_message_header);
   sock->connected = 0;
 
   STAILQ_INIT(&sock->pending_writes);
-  if ((r=nr_p_buf_ctx_create(NR_STUN_MAX_MESSAGE_SIZE, &sock->p_bufs)))
+  if ((r=nr_p_buf_ctx_create(sock->buffer_size, &sock->p_bufs)))
     ABORT(r);
-  sock->max_pending=max_pending;
-
+  sock->max_pending = max_pending + frame_size;
 
   if ((r=nr_socket_create_int(sock, &nr_socket_buffered_stun_vtbl, sockp)))
     ABORT(r);
 
   _status=0;
 abort:
-  if (_status) {
+  if (_status && sock) {
     void *sock_v = sock;
     sock->inner = 0;  /* Give up ownership so we don't destroy */
     nr_socket_buffered_stun_destroy(&sock_v);
@@ -180,9 +206,9 @@ static int nr_socket_buffered_stun_sendto(void *obj,const void *msg, size_t len,
   int flags, nr_transport_addr *to)
 {
   nr_socket_buffered_stun *sock = (nr_socket_buffered_stun *)obj;
-
   int r, _status;
   size_t written;
+  nr_frame_header *frame = NULL;
 
   /* Check that we are writing to the connected address if
      connected */
@@ -193,6 +219,21 @@ static int nr_socket_buffered_stun_sendto(void *obj,const void *msg, size_t len,
     }
   }
 
+  if (sock->framing_type == ICE_TCP_FRAMING) {
+
+    assert(len <= NR_MAX_FRAME_SIZE);
+    if (len > NR_MAX_FRAME_SIZE)
+      ABORT(R_FAILED);
+
+    if (!(frame = RMALLOC(len + sizeof(nr_frame_header))))
+      ABORT(R_NO_MEMORY);
+
+    frame->frame_length = htons(len);
+    memcpy(frame->data, msg, len);
+    len += sizeof(nr_frame_header);
+    msg = frame;
+  }
+
   if ((r=nr_socket_buffered_stun_write(obj, msg, len, &written)))
     ABORT(r);
 
@@ -201,6 +242,7 @@ static int nr_socket_buffered_stun_sendto(void *obj,const void *msg, size_t len,
 
   _status=0;
 abort:
+  RFREE(frame);
   return _status;
 }
 
@@ -215,6 +257,8 @@ static int nr_socket_buffered_stun_recvfrom(void *obj,void * restrict buf,
   int r, _status;
   size_t bytes_read;
   nr_socket_buffered_stun *sock = (nr_socket_buffered_stun *)obj;
+  nr_frame_header *frame = (nr_frame_header *)sock->buffer;
+  size_t skip_hdr_size = (sock->framing_type == ICE_TCP_FRAMING) ? sizeof(nr_frame_header) : 0;
 
   if (sock->read_state == NR_ICE_SOCKET_READ_FAILED) {
     ABORT(R_FAILED);
@@ -237,38 +281,50 @@ reread:
   if (sock->bytes_needed)
     ABORT(R_WOULDBLOCK);
 
-  /* No more bytes expeected */
+  /* No more bytes expected */
   if (sock->read_state == NR_ICE_SOCKET_READ_NONE) {
-    int tmp_length;
     size_t remaining_length;
+    if (sock->framing_type == ICE_TCP_FRAMING) {
+      if (sock->bytes_read < sizeof(nr_frame_header))
+        ABORT(R_BAD_DATA);
+      remaining_length = ntohs(frame->frame_length);
+    } else {
+      int tmp_length;
 
-    /* Parse the header */
-    if (r = nr_stun_message_length(sock->buffer, sock->bytes_read, &tmp_length))
-      ABORT(r);
-    assert(tmp_length >= 0);
-    if (tmp_length < 0)
-      ABORT(R_BAD_DATA);
-    remaining_length = tmp_length;
+      /* Parse the header */
+      if (r = nr_stun_message_length(sock->buffer, sock->bytes_read, &tmp_length))
+        ABORT(r);
+      assert(tmp_length >= 0);
+      if (tmp_length < 0)
+        ABORT(R_BAD_DATA);
+      remaining_length = tmp_length;
 
+    }
     /* Check to see if we have enough room */
     if ((sock->buffer_size - sock->bytes_read) < remaining_length)
       ABORT(R_BAD_DATA);
 
     /* Set ourselves up to read the rest of the data */
-    sock->read_state = NR_ICE_SOCKET_READ_HDR;
     sock->bytes_needed = remaining_length;
 
+    sock->read_state = NR_ICE_SOCKET_READ_HDR;
     goto reread;
   }
+
+  assert(skip_hdr_size <= sock->bytes_read);
+  if (skip_hdr_size > sock->bytes_read)
+    ABORT(R_BAD_DATA);
+  sock->bytes_read -= skip_hdr_size;
 
   if (maxlen < sock->bytes_read)
     ABORT(R_BAD_ARGS);
 
-  memcpy(buf, sock->buffer, sock->bytes_read);
   *len = sock->bytes_read;
-  sock->read_state = NR_ICE_SOCKET_READ_NONE;
+  memcpy(buf, sock->buffer + skip_hdr_size, sock->bytes_read);
+
   sock->bytes_read = 0;
-  sock->bytes_needed = sizeof(nr_stun_message_header);
+  sock->read_state = NR_ICE_SOCKET_READ_NONE;
+  sock->bytes_needed = (sock->framing_type == ICE_TCP_FRAMING) ? sizeof(nr_frame_header) : sizeof(nr_stun_message_header);
 
   assert(!nr_transport_addr_is_wildcard(&sock->remote_addr));
   if (!nr_transport_addr_is_wildcard(&sock->remote_addr)) {
@@ -319,8 +375,10 @@ static void nr_socket_buffered_stun_connected_cb(NR_SOCKET s, int how, void *arg
   assert(!sock->connected);
 
   sock->connected = 1;
-  if (sock->pending)
+  if (sock->pending) {
+    r_log(LOG_GENERIC, LOG_INFO, "Invoking writable_cb on connected (%u)", (uint32_t) sock->pending);
     nr_socket_buffered_stun_writable_cb(s, how, arg);
+  }
 }
 
 static int nr_socket_buffered_stun_connect(void *obj, nr_transport_addr *addr)
@@ -343,8 +401,24 @@ static int nr_socket_buffered_stun_connect(void *obj, nr_transport_addr *addr)
     }
     ABORT(r);
   } else {
+    r_log(LOG_GENERIC, LOG_INFO, "Connected without blocking");
     sock->connected = 1;
   }
+
+  _status=0;
+abort:
+  return(_status);
+}
+
+static int nr_socket_buffered_stun_arm_writable_cb(nr_socket_buffered_stun *sock)
+{
+  int r, _status;
+  NR_SOCKET fd;
+
+  if ((r=nr_socket_getfd(sock->inner, &fd)))
+    ABORT(r);
+
+  NR_ASYNC_WAIT(fd, NR_ASYNC_WAIT_WRITE, nr_socket_buffered_stun_writable_cb, sock);
 
   _status=0;
 abort:
@@ -362,7 +436,9 @@ static int nr_socket_buffered_stun_write(void *obj,const void *msg, size_t len, 
   /* Buffers are close to full, report error. Do this now so we never
      get partial writes */
   if ((sock->pending + len) > sock->max_pending) {
-    r_log(LOG_GENERIC, LOG_INFO, "Write buffer for %s full", sock->remote_addr.as_string);
+    r_log(LOG_GENERIC, LOG_INFO, "Write buffer for %s full (%u + %u > %u) - re-arming @%p",
+          sock->remote_addr.as_string, (uint32_t)sock->pending, (uint32_t)len, (uint32_t)sock->max_pending,
+          &(sock->pending));
     ABORT(R_WOULDBLOCK);
   }
 
@@ -370,8 +446,13 @@ static int nr_socket_buffered_stun_write(void *obj,const void *msg, size_t len, 
   if (sock->connected && !sock->pending) {
     r = nr_socket_write(sock->inner, msg, len, &written2, 0);
     if (r) {
-      if (r != R_WOULDBLOCK)
+      if (r != R_WOULDBLOCK) {
+        r_log(LOG_GENERIC, LOG_ERR, "Write error for %s - %d",
+              sock->remote_addr.as_string, r);
         ABORT(r);
+      }
+      r_log(LOG_GENERIC, LOG_INFO, "Write of %" PRIu64 " blocked for %s",
+            (uint64_t) len, sock->remote_addr.as_string);
 
       written2=0;
     }
@@ -384,20 +465,23 @@ static int nr_socket_buffered_stun_write(void *obj,const void *msg, size_t len, 
 
   if (len) {
     if ((r=nr_p_buf_write_to_chain(sock->p_bufs, &sock->pending_writes,
-                                     ((UCHAR *)msg) + written2, len)))
+                                   ((UCHAR *)msg) + written2, len))) {
+      r_log(LOG_GENERIC, LOG_ERR, "Write_to_chain error for %s - %d",
+            sock->remote_addr.as_string, r);
+
       ABORT(r);
+    }
 
     sock->pending += len;
   }
 
   if (sock->pending && !already_armed) {
-    NR_SOCKET fd;
-
-    if ((r=nr_socket_getfd(sock->inner, &fd)))
-      ABORT(r);
-
-    NR_ASYNC_WAIT(fd, NR_ASYNC_WAIT_WRITE, nr_socket_buffered_stun_writable_cb, sock);
+      if ((r=nr_socket_buffered_stun_arm_writable_cb(sock)))
+        ABORT(r);
   }
+  r_log(LOG_GENERIC, LOG_INFO, "Write buffer not empty for %s  %u - %s armed (@%p)",
+        sock->remote_addr.as_string, (uint32_t)sock->pending,
+        already_armed ? "already" : "", &sock->pending);
 
   *written = original_len;
 
@@ -420,6 +504,8 @@ static void nr_socket_buffered_stun_writable_cb(NR_SOCKET s, int how, void *arg)
                            n1->length - n1->r_offset,
                            &written, 0))) {
 
+      r_log(LOG_GENERIC, LOG_ERR, "Write error for %s - %d",
+            sock->remote_addr.as_string, r);
       ABORT(r);
     }
 
@@ -429,6 +515,9 @@ static void nr_socket_buffered_stun_writable_cb(NR_SOCKET s, int how, void *arg)
 
     if (n1->r_offset < n1->length) {
       /* We wrote something, but not everything */
+      r_log(LOG_GENERIC, LOG_INFO, "Write in callback didn't write all (remaining %u of %u) for %s",
+            n1->length - n1->r_offset, n1->length,
+            sock->remote_addr.as_string);
       ABORT(R_WOULDBLOCK);
     }
 
@@ -440,7 +529,12 @@ static void nr_socket_buffered_stun_writable_cb(NR_SOCKET s, int how, void *arg)
   assert(!sock->pending);
   _status=0;
 abort:
+  r_log(LOG_GENERIC, LOG_INFO, "Writable_cb %s (%u (%p) pending)",
+        sock->remote_addr.as_string, (uint32_t)sock->pending, &(sock->pending));
   if (_status && _status != R_WOULDBLOCK) {
-    /* TODO(ekr@rtfm.com): Mark the socket as failed */
+    r_log(LOG_GENERIC, LOG_ERR, "Failure in writable_cb: %d", _status);
+    nr_socket_buffered_stun_failed(sock);
+  } else if (sock->pending) {
+    nr_socket_buffered_stun_arm_writable_cb(sock);
   }
 }

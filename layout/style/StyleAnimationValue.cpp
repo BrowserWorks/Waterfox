@@ -7,7 +7,7 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/MathAlgorithms.h"
-
+#include "mozilla/RuleNodeCacheConditions.h"
 #include "mozilla/StyleAnimationValue.h"
 #include "nsStyleTransformMatrix.h"
 #include "nsCOMArray.h"
@@ -25,6 +25,7 @@
 #include "gfxMatrix.h"
 #include "gfxQuaternion.h"
 #include "nsIDocument.h"
+#include "nsIFrame.h"
 #include "gfx2DGlue.h"
 
 using namespace mozilla;
@@ -1362,7 +1363,7 @@ StyleAnimationValue::AppendTransformFunction(nsCSSKeyword aTransformFunction,
 #define YZSHEAR 2
 
 static bool
-Decompose2DMatrix(const gfxMatrix &aMatrix, Point3D &aScale,
+Decompose2DMatrix(const Matrix &aMatrix, Point3D &aScale,
                   float aShear[3], gfxQuaternion &aRotate,
                   Point3D &aTranslate)
 {
@@ -1421,11 +1422,11 @@ Decompose2DMatrix(const gfxMatrix &aMatrix, Point3D &aScale,
  * in http://tog.acm.org/resources/GraphicsGems/AllGems.tar.gz
  */
 static bool
-Decompose3DMatrix(const gfx3DMatrix &aMatrix, Point3D &aScale,
+Decompose3DMatrix(const Matrix4x4 &aMatrix, Point3D &aScale,
                   float aShear[3], gfxQuaternion &aRotate,
                   Point3D &aTranslate, Point4D &aPerspective)
 {
-  Matrix4x4 local = ToMatrix4x4(aMatrix);
+  Matrix4x4 local = aMatrix;
 
   if (local[3][3] == 0) {
     return false;
@@ -1523,9 +1524,9 @@ T InterpolateNumerically(const T& aOne, const T& aTwo, double aCoeff)
 }
 
 
-/* static */ gfx3DMatrix
-StyleAnimationValue::InterpolateTransformMatrix(const gfx3DMatrix &aMatrix1,
-                                                const gfx3DMatrix &aMatrix2,
+/* static */ Matrix4x4
+StyleAnimationValue::InterpolateTransformMatrix(const Matrix4x4 &aMatrix1,
+                                                const Matrix4x4 &aMatrix2,
                                                 double aProgress)
 {
   // Decompose both matrices
@@ -1542,7 +1543,7 @@ StyleAnimationValue::InterpolateTransformMatrix(const gfx3DMatrix &aMatrix1,
   gfxQuaternion rotate2;
   float shear2[3] = { 0.0f, 0.0f, 0.0f};
 
-  gfxMatrix matrix2d1, matrix2d2;
+  Matrix matrix2d1, matrix2d2;
   if (aMatrix1.Is2D(&matrix2d1) && aMatrix2.Is2D(&matrix2d2)) {
     Decompose2DMatrix(matrix2d1, scale1, shear1, rotate1, translate1);
     Decompose2DMatrix(matrix2d2, scale2, shear2, rotate2, translate2);
@@ -1595,7 +1596,7 @@ StyleAnimationValue::InterpolateTransformMatrix(const gfx3DMatrix &aMatrix1,
     result.PreScale(scale.x, scale.y, scale.z);
   }
 
-  return To3DMatrix(result);
+  return result;
 }
 
 static nsCSSValueList*
@@ -2590,7 +2591,7 @@ StyleAnimationValue::ComputeValue(nsCSSProperty aProperty,
     // context-sensitive. So if there's nothing cached, it's not context
     // sensitive.
     *aIsContextSensitive =
-      !tmpStyleContext->RuleNode()->NodeHasCachedData(sid);
+      !tmpStyleContext->RuleNode()->NodeHasCachedUnconditionalData(sid);
   }
 
   // If we're not concerned whether the property is context sensitive then just
@@ -2868,11 +2869,11 @@ SubstitutePixelValues(nsStyleContext* aStyleContext,
                       const nsCSSValue& aInput, nsCSSValue& aOutput)
 {
   if (aInput.IsCalcUnit()) {
-    bool canStoreInRuleTree = true;
+    RuleNodeCacheConditions conditions;
     nsRuleNode::ComputedCalc c =
       nsRuleNode::SpecifiedCalcToComputedCalc(aInput, aStyleContext,
                                               aStyleContext->PresContext(),
-                                              canStoreInRuleTree);
+                                              conditions);
     nsStyleCoord::CalcValue c2;
     c2.mLength = c.mLength;
     c2.mPercent = c.mPercent;
@@ -2889,10 +2890,10 @@ SubstitutePixelValues(nsStyleContext* aStyleContext,
     aOutput.SetArrayValue(outputArray, aInput.GetUnit());
   } else if (aInput.IsLengthUnit() &&
              aInput.GetUnit() != eCSSUnit_Pixel) {
-    bool canStoreInRuleTree = true;
+    RuleNodeCacheConditions conditions;
     nscoord len = nsRuleNode::CalcLength(aInput, aStyleContext,
                                          aStyleContext->PresContext(),
-                                         canStoreInRuleTree);
+                                         conditions);
     aOutput.SetFloatValue(nsPresContext::AppUnitsToFloatCSSPixels(len),
                           eCSSUnit_Pixel);
   } else {
@@ -3524,6 +3525,32 @@ StyleAnimationValue::ExtractComputedValue(nsCSSProperty aProperty,
       NS_NOTREACHED("shouldn't use on non-animatable properties");
   }
   return false;
+}
+
+gfxSize
+StyleAnimationValue::GetScaleValue(const nsIFrame* aForFrame) const
+{
+  MOZ_ASSERT(aForFrame);
+  MOZ_ASSERT(GetUnit() == StyleAnimationValue::eUnit_Transform);
+
+  nsCSSValueSharedList* list = GetCSSValueSharedListValue();
+  MOZ_ASSERT(list->mHead);
+
+  RuleNodeCacheConditions dontCare;
+  nsStyleTransformMatrix::TransformReferenceBox refBox(aForFrame);
+  Matrix4x4 transform = nsStyleTransformMatrix::ReadTransforms(
+                          list->mHead,
+                          aForFrame->StyleContext(),
+                          aForFrame->PresContext(), dontCare, refBox,
+                          aForFrame->PresContext()->AppUnitsPerDevPixel());
+
+  Matrix transform2d;
+  bool canDraw2D = transform.CanDraw2D(&transform2d);
+  if (!canDraw2D) {
+    return gfxSize();
+  }
+
+  return ThebesMatrix(transform2d).ScaleFactors(true);
 }
 
 StyleAnimationValue::StyleAnimationValue(int32_t aInt, Unit aUnit,

@@ -88,7 +88,7 @@ public:
 
   virtual void SetVolume(double aVolume) override;
 
-  virtual double GetMediaTimeSecs() override;
+  virtual int64_t GetMediaTimeUs() override;
 
   // To update progress bar when the element is visible
   virtual void SetElementVisibility(bool aIsVisible) override;;
@@ -146,10 +146,10 @@ private:
   // mLock
   SeekTarget mSeekTarget;
 
-  // MediaPromise of current seek.
+  // MozPromise of current seek.
   // Used in main thread and offload callback thread, protected by Mutex
   // mLock
-  MediaPromiseHolder<MediaDecoder::SeekPromise> mSeekPromise;
+  MozPromiseHolder<MediaDecoder::SeekPromise> mSeekPromise;
 
   // Positions obtained from offlaoded tracks (DSP)
   // Used in main thread and offload callback thread, protected by Mutex
@@ -192,8 +192,6 @@ private:
   // Used only from main thread so no lock is needed.
   nsRefPtr<mozilla::dom::WakeLock> mWakeLock;
 
-  int64_t GetMediaTimeUs();
-
   // Provide the playback position in microseconds from total number of
   // frames played by audio track
   int64_t GetOutputPlayPositionUs_l() const;
@@ -233,7 +231,7 @@ private:
   // When audio is offloaded, application processor wakes up less frequently
   // (>1sec) But when Player UI is visible we need to update progress bar
   // atleast once in 250ms. Start a timer when player UI becomes visible or
-  // audio starts playing to send PlaybackPositionChanged events once in 250ms.
+  // audio starts playing to send UpdateLogicalPosition events once in 250ms.
   // Stop the timer when UI goes invisible or play state is not playing.
   // Also make sure timer functions are always called from main thread
   nsresult StartTimeUpdate();
@@ -246,7 +244,7 @@ private:
   // (i.e.MediaDecoder)
   void NotifyAudioEOS();
 
-  // Notify position changed event by sending PlaybackPositionChanged event to
+  // Notify position changed event by sending UpdateLogicalPosition event to
   // observer
   void NotifyPositionChanged();
 

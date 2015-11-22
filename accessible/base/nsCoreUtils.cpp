@@ -110,19 +110,19 @@ nsCoreUtils::DispatchClickEvent(nsITreeBoxObject *aTreeBoxObj,
     presContext->AppUnitsToDevPixels(offset.y);
 
   // XUL is just desktop, so there is no real reason for senfing touch events.
-  DispatchMouseEvent(NS_MOUSE_BUTTON_DOWN, cnvdX, cnvdY,
+  DispatchMouseEvent(eMouseDown, cnvdX, cnvdY,
                      tcContent, tcFrame, presShell, rootWidget);
 
-  DispatchMouseEvent(NS_MOUSE_BUTTON_UP, cnvdX, cnvdY,
+  DispatchMouseEvent(eMouseUp, cnvdX, cnvdY,
                      tcContent, tcFrame, presShell, rootWidget);
 }
 
 void
-nsCoreUtils::DispatchMouseEvent(uint32_t aEventType, int32_t aX, int32_t aY,
+nsCoreUtils::DispatchMouseEvent(EventMessage aMessage, int32_t aX, int32_t aY,
                                 nsIContent *aContent, nsIFrame *aFrame,
                                 nsIPresShell *aPresShell, nsIWidget *aRootWidget)
 {
-  WidgetMouseEvent event(true, aEventType, aRootWidget,
+  WidgetMouseEvent event(true, aMessage, aRootWidget,
                          WidgetMouseEvent::eReal, WidgetMouseEvent::eNormal);
 
   event.refPoint = LayoutDeviceIntPoint(aX, aY);
@@ -137,14 +137,14 @@ nsCoreUtils::DispatchMouseEvent(uint32_t aEventType, int32_t aX, int32_t aY,
 }
 
 void
-nsCoreUtils::DispatchTouchEvent(uint32_t aEventType, int32_t aX, int32_t aY,
+nsCoreUtils::DispatchTouchEvent(EventMessage aMessage, int32_t aX, int32_t aY,
                                 nsIContent* aContent, nsIFrame* aFrame,
                                 nsIPresShell* aPresShell, nsIWidget* aRootWidget)
 {
   if (!dom::TouchEvent::PrefEnabled())
     return;
 
-  WidgetTouchEvent event(true, aEventType, aRootWidget);
+  WidgetTouchEvent event(true, aMessage, aRootWidget);
 
   event.time = PR_IntervalNow();
 
@@ -425,7 +425,7 @@ nsCoreUtils::IsTabDocument(nsIDocument* aDocumentNode)
   treeItem->GetParent(getter_AddRefs(parentTreeItem));
 
   // Tab document running in own process doesn't have parent.
-  if (XRE_GetProcessType() == GeckoProcessType_Content)
+  if (XRE_IsContentProcess())
     return !parentTreeItem;
 
   // Parent of docshell for tab document running in chrome process is root.

@@ -59,7 +59,7 @@ public:
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void
-  GetName(nsString& aRetval) const;
+  GetName(nsAString& aRetval) const;
 
   already_AddRefed<Promise>
   CreateFile(const nsAString& aPath, const CreateFileOptions& aOptions,
@@ -76,6 +76,14 @@ public:
 
   already_AddRefed<Promise>
   RemoveDeep(const StringOrFileOrDirectory& aPath, ErrorResult& aRv);
+
+  // From https://microsoftedge.github.io/directory-upload/proposal.html#directory-interface :
+
+  void
+  GetPath(nsAString& aRetval) const;
+
+  already_AddRefed<Promise>
+  GetFilesAndDirectories();
 
   // =========== End WebIDL bindings.============
 

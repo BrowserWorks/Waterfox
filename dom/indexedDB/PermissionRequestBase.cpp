@@ -43,11 +43,11 @@ const uint32_t kPermissionDefault = nsIPermissionManager::UNKNOWN_ACTION;
 void
 AssertSanity()
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(NS_IsMainThread());
 }
 
-} // anonymous namespace
+} // namespace
 
 PermissionRequestBase::PermissionRequestBase(Element* aOwnerElement,
                                              nsIPrincipal* aPrincipal)

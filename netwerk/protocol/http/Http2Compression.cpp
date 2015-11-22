@@ -16,6 +16,7 @@
 #include "Http2Compression.h"
 #include "Http2HuffmanIncoming.h"
 #include "Http2HuffmanOutgoing.h"
+#include "mozilla/StaticPtr.h"
 
 extern PRThread *gSocketThread;
 
@@ -24,12 +25,76 @@ namespace net {
 
 static nsDeque *gStaticHeaders = nullptr;
 
+class HpackStaticTableReporter final : public nsIMemoryReporter
+{
+public:
+  NS_DECL_THREADSAFE_ISUPPORTS
+
+  HpackStaticTableReporter() {}
+
+  NS_IMETHODIMP
+  CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
+                 bool aAnonymize) override
+  {
+    return MOZ_COLLECT_REPORT(
+      "explicit/network/hpack/static-table", KIND_HEAP, UNITS_BYTES,
+      gStaticHeaders->SizeOfIncludingThis(MallocSizeOf),
+      "Memory usage of HPACK static table.");
+  }
+
+private:
+  MOZ_DEFINE_MALLOC_SIZE_OF(MallocSizeOf)
+
+  ~HpackStaticTableReporter() {}
+};
+
+NS_IMPL_ISUPPORTS(HpackStaticTableReporter, nsIMemoryReporter)
+
+class HpackDynamicTableReporter final : public nsIMemoryReporter
+{
+public:
+  NS_DECL_THREADSAFE_ISUPPORTS
+
+  explicit HpackDynamicTableReporter(Http2BaseCompressor* aCompressor)
+    : mCompressor(aCompressor)
+  {}
+
+  NS_IMETHODIMP
+  CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
+                 bool aAnonymize) override
+  {
+    if (!mCompressor) {
+      return NS_OK;
+    }
+
+    return MOZ_COLLECT_REPORT(
+      "explicit/network/hpack/dynamic-tables", KIND_HEAP, UNITS_BYTES,
+      mCompressor->SizeOfExcludingThis(MallocSizeOf),
+      "Aggregate memory usage of HPACK dynamic tables.");
+  }
+
+private:
+  MOZ_DEFINE_MALLOC_SIZE_OF(MallocSizeOf)
+
+  ~HpackDynamicTableReporter() {}
+
+  Http2BaseCompressor* mCompressor;
+
+  friend class Http2BaseCompressor;
+};
+
+NS_IMPL_ISUPPORTS(HpackDynamicTableReporter, nsIMemoryReporter)
+
+StaticRefPtr<HpackStaticTableReporter> gStaticReporter;
+
 void
 Http2CompressionCleanup()
 {
   // this happens after the socket thread has been destroyed
   delete gStaticHeaders;
   gStaticHeaders = nullptr;
+  UnregisterStrongMemoryReporter(gStaticReporter);
+  gStaticReporter = nullptr;
 }
 
 static void
@@ -51,6 +116,8 @@ InitializeStaticHeaders()
   MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
   if (!gStaticHeaders) {
     gStaticHeaders = new nsDeque();
+    gStaticReporter = new HpackStaticTableReporter();
+    RegisterStrongMemoryReporter(gStaticReporter);
     AddStaticElement(NS_LITERAL_CSTRING(":authority"));
     AddStaticElement(NS_LITERAL_CSTRING(":method"), NS_LITERAL_CSTRING("GET"));
     AddStaticElement(NS_LITERAL_CSTRING(":method"), NS_LITERAL_CSTRING("POST"));
@@ -113,6 +180,17 @@ InitializeStaticHeaders()
     AddStaticElement(NS_LITERAL_CSTRING("via"));
     AddStaticElement(NS_LITERAL_CSTRING("www-authenticate"));
   }
+}
+
+size_t nvPair::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
+{
+  return mName.SizeOfExcludingThisIfUnshared(aMallocSizeOf) +
+    mValue.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
+}
+
+size_t nvPair::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
+{
+  return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
 }
 
 nvFIFO::nvFIFO()
@@ -203,12 +281,31 @@ Http2BaseCompressor::Http2BaseCompressor()
   : mOutput(nullptr)
   , mMaxBuffer(kDefaultMaxBuffer)
 {
+  mDynamicReporter = new HpackDynamicTableReporter(this);
+  RegisterStrongMemoryReporter(mDynamicReporter);
+}
+
+Http2BaseCompressor::~Http2BaseCompressor()
+{
+  UnregisterStrongMemoryReporter(mDynamicReporter);
+  mDynamicReporter->mCompressor = nullptr;
+  mDynamicReporter = nullptr;
 }
 
 void
 Http2BaseCompressor::ClearHeaderTable()
 {
   mHeaderTable.Clear();
+}
+
+size_t
+Http2BaseCompressor::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
+{
+  size_t size = 0;
+  for (uint32_t i = mHeaderTable.StaticLength(); i < mHeaderTable.Length(); ++i) {
+    size += mHeaderTable[i]->SizeOfIncludingThis(aMallocSizeOf);
+  }
+  return size;
 }
 
 void
@@ -410,6 +507,11 @@ Http2Decompressor::OutputHeader(const nsACString &name, const nsACString &value)
     }
   }
   if(isColonHeader) {
+    // :status is the only pseudo-header field allowed in received HEADERS frames, PUSH_PROMISE allows the other pseudo-header fields
+    if (!name.EqualsLiteral(":status") && !mIsPush) {
+      LOG(("HTTP Decompressor found illegal response pseudo-header %s", name.BeginReading()));
+      return NS_ERROR_ILLEGAL_VALUE;
+    }
     if (mSeenNonColonHeader) {
       LOG(("HTTP Decompressor found illegal : header %s", name.BeginReading()));
       return NS_ERROR_ILLEGAL_VALUE;
@@ -1219,5 +1321,5 @@ Http2Compressor::SetMaxBufferSizeInternal(uint32_t maxBufferSize)
   return NS_OK;
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

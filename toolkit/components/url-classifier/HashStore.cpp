@@ -35,7 +35,8 @@
 #include "nsIStreamConverterService.h"
 #include "nsNetUtil.h"
 #include "nsCheckSummedOutputStream.h"
-#include "prlog.h"
+#include "prio.h"
+#include "mozilla/Logging.h"
 #include "zlib.h"
 
 // Main store for SafeBrowsing protocol data. We store
@@ -93,13 +94,8 @@
 
 // NSPR_LOG_MODULES=UrlClassifierDbService:5
 extern PRLogModuleInfo *gUrlClassifierDbServiceLog;
-#if defined(PR_LOGGING)
-#define LOG(args) PR_LOG(gUrlClassifierDbServiceLog, PR_LOG_DEBUG, args)
-#define LOG_ENABLED() PR_LOG_TEST(gUrlClassifierDbServiceLog, 4)
-#else
-#define LOG(args)
-#define LOG_ENABLED() (false)
-#endif
+#define LOG(args) MOZ_LOG(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug, args)
+#define LOG_ENABLED() MOZ_LOG_TEST(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug)
 
 // Either the return was successful or we call the Reset function (unless we
 // hit an OOM).  Used while reading in the store.
@@ -126,7 +122,7 @@ const uint32_t CURRENT_VERSION = 3;
 nsresult
 TableUpdate::NewAddPrefix(uint32_t aAddChunk, const Prefix& aHash)
 {
-  AddPrefix *add = mAddPrefixes.AppendElement();
+  AddPrefix *add = mAddPrefixes.AppendElement(fallible);
   if (!add) return NS_ERROR_OUT_OF_MEMORY;
   add->addChunk = aAddChunk;
   add->prefix = aHash;
@@ -136,7 +132,7 @@ TableUpdate::NewAddPrefix(uint32_t aAddChunk, const Prefix& aHash)
 nsresult
 TableUpdate::NewSubPrefix(uint32_t aAddChunk, const Prefix& aHash, uint32_t aSubChunk)
 {
-  SubPrefix *sub = mSubPrefixes.AppendElement();
+  SubPrefix *sub = mSubPrefixes.AppendElement(fallible);
   if (!sub) return NS_ERROR_OUT_OF_MEMORY;
   sub->addChunk = aAddChunk;
   sub->prefix = aHash;
@@ -147,7 +143,7 @@ TableUpdate::NewSubPrefix(uint32_t aAddChunk, const Prefix& aHash, uint32_t aSub
 nsresult
 TableUpdate::NewAddComplete(uint32_t aAddChunk, const Completion& aHash)
 {
-  AddComplete *add = mAddCompletes.AppendElement();
+  AddComplete *add = mAddCompletes.AppendElement(fallible);
   if (!add) return NS_ERROR_OUT_OF_MEMORY;
   add->addChunk = aAddChunk;
   add->complete = aHash;
@@ -157,7 +153,7 @@ TableUpdate::NewAddComplete(uint32_t aAddChunk, const Completion& aHash)
 nsresult
 TableUpdate::NewSubComplete(uint32_t aAddChunk, const Completion& aHash, uint32_t aSubChunk)
 {
-  SubComplete *sub = mSubCompletes.AppendElement();
+  SubComplete *sub = mSubCompletes.AppendElement(fallible);
   if (!sub) return NS_ERROR_OUT_OF_MEMORY;
   sub->addChunk = aAddChunk;
   sub->complete = aHash;
@@ -483,7 +479,7 @@ Merge(ChunkSet* aStoreChunks,
   // to make the chunkranges continuous.
   aStoreChunks->Merge(aUpdateChunks);
 
-  aStorePrefixes->AppendElements(adds);
+  aStorePrefixes->AppendElements(adds, fallible);
   EntrySort(*aStorePrefixes);
 
   return NS_OK;
@@ -558,7 +554,7 @@ ExpireEntries(FallibleTArray<T>* aEntries, ChunkSet& aExpirations)
     }
   }
 
-  aEntries->SetLength(addIter - aEntries->Elements());
+  aEntries->TruncateLength(addIter - aEntries->Elements());
 }
 
 nsresult
@@ -584,7 +580,7 @@ nsresult DeflateWriteTArray(nsIOutputStream* aStream, nsTArray<T>& aIn)
   uLongf insize = aIn.Length() * sizeof(T);
   uLongf outsize = compressBound(insize);
   FallibleTArray<char> outBuff;
-  if (!outBuff.SetLength(outsize)) {
+  if (!outBuff.SetLength(outsize, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -627,7 +623,7 @@ nsresult InflateReadTArray(nsIInputStream* aStream, FallibleTArray<T>* aOut,
   NS_ASSERTION(read == sizeof(inLen), "Error reading inflate length");
 
   FallibleTArray<char> inBuff;
-  if (!inBuff.SetLength(inLen)) {
+  if (!inBuff.SetLength(inLen, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -636,7 +632,7 @@ nsresult InflateReadTArray(nsIInputStream* aStream, FallibleTArray<T>* aOut,
 
   uLongf insize = inLen;
   uLongf outsize = aExpectedSize * sizeof(T);
-  if (!aOut->SetLength(aExpectedSize)) {
+  if (!aOut->SetLength(aExpectedSize, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -709,13 +705,16 @@ ByteSliceRead(nsIInputStream* aInStream, FallibleTArray<uint32_t>* aData, uint32
   rv = ReadTArray(aInStream, &slice4, count);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!aData->SetCapacity(count)) {
+  if (!aData->SetCapacity(count, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
   for (uint32_t i = 0; i < count; i++) {
-    aData->AppendElement((slice1[i] << 24) | (slice2[i] << 16)
-                         | (slice3[i] << 8) | (slice4[i]));
+    aData->AppendElement((slice1[i] << 24) |
+                           (slice2[i] << 16) |
+                           (slice3[i] << 8) |
+                           (slice4[i]),
+                         fallible);
   }
 
   return NS_OK;
@@ -730,11 +729,11 @@ HashStore::ReadAddPrefixes()
   nsresult rv = ByteSliceRead(mInputStream, &chunks, count);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!mAddPrefixes.SetCapacity(count)) {
+  if (!mAddPrefixes.SetCapacity(count, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   for (uint32_t i = 0; i < count; i++) {
-    AddPrefix *add = mAddPrefixes.AppendElement();
+    AddPrefix *add = mAddPrefixes.AppendElement(fallible);
     add->prefix.FromUint32(0);
     add->addChunk = chunks[i];
   }
@@ -759,11 +758,11 @@ HashStore::ReadSubPrefixes()
   rv = ByteSliceRead(mInputStream, &prefixes, count);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!mSubPrefixes.SetCapacity(count)) {
+  if (!mSubPrefixes.SetCapacity(count, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   for (uint32_t i = 0; i < count; i++) {
-    SubPrefix *sub = mSubPrefixes.AppendElement();
+    SubPrefix *sub = mSubPrefixes.AppendElement(fallible);
     sub->addChunk = addchunks[i];
     sub->prefix.FromUint32(prefixes[i]);
     sub->subChunk = subchunks[i];
@@ -982,7 +981,7 @@ RemoveDeadSubPrefixes(SubPrefixArray& aSubs, ChunkSet& aAddChunks)
   }
 
   LOG(("Removed %u dead SubPrefix entries.", subEnd - subIter));
-  aSubs.SetLength(subIter - aSubs.Elements());
+  aSubs.TruncateLength(subIter - aSubs.Elements());
 }
 
 #ifdef DEBUG
@@ -1055,5 +1054,5 @@ HashStore::AugmentAdds(const nsTArray<uint32_t>& aPrefixes)
   return NS_OK;
 }
 
-}
-}
+} // namespace safebrowsing
+} // namespace mozilla

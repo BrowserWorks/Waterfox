@@ -1,0 +1,77 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script src="mediaStreamPlayback.js"></script>
+</head>
+<body>
+<pre id="test">
+<script type="application/javascript">
+createHTML({ title: "Run enumerateDevices code", bug: "1046245" });
+/**
+  Tests covering enumerateDevices API and deviceId constraint. Exercise code.
+*/
+
+function mustSucceed(msg, f) {
+  return f().then(() => ok(true, msg + " must succeed"),
+                  e => is(e.name, null, msg + " must succeed: " + e.message));
+}
+
+function mustFailWith(msg, reason, constraint, f) {
+  return f().then(() => ok(false, msg + " must fail"), e => {
+      is(e.name, reason, msg + " must fail: " + e.message);
+      if (constraint) {
+        is(e.constraint, constraint, msg + " must fail w/correct constraint.");
+      }
+    });
+}
+
+var pushPrefs = (...p) => new Promise(r => SpecialPowers.pushPrefEnv({set: p}, r));
+
+runTest(() =>
+  pushPrefs(["media.navigator.streams.fake", true])
+  .then(() => navigator.mediaDevices.enumerateDevices())
+  .then(devices => {
+    ok(devices.length > 0, "At least one device found");
+    devices.forEach(d => {
+      ok(d.kind == "videoinput" || d.kind == "audioinput", "Known device kind");
+      is(d.deviceId.length, 44, "Correct device id length");
+      ok(d.label.length !== undefined, "Device label: " + d.label);
+      is(d.groupId, "", "Don't support groupId yet");
+    });
+    var jsoned = JSON.parse(JSON.stringify(devices));
+    is(jsoned[0].kind, devices[0].kind, "kind survived serializer");
+    is(jsoned[0].deviceId, devices[0].deviceId, "deviceId survived serializer");
+  })
+  // Check deviceId failure paths for video.
+  .then(() => mustSucceed("unknown plain deviceId on video",
+                          () => navigator.mediaDevices.getUserMedia({
+    video: { deviceId: "unknown9qHr8B0JIbcHlbl9xR+jMbZZ8WyoPfpCXPfc=" },
+    fake: true,
+  })))
+  .then(() => mustSucceed("unknown plain deviceId on audio",
+                          () => navigator.mediaDevices.getUserMedia({
+    audio: { deviceId: "unknown9qHr8B0JIbcHlbl9xR+jMbZZ8WyoPfpCXPfc=" },
+    fake: true,
+  })))
+  .then(() => mustFailWith("unknown exact deviceId on video",
+                           "OverconstrainedError", "deviceId",
+                           () => navigator.mediaDevices.getUserMedia({
+    video: { deviceId: { exact: "unknown9qHr8B0JIbcHlbl9xR+jMbZZ8WyoPfpCXPfc=" } },
+    fake: true,
+  })))
+  .then(() => mustFailWith("unknown exact deviceId on audio",
+                           "OverconstrainedError", "deviceId",
+                           () => navigator.mediaDevices.getUserMedia({
+    audio: { deviceId: { exact: "unknown9qHr8B0JIbcHlbl9xR+jMbZZ8WyoPfpCXPfc=" } },
+    fake: true,
+  })))
+  // Check the special case of no devices found (these prefs override fake).
+  .then(() => pushPrefs(["media.audio_loopback_dev", "none"],
+                        ["media.video_loopback_dev", "none"]))
+  .then(() => navigator.mediaDevices.enumerateDevices())
+  .then(devices => ok(devices.length === 0, "No devices found")));
+
+</script>
+</pre>
+</body>
+</html>

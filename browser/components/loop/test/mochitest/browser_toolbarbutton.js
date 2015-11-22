@@ -38,7 +38,7 @@ add_task(function* test_LoopUI_getters() {
   yield loadLoopPanel();
   Assert.ok(LoopUI.browser, "Browser element should be there");
   Assert.strictEqual(LoopUI.selectedTab, "rooms", "Initially the rooms tab should be selected");
-  let panelTabs = LoopUI.browser.contentDocument.querySelectorAll(".tab-view > li");
+  let panelTabs = LoopUI.browser.contentDocument.querySelectorAll(".tab-view > li:not(.slide-bar)");
   Assert.strictEqual(panelTabs.length, 1, "Only one tab, 'rooms', should be visible");
 
   // Hide the panel.
@@ -52,7 +52,7 @@ add_task(function* test_LoopUI_getters() {
 
   yield LoopUI.togglePanel();
   Assert.strictEqual(LoopUI.selectedTab, "rooms", "Rooms tab should still be selected");
-  panelTabs = LoopUI.browser.contentDocument.querySelectorAll(".tab-view > li");
+  panelTabs = LoopUI.browser.contentDocument.querySelectorAll(".tab-view > li:not(.slide-bar)");
   Assert.strictEqual(panelTabs.length, 2, "Two tabs should be visible");
   yield LoopUI.togglePanel();
 
@@ -166,4 +166,20 @@ add_task(function* test_screen_share() {
   Assert.strictEqual(LoopUI.toolbarButton.node.getAttribute("state"), "action", "Check button is in action state");
   MozLoopService.setScreenShareState("1", false);
   Assert.strictEqual(LoopUI.toolbarButton.node.getAttribute("state"), "", "Check button is in default state");
+});
+
+add_task(function* test_private_browsing_window() {
+  let win = OpenBrowserWindow({ private: true });
+  yield new Promise(resolve => {
+    win.addEventListener("load", function listener() {
+      win.removeEventListener("load", listener);
+      resolve();
+    });
+  });
+
+  let button = win.LoopUI.toolbarButton.node;
+  Assert.ok(button, "Loop button should be present");
+  Assert.ok(button.getAttribute("disabled"), "Disabled attribute should be set");
+
+  win.close();
 });
