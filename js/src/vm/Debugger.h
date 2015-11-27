@@ -140,17 +140,17 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
     }
 
   public:
-    template <void (traceValueEdges)(JSTracer*, JSObject*)>
-    void markCrossCompartmentEdges(JSTracer* tracer) {
-        for (Enum e(*static_cast<Base*>(this)); !e.empty(); e.popFront()) {
-            traceValueEdges(tracer, e.front().value());
-            Key key = e.front().key();
-            TraceEdge(tracer, &key, "Debugger WeakMap key");
-            if (key != e.front().key())
-                e.rekeyFront(key);
-            key.unsafeSet(nullptr);
-        }
-    }
+    //template <void (traceValueEdges)(JSTracer*, JSObject*)>
+    //void markCrossCompartmentEdges(JSTracer* tracer) {
+    //    for (Enum e(*static_cast<Base*>(this)); !e.empty(); e.popFront()) {
+    //        traceValueEdges(tracer, e.front().value());
+    //        Key key = e.front().key();
+    //        TraceEdge(tracer, &key, "Debugger WeakMap key");
+    //        if (key != e.front().key())
+    //            e.rekeyFront(key);
+    //        key.unsafeSet(nullptr);
+    //    }
+    //}
 
     bool hasKeyInZone(JS::Zone* zone) {
         CountMap::Ptr p = zoneCounts.lookup(zone);
