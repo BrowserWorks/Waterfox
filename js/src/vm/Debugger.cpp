@@ -2382,10 +2382,10 @@ Debugger::removeAllocationsTrackingForAllDebuggees()
 void
 Debugger::markCrossCompartmentEdges(JSTracer* trc)
 {
-    //objects.markCrossCompartmentEdges<DebuggerObject_trace>(trc);
-    //environments.markCrossCompartmentEdges<DebuggerEnv_trace>(trc);
-    //scripts.markCrossCompartmentEdges<DebuggerScript_trace>(trc);
-    //sources.markCrossCompartmentEdges<DebuggerSource_trace>(trc);
+    objects.markCrossCompartmentEdges<DebuggerObject_trace>(trc);
+    environments.markCrossCompartmentEdges<DebuggerEnv_trace>(trc);
+    scripts.markCrossCompartmentEdges<DebuggerScript_trace>(trc);
+    sources.markCrossCompartmentEdges<DebuggerSource_trace>(trc);
 
     // Because we don't have access to a `cx` inside
     // `Debugger::logTenurePromotion`, we can't hold onto CCWs inside the log,

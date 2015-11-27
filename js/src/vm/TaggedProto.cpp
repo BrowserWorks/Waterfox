@@ -4,28 +4,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "vm/TaggedProto.h"
-
-#include "jsfun.h"
-#include "jsobj.h"
-
-#include "gc/Barrier.h"
-
-namespace js {
-
 /* static */ void
-InternalGCMethods<TaggedProto>::preBarrier(TaggedProto& proto)
+js::InternalGCMethods<TaggedProto>::preBarrier(TaggedProto& proto)
 {
     InternalGCMethods<JSObject*>::preBarrier(proto.toObjectOrNull());
 }
 
 /* static */ void
-InternalGCMethods<TaggedProto>::postBarrier(TaggedProto* vp, TaggedProto prev, TaggedProto next)
+js::InternalGCMethods<TaggedProto>::postBarrier(TaggedProto* vp, TaggedProto prev, TaggedProto next)
 {
     JSObject* prevObj = prev.isObject() ? prev.toObject() : nullptr;
     JSObject* nextObj = next.isObject() ? next.toObject() : nullptr;
     InternalGCMethods<JSObject*>::postBarrier(reinterpret_cast<JSObject**>(vp), prevObj,
                                               nextObj);
 }
-
-} // namespace js

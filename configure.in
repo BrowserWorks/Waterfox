@@ -607,10 +607,14 @@ See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
         AC_SUBST(MSVC_APPCRT_DLL)
         AC_SUBST(MSVC_DESKTOPCRT_DLL)
 
-		# Send our CFLAGS to NSS
-		MOZ_CFLAGS_NSS=1
-		AC_DEFINE_UNQUOTED(GTEST_HAS_SEH, 0)
-
+        # Disable SEH on clang-cl because it doesn't implement them yet.
+        if test -z "$CLANG_CL"; then
+            AC_DEFINE(HAVE_SEH_EXCEPTIONS)
+        else
+            # Send our CFLAGS to NSS
+            MOZ_CFLAGS_NSS=1
+            AC_DEFINE_UNQUOTED(GTEST_HAS_SEH, 0)
+        fi
 
         if test -n "$WIN32_REDIST_DIR"; then
           if test ! -d "$WIN32_REDIST_DIR"; then
@@ -996,7 +1000,7 @@ MOZ_FS_LAYOUT=unix
 
 USE_DEPENDENT_LIBS=1
 
-_PLATFORM_DEFAULT_TOOLKIT=cairo-gtk3
+_PLATFORM_DEFAULT_TOOLKIT=cairo-gtk2
 
 if test -n "$CROSS_COMPILE"; then
     OS_TARGET="${target_os}"
@@ -1828,7 +1832,7 @@ case "$host" in
 *mingw*)
     if test -n "$_WIN32_MSVC"; then
         HOST_AR=lib
-        HOST_AR_FLAGS='-NOLOGO -OUT:$@ -FORCE'
+        HOST_AR_FLAGS='-NOLOGO -OUT:$@'
         HOST_CFLAGS="$HOST_CFLAGS -TC -nologo"
         HOST_RANLIB='echo ranlib'
     else
@@ -2183,7 +2187,7 @@ ia64*-hpux*)
             AS="$(basename "$AS_BIN")"
         fi
         AR='lib'
-        AR_FLAGS='-NOLOGO -OUT:$@ -FORCE'
+        AR_FLAGS='-NOLOGO -OUT:$@'
         AR_EXTRACT=
         RANLIB='echo not_ranlib'
         STRIP='echo not_strip'
@@ -2254,7 +2258,7 @@ ia64*-hpux*)
         CFLAGS="$CFLAGS -we4553"
         CXXFLAGS="$CXXFLAGS -we4553"
         LIBS="$LIBS kernel32.lib user32.lib gdi32.lib winmm.lib wsock32.lib advapi32.lib secur32.lib netapi32.lib"
-        MOZ_DEBUG_LDFLAGS='-DEBUG'
+        MOZ_DEBUG_LDFLAGS='-DEBUG -DEBUGTYPE:CV'
         WARNINGS_AS_ERRORS='-WX'
         MOZ_OPTIMIZE_FLAGS='-O1 -Oi'
         MOZ_FIX_LINK_PATHS=

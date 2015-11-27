@@ -365,7 +365,7 @@ UNICODE_STRING* GetImageInfoFromModule(HMODULE module, uint32* flags) {
 #pragma warning(push)
 #pragma warning(disable: 4509)
   UNICODE_STRING* out_name = NULL;
-  try {
+  __try {
     do {
       *flags = 0;
       base::win::PEImage pe(module);
@@ -388,7 +388,7 @@ UNICODE_STRING* GetImageInfoFromModule(HMODULE module, uint32* flags) {
           *flags |= MODULE_HAS_CODE;
       }
     } while (false);
-  } catch(...) {
+  } __except(EXCEPTION_EXECUTE_HANDLER) {
   }
 
   return out_name;
