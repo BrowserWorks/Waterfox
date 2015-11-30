@@ -26,6 +26,7 @@ pref("general.useragent.compatMode.firefox", false);
 // This pref exists only for testing purposes. In order to disable all
 // overrides by default, don't initialize UserAgentOverrides.jsm.
 pref("general.useragent.site_specific_overrides", true);
+pref("general.useragent.override.netflix.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:44.0) Gecko/20100101 Firefox/42.0"); 
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
 
