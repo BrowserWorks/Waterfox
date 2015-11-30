@@ -13,7 +13,8 @@
 #include "mozilla/Maybe.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/Monitor.h"
-#include "mozilla/Tuple.h"
+//#include "mozilla/Tuple.h"
+#include <tuple>
 
 #include "nsTArray.h"
 #include "nsThreadUtils.h"
@@ -864,9 +865,9 @@ namespace detail {
 template<typename ReturnType, typename ThisType, typename... ArgTypes, size_t... Indices>
 ReturnType
 MethodCallInvokeHelper(ReturnType(ThisType::*aMethod)(ArgTypes...), ThisType* aThisVal,
-                       Tuple<ArgTypes...>& aArgs, IndexSequence<Indices...>)
+                       std::tuple<ArgTypes...>& aArgs, IndexSequence<Indices...>)
 {
-  return ((*aThisVal).*aMethod)(Get<Indices>(aArgs)...);
+  return ((*aThisVal).*aMethod)(std::get<Indices>(aArgs)...);
 }
 
 // Non-templated base class to allow us to use MOZ_COUNT_{C,D}TOR, which cause
@@ -897,7 +898,7 @@ public:
 private:
   MethodType mMethod;
   nsRefPtr<ThisType> mThisVal;
-  Tuple<ArgTypes...> mArgs;
+  std::tuple<ArgTypes...> mArgs;
 };
 
 template<typename PromiseType, typename ThisType, typename ...ArgTypes>

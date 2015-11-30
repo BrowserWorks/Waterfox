@@ -12,7 +12,7 @@
 # analysis scripts, written in JS, will run over those database files to
 # produce the final analysis output.
 
-include $(topsrcdir)/config/config.mk
+include $(topsrcdir)/config/config.mkz
 
 # Tree to build and analyze, defaulting to the current tree
 TARGET_JSOBJDIR ?= $(MOZ_BUILD_ROOT)

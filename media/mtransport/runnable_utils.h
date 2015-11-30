@@ -13,7 +13,8 @@
 #include "mozilla/IndexSequence.h"
 #include "mozilla/Move.h"
 #include "mozilla/RefPtr.h"
-#include "mozilla/Tuple.h"
+//#include "mozilla/Tuple.h"
+#include <tuple>
 
 // Abstract base class for all of our templates
 namespace mozilla {
@@ -61,9 +62,9 @@ template<typename R>
 struct RunnableFunctionCallHelper
 {
   template<typename FunType, typename... Args, size_t... Indices>
-  static R apply(FunType func, Tuple<Args...>& args, IndexSequence<Indices...>)
+  static R apply(FunType func, std::tuple<Args...>& args, IndexSequence<Indices...>)
   {
-    return func(Get<Indices>(args)...);
+    return func(std::get<Indices>(args)...);
   }
 };
 
@@ -74,9 +75,9 @@ template<>
 struct RunnableFunctionCallHelper<void>
 {
   template<typename FunType, typename... Args, size_t... Indices>
-  static void apply(FunType func, Tuple<Args...>& args, IndexSequence<Indices...>)
+  static void apply(FunType func, std::tuple<Args...>& args, IndexSequence<Indices...>)
   {
-    func(Get<Indices>(args)...);
+    func(std::get<Indices>(args)...);
   }
 };
 
@@ -84,9 +85,9 @@ template<typename R>
 struct RunnableMethodCallHelper
 {
   template<typename Class, typename M, typename... Args, size_t... Indices>
-  static R apply(Class obj, M method, Tuple<Args...>& args, IndexSequence<Indices...>)
+  static R apply(Class obj, M method, std::tuple<Args...>& args, IndexSequence<Indices...>)
   {
-    return ((*obj).*method)(Get<Indices>(args)...);
+    return ((*obj).*method)(std::get<Indices>(args)...);
   }
 };
 
@@ -97,9 +98,9 @@ template<>
 struct RunnableMethodCallHelper<void>
 {
   template<typename Class, typename M, typename... Args, size_t... Indices>
-  static void apply(Class obj, M method, Tuple<Args...>& args, IndexSequence<Indices...>)
+  static void apply(Class obj, M method, std::tuple<Args...>& args, IndexSequence<Indices...>)
   {
-    ((*obj).*method)(Get<Indices>(args)...);
+    ((*obj).*method)(std::get<Indices>(args)...);
   }
 };
 
@@ -121,7 +122,7 @@ public:
 
 private:
   FunType mFunc;
-  Tuple<Args...> mArgs;
+  std::tuple<Args...> mArgs;
 };
 
 template<typename FunType, typename... Args>
@@ -147,7 +148,7 @@ public:
 private:
   Ret* mReturn;
   FunType mFunc;
-  Tuple<Args...> mArgs;
+  std::tuple<Args...> mArgs;
 };
 
 template<typename R, typename FunType, typename... Args>
@@ -173,7 +174,7 @@ public:
 private:
   Class mObj;
   M mMethod;
-  Tuple<Args...> mArgs;
+  std::tuple<Args...> mArgs;
 };
 
 template<typename Class, typename M, typename... Args>
@@ -200,7 +201,7 @@ private:
   Ret* mReturn;
   Class mObj;
   M mMethod;
-  Tuple<Args...> mArgs;
+  std::tuple<Args...> mArgs;
 };
 
 template<typename R, typename Class, typename M, typename... Args>

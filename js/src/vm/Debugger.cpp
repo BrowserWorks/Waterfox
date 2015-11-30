@@ -2376,10 +2376,10 @@ Debugger::removeAllocationsTrackingForAllDebuggees()
 }
 
 
-
+
 /*** Debugger JSObjects **************************************************************************/
 
-void
+/* void
 Debugger::markCrossCompartmentEdges(JSTracer* trc)
 {
     objects.markCrossCompartmentEdges<DebuggerObject_trace>(trc);
@@ -2418,7 +2418,7 @@ Debugger::markCrossCompartmentEdges(JSTracer* trc)
  * This method is also used during compacting GC to update cross compartment
  * pointers in zones that are not currently being compacted.
  */
-/* static */ void
+/* static void
 Debugger::markIncomingCrossCompartmentEdges(JSTracer* trc)
 {
     JSRuntime* rt = trc->runtime();
@@ -2433,7 +2433,7 @@ Debugger::markIncomingCrossCompartmentEdges(JSTracer* trc)
             dbg->markCrossCompartmentEdges(trc);
         }
     }
-}
+} */
 
 /*
  * This method has two tasks:

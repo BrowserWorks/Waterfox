@@ -140,7 +140,7 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
     }
 
   public:
-    template <void (traceValueEdges)(JSTracer*, JSObject*)>
+/*     template <void (traceValueEdges)(JSTracer*, JSObject*)>
     void markCrossCompartmentEdges(JSTracer* tracer) {
         for (Enum e(*static_cast<Base*>(this)); !e.empty(); e.popFront()) {
             traceValueEdges(tracer, e.front().value());
@@ -150,7 +150,7 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
                 e.rekeyFront(key);
             key.unsafeSet(nullptr);
         }
-    }
+    } */
 
     bool hasKeyInZone(JS::Zone* zone) {
         CountMap::Ptr p = zoneCounts.lookup(zone);
@@ -521,7 +521,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static void traceObject(JSTracer* trc, JSObject* obj);
     void trace(JSTracer* trc);
     static void finalize(FreeOp* fop, JSObject* obj);
-    void markCrossCompartmentEdges(JSTracer* tracer);
+    //void markCrossCompartmentEdges(JSTracer* tracer);
 
     static const Class jsclass;
 

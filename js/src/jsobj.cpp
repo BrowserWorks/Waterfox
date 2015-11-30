@@ -3451,11 +3451,11 @@ js::DumpBacktrace(JSContext* cx)
                         script, script->pcToOffset(i.pc()));
     }
     fprintf(stdout, "%s", sprinter.string());
-#ifdef XP_WIN32
+/* #ifdef XP_WIN32
     if (IsDebuggerPresent()) {
         OutputDebugStringA(sprinter.string());
     }
-#endif
+#endif */
 }
 
 
