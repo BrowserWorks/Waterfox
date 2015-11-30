@@ -236,17 +236,18 @@ public class DateTimePicker extends FrameLayout {
     }
 
     public DateTimePicker(Context context) {
-        this(context, "", "", PickersState.DATE, null, null);
+        this(context, "", "", PickersState.DATE);
     }
 
-    public DateTimePicker(Context context, String dateFormat, String dateTimeValue, PickersState state, String minDateValue, String maxDateValue) {
+    public DateTimePicker(Context context, String dateFormat, String dateTimeValue, PickersState state) {
         super(context);
         if (Versions.preHC) {
             throw new UnsupportedOperationException("Custom DateTimePicker is only available for SDK > 10");
         }
 
         setCurrentLocale(Locale.getDefault());
-
+        mMinDate.set(DEFAULT_START_YEAR, Calendar.JANUARY, 1);
+        mMaxDate.set(DEFAULT_END_YEAR, Calendar.DECEMBER, 31);
         mState = state;
         LayoutInflater inflater = LayoutInflater.from(context);
         inflater.inflate(R.layout.datetime_picker, this, true);
@@ -289,7 +290,6 @@ public class DateTimePicker extends FrameLayout {
             mCalendar.setFocusableInTouchMode(true);
             mCalendar.setMaxDate(mMaxDate.getTimeInMillis());
             mCalendar.setMinDate(mMinDate.getTimeInMillis());
-            mCalendar.setDate(mTempDate.getTimeInMillis(), false, false);
 
             mCalendar.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
                 @Override
@@ -323,29 +323,6 @@ public class DateTimePicker extends FrameLayout {
             Log.e(LOGTAG, "Error parsing format string: " + ex);
             mTempDate.setTimeInMillis(System.currentTimeMillis());
         }
-
-	// Set the min / max attribute.
-	try {
-	    if (minDateValue != null && !minDateValue.equals("")) {
-		mMinDate.setTime(new SimpleDateFormat(dateFormat).parse(minDateValue));
-	    } else {
-		mMinDate.set(DEFAULT_START_YEAR, Calendar.JANUARY, 1);
-	    }
-	} catch (Exception ex) {
-	    Log.e(LOGTAG, "Error parsing format sting: " + ex);
-	    mMinDate.set(DEFAULT_START_YEAR, Calendar.JANUARY, 1);
-	}
-
-	try {
-	    if (maxDateValue != null && !maxDateValue.equals("")) {
-		mMaxDate.setTime(new SimpleDateFormat(dateFormat).parse(maxDateValue));
-	    } else {
-		mMaxDate.set(DEFAULT_END_YEAR, Calendar.DECEMBER, 31);
-	    }
-	} catch (Exception ex) {
-	    Log.e(LOGTAG, "Error parsing format string: " + ex);
-	    mMaxDate.set(DEFAULT_END_YEAR, Calendar.DECEMBER, 31);
-	}
 
         // Initialize all spinners.
         mDaySpinner = setupSpinner(R.id.day, 1,

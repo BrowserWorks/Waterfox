@@ -118,7 +118,7 @@ SdpHelper::MsectionIsDisabled(const SdpMediaSection& msection) const
 }
 
 void
-SdpHelper::DisableMsection(Sdp* sdp, SdpMediaSection* msection)
+SdpHelper::DisableMsection(Sdp* sdp, SdpMediaSection* msection) const
 {
   // Make sure to remove the mid from any group attributes
   if (msection->GetAttributeList().HasAttribute(SdpAttribute::kMidAttribute)) {
@@ -228,27 +228,6 @@ SdpHelper::IsBundleSlave(const Sdp& sdp, uint16_t level)
 }
 
 nsresult
-SdpHelper::GetMidFromLevel(const Sdp& sdp,
-                           uint16_t level,
-                           std::string* mid)
-{
-  if (level >= sdp.GetMediaSectionCount()) {
-    SDP_SET_ERROR("Index " << level << " out of range");
-    return NS_ERROR_INVALID_ARG;
-  }
-
-  const SdpMediaSection& msection = sdp.GetMediaSection(level);
-  const SdpAttributeList& attrList = msection.GetAttributeList();
-
-  // grab the mid and set the outparam
-  if (attrList.HasAttribute(SdpAttribute::kMidAttribute)) {
-    *mid = attrList.GetMid();
-  }
-
-  return NS_OK;
-}
-
-nsresult
 SdpHelper::AddCandidateToSdp(Sdp* sdp,
                              const std::string& candidateUntrimmed,
                              const std::string& mid,
@@ -270,34 +249,10 @@ SdpHelper::AddCandidateToSdp(Sdp* sdp,
 
   std::string candidate = candidateUntrimmed.substr(begin);
 
-  // https://tools.ietf.org/html/draft-ietf-rtcweb-jsep-11#section-3.4.2.1
-  // Implementations receiving an ICE Candidate object MUST use the MID if
-  // present, or the m= line index, if not (as it could have come from a
-  // non-JSEP endpoint). (bug 1095793)
-  SdpMediaSection* msection = 0;
-  if (!mid.empty()) {
-    // FindMsectionByMid could return nullptr
-    msection = FindMsectionByMid(*sdp, mid);
+  // TODO(bug 1095793): mid
 
-    // Check to make sure mid matches what we'd get by
-    // looking up the m= line using the level. (mjf)
-    std::string checkMid;
-    nsresult rv = GetMidFromLevel(*sdp, level, &checkMid);
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
-    if (mid != checkMid) {
-      SDP_SET_ERROR("Mismatch between mid and level - \"" << mid
-                     << "\" is not the mid for level " << level
-                     << "; \"" << checkMid << "\" is");
-      return NS_ERROR_INVALID_ARG;
-    }
-  }
-  if (!msection) {
-    msection = &(sdp->GetMediaSection(level));
-  }
-
-  SdpAttributeList& attrList = msection->GetAttributeList();
+  SdpMediaSection& msection = sdp->GetMediaSection(level);
+  SdpAttributeList& attrList = msection.GetAttributeList();
 
   UniquePtr<SdpMultiStringAttribute> candidates;
   if (!attrList.HasAttribute(SdpAttribute::kCandidateAttribute)) {
@@ -578,6 +533,28 @@ SdpHelper::FindMsectionByMid(Sdp& sdp,
   return nullptr;
 }
 
+void
+SdpHelper::SetSsrcs(const std::vector<uint32_t>& ssrcs,
+                    const std::string& cname,
+                    SdpMediaSection* msection) const
+{
+  if (ssrcs.empty()) {
+    msection->GetAttributeList().RemoveAttribute(SdpAttribute::kSsrcAttribute);
+    return;
+  }
+
+  UniquePtr<SdpSsrcAttributeList> ssrcAttr(new SdpSsrcAttributeList);
+  for (auto ssrc : ssrcs) {
+    // When using ssrc attributes, we are required to at least have a cname.
+    // (See https://tools.ietf.org/html/rfc5576#section-6.1)
+    std::string cnameAttr("cname:");
+    cnameAttr += cname;
+    ssrcAttr->PushEntry(ssrc, cnameAttr);
+  }
+
+  msection->GetAttributeList().SetAttribute(ssrcAttr.release());
+}
+
 nsresult
 SdpHelper::CopyStickyParams(const SdpMediaSection& source,
                             SdpMediaSection* dest)
@@ -657,7 +634,8 @@ SdpHelper::GetProtocolForMediaType(SdpMediaSection::MediaType type)
     return SdpMediaSection::kDtlsSctp;
   }
 
-  return SdpMediaSection::kUdpTlsRtpSavpf;
+  // TODO(bug 1094447): Use kUdpTlsRtpSavpf once it interops well
+  return SdpMediaSection::kRtpSavpf;
 }
 
 void

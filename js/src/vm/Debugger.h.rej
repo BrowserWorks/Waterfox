@@ -1,0 +1,11 @@
+--- js/src/vm/Debugger.h
++++ js/src/vm/Debugger.h
+@@ -521,7 +521,7 @@
+     static void traceObject(JSTracer* trc, JSObject* obj);
+     void trace(JSTracer* trc);
+     static void finalize(FreeOp* fop, JSObject* obj);
+-    void markCrossCompartmentEdges(JSTracer* tracer);
++    //void markCrossCompartmentEdges(JSTracer* tracer);
+ 
+     static const Class jsclass;
+ 

@@ -4,16 +4,16 @@
 
 "use strict";
 
-// Tests that changes made to the cubic-bezier timing-function in the
-// cubic-bezier tooltip are reverted when ESC is pressed.
+// Test that changes made to the cubic-bezier timing-function in the
+// cubic-bezier tooltip are reverted when ESC is pressed
 
-const TEST_URI = `
-  <style type='text/css'>
-    body {
-      animation-timing-function: linear;
-    }
-  </style>
-`;
+let TEST_URI = [
+  "<style type='text/css'>",
+  "  body {",
+  "    animation-timing-function: linear;",
+  "  }",
+  "</style>",
+].join("\n");
 
 add_task(function*() {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));

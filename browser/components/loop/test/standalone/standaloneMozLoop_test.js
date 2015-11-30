@@ -83,7 +83,8 @@ describe("loop.StandaloneMozLoop", function() {
 
       var roomDetails = {
         roomName: "fakeName",
-        roomUrl: "http://invalid"
+        roomUrl: "http://invalid",
+        roomOwner: "gavin"
       };
 
       requests[0].respond(200, {"Content-Type": "application/json"},

@@ -16,7 +16,6 @@ import org.json.JSONObject;
 import android.content.Context;
 import android.view.View;
 import org.mozilla.gecko.toolbar.SiteIdentityPopup;
-import org.mozilla.gecko.util.ColorUtils;
 
 public class ContentSecurityDoorHanger extends DoorHanger {
     private static final String LOGTAG = "GeckoSecurityDoorHanger";
@@ -81,11 +80,11 @@ public class ContentSecurityDoorHanger extends DoorHanger {
                 if (enabled) {
                     mMessage.setText(R.string.doorhanger_tracking_message_enabled);
                     mSecurityState.setText(R.string.doorhanger_tracking_state_enabled);
-                    mSecurityState.setTextColor(ColorUtils.getColor(getContext(), R.color.affirmative_green));
+                    mSecurityState.setTextColor(getResources().getColor(R.color.affirmative_green));
                 } else {
                     mMessage.setText(R.string.doorhanger_tracking_message_disabled);
                     mSecurityState.setText(R.string.doorhanger_tracking_state_disabled);
-                    mSecurityState.setTextColor(ColorUtils.getColor(getContext(), R.color.rejection_red));
+                    mSecurityState.setTextColor(getResources().getColor(R.color.rejection_red));
                 }
                 mMessage.setVisibility(VISIBLE);
                 mSecurityState.setVisibility(VISIBLE);

@@ -639,10 +639,10 @@ main(void) {
       printf("FAILED\n");
       exit (30);
     }
-
-    nsAutoCString myEntStr;
-    myEnt->GetString(myEntStr);
-    printf("Found %s\n", myEntStr.get());
+    
+    nsAutoCString str;
+    myEnt->GetString(str);
+    printf("Found %s\n", str.get());
   }
 
   printf("Testing nonexistent entries...");

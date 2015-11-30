@@ -11,7 +11,6 @@ import android.text.Layout;
 import android.util.AttributeSet;
 
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.widget.themed.ThemedTextView;
 
 /**
  * An implementation of FadedTextView should fade the end of the text

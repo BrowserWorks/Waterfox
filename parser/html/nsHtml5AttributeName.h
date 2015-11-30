@@ -361,7 +361,6 @@ class nsHtml5AttributeName
     static nsHtml5AttributeName* ATTR_LANGUAGE;
     static nsHtml5AttributeName* ATTR_TEMPLATE;
     static nsHtml5AttributeName* ATTR_TABINDEX;
-    static nsHtml5AttributeName* ATTR_PROPERTY;
     static nsHtml5AttributeName* ATTR_READONLY;
     static nsHtml5AttributeName* ATTR_SELECTED;
     static nsHtml5AttributeName* ATTR_ROWLINES;

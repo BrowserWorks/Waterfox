@@ -20,4 +20,6 @@ UNIFIED_SOURCES += [
     'OpusParser.cpp',
 ]
 
+FAIL_ON_WARNINGS = True
+
 FINAL_LIBRARY = 'xul'

@@ -110,6 +110,7 @@ public:
     COPY_OPT_STRING_FIELD(mIfname, EmptyString())
     COPY_OPT_STRING_FIELD(mIp, EmptyString())
     COPY_OPT_FIELD(mPrefixLength, 0)
+    COPY_OPT_STRING_FIELD(mOldIfname, EmptyString())
     COPY_OPT_STRING_FIELD(mMode, EmptyString())
     COPY_OPT_FIELD(mReport, false)
     COPY_OPT_FIELD(mEnabled, false)
@@ -162,6 +163,7 @@ public:
   nsString mIfname;
   nsString mIp;
   uint32_t mPrefixLength;
+  nsString mOldIfname;
   nsString mMode;
   bool mReport;
   bool mEnabled;

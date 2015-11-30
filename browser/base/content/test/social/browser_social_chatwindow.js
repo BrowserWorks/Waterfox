@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
+let SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
 
-var manifests = [
+let manifests = [
   {
     name: "provider@example.com",
     origin: "https://example.com",
@@ -28,14 +28,14 @@ var manifests = [
   }
 ];
 
-var ports = [];
+let ports = [];
 function getProviderPort(provider) {
   let port = provider.getWorkerPort();
   ok(port, "provider has a port");
   ports.push(port);
   return port;
 }
-var chatId = 0;
+let chatId = 0;
 function openChat(provider, callback) {
   let chatUrl = provider.origin + "/browser/browser/base/content/test/social/social_chat.html";
   let port = getProviderPort(provider);

@@ -75,7 +75,7 @@ function test() {
   finish();
 }
 
-var gThread = synthesizeProfileForTest([{
+let gThread = synthesizeProfileForTest([{
   time: 5,
   frames: [
     { category: 8,  location: "(root)" },

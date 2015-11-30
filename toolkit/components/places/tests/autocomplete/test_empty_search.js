@@ -8,7 +8,7 @@
  */
 
 // Define some shared uris and titles (each page needs its own uri)
-var kURIs = [
+let kURIs = [
   "http://foo/0",
   "http://foo/1",
   "http://foo/2",
@@ -16,7 +16,7 @@ var kURIs = [
   "http://foo/4",
   "http://foo/5",
 ];
-var kTitles = [
+let kTitles = [
   "title",
 ];
 
@@ -37,7 +37,7 @@ removePages([4,5]);
 
 // Provide for each test: description; search terms; array of gPages indices of
 // pages that should match; optional function to be run before the test
-var gTests = [
+let gTests = [
   ["0: Match everything",
    "foo", [0,1,2,3,4,5]],
   ["1: Match only typed history",

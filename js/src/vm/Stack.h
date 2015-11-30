@@ -275,15 +275,15 @@ class NullFramePtr : public AbstractFramePtr
 /* Flags specified for a frame as it is constructed. */
 enum InitialFrameFlags {
     INITIAL_NONE           =          0,
-    INITIAL_CONSTRUCT      =       0x20, /* == InterpreterFrame::CONSTRUCTING, asserted below */
+    INITIAL_CONSTRUCT      =       0x10, /* == InterpreterFrame::CONSTRUCTING, asserted below */
 };
 
 enum ExecuteType {
     EXECUTE_GLOBAL         =        0x1, /* == InterpreterFrame::GLOBAL */
-    EXECUTE_MODULE         =        0x4, /* == InterpreterFrame::GLOBAL */
-    EXECUTE_DIRECT_EVAL    =        0x8, /* == InterpreterFrame::EVAL */
-    EXECUTE_INDIRECT_EVAL  =        0x9, /* == InterpreterFrame::GLOBAL | EVAL */
-    EXECUTE_DEBUG          =       0x18, /* == InterpreterFrame::EVAL | DEBUGGER_EVAL */
+    EXECUTE_DIRECT_EVAL    =        0x4, /* == InterpreterFrame::EVAL */
+    EXECUTE_INDIRECT_EVAL  =        0x5, /* == InterpreterFrame::GLOBAL | EVAL */
+    EXECUTE_DEBUG          =        0xc, /* == InterpreterFrame::EVAL | DEBUGGER */
+    EXECUTE_DEBUG_GLOBAL   =        0xd  /* == InterpreterFrame::EVAL | DEBUGGER | GLOBAL */
 };
 
 /*****************************************************************************/
@@ -295,10 +295,9 @@ class InterpreterFrame
         /* Primary frame type */
         GLOBAL                 =        0x1,  /* frame pushed for a global script */
         FUNCTION               =        0x2,  /* frame pushed for a scripted call */
-        MODULE                 =        0x4,  /* frame pushed for a module */
 
         /* Frame subtypes */
-        EVAL                   =        0x8,  /* frame pushed for eval() or debugger eval */
+        EVAL                   =        0x4,  /* frame pushed for eval() or debugger eval */
 
 
         /*
@@ -313,16 +312,16 @@ class InterpreterFrame
          *   previous frame in memory. Iteration should treat
          *   evalInFramePrev_ as this frame's previous frame.
          */
-        DEBUGGER_EVAL          =       0x10,
+        DEBUGGER_EVAL          =        0x8,
 
-        CONSTRUCTING           =       0x20,  /* frame is for a constructor invocation */
+        CONSTRUCTING           =       0x10,  /* frame is for a constructor invocation */
 
-        RESUMED_GENERATOR      =       0x40,  /* frame is for a resumed generator invocation */
+        RESUMED_GENERATOR      =       0x20,  /* frame is for a resumed generator invocation */
 
-        /* (0x80 is unused) */
+        /* (0x40 and 0x80 are unused) */
 
         /* Function prologue state */
-        HAS_CALL_OBJ           =      0x100,  /* CallObject created for needsCallObject function */
+        HAS_CALL_OBJ           =      0x100,  /* CallObject created for heavyweight fun */
         HAS_ARGS_OBJ           =      0x200,  /* ArgumentsObject created for needsArgsObj script */
 
         /* Lazy frame initialization */
@@ -364,7 +363,6 @@ class InterpreterFrame
     union {                             /* describes what code is executing in a */
         JSScript*       script;        /*   global frame */
         JSFunction*     fun;           /*   function frame, pre GetScopeChain */
-        ModuleObject*   module;        /*   module frame */
     } exec;
     union {                             /* describes the arguments of a function */
         unsigned        nactual;        /*   for non-eval frames */
@@ -468,7 +466,6 @@ class InterpreterFrame
      *
      *  global frame:   execution of global code or an eval in global code
      *  function frame: execution of function code or an eval in a function
-     *  module frame: execution of a module
      */
 
     bool isFunctionFrame() const {
@@ -477,10 +474,6 @@ class InterpreterFrame
 
     bool isGlobalFrame() const {
         return !!(flags_ & GLOBAL);
-    }
-
-    bool isModuleFrame() const {
-        return !!(flags_ & MODULE);
     }
 
     /*
@@ -515,7 +508,9 @@ class InterpreterFrame
         return isEvalFrame() && !script()->strict();
     }
 
-    bool isDirectEvalFrame() const;
+    bool isDirectEvalFrame() const {
+        return isEvalFrame() && script()->staticLevel() > 0;
+    }
 
     bool isNonStrictDirectEvalFrame() const {
         return isNonStrictEvalFrame() && isDirectEvalFrame();
@@ -658,10 +653,11 @@ class InterpreterFrame
      */
 
     JSScript* script() const {
-        if (isFunctionFrame())
-            return isEvalFrame() ? u.evalScript : fun()->nonLazyScript();
-        MOZ_ASSERT(isGlobalFrame() || isModuleFrame());
-        return exec.script;
+        return isFunctionFrame()
+               ? isEvalFrame()
+                 ? u.evalScript
+                 : fun()->nonLazyScript()
+               : exec.script;
     }
 
     /* Return the previous frame's pc. */
@@ -692,17 +688,6 @@ class InterpreterFrame
 
     JSFunction* maybeFun() const {
         return isFunctionFrame() ? fun() : nullptr;
-    }
-
-    /* Module */
-
-    ModuleObject* module() const {
-        MOZ_ASSERT(isModuleFrame());
-        return exec.module;
-    }
-
-    ModuleObject* maybeModule() const {
-        return isModuleFrame() ? module() : nullptr;
     }
 
     /*
@@ -1658,10 +1643,6 @@ class JitActivation : public Activation
     // Look up a rematerialized frame by the fp. If inlineDepth is out of
     // bounds of what has been rematerialized, nullptr is returned.
     RematerializedFrame* lookupRematerializedFrame(uint8_t* top, size_t inlineDepth = 0);
-
-    // Remove all rematerialized frames associated with the fp top from the
-    // Debugger.
-    void removeRematerializedFramesFromDebugger(JSContext* cx, uint8_t* top);
 
     bool hasRematerializedFrame(uint8_t* top, size_t inlineDepth = 0) {
         return !!lookupRematerializedFrame(top, inlineDepth);

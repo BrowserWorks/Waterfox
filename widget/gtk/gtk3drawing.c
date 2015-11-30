@@ -1124,30 +1124,16 @@ moz_gtk_scrollbar_button_paint(cairo_t *cr, GdkRectangle* rect,
     style = gtk_widget_get_style_context(scrollbar);
   
     gtk_style_context_save(style);
-    gtk_style_context_add_class(style, GTK_STYLE_CLASS_BUTTON);
+    gtk_style_context_add_class(style, GTK_STYLE_CLASS_SCROLLBAR);  
     gtk_style_context_set_state(style, state_flags);
-    if (arrow_angle == ARROW_RIGHT) {
-        gtk_style_context_add_class(style, GTK_STYLE_CLASS_RIGHT);
-    } else if (arrow_angle == ARROW_DOWN) {
-        gtk_style_context_add_class(style, GTK_STYLE_CLASS_BOTTOM);
-    } else if (arrow_angle == ARROW_LEFT) {
-        gtk_style_context_add_class(style, GTK_STYLE_CLASS_LEFT);
-    } else {
-        gtk_style_context_add_class(style, GTK_STYLE_CLASS_TOP);
-    }
   
     gtk_render_background(style, cr, rect->x, rect->y, rect->width, rect->height);
     gtk_render_frame(style, cr, rect->x, rect->y, rect->width, rect->height);
 
     arrow_rect.width = rect->width / 2;
     arrow_rect.height = rect->height / 2;
-    
-    gfloat arrow_scaling;
-    gtk_widget_style_get (scrollbar, "arrow-scaling", &arrow_scaling, NULL);
-
-    gdouble arrow_size = MIN(rect->width, rect->height) * arrow_scaling;
-    arrow_rect.x = rect->x + (rect->width - arrow_size) / 2;
-    arrow_rect.y = rect->y + (rect->height - arrow_size) / 2;
+    arrow_rect.x = rect->x + (rect->width - arrow_rect.width) / 2;
+    arrow_rect.y = rect->y + (rect->height - arrow_rect.height) / 2;
 
     if (state_flags & GTK_STATE_FLAG_ACTIVE) {
         gtk_widget_style_get(scrollbar,
@@ -1162,7 +1148,7 @@ moz_gtk_scrollbar_button_paint(cairo_t *cr, GdkRectangle* rect,
     gtk_render_arrow(style, cr, arrow_angle,
                      arrow_rect.x,
                      arrow_rect.y, 
-                     arrow_size);
+                     arrow_rect.width);
   
     gtk_style_context_restore(style);
 
@@ -2034,7 +2020,6 @@ moz_gtk_progress_chunk_paint(cairo_t *cr, GdkRectangle* rect,
 
     style = gtk_widget_get_style_context(gProgressWidget);
     gtk_style_context_save(style);
-    gtk_style_context_remove_class(style, GTK_STYLE_CLASS_TROUGH);
     gtk_style_context_add_class(style, GTK_STYLE_CLASS_PROGRESSBAR);
 
     if (widget == MOZ_GTK_PROGRESS_CHUNK_INDETERMINATE ||
@@ -2070,15 +2055,12 @@ moz_gtk_progress_chunk_paint(cairo_t *cr, GdkRectangle* rect,
         rect->width = barSize;
       }
     }
-
+  
+    gtk_render_background(style, cr, rect->x, rect->y, rect->width, rect->height);
     // gtk_render_activity was used to render progress chunks on GTK versions
     // before 3.13.7, see bug 1173907.
-    if (!gtk_check_version(3, 13, 7)) {
-      gtk_render_background(style, cr, rect->x, rect->y, rect->width, rect->height);
-      gtk_render_frame(style, cr, rect->x, rect->y, rect->width, rect->height);
-    } else {
+    if (gtk_check_version(3, 13, 7))
       gtk_render_activity(style, cr, rect->x, rect->y, rect->width, rect->height);
-    }
     gtk_style_context_restore(style);
 
     return MOZ_GTK_SUCCESS;
@@ -2737,11 +2719,13 @@ moz_gtk_get_widget_border(GtkThemeWidgetType widget, gint* left, gint* top,
         }
     case MOZ_GTK_TREE_HEADER_CELL:
         {
-            /* A Tree Header in GTK is just a different styled button
+            /* A Tree Header in GTK is just a different styled button 
              * It must be placed in a TreeView for getting the correct style
              * assigned.
-             * That is why the following code is the same as for MOZ_GTK_BUTTON.
+             * That is why the following code is the same as for MOZ_GTK_BUTTON.  
              * */
+            GtkStyleContext *style;
+
             ensure_tree_header_cell_widget();
             *left = *top = *right = *bottom = gtk_container_get_border_width(GTK_CONTAINER(gTreeHeaderCellWidget));
 

@@ -3,11 +3,11 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 /* Bug 653427 */
 
-var tempScope = {};
+let tempScope = {};
 Cu.import("resource://gre/modules/NetUtil.jsm", tempScope);
 Cu.import("resource://gre/modules/FileUtils.jsm", tempScope);
-var NetUtil = tempScope.NetUtil;
-var FileUtils = tempScope.FileUtils;
+let NetUtil = tempScope.NetUtil;
+let FileUtils = tempScope.FileUtils;
 
 // only finish() when correct number of tests are done
 const expected = 9;

@@ -47,9 +47,8 @@
 
 /* reference_count */
 
-#define HB_REFERENCE_COUNT_INERT_VALUE -1
-#define HB_REFERENCE_COUNT_POISON_VALUE -0x0000DEAD
-#define HB_REFERENCE_COUNT_INIT {HB_ATOMIC_INT_INIT(HB_REFERENCE_COUNT_INERT_VALUE)}
+#define HB_REFERENCE_COUNT_INVALID_VALUE -1
+#define HB_REFERENCE_COUNT_INIT {HB_ATOMIC_INT_INIT(HB_REFERENCE_COUNT_INVALID_VALUE)}
 
 struct hb_reference_count_t
 {
@@ -59,10 +58,9 @@ struct hb_reference_count_t
   inline int get_unsafe (void) const { return ref_count.get_unsafe (); }
   inline int inc (void) { return ref_count.inc (); }
   inline int dec (void) { return ref_count.dec (); }
-  inline void finish (void) { ref_count.set_unsafe (HB_REFERENCE_COUNT_POISON_VALUE); }
+  inline void finish (void) { ref_count.set_unsafe (HB_REFERENCE_COUNT_INVALID_VALUE); }
 
-  inline bool is_inert (void) const { return ref_count.get_unsafe () == HB_REFERENCE_COUNT_INERT_VALUE; }
-  inline bool is_valid (void) const { return ref_count.get_unsafe () > 0; }
+  inline bool is_invalid (void) const { return ref_count.get_unsafe () == HB_REFERENCE_COUNT_INVALID_VALUE; }
 };
 
 
@@ -144,12 +142,7 @@ static inline void hb_object_init (Type *obj)
 template <typename Type>
 static inline bool hb_object_is_inert (const Type *obj)
 {
-  return unlikely (obj->header.ref_count.is_inert ());
-}
-template <typename Type>
-static inline bool hb_object_is_valid (const Type *obj)
-{
-  return likely (obj->header.ref_count.is_valid ());
+  return unlikely (obj->header.ref_count.is_invalid ());
 }
 template <typename Type>
 static inline Type *hb_object_reference (Type *obj)
@@ -157,7 +150,6 @@ static inline Type *hb_object_reference (Type *obj)
   hb_object_trace (obj, HB_FUNC);
   if (unlikely (!obj || hb_object_is_inert (obj)))
     return obj;
-  assert (hb_object_is_valid (obj));
   obj->header.ref_count.inc ();
   return obj;
 }
@@ -167,7 +159,6 @@ static inline bool hb_object_destroy (Type *obj)
   hb_object_trace (obj, HB_FUNC);
   if (unlikely (!obj || hb_object_is_inert (obj)))
     return false;
-  assert (hb_object_is_valid (obj));
   if (obj->header.ref_count.dec () != 1)
     return false;
 
@@ -184,7 +175,6 @@ static inline bool hb_object_set_user_data (Type               *obj,
 {
   if (unlikely (!obj || hb_object_is_inert (obj)))
     return false;
-  assert (hb_object_is_valid (obj));
   return obj->header.user_data.set (key, data, destroy, replace);
 }
 
@@ -194,7 +184,6 @@ static inline void *hb_object_get_user_data (Type               *obj,
 {
   if (unlikely (!obj || hb_object_is_inert (obj)))
     return NULL;
-  assert (hb_object_is_valid (obj));
   return obj->header.user_data.get (key);
 }
 

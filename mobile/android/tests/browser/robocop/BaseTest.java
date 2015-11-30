@@ -22,6 +22,7 @@ import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoThread;
+import org.mozilla.gecko.GeckoThread.LaunchState;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.RobocopUtils;
 import org.mozilla.gecko.Tab;
@@ -89,7 +90,7 @@ abstract class BaseTest extends BaseRobocopTest {
     protected void blockForGeckoReady() {
         try {
             Actions.EventExpecter geckoReadyExpector = mActions.expectGeckoEvent("Gecko:Ready");
-            if (!GeckoThread.isRunning()) {
+            if (!GeckoThread.checkLaunchState(LaunchState.GeckoRunning)) {
                 geckoReadyExpector.blockForEvent(GECKO_READY_WAIT_MS, true);
             }
             geckoReadyExpector.unregisterListener();
@@ -183,7 +184,7 @@ abstract class BaseTest extends BaseRobocopTest {
 
         // Send the keys for the URL we want to enter
         mSolo.clearEditText(urlEditView);
-        mSolo.typeText(urlEditView, url);
+        mSolo.enterText(urlEditView, url);
 
         // Get the URL text from the URL bar EditText view
         final String urlBarText = urlEditView.getText().toString();

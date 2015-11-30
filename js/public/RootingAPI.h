@@ -596,13 +596,12 @@ class DispatchWrapper
     T storage;
 
   public:
-    template <typename U>
-    MOZ_IMPLICIT DispatchWrapper(U&& initial)
-      : tracer(&T::trace),
-        storage(mozilla::Forward<U>(initial))
-    { }
-
     // Mimic a pointer type, so that we can drop into Rooted.
+    MOZ_IMPLICIT DispatchWrapper(const T& initial) : tracer(&T::trace), storage(initial) {}
+    MOZ_IMPLICIT DispatchWrapper(T&& initial)
+      : tracer(&T::trace),
+        storage(mozilla::Forward<T>(initial))
+    { }
     T* operator &() { return &storage; }
     const T* operator &() const { return &storage; }
     operator T&() { return storage; }
@@ -654,7 +653,7 @@ namespace JS {
  * specialization, define a RootedBase<T> specialization containing them.
  */
 template <typename T>
-class MOZ_RAII Rooted : public js::RootedBase<T>
+class MOZ_STACK_CLASS Rooted : public js::RootedBase<T>
 {
     static_assert(!mozilla::IsConvertible<T, Traceable*>::value,
                   "Rooted takes pointer or Traceable types but not Traceable* type");
@@ -669,16 +668,20 @@ class MOZ_RAII Rooted : public js::RootedBase<T>
 
   public:
     template <typename RootingContext>
-    explicit Rooted(const RootingContext& cx)
+    explicit Rooted(const RootingContext& cx
+                    MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
       : ptr(js::GCMethods<T>::initial())
     {
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
         registerWithRootLists(js::RootListsForRootingContext(cx));
     }
 
     template <typename RootingContext, typename S>
-    Rooted(const RootingContext& cx, S&& initial)
+    Rooted(const RootingContext& cx, S&& initial
+           MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
       : ptr(mozilla::Forward<S>(initial))
     {
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
         registerWithRootLists(js::RootListsForRootingContext(cx));
     }
 
@@ -726,6 +729,8 @@ class MOZ_RAII Rooted : public js::RootedBase<T>
         T>::Type;
     MaybeWrapped ptr;
 
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+
     Rooted(const Rooted&) = delete;
 };
 
@@ -771,14 +776,24 @@ class HandleBase<JSObject*>
 
 /* Interface substitute for Rooted<T> which does not root the variable's memory. */
 template <typename T>
-class MOZ_RAII FakeRooted : public RootedBase<T>
+class FakeRooted : public RootedBase<T>
 {
   public:
     template <typename CX>
-    explicit FakeRooted(CX* cx) : ptr(GCMethods<T>::initial()) {}
+    explicit FakeRooted(CX* cx
+                        MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+      : ptr(GCMethods<T>::initial())
+    {
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+    }
 
     template <typename CX>
-    FakeRooted(CX* cx, T initial) : ptr(initial) {}
+    explicit FakeRooted(CX* cx, T initial
+                        MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+      : ptr(initial)
+    {
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+    }
 
     DECLARE_POINTER_COMPARISON_OPS(T);
     DECLARE_POINTER_CONSTREF_OPS(T);
@@ -792,6 +807,8 @@ class MOZ_RAII FakeRooted : public RootedBase<T>
     void set(const T& value) {
         ptr = value;
     }
+
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
     FakeRooted(const FakeRooted&) = delete;
 };
@@ -1138,30 +1155,6 @@ CallTraceCallbackOnNonHeap(T* v, const TraceCallbacks& aCallbacks, const char* a
 
 } /* namespace gc */
 } /* namespace js */
-
-// mozilla::Swap uses a stack temporary, which prevents classes like Heap<T>
-// from being declared MOZ_HEAP_CLASS.
-namespace mozilla {
-
-template <typename T>
-inline void
-Swap(JS::Heap<T>& aX, JS::Heap<T>& aY)
-{
-    T tmp = aX;
-    aX = aY;
-    aY = tmp;
-}
-
-template <typename T>
-inline void
-Swap(JS::TenuredHeap<T>& aX, JS::TenuredHeap<T>& aY)
-{
-    T tmp = aX;
-    aX = aY;
-    aY = tmp;
-}
-
-} /* namespace mozilla */
 
 #undef DELETE_ASSIGNMENT_OPS
 

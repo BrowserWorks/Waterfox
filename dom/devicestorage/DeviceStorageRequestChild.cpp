@@ -16,14 +16,33 @@ namespace dom {
 namespace devicestorage {
 
 DeviceStorageRequestChild::DeviceStorageRequestChild()
+  : mCallback(nullptr)
 {
   MOZ_COUNT_CTOR(DeviceStorageRequestChild);
 }
 
-DeviceStorageRequestChild::DeviceStorageRequestChild(DeviceStorageRequest* aRequest)
+DeviceStorageRequestChild::DeviceStorageRequestChild(DOMRequest* aRequest,
+                                                     DeviceStorageFile* aDSFile)
   : mRequest(aRequest)
+  , mDSFile(aDSFile)
+  , mCallback(nullptr)
 {
   MOZ_ASSERT(aRequest);
+  MOZ_ASSERT(aDSFile);
+  MOZ_COUNT_CTOR(DeviceStorageRequestChild);
+}
+
+DeviceStorageRequestChild::DeviceStorageRequestChild(DOMRequest* aRequest,
+                                                     DeviceStorageFile* aDSFile,
+                                                     DeviceStorageFileDescriptor* aDSFileDescriptor)
+  : mRequest(aRequest)
+  , mDSFile(aDSFile)
+  , mDSFileDescriptor(aDSFileDescriptor)
+  , mCallback(nullptr)
+{
+  MOZ_ASSERT(aRequest);
+  MOZ_ASSERT(aDSFile);
+  MOZ_ASSERT(aDSFileDescriptor);
   MOZ_COUNT_CTOR(DeviceStorageRequestChild);
 }
 
@@ -35,131 +54,172 @@ bool
 DeviceStorageRequestChild::
   Recv__delete__(const DeviceStorageResponseValue& aValue)
 {
+  if (mCallback) {
+    mCallback->RequestComplete();
+    mCallback = nullptr;
+  }
+
+  nsCOMPtr<nsPIDOMWindow> window = mRequest->GetOwner();
+  if (!window) {
+    return true;
+  }
+
   switch (aValue.type()) {
 
     case DeviceStorageResponseValue::TErrorResponse:
     {
-      DS_LOG_INFO("error %u", mRequest->GetId());
       ErrorResponse r = aValue;
-      mRequest->Reject(r.error());
+      mRequest->FireError(r.error());
       break;
     }
 
     case DeviceStorageResponseValue::TSuccessResponse:
     {
-      DS_LOG_INFO("success %u", mRequest->GetId());
       nsString fullPath;
-      mRequest->GetFile()->GetFullPath(fullPath);
-      mRequest->Resolve(fullPath);
+      mDSFile->GetFullPath(fullPath);
+      AutoJSContext cx;
+      JS::Rooted<JS::Value> result(cx);
+      StringToJsval(window, fullPath, &result);
+      mRequest->FireSuccess(result);
       break;
     }
 
     case DeviceStorageResponseValue::TFileDescriptorResponse:
     {
-      DS_LOG_INFO("fd %u", mRequest->GetId());
       FileDescriptorResponse r = aValue;
 
-      DeviceStorageFile* file = mRequest->GetFile();
-      DeviceStorageFileDescriptor* descriptor = mRequest->GetFileDescriptor();
       nsString fullPath;
-      file->GetFullPath(fullPath);
-      descriptor->mDSFile = file;
-      descriptor->mFileDescriptor = r.fileDescriptor();
-      mRequest->Resolve(fullPath);
+      mDSFile->GetFullPath(fullPath);
+      AutoJSContext cx;
+      JS::Rooted<JS::Value> result(cx);
+      StringToJsval(window, fullPath, &result);
+
+      mDSFileDescriptor->mDSFile = mDSFile;
+      mDSFileDescriptor->mFileDescriptor = r.fileDescriptor();
+      mRequest->FireSuccess(result);
       break;
     }
 
     case DeviceStorageResponseValue::TBlobResponse:
     {
-      DS_LOG_INFO("blob %u", mRequest->GetId());
       BlobResponse r = aValue;
       BlobChild* actor = static_cast<BlobChild*>(r.blobChild());
-      nsRefPtr<BlobImpl> blobImpl = actor->GetBlobImpl();
-      mRequest->Resolve(blobImpl.get());
+      nsRefPtr<BlobImpl> bloblImpl = actor->GetBlobImpl();
+      nsRefPtr<Blob> blob = Blob::Create(mRequest->GetParentObject(),
+                                         bloblImpl);
+
+      AutoJSContext cx;
+
+      JS::Rooted<JSObject*> obj(cx, blob->WrapObject(cx, nullptr));
+      MOZ_ASSERT(obj);
+
+      JS::Rooted<JS::Value> result(cx, JS::ObjectValue(*obj));
+      mRequest->FireSuccess(result);
       break;
     }
 
     case DeviceStorageResponseValue::TFreeSpaceStorageResponse:
     {
-      DS_LOG_INFO("free %u", mRequest->GetId());
       FreeSpaceStorageResponse r = aValue;
-      mRequest->Resolve(r.freeBytes());
+      AutoJSContext cx;
+      JS::Rooted<JS::Value> result(cx, JS_NumberValue(double(r.freeBytes())));
+      mRequest->FireSuccess(result);
       break;
     }
 
     case DeviceStorageResponseValue::TUsedSpaceStorageResponse:
     {
-      DS_LOG_INFO("used %u", mRequest->GetId());
       UsedSpaceStorageResponse r = aValue;
-      mRequest->Resolve(r.usedBytes());
+      AutoJSContext cx;
+      JS::Rooted<JS::Value> result(cx, JS_NumberValue(double(r.usedBytes())));
+      mRequest->FireSuccess(result);
       break;
     }
 
     case DeviceStorageResponseValue::TAvailableStorageResponse:
     {
-      DS_LOG_INFO("available %u", mRequest->GetId());
       AvailableStorageResponse r = aValue;
-      mRequest->Resolve(r.mountState());
+      AutoJSContext cx;
+      JS::Rooted<JS::Value> result(cx);
+      StringToJsval(window, r.mountState(), &result);
+      mRequest->FireSuccess(result);
       break;
     }
 
     case DeviceStorageResponseValue::TStorageStatusResponse:
     {
-      DS_LOG_INFO("status %u", mRequest->GetId());
       StorageStatusResponse r = aValue;
-      mRequest->Resolve(r.storageStatus());
+      AutoJSContext cx;
+      JS::Rooted<JS::Value> result(cx);
+      StringToJsval(window, r.storageStatus(), &result);
+      mRequest->FireSuccess(result);
       break;
     }
 
     case DeviceStorageResponseValue::TFormatStorageResponse:
     {
-      DS_LOG_INFO("format %u", mRequest->GetId());
       FormatStorageResponse r = aValue;
-      mRequest->Resolve(r.mountState());
+      AutoJSContext cx;
+      JS::Rooted<JS::Value> result(cx);
+      StringToJsval(window, r.mountState(), &result);
+      mRequest->FireSuccess(result);
       break;
     }
 
     case DeviceStorageResponseValue::TMountStorageResponse:
     {
-      DS_LOG_INFO("mount %u", mRequest->GetId());
       MountStorageResponse r = aValue;
-      mRequest->Resolve(r.storageStatus());
+      AutoJSContext cx;
+      JS::Rooted<JS::Value> result(cx);
+      StringToJsval(window, r.storageStatus(), &result);
+      mRequest->FireSuccess(result);
       break;
     }
 
     case DeviceStorageResponseValue::TUnmountStorageResponse:
     {
-      DS_LOG_INFO("unmount %u", mRequest->GetId());
       UnmountStorageResponse r = aValue;
-      mRequest->Resolve(r.storageStatus());
+      AutoJSContext cx;
+      JS::Rooted<JS::Value> result(cx);
+      StringToJsval(window, r.storageStatus(), &result);
+      mRequest->FireSuccess(result);
       break;
     }
 
     case DeviceStorageResponseValue::TEnumerationResponse:
     {
-      DS_LOG_INFO("enumerate %u", mRequest->GetId());
       EnumerationResponse r = aValue;
-      auto request = static_cast<DeviceStorageCursorRequest*>(mRequest.get());
+      nsDOMDeviceStorageCursor* cursor
+        = static_cast<nsDOMDeviceStorageCursor*>(mRequest.get());
+
       uint32_t count = r.paths().Length();
-      request->AddFiles(count);
+      cursor->mFiles.SetCapacity(count);
       for (uint32_t i = 0; i < count; i++) {
         nsRefPtr<DeviceStorageFile> dsf
           = new DeviceStorageFile(r.type(), r.paths()[i].storageName(),
                                   r.rootdir(), r.paths()[i].name());
-        request->AddFile(dsf.forget());
+        cursor->mFiles.AppendElement(dsf.forget());
       }
-      request->Continue();
+
+      nsRefPtr<ContinueCursorEvent> event = new ContinueCursorEvent(cursor);
+      event->Continue();
       break;
     }
 
     default:
     {
-      DS_LOG_ERROR("unknown %u", mRequest->GetId());
       NS_RUNTIMEABORT("not reached");
       break;
     }
   }
   return true;
+}
+
+void
+DeviceStorageRequestChild::
+  SetCallback(DeviceStorageRequestChildCallback *aCallback)
+{
+  mCallback = aCallback;
 }
 
 } // namespace devicestorage

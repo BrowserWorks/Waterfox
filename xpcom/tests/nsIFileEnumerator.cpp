@@ -9,11 +9,11 @@
 #include "nsISimpleEnumerator.h"
 #include "nsCOMPtr.h"
 
-static bool LoopInDir(nsIFile* aFile)
+bool LoopInDir(nsIFile* file)
 {
     nsresult rv;
     nsCOMPtr<nsISimpleEnumerator> entries;
-    rv = aFile->GetDirectoryEntries(getter_AddRefs(entries));
+    rv = file->GetDirectoryEntries(getter_AddRefs(entries));
     if(NS_FAILED(rv) || !entries)
         return false;
     
@@ -24,18 +24,18 @@ static bool LoopInDir(nsIFile* aFile)
         entries->GetNext(getter_AddRefs(sup));
         if(!sup)
             return false;
-
-        nsCOMPtr<nsIFile> nextFile = do_QueryInterface(sup);
-        if (!nextFile)
+        
+        nsCOMPtr<nsIFile> file = do_QueryInterface(sup);
+        if(!file)
             return false;
     
         nsAutoCString name;
-        if(NS_FAILED(nextFile->GetNativeLeafName(name)))
+        if(NS_FAILED(file->GetNativeLeafName(name)))
             return false;
         
         bool isDir;
         printf("%s\n", name.get());
-        rv = nextFile->IsDirectory(&isDir);
+        rv = file->IsDirectory(&isDir);
         if (NS_FAILED(rv))
 		{
 			printf("IsDirectory Failed!!!\n");
@@ -44,8 +44,8 @@ static bool LoopInDir(nsIFile* aFile)
 
 		if (isDir)
         {
-           LoopInDir(nextFile);
-        }
+           LoopInDir(file);   
+        }        
     }
     return true;
 }

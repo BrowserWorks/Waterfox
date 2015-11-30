@@ -1392,21 +1392,6 @@ Element::GetElementsByClassName(const nsAString& aClassNames,
   return NS_OK;
 }
 
-/**
- * Returns the count of descendants (inclusive of aContent) in
- * the uncomposed document that are explicitly set as editable.
- */
-static uint32_t
-EditableInclusiveDescendantCount(nsIContent* aContent)
-{
-  auto htmlElem = nsGenericHTMLElement::FromContent(aContent);
-  if (htmlElem) {
-    return htmlElem->EditableInclusiveDescendantCount();
-  }
-
-  return aContent->EditableDescendantCount();
-}
-
 nsresult
 Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                     nsIContent* aBindingParent,
@@ -1478,8 +1463,6 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
   }
 
   bool hadForceXBL = HasFlag(NODE_FORCE_XBL_BINDINGS);
-
-  bool hadParent = !!GetParentNode();
 
   // Now set the parent and set the "Force attach xbl" flag if needed.
   if (aParent) {
@@ -1572,8 +1555,6 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     SetDirOnBind(this, aParent);
   }
 
-  uint32_t editableDescendantCount = 0;
-
   // If NODE_FORCE_XBL_BINDINGS was set we might have anonymous children
   // that also need to be told that they are moving.
   nsresult rv;
@@ -1590,8 +1571,6 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
            child = child->GetNextSibling()) {
         rv = child->BindToTree(aDocument, this, this, allowScripts);
         NS_ENSURE_SUCCESS(rv, rv);
-
-        editableDescendantCount += EditableInclusiveDescendantCount(child);
       }
     }
   }
@@ -1604,28 +1583,6 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     rv = child->BindToTree(aDocument, this, aBindingParent,
                            aCompileEventHandlers);
     NS_ENSURE_SUCCESS(rv, rv);
-
-    editableDescendantCount += EditableInclusiveDescendantCount(child);
-  }
-
-  if (aDocument) {
-    // Update our editable descendant count because we don't keep track of it
-    // for content that is not in the uncomposed document.
-    MOZ_ASSERT(EditableDescendantCount() == 0);
-    ChangeEditableDescendantCount(editableDescendantCount);
-
-    if (!hadParent) {
-      uint32_t editableDescendantChange = EditableInclusiveDescendantCount(this);
-      if (editableDescendantChange != 0) {
-      // If we are binding a subtree root to the document, we need to update
-      // the editable descendant count of all the ancestors.
-        nsIContent* parent = GetParent();
-        while (parent) {
-          parent->ChangeEditableDescendantCount(editableDescendantChange);
-          parent = parent->GetParent();
-        }
-      }
-    }
   }
 
   nsNodeUtils::ParentChainChanged(this);
@@ -1715,9 +1672,6 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
   nsIDocument* document =
     HasFlag(NODE_FORCE_XBL_BINDINGS) ? OwnerDoc() : GetComposedDoc();
 
-  if (HasPointerLock()) {
-    nsIDocument::UnlockPointer();
-  }
   if (aNullParent) {
     if (IsFullScreenAncestor()) {
       // The element being removed is an ancestor of the full-screen element,
@@ -1729,20 +1683,9 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
       // Fully exit full-screen.
       nsIDocument::ExitFullscreenInDocTree(OwnerDoc());
     }
-
-    if (GetParent() && GetParent()->IsInUncomposedDoc()) {
-      // Update the editable descendant count in the ancestors before we
-      // lose the reference to the parent.
-      int32_t editableDescendantChange = -1 * EditableInclusiveDescendantCount(this);
-      if (editableDescendantChange != 0) {
-        nsIContent* parent = GetParent();
-        while (parent) {
-          parent->ChangeEditableDescendantCount(editableDescendantChange);
-          parent = parent->GetParent();
-        }
-      }
+    if (HasPointerLock()) {
+      nsIDocument::UnlockPointer();
     }
-
     if (GetParent()) {
       nsINode* p = mParent;
       mParent = nullptr;
@@ -1753,10 +1696,6 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
     SetParentIsContent(false);
   }
   ClearInDocument();
-
-  // Editable descendant count only counts descendants that
-  // are in the uncomposed document.
-  ResetEditableDescendantCount();
 
   if (aNullParent || !mParent->IsInShadowTree()) {
     UnsetFlags(NODE_IS_IN_SHADOW_TREE);
@@ -2054,7 +1993,7 @@ Element::DispatchClickEvent(nsPresContext* aPresContext,
   NS_PRECONDITION(aSourceEvent, "Must have source event");
   NS_PRECONDITION(aStatus, "Null out param?");
 
-  WidgetMouseEvent event(aSourceEvent->mFlags.mIsTrusted, eMouseClick,
+  WidgetMouseEvent event(aSourceEvent->mFlags.mIsTrusted, NS_MOUSE_CLICK,
                          aSourceEvent->widget, WidgetMouseEvent::eReal);
   event.refPoint = aSourceEvent->refPoint;
   uint32_t clickCount = 1;
@@ -2405,7 +2344,7 @@ Element::SetAttrAndNotify(int32_t aNamespaceID,
   }
 
   if (aFireMutation) {
-    InternalMutationEvent mutation(true, eLegacyAttrModified);
+    InternalMutationEvent mutation(true, NS_MUTATION_ATTRMODIFIED);
 
     nsAutoString ns;
     nsContentUtils::NameSpaceManager()->GetNameSpaceURI(aNamespaceID, ns);
@@ -2647,7 +2586,7 @@ Element::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aName,
   }
 
   if (hasMutationListeners) {
-    InternalMutationEvent mutation(true, eLegacyAttrModified);
+    InternalMutationEvent mutation(true, NS_MUTATION_ATTRMODIFIED);
 
     mutation.mRelatedNode = attrNode;
     mutation.mAttrName = aName;
@@ -2850,9 +2789,9 @@ Element::CheckHandleEventForLinksPrecondition(EventChainVisitor& aVisitor,
 {
   if (aVisitor.mEventStatus == nsEventStatus_eConsumeNoDefault ||
       (!aVisitor.mEvent->mFlags.mIsTrusted &&
-       (aVisitor.mEvent->mMessage != eMouseClick) &&
-       (aVisitor.mEvent->mMessage != eKeyPress) &&
-       (aVisitor.mEvent->mMessage != eLegacyDOMActivate)) ||
+       (aVisitor.mEvent->message != NS_MOUSE_CLICK) &&
+       (aVisitor.mEvent->message != NS_KEY_PRESS) &&
+       (aVisitor.mEvent->message != NS_UI_ACTIVATE)) ||
       !aVisitor.mPresContext ||
       aVisitor.mEvent->mFlags.mMultipleActionsPrevented) {
     return false;
@@ -2867,11 +2806,11 @@ Element::PreHandleEventForLinks(EventChainPreVisitor& aVisitor)
 {
   // Optimisation: return early if this event doesn't interest us.
   // IMPORTANT: this switch and the switch below it must be kept in sync!
-  switch (aVisitor.mEvent->mMessage) {
-  case eMouseOver:
-  case eFocus:
-  case eMouseOut:
-  case eBlur:
+  switch (aVisitor.mEvent->message) {
+  case NS_MOUSE_OVER:
+  case NS_FOCUS_CONTENT:
+  case NS_MOUSE_OUT:
+  case NS_BLUR_CONTENT:
     break;
   default:
     return NS_OK;
@@ -2887,12 +2826,12 @@ Element::PreHandleEventForLinks(EventChainPreVisitor& aVisitor)
 
   // We do the status bar updates in PreHandleEvent so that the status bar gets
   // updated even if the event is consumed before we have a chance to set it.
-  switch (aVisitor.mEvent->mMessage) {
+  switch (aVisitor.mEvent->message) {
   // Set the status bar similarly for mouseover and focus
-  case eMouseOver:
+  case NS_MOUSE_OVER:
     aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
     // FALL THROUGH
-  case eFocus: {
+  case NS_FOCUS_CONTENT: {
     InternalFocusEvent* focusEvent = aVisitor.mEvent->AsFocusEvent();
     if (!focusEvent || !focusEvent->isRefocus) {
       nsAutoString target;
@@ -2904,10 +2843,10 @@ Element::PreHandleEventForLinks(EventChainPreVisitor& aVisitor)
     }
     break;
   }
-  case eMouseOut:
+  case NS_MOUSE_OUT:
     aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
     // FALL THROUGH
-  case eBlur:
+  case NS_BLUR_CONTENT:
     rv = LeaveLink(aVisitor.mPresContext);
     if (NS_SUCCEEDED(rv)) {
       aVisitor.mEvent->mFlags.mMultipleActionsPrevented = true;
@@ -2928,11 +2867,11 @@ Element::PostHandleEventForLinks(EventChainPostVisitor& aVisitor)
 {
   // Optimisation: return early if this event doesn't interest us.
   // IMPORTANT: this switch and the switch below it must be kept in sync!
-  switch (aVisitor.mEvent->mMessage) {
-  case eMouseDown:
-  case eMouseClick:
-  case eLegacyDOMActivate:
-  case eKeyPress:
+  switch (aVisitor.mEvent->message) {
+  case NS_MOUSE_BUTTON_DOWN:
+  case NS_MOUSE_CLICK:
+  case NS_UI_ACTIVATE:
+  case NS_KEY_PRESS:
     break;
   default:
     return NS_OK;
@@ -2946,8 +2885,8 @@ Element::PostHandleEventForLinks(EventChainPostVisitor& aVisitor)
 
   nsresult rv = NS_OK;
 
-  switch (aVisitor.mEvent->mMessage) {
-  case eMouseDown:
+  switch (aVisitor.mEvent->message) {
+  case NS_MOUSE_BUTTON_DOWN:
     {
       if (aVisitor.mEvent->AsMouseEvent()->button ==
             WidgetMouseEvent::eLeftButton) {
@@ -2970,7 +2909,7 @@ Element::PostHandleEventForLinks(EventChainPostVisitor& aVisitor)
     }
     break;
 
-  case eMouseClick: {
+  case NS_MOUSE_CLICK: {
     WidgetMouseEvent* mouseEvent = aVisitor.mEvent->AsMouseEvent();
     if (mouseEvent->IsLeftClickEvent()) {
       if (mouseEvent->IsControl() || mouseEvent->IsMeta() ||
@@ -2983,9 +2922,7 @@ Element::PostHandleEventForLinks(EventChainPostVisitor& aVisitor)
       if (shell) {
         // single-click
         nsEventStatus status = nsEventStatus_eIgnore;
-        // DOMActive event should be trusted since the activation is actually
-        // occurred even if the cause is an untrusted click event.
-        InternalUIEvent actEvent(true, eLegacyDOMActivate, mouseEvent);
+        InternalUIEvent actEvent(mouseEvent->mFlags.mIsTrusted, NS_UI_ACTIVATE);
         actEvent.detail = 1;
 
         rv = shell->HandleDOMEventWithTarget(this, &actEvent, &status);
@@ -2996,21 +2933,20 @@ Element::PostHandleEventForLinks(EventChainPostVisitor& aVisitor)
     }
     break;
   }
-  case eLegacyDOMActivate:
+  case NS_UI_ACTIVATE:
     {
       if (aVisitor.mEvent->originalTarget == this) {
         nsAutoString target;
         GetLinkTarget(target);
-        const InternalUIEvent* activeEvent = aVisitor.mEvent->AsUIEvent();
-        MOZ_ASSERT(activeEvent);
         nsContentUtils::TriggerLink(this, aVisitor.mPresContext, absURI, target,
-                                    true, true, activeEvent->IsTrustable());
+                                    true, true,
+                                    aVisitor.mEvent->mFlags.mIsTrusted);
         aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
       }
     }
     break;
 
-  case eKeyPress:
+  case NS_KEY_PRESS:
     {
       WidgetKeyboardEvent* keyEvent = aVisitor.mEvent->AsKeyboardEvent();
       if (keyEvent && keyEvent->keyCode == NS_VK_RETURN) {

@@ -52,30 +52,36 @@ EngineeringModeAPI.prototype = {
   // This returns a Promise<DOMString>
   getValue: function getValue(aName) {
     debug("getValue " + aName);
-    let promiseInit = function(aResolverId) {
-      debug("promise init called for getValue " + aName + " has resolverId " + aResolverId);
+    let promiseInit = function(resolve, reject) {
+      debug("promise init called for getValue " + aName);
+      let resolverId = this.getPromiseResolverId({resolve: resolve,
+                                                  reject: reject });
+      debug("promise init " + resolverId);
       cpmm.sendAsyncMessage("EngineeringMode:GetValue", {
-        requestId: aResolverId,
+        requestId: resolverId,
         name: aName
       });
     }.bind(this);
 
-    return this.createPromiseWithId(promiseInit);
+    return this.createPromise(promiseInit);
   },
 
   // This returns a Promise<void>
   setValue: function setValue(aName, aValue) {
     debug("setValue " + aName + ' as ' + aValue );
-    let promiseInit = function(aResolverId) {
-      debug("promise init called for getValue " + aName + " has resolverId " + aResolverId);
+    let promiseInit = function(resolve, reject) {
+      debug("promise init called for setValue " + aName);
+      let resolverId = this.getPromiseResolverId({resolve: resolve,
+                                                  reject: reject });
+      debug("promise init " + resolverId);
       cpmm.sendAsyncMessage("EngineeringMode:SetValue", {
-        requestId: aResolverId,
+        requestId: resolverId,
         name: aName,
         value: aValue
       });
     }.bind(this);
 
-    return this.createPromiseWithId(promiseInit);
+    return this.createPromise(promiseInit);
   },
 
   set onmessage(aHandler) {

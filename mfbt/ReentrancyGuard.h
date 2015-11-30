@@ -16,7 +16,7 @@
 namespace mozilla {
 
 /* Useful for implementing containers that assert non-reentrancy */
-class MOZ_RAII ReentrancyGuard
+class ReentrancyGuard
 {
   MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 #ifdef DEBUG

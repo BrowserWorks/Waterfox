@@ -23,7 +23,7 @@
 #endif /* _WIN32 */
 
 #include "plstr.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "plbase64.h"
 #include "mozilla/Logging.h"
 #include "prprf.h"
@@ -80,9 +80,9 @@ static bool         gShouldCleanupDeadNodes = false;
 
 
 static PLDHashTableOps     pref_HashTableOps = {
-    PLDHashTable::HashStringKey,
+    PL_DHashStringKey,
     matchPrefEntry,
-    PLDHashTable::MoveEntryStub,
+    PL_DHashMoveEntryStub,
     clearPrefEntry,
     nullptr,
 };
@@ -584,7 +584,7 @@ PREF_ClearUserPref(const char *pref_name)
         pref->flags &= ~PREF_USERSET;
 
         if (!(pref->flags & PREF_HAS_DEFAULT)) {
-            gHashTable->RemoveEntry(pref);
+            PL_DHashTableRemove(gHashTable, pref_name);
         }
 
         pref_DoCallback(pref_name);
@@ -698,7 +698,7 @@ PrefHashEntry* pref_HashTableLookup(const char *key)
     MOZ_ASSERT(NS_IsMainThread());
 #endif
 
-    return static_cast<PrefHashEntry*>(gHashTable->Search(key));
+    return static_cast<PrefHashEntry*>(PL_DHashTableSearch(gHashTable, key));
 }
 
 nsresult pref_HashPref(const char *key, PrefValue value, PrefType type, uint32_t flags)
@@ -710,7 +710,9 @@ nsresult pref_HashPref(const char *key, PrefValue value, PrefType type, uint32_t
     if (!gHashTable)
         return NS_ERROR_OUT_OF_MEMORY;
 
-    auto pref = static_cast<PrefHashEntry*>(gHashTable->Add(key, fallible));
+    PrefHashEntry* pref = static_cast<PrefHashEntry*>
+        (PL_DHashTableAdd(gHashTable, key, fallible));
+
     if (!pref)
         return NS_ERROR_OUT_OF_MEMORY;
 

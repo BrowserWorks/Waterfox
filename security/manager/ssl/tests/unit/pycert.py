@@ -10,13 +10,12 @@ signed x509 certificate with the desired properties.
 
 The input format is as follows:
 
-issuer:<issuer distinguished name specification>
-subject:<subject distinguished name specification>
-[version:{1,2,3,4}]
+issuer:<string to use as the issuer common name>
+subject:<string to use as the subject common name>
+[version:<{1,2,3,4}>]
 [validity:<YYYYMMDD-YYYYMMDD|duration in days>]
-[issuerKey:<key specification>]
-[subjectKey:<key specification>]
-[signature:{sha1WithRSAEncryption,sha256WithRSAEncryption,ecdsaWithSHA256}]
+[issuerKey:alternate]
+[subjectKey:alternate]
 [extension:<extension name:<extension-specific data>>]
 [...]
 
@@ -30,45 +29,35 @@ extKeyUsage:[serverAuth,clientAuth,codeSigning,emailProtection
 subjectAlternativeName:[<dNSName>,...]
 authorityInformationAccess:<OCSP URI>
 certificatePolicies:<policy OID>
-nameConstraints:{permitted,excluded}:[<dNSName|directoryName>,...]
 
 Where:
   [] indicates an optional field or component of a field
   <> indicates a required component of a field
-  {} indicates a choice of exactly one value among a set of values
-  [a,b,c] indicates a list of potential values, of which zero or more
+  {} indicates choice among a set of values
+  [a,b,c] indicates a list of potential values, of which more than one
           may be used
 
 For instance, the version field is optional. However, if it is
 specified, it must have exactly one value from the set {1,2,3,4}.
 
-Most fields have reasonable default values. By default one shared RSA
+In the future it will be possible to specify other properties of the
+generated certificate (for example, the signature algorithm). For now,
+those fields have reasonable default values. Currently one shared RSA
 key is used for all signatures and subject public key information
-fields. Using "issuerKey:<key specification>" or
-"subjectKey:<key specification>" causes a different key be used for
-signing or as the subject public key information field, respectively.
-See pykey.py for the list of available specifications.
-The signature algorithm is sha256WithRSAEncryption by default.
+fields. Specifying "issuerKey:alternate" or "subjectKey:alternate"
+causes a different RSA key be used for signing or as the subject public
+key information field, respectively. Other keys are also available -
+see pykey.py.
 
 The validity period may be specified as either concrete notBefore and
 notAfter values or as a validity period centered around 'now'. For the
 latter, this will result in a notBefore of 'now' - duration/2 and a
 notAfter of 'now' + duration/2.
-
-Issuer and subject distinguished name specifications are of the form
-'[stringEncoding]/C=XX/O=Example/CN=example.com'. C (country name), ST
-(state or province name), L (locality name), O (organization name), OU
-(organizational unit name), CN (common name) and emailAddress (email
-address) are currently supported. The optional stringEncoding field may
-be 'utf8String' or 'printableString'. If the given string does not
-contain a '/', it is assumed to represent a common name.
-DirectoryNames also use this format. When specifying a directoryName in
-a nameConstraints extension, the implicit form may not be used.
 """
 
 from pyasn1.codec.der import decoder
 from pyasn1.codec.der import encoder
-from pyasn1.type import constraint, namedtype, tag, univ, useful
+from pyasn1.type import constraint, tag, univ, useful
 from pyasn1_modules import rfc2459
 import base64
 import datetime
@@ -77,31 +66,6 @@ import re
 import sys
 
 import pykey
-
-# The GeneralSubtree definition in pyasn1_modules.rfc2459 is incorrect.
-# Where this definition uses a DefaultedNamedType, pyasn1_modules uses
-# a NamedType, which results in the default value being explicitly
-# encoded, which is incorrect for DER.
-class GeneralSubtree(univ.Sequence):
-    componentType = namedtype.NamedTypes(
-        namedtype.NamedType('base', rfc2459.GeneralName()),
-        namedtype.DefaultedNamedType('minimum', rfc2459.BaseDistance(0).subtype(
-            implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0))),
-        namedtype.OptionalNamedType('maximum', rfc2459.BaseDistance().subtype(
-            implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1)))
-    )
-
-
-# The NameConstraints definition in pyasn1_modules.rfc2459 is incorrect.
-# excludedSubtrees has a tag value of 1, not 0.
-class NameConstraints(univ.Sequence):
-    componentType = namedtype.NamedTypes(
-        namedtype.OptionalNamedType('permittedSubtrees', rfc2459.GeneralSubtrees().subtype(
-            implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0))),
-        namedtype.OptionalNamedType('excludedSubtrees', rfc2459.GeneralSubtrees().subtype(
-            implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1)))
-    )
-
 
 class UnknownBaseError(Exception):
     """Base class for handling unexpected input in this module."""
@@ -161,23 +125,6 @@ class UnknownVersionError(UnknownBaseError):
         self.category = 'version'
 
 
-class UnknownNameConstraintsSpecificationError(UnknownBaseError):
-    """Helper exception type to handle unknown specified
-    nameConstraints."""
-
-    def __init__(self, value):
-        UnknownBaseError.__init__(self, value)
-        self.category = 'nameConstraints specification'
-
-
-class UnknownDNTypeError(UnknownBaseError):
-    """Helper exception type to handle unknown DN types."""
-
-    def __init__(self, value):
-        UnknownBaseError.__init__(self, value)
-        self.category = 'DN'
-
-
 def getASN1Tag(asn1Type):
     """Helper function for returning the base tag value of a given
     type from the pyasn1 package"""
@@ -195,86 +142,39 @@ def stringToAccessDescription(string):
     sequence.setComponentByPosition(1, accessLocation)
     return sequence
 
-def stringToDN(string, tag=None):
-    """Takes a string representing a distinguished name or directory
-    name and returns a Name for use by pyasn1. See the documentation
-    for the issuer and subject fields for more details. Takes an
-    optional implicit tag in cases where the Name needs to be tagged
-    differently."""
-    if '/' not in string:
-        string = '/CN=%s' % string
-    rdns = rfc2459.RDNSequence()
-    pos = 0
-    pattern = '/(C|ST|L|O|OU|CN|emailAddress)='
-    split = re.split(pattern, string)
-    # split should now be [[encoding], <type>, <value>, <type>, <value>, ...]
-    if split[0]:
-        encoding = split[0]
-    else:
-        encoding = 'utf8String'
-    for (nameType, value) in zip(split[1::2], split[2::2]):
-        ava = rfc2459.AttributeTypeAndValue()
-        if nameType == 'C':
-            ava.setComponentByName('type', rfc2459.id_at_countryName)
-            nameComponent = rfc2459.X520countryName(value)
-        elif nameType == 'ST':
-            ava.setComponentByName('type', rfc2459.id_at_stateOrProvinceName)
-            nameComponent = rfc2459.X520StateOrProvinceName()
-        elif nameType == 'L':
-            ava.setComponentByName('type', rfc2459.id_at_localityName)
-            nameComponent = rfc2459.X520LocalityName()
-        elif nameType == 'O':
-            ava.setComponentByName('type', rfc2459.id_at_organizationName)
-            nameComponent = rfc2459.X520OrganizationName()
-        elif nameType == 'OU':
-            ava.setComponentByName('type', rfc2459.id_at_organizationalUnitName)
-            nameComponent = rfc2459.X520OrganizationalUnitName()
-        elif nameType == 'CN':
-            ava.setComponentByName('type', rfc2459.id_at_commonName)
-            nameComponent = rfc2459.X520CommonName()
-        elif nameType == 'emailAddress':
-            ava.setComponentByName('type', rfc2459.emailAddress)
-            nameComponent = rfc2459.Pkcs9email(value)
-        else:
-            raise UnknownDNTypeError(nameType)
-        if not nameType == 'C' and not nameType == 'emailAddress':
-            # The value may have things like '\0' (i.e. a slash followed by
-            # the number zero) that have to be decoded into the resulting
-            # '\x00' (i.e. a byte with value zero).
-            nameComponent.setComponentByName(encoding, value.decode(encoding='string_escape'))
-        ava.setComponentByName('value', nameComponent)
-        rdn = rfc2459.RelativeDistinguishedName()
-        rdn.setComponentByPosition(0, ava)
-        rdns.setComponentByPosition(pos, rdn)
-        pos = pos + 1
-    if tag:
-        name = rfc2459.Name().subtype(implicitTag=tag)
-    else:
-        name = rfc2459.Name()
-    name.setComponentByPosition(0, rdns)
-    return name
-
 def stringToAlgorithmIdentifier(string):
     """Helper function that converts a description of an algorithm
     to a representation usable by the pyasn1 package"""
     algorithmIdentifier = rfc2459.AlgorithmIdentifier()
     algorithm = None
-    name = None
-    if string == 'sha1WithRSAEncryption':
-        name = 'SHA-1'
-        algorithm = rfc2459.sha1WithRSAEncryption
-    elif string == 'sha256WithRSAEncryption':
-        name = 'SHA-256'
+    if string == 'sha256WithRSAEncryption':
         algorithm = univ.ObjectIdentifier('1.2.840.113549.1.1.11')
-    elif string == 'ecdsaWithSHA256':
-        # Note that this value is only used by pykey.py to tell if
-        # ECDSA is allowed.  It does not conform to the pyECC syntax.
-        name = 'SHA-256'
-        algorithm = univ.ObjectIdentifier('1.2.840.10045.4.3.2')
-    else:
+    # In the future, more algorithms will be supported.
+    if algorithm == None:
         raise UnknownAlgorithmTypeError(string)
     algorithmIdentifier.setComponentByName('algorithm', algorithm)
-    return (algorithmIdentifier, name)
+    return algorithmIdentifier
+
+def stringToCommonName(string):
+    """Helper function for taking a string and building an x520 name
+    representation usable by the pyasn1 package. Currently returns one
+    RDN with one AVA consisting of a Common Name encoded as a
+    UTF8String."""
+    commonName = rfc2459.X520CommonName()
+    # The string may have things like '\0' (i.e. a slash followed by
+    # the number zero) that have to be decoded into the resulting
+    # '\x00' (i.e. a byte with value zero).
+    commonName.setComponentByName('utf8String', string.decode(encoding='string_escape'))
+    ava = rfc2459.AttributeTypeAndValue()
+    ava.setComponentByName('type', rfc2459.id_at_commonName)
+    ava.setComponentByName('value', commonName)
+    rdn = rfc2459.RelativeDistinguishedName()
+    rdn.setComponentByPosition(0, ava)
+    rdns = rfc2459.RDNSequence()
+    rdns.setComponentByPosition(0, rdn)
+    name = rfc2459.Name()
+    name.setComponentByPosition(0, rdns)
+    return name
 
 def datetimeToTime(dt):
     """Takes a datetime object and returns an rfc2459.Time object with
@@ -297,9 +197,10 @@ class Certificate:
         self.notBefore = self.now - aYearAndAWhile
         self.notAfter = self.now + aYearAndAWhile
         self.subject = 'Default Subject'
+        self.signatureAlgorithm = 'sha256WithRSAEncryption'
         self.extensions = None
-        self.subjectKey = pykey.keyFromSpecification('default')
-        self.issuerKey = pykey.keyFromSpecification('default')
+        self.subjectKey = pykey.RSAKey()
+        self.issuerKey = pykey.RSAKey()
         self.decodeParams(paramStream)
         self.serialNumber = self.generateSerialNumber()
 
@@ -315,10 +216,7 @@ class Certificate:
         hasher.update(str(self.notBefore))
         hasher.update(str(self.notAfter))
         hasher.update(self.subject)
-        # Bug 1194419: This is duplicated so as to not have to
-        # re-generate the EV testing root certificates. At some point
-        # we should clean this up and re-generate them.
-        hasher.update(self.signature)
+        hasher.update(self.signatureAlgorithm)
         if self.extensions:
             for extension in self.extensions:
                 hasher.update(str(extension))
@@ -357,8 +255,6 @@ class Certificate:
             self.setupKey('issuer', value)
         elif param == 'subjectKey':
             self.setupKey('subject', value)
-        elif param == 'signature':
-            self.signature = value
         else:
             raise UnknownParameterTypeError(param)
 
@@ -394,16 +290,14 @@ class Certificate:
             self.addAuthorityInformationAccess(value)
         elif extensionType == 'certificatePolicies':
             self.addCertificatePolicies(value)
-        elif extensionType == 'nameConstraints':
-            self.addNameConstraints(value)
         else:
             raise UnknownExtensionTypeError(extensionType)
 
     def setupKey(self, subjectOrIssuer, value):
         if subjectOrIssuer == 'subject':
-            self.subjectKey = pykey.keyFromSpecification(value)
+            self.subjectKey = pykey.RSAKey(value)
         elif subjectOrIssuer == 'issuer':
-            self.issuerKey = pykey.keyFromSpecification(value)
+            self.issuerKey = pykey.RSAKey(value)
         else:
             raise UnknownKeyTargetError(subjectOrIssuer)
 
@@ -489,33 +383,6 @@ class Certificate:
         policies.setComponentByPosition(0, policy)
         self.addExtension(rfc2459.id_ce_certificatePolicies, policies)
 
-    def addNameConstraints(self, constraints):
-        nameConstraints = NameConstraints()
-        if constraints.startswith('permitted:'):
-            (subtreesType, subtreesTag) = ('permittedSubtrees', 0)
-        elif constraints.startswith('excluded:'):
-            (subtreesType, subtreesTag) = ('excludedSubtrees', 1)
-        else:
-            raise UnknownNameConstraintsSpecificationError(constraints)
-        generalSubtrees = rfc2459.GeneralSubtrees().subtype(
-            implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, subtreesTag))
-        subtrees = constraints[(constraints.find(':') + 1):]
-        pos = 0
-        for name in subtrees.split(','):
-            generalName = rfc2459.GeneralName()
-            if '/' in name:
-                directoryName = stringToDN(name,
-                  tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 4))
-                generalName.setComponentByName('directoryName', directoryName)
-            else:
-                generalName.setComponentByName('dNSName', name)
-            generalSubtree = GeneralSubtree()
-            generalSubtree.setComponentByName('base', generalName)
-            generalSubtrees.setComponentByPosition(pos, generalSubtree)
-            pos = pos + 1
-        nameConstraints.setComponentByName(subtreesType, generalSubtrees)
-        self.addExtension(rfc2459.id_ce_nameConstraints, nameConstraints)
-
     def getVersion(self):
         return rfc2459.Version(self.versionValue).subtype(
             explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0))
@@ -527,7 +394,7 @@ class Certificate:
         return stringToAlgorithmIdentifier(self.signature)
 
     def getIssuer(self):
-        return stringToDN(self.issuer)
+        return stringToCommonName(self.issuer)
 
     def getValidity(self):
         validity = rfc2459.Validity()
@@ -542,15 +409,16 @@ class Certificate:
         return datetimeToTime(self.notAfter)
 
     def getSubject(self):
-        return stringToDN(self.subject)
+        return stringToCommonName(self.subject)
+
+    def getSignatureAlgorithm(self):
+        return stringToAlgorithmIdentifier(self.signature)
 
     def toDER(self):
-        (signatureOID, hashAlg) = self.getSignature()
-
         tbsCertificate = rfc2459.TBSCertificate()
         tbsCertificate.setComponentByName('version', self.getVersion())
         tbsCertificate.setComponentByName('serialNumber', self.getSerialNumber())
-        tbsCertificate.setComponentByName('signature', signatureOID)
+        tbsCertificate.setComponentByName('signature', self.getSignature())
         tbsCertificate.setComponentByName('issuer', self.getIssuer())
         tbsCertificate.setComponentByName('validity', self.getValidity())
         tbsCertificate.setComponentByName('subject', self.getSubject())
@@ -566,10 +434,9 @@ class Certificate:
             tbsCertificate.setComponentByName('extensions', extensions)
         certificate = rfc2459.Certificate()
         certificate.setComponentByName('tbsCertificate', tbsCertificate)
-        certificate.setComponentByName('signatureAlgorithm', signatureOID)
+        certificate.setComponentByName('signatureAlgorithm', self.getSignatureAlgorithm())
         tbsDER = encoder.encode(tbsCertificate)
-
-        certificate.setComponentByName('signatureValue', self.issuerKey.sign(tbsDER, hashAlg))
+        certificate.setComponentByName('signatureValue', self.issuerKey.sign(tbsDER))
         return encoder.encode(certificate)
 
     def toPEM(self):
@@ -599,9 +466,6 @@ class Certificate:
 def main(output, inputPath):
     with open(inputPath) as configStream:
         output.write(Certificate(configStream).toPEM())
-    # Force updating the output file even if the content does not change
-    # so that we won't be called again simply because of the mtime.
-    output.force_update = True
 
 # When run as a standalone program, this will read a specification from
 # stdin and output the certificate as PEM to stdout.

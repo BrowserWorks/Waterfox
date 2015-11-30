@@ -10,7 +10,6 @@ loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "EventTarget", "sdk/event/target", true);
 loader.lazyRequireGetter(this, "DevToolsUtils", "devtools/toolkit/DevToolsUtils.js");
 loader.lazyRequireGetter(this, "DeferredTask", "resource://gre/modules/DeferredTask.jsm", true);
-loader.lazyRequireGetter(this, "Task", "resource://gre/modules/Task.jsm", true);
 
 // Events piped from system observers to Profiler instances.
 const PROFILER_SYSTEM_EVENTS = [
@@ -26,7 +25,7 @@ loader.lazyGetter(this, "nsIProfilerModule", () => {
   return Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
 });
 
-var DEFAULT_PROFILER_OPTIONS = {
+let DEFAULT_PROFILER_OPTIONS = {
   // When using the DevTools Performance Tools, this will be overridden
   // by the pref `devtools.performance.profiler.buffer-size`.
   entries: Math.pow(10, 7),
@@ -288,7 +287,6 @@ const ProfilerManager = (function () {
      *   - "console-api-profiler"
      *   - "profiler-started"
      *   - "profiler-stopped"
-     *   - "profiler-status"
      *
      * The ProfilerManager listens to all events, and individual
      * consumers filter which events they are interested in.
@@ -376,7 +374,7 @@ const ProfilerManager = (function () {
 /**
  * The profiler actor provides remote access to the built-in nsIProfiler module.
  */
-var Profiler = exports.Profiler = Class({
+let Profiler = exports.Profiler = Class({
   extends: EventTarget,
 
   initialize: function () {

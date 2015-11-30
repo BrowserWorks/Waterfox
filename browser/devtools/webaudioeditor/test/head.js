@@ -4,25 +4,25 @@
 
 const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
-var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+let { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 
 // Enable logging for all the tests. Both the debugger server and frontend will
 // be affected by this pref.
-var gEnableLogging = Services.prefs.getBoolPref("devtools.debugger.log");
+let gEnableLogging = Services.prefs.getBoolPref("devtools.debugger.log");
 Services.prefs.setBoolPref("devtools.debugger.log", false);
 
-var { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-var { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
-var { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-var { TargetFactory } = require("devtools/framework/target");
-var { DebuggerServer } = require("devtools/server/main");
-var { generateUUID } = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
+let { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
+let { Promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
+let { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
+let { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+let { TargetFactory } = require("devtools/framework/target");
+let { DebuggerServer } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
+let { generateUUID } = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
 
-var Promise = require("promise");
-var { WebAudioFront } = require("devtools/server/actors/webaudio");
-var DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
-var audioNodes = require("devtools/server/actors/utils/audionodes.json");
-var mm = null;
+let { WebAudioFront } = require("devtools/server/actors/webaudio");
+let DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+let audioNodes = require("devtools/server/actors/utils/audionodes.json");
+let mm = null;
 
 const FRAME_SCRIPT_UTILS_URL = "chrome://browser/content/devtools/frame-script-utils.js";
 const EXAMPLE_URL = "http://example.com/browser/browser/devtools/webaudioeditor/test/";
@@ -40,7 +40,7 @@ const AUTOMATION_URL = EXAMPLE_URL + "doc_automation.html";
 // All tests are asynchronous.
 waitForExplicitFinish();
 
-var gToolEnabled = Services.prefs.getBoolPref("devtools.webaudioeditor.enabled");
+let gToolEnabled = Services.prefs.getBoolPref("devtools.webaudioeditor.enabled");
 
 DevToolsUtils.testing = true;
 

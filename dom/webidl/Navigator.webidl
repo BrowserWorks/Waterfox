@@ -125,15 +125,14 @@ interface NavigatorGeolocation {
 Navigator implements NavigatorGeolocation;
 
 // http://www.w3.org/TR/battery-status/#navigatorbattery-interface
-partial interface Navigator {
-  [Throws, Pref="dom.battery.enabled"]
-  Promise<BatteryManager> getBattery();
-  // Deprecated. Use getBattery() instead.
-  // XXXbz Per spec this should be non-nullable, but we return null in
-  // torn-down windows.  See bug 884925.
-  [Throws, Pref="dom.battery.enabled", BinaryName="deprecatedBattery"]
-  readonly attribute BatteryManager? battery;
+[NoInterfaceObject]
+interface NavigatorBattery {
+    // XXXbz Per spec this should be non-nullable, but we return null in
+    // torn-down windows.  See bug 884925.
+    [Throws, Pref="dom.battery.enabled"]
+    readonly attribute BatteryManager? battery;
 };
+Navigator implements NavigatorBattery;
 
 // https://wiki.mozilla.org/WebAPI/DataStore
 [NoInterfaceObject,
@@ -432,13 +431,8 @@ partial interface Navigator {
 };
 
 partial interface Navigator {
-  [Throws, Pref="dom.presentation.enabled", CheckAnyPermissions="presentation", AvailableIn="PrivilegedApps", SameObject]
+  [Throws, Pref="dom.presentation.enabled", CheckAnyPermissions="presentation", AvailableIn="PrivilegedApps"]
   readonly attribute Presentation? presentation;
-};
-
-partial interface Navigator {
-  [NewObject, Pref="dom.mozTCPSocket.enabled", CheckAnyPermissions="tcp-socket"]
-  readonly attribute LegacyMozTCPSocket mozTCPSocket;
 };
 
 #ifdef MOZ_EME
@@ -446,7 +440,7 @@ partial interface Navigator {
   [Pref="media.eme.apiVisible", NewObject]
   Promise<MediaKeySystemAccess>
   requestMediaKeySystemAccess(DOMString keySystem,
-                              sequence<MediaKeySystemConfiguration> supportedConfigurations);
+                              optional sequence<MediaKeySystemOptions> supportedConfigurations);
 };
 #endif
 

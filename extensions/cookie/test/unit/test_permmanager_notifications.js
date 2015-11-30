@@ -4,7 +4,7 @@
 // Test that the permissionmanager 'added', 'changed', 'deleted', and 'cleared'
 // notifications behave as expected.
 
-var test_generator = do_run_test();
+let test_generator = do_run_test();
 
 function run_test() {
   do_test_pending();
@@ -23,10 +23,9 @@ function do_run_test() {
   let pm = Services.perms;
   let now = Number(Date.now());
   let permType = "test/expiration-perm";
-  let ssm = Cc["@mozilla.org/scriptsecuritymanager;1"]
-              .getService(Ci.nsIScriptSecurityManager);
-  let uri = NetUtil.newURI("http://example.com");
-  let principal = ssm.createCodebasePrincipal(uri, {});
+  let principal = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
+                    .getService(Ci.nsIScriptSecurityManager)
+                    .getNoAppCodebasePrincipal(NetUtil.newURI("http://example.com"));
 
   let observer = new permission_observer(test_generator, now, permType);
   Services.obs.addObserver(observer, "perm-changed", false);

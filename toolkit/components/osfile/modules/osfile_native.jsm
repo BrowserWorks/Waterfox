@@ -10,11 +10,11 @@
 
 this.EXPORTED_SYMBOLS = ["read"];
 
-var {results: Cr, utils: Cu, interfaces: Ci} = Components;
+let {results: Cr, utils: Cu, interfaces: Ci} = Components;
 
-var SharedAll = Cu.import("resource://gre/modules/osfile/osfile_shared_allthreads.jsm", {});
+let SharedAll = Cu.import("resource://gre/modules/osfile/osfile_shared_allthreads.jsm", {});
 
-var SysAll = {};
+let SysAll = {};
 if (SharedAll.Constants.Win) {
   Cu.import("resource://gre/modules/osfile/osfile_win_allthreads.jsm", SysAll);
 } else if (SharedAll.Constants.libc) {
@@ -22,8 +22,8 @@ if (SharedAll.Constants.Win) {
 } else {
   throw new Error("I am neither under Windows nor under a Posix system");
 }
-var {Promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
-var {XPCOMUtils} = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
+let {Promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+let {XPCOMUtils} = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
 
 /**
  * The native service holding the implementation of the functions.

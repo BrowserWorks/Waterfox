@@ -8,7 +8,7 @@
 #define nsTHashtable_h__
 
 #include "nscore.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsDebug.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/MemoryChecking.h"
@@ -38,8 +38,8 @@
  *     // this should either be a simple datatype (uint32_t, nsISupports*) or
  *     // a const reference (const nsAString&)
  *     typedef something KeyType;
- *     // KeyTypePointer is the pointer-version of KeyType, because
- *     // PLDHashTable.h requires keys to cast to <code>const void*</code>
+ *     // KeyTypePointer is the pointer-version of KeyType, because pldhash.h
+ *     // requires keys to cast to <code>const void*</code>
  *     typedef const something* KeyTypePointer;
  *
  *     EntryType(KeyTypePointer aKey);
@@ -71,6 +71,16 @@
  * @see nsClassHashtable
  * @author "Benjamin Smedberg <bsmedberg@covad.net>"
  */
+
+// These are the codes returned by |Enumerator| functions, which control
+// EnumerateEntry()'s behavior. The PLD/PL_D prefix is because they originated
+// in PLDHashTable, but that class no longer uses them.
+enum PLDHashOperator
+{
+  PL_DHASH_NEXT = 0,          // enumerator says continue
+  PL_DHASH_STOP = 1,          // enumerator says stop
+  PL_DHASH_REMOVE = 2         // enumerator says remove
+};
 
 template<class EntryType>
 class MOZ_NEEDS_NO_VTABLE_TYPE nsTHashtable
@@ -125,7 +135,8 @@ public:
   EntryType* GetEntry(KeyType aKey) const
   {
     return static_cast<EntryType*>(
-      const_cast<PLDHashTable*>(&mTable)->Search(EntryType::KeyToPointer(aKey)));
+      PL_DHashTableSearch(const_cast<PLDHashTable*>(&mTable),
+                          EntryType::KeyToPointer(aKey)));
   }
 
   /**
@@ -143,15 +154,16 @@ public:
    */
   EntryType* PutEntry(KeyType aKey)
   {
-    // infallible add
-    return static_cast<EntryType*>(mTable.Add(EntryType::KeyToPointer(aKey)));
+    return static_cast<EntryType*>  // infallible add
+      (PL_DHashTableAdd(&mTable, EntryType::KeyToPointer(aKey)));
   }
 
   MOZ_WARN_UNUSED_RESULT
   EntryType* PutEntry(KeyType aKey, const fallible_t&)
   {
-    return static_cast<EntryType*>(mTable.Add(EntryType::KeyToPointer(aKey),
-                                              mozilla::fallible));
+    return static_cast<EntryType*>
+      (PL_DHashTableAdd(&mTable, EntryType::KeyToPointer(aKey),
+                        mozilla::fallible));
   }
 
   /**
@@ -160,7 +172,8 @@ public:
    */
   void RemoveEntry(KeyType aKey)
   {
-    mTable.Remove(EntryType::KeyToPointer(aKey));
+    PL_DHashTableRemove(&mTable,
+                        EntryType::KeyToPointer(aKey));
   }
 
   /**
@@ -173,7 +186,47 @@ public:
    */
   void RawRemoveEntry(EntryType* aEntry)
   {
-    mTable.RawRemove(aEntry);
+    PL_DHashTableRawRemove(&mTable, aEntry);
+  }
+
+  /**
+   * client must provide an <code>Enumerator</code> function for
+   *   EnumerateEntries
+   * @param     aEntry the entry being enumerated
+   * @param     userArg passed unchanged from <code>EnumerateEntries</code>
+   * @return    combination of flags
+   *            @link PLDHashOperator::PL_DHASH_NEXT PL_DHASH_NEXT @endlink ,
+   *            @link PLDHashOperator::PL_DHASH_STOP PL_DHASH_STOP @endlink ,
+   *            @link PLDHashOperator::PL_DHASH_REMOVE PL_DHASH_REMOVE @endlink
+   */
+  typedef PLDHashOperator (*Enumerator)(EntryType* aEntry, void* userArg);
+
+  /**
+   * Enumerate all the entries of the function. If any entries are removed via
+   * a PL_DHASH_REMOVE return value from |aEnumFunc|, the table may be shrunk
+   * at the end. Use RawRemoveEntry() instead if you wish to remove an entry
+   * without possibly shrinking the table.
+   * WARNING: this function is deprecated. Please use Iterator instead.
+   * @param     enumFunc the <code>Enumerator</code> function to call
+   * @param     userArg a pointer to pass to the
+   *            <code>Enumerator</code> function
+   * @return    the number of entries actually enumerated
+   */
+  uint32_t EnumerateEntries(Enumerator aEnumFunc, void* aUserArg)
+  {
+    uint32_t n = 0;
+    for (auto iter = mTable.Iter(); !iter.Done(); iter.Next()) {
+      auto entry = static_cast<EntryType*>(iter.Get());
+      PLDHashOperator op = aEnumFunc(entry, aUserArg);
+      n++;
+      if (op & PL_DHASH_REMOVE) {
+        iter.Remove();
+      }
+      if (op & PL_DHASH_STOP) {
+        break;
+      }
+    }
+    return n;
   }
 
   // This is an iterator that also allows entry removal. Example usage:
@@ -282,7 +335,7 @@ public:
    */
   void MarkImmutable()
   {
-    mTable.MarkImmutable();
+    PL_DHashMarkTableImmutable(&mTable);
   }
 #endif
 
@@ -345,7 +398,7 @@ nsTHashtable<EntryType>::Ops()
   {
     s_HashKey,
     s_MatchEntry,
-    EntryType::ALLOW_MEMMOVE ? PLDHashTable::MoveEntryStub : s_CopyEntry,
+    EntryType::ALLOW_MEMMOVE ? ::PL_DHashMoveEntryStub : s_CopyEntry,
     s_ClearEntry,
     s_InitEntry
   };

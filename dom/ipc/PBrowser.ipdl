@@ -53,7 +53,7 @@ using struct nsRect from "nsRect.h";
 using class mozilla::WidgetSelectionEvent from "ipc/nsGUIEventIPC.h";
 using class mozilla::WidgetTouchEvent from "ipc/nsGUIEventIPC.h";
 using struct mozilla::dom::RemoteDOMEvent from "mozilla/dom/TabMessageUtils.h";
-using mozilla::dom::ScreenOrientationInternal from "mozilla/dom/ScreenOrientation.h";
+using mozilla::dom::ScreenOrientation from "mozilla/dom/ScreenOrientation.h";
 using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
 using mozilla::CSSPoint from "Units.h";
 using mozilla::CSSToScreenScale from "Units.h";
@@ -64,10 +64,8 @@ using mozilla::WritingMode from "mozilla/WritingModes.h";
 using mozilla::layers::TouchBehaviorFlags from "mozilla/layers/APZUtils.h";
 using nsIWidget::TouchPointerState from "nsIWidget.h";
 using struct LookAndFeelInt from "mozilla/widget/WidgetMessageUtils.h";
-using class mozilla::dom::ipc::StructuredCloneData from "ipc/IPCMessageUtils.h";
-using mozilla::EventMessage from "mozilla/EventForwards.h";
+using struct mozilla::OwningSerializedStructuredCloneBuffer from "ipc/IPCMessageUtils.h";
 using nsEventStatus from "mozilla/EventForwards.h";
-using nsSizeMode from "nsIWidgetListener.h";
 
 namespace mozilla {
 namespace dom {
@@ -123,7 +121,7 @@ both:
      */
     PRenderFrame();
 
-    PWebBrowserPersistDocument(uint64_t aOuterWindowID);
+    PWebBrowserPersistDocument();
 
 parent:
     /**
@@ -173,10 +171,10 @@ parent:
                       bool aCalledFromJS,
                       bool aPositionSpecified,
                       bool aSizeSpecified,
-                      nsCString aURI,
+                      nsString aURI,
                       nsString aName,
                       nsCString aFeatures,
-                      nsCString aBaseURI)
+                      nsString aBaseURI)
       returns (nsresult rv,
                bool windowOpened,
                FrameScriptInfo[] frameScripts,
@@ -184,11 +182,11 @@ parent:
 
     sync SyncMessage(nsString aMessage, ClonedMessageData aData,
                      CpowEntry[] aCpows, Principal aPrincipal)
-      returns (StructuredCloneData[] retval);
+      returns (OwningSerializedStructuredCloneBuffer[] retval);
 
     prio(high) sync RpcMessage(nsString aMessage, ClonedMessageData aData,
                                CpowEntry[] aCpows, Principal aPrincipal)
-      returns (StructuredCloneData[] retval);
+      returns (OwningSerializedStructuredCloneBuffer[] retval);
 
     /**
      * Notifies chrome that there is a focus change involving an editable
@@ -278,7 +276,7 @@ parent:
      *
      * message      The message value of the handled event.
      */
-    prio(urgent) async OnEventNeedingAckHandled(EventMessage message);
+    prio(urgent) async OnEventNeedingAckHandled(uint32_t message);
 
     /**
      * Tells chrome to start plugin IME.  If this results in a string getting
@@ -476,13 +474,6 @@ parent:
                           MaybeZoomConstraints aConstraints);
 
     /**
-     * Tells the containing widget whether the given input block results in a
-     * swipe. Should be called in response to a WidgetWheelEvent that has
-     * mFlags.mCanTriggerSwipe set on it.
-     */
-    RespondStartSwipeEvent(uint64_t aInputBlockId, bool aStartSwipe);
-
-    /**
      * Brings up the auth prompt dialog.
      * Called when this is the PBrowserParent for a nested remote iframe.
      * aCallbackId corresponds to an nsIAuthPromptCallback that lives in the
@@ -532,7 +523,6 @@ parent:
     ClearNativeTouchSequence(uint64_t aObserverId);
 child:
     NativeSynthesisResponse(uint64_t aObserverId, nsCString aResponse);
-
 
 parent:
 
@@ -587,8 +577,7 @@ child:
 
     CacheFileDescriptor(nsString path, FileDescriptor fd);
 
-    UpdateDimensions(CSSRect rect, CSSSize size, nsSizeMode sizeMode,
-                     ScreenOrientationInternal orientation,
+    UpdateDimensions(CSSRect rect, CSSSize size, ScreenOrientation orientation,
                      LayoutDeviceIntPoint chromeDisp) compressall;
 
     UpdateFrame(FrameMetrics frame);
@@ -642,14 +631,6 @@ child:
      * they are 'compressed' by dumping the oldest one.
      */
     RealMouseMoveEvent(WidgetMouseEvent event) compress;
-    /**
-     * Mouse move events with |reason == eSynthesized| are sent via a separate
-     * message because they do not generate DOM 'mousemove' events, and the
-     * 'compress' attribute on RealMouseMoveEvent() could result in a
-     * |reason == eReal| event being dropped in favour of an |eSynthesized|
-     * event, and thus a DOM 'mousemove' event to be lost.
-     */
-    SynthMouseMoveEvent(WidgetMouseEvent event);
     RealMouseButtonEvent(WidgetMouseEvent event);
     RealKeyEvent(WidgetKeyboardEvent event, MaybeNativeKeyBinding keyBinding);
     MouseWheelEvent(WidgetWheelEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
@@ -722,20 +703,9 @@ child:
     SetUpdateHitRegion(bool aEnabled);
 
     /**
-     * Update the child side docShell active (resource use) state.
+     * Tell the child to update its docShell's active state.
      */
-    SetDocShellIsActive(bool aIsActive);
-
-    /**
-     * Notify the child that it shouldn't paint the offscreen displayport.
-     * This is useful to speed up interactive operations over async
-     * scrolling performance like resize, tabswitch, pageload.
-     *
-     * Each enable call must be matched with a disable call. The child
-     * will remain in the suppress mode as long as there's
-     * a single unmatched call.
-     */
-    async SuppressDisplayport(bool aEnabled);
+    SetIsDocShellActive(bool aIsActive);
 
     /**
      * Navigate by key (Tab/Shift+Tab/F6/Shift+f6).
@@ -753,13 +723,8 @@ child:
     /**
      * Tell the child that the UI resolution changed for the containing
      * window.
-     * To avoid some sync messages from child to parent, we also send the dpi
-     * and default scale with the notification.
-     * If we don't know the dpi and default scale, we just pass in a negative
-     * value (-1) but in the majority of the cases this saves us from two
-     * sync requests from the child to the parent.
      */
-    UIResolutionChanged(float dpi, double scale);
+    UIResolutionChanged();
 
     /**
      * Tell the child that the system theme has changed, and that a repaint
@@ -777,16 +742,6 @@ child:
      * with another.
      */
     SwappedWithOtherRemoteLoader();
-
-    /**
-     * A potential accesskey was just pressed. Look for accesskey targets
-     * using the list of provided charCodes.
-     *
-     * @param charCode array of potential character codes
-     * @param isTrusted true if triggered by a trusted key event
-     * @param modifierMask indicates which accesskey modifiers are pressed
-     */
-    HandleAccessKey(uint32_t[] charCodes, bool isTrusted, int32_t modifierMask);
 
 /*
  * FIXME: write protocol!

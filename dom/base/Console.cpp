@@ -18,7 +18,6 @@
 #include "nsDOMNavigationTiming.h"
 #include "nsGlobalWindow.h"
 #include "nsJSUtils.h"
-#include "nsNetUtil.h"
 #include "nsPerformance.h"
 #include "ScriptSettings.h"
 #include "WorkerPrivate.h"
@@ -27,15 +26,12 @@
 #include "nsContentUtils.h"
 #include "nsDocShell.h"
 #include "nsProxyRelease.h"
-#include "mozilla/ConsoleTimelineMarker.h"
-#include "mozilla/TimestampTimelineMarker.h"
 
 #include "nsIConsoleAPIStorage.h"
 #include "nsIDOMWindowUtils.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsILoadContext.h"
 #include "nsIProgrammingLanguage.h"
-#include "nsISensitiveInfoHiddenURI.h"
 #include "nsIServiceManager.h"
 #include "nsISupportsPrimitives.h"
 #include "nsIWebNavigation.h"
@@ -989,6 +985,59 @@ ReifyStack(nsIStackFrame* aStack, nsTArray<ConsoleStackEntry>& aRefiedStack)
   return NS_OK;
 }
 
+class ConsoleTimelineMarker : public TimelineMarker
+{
+public:
+  ConsoleTimelineMarker(nsDocShell* aDocShell,
+                        TracingMetadata aMetaData,
+                        const nsAString& aCause)
+    : TimelineMarker(aDocShell, "ConsoleTime", aMetaData, aCause)
+  {
+    if (aMetaData == TRACING_INTERVAL_END) {
+      CaptureStack();
+    }
+  }
+
+  virtual bool Equals(const TimelineMarker& aOther) override
+  {
+    if (!TimelineMarker::Equals(aOther)) {
+      return false;
+    }
+    // Console markers must have matching causes as well.
+    return GetCause() == aOther.GetCause();
+  }
+
+  virtual void AddDetails(JSContext* aCx,
+                          mozilla::dom::ProfileTimelineMarker& aMarker) override
+  {
+    if (GetMetaData() == TRACING_INTERVAL_START) {
+      aMarker.mCauseName.Construct(GetCause());
+    } else {
+      aMarker.mEndStack = GetStack();
+    }
+  }
+};
+
+class TimestampTimelineMarker : public TimelineMarker
+{
+public:
+  TimestampTimelineMarker(nsDocShell* aDocShell,
+                          TracingMetadata aMetaData,
+                          const nsAString& aCause)
+    : TimelineMarker(aDocShell, "TimeStamp", aMetaData, aCause)
+  {
+    MOZ_ASSERT(aMetaData == TRACING_TIMESTAMP);
+  }
+
+  virtual void AddDetails(JSContext* aCx,
+                          mozilla::dom::ProfileTimelineMarker& aMarker) override
+  {
+    if (!GetCause().IsEmpty()) {
+      aMarker.mCauseName.Construct(GetCause());
+    }
+  }
+};
+
 // Queue a call to a console method. See the CALL_DELAY constant.
 void
 Console::Method(JSContext* aCx, MethodName aMethodName,
@@ -1095,7 +1144,8 @@ Console::Method(JSContext* aCx, MethodName aMethodName,
           key.init(aCx, jsString);
         }
 
-        UniquePtr<TimelineMarker> marker = MakeUnique<TimestampTimelineMarker>(key);
+        mozilla::UniquePtr<TimelineMarker> marker =
+          MakeUnique<TimestampTimelineMarker>(docShell, TRACING_TIMESTAMP, key);
         TimelineConsumers::AddMarkerForDocShell(docShell, Move(marker));
       }
       // For `console.time(foo)` and `console.timeEnd(foo)`
@@ -1105,9 +1155,10 @@ Console::Method(JSContext* aCx, MethodName aMethodName,
         if (jsString) {
           nsAutoJSString key;
           if (key.init(aCx, jsString)) {
-            UniquePtr<TimelineMarker> marker = MakeUnique<ConsoleTimelineMarker>(
-              key, aMethodName == MethodTime ? MarkerTracingType::START
-                                             : MarkerTracingType::END);
+            mozilla::UniquePtr<TimelineMarker> marker =
+              MakeUnique<ConsoleTimelineMarker>(docShell,
+                                                aMethodName == MethodTime ? TRACING_INTERVAL_START : TRACING_INTERVAL_END,
+                                                key);
             TimelineConsumers::AddMarkerForDocShell(docShell, Move(marker));
           }
         }
@@ -1212,19 +1263,6 @@ Console::ProcessCallData(ConsoleCallData* aData)
 
   event.mLevel = aData->mMethodString;
   event.mFilename = frame.mFilename;
-
-  nsCOMPtr<nsIURI> filenameURI;
-  nsAutoCString pass;
-  if (NS_SUCCEEDED(NS_NewURI(getter_AddRefs(filenameURI), frame.mFilename)) &&
-      NS_SUCCEEDED(filenameURI->GetPassword(pass)) && !pass.IsEmpty()) {
-    nsCOMPtr<nsISensitiveInfoHiddenURI> safeURI = do_QueryInterface(filenameURI);
-    nsAutoCString spec;
-    if (safeURI &&
-        NS_SUCCEEDED(safeURI->GetSensitiveInfoHiddenSpec(spec))) {
-      CopyUTF8toUTF16(spec, event.mFilename);
-    }
-  }
-
   event.mLineNumber = frame.mLineNumber;
   event.mColumnNumber = frame.mColumnNumber;
   event.mFunctionName = frame.mFunctionName;
@@ -1522,12 +1560,6 @@ Console::ProcessArguments(JSContext* aCx,
 
       case 'c':
       {
-        // If there isn't any output but there's already a style, then
-        // discard the previous style and use the next one instead.
-        if (output.IsEmpty() && !aStyles.IsEmpty()) {
-          aStyles.TruncateLength(aStyles.Length() - 1);
-        }
-
         if (!FlushOutput(aCx, aSequence, output)) {
           return false;
         }

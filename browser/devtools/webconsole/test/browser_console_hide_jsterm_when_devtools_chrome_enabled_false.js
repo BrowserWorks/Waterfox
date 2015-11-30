@@ -33,17 +33,13 @@ function* getVariablesView(hud) {
   }
 
   let deferred = promise.defer();
-
-  // Filter out other messages to ensure ours stays visible.
-  hud.ui.filterBox.value = "browser_console_hide_jsterm_test";
-
   hud.jsterm.clearOutput();
-  hud.jsterm.execute("new Object({ browser_console_hide_jsterm_test: true })");
+  hud.jsterm.execute("new Object()");
 
   let [message] = yield waitForMessages({
     webconsole: hud,
     messages: [{
-      text: "Object { browser_console_hide_jsterm_test: true }",
+      text: "Object",
       category: CATEGORY_OUTPUT,
     }],
   });

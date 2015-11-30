@@ -3,7 +3,7 @@
 
 // Check that bookmarklets are returned by searches with searchTerms.
 
-var testData = [
+let testData = [
   { isInQuery: true
   , isBookmark: true
   , title: "bookmark 1"

@@ -4045,8 +4045,7 @@ MobileMessageDB.prototype = {
    */
   createMessageCursor: function(aHasStartDate, aStartDate, aHasEndDate,
                                 aEndDate, aNumbers, aNumbersCount, aDelivery,
-                                aHasRead, aRead, aHasThreadId, aThreadId,
-                                aReverse, aCallback) {
+                                aHasRead, aRead, aThreadId, aReverse, aCallback) {
     if (DEBUG) {
       debug("Creating a message cursor. Filters:" +
             " startDate: " + (aHasStartDate ? aStartDate : "(null)") +
@@ -4054,7 +4053,7 @@ MobileMessageDB.prototype = {
             " delivery: " + aDelivery +
             " numbers: " + (aNumbersCount ? aNumbers : "(null)") +
             " read: " + (aHasRead ? aRead : "(null)") +
-            " threadId: " + (aHasThreadId ? aThreadId : "(null)") +
+            " threadId: " + aThreadId +
             " reverse: " + aReverse);
     }
 
@@ -4074,7 +4073,7 @@ MobileMessageDB.prototype = {
     if (aHasRead) {
       filter.read = aRead;
     }
-    if (aHasThreadId) {
+    if (aThreadId) {
       filter.threadId = aThreadId;
     }
 
@@ -4240,7 +4239,7 @@ MobileMessageDB.prototype = {
   }
 };
 
-var FilterSearcherHelper = {
+let FilterSearcherHelper = {
 
   /**
    * @param index

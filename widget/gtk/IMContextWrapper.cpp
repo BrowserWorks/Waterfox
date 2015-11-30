@@ -94,80 +94,6 @@ public:
   virtual ~GetWritingModeName() {}
 };
 
-class GetTextRangeStyleText final : public nsAutoCString
-{
-public:
-    explicit GetTextRangeStyleText(const TextRangeStyle& aStyle)
-    {
-        if (!aStyle.IsDefined()) {
-            AssignLiteral("{ IsDefined()=false }");
-            return;
-        }
-
-        if (aStyle.IsLineStyleDefined()) {
-            AppendLiteral("{ mLineStyle=");
-            AppendLineStyle(aStyle.mLineStyle);
-            if (aStyle.IsUnderlineColorDefined()) {
-                AppendLiteral(", mUnderlineColor=");
-                AppendColor(aStyle.mUnderlineColor);
-            } else {
-                AppendLiteral(", IsUnderlineColorDefined=false");
-            }
-        } else {
-            AppendLiteral("{ IsLineStyleDefined()=false");
-        }
-
-        if (aStyle.IsForegroundColorDefined()) {
-            AppendLiteral(", mForegroundColor=");
-            AppendColor(aStyle.mForegroundColor);
-        } else {
-            AppendLiteral(", IsForegroundColorDefined()=false");
-        }
-
-        if (aStyle.IsBackgroundColorDefined()) {
-            AppendLiteral(", mBackgroundColor=");
-            AppendColor(aStyle.mBackgroundColor);
-        } else {
-            AppendLiteral(", IsBackgroundColorDefined()=false");
-        }
-
-        AppendLiteral(" }");
-    }
-    void AppendLineStyle(uint8_t aLineStyle)
-    {
-        switch (aLineStyle) {
-            case TextRangeStyle::LINESTYLE_NONE:
-                AppendLiteral("LINESTYLE_NONE");
-                break;
-            case TextRangeStyle::LINESTYLE_SOLID:
-                AppendLiteral("LINESTYLE_SOLID");
-                break;
-            case TextRangeStyle::LINESTYLE_DOTTED:
-                AppendLiteral("LINESTYLE_DOTTED");
-                break;
-            case TextRangeStyle::LINESTYLE_DASHED:
-                AppendLiteral("LINESTYLE_DASHED");
-                break;
-            case TextRangeStyle::LINESTYLE_DOUBLE:
-                AppendLiteral("LINESTYLE_DOUBLE");
-                break;
-            case TextRangeStyle::LINESTYLE_WAVY:
-                AppendLiteral("LINESTYLE_WAVY");
-                break;
-            default:
-                AppendPrintf("Invalid(0x%02X)", aLineStyle);
-                break;
-        }
-    }
-    void AppendColor(nscolor aColor)
-    {
-        AppendPrintf("{ R=0x%02X, G=0x%02X, B=0x%02X, A=0x%02X }",
-                     NS_GET_R(aColor), NS_GET_G(aColor), NS_GET_B(aColor),
-                     NS_GET_A(aColor));
-    }
-    virtual ~GetTextRangeStyleText() {};
-};
-
 const static bool kUseSimpleContextDefault = MOZ_WIDGET_GTK == 2;
 
 /******************************************************************************
@@ -883,7 +809,7 @@ IMContextWrapper::OnSelectionChange(nsWindow* aCaller,
         return;
     }
 
-    const IMENotification::SelectionChangeDataBase& selectionChangeData =
+    const IMENotification::SelectionChangeData& selectionChangeData =
         aIMENotification.mSelectionChangeData;
 
     MOZ_LOG(gGtkIMLog, LogLevel::Info,
@@ -915,7 +841,7 @@ IMContextWrapper::OnSelectionChange(nsWindow* aCaller,
 
     // The focused editor might have placeholder text with normal text node.
     // In such case, the text node must be removed from a compositionstart
-    // event handler.  So, we're dispatching eCompositionStart,
+    // event handler.  So, we're dispatching NS_COMPOSITION_START,
     // we should ignore selection change notification.
     if (mCompositionState == eCompositionState_CompositionStartDispatched) {
         if (NS_WARN_IF(!mSelection.IsValid())) {
@@ -1303,7 +1229,7 @@ IMContextWrapper::DispatchCompositionStart(GtkIMContext* aContext)
         ("GTKIM: %p   DispatchCompositionStart(), FAILED, mCompositionStart=%u",
          this, mCompositionStart));
     mCompositionState = eCompositionState_CompositionStartDispatched;
-    WidgetCompositionEvent compEvent(true, eCompositionStart,
+    WidgetCompositionEvent compEvent(true, NS_COMPOSITION_START,
                                      mLastFocusedWindow);
     InitEvent(compEvent);
     nsCOMPtr<nsIWidget> kungFuDeathGrip = mLastFocusedWindow;
@@ -1364,7 +1290,7 @@ IMContextWrapper::DispatchCompositionChangeEvent(
         }
     }
 
-    WidgetCompositionEvent compositionChangeEvent(true, eCompositionChange,
+    WidgetCompositionEvent compositionChangeEvent(true, NS_COMPOSITION_CHANGE,
                                                   mLastFocusedWindow);
     InitEvent(compositionChangeEvent);
 
@@ -1439,8 +1365,8 @@ IMContextWrapper::DispatchCompositionCommitEvent(
 
     nsRefPtr<nsWindow> lastFocusedWindow(mLastFocusedWindow);
 
-    EventMessage message = aCommitString ? eCompositionCommit :
-                                           eCompositionCommitAsIs;
+    uint32_t message = aCommitString ? NS_COMPOSITION_COMMIT :
+                                       NS_COMPOSITION_COMMIT_AS_IS;
     mCompositionState = eCompositionState_NotComposing;
     mCompositionStart = UINT32_MAX;
     mCompositionTargetRange.Clear();
@@ -1449,7 +1375,7 @@ IMContextWrapper::DispatchCompositionCommitEvent(
     WidgetCompositionEvent compositionCommitEvent(true, message,
                                                   mLastFocusedWindow);
     InitEvent(compositionCommitEvent);
-    if (message == eCompositionCommit) {
+    if (message == NS_COMPOSITION_COMMIT) {
         compositionCommitEvent.mData = *aCommitString;
     }
 
@@ -1471,21 +1397,21 @@ IMContextWrapper::DispatchCompositionCommitEvent(
 
 already_AddRefed<TextRangeArray>
 IMContextWrapper::CreateTextRangeArray(GtkIMContext* aContext,
-                                       const nsAString& aCompositionString)
+                                       const nsAString& aLastDispatchedData)
 {
     MOZ_LOG(gGtkIMLog, LogLevel::Info,
         ("GTKIM: %p CreateTextRangeArray(aContext=%p, "
-         "aCompositionString=\"%s\" (Length()=%u))",
-         this, aContext, NS_ConvertUTF16toUTF8(aCompositionString).get(),
-         aCompositionString.Length()));
+         "aLastDispatchedData=\"%s\" (Length()=%u))",
+         this, aContext, NS_ConvertUTF16toUTF8(aLastDispatchedData).get(),
+         aLastDispatchedData.Length()));
 
     nsRefPtr<TextRangeArray> textRangeArray = new TextRangeArray();
 
     gchar *preedit_string;
-    gint cursor_pos_in_chars;
+    gint cursor_pos;
     PangoAttrList *feedback_list;
     gtk_im_context_get_preedit_string(aContext, &preedit_string,
-                                      &feedback_list, &cursor_pos_in_chars);
+                                      &feedback_list, &cursor_pos);
     if (!preedit_string || !*preedit_string) {
         MOZ_LOG(gGtkIMLog, LogLevel::Error,
             ("GTKIM: %p   CreateTextRangeArray(), FAILED, due to "
@@ -1494,53 +1420,6 @@ IMContextWrapper::CreateTextRangeArray(GtkIMContext* aContext,
         pango_attr_list_unref(feedback_list);
         g_free(preedit_string);
         return textRangeArray.forget();
-    }
-
-    // Convert caret offset from offset in characters to offset in UTF-16
-    // string.  If we couldn't proper offset in UTF-16 string, we should
-    // assume that the caret is at the end of the composition string.
-    uint32_t caretOffsetInUTF16 = aCompositionString.Length();
-    if (NS_WARN_IF(cursor_pos_in_chars < 0)) {
-        // Note that this case is undocumented.  We should assume that the
-        // caret is at the end of the composition string.
-    } else if (cursor_pos_in_chars == 0) {
-        caretOffsetInUTF16 = 0;
-    } else {
-        gchar* charAfterCaret =
-            g_utf8_offset_to_pointer(preedit_string, cursor_pos_in_chars);
-        if (NS_WARN_IF(!charAfterCaret)) {
-            MOZ_LOG(gGtkIMLog, LogLevel::Warning,
-                ("GTKIM: %p   CreateTextRangeArray(), failed to get UTF-8 "
-                 "string before the caret (cursor_pos_in_chars=%d)",
-                 this, cursor_pos_in_chars));
-        } else {
-            glong caretOffset = 0;
-            gunichar2* utf16StrBeforeCaret =
-                g_utf8_to_utf16(preedit_string, charAfterCaret - preedit_string,
-                                nullptr, &caretOffset, nullptr);
-            if (NS_WARN_IF(!utf16StrBeforeCaret) ||
-                NS_WARN_IF(caretOffset < 0)) {
-                MOZ_LOG(gGtkIMLog, LogLevel::Warning,
-                    ("GTKIM: %p   CreateTextRangeArray(), WARNING, failed to "
-                     "convert to UTF-16 string before the caret "
-                     "(cursor_pos_in_chars=%d, caretOffset=%d)",
-                     this, cursor_pos_in_chars, caretOffset));
-            } else {
-                caretOffsetInUTF16 = static_cast<uint32_t>(caretOffset);
-                uint32_t compositionStringLength = aCompositionString.Length();
-                if (NS_WARN_IF(caretOffsetInUTF16 > compositionStringLength)) {
-                    MOZ_LOG(gGtkIMLog, LogLevel::Warning,
-                        ("GTKIM: %p   CreateTextRangeArray(), WARNING, "
-                         "caretOffsetInUTF16=%u is larger than "
-                         "compositionStringLength=%u",
-                         this, caretOffsetInUTF16, compositionStringLength));
-                    caretOffsetInUTF16 = compositionStringLength;
-                }
-            }
-            if (utf16StrBeforeCaret) {
-                g_free(utf16StrBeforeCaret);
-            }
-        }
     }
 
     PangoAttrIterator* iter;
@@ -1555,21 +1434,93 @@ IMContextWrapper::CreateTextRangeArray(GtkIMContext* aContext,
         return textRangeArray.forget();
     }
 
+    /*
+     * Depend on gtk2's implementation on XIM support.
+     * In aFeedback got from gtk2, there are only three types of data:
+     * PANGO_ATTR_UNDERLINE, PANGO_ATTR_FOREGROUND, PANGO_ATTR_BACKGROUND.
+     * Corresponding to XIMUnderline, XIMReverse.
+     * Don't take PANGO_ATTR_BACKGROUND into account, since
+     * PANGO_ATTR_BACKGROUND and PANGO_ATTR_FOREGROUND are always
+     * a couple.
+     */
     do {
-        TextRange range;
-        if (!SetTextRange(iter, preedit_string, caretOffsetInUTF16, range)) {
+        PangoAttribute* attrUnderline =
+            pango_attr_iterator_get(iter, PANGO_ATTR_UNDERLINE);
+        PangoAttribute* attrForeground =
+            pango_attr_iterator_get(iter, PANGO_ATTR_FOREGROUND);
+        if (!attrUnderline && !attrForeground) {
             continue;
         }
+
+        // Get the range of the current attribute(s)
+        gint start, end;
+        pango_attr_iterator_range(iter, &start, &end);
+
+        TextRange range;
+        // XIMReverse | XIMUnderline
+        if (attrUnderline && attrForeground) {
+            range.mRangeType = NS_TEXTRANGE_SELECTEDCONVERTEDTEXT;
+        }
+        // XIMUnderline
+        else if (attrUnderline) {
+            range.mRangeType = NS_TEXTRANGE_CONVERTEDTEXT;
+        }
+        // XIMReverse
+        else if (attrForeground) {
+            range.mRangeType = NS_TEXTRANGE_SELECTEDRAWTEXT;
+        } else {
+            range.mRangeType = NS_TEXTRANGE_RAWINPUT;
+        }
+
+        gunichar2* uniStr = nullptr;
+        if (start == 0) {
+            range.mStartOffset = 0;
+        } else {
+            glong uniStrLen;
+            uniStr = g_utf8_to_utf16(preedit_string, start,
+                                     nullptr, &uniStrLen, nullptr);
+            if (uniStr) {
+                range.mStartOffset = uniStrLen;
+                g_free(uniStr);
+                uniStr = nullptr;
+            }
+        }
+
+        glong uniStrLen;
+        uniStr = g_utf8_to_utf16(preedit_string + start, end - start,
+                                 nullptr, &uniStrLen, nullptr);
+        if (!uniStr) {
+            range.mEndOffset = range.mStartOffset;
+        } else {
+            range.mEndOffset = range.mStartOffset + uniStrLen;
+            g_free(uniStr);
+            uniStr = nullptr;
+        }
+
         textRangeArray->AppendElement(range);
+
+        MOZ_LOG(gGtkIMLog, LogLevel::Debug,
+            ("GTKIM: %p   CreateTextRangeArray(), mStartOffset=%u, "
+             "mEndOffset=%u, mRangeType=%s",
+             this, range.mStartOffset, range.mEndOffset,
+             GetRangeTypeName(range.mRangeType)));
     } while (pango_attr_iterator_next(iter));
 
     TextRange range;
-    range.mStartOffset = range.mEndOffset = caretOffsetInUTF16;
+    if (cursor_pos < 0) {
+        range.mStartOffset = 0;
+    } else if (uint32_t(cursor_pos) > aLastDispatchedData.Length()) {
+        range.mStartOffset = aLastDispatchedData.Length();
+    } else {
+        range.mStartOffset = uint32_t(cursor_pos);
+    }
+    range.mEndOffset = range.mStartOffset;
     range.mRangeType = NS_TEXTRANGE_CARETPOSITION;
     textRangeArray->AppendElement(range);
+
     MOZ_LOG(gGtkIMLog, LogLevel::Debug,
-        ("GTKIM: %p   CreateTextRangeArray(), mStartOffset=%u, "
-         "mEndOffset=%u, mRangeType=%s",
+        ("GTKIM: %p   CreateTextRangeArray(), mStartOffset=%u, mEndOffset=%u, "
+         "mRangeType=%s",
          this, range.mStartOffset, range.mEndOffset,
          GetRangeTypeName(range.mRangeType)));
 
@@ -1578,196 +1529,6 @@ IMContextWrapper::CreateTextRangeArray(GtkIMContext* aContext,
     g_free(preedit_string);
 
     return textRangeArray.forget();
-}
-
-/* static */
-nscolor
-IMContextWrapper::ToNscolor(PangoAttrColor* aPangoAttrColor)
-{
-    PangoColor& pangoColor = aPangoAttrColor->color;
-    uint8_t r = pangoColor.red / 0x100;
-    uint8_t g = pangoColor.green / 0x100;
-    uint8_t b = pangoColor.blue / 0x100;
-    return NS_RGB(r, g, b);
-}
-
-bool
-IMContextWrapper::SetTextRange(PangoAttrIterator* aPangoAttrIter,
-                               const gchar* aUTF8CompositionString,
-                               uint32_t aUTF16CaretOffset,
-                               TextRange& aTextRange) const
-{
-    // Set the range offsets in UTF-16 string.
-    gint utf8ClauseStart, utf8ClauseEnd;
-    pango_attr_iterator_range(aPangoAttrIter, &utf8ClauseStart, &utf8ClauseEnd);
-    if (utf8ClauseStart == utf8ClauseEnd) {
-        MOZ_LOG(gGtkIMLog, LogLevel::Error,
-            ("GTKIM: %p   SetTextRange(), FAILED, due to collapsed range",
-             this));
-        return false;
-    }
-
-    if (!utf8ClauseStart) {
-        aTextRange.mStartOffset = 0;
-    } else {
-        glong utf16PreviousClausesLength;
-        gunichar2* utf16PreviousClausesString =
-            g_utf8_to_utf16(aUTF8CompositionString, utf8ClauseStart, nullptr,
-                            &utf16PreviousClausesLength, nullptr);
-
-        if (NS_WARN_IF(!utf16PreviousClausesString)) {
-            MOZ_LOG(gGtkIMLog, LogLevel::Error,
-                ("GTKIM: %p   SetTextRange(), FAILED, due to g_utf8_to_utf16() "
-                 "failure (retrieving previous string of current clause)",
-                 this));
-            return false;
-        }
-
-        aTextRange.mStartOffset = utf16PreviousClausesLength;
-        g_free(utf16PreviousClausesString);
-    }
-
-    glong utf16CurrentClauseLength;
-    gunichar2* utf16CurrentClauseString =
-        g_utf8_to_utf16(aUTF8CompositionString + utf8ClauseStart,
-                        utf8ClauseEnd - utf8ClauseStart,
-                        nullptr, &utf16CurrentClauseLength, nullptr);
-
-    if (NS_WARN_IF(!utf16CurrentClauseString)) {
-        MOZ_LOG(gGtkIMLog, LogLevel::Error,
-            ("GTKIM: %p   SetTextRange(), FAILED, due to g_utf8_to_utf16() "
-             "failure (retrieving current clause)",
-             this));
-        return false;
-    }
-
-    aTextRange.mEndOffset = aTextRange.mStartOffset + utf16CurrentClauseLength;
-    g_free(utf16CurrentClauseString);
-    utf16CurrentClauseString = nullptr;
-
-    // Set styles
-    TextRangeStyle& style = aTextRange.mRangeStyle;
-
-    // Underline
-    PangoAttrInt* attrUnderline =
-        reinterpret_cast<PangoAttrInt*>(
-            pango_attr_iterator_get(aPangoAttrIter, PANGO_ATTR_UNDERLINE));
-    if (attrUnderline) {
-        switch (attrUnderline->value) {
-            case PANGO_UNDERLINE_NONE:
-                style.mLineStyle = TextRangeStyle::LINESTYLE_NONE;
-                break;
-            case PANGO_UNDERLINE_DOUBLE:
-                style.mLineStyle = TextRangeStyle::LINESTYLE_DOUBLE;
-                break;
-            case PANGO_UNDERLINE_ERROR:
-                style.mLineStyle = TextRangeStyle::LINESTYLE_WAVY;
-                break;
-            case PANGO_UNDERLINE_SINGLE:
-            case PANGO_UNDERLINE_LOW:
-                style.mLineStyle = TextRangeStyle::LINESTYLE_SOLID;
-                break;
-            default:
-                MOZ_LOG(gGtkIMLog, LogLevel::Warning,
-                    ("GTKIM: %p   SetTextRange(), retrieved unknown underline "
-                     "style: %d",
-                     this, attrUnderline->value));
-                style.mLineStyle = TextRangeStyle::LINESTYLE_SOLID;
-                break;
-        }
-        style.mDefinedStyles |= TextRangeStyle::DEFINED_LINESTYLE;
-
-        // Underline color
-        PangoAttrColor* attrUnderlineColor =
-            reinterpret_cast<PangoAttrColor*>(
-                pango_attr_iterator_get(aPangoAttrIter,
-                                        PANGO_ATTR_UNDERLINE_COLOR));
-        if (attrUnderlineColor) {
-            style.mUnderlineColor = ToNscolor(attrUnderlineColor);
-            style.mDefinedStyles |= TextRangeStyle::DEFINED_UNDERLINE_COLOR;
-        }
-    } else {
-        style.mLineStyle = TextRangeStyle::LINESTYLE_NONE;
-        style.mDefinedStyles |= TextRangeStyle::DEFINED_LINESTYLE;
-    }
-
-    // Don't set colors if they are not specified.  They should be computed by
-    // textframe if only one of the colors are specified.
-
-    // Foreground color (text color)
-    PangoAttrColor* attrForeground =
-        reinterpret_cast<PangoAttrColor*>(
-            pango_attr_iterator_get(aPangoAttrIter, PANGO_ATTR_FOREGROUND));
-    if (attrForeground) {
-        style.mForegroundColor = ToNscolor(attrForeground);
-        style.mDefinedStyles |= TextRangeStyle::DEFINED_FOREGROUND_COLOR;
-    }
-
-    // Background color
-    PangoAttrColor* attrBackground =
-        reinterpret_cast<PangoAttrColor*>(
-            pango_attr_iterator_get(aPangoAttrIter, PANGO_ATTR_BACKGROUND));
-    if (attrBackground) {
-        style.mBackgroundColor = ToNscolor(attrBackground);
-        style.mDefinedStyles |= TextRangeStyle::DEFINED_BACKGROUND_COLOR;
-    }
-
-    /**
-     * We need to judge the meaning of the clause for a11y.  Before we support
-     * IME specific composition string style, we used following rules:
-     *
-     *   1: If attrUnderline and attrForground are specified, we assumed the
-     *      clause is NS_TEXTRANGE_SELECTEDCONVERTEDTEXT.
-     *   2: If only attrUnderline is specified, we assumed the clause is
-     *      NS_TEXTRANGE_CONVERTEDTEXT.
-     *   3: If only attrForground is specified, we assumed the clause is
-     *      NS_TEXTRANGE_SELECTEDRAWTEXT.
-     *   4: If neither attrUnderline nor attrForeground is specified, we assumed
-     *      the clause is NS_TEXTRANGE_RAWINPUT.
-     *
-     * However, this rules are odd since there can be two or more selected
-     * clauses.  Additionally, our old rules caused that IME developers/users
-     * cannot specify composition string style as they want.
-     *
-     * So, we shouldn't guess the meaning from its visual style.
-     */
-
-    if (!attrUnderline && !attrForeground && !attrBackground) {
-        MOZ_LOG(gGtkIMLog, LogLevel::Warning,
-            ("GTKIM: %p   SetTextRange(), FAILED, due to no attr, "
-             "aTextRange= { mStartOffset=%u, mEndOffset=%u }",
-             this, aTextRange.mStartOffset, aTextRange.mEndOffset));
-        return false;
-    }
-
-    // If the range covers whole of composition string and the caret is at
-    // the end of the composition string, the range is probably not converted.
-    if (!utf8ClauseStart &&
-        utf8ClauseEnd == static_cast<gint>(strlen(aUTF8CompositionString)) &&
-        aTextRange.mEndOffset == aUTF16CaretOffset) {
-        aTextRange.mRangeType = NS_TEXTRANGE_RAWINPUT;
-    }
-    // Typically, the caret is set at the start of the selected clause.
-    // So, if the caret is in the clause, we can assume that the clause is
-    // selected.
-    else if (aTextRange.mStartOffset <= aUTF16CaretOffset &&
-             aTextRange.mEndOffset > aUTF16CaretOffset) {
-        aTextRange.mRangeType = NS_TEXTRANGE_SELECTEDCONVERTEDTEXT;
-    }
-    // Otherwise, we should assume that the clause is converted but not
-    // selected.
-    else {
-        aTextRange.mRangeType = NS_TEXTRANGE_CONVERTEDTEXT;
-    }
-
-    MOZ_LOG(gGtkIMLog, LogLevel::Debug,
-        ("GTKIM: %p   SetTextRange(), succeeded, aTextRange= { "
-         "mStartOffset=%u, mEndOffset=%u, mRangeType=%s, mRangeStyle=%s }",
-         this, aTextRange.mStartOffset, aTextRange.mEndOffset,
-         GetRangeTypeName(aTextRange.mRangeType),
-         GetTextRangeStyleText(aTextRange.mRangeStyle).get()));
-
-    return true;
 }
 
 void
@@ -1810,8 +1571,8 @@ IMContextWrapper::SetCursorPosition(GtkIMContext* aContext)
     }
 
     WidgetQueryContentEvent charRect(true,
-                                     useCaret ? eQueryCaretRect :
-                                                eQueryTextRect,
+                                     useCaret ? NS_QUERY_CARET_RECT :
+                                                NS_QUERY_TEXT_RECT,
                                      mLastFocusedWindow);
     if (useCaret) {
         charRect.InitForQueryCaretRect(mSelection.mOffset);
@@ -1833,7 +1594,7 @@ IMContextWrapper::SetCursorPosition(GtkIMContext* aContext)
     if (!charRect.mSucceeded) {
         MOZ_LOG(gGtkIMLog, LogLevel::Error,
             ("GTKIM: %p   SetCursorPosition(), FAILED, %s was failed",
-             this, useCaret ? "eQueryCaretRect" : "eQueryTextRect"));
+             this, useCaret ? "NS_QUERY_CARET_RECT" : "NS_QUERY_TEXT_RECT"));
         return;
     }
 
@@ -1909,7 +1670,8 @@ IMContextWrapper::GetCurrentParagraph(nsAString& aText,
     }
 
     // Get all text contents of the focused editor
-    WidgetQueryContentEvent queryTextContentEvent(true, eQueryTextContent,
+    WidgetQueryContentEvent queryTextContentEvent(true,
+                                                  NS_QUERY_TEXT_CONTENT,
                                                   mLastFocusedWindow);
     queryTextContentEvent.InitForQueryTextContent(0, UINT32_MAX);
     mLastFocusedWindow->DispatchEvent(&queryTextContentEvent, status);
@@ -2005,7 +1767,8 @@ IMContextWrapper::DeleteText(GtkIMContext* aContext,
     }
 
     // Get all text contents of the focused editor
-    WidgetQueryContentEvent queryTextContentEvent(true, eQueryTextContent,
+    WidgetQueryContentEvent queryTextContentEvent(true,
+                                                  NS_QUERY_TEXT_CONTENT,
                                                   mLastFocusedWindow);
     queryTextContentEvent.InitForQueryTextContent(0, UINT32_MAX);
     mLastFocusedWindow->DispatchEvent(&queryTextContentEvent, status);
@@ -2051,7 +1814,7 @@ IMContextWrapper::DeleteText(GtkIMContext* aContext,
         g_utf8_offset_to_pointer(utf8Str.get(), endInUTF8Characters);
 
     // Set selection to delete
-    WidgetSelectionEvent selectionEvent(true, eSetSelection,
+    WidgetSelectionEvent selectionEvent(true, NS_SELECTION_SET,
                                         mLastFocusedWindow);
 
     nsDependentCSubstring utf8StrBeforeOffset(utf8Str, 0,
@@ -2080,7 +1843,8 @@ IMContextWrapper::DeleteText(GtkIMContext* aContext,
     }
 
     // Delete the selection
-    WidgetContentCommandEvent contentCommandEvent(true, eContentCommandDelete,
+    WidgetContentCommandEvent contentCommandEvent(true,
+                                                  NS_CONTENT_COMMAND_DELETE,
                                                   mLastFocusedWindow);
     mLastFocusedWindow->DispatchEvent(&contentCommandEvent, status);
 
@@ -2149,7 +1913,7 @@ IMContextWrapper::EnsureToCacheSelection(nsAString* aSelectedString)
     }
 
     nsEventStatus status;
-    WidgetQueryContentEvent selection(true, eQuerySelectedText,
+    WidgetQueryContentEvent selection(true, NS_QUERY_SELECTED_TEXT,
                                       mLastFocusedWindow);
     InitEvent(selection);
     mLastFocusedWindow->DispatchEvent(&selection, status);
@@ -2198,7 +1962,7 @@ IMContextWrapper::Selection::Assign(const IMENotification& aIMENotification)
 void
 IMContextWrapper::Selection::Assign(const WidgetQueryContentEvent& aEvent)
 {
-    MOZ_ASSERT(aEvent.mMessage == eQuerySelectedText);
+    MOZ_ASSERT(aEvent.message == NS_QUERY_SELECTED_TEXT);
     MOZ_ASSERT(aEvent.mSucceeded);
     mOffset = aEvent.mReply.mOffset;
     mLength = aEvent.mReply.mString.Length();

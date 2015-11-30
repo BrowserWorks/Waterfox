@@ -9,6 +9,8 @@ UNIFIED_SOURCES += [
     'AppTrustDomain.cpp',
 ]
 
+FAIL_ON_WARNINGS = True
+
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [

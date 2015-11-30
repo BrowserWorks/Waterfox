@@ -3,10 +3,10 @@
 
 "use strict";
 
-var {Services} = Cu.import("resource://gre/modules/Services.jsm", {});
-var {Loader} = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js",
+let {Services} = Cu.import("resource://gre/modules/Services.jsm", {});
+let {Loader} = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js",
                          {});
-var {OutputParser} = require("devtools/output-parser");
+let {OutputParser} = require("devtools/output-parser");
 
 add_task(function*() {
   yield promiseTab("about:blank");
@@ -26,7 +26,7 @@ function* performTest() {
 }
 
 // Class name used in color swatch.
-var COLOR_TEST_CLASS = "test-class";
+let COLOR_TEST_CLASS = "test-class";
 
 // Create a new CSS color-parsing test.  |name| is the name of the CSS
 // property.  |value| is the CSS text to use.  |segments| is an array
@@ -98,9 +98,7 @@ function testParseCssProperty(doc, parser) {
                    "url(red.svg#blue)\"><span>",
                    "blur(1px) drop-shadow(0 0 0 ",
                    {name: "blue", value: "#00F"},
-                   ") url(\"red.svg#blue\")</span></span>"]),
-
-    makeColorTest("color", "currentColor", ["currentColor"]),
+                   ") url(\"red.svg#blue\")</span></span>"])
   ];
 
   let target = doc.querySelector("div");

@@ -12,9 +12,10 @@
 
 #include "nsUrlClassifierUtils.h"
 
-// NSPR_LOG_MODULES=UrlClassifierProtocolParser:5
-PRLogModuleInfo *gUrlClassifierProtocolParserLog = nullptr;
-#define PARSER_LOG(args) MOZ_LOG(gUrlClassifierProtocolParserLog, mozilla::LogLevel::Debug, args)
+// NSPR_LOG_MODULES=UrlClassifierDbService:5
+extern PRLogModuleInfo *gUrlClassifierDbServiceLog;
+#define LOG(args) MOZ_LOG(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug, args)
+#define LOG_ENABLED() MOZ_LOG_TEST(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug)
 
 namespace mozilla {
 namespace safebrowsing {
@@ -76,10 +77,6 @@ ProtocolParser::~ProtocolParser()
 nsresult
 ProtocolParser::Init(nsICryptoHash* aHasher)
 {
-  if (!gUrlClassifierProtocolParserLog) {
-    gUrlClassifierProtocolParserLog =
-      PR_NewLogModule("UrlClassifierProtocolParser");
-  }
   mCryptoHash = aHasher;
   return NS_OK;
 }
@@ -125,14 +122,14 @@ ProtocolParser::ProcessControl(bool* aDone)
   nsAutoCString line;
   *aDone = true;
   while (NextLine(line)) {
-    PARSER_LOG(("Processing %s\n", line.get()));
+    //LOG(("Processing %s\n", line.get()));
 
     if (StringBeginsWith(line, NS_LITERAL_CSTRING("i:"))) {
       // Set the table name from the table header line.
       SetCurrentTable(Substring(line, 2));
     } else if (StringBeginsWith(line, NS_LITERAL_CSTRING("n:"))) {
       if (PR_sscanf(line.get(), "n:%d", &mUpdateWait) != 1) {
-        PARSER_LOG(("Error parsing n: '%s' (%d)", line.get(), mUpdateWait));
+        LOG(("Error parsing n: '%s' (%d)", line.get(), mUpdateWait));
         mUpdateWait = 0;
       }
     } else if (line.EqualsLiteral("r:pleasereset")) {
@@ -212,12 +209,10 @@ ProtocolParser::ProcessChunkControl(const nsCString& aLine)
                 &mChunkState.num, &mChunkState.hashSize, &mChunkState.length)
       != 4)
   {
-    NS_WARNING(("PR_sscanf failed"));
     return NS_ERROR_FAILURE;
   }
 
   if (mChunkState.length > MAX_CHUNK_SIZE) {
-    NS_WARNING("Invalid length specified in update.");
     return NS_ERROR_FAILURE;
   }
 
@@ -234,7 +229,7 @@ ProtocolParser::ProcessChunkControl(const nsCString& aLine)
     mChunkState.type = (command == 'a') ? CHUNK_ADD : CHUNK_SUB;
   } else if (StringEndsWith(mTableUpdate->TableName(),
     NS_LITERAL_CSTRING("-digest256"))) {
-    PARSER_LOG(("Processing digest256 data"));
+    LOG(("Processing digest256 data"));
     mChunkState.type = (command == 'a') ? CHUNK_ADD_DIGEST : CHUNK_SUB_DIGEST;
   }
   nsresult rv;
@@ -313,7 +308,7 @@ ProtocolParser::ProcessChunk(bool* aDone)
   *aDone = false;
   mState = PROTOCOL_STATE_CONTROL;
 
-  PARSER_LOG(("Handling a %d-byte chunk", chunk.Length()));
+  //LOG(("Handling a %d-byte chunk", chunk.Length()));
   if (StringEndsWith(mTableUpdate->TableName(),
                      NS_LITERAL_CSTRING("-shavar"))) {
     return ProcessShaChunk(chunk);
@@ -420,7 +415,7 @@ ProtocolParser::ProcessShaChunk(const nsACString& aChunk)
       rv = ProcessHostSubComplete(numEntries, aChunk, &start);
     } else {
       NS_WARNING("Unexpected chunk type/hash size!");
-      PARSER_LOG(("Got an unexpected chunk type/hash size: %s:%d",
+      LOG(("Got an unexpected chunk type/hash size: %s:%d",
            mChunkState.type == CHUNK_ADD ? "add" : "sub",
            mChunkState.hashSize));
       return NS_ERROR_FAILURE;

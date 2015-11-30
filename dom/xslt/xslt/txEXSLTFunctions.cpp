@@ -125,13 +125,15 @@ createAndAddToResult(nsIAtom* aName, const nsSubstring& aValue,
                  "invalid result-holder");
 
     nsIDocument* doc = aResultHolder->OwnerDoc();
-    nsCOMPtr<Element> elem = doc->CreateElem(nsDependentAtomString(aName),
-                                             nullptr, kNameSpaceID_None);
-    NS_ENSURE_TRUE(elem, NS_ERROR_NULL_POINTER);
+    nsCOMPtr<nsIContent> elem;
+    nsresult rv = doc->CreateElem(nsDependentAtomString(aName),
+                                  nullptr, kNameSpaceID_None,
+                                  getter_AddRefs(elem));
+    NS_ENSURE_SUCCESS(rv, rv);
 
     nsRefPtr<nsTextNode> text = new nsTextNode(doc->NodeInfoManager());
 
-    nsresult rv = text->SetText(aValue, false);
+    rv = text->SetText(aValue, false);
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = elem->AppendChildTo(text, false);

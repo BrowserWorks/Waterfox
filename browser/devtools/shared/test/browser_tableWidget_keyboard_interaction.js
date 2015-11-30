@@ -7,17 +7,16 @@
 const TEST_URI = "data:text/xml;charset=UTF-8,<?xml version='1.0'?>" +
   "<?xml-stylesheet href='chrome://global/skin/global.css'?>" +
   "<?xml-stylesheet href='chrome://browser/skin/devtools/common.css'?>" +
-  "<?xml-stylesheet href='chrome://browser/skin/devtools/light-theme.css'?>" +
   "<?xml-stylesheet href='chrome://browser/skin/devtools/widgets.css'?>" +
   "<window xmlns='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul'" +
-  " title='Table Widget' width='600' height='500'>" +
-  "<box flex='1' class='theme-light'/></window>";
+  " title='Table Widget' width='600' height='500'><box flex='1'/></window>";
 const TEST_OPT = "chrome,titlebar,toolbar,centerscreen,resizable,dialog=no";
 
 const {TableWidget} = require("devtools/shared/widgets/TableWidget");
-var {Task} = require("resource://gre/modules/Task.jsm");
+let {Task} = require("resource://gre/modules/Task.jsm");
+let {Promise} = require("resource://gre/modules/Promise.jsm");
 
-var doc, table;
+let doc, table;
 
 function test() {
   waitForExplicitFinish();
@@ -52,7 +51,7 @@ function endTests() {
   finish();
 }
 
-var startTests = Task.async(function*() {
+let startTests = Task.async(function*() {
   populateTable();
   yield testKeyboardInteraction();
   endTests();
@@ -133,7 +132,7 @@ function click(node, button = 0) {
 /**
  * Tests if pressing navigation keys on the table items does the expected behavior
  */
-var testKeyboardInteraction = Task.async(function*() {
+let testKeyboardInteraction = Task.async(function*() {
   info("Testing keyboard interaction with the table");
   info("clicking on first row");
   let node = table.tbody.firstChild.firstChild.children[1];

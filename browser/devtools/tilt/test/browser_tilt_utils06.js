@@ -2,7 +2,7 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
 
-var someObject = {
+let someObject = {
   a: 1,
   func: function()
   {
@@ -10,7 +10,7 @@ var someObject = {
   }
 };
 
-var anotherObject = {
+let anotherObject = {
   _finalize: function()
   {
     someObject.c = 3;

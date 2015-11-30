@@ -7,20 +7,23 @@
 // Checking tooltips dimensions, to make sure their big enough to display their
 // content
 
-const TEST_URI = `
-  <style type="text/css">
-    div {
-      width: 300px;height: 300px;border-radius: 50%;
-      background: red url(chrome://global/skin/icons/warning-64.png);
-    }
-  </style>
-  <div></div>
-`;
+const TEST_PAGE = [
+  'data:text/html;charset=utf-8,',
+  '<style type="text/css">',
+  '  div {',
+  '    width: 300px;height: 300px;border-radius: 50%;',
+  '    background: red url(chrome://global/skin/icons/warning-64.png);',
+  '  }',
+  '</style>',
+  '<div></div>'
+].join("\n");
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-  let {inspector, view} = yield openRuleView();
+  yield addTab(TEST_PAGE);
+  let {toolbox, inspector, view} = yield openRuleView();
+
   yield selectNode("div", inspector);
+
   yield testImageDimension(view);
   yield testPickerDimension(view);
 });

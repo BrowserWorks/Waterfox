@@ -69,14 +69,6 @@ template <class TargetUnits, class SourceUnits>
 gfx::IntRectTyped<TargetUnits> ViewAs(const gfx::IntRectTyped<SourceUnits>& aRect, PixelCastJustification) {
   return gfx::IntRectTyped<TargetUnits>(aRect.x, aRect.y, aRect.width, aRect.height);
 }
-template <class TargetUnits, class SourceUnits>
-gfx::MarginTyped<TargetUnits> ViewAs(const gfx::MarginTyped<SourceUnits>& aMargin, PixelCastJustification) {
-  return gfx::MarginTyped<TargetUnits>(aMargin.top, aMargin.right, aMargin.bottom, aMargin.left);
-}
-template <class TargetUnits, class SourceUnits>
-gfx::IntMarginTyped<TargetUnits> ViewAs(const gfx::IntMarginTyped<SourceUnits>& aMargin, PixelCastJustification) {
-  return gfx::IntMarginTyped<TargetUnits>(aMargin.top, aMargin.right, aMargin.bottom, aMargin.left);
-}
 template <class NewTargetUnits, class OldTargetUnits, class SourceUnits>
 gfx::ScaleFactor<SourceUnits, NewTargetUnits> ViewTargetAs(
     const gfx::ScaleFactor<SourceUnits, OldTargetUnits>& aScaleFactor,
@@ -180,44 +172,16 @@ static Maybe<gfx::IntPointTyped<TargetUnits>> UntransformTo(const gfx::Matrix4x4
   }
   return Some(RoundedToInt(ViewAs<TargetUnits>(point.As2DPoint())));
 }
-
-// The versions of UntransformTo() that take a rectangle also take a clip,
-// which represents the bounds within which the target must fall. The
-// result of the transform is intersected with this clip, and is considered
-// meaningful if the intersection is not empty.
-template <typename TargetUnits, typename SourceUnits>
-static Maybe<gfx::RectTyped<TargetUnits>> UntransformTo(const gfx::Matrix4x4& aTransform,
-                                                const gfx::RectTyped<SourceUnits>& aRect,
-                                                const gfx::RectTyped<TargetUnits>& aClip)
-{
-  gfx::Rect rect = aTransform.ProjectRectBounds(aRect.ToUnknownRect(), aClip.ToUnknownRect());
-  if (rect.IsEmpty()) {
-    return Nothing();
-  }
-  return Some(ViewAs<TargetUnits>(rect));
-}
-template <typename TargetUnits, typename SourceUnits>
-static Maybe<gfx::IntRectTyped<TargetUnits>> UntransformTo(const gfx::Matrix4x4& aTransform,
-                                                const gfx::IntRectTyped<SourceUnits>& aRect,
-                                                const gfx::IntRectTyped<TargetUnits>& aClip)
-{
-  gfx::Rect rect = aTransform.ProjectRectBounds(aRect.ToUnknownRect(), aClip.ToUnknownRect());
-  if (rect.IsEmpty()) {
-    return Nothing();
-  }
-  return Some(RoundedToInt(ViewAs<TargetUnits>(rect)));
-}
-
 template <typename TargetUnits, typename SourceUnits>
 static Maybe<gfx::PointTyped<TargetUnits>> UntransformVector(const gfx::Matrix4x4& aTransform,
                                                     const gfx::PointTyped<SourceUnits>& aVector,
                                                     const gfx::PointTyped<SourceUnits>& aAnchor) {
-  gfx::Point4D projectedAnchor = aTransform.ProjectPoint(aAnchor.ToUnknownPoint());
-  gfx::Point4D projectedTarget = aTransform.ProjectPoint(aAnchor.ToUnknownPoint() + aVector.ToUnknownPoint());
-  if (!projectedAnchor.HasPositiveWCoord() || !projectedTarget.HasPositiveWCoord()){
+  gfx::Point4D point = aTransform.ProjectPoint(aAnchor.ToUnknownPoint() + aVector.ToUnknownPoint()) 
+    - aTransform.ProjectPoint(aAnchor.ToUnknownPoint());
+  if (!point.HasPositiveWCoord()){
     return Nothing();
   }
-  return Some(ViewAs<TargetUnits>(projectedAnchor.As2DPoint() - projectedTarget.As2DPoint()));
+  return Some(ViewAs<TargetUnits>(point.As2DPoint()));
 }
 
 } // namespace mozilla

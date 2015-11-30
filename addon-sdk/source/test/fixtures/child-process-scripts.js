@@ -13,7 +13,7 @@ const PROFILE_DIR= pathFor('ProfD');
 const isWindows = platform.toLowerCase().indexOf('win') === 0;
 const isOSX = platform.toLowerCase().indexOf('darwin') === 0;
 
-var scripts = {
+let scripts = {
   'args.sh': 'echo $1 $2 $3 $4',
   'args.bat': 'echo %1 %2 %3 %4',
   'check-env.sh': 'echo $CHILD_PROCESS_ENV_TEST',

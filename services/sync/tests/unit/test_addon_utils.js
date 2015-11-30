@@ -10,7 +10,7 @@ Cu.import("resource://services-sync/util.js");
 const HTTP_PORT = 8888;
 const SERVER_ADDRESS = "http://127.0.0.1:8888";
 
-var prefs = new Preferences();
+let prefs = new Preferences();
 
 prefs.set("extensions.getAddons.get.url",
           SERVER_ADDRESS + "/search/guid:%IDS%");

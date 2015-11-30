@@ -34,7 +34,7 @@ testserver.registerDirectory("/addons/", do_get_file("addons"));
 const profileDir = gProfD.clone();
 profileDir.append("extensions");
 
-var originalSyncGUID;
+let originalSyncGUID;
 
 function run_test() {
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");

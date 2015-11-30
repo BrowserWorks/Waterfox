@@ -52,7 +52,7 @@ add_task(function test() {
     "The correct number of child calls were calculated for the 'http://D' node.");
 });
 
-var gThread = synthesizeProfileForTest([{
+let gThread = synthesizeProfileForTest([{
   time: 5,
   frames: [
     { location: "(root)" },

@@ -190,16 +190,16 @@ class Message : public Pickle {
     return header()->seqno;
   }
 
-  void set_seqno(int32_t aSeqno) {
-    header()->seqno = aSeqno;
+  void set_seqno(int32_t seqno) {
+    header()->seqno = seqno;
   }
 
   const char* const name() const {
     return name_;
   }
 
-  void set_name(const char* const aName) {
-    name_ = aName;
+  void set_name(const char* const name) {
+    name_ = name;
   }
 
 #if defined(OS_POSIX)

@@ -261,7 +261,6 @@ nsHttpChannel::nsHttpChannel()
     , mIsPartialRequest(0)
     , mHasAutoRedirectVetoNotifier(0)
     , mIsPackagedAppResource(0)
-    , mIsCorsPreflightDone(0)
     , mPushedStream(nullptr)
     , mLocalBlocklist(false)
     , mWarningReporter(nullptr)
@@ -417,6 +416,10 @@ nsHttpChannel::Connect()
         return NS_ERROR_DOCUMENT_NOT_CACHED;
     }
 
+    if (!gHttpHandler->UseCache()) {
+        return ContinueConnect();
+    }
+
     // open a cache entry for this channel...
     rv = OpenCacheEntry(isHttps);
 
@@ -448,26 +451,6 @@ nsHttpChannel::Connect()
 nsresult
 nsHttpChannel::ContinueConnect()
 {
-    // If we need to start a CORS preflight, do it now!
-    // Note that it is important to do this before the early returns below.
-    if (!mIsCorsPreflightDone && mRequireCORSPreflight &&
-        mInterceptCache != INTERCEPTED) {
-        MOZ_ASSERT(!mPreflightChannel);
-        nsresult rv =
-            nsCORSListenerProxy::StartCORSPreflight(this,
-                                                    mPreflightPrincipal, this,
-                                                    mWithCredentials,
-                                                    mUnsafeHeaders,
-                                                    getter_AddRefs(mPreflightChannel));
-        return rv;
-    }
-
-    MOZ_RELEASE_ASSERT(!(mRequireCORSPreflight &&
-                         mInterceptCache != INTERCEPTED) ||
-                       mIsCorsPreflightDone,
-                       "CORS preflight must have been finished by the time we "
-                       "do the rest of ContinueConnect");
-
     // we may or may not have a cache entry at this point
     if (mCacheEntry) {
         // read straight from the cache if possible...
@@ -962,12 +945,6 @@ CallTypeSniffers(void *aClosure, const uint8_t *aData, uint32_t aCount)
 nsresult
 nsHttpChannel::CallOnStartRequest()
 {
-    MOZ_RELEASE_ASSERT(!(mRequireCORSPreflight &&
-                         mInterceptCache != INTERCEPTED) ||
-                       mIsCorsPreflightDone,
-                       "CORS preflight must have been finished by the time we "
-                       "call OnStartRequest");
-
     nsresult rv;
 
     mTracingEnabled = false;
@@ -1246,9 +1223,6 @@ GetPKPConsoleErrorTag(uint32_t failureResult, nsAString& consoleErrorTag)
             break;
         case nsISiteSecurityService::ERROR_COULD_NOT_SAVE_STATE:
             consoleErrorTag = NS_LITERAL_STRING("PKPCouldNotSaveState");
-            break;
-        case nsISiteSecurityService::ERROR_ROOT_NOT_BUILT_IN:
-            consoleErrorTag = NS_LITERAL_STRING("PKPRootNotBuiltIn");
             break;
         default:
             consoleErrorTag = NS_LITERAL_STRING("PKPUnknownError");
@@ -2007,12 +1981,10 @@ nsHttpChannel::StartRedirectChannelToURI(nsIURI *upgradedURI, uint32_t flags)
 
     // Ensure that internally-redirected channels cannot be intercepted, which would look
     // like two separate requests to the nsINetworkInterceptController.
-    nsLoadFlags loadFlags = nsIRequest::LOAD_NORMAL;
-    rv = mRedirectChannel->GetLoadFlags(&loadFlags);
-    NS_ENSURE_SUCCESS(rv, rv);
-    loadFlags |= nsIChannel::LOAD_BYPASS_SERVICE_WORKER;
-    rv = mRedirectChannel->SetLoadFlags(loadFlags);
-    NS_ENSURE_SUCCESS(rv, rv);
+    nsCOMPtr<nsIHttpChannelInternal> httpRedirect = do_QueryInterface(mRedirectChannel);
+    if (httpRedirect) {
+        httpRedirect->ForceNoIntercept();
+    }
 
     PushRedirectAsyncFunc(
         &nsHttpChannel::ContinueAsyncRedirectChannelToURI);
@@ -2881,7 +2853,7 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
         if (mPostID == 0)
             mPostID = gHttpHandler->GenerateUniqueID();
     }
-    else if (!PossiblyIntercepted() && !mRequestHead.IsGet() && !mRequestHead.IsHead()) {
+    else if (!mRequestHead.IsGet() && !mRequestHead.IsHead()) {
         // don't use the cache for other types of requests
         return NS_OK;
     }
@@ -2898,9 +2870,8 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
         return NS_OK;
 
     // Pick up an application cache from the notification
-    // callbacks if available and if we are not an intercepted channel.
-    if (!PossiblyIntercepted() && !mApplicationCache &&
-        mInheritApplicationCache) {
+    // callbacks if available
+    if (!mApplicationCache && mInheritApplicationCache) {
         nsCOMPtr<nsIApplicationCacheContainer> appCacheContainer;
         GetCallback(appCacheContainer);
 
@@ -2962,11 +2933,8 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
         rv = cacheStorageService->AppCacheStorage(info,
             mApplicationCache,
             getter_AddRefs(cacheStorage));
-    } else if (PossiblyIntercepted()) {
-        // The synthesized cache has less restrictions on file size and so on.
-        rv = cacheStorageService->SynthesizedCacheStorage(info,
-            getter_AddRefs(cacheStorage));
-    } else if (mLoadFlags & INHIBIT_PERSISTENT_CACHING) {
+    }
+    else if (PossiblyIntercepted() || mLoadFlags & INHIBIT_PERSISTENT_CACHING) {
         rv = cacheStorageService->MemoryCacheStorage(info, // ? choose app cache as well...
             getter_AddRefs(cacheStorage));
     }
@@ -4860,7 +4828,6 @@ NS_INTERFACE_MAP_BEGIN(nsHttpChannel)
     NS_INTERFACE_MAP_ENTRY(nsIThreadRetargetableStreamListener)
     NS_INTERFACE_MAP_ENTRY(nsIDNSListener)
     NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
-    NS_INTERFACE_MAP_ENTRY(nsICorsPreflightCallback)
     // we have no macro that covers this case.
     if (aIID.Equals(NS_GET_IID(nsHttpChannel)) ) {
         AddRef();
@@ -4877,8 +4844,6 @@ NS_IMETHODIMP
 nsHttpChannel::Cancel(nsresult status)
 {
     MOZ_ASSERT(NS_IsMainThread());
-    // We should never have a pump open while a CORS preflight is in progress.
-    MOZ_ASSERT_IF(mPreflightChannel, !mCachePump);
 
     LOG(("nsHttpChannel::Cancel [this=%p status=%x]\n", this, status));
     if (mCanceled) {
@@ -4901,8 +4866,6 @@ nsHttpChannel::Cancel(nsresult status)
         mCachePump->Cancel(status);
     if (mAuthProvider)
         mAuthProvider->Cancel(status);
-    if (mPreflightChannel)
-        mPreflightChannel->Cancel(status);
     return NS_OK;
 }
 
@@ -4974,10 +4937,6 @@ nsHttpChannel::GetSecurityInfo(nsISupports **securityInfo)
 NS_IMETHODIMP
 nsHttpChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *context)
 {
-    MOZ_ASSERT(!mLoadInfo || mLoadInfo->GetSecurityMode() == 0 ||
-               mLoadInfo->GetInitialSecurityCheckDone(),
-               "security flags in loadInfo but asyncOpen2() not called");
-
     LOG(("nsHttpChannel::AsyncOpen [this=%p]\n", this));
 
     NS_ENSURE_ARG_POINTER(listener);
@@ -5004,7 +4963,6 @@ nsHttpChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *context)
 
     if (ShouldIntercept()) {
         mInterceptCache = MAYBE_INTERCEPT;
-        SetCouldBeSynthesized();
     }
 
     // Remember the cookie header that was set, if any
@@ -5223,7 +5181,9 @@ nsHttpChannel::BeginConnect()
         // If this is a packaged app resource, the content will be fetched
         // by the packaged app service into the cache, and the cache entry will
         // be passed to OnCacheEntryAvailable.
-
+        mLoadFlags |= LOAD_ONLY_FROM_CACHE;
+        mLoadFlags |= LOAD_FROM_CACHE;
+        mLoadFlags &= ~VALIDATE_ALWAYS;
         nsCOMPtr<nsIPackagedAppService> pas =
             do_GetService("@mozilla.org/network/packaged-app-service;1", &rv);
         if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -5231,18 +5191,10 @@ nsHttpChannel::BeginConnect()
             return rv;
         }
 
-        rv = pas->GetResource(this, this);
+        rv = pas->RequestURI(mURI, GetLoadContextInfo(this), this);
         if (NS_FAILED(rv)) {
             AsyncAbort(rv);
         }
-
-        // We need to alter the flags so the cache entry returned by the
-        // packaged app service is always accepted. Revalidation is handled
-        // by the service.
-        mLoadFlags |= LOAD_ONLY_FROM_CACHE;
-        mLoadFlags |= LOAD_FROM_CACHE;
-        mLoadFlags &= ~VALIDATE_ALWAYS;
-
         return rv;
     }
 
@@ -6892,14 +6844,6 @@ nsHttpChannel::MarkIntercepted()
     mInterceptCache = INTERCEPTED;
 }
 
-NS_IMETHODIMP
-nsHttpChannel::GetResponseSynthesized(bool* aSynthesized)
-{
-    NS_ENSURE_ARG_POINTER(aSynthesized);
-    *aSynthesized = (mInterceptCache == INTERCEPTED);
-    return NS_OK;
-}
-
 bool
 nsHttpChannel::AwaitingCacheCallbacks()
 {
@@ -6982,35 +6926,6 @@ nsHttpChannel::OnPush(const nsACString &url, Http2PushedStream *pushedStream)
     channel->SetPushedStream(pushedStream);
     rv = pushListener->OnPush(this, pushHttpChannel);
     return rv;
-}
-
-void
-nsHttpChannel::SetCouldBeSynthesized()
-{
-  MOZ_ASSERT(!BypassServiceWorker());
-  mResponseCouldBeSynthesized = true;
-}
-
-NS_IMETHODIMP
-nsHttpChannel::OnPreflightSucceeded()
-{
-    MOZ_ASSERT(mRequireCORSPreflight, "Why did a preflight happen?");
-    mIsCorsPreflightDone = 1;
-    mPreflightChannel = nullptr;
-
-    return ContinueConnect();
-}
-
-NS_IMETHODIMP
-nsHttpChannel::OnPreflightFailed(nsresult aError)
-{
-    MOZ_ASSERT(mRequireCORSPreflight, "Why did a preflight happen?");
-    mIsCorsPreflightDone = 1;
-    mPreflightChannel = nullptr;
-
-    CloseCacheEntry(true);
-    AsyncAbort(aError);
-    return NS_OK;
 }
 
 } // namespace net

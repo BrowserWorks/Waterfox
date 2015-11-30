@@ -20,10 +20,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "Prefetcher",
 XPCOMUtils.defineLazyServiceGetter(this, "SystemPrincipal",
                                    "@mozilla.org/systemprincipal;1", "nsIPrincipal");
 
-XPCOMUtils.defineLazyServiceGetter(this, "contentSecManager",
-                                   "@mozilla.org/contentsecuritymanager;1",
-                                   "nsIContentSecurityManager");
-
 // Similar to Python. Returns dict[key] if it exists. Otherwise,
 // sets dict[key] to default_ and returns default_.
 function setDefault(dict, key, default_)
@@ -44,7 +40,7 @@ function setDefault(dict, key, default_)
 //
 // In the child, clients can watch for changes to all paths that start
 // with a given component.
-var NotificationTracker = {
+let NotificationTracker = {
   init: function() {
     let cpmm = Cc["@mozilla.org/childprocessmessagemanager;1"]
                .getService(Ci.nsISyncMessageSender);
@@ -152,7 +148,7 @@ var NotificationTracker = {
 // it runs, it notifies the parent that it needs to run its own
 // nsIContentPolicy list. If any policy in the parent rejects a
 // resource load, that answer is returned to the child.
-var ContentPolicyChild = {
+let ContentPolicyChild = {
   _classDescription: "Addon shim content policy",
   _classID: Components.ID("6e869130-635c-11e2-bcfd-0800200c9a66"),
   _contractID: "@mozilla.org/addon-child/policy;1",
@@ -278,17 +274,7 @@ AboutProtocolChannel.prototype = {
     Services.tm.currentThread.dispatch(runnable, Ci.nsIEventTarget.DISPATCH_NORMAL);
   },
 
-  asyncOpen2: function(listener) {
-    // throws an error if security checks fail
-    var outListener = contentSecManager.performSecurityCheck(this, listener);
-    this.asyncOpen(outListener, null);
-  },
-
   open: function() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-  },
-
-  open2: function() {
     throw Cr.NS_ERROR_NOT_IMPLEMENTED;
   },
 
@@ -362,7 +348,7 @@ AboutProtocolInstance.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIFactory, Ci.nsIAboutModule])
 };
 
-var AboutProtocolChild = {
+let AboutProtocolChild = {
   _classDescription: "Addon shim about: protocol handler",
 
   init: function() {
@@ -397,7 +383,7 @@ var AboutProtocolChild = {
 
 // This code registers observers in the child whenever an add-on in
 // the parent asks for notifications on the given topic.
-var ObserverChild = {
+let ObserverChild = {
   init: function() {
     NotificationTracker.watch("observer", this);
   },
@@ -520,7 +506,7 @@ SandboxChild.prototype = {
                                          Ci.nsISupportsWeakReference])
 };
 
-var RemoteAddonsChild = {
+let RemoteAddonsChild = {
   _ready: false,
 
   makeReady: function() {

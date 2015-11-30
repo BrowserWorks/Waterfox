@@ -98,7 +98,7 @@ var defaultTheme = {
 const profileDir = gProfD.clone();
 profileDir.append("extensions");
 
-var oldSyncGUIDs = {};
+let oldSyncGUIDs = {};
 
 function prepare_profile() {
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");

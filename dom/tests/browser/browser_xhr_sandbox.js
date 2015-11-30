@@ -1,5 +1,5 @@
 // This code is evaluated in a sandbox courtesy of toSource();
-var sandboxCode = (function() {
+let sandboxCode = (function() {
   let req = new XMLHttpRequest();
   req.open("GET", "http://mochi.test:8888/browser/dom/tests/browser/", true);
   req.onreadystatechange = function() {

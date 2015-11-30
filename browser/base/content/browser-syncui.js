@@ -8,14 +8,11 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CloudSync",
                                   "resource://gre/modules/CloudSync.jsm");
 #else
-var CloudSync = null;
+let CloudSync = null;
 #endif
 
-XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
-                                  "resource://gre/modules/FxAccounts.jsm");
-
 // gSyncUI handles updating the tools menu and displaying notifications.
-var gSyncUI = {
+let gSyncUI = {
   _obs: ["weave:service:sync:start",
          "weave:service:sync:finish",
          "weave:service:sync:error",
@@ -41,7 +38,10 @@ var gSyncUI = {
 
     // Proceed to set up the UI if Sync has already started up.
     // Otherwise we'll do it when Sync is firing up.
-    if (this.weaveService.ready) {
+    let xps = Components.classes["@mozilla.org/weave/service;1"]
+                                .getService(Components.interfaces.nsISupports)
+                                .wrappedJSObject;
+    if (xps.ready) {
       this.initUI();
       return;
     }
@@ -99,44 +99,28 @@ var gSyncUI = {
     }
   },
 
-  // Returns a promise that resolves with true if Sync needs to be configured,
-  // false otherwise.
   _needsSetup() {
-    // If Sync is configured for FxAccounts then we do that promise-dance.
-    if (this.weaveService.fxAccountsEnabled) {
-      return fxAccounts.getSignedInUser().then(user => {
-        // We want to treat "account needs verification" as "needs setup".
-        return !(user && user.verified);
-      });
+    // We want to treat "account needs verification" as "needs setup". So
+    // "reach in" to Weave.Status._authManager to check whether we the signed-in
+    // user is verified.
+    // Referencing Weave.Status spins a nested event loop to initialize the
+    // authManager, so this should always return a value directly.
+    // This only applies to fxAccounts-based Sync.
+    if (Weave.Status._authManager._signedInUser !== undefined) {
+      // If we have a signed in user already, and that user is not verified,
+      // revert to the "needs setup" state.
+      return !Weave.Status._authManager._signedInUser ||
+             !Weave.Status._authManager._signedInUser.verified;
     }
+
     // We are using legacy sync - check that.
     let firstSync = "";
     try {
       firstSync = Services.prefs.getCharPref("services.sync.firstSync");
     } catch (e) { }
 
-    return Promise.resolve(Weave.Status.checkSetup() == Weave.CLIENT_NOT_CONFIGURED ||
-                           firstSync == "notReady");
-  },
-
-  // Returns a promise that resolves with true if the user currently signed in
-  // to Sync needs to be verified, false otherwise.
-  _needsVerification() {
-    // For callers who care about the distinction between "needs setup" and
-    // "needs verification"
-    if (this.weaveService.fxAccountsEnabled) {
-      return fxAccounts.getSignedInUser().then(user => {
-        // If there is no user, they can't be in a "needs verification" state.
-        if (!user) {
-          return false;
-        }
-        return !user.verified;
-      });
-    }
-
-    // Otherwise we are configured for legacy Sync, which has no verification
-    // concept.
-    return Promise.resolve(false);
+    return Weave.Status.checkSetup() == Weave.CLIENT_NOT_CONFIGURED ||
+           firstSync == "notReady";
   },
 
   // Note that we don't show login errors in a notification bar here, but do
@@ -148,36 +132,41 @@ var gSyncUI = {
     return Weave.Status.login == Weave.LOGIN_FAILED_LOGIN_REJECTED;
   },
 
-  // Kick off an update of the UI - does *not* return a promise.
-  updateUI() {
-    this._promiseUpdateUI().catch(err => {
-      this.log.error("updateUI failed", err);
-    })
-  },
+  updateUI: function SUI_updateUI() {
+    let needsSetup = this._needsSetup();
+    let loginFailed = this._loginFailed();
 
-  // Updates the UI - returns a promise.
-  _promiseUpdateUI() {
-    return this._needsSetup().then(needsSetup => {
-      let loginFailed = this._loginFailed();
+    // Start off with a clean slate
+    document.getElementById("sync-reauth-state").hidden = true;
+    document.getElementById("sync-setup-state").hidden = true;
+    document.getElementById("sync-syncnow-state").hidden = true;
 
-      // Start off with a clean slate
-      document.getElementById("sync-reauth-state").hidden = true;
-      document.getElementById("sync-setup-state").hidden = true;
-      document.getElementById("sync-syncnow-state").hidden = true;
+    if (CloudSync && CloudSync.ready && CloudSync().adapters.count) {
+      document.getElementById("sync-syncnow-state").hidden = false;
+    } else if (loginFailed) {
+      // unhiding this element makes the menubar show the login failure state.
+      document.getElementById("sync-reauth-state").hidden = false;
+    } else if (needsSetup) {
+      document.getElementById("sync-setup-state").hidden = false;
+    } else {
+      document.getElementById("sync-syncnow-state").hidden = false;
+    }
 
-      if (CloudSync && CloudSync.ready && CloudSync().adapters.count) {
-        document.getElementById("sync-syncnow-state").hidden = false;
-      } else if (loginFailed) {
-        // unhiding this element makes the menubar show the login failure state.
-        document.getElementById("sync-reauth-state").hidden = false;
-      } else if (needsSetup) {
-        document.getElementById("sync-setup-state").hidden = false;
-      } else {
-        document.getElementById("sync-syncnow-state").hidden = false;
+    if (!gBrowser)
+      return;
+
+    let syncButton = document.getElementById("sync-button");
+    let statusButton = document.getElementById("PanelUI-fxa-icon");
+    if (needsSetup) {
+      if (syncButton) {
+        syncButton.removeAttribute("tooltiptext");
       }
+      if (statusButton) {
+        statusButton.removeAttribute("tooltiptext");
+      }
+    }
 
-      return this._updateSyncButtonsTooltip();
-    });
+    this._updateLastSyncTime();
   },
 
   // Functions called by observers
@@ -248,32 +237,21 @@ var gSyncUI = {
   },
 
   // Commands
-  // doSync forces a sync - it *does not* return a promise as it is called
-  // via the various UI components.
-  doSync() {
-    this._needsSetup().then(needsSetup => {
-      if (!needsSetup) {
-        setTimeout(function () Weave.Service.errorHandler.syncAndReportErrors(), 0);
-      }
-      Services.obs.notifyObservers(null, "cloudsync:user-sync", null);
-    }).catch(err => {
-      this.log.error("Failed to force a sync", err);
-    });
+  doSync: function SUI_doSync() {
+    let needsSetup = this._needsSetup();
+
+    if (!needsSetup) {
+      setTimeout(function () Weave.Service.errorHandler.syncAndReportErrors(), 0);
+    }
+
+    Services.obs.notifyObservers(null, "cloudsync:user-sync", null);
   },
 
-  // Handle clicking the toolbar button - which either opens the Sync setup
-  // pages or forces a sync now. Does *not* return a promise as it is called
-  // via the UI.
-  handleToolbarButton() {
-    this._needsSetup().then(needsSetup => {
-      if (needsSetup || this._loginFailed()) {
-        this.openSetup();
-      } else {
-        return this.doSync();
-      }
-    }).catch(err => {
-      this.log.error("Failed to handle toolbar button command", err);
-    });
+  handleToolbarButton: function SUI_handleStatusbarButton() {
+    if (this._needsSetup())
+      this.openSetup();
+    else
+      this.doSync();
   },
 
   /**
@@ -289,13 +267,24 @@ var gSyncUI = {
    */
 
   openSetup: function SUI_openSetup(wizardType, entryPoint = "syncbutton") {
-    if (this.weaveService.fxAccountsEnabled) {
-      // If the user is also in an uitour, set the entrypoint to `uitour`
-      if (UITour.tourBrowsersByWindow.get(window) &&
-          UITour.tourBrowsersByWindow.get(window).has(gBrowser.selectedBrowser)) {
-        entryPoint = "uitour";
-      }
-      this.openPrefs(entryPoint);
+    let xps = Components.classes["@mozilla.org/weave/service;1"]
+                                .getService(Components.interfaces.nsISupports)
+                                .wrappedJSObject;
+    if (xps.fxAccountsEnabled) {
+      fxAccounts.getSignedInUser().then(userData => {
+        if (userData) {
+          this.openPrefs();
+        } else {
+          // If the user is also in an uitour, set the entrypoint to `uitour`
+          if (UITour.tourBrowsersByWindow.get(window) &&
+              UITour.tourBrowsersByWindow.get(window).has(gBrowser.selectedBrowser)) {
+            entryPoint = "uitour";
+          }
+          switchToTabHavingURI("about:accounts?entrypoint=" + entryPoint, true, {
+            replaceQueryString: true
+          });
+        }
+      });
     } else {
       let win = Services.wm.getMostRecentWindow("Weave:AccountSetup");
       if (win)
@@ -308,7 +297,6 @@ var gSyncUI = {
     }
   },
 
-  // Open the legacy-sync device pairing UI. Note used for FxA Sync.
   openAddDevice: function () {
     if (!Weave.Utils.ensureMPUnlocked())
       return;
@@ -321,78 +309,49 @@ var gSyncUI = {
                         "syncAddDevice", "centerscreen,chrome,resizable=no");
   },
 
-  openPrefs: function (entryPoint) {
-    openPreferences("paneSync", { urlParams: { entrypoint: entryPoint } });
+  openPrefs: function SUI_openPrefs() {
+    openPreferences("paneSync");
   },
 
   openSignInAgainPage: function (entryPoint = "syncbutton") {
     gFxAccounts.openSignInAgainPage(entryPoint);
   },
 
-  /* Update the tooltip for the Sync Toolbar button and the Sync spinner in the
-     FxA hamburger area.
-     If Sync is configured, the tooltip is when the last sync occurred,
-     otherwise the tooltip reflects the fact that Sync needs to be
-     (re-)configured.
-  */
-  _updateSyncButtonsTooltip: Task.async(function* () {
+  // Helpers
+  _updateLastSyncTime: function SUI__updateLastSyncTime() {
     if (!gBrowser)
       return;
 
-    let email;
-    try {
-      email = Services.prefs.getCharPref("services.sync.username");
-    } catch (ex) {}
-
-    let needsSetup = yield this._needsSetup();
-    let needsVerification = yield this._needsVerification();
-    let loginFailed = this._loginFailed();
-    // This is a little messy as the Sync buttons are 1/2 Sync related and
-    // 1/2 FxA related - so for some strings we use Sync strings, but for
-    // others we reach into gFxAccounts for strings.
-    let tooltiptext;
-    if (needsVerification) {
-      // "needs verification"
-      tooltiptext = gFxAccounts.strings.formatStringFromName("verifyDescription", [email], 1);
-    } else if (needsSetup) {
-      // "needs setup".
-      tooltiptext = this._stringBundle.GetStringFromName("signInToSync.description");
-    } else if (loginFailed) {
-      // "need to reconnect/re-enter your password"
-      tooltiptext = gFxAccounts.strings.formatStringFromName("reconnectDescription", [email], 1);
-    } else {
-      // Sync appears configured - format the "last synced at" time.
-      try {
-        let lastSync = new Date(Services.prefs.getCharPref("services.sync.lastSync"));
-        // Show the day-of-week and time (HH:MM) of last sync
-        let lastSyncDateString = lastSync.toLocaleFormat("%a %H:%M");
-        tooltiptext = this._stringBundle.formatStringFromName("lastSync2.label", [lastSyncDateString], 1);
-      }
-      catch (e) {
-        // pref doesn't exist (which will be the case until we've seen the
-        // first successful sync) or is invalid (which should be impossible!)
-        // Just leave tooltiptext as the empty string in these cases, which
-        // will cause the tooltip to be removed below.
-      }
-    }
-
-    // We've done all our promise-y work and ready to update the UI - make
-    // sure it hasn't been torn down since we started.
-    if (!gBrowser)
-      return;
     let syncButton = document.getElementById("sync-button");
     let statusButton = document.getElementById("PanelUI-fxa-icon");
 
-    for (let button of [syncButton, statusButton]) {
-      if (button) {
-        if (tooltiptext) {
-          button.setAttribute("tooltiptext", tooltiptext);
-        } else {
-          button.removeAttribute("tooltiptext");
-        }
-      }
+    let lastSync;
+    try {
+      lastSync = new Date(Services.prefs.getCharPref("services.sync.lastSync"));
     }
-  }),
+    catch (e) { };
+    if (!lastSync || this._needsSetup()) {
+      if (syncButton) {
+        syncButton.removeAttribute("tooltiptext");
+      }
+      if (statusButton) {
+        statusButton.removeAttribute("tooltiptext");
+      }
+      return;
+    }
+
+    // Show the day-of-week and time (HH:MM) of last sync
+    let lastSyncDateString = lastSync.toLocaleFormat("%a %H:%M");
+    let lastSyncLabel =
+      this._stringBundle.formatStringFromName("lastSync2.label", [lastSyncDateString], 1);
+
+    if (syncButton) {
+      syncButton.setAttribute("tooltiptext", lastSyncLabel);
+    }
+    if (statusButton) {
+      statusButton.setAttribute("tooltiptext", lastSyncLabel);
+    }
+  },
 
   clearError: function SUI_clearError(errorString) {
     Weave.Notifications.removeAll(errorString);
@@ -483,10 +442,4 @@ XPCOMUtils.defineLazyGetter(gSyncUI, "_stringBundle", function() {
 
 XPCOMUtils.defineLazyGetter(gSyncUI, "log", function() {
   return Log.repository.getLogger("browserwindow.syncui");
-});
-
-XPCOMUtils.defineLazyGetter(gSyncUI, "weaveService", function() {
-  return Components.classes["@mozilla.org/weave/service;1"]
-                   .getService(Components.interfaces.nsISupports)
-                   .wrappedJSObject;
 });

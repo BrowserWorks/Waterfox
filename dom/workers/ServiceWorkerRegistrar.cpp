@@ -11,7 +11,6 @@
 #include "nsIInputStream.h"
 #include "nsILineInputStream.h"
 #include "nsIObserverService.h"
-#include "nsIOutputStream.h"
 #include "nsISafeOutputStream.h"
 
 #include "MainThreadUtils.h"
@@ -323,17 +322,25 @@ ServiceWorkerRegistrar::ReadData()
       return NS_ERROR_FAILURE;                        \
     }
 
-    nsAutoCString suffix;
-    GET_LINE(suffix);
+    GET_LINE(line);
 
-    OriginAttributes attrs;
-    if (!attrs.PopulateFromSuffix(suffix)) {
-      return NS_ERROR_INVALID_ARG;
+    uint32_t appId = line.ToInteger(&rv);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
     }
 
     GET_LINE(line);
+
+    if (!line.EqualsLiteral(SERVICEWORKERREGISTRAR_TRUE) &&
+        !line.EqualsLiteral(SERVICEWORKERREGISTRAR_FALSE)) {
+      return NS_ERROR_FAILURE;
+    }
+
+    bool isInBrowserElement = line.EqualsLiteral(SERVICEWORKERREGISTRAR_TRUE);
+
+    GET_LINE(line);
     entry->principal() =
-      mozilla::ipc::ContentPrincipalInfo(attrs.mAppId, attrs.mInBrowser, line);
+      mozilla::ipc::ContentPrincipalInfo(appId, isInBrowserElement, line);
 
     GET_LINE(entry->scope());
     GET_LINE(entry->scriptSpec());
@@ -548,15 +555,19 @@ ServiceWorkerRegistrar::WriteData()
     const mozilla::ipc::ContentPrincipalInfo& cInfo =
       info.get_ContentPrincipalInfo();
 
-    OriginAttributes attrs(cInfo.appId(), cInfo.isInBrowserElement());
-    nsAutoCString suffix;
-    attrs.CreateSuffix(suffix);
-
     buffer.Truncate();
-    buffer.Append(suffix.get());
+    buffer.AppendInt(cInfo.appId());
     buffer.Append('\n');
 
+    if (cInfo.isInBrowserElement()) {
+      buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TRUE);
+    } else {
+      buffer.AppendLiteral(SERVICEWORKERREGISTRAR_FALSE);
+    }
+
+    buffer.Append('\n');
     buffer.Append(cInfo.spec());
+
     buffer.Append('\n');
 
     buffer.Append(data[i].scope());

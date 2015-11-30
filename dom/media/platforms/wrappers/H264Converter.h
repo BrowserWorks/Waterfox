@@ -29,17 +29,17 @@ public:
                 MediaDataDecoderCallback* aCallback);
   virtual ~H264Converter();
 
-  virtual nsRefPtr<InitPromise> Init() override;
+  virtual nsresult Init() override;
   virtual nsresult Input(MediaRawData* aSample) override;
   virtual nsresult Flush() override;
   virtual nsresult Drain() override;
   virtual nsresult Shutdown() override;
-  virtual bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
+  virtual bool IsHardwareAccelerated() const override;
 
   // Return true if mimetype is H.264.
   static bool IsH264(const TrackInfo& aConfig);
   nsresult GetLastError() const { return mLastError; }
-  
+
 private:
   // Will create the required MediaDataDecoder if need AVCC and we have a SPS NAL.
   // Returns NS_ERROR_FAILURE if error is permanent and can't be recovered and
@@ -49,18 +49,13 @@ private:
   nsresult CheckForSPSChange(MediaRawData* aSample);
   void UpdateConfigFromExtraData(MediaByteBuffer* aExtraData);
 
-  void OnDecoderInitDone(const TrackType aTrackType);
-  void OnDecoderInitFailed(MediaDataDecoder::DecoderFailureReason aReason);
-
   nsRefPtr<PlatformDecoderModule> mPDM;
   VideoInfo mCurrentConfig;
   layers::LayersBackend mLayersBackend;
   nsRefPtr<layers::ImageContainer> mImageContainer;
   nsRefPtr<FlushableTaskQueue> mVideoTaskQueue;
-  nsTArray<nsRefPtr<MediaRawData>> mMediaRawSamples;
   MediaDataDecoderCallback* mCallback;
   nsRefPtr<MediaDataDecoder> mDecoder;
-  MozPromiseRequestHolder<InitPromise> mInitPromiseRequest;
   bool mNeedAVCC;
   nsresult mLastError;
 };

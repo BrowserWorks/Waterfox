@@ -209,23 +209,12 @@ StartsWith(const std::string& haystack, const char (&needle)[N])
 bool
 ShaderValidator::CanLinkTo(const ShaderValidator* prev, nsCString* const out_log) const
 {
-    if (!prev) {
-        nsPrintfCString error("Passed in NULL prev ShaderValidator.");
-        *out_log = error;
-        return false;
-    }
-
     {
-        const std::vector<sh::Uniform>* vertPtr = ShGetUniforms(prev->mHandle);
-        const std::vector<sh::Uniform>* fragPtr = ShGetUniforms(mHandle);
-        if (!vertPtr || !fragPtr) {
-            nsPrintfCString error("Could not create uniform list.");
-            *out_log = error;
-            return false;
-        }
+        const std::vector<sh::Uniform>& vertList = *ShGetUniforms(prev->mHandle);
+        const std::vector<sh::Uniform>& fragList = *ShGetUniforms(mHandle);
 
-        for (auto itrFrag = fragPtr->begin(); itrFrag != fragPtr->end(); ++itrFrag) {
-            for (auto itrVert = vertPtr->begin(); itrVert != vertPtr->end(); ++itrVert) {
+        for (auto itrFrag = fragList.begin(); itrFrag != fragList.end(); ++itrFrag) {
+            for (auto itrVert = vertList.begin(); itrVert != vertList.end(); ++itrVert) {
                 if (itrVert->name != itrFrag->name)
                     continue;
 
@@ -242,17 +231,12 @@ ShaderValidator::CanLinkTo(const ShaderValidator* prev, nsCString* const out_log
         }
     }
     {
-        const std::vector<sh::Varying>* vertPtr = ShGetVaryings(prev->mHandle);
-        const std::vector<sh::Varying>* fragPtr = ShGetVaryings(mHandle);
-        if (!vertPtr || !fragPtr) {
-            nsPrintfCString error("Could not create varying list.");
-            *out_log = error;
-            return false;
-        }
+        const std::vector<sh::Varying>& vertList = *ShGetVaryings(prev->mHandle);
+        const std::vector<sh::Varying>& fragList = *ShGetVaryings(mHandle);
 
         nsTArray<ShVariableInfo> staticUseVaryingList;
 
-        for (auto itrFrag = fragPtr->begin(); itrFrag != fragPtr->end(); ++itrFrag) {
+        for (auto itrFrag = fragList.begin(); itrFrag != fragList.end(); ++itrFrag) {
             const ShVariableInfo varInfo = { itrFrag->type,
                                              (int)itrFrag->elementCount() };
 
@@ -267,7 +251,7 @@ ShaderValidator::CanLinkTo(const ShaderValidator* prev, nsCString* const out_log
             bool definedInVertShader = false;
             bool staticVertUse = false;
 
-            for (auto itrVert = vertPtr->begin(); itrVert != vertPtr->end(); ++itrVert) {
+            for (auto itrVert = vertList.begin(); itrVert != vertList.end(); ++itrVert) {
                 if (itrVert->name != itrFrag->name)
                     continue;
 

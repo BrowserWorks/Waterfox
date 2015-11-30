@@ -68,9 +68,7 @@ SOURCES += [
     'Omnijar.cpp',
 ]
 
-if CONFIG['GNU_CC']:
-    CFLAGS += ['-Wshadow']
-    CXXFLAGS += ['-Wshadow']
+FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

@@ -1,4 +1,4 @@
-var url = "https://example.com/browser/toolkit/content/tests/browser/file_contentTitle.html";
+let url = "https://example.com/browser/toolkit/content/tests/browser/file_contentTitle.html";
 
 add_task(function*() {
   let tab = gBrowser.selectedTab = gBrowser.addTab(url);

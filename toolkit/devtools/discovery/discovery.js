@@ -63,7 +63,7 @@ XPCOMUtils.defineLazyGetter(this, "libcutils", function () {
   return libcutils;
 });
 
-var logging = Services.prefs.getBoolPref("devtools.discovery.log");
+let logging = Services.prefs.getBoolPref("devtools.discovery.log");
 function log(msg) {
   if (logging) {
     console.log("DISCOVERY: " + msg);
@@ -512,6 +512,6 @@ Discovery.prototype = {
 
 };
 
-var discovery = new Discovery();
+let discovery = new Discovery();
 
 module.exports = discovery;

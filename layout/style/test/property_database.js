@@ -2490,7 +2490,7 @@ var gCSSProperties = {
                      "font-kerning", "font-synthesis", "font-variant-alternates", "font-variant-caps", "font-variant-east-asian",
                      "font-variant-ligatures", "font-variant-numeric", "font-variant-position" ],
     initial_values: [ (gInitialFontFamilyIsSansSerif ? "medium sans-serif" : "medium serif") ],
-    other_values: [ "large serif", "9px fantasy", "condensed bold italic small-caps 24px/1.4 Times New Roman, serif", "small inherit roman", "small roman inherit",
+    other_values: [ "large serif", "9px fantasy", "bold italic small-caps 24px/1.4 Times New Roman, serif", "small inherit roman", "small roman inherit",
       // system fonts
       "caption", "icon", "menu", "message-box", "small-caption", "status-bar",
       // Gecko-specific system fonts
@@ -3642,14 +3642,6 @@ var gCSSProperties = {
     ],
     quirks_values: { "5": "5px" },
   },
-  "will-change": {
-    domProp: "willChange",
-    inherited: false,
-    type: CSS_TYPE_LONGHAND,
-    initial_values: [ "auto" ],
-    other_values: [ "scroll-position", "contents", "transform", "opacity", "scroll-position, transform", "transform, opacity", "contents, transform", "property-that-doesnt-exist-yet" ],
-    invalid_values: [ "none", "all", "default", "auto, scroll-position", "scroll-position, auto", "transform scroll-position", ",", "trailing,", "will-change", "transform, will-change" ]
-  },
   "word-break": {
     domProp: "wordBreak",
     inherited: true,
@@ -3681,8 +3673,8 @@ var gCSSProperties = {
     other_values: [ "break-word" ],
     invalid_values: []
   },
-  "hyphens": {
-    domProp: "hyphens",
+  "-moz-hyphens": {
+    domProp: "MozHyphens",
     inherited: true,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "manual" ],
@@ -4556,16 +4548,6 @@ var gCSSProperties = {
     initial_values: [ "normal" ],
     other_values: [ "'ENG'", "'TRK'", "\"TRK\"", "'N\\'Ko'" ],
     invalid_values: [ "TRK", "ja" ]
-  },
-  "-moz-hyphens": {
-    domProp: "MozHyphens",
-    inherited: true,
-    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
-    alias_for: "hyphens",
-    subproperties: [ "hyphens" ],
-    initial_values: [ "manual" ],
-    other_values: [ "none", "auto" ],
-    invalid_values: []
   }
 }
 
@@ -4727,8 +4709,8 @@ if (SpecialPowers.getBoolPref("layout.css.vertical-text.enabled")) {
       domProp: "writingMode",
       inherited: true,
       type: CSS_TYPE_LONGHAND,
-      initial_values: [ "horizontal-tb", "lr", "lr-tb", "rl", "rl-tb" ],
-      other_values: [ "vertical-lr", "vertical-rl", "tb", "tb-rl" ],
+      initial_values: [ "horizontal-tb" ],
+      other_values: [ "vertical-lr", "vertical-rl" ],
       invalid_values: [ "10px", "30%", "justify", "auto", "1em" ]
     },
     "text-orientation": {
@@ -5337,7 +5319,7 @@ if (SpecialPowers.getBoolPref("svg.paint-order.enabled")) {
   };
 }
 
-if (SpecialPowers.getBoolPref("svg.transform-box.enabled")) {
+if (SpecialPowers.getBoolPref("svg.transform-origin.enabled")) {
   gCSSProperties["transform-box"] = {
     domProp: "transformBox",
     inherited: false,
@@ -6392,6 +6374,17 @@ if (SpecialPowers.getBoolPref("layout.css.background-blend-mode.enabled")) {
     other_values: [ "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn",
       "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity" ],
     invalid_values: ["none", "10px", "multiply multiply"]
+  };
+}
+
+if (SpecialPowers.getBoolPref("layout.css.will-change.enabled")) {
+  gCSSProperties["will-change"] = {
+    domProp: "willChange",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "auto" ],
+    other_values: [ "scroll-position", "contents", "transform", "opacity", "scroll-position, transform", "transform, opacity", "contents, transform", "property-that-doesnt-exist-yet" ],
+    invalid_values: [ "none", "all", "default", "auto, scroll-position", "scroll-position, auto", "transform scroll-position", ",", "trailing," ]
   };
 }
 

@@ -18,7 +18,7 @@ sys.include_path.push(options.topsrcdir);
 
 include('string-format.js');
 
-var modules = [];
+let modules = [];
 
 function LoadModules(modulelist)
 {

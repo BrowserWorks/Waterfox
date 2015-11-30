@@ -375,13 +375,13 @@ function getId (item) {
  * Set up the default, root groups
  */
 
-var defaultGroupMap = {
+let defaultGroupMap = {
   MENU: bmsrv.bookmarksMenuFolder,
   TOOLBAR: bmsrv.toolbarFolder,
   UNSORTED: bmsrv.unfiledBookmarksFolder
 };
 
-var rootGroups = new Map();
+let rootGroups = new Map();
 
 for (let i in defaultGroupMap) {
   let group = Object.freeze(Group({ title: i, id: defaultGroupMap[i] }));
@@ -389,7 +389,7 @@ for (let i in defaultGroupMap) {
   exports[i] = group;
 }
 
-var defaults = {
+let defaults = {
   group: exports.UNSORTED,
   index: -1
 };

@@ -19,7 +19,7 @@ function registerAddonResourceHandler(data) {
   return "resource://" + resourceName + "/";
 }
 
-var mainModule;
+let mainModule;
 
 function install(data, reason) {}
 function uninstall(data, reason) {}

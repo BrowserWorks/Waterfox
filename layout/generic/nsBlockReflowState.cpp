@@ -316,16 +316,13 @@ nsBlockReflowState::ReplacedBlockFitsInAvailSpace(nsIFrame* aReplacedBlock,
   nsBlockFrame::ReplacedElementISizeToClear replacedISize =
     nsBlockFrame::ISizeToClearPastFloats(*this, aFloatAvailableSpace.mRect,
                                          aReplacedBlock);
-  // The inline-start side of the replaced element should be offset by
-  // the larger of the float intrusion or the replaced element's own
-  // start margin.  The inline-end side is similar, except for Web
-  // compatibility we ignore the margin.
   return std::max(aFloatAvailableSpace.mRect.IStart(wm) -
                     mContentArea.IStart(wm),
                   replacedISize.marginIStart) +
            replacedISize.borderBoxISize +
-           (mContentArea.IEnd(wm) -
-            aFloatAvailableSpace.mRect.IEnd(wm)) <=
+           std::max(mContentArea.IEnd(wm) -
+                      aFloatAvailableSpace.mRect.IEnd(wm),
+                    replacedISize.marginIEnd) <=
          mContentArea.ISize(wm);
 }
 

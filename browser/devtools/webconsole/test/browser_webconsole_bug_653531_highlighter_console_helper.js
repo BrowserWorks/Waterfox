@@ -7,7 +7,7 @@
 
 "use strict";
 
-var inspector, h1, outputNode;
+let inspector, h1, outputNode;
 
 function createDocument() {
   let doc = content.document;
@@ -48,7 +48,7 @@ function setupHighlighterTests() {
   openInspector().then(runSelectionTests);
 }
 
-var runSelectionTests = Task.async(function*(aInspector) {
+let runSelectionTests = Task.async(function*(aInspector) {
   inspector = aInspector;
 
   let onPickerStarted = inspector.toolbox.once("picker-started");

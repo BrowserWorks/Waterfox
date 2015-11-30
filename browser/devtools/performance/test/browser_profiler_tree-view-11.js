@@ -6,7 +6,8 @@
  * icon is next to the frame with optimizations
  */
 
-var { CATEGORY_MASK } = require("devtools/performance/global");
+const RecordingUtils = require("devtools/performance/recording-utils");
+const { CATEGORY_MASK } = require("devtools/performance/global");
 
 function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
@@ -67,7 +68,7 @@ function* spawnTest() {
   }
 }
 
-var gUniqueStacks = new RecordingUtils.UniqueStacks();
+let gUniqueStacks = new RecordingUtils.UniqueStacks();
 
 function uniqStr(s) {
   return gUniqueStacks.getOrAddStringIndex(s);
@@ -76,7 +77,7 @@ function uniqStr(s) {
 // Since deflateThread doesn't handle deflating optimization info, use
 // placeholder names A_O1, B_O2, and B_O3, which will be used to manually
 // splice deduped opts into the profile.
-var gThread = RecordingUtils.deflateThread({
+let gThread = RecordingUtils.deflateThread({
   samples: [{
     time: 0,
     frames: [
@@ -105,7 +106,7 @@ var gThread = RecordingUtils.deflateThread({
 }, gUniqueStacks);
 
 // 3 RawOptimizationSites
-var gRawSite1 = {
+let gRawSite1 = {
   _testFrameInfo: { name: "A", line: "12", file: "@baz" },
   line: 12,
   column: 2,

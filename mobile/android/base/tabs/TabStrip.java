@@ -19,9 +19,8 @@ import org.mozilla.gecko.BrowserApp.Refreshable;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
-import org.mozilla.gecko.util.ColorUtils;
-import org.mozilla.gecko.widget.themed.ThemedImageButton;
-import org.mozilla.gecko.widget.themed.ThemedLinearLayout;
+import org.mozilla.gecko.widget.ThemedImageButton;
+import org.mozilla.gecko.widget.ThemedLinearLayout;
 
 public class TabStrip extends ThemedLinearLayout
                       implements Refreshable {
@@ -40,7 +39,7 @@ public class TabStrip extends ThemedLinearLayout
         super(context, attrs);
         setOrientation(HORIZONTAL);
 
-        LayoutInflater.from(context).inflate(R.layout.tab_strip_inner, this);
+        LayoutInflater.from(context).inflate(R.layout.tab_strip, this);
         tabStripView = (TabStripView) findViewById(R.id.tab_strip);
 
         addTabButton = (ThemedImageButton) findViewById(R.id.add_tab);
@@ -153,7 +152,7 @@ public class TabStrip extends ThemedLinearLayout
 
     @Override
     public void onLightweightThemeReset() {
-        final int defaultBackgroundColor = ColorUtils.getColor(getContext(), R.color.text_and_tabs_tray_grey);
+        final int defaultBackgroundColor = getResources().getColor(R.color.text_and_tabs_tray_grey);
         setBackgroundColor(defaultBackgroundColor);
     }
 }

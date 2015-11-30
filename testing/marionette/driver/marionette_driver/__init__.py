@@ -3,12 +3,12 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-__version__ = '0.13'
+__version__ = '0.12'
 
 
 from marionette_driver import ( errors, by, decorators, expected, geckoinstance,
                                 gestures, keys, marionette, selection, wait,
-                                date_time_value )
+                                application_cache, date_time_value )
 from marionette_driver.by import By
 from marionette_driver.date_time_value import DateTimeValue
 from marionette_driver.gestures import smooth_scroll, pinch

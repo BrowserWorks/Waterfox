@@ -4,7 +4,7 @@
 function f() {
     for (var i=0; i<100; i++) {
 	if (i === 20)
-	    enableShellObjectMetadataCallback();
+	    setObjectMetadataCallback(true);
 	var o = {x: 1};
 	if (i >= 20) {
 	    var md = getObjectMetadata(o);

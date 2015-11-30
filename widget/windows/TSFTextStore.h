@@ -335,7 +335,7 @@ protected:
     // Current copy of the active composition string. Only mString is
     // changed during a InsertTextAtSelection call if we have a composition.
     // mString acts as a buffer until OnUpdateComposition is called
-    // and mString is flushed to editor through eCompositionChange.
+    // and mString is flushed to editor through NS_COMPOSITION_CHANGE.
     // This way all changes are updated in batches to avoid
     // inconsistencies/artifacts.
     nsString mString;
@@ -511,7 +511,7 @@ protected:
       COMPOSITION_START,
       COMPOSITION_UPDATE,
       COMPOSITION_END,
-      SET_SELECTION
+      SELECTION_SET
     };
     ActionType mType;
     // For compositionstart and selectionset
@@ -885,8 +885,8 @@ protected:
   static bool sDoNotReturnNoLayoutErrorToMSTraditionalTIP;
   static bool sDoNotReturnNoLayoutErrorToFreeChangJie;
   static bool sDoNotReturnNoLayoutErrorToEasyChangjei;
-  static bool sDoNotReturnNoLayoutErrorToMSJapaneseIMEAtFirstChar;
-  static bool sDoNotReturnNoLayoutErrorToMSJapaneseIMEAtCaret;
+  static bool sDoNotReturnNoLayoutErrorToGoogleJaInputAtFirstChar;
+  static bool sDoNotReturnNoLayoutErrorToGoogleJaInputAtCaret;
   static bool sHackQueryInsertForMSSimplifiedTIP;
   static bool sHackQueryInsertForMSTraditionalTIP;
 };

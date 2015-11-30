@@ -4,10 +4,9 @@
 
 // Utility functions for Chat tests.
 
-var Chat = Cu.import("resource:///modules/Chat.jsm", {}).Chat;
-const kDefaultButtonSet = new Set(["minimize", "swap", "close"]);
+let Chat = Cu.import("resource:///modules/Chat.jsm", {}).Chat;
 
-function promiseOpenChat(url, mode, focus, buttonSet = null) {
+function promiseOpenChat(url, mode, focus) {
   let uri = Services.io.newURI(url, null, null);
   let origin = uri.prePath;
   let title = origin;
@@ -29,9 +28,6 @@ function promiseOpenChat(url, mode, focus, buttonSet = null) {
     }, true);
   }
   let chatbox = Chat.open(null, origin, title, url, mode, focus, callback);
-  if (buttonSet) {
-    chatbox.setAttribute("buttonSet", buttonSet);
-  }
   return deferred.promise;
 }
 

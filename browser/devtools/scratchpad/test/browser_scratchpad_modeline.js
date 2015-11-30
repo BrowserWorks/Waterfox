@@ -3,19 +3,19 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 /* Bug 644413 */
 
-var tempScope = {};
+let tempScope = {};
 Cu.import("resource://gre/modules/NetUtil.jsm", tempScope);
 Cu.import("resource://gre/modules/FileUtils.jsm", tempScope);
-var NetUtil = tempScope.NetUtil;
-var FileUtils = tempScope.FileUtils;
+let NetUtil = tempScope.NetUtil;
+let FileUtils = tempScope.FileUtils;
 
 
-var gScratchpad; // Reference to the Scratchpad object.
-var gFile; // Reference to the temporary nsIFile we will work with.
-var DEVTOOLS_CHROME_ENABLED = "devtools.chrome.enabled";
+let gScratchpad; // Reference to the Scratchpad object.
+let gFile; // Reference to the temporary nsIFile we will work with.
+let DEVTOOLS_CHROME_ENABLED = "devtools.chrome.enabled";
 
 // The temporary file content.
-var gFileContent = "function main() { return 0; }";
+let gFileContent = "function main() { return 0; }";
 
 function test() {
   waitForExplicitFinish();

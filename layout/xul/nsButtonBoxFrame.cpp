@@ -110,8 +110,8 @@ nsButtonBoxFrame::HandleEvent(nsPresContext* aPresContext,
     return NS_OK;
   }
 
-  switch (aEvent->mMessage) {
-    case eKeyDown: {
+  switch (aEvent->message) {
+    case NS_KEY_DOWN: {
       WidgetKeyboardEvent* keyEvent = aEvent->AsKeyboardEvent();
       if (!keyEvent) {
         break;
@@ -128,7 +128,7 @@ nsButtonBoxFrame::HandleEvent(nsPresContext* aPresContext,
 
 // On mac, Return fires the default button, not the focused one.
 #ifndef XP_MACOSX
-    case eKeyPress: {
+    case NS_KEY_PRESS: {
       WidgetKeyboardEvent* keyEvent = aEvent->AsKeyboardEvent();
       if (!keyEvent) {
         break;
@@ -144,7 +144,7 @@ nsButtonBoxFrame::HandleEvent(nsPresContext* aPresContext,
     }
 #endif
 
-    case eKeyUp: {
+    case NS_KEY_UP: {
       WidgetKeyboardEvent* keyEvent = aEvent->AsKeyboardEvent();
       if (!keyEvent) {
         break;
@@ -166,16 +166,13 @@ nsButtonBoxFrame::HandleEvent(nsPresContext* aPresContext,
       break;
     }
 
-    case eMouseClick: {
+    case NS_MOUSE_CLICK: {
       WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
       if (mouseEvent->IsLeftClickEvent()) {
         MouseClicked(aPresContext, mouseEvent);
       }
       break;
     }
-
-    default:
-      break;
   }
 
   return nsBoxFrame::HandleEvent(aPresContext, aEvent, aEventStatus);

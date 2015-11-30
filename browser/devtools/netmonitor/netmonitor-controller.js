@@ -118,7 +118,7 @@ Cu.import("resource:///modules/devtools/VariablesViewController.jsm");
 Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
 
 const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const promise = require("promise");
+const promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const Editor = require("devtools/sourceeditor/editor");
 const {Tooltip} = require("devtools/shared/widgets/Tooltip");
@@ -157,7 +157,7 @@ Object.defineProperty(this, "NetworkHelper", {
 /**
  * Object defining the network monitor controller components.
  */
-var NetMonitorController = {
+let NetMonitorController = {
   /**
    * Initializes the view.
    *
@@ -320,44 +320,6 @@ var NetMonitorController = {
     }
     this._currentActivity = ACTIVITY_TYPE.NONE;
     return promise.reject(new Error("Invalid activity type"));
-  },
-
-  /**
-   * Selects the specified request in the waterfall and opens the details view.
-   *
-   * @param string requestId
-   *        The actor ID of the request to inspect.
-   * @return object
-   *         A promise resolved once the task finishes.
-   */
-  inspectRequest: function(requestId) {
-    // Look for the request in the existing ones or wait for it to appear, if
-    // the network monitor is still loading.
-    let deferred = promise.defer();
-    let request = null;
-    let inspector = function() {
-      let predicate = i => i.value === requestId;
-      request = NetMonitorView.RequestsMenu.getItemForPredicate(predicate);
-      if (!request) {
-        // Reset filters so that the request is visible.
-        NetMonitorView.RequestsMenu.filterOn("all");
-        request = NetMonitorView.RequestsMenu.getItemForPredicate(predicate);
-      }
-
-      // If the request was found, select it. Otherwise this function will be
-      // called again once new requests arrive.
-      if (request) {
-        window.off(EVENTS.REQUEST_ADDED, inspector);
-        NetMonitorView.RequestsMenu.selectedItem = request;
-        deferred.resolve();
-      }
-    }
-
-    inspector();
-    if (!request) {
-      window.on(EVENTS.REQUEST_ADDED, inspector);
-    }
-    return deferred.promise;
   },
 
   /**
@@ -756,13 +718,13 @@ NetworkEventsHandler.prototype = {
 /**
  * Localization convenience methods.
  */
-var L10N = new ViewHelpers.L10N(NET_STRINGS_URI);
-var PKI_L10N = new ViewHelpers.L10N(PKI_STRINGS_URI);
+let L10N = new ViewHelpers.L10N(NET_STRINGS_URI);
+let PKI_L10N = new ViewHelpers.L10N(PKI_STRINGS_URI);
 
 /**
  * Shortcuts for accessing various network monitor preferences.
  */
-var Prefs = new ViewHelpers.Prefs("devtools.netmonitor", {
+let Prefs = new ViewHelpers.Prefs("devtools.netmonitor", {
   networkDetailsWidth: ["Int", "panes-network-details-width"],
   networkDetailsHeight: ["Int", "panes-network-details-height"],
   statistics: ["Bool", "statistics"],
@@ -848,4 +810,4 @@ function dumpn(str) {
   }
 }
 
-var wantLogging = Services.prefs.getBoolPref("devtools.debugger.log");
+let wantLogging = Services.prefs.getBoolPref("devtools.debugger.log");

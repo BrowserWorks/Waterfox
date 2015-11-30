@@ -68,8 +68,8 @@ def run(pid):
     try:
         p = psutil.Process(pid)
         pinfo = p.as_dict(ad_value=ACCESS_DENIED)
-    except psutil.NoSuchProcess as err:
-        sys.exit(str(err))
+    except psutil.NoSuchProcess:
+        sys.exit(str(sys.exc_info()[1]))
 
     try:
         parent = p.parent()
@@ -79,19 +79,13 @@ def run(pid):
             parent = ''
     except psutil.Error:
         parent = ''
-    if pinfo['create_time'] != ACCESS_DENIED:
-        started = datetime.datetime.fromtimestamp(
-            pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
-    else:
-        started = ACCESS_DENIED
+    started = datetime.datetime.fromtimestamp(
+        pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
     io = pinfo.get('io_counters', ACCESS_DENIED)
-    if pinfo['memory_info'] != ACCESS_DENIED:
-        mem = '%s%% (resident=%s, virtual=%s) ' % (
-            round(pinfo['memory_percent'], 1),
-            convert_bytes(pinfo['memory_info'].rss),
-            convert_bytes(pinfo['memory_info'].vms))
-    else:
-        mem = ACCESS_DENIED
+    mem = '%s%% (resident=%s, virtual=%s) ' % (
+        round(pinfo['memory_percent'], 1),
+        convert_bytes(pinfo['memory_info'].rss),
+        convert_bytes(pinfo['memory_info'].vms))
     children = p.children()
 
     print_('pid', pinfo['pid'])
@@ -107,7 +101,8 @@ def run(pid):
         print_('gids', 'real=%s, effective=%s, saved=%s' % pinfo['gids'])
     if POSIX:
         print_('terminal', pinfo['terminal'] or '')
-    print_('cwd', pinfo['cwd'])
+    if hasattr(p, 'getcwd'):
+        print_('cwd', pinfo['cwd'])
     print_('memory', mem)
     print_('cpu', '%s%% (user=%s, system=%s)' % (
         pinfo['cpu_percent'],

@@ -17,6 +17,7 @@
 'use strict';
 
 var util = require('../util/util');
+var Promise = require('../util/promise').Promise;
 
 var RESOLVED = Promise.resolve(true);
 

@@ -48,6 +48,9 @@ public class DirCursor extends MatrixCursor {
         int    nCIndex = 0;
         Object [] vals = new Object[nCols];
 
+        if (vals == null)
+            return;
+
         if (dir.isDirectory()) {
             try {
                 nCIndex = getColumnIndex(_ID);

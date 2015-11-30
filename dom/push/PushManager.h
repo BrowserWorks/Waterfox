@@ -36,7 +36,6 @@
 #include "mozilla/AlreadyAddRefed.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/BindingDeclarations.h"
-#include "mozilla/dom/TypedArray.h"
 
 #include "nsCOMPtr.h"
 #include "mozilla/nsRefPtr.h"
@@ -44,8 +43,6 @@
 
 class nsIGlobalObject;
 class nsIPrincipal;
-
-#include "mozilla/dom/PushSubscriptionBinding.h"
 
 namespace mozilla {
 namespace dom {
@@ -66,8 +63,7 @@ public:
 
   explicit PushSubscription(nsIGlobalObject* aGlobal,
                             const nsAString& aEndpoint,
-                            const nsAString& aScope,
-                            const nsTArray<uint8_t>& aP256dhKey);
+                            const nsAString& aScope);
 
   JSObject*
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
@@ -84,17 +80,8 @@ public:
     aEndpoint = mEndpoint;
   }
 
-  void
-  GetKey(JSContext* cx,
-         PushEncryptionKeyName aType,
-         JS::MutableHandle<JSObject*> aP256dhKey);
-
   static already_AddRefed<PushSubscription>
-  Constructor(GlobalObject& aGlobal,
-              const nsAString& aEndpoint,
-              const nsAString& aScope,
-              const Nullable<ArrayBuffer>& aP256dhKey,
-              ErrorResult& aRv);
+  Constructor(GlobalObject& aGlobal, const nsAString& aEndpoint, const nsAString& aScope, ErrorResult& aRv);
 
   void
   SetPrincipal(nsIPrincipal* aPrincipal);
@@ -110,7 +97,6 @@ private:
   nsCOMPtr<nsIPrincipal> mPrincipal;
   nsString mEndpoint;
   nsString mScope;
-  nsTArray<uint8_t> mRawP256dhKey;
 };
 
 class PushManager final : public nsISupports
@@ -160,8 +146,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(WorkerPushSubscription)
 
   explicit WorkerPushSubscription(const nsAString& aEndpoint,
-                                  const nsAString& aScope,
-                                  const nsTArray<uint8_t>& aRawP256dhKey);
+                                  const nsAString& aScope);
 
   nsIGlobalObject*
   GetParentObject() const
@@ -173,21 +158,13 @@ public:
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<WorkerPushSubscription>
-  Constructor(GlobalObject& aGlobal,
-              const nsAString& aEndpoint,
-              const nsAString& aScope,
-              const Nullable<ArrayBuffer>& aP256dhKey,
-              ErrorResult& aRv);
+  Constructor(GlobalObject& aGlobal, const nsAString& aEndpoint, const nsAString& aScope, ErrorResult& aRv);
 
   void
   GetEndpoint(nsAString& aEndpoint) const
   {
     aEndpoint = mEndpoint;
   }
-
-  void
-  GetKey(JSContext* cx, PushEncryptionKeyName aType,
-         JS::MutableHandle<JSObject*> aP256dhKey);
 
   already_AddRefed<Promise>
   Unsubscribe(ErrorResult& aRv);
@@ -198,7 +175,6 @@ protected:
 private:
   nsString mEndpoint;
   nsString mScope;
-  nsTArray<uint8_t> mRawP256dhKey;
 };
 
 class WorkerPushManager final : public nsISupports

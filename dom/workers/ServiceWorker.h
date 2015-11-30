@@ -11,6 +11,7 @@
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/ServiceWorkerBinding.h" // For ServiceWorkerState.
 
+class nsIDocument;
 class nsPIDOMWindow;
 
 namespace mozilla {
@@ -53,8 +54,6 @@ public:
   void
   GetScriptURL(nsString& aURL) const;
 
-  const ServiceWorkerInfo* Info() const { return mInfo; }
-
   void
   DispatchStateChange(ServiceWorkerState aState)
   {
@@ -93,6 +92,10 @@ private:
   // can be released and recreated as required rather than re-implement some of
   // the SharedWorker logic.
   nsRefPtr<SharedWorker> mSharedWorker;
+  // We need to keep the document and window alive for PostMessage to be able
+  // to access them.
+  nsCOMPtr<nsIDocument> mDocument;
+  nsCOMPtr<nsPIDOMWindow> mWindow;
 };
 
 } // namespace workers

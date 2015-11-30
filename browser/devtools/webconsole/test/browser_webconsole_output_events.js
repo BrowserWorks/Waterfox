@@ -15,7 +15,7 @@ thisTestLeaksUncaughtRejectionsAndShouldBeFixed("null");
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-console-output-events.html";
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();

@@ -3,9 +3,9 @@
  * document.
  */
 
-var {PageMetadata} = Cu.import("resource://gre/modules/PageMetadata.jsm", {});
+let {PageMetadata} = Cu.import("resource://gre/modules/PageMetadata.jsm", {});
 
-var rootURL = "http://example.com/browser/toolkit/modules/tests/browser/";
+let rootURL = "http://example.com/browser/toolkit/modules/tests/browser/";
 
 function promiseDocument(fileName) {
   let url = rootURL + fileName;

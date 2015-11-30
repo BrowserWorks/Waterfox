@@ -1,4 +1,4 @@
-var ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
+let ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
            .getService(Ci.nsIMessageBroadcaster);
 ppmm.QueryInterface(Ci.nsIProcessScriptLoader);
 
@@ -18,7 +18,7 @@ function processScript() {
   });
   sendSyncMessage("ProcessTest:Loaded");
 }
-var processScriptURL = "data:,(" + processScript.toString() + ")()";
+let processScriptURL = "data:,(" + processScript.toString() + ")()";
 
 function initTestScript() {
   let init = initialProcessData;
@@ -29,9 +29,9 @@ function initTestScript() {
 
   sendAsyncMessage("ProcessTest:InitGood", init.test456.get("hi"));
 }
-var initTestScriptURL = "data:,(" + initTestScript.toString() + ")()";
+let initTestScriptURL = "data:,(" + initTestScript.toString() + ")()";
 
-var checkProcess = Task.async(function*(mm) {
+let checkProcess = Task.async(function*(mm) {
   let { target } = yield promiseMessage(mm, "ProcessTest:Loaded");
   target.sendAsyncMessage("ProcessTest:Reply");
   yield promiseMessage(target, "ProcessTest:Finished");

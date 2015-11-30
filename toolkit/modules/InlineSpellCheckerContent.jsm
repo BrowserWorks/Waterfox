@@ -5,9 +5,9 @@
 
 "use strict";
 
-var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+let { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
-var { SpellCheckHelper } = Cu.import("resource://gre/modules/InlineSpellChecker.jsm");
+let { SpellCheckHelper } = Cu.import("resource://gre/modules/InlineSpellChecker.jsm");
 
 this.EXPORTED_SYMBOLS = [ "InlineSpellCheckerContent" ]
 

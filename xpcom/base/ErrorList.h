@@ -333,10 +333,6 @@
   ERROR(NS_ERROR_INTERCEPTED_USED_RESPONSE,            FAILURE(104)),
   /* Service worker intercepted a client request with an opaque response */
   ERROR(NS_ERROR_CLIENT_REQUEST_OPAQUE_INTERCEPTION,   FAILURE(105)),
-  /* Service worker intercepted a non-navigation with an opaque redirect */
-  ERROR(NS_ERROR_BAD_OPAQUE_REDIRECT_INTERCEPTION,     FAILURE(106)),
-  /* Service worker intentionally canceled load via preventDefault(). */
-  ERROR(NS_ERROR_INTERCEPTION_CANCELED,                FAILURE(107)),
 #undef MODULE
 
 
@@ -661,11 +657,6 @@
   ERROR(NS_ERROR_CSP_FORM_ACTION_VIOLATION,        FAILURE(98)),
   ERROR(NS_ERROR_CSP_FRAME_ANCESTOR_VIOLATION,     FAILURE(99)),
 
-  /* Error code for Sub-Resource Integrity */
-  ERROR(NS_ERROR_SRI_CORRUPT,                      FAILURE(200)),
-  ERROR(NS_ERROR_SRI_DISABLED,                     FAILURE(201)),
-  ERROR(NS_ERROR_SRI_NOT_ELIGIBLE,                 FAILURE(202)),
-
   /* CMS specific nsresult error codes.  Note: the numbers used here correspond
    * to the values in nsICMSMessageErrors.idl. */
   ERROR(NS_ERROR_CMS_VERIFY_NOT_SIGNED,            FAILURE(1024)),
@@ -788,7 +779,6 @@
   ERROR(NS_ERROR_XPATH_UNBALANCED_CURLY_BRACE,        FAILURE(29)),
   ERROR(NS_ERROR_XSLT_BAD_NODE_NAME,                  FAILURE(30)),
   ERROR(NS_ERROR_XSLT_VAR_ALREADY_SET,                FAILURE(31)),
-  ERROR(NS_ERROR_XSLT_CALL_TO_KEY_NOT_ALLOWED,        FAILURE(32)),
 
   ERROR(NS_XSLT_GET_NEW_HANDLER,  SUCCESS(1)),
 #undef MODULE

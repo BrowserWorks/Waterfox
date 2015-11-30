@@ -64,12 +64,8 @@ function iterateOverPath(path, extensions) {
     } else if (extensions.some((extension) => entry.name.endsWith(extension))) {
       let file = parentDir.clone();
       file.append(entry.name);
-      // the build system might leave dead symlinks hanging around, which are
-      // returned as part of the directory iterator, but don't actually exist:
-      if (file.exists()) {
-        let uriSpec = getURLForFile(file);
-        files.push(Services.io.newURI(uriSpec, null, null));
-      }
+      let uriSpec = getURLForFile(file);
+      files.push(Services.io.newURI(uriSpec, null, null));
     } else if (entry.name.endsWith(".ja") || entry.name.endsWith(".jar")) {
       let file = parentDir.clone();
       file.append(entry.name);

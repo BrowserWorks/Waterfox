@@ -6,15 +6,15 @@
 // This test covers MozTrap test 6047
 // bug 880621
 
-var {LoadContextInfo} = Cu.import("resource://gre/modules/LoadContextInfo.jsm", null);
+let {LoadContextInfo} = Cu.import("resource://gre/modules/LoadContextInfo.jsm", null);
 
-var tmp = {};
+let tmp = {};
 
 Cc["@mozilla.org/moz/jssubscript-loader;1"]
   .getService(Ci.mozIJSSubScriptLoader)
   .loadSubScript("chrome://browser/content/sanitize.js", tmp);
 
-var Sanitizer = tmp.Sanitizer;
+let Sanitizer = tmp.Sanitizer;
 
 function test() {
 

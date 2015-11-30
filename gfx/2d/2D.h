@@ -1128,40 +1128,21 @@ struct TileSet
   size_t mTileCount;
 };
 
-struct Config {
-  LogForwarder* mLogForwarder;
-  int32_t mMaxTextureSize;
-  int32_t mMaxAllocSize;
-
-  Config()
-  : mLogForwarder(nullptr)
-  , mMaxTextureSize(8192)
-  , mMaxAllocSize(52000000)
-  {}
-};
-
 class GFX2D_API Factory
 {
 public:
-  static void Init(const Config& aConfig);
-  static void ShutDown();
-
   static bool HasSSE2();
 
   /** Make sure that the given dimensions don't overflow a 32-bit signed int
    * using 4 bytes per pixel; optionally, make sure that either dimension
    * doesn't exceed the given limit.
    */
-  static bool CheckSurfaceSize(const IntSize &sz,
-                               int32_t limit = 0,
-                               int32_t allocLimit = 0);
+  static bool CheckSurfaceSize(const IntSize &sz, int32_t limit = 0);
 
   /** Make sure the given dimension satisfies the CheckSurfaceSize and is
    * within 8k limit.  The 8k value is chosen a bit randomly.
    */
   static bool ReasonableSurfaceSize(const IntSize &aSize);
-
-  static bool AllowedSurfaceSize(const IntSize &aSize);
 
   static already_AddRefed<DrawTarget> CreateDrawTargetForCairoSurface(cairo_surface_t* aSurface, const IntSize& aSize, SurfaceFormat* aFormat = nullptr);
 
@@ -1236,10 +1217,10 @@ public:
 
   static uint32_t GetMaxSurfaceSize(BackendType aType);
 
-  static LogForwarder* GetLogForwarder() { return sConfig ? sConfig->mLogForwarder : nullptr; }
+  static LogForwarder* GetLogForwarder() { return mLogForwarder; }
 
 private:
-  static Config* sConfig;
+  static LogForwarder* mLogForwarder;
 public:
 
 #ifdef USE_SKIA_GPU
@@ -1253,7 +1234,7 @@ public:
 
 #if defined(USE_SKIA) && defined(MOZ_ENABLE_FREETYPE)
   static already_AddRefed<GlyphRenderingOptions>
-    CreateCairoGlyphRenderingOptions(FontHinting aHinting, bool aAutoHinting, AntialiasMode aAntialiasMode = AntialiasMode::DEFAULT);
+    CreateCairoGlyphRenderingOptions(FontHinting aHinting, bool aAutoHinting);
 #endif
   static already_AddRefed<DrawTarget>
     CreateDualDrawTarget(DrawTarget *targetA, DrawTarget *targetB);

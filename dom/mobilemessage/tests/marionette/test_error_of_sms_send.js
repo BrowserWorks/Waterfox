@@ -6,7 +6,7 @@ MARIONETTE_HEAD_JS = 'head.js';
 
 const kPrefRilRadioDisabled  = "ril.radio.disabled";
 
-var connection;
+let connection;
 function ensureMobileConnection() {
   let deferred = Promise.defer();
 

@@ -163,6 +163,9 @@ extern bool
 array_pop(JSContext* cx, unsigned argc, js::Value* vp);
 
 extern bool
+array_splice(JSContext* cx, unsigned argc, js::Value* vp);
+
+extern bool
 array_splice_impl(JSContext* cx, unsigned argc, js::Value* vp, bool pop);
 
 extern bool
@@ -176,7 +179,7 @@ extern bool
 array_concat_dense(JSContext* cx, HandleObject arr1, HandleObject arr2,
                    HandleObject result);
 
-extern bool
+bool
 array_join(JSContext* cx, unsigned argc, js::Value* vp);
 
 extern JSString*

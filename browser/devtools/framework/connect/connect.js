@@ -10,15 +10,15 @@ const Cu = Components.utils;
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
-var {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
-var {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-var {TargetFactory} = require("devtools/framework/target");
-var {Toolbox} = require("devtools/framework/toolbox")
-var promise = require("promise");
-var {DebuggerClient} = require("devtools/toolkit/client/main");
+Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
+let {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
+let {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+let {TargetFactory} = require("devtools/framework/target");
+let {Toolbox} = require("devtools/framework/toolbox")
+let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 
-var gClient;
-var gConnectionTimeout;
+let gClient;
+let gConnectionTimeout;
 
 XPCOMUtils.defineLazyGetter(window, 'l10n', function () {
   return Services.strings.createBundle('chrome://browser/locale/devtools/connection-screen.properties');
@@ -54,7 +54,7 @@ window.addEventListener("DOMContentLoaded", function onDOMReady() {
 /**
  * Called when the "connect" button is clicked.
  */
-var submit = Task.async(function*() {
+let submit = Task.async(function*() {
   // Show the "connecting" screen
   document.body.classList.add("connecting");
 
@@ -87,7 +87,7 @@ function clientConnect() {
 /**
  * Connection is ready. List actors and build buttons.
  */
-var onConnectionReady = Task.async(function*(aType, aTraits) {
+let onConnectionReady = Task.async(function*(aType, aTraits) {
   clearTimeout(gConnectionTimeout);
 
   let deferred = promise.defer();

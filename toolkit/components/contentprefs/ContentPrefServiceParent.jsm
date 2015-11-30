@@ -11,7 +11,7 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-var ContentPrefServiceParent = {
+let ContentPrefServiceParent = {
   _cps2: null,
 
   init: function() {

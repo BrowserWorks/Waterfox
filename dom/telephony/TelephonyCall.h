@@ -13,8 +13,6 @@
 #include "mozilla/dom/TelephonyCallId.h"
 #include "mozilla/dom/telephony/TelephonyCommon.h"
 
-#include "nsITelephonyService.h"
-
 class nsPIDOMWindow;
 
 namespace mozilla {
@@ -186,12 +184,6 @@ private:
   explicit TelephonyCall(nsPIDOMWindow* aOwner);
 
   ~TelephonyCall();
-
-  nsresult
-  Hold(nsITelephonyCallback* aCallback);
-
-  nsresult
-  Resume(nsITelephonyCallback* aCallback);
 
   void
   ChangeStateInternal(uint16_t aCallState, bool aFireEvents);

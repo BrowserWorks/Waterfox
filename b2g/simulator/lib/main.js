@@ -17,7 +17,7 @@ const ROOT_URI = require("addon").uri;
 const PROFILE_URL = ROOT_URI + "profile/";
 const BIN_URL = ROOT_URI + "b2g/";
 
-var process;
+let process;
 
 function launch(options) {
   // Close already opened simulation.
@@ -71,7 +71,7 @@ function close() {
   return p.kill();
 }
 
-var name;
+let name;
 
 AddonManager.getAddonByID(require("addon").id, function (addon) {
   name = addon.name.replace(" Simulator", "");

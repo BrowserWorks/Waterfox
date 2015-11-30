@@ -8,7 +8,7 @@
    VariablesViewController, Task */
 
 const {Cu, Ci} = require("chrome");
-const promise = require("promise");
+const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const {Spectrum} = require("devtools/shared/widgets/Spectrum");
 const {CubicBezierWidget} =
       require("devtools/shared/widgets/CubicBezierWidget");
@@ -97,7 +97,7 @@ OptionsStore.prototype = {
 /**
  * The low level structure of a tooltip is a XUL element (a <panel>).
  */
-var PanelFactory = {
+let PanelFactory = {
   /**
    * Get a new XUL panel instance.
    * @param {XULDocument} doc
@@ -1714,7 +1714,7 @@ SwatchFilterTooltip.prototype = Heritage.extend(SwatchBasedEditorTooltip.prototy
 function L10N() {}
 L10N.prototype = {};
 
-var l10n = new L10N();
+let l10n = new L10N();
 
 loader.lazyGetter(L10N.prototype, "strings", () => {
   return Services.strings.createBundle(

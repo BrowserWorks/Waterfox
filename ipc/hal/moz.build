@@ -9,7 +9,6 @@ EXPORTS.mozilla.ipc += [
     'DaemonSocket.h',
     'DaemonSocketConnector.h',
     'DaemonSocketConsumer.h',
-    'DaemonSocketMessageHandlers.h',
     'DaemonSocketPDU.h',
     'DaemonSocketPDUHelpers.h'
 ]
@@ -25,3 +24,5 @@ UNIFIED_SOURCES += [
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
+
+FAIL_ON_WARNINGS = True

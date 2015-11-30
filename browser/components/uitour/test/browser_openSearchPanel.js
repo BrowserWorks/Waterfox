@@ -3,15 +3,15 @@
 
 "use strict";
 
-var gTestTab;
-var gContentAPI;
-var gContentWindow;
+let gTestTab;
+let gContentAPI;
+let gContentWindow;
 
 function test() {
   UITourTest();
 }
 
-var tests = [
+let tests = [
   function test_openSearchPanel(done) {
     let searchbar = document.getElementById("searchbar");
 

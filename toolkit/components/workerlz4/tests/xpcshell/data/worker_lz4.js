@@ -41,8 +41,8 @@ self.onmessage = function() {
   }
 };
 
-var Lz4;
-var Internals;
+let Lz4;
+let Internals;
 function test_import() {
   Lz4 = require("resource://gre/modules/workers/lz4.js");
   Internals = require("resource://gre/modules/workers/lz4_internal.js");

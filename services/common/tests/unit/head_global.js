@@ -3,11 +3,11 @@
 
 const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu, manager: Cm} = Components;
 
-var gSyncProfile = do_get_profile();
+let gSyncProfile = do_get_profile();
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-var XULAppInfo = {
+let XULAppInfo = {
   vendor: "Mozilla",
   name: "XPCShell",
   ID: "xpcshell@tests.mozilla.org",
@@ -23,7 +23,7 @@ var XULAppInfo = {
   invalidateCachesOnRestart: function invalidateCachesOnRestart() { }
 };
 
-var XULAppInfoFactory = {
+let XULAppInfoFactory = {
   createInstance: function (outer, iid) {
     if (outer != null)
       throw Cr.NS_ERROR_NO_AGGREGATION;
@@ -31,7 +31,7 @@ var XULAppInfoFactory = {
   }
 };
 
-var registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
+let registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
 registrar.registerFactory(Components.ID("{fbfae60b-64a4-44ef-a911-08ceb70b9f31}"),
                           "XULAppInfo", "@mozilla.org/xre/app-info;1",
                           XULAppInfoFactory);

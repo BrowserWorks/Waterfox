@@ -262,8 +262,9 @@ class NativeJSContainerImpl final
     sdk::Bundle::LocalRef
     BundleFromValue(const JS::HandleObject obj)
     {
-        JS::Rooted<JS::IdVector> ids(mJSContext, JS::IdVector(mJSContext));
-        if (!CheckJSCall(JS_Enumerate(mJSContext, obj, &ids))) {
+        const JS::AutoIdArray ids(mJSContext,
+                                  JS_Enumerate(mJSContext, obj));
+        if (!CheckJSCall(!!ids)) {
             return nullptr;
         }
 

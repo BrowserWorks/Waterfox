@@ -6,10 +6,6 @@
 
 #include "TaskThrottler.h"
 
-#include "mozilla/layers/APZThreadUtils.h"  // for NewTimerCallback
-#include "nsComponentManagerUtils.h"        // for do_CreateInstance
-#include "nsITimer.h"
-
 namespace mozilla {
 namespace layers {
 
@@ -19,13 +15,7 @@ TaskThrottler::TaskThrottler(const TimeStamp& aTimeStamp, const TimeDuration& aM
   , mStartTime(aTimeStamp)
   , mMaxWait(aMaxWait)
   , mMean(1)
-  , mTimer(do_CreateInstance(NS_TIMER_CONTRACTID))
 { }
-
-TaskThrottler::~TaskThrottler()
-{
-  mTimer->Cancel();
-}
 
 void
 TaskThrottler::PostTask(const tracked_objects::Location& aLocation,
@@ -37,23 +27,9 @@ TaskThrottler::PostTask(const tracked_objects::Location& aLocation,
     if (mQueuedTask) {
       mQueuedTask->Cancel();
       mQueuedTask = nullptr;
-      mTimer->Cancel();
     }
     if (TimeSinceLastRequest(aTimeStamp) < mMaxWait) {
       mQueuedTask = Move(aTask);
-      // Make sure the queued task is sent after mMaxWait time elapses,
-      // even if we don't get a TaskComplete() until then.
-      TimeDuration timeout = mMaxWait - TimeSinceLastRequest(aTimeStamp);
-      TimeStamp timeoutTime = mStartTime + mMaxWait;
-      nsRefPtr<TaskThrottler> refPtrThis = this;
-      mTimer->InitWithCallback(NewTimerCallback(
-          [refPtrThis, timeoutTime]()
-          {
-            if (refPtrThis->mQueuedTask) {
-              refPtrThis->RunQueuedTask(timeoutTime);
-            }
-          }),
-          timeout.ToMilliseconds(), nsITimer::TYPE_ONE_SHOT);
       return;
     }
     // we've been waiting for more than the max-wait limit, so just fall through
@@ -75,20 +51,12 @@ TaskThrottler::TaskComplete(const TimeStamp& aTimeStamp)
   mMean.insert(aTimeStamp - mStartTime);
 
   if (mQueuedTask) {
-    RunQueuedTask(aTimeStamp);
-    mTimer->Cancel();
+    mStartTime = aTimeStamp;
+    mQueuedTask->Run();
+    mQueuedTask = nullptr;
   } else {
     mOutstanding = false;
   }
-}
-
-void
-TaskThrottler::RunQueuedTask(const TimeStamp& aTimeStamp)
-{
-  mStartTime = aTimeStamp;
-  mQueuedTask->Run();
-  mQueuedTask = nullptr;
-
 }
 
 void
@@ -97,7 +65,6 @@ TaskThrottler::CancelPendingTask()
   if (mQueuedTask) {
     mQueuedTask->Cancel();
     mQueuedTask = nullptr;
-    mTimer->Cancel();
   }
 }
 

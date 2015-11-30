@@ -17,10 +17,10 @@ const FILE_MANIFEST            = "experiments.manifest";
 const SEC_IN_ONE_DAY = 24 * 60 * 60;
 const MS_IN_ONE_DAY  = SEC_IN_ONE_DAY * 1000;
 
-var gProfileDir = null;
-var gHttpServer = null;
-var gHttpRoot   = null;
-var gPolicy     = null;
+let gProfileDir = null;
+let gHttpServer = null;
+let gHttpRoot   = null;
+let gPolicy     = null;
 
 
 function ManifestEntry(data) {

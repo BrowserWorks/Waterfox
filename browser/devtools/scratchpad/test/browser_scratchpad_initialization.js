@@ -2,7 +2,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var DEVTOOLS_CHROME_ENABLED = "devtools.chrome.enabled";
+let DEVTOOLS_CHROME_ENABLED = "devtools.chrome.enabled";
 
 function test()
 {

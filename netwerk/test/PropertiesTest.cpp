@@ -55,11 +55,11 @@ main(int argc, char* argv[])
   ret = NS_NewChannel(&channel,
                       uri,
                       systemPrincipal,
-                      nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                      nsILoadInfo::SEC_NORMAL,
                       nsIContentPolicy::TYPE_OTHER);
   if (NS_FAILED(ret)) return 1;
 
-  ret = channel->Open2(&in);
+  ret = channel->Open(&in);
   if (NS_FAILED(ret)) return 1;
 
   nsIPersistentProperties* props;

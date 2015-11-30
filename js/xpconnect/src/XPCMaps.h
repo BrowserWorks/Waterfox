@@ -16,7 +16,7 @@
 
 // Note that most of the declarations for hash table entries begin with
 // a pointer to something or another. This makes them look enough like
-// the PLDHashEntryStub struct that the default ops (PLDHashTable::StubOps())
+// the PLDHashEntryStub struct that the default OPs (PL_DHashGetStubOps())
 // just do the right thing for most of our needs.
 
 // no virtuals in the maps - all the common stuff inlined
@@ -114,7 +114,7 @@ public:
     inline XPCWrappedNative* Find(nsISupports* Obj)
     {
         NS_PRECONDITION(Obj,"bad param");
-        auto entry = static_cast<Entry*>(mTable->Search(Obj));
+        Entry* entry = (Entry*) PL_DHashTableSearch(mTable, Obj);
         return entry ? entry->value : nullptr;
     }
 
@@ -123,7 +123,8 @@ public:
         NS_PRECONDITION(wrapper,"bad param");
         nsISupports* obj = wrapper->GetIdentityObject();
         MOZ_ASSERT(!Find(obj), "wrapper already in new scope!");
-        auto entry = static_cast<Entry*>(mTable->Add(obj, mozilla::fallible));
+        Entry* entry = static_cast<Entry*>
+            (PL_DHashTableAdd(mTable, obj, mozilla::fallible));
         if (!entry)
             return nullptr;
         if (entry->key)
@@ -143,7 +144,7 @@ public:
                    "nsISupports identity! This will most likely cause serious "
                    "problems!");
 #endif
-        mTable->Remove(wrapper->GetIdentityObject());
+        PL_DHashTableRemove(mTable, wrapper->GetIdentityObject());
     }
 
     inline uint32_t Count() { return mTable->EntryCount(); }
@@ -177,7 +178,7 @@ public:
 
     inline nsXPCWrappedJSClass* Find(REFNSIID iid)
     {
-        auto entry = static_cast<Entry*>(mTable->Search(&iid));
+        Entry* entry = (Entry*) PL_DHashTableSearch(mTable, &iid);
         return entry ? entry->value : nullptr;
     }
 
@@ -185,7 +186,8 @@ public:
     {
         NS_PRECONDITION(clazz,"bad param");
         const nsIID* iid = &clazz->GetIID();
-        auto entry = static_cast<Entry*>(mTable->Add(iid, mozilla::fallible));
+        Entry* entry = static_cast<Entry*>
+            (PL_DHashTableAdd(mTable, iid, mozilla::fallible));
         if (!entry)
             return nullptr;
         if (entry->key)
@@ -198,7 +200,7 @@ public:
     inline void Remove(nsXPCWrappedJSClass* clazz)
     {
         NS_PRECONDITION(clazz,"bad param");
-        mTable->Remove(&clazz->GetIID());
+        PL_DHashTableRemove(mTable, &clazz->GetIID());
     }
 
     inline uint32_t Count() { return mTable->EntryCount(); }
@@ -230,7 +232,7 @@ public:
 
     inline XPCNativeInterface* Find(REFNSIID iid)
     {
-        auto entry = static_cast<Entry*>(mTable->Search(&iid));
+        Entry* entry = (Entry*) PL_DHashTableSearch(mTable, &iid);
         return entry ? entry->value : nullptr;
     }
 
@@ -238,7 +240,8 @@ public:
     {
         NS_PRECONDITION(iface,"bad param");
         const nsIID* iid = iface->GetIID();
-        auto entry = static_cast<Entry*>(mTable->Add(iid, mozilla::fallible));
+        Entry* entry = static_cast<Entry*>
+            (PL_DHashTableAdd(mTable, iid, mozilla::fallible));
         if (!entry)
             return nullptr;
         if (entry->key)
@@ -251,7 +254,7 @@ public:
     inline void Remove(XPCNativeInterface* iface)
     {
         NS_PRECONDITION(iface,"bad param");
-        mTable->Remove(iface->GetIID());
+        PL_DHashTableRemove(mTable, iface->GetIID());
     }
 
     inline uint32_t Count() { return mTable->EntryCount(); }
@@ -284,14 +287,15 @@ public:
 
     inline XPCNativeSet* Find(nsIClassInfo* info)
     {
-        auto entry = static_cast<Entry*>(mTable->Search(info));
+        Entry* entry = (Entry*) PL_DHashTableSearch(mTable, info);
         return entry ? entry->value : nullptr;
     }
 
     inline XPCNativeSet* Add(nsIClassInfo* info, XPCNativeSet* set)
     {
         NS_PRECONDITION(info,"bad param");
-        auto entry = static_cast<Entry*>(mTable->Add(info, mozilla::fallible));
+        Entry* entry = static_cast<Entry*>
+            (PL_DHashTableAdd(mTable, info, mozilla::fallible));
         if (!entry)
             return nullptr;
         if (entry->key)
@@ -304,7 +308,7 @@ public:
     inline void Remove(nsIClassInfo* info)
     {
         NS_PRECONDITION(info,"bad param");
-        mTable->Remove(info);
+        PL_DHashTableRemove(mTable, info);
     }
 
     inline uint32_t Count() { return mTable->EntryCount(); }
@@ -340,14 +344,15 @@ public:
 
     inline XPCWrappedNativeProto* Find(nsIClassInfo* info)
     {
-        auto entry = static_cast<Entry*>(mTable->Search(info));
+        Entry* entry = (Entry*) PL_DHashTableSearch(mTable, info);
         return entry ? entry->value : nullptr;
     }
 
     inline XPCWrappedNativeProto* Add(nsIClassInfo* info, XPCWrappedNativeProto* proto)
     {
         NS_PRECONDITION(info,"bad param");
-        auto entry = static_cast<Entry*>(mTable->Add(info, mozilla::fallible));
+        Entry* entry = static_cast<Entry*>
+            (PL_DHashTableAdd(mTable, info, mozilla::fallible));
         if (!entry)
             return nullptr;
         if (entry->key)
@@ -360,7 +365,7 @@ public:
     inline void Remove(nsIClassInfo* info)
     {
         NS_PRECONDITION(info,"bad param");
-        mTable->Remove(info);
+        PL_DHashTableRemove(mTable, info);
     }
 
     inline uint32_t Count() { return mTable->EntryCount(); }
@@ -400,7 +405,7 @@ public:
 
     inline XPCNativeSet* Find(XPCNativeSetKey* key)
     {
-        auto entry = static_cast<Entry*>(mTable->Search(key));
+        Entry* entry = (Entry*) PL_DHashTableSearch(mTable, key);
         return entry ? entry->key_value : nullptr;
     }
 
@@ -408,7 +413,8 @@ public:
     {
         NS_PRECONDITION(key,"bad param");
         NS_PRECONDITION(set,"bad param");
-        auto entry = static_cast<Entry*>(mTable->Add(key, mozilla::fallible));
+        Entry* entry = static_cast<Entry*>
+            (PL_DHashTableAdd(mTable, key, mozilla::fallible));
         if (!entry)
             return nullptr;
         if (entry->key_value)
@@ -428,7 +434,7 @@ public:
         NS_PRECONDITION(set,"bad param");
 
         XPCNativeSetKey key(set, nullptr, 0);
-        mTable->Remove(&key);
+        PL_DHashTableRemove(mTable, &key);
     }
 
     inline uint32_t Count() { return mTable->EntryCount(); }
@@ -472,14 +478,15 @@ public:
 
     inline nsIXPCFunctionThisTranslator* Find(REFNSIID iid)
     {
-        auto entry = static_cast<Entry*>(mTable->Search(&iid));
+        Entry* entry = (Entry*) PL_DHashTableSearch(mTable, &iid);
         return entry ? entry->value : nullptr;
     }
 
     inline nsIXPCFunctionThisTranslator* Add(REFNSIID iid,
                                              nsIXPCFunctionThisTranslator* obj)
     {
-        auto entry = static_cast<Entry*>(mTable->Add(&iid, mozilla::fallible));
+        Entry* entry = static_cast<Entry*>
+            (PL_DHashTableAdd(mTable, &iid, mozilla::fallible));
         if (!entry)
             return nullptr;
         entry->value = obj;
@@ -489,7 +496,7 @@ public:
 
     inline void Remove(REFNSIID iid)
     {
-        mTable->Remove(&iid);
+        PL_DHashTableRemove(mTable, &iid);
     }
 
     inline uint32_t Count() { return mTable->EntryCount(); }
@@ -550,8 +557,8 @@ public:
     inline XPCWrappedNativeProto* Add(XPCWrappedNativeProto* proto)
     {
         NS_PRECONDITION(proto,"bad param");
-        auto entry = static_cast<PLDHashEntryStub*>
-                                (mTable->Add(proto, mozilla::fallible));
+        PLDHashEntryStub* entry = static_cast<PLDHashEntryStub*>
+            (PL_DHashTableAdd(mTable, proto, mozilla::fallible));
         if (!entry)
             return nullptr;
         if (entry->key)
@@ -563,7 +570,7 @@ public:
     inline void Remove(XPCWrappedNativeProto* proto)
     {
         NS_PRECONDITION(proto,"bad param");
-        mTable->Remove(proto);
+        PL_DHashTableRemove(mTable, proto);
     }
 
     inline uint32_t Count() { return mTable->EntryCount(); }

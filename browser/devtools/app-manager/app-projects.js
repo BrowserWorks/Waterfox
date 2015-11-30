@@ -148,7 +148,7 @@ const IDB = {
 
 const store = new ObservableObject({ projects:[] });
 
-var loadDeferred = promise.defer();
+let loadDeferred = promise.defer();
 
 loadDeferred.resolve(IDB.open().then(function (projects) {
   store.object.projects = projects;

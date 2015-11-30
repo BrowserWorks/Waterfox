@@ -15,13 +15,6 @@
 class nsIPrincipal;
 
 namespace mozilla {
-
-namespace ipc {
-
-class PrincipalInfo;
-
-} // namespace ipc
-
 namespace dom {
 
 namespace quota {
@@ -144,7 +137,7 @@ CreateClient();
 
 PAsmJSCacheEntryParent*
 AllocEntryParent(OpenMode aOpenMode, WriteParams aWriteParams,
-                 const mozilla::ipc::PrincipalInfo& aPrincipalInfo);
+                 nsIPrincipal* aPrincipal);
 
 void
 DeallocEntryParent(PAsmJSCacheEntryParent* aActor);

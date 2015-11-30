@@ -3,17 +3,17 @@
 
 MARIONETTE_TIMEOUT = 10000;
 
-var Cc = SpecialPowers.Cc;
-var Ci = SpecialPowers.Ci;
+let Cc = SpecialPowers.Cc;
+let Ci = SpecialPowers.Ci;
 
-var volumeService = Cc["@mozilla.org/telephony/volume-service;1"].getService(Ci.nsIVolumeService);
+let volumeService = Cc["@mozilla.org/telephony/volume-service;1"].getService(Ci.nsIVolumeService);
 ok(volumeService, "Should have volume service");
 
-var volName = "fake";
-var mountPoint = "/data/fake/storage";
+let volName = "fake";
+let mountPoint = "/data/fake/storage";
 volumeService.createFakeVolume(volName, mountPoint);
 
-var vol = volumeService.getVolumeByName(volName);
+let vol = volumeService.getVolumeByName(volName);
 ok(vol, "volume shouldn't be null");
 
 is(volName, vol.name, "name");

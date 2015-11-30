@@ -19,7 +19,7 @@ class InternalMutationEvent : public WidgetEvent
 public:
   virtual InternalMutationEvent* AsMutationEvent() override { return this; }
 
-  InternalMutationEvent(bool aIsTrusted, EventMessage aMessage)
+  InternalMutationEvent(bool aIsTrusted, uint32_t aMessage)
     : WidgetEvent(aIsTrusted, aMessage, eMutationEventClass)
     , mAttrChange(0)
   {
@@ -30,7 +30,7 @@ public:
   {
     MOZ_ASSERT(mClass == eMutationEventClass,
                "Duplicate() must be overridden by sub class");
-    InternalMutationEvent* result = new InternalMutationEvent(false, mMessage);
+    InternalMutationEvent* result = new InternalMutationEvent(false, message);
     result->AssignMutationEventData(*this, true);
     result->mFlags = mFlags;
     return result;

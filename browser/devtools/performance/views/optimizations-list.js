@@ -15,7 +15,7 @@ const PROPNAME_MAX_LENGTH = 4;
  * @see browser/devtools/performance/modules/logic/jit.js
  */
 
-var OptimizationsListView = {
+let OptimizationsListView = {
 
   _currentFrame: null,
 
@@ -24,7 +24,6 @@ var OptimizationsListView = {
    */
   initialize: function () {
     this.reset = this.reset.bind(this);
-    this._onThemeChanged = this._onThemeChanged.bind(this);
 
     this.el = $("#jit-optimizations-view");
     this.$headerName = $("#jit-optimizations-header .header-function-name");
@@ -35,20 +34,15 @@ var OptimizationsListView = {
       sorted: false,
       emptyText: JIT_EMPTY_TEXT
     });
-    this.graph = new OptimizationsGraph($("#optimizations-graph"));
-    this.graph.setTheme(PerformanceController.getTheme());
 
     // Start the tree by resetting.
     this.reset();
-
-    PerformanceController.on(EVENTS.THEME_CHANGED, this._onThemeChanged);
   },
 
   /**
    * Destruction function called when the tool cleans up.
    */
   destroy: function () {
-    PerformanceController.off(EVENTS.THEME_CHANGED, this._onThemeChanged);
     this.tree = null;
     this.$headerName = this.$headerFile = this.$headerLine = this.el = null;
   },
@@ -59,10 +53,7 @@ var OptimizationsListView = {
    *
    * @param {FrameNode} frameNode
    */
-  setCurrentFrame: function (threadNode, frameNode) {
-    if (threadNode !== this.getCurrentThread()) {
-      this._currentThread = threadNode;
-    }
+  setCurrentFrame: function (frameNode) {
     if (frameNode !== this.getCurrentFrame()) {
       this._currentFrame = frameNode;
     }
@@ -73,17 +64,8 @@ var OptimizationsListView = {
    *
    * @return {?FrameNode}
    */
-  getCurrentFrame: function () {
+  getCurrentFrame: function (frameNode) {
     return this._currentFrame;
-  },
-
-  /**
-   * Returns the current thread node for this view.
-   *
-   * @return {?ThreadNode}
-   */
-  getCurrentThread: function () {
-    return this._currentThread;
   },
 
   /**
@@ -91,7 +73,7 @@ var OptimizationsListView = {
    * and removes current frame.
    */
   reset: function () {
-    this.setCurrentFrame(null, null);
+    this.setCurrentFrame(null);
     this.clear();
     this.el.classList.add("empty");
     this.emit(EVENTS.OPTIMIZATIONS_RESET);
@@ -141,16 +123,7 @@ var OptimizationsListView = {
       this._renderSite(view, site, frameData);
     }
 
-    this._renderTierGraph();
-
     this.emit(EVENTS.OPTIMIZATIONS_RENDERED, this.getCurrentFrame());
-  },
-
-  /**
-   * Renders the optimization tier graph over time.
-   */
-  _renderTierGraph: function () {
-    this.graph.render(this.getCurrentThread(), this.getCurrentFrame());
   },
 
   /**
@@ -202,6 +175,7 @@ var OptimizationsListView = {
   /**
    * Creates an element for insertion in the raw view for an OptimizationSite.
    */
+
   _createSiteNode: function (frameData, site) {
     let node = document.createElement("span");
     let desc = document.createElement("span");
@@ -251,6 +225,7 @@ var OptimizationsListView = {
    * @param {IonType} ionType
    * @return {Element}
    */
+
   _createIonNode: function (ionType) {
     let node = document.createElement("span");
     node.textContent = `${ionType.site} : ${ionType.mirType}`;
@@ -265,6 +240,7 @@ var OptimizationsListView = {
    * @param {ObservedType} type
    * @return {Element}
    */
+
   _createObservedTypeNode: function (type) {
     let node = document.createElement("span");
     let typeNode = document.createElement("span");
@@ -304,6 +280,7 @@ var OptimizationsListView = {
    * @param {OptimizationAttempt} attempt
    * @return {Element}
    */
+
   _createAttemptNode: function (attempt) {
     let node = document.createElement("span");
     let strategyNode = document.createElement("span");
@@ -332,6 +309,7 @@ var OptimizationsListView = {
    * @param {?Element} el
    * @return {Element}
    */
+
   _createDebuggerLinkNode: function (url, line, el) {
     let node = el || document.createElement("span");
     node.className = "opt-url";
@@ -351,6 +329,7 @@ var OptimizationsListView = {
   /**
    * Updates the headers with the current frame's data.
    */
+
   _setHeaders: function (frameData) {
     let isMeta = frameData.isMetaCategory;
     let name = isMeta ? frameData.categoryData.label : frameData.functionName;
@@ -372,6 +351,7 @@ var OptimizationsListView = {
    * @param {String} url
    * @return {Boolean}
    */
+
   _isLinkableURL: function (url) {
     return url && url.indexOf &&
        (url.indexOf("http") === 0 ||
@@ -379,15 +359,8 @@ var OptimizationsListView = {
         url.indexOf("file://") === 0);
   },
 
-  /**
-   * Called when `devtools.theme` changes.
-   */
-  _onThemeChanged: function (_, theme) {
-    this.graph.setTheme(theme);
-    this.graph.refresh({ force: true });
-  },
-
   toString: () => "[object OptimizationsListView]"
+
 };
 
 EventEmitter.decorate(OptimizationsListView);

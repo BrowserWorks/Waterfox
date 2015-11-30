@@ -204,11 +204,11 @@ SelectionCarets::HandleEvent(WidgetEvent* aEvent)
   nsPoint ptInRoot =
     nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent, movePoint, rootFrame);
 
-  if (aEvent->mMessage == eTouchStart ||
-      (aEvent->mMessage == eMouseDown &&
+  if (aEvent->message == NS_TOUCH_START ||
+      (aEvent->message == NS_MOUSE_BUTTON_DOWN &&
        mouseEvent->button == WidgetMouseEvent::eLeftButton)) {
     // If having a active touch, ignore other touch down event
-    if (aEvent->mMessage == eTouchStart && mActiveTouchId >= 0) {
+    if (aEvent->message == NS_TOUCH_START && mActiveTouchId >= 0) {
       return nsEventStatus_eConsumeNoDefault;
     }
 
@@ -231,9 +231,9 @@ SelectionCarets::HandleEvent(WidgetEvent* aEvent)
       mActiveTouchId = -1;
       LaunchLongTapDetector();
     }
-  } else if (aEvent->mMessage == eTouchEnd ||
-             aEvent->mMessage == eTouchCancel ||
-             aEvent->mMessage == eMouseUp) {
+  } else if (aEvent->message == NS_TOUCH_END ||
+             aEvent->message == NS_TOUCH_CANCEL ||
+             aEvent->message == NS_MOUSE_BUTTON_UP) {
     CancelLongTapDetector();
     if (mDragMode != NONE) {
       // Only care about same id
@@ -244,7 +244,8 @@ SelectionCarets::HandleEvent(WidgetEvent* aEvent)
       }
       return nsEventStatus_eConsumeNoDefault;
     }
-  } else if (aEvent->mMessage == eTouchMove || aEvent->mMessage == eMouseMove) {
+  } else if (aEvent->message == NS_TOUCH_MOVE ||
+             aEvent->message == NS_MOUSE_MOVE) {
     if (mDragMode == START_FRAME || mDragMode == END_FRAME) {
       if (mActiveTouchId == nowTouchId) {
         ptInRoot.y += mCaretCenterToDownPointOffsetY;
@@ -270,15 +271,15 @@ SelectionCarets::HandleEvent(WidgetEvent* aEvent)
       CancelLongTapDetector();
     }
 
-  } else if (aEvent->mMessage == eMouseLongTap) {
+  } else if (aEvent->message == NS_MOUSE_MOZLONGTAP) {
     if (!mVisible || !sSelectionCaretDetectsLongTap) {
-      SELECTIONCARETS_LOG("SelectWord from eMouseLongTap");
+      SELECTIONCARETS_LOG("SelectWord from NS_MOUSE_MOZLONGTAP");
 
       mDownPoint = ptInRoot;
       nsresult wordSelected = SelectWord();
 
       if (NS_FAILED(wordSelected)) {
-        SELECTIONCARETS_LOG("SelectWord from eMouseLongTap failed!");
+        SELECTIONCARETS_LOG("SelectWord from NS_MOUSE_MOZLONGTAP failed!");
         return nsEventStatus_eIgnore;
       }
 

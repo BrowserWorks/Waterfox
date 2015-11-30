@@ -26,21 +26,6 @@ this.ContentWebRTC = {
     Services.obs.addObserver(handlePCRequest, "PeerConnection:request", false);
     Services.obs.addObserver(updateIndicators, "recording-device-events", false);
     Services.obs.addObserver(removeBrowserSpecificIndicator, "recording-window-ended", false);
-
-    if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT)
-      Services.obs.addObserver(processShutdown, "content-child-shutdown", false);
-  },
-
-  uninit: function() {
-    Services.obs.removeObserver(handleGUMRequest, "getUserMedia:request");
-    Services.obs.removeObserver(handlePCRequest, "PeerConnection:request");
-    Services.obs.removeObserver(updateIndicators, "recording-device-events");
-    Services.obs.removeObserver(removeBrowserSpecificIndicator, "recording-window-ended");
-
-    if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT)
-      Services.obs.removeObserver(processShutdown, "content-child-shutdown");
-
-    this._initialized = false;
   },
 
   // Called only for 'unload' to remove pending gUM prompts in reloaded frames.
@@ -340,8 +325,4 @@ function getMessageManagerForWindow(aContentWindow) {
   } catch(e if e.result == Cr.NS_NOINTERFACE) {
     return null;
   }
-}
-
-function processShutdown() {
-  ContentWebRTC.uninit();
 }

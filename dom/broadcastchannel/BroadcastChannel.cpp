@@ -37,8 +37,7 @@ public:
   NS_INLINE_DECL_REFCOUNTING(BroadcastChannelMessage)
 
   BroadcastChannelMessage()
-    : StructuredCloneHelper(CloningSupported, TransferringNotSupported,
-                            DifferentProcess)
+    : StructuredCloneHelper(CloningSupported, TransferringNotSupported)
   {}
 
 private:
@@ -458,6 +457,14 @@ BroadcastChannel::PostMessageInternal(JSContext* aCx,
   data->Write(aCx, aMessage, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
+  }
+
+  const nsTArray<nsRefPtr<BlobImpl>>& blobImpls = data->BlobImpls();
+  for (uint32_t i = 0, len = blobImpls.Length(); i < len; ++i) {
+    if (!blobImpls[i]->MayBeClonedToOtherThreads()) {
+      aRv.Throw(NS_ERROR_DOM_DATA_CLONE_ERR);
+      return;
+    }
   }
 
   PostMessageData(data);

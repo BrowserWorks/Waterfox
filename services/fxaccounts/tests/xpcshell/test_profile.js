@@ -19,7 +19,7 @@ const STATUS_SUCCESS = 200;
  *        Mocked raw response from the server
  * @returns {Function}
  */
-var mockResponse = function (response) {
+let mockResponse = function (response) {
   let Request = function (requestUri) {
     // Store the request uri so tests can inspect it
     Request._requestUri = requestUri;
@@ -41,7 +41,7 @@ var mockResponse = function (response) {
  *        Error object
  * @returns {Function}
  */
-var mockResponseError = function (error) {
+let mockResponseError = function (error) {
   return function () {
     return {
       setHeader: function () {},
@@ -52,7 +52,7 @@ var mockResponseError = function (error) {
   };
 };
 
-var mockClient = function (fxa) {
+let mockClient = function (fxa) {
   let options = {
     serverURL: "http://127.0.0.1:1111/v1",
     fxa: fxa,
@@ -77,7 +77,7 @@ FxaMock.prototype = {
   }
 };
 
-var mockFxa = function() {
+let mockFxa = function() {
   return new FxaMock();
 };
 

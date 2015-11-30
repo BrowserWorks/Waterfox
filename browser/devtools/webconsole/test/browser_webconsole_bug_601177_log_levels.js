@@ -15,18 +15,14 @@ const TEST_URI = "data:text/html;charset=utf-8,Web Console test for " +
 const TEST_URI2 = "http://example.com/browser/browser/devtools/webconsole/" +
                   "test/test-bug-601177-log-levels.html";
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   Services.prefs.setBoolPref("javascript.options.strict", true);
 
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();
 
-  // On e10s, the exception is triggered in child process
-  // and is ignored by test harness
-  if (!Services.appinfo.browserTabsRemoteAutostart) {
-    expectUncaughtException();
-  }
+  expectUncaughtException();
 
   yield testLogLevels(hud);
 

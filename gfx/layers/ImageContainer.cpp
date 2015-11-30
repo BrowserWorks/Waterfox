@@ -262,14 +262,6 @@ ImageContainer::SetCurrentImageInternal(const nsTArray<NonOwningImage>& aImages)
           mFrameIDsNotYetComposited.AppendElement(img.mFrameID);
         }
       }
-
-      // Remove really old frames, assuming they'll never be composited.
-      const uint32_t maxFrames = 100;
-      if (mFrameIDsNotYetComposited.Length() > maxFrames) {
-        uint32_t dropFrames = mFrameIDsNotYetComposited.Length() - maxFrames;
-        mDroppedImageCount += dropFrames;
-        mFrameIDsNotYetComposited.RemoveElementsAt(0, dropFrames);
-      }
     }
   }
 
@@ -405,17 +397,16 @@ ImageContainer::NotifyCompositeInternal(const ImageCompositeNotification& aNotif
   ++mPaintCount;
 
   if (aNotification.producerID() == mCurrentProducerID) {
-    uint32_t i;
-    for (i = 0; i < mFrameIDsNotYetComposited.Length(); ++i) {
-      if (mFrameIDsNotYetComposited[i] <= aNotification.frameID()) {
-        if (mFrameIDsNotYetComposited[i] < aNotification.frameID()) {
+    while (!mFrameIDsNotYetComposited.IsEmpty()) {
+      if (mFrameIDsNotYetComposited[0] <= aNotification.frameID()) {
+        if (mFrameIDsNotYetComposited[0] < aNotification.frameID()) {
           ++mDroppedImageCount;
         }
+        mFrameIDsNotYetComposited.RemoveElementAt(0);
       } else {
         break;
       }
     }
-    mFrameIDsNotYetComposited.RemoveElementsAt(0, i);
     for (auto& img : mCurrentImages) {
       if (img.mFrameID == aNotification.frameID()) {
         img.mComposited = true;
@@ -493,7 +484,7 @@ CopyPlane(uint8_t *aDst, const uint8_t *aSrc,
   }
 }
 
-bool
+void
 PlanarYCbCrImage::CopyData(const Data& aData)
 {
   mData = aData;
@@ -505,7 +496,7 @@ PlanarYCbCrImage::CopyData(const Data& aData)
   // get new buffer
   mBuffer = AllocateBuffer(size);
   if (!mBuffer)
-    return false;
+    return;
 
   // update buffer size
   mBufferSize = size;
@@ -522,13 +513,12 @@ PlanarYCbCrImage::CopyData(const Data& aData)
             mData.mCbCrSize, mData.mCbCrStride, mData.mCrSkip);
 
   mSize = aData.mPicSize;
-  return true;
 }
 
-bool
+void
 PlanarYCbCrImage::SetData(const Data &aData)
 {
-  return CopyData(aData);
+  CopyData(aData);
 }
 
 gfxImageFormat
@@ -539,12 +529,11 @@ PlanarYCbCrImage::GetOffscreenFormat()
     mOffscreenFormat;
 }
 
-bool
+void
 PlanarYCbCrImage::SetDataNoCopy(const Data &aData)
 {
   mData = aData;
   mSize = aData.mPicSize;
-  return true;
 }
 
 uint8_t*
@@ -632,10 +621,10 @@ CairoImage::GetTextureClient(CompositableClient *aClient)
     aClient->GetTextureClientRecycler();
   if (recycler) {
     textureClient =
-      recycler->CreateOrRecycle(surface->GetFormat(),
-                                surface->GetSize(),
-                                BackendSelector::Content,
-                                aClient->GetTextureFlags());
+      recycler->CreateOrRecycleForDrawing(surface->GetFormat(),
+                                          surface->GetSize(),
+                                          BackendSelector::Content,
+                                          aClient->GetTextureFlags());
   }
 #endif
 

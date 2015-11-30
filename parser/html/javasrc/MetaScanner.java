@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008-2015 Mozilla Foundation
+ * Copyright (c) 2008-2010 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -162,11 +162,7 @@ public abstract class MetaScanner {
     
     private int httpEquivState;
     
-    // CPPONLY: private TreeBuilder treeBuilder;
-
-    public MetaScanner(
-        // CPPONLY: TreeBuilder tb
-    ) {
+    public MetaScanner() {
         this.readable = null;
         this.metaState = NO;
         this.contentIndex = Integer.MAX_VALUE;
@@ -179,7 +175,6 @@ public abstract class MetaScanner {
         this.content = null;
         this.charset = null;
         this.httpEquivState = HTTP_EQUIV_NOT_SEEN;
-        // CPPONLY: this.treeBuilder = tb;
     }
     
     @SuppressWarnings("unused") private void destructor() {
@@ -795,15 +790,11 @@ public abstract class MetaScanner {
             return;
         }
         if (contentIndex == CONTENT.length && content == null) {
-            content = Portability.newStringFromBuffer(strBuf, 0, strBufLen
-                 // CPPONLY: , treeBuilder
-            );
+            content = Portability.newStringFromBuffer(strBuf, 0, strBufLen);
             return;
         }
         if (charsetIndex == CHARSET.length && charset == null) {
-            charset = Portability.newStringFromBuffer(strBuf, 0, strBufLen
-                 // CPPONLY: , treeBuilder
-            );
+            charset = Portability.newStringFromBuffer(strBuf, 0, strBufLen);            
             return;
         }
         if (httpEquivIndex == HTTP_EQUIV.length
@@ -829,9 +820,7 @@ public abstract class MetaScanner {
                 return true;
         }
         if (content != null && httpEquivState == HTTP_EQUIV_CONTENT_TYPE) {
-            String extract = TreeBuilder.extractCharsetFromContent(content
-                // CPPONLY: , treeBuilder
-            );
+            String extract = TreeBuilder.extractCharsetFromContent(content);
             if (extract == null) {
                 return false;
             }

@@ -34,7 +34,7 @@ MockFXAManager.prototype = {
   },
 }
 
-var originalManager = FirefoxAccounts.fxAccountsManager;
+let originalManager = FirefoxAccounts.fxAccountsManager;
 FirefoxAccounts.fxAccountsManager = new MockFXAManager();
 do_register_cleanup(() => {
   log("restoring fxaccountsmanager");
@@ -252,7 +252,7 @@ function test_child_process_shutdown() {
   DOMIdentity.newContext(mockedRP, mockedRP._mm);
 }
 
-var TESTS = [
+let TESTS = [
   test_overall,
   test_mock,
   test_watch_signed_in,

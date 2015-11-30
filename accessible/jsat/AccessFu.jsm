@@ -134,8 +134,6 @@ this.AccessFu = { // jshint ignore:line
     Services.obs.addObserver(this, 'Accessibility:Focus', false);
     Services.obs.addObserver(this, 'Accessibility:ActivateObject', false);
     Services.obs.addObserver(this, 'Accessibility:LongPress', false);
-    Services.obs.addObserver(this, 'Accessibility:ScrollForward', false);
-    Services.obs.addObserver(this, 'Accessibility:ScrollBackward', false);
     Services.obs.addObserver(this, 'Accessibility:MoveByGranularity', false);
     Utils.win.addEventListener('TabOpen', this);
     Utils.win.addEventListener('TabClose', this);
@@ -189,8 +187,6 @@ this.AccessFu = { // jshint ignore:line
     Services.obs.removeObserver(this, 'Accessibility:Focus');
     Services.obs.removeObserver(this, 'Accessibility:ActivateObject');
     Services.obs.removeObserver(this, 'Accessibility:LongPress');
-    Services.obs.removeObserver(this, 'Accessibility:ScrollForward');
-    Services.obs.removeObserver(this, 'Accessibility:ScrollBackward');
     Services.obs.removeObserver(this, 'Accessibility:MoveByGranularity');
 
     delete this._quicknavModesPref;
@@ -308,26 +304,16 @@ this.AccessFu = { // jshint ignore:line
         this._enableOrDisable();
         break;
       case 'Accessibility:NextObject':
-      case 'Accessibility:PreviousObject':
-      {
-        let rule = aData ?
-          aData.substr(0, 1).toUpperCase() + aData.substr(1).toLowerCase() :
-          'Simple';
-        let method = aTopic.replace(/Accessibility:(\w+)Object/, 'move$1');
-        this.Input.moveCursor(method, rule, 'gesture');
+        this.Input.moveCursor('moveNext', 'Simple', 'gesture');
         break;
-      }
+      case 'Accessibility:PreviousObject':
+        this.Input.moveCursor('movePrevious', 'Simple', 'gesture');
+        break;
       case 'Accessibility:ActivateObject':
         this.Input.activateCurrent(JSON.parse(aData));
         break;
       case 'Accessibility:LongPress':
         this.Input.sendContextMenuMessage();
-        break;
-      case 'Accessibility:ScrollForward':
-        this.Input.androidScroll('forward');
-        break;
-      case 'Accessibility:ScrollBackward':
-        this.Input.androidScroll('backward');
         break;
       case 'Accessibility:Focus':
         this._focused = JSON.parse(aData);
@@ -851,19 +837,12 @@ var Input = {
                           adjustRange: aAdjustRange });
   },
 
-  androidScroll: function androidScroll(aDirection) {
-    let mm = Utils.getMessageManager(Utils.CurrentBrowser);
-    mm.sendAsyncMessage('AccessFu:AndroidScroll',
-                        { direction: aDirection, origin: 'top' });
-  },
-
   moveByGranularity: function moveByGranularity(aDetails) {
-    const GRANULARITY_PARAGRAPH = 8;
-    const GRANULARITY_LINE = 4;
+    const MOVEMENT_GRANULARITY_PARAGRAPH = 8;
 
     if (!this.editState.editing) {
-      if (aDetails.granularity & (GRANULARITY_PARAGRAPH | GRANULARITY_LINE)) {
-        this.moveCursor('move' + aDetails.direction, 'Simple', 'gesture');
+      if (aDetails.granularity === MOVEMENT_GRANULARITY_PARAGRAPH) {
+        this.moveCursor('move' + aDetails.direction, 'Paragraph', 'gesture');
         return;
       }
     } else {

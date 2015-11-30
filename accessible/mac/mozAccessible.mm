@@ -302,6 +302,7 @@ ConvertToNSArray(nsTArray<ProxyAccessible*>& aArray)
                                                            NSAccessibilityHelpAttribute,
                                                            NSAccessibilityTitleUIElementAttribute,
                                                            NSAccessibilityTopLevelUIElementAttribute,
+                                                           NSAccessibilityDescriptionAttribute,
 #if DEBUG
                                                            @"AXMozDescription",
 #endif
@@ -402,6 +403,8 @@ ConvertToNSArray(nsTArray<ProxyAccessible*>& aArray)
     return [self value];
   if ([attribute isEqualToString:NSAccessibilityRoleDescriptionAttribute])
     return [self roleDescription];
+  if ([attribute isEqualToString:NSAccessibilityDescriptionAttribute])
+    return [self customDescription];
   if ([attribute isEqualToString:NSAccessibilityFocusedAttribute])
     return [NSNumber numberWithBool:[self isFocused]];
   if ([attribute isEqualToString:NSAccessibilitySizeAttribute])
@@ -1202,17 +1205,32 @@ struct RoleDescrComparator
   // Do nothing. mozTextAccessible will.
 }
 
+- (NSString*)customDescription
+{
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
+
+  nsAutoString desc;
+  if (AccessibleWrap* accWrap = [self getGeckoAccessible])
+    accWrap->Description(desc);
+  else if (ProxyAccessible* proxy = [self getProxyAccessible])
+    proxy->Description(desc);
+  else
+    return nil;
+
+  return nsCocoaUtils::ToNSString(desc);
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NIL;
+}
+
 - (NSString*)help
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
 
-  // What needs to go here is actually the accDescription of an item.
-  // The MSAA acc_help method has nothing to do with this one.
   nsAutoString helpText;
   if (AccessibleWrap* accWrap = [self getGeckoAccessible])
-    accWrap->Description(helpText);
+    accWrap->Help(helpText);
   else if (ProxyAccessible* proxy = [self getProxyAccessible])
-    proxy->Description(helpText);
+    proxy->Help(helpText);
 
   return nsCocoaUtils::ToNSString(helpText);
 

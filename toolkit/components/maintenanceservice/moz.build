@@ -50,5 +50,7 @@ OS_LIBS += [
     'shell32',
 ]
 
+FAIL_ON_WARNINGS = True
+
 with Files('**'):
     BUG_COMPONENT = ('Toolkit', 'Application Update')

@@ -24,7 +24,7 @@ function debug(msg) {
   dump("LogCapture.jsm: " + msg + "\n");
 }
 
-var LogCapture = {
+let LogCapture = {
   ensureLoaded: function() {
     if (!this.ctypes) {
       this.load();

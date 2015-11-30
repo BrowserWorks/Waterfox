@@ -151,7 +151,8 @@ nsFontMetrics::Init(const nsFont& aFont,
     aFont.AddFontFeaturesToStyle(&style);
 
     mFontGroup = gfxPlatform::GetPlatform()->
-        CreateFontGroup(aFont.fontlist, &style, aTextPerf, aUserFontSet);
+        CreateFontGroup(aFont.fontlist, &style, aUserFontSet);
+    mFontGroup->SetTextPerfMetrics(aTextPerf);
     return NS_OK;
 }
 

@@ -11,7 +11,7 @@
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-bug-952277-highlight-nodes-in-vview.html";
 
-var gWebConsole, gJSTerm, gVariablesView, gToolbox;
+let gWebConsole, gJSTerm, gVariablesView, gToolbox;
 
 function test() {
   loadTab(TEST_URI).then(() => {

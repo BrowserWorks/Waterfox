@@ -1,5 +1,5 @@
-var java = new JavaBridge(this);
-var javaResponded = false;
+let java = new JavaBridge(this);
+let javaResponded = false;
 
 do_register_cleanup(() => {
   java.disconnect();

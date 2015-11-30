@@ -32,9 +32,9 @@ public:
 
     aOutput.SetLength(OutputCount());
     for (uint16_t i = 0; i < OutputCount(); ++i) {
-      if (i < aInput[0].ChannelCount()) {
+      if (i < aInput[0].mChannelData.Length()) {
         // Split out existing channels
-        aOutput[i].AllocateChannels(1);
+        AllocateAudioBlock(1, &aOutput[i]);
         AudioBlockCopyChannelWithScale(
             static_cast<const float*>(aInput[0].mChannelData[i]),
             aInput[0].mVolume,
@@ -60,9 +60,8 @@ ChannelSplitterNode::ChannelSplitterNode(AudioContext* aContext,
               ChannelInterpretation::Speakers)
   , mOutputCount(aOutputCount)
 {
-  mStream = AudioNodeStream::Create(aContext,
-                                    new ChannelSplitterNodeEngine(this),
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+  mStream = aContext->Graph()->CreateAudioNodeStream(new ChannelSplitterNodeEngine(this),
+                                                     MediaStreamGraph::INTERNAL_STREAM);
 }
 
 ChannelSplitterNode::~ChannelSplitterNode()

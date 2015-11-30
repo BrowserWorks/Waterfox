@@ -6,16 +6,16 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-var WSP = {};
+let WSP = {};
 Cu.import("resource://gre/modules/WspPduHelper.jsm", WSP);
-var WBXML = {};
+let WBXML = {};
 Cu.import("resource://gre/modules/WbxmlPduHelper.jsm", WBXML);
 
 Cu.import("resource://services-crypto/utils.js");
 Cu.import("resource://services-common/utils.js");
 
 // set to true to see debug messages
-var DEBUG = WBXML.DEBUG_ALL | false;
+let DEBUG = WBXML.DEBUG_ALL | false;
 
 /**
  * Public identifier for CP
@@ -468,7 +468,7 @@ const CP_VALUE_FIELDS = (function () {
   return names;
 })();
 
-var debug;
+let debug;
 if (DEBUG) {
   debug = function (s) {
     dump("-$- CpPduHelper: " + s + "\n");

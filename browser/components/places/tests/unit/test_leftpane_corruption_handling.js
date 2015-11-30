@@ -9,11 +9,11 @@
  */
 
 // Used to store the original leftPaneFolderId getter.
-var gLeftPaneFolderIdGetter;
-var gAllBookmarksFolderIdGetter;
+let gLeftPaneFolderIdGetter;
+let gAllBookmarksFolderIdGetter;
 // Used to store the original left Pane status as a JSON string.
-var gReferenceHierarchy;
-var gLeftPaneFolderId;
+let gReferenceHierarchy;
+let gLeftPaneFolderId;
 
 add_task(function* () {
   // We want empty roots.
@@ -69,7 +69,7 @@ add_task(function* () {
 });
 
 // Corruption cases.
-var gTests = [
+let gTests = [
 
   function* test1() {
     print("1. Do nothing, checks test calibration.");

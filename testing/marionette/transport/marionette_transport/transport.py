@@ -10,11 +10,11 @@ import time
 
 
 class MarionetteTransport(object):
-    """The Marionette socket client.  This speaks the same protocol
-    as the remote debugger inside Gecko, in which messages are always
-    preceded by the message length and a colon, e.g.:
+    """ The Marionette socket client.  This speaks the same protocol
+        as the remote debugger inside Gecko, in which messages are
+        always preceded by the message length and a colon, e.g.,
 
-        20:{"command": "test"}
+        20:{'command': 'test'}
     """
 
     max_packet_length = 4096
@@ -25,25 +25,26 @@ class MarionetteTransport(object):
         self.port = port
         self.socket_timeout = socket_timeout
         self.sock = None
-        self.protocol = 1
-        self.application_type = None
+        self.traits = None
+        self.applicationType = None
+        self.actor = 'root'
 
     def _recv_n_bytes(self, n):
-        """Convenience method for receiving exactly n bytes from self.sock
-        (assuming it's open and connected).
+        """ Convenience method for receiving exactly n bytes from
+            self.sock (assuming it's open and connected).
         """
-        data = ""
+        data = ''
         while len(data) < n:
             chunk = self.sock.recv(n - len(data))
-            if chunk == "":
+            if chunk == '':
                 break
             data += chunk
         return data
 
     def receive(self):
-        """Receive the next complete response from the server, and
-        return it as a JSON structure.  Each response from the server
-        is prepended by len(message) + ":".
+        """ Receive the next complete response from the server, and return
+            it as a dict.  Each response from the server is prepended by
+            len(message) + ':'.
         """
         assert(self.sock)
         now = time.time()
@@ -68,10 +69,8 @@ class MarionetteTransport(object):
         raise socket.timeout('connection timed out after %d s' % self.socket_timeout)
 
     def connect(self):
-        """Connect to the server and process the hello message we expect
-        to receive in response.
-
-        Return a tuple of the protocol level and the application type.
+        """ Connect to the server and process the hello message we expect
+            to receive in response.
         """
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(self.socket_timeout)
@@ -83,22 +82,27 @@ class MarionetteTransport(object):
             self.sock = None
             raise
         self.sock.settimeout(2.0)
-
         hello = self.receive()
-        self.protocol = hello.get("marionetteProtocol", 1)
-        self.application_type = hello.get("applicationType")
+        self.traits = hello.get('traits')
+        self.applicationType = hello.get('applicationType')
 
-        return (self.protocol, self.application_type)
+        # get the marionette actor id
+        response = self.send({'to': 'root', 'name': 'getMarionetteID'})
+        self.actor = response['id']
 
-    def send(self, data):
-        """Send a message on the socket, prepending it with len(msg) + ":"."""
+    def send(self, msg):
+        """ Send a message on the socket, prepending it with len(msg) + ':'.
+        """
         if not self.sock:
             self.connect()
-        data = "%s:%s" % (len(data), data)
+        if 'to' not in msg:
+            msg['to'] = self.actor
+        data = json.dumps(msg)
+        data = '%s:%s' % (len(data), data)
 
         for packet in [data[i:i + self.max_packet_length] for i in
                        range(0, len(data), self.max_packet_length)]:
-            try:
+            try: 
                 self.sock.send(packet)
             except IOError as e:
                 if e.errno == errno.EPIPE:
@@ -106,10 +110,12 @@ class MarionetteTransport(object):
                 else:
                     raise e
 
-        return self.receive()
+        response = self.receive()
+        return response
 
     def close(self):
-        """Close the socket."""
+        """ Close the socket.
+        """
         if self.sock:
             self.sock.close()
         self.sock = None

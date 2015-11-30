@@ -4,6 +4,31 @@
 
 package org.mozilla.gecko.fxa.activities;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.R;
+import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.FxAccountUtils;
+import org.mozilla.gecko.background.preferences.PreferenceFragment;
+import org.mozilla.gecko.fxa.FirefoxAccounts;
+import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
+import org.mozilla.gecko.fxa.login.Married;
+import org.mozilla.gecko.fxa.login.State;
+import org.mozilla.gecko.fxa.sync.FxAccountSyncStatusHelper;
+import org.mozilla.gecko.fxa.tasks.FxAccountCodeResender;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.SharedPreferencesClientsDataDelegate;
+import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.util.HardwareUtils;
+import org.mozilla.gecko.util.ThreadUtils;
+
 import android.accounts.Account;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -11,7 +36,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.CheckBoxPreference;
@@ -24,34 +48,9 @@ import android.preference.PreferenceScreen;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
-import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.R;
-import org.mozilla.gecko.background.common.log.Logger;
-import org.mozilla.gecko.background.fxa.FxAccountUtils;
-import org.mozilla.gecko.background.preferences.PreferenceFragment;
-import org.mozilla.gecko.fxa.FirefoxAccounts;
-import org.mozilla.gecko.fxa.FxAccountConstants;
-import org.mozilla.gecko.fxa.SyncStatusListener;
-import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
-import org.mozilla.gecko.fxa.login.Married;
-import org.mozilla.gecko.fxa.login.State;
-import org.mozilla.gecko.fxa.sync.FxAccountSyncStatusHelper;
-import org.mozilla.gecko.fxa.tasks.FxAccountCodeResender;
-import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.SharedPreferencesClientsDataDelegate;
-import org.mozilla.gecko.sync.SyncConfiguration;
-import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
-import org.mozilla.gecko.util.HardwareUtils;
-import org.mozilla.gecko.util.ThreadUtils;
-
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * A fragment that displays the status of an AndroidFxAccount.
@@ -96,7 +95,6 @@ public class FxAccountStatusFragment
   protected PreferenceCategory accountCategory;
   protected Preference profilePreference;
   protected Preference emailPreference;
-  protected Preference manageAccountPreference;
   protected Preference authServerPreference;
 
   protected Preference needsPasswordPreference;
@@ -172,10 +170,6 @@ public class FxAccountStatusFragment
     } else {
       accountCategory.removePreference(profilePreference);
     }
-    manageAccountPreference = ensureFindPreference("manage_account");
-    if (AppConstants.MOZ_ANDROID_NATIVE_ACCOUNT_UI) {
-      accountCategory.removePreference(manageAccountPreference);
-    }
     authServerPreference = ensureFindPreference("auth_server");
 
     needsPasswordPreference = ensureFindPreference("needs_credentials");
@@ -204,7 +198,6 @@ public class FxAccountStatusFragment
     } else {
       emailPreference.setOnPreferenceClickListener(this);
     }
-    manageAccountPreference.setOnPreferenceClickListener(this);
 
     needsPasswordPreference.setOnPreferenceClickListener(this);
     needsVerificationPreference.setOnPreferenceClickListener(this);
@@ -242,22 +235,8 @@ public class FxAccountStatusFragment
 
   @Override
   public boolean onPreferenceClick(Preference preference) {
-    if (preference == profilePreference) {
-      if (!AppConstants.MOZ_ANDROID_NATIVE_ACCOUNT_UI) {
-        // There is no native equivalent, bind the click action to fire an intent.
-        ActivityUtils.openURLInFennec(getActivity().getApplicationContext(), "about:accounts?action=avatar");
-      }
-    }
-
-    if (preference == manageAccountPreference) {
-      // There's no native equivalent, so no need to re-direct through an Intent filter.
-      ActivityUtils.openURLInFennec(getActivity().getApplicationContext(), "about:accounts?action=manage");
-      return true;
-    }
-
     if (preference == needsPasswordPreference) {
-      final Intent intent = new Intent(FxAccountConstants.ACTION_FXA_UPDATE_CREDENTIALS);
-      intent.putExtra(FxAccountWebFlowActivity.EXTRA_ENDPOINT, FxAccountConstants.ENDPOINT_PREFERENCES);
+      Intent intent = new Intent(getActivity(), FxAccountUpdateCredentialsActivity.class);
       final Bundle extras = getExtrasForAccount();
       if (extras != null) {
         intent.putExtras(extras);
@@ -271,8 +250,7 @@ public class FxAccountStatusFragment
     }
 
     if (preference == needsFinishMigratingPreference) {
-      final Intent intent = new Intent(FxAccountConstants.ACTION_FXA_FINISH_MIGRATING);
-      intent.putExtra(FxAccountWebFlowActivity.EXTRA_ENDPOINT, FxAccountConstants.ENDPOINT_PREFERENCES);
+      final Intent intent = new Intent(getActivity(), FxAccountFinishMigratingActivity.class);
       final Bundle extras = getExtrasForAccount();
       if (extras != null) {
         intent.putExtras(extras);
@@ -286,15 +264,12 @@ public class FxAccountStatusFragment
     }
 
     if (preference == needsVerificationPreference) {
-      if (AppConstants.MOZ_ANDROID_NATIVE_ACCOUNT_UI) {
-        FxAccountCodeResender.resendCode(getActivity().getApplicationContext(), fxAccount);
-      }
+      FxAccountCodeResender.resendCode(getActivity().getApplicationContext(), fxAccount);
 
-      final Intent intent = new Intent(FxAccountConstants.ACTION_FXA_CONFIRM_ACCOUNT);
+      Intent intent = new Intent(getActivity(), FxAccountConfirmAccountActivity.class);
       // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
       // the soft keyboard not being shown for the started activity. Why, Android, why?
       intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-      intent.putExtra(FxAccountWebFlowActivity.EXTRA_ENDPOINT, FxAccountConstants.ENDPOINT_PREFERENCES);
       startActivity(intent);
 
       return true;
@@ -412,7 +387,7 @@ public class FxAccountStatusFragment
     setCheckboxesEnabled(true);
   }
 
-  protected class InnerSyncStatusDelegate implements SyncStatusListener {
+  protected class InnerSyncStatusDelegate implements FirefoxAccounts.SyncStatusListener {
     protected final Runnable refreshRunnable = new Runnable() {
       @Override
       public void run() {
@@ -489,7 +464,6 @@ public class FxAccountStatusFragment
     FxAccountSyncStatusHelper.getInstance().startObserving(syncStatusDelegate);
 
     if (AppConstants.MOZ_ANDROID_FIREFOX_ACCOUNT_PROFILES) {
-      profilePreference.getIntent().setData(Uri.parse("about:accounts?action=avatar"));
       // Register a local broadcast receiver to get profile cached notification.
       final IntentFilter intentFilter = new IntentFilter();
       intentFilter.addAction(FxAccountConstants.ACCOUNT_PROFILE_JSON_UPDATED_ACTION);

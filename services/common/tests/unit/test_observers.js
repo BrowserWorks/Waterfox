@@ -3,7 +3,7 @@
 
 Components.utils.import("resource://services-common/observers.js");
 
-var gSubject = {};
+let gSubject = {};
 
 function run_test() {
   run_next_test();

@@ -103,15 +103,16 @@ StorageEvent::InitStorageEvent(const nsAString& aType, bool aCanBubble,
 } // namespace dom
 } // namespace mozilla
 
-using namespace mozilla;
-using namespace mozilla::dom;
-
-already_AddRefed<StorageEvent>
-NS_NewDOMStorageEvent(EventTarget* aOwner)
+nsresult
+NS_NewDOMStorageEvent(nsIDOMEvent** aDOMEvent,
+                      mozilla::dom::EventTarget* aOwner)
 {
-  nsRefPtr<StorageEvent> e = new StorageEvent(aOwner);
+  nsRefPtr<mozilla::dom::StorageEvent> e =
+    new mozilla::dom::StorageEvent(aOwner);
 
   e->SetTrusted(e->Init(aOwner));
-  return e.forget();
+  e.forget(aDOMEvent);
+
+  return NS_OK;
 }
 

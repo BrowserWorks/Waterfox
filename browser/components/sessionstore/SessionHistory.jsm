@@ -40,7 +40,7 @@ this.SessionHistory = Object.freeze({
 /**
  * The internal API for the SessionHistory module.
  */
-var SessionHistoryInternal = {
+let SessionHistoryInternal = {
   /**
    * Returns whether the given docShell's session history is empty.
    *
@@ -122,8 +122,6 @@ var SessionHistoryInternal = {
     if (shEntry.isSubFrame) {
       entry.subframe = true;
     }
-
-    entry.charset = shEntry.URI.originCharset;
 
     let cacheKey = shEntry.cacheKey;
     if (cacheKey && cacheKey instanceof Ci.nsISupportsPRUint32 &&
@@ -291,7 +289,7 @@ var SessionHistoryInternal = {
     var shEntry = Cc["@mozilla.org/browser/session-history-entry;1"].
                   createInstance(Ci.nsISHEntry);
 
-    shEntry.setURI(Utils.makeURI(entry.url, entry.charset));
+    shEntry.setURI(Utils.makeURI(entry.url));
     shEntry.setTitle(entry.title || entry.url);
     if (entry.subframe)
       shEntry.setIsSubFrame(entry.subframe || false);

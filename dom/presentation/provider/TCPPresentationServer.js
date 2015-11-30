@@ -127,21 +127,6 @@ TCPPresentationServer.prototype = {
     return this._devices.get(aId);
   },
 
-  updateTCPDevice: function(aId, aName, aType, aHost, aPort) {
-    DEBUG && log("TCPPresentationServer - updateTCPDevice with id: " + aId);
-    if (!this._devices.has(aId)) {
-      throw Cr.NS_ERROR_INVALID_ARG;
-    }
-
-    let device = this._devices.get(aId);
-    device.name = aName;
-    device.type = aType;
-    device.host = aHost;
-    device.port = aPort;
-
-    return device;
-  },
-
   getTCPDevice: function(aId) {
     DEBUG && log("TCPPresentationServer - getTCPDevice with id: " + aId);
     if (!this._devices.has(aId)) {
@@ -279,8 +264,8 @@ function ChannelDescription(aInit) {
       this._tcpAddresses = Cc["@mozilla.org/array;1"]
                            .createInstance(Ci.nsIMutableArray);
       for (let address of aInit.tcpAddress) {
-        let wrapper = Cc["@mozilla.org/supports-cstring;1"]
-                      .createInstance(Ci.nsISupportsCString);
+        let wrapper = Cc["@mozilla.org/supports-string;1"]
+                      .createInstance(Ci.nsISupportsString);
         wrapper.data = address;
         this._tcpAddresses.appendElement(wrapper, false);
       }
@@ -328,7 +313,7 @@ function discriptionAsJson(aDescription) {
       let addresses = aDescription.tcpAddress.QueryInterface(Ci.nsIArray);
       json.tcpAddress = [];
       for (let idx = 0; idx < addresses.length; idx++) {
-        let address = addresses.queryElementAt(idx, Ci.nsISupportsCString);
+        let address = addresses.queryElementAt(idx, Ci.nsISupportsString);
         json.tcpAddress.push(address.data);
       }
       json.tcpPort = aDescription.tcpPort;
@@ -556,11 +541,11 @@ TCPControlChannel.prototype = {
         break;
       }
       case "requestSession:Offer": {
-        this._onOffer(aMsg.offer);
+        this._listener.onOffer(new ChannelDescription(aMsg.offer));
         break;
       }
       case "requestSession:Answer": {
-        this._onAnswer(aMsg.answer);
+        this._listener.onAnswer(new ChannelDescription(aMsg.answer));
         break;
       }
     }

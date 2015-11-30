@@ -14,13 +14,11 @@ fi
 
 makeShaderVS() {
     fxc -nologo $FXC_FLAGS -Tvs_4_0_level_9_3 $SRC -E$1 -Vn$1 -Fh$tempfile
-    echo "ShaderBytes s$1 = { $1, sizeof($1) };" >> $tempfile;
     cat $tempfile >> $DEST
 }
 
 makeShaderPS() {
     fxc -nologo $FXC_FLAGS -Tps_4_0_level_9_3 $SRC -E$1 -Vn$1 -Fh$tempfile
-    echo "ShaderBytes s$1 = { $1, sizeof($1) };" >> $tempfile;
     cat $tempfile >> $DEST
 }
 
@@ -28,12 +26,10 @@ SRC=CompositorD3D11.hlsl
 DEST=CompositorD3D11Shaders.h
 
 rm -f $DEST
-echo "struct ShaderBytes { const void* mData; size_t mLength; };" >> $DEST;
 makeShaderVS LayerQuadVS
 makeShaderPS SolidColorShader
 makeShaderPS RGBShader
 makeShaderPS RGBAShader
-makeShaderPS RGBAShaderPremul
 makeShaderPS ComponentAlphaShader
 makeShaderPS YCbCrShader
 makeShaderVS LayerQuadMaskVS
@@ -41,9 +37,7 @@ makeShaderVS LayerQuadMask3DVS
 makeShaderPS SolidColorShaderMask
 makeShaderPS RGBShaderMask
 makeShaderPS RGBAShaderMask
-makeShaderPS RGBAShaderMaskPremul
 makeShaderPS RGBAShaderMask3D
-makeShaderPS RGBAShaderMask3DPremul
 makeShaderPS YCbCrShaderMask
 makeShaderPS ComponentAlphaShaderMask
 

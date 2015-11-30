@@ -13,7 +13,7 @@ Promise.Debugging.clearUncaughtErrorObservers();
 ////////////////////////////////////////////////////////////////////////////////
 //// Test runner
 
-var run_promise_tests = function run_promise_tests(tests, cb) {
+let run_promise_tests = function run_promise_tests(tests, cb) {
   let loop = function loop(index) {
     if (index >= tests.length) {
       if (cb) {
@@ -36,7 +36,7 @@ var run_promise_tests = function run_promise_tests(tests, cb) {
   return loop(0);
 };
 
-var make_promise_test = function(test) {
+let make_promise_test = function(test) {
   return function runtest() {
     do_print("Test starting: " + test.name);
     try {
@@ -82,12 +82,12 @@ var make_promise_test = function(test) {
 ////////////////////////////////////////////////////////////////////////////////
 //// Tests
 
-var tests = [];
+let tests = [];
 
 // Utility function to observe an failures in a promise
 // This function is useful if the promise itself is
 // not returned.
-var observe_failures = function observe_failures(promise) {
+let observe_failures = function observe_failures(promise) {
   promise.catch(function onReject(reason) {
     test.do_throw("Observed failure in test " + test + ": " + reason);
   });

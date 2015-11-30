@@ -14,7 +14,6 @@ add_task(function* () {
     "example.com": "security-state-secure",
     "nocert.example.com": "security-state-broken",
     "rc4.example.com": "security-state-weak",
-    "localhost": "security-state-local",
   };
 
   yield new promise(resolve => {
@@ -51,8 +50,6 @@ add_task(function* () {
    *  - https://nocert.example.com (broken)
    *  - https://example.com (secure)
    *  - http://test1.example.com (insecure)
-   *  - https://rc4.example.com (partly secure)
-   *  - http://localhost (local)
    * and waits until NetworkMonitor has handled all packets sent by the server.
    */
   function* performRequests() {
@@ -85,19 +82,14 @@ add_task(function* () {
     debuggee.performRequests(1, "https://rc4.example.com" + CORS_SJS_PATH);
     yield done;
 
-    done = waitForSecurityBrokenNetworkEvent(true);
-    info("Requesting a resource over HTTP to localhost.");
-    debuggee.performRequests(1, "http://localhost" + CORS_SJS_PATH);
-    yield done;
-
-    is(RequestsMenu.itemCount, 5, "Five events logged.");
+    is(RequestsMenu.itemCount, 4, "Four events logged.");
   }
 
   /**
    * Returns a promise that's resolved once a request with security issues is
    * completed.
    */
-  function waitForSecurityBrokenNetworkEvent(networkError) {
+  function waitForSecurityBrokenNetworkEvent() {
     let awaitedEvents = [
       "UPDATING_REQUEST_HEADERS",
       "RECEIVED_REQUEST_HEADERS",
@@ -109,12 +101,6 @@ add_task(function* () {
       "UPDATING_EVENT_TIMINGS",
       "RECEIVED_EVENT_TIMINGS",
     ];
-
-    // If the reason for breakage is a network error, then the
-    // STARTED_RECEIVING_RESPONSE event does not fire.
-    if (networkError) {
-      awaitedEvents.splice(4, 1);
-    }
 
     let promises = awaitedEvents.map((event) => {
       return monitor.panelWin.once(EVENTS[event]);

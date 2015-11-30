@@ -14,7 +14,6 @@
 #include "nsIDOMNode.h"
 #include "nsIEditor.h"
 #include "nscore.h"
-#include "mozilla/GuardObjects.h"
 
 class nsIAtom;
 class nsIContentIterator;
@@ -31,26 +30,14 @@ class Selection;
  * stack based helper class for batching a collection of txns inside a
  * placeholder txn.
  */
-class MOZ_RAII nsAutoPlaceHolderBatch
+class MOZ_STACK_CLASS nsAutoPlaceHolderBatch
 {
   private:
     nsCOMPtr<nsIEditor> mEd;
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
   public:
-    nsAutoPlaceHolderBatch(nsIEditor *aEd, nsIAtom *atom MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : mEd(do_QueryInterface(aEd))
-    {
-      MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-      if (mEd) {
-        mEd->BeginPlaceHolderTransaction(atom);
-      }
-    }
-    ~nsAutoPlaceHolderBatch()
-    {
-      if (mEd) {
-        mEd->EndPlaceHolderTransaction();
-      }
-    }
+    nsAutoPlaceHolderBatch( nsIEditor *aEd, nsIAtom *atom) : mEd(do_QueryInterface(aEd))
+                   { if (mEd) mEd->BeginPlaceHolderTransaction(atom); }
+    ~nsAutoPlaceHolderBatch() { if (mEd) mEd->EndPlaceHolderTransaction(); }
 };
 
 /***************************************************************************
@@ -58,15 +45,10 @@ class MOZ_RAII nsAutoPlaceHolderBatch
  * Note: I changed this to use placeholder batching so that we get
  * proper selection save/restore across undo/redo.
  */
-class MOZ_RAII nsAutoEditBatch : public nsAutoPlaceHolderBatch
+class MOZ_STACK_CLASS nsAutoEditBatch : public nsAutoPlaceHolderBatch
 {
-  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
   public:
-    explicit nsAutoEditBatch(nsIEditor *aEd MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : nsAutoPlaceHolderBatch(aEd, nullptr)
-    {
-      MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-    }
+    explicit nsAutoEditBatch( nsIEditor *aEd) : nsAutoPlaceHolderBatch(aEd,nullptr)  {}
     ~nsAutoEditBatch() {}
 };
 
@@ -74,17 +56,16 @@ class MOZ_RAII nsAutoEditBatch : public nsAutoPlaceHolderBatch
  * stack based helper class for saving/restoring selection.  Note that this
  * assumes that the nodes involved are still around afterwards!
  */
-class MOZ_RAII nsAutoSelectionReset
+class MOZ_STACK_CLASS nsAutoSelectionReset
 {
   private:
     /** ref-counted reference to the selection that we are supposed to restore */
     nsRefPtr<mozilla::dom::Selection> mSel;
     nsEditor *mEd;  // non-owning ref to nsEditor
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
   public:
     /** constructor responsible for remembering all state needed to restore aSel */
-    nsAutoSelectionReset(mozilla::dom::Selection* aSel, nsEditor* aEd MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+    nsAutoSelectionReset(mozilla::dom::Selection* aSel, nsEditor* aEd);
 
     /** destructor restores mSel to its former state */
     ~nsAutoSelectionReset();
@@ -96,16 +77,14 @@ class MOZ_RAII nsAutoSelectionReset
 /***************************************************************************
  * stack based helper class for StartOperation()/EndOperation() sandwich
  */
-class MOZ_RAII nsAutoRules
+class MOZ_STACK_CLASS nsAutoRules
 {
   public:
 
   nsAutoRules(nsEditor *ed, EditAction action,
-              nsIEditor::EDirection aDirection
-              MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-    : mEd(ed), mDoNothing(false)
+              nsIEditor::EDirection aDirection) :
+         mEd(ed), mDoNothing(false)
   {
-    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     if (mEd && !mEd->mAction) // mAction will already be set if this is nested call
     {
       mEd->StartOperation(action, aDirection);
@@ -123,7 +102,6 @@ class MOZ_RAII nsAutoRules
   protected:
   nsEditor *mEd;
   bool mDoNothing;
-  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
 
@@ -131,14 +109,12 @@ class MOZ_RAII nsAutoRules
  * stack based helper class for turning off active selection adjustment
  * by low level transactions
  */
-class MOZ_RAII nsAutoTxnsConserveSelection
+class MOZ_STACK_CLASS nsAutoTxnsConserveSelection
 {
   public:
 
-  explicit nsAutoTxnsConserveSelection(nsEditor *ed MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-    : mEd(ed), mOldState(true)
+  explicit nsAutoTxnsConserveSelection(nsEditor *ed) : mEd(ed), mOldState(true)
   {
-    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     if (mEd)
     {
       mOldState = mEd->GetShouldTxnSetSelection();
@@ -157,19 +133,17 @@ class MOZ_RAII nsAutoTxnsConserveSelection
   protected:
   nsEditor *mEd;
   bool mOldState;
-  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
 /***************************************************************************
  * stack based helper class for batching reflow and paint requests.
  */
-class MOZ_RAII nsAutoUpdateViewBatch
+class MOZ_STACK_CLASS nsAutoUpdateViewBatch
 {
   public:
 
-  explicit nsAutoUpdateViewBatch(nsEditor *ed MOZ_GUARD_OBJECT_NOTIFIER_PARAM) : mEd(ed)
+  explicit nsAutoUpdateViewBatch(nsEditor *ed) : mEd(ed)
   {
-    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     NS_ASSERTION(mEd, "null mEd pointer!");
 
     if (mEd)
@@ -184,7 +158,6 @@ class MOZ_RAII nsAutoUpdateViewBatch
 
   protected:
   nsEditor *mEd;
-  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
 /******************************************************************************
@@ -197,12 +170,12 @@ class nsBoolDomIterFunctor
     virtual bool operator()(nsINode* aNode) const = 0;
 };
 
-class MOZ_RAII nsDOMIterator
+class MOZ_STACK_CLASS nsDOMIterator
 {
   public:
-    explicit nsDOMIterator(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM);
+    nsDOMIterator();
 
-    explicit nsDOMIterator(nsINode& aNode MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+    explicit nsDOMIterator(nsINode& aNode);
     virtual ~nsDOMIterator();
 
     nsresult Init(nsRange& aRange);
@@ -211,13 +184,12 @@ class MOZ_RAII nsDOMIterator
                     nsTArray<mozilla::OwningNonNull<nsINode>>& arrayOfNodes) const;
   protected:
     nsCOMPtr<nsIContentIterator> mIter;
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
-class MOZ_RAII nsDOMSubtreeIterator : public nsDOMIterator
+class MOZ_STACK_CLASS nsDOMSubtreeIterator : public nsDOMIterator
 {
   public:
-    explicit nsDOMSubtreeIterator(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM);
+    nsDOMSubtreeIterator();
     virtual ~nsDOMSubtreeIterator();
 
     nsresult Init(nsRange& aRange);

@@ -25,8 +25,8 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import org.mozilla.gecko.annotation.JNITarget;
-import org.mozilla.gecko.annotation.RobocopTarget;
+import org.mozilla.gecko.mozglue.JNITarget;
+import org.mozilla.gecko.mozglue.RobocopTarget;
 
 /**
  * We're not allowed to hold on to most events given to us
@@ -212,7 +212,6 @@ public class GeckoEvent {
     private int mNativeWindow;
 
     private short mScreenOrientation;
-    private short mScreenAngle;
 
     private ByteBuffer mBuffer;
 
@@ -692,6 +691,10 @@ public class GeckoEvent {
         sb.append("{ \"x\" : ").append(metrics.viewportRectLeft)
           .append(", \"y\" : ").append(metrics.viewportRectTop)
           .append(", \"zoom\" : ").append(metrics.zoomFactor)
+          .append(", \"fixedMarginLeft\" : ").append(metrics.marginLeft)
+          .append(", \"fixedMarginTop\" : ").append(metrics.marginTop)
+          .append(", \"fixedMarginRight\" : ").append(metrics.marginRight)
+          .append(", \"fixedMarginBottom\" : ").append(metrics.marginBottom)
           .append(", \"displayPort\" :").append(displayPort.toJSON())
           .append('}');
         event.mCharactersExtra = sb.toString();
@@ -746,10 +749,9 @@ public class GeckoEvent {
         return event;
     }
 
-    public static GeckoEvent createScreenOrientationEvent(short aScreenOrientation, short aScreenAngle) {
+    public static GeckoEvent createScreenOrientationEvent(short aScreenOrientation) {
         GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.SCREENORIENTATION_CHANGED);
         event.mScreenOrientation = aScreenOrientation;
-        event.mScreenAngle = aScreenAngle;
         return event;
     }
 

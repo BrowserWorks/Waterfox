@@ -4,7 +4,7 @@
 MARIONETTE_TIMEOUT = 90000;
 MARIONETTE_HEAD_JS = "head.js";
 
-var TEST_ADD_DATA = [{
+let TEST_ADD_DATA = [{
     // a contact without email and anr.
     name: ["add1"],
     tel: [{value: "0912345678"}],

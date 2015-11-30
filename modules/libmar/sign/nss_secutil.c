@@ -81,10 +81,7 @@ GetPasswordString(void *arg, char *prompt)
     fflush(stdout);
   }
 
-  if (!QUIET_FGETS(phrase, sizeof(phrase), input)) {
-    fprintf(stderr, "QUIET_FGETS failed\n");
-    return NULL;
-  }
+  QUIET_FGETS (phrase, sizeof(phrase), input);
 
   if (isInputTerminal) {
     fprintf(stdout, "\n");

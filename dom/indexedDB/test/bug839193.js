@@ -4,18 +4,15 @@
 
 const nsIQuotaManager = Components.interfaces.nsIQuotaManager;
 
-var gURI = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService).newURI("http://localhost", null, null);
+let gURI = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService).newURI("http://localhost", null, null);
 
-function onUsageCallback(principal, usage, fileUsage) {}
+function onUsageCallback(uri, usage, fileUsage) {}
 
 function onLoad()
 {
   var quotaManager = Components.classes["@mozilla.org/dom/quota/manager;1"]
                                .getService(nsIQuotaManager);
-  let principal = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
-                            .getService(Components.interfaces.nsIScriptSecurityManager)
-                            .createCodebasePrincipal(gURI, {});
-  var quotaRequest = quotaManager.getUsageForPrincipal(principal, onUsageCallback);
+  var quotaRequest = quotaManager.getUsageForURI(gURI, onUsageCallback);
   quotaRequest.cancel();
   Components.classes["@mozilla.org/observer-service;1"]
             .getService(Components.interfaces.nsIObserverService)

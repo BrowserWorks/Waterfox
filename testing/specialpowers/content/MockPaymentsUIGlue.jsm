@@ -15,10 +15,10 @@ Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-var classID;
-var oldFactory;
-var newFactory = function(window) {
+let registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
+let classID;
+let oldFactory;
+let newFactory = function(window) {
   return {
     createInstance: function(aOuter, aIID) {
       if (aOuter) {

@@ -546,7 +546,6 @@ BacktrackingAllocator::buildLivenessInfo()
                 LAllocation* use = phi->getOperand(mblock->positionInPhiSuccessor());
                 uint32_t reg = use->toUse()->virtualRegister();
                 live.insert(reg);
-                vreg(use).setUsedByPhi();
             }
         }
 
@@ -1672,40 +1671,6 @@ BacktrackingAllocator::insertAllRanges(LiveRangeSet& set, LiveBundle* bundle)
 }
 
 bool
-BacktrackingAllocator::deadRange(LiveRange* range)
-{
-    // Check for direct uses of this range.
-    if (range->hasUses() || range->hasDefinition())
-        return false;
-
-    CodePosition start = range->from();
-    LNode* ins = insData[start];
-    if (start == entryOf(ins->block()))
-        return false;
-
-    VirtualRegister& reg = vregs[range->vreg()];
-
-    // Check if there are later ranges for this vreg.
-    LiveRange::RegisterLinkIterator iter = reg.rangesBegin(range);
-    for (iter++; iter; iter++) {
-        LiveRange* laterRange = LiveRange::get(*iter);
-        if (laterRange->from() > range->from())
-            return false;
-    }
-
-    // Check if this range ends at a loop backedge.
-    LNode* last = insData[range->to().previous()];
-    if (last->isGoto() && last->toGoto()->target()->id() < last->block()->mir()->id())
-        return false;
-
-    // Check if there are phis which this vreg flows to.
-    if (reg.usedByPhi())
-        return false;
-
-    return true;
-}
-
-bool
 BacktrackingAllocator::resolveControlFlow()
 {
     // Add moves to handle changing assignments for vregs over their lifetime.
@@ -1720,30 +1685,20 @@ BacktrackingAllocator::resolveControlFlow()
         if (mir->shouldCancel("Backtracking Resolve Control Flow (vreg loop)"))
             return false;
 
-        for (LiveRange::RegisterLinkIterator iter = reg.rangesBegin(); iter; ) {
+        for (LiveRange::RegisterLinkIterator iter = reg.rangesBegin(); iter; iter++) {
             LiveRange* range = LiveRange::get(*iter);
-
-            // Remove ranges which will never be used.
-            if (deadRange(range)) {
-                reg.removeRangeAndIncrement(iter);
-                continue;
-            }
 
             // The range which defines the register does not have a predecessor
             // to add moves from.
-            if (range->hasDefinition()) {
-                iter++;
+            if (range->hasDefinition())
                 continue;
-            }
 
             // Ignore ranges that start at block boundaries. We will handle
             // these in the next phase.
             CodePosition start = range->from();
             LNode* ins = insData[start];
-            if (start == entryOf(ins->block())) {
-                iter++;
+            if (start == entryOf(ins->block()))
                 continue;
-            }
 
             // If we already saw a range which covers the start of this range
             // and has the same allocation, we don't need an explicit move at
@@ -1761,10 +1716,8 @@ BacktrackingAllocator::resolveControlFlow()
                     break;
                 }
             }
-            if (skip) {
-                iter++;
+            if (skip)
                 continue;
-            }
 
             LiveRange* predecessorRange = reg.rangeFor(start.previous(), /* preferRegister = */ true);
             if (start.subpos() == CodePosition::INPUT) {
@@ -1774,8 +1727,6 @@ BacktrackingAllocator::resolveControlFlow()
                 if (!moveAfter(ins->toInstruction(), predecessorRange, range, reg.type()))
                     return false;
             }
-
-            iter++;
         }
     }
 
@@ -2465,19 +2416,16 @@ BacktrackingAllocator::computeSpillWeight(LiveBundle* bundle)
         return fixed ? 2000000 : 1000000;
 
     size_t usesTotal = 0;
-    fixed = false;
 
     for (LiveRange::BundleLinkIterator iter = bundle->rangesBegin(); iter; iter++) {
         LiveRange* range = LiveRange::get(*iter);
 
         if (range->hasDefinition()) {
             VirtualRegister& reg = vregs[range->vreg()];
-            if (reg.def()->policy() == LDefinition::FIXED && reg.def()->output()->isRegister()) {
+            if (reg.def()->policy() == LDefinition::FIXED && reg.def()->output()->isRegister())
                 usesTotal += 2000;
-                fixed = true;
-            } else if (!reg.ins()->isPhi()) {
+            else if (!reg.ins()->isPhi())
                 usesTotal += 2000;
-            }
         }
 
         for (UsePositionIterator iter = range->usesBegin(); iter; iter++) {
@@ -2488,9 +2436,8 @@ BacktrackingAllocator::computeSpillWeight(LiveBundle* bundle)
                 usesTotal += 1000;
                 break;
 
-              case LUse::FIXED:
-                fixed = true;
               case LUse::REGISTER:
+              case LUse::FIXED:
                 usesTotal += 2000;
                 break;
 
@@ -2503,11 +2450,6 @@ BacktrackingAllocator::computeSpillWeight(LiveBundle* bundle)
             }
         }
     }
-
-    // Bundles with fixed uses are given a higher spill weight, since they must
-    // be allocated to a specific register.
-    if (testbed && fixed)
-        usesTotal *= 2;
 
     // Compute spill weight as a use density, lowering the weight for long
     // lived bundles with relatively few uses.

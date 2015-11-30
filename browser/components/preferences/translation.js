@@ -69,7 +69,7 @@ Lang.prototype = {
   toString: function() this._label
 }
 
-var gTranslationExceptions = {
+let gTranslationExceptions = {
   onLoad: function() {
     if (this._siteTree) {
       // Re-using an open dialog, clear the old observers.

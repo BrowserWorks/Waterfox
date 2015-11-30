@@ -19,6 +19,7 @@ builtin(include, build/autoconf/mozprog.m4)dnl
 builtin(include, build/autoconf/mozheader.m4)dnl
 builtin(include, build/autoconf/mozcommonheader.m4)dnl
 builtin(include, build/autoconf/lto.m4)dnl
+builtin(include, build/autoconf/llvm-pr8927.m4)dnl
 builtin(include, build/autoconf/frameptr.m4)dnl
 builtin(include, build/autoconf/compiler-opts.m4)dnl
 builtin(include, build/autoconf/expandlibs.m4)dnl
@@ -33,7 +34,6 @@ builtin(include, build/autoconf/ffi.m4)dnl
 builtin(include, build/autoconf/clang-plugin.m4)dnl
 builtin(include, build/autoconf/alloc.m4)dnl
 builtin(include, build/autoconf/ios.m4)dnl
-builtin(include, build/autoconf/jemalloc.m4)dnl
 
 MOZ_PROG_CHECKMSYS()
 

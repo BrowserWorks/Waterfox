@@ -1,6 +1,6 @@
 "use strict";
 
-var frames = [];
+let frames = [];
 
 var dbg = new Debugger(global);
 dbg.onDebuggerStatement = function (frame) {

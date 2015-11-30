@@ -8,7 +8,7 @@ module.metadata = {
   "stability": "unstable"
 };
 
-var unescape = decodeURIComponent;
+let unescape = decodeURIComponent;
 exports.unescape = unescape;
 
 // encodes a string safely for application/x-www-form-urlencoded

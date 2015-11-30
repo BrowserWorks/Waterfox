@@ -14,7 +14,7 @@ describe("loop.store.ConversationStore", function () {
   var sharedActions = loop.shared.actions;
   var sharedUtils = loop.shared.utils;
   var sandbox, dispatcher, client, store, fakeSessionData, sdkDriver;
-  var contact, fakeMozLoop, fakeStreamElement;
+  var contact, fakeMozLoop, fakeVideoElement;
   var connectPromise, resolveConnectPromise, rejectConnectPromise;
   var wsCancelSpy, wsCloseSpy, wsDeclineSpy, wsMediaUpSpy, fakeWebsocket;
 
@@ -95,7 +95,7 @@ describe("loop.store.ConversationStore", function () {
       progressURL: "fakeURL"
     };
 
-    fakeStreamElement = { id: "fakeStreamElement" };
+    fakeVideoElement = { id: "fakeVideoElement" };
 
     var dummySocket = {
       close: sinon.spy(),
@@ -388,10 +388,11 @@ describe("loop.store.ConversationStore", function () {
           connectPromise.then(function() {
             checkFailures(done, function() {
               sinon.assert.calledOnce(dispatcher.dispatch);
-              sinon.assert.calledWithExactly(dispatcher.dispatch,
-                new sharedActions.ConnectionProgress({
-                  wsState: WS_STATES.INIT
-                }));
+              // Can't use instanceof here, as that matches any action
+              sinon.assert.calledWithMatch(dispatcher.dispatch,
+                sinon.match.hasOwn("name", "connectionProgress"));
+              sinon.assert.calledWithMatch(dispatcher.dispatch,
+                sinon.match.hasOwn("wsState", WS_STATES.INIT));
             });
           }, function() {
             done(new Error("Promise should have been resolve, not rejected"));
@@ -406,10 +407,11 @@ describe("loop.store.ConversationStore", function () {
           }, function() {
             checkFailures(done, function() {
               sinon.assert.calledOnce(dispatcher.dispatch);
-              sinon.assert.calledOnce(dispatcher.dispatch,
-                new sharedActions.ConnectionFailure({
-                  reason: "websocket-setup"
-                }));
+              // Can't use instanceof here, as that matches any action
+              sinon.assert.calledWithMatch(dispatcher.dispatch,
+                sinon.match.hasOwn("name", "connectionFailure"));
+              sinon.assert.calledWithMatch(dispatcher.dispatch,
+                sinon.match.hasOwn("reason", "websocket-setup"));
              });
           });
         });
@@ -777,20 +779,10 @@ describe("loop.store.ConversationStore", function () {
       sinon.assert.calledOnce(wsHangupSpy);
     });
 
-    it("should set the callState to finished for ongoing call state", function() {
+    it("should set the callState to finished", function() {
       store.hangupCall(new sharedActions.HangupCall());
 
       expect(store.getStoreState("callState")).eql(CALL_STATES.FINISHED);
-    });
-
-    it("should set the callState to CLOSE for non-ongoing call state", function() {
-      store.setStoreState({
-        callState: CALL_STATES.CONNECTING
-      });
-
-      store.hangupCall(new sharedActions.HangupCall());
-
-      expect(store.getStoreState("callState")).eql(CALL_STATES.CLOSE);
     });
 
     it("should release mozLoop callsData", function() {
@@ -967,16 +959,16 @@ describe("loop.store.ConversationStore", function () {
 
   describe("#mediaStreamCreated", function() {
     it("should add a local video object to the store", function() {
-      expect(store.getStoreState()).to.not.have.property("localSrcMediaElement");
+      expect(store.getStoreState()).to.not.have.property("localSrcVideoObject");
 
       store.mediaStreamCreated(new sharedActions.MediaStreamCreated({
         hasVideo: false,
         isLocal: true,
-        srcMediaElement: fakeStreamElement
+        srcVideoObject: fakeVideoElement
       }));
 
-      expect(store.getStoreState().localSrcMediaElement).eql(fakeStreamElement);
-      expect(store.getStoreState()).to.not.have.property("remoteSrcMediaElement");
+      expect(store.getStoreState().localSrcVideoObject).eql(fakeVideoElement);
+      expect(store.getStoreState()).to.not.have.property("remoteSrcVideoObject");
     });
 
     it("should set the local video enabled", function() {
@@ -988,7 +980,7 @@ describe("loop.store.ConversationStore", function () {
       store.mediaStreamCreated(new sharedActions.MediaStreamCreated({
         hasVideo: true,
         isLocal: true,
-        srcMediaElement: fakeStreamElement
+        srcVideoObject: fakeVideoElement
       }));
 
       expect(store.getStoreState().localVideoEnabled).eql(true);
@@ -996,16 +988,16 @@ describe("loop.store.ConversationStore", function () {
     });
 
     it("should add a remote video object to the store", function() {
-      expect(store.getStoreState()).to.not.have.property("remoteSrcMediaElement");
+      expect(store.getStoreState()).to.not.have.property("remoteSrcVideoObject");
 
       store.mediaStreamCreated(new sharedActions.MediaStreamCreated({
         hasVideo: false,
         isLocal: false,
-        srcMediaElement: fakeStreamElement
+        srcVideoObject: fakeVideoElement
       }));
 
-      expect(store.getStoreState()).not.have.property("localSrcMediaElement");
-      expect(store.getStoreState().remoteSrcMediaElement).eql(fakeStreamElement);
+      expect(store.getStoreState()).not.have.property("localSrcVideoObject");
+      expect(store.getStoreState().remoteSrcVideoObject).eql(fakeVideoElement);
     });
 
     it("should set the remote video enabled", function() {
@@ -1017,7 +1009,7 @@ describe("loop.store.ConversationStore", function () {
       store.mediaStreamCreated(new sharedActions.MediaStreamCreated({
         hasVideo: true,
         isLocal: false,
-        srcMediaElement: fakeStreamElement
+        srcVideoObject: fakeVideoElement
       }));
 
       expect(store.getStoreState().localVideoEnabled).eql(false);
@@ -1028,8 +1020,8 @@ describe("loop.store.ConversationStore", function () {
   describe("#mediaStreamDestroyed", function() {
     beforeEach(function() {
       store.setStoreState({
-        localSrcMediaElement: fakeStreamElement,
-        remoteSrcMediaElement: fakeStreamElement
+        localSrcVideoObject: fakeVideoElement,
+        remoteSrcVideoObject: fakeVideoElement
       });
     });
 
@@ -1038,8 +1030,8 @@ describe("loop.store.ConversationStore", function () {
         isLocal: true
       }));
 
-      expect(store.getStoreState().localSrcMediaElement).eql(null);
-      expect(store.getStoreState().remoteSrcMediaElement).eql(fakeStreamElement);
+      expect(store.getStoreState().localSrcVideoObject).eql(null);
+      expect(store.getStoreState().remoteSrcVideoObject).eql(fakeVideoElement);
     });
 
     it("should clear the remote video object", function() {
@@ -1047,8 +1039,8 @@ describe("loop.store.ConversationStore", function () {
         isLocal: false
       }));
 
-      expect(store.getStoreState().localSrcMediaElement).eql(fakeStreamElement);
-      expect(store.getStoreState().remoteSrcMediaElement).eql(null);
+      expect(store.getStoreState().localSrcVideoObject).eql(fakeVideoElement);
+      expect(store.getStoreState().remoteSrcVideoObject).eql(null);
     });
   });
 
@@ -1116,6 +1108,7 @@ describe("loop.store.ConversationStore", function () {
   describe("#fetchRoomEmailLink", function() {
     it("should request a new call url to the server", function() {
       store.fetchRoomEmailLink(new sharedActions.FetchRoomEmailLink({
+        roomOwner: "bob@invalid.tld",
         roomName: "FakeRoomName"
       }));
 
@@ -1133,6 +1126,7 @@ describe("loop.store.ConversationStore", function () {
           cb(null, {roomUrl: "http://fake.invalid/"});
         };
         store.fetchRoomEmailLink(new sharedActions.FetchRoomEmailLink({
+          roomOwner: "bob@invalid.tld",
           roomName: "FakeRoomName"
         }));
 
@@ -1148,6 +1142,7 @@ describe("loop.store.ConversationStore", function () {
           cb(new Error("error"));
         };
         store.fetchRoomEmailLink(new sharedActions.FetchRoomEmailLink({
+          roomOwner: "bob@invalid.tld",
           roomName: "FakeRoomName"
         }));
 
@@ -1210,6 +1205,24 @@ describe("loop.store.ConversationStore", function () {
         sandbox.stub(dispatcher, "dispatch");
       });
 
+      it("should dispatch a connection failure action on 'terminate' for outgoing calls", function() {
+        store.setStoreState({
+          outgoing: true
+        });
+
+        store._websocket.trigger("progress", {
+          state: WS_STATES.TERMINATED,
+          reason: WEBSOCKET_REASONS.REJECT
+        });
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        // Can't use instanceof here, as that matches any action
+        sinon.assert.calledWithMatch(dispatcher.dispatch,
+          sinon.match.hasOwn("name", "connectionFailure"));
+        sinon.assert.calledWithMatch(dispatcher.dispatch,
+          sinon.match.hasOwn("reason", WEBSOCKET_REASONS.REJECT));
+      });
+
       it("should dispatch a connection failure action on 'terminate' for incoming calls if the previous state was not 'alerting' or 'init'", function() {
         store.setStoreState({
           outgoing: false
@@ -1221,6 +1234,7 @@ describe("loop.store.ConversationStore", function () {
         }, WS_STATES.CONNECTING);
 
         sinon.assert.calledOnce(dispatcher.dispatch);
+        // Can't use instanceof here, as that matches any action
         sinon.assert.calledWithExactly(dispatcher.dispatch,
           new sharedActions.ConnectionFailure({
             reason: WEBSOCKET_REASONS.CANCEL
@@ -1238,6 +1252,7 @@ describe("loop.store.ConversationStore", function () {
         }, WS_STATES.INIT);
 
         sinon.assert.calledOnce(dispatcher.dispatch);
+        // Can't use instanceof here, as that matches any action
         sinon.assert.calledWithExactly(dispatcher.dispatch,
           new sharedActions.CancelCall({}));
       });
@@ -1253,6 +1268,7 @@ describe("loop.store.ConversationStore", function () {
         }, WS_STATES.ALERTING);
 
         sinon.assert.calledOnce(dispatcher.dispatch);
+        // Can't use instanceof here, as that matches any action
         sinon.assert.calledWithExactly(dispatcher.dispatch,
           new sharedActions.CancelCall({}));
       });
@@ -1261,57 +1277,11 @@ describe("loop.store.ConversationStore", function () {
         store._websocket.trigger("progress", {state: WS_STATES.ALERTING});
 
         sinon.assert.calledOnce(dispatcher.dispatch);
-        sinon.assert.calledWithExactly(dispatcher.dispatch,
-          new sharedActions.ConnectionProgress({
-            wsState: WS_STATES.ALERTING
-          }));
-      });
-
-      describe("Outgoing Calls, handling 'terminate'", function() {
-        beforeEach(function() {
-          store.setStoreState({
-            outgoing: true
-          });
-        });
-
-        it("should dispatch a connection failure action", function() {
-          store._websocket.trigger("progress", {
-            state: WS_STATES.TERMINATED,
-            reason: WEBSOCKET_REASONS.MEDIA_FAIL
-          });
-
-          sinon.assert.calledOnce(dispatcher.dispatch);
-          sinon.assert.calledWithExactly(dispatcher.dispatch,
-            new sharedActions.ConnectionFailure({
-              reason: WEBSOCKET_REASONS.MEDIA_FAIL
-            }));
-        });
-
-        it("should dispatch an action with user unavailable if the websocket reports busy", function() {
-          store._websocket.trigger("progress", {
-            state: WS_STATES.TERMINATED,
-            reason: WEBSOCKET_REASONS.BUSY
-          });
-
-          sinon.assert.calledOnce(dispatcher.dispatch);
-          sinon.assert.calledWithExactly(dispatcher.dispatch,
-            new sharedActions.ConnectionFailure({
-              reason: FAILURE_DETAILS.USER_UNAVAILABLE
-            }));
-        });
-
-        it("should dispatch an action with user unavailable if the websocket reports reject", function() {
-          store._websocket.trigger("progress", {
-            state: WS_STATES.TERMINATED,
-            reason: WEBSOCKET_REASONS.REJECT
-          });
-
-          sinon.assert.calledOnce(dispatcher.dispatch);
-          sinon.assert.calledWithExactly(dispatcher.dispatch,
-            new sharedActions.ConnectionFailure({
-              reason: FAILURE_DETAILS.USER_UNAVAILABLE
-            }));
-        });
+        // Can't use instanceof here, as that matches any action
+        sinon.assert.calledWithMatch(dispatcher.dispatch,
+          sinon.match.hasOwn("name", "connectionProgress"));
+        sinon.assert.calledWithMatch(dispatcher.dispatch,
+          sinon.match.hasOwn("wsState", WS_STATES.ALERTING));
       });
     });
   });

@@ -11,7 +11,7 @@ const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/testscript.js";
 const PREF = "devtools.webconsole.persistlog";
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   Services.prefs.setBoolPref(PREF, true);
 
   let { browser } = yield loadTab(TEST_URI);

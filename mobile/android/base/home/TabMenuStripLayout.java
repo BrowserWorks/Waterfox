@@ -5,10 +5,6 @@
 
 package org.mozilla.gecko.home;
 
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
-
-import android.content.res.ColorStateList;
 import org.mozilla.gecko.R;
 
 import android.content.Context;
@@ -20,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
@@ -29,7 +26,7 @@ import android.widget.TextView;
 class TabMenuStripLayout extends LinearLayout
                          implements View.OnFocusChangeListener {
 
-    private TabMenuStrip.OnTitleClickListener onTitleClickListener;
+    private HomePager.OnTitleClickListener onTitleClickListener;
     private Drawable strip;
     private TextView selectedView;
 
@@ -43,20 +40,13 @@ class TabMenuStripLayout extends LinearLayout
     // This variable is used to predict the direction of scroll.
     private float prevProgress;
     private int tabContentStart;
-    private boolean titlebarFill;
-    private int activeTextColor;
-    private ColorStateList inactiveTextColor;
 
     TabMenuStripLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TabMenuStrip);
         final int stripResId = a.getResourceId(R.styleable.TabMenuStrip_strip, -1);
-
-        titlebarFill = a.getBoolean(R.styleable.TabMenuStrip_titlebarFill, false);
         tabContentStart = a.getDimensionPixelSize(R.styleable.TabMenuStrip_tabContentStart, 0);
-        activeTextColor = a.getColor(R.styleable.TabMenuStrip_activeTextColor, R.color.text_and_tabs_tray_grey);
-        inactiveTextColor = a.getColorStateList(R.styleable.TabMenuStrip_inactiveTextColor);
         a.recycle();
 
         if (stripResId != -1) {
@@ -69,14 +59,7 @@ class TabMenuStripLayout extends LinearLayout
     void onAddPagerView(String title) {
         final TextView button = (TextView) LayoutInflater.from(getContext()).inflate(R.layout.tab_menu_strip, this, false);
         button.setText(title.toUpperCase());
-        button.setTextColor(inactiveTextColor);
-
-        // Set titles width to weight, or wrap text width.
-        if (titlebarFill) {
-            button.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f));
-        } else {
-            button.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        }
+        button.setTextColor(getResources().getColorStateList(R.color.tab_text_color));
 
         if (getChildCount() == 0) {
             button.setPadding(button.getPaddingLeft() + tabContentStart,
@@ -92,11 +75,11 @@ class TabMenuStripLayout extends LinearLayout
 
     void onPageSelected(final int position) {
         if (selectedView != null) {
-            selectedView.setTextColor(inactiveTextColor);
+            selectedView.setTextColor(getResources().getColorStateList(R.color.tab_text_color));
         }
 
         selectedView = (TextView) getChildAt(position);
-        selectedView.setTextColor(activeTextColor);
+        selectedView.setTextColor(getResources().getColor(R.color.placeholder_grey));
 
         // Callback to measure and draw the strip after the view is visible.
         ViewTreeObserver vto = selectedView.getViewTreeObserver();
@@ -225,7 +208,7 @@ class TabMenuStripLayout extends LinearLayout
         }
     }
 
-    void setOnTitleClickListener(TabMenuStrip.OnTitleClickListener onTitleClickListener) {
+    void setOnTitleClickListener(HomePager.OnTitleClickListener onTitleClickListener) {
         this.onTitleClickListener = onTitleClickListener;
     }
 

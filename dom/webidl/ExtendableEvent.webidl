@@ -11,7 +11,6 @@
  Exposed=ServiceWorker]
 interface ExtendableEvent : Event {
   // https://github.com/slightlyoff/ServiceWorker/issues/261
-  [Throws]
   void waitUntil(Promise<any> p);
 };
 

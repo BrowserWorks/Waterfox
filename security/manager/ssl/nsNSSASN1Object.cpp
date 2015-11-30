@@ -196,11 +196,12 @@ CreateFromDER(unsigned char *data,
 
     sequence->GetASN1Objects(getter_AddRefs(elements));
     nsCOMPtr<nsIASN1Object> asn1Obj = do_QueryElementAt(elements, 0);
-    if (!asn1Obj) {
+    *retval = asn1Obj;
+    if (!*retval)
       return NS_ERROR_FAILURE;
-    }
 
-    asn1Obj.forget(retval);
+    NS_ADDREF(*retval);
+      
   }
   return rv; 
 }

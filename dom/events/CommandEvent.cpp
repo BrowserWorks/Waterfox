@@ -64,12 +64,14 @@ CommandEvent::InitCommandEvent(const nsAString& aTypeArg,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<CommandEvent>
-NS_NewDOMCommandEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMCommandEvent(nsIDOMEvent** aInstancePtrResult,
+                      EventTarget* aOwner,
                       nsPresContext* aPresContext,
                       WidgetCommandEvent* aEvent)
 {
-  nsRefPtr<CommandEvent> it =
-    new CommandEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  CommandEvent* it = new CommandEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

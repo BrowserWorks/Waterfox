@@ -19,7 +19,7 @@ namespace mozilla {
 // Similar to `AutoTimelineMarker`, but adds its traced marker to all docshells,
 // not a single particular one. This is useful for operations that aren't
 // associated with any one particular doc shell, or when it isn't clear which
-// docshell triggered the operation.
+// doc shell triggered the operation.
 //
 // Example usage:
 //
@@ -29,7 +29,7 @@ namespace mozilla {
 //       cc->Collect();
 //       ...
 //     }
-class MOZ_RAII AutoGlobalTimelineMarker
+class MOZ_STACK_CLASS AutoGlobalTimelineMarker
 {
   MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER;
 

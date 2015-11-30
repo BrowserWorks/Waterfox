@@ -11,6 +11,9 @@ add_task(function*() {
 
   let {inspector, panel} = yield openAnimationInspector();
   yield testRefreshOnNewAnimation(inspector, panel);
+
+  ({inspector, panel} = yield closeAnimationInspectorAndRestartWithNewUI());
+  yield testRefreshOnNewAnimation(inspector, panel);
 });
 
 function* testRefreshOnNewAnimation(inspector, panel) {

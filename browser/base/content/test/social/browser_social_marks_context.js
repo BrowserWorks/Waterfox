@@ -1,4 +1,4 @@
-var SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
+let SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
 
 function makeMarkProvider(origin) {
   return { // used for testing install

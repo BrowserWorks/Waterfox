@@ -3,7 +3,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-var testGenerator = testSteps();
+let testGenerator = testSteps();
 
 function testSteps()
 {

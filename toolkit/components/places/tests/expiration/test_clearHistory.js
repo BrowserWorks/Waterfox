@@ -11,8 +11,8 @@
  * annos.
  */
 
-var hs = PlacesUtils.history;
-var as = PlacesUtils.annotations;
+let hs = PlacesUtils.history;
+let as = PlacesUtils.annotations;
 
 /**
  * Creates an aged annotation.
@@ -24,7 +24,7 @@ var as = PlacesUtils.annotations;
  * @param aAgeInDays Age in days of the annotation.
  * @param [optional] aLastModifiedAgeInDays Age in days of the annotation, for lastModified.
  */
-var now = Date.now();
+let now = Date.now();
 function add_old_anno(aIdentifier, aName, aValue, aExpirePolicy,
                       aAgeInDays, aLastModifiedAgeInDays) {
   let expireDate = (now - (aAgeInDays * 86400 * 1000)) * 1000;

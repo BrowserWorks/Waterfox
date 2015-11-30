@@ -276,10 +276,9 @@ private:
         surfacePathPrefix.Append("@");
         surfacePathPrefix.AppendFloat(counter.Key().AnimationTime());
 
-        if (counter.Key().Flags() != DefaultSurfaceFlags()) {
+        if (counter.Key().Flags() != imgIContainer::DECODE_FLAGS_DEFAULT) {
           surfacePathPrefix.Append(", flags:");
-          surfacePathPrefix.AppendInt(uint32_t(counter.Key().Flags()),
-                                      /* aRadix = */ 16);
+          surfacePathPrefix.AppendInt(counter.Key().Flags(), /* aRadix = */ 16);
         }
       } else if (counter.Type() == SurfaceMemoryCounterType::COMPOSITING) {
         surfacePathPrefix.Append(", compositing frame");
@@ -1069,8 +1068,7 @@ protected:
 };
 
 imgCacheExpirationTracker::imgCacheExpirationTracker()
- : nsExpirationTracker<imgCacheEntry, 3>(TIMEOUT_SECONDS * 1000,
-                                         "imgCacheExpirationTracker")
+ : nsExpirationTracker<imgCacheEntry, 3>(TIMEOUT_SECONDS * 1000)
 { }
 
 void

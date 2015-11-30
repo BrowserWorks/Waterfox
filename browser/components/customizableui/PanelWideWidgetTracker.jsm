@@ -11,19 +11,19 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
   "resource:///modules/CustomizableUI.jsm");
 
-var gModuleName = "[PanelWideWidgetTracker]";
+let gModuleName = "[PanelWideWidgetTracker]";
 #include logging.js
 
-var gPanel = CustomizableUI.AREA_PANEL;
+let gPanel = CustomizableUI.AREA_PANEL;
 // We keep track of the widget placements for the panel locally:
-var gPanelPlacements = [];
+let gPanelPlacements = [];
 
 // All the wide widgets we know of:
-var gWideWidgets = new Set();
+let gWideWidgets = new Set();
 // All the widgets we know of:
-var gSeenWidgets = new Set();
+let gSeenWidgets = new Set();
 
-var PanelWideWidgetTracker = {
+let PanelWideWidgetTracker = {
   // Listeners used to validate panel contents whenever they change:
   onWidgetAdded: function(aWidgetId, aArea, aPosition) {
     if (aArea == gPanel) {

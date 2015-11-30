@@ -217,14 +217,14 @@ static void CalculatePluginClip(const gfx::IntRect& aBounds,
                                 bool& aPluginIsVisible)
 {
   aPluginIsVisible = true;
-  nsIntRegion contentVisibleRegion;
-  // aPluginClipRects (plugin widget origin) - contains *visible* rects
+  // aBounds (content origin)
+  nsIntRegion contentVisibleRegion(aBounds);
+  // aPluginClipRects (plugin widget origin)
   for (uint32_t idx = 0; idx < aPluginClipRects.Length(); idx++) {
     gfx::IntRect rect = aPluginClipRects[idx];
     // shift to content origin
     rect.MoveBy(aBounds.x, aBounds.y);
-    // accumulate visible rects
-    contentVisibleRegion.OrWith(rect);
+    contentVisibleRegion.AndWith(rect);
   }
   // apply layers clip (window origin)
   nsIntRegion region = aParentLayerVisibleRegion;
@@ -307,6 +307,8 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
       // Handle invalidation, this can be costly, avoid if it is not needed.
       if (isVisible) {
         // invalidate region (widget origin)
+        gfx::IntRect bounds = aPlugins[pluginsIdx].bounds();
+        gfx::IntRect rect(0, 0, bounds.width, bounds.height);
 #if defined(XP_WIN)
         // Work around for flash's crummy sandbox. See bug 762948. This call
         // digs down into the window hirearchy, invalidating regions on
@@ -328,32 +330,30 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
 }
 
 bool
-CompositorChild::RecvHideAllPlugins(const uintptr_t& aParentWidget)
+CompositorChild::RecvUpdatePluginVisibility(const uintptr_t& aOwnerWidget,
+                                            nsTArray<uintptr_t>&& aVisibleIdList)
 {
 #if !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
-  NS_NOTREACHED("CompositorChild::RecvHideAllPlugins calls "
+  NS_NOTREACHED("CompositorChild::RecvUpdatePluginVisibility calls "
                 "unexpected on this platform.");
   return false;
 #else
   MOZ_ASSERT(NS_IsMainThread());
-  nsTArray<uintptr_t> list;
-  nsIWidget::UpdateRegisteredPluginWindowVisibility(aParentWidget, list);
+  nsIWidget::UpdateRegisteredPluginWindowVisibility(aOwnerWidget, aVisibleIdList);
   return true;
 #endif // !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
 }
 
 bool
-CompositorChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId,
-                                  const TimeStamp& aCompositeStart,
-                                  const TimeStamp& aCompositeEnd)
+CompositorChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId)
 {
   if (mLayerManager) {
     MOZ_ASSERT(aId == 0);
-    mLayerManager->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
+    mLayerManager->DidComposite(aTransactionId);
   } else if (aId != 0) {
     dom::TabChild *child = dom::TabChild::GetFrom(aId);
     if (child) {
-      child->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
+      child->DidComposite(aTransactionId);
     }
   }
   return true;

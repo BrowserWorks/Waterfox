@@ -50,7 +50,12 @@ public:
 
   virtual void Destroy() override;
 
-  virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() override;
+  virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() override
+  {
+    return TextureFactoryIdentifier(LayersBackend::LAYERS_BASIC,
+                                    XRE_GetProcessType(),
+                                    GetMaxTextureSize());
+  }
 
   virtual already_AddRefed<CompositingRenderTarget>
   CreateRenderTarget(const gfx::IntRect &aRect, SurfaceInitMode aInit) override;

@@ -13,13 +13,14 @@
 #include "nsServiceManagerUtils.h"
 #include "nsContentUtils.h"
 #include "jsapi.h"
+#include "jsfriendapi.h"
+#include "js/StructuredClone.h"
 #include "xpcpublic.h"
 
 #include "mozilla/Base64.h"
 #include "mozilla/dom/ScriptSettings.h"
 
 using namespace mozilla;
-using namespace mozilla::dom;
 
 NS_IMPL_ADDREF(nsStructuredCloneContainer)
 NS_IMPL_RELEASE(nsStructuredCloneContainer)
@@ -30,40 +31,53 @@ NS_INTERFACE_MAP_BEGIN(nsStructuredCloneContainer)
 NS_INTERFACE_MAP_END
 
 nsStructuredCloneContainer::nsStructuredCloneContainer()
-  : mVersion(0)
+  : mData(nullptr), mSize(0), mVersion(0)
 {
 }
 
 nsStructuredCloneContainer::~nsStructuredCloneContainer()
 {
+  free(mData);
 }
 
-NS_IMETHODIMP
+nsresult
 nsStructuredCloneContainer::InitFromJSVal(JS::Handle<JS::Value> aData,
                                           JSContext* aCx)
 {
-  if (DataLength()) {
+  NS_ENSURE_STATE(!mData);
+
+  uint64_t* jsBytes = nullptr;
+  bool success = JS_WriteStructuredClone(aCx, aData, &jsBytes, &mSize,
+                                           nullptr, nullptr,
+                                           JS::UndefinedHandleValue);
+  NS_ENSURE_STATE(success);
+  NS_ENSURE_STATE(jsBytes);
+
+  // Copy jsBytes into our own buffer.
+  mData = (uint64_t*) malloc(mSize);
+  if (!mData) {
+    mSize = 0;
+    mVersion = 0;
+
+    JS_ClearStructuredClone(jsBytes, mSize, nullptr, nullptr);
     return NS_ERROR_FAILURE;
   }
-
-  ErrorResult rv;
-  Write(aCx, aData, rv);
-  if (NS_WARN_IF(rv.Failed())) {
-    return rv.StealNSResult();
+  else {
+    mVersion = JS_STRUCTURED_CLONE_VERSION;
   }
 
-  mVersion = JS_STRUCTURED_CLONE_VERSION;
+  memcpy(mData, jsBytes, mSize);
+
+  JS_ClearStructuredClone(jsBytes, mSize, nullptr, nullptr);
   return NS_OK;
 }
 
-NS_IMETHODIMP
+nsresult
 nsStructuredCloneContainer::InitFromBase64(const nsAString &aData,
                                            uint32_t aFormatVersion,
-                                           JSContext* aCx)
+                                           JSContext *aCx)
 {
-  if (DataLength()) {
-    return NS_ERROR_FAILURE;
-  }
+  NS_ENSURE_STATE(!mData);
 
   NS_ConvertUTF16toUTF8 data(aData);
 
@@ -71,10 +85,12 @@ nsStructuredCloneContainer::InitFromBase64(const nsAString &aData,
   nsresult rv = Base64Decode(data, binaryData);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!CopyExternalData(binaryData.get(), binaryData.Length())) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
+  // Copy the string's data into our own buffer.
+  mData = (uint64_t*) malloc(binaryData.Length());
+  NS_ENSURE_STATE(mData);
+  memcpy(mData, binaryData.get(), binaryData.Length());
 
+  mSize = binaryData.Length();
   mVersion = aFormatVersion;
   return NS_OK;
 }
@@ -85,34 +101,31 @@ nsStructuredCloneContainer::DeserializeToJsval(JSContext* aCx,
 {
   aValue.setNull();
   JS::Rooted<JS::Value> jsStateObj(aCx);
-
-  ErrorResult rv;
-  Read(aCx, &jsStateObj, rv);
-  if (NS_WARN_IF(rv.Failed())) {
-    return rv.StealNSResult();
-  }
+  bool hasTransferable = false;
+  bool success = JS_ReadStructuredClone(aCx, mData, mSize, mVersion,
+                                        &jsStateObj, nullptr, nullptr) &&
+                 JS_StructuredCloneHasTransferables(mData, mSize,
+                                                    &hasTransferable);
+  // We want to be sure that mData doesn't contain transferable objects
+  MOZ_ASSERT(!hasTransferable);
+  NS_ENSURE_STATE(success && !hasTransferable);
 
   aValue.set(jsStateObj);
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsStructuredCloneContainer::DeserializeToVariant(JSContext* aCx,
-                                                 nsIVariant** aData)
+nsresult
+nsStructuredCloneContainer::DeserializeToVariant(JSContext *aCx,
+                                                 nsIVariant **aData)
 {
+  NS_ENSURE_STATE(mData);
   NS_ENSURE_ARG_POINTER(aData);
   *aData = nullptr;
-
-  if (!DataLength()) {
-    return NS_ERROR_FAILURE;
-  }
 
   // Deserialize to a JS::Value.
   JS::Rooted<JS::Value> jsStateObj(aCx);
   nsresult rv = DeserializeToJsval(aCx, &jsStateObj);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // Now wrap the JS::Value as an nsIVariant.
   nsCOMPtr<nsIVariant> varStateObj;
@@ -121,56 +134,44 @@ nsStructuredCloneContainer::DeserializeToVariant(JSContext* aCx,
   xpconnect->JSValToVariant(aCx, jsStateObj, getter_AddRefs(varStateObj));
   NS_ENSURE_STATE(varStateObj);
 
-  varStateObj.forget(aData);
+  NS_ADDREF(*aData = varStateObj);
   return NS_OK;
 }
 
-NS_IMETHODIMP
+nsresult
 nsStructuredCloneContainer::GetDataAsBase64(nsAString &aOut)
 {
+  NS_ENSURE_STATE(mData);
   aOut.Truncate();
 
-  if (!DataLength()) {
-    return NS_ERROR_FAILURE;
-  }
-
-  if (HasClonedDOMObjects()) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsAutoCString binaryData(reinterpret_cast<char*>(Data()), DataLength());
+  nsAutoCString binaryData(reinterpret_cast<char*>(mData), mSize);
   nsAutoCString base64Data;
   nsresult rv = Base64Encode(binaryData, base64Data);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
+  NS_ENSURE_SUCCESS(rv, rv);
 
-  CopyASCIItoUTF16(base64Data, aOut);
+  aOut.Assign(NS_ConvertASCIItoUTF16(base64Data));
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsStructuredCloneContainer::GetSerializedNBytes(uint64_t* aSize)
+nsresult
+nsStructuredCloneContainer::GetSerializedNBytes(uint64_t *aSize)
 {
+  NS_ENSURE_STATE(mData);
   NS_ENSURE_ARG_POINTER(aSize);
 
-  if (!DataLength()) {
-    return NS_ERROR_FAILURE;
-  }
+  // mSize is a size_t, while aSize is a uint64_t.  We rely on an implicit cast
+  // here so that we'll get a compile error if a size_t-to-uint64_t cast is
+  // narrowing.
+  *aSize = mSize;
 
-  *aSize = DataLength();
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsStructuredCloneContainer::GetFormatVersion(uint32_t* aFormatVersion)
+nsresult
+nsStructuredCloneContainer::GetFormatVersion(uint32_t *aFormatVersion)
 {
+  NS_ENSURE_STATE(mData);
   NS_ENSURE_ARG_POINTER(aFormatVersion);
-
-  if (!DataLength()) {
-    return NS_ERROR_FAILURE;
-  }
-
   *aFormatVersion = mVersion;
   return NS_OK;
 }

@@ -110,9 +110,7 @@ enum opcode {
     PUSH_PROC_STATE,                PUSH_VERSION,
     PUT_SUBS,                       PUT_SUBS2,          PUT_SUBS3,
     PUT_GLYPH,                      PUSH_GLYPH_ATTR,    PUSH_ATT_TO_GLYPH_ATTR,
-    BITOR,                          BITAND,             BITNOT,
-    BITSET,                         SET_FEAT,
-    MAX_OPCODE,                     
+    MAX_OPCODE,
     // private opcodes for internal use only, comes after all other on disk opcodes
     TEMP_COPY = MAX_OPCODE
 };
@@ -150,7 +148,7 @@ public:
 
     SlotMap   & slotMap() const throw();
     status_t    status() const throw();
-//    operator bool () const throw();
+    operator bool () const throw();
 
 private:
     void    check_final_stack(const stack_t * const sp);

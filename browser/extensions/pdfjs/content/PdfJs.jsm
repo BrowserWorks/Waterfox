@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 /* jshint esnext:true */
-/* globals Components, Services, XPCOMUtils, PdfjsChromeUtils,
+/* globals Components, Services, XPCOMUtils, PdfjsChromeUtils, PdfRedirector,
            PdfjsContentUtils, DEFAULT_PREFERENCES, PdfStreamConverter */
 
 'use strict';
@@ -43,7 +43,7 @@ const PDF_CONTENT_TYPE = 'application/pdf';
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 
-var Svc = {};
+let Svc = {};
 XPCOMUtils.defineLazyServiceGetter(Svc, 'mime',
                                    '@mozilla.org/mime;1',
                                    'nsIMIMEService');
@@ -145,7 +145,7 @@ Factory.prototype = {
   }
 };
 
-var PdfJs = {
+let PdfJs = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
   _registered: false,
   _initialized: false,

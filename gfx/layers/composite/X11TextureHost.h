@@ -15,14 +15,6 @@
 namespace mozilla {
 namespace layers {
 
-class X11TextureSource : public TextureSource
-{
-public:
-  // Called when the underlying X surface has been changed.
-  // Useful for determining whether to rebind a GLXPixmap to a texture.
-  virtual void Updated() = 0;
-};
-
 // TextureHost for Xlib-backed TextureSources.
 class X11TextureHost : public TextureHost
 {
@@ -51,14 +43,8 @@ public:
 #endif
 
 protected:
-  virtual void UpdatedInternal(const nsIntRegion*) override
-  {
-    if (mTextureSource)
-      mTextureSource->Updated();
-  }
-
   RefPtr<Compositor> mCompositor;
-  RefPtr<X11TextureSource> mTextureSource;
+  RefPtr<TextureSource> mTextureSource;
   RefPtr<gfxXlibSurface> mSurface;
 };
 

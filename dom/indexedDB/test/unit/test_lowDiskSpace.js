@@ -4,7 +4,7 @@
  */
 "use strict";
 
-var disableWorkerTest = "This test uses SpecialPowers";
+let disableWorkerTest = "This test uses SpecialPowers";
 
 var self = this;
 

@@ -38,7 +38,6 @@
 #include <unistd.h>
 #include <utils/Timers.h>
 
-#undef LOG
 #define LOG(args...)                                            \
   __android_log_print(ANDROID_LOG_INFO, "Gonk" , ## args)
 
@@ -77,9 +76,10 @@ GeckoTouchDispatcher::GeckoTouchDispatcher()
   gfxPrefs::GetSingleton();
 
   mEnabledUniformityInfo = gfxPrefs::UniformityInfo();
+  mResamplingEnabled = gfxPrefs::TouchResampling() &&
+                       gfxPrefs::HardwareVsyncEnabled();
   mVsyncAdjust = TimeDuration::FromMilliseconds(gfxPrefs::TouchVsyncSampleAdjust());
   mMaxPredict = TimeDuration::FromMilliseconds(gfxPrefs::TouchResampleMaxPredict());
-  mMinDelta = TimeDuration::FromMilliseconds(gfxPrefs::TouchResampleMinDelta());
   mOldTouchThreshold = TimeDuration::FromMilliseconds(gfxPrefs::TouchResampleOldTouchThreshold());
   mDelayedVsyncThreshold = TimeDuration::FromMilliseconds(gfxPrefs::TouchResampleVsyncDelayThreshold());
 }
@@ -90,12 +90,15 @@ GeckoTouchDispatcher::SetCompositorVsyncScheduler(mozilla::layers::CompositorVsy
   MOZ_ASSERT(NS_IsMainThread());
   // We assume on b2g that there is only 1 CompositorParent
   MOZ_ASSERT(mCompositorVsyncScheduler == nullptr);
-  mCompositorVsyncScheduler = aObserver;
+  if (mResamplingEnabled) {
+    mCompositorVsyncScheduler = aObserver;
+  }
 }
 
 void
 GeckoTouchDispatcher::NotifyVsync(TimeStamp aVsyncTimestamp)
 {
+  MOZ_ASSERT(mResamplingEnabled);
   layers::APZThreadUtils::AssertOnControllerThread();
   DispatchTouchMoveEvents(aVsyncTimestamp);
 }
@@ -122,6 +125,12 @@ GeckoTouchDispatcher::NotifyTouch(MultiTouchInput& aTouch, TimeStamp aEventTime)
 
     mTouchMoveEvents.push_back(aTouch);
     mHavePendingTouchMoves = true;
+    if (mResamplingEnabled) {
+      return;
+    }
+
+    layers::APZThreadUtils::RunOnControllerThread(NewRunnableMethod(
+      this, &GeckoTouchDispatcher::DispatchTouchMoveEvents, TimeStamp::Now()));
   } else {
     { // scope lock
       MutexAutoLock lock(mTouchQueueLock);
@@ -137,10 +146,12 @@ GeckoTouchDispatcher::DispatchTouchNonMoveEvent(MultiTouchInput aInput)
 {
   layers::APZThreadUtils::AssertOnControllerThread();
 
-  // Flush pending touch move events, if there are any
-  // (DispatchTouchMoveEvents will check the mHavePendingTouchMoves flag and
-  // bail out if there's nothing to be done).
-  NotifyVsync(TimeStamp::Now());
+  if (mResamplingEnabled) {
+    // Flush pending touch move events, if there are any
+    // (DispatchTouchMoveEvents will check the mHavePendingTouchMoves flag and
+    // bail out if there's nothing to be done).
+    NotifyVsync(TimeStamp::Now());
+  }
   DispatchTouchEvent(aInput);
 
   { // scope lock
@@ -162,22 +173,27 @@ GeckoTouchDispatcher::DispatchTouchMoveEvents(TimeStamp aVsyncTime)
     }
     mHavePendingTouchMoves = false;
 
-    int touchCount = mTouchMoveEvents.size();
-    TimeDuration vsyncTouchDiff = aVsyncTime - mTouchMoveEvents.back().mTimeStamp;
-    // The delay threshold is a positive pref, but we're testing to see if the
-    // vsync time is delayed from the touch, so add a negative sign.
-    bool isDelayedVsyncEvent = vsyncTouchDiff < -mDelayedVsyncThreshold;
-    bool isOldTouch = vsyncTouchDiff > mOldTouchThreshold;
-    bool resample = (touchCount > 1) && !isDelayedVsyncEvent && !isOldTouch;
+    if (mResamplingEnabled) {
+      int touchCount = mTouchMoveEvents.size();
+      TimeDuration vsyncTouchDiff = aVsyncTime - mTouchMoveEvents.back().mTimeStamp;
+      // The delay threshold is a positive pref, but we're testing to see if the
+      // vsync time is delayed from the touch, so add a negative sign.
+      bool isDelayedVsyncEvent = vsyncTouchDiff < -mDelayedVsyncThreshold;
+      bool isOldTouch = vsyncTouchDiff > mOldTouchThreshold;
+      bool resample = (touchCount > 1) && !isDelayedVsyncEvent && !isOldTouch;
 
-    if (!resample) {
-      touchMove = mTouchMoveEvents.back();
-      mTouchMoveEvents.clear();
-      if (!isDelayedVsyncEvent && !isOldTouch) {
-        mTouchMoveEvents.push_back(touchMove);
+      if (!resample) {
+        touchMove = mTouchMoveEvents.back();
+        mTouchMoveEvents.clear();
+        if (!isDelayedVsyncEvent && !isOldTouch) {
+          mTouchMoveEvents.push_back(touchMove);
+        }
+      } else {
+        ResampleTouchMoves(touchMove, aVsyncTime);
       }
     } else {
-      ResampleTouchMoves(touchMove, aVsyncTime);
+      touchMove = mTouchMoveEvents.back();
+      mTouchMoveEvents.clear();
     }
   }
 
@@ -276,14 +292,6 @@ GeckoTouchDispatcher::ResampleTouchMoves(MultiTouchInput& aOutTouch, TimeStamp a
 
   TimeStamp sampleTime = aVsyncTime - mVsyncAdjust;
   TimeDuration touchDiff = currentTouch.mTimeStamp - baseTouch.mTimeStamp;
-
-  if (touchDiff < mMinDelta) {
-    aOutTouch = currentTouch;
-    #ifdef LOG_RESAMPLE_DATA
-    LOG("The touches are too close, skip resampling\n");
-    #endif
-    return;
-  }
 
   if (currentTouch.mTimeStamp < sampleTime) {
     TimeDuration maxResampleTime = std::min(touchDiff / int64_t(2), mMaxPredict);

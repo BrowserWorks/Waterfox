@@ -74,8 +74,8 @@ const TEST_LOGINS = [
   },
 ];
 
-var crypto = new OSCrypto();
-var dbConn;
+let crypto = new OSCrypto();
+let dbConn;
 
 function promiseSetPassword(login) {
   return new Promise((resolve, reject) => {
@@ -84,7 +84,7 @@ function promiseSetPassword(login) {
       SET password_value = :password_value
       WHERE rowid = :rowid
     `);
-    let passwordValue = crypto.stringToArray(crypto.encryptData(login.password));
+    let passwordValue = crypto.encryptData(login.password);
     stmt.bindBlobByName("password_value", passwordValue, passwordValue.length);
     stmt.params.rowid = login.id;
 

@@ -33,6 +33,8 @@
 #include "mozilla/dom/PCrashReporterChild.h"
 #include "mozilla/dom/ProcessGlobal.h"
 #include "mozilla/dom/Promise.h"
+#include "mozilla/dom/asmjscache/AsmJSCache.h"
+#include "mozilla/dom/asmjscache/PAsmJSCacheEntryChild.h"
 #include "mozilla/dom/nsIContentChild.h"
 #include "mozilla/psm/PSMContentListener.h"
 #include "mozilla/hal_sandbox/PHalChild.h"
@@ -178,13 +180,13 @@
 #endif
 
 #include "ProcessUtils.h"
+#include "StructuredCloneUtils.h"
 #include "URIUtils.h"
 #include "nsContentUtils.h"
 #include "nsIPrincipal.h"
 #include "nsDeviceStorage.h"
 #include "DomainPolicy.h"
 #include "mozilla/dom/DataStoreService.h"
-#include "mozilla/dom/ipc/StructuredCloneData.h"
 #include "mozilla/dom/telephony/PTelephonyChild.h"
 #include "mozilla/dom/time/DateCacheCleaner.h"
 #include "mozilla/dom/voicemail/VoicemailIPCService.h"
@@ -610,6 +612,7 @@ ContentChild::Init(MessageLoop* aIOLoop,
                    IPC::Channel* aChannel)
 {
 #ifdef MOZ_WIDGET_GTK
+    // sigh
     gtk_init(nullptr, nullptr);
 #endif
 
@@ -799,7 +802,7 @@ ContentChild::InitXPCOM()
     bool isConnected;
     ClipboardCapabilities clipboardCaps;
     DomainPolicyClone domainPolicy;
-    StructuredCloneData initialData;
+    OwningSerializedStructuredCloneBuffer initialData;
 
     SendGetXPCOMProcessAttributes(&isOffline, &isConnected,
                                   &isLangRTL, &mAvailableDictionaries,
@@ -831,15 +834,17 @@ ContentChild::InitXPCOM()
         if (NS_WARN_IF(!jsapi.Init(xpc::PrivilegedJunkScope()))) {
             MOZ_CRASH();
         }
-        ErrorResult rv;
         JS::RootedValue data(jsapi.cx());
-        initialData.Read(jsapi.cx(), &data, rv);
-        if (NS_WARN_IF(rv.Failed())) {
+        if (!JS_ReadStructuredClone(jsapi.cx(), initialData.data, initialData.dataLength,
+                                    JS_STRUCTURED_CLONE_VERSION, &data, nullptr, nullptr)) {
             MOZ_CRASH();
         }
         ProcessGlobal* global = ProcessGlobal::Get();
         global->SetInitialProcessData(data);
     }
+
+    DebugOnly<FileUpdateDispatcher*> observer = FileUpdateDispatcher::GetSingleton();
+    NS_ASSERTION(observer, "FileUpdateDispatcher is null");
 
     // This object is held alive by the observer service.
     nsRefPtr<SystemMessageHandledObserver> sysMsgObserver =
@@ -1410,18 +1415,6 @@ ContentChild::RecvNotifyPresentationReceiverLaunched(PBrowserChild* aIframe,
     return true;
 }
 
-bool
-ContentChild::RecvNotifyPresentationReceiverCleanUp(const nsString& aSessionId)
-{
-  nsCOMPtr<nsIPresentationService> service =
-      do_GetService(PRESENTATION_SERVICE_CONTRACTID);
-  NS_WARN_IF(!service);
-
-  NS_WARN_IF(NS_FAILED(service->UntrackSessionInfo(aSessionId)));
-
-  return true;
-}
-
 PCrashReporterChild*
 ContentChild::AllocPCrashReporterChild(const mozilla::dom::NativeThreadId& id,
                                        const uint32_t& processType)
@@ -1475,6 +1468,23 @@ ContentChild::DeallocPIccChild(PIccChild* aActor)
 {
     // IccChild is refcounted, must not be freed manually.
     static_cast<IccChild*>(aActor)->Release();
+    return true;
+}
+
+asmjscache::PAsmJSCacheEntryChild*
+ContentChild::AllocPAsmJSCacheEntryChild(
+                                    const asmjscache::OpenMode& aOpenMode,
+                                    const asmjscache::WriteParams& aWriteParams,
+                                    const IPC::Principal& aPrincipal)
+{
+    NS_NOTREACHED("Should never get here!");
+    return nullptr;
+}
+
+bool
+ContentChild::DeallocPAsmJSCacheEntryChild(PAsmJSCacheEntryChild* aActor)
+{
+    asmjscache::DeallocEntryChild(aActor);
     return true;
 }
 
@@ -2083,11 +2093,10 @@ ContentChild::RecvAsyncMessage(const nsString& aMsg,
 {
     nsRefPtr<nsFrameMessageManager> cpm = nsFrameMessageManager::GetChildProcessManager();
     if (cpm) {
-        StructuredCloneData data;
-        ipc::UnpackClonedMessageDataForChild(aData, data);
+        StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForChild(aData);
         CrossProcessCpowHolder cpows(this, aCpows);
         cpm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(cpm.get()), nullptr,
-                            aMsg, false, &data, &cpows, aPrincipal, nullptr);
+                            aMsg, false, &cloneData, &cpows, aPrincipal, nullptr);
     }
     return true;
 }
@@ -2176,7 +2185,10 @@ bool
 ContentChild::RecvFlushMemory(const nsString& reason)
 {
 #ifdef MOZ_NUWA_PROCESS
-    MOZ_ASSERT(!IsNuwaProcess() || !IsNuwaReady());
+    if (IsNuwaProcess()) {
+        // Don't flush memory in the nuwa process: the GC thread could be frozen.
+        return true;
+    }
 #endif
     nsCOMPtr<nsIObserverService> os =
         mozilla::services::GetObserverService();
@@ -2283,7 +2295,11 @@ ContentChild::RecvAppInit()
     // PreloadSlowThings() may set the docshell of the first TabChild
     // inactive, and we can only safely restore it to active from
     // BrowserElementChild.js.
-    if (mIsForApp || mIsForBrowser) {
+    if ((mIsForApp || mIsForBrowser)
+#ifdef MOZ_NUWA_PROCESS
+        && !IsNuwaProcess()
+#endif
+       ) {
         PreloadSlowThings();
     }
 
@@ -2415,7 +2431,11 @@ bool
 ContentChild::RecvMinimizeMemoryUsage()
 {
 #ifdef MOZ_NUWA_PROCESS
-    MOZ_ASSERT(!IsNuwaProcess() || !IsNuwaReady());
+    if (IsNuwaProcess()) {
+        // Don't minimize memory in the nuwa process: it will perform GC, but the
+        // GC thread could be frozen.
+        return true;
+    }
 #endif
     nsCOMPtr<nsIMemoryReporterManager> mgr =
         do_GetService("@mozilla.org/memory-reporter-manager;1");
@@ -2804,7 +2824,7 @@ ContentChild::RecvInvokeDragSession(nsTArray<IPCDataTransfer>&& aTransfers,
     if (session) {
       session->SetDragAction(aAction);
       nsCOMPtr<DataTransfer> dataTransfer =
-        new DataTransfer(nullptr, eDragStart, false, -1);
+        new DataTransfer(nullptr, NS_DRAGDROP_START, false, -1);
       for (uint32_t i = 0; i < aTransfers.Length(); ++i) {
         auto& items = aTransfers[i].items();
         for (uint32_t j = 0; j < items.Length(); ++j) {
@@ -2862,3 +2882,4 @@ ContentChild::RecvTestGraphicsDeviceReset(const uint32_t& aResetReason)
 
 } // namespace dom
 } // namespace mozilla
+

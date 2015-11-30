@@ -25,8 +25,7 @@ public:
                                      bool aIsFirstPaint,
                                      bool aScheduleComposite,
                                      uint32_t aPaintSequenceNumber,
-                                     bool aIsRepeatTransaction,
-                                     int32_t aPaintSyncId) = 0;
+                                     bool aIsRepeatTransaction) = 0;
 
     virtual AsyncCompositionManager* GetCompositionManager(LayerTransactionParent* aLayerTree) { return nullptr; }
 

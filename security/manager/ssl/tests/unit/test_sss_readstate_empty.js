@@ -5,7 +5,7 @@
 // The purpose of this test is to create an empty site security service state
 // file and see that the site security service doesn't fail when reading it.
 
-var gSSService = null;
+let gSSService = null;
 
 function checkStateRead(aSubject, aTopic, aData) {
   // nonexistent.example.com should never be an HSTS host

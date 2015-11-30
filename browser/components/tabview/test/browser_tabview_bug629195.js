@@ -1,9 +1,9 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var win;
-var contentWindow;
-var originalTab;
+let win;
+let contentWindow;
+let originalTab;
 
 function test() {
   waitForExplicitFinish();

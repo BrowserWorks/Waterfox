@@ -12,7 +12,6 @@ loop.store = loop.store || {};
   var CALL_TYPES = loop.shared.utils.CALL_TYPES;
   var REST_ERRNOS = loop.shared.utils.REST_ERRNOS;
   var FAILURE_DETAILS = loop.shared.utils.FAILURE_DETAILS;
-  var WEBSOCKET_REASONS = loop.shared.utils.WEBSOCKET_REASONS;
 
   /**
    * Websocket states taken from:
@@ -338,10 +337,7 @@ loop.store = loop.store || {};
       }
 
       this._endSession();
-      this.setStoreState({
-        callState: this._storeState.callState === CALL_STATES.ONGOING ?
-                   CALL_STATES.FINISHED : CALL_STATES.CLOSE
-      });
+      this.setStoreState({callState: CALL_STATES.FINISHED});
     },
 
     /**
@@ -428,6 +424,7 @@ loop.store = loop.store || {};
         decryptedContext: {
           roomName: actionData.roomName
         },
+        roomOwner: actionData.roomOwner,
         maxSize: loop.store.MAX_ROOM_CREATION_SIZE,
         expiresIn: loop.store.DEFAULT_EXPIRES_IN
       }, function(err, createdRoomData) {
@@ -451,14 +448,14 @@ loop.store = loop.store || {};
       if (actionData.isLocal) {
         this.setStoreState({
           localVideoEnabled: actionData.hasVideo,
-          localSrcMediaElement: actionData.srcMediaElement
+          localSrcVideoObject: actionData.srcVideoObject
         });
         return;
       }
 
       this.setStoreState({
         remoteVideoEnabled: actionData.hasVideo,
-        remoteSrcMediaElement: actionData.srcMediaElement
+        remoteSrcVideoObject: actionData.srcVideoObject
       });
     },
 
@@ -470,13 +467,13 @@ loop.store = loop.store || {};
     mediaStreamDestroyed: function(actionData) {
       if (actionData.isLocal) {
         this.setStoreState({
-          localSrcMediaElement: null
+          localSrcVideoObject: null
         });
         return;
       }
 
       this.setStoreState({
-        remoteSrcMediaElement: null
+        remoteSrcVideoObject: null
       });
     },
 
@@ -549,7 +546,7 @@ loop.store = loop.store || {};
           if (err) {
             console.error("Failed to get outgoing call data", err);
             var failureReason = FAILURE_DETAILS.UNKNOWN;
-            if (err.errno === REST_ERRNOS.USER_UNAVAILABLE) {
+            if (err.errno == REST_ERRNOS.USER_UNAVAILABLE) {
               failureReason = FAILURE_DETAILS.USER_UNAVAILABLE;
             }
             this.dispatcher.dispatch(
@@ -631,19 +628,8 @@ loop.store = loop.store || {};
           (previousState !== WS_STATES.INIT &&
            previousState !== WS_STATES.ALERTING)) {
         // For outgoing calls we can treat everything as connection failure.
-
-        // XXX We currently fallback to the websocket reason, but really these should
-        // be fully migrated to use FAILURE_DETAILS, so as not to expose websocket
-        // states outside of this store. Bug 1124384 should help to fix this.
-        var reason = progressData.reason;
-
-        if (reason === WEBSOCKET_REASONS.REJECT ||
-            reason === WEBSOCKET_REASONS.BUSY) {
-          reason = FAILURE_DETAILS.USER_UNAVAILABLE;
-        }
-
         this.dispatcher.dispatch(new sharedActions.ConnectionFailure({
-          reason: reason
+          reason: progressData.reason
         }));
         return;
       }

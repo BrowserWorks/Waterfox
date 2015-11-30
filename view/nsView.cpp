@@ -18,7 +18,6 @@
 #include "nsXULPopupManager.h"
 #include "nsIWidgetListener.h"
 #include "nsContentUtils.h" // for nsAutoScriptBlocker
-#include "mozilla/TimelineConsumers.h"
 
 using namespace mozilla;
 
@@ -1072,28 +1071,12 @@ nsView::DidPaintWindow()
 }
 
 void
-nsView::DidCompositeWindow(const TimeStamp& aCompositeStart,
-                           const TimeStamp& aCompositeEnd)
+nsView::DidCompositeWindow()
 {
   nsIPresShell* presShell = mViewManager->GetPresShell();
   if (presShell) {
     nsAutoScriptBlocker scriptBlocker;
-
-    nsPresContext* context = presShell->GetPresContext();
-    context->GetDisplayRootPresContext()->GetRootPresContext()->NotifyDidPaintForSubtree(nsIPresShell::PAINT_COMPOSITE);
-
-    // If the two timestamps are identical, this was likely a fake composite
-    // event which wouldn't be terribly useful to display.
-    if (aCompositeStart == aCompositeEnd) {
-      return;
-    }
-
-    nsIDocShell* docShell = context->GetDocShell();
-
-    TimelineConsumers::AddMarkerForDocShell(docShell,
-      "Composite", aCompositeStart, MarkerTracingType::START);
-    TimelineConsumers::AddMarkerForDocShell(docShell,
-      "Composite", aCompositeEnd, MarkerTracingType::END);
+    presShell->GetPresContext()->GetDisplayRootPresContext()->GetRootPresContext()->NotifyDidPaintForSubtree(nsIPresShell::PAINT_COMPOSITE);
   }
 }
 

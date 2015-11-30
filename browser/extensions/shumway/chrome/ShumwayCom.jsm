@@ -16,17 +16,15 @@
 
 var EXPORTED_SYMBOLS = ['ShumwayCom'];
 
-Components.utils.import('resource://gre/modules/NetUtil.jsm');
-Components.utils.import('resource://gre/modules/Promise.jsm');
-Components.utils.import('resource://gre/modules/Services.jsm');
 Components.utils.import('resource://gre/modules/XPCOMUtils.jsm');
+Components.utils.import('resource://gre/modules/Services.jsm');
+Components.utils.import('resource://gre/modules/Promise.jsm');
 
 Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
 Components.utils.import('chrome://shumway/content/SpecialStorage.jsm');
 Components.utils.import('chrome://shumway/content/RtmpUtils.jsm');
 Components.utils.import('chrome://shumway/content/ExternalInterface.jsm');
 Components.utils.import('chrome://shumway/content/FileLoader.jsm');
-Components.utils.import('chrome://shumway/content/LocalConnection.jsm');
 
 XPCOMUtils.defineLazyModuleGetter(this, 'ShumwayTelemetry',
   'resource://shumway/ShumwayTelemetry.jsm');
@@ -77,9 +75,6 @@ function sanitizeTelemetryArgs(args) {
     case 'feature':
       request.featureType = args.feature | 0;
       break;
-    case 'loadResource':
-      request.resultType = args.resultType | 0;
-      break;
     case 'error':
       request.errorType = args.error | 0;
       break;
@@ -94,7 +89,6 @@ function sanitizeLoadFileArgs(args) {
     sessionId: +args.sessionId,
     limit: +args.limit || 0,
     mimeType: String(args.mimeType || ''),
-    method: (args.method + '') || 'GET',
     postData: args.postData || null
   };
 }
@@ -118,190 +112,109 @@ function sanitizeExternalComArgs(args) {
   return request;
 }
 
-var cloneIntoFromContent = (function () {
-  // waiveXrays are used due to bug 1150771, checking if we are affected
-  // TODO remove workaround after Firefox 40 is released (2015-08-11)
-  let sandbox1 = new Components.utils.Sandbox(null);
-  let sandbox2 = new Components.utils.Sandbox(null);
-  let arg = Components.utils.evalInSandbox('({buf: new ArrayBuffer(2)})', sandbox1);
-  let clonedArg = Components.utils.cloneInto(arg, sandbox2);
-  if (!Components.utils.waiveXrays(clonedArg).buf) {
-    return function (obj, contentSandbox) {
-      return Components.utils.cloneInto(
-        Components.utils.waiveXrays(obj), contentSandbox);
-    };
-  }
-
-  return function (obj, contentSandbox) {
-    return Components.utils.cloneInto(obj, contentSandbox);
-  };
-})();
-
-var ShumwayEnvironment = {
-  DEBUG: 'debug',
-  DEVELOPMENT: 'dev',
-  RELEASE: 'release',
-  TEST: 'test'
-};
-
 var ShumwayCom = {
-  environment: getCharPref('shumway.environment', 'dev'),
-  
   createAdapter: function (content, callbacks, hooks) {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var wrapped = {
-      environment: ShumwayCom.environment,
-    
-      enableDebug: function () {
+      enableDebug: function enableDebug() {
         callbacks.enableDebug()
       },
 
-      fallback: function () {
-        callbacks.sendMessage('fallback', null, false);
-      },
-
-      getSettings: function () {
-        return Components.utils.cloneInto(
-          callbacks.sendMessage('getSettings', null, true), content);
-      },
-
-      getPluginParams: function () {
-        return Components.utils.cloneInto(
-          callbacks.sendMessage('getPluginParams', null, true), content);
-      },
-
-      reportIssue: function () {
-        callbacks.sendMessage('reportIssue', null, false);
-      },
-
-      reportTelemetry: function (args) {
-        var request = sanitizeTelemetryArgs(args);
-        callbacks.sendMessage('reportTelemetry', request, false);
-      },
-
-      setupGfxComBridge: function (gfxWindow) {
-        // Creates ShumwayCom adapter for the gfx iframe exposing only subset
-        // of the privileged function. Removing Xrays to setup the ShumwayCom
-        // property and for usage as a sandbox for cloneInto operations.
-        var gfxContent = gfxWindow.contentWindow.wrappedJSObject;
-        ShumwayCom.createGfxAdapter(gfxContent, callbacks, hooks);
-
-        setupUserInput(gfxWindow.contentWindow, callbacks);
-      },
-
-      setupPlayerComBridge: function (playerWindow) {
-        // Creates ShumwayCom adapter for the player iframe exposing only subset
-        // of the privileged function. Removing Xrays to setup the ShumwayCom
-        // property and for usage as a sandbox for cloneInto operations.
-        var playerContent = playerWindow.contentWindow.wrappedJSObject;
-        ShumwayCom.createPlayerAdapter(playerContent, callbacks, hooks);
-      }
-    };
-
-    var shumwayComAdapter = Components.utils.cloneInto(wrapped, content, {cloneFunctions:true});
-    content.ShumwayCom = shumwayComAdapter;
-  },
-
-  createGfxAdapter: function (content, callbacks, hooks) {
-    // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
-    // up Xray wrappers.
-    var wrapped = {
-      environment: ShumwayCom.environment,
-
-      setFullscreen: function (value) {
+      setFullscreen: function setFullscreen(value) {
         value = !!value;
         callbacks.sendMessage('setFullscreen', value, false);
       },
 
-      reportTelemetry: function (args) {
+      fallback: function fallback() {
+        callbacks.sendMessage('fallback', null, false);
+      },
+
+      getSettings: function getSettings() {
+        return Components.utils.cloneInto(
+          callbacks.sendMessage('getSettings', null, true), content);
+      },
+
+      getPluginParams: function getPluginParams() {
+        return Components.utils.cloneInto(
+          callbacks.sendMessage('getPluginParams', null, true), content);
+      },
+
+      reportIssue: function reportIssue() {
+        callbacks.sendMessage('reportIssue', null, false);
+      },
+
+      reportTelemetry: function reportTelemetry(args) {
         var request = sanitizeTelemetryArgs(args);
         callbacks.sendMessage('reportTelemetry', request, false);
       },
 
-      postAsyncMessage: function (msg) {
-        if (hooks.onPlayerAsyncMessageCallback) {
-          hooks.onPlayerAsyncMessageCallback(msg);
+      userInput: function userInput() {
+        callbacks.sendMessage('userInput', null, true);
+      },
+
+      setupComBridge: function setupComBridge(playerWindow) {
+        // postSyncMessage helper function to relay messages from the secondary
+        // window to the primary one.
+        function postSyncMessage(msg) {
+          if (onSyncMessageCallback) {
+            // the msg came from other content window
+            // waiveXrays are used due to bug 1150771.
+            var reclonedMsg = Components.utils.cloneInto(Components.utils.waiveXrays(msg), content);
+            var result = onSyncMessageCallback(reclonedMsg);
+            // the result will be sent later to other content window
+            var waivedResult = Components.utils.waiveXrays(result);
+            return waivedResult;
+          }
         }
+
+        // Creates secondary ShumwayCom adapter.
+        var playerContent = playerWindow.contentWindow.wrappedJSObject;
+        ShumwayCom.createPlayerAdapter(playerContent, postSyncMessage, callbacks, hooks);
       },
 
       setSyncMessageCallback: function (callback) {
-        if (typeof callback !== 'function') {
-          log('error: attempt to set non-callable as callback in setSyncMessageCallback');
+        if (callback !== null && typeof callback !== 'function') {
           return;
         }
-        hooks.onGfxSyncMessageCallback = function (msg, sandbox) {
-          var reclonedMsg = cloneIntoFromContent(msg, content);
-          var result = callback(reclonedMsg);
-          return cloneIntoFromContent(result, sandbox);
-        };
-      },
-
-      setAsyncMessageCallback: function (callback) {
-        if (typeof callback !== 'function') {
-          log('error: attempt to set non-callable as callback in setAsyncMessageCallback');
-          return;
-        }
-        hooks.onGfxAsyncMessageCallback = function (msg) {
-          var reclonedMsg = cloneIntoFromContent(msg, content);
-          callback(reclonedMsg);
-        };
+        onSyncMessageCallback = callback;
       }
     };
-    
-    if (ShumwayCom.environment === ShumwayEnvironment.TEST) {
-      wrapped.processFrame = function () {
-        callbacks.sendMessage('processFrame');
-      };
-      
-      wrapped.processFSCommand = function (command, args) {
-        callbacks.sendMessage('processFSCommand', command, args);
-      };
-      
-      wrapped.setScreenShotCallback = function (callback) {
-        callbacks.sendMessage('setScreenShotCallback', callback);
-      };
-    }
+
+    var onSyncMessageCallback = null;
 
     var shumwayComAdapter = Components.utils.cloneInto(wrapped, content, {cloneFunctions:true});
     content.ShumwayCom = shumwayComAdapter;
   },
 
-  createPlayerAdapter: function (content, callbacks, hooks) {
+  createPlayerAdapter: function (content, postSyncMessage, callbacks, hooks) {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var wrapped = {
-      environment: ShumwayCom.environment,
-    
-      externalCom: function (args) {
+      externalCom: function externalCom(args) {
         var request = sanitizeExternalComArgs(args);
         var result = String(callbacks.sendMessage('externalCom', request, true));
         return result;
       },
 
-      loadFile: function (args) {
+      loadFile: function loadFile(args) {
         var request = sanitizeLoadFileArgs(args);
         callbacks.sendMessage('loadFile', request, false);
       },
 
-      abortLoad: function (sessionId) {
-        sessionId = sessionId|0;
-        callbacks.sendMessage('abortLoad', sessionId, false);
-      },
-
-      reportTelemetry: function (args) {
+      reportTelemetry: function reportTelemetry(args) {
         var request = sanitizeTelemetryArgs(args);
         callbacks.sendMessage('reportTelemetry', request, false);
       },
 
-      setClipboard: function (args) {
+      setClipboard: function setClipboard(args) {
         if (typeof args !== 'string') {
           return; // ignore non-string argument
         }
         callbacks.sendMessage('setClipboard', args, false);
       },
 
-      navigateTo: function (args) {
+      navigateTo: function navigateTo(args) {
         var request = {
           url: String(args.url || ''),
           target: String(args.target || '')
@@ -309,7 +222,7 @@ var ShumwayCom = {
         callbacks.sendMessage('navigateTo', request, false);
       },
 
-      loadSystemResource: function (id) {
+      loadSystemResource: function loadSystemResource(id) {
         loadShumwaySystemResource(id).then(function (data) {
           if (onSystemResourceCallback) {
             onSystemResourceCallback(id, Components.utils.cloneInto(data, content));
@@ -317,29 +230,9 @@ var ShumwayCom = {
         });
       },
 
-      sendSyncMessage: function (msg) {
-        var result;
-        if (hooks.onGfxSyncMessageCallback) {
-          result = hooks.onGfxSyncMessageCallback(msg, content);
-        }
-        return result;
-      },
-
-      postAsyncMessage: function (msg) {
-        if (hooks.onGfxAsyncMessageCallback) {
-          hooks.onGfxAsyncMessageCallback(msg);
-        }
-      },
-
-      setAsyncMessageCallback: function (callback) {
-        if (typeof callback !== 'function') {
-          log('error: attempt to set non-callable as callback in setAsyncMessageCallback');
-          return;
-        }
-        hooks.onPlayerAsyncMessageCallback = function (msg) {
-          var reclonedMsg = cloneIntoFromContent(msg, content);
-          callback(reclonedMsg);
-        };
+      postSyncMessage: function (msg) {
+        var result = postSyncMessage(msg);
+        return Components.utils.cloneInto(result, content)
       },
 
       createSpecialStorage: function () {
@@ -374,14 +267,6 @@ var ShumwayCom = {
           return;
         }
         onSystemResourceCallback = callback;
-      },
-
-      getLocalConnectionService: function() {
-        if (!wrappedLocalConnectionService) {
-          wrappedLocalConnectionService = new LocalConnectionService(content,
-                                                                     callbacks.getEnvironment());
-        }
-        return wrappedLocalConnectionService;
       }
     };
 
@@ -404,17 +289,9 @@ var ShumwayCom = {
       };
     }
 
-    if (ShumwayCom.environment === ShumwayEnvironment.TEST) {
-      wrapped.print = function(msg) {
-        callbacks.sendMessage('print', msg);
-      }
-    }
-
     var onSystemResourceCallback = null;
     var onExternalCallback = null;
     var onLoadFileCallback = null;
-
-    var wrappedLocalConnectionService = null;
 
     hooks.onLoadFileCallback = function (arg) {
       if (onLoadFileCallback) {
@@ -469,18 +346,6 @@ function loadShumwaySystemResource(id) {
   return deferred.promise;
 }
 
-function setupUserInput(contentWindow, callbacks) {
-  function notifyUserInput() {
-    callbacks.sendMessage('userInput', null, true);
-  }
-
-  // Ignoring the untrusted events by providing the 4th argument for addEventListener.
-  contentWindow.document.addEventListener('mousedown', notifyUserInput, true, false);
-  contentWindow.document.addEventListener('mouseup', notifyUserInput, true, false);
-  contentWindow.document.addEventListener('keydown', notifyUserInput, true, false);
-  contentWindow.document.addEventListener('keyup', notifyUserInput, true, false);
-}
-
 // All the privileged actions.
 function ShumwayChromeActions(startupInfo, window, document) {
   this.url = startupInfo.url;
@@ -490,7 +355,6 @@ function ShumwayChromeActions(startupInfo, window, document) {
   this.isOverlay = startupInfo.isOverlay;
   this.embedTag = startupInfo.embedTag;
   this.isPausedAtStart = startupInfo.isPausedAtStart;
-  this.initStartTime = startupInfo.initStartTime;
   this.window = window;
   this.document = document;
   this.allowScriptAccess = startupInfo.allowScriptAccess;
@@ -501,8 +365,9 @@ function ShumwayChromeActions(startupInfo, window, document) {
     errors: []
   };
 
-  this.fileLoader = new FileLoader(startupInfo.url, startupInfo.baseUrl, startupInfo.refererUrl,
-    function (args) { this.onLoadFileCallback(args); }.bind(this));
+  this.fileLoader = new FileLoader(startupInfo.url, startupInfo.baseUrl, function (args) {
+    this.onLoadFileCallback(args);
+  }.bind(this));
   this.onLoadFileCallback = null;
 
   this.externalInterface = null;
@@ -535,7 +400,8 @@ ShumwayChromeActions.prototype = {
       playerSettings: {
         turboMode: getBoolPref('shumway.turboMode', false),
         hud: getBoolPref('shumway.hud', false),
-        forceHidpi: getBoolPref('shumway.force_hidpi', false)
+        forceHidpi: getBoolPref('shumway.force_hidpi', false),
+        env: getCharPref('shumway.environment', 'dev')
       }
     }
   },
@@ -548,17 +414,12 @@ ShumwayChromeActions.prototype = {
       objectParams: this.objectParams,
       isOverlay: this.isOverlay,
       isPausedAtStart: this.isPausedAtStart,
-      initStartTime: this.initStartTime,
       isDebuggerEnabled: getBoolPref('shumway.debug.enabled', false)
     };
   },
 
   loadFile: function loadFile(data) {
     this.fileLoader.load(data);
-  },
-
-  abortLoad: function abortLoad(sessionId) {
-    this.fileLoader.abort(sessionId);
   },
 
   navigateTo: function (data) {
@@ -590,11 +451,20 @@ ShumwayChromeActions.prototype = {
   },
 
   userInput: function() {
-    // Recording time of last user input for isUserInputInProgress below.
-    this.lastUserInput = Date.now();
+    var win = this.window;
+    var winUtils = win.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                      .getInterface(Components.interfaces.nsIDOMWindowUtils);
+    if (winUtils.isHandlingUserInput) {
+      this.lastUserInput = Date.now();
+    }
   },
 
   isUserInputInProgress: function () {
+    // TODO userInput does not work for OOP
+    if (!getBoolPref('shumway.userInputSecurity', true)) {
+      return true;
+    }
+
     // We don't trust our Shumway non-privileged code just yet to verify the
     // user input -- using userInput function above to track that.
     if ((Date.now() - this.lastUserInput) > MAX_USER_INPUT_TIMEOUT) {
@@ -643,13 +513,6 @@ ShumwayChromeActions.prototype = {
           !this.telemetry.features[featureType]) {
           this.telemetry.features[featureType] = true; // record only one feature per SWF
           ShumwayTelemetry.onFeature(featureType);
-        }
-        break;
-      case 'loadResource':
-        var resultType = request.resultType;
-        var MIN_RESULT_TYPE = 0, MAX_RESULT_TYPE = 10;
-        if (resultType >= MIN_RESULT_TYPE && resultType <= MAX_RESULT_TYPE) {
-          ShumwayTelemetry.onLoadResource(resultType);
         }
         break;
       case 'error':
@@ -704,35 +567,6 @@ ShumwayChromeActions.prototype = {
     }
 
     return this.externalInterface.processAction(data);
-  },
-  
-  postMessage: function (type, data) {
-    var embedTag = this.embedTag;
-    var event = embedTag.ownerDocument.createEvent('CustomEvent');
-    var detail = Components.utils.cloneInto({ type: type, data: data }, embedTag.ownerDocument.wrappedJSObject);
-    event.initCustomEvent('message', false, false, detail);
-    embedTag.dispatchEvent(event);
-  },
-  
-  processFrame: function () {
-    this.postMessage('processFrame');
-  },
-
-  processFSCommand: function (command, data) {
-    this.postMessage('processFSCommand', { command: command, data: data });
-  },
-
-  print: function (msg) {
-    this.postMessage('print', msg);
-  },
-
-  setScreenShotCallback: function (callback) {
-    var embedTag = this.embedTag;
-    Components.utils.exportFunction(function () {
-      // `callback` can be wrapped in a CPOW and thus cause a slow synchronous cross-process operation.
-      var result = callback();
-      return Components.utils.cloneInto(result, embedTag.ownerDocument);
-    }, embedTag.wrappedJSObject, {defineAs: 'getCanvasData'});
   }
 };
 

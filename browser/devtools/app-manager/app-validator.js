@@ -3,14 +3,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-var {Ci,Cu,CC} = require("chrome");
+let {Ci,Cu,CC} = require("chrome");
 const promise = require("devtools/toolkit/deprecated-sync-thenables");
 
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm");
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
-var XMLHttpRequest = CC("@mozilla.org/xmlextras/xmlhttprequest;1");
-var strings = Services.strings.createBundle("chrome://browser/locale/devtools/app-manager.properties");
+let XMLHttpRequest = CC("@mozilla.org/xmlextras/xmlhttprequest;1");
+let strings = Services.strings.createBundle("chrome://browser/locale/devtools/app-manager.properties");
 
 function AppValidator({ type, location }) {
   this.type = type;
@@ -37,22 +37,12 @@ AppValidator.prototype._getPackagedManifestFile = function () {
     this.error(strings.GetStringFromName("validator.expectProjectFolder"));
     return null;
   }
-
-  let appManifestFile = manifestFile.clone();
-  appManifestFile.append("manifest.webapp");
-
-  let jsonManifestFile = manifestFile.clone();
-  jsonManifestFile.append("manifest.json");
-
-  let hasAppManifest = appManifestFile.exists() && appManifestFile.isFile();
-  let hasJsonManifest = jsonManifestFile.exists() && jsonManifestFile.isFile();
-
-  if (!hasAppManifest && !hasJsonManifest) {
-    this.error(strings.GetStringFromName("validator.noManifestFile"));
+  manifestFile.append("manifest.webapp");
+  if (!manifestFile.exists() || !manifestFile.isFile()) {
+    this.error(strings.GetStringFromName("validator.wrongManifestFileName"));
     return null;
   }
-
-  return hasAppManifest ? appManifestFile : jsonManifestFile;
+  return manifestFile;
 };
 
 AppValidator.prototype._getPackagedManifestURL = function () {
@@ -201,6 +191,10 @@ AppValidator.prototype._getOriginURL = function () {
 };
 
 AppValidator.prototype.validateLaunchPath = function (manifest) {
+  // Addons don't use index page (yet?)
+  if (manifest.role && manifest.role === "addon") {
+    return promise.resolve();
+  }
   let deferred = promise.defer();
   // The launch_path field has to start with a `/`
   if (manifest.launch_path && manifest.launch_path[0] !== "/") {
@@ -256,7 +250,7 @@ AppValidator.prototype.validateLaunchPath = function (manifest) {
 
 AppValidator.prototype.validateType = function (manifest) {
   let appType = manifest.type || "web";
-  if (["web", "privileged", "certified"].indexOf(appType) === -1) {
+  if (["web", "trusted", "privileged", "certified"].indexOf(appType) === -1) {
     this.error(strings.formatStringFromName("validator.invalidAppType", [appType], 1));
   } else if (this.type == "hosted" &&
              ["certified", "privileged"].indexOf(appType) !== -1) {
@@ -273,20 +267,14 @@ AppValidator.prototype.validate = function () {
   this.errors = [];
   this.warnings = [];
   return this._getManifest().
-    then((manifest) => {
+    then((function (manifest) {
       if (manifest) {
         this.manifest = manifest;
-
-        // Skip validations for add-ons
-        if (manifest.role === "addon" || manifest.manifest_version) {
-          return promise.resolve();
-        }
-
         this.validateManifest(manifest);
         this.validateType(manifest);
         return this.validateLaunchPath(manifest);
       }
-    });
+    }).bind(this));
 };
 
 exports.AppValidator = AppValidator;

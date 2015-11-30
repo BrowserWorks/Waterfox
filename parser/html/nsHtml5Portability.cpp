@@ -6,7 +6,6 @@
 #include "nsString.h"
 #include "jArray.h"
 #include "nsHtml5Portability.h"
-#include "nsHtml5TreeBuilder.h"
 
 nsIAtom*
 nsHtml5Portability::newLocalNameFromBuffer(char16_t* buf, int32_t offset, int32_t length, nsHtml5AtomTable* interner)
@@ -17,15 +16,9 @@ nsHtml5Portability::newLocalNameFromBuffer(char16_t* buf, int32_t offset, int32_
 }
 
 nsString*
-nsHtml5Portability::newStringFromBuffer(char16_t* buf, int32_t offset, int32_t length, nsHtml5TreeBuilder* treeBuilder)
+nsHtml5Portability::newStringFromBuffer(char16_t* buf, int32_t offset, int32_t length)
 {
-  nsString* str = new nsString();
-  bool succeeded = str->Append(buf + offset, length, mozilla::fallible);
-  if (!succeeded) {
-    str->Assign(char16_t(0xFFFD));
-    treeBuilder->MarkAsBroken(NS_ERROR_OUT_OF_MEMORY);
-  }
-  return str;
+  return new nsString(buf + offset, length);
 }
 
 nsString*

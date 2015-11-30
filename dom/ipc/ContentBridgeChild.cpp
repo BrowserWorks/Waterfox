@@ -7,10 +7,12 @@
 #include "mozilla/dom/ContentBridgeChild.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/File.h"
+#include "mozilla/dom/StructuredCloneUtils.h"
 #include "mozilla/dom/TabChild.h"
 #include "mozilla/dom/ipc/BlobChild.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "mozilla/ipc/InputStreamUtils.h"
+#include "nsIObserverService.h"
 
 using namespace mozilla::ipc;
 using namespace mozilla::jsipc;
@@ -19,7 +21,8 @@ namespace mozilla {
 namespace dom {
 
 NS_IMPL_ISUPPORTS(ContentBridgeChild,
-                  nsIContentChild)
+                  nsIContentChild,
+                  nsIObserver)
 
 ContentBridgeChild::ContentBridgeChild(Transport* aTransport)
   : mTransport(aTransport)
@@ -33,6 +36,10 @@ ContentBridgeChild::~ContentBridgeChild()
 void
 ContentBridgeChild::ActorDestroy(ActorDestroyReason aWhy)
 {
+  nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
+  if (os) {
+    os->RemoveObserver(this, "content-child-shutdown");
+  }
   MessageLoop::current()->PostTask(
     FROM_HERE,
     NewRunnableMethod(this, &ContentBridgeChild::DeferredDestroy));
@@ -47,6 +54,11 @@ ContentBridgeChild::Create(Transport* aTransport, ProcessId aOtherPid)
 
   DebugOnly<bool> ok = bridge->Open(aTransport, aOtherPid, XRE_GetIOMessageLoop());
   MOZ_ASSERT(ok);
+
+  nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
+  if (os) {
+    os->AddObserver(bridge, "content-child-shutdown", false);
+  }
 
   return bridge;
 }
@@ -166,6 +178,17 @@ bool
 ContentBridgeChild::DeallocPBlobChild(PBlobChild* aActor)
 {
   return nsIContentChild::DeallocPBlobChild(aActor);
+}
+
+NS_IMETHODIMP
+ContentBridgeChild::Observe(nsISupports* aSubject,
+                             const char* aTopic,
+                             const char16_t* aData)
+{
+  if (!strcmp(aTopic, "content-child-shutdown")) {
+    Close();
+  }
+  return NS_OK;
 }
 
 } // namespace dom

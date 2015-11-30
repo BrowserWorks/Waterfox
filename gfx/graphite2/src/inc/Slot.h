@@ -32,13 +32,15 @@ of the License or (at your option) any later version.
 #include "inc/Font.h"
 #include "inc/Position.h"
 
+
+
 namespace graphite2 {
 
 typedef gr_attrCode attrCode;
 
 class GlyphFace;
-class SegCacheEntry;
 class Segment;
+class SegCacheEntry;
 
 struct SlotJustify
 {
@@ -73,14 +75,13 @@ public:
     unsigned short gid() const { return m_glyphid; }
     Position origin() const { return m_position; }
     float advance() const { return m_advance.x; }
-    void advance(Position &val) { m_advance = val; }
     Position advancePos() const { return m_advance; }
     int before() const { return m_before; }
     int after() const { return m_after; }
     uint32 index() const { return m_index; }
     void index(uint32 val) { m_index = val; }
 
-    Slot(int16 *m_userAttr = NULL);
+    Slot();
     void set(const Slot & slot, int charOffset, size_t numUserAttr, size_t justLevels, size_t numChars);
     Slot *next() const { return m_next; }
     void next(Slot *s) { m_next = s; }
@@ -97,7 +98,7 @@ public:
     void after(int ind) { m_after = ind; }
     bool isBase() const { return (!m_parent); }
     void update(int numSlots, int numCharInfo, Position &relpos);
-    Position finalise(const Segment* seg, const Font* font, Position & base, Rect & bbox, uint8 attrLevel, float & clusterMin, bool rtl, bool isFinal);
+    Position finalise(const Segment* seg, const Font* font, Position & base, Rect & bbox, uint8 attrLevel, float & clusterMin);
     bool isDeleted() const { return (m_flags & DELETED) ? true : false; }
     void markDeleted(bool state) { if (state) m_flags |= DELETED; else m_flags &= ~DELETED; }
     bool isCopied() const { return (m_flags & COPIED) ? true : false; }
@@ -107,7 +108,6 @@ public:
     bool isInsertBefore() const { return !(m_flags & INSERTED); }
     uint8 getBidiLevel() const { return m_bidiLevel; }
     void setBidiLevel(uint8 level) { m_bidiLevel = level; }
-    int8 getBidiClass(const Segment *seg);
     int8 getBidiClass() const { return m_bidiCls; }
     void setBidiClass(int8 cls) { m_bidiCls = cls; }
     int16 *userAttrs() const { return m_userAttr; }
@@ -122,20 +122,16 @@ public:
     Slot *attachedTo() const { return m_parent; }
     Position attachOffset() const { return m_attach - m_with; }
     Slot* firstChild() const { return m_child; }
-    void firstChild(Slot *ap) { m_child = ap; }
     bool child(Slot *ap);
     Slot* nextSibling() const { return m_sibling; }
-    void nextSibling(Slot *ap) { m_sibling = ap; }
     bool sibling(Slot *ap);
     bool removeChild(Slot *ap);
     bool removeSibling(Slot *ap);
-    int32 clusterMetric(const Segment* seg, uint8 metric, uint8 attrLevel, bool rtl);
+    int32 clusterMetric(const Segment* seg, uint8 metric, uint8 attrLevel);
     void positionShift(Position a) { m_position += a; }
     void floodShift(Position adj);
     float just() const { return m_just; }
     void just(float j) { m_just = j; }
-    Slot *nextInCluster(const Slot *s) const;
-    bool isChildOf(const Slot *base) const;
 
     CLASS_NEW_DELETE
 

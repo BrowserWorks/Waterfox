@@ -66,37 +66,6 @@
 namespace mozilla {
 namespace internal {
 
-class AutoVirtualProtect
-{
-public:
-  AutoVirtualProtect(void* aFunc, size_t aSize, DWORD aProtect)
-    : mFunc(aFunc), mSize(aSize), mNewProtect(aProtect), mOldProtect(0),
-      mSuccess(false)
-  {}
-
-  ~AutoVirtualProtect()
-  {
-    if (mSuccess) {
-      VirtualProtectEx(GetCurrentProcess(), mFunc, mSize, mOldProtect,
-                       &mOldProtect);
-    }
-  }
-
-  bool Protect()
-  {
-    mSuccess = !!VirtualProtectEx(GetCurrentProcess(), mFunc, mSize,
-                                  mNewProtect, &mOldProtect);
-    return mSuccess;
-  }
-
-private:
-  void* const mFunc;
-  size_t const mSize;
-  DWORD const mNewProtect;
-  DWORD mOldProtect;
-  bool mSuccess;
-};
-
 class WindowsDllNopSpacePatcher
 {
   typedef unsigned char* byteptr_t;
@@ -122,14 +91,17 @@ public:
       byteptr_t fn = mPatchedFns[i];
 
       // Ensure we can write to the code.
-      AutoVirtualProtect protect(fn, 2, PAGE_EXECUTE_READWRITE);
-      if (!protect.Protect()) {
+      DWORD op;
+      if (!VirtualProtectEx(GetCurrentProcess(), fn, 2, PAGE_EXECUTE_READWRITE, &op)) {
         // printf("VirtualProtectEx failed! %d\n", GetLastError());
         continue;
       }
 
       // mov edi, edi
       *((uint16_t*)fn) = 0xff8b;
+
+      // Restore the old protection.
+      VirtualProtectEx(GetCurrentProcess(), fn, 2, op, &op);
 
       // I don't think this is actually necessary, but it can't hurt.
       FlushInstructionCache(GetCurrentProcess(),
@@ -169,15 +141,18 @@ public:
 
     // Ensure we can read and write starting at fn - 5 (for the long jmp we're
     // going to write) and ending at fn + 2 (for the short jmp up to the long
-    // jmp). These bytes may span two pages with different protection.
-    AutoVirtualProtect protectBefore(fn - 5, 5, PAGE_EXECUTE_READWRITE);
-    AutoVirtualProtect protectAfter(fn, 2, PAGE_EXECUTE_READWRITE);
-    if (!protectBefore.Protect() || !protectAfter.Protect()) {
+    // jmp).
+    DWORD op;
+    if (!VirtualProtectEx(GetCurrentProcess(), fn - 5, 7,
+                          PAGE_EXECUTE_READWRITE, &op)) {
       //printf ("VirtualProtectEx failed! %d\n", GetLastError());
       return false;
     }
 
     bool rv = WriteHook(fn, aHookDest, aOrigFunc);
+
+    // Re-protect, and we're done.
+    VirtualProtectEx(GetCurrentProcess(), fn - 5, 7, op, &op);
 
     if (rv) {
       mPatchedFns[mPatchedFnsLen] = fn;
@@ -273,14 +248,13 @@ public:
 #error "Unknown processor type"
 #endif
       byteptr_t origBytes = *((byteptr_t*)p);
-
       // ensure we can modify the original code
-      AutoVirtualProtect protect(origBytes, nBytes, PAGE_EXECUTE_READWRITE);
-      if (!protect.Protect()) {
+      DWORD op;
+      if (!VirtualProtectEx(GetCurrentProcess(), origBytes, nBytes,
+                            PAGE_EXECUTE_READWRITE, &op)) {
         //printf ("VirtualProtectEx failed! %d\n", GetLastError());
         continue;
       }
-
       // Remove the hook by making the original function jump directly
       // in the trampoline.
       intptr_t dest = (intptr_t)(p + sizeof(void*));
@@ -292,6 +266,8 @@ public:
 #else
 #error "Unknown processor type"
 #endif
+      // restore protection; if this fails we can't really do anything about it
+      VirtualProtectEx(GetCurrentProcess(), origBytes, nBytes, op, &op);
     }
   }
 
@@ -451,13 +427,13 @@ protected:
 
     while (nBytes < 13) {
 
-      // if found JMP 32bit offset, next bytes must be NOP or INT3
+      // if found JMP 32bit offset, next bytes must be NOP
       if (pJmp32 >= 0) {
-        if (origBytes[nBytes] == 0x90 || origBytes[nBytes] == 0xcc) {
-          nBytes++;
-          continue;
+        if (origBytes[nBytes++] != 0x90) {
+          return;
         }
-        return;
+
+        continue;
       }
       if (origBytes[nBytes] == 0x0f) {
         nBytes++;
@@ -653,8 +629,9 @@ protected:
     *aOutTramp = tramp;
 
     // ensure we can modify the original code
-    AutoVirtualProtect protect(aOrigFunction, nBytes, PAGE_EXECUTE_READWRITE);
-    if (!protect.Protect()) {
+    DWORD op;
+    if (!VirtualProtectEx(GetCurrentProcess(), aOrigFunction, nBytes,
+                          PAGE_EXECUTE_READWRITE, &op)) {
       //printf ("VirtualProtectEx failed! %d\n", GetLastError());
       return;
     }
@@ -676,6 +653,9 @@ protected:
     origBytes[11] = 0xff;
     origBytes[12] = 0xe3;
 #endif
+
+    // restore protection; if this fails we can't really do anything about it
+    VirtualProtectEx(GetCurrentProcess(), aOrigFunction, nBytes, op, &op);
   }
 
   byteptr_t FindTrampolineSpace()

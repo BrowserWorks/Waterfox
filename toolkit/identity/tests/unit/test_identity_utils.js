@@ -34,7 +34,7 @@ function test_check_renamed() {
   run_next_test();
 }
 
-var TESTS = [
+let TESTS = [
   test_check_deprecated,
   test_check_renamed
 ];

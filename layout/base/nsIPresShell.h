@@ -20,7 +20,6 @@
 #ifndef nsIPresShell_h___
 #define nsIPresShell_h___
 
-#include "mozilla/ArenaObjectID.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/StaticPtr.h"
@@ -140,10 +139,10 @@ typedef struct CapturingContentInfo {
   mozilla::StaticRefPtr<nsIContent> mContent;
 } CapturingContentInfo;
 
-// b07c5323-3061-4ca9-95ed-84cccbffadac
+// 4f512d0b-c58c-4fc9-ae42-8aa6d992e7ae
 #define NS_IPRESSHELL_IID \
-{ 0xb07c5323, 0x3061, 0x4ca9, \
-  { 0x95, 0xed, 0x84, 0xcc, 0xcb, 0xff, 0xad, 0xac } }
+{ 0x4f512d0b, 0xc58c, 0x4fc9, \
+  { 0xae, 0x42, 0x8a, 0xa6, 0xd9, 0x92, 0xe7, 0xae } }
 
 // debug VerifyReflow flags
 #define VERIFY_REFLOW_ON                    0x01
@@ -247,7 +246,7 @@ public:
    * the same aSize value.  AllocateByObjectID returns zero-filled memory.
    * AllocateByObjectID is infallible and will abort on out-of-memory.
    */
-  void* AllocateByObjectID(mozilla::ArenaObjectID aID, size_t aSize)
+  void* AllocateByObjectID(nsPresArena::ObjectID aID, size_t aSize)
   {
 #ifdef DEBUG
     mPresArenaAllocCount++;
@@ -257,7 +256,7 @@ public:
     return result;
   }
 
-  void FreeByObjectID(mozilla::ArenaObjectID aID, void* aPtr)
+  void FreeByObjectID(nsPresArena::ObjectID aID, void* aPtr)
   {
 #ifdef DEBUG
     mPresArenaAllocCount--;
@@ -290,23 +289,6 @@ public:
 #endif
     if (!mIsDestroying)
       mFrameArena.FreeBySize(aSize, aPtr);
-  }
-
-  template<typename T>
-  void RegisterArenaRefPtr(mozilla::ArenaRefPtr<T>* aPtr)
-  {
-    mFrameArena.RegisterArenaRefPtr(aPtr);
-  }
-
-  template<typename T>
-  void DeregisterArenaRefPtr(mozilla::ArenaRefPtr<T>* aPtr)
-  {
-    mFrameArena.DeregisterArenaRefPtr(aPtr);
-  }
-
-  void ClearArenaRefPtrs(mozilla::ArenaObjectID aObjectID)
-  {
-    mFrameArena.ClearArenaRefPtrs(aObjectID);
   }
 
   nsIDocument* GetDocument() const { return mDocument; }
@@ -422,6 +404,12 @@ public:
    * coordinates for aWidth and aHeight must be in standard nscoord's.
    */
   virtual nsresult ResizeReflow(nscoord aWidth, nscoord aHeight) = 0;
+  /**
+   * Reflow, and also change presshell state so as to only permit
+   * reflowing off calls to ResizeReflowOverride() in the future.
+   * ResizeReflow() calls are ignored after ResizeReflowOverride().
+   */
+  virtual nsresult ResizeReflowOverride(nscoord aWidth, nscoord aHeight) = 0;
   /**
    * Do the same thing as ResizeReflow but even if ResizeReflowOverride was
    * called previously.
@@ -1665,6 +1653,11 @@ public:
     return mScrollPositionClampingScrollPortSize;
   }
 
+  void SetContentDocumentFixedPositionMargins(const nsMargin& aMargins);
+  const nsMargin& GetContentDocumentFixedPositionMargins() {
+    return mContentDocumentFixedPositionMargins;
+  }
+
   virtual void WindowSizeMoveDone() = 0;
   virtual void SysColorChanged() = 0;
   virtual void ThemeChanged() = 0;
@@ -1756,6 +1749,12 @@ protected:
   uint64_t                  mPaintCount;
 
   nsSize                    mScrollPositionClampingScrollPortSize;
+
+  // This margin is intended to be used when laying out fixed position children
+  // on this PresShell's viewport frame. See the documentation of
+  // nsIDOMWindowUtils.setContentDocumentFixedPositionMargins for details of
+  // their use.
+  nsMargin                  mContentDocumentFixedPositionMargins;
 
   // A list of weak frames. This is a pointer to the last item in the list.
   nsWeakFrame*              mWeakFrames;

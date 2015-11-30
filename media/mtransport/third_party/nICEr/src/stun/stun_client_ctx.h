@@ -65,6 +65,7 @@ typedef union nr_stun_client_params_ {
 #endif /* USE_STUND_0_96 */
 
 #ifdef USE_ICE
+    nr_stun_client_ice_use_candidate_params                  ice_use_candidate;
     nr_stun_client_ice_binding_request_params                ice_binding_request;
 #endif /* USE_ICE */
 

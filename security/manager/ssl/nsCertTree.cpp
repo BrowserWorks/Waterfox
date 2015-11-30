@@ -84,9 +84,9 @@ CompareCacheClearEntry(PLDHashTable *table, PLDHashEntryHdr *hdr)
 }
 
 static const PLDHashTableOps gMapOps = {
-  PLDHashTable::HashVoidPtrKeyStub,
+  PL_DHashVoidPtrKeyStub,
   CompareCacheMatchEntry,
-  PLDHashTable::MoveEntryStub,
+  PL_DHashMoveEntryStub,
   CompareCacheClearEntry,
   CompareCacheInitEntry
 };
@@ -186,14 +186,14 @@ CompareCacheHashEntry *
 nsCertTree::getCacheEntry(void *cache, void *aCert)
 {
   PLDHashTable &aCompareCache = *reinterpret_cast<PLDHashTable*>(cache);
-  auto entryPtr = static_cast<CompareCacheHashEntryPtr*>
-                             (aCompareCache.Add(aCert, fallible));
+  CompareCacheHashEntryPtr *entryPtr = static_cast<CompareCacheHashEntryPtr*>
+    (PL_DHashTableAdd(&aCompareCache, aCert, fallible));
   return entryPtr ? entryPtr->entry : nullptr;
 }
 
 void nsCertTree::RemoveCacheEntry(void *key)
 {
-  mCompareCache.Remove(key);
+  PL_DHashTableRemove(&mCompareCache, key);
 }
 
 // CountOrganizations
@@ -771,8 +771,7 @@ nsCertTree::DeleteEntryObject(uint32_t index)
         if (certdi->mAddonInfo) {
           cert = certdi->mAddonInfo->mCert;
         }
-        nsCertAddonInfo* addonInfo =
-          certdi->mAddonInfo ? certdi->mAddonInfo.get() : nullptr;
+        nsCertAddonInfo *addonInfo = certdi->mAddonInfo ? certdi->mAddonInfo : nullptr;
         if (certdi->mTypeOfEntry == nsCertTreeDispInfo::host_port_override) {
           mOverrideService->ClearValidityOverride(certdi->mAsciiHost, certdi->mPort);
           if (addonInfo) {

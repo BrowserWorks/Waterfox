@@ -8,14 +8,14 @@ Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 
 // Tracking info/collections.
-var collectionsHelper = track_collections_helper();
-var collections = collectionsHelper.collections;
+let collectionsHelper = track_collections_helper();
+let collections = collectionsHelper.collections;
 
-var meta_global;
-var server;
+let meta_global;
+let server;
 
-var expectedUA;
-var ua;
+let expectedUA;
+let ua;
 function uaHandler(f) {
   return function(request, response) {
     ua = request.getHeader("User-Agent");

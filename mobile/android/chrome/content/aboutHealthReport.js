@@ -26,9 +26,9 @@ const EVENT_HEALTH_RESPONSE = "HealthReport:Response";
 
 // about:healthreport prefs are stored in Firefox's default Android
 // SharedPreferences.
-var sharedPrefs = SharedPreferences.forApp();
+let sharedPrefs = SharedPreferences.forApp();
 
-var healthReportWrapper = {
+let healthReportWrapper = {
   init: function () {
     let iframe = document.getElementById("remote-report");
     iframe.addEventListener("load", healthReportWrapper.initRemotePage, false);

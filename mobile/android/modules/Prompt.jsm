@@ -4,8 +4,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict"
 
-var Cc = Components.classes;
-var Ci = Components.interfaces;
+let Cc = Components.classes;
+let Ci = Components.interfaces;
 
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/Messaging.jsm");
@@ -120,9 +120,7 @@ Prompt.prototype = {
     return this._addInput({
       type: aOptions.type || "date",
       value: aOptions.value,
-      id: aOptions.id,
-      max: aOptions.max,
-      min: aOptions.min
+      id: aOptions.id
     });
   },
 

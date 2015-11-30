@@ -11,7 +11,7 @@ MARIONETTE_HEAD_JS = "head.js";
  *
  *   1) set "ril.data.apnSettings" to a given settings object,
  *   2) enable data connection and wait for a "datachange" event,
- *   3) check the IP address type of the active network info,
+ *   3) check the IP address type of the active network interface,
  *   4) disable data connection.
  *
  * Fulfill params: (none)
@@ -30,12 +30,12 @@ function doTest(aApnSettings, aHaveV4Address, aHaveV6Address) {
     .then(() => setDataEnabledAndWait(true))
     .then(function() {
       let nm = getNetworkManager();
-      let networkInfo = nm.activeNetworkInfo;
-      ok(networkInfo, "Active network info");
-      log("  Interface: " + networkInfo.name);
+      let active = nm.active;
+      ok(active, "Active network interface");
+      log("  Interface: " + active.name);
 
       let ips = {}, prefixLengths = {};
-      let num = networkInfo.getAddresses(ips, prefixLengths);
+      let num = active.getAddresses(ips, prefixLengths);
       log("  Num addresses: " + num);
       log("  Addresses: " + JSON.stringify(ips.value));
       log("  PrefixLengths: " + JSON.stringify(prefixLengths.value));
@@ -43,12 +43,12 @@ function doTest(aApnSettings, aHaveV4Address, aHaveV6Address) {
       if (aHaveV4Address) {
         ok(ips.value.reduce(function(aFound, aAddress) {
           return aFound || aAddress.indexOf(":") < 0;
-        }, false), "IPv4 address");
+        }), "IPv4 address");
       }
       if (aHaveV6Address) {
         ok(ips.value.reduce(function(aFound, aAddress) {
           return aFound || aAddress.indexOf(":") > 0;
-        }, false), "IPv6 address");
+        }), "IPv6 address");
       }
     })
     .then(() => setDataEnabledAndWait(false));
@@ -106,16 +106,14 @@ startTestCommon(function() {
 
         .then(() => doTestHome(aApnSettings, "NoSuchProtocol"))
         .then(() => doTestHome(aApnSettings, "IP"))
-        // TODO: Bug 979137 - B2G Emulator: Support the IPV4V6
-        //.then(() => doTestHome(aApnSettings, "IPV4V6"))
+        .then(() => doTestHome(aApnSettings, "IPV4V6"))
         .then(() => doTestHome(aApnSettings, "IPV6"))
 
         .then(() => setEmulatorRoamingAndWait(true))
 
         .then(() => doTestRoaming(aApnSettings, "NoSuchProtocol"))
         .then(() => doTestRoaming(aApnSettings, "IP"))
-        // TODO: Bug 979137 - B2G Emulator: Support the IPV4V6
-        //.then(() => doTestRoaming(aApnSettings, "IPV4V6"))
+        .then(() => doTestRoaming(aApnSettings, "IPV4V6"))
         .then(() => doTestRoaming(aApnSettings, "IPV6"))
 
         .then(() => setEmulatorRoamingAndWait(false));

@@ -96,7 +96,7 @@
 #include "xpcpublic.h"
 #include "js/TracingAPI.h"
 #include "js/WeakMapPtr.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nscore.h"
 #include "nsXPCOM.h"
 #include "nsAutoPtr.h"
@@ -153,6 +153,7 @@
 #include "nsJSPrincipals.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "xpcObjectHelper.h"
+#include "nsIThreadInternal.h"
 
 #include "SandboxPrivate.h"
 #include "BackstagePass.h"
@@ -210,7 +211,7 @@ extern const char XPC_XPCONNECT_CONTRACTID[];
     return (result || !src) ? NS_OK : NS_ERROR_OUT_OF_MEMORY
 
 
-#define WRAPPER_FLAGS JSCLASS_HAS_PRIVATE
+#define WRAPPER_FLAGS (JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS )
 
 #define INVALID_OBJECT ((JSObject*)1)
 
@@ -239,12 +240,14 @@ static inline bool IS_WN_REFLECTOR(JSObject* obj)
 // returned as function call result values they are not addref'd. Exceptions
 // to this rule are noted explicitly.
 
-class nsXPConnect final : public nsIXPConnect
+class nsXPConnect final : public nsIXPConnect,
+                          public nsIThreadObserver
 {
 public:
     // all the interface method declarations...
     NS_DECL_ISUPPORTS
     NS_DECL_NSIXPCONNECT
+    NS_DECL_NSITHREADOBSERVER
 
     // non-interface implementation
 public:
@@ -320,6 +323,13 @@ private:
 
     XPCJSRuntime*                   mRuntime;
     bool                            mShuttingDown;
+
+    // nsIThreadInternal doesn't remember which observers it called
+    // OnProcessNextEvent on when it gets around to calling AfterProcessNextEvent.
+    // So if XPConnect gets initialized mid-event (which can happen), we'll get
+    // an 'after' notification without getting an 'on' notification. If we don't
+    // watch out for this, we'll do an unmatched |pop| on the context stack.
+    uint16_t                 mEventDepth;
 
     static uint32_t gReportAllJSExceptions;
 
@@ -479,9 +489,6 @@ public:
     NoteCustomGCThingXPCOMChildren(const js::Class* aClasp, JSObject* aObj,
                                    nsCycleCollectionTraversalCallback& aCb) const override;
 
-    virtual void BeforeProcessTask(bool aMightBlock) override;
-    virtual void AfterProcessTask(uint32_t aNewRecursionDepth) override;
-
     /**
      * Infrastructure for classes that need to defer part of the finalization
      * until after the GC has run, for example for objects that we don't want to
@@ -554,7 +561,7 @@ public:
     void PrepareForForgetSkippable() override;
     void BeginCycleCollectionCallback() override;
     void EndCycleCollectionCallback(mozilla::CycleCollectorResults& aResults) override;
-    void DispatchDeferredDeletion(bool aContinuation, bool aPurge = false) override;
+    void DispatchDeferredDeletion(bool continuation) override;
 
     void CustomGCCallback(JSGCStatus status) override;
     void CustomOutOfMemoryCallback() override;
@@ -607,6 +614,16 @@ public:
     void DeleteSingletonScopes();
 
     PRTime GetWatchdogTimestamp(WatchdogTimestampCategory aCategory);
+
+    void OnProcessNextEvent() {
+        mSlowScriptCheckpoint = mozilla::TimeStamp::NowLoRes();
+        mSlowScriptSecondHalf = false;
+        js::ResetStopwatches(Get()->Runtime());
+    }
+    void OnAfterProcessNextEvent() {
+        mSlowScriptCheckpoint = mozilla::TimeStamp();
+        mSlowScriptSecondHalf = false;
+    }
 
     nsTArray<nsXPCWrappedJS*>& WrappedJSToReleaseArray() { return mWrappedJSToReleaseArray; }
 
@@ -3040,7 +3057,7 @@ private:
 /******************************************************************************
  * Handles pre/post script processing.
  */
-class MOZ_RAII AutoScriptEvaluate
+class MOZ_STACK_CLASS AutoScriptEvaluate
 {
 public:
     /**
@@ -3077,7 +3094,7 @@ private:
 };
 
 /***************************************************************************/
-class MOZ_RAII AutoResolveName
+class MOZ_STACK_CLASS AutoResolveName
 {
 public:
     AutoResolveName(XPCCallContext& ccx, JS::HandleId name
@@ -3418,7 +3435,6 @@ struct GlobalProperties {
     bool crypto : 1;
     bool rtcIdentityProvider : 1;
     bool fetch : 1;
-    bool caches : 1;
 };
 
 // Infallible.

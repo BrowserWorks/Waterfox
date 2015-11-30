@@ -3,10 +3,12 @@ MOZ_UPDATE_CHANNEL = "beta"
 MOZILLA_DIR = BRANCH
 OBJDIR = "obj-l10n"
 EN_US_BINARY_URL = "http://archive.mozilla.org/pub/mobile/candidates/%(version)s-candidates/build%(buildnum)d/android-api-9/en-US"
+STAGE_SERVER = "upload.ffxbld.productdelivery.prod.mozaws.net"
+STAGE_USER = "ffxbld"
+STAGE_SSH_KEY = "~/.ssh/ffxbld_rsa"
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 config = {
-    "stage_product": "mobile",
     "log_name": "single_locale",
     "objdir": OBJDIR,
     "is_automation": True,
@@ -59,8 +61,15 @@ config = {
         "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
     },
     "base_en_us_binary_url": EN_US_BINARY_URL,
-    "upload_branch": "%s-android-api-9" % BRANCH,
-    "ssh_key_dir": "~/.ssh",
+    # TODO ideally we could get this info from a central location.
+    # However, the agility of these individual config files might trump that.
+    "upload_env": {
+        "UPLOAD_USER": STAGE_USER,
+        "UPLOAD_SSH_KEY": STAGE_SSH_KEY,
+        "UPLOAD_HOST": STAGE_SERVER,
+        "UPLOAD_TO_TEMP": "1",
+        "MOZ_PKG_VERSION": "%(version)s",
+    },
     "base_post_upload_cmd": "post_upload.py -p mobile -n %(buildnum)s -v %(version)s --builddir android-api-9/%(locale)s --release-to-mobile-candidates-dir --nightly-dir=candidates",
     "merge_locales": True,
     "make_dirs": ['config'],
@@ -68,6 +77,16 @@ config = {
     "mozconfig": "%s/mobile/android/config/mozconfigs/android-api-9-10-constrained/l10n-release" % MOZILLA_DIR,
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",
     "key_alias": "release",
+    "default_actions": [
+        "clobber",
+        "pull",
+        "list-locales",
+        "setup",
+        "repack",
+        "upload-repacks",
+        "submit-to-balrog",
+        "summary",
+    ],
     # Mock
     "mock_target": "mozilla-centos6-x86_64-android",
     "mock_packages": ['autoconf213', 'python', 'zip', 'mozilla-python27-mercurial', 'git', 'ccache',

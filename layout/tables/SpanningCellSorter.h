@@ -11,7 +11,7 @@
  * Code to sort cells by their colspan, used by BasicTableLayoutStrategy.
  */
 
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsDebug.h"
 #include "StackArena.h"
 

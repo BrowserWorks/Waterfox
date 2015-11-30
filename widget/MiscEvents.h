@@ -27,7 +27,7 @@ public:
     return this;
   }
 
-  WidgetContentCommandEvent(bool aIsTrusted, EventMessage aMessage,
+  WidgetContentCommandEvent(bool aIsTrusted, uint32_t aMessage,
                             nsIWidget* aWidget,
                             bool aOnlyEnabledCheck = false)
     : WidgetGUIEvent(aIsTrusted, aMessage, aWidget, eContentCommandEventClass)
@@ -46,10 +46,10 @@ public:
     return nullptr;
   }
 
-  // eContentCommandPasteTransferable
+  // NS_CONTENT_COMMAND_PASTE_TRANSFERABLE
   nsCOMPtr<nsITransferable> mTransferable; // [in]
 
-  // eContentCommandScroll
+  // NS_CONTENT_COMMAND_SCROLL
   // for mScroll.mUnit
   enum
   {
@@ -103,7 +103,7 @@ public:
 
   WidgetCommandEvent(bool aIsTrusted, nsIAtom* aEventType,
                      nsIAtom* aCommand, nsIWidget* aWidget)
-    : WidgetGUIEvent(aIsTrusted, eUnidentifiedEvent, aWidget,
+    : WidgetGUIEvent(aIsTrusted, NS_USER_DEFINED_EVENT, aWidget,
                      eCommandEventClass)
     , command(aCommand)
   {
@@ -145,7 +145,7 @@ class WidgetPluginEvent : public WidgetGUIEvent
 public:
   virtual WidgetPluginEvent* AsPluginEvent() override { return this; }
 
-  WidgetPluginEvent(bool aIsTrusted, EventMessage aMessage, nsIWidget* aWidget)
+  WidgetPluginEvent(bool aIsTrusted, uint32_t aMessage, nsIWidget* aWidget)
     : WidgetGUIEvent(aIsTrusted, aMessage, aWidget, ePluginEventClass)
     , retargetToFocusedDocument(false)
   {
@@ -158,7 +158,7 @@ public:
     MOZ_ASSERT(mClass == ePluginEventClass,
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
-    WidgetPluginEvent* result = new WidgetPluginEvent(false, mMessage, nullptr);
+    WidgetPluginEvent* result = new WidgetPluginEvent(false, message, nullptr);
     result->AssignPluginEventData(*this, true);
     result->mFlags = mFlags;
     return result;

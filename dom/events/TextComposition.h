@@ -319,7 +319,7 @@ private:
    */
   BaseEventFlags CloneAndDispatchAs(
                    const WidgetCompositionEvent* aCompositionEvent,
-                   EventMessage aMessage,
+                   uint32_t aMessage,
                    nsEventStatus* aStatus = nullptr,
                    EventDispatchingCallback* aCallBack = nullptr);
 
@@ -353,7 +353,7 @@ private:
   public:
     CompositionEventDispatcher(TextComposition* aTextComposition,
                                nsINode* aEventTarget,
-                               EventMessage aEventMessage,
+                               uint32_t aEventMessage,
                                const nsAString& aData,
                                bool aIsSynthesizedEvent = false);
     NS_IMETHOD Run() override;
@@ -361,8 +361,8 @@ private:
   private:
     nsRefPtr<TextComposition> mTextComposition;
     nsCOMPtr<nsINode> mEventTarget;
+    uint32_t mEventMessage;
     nsString mData;
-    EventMessage mEventMessage;
     bool mIsSynthesizedEvent;
 
     CompositionEventDispatcher() {};
@@ -381,7 +381,7 @@ private:
    *                                commit or cancel composition.  Otherwise,
    *                                false.
    */
-  void DispatchCompositionEventRunnable(EventMessage aEventMessage,
+  void DispatchCompositionEventRunnable(uint32_t aEventMessage,
                                         const nsAString& aData,
                                         bool aIsSynthesizingCommit = false);
 };

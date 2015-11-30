@@ -19,7 +19,7 @@
 namespace mozilla {
 
 // Forward declarations
-class JsepCodecDescription;
+struct JsepCodecDescription;
 class JsepTrack;
 struct JsepTrackPair;
 
@@ -135,8 +135,8 @@ public:
                                          const std::string& mid,
                                          uint16_t level) = 0;
   virtual nsresult AddLocalIceCandidate(const std::string& candidate,
+                                        const std::string& mid,
                                         uint16_t level,
-                                        std::string* mid,
                                         bool* skipped) = 0;
   virtual nsresult EndOfLocalCandidates(
       const std::string& defaultCandidateAddr,

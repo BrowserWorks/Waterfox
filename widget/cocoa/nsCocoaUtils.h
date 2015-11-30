@@ -244,7 +244,6 @@ public:
   static BOOL IsMomentumScrollEvent(NSEvent* aEvent);
   static BOOL HasPreciseScrollingDeltas(NSEvent* aEvent);
   static void GetScrollingDeltas(NSEvent* aEvent, CGFloat* aOutDeltaX, CGFloat* aOutDeltaY);
-  static BOOL EventHasPhaseInformation(NSEvent* aEvent);
 
   // Hides the Menu bar and the Dock. Multiple hide/show requests can be nested.
   static void HideOSChromeOnScreen(bool aShouldHide);
@@ -328,12 +327,8 @@ public:
    */
   static void InitInputEvent(mozilla::WidgetInputEvent &aInputEvent,
                              NSEvent* aNativeEvent);
-
-  /**
-   * Converts the native modifiers from aNativeEvent into WidgetMouseEvent
-   * Modifiers. aNativeEvent can be null.
-   */
-  static mozilla::Modifiers ModifiersForEvent(NSEvent* aNativeEvent);
+  static void InitInputEvent(mozilla::WidgetInputEvent &aInputEvent,
+                             NSUInteger aModifiers);
 
   /**
    * ConvertToCarbonModifier() returns carbon modifier flags for the cocoa

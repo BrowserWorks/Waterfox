@@ -1,5 +1,3 @@
-void	mq_nanosleep(unsigned ns);
-
 /*
  * Simple templated message queue implementation that relies on only mutexes for
  * synchronization (which reduces portability issues).  Given the following
@@ -77,23 +75,26 @@ a_attr a_mq_msg_type *							\
 a_prefix##get(a_mq_type *mq)						\
 {									\
 	a_mq_msg_type *msg;						\
-	unsigned ns;							\
+	struct timespec timeout;					\
 									\
 	msg = a_prefix##tryget(mq);					\
 	if (msg != NULL)						\
 		return (msg);						\
 									\
-	ns = 1;								\
+	timeout.tv_sec = 0;						\
+	timeout.tv_nsec = 1;						\
 	while (true) {							\
-		mq_nanosleep(ns);					\
+		nanosleep(&timeout, NULL);				\
 		msg = a_prefix##tryget(mq);				\
 		if (msg != NULL)					\
 			return (msg);					\
-		if (ns < 1000*1000*1000) {				\
+		if (timeout.tv_sec == 0) {				\
 			/* Double sleep time, up to max 1 second. */	\
-			ns <<= 1;					\
-			if (ns > 1000*1000*1000)			\
-				ns = 1000*1000*1000;			\
+			timeout.tv_nsec <<= 1;				\
+			if (timeout.tv_nsec >= 1000*1000*1000) {	\
+				timeout.tv_sec = 1;			\
+				timeout.tv_nsec = 0;			\
+			}						\
 		}							\
 	}								\
 }									\

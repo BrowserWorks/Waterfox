@@ -315,13 +315,10 @@ class MozbuildObject(ProcessExecutionMixin):
 
     def have_winrm(self):
         # `winrm -h` should print 'winrm version ...' and exit 1
-        try:
-            p = subprocess.Popen(['winrm.exe', '-h'],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
-            return p.wait() == 1 and p.stdout.read().startswith('winrm')
-        except:
-            return False
+        p = subprocess.Popen(['winrm.exe', '-h'],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
+        return p.wait() == 1 and p.stdout.read().startswith('winrm')
 
     def remove_objdir(self):
         """Remove the entire object directory."""

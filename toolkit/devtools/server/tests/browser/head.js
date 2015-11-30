@@ -9,10 +9,8 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 const {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
 const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const {DebuggerClient} = require("devtools/toolkit/client/main");
-const {DebuggerServer} = require("devtools/server/main");
-const {defer} = require("promise");
-const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+const {DebuggerClient} = Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
+const {DebuggerServer} = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
 
 const PATH = "browser/toolkit/devtools/server/tests/browser/";
 const MAIN_DOMAIN = "http://test1.example.org/" + PATH;
@@ -27,7 +25,7 @@ waitForExplicitFinish();
  * @param {String} url The url to be loaded in the new tab
  * @return a promise that resolves to the document when the url is loaded
  */
-var addTab = Task.async(function* (url) {
+let addTab = Task.async(function* (url) {
   info("Adding a new tab with URL: '" + url + "'");
   let tab = gBrowser.selectedTab = gBrowser.addTab();
   let loaded = once(gBrowser.selectedBrowser, "load", true);
@@ -40,7 +38,7 @@ var addTab = Task.async(function* (url) {
   yield new Promise(resolve => {
     let isBlank = url == "about:blank";
     waitForFocus(resolve, content, isBlank);
-  });
+  });;
 
   return tab.linkedBrowser.contentWindow.document;
 });
@@ -139,60 +137,3 @@ registerCleanupFunction(function tearDown() {
     gBrowser.removeCurrentTab();
   }
 });
-
-function idleWait(time) {
-  return DevToolsUtils.waitForTime(time);
-}
-
-function busyWait(time) {
-  let start = Date.now();
-  let stack;
-  while (Date.now() - start < time) { stack = Components.stack; }
-}
-
-/**
- * Waits until a predicate returns true.
- *
- * @param function predicate
- *        Invoked once in a while until it returns true.
- * @param number interval [optional]
- *        How often the predicate is invoked, in milliseconds.
- */
-function waitUntil(predicate, interval = 10) {
-  if (predicate()) {
-    return Promise.resolve(true);
-  }
-  return new Promise(resolve => {
-    setTimeout(function() {
-      waitUntil(predicate).then(() => resolve(true));
-    }, interval);
-  });
-}
-
-function waitForMarkerType(front, types, predicate) {
-  types = [].concat(types);
-  predicate = predicate || function(){ return true; };
-  let filteredMarkers = [];
-  let { promise, resolve } = defer();
-
-  info("Waiting for markers of type: " + types);
-
-  function handler (name, data) {
-    if (name !== "markers") {
-      return;
-    }
-
-    let markers = data.markers;
-    info("Got markers: " + JSON.stringify(markers, null, 2));
-
-    filteredMarkers = filteredMarkers.concat(markers.filter(m => types.indexOf(m.name) !== -1));
-
-    if (types.every(t => filteredMarkers.some(m => m.name === t)) && predicate(filteredMarkers)) {
-      front.off("timeline-data", handler);
-      resolve(filteredMarkers);
-    }
-  }
-  front.on("timeline-data", handler);
-
-  return promise;
-}

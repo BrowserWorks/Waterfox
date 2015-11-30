@@ -16,7 +16,7 @@ const {AppProjects} = require("devtools/app-manager/app-projects");
 const {Connection} = require("devtools/client/connection-manager");
 const {AppManager} = require("devtools/webide/app-manager");
 const EventEmitter = require("devtools/toolkit/event-emitter");
-const promise = require("promise");
+const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const ProjectEditor = require("projecteditor/projecteditor");
 const {GetAvailableAddons} = require("devtools/webide/addons");
 const {getJSON} = require("devtools/shared/getjson");
@@ -58,10 +58,10 @@ window.addEventListener("unload", function onUnload() {
   UI.destroy();
 });
 
-var projectList;
-var runtimeList;
+let projectList;
+let runtimeList;
 
-var UI = {
+let UI = {
   init: function() {
     this._telemetry = new Telemetry();
     this._telemetry.toolOpened("webide");
@@ -77,16 +77,6 @@ var UI = {
     projectList = new ProjectList(window, window);
     if (projectList.sidebarsEnabled) {
       ProjectPanel.toggleSidebar();
-
-      // TODO: Remove if/when dropdown layout is removed.
-      let toolbarNode = document.querySelector("#main-toolbar");
-      toolbarNode.classList.add("sidebar-layout");
-      let projectNode = document.querySelector("#project-panel-button");
-      projectNode.setAttribute("hidden", "true");
-      let runtimeNode = document.querySelector("#runtime-panel-button");
-      runtimeNode.setAttribute("hidden", "true");
-      let openAppNode = document.querySelector("#menuitem-show_projectPanel");
-      openAppNode.setAttribute("hidden", "true");
     }
     runtimeList = new RuntimeList(window, window);
     if (runtimeList.sidebarsEnabled) {
@@ -509,14 +499,8 @@ var UI = {
 
     if (AppManager.connected) {
       runtimePanelButton.setAttribute("active", "true");
-      if (projectList.sidebarsEnabled) {
-        runtimePanelButton.removeAttribute("hidden");
-      }
     } else {
       runtimePanelButton.removeAttribute("active");
-      if (projectList.sidebarsEnabled) {
-        runtimePanelButton.setAttribute("hidden", "true");
-      }
     }
 
     projectPanelCmd.removeAttribute("disabled");
@@ -1058,10 +1042,6 @@ var UI = {
   },
 
   updateToolboxFullscreenState: function() {
-    if (projectList.sidebarsEnabled) {
-      return;
-    }
-
     let panel = document.querySelector("#deck").selectedPanel;
     let nbox = document.querySelector("#notificationbox");
     if (panel && panel.id == "deck-panel-details" &&
@@ -1102,7 +1082,7 @@ var UI = {
 
 EventEmitter.decorate(UI);
 
-var Cmds = {
+let Cmds = {
   quit: function() {
     if (UI.canCloseProject()) {
       window.close();
@@ -1135,9 +1115,14 @@ var Cmds = {
       ProjectPanel.showPopup();
     }
 
-    // TODO: Remove this check if/when we remove the dropdown view.
+    // There are currently no available events to listen for when an unselected
+    // tab navigates.  Since we show every tab's location in the project menu,
+    // we re-list all the tabs each time the menu is displayed.
+    // TODO: An event-based solution will be needed for the sidebar UI.
     if (!projectList.sidebarsEnabled && AppManager.connected) {
-      projectList.refreshTabs();
+      return AppManager.listTabs().then(() => {
+        projectList.updateTabs();
+      }).catch(console.error);
     }
 
     return promise.resolve();

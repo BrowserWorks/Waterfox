@@ -8,7 +8,6 @@
 #include "WMFDecoderModule.h"
 #include "WMFVideoMFTManager.h"
 #include "WMFAudioMFTManager.h"
-#include "MFTDecoder.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Services.h"
@@ -40,6 +39,13 @@ WMFDecoderModule::~WMFDecoderModule()
     DebugOnly<HRESULT> hr = wmf::MFShutdown();
     NS_ASSERTION(SUCCEEDED(hr), "MFShutdown failed");
   }
+}
+
+void
+WMFDecoderModule::DisableHardwareAcceleration()
+{
+  sDXVAEnabled = false;
+  sIsIntelDecoderEnabled = false;
 }
 
 static void
@@ -100,19 +106,13 @@ WMFDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
                                      FlushableTaskQueue* aVideoTaskQueue,
                                      MediaDataDecoderCallback* aCallback)
 {
-  nsAutoPtr<WMFVideoMFTManager> manager(
-    new WMFVideoMFTManager(aConfig,
-                           aLayersBackend,
-                           aImageContainer,
-                           sDXVAEnabled));
-
-  if (!manager->Init()) {
-    return nullptr;
-  }
-
   nsRefPtr<MediaDataDecoder> decoder =
-    new WMFMediaDataDecoder(manager.forget(), aVideoTaskQueue, aCallback);
-
+    new WMFMediaDataDecoder(new WMFVideoMFTManager(aConfig,
+                                                   aLayersBackend,
+                                                   aImageContainer,
+                                                   sDXVAEnabled && ShouldUseDXVA(aConfig)),
+                            aVideoTaskQueue,
+                            aCallback);
   return decoder.forget();
 }
 
@@ -121,15 +121,40 @@ WMFDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
                                      FlushableTaskQueue* aAudioTaskQueue,
                                      MediaDataDecoderCallback* aCallback)
 {
-  nsAutoPtr<WMFAudioMFTManager> manager(new WMFAudioMFTManager(aConfig));
-
-  if (!manager->Init()) {
-    return nullptr;
-  }
-
   nsRefPtr<MediaDataDecoder> decoder =
-    new WMFMediaDataDecoder(manager.forget(), aAudioTaskQueue, aCallback);
+    new WMFMediaDataDecoder(new WMFAudioMFTManager(aConfig),
+                            aAudioTaskQueue,
+                            aCallback);
   return decoder.forget();
+}
+
+bool
+WMFDecoderModule::ShouldUseDXVA(const VideoInfo& aConfig) const
+{
+  static bool isAMD = false;
+  static bool initialized = false;
+  if (!initialized) {
+    nsCOMPtr<nsIGfxInfo> gfxInfo = services::GetGfxInfo();
+    nsAutoString vendor;
+    gfxInfo->GetAdapterVendorID(vendor);
+    isAMD = vendor.Equals(widget::GfxDriverInfo::GetDeviceVendor(widget::VendorAMD), nsCaseInsensitiveStringComparator()) ||
+            vendor.Equals(widget::GfxDriverInfo::GetDeviceVendor(widget::VendorATI), nsCaseInsensitiveStringComparator());
+    initialized = true;
+  }
+  if (!isAMD) {
+    return true;
+  }
+  // Don't use DXVA for 4k videos or above, since it seems to perform poorly.
+  return aConfig.mDisplay.width <= 1920 && aConfig.mDisplay.height <= 1200;
+}
+
+bool
+WMFDecoderModule::SupportsSharedDecoders(const VideoInfo& aConfig) const
+{
+  // If DXVA is enabled, but we're not going to use it for this specific config, then
+  // we can't use the shared decoder.
+  return !AgnosticMimeType(aConfig.mMimeType) &&
+    (!sDXVAEnabled || ShouldUseDXVA(aConfig));
 }
 
 bool

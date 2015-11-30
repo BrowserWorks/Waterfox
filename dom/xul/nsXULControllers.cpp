@@ -52,6 +52,9 @@ NS_NewXULControllers(nsISupports* aOuter, REFNSIID aIID, void** aResult)
     return NS_ERROR_NO_AGGREGATION;
 
   nsXULControllers* controllers = new nsXULControllers();
+  if (! controllers)
+    return NS_ERROR_OUT_OF_MEMORY;
+  
   nsresult rv;
   NS_ADDREF(controllers);
   rv = controllers->QueryInterface(aIID, aResult);
@@ -118,6 +121,7 @@ NS_IMETHODIMP
 nsXULControllers::InsertControllerAt(uint32_t aIndex, nsIController *controller)
 {
   nsXULControllerData*  controllerData = new nsXULControllerData(++mCurControllerID, controller);
+  if (!controllerData) return NS_ERROR_OUT_OF_MEMORY;
 #ifdef DEBUG
   nsXULControllerData** inserted =
 #endif
@@ -161,6 +165,7 @@ nsXULControllers::AppendController(nsIController *controller)
 {
   // This assigns controller IDs starting at 1 so we can use 0 to test if an ID was obtained
   nsXULControllerData*  controllerData = new nsXULControllerData(++mCurControllerID, controller);
+  if (!controllerData) return NS_ERROR_OUT_OF_MEMORY;
 
 #ifdef DEBUG
   nsXULControllerData** appended =

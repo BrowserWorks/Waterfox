@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var originalPolicy = null;
+let originalPolicy = null;
 
 /**
  * Display a datareporting notification to the user.
@@ -47,7 +47,7 @@ function sendNotifyRequest(name) {
   return [policy, deferred.promise];
 }
 
-var dumpAppender, rootLogger;
+let dumpAppender, rootLogger;
 
 function test() {
   registerCleanupFunction(cleanup);

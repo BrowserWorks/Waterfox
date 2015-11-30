@@ -457,13 +457,6 @@ LazyIdleThread::GetPRThread(PRThread** aPRThread)
 }
 
 NS_IMETHODIMP
-LazyIdleThread::AsyncShutdown()
-{
-  ASSERT_OWNING_THREAD();
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
 LazyIdleThread::Shutdown()
 {
   ASSERT_OWNING_THREAD();
@@ -533,13 +526,15 @@ LazyIdleThread::OnDispatchedEvent(nsIThreadInternal* /*aThread */)
 
 NS_IMETHODIMP
 LazyIdleThread::OnProcessNextEvent(nsIThreadInternal* /* aThread */,
-                                   bool /* aMayWait */)
+                                   bool /* aMayWait */,
+                                   uint32_t /* aRecursionDepth */)
 {
   return NS_OK;
 }
 
 NS_IMETHODIMP
 LazyIdleThread::AfterProcessNextEvent(nsIThreadInternal* /* aThread */,
+                                      uint32_t /* aRecursionDepth */,
                                       bool aEventWasProcessed)
 {
   bool shouldNotifyIdle;

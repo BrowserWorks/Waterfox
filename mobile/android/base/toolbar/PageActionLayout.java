@@ -162,7 +162,7 @@ public class PageActionLayout extends LinearLayout implements NativeEventListene
         ThreadUtils.assertOnUiThread();
 
         final int width = mContext.getResources().getDimensionPixelSize(R.dimen.page_action_button_width);
-        ImageButton imageButton = new ImageButton(mContext, null, R.style.UrlBar_ImageButton);
+        ImageButton imageButton = new ImageButton(mContext, null, R.style.UrlBar_ImageButton_Icon);
         imageButton.setLayoutParams(new LayoutParams(width, LayoutParams.MATCH_PARENT));
         imageButton.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         imageButton.setOnClickListener(this);

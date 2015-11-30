@@ -630,7 +630,7 @@ public:
             StringHash,
             HashMatchEntry,
             MoveEntry,
-            PLDHashTable::ClearEntryStub,
+            PL_DHashClearEntryStub,
             nullptr
         };
 
@@ -700,8 +700,8 @@ public:
             }
             uint32_t filesize = strtoul(beginning, nullptr, 10);
 
-            auto mapEntry =
-                static_cast<FNCMapEntry*>(mMap.Add(filename.get(), fallible));
+            FNCMapEntry* mapEntry = static_cast<FNCMapEntry*>
+                (PL_DHashTableAdd(&mMap, filename.get(), fallible));
             if (mapEntry) {
                 mapEntry->mFilename.Assign(filename);
                 mapEntry->mTimestamp = timestamp;
@@ -724,7 +724,9 @@ public:
     GetInfoForFile(const nsCString& aFileName, nsCString& aFaceList,
                    uint32_t *aTimestamp, uint32_t *aFilesize)
     {
-        auto entry = static_cast<FNCMapEntry*>(mMap.Search(aFileName.get()));
+        FNCMapEntry *entry =
+            static_cast<FNCMapEntry*>(PL_DHashTableSearch(&mMap,
+                                                          aFileName.get()));
         if (entry) {
             *aTimestamp = entry->mTimestamp;
             *aFilesize = entry->mFilesize;
@@ -740,8 +742,8 @@ public:
     CacheFileInfo(const nsCString& aFileName, const nsCString& aFaceList,
                   uint32_t aTimestamp, uint32_t aFilesize)
     {
-        auto entry =
-            static_cast<FNCMapEntry*>(mMap.Add(aFileName.get(), fallible));
+        FNCMapEntry* entry = static_cast<FNCMapEntry*>
+            (PL_DHashTableAdd(&mMap, aFileName.get(), fallible));
         if (entry) {
             entry->mFilename.Assign(aFileName);
             entry->mTimestamp = aTimestamp;
@@ -911,19 +913,19 @@ gfxFT2FontList::AppendFacesFromFontFile(const nsCString& aFileName,
                                         StandardFile aStdFile,
                                         FT2FontFamily::Visibility aVisibility)
 {
-    nsCString cachedFaceList;
+    nsCString faceList;
     uint32_t filesize = 0, timestamp = 0;
     if (aCache) {
-        aCache->GetInfoForFile(aFileName, cachedFaceList, &timestamp, &filesize);
+        aCache->GetInfoForFile(aFileName, faceList, &timestamp, &filesize);
     }
 
     struct stat s;
     int statRetval = stat(aFileName.get(), &s);
-    if (!cachedFaceList.IsEmpty() && 0 == statRetval &&
+    if (!faceList.IsEmpty() && 0 == statRetval &&
         s.st_mtime == timestamp && s.st_size == filesize)
     {
         LOG(("using cached font info for %s", aFileName.get()));
-        AppendFacesFromCachedFaceList(aFileName, cachedFaceList, aStdFile,
+        AppendFacesFromCachedFaceList(aFileName, faceList, aStdFile,
                                       aVisibility);
         return;
     }
@@ -932,7 +934,7 @@ gfxFT2FontList::AppendFacesFromFontFile(const nsCString& aFileName,
     FT_Face dummy;
     if (FT_Err_Ok == FT_New_Face(ftLibrary, aFileName.get(), -1, &dummy)) {
         LOG(("reading font info via FreeType for %s", aFileName.get()));
-        nsCString newFaceList;
+        nsCString faceList;
         timestamp = s.st_mtime;
         filesize = s.st_size;
         for (FT_Long i = 0; i < dummy->num_faces; i++) {
@@ -940,12 +942,12 @@ gfxFT2FontList::AppendFacesFromFontFile(const nsCString& aFileName,
             if (FT_Err_Ok != FT_New_Face(ftLibrary, aFileName.get(), i, &face)) {
                 continue;
             }
-            AddFaceToList(aFileName, i, aStdFile, aVisibility, face, newFaceList);
+            AddFaceToList(aFileName, i, aStdFile, aVisibility, face, faceList);
             FT_Done_Face(face);
         }
         FT_Done_Face(dummy);
-        if (aCache && 0 == statRetval && !newFaceList.IsEmpty()) {
-            aCache->CacheFileInfo(aFileName, newFaceList, timestamp, filesize);
+        if (aCache && 0 == statRetval && !faceList.IsEmpty()) {
+            aCache->CacheFileInfo(aFileName, faceList, timestamp, filesize);
         }
     }
 }

@@ -33,7 +33,6 @@ NativeMenuItemTarget* nsMenuBarX::sNativeEventTarget = nil;
 nsMenuBarX* nsMenuBarX::sLastGeckoMenuBarPainted = nullptr; // Weak
 nsMenuBarX* nsMenuBarX::sCurrentPaintDelayedMenuBar = nullptr; // Weak
 NSMenu* sApplicationMenu = nil;
-BOOL sApplicationMenuIsFallback = NO;
 BOOL gSomeMenuBarPainted = NO;
 
 // We keep references to the first quit and pref item content nodes we find, which
@@ -187,7 +186,6 @@ void nsMenuBarX::ConstructFallbackNativeMenus()
   [quitMenuItem setTarget:nsMenuBarX::sNativeEventTarget];
   [quitMenuItem setTag:eCommand_ID_Quit];
   [sApplicationMenu addItem:quitMenuItem];
-  sApplicationMenuIsFallback = YES;
 }
 
 uint32_t nsMenuBarX::GetMenuCount()
@@ -209,11 +207,6 @@ nsresult nsMenuBarX::InsertMenuAtIndex(nsMenuX* aMenu, uint32_t aIndex)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
-  // If we've only yet created a fallback global Application menu (using
-  // ContructFallbackNativeMenus()), destroy it before recreating it properly.
-  if (sApplicationMenu && sApplicationMenuIsFallback) {
-    ResetNativeApplicationMenu();
-  }
   // If we haven't created a global Application menu yet, do it.
   if (!sApplicationMenu) {
     nsresult rv = NS_OK; // avoid warning about rv being unused
@@ -513,7 +506,6 @@ void nsMenuBarX::ResetNativeApplicationMenu()
   [sApplicationMenu removeAllItems];
   [sApplicationMenu release];
   sApplicationMenu = nil;
-  sApplicationMenuIsFallback = NO;
 }
 
 // Hide the item in the menu by setting the 'hidden' attribute. Returns it in |outHiddenNode| so

@@ -19,8 +19,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "Deprecated",
   "resource://gre/modules/Deprecated.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Services",
-  "resource://gre/modules/Services.jsm");
 
 var gViewSourceUtils = {
 
@@ -92,9 +90,6 @@ var gViewSourceUtils = {
    *          The line number to focus on once the source is loaded.
    */
   viewSourceInBrowser: function(aArgs) {
-    Services.telemetry
-            .getHistogramById("VIEW_SOURCE_IN_BROWSER_OPENED_BOOLEAN")
-            .add(true);
     let viewSourceBrowser = new ViewSourceBrowser(aArgs.viewSourceBrowser);
     viewSourceBrowser.loadViewSource(aArgs);
   },
@@ -104,42 +99,33 @@ var gViewSourceUtils = {
    * <browser>.  This allows for non-window display methods, such as a tab from
    * Firefox.
    *
+   * @param aSelection
+   *        A Selection object for the content of interest.
    * @param aViewSourceInBrowser
-   *        The browser containing the page to view the source of.
-   * @param aTarget
-   *        Set to the target node for MathML. Null for other types of elements.
-   * @param aGetBrowserFn
-   *        If set, a function that will return a browser to open the source in.
-   *        If null, or this function returns null, opens the source in a new window.
+   *        The browser to display the view source in.
    */
-  viewPartialSourceInBrowser: function(aViewSourceInBrowser, aTarget, aGetBrowserFn) {
-    let mm = aViewSourceInBrowser.messageManager;
-    mm.addMessageListener("ViewSource:GetSelectionDone", function gotSelection(message) {
-      mm.removeMessageListener("ViewSource:GetSelectionDone", gotSelection);
+  viewSourceFromSelectionInBrowser: function(aSelection, aViewSourceInBrowser) {
+    let viewSourceBrowser = new ViewSourceBrowser(aViewSourceInBrowser);
+    viewSourceBrowser.loadViewSourceFromSelection(aSelection);
+  },
 
-      if (!message.data)
-        return;
-
-      let browserToOpenIn = aGetBrowserFn ? aGetBrowserFn() : null;
-      if (browserToOpenIn) {
-        let viewSourceBrowser = new ViewSourceBrowser(browserToOpenIn);
-        viewSourceBrowser.loadViewSourceFromSelection(message.data.uri, message.data.drawSelection,
-                                                      message.data.baseURI);
-      }
-      else {
-        let docUrl = null;
-        window.openDialog("chrome://global/content/viewPartialSource.xul",
-                          "_blank", "scrollbars,resizable,chrome,dialog=no",
-                          {
-                            URI: message.data.uri,
-                            drawSelection: message.data.drawSelection,
-                            baseURI: message.data.baseURI,
-                            partial: true,
-                          });
-      }
-    });
-
-    mm.sendAsyncMessage("ViewSource:GetSelection", { }, { target: aTarget });
+  /**
+   * Displays view source for a MathML fragment from some document in the
+   * provided <browser>.  This allows for non-window display methods,  such as a
+   * tab from Firefox.
+   *
+   * @param aNode
+   *        Some element within the fragment of interest.
+   * @param aContext
+   *        A string denoting the type of fragment.  Currently, "mathml" is the
+   *        only accepted value.
+   * @param aViewSourceInBrowser
+   *        The browser to display the view source in.
+   */
+  viewSourceFromFragmentInBrowser: function(aNode, aContext,
+                                            aViewSourceInBrowser) {
+    let viewSourceBrowser = new ViewSourceBrowser(aViewSourceInBrowser);
+    viewSourceBrowser.loadViewSourceFromFragment(aNode, aContext);
   },
 
   // Opens the interval view source viewer
@@ -163,9 +149,6 @@ var gViewSourceUtils = {
       } catch (ex) {
       }
     }
-    Services.telemetry
-            .getHistogramById("VIEW_SOURCE_IN_WINDOW_OPENED_BOOLEAN")
-            .add(true);
     openDialog("chrome://global/content/viewSource.xul",
                "_blank",
                "all,dialog=no",
@@ -354,10 +337,7 @@ var gViewSourceUtils = {
   // Calls the callback, keeping in mind undefined or null values.
   handleCallBack: function(aCallBack, result, data)
   {
-    Services.telemetry
-            .getHistogramById("VIEW_SOURCE_EXTERNAL_RESULT_BOOLEAN")
-            .add(result);
-    // if callback is undefined, default to the internal viewer
+    // ifcallback is undefined, default to the internal viewer
     if (aCallBack === undefined) {
       this.internalViewerFallback(result, data);
     } else if (aCallBack) {

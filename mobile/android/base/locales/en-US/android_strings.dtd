@@ -6,21 +6,11 @@
 <!ENTITY  no_space_to_start_error "There is not enough space available for &brandShortName; to start.">
 <!ENTITY  error_loading_file "An error occurred when trying to load files required to run &brandShortName;">
 
-<!ENTITY firstrun_panel_title_welcome "Welcome">
 <!ENTITY  onboard_start_message3 "Browse with &brandShortName;">
 <!ENTITY  onboard_start_subtext3 "Make your mobile Web browsing experience truly your own.">
 <!ENTITY  onboard_start_button_account "Sign in to &brandShortName;">
 <!ENTITY  onboard_start_button_browser "Start Browsing">
-<!ENTITY firstrun_button_next "Next">
-
 <!ENTITY  onboard_start_restricted1 "Stay safe and in control with this simplified version of &brandShortName;.">
-
-<!ENTITY firstrun_import_title "Import">
-<!ENTITY firstrun_import_message "Welcome to &brandShortName;">
-<!ENTITY firstrun_import_subtext "Import your bookmarks and history from another browser.">
-<!ENTITY firstrun_import_action "Transfer to &brandShortName;">
-<!ENTITY firstrun_import_dialog_button "Transfer">
-<!ENTITY firstrun_import_progress_title "Transferring">
 
 <!-- Localization note: These are used as the titles of different pages on the home screen.
      They are automatically converted to all caps by the Android platform. -->
@@ -65,9 +55,8 @@
 
 <!ENTITY history_today_section "Today">
 <!ENTITY history_yesterday_section "Yesterday">
-<!ENTITY history_week_section3 "Last 7 days">
-<!ENTITY history_this_month_section "This month">
-<!ENTITY history_older_section3 "Older than 6 months">
+<!ENTITY history_week_section2 "Last Week">
+<!ENTITY history_older_section2 "Last Month">
 
 <!ENTITY go "Go">
 <!ENTITY search "Search">
@@ -80,6 +69,8 @@
 <!ENTITY edit_mode_cancel "Cancel">
 
 <!ENTITY close_tab "Close Tab">
+<!ENTITY tab_audio_playing "This tab is playing audio">
+<!ENTITY tab_audio_muted "This tab has been muted">
 <!ENTITY one_tab "1 tab">
 <!-- Localization note (num_tabs2) : Number of tabs is always more than one.
      We can't use android plural forms, sadly. See bug #753859. -->
@@ -90,14 +81,6 @@
      as possible because it's shown as a label in a toast.  Ideally, this string
      is upper-case, to match Google and Android's convention. -->
 <!ENTITY switch_button_message "SWITCH">
-<!-- Localization note (tab_title_prefix_is_playing_audio): This string is not
-     visible in the UI, but rather used as a text-to-speech content description
-     for sight-impaired a11y users. The content description is set on a tab
-     title in a list of open tabs when content in that tab is playing audio.
-     &formatS; will be replaced with the title of the tab, as received from the
-     web page. When audio is not playing in a tab, &formatS; will be used as
-     the content description. -->
-<!ENTITY tab_title_prefix_is_playing_audio "Playing audio – &formatS;">
 
 <!ENTITY settings "Settings">
 <!ENTITY settings_title "Settings">
@@ -199,9 +182,6 @@
 <!ENTITY pref_home_updates_wifi "Only over Wi-Fi">
 <!ENTITY pref_home_suggested_sites "Show site suggestions">
 <!ENTITY pref_home_suggested_sites_summary "Display shortcuts to sites on your homepage that we think you might find interesting">
-<!ENTITY pref_category_home_homepage "Homepage">
-<!ENTITY home_homepage_title "Set a Homepage">
-<!ENTITY home_homepage_use_current_tab "Use current tab">
 
 <!-- Localization note: These are shown in the left sidebar on tablets -->
 <!ENTITY pref_header_customize "Customize">
@@ -257,6 +237,7 @@
 <!ENTITY pref_plugins_tap_to_play "Tap to play">
 <!ENTITY pref_plugins_disabled "Disabled">
 <!ENTITY pref_text_size "Text size">
+<!ENTITY pref_reflow_on_zoom4 "Text reflow">
 <!ENTITY pref_restore "Tabs">
 <!ENTITY pref_restore_always "Always restore">
 <!ENTITY pref_restore_quit "Don\'t restore after quitting &brandShortName;">
@@ -366,7 +347,6 @@ size. -->
 <!ENTITY share_title "Share via">
 <!ENTITY share_image_failed "Unable to share this image">
 <!ENTITY save_as_pdf "Save as PDF">
-<!ENTITY print "Print">
 <!ENTITY find_in_page "Find in Page">
 <!ENTITY desktop_mode "Request Desktop Site">
 <!ENTITY page "Page">
@@ -411,8 +391,6 @@ size. -->
 <!ENTITY contextmenu_top_sites_pin "Pin Site">
 <!ENTITY contextmenu_top_sites_unpin "Unpin Site">
 <!ENTITY contextmenu_add_search_engine "Add a Search Engine">
-<!ENTITY contextmenu_mark_read "Mark as read">
-<!ENTITY contextmenu_mark_unread "Mark as unread">
 
 <!-- Localization note (doorhanger_login_no_username): This string is used in the save-login doorhanger
      where normally a username would be displayed. In this case, no username was found, and this placeholder
@@ -435,8 +413,8 @@ size. -->
 
 <!-- Localization note (pref_prevent_magnifying_glass): Label for setting that controls
      whether or not the magnifying glass is disabled. -->
-<!ENTITY pref_magnifying_glass_enabled "Magnify small areas">
-<!ENTITY pref_magnifying_glass_enabled_summary "Enlarge links and form fields when tapping near them">
+<!ENTITY pref_prevent_magnifying_glass "Disable magnifying glass ">
+<!ENTITY pref_prevent_magnifying_glass_summary "Prevent magnifying glass for use in resolving ambiguous screen touches">
 
 <!-- Localization note (pref_scroll_title_bar2): Label for setting that controls
      whether or not the dynamic toolbar is enabled. -->
@@ -495,6 +473,8 @@ size. -->
 <!ENTITY button_set "Set">
 <!ENTITY button_clear "Clear">
 <!ENTITY button_copy "Copy">
+
+<!ENTITY firstrun_panel_title_welcome "Welcome">
 
 <!ENTITY home_top_sites_title "Top Sites">
 <!-- Localization note (home_top_sites_add): This string is used as placeholder
@@ -584,10 +564,14 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 <!ENTITY identity_connection_insecure "Insecure connection">
 
 <!-- Mixed content notifications in site identity popup -->
-<!ENTITY mixed_content_blocked_all1 "&brandShortName; has blocked insecure content on this page.">
-<!ENTITY mixed_content_blocked_some1 "&brandShortName; has blocked some of the insecure content on this page.">
-<!ENTITY mixed_content_display_loaded1 "Parts of this page are not secure (such as images).">
-<!ENTITY mixed_content_protection_disabled1 "You have disabled protection from insecure content.">
+<!ENTITY mixed_content_blocked_all "&brandShortName; has blocked insecure elements on this page.">
+<!ENTITY mixed_content_blocked_some "&brandShortName; has blocked some insecure elements on this page.">
+<!ENTITY mixed_content_display_loaded "This page has some insecure elements.">
+<!ENTITY mixed_content_protection_disabled "You have disabled protection from insecure elements.">
+
+<!ENTITY loaded_mixed_content_message "This page is displaying content that isn\'t secure.">
+<!ENTITY blocked_mixed_content_message_top "&brandShortName; has blocked content that isn\'t secure.">
+<!ENTITY blocked_mixed_content_message_bottom "Most websites will still work properly even when this content is blocked.">
 
 <!-- Tracking content notifications in site identity popup -->
 <!ENTITY doorhanger_tracking_title "Tracking protection">
@@ -720,16 +704,3 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 <!ENTITY restriction_disallow_master_password_title2 "Disable master password">
 <!ENTITY restriction_disallow_guest_browsing_title2 "Disable Guest Browsing">
 
-<!-- Default Bookmarks titles-->
-<!-- LOCALIZATION NOTE (bookmarks_about_browser): link title for about:fennec -->
-<!ENTITY bookmarks_about_browser "Firefox: About your browser">
-<!-- LOCALIZATION NOTE (bookmarks_addons): link title for https://addons.mozilla.org/en-US/mobile -->
-<!ENTITY bookmarks_addons "Firefox: Customize with add-ons">
-<!-- LOCALIZATION NOTE (bookmarks_support): link title for https://support.mozilla.org/ -->
-<!ENTITY bookmarks_support "Firefox: Support">
-<!--LOCALIZATION NOTE (bookmarks_marketplace):link title for https://marketplace.firefox.com -->
-<!ENTITY bookmarks_marketplace "Firefox Marketplace">
-<!-- LOCALIZATION NOTE (bookmarks_restricted_support): link title for https://support.mozilla.org/kb/controlledaccess -->
-<!ENTITY bookmarks_restricted_support2 "Firefox Help and Support for restricted profiles on Android tablets">
-<!-- LOCALIZATION NOTE (bookmarks_restricted_webmaker):link title for https://webmaker.org -->
-<!ENTITY bookmarks_restricted_webmaker "Learn the Web: Mozilla Webmaker">

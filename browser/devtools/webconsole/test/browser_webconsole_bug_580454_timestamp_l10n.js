@@ -15,7 +15,7 @@
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-console.html";
 
-var test = asyncTest(function*() {
+let test = asyncTest(function*() {
   yield loadTab(TEST_URI);
   const TEST_TIMESTAMP = 12345678;
   let date = new Date(TEST_TIMESTAMP);

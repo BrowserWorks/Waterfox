@@ -13,7 +13,7 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://services-sync/main.js");
 
-var BrowserTabs = {
+let BrowserTabs = {
   /**
    * Add
    *

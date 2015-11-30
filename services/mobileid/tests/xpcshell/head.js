@@ -125,10 +125,9 @@ function addPermission(aAction) {
   let uri = Cc["@mozilla.org/network/io-service;1"]
               .getService(Ci.nsIIOService)
               .newURI(ORIGIN, null, null);
-  let attrs = {appId: APP_ID};
   let _principal = Cc["@mozilla.org/scriptsecuritymanager;1"]
                      .getService(Ci.nsIScriptSecurityManager)
-                     .createCodebasePrincipal(uri, attrs);
+                     .getAppCodebasePrincipal(uri, APP_ID, false);
   let pm = Cc["@mozilla.org/permissionmanager;1"]
              .getService(Ci.nsIPermissionManager);
   pm.addFromPrincipal(_principal, MOBILEID_PERM, aAction);
@@ -138,10 +137,9 @@ function removePermission() {
   let uri = Cc["@mozilla.org/network/io-service;1"]
               .getService(Ci.nsIIOService)
               .newURI(ORIGIN, null, null);
-  let attrs = {appId: APP_ID};
   let _principal = Cc["@mozilla.org/scriptsecuritymanager;1"]
                      .getService(Ci.nsIScriptSecurityManager)
-                     .createCodebasePrincipal(uri, attrs);
+                     .getAppCodebasePrincipal(uri, APP_ID, false);
   let pm = Cc["@mozilla.org/permissionmanager;1"]
              .getService(Ci.nsIPermissionManager);
   pm.removeFromPrincipal(_principal, MOBILEID_PERM);
@@ -149,7 +147,7 @@ function removePermission() {
 
 // === Mocks ===
 
-var Mock = function(aOptions) {
+let Mock = function(aOptions) {
   if (!aOptions) {
     aOptions = {};
   }
@@ -207,7 +205,7 @@ Mock.prototype = {
 };
 
 // UI Glue mock up.
-var MockUi = function(aOptions) {
+let MockUi = function(aOptions) {
   Mock.call(this, aOptions);
 };
 
@@ -255,7 +253,7 @@ MockUi.prototype = {
 };
 
 // Credentials store mock up.
-var MockCredStore = function(aOptions) {
+let MockCredStore = function(aOptions) {
   Mock.call(this, aOptions);
 };
 
@@ -316,7 +314,7 @@ MockCredStore.prototype = {
 };
 
 // Client mock up.
-var MockClient = function(aOptions) {
+let MockClient = function(aOptions) {
   Mock.call(this, aOptions);
 };
 
@@ -408,14 +406,14 @@ const kMobileIdentityUIGlueContractID =
 /*const kMobileIdentityUIGlueFactory =
   Cm.getClassObject(Cc[kMobileIdentityUIGlueContractID], Ci.nsIFactory);*/
 
-var fakeMobileIdentityUIGlueFactory = {
+let fakeMobileIdentityUIGlueFactory = {
   createInstance: function(aOuter, aIid) {
     return MobileIdentityUIGlue.QueryInterface(aIid);
   }
 };
 
 // MobileIdentityUIGlue fake component.
-var MobileIdentityUIGlue = {
+let MobileIdentityUIGlue = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileIdentityUIGlue]),
 
 };
@@ -433,7 +431,7 @@ var MobileIdentityUIGlue = {
 const XUL_APP_INFO_UUID = Components.ID("{84fdc459-d96d-421c-9bff-a8193233ae75}");
 const XUL_APP_INFO_CONTRACT_ID = "@mozilla.org/xre/app-info;1";
 
-var XULAppInfo = {
+let XULAppInfo = {
   vendor: "Mozilla",
   name: "MobileIdTest",
   ID: "{230de50e-4cd1-11dc-8314-0800200b9a66}",
@@ -452,7 +450,7 @@ var XULAppInfo = {
   ])
 };
 
-var XULAppInfoFactory = {
+let XULAppInfoFactory = {
   createInstance: function (outer, iid) {
     if (outer != null) {
       throw Cr.NS_ERROR_NO_AGGREGATION;

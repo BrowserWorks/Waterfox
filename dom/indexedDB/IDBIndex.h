@@ -76,20 +76,8 @@ public:
   bool
   MultiEntry() const;
 
-  bool
-  LocaleAware() const;
-
   const KeyPath&
   GetKeyPath() const;
-
-  void
-  GetLocale(nsString& aLocale) const;
-
-  const nsCString&
-  Locale() const;
-
-  bool
-  IsAutoLocale() const;
 
   IDBObjectStore*
   ObjectStore() const

@@ -401,5 +401,5 @@ this.LoginHelper = {
       return;
     }
     Services.logins.addLogin(login);
-  }
+  },
 };

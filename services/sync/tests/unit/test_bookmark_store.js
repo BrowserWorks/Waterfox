@@ -11,15 +11,15 @@ const PARENT_ANNO = "sync/parent";
 
 Service.engineManager.register(BookmarksEngine);
 
-var engine = Service.engineManager.get("bookmarks");
-var store = engine._store;
-var tracker = engine._tracker;
+let engine = Service.engineManager.get("bookmarks");
+let store = engine._store;
+let tracker = engine._tracker;
 
 // Don't write some persistence files asynchronously.
 tracker.persistChangedIDs = false;
 
-var fxuri = Utils.makeURI("http://getfirefox.com/");
-var tburi = Utils.makeURI("http://getthunderbird.com/");
+let fxuri = Utils.makeURI("http://getfirefox.com/");
+let tburi = Utils.makeURI("http://getthunderbird.com/");
 
 add_test(function test_ignore_specials() {
   _("Ensure that we can't delete bookmark roots.");

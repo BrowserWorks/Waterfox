@@ -23,7 +23,6 @@
 #include "js/UbiNode.h"
 #include "js/Utility.h"
 #include "js/Vector.h"
-#include "vm/TaggedProto.h"
 
 namespace js {
 
@@ -33,6 +32,7 @@ namespace jit {
     class TempAllocator;
 } // namespace jit
 
+class TaggedProto;
 struct TypeZone;
 class TypeConstraint;
 class TypeNewScript;
@@ -794,7 +794,6 @@ class PreliminaryObjectArray
     }
 
     void registerNewObject(JSObject* res);
-    void unregisterObject(JSObject* obj);
 
     JSObject* get(size_t i) const {
         MOZ_ASSERT(i < COUNT);
@@ -964,7 +963,7 @@ class TypeNewScript
 
     bool rollbackPartiallyInitializedObjects(JSContext* cx, ObjectGroup* group);
 
-    static bool make(JSContext* cx, ObjectGroup* group, JSFunction* fun);
+    static void make(JSContext* cx, ObjectGroup* group, JSFunction* fun);
     static TypeNewScript* makeNativeVersion(JSContext* cx, TypeNewScript* newScript,
                                             PlainObject* templateObject);
 

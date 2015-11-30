@@ -7,10 +7,10 @@
 
 "use strict";
 
-var gTestTab;
-var gContentAPI;
-var gContentWindow;
-var gContentDoc;
+let gTestTab;
+let gContentAPI;
+let gContentWindow;
+let gContentDoc;
 
 function test() {
   registerCleanupFunction(function() {
@@ -24,7 +24,7 @@ function test() {
  * fact and therefore listens to visibilitychange events.
  * In particular this scenario happens for detaching the tab (ie. moving it to a new window).
  */
-var tests = [
+let tests = [
   taskify(function* test_move_tab_to_new_window(done) {
     let onVisibilityChange = (aEvent) => {
       if (!document.hidden && window != UITour.getChromeWindow(aEvent.target)) {

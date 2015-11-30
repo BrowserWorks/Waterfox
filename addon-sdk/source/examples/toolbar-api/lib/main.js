@@ -7,7 +7,7 @@ const { Toolbar } = require("sdk/ui/toolbar");
 const { Frame } = require("sdk/ui/frame");
 const { ActionButton } = require("sdk/ui/button/action");
 
-var button = new ActionButton({
+let button = new ActionButton({
   id: "button",
   label: "send!",
   icon: "./favicon.ico",
@@ -18,7 +18,7 @@ var button = new ActionButton({
   }
 });
 
-var frame = new Frame({
+let frame = new Frame({
     url: "./index.html",
     onAttach: () => {
       console.log("frame was attached");
@@ -35,7 +35,7 @@ var frame = new Frame({
         event.source.postMessage("pong!", event.source.origin);
     }
 });
-var toolbar = new Toolbar({
+let toolbar = new Toolbar({
   items: [frame],
   title: "Addon Demo",
   hidden: false,

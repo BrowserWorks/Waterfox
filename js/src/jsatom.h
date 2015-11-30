@@ -19,6 +19,16 @@
 class JSAtom;
 class JSAutoByteString;
 
+struct JSIdArray {
+    int length;
+    js::HeapId vector[1];    /* actually, length jsid words */
+
+    js::HeapId* begin() { return vector; }
+    const js::HeapId* begin() const { return vector; }
+    js::HeapId* end() { return vector + length; }
+    const js::HeapId* end() const { return vector + length; }
+};
+
 namespace js {
 
 JS_STATIC_ASSERT(sizeof(HashNumber) == 4);
@@ -176,6 +186,7 @@ extern const char js_import_str[];
 extern const char js_in_str[];
 extern const char js_instanceof_str[];
 extern const char js_interface_str[];
+extern const char js_new_str[];
 extern const char js_package_str[];
 extern const char js_private_str[];
 extern const char js_protected_str[];

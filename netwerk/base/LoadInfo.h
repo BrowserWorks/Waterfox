@@ -48,9 +48,8 @@ public:
            nsIPrincipal* aTriggeringPrincipal,
            nsINode* aLoadingContext,
            nsSecurityFlags aSecurityFlags,
-           nsContentPolicyType aContentPolicyType);
-
-  already_AddRefed<nsILoadInfo> Clone() const;
+           nsContentPolicyType aContentPolicyType,
+           nsIURI* aBaseURI = nullptr);
 
 private:
   // private constructor that is only allowed to be called from within
@@ -68,7 +67,6 @@ private:
            bool aEnforceSecurity,
            bool aInitialSecurityCheckDone,
            nsTArray<nsCOMPtr<nsIPrincipal>>& aRedirectChain);
-  LoadInfo(const LoadInfo& rhs);
 
   friend nsresult
   mozilla::ipc::LoadInfoArgsToLoadInfo(
@@ -82,6 +80,7 @@ private:
   nsWeakPtr                        mLoadingContext;
   nsSecurityFlags                  mSecurityFlags;
   nsContentPolicyType              mContentPolicyType;
+  nsCOMPtr<nsIURI>                 mBaseURI;
   bool                             mUpgradeInsecureRequests;
   uint64_t                         mInnerWindowID;
   uint64_t                         mOuterWindowID;

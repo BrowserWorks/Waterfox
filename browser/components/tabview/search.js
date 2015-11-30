@@ -24,7 +24,7 @@
 //
 // A collection of helper functions for dealing with both <TabItem>s and
 // <xul:tab>s without having to worry which one is which.
-var TabUtils = {
+let TabUtils = {
   // ----------
   // Function: toString
   // Prints [TabUtils] for debug use.
@@ -274,7 +274,7 @@ TabMatcher.prototype = {
 // Class: TabHandlers
 // 
 // A object that handles all of the event handlers.
-var TabHandlers = {
+let TabHandlers = {
   _mouseDownLocation: null,
 
   // ---------
@@ -370,7 +370,7 @@ var TabHandlers = {
 // Class: Search
 // 
 // A object that handles the search feature.
-var Search = {
+let Search = {
   _initiatedBy: "",
   _blockClick: false,
   _currentHandler: null,
@@ -530,8 +530,9 @@ var Search = {
 
     iQ("#searchbutton").css({ opacity:.8 });
 
-    if (AppConstants.platform == "macosx")
-      UI.setTitlebarColors(true);
+#ifdef XP_MACOSX
+    UI.setTitlebarColors(true);
+#endif
 
     this.perform();
     this.switchToBeforeMode();
@@ -593,8 +594,9 @@ var Search = {
       $searchShade.show();
       $search.show();
 
-      if (AppConstants.platform == "macosx")
-        UI.setTitlebarColors({active: "#717171", inactive: "#EDEDED"});
+#ifdef XP_MACOSX
+      UI.setTitlebarColors({active: "#717171", inactive: "#EDEDED"});
+#endif
 
       if (activatedByKeypress) {
         // set the focus so key strokes are entered into the textbox.

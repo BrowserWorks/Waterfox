@@ -164,14 +164,17 @@ GMPParent::LoadProcess()
     bool ok = SendSetNodeId(mNodeId);
     if (!ok) {
       LOGD("%s: Failed to send node id to child process", __FUNCTION__);
+      mProcess->Delete();
+      mProcess = nullptr;
       return NS_ERROR_FAILURE;
     }
     LOGD("%s: Sent node id to child process", __FUNCTION__);
 
-    // Intr call to block initialization on plugin load.
-    ok = CallStartPlugin();
+    ok = SendStartPlugin();
     if (!ok) {
       LOGD("%s: Failed to send start to child process", __FUNCTION__);
+      mProcess->Delete();
+      mProcess = nullptr;
       return NS_ERROR_FAILURE;
     }
     LOGD("%s: Sent StartPlugin to child process", __FUNCTION__);

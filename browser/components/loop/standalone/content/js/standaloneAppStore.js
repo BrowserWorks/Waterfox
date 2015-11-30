@@ -6,7 +6,7 @@ var loop = loop || {};
 loop.store = loop.store || {};
 
 /**
- * Manages the standalone app controller view. Used to get
+ * Manages the conversation window app controller view. Used to get
  * the window data and store the window type.
  */
 loop.store.StandaloneAppStore = (function() {
@@ -31,10 +31,14 @@ loop.store.StandaloneAppStore = (function() {
     if (!options.sdk) {
       throw new Error("Missing option sdk");
     }
+    if (!options.conversation) {
+      throw new Error("Missing option conversation");
+    }
 
     this._dispatcher = options.dispatcher;
     this._storeState = {};
     this._sdk = options.sdk;
+    this._conversation = options.conversation;
 
     this._dispatcher.register(this, [
       "extractTokenInfo"
@@ -127,6 +131,10 @@ loop.store.StandaloneAppStore = (function() {
         token = result[1];
       }
       // Else type is home.
+
+      if (token) {
+        this._conversation.set({loopToken: token});
+      }
 
       this.setStoreState({
         windowType: windowType,

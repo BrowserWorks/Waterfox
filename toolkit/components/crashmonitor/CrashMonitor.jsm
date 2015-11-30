@@ -53,7 +53,7 @@ const NOTIFICATIONS = [
   "sessionstore-final-state-write-complete"
 ];
 
-var CrashMonitorInternal = {
+let CrashMonitorInternal = {
 
   /**
    * Notifications received during the current session.

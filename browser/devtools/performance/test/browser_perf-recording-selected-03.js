@@ -7,7 +7,7 @@
  * selected recording changes. Bug 1060885.
  */
 
-var test = Task.async(function*() {
+let test = Task.async(function*() {
   let { target, panel, toolbox } = yield initPerformance(SIMPLE_URL);
   let { $, EVENTS, PerformanceController, RecordingsView } = panel.panelWin;
 

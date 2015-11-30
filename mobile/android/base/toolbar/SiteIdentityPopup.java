@@ -27,7 +27,6 @@ import org.mozilla.gecko.SiteIdentity.MixedMode;
 import org.mozilla.gecko.SiteIdentity.TrackingMode;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
-import org.mozilla.gecko.util.ColorUtils;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.widget.AnchoredPopup;
@@ -339,13 +338,13 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
             }
 
             mSecurityState.setText(R.string.identity_connection_insecure);
-            mSecurityState.setTextColor(ColorUtils.getColor(mContext, R.color.placeholder_active_grey));
+            mSecurityState.setTextColor(mResources.getColor(R.color.placeholder_active_grey));
         } else {
             // Connection is secure.
             mIcon.setImageResource(R.drawable.lock_secure);
 
             setSecurityStateIcon(R.drawable.img_check, 2);
-            mSecurityState.setTextColor(ColorUtils.getColor(mContext, R.color.affirmative_green));
+            mSecurityState.setTextColor(mResources.getColor(R.color.affirmative_green));
             mSecurityState.setText(R.string.identity_connection_secure);
 
             // Mixed content has been blocked, if present.

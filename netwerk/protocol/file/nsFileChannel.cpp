@@ -146,8 +146,8 @@ nsFileCopyEvent::Dispatch(nsIRunnable *callback,
   mCallbackTarget = target;
 
   // Build a coalescing proxy for progress events
-  nsresult rv = net_NewTransportEventSinkProxy(getter_AddRefs(mSink), sink, target);
-
+  nsresult rv = net_NewTransportEventSinkProxy(getter_AddRefs(mSink), sink,
+                                               target, true);
   if (NS_FAILED(rv))
     return rv;
 

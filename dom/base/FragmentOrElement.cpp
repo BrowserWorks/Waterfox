@@ -677,10 +677,10 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
   // Don't propagate mouseover and mouseout events when mouse is moving
   // inside chrome access only content.
   bool isAnonForEvents = IsRootOfChromeAccessOnlySubtree();
-  if ((aVisitor.mEvent->mMessage == eMouseOver ||
-       aVisitor.mEvent->mMessage == eMouseOut ||
-       aVisitor.mEvent->mMessage == ePointerOver ||
-       aVisitor.mEvent->mMessage == ePointerOut) &&
+  if ((aVisitor.mEvent->message == NS_MOUSE_OVER ||
+       aVisitor.mEvent->message == NS_MOUSE_OUT ||
+       aVisitor.mEvent->message == NS_POINTER_OVER ||
+       aVisitor.mEvent->message == NS_POINTER_OUT) &&
       // Check if we should stop event propagation when event has just been
       // dispatched or when we're about to propagate from
       // chrome access only subtree or if we are about to propagate out of
@@ -739,7 +739,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
               printf("Stopping %s propagation:"
                      "\n\toriginalTarget=%s \n\tcurrentTarget=%s %s"
                      "\n\trelatedTarget=%s %s \n%s",
-                     (aVisitor.mEvent->mMessage == eMouseOver)
+                     (aVisitor.mEvent->message == NS_MOUSE_OVER)
                        ? "mouseover" : "mouseout",
                      NS_ConvertUTF16toUTF8(ot).get(),
                      NS_ConvertUTF16toUTF8(ct).get(),
@@ -805,19 +805,18 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
     //   scroll
     //   selectstart
     bool stopEvent = false;
-    switch (aVisitor.mEvent->mMessage) {
-      case eImageAbort:
-      case eLoadError:
-      case eFormSelect:
-      case eFormChange:
-      case eLoad:
-      case eFormReset:
-      case eResize:
-      case eScroll:
-      case eSelectStart:
+    switch (aVisitor.mEvent->message) {
+      case NS_IMAGE_ABORT:
+      case NS_LOAD_ERROR:
+      case NS_FORM_SELECTED:
+      case NS_FORM_CHANGE:
+      case NS_LOAD:
+      case NS_FORM_RESET:
+      case NS_RESIZE_EVENT:
+      case NS_SCROLL_EVENT:
         stopEvent = true;
         break;
-      case eUnidentifiedEvent:
+      case NS_USER_DEFINED_EVENT:
         if (aVisitor.mDOMEvent) {
           nsAutoString eventType;
           aVisitor.mDOMEvent->GetType(eventType);
@@ -828,12 +827,11 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
               eventType.EqualsLiteral("load") ||
               eventType.EqualsLiteral("reset") ||
               eventType.EqualsLiteral("resize") ||
-              eventType.EqualsLiteral("scroll")) {
+              eventType.EqualsLiteral("scroll") ||
+              eventType.EqualsLiteral("selectstart")) {
             stopEvent = true;
           }
         }
-        break;
-      default:
         break;
     }
 
@@ -843,7 +841,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
       // The load event is special in that we don't ever propagate it
       // to chrome.
       nsCOMPtr<nsPIDOMWindow> win = OwnerDoc()->GetWindow();
-      EventTarget* parentTarget = win && aVisitor.mEvent->mMessage != eLoad
+      EventTarget* parentTarget = win && aVisitor.mEvent->message != NS_LOAD
         ? win->GetParentTarget() : nullptr;
 
       aVisitor.mParentTarget = parentTarget;
@@ -1217,7 +1215,7 @@ FragmentOrElement::FireNodeInserted(nsIDocument* aDoc,
 
     if (nsContentUtils::HasMutationListeners(childContent,
           NS_EVENT_BITS_MUTATION_NODEINSERTED, aParent)) {
-      InternalMutationEvent mutation(true, eLegacyNodeInserted);
+      InternalMutationEvent mutation(true, NS_MUTATION_NODEINSERTED);
       mutation.mRelatedNode = do_QueryInterface(aParent);
 
       mozAutoSubtreeModified subtree(aDoc, aParent);

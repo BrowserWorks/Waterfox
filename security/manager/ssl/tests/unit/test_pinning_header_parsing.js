@@ -5,10 +5,10 @@
 // The purpose of this test is to check that parsing of HPKP headers
 // is correct.
 
-var profileDir = do_get_profile();
+let profileDir = do_get_profile();
 const certdb = Cc["@mozilla.org/security/x509certdb;1"]
                  .getService(Ci.nsIX509CertDB);
-var gSSService = Cc["@mozilla.org/ssservice;1"]
+let gSSService = Cc["@mozilla.org/ssservice;1"]
                    .getService(Ci.nsISiteSecurityService);
 
 function certFromFile(cert_name) {

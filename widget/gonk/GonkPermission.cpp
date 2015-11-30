@@ -30,7 +30,6 @@
 
 #undef LOG
 #include <android/log.h>
-#undef ALOGE
 #define ALOGE(args...)  __android_log_print(ANDROID_LOG_ERROR, "gonkperm" , ## args)
 
 using namespace android;

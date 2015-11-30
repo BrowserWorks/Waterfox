@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm", {});
+let {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm", {});
 
 function run_test() {
   run_next_test();

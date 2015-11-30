@@ -11,7 +11,6 @@
 #ifndef nsStyleStruct_h___
 #define nsStyleStruct_h___
 
-#include "mozilla/ArenaObjectID.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/CSSVariableValues.h"
 #include "nsColor.h"
@@ -31,9 +30,8 @@
 #include "CounterStyleManager.h"
 
 class nsIFrame;
-class nsIURI;
-class nsStyleContext;
 class nsTextFrame;
+class nsIURI;
 class imgIContainer;
 
 // Includes nsStyleStructID.
@@ -121,7 +119,7 @@ public:
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleFont, sz);
+      AllocateByObjectID(nsPresArena::nsStyleFont_id, sz);
   }
   void Destroy(nsPresContext* aContext);
 
@@ -363,12 +361,12 @@ struct nsStyleColor {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleColor, sz);
+      AllocateByObjectID(nsPresArena::nsStyleColor_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleColor();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleColor, this);
+      FreeByObjectID(nsPresArena::nsStyleColor_id, this);
   }
 
   // Don't add ANY members to this struct!  We can achieve caching in the rule
@@ -383,7 +381,7 @@ struct nsStyleBackground {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleBackground, sz);
+      AllocateByObjectID(nsPresArena::nsStyleBackground_id, sz);
   }
   void Destroy(nsPresContext* aContext);
 
@@ -618,7 +616,7 @@ struct nsStyleMargin {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleMargin, sz);
+      AllocateByObjectID(nsPresArena::nsStyleMargin_id, sz);
   }
   void Destroy(nsPresContext* aContext);
 
@@ -662,7 +660,7 @@ struct nsStylePadding {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStylePadding, sz);
+      AllocateByObjectID(nsPresArena::nsStylePadding_id, sz);
   }
   void Destroy(nsPresContext* aContext);
 
@@ -858,7 +856,7 @@ struct nsStyleBorder {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleBorder, sz);
+      AllocateByObjectID(nsPresArena::nsStyleBorder_id, sz);
   }
   void Destroy(nsPresContext* aContext);
 
@@ -1088,12 +1086,12 @@ struct nsStyleOutline {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleOutline, sz);
+      AllocateByObjectID(nsPresArena::nsStyleOutline_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleOutline();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleOutline, this);
+      FreeByObjectID(nsPresArena::nsStyleOutline_id, this);
   }
 
   void RecalcData(nsPresContext* aContext);
@@ -1184,12 +1182,12 @@ struct nsStyleList {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleList, sz);
+      AllocateByObjectID(nsPresArena::nsStyleList_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleList();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleList, this);
+      FreeByObjectID(nsPresArena::nsStyleList_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleList& aOther) const;
@@ -1285,8 +1283,7 @@ struct nsStyleGridTemplate {
   }
 
   inline bool operator!=(const nsStyleGridTemplate& aOther) const {
-    return mIsSubgrid != aOther.mIsSubgrid ||
-           mLineNameLists != aOther.mLineNameLists ||
+    return mLineNameLists != aOther.mLineNameLists ||
            mMinTrackSizingFunctions != aOther.mMinTrackSizingFunctions ||
            mMaxTrackSizingFunctions != aOther.mMaxTrackSizingFunctions;
   }
@@ -1360,16 +1357,15 @@ struct nsStylePosition {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStylePosition, sz);
+      AllocateByObjectID(nsPresArena::nsStylePosition_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStylePosition();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStylePosition, this);
+      FreeByObjectID(nsPresArena::nsStylePosition_id, this);
   }
 
-  nsChangeHint CalcDifference(const nsStylePosition& aOther,
-                              nsStyleContext* aContext) const;
+  nsChangeHint CalcDifference(const nsStylePosition& aOther) const;
   static nsChangeHint MaxDifference() {
     return NS_CombineHint(NS_STYLE_HINT_REFLOW,
                           nsChangeHint(nsChangeHint_RecomputePosition |
@@ -1565,12 +1561,12 @@ struct nsStyleTextReset {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleTextReset, sz);
+      AllocateByObjectID(nsPresArena::nsStyleTextReset_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleTextReset();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleTextReset, this);
+      FreeByObjectID(nsPresArena::nsStyleTextReset_id, this);
   }
 
   uint8_t GetDecorationStyle() const
@@ -1642,12 +1638,12 @@ struct nsStyleText {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleText, sz);
+      AllocateByObjectID(nsPresArena::nsStyleText_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleText();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleText, this);
+      FreeByObjectID(nsPresArena::nsStyleText_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleText& aOther) const;
@@ -1834,12 +1830,12 @@ struct nsStyleVisibility {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleVisibility, sz);
+      AllocateByObjectID(nsPresArena::nsStyleVisibility_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleVisibility();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleVisibility, this);
+      FreeByObjectID(nsPresArena::nsStyleVisibility_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleVisibility& aOther) const;
@@ -2063,12 +2059,12 @@ struct nsStyleDisplay {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleDisplay, sz);
+      AllocateByObjectID(nsPresArena::nsStyleDisplay_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleDisplay();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleDisplay, this);
+      FreeByObjectID(nsPresArena::nsStyleDisplay_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleDisplay& aOther) const;
@@ -2324,12 +2320,12 @@ struct nsStyleTable {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleTable, sz);
+      AllocateByObjectID(nsPresArena::nsStyleTable_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleTable();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleTable, this);
+      FreeByObjectID(nsPresArena::nsStyleTable_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleTable& aOther) const;
@@ -2355,12 +2351,12 @@ struct nsStyleTableBorder {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleTableBorder, sz);
+      AllocateByObjectID(nsPresArena::nsStyleTableBorder_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleTableBorder();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleTableBorder, this);
+      FreeByObjectID(nsPresArena::nsStyleTableBorder_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleTableBorder& aOther) const;
@@ -2451,12 +2447,12 @@ struct nsStyleQuotes {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleQuotes, sz);
+      AllocateByObjectID(nsPresArena::nsStyleQuotes_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleQuotes();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleQuotes, this);
+      FreeByObjectID(nsPresArena::nsStyleQuotes_id, this);
   }
 
   void SetInitial();
@@ -2533,7 +2529,7 @@ struct nsStyleContent {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleContent, sz);
+      AllocateByObjectID(nsPresArena::nsStyleContent_id, sz);
   }
   void Destroy(nsPresContext* aContext);
 
@@ -2642,12 +2638,12 @@ struct nsStyleUIReset {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleUIReset, sz);
+      AllocateByObjectID(nsPresArena::nsStyleUIReset_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleUIReset();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleUIReset, this);
+      FreeByObjectID(nsPresArena::nsStyleUIReset_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleUIReset& aOther) const;
@@ -2704,12 +2700,12 @@ struct nsStyleUserInterface {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleUserInterface, sz);
+      AllocateByObjectID(nsPresArena::nsStyleUserInterface_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleUserInterface();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleUserInterface, this);
+      FreeByObjectID(nsPresArena::nsStyleUserInterface_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleUserInterface& aOther) const;
@@ -2751,12 +2747,12 @@ struct nsStyleXUL {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleXUL, sz);
+      AllocateByObjectID(nsPresArena::nsStyleXUL_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleXUL();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleXUL, this);
+      FreeByObjectID(nsPresArena::nsStyleXUL_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleXUL& aOther) const;
@@ -2787,12 +2783,12 @@ struct nsStyleColumn {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleColumn, sz);
+      AllocateByObjectID(nsPresArena::nsStyleColumn_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleColumn();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleColumn, this);
+      FreeByObjectID(nsPresArena::nsStyleColumn_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleColumn& aOther) const;
@@ -2880,12 +2876,12 @@ struct nsStyleSVG {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleSVG, sz);
+      AllocateByObjectID(nsPresArena::nsStyleSVG_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleSVG();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleSVG, this);
+      FreeByObjectID(nsPresArena::nsStyleSVG_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleSVG& aOther) const;
@@ -3162,12 +3158,12 @@ struct nsStyleSVGReset {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleSVGReset, sz);
+      AllocateByObjectID(nsPresArena::nsStyleSVGReset_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleSVGReset();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleSVGReset, this);
+      FreeByObjectID(nsPresArena::nsStyleSVGReset_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleSVGReset& aOther) const;
@@ -3213,12 +3209,12 @@ struct nsStyleVariables {
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsStyleVariables, sz);
+      AllocateByObjectID(nsPresArena::nsStyleVariables_id, sz);
   }
   void Destroy(nsPresContext* aContext) {
     this->~nsStyleVariables();
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsStyleVariables, this);
+      FreeByObjectID(nsPresArena::nsStyleVariables_id, this);
   }
 
   nsChangeHint CalcDifference(const nsStyleVariables& aOther) const;

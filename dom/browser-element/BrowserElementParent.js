@@ -4,10 +4,10 @@
 
 "use strict";
 
-var Cu = Components.utils;
-var Ci = Components.interfaces;
-var Cc = Components.classes;
-var Cr = Components.results;
+let Cu = Components.utils;
+let Ci = Components.interfaces;
+let Cc = Components.classes;
+let Cr = Components.results;
 
 /* BrowserElementParent injects script to listen for certain events in the
  * child.  We then listen to messages from the child script and take
@@ -77,8 +77,6 @@ function BrowserElementParent() {
   Services.obs.addObserver(this, 'oop-frameloader-crashed', /* ownsWeak = */ true);
   Services.obs.addObserver(this, 'copypaste-docommand', /* ownsWeak = */ true);
   Services.obs.addObserver(this, 'ask-children-to-execute-copypaste-command', /* ownsWeak = */ true);
-  Services.obs.addObserver(this, 'frameloader-message-manager-will-change', /* ownsWeak = */ true);
-  Services.obs.addObserver(this, 'frameloader-message-manager-changed', /* ownsWeak = */ true);
 }
 
 BrowserElementParent.prototype = {
@@ -163,17 +161,10 @@ BrowserElementParent.prototype = {
 
   _setupMessageListener: function() {
     this._mm = this._frameLoader.messageManager;
-    this._isWidget = this._frameLoader
-                         .QueryInterface(Ci.nsIFrameLoader)
-                         .ownerIsWidget;
-    this._mm.addMessageListener('browser-element-api:call', this);
-    this._mm.loadFrameScript("chrome://global/content/extensions.js", true);
-  },
-
-  receiveMessage: function(aMsg) {
-    if (!this._isAlive()) {
-      return;
-    }
+    let self = this;
+    let isWidget = this._frameLoader
+                       .QueryInterface(Ci.nsIFrameLoader)
+                       .ownerIsWidget;
 
     // Messages we receive are handed to functions which take a (data) argument,
     // where |data| is the message manager's data object.
@@ -231,15 +222,18 @@ BrowserElementParent.prototype = {
       "opentab": this._fireEventFromMsg
     };
 
-    if (aMsg.data.msg_name in mmCalls) {
-      return mmCalls[aMsg.data.msg_name].apply(this, arguments);
-    } else if (!this._isWidget && aMsg.data.msg_name in mmSecuritySensitiveCalls) {
-      return mmSecuritySensitiveCalls[aMsg.data.msg_name].apply(this, arguments);
-    }
-  },
+    this._mm.addMessageListener('browser-element-api:call', function(aMsg) {
+      if (!self._isAlive()) {
+        return;
+      }
 
-  _removeMessageListener: function() {
-    this._mm.removeMessageListener('browser-element-api:call', this);
+      if (aMsg.data.msg_name in mmCalls) {
+        return mmCalls[aMsg.data.msg_name].apply(self, arguments);
+      } else if (!isWidget && aMsg.data.msg_name in mmSecuritySensitiveCalls) {
+        return mmSecuritySensitiveCalls[aMsg.data.msg_name]
+                 .apply(self, arguments);
+      }
+    });
   },
 
   /**
@@ -459,8 +453,6 @@ BrowserElementParent.prototype = {
   //  - caretVisible: Indicate the caret visiibility.
   //  - selectionVisible: Indicate current selection is visible or not.
   //  - selectionEditable: Indicate current selection is editable or not.
-  //  - selectedTextContent: Contains current selected text content, which is
-  //                         equivalent to the string returned by Selection.toString().
   _handleCaretStateChanged: function(data) {
     let evt = this._createEvent('caretstatechanged', data.json,
                                 /* cancelable = */ false);
@@ -839,16 +831,14 @@ BrowserElementParent.prototype = {
       catch(e) {
         debug('Malformed referrer -- ' + e);
       }
-
-      // TODO Bug 1165466: use originAttributes from nsILoadContext.
-      let attrs = {appId: this._frameLoader.loadContext.appId,
-                   inBrowser: this._frameLoader.loadContext.isInBrowserElement};
       // This simply returns null if there is no principal available
       // for the requested uri. This is an acceptable fallback when
       // calling newChannelFromURI2.
-      principal =
-        Services.scriptSecurityManager.createCodebasePrincipal(
-          referrer, attrs);
+      principal = 
+        Services.scriptSecurityManager.getAppCodebasePrincipal(
+          referrer, 
+          this._frameLoader.loadContext.appId, 
+          this._frameLoader.loadContext.isInBrowserElement);
     }
 
     debug('Using principal? ' + !!principal);
@@ -1109,16 +1099,6 @@ BrowserElementParent.prototype = {
     case 'ask-children-to-execute-copypaste-command':
       if (this._isAlive() && this._frameElement == subject.wrappedJSObject) {
         this._sendAsyncMsg('copypaste-do-command', { command: data });
-      }
-      break;
-    case 'frameloader-message-manager-will-change':
-      if (this._isAlive() && subject == this._frameLoader) {
-        this._removeMessageListener();
-      }
-      break;
-    case 'frameloader-message-manager-changed':
-      if (this._isAlive() && subject == this._frameLoader) {
-        this._setupMessageListener();
       }
       break;
     default:

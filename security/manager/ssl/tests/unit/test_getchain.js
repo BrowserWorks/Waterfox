@@ -10,7 +10,7 @@ const certdb  = Cc["@mozilla.org/security/x509certdb;1"]
                   .getService(Ci.nsIX509CertDB);
 // This is the list of certificates needed for the test
 // The certificates prefixed by 'int-' are intermediates
-var certList = [
+let certList = [
   'ee',
   'ca-1',
   'ca-2',

@@ -5,7 +5,7 @@
 
 package org.mozilla.gecko.util;
 
-import org.mozilla.gecko.annotation.RobocopTarget;
+import org.mozilla.gecko.mozglue.RobocopTarget;
 
 @RobocopTarget
 public interface NativeEventListener {

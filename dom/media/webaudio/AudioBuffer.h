@@ -33,32 +33,19 @@ class AudioContext;
 class AudioBuffer final : public nsWrapperCache
 {
 public:
-  // If non-null, aInitialContents must have number of channels equal to
-  // aNumberOfChannels and their lengths must be at least aLength.
   static already_AddRefed<AudioBuffer>
   Create(AudioContext* aContext, uint32_t aNumberOfChannels,
          uint32_t aLength, float aSampleRate,
-         already_AddRefed<ThreadSharedFloatArrayBufferList> aInitialContents,
          JSContext* aJSContext, ErrorResult& aRv);
-
-  static already_AddRefed<AudioBuffer>
-  Create(AudioContext* aContext, uint32_t aNumberOfChannels,
-         uint32_t aLength, float aSampleRate,
-         JSContext* aJSContext, ErrorResult& aRv)
-  {
-    return Create(aContext, aNumberOfChannels, aLength, aSampleRate,
-                  nullptr, aJSContext, aRv);
-  }
 
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(AudioBuffer)
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(AudioBuffer)
 
-  nsPIDOMWindow* GetParentObject() const
+  AudioContext* GetParentObject() const
   {
-    nsCOMPtr<nsPIDOMWindow> parentObject = do_QueryReferent(mOwnerWindow);
-    return parentObject;
+    return mContext;
   }
 
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
@@ -103,21 +90,21 @@ public:
    */
   ThreadSharedFloatArrayBufferList* GetThreadSharedChannelsForRate(JSContext* aContext);
 
+  // This replaces the contents of the JS array for the given channel.
+  // This function needs to be called on an AudioBuffer which has not been
+  // handed off to the content yet, and right after the object has been
+  // initialized.
+  void SetRawChannelContents(uint32_t aChannel, float* aContents);
+
 protected:
   AudioBuffer(AudioContext* aContext, uint32_t aNumberOfChannels,
-              uint32_t aLength, float aSampleRate,
-              already_AddRefed<ThreadSharedFloatArrayBufferList>
-                aInitialContents);
+              uint32_t aLength, float aSampleRate);
   ~AudioBuffer();
 
   bool RestoreJSChannelData(JSContext* aJSContext);
-
-  already_AddRefed<ThreadSharedFloatArrayBufferList>
-  StealJSArrayDataIntoSharedChannels(JSContext* aJSContext);
-
   void ClearJSChannels();
 
-  nsWeakPtr mOwnerWindow;
+  nsRefPtr<AudioContext> mContext;
   // Float32Arrays
   nsAutoTArray<JS::Heap<JSObject*>, 2> mJSChannels;
 

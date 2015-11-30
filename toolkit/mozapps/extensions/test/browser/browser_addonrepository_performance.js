@@ -4,9 +4,9 @@
 
 // Tests that the metadata request includes startup time measurements
 
-var tmp = {};
+let tmp = {};
 Components.utils.import("resource://gre/modules/addons/AddonRepository.jsm", tmp);
-var AddonRepository = tmp.AddonRepository;
+let AddonRepository = tmp.AddonRepository;
 
 var gTelemetry = Cc["@mozilla.org/base/telemetry;1"].getService(Ci.nsITelemetry);
 var gManagerWindow;

@@ -65,14 +65,16 @@ MediaKeySystemAccessManager::~MediaKeySystemAccessManager()
 void
 MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
                                      const nsAString& aKeySystem,
-                                     const Sequence<MediaKeySystemConfiguration>& aConfigs)
+                                     const Optional<Sequence<MediaKeySystemOptions>>& aOptions)
 {
-  if (aKeySystem.IsEmpty() || aConfigs.IsEmpty()) {
+  if (aKeySystem.IsEmpty() || (aOptions.WasPassed() && aOptions.Value().IsEmpty())) {
     aPromise->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR,
                           NS_LITERAL_CSTRING("Invalid keysystem type or invalid options sequence"));
     return;
   }
-  Request(aPromise, aKeySystem, aConfigs, RequestType::Initial);
+  Sequence<MediaKeySystemOptions> optionsNotPassed;
+  const auto& options = aOptions.WasPassed() ? aOptions.Value() : optionsNotPassed;
+  Request(aPromise, aKeySystem, options, RequestType::Initial);
 }
 
 static bool
@@ -91,7 +93,7 @@ ShouldTrialCreateGMP(const nsAString& aKeySystem)
 void
 MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
                                      const nsAString& aKeySystem,
-                                     const Sequence<MediaKeySystemConfiguration>& aConfigs,
+                                     const Sequence<MediaKeySystemOptions>& aOptions,
                                      RequestType aType)
 {
   EME_LOG("MediaKeySystemAccessManager::Request %s", NS_ConvertUTF16toUTF8(aKeySystem).get());
@@ -145,7 +147,7 @@ MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
     // has had a new plugin added. AwaitInstall() sets a timer to fail if the
     // update/download takes too long or fails.
     if (aType == RequestType::Initial &&
-        AwaitInstall(aPromise, aKeySystem, aConfigs)) {
+        AwaitInstall(aPromise, aKeySystem, aOptions)) {
       // Notify chrome that we're going to wait for the CDM to download/update.
       // Note: If we're re-trying, we don't re-send the notificaiton,
       // as chrome is already displaying the "we can't play, updating"
@@ -174,16 +176,14 @@ MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
     return;
   }
 
-  MediaKeySystemConfiguration config;
-  // TODO: Remove IsSupported() check here once we remove backwards
-  // compatibility with initial implementation...
-  if (MediaKeySystemAccess::GetSupportedConfig(keySystem, aConfigs, config) ||
-      MediaKeySystemAccess::IsSupported(keySystem, aConfigs)) {
+  if (aOptions.IsEmpty() ||
+      MediaKeySystemAccess::IsSupported(keySystem, aOptions)) {
     nsRefPtr<MediaKeySystemAccess> access(
-      new MediaKeySystemAccess(mWindow, keySystem, NS_ConvertUTF8toUTF16(cdmVersion), config));
-    if (ShouldTrialCreateGMP(keySystem)) {
+      new MediaKeySystemAccess(mWindow, keySystem, NS_ConvertUTF8toUTF16(cdmVersion)));
+   if (ShouldTrialCreateGMP(keySystem)) {
       // Ensure we have tried creating a GMPVideoDecoder for this
       // keySystem, and that we can use it to decode. This ensures that we only
+      // report that we support this keySystem when the CDM us usable (i.e.
       // report that we support this keySystem when the CDM us usable.
       mTrialCreator->MaybeAwaitTrialCreate(keySystem, access, aPromise, mWindow);
       return;
@@ -198,11 +198,11 @@ MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
 
 MediaKeySystemAccessManager::PendingRequest::PendingRequest(DetailedPromise* aPromise,
                                                             const nsAString& aKeySystem,
-                                                            const Sequence<MediaKeySystemConfiguration>& aConfigs,
+                                                            const Sequence<MediaKeySystemOptions>& aOptions,
                                                             nsITimer* aTimer)
   : mPromise(aPromise)
   , mKeySystem(aKeySystem)
-  , mConfigs(aConfigs)
+  , mOptions(aOptions)
   , mTimer(aTimer)
 {
   MOZ_COUNT_CTOR(MediaKeySystemAccessManager::PendingRequest);
@@ -211,7 +211,7 @@ MediaKeySystemAccessManager::PendingRequest::PendingRequest(DetailedPromise* aPr
 MediaKeySystemAccessManager::PendingRequest::PendingRequest(const PendingRequest& aOther)
   : mPromise(aOther.mPromise)
   , mKeySystem(aOther.mKeySystem)
-  , mConfigs(aOther.mConfigs)
+  , mOptions(aOther.mOptions)
   , mTimer(aOther.mTimer)
 {
   MOZ_COUNT_CTOR(MediaKeySystemAccessManager::PendingRequest);
@@ -241,7 +241,7 @@ MediaKeySystemAccessManager::PendingRequest::RejectPromise(const nsCString& aRea
 bool
 MediaKeySystemAccessManager::AwaitInstall(DetailedPromise* aPromise,
                                           const nsAString& aKeySystem,
-                                          const Sequence<MediaKeySystemConfiguration>& aConfigs)
+                                          const Sequence<MediaKeySystemOptions>& aOptions)
 {
   EME_LOG("MediaKeySystemAccessManager::AwaitInstall %s", NS_ConvertUTF16toUTF8(aKeySystem).get());
 
@@ -256,7 +256,7 @@ MediaKeySystemAccessManager::AwaitInstall(DetailedPromise* aPromise,
     return false;
   }
 
-  mRequests.AppendElement(PendingRequest(aPromise, aKeySystem, aConfigs, timer));
+  mRequests.AppendElement(PendingRequest(aPromise, aKeySystem, aOptions, timer));
   return true;
 }
 
@@ -264,7 +264,7 @@ void
 MediaKeySystemAccessManager::RetryRequest(PendingRequest& aRequest)
 {
   aRequest.CancelTimer();
-  Request(aRequest.mPromise, aRequest.mKeySystem, aRequest.mConfigs, RequestType::Subsequent);
+  Request(aRequest.mPromise, aRequest.mKeySystem, aRequest.mOptions, RequestType::Subsequent);
 }
 
 nsresult

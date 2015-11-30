@@ -127,8 +127,6 @@ public:
                           const nsAString& aBdAddress) override;
   void DtmfNotification(char aDtmf,
                         const nsAString& aBdAddress) override;
-  void NRECNotification(BluetoothHandsfreeNRECState aNrec,
-                        const nsAString& aBdAddr) override;
   void CallHoldNotification(BluetoothHandsfreeCallHoldType aChld,
                             const nsAString& aBdAddress) override;
   void DialCallNotification(const nsAString& aNumber,
@@ -215,7 +213,6 @@ private:
   bool mReceiveVgsFlag;
   // This flag is for HFP only, not for HSP.
   bool mDialingRequestProcessed;
-  bool mNrecEnabled;
   PhoneType mPhoneType;
   nsString mDeviceAddress;
   nsString mMsisdn;

@@ -790,7 +790,7 @@ IPDL union type."""
         if self.recursive:
             return self.ptrToType()
         else:
-            return Type('mozilla::AlignedStorage2', T=self.internalType())
+            return TypeArray(Type('char'), ExprSizeof(self.internalType()))
 
     def unionValue(self):
         # NB: knows that Union's storage C union is named |mValue|
@@ -852,14 +852,14 @@ IPDL union type."""
         if self.recursive:
             return v
         else:
-            return ExprCall(ExprSelect(v, '.', 'addr'))
+            return ExprCast(ExprAddrOf(v), self.ptrToType(), reinterpret=1)
 
     def constptrToSelfExpr(self):
         """|*constptrToSelfExpr()| has type |self.constType()|"""
         v = self.unionValue()
         if self.recursive:
             return v
-        return ExprCall(ExprSelect(v, '.', 'addr'))
+        return ExprCast(ExprAddrOf(v), self.constPtrToType(), reinterpret=1)
 
     def ptrToInternalType(self):
         t = self.ptrToType()
@@ -2942,7 +2942,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                 ExprMemberInit(p.lastActorIdVar(),
                                [ p.actorIdInit(self.side) ]),
                 ExprMemberInit(p.otherPidVar(),
-                               [ ExprVar('mozilla::ipc::kInvalidProcessId') ]),
+                               [ ExprVar('ipc::kInvalidProcessId') ]),
                 ExprMemberInit(p.lastShmemIdVar(),
                                [ p.shmemIdInit(self.side) ]),
                 ExprMemberInit(p.stateVar(),

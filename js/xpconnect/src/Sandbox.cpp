@@ -16,6 +16,7 @@
 #include "nsGlobalWindow.h"
 #include "nsIScriptContext.h"
 #include "nsIScriptObjectPrincipal.h"
+#include "nsIScriptSecurityManager.h"
 #include "nsIURI.h"
 #include "nsJSUtils.h"
 #include "nsNetUtil.h"
@@ -29,7 +30,6 @@
 #include "Crypto.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/BlobBinding.h"
-#include "mozilla/dom/cache/CacheStorage.h"
 #include "mozilla/dom/CSSBinding.h"
 #include "mozilla/dom/indexedDB/IndexedDatabaseManager.h"
 #include "mozilla/dom/Fetch.h"
@@ -828,7 +828,7 @@ xpc::SandboxProxyHandler::hasOwn(JSContext* cx, JS::Handle<JSObject*> proxy,
 
 bool
 xpc::SandboxProxyHandler::get(JSContext* cx, JS::Handle<JSObject*> proxy,
-                              JS::Handle<JS::Value> receiver,
+                              JS::Handle<JSObject*> receiver,
                               JS::Handle<jsid> id,
                               JS::MutableHandle<Value> vp) const
 {
@@ -908,8 +908,6 @@ xpc::GlobalProperties::Parse(JSContext* cx, JS::HandleObject obj)
 #endif
         } else if (!strcmp(name.ptr(), "fetch")) {
             fetch = true;
-        } else if (!strcmp(name.ptr(), "caches")) {
-            caches = true;
         } else {
             JS_ReportError(cx, "Unknown property name: %s", name.ptr());
             return false;
@@ -973,9 +971,6 @@ xpc::GlobalProperties::Define(JSContext* cx, JS::HandleObject obj)
 #endif
 
     if (fetch && !SandboxCreateFetch(cx, obj))
-        return false;
-
-    if (caches && !dom::cache::CacheStorage::DefineCaches(cx, obj))
         return false;
 
     return true;
@@ -1198,15 +1193,15 @@ ParsePrincipal(JSContext* cx, HandleString codebase, nsIPrincipal** principal)
         return false;
     }
 
+    nsCOMPtr<nsIScriptSecurityManager> secman =
+        do_GetService(kScriptSecurityManagerContractID);
+    NS_ENSURE_TRUE(secman, false);
+
     // We could allow passing in the app-id and browser-element info to the
     // sandbox constructor. But creating a sandbox based on a string is a
     // deprecated API so no need to add features to it.
-    OriginAttributes attrs;
-    nsCOMPtr<nsIPrincipal> prin =
-        BasePrincipal::CreateCodebasePrincipal(uri, attrs);
-    prin.forget(principal);
-
-    if (!*principal) {
+    rv = secman->GetNoAppCodebasePrincipal(uri, principal);
+    if (NS_FAILED(rv) || !*principal) {
         JS_ReportError(cx, "Creating Principal from URI failed");
         return false;
     }

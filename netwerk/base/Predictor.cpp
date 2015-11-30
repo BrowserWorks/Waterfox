@@ -1515,7 +1515,7 @@ Predictor::SpaceCleaner::OnMetaDataElement(const char *key, const char *value)
   nsCString uri;
   nsresult rv = parsedURI->GetAsciiSpec(uri);
   uint32_t uriLength = uri.Length();
-  if (NS_SUCCEEDED(rv) &&
+  if (ok && NS_SUCCEEDED(rv) &&
       uriLength > mPredictor->mMaxURILength) {
     // Default to getting rid of URIs that are too long and were put in before
     // we had our limit on URI length, in order to free up some space.
@@ -1525,9 +1525,9 @@ Predictor::SpaceCleaner::OnMetaDataElement(const char *key, const char *value)
     return NS_OK;
   }
 
-  if (!mLRUKeyToDelete || lastHit < mLRUStamp) {
+  if (!ok || !mLRUKeyToDelete || lastHit < mLRUStamp) {
     mLRUKeyToDelete = key;
-    mLRUStamp = lastHit;
+    mLRUStamp = ok ? lastHit : 0;
   }
 
   return NS_OK;

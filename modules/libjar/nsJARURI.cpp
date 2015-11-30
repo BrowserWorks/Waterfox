@@ -430,12 +430,6 @@ nsJARURI::GetAsciiSpec(nsACString &aSpec)
 }
 
 NS_IMETHODIMP
-nsJARURI::GetAsciiHostPort(nsACString &aHostPort)
-{
-    return NS_ERROR_FAILURE;
-}
-
-NS_IMETHODIMP
 nsJARURI::GetAsciiHost(nsACString &aHost)
 {
     return NS_ERROR_FAILURE;

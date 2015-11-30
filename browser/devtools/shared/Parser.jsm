@@ -411,7 +411,7 @@ SyntaxTree.prototype = {
 /**
  * Parser utility methods.
  */
-var ParserHelpers = {
+let ParserHelpers = {
   /**
    * Gets the location information for a node. Not all nodes have a
    * location property directly attached, or the location information
@@ -732,7 +732,7 @@ var ParserHelpers = {
  *   loc: SourceLocation | null;
  * }
  */
-var SyntaxTreeVisitor = {
+let SyntaxTreeVisitor = {
   /**
    * Walks a syntax tree.
    *

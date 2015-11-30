@@ -5,8 +5,7 @@
 
 package org.mozilla.gecko;
 
-import org.mozilla.gecko.util.ColorUtils;
-import org.mozilla.gecko.widget.themed.ThemedEditText;
+import org.mozilla.gecko.widget.ThemedEditText;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -81,7 +80,7 @@ public class CustomEditText extends ThemedEditText {
     public void setPrivateMode(boolean isPrivate) {
         super.setPrivateMode(isPrivate);
 
-        mHighlightColor = ColorUtils.getColor(getContext(), isPrivate
+        mHighlightColor = getContext().getResources().getColor(isPrivate
                 ? R.color.url_bar_text_highlight_pb : R.color.fennec_ui_orange);
         // android:textColorHighlight cannot support a ColorStateList.
         setHighlightColor(mHighlightColor);

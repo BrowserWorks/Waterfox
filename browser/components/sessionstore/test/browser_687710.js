@@ -8,9 +8,9 @@
 // graph is a tree and tires to walk to the root.  But if there's a cycle,
 // there is no root, and we loop forever.
 
-var stateBackup = ss.getBrowserState();
+let stateBackup = ss.getBrowserState();
 
-var state = {windows:[{tabs:[{entries:[
+let state = {windows:[{tabs:[{entries:[
   {
     docIdentifier: 1,
     url: "http://example.com",

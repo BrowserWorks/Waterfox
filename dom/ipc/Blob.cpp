@@ -710,6 +710,64 @@ private:
   }
 };
 
+// This is only needed for IndexedDB BlobImplSnapshot.
+class SameProcessInputStreamBlobImpl final
+  : public BlobImplBase
+{
+  nsCOMPtr<nsIInputStream> mInputStream;
+
+public:
+  SameProcessInputStreamBlobImpl(const nsAString& aContentType,
+                                 uint64_t aLength,
+                                 nsIInputStream* aInputStream)
+    : BlobImplBase(aContentType, aLength)
+    , mInputStream(aInputStream)
+  {
+    MOZ_ASSERT(aLength != UINT64_MAX);
+    MOZ_ASSERT(aInputStream);
+
+    mImmutable = true;
+  }
+
+  SameProcessInputStreamBlobImpl(const nsAString& aName,
+                                 const nsAString& aContentType,
+                                 uint64_t aLength,
+                                 int64_t aLastModifiedDate,
+                                 nsIInputStream* aInputStream)
+    : BlobImplBase(aName, aContentType, aLength, aLastModifiedDate,
+                   BlobDirState::eIsNotDir)
+    , mInputStream(aInputStream)
+  {
+    MOZ_ASSERT(aLength != UINT64_MAX);
+    MOZ_ASSERT(aLastModifiedDate != INT64_MAX);
+    MOZ_ASSERT(aInputStream);
+
+    mImmutable = true;
+  }
+
+private:
+  virtual already_AddRefed<BlobImpl>
+  CreateSlice(uint64_t /* aStart */,
+              uint64_t /* aLength */,
+              const nsAString& /* aContentType */,
+              ErrorResult& /* aRv */) override
+  {
+    MOZ_CRASH("Not implemented");
+  }
+
+  virtual void
+  GetInternalStream(nsIInputStream** aStream, ErrorResult& aRv) override
+  {
+    if (NS_WARN_IF(!aStream)) {
+      aRv.Throw(NS_ERROR_FAILURE);
+      return;
+    }
+
+    nsCOMPtr<nsIInputStream> inputStream = mInputStream;
+    inputStream.forget(aStream);
+  }
+};
+
 struct MOZ_STACK_CLASS CreateBlobImplMetadata final
 {
   nsString mContentType;
@@ -820,6 +878,40 @@ CreateBlobImpl(const nsTArray<uint8_t>& aMemoryData,
 }
 
 already_AddRefed<BlobImpl>
+CreateBlobImpl(intptr_t aAddRefedInputStream,
+               const CreateBlobImplMetadata& aMetadata)
+{
+  MOZ_ASSERT(gProcessType == GeckoProcessType_Default);
+  MOZ_ASSERT(aMetadata.mIsSameProcessActor);
+  MOZ_ASSERT(aAddRefedInputStream);
+
+  nsCOMPtr<nsIInputStream> inputStream =
+    dont_AddRef(
+      reinterpret_cast<nsIInputStream*>(aAddRefedInputStream));
+
+  nsRefPtr<BlobImpl> blobImpl;
+  if (!aMetadata.mHasRecursed && aMetadata.IsFile()) {
+    blobImpl =
+      new SameProcessInputStreamBlobImpl(aMetadata.mName,
+                                         aMetadata.mContentType,
+                                         aMetadata.mLength,
+                                         aMetadata.mLastModifiedDate,
+                                         inputStream);
+  } else {
+    blobImpl =
+      new SameProcessInputStreamBlobImpl(aMetadata.mContentType,
+                                         aMetadata.mLength,
+                                         inputStream);
+  }
+
+  DebugOnly<bool> isMutable;
+  MOZ_ASSERT(NS_SUCCEEDED(blobImpl->GetMutable(&isMutable)));
+  MOZ_ASSERT(!isMutable);
+
+  return blobImpl.forget();
+}
+
+already_AddRefed<BlobImpl>
 CreateBlobImpl(const nsTArray<BlobData>& aBlobData,
                CreateBlobImplMetadata& aMetadata);
 
@@ -839,6 +931,11 @@ CreateBlobImplFromBlobData(const BlobData& aBlobData,
 
     case BlobData::TArrayOfuint8_t: {
       blobImpl = CreateBlobImpl(aBlobData.get_ArrayOfuint8_t(), aMetadata);
+      break;
+    }
+
+    case BlobData::Tintptr_t: {
+      blobImpl = CreateBlobImpl(aBlobData.get_intptr_t(), aMetadata);
       break;
     }
 
@@ -2017,6 +2114,12 @@ public:
   virtual int64_t
   GetFileId() override;
 
+  virtual void
+  AddFileInfo(FileInfo* aFileInfo) override;
+
+  virtual FileInfo*
+  GetFileInfo(FileManager* aFileManager) override;
+
   virtual nsresult
   GetSendInfo(nsIInputStream** aBody,
               uint64_t* aContentLength,
@@ -2757,6 +2860,20 @@ RemoteBlobImpl::GetFileId()
   return mBlobImpl->GetFileId();
 }
 
+void
+BlobParent::
+RemoteBlobImpl::AddFileInfo(FileInfo* aFileInfo)
+{
+  return mBlobImpl->AddFileInfo(aFileInfo);
+}
+
+FileInfo*
+BlobParent::
+RemoteBlobImpl::GetFileInfo(FileManager* aFileManager)
+{
+  return mBlobImpl->GetFileInfo(aFileManager);
+}
+
 nsresult
 BlobParent::
 RemoteBlobImpl::GetSendInfo(nsIInputStream** aBody,
@@ -3244,16 +3361,6 @@ BlobChild::GetOrCreateFromImpl(ChildManagerType* aManager,
   MOZ_ASSERT(aManager);
   MOZ_ASSERT(aBlobImpl);
 
-  // If the blob represents a wrapper around real blob implementation (so called
-  // snapshot) then we need to get the real one.
-  if (nsCOMPtr<PIBlobImplSnapshot> snapshot = do_QueryInterface(aBlobImpl)) {
-    aBlobImpl = snapshot->GetBlobImpl();
-    if (!aBlobImpl) {
-      // The snapshot is not valid anymore.
-      return nullptr;
-    }
-  }
-
   // If the blob represents a remote blob then we can simply pass its actor back
   // here.
   if (nsCOMPtr<nsIRemoteBlob> remoteBlob = do_QueryInterface(aBlobImpl)) {
@@ -3274,7 +3381,18 @@ BlobChild::GetOrCreateFromImpl(ChildManagerType* aManager,
 
   AnyBlobConstructorParams blobParams;
 
+  nsCOMPtr<nsIInputStream> snapshotInputStream;
+
   if (gProcessType == GeckoProcessType_Default) {
+    nsCOMPtr<PIBlobImplSnapshot> snapshot = do_QueryInterface(aBlobImpl);
+    if (snapshot) {
+      ErrorResult rv;
+      aBlobImpl->GetInternalStream(getter_AddRefs(snapshotInputStream), rv);
+      MOZ_ALWAYS_TRUE(!rv.Failed());
+    }
+  }
+
+  if (gProcessType == GeckoProcessType_Default && !snapshotInputStream) {
     nsRefPtr<BlobImpl> sameProcessImpl = aBlobImpl;
     auto addRefedBlobImpl =
       reinterpret_cast<intptr_t>(sameProcessImpl.forget().take());
@@ -3282,7 +3400,12 @@ BlobChild::GetOrCreateFromImpl(ChildManagerType* aManager,
     blobParams = SameProcessBlobConstructorParams(addRefedBlobImpl);
   } else {
     BlobData blobData;
-    BlobDataFromBlobImpl(aBlobImpl, blobData);
+    if (snapshotInputStream) {
+      blobData =
+        reinterpret_cast<intptr_t>(snapshotInputStream.forget().take());
+    } else {
+      BlobDataFromBlobImpl(aBlobImpl, blobData);
+    }
 
     nsString contentType;
     aBlobImpl->GetType(contentType);
@@ -3791,8 +3914,6 @@ BlobParent::GetOrCreateFromImpl(ParentManagerType* aManager,
   MOZ_ASSERT(aManager);
   MOZ_ASSERT(aBlobImpl);
 
-  MOZ_ASSERT(!nsCOMPtr<PIBlobImplSnapshot>(do_QueryInterface(aBlobImpl)));
-
   // If the blob represents a remote blob for this manager then we can simply
   // pass its actor back here.
   if (nsCOMPtr<nsIRemoteBlob> remoteBlob = do_QueryInterface(aBlobImpl)) {
@@ -3807,9 +3928,20 @@ BlobParent::GetOrCreateFromImpl(ParentManagerType* aManager,
     return nullptr;
   }
 
+  const bool isSameProcessActor = ActorManagerIsSameProcess(aManager);
+
   AnyBlobConstructorParams blobParams;
 
-  if (ActorManagerIsSameProcess(aManager)) {
+  bool isSnapshot;
+
+  if (isSameProcessActor) {
+    nsCOMPtr<PIBlobImplSnapshot> snapshot = do_QueryInterface(aBlobImpl);
+    isSnapshot = !!snapshot;
+  } else {
+    isSnapshot = false;
+  }
+
+  if (isSameProcessActor && !isSnapshot) {
     nsRefPtr<BlobImpl> sameProcessImpl = aBlobImpl;
     auto addRefedBlobImpl =
       reinterpret_cast<intptr_t>(sameProcessImpl.forget().take());

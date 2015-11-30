@@ -8,9 +8,9 @@
 
 "use strict";
 
-var {Tools} = require("definitions");
+let {Tools} = require("definitions");
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   let currWindow, hud, mainWindow;
 
   mainWindow = Services.wm.getMostRecentWindow(null);

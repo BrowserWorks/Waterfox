@@ -1179,8 +1179,8 @@ NS_IMETHODIMP
 nsLocalFile::Clone(nsIFile** aFile)
 {
   // Just copy-construct ourselves
-  nsRefPtr<nsLocalFile> file = new nsLocalFile(*this);
-  file.forget(aFile);
+  *aFile = new nsLocalFile(*this);
+  NS_ADDREF(*aFile);
 
   return NS_OK;
 }
@@ -1412,7 +1412,7 @@ nsLocalFile::AppendInternal(const nsAFlatString& aNode,
 
   // check the relative path for validity
   if (aNode.First() == L'\\' ||               // can't start with an '\'
-      aNode.Contains(L'/') ||                 // can't contain /
+      aNode.FindChar(L'/') != kNotFound ||    // can't contain /
       aNode.EqualsASCII("..")) {              // can't be ..
     return NS_ERROR_FILE_UNRECOGNIZED_PATH;
   }
@@ -1441,7 +1441,7 @@ nsLocalFile::AppendInternal(const nsAFlatString& aNode,
     }
   }
   // single components can't contain '\'
-  else if (aNode.Contains(L'\\')) {
+  else if (aNode.FindChar(L'\\') != kNotFound) {
     return NS_ERROR_FILE_UNRECOGNIZED_PATH;
   }
 
@@ -3214,12 +3214,14 @@ nsLocalFile::GetDirectoryEntries(nsISimpleEnumerator** aEntries)
 
   *aEntries = nullptr;
   if (mWorkingPath.EqualsLiteral("\\\\.")) {
-    nsRefPtr<nsDriveEnumerator> drives = new nsDriveEnumerator;
+    nsDriveEnumerator* drives = new nsDriveEnumerator;
+    NS_ADDREF(drives);
     rv = drives->Init();
     if (NS_FAILED(rv)) {
+      NS_RELEASE(drives);
       return rv;
     }
-    drives.forget(aEntries);
+    *aEntries = drives;
     return NS_OK;
   }
 
@@ -3358,18 +3360,20 @@ nsLocalFile::Launch()
 nsresult
 NS_NewLocalFile(const nsAString& aPath, bool aFollowLinks, nsIFile** aResult)
 {
-  nsRefPtr<nsLocalFile> file = new nsLocalFile();
+  nsLocalFile* file = new nsLocalFile();
+  NS_ADDREF(file);
 
   file->SetFollowLinks(aFollowLinks);
 
   if (!aPath.IsEmpty()) {
     nsresult rv = file->InitWithPath(aPath);
     if (NS_FAILED(rv)) {
+      NS_RELEASE(file);
       return rv;
     }
   }
 
-  file.forget(aResult);
+  *aResult = file;
   return NS_OK;
 }
 

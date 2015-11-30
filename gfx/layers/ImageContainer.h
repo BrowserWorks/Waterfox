@@ -288,8 +288,8 @@ public:
 
   explicit ImageContainer(ImageContainer::Mode flag = SYNCHRONOUS);
 
-  typedef uint32_t FrameID;
-  typedef uint32_t ProducerID;
+  typedef int32_t FrameID;
+  typedef int32_t ProducerID;
 
 
   /**
@@ -656,7 +656,7 @@ public:
    * This makes a copy of the data buffers, in order to support functioning
    * in all different layer managers.
    */
-  virtual bool SetData(const Data& aData);
+  virtual void SetData(const Data& aData);
 
   /**
    * This doesn't make a copy of the data buffers. Can be used when mBuffer is
@@ -665,7 +665,7 @@ public:
    * The GStreamer media backend uses this to decode into PlanarYCbCrImage(s)
    * directly.
    */
-  virtual bool SetDataNoCopy(const Data &aData);
+  virtual void SetDataNoCopy(const Data &aData);
 
   /**
    * This allocates and returns a new buffer
@@ -709,7 +709,7 @@ protected:
    *
    * @param aData           Input image data.
    */
-  bool CopyData(const Data& aData);
+  void CopyData(const Data& aData);
 
   /**
    * Return a buffer to store image data in.

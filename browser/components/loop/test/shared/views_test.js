@@ -169,28 +169,12 @@ describe("loop.shared.views", function() {
           }));
 
         TestUtils.Simulate.click(comp.getDOMNode().querySelector(
-          ".screen-share-menu > li"));
+          ".conversation-window-dropdown > li"));
 
         sinon.assert.calledOnce(dispatcher.dispatch);
         sinon.assert.calledWithExactly(dispatcher.dispatch,
           new sharedActions.StartScreenShare({ type: "browser" }));
       });
-
-    it("should close the dropdown on 'browser' option click", function() {
-      var comp = TestUtils.renderIntoDocument(
-        React.createElement(sharedViews.ScreenShareControlButton, {
-          dispatcher: dispatcher,
-          visible: true,
-          state: SCREEN_SHARE_STATES.INACTIVE
-        }));
-
-      sandbox.stub(comp, "hideDropdownMenu");
-
-      TestUtils.Simulate.click(comp.getDOMNode().querySelector(
-        ".screen-share-menu > li"));
-
-      sinon.assert.calledOnce(comp.hideDropdownMenu);
-    });
 
     it("should dispatch a 'window' StartScreenShare action on option click",
       function() {
@@ -202,28 +186,12 @@ describe("loop.shared.views", function() {
           }));
 
         TestUtils.Simulate.click(comp.getDOMNode().querySelector(
-          ".screen-share-menu > li:last-child"));
+          ".conversation-window-dropdown > li:last-child"));
 
         sinon.assert.calledOnce(dispatcher.dispatch);
         sinon.assert.calledWithExactly(dispatcher.dispatch,
           new sharedActions.StartScreenShare({ type: "window" }));
       });
-
-    it("should close the dropdown on 'window' option click", function() {
-      var comp = TestUtils.renderIntoDocument(
-        React.createElement(sharedViews.ScreenShareControlButton, {
-          dispatcher: dispatcher,
-          visible: true,
-          state: SCREEN_SHARE_STATES.INACTIVE
-        }));
-
-      sandbox.stub(comp, "hideDropdownMenu");
-
-      TestUtils.Simulate.click(comp.getDOMNode().querySelector(
-        ".screen-share-menu > li:last-child"));
-
-      sinon.assert.calledOnce(comp.hideDropdownMenu);
-    });
 
     it("should have the 'window' option enabled", function() {
       var comp = TestUtils.renderIntoDocument(
@@ -233,7 +201,7 @@ describe("loop.shared.views", function() {
           state: SCREEN_SHARE_STATES.INACTIVE
         }));
 
-      var node = comp.getDOMNode().querySelector(".screen-share-menu > li:last-child");
+      var node = comp.getDOMNode().querySelector(".conversation-window-dropdown > li:last-child");
       expect(node.classList.contains("disabled")).eql(false);
     });
 
@@ -248,7 +216,7 @@ describe("loop.shared.views", function() {
           state: SCREEN_SHARE_STATES.INACTIVE
         }));
 
-      var node = comp.getDOMNode().querySelector(".screen-share-menu > li:last-child");
+      var node = comp.getDOMNode().querySelector(".conversation-window-dropdown > li:last-child");
       expect(node.classList.contains("disabled")).eql(true);
     });
 
@@ -263,7 +231,7 @@ describe("loop.shared.views", function() {
           state: SCREEN_SHARE_STATES.INACTIVE
         }));
 
-      var node = comp.getDOMNode().querySelector(".screen-share-menu > li:last-child");
+      var node = comp.getDOMNode().querySelector(".conversation-window-dropdown > li:last-child");
       expect(node.classList.contains("disabled")).eql(true);
     });
 
@@ -284,185 +252,12 @@ describe("loop.shared.views", function() {
       });
   });
 
-  describe("SettingsControlButton", function() {
-    var fakeMozLoop;
-    var support_url = "https://support.com";
-    var feedback_url = "https://feedback.com";
-
-    beforeEach(function() {
-      fakeMozLoop = {
-        openURL: sandbox.stub(),
-        setLoopPref: sandbox.stub(),
-        getLoopPref: function (prefName) {
-          switch (prefName) {
-            case "support_url":
-              return support_url;
-            case "feedback.formURL":
-              return feedback_url;
-            default:
-              return prefName;
-          }
-        }
-      };
-    });
-
-    function mountTestComponent(props) {
-      props = _.extend({
-        mozLoop: fakeMozLoop
-      }, props);
-
-      return TestUtils.renderIntoDocument(
-        React.createElement(sharedViews.SettingsControlButton, props));
-    }
-
-    it("should render a visible button", function() {
-      var settingsMenuItems = [{ id: "feedback" }];
-      var comp = mountTestComponent({ menuItems: settingsMenuItems} );
-
-      var node = comp.getDOMNode().querySelector(".btn-settings");
-      expect(node.classList.contains("hide")).eql(false);
-    });
-
-    it("should not render anything", function() {
-      var comp = mountTestComponent();
-      expect(comp.getDOMNode()).to.eql(null);
-    });
-
-    it("should not show an indefined menu option", function() {
-      var settingsMenuItems = [
-        { id: "not Defined" },
-        { id: "help" }
-      ];
-      var comp = mountTestComponent({ menuItems: settingsMenuItems} );
-      var menuItems = comp.getDOMNode().querySelectorAll(".settings-menu > li");
-      expect(menuItems).to.have.length.of(1);
-    });
-
-    it("should not render anythin if not exists any valid item to show", function() {
-      var settingsMenuItems = [
-        { id: "not Defined" },
-        { id: "another wrong menu item" }
-      ];
-      var comp = mountTestComponent({ menuItems: settingsMenuItems} );
-      expect(comp.getDOMNode()).to.eql(null);
-    });
-
-    it("should show the settings dropdown on click", function() {
-      var settingsMenuItems = [{ id: "feedback" }];
-      var comp = mountTestComponent({ menuItems: settingsMenuItems} );
-
-      expect(comp.state.showMenu).eql(false);
-      TestUtils.Simulate.click(comp.getDOMNode().querySelector(".btn-settings"));
-
-      expect(comp.state.showMenu).eql(true);
-    });
-
-    it("should have a `menu-below` class on the dropdown when the prop is set.", function() {
-      var settingsMenuItems = [
-        { id: "help" }
-      ];
-      var comp = mountTestComponent({
-        menuBelow: true,
-        menuItems: settingsMenuItems
-      });
-      var menuItems = comp.getDOMNode().querySelector(".settings-menu");
-
-      expect(menuItems.classList.contains("menu-below")).eql(true);
-    });
-
-    it("should not have a `menu-below` class on the dropdown when the prop is not set.", function() {
-      var settingsMenuItems = [
-        { id: "help" }
-      ];
-      var comp = mountTestComponent({
-        menuItems: settingsMenuItems
-      });
-      var menuItems = comp.getDOMNode().querySelector(".settings-menu");
-
-      expect(menuItems.classList.contains("menu-below")).eql(false);
-    });
-
-    it("should show edit Context on menu when the option is enabled", function() {
-      var settingsMenuItems = [
-        {
-          id: "edit",
-          enabled: true,
-          visible: true,
-          onClick: function() {}
-        }
-      ];
-      var comp = mountTestComponent({ menuItems: settingsMenuItems} );
-
-      var node = comp.getDOMNode().querySelector(".settings-menu > li.entry-settings-edit");
-      expect(node.classList.contains("hide")).eql(false);
-    });
-
-    it("should hide edit Context on menu when the option is not visible", function() {
-      var settingsMenuItems = [
-        {
-          id: "edit",
-          enabled: false,
-          visible: false,
-          onClick: function() {}
-        }
-      ];
-      var comp = mountTestComponent({ menuItems: settingsMenuItems} );
-
-      var node = comp.getDOMNode().querySelector(".settings-menu > li.entry-settings-edit");
-      expect(node.classList.contains("hide")).eql(true);
-    });
-
-    it("should call onClick method when the edit context menu item is clicked", function() {
-      var onClickCalled = false;
-      var settingsMenuItems = [
-        {
-          id: "edit",
-          enabled: true,
-          visible: true,
-          onClick: sandbox.stub()
-        }
-      ];
-      var comp = mountTestComponent({ menuItems: settingsMenuItems} );
-
-      TestUtils.Simulate.click(comp.getDOMNode().querySelector(".settings-menu > li.entry-settings-edit"));
-      sinon.assert.calledOnce(settingsMenuItems[0].onClick);
-    });
-
-    it("should open a tab to the feedback url when the feedback menu item is clicked", function() {
-      var settingsMenuItems = [
-        { id: "feedback" },
-        { id: "help" }
-      ];
-      var comp = mountTestComponent({ menuItems: settingsMenuItems} );
-
-      TestUtils.Simulate.click(comp.getDOMNode().querySelector(".settings-menu > li:first-child"));
-
-      sinon.assert.calledOnce(fakeMozLoop.openURL);
-      sinon.assert.calledWithExactly(fakeMozLoop.openURL, feedback_url);
-    });
-
-    it("should open a tab to the support url when the support menu item is clicked", function() {
-      var settingsMenuItems = [
-        { id: "feedback" },
-        { id: "help" }
-      ];
-      var comp = mountTestComponent({ menuItems: settingsMenuItems} );
-
-      TestUtils.Simulate.click(comp.getDOMNode().querySelector(".settings-menu > li:last-child"));
-
-      sinon.assert.calledOnce(fakeMozLoop.openURL);
-      sinon.assert.calledWithExactly(fakeMozLoop.openURL, support_url);
-    });
-  });
-
   describe("ConversationToolbar", function() {
-    var clock, hangup, publishStream;
+    var hangup, publishStream;
 
     function mountTestComponent(props) {
       props = _.extend({
-        dispatcher: dispatcher,
-        mozLoop: {},
-        show: true
+        dispatcher: dispatcher
       }, props || {});
       return TestUtils.renderIntoDocument(
         React.createElement(sharedViews.ConversationToolbar, props));
@@ -471,57 +266,6 @@ describe("loop.shared.views", function() {
     beforeEach(function() {
       hangup = sandbox.stub();
       publishStream = sandbox.stub();
-      clock = sinon.useFakeTimers();
-    });
-
-    afterEach(function() {
-      clock.restore();
-    });
-
-    it("should not render the component when 'show' is false", function() {
-      var comp = mountTestComponent({
-        hangup: hangup,
-        publishStream: publishStream,
-        show: false
-      });
-
-      expect(comp.getDOMNode()).to.eql(null);
-    });
-
-    it("should start no idle", function() {
-      var comp = mountTestComponent({
-        hangupButtonLabel: "foo",
-        hangup: hangup,
-        publishStream: publishStream
-      });
-      expect(comp.getDOMNode().classList.contains("idle")).eql(false);
-    });
-
-    it("should be on idle state after 6 seconds", function() {
-      var comp = mountTestComponent({
-        hangupButtonLabel: "foo",
-        hangup: hangup,
-        publishStream: publishStream
-      });
-      expect(comp.getDOMNode().classList.contains("idle")).eql(false);
-
-      clock.tick(6001);
-      expect(comp.getDOMNode().classList.contains("idle")).eql(true);
-    });
-
-    it("should remove idle state when the user moves the mouse", function() {
-      var comp = mountTestComponent({
-        hangupButtonLabel: "foo",
-        hangup: hangup,
-        publishStream: publishStream
-      });
-
-      clock.tick(6001);
-      expect(comp.getDOMNode().classList.contains("idle")).eql(true);
-
-      document.body.dispatchEvent(new CustomEvent("mousemove"));
-
-      expect(comp.getDOMNode().classList.contains("idle")).eql(false);
     });
 
     it("should accept a hangupButtonLabel optional prop", function() {
@@ -535,7 +279,7 @@ describe("loop.shared.views", function() {
             .eql("foo");
     });
 
-    it("should accept an enableHangup optional prop", function() {
+    it("should accept a enableHangup optional prop", function() {
       var comp = mountTestComponent({
         enableHangup: false,
         hangup: hangup,
@@ -544,16 +288,6 @@ describe("loop.shared.views", function() {
 
       expect(comp.getDOMNode().querySelector("button.btn-hangup").disabled)
             .eql(true);
-    });
-
-    it("should accept a showHangup optional prop", function() {
-      var comp = mountTestComponent({
-        showHangup: false,
-        hangup: hangup,
-        publishStream: publishStream
-      });
-
-      expect(comp.getDOMNode().querySelector(".btn-hangup-entry")).to.eql(null);
     });
 
     it("should hangup when hangup button is clicked", function() {
@@ -624,6 +358,323 @@ describe("loop.shared.views", function() {
 
       sinon.assert.calledOnce(publishStream);
       sinon.assert.calledWithExactly(publishStream, "video", true);
+    });
+  });
+
+  describe("ConversationView", function() {
+    var fakeSDK, fakeSessionData, fakeSession, fakePublisher, model, fakeAudio;
+
+    function mountTestComponent(props) {
+      props = _.extend({
+        dispatcher: dispatcher
+      }, props || {});
+      return TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ConversationView, props));
+    }
+
+    beforeEach(function() {
+      fakeAudio = {
+        play: sinon.spy(),
+        pause: sinon.spy(),
+        removeAttribute: sinon.spy()
+      };
+      sandbox.stub(window, "Audio").returns(fakeAudio);
+
+      fakeSessionData = {
+        sessionId: "sessionId",
+        sessionToken: "sessionToken",
+        apiKey: "apiKey"
+      };
+      fakeSession = _.extend({
+        connection: {connectionId: 42},
+        connect: sandbox.spy(),
+        disconnect: sandbox.spy(),
+        publish: sandbox.spy(),
+        unpublish: sandbox.spy(),
+        subscribe: sandbox.spy()
+      }, Backbone.Events);
+      fakePublisher = _.extend({
+        publishAudio: sandbox.spy(),
+        publishVideo: sandbox.spy()
+      }, Backbone.Events);
+      fakeSDK = {
+        initPublisher: sandbox.stub().returns(fakePublisher),
+        initSession: sandbox.stub().returns(fakeSession),
+        on: sandbox.stub()
+      };
+      model = new sharedModels.ConversationModel(fakeSessionData, {
+        sdk: fakeSDK
+      });
+    });
+
+    describe("#componentDidMount", function() {
+      it("should start a session by default", function() {
+        sandbox.stub(model, "startSession");
+
+        mountTestComponent({
+          sdk: fakeSDK,
+          model: model,
+          video: {enabled: true}
+        });
+
+        sinon.assert.calledOnce(model.startSession);
+      });
+
+      it("shouldn't start a session if initiate is false", function() {
+        sandbox.stub(model, "startSession");
+
+        mountTestComponent({
+          initiate: false,
+          sdk: fakeSDK,
+          model: model,
+          video: {enabled: true}
+        });
+
+        sinon.assert.notCalled(model.startSession);
+      });
+    });
+
+    describe("constructed", function() {
+      var comp;
+
+      beforeEach(function() {
+        comp = mountTestComponent({
+          sdk: fakeSDK,
+          model: model,
+          video: {enabled: false}
+        });
+      });
+
+      describe("#hangup", function() {
+        beforeEach(function() {
+          comp.startPublishing();
+        });
+
+        it("should disconnect the session", function() {
+          sandbox.stub(model, "endSession");
+
+          comp.hangup();
+
+          sinon.assert.calledOnce(model.endSession);
+        });
+
+        it("should stop publishing local streams", function() {
+          comp.hangup();
+
+          sinon.assert.calledOnce(fakeSession.unpublish);
+        });
+      });
+
+      describe("#startPublishing", function() {
+        it("should publish local stream", function() {
+          comp.startPublishing();
+
+          sinon.assert.calledOnce(fakeSDK.initPublisher);
+          sinon.assert.calledOnce(fakeSession.publish);
+        });
+
+        // XXX This test would need reworking, but the code should be going
+        // away after the obsolences of call urls (currently bug 1170150).
+        it("should start listening to OT publisher accessDialogOpened and " +
+          " accessDenied events");
+      });
+
+      describe("#stopPublishing", function() {
+        beforeEach(function() {
+          sandbox.stub(fakePublisher, "off");
+          comp.startPublishing();
+        });
+
+        it("should stop publish local stream", function() {
+          comp.stopPublishing();
+
+          sinon.assert.calledOnce(fakeSession.unpublish);
+        });
+
+        it("should unsubscribe from publisher events",
+          function() {
+            comp.stopPublishing();
+
+            // Note: Backbone.Events#stopListening calls off() on passed object.
+            sinon.assert.calledOnce(fakePublisher.off);
+          });
+      });
+
+      describe("#publishStream", function() {
+        var component;
+
+        beforeEach(function() {
+          component = mountTestComponent({
+            sdk: fakeSDK,
+            model: model,
+            video: {enabled: false}
+          });
+          component.startPublishing();
+        });
+
+        it("should start streaming local audio", function() {
+          component.publishStream("audio", true);
+
+          sinon.assert.calledOnce(fakePublisher.publishAudio);
+          sinon.assert.calledWithExactly(fakePublisher.publishAudio, true);
+        });
+
+        it("should stop streaming local audio", function() {
+          component.publishStream("audio", false);
+
+          sinon.assert.calledOnce(fakePublisher.publishAudio);
+          sinon.assert.calledWithExactly(fakePublisher.publishAudio, false);
+        });
+
+        it("should start streaming local video", function() {
+          component.publishStream("video", true);
+
+          sinon.assert.calledOnce(fakePublisher.publishVideo);
+          sinon.assert.calledWithExactly(fakePublisher.publishVideo, true);
+        });
+
+        it("should stop streaming local video", function() {
+          component.publishStream("video", false);
+
+          sinon.assert.calledOnce(fakePublisher.publishVideo);
+          sinon.assert.calledWithExactly(fakePublisher.publishVideo, false);
+        });
+      });
+
+      describe("Model events", function() {
+
+        describe("for standalone", function() {
+
+          beforeEach(function() {
+            // In standalone, navigator.mozLoop does not exists
+            if (navigator.hasOwnProperty("mozLoop")) {
+              sandbox.stub(navigator, "mozLoop", undefined);
+            }
+          });
+
+          it("should play a connected sound, once, on session:connected",
+             function() {
+               var url = "shared/sounds/connected.ogg";
+               sandbox.stub(window, "XMLHttpRequest").returns(fakeAudioXHR);
+               model.trigger("session:connected");
+
+               fakeAudioXHR.onload();
+
+               sinon.assert.called(fakeAudioXHR.open);
+               sinon.assert.calledWithExactly(fakeAudioXHR.open, "GET", url, true);
+
+               sinon.assert.calledOnce(fakeAudio.play);
+               expect(fakeAudio.loop).to.not.equal(true);
+             });
+        });
+
+        describe("for desktop", function() {
+          var origMozLoop;
+
+          beforeEach(function() {
+            origMozLoop = navigator.mozLoop;
+            navigator.mozLoop = {
+              getAudioBlob: sinon.spy(function(name, callback) {
+                var data = new ArrayBuffer(10);
+                callback(null, new Blob([data], {type: "audio/ogg"}));
+              })
+            };
+          });
+
+          afterEach(function() {
+            navigator.mozLoop = origMozLoop;
+          });
+
+          it("should play a connected sound, once, on session:connected",
+             function() {
+               var url = "chrome://browser/content/loop/shared/sounds/connected.ogg";
+               model.trigger("session:connected");
+
+               sinon.assert.calledOnce(navigator.mozLoop.getAudioBlob);
+               sinon.assert.calledWithExactly(navigator.mozLoop.getAudioBlob,
+                                              "connected", sinon.match.func);
+               sinon.assert.calledOnce(fakeAudio.play);
+               expect(fakeAudio.loop).to.not.equal(true);
+             });
+        });
+
+        describe("for both (standalone and desktop)", function() {
+          beforeEach(function() {
+            sandbox.stub(window, "XMLHttpRequest").returns(fakeAudioXHR);
+          });
+
+          it("should start streaming on session:connected", function() {
+            model.trigger("session:connected");
+
+            sinon.assert.calledOnce(fakeSDK.initPublisher);
+          });
+
+          it("should publish remote stream on session:stream-created",
+             function() {
+               var s1 = {connection: {connectionId: 42}};
+
+               model.trigger("session:stream-created", {stream: s1});
+
+               sinon.assert.calledOnce(fakeSession.subscribe);
+               sinon.assert.calledWith(fakeSession.subscribe, s1);
+             });
+
+          it("should unpublish local stream on session:ended", function() {
+            comp.startPublishing();
+
+            model.trigger("session:ended");
+
+            sinon.assert.calledOnce(fakeSession.unpublish);
+          });
+
+          it("should unpublish local stream on session:peer-hungup", function() {
+            comp.startPublishing();
+
+            model.trigger("session:peer-hungup");
+
+            sinon.assert.calledOnce(fakeSession.unpublish);
+          });
+
+          it("should unpublish local stream on session:network-disconnected",
+             function() {
+               comp.startPublishing();
+
+               model.trigger("session:network-disconnected");
+
+               sinon.assert.calledOnce(fakeSession.unpublish);
+             });
+        });
+
+      });
+
+      describe("Publisher events", function() {
+        beforeEach(function() {
+          comp.startPublishing();
+        });
+
+        it("should set audio state on streamCreated", function() {
+          fakePublisher.trigger("streamCreated", {stream: {hasAudio: true}});
+          expect(comp.state.audio.enabled).eql(true);
+
+          fakePublisher.trigger("streamCreated", {stream: {hasAudio: false}});
+          expect(comp.state.audio.enabled).eql(false);
+        });
+
+        it("should set video state on streamCreated", function() {
+          fakePublisher.trigger("streamCreated", {stream: {hasVideo: true}});
+          expect(comp.state.video.enabled).eql(true);
+
+          fakePublisher.trigger("streamCreated", {stream: {hasVideo: false}});
+          expect(comp.state.video.enabled).eql(false);
+        });
+
+        it("should set media state on streamDestroyed", function() {
+          fakePublisher.trigger("streamDestroyed");
+
+          expect(comp.state.audio.enabled).eql(false);
+          expect(comp.state.video.enabled).eql(false);
+        });
+      });
     });
   });
 
@@ -819,28 +870,6 @@ describe("loop.shared.views", function() {
         React.createElement(sharedViews.ContextUrlView, props));
     }
 
-    it("should set a clicks-allowed class if clicks are allowed", function() {
-      view = mountTestComponent({
-        allowClick: true,
-        url: "http://wonderful.invalid"
-      });
-
-      var wrapper = view.getDOMNode().querySelector(".context-wrapper");
-
-      expect(wrapper.classList.contains("clicks-allowed")).eql(true);
-    });
-
-    it("should not set a clicks-allowed class if clicks are not allowed", function() {
-      view = mountTestComponent({
-        allowClick: false,
-        url: "http://wonderful.invalid"
-      });
-
-      var wrapper = view.getDOMNode().querySelector(".context-wrapper");
-
-      expect(wrapper.classList.contains("clicks-allowed")).eql(false);
-    });
-
     it("should display nothing if the url is invalid", function() {
       view = mountTestComponent({
         url: "fjrTykyw"
@@ -891,7 +920,7 @@ describe("loop.shared.views", function() {
         url: "http://wonderful.invalid"
       });
 
-      expect(view.getDOMNode().querySelector(".context-wrapper").href)
+      expect(view.getDOMNode().querySelector(".context-url").href)
         .eql("http://wonderful.invalid/");
     });
 
@@ -901,7 +930,7 @@ describe("loop.shared.views", function() {
         url: "http://wonderful.invalid"
       });
 
-      var linkNode = view.getDOMNode().querySelector(".context-wrapper");
+      var linkNode = view.getDOMNode().querySelector(".context-url");
 
       TestUtils.Simulate.click(linkNode);
 
@@ -910,19 +939,6 @@ describe("loop.shared.views", function() {
         new sharedActions.RecordClick({
           linkInfo: "Shared URL"
         }));
-    });
-
-    it("should not dispatch an action if clicks are not allowed", function() {
-      view = mountTestComponent({
-        allowClick: false,
-        url: "http://wonderful.invalid"
-      });
-
-      var linkNode = view.getDOMNode().querySelector(".context-wrapper");
-
-      TestUtils.Simulate.click(linkNode);
-
-      sinon.assert.notCalled(dispatcher.dispatch);
     });
   });
 
@@ -964,7 +980,7 @@ describe("loop.shared.views", function() {
         mediaType: "local",
         // This doesn't actually get assigned to the video element, but is enough
         // for this test to check display of the video element.
-        srcMediaElement: {
+        srcVideoObject: {
           fake: 1
         }
       });
@@ -990,7 +1006,7 @@ describe("loop.shared.views", function() {
         view = mountTestComponent({
           displayAvatar: false,
           mediaType: "local",
-          srcMediaElement: {
+          srcVideoObject: {
             fake: 1
           }
         });
@@ -1122,7 +1138,7 @@ describe("loop.shared.views", function() {
 
     it("should not mark the wrapper as showing local streams when not displaying a stream", function() {
       view = mountTestComponent({
-        localSrcMediaElement: null,
+        localSrcVideoObject: null,
         localPosterUrl: null
       });
 
@@ -1132,7 +1148,7 @@ describe("loop.shared.views", function() {
 
     it("should mark the wrapper as showing local streams when displaying a stream", function() {
       view = mountTestComponent({
-        localSrcMediaElement: {},
+        localSrcVideoObject: {},
         localPosterUrl: null
       });
 
@@ -1142,7 +1158,7 @@ describe("loop.shared.views", function() {
 
     it("should mark the wrapper as showing local streams when displaying a poster url", function() {
       view = mountTestComponent({
-        localSrcMediaElement: {},
+        localSrcVideoObject: {},
         localPosterUrl: "fake/url"
       });
 
@@ -1152,7 +1168,7 @@ describe("loop.shared.views", function() {
 
     it("should not mark the wrapper as showing remote streams when not displaying a stream", function() {
       view = mountTestComponent({
-        remoteSrcMediaElement: null,
+        remoteSrcVideoObject: null,
         remotePosterUrl: null
       });
 
@@ -1162,7 +1178,7 @@ describe("loop.shared.views", function() {
 
     it("should mark the wrapper as showing remote streams when displaying a stream", function() {
       view = mountTestComponent({
-        remoteSrcMediaElement: {},
+        remoteSrcVideoObject: {},
         remotePosterUrl: null
       });
 
@@ -1172,7 +1188,7 @@ describe("loop.shared.views", function() {
 
     it("should mark the wrapper as showing remote streams when displaying a poster url", function() {
       view = mountTestComponent({
-        remoteSrcMediaElement: {},
+        remoteSrcVideoObject: {},
         remotePosterUrl: "fake/url"
       });
 

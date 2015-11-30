@@ -16,9 +16,9 @@ const INIT_URI = "data:text/html;charset=utf-8,Web Console test for " +
 const TEST_URI = "http://example.com/browser/browser/devtools/" +
                  "webconsole/test/test-bug-644419-log-limits.html";
 
-var hud, outputNode;
+let hud, outputNode;
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   let { browser } = yield loadTab(INIT_URI);
 
   hud = yield openConsole();
@@ -28,11 +28,7 @@ var test = asyncTest(function* () {
 
   let loaded = loadBrowser(browser);
 
-  // On e10s, the exception is triggered in child process
-  // and is ignored by test harness
-  if (!Services.appinfo.browserTabsRemoteAutostart) {
-    expectUncaughtException();
-  }
+  expectUncaughtException();
 
   content.location = TEST_URI;
   yield loaded;
@@ -112,9 +108,7 @@ function testJsLimits2() {
     let script = content.document.createElement("script");
     script.text = "fubar" + i + ".bogus(6);";
 
-    if (!Services.appinfo.browserTabsRemoteAutostart) {
-      expectUncaughtException();
-    }
+    expectUncaughtException();
     head.insertBefore(script, head.firstChild);
   }
 
@@ -136,7 +130,7 @@ function testJsLimits2() {
   });
 }
 
-var gCounter, gImage;
+let gCounter, gImage;
 
 function testNetLimits() {
   Services.prefs.setIntPref("devtools.hud.loglimit.network", 10);

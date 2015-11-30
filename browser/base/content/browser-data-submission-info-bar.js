@@ -5,7 +5,7 @@
 /**
  * Represents an info bar that shows a data submission notification.
  */
-var gDataNotificationInfoBar = {
+let gDataNotificationInfoBar = {
   _OBSERVERS: [
     "datareporting:notify-data-policy:request",
     "datareporting:notify-data-policy:close",

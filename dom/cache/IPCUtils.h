@@ -39,11 +39,6 @@ namespace IPC {
                                     mozilla::dom::RequestCache::Default,
                                     mozilla::dom::RequestCache::EndGuard_> {};
   template<>
-  struct ParamTraits<mozilla::dom::RequestRedirect> :
-    public ContiguousEnumSerializer<mozilla::dom::RequestRedirect,
-                                    mozilla::dom::RequestRedirect::Follow,
-                                    mozilla::dom::RequestRedirect::EndGuard_> {};
-  template<>
   struct ParamTraits<mozilla::dom::ResponseType> :
     public ContiguousEnumSerializer<mozilla::dom::ResponseType,
                                     mozilla::dom::ResponseType::Basic,

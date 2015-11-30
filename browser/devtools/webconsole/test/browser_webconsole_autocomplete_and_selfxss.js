@@ -9,9 +9,9 @@ const TEST_URI = "data:text/html;charset=utf-8,<p>test for bug 642615";
 XPCOMUtils.defineLazyServiceGetter(this, "clipboardHelper",
                                    "@mozilla.org/widget/clipboardhelper;1",
                                    "nsIClipboardHelper");
-var WebConsoleUtils = require("devtools/toolkit/webconsole/utils").Utils;
+let WebConsoleUtils = require("devtools/toolkit/webconsole/utils").Utils;
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();

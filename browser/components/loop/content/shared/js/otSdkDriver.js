@@ -278,17 +278,14 @@ loop.OTSdkDriver = (function() {
       }));
 
       if (this.session) {
-        this.session.off("sessionDisconnected streamCreated streamDestroyed " +
-                         "connectionCreated connectionDestroyed " +
-                         "streamPropertyChanged signal:readyForDataChannel");
+        this.session.off("sessionDisconnected streamCreated streamDestroyed connectionCreated connectionDestroyed streamPropertyChanged");
         this.session.disconnect();
         delete this.session;
 
         this._notifyMetricsEvent("Session.connectionDestroyed", "local");
       }
       if (this.publisher) {
-        this.publisher.off("accessAllowed accessDenied accessDialogOpened " +
-                           "streamCreated streamDestroyed");
+        this.publisher.off("accessAllowed accessDenied accessDialogOpened streamCreated");
         this.publisher.destroy();
         delete this.publisher;
       }
@@ -601,7 +598,7 @@ loop.OTSdkDriver = (function() {
       this.dispatcher.dispatch(new sharedActions.MediaStreamCreated({
         hasVideo: sdkSubscriberObject.stream[STREAM_PROPERTIES.HAS_VIDEO],
         isLocal: false,
-        srcMediaElement: sdkSubscriberVideo
+        srcVideoObject: sdkSubscriberVideo
       }));
 
       this._subscribedRemoteStream = true;
@@ -635,7 +632,7 @@ loop.OTSdkDriver = (function() {
       // _handleRemoteScreenShareCreated.  Maybe these should be separate
       // actions.  But even so, this shouldn't be necessary....
       this.dispatcher.dispatch(new sharedActions.ReceivingScreenShare({
-        receiving: true, srcMediaElement: sdkSubscriberVideo
+        receiving: true, srcVideoObject: sdkSubscriberVideo
       }));
 
     },
@@ -767,7 +764,7 @@ loop.OTSdkDriver = (function() {
       this.dispatcher.dispatch(new sharedActions.MediaStreamCreated({
         hasVideo: hasVideo,
         isLocal: true,
-        srcMediaElement: sdkLocalVideo
+        srcVideoObject: sdkLocalVideo
       }));
 
       // Only dispatch the video dimensions if we actually have video.
@@ -939,9 +936,9 @@ loop.OTSdkDriver = (function() {
      * Handles publishing of property changes to a stream.
      */
     _onStreamPropertyChanged: function(event) {
-      if (event.changedProperty === STREAM_PROPERTIES.VIDEO_DIMENSIONS) {
+      if (event.changedProperty == STREAM_PROPERTIES.VIDEO_DIMENSIONS) {
         this.dispatcher.dispatch(new sharedActions.VideoDimensionsChanged({
-          isLocal: event.stream.connection.id === this.session.connection.id,
+          isLocal: event.stream.connection.id == this.session.connection.id,
           videoType: event.stream.videoType,
           dimensions: event.stream[STREAM_PROPERTIES.VIDEO_DIMENSIONS]
         }));
@@ -1101,8 +1098,8 @@ loop.OTSdkDriver = (function() {
         return;
       }
 
-      if (startTime === this.CONNECTION_START_TIME_ALREADY_NOTED ||
-          startTime === this.CONNECTION_START_TIME_UNINITIALIZED ||
+      if (startTime == this.CONNECTION_START_TIME_ALREADY_NOTED ||
+          startTime == this.CONNECTION_START_TIME_UNINITIALIZED ||
           startTime > endTime) {
         if (this._debugTwoWayMediaTelemetry) {
           console.log("_noteConnectionLengthIfNeeded called with " +
@@ -1128,7 +1125,7 @@ loop.OTSdkDriver = (function() {
      * be running in the standalone client and return immediately.
      *
      * @param  {String}  type    Type of sharing that was flipped. May be 'window'
-     *                           or 'browser'.
+     *                           or 'tab'.
      * @param  {Boolean} enabled Flag that tells us if the feature was flipped on
      *                           or off.
      * @private

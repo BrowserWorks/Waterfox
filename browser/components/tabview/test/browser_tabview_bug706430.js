@@ -3,7 +3,7 @@
 
 "use strict";
 
-var state1 = {
+let state1 = {
   windows: [{
     tabs: [{
       entries: [{ url: "about:robots#1" }],
@@ -24,7 +24,7 @@ var state1 = {
   }]
 };
 
-var state2 = {
+let state2 = {
   windows: [{
     tabs: [{entries: [{ url: "about:robots#1" }], hidden: true},
            {entries: [{ url: "about:robots#2" }], hidden: false}],
@@ -32,7 +32,7 @@ var state2 = {
   }]
 };
 
-var ss = Cc["@mozilla.org/browser/sessionstore;1"]
+let ss = Cc["@mozilla.org/browser/sessionstore;1"]
          .getService(Ci.nsISessionStore);
 
 function test() {

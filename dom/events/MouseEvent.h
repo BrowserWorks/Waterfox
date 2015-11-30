@@ -132,9 +132,4 @@ protected:
   NS_FORWARD_NSIDOMMOUSEEVENT(MouseEvent::) \
   NS_FORWARD_TO_UIEVENT
 
-already_AddRefed<mozilla::dom::MouseEvent>
-NS_NewDOMMouseEvent(mozilla::dom::EventTarget* aOwner,
-                    nsPresContext* aPresContext,
-                    mozilla::WidgetMouseEvent* aEvent);
-
 #endif // mozilla_dom_MouseEvent_h_

@@ -54,14 +54,14 @@ function resolveResourceURI(uri) {
   return resolved;
 }
 
-var fromFilename = exports.fromFilename = function fromFilename(path) {
+let fromFilename = exports.fromFilename = function fromFilename(path) {
   var file = Cc['@mozilla.org/file/local;1']
              .createInstance(Ci.nsILocalFile);
   file.initWithPath(path);
   return ios.newFileURI(file).spec;
 };
 
-var toFilename = exports.toFilename = function toFilename(url) {
+let toFilename = exports.toFilename = function toFilename(url) {
   var uri = newURI(url);
   if (uri.scheme == "resource")
     uri = newURI(resolveResourceURI(uri));
@@ -300,7 +300,7 @@ const DataURL = Class({
 
 exports.DataURL = DataURL;
 
-var getTLD = exports.getTLD = function getTLD (url) {
+let getTLD = exports.getTLD = function getTLD (url) {
   let uri = newURI(url.toString());
   let tld = null;
   try {
@@ -315,7 +315,7 @@ var getTLD = exports.getTLD = function getTLD (url) {
   return tld;
 };
 
-var isValidURI = exports.isValidURI = function (uri) {
+let isValidURI = exports.isValidURI = function (uri) {
   try {
     newURI(uri);
   }

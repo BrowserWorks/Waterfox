@@ -17,12 +17,12 @@ xul|window xul|scrollbar {
   }
 }
 
-xul|scrollbar[root="true"] {
+html xul|scrollbar[root="true"] {
   position: relative;
   z-index: 2147483647;
 }
 
-xul|scrollbar {
+html xul|scrollbar {
   -moz-appearance: none !important;
   background-color: transparent !important;
   background-image: none !important;

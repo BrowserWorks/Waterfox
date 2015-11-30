@@ -787,7 +787,8 @@ nsNSSCertificate::GetIssuer(nsIX509Cert** aIssuer)
   if (!cert) {
     return NS_ERROR_UNEXPECTED;
   }
-  cert.forget(aIssuer);
+  *aIssuer = cert;
+  NS_ADDREF(*aIssuer);
   return NS_OK;
 }
 
@@ -1261,9 +1262,10 @@ nsNSSCertificate::GetValidity(nsIX509CertValidity** aValidity)
     return NS_ERROR_NOT_AVAILABLE;
 
   NS_ENSURE_ARG(aValidity);
-  nsRefPtr<nsX509CertValidity> validity = new nsX509CertValidity(mCert.get());
+  nsX509CertValidity* validity = new nsX509CertValidity(mCert.get());
 
-  validity.forget(aValidity);
+  NS_ADDREF(validity);
+  *aValidity = static_cast<nsIX509CertValidity*>(validity);
   return NS_OK;
 }
 
@@ -1721,7 +1723,8 @@ nsNSSCertList::GetEnumerator(nsISimpleEnumerator** _retval)
   nsCOMPtr<nsISimpleEnumerator> enumerator =
     new nsNSSCertListEnumerator(mCertList.get(), locker);
 
-  enumerator.forget(_retval);
+  *_retval = enumerator;
+  NS_ADDREF(*_retval);
   return NS_OK;
 }
 
@@ -1850,7 +1853,8 @@ nsNSSCertListEnumerator::GetNext(nsISupports** _retval)
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  nssCert.forget(_retval);
+  *_retval = nssCert;
+  NS_ADDREF(*_retval);
 
   CERT_RemoveCertListNode(node);
   return NS_OK;

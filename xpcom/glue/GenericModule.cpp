@@ -50,17 +50,17 @@ GenericModule::RegisterSelf(nsIComponentManager* aCompMgr,
                             const char* aLoaderStr,
                             const char* aType)
 {
-  nsCOMPtr<nsIComponentRegistrar> registrar = do_QueryInterface(aCompMgr);
+  nsCOMPtr<nsIComponentRegistrar> r = do_QueryInterface(aCompMgr);
   for (const Module::CIDEntry* e = mData->mCIDs; e->cid; ++e) {
-    registrar->RegisterFactoryLocation(*e->cid, "", nullptr, aLocation,
-                                       aLoaderStr, aType);
+    r->RegisterFactoryLocation(*e->cid, "", nullptr, aLocation,
+                               aLoaderStr, aType);
   }
 
   for (const Module::ContractIDEntry* e = mData->mContractIDs;
        e && e->contractid;
        ++e) {
-    registrar->RegisterFactoryLocation(*e->cid, "", e->contractid, aLocation,
-                                       aLoaderStr, aType);
+    r->RegisterFactoryLocation(*e->cid, "", e->contractid, aLocation,
+                               aLoaderStr, aType);
   }
 
   nsCOMPtr<nsICategoryManager> catman;
@@ -71,9 +71,9 @@ GenericModule::RegisterSelf(nsIComponentManager* aCompMgr,
       catman = do_GetService(NS_CATEGORYMANAGER_CONTRACTID);
     }
 
-    nsAutoCString prevValue;
+    nsAutoCString r;
     catman->AddCategoryEntry(e->category, e->entry, e->value, true, true,
-                             getter_Copies(prevValue));
+                             getter_Copies(r));
   }
   return NS_OK;
 }

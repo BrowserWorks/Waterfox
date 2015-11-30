@@ -64,7 +64,6 @@ imgRequest::imgRequest(imgLoader* aLoader, const ImageCacheKey& aCacheKey)
  : mLoader(aLoader)
  , mCacheKey(aCacheKey)
  , mLoadId(nullptr)
- , mFirstProxy(nullptr)
  , mValidator(nullptr)
  , mInnerWindowId(0)
  , mCORSMode(imgIRequest::CORS_NONE)
@@ -218,12 +217,6 @@ imgRequest::AddProxy(imgRequestProxy* proxy)
 {
   NS_PRECONDITION(proxy, "null imgRequestProxy passed in");
   LOG_SCOPE_WITH_PARAM(GetImgLog(), "imgRequest::AddProxy", "proxy", proxy);
-
-  if (!mFirstProxy) {
-    // Save a raw pointer to the first proxy we see, for use in the network
-    // priority logic.
-    mFirstProxy = proxy;
-  }
 
   // If we're empty before adding, we have to tell the loader we now have
   // proxies.
@@ -542,7 +535,8 @@ imgRequest::AdjustPriority(imgRequestProxy* proxy, int32_t delta)
   // concern though is that image loads remain lower priority than other pieces
   // of content such as link clicks, CSS, and JS.
   //
-  if (!mFirstProxy || proxy != mFirstProxy) {
+  nsRefPtr<ProgressTracker> progressTracker = GetProgressTracker();
+  if (!progressTracker->FirstObserverIs(proxy)) {
     return;
   }
 

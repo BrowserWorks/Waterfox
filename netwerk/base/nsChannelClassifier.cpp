@@ -130,9 +130,7 @@ nsChannelClassifier::ShouldEnableTrackingProtection(nsIChannel *aChannel,
     // scheme, since users who put sites on the allowlist probably don't expect
     // allowlisting to depend on scheme.
     nsCOMPtr<nsIURL> url = do_QueryInterface(topWinURI, &rv);
-    if (NS_FAILED(rv)) {
-      return rv; // normal for some loads, no need to print a warning
-    }
+    NS_ENSURE_SUCCESS(rv, rv);
 
     nsCString escaped(NS_LITERAL_CSTRING("https://"));
     nsAutoCString temp;
@@ -618,13 +616,12 @@ nsChannelClassifier::OnClassifyComplete(nsresult aErrorCode)
     if (aErrorCode == NS_ERROR_TRACKING_URI &&
         NS_SUCCEEDED(IsTrackerWhitelisted())) {
       LOG(("nsChannelClassifier[%p]:OnClassifyComplete tracker found "
-           "in whitelist so we won't block it", this));
+           "in whitelist so we won't block it)", this));
       aErrorCode = NS_OK;
     }
 
+    LOG(("nsChannelClassifier[%p]:OnClassifyComplete %d", this, aErrorCode));
     if (mSuspendedChannel) {
-        LOG(("nsChannelClassifier[%p]:OnClassifyComplete %d (suspended channel)",
-             this, aErrorCode));
         MarkEntryClassified(aErrorCode);
 
         if (NS_FAILED(aErrorCode)) {

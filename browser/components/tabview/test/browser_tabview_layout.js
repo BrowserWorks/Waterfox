@@ -11,9 +11,9 @@ function test() {
   TabView.toggle();
 }
 
-var originalGroupItem = null;
-var originalTab = null;
-var contentWindow = null;
+let originalGroupItem = null;
+let originalTab = null;
+let contentWindow = null;
 
 function onTabViewWindowLoaded() {
   window.removeEventListener("tabviewshown", onTabViewWindowLoaded, false);

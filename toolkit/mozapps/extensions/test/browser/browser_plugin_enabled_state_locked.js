@@ -10,9 +10,9 @@ const gIsOSX = ("nsILocalFileMac" in Ci);
 const gIsLinux = ("@mozilla.org/gnome-gconf-service;1" in Cc) ||
   ("@mozilla.org/gio-service;1" in Cc);
 
-var gManagerWindow;
-var gCategoryUtilities;
-var gPluginElement;
+let gManagerWindow;
+let gCategoryUtilities;
+let gPluginElement;
 
 function getTestPluginPref() {
   let prefix = "plugin.state.";

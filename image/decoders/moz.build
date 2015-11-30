@@ -32,6 +32,8 @@ UNIFIED_SOURCES += [
     'nsPNGDecoder.cpp',
 ]
 
+FAIL_ON_WARNINGS = True
+
 # Decoders need RasterImage.h
 LOCAL_INCLUDES += [
     '/image',

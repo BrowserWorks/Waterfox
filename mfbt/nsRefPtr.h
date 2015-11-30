@@ -19,7 +19,6 @@ class nsCOMPtr_helper;
 
 namespace mozilla {
 template<class T> class OwningNonNull;
-template<class T> class RefPtr;
 } // namespace mozilla
 
 template <class T>
@@ -33,6 +32,13 @@ private:
       AddRefTraits<T>::AddRef(aRawPtr);
     }
     assign_assuming_AddRef(aRawPtr);
+  }
+
+  void**
+  begin_assignment()
+  {
+    assign_assuming_AddRef(0);
+    return reinterpret_cast<void**>(&mRawPtr);
   }
 
   void
@@ -128,10 +134,6 @@ public:
   template<class U>
   MOZ_IMPLICIT nsRefPtr(const mozilla::OwningNonNull<U>& aOther);
 
-  // Defined in RefPtr.h
-  template<class U>
-  MOZ_IMPLICIT nsRefPtr(mozilla::RefPtr<U>&& aOther);
-
   // Assignment operators
 
   nsRefPtr<T>&
@@ -192,11 +194,6 @@ public:
   nsRefPtr<T>&
   operator=(const mozilla::OwningNonNull<U>& aOther);
 
-  // Defined in RefPtr.h
-  template<class U>
-  nsRefPtr<T>&
-  operator=(mozilla::RefPtr<U>&& aOther);
-
   // Other pointer operators
 
   void
@@ -251,9 +248,6 @@ public:
   }
 
   operator T*() const
-#ifdef MOZ_HAVE_REF_QUALIFIERS
-  &
-#endif
   /*
     ...makes an |nsRefPtr| act like its underlying raw pointer type whenever it
     is used in a context where a raw pointer is expected.  It is this operator
@@ -265,19 +259,6 @@ public:
   {
     return get();
   }
-
-#ifdef MOZ_HAVE_REF_QUALIFIERS
-  // Don't allow implicit conversion of temporary nsRefPtr to raw pointer,
-  // because the refcount might be one and the pointer will immediately become
-  // invalid.
-  operator T*() const && = delete;
-
-  // These are needed to avoid the deleted operator above.  XXX Why is operator!
-  // needed separately?  Shouldn't the compiler prefer using the non-deleted
-  // operator bool instead of the deleted operator T*?
-  explicit operator bool() const { return !!mRawPtr; }
-  bool operator!() const { return !mRawPtr; }
-#endif
 
   T*
   operator->() const MOZ_NO_ADDREF_RELEASE_ON_RETURN
@@ -348,14 +329,12 @@ public:
 private:
   // This helper class makes |nsRefPtr<const T>| possible by casting away
   // the constness from the pointer when calling AddRef() and Release().
-  //
   // This is necessary because AddRef() and Release() implementations can't
   // generally expected to be const themselves (without heavy use of |mutable|
   // and |const_cast| in their own implementations).
-  //
-  // This should be sound because while |nsRefPtr<const T>| provides a
-  // const view of an object, the object itself should not be const (it
-  // would have to be allocated as |new const T| or similar to be const).
+  // This should be sound because while |nsRefPtr<const T>| provides a const
+  // view of an object, the object itself should be const (it would have to be
+  // allocated as |new const T| or similar to itself be const).
   template<class U>
   struct AddRefTraits
   {
@@ -551,34 +530,42 @@ operator!=(U* aLhs, const nsRefPtr<T>& aRhs)
   return const_cast<const U*>(aLhs) != static_cast<const T*>(aRhs.get());
 }
 
-// Comparing an |nsRefPtr| to |nullptr|
+namespace detail {
+class nsRefPtrZero;
+} // namespace detail
+
+// Comparing an |nsRefPtr| to |0|
 
 template <class T>
 inline bool
-operator==(const nsRefPtr<T>& aLhs, decltype(nullptr))
+operator==(const nsRefPtr<T>& aLhs, ::detail::nsRefPtrZero* aRhs)
+// specifically to allow |smartPtr == 0|
 {
-  return aLhs.get() == nullptr;
+  return static_cast<const void*>(aLhs.get()) == reinterpret_cast<const void*>(aRhs);
 }
 
 template <class T>
 inline bool
-operator==(decltype(nullptr), const nsRefPtr<T>& aRhs)
+operator==(::detail::nsRefPtrZero* aLhs, const nsRefPtr<T>& aRhs)
+// specifically to allow |0 == smartPtr|
 {
-  return nullptr == aRhs.get();
+  return reinterpret_cast<const void*>(aLhs) == static_cast<const void*>(aRhs.get());
 }
 
 template <class T>
 inline bool
-operator!=(const nsRefPtr<T>& aLhs, decltype(nullptr))
+operator!=(const nsRefPtr<T>& aLhs, ::detail::nsRefPtrZero* aRhs)
+// specifically to allow |smartPtr != 0|
 {
-  return aLhs.get() != nullptr;
+  return static_cast<const void*>(aLhs.get()) != reinterpret_cast<const void*>(aRhs);
 }
 
 template <class T>
 inline bool
-operator!=(decltype(nullptr), const nsRefPtr<T>& aRhs)
+operator!=(::detail::nsRefPtrZero* aLhs, const nsRefPtr<T>& aRhs)
+// specifically to allow |0 != smartPtr|
 {
-  return nullptr != aRhs.get();
+  return reinterpret_cast<const void*>(aLhs) != static_cast<const void*>(aRhs.get());
 }
 
 /*****************************************************************************/

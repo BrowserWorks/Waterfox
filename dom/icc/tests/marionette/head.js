@@ -92,7 +92,7 @@ function isStkText(aStkText, aExpectedStkText) {
   }
 }
 
-var _pendingEmulatorCmdCount = 0;
+let _pendingEmulatorCmdCount = 0;
 
 /**
  * Send emulator command with safe guard.
@@ -223,8 +223,8 @@ function verifyWithPeekedStkEnvelope(aExpectEnvelope) {
   });
 }
 
-var workingFrame;
-var iccManager;
+let workingFrame;
+let iccManager;
 
 /**
  * Push required permissions and test if

@@ -14,6 +14,9 @@
         <attr name="menuItemActionBarStyle" format="reference"/>
 
         <!-- Style for MenuItemActionBar -->
+        <attr name="menuItemActionBarStyleNewTablet" format="reference"/>
+
+        <!-- Style for MenuItemActionBar -->
         <attr name="menuItemActionModeStyle" format="reference"/>
 
         <!-- Style for MenuItemActionView -->
@@ -167,9 +170,6 @@
     <declare-styleable name="TabMenuStrip">
         <attr name="strip" format="reference"/>
         <attr name="tabContentStart" format="dimension" />
-        <attr name="activeTextColor" format="color" />
-        <attr name="inactiveTextColor" format="color" />
-        <attr name="titlebarFill" format="boolean" />
     </declare-styleable>
 
     <declare-styleable name="TabPanelBackButton">
@@ -196,13 +196,9 @@
         <attr name="disabledText" format="string" />
     </declare-styleable>
 
-    <declare-styleable name="ThemedView">
-        <!-- A reimplementation of android:tintList which is
-             otherwise only available on API 21+.
-
-             Using this attribute is mutually exclusive with android:tint
-             and setting colorFilters in code. This is because on pre-Lollipop,
-             android:tint and DrawableCompat.tint* uses colorFilters under the hood. -->
+    <declare-styleable name="MenuItemActionBar">
+        <!-- We reimplement tint list XML attrs here because it is
+             only available in Android 21+. -->
         <attr name="drawableTintList" format="color" />
     </declare-styleable>
 

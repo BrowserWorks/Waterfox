@@ -14,7 +14,7 @@ const {interfaces: Ci, results: Cr, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-var APP_INFO = {
+let APP_INFO = {
   vendor: "Mozilla",
   name: "xpcshell",
   ID: "xpcshell@tests.mozilla.org",

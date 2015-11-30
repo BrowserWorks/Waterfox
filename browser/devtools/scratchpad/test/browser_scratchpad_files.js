@@ -2,18 +2,18 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var tempScope = {};
+let tempScope = {};
 Cu.import("resource://gre/modules/NetUtil.jsm", tempScope);
-var NetUtil = tempScope.NetUtil;
+let NetUtil = tempScope.NetUtil;
 
 // Reference to the Scratchpad object.
-var gScratchpad;
+let gScratchpad;
 
 // Reference to the temporary nsIFile we will work with.
-var gFile;
+let gFile;
 
 // The temporary file content.
-var gFileContent = "hello.world('bug636725');";
+let gFileContent = "hello.world('bug636725');";
 
 function test()
 {

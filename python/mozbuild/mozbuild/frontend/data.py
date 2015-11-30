@@ -173,9 +173,8 @@ class XPIDLFile(ContextDerived):
 
         self.install_target = context['FINAL_TARGET']
 
-class BaseDefines(ContextDerived):
-    """Context derived container object for DEFINES/HOST_DEFINES,
-    which are OrderedDicts.
+class Defines(ContextDerived):
+    """Context derived container object for DEFINES, which is an OrderedDict.
     """
     __slots__ = ('defines')
 
@@ -197,12 +196,6 @@ class BaseDefines(ContextDerived):
             self.defines.update(more_defines.defines)
         else:
             self.defines.update(more_defines)
-
-class Defines(BaseDefines):
-    pass
-
-class HostDefines(BaseDefines):
-    pass
 
 class Exports(ContextDerived):
     """Context derived container object for EXPORTS, which is a
@@ -993,30 +986,3 @@ class AndroidAssetsDirs(ContextDerived):
     def __init__(self, context, paths):
         ContextDerived.__init__(self, context)
         self.paths = paths
-
-class AndroidExtraResDirs(ContextDerived):
-    """Represents Android extra resource directories.
-
-    Extra resources are resources provided by libraries and including in a
-    packaged APK, but not otherwise redistributed.  In practice, this means
-    resources included in Fennec but not in GeckoView.
-    """
-
-    __slots__ = (
-        'paths',
-    )
-
-    def __init__(self, context, paths):
-        ContextDerived.__init__(self, context)
-        self.paths = paths
-
-class AndroidExtraPackages(ContextDerived):
-    """Represents Android extra packages."""
-
-    __slots__ = (
-        'packages',
-    )
-
-    def __init__(self, context, packages):
-        ContextDerived.__init__(self, context)
-        self.packages = packages

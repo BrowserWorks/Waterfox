@@ -4,8 +4,8 @@
 
 "use strict";
 
-var promise = require("promise");
-var {editableField, getInplaceEditorForSpan: inplaceEditor} = require("devtools/shared/inplace-editor");
+let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+let {editableField, getInplaceEditorForSpan: inplaceEditor} = require("devtools/shared/inplace-editor");
 
 // Test the inplace-editor behavior.
 

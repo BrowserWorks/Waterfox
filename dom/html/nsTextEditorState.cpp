@@ -93,9 +93,6 @@ public:
       return NS_OK;
     }
 
-    AutoHideSelectionChanges hideSelectionChanges
-      (mFrame->GetConstFrameSelection());
-
     if (mFrame) {
       // SetSelectionRange leads to Selection::AddRange which flushes Layout -
       // need to block script to avoid nested PrepareEditor calls (bug 642800).
@@ -822,7 +819,7 @@ nsTextInputListener::NotifySelectionChanged(nsIDOMDocument* aDoc, nsISelection* 
         if (presShell) 
         {
           nsEventStatus status = nsEventStatus_eIgnore;
-          WidgetEvent event(true, eFormSelect);
+          WidgetEvent event(true, NS_FORM_SELECTED);
 
           presShell->HandleEventWithTarget(&event, mFrame, content, &status);
         }
@@ -907,7 +904,7 @@ nsTextInputListener::HandleEvent(nsIDOMEvent* aEvent)
     return NS_ERROR_UNEXPECTED;
   }
 
-  if (keyEvent->mMessage != eKeyPress) {
+  if (keyEvent->message != NS_KEY_PRESS) {
     return NS_OK;
   }
 
@@ -1250,8 +1247,6 @@ nsTextEditorState::PrepareEditor(const nsAString *aValue)
     // Do not initialize the editor multiple times.
     return NS_OK;
   }
-
-  AutoHideSelectionChanges hideSelectionChanges(GetConstFrameSelection());
 
   // Don't attempt to initialize recursively!
   InitializationGuard guard(*this);

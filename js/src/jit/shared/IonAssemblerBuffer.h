@@ -279,12 +279,6 @@ class AssemblerBuffer
     }
 
   public:
-    Inst* getInstOrNull(BufferOffset off) {
-        if (!off.assigned())
-            return nullptr;
-        return getInst(off);
-    }
-
     Inst* getInst(BufferOffset off) {
         const int offset = off.getOffset();
 

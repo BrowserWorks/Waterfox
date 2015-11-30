@@ -14,7 +14,7 @@ thisTestLeaksUncaughtRejectionsAndShouldBeFixed("TypeError: can't convert undefi
  * Tests if cached requests have the correct status code
  */
 
-var test = Task.async(function*() {
+let test = Task.async(function*() {
   let [tab, debuggee, monitor] = yield initNetMonitor(STATUS_CODES_URL, null, true);
   info("Starting test... ");
 

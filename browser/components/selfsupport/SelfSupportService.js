@@ -8,20 +8,11 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
 
-const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
-
-XPCOMUtils.defineLazyGetter(this, "gPolicy", () => {
-  try {
-    return Cc["@mozilla.org/datareporting/service;1"]
-             .getService(Ci.nsISupports)
-             .wrappedJSObject
-             .policy;
-  } catch (e) {
-    return undefined;
-  }
-});
+const policy = Cc["@mozilla.org/datareporting/service;1"]
+                 .getService(Ci.nsISupports)
+                 .wrappedJSObject
+                 .policy;
 
 XPCOMUtils.defineLazyGetter(this, "reporter", () => {
   return Cc["@mozilla.org/datareporting/service;1"]
@@ -53,25 +44,14 @@ MozSelfSupportInterface.prototype = {
   },
 
   get healthReportDataSubmissionEnabled() {
-    if (gPolicy) {
-      return gPolicy.healthReportUploadEnabled;
-    }
-
-    // The datareporting service is unavailable or disabled.
-    return Preferences.get(PREF_FHR_UPLOAD_ENABLED, false);
+    return policy.healthReportUploadEnabled;
   },
 
   set healthReportDataSubmissionEnabled(enabled) {
-    if (gPolicy) {
-      let reason = "Self-support interface sent " +
-                   (enabled ? "opt-in" : "opt-out") +
-                   " command.";
-      gPolicy.recordHealthReportUploadEnabled(enabled, reason);
-      return;
-    }
-
-    // The datareporting service is unavailable or disabled.
-    Preferences.set(PREF_FHR_UPLOAD_ENABLED, enabled);
+    let reason = "Self-support interface sent " +
+                 (enabled ? "opt-in" : "opt-out") +
+                 " command.";
+    policy.recordHealthReportUploadEnabled(enabled, reason);
   },
 
   getHealthReportPayload: function () {

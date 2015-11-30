@@ -48,8 +48,7 @@ SVGAngle::SetValue(float aValue, ErrorResult& rv)
     return;
   }
   bool isBaseVal = mType == BaseValue;
-  mVal->SetBaseValue(aValue, isBaseVal ? mSVGElement.get() : nullptr,
-                     isBaseVal);
+  mVal->SetBaseValue(aValue, isBaseVal ? mSVGElement : nullptr, isBaseVal);
 }
 
 float
@@ -84,8 +83,7 @@ SVGAngle::NewValueSpecifiedUnits(uint16_t unitType,
     return;
   }
   rv = mVal->NewValueSpecifiedUnits(unitType, valueInSpecifiedUnits,
-                                    mType == BaseValue ? mSVGElement.get()
-                                                       : nullptr);
+                                    mType == BaseValue ? mSVGElement : nullptr);
 }
 
 void
@@ -95,8 +93,7 @@ SVGAngle::ConvertToSpecifiedUnits(uint16_t unitType, ErrorResult& rv)
     rv.Throw(NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR);
     return;
   }
-  rv = mVal->ConvertToSpecifiedUnits(unitType, mType == BaseValue ?
-                                     mSVGElement.get() : nullptr);
+  rv = mVal->ConvertToSpecifiedUnits(unitType, mType == BaseValue ? mSVGElement : nullptr);
 }
 
 void
@@ -107,8 +104,7 @@ SVGAngle::SetValueAsString(const nsAString& aValue, ErrorResult& rv)
     return;
   }
   bool isBaseVal = mType == BaseValue;
-  rv = mVal->SetBaseValueString(aValue, isBaseVal ? mSVGElement.get() : nullptr,
-                                isBaseVal);
+  rv = mVal->SetBaseValueString(aValue, isBaseVal ? mSVGElement : nullptr, isBaseVal);
 }
 
 void

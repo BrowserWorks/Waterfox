@@ -4,7 +4,7 @@
 "use strict";
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
-var GMPScope = Cu.import("resource://gre/modules/addons/GMPProvider.jsm");
+let GMPScope = Cu.import("resource://gre/modules/addons/GMPProvider.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "pluginsBundle",
@@ -13,8 +13,8 @@ XPCOMUtils.defineLazyGetter(this, "pluginsBundle",
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
 
-var gMockAddons = new Map();
-var gMockEmeAddons = new Map();
+let gMockAddons = new Map();
+let gMockEmeAddons = new Map();
 
 for (let plugin of GMPScope.GMP_PLUGINS) {
   let mockAddon = Object.freeze({
@@ -32,9 +32,9 @@ for (let plugin of GMPScope.GMP_PLUGINS) {
   }
 }
 
-var gInstalledAddonId = "";
-var gPrefs = Services.prefs;
-var gGetKey = GMPScope.GMPPrefs.getPrefKey;
+let gInstalledAddonId = "";
+let gPrefs = Services.prefs;
+let gGetKey = GMPScope.GMPPrefs.getPrefKey;
 
 function MockGMPInstallManager() {
 }

@@ -57,7 +57,8 @@ public:
     : DOMEventTargetHelper(aGlobal)
     , mPlaybackRate(1.0)
     , mPendingState(PendingState::NotPending)
-    , mAnimationIndex(sNextAnimationIndex++)
+    , mSequenceNum(kUnsequenced)
+    , mIsRunningOnCompositor(false)
     , mFinishedAtLastComposeStyle(false)
     , mIsRelevant(false)
     , mFinishedIsResolved(false)
@@ -108,7 +109,7 @@ public:
   virtual void Play(ErrorResult& aRv, LimitBehavior aLimitBehavior);
   virtual void Pause(ErrorResult& aRv);
   virtual void Reverse(ErrorResult& aRv);
-  bool IsRunningOnCompositor() const;
+  bool IsRunningOnCompositor() const { return mIsRunningOnCompositor; }
   IMPL_EVENT_HANDLER(finish);
   IMPL_EVENT_HANDLER(cancel);
 
@@ -267,7 +268,17 @@ public:
    * Returns true if this Animation has a lower composite order than aOther.
    */
   virtual bool HasLowerCompositeOrderThan(const Animation& aOther) const;
+  /**
+   * Returns true if this Animation is involved in some sort of
+   * custom composite ordering (such as the ordering defined for CSS
+   * animations or CSS transitions).
+   *
+   * When this is true, this class will not update the sequence number.
+   */
+  virtual bool IsUsingCustomCompositeOrder() const { return false; }
 
+  void SetIsRunningOnCompositor() { mIsRunningOnCompositor = true; }
+  void ClearIsRunningOnCompositor() { mIsRunningOnCompositor = false; }
   /**
    * Returns true if this animation does not currently need to update
    * style on the main thread (e.g. because it is empty, or is
@@ -286,22 +297,6 @@ public:
   void ComposeStyle(nsRefPtr<AnimValuesStyleRule>& aStyleRule,
                     nsCSSPropertySet& aSetProperties,
                     bool& aNeedsRefreshes);
-
-
-  // FIXME: Because we currently determine if we need refresh driver ticks
-  // during restyling (specifically ComposeStyle above) and not necessarily
-  // during a refresh driver tick, we can arrive at a situation where we
-  // have finished running an animation but are waiting until the next tick
-  // to queue the final end event. This method tells us when we are in that
-  // situation so we can avoid unregistering from the refresh driver until
-  // we've finished dispatching events.
-  //
-  // This is a temporary measure until bug 1195180 is done and we can do all
-  // our registering and unregistering within a tick callback.
-  virtual bool HasEndEventToQueue() const { return false; }
-
-  void NotifyEffectTimingUpdated();
-
 protected:
   void SilentlySetCurrentTime(const TimeDuration& aNewCurrentTime);
   void SilentlySetPlaybackRate(double aPlaybackRate);
@@ -335,8 +330,8 @@ protected:
     Async
   };
 
-  virtual void UpdateTiming(SeekFlag aSeekFlag,
-                            SyncNotifyFlag aSyncNotifyFlag);
+  void UpdateTiming(SeekFlag aSeekFlag,
+                    SyncNotifyFlag aSyncNotifyFlag);
   void UpdateFinishedState(SeekFlag aSeekFlag,
                            SyncNotifyFlag aSyncNotifyFlag);
   void UpdateEffect();
@@ -357,7 +352,6 @@ protected:
 
   bool IsPossiblyOrphanedPendingAnimation() const;
   StickyTimeDuration EffectEnd() const;
-  TimeStamp AnimationTimeToTimeStamp(const StickyTimeDuration& aTime) const;
 
   nsIDocument* GetRenderedDocument() const;
   nsPresContext* GetPresContext() const;
@@ -395,17 +389,15 @@ protected:
   enum class PendingState { NotPending, PlayPending, PausePending };
   PendingState mPendingState;
 
-  static uint64_t sNextAnimationIndex;
+  static uint64_t sNextSequenceNum;
+  static const uint64_t kUnsequenced = UINT64_MAX;
 
-  // The relative position of this animation within the global animation list.
-  // This is kNoIndex while the animation is in the idle state and is updated
-  // each time the animation transitions out of the idle state.
-  //
-  // Note that subclasses such as CSSTransition and CSSAnimation may repurpose
-  // this member to implement their own brand of sorting. As a result, it is
-  // possible for two different objects to have the same index.
-  uint64_t mAnimationIndex;
+  // The sequence number assigned to this animation. This is kUnsequenced
+  // while the animation is in the idle state and is updated each time
+  // the animation transitions out of the idle state.
+  uint64_t mSequenceNum;
 
+  bool mIsRunningOnCompositor;
   bool mFinishedAtLastComposeStyle;
   // Indicates that the animation should be exposed in an element's
   // getAnimations() list.

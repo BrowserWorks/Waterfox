@@ -25,7 +25,7 @@ module.exports = EventEmitter;
 const { Cu, components } = require("chrome");
 const Services = require("Services");
 const promise = require("promise");
-var loggingEnabled = true;
+let loggingEnabled = true;
 
 if (!isWorker) {
   loggingEnabled = Services.prefs.getBoolPref("devtools.dump.emit");
@@ -86,10 +86,10 @@ EventEmitter.prototype = {
   once: function EventEmitter_once(aEvent, aListener) {
     let deferred = promise.defer();
 
-    let handler = (aEvent, aFirstArg, ...aRest) => {
+    let handler = (aEvent, aFirstArg) => {
       this.off(aEvent, handler);
       if (aListener) {
-        aListener.apply(null, [aEvent, aFirstArg, ...aRest]);
+        aListener.apply(null, arguments);
       }
       deferred.resolve(aFirstArg);
     };

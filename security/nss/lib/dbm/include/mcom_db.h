@@ -56,6 +56,12 @@ typedef PRUint32 uint32;
 
 #ifdef __DBINTERFACE_PRIVATE
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#else
+#include "cdefs.h"
+#endif
+
 #ifdef HAVE_SYS_BYTEORDER_H
 #include <sys/byteorder.h>
 #endif

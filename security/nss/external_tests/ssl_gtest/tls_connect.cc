@@ -176,10 +176,6 @@ void TlsConnectTestBase::EnableSomeEcdheCiphers() {
   server_->EnableSomeEcdheCiphers();
 }
 
-void TlsConnectTestBase::DisableDheCiphers() {
-  client_->DisableDheCiphers();
-  server_->DisableDheCiphers();
-}
 
 void TlsConnectTestBase::ConfigureSessionCache(SessionResumptionMode client,
                                                SessionResumptionMode server) {

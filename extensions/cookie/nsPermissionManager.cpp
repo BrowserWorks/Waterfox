@@ -20,6 +20,7 @@
 #include "nsTArray.h"
 #include "nsReadableUtils.h"
 #include "nsILineInputStream.h"
+#include "nsIIDNService.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsDirectoryServiceDefs.h"
 #include "prprf.h"
@@ -126,24 +127,19 @@ GetPrincipalFromOrigin(const nsACString& aOrigin, nsIPrincipal** aPrincipal)
 nsresult
 GetPrincipal(nsIURI* aURI, uint32_t aAppId, bool aIsInBrowserElement, nsIPrincipal** aPrincipal)
 {
-  // TODO: Bug 1165267 - Use OriginAttributes for nsCookieService
-  mozilla::OriginAttributes attrs(aAppId, aIsInBrowserElement);
-  nsCOMPtr<nsIPrincipal> principal = mozilla::BasePrincipal::CreateCodebasePrincipal(aURI, attrs);
-  NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
+  nsIScriptSecurityManager* secMan = nsContentUtils::GetSecurityManager();
+  NS_ENSURE_TRUE(secMan, NS_ERROR_FAILURE);
 
-  principal.forget(aPrincipal);
-  return NS_OK;
+  return secMan->GetAppCodebasePrincipal(aURI, aAppId, aIsInBrowserElement, aPrincipal);
 }
 
 nsresult
 GetPrincipal(nsIURI* aURI, nsIPrincipal** aPrincipal)
 {
-  mozilla::OriginAttributes attrs;
-  nsCOMPtr<nsIPrincipal> principal = mozilla::BasePrincipal::CreateCodebasePrincipal(aURI, attrs);
-  NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
+  nsIScriptSecurityManager* secMan = nsContentUtils::GetSecurityManager();
+  NS_ENSURE_TRUE(secMan, NS_ERROR_FAILURE);
 
-  principal.forget(aPrincipal);
-  return NS_OK;
+  return secMan->GetNoAppCodebasePrincipal(aURI, aPrincipal);
 }
 
 nsCString
@@ -2636,12 +2632,12 @@ nsPermissionManager::ImportDefaults()
   rv = NS_NewChannel(getter_AddRefs(channel),
                      defaultsURI,
                      nsContentUtils::GetSystemPrincipal(),
-                     nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                     nsILoadInfo::SEC_NORMAL,
                      nsIContentPolicy::TYPE_OTHER);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIInputStream> inputStream;
-  rv = channel->Open2(getter_AddRefs(inputStream));
+  rv = channel->Open(getter_AddRefs(inputStream));
   NS_ENSURE_SUCCESS(rv, rv);
 
   rv = _DoImport(inputStream, nullptr);
@@ -2745,6 +2741,19 @@ nsPermissionManager::_DoImport(nsIInputStream *inputStream, mozIStorageConnectio
   } while (isMore);
 
   return NS_OK;
+}
+
+nsresult
+nsPermissionManager::NormalizeToACE(nsCString &aHost)
+{
+  // lazily init the IDN service
+  if (!mIDNService) {
+    nsresult rv;
+    mIDNService = do_GetService(NS_IDNSERVICE_CONTRACTID, &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
+  return mIDNService->ConvertUTF8toACE(aHost, aHost);
 }
 
 void

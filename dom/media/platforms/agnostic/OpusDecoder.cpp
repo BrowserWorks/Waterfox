@@ -12,11 +12,12 @@
 #include <stdint.h>
 #include <inttypes.h>  // For PRId64
 
-extern PRLogModuleInfo* GetPDMLog();
-#define OPUS_DEBUG(arg, ...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, \
+#define OPUS_DEBUG(arg, ...) MOZ_LOG(gMediaDecoderLog, mozilla::LogLevel::Debug, \
     ("OpusDataDecoder(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 
 namespace mozilla {
+
+extern PRLogModuleInfo* gMediaDecoderLog;
 
 OpusDataDecoder::OpusDataDecoder(const AudioInfo& aConfig,
                                  FlushableTaskQueue* aTaskQueue,
@@ -46,19 +47,19 @@ OpusDataDecoder::Shutdown()
   return NS_OK;
 }
 
-nsRefPtr<MediaDataDecoder::InitPromise>
+nsresult
 OpusDataDecoder::Init()
 {
   size_t length = mInfo.mCodecSpecificConfig->Length();
   uint8_t *p = mInfo.mCodecSpecificConfig->Elements();
   if (length < sizeof(uint64_t)) {
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return NS_ERROR_FAILURE;
   }
   int64_t codecDelay = BigEndian::readUint64(p);
   length -= sizeof(uint64_t);
   p += sizeof(uint64_t);
   if (NS_FAILED(DecodeHeader(p, length))) {
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return NS_ERROR_FAILURE;
   }
 
   int r;
@@ -74,7 +75,7 @@ OpusDataDecoder::Init()
   if (codecDelay != FramesToUsecs(mOpusParser->mPreSkip,
                                   mOpusParser->mRate).value()) {
     NS_WARNING("Invalid Opus header: CodecDelay and pre-skip do not match!");
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return NS_ERROR_FAILURE;
   }
 
   if (mInfo.mRate != (uint32_t)mOpusParser->mRate) {
@@ -84,8 +85,7 @@ OpusDataDecoder::Init()
     NS_WARNING("Invalid Opus header: container and codec channels do not match!");
   }
 
-  return r == OPUS_OK ? InitPromise::CreateAndResolve(TrackInfo::kAudioTrack, __func__)
-                      : InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+  return r == OPUS_OK ? NS_OK : NS_ERROR_FAILURE;
 }
 
 nsresult

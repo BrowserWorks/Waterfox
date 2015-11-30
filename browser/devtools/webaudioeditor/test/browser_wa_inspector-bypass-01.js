@@ -18,8 +18,12 @@ add_task(function*() {
   ]);
   let nodeIds = actors.map(actor => actor.actorID);
 
+  click(panelWin, findGraphNode(panelWin, nodeIds[1]));
   // Wait for the node to be set as well as the inspector to come fully into the view
-  yield clickGraphNode(panelWin, findGraphNode(panelWin, nodeIds[1]), true);
+  yield Promise.all([
+    waitForInspectorRender(panelWin, EVENTS),
+    once(panelWin, EVENTS.UI_INSPECTOR_TOGGLED)
+  ]);
 
   let $bypass = $("toolbarbutton.bypass");
 
@@ -45,7 +49,9 @@ add_task(function*() {
   ok(!findGraphNode(panelWin, nodeIds[1]).classList.contains("bypassed"),
     "AudioNode no longer has 'bypassed' class.");
 
-  yield clickGraphNode(panelWin, findGraphNode(panelWin, nodeIds[0]));
+  click(panelWin, findGraphNode(panelWin, nodeIds[0]));
+
+  yield once(panelWin, EVENTS.UI_INSPECTOR_NODE_SET);
 
   is((yield actors[0].isBypassed()), false, "Unbypassable AudioNodeActor is not bypassed.");
   is($bypass.checked, false, "Button is 'off' for unbypassable nodes");

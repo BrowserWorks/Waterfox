@@ -52,11 +52,21 @@ MP3Demuxer::Init() {
     MP3DEMUXER_LOG("MP3Demuxer::Init() failure: waiting for data");
 
     return InitPromise::CreateAndReject(
-      DemuxerFailureReason::DEMUXER_ERROR, __func__);
+      DemuxerFailureReason::WAITING_FOR_DATA, __func__);
   }
 
   MP3DEMUXER_LOG("MP3Demuxer::Init() successful");
   return InitPromise::CreateAndResolve(NS_OK, __func__);
+}
+
+already_AddRefed<MediaDataDemuxer>
+MP3Demuxer::Clone() const {
+  nsRefPtr<MP3Demuxer> demuxer = new MP3Demuxer(mSource);
+  if (!demuxer->InitInternal()) {
+    NS_WARNING("Couldn't recreate MP3Demuxer");
+    return nullptr;
+  }
+  return demuxer.forget();
 }
 
 bool
@@ -237,15 +247,15 @@ MP3TrackDemuxer::ScanUntil(TimeUnit aTime) {
   while (SkipNextFrame(nextRange) && Duration(mFrameIndex + 1) < aTime) {
     nextRange = FindNextFrame();
     MP3DEMUXER_LOGV("ScanUntil* avgFrameLen=%f mNumParsedFrames=%" PRIu64
-                    " mFrameIndex=%" PRId64 " mOffset=%" PRIu64 " Duration=%" PRId64,
-                    aTime, AverageFrameLength(), mNumParsedFrames, mFrameIndex,
-                    mOffset, Duration(mFrameIndex + 1));
+                " mFrameIndex=%" PRId64 " mOffset=%" PRIu64 " Duration=%" PRId64,
+                aTime, AverageFrameLength(), mNumParsedFrames, mFrameIndex,
+                mOffset, Duration(mFrameIndex + 1));
   }
 
   MP3DEMUXER_LOG("ScanUntil End avgFrameLen=%f mNumParsedFrames=%" PRIu64
-                 " mFrameIndex=%" PRId64 " mOffset=%" PRIu64,
-                 aTime, AverageFrameLength(), mNumParsedFrames, mFrameIndex,
-                 mOffset);
+              " mFrameIndex=%" PRId64 " mOffset=%" PRIu64,
+              aTime, AverageFrameLength(), mNumParsedFrames, mFrameIndex,
+              mOffset);
 
   return Duration(mFrameIndex);
 }
@@ -253,10 +263,12 @@ MP3TrackDemuxer::ScanUntil(TimeUnit aTime) {
 nsRefPtr<MP3TrackDemuxer::SamplesPromise>
 MP3TrackDemuxer::GetSamples(int32_t aNumSamples) {
   MP3DEMUXER_LOGV("GetSamples(%d) Begin mOffset=%" PRIu64 " mNumParsedFrames=%" PRIu64
-                  " mFrameIndex=%" PRId64 " mTotalFrameLen=%" PRIu64 " mSamplesPerFrame=%d "
-                  "mSamplesPerSecond=%d mChannels=%d",
-                  aNumSamples, mOffset, mNumParsedFrames, mFrameIndex, mTotalFrameLen,
-                  mSamplesPerFrame, mSamplesPerSecond, mChannels);
+              " mFrameIndex=%" PRId64
+              " mTotalFrameLen=%" PRIu64 " mSamplesPerFrame=%d mSamplesPerSecond=%d "
+              "mChannels=%d",
+              aNumSamples,
+              mOffset, mNumParsedFrames, mFrameIndex, mTotalFrameLen, mSamplesPerFrame,
+              mSamplesPerSecond, mChannels);
 
   if (!aNumSamples) {
     return SamplesPromise::CreateAndReject(
@@ -275,11 +287,13 @@ MP3TrackDemuxer::GetSamples(int32_t aNumSamples) {
   }
 
   MP3DEMUXER_LOGV("GetSamples() End mSamples.Size()=%d aNumSamples=%d mOffset=%" PRIu64
-                  " mNumParsedFrames=%" PRIu64 " mFrameIndex=%" PRId64
-                  " mTotalFrameLen=%" PRIu64 " mSamplesPerFrame=%d mSamplesPerSecond=%d "
-                  "mChannels=%d",
-                  frames->mSamples.Length(), aNumSamples, mOffset, mNumParsedFrames,
-                  mFrameIndex, mTotalFrameLen, mSamplesPerFrame, mSamplesPerSecond, mChannels);
+              " mNumParsedFrames=%" PRIu64
+              " mFrameIndex=%" PRId64
+              " mTotalFrameLen=%" PRIu64 " mSamplesPerFrame=%d mSamplesPerSecond=%d "
+              "mChannels=%d",
+              frames->mSamples.Length(), aNumSamples,
+              mOffset, mNumParsedFrames, mFrameIndex, mTotalFrameLen, mSamplesPerFrame,
+              mSamplesPerSecond, mChannels);
 
   if (frames->mSamples.IsEmpty()) {
     return SamplesPromise::CreateAndReject(
@@ -325,6 +339,11 @@ MP3TrackDemuxer::GetBuffered() {
 }
 
 int64_t
+MP3TrackDemuxer::GetEvictionOffset(TimeUnit aTime) {
+  return 0;
+}
+
+int64_t
 MP3TrackDemuxer::StreamLength() const {
   return mSource.GetLength();
 }
@@ -361,26 +380,21 @@ MP3TrackDemuxer::Duration(int64_t aNumFrames) const {
 MediaByteRange
 MP3TrackDemuxer::FindNextFrame() {
   static const int BUFFER_SIZE = 4096;
-  static const int MAX_SKIPPED_BYTES = 10 * BUFFER_SIZE;
 
   MP3DEMUXER_LOGV("FindNext() Begin mOffset=%" PRIu64 " mNumParsedFrames=%" PRIu64
-                  " mFrameIndex=%" PRId64 " mTotalFrameLen=%" PRIu64
-                  " mSamplesPerFrame=%d mSamplesPerSecond=%d mChannels=%d",
-                  mOffset, mNumParsedFrames, mFrameIndex, mTotalFrameLen, mSamplesPerFrame,
-                  mSamplesPerSecond, mChannels);
+              " mFrameIndex=%" PRId64
+              " mTotalFrameLen=%" PRIu64 " mSamplesPerFrame=%d mSamplesPerSecond=%d "
+              "mChannels=%d",
+              mOffset, mNumParsedFrames, mFrameIndex, mTotalFrameLen, mSamplesPerFrame,
+              mSamplesPerSecond, mChannels);
 
   uint8_t buffer[BUFFER_SIZE];
   int32_t read = 0;
   const uint8_t* frameBeg = nullptr;
   const uint8_t* bufferEnd = nullptr;
 
-  while (frameBeg == bufferEnd) {
-    if ((!mParser.FirstFrame().Length() &&
-         mOffset - mParser.ID3Header().Size() > MAX_SKIPPED_BYTES) ||
-        (read = Read(buffer, mOffset, BUFFER_SIZE)) == 0) {
-      // This is not a valid MPEG audio stream or we've reached EOS, give up.
-      break;
-    }
+  while (frameBeg == bufferEnd &&
+         (read = Read(buffer, mOffset, BUFFER_SIZE)) > 0) {
     NS_ENSURE_TRUE(mOffset + read > mOffset, MediaByteRange(0, 0));
     mOffset += read;
     bufferEnd = buffer + read;
@@ -395,18 +409,18 @@ MP3TrackDemuxer::FindNextFrame() {
 
   if (frameBeg == bufferEnd || !mParser.CurrentFrame().Length()) {
     MP3DEMUXER_LOG("FindNext() Exit frameBeg=%p bufferEnd=%p "
-                   "mParser.CurrentFrame().Length()=%d ",
-                   frameBeg, bufferEnd, mParser.CurrentFrame().Length());
+                "mParser.CurrentFrame().Length()=%d ",
+                frameBeg, bufferEnd, mParser.CurrentFrame().Length());
     return { 0, 0 };
   }
 
   MP3DEMUXER_LOGV("FindNext() End mOffset=%" PRIu64 " mNumParsedFrames=%" PRIu64
-                  " mFrameIndex=%" PRId64 " bufferEnd=%p frameBeg=%p"
-                  " mTotalFrameLen=%" PRIu64 " mSamplesPerFrame=%d mSamplesPerSecond=%d "
-                  "mChannels=%d",
-                  mOffset, mNumParsedFrames, mFrameIndex, bufferEnd, frameBeg,
-                  mTotalFrameLen, mSamplesPerFrame,
-                  mSamplesPerSecond, mChannels);
+              " mFrameIndex=%" PRId64 " bufferEnd=%p frameBeg=%p"
+              " mTotalFrameLen=%" PRIu64 " mSamplesPerFrame=%d mSamplesPerSecond=%d "
+              "mChannels=%d",
+              mOffset, mNumParsedFrames, mFrameIndex, bufferEnd, frameBeg,
+              mTotalFrameLen, mSamplesPerFrame,
+              mSamplesPerSecond, mChannels);
 
   const int64_t nextBeg = mOffset - (bufferEnd - frameBeg) + 1;
   return { nextBeg, nextBeg + mParser.CurrentFrame().Length() };
@@ -423,10 +437,11 @@ MP3TrackDemuxer::SkipNextFrame(const MediaByteRange& aRange) {
   UpdateState(aRange);
 
   MP3DEMUXER_LOGV("SkipNext() End mOffset=%" PRIu64 " mNumParsedFrames=%" PRIu64
-                  " mFrameIndex=%" PRId64 " mTotalFrameLen=%" PRIu64
-                  " mSamplesPerFrame=%d mSamplesPerSecond=%d mChannels=%d",
-                  mOffset, mNumParsedFrames, mFrameIndex, mTotalFrameLen, mSamplesPerFrame,
-                  mSamplesPerSecond, mChannels);
+              " mFrameIndex=%" PRId64
+              " mTotalFrameLen=%" PRIu64 " mSamplesPerFrame=%d mSamplesPerSecond=%d "
+              "mChannels=%d",
+              mOffset, mNumParsedFrames, mFrameIndex, mTotalFrameLen, mSamplesPerFrame,
+              mSamplesPerSecond, mChannels);
 
   return true;
 }
@@ -470,10 +485,11 @@ MP3TrackDemuxer::GetNextFrame(const MediaByteRange& aRange) {
   }
 
   MP3DEMUXER_LOGV("GetNext() End mOffset=%" PRIu64 " mNumParsedFrames=%" PRIu64
-                  " mFrameIndex=%" PRId64 " mTotalFrameLen=%" PRIu64
-                  " mSamplesPerFrame=%d mSamplesPerSecond=%d mChannels=%d",
-                  mOffset, mNumParsedFrames, mFrameIndex, mTotalFrameLen, mSamplesPerFrame,
-                  mSamplesPerSecond, mChannels);
+              " mFrameIndex=%" PRId64
+              " mTotalFrameLen=%" PRIu64 " mSamplesPerFrame=%d mSamplesPerSecond=%d "
+              "mChannels=%d",
+              mOffset, mNumParsedFrames, mFrameIndex, mTotalFrameLen, mSamplesPerFrame,
+              mSamplesPerSecond, mChannels);
 
   return frame.forget();
 }
@@ -608,12 +624,8 @@ FrameParser::Parse(const uint8_t* aBeg, const uint8_t* aEnd) {
       if (tagSize > remainingBuffer) {
         // Skipping across the ID3 tag would take us past the end of the buffer, therefore we
         // return immediately and let the calling function handle skipping the rest of the tag.
-        MP3DEMUXER_LOGV("ID3v2 tag detected, size=%d, "
-                        "needing to skip %d bytes past the current buffer",
-                        tagSize, tagSize - remainingBuffer);
         return { aEnd, tagSize - remainingBuffer };
       }
-      MP3DEMUXER_LOGV("ID3v2 tag detected, size=%d", tagSize);
       aBeg = id3Beg + tagSize;
     }
   }

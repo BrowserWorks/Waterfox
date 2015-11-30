@@ -39,7 +39,7 @@ var provider = {
   _seenHigh: false
 };
 
-var runningInParent = true;
+let runningInParent = true;
 try {
   runningInParent = Components.classes["@mozilla.org/xre/runtime;1"].
                     getService(Components.interfaces.nsIXULRuntime).processType

@@ -68,10 +68,10 @@ XPCOMUtils.defineLazyGetter(this, "SMALLSVG_DATA_URI", function() {
          "IGhlaWdodD0iNDEuOCIvPg0KPC9zdmc%2BDQo%3D");
 });
 
-var gTestDir = do_get_cwd();
+let gTestDir = do_get_cwd();
 
 // Initialize profile.
-var gProfD = do_get_profile();
+let gProfD = do_get_profile();
 
 // Remove any old database.
 clearDB();
@@ -96,7 +96,7 @@ function uri(aSpec) NetUtil.newURI(aSpec);
  *
  * @return The database connection or null if unable to get one.
  */
-var gDBConn;
+let gDBConn;
 function DBConn(aForceNewConnection) {
   if (!aForceNewConnection) {
     let db = PlacesUtils.history.QueryInterface(Ci.nsPIPlacesDatabase)
@@ -377,7 +377,7 @@ function promiseTopicObserved(aTopic)
 /**
  * Simulates a Places shutdown.
  */
-var shutdownPlaces = function() {
+let shutdownPlaces = function() {
   do_print("shutdownPlaces: starting");
   let promise = new Promise(resolve => {
     Services.obs.addObserver(resolve, "places-connection-closed", false);

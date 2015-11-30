@@ -18,7 +18,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "AboutHomeUtils",
   "resource:///modules/AboutHome.jsm");
 
 const TEST_CONTENT_HELPER = "chrome://mochitests/content/browser/browser/base/content/test/general/aboutHome_content_script.js";
-var gRightsVersion = Services.prefs.getIntPref("browser.rights.version");
+let gRightsVersion = Services.prefs.getIntPref("browser.rights.version");
 
 registerCleanupFunction(function() {
   // Ensure we don't pollute prefs for next tests.
@@ -28,7 +28,7 @@ registerCleanupFunction(function() {
   Services.prefs.clearUserPref("browser.rights." + gRightsVersion + ".shown");
 });
 
-var gTests = [
+let gTests = [
 
 {
   desc: "Check that clearing cookies does not clear storage",
@@ -420,23 +420,6 @@ var gTests = [
   }
 },
 {
-  desc: "Pressing any key should focus the search box in the page, and send the key to it",
-  setup: function () {},
-  run: Task.async(function* () {
-    let doc = gBrowser.selectedBrowser.contentDocument;
-    let logo = doc.getElementById("brandLogo");
-    let searchInput = doc.getElementById("searchText");
-
-    EventUtils.synthesizeMouseAtCenter(logo, {});
-    isnot(searchInput, doc.activeElement, "Search input should not be the active element.");
-
-    EventUtils.synthesizeKey("a", {});
-    yield promiseWaitForCondition(() => doc.activeElement === searchInput);
-    is(searchInput, doc.activeElement, "Search input should be the active element.");
-    is(searchInput.value, "a", "Search input should be 'a'.");
-  })
-},
-{
   desc: "Cmd+k should focus the search box in the page when the search box in the toolbar is absent",
   setup: function () {
     // Remove the search bar from toolbar
@@ -482,25 +465,6 @@ var gTests = [
     yield promiseTabLoadEvent(gBrowser.selectedTab, null, "load");
     is(gBrowser.currentURI.spec, "about:accounts?entrypoint=abouthome",
       "Entry point should be `abouthome`.");
-  })
-},
-{
-  desc: "Pressing Space while the Addons button is focussed should activate it",
-  setup: function () {},
-  run: Task.async(function* () {
-    // Skip this test on Mac, because Space doesn't activate the button there.
-    if (navigator.platform.indexOf("Mac") == 0) {
-      return Promise.resolve();
-    }
-
-    info("Waiting for about:addons tab to open...");
-    let promiseTabOpened = BrowserTestUtils.waitForNewTab(gBrowser, "about:addons");
-    let addOnsButton = gBrowser.selectedBrowser.contentDocument.getElementById("addons");
-    addOnsButton.focus();
-    EventUtils.synthesizeKey(" ", {});
-    let tab = yield promiseTabOpened;
-    is(tab.linkedBrowser.currentURI.spec, "about:addons", "Should have seen the about:addons tab");
-    yield BrowserTestUtils.removeTab(tab);
   })
 }
 
@@ -654,7 +618,7 @@ function promiseWaitForEvent(node, type, capturing) {
   });
 }
 
-var promisePrefsOpen = Task.async(function*() {
+let promisePrefsOpen = Task.async(function*() {
   info("Waiting for the preferences tab to open...");
   let event = yield promiseWaitForEvent(gBrowser.tabContainer, "TabOpen", true);
   let tab = event.target;

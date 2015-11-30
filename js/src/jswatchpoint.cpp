@@ -145,6 +145,14 @@ WatchpointMap::triggerWatchpoint(JSContext* cx, HandleObject obj, HandleId id, M
 }
 
 bool
+WatchpointMap::markCompartmentIteratively(JSCompartment* c, JSTracer* trc)
+{
+    if (!c->watchpointMap)
+        return false;
+    return c->watchpointMap->markIteratively(trc);
+}
+
+bool
 WatchpointMap::markIteratively(JSTracer* trc)
 {
     bool marked = false;

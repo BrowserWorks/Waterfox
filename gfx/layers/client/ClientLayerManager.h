@@ -203,9 +203,7 @@ public:
   virtual bool RequestOverfill(mozilla::dom::OverfillCallback* aCallback) override;
   virtual void RunOverfillCallback(const uint32_t aOverfill) override;
 
-  void DidComposite(uint64_t aTransactionId,
-                    const mozilla::TimeStamp& aCompositeStart,
-                    const mozilla::TimeStamp& aCompositeEnd);
+  void DidComposite(uint64_t aTransactionId);
 
   virtual bool SupportsMixBlendModes(EnumSet<gfx::CompositionOp>& aMixBlendModes) override
   {
@@ -254,8 +252,6 @@ public:
   float RequestProperty(const nsAString& aProperty) override;
 
   bool AsyncPanZoomEnabled() const override;
-
-  void SetNextPaintSyncId(int32_t aSyncId);
 
 protected:
   enum TransactionPhase {

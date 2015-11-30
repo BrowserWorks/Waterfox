@@ -22,9 +22,15 @@
 #endif
 
 /*
- * Version information
+ * Version information for the 'ident' and 'what commands
+ *
+ * NOTE: the first component of the concatenated rcsid string
+ * must not end in a '$' to prevent rcs keyword substitution.
  */
-const char __nss_dbm_version[] = "Version: NSS " SOFTOKEN_VERSION _DEBUG_STRING;
+const char __nss_dbm_rcsid[] = "$Header: NSS " SOFTOKEN_VERSION _DEBUG_STRING
+        "  " __DATE__ " " __TIME__ " $";
+const char __nss_dbm_sccsid[] = "@(#)NSS " SOFTOKEN_VERSION _DEBUG_STRING
+        "  " __DATE__ " " __TIME__;
 
 typedef struct LGPrivateStr {
     NSSLOWCERTCertDBHandle *certDB;
@@ -589,7 +595,7 @@ legacy_Open(const char *configdir, const char *certPrefix,
     PRBool readOnly = (flags == SDB_RDONLY)? PR_TRUE: PR_FALSE;
     volatile char c; /* force a reference that won't get optimized away */
 
-    c = __nss_dbm_version[0];
+    c = __nss_dbm_rcsid[0] + __nss_dbm_sccsid[0];
 
     rv = SECOID_Init();
     if (SECSuccess != rv) {

@@ -6,12 +6,14 @@
  * if on, and displays selected frames on focus.
  */
 
+const RecordingUtils = require("devtools/performance/recording-utils");
+
 Services.prefs.setBoolPref(INVERT_PREF, false);
 
 function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let { EVENTS, $, $$, window, PerformanceController } = panel.panelWin;
-  let { OverviewView, DetailsView, OptimizationsListView, JsCallTreeView, RecordingsView } = panel.panelWin;
+  let { OverviewView, DetailsView, JITOptimizationsView, JsCallTreeView, RecordingsView } = panel.panelWin;
 
   let profilerData = { threads: [gThread] }
 
@@ -42,7 +44,7 @@ function* spawnTest() {
   yield checkFrame(3);
 
   let select = once(PerformanceController, EVENTS.RECORDING_SELECTED);
-  let reset = once(OptimizationsListView, EVENTS.OPTIMIZATIONS_RESET);
+  let reset = once(JITOptimizationsView, EVENTS.OPTIMIZATIONS_RESET);
   RecordingsView.selectedIndex = 0;
   yield Promise.all([select, reset]);
   ok(true, "JITOptimizations view correctly reset when switching recordings.");
@@ -67,12 +69,11 @@ function* spawnTest() {
   }
 
   function *checkFrame (frameIndex, expectedOpts=[]) {
-    info(`Checking frame ${frameIndex}`);
     // Click the frame
-    let rendered = once(OptimizationsListView, EVENTS.OPTIMIZATIONS_RENDERED);
+    let rendered = once(JITOptimizationsView, EVENTS.OPTIMIZATIONS_RENDERED);
     mousedown(window, $$(".call-tree-item")[frameIndex]);
     yield rendered;
-    ok(true, "OptimizationsListView rendered when enabling with the current frame node selected");
+    ok(true, "JITOptimizationsView rendered when enabling with the current frame node selected");
 
     let isEmpty = $("#jit-optimizations-view").classList.contains("empty");
     if (expectedOpts.length === 0) {
@@ -86,7 +87,7 @@ function* spawnTest() {
     // share the same frame info
     let frameInfo = expectedOpts[0].opt._testFrameInfo;
 
-    let { $headerName, $headerLine, $headerFile } = OptimizationsListView;
+    let { $headerName, $headerLine, $headerFile } = JITOptimizationsView;
     ok(!$headerName.hidden, "header function name should be shown");
     ok(!$headerLine.hidden, "header line should be shown");
     ok(!$headerFile.hidden, "header file should be shown");
@@ -119,7 +120,7 @@ function* spawnTest() {
   }
 }
 
-var gUniqueStacks = new RecordingUtils.UniqueStacks();
+let gUniqueStacks = new RecordingUtils.UniqueStacks();
 
 function uniqStr(s) {
   return gUniqueStacks.getOrAddStringIndex(s);
@@ -128,7 +129,7 @@ function uniqStr(s) {
 // Since deflateThread doesn't handle deflating optimization info, use
 // placeholder names A_O1, B_O2, and B_O3, which will be used to manually
 // splice deduped opts into the profile.
-var gThread = RecordingUtils.deflateThread({
+let gThread = RecordingUtils.deflateThread({
   samples: [{
     time: 0,
     frames: [
@@ -169,7 +170,7 @@ var gThread = RecordingUtils.deflateThread({
 }, gUniqueStacks);
 
 // 3 RawOptimizationSites
-var gRawSite1 = {
+let gRawSite1 = {
   _testFrameInfo: { name: "A", line: "12", file: "@baz" },
   line: 12,
   column: 2,
@@ -198,7 +199,7 @@ var gRawSite1 = {
   }
 };
 
-var gRawSite2 = {
+let gRawSite2 = {
   _testFrameInfo: { name: "B", line: "10", file: "@boo" },
   line: 40,
   types: [{
@@ -218,7 +219,7 @@ var gRawSite2 = {
   }
 };
 
-var gRawSite3 = {
+let gRawSite3 = {
   _testFrameInfo: { name: "B", line: "10", file: "@boo" },
   line: 34,
   types: [{

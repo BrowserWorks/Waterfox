@@ -109,15 +109,11 @@ public:
   AllowedForPrincipal(nsIPrincipal* aPrincipal,
                       bool* aIsSystemPrincipal = nullptr);
 
-#ifdef DEBUG
-  void
-  AssertIsOnOwningThread() const;
-
-  PRThread*
-  OwningThread() const;
-#else
   void
   AssertIsOnOwningThread() const
+#ifdef DEBUG
+  ;
+#else
   { }
 #endif
 

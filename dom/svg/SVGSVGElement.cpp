@@ -470,7 +470,7 @@ SVGSVGElement::SetZoomAndPan(uint16_t aZoomAndPan, ErrorResult& rv)
     return;
   }
 
-  rv.ThrowRangeError(MSG_INVALID_ZOOMANDPAN_VALUE_ERROR);
+  rv.ThrowRangeError(MSG_INVALID_ZOOMANDPAN_VALUE_ERROR, &aZoomAndPan);
 }
 
 //----------------------------------------------------------------------
@@ -511,10 +511,10 @@ SVGSVGElement::SetCurrentScaleTranslate(float s, float x, float y)
     if (presShell && IsRoot()) {
       nsEventStatus status = nsEventStatus_eIgnore;
       if (mPreviousScale != mCurrentScale) {
-        InternalSVGZoomEvent svgZoomEvent(true, eSVGZoom);
+        InternalSVGZoomEvent svgZoomEvent(true, NS_SVG_ZOOM);
         presShell->HandleDOMEventWithTarget(this, &svgZoomEvent, &status);
       } else {
-        WidgetEvent svgScrollEvent(true, eSVGScroll);
+        WidgetEvent svgScrollEvent(true, NS_SVG_SCROLL);
         presShell->HandleDOMEventWithTarget(this, &svgScrollEvent, &status);
       }
       InvalidateTransformNotifyFrame();
@@ -590,7 +590,7 @@ SVGSVGElement::IsAttributeMapped(const nsIAtom* name) const
 nsresult
 SVGSVGElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
-  if (aVisitor.mEvent->mMessage == eSVGLoad) {
+  if (aVisitor.mEvent->message == NS_SVG_LOAD) {
     if (mTimedDocumentRoot) {
       mTimedDocumentRoot->Begin();
       // Set 'resample needed' flag, so that if any script calls a DOM method

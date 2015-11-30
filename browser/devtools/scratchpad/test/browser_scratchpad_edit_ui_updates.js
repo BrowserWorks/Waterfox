@@ -5,8 +5,8 @@
 
 "use strict";
 
-var WebConsoleUtils = require("devtools/toolkit/webconsole/utils").Utils;
-var DEVTOOLS_CHROME_ENABLED = "devtools.chrome.enabled";
+let WebConsoleUtils = require("devtools/toolkit/webconsole/utils").Utils;
+let DEVTOOLS_CHROME_ENABLED = "devtools.chrome.enabled";
 
 function test()
 {

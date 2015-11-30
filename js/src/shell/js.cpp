@@ -56,12 +56,10 @@
 #endif
 #include "jswrapper.h"
 
-#include "builtin/ModuleObject.h"
 #include "builtin/TestingFunctions.h"
 #include "frontend/Parser.h"
 #include "gc/GCInternals.h"
 #include "jit/arm/Simulator-arm.h"
-#include "jit/InlinableNatives.h"
 #include "jit/Ion.h"
 #include "jit/JitcodeMap.h"
 #include "jit/OptimizationTracking.h"
@@ -93,7 +91,6 @@ using namespace js::cli;
 using namespace js::shell;
 
 using mozilla::ArrayLength;
-using mozilla::Atomic;
 using mozilla::MakeUnique;
 using mozilla::Maybe;
 using mozilla::NumberEqualsInt32;
@@ -126,13 +123,12 @@ static size_t gMaxStackSize = 128 * sizeof(size_t) * 1024;
  */
 static double MAX_TIMEOUT_INTERVAL = 1800.0;
 static double gTimeoutInterval = -1.0;
-static Atomic<bool> gServiceInterrupt;
+static volatile bool gServiceInterrupt = false;
 static JS::PersistentRootedValue gInterruptFunc;
 
 static bool gLastWarningEnabled = false;
 static JS::PersistentRootedValue gLastWarning;
 
-static bool enableCodeCoverage = false;
 static bool enableDisassemblyDumps = false;
 static bool offthreadCompilation = false;
 static bool enableBaseline = false;
@@ -230,7 +226,7 @@ class ShellPrincipals: public JSPrincipals {
     static void destroy(JSPrincipals* principals) {
         MOZ_ASSERT(principals != &fullyTrusted);
         MOZ_ASSERT(principals->refcount == 0);
-        js_delete(static_cast<const ShellPrincipals*>(principals));
+        js_free(static_cast<ShellPrincipals*>(principals));
     }
 
     static bool subsumes(JSPrincipals* first, JSPrincipals* second) {
@@ -573,7 +569,7 @@ Process(JSContext* cx, const char* filename, bool forceTTY)
             return;
         }
     }
-    AutoCloseFile autoClose(file);
+    AutoCloseInputFile autoClose(file);
 
     if (!forceTTY && !isatty(fileno(file))) {
         // It's not interactive - just execute it.
@@ -664,7 +660,7 @@ CreateMappedArrayBuffer(JSContext* cx, unsigned argc, Value* vp)
                              JSSMSG_CANT_OPEN, filename.ptr(), strerror(errno));
         return false;
     }
-    AutoCloseFile autoClose(file);
+    AutoCloseInputFile autoClose(file);
 
     if (!sizeGiven) {
         struct stat st;
@@ -1294,7 +1290,7 @@ js::shell::FileAsString(JSContext* cx, const char* pathname)
         JS_ReportError(cx, "can't open %s: %s", pathname, strerror(errno));
         return nullptr;
     }
-    AutoCloseFile autoClose(file);
+    AutoCloseInputFile autoClose(file);
 
     if (fseek(file, 0, SEEK_END) != 0) {
         JS_ReportError(cx, "can't seek end of %s", pathname);
@@ -1975,8 +1971,8 @@ DisassembleScript(JSContext* cx, HandleScript script, HandleFunction fun, bool l
         Sprint(sp, "flags:");
         if (fun->isLambda())
             Sprint(sp, " LAMBDA");
-        if (fun->needsCallObject())
-            Sprint(sp, " NEEDS_CALLOBJECT");
+        if (fun->isHeavyweight())
+            Sprint(sp, " HEAVYWEIGHT");
         if (fun->isConstructor())
             Sprint(sp, " CONSTRUCTOR");
         if (fun->isExprBody())
@@ -2070,12 +2066,7 @@ DisassembleToSprinter(JSContext* cx, unsigned argc, Value* vp, Sprinter* sprinte
     } else {
         for (unsigned i = 0; i < p.argc; i++) {
             RootedFunction fun(cx);
-            RootedScript script(cx);
-            RootedValue value(cx, p.argv[i]);
-            if (value.isObject() && value.toObject().is<ModuleObject>())
-                script = value.toObject().as<ModuleObject>().script();
-            else
-                script = ValueToScript(cx, value, fun.address());
+            RootedScript script (cx, ValueToScript(cx, p.argv[i], fun.address()));
             if (!script)
                 return false;
             if (!DisassembleScript(cx, script, fun, p.lines, p.recursive, sprinter))
@@ -3067,45 +3058,6 @@ Compile(JSContext* cx, unsigned argc, Value* vp)
 }
 
 static bool
-ParseModule(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    if (args.length() < 1) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                             JSMSG_MORE_ARGS_NEEDED, "parseModule", "0", "s");
-        return false;
-    }
-    if (!args[0].isString()) {
-        const char* typeName = InformalValueTypeName(args[0]);
-        JS_ReportError(cx, "expected string to compile, got %s", typeName);
-        return false;
-    }
-
-    RootedObject global(cx, JS::CurrentGlobalOrNull(cx));
-    JSFlatString* scriptContents = args[0].toString()->ensureFlat(cx);
-    if (!scriptContents)
-        return false;
-
-    CompileOptions options(cx);
-    options.setFileAndLine("<string>", 1);
-
-    AutoStableStringChars stableChars(cx);
-    if (!stableChars.initTwoByte(cx, scriptContents))
-        return false;
-
-    const char16_t* chars = stableChars.twoByteRange().start().get();
-    SourceBufferHolder srcBuf(chars, scriptContents->length(),
-                              SourceBufferHolder::NoOwnership);
-
-    RootedObject module(cx, frontend::CompileModule(cx, global, options, srcBuf));
-    if (!module)
-        return false;
-
-    args.rval().setObject(*module);
-    return true;
-}
-
-static bool
 Parse(JSContext* cx, unsigned argc, Value* vp)
 {
     using namespace js::frontend;
@@ -3400,7 +3352,7 @@ runOffThreadScript(JSContext* cx, unsigned argc, Value* vp)
     return JS_ExecuteScript(cx, script, args.rval());
 }
 
-struct MOZ_RAII FreeOnReturn
+struct FreeOnReturn
 {
     JSContext* cx;
     const char* ptr;
@@ -4247,28 +4199,18 @@ DumpStaticScopeChain(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    if (!args[0].isObject() ||
-        !(args[0].toObject().is<JSFunction>() || args[0].toObject().is<ModuleObject>()))
-    {
-        ReportUsageError(cx, callee, "Argument must be an interpreted function or a module");
+    if (!args[0].isObject() || !args[0].toObject().is<JSFunction>()) {
+        ReportUsageError(cx, callee, "Argument must be an interpreted function");
         return false;
     }
 
-    RootedObject obj(cx, &args[0].toObject());
-    RootedScript script(cx);
-
-    if (obj->is<JSFunction>()) {
-        RootedFunction fun(cx, &obj->as<JSFunction>());
-        if (!fun->isInterpreted()) {
-            ReportUsageError(cx, callee, "Argument must be an interpreted function");
-            return false;
-        }
-        script = fun->getOrCreateScript(cx);
-    } else {
-        script = obj->as<ModuleObject>().script();
+    RootedFunction fun(cx, &args[0].toObject().as<JSFunction>());
+    if (!fun->isInterpreted()) {
+        ReportUsageError(cx, callee, "Argument must be an interpreted function");
+        return false;
     }
 
-    js::DumpStaticScopeChain(script);
+    js::DumpStaticScopeChain(fun->getOrCreateScript(cx));
 
     args.rval().setUndefined();
     return true;
@@ -4663,10 +4605,6 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
 "compile(code)",
 "  Compiles a string to bytecode, potentially throwing."),
 
-    JS_FN_HELP("parseModule", ParseModule, 1, 0,
-"parseModule(code)",
-"  Parses source text as a module and returns a Module object."),
-
     JS_FN_HELP("parse", Parse, 1, 0,
 "parse(code)",
 "  Parses a string, potentially throwing."),
@@ -4879,12 +4817,11 @@ static const JSFunctionSpecWithHelp fuzzing_unsafe_functions[] = {
 "  arguments[0] (of the call to nestedShell) will be argv[1], arguments[1] will\n"
 "  be argv[2], etc."),
 
-    JS_INLINABLE_FN_HELP("assertFloat32", testingFunc_assertFloat32, 2, 0, TestAssertFloat32,
+    JS_FN_HELP("assertFloat32", testingFunc_assertFloat32, 2, 0,
 "assertFloat32(value, isFloat32)",
 "  In IonMonkey only, asserts that value has (resp. hasn't) the MIRType_Float32 if isFloat32 is true (resp. false)."),
 
-    JS_INLINABLE_FN_HELP("assertRecoveredOnBailout", testingFunc_assertRecoveredOnBailout, 2, 0,
-TestAssertRecoveredOnBailout,
+    JS_FN_HELP("assertRecoveredOnBailout", testingFunc_assertRecoveredOnBailout, 2, 0,
 "assertRecoveredOnBailout(var)",
 "  In IonMonkey only, asserts that variable has RecoveredOnBailout flag."),
 
@@ -4923,8 +4860,8 @@ TestAssertRecoveredOnBailout,
 
 #ifdef DEBUG
     JS_FN_HELP("dumpStaticScopeChain", DumpStaticScopeChain, 1, 0,
-"dumpStaticScopeChain(obj)",
-"  Prints the static scope chain of an interpreted function or a module."),
+"dumpStaticScopeChain(fun)",
+"  Prints the static scope chain of an interpreted function fun."),
 #endif
 
     JS_FS_HELP_END
@@ -5016,8 +4953,8 @@ Help(JSContext* cx, unsigned argc, Value* vp)
     RootedObject obj(cx);
     if (args.length() == 0) {
         RootedObject global(cx, JS::CurrentGlobalOrNull(cx));
-        Rooted<IdVector> ida(cx, IdVector(cx));
-        if (!JS_Enumerate(cx, global, &ida))
+        AutoIdArray ida(cx, JS_Enumerate(cx, global));
+        if (!ida)
             return false;
 
         for (size_t i = 0; i < ida.length(); i++) {
@@ -5219,7 +5156,7 @@ dom_doFoo(JSContext* cx, HandleObject obj, void* self, const JSJitMethodCallArgs
 
 static const JSJitInfo dom_x_getterinfo = {
     { (JSJitGetterOp)dom_get_x },
-    { 0 },    /* protoID */
+    0,        /* protoID */
     0,        /* depth */
     JSJitInfo::AliasNone, /* aliasSet */
     JSJitInfo::Getter,
@@ -5235,7 +5172,7 @@ static const JSJitInfo dom_x_getterinfo = {
 
 static const JSJitInfo dom_x_setterinfo = {
     { (JSJitGetterOp)dom_set_x },
-    { 0 },    /* protoID */
+    0,        /* protoID */
     0,        /* depth */
     JSJitInfo::Setter,
     JSJitInfo::AliasEverything, /* aliasSet */
@@ -5251,7 +5188,7 @@ static const JSJitInfo dom_x_setterinfo = {
 
 static const JSJitInfo doFoo_methodinfo = {
     { (JSJitGetterOp)dom_doFoo },
-    { 0 },    /* protoID */
+    0,        /* protoID */
     0,        /* depth */
     JSJitInfo::Method,
     JSJitInfo::AliasEverything, /* aliasSet */
@@ -5869,15 +5806,6 @@ SetRuntimeOptions(JSRuntime* rt, const OptionParser& op)
             return OptionFailure("ion-scalar-replacement", str);
     }
 
-    if (const char* str = op.getStringOption("ion-shared-stubs")) {
-        if (strcmp(str, "on") == 0)
-            jit::js_JitOptions.disableSharedStubs = false;
-        else if (strcmp(str, "off") == 0)
-            jit::js_JitOptions.disableSharedStubs = true;
-        else
-            return OptionFailure("ion-shared-stubs", str);
-    }
-
     if (const char* str = op.getStringOption("ion-gvn")) {
         if (strcmp(str, "off") == 0) {
             jit::js_JitOptions.disableGvn = true;
@@ -5918,15 +5846,6 @@ SetRuntimeOptions(JSRuntime* rt, const OptionParser& op)
             return OptionFailure("ion-range-analysis", str);
     }
 
-    if (const char *str = op.getStringOption("ion-sincos")) {
-        if (strcmp(str, "on") == 0)
-            jit::js_JitOptions.disableSincos = false;
-        else if (strcmp(str, "off") == 0)
-            jit::js_JitOptions.disableSincos = true;
-        else
-            return OptionFailure("ion-sincos", str);
-    }
-
     if (const char* str = op.getStringOption("ion-sink")) {
         if (strcmp(str, "on") == 0)
             jit::js_JitOptions.disableSink = false;
@@ -5943,15 +5862,6 @@ SetRuntimeOptions(JSRuntime* rt, const OptionParser& op)
             jit::js_JitOptions.disableLoopUnrolling = true;
         else
             return OptionFailure("ion-loop-unrolling", str);
-    }
-
-    if (const char* str = op.getStringOption("ion-instruction-reordering")) {
-        if (strcmp(str, "on") == 0)
-            jit::js_JitOptions.disableInstructionReordering = false;
-        else if (strcmp(str, "off") == 0)
-            jit::js_JitOptions.disableInstructionReordering = true;
-        else
-            return OptionFailure("ion-instruction-reordering", str);
     }
 
     if (op.getBoolOption("ion-check-range-analysis"))
@@ -6041,7 +5951,7 @@ SetRuntimeOptions(JSRuntime* rt, const OptionParser& op)
     int32_t stopAt = op.getIntOption("arm-sim-stop-at");
     if (stopAt >= 0)
         jit::Simulator::StopSimAt = stopAt;
-#elif defined(JS_SIMULATOR_MIPS32)
+#elif defined(JS_SIMULATOR_MIPS)
     if (op.getBoolOption("mips-sim-icache-checks"))
         jit::Simulator::ICacheCheckingEnabled = true;
 
@@ -6053,9 +5963,7 @@ SetRuntimeOptions(JSRuntime* rt, const OptionParser& op)
     reportWarnings = op.getBoolOption('w');
     compileOnly = op.getBoolOption('c');
     printTiming = op.getBoolOption('b');
-    enableCodeCoverage = op.getBoolOption("code-coverage");
-    enableDisassemblyDumps = op.getBoolOption('D');
-    rt->profilingScripts = enableCodeCoverage || enableDisassemblyDumps;
+    rt->profilingScripts = enableDisassemblyDumps = op.getBoolOption('D');
 
     jsCacheDir = op.getStringOption("js-cache");
     if (jsCacheDir) {
@@ -6094,7 +6002,7 @@ SetWorkerRuntimeOptions(JSRuntime* rt)
                              .setNativeRegExp(enableNativeRegExp)
                              .setUnboxedArrays(enableUnboxedArrays);
     rt->setOffthreadIonCompilationEnabled(offthreadCompilation);
-    rt->profilingScripts = enableCodeCoverage || enableDisassemblyDumps;
+    rt->profilingScripts = enableDisassemblyDumps;
 
 #ifdef JS_GC_ZEAL
     if (*gZealStr)
@@ -6235,7 +6143,6 @@ main(int argc, char** argv, char** envp)
                                "specified by --js-cache. This cache directory will be removed"
                                "when the js shell exits. This is useful for running tests in"
                                "parallel.")
-        || !op.addBoolOption('\0', "code-coverage", "Enable code coverage instrumentation.")
 #ifdef DEBUG
         || !op.addBoolOption('O', "print-alloc", "Print the number of allocations at exit")
 #endif
@@ -6251,8 +6158,6 @@ main(int argc, char** argv, char** envp)
         || !op.addBoolOption('\0', "no-native-regexp", "Disable native regexp compilation")
         || !op.addBoolOption('\0', "no-unboxed-objects", "Disable creating unboxed plain objects")
         || !op.addBoolOption('\0', "unboxed-arrays", "Allow creating unboxed arrays")
-        || !op.addStringOption('\0', "ion-shared-stubs", "on/off",
-                               "Use shared stubs (default: off, on to enable)")
         || !op.addStringOption('\0', "ion-scalar-replacement", "on/off",
                                "Scalar Replacement (default: on, off to disable)")
         || !op.addStringOption('\0', "ion-gvn", "[mode]",
@@ -6265,19 +6170,10 @@ main(int argc, char** argv, char** envp)
                                "Find edge cases where Ion can avoid bailouts (default: on, off to disable)")
         || !op.addStringOption('\0', "ion-range-analysis", "on/off",
                                "Range analysis (default: on, off to disable)")
-#if defined(__APPLE__)
-        || !op.addStringOption('\0', "ion-sincos", "on/off",
-                               "Replace sin(x)/cos(x) to sincos(x) (default: on, off to disable)")
-#else
-        || !op.addStringOption('\0', "ion-sincos", "on/off",
-                               "Replace sin(x)/cos(x) to sincos(x) (default: off, on to enable)")
-#endif
         || !op.addStringOption('\0', "ion-sink", "on/off",
                                "Sink code motion (default: off, on to enable)")
         || !op.addStringOption('\0', "ion-loop-unrolling", "on/off",
                                "Loop unrolling (default: off, on to enable)")
-        || !op.addStringOption('\0', "ion-instruction-reordering", "on/off",
-                               "Instruction reordering (default: off, on to enable)")
         || !op.addBoolOption('\0', "ion-check-range-analysis",
                                "Range analysis checking")
         || !op.addBoolOption('\0', "ion-extra-checks",
@@ -6342,7 +6238,7 @@ main(int argc, char** argv, char** envp)
                              "simulator.")
         || !op.addIntOption('\0', "arm-sim-stop-at", "NUMBER", "Stop the ARM simulator after the given "
                             "NUMBER of instructions.", -1)
-#elif defined(JS_SIMULATOR_MIPS32)
+#elif defined(JS_SIMULATOR_MIPS)
 	|| !op.addBoolOption('\0', "mips-sim-icache-checks", "Enable icache flush checks in the MIPS "
                              "simulator.")
         || !op.addIntOption('\0', "mips-sim-stop-at", "NUMBER", "Stop the MIPS simulator after the given "

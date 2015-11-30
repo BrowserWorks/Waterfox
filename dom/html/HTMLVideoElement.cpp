@@ -42,7 +42,6 @@ NS_IMPL_ELEMENT_CLONE(HTMLVideoElement)
 
 HTMLVideoElement::HTMLVideoElement(already_AddRefed<NodeInfo>& aNodeInfo)
   : HTMLMediaElement(aNodeInfo)
-  , mUseScreenWakeLock(true)
 {
 }
 
@@ -187,19 +186,6 @@ bool HTMLVideoElement::MozHasAudio() const
   return HasAudio();
 }
 
-bool HTMLVideoElement::MozUseScreenWakeLock() const
-{
-  MOZ_ASSERT(NS_IsMainThread(), "Should be on main thread.");
-  return mUseScreenWakeLock;
-}
-
-void HTMLVideoElement::SetMozUseScreenWakeLock(bool aValue)
-{
-  MOZ_ASSERT(NS_IsMainThread(), "Should be on main thread.");
-  mUseScreenWakeLock = aValue;
-  UpdateScreenWakeLock();
-}
-
 JSObject*
 HTMLVideoElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
@@ -232,7 +218,7 @@ HTMLVideoElement::GetVideoPlaybackQuality()
     }
 
     if (mDecoder) {
-      FrameStatistics& stats = mDecoder->GetFrameStatistics();
+      MediaDecoder::FrameStatistics& stats = mDecoder->GetFrameStatistics();
       totalFrames = stats.GetParsedFrames();
       droppedFrames = stats.GetDroppedFrames();
       corruptedFrames = 0;
@@ -264,15 +250,15 @@ HTMLVideoElement::UpdateScreenWakeLock()
 {
   bool hidden = OwnerDoc()->Hidden();
 
-  if (mScreenWakeLock && (mPaused || hidden || !mUseScreenWakeLock)) {
+  if (mScreenWakeLock && (mPaused || hidden)) {
     ErrorResult rv;
     mScreenWakeLock->Unlock(rv);
+    NS_WARN_IF_FALSE(!rv.Failed(), "Failed to unlock the wakelock.");
     mScreenWakeLock = nullptr;
     return;
   }
 
-  if (!mScreenWakeLock && !mPaused && !hidden &&
-      mUseScreenWakeLock && HasVideo()) {
+  if (!mScreenWakeLock && !mPaused && !hidden && HasVideo()) {
     nsRefPtr<power::PowerManagerService> pmService =
       power::PowerManagerService::GetInstance();
     NS_ENSURE_TRUE_VOID(pmService);

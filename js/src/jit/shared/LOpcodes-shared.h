@@ -77,6 +77,8 @@
     _(Unreachable)                  \
     _(EncodeSnapshot)               \
     _(GetDynamicName)               \
+    _(FilterArgumentsOrEvalS)       \
+    _(FilterArgumentsOrEvalV)       \
     _(CallDirectEval)               \
     _(StackArgT)                    \
     _(StackArgV)                    \
@@ -115,8 +117,8 @@
     _(CompareStrictS)               \
     _(CompareB)                     \
     _(CompareBAndBranch)            \
-    _(CompareBitwise)               \
-    _(CompareBitwiseAndBranch)      \
+    _(CompareV)                     \
+    _(CompareVAndBranch)            \
     _(CompareVM)                    \
     _(BitAndAndBranch)              \
     _(IsNullOrLikeUndefinedV)       \
@@ -162,7 +164,6 @@
     _(Concat)                       \
     _(CharCodeAt)                   \
     _(FromCharCode)                 \
-    _(SinCos)                       \
     _(StringSplit)                  \
     _(Int32ToDouble)                \
     _(Float32ToDouble)              \
@@ -194,8 +195,6 @@
     _(RegExpReplace)                \
     _(StringReplace)                \
     _(Substr)                       \
-    _(BinarySharedStub)             \
-    _(UnarySharedStub)              \
     _(Lambda)                       \
     _(LambdaArrow)                  \
     _(LambdaForSingleton)           \

@@ -15,8 +15,7 @@ CompositionEvent::CompositionEvent(EventTarget* aOwner,
                                    nsPresContext* aPresContext,
                                    WidgetCompositionEvent* aEvent)
   : UIEvent(aOwner, aPresContext,
-            aEvent ? aEvent :
-                     new WidgetCompositionEvent(false, eVoidEvent, nullptr))
+            aEvent ? aEvent : new WidgetCompositionEvent(false, 0, nullptr))
 {
   NS_ASSERTION(mEvent->mClass == eCompositionEventClass,
                "event type mismatch");
@@ -81,12 +80,12 @@ CompositionEvent::InitCompositionEvent(const nsAString& aType,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<CompositionEvent>
-NS_NewDOMCompositionEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMCompositionEvent(nsIDOMEvent** aInstancePtrResult,
+                          EventTarget* aOwner,
                           nsPresContext* aPresContext,
                           WidgetCompositionEvent* aEvent)
 {
-  nsRefPtr<CompositionEvent> event =
-    new CompositionEvent(aOwner, aPresContext, aEvent);
-  return event.forget();
+  CompositionEvent* event = new CompositionEvent(aOwner, aPresContext, aEvent);
+  return CallQueryInterface(event, aInstancePtrResult);
 }

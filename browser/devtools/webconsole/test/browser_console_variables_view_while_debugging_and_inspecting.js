@@ -11,7 +11,7 @@
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-eval-in-stackframe.html";
 
-var gWebConsole, gJSTerm, gDebuggerWin, gThread, gDebuggerController,
+let gWebConsole, gJSTerm, gDebuggerWin, gThread, gDebuggerController,
     gStackframes, gVariablesView;
 
 function test() {

@@ -71,12 +71,14 @@ const TEST_DATA = [
                   "message, where the user data can be passed transparently; " +
                   "- A short message to be sent to the network in an " +
                   "SMS-SUBMIT "}},
-  {command: "D02E" + // Length
+  {command: "D030" + // Length
             "8103011300" + // Command details
             "82028183" + // Device identities
+            "8500" + // Alpha identifier
             "86099111223344556677F8" + // Address
             "8B180100099110325476F840F40C54657374204D657373616765", // 3GPP-SMS TPDU
-   expect: {commandQualifier: 0x00}},
+   expect: {commandQualifier: 0x00,
+            text: ""}},
   {command: "D055" + // Length
             "8103011300" + // Command details
             "82028183" + // Device identities
@@ -158,15 +160,7 @@ const TEST_DATA = [
             text: "82ル2"}},
 ];
 
-const TEST_CMD_NULL_ALPHA_ID =
-        "D030" + // Length
-        "8103011300" + // Command details
-        "82028183" + // Device identities
-        "8500" + // Alpha identifier
-        "86099111223344556677F8" + // Address
-        "8B180100099110325476F840F40C54657374204D657373616765"; // 3GPP-SMS TPDU
-
-function verifySendSMS(aCommand, aExpect) {
+function testSendSMS(aCommand, aExpect) {
   is(aCommand.commandNumber, 0x01, "commandNumber");
   is(aCommand.typeOfCommand, MozIccManager.STK_CMD_SEND_SMS, "typeOfCommand");
   is(aCommand.commandQualifier, aExpect.commandQualifier, "commandQualifier");
@@ -184,8 +178,8 @@ function verifySendSMS(aCommand, aExpect) {
   }
 }
 
-// Test normal cases of send SMS proactive command
-function testSendSMS() {
+// Start tests
+startTestCommon(function() {
   let icc = getMozIcc();
   let promise = Promise.resolve();
   for (let i = 0; i < TEST_DATA.length; i++) {
@@ -196,12 +190,12 @@ function testSendSMS() {
       let promises = [];
       // Wait onstkcommand event.
       promises.push(waitForTargetEvent(icc, "stkcommand")
-        .then((aEvent) => verifySendSMS(aEvent.command, data.expect)));
+        .then((aEvent) => testSendSMS(aEvent.command, data.expect)));
       // Wait icc-stkcommand system message.
       promises.push(waitForSystemMessage("icc-stkcommand")
         .then((aMessage) => {
           is(aMessage.iccId, icc.iccInfo.iccid, "iccId");
-          verifySendSMS(aMessage.command, data.expect);
+          testSendSMS(aMessage.command, data.expect);
         }));
       // Send emulator command to generate stk unsolicited event.
       promises.push(sendEmulatorStkPdu(data.command));
@@ -210,31 +204,4 @@ function testSendSMS() {
     });
   }
   return promise;
-}
-
-function testSendSMSNullAlphaId() {
-  let icc = getMozIcc();
-
-  // No "stkcommand" event should occur.
-  icc.addEventListener("stkcommand",
-    (event) => ok(false, event + " should not occur."));
-
-  // No "icc-stkcommand" system message should be sent.
-  workingFrame.contentWindow.navigator.mozSetMessageHandler("icc-stkcommand",
-    (msg) => ok(false, msg + " should not be sent."));
-
-  // If nothing happens within 3 seconds after the emulator command sent,
-  // treat as success.
-  log("send_sms_cmd: " + TEST_CMD_NULL_ALPHA_ID);
-  return sendEmulatorStkPdu(TEST_CMD_NULL_ALPHA_ID)
-    .then(() => new Promise(function(resolve, reject) {
-      setTimeout(() => resolve(), 3000);
-    }));
-}
-
-// Start tests
-startTestCommon(function() {
-  return Promise.resolve()
-    .then(() => testSendSMS())
-    .then(() => testSendSMSNullAlphaId());
 });

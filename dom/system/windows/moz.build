@@ -13,4 +13,6 @@ LOCAL_INCLUDES += [
     '/dom/geolocation'
 ]
 
+FAIL_ON_WARNINGS = True
+
 FINAL_LIBRARY = 'xul'

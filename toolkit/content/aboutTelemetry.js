@@ -16,10 +16,6 @@ Cu.import("resource://gre/modules/TelemetryArchive.jsm");
 Cu.import("resource://gre/modules/TelemetryUtils.jsm");
 Cu.import("resource://gre/modules/TelemetryLog.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-
-XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
-                                  "resource://gre/modules/AppConstants.jsm");
 
 const Telemetry = Services.telemetry;
 const bundle = Services.strings.createBundle(
@@ -44,10 +40,10 @@ const isWindows = (Services.appinfo.OS == "WINNT");
 const EOL = isWindows ? "\r\n" : "\n";
 
 // This is the ping object currently displayed in the page.
-var gPingData = null;
+let gPingData = null;
 
 // Cached value of document's RTL mode
-var documentRTLMode = "";
+let documentRTLMode = "";
 
 /**
  * Helper function for determining whether the document direction is RTL.
@@ -205,7 +201,7 @@ function shortTimeString(date) {
          + ":" + padToTwoDigits(date.getSeconds());
 }
 
-var Settings = {
+let Settings = {
   SETTINGS: [
     // data upload
     {
@@ -232,17 +228,8 @@ var Settings = {
     let elements = document.getElementsByClassName("change-data-choices-link");
     for (let el of elements) {
       el.addEventListener("click", function() {
-        if (AppConstants.platform == "android") {
-          Cu.import("resource://gre/modules/Messaging.jsm");
-          Messaging.sendRequest({
-            type: "Settings:Show",
-            resource: "preferences_vendor",
-          });
-        } else {
-          // Show the data choices preferences on desktop.
-          let mainWindow = getMainWindowWithPreferencesPane();
-          mainWindow.openAdvancedPreferences("dataChoicesTab");
-        }
+        let mainWindow = getMainWindowWithPreferencesPane();
+        mainWindow.openAdvancedPreferences("dataChoicesTab");
       }, false);
     }
   },
@@ -272,7 +259,7 @@ var Settings = {
   }
 };
 
-var PingPicker = {
+let PingPicker = {
   viewCurrentPingData: true,
   _archivedPings: null,
 
@@ -447,7 +434,7 @@ var PingPicker = {
   },
 };
 
-var GeneralData = {
+let GeneralData = {
   /**
    * Renders the general data
    */
@@ -496,7 +483,7 @@ var GeneralData = {
   },
 };
 
-var EnvironmentData = {
+let EnvironmentData = {
   /**
    * Renders the environment data
    */
@@ -548,7 +535,7 @@ var EnvironmentData = {
   },
 };
 
-var TelLog = {
+let TelLog = {
   /**
    * Renders the telemetry log
    */
@@ -601,7 +588,7 @@ var TelLog = {
   },
 };
 
-var SlowSQL = {
+let SlowSQL = {
 
   slowSqlHits: bundle.GetStringFromName("slowSqlHits"),
 
@@ -723,7 +710,7 @@ var SlowSQL = {
   }
 };
 
-var StackRenderer = {
+let StackRenderer = {
 
   stackTitle: bundle.GetStringFromName("stackTitle"),
 
@@ -878,7 +865,7 @@ function SymbolicationRequest_fetchSymbols() {
   this.symbolRequest.send(requestJSON);
 }
 
-var ChromeHangs = {
+let ChromeHangs = {
 
   symbolRequest: null,
 
@@ -905,7 +892,7 @@ var ChromeHangs = {
   }
 };
 
-var ThreadHangStats = {
+let ThreadHangStats = {
 
   /**
    * Renders raw thread hang stats data
@@ -957,7 +944,7 @@ var ThreadHangStats = {
   },
 };
 
-var Histogram = {
+let Histogram = {
 
   hgramSamplesCaption: bundle.GetStringFromName("histogramSamples"),
 
@@ -1210,7 +1197,7 @@ function RenderObject(aObject) {
   return output + "}";
 };
 
-var KeyValueTable = {
+let KeyValueTable = {
   /**
    * Returns a 2-column table with keys and values
    * @param aMeasurements Each key in this JS object is rendered as a row in
@@ -1276,7 +1263,7 @@ var KeyValueTable = {
   }
 };
 
-var KeyedHistogram = {
+let KeyedHistogram = {
   render: function(parent, id, keyedHistogram) {
     let outerDiv = document.createElement("div");
     outerDiv.className = "keyed-histogram";
@@ -1296,7 +1283,7 @@ var KeyedHistogram = {
   },
 };
 
-var AddonDetails = {
+let AddonDetails = {
   tableIDTitle: bundle.GetStringFromName("addonTableID"),
   tableDetailsTitle: bundle.GetStringFromName("addonTableDetails"),
 
@@ -1464,7 +1451,7 @@ function onLoad() {
   }
 }
 
-var LateWritesSingleton = {
+let LateWritesSingleton = {
   renderHeader: function LateWritesSingleton_renderHeader(aIndex) {
     StackRenderer.renderHeader("late-writes", [aIndex + 1]);
   },
@@ -1606,17 +1593,14 @@ function displayPingData(ping) {
   let keyedDiv = document.getElementById("keyed-histograms");
   removeAllChildNodes(keyedDiv);
 
-  setHasData("keyed-histograms-section", false);
   let keyedHistograms = payload.keyedHistograms;
-  if (keyedHistograms) {
-    let hasData = false;
+  hasData = Object.keys(keyedHistograms).length > 0;
+  setHasData("keyed-histograms-section", hasData);
+
+  if (hasData) {
     for (let [id, keyed] of Iterator(keyedHistograms)) {
-      if (Object.keys(keyed).length > 0) {
-        hasData = true;
-        KeyedHistogram.render(keyedDiv, id, keyed, {unpacked: true});
-      }
+      KeyedHistogram.render(keyedDiv, id, keyed, {unpacked: true});
     }
-    setHasData("keyed-histograms-section", hasData);
   }
 
   // Show addon histogram data

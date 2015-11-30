@@ -5,9 +5,9 @@
 
 /* Tests history redirects handling */
 
-var hs = Cc["@mozilla.org/browser/nav-history-service;1"].
+let hs = Cc["@mozilla.org/browser/nav-history-service;1"].
          getService(Ci.nsINavHistoryService);
-var bh = hs.QueryInterface(Ci.nsIBrowserHistory);
+let bh = hs.QueryInterface(Ci.nsIBrowserHistory);
 
 const PERMA_REDIR_PATH = "/permaredir";
 const TEMP_REDIR_PATH = "/tempredir";

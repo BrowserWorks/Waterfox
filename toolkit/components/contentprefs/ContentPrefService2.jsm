@@ -22,7 +22,7 @@
 //
 // See https://bugzilla.mozilla.org/show_bug.cgi?id=699859
 
-var EXPORTED_SYMBOLS = [
+let EXPORTED_SYMBOLS = [
   "ContentPrefService2",
 ];
 

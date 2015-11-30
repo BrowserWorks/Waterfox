@@ -19,15 +19,8 @@ public:
 
     // Creates a new nsViewSourceChannel to view the source of an about:srcdoc
     // URI with contents specified by srcdoc.
-    nsresult NewSrcdocChannel(nsIURI *aURI,
-                              nsIURI *aBaseURI,
-                              const nsAString &aSrcdoc,
-                              nsINode *aLoadingNode,
-                              nsIPrincipal *aLoadingPrincipal,
-                              nsIPrincipal *aTriggeringPrincipal,
-                              nsSecurityFlags aSecurityFlags,
-                              nsContentPolicyType aContentPolicyType,
-                              nsIChannel** outChannel);
+    nsresult NewSrcdocChannel(nsIURI* uri, const nsAString &srcdoc,
+                              nsIChannel** result);
 
     static nsViewSourceHandler* GetInstance();
 

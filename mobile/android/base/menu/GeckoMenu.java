@@ -5,7 +5,6 @@
 package org.mozilla.gecko.menu;
 
 import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.util.ThreadUtils.AssertBehavior;
@@ -257,12 +256,8 @@ public class GeckoMenu extends ListView
             });
             ((MenuItemActionBar) actionView).setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
-                public boolean onLongClick(View view) {
-                    if (handleMenuItemLongClick(menuItem)) {
-                        GeckoAppShell.vibrateOnHapticFeedbackEnabled(getResources().getIntArray(R.array.long_press_vibrate_msec));
-                        return true;
-                    }
-                    return false;
+                public boolean onLongClick(View v) {
+                    return handleMenuItemLongClick(menuItem);
                 }
             });
         } else if (actionView instanceof MenuItemActionView) {
@@ -275,11 +270,7 @@ public class GeckoMenu extends ListView
             ((MenuItemActionView) actionView).setMenuItemLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View view) {
-                    if (handleMenuItemLongClick(menuItem)) {
-                        GeckoAppShell.vibrateOnHapticFeedbackEnabled(getResources().getIntArray(R.array.long_press_vibrate_msec));
-                        return true;
-                    }
-                    return false;
+                    return handleMenuItemLongClick(menuItem);
                 }
             });
         }
@@ -653,15 +644,12 @@ public class GeckoMenu extends ListView
     }
 
     boolean handleMenuItemLongClick(GeckoMenuItem item) {
-        if (!item.isEnabled()) {
+        if(!item.isEnabled()) {
             return false;
         }
 
-        if (mCallback != null) {
-            if (mCallback.onMenuItemLongClick(item)) {
-                close();
-                return true;
-            }
+        if(mCallback != null) {
+            return mCallback.onMenuItemLongClick(item);
         }
         return false;
     }

@@ -35,17 +35,17 @@ MultiTouchInput::MultiTouchInput(const WidgetTouchEvent& aTouchEvent)
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only copy from WidgetTouchEvent on main thread");
 
-  switch (aTouchEvent.mMessage) {
-    case eTouchStart:
+  switch (aTouchEvent.message) {
+    case NS_TOUCH_START:
       mType = MULTITOUCH_START;
       break;
-    case eTouchMove:
+    case NS_TOUCH_MOVE:
       mType = MULTITOUCH_MOVE;
       break;
-    case eTouchEnd:
+    case NS_TOUCH_END:
       mType = MULTITOUCH_END;
       break;
-    case eTouchCancel:
+    case NS_TOUCH_CANCEL:
       mType = MULTITOUCH_CANCEL;
       break;
     default:
@@ -81,27 +81,27 @@ MultiTouchInput::ToWidgetTouchEvent(nsIWidget* aWidget) const
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only convert To WidgetTouchEvent on main thread");
 
-  EventMessage touchEventMessage = eVoidEvent;
+  uint32_t touchType = NS_EVENT_NULL;
   switch (mType) {
   case MULTITOUCH_START:
-    touchEventMessage = eTouchStart;
+    touchType = NS_TOUCH_START;
     break;
   case MULTITOUCH_MOVE:
-    touchEventMessage = eTouchMove;
+    touchType = NS_TOUCH_MOVE;
     break;
   case MULTITOUCH_END:
-    touchEventMessage = eTouchEnd;
+    touchType = NS_TOUCH_END;
     break;
   case MULTITOUCH_CANCEL:
-    touchEventMessage = eTouchCancel;
+    touchType = NS_TOUCH_CANCEL;
     break;
   default:
     MOZ_ASSERT_UNREACHABLE("Did not assign a type to WidgetTouchEvent in MultiTouchInput");
     break;
   }
 
-  WidgetTouchEvent event(true, touchEventMessage, aWidget);
-  if (touchEventMessage == eVoidEvent) {
+  WidgetTouchEvent event(true, touchType, aWidget);
+  if (touchType == NS_EVENT_NULL) {
     return event;
   }
 
@@ -122,24 +122,24 @@ MultiTouchInput::ToWidgetMouseEvent(nsIWidget* aWidget) const
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only convert To WidgetMouseEvent on main thread");
 
-  EventMessage mouseEventMessage = eVoidEvent;
+  uint32_t mouseEventType = NS_EVENT_NULL;
   switch (mType) {
     case MultiTouchInput::MULTITOUCH_START:
-      mouseEventMessage = eMouseDown;
+      mouseEventType = NS_MOUSE_BUTTON_DOWN;
       break;
     case MultiTouchInput::MULTITOUCH_MOVE:
-      mouseEventMessage = eMouseMove;
+      mouseEventType = NS_MOUSE_MOVE;
       break;
     case MultiTouchInput::MULTITOUCH_CANCEL:
     case MultiTouchInput::MULTITOUCH_END:
-      mouseEventMessage = eMouseUp;
+      mouseEventType = NS_MOUSE_BUTTON_UP;
       break;
     default:
       MOZ_ASSERT_UNREACHABLE("Did not assign a type to WidgetMouseEvent");
       break;
   }
 
-  WidgetMouseEvent event(true, mouseEventMessage, aWidget,
+  WidgetMouseEvent event(true, mouseEventType, aWidget,
                          WidgetMouseEvent::eReal, WidgetMouseEvent::eNormal);
 
   const SingleTouchData& firstTouch = mTouches[0];
@@ -151,7 +151,7 @@ MultiTouchInput::ToWidgetMouseEvent(nsIWidget* aWidget) const
   event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_TOUCH;
   event.modifiers = modifiers;
 
-  if (mouseEventMessage != eMouseMove) {
+  if (mouseEventType != NS_MOUSE_MOVE) {
     event.clickCount = 1;
   }
 
@@ -181,21 +181,21 @@ MultiTouchInput::MultiTouchInput(const WidgetMouseEvent& aMouseEvent)
 {
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only copy from WidgetMouseEvent on main thread");
-  switch (aMouseEvent.mMessage) {
-  case eMouseDown:
+  switch (aMouseEvent.message) {
+  case NS_MOUSE_BUTTON_DOWN:
     mType = MULTITOUCH_START;
     break;
-  case eMouseMove:
+  case NS_MOUSE_MOVE:
     mType = MULTITOUCH_MOVE;
     break;
-  case eMouseUp:
+  case NS_MOUSE_BUTTON_UP:
     mType = MULTITOUCH_END;
     break;
   // The mouse pointer has been interrupted in an implementation-specific
   // manner, such as a synchronous event or action cancelling the touch, or a
   // touch point leaving the document window and going into a non-document
   // area capable of handling user interactions.
-  case eMouseExitFromWidget:
+  case NS_MOUSE_EXIT_WIDGET:
     mType = MULTITOUCH_CANCEL;
     break;
   default:
@@ -223,40 +223,6 @@ MultiTouchInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
     mTouches[i].mLocalScreenPoint = *point;
   }
   return true;
-}
-
-bool
-PanGestureInput::IsMomentum() const
-{
-  switch (mType) {
-    case PanGestureInput::PANGESTURE_MOMENTUMSTART:
-    case PanGestureInput::PANGESTURE_MOMENTUMPAN:
-    case PanGestureInput::PANGESTURE_MOMENTUMEND:
-      return true;
-    default:
-      return false;
-  }
-}
-
-WidgetWheelEvent
-PanGestureInput::ToWidgetWheelEvent(nsIWidget* aWidget) const
-{
-  WidgetWheelEvent wheelEvent(true, eWheel, aWidget);
-  wheelEvent.modifiers = this->modifiers;
-  wheelEvent.time = mTime;
-  wheelEvent.timeStamp = mTimeStamp;
-  wheelEvent.refPoint =
-    RoundedToInt(ViewAs<LayoutDevicePixel>(mPanStartPoint,
-      PixelCastJustification::LayoutDeviceToScreenForUntransformedEvent));
-  wheelEvent.buttons = 0;
-  wheelEvent.deltaMode = nsIDOMWheelEvent::DOM_DELTA_PIXEL;
-  wheelEvent.isMomentum = IsMomentum();
-  wheelEvent.lineOrPageDeltaX = mLineOrPageDeltaX;
-  wheelEvent.lineOrPageDeltaY = mLineOrPageDeltaY;
-  wheelEvent.deltaX = mPanDisplacement.x;
-  wheelEvent.deltaY = mPanDisplacement.y;
-  wheelEvent.mFlags.mHandledByAPZ = mHandledByAPZ;
-  return wheelEvent;
 }
 
 bool
@@ -296,39 +262,6 @@ TapGestureInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
   }
   mLocalPoint = *point;
   return true;
-}
-
-static uint32_t
-DeltaModeForDeltaType(ScrollWheelInput::ScrollDeltaType aDeltaType)
-{
-  switch (aDeltaType) {
-    case ScrollWheelInput::SCROLLDELTA_LINE:
-      return nsIDOMWheelEvent::DOM_DELTA_LINE;
-    case ScrollWheelInput::SCROLLDELTA_PIXEL:
-    default:
-      return nsIDOMWheelEvent::DOM_DELTA_PIXEL;
-  }
-}
-
-WidgetWheelEvent
-ScrollWheelInput::ToWidgetWheelEvent(nsIWidget* aWidget) const
-{
-  WidgetWheelEvent wheelEvent(true, eWheel, aWidget);
-  wheelEvent.modifiers = this->modifiers;
-  wheelEvent.time = mTime;
-  wheelEvent.timeStamp = mTimeStamp;
-  wheelEvent.refPoint =
-    RoundedToInt(ViewAs<LayoutDevicePixel>(mOrigin,
-      PixelCastJustification::LayoutDeviceToScreenForUntransformedEvent));
-  wheelEvent.buttons = 0;
-  wheelEvent.deltaMode = DeltaModeForDeltaType(mDeltaType);
-  wheelEvent.isMomentum = mIsMomentum;
-  wheelEvent.deltaX = mDeltaX;
-  wheelEvent.deltaY = mDeltaY;
-  wheelEvent.lineOrPageDeltaX = mLineOrPageDeltaX;
-  wheelEvent.lineOrPageDeltaY = mLineOrPageDeltaY;
-  wheelEvent.mFlags.mHandledByAPZ = mHandledByAPZ;
-  return wheelEvent;
 }
 
 bool

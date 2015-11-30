@@ -9,31 +9,34 @@
 // FIXME: some of the inplace-editor focus/blur/commit/revert stuff
 // should be factored out in head.js
 
-const TEST_URI = `
-  <style type="text/css">
-  #testid {
-    color: red;
-    background-color: blue;
-  }
-  .testclass, .unmatched {
-    background-color: green;
-  }
-  </style>
-  <div id="testid" class="testclass">Styled Node</div>
-  <div id="testid2">Styled Node</div>
-`;
+let BACKGROUND_IMAGE_URL = 'url("' + TEST_URL_ROOT + 'doc_test_image.png")';
+let TEST_URI = [
+  '<style type="text/css">',
+  '#testid {',
+  '  color: red;',
+  '  background-color: blue;',
+  '}',
+  '.testclass, .unmatched {',
+  '  background-color: green;',
+  '}',
+  '</style>',
+  '<div id="testid" class="testclass">Styled Node</div>',
+  '<div id="testid2">Styled Node</div>'
+].join("\n");
 
-var BACKGROUND_IMAGE_URL = 'url("' + TEST_URL_ROOT + 'doc_test_image.png")';
-
-var TEST_DATA = [
+let TEST_DATA = [
   { name: "border-color", value: "red", isValid: true },
   { name: "background-image", value: BACKGROUND_IMAGE_URL, isValid: true },
   { name: "border", value: "solid 1px foo", isValid: false },
 ];
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-  let {inspector, view} = yield openRuleView();
+  let tab = yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+
+  info("Opening the rule-view");
+  let {toolbox, inspector, view} = yield openRuleView();
+
+  info("Selecting the test element");
   yield selectNode("#testid", inspector);
 
   let ruleEditor = getRuleViewRuleEditor(view, 1);
@@ -49,15 +52,12 @@ function* testEditProperty(ruleEditor, name, value, isValid) {
   let propEditor = ruleEditor.rule.textProps[0].editor;
 
   info("Focusing an existing property name in the rule-view");
-  let editor = yield focusEditableField(ruleEditor.ruleView,
-    propEditor.nameSpan, 32, 1);
+  let editor = yield focusEditableField(ruleEditor.ruleView, propEditor.nameSpan, 32, 1);
 
-  is(inplaceEditor(propEditor.nameSpan), editor,
-    "The property name editor got focused");
+  is(inplaceEditor(propEditor.nameSpan), editor, "The property name editor got focused");
   let input = editor.input;
 
-  info("Entering a new property name, including : to commit and " +
-    "focus the value");
+  info("Entering a new property name, including : to commit and focus the value");
   let onValueFocus = once(ruleEditor.element, "focus", true);
   let onModifications = ruleEditor.rule._applyingModifications;
   EventUtils.sendString(name + ":", doc.defaultView);
@@ -76,8 +76,7 @@ function* testEditProperty(ruleEditor, name, value, isValid) {
   yield onBlur;
   yield onModifications;
 
-  is(propEditor.isValid(), isValid,
-    value + " is " + isValid ? "valid" : "invalid");
+  is(propEditor.isValid(), isValid, value + " is " + isValid ? "valid" : "invalid");
 
   info("Checking that the style property was changed on the content page");
   let propValue = yield executeInContent("Test:GetRulePropertyValue", {
@@ -91,10 +90,4 @@ function* testEditProperty(ruleEditor, name, value, isValid) {
   } else {
     isnot(propValue, value, name + " shouldn't have been set.");
   }
-
-  info("Wait for remaining modifications to be applied");
-  yield ruleEditor.rule._applyingModifications;
-
-  is(ruleEditor.rule._applyingModifications, null,
-    "Reference to rule modification promise was removed after completion");
 }

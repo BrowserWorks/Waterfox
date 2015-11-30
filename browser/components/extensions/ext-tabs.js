@@ -2,7 +2,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "NewTabURL",
                                   "resource:///modules/NewTabURL.jsm");
 
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
-var {
+let {
   EventManager,
   ignoreEvent,
   runSafe,
@@ -35,7 +35,7 @@ function getSender(context, target, sender)
 }
 
 // WeakMap[ExtensionPage -> {tab, parentWindow}]
-var pageDataMap = new WeakMap();
+let pageDataMap = new WeakMap();
 
 // This listener fires whenever an extension page opens in a tab
 // (either initiated by the extension or the user). Its job is to fill
@@ -298,7 +298,7 @@ extensions.registerAPI((extension, context) => {
         }
 
         let tab = tabId ? TabManager.getTab(tabId) : TabManager.activeTab;
-        let tabbrowser = tab.ownerDocument.defaultView.gBrowser;
+        let tabbrowser = tab.ownerDocument.gBrowser;
         if ("url" in updateProperties) {
           tab.linkedBrowser.loadURI(updateProperties.url);
         }

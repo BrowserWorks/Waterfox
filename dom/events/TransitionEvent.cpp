@@ -15,7 +15,7 @@ TransitionEvent::TransitionEvent(EventTarget* aOwner,
                                  nsPresContext* aPresContext,
                                  InternalTransitionEvent* aEvent)
   : Event(aOwner, aPresContext,
-          aEvent ? aEvent : new InternalTransitionEvent(false, eVoidEvent))
+          aEvent ? aEvent : new InternalTransitionEvent(false, 0))
 {
   if (aEvent) {
     mEventIsInternal = false;
@@ -88,12 +88,14 @@ TransitionEvent::GetPseudoElement(nsAString& aPseudoElement)
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<TransitionEvent>
-NS_NewDOMTransitionEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMTransitionEvent(nsIDOMEvent** aInstancePtrResult,
+                         EventTarget* aOwner,
                          nsPresContext* aPresContext,
                          InternalTransitionEvent* aEvent)
 {
-  nsRefPtr<TransitionEvent> it =
-    new TransitionEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  TransitionEvent *it = new TransitionEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

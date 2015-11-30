@@ -277,14 +277,14 @@ public:
     }
   }
 
-  void ComputeSilence(AudioBlock *aOutput)
+  void ComputeSilence(AudioChunk *aOutput)
   {
     aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
+                            const AudioChunk& aInput,
+                            AudioChunk* aOutput,
                             bool* aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
@@ -307,7 +307,7 @@ public:
       return;
     }
 
-    aOutput->AllocateChannels(1);
+    AllocateAudioBlock(1, aOutput);
     float* output = aOutput->ChannelFloatsForWrite(0);
 
     uint32_t start, end;
@@ -384,8 +384,7 @@ OscillatorNode::OscillatorNode(AudioContext* aContext)
   , mStartCalled(false)
 {
   OscillatorNodeEngine* engine = new OscillatorNodeEngine(this, aContext->Destination());
-  mStream = AudioNodeStream::Create(aContext, engine,
-                                    AudioNodeStream::NEED_MAIN_THREAD_FINISHED);
+  mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::SOURCE_STREAM);
   engine->SetSourceStream(mStream);
   mStream->AddMainThreadListener(this);
 }

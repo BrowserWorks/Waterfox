@@ -12,6 +12,7 @@
 #include "nsCOMPtr.h"
 #include "nsError.h"
 #include "MediaDecoder.h"
+#include "MediaSourceReader.h"
 
 class nsIStreamListener;
 
@@ -57,6 +58,12 @@ public:
   void AttachMediaSource(dom::MediaSource* aMediaSource);
   void DetachMediaSource();
 
+  already_AddRefed<SourceBufferDecoder> CreateSubDecoder(const nsACString& aType,
+                                                         int64_t aTimestampOffset /* microseconds */);
+  void AddTrackBuffer(TrackBuffer* aTrackBuffer);
+  void RemoveTrackBuffer(TrackBuffer* aTrackBuffer);
+  void OnTrackBufferConfigured(TrackBuffer* aTrackBuffer, const MediaInfo& aInfo);
+
   void Ended(bool aEnded);
 
   // Return the duration of the video in seconds.
@@ -66,14 +73,31 @@ public:
   void SetMediaSourceDuration(double aDuration, MSRangeRemovalAction aAction);
   double GetMediaSourceDuration();
 
+  // Called whenever a TrackBuffer has new data appended or a new decoder
+  // initializes.  Safe to call from any thread.
+  void NotifyTimeRangesChanged();
+
+  // Indicates the point in time at which the reader should consider
+  // registered TrackBuffers essential for initialization.
+  void PrepareReaderInitialization();
+
 #ifdef MOZ_EME
   virtual nsresult SetCDMProxy(CDMProxy* aProxy) override;
 #endif
 
+  MediaSourceReader* GetReader()
+  {
+    MOZ_ASSERT(!mIsUsingFormatReader);
+    return static_cast<MediaSourceReader*>(mReader.get());
+  }
   MediaSourceDemuxer* GetDemuxer()
   {
     return mDemuxer;
   }
+
+  // Returns true if aReader is a currently active audio or video
+  // reader in this decoders MediaSourceReader.
+  bool IsActiveReader(MediaDecoderReader* aReader);
 
   // Returns a string describing the state of the MediaSource internal
   // buffered data. Used for debugging purposes.
@@ -86,6 +110,8 @@ private:
   // calls Attach/DetachMediaSource on this decoder to set and clear
   // mMediaSource.
   dom::MediaSource* mMediaSource;
+  nsRefPtr<MediaDecoderReader> mReader;
+  bool mIsUsingFormatReader;
   nsRefPtr<MediaSourceDemuxer> mDemuxer;
 
   Atomic<bool> mEnded;

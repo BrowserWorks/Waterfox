@@ -5,7 +5,7 @@
 "use strict";
 
 // Don't modify this, instead set dom.push.debug.
-var gDebuggingEnabled = false;
+let gDebuggingEnabled = false;
 
 function debug(s) {
   if (gDebuggingEnabled)
@@ -100,19 +100,6 @@ PushClient.prototype = {
                               }, null, principal);
   },
 
-  _deliverPushEndpoint: function(request, registration) {
-    if (registration.p256dhKey) {
-      let key = new Uint8Array(registration.p256dhKey);
-      request.onPushEndpoint(Cr.NS_OK,
-                             registration.pushEndpoint,
-                             key.length,
-                             key);
-      return;
-    }
-
-    request.onPushEndpoint(Cr.NS_OK, registration.pushEndpoint, 0, null);
-  },
-
   receiveMessage: function(aMessage) {
 
     let json = aMessage.data;
@@ -125,23 +112,23 @@ PushClient.prototype = {
     debug("receiveMessage(): " + JSON.stringify(aMessage))
     switch (aMessage.name) {
       case "PushService:Register:OK":
-        this._deliverPushEndpoint(request, json);
+      {
+        request.onPushEndpoint(Cr.NS_OK, json.pushEndpoint);
         break;
+      }
       case "PushService:Register:KO":
-        request.onPushEndpoint(Cr.NS_ERROR_FAILURE, "", 0, null);
+        request.onPushEndpoint(Cr.NS_ERROR_FAILURE, "");
         break;
       case "PushService:Registration:OK":
       {
         let endpoint = "";
-        if (!json.registration) {
-          request.onPushEndpoint(Cr.NS_OK, "", 0, null);
-        } else {
-          this._deliverPushEndpoint(request, json.registration);
-        }
+        if (json.registration)
+          endpoint = json.registration.pushEndpoint;
+        request.onPushEndpoint(Cr.NS_OK, endpoint);
         break;
       }
       case "PushService:Registration:KO":
-        request.onPushEndpoint(Cr.NS_ERROR_FAILURE, "", 0, null);
+        request.onPushEndpoint(Cr.NS_ERROR_FAILURE, "");
         break;
       case "PushService:Unregister:OK":
         if (typeof json.result !== "boolean") {

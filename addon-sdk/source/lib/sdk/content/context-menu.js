@@ -96,7 +96,7 @@ const NON_PAGE_CONTEXT_ELTS = [
 
 // List all editable types of inputs.  Or is it better to have a list
 // of non-editable inputs?
-var editableInputs = {
+let editableInputs = {
   email: true,
   number: true,
   password: true,
@@ -107,9 +107,9 @@ var editableInputs = {
   url: true
 };
 
-var CONTEXTS = {};
+let CONTEXTS = {};
 
-var Context = Class({
+let Context = Class({
   initialize: function(id) {
     this.id = id;
   },
@@ -250,7 +250,7 @@ function instantiateContext({ id, type, args }) {
   return new CONTEXTS[type](id, ...args);
 }
 
-var ContextWorker = Class({
+let ContextWorker = Class({
   implements: [ WorkerChild ],
 
   // Calls the context workers context listeners and returns the first result
@@ -304,7 +304,7 @@ function getItemWorkerForWindow(item, window) {
 // A very simple remote proxy for every item. It's job is to provide data for
 // the main process to use to determine visibility state and to call into
 // content scripts when clicked.
-var RemoteItem = Class({
+let RemoteItem = Class({
   initialize: function(options, manager) {
     this.id = options.id;
     this.contexts = [instantiateContext(c) for (c of options.contexts)];
@@ -362,7 +362,7 @@ var RemoteItem = Class({
 exports.RemoteItem = RemoteItem;
 
 // Holds remote items for this frame.
-var keepAlive = new Map();
+let keepAlive = new Map();
 
 // Called to create remote proxies for items. If they already exist we destroy
 // and recreate. This can happen if the item changes in some way or in odd
@@ -386,7 +386,7 @@ process.port.on('sdk/contextmenu/destroyitems', (process, items) => {
   }
 });
 
-var lastPopupNode = null;
+let lastPopupNode = null;
 
 system.on('content-contextmenu', ({ subject }) => {
   let { event: { target: popupNode }, addonInfo } = subject.wrappedJSObject;

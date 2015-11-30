@@ -8,12 +8,12 @@ if (typeof registerManifests === "undefined") {
   load("../unit/head_crtestutils.js");
 }
 
-var manifestFile = do_get_file("../unit/data/test_resolve_uris.manifest");
+let manifestFile = do_get_file("../unit/data/test_resolve_uris.manifest");
 
-var manifests = [ manifestFile ];
+let manifests = [ manifestFile ];
 registerManifests(manifests);
 
-var ios = Cc["@mozilla.org/network/io-service;1"].
+let ios = Cc["@mozilla.org/network/io-service;1"].
           getService(Ci.nsIIOService);
 
 function do_run_test()

@@ -310,7 +310,11 @@ nsXULCommandDispatcher::AddCommandUpdater(nsIDOMElement* aElement,
 #endif
 
   // If we get here, this is a new updater. Append it to the list.
-  *link = new Updater(aElement, aEvents, aTargets);
+  updater = new Updater(aElement, aEvents, aTargets);
+  if (! updater)
+      return NS_ERROR_OUT_OF_MEMORY;
+
+  *link = updater;
   return NS_OK;
 }
 
@@ -397,7 +401,7 @@ nsXULCommandDispatcher::UpdateCommands(const nsAString& aEventName)
     }
 #endif
 
-    WidgetEvent event(true, eXULCommandUpdate);
+    WidgetEvent event(true, NS_XUL_COMMAND_UPDATE);
     EventDispatcher::Dispatch(content, nullptr, &event);
   }
   return NS_OK;

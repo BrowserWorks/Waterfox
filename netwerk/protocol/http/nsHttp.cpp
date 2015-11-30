@@ -8,7 +8,7 @@
 #include "HttpLog.h"
 
 #include "nsHttp.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/HashFunctions.h"
 #include "nsCRT.h"
@@ -85,8 +85,8 @@ StringCompare(PLDHashTable *table, const PLDHashEntryHdr *entry,
 static const PLDHashTableOps ops = {
     StringHash,
     StringCompare,
-    PLDHashTable::MoveEntryStub,
-    PLDHashTable::ClearEntryStub,
+    PL_DHashMoveEntryStub,
+    PL_DHashClearEntryStub,
     nullptr
 };
 
@@ -115,8 +115,8 @@ nsHttp::CreateAtomTable()
     };
 
     for (int i = 0; atoms[i]; ++i) {
-        auto stub = static_cast<PLDHashEntryStub*>
-                               (sAtomTable->Add(atoms[i], fallible));
+        PLDHashEntryStub *stub = reinterpret_cast<PLDHashEntryStub *>
+            (PL_DHashTableAdd(sAtomTable, atoms[i], fallible));
         if (!stub)
             return NS_ERROR_OUT_OF_MEMORY;
 
@@ -160,7 +160,8 @@ nsHttp::ResolveAtom(const char *str)
 
     MutexAutoLock lock(*sLock);
 
-    auto stub = static_cast<PLDHashEntryStub*>(sAtomTable->Add(str, fallible));
+    PLDHashEntryStub *stub = reinterpret_cast<PLDHashEntryStub *>
+        (PL_DHashTableAdd(sAtomTable, str, fallible));
     if (!stub)
         return atom;  // out of memory
 

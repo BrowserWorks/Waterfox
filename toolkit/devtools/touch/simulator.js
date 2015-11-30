@@ -3,14 +3,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-var { Ci } = require("chrome");
-var promise = require("promise");
+let { Ci } = require("chrome");
+let promise = require("promise");
 
 const FRAME_SCRIPT =
   "resource://gre/modules/devtools/touch/simulator-content.js";
 
-var trackedBrowsers = new WeakMap();
-var savedTouchEventsEnabled =
+let trackedBrowsers = new WeakMap();
+let savedTouchEventsEnabled =
   Services.prefs.getIntPref("dom.w3c_touch_events.enabled");
 
 /**

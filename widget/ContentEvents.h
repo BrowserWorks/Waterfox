@@ -38,7 +38,7 @@ public:
     both       = 2
   };
 
-  InternalScrollPortEvent(bool aIsTrusted, EventMessage aMessage,
+  InternalScrollPortEvent(bool aIsTrusted, uint32_t aMessage,
                           nsIWidget* aWidget)
     : WidgetGUIEvent(aIsTrusted, aMessage, aWidget, eScrollPortEventClass)
     , orient(vertical)
@@ -51,7 +51,7 @@ public:
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
     InternalScrollPortEvent* result =
-      new InternalScrollPortEvent(false, mMessage, nullptr);
+      new InternalScrollPortEvent(false, message, nullptr);
     result->AssignScrollPortEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -80,7 +80,7 @@ public:
     return this;
   }
 
-  InternalScrollAreaEvent(bool aIsTrusted, EventMessage aMessage,
+  InternalScrollAreaEvent(bool aIsTrusted, uint32_t aMessage,
                           nsIWidget* aWidget)
     : WidgetGUIEvent(aIsTrusted, aMessage, aWidget, eScrollAreaEventClass)
   {
@@ -92,7 +92,7 @@ public:
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
     InternalScrollAreaEvent* result =
-      new InternalScrollAreaEvent(false, mMessage, nullptr);
+      new InternalScrollAreaEvent(false, message, nullptr);
     result->AssignScrollAreaEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -121,7 +121,7 @@ class InternalFormEvent : public WidgetEvent
 public:
   virtual InternalFormEvent* AsFormEvent() override { return this; }
 
-  InternalFormEvent(bool aIsTrusted, EventMessage aMessage)
+  InternalFormEvent(bool aIsTrusted, uint32_t aMessage)
     : WidgetEvent(aIsTrusted, aMessage, eFormEventClass)
     , originator(nullptr)
   {
@@ -131,7 +131,7 @@ public:
   {
     MOZ_ASSERT(mClass == eFormEventClass,
                "Duplicate() must be overridden by sub class");
-    InternalFormEvent* result = new InternalFormEvent(false, mMessage);
+    InternalFormEvent* result = new InternalFormEvent(false, message);
     result->AssignFormEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -159,7 +159,7 @@ public:
     return this;
   }
 
-  InternalClipboardEvent(bool aIsTrusted, EventMessage aMessage)
+  InternalClipboardEvent(bool aIsTrusted, uint32_t aMessage)
     : WidgetEvent(aIsTrusted, aMessage, eClipboardEventClass)
   {
   }
@@ -168,8 +168,7 @@ public:
   {
     MOZ_ASSERT(mClass == eClipboardEventClass,
                "Duplicate() must be overridden by sub class");
-    InternalClipboardEvent* result =
-      new InternalClipboardEvent(false, mMessage);
+    InternalClipboardEvent* result = new InternalClipboardEvent(false, message);
     result->AssignClipboardEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -195,7 +194,7 @@ class InternalFocusEvent : public InternalUIEvent
 public:
   virtual InternalFocusEvent* AsFocusEvent() override { return this; }
 
-  InternalFocusEvent(bool aIsTrusted, EventMessage aMessage)
+  InternalFocusEvent(bool aIsTrusted, uint32_t aMessage)
     : InternalUIEvent(aIsTrusted, aMessage, eFocusEventClass)
     , fromRaise(false)
     , isRefocus(false)
@@ -206,7 +205,7 @@ public:
   {
     MOZ_ASSERT(mClass == eFocusEventClass,
                "Duplicate() must be overridden by sub class");
-    InternalFocusEvent* result = new InternalFocusEvent(false, mMessage);
+    InternalFocusEvent* result = new InternalFocusEvent(false, message);
     result->AssignFocusEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -240,7 +239,7 @@ public:
     return this;
   }
 
-  InternalTransitionEvent(bool aIsTrusted, EventMessage aMessage)
+  InternalTransitionEvent(bool aIsTrusted, uint32_t aMessage)
     : WidgetEvent(aIsTrusted, aMessage, eTransitionEventClass)
     , elapsedTime(0.0)
   {
@@ -252,7 +251,7 @@ public:
     MOZ_ASSERT(mClass == eTransitionEventClass,
                "Duplicate() must be overridden by sub class");
     InternalTransitionEvent* result =
-      new InternalTransitionEvent(false, mMessage);
+      new InternalTransitionEvent(false, message);
     result->AssignTransitionEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -285,7 +284,7 @@ public:
     return this;
   }
 
-  InternalAnimationEvent(bool aIsTrusted, EventMessage aMessage)
+  InternalAnimationEvent(bool aIsTrusted, uint32_t aMessage)
     : WidgetEvent(aIsTrusted, aMessage, eAnimationEventClass)
     , elapsedTime(0.0)
   {
@@ -296,8 +295,7 @@ public:
   {
     MOZ_ASSERT(mClass == eAnimationEventClass,
                "Duplicate() must be overridden by sub class");
-    InternalAnimationEvent* result =
-      new InternalAnimationEvent(false, mMessage);
+    InternalAnimationEvent* result = new InternalAnimationEvent(false, message);
     result->AssignAnimationEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -327,7 +325,7 @@ class InternalSVGZoomEvent : public WidgetGUIEvent
 public:
   virtual InternalSVGZoomEvent* AsSVGZoomEvent() override { return this; }
 
-  InternalSVGZoomEvent(bool aIsTrusted, EventMessage aMessage)
+  InternalSVGZoomEvent(bool aIsTrusted, uint32_t aMessage)
     : WidgetGUIEvent(aIsTrusted, aMessage, nullptr, eSVGZoomEventClass)
   {
     mFlags.mCancelable = false;
@@ -338,7 +336,7 @@ public:
     MOZ_ASSERT(mClass == eSVGZoomEventClass,
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
-    InternalSVGZoomEvent* result = new InternalSVGZoomEvent(false, mMessage);
+    InternalSVGZoomEvent* result = new InternalSVGZoomEvent(false, message);
     result->AssignSVGZoomEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -363,7 +361,7 @@ public:
     return this;
   }
 
-  InternalSMILTimeEvent(bool aIsTrusted, EventMessage aMessage)
+  InternalSMILTimeEvent(bool aIsTrusted, uint32_t aMessage)
     : InternalUIEvent(aIsTrusted, aMessage, eSMILTimeEventClass)
   {
     mFlags.mBubbles = false;
@@ -374,7 +372,7 @@ public:
   {
     MOZ_ASSERT(mClass == eSMILTimeEventClass,
                "Duplicate() must be overridden by sub class");
-    InternalSMILTimeEvent* result = new InternalSMILTimeEvent(false, mMessage);
+    InternalSMILTimeEvent* result = new InternalSMILTimeEvent(false, message);
     result->AssignSMILTimeEventData(*this, true);
     result->mFlags = mFlags;
     return result;

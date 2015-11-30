@@ -133,8 +133,7 @@ private:
         mParent(0),
         mObjectSize(0),
         mDateCreated(0),
-        mDateModified(0),
-        mDateAdded(0) {}
+        mDateModified(0) {}
 
     NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DbEntry)
 
@@ -146,9 +145,8 @@ private:
     uint64_t        mObjectSize;
     nsCString       mDisplayName;
     nsCString       mPath;
-    time_t          mDateCreated;
-    time_t          mDateModified;
-    time_t          mDateAdded;
+    PRTime          mDateCreated;
+    PRTime          mDateModified;
 
   protected:
     ~DbEntry() {}

@@ -74,9 +74,8 @@ function loadCallgraph(file)
     var suppressedFieldCalls = {};
     var resolvedFunctions = {};
 
-    for (var line of readFileLines_gen(file)) {
-        line = line.replace(/\n/, "");
-
+    var textLines = snarf(file).split('\n');
+    for (var line of textLines) {
         var match;
         if (match = line.charAt(0) == "#" && /^\#(\d+) (.*)/.exec(line)) {
             assert(functionNames.length == match[1]);

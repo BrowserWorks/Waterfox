@@ -17,8 +17,6 @@
 #include "AnnexB.h"
 #include "Endian.h"
 
-#include <cstring>
-
 using mozilla::BigEndian;
 
 static const uint8_t kAnnexBDelimiter[] = { 0, 0, 0, 1 };

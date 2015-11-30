@@ -13,19 +13,19 @@ Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 
-var prefs = new Preferences();
+let prefs = new Preferences();
 prefs.set("extensions.getAddons.get.url",
           "http://localhost:8888/search/guid:%IDS%");
 
 loadAddonTestFunctions();
 startupManager();
 
-var engineManager = Service.engineManager;
+let engineManager = Service.engineManager;
 
 engineManager.register(AddonsEngine);
-var engine = engineManager.get("addons");
-var reconciler = engine._reconciler;
-var tracker = engine._tracker;
+let engine = engineManager.get("addons");
+let reconciler = engine._reconciler;
+let tracker = engine._tracker;
 
 function advance_test() {
   reconciler._addons = {};

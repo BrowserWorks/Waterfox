@@ -13,7 +13,7 @@
 // chrome-only, we must listen for the simple gesture events during
 // the capturing phase and call stopPropagation on every event.
 
-var gGestureSupport = {
+let gGestureSupport = {
   _currentRotation: 0,
   _lastRotateDelta: 0,
   _rotateMomentumThreshold: .75,
@@ -25,7 +25,7 @@ var gGestureSupport = {
    *        True to add/init listeners and false to remove/uninit
    */
   init: function GS_init(aAddListener) {
-    const gestureEvents = ["SwipeGestureMayStart", "SwipeGestureStart",
+    const gestureEvents = ["SwipeGestureStart",
       "SwipeGestureUpdate", "SwipeGestureEnd", "SwipeGesture",
       "MagnifyGestureStart", "MagnifyGestureUpdate", "MagnifyGesture",
       "RotateGestureStart", "RotateGestureUpdate", "RotateGesture",
@@ -58,14 +58,10 @@ var gGestureSupport = {
       ({ threshold: aThreshold, latched: !!aLatched });
 
     switch (aEvent.type) {
-      case "MozSwipeGestureMayStart":
-        if (this._shouldDoSwipeGesture(aEvent)) {
+      case "MozSwipeGestureStart":
+        if (this._setupSwipeGesture(aEvent)) {
           aEvent.preventDefault();
         }
-        break;
-      case "MozSwipeGestureStart":
-        aEvent.preventDefault();
-        this._setupSwipeGesture();
         break;
       case "MozSwipeGestureUpdate":
         aEvent.preventDefault();
@@ -177,15 +173,15 @@ var gGestureSupport = {
   },
 
   /**
-   * Checks whether we want to start a swipe for aEvent and sets
-   * aEvent.allowedDirections to the right values.
+   * Sets up swipe gestures. This includes setting up swipe animations for the
+   * gesture, if enabled.
    *
    * @param aEvent
-   *        The swipe gesture "MayStart" event.
-   * @return true if we're willing to start a swipe for this event, false
-   *         otherwise.
+   *        The swipe gesture start event.
+   * @return true if swipe gestures could successfully be set up, false
+   *         othwerwise.
    */
-  _shouldDoSwipeGesture: function GS__shouldDoSwipeGesture(aEvent) {
+  _setupSwipeGesture: function GS__setupSwipeGesture(aEvent) {
     if (!this._swipeNavigatesHistory(aEvent)) {
       return false;
     }
@@ -221,20 +217,7 @@ var gGestureSupport = {
                                           aEvent.DIRECTION_LEFT;
     }
 
-    return true;
-  },
-
-  /**
-   * Sets up swipe gestures. This includes setting up swipe animations for the
-   * gesture, if enabled.
-   *
-   * @param aEvent
-   *        The swipe gesture start event.
-   * @return true if swipe gestures could successfully be set up, false
-   *         othwerwise.
-   */
-  _setupSwipeGesture: function GS__setupSwipeGesture() {
-    gHistorySwipeAnimation.startAnimation(false);
+    gHistorySwipeAnimation.startAnimation(isVerticalSwipe);
 
     this._doUpdate = function GS__doUpdate(aEvent) {
       gHistorySwipeAnimation.updateAnimation(aEvent.delta);
@@ -246,6 +229,8 @@ var gGestureSupport = {
       this._doUpdate = function (aEvent) {};
       this._doEnd = function (aEvent) {};
     }
+
+    return true;
   },
 
   /**
@@ -571,7 +556,7 @@ var gGestureSupport = {
 };
 
 // History Swipe Animation Support (bug 678392)
-var gHistorySwipeAnimation = {
+let gHistorySwipeAnimation = {
 
   active: false,
   isLTR: false,

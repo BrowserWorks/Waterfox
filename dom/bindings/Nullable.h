@@ -35,7 +35,7 @@ public:
     mValue.emplace(aValue);
   }
 
-  Nullable(Nullable<T>&& aOther)
+  explicit Nullable(Nullable<T>&& aOther)
     : mValue(mozilla::Move(aOther.mValue))
   {}
 

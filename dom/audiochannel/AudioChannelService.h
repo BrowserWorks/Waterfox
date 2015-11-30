@@ -142,8 +142,6 @@ private:
   AudioChannelService();
   ~AudioChannelService();
 
-  static void CreateServiceIfNeeded();
-
   /**
    * Shutdown the singleton.
    */

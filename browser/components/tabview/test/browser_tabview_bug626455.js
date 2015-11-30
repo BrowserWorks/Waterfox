@@ -12,8 +12,8 @@
 const TEST_URL = 'data:text/html,<script>window.onbeforeunload=' +
                  'function(e){e.returnValue="?"}</script>';
 
-var contentWindow;
-var activeGroup;
+let contentWindow;
+let activeGroup;
 
 Components.utils.import("resource://gre/modules/Promise.jsm", this);
 

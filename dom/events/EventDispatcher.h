@@ -23,7 +23,6 @@ template<class E> class nsCOMArray;
 
 namespace mozilla {
 namespace dom {
-class Event;
 class EventTarget;
 } // namespace dom
 
@@ -246,8 +245,8 @@ public:
    * Neither aTarget nor aEvent is allowed to be nullptr.
    *
    * If aTargets is non-null, event target chain will be created, but
-   * event won't be handled. In this case aEvent->mMessage should be
-   * eVoidEvent.
+   * event won't be handled. In this case aEvent->message should be
+   * NS_EVENT_NULL.
    * @note Use this method when dispatching a WidgetEvent.
    */
   static nsresult Dispatch(nsISupports* aTarget,
@@ -273,12 +272,13 @@ public:
                                    nsEventStatus* aEventStatus);
 
   /**
-   * Creates a DOM Event.  Returns null if the event type is unsupported.
+   * Creates a DOM Event.
    */
-  static already_AddRefed<dom::Event> CreateEvent(dom::EventTarget* aOwner,
-                                                  nsPresContext* aPresContext,
-                                                  WidgetEvent* aEvent,
-                                                  const nsAString& aEventType);
+  static nsresult CreateEvent(dom::EventTarget* aOwner,
+                              nsPresContext* aPresContext,
+                              WidgetEvent* aEvent,
+                              const nsAString& aEventType,
+                              nsIDOMEvent** aDOMEvent);
 
   /**
    * Called at shutting down.

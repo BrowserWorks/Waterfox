@@ -191,7 +191,7 @@ nsPrefetchNode::OpenChannel()
                                         source,
                                         source->NodePrincipal(),
                                         nullptr,   //aTriggeringPrincipal
-                                        nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
+                                        nsILoadInfo::SEC_NORMAL,
                                         nsIContentPolicy::TYPE_OTHER,
                                         loadGroup, // aLoadGroup
                                         this,      // aCallbacks
@@ -211,7 +211,10 @@ nsPrefetchNode::OpenChannel()
             false);
     }
 
-    return mChannel->AsyncOpen2(this);
+    rv = mChannel->AsyncOpen(this, nullptr);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    return NS_OK;
 }
 
 nsresult

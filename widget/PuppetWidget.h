@@ -196,11 +196,10 @@ public:
   virtual bool NeedsPaint() override;
 
   virtual TabChild* GetOwningTabChild() override { return mTabChild; }
-
-  void UpdateBackingScaleCache(float aDpi, double aScale)
+  virtual void ClearBackingScaleCache()
   {
-    mDPI = aDpi;
-    mDefaultScale = aScale;
+    mDPI = -1;
+    mDefaultScale = -1;
   }
 
   nsIntSize GetScreenDimensions();

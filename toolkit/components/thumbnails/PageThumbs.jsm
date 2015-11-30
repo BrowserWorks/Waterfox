@@ -712,7 +712,7 @@ this.PageThumbsStorage = {
   }
 };
 
-var PageThumbsStorageMigrator = {
+let PageThumbsStorageMigrator = {
   get currentVersion() {
     try {
       return Services.prefs.getIntPref(PREF_STORAGE_VERSION);
@@ -770,7 +770,7 @@ var PageThumbsStorageMigrator = {
   }
 };
 
-var PageThumbsExpiration = {
+let PageThumbsExpiration = {
   _filters: [],
 
   init: function Expiration_init() {
@@ -835,12 +835,12 @@ var PageThumbsExpiration = {
 /**
  * Interface to a dedicated thread handling I/O
  */
-var PageThumbsWorker = new BasePromiseWorker("resource://gre/modules/PageThumbsWorker.js");
+let PageThumbsWorker = new BasePromiseWorker("resource://gre/modules/PageThumbsWorker.js");
 // As the PageThumbsWorker performs I/O, we can receive instances of
 // OS.File.Error, so we need to install a decoder.
 PageThumbsWorker.ExceptionHandlers["OS.File.Error"] = OS.File.Error.fromMsg;
 
-var PageThumbsHistoryObserver = {
+let PageThumbsHistoryObserver = {
   onDeleteURI: function Thumbnails_onDeleteURI(aURI, aGUID) {
     PageThumbsStorage.remove(aURI.spec);
   },

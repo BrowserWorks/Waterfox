@@ -5,13 +5,13 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
+const { DebuggerServer } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
+const { DebuggerClient } = Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
 const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const { DebuggerClient } = require("devtools/toolkit/client/main");
-const { DebuggerServer } = require("devtools/server/main");
 const { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm");
 const { Services } = Cu.import("resource://gre/modules/Services.jsm");
 
-var gClient, gActor;
+let gClient, gActor;
 
 function connect(onDone) {
 
@@ -133,7 +133,7 @@ addMessageListener("getAppActor", function (aMessage) {
   });
 });
 
-var Frames = [];
+let Frames = [];
 addMessageListener("addFrame", function (aMessage) {
   let win = Services.wm.getMostRecentWindow("navigator:browser");
   let doc = win.document;
@@ -171,7 +171,7 @@ addMessageListener("cleanup", function () {
   });
 });
 
-var FramesMock = {
+let FramesMock = {
   list: function () {
     return Frames;
   },

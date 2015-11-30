@@ -26,7 +26,7 @@
 #include "gfxFont.h"
 #include "nsCSSPseudoElements.h"
 #include "nsThemeConstants.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsStyleContext.h"
 #include "nsStyleSet.h"
 #include "nsStyleStruct.h"
@@ -104,7 +104,7 @@ nsRuleNode::ChildrenHashHashKey(PLDHashTable *aTable, const void *aKey)
     static_cast<const nsRuleNode::Key*>(aKey);
   // Disagreement on importance and level for the same rule is extremely
   // rare, so hash just on the rule.
-  return PLDHashTable::HashVoidPtrKeyStub(aTable, key->mRule);
+  return PL_DHashVoidPtrKeyStub(aTable, key->mRule);
 }
 
 /* static */ bool
@@ -127,8 +127,8 @@ nsRuleNode::ChildrenHashOps = {
   // large size allocations.
   ChildrenHashHashKey,
   ChildrenHashMatchEntry,
-  PLDHashTable::MoveEntryStub,
-  PLDHashTable::ClearEntryStub,
+  PL_DHashMoveEntryStub,
+  PL_DHashClearEntryStub,
   nullptr
 };
 
@@ -1402,7 +1402,7 @@ void*
 nsRuleNode::operator new(size_t sz, nsPresContext* aPresContext) CPP_THROW_NEW
 {
   // Check the recycle list first.
-  return aPresContext->PresShell()->AllocateByObjectID(eArenaObjectID_nsRuleNode, sz);
+  return aPresContext->PresShell()->AllocateByObjectID(nsPresArena::nsRuleNode_id, sz);
 }
 
 // Overridden to prevent the global delete from being called, since the memory
@@ -1457,7 +1457,7 @@ nsRuleNode::DestroyInternal(nsRuleNode ***aDestroyQueueTail)
 
   // Don't let the memory be freed, since it will be recycled
   // instead. Don't call the global operator delete.
-  mPresContext->PresShell()->FreeByObjectID(eArenaObjectID_nsRuleNode, this);
+  mPresContext->PresShell()->FreeByObjectID(nsPresArena::nsRuleNode_id, this);
 }
 
 nsRuleNode* nsRuleNode::CreateRootNode(nsPresContext* aPresContext)
@@ -1539,8 +1539,8 @@ nsRuleNode::Transition(nsIStyleRule* aRule, uint8_t aLevel,
   }
 
   if (ChildrenAreHashed()) {
-    auto entry =
-      static_cast<ChildrenHashEntry*>(ChildrenHash()->Add(&key, fallible));
+    ChildrenHashEntry *entry = static_cast<ChildrenHashEntry*>
+      (PL_DHashTableAdd(ChildrenHash(), &key, fallible));
     if (!entry) {
       NS_WARNING("out of memory");
       return this;
@@ -1606,8 +1606,8 @@ nsRuleNode::ConvertChildrenToHash(int32_t aNumKids)
                                         aNumKids);
   for (nsRuleNode* curr = ChildrenList(); curr; curr = curr->mNextSibling) {
     // This will never fail because of the initial size we gave the table.
-    auto entry =
-      static_cast<ChildrenHashEntry*>(hash->Add(curr->mRule, fallible));
+    ChildrenHashEntry *entry = static_cast<ChildrenHashEntry*>(
+      PL_DHashTableAdd(hash, curr->mRule, fallible));
     NS_ASSERTION(!entry->mRuleNode, "duplicate entries in list");
     entry->mRuleNode = curr;
   }
@@ -4370,13 +4370,13 @@ nsRuleNode::ComputeTextData(void* aStartStruct,
               parentText->mTextCombineUpright,
               NS_STYLE_TEXT_COMBINE_UPRIGHT_NONE, 0, 0, 0, 0);
 
-  // -moz-control-character-visibility: enum, inherit, initial
+  // -moz-text-discard: enum, inherit, initial
   SetDiscrete(*aRuleData->ValueForControlCharacterVisibility(),
               text->mControlCharacterVisibility,
               conditions,
               SETDSC_ENUMERATED | SETDSC_UNSET_INHERIT,
               parentText->mControlCharacterVisibility,
-              nsCSSParser::ControlCharVisibilityDefault(), 0, 0, 0, 0);
+              NS_STYLE_CONTROL_CHARACTER_VISIBILITY_HIDDEN, 0, 0, 0, 0);
 
   COMPUTE_END_INHERITED(Text, text)
 }

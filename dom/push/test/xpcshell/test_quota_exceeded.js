@@ -85,9 +85,7 @@ add_task(function* test_expiration_origin_threshold() {
     updates++;
     return updates == 6;
   });
-
-  let unregisterDone;
-  let unregisterPromise = new Promise(resolve => unregisterDone = resolve);
+  let unregisterDefer = Promise.defer();
 
   PushService.init({
     serverURI: 'wss://push.example.org/',
@@ -129,7 +127,7 @@ add_task(function* test_expiration_origin_threshold() {
         },
         onUnregister(request) {
           equal(request.channelID, 'eb33fc90-c883-4267-b5cb-613969e8e349', 'Unregistered wrong channel ID');
-          unregisterDone();
+          unregisterDefer.resolve();
         },
         // We expect to receive acks, but don't care about their
         // contents.
@@ -138,7 +136,7 @@ add_task(function* test_expiration_origin_threshold() {
     },
   });
 
-  yield waitForPromise(unregisterPromise, DEFAULT_TIMEOUT,
+  yield waitForPromise(unregisterDefer.promise, DEFAULT_TIMEOUT,
     'Timed out waiting for unregister request');
 
   yield waitForPromise(notifyPromise, DEFAULT_TIMEOUT,

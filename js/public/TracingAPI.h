@@ -27,21 +27,9 @@ GCTraceKindToAscii(JS::TraceKind kind);
 } // namespace JS
 
 enum WeakMapTraceKind {
-    // Do true ephemeron marking with an iterative weak marking phase.
-    DoNotTraceWeakMaps,
-
-    // Do true ephemeron marking with a weak key lookup marking phase. This is
-    // expected to be constant for the lifetime of a JSTracer; it does not
-    // change when switching from "plain" marking to weak marking.
-    ExpandWeakMaps,
-
-    // Trace through to all values, irrespective of whether the keys are live
-    // or not. Used for non-marking tracers.
-    TraceWeakMapValues,
-
-    // Trace through to all keys and values, irrespective of whether the keys
-    // are live or not. Used for non-marking tracers.
-    TraceWeakMapKeysValues
+    DoNotTraceWeakMaps = 0,
+    TraceWeakMapValues = 1,
+    TraceWeakMapKeysValues = 2
 };
 
 class JS_PUBLIC_API(JSTracer)
@@ -50,18 +38,16 @@ class JS_PUBLIC_API(JSTracer)
     // Return the runtime set on the tracer.
     JSRuntime* runtime() const { return runtime_; }
 
-    // Return the weak map tracing behavior currently set on this tracer.
-    WeakMapTraceKind weakMapAction() const { return weakMapAction_; }
+    // Return the weak map tracing behavior set on this tracer.
+    WeakMapTraceKind eagerlyTraceWeakMaps() const { return eagerlyTraceWeakMaps_; }
 
     // An intermediate state on the road from C to C++ style dispatch.
     enum class TracerKindTag {
         Marking,
-        WeakMarking, // In weak marking phase: looking up every marked obj/script.
         Tenuring,
         Callback
     };
-    bool isMarkingTracer() const { return tag_ == TracerKindTag::Marking || tag_ == TracerKindTag::WeakMarking; }
-    bool isWeakMarkingTracer() const { return tag_ == TracerKindTag::WeakMarking; }
+    bool isMarkingTracer() const { return tag_ == TracerKindTag::Marking; }
     bool isTenuringTracer() const { return tag_ == TracerKindTag::Tenuring; }
     bool isCallbackTracer() const { return tag_ == TracerKindTag::Callback; }
     inline JS::CallbackTracer* asCallbackTracer();
@@ -69,15 +55,13 @@ class JS_PUBLIC_API(JSTracer)
   protected:
     JSTracer(JSRuntime* rt, TracerKindTag tag,
              WeakMapTraceKind weakTraceKind = TraceWeakMapValues)
-      : runtime_(rt), weakMapAction_(weakTraceKind), tag_(tag)
+      : runtime_(rt), tag_(tag), eagerlyTraceWeakMaps_(weakTraceKind)
     {}
 
   private:
     JSRuntime*          runtime_;
-    WeakMapTraceKind    weakMapAction_;
-
-  protected:
     TracerKindTag       tag_;
+    WeakMapTraceKind    eagerlyTraceWeakMaps_;
 };
 
 namespace JS {
@@ -200,7 +184,7 @@ class JS_PUBLIC_API(CallbackTracer) : public JSTracer
 };
 
 // Set the name portion of the tracer's context for the current edge.
-class MOZ_RAII AutoTracingName
+class AutoTracingName
 {
     CallbackTracer* trc_;
     const char* prior_;
@@ -217,7 +201,7 @@ class MOZ_RAII AutoTracingName
 };
 
 // Set the index portion of the tracer's context for the current range.
-class MOZ_RAII AutoTracingIndex
+class AutoTracingIndex
 {
     CallbackTracer* trc_;
 
@@ -246,7 +230,7 @@ class MOZ_RAII AutoTracingIndex
 
 // Set a context callback for the trace callback to use, if it needs a detailed
 // edge description.
-class MOZ_RAII AutoTracingDetails
+class AutoTracingDetails
 {
     CallbackTracer* trc_;
 
@@ -274,6 +258,31 @@ JSTracer::asCallbackTracer()
     MOZ_ASSERT(isCallbackTracer());
     return static_cast<JS::CallbackTracer*>(this);
 }
+
+namespace js {
+
+// Automates static dispatch for tracing for TraceableContainers.
+template <typename, typename=void> struct DefaultTracer;
+
+// The default for POD, non-pointer types is to do nothing.
+template <typename T>
+struct DefaultTracer<T, typename mozilla::EnableIf<!mozilla::IsPointer<T>::value &&
+                                                   mozilla::IsPod<T>::value>::Type> {
+    static void trace(JSTracer* trc, T* t, const char* name) {
+        MOZ_ASSERT(mozilla::IsPod<T>::value);
+        MOZ_ASSERT(!mozilla::IsPointer<T>::value);
+    }
+};
+
+// The default for non-pod (e.g. struct) types is to call the trace method.
+template <typename T>
+struct DefaultTracer<T, typename mozilla::EnableIf<!mozilla::IsPod<T>::value>::Type> {
+    static void trace(JSTracer* trc, T* t, const char* name) {
+        t->trace(trc);
+    }
+};
+
+} // namespace js
 
 // The JS_Call*Tracer family of functions traces the given GC thing reference.
 // This performs the tracing action configured on the given JSTracer:
@@ -339,12 +348,12 @@ extern JS_PUBLIC_API(void)
 JS_CallTenuredObjectTracer(JSTracer* trc, JS::TenuredHeap<JSObject*>* objp, const char* name);
 
 extern JS_PUBLIC_API(void)
+JS_TraceChildren(JSTracer* trc, void* thing, JS::TraceKind kind);
+
+extern JS_PUBLIC_API(void)
 JS_TraceRuntime(JSTracer* trc);
 
 namespace JS {
-extern JS_PUBLIC_API(void)
-TraceChildren(JSTracer* trc, GCCellPtr thing);
-
 typedef js::HashSet<Zone*, js::DefaultHasher<Zone*>, js::SystemAllocPolicy> ZoneSet;
 } // namespace JS
 
@@ -356,38 +365,5 @@ JS_TraceIncomingCCWs(JSTracer* trc, const JS::ZoneSet& zones);
 extern JS_PUBLIC_API(void)
 JS_GetTraceThingInfo(char* buf, size_t bufsize, JSTracer* trc,
                      void* thing, JS::TraceKind kind, bool includeDetails);
-
-namespace js {
-
-// Automates static dispatch for tracing for TraceableContainers.
-template <typename, typename=void> struct DefaultTracer;
-
-// The default for POD, non-pointer types is to do nothing.
-template <typename T>
-struct DefaultTracer<T, typename mozilla::EnableIf<!mozilla::IsPointer<T>::value &&
-                                                   mozilla::IsPod<T>::value>::Type> {
-    static void trace(JSTracer* trc, T* t, const char* name) {
-        MOZ_ASSERT(mozilla::IsPod<T>::value);
-        MOZ_ASSERT(!mozilla::IsPointer<T>::value);
-    }
-};
-
-// The default for non-pod (e.g. struct) types is to call the trace method.
-template <typename T>
-struct DefaultTracer<T, typename mozilla::EnableIf<!mozilla::IsPod<T>::value>::Type> {
-    static void trace(JSTracer* trc, T* t, const char* name) {
-        t->trace(trc);
-    }
-};
-
-template <>
-struct DefaultTracer<jsid>
-{
-    static void trace(JSTracer* trc, jsid* id, const char* name) {
-        JS_CallUnbarrieredIdTracer(trc, id, name);
-    }
-};
-
-} // namespace js
 
 #endif /* js_TracingAPI_h */

@@ -187,7 +187,7 @@ Components.utils.import('resource://gre/modules/ctypes.jsm');
 
 // =================== DevTools ====================
 
-var developerHUD;
+let developerHUD;
 SettingsListener.observe('devtools.overlay', false, (value) => {
   if (value) {
     if (!developerHUD) {
@@ -205,7 +205,7 @@ SettingsListener.observe('devtools.overlay', false, (value) => {
 
 #ifdef MOZ_WIDGET_GONK
 
-var LogShake;
+let LogShake;
 (function() {
   let scope = {};
   Cu.import('resource://gre/modules/LogShake.jsm', scope);
@@ -537,50 +537,8 @@ SettingsListener.observe("theme.selected",
   setPAC();
 })();
 
-#ifdef MOZ_B2G_RIL
-XPCOMUtils.defineLazyModuleGetter(this, "AppsUtils",
-                                  "resource://gre/modules/AppsUtils.jsm");
-
-// ======================= Dogfooders FOTA ==========================
-SettingsListener.observe('debug.performance_data.dogfooding', false,
-  isDogfooder => {
-    if (!isDogfooder) {
-      dump('AUS:Settings: Not a dogfooder!\n');
-      return;
-    }
-
-    if (!('mozTelephony' in navigator)) {
-      dump('AUS:Settings: There is no mozTelephony!\n');
-      return;
-    }
-
-    if (!('mozMobileConnections' in navigator)) {
-      dump('AUS:Settings: There is no mozMobileConnections!\n');
-      return;
-    }
-
-    let conn = navigator.mozMobileConnections[0];
-    conn.addEventListener('radiostatechange', function onradiostatechange() {
-      if (conn.radioState !== 'enabled') {
-        return;
-      }
-
-      conn.removeEventListener('radiostatechange', onradiostatechange);
-      navigator.mozTelephony.dial('*#06#').then(call => {
-        return call.result.then(res => {
-          if (res.success && res.statusMessage
-              && (res.serviceCode === 'scImei')) {
-            Services.prefs.setCharPref("app.update.imei_hash",
-                                       AppsUtils.computeHash(res.statusMessage, "SHA512"));
-          }
-        });
-      });
-    });
-  });
-#endif
-
 // =================== Various simple mapping  ======================
-var settingsToObserve = {
+let settingsToObserve = {
   'accessibility.screenreader_quicknav_modes': {
     prefName: 'accessibility.accessfu.quicknav_modes',
     resetToPref: true,
@@ -615,13 +573,9 @@ var settingsToObserve = {
   'devtools.remote.wifi.visible': {
     resetToPref: true
   },
-  'devtools.telemetry.supported_performance_marks': {
-    resetToPref: true
-  },
-
   'dom.mozApps.use_reviewer_certs': false,
   'dom.mozApps.signed_apps_installable_from': 'https://marketplace.firefox.com',
-  'dom.presentation.discovery.enabled': false,
+  'dom.presentation.discovery.enabled': true,
   'dom.presentation.discoverable': false,
   'dom.serviceWorkers.interception.enabled': true,
   'dom.serviceWorkers.testing.enabled': false,
@@ -633,7 +587,6 @@ var settingsToObserve = {
   'layers.effect.invert': false,
   'layers.effect.grayscale': false,
   'layers.effect.contrast': '0.0',
-  'layout.display-list.dump': false,
   'mms.debugging.enabled': false,
   'network.debugging.enabled': false,
   'privacy.donottrackheader.enabled': false,

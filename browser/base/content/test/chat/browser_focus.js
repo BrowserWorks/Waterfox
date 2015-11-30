@@ -22,7 +22,7 @@ function isChatFocused(chat) {
   return elt == chat.content;
 }
 
-var chatbar = document.getElementById("pinnedchats");
+let chatbar = document.getElementById("pinnedchats");
 
 function* setUp() {
   // Note that (probably) due to bug 604289, if a tab is focused but the

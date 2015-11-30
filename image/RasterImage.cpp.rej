@@ -1,0 +1,123 @@
+--- image/RasterImage.cpp
++++ image/RasterImage.cpp
+@@ -42,7 +42,8 @@
+ #include <stdint.h>
+ #include "mozilla/Telemetry.h"
+ #include "mozilla/TimeStamp.h"
+-#include "mozilla/Tuple.h"
++//#include "mozilla/Tuple.h"
++#include <tuple>
+ #include "mozilla/ClearOnShutdown.h"
+ #include "mozilla/gfx/Scale.h"
+ 
+@@ -622,20 +623,24 @@
+   MOZ_ASSERT(NS_IsMainThread());
+   MOZ_ASSERT(aContainer);
+ 
+-  DrawResult drawResult;
+-  RefPtr<SourceSurface> surface;
+-  Tie(drawResult, surface) =
+-    GetFrameInternal(mSize, FRAME_CURRENT, aFlags | FLAG_ASYNC_NOTIFY);
+-  if (!surface) {
++	auto result = GetFrameInternal(mSize, FRAME_CURRENT, aFlags | FLAG_ASYNC_NOTIFY);
++	if (!result.second()) {
++//  DrawResult drawResult;
++//  RefPtr<SourceSurface> surface;
++//  std::tie(drawResult, surface) =
++//	  GetFrameInternal(mSize, FRAME_CURRENT, aFlags | FLAG_ASYNC_NOTIFY);
++//  if (!surface) {
+     // The OS threw out some or all of our buffer. We'll need to wait for the
+     // redecode (which was automatically triggered by GetFrame) to complete.
+-    return MakePair(drawResult, nsRefPtr<layers::Image>());
++//    return MakePair(drawResult, nsRefPtr<layers::Image>());
++	return MakePair(result.first(), nsRefPtr<layers::Image>());
+   }
+ 
+   CairoImage::Data cairoData;
+   GetWidth(&cairoData.mSize.width);
+   GetHeight(&cairoData.mSize.height);
+-  cairoData.mSourceSurface = surface;
++  //cairoData.mSourceSurface = surface;
++  cairoData.mSourceSurface = result.second();
+ 
+   nsRefPtr<layers::Image> image =
+     aContainer->CreateImage(ImageFormat::CAIRO_SURFACE);
+@@ -643,7 +648,8 @@
+ 
+   static_cast<CairoImage*>(image.get())->SetData(cairoData);
+ 
+-  return MakePair(drawResult, Move(image));
++  //return MakePair(drawResult, Move(image));
++  return MakePair(result.first(), Move(image));
+ }
+ 
+ NS_IMETHODIMP_(bool)
+@@ -695,19 +701,27 @@
+   // We need a new ImageContainer, so create one.
+   container = LayerManager::CreateImageContainer();
+ 
+-  DrawResult drawResult;
+-  nsRefPtr<layers::Image> image;
+-  Tie(drawResult, image) = GetCurrentImage(container, aFlags);
+-  if (!image) {
++	auto result = GetCurrentImage(container, aFlags);
++	if (!result.second()) {
++	// We couldn't get an Image.
++//  DrawResult drawResult;
++//  nsRefPtr<layers::Image> image;
++//  std::tie(drawResult, image) = GetCurrentImage(container, aFlags);
++//  if (!image) {
+     return nullptr;
+   }
+ 
+-  // |image| holds a reference to a SourceSurface which in turn holds a lock on
+-  // the current frame's VolatileBuffer, ensuring that it doesn't get freed as
+-  // long as the layer system keeps this ImageContainer alive.
+-  container->SetCurrentImageInTransaction(image);
++	// |result.second()| holds a reference to a SourceSurface which in turn holds
++	// a lock on the current frame's VolatileBuffer, ensuring that it doesn't get
++	// freed as long as the layer system keeps this ImageContainer alive.
++	container->SetCurrentImageInTransaction(result.second());
++   // |image| holds a reference to a SourceSurface which in turn holds a lock on
++   // the current frame's VolatileBuffer, ensuring that it doesn't get freed as
++   // long as the layer system keeps this ImageContainer alive.
++//  container->SetCurrentImageInTransaction(image);
+ 
+-  mLastImageContainerDrawResult = drawResult;
++	mLastImageContainerDrawResult = result.first();
++//  mLastImageContainerDrawResult = drawResult;
+   mImageContainer = container;
+ 
+   return container.forget();
+@@ -723,17 +737,23 @@
+     return;
+   }
+ 
+-  DrawResult drawResult;
+-  nsRefPtr<layers::Image> image;
+-  Tie(drawResult, image) = GetCurrentImage(container, FLAG_NONE);
+-  if (!image) {
++	auto result = GetCurrentImage(container, FLAG_NONE);
++	if (!result.second()) {
++	// We couldn't get an Image.
++//  DrawResult drawResult;
++//  nsRefPtr<layers::Image> image;
++//  std::tie(drawResult, image) = GetCurrentImage(container, FLAG_NONE);
++//  if (!image) {
+     return;
+   }
+ 
+-  mLastImageContainerDrawResult = drawResult;
+-  nsAutoTArray<ImageContainer::NonOwningImage, 1> imageList;
+-  imageList.AppendElement(ImageContainer::NonOwningImage(image));
+-  container->SetCurrentImages(imageList);
++	mLastImageContainerDrawResult = result.first();
++	nsAutoTArray<ImageContainer::NonOwningImage, 1> imageList;
++	imageList.AppendElement(
++	ImageContainer::NonOwningImage(result.second()));
++//  mLastImageContainerDrawResult = drawResult;
++//  nsAutoTArray<ImageContainer::NonOwningImage, 1> imageList;
++//  imageList.AppendElement(ImageContainer::NonOwningImage(image));
+ }
+ 
+ size_t

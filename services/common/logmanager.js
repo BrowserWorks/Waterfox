@@ -38,12 +38,12 @@ const DEFAULT_MAX_ERROR_AGE = 20 * 24 * 60 * 60; // 20 days
 // times, which would cause messages to appear twice.
 
 // Singletons used by each instance.
-var formatter;
-var dumpAppender;
-var consoleAppender;
+let formatter;
+let dumpAppender;
+let consoleAppender;
 
 // A set of all preference roots used by all instances.
-var allBranches = new Set();
+let allBranches = new Set();
 
 // A storage appender that is flushable to a file on disk.  Policies for
 // when to flush, to what file, log rotation etc are up to the consumer

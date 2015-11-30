@@ -24,8 +24,8 @@
 #include <android/log.h>
 #define GADM_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "GonkAudioDecoderManager", __VA_ARGS__)
 
-extern PRLogModuleInfo* GetPDMLog();
-#define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+PRLogModuleInfo* GetDemuxerLog();
+#define LOG(...) MOZ_LOG(GetDemuxerLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 #define READ_OUTPUT_BUFFER_TIMEOUT_US  3000
 
 using namespace android;
@@ -53,22 +53,12 @@ GonkAudioDecoderManager::~GonkAudioDecoderManager()
   MOZ_COUNT_DTOR(GonkAudioDecoderManager);
 }
 
-nsRefPtr<MediaDataDecoder::InitPromise>
+android::sp<MediaCodecProxy>
 GonkAudioDecoderManager::Init(MediaDataDecoderCallback* aCallback)
-{
-  if (InitMediaCodecProxy(aCallback)) {
-    return InitPromise::CreateAndResolve(TrackType::kAudioTrack, __func__);
-  } else {
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
-  }
-}
-
-bool
-GonkAudioDecoderManager::InitMediaCodecProxy(MediaDataDecoderCallback* aCallback)
 {
   status_t rv = OK;
   if (mLooper != nullptr) {
-    return false;
+    return nullptr;
   }
   // Create ALooper
   mLooper = new ALooper;
@@ -77,12 +67,12 @@ GonkAudioDecoderManager::InitMediaCodecProxy(MediaDataDecoderCallback* aCallback
 
   mDecoder = MediaCodecProxy::CreateByType(mLooper, mMimeType.get(), false, nullptr);
   if (!mDecoder.get()) {
-    return false;
+    return nullptr;
   }
   if (!mDecoder->AskMediaCodecAndWait())
   {
     mDecoder = nullptr;
-    return false;
+    return nullptr;
   }
   sp<AMessage> format = new AMessage;
   // Fixed values
@@ -94,7 +84,7 @@ GonkAudioDecoderManager::InitMediaCodecProxy(MediaDataDecoderCallback* aCallback
   format->setInt32("aac-profile", mAudioProfile);
   status_t err = mDecoder->configure(format, nullptr, nullptr, 0);
   if (err != OK || !mDecoder->Prepare()) {
-    return false;
+    return nullptr;
   }
 
   if (mMimeType.EqualsLiteral("audio/mp4a-latm")) {
@@ -103,10 +93,10 @@ GonkAudioDecoderManager::InitMediaCodecProxy(MediaDataDecoderCallback* aCallback
   }
 
   if (rv == OK) {
-    return true;
+    return mDecoder;
   } else {
     GADM_LOG("Failed to input codec specific data!");
-    return false;
+    return nullptr;
   }
 }
 

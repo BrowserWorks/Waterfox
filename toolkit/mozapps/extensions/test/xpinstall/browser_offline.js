@@ -1,4 +1,4 @@
-var proxyPrefValue;
+let proxyPrefValue;
 
 // ----------------------------------------------------------------------------
 // Tests that going offline cancels an in progress download.

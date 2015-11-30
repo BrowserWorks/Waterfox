@@ -70,16 +70,16 @@ public class testSettingsMenuItems extends PixelTest {
 
         PATH_CUSTOMIZE = new String[] { mStringHelper.CUSTOMIZE_SECTION_LABEL };
         OPTIONS_CUSTOMIZE = new String[][] {
-                { mStringHelper.CUSTOMIZE_HOME},
-                { mStringHelper.SEARCH_TITLE, "", mStringHelper.SEARCH_SUGGESTIONS, mStringHelper.SEARCH_INSTALLED},
-                { mStringHelper.TABS_LABEL, mStringHelper.DONT_RESTORE_TABS, mStringHelper.ALWAYS_RESTORE_TABS, mStringHelper.DONT_RESTORE_QUIT },
-                { mStringHelper.IMPORT_FROM_ANDROID_LABEL, "", mStringHelper.BOOKMARKS, mStringHelper.HISTORY, mStringHelper.IMPORT },
+                { "Home" },
+                { "Search", "", "Show search suggestions", "Installed search engines"},
+                { mStringHelper.TABS_LABEL, "Don't restore after quitting " + mStringHelper.BRAND_NAME, "Always restore", "Don't restore after quitting " + mStringHelper.BRAND_NAME },
+                { mStringHelper.IMPORT_FROM_ANDROID_LABEL, "", "Bookmarks", "History", "Import" },
         };
 
-        PATH_HOME = new String[] { mStringHelper.CUSTOMIZE_SECTION_LABEL, mStringHelper.CUSTOMIZE_HOME };
+        PATH_HOME = new String[] { mStringHelper.CUSTOMIZE_SECTION_LABEL, "Home" };
         OPTIONS_HOME = new String[][] {
-                { mStringHelper.PANELS },
-                { mStringHelper.AUTOMATIC_UPDATES, mStringHelper.ENABLED, mStringHelper.ENABLED, mStringHelper.OVER_WIFI_OPTION},
+                { "Panels" },
+                { "Automatic updates", "Enabled", "Enabled", "Only over Wi-Fi" },
         };
 
         PATH_DISPLAY = new String[] { mStringHelper.DISPLAY_SECTION_LABEL };
@@ -88,24 +88,21 @@ public class testSettingsMenuItems extends PixelTest {
         OPTIONS_DISPLAY = new String[][] {
                 { mStringHelper.TEXT_SIZE_LABEL },
                 TITLE_BAR_LABEL_ARR,
-                { mStringHelper.SCROLL_TITLE_BAR_LABEL, mStringHelper.HIDE_TITLE_BAR },
-                { mStringHelper.ADVANCED},
-                { mStringHelper.CHARACTER_ENCODING_LABEL, mStringHelper.DONT_SHOW_MENU, mStringHelper.SHOW_MENU, mStringHelper.DONT_SHOW_MENU },
-                { mStringHelper.PLUGINS_LABEL, mStringHelper.TAP_TO_PLAY, mStringHelper.ENABLED, mStringHelper.TAP_TO_PLAY, mStringHelper.DISABLED },
+                { mStringHelper.SCROLL_TITLE_BAR_LABEL, "Hide the " + mStringHelper.BRAND_NAME + " title bar when scrolling down a page" },
+                { "Advanced" },
+                { mStringHelper.CHARACTER_ENCODING_LABEL, "Don't show menu", "Show menu", "Don't show menu" },
+                { mStringHelper.PLUGINS_LABEL, "Tap to play", "Enabled", "Tap to play", "Disabled" },
         };
 
         PATH_PRIVACY = new String[] { mStringHelper.PRIVACY_SECTION_LABEL };
         OPTIONS_PRIVACY = new String[][] {
                 { mStringHelper.TRACKING_PROTECTION_LABEL },
                 { mStringHelper.DNT_LABEL },
-                { mStringHelper.COOKIES_LABEL, mStringHelper.ENABLED, mStringHelper.ENABLED_EXCLUDE_3RD_PARTY, mStringHelper.ENABLED },
+                { mStringHelper.COOKIES_LABEL, "Enabled", "Enabled, excluding 3rd party", "Disabled" },
                 { mStringHelper.REMEMBER_LOGINS_LABEL },
                 { mStringHelper.MANAGE_LOGINS_LABEL },
                 { mStringHelper.MASTER_PASSWORD_LABEL },
-                { mStringHelper.CLEAR_PRIVATE_DATA_LABEL, "", mStringHelper.BROWSING_HISTORY,
-                        mStringHelper.SEARCH_HISTORY, mStringHelper.DOWNLOADS, mStringHelper.FORM_HISTORY,
-                        mStringHelper.COOKIES_AND_LOGINS, mStringHelper.CLEAR_PRIVATE_DATA_LABEL, mStringHelper.CACHE,
-                        mStringHelper.OFFLINE_DATA, mStringHelper.SITE_SETTINGS, mStringHelper.CLEAR_DATA_BUTTON },
+                { mStringHelper.CLEAR_PRIVATE_DATA_LABEL, "", "Browsing history", "Search history", "Downloads", "Form history", "Cookies & active logins", mStringHelper.CLEAR_PRIVATE_DATA_LABEL, "Cache", "Offline website data", "Site settings", "Clear data" },
         };
 
         PATH_MOZILLA = new String[] { mStringHelper.MOZILLA_SECTION_LABEL };
@@ -113,8 +110,8 @@ public class testSettingsMenuItems extends PixelTest {
                 { mStringHelper.ABOUT_LABEL },
                 { mStringHelper.FAQS_LABEL },
                 { mStringHelper.FEEDBACK_LABEL },
-                { mStringHelper.DATA_CHOICES },
-                { mStringHelper.HEALTH_REPORT_LABEL, mStringHelper.HEALTH_REPORT_EXPLANATION },
+                { "Data choices" },
+                { mStringHelper.HEALTH_REPORT_LABEL, "Shares data with Mozilla about your browser health and helps you understand your browser performance" },
                 { mStringHelper.MY_HEALTH_REPORT_LABEL },
         };
 
@@ -182,19 +179,23 @@ public class testSettingsMenuItems extends PixelTest {
     public void updateConditionalSettings(Map<String[], List<String[]>> settingsMap) {
         // Preferences dependent on RELEASE_BUILD
         if (!AppConstants.RELEASE_BUILD) {
+            // Text reflow - only built if *not* release build
+            String[] textReflowUi = { mStringHelper.TEXT_REFLOW_LABEL };
+            settingsMap.get(PATH_DISPLAY).add(textReflowUi);
+
             if (AppConstants.MOZ_STUMBLER_BUILD_TIME_ENABLED) {
                 // Anonymous cell tower/wifi collection
-                String[] networkReportingUi = { mStringHelper.MOZ_LOCATION, mStringHelper.MOZ_LOCATION_MSG };
+                String[] networkReportingUi = { "Mozilla Location Service", "Help Mozilla map the world! Share the approximate Wi-Fi and cellular location of your device to improve our geolocation service." };
                 settingsMap.get(PATH_MOZILLA).add(networkReportingUi);
 
-                String[] learnMoreUi = { mStringHelper.LEARN_MORE };
+                String[] learnMoreUi = { "Learn more" };
                 settingsMap.get(PATH_MOZILLA).add(learnMoreUi);
             }
         }
 
         // Automatic updates
         if (AppConstants.MOZ_UPDATER) {
-            String[] autoUpdateUi = { mStringHelper.DOWNLOAD_UPDATES_AUTO, mStringHelper.OVER_WIFI_OPTION, mStringHelper.ALWAYS, mStringHelper.OVER_WIFI_OPTION, mStringHelper.NEVER };
+            String[] autoUpdateUi = { "Download updates automatically", "Only over Wi-Fi", "Always", "Only over Wi-Fi", "Never" };
             settingsMap.get(PATH_CUSTOMIZE).add(autoUpdateUi);
         }
 
@@ -206,13 +207,13 @@ public class testSettingsMenuItems extends PixelTest {
 
         // Crash reporter
         if (AppConstants.MOZ_CRASHREPORTER) {
-            String[] crashReporterUi = { mStringHelper.CRASH_REPORTER, mStringHelper.CRASH_REPORTER_MSG};
+            String[] crashReporterUi = { "Crash Reporter", mStringHelper.BRAND_NAME + " submits crash reports to help Mozilla make your browser more stable and secure" };
             settingsMap.get(PATH_MOZILLA).add(crashReporterUi);
         }
 
         // Telemetry
         if (AppConstants.MOZ_TELEMETRY_REPORTING) {
-            String[] telemetryUi = { mStringHelper.TELEMETRY, mStringHelper.TELEMETRY_MSG};
+            String[] telemetryUi = { "Telemetry", "Shares performance, usage, hardware and customization data about your browser with Mozilla to help us make " + mStringHelper.BRAND_NAME + " better" };
             settingsMap.get(PATH_MOZILLA).add(telemetryUi);
         }
 
@@ -292,9 +293,8 @@ public class testSettingsMenuItems extends PixelTest {
                 }
             }
 
-            // Navigate back if on a phone or small tablets. Large tablets
-            // shouldn't do this because they use headers and fragments.
-            if (mDevice.type.equals("phone") || HardwareUtils.isSmallTablet()) {
+            // Navigate back if on a phone. Tablets shouldn't do this because they use headers and fragments.
+            if (mDevice.type.equals("phone")) {
                 int menuDepth = menuPath.length;
                 while (menuDepth > 0) {
                     mSolo.goBack();

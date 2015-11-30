@@ -13,7 +13,7 @@ const Ci = Components.interfaces;
 const Cc = Components.classes;
 const Cr = Components.results;
 
-var XPCOMUtils = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {}).XPCOMUtils;
+let XPCOMUtils = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {}).XPCOMUtils;
 XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
   "resource://gre/modules/AsyncShutdown.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
@@ -25,7 +25,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
 /**
  * Conversion between nsIPropertyBag and JS object
  */
-var PropertyBagConverter = {
+let PropertyBagConverter = {
   // From nsIPropertyBag to JS
   toObject: function(bag) {
     if (!(bag instanceof Ci.nsIPropertyBag)) {

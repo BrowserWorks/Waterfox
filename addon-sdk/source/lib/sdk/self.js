@@ -33,7 +33,7 @@ const isPrivateBrowsingSupported = 'private-browsing' in permissions &&
 const uri = (path="") =>
   path.includes(":") ? path : addonDataURI + path.replace(/^\.\//, "");
 
-var preferencesBranch = ("preferences-branch" in metadata)
+let preferencesBranch = ("preferences-branch" in metadata)
                             ? metadata["preferences-branch"]
                             : options.preferencesBranch
 

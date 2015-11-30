@@ -9,7 +9,7 @@ function test() {
   open_preferences(runTest);
 }
 
-var gElements;
+let gElements;
 
 function checkElements(expectedPane) {
   for (let element of gElements) {
@@ -19,11 +19,10 @@ function checkElements(expectedPane) {
       continue;
     }
     let attributeValue = element.getAttribute("data-category");
-    let suffix = " (id=" + element.id + ")";
     if (attributeValue == "pane" + expectedPane) {
-      is_element_visible(element, expectedPane + " elements should be visible" + suffix);
+      is_element_visible(element, expectedPane + " elements should be visible");
     } else {
-      is_element_hidden(element, "Elements not in " + expectedPane + " should be hidden" + suffix);
+      is_element_hidden(element, "Elements not in " + expectedPane + " should be hidden");
     }
   }
 }

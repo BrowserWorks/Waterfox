@@ -36,45 +36,31 @@ add_task(function test() {
   equal(root.sampleTimes[root.sampleTimes.length - 1], endTime, "root recorded last sample time in scope");
 
   let frame = getFrameNodePath(root, "X");
-  let data = createTierGraphDataFromFrameNode(frame, root.sampleTimes, (endTime-startTime)/RESOLUTION);
+  let data = createTierGraphDataFromFrameNode(frame, root.sampleTimes, { startTime, endTime, resolution: RESOLUTION });
 
   let TIME_PER_WINDOW = SAMPLE_COUNT / 2 / RESOLUTION * TIME_PER_SAMPLE;
 
-  // Filter out the dupes created with the same delta so the graph
-  // can render correctly.
-  let filteredData = [];
-  for (let i = 0; i < data.length; i++) {
-    if (!i || data[i].delta !== data[i-1].delta) {
-      filteredData.push(data[i]);
-    }
+  for (let i = 0; i < 10; i++) {
+    equal(data[i].x, startTime + TIME_OFFSET + (TIME_PER_WINDOW * i), "first window has correct x");
+    equal(data[i].ys[0], 0.2, "first window has 2 frames in interpreter");
+    equal(data[i].ys[1], 0.2, "first window has 2 frames in baseline");
+    equal(data[i].ys[2], 0.2, "first window has 2 frames in ion");
   }
-  data = filteredData;
-
-  for (let i = 0; i < 11; i++) {
-    equal(data[i].delta, startTime + TIME_OFFSET + (TIME_PER_WINDOW * i), "first window has correct x");
-    equal(data[i].values[0], 0.2, "first window has 2 frames in interpreter");
-    equal(data[i].values[1], 0.2, "first window has 2 frames in baseline");
-    equal(data[i].values[2], 0.2, "first window has 2 frames in ion");
+  for (let i = 10; i < 20; i++) {
+    equal(data[i].x, startTime + TIME_OFFSET + (TIME_PER_WINDOW * i), "second window has correct x");
+    equal(data[i].ys[0], 0, "second window observed no optimizations");
+    equal(data[i].ys[1], 0, "second window observed no optimizations");
+    equal(data[i].ys[2], 0, "second window observed no optimizations");
   }
-  // Start on 11, since i===10 is where the values change, and the new value (0,0,0)
-  // is removed in `filteredData`
-  for (let i = 11; i < 20; i++) {
-    equal(data[i].delta, startTime + TIME_OFFSET + (TIME_PER_WINDOW * i), "second window has correct x");
-    equal(data[i].values[0], 0, "second window observed no optimizations");
-    equal(data[i].values[1], 0, "second window observed no optimizations");
-    equal(data[i].values[2], 0, "second window observed no optimizations");
-  }
-  // Start on 21, since i===20 is where the values change, and the new value (0.3,0,0)
-  // is removed in `filteredData`
-  for (let i = 21; i < 30; i++) {
-    equal(data[i].delta, startTime + TIME_OFFSET + (TIME_PER_WINDOW * i), "third window has correct x");
-    equal(data[i].values[0], 0.3, "third window has 3 frames in interpreter");
-    equal(data[i].values[1], 0, "third window has 0 frames in baseline");
-    equal(data[i].values[2], 0, "third window has 0 frames in ion");
+  for (let i = 20; i < 30; i++) {
+    equal(data[i].x, startTime + TIME_OFFSET + (TIME_PER_WINDOW * i), "third window has correct x");
+    equal(data[i].ys[0], 0.3, "third window has 3 frames in interpreter");
+    equal(data[i].ys[1], 0, "third window has 0 frames in baseline");
+    equal(data[i].ys[2], 0, "third window has 0 frames in ion");
   }
 });
 
-var gUniqueStacks = new RecordingUtils.UniqueStacks();
+let gUniqueStacks = new RecordingUtils.UniqueStacks();
 
 function uniqStr(s) {
   return gUniqueStacks.getOrAddStringIndex(s);
@@ -82,19 +68,20 @@ function uniqStr(s) {
 
 const TIER_PATTERNS = [
   // 0-99
-  ["X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0"],
+  ["X", "X", "X", "X", "X", "X", "X", "X", "X", "X"],
   // 100-199
-  ["X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0"],
+  ["X", "X", "X", "X", "X", "X", "X", "X", "X", "X"],
   // 200-299
-  ["X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0"],
+  ["X", "X", "X", "X", "X", "X", "X", "X", "X", "X"],
   // 300-399
-  ["X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0"],
+  ["X", "X", "X", "X", "X", "X", "X", "X", "X", "X"],
   // 400-499
-  ["X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0"],
+  ["X", "X", "X", "X", "X", "X", "X", "X", "X", "X"],
 
   // 500-599
-  // Test current frames in all opts
-  ["A", "A", "A", "A", "X_1", "X_2", "X_1", "X_2", "X_0", "X_0"],
+  // Test current frames in all opts, including that
+  // the same frame with no opts does not get counted
+  ["X", "X", "A", "A", "X_1", "X_2", "X_1", "X_2", "X_0", "X_0"],
 
   // 600-699
   // Nothing for current frame
@@ -105,9 +92,9 @@ const TIER_PATTERNS = [
   ["X_2 -> Y", "X_2 -> Y", "X_2 -> Y", "X_0", "X_0", "X_0", "A", "A", "A", "A"],
 
   // 800-899
-  ["X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0"],
+  ["X", "X", "X", "X", "X", "X", "X", "X", "X", "X"],
   // 900-999
-  ["X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0", "X_0"],
+  ["X", "X", "X", "X", "X", "X", "X", "X", "X", "X"],
 ];
 
 function createSample (i, frames) {
@@ -123,7 +110,7 @@ function createSample (i, frames) {
   return sample;
 }
 
-var SAMPLES = (function () {
+let SAMPLES = (function () {
   let samples = [];
 
   for (let i = 0; i < SAMPLE_COUNT;) {
@@ -137,9 +124,9 @@ var SAMPLES = (function () {
   return samples;
 })();
 
-var gThread = RecordingUtils.deflateThread({ samples: SAMPLES, markers: [] }, gUniqueStacks);
+let gThread = RecordingUtils.deflateThread({ samples: SAMPLES, markers: [] }, gUniqueStacks);
 
-var gRawSite1 = {
+let gRawSite1 = {
   line: 12,
   column: 2,
   types: [{

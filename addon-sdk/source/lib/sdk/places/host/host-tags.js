@@ -79,7 +79,7 @@ function getTagsByURL (message) {
  * Hook into host
  */
 
-var reqStream = filter(request, function (data) {
+let reqStream = filter(request, function (data) {
   return /sdk-places-tags/.test(data.event);
 });
 

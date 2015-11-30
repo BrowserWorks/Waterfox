@@ -21,26 +21,10 @@ Components.utils.import('resource://gre/modules/Promise.jsm');
 Components.utils.import('resource://gre/modules/XPCOMUtils.jsm');
 Components.utils.import('resource://gre/modules/NetUtil.jsm');
 
-function FileLoaderSession(sessionId) {
-  this.sessionId = sessionId;
-  this.xhr = null;
-}
-FileLoaderSession.prototype = {
-  abort() {
-    if (this.xhr) {
-      this.xhr.abort();
-      this.xhr = null;
-    }
-  }
-};
-
-
-function FileLoader(swfUrl, baseUrl, refererUrl, callback) {
+function FileLoader(swfUrl, baseUrl, callback) {
   this.swfUrl = swfUrl;
   this.baseUrl = baseUrl;
-  this.refererUrl = refererUrl;
   this.callback = callback;
-  this.activeSessions = Object.create(null);
 
   this.crossdomainRequestsCache = Object.create(null);
 }
@@ -66,26 +50,18 @@ FileLoader.prototype = {
     var method = data.method || "GET";
     var mimeType = data.mimeType;
     var postData = data.postData || null;
-    var sendReferer = canSendReferer(swfUrl, this.refererUrl);
 
-    var session = new FileLoaderSession(sessionId);
-    this.activeSessions[sessionId] = session;
-    var self = this;
 
     var performXHR = function () {
-      // Load has been aborted before we reached this point.
-      if (!self.activeSessions[sessionId]) {
-        return;
-      }
-      var xhr = session.xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"].
-                              createInstance(Components.interfaces.nsIXMLHttpRequest);
+      var xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
+        .createInstance(Components.interfaces.nsIXMLHttpRequest);
       xhr.open(method, url, true);
       xhr.responseType = "moz-chunked-arraybuffer";
 
-      if (sendReferer) {
+      if (baseUrl) {
         // Setting the referer uri, some site doing checks if swf is embedded
         // on the original page.
-        xhr.setRequestHeader("Referer", self.refererUrl);
+        xhr.setRequestHeader("Referer", baseUrl);
       }
 
       // TODO apply range request headers if limit is specified
@@ -93,23 +69,16 @@ FileLoader.prototype = {
       var lastPosition = 0;
       xhr.onprogress = function (e) {
         var position = e.loaded;
-        var total = e.total;
         var data = new Uint8Array(xhr.response);
-        // The event's `loaded` and `total` properties are sometimes lower than the actual
-        // number of loaded bytes. In that case, increase them to that value.
-        position = Math.max(position, data.byteLength);
-        total = Math.max(total, data.byteLength);
-
         notifyLoadFileListener({callback:"loadFile", sessionId: sessionId,
-          topic: "progress", array: data, loaded: position, total: total});
+          topic: "progress", array: data, loaded: position, total: e.total});
         lastPosition = position;
-        if (limit && total >= limit) {
+        if (limit && e.total >= limit) {
           xhr.abort();
         }
       };
       xhr.onreadystatechange = function(event) {
         if (xhr.readyState === 4) {
-          delete self.activeSessions[sessionId];
           if (xhr.status !== 200 && xhr.status !== 0) {
             notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "error", error: xhr.statusText});
           }
@@ -126,21 +95,9 @@ FileLoader.prototype = {
       performXHR();
     }, function (reason) {
       log("data access is prohibited to " + url + " from " + baseUrl);
-      delete self.activeSessions[sessionId];
-      notifyLoadFileListener({
-        callback: "loadFile", sessionId: sessionId, topic: "error",
-        error: "only original swf file or file from the same origin loading supported (XDOMAIN)"
-      });
+      notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "error",
+        error: "only original swf file or file from the same origin loading supported"});
     });
-  },
-  abort: function(sessionId) {
-    var session = this.activeSessions[sessionId];
-    if (!session) {
-      log("Warning: trying to abort invalid session " + sessionId);
-      return;
-    }
-    session.abort();
-    delete this.activeSessions[sessionId];
   }
 };
 
@@ -170,25 +127,6 @@ function disableXHRRedirect(xhr) {
     QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIChannelEventSink])
   };
   xhr.channel.notificationCallbacks = listener;
-}
-
-function canSendReferer(url, refererUrl) {
-  if (!refererUrl) {
-    return false;
-  }
-  // Allow sending HTTPS referer only to HTTPS.
-  var parsedUrl, parsedRefererUrl;
-  try {
-    parsedRefererUrl = NetUtil.newURI(refererUrl);
-  } catch (ex) { /* skipping invalid urls */ }
-  if (!parsedRefererUrl ||
-      parsedRefererUrl.scheme.toLowerCase() !== 'https') {
-    return true;
-  }
-  try {
-    parsedUrl = NetUtil.newURI(url);
-  } catch (ex) { /* skipping invalid urls */ }
-  return !!parsedUrl && parsedUrl.scheme.toLowerCase() === 'https';
 }
 
 function canDownloadFile(url, checkPolicyFile, swfUrl, cache) {

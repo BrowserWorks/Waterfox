@@ -25,7 +25,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "BinarySearch",
 
 XPCOMUtils.defineLazyGetter(this, "gPrincipal", function () {
   let uri = Services.io.newURI("about:newtab", null, null);
-  return Services.scriptSecurityManager.createCodebasePrincipal(uri, {});
+  return Services.scriptSecurityManager.getNoAppCodebasePrincipal(uri);
 });
 
 XPCOMUtils.defineLazyGetter(this, "gCryptoHash", function () {
@@ -193,7 +193,7 @@ LinksStorage.prototype = {
 /**
  * Singleton that serves as a registry for all open 'New Tab Page's.
  */
-var AllPages = {
+let AllPages = {
   /**
    * The array containing all active pages.
    */
@@ -325,7 +325,7 @@ var AllPages = {
 /**
  * Singleton that keeps Grid preferences
  */
-var GridPrefs = {
+let GridPrefs = {
   /**
    * Cached value that tells the number of rows of newtab grid.
    */
@@ -380,7 +380,7 @@ GridPrefs.init();
  * Singleton that keeps track of all pinned links and their positions in the
  * grid.
  */
-var PinnedLinks = {
+let PinnedLinks = {
   /**
    * The cached list of pinned links.
    */
@@ -504,7 +504,7 @@ var PinnedLinks = {
 /**
  * Singleton that keeps track of all blocked links in the grid.
  */
-var BlockedLinks = {
+let BlockedLinks = {
   /**
    * A list of objects that are observing blocked link changes.
    */
@@ -604,20 +604,7 @@ var BlockedLinks = {
  * Singleton that serves as the default link provider for the grid. It queries
  * the history to retrieve the most frequently visited sites.
  */
-var PlacesProvider = {
-  /**
-   * A count of how many batch updates are under way (batches may be nested, so
-   * we keep a counter instead of a simple bool).
-   **/
-  _batchProcessingDepth: 0,
-
-  /**
-   * A flag that tracks whether onFrecencyChanged was notified while a batch
-   * operation was in progress, to tell us whether to take special action after
-   * the batch operation completes.
-   **/
-  _batchCalledFrecencyChanged: false,
-
+let PlacesProvider = {
   /**
    * Set this to change the maximum number of links the provider will provide.
    */
@@ -724,18 +711,6 @@ var PlacesProvider = {
   /**
    * Called by the history service.
    */
-  onBeginUpdateBatch: function() {
-    this._batchProcessingDepth += 1;
-  },
-
-  onEndUpdateBatch: function() {
-    this._batchProcessingDepth -= 1;
-    if (this._batchProcessingDepth == 0 && this._batchCalledFrecencyChanged) {
-      this.onManyFrecenciesChanged();
-      this._batchCalledFrecencyChanged = false;
-    }
-  },
-
   onDeleteURI: function PlacesProvider_onDeleteURI(aURI, aGUID, aReason) {
     // let observers remove sensetive data associated with deleted visit
     this._callObservers("onDeleteURI", {
@@ -751,13 +726,6 @@ var PlacesProvider = {
    * Called by the history service.
    */
   onFrecencyChanged: function PlacesProvider_onFrecencyChanged(aURI, aNewFrecency, aGUID, aHidden, aLastVisitDate) {
-    // If something is doing a batch update of history entries we don't want
-    // to do lots of work for each record. So we just track the fact we need
-    // to call onManyFrecenciesChanged() once the batch is complete.
-    if (this._batchProcessingDepth > 0) {
-      this._batchCalledFrecencyChanged = true;
-      return;
-    }
     // The implementation of the query in getLinks excludes hidden and
     // unvisited pages, so it's important to exclude them here, too.
     if (!aHidden && aLastVisitDate) {
@@ -815,7 +783,7 @@ var PlacesProvider = {
  *   lastVisitDate: 1394678824766431,
  * }
  */
-var Links = {
+let Links = {
   /**
    * The maximum number of links returned by getLinks.
    */
@@ -1290,7 +1258,7 @@ Links.compareLinks = Links.compareLinks.bind(Links);
  * Singleton used to collect telemetry data.
  *
  */
-var Telemetry = {
+let Telemetry = {
   /**
    * Initializes object.
    */
@@ -1332,7 +1300,7 @@ var Telemetry = {
  * or if we should rather not do it for security reasons. URIs that inherit
  * their caller's principal will be filtered.
  */
-var LinkChecker = {
+let LinkChecker = {
   _cache: {},
 
   get flags() {
@@ -1359,7 +1327,7 @@ var LinkChecker = {
   }
 };
 
-var ExpirationFilter = {
+let ExpirationFilter = {
   init: function ExpirationFilter_init() {
     PageThumbs.addExpirationFilter(this);
   },

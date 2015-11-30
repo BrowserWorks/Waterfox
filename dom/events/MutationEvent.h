@@ -65,9 +65,4 @@ protected:
 } // namespace dom
 } // namespace mozilla
 
-already_AddRefed<mozilla::dom::MutationEvent>
-NS_NewDOMMutationEvent(mozilla::dom::EventTarget* aOwner,
-                       nsPresContext* aPresContext,
-                       mozilla::InternalMutationEvent* aEvent);
-
 #endif // mozilla_dom_MutationEvent_h_

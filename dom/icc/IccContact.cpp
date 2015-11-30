@@ -21,14 +21,12 @@ IccContact::Create(mozContact& aMozContact, nsIIccContact** aIccContact)
   // Id
   nsAutoString id;
   aMozContact.GetId(id, er);
-  nsresult rv = er.StealNSResult();
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS(er.StealNSResult(), NS_ERROR_FAILURE);
 
   // Names
   Nullable<nsTArray<nsString>> names;
   aMozContact.GetName(names, er);
-  rv = er.StealNSResult();
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS(er.StealNSResult(), NS_ERROR_FAILURE);
   if (names.IsNull()) {
     // Set as Empty nsTarray<nsString> for IccContact constructor.
     names.SetValue();
@@ -37,8 +35,7 @@ IccContact::Create(mozContact& aMozContact, nsIIccContact** aIccContact)
   // Numbers
   Nullable<nsTArray<ContactTelField>> nullableNumberList;
   aMozContact.GetTel(nullableNumberList, er);
-  rv = er.StealNSResult();
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS(er.StealNSResult(), NS_ERROR_FAILURE);
   nsTArray<nsString> numbers;
   if (!nullableNumberList.IsNull()) {
     const nsTArray<ContactTelField>& numberList = nullableNumberList.Value();
@@ -52,8 +49,7 @@ IccContact::Create(mozContact& aMozContact, nsIIccContact** aIccContact)
   // Emails
   Nullable<nsTArray<ContactField>> nullableEmailList;
   aMozContact.GetEmail(nullableEmailList, er);
-  rv = er.StealNSResult();
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS(er.StealNSResult(), NS_ERROR_FAILURE);
   nsTArray<nsString> emails;
   if (!nullableEmailList.IsNull()) {
     const nsTArray<ContactField>& emailList = nullableEmailList.Value();

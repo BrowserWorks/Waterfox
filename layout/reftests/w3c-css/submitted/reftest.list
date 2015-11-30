@@ -69,6 +69,3 @@ include values3/reftest.list
 
 # Variables Level 1
 include variables/reftest.list
-
-# CSS will-change Level 1
-include will-change/reftest.list

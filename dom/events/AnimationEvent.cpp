@@ -15,7 +15,7 @@ AnimationEvent::AnimationEvent(EventTarget* aOwner,
                                nsPresContext* aPresContext,
                                InternalAnimationEvent* aEvent)
   : Event(aOwner, aPresContext,
-          aEvent ? aEvent : new InternalAnimationEvent(false, eVoidEvent))
+          aEvent ? aEvent : new InternalAnimationEvent(false, 0))
 {
   if (aEvent) {
     mEventIsInternal = false;
@@ -88,12 +88,14 @@ AnimationEvent::GetPseudoElement(nsAString& aPseudoElement)
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<AnimationEvent>
-NS_NewDOMAnimationEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMAnimationEvent(nsIDOMEvent** aInstancePtrResult,
+                        EventTarget* aOwner,
                         nsPresContext* aPresContext,
                         InternalAnimationEvent* aEvent)
 {
-  nsRefPtr<AnimationEvent> it =
-    new AnimationEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  AnimationEvent* it = new AnimationEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

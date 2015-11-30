@@ -229,6 +229,7 @@ void
 TextureClient::RecycleTexture(TextureFlags aFlags)
 {
   MOZ_ASSERT(GetFlags() & TextureFlags::RECYCLE);
+  MOZ_ASSERT(!HasRecycleCallback());
 
   mAddedToCompositableClient = false;
   if (mFlags != aFlags) {
@@ -250,24 +251,6 @@ TextureClient::SetAddedToCompositableClient()
 {
   if (!mAddedToCompositableClient) {
     mAddedToCompositableClient = true;
-  }
-}
-
-/* static */ void
-TextureClient::TextureClientRecycleCallback(TextureClient* aClient, void* aClosure)
-{
-  MOZ_ASSERT(aClient->GetRecycleAllocator());
-  aClient->GetRecycleAllocator()->RecycleTextureClient(aClient);
-}
-
-void
-TextureClient::SetRecycleAllocator(TextureClientRecycleAllocator* aAllocator)
-{
-  mRecycleAllocator = aAllocator;
-  if (aAllocator) {
-    SetRecycleCallback(TextureClientRecycleCallback, nullptr);
-  } else {
-    ClearRecycleCallback();
   }
 }
 
@@ -365,15 +348,6 @@ TextureClient::CreateForDrawing(ISurfaceAllocator* aAllocator,
                                 TextureFlags aTextureFlags,
                                 TextureAllocationFlags aAllocFlags)
 {
-  MOZ_ASSERT(aAllocator->IPCOpen());
-  if (!aAllocator || !aAllocator->IPCOpen()) {
-    return nullptr;
-  }
-
-  if (!gfx::Factory::AllowedSurfaceSize(aSize)) {
-    return nullptr;
-  }
-
   gfx::BackendType moz2DBackend = BackendTypeForBackendSelector(aSelector);
 
   RefPtr<TextureClient> texture;
@@ -481,15 +455,6 @@ TextureClient::CreateForRawBufferAccess(ISurfaceAllocator* aAllocator,
                                         TextureFlags aTextureFlags,
                                         TextureAllocationFlags aAllocFlags)
 {
-  MOZ_ASSERT(aAllocator->IPCOpen());
-  if (!aAllocator || !aAllocator->IPCOpen()) {
-    return nullptr;
-  }
-
-  if (!gfx::Factory::AllowedSurfaceSize(aSize)) {
-    return nullptr;
-  }
-
   RefPtr<BufferTextureClient> texture =
     CreateBufferTextureClient(aAllocator, aFormat,
                               aTextureFlags, aMoz2DBackend);
@@ -509,15 +474,6 @@ TextureClient::CreateForYCbCr(ISurfaceAllocator* aAllocator,
                               StereoMode aStereoMode,
                               TextureFlags aTextureFlags)
 {
-  MOZ_ASSERT(aAllocator->IPCOpen());
-  if (!aAllocator || !aAllocator->IPCOpen()) {
-    return nullptr;
-  }
-
-  if (!gfx::Factory::AllowedSurfaceSize(aYSize)) {
-    return nullptr;
-  }
-
   RefPtr<BufferTextureClient> texture;
   if (aAllocator->IsSameProcess()) {
     texture = new MemoryTextureClient(aAllocator, gfx::SurfaceFormat::YUV,
@@ -543,11 +499,6 @@ TextureClient::CreateWithBufferSize(ISurfaceAllocator* aAllocator,
                      size_t aSize,
                      TextureFlags aTextureFlags)
 {
-  MOZ_ASSERT(aAllocator->IPCOpen());
-  if (!aAllocator || !aAllocator->IPCOpen()) {
-    return nullptr;
-  }
-
   RefPtr<BufferTextureClient> texture;
   if (aAllocator->IsSameProcess()) {
     texture = new MemoryTextureClient(aAllocator, gfx::SurfaceFormat::YUV,
@@ -595,7 +546,6 @@ TextureClient::KeepUntilFullDeallocation(UniquePtr<KeepAlive> aKeep, bool aMainT
 void TextureClient::ForceRemove(bool sync)
 {
   if (mValid && mActor) {
-    FinalizeOnIPDLThread();
     if (sync || GetFlags() & TextureFlags::DEALLOCATE_CLIENT) {
       MOZ_PERFORMANCE_WARNING("gfx", "TextureClient/Host pair requires synchronous deallocation");
       if (mActor->IPCOpen()) {
@@ -883,7 +833,6 @@ BufferTextureClient::BorrowDrawTarget()
 
   ImageDataSerializer serializer(GetBuffer(), GetBufferSize());
   if (!serializer.IsValid()) {
-    gfxCriticalNote << "Invalid serializer " << IsValid() << ", " << IsLocked() << ", " << GetBufferSize();
     return nullptr;
   }
 
@@ -893,9 +842,6 @@ BufferTextureClient::BorrowDrawTarget()
   }
 
   mDrawTarget = serializer.GetAsDrawTarget(BackendType::CAIRO);
-  if (!mDrawTarget) {
-    gfxCriticalNote << "BorrowDrawTarget failure, original backend " << (int)mBackend;
-  }
 
   return mDrawTarget;
 }

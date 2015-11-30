@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var Ci = Components.interfaces;
-var Cu = Components.utils;
+let Ci = Components.interfaces;
+let Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, 'Services',
@@ -15,9 +15,7 @@ XPCOMUtils.defineLazyModuleGetter(this, 'Logger',
 XPCOMUtils.defineLazyModuleGetter(this, 'Roles',
   'resource://gre/modules/accessibility/Constants.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'TraversalRules',
-  'resource://gre/modules/accessibility/Traversal.jsm');
-XPCOMUtils.defineLazyModuleGetter(this, 'TraversalHelper',
-  'resource://gre/modules/accessibility/Traversal.jsm');
+  'resource://gre/modules/accessibility/TraversalRules.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Presentation',
   'resource://gre/modules/accessibility/Presentation.jsm');
 
@@ -29,6 +27,7 @@ const MOVEMENT_GRANULARITY_PARAGRAPH = 8;
 
 this.ContentControl = function ContentControl(aContentScope) {
   this._contentScope = Cu.getWeakReference(aContentScope);
+  this._vcCache = new WeakMap();
   this._childMessageSenders = new WeakMap();
 };
 
@@ -39,8 +38,7 @@ this.ContentControl.prototype = {
                        'AccessFu:AutoMove',
                        'AccessFu:Activate',
                        'AccessFu:MoveCaret',
-                       'AccessFu:MoveByGranularity',
-                       'AccessFu:AndroidScroll'],
+                       'AccessFu:MoveByGranularity'],
 
   start: function cc_start() {
     let cs = this._contentScope.get();
@@ -93,27 +91,6 @@ this.ContentControl.prototype = {
     }
   },
 
-  handleAndroidScroll: function cc_handleAndroidScroll(aMessage) {
-    let vc = this.vc;
-    let position = vc.position;
-
-    if (aMessage.json.origin != 'child' && this.sendToChild(vc, aMessage)) {
-      // Forwarded succesfully to child cursor.
-      return;
-    }
-
-    // Counter-intuitive, but scrolling backward (ie. up), actually should
-    // increase range values.
-    if (this.adjustRange(position, aMessage.json.direction === 'backward')) {
-      return;
-    }
-
-    this._contentScope.get().sendAsyncMessage('AccessFu:DoScroll',
-      { bounds: Utils.getBounds(position, true),
-        page: aMessage.json.direction === 'forward' ? 1 : -1,
-        horizontal: false });
-  },
-
   handleMoveCursor: function cc_handleMoveCursor(aMessage) {
     let origin = aMessage.json.origin;
     let action = aMessage.json.action;
@@ -129,7 +106,7 @@ this.ContentControl.prototype = {
       return;
     }
 
-    let moved = TraversalHelper.move(vc, action, aMessage.json.rule);
+    let moved = vc[action](TraversalRules[aMessage.json.rule]);
 
     if (moved) {
       if (origin === 'child') {

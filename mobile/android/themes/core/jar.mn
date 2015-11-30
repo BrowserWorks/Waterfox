@@ -8,9 +8,6 @@ chrome.jar:
 % skin browser classic/1.0 %skin/
   skin/aboutPage.css                        (aboutPage.css)
   skin/about.css                            (about.css)
-#ifndef MOZ_ANDROID_NATIVE_ACCOUNT_UI
-  skin/aboutAccounts.css                    (aboutAccounts.css)
-#endif
 * skin/aboutAddons.css                      (aboutAddons.css)
 * skin/aboutBase.css                        (aboutBase.css)
 #ifdef MOZ_DEVICES
@@ -32,7 +29,6 @@ chrome.jar:
   skin/config.css                           (config.css)
   skin/touchcontrols.css                    (touchcontrols.css)
   skin/netError.css                         (netError.css)
-  skin/spinner.css                          (spinner.css)
 % override chrome://global/skin/about.css chrome://browser/skin/about.css
 % override chrome://global/skin/aboutMemory.css chrome://browser/skin/aboutMemory.css
 % override chrome://global/skin/aboutReader.css chrome://browser/skin/aboutReader.css
@@ -48,13 +44,17 @@ chrome.jar:
 #
 
 * skin/aboutLogins.css                      (aboutLogins.css)
+  skin/images/spinning_throbber.svg         (images/spinning_throbber.svg)
 
   skin/images/search.png                    (images/search.png)
   skin/images/lock.png                      (images/lock.png)
   skin/images/textfield.png                 (images/textfield.png)
 
   skin/images/5stars.png                    (images/5stars.png)
+  skin/images/addons-32.png                 (images/addons-32.png)
   skin/images/amo-logo.png                  (images/amo-logo.png)
+  skin/images/arrowleft-16.png              (images/arrowleft-16.png)
+  skin/images/arrowright-16.png             (images/arrowright-16.png)
   skin/images/arrowdown-16.png              (images/arrowdown-16.png)
   skin/images/arrowup-16.png                (images/arrowup-16.png)
   skin/images/blocked-warning.png           (images/blocked-warning.png)
@@ -65,6 +65,7 @@ chrome.jar:
   skin/images/checkbox_unchecked_disabled.png (images/checkbox_unchecked_disabled.png)
   skin/images/checkbox_unchecked_pressed.png  (images/checkbox_unchecked_pressed.png)
   skin/images/chevron.png                   (images/chevron.png)
+  skin/images/default-app-icon.png          (images/default-app-icon.png)
   skin/images/dropmarker.svg                (images/dropmarker.svg)
   skin/images/dropmarker-right.svg          (images/dropmarker-right.svg)
   skin/images/errorpage-warning.png         (images/errorpage-warning.png)
@@ -72,6 +73,8 @@ chrome.jar:
   skin/images/fullscreen-hdpi.png           (images/fullscreen-hdpi.png)
   skin/images/grey-caution.svg              (images/grey-caution.svg)
   skin/images/certerror-warning.png         (images/certerror-warning.png)
+  skin/images/errorpage-larry-white.png     (images/errorpage-larry-white.png)
+  skin/images/errorpage-larry-black.png     (images/errorpage-larry-black.png)
   skin/images/throbber.png                  (images/throbber.png)
   skin/images/search-clear-30.png           (images/search-clear-30.png)
   skin/images/play-hdpi.png                 (images/play-hdpi.png)

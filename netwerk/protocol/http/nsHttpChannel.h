@@ -24,7 +24,6 @@
 #include "AutoClose.h"
 #include "nsIStreamListener.h"
 #include "nsISupportsPrimitives.h"
-#include "nsICorsPreflightCallback.h"
 
 class nsDNSPrefetch;
 class nsICancelable;
@@ -70,7 +69,6 @@ class nsHttpChannel final : public HttpBaseChannel
                           , public nsIThreadRetargetableStreamListener
                           , public nsIDNSListener
                           , public nsSupportsWeakReference
-                          , public nsICorsPreflightCallback
 {
 public:
     NS_DECL_ISUPPORTS_INHERITED
@@ -151,9 +149,6 @@ public:
     NS_IMETHOD GetRequestStart(mozilla::TimeStamp *aRequestStart) override;
     NS_IMETHOD GetResponseStart(mozilla::TimeStamp *aResponseStart) override;
     NS_IMETHOD GetResponseEnd(mozilla::TimeStamp *aResponseEnd) override;
-    // nsICorsPreflightCallback
-    NS_IMETHOD OnPreflightSucceeded() override;
-    NS_IMETHOD OnPreflightFailed(nsresult aError) override;
 
     nsresult AddSecurityMessage(const nsAString& aMessageTag,
                                 const nsAString& aMessageCategory) override;
@@ -238,9 +233,7 @@ public: /* internal necko use only */
     };
 
     void MarkIntercepted();
-    NS_IMETHOD GetResponseSynthesized(bool* aSynthesized) override;
     bool AwaitingCacheCallbacks();
-    void SetCouldBeSynthesized();
 
 protected:
     virtual ~nsHttpChannel();
@@ -491,10 +484,6 @@ private:
     // Upon successfully fetching the package, the resource will be placed in
     // the cache, and served by calling OnCacheEntryAvailable.
     uint32_t                          mIsPackagedAppResource : 1;
-    // True if CORS preflight has been performed
-    uint32_t                          mIsCorsPreflightDone : 1;
-
-    nsCOMPtr<nsIChannel>              mPreflightChannel;
 
     nsTArray<nsContinueRedirectionFunc> mRedirectFuncStack;
 

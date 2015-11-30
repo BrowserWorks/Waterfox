@@ -11,7 +11,7 @@ const FRAMES= [FAST_FPS, FAST_FPS, FAST_FPS, SLOW_FPS, FAST_FPS];
 const TEST_DATA = [];
 const INTERVAL = 100;
 const DURATION = 5000; // 5s
-var t = 0;
+let t = 0;
 for (let frameRate of FRAMES) {
   for (let i = 0; i < frameRate; i++) {
     let delta = Math.floor(1000 / frameRate); // Duration between frames at this rate
@@ -20,7 +20,8 @@ for (let frameRate of FRAMES) {
   }
 }
 
-var LineGraphWidget = require("devtools/shared/widgets/LineGraphWidget");
+let LineGraphWidget = require("devtools/shared/widgets/LineGraphWidget");
+let {Promise} = require("resource://gre/modules/Promise.jsm");
 
 add_task(function*() {
   yield promiseTab("about:blank");

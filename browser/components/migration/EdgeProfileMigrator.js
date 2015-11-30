@@ -84,6 +84,16 @@ function EdgeProfileMigrator() {
 
 EdgeProfileMigrator.prototype = Object.create(MigratorPrototype);
 
+/* Somewhat counterintuitively, this returns:
+ * - |null| to indicate "There is only 1 (default) profile" (on win10+)
+ * - |[]| to indicate "There are no profiles" (on <=win8.1) which will avoid using this migrator.
+ * See MigrationUtils.jsm for slightly more info on how sourceProfiles is used.
+ */
+EdgeProfileMigrator.prototype.__defineGetter__("sourceProfiles", function() {
+  let isWin10OrHigher = AppConstants.isPlatformAndVersionAtLeast("win", "10.0");
+  return isWin10OrHigher ? null : [];
+});
+
 EdgeProfileMigrator.prototype.getResources = function() {
   let resources = [
     MSMigrationUtils.getBookmarksMigrator(MSMigrationUtils.MIGRATION_TYPE_EDGE),
@@ -96,16 +106,6 @@ EdgeProfileMigrator.prototype.getResources = function() {
   resources.push(windowsVaultFormPasswordsMigrator);
   return resources.filter(r => r.exists);
 };
-
-/* Somewhat counterintuitively, this returns:
- * - |null| to indicate "There is only 1 (default) profile" (on win10+)
- * - |[]| to indicate "There are no profiles" (on <=win8.1) which will avoid using this migrator.
- * See MigrationUtils.jsm for slightly more info on how sourceProfiles is used.
- */
-EdgeProfileMigrator.prototype.__defineGetter__("sourceProfiles", function() {
-  let isWin10OrHigher = AppConstants.isPlatformAndVersionAtLeast("win", "10.0");
-  return isWin10OrHigher ? null : [];
-});
 
 EdgeProfileMigrator.prototype.classDescription = "Edge Profile Migrator";
 EdgeProfileMigrator.prototype.contractID = "@mozilla.org/profile/migrator;1?app=browser&type=edge";

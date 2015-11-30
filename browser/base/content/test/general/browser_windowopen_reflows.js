@@ -72,7 +72,7 @@ function test() {
   });
 }
 
-var observer = {
+let observer = {
   reflow: function (start, end) {
     // Gather information about the current code path.
     let stack = new Error().stack;

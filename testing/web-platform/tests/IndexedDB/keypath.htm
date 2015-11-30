@@ -41,7 +41,9 @@
                     cursor.continue();
                 }
                 else {
-                    assert_key_equals(actual_keys, expected_keys, "keyorder array");
+                    assert_equals(actual_keys.length, expected_keys.length, "array length");
+                    assert_object_equals(actual_keys, expected_keys, "keyorder array");
+
                     t.done();
                 }
             });

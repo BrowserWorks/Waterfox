@@ -14,13 +14,13 @@ if (typeof Components != "undefined") {
 }
 (function(exports) {
 
-var SharedAll =
+let SharedAll =
   require("resource://gre/modules/osfile/osfile_shared_allthreads.jsm");
-var Path = require("resource://gre/modules/osfile/ospath.jsm");
-var Lz4 =
+let Path = require("resource://gre/modules/osfile/ospath.jsm");
+let Lz4 =
   require("resource://gre/modules/workers/lz4.js");
-var LOG = SharedAll.LOG.bind(SharedAll, "Shared front-end");
-var clone = SharedAll.clone;
+let LOG = SharedAll.LOG.bind(SharedAll, "Shared front-end");
+let clone = SharedAll.clone;
 
 /**
  * Code shared by implementations of File.
@@ -29,7 +29,7 @@ var clone = SharedAll.clone;
  * @param {string} path File path of the file handle, used for error-reporting.
  * @constructor
  */
-var AbstractFile = function AbstractFile(fd, path) {
+let AbstractFile = function AbstractFile(fd, path) {
   this._fd = fd;
   if (!path) {
     throw new TypeError("path is expected");

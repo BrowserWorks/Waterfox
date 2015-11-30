@@ -10,7 +10,7 @@
  * Session annotations should be expired when browsing session ends.
  */
 
-var as = Cc["@mozilla.org/browser/annotation-service;1"].
+let as = Cc["@mozilla.org/browser/annotation-service;1"].
          getService(Ci.nsIAnnotationService);
 
 function run_test() {

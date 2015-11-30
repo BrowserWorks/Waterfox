@@ -89,7 +89,7 @@ namespace layers {
 
 MultiTiledContentClient::MultiTiledContentClient(ClientTiledPaintedLayer* aPaintedLayer,
                                                  ClientLayerManager* aManager)
-  : TiledContentClient(aManager, "Multi")
+  : TiledContentClient(aManager)
 {
   MOZ_COUNT_CTOR(MultiTiledContentClient);
 
@@ -442,7 +442,7 @@ gfxShmSharedReadLock::GetReadCount() {
 class TileExpiry final : public nsExpirationTracker<TileClient, 3>
 {
   public:
-    TileExpiry() : nsExpirationTracker<TileClient, 3>(1000, "TileExpiry") {}
+    TileExpiry() : nsExpirationTracker<TileClient, 3>(1000) {}
 
     static void AddTile(TileClient* aTile)
     {
@@ -1398,16 +1398,14 @@ ClientMultiTiledLayerBuffer::ValidateTile(TileClient& aTile,
  * transformed into the painted layer's LayerPixel coordinates, accounting
  * for the compositor state.
  */
-static Maybe<LayerRect>
+static LayerRect
 GetCompositorSideCompositionBounds(const LayerMetricsWrapper& aScrollAncestor,
                                    const Matrix4x4& aTransformToCompBounds,
-                                   const ViewTransform& aAPZTransform,
-                                   const LayerRect& aClip)
+                                   const ViewTransform& aAPZTransform)
 {
   Matrix4x4 transform = aTransformToCompBounds * Matrix4x4(aAPZTransform);
-
-  return UntransformTo<LayerPixel>(transform.Inverse(),
-    aScrollAncestor.Metrics().GetCompositionBounds(), aClip);
+  return TransformTo<LayerPixel>(transform.Inverse(),
+            aScrollAncestor.Metrics().GetCompositionBounds());
 }
 
 bool
@@ -1486,18 +1484,12 @@ ClientMultiTiledLayerBuffer::ComputeProgressiveUpdateRegion(const nsIntRegion& a
     }
   }
 
-  Maybe<LayerRect> transformedCompositionBounds =
+  LayerRect transformedCompositionBounds =
     GetCompositorSideCompositionBounds(scrollAncestor,
                                        aPaintData->mTransformToCompBounds,
-                                       viewTransform,
-                                       ViewAs<LayerPixel>(Rect(mPaintedLayer->GetLayerBounds())));
+                                       viewTransform);
 
-  if (!transformedCompositionBounds) {
-    aPaintData->mPaintFinished = true;
-    return false;
-  }
-
-  TILING_LOG("TILING %p: Progressive update transformed compositor bounds %s\n", mPaintedLayer, Stringify(*transformedCompositionBounds).c_str());
+  TILING_LOG("TILING %p: Progressive update transformed compositor bounds %s\n", mPaintedLayer, Stringify(transformedCompositionBounds).c_str());
 
   // Compute a "coherent update rect" that we should paint all at once in a
   // single transaction. This is to avoid rendering glitches on animated
@@ -1510,9 +1502,9 @@ ClientMultiTiledLayerBuffer::ComputeProgressiveUpdateRegion(const nsIntRegion& a
   // the browser, so we always use the entire user-visible area.
   IntRect coherentUpdateRect(LayerIntRect::ToUntyped(RoundedOut(
 #ifdef MOZ_WIDGET_ANDROID
-    transformedCompositionBounds->Intersect(aPaintData->mCompositionBounds)
+    transformedCompositionBounds.Intersect(aPaintData->mCompositionBounds)
 #else
-    *transformedCompositionBounds
+    transformedCompositionBounds
 #endif
   )));
 
@@ -1669,7 +1661,7 @@ void
 TiledContentClient::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 {
   aStream << aPrefix;
-  aStream << nsPrintfCString("%sTiledContentClient (0x%p)", mName, this).get();
+  aStream << nsPrintfCString("TiledContentClient (0x%p)", this).get();
 
   if (profiler_feature_active("displaylistdump")) {
     nsAutoCString pfx(aPrefix);
@@ -1685,15 +1677,6 @@ TiledContentClient::Dump(std::stringstream& aStream,
                          bool aDumpHtml)
 {
   GetTiledBuffer()->Dump(aStream, aPrefix, aDumpHtml);
-}
-
-void
-BasicTiledLayerPaintData::ResetPaintData()
-{
-  mLowPrecisionPaintCount = 0;
-  mPaintFinished = false;
-  mCompositionBounds.SetEmpty();
-  mCriticalDisplayPort.SetEmpty();
 }
 
 } // namespace layers

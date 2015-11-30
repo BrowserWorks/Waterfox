@@ -106,7 +106,7 @@ class HangMonitorChild
  private:
   void ShutdownOnThread();
 
-  static Atomic<HangMonitorChild*> sInstance;
+  static HangMonitorChild* sInstance;
 
   const nsRefPtr<ProcessHangMonitor> mHangMonitor;
   Monitor mMonitor;
@@ -124,7 +124,7 @@ class HangMonitorChild
   bool mIPCOpen;
 };
 
-Atomic<HangMonitorChild*> HangMonitorChild::sInstance;
+HangMonitorChild* HangMonitorChild::sInstance;
 
 /* Parent process objects */
 
@@ -675,10 +675,10 @@ HangMonitoredProcess::GetHangType(uint32_t* aHangType)
     *aHangType = PLUGIN_HANG;
     break;
    default:
-    MOZ_ASSERT_UNREACHABLE("Unexpected HangData type");
+    MOZ_ASSERT(false);
     return NS_ERROR_UNEXPECTED;
+    break;
   }
-
   return NS_OK;
 }
 

@@ -6,8 +6,8 @@
  * is keyboard accessible.
  */
 
-var { AbstractTreeItem } = Cu.import("resource:///modules/devtools/AbstractTreeItem.jsm", {});
-var { Heritage } = Cu.import("resource:///modules/devtools/ViewHelpers.jsm", {});
+let { AbstractTreeItem } = Cu.import("resource:///modules/devtools/AbstractTreeItem.jsm", {});
+let { Heritage } = Cu.import("resource:///modules/devtools/ViewHelpers.jsm", {});
 
 function* spawnTest() {
   let container = document.createElement("vbox");
@@ -171,7 +171,7 @@ MyCustomTreeItem.prototype = Heritage.extend(AbstractTreeItem.prototype, {
   }
 });
 
-var gDataSrc = {
+let gDataSrc = {
   label: "root",
   children: [{
     label: "foo",

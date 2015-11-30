@@ -1,11 +1,11 @@
-var protocol = require("devtools/server/protocol");
-var {method, Arg, Option, RetVal} = protocol;
+let protocol = require("devtools/server/protocol");
+let {method, Arg, Option, RetVal} = protocol;
 
 protocol.types.addActorType("child");
 protocol.types.addActorType("root");
 
 // The child actor doesn't provide a form description
-var ChildActor = protocol.ActorClass({
+let ChildActor = protocol.ActorClass({
   typeName: "child",
   initialize(conn) {
     protocol.Actor.prototype.initialize.call(this, conn);
@@ -25,7 +25,7 @@ var ChildActor = protocol.ActorClass({
   }),
 });
 
-var ChildFront = protocol.FrontClass(ChildActor, {
+let ChildFront = protocol.FrontClass(ChildActor, {
   initialize(client) {
     protocol.Front.prototype.initialize.call(this, client);
   },
@@ -36,7 +36,7 @@ var ChildFront = protocol.FrontClass(ChildActor, {
 });
 
 // The root actor does provide a form description.
-var RootActor = protocol.ActorClass({
+let RootActor = protocol.ActorClass({
   typeName: "root",
   initialize(conn) {
     protocol.Actor.prototype.initialize.call(this, conn);
@@ -108,7 +108,7 @@ var RootActor = protocol.ActorClass({
   }),
 });
 
-var RootFront = protocol.FrontClass(RootActor, {
+let RootFront = protocol.FrontClass(RootActor, {
   initialize(client) {
     this.actorID = "root";
     protocol.Front.prototype.initialize.call(this, client);

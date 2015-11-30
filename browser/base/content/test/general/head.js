@@ -484,7 +484,7 @@ function waitForDocLoadComplete(aBrowser=gBrowser) {
 waitForDocLoadComplete.listeners = new Set();
 registerCleanupFunction(() => waitForDocLoadComplete.listeners.clear());
 
-var FullZoomHelper = {
+let FullZoomHelper = {
 
   selectTabAndWaitForLocationChange: function selectTabAndWaitForLocationChange(tab) {
     if (!tab)
@@ -558,8 +558,8 @@ var FullZoomHelper = {
       let didPs = false;
       let didZoom = false;
 
-      gBrowser.addEventListener("pageshow", function listener(event) {
-        gBrowser.removeEventListener("pageshow", listener, true);
+      gBrowser.addEventListener("pageshow", function (event) {
+        gBrowser.removeEventListener("pageshow", arguments.callee, true);
         didPs = true;
         if (didZoom)
           resolve();
@@ -718,9 +718,9 @@ function assertWebRTCIndicatorStatus(expected) {
       let win = Services.wm.getMostRecentWindow("Browser:WebRTCGlobalIndicator");
       if (win) {
         yield new Promise((resolve, reject) => {
-          win.addEventListener("unload", function listener(e) {
+          win.addEventListener("unload", (e) => {
             if (e.target == win.document) {
-              win.removeEventListener("unload", listener);
+              win.removeEventListener("unload", arguments.callee);
               resolve();
             }
           }, false);
@@ -806,6 +806,7 @@ function assertMixedContentBlockingState(tabbrowser, states = {}) {
     ok(!classList.contains("mixedActiveBlocked"), "No MCB icon on HTTP page");
     ok(!classList.contains("mixedDisplayContent"), "No MCB icon on HTTP page");
     ok(!classList.contains("mixedDisplayContentLoadedActiveBlocked"), "No MCB icon on HTTP page");
+    ok(!classList.contains("mixedContent"), "No MCB icon on HTTP page");
   } else {
     // Make sure the identity box UI has the correct mixedcontent states and icons
     is(classList.contains("mixedActiveContent"), activeLoaded,
@@ -816,6 +817,8 @@ function assertMixedContentBlockingState(tabbrowser, states = {}) {
        "identityBox has expected class for passiveLoaded && !(activeLoaded || activeBlocked)");
     is(classList.contains("mixedDisplayContentLoadedActiveBlocked"), passiveLoaded && activeBlocked,
        "identityBox has expected class for passiveLoaded && activeBlocked");
+    is (classList.contains("mixedContent"), activeBlocked || activeLoaded || passiveLoaded,
+       "identityBox has expected class for mixed content");
 
     if (activeLoaded) {
       is(identityBoxImage, "url(\"chrome://browser/skin/identity-mixed-active-loaded.svg\")",

@@ -10,5 +10,4 @@ EXTRA_JS_MODULES.devtools += [
 
 EXTRA_JS_MODULES.devtools.client += [
     'connection-manager.js',
-    'main.js',
 ]

@@ -25,13 +25,15 @@ public:
                      const AudioInfo& aConfig);
   virtual ~FFmpegAudioDecoder();
 
-  virtual nsRefPtr<InitPromise> Init() override;
+  virtual nsresult Init() override;
   virtual nsresult Input(MediaRawData* aSample) override;
-  virtual void ProcessDrain() override;
+  virtual nsresult Drain() override;
   static AVCodecID GetCodecId(const nsACString& aMimeType);
 
 private:
   void DecodePacket(MediaRawData* aSample);
+
+  MediaDataDecoderCallback* mCallback;
 };
 
 } // namespace mozilla

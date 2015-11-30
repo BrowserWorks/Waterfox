@@ -12,7 +12,7 @@ import os
 
 HOST_FINGERPRINTS = {
     'bitbucket.org': '46:de:34:e7:9b:18:cd:7f:ae:fd:8b:e3:bc:f4:1a:5e:38:d7:ac:24',
-    'bugzilla.mozilla.org': 'f9:7e:62:42:4e:38:79:96:ca:87:71:2a:f8:51:38:c8:16:92:5c:a7',
+    'bugzilla.mozilla.org': '47:13:a2:14:0c:46:45:53:12:0d:e5:36:16:a5:60:26:3e:da:3a:60',
     'hg.mozilla.org': 'af:27:b9:34:47:4e:e5:98:01:f6:83:2b:51:c9:aa:d8:df:fb:1a:27',
 }
 
@@ -183,7 +183,7 @@ class MercurialConfig(object):
 
     def get_bugzilla_credentials(self):
         if 'bugzilla' not in self._c:
-            return None, None, None, None, None
+            return None, None, None, None
 
         b = self._c['bugzilla']
         return (
@@ -191,21 +191,11 @@ class MercurialConfig(object):
             b.get('password', None),
             b.get('userid', None),
             b.get('cookie', None),
-            b.get('apikey', None),
         )
 
-    def set_bugzilla_credentials(self, username, api_key):
+    def set_bugzilla_credentials(self, username, password):
         b = self._c.setdefault('bugzilla', {})
         if username:
             b['username'] = username
-        if api_key:
-            b['apikey'] = api_key
-
-    def clear_legacy_bugzilla_credentials(self):
-        if 'bugzilla' not in self._c:
-            return
-
-        b = self._c['bugzilla']
-        for k in ('password', 'userid', 'cookie'):
-            if k in b:
-                del b[k]
+        if password:
+            b['password'] = password

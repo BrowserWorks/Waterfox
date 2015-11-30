@@ -79,7 +79,7 @@ DOMSVGLengthList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 // Helper class: AutoChangeLengthListNotifier
 // Stack-based helper class to pair calls to WillChangeLengthList and
 // DidChangeLengthList.
-class MOZ_RAII AutoChangeLengthListNotifier
+class MOZ_STACK_CLASS AutoChangeLengthListNotifier
 {
 public:
   explicit AutoChangeLengthListNotifier(DOMSVGLengthList* aLengthList MOZ_GUARD_OBJECT_NOTIFIER_PARAM)

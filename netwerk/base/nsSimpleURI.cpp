@@ -297,7 +297,6 @@ nsSimpleURI::GetHostPort(nsACString &result)
 {
     // Note: Audit all callers before changing this to return an empty
     // string -- CAPS and UI code may depend on this throwing.
-    // Note: If this is changed, change GetAsciiHostPort as well.
     return NS_ERROR_FAILURE;
 }
 
@@ -526,13 +525,6 @@ nsSimpleURI::GetAsciiSpec(nsACString &result)
     if (NS_FAILED(rv)) return rv;
     NS_EscapeURL(buf, esc_OnlyNonASCII|esc_AlwaysCopy, result);
     return NS_OK;
-}
-
-NS_IMETHODIMP
-nsSimpleURI::GetAsciiHostPort(nsACString &result)
-{
-    // XXX This behavior mimics GetHostPort.
-    return NS_ERROR_FAILURE;
 }
 
 NS_IMETHODIMP

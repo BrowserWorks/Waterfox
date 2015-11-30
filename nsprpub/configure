@@ -7089,7 +7089,6 @@ tools are selected during the Xcode/Developer Tools installation." "$LINENO" 5
 
         CC_VERSION=`${CC} -v 2>&1 | sed -ne "$_MSVC_VER_FILTER"`
 
-
         _CC_MAJOR_VERSION=`echo ${CC_VERSION} | awk -F\. '{ print $1 }'`
         _CC_MINOR_VERSION=`echo ${CC_VERSION} | awk -F\. '{ print $2 }'`
         _CC_RELEASE=`echo ${CC_VERSION} | awk -F\. '{ print $3 }'`

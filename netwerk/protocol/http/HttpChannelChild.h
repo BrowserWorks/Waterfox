@@ -80,7 +80,6 @@ public:
   NS_IMETHOD SetRequestHeader(const nsACString& aHeader,
                               const nsACString& aValue,
                               bool aMerge) override;
-  NS_IMETHOD SetEmptyRequestHeader(const nsACString& aHeader) override;
   NS_IMETHOD RedirectTo(nsIURI *newURI) override;
   // nsIHttpChannelInternal
   NS_IMETHOD SetupFallbackChannel(const char *aFallbackKey) override;
@@ -136,8 +135,7 @@ protected:
   bool RecvRedirect1Begin(const uint32_t& newChannel,
                           const URIParams& newURI,
                           const uint32_t& redirectFlags,
-                          const nsHttpResponseHead& responseHead,
-                          const nsCString& securityInfoSerialization) override;
+                          const nsHttpResponseHead& responseHead) override;
   bool RecvRedirect3Complete() override;
   bool RecvAssociateApplicationCache(const nsCString& groupID,
                                      const nsCString& clientID) override;
@@ -150,8 +148,6 @@ protected:
 
   bool GetAssociatedContentSecurity(nsIAssociatedContentSecurity** res = nullptr);
   virtual void DoNotifyListenerCleanup() override;
-
-  NS_IMETHOD GetResponseSynthesized(bool* aSynthesized) override;
 
 private:
   nsresult ContinueAsyncOpen();
@@ -241,8 +237,7 @@ private:
   void Redirect1Begin(const uint32_t& newChannelId,
                       const URIParams& newUri,
                       const uint32_t& redirectFlags,
-                      const nsHttpResponseHead& responseHead,
-                      const nsACString& securityInfoSerialization);
+                      const nsHttpResponseHead& responseHead);
   void Redirect3Complete();
   void DeleteSelf();
 

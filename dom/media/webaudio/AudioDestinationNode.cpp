@@ -32,6 +32,8 @@ static uint8_t gWebAudioOutputKey;
 class OfflineDestinationNodeEngine final : public AudioNodeEngine
 {
 public:
+  typedef AutoFallibleTArray<nsAutoArrayPtr<float>, 2> InputChannels;
+
   OfflineDestinationNodeEngine(AudioDestinationNode* aNode,
                                uint32_t aNumberOfChannels,
                                uint32_t aLength,
@@ -46,60 +48,72 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
+                            const AudioChunk& aInput,
+                            AudioChunk* aOutput,
                             bool* aFinished) override
   {
     // Do this just for the sake of political correctness; this output
     // will not go anywhere.
     *aOutput = aInput;
 
-    // The output buffer is allocated lazily, on the rendering thread, when
-    // non-null input is received.
-    if (!mBufferAllocated && !aInput.IsNull()) {
+    // The output buffer is allocated lazily, on the rendering thread.
+    if (!mBufferAllocated) {
       // These allocations might fail if content provides a huge number of
       // channels or size, but it's OK since we'll deal with the failure
       // gracefully.
-      mBuffer = ThreadSharedFloatArrayBufferList::
-        Create(mNumberOfChannels, mLength, fallible);
-      if (mBuffer && mWriteIndex) {
-        // Zero leading for any null chunks that were skipped.
+      if (mInputChannels.SetLength(mNumberOfChannels, fallible)) {
         for (uint32_t i = 0; i < mNumberOfChannels; ++i) {
-          float* channelData = mBuffer->GetDataForWrite(i);
-          PodZero(channelData, mWriteIndex);
+          mInputChannels[i] = new (fallible) float[mLength];
+          if (!mInputChannels[i]) {
+            mInputChannels.Clear();
+            break;
+          }
         }
       }
 
       mBufferAllocated = true;
     }
 
-    // Skip copying if there is no buffer.
-    uint32_t outputChannelCount = mBuffer ? mNumberOfChannels : 0;
+    // Handle the case of allocation failure in the input buffer
+    if (mInputChannels.IsEmpty()) {
+      return;
+    }
+
+    if (mWriteIndex >= mLength) {
+      NS_ASSERTION(mWriteIndex == mLength, "Overshot length");
+      // Don't record any more.
+      return;
+    }
 
     // Record our input buffer
     MOZ_ASSERT(mWriteIndex < mLength, "How did this happen?");
     const uint32_t duration = std::min(WEBAUDIO_BLOCK_SIZE, mLength - mWriteIndex);
-    const uint32_t inputChannelCount = aInput.ChannelCount();
-    for (uint32_t i = 0; i < outputChannelCount; ++i) {
-      float* outputData = mBuffer->GetDataForWrite(i) + mWriteIndex;
-      if (aInput.IsNull() || i >= inputChannelCount) {
-        PodZero(outputData, duration);
+    const uint32_t commonChannelCount = std::min(mInputChannels.Length(),
+                                                 aInput.mChannelData.Length());
+    // First, copy as many channels in the input as we have
+    for (uint32_t i = 0; i < commonChannelCount; ++i) {
+      if (aInput.IsNull()) {
+        PodZero(mInputChannels[i] + mWriteIndex, duration);
       } else {
         const float* inputBuffer = static_cast<const float*>(aInput.mChannelData[i]);
         if (duration == WEBAUDIO_BLOCK_SIZE) {
           // Use the optimized version of the copy with scale operation
           AudioBlockCopyChannelWithScale(inputBuffer, aInput.mVolume,
-                                         outputData);
+                                         mInputChannels[i] + mWriteIndex);
         } else {
           if (aInput.mVolume == 1.0f) {
-            PodCopy(outputData, inputBuffer, duration);
+            PodCopy(mInputChannels[i] + mWriteIndex, inputBuffer, duration);
           } else {
             for (uint32_t j = 0; j < duration; ++j) {
-              outputData[j] = aInput.mVolume * inputBuffer[j];
+              mInputChannels[i][mWriteIndex + j] = aInput.mVolume * inputBuffer[j];
             }
           }
         }
       }
+    }
+    // Then, silence all of the remaining channels
+    for (uint32_t i = commonChannelCount; i < mInputChannels.Length(); ++i) {
+      PodZero(mInputChannels[i] + mWriteIndex, duration);
     }
     mWriteIndex += duration;
 
@@ -151,10 +165,13 @@ public:
     // Create the input buffer
     ErrorResult rv;
     nsRefPtr<AudioBuffer> renderedBuffer =
-      AudioBuffer::Create(context, mNumberOfChannels, mLength, mSampleRate,
-                          mBuffer.forget(), cx, rv);
+      AudioBuffer::Create(context, mInputChannels.Length(),
+                          mLength, mSampleRate, cx, rv);
     if (rv.Failed()) {
       return;
+    }
+    for (uint32_t i = 0; i < mInputChannels.Length(); ++i) {
+      renderedBuffer->SetRawChannelContents(i, mInputChannels[i]);
     }
 
     aNode->ResolvePromise(renderedBuffer);
@@ -169,9 +186,7 @@ public:
   virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     size_t amount = AudioNodeEngine::SizeOfExcludingThis(aMallocSizeOf);
-    if (mBuffer) {
-      amount += mBuffer->SizeOfIncludingThis(aMallocSizeOf);
-    }
+    amount += mInputChannels.ShallowSizeOfExcludingThis(aMallocSizeOf);
     return amount;
   }
 
@@ -181,11 +196,11 @@ public:
   }
 
 private:
-  // The input to the destination node is recorded in mBuffer.
+  // The input to the destination node is recorded in the mInputChannels buffer.
   // When this buffer fills up with mLength frames, the buffered input is sent
   // to the main thread in order to dispatch OfflineAudioCompletionEvent.
-  nsRefPtr<ThreadSharedFloatArrayBufferList> mBuffer;
-  // An index representing the next offset in mBuffer to be written to.
+  InputChannels mInputChannels;
+  // An index representing the next offset in mInputChannels to be written to.
   uint32_t mWriteIndex;
   uint32_t mNumberOfChannels;
   // How many frames the OfflineAudioContext intends to produce.
@@ -235,8 +250,8 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
+                            const AudioChunk& aInput,
+                            AudioChunk* aOutput,
                             bool* aFinished) override
   {
     *aOutput = aInput;
@@ -290,6 +305,11 @@ private:
   bool mSuspended;
 };
 
+static bool UseAudioChannelService()
+{
+  return Preferences::GetBool("media.useAudioChannelService");
+}
+
 static bool UseAudioChannelAPI()
 {
   return Preferences::GetBool("media.useAudioChannelAPI");
@@ -322,19 +342,16 @@ AudioDestinationNode::AudioDestinationNode(AudioContext* aContext,
   , mExtraCurrentTimeUpdatedSinceLastStableState(false)
   , mCaptured(false)
 {
+  bool startWithAudioDriver = true;
   MediaStreamGraph* graph = aIsOffline ?
                             MediaStreamGraph::CreateNonRealtimeInstance(aSampleRate) :
-                            MediaStreamGraph::GetInstance(MediaStreamGraph::AUDIO_THREAD_DRIVER, aChannel);
+                            MediaStreamGraph::GetInstance(startWithAudioDriver, aChannel);
   AudioNodeEngine* engine = aIsOffline ?
                             new OfflineDestinationNodeEngine(this, aNumberOfChannels,
                                                              aLength, aSampleRate) :
                             static_cast<AudioNodeEngine*>(new DestinationNodeEngine(this));
 
-  AudioNodeStream::Flags flags =
-    AudioNodeStream::NEED_MAIN_THREAD_CURRENT_TIME |
-    AudioNodeStream::NEED_MAIN_THREAD_FINISHED |
-    AudioNodeStream::EXTERNAL_OUTPUT;
-  mStream = AudioNodeStream::Create(aContext, engine, flags, graph);
+  mStream = graph->CreateAudioNodeStream(engine, MediaStreamGraph::EXTERNAL_STREAM);
   mStream->AddMainThreadListener(this);
   mStream->AddAudioOutput(&gWebAudioOutputKey);
 
@@ -580,6 +597,10 @@ AudioDestinationNode::SetMozAudioChannelType(AudioChannel aValue, ErrorResult& a
 bool
 AudioDestinationNode::CheckAudioChannelPermissions(AudioChannel aValue)
 {
+  if (!UseAudioChannelService()) {
+    return true;
+  }
+
   // Only normal channel doesn't need permission.
   if (aValue == AudioChannel::Normal) {
     return true;
@@ -615,7 +636,7 @@ AudioDestinationNode::CheckAudioChannelPermissions(AudioChannel aValue)
 void
 AudioDestinationNode::CreateAudioChannelAgent()
 {
-  if (mIsOffline) {
+  if (mIsOffline || !UseAudioChannelService()) {
     return;
   }
 
@@ -644,7 +665,9 @@ AudioDestinationNode::ScheduleStableStateNotification()
     NS_NewRunnableMethod(this, &AudioDestinationNode::NotifyStableState);
   // Dispatch will fail if this is called on AudioNode destruction during
   // shutdown, in which case failure can be ignored.
-  nsContentUtils::RunInStableState(event.forget());
+  nsContentUtils::RunInStableState(event.forget(),
+                                   nsContentUtils::
+                                     DispatchFailureHandling::IgnoreFailure);
 }
 
 double
@@ -682,7 +705,7 @@ AudioDestinationNode::SetIsOnlyNodeForContext(bool aIsOnlyNode)
   }
 
   if (aIsOnlyNode) {
-    mStream->Suspend();
+    mStream->ChangeExplicitBlockerCount(1);
     mStartedBlockingDueToBeingOnlyNode = TimeStamp::Now();
     // Don't do an update of mExtraCurrentTimeSinceLastStartedBlocking until the next stable state.
     mExtraCurrentTimeUpdatedSinceLastStableState = true;
@@ -692,7 +715,7 @@ AudioDestinationNode::SetIsOnlyNodeForContext(bool aIsOnlyNode)
     ExtraCurrentTime();
     mExtraCurrentTime += mExtraCurrentTimeSinceLastStartedBlocking;
     mExtraCurrentTimeSinceLastStartedBlocking = 0;
-    mStream->Resume();
+    mStream->ChangeExplicitBlockerCount(-1);
     mStartedBlockingDueToBeingOnlyNode = TimeStamp();
   }
 }

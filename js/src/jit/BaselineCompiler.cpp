@@ -25,7 +25,6 @@
 
 #include "jsscriptinlines.h"
 
-#include "jit/MacroAssembler-inl.h"
 #include "vm/Interpreter-inl.h"
 #include "vm/NativeObject-inl.h"
 
@@ -91,12 +90,6 @@ BaselineCompiler::compile()
     if (!script->ensureHasTypes(cx) || !script->ensureHasAnalyzedArgsUsage(cx))
         return Method_Error;
 
-    // When a Debugger set the collectCoverageInfo flag, we recompile baseline
-    // scripts without entering the interpreter again. We have to create the
-    // ScriptCounts if they do not exist.
-    if (!script->hasScriptCounts() && cx->compartment()->collectCoverage())
-        script->initScriptCounts(cx);
-
     // Pin analysis info during compilation.
     AutoEnterAnalysis autoEnterAnalysis(cx);
 
@@ -129,7 +122,7 @@ BaselineCompiler::compile()
     JSObject* templateScope = nullptr;
     if (script->functionNonDelazifying()) {
         RootedFunction fun(cx, script->functionNonDelazifying());
-        if (fun->needsCallObject()) {
+        if (fun->isHeavyweight()) {
             RootedScript scriptRoot(cx, script);
             templateScope = CallObject::createTemplateObject(cx, scriptRoot, gc::TenuredHeap);
             if (!templateScope)
@@ -493,12 +486,12 @@ BaselineCompiler::emitOutOfLinePostBarrierSlot()
     // On ARM, save the link register before calling.  It contains the return
     // address.  The |masm.ret()| later will pop this into |pc| to return.
     masm.push(lr);
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS)
     masm.push(ra);
 #endif
     masm.pushValue(R0);
 
-    masm.setupUnalignedABICall(scratch);
+    masm.setupUnalignedABICall(2, scratch);
     masm.movePtr(ImmPtr(cx->runtime()), scratch);
     masm.passABIArg(scratch);
     masm.passABIArg(objReg);
@@ -593,7 +586,7 @@ BaselineCompiler::emitIsDebuggeeCheck()
 {
     if (compileDebugInstrumentation_) {
         masm.Push(BaselineFrameReg);
-        masm.setupUnalignedABICall(R0.scratchReg());
+        masm.setupUnalignedABICall(1, R0.scratchReg());
         masm.loadBaselineFramePtr(BaselineFrameReg, R0.scratchReg());
         masm.passABIArg(R0.scratchReg());
         masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, jit::FrameIsDebuggeeCheck));
@@ -636,13 +629,13 @@ BaselineCompiler::emitDebugPrologue()
     return true;
 }
 
-typedef bool (*InitStrictEvalScopeObjectsFn)(JSContext*, BaselineFrame*);
-static const VMFunction InitStrictEvalScopeObjectsInfo =
-    FunctionInfo<InitStrictEvalScopeObjectsFn>(jit::InitStrictEvalScopeObjects);
+typedef bool (*StrictEvalPrologueFn)(JSContext*, BaselineFrame*);
+static const VMFunction StrictEvalPrologueInfo =
+    FunctionInfo<StrictEvalPrologueFn>(jit::StrictEvalPrologue);
 
-typedef bool (*InitFunctionScopeObjectsFn)(JSContext*, BaselineFrame*);
-static const VMFunction InitFunctionScopeObjectsInfo =
-    FunctionInfo<InitFunctionScopeObjectsFn>(jit::InitFunctionScopeObjects);
+typedef bool (*HeavyweightFunPrologueFn)(JSContext*, BaselineFrame*);
+static const VMFunction HeavyweightFunPrologueInfo =
+    FunctionInfo<HeavyweightFunPrologueFn>(jit::HeavyweightFunPrologue);
 
 bool
 BaselineCompiler::initScopeChain()
@@ -654,7 +647,7 @@ BaselineCompiler::initScopeChain()
     RootedFunction fun(cx, function());
     if (fun) {
         // Use callee->environment as scope chain. Note that we do
-        // this also for needsCallObject functions, so that the scope
+        // this also for heavy-weight functions, so that the scope
         // chain slot is properly initialized if the call triggers GC.
         Register callee = R0.scratchReg();
         Register scope = R1.scratchReg();
@@ -662,14 +655,14 @@ BaselineCompiler::initScopeChain()
         masm.loadPtr(Address(callee, JSFunction::offsetOfEnvironment()), scope);
         masm.storePtr(scope, frame.addressOfScopeChain());
 
-        if (fun->needsCallObject()) {
+        if (fun->isHeavyweight()) {
             // Call into the VM to create a new call object.
             prepareVMCall();
 
             masm.loadBaselineFramePtr(BaselineFrameReg, R0.scratchReg());
             pushArg(R0.scratchReg());
 
-            if (!callVMNonOp(InitFunctionScopeObjectsInfo, phase))
+            if (!callVMNonOp(HeavyweightFunPrologueInfo, phase))
                 return false;
         }
     } else {
@@ -683,7 +676,7 @@ BaselineCompiler::initScopeChain()
             masm.loadBaselineFramePtr(BaselineFrameReg, R0.scratchReg());
             pushArg(R0.scratchReg());
 
-            if (!callVMNonOp(InitStrictEvalScopeObjectsInfo, phase))
+            if (!callVMNonOp(StrictEvalPrologueInfo, phase))
                 return false;
         }
     }
@@ -811,17 +804,6 @@ BaselineCompiler::emitDebugTrap()
     return appendICEntry(ICEntry::Kind_DebugTrap, masm.currentOffset());
 }
 
-void
-BaselineCompiler::emitCoverage(jsbytecode* pc)
-{
-    PCCounts* counts = script->maybeGetPCCounts(pc);
-    if (!counts)
-        return;
-
-    uint64_t* counterAddr = &counts->numExec();
-    masm.inc64(AbsoluteAddress(counterAddr));
-}
-
 #ifdef JS_TRACE_LOGGING
 bool
 BaselineCompiler::emitTraceLoggerEnter()
@@ -919,7 +901,6 @@ BaselineCompiler::emitBody()
     bool lastOpUnreachable = false;
     uint32_t emittedOps = 0;
     mozilla::DebugOnly<jsbytecode*> prevpc = pc;
-    bool compileCoverage = script->hasScriptCounts();
 
     while (true) {
         JSOp op = JSOp(*pc);
@@ -973,10 +954,6 @@ BaselineCompiler::emitBody()
         // Emit traps for breakpoints and step mode.
         if (compileDebugInstrumentation_ && !emitDebugTrap())
             return Method_Error;
-
-        // Emit code coverage code, to fill the same data as the interpreter.
-        if (compileCoverage)
-            emitCoverage(pc);
 
         switch (op) {
           default:
@@ -1634,7 +1611,7 @@ BaselineCompiler::emitBinaryArith()
     frame.popRegsAndSync(2);
 
     // Call IC
-    ICBinaryArith_Fallback::Compiler stubCompiler(cx, ICStubCompiler::Engine::Baseline);
+    ICBinaryArith_Fallback::Compiler stubCompiler(cx);
     if (!emitOpIC(stubCompiler.getStub(&stubSpace_)))
         return false;
 
@@ -1650,7 +1627,7 @@ BaselineCompiler::emitUnaryArith()
     frame.popRegsAndSync(1);
 
     // Call IC
-    ICUnaryArith_Fallback::Compiler stubCompiler(cx, ICStubCompiler::Engine::Baseline);
+    ICUnaryArith_Fallback::Compiler stubCompiler(cx);
     if (!emitOpIC(stubCompiler.getStub(&stubSpace_)))
         return false;
 
@@ -1716,7 +1693,7 @@ BaselineCompiler::emitCompare()
     frame.popRegsAndSync(2);
 
     // Call IC.
-    ICCompare_Fallback::Compiler stubCompiler(cx, ICStubCompiler::Engine::Baseline);
+    ICCompare_Fallback::Compiler stubCompiler(cx);
     if (!emitOpIC(stubCompiler.getStub(&stubSpace_)))
         return false;
 
@@ -1751,7 +1728,7 @@ BaselineCompiler::emit_JSOP_CASE()
     frame.syncStack(0);
 
     // Call IC.
-    ICCompare_Fallback::Compiler stubCompiler(cx, ICStubCompiler::Engine::Baseline);
+    ICCompare_Fallback::Compiler stubCompiler(cx);
     if (!emitOpIC(stubCompiler.getStub(&stubSpace_)))
         return false;
 
@@ -2627,9 +2604,9 @@ BaselineCompiler::emit_JSOP_SETLOCAL()
 bool
 BaselineCompiler::emitFormalArgAccess(uint32_t arg, bool get)
 {
-    // Fast path: the script does not use |arguments| or formals don't
-    // alias the arguments object.
-    if (!script->argumentsAliasesFormals()) {
+    // Fast path: the script does not use |arguments|, or is strict. In strict
+    // mode, formals do not alias the arguments object.
+    if (!script->argumentsHasVarBinding() || script->strict()) {
         if (get) {
             frame.pushArg(arg);
         } else {
@@ -3792,11 +3769,7 @@ BaselineCompiler::emit_JSOP_RESUME()
     // Push a fake return address on the stack. We will resume here when the
     // generator returns.
     Label genStart, returnTarget;
-#ifdef JS_USE_LINK_REGISTER
-    masm.call(&genStart);
-#else
     masm.callAndPushReturnAddress(&genStart);
-#endif
 
     // Add an IC entry so the return offset -> pc mapping works.
     if (!appendICEntry(ICEntry::Kind_Op, masm.currentOffset()))
@@ -3804,9 +3777,6 @@ BaselineCompiler::emit_JSOP_RESUME()
 
     masm.jump(&returnTarget);
     masm.bind(&genStart);
-#ifdef JS_USE_LINK_REGISTER
-    masm.pushReturnAddress();
-#endif
 
     // If profiler instrumentation is on, update lastProfilingFrame on
     // current JitActivation

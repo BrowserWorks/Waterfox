@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-Components.utils.import("resource://gre/modules/AppConstants.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 
@@ -356,12 +355,12 @@ PlacesViewBase.prototype = {
           PlacesUtils.livemarks.getLivemark({ id: itemId })
             .then(aLivemark => {
               element.setAttribute("livemark", "true");
-              if (AppConstants.platform === "macosx") {
-                // OS X native menubar doesn't track list-style-images since
-                // it doesn't have a frame (bug 733415).  Thus enforce updating.
-                element.setAttribute("image", "");
-                element.removeAttribute("image");
-              }
+#ifdef XP_MACOSX
+              // OS X native menubar doesn't track list-style-images since
+              // it doesn't have a frame (bug 733415).  Thus enforce updating.
+              element.setAttribute("image", "");
+              element.removeAttribute("image");
+#endif
               this.controller.cacheLivemarkInfo(aPlacesNode, aLivemark);
             }, () => undefined);
         }
@@ -541,12 +540,12 @@ PlacesViewBase.prototype = {
       let menu = elt.parentNode;
       if (!menu.hasAttribute("livemark")) {
         menu.setAttribute("livemark", "true");
-        if (AppConstants.platform === "macosx") {
-          // OS X native menubar doesn't track list-style-images since
-          // it doesn't have a frame (bug 733415).  Thus enforce updating.
-          menu.setAttribute("image", "");
-          menu.removeAttribute("image");
-        }
+#ifdef XP_MACOSX
+        // OS X native menubar doesn't track list-style-images since
+        // it doesn't have a frame (bug 733415).  Thus enforce updating.
+        menu.setAttribute("image", "");
+        menu.removeAttribute("image");
+#endif
       }
 
       PlacesUtils.livemarks.getLivemark({ id: aPlacesNode.itemId })
@@ -1775,15 +1774,15 @@ function PlacesMenu(aPopupShowingEvent, aPlace, aOptions) {
   this._addEventListeners(this._rootElt, ["popupshowing", "popuphidden"], true);
   this._addEventListeners(window, ["unload"], false);
 
-  if (AppConstants.platform === "macosx") {
-    // Must walk up to support views in sub-menus, like Bookmarks Toolbar menu.
-    for (let elt = this._viewElt.parentNode; elt; elt = elt.parentNode) {
-      if (elt.localName == "menubar") {
-        this._nativeView = true;
-        break;
-      }
+#ifdef XP_MACOSX
+  // Must walk up to support views in sub-menus, like Bookmarks Toolbar menu.
+  for (let elt = this._viewElt.parentNode; elt; elt = elt.parentNode) {
+    if (elt.localName == "menubar") {
+      this._nativeView = true;
+      break;
     }
   }
+#endif
 
   PlacesViewBase.call(this, aPlace, aOptions);
   this._onPopupShowing(aPopupShowingEvent);

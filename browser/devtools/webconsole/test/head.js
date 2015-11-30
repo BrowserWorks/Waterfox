@@ -5,20 +5,20 @@
 
 "use strict";
 
-var {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
-var {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
-var {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
-var {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-var promise = require("promise");
-var {TargetFactory} = require("devtools/framework/target");
-var {Utils: WebConsoleUtils} = require("devtools/toolkit/webconsole/utils");
-var {Messages} = require("devtools/webconsole/console-output");
-var DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+let {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
+let {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
+let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+let {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
+let {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+let {TargetFactory} = require("devtools/framework/target");
+let {Utils: WebConsoleUtils} = require("devtools/toolkit/webconsole/utils");
+let {Messages} = require("devtools/webconsole/console-output");
+let DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 const asyncStorage = require("devtools/toolkit/shared/async-storage");
 
 // Services.prefs.setBoolPref("devtools.debugger.log", true);
 
-var gPendingOutputTest = 0;
+let gPendingOutputTest = 0;
 
 // The various categories of messages.
 const CATEGORY_NETWORK = 0;
@@ -28,7 +28,6 @@ const CATEGORY_WEBDEV = 3;
 const CATEGORY_INPUT = 4;
 const CATEGORY_OUTPUT = 5;
 const CATEGORY_SECURITY = 6;
-const CATEGORY_SERVER = 7;
 
 // The possible message severities.
 const SEVERITY_ERROR = 0;
@@ -41,7 +40,7 @@ const GROUP_INDENT = 12;
 
 const WEBCONSOLE_STRINGS_URI = "chrome://browser/locale/devtools/" +
                                "webconsole.properties";
-var WCUL10n = new WebConsoleUtils.l10n(WEBCONSOLE_STRINGS_URI);
+let WCUL10n = new WebConsoleUtils.l10n(WEBCONSOLE_STRINGS_URI);
 
 DevToolsUtils.testing = true;
 
@@ -179,7 +178,7 @@ function findLogEntry(str) {
  * @return object
  *         A promise that is resolved once the web console is open.
  */
-var openConsole = function(tab) {
+let openConsole = function(tab) {
   let webconsoleOpened = promise.defer();
   let target = TargetFactory.forTab(tab || gBrowser.selectedTab);
   gDevTools.showToolbox(target, "webconsole").then(toolbox => {
@@ -202,7 +201,7 @@ var openConsole = function(tab) {
  * @return object
  *         A promise that is resolved once the web console is closed.
  */
-var closeConsole = Task.async(function* (tab) {
+let closeConsole = Task.async(function* (tab) {
   let target = TargetFactory.forTab(tab || gBrowser.selectedTab);
   let toolbox = gDevTools.getToolbox(target);
   if (toolbox) {
@@ -262,7 +261,7 @@ function waitForContextMenu(popup, button, onShown, onHidden) {
  * does and completes the load event.
  * @return a promise that resolves to the tab object
  */
-var waitForTab = Task.async(function*() {
+let waitForTab = Task.async(function*() {
   info("Waiting for a tab to open");
   yield once(gBrowser.tabContainer, "TabOpen");
   let tab = gBrowser.selectedTab;
@@ -317,7 +316,7 @@ function dumpMessageElement(message) {
                 "text", text);
 }
 
-var finishTest = Task.async(function* () {
+let finishTest = Task.async(function* () {
   dumpConsoles();
 
   let browserConsole = HUDService.getBrowserConsole();
@@ -402,7 +401,7 @@ function waitForSuccess(options) {
   return deferred.promise;
 }
 
-var openInspector = Task.async(function* (tab = gBrowser.selectedTab) {
+let openInspector = Task.async(function* (tab = gBrowser.selectedTab) {
   let target = TargetFactory.forTab(tab);
   let toolbox = yield gDevTools.showToolbox(target, "inspector");
   return toolbox.getCurrentPanel();
@@ -730,7 +729,7 @@ function variablesViewExpandTo(options) {
  * @return object
  *         A Promise object that is resolved once the property is updated.
  */
-var updateVariablesViewProperty = Task.async(function* (options) {
+let updateVariablesViewProperty = Task.async(function* (options) {
   let view = options.property._variablesView;
   view.window.focus();
   options.property.focus();
@@ -1079,7 +1078,7 @@ function waitForMessages(options) {
         let file = frame.querySelector(".message-location").title;
         if (!checkText(expected.file, file)) {
           ok(false, "frame #" + i + " does not match file name: " +
-                    expected.file + " != " + file);
+                    expected.file);
           displayErrorContext(rule, element);
           return false;
         }
@@ -1089,7 +1088,7 @@ function waitForMessages(options) {
         let fn = frame.querySelector(".function").textContent;
         if (!checkText(expected.fn, fn)) {
           ok(false, "frame #" + i + " does not match the function name: " +
-                    expected.fn + " != " + fn);
+                    expected.fn);
           displayErrorContext(rule, element);
           return false;
         }
@@ -1099,7 +1098,7 @@ function waitForMessages(options) {
         let line = frame.querySelector(".message-location").sourceLine;
         if (!checkText(expected.line, line)) {
           ok(false, "frame #" + i + " does not match the line number: " +
-                    expected.line + " != " + line);
+                    expected.line);
           displayErrorContext(rule, element);
           return false;
         }

@@ -45,18 +45,10 @@ template<class Cls> struct TypeAdapter<LocalRef<Cls>> {
     }
 };
 
-// clang is picky about function types, including attributes that modify the calling
-// convention, lining up.  GCC appears to be somewhat less so.
-#ifdef __clang__
-#define MOZ_JNICALL_ABI JNICALL
-#else
-#define MOZ_JNICALL_ABI
-#endif
-
 template<class Cls> constexpr jobject
-    (JNIEnv::*TypeAdapter<LocalRef<Cls>>::Call)(jobject, jmethodID, jvalue*) MOZ_JNICALL_ABI;
+    (JNIEnv::*TypeAdapter<LocalRef<Cls>>::Call)(jobject, jmethodID, jvalue*);
 template<class Cls> constexpr jobject
-    (JNIEnv::*TypeAdapter<LocalRef<Cls>>::StaticCall)(jclass, jmethodID, jvalue*) MOZ_JNICALL_ABI;
+    (JNIEnv::*TypeAdapter<LocalRef<Cls>>::StaticCall)(jclass, jmethodID, jvalue*);
 template<class Cls> constexpr jobject
     (JNIEnv::*TypeAdapter<LocalRef<Cls>>::Get)(jobject, jfieldID);
 template<class Cls> constexpr jobject

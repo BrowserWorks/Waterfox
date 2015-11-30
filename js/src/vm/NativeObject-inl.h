@@ -79,10 +79,7 @@ inline void
 NativeObject::initDenseElementWithType(ExclusiveContext* cx, uint32_t index, const Value& val)
 {
     MOZ_ASSERT(!shouldConvertDoubleElements());
-    if (val.isMagic(JS_ELEMENTS_HOLE))
-        markDenseElementsNotPacked(cx);
-    else
-        AddTypePropertyId(cx, this, JSID_VOID, val);
+    AddTypePropertyId(cx, this, JSID_VOID, val);
     initDenseElement(index, val);
 }
 

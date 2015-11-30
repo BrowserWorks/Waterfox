@@ -10,17 +10,17 @@
  * Toolkit glue for the remote debugging protocol, loaded into the
  * debugging global.
  */
-var { Ci, Cc, CC, Cu, Cr } = require("chrome");
-var Services = require("Services");
-var { ActorPool, OriginalLocation, RegisteredActorFactory,
+let { Ci, Cc, CC, Cu, Cr } = require("chrome");
+let Services = require("Services");
+let { ActorPool, OriginalLocation, RegisteredActorFactory,
       ObservedActorFactory } = require("devtools/server/actors/common");
-var { LocalDebuggerTransport, ChildDebuggerTransport, WorkerDebuggerTransport } =
+let { LocalDebuggerTransport, ChildDebuggerTransport, WorkerDebuggerTransport } =
   require("devtools/toolkit/transport/transport");
-var DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
-var { dumpn, dumpv, dbg_assert } = DevToolsUtils;
-var EventEmitter = require("devtools/toolkit/event-emitter");
-var Debugger = require("Debugger");
-var Promise = require("promise");
+let DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+let { dumpn, dumpv, dbg_assert } = DevToolsUtils;
+let EventEmitter = require("devtools/toolkit/event-emitter");
+let Debugger = require("Debugger");
+let Promise = require("promise");
 
 DevToolsUtils.defineLazyGetter(this, "DebuggerSocket", () => {
   let { DebuggerSocket } = require("devtools/toolkit/security/socket");
@@ -84,7 +84,7 @@ function loadSubScript(aURL)
 
 loader.lazyRequireGetter(this, "events", "sdk/event/core");
 
-var {defer, resolve, reject, all} = require("devtools/toolkit/deprecated-sync-thenables");
+let {defer, resolve, reject, all} = require("devtools/toolkit/deprecated-sync-thenables");
 this.defer = defer;
 this.resolve = resolve;
 this.reject = reject;
@@ -493,11 +493,6 @@ var DebuggerServer = {
       constructor: "MemoryActor",
       type: { tab: true }
     });
-    this.registerModule("devtools/server/actors/memprof", {
-      prefix: "memprof",
-      constructor: "MemprofActor",
-      type: { global: true, tab: true }
-    });
     this.registerModule("devtools/server/actors/framerate", {
       prefix: "framerate",
       constructor: "FramerateActor",
@@ -539,11 +534,6 @@ var DebuggerServer = {
         constructor: "ProfilerActor",
         type: { tab: true }
       });
-      this.registerModule("devtools/server/actors/performance", {
-        prefix: "performance",
-        constructor: "PerformanceActor",
-        type: { tab: true }
-      });
     }
     this.registerModule("devtools/server/actors/animation", {
       prefix: "animations",
@@ -553,7 +543,7 @@ var DebuggerServer = {
     this.registerModule("devtools/server/actors/promises", {
       prefix: "promises",
       constructor: "PromisesActor",
-      type: { tab: true }
+      type: { global: true, tab: true }
     });
     this.registerModule("devtools/server/actors/performance-entries", {
       prefix: "performanceEntries",
@@ -1275,7 +1265,7 @@ this.OriginalLocation = OriginalLocation;
 // When using DebuggerServer.addActors, some symbols are expected to be in
 // the scope of the added actor even before the corresponding modules are
 // loaded, so let's explicitly bind the expected symbols here.
-var includes = ["Components", "Ci", "Cu", "require", "Services", "DebuggerServer",
+let includes = ["Components", "Ci", "Cu", "require", "Services", "DebuggerServer",
                 "ActorPool", "DevToolsUtils"];
 includes.forEach(name => {
   DebuggerServer[name] = this[name];

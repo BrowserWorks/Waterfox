@@ -3,21 +3,17 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef SKIA_GL_GLUE_H_
-#define SKIA_GL_GLUE_H_
+#include "mozilla/RefPtr.h"
 
 #ifdef USE_SKIA_GPU
 
-#include "mozilla/gfx/RefPtrSkia.h"
-#include "mozilla/RefPtr.h"
-
-struct GrGLInterface;
-class GrContext;
+#include "GLContext.h"
+#include "skia/include/gpu/gl/GrGLInterface.h"
+#include "skia/include/gpu/GrContext.h"
+#include "mozilla/gfx/HelpersSkia.h"
 
 namespace mozilla {
 namespace gl {
-
-class GLContext;
 
 class SkiaGLGlue : public GenericAtomicRefCounted
 {
@@ -28,18 +24,27 @@ public:
   GrContext* GetGrContext() const { return mGrContext.get(); }
 
 protected:
-  virtual ~SkiaGLGlue();
+  virtual ~SkiaGLGlue() {
+    /*
+     * These members have inter-dependencies, but do not keep each other alive, so
+     * destruction order is very important here: mGrContext uses mGrGLInterface, and
+     * through it, uses mGLContext
+     */
+    mGrContext = nullptr;
+    mGrGLInterface = nullptr;
+    mGLContext = nullptr;
+  }
 
 private:
   RefPtr<GLContext> mGLContext;
-  gfx::RefPtrSkia<GrGLInterface> mGrGLInterface;
-  gfx::RefPtrSkia<GrContext> mGrContext;
+  mozilla::gfx::RefPtrSkia<GrGLInterface> mGrGLInterface;
+  mozilla::gfx::RefPtrSkia<GrContext> mGrContext;
 };
 
 } // namespace gl
 } // namespace mozilla
 
-#else // USE_SKIA_GPU
+#else
 
 class GrContext;
 
@@ -55,10 +60,7 @@ public:
   GLContext* GetGLContext() const { return nullptr; }
   GrContext* GetGrContext() const { return nullptr; }
 };
+}
+}
 
-} // namespace gl
-} // namespace mozilla
-
-#endif // USE_SKIA_GPU
-
-#endif // SKIA_GL_GLUE_H_
+#endif

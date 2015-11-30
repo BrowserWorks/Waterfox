@@ -4,7 +4,7 @@
 
 "use strict";
 
-var { TabActor } = require("devtools/server/actors/webbrowser");
+let { TabActor } = require("devtools/server/actors/webbrowser");
 
 /**
  * Tab actor for documents living in a child process.

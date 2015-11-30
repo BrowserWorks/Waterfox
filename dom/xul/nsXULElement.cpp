@@ -620,7 +620,7 @@ nsXULElement::IsFocusableInternal(int32_t *aTabIndex, bool aWithMouse)
   return shouldFocus;
 }
 
-bool
+void
 nsXULElement::PerformAccesskey(bool aKeyCausesActivation,
                                bool aIsTrustedEvent)
 {
@@ -643,24 +643,21 @@ nsXULElement::PerformAccesskey(bool aKeyCausesActivation,
         // |element|, or clear it.
         content = do_QueryInterface(element);
 
-        if (!content) {
-            return false;
-        }
+        if (!content)
+            return;
     }
 
     nsIFrame* frame = content->GetPrimaryFrame();
-    if (!frame || !frame->IsVisibleConsideringAncestors()) {
-        return false;
-    }
+    if (!frame || !frame->IsVisibleConsideringAncestors())
+        return;
 
-    bool focused = false;
     nsXULElement* elm = FromContent(content);
     if (elm) {
         // Define behavior for each type of XUL element.
         if (!content->IsXULElement(nsGkAtoms::toolbarbutton)) {
           nsIFocusManager* fm = nsFocusManager::GetFocusManager();
           if (fm) {
-            nsCOMPtr<nsIDOMElement> elementToFocus;
+            nsCOMPtr<nsIDOMElement> element;
             // for radio buttons, focus the radiogroup instead
             if (content->IsXULElement(nsGkAtoms::radio)) {
               nsCOMPtr<nsIDOMXULSelectControlItemElement> controlItem(do_QueryInterface(content));
@@ -670,19 +667,14 @@ nsXULElement::PerformAccesskey(bool aKeyCausesActivation,
                 if (!disabled) {
                   nsCOMPtr<nsIDOMXULSelectControlElement> selectControl;
                   controlItem->GetControl(getter_AddRefs(selectControl));
-                  elementToFocus = do_QueryInterface(selectControl);
+                  element = do_QueryInterface(selectControl);
                 }
               }
             } else {
-              elementToFocus = do_QueryInterface(content);
+              element = do_QueryInterface(content);
             }
-            if (elementToFocus) {
-              fm->SetFocus(elementToFocus, nsIFocusManager::FLAG_BYKEY);
-
-              // Return true if the element became focused.
-              nsPIDOMWindow* window = OwnerDoc()->GetWindow();
-              focused = (window && window->GetFocusedNode());
-            }
+            if (element)
+              fm->SetFocus(element, nsIFocusManager::FLAG_BYKEY);
           }
         }
         if (aKeyCausesActivation &&
@@ -690,10 +682,8 @@ nsXULElement::PerformAccesskey(bool aKeyCausesActivation,
           elm->ClickWithInputSource(nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD);
         }
     } else {
-        return content->PerformAccesskey(aKeyCausesActivation, aIsTrustedEvent);
+        content->PerformAccesskey(aKeyCausesActivation, aIsTrustedEvent);
     }
-
-    return focused;
 }
 
 //----------------------------------------------------------------------
@@ -1275,18 +1265,18 @@ nsXULElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
     aVisitor.mForceContentDispatch = true; //FIXME! Bug 329119
     if (IsRootOfNativeAnonymousSubtree() &&
         (IsAnyOfXULElements(nsGkAtoms::scrollbar, nsGkAtoms::scrollcorner)) &&
-        (aVisitor.mEvent->mMessage == eMouseClick ||
-         aVisitor.mEvent->mMessage == eMouseDoubleClick ||
-         aVisitor.mEvent->mMessage == eXULCommand ||
-         aVisitor.mEvent->mMessage == eContextMenu ||
-         aVisitor.mEvent->mMessage == eDragStart ||
-         aVisitor.mEvent->mMessage == eLegacyDragGesture)) {
+        (aVisitor.mEvent->message == NS_MOUSE_CLICK ||
+         aVisitor.mEvent->message == NS_MOUSE_DOUBLECLICK ||
+         aVisitor.mEvent->message == NS_XUL_COMMAND ||
+         aVisitor.mEvent->message == NS_CONTEXTMENU ||
+         aVisitor.mEvent->message == NS_DRAGDROP_START ||
+         aVisitor.mEvent->message == NS_DRAGDROP_GESTURE)) {
         // Don't propagate these events from native anonymous scrollbar.
         aVisitor.mCanHandle = true;
         aVisitor.mParentTarget = nullptr;
         return NS_OK;
     }
-    if (aVisitor.mEvent->mMessage == eXULCommand &&
+    if (aVisitor.mEvent->message == NS_XUL_COMMAND &&
         aVisitor.mEvent->mClass == eInputEventClass &&
         aVisitor.mEvent->originalTarget == static_cast<nsIContent*>(this) &&
         !IsXULElement(nsGkAtoms::command)) {
@@ -1750,11 +1740,11 @@ nsXULElement::ClickWithInputSource(uint16_t aInputSource)
 
             bool isCallerChrome = nsContentUtils::IsCallerChrome();
 
-            WidgetMouseEvent eventDown(isCallerChrome, eMouseDown,
+            WidgetMouseEvent eventDown(isCallerChrome, NS_MOUSE_BUTTON_DOWN,
                                        nullptr, WidgetMouseEvent::eReal);
-            WidgetMouseEvent eventUp(isCallerChrome, eMouseUp,
+            WidgetMouseEvent eventUp(isCallerChrome, NS_MOUSE_BUTTON_UP,
                                      nullptr, WidgetMouseEvent::eReal);
-            WidgetMouseEvent eventClick(isCallerChrome, eMouseClick, nullptr,
+            WidgetMouseEvent eventClick(isCallerChrome, NS_MOUSE_CLICK, nullptr,
                                         WidgetMouseEvent::eReal);
             eventDown.inputSource = eventUp.inputSource = eventClick.inputSource
                                   = aInputSource;
@@ -2288,15 +2278,16 @@ nsXULPrototypeElement::Deserialize(nsIObjectInputStream* aStream,
     // Read Node Info
     uint32_t number = 0;
     nsresult rv = aStream->Read32(&number);
-    if (NS_WARN_IF(NS_FAILED(rv))) return rv;
     mNodeInfo = aNodeInfos->SafeElementAt(number, nullptr);
     if (!mNodeInfo) {
         return NS_ERROR_UNEXPECTED;
     }
 
     // Read Attributes
-    rv = aStream->Read32(&number);
-    if (NS_WARN_IF(NS_FAILED(rv))) return rv;
+    nsresult tmp = aStream->Read32(&number);
+    if (NS_FAILED(tmp)) {
+      rv = tmp;
+    }
     mNumAttributes = int32_t(number);
 
     if (mNumAttributes > 0) {
@@ -2307,8 +2298,10 @@ nsXULPrototypeElement::Deserialize(nsIObjectInputStream* aStream,
 
         nsAutoString attributeValue;
         for (uint32_t i = 0; i < mNumAttributes; ++i) {
-            rv = aStream->Read32(&number);
-            if (NS_WARN_IF(NS_FAILED(rv))) return rv;
+            tmp = aStream->Read32(&number);
+            if (NS_FAILED(tmp)) {
+              rv = tmp;
+            }
             mozilla::dom::NodeInfo* ni = aNodeInfos->SafeElementAt(number, nullptr);
             if (!ni) {
                 return NS_ERROR_UNEXPECTED;
@@ -2316,25 +2309,31 @@ nsXULPrototypeElement::Deserialize(nsIObjectInputStream* aStream,
 
             mAttributes[i].mName.SetTo(ni);
 
-            rv = aStream->ReadString(attributeValue);
-            if (NS_WARN_IF(NS_FAILED(rv))) return rv;
-            rv = SetAttrAt(i, attributeValue, aDocumentURI);
-            if (NS_WARN_IF(NS_FAILED(rv))) return rv;
+            tmp = aStream->ReadString(attributeValue);
+            if (NS_FAILED(tmp)) {
+              rv = tmp;
+            }
+            tmp = SetAttrAt(i, attributeValue, aDocumentURI);
+            if (NS_FAILED(tmp)) {
+              rv = tmp;
+            }
         }
     }
 
-    rv = aStream->Read32(&number);
-    if (NS_WARN_IF(NS_FAILED(rv))) return rv;
+    tmp = aStream->Read32(&number);
+    if (NS_FAILED(tmp)) {
+      rv = tmp;
+    }
     uint32_t numChildren = int32_t(number);
 
     if (numChildren > 0) {
-        if (!mChildren.SetCapacity(numChildren, fallible)) {
-            return NS_ERROR_OUT_OF_MEMORY;
-        }
+        mChildren.SetCapacity(numChildren);
 
         for (uint32_t i = 0; i < numChildren; i++) {
-            rv = aStream->Read32(&number);
-            if (NS_WARN_IF(NS_FAILED(rv))) return rv;
+            tmp = aStream->Read32(&number);
+            if (NS_FAILED(tmp)) {
+              rv = tmp;
+            }
             Type childType = (Type)number;
 
             nsRefPtr<nsXULPrototypeNode> child;
@@ -2342,43 +2341,64 @@ nsXULPrototypeElement::Deserialize(nsIObjectInputStream* aStream,
             switch (childType) {
             case eType_Element:
                 child = new nsXULPrototypeElement();
-                rv = child->Deserialize(aStream, aProtoDoc, aDocumentURI,
-                                        aNodeInfos);
-                if (NS_WARN_IF(NS_FAILED(rv))) return rv;
+                child->mType = childType;
+
+                tmp = child->Deserialize(aStream, aProtoDoc, aDocumentURI,
+                                         aNodeInfos);
+                if (NS_FAILED(tmp)) {
+                  rv = tmp;
+                }
                 break;
             case eType_Text:
                 child = new nsXULPrototypeText();
-                rv = child->Deserialize(aStream, aProtoDoc, aDocumentURI,
-                                        aNodeInfos);
-                if (NS_WARN_IF(NS_FAILED(rv))) return rv;
+                child->mType = childType;
+
+                tmp = child->Deserialize(aStream, aProtoDoc, aDocumentURI,
+                                         aNodeInfos);
+                if (NS_FAILED(tmp)) {
+                  rv = tmp;
+                }
                 break;
             case eType_PI:
                 child = new nsXULPrototypePI();
-                rv = child->Deserialize(aStream, aProtoDoc, aDocumentURI,
-                                        aNodeInfos);
-                if (NS_WARN_IF(NS_FAILED(rv))) return rv;
+                child->mType = childType;
+
+                tmp = child->Deserialize(aStream, aProtoDoc, aDocumentURI,
+                                         aNodeInfos);
+                if (NS_FAILED(tmp)) {
+                  rv = tmp;
+                }
                 break;
             case eType_Script: {
                 // language version/options obtained during deserialization.
-                nsRefPtr<nsXULPrototypeScript> script = new nsXULPrototypeScript(0, 0);
+                nsXULPrototypeScript* script = new nsXULPrototypeScript(0, 0);
+                child = script;
+                child->mType = childType;
 
-                rv = aStream->ReadBoolean(&script->mOutOfLine);
-                if (NS_WARN_IF(NS_FAILED(rv))) return rv;
-                if (!script->mOutOfLine) {
-                    rv = script->Deserialize(aStream, aProtoDoc, aDocumentURI,
-                                             aNodeInfos);
-                    if (NS_WARN_IF(NS_FAILED(rv))) return rv;
+                tmp = aStream->ReadBoolean(&script->mOutOfLine);
+                if (NS_FAILED(tmp)) {
+                  rv = tmp;
+                }
+                if (! script->mOutOfLine) {
+                    tmp = script->Deserialize(aStream, aProtoDoc, aDocumentURI,
+                                              aNodeInfos);
+                    if (NS_FAILED(tmp)) {
+                      rv = tmp;
+                    }
                 } else {
                     nsCOMPtr<nsISupports> supports;
-                    rv = aStream->ReadObject(true, getter_AddRefs(supports));
-                    if (NS_WARN_IF(NS_FAILED(rv))) return rv;
+                    tmp = aStream->ReadObject(true, getter_AddRefs(supports));
                     script->mSrcURI = do_QueryInterface(supports);
+                    if (NS_FAILED(tmp)) {
+                      rv = tmp;
+                    }
 
-                    rv = script->DeserializeOutOfLine(aStream, aProtoDoc);
-                    if (NS_WARN_IF(NS_FAILED(rv))) return rv;
+                    tmp = script->DeserializeOutOfLine(aStream, aProtoDoc);
+                    if (NS_FAILED(tmp)) {
+                      rv = tmp;
+                    }
                 }
-
-                child = script.forget();
+                // If we failed to deserialize, consider deleting 'script'?
                 break;
             }
             default:
@@ -2387,7 +2407,6 @@ nsXULPrototypeElement::Deserialize(nsIObjectInputStream* aStream,
             }
 
             MOZ_ASSERT(child, "Don't append null to mChildren");
-            MOZ_ASSERT(child->mType == childType);
             mChildren.AppendElement(child);
 
             // Oh dear. Something failed during the deserialization.
@@ -2398,7 +2417,7 @@ nsXULPrototypeElement::Deserialize(nsIObjectInputStream* aStream,
             // death. So, let's just fail now, and propagate that failure
             // upward so that the ChromeProtocolHandler knows it can't use
             // a cached chrome channel for this.
-            if (NS_WARN_IF(NS_FAILED(rv)))
+            if (NS_FAILED(rv))
                 return rv;
         }
     }
@@ -2598,16 +2617,13 @@ nsXULPrototypeScript::Deserialize(nsIObjectInputStream* aStream,
                                   nsIURI* aDocumentURI,
                                   const nsTArray<nsRefPtr<mozilla::dom::NodeInfo>> *aNodeInfos)
 {
-    nsresult rv;
     NS_ASSERTION(!mSrcLoading || mSrcLoadWaiters != nullptr ||
                  !mScriptObject,
                  "prototype script not well-initialized when deserializing?!");
 
     // Read basic prototype data
-    rv = aStream->Read32(&mLineNo);
-    if (NS_FAILED(rv)) return rv;
-    rv = aStream->Read32(&mLangVersion);
-    if (NS_FAILED(rv)) return rv;
+    aStream->Read32(&mLineNo);
+    aStream->Read32(&mLangVersion);
 
     AutoSafeJSContext cx;
     JS::Rooted<JSObject*> global(cx, xpc::CompilationScope());
@@ -2615,8 +2631,8 @@ nsXULPrototypeScript::Deserialize(nsIObjectInputStream* aStream,
     JSAutoCompartment ac(cx, global);
 
     JS::Rooted<JSScript*> newScriptObject(cx);
-    rv = nsContentUtils::XPConnect()->ReadScript(aStream, cx,
-                                                 newScriptObject.address());
+    nsresult rv = nsContentUtils::XPConnect()->ReadScript(aStream, cx,
+                                                          newScriptObject.address());
     NS_ENSURE_SUCCESS(rv, rv);
     Set(newScriptObject);
     return NS_OK;
@@ -2846,11 +2862,11 @@ nsXULPrototypeText::Deserialize(nsIObjectInputStream* aStream,
                                 nsIURI* aDocumentURI,
                                 const nsTArray<nsRefPtr<mozilla::dom::NodeInfo>> *aNodeInfos)
 {
-    nsresult rv = aStream->ReadString(mValue);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-        return rv;
-    }
-    return NS_OK;
+    nsresult rv;
+
+    rv = aStream->ReadString(mValue);
+
+    return rv;
 }
 
 //----------------------------------------------------------------------
@@ -2889,9 +2905,10 @@ nsXULPrototypePI::Deserialize(nsIObjectInputStream* aStream,
     nsresult rv;
 
     rv = aStream->ReadString(mTarget);
-    if (NS_FAILED(rv)) return rv;
-    rv = aStream->ReadString(mData);
-    if (NS_FAILED(rv)) return rv;
+    nsresult tmp = aStream->ReadString(mData);
+    if (NS_FAILED(tmp)) {
+      rv = tmp;
+    }
 
     return rv;
 }

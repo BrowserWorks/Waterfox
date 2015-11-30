@@ -33,10 +33,10 @@ const REASON = [ 'unknown', 'startup', 'shutdown', 'enable', 'disable',
 
 const bind = Function.call.bind(Function.bind);
 
-var loader = null;
-var unload = null;
-var cuddlefishSandbox = null;
-var nukeTimer = null;
+let loader = null;
+let unload = null;
+let cuddlefishSandbox = null;
+let nukeTimer = null;
 
 // Utility function that synchronously reads local resource from the given
 // `uri` and returns content string.

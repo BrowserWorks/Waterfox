@@ -1,8 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var tabOne;
-var tabTwo;
+let tabOne;
+let tabTwo;
 
 function test() {
   waitForExplicitFinish();

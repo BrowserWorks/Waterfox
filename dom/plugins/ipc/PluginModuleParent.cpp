@@ -306,7 +306,7 @@ public:
         return sIsLoadModuleOnStack;
     }
 
-    class MOZ_RAII NotifyLoadingModule
+    class MOZ_STACK_CLASS NotifyLoadingModule
     {
     public:
         explicit NotifyLoadingModule(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM)

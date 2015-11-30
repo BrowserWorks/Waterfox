@@ -1014,5 +1014,5 @@ nsPlacesExpiration.prototype = {
 ////////////////////////////////////////////////////////////////////////////////
 //// Module Registration
 
-var components = [nsPlacesExpiration];
+let components = [nsPlacesExpiration];
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(components);

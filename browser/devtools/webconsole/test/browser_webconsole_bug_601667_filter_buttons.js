@@ -6,41 +6,20 @@
 "use strict";
 
 const TEST_URI = "http://example.com/";
-const FILTER_PREF_DOMAIN = "devtools.webconsole.filter.";
 
-var hud, hudId, hudBox;
-var prefs = {};
+let hud, hudId, hudBox;
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   hud = yield openConsole();
   hudId = hud.hudId;
   hudBox = hud.ui.rootElement;
 
-  savePrefs();
-
   testFilterButtons();
-
-  restorePrefs();
 
   hud = hudId = hudBox = null;
 });
-
-function savePrefs() {
-  let branch = Services.prefs.getBranch(FILTER_PREF_DOMAIN);
-  let children = branch.getChildList("");
-  for (let child of children) {
-    prefs[child] = branch.getBoolPref(child);
-  }
-}
-
-function restorePrefs() {
-  let branch = Services.prefs.getBranch(FILTER_PREF_DOMAIN);
-  for (let p in prefs) {
-    branch.setBoolPref(p, prefs[p]);
-  }
-}
 
 function testFilterButtons() {
   testMenuFilterButton("net");
@@ -48,14 +27,12 @@ function testFilterButtons() {
   testMenuFilterButton("js");
   testMenuFilterButton("logging");
   testMenuFilterButton("security");
-  testMenuFilterButton("server");
 
   testIsolateFilterButton("net");
   testIsolateFilterButton("css");
   testIsolateFilterButton("js");
   testIsolateFilterButton("logging");
   testIsolateFilterButton("security");
-  testIsolateFilterButton("server");
 }
 
 function testMenuFilterButton(category) {

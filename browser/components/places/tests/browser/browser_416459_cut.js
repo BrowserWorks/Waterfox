@@ -59,7 +59,7 @@ add_task(function* () {
   yield selectBookmarksIn(organizer, bookmarks, "UnfiledBookmarks");
 });
 
-var selectBookmarksIn = Task.async(function* (organizer, bookmarks, aLeftPaneQuery) {
+let selectBookmarksIn = Task.async(function* (organizer, bookmarks, aLeftPaneQuery) {
   let PlacesOrganizer = organizer.PlacesOrganizer;
   let ContentTree = organizer.ContentTree;
   info("Selecting " + aLeftPaneQuery + " in the left pane");

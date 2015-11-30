@@ -5,7 +5,6 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import argparse
-import itertools
 import json
 import logging
 import operator
@@ -26,7 +25,6 @@ from mach.mixin.logging import LoggingMixin
 
 from mozbuild.base import (
     MachCommandBase,
-    MachCommandConditions as conditions,
     MozbuildObject,
     MozconfigFindException,
     MozconfigLoadException,
@@ -127,17 +125,21 @@ class BuildProgressFooter(object):
         # terminal is a blessings.Terminal.
         self._t = terminal
         self._fh = sys.stdout
-        self.tiers = monitor.tiers.tier_status.viewitems()
+        self._monitor = monitor
 
-    def clear(self):
-        """Removes the footer from the current terminal."""
+    def _clear_lines(self, n):
         self._fh.write(self._t.move_x(0))
         self._fh.write(self._t.clear_eos())
 
+    def clear(self):
+        """Removes the footer from the current terminal."""
+        self._clear_lines(1)
+
     def draw(self):
         """Draws this footer in the terminal."""
+        tiers = self._monitor.tiers
 
-        if not self.tiers:
+        if not tiers.tiers:
             return
 
         # The drawn terminal looks something like:
@@ -146,15 +148,15 @@ class BuildProgressFooter(object):
         # This is a list of 2-tuples of (encoding function, input). None means
         # no encoding. For a full reason on why we do things this way, read the
         # big comment below.
-        parts = [('bold', 'TIER:')]
-        append = parts.append
-        for tier, status in self.tiers:
-            if status is None:
-                append(tier)
-            elif status == 'finished':
-                append(('green', tier))
+        parts = [('bold', 'TIER'), ':', ' ']
+
+        for tier, active, finished in tiers.tier_status():
+            if active:
+                parts.extend([('underline_yellow', tier), ' '])
+            elif finished:
+                parts.extend([('green', tier), ' '])
             else:
-                append(('underline_yellow', tier))
+                parts.extend([tier, ' '])
 
         # We don't want to write more characters than the current width of the
         # terminal otherwise wrapping may result in weird behavior. We can't
@@ -166,25 +168,30 @@ class BuildProgressFooter(object):
         written = 0
         write_pieces = []
         for part in parts:
-            try:
-                func, part = part
-                encoded = getattr(self._t, func)(part)
-            except ValueError:
-                encoded = part
+            if isinstance(part, tuple):
+                func, arg = part
 
-            len_part = len(part)
-            len_spaces = len(write_pieces)
-            if written + len_part + len_spaces > max_width:
-                write_pieces.append(part[0:max_width - written - len_spaces])
-                written += len_part
-                break
+                if written + len(arg) > max_width:
+                    write_pieces.append(arg[0:max_width - written])
+                    written += len(arg)
+                    break
 
-            write_pieces.append(encoded)
-            written += len_part
+                encoded = getattr(self._t, func)(arg)
 
+                write_pieces.append(encoded)
+                written += len(arg)
+            else:
+                if written + len(part) > max_width:
+                    write_pieces.append(part[0:max_width - written])
+                    written += len(part)
+                    break
+
+                write_pieces.append(part)
+                written += len(part)
         with self._t.location():
             self._t.move(self._t.height-1,0)
-            self._fh.write(' '.join(write_pieces))
+            self._fh.write(''.join(write_pieces))
+        self._fh.flush()
 
 
 class BuildOutputManager(LoggingMixin):
@@ -517,40 +524,21 @@ class Build(MachCommandBase):
         print('Hit CTRL+c to stop server.')
         server.run()
 
-    CLOBBER_CHOICES = ['objdir', 'python']
     @Command('clobber', category='build',
         description='Clobber the tree (delete the object directory).')
-    @CommandArgument('what', default=['objdir'], nargs='*',
-        help='Target to clobber, must be one of {{{}}} (default objdir).'.format(
-             ', '.join(CLOBBER_CHOICES)))
-    def clobber(self, what):
-        invalid = set(what) - set(self.CLOBBER_CHOICES)
-        if invalid:
-            print('Unknown clobber target(s): {}'.format(', '.join(invalid)))
-            return 1
+    def clobber(self):
+        try:
+            self.remove_objdir()
+            return 0
+        except OSError as e:
+            if sys.platform.startswith('win'):
+                if isinstance(e, WindowsError) and e.winerror in (5,32):
+                    self.log(logging.ERROR, 'file_access_error', {'error': e},
+                        "Could not clobber because a file was in use. If the "
+                        "application is running, try closing it. {error}")
+                    return 1
 
-        ret = 0
-        if 'objdir' in what:
-            try:
-                self.remove_objdir()
-            except OSError as e:
-                if sys.platform.startswith('win'):
-                    if isinstance(e, WindowsError) and e.winerror in (5,32):
-                        self.log(logging.ERROR, 'file_access_error', {'error': e},
-                            "Could not clobber because a file was in use. If the "
-                            "application is running, try closing it. {error}")
-                        return 1
-                raise
-
-        if 'python' in what:
-            if os.path.isdir(mozpath.join(self.topsrcdir, '.hg')):
-                cmd = ['hg', 'purge', '--all', '-I', 'glob:**.py[co]']
-            elif os.path.isdir(mozpath.join(self.topsrcdir, '.git')):
-                cmd = ['git', 'clean', '-f', '-x', '*.py[co]']
-            else:
-                cmd = ['find', '.', '-type', 'f', '-name', '*.py[co]', '-delete']
-            ret = subprocess.call(cmd, cwd=self.topsrcdir)
-        return ret
+            raise
 
     @Command('build-backend', category='build',
         description='Generate a backend used to build the tree.')
@@ -964,9 +952,6 @@ class Install(MachCommandBase):
     @Command('install', category='post-build',
         description='Install the package on the machine, or on a device.')
     def install(self):
-        if conditions.is_android(self):
-            from mozrunner.devices.android_device import verify_android_device
-            verify_android_device(self)
         ret = self._run_make(directory=".", target='install', ensure_exit_code=False)
         if ret == 0:
             self.notify('Install complete')

@@ -4,8 +4,8 @@
 
 "use strict";
 
-var Cu = Components.utils;
-var Ci = Components.interfaces;
+let Cu = Components.utils;
+let Ci = Components.interfaces;
 
 Cu.import("resource:///modules/tabview/utils.jsm");
 
@@ -20,7 +20,7 @@ this.__defineGetter__("webProgress", function () {
 // WindowEventHandler
 //
 // Handles events dispatched by the content window.
-var WindowEventHandler = {
+let WindowEventHandler = {
   // ----------
   // Function: onDOMWillOpenModalDialog
   // Sends a synchronous message when the "onDOMWillOpenModalDialog" event
@@ -56,7 +56,7 @@ addEventListener("MozAfterPaint", WindowEventHandler.onMozAfterPaint, false);
 // WindowMessageHandler
 //
 // Handles messages sent by the chrome process.
-var WindowMessageHandler = {
+let WindowMessageHandler = {
   // ----------
   // Function: isDocumentLoaded
   // Checks if the currently active document is loaded.

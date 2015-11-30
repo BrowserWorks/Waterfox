@@ -18,22 +18,22 @@
  */
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-var {LoadContextInfo} = Cu.import("resource://gre/modules/LoadContextInfo.jsm", {});
+let {LoadContextInfo} = Cu.import("resource://gre/modules/LoadContextInfo.jsm", {});
 
 XPCOMUtils.defineLazyModuleGetter(this, "FormHistory",
                                   "resource://gre/modules/FormHistory.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
 
-var tempScope = {};
+let tempScope = {};
 Cc["@mozilla.org/moz/jssubscript-loader;1"].getService(Ci.mozIJSSubScriptLoader)
                                            .loadSubScript("chrome://browser/content/sanitize.js", tempScope);
-var Sanitizer = tempScope.Sanitizer;
+let Sanitizer = tempScope.Sanitizer;
 
 const kMsecPerMin = 60 * 1000;
 const kUsecPerMin = 60 * 1000000;
 
-var formEntries, downloadIDs, olderDownloadIDs;
+let formEntries, downloadIDs, olderDownloadIDs;
 
 // Add tests here.  Each is a function that's called by doNextTest().
 var gAllTests = [
@@ -564,7 +564,7 @@ var gAllTests = [
 
     var sm = Cc["@mozilla.org/scriptsecuritymanager;1"]
              .getService(Ci.nsIScriptSecurityManager);
-    var principal = sm.createCodebasePrincipal(URI, {});
+    var principal = sm.getNoAppCodebasePrincipal(URI);
 
     // Give www.example.com privileges to store offline data
     var pm = Cc["@mozilla.org/permissionmanager;1"]
@@ -634,7 +634,7 @@ var gAllTests = [
 
     var sm = Cc["@mozilla.org/scriptsecuritymanager;1"]
              .getService(Ci.nsIScriptSecurityManager);
-    var principal = sm.createCodebasePrincipal(URI, {});
+    var principal = sm.getNoAppCodebasePrincipal(URI);
 
     // Open the dialog
     let wh = new WindowHelper();
@@ -661,8 +661,8 @@ var gAllTests = [
 // test run.  See doNextTest().
 var gCurrTest = 0;
 
-var now_mSec = Date.now();
-var now_uSec = now_mSec * 1000;
+let now_mSec = Date.now();
+let now_uSec = now_mSec * 1000;
 
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -1832,10 +1832,11 @@ MediaCacheStream::NotifyDataReceived(int64_t aSize, const char* aData,
 }
 
 void
-MediaCacheStream::FlushPartialBlockInternal(bool aNotifyAll,
-                                            ReentrantMonitorAutoEnter& aReentrantMonitor)
+MediaCacheStream::FlushPartialBlockInternal(bool aNotifyAll)
 {
   NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+
+  ReentrantMonitorAutoEnter mon(gMediaCache->GetReentrantMonitor());
 
   int32_t blockOffset = int32_t(mChannelOffset%BLOCK_SIZE);
   if (blockOffset > 0) {
@@ -1858,7 +1859,7 @@ MediaCacheStream::FlushPartialBlockInternal(bool aNotifyAll,
   // that will never come.
   if ((blockOffset > 0 || mChannelOffset == 0) && aNotifyAll) {
     // Wake up readers who may be waiting for this data
-    aReentrantMonitor.NotifyAll();
+    mon.NotifyAll();
   }
 }
 
@@ -1873,7 +1874,7 @@ MediaCacheStream::FlushPartialBlock()
   // Note: This writes a full block, so if data is not at the end of the
   // stream, the decoder must subsequently choose correct start and end offsets
   // for reading/seeking.
-  FlushPartialBlockInternal(false, mon);
+  FlushPartialBlockInternal(false);
 
   gMediaCache->QueueUpdate();
 }
@@ -1894,7 +1895,7 @@ MediaCacheStream::NotifyDataEnded(nsresult aStatus)
 
   // It is prudent to update channel/cache status before calling
   // CacheClientNotifyDataEnded() which will read |mChannelEnded|.
-  FlushPartialBlockInternal(true, mon);
+  FlushPartialBlockInternal(true);
   mChannelEnded = true;
   gMediaCache->QueueUpdate();
 
@@ -2459,13 +2460,13 @@ nsresult MediaCacheStream::GetCachedRanges(nsTArray<MediaByteRange>& aRanges)
   // shrink while we're trying to loop over them.
   NS_ASSERTION(mPinCount > 0, "Must be pinned");
 
-  int64_t startOffset = GetNextCachedDataInternal(0);
+  int64_t startOffset = GetNextCachedData(0);
   while (startOffset >= 0) {
-    int64_t endOffset = GetCachedDataEndInternal(startOffset);
+    int64_t endOffset = GetCachedDataEnd(startOffset);
     NS_ASSERTION(startOffset < endOffset, "Buffered range must end after its start");
     // Bytes [startOffset..endOffset] are cached.
     aRanges.AppendElement(MediaByteRange(startOffset, endOffset));
-    startOffset = GetNextCachedDataInternal(endOffset);
+    startOffset = GetNextCachedData(endOffset);
     NS_ASSERTION(startOffset == -1 || startOffset > endOffset,
       "Must have advanced to start of next range, or hit end of stream");
   }

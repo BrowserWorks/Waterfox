@@ -16,9 +16,11 @@
 #include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/DOMStringList.h"
 #include "mozilla/ipc/BackgroundChild.h"
+#include "nsIAppShell.h"
 #include "nsPIDOMWindow.h"
 #include "nsServiceManagerUtils.h"
 #include "nsTHashtable.h"
+#include "nsWidgetsCID.h"
 #include "ProfilerHelpers.h"
 #include "ReportInternalError.h"
 #include "WorkerFeature.h"
@@ -33,6 +35,36 @@ namespace indexedDB {
 
 using namespace mozilla::dom::workers;
 using namespace mozilla::ipc;
+
+namespace {
+
+NS_DEFINE_CID(kAppShellCID, NS_APPSHELL_CID);
+
+bool
+RunBeforeNextEvent(IDBTransaction* aTransaction)
+{
+  MOZ_ASSERT(aTransaction);
+
+  if (NS_IsMainThread()) {
+    nsCOMPtr<nsIAppShell> appShell = do_GetService(kAppShellCID);
+    MOZ_ASSERT(appShell);
+
+    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(appShell->RunBeforeNextEvent(aTransaction)));
+
+    return true;
+  }
+
+  WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+  MOZ_ASSERT(workerPrivate);
+
+  if (NS_WARN_IF(!workerPrivate->RunBeforeNextEvent(aTransaction))) {
+    return false;
+  }
+
+  return true;
+}
+
+} // namespace
 
 class IDBTransaction::WorkerFeature final
   : public mozilla::dom::workers::WorkerFeature
@@ -82,7 +114,6 @@ IDBTransaction::IDBTransaction(IDBDatabase* aDatabase,
   , mAbortCode(NS_OK)
   , mPendingRequestCount(0)
   , mLineNo(0)
-  , mColumn(0)
   , mReadyState(IDBTransaction::INITIAL)
   , mMode(aMode)
   , mCreating(false)
@@ -187,12 +218,19 @@ IDBTransaction::CreateVersionChange(
                        emptyObjectStoreNames,
                        VERSION_CHANGE);
   aOpenRequest->GetCallerLocation(transaction->mFilename,
-                                  &transaction->mLineNo, &transaction->mColumn);
+                                  &transaction->mLineNo);
 
   transaction->SetScriptOwner(aDatabase->GetScriptOwner());
 
-  nsCOMPtr<nsIRunnable> runnable = do_QueryObject(transaction);
-  nsContentUtils::RunInMetastableState(runnable.forget());
+  if (NS_WARN_IF(!RunBeforeNextEvent(transaction))) {
+    MOZ_ASSERT(!NS_IsMainThread());
+#ifdef DEBUG
+    // Silence assertions.
+    transaction->mSentCommitOrAbort = true;
+#endif
+    aActor->SendDeleteMeInternal(/* aFailedConstructor */ true);
+    return nullptr;
+  }
 
   transaction->mBackgroundActor.mVersionChangeBackgroundActor = aActor;
   transaction->mNextObjectStoreId = aNextObjectStoreId;
@@ -220,13 +258,14 @@ IDBTransaction::Create(IDBDatabase* aDatabase,
 
   nsRefPtr<IDBTransaction> transaction =
     new IDBTransaction(aDatabase, aObjectStoreNames, aMode);
-  IDBRequest::CaptureCaller(transaction->mFilename, &transaction->mLineNo,
-                            &transaction->mColumn);
+  IDBRequest::CaptureCaller(transaction->mFilename, &transaction->mLineNo);
 
   transaction->SetScriptOwner(aDatabase->GetScriptOwner());
 
-  nsCOMPtr<nsIRunnable> runnable = do_QueryObject(transaction);
-  nsContentUtils::RunInMetastableState(runnable.forget());
+  if (NS_WARN_IF(!RunBeforeNextEvent(transaction))) {
+    MOZ_ASSERT(!NS_IsMainThread());
+    return nullptr;
+  }
 
   transaction->mCreating = true;
 
@@ -494,16 +533,13 @@ IDBTransaction::IsOpen() const
 }
 
 void
-IDBTransaction::GetCallerLocation(nsAString& aFilename, uint32_t* aLineNo,
-                                  uint32_t* aColumn) const
+IDBTransaction::GetCallerLocation(nsAString& aFilename, uint32_t* aLineNo) const
 {
   AssertIsOnOwningThread();
   MOZ_ASSERT(aLineNo);
-  MOZ_ASSERT(aColumn);
 
   aFilename = mFilename;
   *aLineNo = mLineNo;
-  *aColumn = mColumn;
 }
 
 already_AddRefed<IDBObjectStore>
@@ -859,7 +895,7 @@ IDBTransaction::GetError() const
 }
 
 already_AddRefed<DOMStringList>
-IDBTransaction::ObjectStoreNames() const
+IDBTransaction::ObjectStoreNames()
 {
   AssertIsOnOwningThread();
 

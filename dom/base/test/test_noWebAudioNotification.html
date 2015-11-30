@@ -27,6 +27,10 @@ var ac;
 
 var tests = [
   function() {
+    SpecialPowers.pushPrefEnv({"set": [["media.useAudioChannelService", true]]}, runTest);
+  },
+
+  function() {
     observerService.addObserver(observer, "audio-playback", false);
     ok(true, "Observer set");
     runTest();

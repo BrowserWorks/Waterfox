@@ -189,9 +189,6 @@ nsSupportsArray::Read(nsIObjectInputStream* aStream)
 
   uint32_t newArraySize;
   rv = aStream->Read32(&newArraySize);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
 
   if (newArraySize <= kAutoArraySize) {
     if (mArray != mAutoArray) {

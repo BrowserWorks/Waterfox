@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     rv = NS_NewChannel(getter_AddRefs(chan),
                        uri,
                        systemPrincipal,
-                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
+                       nsILoadInfo::SEC_NORMAL,
                        nsIContentPolicy::TYPE_OTHER);
 
     if (NS_FAILED(rv))
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
     if (NS_FAILED(rv))
       return -1;
 
-    rv = chan->AsyncOpen2(loader);
+    rv = chan->AsyncOpen(loader, nullptr);
     if (NS_FAILED(rv))
       return -1;
 

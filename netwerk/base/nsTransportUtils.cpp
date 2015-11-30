@@ -23,11 +23,13 @@ public:
     NS_DECL_NSITRANSPORTEVENTSINK
 
     nsTransportEventSinkProxy(nsITransportEventSink *sink,
-                              nsIEventTarget *target)
+                              nsIEventTarget *target,
+                              bool coalesceAll)
         : mSink(sink)
         , mTarget(target)
         , mLock("nsTransportEventSinkProxy.mLock")
         , mLastEvent(nullptr)
+        , mCoalesceAll(coalesceAll)
     {
         NS_ADDREF(mSink);
     }
@@ -45,6 +47,7 @@ public:
     nsCOMPtr<nsIEventTarget>         mTarget;
     Mutex                            mLock;
     nsTransportStatusEvent          *mLastEvent;
+    bool                             mCoalesceAll;
 };
 
 class nsTransportStatusEvent : public nsRunnable
@@ -102,7 +105,7 @@ nsTransportEventSinkProxy::OnTransportStatus(nsITransport *transport,
         MutexAutoLock lock(mLock);
 
         // try to coalesce events! ;-)
-        if (mLastEvent && (mLastEvent->mStatus == status)) {
+        if (mLastEvent && (mCoalesceAll || mLastEvent->mStatus == status)) {
             mLastEvent->mStatus = status;
             mLastEvent->mProgress = progress;
             mLastEvent->mProgressMax = progressMax;
@@ -132,9 +135,10 @@ nsTransportEventSinkProxy::OnTransportStatus(nsITransport *transport,
 nsresult
 net_NewTransportEventSinkProxy(nsITransportEventSink **result,
                                nsITransportEventSink *sink,
-                               nsIEventTarget *target)
+                               nsIEventTarget *target,
+                               bool coalesceAll)
 {
-    *result = new nsTransportEventSinkProxy(sink, target);
+    *result = new nsTransportEventSinkProxy(sink, target, coalesceAll);
     if (!*result)
         return NS_ERROR_OUT_OF_MEMORY;
     NS_ADDREF(*result);

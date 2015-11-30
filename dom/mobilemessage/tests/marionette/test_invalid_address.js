@@ -8,7 +8,7 @@ const MMS_MAX_LENGTH_SUBJECT = 40;
 SpecialPowers.addPermission("sms", true, document);
 SpecialPowers.setBoolPref("dom.sms.enabled", true);
 
-var tasks = {
+let tasks = {
   // List of test fuctions. Each of them should call |tasks.next()| when
   // completed or |tasks.finish()| to jump to the last one.
   _tasks: [],
@@ -41,7 +41,7 @@ var tasks = {
   }
 };
 
-var manager;
+let manager;
 
 function getAllMessages(callback, filter, reverse) {
   let messages = [];

@@ -34,4 +34,4 @@ dictionary ResponseInit {
   HeadersInit headers;
 };
 
-enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredirect" };
+enum ResponseType { "basic", "cors", "default", "error", "opaque" };

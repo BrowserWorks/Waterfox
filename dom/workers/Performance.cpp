@@ -68,13 +68,8 @@ void
 Performance::InsertUserEntry(PerformanceEntry* aEntry)
 {
   if (mWorkerPrivate->PerformanceLoggingEnabled()) {
-    nsAutoCString uri;
-    nsCOMPtr<nsIURI> scriptURI = mWorkerPrivate->GetResolvedScriptURI();
-    if (!scriptURI || NS_FAILED(scriptURI->GetHost(uri))) {
-      // If we have no URI, just put in "none".
-      uri.AssignLiteral("none");
-    }
-    PerformanceBase::LogEntry(aEntry, uri);
+    PerformanceBase::LogEntry(aEntry,
+                              NS_ConvertUTF16toUTF8(mWorkerPrivate->ScriptURL()));
   }
   PerformanceBase::InsertUserEntry(aEntry);
 }

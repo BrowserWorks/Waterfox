@@ -38,13 +38,13 @@ add_task(function test() {
   equal(third.data.line, 78, "includes OptimizationSite as reference under `data`");
 });
 
-var gStringTable = new RecordingUtils.UniqueStrings();
+let gStringTable = new RecordingUtils.UniqueStrings();
 
 function uniqStr(s) {
   return gStringTable.getOrAddStringIndex(s);
 }
 
-var gRawSite1 = {
+let gRawSite1 = {
   line: 12,
   column: 2,
   types: [{
@@ -72,7 +72,7 @@ var gRawSite1 = {
   }
 };
 
-var gRawSite2 = {
+let gRawSite2 = {
   line: 34,
   types: [{
     mirType: uniqStr("Int32"),
@@ -91,7 +91,7 @@ var gRawSite2 = {
   }
 };
 
-var gRawSite3 = {
+let gRawSite3 = {
   line: 78,
   types: [{
     mirType: uniqStr("Object"),

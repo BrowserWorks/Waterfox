@@ -26,9 +26,9 @@ const TEST_IMG = "http://example.com/browser/browser/devtools/webconsole/" +
 const TEST_DATA_JSON_CONTENT =
   '{ id: "test JSON data", myArray: [ "foo", "bar", "baz", "biff" ] }';
 
-var lastRequest = null;
-var requestCallback = null;
-var browser, hud;
+let lastRequest = null;
+let requestCallback = null;
+let browser, hud;
 
 function test() {
   loadTab(TEST_URI).then((tab) => {
@@ -191,22 +191,20 @@ function testFormSubmission() {
 function testNetworkPanel() {
   // Open the NetworkPanel. The functionality of the NetworkPanel is tested
   // within separate test files.
-  hud.ui.openNetworkPanel(lastRequest.actor).then(() => {
-    let toolbox = gDevTools.getToolbox(hud.target);
-    is(toolbox.currentToolId, "netmonitor", "Network panel was opened");
-    let panel = toolbox.getCurrentPanel();
-    let selected = panel.panelWin.NetMonitorView.RequestsMenu.selectedItem;
-    is(selected.attachment.method, lastRequest.request.method,
-       "The correct request is selected");
-    is(selected.attachment.url, lastRequest.request.url,
-       "The correct request is definitely selected");
+  let networkPanel = hud.ui.openNetworkPanel(hud.ui.filterBox, lastRequest);
+
+  networkPanel.panel.addEventListener("popupshown", function onPopupShown() {
+    networkPanel.panel.removeEventListener("popupshown", onPopupShown, true);
+
+    is(hud.ui.filterBox._netPanel, networkPanel,
+       "Network panel stored on anchor node");
+    ok(true, "NetworkPanel was opened");
 
     // All tests are done. Shutdown.
+    networkPanel.panel.hidePopup();
     lastRequest = null;
     HUDService.lastFinishedRequest.callback = null;
     browser = requestCallback = hud = null;
     executeSoon(finishTest);
-  }).then(null, error => {
-    ok(false, "Got an error: " + error.message + "\n" + error.stack);
-  });
+  }, true);
 }

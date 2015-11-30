@@ -5,8 +5,6 @@
 //
 // These do not test the futex operations.
 
-load(libdir + "asserts.js");
-
 var DEBUG = false;		// Set to true for useful printouts
 
 function dprint(...xs) {
@@ -206,23 +204,18 @@ function testTypeBinop(a, op) {
     op(a, 0);
 }
 
-var globlength = 0;		// Will be set later
-
 function testRangeCAS(a) {
     dprint("Range: " + a.constructor.name);
 
-    var msg = /out-of-range index for atomic access/;
-
-    assertErrorMessage(() => Atomics.compareExchange(a, -1, 0, 1), RangeError, msg);
+    assertEq(Atomics.compareExchange(a, -1, 0, 1), undefined); // out of range => undefined, no effect
     assertEq(a[0], 0);
+    a[0] = 0;
 
-    assertErrorMessage(() => Atomics.compareExchange(a, "hi", 0, 1), RangeError, msg);
+    assertEq(Atomics.compareExchange(a, "hi", 0, 1), undefined); // invalid => undefined, no effect
     assertEq(a[0], 0);
+    a[0] = 0;
 
-    assertErrorMessage(() => Atomics.compareExchange(a, a.length + 5, 0, 1), RangeError, msg);
-    assertEq(a[0], 0);
-
-    assertErrorMessage(() => Atomics.compareExchange(a, globlength, 0, 1), RangeError, msg);
+    assertEq(Atomics.compareExchange(a, a.length + 5, 0, 1), undefined); // out of range => undefined, no effect
     assertEq(a[0], 0);
 }
 
@@ -486,9 +479,7 @@ function runTests() {
     CLONE(testTypeBinop)(v32, Atomics.xor);
 
     // Test out-of-range references
-    globlength = v8.length + 5;
     CLONE(testRangeCAS)(v8);
-    globlength = v32.length + 5;
     CLONE(testRangeCAS)(v32);
 
     // Test extreme values

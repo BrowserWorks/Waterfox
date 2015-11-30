@@ -37,11 +37,7 @@ function SpecialPowers(window) {
   this.SP_ASYNC_MESSAGES = ["SpecialPowers.Focus",
                             "SpecialPowers.Quit",
                             "SPPingService",
-                            "SPQuotaManager",
-                            "SPLoadExtension",
-                            "SPStartupExtension",
-                            "SPUnloadExtension",
-                            "SPExtensionMessage"];
+                            "SPQuotaManager"];
   addMessageListener("SPPingService", this._messageListener);
   let self = this;
   Services.obs.addObserver(function onInnerWindowDestroyed(subject, topic, data) {

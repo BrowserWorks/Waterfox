@@ -94,6 +94,7 @@ dnl ==============================================================
 _topsrcdir=`cd \`dirname $0\`; pwd`
 _objdir=`pwd`
 
+
 dnl TODO Don't exempt L10N builds once bug 842760 is resolved.
 if test "$_topsrcdir" = "$_objdir" -a "${with_l10n_base+set}" != set; then
   echo "  ***"
@@ -658,30 +659,66 @@ See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
 
         unset _MSVC_VER_FILTER
 
-        AC_CACHE_CHECK(for overridable _RAISE,
-                       ac_cv_have__RAISE,
+        AC_CACHE_CHECK(for std::_Throw, ac_cv_have_std__Throw,
             [
                 AC_LANG_SAVE
                 AC_LANG_CPLUSPLUS
                 _SAVE_CXXFLAGS="$CXXFLAGS"
                 CXXFLAGS="${CXXFLAGS} -D_HAS_EXCEPTIONS=0"
-                AC_TRY_COMPILE([#include <xstddef>
-                                #undef _RAISE
-                                #define _RAISE(x) externallyDefinedFunction((x).what())
-                                #include <vector>
-                               ],
-                               [std::vector<int> v; return v.at(1);],
-                               ac_cv_have__RAISE="no",
-                               ac_cv_have__RAISE="yes")
+                AC_TRY_COMPILE([#include <exception>],
+                            [std::_Throw(std::exception()); return 0;],
+                            ac_cv_have_std__Throw="yes",
+                            ac_cv_have_std__Throw="no")
                 CXXFLAGS="$_SAVE_CXXFLAGS"
                 AC_LANG_RESTORE
             ])
-        if test "$ac_cv_have__RAISE" = "yes"; then
-            WRAP_STL_INCLUDES=1
-            MOZ_MSVC_STL_WRAP_RAISE=1
-            AC_DEFINE(MOZ_MSVC_STL_WRAP_RAISE)
+
+        if test "$ac_cv_have_std__Throw" = "yes"; then
+            AC_CACHE_CHECK(for |class __declspec(dllimport) exception| bug,
+                           ac_cv_have_dllimport_exception_bug,
+                [
+                    AC_LANG_SAVE
+                    AC_LANG_CPLUSPLUS
+                    _SAVE_CXXFLAGS="$CXXFLAGS"
+                    CXXFLAGS="${CXXFLAGS} -D_HAS_EXCEPTIONS=0"
+                    AC_TRY_LINK([#include <vector>],
+                                [std::vector<int> v; return v.at(1);],
+                                ac_cv_have_dllimport_exception_bug="no",
+                                ac_cv_have_dllimport_exception_bug="yes")
+                    CXXFLAGS="$_SAVE_CXXFLAGS"
+                    AC_LANG_RESTORE
+                ])
+            if test "$ac_cv_have_dllimport_exception_bug" = "no"; then
+                WRAP_STL_INCLUDES=1
+                MOZ_MSVC_STL_WRAP_Throw=1
+                AC_DEFINE(MOZ_MSVC_STL_WRAP_Throw)
+            fi
         else
-            AC_MSG_ERROR([Gecko exception wrapping doesn't understand your your MSVC/SDK.  Please file a bug describing this error and your build configuration.])
+            AC_CACHE_CHECK(for overridable _RAISE,
+                           ac_cv_have__RAISE,
+                [
+                    AC_LANG_SAVE
+                    AC_LANG_CPLUSPLUS
+                    _SAVE_CXXFLAGS="$CXXFLAGS"
+                    CXXFLAGS="${CXXFLAGS} -D_HAS_EXCEPTIONS=0"
+                    AC_TRY_COMPILE([#include <xstddef>
+                                    #undef _RAISE
+                                    #define _RAISE(x) externallyDefinedFunction((x).what())
+                                    #include <vector>
+                                   ],
+                                   [std::vector<int> v; return v.at(1);],
+                                   ac_cv_have__RAISE="no",
+                                   ac_cv_have__RAISE="yes")
+                    CXXFLAGS="$_SAVE_CXXFLAGS"
+                    AC_LANG_RESTORE
+                ])
+            if test "$ac_cv_have__RAISE" = "yes"; then
+                WRAP_STL_INCLUDES=1
+                MOZ_MSVC_STL_WRAP_RAISE=1
+                AC_DEFINE(MOZ_MSVC_STL_WRAP_RAISE)
+            else
+                AC_MSG_ERROR([Gecko exception wrapping doesn't understand your your MSVC/SDK.  Please file a bug describing this error and your build configuration.])
+            fi
         fi
 
         if test "$WRAP_STL_INCLUDES" = "1"; then
@@ -762,6 +799,8 @@ See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
     fi
 
     AC_DEFINE_UNQUOTED(MOZ_WINSDK_TARGETVER,0x$MOZ_WINSDK_TARGETVER)
+    # Definitions matching sdkddkver.h
+    AC_DEFINE_UNQUOTED(MOZ_NTDDI_WIN7, 0x06010000)
     AC_DEFINE_UNQUOTED(MOZ_WINSDK_MAXVER,$MOZ_WINSDK_MAXVER)
     AC_SUBST(MOZ_WINSDK_MAXVER)
     ;;
@@ -796,6 +835,7 @@ AC_SUBST(INTEL_CXX)
 
 AC_SUBST(STL_FLAGS)
 AC_SUBST(WRAP_STL_INCLUDES)
+AC_SUBST(MOZ_MSVC_STL_WRAP_Throw)
 AC_SUBST(MOZ_MSVC_STL_WRAP_RAISE)
 
 dnl ========================================================
@@ -845,8 +885,6 @@ fi
 
 MOZ_PATH_PROG(RPMBUILD, rpmbuild, :)
 AC_SUBST(RPMBUILD)
-
-MOZ_PATH_PROG(GENISOIMAGE, genisoimage, :)
 
 if test "$COMPILE_ENVIRONMENT"; then
 
@@ -1481,6 +1519,7 @@ if test "$GNU_CC"; then
     # -Wall - turn on a lot of warnings
     # -Wchar-subscripts - catches array index using signed char
     # -Wcomment - catches nested comments
+    # -Wdeclaration-after-statement - MSVC doesn't like these
     # -Wempty-body - catches bugs, e.g. "if (c); foo();", few false positives
     # -Wendif-labels - catches `#else FOO` and `#endif FOO` not in comment
     # -Wenum-compare - catches comparison of different enum types
@@ -1500,6 +1539,7 @@ if test "$GNU_CC"; then
     # -Wunknown-pragmas - catches unexpected #pragma directives
     #
     _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wall"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wdeclaration-after-statement"
     _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wempty-body"
     _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wpointer-to-int-cast"
     _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wsign-compare"
@@ -1529,11 +1569,8 @@ if test "$GNU_CC"; then
 
     # Turn off the following warnings that -Wall turns on:
     # -Wno-unused - lots of violations in third-party code
-    # -Wno-unused-local-typedef - catches unused typedefs, which are commonly used in assertion macros
     #
     _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wno-unused"
-
-    MOZ_CXX_SUPPORTS_WARNING(-Wno-, unused-local-typedef, ac_cxx_has_wno_unused_local_typedef)
 
     if test -z "$INTEL_CC" -a -z "$CLANG_CC"; then
        # Don't use -Wcast-align with ICC or clang
@@ -1591,7 +1628,6 @@ if test "$GNU_CXX"; then
     # -Woverloaded-virtual - function declaration hides virtual function from base class
     # -Wparentheses - catches `if (a=b)` and operator precedence bugs
     # -Wpointer-arith - catches pointer arithmetic using NULL or sizeof(void)
-    # -Wrange-loop-analysis - catches copies during range-based for loops.
     # -Wreturn-type - catches missing returns, zero false positives
     # -Wsequence-point - catches undefined order behavior like `a = a++`
     # -Wsign-compare - catches comparison of signed and unsigned types
@@ -1623,21 +1659,18 @@ if test "$GNU_CXX"; then
         _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=unused-label"
 
         MOZ_CXX_SUPPORTS_WARNING(-Werror=, non-literal-null-conversion, ac_cxx_has_werror_non_literal_null_conversion)
-        MOZ_CXX_SUPPORTS_WARNING(-Werror=, range-loop-analysis, ac_cxx_has_range_loop_analysis)
         MOZ_CXX_SUPPORTS_WARNING(-Werror=, sometimes-uninitialized, ac_cxx_has_sometimes_uninitialized)
     fi
 
     # Turn off the following warnings that -Wall turns on:
     # -Wno-invalid-offsetof - we use offsetof on non-POD types frequently
     # -Wno-inline-new-delete - we inline 'new' and 'delete' in mozalloc
-    # -Wno-unused-local-typedef - catches unused typedefs, which are commonly used in assertion macros
     #   for performance reasons, and because GCC and clang accept it (though
     #   clang warns about it).
     #
     _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wno-invalid-offsetof"
 
     MOZ_CXX_SUPPORTS_WARNING(-Wno-, inline-new-delete, ac_cxx_has_wno_inline_new_delete)
-    MOZ_CXX_SUPPORTS_WARNING(-Wno-, unused-local-typedef, ac_cxx_has_wno_unused_local_typedef)
 
     if test -z "$INTEL_CXX" -a -z "$CLANG_CXX"; then
        # Don't use -Wcast-align with ICC or clang
@@ -1835,7 +1868,7 @@ case "$host" in
         HOST_CFLAGS="$HOST_CFLAGS -mwindows"
     fi
     HOST_CFLAGS="$HOST_CFLAGS -DXP_WIN32 -DXP_WIN -DWIN32 -D_WIN32 -DNO_X11 -D_CRT_SECURE_NO_WARNINGS"
-    HOST_NSPR_MDCPUCFG='"md/_winnt.cfg"'
+    HOST_NSPR_MDCPUCFG='\"md/_winnt.cfg\"'
     HOST_OPTIMIZE_FLAGS="${HOST_OPTIMIZE_FLAGS=-O2}"
     HOST_BIN_SUFFIX=.exe
     case "$host" in
@@ -1861,13 +1894,13 @@ case "$host" in
 
 *-darwin*)
     HOST_CFLAGS="$HOST_CFLAGS -DXP_UNIX -DXP_MACOSX -DNO_X11"
-    HOST_NSPR_MDCPUCFG='"md/_darwin.cfg"'
+    HOST_NSPR_MDCPUCFG='\"md/_darwin.cfg\"'
     HOST_OPTIMIZE_FLAGS="${HOST_OPTIMIZE_FLAGS=-O3}"
     ;;
 
 *-linux*|*-kfreebsd*-gnu|*-gnu*)
     HOST_CFLAGS="$HOST_CFLAGS -DXP_UNIX"
-    HOST_NSPR_MDCPUCFG='"md/_linux.cfg"'
+    HOST_NSPR_MDCPUCFG='\"md/_linux.cfg\"'
     HOST_OPTIMIZE_FLAGS="${HOST_OPTIMIZE_FLAGS=-O3}"
     ;;
 
@@ -2214,10 +2247,8 @@ ia64*-hpux*)
         _DEFINES_CXXFLAGS='-FI $(DEPTH)/dist/include/mozilla-config.h -DMOZILLA_CLIENT'
         CFLAGS="$CFLAGS -W3 -Gy"
         CXXFLAGS="$CXXFLAGS -W3 -Gy"
-        if test "$CPU_ARCH" = "x86" -a -z "$CLANG_CL"; then
+        if test "$CPU_ARCH" = "x86"; then
             dnl VS2012+ defaults to -arch:SSE2.
-            dnl Clang-cl gets confused by -arch:IA32, so don't add it.
-            dnl (See https://llvm.org/bugs/show_bug.cgi?id=24335)
             CFLAGS="$CFLAGS -arch:IA32"
             CXXFLAGS="$CXXFLAGS -arch:IA32"
         fi
@@ -2282,7 +2313,6 @@ ia64*-hpux*)
         dnl Probably also a compiler bug, but what can you do?
         PROFILE_USE_LDFLAGS="-LTCG:PGUPDATE"
         LDFLAGS="$LDFLAGS -DYNAMICBASE"
-        RCFLAGS="-nologo"
         if test "$_CC_MAJOR_VERSION" = "18" -a "$_CC_BUILD_VERSION" = "31101"; then
             dnl Use MaxILKSize as a workaround for LNK1248 in VS2013update4
             dnl See https://connect.microsoft.com/VisualStudio/feedback/details/1044914/fatal-error-lnk1248
@@ -2609,6 +2639,8 @@ esac
 AC_SUBST(WRAP_SYSTEM_INCLUDES)
 AC_SUBST(VISIBILITY_FLAGS)
 
+MOZ_LLVM_PR8927
+
 dnl Checks for header files.
 dnl ========================================================
 AC_HEADER_DIRENT
@@ -2693,6 +2725,14 @@ if test "x$enable_dtrace" = "xyes"; then
   fi
 fi
 AC_SUBST(HAVE_DTRACE)
+
+case $target in
+*-aix4.3*|*-aix5*)
+    ;;
+*)
+    MOZ_CHECK_HEADERS(sys/cdefs.h)
+    ;;
+esac
 
 MOZ_LINUX_PERF_EVENT
 
@@ -3453,7 +3493,7 @@ MOZ_ARG_WITH_BOOL(system-nss,
     _USE_SYSTEM_NSS=1 )
 
 if test -n "$_USE_SYSTEM_NSS"; then
-    AM_PATH_NSS(3.20.1, [MOZ_NATIVE_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
+    AM_PATH_NSS(3.19.4, [MOZ_NATIVE_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
 fi
 
 if test -n "$MOZ_NATIVE_NSS"; then
@@ -3783,7 +3823,6 @@ MOZ_ANDROID_DOWNLOADS_INTEGRATION=
 MOZ_ANDROID_MLS_STUMBLER=
 MOZ_ANDROID_SHARE_OVERLAY=
 MOZ_INSTALL_TRACKING=
-MOZ_SWITCHBOARD=
 ACCESSIBILITY=1
 MOZ_TIME_MANAGER=
 MOZ_SIMPLEPUSH=
@@ -4041,17 +4080,12 @@ b2g/dev)
   ;;
 esac
 
-if test -n "$MOZ_B2GDROID"; then
-    AC_DEFINE(MOZ_B2GDROID)
-fi
-
 AC_SUBST(MOZ_BUILD_APP)
 AC_SUBST(MOZ_PHOENIX)
 AC_SUBST(MOZ_XULRUNNER)
 AC_SUBST(MOZ_B2G)
 AC_SUBST(MOZ_MULET)
 AC_SUBST(MOZ_B2G_VERSION)
-AC_SUBST(MOZ_B2GDROID)
 
 AC_DEFINE_UNQUOTED(MOZ_BUILD_APP,$MOZ_BUILD_APP)
 
@@ -4071,15 +4105,14 @@ dnl ========================================================
 if test -z "$gonkdir" ; then
     # Minimum Android SDK API Level we require.
     case "$MOZ_BUILD_APP" in
-    mobile/android | mobile/android/b2gdroid)
+    mobile/android)
         android_min_api_level=20
         case "$target" in
         *-android*|*-linuxandroid*)
             :
             ;;
         *)
-            AC_MSG_ERROR([You must specify --target=arm-linux-androideabi (or some other valid android target) when building with --enable-application=mobile/android or --enable-application=mobile/android/b2gdroid.
-             See https://wiki.mozilla.org/Mobile/Fennec/Android#Setup_Fennec_mozconfig for more information about the necessary options])
+            AC_MSG_ERROR([You must specify --target=arm-linux-androideabi (or some other valid android target) when building with --enable-application=mobile/android. See https://wiki.mozilla.org/Mobile/Fennec/Android#Setup_Fennec_mozconfig for more information about the necessary options])
             ;;
         esac
         ;;
@@ -4881,13 +4914,6 @@ if test -n "$MOZ_INSTALL_TRACKING"; then
 fi
 
 dnl ========================================================
-dnl = Include Switchboard A/B framework on Android
-dnl ========================================================
-if test -n "$MOZ_SWITCHBOARD"; then
-    AC_DEFINE(MOZ_SWITCHBOARD)
-fi
-
-dnl ========================================================
 dnl = Enable IPDL's "expensive" unit tests
 dnl ========================================================
 MOZ_IPDL_TESTS=
@@ -5441,23 +5467,6 @@ if test -n "$MOZ_VPX" -a -z "$MOZ_NATIVE_LIBVPX"; then
         VPX_AS_CONVERSION='$(PERL) $(topsrcdir)/media/libvpx/build/make/ads2gas.pl'
         VPX_ASM_SUFFIX="$ASM_SUFFIX"
         VPX_ARM_ASM=1
-        dnl Building with -mfpu=neon requires either the "softfp" or the
-        dnl "hardfp" ABI. Depending on the compiler's default target, and the
-        dnl CFLAGS, the default ABI might be neither, in which case it is the
-        dnl "softfloat" ABI.
-        dnl The "softfloat" ABI is binary-compatible with the "softfp" ABI, so
-        dnl we can safely mix code built with both ABIs. So, if we detect
-        dnl that compiling uses the "softfloat" ABI, force the use of the
-        dnl "softfp" ABI instead.
-        dnl Confusingly, the __SOFTFP__ preprocessor variable indicates the
-        dnl "softfloat" ABI, not the "softfp" ABI.
-        dnl Note: VPX_ASFLAGS is also used in CFLAGS.
-        AC_TRY_COMPILE([],
-          [#ifndef __SOFTFP__
-           #error "compiler target supports -mfpu=neon, so we don't have to add extra flags"
-           #endif],
-           VPX_ASFLAGS="$VPX_ASFLAGS -mfloat-abi=softfp"
-           )
       fi
     ;;
     *:x86)
@@ -7226,7 +7235,7 @@ dnl ========================================================
 dnl = Jemalloc build setup
 dnl ========================================================
 if test -z "$MOZ_MEMORY"; then
-  if test -n "$MOZ_JEMALLOC4" -a -z "$MOZ_REPLACE_MALLOC"; then
+  if test -n "$MOZ_JEMALLOC3" -a -z "$MOZ_REPLACE_MALLOC"; then
     MOZ_NATIVE_JEMALLOC=1
     AC_CHECK_FUNCS(mallctl nallocx,,
       [MOZ_NATIVE_JEMALLOC=
@@ -7234,7 +7243,7 @@ if test -z "$MOZ_MEMORY"; then
     if test -n "$MOZ_NATIVE_JEMALLOC"; then
       MOZ_MEMORY=1
       AC_DEFINE(MOZ_MEMORY)
-      AC_DEFINE(MOZ_JEMALLOC4)
+      AC_DEFINE(MOZ_JEMALLOC3)
       AC_DEFINE(MOZ_NATIVE_JEMALLOC)
     fi
   fi
@@ -7247,8 +7256,8 @@ if test -z "$MOZ_MEMORY"; then
   esac
 else
   AC_DEFINE(MOZ_MEMORY)
-  if test -n "$MOZ_JEMALLOC4"; then
-    AC_DEFINE(MOZ_JEMALLOC4)
+  if test -n "$MOZ_JEMALLOC3"; then
+    AC_DEFINE(MOZ_JEMALLOC3)
   fi
   if test "x$MOZ_DEBUG" = "x1"; then
     AC_DEFINE(MOZ_MEMORY_DEBUG)
@@ -7297,7 +7306,7 @@ else
   esac
 fi # MOZ_MEMORY
 AC_SUBST(MOZ_MEMORY)
-AC_SUBST(MOZ_JEMALLOC4)
+AC_SUBST(MOZ_JEMALLOC3)
 AC_SUBST(MOZ_NATIVE_JEMALLOC)
 AC_SUBST(MOZ_CRT)
 export MOZ_CRT
@@ -7525,7 +7534,7 @@ fi
 AC_SUBST(MOZ_DISABLE_STARTUPCACHE)
 
 dnl ========================================================
-dnl = Enable packaging Gaia with B2G desktop and b2gdroid
+dnl = Enable packaging Gaia with B2G desktop
 dnl ========================================================
 if test x"$MOZ_WIDGET_TOOLKIT" != x"gonk"; then
     if test -n "$GAIADIR" -a ! -d "$GAIADIR" ; then
@@ -7539,10 +7548,6 @@ if test x"$MOZ_WIDGET_TOOLKIT" != x"gonk"; then
 
     if test -n "$FXOS_SIMULATOR" -a -z "$GAIADIR" ; then
         AC_MSG_ERROR([FXOS_SIMULATOR=1 requires GAIADIR to be defined])
-    fi
-
-    if test "$MOZ_BUILD_APP" = "mobile/android/b2gdroid" -a -z "$GAIADIR"; then
-        AC_MSG_ERROR([GAIADIR needs to be set in b2gdroid builds])
     fi
 
     if test -n "$FXOS_SIMULATOR" ; then
@@ -8499,13 +8504,6 @@ if test -n "$MOZ_DEVICES"; then
   AC_DEFINE(MOZ_DEVICES)
 fi
 
-dnl Build Fennec Android native UI to manage accounts.  This will go away as
-dnl Fennec transitions to web UI to manage accounts.
-AC_SUBST(MOZ_ANDROID_NATIVE_ACCOUNT_UI)
-if test -n "$MOZ_ANDROID_NATIVE_ACCOUNT_UI"; then
-  AC_DEFINE(MOZ_ANDROID_NATIVE_ACCOUNT_UI)
-fi
-
 dnl ========================================================
 if test "$MOZ_DEBUG" -o "$MOZ_DMD"; then
     MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS=
@@ -8609,7 +8607,6 @@ AC_SUBST(MOZ_ANDROID_APPLICATION_CLASS)
 AC_SUBST(MOZ_ANDROID_BROWSER_INTENT_CLASS)
 AC_SUBST(MOZ_ANDROID_SEARCH_INTENT_CLASS)
 AC_SUBST(MOZ_INSTALL_TRACKING)
-AC_SUBST(MOZ_SWITCHBOARD)
 AC_SUBST(ENABLE_STRIP)
 AC_SUBST(PKG_SKIP_STRIP)
 AC_SUBST(STRIP_FLAGS)
@@ -8713,10 +8710,6 @@ AC_SUBST(MOZ_CHILD_PROCESS_BUNDLE)
 # "Profile" field, which controls profile location.
 # - MOZ_APP_ID: When set, used for application.ini's "ID" field, and
 # crash reporter server url.
-# - MOZ_APP_ANDROID_VERSION_CODE: On android, "android:versionCode" for
-# the main application is set to the value of this variable.  If not
-# set, it falls back to a Mozilla-specific value derived from the
-# build ID.
 # - MOZ_PROFILE_MIGRATOR: When set, enables profile migrator.
 
 if test -z "$MOZ_APP_NAME"; then
@@ -8760,7 +8753,6 @@ AC_SUBST(MOZ_APP_BASENAME)
 AC_SUBST(MOZ_APP_VENDOR)
 AC_SUBST(MOZ_APP_PROFILE)
 AC_SUBST(MOZ_APP_ID)
-AC_SUBST(MOZ_APP_ANDROID_VERSION_CODE)
 AC_SUBST(MAR_CHANNEL_ID)
 AC_SUBST(ACCEPTED_MAR_CHANNEL_IDS)
 AC_SUBST(MOZ_PROFILE_MIGRATOR)
@@ -8780,12 +8772,11 @@ fi
 AC_SUBST(MOZ_APP_STATIC_INI)
 
 AC_SUBST(MOZ_PKG_SPECIAL)
-AC_SUBST(MOZ_SIMPLE_PACKAGE_NAME)
 
 AC_SUBST(MOZILLA_OFFICIAL)
+
+# Build revisions should always be present in official builds
 if test "$MOZILLA_OFFICIAL"; then
-    AC_DEFINE(MOZILLA_OFFICIAL)
-    # Build revisions should always be present in official builds
     MOZ_INCLUDE_SOURCE_INFO=1
 fi
 
@@ -8986,8 +8977,6 @@ AC_SUBST(SOCORRO_SYMBOL_UPLOAD_TOKEN_FILE)
 AC_SUBST(MOZ_ENABLE_SZIP)
 AC_SUBST(MOZ_SZIP_FLAGS)
 
-AC_SUBST(DMG_TOOL)
-
 dnl Host JavaScript runtime, if any, to use during cross compiles.
 AC_SUBST(JS_BINARY)
 
@@ -9138,7 +9127,78 @@ MOZ_CREATE_CONFIG_STATUS()
 if test "$COMPILE_ENVIRONMENT" -a -z "$LIBXUL_SDK_DIR"; then
   MOZ_SUBCONFIGURE_ICU()
   MOZ_SUBCONFIGURE_FFI()
-  MOZ_SUBCONFIGURE_JEMALLOC()
+fi
+
+# Run jemalloc configure script
+
+if test -z "$MOZ_NATIVE_JEMALLOC" -a "$MOZ_MEMORY" && test -n "$MOZ_JEMALLOC3" -o -n "$MOZ_REPLACE_MALLOC"; then
+  ac_configure_args="--build=$build --host=$target --enable-stats --with-jemalloc-prefix=je_ --disable-valgrind"
+  # We're using memalign for _aligned_malloc in memory/build/mozmemory_wrap.c
+  # on Windows, so just export memalign on all platforms.
+  ac_configure_args="$ac_configure_args ac_cv_func_memalign=yes"
+  if test -n "$MOZ_REPLACE_MALLOC"; then
+    # When using replace_malloc, we always want valloc exported from jemalloc.
+    ac_configure_args="$ac_configure_args ac_cv_func_valloc=yes"
+  fi
+  if test -n "$MOZ_JEMALLOC3"; then
+    case "${OS_ARCH}" in
+      WINNT|Darwin)
+        # We want jemalloc functions to be kept hidden on both Mac and Windows
+        # See memory/build/mozmemory_wrap.h for details.
+        ac_configure_args="$ac_configure_args --without-export"
+        ;;
+    esac
+  elif test "${OS_ARCH}" = Darwin; then
+    # When building as a replace-malloc lib, disabling the zone allocator
+    # forces to use pthread_atfork.
+    ac_configure_args="$ac_configure_args --disable-zone-allocator"
+  fi
+  _MANGLE="malloc posix_memalign aligned_alloc calloc realloc free memalign valloc malloc_usable_size"
+  JEMALLOC_WRAPPER=
+  if test -z "$MOZ_REPLACE_MALLOC"; then
+    case "$OS_ARCH" in
+      Linux|DragonFly|FreeBSD|NetBSD|OpenBSD)
+        MANGLE=$_MANGLE
+        ;;
+    esac
+  elif test -z "$MOZ_JEMALLOC3"; then
+    MANGLE=$_MANGLE
+    JEMALLOC_WRAPPER=replace_
+  fi
+  if test -n "$MANGLE"; then
+    MANGLED=
+    for mangle in ${MANGLE}; do
+      if test -n "$MANGLED"; then
+        MANGLED="$mangle:$JEMALLOC_WRAPPER$mangle,$MANGLED"
+      else
+        MANGLED="$mangle:$JEMALLOC_WRAPPER$mangle"
+      fi
+    done
+    ac_configure_args="$ac_configure_args --with-mangling=$MANGLED"
+  fi
+  unset CONFIG_FILES
+  if test -z "$MOZ_TLS"; then
+    ac_configure_args="$ac_configure_args --disable-tls"
+  fi
+  EXTRA_CFLAGS="$CFLAGS"
+  for var in AS CC CXX CPP LD AR RANLIB STRIP CPPFLAGS EXTRA_CFLAGS LDFLAGS; do
+    ac_configure_args="$ac_configure_args $var='`eval echo \\${${var}}`'"
+  done
+  if test "$CROSS_COMPILE"; then
+    ac_configure_args="$ac_configure_args je_cv_static_page_shift=12"
+  fi
+  # Force disable DSS support in jemalloc.
+  ac_configure_args="$ac_configure_args ac_cv_func_sbrk=false"
+
+  # Make Linux builds munmap freed chunks instead of recycling them.
+  ac_configure_args="$ac_configure_args --enable-munmap"
+
+  if ! test -e memory/jemalloc; then
+    mkdir -p memory/jemalloc
+  fi
+
+  AC_OUTPUT_SUBDIRS(memory/jemalloc/src)
+  ac_configure_args="$_SUBDIR_CONFIG_ARGS"
 fi
 
 # Run freetype configure script

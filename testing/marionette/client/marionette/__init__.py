@@ -3,18 +3,19 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-__version__ = '0.19'
+__version__ = '0.18'
+
 
 from .marionette_test import MarionetteTestCase, MarionetteJSTestCase, CommonTestCase, expectedFailure, skip, SkipTest
 from .runner import (
         B2GTestCaseMixin,
         B2GTestResultMixin,
-        BaseMarionetteArguments,
+        BaseMarionetteOptions,
         BaseMarionetteTestRunner,
         BrowserMobProxyTestCaseMixin,
-        EnduranceArguments,
+        EnduranceOptionsMixin,
         EnduranceTestCaseMixin,
-        HTMLReportingArguments,
+        HTMLReportingOptionsMixin,
         HTMLReportingTestResultMixin,
         HTMLReportingTestRunnerMixin,
         Marionette,
@@ -22,6 +23,7 @@ from .runner import (
         MarionetteTestResult,
         MarionetteTextTestRunner,
         MemoryEnduranceTestCaseMixin,
+        OptionParser,
         TestManifest,
         TestResult,
         TestResultCollection

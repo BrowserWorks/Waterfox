@@ -21,8 +21,9 @@ add_task(function*() {
 
   let destroyed = yield waitUntilDestroyed;
 
-  destroyed.forEach((node, i) => {
-    ok(node.type, "AudioBufferSourceNode", "Only buffer nodes are destroyed");
+  let destroyedTypes = yield Promise.all(destroyed.map(actor => actor.getType()));
+  destroyedTypes.forEach((type, i) => {
+    ok(type, "AudioBufferSourceNode", "Only buffer nodes are destroyed");
     ok(actorIsInList(created, destroyed[i]),
       "`destroy-node` called only on AudioNodes in current document.");
   });

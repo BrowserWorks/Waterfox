@@ -27,7 +27,7 @@ namespace mozilla {
  *   }
  */
 template<class T>
-class MOZ_RAII AutoRestore
+class MOZ_STACK_CLASS AutoRestore
 {
 private:
   T& mLocation;

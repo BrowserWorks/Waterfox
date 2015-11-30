@@ -39,11 +39,13 @@ const TEST_DATA = [
                   "SEND SS proactive command shall not be checked against " +
                   "those of the FDN list. Upon receiving this command, the " +
                   "ME shall deci"}},
-  {command: "D01B" + // Length
+  {command: "D01D" + // Length
             "8103011100" + // Command details
             "82028183" + // Device identities
+            "8500" + // Alpha identifier
             "891091AA120A214365870921436587A901FB", // SS string
-   expect: {commandQualifier: 0x00}},
+   expect: {commandQualifier: 0x00,
+            text: ""}},
   {command: "D02B" + // Length
             "8103011100" + // Command details
             "82028183" + // Device identities
@@ -86,14 +88,7 @@ const TEST_DATA = [
             text: "你好"}},
 ];
 
-const TEST_CMD_NULL_ALPHA_ID =
-        "D01D" + // Length
-        "8103011100" + // Command details
-        "82028183" + // Device identities
-        "8500" + // Alpha identifier
-        "891091AA120A214365870921436587A901FB"; // SS string
-
-function verifySendSS(aCommand, aExpect) {
+function testSendSS(aCommand, aExpect) {
   is(aCommand.commandNumber, 0x01, "commandNumber");
   is(aCommand.typeOfCommand, MozIccManager.STK_CMD_SEND_SS, "typeOfCommand");
   is(aCommand.commandQualifier, aExpect.commandQualifier, "commandQualifier");
@@ -111,7 +106,8 @@ function verifySendSS(aCommand, aExpect) {
   }
 }
 
-function testSendSS() {
+// Start tests
+startTestCommon(function() {
   let icc = getMozIcc();
   let promise = Promise.resolve();
   for (let i = 0; i < TEST_DATA.length; i++) {
@@ -122,12 +118,12 @@ function testSendSS() {
       let promises = [];
       // Wait onstkcommand event.
       promises.push(waitForTargetEvent(icc, "stkcommand")
-        .then((aEvent) => verifySendSS(aEvent.command, data.expect)));
+        .then((aEvent) => testSendSS(aEvent.command, data.expect)));
       // Wait icc-stkcommand system message.
       promises.push(waitForSystemMessage("icc-stkcommand")
         .then((aMessage) => {
           is(aMessage.iccId, icc.iccInfo.iccid, "iccId");
-          verifySendSS(aMessage.command, data.expect);
+          testSendSS(aMessage.command, data.expect);
         }));
       // Send emulator command to generate stk unsolicited event.
       promises.push(sendEmulatorStkPdu(data.command));
@@ -136,31 +132,4 @@ function testSendSS() {
     });
   }
   return promise;
-}
-
-function testSendSSNullAlphaId() {
-  let icc = getMozIcc();
-
-  // No "stkcommand" event should occur.
-  icc.addEventListener("stkcommand",
-    (event) => ok(false, event + " should not occur."));
-
-  // No "icc-stkcommand" system message should be sent.
-  workingFrame.contentWindow.navigator.mozSetMessageHandler("icc-stkcommand",
-    (msg) => ok(false, msg + " should not be sent."));
-
-  // If nothing happens within 3 seconds after the emulator command sent,
-  // treat as success.
-  log("send_ss_cmd: " + TEST_CMD_NULL_ALPHA_ID);
-  return sendEmulatorStkPdu(TEST_CMD_NULL_ALPHA_ID)
-    .then(() => new Promise(function(resolve, reject) {
-      setTimeout(() => resolve(), 3000);
-    }));
-}
-
-// Start tests
-startTestCommon(function() {
-  return Promise.resolve()
-    .then(() => testSendSS())
-    .then(() => testSendSSNullAlphaId());
 });

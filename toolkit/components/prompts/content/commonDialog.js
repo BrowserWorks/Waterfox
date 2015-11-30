@@ -10,7 +10,7 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/CommonDialog.jsm");
 
-var propBag, args, Dialog;
+let propBag, args, Dialog;
 
 function commonDialogOnLoad() {
     propBag = window.arguments[0].QueryInterface(Ci.nsIWritablePropertyBag2)

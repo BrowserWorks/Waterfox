@@ -23,9 +23,4 @@ public interface RestrictionConfiguration {
      * Is this user restricted in any way?
      */
     boolean isRestricted();
-
-    /**
-     * Update restrictions if needed.
-     */
-    void update();
 }

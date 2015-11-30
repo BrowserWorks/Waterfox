@@ -29,7 +29,6 @@
 #include "jsfuninlines.h"
 #include "jsgcinlines.h"
 #include "jsobjinlines.h"
-#include "jsscriptinlines.h"
 
 using namespace js;
 using namespace js::gc;
@@ -80,8 +79,8 @@ JSCompartment::JSCompartment(Zone* zone, const JS::CompartmentOptions& options =
     scheduledForDestruction(false),
     maybeAlive(true),
     jitCompartment_(nullptr),
-    mappedArgumentsTemplate_(nullptr),
-    unmappedArgumentsTemplate_(nullptr)
+    normalArgumentsTemplate_(nullptr),
+    strictArgumentsTemplate_(nullptr)
 {
     PodArrayZero(sawDeprecatedLanguageExtension);
     runtime_->numCompartments++;
@@ -271,21 +270,17 @@ JSCompartment::putWrapper(JSContext* cx, const CrossCompartmentKey& wrapped, con
     MOZ_ASSERT(wrapped.wrapped);
     MOZ_ASSERT_IF(wrapped.kind == CrossCompartmentKey::StringWrapper, wrapper.isString());
     MOZ_ASSERT_IF(wrapped.kind != CrossCompartmentKey::StringWrapper, wrapper.isObject());
+    bool success = crossCompartmentWrappers.put(wrapped, ReadBarriered<Value>(wrapper));
 
     /* There's no point allocating wrappers in the nursery since we will tenure them anyway. */
     MOZ_ASSERT(!IsInsideNursery(static_cast<gc::Cell*>(wrapper.toGCThing())));
 
-    if (!crossCompartmentWrappers.put(wrapped, ReadBarriered<Value>(wrapper))) {
-        ReportOutOfMemory(cx);
-        return false;
-    }
-
-    if (IsInsideNursery(wrapped.wrapped) || IsInsideNursery(wrapped.debugger)) {
+    if (success && (IsInsideNursery(wrapped.wrapped) || IsInsideNursery(wrapped.debugger))) {
         WrapperMapRef ref(&crossCompartmentWrappers, wrapped);
         cx->runtime()->gc.storeBuffer.putGeneric(ref);
     }
 
-    return true;
+    return success;
 }
 
 static JSString*
@@ -568,16 +563,6 @@ JSCompartment::traceRoots(JSTracer* trc, js::gc::GCRuntime::TraceOrMarkRuntime t
 
     if (objectMetadataTable)
         objectMetadataTable->trace(trc);
-
-    if (scriptCountsMap && !trc->runtime()->isHeapMinorCollecting()) {
-        MOZ_ASSERT_IF(!trc->runtime()->isBeingDestroyed(), collectCoverage());
-        for (ScriptCountsMap::Range r = scriptCountsMap->all(); !r.empty(); r.popFront()) {
-            JSScript* script = const_cast<JSScript*>(r.front().key());
-            MOZ_ASSERT(script->hasScriptCounts());
-            TraceRoot(trc, &script, "profilingScripts");
-            MOZ_ASSERT(script == r.front().key(), "const_cast is only a work-around");
-        }
-    }
 }
 
 void
@@ -730,11 +715,11 @@ JSCompartment::sweepCrossCompartmentWrappers()
 void
 JSCompartment::sweepTemplateObjects()
 {
-    if (mappedArgumentsTemplate_ && IsAboutToBeFinalized(&mappedArgumentsTemplate_))
-        mappedArgumentsTemplate_.set(nullptr);
+    if (normalArgumentsTemplate_ && IsAboutToBeFinalized(&normalArgumentsTemplate_))
+        normalArgumentsTemplate_.set(nullptr);
 
-    if (unmappedArgumentsTemplate_ && IsAboutToBeFinalized(&unmappedArgumentsTemplate_))
-        unmappedArgumentsTemplate_.set(nullptr);
+    if (strictArgumentsTemplate_ && IsAboutToBeFinalized(&strictArgumentsTemplate_))
+        strictArgumentsTemplate_.set(nullptr);
 }
 
 /* static */ void
@@ -822,7 +807,7 @@ JSCompartment::setNewObjectMetadata(JSContext* cx, JSObject* obj)
         assertSameCompartment(cx, metadata);
         if (!objectMetadataTable) {
             objectMetadataTable = cx->new_<ObjectWeakMap>(cx);
-            if (!objectMetadataTable || !objectMetadataTable->init())
+            if (!objectMetadataTable)
                 CrashAtUnhandlableOOM("setNewObjectMetadata");
         }
         if (!objectMetadataTable->add(cx, obj, metadata))
@@ -935,15 +920,14 @@ JSCompartment::updateDebuggerObservesFlag(unsigned flag)
 {
     MOZ_ASSERT(isDebuggee());
     MOZ_ASSERT(flag == DebuggerObservesAllExecution ||
-               flag == DebuggerObservesCoverage ||
                flag == DebuggerObservesAsmJS);
 
     const GlobalObject::DebuggerVector* v = maybeGlobal()->getDebuggers();
     for (Debugger * const* p = v->begin(); p != v->end(); p++) {
         Debugger* dbg = *p;
-        if (flag == DebuggerObservesAllExecution ? dbg->observesAllExecution() :
-            flag == DebuggerObservesCoverage ? dbg->observesCoverage() :
-            dbg->observesAsmJS())
+        if (flag == DebuggerObservesAllExecution
+            ? dbg->observesAllExecution()
+            : dbg->observesAsmJS())
         {
             debugModeBits |= flag;
             return;
@@ -960,49 +944,6 @@ JSCompartment::unsetIsDebuggee()
         debugModeBits &= ~DebuggerObservesMask;
         DebugScopes::onCompartmentUnsetIsDebuggee(this);
     }
-}
-
-void
-JSCompartment::updateDebuggerObservesCoverage()
-{
-    bool previousState = debuggerObservesCoverage();
-    updateDebuggerObservesFlag(DebuggerObservesCoverage);
-    if (previousState == debuggerObservesCoverage())
-        return;
-
-    if (debuggerObservesCoverage()) {
-        // Interrupt any running interpreter frame. The scriptCounts are
-        // allocated on demand when a script resume its execution.
-        for (ActivationIterator iter(runtimeFromMainThread()); !iter.done(); ++iter) {
-            if (iter->isInterpreter())
-                iter->asInterpreter()->enableInterruptsUnconditionally();
-        }
-        return;
-    }
-
-    // If the runtime flag is enabled, then keep the data until
-    // StopPCCountProfiling is called.
-    if (runtimeFromMainThread()->profilingScripts)
-        return;
-
-    clearScriptCounts();
-}
-
-void
-JSCompartment::clearScriptCounts()
-{
-    if (!scriptCountsMap)
-        return;
-
-    // Clear all hasScriptCounts_ flags of JSScript, in order to release all
-    // ScriptCounts entry of the current compartment.
-    for (ScriptCountsMap::Range r = scriptCountsMap->all(); !r.empty(); r.popFront()) {
-        ScriptCounts* value = &r.front().value();
-        r.front().key()->takeOverScriptCountsMapEntry(value);
-    }
-
-    js_delete(scriptCountsMap);
-    scriptCountsMap = nullptr;
 }
 
 void

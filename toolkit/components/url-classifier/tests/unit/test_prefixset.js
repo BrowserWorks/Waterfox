@@ -214,7 +214,7 @@ function testLoadSaveNoDelta() {
   doExpectedLookups(pset, arr, 1);
 }
 
-var tests = [testBasicPset,
+let tests = [testBasicPset,
              testSimplePset,
              testReSetPrefixes,
              testLoadSaveLargeSet,

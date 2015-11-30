@@ -175,9 +175,10 @@ txMozillaTextOutput::createResultDocument(nsIDOMDocument* aSourceDocument,
             RegisterNameSpace(NS_LITERAL_STRING(kTXNameSpaceURI), namespaceID);
         NS_ENSURE_SUCCESS(rv, rv);
 
-        mTextParent =
-          mDocument->CreateElem(nsDependentAtomString(nsGkAtoms::result),
-                                nsGkAtoms::transformiix, namespaceID);
+        rv = mDocument->CreateElem(nsDependentAtomString(nsGkAtoms::result),
+                                   nsGkAtoms::transformiix, namespaceID,
+                                   getter_AddRefs(mTextParent));
+        NS_ENSURE_SUCCESS(rv, rv);
 
 
         rv = mDocument->AppendChildTo(mTextParent, true);

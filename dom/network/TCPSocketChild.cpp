@@ -11,21 +11,25 @@
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/dom/PBrowserChild.h"
 #include "mozilla/dom/TabChild.h"
-#include "nsITCPSocketCallback.h"
-#include "TCPSocket.h"
+#include "nsIDOMTCPSocket.h"
+#include "nsJSUtils.h"
 #include "nsContentUtils.h"
 #include "jsapi.h"
 #include "jsfriendapi.h"
+#include "jswrapper.h"
 
 using mozilla::net::gNeckoChild;
 
 namespace IPC {
 
 bool
-DeserializeArrayBuffer(JSContext* cx,
+DeserializeArrayBuffer(JS::Handle<JSObject*> aObj,
                        const InfallibleTArray<uint8_t>& aBuffer,
                        JS::MutableHandle<JS::Value> aVal)
 {
+  mozilla::AutoSafeJSContext cx;
+  JSAutoCompartment ac(cx, aObj);
+
   mozilla::UniquePtr<uint8_t[], JS::FreePolicy> data(js_pod_malloc<uint8_t>(aBuffer.Length()));
   if (!data)
       return false;
@@ -53,16 +57,19 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(TCPSocketChildBase)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(TCPSocketChildBase)
+  tmp->mWindowObj = nullptr;
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mSocket)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(TCPSocketChildBase)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mWindowObj)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(TCPSocketChildBase)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(TCPSocketChildBase)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(TCPSocketChildBase)
+  NS_INTERFACE_MAP_ENTRY(nsITCPSocketChild)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
@@ -87,36 +94,36 @@ NS_IMETHODIMP_(MozExternalRefCountType) TCPSocketChild::Release(void)
   return refcnt;
 }
 
-TCPSocketChild::TCPSocketChild(const nsAString& aHost, const uint16_t& aPort)
-: mHost(aHost)
-, mPort(aPort)
+TCPSocketChild::TCPSocketChild()
+: mHost()
+, mPort(0)
 {
 }
 
-void
-TCPSocketChild::SendOpen(nsITCPSocketCallback* aSocket, bool aUseSSL, bool aUseArrayBuffers)
-{
-  mSocket = aSocket;
-
-  AddIPDLReference();
-  gNeckoChild->SendPTCPSocketConstructor(this, mHost, mPort);
-  PTCPSocketChild::SendOpen(mHost, mPort, aUseSSL, aUseArrayBuffers);
+void TCPSocketChild::Init(const nsString& aHost, const uint16_t& aPort) {
+  mHost = aHost;
+  mPort = aPort;
 }
 
-void
-TCPSocketChild::SendWindowlessOpenBind(nsITCPSocketCallback* aSocket,
-                                       const nsACString& aRemoteHost, uint16_t aRemotePort,
-                                       const nsACString& aLocalHost, uint16_t aLocalPort,
-                                       bool aUseSSL)
+NS_IMETHODIMP
+TCPSocketChild::SendOpen(nsITCPSocketInternal* aSocket,
+                         const nsAString& aHost, uint16_t aPort,
+                         bool aUseSSL, const nsAString& aBinaryType,
+                         nsIDOMWindow* aWindow, JS::Handle<JS::Value> aWindowObj,
+                         JSContext* aCx)
 {
   mSocket = aSocket;
+
+  MOZ_ASSERT(aWindowObj.isObject());
+  mWindowObj = js::CheckedUnwrap(&aWindowObj.toObject());
+  if (!mWindowObj) {
+    return NS_ERROR_FAILURE;
+  }
   AddIPDLReference();
-  gNeckoChild->SendPTCPSocketConstructor(this,
-                                         NS_ConvertUTF8toUTF16(aRemoteHost),
-                                         aRemotePort);
-  PTCPSocketChild::SendOpenBind(nsCString(aRemoteHost), aRemotePort,
-                                nsCString(aLocalHost), aLocalPort,
-                                aUseSSL, true);
+  gNeckoChild->SendPTCPSocketConstructor(this, nsString(aHost), aPort);
+  PTCPSocketChild::SendOpen(nsString(aHost), aPort,
+                            aUseSSL, nsString(aBinaryType));
+  return NS_OK;
 }
 
 void
@@ -143,89 +150,147 @@ bool
 TCPSocketChild::RecvUpdateBufferedAmount(const uint32_t& aBuffered,
                                          const uint32_t& aTrackingNumber)
 {
-  mSocket->UpdateBufferedAmount(aBuffered, aTrackingNumber);
+  if (NS_FAILED(mSocket->UpdateBufferedAmount(aBuffered, aTrackingNumber))) {
+    NS_ERROR("Shouldn't fail!");
+  }
   return true;
 }
 
 bool
 TCPSocketChild::RecvCallback(const nsString& aType,
                              const CallbackData& aData,
-                             const uint32_t& aReadyState)
+                             const nsString& aReadyState)
 {
-  mSocket->UpdateReadyState(aReadyState);
+  if (NS_FAILED(mSocket->UpdateReadyState(aReadyState)))
+    NS_ERROR("Shouldn't fail!");
 
+  nsresult rv = NS_ERROR_FAILURE;
   if (aData.type() == CallbackData::Tvoid_t) {
-    mSocket->FireEvent(aType);
+    rv = mSocket->CallListenerVoid(aType);
 
   } else if (aData.type() == CallbackData::TTCPError) {
     const TCPError& err(aData.get_TCPError());
-    mSocket->FireErrorEvent(err.name(), err.message());
+    rv = mSocket->CallListenerError(aType, err.name());
 
   } else if (aData.type() == CallbackData::TSendableData) {
     const SendableData& data = aData.get_SendableData();
 
     if (data.type() == SendableData::TArrayOfuint8_t) {
-      mSocket->FireDataArrayEvent(aType, data.get_ArrayOfuint8_t());
-    } else if (data.type() == SendableData::TnsCString) {
-      mSocket->FireDataStringEvent(aType, data.get_nsCString());
+      JSContext* cx = nsContentUtils::GetSafeJSContext();
+      JSAutoRequest ar(cx);
+      JS::Rooted<JS::Value> val(cx);
+      JS::Rooted<JSObject*> window(cx, mWindowObj);
+      bool ok = IPC::DeserializeArrayBuffer(window, data.get_ArrayOfuint8_t(), &val);
+      NS_ENSURE_TRUE(ok, true);
+      rv = mSocket->CallListenerArrayBuffer(aType, val);
+
+    } else if (data.type() == SendableData::TnsString) {
+      rv = mSocket->CallListenerData(aType, data.get_nsString());
+
     } else {
       MOZ_CRASH("Invalid callback data type!");
     }
+
   } else {
     MOZ_CRASH("Invalid callback type!");
   }
+  NS_ENSURE_SUCCESS(rv, true);
   return true;
 }
 
-void
-TCPSocketChild::SendSend(const nsACString& aData, uint32_t aTrackingNumber)
+NS_IMETHODIMP
+TCPSocketChild::SendStartTLS()
 {
-  SendData(nsCString(aData), aTrackingNumber);
-}
-
-nsresult
-TCPSocketChild::SendSend(const ArrayBuffer& aData,
-                         uint32_t aByteOffset,
-                         uint32_t aByteLength,
-                         uint32_t aTrackingNumber)
-{
-  uint32_t buflen = aData.Length();
-  uint32_t offset = std::min(buflen, aByteOffset);
-  uint32_t nbytes = std::min(buflen - aByteOffset, aByteLength);
-  FallibleTArray<uint8_t> fallibleArr;
-  if (!fallibleArr.InsertElementsAt(0, aData.Data() + offset, nbytes, fallible)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
-  InfallibleTArray<uint8_t> arr;
-  arr.SwapElements(fallibleArr);
-  SendData(arr, aTrackingNumber);
+  PTCPSocketChild::SendStartTLS();
   return NS_OK;
 }
 
 NS_IMETHODIMP
-TCPSocketChild::SendSendArray(nsTArray<uint8_t>& aArray, uint32_t aTrackingNumber)
+TCPSocketChild::SendSuspend()
 {
-  SendData(aArray, aTrackingNumber);
+  PTCPSocketChild::SendSuspend();
   return NS_OK;
 }
 
-void
-TCPSocketChild::SetSocket(TCPSocket* aSocket)
+NS_IMETHODIMP
+TCPSocketChild::SendResume()
 {
-  mSocket = aSocket;
+  PTCPSocketChild::SendResume();
+  return NS_OK;
 }
 
-void
+NS_IMETHODIMP
+TCPSocketChild::SendClose()
+{
+  PTCPSocketChild::SendClose();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+TCPSocketChild::SendSend(JS::Handle<JS::Value> aData,
+                         uint32_t aByteOffset,
+                         uint32_t aByteLength,
+                         uint32_t aTrackingNumber,
+                         JSContext* aCx)
+{
+  if (aData.isString()) {
+    JSString* jsstr = aData.toString();
+    nsAutoJSString str;
+    bool ok = str.init(aCx, jsstr);
+    NS_ENSURE_TRUE(ok, NS_ERROR_FAILURE);
+    SendData(str, aTrackingNumber);
+  } else {
+    NS_ENSURE_TRUE(aData.isObject(), NS_ERROR_FAILURE);
+    JS::Rooted<JSObject*> obj(aCx, &aData.toObject());
+    NS_ENSURE_TRUE(JS_IsArrayBufferObject(obj), NS_ERROR_FAILURE);
+    uint32_t buflen = JS_GetArrayBufferByteLength(obj);
+    aByteOffset = std::min(buflen, aByteOffset);
+    uint32_t nbytes = std::min(buflen - aByteOffset, aByteLength);
+    FallibleTArray<uint8_t> fallibleArr;
+    {
+        JS::AutoCheckCannotGC nogc;
+        uint8_t* data = JS_GetArrayBufferData(obj, nogc);
+        if (!data) {
+            return NS_ERROR_OUT_OF_MEMORY;
+        }
+        if (!fallibleArr.InsertElementsAt(0, data + aByteOffset, nbytes,
+                                          fallible)) {
+            return NS_ERROR_OUT_OF_MEMORY;
+        }
+    }
+    InfallibleTArray<uint8_t> arr;
+    arr.SwapElements(fallibleArr);
+    SendData(arr, aTrackingNumber);
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+TCPSocketChild::SetSocketAndWindow(nsITCPSocketInternal *aSocket,
+                                   JS::Handle<JS::Value> aWindowObj,
+                                   JSContext* aCx)
+{
+  mSocket = aSocket;
+  MOZ_ASSERT(aWindowObj.isObject());
+  mWindowObj = js::CheckedUnwrap(&aWindowObj.toObject());
+  if (!mWindowObj) {
+    return NS_ERROR_FAILURE;
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 TCPSocketChild::GetHost(nsAString& aHost)
 {
   aHost = mHost;
+  return NS_OK;
 }
 
-void
+NS_IMETHODIMP
 TCPSocketChild::GetPort(uint16_t* aPort)
 {
   *aPort = mPort;
+  return NS_OK;
 }
 
 bool

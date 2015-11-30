@@ -1752,12 +1752,7 @@ nsComponentManagerImpl::IsContractIDRegistered(const char* aClass,
   nsFactoryEntry* entry = GetFactoryEntry(aClass, strlen(aClass));
 
   if (entry) {
-    // UnregisterFactory might have left a stale nsFactoryEntry in
-    // mContractIDs, so we should check to see whether this entry has
-    // anything useful.
-    *aResult = (bool(entry->mModule) ||
-                bool(entry->mFactory) ||
-                bool(entry->mServiceObject));
+    *aResult = true;
   } else {
     *aResult = false;
   }

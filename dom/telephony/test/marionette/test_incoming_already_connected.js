@@ -6,11 +6,11 @@ MARIONETTE_HEAD_JS = 'head.js';
 
 const outNumber = "5555551111";
 const outInfo = gOutCallStrPool(outNumber);
-var outCall;
+let outCall;
 
 const inNumber = "5555552222";
 const inInfo = gInCallStrPool(inNumber);
-var inCall;
+let inCall;
 
 startTest(function() {
   gDial(outNumber)

@@ -26,7 +26,8 @@ XPCOMUtils.defineLazyServiceGetter(this, "appsService",
                                    "@mozilla.org/AppsService;1",
                                    "nsIAppsService");
 
-// Shared code for AppsServiceChild.jsm, Webapps.jsm and Webapps.js
+// Shared code for AppsServiceChild.jsm, TrustedHostedAppsUtils.jsm,
+// Webapps.jsm and Webapps.js
 
 this.EXPORTED_SYMBOLS =
   ["AppsUtils", "ManifestHelper", "isAbsoluteURI", "mozIApplication"];
@@ -73,9 +74,11 @@ mozIApplication.prototype = {
     this._principal = null;
 
     try {
-      this._principal = Services.scriptSecurityManager.createCodebasePrincipal(
+      this._principal = Services.scriptSecurityManager.getAppCodebasePrincipal(
         Services.io.newURI(this.origin, null, null),
-        {appId: this.localId});
+        this.localId,
+        false /* mozbrowser */
+      );
     } catch(e) {
       dump("Could not create app principal " + e + "\n");
     }
@@ -130,10 +133,6 @@ function _setAppProperties(aObj, aApp) {
   aObj.kind = aApp.kind;
   aObj.enabled = aApp.enabled !== undefined ? aApp.enabled : true;
   aObj.sideloaded = aApp.sideloaded;
-#ifdef MOZ_B2GDROID
-  aObj.android_packagename = aApp.android_packagename;
-  aObj.android_classname = aApp.android_classname;
-#endif
 }
 
 this.AppsUtils = {
@@ -301,7 +300,9 @@ this.AppsUtils = {
               return Services.prefs.getCharPref("security.apps.privileged.CSP.default");
               break;
             case Ci.nsIPrincipal.APP_STATUS_INSTALLED:
-              return "";
+              return app.kind == "hosted-trusted"
+                ? Services.prefs.getCharPref("security.apps.trusted.CSP.default")
+                : "";
               break;
           }
         } catch(e) {}
@@ -604,6 +605,7 @@ this.AppsUtils = {
 
     switch(type) {
     case "web":
+    case "trusted":
       return Ci.nsIPrincipal.APP_STATUS_INSTALLED;
     case "privileged":
       return Ci.nsIPrincipal.APP_STATUS_PRIVILEGED;
@@ -757,8 +759,8 @@ this.AppsUtils = {
     return deferred.promise;
   },
 
-  // Returns the hash of a string, with MD5 as a default hashing function.
-  computeHash: function(aString, aAlgorithm = "MD5") {
+  // Returns the MD5 hash of a string.
+  computeHash: function(aString) {
     let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
                       .createInstance(Ci.nsIScriptableUnicodeConverter);
     converter.charset = "UTF-8";
@@ -768,7 +770,7 @@ this.AppsUtils = {
 
     let hasher = Cc["@mozilla.org/security/hash;1"]
                    .createInstance(Ci.nsICryptoHash);
-    hasher.initWithString(aAlgorithm);
+    hasher.init(hasher.MD5);
     hasher.update(data, data.length);
     // We're passing false to get the binary hash and not base64.
     let hash = hasher.finish(false);

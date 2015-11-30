@@ -459,31 +459,6 @@ nsPartChannel::GetBaseChannel(nsIChannel ** aReturn)
     return NS_OK;
 }
 
-NS_IMETHODIMP
-nsPartChannel::GetPreamble(nsACString & aPreamble)
-{
-    aPreamble = mPreamble;
-    return NS_OK;
-}
-
-void
-nsPartChannel::SetPreamble(const nsACString& aPreamble)
-{
-    mPreamble = aPreamble;
-}
-
-NS_IMETHODIMP
-nsPartChannel::GetOriginalResponseHeader(nsACString & aOriginalResponseHeader)
-{
-    aOriginalResponseHeader = mOriginalResponseHeader;
-    return NS_OK;
-}
-
-void
-nsPartChannel::SetOriginalResponseHeader(const nsACString& aOriginalResponseHeader)
-{
-    mOriginalResponseHeader = aOriginalResponseHeader;
-}
 
 // nsISupports implementation
 NS_IMPL_ISUPPORTS(nsMultiMixedConv,
@@ -547,49 +522,6 @@ private:
   char *mBuffer;
 };
 
-char*
-nsMultiMixedConv::ProbeToken(char* aBuffer, uint32_t& aTokenLen)
-{
-    // To sign a packaged web app in the new security model, we need
-    // to add the signature to the package header. The header is the
-    // data before the first token and the header format is
-    //
-    // [field-name]: [field-value] CR LF
-    //
-    // So the package may look like:
-    //
-    // manifest-signature: MRjdkly...
-    // --gc0pJq0M:08jU534c0p
-    // Content-Location: /someapp.webmanifest
-    // Content-Type: application/manifest
-    //
-    // {
-    // "name": "My App",
-    // "description":"A great app!"
-    // ...
-    //
-    //
-    // We search for the first '\r\n--' and assign the subsquent chars
-    // to the token until another '\r\n'. '--' will be included in the
-    // token we probed. If the second '\r\n' is not found, we still treat
-    // the token is not found and more data will be requested.
-
-    char* posCRLFDashDash = PL_strstr(aBuffer, "\r\n--");
-    if (!posCRLFDashDash) {
-        return nullptr;
-    }
-
-    char* tokenStart = posCRLFDashDash + 2; // Skip "\r\n".
-    char* tokenEnd = PL_strstr(tokenStart, "\r\n");
-    if (!tokenEnd) {
-        return nullptr;
-    }
-
-    aTokenLen = tokenEnd - tokenStart;
-
-    return tokenStart;
-}
-
 // nsIStreamListener implementation
 NS_IMETHODIMP
 nsMultiMixedConv::OnDataAvailable(nsIRequest *request, nsISupports *context,
@@ -652,36 +584,24 @@ nsMultiMixedConv::OnDataAvailable(nsIRequest *request, nsISupports *context,
         } else if (mPackagedApp) {
             // We need to check the line starts with --
             if (!StringBeginsWith(firstBuffer, NS_LITERAL_CSTRING("--"))) {
-                char* tokenPos = ProbeToken(buffer, mTokenLen);
-                if (!tokenPos) {
-                    // No token is found. We need more data.
-                    mFirstOnData = true;
-                } else {
-                    // Token is probed.
-                    mToken = Substring(tokenPos, mTokenLen);
-                    mPreamble = nsCString(Substring(buffer, tokenPos));
-
-                    // Push the cursor to the token so that the while loop below will
-                    // find token from the right position.
-                    cursor = tokenPos;
-                }
-            } else {
-                // If the boundary was set in the header,
-                // we need to check it matches with the one in the file.
-                if (mTokenLen &&
-                    !StringBeginsWith(Substring(firstBuffer, 2), mToken)) {
-                    return NS_ERROR_FAILURE;
-                }
-
-                // Save the token.
-                if (!mTokenLen) {
-                    mToken = nsCString(Substring(firstBuffer, 2).BeginReading(),
-                                       posCR - 2);
-                    mTokenLen = mToken.Length();
-                }
-
-                cursor = buffer;
+                return NS_ERROR_FAILURE;
             }
+
+            // If the boundary was set in the header,
+            // we need to check it matches with the one in the file.
+            if (mTokenLen &&
+                !StringBeginsWith(Substring(firstBuffer, 2), mToken)) {
+                return NS_ERROR_FAILURE;
+            }
+
+            // Save the token.
+            if (!mTokenLen) {
+                mToken = nsCString(Substring(firstBuffer, 2).BeginReading(),
+                                   posCR - 2);
+                mTokenLen = mToken.Length();
+            }
+
+            cursor = buffer;
         } else if (!PL_strnstr(cursor, token, mTokenLen + 2)) {
             char *newBuffer = (char *) realloc(buffer, bufLen + mTokenLen + 1);
             if (!newBuffer)
@@ -709,14 +629,8 @@ nsMultiMixedConv::OnDataAvailable(nsIRequest *request, nsISupports *context,
         // for this "part" given the previous buffer given to 
         // us in the previous OnDataAvailable callback.
         bool done = false;
-        const char* originalCursor = cursor;
         rv = ParseHeaders(channel, cursor, bufLen, &done);
         if (NS_FAILED(rv)) return rv;
-
-        // Append the content to the original header.
-        if (cursor > originalCursor) {
-            mOriginalResponseHeader.Append(originalCursor, cursor - originalCursor);
-        }
 
         if (done) {
             mProcessingHeaders = false;
@@ -755,16 +669,9 @@ nsMultiMixedConv::OnDataAvailable(nsIRequest *request, nsISupports *context,
             // parse headers
             mNewPart = false;
             cursor = token;
-            bool done = false;
-            const char* originalCursor = cursor;
+            bool done = false; 
             rv = ParseHeaders(channel, cursor, bufLen, &done);
             if (NS_FAILED(rv)) return rv;
-
-            // Append the content to the original header.
-            if (cursor > originalCursor) {
-                mOriginalResponseHeader.Append(originalCursor, cursor - originalCursor);
-            }
-
             if (done) {
                 rv = SendStart(channel);
                 if (NS_FAILED(rv)) return rv;
@@ -1057,13 +964,6 @@ nsMultiMixedConv::SendStart(nsIChannel *aChannel) {
 
     // Set up the new part channel...
     mPartChannel = newChannel;
-
-    // Pass preamble to the channel.
-    mPartChannel->SetPreamble(mPreamble);
-
-    // Pass original http header.
-    mPartChannel->SetOriginalResponseHeader(mOriginalResponseHeader);
-    mOriginalResponseHeader = EmptyCString();
 
     // We pass the headers to the nsPartChannel
     mPartChannel->SetResponseHead(mResponseHead.forget());

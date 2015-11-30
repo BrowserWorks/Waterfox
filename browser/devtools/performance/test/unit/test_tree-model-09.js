@@ -5,7 +5,7 @@
  * Tests that when displaying only content nodes, platform nodes are generalized.
  */
 
-var { CATEGORY_MASK } = require("devtools/performance/global");
+let { CATEGORY_MASK } = require("devtools/performance/global");
 
 function run_test() {
   run_next_test();
@@ -47,7 +47,7 @@ add_task(function test() {
      "generalized frames of same type are duplicated in top-down view");
 });
 
-var gThread = synthesizeProfileForTest([{
+let gThread = synthesizeProfileForTest([{
   time: 5,
   frames: [
     { location: "(root)" },

@@ -174,14 +174,6 @@ ImageWrapper::GetFrame(uint32_t aWhichFrame,
   return mInnerImage->GetFrame(aWhichFrame, aFlags);
 }
 
-NS_IMETHODIMP_(already_AddRefed<SourceSurface>)
-ImageWrapper::GetFrameAtSize(const IntSize& aSize,
-                             uint32_t aWhichFrame,
-                             uint32_t aFlags)
-{
-  return mInnerImage->GetFrameAtSize(aSize, aWhichFrame, aFlags);
-}
-
 NS_IMETHODIMP_(bool)
 ImageWrapper::IsOpaque()
 {
@@ -293,12 +285,6 @@ NS_IMETHODIMP_(void)
 ImageWrapper::SetAnimationStartTime(const TimeStamp& aTime)
 {
   mInnerImage->SetAnimationStartTime(aTime);
-}
-
-void
-ImageWrapper::PropagateUseCounters(nsIDocument* aParentDocument)
-{
-  mInnerImage->PropagateUseCounters(aParentDocument);
 }
 
 nsIntSize

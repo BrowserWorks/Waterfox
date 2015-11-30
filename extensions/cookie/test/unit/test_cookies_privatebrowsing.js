@@ -3,7 +3,7 @@
 
 // Test private browsing mode.
 
-var test_generator = do_run_test();
+let test_generator = do_run_test();
 
 function run_test() {
   do_test_pending();

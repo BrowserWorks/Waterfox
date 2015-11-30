@@ -44,7 +44,7 @@ public:
    * Notify this Axis that a new touch has been received, including a timestamp
    * for when the touch was received. This triggers a recalculation of velocity.
    */
-  void UpdateWithTouchAtDevicePoint(ParentLayerCoord aPos, ParentLayerCoord aAdditionalDelta, uint32_t aTimestampMs);
+  void UpdateWithTouchAtDevicePoint(ParentLayerCoord aPos, uint32_t aTimestampMs);
 
   /**
    * Notify this Axis that a touch has begun, i.e. the user has put their finger
@@ -59,12 +59,12 @@ public:
   void EndTouch(uint32_t aTimestampMs);
 
   /**
-   * Notify this Axis that the gesture has ended forcefully. Useful for stopping
+   * Notify this Axis that a touch has ended forcefully. Useful for stopping
    * flings when a user puts their finger down in the middle of one (i.e. to
    * stop a previous touch including its fling so that a new one can take its
    * place).
    */
-  void CancelGesture();
+  void CancelTouch();
 
   /**
    * Takes a requested displacement to the position of this axis, and adjusts it
@@ -163,7 +163,7 @@ public:
   /**
    * Returns whether this axis can scroll any more in a particular direction.
    */
-  bool CanScroll(ParentLayerCoord aDelta) const;
+  bool CanScroll(double aDelta) const;
 
   /**
    * Returns true if the page has room to be scrolled along this axis
@@ -222,11 +222,6 @@ public:
    * This gets called by ScaleWillOverscroll().
    */
   bool ScaleWillOverscrollBothSides(float aScale) const;
-
-  /**
-   * Returns true if movement on this axis is locked.
-   */
-  bool IsAxisLocked() const;
 
   ParentLayerCoord GetOrigin() const;
   ParentLayerCoord GetCompositionLength() const;

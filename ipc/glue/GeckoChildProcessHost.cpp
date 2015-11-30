@@ -593,7 +593,7 @@ MaybeAddNsprLogFileAccess(std::vector<std::wstring>& aAllowedFilesReadWrite)
   // Chromium sandbox can only allow access to fully qualified file paths. This
   // only affects the environment for the child process we're about to create,
   // because this will get reset to the original value in PerformAsyncLaunch.
-  aAllowedFilesReadWrite.push_back(std::wstring(resolvedFilePath.get()));
+  aAllowedFilesReadWrite.push_back(resolvedFilePath.get());
   nsAutoCString resolvedEnvVar("NSPR_LOG_FILE=");
   AppendUTF16toUTF8(resolvedFilePath, resolvedEnvVar);
   PR_SetEnv(resolvedEnvVar.get());
@@ -948,12 +948,6 @@ GeckoChildProcessHost::PerformAsyncLaunchInternal(std::vector<std::string>& aExt
          it != mAllowedFilesReadWrite.end();
          ++it) {
       mSandboxBroker.AllowReadWriteFile(it->c_str());
-    }
-
-    for (auto it = mAllowedDirectories.begin();
-         it != mAllowedDirectories.end();
-         ++it) {
-      mSandboxBroker.AllowDirectory(it->c_str());
     }
   }
 #endif // XP_WIN && MOZ_SANDBOX

@@ -11,7 +11,7 @@
  */
 
 // Sequence of setPermission parameters.
-var testSequence = [
+let testSequence = [
   [ { winAttributes: { readOnly: true, system: true, hidden: true } },
     { readOnly: true, system: true, hidden: true } ],
   [ { winAttributes: { readOnly: false } },

@@ -39,7 +39,9 @@
                     actual_keys.push(cursor.key.valueOf());
                     cursor.continue();
                 } else {
-                    assert_array_equals(actual_keys, expected_keys, "keyorder array");
+                    assert_equals(actual_keys.length, expected_keys.length, "array length");
+                    assert_object_equals(actual_keys, expected_keys, "keyorder array");
+
                     t.done();
                 }
             });
@@ -61,3 +63,4 @@
 </script>
 
 <div id=log></log>
+

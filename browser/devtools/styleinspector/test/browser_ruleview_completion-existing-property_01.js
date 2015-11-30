@@ -4,8 +4,8 @@
 
 "use strict";
 
-// Tests that CSS property names are autocompleted and cycled correctly when
-// editing an existing property in the rule view.
+// Test that CSS property names are autocompleted and cycled correctly when
+// editing an existing property in the rule view
 
 const MAX_ENTRIES = 10;
 
@@ -16,10 +16,10 @@ const MAX_ENTRIES = 10;
 //    selectedIndex of the popup,
 //    total items in the popup
 //  ]
-var testData = [
+let testData = [
   ["VK_RIGHT", "font", -1, 0],
-  ["-", "font-family", 0, MAX_ENTRIES],
-  ["f", "font-family", 0, 2],
+  ["-","font-family", 0, MAX_ENTRIES],
+  ["f","font-family", 0, 2],
   ["VK_BACK_SPACE", "font-f", -1, 0],
   ["VK_BACK_SPACE", "font-", -1, 0],
   ["VK_BACK_SPACE", "font", -1, 0],
@@ -54,10 +54,11 @@ var testData = [
   ["VK_ESCAPE", null, -1, 0],
 ];
 
-const TEST_URI = "<h1 style='font: 24px serif'>Header</h1>";
+let TEST_URL = "data:text/html;charset=utf-8,<h1 style='font: 24px serif'>Filename" +
+               ": browser_bug893965_css_property_completion_existing_property.js</h1>";
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+  yield addTab(TEST_URL);
   let {toolbox, inspector, view} = yield openRuleView();
 
   info("Test autocompletion after 1st page load");
@@ -73,8 +74,7 @@ function* runAutocompletionTest(toolbox, inspector, view) {
   yield selectNode("h1", inspector);
 
   info("Focusing the css property editable field");
-  let propertyName = view.styleDocument
-    .querySelectorAll(".ruleview-propertyname")[0];
+  let propertyName = view.styleDocument.querySelectorAll(".ruleview-propertyname")[0];
   let editor = yield focusEditableField(view, propertyName);
 
   info("Starting to test for css property completion");
@@ -90,8 +90,7 @@ function* testCompletion([key, completion, index, total], editor, view) {
   let onSuggest;
 
   if (/(left|right|back_space|escape|home|end|page_up|page_down)/ig.test(key)) {
-    info("Adding event listener for " +
-      "left|right|back_space|escape|home|end|page_up|page_down keys");
+    info("Adding event listener for left|right|back_space|escape|home|end|page_up|page_down keys");
     onSuggest = once(editor.input, "keypress");
   } else {
     info("Waiting for after-suggest event on the editor");
@@ -111,8 +110,7 @@ function* testCompletion([key, completion, index, total], editor, view) {
   if (total == 0) {
     ok(!(editor.popup && editor.popup.isOpen), "Popup is closed");
   } else {
-    ok(editor.popup._panel.state == "open" ||
-       editor.popup._panel.state == "showing", "Popup is open");
+    ok(editor.popup._panel.state == "open" || editor.popup._panel.state == "showing", "Popup is open");
     is(editor.popup.getItems().length, total, "Number of suggestions match");
     is(editor.popup.selectedIndex, index, "Correct item is selected");
   }

@@ -197,12 +197,9 @@ nsXULPopupListener::HandleEvent(nsIDOMEvent* aEvent)
 
   if (mIsContext) {
 #ifndef NS_CONTEXT_MENU_IS_MOUSEUP
-    uint16_t inputSource = nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN;
-    mouseEvent->GetMozInputSource(&inputSource);
-    bool isTouch = inputSource == nsIDOMMouseEvent::MOZ_SOURCE_TOUCH;
     // If the context menu launches on mousedown,
     // we have to fire focus on the content we clicked on
-    FireFocusOnTargetContent(targetNode, isTouch);
+    FireFocusOnTargetContent(targetNode);
 #endif
   }
   else {
@@ -221,7 +218,7 @@ nsXULPopupListener::HandleEvent(nsIDOMEvent* aEvent)
 
 #ifndef NS_CONTEXT_MENU_IS_MOUSEUP
 nsresult
-nsXULPopupListener::FireFocusOnTargetContent(nsIDOMNode* aTargetNode, bool aIsTouch)
+nsXULPopupListener::FireFocusOnTargetContent(nsIDOMNode* aTargetNode)
 {
   nsresult rv;
   nsCOMPtr<nsIDOMDocument> domDoc;
@@ -267,12 +264,8 @@ nsXULPopupListener::FireFocusOnTargetContent(nsIDOMNode* aTargetNode, bool aIsTo
     nsIFocusManager* fm = nsFocusManager::GetFocusManager();
     if (fm) {
       if (element) {
-        uint32_t focusFlags = nsIFocusManager::FLAG_BYMOUSE |
-                              nsIFocusManager::FLAG_NOSCROLL;
-        if (aIsTouch) {
-          focusFlags |= nsIFocusManager::FLAG_BYTOUCH;
-        }
-        fm->SetFocus(element, focusFlags);
+        fm->SetFocus(element, nsIFocusManager::FLAG_BYMOUSE |
+                              nsIFocusManager::FLAG_NOSCROLL);
       } else if (!suppressBlur) {
         nsPIDOMWindow *window = doc->GetWindow();
         fm->ClearFocus(window);

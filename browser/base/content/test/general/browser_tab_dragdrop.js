@@ -2,13 +2,13 @@ function swapTabsAndCloseOther(a, b) {
   gBrowser.swapBrowsersAndCloseOther(gBrowser.tabs[b], gBrowser.tabs[a]);
 }
 
-var getClicks = function(tab) {
+let getClicks = function(tab) {
   return ContentTask.spawn(tab.linkedBrowser, {}, function() {
     return content.wrappedJSObject.clicks;
   });
 }
 
-var clickTest = Task.async(function*(tab) {
+let clickTest = Task.async(function*(tab) {
   let clicks = yield getClicks(tab);
 
   yield ContentTask.spawn(tab.linkedBrowser, {}, function() {

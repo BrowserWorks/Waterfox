@@ -174,6 +174,7 @@ nsHttpHandler::nsHttpHandler()
     , mProduct("Gecko")
     , mCompatFirefoxEnabled(false)
     , mUserAgentIsDirty(true)
+    , mUseCache(true)
     , mPromptTempRedirect(true)
     , mSendSecureXSiteReferrer(true)
     , mEnablePersistentHttpsCaching(false)
@@ -422,40 +423,34 @@ nsHttpHandler::AddStandardRequestHeaders(nsHttpHeaderArray *request)
     nsresult rv;
 
     // Add the "User-Agent" header
-    rv = request->SetHeader(nsHttp::User_Agent, UserAgent(),
-                            false, nsHttpHeaderArray::eVarietyDefault);
+    rv = request->SetHeader(nsHttp::User_Agent, UserAgent());
     if (NS_FAILED(rv)) return rv;
 
     // MIME based content negotiation lives!
     // Add the "Accept" header
-    rv = request->SetHeader(nsHttp::Accept, mAccept,
-                            false, nsHttpHeaderArray::eVarietyDefault);
+    rv = request->SetHeader(nsHttp::Accept, mAccept);
     if (NS_FAILED(rv)) return rv;
 
     // Add the "Accept-Language" header
     if (!mAcceptLanguages.IsEmpty()) {
         // Add the "Accept-Language" header
-        rv = request->SetHeader(nsHttp::Accept_Language, mAcceptLanguages,
-                                false, nsHttpHeaderArray::eVarietyDefault);
+        rv = request->SetHeader(nsHttp::Accept_Language, mAcceptLanguages);
         if (NS_FAILED(rv)) return rv;
     }
 
     // Add the "Accept-Encoding" header
-    rv = request->SetHeader(nsHttp::Accept_Encoding, mAcceptEncodings,
-                            false, nsHttpHeaderArray::eVarietyDefault);
+    rv = request->SetHeader(nsHttp::Accept_Encoding, mAcceptEncodings);
     if (NS_FAILED(rv)) return rv;
 
     // Add the "Do-Not-Track" header
     if (mDoNotTrackEnabled) {
-      rv = request->SetHeader(nsHttp::DoNotTrack, NS_LITERAL_CSTRING("1"),
-                              false, nsHttpHeaderArray::eVarietyDefault);
+      rv = request->SetHeader(nsHttp::DoNotTrack, NS_LITERAL_CSTRING("1"));
       if (NS_FAILED(rv)) return rv;
     }
 
     // add the "Send Hint" header
     if (mSafeHintEnabled || mParentalControlEnabled) {
-      rv = request->SetHeader(nsHttp::Prefer, NS_LITERAL_CSTRING("safe"),
-                              false, nsHttpHeaderArray::eVarietyDefault);
+      rv = request->SetHeader(nsHttp::Prefer, NS_LITERAL_CSTRING("safe"));
       if (NS_FAILED(rv)) return rv;
     }
     return NS_OK;
@@ -1157,6 +1152,13 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
                                   getter_Copies(acceptEncodings));
         if (NS_SUCCEEDED(rv))
             SetAcceptEncodings(acceptEncodings);
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("use-cache"))) {
+        rv = prefs->GetBoolPref(HTTP_PREF("use-cache"), &cVar);
+        if (NS_SUCCEEDED(rv)) {
+            mUseCache = cVar;
+        }
     }
 
     if (PREF_CHANGED(HTTP_PREF("default-socket-type"))) {

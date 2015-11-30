@@ -100,7 +100,7 @@ function test_identity_auth() {
   IDService.IDP._doAuthentication(_provId, idpParams);
 }
 
-var TESTS = [
+let TESTS = [
     test_smoke,
     test_identity_request,
     test_identity_auth,

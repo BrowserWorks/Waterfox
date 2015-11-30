@@ -8,8 +8,8 @@
   * Test bookmarksService.getBookmarkedURIFor(aURI);
   */
 
-var hs = PlacesUtils.history;
-var bs = PlacesUtils.bookmarks;
+let hs = PlacesUtils.history;
+let bs = PlacesUtils.bookmarks;
 
 function run_test() {
   run_next_test();

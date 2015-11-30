@@ -64,6 +64,10 @@ const kEventConstructors = {
                                                           return new BluetoothDeviceEvent(aName, aProps);
                                                        },
                                              },
+  BluetoothDiscoveryStateChangedEvent:       { create: function (aName, aProps) {
+                                                          return new BluetoothDiscoveryStateChangedEvent(aName, aProps);
+                                                       },
+                                             },
   BluetoothGattCharacteristicEvent:          { create: function (aName, aProps) {
                                                           return new BluetoothGattCharacteristicEvent(aName, aProps);
                                                        },
@@ -76,20 +80,8 @@ const kEventConstructors = {
                                                           return new BluetoothPairingEvent(aName, aProps);
                                                        },
                                              },
-  BluetoothPhonebookPullingEvent:            { create: function (aName, aProps) {
-                                                          return new BluetoothPhonebookPullingEvent(aName, aProps);
-                                                       },
-                                             },
   BluetoothStatusChangedEvent:               { create: function (aName, aProps) {
                                                           return new BluetoothStatusChangedEvent(aName, aProps);
-                                                       },
-                                             },
-  BluetoothVCardListingEvent:                { create: function (aName, aProps) {
-                                                          return new BluetoothVCardListingEvent(aName, aProps);
-                                                       },
-                                             },
-  BluetoothVCardPullingEvent:                { create: function (aName, aProps) {
-                                                          return new BluetoothVCardPullingEvent(aName, aProps);
                                                        },
                                              },
   CallEvent:                                 { create: function (aName, aProps) {
@@ -482,18 +474,6 @@ const kEventConstructors = {
                                                          e.initUIEvent(aName, aProps.bubbles, aProps.cancelable,
                                                                        aProps.view, aProps.detail);
                                                          return e;
-                                                       },
-                                             },
-  TCPSocketErrorEvent:                       { create: function(aName, aProps) {
-                                                         return new TCPSocketErrorEvent(aName, aProps);
-                                                       },
-                                             },
-  TCPSocketEvent:                            { create: function(aName, aProps) {
-                                                         return new TCPSocketEvent(aName, aProps);
-                                                       },
-                                             },
-  TCPServerSocketEvent:                      { create: function(aName, aProps) {
-                                                         return new TCPServerSocketEvent(aName, aProps);
                                                        },
                                              },
   TimeEvent:                                 { create: function (aName, aProps) {

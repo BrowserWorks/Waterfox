@@ -8,7 +8,7 @@
 "use strict";
 
 // the singleton frameworker, available for (ab)use by tests.
-var frameworker;
+let frameworker;
 
 (function () { // bug 673569 workaround :(
 

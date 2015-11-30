@@ -528,13 +528,14 @@ js::SetIntegrityLevel(JSContext* cx, HandleObject obj, IntegrityLevel level)
         Reverse(shapes.begin(), shapes.end());
 
         for (Shape* shape : shapes) {
-            Rooted<StackShape> child(cx, StackShape(shape));
-            child.setAttrs(child.attrs() | GetSealedOrFrozenAttributes(child.attrs(), level));
+            StackShape unrootedChild(shape);
+            RootedGeneric<StackShape*> child(cx, &unrootedChild);
+            child->attrs |= GetSealedOrFrozenAttributes(child->attrs, level);
 
-            if (!JSID_IS_EMPTY(child.get().propid) && level == IntegrityLevel::Frozen)
-                MarkTypePropertyNonWritable(cx, nobj, child.get().propid);
+            if (!JSID_IS_EMPTY(child->propid) && level == IntegrityLevel::Frozen)
+                MarkTypePropertyNonWritable(cx, nobj, child->propid);
 
-            last = cx->compartment()->propertyTree.getChild(cx, last, child);
+            last = cx->compartment()->propertyTree.getChild(cx, last, *child);
             if (!last)
                 return false;
         }
@@ -691,6 +692,11 @@ NewObject(ExclusiveContext* cx, HandleObjectGroup group, gc::AllocKind kind,
             return nullptr;
         obj = nobj;
     }
+
+    bool globalWithoutCustomTrace = clasp->trace == JS_GlobalObjectTraceHook &&
+                                    !cx->compartment()->options().getTrace();
+    if (clasp->trace && !globalWithoutCustomTrace)
+        MOZ_RELEASE_ASSERT(clasp->flags & JSCLASS_IMPLEMENTS_BARRIERS);
 
     probes::CreateObject(cx, obj);
     return obj;
@@ -1354,8 +1360,9 @@ InitializePropertiesFromCompatibleNativeObject(JSContext* cx,
         Reverse(shapes.begin(), shapes.end());
 
         for (Shape* shape : shapes) {
-            Rooted<StackShape> child(cx, StackShape(shape));
-            shape = cx->compartment()->propertyTree.getChild(cx, shape, child);
+            StackShape unrootedChild(shape);
+            RootedGeneric<StackShape*> child(cx, &unrootedChild);
+            shape = cx->compartment()->propertyTree.getChild(cx, shape, *child);
             if (!shape)
                 return false;
         }
@@ -3620,7 +3627,7 @@ JSObject::sizeOfIncludingThisInNursery() const
     return size;
 }
 
-JS::ubi::Node::Size
+size_t
 JS::ubi::Concrete<JSObject>::size(mozilla::MallocSizeOf mallocSizeOf) const
 {
     JSObject& obj = get();

@@ -672,8 +672,7 @@ class OrderedHashMap
 
       public:
         Entry() : key(), value() {}
-        template <typename V>
-        Entry(const Key& k, V&& v) : key(k), value(Forward<V>(v)) {}
+        Entry(const Key& k, const Value& v) : key(k), value(v) {}
         Entry(Entry&& rhs) : key(Move(rhs.key)), value(Move(rhs.value)) {}
 
         const Key key;
@@ -708,8 +707,7 @@ class OrderedHashMap
     Range all()                                     { return impl.all(); }
     const Entry* get(const Key& key) const          { return impl.get(key); }
     Entry* get(const Key& key)                      { return impl.get(key); }
-    template <typename V>
-    bool put(const Key& key, V&& value)             { return impl.put(Entry(key, Forward<V>(value))); }
+    bool put(const Key& key, const Value& value)    { return impl.put(Entry(key, value)); }
     bool remove(const Key& key, bool* foundp)       { return impl.remove(key, foundp); }
     bool clear()                                    { return impl.clear(); }
 

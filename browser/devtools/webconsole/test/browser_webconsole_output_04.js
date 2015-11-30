@@ -16,7 +16,7 @@ thisTestLeaksUncaughtRejectionsAndShouldBeFixed("null");
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-console-output-04.html";
 
-var inputTests = [
+let inputTests = [
   // 0
   {
     input: "testTextNode()",

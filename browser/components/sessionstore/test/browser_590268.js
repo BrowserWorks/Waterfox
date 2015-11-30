@@ -4,12 +4,11 @@
 
 const NUM_TABS = 12;
 
-var stateBackup = ss.getBrowserState();
+let stateBackup = ss.getBrowserState();
 
 function test() {
   /** Test for Bug 590268 - Provide access to sessionstore tab data sooner **/
   waitForExplicitFinish();
-  requestLongerTimeout(2);
 
   let startedTest = false;
 

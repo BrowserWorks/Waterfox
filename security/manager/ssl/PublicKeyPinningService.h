@@ -6,7 +6,6 @@
 #define PublicKeyPinningService_h
 
 #include "cert.h"
-#include "CertVerifier.h"
 #include "nsString.h"
 #include "nsTArray.h"
 #include "pkix/Time.h"
@@ -32,8 +31,7 @@ public:
                                     const char* hostname,
                                     mozilla::pkix::Time time,
                                     bool enforceTestMode,
-                            /*out*/ bool& chainHasValidPins,
-                   /*optional out*/ PinningTelemetryInfo* pinningTelemetryInfo);
+                            /*out*/ bool& chainHasValidPins);
   /**
    * Returns true if there is any intersection between the certificate list
    * and the pins specified in the aSHA256key array. Values passed in are

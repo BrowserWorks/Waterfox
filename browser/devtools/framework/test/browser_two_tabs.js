@@ -5,15 +5,17 @@
  * Check regression when opening two tabs
  */
 
-var { DebuggerServer } = require("devtools/server/main");
-var { DebuggerClient } = require("devtools/toolkit/client/main");
+let { DebuggerServer } =
+  Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
+let { DebuggerClient } =
+  Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
 
 const TAB_URL_1 = "data:text/html;charset=utf-8,foo";
 const TAB_URL_2 = "data:text/html;charset=utf-8,bar";
 
-var gClient;
-var gTab1, gTab2;
-var gTabActor1, gTabActor2;
+let gClient;
+let gTab1, gTab2;
+let gTabActor1, gTabActor2;
 
 function test() {
   waitForExplicitFinish();

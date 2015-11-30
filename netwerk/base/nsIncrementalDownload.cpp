@@ -268,7 +268,7 @@ nsIncrementalDownload::ProcessTimeout()
   nsresult rv = NS_NewChannel(getter_AddRefs(channel),
                               mFinalURI,
                               nsContentUtils::GetSystemPrincipal(),
-                              nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                              nsILoadInfo::SEC_NORMAL,
                               nsIContentPolicy::TYPE_OTHER,
                               nullptr,   // loadGroup
                               this,      // aCallbacks
@@ -310,7 +310,7 @@ nsIncrementalDownload::ProcessTimeout()
     }
   }
 
-  rv = channel->AsyncOpen2(this);
+  rv = channel->AsyncOpen(this, nullptr);
   if (NS_FAILED(rv))
     return rv;
 

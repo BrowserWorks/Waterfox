@@ -13,7 +13,7 @@ NS_IMPL_ISUPPORTS(nsParentalControlsService, nsIParentalControlsService)
 nsParentalControlsService::nsParentalControlsService() :
   mEnabled(false)
 {
-  if (mozilla::jni::IsAvailable()) {
+  if (mozilla::AndroidBridge::HasEnv()) {
     mEnabled = mozilla::widget::RestrictedProfiles::IsUserRestricted();
   }
 }
@@ -85,7 +85,7 @@ nsParentalControlsService::IsAllowed(int16_t aAction,
     return rv;
   }
 
-  if (mozilla::jni::IsAvailable()) {
+  if (mozilla::AndroidBridge::HasEnv()) {
     nsAutoCString url;
     if (aUri) {
       rv = aUri->GetSpec(url);

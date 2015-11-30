@@ -41,7 +41,6 @@ chrome.jar:
   content/MemoryObserver.js            (content/MemoryObserver.js)
   content/ConsoleAPI.js                (content/ConsoleAPI.js)
   content/PluginHelper.js              (content/PluginHelper.js)
-  content/PrintHelper.js               (content/PrintHelper.js)
   content/OfflineApps.js               (content/OfflineApps.js)
   content/MasterPassword.js            (content/MasterPassword.js)
   content/FindHelper.js                (content/FindHelper.js)
@@ -59,10 +58,6 @@ chrome.jar:
 #ifdef MOZ_DEVICES
   content/aboutDevices.xhtml           (content/aboutDevices.xhtml)
   content/aboutDevices.js              (content/aboutDevices.js)
-#endif
-#ifndef MOZ_ANDROID_NATIVE_ACCOUNT_UI
-  content/aboutAccounts.xhtml          (content/aboutAccounts.xhtml)
-  content/aboutAccounts.js             (content/aboutAccounts.js)
 #endif
   content/aboutLogins.xhtml            (content/aboutLogins.xhtml)
   content/aboutLogins.js               (content/aboutLogins.js)

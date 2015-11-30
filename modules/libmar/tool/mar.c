@@ -161,9 +161,7 @@ int main(int argc, char **argv) {
       break;
     /* -C workingdirectory */
     } else if (argv[1][0] == '-' && argv[1][1] == 'C') {
-      if (chdir(argv[2]) != 0) {
-        return -1;
-      }
+      chdir(argv[2]);
       argv += 2;
       argc -= 2;
     } 

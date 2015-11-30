@@ -5,7 +5,7 @@
 
 package org.mozilla.gecko.mozglue;
 
-import org.mozilla.gecko.annotation.JNITarget;
+import org.mozilla.gecko.mozglue.JNITarget;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;

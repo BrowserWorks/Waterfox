@@ -15,8 +15,7 @@ MouseScrollEvent::MouseScrollEvent(EventTarget* aOwner,
                                    nsPresContext* aPresContext,
                                    WidgetMouseScrollEvent* aEvent)
   : MouseEvent(aOwner, aPresContext,
-               aEvent ? aEvent :
-                        new WidgetMouseScrollEvent(false, eVoidEvent, nullptr))
+               aEvent ? aEvent : new WidgetMouseScrollEvent(false, 0, nullptr))
 {
   if (aEvent) {
     mEventIsInternal = false;
@@ -89,12 +88,14 @@ MouseScrollEvent::Axis()
 using namespace mozilla;
 using namespace dom;
 
-already_AddRefed<MouseScrollEvent>
-NS_NewDOMMouseScrollEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMMouseScrollEvent(nsIDOMEvent** aInstancePtrResult,
+                          EventTarget* aOwner,
                           nsPresContext* aPresContext,
                           WidgetMouseScrollEvent* aEvent)
 {
-  nsRefPtr<MouseScrollEvent> it =
-    new MouseScrollEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  MouseScrollEvent* it = new MouseScrollEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

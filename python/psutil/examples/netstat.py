@@ -23,6 +23,7 @@ import socket
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 
 import psutil
+from psutil._compat import print_
 
 
 AD = "-"
@@ -37,7 +38,7 @@ proto_map = {
 
 def main():
     templ = "%-5s %-30s %-30s %-13s %-6s %s"
-    print(templ % (
+    print_(templ % (
         "Proto", "Local address", "Remote address", "Status", "PID",
         "Program name"))
     proc_names = {}
@@ -51,7 +52,7 @@ def main():
         raddr = ""
         if c.raddr:
             raddr = "%s:%s" % (c.raddr)
-        print(templ % (
+        print_(templ % (
             proto_map[(c.family, c.type)],
             laddr,
             raddr or AD,

@@ -8,13 +8,11 @@ Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://gre/modules/PromiseUtils.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://testing-common/httpd.js", this);
-Cu.import("resource://gre/modules/AppConstants.jsm");
 
-const gIsWindows = AppConstants.platform == "win";
-const gIsMac = AppConstants.platform == "macosx";
-const gIsAndroid = AppConstants.platform == "android";
-const gIsGonk = AppConstants.platform == "gonk";
-const gIsLinux = AppConstants.platform == "linux";
+const gIsWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
+const gIsMac = ("@mozilla.org/xpcom/mac-utils;1" in Cc);
+const gIsAndroid =  ("@mozilla.org/android/bridge;1" in Cc);
+const gIsGonk = ("@mozilla.org/cellbroadcast/gonkservice;1" in Cc);
 
 const Telemetry = Cc["@mozilla.org/base/telemetry;1"].getService(Ci.nsITelemetry);
 
@@ -26,8 +24,8 @@ const HAS_DATAREPORTINGSERVICE = "@mozilla.org/datareporting/service;1" in Cc;
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-var gOldAppInfo = null;
-var gGlobalScope = this;
+let gOldAppInfo = null;
+let gGlobalScope = this;
 
 const PingServer = {
   _httpServer: null,

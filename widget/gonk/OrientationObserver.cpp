@@ -33,7 +33,7 @@ namespace {
 
 struct OrientationMapping {
   uint32_t mScreenRotation;
-  ScreenOrientationInternal mDomOrientation;
+  ScreenOrientation mDomOrientation;
 };
 
 static OrientationMapping sOrientationMappings[] = {
@@ -43,8 +43,8 @@ static OrientationMapping sOrientationMappings[] = {
   {nsIScreen::ROTATION_270_DEG, eScreenOrientation_LandscapeSecondary},
 };
 
-const static uint32_t sDefaultLandscape = 2;
-const static uint32_t sDefaultPortrait = 0;
+const static int sDefaultLandscape = 2;
+const static int sDefaultPortrait = 0;
 
 static uint32_t sOrientationOffset = 0;
 
@@ -106,9 +106,9 @@ DetectDefaultOrientation()
  * @return NS_OK on success. NS_ILLEGAL_VALUE on failure.
  */
 static nsresult
-ConvertToScreenRotation(ScreenOrientationInternal aOrientation, uint32_t *aResult)
+ConvertToScreenRotation(ScreenOrientation aOrientation, uint32_t *aResult)
 {
-  for (uint32_t i = 0; i < ArrayLength(sOrientationMappings); i++) {
+  for (int i = 0; i < ArrayLength(sOrientationMappings); i++) {
     if (aOrientation & sOrientationMappings[i].mDomOrientation) {
       // Shift the mappings in sOrientationMappings so devices with default
       // landscape orientation map landscape-primary to 0 degree and so forth.
@@ -132,9 +132,9 @@ ConvertToScreenRotation(ScreenOrientationInternal aOrientation, uint32_t *aResul
  * @return NS_OK on success. NS_ILLEGAL_VALUE on failure.
  */
 nsresult
-ConvertToDomOrientation(uint32_t aRotation, ScreenOrientationInternal *aResult)
+ConvertToDomOrientation(uint32_t aRotation, ScreenOrientation *aResult)
 {
-  for (uint32_t i = 0; i < ArrayLength(sOrientationMappings); i++) {
+  for (int i = 0; i < ArrayLength(sOrientationMappings); i++) {
     if (aRotation == sOrientationMappings[i].mScreenRotation) {
       // Shift the mappings in sOrientationMappings so devices with default
       // landscape orientation map 0 degree to landscape-primary and so forth.
@@ -213,11 +213,11 @@ OrientationObserver::Notify(const hal::SensorData& aSensorData)
   }
 
   int rotation = mOrientation->OnSensorChanged(aSensorData, static_cast<int>(currRotation));
-  if (rotation < 0 || uint32_t(rotation) == currRotation) {
+  if (rotation < 0 || rotation == currRotation) {
     return;
   }
 
-  ScreenOrientationInternal orientation;
+  ScreenOrientation orientation;
   if (NS_FAILED(ConvertToDomOrientation(rotation, &orientation))) {
     return;
   }
@@ -259,7 +259,7 @@ OrientationObserver::DisableAutoOrientation()
 }
 
 bool
-OrientationObserver::LockScreenOrientation(ScreenOrientationInternal aOrientation)
+OrientationObserver::LockScreenOrientation(ScreenOrientation aOrientation)
 {
   MOZ_ASSERT(aOrientation | (eScreenOrientation_PortraitPrimary |
                              eScreenOrientation_PortraitSecondary |
@@ -295,7 +295,7 @@ OrientationObserver::LockScreenOrientation(ScreenOrientationInternal aOrientatio
   nsresult rv = screen->GetRotation(&currRotation);
   NS_ENSURE_SUCCESS(rv, false);
 
-  ScreenOrientationInternal currOrientation = eScreenOrientation_None;
+  ScreenOrientation currOrientation = eScreenOrientation_None;
   rv = ConvertToDomOrientation(currRotation, &currOrientation);
   NS_ENSURE_SUCCESS(rv, false);
 
@@ -314,7 +314,7 @@ OrientationObserver::LockScreenOrientation(ScreenOrientationInternal aOrientatio
   NS_ENSURE_SUCCESS(rv, false);
 
   // This conversion will disambiguate aOrientation.
-  ScreenOrientationInternal orientation;
+  ScreenOrientation orientation;
   rv = ConvertToDomOrientation(rotation, &orientation);
   NS_ENSURE_SUCCESS(rv, false);
 

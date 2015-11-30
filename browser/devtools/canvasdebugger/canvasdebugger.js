@@ -12,7 +12,7 @@ Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
 Cu.import("resource://gre/modules/devtools/Console.jsm");
 
 const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const promise = require("promise");
+const promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const { CallWatcherFront } = require("devtools/server/actors/call-watcher");
 const { CanvasFront } = require("devtools/server/actors/canvas");
@@ -99,7 +99,7 @@ const CALLS_LIST_SLOW_SAVE_DELAY = 100; // ms
 /**
  * The current target and the Canvas front, set by this tool's host.
  */
-var gToolbox, gTarget, gFront;
+let gToolbox, gTarget, gFront;
 
 /**
  * Initializes the canvas debugger controller and views.
@@ -126,7 +126,7 @@ function shutdownCanvasDebugger() {
 /**
  * Functions handling target-related lifetime events.
  */
-var EventsHandler = {
+let EventsHandler = {
   /**
    * Listen for events emitted by the current tab target.
    */
@@ -179,8 +179,8 @@ var EventsHandler = {
 /**
  * Localization convenience methods.
  */
-var L10N = new ViewHelpers.L10N(STRINGS_URI);
-var SHARED_L10N = new ViewHelpers.L10N(SHARED_STRINGS_URI);
+let L10N = new ViewHelpers.L10N(STRINGS_URI);
+let SHARED_L10N = new ViewHelpers.L10N(SHARED_STRINGS_URI);
 
 /**
  * Convenient way of emitting events from the panel window.
@@ -190,8 +190,8 @@ EventEmitter.decorate(this);
 /**
  * DOM query helpers.
  */
-var $ = (selector, target = document) => target.querySelector(selector);
-var $all = (selector, target = document) => target.querySelectorAll(selector);
+let $ = (selector, target = document) => target.querySelector(selector);
+let $all = (selector, target = document) => target.querySelectorAll(selector);
 
 /**
  * Gets the fileName part of a string which happens to be an URL.

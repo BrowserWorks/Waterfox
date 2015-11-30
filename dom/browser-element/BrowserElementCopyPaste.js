@@ -8,9 +8,9 @@
 
 dump("###################################### BrowserElementCopyPaste.js loaded\n");
 
-var { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
+let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
 
-var CopyPasteAssistent = {
+let CopyPasteAssistent = {
   COMMAND_MAP: {
     'cut': 'cmd_cut',
     'copy': 'cmd_copyAndCollapseToEnd',
@@ -72,8 +72,7 @@ var CopyPasteAssistent = {
       collapsed: e.collapsed,
       caretVisible: e.caretVisible,
       selectionVisible: e.selectionVisible,
-      selectionEditable: e.selectionEditable,
-      selectedTextContent: e.selectedTextContent
+      selectionEditable: e.selectionEditable
     };
 
     // Get correct geometry information if we have nested iframe.

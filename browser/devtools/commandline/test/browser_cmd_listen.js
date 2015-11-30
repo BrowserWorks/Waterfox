@@ -10,7 +10,7 @@ function test() {
   return Task.spawn(testTask).then(finish, helpers.handleError);
 }
 
-var tests = {
+let tests = {
   testInput: function(options) {
     return helpers.audit(options, [
       {

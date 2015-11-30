@@ -3,9 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // apiPort is our port to WorkerAPI
-var apiPort;
+let apiPort;
 // testerPort is whatever port a test calls us on
-var testerPort;
+let testerPort;
 
 onconnect = function(e) {
   // assume this is a test connecting, but if we get

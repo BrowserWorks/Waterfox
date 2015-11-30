@@ -11,7 +11,7 @@
  *
  */
 
-var Utils = (function() {
+let Utils = (function() {
   const Cu = Components.utils;
   const {Services} = Cu.import("resource://gre/modules/Services.jsm", {});
   const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});

@@ -4,7 +4,7 @@
 MARIONETTE_TIMEOUT = 60000;
 MARIONETTE_HEAD_JS = "head.js";
 
-var url = "http://www.mozilla.org";
+let url = "http://www.mozilla.org";
 
 function testUrlTagDiscover(re) {
   log("Running \'testUrlTagDiscover\'");
@@ -83,7 +83,7 @@ function testEmptyT4TDiscover() {
   testEmptyTagDiscover(emulator.T4T_RE_INDEX);
 }
 
-var tests = [
+let tests = [
     testUrlT1TDiscover,
     testUrlT2TDiscover,
     testUrlT3TDiscover,

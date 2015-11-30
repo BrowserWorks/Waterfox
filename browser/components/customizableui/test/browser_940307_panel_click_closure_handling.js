@@ -4,7 +4,7 @@
 
 "use strict";
 
-var button, menuButton;
+let button, menuButton;
 /* Clicking a button should close the panel */
 add_task(function() {
   button = document.createElement("toolbarbutton");

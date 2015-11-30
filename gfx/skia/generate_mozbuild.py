@@ -49,8 +49,6 @@ if CONFIG['INTEL_ARCHITECTURE'] and CONFIG['GNU_CC'] and CONFIG['OS_ARCH'] != 'W
             'skia/src/opts/SkBlitRow_opts_SSE4_asm.S',
         ]
 
-ALLOW_COMPILER_WARNINGS = True
-
 FINAL_LIBRARY = 'gkmedias'
 LOCAL_INCLUDES += [
     'skia/include/config',
@@ -141,14 +139,9 @@ if CONFIG['GNU_CXX']:
     CXXFLAGS += [
         '-Wno-overloaded-virtual',
         '-Wno-unused-function',
-        '-Wno-deprecated-declarations',
     ]
     if CONFIG['CLANG_CXX']:
-        CXXFLAGS += [
-            '-Wno-inconsistent-missing-override',
-            '-Wno-macro-redefined',
-            '-Wno-unused-private-field',
-        ]
+        CXXFLAGS += ['-Wno-inconsistent-missing-override']
     else:
         CXXFLAGS += ['-Wno-logical-op']
     if CONFIG['CPU_ARCH'] == 'arm':

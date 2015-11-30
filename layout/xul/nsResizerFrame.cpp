@@ -61,9 +61,9 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
   nsWeakFrame weakFrame(this);
   bool doDefault = true;
 
-  switch (aEvent->mMessage) {
-    case eTouchStart:
-    case eMouseDown: {
+  switch (aEvent->message) {
+    case NS_TOUCH_START:
+    case NS_MOUSE_BUTTON_DOWN: {
       if (aEvent->mClass == eTouchEventClass ||
           (aEvent->mClass == eMouseEventClass &&
            aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton)) {
@@ -128,8 +128,8 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
     }
     break;
 
-  case eTouchEnd:
-  case eMouseUp: {
+  case NS_TOUCH_END:
+  case NS_MOUSE_BUTTON_UP: {
     if (aEvent->mClass == eTouchEventClass ||
         (aEvent->mClass == eMouseEventClass &&
          aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton)) {
@@ -143,8 +143,8 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
   }
   break;
 
-  case eTouchMove:
-  case eMouseMove: {
+  case NS_TOUCH_MOVE:
+  case NS_MOUSE_MOVE: {
     if (mTrackingMouseMove)
     {
       nsCOMPtr<nsIBaseWindow> window;
@@ -287,14 +287,14 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
   }
   break;
 
-  case eMouseClick: {
+  case NS_MOUSE_CLICK: {
     WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
     if (mouseEvent->IsLeftClickEvent()) {
       MouseClicked(aPresContext, mouseEvent);
     }
     break;
   }
-  case eMouseDoubleClick:
+  case NS_MOUSE_DOUBLECLICK:
     if (aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton) {
       nsCOMPtr<nsIBaseWindow> window;
       nsIPresShell* presShell = aPresContext->GetPresShell();
@@ -309,9 +309,6 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
         RestoreOriginalSize(contentToResize);
       }
     }
-    break;
-
-  default:
     break;
   }
 

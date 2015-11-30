@@ -136,14 +136,6 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::target, aTarget, aRv);
   }
-  void GetIntegrity(nsAString& aIntegrity) const
-  {
-    GetHTMLAttr(nsGkAtoms::integrity, aIntegrity);
-  }
-  void SetIntegrity(const nsAString& aIntegrity, ErrorResult& aRv)
-  {
-    SetHTMLAttr(nsGkAtoms::integrity, aIntegrity, aRv);
-  }
 
   already_AddRefed<nsIDocument> GetImport();
   already_AddRefed<ImportLoader> GetImportLoader()

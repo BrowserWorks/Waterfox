@@ -18,10 +18,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "Promise",
 XPCOMUtils.defineLazyModuleGetter(this, "CloudSync",
                                   "resource://gre/modules/CloudSync.jsm");
 #else
-var CloudSync = null;
+let CloudSync = null;
 #endif
 
-var RemoteTabViewer = {
+let RemoteTabViewer = {
   _tabsList: null,
 
   init: function () {

@@ -3,8 +3,8 @@
 
 const Ci = Components.interfaces;
 
-var tab;
-var browser;
+let tab;
+let browser;
 
 const scrollHtml =
   "<textarea id=\"textarea1\" row=2>Firefox\n\nFirefox\n\n\n\n\n\n\n\n\n\n" +

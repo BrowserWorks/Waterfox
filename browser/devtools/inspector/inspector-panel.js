@@ -8,10 +8,10 @@ const {Cc, Ci, Cu, Cr} = require("chrome");
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-var promise = require("promise");
-var EventEmitter = require("devtools/toolkit/event-emitter");
-var clipboard = require("sdk/clipboard");
-var {HostType} = require("devtools/framework/toolbox").Toolbox;
+let promise = require("resource://gre/modules/Promise.jsm").Promise;
+let EventEmitter = require("devtools/toolkit/event-emitter");
+let clipboard = require("sdk/clipboard");
+let {HostType} = require("devtools/framework/toolbox").Toolbox;
 
 loader.lazyGetter(this, "MarkupView", () => require("devtools/markupview/markup-view").MarkupView);
 loader.lazyGetter(this, "HTMLBreadcrumbs", () => require("devtools/inspector/breadcrumbs").HTMLBreadcrumbs);
@@ -973,36 +973,6 @@ InspectorPanel.prototype = {
 
       jsterm.execute("inspect($0)");
       jsterm.inputNode.focus();
-    });
-  },
-
-  /**
-   * Use in Console.
-   *
-   * Takes the currently selected node in the inspector and assigns it to a
-   * temp variable on the content window.  Also opens the split console and
-   * autofills it with the temp variable.
-   */
-  useInConsole: function() {
-    this._toolbox.openSplitConsole().then(() => {
-      let panel = this._toolbox.getPanel("webconsole");
-      let jsterm = panel.hud.jsterm;
-
-      let evalString = `let i = 0;
-        while (window.hasOwnProperty("temp" + i) && i < 1000) {
-          i++;
-        }
-        window["temp" + i] = $0;
-        "temp" + i;
-      `;
-
-      let options = {
-        selectedNodeActor: this.selection.nodeFront.actorID,
-      };
-      jsterm.requestEvaluation(evalString, options).then((res) => {
-        jsterm.setInputValue(res.result);
-        this.emit("console-var-ready");
-      });
     });
   },
 

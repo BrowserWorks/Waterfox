@@ -10,9 +10,9 @@
 
 importScripts("resource://gre/modules/osfile.jsm");
 
-var File = OS.File;
-var Encoder = new TextEncoder();
-var Counter = 0;
+let File = OS.File;
+let Encoder = new TextEncoder();
+let Counter = 0;
 
 const MAX_LOOP_LOGS = 5;
 /**
@@ -63,8 +63,8 @@ onmessage = function(e) {
  * Mask upper 24-bits of ip address with fake numbers. Call resetIpMask() first.
  */
 
-var IpMap = {};
-var IpCount = 0;
+let IpMap = {};
+let IpCount = 0;
 
 function resetIpMask() {
   IpMap = {};
@@ -143,7 +143,7 @@ function sanitizeUrls(text) {
  *
  * @param {DOMString} sdp The sdp text.
  */
-var redactSdp = sdp => sdp.replace(/\r\na=(fingerprint|identity):.*?\r\n/g,
+let redactSdp = sdp => sdp.replace(/\r\na=(fingerprint|identity):.*?\r\n/g,
                                    "\r\n");
 
 /**

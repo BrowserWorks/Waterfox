@@ -14,10 +14,10 @@
  * If the pref is set to a number < 0 we will use the default value.
  */
 
-var hs = Cc["@mozilla.org/browser/nav-history-service;1"].
+let hs = Cc["@mozilla.org/browser/nav-history-service;1"].
          getService(Ci.nsINavHistoryService);
 
-var tests = [
+let tests = [
 
   { desc: "Set max_pages to a negative value, with 1 page.",
     maxPages: -1,

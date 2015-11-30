@@ -11,7 +11,6 @@
 #include "nsPresContext.h"
 #include "nsMappedAttributes.h"
 #include "nsSize.h"
-#include "nsDocument.h"
 #include "nsIDocument.h"
 #include "nsIDOMMutationEvent.h"
 #include "nsIScriptContext.h"
@@ -28,7 +27,6 @@
 #include "mozilla/dom/HTMLFormElement.h"
 #include "nsAttrValueOrString.h"
 #include "imgLoader.h"
-#include "Image.h"
 
 // Responsive images!
 #include "mozilla/dom/HTMLSourceElement.h"
@@ -469,8 +467,12 @@ HTMLImageElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
   // twice, once by the image frame for the map and once by the Anchor
   // element. (bug 39723)
   WidgetMouseEvent* mouseEvent = aVisitor.mEvent->AsMouseEvent();
-  if (mouseEvent && mouseEvent->IsLeftClickEvent() && IsMap()) {
-    aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
+  if (mouseEvent && mouseEvent->IsLeftClickEvent()) {
+    bool isMap = false;
+    GetIsMap(&isMap);
+    if (isMap) {
+      aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
+    }
   }
   return nsGenericHTMLElement::PreHandleEvent(aVisitor);
 }
@@ -1297,18 +1299,6 @@ void
 HTMLImageElement::MediaFeatureValuesChanged()
 {
   QueueImageLoadTask();
-}
-
-void
-HTMLImageElement::FlushUseCounters()
-{
-  nsCOMPtr<imgIRequest> request;
-  GetRequest(CURRENT_REQUEST, getter_AddRefs(request));
-
-  nsCOMPtr<imgIContainer> container;
-  request->GetImage(getter_AddRefs(container));
-
-  static_cast<image::Image*>(container.get())->ReportUseCounters();
 }
 
 } // namespace dom

@@ -4,9 +4,9 @@
 
 "use strict";
 
-var Ci = Components.interfaces;
-var Cu = Components.utils;
-var Cr = Components.results;
+let Ci = Components.interfaces;
+let Cu = Components.utils;
+let Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm", this);
@@ -138,7 +138,7 @@ this.ThirdPartyCookieProbe.prototype = {
  *
  * @constructor
  */
-var RejectStats = function() {
+let RejectStats = function() {
   /**
    * The set of all sites for which we have accepted third-party cookies.
    */

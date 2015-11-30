@@ -275,7 +275,7 @@ struct WorkerLoadInfo
   bool mPrincipalIsSystem;
   bool mIsInPrivilegedApp;
   bool mIsInCertifiedApp;
-  bool mStorageAllowed;
+  bool mIndexedDBAllowed;
   bool mPrivateBrowsing;
   bool mServiceWorkersTestingInWindow;
 

@@ -9,10 +9,10 @@
 
 "use strict";
 
-var TEST_URI = "data:text/html;charset=utf-8,Web Console test for " +
+let TEST_URI = "data:text/html;charset=utf-8,Web Console test for " +
                "bug 613642: remember scroll location";
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();

@@ -27,7 +27,6 @@
 
 #include "FFTConvolver.h"
 #include "HRTFDatabase.h"
-#include "AudioBlock.h"
 
 using namespace std;
 using namespace mozilla;
@@ -129,28 +128,28 @@ int HRTFPanner::calculateDesiredAzimuthIndexAndBlend(double azimuth, double& azi
     return desiredAzimuthIndex;
 }
 
-void HRTFPanner::pan(double desiredAzimuth, double elevation, const AudioBlock* inputBus, AudioBlock* outputBus)
+void HRTFPanner::pan(double desiredAzimuth, double elevation, const AudioChunk* inputBus, AudioChunk* outputBus)
 {
 #ifdef DEBUG
     unsigned numInputChannels =
-        inputBus->IsNull() ? 0 : inputBus->ChannelCount();
+        inputBus->IsNull() ? 0 : inputBus->mChannelData.Length();
 
     MOZ_ASSERT(numInputChannels <= 2);
-    MOZ_ASSERT(inputBus->GetDuration() == WEBAUDIO_BLOCK_SIZE);
+    MOZ_ASSERT(inputBus->mDuration == WEBAUDIO_BLOCK_SIZE);
 #endif
 
-    bool isOutputGood = outputBus && outputBus->ChannelCount() == 2 && outputBus->GetDuration() == WEBAUDIO_BLOCK_SIZE;
+    bool isOutputGood = outputBus && outputBus->mChannelData.Length() == 2 && outputBus->mDuration == WEBAUDIO_BLOCK_SIZE;
     MOZ_ASSERT(isOutputGood);
 
     if (!isOutputGood) {
         if (outputBus)
-            outputBus->SetNull(outputBus->GetDuration());
+            outputBus->SetNull(outputBus->mDuration);
         return;
     }
 
     HRTFDatabase* database = m_databaseLoader->database();
     if (!database) { // not yet loaded
-        outputBus->SetNull(outputBus->GetDuration());
+        outputBus->SetNull(outputBus->mDuration);
         return;
     }
 
@@ -160,7 +159,7 @@ void HRTFPanner::pan(double desiredAzimuth, double elevation, const AudioBlock* 
     bool isAzimuthGood = azimuth >= -180.0 && azimuth <= 180.0;
     MOZ_ASSERT(isAzimuthGood);
     if (!isAzimuthGood) {
-        outputBus->SetNull(outputBus->GetDuration());
+        outputBus->SetNull(outputBus->mDuration);
         return;
     }
 
@@ -224,7 +223,7 @@ void HRTFPanner::pan(double desiredAzimuth, double elevation, const AudioBlock* 
     bool areKernelsGood = kernelL1 && kernelR1 && kernelL2 && kernelR2;
     MOZ_ASSERT(areKernelsGood);
     if (!areKernelsGood) {
-        outputBus->SetNull(outputBus->GetDuration());
+        outputBus->SetNull(outputBus->mDuration);
         return;
     }
 

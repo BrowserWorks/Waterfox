@@ -23,13 +23,7 @@ function run_test() {
   // The mock XMLHttpRequest is MUCH faster
   overrideXHR(callHandleEvent);
   standardInit();
-  // Only perform the non hash check tests when mar signing is enabled since the
-  // update service doesn't perform hash checks when mar signing is enabled.
-  if (IS_MAR_CHECKS_ENABLED) {
-    do_execute_soon(run_test_pt11);
-  } else {
-    do_execute_soon(run_test_pt1);
-  }
+  do_execute_soon(run_test_pt1);
 }
 
 // The HttpServer must be stopped before calling do_test_finished

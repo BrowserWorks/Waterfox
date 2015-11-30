@@ -9,16 +9,16 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const gAppRep = Cc["@mozilla.org/downloads/application-reputation-service;1"].
                   getService(Ci.nsIApplicationReputationService);
-var gHttpServ = null;
-var gTables = {};
+let gHttpServ = null;
+let gTables = {};
 
-var ALLOW_LIST = 0;
-var BLOCK_LIST = 1;
-var NO_LIST = 2;
+let ALLOW_LIST = 0;
+let BLOCK_LIST = 1;
+let NO_LIST = 2;
 
-var whitelistedURI = createURI("http://foo:bar@whitelisted.com/index.htm#junk");
-var exampleURI = createURI("http://user:password@example.com/i.html?foo=bar");
-var blocklistedURI = createURI("http://baz:qux@blocklisted.com?xyzzy");
+let whitelistedURI = createURI("http://foo:bar@whitelisted.com/index.htm#junk");
+let exampleURI = createURI("http://user:password@example.com/i.html?foo=bar");
+let blocklistedURI = createURI("http://baz:qux@blocklisted.com?xyzzy");
 
 function readFileToString(aFilename) {
   let f = do_get_file(aFilename);
@@ -317,11 +317,11 @@ add_test(function test_redirect_on_blocklist() {
   let secman = Services.scriptSecurityManager;
   let badRedirects = Cc["@mozilla.org/array;1"]
                        .createInstance(Ci.nsIMutableArray);
-  badRedirects.appendElement(secman.createCodebasePrincipal(exampleURI, {}),
+  badRedirects.appendElement(secman.getNoAppCodebasePrincipal(exampleURI),
                              false);
-  badRedirects.appendElement(secman.createCodebasePrincipal(blocklistedURI, {}),
+  badRedirects.appendElement(secman.getNoAppCodebasePrincipal(blocklistedURI),
                              false);
-  badRedirects.appendElement(secman.createCodebasePrincipal(whitelistedURI, {}),
+  badRedirects.appendElement(secman.getNoAppCodebasePrincipal(whitelistedURI),
                              false);
   gAppRep.queryReputation({
     sourceURI: whitelistedURI,

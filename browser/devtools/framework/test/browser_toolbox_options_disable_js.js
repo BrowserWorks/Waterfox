@@ -5,8 +5,8 @@
 
 const TEST_URI = URL_ROOT + "browser_toolbox_options_disable_js.html";
 
-var doc;
-var toolbox;
+let doc;
+let toolbox;
 
 function test() {
   gBrowser.selectedTab = gBrowser.addTab();

@@ -12,7 +12,7 @@ Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
 
-var Experiments;
+let Experiments;
 try {
   Experiments = Cu.import("resource:///modules/experiments/Experiments.jsm").Experiments;
 }
@@ -90,10 +90,6 @@ const PREFS_WHITELIST = [
   "storage.vacuum.last.",
   "svg.",
   "toolkit.startup.recent_crashes",
-  "ui.osk.enabled",
-  "ui.osk.detect_physical_keyboard",
-  "ui.osk.require_tablet_mode",
-  "ui.osk.debug.keyboardDisplayReason",
   "webgl.",
 ];
 
@@ -171,7 +167,7 @@ this.Troubleshoot = {
 // generate the provider's data.  The function is passed a "done" callback, and
 // when done, it must pass its data to the callback.  The resulting snapshot
 // object will contain a name => data entry for each provider.
-var dataProviders = {
+let dataProviders = {
 
   application: function application(done) {
     let data = {

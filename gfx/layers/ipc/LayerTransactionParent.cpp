@@ -197,12 +197,11 @@ LayerTransactionParent::RecvUpdateNoSwap(InfallibleTArray<Edit>&& cset,
                                          const bool& scheduleComposite,
                                          const uint32_t& paintSequenceNumber,
                                          const bool& isRepeatTransaction,
-                                         const mozilla::TimeStamp& aTransactionStart,
-                                         const int32_t& aPaintSyncId)
+                                         const mozilla::TimeStamp& aTransactionStart)
 {
   return RecvUpdate(Move(cset), aTransactionId, targetConfig, Move(aPlugins), isFirstPaint,
       scheduleComposite, paintSequenceNumber, isRepeatTransaction,
-      aTransactionStart, aPaintSyncId, nullptr);
+      aTransactionStart, nullptr);
 }
 
 class MOZ_STACK_CLASS AutoLayerTransactionParentAsyncMessageSender
@@ -230,7 +229,6 @@ LayerTransactionParent::RecvUpdate(InfallibleTArray<Edit>&& cset,
                                    const uint32_t& paintSequenceNumber,
                                    const bool& isRepeatTransaction,
                                    const mozilla::TimeStamp& aTransactionStart,
-                                   const int32_t& aPaintSyncId,
                                    InfallibleTArray<EditReply>* reply)
 {
   profiler_tracing("Paint", "LayerTransaction", TRACING_INTERVAL_START);
@@ -329,11 +327,8 @@ LayerTransactionParent::RecvUpdate(InfallibleTArray<Edit>&& cset,
       layer->SetBaseTransform(common.transform().value());
       layer->SetPostScale(common.postXScale(), common.postYScale());
       layer->SetIsFixedPosition(common.isFixedPosition());
-      if (common.isFixedPosition()) {
-        layer->SetFixedPositionData(common.fixedPositionScrollContainerId(),
-                                    common.fixedPositionAnchor(),
-                                    common.isClipFixed());
-      }
+      layer->SetFixedPositionAnchor(common.fixedPositionAnchor());
+      layer->SetFixedPositionMargins(common.fixedPositionMargin());
       if (common.isStickyPosition()) {
         layer->SetStickyPositionData(common.stickyScrollContainerId(),
                                      common.stickyScrollRangeOuter(),
@@ -593,8 +588,7 @@ LayerTransactionParent::RecvUpdate(InfallibleTArray<Edit>&& cset,
 
   mShadowLayersManager->ShadowLayersUpdated(this, aTransactionId, targetConfig,
                                             aPlugins, isFirstPaint, scheduleComposite,
-                                            paintSequenceNumber, isRepeatTransaction,
-                                            aPaintSyncId);
+                                            paintSequenceNumber, isRepeatTransaction);
 
   {
     AutoResolveRefLayers resolve(mShadowLayersManager->GetCompositionManager(this));

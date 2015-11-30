@@ -57,7 +57,7 @@ VideoDecoder::InitDecode(const GMPVideoCodec& aCodecSettings,
   mCallback = aCallback;
   assert(mCallback);
   mDecoder = new WMFH264Decoder();
-  HRESULT hr = mDecoder->Init(aCoreCount);
+  HRESULT hr = mDecoder->Init();
   if (FAILED(hr)) {
     CK_LOGD("VideoDecoder::InitDecode failed to init WMFH264Decoder");
     mCallback->Error(GMPGenericErr);

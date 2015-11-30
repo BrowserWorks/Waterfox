@@ -21,7 +21,7 @@ XPCOMUtils.defineLazyGetter(this, "gDecoder", function () {
   return new TextDecoder();
 });
 
-var SessionMigrationInternal = {
+let SessionMigrationInternal = {
   /**
    * Convert the original session restore state into a minimal state. It will
    * only contain:
@@ -96,7 +96,7 @@ var SessionMigrationInternal = {
   }
 }
 
-var SessionMigration = {
+let SessionMigration = {
   /**
    * Migrate a limited set of session data from one path to another.
    */

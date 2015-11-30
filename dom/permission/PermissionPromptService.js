@@ -5,8 +5,8 @@
 "use strict";
 
 /* static functions */
-var DEBUG = 0;
-var debug;
+let DEBUG = 0;
+let debug;
 if (DEBUG) {
   debug = function (s) { dump("-*- PermissionPromptService: " + s + "\n"); };
 }

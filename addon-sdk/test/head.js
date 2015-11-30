@@ -6,17 +6,17 @@ const { utils: Cu } = Components;
 const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 const LoaderModule = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {}).Loader;
 const { console } = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
-var {
+let {
   Loader, main, Module, Require, unload
 } = LoaderModule;
 
-var CURRENT_DIR = gTestPath.replace(/\/[^\/]*\.js$/,'/');
-var loaders = [];
+let CURRENT_DIR = gTestPath.replace(/\/[^\/]*\.js$/,'/');
+let loaders = [];
 
 // All tests are asynchronous.
 waitForExplicitFinish();
 
-var gEnableLogging = Services.prefs.getBoolPref("devtools.debugger.log");
+let gEnableLogging = Services.prefs.getBoolPref("devtools.debugger.log");
 Services.prefs.setBoolPref("devtools.debugger.log", true);
 
 registerCleanupFunction(() => {

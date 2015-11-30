@@ -19,10 +19,10 @@ public class GeckoJavaSampler {
     private static Thread sSamplingThread;
     private static SamplingThread sSamplingRunnable;
     private static Thread sMainThread;
+    private static volatile boolean sLibsLoaded;
 
     // Use the same timer primitive as the profiler
     // to get a perfect sample syncing.
-    @WrapForJNI
     private static native double getProfilerTime();
 
     private static class Sample {
@@ -31,7 +31,7 @@ public class GeckoJavaSampler {
         public long mJavaTime; // non-zero if Android system time is used
         public Sample(StackTraceElement[] aStack) {
             mFrames = new Frame[aStack.length];
-            if (GeckoThread.isStateAtLeast(GeckoThread.State.LIBS_READY)) {
+            if (sLibsLoaded) {
                 mTime = getProfilerTime();
             }
             if (mTime == 0.0d) {
@@ -208,4 +208,11 @@ public class GeckoJavaSampler {
             sSamplingRunnable = null;
         }
     }
+
+    public static void setLibsLoaded() {
+        sLibsLoaded = true;
+    }
 }
+
+
+

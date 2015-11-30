@@ -315,12 +315,12 @@ NS_IMETHODIMP CacheIOThread::OnDispatchedEvent(nsIThreadInternal *thread)
   return NS_OK;
 }
 
-NS_IMETHODIMP CacheIOThread::OnProcessNextEvent(nsIThreadInternal *thread, bool mayWait)
+NS_IMETHODIMP CacheIOThread::OnProcessNextEvent(nsIThreadInternal *thread, bool mayWait, uint32_t recursionDepth)
 {
   return NS_OK;
 }
 
-NS_IMETHODIMP CacheIOThread::AfterProcessNextEvent(nsIThreadInternal *thread,
+NS_IMETHODIMP CacheIOThread::AfterProcessNextEvent(nsIThreadInternal *thread, uint32_t recursionDepth,
                                                    bool eventWasProcessed)
 {
   return NS_OK;

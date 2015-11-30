@@ -263,6 +263,7 @@ private:
   nsRefPtr<SourceBufferAttributes> mAttributes;
 
   bool mUpdating;
+  bool mIsUsingFormatReader;
 
   mozilla::Atomic<bool> mActive;
 

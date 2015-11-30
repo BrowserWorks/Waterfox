@@ -4,7 +4,7 @@
 // Test that inspecting primitive values uses the object inspector, not an
 // inline comment.
 
-var {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
+let {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 
 function test() {
   const options = {
@@ -27,7 +27,7 @@ function* runTests([win, sp]) {
 }
 
 // Helper function that does the actual testing.
-var checkResults = Task.async(function* (sp, value, isString = false) {
+let checkResults = Task.async(function* (sp, value, isString = false) {
   let sourceValue = value;
   if (isString) {
     sourceValue = '"' + value + '"';

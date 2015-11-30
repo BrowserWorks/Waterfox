@@ -3,15 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const Cu = Components.utils;
-var {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-var {TargetFactory} = require("devtools/framework/target");
-var {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
-var promise = require("promise");
-var {getInplaceEditorForSpan: inplaceEditor} = require("devtools/shared/inplace-editor");
-var clipboard = require("sdk/clipboard");
-var {setTimeout, clearTimeout} = require("sdk/timers");
-var {promiseInvoke} = require("devtools/async-utils");
-var DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+let {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+let {TargetFactory} = require("devtools/framework/target");
+let {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
+let promise = require("resource://gre/modules/Promise.jsm").Promise;
+let {getInplaceEditorForSpan: inplaceEditor} = require("devtools/shared/inplace-editor");
+let clipboard = require("sdk/clipboard");
+let {setTimeout, clearTimeout} = require("sdk/timers");
+let {promiseInvoke} = require("devtools/async-utils");
+let DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 
 // All test are asynchronous
 waitForExplicitFinish();
@@ -51,7 +51,6 @@ registerCleanupFunction(function*() {
 const TEST_URL_ROOT = "http://mochi.test:8888/browser/browser/devtools/markupview/test/";
 const CHROME_BASE = "chrome://mochitests/content/browser/browser/devtools/markupview/test/";
 const COMMON_FRAME_SCRIPT_URL = "chrome://browser/content/devtools/frame-script-utils.js";
-const MARKUPVIEW_FRAME_SCRIPT_URL = CHROME_BASE + "frame-script-utils.js";
 
 /**
  * Add a new test tab in the browser and load the given url.
@@ -72,7 +71,6 @@ function addTab(url) {
 
   info("Loading the helper frame script " + COMMON_FRAME_SCRIPT_URL);
   linkedBrowser.messageManager.loadFrameScript(COMMON_FRAME_SCRIPT_URL, false);
-  linkedBrowser.messageManager.loadFrameScript(MARKUPVIEW_FRAME_SCRIPT_URL, false);
 
   linkedBrowser.addEventListener("load", function onload() {
     linkedBrowser.removeEventListener("load", onload, true);
@@ -272,7 +270,7 @@ function selectAndHighlightNode(nodeOrSelector, inspector) {
  * to highlight the node upon selection
  * @return {Promise} Resolves when the inspector is updated with the new node
  */
-var selectNode = Task.async(function*(selector, inspector, reason="test") {
+let selectNode = Task.async(function*(selector, inspector, reason="test") {
   info("Selecting the node for '" + selector + "'");
   let nodeFront = yield getNodeFront(selector, inspector);
   let updated = inspector.once("inspector-updated");
@@ -300,7 +298,7 @@ function getContainerForNodeFront(nodeFront, {markup}) {
  * loaded in the toolbox
  * @return {MarkupContainer}
  */
-var getContainerForSelector = Task.async(function*(selector, inspector) {
+let getContainerForSelector = Task.async(function*(selector, inspector) {
   info("Getting the markup-container for node " + selector);
   let nodeFront = yield getNodeFront(selector, inspector);
   let container = getContainerForNodeFront(nodeFront, inspector);
@@ -333,7 +331,7 @@ function waitForChildrenUpdated({markup}) {
  * loaded in the toolbox
  * @return {Promise} Resolves when the node has been selected.
  */
-var clickContainer = Task.async(function*(selector, inspector) {
+let clickContainer = Task.async(function*(selector, inspector) {
   info("Clicking on the markup-container for node " + selector);
 
   let nodeFront = yield getNodeFront(selector, inspector);
@@ -384,7 +382,7 @@ function setEditableFieldValue(field, value, inspector) {
  * loaded in the toolbox
  * @return a promise that resolves when the node has mutated
  */
-var addNewAttributes = Task.async(function*(selector, text, inspector) {
+let addNewAttributes = Task.async(function*(selector, text, inspector) {
   info("Entering text '" + text + "' in node '" + selector + "''s new attribute field");
 
   let container = yield getContainerForSelector(selector, inspector);
@@ -406,7 +404,7 @@ var addNewAttributes = Task.async(function*(selector, text, inspector) {
  * Note that node.getAttribute() returns attribute values provided by the HTML
  * parser. The parser only provides unescaped entities so &amp; will return &.
  */
-var assertAttributes = Task.async(function*(selector, expected) {
+let assertAttributes = Task.async(function*(selector, expected) {
   let {attributes: actual} = yield getNodeInfo(selector);
 
   is(actual.length, Object.keys(expected).length,
@@ -535,7 +533,7 @@ function once(target, eventName, useCapture=false) {
  * @return A promise that resolves with a boolean indicating whether
  *         the menu items are disabled once the menu has been checked.
  */
-var isEditingMenuDisabled = Task.async(function*(nodeFront, inspector, assert=true) {
+let isEditingMenuDisabled = Task.async(function*(nodeFront, inspector, assert=true) {
   let deleteMenuItem = inspector.panelDoc.getElementById("node-menu-delete");
   let editHTMLMenuItem = inspector.panelDoc.getElementById("node-menu-edithtml");
   let pasteHTMLMenuItem = inspector.panelDoc.getElementById("node-menu-pasteouterhtml");
@@ -569,7 +567,7 @@ var isEditingMenuDisabled = Task.async(function*(nodeFront, inspector, assert=tr
  * @return A promise that resolves with a boolean indicating whether
  *         the menu items are enabled once the menu has been checked.
  */
-var isEditingMenuEnabled = Task.async(function*(nodeFront, inspector, assert=true) {
+let isEditingMenuEnabled = Task.async(function*(nodeFront, inspector, assert=true) {
   let deleteMenuItem = inspector.panelDoc.getElementById("node-menu-delete");
   let editHTMLMenuItem = inspector.panelDoc.getElementById("node-menu-edithtml");
   let pasteHTMLMenuItem = inspector.panelDoc.getElementById("node-menu-pasteouterhtml");
@@ -599,7 +597,7 @@ var isEditingMenuEnabled = Task.async(function*(nodeFront, inspector, assert=tru
  * @param {DOMNode} menu A menu that implements hidePopup/openPopup
  * @return a promise that resolves once the menu is opened.
  */
-var reopenMenu = Task.async(function*(menu) {
+let reopenMenu = Task.async(function*(menu) {
   // First close it is if it is already opened.
   if (menu.state == "closing" || menu.state == "open") {
     let popuphidden = once(menu, "popuphidden", true);

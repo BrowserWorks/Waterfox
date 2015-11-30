@@ -1,10 +1,10 @@
 // Bug 474792 - Clear "Never remember passwords for this site" when
 // clearing site-specific settings in Clear Recent History dialog
 
-var tempScope = {};
+let tempScope = {};
 Cc["@mozilla.org/moz/jssubscript-loader;1"].getService(Ci.mozIJSSubScriptLoader)
                                            .loadSubScript("chrome://browser/content/sanitize.js", tempScope);
-var Sanitizer = tempScope.Sanitizer;
+let Sanitizer = tempScope.Sanitizer;
 
 function test() {
 

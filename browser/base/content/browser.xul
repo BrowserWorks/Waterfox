@@ -83,7 +83,6 @@
                onpopuphidden="if (event.target == this) TabContextMenu.contextTab = null;">
       <menuitem id="context_reloadTab" label="&reloadTab.label;" accesskey="&reloadTab.accesskey;"
                 oncommand="gBrowser.reloadTab(TabContextMenu.contextTab);"/>
-      <menuitem id="context_toggleMuteTab" oncommand="TabContextMenu.contextTab.toggleMuteAudio();"/>
       <menuseparator/>
       <menuitem id="context_pinTab" label="&pinTab.label;"
                 accesskey="&pinTab.accesskey;"
@@ -163,7 +162,7 @@
     <menulist popuponly="true" id="ContentSelectDropdown" hidden="true">
       <menupopup rolluponmousewheel="true"
 #ifdef XP_WIN
-                 consumeoutsideclicks="false" ignorekeys="handled"
+                 consumeoutsideclicks="false"
 #endif
         />
     </menulist>
@@ -445,6 +444,28 @@
                        value="&syncStartPanel2.heading;"/>
           <description id="sync-start-panel-subtitle"
                        value="&syncStartPanel2.subTitle;"/>
+        </vbox>
+      </hbox>
+    </panel>
+
+    <!-- Sync Error Panel -->
+    <panel id="sync-error-panel" class="sync-panel" type="arrow" hidden="true"
+           noautofocus="true" onclick="this.hidePopup();"
+           flip="slide">
+      <hbox class="sync-panel-outer">
+        <image class="sync-panel-icon"/>
+        <vbox class="sync-panel-inner">
+          <description id="sync-error-panel-title"
+                       value="&syncErrorPanel.heading;"/>
+          <description id="sync-error-panel-subtitle"
+                       value="&syncErrorPanel.subTitle;"/>
+          <hbox class="sync-panel-button-box">
+            <spacer flex="1"/>
+            <button class="sync-panel-button"
+                    label="&syncErrorPanel.signInButton.label;"
+                    accesskey="&syncErrorPanel.signInButton.accesskey;"
+                    onclick="gFxAccounts.openSignInAgainPage();"/>
+          </hbox>
         </vbox>
       </hbox>
     </panel>
@@ -794,6 +815,7 @@
 
         <toolbarbutton id="bookmarks-menu-button"
                        class="toolbarbutton-1 chromeclass-toolbar-additional"
+                       persist="class"
                        removable="true"
                        type="menu-button"
                        label="&bookmarksMenuButton.label;"
@@ -917,7 +939,7 @@
                        tooltip="dynamic-shortcut-tooltip"/>
 
         <toolbarbutton id="home-button" class="toolbarbutton-1 chromeclass-toolbar-additional"
-                       removable="true"
+                       persist="class" removable="true"
                        label="&homeButton.label;"
                        ondragover="homeButtonObserver.onDragOver(event)"
                        ondragenter="homeButtonObserver.onDragOver(event)"
@@ -1151,24 +1173,14 @@
 #include ../../components/customizableui/content/customizeMode.inc.xul
   </deck>
 
-  <html:div id="fullscreen-warning" hidden="true">
-    <html:div id="fullscreen-domain-text">
-      &fullscreenWarning.beforeDomain.label;
-      <html:span id="fullscreen-domain"/>
-      &fullscreenWarning.afterDomain.label;
-    </html:div>
-    <html:div id="fullscreen-generic-text">
-      &fullscreenWarning.generic.label;
-    </html:div>
-    <html:button id="fullscreen-exit-button"
-                 onclick="FullScreen.exitDomFullScreen();">
-#ifdef XP_MACOSX
-            &exitDOMFullscreenMac.button;
-#else
-            &exitDOMFullscreen.button;
-#endif
-    </html:button>
-  </html:div>
+  <hbox id="full-screen-warning-container" hidden="true" fadeout="true">
+    <hbox style="width: 100%;" pack="center"> <!-- Inner hbox needed due to bug 579776. -->
+      <vbox id="full-screen-warning-message" align="center">
+        <description id="full-screen-domain-text"/>
+        <description class="full-screen-description" value="&fullscreenExitHint2.value;"/>
+      </vbox>
+    </hbox>
+  </hbox>
 
   <vbox id="browser-bottombox" layer="true">
     <notificationbox id="global-notificationbox"/>

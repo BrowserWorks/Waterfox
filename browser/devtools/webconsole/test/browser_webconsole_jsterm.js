@@ -8,9 +8,9 @@
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-console.html";
 
-var jsterm;
+let jsterm;
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield loadTab(TEST_URI);
   let hud = yield openConsole();
   jsterm = hud.jsterm;

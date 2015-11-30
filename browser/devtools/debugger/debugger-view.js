@@ -14,7 +14,6 @@ const BREAKPOINT_LINE_TOOLTIP_MAX_LENGTH = 1000; // chars
 const BREAKPOINT_CONDITIONAL_POPUP_POSITION = "before_start";
 const BREAKPOINT_CONDITIONAL_POPUP_OFFSET_X = 7; // px
 const BREAKPOINT_CONDITIONAL_POPUP_OFFSET_Y = -3; // px
-const BREAKPOINT_SMALL_WINDOW_WIDTH = 850; // px
 const RESULTS_PANEL_POPUP_POSITION = "before_end";
 const RESULTS_PANEL_MAX_RESULTS = 10;
 const FILE_SEARCH_ACTION_MAX_DELAY = 300; // ms
@@ -31,28 +30,13 @@ const SEARCH_AUTOFILL = [SEARCH_GLOBAL_FLAG, SEARCH_FUNCTION_FLAG, SEARCH_TOKEN_
 const EDITOR_VARIABLE_HOVER_DELAY = 750; // ms
 const EDITOR_VARIABLE_POPUP_POSITION = "topcenter bottomleft";
 const TOOLBAR_ORDER_POPUP_POSITION = "topcenter bottomleft";
-const RESIZE_REFRESH_RATE = 50; // ms
 const PROMISE_DEBUGGER_URL =
   "chrome://browser/content/devtools/promisedebugger/promise-debugger.xhtml";
-
-const debuggerControllerEmit = DebuggerController.emit.bind(DebuggerController);
-const createStore = require("devtools/shared/redux/create-store")();
-const { combineEmittingReducers } = require("devtools/shared/redux/reducers");
-const reducers = require("./content/reducers/index");
-const store = createStore(combineEmittingReducers(reducers, debuggerControllerEmit));
-const { NAME: WAIT_UNTIL_NAME } = require("devtools/shared/redux/middleware/wait-service");
-
-const services = {
-  WAIT_UNTIL: WAIT_UNTIL_NAME
-};
-
-const EventListenersView = require('./content/views/event-listeners-view');
-const actions = require('./content/actions/event-listeners');
 
 /**
  * Object defining the debugger view components.
  */
-var DebuggerView = {
+let DebuggerView = {
   /**
    * Initializes the debugger view.
    *
@@ -97,8 +81,6 @@ var DebuggerView = {
     if (this._shutdown) {
       return this._shutdown;
     }
-
-    window.removeEventListener("resize", this._onResize, false);
 
     let deferred = promise.defer();
     this._shutdown = deferred.promise;
@@ -148,10 +130,10 @@ var DebuggerView = {
     this._instrumentsPane.setAttribute("width", Prefs.instrumentsWidth);
     this.toggleInstrumentsPane({ visible: Prefs.panesVisibleOnStartup });
 
-    this.updateLayoutMode();
-
-    this._onResize = this._onResize.bind(this);
-    window.addEventListener("resize", this._onResize, false);
+    // Side hosts requires a different arrangement of the debugger widgets.
+    if (gHostType == "side") {
+      this.handleHostChanged(gHostType);
+    }
   },
 
   /**
@@ -221,17 +203,6 @@ var DebuggerView = {
   _initializePromiseDebugger: function() {
     let iframe = this._promiseDebuggerIframe = document.createElement("iframe");
     iframe.setAttribute("flex", 1);
-
-    let onLoad = (event) => {
-      iframe.removeEventListener("load", onLoad, true);
-
-      let doc = event.target;
-      let win = doc.defaultView;
-
-      win.setPanel(DebuggerController._toolbox);
-    };
-
-    iframe.addEventListener("load", onLoad, true);
     iframe.setAttribute("src", PROMISE_DEBUGGER_URL);
     this._promisePane.appendChild(iframe);
   },
@@ -241,8 +212,6 @@ var DebuggerView = {
    */
   _destroyPromiseDebugger: function() {
     if (this._promiseDebuggerIframe) {
-      this._promiseDebuggerIframe.contentWindow.destroy();
-
       this._promiseDebuggerIframe.parentNode.removeChild(
         this._promiseDebuggerIframe);
 
@@ -629,7 +598,7 @@ var DebuggerView = {
    */
   _onInstrumentsPaneTabSelect: function() {
     if (this._instrumentsPane.selectedTab.id == "events-tab") {
-      store.dispatch(actions.fetchEventListeners());
+      DebuggerController.Breakpoints.DOM.scheduleEventListenersFetch();
     }
   },
 
@@ -639,64 +608,24 @@ var DebuggerView = {
    * @param string aType
    *        The host type, either "bottom", "side" or "window".
    */
-  handleHostChanged: function(hostType) {
-    this._hostType = hostType;
-    this.updateLayoutMode();
-  },
+  handleHostChanged: function(aType) {
+    let newLayout = "";
 
-  /**
-   * Resize handler for this container's window.
-   */
-  _onResize: function (evt) {
-    // Allow requests to settle down first.
-    setNamedTimeout(
-      "resize-events", RESIZE_REFRESH_RATE, () => this.updateLayoutMode());
-  },
-
-  /**
-   * Set the layout to "vertical" or "horizontal" depending on the host type.
-   */
-  updateLayoutMode: function() {
-    if (this._isSmallWindowHost() || this._hostType == "side") {
-      this._setLayoutMode("vertical");
-    } else {
-      this._setLayoutMode("horizontal");
-    }
-  },
-
-  /**
-   * Check if the current host is in window mode and is
-   * too small for horizontal layout
-   */
-  _isSmallWindowHost: function() {
-    if (this._hostType != "window") {
-      return false;
-    }
-
-    return window.outerWidth <= BREAKPOINT_SMALL_WINDOW_WIDTH;
-  },
-
-  /**
-   * Enter the provided layoutMode. Do nothing if the layout is the same as the current one.
-   * @param {String} layoutMode new layout ("vertical" or "horizontal")
-   */
-  _setLayoutMode: function(layoutMode) {
-    if (this._body.getAttribute("layout") == layoutMode) {
-      return;
-    }
-
-    if (layoutMode == "vertical") {
+    if (aType == "side") {
+      newLayout = "vertical";
       this._enterVerticalLayout();
     } else {
+      newLayout = "horizontal";
       this._enterHorizontalLayout();
     }
 
-    this._body.setAttribute("layout", layoutMode);
-    window.emit(EVENTS.LAYOUT_CHANGED, layoutMode);
+    this._hostType = aType;
+    this._body.setAttribute("layout", newLayout);
+    window.emit(EVENTS.LAYOUT_CHANGED, newLayout);
   },
 
   /**
-   * Switches the debugger widgets to a vertical layout.
+   * Switches the debugger widgets to a horizontal layout.
    */
   _enterVerticalLayout: function() {
     let vertContainer = document.getElementById("vertical-layout-panes-container");
@@ -713,7 +642,7 @@ var DebuggerView = {
   },
 
   /**
-   * Switches the debugger widgets to a horizontal layout.
+   * Switches the debugger widgets to a vertical layout.
    */
   _enterHorizontalLayout: function() {
     let normContainer = document.getElementById("debugger-widgets");
@@ -930,5 +859,3 @@ ResultsPanelContainer.prototype = Heritage.extend(WidgetMethods, {
   left: 0,
   top: 0
 });
-
-DebuggerView.EventListeners = new EventListenersView(store, DebuggerController);

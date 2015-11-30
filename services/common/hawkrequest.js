@@ -181,7 +181,7 @@ this.Intl.prototype = {
 };
 
 // Singleton getter for Intl, creating an instance only when we first need it.
-var intl = null;
+let intl = null;
 function getIntl() {
   if (!intl) {
     intl = new Intl();

@@ -525,14 +525,6 @@ nsGenericHTMLElement::IntrinsicState() const
   return state;
 }
 
-uint32_t
-nsGenericHTMLElement::EditableInclusiveDescendantCount()
-{
-  bool isEditable = IsInUncomposedDoc() && HasFlag(NODE_IS_EDITABLE) &&
-    GetContentEditableValue() == eTrue;
-  return EditableDescendantCount() + isEditable;
-}
-
 nsresult
 nsGenericHTMLElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                                  nsIContent* aBindingParent,
@@ -556,7 +548,6 @@ nsGenericHTMLElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
       aDocument->
         AddToNameTable(this, GetParsedAttr(nsGkAtoms::name)->GetAtomValue());
     }
-
     if (HasFlag(NODE_IS_EDITABLE) && GetContentEditableValue() == eTrue) {
       nsCOMPtr<nsIHTMLDocument> htmlDocument = do_QueryInterface(aDocument);
       if (htmlDocument) {
@@ -2250,8 +2241,9 @@ nsresult
 nsGenericHTMLFormElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
   if (aVisitor.mEvent->mFlags.mIsTrusted) {
-    switch (aVisitor.mEvent->mMessage) {
-      case eFocus: {
+    switch (aVisitor.mEvent->message) {
+      case NS_FOCUS_CONTENT:
+      {
         // Check to see if focus has bubbled up from a form control's
         // child textfield or button.  If that's the case, don't focus
         // this parent file control -- leave focus on the child.
@@ -2261,14 +2253,13 @@ nsGenericHTMLFormElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
           formControlFrame->SetFocus(true, true);
         break;
       }
-      case eBlur: {
+      case NS_BLUR_CONTENT:
+      {
         nsIFormControlFrame* formControlFrame = GetFormControlFrame(true);
         if (formControlFrame)
           formControlFrame->SetFocus(false, false);
         break;
       }
-      default:
-        break;
     }
   }
 
@@ -2454,8 +2445,8 @@ nsGenericHTMLFormElement::FormIdUpdated(Element* aOldElement,
 }
 
 bool 
-nsGenericHTMLFormElement::IsElementDisabledForEvents(EventMessage aMessage,
-                                                     nsIFrame* aFrame)
+nsGenericHTMLFormElement::IsElementDisabledForEvents(uint32_t aMessage, 
+                                                    nsIFrame* aFrame)
 {
   bool disabled = IsDisabled();
   if (!disabled && aFrame) {
@@ -2464,7 +2455,7 @@ nsGenericHTMLFormElement::IsElementDisabledForEvents(EventMessage aMessage,
       uiStyle->mUserInput == NS_STYLE_USER_INPUT_DISABLED;
 
   }
-  return disabled && aMessage != eMouseMove;
+  return disabled && aMessage != NS_MOUSE_MOVE;
 }
 
 void
@@ -2653,7 +2644,7 @@ nsGenericHTMLElement::Click()
   // called from chrome JS. Mark this event trusted if Click()
   // is called from chrome code.
   WidgetMouseEvent event(nsContentUtils::IsCallerChrome(),
-                         eMouseClick, nullptr, WidgetMouseEvent::eReal);
+                         NS_MOUSE_CLICK, nullptr, WidgetMouseEvent::eReal);
   event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN;
 
   EventDispatcher::Dispatch(static_cast<nsIContent*>(this), context, &event);
@@ -2739,29 +2730,23 @@ nsGenericHTMLElement::RegUnRegAccessKey(bool aDoReg)
   }
 }
 
-bool
+void
 nsGenericHTMLElement::PerformAccesskey(bool aKeyCausesActivation,
                                        bool aIsTrustedEvent)
 {
   nsPresContext* presContext = GetPresContext(eForUncomposedDoc);
-  if (!presContext) {
-    return false;
-  }
+  if (!presContext)
+    return;
 
   // It's hard to say what HTML4 wants us to do in all cases.
-  bool focused = true;
-  nsFocusManager* fm = nsFocusManager::GetFocusManager();
+  nsIFocusManager* fm = nsFocusManager::GetFocusManager();
   if (fm) {
     fm->SetFocus(this, nsIFocusManager::FLAG_BYKEY);
-
-    // Return true if the element became the current focus within its window.
-    nsPIDOMWindow* window = OwnerDoc()->GetWindow();
-    focused = (window && window->GetFocusedNode());
   }
 
   if (aKeyCausesActivation) {
     // Click on it if the users prefs indicate to do so.
-    WidgetMouseEvent event(aIsTrustedEvent, eMouseClick, nullptr,
+    WidgetMouseEvent event(aIsTrustedEvent, NS_MOUSE_CLICK, nullptr,
                            WidgetMouseEvent::eReal);
     event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD;
 
@@ -2771,8 +2756,6 @@ nsGenericHTMLElement::PerformAccesskey(bool aKeyCausesActivation,
     EventDispatcher::Dispatch(static_cast<nsIContent*>(this),
                               presContext, &event);
   }
-
-  return focused;
 }
 
 const nsAttrName*
@@ -2933,12 +2916,6 @@ nsGenericHTMLElement::ChangeEditableState(int32_t aChange)
       do_QueryInterface(document);
     if (htmlDocument) {
       htmlDocument->ChangeContentEditableCount(this, aChange);
-    }
-
-    nsIContent* parent = GetParent();
-    while (parent) {
-      parent->ChangeEditableDescendantCount(aChange);
-      parent = parent->GetParent();
     }
   }
 

@@ -92,7 +92,7 @@
 #include "nsSandboxFlags.h"
 #include "mozilla/layers/CompositorChild.h"
 
-#include "mozilla/dom/ipc/StructuredCloneData.h"
+#include "mozilla/dom/StructuredCloneUtils.h"
 #include "mozilla/WebBrowserPersistLocalDocument.h"
 
 #ifdef MOZ_XUL
@@ -157,6 +157,7 @@ nsFrameLoader::nsFrameLoader(Element* aOwner, bool aNetworkCreated)
   , mObservingOwnerContent(false)
   , mVisible(true)
 {
+  ResetPermissionManagerStatus();
   mRemoteFrame = ShouldUseRemoteProcess();
 }
 
@@ -273,42 +274,6 @@ nsFrameLoader::LoadURI(nsIURI* aURI)
     mURIToLoad = nullptr;
   }
   return rv;
-}
-
-NS_IMETHODIMP
-nsFrameLoader::SwitchProcessAndLoadURI(nsIURI* aURI)
-{
-  nsCOMPtr<nsIURI> URIToLoad = aURI;
-  nsRefPtr<TabParent> tp = nullptr;
-
-  MutableTabContext context;
-  nsCOMPtr<mozIApplication> ownApp = GetOwnApp();
-  nsCOMPtr<mozIApplication> containingApp = GetContainingApp();
-
-  bool tabContextUpdated = true;
-  if (ownApp) {
-    tabContextUpdated = context.SetTabContextForAppFrame(ownApp, containingApp);
-  } else if (OwnerIsBrowserFrame()) {
-    // The |else| above is unnecessary; OwnerIsBrowserFrame() implies !ownApp.
-    tabContextUpdated = context.SetTabContextForBrowserFrame(containingApp);
-  } else {
-    tabContextUpdated = context.SetTabContextForNormalFrame();
-  }
-  NS_ENSURE_STATE(tabContextUpdated);
-
-  nsCOMPtr<Element> ownerElement = mOwnerContent;
-  tp = ContentParent::CreateBrowserOrApp(context, ownerElement, nullptr);
-  if (!tp) {
-    return NS_ERROR_FAILURE;
-  }
-  mRemoteBrowserShown = false;
-
-  nsresult rv = SwapRemoteBrowser(tp);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-  LoadURI(URIToLoad);
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -443,9 +408,6 @@ nsFrameLoader::ReallyStartLoadingInternal()
   mNeedsAsyncDestroy = tmpState;
   mURIToLoad = nullptr;
   NS_ENSURE_SUCCESS(rv, rv);
-
-  // Track the appId's reference count if this frame is in-process
-  ResetPermissionManagerStatus();
 
   return NS_OK;
 }
@@ -634,7 +596,7 @@ AllDescendantsOfType(nsIDocShellTreeItem* aParentItem, int32_t aType)
  * A class that automatically sets mInShow to false when it goes
  * out of scope.
  */
-class MOZ_RAII AutoResetInShow {
+class MOZ_STACK_CLASS AutoResetInShow {
   private:
     nsFrameLoader* mFrameLoader;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
@@ -989,7 +951,7 @@ nsFrameLoader::SwapWithOtherRemoteLoader(nsFrameLoader* aOther,
   return NS_OK;
 }
 
-class MOZ_RAII AutoResetInFrameSwap final
+class MOZ_STACK_CLASS AutoResetInFrameSwap final
 {
 public:
   AutoResetInFrameSwap(nsFrameLoader* aThisFrameLoader,
@@ -2447,7 +2409,7 @@ public:
   nsAsyncMessageToChild(JSContext* aCx,
                         nsFrameLoader* aFrameLoader,
                         const nsAString& aMessage,
-                        StructuredCloneData& aData,
+                        const StructuredCloneData& aData,
                         JS::Handle<JSObject *> aCpows,
                         nsIPrincipal* aPrincipal)
     : nsSameProcessAsyncMessageBase(aCx, aMessage, aData, aCpows, aPrincipal)
@@ -2472,7 +2434,7 @@ public:
 bool
 nsFrameLoader::DoSendAsyncMessage(JSContext* aCx,
                                   const nsAString& aMessage,
-                                  StructuredCloneData& aData,
+                                  const StructuredCloneData& aData,
                                   JS::Handle<JSObject *> aCpows,
                                   nsIPrincipal* aPrincipal)
 {
@@ -2639,57 +2601,6 @@ nsFrameLoader::SetRemoteBrowser(nsITabParent* aTabParent)
   ShowRemoteFrame(ScreenIntSize(0, 0));
 }
 
-nsresult
-nsFrameLoader::SwapRemoteBrowser(nsITabParent* aTabParent)
-{
-  nsRefPtr<TabParent> newParent = TabParent::GetFrom(aTabParent);
-  if (!newParent || !mRemoteBrowser) {
-    return NS_ERROR_DOM_INVALID_STATE_ERR;
-  }
-  if (!IsRemoteFrame()) {
-    NS_WARNING("Switching from in-process to out-of-process is not supported.");
-    return NS_ERROR_NOT_IMPLEMENTED;
-  }
-  if (!OwnerIsBrowserOrAppFrame()) {
-    NS_WARNING("Switching process for non-mozbrowser/app frame is not supported.");
-    return NS_ERROR_NOT_IMPLEMENTED;
-  }
-  if (newParent == mRemoteBrowser) {
-    return NS_OK;
-  }
-  nsCOMPtr<nsIObserverService> os = services::GetObserverService();
-  if (os) {
-    os->NotifyObservers(NS_ISUPPORTS_CAST(nsIFrameLoader*, this),
-                        "frameloader-message-manager-will-change", nullptr);
-  }
-
-  mRemoteBrowser->CacheFrameLoader(nullptr);
-  mRemoteBrowser->SetOwnerElement(nullptr);
-  mRemoteBrowser->Detach();
-  mRemoteBrowser->Destroy();
-
-  if (mMessageManager) {
-    mMessageManager->Disconnect();
-    mMessageManager = nullptr;
-  }
-
-  mRemoteBrowser = newParent;
-  mRemoteBrowser->Attach(this);
-  mChildID = mRemoteBrowser->Manager()->ChildID();
-  ReallyLoadFrameScripts();
-  InitializeBrowserAPI();
-
-  if (os) {
-    os->NotifyObservers(NS_ISUPPORTS_CAST(nsIFrameLoader*, this),
-                        "frameloader-message-manager-changed", nullptr);
-  }
-  if (!mRemoteBrowserShown) {
-    ShowRemoteFrame(ScreenIntSize(0, 0));
-  }
-
-  return NS_OK;
-}
-
 void
 nsFrameLoader::SetDetachedSubdocView(nsView* aDetachedViews,
                                      nsIDocument* aContainerDoc)
@@ -2794,9 +2705,7 @@ nsFrameLoader::ResetPermissionManagerStatus()
 {
   // The resetting of the permissions status can run only
   // in the main process.
-  // only in-main-process && in-process frame is handled here and all other
-  // cases are handled by ContentParent.
-  if (XRE_IsContentProcess() || mRemoteFrame) {
+  if (XRE_IsContentProcess()) {
     return;
   }
 
@@ -2976,31 +2885,18 @@ nsFrameLoader::InitializeBrowserAPI()
 }
 
 NS_IMETHODIMP
-nsFrameLoader::StartPersistence(uint64_t aOuterWindowID,
-                                nsIWebBrowserPersistDocumentReceiver* aRecv)
+nsFrameLoader::StartPersistence(nsIWebBrowserPersistDocumentReceiver* aRecv)
 {
-  if (!aRecv) {
-    return NS_ERROR_INVALID_POINTER;
-  }
-
   if (mRemoteBrowser) {
-    return mRemoteBrowser->StartPersistence(aOuterWindowID, aRecv);
+    return mRemoteBrowser->StartPersistence(aRecv);
   }
-
-  nsCOMPtr<nsIDocument> rootDoc = do_GetInterface(mDocShell);
-  nsCOMPtr<nsIDocument> foundDoc;
-  if (aOuterWindowID) {
-    foundDoc = nsContentUtils::GetSubdocumentWithOuterWindowId(rootDoc, aOuterWindowID);
-  } else {
-    foundDoc = rootDoc;
-  }
-
-  if (!foundDoc) {
-    aRecv->OnError(NS_ERROR_NO_CONTENT);
-  } else {
+  if (mDocShell) {
+    nsCOMPtr<nsIDocument> doc = do_GetInterface(mDocShell);
+    NS_ENSURE_STATE(doc);
     nsCOMPtr<nsIWebBrowserPersistDocument> pdoc =
-      new mozilla::WebBrowserPersistLocalDocument(foundDoc);
+      new mozilla::WebBrowserPersistLocalDocument(doc);
     aRecv->OnDocumentReady(pdoc);
+    return NS_OK;
   }
-  return NS_OK;
+  return NS_ERROR_NO_CONTENT;
 }

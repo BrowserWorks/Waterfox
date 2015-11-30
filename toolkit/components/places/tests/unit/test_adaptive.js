@@ -136,20 +136,20 @@ function doAdaptiveDecay()
   }, this);
 }
 
-var uri1 = uri("http://site.tld/1");
-var uri2 = uri("http://site.tld/2");
+let uri1 = uri("http://site.tld/1");
+let uri2 = uri("http://site.tld/2");
 
 // d1 is some date for the page visit
-var d1 = new Date(Date.now() - 1000 * 60 * 60) * 1000;
+let d1 = new Date(Date.now() - 1000 * 60 * 60) * 1000;
 // c1 is larger (should show up higher) than c2
-var c1 = 10;
-var c2 = 1;
+let c1 = 10;
+let c2 = 1;
 // s1 is a partial match of s2
-var s0 = "";
-var s1 = "si";
-var s2 = "site";
+let s0 = "";
+let s1 = "si";
+let s2 = "site";
 
-var observer = {
+let observer = {
   results: null,
   search: null,
   runCount: -1,
@@ -172,7 +172,7 @@ function makeResult(aURI, aStyle = "favicon") {
   };
 }
 
-var tests = [
+let tests = [
   // Test things without a search term.
   function() {
     print("Test 0 same count, diff rank, same term; no search");
@@ -350,7 +350,7 @@ var tests = [
  * This deferred object contains a promise that is resolved when the
  * ensure_results function has finished its execution.
  */
-var deferEnsureResults;
+let deferEnsureResults;
 
 /**
  * Test adaptive autocomplete.

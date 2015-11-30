@@ -12,7 +12,7 @@ function test() {
   goNext();
 }
 
-var tests = [
+let tests = [
   // Popup Notifications main actions should catch exceptions from callbacks
   { id: "Test#1",
     run: function () {

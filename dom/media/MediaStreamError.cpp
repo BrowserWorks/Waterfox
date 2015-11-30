@@ -12,10 +12,10 @@ namespace mozilla {
 
 BaseMediaMgrError::BaseMediaMgrError(const nsAString& aName,
                                      const nsAString& aMessage,
-                                     const nsAString& aConstraint)
+                                     const nsAString& aConstraintName)
   : mName(aName)
   , mMessage(aMessage)
-  , mConstraint(aConstraint)
+  , mConstraintName(aConstraintName)
 {
   if (mMessage.IsEmpty()) {
     if (mName.EqualsLiteral("NotFoundError")) {
@@ -28,9 +28,8 @@ BaseMediaMgrError::BaseMediaMgrError(const nsAString& aName,
     } else if (mName.EqualsLiteral("InternalError")) {
       mMessage.AssignLiteral("Internal error.");
     } else if (mName.EqualsLiteral("NotSupportedError")) {
-      mMessage.AssignLiteral("The operation is not supported.");
-    } else if (mName.EqualsLiteral("OverconstrainedError")) {
-      mMessage.AssignLiteral("Constraints could be not satisfied.");
+      mMessage.AssignLiteral("Constraints with no audio or video in it are not "
+          "supported");
     }
   }
 }
@@ -44,8 +43,8 @@ MediaStreamError::MediaStreamError(
     nsPIDOMWindow* aParent,
     const nsAString& aName,
     const nsAString& aMessage,
-    const nsAString& aConstraint)
-  : BaseMediaMgrError(aName, aMessage, aConstraint)
+    const nsAString& aConstraintName)
+  : BaseMediaMgrError(aName, aMessage, aConstraintName)
   , mParent(aParent) {}
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(MediaStreamError, mParent)
@@ -76,9 +75,9 @@ MediaStreamError::GetMessage(nsAString& aMessage) const
 }
 
 void
-MediaStreamError::GetConstraint(nsAString& aConstraint) const
+MediaStreamError::GetConstraintName(nsAString& aConstraintName) const
 {
-  aConstraint = mConstraint;
+  aConstraintName = mConstraintName;
 }
 
 } // namespace dom

@@ -48,7 +48,6 @@ class VideoTrack;
 class AudioTrackList;
 class VideoTrackList;
 class MediaTrackListListener;
-struct MediaTrackConstraints;
 } // namespace dom
 
 namespace layers {
@@ -78,7 +77,6 @@ class DOMMediaStream : public DOMEventTargetHelper
   typedef dom::MediaTrackListListener MediaTrackListListener;
 
 public:
-  typedef dom::MediaTrackConstraints MediaTrackConstraints;
   typedef uint8_t TrackTypeHints;
 
   DOMMediaStream();
@@ -122,11 +120,6 @@ public:
   virtual void SetTrackEnabled(TrackID aTrackID, bool aEnabled);
 
   virtual void StopTrack(TrackID aTrackID);
-
-  virtual already_AddRefed<dom::Promise>
-  ApplyConstraintsToTrack(TrackID aTrackID,
-                          const MediaTrackConstraints& aConstraints,
-                          ErrorResult &aRv);
 
   virtual DOMLocalMediaStream* AsDOMLocalMediaStream() { return nullptr; }
   virtual DOMHwMediaStream* AsDOMHwMediaStream() { return nullptr; }
@@ -197,20 +190,20 @@ public:
    * Create an nsDOMMediaStream whose underlying stream is a SourceMediaStream.
    */
   static already_AddRefed<DOMMediaStream> CreateSourceStream(nsIDOMWindow* aWindow,
-                                                             MediaStreamGraph* aGraph);
+                                                             MediaStreamGraph* aGraph = nullptr);
 
   /**
    * Create an nsDOMMediaStream whose underlying stream is a TrackUnionStream.
    */
   static already_AddRefed<DOMMediaStream> CreateTrackUnionStream(nsIDOMWindow* aWindow,
-                                                                 MediaStreamGraph* aGraph);
+                                                                 MediaStreamGraph* aGraph = nullptr);
 
   /**
    * Create an nsDOMMediaStream whose underlying stream is an
    * AudioCaptureStream
    */
   static already_AddRefed<DOMMediaStream> CreateAudioCaptureStream(
-    nsIDOMWindow* aWindow, MediaStreamGraph* aGraph);
+    nsIDOMWindow* aWindow, MediaStreamGraph* aGraph = nullptr);
 
   void SetLogicalStreamStartTime(StreamTime aTime)
   {
@@ -272,11 +265,11 @@ protected:
 
   void Destroy();
   void InitSourceStream(nsIDOMWindow* aWindow,
-                        MediaStreamGraph* aGraph);
+                        MediaStreamGraph* aGraph = nullptr);
   void InitTrackUnionStream(nsIDOMWindow* aWindow,
-                            MediaStreamGraph* aGraph);
+                            MediaStreamGraph* aGraph = nullptr);
   void InitAudioCaptureStream(nsIDOMWindow* aWindow,
-                              MediaStreamGraph* aGraph);
+                              MediaStreamGraph* aGraph = nullptr);
   void InitStreamCommon(MediaStream* aStream);
   already_AddRefed<AudioTrack> CreateAudioTrack(AudioStreamTrack* aStreamTrack);
   already_AddRefed<VideoTrack> CreateVideoTrack(VideoStreamTrack* aStreamTrack);
@@ -358,20 +351,20 @@ public:
    */
   static already_AddRefed<DOMLocalMediaStream>
   CreateSourceStream(nsIDOMWindow* aWindow,
-                     MediaStreamGraph* aGraph);
+                     MediaStreamGraph* aGraph = nullptr);
 
   /**
    * Create an nsDOMLocalMediaStream whose underlying stream is a TrackUnionStream.
    */
   static already_AddRefed<DOMLocalMediaStream>
   CreateTrackUnionStream(nsIDOMWindow* aWindow,
-                         MediaStreamGraph* aGraph);
+                         MediaStreamGraph* aGraph = nullptr);
 
   /**
    * Create an nsDOMLocalMediaStream whose underlying stream is an
    * AudioCaptureStream. */
   static already_AddRefed<DOMLocalMediaStream> CreateAudioCaptureStream(
-    nsIDOMWindow* aWindow, MediaStreamGraph* aGraph);
+    nsIDOMWindow* aWindow, MediaStreamGraph* aGraph = nullptr);
 
 protected:
   virtual ~DOMLocalMediaStream();
@@ -395,7 +388,7 @@ public:
   static already_AddRefed<DOMAudioNodeMediaStream>
   CreateTrackUnionStream(nsIDOMWindow* aWindow,
                          AudioNode* aNode,
-                         MediaStreamGraph* aGraph);
+                         MediaStreamGraph* aGraph = nullptr);
 
 protected:
   ~DOMAudioNodeMediaStream();

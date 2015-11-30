@@ -43,7 +43,7 @@ const HOSTAPD_CONFIG_LIST = [
   },
 ];
 
-var gTestSuite = (function() {
+let gTestSuite = (function() {
   let suite = {};
 
   // Private member variables of the returned object |suite|.
@@ -776,12 +776,7 @@ var gTestSuite = (function() {
         .then(() => runEmulatorShellSafe(['hostapd', '-B', configFileName]))
         .then(function (reply) {
           // It may fail at the first time due to the previous ungracefully terminated one.
-          if (reply.length === 0) {
-            // The hostapd starts successfully
-            return;
-          }
-
-          if (reply[0].indexOf('bind(PF_UNIX): Address already in use') !== -1) {
+          if (reply[0] === 'bind(PF_UNIX): Address already in use') {
             return startOneHostapd(aIndex);
           }
         });

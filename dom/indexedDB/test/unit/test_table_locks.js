@@ -15,7 +15,7 @@ const objData = "1234567890";
 const objDataCount = 5;
 const loopCount = 100;
 
-var testGenerator = testSteps();
+let testGenerator = testSteps();
 
 function testSteps()
 {

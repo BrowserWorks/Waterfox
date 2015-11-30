@@ -8,14 +8,14 @@ const Cu = Components.utils;
 
 this.EXPORTED_SYMBOLS = ["TelemetryStopwatch"];
 
-var Telemetry = Cc["@mozilla.org/base/telemetry;1"]
+let Telemetry = Cc["@mozilla.org/base/telemetry;1"]
                   .getService(Ci.nsITelemetry);
 
 // simpleTimers are directly associated with a histogram
 // name. objectTimers are associated with an object _and_
 // a histogram name.
-var simpleTimers = {};
-var objectTimers = new WeakMap();
+let simpleTimers = {};
+let objectTimers = new WeakMap();
 
 this.TelemetryStopwatch = {
   /**

@@ -5,7 +5,7 @@ MARIONETTE_TIMEOUT = 60000;
 MARIONETTE_HEAD_JS = 'head.js';
 
 const number = "****5555552368****";
-var outCall;
+let outCall;
 
 function testDialOutInvalidNumber() {
   log("Make an outCall call to an invalid number.");

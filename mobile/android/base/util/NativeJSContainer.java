@@ -6,6 +6,7 @@
 package org.mozilla.gecko.util;
 
 import org.mozilla.gecko.annotation.WrapForJNI;
+import org.mozilla.gecko.mozglue.JNITarget;
 
 /**
  * NativeJSContainer is a wrapper around the SpiderMonkey JSAPI to make it possible to

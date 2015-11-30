@@ -13,7 +13,7 @@ menulist {
 }
 
 menulist:not([popuponly="true"]) {
-  min-height: 20px;
+  min-height: 20px !important;
 }
 
 .menulist-label-box {

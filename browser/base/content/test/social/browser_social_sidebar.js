@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
+let SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
 
-var manifest = { // normal provider
+let manifest = { // normal provider
   name: "provider 1",
   origin: "https://example.com",
   sidebarURL: "https://example.com/browser/browser/base/content/test/social/social_sidebar.html",

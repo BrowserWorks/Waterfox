@@ -14,7 +14,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
                                   "resource://gre/modules/Preferences.jsm");
 
 // Rules are defined at the bottom of this file.
-var PrefetcherRules = {};
+let PrefetcherRules = {};
 
 /*
  * When events that trigger in the content process are forwarded to
@@ -348,7 +348,7 @@ Database.prototype = {
   },
 };
 
-var Prefetcher = {
+let Prefetcher = {
   init: function() {
     // Give an index to each rule and store it in this.ruleMap based
     // on the index. The index is used to serialize and deserialize
@@ -482,8 +482,8 @@ var Prefetcher = {
   },
 };
 
-var AdblockId = "{d10d0bf8-f5b5-c8b4-a8b2-2b9879e08c5d}";
-var AdblockRules = {
+let AdblockId = "{d10d0bf8-f5b5-c8b4-a8b2-2b9879e08c5d}";
+let AdblockRules = {
   "ContentPolicy.shouldLoad": [
     new MethodOp("Node", "InitNode", "QueryInterface", Ci.nsISupports),
     new PropertyOp("Document", "Node", "ownerDocument"),
@@ -501,8 +501,8 @@ var AdblockRules = {
 };
 PrefetcherRules[AdblockId] = AdblockRules;
 
-var LastpassId = "support@lastpass.com";
-var LastpassRules = {
+let LastpassId = "support@lastpass.com";
+let LastpassRules = {
   "EventTarget.handleEvent": [
     new PropertyOp("EventTarget", "Event", "target"),
     new PropertyOp("EventOriginalTarget", "Event", "originalTarget"),

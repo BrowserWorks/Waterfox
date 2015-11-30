@@ -4,9 +4,9 @@
 
 Cu.import("resource://gre/modules/Promise.jsm");
 
-var cs = Cc["@mozilla.org/consoleservice;1"].
+let cs = Cc["@mozilla.org/consoleservice;1"].
   getService(Ci.nsIConsoleService);
-var ps = Cc["@mozilla.org/preferences-service;1"].
+let ps = Cc["@mozilla.org/preferences-service;1"].
   getService(Ci.nsIPrefService);
 
 function makeBuffer(length) {

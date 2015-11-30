@@ -4,7 +4,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 #endif
 
-var gDragDataHelper = {
+let gDragDataHelper = {
   get mimeType() {
     return "text/x-moz-url";
   },

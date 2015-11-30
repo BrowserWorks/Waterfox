@@ -71,7 +71,7 @@ function shouldArchivePings() {
   return Preferences.get(PREF_ARCHIVE_ENABLED, false);
 }
 
-var TelemetryArchiveImpl = {
+let TelemetryArchiveImpl = {
   _logger: null,
 
   get _log() {

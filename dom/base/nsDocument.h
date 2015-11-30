@@ -45,7 +45,7 @@
 #include "nsIApplicationCache.h"
 #include "nsIApplicationCacheContainer.h"
 #include "nsStyleSet.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsAttrAndChildArray.h"
 #include "nsDOMAttributeMap.h"
 #include "nsIContentViewer.h"
@@ -100,7 +100,6 @@ class CallbackFunction;
 struct FullscreenRequest : public LinkedListElement<FullscreenRequest>
 {
   explicit FullscreenRequest(Element* aElement);
-  FullscreenRequest(const FullscreenRequest&) = delete;
   ~FullscreenRequest();
 
   Element* GetElement() const { return mElement; }
@@ -973,8 +972,6 @@ public:
    */
   void OnAppThemeChanged();
 
-  void ReportUseCounters();
-
 private:
   void AddOnDemandBuiltInUASheet(mozilla::CSSStyleSheet* aSheet);
   nsRadioGroupStruct* GetRadioGroupInternal(const nsAString& aName) const;
@@ -1014,9 +1011,9 @@ public:
 
   virtual nsresult Init();
 
-  virtual already_AddRefed<Element> CreateElem(const nsAString& aName,
-                                               nsIAtom* aPrefix,
-                                               int32_t aNamespaceID) override;
+  virtual nsresult CreateElem(const nsAString& aName, nsIAtom *aPrefix,
+                              int32_t aNamespaceID,
+                              nsIContent **aResult) override;
 
   virtual void Sanitize() override;
 
@@ -1150,8 +1147,7 @@ public:
 
   virtual void PreloadStyle(nsIURI* uri, const nsAString& charset,
                             const nsAString& aCrossOriginAttr,
-                            ReferrerPolicy aReferrerPolicy,
-                            const nsAString& aIntegrity) override;
+                            ReferrerPolicy aReferrerPolicy) override;
 
   virtual nsresult LoadChromeSheetSync(nsIURI* uri, bool isAgentSheet,
                                        mozilla::CSSStyleSheet** sheet) override;
@@ -1280,13 +1276,6 @@ public:
   bool SetPointerLock(Element* aElement, int aCursorStyle);
   static void UnlockPointer(nsIDocument* aDoc = nullptr);
 
-  void SetCurrentOrientation(mozilla::dom::OrientationType aType,
-                             uint16_t aAngle) override;
-  uint16_t CurrentOrientationAngle() const override;
-  mozilla::dom::OrientationType CurrentOrientationType() const override;
-  void SetOrientationPendingPromise(mozilla::dom::Promise* aPromise) override;
-  mozilla::dom::Promise* GetOrientationPendingPromise() const override;
-
   // This method may fire a DOM event; if it does so it will happen
   // synchronously.
   void UpdateVisibilityState();
@@ -1303,7 +1292,7 @@ public:
                                         mozilla::dom::LifecycleCallbackArgs* aArgs = nullptr,
                                         mozilla::dom::CustomElementDefinition* aDefinition = nullptr) override;
 
-  static void ProcessTopElementQueue();
+  static void ProcessTopElementQueue(bool aIsBaseQueue = false);
 
   void GetCustomPrototype(int32_t aNamespaceID,
                           nsIAtom* aAtom,
@@ -1488,14 +1477,11 @@ public:
 
   static void XPCOMShutdown();
 
-  bool mIsTopLevelContentDocument: 1;
-  bool mIsContentDocument: 1;
+  bool mIsTopLevelContentDocument:1;
 
   bool IsTopLevelContentDocument();
-  void SetIsTopLevelContentDocument(bool aIsTopLevelContentDocument);
 
-  bool IsContentDocument() const;
-  void SetIsContentDocument(bool aIsContentDocument);
+  void SetIsTopLevelContentDocument(bool aIsTopLevelContentDocument);
 
   js::ExpandoAndGeneration mExpandoAndGeneration;
 
@@ -1527,8 +1513,6 @@ protected:
   virtual nsPIDOMWindow *GetWindowInternal() const override;
   virtual nsIScriptGlobalObject* GetScriptHandlingObjectInternal() const override;
   virtual bool InternalAllowXULXBL() override;
-
-  void UpdateScreenOrientation();
 
 #define NS_DOCUMENT_NOTIFY_OBSERVERS(func_, params_)                        \
   NS_OBSERVER_ARRAY_NOTIFY_XPCOM_OBSERVERS(mObservers, nsIDocumentObserver, \
@@ -1600,9 +1584,15 @@ private:
   // queue in the stack is the base element queue.
   static mozilla::Maybe<nsTArray<nsRefPtr<mozilla::dom::CustomElementData>>> sProcessingStack;
 
+  // Flag to prevent re-entrance into base element queue as described in the
+  // custom elements speicification.
+  static bool sProcessingBaseElementQueue;
+
   static bool CustomElementConstructor(JSContext* aCx, unsigned aArgc, JS::Value* aVp);
 
 public:
+  static void ProcessBaseElementQueue();
+
   // Enqueue created callback or register upgrade candidate for
   // newly created custom elements, possibly extending an existing type.
   // ex. <x-button>, <button is="x-button> (type extension)
@@ -1671,13 +1661,6 @@ public:
   // user.
   bool mAllowRelocking:1;
 
-  // ScreenOrientation "pending promise" as described by
-  // http://www.w3.org/TR/screen-orientation/
-  nsRefPtr<mozilla::dom::Promise> mOrientationPendingPromise;
-
-  uint16_t mCurrentOrientationAngle;
-  mozilla::dom::OrientationType mCurrentOrientationType;
-
   // Whether we're observing the "app-theme-changed" observer service
   // notification.  We need to keep track of this because we might get multiple
   // OnPageShow notifications in a row without an OnPageHide in between, if
@@ -1691,14 +1674,6 @@ public:
   // The number of pointer lock requests which are cancelled by the user.
   // The value is saturated to kPointerLockRequestLimit+1 = 3.
   uint8_t mCancelledPointerLockRequests:2;
-
-  // Whether we have reported use counters for this document with Telemetry yet.
-  // Normally this is only done at document destruction time, but for image
-  // documents (SVG documents) that are not guaranteed to be destroyed, we
-  // report use counters when the image cache no longer has any imgRequestProxys
-  // pointing to them.  We track whether we ever reported use counters so
-  // that we only report them once for the document.
-  bool mReportedUseCounters:1;
 
   uint8_t mPendingFullscreenRequests;
 
@@ -1763,9 +1738,6 @@ private:
   // Reschedule any notifications we need to handle
   // requestAnimationFrame, if it's OK to do so.
   void MaybeRescheduleAnimationFrameNotifications();
-
-  // Returns true if the scheme for the url for this document is "about"
-  bool IsAboutPage();
 
   // These are not implemented and not supported.
   nsDocument(const nsDocument& aOther);
@@ -1844,6 +1816,7 @@ private:
 
   enum ViewportType {
     DisplayWidthHeight,
+    DisplayWidthHeightNoZoom,
     Specified,
     Unknown
   };

@@ -61,14 +61,8 @@ endif
 
 chrome_manifests := @chrome_manifests@
 
-%/interfaces.manifest: Makefile
-	$(call py_action,buildlist,$@ $(foreach xpt,$(filter $*/%,$(registered_xpt_files)),'interfaces $(notdir $(xpt))'))
-
-interfaces_manifests := @interfaces_manifests@
-
 xpidl_modules := @xpidl_modules@
-registered_xpt_files := @registered_xpt_files@
-xpt_files := $(registered_xpt_files) @xpt_files@
+xpt_files := @xpt_files@
 
 @xpidl_rules@
 
@@ -76,7 +70,7 @@ depends_files := $(foreach root,$(xpidl_modules),$(idl_deps_dir)/$(root).pp)
 
 GARBAGE += $(xpt_files) $(depends_files)
 
-xpidl:: $(xpt_files) $(chrome_manifests) $(interfaces_manifests)
+xpidl:: $(xpt_files) $(chrome_manifests)
 
 $(xpt_files): $(process_py) $(call mkdir_deps,$(idl_deps_dir) $(dist_include_dir))
 

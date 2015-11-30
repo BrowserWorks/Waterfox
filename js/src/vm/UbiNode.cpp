@@ -11,8 +11,6 @@
 #include "mozilla/Range.h"
 #include "mozilla/Scoped.h"
 
-#include <algorithm>
-
 #include "jscntxt.h"
 #include "jsobj.h"
 #include "jsscript.h"
@@ -24,7 +22,6 @@
 #include "js/TypeDecls.h"
 #include "js/Utility.h"
 #include "js/Vector.h"
-#include "vm/Debugger.h"
 #include "vm/GlobalObject.h"
 #include "vm/ScopeObject.h"
 #include "vm/Shape.h"
@@ -35,127 +32,31 @@
 #include "vm/Debugger-inl.h"
 
 using mozilla::Some;
-using mozilla::RangedPtr;
 using mozilla::UniquePtr;
 using JS::DispatchTraceKindTyped;
 using JS::HandleValue;
 using JS::Value;
 using JS::ZoneSet;
-using JS::ubi::AtomOrTwoByteChars;
-using JS::ubi::CoarseType;
 using JS::ubi::Concrete;
 using JS::ubi::Edge;
 using JS::ubi::EdgeRange;
 using JS::ubi::Node;
 using JS::ubi::SimpleEdge;
 using JS::ubi::SimpleEdgeVector;
-using JS::ubi::StackFrame;
 using JS::ubi::TracerConcrete;
 using JS::ubi::TracerConcreteWithCompartment;
 
-template<typename CharT>
-static size_t
-copyToBuffer(const CharT* src, RangedPtr<char16_t> dest, size_t length)
-{
-    size_t i = 0;
-    for ( ; i < length; i++)
-        dest[i] = src[i];
-    return i;
-}
-
-struct CopyToBufferMatcher
-{
-    using ReturnType = size_t;
-
-    RangedPtr<char16_t> destination;
-    size_t              maxLength;
-
-    CopyToBufferMatcher(RangedPtr<char16_t> destination, size_t maxLength)
-      : destination(destination)
-      , maxLength(maxLength)
-    { }
-
-    size_t
-    match(JSAtom* atom)
-    {
-        if (!atom)
-            return 0;
-
-        size_t length = std::min(atom->length(), maxLength);
-        JS::AutoCheckCannotGC noGC;
-        return atom->hasTwoByteChars()
-            ? copyToBuffer(atom->twoByteChars(noGC), destination, length)
-            : copyToBuffer(atom->latin1Chars(noGC), destination, length);
-    }
-
-    size_t
-    match(const char16_t* chars)
-    {
-        if (!chars)
-            return 0;
-
-        size_t length = std::min(js_strlen(chars), maxLength);
-        return copyToBuffer(chars, destination, length);
-    }
-};
-
-size_t
-StackFrame::source(RangedPtr<char16_t> destination, size_t length) const
-{
-    CopyToBufferMatcher m(destination, length);
-    return source().match(m);
-}
-
-size_t
-StackFrame::functionDisplayName(RangedPtr<char16_t> destination, size_t length) const
-{
-    CopyToBufferMatcher m(destination, length);
-    return functionDisplayName().match(m);
-}
-
-struct LengthMatcher
-{
-    using ReturnType = size_t;
-
-    size_t
-    match(JSAtom* atom)
-    {
-        return atom ? atom->length() : 0;
-    }
-
-    size_t
-    match(const char16_t* chars)
-    {
-        return chars ? js_strlen(chars) : 0;
-    }
-};
-
-size_t
-StackFrame::sourceLength()
-{
-    LengthMatcher m;
-    return source().match(m);
-}
-
-size_t
-StackFrame::functionDisplayNameLength()
-{
-    LengthMatcher m;
-    return functionDisplayName().match(m);
-}
-
 // All operations on null ubi::Nodes crash.
-CoarseType Concrete<void>::coarseType() const      { MOZ_CRASH("null ubi::Node"); }
-const char16_t* Concrete<void>::typeName() const   { MOZ_CRASH("null ubi::Node"); }
-JS::Zone* Concrete<void>::zone() const             { MOZ_CRASH("null ubi::Node"); }
-JSCompartment* Concrete<void>::compartment() const { MOZ_CRASH("null ubi::Node"); }
+const char16_t* Concrete<void>::typeName() const          { MOZ_CRASH("null ubi::Node"); }
+JS::Zone* Concrete<void>::zone() const                    { MOZ_CRASH("null ubi::Node"); }
+JSCompartment* Concrete<void>::compartment() const        { MOZ_CRASH("null ubi::Node"); }
 
 UniquePtr<EdgeRange>
 Concrete<void>::edges(JSContext*, bool) const {
     MOZ_CRASH("null ubi::Node");
 }
 
-Node::Size
+size_t
 Concrete<void>::size(mozilla::MallocSizeOf mallocSizeof) const
 {
     MOZ_CRASH("null ubi::Node");
@@ -280,7 +181,7 @@ class SimpleEdgeRange : public EdgeRange {
 
     bool init(JSContext* cx, void* thing, JS::TraceKind kind, bool wantNames = true) {
         SimpleEdgeVectorTracer tracer(cx, &edges, wantNames);
-        js::TraceChildren(&tracer, thing, kind);
+        JS_TraceChildren(&tracer, thing, kind);
         settle();
         return tracer.okay;
     }
@@ -315,19 +216,6 @@ JSCompartment*
 TracerConcreteWithCompartment<Referent>::compartment() const
 {
     return TracerBase::get().compartment();
-}
-
-bool
-Concrete<JSObject>::hasAllocationStack() const
-{
-    return !!js::Debugger::getObjectAllocationSite(get());
-}
-
-StackFrame
-Concrete<JSObject>::allocationStack() const
-{
-    MOZ_ASSERT(hasAllocationStack());
-    return StackFrame(js::Debugger::getObjectAllocationSite(get()));
 }
 
 const char*

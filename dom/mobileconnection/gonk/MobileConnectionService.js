@@ -76,7 +76,7 @@ XPCOMUtils.defineLazyGetter(this, "gRadioInterfaceLayer", function() {
   return ril;
 });
 
-var DEBUG = RIL.DEBUG_RIL;
+let DEBUG = RIL.DEBUG_RIL;
 function debug(s) {
   dump("MobileConnectionService: " + s + "\n");
 }

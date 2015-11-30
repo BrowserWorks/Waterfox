@@ -3,9 +3,9 @@
 
 "use strict";
 
-var gTestTab;
-var gContentAPI;
-var gContentWindow;
+let gTestTab;
+let gContentAPI;
+let gContentWindow;
 
 function test() {
   UITourTest();
@@ -65,7 +65,7 @@ function cleanUpNotification(aId, aChromeWindow = window) {
   notification.close();
 }
 
-var tests = [
+let tests = [
   /**
    * Check that the "stars" heartbeat UI correctly shows and closes.
    */

@@ -9,7 +9,7 @@ Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/Promise.jsm")
 Cu.import("resource://gre/modules/Log.jsm");
 
-var testFormatter = {
+let testFormatter = {
   format: function format(message) {
     return message.loggerName + "\t" +
       message.levelDesc + "\t" +

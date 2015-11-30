@@ -443,7 +443,6 @@ nsresult nsZipArchive::ExtractFile(nsZipItem *item, const char *outname,
     uint32_t count = 0;
     uint8_t* buf = cursor.Read(&count);
     if (!buf) {
-      nsZipArchive::sFileCorruptedReason = "nsZipArchive: Read() failed to return a buffer";
       rv = NS_ERROR_FILE_CORRUPTED;
       break;
     } else if (count == 0) {
@@ -644,28 +643,22 @@ MOZ_WIN_MEM_TRY_BEGIN
       }
   }
 
-  if (!centralOffset) {
-    nsZipArchive::sFileCorruptedReason = "nsZipArchive: no central offset";
+  if (!centralOffset)
     return NS_ERROR_FILE_CORRUPTED;
-  }
 
   buf = startp + centralOffset;
 
   // avoid overflow of startp + centralOffset.
-  if (buf < startp) {
-    nsZipArchive::sFileCorruptedReason = "nsZipArchive: overflow looking for central directory";
+  if (buf < startp)
     return NS_ERROR_FILE_CORRUPTED;
-  }
 
   //-- Read the central directory headers
   uint32_t sig = 0;
   while (buf + int32_t(sizeof(uint32_t)) <= endp &&
          (sig = xtolong(buf)) == CENTRALSIG) {
     // Make sure there is enough data available.
-    if (endp - buf < ZIPCENTRAL_SIZE) {
-      nsZipArchive::sFileCorruptedReason = "nsZipArchive: central directory too small";
+    if (endp - buf < ZIPCENTRAL_SIZE)
       return NS_ERROR_FILE_CORRUPTED;
-    }
 
     // Read the fixed-size data.
     ZipCentral* central = (ZipCentral*)buf;
@@ -678,13 +671,9 @@ MOZ_WIN_MEM_TRY_BEGIN
     // Sanity check variable sizes and refuse to deal with
     // anything too big: it's likely a corrupt archive.
     if (namelen < 1 ||
-        namelen > kMaxNameLength) {
-      nsZipArchive::sFileCorruptedReason = "nsZipArchive: namelen out of range";
-      return NS_ERROR_FILE_CORRUPTED;
-    }
-    if (buf >= buf + diff || // No overflow
+        namelen > kMaxNameLength ||
+        buf >= buf + diff || // No overflow
         buf >= endp - diff) {
-      nsZipArchive::sFileCorruptedReason = "nsZipArchive: overflow looking for next item";
       return NS_ERROR_FILE_CORRUPTED;
     }
 
@@ -707,10 +696,8 @@ MOZ_WIN_MEM_TRY_BEGIN
     sig = 0;
   } /* while reading central directory records */
 
-  if (sig != ENDSIG) {
-    nsZipArchive::sFileCorruptedReason = "nsZipArchive: unexpected sig";
+  if (sig != ENDSIG)
     return NS_ERROR_FILE_CORRUPTED;
-  }
 
   // Make the comment available for consumers.
   if (endp - buf >= ZIPEND_SIZE) {
@@ -1212,6 +1199,3 @@ nsZipItemPtr_base::nsZipItemPtr_base(nsZipArchive *aZip, const char * aEntryName
     return;
   }
 }
-
-/* static */ const char*
-nsZipArchive::sFileCorruptedReason = nullptr;

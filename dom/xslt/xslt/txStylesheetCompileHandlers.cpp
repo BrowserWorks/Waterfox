@@ -183,7 +183,7 @@ getExprAttr(txStylesheetAttr* aAttributes,
 
     rv = txExprParser::createExpr(attr->mValue, &aState,
                                   getter_Transfers(aExpr));
-    if (NS_FAILED(rv) && aState.ignoreError(rv)) {
+    if (NS_FAILED(rv) && aState.fcp()) {
         // use default value in fcp for not required exprs
         if (aRequired) {
             aExpr = new txErrorExpr(
@@ -255,11 +255,10 @@ getPatternAttr(txStylesheetAttr* aAttributes,
         return rv;
     }
 
-    rv = txPatternParser::createPattern(attr->mValue, &aState,
-                                        getter_Transfers(aPattern));
-    if (NS_FAILED(rv) && (aRequired || !aState.ignoreError(rv))) {
+    aPattern = txPatternParser::createPattern(attr->mValue, &aState);
+    if (!aPattern && (aRequired || !aState.fcp())) {
         // XXX ErrorReport: XSLT-Pattern parse failure
-        return rv;
+        return NS_ERROR_XPATH_PARSE_FAILURE;
     }
 
     return NS_OK;
@@ -839,8 +838,6 @@ txFnStartKey(int32_t aNamespaceID,
                       aState, name);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    aState.mDisAllowed = txIParseContext::KEY_FUNCTION;
-
     nsAutoPtr<txPattern> match;
     rv = getPatternAttr(aAttributes, aAttrCount, nsGkAtoms::match, true,
                         aState, match);
@@ -850,8 +847,6 @@ txFnStartKey(int32_t aNamespaceID,
     rv = getExprAttr(aAttributes, aAttrCount, nsGkAtoms::use, true,
                      aState, use);
     NS_ENSURE_SUCCESS(rv, rv);
-
-    aState.mDisAllowed = 0;
 
     rv = aState.mStylesheet->addKey(name, Move(match), Move(use));
     NS_ENSURE_SUCCESS(rv, rv);

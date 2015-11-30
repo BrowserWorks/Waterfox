@@ -14,8 +14,8 @@ function nextStep(fn) {
   setTimeout(fn, CURRENT_TIME_TOLERANCE_MS + 10);
 }
 
-var originalTab;
-var newTab;
+let originalTab;
+let newTab;
 
 function test() {
   waitForExplicitFinish();

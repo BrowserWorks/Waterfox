@@ -9,7 +9,8 @@ const TEST_URL = TEST_URL_ROOT + "doc_filter.html";
 
 add_task(function*() {
   yield addTab(TEST_URL);
-  let {view} = yield openRuleView();
+
+  let {toolbox, inspector, view} = yield openRuleView();
 
   info("Getting the filter swatch element");
   let swatch = getRuleViewProperty(view, "body", "filter").valueSpan

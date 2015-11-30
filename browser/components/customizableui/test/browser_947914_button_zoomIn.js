@@ -4,7 +4,7 @@
 
 "use strict";
 
-var initialPageZoom = ZoomManager.zoom;
+let initialPageZoom = ZoomManager.zoom;
 
 add_task(function() {
   info("Check zoom in button existence and functionality");

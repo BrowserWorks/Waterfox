@@ -7,7 +7,6 @@
 
 #include "mozilla/EventForwards.h"
 #include "mozilla/WidgetUtils.h"
-#include "mozilla/layers/APZCCallbackHelper.h"
 #include "nsRect.h"
 #include "nsIWidget.h"
 #include "nsWidgetsCID.h"
@@ -40,6 +39,7 @@ class APZCTreeManager;
 class GeckoContentController;
 class APZEventState;
 struct ScrollableLayerGuid;
+struct SetAllowedTouchBehaviorCallback;
 } // namespace layers
 
 class CompositorVsyncDispatcher;
@@ -124,8 +124,8 @@ public:
   NS_IMETHOD              PlaceBehind(nsTopLevelWidgetZPlacement aPlacement,
                                       nsIWidget *aWidget, bool aActivate) override;
 
-  NS_IMETHOD              SetSizeMode(nsSizeMode aMode) override;
-  virtual nsSizeMode      SizeMode() override
+  NS_IMETHOD              SetSizeMode(int32_t aMode) override;
+  virtual int32_t         SizeMode() override
   {
     return mSizeMode;
   }
@@ -498,7 +498,7 @@ protected:
   nsRefPtr<mozilla::CompositorVsyncDispatcher> mCompositorVsyncDispatcher;
   nsRefPtr<APZCTreeManager> mAPZC;
   nsRefPtr<APZEventState> mAPZEventState;
-  SetAllowedTouchBehaviorCallback mSetAllowedTouchBehaviorCallback;
+  nsRefPtr<SetAllowedTouchBehaviorCallback> mSetAllowedTouchBehaviorCallback;
   nsRefPtr<WidgetShutdownObserver> mShutdownObserver;
   nsRefPtr<TextEventDispatcher> mTextEventDispatcher;
   nsCursor          mCursor;

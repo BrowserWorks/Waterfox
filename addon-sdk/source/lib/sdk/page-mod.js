@@ -25,13 +25,13 @@ remoteRequire('sdk/content/page-mod');
 const pagemods = new Map();
 const workers = new Map();
 const models = new WeakMap();
-var modelFor = (mod) => models.get(mod);
-var workerFor = (mod) => workers.get(mod)[0];
+let modelFor = (mod) => models.get(mod);
+let workerFor = (mod) => workers.get(mod)[0];
 
 // Helper functions
-var isRegExpOrString = (v) => isRegExp(v) || typeof v === 'string';
+let isRegExpOrString = (v) => isRegExp(v) || typeof v === 'string';
 
-var PAGEMOD_ID = 0;
+let PAGEMOD_ID = 0;
 
 // Validation Contracts
 const modOptions = {

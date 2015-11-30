@@ -37,11 +37,7 @@ WebBrowserPersistResourcesChild::VisitDocument(nsIWebBrowserPersistDocument* aDo
 {
     auto* subActor = new WebBrowserPersistDocumentChild();
     dom::PBrowserChild* grandManager = Manager()->Manager();
-    // As a consequence of how PWebBrowserPersistDocumentConstructor can be
-    // sent by both the parent and the child, we must pass the outerWindowID
-    // argument here. We pass 0, though note that this argument is actually
-    // just ignored when passed up to the parent from the child.
-    if (!grandManager->SendPWebBrowserPersistDocumentConstructor(subActor, 0)) {
+    if (!grandManager->SendPWebBrowserPersistDocumentConstructor(subActor)) {
         // NOTE: subActor is freed at this point.
         return NS_ERROR_FAILURE;
     }

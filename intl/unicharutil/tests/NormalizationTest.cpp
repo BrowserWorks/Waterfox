@@ -10,7 +10,6 @@
 #include "nsString.h"
 #include "nsCharTraits.h"
 #include "nsServiceManagerUtils.h"
-#include "mozilla/Snprintf.h"
 
 struct testcaseLine {
   wchar_t* c1;
@@ -137,6 +136,7 @@ bool TestUnspecifiedCodepoint(uint32_t codepoint)
   bool rv = true;
   char16_t unicharArray[3];
   nsAutoString X, normalized;
+  char description[9];
 
   if (IS_IN_BMP(codepoint)) {
     unicharArray[0] = codepoint;
@@ -157,11 +157,8 @@ bool TestUnspecifiedCodepoint(uint32_t codepoint)
 
       X == NFC(X) == NFD(X) == NFKC(X) == NFKD(X)
   */
-  static const size_t len = 9;
-  char description[len];
-
   DEBUG_TESTCASE(X);
-  snprintf(description, len, "U+%04X", codepoint);
+  sprintf(description, "U+%04X", codepoint);
   NORMALIZE_AND_COMPARE(X, X, NFC, description);
   NORMALIZE_AND_COMPARE(X, X, NFD, description);
   NORMALIZE_AND_COMPARE(X, X, NFKC, description);

@@ -24,7 +24,6 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/TimelineConsumers.h"
-#include "mozilla/EventTimelineMarker.h"
 
 #include "EventListenerService.h"
 #include "nsCOMArray.h"
@@ -53,11 +52,11 @@ namespace mozilla {
 using namespace dom;
 using namespace hal;
 
-#define EVENT_TYPE_EQUALS(ls, message, userType, typeString, allEvents) \
-  ((ls->mEventMessage == message &&                                     \
-    (ls->mEventMessage != eUnidentifiedEvent ||                         \
-    (mIsMainThreadELM && ls->mTypeAtom == userType) ||                  \
-    (!mIsMainThreadELM && ls->mTypeString.Equals(typeString)))) ||      \
+#define EVENT_TYPE_EQUALS(ls, type, userType, typeString, allEvents) \
+  ((ls->mEventType == type &&                                        \
+    (ls->mEventType != NS_USER_DEFINED_EVENT ||                      \
+    (mIsMainThreadELM && ls->mTypeAtom == userType) ||               \
+    (!mIsMainThreadELM && ls->mTypeString.Equals(typeString)))) ||   \
    (allEvents && ls->mAllEvents))
 
 static const uint32_t kAllMutationBits =
@@ -70,22 +69,22 @@ static const uint32_t kAllMutationBits =
   NS_EVENT_BITS_MUTATION_CHARACTERDATAMODIFIED;
 
 static uint32_t
-MutationBitForEventType(EventMessage aEventType)
+MutationBitForEventType(uint32_t aEventType)
 {
   switch (aEventType) {
-    case eLegacySubtreeModified:
+    case NS_MUTATION_SUBTREEMODIFIED:
       return NS_EVENT_BITS_MUTATION_SUBTREEMODIFIED;
-    case eLegacyNodeInserted:
+    case NS_MUTATION_NODEINSERTED:
       return NS_EVENT_BITS_MUTATION_NODEINSERTED;
-    case eLegacyNodeRemoved:
+    case NS_MUTATION_NODEREMOVED:
       return NS_EVENT_BITS_MUTATION_NODEREMOVED;
-    case eLegacyNodeRemovedFromDocument:
+    case NS_MUTATION_NODEREMOVEDFROMDOCUMENT:
       return NS_EVENT_BITS_MUTATION_NODEREMOVEDFROMDOCUMENT;
-    case eLegacyNodeInsertedIntoDocument:
+    case NS_MUTATION_NODEINSERTEDINTODOCUMENT:
       return NS_EVENT_BITS_MUTATION_NODEINSERTEDINTODOCUMENT;
-    case eLegacyAttrModified:
+    case NS_MUTATION_ATTRMODIFIED:
       return NS_EVENT_BITS_MUTATION_ATTRMODIFIED;
-    case eLegacyCharacterDataModified:
+    case NS_MUTATION_CHARACTERDATAMODIFIED:
       return NS_EVENT_BITS_MUTATION_CHARACTERDATAMODIFIED;
     default:
       break;
@@ -95,9 +94,8 @@ MutationBitForEventType(EventMessage aEventType)
 
 uint32_t EventListenerManager::sMainThreadCreatedCount = 0;
 
-EventListenerManagerBase::EventListenerManagerBase()
-  : mNoListenerForEvent(eVoidEvent)
-  , mMayHavePaintEventListener(false)
+EventListenerManager::EventListenerManager(EventTarget* aTarget)
+  : mMayHavePaintEventListener(false)
   , mMayHaveMutationListeners(false)
   , mMayHaveCapturingListeners(false)
   , mMayHaveSystemGroupListeners(false)
@@ -108,13 +106,7 @@ EventListenerManagerBase::EventListenerManagerBase()
   , mMayHaveInputOrCompositionEventListener(false)
   , mClearingListeners(false)
   , mIsMainThreadELM(NS_IsMainThread())
-{
-  static_assert(sizeof(EventListenerManagerBase) == sizeof(uint32_t),
-                "Keep the size of EventListenerManagerBase size compact!");
-}
-
-EventListenerManager::EventListenerManager(EventTarget* aTarget)
-  : EventListenerManagerBase()
+  , mNoListenerForEvent(0)
   , mTarget(aTarget)
 {
   NS_ASSERTION(aTarget, "unexpected null pointer");
@@ -223,17 +215,15 @@ EventListenerManager::GetTargetAsInnerWindow() const
 void
 EventListenerManager::AddEventListenerInternal(
                         const EventListenerHolder& aListenerHolder,
-                        EventMessage aEventMessage,
+                        uint32_t aType,
                         nsIAtom* aTypeAtom,
                         const nsAString& aTypeString,
                         const EventListenerFlags& aFlags,
                         bool aHandler,
                         bool aAllEvents)
 {
-  MOZ_ASSERT(// Main thread
-             (NS_IsMainThread() && aEventMessage && aTypeAtom) ||
-             // non-main-thread
-             (!NS_IsMainThread() && aEventMessage && !aTypeString.IsEmpty()) ||
+  MOZ_ASSERT((NS_IsMainThread() && aType && aTypeAtom) || // Main thread
+             (!NS_IsMainThread() && aType && !aTypeString.IsEmpty()) || // non-main-thread
              aAllEvents, "Missing type"); // all-events listener
 
   if (!aListenerHolder || mClearingListeners) {
@@ -251,20 +241,21 @@ EventListenerManager::AddEventListenerInternal(
     // mListener == aListenerHolder is the last one, since it can be a bit slow.
     if (listener->mListenerIsHandler == aHandler &&
         listener->mFlags == aFlags &&
-        EVENT_TYPE_EQUALS(listener, aEventMessage, aTypeAtom, aTypeString,
+        EVENT_TYPE_EQUALS(listener, aType, aTypeAtom, aTypeString,
                           aAllEvents) &&
         listener->mListener == aListenerHolder) {
       return;
     }
   }
 
-  mNoListenerForEvent = eVoidEvent;
+  mNoListenerForEvent = NS_EVENT_NULL;
   mNoListenerForEventAtom = nullptr;
 
   listener = aAllEvents ? mListeners.InsertElementAt(0) :
                           mListeners.AppendElement();
   listener->mListener = aListenerHolder;
-  listener->mEventMessage = aEventMessage;
+  MOZ_ASSERT(aType < PR_UINT16_MAX);
+  listener->mEventType = aType;
   listener->mTypeString = aTypeString;
   listener->mTypeAtom = aTypeAtom;
   listener->mFlags = aFlags;
@@ -293,14 +284,13 @@ EventListenerManager::AddEventListenerInternal(
     mMayHaveCapturingListeners = true;
   }
 
-  if (aEventMessage == eAfterPaint) {
+  if (aType == NS_AFTERPAINT) {
     mMayHavePaintEventListener = true;
     nsPIDOMWindow* window = GetInnerWindowForTarget();
     if (window) {
       window->SetHasPaintEventListeners();
     }
-  } else if (aEventMessage >= eLegacyMutationEventFirst &&
-             aEventMessage <= eLegacyMutationEventLast) {
+  } else if (aType >= NS_MUTATION_START && aType <= NS_MUTATION_END) {
     // For mutation listeners, we need to update the global bit on the DOM window.
     // Otherwise we won't actually fire the mutation event.
     mMayHaveMutationListeners = true;
@@ -311,20 +301,20 @@ EventListenerManager::AddEventListenerInternal(
       if (doc) {
         doc->WarnOnceAbout(nsIDocument::eMutationEvent);
       }
-      // If aEventMessage is eLegacySubtreeModified, we need to listen all
+      // If aType is NS_MUTATION_SUBTREEMODIFIED, we need to listen all
       // mutations. nsContentUtils::HasMutationListeners relies on this.
-      window->SetMutationListeners(
-        (aEventMessage == eLegacySubtreeModified) ?
-          kAllMutationBits : MutationBitForEventType(aEventMessage));
+      window->SetMutationListeners((aType == NS_MUTATION_SUBTREEMODIFIED) ?
+                                   kAllMutationBits :
+                                   MutationBitForEventType(aType));
     }
   } else if (aTypeAtom == nsGkAtoms::ondeviceorientation) {
-    EnableDevice(eDeviceOrientation);
+    EnableDevice(NS_DEVICE_ORIENTATION);
   } else if (aTypeAtom == nsGkAtoms::ondeviceproximity || aTypeAtom == nsGkAtoms::onuserproximity) {
-    EnableDevice(eDeviceProximity);
+    EnableDevice(NS_DEVICE_PROXIMITY);
   } else if (aTypeAtom == nsGkAtoms::ondevicelight) {
-    EnableDevice(eDeviceLight);
+    EnableDevice(NS_DEVICE_LIGHT);
   } else if (aTypeAtom == nsGkAtoms::ondevicemotion) {
-    EnableDevice(eDeviceMotion);
+    EnableDevice(NS_DEVICE_MOTION);
 #ifdef MOZ_B2G
   } else if (aTypeAtom == nsGkAtoms::onmoztimechange) {
     nsCOMPtr<nsPIDOMWindow> window = GetTargetAsInnerWindow();
@@ -334,12 +324,12 @@ EventListenerManager::AddEventListenerInternal(
   } else if (aTypeAtom == nsGkAtoms::onmoznetworkupload) {
     nsCOMPtr<nsPIDOMWindow> window = GetTargetAsInnerWindow();
     if (window) {
-      window->EnableNetworkEvent(eNetworkUpload);
+      window->EnableNetworkEvent(NS_NETWORK_UPLOAD_EVENT);
     }
   } else if (aTypeAtom == nsGkAtoms::onmoznetworkdownload) {
     nsCOMPtr<nsPIDOMWindow> window = GetTargetAsInnerWindow();
     if (window) {
-      window->EnableNetworkEvent(eNetworkDownload);
+      window->EnableNetworkEvent(NS_NETWORK_DOWNLOAD_EVENT);
     }
 #endif // MOZ_B2G
   } else if (aTypeAtom == nsGkAtoms::ontouchstart ||
@@ -353,8 +343,7 @@ EventListenerManager::AddEventListenerInternal(
     if (window && !aFlags.mInSystemGroup) {
       window->SetHasTouchEventListeners();
     }
-  } else if (aEventMessage >= ePointerEventFirst &&
-             aEventMessage <= ePointerEventLast) {
+  } else if (aType >= NS_POINTER_EVENT_START && aType <= NS_POINTER_LOST_CAPTURE) {
     nsPIDOMWindow* window = GetInnerWindowForTarget();
     if (aTypeAtom == nsGkAtoms::onpointerenter ||
         aTypeAtom == nsGkAtoms::onpointerleave) {
@@ -383,8 +372,8 @@ EventListenerManager::AddEventListenerInternal(
       window->SetHasMouseEnterLeaveEventListeners();
     }
 #ifdef MOZ_GAMEPAD
-  } else if (aEventMessage >= eGamepadEventFirst &&
-             aEventMessage <= eGamepadEventLast) {
+  } else if (aType >= NS_GAMEPAD_START &&
+             aType <= NS_GAMEPAD_END) {
     nsPIDOMWindow* window = GetInnerWindowForTarget();
     if (window) {
       window->SetHasGamepadEventListener();
@@ -405,13 +394,6 @@ EventListenerManager::AddEventListenerInternal(
     }
   }
 
-  if (IsApzAwareEvent(aTypeAtom)) {
-    nsCOMPtr<nsINode> node = do_QueryInterface(mTarget);
-    if (node) {
-      node->SetMayHaveApzAwareListeners();
-    }
-  }
-
   if (aTypeAtom && mTarget) {
     mTarget->EventListenerAdded(aTypeAtom);
   }
@@ -423,14 +405,14 @@ EventListenerManager::AddEventListenerInternal(
 }
 
 bool
-EventListenerManager::IsDeviceType(EventMessage aEventMessage)
+EventListenerManager::IsDeviceType(uint32_t aType)
 {
-  switch (aEventMessage) {
-    case eDeviceOrientation:
-    case eDeviceMotion:
-    case eDeviceLight:
-    case eDeviceProximity:
-    case eUserProximity:
+  switch (aType) {
+    case NS_DEVICE_ORIENTATION:
+    case NS_DEVICE_MOTION:
+    case NS_DEVICE_LIGHT:
+    case NS_DEVICE_PROXIMITY:
+    case NS_USER_PROXIMITY:
       return true;
     default:
       break;
@@ -439,25 +421,25 @@ EventListenerManager::IsDeviceType(EventMessage aEventMessage)
 }
 
 void
-EventListenerManager::EnableDevice(EventMessage aEventMessage)
+EventListenerManager::EnableDevice(uint32_t aType)
 {
   nsCOMPtr<nsPIDOMWindow> window = GetTargetAsInnerWindow();
   if (!window) {
     return;
   }
 
-  switch (aEventMessage) {
-    case eDeviceOrientation:
+  switch (aType) {
+    case NS_DEVICE_ORIENTATION:
       window->EnableDeviceSensor(SENSOR_ORIENTATION);
       break;
-    case eDeviceProximity:
-    case eUserProximity:
+    case NS_DEVICE_PROXIMITY:
+    case NS_USER_PROXIMITY:
       window->EnableDeviceSensor(SENSOR_PROXIMITY);
       break;
-    case eDeviceLight:
+    case NS_DEVICE_LIGHT:
       window->EnableDeviceSensor(SENSOR_LIGHT);
       break;
-    case eDeviceMotion:
+    case NS_DEVICE_MOTION:
       window->EnableDeviceSensor(SENSOR_ACCELERATION);
       window->EnableDeviceSensor(SENSOR_LINEAR_ACCELERATION);
       window->EnableDeviceSensor(SENSOR_GYROSCOPE);
@@ -469,27 +451,27 @@ EventListenerManager::EnableDevice(EventMessage aEventMessage)
 }
 
 void
-EventListenerManager::DisableDevice(EventMessage aEventMessage)
+EventListenerManager::DisableDevice(uint32_t aType)
 {
   nsCOMPtr<nsPIDOMWindow> window = GetTargetAsInnerWindow();
   if (!window) {
     return;
   }
 
-  switch (aEventMessage) {
-    case eDeviceOrientation:
+  switch (aType) {
+    case NS_DEVICE_ORIENTATION:
       window->DisableDeviceSensor(SENSOR_ORIENTATION);
       break;
-    case eDeviceMotion:
+    case NS_DEVICE_MOTION:
       window->DisableDeviceSensor(SENSOR_ACCELERATION);
       window->DisableDeviceSensor(SENSOR_LINEAR_ACCELERATION);
       window->DisableDeviceSensor(SENSOR_GYROSCOPE);
       break;
-    case eDeviceProximity:
-    case eUserProximity:
+    case NS_DEVICE_PROXIMITY:
+    case NS_USER_PROXIMITY:
       window->DisableDeviceSensor(SENSOR_PROXIMITY);
       break;
-    case eDeviceLight:
+    case NS_DEVICE_LIGHT:
       window->DisableDeviceSensor(SENSOR_LIGHT);
       break;
     default:
@@ -501,13 +483,13 @@ EventListenerManager::DisableDevice(EventMessage aEventMessage)
 void
 EventListenerManager::RemoveEventListenerInternal(
                         const EventListenerHolder& aListenerHolder,
-                        EventMessage aEventMessage,
+                        uint32_t aType,
                         nsIAtom* aUserType,
                         const nsAString& aTypeString,
                         const EventListenerFlags& aFlags,
                         bool aAllEvents)
 {
-  if (!aListenerHolder || !aEventMessage || mClearingListeners) {
+  if (!aListenerHolder || !aType || mClearingListeners) {
     return;
   }
 
@@ -515,16 +497,16 @@ EventListenerManager::RemoveEventListenerInternal(
 
   uint32_t count = mListeners.Length();
   uint32_t typeCount = 0;
-  bool deviceType = IsDeviceType(aEventMessage);
+  bool deviceType = IsDeviceType(aType);
 #ifdef MOZ_B2G
-  bool timeChangeEvent = (aEventMessage == eTimeChange);
-  bool networkEvent = (aEventMessage == eNetworkUpload ||
-                       aEventMessage == eNetworkDownload);
+  bool timeChangeEvent = (aType == NS_MOZ_TIME_CHANGE_EVENT);
+  bool networkEvent = (aType == NS_NETWORK_UPLOAD_EVENT ||
+                       aType == NS_NETWORK_DOWNLOAD_EVENT);
 #endif // MOZ_B2G
 
   for (uint32_t i = 0; i < count; ++i) {
     listener = &mListeners.ElementAt(i);
-    if (EVENT_TYPE_EQUALS(listener, aEventMessage, aUserType, aTypeString,
+    if (EVENT_TYPE_EQUALS(listener, aType, aUserType, aTypeString,
                           aAllEvents)) {
       ++typeCount;
       if (listener->mListener == aListenerHolder &&
@@ -532,7 +514,7 @@ EventListenerManager::RemoveEventListenerInternal(
         nsRefPtr<EventListenerManager> kungFuDeathGrip(this);
         mListeners.RemoveElementAt(i);
         --count;
-        mNoListenerForEvent = eVoidEvent;
+        mNoListenerForEvent = NS_EVENT_NULL;
         mNoListenerForEventAtom = nullptr;
         if (mTarget && aUserType) {
           mTarget->EventListenerRemoved(aUserType);
@@ -555,7 +537,7 @@ EventListenerManager::RemoveEventListenerInternal(
   }
 
   if (!aAllEvents && deviceType && typeCount == 0) {
-    DisableDevice(aEventMessage);
+    DisableDevice(aType);
 #ifdef MOZ_B2G
   } else if (timeChangeEvent && typeCount == 0) {
     nsCOMPtr<nsPIDOMWindow> window = GetTargetAsInnerWindow();
@@ -565,7 +547,7 @@ EventListenerManager::RemoveEventListenerInternal(
   } else if (!aAllEvents && networkEvent && typeCount == 0) {
     nsCOMPtr<nsPIDOMWindow> window = GetTargetAsInnerWindow();
     if (window) {
-      window->DisableNetworkEvent(aEventMessage);
+      window->DisableNetworkEvent(aType);
     }
 #endif // MOZ_B2G
   }
@@ -576,20 +558,20 @@ EventListenerManager::ListenerCanHandle(Listener* aListener,
                                         WidgetEvent* aEvent)
 {
   // This is slightly different from EVENT_TYPE_EQUALS in that it returns
-  // true even when aEvent->mMessage == eUnidentifiedEvent and
-  // aListener=>mEventMessage != eUnidentifiedEvent as long as the atoms are
+  // true even when aEvent->message == NS_USER_DEFINED_EVENT and
+  // aListener=>mEventType != NS_USER_DEFINED_EVENT as long as the atoms are
   // the same
   if (aListener->mAllEvents) {
     return true;
   }
-  if (aEvent->mMessage == eUnidentifiedEvent) {
+  if (aEvent->message == NS_USER_DEFINED_EVENT) {
     if (mIsMainThreadELM) {
       return aListener->mTypeAtom == aEvent->userType;
     }
     return aListener->mTypeString.Equals(aEvent->typeString);
   }
   MOZ_ASSERT(mIsMainThreadELM);
-  return aListener->mEventMessage == aEvent->mMessage;
+  return aListener->mEventType == aEvent->message;
 }
 
 void
@@ -600,8 +582,8 @@ EventListenerManager::AddEventListenerByType(
 {
   nsCOMPtr<nsIAtom> atom =
     mIsMainThreadELM ? do_GetAtom(NS_LITERAL_STRING("on") + aType) : nullptr;
-  EventMessage message = nsContentUtils::GetEventMessage(atom);
-  AddEventListenerInternal(aListenerHolder, message, atom, aType, aFlags);
+  uint32_t type = nsContentUtils::GetEventId(atom);
+  AddEventListenerInternal(aListenerHolder, type, atom, aType, aFlags);
 }
 
 void
@@ -612,12 +594,12 @@ EventListenerManager::RemoveEventListenerByType(
 {
   nsCOMPtr<nsIAtom> atom =
     mIsMainThreadELM ? do_GetAtom(NS_LITERAL_STRING("on") + aType) : nullptr;
-  EventMessage message = nsContentUtils::GetEventMessage(atom);
-  RemoveEventListenerInternal(aListenerHolder, message, atom, aType, aFlags);
+  uint32_t type = nsContentUtils::GetEventId(atom);
+  RemoveEventListenerInternal(aListenerHolder, type, atom, aType, aFlags);
 }
 
 EventListenerManager::Listener*
-EventListenerManager::FindEventHandler(EventMessage aEventMessage,
+EventListenerManager::FindEventHandler(uint32_t aEventType,
                                        nsIAtom* aTypeAtom,
                                        const nsAString& aTypeString)
 {
@@ -628,7 +610,7 @@ EventListenerManager::FindEventHandler(EventMessage aEventMessage,
   for (uint32_t i = 0; i < count; ++i) {
     listener = &mListeners.ElementAt(i);
     if (listener->mListenerIsHandler &&
-        EVENT_TYPE_EQUALS(listener, aEventMessage, aTypeAtom, aTypeString,
+        EVENT_TYPE_EQUALS(listener, aEventType, aTypeAtom, aTypeString,
                           false)) {
       return listener;
     }
@@ -645,8 +627,8 @@ EventListenerManager::SetEventHandlerInternal(
 {
   MOZ_ASSERT(aName || !aTypeString.IsEmpty());
 
-  EventMessage eventMessage = nsContentUtils::GetEventMessage(aName);
-  Listener* listener = FindEventHandler(eventMessage, aName, aTypeString);
+  uint32_t eventType = nsContentUtils::GetEventId(aName);
+  Listener* listener = FindEventHandler(eventType, aName, aTypeString);
 
   if (!listener) {
     // If we didn't find a script listener or no listeners existed
@@ -658,10 +640,10 @@ EventListenerManager::SetEventHandlerInternal(
     NS_NewJSEventHandler(mTarget, aName,
                          aTypedHandler, getter_AddRefs(jsEventHandler));
     EventListenerHolder listenerHolder(jsEventHandler);
-    AddEventListenerInternal(listenerHolder, eventMessage, aName, aTypeString,
+    AddEventListenerInternal(listenerHolder, eventType, aName, aTypeString,
                              flags, true);
 
-    listener = FindEventHandler(eventMessage, aName, aTypeString);
+    listener = FindEventHandler(eventType, aName, aTypeString);
   } else {
     JSEventHandler* jsEventHandler = listener->GetJSEventHandler();
     MOZ_ASSERT(jsEventHandler,
@@ -722,37 +704,42 @@ EventListenerManager::SetEventHandler(nsIAtom* aName,
       return NS_ERROR_DOM_SECURITY_ERR;
     }
 
-    // Perform CSP check
     nsCOMPtr<nsIContentSecurityPolicy> csp;
     rv = doc->NodePrincipal()->GetCsp(getter_AddRefs(csp));
     NS_ENSURE_SUCCESS(rv, rv);
 
     if (csp) {
-      // let's generate a script sample and pass it as aContent,
-      // it will not match the hash, but allows us to pass
-      // the script sample in aCOntent.
-      nsAutoString scriptSample, attr, tagName(NS_LITERAL_STRING("UNKNOWN"));
-      aName->ToString(attr);
-      nsCOMPtr<nsIDOMNode> domNode(do_QueryInterface(mTarget));
-      if (domNode) {
-        domNode->GetNodeName(tagName);
-      }
-      // build a "script sample" based on what we know about this element
-      scriptSample.Assign(attr);
-      scriptSample.AppendLiteral(" attribute on ");
-      scriptSample.Append(tagName);
-      scriptSample.AppendLiteral(" element");
-
-      bool allowsInlineScript = true;
-      rv = csp->GetAllowsInline(nsIContentPolicy::TYPE_SCRIPT,
-                                EmptyString(), // aNonce
-                                scriptSample,
-                                0,             // aLineNumber
-                                &allowsInlineScript);
+      bool inlineOK = true;
+      bool reportViolations = false;
+      rv = csp->GetAllowsInlineScript(&reportViolations, &inlineOK);
       NS_ENSURE_SUCCESS(rv, rv);
 
+      if (reportViolations) {
+        // gather information to log with violation report
+        nsIURI* uri = doc->GetDocumentURI();
+        nsAutoCString asciiSpec;
+        if (uri)
+          uri->GetAsciiSpec(asciiSpec);
+        nsAutoString scriptSample, attr, tagName(NS_LITERAL_STRING("UNKNOWN"));
+        aName->ToString(attr);
+        nsCOMPtr<nsIDOMNode> domNode(do_QueryInterface(mTarget));
+        if (domNode)
+          domNode->GetNodeName(tagName);
+        // build a "script sample" based on what we know about this element
+        scriptSample.Assign(attr);
+        scriptSample.AppendLiteral(" attribute on ");
+        scriptSample.Append(tagName);
+        scriptSample.AppendLiteral(" element");
+        csp->LogViolationDetails(nsIContentSecurityPolicy::VIOLATION_TYPE_INLINE_SCRIPT,
+                                 NS_ConvertUTF8toUTF16(asciiSpec),
+                                 scriptSample,
+                                 0,
+                                 EmptyString(),
+                                 EmptyString());
+      }
+
       // return early if CSP wants us to block inline scripts
-      if (!allowsInlineScript) {
+      if (!inlineOK) {
         return NS_OK;
       }
     }
@@ -789,12 +776,12 @@ EventListenerManager::RemoveEventHandler(nsIAtom* aName,
     return;
   }
 
-  EventMessage eventMessage = nsContentUtils::GetEventMessage(aName);
-  Listener* listener = FindEventHandler(eventMessage, aName, aTypeString);
+  uint32_t eventType = nsContentUtils::GetEventId(aName);
+  Listener* listener = FindEventHandler(eventType, aName, aTypeString);
 
   if (listener) {
     mListeners.RemoveElementAt(uint32_t(listener - &mListeners.ElementAt(0)));
-    mNoListenerForEvent = eVoidEvent;
+    mNoListenerForEvent = NS_EVENT_NULL;
     mNoListenerForEventAtom = nullptr;
     if (mTarget && aName) {
       mTarget->EventListenerRemoved(aName);
@@ -1059,6 +1046,29 @@ EventListenerManager::GetDocShellForTarget()
   return docShell;
 }
 
+class EventTimelineMarker : public TimelineMarker
+{
+public:
+  EventTimelineMarker(nsDocShell* aDocShell, TracingMetadata aMetaData,
+                      uint16_t aPhase, const nsAString& aCause)
+    : TimelineMarker(aDocShell, "DOMEvent", aMetaData, aCause)
+    , mPhase(aPhase)
+  {
+  }
+
+  virtual void AddDetails(JSContext* aCx,
+                          mozilla::dom::ProfileTimelineMarker& aMarker) override
+  {
+    if (GetMetaData() == TRACING_INTERVAL_START) {
+      aMarker.mType.Construct(GetCause());
+      aMarker.mEventPhase.Construct(mPhase);
+    }
+  }
+
+private:
+  uint16_t mPhase;
+};
+
 /**
 * Causes a check for event listeners and processing by them if they exist.
 * @param an event listener
@@ -1099,10 +1109,8 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
           // This is tiny bit slow, but happens only once per event.
           nsCOMPtr<EventTarget> et =
             do_QueryInterface(aEvent->originalTarget);
-          nsRefPtr<Event> event = EventDispatcher::CreateEvent(et, aPresContext,
-                                                               aEvent,
-                                                               EmptyString());
-          event.forget(aDOMEvent);
+          EventDispatcher::CreateEvent(et, aPresContext,
+                                       aEvent, EmptyString(), aDOMEvent);
         }
         if (*aDOMEvent) {
           if (!aEvent->currentTarget) {
@@ -1129,8 +1137,9 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
               (*aDOMEvent)->GetType(typeStr);
               uint16_t phase;
               (*aDOMEvent)->GetEventPhase(&phase);
-              UniquePtr<TimelineMarker> marker = MakeUnique<EventTimelineMarker>(
-                typeStr, phase, MarkerTracingType::START);
+              mozilla::UniquePtr<TimelineMarker> marker =
+                MakeUnique<EventTimelineMarker>(ds, TRACING_INTERVAL_START,
+                                                phase, typeStr);
               TimelineConsumers::AddMarkerForDocShell(ds, Move(marker));
             }
           }
@@ -1142,7 +1151,7 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
 
           if (isTimelineRecording) {
             nsDocShell* ds = static_cast<nsDocShell*>(docShell.get());
-            TimelineConsumers::AddMarkerForDocShell(ds, "DOMEvent", MarkerTracingType::END);
+            TimelineConsumers::AddMarkerForDocShell(ds, "DOMEvent", TRACING_INTERVAL_END);
           }
         }
       }
@@ -1152,7 +1161,7 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
   aEvent->currentTarget = nullptr;
 
   if (mIsMainThreadELM && !hasListener) {
-    mNoListenerForEvent = aEvent->mMessage;
+    mNoListenerForEvent = aEvent->message;
     mNoListenerForEventAtom = aEvent->userType;
   }
 
@@ -1203,7 +1212,7 @@ EventListenerManager::AddListenerForAllEvents(nsIDOMEventListener* aDOMListener,
   flags.mAllowUntrustedEvents = aWantsUntrusted;
   flags.mInSystemGroup = aSystemEventGroup;
   EventListenerHolder listenerHolder(aDOMListener);
-  AddEventListenerInternal(listenerHolder, eAllEvents, nullptr, EmptyString(),
+  AddEventListenerInternal(listenerHolder, NS_EVENT_ALL, nullptr, EmptyString(),
                            flags, false, true);
 }
 
@@ -1217,7 +1226,7 @@ EventListenerManager::RemoveListenerForAllEvents(
   flags.mCapture = aUseCapture;
   flags.mInSystemGroup = aSystemEventGroup;
   EventListenerHolder listenerHolder(aDOMListener);
-  RemoveEventListenerInternal(listenerHolder, eAllEvents, nullptr,
+  RemoveEventListenerInternal(listenerHolder, NS_EVENT_ALL, nullptr,
                               EmptyString(), flags, true);
 }
 
@@ -1228,8 +1237,8 @@ EventListenerManager::HasMutationListeners()
     uint32_t count = mListeners.Length();
     for (uint32_t i = 0; i < count; ++i) {
       Listener* listener = &mListeners.ElementAt(i);
-      if (listener->mEventMessage >= eLegacyMutationEventFirst &&
-          listener->mEventMessage <= eLegacyMutationEventLast) {
+      if (listener->mEventType >= NS_MUTATION_START &&
+          listener->mEventType <= NS_MUTATION_END) {
         return true;
       }
     }
@@ -1246,12 +1255,12 @@ EventListenerManager::MutationListenerBits()
     uint32_t count = mListeners.Length();
     for (uint32_t i = 0; i < count; ++i) {
       Listener* listener = &mListeners.ElementAt(i);
-      if (listener->mEventMessage >= eLegacyMutationEventFirst &&
-          listener->mEventMessage <= eLegacyMutationEventLast) {
-        if (listener->mEventMessage == eLegacySubtreeModified) {
+      if (listener->mEventType >= NS_MUTATION_START &&
+          listener->mEventType <= NS_MUTATION_END) {
+        if (listener->mEventType == NS_MUTATION_SUBTREEMODIFIED) {
           return kAllMutationBits;
         }
-        bits |= MutationBitForEventType(listener->mEventMessage);
+        bits |= MutationBitForEventType(listener->mEventType);
       }
     }
   }
@@ -1341,8 +1350,8 @@ EventListenerManager::HasUnloadListeners()
   uint32_t count = mListeners.Length();
   for (uint32_t i = 0; i < count; ++i) {
     Listener* listener = &mListeners.ElementAt(i);
-    if (listener->mEventMessage == eUnload ||
-        listener->mEventMessage == eBeforeUnload) {
+    if (listener->mEventType == NS_PAGE_UNLOAD ||
+        listener->mEventType == NS_BEFORE_PAGE_UNLOAD) {
       return true;
     }
   }
@@ -1413,8 +1422,8 @@ const TypedEventHandler*
 EventListenerManager::GetTypedEventHandler(nsIAtom* aEventName,
                                            const nsAString& aTypeString)
 {
-  EventMessage eventMessage = nsContentUtils::GetEventMessage(aEventName);
-  Listener* listener = FindEventHandler(eventMessage, aEventName, aTypeString);
+  uint32_t eventType = nsContentUtils::GetEventId(aEventName);
+  Listener* listener = FindEventHandler(eventType, aEventName, aTypeString);
 
   if (!listener) {
     return nullptr;
@@ -1490,30 +1499,6 @@ EventListenerManager::TraceListeners(JSTracer* aTrc)
     // We might have eWrappedJSListener, but that is the legacy type for
     // JS implemented event listeners, and trickier to handle here.
   }
-}
-
-bool
-EventListenerManager::HasApzAwareListeners()
-{
-  uint32_t count = mListeners.Length();
-  for (uint32_t i = 0; i < count; ++i) {
-    Listener* listener = &mListeners.ElementAt(i);
-    if (IsApzAwareEvent(listener->mTypeAtom)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool
-EventListenerManager::IsApzAwareEvent(nsIAtom* aEvent)
-{
-  return aEvent == nsGkAtoms::ontouchstart ||
-         aEvent == nsGkAtoms::ontouchmove ||
-         aEvent == nsGkAtoms::onwheel ||
-         aEvent == nsGkAtoms::onDOMMouseScroll ||
-         aEvent == nsHtml5Atoms::onmousewheel ||
-         aEvent == nsGkAtoms::onMozMousePixelScroll;
 }
 
 already_AddRefed<nsIScriptGlobalObject>

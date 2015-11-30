@@ -1052,14 +1052,14 @@ bool
 RRegExpReplace::recover(JSContext* cx, SnapshotIterator& iter) const
 {
     RootedString string(cx, iter.read().toString());
-    Rooted<RegExpObject*> regexp(cx, &iter.read().toObject().as<RegExpObject>());
+    RootedObject regexp(cx, &iter.read().toObject());
     RootedString repl(cx, iter.read().toString());
+    RootedValue result(cx);
 
-    JSString* result = js::str_replace_regexp_raw(cx, string, regexp, repl);
-    if (!result)
+    if (!js::str_replace_regexp_raw(cx, string, regexp, repl, &result))
         return false;
 
-    iter.storeInstructionResult(StringValue(result));
+    iter.storeInstructionResult(result);
     return true;
 }
 
@@ -1098,18 +1098,10 @@ RToDouble::RToDouble(CompactBufferReader& reader)
 bool
 RToDouble::recover(JSContext* cx, SnapshotIterator& iter) const
 {
-    RootedValue v(cx, iter.read());
-    RootedValue result(cx);
+    Value v = iter.read();
 
     MOZ_ASSERT(!v.isObject());
-    MOZ_ASSERT(!v.isSymbol());
-
-    double dbl;
-    if (!ToNumber(cx, v, &dbl))
-        return false;
-
-    result.setDouble(dbl);
-    iter.storeInstructionResult(result);
+    iter.storeInstructionResult(v);
     return true;
 }
 
@@ -1502,12 +1494,12 @@ bool RStringReplace::recover(JSContext* cx, SnapshotIterator& iter) const
     RootedString string(cx, iter.read().toString());
     RootedString pattern(cx, iter.read().toString());
     RootedString replace(cx, iter.read().toString());
+    RootedValue result(cx);
 
-    JSString* result = js::str_replace_string_raw(cx, string, pattern, replace);
-    if (!result)
+    if (!js::str_replace_string_raw(cx, string, pattern, replace, &result))
         return false;
 
-    iter.storeInstructionResult(StringValue(result));
+    iter.storeInstructionResult(result);
     return true;
 }
 

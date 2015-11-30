@@ -618,16 +618,14 @@ struct JSObject_Slots16 : JSObject { void* data[3]; js::Value fslots[16]; };
 /* static */ MOZ_ALWAYS_INLINE void
 JSObject::readBarrier(JSObject* obj)
 {
-    MOZ_ASSERT_IF(obj, !isNullLike(obj));
-    if (obj && obj->isTenured())
+    if (!isNullLike(obj) && obj->isTenured())
         obj->asTenured().readBarrier(&obj->asTenured());
 }
 
 /* static */ MOZ_ALWAYS_INLINE void
 JSObject::writeBarrierPre(JSObject* obj)
 {
-    MOZ_ASSERT_IF(obj, !isNullLike(obj));
-    if (obj && obj->isTenured())
+    if (!isNullLike(obj) && obj->isTenured())
         obj->asTenured().writeBarrierPre(&obj->asTenured());
 }
 
@@ -635,15 +633,13 @@ JSObject::writeBarrierPre(JSObject* obj)
 JSObject::writeBarrierPost(void* cellp, JSObject* prev, JSObject* next)
 {
     MOZ_ASSERT(cellp);
-    MOZ_ASSERT_IF(next, !IsNullTaggedPointer(next));
-    MOZ_ASSERT_IF(prev, !IsNullTaggedPointer(prev));
 
     // If the target needs an entry, add it.
     js::gc::StoreBuffer* buffer;
-    if (next && (buffer = next->storeBuffer())) {
+    if (!IsNullTaggedPointer(next) && (buffer = next->storeBuffer())) {
         // If we know that the prev has already inserted an entry, we can skip
         // doing the lookup to add the new entry.
-        if (prev && prev->storeBuffer()) {
+        if (!IsNullTaggedPointer(prev) && prev->storeBuffer()) {
             buffer->assertHasCellEdge(static_cast<js::gc::Cell**>(cellp));
             return;
         }
@@ -652,7 +648,7 @@ JSObject::writeBarrierPost(void* cellp, JSObject* prev, JSObject* next)
     }
 
     // Remove the prev entry if the new value does not need it.
-    if (prev && (buffer = prev->storeBuffer()))
+    if (!IsNullTaggedPointer(prev) && (buffer = prev->storeBuffer()))
         buffer->unputCellFromAnyThread(static_cast<js::gc::Cell**>(cellp));
 }
 
@@ -823,11 +819,11 @@ HasProperty(JSContext* cx, HandleObject obj, PropertyName* name, bool* foundp);
  * `receiver[id]`, and we've already searched the prototype chain up to `obj`.
  */
 inline bool
-GetProperty(JSContext* cx, HandleObject obj, HandleValue receiver, HandleId id,
+GetProperty(JSContext* cx, HandleObject obj, HandleObject receiver, HandleId id,
             MutableHandleValue vp);
 
 inline bool
-GetProperty(JSContext* cx, HandleObject obj, HandleValue receiver, PropertyName* name,
+GetProperty(JSContext* cx, HandleObject obj, HandleObject receiver, PropertyName* name,
             MutableHandleValue vp)
 {
     RootedId id(cx, NameToId(name));
@@ -835,52 +831,17 @@ GetProperty(JSContext* cx, HandleObject obj, HandleValue receiver, PropertyName*
 }
 
 inline bool
-GetProperty(JSContext* cx, HandleObject obj, HandleObject receiver, HandleId id,
-            MutableHandleValue vp)
-{
-    RootedValue receiverValue(cx, ObjectValue(*receiver));
-    return GetProperty(cx, obj, receiverValue, id, vp);
-}
-
-inline bool
-GetProperty(JSContext* cx, HandleObject obj, HandleObject receiver, PropertyName* name,
-            MutableHandleValue vp)
-{
-    RootedValue receiverValue(cx, ObjectValue(*receiver));
-    return GetProperty(cx, obj, receiverValue, name, vp);
-}
-
-inline bool
-GetElement(JSContext* cx, HandleObject obj, HandleValue receiver, uint32_t index,
-           MutableHandleValue vp);
-
-inline bool
 GetElement(JSContext* cx, HandleObject obj, HandleObject receiver, uint32_t index,
            MutableHandleValue vp);
 
 inline bool
-GetPropertyNoGC(JSContext* cx, JSObject* obj, const Value& receiver, jsid id, Value* vp);
-
-inline bool
-GetPropertyNoGC(JSContext* cx, JSObject* obj, JSObject* receiver, jsid id, Value* vp)
-{
-    return GetPropertyNoGC(cx, obj, ObjectValue(*receiver), id, vp);
-}
-
-inline bool
-GetPropertyNoGC(JSContext* cx, JSObject* obj, const Value& receiver, PropertyName* name, Value* vp)
-{
-    return GetPropertyNoGC(cx, obj, receiver, NameToId(name), vp);
-}
+GetPropertyNoGC(JSContext* cx, JSObject* obj, JSObject* receiver, jsid id, Value* vp);
 
 inline bool
 GetPropertyNoGC(JSContext* cx, JSObject* obj, JSObject* receiver, PropertyName* name, Value* vp)
 {
-    return GetPropertyNoGC(cx, obj, ObjectValue(*receiver), name, vp);
+    return GetPropertyNoGC(cx, obj, receiver, NameToId(name), vp);
 }
-
-inline bool
-GetElementNoGC(JSContext* cx, JSObject* obj, const Value& receiver, uint32_t index, Value* vp);
 
 inline bool
 GetElementNoGC(JSContext* cx, JSObject* obj, JSObject* receiver, uint32_t index, Value* vp);
@@ -1043,8 +1004,7 @@ GetObjectClassName(JSContext* cx, HandleObject obj);
  */
 
 /*
- * If obj is a WindowProxy, return its current inner Window. Otherwise return
- * obj. This function can't fail and never returns nullptr.
+ * If obj a WindowProxy, return its current inner Window. Otherwise return obj.
  *
  * GetInnerObject is called when we need a scope chain; you never want a
  * WindowProxy on a scope chain.
@@ -1067,7 +1027,6 @@ GetInnerObject(JSObject* obj)
 
 /*
  * If obj is a Window object, return the WindowProxy. Otherwise return obj.
- * This function can't fail; it never sets an exception or returns nullptr.
  *
  * This must be called before passing an object to script, if the object might
  * be a Window. (But usually those cases involve scope objects, and for those,

@@ -43,7 +43,7 @@ NS_INTERFACE_MAP_END
 // Helper class: AutoChangeStringListNotifier
 // Stack-based helper class to pair calls to WillChangeStringListList and
 // DidChangeStringListList.
-class MOZ_RAII AutoChangeStringListNotifier
+class MOZ_STACK_CLASS AutoChangeStringListNotifier
 {
 public:
   explicit AutoChangeStringListNotifier(DOMSVGStringList* aStringList MOZ_GUARD_OBJECT_NOTIFIER_PARAM)

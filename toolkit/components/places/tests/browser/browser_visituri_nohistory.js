@@ -6,7 +6,7 @@
 const INITIAL_URL = "http://example.com/tests/toolkit/components/places/tests/browser/begin.html";
 const FINAL_URL = "http://example.com/tests/toolkit/components/places/tests/browser/final.html";
 
-var gTab = gBrowser.selectedTab = gBrowser.addTab();
+let gTab = gBrowser.selectedTab = gBrowser.addTab();
 
 /**
  * One-time observer callback.

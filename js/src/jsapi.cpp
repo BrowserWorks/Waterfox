@@ -66,7 +66,6 @@
 #include "js/SliceBudget.h"
 #include "js/StructuredClone.h"
 #if ENABLE_INTL_API
-#include "unicode/timezone.h"
 #include "unicode/uclean.h"
 #include "unicode/utypes.h"
 #endif // ENABLE_INTL_API
@@ -118,8 +117,7 @@ using js::frontend::Parser;
 #endif
 
 bool
-JS::CallArgs::requireAtLeast(JSContext* cx, const char* fnname, unsigned required) const
-{
+JS::CallArgs::requireAtLeast(JSContext* cx, const char* fnname, unsigned required) {
     if (length() < required) {
         char numArgsStr[40];
         JS_snprintf(numArgsStr, sizeof numArgsStr, "%u", required - 1);
@@ -333,7 +331,7 @@ IterPerformanceStats(JSContext* cx,
             continue;
         }
         js::AutoCompartment autoCompartment(cx, compartment);
-        mozilla::RefPtr<PerformanceGroup> group = compartment->performanceMonitoring.getSharedGroup(cx);
+        PerformanceGroup* group = compartment->performanceMonitoring.getSharedGroup(cx);
         if (group->data.ticks == 0) {
             // Don't report compartments that have never been used.
             continue;
@@ -589,12 +587,6 @@ JS_Init(void)
     using js::TlsPerThreadData;
     if (!TlsPerThreadData.initialized() && !TlsPerThreadData.init())
         return false;
-
-#if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
-    if (!js::oom::InitThreadType())
-        return false;
-    js::oom::SetThreadType(js::oom::THREAD_TYPE_MAIN);
-#endif
 
     jit::ExecutableAllocator::initStatic();
 
@@ -1773,6 +1765,25 @@ JS_SetNativeStackQuota(JSRuntime* rt, size_t systemCodeStackSize, size_t trusted
 
 /************************************************************************/
 
+JS_PUBLIC_API(int)
+JS_IdArrayLength(JSContext* cx, JSIdArray* ida)
+{
+    return ida->length;
+}
+
+JS_PUBLIC_API(jsid)
+JS_IdArrayGet(JSContext* cx, JSIdArray* ida, unsigned index)
+{
+    MOZ_ASSERT(index < unsigned(ida->length));
+    return ida->vector[index];
+}
+
+JS_PUBLIC_API(void)
+JS_DestroyIdArray(JSContext* cx, JSIdArray* ida)
+{
+    cx->runtime()->defaultFreeOp()->free_(ida);
+}
+
 JS_PUBLIC_API(bool)
 JS_ValueToId(JSContext* cx, HandleValue value, MutableHandleId idp)
 {
@@ -2920,16 +2931,12 @@ JS_GetPropertyDescriptor(JSContext* cx, HandleObject obj, const char* name,
 JS_PUBLIC_API(bool)
 JS_GetPropertyById(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp)
 {
-    AssertHeapIsIdle(cx);
-    CHECK_REQUEST(cx);
-    assertSameCompartment(cx, obj, id);
-
-    return GetProperty(cx, obj, obj, id, vp);
+    return JS_ForwardGetPropertyTo(cx, obj, id, obj, vp);
 }
 
 JS_PUBLIC_API(bool)
-JS_ForwardGetPropertyTo(JSContext* cx, HandleObject obj, HandleId id, HandleValue onBehalfOf,
-                        MutableHandleValue vp)
+JS_ForwardGetPropertyTo(JSContext* cx, JS::HandleObject obj, JS::HandleId id, JS::HandleObject onBehalfOf,
+                        JS::MutableHandleValue vp)
 {
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
@@ -2939,13 +2946,9 @@ JS_ForwardGetPropertyTo(JSContext* cx, HandleObject obj, HandleId id, HandleValu
 }
 
 JS_PUBLIC_API(bool)
-JS_GetElement(JSContext* cx, HandleObject obj, uint32_t index, MutableHandleValue vp)
+JS_GetElement(JSContext* cx, HandleObject objArg, uint32_t index, MutableHandleValue vp)
 {
-    AssertHeapIsIdle(cx);
-    CHECK_REQUEST(cx);
-    assertSameCompartment(cx, obj);
-
-    return GetElement(cx, obj, obj, index, vp);
+    return JS_ForwardGetElementTo(cx, objArg, index, objArg, vp);
 }
 
 JS_PUBLIC_API(bool)
@@ -3163,19 +3166,18 @@ JS_SetAllNonReservedSlotsToUndefined(JSContext* cx, JSObject* objArg)
         obj->as<NativeObject>().setSlot(i, UndefinedValue());
 }
 
-JS_PUBLIC_API(bool)
-JS_Enumerate(JSContext* cx, HandleObject obj, JS::MutableHandle<IdVector> props)
+JS_PUBLIC_API(JSIdArray*)
+JS_Enumerate(JSContext* cx, HandleObject obj)
 {
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
     assertSameCompartment(cx, obj);
-    MOZ_ASSERT(props.empty());
 
-    AutoIdVector ids(cx);
-    if (!GetPropertyKeys(cx, obj, JSITER_OWNONLY, &ids))
-        return false;
-
-    return props.append(ids.begin(), ids.end());
+    AutoIdVector props(cx);
+    JSIdArray* ida;
+    if (!GetPropertyKeys(cx, obj, JSITER_OWNONLY, &props) || !VectorToIdArray(cx, props, &ida))
+        return nullptr;
+    return ida;
 }
 
 JS_PUBLIC_API(Value)
@@ -3273,7 +3275,7 @@ JS_GetSecurityCallbacks(JSRuntime* rt)
 }
 
 JS_PUBLIC_API(void)
-JS_SetTrustedPrincipals(JSRuntime* rt, JSPrincipals* prin)
+JS_SetTrustedPrincipals(JSRuntime* rt, const JSPrincipals* prin)
 {
     rt->setTrustedPrincipals(prin);
 }
@@ -3389,9 +3391,11 @@ IsFunctionCloneable(HandleFunction fun, HandleObject dynamicScope)
 
         // If the script is an indirect eval that is immediately scoped under
         // the global, we can clone it.
-        if (scope->is<StaticBlockObject>()) {
-            if (StaticEvalObject* staticEval = scope->as<StaticBlockObject>().maybeEnclosingEval())
-                return !staticEval->isDirect();
+        if (scope->is<StaticEvalObject>() &&
+            !scope->as<StaticEvalObject>().isDirect() &&
+            !scope->as<StaticEvalObject>().isStrict())
+        {
+            return true;
         }
 
         // Any other enclosing static scope (e.g., function, block) cannot be
@@ -3809,13 +3813,18 @@ AutoFile::open(JSContext* cx, const char* filename)
     return true;
 }
 
+JSObject * const JS::ReadOnlyCompileOptions::nullObjectPtr = nullptr;
+
 void
-JS::TransitiveCompileOptions::copyPODTransitiveOptions(const TransitiveCompileOptions& rhs)
+JS::ReadOnlyCompileOptions::copyPODOptions(const ReadOnlyCompileOptions& rhs)
 {
-    mutedErrors_ = rhs.mutedErrors_;
     version = rhs.version;
     versionSet = rhs.versionSet;
     utf8 = rhs.utf8;
+    lineno = rhs.lineno;
+    column = rhs.column;
+    forEval = rhs.forEval;
+    noScriptRval = rhs.noScriptRval;
     selfHostingMode = rhs.selfHostingMode;
     canLazilyParse = rhs.canLazilyParse;
     strictOption = rhs.strictOption;
@@ -3829,17 +3838,6 @@ JS::TransitiveCompileOptions::copyPODTransitiveOptions(const TransitiveCompileOp
     introductionLineno = rhs.introductionLineno;
     introductionOffset = rhs.introductionOffset;
     hasIntroductionInfo = rhs.hasIntroductionInfo;
-};
-
-void
-JS::ReadOnlyCompileOptions::copyPODOptions(const ReadOnlyCompileOptions& rhs)
-{
-    copyPODTransitiveOptions(rhs);
-    lineno = rhs.lineno;
-    column = rhs.column;
-    isRunOnce = rhs.isRunOnce;
-    forEval = rhs.forEval;
-    noScriptRval = rhs.noScriptRval;
 }
 
 JS::OwningCompileOptions::OwningCompileOptions(JSContext* cx)
@@ -3864,6 +3862,7 @@ JS::OwningCompileOptions::copy(JSContext* cx, const ReadOnlyCompileOptions& rhs)
 {
     copyPODOptions(rhs);
 
+    setMutedErrors(rhs.mutedErrors());
     setElement(rhs.element());
     setElementAttributeName(rhs.elementAttributeName());
     setIntroductionScript(rhs.introductionScript());
@@ -4253,7 +4252,7 @@ CompileFunction(JSContext* cx, const ReadOnlyCompileOptions& optionsArg,
             return false;
     }
 
-    Rooted<PropertyNameVector> formals(cx, PropertyNameVector(cx));
+    AutoNameVector formals(cx);
     for (unsigned i = 0; i < nargs; i++) {
         RootedAtom argAtom(cx, Atomize(cx, argnames[i], strlen(argnames[i])));
         if (!argAtom || !formals.append(argAtom->asPropertyName()))
@@ -4271,7 +4270,8 @@ CompileFunction(JSContext* cx, const ReadOnlyCompileOptions& optionsArg,
     MOZ_ASSERT_IF(!enclosingDynamicScope->is<GlobalObject>(),
                   HasNonSyntacticStaticScopeChain(enclosingStaticScope));
 
-    if (!frontend::CompileFunctionBody(cx, fun, optionsArg, formals, srcBuf, enclosingStaticScope))
+    CompileOptions options(cx, optionsArg);
+    if (!frontend::CompileFunctionBody(cx, fun, options, formals, srcBuf, enclosingStaticScope))
         return false;
 
     return true;
@@ -4451,7 +4451,7 @@ Evaluate(JSContext* cx, HandleObject scope, Handle<ScopeObject*> staticScope,
     RootedScript script(cx, frontend::CompileScript(cx, &cx->tempLifoAlloc(),
                                                     scope, staticScope,
                                                     /* evalCaller = */ nullptr, options,
-                                                    srcBuf, /* source = */ nullptr, &sct));
+                                                    srcBuf, /* source = */ nullptr, 0, &sct));
     if (!script)
         return false;
 
@@ -5490,11 +5490,11 @@ JS_NewDateObject(JSContext* cx, int year, int mon, int mday, int hour, int min, 
 }
 
 JS_PUBLIC_API(JSObject*)
-JS::NewDateObject(JSContext* cx, JS::ClippedTime time)
+JS_NewDateObjectMsec(JSContext* cx, double msec)
 {
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
-    return NewDateObjectMsec(cx, time);
+    return NewDateObjectMsec(cx, JS::TimeClip(msec));
 }
 
 JS_PUBLIC_API(bool)
@@ -6078,13 +6078,10 @@ AutoFilename::get() const
 }
 
 JS_PUBLIC_API(bool)
-DescribeScriptedCaller(JSContext* cx, AutoFilename* filename, unsigned* lineno,
-                       unsigned* column)
+DescribeScriptedCaller(JSContext* cx, AutoFilename* filename, unsigned* lineno)
 {
     if (lineno)
         *lineno = 0;
-    if (column)
-        *column = 0;
 
     NonBuiltinFrameIter i(cx);
     if (i.done())
@@ -6097,12 +6094,8 @@ DescribeScriptedCaller(JSContext* cx, AutoFilename* filename, unsigned* lineno,
 
     if (filename)
         filename->reset(i.scriptSource());
-
     if (lineno)
-        *lineno = i.computeLine(column);
-    else if (column)
-        i.computeLine(column);
-
+        *lineno = i.computeLine();
     return true;
 }
 
@@ -6278,12 +6271,3 @@ JS::GetObjectZone(JSObject* obj)
 {
     return obj->zone();
 }
-
-JS_PUBLIC_API(void)
-JS::ResetTimeZone()
-{
-#if ENABLE_INTL_API && defined(ICU_TZ_HAS_RECREATE_DEFAULT)
-    icu::TimeZone::recreateDefault();
-#endif
-}
-

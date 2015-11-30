@@ -10,7 +10,7 @@
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-console-output-02.html";
 
-var inputTests = [
+let inputTests = [
   // 0 - native named function
   {
     input: "document.getElementById",

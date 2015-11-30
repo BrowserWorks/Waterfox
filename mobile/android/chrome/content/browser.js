@@ -4,10 +4,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-var Cc = Components.classes;
-var Ci = Components.interfaces;
-var Cu = Components.utils;
-var Cr = Components.results;
+let Cc = Components.classes;
+let Ci = Components.interfaces;
+let Cu = Components.utils;
+let Cr = Components.results;
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -118,7 +118,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "GMPInstallManager",
 
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode", "resource://gre/modules/ReaderMode.jsm");
 
-var lazilyLoadedBrowserScripts = [
+let lazilyLoadedBrowserScripts = [
   ["SelectHelper", "chrome://browser/content/SelectHelper.js"],
   ["InputWidgetHelper", "chrome://browser/content/InputWidgetHelper.js"],
   ["MasterPassword", "chrome://browser/content/MasterPassword.js"],
@@ -143,7 +143,7 @@ lazilyLoadedBrowserScripts.forEach(function (aScript) {
   });
 });
 
-var lazilyLoadedObserverScripts = [
+let lazilyLoadedObserverScripts = [
   ["MemoryObserver", ["memory-pressure", "Memory:Dump"], "chrome://browser/content/MemoryObserver.js"],
   ["ConsoleAPI", ["console-api-log-event"], "chrome://browser/content/ConsoleAPI.js"],
   ["FindHelper", ["FindInPage:Opened", "FindInPage:Closed", "Tab:Selected"], "chrome://browser/content/FindHelper.js"],
@@ -153,7 +153,6 @@ var lazilyLoadedObserverScripts = [
   ["SelectionHandler", ["TextSelection:Get"], "chrome://browser/content/SelectionHandler.js"],
   ["EmbedRT", ["GeckoView:ImportScript"], "chrome://browser/content/EmbedRT.js"],
   ["Reader", ["Reader:FetchContent", "Reader:Added", "Reader:Removed"], "chrome://browser/content/Reader.js"],
-  ["PrintHelper", ["Print:PDF"], "chrome://browser/content/PrintHelper.js"],
 ];
 if (AppConstants.NIGHTLY_BUILD) {
   lazilyLoadedObserverScripts.push(
@@ -325,8 +324,49 @@ const kStateActive = 0x00000001; // :active pseudoclass for elements
 
 const kXLinkNamespace = "http://www.w3.org/1999/xlink";
 
+const kDefaultCSSViewportWidth = 980;
+const kDefaultCSSViewportHeight = 480;
+
+const kViewportRemeasureThrottle = 500;
+
+function doChangeMaxLineBoxWidth(aWidth) {
+  gReflowPending = null;
+  let webNav = BrowserApp.selectedTab.window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
+  let docShell = webNav.QueryInterface(Ci.nsIDocShell);
+  let docViewer = docShell.contentViewer;
+
+  let range = null;
+  if (BrowserApp.selectedTab._mReflozPoint) {
+    range = BrowserApp.selectedTab._mReflozPoint.range;
+  }
+
+  try {
+    docViewer.pausePainting();
+    docViewer.changeMaxLineBoxWidth(aWidth);
+
+    if (range) {
+      ZoomHelper.zoomInAndSnapToRange(range);
+    } else {
+      // In this case, we actually didn't zoom into a specific range. It
+      // probably happened from a page load reflow-on-zoom event, so we
+      // need to make sure painting is re-enabled.
+      BrowserApp.selectedTab.clearReflowOnZoomPendingActions();
+    }
+  } finally {
+    docViewer.resumePainting();
+  }
+}
+
 function fuzzyEquals(a, b) {
   return (Math.abs(a - b) < 1e-6);
+}
+
+/**
+ * Convert a font size to CSS pixels (px) from twentieiths-of-a-point
+ * (twips).
+ */
+function convertFromTwipsToPx(aSize) {
+  return aSize/240 * 16.0;
 }
 
 XPCOMUtils.defineLazyGetter(this, "ContentAreaUtils", function() {
@@ -355,7 +395,7 @@ function resolveGeckoURI(aURI) {
 /**
  * Cache of commonly used string bundles.
  */
-var Strings = {
+let Strings = {
   init: function () {
     XPCOMUtils.defineLazyGetter(Strings, "brand", () => Services.strings.createBundle("chrome://branding/locale/brand.properties"));
     XPCOMUtils.defineLazyGetter(Strings, "browser", () => Services.strings.createBundle("chrome://browser/locale/browser.properties"));
@@ -419,6 +459,7 @@ var BrowserApp = {
     Services.obs.addObserver(this, "Tab:Load", false);
     Services.obs.addObserver(this, "Tab:Selected", false);
     Services.obs.addObserver(this, "Tab:Closed", false);
+    Services.obs.addObserver(this, "Tab:ToggleMuteAudio", false);
     Services.obs.addObserver(this, "Session:Back", false);
     Services.obs.addObserver(this, "Session:Forward", false);
     Services.obs.addObserver(this, "Session:Navigate", false);
@@ -432,6 +473,7 @@ var BrowserApp = {
     Services.obs.addObserver(this, "FullScreen:Exit", false);
     Services.obs.addObserver(this, "Viewport:Change", false);
     Services.obs.addObserver(this, "Viewport:Flush", false);
+    Services.obs.addObserver(this, "Viewport:FixedMarginsChanged", false);
     Services.obs.addObserver(this, "Passwords:Init", false);
     Services.obs.addObserver(this, "FormHistory:Init", false);
     Services.obs.addObserver(this, "gather-telemetry", false);
@@ -525,12 +567,6 @@ var BrowserApp = {
       Services.prefs.setBoolPref("xpinstall.enabled", true);
     }
 
-    let sysInfo = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2);
-    if (sysInfo.get("version") < 16) {
-      let defaults = Services.prefs.getDefaultBranch(null);
-      defaults.setBoolPref("media.autoplay.enabled", false);
-    }
-
     try {
       // Set the tiles click observer only if tiles reporting is enabled (that
       // is, a report URL is set in prefs).
@@ -556,22 +592,6 @@ var BrowserApp = {
       InitLater(() => AccessFu.attach(window), window, "AccessFu");
     }
 
-    if (!AppConstants.MOZ_ANDROID_NATIVE_ACCOUNT_UI) {
-      // We can't delay registering WebChannel listeners: if the first page is
-      // about:accounts, which can happen when starting the Firefox Account flow
-      // from the first run experience, or via the Firefox Account Status
-      // Activity, we can and do miss messages from the fxa-content-server.
-      // However, we never allow suitably restricted profiles from listening to
-      // fxa-content-server messages.
-      if (ParentalControls.isAllowed(ParentalControls.MODIFY_ACCOUNTS)) {
-        console.log("browser.js: loading Firefox Accounts WebChannel");
-        Cu.import("resource://gre/modules/FxAccountsWebChannel.jsm");
-        EnsureFxAccountsWebChannel();
-      } else {
-        console.log("browser.js: not loading Firefox Accounts WebChannel; this profile cannot connect to Firefox Accounts.");
-      }
-    }
-
     // Notify Java that Gecko has loaded.
     Messaging.sendRequest({ type: "Gecko:Ready" });
 
@@ -590,6 +610,13 @@ var BrowserApp = {
             Services.prefs.getBoolPref("privacy.trackingprotection.enabled")));
         InitLater(() => WebcompatReporter.init());
       }
+
+      InitLater(function () {
+        // title == 0 and url == 1. See:
+        //   https://mxr.mozilla.org/mozilla-central/source/mobile/android/base/resources/values/arrays.xml?rev=861e4bd9e7fe#153
+        const titleInTitlebarEnabled = Services.prefs.getIntPref("browser.chrome.titlebarMode") == 0;
+        Telemetry.addData("FENNEC_TITLE_IN_TITLEBAR_ENABLED", titleInTitlebarEnabled);
+      });
 
       InitLater(() => LightWeightThemeWebInstaller.init());
       InitLater(() => SpatialNavigation.init(BrowserApp.deck, null), window, "SpatialNavigation");
@@ -708,9 +735,6 @@ var BrowserApp = {
     NativeWindow.contextmenus.add(stringGetter("contextmenu.addToReadingList"),
       NativeWindow.contextmenus.linkOpenableContext,
       function(aTarget) {
-        UITelemetry.addEvent("action.1", "contextmenu", null, "web_reading_list");
-        UITelemetry.addEvent("save.1", "contextmenu", null, "reading_list");
-
         let url = NativeWindow.contextmenus._getLinkURL(aTarget);
         Messaging.sendRequestForResult({
             type: "Reader:AddToList",
@@ -830,7 +854,6 @@ var BrowserApp = {
       NativeWindow.contextmenus._disableRestricted("BOOKMARK", NativeWindow.contextmenus.linkBookmarkableContext),
       function(aTarget) {
         UITelemetry.addEvent("action.1", "contextmenu", null, "web_bookmark");
-        UITelemetry.addEvent("save.1", "contextmenu", null, "bookmark");
 
         let url = NativeWindow.contextmenus._getLinkURL(aTarget);
         let title = aTarget.textContent || aTarget.title || url;
@@ -1064,7 +1087,6 @@ var BrowserApp = {
   },
 
   contentDocumentChanged: function() {
-    dump("GeckoBug1151102: Setting first-paint flag on DWU");
     window.top.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils).isFirstPaint = true;
     Services.androidBridge.contentDocumentChanged();
   },
@@ -1086,6 +1108,7 @@ var BrowserApp = {
       return;
 
     aTab.setActive(true);
+    aTab.setResolution(aTab._zoom, true);
     this.contentDocumentChanged();
     this.deck.selectedPanel = aTab.browser;
     // Focus the browser so that things like selection will be styled correctly.
@@ -1355,13 +1378,23 @@ var BrowserApp = {
       this.gmpInstallManager.uninit();
     }
 
-    // Notify all windows that an application quit has been requested.
-    let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"].createInstance(Ci.nsISupportsPRBool);
-    Services.obs.notifyObservers(cancelQuit, "quit-application-requested", "restart");
+    // Figure out if there's at least one other browser window around.
+    let lastBrowser = true;
+    let e = Services.wm.getEnumerator("navigator:browser");
+    while (e.hasMoreElements() && lastBrowser) {
+      let win = e.getNext();
+      if (!win.closed && win != window)
+        lastBrowser = false;
+    }
 
-    // Quit aborted.
-    if (cancelQuit.data) {
-      return;
+    if (lastBrowser) {
+      // Let everyone know we are closing the last browser window
+      let closingCanceled = Cc["@mozilla.org/supports-PRBool;1"].createInstance(Ci.nsISupportsPRBool);
+      Services.obs.notifyObservers(closingCanceled, "browser-lastwindow-close-requested", null);
+      if (closingCanceled.data)
+        return;
+
+      Services.obs.notifyObservers(null, "browser-lastwindow-close-granted", null);
     }
 
     // Tell session store to forget about this window
@@ -1371,8 +1404,8 @@ var BrowserApp = {
     }
 
     BrowserApp.sanitize(aClear.sanitize, function() {
-      let appStartup = Cc["@mozilla.org/toolkit/app-startup;1"].getService(Ci.nsIAppStartup);
-      appStartup.quit(Ci.nsIAppStartup.eForceQuit);
+      window.QueryInterface(Ci.nsIDOMChromeWindow).minimize();
+      window.close();
     });
   },
 
@@ -1664,7 +1697,7 @@ var BrowserApp = {
         shouldZoom = false;
       // ZoomHelper.zoomToElement will handle not sending any message if this input is already mostly filling the screen
       ZoomHelper.zoomToElement(focused, -1, false,
-          aAllowZoom && shouldZoom && !ViewportHandler.isViewportSpecified(aBrowser.contentWindow));
+          aAllowZoom && shouldZoom && !ViewportHandler.getViewportMetadata(aBrowser.contentWindow).isSpecified);
     }
   },
 
@@ -1725,17 +1758,11 @@ var BrowserApp = {
           break;
 
       case "Session:Reload": {
-        let flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
+        let flags = Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_PROXY | Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE;
 
         // Check to see if this is a message to enable/disable mixed content blocking.
         if (aData) {
           let data = JSON.parse(aData);
-
-          if (data.bypassCache) {
-            flags |= Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE |
-                     Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_PROXY;
-          }
-
           if (data.contentType === "tracking") {
             // Convert document URI into the format used by
             // nsChannelClassifier::ShouldEnableTrackingProtection
@@ -1842,6 +1869,13 @@ var BrowserApp = {
         break;
       }
 
+      case "Tab:ToggleMuteAudio": {
+        let data = JSON.parse(aData);
+        let tab = this.getTabForId(data.tabId);
+        tab.toggleMuteAudio();
+        break;
+      }
+
       case "keyword-search":
         // This event refers to a search via the URL bar, not a bookmarks
         // keyword search. Note that this code assumes that the user can only
@@ -1919,6 +1953,13 @@ var BrowserApp = {
 
       case "gather-telemetry":
         Messaging.sendRequest({ type: "Telemetry:Gather" });
+        break;
+
+      case "Viewport:FixedMarginsChanged":
+        gViewportMargins = JSON.parse(aData);
+        if (this.selectedTab) {
+          this.selectedTab.updateViewportSize(gScreenWidth);
+        }
         break;
 
       case "nsPref:changed":
@@ -2088,6 +2129,12 @@ var BrowserApp = {
     let result = chosen.join(",");
     console.log("Setting intl.accept_languages to " + result);
     this.setLocalizedPref("intl.accept_languages", result);
+  },
+
+  get defaultBrowserWidth() {
+    delete this.defaultBrowserWidth;
+    let width = Services.prefs.getIntPref("browser.viewport.desktopWidth");
+    return this.defaultBrowserWidth = width;
   },
 
   // nsIAndroidBrowserApp
@@ -3061,7 +3108,6 @@ var LightWeightThemeWebInstaller = {
     if (ParentalControls.parentalControlsEnabled &&
         !this._manager.currentTheme &&
         !ParentalControls.isAllowed(ParentalControls.DEFAULT_THEME)) {
-      // We are using the DEFAULT_THEME restriction to differentiate between restricted profiles & guest mode - Bug 1199596
       this._installParentalControlsTheme();
     }
   },
@@ -3382,11 +3428,18 @@ nsBrowserAccess.prototype = {
 
 // track the last known screen size so that new tabs
 // get created with the right size rather than being 1x1
-var gScreenWidth = 1;
-var gScreenHeight = 1;
+let gScreenWidth = 1;
+let gScreenHeight = 1;
+let gReflowPending = null;
+
+// The margins that should be applied to the viewport for fixed position
+// children. This is used to avoid browser chrome permanently obscuring
+// fixed position content, and also to make sure window-sized pages take
+// into account said browser chrome.
+let gViewportMargins = { top: 0, right: 0, bottom: 0, left: 0};
 
 // The URL where suggested tile clicks are posted.
-var gTilesReportURL = null;
+let gTilesReportURL = null;
 
 function Tab(aURL, aParams) {
   this.filter = null;
@@ -3396,7 +3449,15 @@ function Tab(aURL, aParams) {
   this._zoom = 1.0;
   this._drawZoom = 1.0;
   this._restoreZoom = false;
+  this._fixedMarginLeft = 0;
+  this._fixedMarginTop = 0;
+  this._fixedMarginRight = 0;
+  this._fixedMarginBottom = 0;
   this.userScrollPos = { x: 0, y: 0 };
+  this.viewportExcludesHorizontalMargins = true;
+  this.viewportExcludesVerticalMargins = true;
+  this.viewportMeasureCallback = null;
+  this.lastPageSizeAfterViewportRemeasure = { width: 0, height: 0 };
   this.contentDocumentIsDisplayed = true;
   this.pluginDoorhangerTimeout = null;
   this.shouldShowPluginDoorhanger = true;
@@ -3404,6 +3465,8 @@ function Tab(aURL, aParams) {
   this.desktopMode = false;
   this.originalURI = null;
   this.hasTouchListener = false;
+  this.browserWidth = 0;
+  this.browserHeight = 0;
   this.tilesData = null;
 
   this.create(aURL, aParams);
@@ -3452,6 +3515,7 @@ Tab.prototype = {
     this.browser = document.createElement("browser");
     this.browser.setAttribute("type", "content-targetable");
     this.browser.setAttribute("messagemanagergroup", "browsers");
+    this.setBrowserSize(kDefaultCSSViewportWidth, kDefaultCSSViewportHeight);
 
     // Make sure the previously selected panel remains selected. The selected panel of a deck is
     // not stable when panels are added.
@@ -3561,6 +3625,8 @@ Tab.prototype = {
     this.browser.addEventListener("VideoBindingCast", this, true, true);
 
     Services.obs.addObserver(this, "before-first-paint", false);
+    Services.obs.addObserver(this, "after-viewport-change", false);
+    Services.prefs.addObserver("browser.ui.zoom.force-user-scalable", this, false);
 
     if (aParams.delayLoad) {
       // If this is a zombie tab, attach restore data so the tab will be
@@ -3594,6 +3660,84 @@ Tab.prototype = {
         dump("Handled load error: " + e);
       }
     }
+  },
+
+  /**
+   * Retrieves the font size in twips for a given element.
+   */
+  getInflatedFontSizeFor: function(aElement) {
+    // GetComputedStyle should always give us CSS pixels for a font size.
+    let fontSizeStr = this.window.getComputedStyle(aElement)['fontSize'];
+    let fontSize = fontSizeStr.slice(0, -2);
+    return aElement.fontSizeInflation * fontSize;
+  },
+
+  /**
+   * This returns the zoom necessary to match the font size of an element to
+   * the minimum font size specified by the browser.zoom.reflowOnZoom.minFontSizeTwips
+   * preference.
+   */
+  getZoomToMinFontSize: function(aElement) {
+    // We only use the font.size.inflation.minTwips preference because this is
+    // the only one that is controlled by the user-interface in the 'Settings'
+    // menu. Thus, if font.size.inflation.emPerLine is changed, this does not
+    // effect reflow-on-zoom.
+    let minFontSize = convertFromTwipsToPx(Services.prefs.getIntPref("font.size.inflation.minTwips"));
+    return minFontSize / this.getInflatedFontSizeFor(aElement);
+  },
+
+  clearReflowOnZoomPendingActions: function() {
+    // Reflow was completed, so now re-enable painting.
+    let webNav = BrowserApp.selectedTab.window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
+    let docShell = webNav.QueryInterface(Ci.nsIDocShell);
+    let docViewer = docShell.contentViewer;
+    docViewer.resumePainting();
+
+    BrowserApp.selectedTab._mReflozPositioned = false;
+  },
+
+  /**
+   * Reflow on zoom consists of a few different sub-operations:
+   *
+   * 1. When a double-tap event is seen, we verify that the correct preferences
+   *    are enabled and perform the pre-position handling calculation. We also
+   *    signal that reflow-on-zoom should be performed at this time, and pause
+   *    painting.
+   * 2. During the next call to setViewport(), which is in the Tab prototype,
+   *    we detect that a call to changeMaxLineBoxWidth should be performed. If
+   *    we're zooming out, then the max line box width should be reset at this
+   *    time. Otherwise, we call performReflowOnZoom.
+   *   2a. PerformReflowOnZoom() and resetMaxLineBoxWidth() schedule a call to
+   *       doChangeMaxLineBoxWidth, based on a timeout specified in preferences.
+   * 3. doChangeMaxLineBoxWidth changes the line box width (which also
+   *    schedules a reflow event), and then calls ZoomHelper.zoomInAndSnapToRange.
+   * 4. ZoomHelper.zoomInAndSnapToRange performs the positioning of reflow-on-zoom
+   *    and then re-enables painting.
+   *
+   * Some of the events happen synchronously, while others happen asynchronously.
+   * The following is a rough sketch of the progression of events:
+   *
+   * double tap event seen -> onDoubleTap() -> ... asynchronous ...
+   *   -> setViewport() -> performReflowOnZoom() -> ... asynchronous ...
+   *   -> doChangeMaxLineBoxWidth() -> ZoomHelper.zoomInAndSnapToRange()
+   *   -> ... asynchronous ... -> setViewport() -> Observe('after-viewport-change')
+   *   -> resumePainting()
+   */
+  performReflowOnZoom: function(aViewport) {
+    let zoom = this._drawZoom ? this._drawZoom : aViewport.zoom;
+
+    let viewportWidth = gScreenWidth / zoom;
+    let reflozTimeout = Services.prefs.getIntPref("browser.zoom.reflowZoom.reflowTimeout");
+
+    if (gReflowPending) {
+      clearTimeout(gReflowPending);
+    }
+
+    // We add in a bit of fudge just so that the end characters
+    // don't accidentally get clipped. 15px is an arbitrary choice.
+    gReflowPending = setTimeout(doChangeMaxLineBoxWidth,
+                                reflozTimeout,
+                                viewportWidth - 15);
   },
 
   /**
@@ -3664,6 +3808,8 @@ Tab.prototype = {
     this.browser.removeEventListener("VideoBindingCast", this, true, true);
 
     Services.obs.removeObserver(this, "before-first-paint");
+    Services.obs.removeObserver(this, "after-viewport-change");
+    Services.prefs.removeObserver("browser.ui.zoom.force-user-scalable", this);
 
     // Make sure the previously selected panel remains selected. The selected panel of a deck is
     // not stable when panels are removed.
@@ -3735,18 +3881,27 @@ Tab.prototype = {
 
     let scrollx = this.browser.contentWindow.scrollX * zoom;
     let scrolly = this.browser.contentWindow.scrollY * zoom;
+    let screenWidth = gScreenWidth - gViewportMargins.left - gViewportMargins.right;
+    let screenHeight = gScreenHeight - gViewportMargins.top - gViewportMargins.bottom;
     let displayPortMargins = {
       left: scrollx - aDisplayPort.left,
       top: scrolly - aDisplayPort.top,
-      right: aDisplayPort.right - (scrollx + gScreenWidth),
-      bottom: aDisplayPort.bottom - (scrolly + gScreenHeight)
+      right: aDisplayPort.right - (scrollx + screenWidth),
+      bottom: aDisplayPort.bottom - (scrolly + screenHeight)
     };
 
-    cwu.setDisplayPortMarginsForElement(displayPortMargins.left,
-                                        displayPortMargins.top,
-                                        displayPortMargins.right,
-                                        displayPortMargins.bottom,
-                                        element, 0);
+    if (this._oldDisplayPortMargins == null ||
+        !fuzzyEquals(displayPortMargins.left, this._oldDisplayPortMargins.left) ||
+        !fuzzyEquals(displayPortMargins.top, this._oldDisplayPortMargins.top) ||
+        !fuzzyEquals(displayPortMargins.right, this._oldDisplayPortMargins.right) ||
+        !fuzzyEquals(displayPortMargins.bottom, this._oldDisplayPortMargins.bottom)) {
+      cwu.setDisplayPortMarginsForElement(displayPortMargins.left,
+                                          displayPortMargins.top,
+                                          displayPortMargins.right,
+                                          displayPortMargins.bottom,
+                                          element, 0);
+    }
+    this._oldDisplayPortMargins = displayPortMargins;
   },
 
   setScrollClampingSize: function(zoom) {
@@ -3754,6 +3909,16 @@ Tab.prototype = {
     let viewportHeight = gScreenHeight / zoom;
     let screenWidth = gScreenWidth;
     let screenHeight = gScreenHeight;
+
+    // Shrink the viewport appropriately if the margins are excluded
+    if (this.viewportExcludesVerticalMargins) {
+      screenHeight = gScreenHeight - gViewportMargins.top - gViewportMargins.bottom;
+      viewportHeight = screenHeight / zoom;
+    }
+    if (this.viewportExcludesHorizontalMargins) {
+      screenWidth = gScreenWidth - gViewportMargins.left - gViewportMargins.right;
+      viewportWidth = screenWidth / zoom;
+    }
 
     // Make sure the aspect ratio of the screen is maintained when setting
     // the clamping scroll-port size.
@@ -3768,17 +3933,30 @@ Tab.prototype = {
   },
 
   setViewport: function(aViewport) {
-    if (AppConstants.MOZ_ANDROID_APZ) {
-      // This should already be getting short-circuited out in GeckoLayerClient,
-      // but this is an extra safety precaution
-      return;
-    }
-
     // Transform coordinates based on zoom
     let x = aViewport.x / aViewport.zoom;
     let y = aViewport.y / aViewport.zoom;
 
     this.setScrollClampingSize(aViewport.zoom);
+
+    // Adjust the max line box width to be no more than the viewport width, but
+    // only if the reflow-on-zoom preference is enabled.
+    let isZooming = !fuzzyEquals(aViewport.zoom, this._zoom);
+
+    let docViewer = null;
+
+    if (isZooming &&
+        BrowserEventHandler.mReflozPref &&
+        BrowserApp.selectedTab._mReflozPoint &&
+        BrowserApp.selectedTab.probablyNeedRefloz) {
+      let webNav = BrowserApp.selectedTab.window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
+      let docShell = webNav.QueryInterface(Ci.nsIDocShell);
+      docViewer = docShell.contentViewer;
+      docViewer.pausePainting();
+
+      BrowserApp.selectedTab.performReflowOnZoom(aViewport);
+      BrowserApp.selectedTab.probablyNeedRefloz = false;
+    }
 
     let win = this.browser.contentWindow;
     win.scrollTo(x, y);
@@ -3790,12 +3968,27 @@ Tab.prototype = {
 
     if (aViewport.displayPort)
       this.setDisplayPort(aViewport.displayPort);
+
+    // Store fixed margins for later retrieval in getViewport.
+    this._fixedMarginLeft = aViewport.fixedMarginLeft;
+    this._fixedMarginTop = aViewport.fixedMarginTop;
+    this._fixedMarginRight = aViewport.fixedMarginRight;
+    this._fixedMarginBottom = aViewport.fixedMarginBottom;
+
+    let dwi = win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+    dwi.setContentDocumentFixedPositionMargins(
+      aViewport.fixedMarginTop / aViewport.zoom,
+      aViewport.fixedMarginRight / aViewport.zoom,
+      aViewport.fixedMarginBottom / aViewport.zoom,
+      aViewport.fixedMarginLeft / aViewport.zoom);
+
+    Services.obs.notifyObservers(null, "after-viewport-change", "");
+    if (docViewer) {
+        docViewer.resumePainting();
+    }
   },
 
   setResolution: function(aZoom, aForce) {
-    if (AppConstants.MOZ_ANDROID_APZ) {
-      return;
-    }
     // Set zoom level
     if (aForce || !fuzzyEquals(aZoom, this._zoom)) {
       this._zoom = aZoom;
@@ -3808,22 +4001,28 @@ Tab.prototype = {
   },
 
   getViewport: function() {
+    let screenW = gScreenWidth - gViewportMargins.left - gViewportMargins.right;
+    let screenH = gScreenHeight - gViewportMargins.top - gViewportMargins.bottom;
     let zoom = this.restoredSessionZoom() || this._zoom;
 
     let viewport = {
-      width: gScreenWidth,
-      height: gScreenHeight,
-      cssWidth: gScreenWidth / zoom,
-      cssHeight: gScreenHeight / zoom,
+      width: screenW,
+      height: screenH,
+      cssWidth: screenW / zoom,
+      cssHeight: screenH / zoom,
       pageLeft: 0,
       pageTop: 0,
-      pageRight: gScreenWidth,
-      pageBottom: gScreenHeight,
+      pageRight: screenW,
+      pageBottom: screenH,
       // We make up matching css page dimensions
       cssPageLeft: 0,
       cssPageTop: 0,
-      cssPageRight: gScreenWidth / zoom,
-      cssPageBottom: gScreenHeight / zoom,
+      cssPageRight: screenW / zoom,
+      cssPageBottom: screenH / zoom,
+      fixedMarginLeft: this._fixedMarginLeft,
+      fixedMarginTop: this._fixedMarginTop,
+      fixedMarginRight: this._fixedMarginRight,
+      fixedMarginBottom: this._fixedMarginBottom,
       zoom: zoom,
     };
 
@@ -3869,13 +4068,70 @@ Tab.prototype = {
   },
 
   sendViewportUpdate: function(aPageSizeUpdate) {
-    if (AppConstants.MOZ_ANDROID_APZ) {
-      return;
-    }
     let viewport = this.getViewport();
     let displayPort = Services.androidBridge.getDisplayPort(aPageSizeUpdate, BrowserApp.isBrowserContentDocumentDisplayed(), this.id, viewport);
     if (displayPort != null)
       this.setDisplayPort(displayPort);
+  },
+
+  updateViewportForPageSize: function() {
+    let hasHorizontalMargins = gViewportMargins.left != 0 || gViewportMargins.right != 0;
+    let hasVerticalMargins = gViewportMargins.top != 0 || gViewportMargins.bottom != 0;
+
+    if (!hasHorizontalMargins && !hasVerticalMargins) {
+      // If there are no margins, then we don't need to do any remeasuring
+      return;
+    }
+
+    // If the page size has changed so that it might or might not fit on the
+    // screen with the margins included, run updateViewportSize to resize the
+    // browser accordingly.
+    // A page will receive the smaller viewport when its page size fits
+    // within the screen size, so remeasure when the page size remains within
+    // the threshold of screen + margins, in case it's sizing itself relative
+    // to the viewport.
+    let viewport = this.getViewport();
+    let pageWidth = viewport.pageRight - viewport.pageLeft;
+    let pageHeight = viewport.pageBottom - viewport.pageTop;
+    let remeasureNeeded = false;
+
+    if (hasHorizontalMargins) {
+      let viewportShouldExcludeHorizontalMargins = (pageWidth <= gScreenWidth - 0.5);
+      if (viewportShouldExcludeHorizontalMargins != this.viewportExcludesHorizontalMargins) {
+        remeasureNeeded = true;
+      }
+    }
+    if (hasVerticalMargins) {
+      let viewportShouldExcludeVerticalMargins = (pageHeight <= gScreenHeight - 0.5);
+      if (viewportShouldExcludeVerticalMargins != this.viewportExcludesVerticalMargins) {
+        remeasureNeeded = true;
+      }
+    }
+
+    if (remeasureNeeded) {
+      if (!this.viewportMeasureCallback) {
+        this.viewportMeasureCallback = setTimeout(function() {
+          this.viewportMeasureCallback = null;
+
+          // Re-fetch the viewport as it may have changed between setting the timeout
+          // and running this callback
+          let viewport = this.getViewport();
+          let pageWidth = viewport.pageRight - viewport.pageLeft;
+          let pageHeight = viewport.pageBottom - viewport.pageTop;
+
+          if (Math.abs(pageWidth - this.lastPageSizeAfterViewportRemeasure.width) >= 0.5 ||
+              Math.abs(pageHeight - this.lastPageSizeAfterViewportRemeasure.height) >= 0.5) {
+            this.updateViewportSize(gScreenWidth);
+          }
+        }.bind(this), kViewportRemeasureThrottle);
+      }
+    } else if (this.viewportMeasureCallback) {
+      // If the page changed size twice since we last measured the viewport and
+      // the latest size change reveals we don't need to remeasure, cancel any
+      // pending remeasure.
+      clearTimeout(this.viewportMeasureCallback);
+      this.viewportMeasureCallback = null;
+    }
   },
 
   // These constants are used to prioritize high quality metadata over low quality data, so that
@@ -4018,6 +4274,14 @@ Tab.prototype = {
           visible: true
         };
       });
+    }
+  },
+
+  toggleMuteAudio: function() {
+    if (this.browser.audioMuted) {
+      this.browser.unmute();
+    } else {
+      this.browser.mute();
     }
   },
 
@@ -4231,6 +4495,7 @@ Tab.prototype = {
           return;
 
         this.sendViewportUpdate(true);
+        this.updateViewportForPageSize();
         break;
       }
 
@@ -4493,6 +4758,13 @@ Tab.prototype = {
     if (!sameDocument) {
       // XXX This code assumes that this is the earliest hook we have at which
       // browser.contentDocument is changed to the new document we're loading
+
+      // We have a new browser and a new window, so the old browserWidth and
+      // browserHeight are no longer valid.  We need to force-set the browser
+      // size to ensure it sets the CSS viewport size before the document
+      // has a chance to check it.
+      this.setBrowserSize(kDefaultCSSViewportWidth, kDefaultCSSViewportHeight, true);
+
       this.contentDocumentIsDisplayed = false;
       this.hasTouchListener = false;
     } else {
@@ -4601,8 +4873,224 @@ Tab.prototype = {
     // for now anyway.
   },
 
-  viewportSizeUpdated: function viewportSizeUpdated() {
-    this.sendViewportUpdate(); // recompute displayport
+  get metadata() {
+    return ViewportHandler.getMetadataForDocument(this.browser.contentDocument);
+  },
+
+  /** Update viewport when the metadata changes. */
+  updateViewportMetadata: function updateViewportMetadata(aMetadata, aInitialLoad) {
+    if (Services.prefs.getBoolPref("browser.ui.zoom.force-user-scalable")) {
+      aMetadata.allowZoom = true;
+      aMetadata.allowDoubleTapZoom = true;
+      aMetadata.minZoom = aMetadata.maxZoom = NaN;
+    }
+
+    let scaleRatio = window.devicePixelRatio;
+
+    if (aMetadata.defaultZoom > 0)
+      aMetadata.defaultZoom *= scaleRatio;
+    if (aMetadata.minZoom > 0)
+      aMetadata.minZoom *= scaleRatio;
+    if (aMetadata.maxZoom > 0)
+      aMetadata.maxZoom *= scaleRatio;
+
+    aMetadata.isRTL = this.browser.contentDocument.documentElement.dir == "rtl";
+
+    ViewportHandler.setMetadataForDocument(this.browser.contentDocument, aMetadata);
+    this.sendViewportMetadata();
+
+    this.updateViewportSize(gScreenWidth, aInitialLoad);
+  },
+
+  /** Update viewport when the metadata or the window size changes. */
+  updateViewportSize: function updateViewportSize(aOldScreenWidth, aInitialLoad) {
+    // When this function gets called on window resize, we must execute
+    // this.sendViewportUpdate() so that refreshDisplayPort is called.
+    // Ensure that when making changes to this function that code path
+    // is not accidentally removed (the call to sendViewportUpdate() is
+    // at the very end).
+
+    if (this.viewportMeasureCallback) {
+      clearTimeout(this.viewportMeasureCallback);
+      this.viewportMeasureCallback = null;
+    }
+
+    let browser = this.browser;
+    if (!browser)
+      return;
+
+    let screenW = gScreenWidth - gViewportMargins.left - gViewportMargins.right;
+    let screenH = gScreenHeight - gViewportMargins.top - gViewportMargins.bottom;
+    let viewportW, viewportH;
+
+    let metadata = this.metadata;
+    if (metadata.autoSize) {
+      viewportW = screenW / window.devicePixelRatio;
+      viewportH = screenH / window.devicePixelRatio;
+    } else {
+      viewportW = metadata.width;
+      viewportH = metadata.height;
+
+      // If (scale * width) < device-width, increase the width (bug 561413).
+      let maxInitialZoom = metadata.defaultZoom || metadata.maxZoom;
+      if (maxInitialZoom && viewportW) {
+        viewportW = Math.max(viewportW, screenW / maxInitialZoom);
+      }
+
+      let validW = viewportW > 0;
+      let validH = viewportH > 0;
+
+      if (!validW)
+        viewportW = validH ? (viewportH * (screenW / screenH)) : BrowserApp.defaultBrowserWidth;
+      if (!validH)
+        viewportH = viewportW * (screenH / screenW);
+    }
+
+    // Make sure the viewport height is not shorter than the window when
+    // the page is zoomed out to show its full width. Note that before
+    // we set the viewport width, the "full width" of the page isn't properly
+    // defined, so that's why we have to call setBrowserSize twice - once
+    // to set the width, and the second time to figure out the height based
+    // on the layout at that width.
+    let oldBrowserWidth = this.browserWidth;
+    this.setBrowserSize(viewportW, viewportH);
+
+    // if this page has not been painted yet, then this must be getting run
+    // because a meta-viewport element was added (via the DOMMetaAdded handler).
+    // in this case, we should not do anything that forces a reflow (see bug 759678)
+    // such as requesting the page size or sending a viewport update. this code
+    // will get run again in the before-first-paint handler and that point we
+    // will run though all of it. the reason we even bother executing up to this
+    // point on the DOMMetaAdded handler is so that scripts that use window.innerWidth
+    // before they are painted have a correct value (bug 771575).
+    if (!this.contentDocumentIsDisplayed) {
+      return;
+    }
+
+    // This change to the zoom accounts for all types of changes I can conceive:
+    // 1. screen size changes, CSS viewport does not (pages with no meta viewport
+    //    or a fixed size viewport)
+    // 2. screen size changes, CSS viewport also does (pages with a device-width
+    //    viewport)
+    // 3. screen size remains constant, but CSS viewport changes (meta viewport
+    //    tag is added or removed)
+    // 4. neither screen size nor CSS viewport changes
+    //
+    // In all of these cases, we maintain how much actual content is visible
+    // within the screen width. Note that "actual content" may be different
+    // with respect to CSS pixels because of the CSS viewport size changing.
+    let zoom = this.restoredSessionZoom() || metadata.defaultZoom;
+    if (!zoom || !aInitialLoad) {
+      let zoomScale = (screenW * oldBrowserWidth) / (aOldScreenWidth * viewportW);
+      zoom = this.clampZoom(this._zoom * zoomScale);
+    }
+    this.setResolution(zoom, false);
+    this.setScrollClampingSize(zoom);
+
+    this.viewportExcludesHorizontalMargins = true;
+    this.viewportExcludesVerticalMargins = true;
+    let minScale = 1.0;
+    if (this.browser.contentDocument) {
+      // this may get run during a Viewport:Change message while the document
+      // has not yet loaded, so need to guard against a null document.
+      let cwu = this.browser.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+      let cssPageRect = cwu.getRootBounds();
+
+      // In the situation the page size equals or exceeds the screen size,
+      // lengthen the viewport on the corresponding axis to include the margins.
+      // The '- 0.5' is to account for rounding errors.
+      if (cssPageRect.width * this._zoom > gScreenWidth - 0.5) {
+        screenW = gScreenWidth;
+        this.viewportExcludesHorizontalMargins = false;
+      }
+      if (cssPageRect.height * this._zoom > gScreenHeight - 0.5) {
+        screenH = gScreenHeight;
+        this.viewportExcludesVerticalMargins = false;
+      }
+
+      minScale = screenW / cssPageRect.width;
+    }
+    minScale = this.clampZoom(minScale);
+    viewportH = Math.max(viewportH, screenH / minScale);
+
+    // In general we want to keep calls to setBrowserSize and setScrollClampingSize
+    // together because setBrowserSize could mark the viewport size as dirty, creating
+    // a pending resize event for content. If that resize gets dispatched (which happens
+    // on the next reflow) without setScrollClampingSize having being called, then
+    // content might be exposed to incorrect innerWidth/innerHeight values.
+    this.setBrowserSize(viewportW, viewportH);
+    this.setScrollClampingSize(zoom);
+
+    // Avoid having the scroll position jump around after device rotation.
+    let win = this.browser.contentWindow;
+    this.userScrollPos.x = win.scrollX;
+    this.userScrollPos.y = win.scrollY;
+
+    this.sendViewportUpdate();
+
+    if (metadata.allowZoom && !Services.prefs.getBoolPref("browser.ui.zoom.force-user-scalable")) {
+      // If the CSS viewport is narrower than the screen (i.e. width <= device-width)
+      // then we disable double-tap-to-zoom behaviour.
+      var oldAllowDoubleTapZoom = metadata.allowDoubleTapZoom;
+      var newAllowDoubleTapZoom = (!metadata.isSpecified) || (viewportW > screenW / window.devicePixelRatio);
+      if (oldAllowDoubleTapZoom !== newAllowDoubleTapZoom) {
+        metadata.allowDoubleTapZoom = newAllowDoubleTapZoom;
+        this.sendViewportMetadata();
+      }
+    }
+
+    // Store the page size that was used to calculate the viewport so that we
+    // can verify it's changed when we consider remeasuring in updateViewportForPageSize
+    let viewport = this.getViewport();
+    this.lastPageSizeAfterViewportRemeasure = {
+      width: viewport.pageRight - viewport.pageLeft,
+      height: viewport.pageBottom - viewport.pageTop
+    };
+  },
+
+  sendViewportMetadata: function sendViewportMetadata() {
+    let metadata = this.metadata;
+    Messaging.sendRequest({
+      type: "Tab:ViewportMetadata",
+      allowZoom: metadata.allowZoom,
+      allowDoubleTapZoom: metadata.allowDoubleTapZoom,
+      defaultZoom: metadata.defaultZoom || window.devicePixelRatio,
+      minZoom: metadata.minZoom || 0,
+      maxZoom: metadata.maxZoom || 0,
+      isRTL: metadata.isRTL,
+      tabID: this.id
+    });
+  },
+
+  setBrowserSize: function(aWidth, aHeight, aForce) {
+    if (!aForce) {
+      if (fuzzyEquals(this.browserWidth, aWidth) && fuzzyEquals(this.browserHeight, aHeight)) {
+        return;
+      }
+    }
+
+    this.browserWidth = aWidth;
+    this.browserHeight = aHeight;
+
+    if (!this.browser.contentWindow)
+      return;
+    let cwu = this.browser.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+    cwu.setCSSViewport(aWidth, aHeight);
+  },
+
+  /** Takes a scale and restricts it based on this tab's zoom limits. */
+  clampZoom: function clampZoom(aZoom) {
+    let zoom = ViewportHandler.clamp(aZoom, kViewportMinScale, kViewportMaxScale);
+
+    let md = this.metadata;
+    if (!md.allowZoom)
+      return md.defaultZoom || zoom;
+
+    if (md && md.minZoom)
+      zoom = Math.max(zoom, md.minZoom);
+    if (md && md.maxZoom)
+      zoom = Math.min(zoom, md.maxZoom);
+    return zoom;
   },
 
   observe: function(aSubject, aTopic, aData) {
@@ -4616,18 +5104,57 @@ Tab.prototype = {
           }
           this.contentDocumentIsDisplayed = true;
 
-          let zoom = this.restoredSessionZoom();
-          if (zoom) {
-            this.setResolution(zoom, true);
-          }
+          // reset CSS viewport and zoom to default on new page, and then calculate
+          // them properly using the actual metadata from the page. note that the
+          // updateMetadata call takes into account the existing CSS viewport size
+          // and zoom when calculating the new ones, so we need to reset these
+          // things here before calling updateMetadata.
+          this.setBrowserSize(kDefaultCSSViewportWidth, kDefaultCSSViewportHeight);
+          let zoom = this.restoredSessionZoom() || gScreenWidth / this.browserWidth;
+          this.setResolution(zoom, true);
+          ViewportHandler.updateMetadata(this, true);
+
+          // Note that if we draw without a display-port, things can go wrong. By the
+          // time we execute this, it's almost certain a display-port has been set via
+          // the MozScrolledAreaChanged event. If that didn't happen, the updateMetadata
+          // call above does so at the end of the updateViewportSize function. As long
+          // as that is happening, we don't need to do it again here.
 
           if (!this.restoredSessionZoom() && contentDocument.mozSyntheticDocument) {
+            // for images, scale to fit width. this needs to happen *after* the call
+            // to updateMetadata above, because that call sets the CSS viewport which
+            // will affect the page size (i.e. contentDocument.body.scroll*) that we
+            // use in this calculation. also we call sendViewportUpdate after changing
+            // the resolution so that the display port gets recalculated appropriately.
             let fitZoom = Math.min(gScreenWidth / contentDocument.body.scrollWidth,
                                    gScreenHeight / contentDocument.body.scrollHeight);
             this.setResolution(fitZoom, false);
-            this.sendViewportUpdate();  // recompute displayport
+            this.sendViewportUpdate();
           }
         }
+
+        // If the reflow-text-on-page-load pref is enabled, and reflow-on-zoom
+        // is enabled, and our defaultZoom level is set, then we need to get
+        // the default zoom and reflow the text according to the defaultZoom
+        // level.
+        let rzEnabled = BrowserEventHandler.mReflozPref;
+        let rzPl = Services.prefs.getBoolPref("browser.zoom.reflowZoom.reflowTextOnPageLoad");
+
+        if (rzEnabled && rzPl) {
+          // Retrieve the viewport width and adjust the max line box width
+          // accordingly.
+          let vp = BrowserApp.selectedTab.getViewport();
+          BrowserApp.selectedTab.performReflowOnZoom(vp);
+        }
+        break;
+      case "after-viewport-change":
+        if (BrowserApp.selectedTab._mReflozPositioned) {
+          BrowserApp.selectedTab.clearReflowOnZoomPendingActions();
+        }
+        break;
+      case "nsPref:changed":
+        if (aData == "browser.ui.zoom.force-user-scalable")
+          ViewportHandler.updateMetadata(this, false);
         break;
     }
   },
@@ -4668,6 +5195,27 @@ var BrowserEventHandler = {
 
     InitLater(() => BrowserApp.deck.addEventListener("click", InputWidgetHelper, true));
     InitLater(() => BrowserApp.deck.addEventListener("click", SelectHelper, true));
+
+    document.addEventListener("MozMagnifyGesture", this, true);
+
+    Services.prefs.addObserver("browser.zoom.reflowOnZoom", this, false);
+    this.updateReflozPref();
+  },
+
+  resetMaxLineBoxWidth: function() {
+    BrowserApp.selectedTab.probablyNeedRefloz = false;
+
+    if (gReflowPending) {
+      clearTimeout(gReflowPending);
+    }
+
+    let reflozTimeout = Services.prefs.getIntPref("browser.zoom.reflowZoom.reflowTimeout");
+    gReflowPending = setTimeout(doChangeMaxLineBoxWidth,
+                                reflozTimeout, 0);
+  },
+
+  updateReflozPref: function() {
+     this.mReflozPref = Services.prefs.getBoolPref("browser.zoom.reflowOnZoom");
   },
 
   handleEvent: function(aEvent) {
@@ -4677,6 +5225,11 @@ var BrowserEventHandler = {
         break;
       case 'MozMouseHittest':
         this._handleRetargetedTouchStart(aEvent);
+        break;
+      case 'MozMagnifyGesture':
+        this.observe(this, aEvent.type,
+                     JSON.stringify({x: aEvent.screenX, y: aEvent.screenY,
+                                     zoomDelta: aEvent.delta}));
         break;
     }
   },
@@ -4756,6 +5309,11 @@ var BrowserEventHandler = {
         tabID: tab.id
       });
       return;
+    } else if (aTopic == "nsPref:changed") {
+      if (aData == "browser.zoom.reflowOnZoom") {
+        this.updateReflozPref();
+      }
+      return;
     }
 
     // the remaining events are all dependent on the browser content document being the
@@ -4824,12 +5382,10 @@ var BrowserEventHandler = {
         break;
 
       case "Gesture:SingleTap": {
-        let focusedElement = null;
         try {
           // If the element was previously focused, show the caret attached to it.
           let element = this._highlightElement;
-          focusedElement = BrowserApp.getFocusedInput(BrowserApp.selectedBrowser);
-          if (element && element == focusedElement) {
+          if (element && element == BrowserApp.getFocusedInput(BrowserApp.selectedBrowser)) {
             let result = SelectionHandler.attachCaret(element);
             if (result !== SelectionHandler.ERROR_NONE) {
               dump("Unexpected failure during caret attach: " + result);
@@ -4843,17 +5399,6 @@ var BrowserEventHandler = {
         let {x, y} = data;
 
         if (this._inCluster && this._clickInZoomedView != true) {
-          // If there is a focused element, the display of the zoomed view won't remove the focus.
-          // In this case, the form assistant linked to the focused element will never be closed.
-          // To avoid this situation, the focus is moved and the form assistant is closed.
-          if (focusedElement) {
-            try {
-              Services.focus.moveFocus(BrowserApp.selectedBrowser.contentWindow, null, Services.focus.MOVEFOCUS_ROOT, 0);
-            } catch(e) {
-              Cu.reportError(e);
-            }
-            Messaging.sendRequest({ type: "FormAssist:Hide" });
-          }
           this._clusterClicked(x, y);
         } else {
           if (this._clickInZoomedView != true) {
@@ -4879,6 +5424,10 @@ var BrowserEventHandler = {
         this.onDoubleTap(aData);
         break;
 
+      case "MozMagnifyGesture":
+        this.onPinchFinish(aData);
+        break;
+
       default:
         dump('BrowserEventHandler.handleUserEvent: unexpected topic "' + aTopic + '"');
         break;
@@ -4902,13 +5451,38 @@ var BrowserEventHandler = {
   },
 
   onDoubleTap: function(aData) {
-    let metadata = ViewportHandler.getMetadataForDocument(BrowserApp.selectedBrowser.contentDocument);
-    if (metadata && !metadata.allowDoubleTapZoom) {
+    let metadata = BrowserApp.selectedTab.metadata;
+    if (!metadata.allowDoubleTapZoom) {
       return;
     }
 
     let data = JSON.parse(aData);
     let element = ElementTouchHelper.anyElementFromPoint(data.x, data.y);
+
+    // We only want to do this if reflow-on-zoom is enabled, we don't already
+    // have a reflow-on-zoom event pending, and the element upon which the user
+    // double-tapped isn't of a type we want to avoid reflow-on-zoom.
+    if (BrowserEventHandler.mReflozPref &&
+       !BrowserApp.selectedTab._mReflozPoint &&
+       !this._shouldSuppressReflowOnZoom(element)) {
+
+      // See comment above performReflowOnZoom() for a detailed description of
+      // the events happening in the reflow-on-zoom operation.
+      let data = JSON.parse(aData);
+      let zoomPointX = data.x;
+      let zoomPointY = data.y;
+
+      BrowserApp.selectedTab._mReflozPoint = { x: zoomPointX, y: zoomPointY,
+        range: BrowserApp.selectedBrowser.contentDocument.caretPositionFromPoint(zoomPointX, zoomPointY) };
+
+      // Before we perform a reflow on zoom, let's disable painting.
+      let webNav = BrowserApp.selectedTab.window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
+      let docShell = webNav.QueryInterface(Ci.nsIDocShell);
+      let docViewer = docShell.contentViewer;
+      docViewer.pausePainting();
+
+      BrowserApp.selectedTab.probablyNeedRefloz = true;
+    }
 
     if (!element) {
       ZoomHelper.zoomOut();
@@ -4922,6 +5496,43 @@ var BrowserEventHandler = {
       ZoomHelper.zoomOut();
     } else {
       ZoomHelper.zoomToElement(element, data.y);
+    }
+  },
+
+  /**
+   * Determine if reflow-on-zoom functionality should be suppressed, given a
+   * particular element. Double-tapping on the following elements suppresses
+   * reflow-on-zoom:
+   *
+   * <video>, <object>, <embed>, <applet>, <canvas>, <img>, <media>, <pre>
+   */
+  _shouldSuppressReflowOnZoom: function(aElement) {
+    if (aElement instanceof HTMLVideoElement ||
+        aElement instanceof HTMLObjectElement ||
+        aElement instanceof HTMLEmbedElement ||
+        aElement instanceof HTMLAppletElement ||
+        aElement instanceof HTMLCanvasElement ||
+        aElement instanceof HTMLImageElement ||
+        aElement instanceof HTMLMediaElement ||
+        aElement instanceof HTMLPreElement) {
+      return true;
+    }
+
+    return false;
+  },
+
+  onPinchFinish: function(aData) {
+    let data = {};
+    try {
+      data = JSON.parse(aData);
+    } catch(ex) {
+      console.log(ex);
+      return;
+    }
+
+    if (BrowserEventHandler.mReflozPref &&
+        data.zoomDelta < 0.0) {
+      BrowserEventHandler.resetMaxLineBoxWidth();
     }
   },
 
@@ -5248,12 +5859,7 @@ var FormAssistant = {
 
           if (this._showValidationMessage(focused))
             break;
-          let checkResultsClick = hasResults => {
-            if (!hasResults) {
-              this._hideFormAssistPopup();
-            }
-          };
-          this._showAutoCompleteSuggestions(focused, checkResultsClick);
+          this._showAutoCompleteSuggestions(focused, function () {});
         } else {
           // temporarily hide the form assist popup while we're panning or zooming the page
           this._hideFormAssistPopup();
@@ -5576,7 +6182,7 @@ var FormAssistant = {
  * An object to watch for Gecko status changes -- add-on installs, pref changes
  * -- and reflect them back to Java.
  */
-var HealthReportStatusListener = {
+let HealthReportStatusListener = {
   PREF_ACCEPT_LANG: "intl.accept_languages",
   PREF_BLOCKLIST_ENABLED: "extensions.blocklist.enabled",
 
@@ -6008,56 +6614,55 @@ var ViewportHandler = {
   _metadata: new WeakMap(),
 
   init: function init() {
+    addEventListener("DOMMetaAdded", this, false);
     Services.obs.addObserver(this, "Window:Resize", false);
-    Services.obs.addObserver(this, "zoom-constraints-updated", false);
+  },
+
+  handleEvent: function handleEvent(aEvent) {
+    switch (aEvent.type) {
+      case "DOMMetaAdded":
+        let target = aEvent.originalTarget;
+        if (target.name != "viewport")
+          break;
+        let document = target.ownerDocument;
+        let browser = BrowserApp.getBrowserForDocument(document);
+        let tab = BrowserApp.getTabForBrowser(browser);
+        if (tab)
+          this.updateMetadata(tab, false);
+        break;
+    }
   },
 
   observe: function(aSubject, aTopic, aData) {
     switch (aTopic) {
-      case "zoom-constraints-updated":
-        // aSubject should be a document, so let's find the tab corresponding
-        // to that if there is one
-        let constraints = JSON.parse(aData);
-        let doc = aSubject;
-        constraints.isRTL = doc.documentElement.dir == "rtl";
-        ViewportHandler.setMetadataForDocument(doc, constraints);
-        let tab = BrowserApp.getTabForWindow(doc.defaultView);
-        if (tab) {
-          constraints.type = "Tab:ViewportMetadata";
-          constraints.tabID = tab.id;
-          Messaging.sendRequest(constraints);
-        }
-        return;
       case "Window:Resize":
         if (window.outerWidth == gScreenWidth && window.outerHeight == gScreenHeight)
           break;
         if (window.outerWidth == 0 || window.outerHeight == 0)
           break;
 
+        let oldScreenWidth = gScreenWidth;
         gScreenWidth = window.outerWidth * window.devicePixelRatio;
         gScreenHeight = window.outerHeight * window.devicePixelRatio;
         let tabs = BrowserApp.tabs;
-        for (let i = 0; i < tabs.length; i++) {
-          tabs[i].viewportSizeUpdated();
-        }
+        for (let i = 0; i < tabs.length; i++)
+          tabs[i].updateViewportSize(oldScreenWidth);
         break;
-      default:
-        return;
     }
+  },
 
-    if (aData) {
-      let scrollChange = JSON.parse(aData);
-      let windowUtils = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-      windowUtils.setNextPaintSyncId(scrollChange.id);
-      let win = BrowserApp.selectedTab.browser.contentWindow;
-      win.scrollBy(scrollChange.x, scrollChange.y);
+  updateMetadata: function updateMetadata(tab, aInitialLoad) {
+    let contentWindow = tab.browser.contentWindow;
+    if (contentWindow.document.documentElement) {
+      let metadata = this.getViewportMetadata(contentWindow);
+      tab.updateViewportMetadata(metadata, aInitialLoad);
     }
   },
 
   /**
-   * Returns true if a viewport tag was specified
+   * Returns the ViewportMetadata object.
    */
-  isViewportSpecified: function isViewportSpecified(aWindow) {
+  getViewportMetadata: function getViewportMetadata(aWindow) {
     let tab = BrowserApp.getTabForWindow(aWindow);
     let readerMode = false;
     try {
@@ -6065,16 +6670,105 @@ var ViewportHandler = {
     } catch (e) {
     }
     if (tab.desktopMode && !readerMode) {
-      return false;
+      return new ViewportMetadata({
+        minZoom: kViewportMinScale,
+        maxZoom: kViewportMaxScale,
+        width: kDefaultCSSViewportWidth,
+        height: -1,
+        allowZoom: true,
+        allowDoubleTapZoom: true,
+        isSpecified: false
+      });
     }
 
     let windowUtils = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-    return !isNaN(parseFloat(windowUtils.getDocumentMetadata("viewport-initial-scale")))
-        || !isNaN(parseFloat(windowUtils.getDocumentMetadata("viewport-minimum-scale")))
-        || !isNaN(parseFloat(windowUtils.getDocumentMetadata("viewport-maximum-scale")))
-        || ("" != windowUtils.getDocumentMetadata("viewport-user-scalable"))
-        || ("" != windowUtils.getDocumentMetadata("viewport-width"))
-        || ("" != windowUtils.getDocumentMetadata("viewport-height"));
+
+    // viewport details found here
+    // http://developer.apple.com/safari/library/documentation/AppleApplications/Reference/SafariHTMLRef/Articles/MetaTags.html
+    // http://developer.apple.com/safari/library/documentation/AppleApplications/Reference/SafariWebContent/UsingtheViewport/UsingtheViewport.html
+
+    // Note: These values will be NaN if parseFloat or parseInt doesn't find a number.
+    // Remember that NaN is contagious: Math.max(1, NaN) == Math.min(1, NaN) == NaN.
+    let hasMetaViewport = true;
+    let scale = parseFloat(windowUtils.getDocumentMetadata("viewport-initial-scale"));
+    let minScale = parseFloat(windowUtils.getDocumentMetadata("viewport-minimum-scale"));
+    let maxScale = parseFloat(windowUtils.getDocumentMetadata("viewport-maximum-scale"));
+
+    let widthStr = windowUtils.getDocumentMetadata("viewport-width");
+    let heightStr = windowUtils.getDocumentMetadata("viewport-height");
+    let width = this.clamp(parseInt(widthStr), kViewportMinWidth, kViewportMaxWidth) || 0;
+    let height = this.clamp(parseInt(heightStr), kViewportMinHeight, kViewportMaxHeight) || 0;
+
+    // Allow zoom unless explicity disabled or minScale and maxScale are equal.
+    // WebKit allows 0, "no", or "false" for viewport-user-scalable.
+    // Note: NaN != NaN. Therefore if minScale and maxScale are undefined the clause has no effect.
+    let allowZoomStr = windowUtils.getDocumentMetadata("viewport-user-scalable");
+    let allowZoom = !/^(0|no|false)$/.test(allowZoomStr) && (minScale != maxScale);
+
+    // Double-tap should always be disabled if allowZoom is disabled. So we initialize
+    // allowDoubleTapZoom to the same value as allowZoom and have additional conditions to
+    // disable it in updateViewportSize.
+    let allowDoubleTapZoom = allowZoom;
+
+    let autoSize = true;
+
+    if (isNaN(scale) && isNaN(minScale) && isNaN(maxScale) && allowZoomStr == "" && widthStr == "" && heightStr == "") {
+      // Only check for HandheldFriendly if we don't have a viewport meta tag
+      let handheldFriendly = windowUtils.getDocumentMetadata("HandheldFriendly");
+      if (handheldFriendly == "true") {
+        return new ViewportMetadata({
+          defaultZoom: 1,
+          autoSize: true,
+          allowZoom: true,
+          allowDoubleTapZoom: false
+        });
+      }
+
+      let doctype = aWindow.document.doctype;
+      if (doctype && /(WAP|WML|Mobile)/.test(doctype.publicId)) {
+        return new ViewportMetadata({
+          defaultZoom: 1,
+          autoSize: true,
+          allowZoom: true,
+          allowDoubleTapZoom: false
+        });
+      }
+
+      hasMetaViewport = false;
+      let defaultZoom = Services.prefs.getIntPref("browser.viewport.defaultZoom");
+      if (defaultZoom >= 0) {
+        scale = defaultZoom / 1000;
+        autoSize = false;
+      }
+    }
+
+    scale = this.clamp(scale, kViewportMinScale, kViewportMaxScale);
+    minScale = this.clamp(minScale, kViewportMinScale, kViewportMaxScale);
+    maxScale = this.clamp(maxScale, (isNaN(minScale) ? kViewportMinScale : minScale), kViewportMaxScale);
+    if (autoSize) {
+      // If initial scale is 1.0 and width is not set, assume width=device-width
+      autoSize = (widthStr == "device-width" ||
+                  (!widthStr && (heightStr == "device-height" || scale == 1.0)));
+    }
+
+    let isRTL = aWindow.document.documentElement.dir == "rtl";
+
+    return new ViewportMetadata({
+      defaultZoom: scale,
+      minZoom: minScale,
+      maxZoom: maxScale,
+      width: width,
+      height: height,
+      autoSize: autoSize,
+      allowZoom: allowZoom,
+      allowDoubleTapZoom: allowDoubleTapZoom,
+      isSpecified: hasMetaViewport,
+      isRTL: isRTL
+    });
+  },
+
+  clamp: function(num, min, max) {
+    return Math.max(min, Math.min(max, num));
   },
 
   get displayDPI() {
@@ -6084,11 +6778,15 @@ var ViewportHandler = {
   },
 
   /**
-   * Returns the viewport metadata for the given document, or undefined if there
-   * isn't one.
+   * Returns the viewport metadata for the given document, or the default metrics if no viewport
+   * metadata is available for that document.
    */
   getMetadataForDocument: function getMetadataForDocument(aDocument) {
-    return this._metadata.get(aDocument);
+    let metadata = this._metadata.get(aDocument);
+    if (metadata === undefined) {
+      metadata = new ViewportMetadata();
+    }
+    return metadata;
   },
 
   /** Updates the saved viewport metadata for the given content document. */
@@ -6098,7 +6796,61 @@ var ViewportHandler = {
     else
       this._metadata.set(aDocument, aMetadata);
   }
+
 };
+
+/**
+ * An object which represents the page's preferred viewport properties:
+ *   width (int): The CSS viewport width in px.
+ *   height (int): The CSS viewport height in px.
+ *   defaultZoom (float): The initial scale when the page is loaded.
+ *   minZoom (float): The minimum zoom level.
+ *   maxZoom (float): The maximum zoom level.
+ *   autoSize (boolean): Resize the CSS viewport when the window resizes.
+ *   allowZoom (boolean): Let the user zoom in or out.
+ *   allowDoubleTapZoom (boolean): Allow double-tap to zoom in.
+ *   isSpecified (boolean): Whether the page viewport is specified or not.
+ */
+function ViewportMetadata(aMetadata = {}) {
+  this.width = ("width" in aMetadata) ? aMetadata.width : 0;
+  this.height = ("height" in aMetadata) ? aMetadata.height : 0;
+  this.defaultZoom = ("defaultZoom" in aMetadata) ? aMetadata.defaultZoom : 0;
+  this.minZoom = ("minZoom" in aMetadata) ? aMetadata.minZoom : 0;
+  this.maxZoom = ("maxZoom" in aMetadata) ? aMetadata.maxZoom : 0;
+  this.autoSize = ("autoSize" in aMetadata) ? aMetadata.autoSize : false;
+  this.allowZoom = ("allowZoom" in aMetadata) ? aMetadata.allowZoom : true;
+  this.allowDoubleTapZoom = ("allowDoubleTapZoom" in aMetadata) ? aMetadata.allowDoubleTapZoom : true;
+  this.isSpecified = ("isSpecified" in aMetadata) ? aMetadata.isSpecified : false;
+  this.isRTL = ("isRTL" in aMetadata) ? aMetadata.isRTL : false;
+  Object.seal(this);
+}
+
+ViewportMetadata.prototype = {
+  width: null,
+  height: null,
+  defaultZoom: null,
+  minZoom: null,
+  maxZoom: null,
+  autoSize: null,
+  allowZoom: null,
+  allowDoubleTapZoom: null,
+  isSpecified: null,
+  isRTL: null,
+
+  toString: function() {
+    return "width=" + this.width
+         + "; height=" + this.height
+         + "; defaultZoom=" + this.defaultZoom
+         + "; minZoom=" + this.minZoom
+         + "; maxZoom=" + this.maxZoom
+         + "; autoSize=" + this.autoSize
+         + "; allowZoom=" + this.allowZoom
+         + "; allowDoubleTapZoom=" + this.allowDoubleTapZoom
+         + "; isSpecified=" + this.isSpecified
+         + "; isRTL=" + this.isRTL;
+  }
+};
+
 
 /**
  * Handler for blocked popups, triggered by DOMUpdatePageReport events in browser.xml
@@ -6585,14 +7337,15 @@ var IdentityHandler = {
   },
 
   /**
-   * Attempt to provide proper IDN treatment for host names
+   * Return the eTLD+1 version of the current hostname
    */
   getEffectiveHost: function getEffectiveHost() {
     if (!this._IDNService)
       this._IDNService = Cc["@mozilla.org/network/idn-service;1"]
                          .getService(Ci.nsIIDNService);
     try {
-      return this._IDNService.convertToDisplayIDN(this._uri.host, {});
+      let baseDomain = Services.eTLD.getBaseDomainFromHost(this._lastLocation.hostname);
+      return this._IDNService.convertToDisplayIDN(baseDomain, {});
     } catch (e) {
       // If something goes wrong (e.g. hostname is an IP address) just fail back
       // to the full domain.

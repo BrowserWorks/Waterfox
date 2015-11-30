@@ -4,9 +4,9 @@
 
 this.EXPORTED_SYMBOLS = ["WebappManager"];
 
-var Ci = Components.interfaces;
-var Cc = Components.classes;
-var Cu = Components.utils;
+let Ci = Components.interfaces;
+let Cc = Components.classes;
+let Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");

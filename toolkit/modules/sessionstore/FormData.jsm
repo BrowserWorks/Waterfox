@@ -94,7 +94,7 @@ this.FormData = Object.freeze({
 /**
  * This module's internal API.
  */
-var FormDataInternal = {
+let FormDataInternal = {
   /**
    * Collect form data for a given |frame| *not* including any subframes.
    *

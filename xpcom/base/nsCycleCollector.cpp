@@ -803,10 +803,10 @@ PtrToNodeMatchEntry(PLDHashTable* aTable,
 }
 
 static PLDHashTableOps PtrNodeOps = {
-  PLDHashTable::HashVoidPtrKeyStub,
+  PL_DHashVoidPtrKeyStub,
   PtrToNodeMatchEntry,
-  PLDHashTable::MoveEntryStub,
-  PLDHashTable::ClearEntryStub,
+  PL_DHashMoveEntryStub,
+  PL_DHashClearEntryStub,
   nullptr
 };
 
@@ -868,44 +868,33 @@ public:
   }
 #endif
 
-  PtrToNodeEntry* FindNodeEntry(void* aPtr);
   PtrInfo* FindNode(void* aPtr);
   PtrToNodeEntry* AddNodeToMap(void* aPtr);
-  void RemoveNodeFromMap(PtrToNodeEntry* aPtr);
+  void RemoveNodeFromMap(void* aPtr);
 
   uint32_t MapCount() const
   {
     return mPtrToNodeMap.EntryCount();
   }
 
-  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
+  void SizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
+                           size_t* aNodesSize, size_t* aEdgesSize,
+                           size_t* aWeakMapsSize) const
   {
-    size_t n = 0;
-
-    n += mNodes.SizeOfExcludingThis(aMallocSizeOf);
-    n += mEdges.SizeOfExcludingThis(aMallocSizeOf);
+    *aNodesSize = mNodes.SizeOfExcludingThis(aMallocSizeOf);
+    *aEdgesSize = mEdges.SizeOfExcludingThis(aMallocSizeOf);
 
     // We don't measure what the WeakMappings point to, because the
     // pointers are non-owning.
-    n += mWeakMaps.ShallowSizeOfExcludingThis(aMallocSizeOf);
-
-    n += mPtrToNodeMap.ShallowSizeOfExcludingThis(aMallocSizeOf);
-
-    return n;
+    *aWeakMapsSize = mWeakMaps.ShallowSizeOfExcludingThis(aMallocSizeOf);
   }
 };
-
-PtrToNodeEntry*
-CCGraph::FindNodeEntry(void* aPtr)
-{
-  return
-    static_cast<PtrToNodeEntry*>(mPtrToNodeMap.Search(aPtr));
-}
 
 PtrInfo*
 CCGraph::FindNode(void* aPtr)
 {
-  PtrToNodeEntry* e = FindNodeEntry(aPtr);
+  PtrToNodeEntry* e =
+    static_cast<PtrToNodeEntry*>(PL_DHashTableSearch(&mPtrToNodeMap, aPtr));
   return e ? e->mNode : nullptr;
 }
 
@@ -917,7 +906,8 @@ CCGraph::AddNodeToMap(void* aPtr)
     return nullptr;
   }
 
-  auto e = static_cast<PtrToNodeEntry*>(mPtrToNodeMap.Add(aPtr, fallible));
+  PtrToNodeEntry* e = static_cast<PtrToNodeEntry*>
+    (PL_DHashTableAdd(&mPtrToNodeMap, aPtr, fallible));
   if (!e) {
     mOutOfMemory = true;
     MOZ_ASSERT(false, "Ran out of memory while building cycle collector graph");
@@ -927,9 +917,9 @@ CCGraph::AddNodeToMap(void* aPtr)
 }
 
 void
-CCGraph::RemoveNodeFromMap(PtrToNodeEntry* aEntry)
+CCGraph::RemoveNodeFromMap(void* aPtr)
 {
-  mPtrToNodeMap.RemoveEntry(aEntry);
+  PL_DHashTableRemove(&mPtrToNodeMap, aPtr);
 }
 
 
@@ -1245,7 +1235,7 @@ enum ccType
 // Top level structure for the cycle collector.
 ////////////////////////////////////////////////////////////////////////
 
-using js::SliceBudget;
+typedef js::SliceBudget SliceBudget;
 
 class JSPurpleBuffer;
 
@@ -1325,7 +1315,9 @@ public:
 
   void SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                            size_t* aObjectSize,
-                           size_t* aGraphSize,
+                           size_t* aGraphNodesSize,
+                           size_t* aGraphEdgesSize,
+                           size_t* aWeakMapsSize,
                            size_t* aPurpleBufferSize) const;
 
   JSPurpleBuffer* GetJSPurpleBuffer();
@@ -3296,7 +3288,7 @@ nsCycleCollector::CollectWhite()
   }
   timeLog.Checkpoint("CollectWhite::Unroot");
 
-  nsCycleCollector_dispatchDeferredDeletion(false, true);
+  nsCycleCollector_dispatchDeferredDeletion(false);
   timeLog.Checkpoint("CollectWhite::dispatchDeferredDeletion");
 
   mIncrementalPhase = CleanupPhase;
@@ -3315,9 +3307,12 @@ NS_IMETHODIMP
 nsCycleCollector::CollectReports(nsIHandleReportCallback* aHandleReport,
                                  nsISupports* aData, bool aAnonymize)
 {
-  size_t objectSize, graphSize, purpleBufferSize;
+  size_t objectSize, graphNodesSize, graphEdgesSize, weakMapsSize,
+         purpleBufferSize;
   SizeOfIncludingThis(CycleCollectorMallocSizeOf,
-                      &objectSize, &graphSize,
+                      &objectSize,
+                      &graphNodesSize, &graphEdgesSize,
+                      &weakMapsSize,
                       &purpleBufferSize);
 
 #define REPORT(_path, _amount, _desc)                                     \
@@ -3338,8 +3333,17 @@ nsCycleCollector::CollectReports(nsIHandleReportCallback* aHandleReport,
   REPORT("explicit/cycle-collector/collector-object", objectSize,
          "Memory used for the cycle collector object itself.");
 
-  REPORT("explicit/cycle-collector/graph", graphSize,
-         "Memory used for the cycle collector's graph. "
+  REPORT("explicit/cycle-collector/graph-nodes", graphNodesSize,
+         "Memory used for the nodes of the cycle collector's graph. "
+         "This should be zero when the collector is idle.");
+
+  REPORT("explicit/cycle-collector/graph-edges", graphEdgesSize,
+         "Memory used for the edges of the cycle collector's graph. "
+         "This should be zero when the collector is idle.");
+
+  REPORT("explicit/cycle-collector/weak-maps", weakMapsSize,
+         "Memory used for the representation of weak maps in the "
+         "cycle collector's graph. "
          "This should be zero when the collector is idle.");
 
   REPORT("explicit/cycle-collector/purple-buffer", purpleBufferSize,
@@ -3538,7 +3542,7 @@ nsCycleCollector::ShutdownCollect()
 {
   FinishAnyIncrementalGCInProgress();
 
-  SliceBudget unlimitedBudget = SliceBudget::unlimited();
+  SliceBudget unlimitedBudget;
   uint32_t i;
   for (i = 0; i < DEFAULT_SHUTDOWN_COLLECTIONS; ++i) {
     if (!Collect(ShutdownCC, unlimitedBudget, nullptr)) {
@@ -3683,7 +3687,7 @@ nsCycleCollector::FinishAnyCurrentCollection()
     return;
   }
 
-  SliceBudget unlimitedBudget = SliceBudget::unlimited();
+  SliceBudget unlimitedBudget;
   PrintPhase("FinishAnyCurrentCollection");
   // Use SliceCC because we only want to finish the CC in progress.
   Collect(SliceCC, unlimitedBudget, nullptr);
@@ -3829,7 +3833,7 @@ nsCycleCollector::Shutdown()
   // Always delete snow white objects.
   FreeSnowWhite(true);
 
-#ifndef NS_FREE_PERMANENT_DATA
+#ifndef DEBUG
   if (PR_GetEnv("MOZ_CC_RUN_DURING_SHUTDOWN"))
 #endif
   {
@@ -3844,10 +3848,8 @@ nsCycleCollector::RemoveObjectFromGraph(void* aObj)
     return;
   }
 
-  PtrToNodeEntry* e = mGraph.FindNodeEntry(aObj);
-  PtrInfo* pinfo = e ? e->mNode : nullptr;
-  if (pinfo) {
-    mGraph.RemoveNodeFromMap(e);
+  if (PtrInfo* pinfo = mGraph.FindNode(aObj)) {
+    mGraph.RemoveNodeFromMap(aObj);
 
     pinfo->mPointer = nullptr;
     pinfo->mParticipant = nullptr;
@@ -3857,12 +3859,15 @@ nsCycleCollector::RemoveObjectFromGraph(void* aObj)
 void
 nsCycleCollector::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                                       size_t* aObjectSize,
-                                      size_t* aGraphSize,
+                                      size_t* aGraphNodesSize,
+                                      size_t* aGraphEdgesSize,
+                                      size_t* aWeakMapsSize,
                                       size_t* aPurpleBufferSize) const
 {
   *aObjectSize = aMallocSizeOf(this);
 
-  *aGraphSize = mGraph.SizeOfExcludingThis(aMallocSizeOf);
+  mGraph.SizeOfExcludingThis(aMallocSizeOf, aGraphNodesSize, aGraphEdgesSize,
+                             aWeakMapsSize);
 
   *aPurpleBufferSize = mPurpleBuf.SizeOfExcludingThis(aMallocSizeOf);
 
@@ -4057,11 +4062,11 @@ nsCycleCollector_forgetSkippable(bool aRemoveChildlessNodes,
 }
 
 void
-nsCycleCollector_dispatchDeferredDeletion(bool aContinuation, bool aPurge)
+nsCycleCollector_dispatchDeferredDeletion(bool aContinuation)
 {
   CycleCollectedJSRuntime* rt = CycleCollectedJSRuntime::Get();
   if (rt) {
-    rt->DispatchDeferredDeletion(aContinuation, aPurge);
+    rt->DispatchDeferredDeletion(aContinuation);
   }
 }
 
@@ -4097,7 +4102,7 @@ nsCycleCollector_collect(nsICycleCollectorListener* aManualListener)
   PROFILER_LABEL("nsCycleCollector", "collect",
                  js::ProfileEntry::Category::CC);
 
-  SliceBudget unlimitedBudget = SliceBudget::unlimited();
+  SliceBudget unlimitedBudget;
   data->mCollector->Collect(ManualCC, unlimitedBudget, aManualListener);
 }
 

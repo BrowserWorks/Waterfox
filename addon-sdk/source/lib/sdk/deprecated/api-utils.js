@@ -128,7 +128,7 @@ exports.addIterator = function addIterator(obj, keysValsGenerator) {
 
 // Similar to typeof, except arrays, null and regexps are identified by "array" and
 // "null" and "regexp", not "object".
-var getTypeOf = exports.getTypeOf = function getTypeOf(val) {
+let getTypeOf = exports.getTypeOf = function getTypeOf(val) {
   let typ = typeof(val);
   if (typ === "object") {
     if (!val)
@@ -158,23 +158,23 @@ function RequirementError(key, requirement) {
 }
 RequirementError.prototype = Object.create(Error.prototype);
 
-var string = { is: ['string', 'undefined', 'null'] };
+let string = { is: ['string', 'undefined', 'null'] };
 exports.string = string;
 
-var number = { is: ['number', 'undefined', 'null'] };
+let number = { is: ['number', 'undefined', 'null'] };
 exports.number = number;
 
-var boolean = { is: ['boolean', 'undefined', 'null'] };
+let boolean = { is: ['boolean', 'undefined', 'null'] };
 exports.boolean = boolean;
 
-var object = { is: ['object', 'undefined', 'null'] };
+let object = { is: ['object', 'undefined', 'null'] };
 exports.object = object;
 
-var array = { is: ['array', 'undefined', 'null'] };
+let array = { is: ['array', 'undefined', 'null'] };
 exports.array = array;
 
-var isTruthyType = type => !(type === 'undefined' || type === 'null');
-var findTypes = v => { while (!isArray(v) && v.is) v = v.is; return v };
+let isTruthyType = type => !(type === 'undefined' || type === 'null');
+let findTypes = v => { while (!isArray(v) && v.is) v = v.is; return v };
 
 function required(req) {
   let types = (findTypes(req) || VALID_TYPES).filter(isTruthyType);

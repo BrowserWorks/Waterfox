@@ -6,7 +6,7 @@
  * A collection of `AudioNodeModel`s used throughout the editor
  * to keep track of audio nodes within the audio context.
  */
-var gAudioNodes = new AudioNodesCollection();
+let gAudioNodes = new AudioNodesCollection();
 
 /**
  * Initializes the web audio editor views
@@ -37,7 +37,7 @@ function shutdownWebAudioEditor() {
 /**
  * Functions handling target-related lifetime events.
  */
-var WebAudioEditorController = {
+let WebAudioEditorController = {
   /**
    * Listen for events emitted by the current tab target.
    */
@@ -185,9 +185,9 @@ var WebAudioEditorController = {
    * Called when a new node is created. Creates an `AudioNodeView` instance
    * for tracking throughout the editor.
    */
-  _onCreateNode: function (nodeActor) {
-    gAudioNodes.add(nodeActor);
-  },
+  _onCreateNode: Task.async(function* (nodeActor) {
+    yield gAudioNodes.add(nodeActor);
+  }),
 
   /**
    * Called on `destroy-node` when an AudioNode is GC'd. Removes

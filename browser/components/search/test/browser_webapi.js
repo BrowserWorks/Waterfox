@@ -1,4 +1,4 @@
-var ROOT = getRootDirectory(gTestPath).replace("chrome://mochitests/content", "http://example.com");
+let ROOT = getRootDirectory(gTestPath).replace("chrome://mochitests/content", "http://example.com");
 const searchBundle = Services.strings.createBundle("chrome://global/locale/search/search.properties");
 const brandBundle = Services.strings.createBundle("chrome://branding/locale/brand.properties");
 const brandName = brandBundle.GetStringFromName("brandShortName");

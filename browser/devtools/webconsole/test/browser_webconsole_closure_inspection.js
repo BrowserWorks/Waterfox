@@ -11,7 +11,7 @@
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-closures.html";
 
-var gWebConsole, gJSTerm, gVariablesView;
+let gWebConsole, gJSTerm, gVariablesView;
 
 function test() {
   registerCleanupFunction(() => {

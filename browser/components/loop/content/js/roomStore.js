@@ -114,7 +114,7 @@ loop.store = loop.store || {};
         activeRoom: this.activeRoomStore ? this.activeRoomStore.getStoreState() : {},
         error: null,
         pendingCreation: false,
-        pendingInitialRetrieval: true,
+        pendingInitialRetrieval: false,
         rooms: [],
         savingContext: false
       };
@@ -264,6 +264,7 @@ loop.store = loop.store || {};
         decryptedContext: {
           roomName: this._generateNewRoomName(actionData.nameTemplate)
         },
+        roomOwner: actionData.roomOwner,
         maxSize: this.maxRoomCreationSize
       };
 
@@ -324,7 +325,7 @@ loop.store = loop.store || {};
       this._notifications.set({
         id: "create-room-error",
         level: "error",
-        message: mozL10n.get("generic_failure_message")
+        message: mozL10n.get("generic_failure_title")
       });
     },
 
@@ -426,6 +427,7 @@ loop.store = loop.store || {};
      * Gather the list of all available rooms from the MozLoop API.
      */
     getAllRooms: function() {
+      this.setStoreState({pendingInitialRetrieval: true});
       this._mozLoop.rooms.getAll(null, function(err, rawRoomList) {
         var action;
 
@@ -494,7 +496,7 @@ loop.store = loop.store || {};
         var context = room.decryptedContext;
         var oldRoomName = context.roomName;
         var newRoomName = actionData.newRoomName.trim();
-        if (newRoomName && oldRoomName !== newRoomName) {
+        if (newRoomName && oldRoomName != newRoomName) {
           roomData.roomName = newRoomName;
         }
         var oldRoomURLs = context.urls;

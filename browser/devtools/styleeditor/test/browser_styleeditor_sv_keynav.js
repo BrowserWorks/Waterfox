@@ -24,15 +24,17 @@ add_task(function* () {
   ok(ui.editors[2].sourceEditor.hasFocus(), "Editor #2 has focus.");
 });
 
-function getStylesheetNameLinkFor(editor) {
-  return editor.summary.querySelector(".stylesheet-name");
+function getStylesheetNameLinkFor(aEditor)
+{
+  return aEditor.summary.querySelector(".stylesheet-name");
 }
 
-function testKeyboardNavigation(editor, panel) {
+function testKeyboardNavigation(aEditor, panel)
+{
   let panelWindow = panel.panelWindow;
   let ui = panel.UI;
-  waitForFocus(function() {
-    let summary = editor.summary;
+  waitForFocus(function () {
+    let summary = aEditor.summary;
     EventUtils.synthesizeMouseAtCenter(summary, {}, panelWindow);
 
     let item = getStylesheetNameLinkFor(ui.editors[0]);

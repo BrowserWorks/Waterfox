@@ -1,9 +1,9 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var {Toolbox} = require("devtools/framework/toolbox");
+let {Toolbox} = require("devtools/framework/toolbox");
 
-var toolbox, toolIDs, idIndex, secondTime = false,
+let toolbox, toolIDs, idIndex, secondTime = false,
     reverse = false, nextKey = null, prevKey = null;
 
 function test() {

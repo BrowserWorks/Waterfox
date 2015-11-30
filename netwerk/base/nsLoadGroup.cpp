@@ -88,9 +88,9 @@ RequestHashInitEntry(PLDHashEntryHdr *entry, const void *key)
 
 static const PLDHashTableOps sRequestHashOps =
 {
-    PLDHashTable::HashVoidPtrKeyStub,
+    PL_DHashVoidPtrKeyStub,
     RequestHashMatchEntry,
-    PLDHashTable::MoveEntryStub,
+    PL_DHashMoveEntryStub,
     RequestHashClearEntry,
     RequestHashInitEntry
 };
@@ -205,7 +205,7 @@ AppendRequestsToArray(PLDHashTable* aTable, nsTArray<nsIRequest*> *aArray)
     for (auto iter = aTable->Iter(); !iter.Done(); iter.Next()) {
         auto e = static_cast<RequestMapEntry*>(iter.Get());
         nsIRequest *request = e->mKey;
-        NS_ASSERTION(request, "What? Null key in PLDHashTable entry?");
+        NS_ASSERTION(request, "What? Null key in pldhash entry?");
 
         bool ok = !!aArray->AppendElement(request);
         if (!ok) {
@@ -255,7 +255,7 @@ nsLoadGroup::Cancel(nsresult status)
 
         NS_ASSERTION(request, "NULL request found in list.");
 
-        if (!mRequests.Search(request)) {
+        if (!PL_DHashTableSearch(&mRequests, request)) {
             // |request| was removed already
             NS_RELEASE(request);
             continue;
@@ -463,7 +463,7 @@ nsLoadGroup::AddRequest(nsIRequest *request, nsISupports* ctxt)
              this, request, nameStr.get(), mRequests.EntryCount()));
     }
 
-    NS_ASSERTION(!mRequests.Search(request),
+    NS_ASSERTION(!PL_DHashTableSearch(&mRequests, request),
                  "Entry added to loadgroup twice, don't do that");
 
     //
@@ -491,8 +491,9 @@ nsLoadGroup::AddRequest(nsIRequest *request, nsISupports* ctxt)
     // Add the request to the list of active requests...
     //
 
-    auto entry =
-        static_cast<RequestMapEntry*>(mRequests.Add(request, fallible));
+    RequestMapEntry *entry = static_cast<RequestMapEntry *>
+        (PL_DHashTableAdd(&mRequests, request, fallible));
+
     if (!entry) {
         return NS_ERROR_OUT_OF_MEMORY;
     }
@@ -528,7 +529,7 @@ nsLoadGroup::AddRequest(nsIRequest *request, nsISupports* ctxt)
                 // the damage...
                 //
 
-                mRequests.Remove(request);
+                PL_DHashTableRemove(&mRequests, request);
 
                 rv = NS_OK;
 
@@ -570,7 +571,9 @@ nsLoadGroup::RemoveRequest(nsIRequest *request, nsISupports* ctxt,
     // the request was *not* in the group so do not update the foreground
     // count or it will get messed up...
     //
-    auto entry = static_cast<RequestMapEntry*>(mRequests.Search(request));
+    RequestMapEntry *entry =
+        static_cast<RequestMapEntry *>
+                   (PL_DHashTableSearch(&mRequests, request));
 
     if (!entry) {
         LOG(("LOADGROUP [%x]: Unable to remove request %x. Not in group!\n",
@@ -579,7 +582,7 @@ nsLoadGroup::RemoveRequest(nsIRequest *request, nsISupports* ctxt,
         return NS_ERROR_FAILURE;
     }
 
-    mRequests.RemoveEntry(entry);
+    PL_DHashTableRawRemove(&mRequests, entry);
 
     // Collect telemetry stats only when default request is a timed channel.
     // Don't include failed requests in the timing statistics.

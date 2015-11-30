@@ -12,15 +12,13 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.support.v4.content.ContextCompat;
-import org.mozilla.gecko.widget.themed.ThemedImageView;
+import android.widget.ImageView;
 
 /* Special version of ImageView for thumbnails. Scales a thumbnail so that it maintains its aspect
  * ratio and so that the images width and height are the same size or greater than the view size
  */
-public class ThumbnailView extends ThemedImageView {
+public class ThumbnailView extends ImageView {
     private static final String LOGTAG = "GeckoThumbnailView";
-
     final private Matrix mMatrix;
     private int mWidthSpec = -1;
     private int mHeightSpec = -1;
@@ -70,17 +68,18 @@ public class ThumbnailView extends ThemedImageView {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
+
     @Override
     public void setImageDrawable(Drawable drawable) {
         if (drawable == null) {
-            drawable = ContextCompat.getDrawable(getContext(), R.drawable.tab_panel_tab_background);
+            drawable = getResources().getDrawable(R.drawable.tab_panel_tab_background);
             setScaleType(ScaleType.FIT_XY);
             mScale = false;
         } else {
             mScale = true;
             setScaleType(ScaleType.FIT_CENTER);
         }
-
+        
         super.setImageDrawable(drawable);
     }
 }

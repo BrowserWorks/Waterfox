@@ -5,7 +5,7 @@
 
 package org.mozilla.gecko;
 
-import org.mozilla.gecko.annotation.RobocopTarget;
+import org.mozilla.gecko.mozglue.RobocopTarget;
 
 /**
  * Holds data definitions for our UI Telemetry implementation.
@@ -176,9 +176,6 @@ public interface TelemetryContract {
         // Note: Only used in JavaScript for now, but here for completeness.
         PAGEACTION("pageaction"),
 
-        // Action triggered from one of a series of views, such as ViewPager.
-        PANEL("panel"),
-
         // Action triggered from a settings screen.
         SETTINGS("settings"),
 
@@ -221,9 +218,6 @@ public interface TelemetryContract {
     public enum Session {
         // Awesomescreen (including frecency search) is active.
         AWESOMESCREEN("awesomescreen.1"),
-
-        // Used to tag experiments being run.
-        EXPERIMENT("experiment.1"),
 
         // Started the very first time we believe the application has been launched.
         FIRSTRUN("firstrun.1"),

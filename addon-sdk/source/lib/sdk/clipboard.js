@@ -57,13 +57,13 @@ const kFlavorMap = [
   { short: "image", long: "image/png" }
 ];
 
-var clipboardService = Cc["@mozilla.org/widget/clipboard;1"].
+let clipboardService = Cc["@mozilla.org/widget/clipboard;1"].
                        getService(Ci.nsIClipboard);
 
-var clipboardHelper = Cc["@mozilla.org/widget/clipboardhelper;1"].
+let clipboardHelper = Cc["@mozilla.org/widget/clipboardhelper;1"].
                       getService(Ci.nsIClipboardHelper);
 
-var imageTools = Cc["@mozilla.org/image/tools;1"].
+let imageTools = Cc["@mozilla.org/image/tools;1"].
                getService(Ci.imgITools);
 
 exports.set = function(aData, aDataType) {

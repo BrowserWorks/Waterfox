@@ -1,6 +1,6 @@
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://webapprt/modules/WebappRT.jsm");
-var { DOMApplicationRegistry } =
+let { DOMApplicationRegistry } =
   Cu.import("resource://gre/modules/Webapps.jsm", {});
 
 function test() {
@@ -27,12 +27,7 @@ function test() {
           winAppBrowser.addEventListener("load", function onLoadBrowser() {
             winAppBrowser.removeEventListener("load", onLoadBrowser, true);
 
-            let contentWindow = Cu.waiveXrays(gAppBrowser.contentDocument.defaultView);
-            is(contentWindow.openedWindow.location.href,
-               "http://test/webapprtChrome/webapprt/test/chrome/sample.html",
-               "window.open returns window with correct URL");
-
-            is(winAppBrowser.documentURI.spec,
+            is(winAppBrowser.getAttribute("src"),
                "http://test/webapprtChrome/webapprt/test/chrome/sample.html",
                "New window browser has correct src");
 

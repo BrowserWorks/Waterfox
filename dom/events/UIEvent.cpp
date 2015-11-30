@@ -29,7 +29,7 @@ UIEvent::UIEvent(EventTarget* aOwner,
                  nsPresContext* aPresContext,
                  WidgetGUIEvent* aEvent)
   : Event(aOwner, aPresContext,
-          aEvent ? aEvent : new InternalUIEvent(false, eVoidEvent, nullptr))
+          aEvent ? aEvent : new InternalUIEvent(false, 0))
   , mClientPoint(0, 0)
   , mLayerPoint(0, 0)
   , mPagePoint(0, 0)
@@ -499,11 +499,14 @@ UIEvent::InitModifiers(const EventModifierInit& aParam)
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<UIEvent>
-NS_NewDOMUIEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMUIEvent(nsIDOMEvent** aInstancePtrResult,
+                 EventTarget* aOwner,
                  nsPresContext* aPresContext,
                  WidgetGUIEvent* aEvent) 
 {
-  nsRefPtr<UIEvent> it = new UIEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  UIEvent* it = new UIEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

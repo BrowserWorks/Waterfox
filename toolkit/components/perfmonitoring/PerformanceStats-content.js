@@ -31,12 +31,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
  *
  * In the parent, this is always an empty monitor.
  */
-var gMonitor = PerformanceStats.getMonitor([]);
+let gMonitor = PerformanceStats.getMonitor([]);
 
 /**
  * `true` if this is a content process, `false` otherwise.
  */
-var isContent = Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT;
+let isContent = Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT;
 
 /**
  * Handle message `performance-stats-service-acquire`: ensure that the global
@@ -79,9 +79,8 @@ Services.cpmm.addMessageListener("performance-stats-service-release", function(m
   if (!isContent) {
     return;
   }
-
   // Keep only the probes that do not appear in the payload
-  let probes = gMonitor.probeNames
+  let probes = gMonitor.getProbeNames
     .filter(x => msg.data.payload.indexOf(x) == -1);
   gMonitor = PerformanceStats.getMonitor(probes);
 });

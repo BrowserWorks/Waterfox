@@ -8,7 +8,7 @@
 
 "use strict";
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
     "test/test-console.html?_date=" + Date.now();
   const COMMAND_NAME = "consoleCmd_copyURL";

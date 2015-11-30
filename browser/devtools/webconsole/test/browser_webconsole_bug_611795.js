@@ -7,14 +7,14 @@
 const TEST_URI = 'data:text/html;charset=utf-8,<div style="-moz-opacity:0;">' +
                  'test repeated css warnings</div><p style="-moz-opacity:0">' +
                  'hi</p>';
-var hud;
+let hud;
 
 /**
  * Unit test for bug 611795:
  * Repeated CSS messages get collapsed into one.
  */
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   hud = yield openConsole();

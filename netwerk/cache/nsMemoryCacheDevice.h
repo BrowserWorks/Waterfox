@@ -8,7 +8,7 @@
 #define _nsMemoryCacheDevice_h_
 
 #include "nsCacheDevice.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsCacheEntry.h"
 
 

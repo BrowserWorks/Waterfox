@@ -85,7 +85,6 @@ class TlsAgent : public PollTarget {
 
   void Handshake();
   void EnableSomeEcdheCiphers();
-  void DisableDheCiphers();
   bool EnsureTlsSetup();
 
   void ConfigureSessionCache(SessionResumptionMode mode);

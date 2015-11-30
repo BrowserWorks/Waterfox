@@ -17,7 +17,7 @@ MutationEvent::MutationEvent(EventTarget* aOwner,
                              nsPresContext* aPresContext,
                              InternalMutationEvent* aEvent)
   : Event(aOwner, aPresContext,
-          aEvent ? aEvent : new InternalMutationEvent(false, eVoidEvent))
+          aEvent ? aEvent : new InternalMutationEvent(false, 0))
 {
   mEventIsInternal = (aEvent == nullptr);
 }
@@ -119,11 +119,14 @@ MutationEvent::InitMutationEvent(const nsAString& aTypeArg,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<MutationEvent>
-NS_NewDOMMutationEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMMutationEvent(nsIDOMEvent** aInstancePtrResult,
+                       EventTarget* aOwner,
                        nsPresContext* aPresContext,
                        InternalMutationEvent* aEvent) 
 {
-  nsRefPtr<MutationEvent> it = new MutationEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  MutationEvent* it = new MutationEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

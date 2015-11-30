@@ -2,10 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# XXX Bug 1181261 - Please update config in testing/mozharness/config
-# instead. This file is still needed for taskcluster emulator tests,
-# but should be removed once bug 1188330 is finished.
-
 config = {
     "suite_definitions": {
         "gaiatest_desktop": {

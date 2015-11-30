@@ -21,7 +21,6 @@ namespace a11y {
 void
 ProxyAccessible::Shutdown()
 {
-  MOZ_DIAGNOSTIC_ASSERT(!IsDoc());
   NS_ASSERTION(!mOuterDoc, "Why do we still have a child doc?");
 
   // XXX Ideally  this wouldn't be necessary, but it seems OuterDoc accessibles
@@ -980,14 +979,6 @@ ProxyAccessible::TakeFocus()
   unused << mDoc->SendTakeFocus(mID);
 }
 
-uint32_t
-ProxyAccessible::EmbeddedChildCount() const
-{
-  uint32_t count;
-  unused << mDoc->SendEmbeddedChildCount(mID, &count);
-  return count;
-}
-
 int32_t
 ProxyAccessible::IndexOfEmbeddedChild(const ProxyAccessible* aChild)
 {
@@ -1020,9 +1011,9 @@ ProxyAccessible::ChildAtPoint(int32_t aX, int32_t aY,
 {
   uint64_t childID = 0;
   bool ok = false;
-  unused << mDoc->SendAccessibleAtPoint(mID, aX, aY, false,
-                                        static_cast<uint32_t>(aWhichChild),
-                                        &childID, &ok);
+  unused << mDoc->SendChildAtPoint(mID, aX, aY,
+                                   static_cast<uint32_t>(aWhichChild),
+                                   &childID, &ok);
   return ok ? mDoc->GetAccessible(childID) : nullptr;
 }
 
@@ -1030,9 +1021,7 @@ nsIntRect
 ProxyAccessible::Bounds()
 {
   nsIntRect rect;
-  unused << mDoc->SendExtents(mID, false,
-                              &(rect.x), &(rect.y),
-                              &(rect.width), &(rect.height));
+  unused << mDoc->SendBounds(mID, &rect);
   return rect;
 }
 
@@ -1071,26 +1060,6 @@ ProxyAccessible::URLDocTypeMimeType(nsString& aURL, nsString& aDocType,
                                     nsString& aMimeType)
 {
   unused << mDoc->SendURLDocTypeMimeType(mID, &aURL, &aDocType, &aMimeType);
-}
-
-ProxyAccessible*
-ProxyAccessible::AccessibleAtPoint(int32_t aX, int32_t aY,
-                                   bool aNeedsScreenCoords)
-{
-  uint64_t childID = 0;
-  bool ok = false;
-  unused <<
-    mDoc->SendAccessibleAtPoint(mID, aX, aY, aNeedsScreenCoords,
-                                static_cast<uint32_t>(Accessible::eDirectChild),
-                                &childID, &ok);
-  return ok ? mDoc->GetAccessible(childID) : nullptr;
-}
-
-void
-ProxyAccessible::Extents(bool aNeedsScreenCoords, int32_t* aX, int32_t* aY,
-                        int32_t* aWidth, int32_t* aHeight)
-{
-  unused << mDoc->SendExtents(mID, aNeedsScreenCoords, aX, aY, aWidth, aHeight);
 }
 
 Accessible*

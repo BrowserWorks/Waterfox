@@ -306,5 +306,5 @@ add_task(function test_save_reload_unknownProperties()
 ////////////////////////////////////////////////////////////////////////////////
 //// Termination
 
-var tailFile = do_get_file("tail.js");
+let tailFile = do_get_file("tail.js");
 Services.scriptloader.loadSubScript(NetUtil.newURI(tailFile).spec);

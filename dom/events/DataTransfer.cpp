@@ -68,41 +68,40 @@ const char DataTransfer::sEffects[8][9] = {
   "none", "copy", "move", "copyMove", "link", "copyLink", "linkMove", "all"
 };
 
-DataTransfer::DataTransfer(nsISupports* aParent, EventMessage aEventMessage,
+DataTransfer::DataTransfer(nsISupports* aParent, uint32_t aEventType,
                            bool aIsExternal, int32_t aClipboardType)
-  : mParent(aParent)
-  , mDropEffect(nsIDragService::DRAGDROP_ACTION_NONE)
-  , mEffectAllowed(nsIDragService::DRAGDROP_ACTION_UNINITIALIZED)
-  , mEventMessage(aEventMessage)
-  , mCursorState(false)
-  , mReadOnly(true)
-  , mIsExternal(aIsExternal)
-  , mUserCancelled(false)
-  , mIsCrossDomainSubFrameDrop(false)
-  , mClipboardType(aClipboardType)
-  , mDragImageX(0)
-  , mDragImageY(0)
+  : mParent(aParent),
+    mEventType(aEventType),
+    mDropEffect(nsIDragService::DRAGDROP_ACTION_NONE),
+    mEffectAllowed(nsIDragService::DRAGDROP_ACTION_UNINITIALIZED),
+    mCursorState(false),
+    mReadOnly(true),
+    mIsExternal(aIsExternal),
+    mUserCancelled(false),
+    mIsCrossDomainSubFrameDrop(false),
+    mClipboardType(aClipboardType),
+    mDragImageX(0),
+    mDragImageY(0)
 {
   // For these events, we want to be able to add data to the data transfer, so
   // clear the readonly state. Otherwise, the data is already present. For
   // external usage, cache the data from the native clipboard or drag.
-  if (aEventMessage == eCut ||
-      aEventMessage == eCopy ||
-      aEventMessage == eDragStart ||
-      aEventMessage == eLegacyDragGesture) {
+  if (aEventType == NS_CUT ||
+      aEventType == NS_COPY ||
+      aEventType == NS_DRAGDROP_START ||
+      aEventType == NS_DRAGDROP_GESTURE) {
     mReadOnly = false;
   } else if (mIsExternal) {
-    if (aEventMessage == ePaste) {
+    if (aEventType == NS_PASTE) {
       CacheExternalClipboardFormats();
-    } else if (aEventMessage >= eDragDropEventFirst &&
-               aEventMessage <= eDragDropEventLast) {
+    } else if (aEventType >= NS_DRAGDROP_EVENT_START && aEventType <= NS_DRAGDROP_LEAVE) {
       CacheExternalDragFormats();
     }
   }
 }
 
 DataTransfer::DataTransfer(nsISupports* aParent,
-                           EventMessage aEventMessage,
+                           uint32_t aEventType,
                            const uint32_t aEffectAllowed,
                            bool aCursorState,
                            bool aIsExternal,
@@ -113,20 +112,20 @@ DataTransfer::DataTransfer(nsISupports* aParent,
                            Element* aDragImage,
                            uint32_t aDragImageX,
                            uint32_t aDragImageY)
-  : mParent(aParent)
-  , mDropEffect(nsIDragService::DRAGDROP_ACTION_NONE)
-  , mEffectAllowed(aEffectAllowed)
-  , mEventMessage(aEventMessage)
-  , mCursorState(aCursorState)
-  , mReadOnly(true)
-  , mIsExternal(aIsExternal)
-  , mUserCancelled(aUserCancelled)
-  , mIsCrossDomainSubFrameDrop(aIsCrossDomainSubFrameDrop)
-  , mClipboardType(aClipboardType)
-  , mItems(aItems)
-  , mDragImage(aDragImage)
-  , mDragImageX(aDragImageX)
-  , mDragImageY(aDragImageY)
+  : mParent(aParent),
+    mEventType(aEventType),
+    mDropEffect(nsIDragService::DRAGDROP_ACTION_NONE),
+    mEffectAllowed(aEffectAllowed),
+    mCursorState(aCursorState),
+    mReadOnly(true),
+    mIsExternal(aIsExternal),
+    mUserCancelled(aUserCancelled),
+    mIsCrossDomainSubFrameDrop(aIsCrossDomainSubFrameDrop),
+    mClipboardType(aClipboardType),
+    mItems(aItems),
+    mDragImage(aDragImage),
+    mDragImageX(aDragImageX),
+    mDragImageY(aDragImageY)
 {
   MOZ_ASSERT(mParent);
   // The items are copied from aItems into mItems. There is no need to copy
@@ -134,8 +133,8 @@ DataTransfer::DataTransfer(nsISupports* aParent,
   // draggesture and dragstart events are the only times when items are
   // modifiable, but those events should have been using the first constructor
   // above.
-  NS_ASSERTION(aEventMessage != eLegacyDragGesture &&
-               aEventMessage != eDragStart,
+  NS_ASSERTION(aEventType != NS_DRAGDROP_GESTURE &&
+               aEventType != NS_DRAGDROP_START,
                "invalid event type for DataTransfer constructor");
 }
 
@@ -156,9 +155,9 @@ DataTransfer::Constructor(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  EventMessage eventMessage = nsContentUtils::GetEventMessage(eventTypeAtom);
+  uint32_t eventType = nsContentUtils::GetEventId(eventTypeAtom);
   nsRefPtr<DataTransfer> transfer = new DataTransfer(aGlobal.GetAsSupports(),
-                                                     eventMessage, aIsExternal,
+                                                     eventType, aIsExternal,
                                                      -1);
   return transfer.forget();
 }
@@ -269,9 +268,8 @@ DataTransfer::GetMozUserCancelled(bool* aUserCancelled)
 FileList*
 DataTransfer::GetFiles(ErrorResult& aRv)
 {
-  if (mEventMessage != eDrop &&
-      mEventMessage != eLegacyDragDrop &&
-      mEventMessage != ePaste) {
+  if (mEventType != NS_DRAGDROP_DROP && mEventType != NS_DRAGDROP_DRAGDROP &&
+      mEventType != NS_PASTE) {
     return nullptr;
   }
 
@@ -543,8 +541,7 @@ DataTransfer::MozTypesAt(uint32_t aIndex, ErrorResult& aRv)
 {
   // Only the first item is valid for clipboard events
   if (aIndex > 0 &&
-      (mEventMessage == eCut || mEventMessage == eCopy ||
-       mEventMessage == ePaste)) {
+      (mEventType == NS_CUT || mEventType == NS_COPY || mEventType == NS_PASTE)) {
     aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
     return nullptr;
   }
@@ -584,8 +581,7 @@ DataTransfer::MozGetDataAt(const nsAString& aFormat, uint32_t aIndex,
 
   // Only the first item is valid for clipboard events
   if (aIndex > 0 &&
-      (mEventMessage == eCut || mEventMessage == eCopy ||
-       mEventMessage == ePaste)) {
+      (mEventType == NS_CUT || mEventType == NS_COPY || mEventType == NS_PASTE)) {
     return NS_ERROR_DOM_INDEX_SIZE_ERR;
   }
 
@@ -603,8 +599,8 @@ DataTransfer::MozGetDataAt(const nsAString& aFormat, uint32_t aIndex,
   // only allow access to the data with the same principal.
   nsIPrincipal* principal = nullptr;
   if (mIsCrossDomainSubFrameDrop ||
-      (mEventMessage != eDrop && mEventMessage != eLegacyDragDrop &&
-       mEventMessage != ePaste &&
+      (mEventType != NS_DRAGDROP_DROP && mEventType != NS_DRAGDROP_DRAGDROP &&
+       mEventType != NS_PASTE &&
        !nsContentUtils::IsCallerChrome())) {
     principal = nsContentUtils::SubjectPrincipal();
   }
@@ -696,8 +692,7 @@ DataTransfer::MozSetDataAt(const nsAString& aFormat, nsIVariant* aData,
 
   // Only the first item is valid for clipboard events
   if (aIndex > 0 &&
-      (mEventMessage == eCut || mEventMessage == eCopy ||
-       mEventMessage == ePaste)) {
+      (mEventType == NS_CUT || mEventType == NS_COPY || mEventType == NS_PASTE)) {
     return NS_ERROR_DOM_INDEX_SIZE_ERR;
   }
 
@@ -742,8 +737,7 @@ DataTransfer::MozClearDataAt(const nsAString& aFormat, uint32_t aIndex,
 
   // Only the first item is valid for clipboard events
   if (aIndex > 0 &&
-      (mEventMessage == eCut || mEventMessage == eCopy ||
-       mEventMessage == ePaste)) {
+      (mEventType == NS_CUT || mEventType == NS_COPY || mEventType == NS_PASTE)) {
     aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
     return;
   }
@@ -758,8 +752,8 @@ DataTransfer::MozClearDataAtHelper(const nsAString& aFormat, uint32_t aIndex,
   MOZ_ASSERT(!mReadOnly);
   MOZ_ASSERT(aIndex < mItems.Length());
   MOZ_ASSERT(aIndex == 0 ||
-             (mEventMessage != eCut && mEventMessage != eCopy &&
-              mEventMessage != ePaste));
+             (mEventType != NS_CUT && mEventType != NS_COPY &&
+              mEventType != NS_PASTE));
 
   nsAutoString format;
   GetRealFormat(aFormat, format);
@@ -877,40 +871,43 @@ DataTransfer::GetFilesAndDirectories(ErrorResult& aRv)
     if (NS_WARN_IF(aRv.Failed())) {
       return nullptr;
     }
+
+    if (!mFiles) {
+      aRv.Throw(NS_ERROR_FAILURE);
+      return nullptr;
+    }
   }
 
   Sequence<OwningFileOrDirectory> filesAndDirsSeq;
 
-  if (mFiles && mFiles->Length()) {
-    if (!filesAndDirsSeq.SetLength(mFiles->Length(), mozilla::fallible_t())) {
-      p->MaybeReject(NS_ERROR_OUT_OF_MEMORY);
-      return p.forget();
-    }
+  if (!filesAndDirsSeq.SetLength(mFiles->Length(), mozilla::fallible_t())) {
+    p->MaybeReject(NS_ERROR_OUT_OF_MEMORY);
+    return p.forget();
+  }
 
-    nsPIDOMWindow* window = parentNode->OwnerDoc()->GetInnerWindow();
+  nsPIDOMWindow* window = parentNode->OwnerDoc()->GetInnerWindow();
 
-    nsRefPtr<OSFileSystem> fs;
-    for (uint32_t i = 0; i < mFiles->Length(); ++i) {
-      if (mFiles->Item(i)->Impl()->IsDirectory()) {
+  nsRefPtr<OSFileSystem> fs;
+  for (uint32_t i = 0; i < mFiles->Length(); ++i) {
+    if (mFiles->Item(i)->Impl()->IsDirectory()) {
 #if defined(ANDROID) || defined(MOZ_B2G)
-        MOZ_ASSERT(false,
-                   "Directory picking should have been redirected to normal "
-                   "file picking for platforms that don't have a directory "
-                   "picker");
+      MOZ_ASSERT(false,
+                 "Directory picking should have been redirected to normal "
+                 "file picking for platforms that don't have a directory "
+                 "picker");
 #endif
-        nsAutoString path;
-        mFiles->Item(i)->GetMozFullPathInternal(path, aRv);
-        if (aRv.Failed()) {
-          return nullptr;
-        }
-        int32_t leafSeparatorIndex = path.RFind(FILE_PATH_SEPARATOR);
-        nsDependentSubstring dirname = Substring(path, 0, leafSeparatorIndex);
-        nsDependentSubstring basename = Substring(path, leafSeparatorIndex);
-        fs = MakeOrReuseFileSystem(dirname, fs, window);
-        filesAndDirsSeq[i].SetAsDirectory() = new Directory(fs, basename);
-      } else {
-        filesAndDirsSeq[i].SetAsFile() = mFiles->Item(i);
+      nsAutoString path;
+      mFiles->Item(i)->GetMozFullPathInternal(path, aRv);
+      if (aRv.Failed()) {
+        return nullptr;
       }
+      int32_t leafSeparatorIndex = path.RFind(FILE_PATH_SEPARATOR);
+      nsDependentSubstring dirname = Substring(path, 0, leafSeparatorIndex);
+      nsDependentSubstring basename = Substring(path, leafSeparatorIndex);
+      fs = MakeOrReuseFileSystem(dirname, fs, window);
+      filesAndDirsSeq[i].SetAsDirectory() = new Directory(fs, basename);
+    } else {
+      filesAndDirsSeq[i].SetAsFile() = mFiles->Item(i);
     }
   }
 
@@ -944,12 +941,12 @@ DataTransfer::AddElement(nsIDOMElement* aElement)
 }
 
 nsresult
-DataTransfer::Clone(nsISupports* aParent, EventMessage aEventMessage,
+DataTransfer::Clone(nsISupports* aParent, uint32_t aEventType,
                     bool aUserCancelled, bool aIsCrossDomainSubFrameDrop,
                     DataTransfer** aNewDataTransfer)
 {
   DataTransfer* newDataTransfer =
-    new DataTransfer(aParent, aEventMessage, mEffectAllowed, mCursorState,
+    new DataTransfer(aParent, aEventType, mEffectAllowed, mCursorState,
                      mIsExternal, aUserCancelled, aIsCrossDomainSubFrameDrop,
                      mClipboardType, mItems, mDragImage, mDragImageX,
                      mDragImageY);
@@ -1258,8 +1255,7 @@ DataTransfer::CacheExternalDragFormats()
 void
 DataTransfer::CacheExternalClipboardFormats()
 {
-  NS_ASSERTION(mEventMessage == ePaste,
-               "caching clipboard data for invalid event");
+  NS_ASSERTION(mEventType == NS_PASTE, "caching clipboard data for invalid event");
 
   // Called during the constructor for paste events to cache the formats
   // available on the clipboard. As with CacheExternalDragFormats, the
@@ -1300,7 +1296,7 @@ DataTransfer::FillInExternalData(TransferItem& aItem, uint32_t aIndex)
   }
 
   // only drag and paste events should be calling FillInExternalData
-  NS_ASSERTION(mEventMessage != eCut && mEventMessage != eCopy,
+  NS_ASSERTION(mEventType != NS_CUT && mEventType != NS_COPY,
                "clipboard event with empty data");
 
     NS_ConvertUTF16toUTF8 utf8format(aItem.mFormat);
@@ -1318,7 +1314,7 @@ DataTransfer::FillInExternalData(TransferItem& aItem, uint32_t aIndex)
   trans->Init(nullptr);
   trans->AddDataFlavor(format);
 
-  if (mEventMessage == ePaste) {
+  if (mEventType == NS_PASTE) {
     MOZ_ASSERT(aIndex == 0, "index in clipboard must be 0");
 
     nsCOMPtr<nsIClipboard> clipboard = do_GetService("@mozilla.org/widget/clipboard;1");

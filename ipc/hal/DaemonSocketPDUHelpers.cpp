@@ -7,59 +7,22 @@
 #include "DaemonSocketPDUHelpers.h"
 #include <limits>
 
-// Enable this constant to abort Gecko on IPC errors. This is helpful
-// for debugging, but should *never* be enabled by default.
-#define MOZ_HAL_ABORT_ON_IPC_ERRORS (0)
-
 #ifdef CHROMIUM_LOG
 #undef CHROMIUM_LOG
 #endif
 
 #if defined(MOZ_WIDGET_GONK)
-
 #include <android/log.h>
-
-#define CHROMIUM_LOG(args...) \
-  __android_log_print(ANDROID_LOG_INFO, "HAL-IPC", args);
-
-#define CHROMIUM_LOG_VA(fmt, ap) \
-  __android_log_vprint(ANDROID_LOG_INFO, "HAL-IPC", fmt, ap);
-
+#define CHROMIUM_LOG(args...)  __android_log_print(ANDROID_LOG_INFO, "I/O", args);
 #else
-
 #include <stdio.h>
-
 #define IODEBUG true
-#define CHROMIUM_LOG(args...) if (IODEBUG) { printf(args); }
-#define CHROMIUM_LOG_VA(fmt, ap) if (IODEBUG) { vprintf(fmt, ap); }
-
+#define CHROMIUM_LOG(args...) if (IODEBUG) printf(args);
 #endif
 
 namespace mozilla {
 namespace ipc {
 namespace DaemonSocketPDUHelpers {
-
-//
-// Logging
-//
-
-namespace detail {
-
-void
-LogProtocolError(const char* aFmt, ...)
-{
-  va_list ap;
-
-  va_start(ap, aFmt);
-  CHROMIUM_LOG_VA(aFmt, ap);
-  va_end(ap);
-
-  if (MOZ_HAL_ABORT_ON_IPC_ERRORS) {
-    MOZ_CRASH("HAL IPC protocol error");
-  }
-}
-
-} // namespace detail
 
 //
 // Conversion
@@ -72,8 +35,7 @@ Convert(bool aIn, uint8_t& aOut)
     [false] = 0x00,
     [true] = 0x01
   };
-  if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn >= MOZ_ARRAY_LENGTH(sValue), bool, uint8_t)) {
+  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sValue))) {
     aOut = 0;
     return NS_ERROR_ILLEGAL_VALUE;
   }
@@ -97,10 +59,8 @@ Convert(bool aIn, int32_t& aOut)
 nsresult
 Convert(int aIn, uint8_t& aOut)
 {
-  if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn < std::numeric_limits<uint8_t>::min(), int, uint8_t) ||
-      MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn > std::numeric_limits<uint8_t>::max(), int, uint8_t)) {
+  if (NS_WARN_IF(aIn < std::numeric_limits<uint8_t>::min()) ||
+      NS_WARN_IF(aIn > std::numeric_limits<uint8_t>::max())) {
     aOut = 0; // silences compiler warning
     return NS_ERROR_ILLEGAL_VALUE;
   }
@@ -111,10 +71,8 @@ Convert(int aIn, uint8_t& aOut)
 nsresult
 Convert(int aIn, int16_t& aOut)
 {
-  if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn < std::numeric_limits<int16_t>::min(), int, int16_t) ||
-      MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn > std::numeric_limits<int16_t>::max(), int, int16_t)) {
+  if (NS_WARN_IF(aIn < std::numeric_limits<int16_t>::min()) ||
+      NS_WARN_IF(aIn > std::numeric_limits<int16_t>::max())) {
     aOut = 0; // silences compiler warning
     return NS_ERROR_ILLEGAL_VALUE;
   }
@@ -125,10 +83,8 @@ Convert(int aIn, int16_t& aOut)
 nsresult
 Convert(int aIn, int32_t& aOut)
 {
-  if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn < std::numeric_limits<int32_t>::min(), int, int32_t) ||
-      MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn > std::numeric_limits<int32_t>::max(), int, int32_t)) {
+  if (NS_WARN_IF(aIn < std::numeric_limits<int32_t>::min()) ||
+      NS_WARN_IF(aIn > std::numeric_limits<int32_t>::max())) {
     aOut = 0; // silences compiler warning
     return NS_ERROR_ILLEGAL_VALUE;
   }
@@ -143,8 +99,7 @@ Convert(uint8_t aIn, bool& aOut)
     [0x00] = false,
     [0x01] = true
   };
-  if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn >= MOZ_ARRAY_LENGTH(sBool), uint8_t, bool)) {
+  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sBool))) {
     return NS_ERROR_ILLEGAL_VALUE;
   }
   aOut = sBool[aIn];
@@ -182,10 +137,8 @@ Convert(uint32_t aIn, int& aOut)
 nsresult
 Convert(uint32_t aIn, uint8_t& aOut)
 {
-  if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn < std::numeric_limits<uint8_t>::min(), uint32_t, uint8_t) ||
-      MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn > std::numeric_limits<uint8_t>::max(), uint32_t, uint8_t)) {
+  if (NS_WARN_IF(aIn < std::numeric_limits<uint8_t>::min()) ||
+      NS_WARN_IF(aIn > std::numeric_limits<uint8_t>::max())) {
     aOut = 0; // silences compiler warning
     return NS_ERROR_ILLEGAL_VALUE;
   }
@@ -196,7 +149,7 @@ Convert(uint32_t aIn, uint8_t& aOut)
 nsresult
 Convert(size_t aIn, uint16_t& aOut)
 {
-  if (MOZ_HAL_IPC_CONVERT_WARN_IF(aIn >= (1ul << 16), size_t, uint16_t)) {
+  if (NS_WARN_IF(aIn >= (1ul << 16))) {
     aOut = 0; // silences compiler warning
     return NS_ERROR_ILLEGAL_VALUE;
   }
@@ -207,12 +160,6 @@ Convert(size_t aIn, uint16_t& aOut)
 //
 // Packing
 //
-
-nsresult
-PackPDU(bool aIn, DaemonSocketPDU& aPDU)
-{
-  return PackPDU(PackConversion<bool, uint8_t>(aIn), aPDU);
-}
 
 nsresult
 PackPDU(const DaemonSocketPDUHeader& aIn, DaemonSocketPDU& aPDU)
@@ -237,18 +184,6 @@ PackPDU(const DaemonSocketPDUHeader& aIn, DaemonSocketPDU& aPDU)
 //
 
 nsresult
-UnpackPDU(DaemonSocketPDU& aPDU, bool& aOut)
-{
-  return UnpackPDU(aPDU, UnpackConversion<uint8_t, bool>(aOut));
-}
-
-nsresult
-UnpackPDU(DaemonSocketPDU& aPDU, char& aOut)
-{
-  return UnpackPDU(aPDU, UnpackConversion<uint8_t, char>(aOut));
-}
-
-nsresult
 UnpackPDU(DaemonSocketPDU& aPDU, nsDependentCString& aOut)
 {
   // We get a pointer to the first character in the PDU, a length
@@ -256,19 +191,19 @@ UnpackPDU(DaemonSocketPDU& aPDU, nsDependentCString& aOut)
   // the string in the PDU, we can copy the actual bytes.
 
   const char* str = reinterpret_cast<const char*>(aPDU.Consume(1));
-  if (MOZ_HAL_IPC_UNPACK_WARN_IF(!str, nsDependentCString)) {
+  if (NS_WARN_IF(!str)) {
     return NS_ERROR_ILLEGAL_VALUE; // end of PDU
   }
 
   const char* end = static_cast<char*>(memchr(str, '\0', aPDU.GetSize() + 1));
-  if (MOZ_HAL_IPC_UNPACK_WARN_IF(!end, nsDependentCString)) {
+  if (NS_WARN_IF(!end)) {
     return NS_ERROR_ILLEGAL_VALUE; // no string terminator
   }
 
   ptrdiff_t len = end - str;
 
   const uint8_t* rest = aPDU.Consume(len);
-  if (MOZ_HAL_IPC_UNPACK_WARN_IF(!rest, nsDependentCString)) {
+  if (NS_WARN_IF(!rest)) {
     // We couldn't consume bytes that should have been there.
     return NS_ERROR_ILLEGAL_VALUE;
   }
@@ -325,7 +260,7 @@ PDUInitOp::WarnAboutTrailingData() const
   uint16_t payloadSize;
   mPDU->GetHeader(service, opcode, payloadSize);
 
-  detail::LogProtocolError(
+  CHROMIUM_LOG(
     "Unpacked PDU of type (%x,%x) still contains %zu Bytes of data.",
     service, opcode, size);
 }

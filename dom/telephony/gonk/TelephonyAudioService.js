@@ -22,7 +22,7 @@ const AUDIO_STATE_NAME = [
   "PHONE_STATE_IN_CALL"
 ];
 
-var DEBUG;
+let DEBUG;
 function debug(s) {
   dump("TelephonyAudioService: " + s + "\n");
 }

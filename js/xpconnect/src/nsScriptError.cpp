@@ -17,7 +17,6 @@
 #include "nsPIDOMWindow.h"
 #include "nsILoadContext.h"
 #include "nsIDocShell.h"
-#include "nsISensitiveInfoHiddenURI.h"
 
 nsScriptErrorBase::nsScriptErrorBase()
     :  mMessage(),
@@ -179,26 +178,7 @@ nsScriptErrorBase::InitWithWindowID(const nsAString& message,
                                     uint64_t aInnerWindowID)
 {
     mMessage.Assign(message);
-
-    if (!sourceName.IsEmpty()) {
-        mSourceName.Assign(sourceName);
-
-        nsCOMPtr<nsIURI> uri;
-        nsAutoCString pass;
-        if (NS_SUCCEEDED(NS_NewURI(getter_AddRefs(uri), sourceName)) &&
-            NS_SUCCEEDED(uri->GetPassword(pass)) &&
-            !pass.IsEmpty()) {
-            nsCOMPtr<nsISensitiveInfoHiddenURI> safeUri =
-                do_QueryInterface(uri);
-
-            nsAutoCString loc;
-            if (safeUri &&
-                NS_SUCCEEDED(safeUri->GetSensitiveInfoHiddenSpec(loc))) {
-                mSourceName.Assign(NS_ConvertUTF8toUTF16(loc));
-            }
-        }
-    }
-
+    mSourceName.Assign(sourceName);
     mLineNumber = lineNumber;
     mSourceLine.Assign(sourceLine);
     mColumnNumber = columnNumber;

@@ -101,13 +101,16 @@ function buildOptionListForChildren(node) {
     if (tagName == 'OPTION' || tagName == 'OPTGROUP') {
       let textContent =
         tagName == 'OPTGROUP' ? child.getAttribute("label")
-                              : child.text;
-      if (textContent == null) {
-        textContent = "";
+                              : child.textContent;
+
+      if (textContent != null) {
+        textContent = textContent.trim();
+      } else {
+        textContent = ""
       }
 
       let info = {
-        tagName: tagName,
+        tagName: child.tagName,
         textContent: textContent,
         disabled: child.disabled,
         // We need to do this for every option element as each one can have

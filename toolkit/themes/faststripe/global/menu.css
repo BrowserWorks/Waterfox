@@ -70,7 +70,8 @@ menuitem.spell-suggestion {
   -moz-margin-end: 1.35em !important;
 }
 
-.menu-iconic-left {
+.menu-iconic-left,
+.menu-iconic-right {
   min-width: 1.45em;
 }
 
@@ -155,8 +156,11 @@ menulist > menupopup > menu {
 }
 
 menulist > menupopup > menuitem > .menu-iconic-left,
-menulist > menupopup > menu > .menu-iconic-left {
+menulist > menupopup > menu > .menu-iconic-left,
+menulist > menupopup > menuitem > .menu-iconic-right,
+menulist > menupopup > menu > .menu-iconic-right {
   display: none;
+  padding-top: 0px;
 }
 
 menulist > menupopup > menuitem > label,

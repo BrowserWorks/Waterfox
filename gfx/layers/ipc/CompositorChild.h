@@ -74,9 +74,7 @@ public:
   RecvClearCachedResources(const uint64_t& id) override;
 
   virtual bool
-  RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId,
-                   const TimeStamp& aCompositeStart,
-                   const TimeStamp& aCompositeEnd) override;
+  RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId) override;
 
   virtual bool
   RecvInvalidateAll() override;
@@ -90,7 +88,8 @@ public:
                                  nsTArray<PluginWindowData>&& aPlugins) override;
 
   virtual bool
-  RecvHideAllPlugins(const uintptr_t& aParentWidget) override;
+  RecvUpdatePluginVisibility(const uintptr_t& aOwnerWidget,
+                             nsTArray<uintptr_t>&& aWindowList) override;
 
   /**
    * Request that the parent tell us when graphics are ready on GPU.

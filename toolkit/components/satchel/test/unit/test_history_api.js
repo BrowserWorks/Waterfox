@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 var testnum = 0;
-var dbConnection; // used for deleted table tests
+let dbConnection; // used for deleted table tests
 
 Cu.import("resource://gre/modules/Promise.jsm");
 

@@ -12,7 +12,5 @@ EXTRA_JS_MODULES.devtools.toolkit.webconsole += [
     'client.js',
     'network-helper.js',
     'network-monitor.js',
-    'server-logger-monitor.js',
-    'server-logger.js',
     'utils.js',
 ]

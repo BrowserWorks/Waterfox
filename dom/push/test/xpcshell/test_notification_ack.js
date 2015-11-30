@@ -5,7 +5,7 @@
 
 const {PushDB, PushService, PushServiceWebSocket} = serviceExports;
 
-var userAgentID = '5ab1d1df-7a3d-4024-a469-b9e1bb399fad';
+let userAgentID = '5ab1d1df-7a3d-4024-a469-b9e1bb399fad';
 
 function run_test() {
   do_get_profile();
@@ -54,8 +54,7 @@ add_task(function* test_notification_ack() {
   ]);
 
   let acks = 0;
-  let ackDone;
-  let ackPromise = new Promise(resolve => ackDone = resolve);
+  let ackDefer = Promise.defer();
   PushService.init({
     serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
@@ -116,7 +115,7 @@ add_task(function* test_notification_ack() {
               channelID: '5477bfda-22db-45d4-9614-fee369630260',
               version: 6
             }], updates, 'Wrong updates for acknowledgement 3');
-            ackDone();
+            ackDefer.resolve();
             break;
 
           default:
@@ -129,6 +128,6 @@ add_task(function* test_notification_ack() {
 
   yield waitForPromise(notifyPromise, DEFAULT_TIMEOUT,
     'Timed out waiting for notifications');
-  yield waitForPromise(ackPromise, DEFAULT_TIMEOUT,
+  yield waitForPromise(ackDefer.promise, DEFAULT_TIMEOUT,
     'Timed out waiting for multiple acknowledgements');
 });

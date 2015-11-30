@@ -7,35 +7,21 @@
 """Windows platform implementation."""
 
 import errno
-import functools
 import os
 import sys
-from collections import namedtuple
 
-from . import _common
-from . import _psutil_windows as cext
-from ._common import conn_tmap, usage_percent, isfile_strict
-from ._common import sockfam_to_enum, socktype_to_enum
-from ._compat import PY3, xrange, lru_cache, long
-from ._psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,
-                              BELOW_NORMAL_PRIORITY_CLASS,
-                              HIGH_PRIORITY_CLASS,
-                              IDLE_PRIORITY_CLASS,
-                              NORMAL_PRIORITY_CLASS,
-                              REALTIME_PRIORITY_CLASS)
-
-if sys.version_info >= (3, 4):
-    import enum
-else:
-    enum = None
+from psutil import _common
+from psutil._common import conn_tmap, usage_percent, isfile_strict
+from psutil._compat import PY3, xrange, wraps, lru_cache, namedtuple
+import _psutil_windows as cext
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
                   "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
                   "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
+                  #
                   "CONN_DELETE_TCB",
-                  "AF_LINK",
                   ]
 
 # --- module level constants (gets pushed up to psutil module)
@@ -44,11 +30,6 @@ CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
                                cext.ERROR_ACCESS_DENIED])
-if enum is None:
-    AF_LINK = -1
-else:
-    AddressFamily = enum.IntEnum('AddressFamily', {'AF_LINK': -1})
-    AF_LINK = AddressFamily.AF_LINK
 
 TCP_STATUSES = {
     cext.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,
@@ -66,16 +47,6 @@ TCP_STATUSES = {
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
 
-if enum is not None:
-    class Priority(enum.IntEnum):
-        ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
-        BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
-        HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
-        IDLE_PRIORITY_CLASS = IDLE_PRIORITY_CLASS
-        NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
-        REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
-
-    globals().update(Priority.__members__)
 
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
@@ -86,10 +57,6 @@ pextmem = namedtuple(
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
-ntpinfo = namedtuple(
-    'ntpinfo', ['num_handles', 'ctx_switches', 'user_time', 'kernel_time',
-                'create_time', 'num_threads', 'io_rcount', 'io_wcount',
-                'io_rbytes', 'io_wbytes'])
 
 # set later from __init__.py
 NoSuchProcess = None
@@ -199,27 +166,15 @@ def net_connections(kind, _pid=-1):
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
     rawlist = cext.net_connections(_pid, families, types)
-    ret = set()
+    ret = []
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
         status = TCP_STATUSES[status]
-        fam = sockfam_to_enum(fam)
-        type = socktype_to_enum(type)
         if _pid == -1:
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
         else:
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
-        ret.add(nt)
-    return list(ret)
-
-
-def net_if_stats():
-    ret = cext.net_if_stats()
-    for name, items in ret.items():
-        isup, duplex, speed, mtu = items
-        if hasattr(_common, 'NicDuplex'):
-            duplex = _common.NicDuplex(duplex)
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+        ret.append(nt)
     return ret
 
 
@@ -239,21 +194,21 @@ pid_exists = cext.pid_exists
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
 ppid_map = cext.ppid_map  # not meant to be public
-net_if_addrs = cext.net_if_addrs
 
 
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError and WindowsError
     exceptions into NoSuchProcess and AccessDenied.
     """
-    @functools.wraps(fun)
+    @wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except OSError as err:
+        except OSError:
             # support for private module import
             if NoSuchProcess is None or AccessDenied is None:
                 raise
+            err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
                 raise AccessDenied(self.pid, self._name)
             if err.errno == errno.ESRCH:
@@ -265,12 +220,11 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid"]
+    __slots__ = ["pid", "_name"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
-        self._ppid = None
 
     @wrap_exceptions
     def name(self):
@@ -284,12 +238,7 @@ class Process(object):
         elif self.pid == 4:
             return "System"
         else:
-            try:
-                # Note: this will fail with AD for most PIDs owned
-                # by another user but it's faster.
-                return os.path.basename(self.exe())
-            except AccessDenied:
-                return cext.proc_name(self.pid)
+            return os.path.basename(self.exe())
 
     @wrap_exceptions
     def exe(self):
@@ -316,10 +265,9 @@ class Process(object):
     def _get_raw_meminfo(self):
         try:
             return cext.proc_memory_info(self.pid)
-        except OSError as err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                # TODO: the C ext can probably be refactored in order
-                # to get this from cext.proc_info()
                 return cext.proc_memory_info_2(self.pid)
             raise
 
@@ -339,9 +287,10 @@ class Process(object):
     def memory_maps(self):
         try:
             raw = cext.proc_memory_maps(self.pid)
-        except OSError as err:
+        except OSError:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
+            err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
                 raise AccessDenied(self.pid, self._name)
             if err.errno == errno.ESRCH:
@@ -385,14 +334,15 @@ class Process(object):
             return boot_time()
         try:
             return cext.proc_create_time(self.pid)
-        except OSError as err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                return ntpinfo(*cext.proc_info(self.pid)).create_time
+                return cext.proc_create_time_2(self.pid)
             raise
 
     @wrap_exceptions
     def num_threads(self):
-        return ntpinfo(*cext.proc_info(self.pid)).num_threads
+        return cext.proc_num_threads(self.pid)
 
     @wrap_exceptions
     def threads(self):
@@ -407,10 +357,10 @@ class Process(object):
     def cpu_times(self):
         try:
             ret = cext.proc_cpu_times(self.pid)
-        except OSError as err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                nt = ntpinfo(*cext.proc_info(self.pid))
-                ret = (nt.user_time, nt.kernel_time)
+                ret = cext.proc_cpu_times_2(self.pid)
             else:
                 raise
         return _common.pcputimes(*ret)
@@ -442,10 +392,10 @@ class Process(object):
         # Convert the first part in the corresponding drive letter
         # (e.g. "C:\") by using Windows's QueryDosDevice()
         raw_file_names = cext.proc_open_files(self.pid)
-        for _file in raw_file_names:
-            _file = _convert_raw_path(_file)
-            if isfile_strict(_file) and _file not in retlist:
-                ntuple = _common.popenfile(_file, -1)
+        for file in raw_file_names:
+            file = _convert_raw_path(file)
+            if isfile_strict(file) and file not in retlist:
+                ntuple = _common.popenfile(file, -1)
                 retlist.append(ntuple)
         return retlist
 
@@ -455,10 +405,7 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        value = cext.proc_priority_get(self.pid)
-        if enum is not None:
-            value = Priority(value)
-        return value
+        return cext.proc_priority_get(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
@@ -484,10 +431,10 @@ class Process(object):
     def io_counters(self):
         try:
             ret = cext.proc_io_counters(self.pid)
-        except OSError as err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                nt = ntpinfo(*cext.proc_info(self.pid))
-                ret = (nt.io_rcount, nt.io_wcount, nt.io_rbytes, nt.io_wbytes)
+                ret = cext.proc_io_counters_2(self.pid)
             else:
                 raise
         return _common.pio(*ret)
@@ -502,8 +449,7 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_get(self):
-        def from_bitmask(x):
-            return [i for i in xrange(64) if (1 << i) & x]
+        from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
         bitmask = cext.proc_cpu_affinity_get(self.pid)
         return from_bitmask(bitmask)
 
@@ -523,11 +469,7 @@ class Process(object):
         allcpus = list(range(len(per_cpu_times())))
         for cpu in value:
             if cpu not in allcpus:
-                if not isinstance(cpu, (int, long)):
-                    raise TypeError(
-                        "invalid CPU %r; an integer is required" % cpu)
-                else:
-                    raise ValueError("invalid CPU %r" % cpu)
+                raise ValueError("invalid CPU %r" % cpu)
 
         bitmask = to_bitmask(value)
         cext.proc_cpu_affinity_set(self.pid, bitmask)
@@ -536,13 +478,13 @@ class Process(object):
     def num_handles(self):
         try:
             return cext.proc_num_handles(self.pid)
-        except OSError as err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                return ntpinfo(*cext.proc_info(self.pid)).num_handles
+                return cext.proc_num_handles_2(self.pid)
             raise
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        ctx_switches = ntpinfo(*cext.proc_info(self.pid)).ctx_switches
-        # only voluntary ctx switches are supported
-        return _common.pctxsw(ctx_switches, 0)
+        tupl = cext.proc_num_ctx_switches(self.pid)
+        return _common.pctxsw(*tupl)

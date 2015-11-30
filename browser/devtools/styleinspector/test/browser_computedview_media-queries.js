@@ -9,13 +9,17 @@
 
 const TEST_URI = TEST_URL_ROOT + "doc_media_queries.html";
 
-var {PropertyView} = require("devtools/styleinspector/computed-view");
-var {CssLogic} = require("devtools/styleinspector/css-logic");
+let {PropertyView} = require("devtools/styleinspector/computed-view");
+let {CssLogic} = require("devtools/styleinspector/css-logic");
 
 add_task(function*() {
   yield addTab(TEST_URI);
-  let {inspector, view} = yield openComputedView();
+  let {toolbox, inspector, view} = yield openComputedView();
+
+  info("Selecting the test element");
   yield selectNode("div", inspector);
+
+  info("Checking property view");
   yield checkPropertyView(view);
 });
 

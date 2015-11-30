@@ -303,7 +303,7 @@ GetTopJitJSScript(JSContext* cx)
     return iter.script();
 }
 
-#ifdef JS_CODEGEN_MIPS32
+#ifdef JS_CODEGEN_MIPS
 uint8_t* alignDoubleSpillWithOffset(uint8_t* pointer, int32_t offset);
 #else
 inline uint8_t*
@@ -699,8 +699,8 @@ class IonOOLSetterOpExitFrameLayout : public IonOOLPropertyOpExitFrameLayout
     }
 };
 
-// ProxyGetProperty(JSContext* cx, HandleObject proxy, HandleId id, MutableHandleValue vp)
-// ProxyCallProperty(JSContext* cx, HandleObject proxy, HandleId id, MutableHandleValue vp)
+// Proxy::get(JSContext* cx, HandleObject proxy, HandleObject receiver, HandleId id,
+//            MutableHandleValue vp)
 // ProxySetProperty(JSContext* cx, HandleObject proxy, HandleId id, MutableHandleValue vp,
 //                  bool strict)
 class IonOOLProxyExitFrameLayout
@@ -711,6 +711,9 @@ class IonOOLProxyExitFrameLayout
 
     // The proxy object.
     JSObject* proxy_;
+
+    // Object for HandleObject
+    JSObject* receiver_;
 
     // id for HandleId
     jsid id_;
@@ -742,6 +745,9 @@ class IonOOLProxyExitFrameLayout
     }
     inline jsid* id() {
         return &id_;
+    }
+    inline JSObject** receiver() {
+        return &receiver_;
     }
     inline JSObject** proxy() {
         return &proxy_;

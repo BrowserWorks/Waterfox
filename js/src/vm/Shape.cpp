@@ -335,8 +335,8 @@ Shape::replaceLastProperty(ExclusiveContext* cx, StackBaseShape& base,
     if (!nbase)
         return nullptr;
 
-    Rooted<StackShape> child(cx, StackShape(shape));
-    child.setBase(nbase);
+    StackShape child(shape);
+    child.base = nbase;
 
     return cx->compartment()->propertyTree.getChild(cx, shape->parent, child);
 }
@@ -348,7 +348,7 @@ Shape::replaceLastProperty(ExclusiveContext* cx, StackBaseShape& base,
  */
 /* static */ Shape*
 NativeObject::getChildPropertyOnDictionary(ExclusiveContext* cx, HandleNativeObject obj,
-                                           HandleShape parent, MutableHandle<StackShape> child)
+                                           HandleShape parent, StackShape& child)
 {
     /*
      * Shared properties have no slot, but slot_ will reflect that of parent.
@@ -385,14 +385,15 @@ NativeObject::getChildPropertyOnDictionary(ExclusiveContext* cx, HandleNativeObj
 
     if (obj->inDictionaryMode()) {
         MOZ_ASSERT(parent == obj->lastProperty());
-        shape = child.isAccessorShape() ? Allocate<AccessorShape>(cx) : Allocate<Shape>(cx);
+        RootedGeneric<StackShape*> childRoot(cx, &child);
+        shape = childRoot->isAccessorShape() ? Allocate<AccessorShape>(cx) : Allocate<Shape>(cx);
         if (!shape)
             return nullptr;
-        if (child.hasSlot() && child.slot() >= obj->lastProperty()->base()->slotSpan()) {
-            if (!obj->setSlotSpan(cx, child.slot() + 1))
+        if (childRoot->hasSlot() && childRoot->slot() >= obj->lastProperty()->base()->slotSpan()) {
+            if (!obj->setSlotSpan(cx, childRoot->slot() + 1))
                 return nullptr;
         }
-        shape->initDictionaryShape(child, obj->numFixedSlots(), &obj->shape_);
+        shape->initDictionaryShape(*childRoot, obj->numFixedSlots(), &obj->shape_);
     }
 
     return shape;
@@ -400,13 +401,13 @@ NativeObject::getChildPropertyOnDictionary(ExclusiveContext* cx, HandleNativeObj
 
 /* static */ Shape*
 NativeObject::getChildProperty(ExclusiveContext* cx,
-                               HandleNativeObject obj, HandleShape parent,
-                               MutableHandle<StackShape> child)
+                               HandleNativeObject obj, HandleShape parent, StackShape& unrootedChild)
 {
-    Shape* shape = getChildPropertyOnDictionary(cx, obj, parent, child);
+    RootedGeneric<StackShape*> child(cx, &unrootedChild);
+    Shape* shape = getChildPropertyOnDictionary(cx, obj, parent, *child);
 
     if (!obj->inDictionaryMode()) {
-        shape = cx->compartment()->propertyTree.getChild(cx, parent, child);
+        shape = cx->compartment()->propertyTree.getChild(cx, parent, *child);
         if (!shape)
             return nullptr;
         //MOZ_ASSERT(shape->parent == parent);
@@ -576,9 +577,9 @@ NativeObject::addPropertyInternal(ExclusiveContext* cx,
                 return nullptr;
         }
 
-        Rooted<StackShape> child(cx, StackShape(nbase, id, slot, attrs, flags));
+        StackShape child(nbase, id, slot, attrs, flags);
         child.updateGetterSetter(getter, setter);
-        shape = getChildProperty(cx, obj, last, &child);
+        shape = getChildProperty(cx, obj, last, child);
     }
 
     if (shape) {
@@ -642,7 +643,7 @@ js::ReshapeForAllocKind(JSContext* cx, Shape* shape, TaggedProto proto,
                 return nullptr;
         }
 
-        Rooted<StackShape> child(cx, StackShape(nbase, id, i, JSPROP_ENUMERATE, 0));
+        StackShape child(nbase, id, i, JSPROP_ENUMERATE, 0);
         newShape = cx->compartment()->propertyTree.getChild(cx, newShape, child);
         if (!newShape)
             return nullptr;
@@ -835,10 +836,10 @@ NativeObject::putProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId
         MOZ_ASSERT(shape == obj->lastProperty());
 
         /* Find or create a property tree node labeled by our arguments. */
-        Rooted<StackShape> child(cx, StackShape(nbase, id, slot, attrs, flags));
+        StackShape child(nbase, id, slot, attrs, flags);
         child.updateGetterSetter(getter, setter);
         RootedShape parent(cx, shape->parent);
-        Shape* newShape = getChildProperty(cx, obj, parent, &child);
+        Shape* newShape = getChildProperty(cx, obj, parent, child);
 
         if (!newShape) {
             obj->checkShapeConsistency();

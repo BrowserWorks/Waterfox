@@ -24,7 +24,7 @@ try {
 
 assertEq(actual, expect);
 
-s += s.slice(0, -4);
+s += s.slice(0, -2);
 
 try {
     eval(s);

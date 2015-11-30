@@ -12,17 +12,7 @@ Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 
-var fakeServer = new SyncServer();
-fakeServer.start();
-
-do_register_cleanup(function() {
-  return new Promise(resolve => {
-    fakeServer.stop(resolve);
-  });
-});
-
-var fakeServerUrl = "http://localhost:" + fakeServer.port;
-
+const FAKE_SERVER_URL = "http://dummy:9000/";
 const logsdir = FileUtils.getDir("ProfD", ["weave", "logs"], true);
 
 const PROLONGED_ERROR_DURATION =
@@ -50,12 +40,12 @@ CatapultEngine.prototype = {
   }
 };
 
-var engineManager = Service.engineManager;
+let engineManager = Service.engineManager;
 engineManager.register(CatapultEngine);
 
 // This relies on Service/ErrorHandler being a singleton. Fixing this will take
 // a lot of work.
-var errorHandler = Service.errorHandler;
+let errorHandler = Service.errorHandler;
 
 function run_test() {
   initTestLogging("Trace");
@@ -181,9 +171,6 @@ add_identity_test(this, function test_401_logout() {
       _("Got weave:service:login:error in second sync.");
       Svc.Obs.remove("weave:service:login:error", onLoginError);
 
-      let errorCount = sumHistogram("WEAVE_STORAGE_AUTH_ERRORS", { key: "info/collections" });
-      do_check_eq(errorCount, 2);
-
       do_check_eq(Status.login, LOGIN_FAILED_LOGIN_REJECTED);
       do_check_false(Service.isLoggedIn);
 
@@ -249,8 +236,8 @@ add_identity_test(this, function test_shouldReportError() {
 
   // Give ourselves a clusterURL so that the temporary 401 no-error situation
   // doesn't come into play.
-  Service.serverURL  = fakeServerUrl;
-  Service.clusterURL = fakeServerUrl;
+  Service.serverURL  = FAKE_SERVER_URL;
+  Service.clusterURL = FAKE_SERVER_URL;
 
   // Test dontIgnoreErrors, non-network, non-prolonged, login error reported
   Status.resetSync();
@@ -602,8 +589,8 @@ add_identity_test(this, function test_sync_syncAndReportErrors_prolonged_non_net
 add_identity_test(this, function test_login_syncAndReportErrors_network_error() {
   // Test network errors are reported when calling syncAndReportErrors.
   yield configureIdentity({username: "broken.wipe"});
-  Service.serverURL  = fakeServerUrl;
-  Service.clusterURL = fakeServerUrl;
+  Service.serverURL  = FAKE_SERVER_URL;
+  Service.clusterURL = FAKE_SERVER_URL;
 
   let deferred = Promise.defer();
   Svc.Obs.add("weave:ui:login:error", function onSyncError() {
@@ -642,8 +629,8 @@ add_identity_test(this, function test_login_syncAndReportErrors_prolonged_networ
   // when calling syncAndReportErrors.
   yield configureIdentity({username: "johndoe"});
 
-  Service.serverURL  = fakeServerUrl;
-  Service.clusterURL = fakeServerUrl;
+  Service.serverURL  = FAKE_SERVER_URL;
+  Service.clusterURL = FAKE_SERVER_URL;
 
   let deferred = Promise.defer();
   Svc.Obs.add("weave:ui:login:error", function onSyncError() {
@@ -728,8 +715,8 @@ add_task(function test_sync_prolonged_non_network_error() {
 add_identity_test(this, function test_login_prolonged_network_error() {
   // Test prolonged, network errors are reported
   yield configureIdentity({username: "johndoe"});
-  Service.serverURL  = fakeServerUrl;
-  Service.clusterURL = fakeServerUrl;
+  Service.serverURL  = FAKE_SERVER_URL;
+  Service.clusterURL = FAKE_SERVER_URL;
 
   let deferred = Promise.defer();
   Svc.Obs.add("weave:ui:login:error", function onSyncError() {
@@ -814,8 +801,8 @@ add_task(function test_sync_non_network_error() {
 
 add_identity_test(this, function test_login_network_error() {
   yield configureIdentity({username: "johndoe"});
-  Service.serverURL  = fakeServerUrl;
-  Service.clusterURL = fakeServerUrl;
+  Service.serverURL  = FAKE_SERVER_URL;
+  Service.clusterURL = FAKE_SERVER_URL;
 
   let deferred = Promise.defer();
   // Test network errors are not reported.
@@ -1804,10 +1791,6 @@ add_task(function test_sync_engine_generic_fail() {
       do_check_true(logfile.leafName.startsWith("error-sync-"), logfile.leafName);
 
       clean();
-
-      let syncErrors = sumHistogram("WEAVE_ENGINE_SYNC_ERRORS", { key: "catapult" });
-      do_check_true(syncErrors, 1);
-
       server.stop(deferred.resolve);
     });
   });

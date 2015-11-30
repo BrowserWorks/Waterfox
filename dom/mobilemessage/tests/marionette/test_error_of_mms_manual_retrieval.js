@@ -9,18 +9,18 @@ MARIONETTE_CONTEXT = "chrome";
 
 Cu.import("resource://gre/modules/Promise.jsm");
 
-var MMS = {};
+let MMS = {};
 Cu.import("resource://gre/modules/MmsPduHelper.jsm", MMS);
 
-var gMobileMessageDatabaseService =
+let gMobileMessageDatabaseService =
   Cc["@mozilla.org/mobilemessage/gonkmobilemessagedatabaseservice;1"]
     .getService(Ci.nsIGonkMobileMessageDatabaseService);
 
-var gUuidGenerator =
+let gUuidGenerator =
   Cc["@mozilla.org/uuid-generator;1"]
     .getService(Ci.nsIUUIDGenerator);
 
-var gMmsService = Cc["@mozilla.org/mms/gonkmmsservice;1"]
+let gMmsService = Cc["@mozilla.org/mms/gonkmmsservice;1"]
                        .getService(Ci.nsIMmsService);
 
 function saveMmsNotification() {
@@ -111,7 +111,7 @@ function testRetrieve(aCause, aInit, aCleanup) {
     .then(() => { if (aCleanup) aCleanup(); });
 }
 
-var setRadioDisabled = function(aDisabled) {
+let setRadioDisabled = function(aDisabled) {
     log("set ril.radio.disabled to " + aDisabled);
     Services.prefs.setBoolPref("ril.radio.disabled", aDisabled);
 };

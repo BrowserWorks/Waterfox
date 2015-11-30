@@ -64,7 +64,7 @@
 
 "use strict";
 
-var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+let { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -287,14 +287,8 @@ const DownloadsPanel = {
    * visualization.
    */
   handleEvent(aEvent) {
-    switch (aEvent.type) {
-      case "mousemove":
-        this.keyFocusing = false;
-        break;
-      case "keydown":
-        return this._onKeyDown(aEvent);
-      case "keypress":
-        return this._onKeyPress(aEvent);
+    if (aEvent.type == "mousemove") {
+      this.keyFocusing = false;
     }
   },
 
@@ -384,10 +378,10 @@ const DownloadsPanel = {
    */
   _attachEventListeners() {
     // Handle keydown to support accel-V.
-    this.panel.addEventListener("keydown", this, false);
+    this.panel.addEventListener("keydown", this._onKeyDown.bind(this), false);
     // Handle keypress to be able to preventDefault() events before they reach
     // the richlistbox, for keyboard navigation.
-    this.panel.addEventListener("keypress", this, false);
+    this.panel.addEventListener("keypress", this._onKeyPress.bind(this), false);
   },
 
   /**
@@ -395,8 +389,10 @@ const DownloadsPanel = {
    * is called automatically on panel termination.
    */
   _unattachEventListeners() {
-    this.panel.removeEventListener("keydown", this, false);
-    this.panel.removeEventListener("keypress", this, false);
+    this.panel.removeEventListener("keydown", this._onKeyDown.bind(this),
+                                   false);
+    this.panel.removeEventListener("keypress", this._onKeyPress.bind(this),
+                                   false);
   },
 
   _onKeyPress(aEvent) {

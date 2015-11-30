@@ -8,6 +8,7 @@
 
 #include "nsIPrintSession.h" 
 #include "nsWeakReference.h"
+#include "gfxCore.h"
 
 //*****************************************************************************
 //***    nsPrintSession

@@ -4,8 +4,8 @@
 
 "use strict";
 
-var initialLocation = gBrowser.currentURI.spec;
-var globalClipboard;
+let initialLocation = gBrowser.currentURI.spec;
+let globalClipboard;
 
 add_task(function() {
   info("Check cut button existence and functionality");

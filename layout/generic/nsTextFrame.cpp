@@ -355,9 +355,6 @@ public:
     }
   }
 
-  nscolor GetSystemFieldForegroundColor();
-  nscolor GetSystemFieldBackgroundColor();
-
 protected:
   nsTextFrame*   mFrame;
   nsPresContext* mPresContext;
@@ -377,8 +374,6 @@ protected:
 
   int32_t mSufficientContrast;
   nscolor mFrameBackgroundColor;
-  nscolor mSystemFieldForegroundColor;
-  nscolor mSystemFieldBackgroundColor;
 
   // selection colors and underline info, the colors are resolved colors if
   // mResolveColors is true (which is the default), i.e., the foreground color
@@ -556,9 +551,7 @@ class FrameTextRunCache final : public nsExpirationTracker<gfxTextRun,3> {
 public:
   enum { TIMEOUT_SECONDS = 10 };
   FrameTextRunCache()
-    : nsExpirationTracker<gfxTextRun,3>(TIMEOUT_SECONDS * 1000,
-                                        "FrameTextRunCache")
-  {}
+      : nsExpirationTracker<gfxTextRun,3>(TIMEOUT_SECONDS*1000) {}
   ~FrameTextRunCache() {
     AgeAllGenerations();
   }
@@ -3642,11 +3635,6 @@ nsTextPaintStyle::InitCommonColors()
   nscolor defaultBgColor = mPresContext->DefaultBackgroundColor();
   mFrameBackgroundColor = NS_ComposeColors(defaultBgColor, bgColor);
 
-  mSystemFieldForegroundColor =
-    LookAndFeel::GetColor(LookAndFeel::eColorID__moz_fieldtext);
-  mSystemFieldBackgroundColor =
-    LookAndFeel::GetColor(LookAndFeel::eColorID__moz_field);
-
   if (bgFrame->IsThemed()) {
     // Assume a native widget has sufficient contrast always
     mSufficientContrast = 0;
@@ -3672,20 +3660,6 @@ nsTextPaintStyle::InitCommonColors()
                                            selectionBGColor));
 
   mInitCommonColors = true;
-}
-
-nscolor
-nsTextPaintStyle::GetSystemFieldForegroundColor()
-{
-  InitCommonColors();
-  return mSystemFieldForegroundColor;
-}
-
-nscolor
-nsTextPaintStyle::GetSystemFieldBackgroundColor()
-{
-  InitCommonColors();
-  return mSystemFieldBackgroundColor;
 }
 
 static Element*
@@ -5199,16 +5173,16 @@ nsTextFrame::UnionAdditionalOverflow(nsPresContext* aPresContext,
   AddStateBits(TEXT_SELECTION_UNDERLINE_OVERFLOWED);
 }
 
-gfxFloat
-nsTextFrame::ComputeDescentLimitForSelectionUnderline(
-               nsPresContext* aPresContext,
-               const gfxFont::Metrics& aFontMetrics)
+static gfxFloat
+ComputeDescentLimitForSelectionUnderline(nsPresContext* aPresContext,
+                                         nsTextFrame* aFrame,
+                                         const gfxFont::Metrics& aFontMetrics)
 {
   gfxFloat app = aPresContext->AppUnitsPerDevPixel();
   nscoord lineHeightApp =
-    nsHTMLReflowState::CalcLineHeight(GetContent(),
-                                      StyleContext(), NS_AUTOHEIGHT,
-                                      GetFontSizeInflation());
+    nsHTMLReflowState::CalcLineHeight(aFrame->GetContent(),
+                                      aFrame->StyleContext(), NS_AUTOHEIGHT,
+                                      aFrame->GetFontSizeInflation());
   gfxFloat lineHeight = gfxFloat(lineHeightApp) / app;
   if (lineHeight <= aFontMetrics.maxHeight) {
     return aFontMetrics.maxDescent;
@@ -5226,12 +5200,10 @@ static const SelectionType SelectionTypesWithDecorations =
   nsISelectionController::SELECTION_IME_CONVERTEDTEXT |
   nsISelectionController::SELECTION_IME_SELECTEDCONVERTEDTEXT;
 
-/* static */
-gfxFloat
-nsTextFrame::ComputeSelectionUnderlineHeight(
-               nsPresContext* aPresContext,
-               const gfxFont::Metrics& aFontMetrics,
-               SelectionType aSelectionType)
+static gfxFloat
+ComputeSelectionUnderlineHeight(nsPresContext* aPresContext,
+                                const gfxFont::Metrics& aFontMetrics,
+                                SelectionType aSelectionType)
 {
   switch (aSelectionType) {
     case nsISelectionController::SELECTION_IME_RAWINPUT:
@@ -5259,22 +5231,28 @@ nsTextFrame::ComputeSelectionUnderlineHeight(
   }
 }
 
-void
-nsTextFrame::PaintDecorationLine(gfxContext* const aCtx,
-                                 const gfxRect& aDirtyRect,
-                                 nscolor aColor,
-                                 const nscolor* aOverrideColor,
-                                 const gfxPoint& aPt,
-                                 gfxFloat aICoordInFrame,
-                                 const gfxSize& aLineSize,
-                                 gfxFloat aAscent,
-                                 gfxFloat aOffset,
-                                 uint8_t aDecoration,
-                                 uint8_t aStyle,
-                                 DecorationType aDecorationType,
-                                 DrawPathCallbacks* aCallbacks,
-                                 bool aVertical,
-                                 gfxFloat aDescentLimit /* = -1.0 */)
+enum DecorationType {
+  eNormalDecoration,
+  eSelectionDecoration
+};
+
+static void
+PaintDecorationLine(nsIFrame* aFrame,
+                    gfxContext* const aCtx,
+                    const gfxRect& aDirtyRect,
+                    nscolor aColor,
+                    const nscolor* aOverrideColor,
+                    const gfxPoint& aPt,
+                    gfxFloat aICoordInFrame,
+                    const gfxSize& aLineSize,
+                    gfxFloat aAscent,
+                    gfxFloat aOffset,
+                    uint8_t aDecoration,
+                    uint8_t aStyle,
+                    DecorationType aDecorationType,
+                    nsTextFrame::DrawPathCallbacks* aCallbacks,
+                    bool aVertical,
+                    gfxFloat aDescentLimit = -1.0)
 {
   nscolor lineColor = aOverrideColor ? *aOverrideColor : aColor;
   if (aCallbacks) {
@@ -5287,7 +5265,7 @@ nsTextFrame::PaintDecorationLine(gfxContext* const aCtx,
       aCallbacks->PaintSelectionDecorationLine(path, lineColor);
     }
   } else {
-    nsCSSRendering::PaintDecorationLine(this, *aCtx->GetDrawTarget(),
+    nsCSSRendering::PaintDecorationLine(aFrame, *aCtx->GetDrawTarget(),
                                         ToRect(aDirtyRect), lineColor,
       aPt, Float(aICoordInFrame), aLineSize, aAscent, aOffset, aDecoration, aStyle,
       aVertical, aDescentLimit);
@@ -5298,20 +5276,16 @@ nsTextFrame::PaintDecorationLine(gfxContext* const aCtx,
  * This, plus SelectionTypesWithDecorations, encapsulates all knowledge about
  * drawing text decoration for selections.
  */
-void
-nsTextFrame::DrawSelectionDecorations(gfxContext* aContext,
-                                      const gfxRect& aDirtyRect,
-                                      SelectionType aType,
-                                      nsTextPaintStyle& aTextPaintStyle,
-                                      const TextRangeStyle &aRangeStyle,
-                                      const gfxPoint& aPt,
-                                      gfxFloat aICoordInFrame,
-                                      gfxFloat aWidth,
-                                      gfxFloat aAscent,
-                                      const gfxFont::Metrics& aFontMetrics,
-                                      DrawPathCallbacks* aCallbacks,
-                                      bool aVertical,
-                                      uint8_t aDecoration)
+static void DrawSelectionDecorations(gfxContext* aContext,
+    const gfxRect& aDirtyRect,
+    SelectionType aType,
+    nsTextFrame* aFrame,
+    nsTextPaintStyle& aTextPaintStyle,
+    const TextRangeStyle &aRangeStyle,
+    const gfxPoint& aPt, gfxFloat aICoordInFrame, gfxFloat aWidth,
+    gfxFloat aAscent, const gfxFont::Metrics& aFontMetrics,
+    nsTextFrame::DrawPathCallbacks* aCallbacks,
+    bool aVertical, uint8_t aDecoration)
 {
   gfxPoint pt(aPt);
   gfxSize size(aWidth,
@@ -5319,7 +5293,7 @@ nsTextFrame::DrawSelectionDecorations(gfxContext* aContext,
                                                aFontMetrics, aType));
   gfxFloat descentLimit =
     ComputeDescentLimitForSelectionUnderline(aTextPaintStyle.PresContext(),
-                                             aFontMetrics);
+                                             aFrame, aFontMetrics);
 
   float relativeSize;
   uint8_t style;
@@ -5365,25 +5339,13 @@ nsTextFrame::DrawSelectionDecorations(gfxContext* aContext,
           // There is no underline style definition.
           return;
         }
-        // If underline color is defined and that doesn't depend on the
-        // foreground color, we should use the color directly.
-        if (aRangeStyle.IsUnderlineColorDefined() &&
-            (!aRangeStyle.IsForegroundColorDefined() ||
-             aRangeStyle.mUnderlineColor != aRangeStyle.mForegroundColor)) {
+        if (aRangeStyle.IsUnderlineColorDefined()) {
           color = aRangeStyle.mUnderlineColor;
-        }
-        // If foreground color or background color is defined, the both colors
-        // are computed by GetSelectionTextColors().  Then, we should use its
-        // foreground color always.  The color should have sufficient contrast
-        // with the background color.
-        else if (aRangeStyle.IsForegroundColorDefined() ||
-                 aRangeStyle.IsBackgroundColorDefined()) {
-          nscolor bg;
-          GetSelectionTextColors(aType, aTextPaintStyle, aRangeStyle,
-                                 &color, &bg);
-        }
-        // Otherwise, use the foreground color of the frame.
-        else {
+        } else if (aRangeStyle.IsForegroundColorDefined()) {
+          color = aRangeStyle.mForegroundColor;
+        } else {
+          NS_ASSERTION(!aRangeStyle.IsBackgroundColorDefined(),
+                       "Only the background color is defined");
           color = aTextPaintStyle.GetTextColor();
         }
       } else if (!weDefineSelectionUnderline) {
@@ -5399,11 +5361,11 @@ nsTextFrame::DrawSelectionDecorations(gfxContext* aContext,
       break;
     case nsISelectionController::SELECTION_URLSTRIKEOUT: {
       nscoord inflationMinFontSize =
-        nsLayoutUtils::InflationMinFontSizeFor(this);
+        nsLayoutUtils::InflationMinFontSizeFor(aFrame);
       float inflation =
-        GetInflationForTextDecorations(this, inflationMinFontSize);
+        GetInflationForTextDecorations(aFrame, inflationMinFontSize);
       const gfxFont::Metrics metrics =
-        GetFirstFontMetrics(GetFontGroupForFrame(this, inflation), aVertical);
+        GetFirstFontMetrics(GetFontGroupForFrame(aFrame, inflation), aVertical);
 
       relativeSize = 2.0f;
       offset = metrics.strikeoutOffset + 0.5;
@@ -5415,19 +5377,24 @@ nsTextFrame::DrawSelectionDecorations(gfxContext* aContext,
       return;
   }
   size.height *= relativeSize;
-  PaintDecorationLine(aContext, aDirtyRect, color, nullptr, pt,
+  PaintDecorationLine(aFrame, aContext, aDirtyRect, color, nullptr, pt,
     (aVertical ? (pt.y - aPt.y) : (pt.x - aPt.x)) + aICoordInFrame,
     size, aAscent, offset, aDecoration, style, eSelectionDecoration,
     aCallbacks, aVertical, descentLimit);
 }
 
-/* static */
-bool
-nsTextFrame::GetSelectionTextColors(SelectionType aType,
-                                    nsTextPaintStyle& aTextPaintStyle,
-                                    const TextRangeStyle &aRangeStyle,
-                                    nscolor* aForeground,
-                                    nscolor* aBackground)
+/**
+ * This function encapsulates all knowledge of how selections affect foreground
+ * and background colors.
+ * @return true if the selection affects colors, false otherwise
+ * @param aForeground the foreground color to use
+ * @param aBackground the background color to use, or RGBA(0,0,0,0) if no
+ * background should be painted
+ */
+static bool GetSelectionTextColors(SelectionType aType,
+                                     nsTextPaintStyle& aTextPaintStyle,
+                                     const TextRangeStyle &aRangeStyle,
+                                     nscolor* aForeground, nscolor* aBackground)
 {
   switch (aType) {
     case nsISelectionController::SELECTION_NORMAL:
@@ -5444,28 +5411,17 @@ nsTextFrame::GetSelectionTextColors(SelectionType aType,
     case nsISelectionController::SELECTION_IME_CONVERTEDTEXT:
     case nsISelectionController::SELECTION_IME_SELECTEDCONVERTEDTEXT:
       if (aRangeStyle.IsDefined()) {
+        *aForeground = aTextPaintStyle.GetTextColor();
+        *aBackground = NS_RGBA(0,0,0,0);
         if (!aRangeStyle.IsForegroundColorDefined() &&
             !aRangeStyle.IsBackgroundColorDefined()) {
-          *aForeground = aTextPaintStyle.GetTextColor();
-          *aBackground = NS_RGBA(0,0,0,0);
           return false;
         }
         if (aRangeStyle.IsForegroundColorDefined()) {
           *aForeground = aRangeStyle.mForegroundColor;
-          if (aRangeStyle.IsBackgroundColorDefined()) {
-            *aBackground = aRangeStyle.mBackgroundColor;
-          } else {
-            // If foreground color is defined but background color isn't
-            // defined, we can guess that IME must expect that the background
-            // color is system's default field background color.
-            *aBackground = aTextPaintStyle.GetSystemFieldBackgroundColor();
-          }
-        } else { // aRangeStyle.IsBackgroundColorDefined() is true
+        }
+        if (aRangeStyle.IsBackgroundColorDefined()) {
           *aBackground = aRangeStyle.mBackgroundColor;
-          // If background color is defined but foreground color isn't defined,
-          // we can assume that IME must expect that the foreground color is
-          // same as system's field text color.
-          *aForeground = aTextPaintStyle.GetSystemFieldForegroundColor();
         }
         return true;
       }
@@ -5935,7 +5891,7 @@ nsTextFrame::PaintTextSelectionDecorations(gfxContext* aCtx,
       }
       gfxFloat width = Abs(advance) / app;
       gfxFloat xInFrame = pt.x - (aFramePt.x / app);
-      DrawSelectionDecorations(aCtx, dirtyRect, aSelectionType,
+      DrawSelectionDecorations(aCtx, dirtyRect, aSelectionType, this,
                                aTextPaintStyle, selectedStyle, pt, xInFrame,
                                width, mAscent / app, decorationMetrics,
                                aCallbacks, verticalRun, kDecoration);
@@ -6448,7 +6404,7 @@ nsTextFrame::DrawTextRunAndDecorations(
       decSize.height = metrics.underlineSize;
       bCoord = (frameBStart - dec.mBaselineOffset) / app;
 
-      PaintDecorationLine(aCtx, dirtyRect, dec.mColor,
+      PaintDecorationLine(this, aCtx, dirtyRect, dec.mColor,
         aDecorationOverrideColor, decPt, 0.0, decSize, ascent,
         metrics.underlineOffset, NS_STYLE_TEXT_DECORATION_LINE_UNDERLINE,
         dec.mStyle, eNormalDecoration, aCallbacks, verticalRun);
@@ -6469,7 +6425,7 @@ nsTextFrame::DrawTextRunAndDecorations(
       decSize.height = metrics.underlineSize;
       bCoord = (frameBStart - dec.mBaselineOffset) / app;
 
-      PaintDecorationLine(aCtx, dirtyRect, dec.mColor,
+      PaintDecorationLine(this, aCtx, dirtyRect, dec.mColor,
         aDecorationOverrideColor, decPt, 0.0, decSize, ascent,
         metrics.maxAscent, NS_STYLE_TEXT_DECORATION_LINE_OVERLINE, dec.mStyle,
         eNormalDecoration, aCallbacks, verticalRun);
@@ -6496,7 +6452,7 @@ nsTextFrame::DrawTextRunAndDecorations(
       decSize.height = metrics.strikeoutSize;
       bCoord = (frameBStart - dec.mBaselineOffset) / app;
 
-      PaintDecorationLine(aCtx, dirtyRect, dec.mColor,
+      PaintDecorationLine(this, aCtx, dirtyRect, dec.mColor,
         aDecorationOverrideColor, decPt, 0.0, decSize, ascent,
         metrics.strikeoutOffset, NS_STYLE_TEXT_DECORATION_LINE_LINE_THROUGH,
         dec.mStyle, eNormalDecoration, aCallbacks, verticalRun);
@@ -6707,7 +6663,7 @@ nsTextFrame::CombineSelectionUnderlineRect(nsPresContext* aPresContext,
   gfxFloat underlineOffset = fontGroup->GetUnderlineOffset();
   gfxFloat ascent = aPresContext->AppUnitsToGfxUnits(mAscent);
   gfxFloat descentLimit =
-    ComputeDescentLimitForSelectionUnderline(aPresContext, metrics);
+    ComputeDescentLimitForSelectionUnderline(aPresContext, this, metrics);
 
   SelectionDetails *details = GetSelectionDetails();
   for (SelectionDetails *sd = details; sd; sd = sd->mNext) {
@@ -8432,8 +8388,7 @@ nsTextFrame::ReflowText(nsLineLayout& aLineLayout, nscoord aAvailableWidth,
                                    (GetStateBits() & TEXT_IS_IN_TOKEN_MATHML);
   gfxBreakPriority breakPriority = aLineLayout.LastOptionalBreakPriority();
   gfxTextRun::SuppressBreak suppressBreak = gfxTextRun::eNoSuppressBreak;
-  bool shouldSuppressLineBreak = ShouldSuppressLineBreak();
-  if (shouldSuppressLineBreak) {
+  if (ShouldSuppressLineBreak()) {
     suppressBreak = gfxTextRun::eSuppressAllBreaks;
   } else if (!aLineLayout.LineIsBreakable()) {
     suppressBreak = gfxTextRun::eSuppressInitialBreak;
@@ -8628,37 +8583,35 @@ nsTextFrame::ReflowText(nsLineLayout& aLineLayout, nscoord aAvailableWidth,
     aLineLayout.SetTrimmableISize(NSToCoordFloor(trimmableWidth));
     AddStateBits(TEXT_HAS_NONCOLLAPSED_CHARACTERS);
   }
+  if (charsFit > 0 && charsFit == length &&
+      textStyle->mHyphens != NS_STYLE_HYPHENS_NONE &&
+      HasSoftHyphenBefore(frag, mTextRun, offset, end)) {
+    bool fits =
+      textMetrics.mAdvanceWidth + provider.GetHyphenWidth() <= availWidth;
+    // Record a potential break after final soft hyphen
+    aLineLayout.NotifyOptionalBreakPosition(this, length, fits,
+                                            gfxBreakPriority::eNormalBreak);
+  }
   bool breakAfter = forceBreakAfter;
-  if (!shouldSuppressLineBreak) {
-    if (charsFit > 0 && charsFit == length &&
-        textStyle->mHyphens != NS_STYLE_HYPHENS_NONE &&
-        HasSoftHyphenBefore(frag, mTextRun, offset, end)) {
-      bool fits =
-        textMetrics.mAdvanceWidth + provider.GetHyphenWidth() <= availWidth;
-      // Record a potential break after final soft hyphen
-      aLineLayout.NotifyOptionalBreakPosition(this, length, fits,
-                                              gfxBreakPriority::eNormalBreak);
-    }
-    // length == 0 means either the text is empty or it's all collapsed away
-    bool emptyTextAtStartOfLine = atStartOfLine && length == 0;
-    if (!breakAfter && charsFit == length && !emptyTextAtStartOfLine &&
-        transformedOffset + transformedLength == mTextRun->GetLength() &&
-        (mTextRun->GetFlags() & nsTextFrameUtils::TEXT_HAS_TRAILING_BREAK)) {
-      // We placed all the text in the textrun and we have a break opportunity
-      // at the end of the textrun. We need to record it because the following
-      // content may not care about nsLineBreaker.
+  // length == 0 means either the text is empty or it's all collapsed away
+  bool emptyTextAtStartOfLine = atStartOfLine && length == 0;
+  if (!breakAfter && charsFit == length && !emptyTextAtStartOfLine &&
+      transformedOffset + transformedLength == mTextRun->GetLength() &&
+      !ShouldSuppressLineBreak() &&
+      (mTextRun->GetFlags() & nsTextFrameUtils::TEXT_HAS_TRAILING_BREAK)) {
+    // We placed all the text in the textrun and we have a break opportunity at
+    // the end of the textrun. We need to record it because the following
+    // content may not care about nsLineBreaker.
 
-      // Note that because we didn't break, we can be sure that (thanks to the
-      // code up above) textMetrics.mAdvanceWidth includes the width of any
-      // trailing whitespace. So we need to subtract trimmableWidth here
-      // because if we did break at this point, that much width would be
-      // trimmed.
-      if (textMetrics.mAdvanceWidth - trimmableWidth > availWidth) {
-        breakAfter = true;
-      } else {
-        aLineLayout.NotifyOptionalBreakPosition(this, length, true,
-                                                gfxBreakPriority::eNormalBreak);
-      }
+    // Note that because we didn't break, we can be sure that (thanks to the
+    // code up above) textMetrics.mAdvanceWidth includes the width of any
+    // trailing whitespace. So we need to subtract trimmableWidth here
+    // because if we did break at this point, that much width would be trimmed.
+    if (textMetrics.mAdvanceWidth - trimmableWidth > availWidth) {
+      breakAfter = true;
+    } else {
+      aLineLayout.NotifyOptionalBreakPosition(this, length, true,
+                                              gfxBreakPriority::eNormalBreak);
     }
   }
 
@@ -8706,7 +8659,7 @@ nsTextFrame::ReflowText(nsLineLayout& aLineLayout, nscoord aAvailableWidth,
   if (!textStyle->WhiteSpaceIsSignificant() &&
       (lineContainer->StyleText()->mTextAlign == NS_STYLE_TEXT_ALIGN_JUSTIFY ||
        lineContainer->StyleText()->mTextAlignLast == NS_STYLE_TEXT_ALIGN_JUSTIFY ||
-       shouldSuppressLineBreak) &&
+       ShouldSuppressLineBreak()) &&
       !lineContainer->IsSVGText()) {
     AddStateBits(TEXT_JUSTIFICATION_ENABLED);
     provider.ComputeJustification(offset, charsFit);

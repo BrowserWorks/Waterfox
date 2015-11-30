@@ -32,6 +32,30 @@ private:
   nsRefPtr<MediaRawData> mSample;
 };
 
+class InitTask : public nsRunnable {
+public:
+  explicit InitTask(MediaDataDecoder* aDecoder)
+   : mDecoder(aDecoder)
+   , mResultValid(false)
+  {}
+
+  NS_IMETHOD Run() {
+    mResult = mDecoder->Init();
+    mResultValid = true;
+    return NS_OK;
+  }
+
+  nsresult Result() {
+    MOZ_ASSERT(mResultValid);
+    return mResult;
+  }
+
+private:
+  MediaDataDecoder* mDecoder;
+  nsresult mResult;
+  bool mResultValid;
+};
+
 template<typename T>
 class Condition {
 public:
@@ -108,7 +132,6 @@ public:
    , mIsShutdown(false)
 #endif
   {
-    mProxyThreadWrapper = CreateXPCOMAbstractThreadWrapper(aProxyThread, false);
   }
 
   // Ideally, this would return a regular MediaDataDecoderCallback pointer
@@ -132,7 +155,7 @@ public:
   // Init and Shutdown run synchronously on the proxy thread, all others are
   // asynchronously and responded to via the MediaDataDecoderCallback.
   // Note: the nsresults returned by the proxied decoder are lost.
-  virtual nsRefPtr<InitPromise> Init() override;
+  virtual nsresult Init() override;
   virtual nsresult Input(MediaRawData* aSample) override;
   virtual nsresult Flush() override;
   virtual nsresult Drain() override;
@@ -142,8 +165,6 @@ public:
   void FlushComplete();
 
 private:
-  nsRefPtr<InitPromise> InternalInit();
-
 #ifdef DEBUG
   bool IsOnProxyThread() {
     return NS_GetCurrentThread() == mProxyThread;
@@ -155,7 +176,6 @@ private:
 
   nsRefPtr<MediaDataDecoder> mProxyDecoder;
   nsCOMPtr<nsIThread> mProxyThread;
-  nsRefPtr<AbstractThread> mProxyThreadWrapper;
 
   MediaDataDecoderCallbackProxy mProxyCallback;
 

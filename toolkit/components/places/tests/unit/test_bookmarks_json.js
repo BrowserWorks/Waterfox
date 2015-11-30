@@ -12,7 +12,7 @@ const LOAD_IN_SIDEBAR_ANNO = "bookmarkProperties/loadInSidebar";
 const DESCRIPTION_ANNO = "bookmarkProperties/description";
 
 // An object representing the contents of bookmarks.json.
-var test_bookmarks = {
+let test_bookmarks = {
   menu: [
     { title: "Mozilla Firefox",
       children: [
@@ -72,7 +72,7 @@ var test_bookmarks = {
 };
 
 // Exported bookmarks file pointer.
-var bookmarksExportedFile;
+let bookmarksExportedFile;
 
 add_task(function test_import_bookmarks() {
   let bookmarksFile = OS.Path.join(do_get_cwd().path, "bookmarks.json");

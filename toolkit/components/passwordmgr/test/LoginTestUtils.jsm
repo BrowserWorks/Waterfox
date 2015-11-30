@@ -25,7 +25,7 @@ const LoginInfo =
                              "nsILoginInfo", "init");
 
 // For now, we need consumers to provide a reference to Assert.jsm.
-var Assert = null;
+let Assert = null;
 
 this.LoginTestUtils = {
   set Assert(assert) {

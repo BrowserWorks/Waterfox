@@ -8,7 +8,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 var Social, SocialService;
 
-var manifests = [
+let manifests = [
   {
     name: "provider 1",
     origin: "https://example1.com",

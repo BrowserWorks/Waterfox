@@ -30,7 +30,7 @@ function test() {
   runTests(tests, undefined, cbPostTest);
 }
 
-var tests = {
+let tests = {
   testNotificationCallback: function(cbnext) {
     let run = function() {
       let testPort, apiPort;

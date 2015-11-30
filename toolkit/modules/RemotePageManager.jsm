@@ -418,7 +418,7 @@ ChildMessagePort.prototype.destroy = function() {
 
 // Allows callers to register to connect to specific content pages. Registration
 // is done through the addRemotePageListener method
-var RemotePageManagerInternal = {
+let RemotePageManagerInternal = {
   // The currently registered remote pages
   pages: new Map(),
 
@@ -487,9 +487,9 @@ this.RemotePageManager = {
 };
 
 // Listen for pages in any process we're loaded in
-var registeredURLs = new Set();
+let registeredURLs = new Set();
 
-var observer = (window) => {
+let observer = (window) => {
   let url = window.location.toString();
   if (!registeredURLs.has(url))
     return;

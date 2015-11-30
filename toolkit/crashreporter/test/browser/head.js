@@ -9,7 +9,7 @@ function create_subdir(dir, subdirname) {
 }
 
 // need to hold on to this to unregister for cleanup
-var _provider = null;
+let _provider = null;
 
 function make_fake_appdir() {
   // Create a directory inside the profile and register it as UAppData, so

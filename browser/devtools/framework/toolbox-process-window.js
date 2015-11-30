@@ -5,27 +5,28 @@
 
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
-var { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
-var { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-var { TargetFactory } = require("devtools/framework/target");
-var { Toolbox } = require("devtools/framework/toolbox");
-var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
-var { DebuggerClient } = require("devtools/toolkit/client/main");
-var { ViewHelpers } =
+let { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
+let { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+let { TargetFactory } = require("devtools/framework/target");
+let { Toolbox } = require("devtools/framework/toolbox");
+let { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+let { DebuggerClient } =
+  Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
+let { ViewHelpers } =
   Cu.import("resource:///modules/devtools/ViewHelpers.jsm", {});
-var { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
+let { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 
 /**
  * Shortcuts for accessing various debugger preferences.
  */
-var Prefs = new ViewHelpers.Prefs("devtools.debugger", {
+let Prefs = new ViewHelpers.Prefs("devtools.debugger", {
   chromeDebuggingHost: ["Char", "chrome-debugging-host"],
   chromeDebuggingPort: ["Int", "chrome-debugging-port"]
 });
 
-var gToolbox, gClient;
+let gToolbox, gClient;
 
-var connect = Task.async(function*() {
+let connect = Task.async(function*() {
   window.removeEventListener("load", connect);
   // Initiate the connection
   let transport = yield DebuggerClient.socketConnect({

@@ -10,38 +10,10 @@
 #include <cstddef>
 
 #include "jit/shared/Assembler-shared.h"
-
-#if defined(JS_CODEGEN_X86)
-# include "jit/x86/BaseAssembler-x86.h"
-#elif defined(JS_CODEGEN_X64)
-# include "jit/x64/BaseAssembler-x64.h"
-#else
-# error "Unknown architecture!"
-#endif
+#include "jit/x86-shared/BaseAssembler-x86-shared.h"
 
 namespace js {
 namespace jit {
-
-struct ScratchFloat32Scope : public AutoFloatRegisterScope
-{
-    explicit ScratchFloat32Scope(MacroAssembler& masm)
-      : AutoFloatRegisterScope(masm, ScratchFloat32Reg)
-    { }
-};
-
-struct ScratchDoubleScope : public AutoFloatRegisterScope
-{
-    explicit ScratchDoubleScope(MacroAssembler& masm)
-      : AutoFloatRegisterScope(masm, ScratchDoubleReg)
-    { }
-};
-
-struct ScratchSimdScope : public AutoFloatRegisterScope
-{
-    explicit ScratchSimdScope(MacroAssembler& masm)
-      : AutoFloatRegisterScope(masm, ScratchSimdReg)
-    { }
-};
 
 class Operand
 {
@@ -268,7 +240,7 @@ class AssemblerX86Shared : public AssemblerShared
     }
 
   protected:
-    X86Encoding::BaseAssemblerSpecific masm;
+    X86Encoding::BaseAssembler masm;
 
     typedef X86Encoding::JmpSrc JmpSrc;
     typedef X86Encoding::JmpDst JmpDst;
@@ -2219,7 +2191,6 @@ class AssemblerX86Shared : public AssemblerShared
     void vcmpps(uint8_t order, Operand src1, FloatRegister src0, FloatRegister dest) {
         MOZ_ASSERT(HasSSE2());
         // :TODO: (Bug 1132894) See LIRGeneratorX86Shared::lowerForFPU
-        // FIXME: This logic belongs in the MacroAssembler.
         if (!HasAVX() && !src0.aliases(dest)) {
             if (src1.kind() == Operand::FPREG &&
                 dest.aliases(FloatRegister::FromCode(src1.fpu())))

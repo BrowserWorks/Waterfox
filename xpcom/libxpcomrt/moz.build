@@ -67,7 +67,7 @@ xpcom_glue_src = [
     'nsTObserverArray.cpp',
     'nsThreadUtils.cpp',
     'nsWeakReference.cpp',
-    'PLDHashTable.cpp',
+    'pldhash.cpp',
 ]
 src_list += [
     '/xpcom/glue/%s' % s for s in xpcom_glue_src
@@ -138,6 +138,3 @@ DEFINES['MOZILLA_EXTERNAL_LINKAGE'] = True
 include('/ipc/chromium/chromium-config.mozbuild')
 
 SPHINX_TREES['libxpcomrt'] = 'docs'
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']

@@ -6,7 +6,7 @@
 
 const TEST_URI = TEST_URL_ROOT + "doc_custom.html";
 
-// Tests the display of custom declarations in the rule-view.
+// Test the display of custom declarations in the rule-view
 
 add_task(function*() {
   yield addTab(TEST_URI);

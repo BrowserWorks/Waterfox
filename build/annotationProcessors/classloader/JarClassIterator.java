@@ -28,21 +28,20 @@ public class JarClassIterator implements Iterator<ClassWithOptions> {
         String className = mTargetClassListIterator.next();
         try {
             Class<?> ret = mTarget.loadClass(className);
+            final String canonicalName;
 
             // Incremental builds can leave stale classfiles in the jar. Such classfiles will cause
             // an exception at this point. We can safely ignore these classes - they cannot possibly
-            // ever be loaded as they conflict with their parent class and will be killed by
-            // Proguard later on anyway.
-            final Class<?> enclosingClass;
+            // ever be loaded as they conflict with their parent class and will be killed by Proguard
+            // later on anyway.
             try {
-                enclosingClass = ret.getEnclosingClass();
+                canonicalName = ret.getCanonicalName();
             } catch (IncompatibleClassChangeError e) {
                 return next();
             }
 
-            if (enclosingClass != null) {
+            if (canonicalName == null || "null".equals(canonicalName)) {
                 // Anonymous inner class - unsupported.
-                // Or named inner class, which will be processed when we process the outer class.
                 return next();
             }
 

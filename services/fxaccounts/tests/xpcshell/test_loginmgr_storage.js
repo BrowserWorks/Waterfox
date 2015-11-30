@@ -20,8 +20,8 @@ Cu.import("resource://gre/modules/FxAccountsCommon.js");
 
 // Use a backstage pass to get at our LoginManagerStorage object, so we can
 // mock the prototype.
-var {LoginManagerStorage} = Cu.import("resource://gre/modules/FxAccountsStorage.jsm", {});
-var isLoggedIn = true;
+let {LoginManagerStorage} = Cu.import("resource://gre/modules/FxAccountsStorage.jsm", {});
+let isLoggedIn = true;
 LoginManagerStorage.prototype.__defineGetter__("_isLoggedIn", () => isLoggedIn);
 
 function setLoginMgrLoggedInState(loggedIn) {

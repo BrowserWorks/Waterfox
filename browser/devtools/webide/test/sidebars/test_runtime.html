@@ -18,6 +18,8 @@
       window.onload = function() {
         SimpleTest.waitForExplicitFinish();
 
+        Services.prefs.setBoolPref("devtools.webide.sidebars", true);
+
         let win;
 
         SimpleTest.registerCleanupFunction(() => {
@@ -39,7 +41,7 @@
             return !win.document.querySelector("#cmd_stop").hasAttribute("disabled");
           }
 
-          const { DebuggerServer } = require("devtools/server/main");
+          Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
 
           if (!DebuggerServer.initialized) {
             DebuggerServer.init();

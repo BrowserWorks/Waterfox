@@ -79,7 +79,7 @@ public class InstallListener extends BroadcastReceiver {
         }
 
 
-        if (GeckoThread.isRunning()) {
+        if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
             InstallHelper installHelper = new InstallHelper(context, apkResources, null);
             try {
                 JSONObject dataObject = new JSONObject();

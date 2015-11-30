@@ -13,7 +13,7 @@ const COLLAPSE_INSPECTOR_STRING = L10N.getStr("collapseInspector");
  * Functions handling the audio node inspector UI.
  */
 
-var InspectorView = {
+let InspectorView = {
   _currentNode: null,
 
   // Set up config for view toggling
@@ -88,7 +88,7 @@ var InspectorView = {
     else {
       $("#web-audio-editor-details-pane-empty").setAttribute("hidden", "true");
       $("#web-audio-editor-tabs").removeAttribute("hidden");
-      this._buildToolbar();
+      yield this._buildToolbar();
       window.emit(EVENTS.UI_INSPECTOR_NODE_SET, this._currentNode.id);
     }
   }),
@@ -111,11 +111,11 @@ var InspectorView = {
     this.hideImmediately();
   },
 
-  _buildToolbar: function () {
+  _buildToolbar: Task.async(function* () {
     let node = this.getCurrentAudioNode();
 
     let bypassable = node.bypassable;
-    let bypassed = node.isBypassed();
+    let bypassed = yield node.isBypassed();
     let button = $("#audio-node-toolbar .bypass");
 
     if (!bypassable) {
@@ -129,7 +129,7 @@ var InspectorView = {
     } else {
       button.setAttribute("checked", true);
     }
-  },
+  }),
 
   /**
    * Event handlers

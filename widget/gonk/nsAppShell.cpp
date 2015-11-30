@@ -75,7 +75,6 @@
 #include "mozilla/layers/CompositorParent.h"
 #include "GeckoTouchDispatcher.h"
 
-#undef LOG
 #define LOG(args...)                                            \
     __android_log_print(ANDROID_LOG_INFO, "Gonk" , ## args)
 #ifdef VERBOSE_LOG_ENABLED
@@ -243,7 +242,7 @@ private:
 
     void DispatchKeyDownEvent();
     void DispatchKeyUpEvent();
-    nsEventStatus DispatchKeyEventInternal(EventMessage aEventMessage);
+    nsEventStatus DispatchKeyEventInternal(uint32_t aEventMessage);
 };
 
 KeyEventDispatcher::KeyEventDispatcher(const UserInputData& aData,
@@ -295,10 +294,10 @@ KeyEventDispatcher::PrintableKeyValue() const
 }
 
 nsEventStatus
-KeyEventDispatcher::DispatchKeyEventInternal(EventMessage aEventMessage)
+KeyEventDispatcher::DispatchKeyEventInternal(uint32_t aEventMessage)
 {
     WidgetKeyboardEvent event(true, aEventMessage, nullptr);
-    if (aEventMessage == eKeyPress) {
+    if (aEventMessage == NS_KEY_PRESS) {
         // XXX If the charCode is not a printable character, the charCode
         //     should be computed without Ctrl/Alt/Meta modifiers.
         event.charCode = static_cast<uint32_t>(mChar);
@@ -342,16 +341,16 @@ KeyEventDispatcher::Dispatch()
 void
 KeyEventDispatcher::DispatchKeyDownEvent()
 {
-    nsEventStatus status = DispatchKeyEventInternal(eKeyDown);
+    nsEventStatus status = DispatchKeyEventInternal(NS_KEY_DOWN);
     if (status != nsEventStatus_eConsumeNoDefault) {
-        DispatchKeyEventInternal(eKeyPress);
+        DispatchKeyEventInternal(NS_KEY_PRESS);
     }
 }
 
 void
 KeyEventDispatcher::DispatchKeyUpEvent()
 {
-    DispatchKeyEventInternal(eKeyUp);
+    DispatchKeyEventInternal(NS_KEY_UP);
 }
 
 class SwitchEventRunnable : public nsRunnable {
@@ -664,7 +663,6 @@ GeckoInputDispatcher::dispatchOnce()
 void
 GeckoInputDispatcher::notifyConfigurationChanged(const NotifyConfigurationChangedArgs*)
 {
-    gAppShell->CheckPowerKey();
 }
 
 void
@@ -845,10 +843,8 @@ nsAppShell::nsAppShell()
     : mNativeCallbackRequest(false)
     , mEnableDraw(false)
     , mHandlers()
-    , mPowerKeyChecked(false)
 {
     gAppShell = this;
-    Preferences::SetCString("b2g.safe_mode", "unset");
 }
 
 nsAppShell::~nsAppShell()
@@ -915,29 +911,6 @@ nsAppShell::Init()
     // Delay initializing input devices until the screen has been
     // initialized (and we know the resolution).
     return rv;
-}
-
-void
-nsAppShell::CheckPowerKey()
-{
-    if (mPowerKeyChecked) {
-        return;
-    }
-
-    uint32_t deviceId = 0;
-    int32_t powerState = AKEY_STATE_UNKNOWN;
-
-    // EventHub doesn't report the number of devices.
-    while (powerState != AKEY_STATE_DOWN && deviceId < 32) {
-        powerState = mEventHub->getKeyCodeState(deviceId++, AKEYCODE_POWER);
-    }
-
-    // If Power is pressed while we startup, mark safe mode.
-    // Consumers of the b2g.safe_mode preference need to listen on this
-    // preference change to prevent startup races.
-    Preferences::SetCString("b2g.safe_mode",
-                            (powerState == AKEY_STATE_DOWN) ? "yes" : "no");
-    mPowerKeyChecked = true;
 }
 
 NS_IMETHODIMP

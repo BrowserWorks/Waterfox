@@ -22,7 +22,7 @@
 #include "nsIDOMDocumentType.h"
 #include "nsCOMPtr.h"
 #include "nsXPIDLString.h"
-#include "nsIHttpChannelInternal.h"
+#include "nsIHttpChannel.h"
 #include "nsIURI.h"
 #include "nsIServiceManager.h"
 #include "nsNetUtil.h"
@@ -332,7 +332,41 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
     return false;
   }
 
-  if (nsContentUtils::IsSystemPrincipal(principal)) {
+  // Check to see whether the current document is allowed to load this URI.
+  // It's important to use the current document's principal for this check so
+  // that we don't end up in a case where code with elevated privileges is
+  // calling us and changing the principal of this document.
+
+  // Enforce same-origin even for chrome loaders to avoid someone accidentally
+  // using a document that content has a reference to and turn that into a
+  // chrome document.
+  if (!nsContentUtils::IsSystemPrincipal(principal)) {
+    rv = principal->CheckMayLoad(uri, false, false);
+    if (NS_FAILED(rv)) {
+      aRv.Throw(rv);
+      return false;
+    }
+
+    int16_t shouldLoad = nsIContentPolicy::ACCEPT;
+    rv = NS_CheckContentLoadPolicy(nsIContentPolicy::TYPE_INTERNAL_XMLHTTPREQUEST,
+                                   uri,
+                                   principal,
+                                   callingDoc ? callingDoc.get() :
+                                     static_cast<nsIDocument*>(this),
+                                   NS_LITERAL_CSTRING("application/xml"),
+                                   nullptr,
+                                   &shouldLoad,
+                                   nsContentUtils::GetContentPolicy(),
+                                   nsContentUtils::GetSecurityManager());
+    if (NS_FAILED(rv)) {
+      aRv.Throw(rv);
+      return false;
+    }
+    if (NS_CP_REJECTED(shouldLoad)) {
+      aRv.Throw(NS_ERROR_CONTENT_BLOCKED);
+      return false;
+    }
+  } else {
     // We're called from chrome, check to make sure the URI we're
     // about to load is also chrome.
 
@@ -410,7 +444,7 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
                      uri,
                      callingDoc ? callingDoc.get() :
                                   static_cast<nsIDocument*>(this),
-                     nsILoadInfo::SEC_REQUIRE_SAME_ORIGIN_DATA_IS_BLOCKED,
+                     nsILoadInfo::SEC_NORMAL,
                      nsIContentPolicy::TYPE_INTERNAL_XMLHTTPREQUEST,
                      loadGroup,
                      req,
@@ -419,14 +453,6 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
     return false;
-  }
-
-  // TODO Bug 1189945: Remove nsIChannel CorsMode flag and set Request.mode
-  // based on nsILoadInfo securityFlags instead. This block will be removed
-  // when Request.mode set correctly.
-  nsCOMPtr<nsIHttpChannelInternal> httpChannel = do_QueryInterface(channel);
-  if (httpChannel) {
-    httpChannel->SetCorsMode(nsIHttpChannelInternal::CORS_MODE_SAME_ORIGIN);
   }
 
   // StartDocumentLoad asserts that readyState is uninitialized, so
@@ -452,7 +478,7 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
   // mChannelIsPending.
 
   // Start an asynchronous read of the XML document
-  rv = channel->AsyncOpen2(listener);
+  rv = channel->AsyncOpen(listener, nullptr);
   if (NS_FAILED(rv)) {
     mChannelIsPending = false;
     aRv.Throw(rv);
@@ -567,7 +593,7 @@ XMLDocument::EndLoad()
     // Generate a document load event for the case when an XML
     // document was loaded as pure data without any presentation
     // attached to it.
-    WidgetEvent event(true, eLoad);
+    WidgetEvent event(true, NS_LOAD);
     EventDispatcher::Dispatch(static_cast<nsIDocument*>(this), nullptr, &event);
   }
 }

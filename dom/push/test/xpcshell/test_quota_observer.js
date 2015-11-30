@@ -52,8 +52,7 @@ add_task(function* test_expiration_history_observer() {
     }],
   });
 
-  let unregisterDone;
-  let unregisterPromise = new Promise(resolve => unregisterDone = resolve);
+  let unregisterDefer = Promise.defer();
 
   PushService.init({
     serverURI: 'wss://push.example.org/',
@@ -80,14 +79,14 @@ add_task(function* test_expiration_history_observer() {
         },
         onUnregister(request) {
           equal(request.channelID, '379c0668-8323-44d2-a315-4ee83f1a9ee9', 'Dropped wrong channel ID');
-          unregisterDone();
+          unregisterDefer.resolve();
         },
         onACK(request) {},
       });
     }
   });
 
-  yield waitForPromise(unregisterPromise, DEFAULT_TIMEOUT,
+  yield waitForPromise(unregisterDefer.promise, DEFAULT_TIMEOUT,
     'Timed out waiting for unregister request');
 
   let expiredRecord = yield db.getByKeyID('379c0668-8323-44d2-a315-4ee83f1a9ee9');

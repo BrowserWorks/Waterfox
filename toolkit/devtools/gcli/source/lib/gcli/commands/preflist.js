@@ -17,6 +17,7 @@
 'use strict';
 
 var l10n = require('../util/l10n');
+var Promise = require('../util/promise').Promise;
 
 /**
  * Format a list of settings for display

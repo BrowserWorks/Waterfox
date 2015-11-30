@@ -19,6 +19,7 @@ public:
   // MediaDataDemuxer interface.
   explicit MP3Demuxer(MediaResource* aSource);
   nsRefPtr<InitPromise> Init() override;
+  already_AddRefed<MediaDataDemuxer> Clone() const override;
   bool HasTrackType(TrackInfo::TrackType aType) const override;
   uint32_t GetNumberTracks(TrackInfo::TrackType aType) const override;
   already_AddRefed<MediaTrackDemuxer> GetTrackDemuxer(
@@ -354,6 +355,7 @@ public:
     media::TimeUnit aTimeThreshold) override;
   int64_t GetResourceOffset() const override;
   media::TimeIntervals GetBuffered() override;
+  int64_t GetEvictionOffset(media::TimeUnit aTime) override;
 
 private:
   // Destructor.

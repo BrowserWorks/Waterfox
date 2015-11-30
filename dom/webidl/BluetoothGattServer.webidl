@@ -5,19 +5,9 @@
  */
 
 [CheckAnyPermissions="bluetooth"]
-interface BluetoothGattServer : EventTarget
+interface BluetoothGattServer
 {
-  // Fired when a remote device has been connected/disconnected
-  attribute EventHandler  onconnectionstatechanged;
-
-  /**
-   * Connect/Disconnect to the remote BLE device with the target address.
-   *
-   * Promise will be rejected if the local GATT server is busy connecting or
-   * disconnecting to other devices.
+  /* The implementation of BluetoothGattServer will come later.
+   * (see dependent bugs of bug 933358)
    */
-  [NewObject]
-  Promise<void> connect(DOMString address);
-  [NewObject]
-  Promise<void> disconnect(DOMString address);
 };

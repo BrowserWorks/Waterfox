@@ -48,8 +48,7 @@ public:
   virtual void RemoveAudioOutput(void* aKey) override;
   virtual void AddVideoOutput(VideoFrameContainer* aContainer) override;
   virtual void RemoveVideoOutput(VideoFrameContainer* aContainer) override;
-  virtual void Suspend() override {}
-  virtual void Resume() override {}
+  virtual void ChangeExplicitBlockerCount(int32_t aDelta) override;
   virtual void AddListener(MediaStreamListener* aListener) override;
   virtual void RemoveListener(MediaStreamListener* aListener) override;
   virtual void Destroy() override;

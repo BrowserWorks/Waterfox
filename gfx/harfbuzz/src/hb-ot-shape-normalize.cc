@@ -344,13 +344,15 @@ _hb_ot_shape_normalize (const hb_ot_shape_plan_t *plan,
       if (_hb_glyph_info_get_modified_combining_class (&buffer->info[end]) == 0)
         break;
 
-    /* We are going to do a O(n^2).  Only do this if the sequence is short. */
+    /* We are going to do a bubble-sort.  Only do this if the
+     * sequence is short.  Doing it on long sequences can result
+     * in an O(n^2) DoS. */
     if (end - i > 10) {
       i = end;
       continue;
     }
 
-    buffer->sort (i, end, compare_combining_class);
+    hb_bubble_sort (buffer->info + i, end - i, compare_combining_class);
 
     i = end;
   }

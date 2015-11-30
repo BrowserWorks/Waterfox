@@ -111,8 +111,8 @@ add_task(function* test_getshortcutoruri() {
   yield cleanupKeywords();
 });
 
-var folder = null;
-var gAddedEngines = [];
+let folder = null;
+let gAddedEngines = [];
 
 function* setupKeywords() {
   folder = yield PlacesUtils.bookmarks.insert({ parentGuid: PlacesUtils.bookmarks.unfiledGuid,

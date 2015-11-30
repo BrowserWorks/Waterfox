@@ -3,7 +3,7 @@
 
 // Tests that the pref commands work
 
-var prefBranch = Cc["@mozilla.org/preferences-service;1"]
+let prefBranch = Cc["@mozilla.org/preferences-service;1"]
                     .getService(Ci.nsIPrefService).getBranch(null)
                     .QueryInterface(Ci.nsIPrefBranch2);
 

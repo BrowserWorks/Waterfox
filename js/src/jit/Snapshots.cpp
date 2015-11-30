@@ -661,10 +661,8 @@ SnapshotWriter::add(const RValueAllocation& alloc)
     if (!p) {
         offset = allocWriter_.length();
         alloc.write(allocWriter_);
-        if (!allocMap_.add(p, alloc, offset)) {
-            allocWriter_.setOOM();
+        if (!allocMap_.add(p, alloc, offset))
             return false;
-        }
     } else {
         offset = p->value();
     }

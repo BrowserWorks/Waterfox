@@ -15,7 +15,7 @@ const PREF_RIL_NUM_RADIO_INTERFACES = "ril.numRadioInterfaces";
 
 ok(libcutils, "libcutils is available");
 
-var propNum = (function() {
+let propNum = (function() {
   try {
     let numString = libcutils.property_get(PROP_RO_MOZ_RIL_NUMCLIENTS, "1");
     let num = parseInt(numString, 10);
@@ -28,13 +28,13 @@ var propNum = (function() {
 log("Retrieved '" + PROP_RO_MOZ_RIL_NUMCLIENTS + "' = " + propNum);
 ok(propNum, PROP_RO_MOZ_RIL_NUMCLIENTS);
 
-var prefNum = Services.prefs.getIntPref(PREF_RIL_NUM_RADIO_INTERFACES);
+let prefNum = Services.prefs.getIntPref(PREF_RIL_NUM_RADIO_INTERFACES);
 log("Retrieved '" + PREF_RIL_NUM_RADIO_INTERFACES + "' = " + prefNum);
 
-var ril = Cc[NS_RIL_CONTRACTID].getService(Ci.nsIRadioInterfaceLayer);
+let ril = Cc[NS_RIL_CONTRACTID].getService(Ci.nsIRadioInterfaceLayer);
 ok(ril, "ril.constructor is " + ril.constructor);
 
-var ifaceNum = ril.numRadioInterfaces;
+let ifaceNum = ril.numRadioInterfaces;
 log("Retrieved 'nsIRadioInterfaceLayer.numRadioInterfaces' = " + ifaceNum);
 
 is(propNum, prefNum);

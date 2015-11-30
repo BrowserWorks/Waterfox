@@ -38,10 +38,10 @@ namespace indexedDB {
 
 class BackgroundDatabaseChild;
 class DatabaseSpec;
+class FileManager;
 class IDBFactory;
 class IDBMutableFile;
 class IDBObjectStore;
-class IDBOpenDBRequest;
 class IDBRequest;
 class IDBTransaction;
 class PBackgroundIDBDatabaseFileChild;
@@ -68,6 +68,8 @@ class IDBDatabase final
   // Normally null except during a versionchange transaction.
   nsAutoPtr<DatabaseSpec> mPreviousSpec;
 
+  nsRefPtr<FileManager> mFileManager;
+
   BackgroundDatabaseChild* mBackgroundActor;
 
   nsTHashtable<nsPtrHashKey<IDBTransaction>> mTransactions;
@@ -82,26 +84,21 @@ class IDBDatabase final
   // Weak refs, IDBMutableFile strongly owns this IDBDatabase object.
   nsTArray<IDBMutableFile*> mLiveMutableFiles;
 
-  const bool mFileHandleDisabled;
   bool mClosed;
   bool mInvalidated;
 
 public:
   static already_AddRefed<IDBDatabase>
-  Create(IDBOpenDBRequest* aRequest,
+  Create(IDBWrapperCache* aOwnerCache,
          IDBFactory* aFactory,
          BackgroundDatabaseChild* aActor,
          DatabaseSpec* aSpec);
 
-#ifdef DEBUG
-  void
-  AssertIsOnOwningThread() const;
-
-  PRThread*
-  OwningThread() const;
-#else
   void
   AssertIsOnOwningThread() const
+#ifdef DEBUG
+  ;
+#else
   { }
 #endif
 
@@ -192,21 +189,21 @@ public:
   DelayedMaybeExpireFileActors();
 
   // XXX This doesn't really belong here... It's only needed for IDBMutableFile
-  //     serialization and should be removed or fixed someday.
+  //     serialization and should be removed someday.
   nsresult
   GetQuotaInfo(nsACString& aOrigin, PersistenceType* aPersistenceType);
-
-  bool
-  IsFileHandleDisabled() const
-  {
-    return mFileHandleDisabled;
-  }
 
   void
   NoteLiveMutableFile(IDBMutableFile* aMutableFile);
 
   void
   NoteFinishedMutableFile(IDBMutableFile* aMutableFile);
+
+  void
+  OnNewFileHandle();
+
+  void
+  OnFileHandleFinished();
 
   nsPIDOMWindow*
   GetParentObject() const;
@@ -283,7 +280,7 @@ public:
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
-  IDBDatabase(IDBOpenDBRequest* aRequest,
+  IDBDatabase(IDBWrapperCache* aOwnerCache,
               IDBFactory* aFactory,
               BackgroundDatabaseChild* aActor,
               DatabaseSpec* aSpec);
@@ -316,8 +313,7 @@ private:
   void
   LogWarning(const char* aMessageName,
              const nsAString& aFilename,
-             uint32_t aLineNumber,
-             uint32_t aColumnNumber);
+             uint32_t aLineNumber);
 };
 
 } // namespace indexedDB

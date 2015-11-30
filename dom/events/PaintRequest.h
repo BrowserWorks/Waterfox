@@ -89,10 +89,7 @@ public:
   PaintRequest* IndexedGetter(uint32_t aIndex, bool& aFound)
   {
     aFound = aIndex < mArray.Length();
-    if (!aFound) {
-      return nullptr;
-    }
-    return mArray.ElementAt(aIndex);
+    return aFound ? mArray.ElementAt(aIndex) : nullptr;
   }
 
 private:

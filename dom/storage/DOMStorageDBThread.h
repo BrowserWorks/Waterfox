@@ -10,7 +10,6 @@
 #include "prthread.h"
 #include "prinrval.h"
 #include "nsTArray.h"
-#include "mozilla/Atomics.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/storage/StatementCache.h"
 #include "nsString.h"
@@ -293,7 +292,7 @@ private:
 
   // Whether DB has already been open, avoid races between main thread reads
   // and pending DB init in the background I/O thread
-  Atomic<bool, ReleaseAcquire> mDBReady;
+  bool mDBReady;
 
   // State of the database initiation
   nsresult mStatus;

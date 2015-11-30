@@ -19,8 +19,6 @@ class nsIURI;
 namespace mozilla {
 namespace dom {
 
-class PresentationRespondingInfo;
-
 class PresentationService final : public nsIPresentationService
                                 , public nsIObserver
 {
@@ -40,8 +38,15 @@ public:
            info.forget() : nullptr;
   }
 
-  bool IsSessionAccessible(const nsAString& aSessionId,
-                           base::ProcessId aProcessId);
+  void
+  RemoveSessionInfo(const nsAString& aSessionId)
+  {
+    if (mRespondingSessionId.Equals(aSessionId)) {
+      mRespondingSessionId.Truncate();
+    }
+
+    mSessionInfo.Remove(aSessionId);
+  }
 
 private:
   ~PresentationService();
@@ -52,24 +57,9 @@ private:
   bool IsAppInstalled(nsIURI* aUri);
 
   bool mIsAvailable;
-  nsTObserverArray<nsCOMPtr<nsIPresentationAvailabilityListener>> mAvailabilityListeners;
-
-  // Store the responding listener based on the window ID of the (in-process or
-  // OOP) receiver page.
-  // TODO Bug 1195605 - Support many-to-one session.
-  // So far responding listeners are registered but |notifySessionConnect| hasn't
-  // been called in any place until many-to-one session becomes supported.
-  nsRefPtrHashtable<nsUint64HashKey, nsIPresentationRespondingListener> mRespondingListeners;
-
+  nsString mRespondingSessionId;
   nsRefPtrHashtable<nsStringHashKey, PresentationSessionInfo> mSessionInfo;
-
-  // Store the mapping between the window ID of the in-process page and the ID
-  // of the responding session. It's used for an in-process receiver page to
-  // retrieve the correspondent session ID. Besides, also keep the mapping
-  // between the responding session ID and the window ID to help look up the
-  // window ID.
-  nsClassHashtable<nsUint64HashKey, nsString> mRespondingSessionIds;
-  nsDataHashtable<nsStringHashKey, uint64_t> mRespondingWindowIds;
+  nsTObserverArray<nsCOMPtr<nsIPresentationListener>> mListeners;
 };
 
 } // namespace dom

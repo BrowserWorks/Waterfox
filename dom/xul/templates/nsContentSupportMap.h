@@ -6,7 +6,7 @@
 #ifndef nsContentSupportMap_h__
 #define nsContentSupportMap_h__
 
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsTemplateMatch.h"
 
 /**
@@ -21,11 +21,12 @@
  */
 class nsContentSupportMap {
 public:
-    nsContentSupportMap() : mMap(PLDHashTable::StubOps(), sizeof(Entry)) { }
+    nsContentSupportMap() : mMap(PL_DHashGetStubOps(), sizeof(Entry)) { }
     ~nsContentSupportMap() { }
 
     nsresult Put(nsIContent* aElement, nsTemplateMatch* aMatch) {
-        PLDHashEntryHdr* hdr = mMap.Add(aElement, mozilla::fallible);
+        PLDHashEntryHdr* hdr =
+            PL_DHashTableAdd(&mMap, aElement, mozilla::fallible);
         if (!hdr)
             return NS_ERROR_OUT_OF_MEMORY;
 
@@ -37,7 +38,7 @@ public:
     }
 
     bool Get(nsIContent* aElement, nsTemplateMatch** aMatch) {
-        PLDHashEntryHdr* hdr = mMap.Search(aElement);
+        PLDHashEntryHdr* hdr = PL_DHashTableSearch(&mMap, aElement);
         if (!hdr)
             return false;
 

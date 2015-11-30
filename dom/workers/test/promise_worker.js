@@ -3,11 +3,6 @@ function ok(a, msg) {
   postMessage({type: 'status', status: !!a, msg: a + ": " + msg });
 }
 
-function todo(a, msg) {
-  dump("TODO: " + !a + "  =>  " + a + " " + msg + "\n");
-  postMessage({type: 'status', status: !a, msg: a + ": " + msg });
-}
-
 function is(a, b, msg) {
   dump("IS: " + (a===b) + "  =>  " + a + " | " + b + " " + msg + "\n");
   postMessage({type: 'status', status: a === b, msg: a + " === " + b + ": " + msg });
@@ -153,7 +148,7 @@ function promiseAsync_ResolveThenTimeout() {
   ok(!handlerExecuted, "Handlers are not called before 'then' returns.");
 }
 
-function promiseAsync_SyncXHRAndImportScripts()
+function promiseAsync_SyncHXRAndImportScripts()
 {
   var handlerExecuted = false;
 
@@ -795,7 +790,7 @@ var tests = [
     promiseAsync_TimeoutResolveThen,
     promiseAsync_ResolveTimeoutThen,
     promiseAsync_ResolveThenTimeout,
-    promiseAsync_SyncXHRAndImportScripts,
+    promiseAsync_SyncHXRAndImportScripts,
     promiseDoubleThen,
     promiseThenException,
     promiseThenCatchThen,

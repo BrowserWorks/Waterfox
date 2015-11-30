@@ -230,7 +230,7 @@ OptionsPanel.prototype = {
 
     // Populating the default tools lists
     let toggleableTools = gDevTools.getDefaultTools().filter(tool => {
-      return tool.visibilityswitch && !tool.hiddenInOptions;
+      return tool.visibilityswitch;
     });
 
     for (let tool of toggleableTools) {

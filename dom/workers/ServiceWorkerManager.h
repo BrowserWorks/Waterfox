@@ -130,28 +130,6 @@ public:
 
 };
 
-class ServiceWorkerUpdateFinishCallback
-{
-protected:
-  virtual ~ServiceWorkerUpdateFinishCallback()
-  { }
-
-public:
-  NS_INLINE_DECL_REFCOUNTING(ServiceWorkerUpdateFinishCallback)
-
-  virtual
-  void UpdateSucceeded(ServiceWorkerRegistrationInfo* aInfo)
-  { }
-
-  virtual
-  void UpdateFailed(nsresult aStatus)
-  { }
-
-  virtual
-  void UpdateFailed(JSExnType aExnType, const ErrorEventInit& aDesc)
-  { }
-};
-
 /*
  * Wherever the spec treats a worker instance and a description of said worker
  * as the same thing; i.e. "Resolve foo with
@@ -323,14 +301,10 @@ public:
                      ErrorResult& aRv);
 
   void
-  SoftUpdate(nsIPrincipal* aPrincipal,
-             const nsACString& aScope,
-             ServiceWorkerUpdateFinishCallback* aCallback = nullptr);
+  SoftUpdate(nsIPrincipal* aPrincipal, const nsACString& aScope);
 
   void
-  SoftUpdate(const OriginAttributes& aOriginAttributes,
-             const nsACString& aScope,
-             ServiceWorkerUpdateFinishCallback* aCallback = nullptr);
+  SoftUpdate(const OriginAttributes& aOriginAttributes, const nsACString& aScope);
 
   void
   PropagateSoftUpdate(const OriginAttributes& aOriginAttributes,
@@ -375,8 +349,7 @@ public:
               nsString aLine,
               uint32_t aLineNumber,
               uint32_t aColumnNumber,
-              uint32_t aFlags,
-              JSExnType aExnType);
+              uint32_t aFlags);
 
   void
   GetAllClients(nsIPrincipal* aPrincipal,
@@ -431,9 +404,7 @@ private:
   MaybeRemoveRegistrationInfo(const nsACString& aScopeKey);
 
   void
-  SoftUpdate(const nsACString& aScopeKey,
-             const nsACString& aScope,
-             ServiceWorkerUpdateFinishCallback* aCallback = nullptr);
+  SoftUpdate(const nsACString& aScopeKey, const nsACString& aScope);
 
   already_AddRefed<ServiceWorkerRegistrationInfo>
   GetRegistration(const nsACString& aScopeKey,
@@ -581,7 +552,7 @@ private:
   // Removes all service worker registrations that matches the given
   // mozIApplicationClearPrivateDataParams.
   void
-  RemoveAllRegistrations(OriginAttributes* aParams);
+  RemoveAllRegistrations(mozIApplicationClearPrivateDataParams* aParams);
 
   nsRefPtr<ServiceWorkerManagerChild> mActor;
 

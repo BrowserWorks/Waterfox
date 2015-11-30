@@ -7,7 +7,7 @@
 XPCOMUtils.defineLazyModuleGetter(this, "Chat",
                                   "resource:///modules/Chat.jsm");
 
-var openChatOrig = Chat.open;
+let openChatOrig = Chat.open;
 
 add_test(function test_openChatWindow_on_notification() {
   mockPushHandler.registrationPushURL = kEndPointUrl;

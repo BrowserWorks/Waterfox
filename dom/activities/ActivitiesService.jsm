@@ -12,7 +12,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/IndexedDBHelper.jsm");
 Cu.import("resource://gre/modules/AppsUtils.jsm");
-Cu.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "DOMApplicationRegistry",
   "resource://gre/modules/Webapps.jsm");
@@ -239,7 +238,7 @@ ActivitiesDb.prototype = {
   }
 }
 
-var Activities = {
+let Activities = {
   messages: [
     // ActivityProxy.js
     "Activity:Start",
@@ -323,17 +322,10 @@ var Activities = {
             // Don't do this check until we have passed to UIGlue so the glue
             // can choose to launch its own activity if needed.
             if (aResults.options.length === 0) {
-              if (AppConstants.MOZ_B2GDROID) {
-                // Fallback on the Android Intent mapper.
-                let glue = Cc["@mozilla.org/dom/activities/android-ui-glue;1"]
-                             .createInstance(Ci.nsIActivityUIGlue);
-                glue.chooseActivity(aMsg.options, aResults.options, getActivityChoice);
-              } else {
-                self.trySendAndCleanup(aMsg.id, "Activity:FireError", {
-                  "id": aMsg.id,
-                  "error": "NO_PROVIDER"
-                });
-              }
+              self.trySendAndCleanup(aMsg.id, "Activity:FireError", {
+                "id": aMsg.id,
+                "error": "NO_PROVIDER"
+              });
               return;
             }
 

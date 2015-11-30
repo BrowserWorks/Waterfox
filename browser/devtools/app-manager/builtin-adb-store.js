@@ -6,7 +6,7 @@ const {Cu} = require("chrome");
 const ObservableObject = require("devtools/shared/observable-object");
 const {Devices} = Cu.import("resource://gre/modules/devtools/Devices.jsm");
 
-var store = new ObservableObject({versions:[]});
+let store = new ObservableObject({versions:[]});
 
 function feedStore() {
   store.object.available = Devices.helperAddonInstalled;

@@ -9,10 +9,10 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 Cu.import("resource:///modules/devtools/VariablesView.jsm");
 Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
-var {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-var promise = require("promise");
+let {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 
 Object.defineProperty(this, "WebConsoleUtils", {
   get: function() {
@@ -734,7 +734,7 @@ VariablesViewController.attach = function(aView, aOptions) {
 /**
  * Utility functions for handling stackframes.
  */
-var StackFrameUtils = {
+let StackFrameUtils = {
   /**
    * Create a textual representation for the specified stack frame
    * to display in the stackframes container.
@@ -790,4 +790,4 @@ var StackFrameUtils = {
 /**
  * Localization convenience methods.
  */
-var L10N = new ViewHelpers.L10N(DBG_STRINGS_URI);
+let L10N = new ViewHelpers.L10N(DBG_STRINGS_URI);

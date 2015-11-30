@@ -5,25 +5,22 @@
 // in a child process. This is different than single-process as a <menulist> is used
 // to implement the dropdown list.
 
-const XHTML_DTD = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">';
-
 const PAGECONTENT =
-  "<html xmlns='http://www.w3.org/1999/xhtml'>" + 
-  "<body onload='gChangeEvents = 0; document.body.firstChild.focus()'><select onchange='gChangeEvents++'>" +
+  "<html><body onload='gChangeEvents = 0; document.body.firstChild.focus()'><select onchange='gChangeEvents++'>" +
   "  <optgroup label='First Group'>" +
-  "    <option value='One'>One</option>" +
-  "    <option value='Two'>Two</option>" +
+  "    <option value=One>One" +
+  "    <option value=Two>Two" +
   "  </optgroup>" +
-  "  <option value='Three'>Three</option>" +
+  "  <option value=Three>Three" +
   "  <optgroup label='Second Group' disabled='true'>" +
-  "    <option value='Four'>Four</option>" +
-  "    <option value='Five'>Five</option>" +
+  "    <option value=Four>Four" +
+  "    <option value=Five>Five" +
   "  </optgroup>" +
-  "  <option value='Six' disabled='true'>Six</option>" +
+  "  <option value=Six disabled='true'>Six" +
   "  <optgroup label='Third Group'>" +
-  "    <option value='Seven'>   Seven  </option>" +
-  "    <option value='Eight'>&nbsp;&nbsp;Eight&nbsp;&nbsp;</option>" +
-  "  </optgroup></select><input />Text" +
+  "    <option value=Seven>Seven" +
+  "    <option value=Eight>Eight" +
+  "  </optgroup></select><input>" +
   "</body></html>";
 
 function openSelectPopup(selectPopup, withMouse)
@@ -60,11 +57,10 @@ function getChangeEvents()
   });
 }
 
-function doSelectTests(contentType, dtd)
-{
+add_task(function*() {
   let tab = gBrowser.selectedTab = gBrowser.addTab();
   let browser = gBrowser.getBrowserForTab(tab);
-  yield promiseTabLoadEvent(tab, "data:" + contentType + "," + escape(dtd + "\n" + PAGECONTENT));
+  yield promiseTabLoadEvent(tab, "data:text/html," + escape(PAGECONTENT));
 
   yield SimpleTest.promiseFocus(browser.contentWindow);
 
@@ -108,12 +104,6 @@ function doSelectTests(contentType, dtd)
 
   is((yield getChangeEvents()), 0, "Before closed - number of change events");
 
-  EventUtils.synthesizeKey("a", { accelKey: true });
-  let selection = yield ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
-    return String(content.getSelection());
-  });
-  is(selection, isWindows ? "Text" : "", "Select all while popup is open");
-
   yield hideSelectPopup(selectPopup);
 
   is(menulist.selectedIndex, 3, "Item 3 still selected");
@@ -135,17 +125,6 @@ function doSelectTests(contentType, dtd)
   EventUtils.synthesizeKey("VK_TAB", { shiftKey: true });
   is((yield getChangeEvents()), isWindows ? 2 : 1, "Tab away from select with change - number of change events");
 
-  is(selectPopup.lastChild.previousSibling.label, "Seven", "Spaces collapsed");
-  is(selectPopup.lastChild.label, "\xA0\xA0Eight\xA0\xA0", "Non-breaking spaces not collapsed");
-
   gBrowser.removeCurrentTab();
-}
-
-add_task(function*() {
-  yield doSelectTests("text/html", "");
-});
-
-add_task(function*() {
-  yield doSelectTests("application/xhtml+xml", XHTML_DTD);
 });
 

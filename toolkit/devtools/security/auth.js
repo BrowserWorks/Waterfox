@@ -6,11 +6,11 @@
 
 "use strict";
 
-var { Ci, Cc } = require("chrome");
-var Services = require("Services");
-var promise = require("promise");
-var DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
-var { dumpn, dumpv } = DevToolsUtils;
+let { Ci, Cc } = require("chrome");
+let Services = require("Services");
+let promise = require("promise");
+let DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+let { dumpn, dumpv } = DevToolsUtils;
 loader.lazyRequireGetter(this, "prompt",
   "devtools/toolkit/security/prompt");
 loader.lazyRequireGetter(this, "cert",
@@ -38,7 +38,7 @@ function createEnum(obj) {
  * centralize the common actions available, while still allowing embedders to
  * present their UI in whatever way they choose.
  */
-var AuthenticationResult = exports.AuthenticationResult = createEnum({
+let AuthenticationResult = exports.AuthenticationResult = createEnum({
 
   /**
    * Close all listening sockets, and disable them from opening again.
@@ -80,7 +80,7 @@ var AuthenticationResult = exports.AuthenticationResult = createEnum({
  * connection, server listener) in case some methods are customized by the
  * embedder for a given use case.
  */
-var Authenticators = {};
+let Authenticators = {};
 
 /**
  * The Prompt authenticator displays a server-side user prompt that includes
@@ -88,7 +88,7 @@ var Authenticators = {};
  * no cryptographic properties at work here, so it is up to the user to be sure
  * that the client can be trusted.
  */
-var Prompt = Authenticators.Prompt = {};
+let Prompt = Authenticators.Prompt = {};
 
 Prompt.mode = "PROMPT";
 
@@ -252,7 +252,7 @@ Prompt.Server.prototype = {
  *
  * See docs/wifi.md for details of the authentication design.
  */
-var OOBCert = Authenticators.OOBCert = {};
+let OOBCert = Authenticators.OOBCert = {};
 
 OOBCert.mode = "OOB_CERT";
 

@@ -13,9 +13,9 @@ import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.widget.ResizablePathDrawable;
 import org.mozilla.gecko.widget.ResizablePathDrawable.NonScaledPathShape;
-import org.mozilla.gecko.widget.themed.ThemedImageButton;
-import org.mozilla.gecko.widget.themed.ThemedLinearLayout;
-import org.mozilla.gecko.widget.themed.ThemedTextView;
+import org.mozilla.gecko.widget.ThemedImageButton;
+import org.mozilla.gecko.widget.ThemedLinearLayout;
+import org.mozilla.gecko.widget.ThemedTextView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,6 +49,7 @@ public class TabStripItemView extends ThemedLinearLayout
     private final ImageView faviconView;
     private final ThemedTextView titleView;
     private final ThemedImageButton closeView;
+    private final ThemedImageButton audioPlayingView;
 
     private final ResizablePathDrawable backgroundDrawable;
     private final Region tabRegion;
@@ -72,7 +73,7 @@ public class TabStripItemView extends ThemedLinearLayout
         final Resources res = context.getResources();
 
         final ColorStateList tabColors =
-                res.getColorStateList(R.color.tab_strip_item_bg);
+                res.getColorStateList(R.color.new_tablet_tab_strip_item_bg);
         backgroundDrawable = new ResizablePathDrawable(new TabCurveShape(), tabColors);
         setBackgroundDrawable(backgroundDrawable);
 
@@ -103,6 +104,25 @@ public class TabStripItemView extends ThemedLinearLayout
 
                 final Tabs tabs = Tabs.getInstance();
                 tabs.closeTab(tabs.getTab(id), true);
+            }
+        });
+
+        audioPlayingView = (ThemedImageButton) findViewById(R.id.audio_playing);
+        audioPlayingView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (id < 0) {
+                    throw new IllegalStateException("Invalid tab id:" + id);
+                }
+
+                // TODO: Toggle icon in the UI as well (bug 1190301)
+                final JSONObject args = new JSONObject();
+                try {
+                    args.put("tabId", id);
+                    GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Tab:ToggleMuteAudio", args.toString()));
+                } catch (JSONException e) {
+                    Log.e(LOGTAG, "Error toggling mute audio: error building json arguments", e);
+                }
             }
         });
     }
@@ -196,6 +216,7 @@ public class TabStripItemView extends ThemedLinearLayout
         updateTitle(tab);
         updateFavicon(tab.getFavicon());
         setPrivateMode(tab.isPrivate());
+        audioPlayingView.setVisibility(tab.isAudioPlaying() ? View.VISIBLE : View.GONE);
     }
 
     private void updateTitle(Tab tab) {
@@ -209,12 +230,6 @@ public class TabStripItemView extends ThemedLinearLayout
             titleView.setText(tab.getDisplayTitle());
         }
 
-        // TODO: Set content description to indicate audio is playing.
-        if (tab.isAudioPlaying()) {
-            titleView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.tab_audio_playing, 0, 0, 0);
-        } else {
-            titleView.setCompoundDrawables(null, null, null, null);
-        }
     }
 
     private void updateFavicon(final Bitmap favicon) {

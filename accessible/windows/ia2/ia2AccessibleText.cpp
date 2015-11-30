@@ -13,15 +13,8 @@
 #include "HyperTextAccessibleWrap.h"
 #include "HyperTextAccessible-inl.h"
 #include "ProxyWrappers.h"
-#include "mozilla/ClearOnShutdown.h"
 
 using namespace mozilla::a11y;
-
-StaticRefPtr<HyperTextAccessibleWrap> ia2AccessibleText::sLastTextChangeAcc;
-StaticAutoPtr<nsString> ia2AccessibleText::sLastTextChangeString;
-uint32_t ia2AccessibleText::sLastTextChangeStart = 0;
-uint32_t ia2AccessibleText::sLastTextChangeEnd = 0;
-bool ia2AccessibleText::sLastTextChangeWasInsert = false;
 
 // IAccessibleText
 
@@ -579,22 +572,21 @@ ia2AccessibleText::GetModifiedText(bool aGetInsertedText,
   if (!aText)
     return E_INVALIDARG;
 
-  if (!sLastTextChangeAcc)
-    return S_OK;
+  uint32_t startOffset = 0, endOffset = 0;
+  nsAutoString text;
 
-  if (aGetInsertedText != sLastTextChangeWasInsert)
-    return S_OK;
+  nsresult rv = GetModifiedText(aGetInsertedText, text,
+                                &startOffset, &endOffset);
+  if (NS_FAILED(rv))
+    return GetHRESULT(rv);
 
-  if (sLastTextChangeAcc != this)
-    return S_OK;
+  aText->start = startOffset;
+  aText->end = endOffset;
 
-  aText->start = sLastTextChangeStart;
-  aText->end = sLastTextChangeEnd;
-
-  if (sLastTextChangeString->IsEmpty())
+  if (text.IsEmpty())
     return S_FALSE;
 
-  aText->text = ::SysAllocStringLen(sLastTextChangeString->get(), sLastTextChangeString->Length());
+  aText->text = ::SysAllocStringLen(text.get(), text.Length());
   return aText->text ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -616,24 +608,3 @@ ia2AccessibleText::GetGeckoTextBoundary(enum IA2TextBoundaryType aBoundaryType)
   }
 }
 
-void
-ia2AccessibleText::InitTextChangeData()
-{
-  ClearOnShutdown(&sLastTextChangeAcc);
-  ClearOnShutdown(&sLastTextChangeString);
-}
-
-void
-ia2AccessibleText::UpdateTextChangeData(HyperTextAccessibleWrap* aAcc,
-                                        bool aInsert, const nsString& aStr,
-                                        int32_t aStart, uint32_t aLen)
-{
-  if (!sLastTextChangeString)
-    sLastTextChangeString = new nsString();
-
-  sLastTextChangeAcc = aAcc;
-  sLastTextChangeStart = aStart;
-  sLastTextChangeEnd = aStart + aLen;
-  sLastTextChangeWasInsert = aInsert;
-  *sLastTextChangeString = aStr;
-}

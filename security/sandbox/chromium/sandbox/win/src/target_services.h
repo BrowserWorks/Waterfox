@@ -13,19 +13,23 @@ namespace sandbox {
 
 class ProcessState {
  public:
-  ProcessState();
+  ProcessState() : process_state_(0) {}
+
   // Returns true if kernel32.dll has been loaded.
-  bool IsKernel32Loaded() const;
+  bool IsKernel32Loaded();
+
   // Returns true if main has been called.
-  bool InitCalled() const;
+  bool InitCalled();
+
   // Returns true if LowerToken has been called.
-  bool RevertedToSelf() const;
+  bool RevertedToSelf();
+
   // Set the current state.
   void SetKernel32Loaded();
   void SetInitCalled();
   void SetRevertedToSelf();
 
- private:
+ public:
   int process_state_;
   DISALLOW_COPY_AND_ASSIGN(ProcessState);
 };

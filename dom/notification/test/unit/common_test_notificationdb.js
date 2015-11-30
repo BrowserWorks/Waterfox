@@ -22,10 +22,10 @@ function getNotificationObject(app, id, tag) {
   };
 }
 
-var systemNotification =
+let systemNotification =
   getNotificationObject("system", "{2bc883bf-2809-4432-b0f4-f54e10372764}");
 
-var calendarNotification =
+let calendarNotification =
   getNotificationObject("calendar", "{d8d11299-a58e-429b-9a9a-57c562982fbf}");
 
 // Helper to start the NotificationDB

@@ -11,21 +11,18 @@ import os
 import socket
 import subprocess
 import sys
-from collections import namedtuple
 
-from . import _common
-from . import _psposix
-from . import _psutil_posix as cext_posix
-from . import _psutil_sunos as cext
-from ._common import isfile_strict, socktype_to_enum, sockfam_to_enum
-from ._common import usage_percent
-from ._compat import PY3
+from psutil import _common
+from psutil import _psposix
+from psutil._common import usage_percent, isfile_strict
+from psutil._compat import namedtuple, PY3
+import _psutil_posix
+import _psutil_sunos as cext
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
-AF_LINK = cext_posix.AF_LINK
 
 CONN_IDLE = "IDLE"
 CONN_BOUND = "BOUND"
@@ -66,7 +63,6 @@ pmmap_ext = namedtuple(
 
 # set later from __init__.py
 NoSuchProcess = None
-ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
 
@@ -75,7 +71,6 @@ TimeoutExpired = None
 disk_io_counters = cext.disk_io_counters
 net_io_counters = cext.net_io_counters
 disk_usage = _psposix.disk_usage
-net_if_addrs = cext_posix.net_if_addrs
 
 
 def virtual_memory():
@@ -96,9 +91,7 @@ def swap_memory():
     #     usr/src/cmd/swap/swap.c
     # ...nevertheless I can't manage to obtain the same numbers as 'swap'
     # cmdline utility, so let's parse its output (sigh!)
-    p = subprocess.Popen(['/usr/bin/env', 'PATH=/usr/sbin:/sbin:%s' %
-                          os.environ['PATH'], 'swap', '-l', '-k'],
-                         stdout=subprocess.PIPE)
+    p = subprocess.Popen(['swap', '-l', '-k'], stdout=subprocess.PIPE)
     stdout, stderr = p.communicate()
     if PY3:
         stdout = stdout.decode(sys.stdout.encoding)
@@ -216,7 +209,7 @@ def net_connections(kind, _pid=-1):
                          % (kind, ', '.join([repr(x) for x in cmap])))
     families, types = _common.conn_tmap[kind]
     rawlist = cext.net_connections(_pid, families, types)
-    ret = set()
+    ret = []
     for item in rawlist:
         fd, fam, type_, laddr, raddr, status, pid = item
         if fam not in families:
@@ -224,24 +217,11 @@ def net_connections(kind, _pid=-1):
         if type_ not in types:
             continue
         status = TCP_STATUSES[status]
-        fam = sockfam_to_enum(fam)
-        type_ = socktype_to_enum(type_)
         if _pid == -1:
             nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
         else:
             nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
-        ret.add(nt)
-    return list(ret)
-
-
-def net_if_stats():
-    """Get NIC stats (isup, duplex, speed, mtu)."""
-    ret = cext.net_if_stats()
-    for name, items in ret.items():
-        isup, duplex, speed, mtu = items
-        if hasattr(_common, 'NicDuplex'):
-            duplex = _common.NicDuplex(duplex)
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+        ret.append(nt)
     return ret
 
 
@@ -252,19 +232,16 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except EnvironmentError as err:
+        except EnvironmentError:
             # support for private module import
-            if (NoSuchProcess is None or AccessDenied is None or
-                    ZombieProcess is None):
+            if NoSuchProcess is None or AccessDenied is None:
                 raise
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
+            err = sys.exc_info()[1]
             if err.errno in (errno.ENOENT, errno.ESRCH):
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
+                raise NoSuchProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
@@ -274,12 +251,11 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid"]
+    __slots__ = ["pid", "_name"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
-        self._ppid = None
 
     @wrap_exceptions
     def name(self):
@@ -316,11 +292,10 @@ class Process(object):
         # Note: tested on Solaris 11; on Open Solaris 5 everything is
         # fine.
         try:
-            return cext_posix.getpriority(self.pid)
-        except EnvironmentError as err:
-            # 48 is 'operation not supported' but errno does not expose
-            # it. It occurs for low system pids.
-            if err.errno in (errno.ENOENT, errno.ESRCH, 48):
+            return _psutil_posix.getpriority(self.pid)
+        except EnvironmentError:
+            err = sys.exc_info()[1]
+            if err.errno in (errno.ENOENT, errno.ESRCH):
                 if pid_exists(self.pid):
                     raise AccessDenied(self.pid, self._name)
             raise
@@ -333,7 +308,7 @@ class Process(object):
             # The process actually exists though, as it has a name,
             # creation time, etc.
             raise AccessDenied(self.pid, self._name)
-        return cext_posix.setpriority(self.pid, value)
+        return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def ppid(self):
@@ -363,7 +338,8 @@ class Process(object):
             for x in (0, 1, 2, 255):
                 try:
                     return os.readlink('/proc/%d/path/%d' % (self.pid, x))
-                except OSError as err:
+                except OSError:
+                    err = sys.exc_info()[1]
                     if err.errno == errno.ENOENT:
                         hit_enoent = True
                         continue
@@ -380,7 +356,8 @@ class Process(object):
         # Reference: http://goo.gl/55XgO
         try:
             return os.readlink("/proc/%s/path/cwd" % self.pid)
-        except OSError as err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno == errno.ENOENT:
                 os.stat("/proc/%s" % self.pid)
                 return None
@@ -411,8 +388,9 @@ class Process(object):
             try:
                 utime, stime = cext.query_process_thread(
                     self.pid, tid)
-            except EnvironmentError as err:
+            except EnvironmentError:
                 # ENOENT == thread gone in meantime
+                err = sys.exc_info()[1]
                 if err.errno == errno.ENOENT:
                     hit_enoent = True
                     continue
@@ -435,8 +413,9 @@ class Process(object):
             if os.path.islink(path):
                 try:
                     file = os.readlink(path)
-                except OSError as err:
+                except OSError:
                     # ENOENT == file which is gone in the meantime
+                    err = sys.exc_info()[1]
                     if err.errno == errno.ENOENT:
                         hit_enoent = True
                         continue
@@ -516,7 +495,8 @@ class Process(object):
             if not name.startswith('['):
                 try:
                     name = os.readlink('/proc/%s/path/%s' % (self.pid, name))
-                except OSError as err:
+                except OSError:
+                    err = sys.exc_info()[1]
                     if err.errno == errno.ENOENT:
                         # sometimes the link may not be resolved by
                         # readlink() even if it exists (ls shows it).

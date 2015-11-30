@@ -14,7 +14,7 @@ const STATUS_SUCCESS = 200;
  *        Mocked raw response from the server
  * @returns {Function}
  */
-var mockResponse = function (response) {
+let mockResponse = function (response) {
   let Request = function (requestUri) {
     // Store the request uri so tests can inspect it
     Request._requestUri = requestUri;
@@ -33,7 +33,7 @@ var mockResponse = function (response) {
 // A simple mock FxA that hands out tokens without checking them and doesn't
 // expect tokens to be revoked. We have specific token tests further down that
 // has more checks here.
-var mockFxa = {
+let mockFxa = {
   getOAuthToken(options) {
     do_check_eq(options.scope, "profile");
     return "token";
@@ -51,7 +51,7 @@ const PROFILE_OPTIONS = {
  *        Error object
  * @returns {Function}
  */
-var mockResponseError = function (error) {
+let mockResponseError = function (error) {
   return function () {
     return {
       setHeader: function () {},

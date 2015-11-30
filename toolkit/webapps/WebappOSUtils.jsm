@@ -171,8 +171,12 @@ this.WebappOSUtils = {
   },
 
   getInstallPath: function(aApp) {
-#if defined(MOZ_B2G) || defined(MOZ_B2GDROID) || defined(MOZ_FENNEC)
-    // All b2g & fennec builds.
+#ifdef MOZ_B2G
+    // All b2g builds
+    return aApp.basePath + "/" + aApp.id;
+
+#elifdef MOZ_FENNEC
+   // All fennec
     return aApp.basePath + "/" + aApp.id;
 
 #elifdef MOZ_PHOENIX
@@ -400,7 +404,7 @@ this.WebappOSUtils = {
   isLaunchable: function(aApp) {
 #ifdef MOZ_WIDGET_ANDROID
     return true;
-#else
+#endif
 
     let uniqueName = this.getUniqueName(aApp);
 
@@ -461,7 +465,6 @@ this.WebappOSUtils = {
     }
 
     return true;
-#endif
 #endif
   },
 

@@ -895,7 +895,7 @@ const TEST_PASS_ASYNC = 1;
  * dispatching, some tests are sync/async specific.  These functions are marked
  * with 'syncOnly' or 'asyncOnly' attributes and run_next_test knows what to do.
  */
-var testPass = TEST_PASS_SYNC;
+let testPass = TEST_PASS_SYNC;
 
 /**
  * Create a statement of the type under test per testPass.
@@ -947,10 +947,10 @@ var tests =
   test_not_right_owning_statement,
   test_multiple_results,
 ];
-var index = 0;
+let index = 0;
 
 const STARTING_UNIQUE_ID = 2;
-var nextUniqueId = STARTING_UNIQUE_ID;
+let nextUniqueId = STARTING_UNIQUE_ID;
 
 function run_next_test()
 {

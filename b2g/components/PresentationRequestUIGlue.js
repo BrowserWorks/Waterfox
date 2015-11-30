@@ -4,10 +4,6 @@
 
 "use strict"
 
-function debug(aMsg) {
-  //dump("-*- PresentationRequestUIGlue: " + aMsg + "\n");
-}
-
 const { interfaces: Ci, utils: Cu, classes: Cc } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -34,10 +30,9 @@ function PresentationRequestUIGlue() {
       return;
     }
 
-    let sessionId = detail.id;
+    let sessionId = detail.sessionId;
     let resolver = this._resolvers[sessionId];
     if (!resolver) {
-      debug("No correspondent resolver for session ID: " + sessionId);
       return;
     }
 
@@ -49,13 +44,13 @@ function PresentationRequestUIGlue() {
 PresentationRequestUIGlue.prototype = {
 
   sendRequest: function(aUrl, aSessionId) {
+    SystemAppProxy._sendCustomEvent("mozPresentationChromeEvent",
+                                    { type: "presentation-launch-receiver",
+                                      url: aUrl,
+                                      id: aSessionId });
+
     return new Promise(function(aResolve, aReject) {
       this._resolvers[aSessionId] = aResolve;
-
-      SystemAppProxy._sendCustomEvent("mozPresentationChromeEvent",
-                                      { type: "presentation-launch-receiver",
-                                        url: aUrl,
-                                        id: aSessionId });
     }.bind(this));
   },
 

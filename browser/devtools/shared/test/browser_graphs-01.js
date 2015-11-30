@@ -3,7 +3,8 @@
 
 // Tests that graph widgets works properly.
 
-var LineGraphWidget = require("devtools/shared/widgets/LineGraphWidget");
+let LineGraphWidget = require("devtools/shared/widgets/LineGraphWidget");
+let {Promise} = require("resource://gre/modules/Promise.jsm");
 
 add_task(function*() {
   yield promiseTab("about:blank");

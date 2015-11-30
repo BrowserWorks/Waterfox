@@ -140,19 +140,6 @@ public:
 
     void SetErrorOffset(uint32_t aOffset) override;
 
-    bool allowed(Allowed aAllowed) override
-    {
-        return !(mDisAllowed & aAllowed);
-    }
-
-    bool ignoreError(nsresult aResult)
-    {
-        // Some errors shouldn't be ignored even in forwards compatible parsing
-        // mode.
-        return aResult != NS_ERROR_XSLT_CALL_TO_KEY_NOT_ALLOWED &&
-               fcp();
-    }
-
     static void shutdown();
 
 
@@ -163,7 +150,6 @@ public:
     nsAutoPtr<txList> mChooseGotoList;
     bool mDOE;
     bool mSearchingForFallback;
-    uint16_t mDisAllowed;
 
 protected:
     nsRefPtr<txACompileObserver> mObserver;

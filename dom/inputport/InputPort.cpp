@@ -4,7 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "MediaStreamGraph.h"
 #include "DOMMediaStream.h"
 #include "InputPortData.h"
 #include "InputPortListeners.h"
@@ -61,10 +60,7 @@ InputPort::Init(nsIInputPortData* aData, nsIInputPortListener* aListener, ErrorR
   mInputPortListener = static_cast<InputPortListener*>(aListener);
   mInputPortListener->RegisterInputPort(this);
 
-  MediaStreamGraph* graph =
-    MediaStreamGraph::GetInstance(MediaStreamGraph::SYSTEM_THREAD_DRIVER,
-                                  AudioChannel::Normal);
-  mStream = DOMMediaStream::CreateSourceStream(GetOwner(), graph);
+  mStream = DOMMediaStream::CreateSourceStream(GetOwner());
 }
 
 void

@@ -30,54 +30,11 @@ AliasedFormalIter::AliasedFormalIter(JSScript* script)
     settle();
 }
 
-ScriptCounts::ScriptCounts()
-  : pcCounts_(),
-    throwCounts_(),
-    ionCounts_(nullptr)
+inline void
+ScriptCounts::destroy(FreeOp* fop)
 {
-}
-
-ScriptCounts::ScriptCounts(PCCountsVector&& jumpTargets)
-  : pcCounts_(Move(jumpTargets)),
-    throwCounts_(),
-    ionCounts_(nullptr)
-{
-}
-
-ScriptCounts::ScriptCounts(ScriptCounts&& src)
-  : pcCounts_(Move(src.pcCounts_)),
-    throwCounts_(Move(src.throwCounts_)),
-    ionCounts_(Move(src.ionCounts_))
-{
-    src.ionCounts_ = nullptr;
-}
-
-ScriptCounts&
-ScriptCounts::operator=(ScriptCounts&& src)
-{
-    pcCounts_ = Move(src.pcCounts_);
-    throwCounts_ = Move(src.throwCounts_);
-    ionCounts_ = Move(src.ionCounts_);
-    src.ionCounts_ = nullptr;
-    return *this;
-}
-
-ScriptCounts::~ScriptCounts()
-{
-    js_delete(ionCounts_);
-}
-
-ScriptAndCounts::ScriptAndCounts(JSScript* script)
-  : script(script),
-    scriptCounts()
-{
-    script->releaseScriptCounts(&scriptCounts);
-}
-
-ScriptAndCounts::ScriptAndCounts(ScriptAndCounts&& sac)
-  : script(Move(sac.script)),
-    scriptCounts(Move(sac.scriptCounts))
-{
+    fop->free_(pcCountsVector);
+    fop->delete_(ionCounts);
 }
 
 void
@@ -110,16 +67,8 @@ JSScript::functionDelazifying() const
 inline void
 JSScript::setFunction(JSFunction* fun)
 {
-    MOZ_ASSERT(!function_ && !module_);
     MOZ_ASSERT(fun->isTenured());
     function_ = fun;
-}
-
-inline void
-JSScript::setModule(js::ModuleObject* module)
-{
-    MOZ_ASSERT(!function_ && !module_);
-    module_ = module;
 }
 
 inline void

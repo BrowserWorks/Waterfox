@@ -22,27 +22,6 @@ treecol {
   -moz-user-select: none;
 }
 
-#engineList treechildren::-moz-tree-image(engineShown, checked),
-#blocklistsTree treechildren::-moz-tree-image(selectionCol, checked) {
-  list-style-image: url("chrome://global/skin/in-content/check.svg#check");
-  width: 21px;
-  height: 21px;
-}
-
-#engineList treechildren::-moz-tree-image(engineShown, checked, selected),
-#blocklistsTree treechildren::-moz-tree-image(selectionCol, checked, selected) {
-  list-style-image: url("chrome://global/skin/in-content/check.svg#check-inverted");
-}
-
-#engineList treechildren::-moz-tree-row,
-#blocklistsTree treechildren::-moz-tree-row {
-  min-height: 36px;
-}
-
-#selectionCol {
-  min-width: 26px;
-}
-
 /* Category List */
 
 #categories {
@@ -436,101 +415,6 @@ description > html|a {
   -moz-box-align: start;
 }
 
-#syncStatusMessage {
-  visibility: collapse;
-  opacity: 0;
-  transition: opacity 1s linear;
-  padding: 14px 8px 14px 14px;
-  border-radius: 2px;
-}
-
-#syncStatusMessage[message-type] {
-  visibility: visible;
-  opacity: 1;
-}
-
-#syncStatusMessage[message-type="verify-success"] {
-  background-color: #74BF43;
-}
-
-#syncStatusMessage[message-type="verify-error"] {
-  background-color: #D74345;
-}
-
-#syncStatusMessage[message-type="migration"] {
-  background-color: #FF9500;
-}
-
-#sync-migration-buttons-deck {
-  visibility: collapse;
-}
-
-#learnMoreLink {
-  margin: 0;
-  color: #FBFBFB;
-  text-decoration: underline;
-}
-
-#syncStatusMessage[message-type="migration"] #sync-migration-buttons-deck {
-  visibility: visible;
-}
-
-#sync-migration-buttons-deck {
-  margin-top: 20px;
-}
-
-#sync-migration-buttons-deck button {
-  margin: 0 10px 0 0;
-  border: 0;
-  border-radius: 2px;
-}
-
-#sync-migrate-upgrade,
-#sync-migrate-resend {
-  background-color: #0095DD;
-  color: #FBFBFB;
-}
-
-#sync-migrate-upgrade:hover,
-#sync-migrate-resend:hover {
-  background-color: #008ACB;
-}
-
-#sync-migrate-upgrade:hover:active,
-#sync-migrate-resend:hover:active {
-  background-color: #006B9D;
-}
-
-#syncStatusMessageWrapper {
-  -moz-box-flex: 1;
-  padding-right: 5px;
-}
-
-#syncStatusMessageTitle, #syncStatusMessageDescription {
-  color: #FBFBFB;
-}
-
-#syncStatusMessage[message-type="migration"] #syncStatusMessageTitle {
-  display: none;
-}
-
-#syncStatusMessageTitle {
-  font-weight: bold !important;
-  font-size: 16px;
-  line-height: 157%;
-  margin: 0 0 20px;
-}
-
-#syncStatusMessageDescription {
-  font-size: 14px;
-  line-height: 158%;
-  margin: 0 !important;
-}
-
-#syncStatusMessageClose {
-  margin: 0px;
-}
-
 #fxaSyncEngines > vbox:first-child {
   margin-right: 80px;
 }
@@ -576,6 +460,7 @@ description > html|a {
 }
 
 #signedOutAccountBoxTitle {
+  margin-inline-start: 6px !important;
   font-weight: bold;
 }
 
@@ -584,19 +469,9 @@ description > html|a {
   margin-top: 11px;
 }
 
-.fxaAccountBoxButtons > * {
-  -moz-box-flex: 1;
-}
-
 .fxaAccountBoxButtons > button {
   padding-left: 11px;
   padding-right: 11px;
-  margin: 0;
-  min-width: 0;
-}
-
-.fxaAccountBoxButtons > button:first-child {
-  margin-right: 14px !important;
 }
 
 .fxaSyncIllustration {

@@ -479,7 +479,7 @@ public final class ANRReporter extends BroadcastReceiver
         // Only get native stack if Gecko is running.
         // Also, unwinding is memory intensive, so only unwind if we have enough memory.
         final boolean haveNativeStack =
-            GeckoThread.isRunning() ?
+            GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning) ?
             requestNativeStack(/* unwind */ SysInfo.getMemSize() >= 640) : false;
 
         try {

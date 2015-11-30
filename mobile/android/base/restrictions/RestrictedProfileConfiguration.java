@@ -6,19 +6,16 @@
 package org.mozilla.gecko.restrictions;
 
 import org.mozilla.gecko.AboutPages;
-import org.mozilla.gecko.util.ThreadUtils;
 
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.os.UserManager;
 
 import java.util.Arrays;
 import java.util.List;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class RestrictedProfileConfiguration implements RestrictionConfiguration {
     static List<Restriction> DEFAULT_RESTRICTIONS = Arrays.asList(
             Restriction.DISALLOW_INSTALL_EXTENSION,
@@ -35,36 +32,22 @@ public class RestrictedProfileConfiguration implements RestrictionConfiguration 
     );
 
     private Context context;
-    private Bundle cachedRestrictions;
-    private boolean isCacheInvalid = true;
 
     public RestrictedProfileConfiguration(Context context) {
         this.context = context.getApplicationContext();
     }
 
     @Override
-    public synchronized boolean isAllowed(Restriction restriction) {
-        if (isCacheInvalid || !ThreadUtils.isOnUiThread()) {
-            cachedRestrictions = readRestrictions();
-            isCacheInvalid = false;
+    public boolean isAllowed(Restriction restriction) {
+        boolean isAllowed = !getAppRestrictions(context).getBoolean(restriction.name, DEFAULT_RESTRICTIONS.contains(restriction));
+
+        if (isAllowed) {
+            // If this restriction is not enforced by the app setup then check wether this is a restriction that is
+            // enforced by the system.
+            isAllowed = !getUserRestrictions(context).getBoolean(restriction.name, false);
         }
 
-        return !cachedRestrictions.getBoolean(restriction.name, DEFAULT_RESTRICTIONS.contains(restriction));
-    }
-
-    private Bundle readRestrictions() {
-        final UserManager mgr = (UserManager) context.getSystemService(Context.USER_SERVICE);
-
-        StrictMode.ThreadPolicy policy = StrictMode.allowThreadDiskReads();
-
-        try {
-            Bundle restrictions = new Bundle();
-            restrictions.putAll(mgr.getApplicationRestrictions(context.getPackageName()));
-            restrictions.putAll(mgr.getUserRestrictions());
-            return restrictions;
-        } finally {
-            StrictMode.setThreadPolicy(policy);
-        }
+        return isAllowed;
     }
 
     @Override
@@ -90,8 +73,15 @@ public class RestrictedProfileConfiguration implements RestrictionConfiguration 
         return true;
     }
 
-    @Override
-    public synchronized void update() {
-        isCacheInvalid = true;
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+    private Bundle getAppRestrictions(final Context context) {
+        final UserManager mgr = (UserManager) context.getSystemService(Context.USER_SERVICE);
+        return mgr.getApplicationRestrictions(context.getPackageName());
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+    private Bundle getUserRestrictions(final Context context) {
+        final UserManager mgr = (UserManager) context.getSystemService(Context.USER_SERVICE);
+        return mgr.getUserRestrictions();
     }
 }

@@ -272,7 +272,7 @@ WrapperAnswer::RecvHasOwn(const ObjectId& objId, const JSIDVariant& idVar, Retur
 }
 
 bool
-WrapperAnswer::RecvGet(const ObjectId& objId, const JSVariant& receiverVar,
+WrapperAnswer::RecvGet(const ObjectId& objId, const ObjectVariant& receiverVar,
                        const JSIDVariant& idVar, ReturnStatus* rs, JSVariant* result)
 {
     // We may run scripted getters.
@@ -289,8 +289,8 @@ WrapperAnswer::RecvGet(const ObjectId& objId, const JSVariant& receiverVar,
     if (!obj)
         return fail(aes, rs);
 
-    RootedValue receiver(cx);
-    if (!fromVariant(cx, receiverVar, &receiver))
+    RootedObject receiver(cx, fromObjectVariant(cx, receiverVar));
+    if (!receiver)
         return fail(aes, rs);
 
     RootedId id(cx);

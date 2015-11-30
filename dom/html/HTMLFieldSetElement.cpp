@@ -63,7 +63,7 @@ NS_IMPL_STRING_ATTR(HTMLFieldSetElement, Name, name)
 NS_IMPL_NSICONSTRAINTVALIDATION(HTMLFieldSetElement)
 
 bool
-HTMLFieldSetElement::IsDisabledForEvents(EventMessage aMessage)
+HTMLFieldSetElement::IsDisabledForEvents(uint32_t aMessage)
 {
   return IsElementDisabledForEvents(aMessage, nullptr);
 }
@@ -74,7 +74,7 @@ HTMLFieldSetElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
   // Do not process any DOM events if the element is disabled.
   aVisitor.mCanHandle = false;
-  if (IsDisabledForEvents(aVisitor.mEvent->mMessage)) {
+  if (IsDisabledForEvents(aVisitor.mEvent->message)) {
     return NS_OK;
   }
 

@@ -15,7 +15,6 @@ class nsISupports;
 
 namespace mozilla {
 namespace dom {
-class PerformanceResourceTiming;
 
 // http://www.w3.org/TR/performance-timeline/#performanceentry
 class PerformanceEntry : public nsISupports,
@@ -77,11 +76,6 @@ public:
   virtual DOMHighResTimeStamp Duration() const
   {
     return 0;
-  }
-
-  virtual const PerformanceResourceTiming* ToResourceTiming() const
-  {
-    return nullptr;
   }
 
 protected:

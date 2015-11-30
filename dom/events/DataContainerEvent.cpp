@@ -87,13 +87,15 @@ DataContainerEvent::SetData(JSContext* aCx, const nsAString& aKey,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<DataContainerEvent>
-NS_NewDOMDataContainerEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMDataContainerEvent(nsIDOMEvent** aInstancePtrResult,
+                            EventTarget* aOwner,
                             nsPresContext* aPresContext,
                             WidgetEvent* aEvent)
 {
-  nsRefPtr<DataContainerEvent> it =
-    new DataContainerEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  DataContainerEvent* it = new DataContainerEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }
 

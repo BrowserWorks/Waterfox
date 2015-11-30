@@ -199,6 +199,7 @@ SmsRequestChild::Recv__delete__(const MessageReply& aReply)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mReplyRequest);
+  nsCOMPtr<SmsMessage> message;
   switch(aReply.type()) {
     case MessageReply::TReplyMessageSend: {
         const MobileMessageData& data =

@@ -131,10 +131,10 @@ function off(type, listener) {
 exports.off = off;
 
 // must use WeakMap to keep reference to all the WeakRefs (!), see bug 986115
-var weakRefs = new WeakMap();
+let weakRefs = new WeakMap();
 
 // and we're out of beta, we're releasing on time!
-var stillAlive = new Map();   
+let stillAlive = new Map();   
 
 on('sdk:loader:destroy', function onunload({ subject, data: reason }) {
   // using logic from ./unload, to avoid a circular module reference

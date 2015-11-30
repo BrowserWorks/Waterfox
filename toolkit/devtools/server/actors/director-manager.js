@@ -46,7 +46,7 @@ types.addDictType("messageportevent", {
  * A MessagePort Actor allowing communication through messageport events
  * over the remote debugging protocol.
  */
-var MessagePortActor = exports.MessagePortActor = protocol.ActorClass({
+let MessagePortActor = exports.MessagePortActor = protocol.ActorClass({
   typeName: "messageport",
 
   /**
@@ -169,7 +169,7 @@ var MessagePortActor = exports.MessagePortActor = protocol.ActorClass({
 /**
  * The corresponding Front object for the MessagePortActor.
  */
-var MessagePortFront = exports.MessagePortFront = protocol.FrontClass(MessagePortActor, {
+let MessagePortFront = exports.MessagePortFront = protocol.FrontClass(MessagePortActor, {
   initialize: function (client, form) {
     protocol.Front.prototype.initialize.call(this, client, form);
   }
@@ -217,7 +217,7 @@ types.addDictType("director-script-detach", {
  * directly connect the debugger client and the content script using a MessageChannel) on tab
  * navigation.
  */
-var DirectorScriptActor = exports.DirectorScriptActor = protocol.ActorClass({
+let DirectorScriptActor = exports.DirectorScriptActor = protocol.ActorClass({
   typeName: "director-script",
 
   /**
@@ -438,7 +438,7 @@ var DirectorScriptActor = exports.DirectorScriptActor = protocol.ActorClass({
 /**
  * The corresponding Front object for the DirectorScriptActor.
  */
-var DirectorScriptFront = exports.DirectorScriptFront = protocol.FrontClass(DirectorScriptActor, {
+let DirectorScriptFront = exports.DirectorScriptFront = protocol.FrontClass(DirectorScriptActor, {
   initialize: function (client, form) {
     protocol.Front.prototype.initialize.call(this, client, form);
   }

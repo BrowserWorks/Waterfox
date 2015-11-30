@@ -64,7 +64,7 @@ matchNameKeysCaseInsensitive(PLDHashTable*, const PLDHashEntryHdr* aHdr,
 }
 
 /*
- * caseInsensitiveHashKey is just like PLDHashTable::HashStringKey except it
+ * caseInsensitiveHashKey is just like PL_DHashStringKey except it
  * uses (*s & ~0x20) instead of simply *s.  This means that "aFOO" and
  * "afoo" and "aFoo" will all hash to the same thing.  It also means
  * that some strings that aren't case-insensensitively equal will hash
@@ -96,8 +96,8 @@ caseInsensitiveStringHashKey(PLDHashTable* aTable, const void* aKey)
 static const struct PLDHashTableOps nametable_CaseInsensitiveHashTableOps = {
   caseInsensitiveStringHashKey,
   matchNameKeysCaseInsensitive,
-  PLDHashTable::MoveEntryStub,
-  PLDHashTable::ClearEntryStub,
+  PL_DHashMoveEntryStub,
+  PL_DHashClearEntryStub,
   nullptr,
 };
 
@@ -136,7 +136,8 @@ nsStaticCaseInsensitiveNameTable::nsStaticCaseInsensitiveNameTable(
 
     NameTableKey key(strPtr);
 
-    auto entry = static_cast<NameTableEntry*>(mNameTable.Add(&key, fallible));
+    NameTableEntry* entry = static_cast<NameTableEntry*>
+      (PL_DHashTableAdd(&mNameTable, &key, fallible));
     if (!entry) {
       continue;
     }
@@ -147,7 +148,7 @@ nsStaticCaseInsensitiveNameTable::nsStaticCaseInsensitiveNameTable(
     entry->mIndex = index;
   }
 #ifdef DEBUG
-  mNameTable.MarkImmutable();
+  PL_DHashMarkTableImmutable(&mNameTable);
 #endif
 }
 
@@ -169,7 +170,8 @@ nsStaticCaseInsensitiveNameTable::Lookup(const nsACString& aName)
   const nsAFlatCString& str = PromiseFlatCString(aName);
 
   NameTableKey key(&str);
-  auto entry = static_cast<NameTableEntry*>(mNameTable.Search(&key));
+  NameTableEntry* entry =
+    static_cast<NameTableEntry*>(PL_DHashTableSearch(&mNameTable, &key));
 
   return entry ? entry->mIndex : nsStaticCaseInsensitiveNameTable::NOT_FOUND;
 }
@@ -182,7 +184,8 @@ nsStaticCaseInsensitiveNameTable::Lookup(const nsAString& aName)
   const nsAFlatString& str = PromiseFlatString(aName);
 
   NameTableKey key(&str);
-  auto entry = static_cast<NameTableEntry*>(mNameTable.Search(&key));
+  NameTableEntry* entry =
+    static_cast<NameTableEntry*>(PL_DHashTableSearch(&mNameTable, &key));
 
   return entry ? entry->mIndex : nsStaticCaseInsensitiveNameTable::NOT_FOUND;
 }

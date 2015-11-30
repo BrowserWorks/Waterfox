@@ -40,7 +40,7 @@ EnsureBluetoothSocketHalLoad()
 }
 
 class mozilla::dom::bluetooth::DroidSocketImpl
-  : public mozilla::ipc::UnixFdWatcher
+  : public ipc::UnixFdWatcher
   , public DataSocketIO
 {
 public:
@@ -74,7 +74,7 @@ public:
   DroidSocketImpl(MessageLoop* aConsumerLoop,
                   MessageLoop* aIOLoop,
                   BluetoothSocket* aConsumer)
-    : mozilla::ipc::UnixFdWatcher(aIOLoop)
+    : ipc::UnixFdWatcher(aIOLoop)
     , DataSocketIO(aConsumerLoop)
     , mConsumer(aConsumer)
     , mShuttingDownOnIOThread(false)

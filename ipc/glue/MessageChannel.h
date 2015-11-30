@@ -175,16 +175,6 @@ class MessageChannel : HasResultCodes
         sIsPumpingMessages = aIsPumping;
     }
 
-#ifdef MOZ_NUWA_PROCESS
-    void Block() {
-        mLink->Block();
-    }
-
-    void Unblock() {
-        mLink->Unblock();
-    }
-#endif
-
 #ifdef OS_WIN
     struct MOZ_STACK_CLASS SyncStackFrame
     {

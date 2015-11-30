@@ -25,7 +25,7 @@ function byteValueToHexString(aValue) {
   return str.length == 1 ? "0" + str : str;
 }
 
-var ref_num = 0;
+let ref_num = 0;
 function buildTextPdus(aDcs) {
   ref_num++;
 

@@ -34,28 +34,28 @@ dictionary MediaPlayStatus
 
 [CheckAnyPermissions="bluetooth"]
 interface BluetoothAdapter : EventTarget {
-  readonly attribute BluetoothAdapterState  state;
-  [AvailableIn=CertifiedApps]
-  readonly attribute DOMString              address;
-  readonly attribute DOMString              name;
-  readonly attribute boolean                discoverable;
-  readonly attribute boolean                discovering;
-  readonly attribute BluetoothGattServer?   gattServer;
+  readonly attribute DOMString      address;
+  readonly attribute unsigned long  class;
+  readonly attribute boolean        discovering;
+  readonly attribute DOMString      name;
+  readonly attribute boolean        discoverable;
+  readonly attribute unsigned long  discoverableTimeout; // in seconds
 
-  [AvailableIn=CertifiedApps]
-  readonly attribute BluetoothPairingListener pairingReqs;
+  // array of type BluetoothDevice[]
+  [GetterThrows]
+  readonly attribute any            devices;
 
-  // Fired when attribute(s) of BluetoothAdapter changed
-           attribute EventHandler   onattributechanged;
+  // array of type DOMString[]
+  [GetterThrows]
+  readonly attribute any            uuids;
 
-  // Fired when a remote device gets paired with the adapter
-           attribute EventHandler   ondevicepaired;
+           attribute EventHandler   ondevicefound;
 
-  // Fired when a remote device gets unpaired from the adapter
-           attribute EventHandler   ondeviceunpaired;
+  // Fired when discovery process has been done or has started
+           attribute EventHandler   ondiscoverystatechanged;
 
-  // Fired when the pairing process aborted
-           attribute EventHandler   onpairingaborted;
+  // Fired when pairing process is completed
+           attribute EventHandler   onpairedstatuschanged;
 
   // Fired when a2dp connection status changed
            attribute EventHandler   ona2dpstatuschanged;
@@ -69,52 +69,30 @@ interface BluetoothAdapter : EventTarget {
   // Fired when remote devices query current media play status
            attribute EventHandler   onrequestmediaplaystatus;
 
-  // Fired when PBAP manager requests for 'pullphonebook'
-           attribute EventHandler   onpullphonebookreq;
-
-  // Fired when PBAP manager requests for 'pullvcardentry'
-           attribute EventHandler   onpullvcardentryreq;
-
-  // Fired when PBAP manager requests for 'pullvcardlisting'
-           attribute EventHandler   onpullvcardlistingreq;
-
-  /**
-   * Enable/Disable a local bluetooth adapter by asynchronus methods and return
-   * its result through a Promise.
-   *
-   * Several onattributechanged events would be triggered during processing the
-   * request, and the last one indicates adapter.state becomes enabled/disabled.
-   */
-  [NewObject, AvailableIn=CertifiedApps]
-  Promise<void> enable();
-  [NewObject, AvailableIn=CertifiedApps]
-  Promise<void> disable();
-
-  [NewObject, AvailableIn=CertifiedApps]
-  Promise<void> setName(DOMString name);
-  [NewObject]
-  Promise<void> setDiscoverable(boolean discoverable);
-
-  [NewObject]
-  Promise<BluetoothDiscoveryHandle> startDiscovery();
-  [NewObject]
-  Promise<void> stopDiscovery();
-
-  [NewObject]
-  Promise<void> pair(DOMString deviceAddress);
-  [NewObject]
-  Promise<void> unpair(DOMString deviceAddress);
-
-  sequence<BluetoothDevice> getPairedDevices();
-
-  [NewObject]
-  Promise<BluetoothDiscoveryHandle> startLeScan(sequence<DOMString> serviceUuids);
-
-  [NewObject]
-  Promise<void> stopLeScan(BluetoothDiscoveryHandle discoveryHandle);
-
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
+  DOMRequest setName(DOMString name);
+  [NewObject, Throws]
+  DOMRequest setDiscoverable(boolean discoverable);
+  [NewObject, Throws]
+  DOMRequest setDiscoverableTimeout(unsigned long timeout);
+  [NewObject, Throws]
+  DOMRequest startDiscovery();
+  [NewObject, Throws]
+  DOMRequest stopDiscovery();
+  [NewObject, Throws]
+  DOMRequest pair(DOMString deviceAddress);
+  [NewObject, Throws]
+  DOMRequest unpair(DOMString deviceAddress);
+  [NewObject, Throws]
+  DOMRequest getPairedDevices();
+  [NewObject, Throws]
   DOMRequest getConnectedDevices(unsigned short serviceUuid);
+  [NewObject, Throws]
+  DOMRequest setPinCode(DOMString deviceAddress, DOMString pinCode);
+  [NewObject, Throws]
+  DOMRequest setPasskey(DOMString deviceAddress, unsigned long passkey);
+  [NewObject, Throws]
+  DOMRequest setPairingConfirmation(DOMString deviceAddress, boolean confirmation);
 
   /**
    * Connect/Disconnect to a specific service of a target remote device.
@@ -133,26 +111,29 @@ interface BluetoothAdapter : EventTarget {
    * @param device Remote device
    * @param profile 2-octets service UUID. This is optional.
    */
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
   DOMRequest connect(BluetoothDevice device, optional unsigned short serviceUuid);
 
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
   DOMRequest disconnect(BluetoothDevice device, optional unsigned short serviceUuid);
 
+  [NewObject, Throws]
+  DOMRequest isConnected(unsigned short serviceUuid);
+
   // One device can only send one file at a time
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
   DOMRequest sendFile(DOMString deviceAddress, Blob blob);
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
   DOMRequest stopSendingFile(DOMString deviceAddress);
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
   DOMRequest confirmReceivingFile(DOMString deviceAddress, boolean confirmation);
 
   // Connect/Disconnect SCO (audio) connection
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
   DOMRequest connectSco();
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
   DOMRequest disconnectSco();
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
   DOMRequest isScoConnected();
 
   /**
@@ -165,35 +146,16 @@ interface BluetoothAdapter : EventTarget {
    *
    * For more information please refer to bug 912005 and 925638.
    */
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
   DOMRequest answerWaitingCall();
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
   DOMRequest ignoreWaitingCall();
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject, Throws]
   DOMRequest toggleCalls();
 
   // AVRCP 1.3 methods
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject,Throws]
   DOMRequest sendMediaMetaData(optional MediaMetaData mediaMetaData);
-  [NewObject, Throws, AvailableIn=CertifiedApps]
+  [NewObject,Throws]
   DOMRequest sendMediaPlayStatus(optional MediaPlayStatus mediaPlayStatus);
 };
-
-enum BluetoothAdapterState
-{
-  "disabled",
-  "disabling",
-  "enabled",
-  "enabling"
-};
-
-enum BluetoothAdapterAttribute
-{
-  "unknown",
-  "state",
-  "address",
-  "name",
-  "discoverable",
-  "discovering"
-};
-

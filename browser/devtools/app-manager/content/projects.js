@@ -42,7 +42,7 @@ window.addEventListener("unload", function onUnload() {
   UI.destroy();
 });
 
-var UI = {
+let UI = {
   isReady: false,
 
   onload: function() {

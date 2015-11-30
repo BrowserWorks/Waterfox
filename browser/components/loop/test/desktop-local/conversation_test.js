@@ -10,7 +10,6 @@ describe("loop.conversation", function() {
   var TestUtils = React.addons.TestUtils;
   var sharedActions = loop.shared.actions;
   var sharedModels = loop.shared.models;
-  var FAILURE_DETAILS = loop.shared.utils.FAILURE_DETAILS;
   var fakeWindow, sandbox, getLoopPrefStub, setLoopPrefStub, mozL10nGet;
 
   beforeEach(function() {
@@ -27,14 +26,11 @@ describe("loop.conversation", function() {
       },
       setLoopPref: setLoopPrefStub,
       getLoopPref: function(prefName) {
-        switch (prefName) {
-          case "contextInConversations.enabled":
-            return false;
-          case "debug.sdk":
-            return false;
-          default:
-            return "http://fake";
+        if (prefName == "debug.sdk") {
+          return false;
         }
+
+        return "http://fake";
       },
       LOOP_SESSION_TYPE: {
         GUEST: 1,
@@ -87,6 +83,9 @@ describe("loop.conversation", function() {
       sandbox.stub(React, "render");
       sandbox.stub(document.mozL10n, "initialize");
 
+      sandbox.stub(loop.shared.models.ConversationModel.prototype,
+        "initialize");
+
       sandbox.stub(loop.Dispatcher.prototype, "dispatch");
 
       sandbox.stub(loop.shared.utils,
@@ -136,9 +135,8 @@ describe("loop.conversation", function() {
   });
 
   describe("AppControllerView", function() {
-    var conversationStore, activeRoomStore, client, ccView, dispatcher;
+    var conversationStore, client, ccView, dispatcher;
     var conversationAppStore, roomStore, feedbackPeriodMs = 15770000000;
-    var ROOM_STATES = loop.store.ROOM_STATES;
 
     function mountTestComponent() {
       return TestUtils.renderIntoDocument(
@@ -168,16 +166,10 @@ describe("loop.conversation", function() {
         }]
       }});
 
-      activeRoomStore = new loop.store.ActiveRoomStore(dispatcher, {
-        mozLoop: {},
-        sdkDriver: {}
-      });
       roomStore = new loop.store.RoomStore(dispatcher, {
-        mozLoop: navigator.mozLoop,
-        activeRoomStore: activeRoomStore
+        mozLoop: navigator.mozLoop
       });
       conversationAppStore = new loop.store.ConversationAppStore({
-        activeRoomStore: activeRoomStore,
         dispatcher: dispatcher,
         mozLoop: navigator.mozLoop
       });
@@ -212,7 +204,6 @@ describe("loop.conversation", function() {
 
     it("should display the RoomView for rooms", function() {
       conversationAppStore.setStoreState({windowType: "room"});
-      activeRoomStore.setStoreState({roomState: ROOM_STATES.READY});
 
       ccView = mountTestComponent();
 
@@ -220,20 +211,13 @@ describe("loop.conversation", function() {
         loop.roomViews.DesktopRoomConversationView);
     });
 
-    it("should display the DirectCallFailureView for failures", function() {
-      conversationAppStore.setStoreState({
-        contact: {},
-        outgoing: false,
-        windowType: "failed"
-      });
-      conversationStore.setStoreState({
-        callStateReason: FAILURE_DETAILS.UNKNOWN
-      });
+    it("should display the GenericFailureView for failures", function() {
+      conversationAppStore.setStoreState({windowType: "failed"});
 
       ccView = mountTestComponent();
 
       TestUtils.findRenderedComponentWithType(ccView,
-        loop.conversationViews.DirectCallFailureView);
+        loop.conversationViews.GenericFailureView);
     });
 
     it("should set the correct title when rendering feedback view", function() {

@@ -9,7 +9,7 @@
 
 Cu.import("resource:///modules/loop/MozLoopAPI.jsm");
 
-var sandbox;
+let sandbox;
 function assertInSandbox(expr, msg_opt) {
   Assert.ok(Cu.evalInSandbox(expr, sandbox), msg_opt);
 }

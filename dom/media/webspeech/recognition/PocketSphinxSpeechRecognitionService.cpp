@@ -21,7 +21,6 @@
 
 extern "C" {
 #include "pocketsphinx/pocketsphinx.h"
-#include "sphinxbase/logmath.h"
 #include "sphinxbase/sphinx_config.h"
 #include "sphinxbase/jsgf.h"
 }
@@ -34,10 +33,8 @@ class DecodeResultTask : public nsRunnable
 {
 public:
   DecodeResultTask(const nsString& hypstring,
-                   float64 confidence,
                    WeakPtr<dom::SpeechRecognition> recognition)
       : mResult(hypstring),
-        mConfidence(confidence),
         mRecognition(recognition),
         mWorkerThread(do_GetCurrentThread())
   {
@@ -62,7 +59,7 @@ public:
         new SpeechRecognitionAlternative(mRecognition);
 
       alternative->mTranscript = mResult;
-      alternative->mConfidence = mConfidence;
+      alternative->mConfidence = 100;
 
       result->mItems.AppendElement(alternative);
     }
@@ -80,7 +77,6 @@ public:
 
 private:
   nsString mResult;
-  float64 mConfidence;
   WeakPtr<dom::SpeechRecognition> mRecognition;
   nsCOMPtr<nsIThread> mWorkerThread;
 };
@@ -99,9 +95,7 @@ public:
   {
     char const* hyp;
     int rv;
-    int32 final;
-    int32 logprob;
-    float64 confidence;
+    int32 score;
     nsAutoCString hypoValue;
 
     rv = ps_start_utt(mPs);
@@ -109,18 +103,15 @@ public:
                         FALSE);
 
     rv = ps_end_utt(mPs);
-    confidence = 0;
     if (rv >= 0) {
-      hyp = ps_get_hyp_final(mPs, &final);
-      if (hyp && final) {
-        logprob = ps_get_prob(mPs);
-        confidence = logmath_exp(ps_get_logmath(mPs), logprob);
+      hyp = ps_get_hyp(mPs, &score);
+      if (hyp) {
         hypoValue.Assign(hyp);
       }
     }
 
     nsCOMPtr<nsIRunnable> resultrunnable =
-      new DecodeResultTask(NS_ConvertUTF8toUTF16(hypoValue), confidence, mRecognition);
+      new DecodeResultTask(NS_ConvertUTF8toUTF16(hypoValue), mRecognition);
     return NS_DispatchToMainThread(resultrunnable);
   }
 
@@ -163,7 +154,7 @@ PocketSphinxSpeechRecognitionService::PocketSphinxSpeechRecognitionService()
 
   // FOR B2G PATHS HARDCODED (APPEND /DATA ON THE BEGINING, FOR DESKTOP, ONLY
   // MODELS/ RELATIVE TO ROOT
-  mPSConfig = cmd_ln_init(nullptr, ps_args(), TRUE, "-bestpath", "yes", "-hmm",
+  mPSConfig = cmd_ln_init(nullptr, ps_args(), TRUE, "-hmm",
                           ToNewUTF8String(aStringAMPath), // acoustic model
                           "-dict", ToNewUTF8String(aStringDictPath), nullptr);
   if (mPSConfig == nullptr) {
@@ -277,11 +268,11 @@ PocketSphinxSpeechRecognitionService::ValidateAndSetGrammarList(
     int result = ps_set_jsgf_string(mPSHandle, "name",
                                     NS_ConvertUTF16toUTF8(grammar).get());
 
+    ps_set_search(mPSHandle, "name");
+
     if (result != 0) {
       ISGrammarCompiled = false;
     } else {
-      ps_set_search(mPSHandle, "name");
-
       ISGrammarCompiled = true;
     }
   } else {

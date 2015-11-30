@@ -13,7 +13,6 @@
 // These includes are needed these for some typedefs (e.g. HandleValue) and
 // functions (e.g. NullValue())...
 #include "js/CallNonGenericMethod.h"
-#include "js/TraceableVector.h"
 #include "js/TypeDecls.h"
 #include "js/Value.h"
 
@@ -34,15 +33,15 @@ class AutoVectorRooter;
 typedef AutoVectorRooter<Value> AutoValueVector;
 typedef AutoVectorRooter<jsid> AutoIdVector;
 typedef AutoVectorRooter<JSObject*> AutoObjectVector;
+typedef AutoVectorRooter<JSFunction*> AutoFunctionVector;
 typedef AutoVectorRooter<JSScript*> AutoVector;
 
-using ValueVector = js::TraceableVector<JS::Value>;
-using IdVector = js::TraceableVector<jsid>;
-using ScriptVector = js::TraceableVector<JSScript*>;
+class AutoIdArray;
 
 template <typename T> class AutoVectorRooter;
 template<typename K, typename V> class AutoHashMapRooter;
 template<typename T> class AutoHashSetRooter;
+template<typename T> class RootedGeneric;
 
 class MOZ_STACK_CLASS SourceBufferHolder;
 
@@ -82,13 +81,14 @@ using JS::AutoVectorRooter;
 typedef AutoVectorRooter<Value> AutoValueVector;
 typedef AutoVectorRooter<jsid> AutoIdVector;
 typedef AutoVectorRooter<JSObject*> AutoObjectVector;
+typedef AutoVectorRooter<JSFunction*> AutoFunctionVector;
+typedef AutoVectorRooter<JSScript*> AutoScriptVector;
 
-using JS::ValueVector;
-using JS::IdVector;
-using JS::ScriptVector;
+using JS::AutoIdArray;
 
 using JS::AutoHashMapRooter;
 using JS::AutoHashSetRooter;
+using JS::RootedGeneric;
 
 using JS::CallArgs;
 using JS::CallNonGenericMethod;
@@ -99,7 +99,6 @@ using JS::NativeImpl;
 using JS::OwningCompileOptions;
 using JS::ReadOnlyCompileOptions;
 using JS::SourceBufferHolder;
-using JS::TransitiveCompileOptions;
 
 using JS::Rooted;
 using JS::RootedFunction;

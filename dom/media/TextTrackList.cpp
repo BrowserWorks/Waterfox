@@ -69,10 +69,7 @@ TextTrack*
 TextTrackList::IndexedGetter(uint32_t aIndex, bool& aFound)
 {
   aFound = aIndex < mTextTracks.Length();
-  if (!aFound) {
-    return nullptr;
-  }
-  return mTextTracks[aIndex];
+  return aFound ? mTextTracks[aIndex] : nullptr;
 }
 
 TextTrack*
@@ -163,9 +160,14 @@ TextTrackList::DispatchTrackEvent(nsIDOMEvent* aEvent)
 void
 TextTrackList::CreateAndDispatchChangeEvent()
 {
-  nsRefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
+  nsCOMPtr<nsIDOMEvent> event;
+  nsresult rv = NS_NewDOMEvent(getter_AddRefs(event), this, nullptr, nullptr);
+  if (NS_FAILED(rv)) {
+    NS_WARNING("Failed to create the error event!");
+    return;
+  }
 
-  nsresult rv = event->InitEvent(NS_LITERAL_STRING("change"), false, false);
+  rv = event->InitEvent(NS_LITERAL_STRING("change"), false, false);
   if (NS_FAILED(rv)) {
     NS_WARNING("Failed to init the change event!");
     return;
@@ -181,24 +183,14 @@ void
 TextTrackList::CreateAndDispatchTrackEventRunner(TextTrack* aTrack,
                                                  const nsAString& aEventName)
 {
-  nsCOMPtr<nsIThread> thread;
-  nsresult rv = NS_GetMainThread(getter_AddRefs(thread));
-  if (NS_FAILED(rv)) {
-    // If we are not able to get the main-thread object we are shutting down.
-    return;
-  }
-
   TrackEventInit eventInit;
   eventInit.mTrack.SetValue().SetAsTextTrack() = aTrack;
   nsRefPtr<TrackEvent> event =
     TrackEvent::Constructor(this, aEventName, eventInit);
 
   // Dispatch the TrackEvent asynchronously.
-  rv = thread->Dispatch(do_AddRef(new TrackEventRunner(this, event)),
-                        NS_DISPATCH_NORMAL);
-
-  // If we are shutting down this can file but it's still ok.
-  NS_WARN_IF(NS_FAILED(rv));
+  nsCOMPtr<nsIRunnable> eventRunner = new TrackEventRunner(this, event);
+  NS_DispatchToMainThread(eventRunner);
 }
 
 HTMLMediaElement*

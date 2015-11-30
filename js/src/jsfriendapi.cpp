@@ -244,9 +244,6 @@ JS_DefineFunctionsWithHelp(JSContext* cx, HandleObject obj, const JSFunctionSpec
         if (!fun)
             return false;
 
-        if (fs->jitInfo)
-            fun->setJitInfo(fs->jitInfo);
-
         if (fs->usage) {
             if (!DefineHelpProperty(cx, fun, "usage", fs->usage))
                 return false;
@@ -659,21 +656,6 @@ FormatValue(JSContext* cx, const Value& vArg, JSAutoByteString& bytes)
     return buf;
 }
 
-// Wrapper for JS_sprintf_append() that reports allocation failure to the
-// context.
-template <typename... Args>
-static char*
-sprintf_append(JSContext* cx, char* buf, Args&&... args)
-{
-    char* result = JS_sprintf_append(buf, mozilla::Forward<Args>(args)...);
-    if (!result) {
-        ReportOutOfMemory(cx);
-        return nullptr;
-    }
-
-    return result;
-}
-
 static char*
 FormatFrame(JSContext* cx, const ScriptFrameIter& iter, char* buf, int num,
             bool showArgs, bool showLocals, bool showThisProps)
@@ -700,17 +682,14 @@ FormatFrame(JSContext* cx, const ScriptFrameIter& iter, char* buf, int num,
     // print the frame number and function name
     if (funname) {
         JSAutoByteString funbytes;
-        char* str = funbytes.encodeLatin1(cx, funname);
-        if (!str)
-            return nullptr;
-        buf = sprintf_append(cx, buf, "%d %s(", num, str);
+        buf = JS_sprintf_append(buf, "%d %s(", num, funbytes.encodeLatin1(cx, funname));
     } else if (fun) {
-        buf = sprintf_append(cx, buf, "%d anonymous(", num);
+        buf = JS_sprintf_append(buf, "%d anonymous(", num);
     } else {
-        buf = sprintf_append(cx, buf, "%d <TOP LEVEL>", num);
+        buf = JS_sprintf_append(buf, "%d <TOP LEVEL>", num);
     }
     if (!buf)
-        return nullptr;
+        return buf;
 
     if (showArgs && iter.hasArgs()) {
         BindingIter bi(script);
@@ -735,11 +714,6 @@ FormatFrame(JSContext* cx, const ScriptFrameIter& iter, char* buf, int num,
 
             JSAutoByteString valueBytes;
             const char* value = FormatValue(cx, arg, valueBytes);
-            if (!value) {
-                if (cx->isThrowingOutOfMemory())
-                    return nullptr;
-                cx->clearPendingException();
-            }
 
             JSAutoByteString nameBytes;
             const char* name = nullptr;
@@ -747,40 +721,40 @@ FormatFrame(JSContext* cx, const ScriptFrameIter& iter, char* buf, int num,
             if (i < iter.numFormalArgs()) {
                 MOZ_ASSERT(i == bi.argIndex());
                 name = nameBytes.encodeLatin1(cx, bi->name());
-                if (!name)
+                if (!buf)
                     return nullptr;
                 bi++;
             }
 
             if (value) {
-                buf = sprintf_append(cx, buf, "%s%s%s%s%s%s",
-                                     !first ? ", " : "",
-                                     name ? name :"",
-                                     name ? " = " : "",
-                                     arg.isString() ? "\"" : "",
-                                     value,
-                                     arg.isString() ? "\"" : "");
+                buf = JS_sprintf_append(buf, "%s%s%s%s%s%s",
+                                        !first ? ", " : "",
+                                        name ? name :"",
+                                        name ? " = " : "",
+                                        arg.isString() ? "\"" : "",
+                                        value,
+                                        arg.isString() ? "\"" : "");
                 if (!buf)
-                    return nullptr;
+                    return buf;
 
                 first = false;
             } else {
-                buf = sprintf_append(cx, buf,
-                                     "    <Failed to get argument while inspecting stack frame>\n");
+                buf = JS_sprintf_append(buf, "    <Failed to get argument while inspecting stack frame>\n");
                 if (!buf)
-                    return nullptr;
+                    return buf;
+                cx->clearPendingException();
 
             }
         }
     }
 
     // print filename and line number
-    buf = sprintf_append(cx, buf, "%s [\"%s\":%d]\n",
-                         fun ? ")" : "",
-                         filename ? filename : "<unknown>",
-                         lineno);
+    buf = JS_sprintf_append(buf, "%s [\"%s\":%d]\n",
+                            fun ? ")" : "",
+                            filename ? filename : "<unknown>",
+                            lineno);
     if (!buf)
-        return nullptr;
+        return buf;
 
 
     // Note: Right now we don't dump the local variables anymore, because
@@ -791,21 +765,17 @@ FormatFrame(JSContext* cx, const ScriptFrameIter& iter, char* buf, int num,
         if (!thisVal.isUndefined()) {
             JSAutoByteString thisValBytes;
             RootedString thisValStr(cx, ToString<CanGC>(cx, thisVal));
-            if (!thisValStr) {
-                if (cx->isThrowingOutOfMemory())
-                    return nullptr;
+            const char* str = nullptr;
+            if (thisValStr &&
+                (str = thisValBytes.encodeLatin1(cx, thisValStr)))
+            {
+                buf = JS_sprintf_append(buf, "    this = %s\n", str);
+                if (!buf)
+                    return buf;
+            } else {
+                buf = JS_sprintf_append(buf, "    <failed to get 'this' value>\n");
                 cx->clearPendingException();
             }
-            if (thisValStr) {
-                const char* str = thisValBytes.encodeLatin1(cx, thisValStr);
-                if (!str)
-                    return nullptr;
-                buf = sprintf_append(cx, buf, "    this = %s\n", str);
-            } else {
-                buf = sprintf_append(cx, buf, "    <failed to get 'this' value>\n");
-            }
-            if (!buf)
-                return nullptr;
         }
     }
 
@@ -814,9 +784,8 @@ FormatFrame(JSContext* cx, const ScriptFrameIter& iter, char* buf, int num,
 
         AutoIdVector keys(cx);
         if (!GetPropertyKeys(cx, obj, JSITER_OWNONLY, &keys)) {
-            if (cx->isThrowingOutOfMemory())
-                return nullptr;
             cx->clearPendingException();
+            return buf;
         }
 
         RootedId id(cx);
@@ -826,44 +795,27 @@ FormatFrame(JSContext* cx, const ScriptFrameIter& iter, char* buf, int num,
             RootedValue v(cx);
 
             if (!GetProperty(cx, obj, obj, id, &v)) {
-                if (cx->isThrowingOutOfMemory())
-                    return nullptr;
+                buf = JS_sprintf_append(buf, "    <Failed to fetch property while inspecting stack frame>\n");
                 cx->clearPendingException();
-                buf = sprintf_append(cx, buf,
-                                     "    <Failed to fetch property while inspecting stack frame>\n");
-                if (!buf)
-                    return nullptr;
                 continue;
             }
 
             JSAutoByteString nameBytes;
-            const char* name = FormatValue(cx, key, nameBytes);
-            if (!name) {
-                if (cx->isThrowingOutOfMemory())
-                    return nullptr;
-                cx->clearPendingException();
-            }
-
             JSAutoByteString valueBytes;
+            const char* name = FormatValue(cx, key, nameBytes);
             const char* value = FormatValue(cx, v, valueBytes);
-            if (!value) {
-                if (cx->isThrowingOutOfMemory())
-                    return nullptr;
+            if (name && value) {
+                buf = JS_sprintf_append(buf, "    this.%s = %s%s%s\n",
+                                        name,
+                                        v.isString() ? "\"" : "",
+                                        value,
+                                        v.isString() ? "\"" : "");
+                if (!buf)
+                    return buf;
+            } else {
+                buf = JS_sprintf_append(buf, "    <Failed to format values while inspecting stack frame>\n");
                 cx->clearPendingException();
             }
-
-            if (name && value) {
-                buf = sprintf_append(cx, buf, "    this.%s = %s%s%s\n",
-                                     name,
-                                     v.isString() ? "\"" : "",
-                                     value,
-                                     v.isString() ? "\"" : "");
-            } else {
-                buf = sprintf_append(cx, buf,
-                                     "    <Failed to format values while inspecting stack frame>\n");
-            }
-            if (!buf)
-                return nullptr;
         }
     }
 
@@ -878,8 +830,6 @@ JS::FormatStackDump(JSContext* cx, char* buf, bool showArgs, bool showLocals, bo
 
     for (AllFramesIter i(cx); !i.done(); ++i) {
         buf = FormatFrame(cx, i, buf, num, showArgs, showLocals, showThisProps);
-        if (!buf)
-            return nullptr;
         num++;
     }
 
@@ -959,7 +909,7 @@ DumpHeapVisitCell(JSRuntime* rt, void* data, void* thing,
     char cellDesc[1024 * 32];
     JS_GetTraceThingInfo(cellDesc, sizeof(cellDesc), dtrc, thing, traceKind, true);
     fprintf(dtrc->output, "%p %c %s\n", thing, MarkDescriptor(thing), cellDesc);
-    js::TraceChildren(dtrc, thing, traceKind);
+    JS_TraceChildren(dtrc, thing, traceKind);
 }
 
 void

@@ -105,7 +105,6 @@ class nsHtml5SpeculativeLoad {
                            const nsAString& aCharset,
                            const nsAString& aType,
                            const nsAString& aCrossOrigin,
-                           const nsAString& aIntegrity,
                            bool aParserInHead)
     {
       NS_PRECONDITION(mOpCode == eSpeculativeLoadUninitialized,
@@ -116,12 +115,10 @@ class nsHtml5SpeculativeLoad {
       mCharset.Assign(aCharset);
       mTypeOrCharsetSource.Assign(aType);
       mCrossOrigin.Assign(aCrossOrigin);
-      mIntegrity.Assign(aIntegrity);
     }
 
     inline void InitStyle(const nsAString& aUrl, const nsAString& aCharset,
-                          const nsAString& aCrossOrigin,
-                          const nsAString& aIntegrity)
+                          const nsAString& aCrossOrigin)
     {
       NS_PRECONDITION(mOpCode == eSpeculativeLoadUninitialized,
                       "Trying to reinitialize a speculative load!");
@@ -129,7 +126,6 @@ class nsHtml5SpeculativeLoad {
       mUrl.Assign(aUrl);
       mCharset.Assign(aCharset);
       mCrossOrigin.Assign(aCrossOrigin);
-      mIntegrity.Assign(aIntegrity);
     }
 
     /**
@@ -223,12 +219,6 @@ class nsHtml5SpeculativeLoad {
      * attribute.  If the attribute is not set, this will be a void string.
      */
     nsString mMedia;
-    /**
-     * If mOpCode is eSpeculativeLoadScript[FromHead], this is the value of the
-     * "integrity" attribute.  If the attribute is not set, this will be a void
-     * string.
-     */
-    nsString mIntegrity;
 };
 
 #endif // nsHtml5SpeculativeLoad_h

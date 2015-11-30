@@ -9,7 +9,7 @@ const XULAPPINFO_CID = Components.ID("{c763b610-9d49-455a-bbd2-ede71682a1ac}");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 
-var gAppInfo = null;
+let gAppInfo = null;
 
 function createAppInfo(id, name, version, platformVersion) {
   gAppInfo = {
@@ -56,10 +56,10 @@ function createAppInfo(id, name, version, platformVersion) {
                             XULAPPINFO_CONTRACTID, XULAppInfoFactory);
 }
 
-var gDirSvc = Cc["@mozilla.org/file/directory_service;1"]
+let gDirSvc = Cc["@mozilla.org/file/directory_service;1"]
                 .getService(Ci.nsIProperties);
 
-var gPluginHost = null;
+let gPluginHost = null;
 
 function test_expected_permission_string(aPermString) {
   gPluginHost.reloadPlugins(false);

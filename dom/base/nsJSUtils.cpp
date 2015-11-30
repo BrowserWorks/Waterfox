@@ -35,10 +35,10 @@ using namespace mozilla::dom;
 
 bool
 nsJSUtils::GetCallingLocation(JSContext* aContext, nsACString& aFilename,
-                              uint32_t* aLineno, uint32_t* aColumn)
+                              uint32_t* aLineno)
 {
   JS::AutoFilename filename;
-  if (!JS::DescribeScriptedCaller(aContext, &filename, aLineno, aColumn)) {
+  if (!JS::DescribeScriptedCaller(aContext, &filename, aLineno)) {
     return false;
   }
 
@@ -48,10 +48,10 @@ nsJSUtils::GetCallingLocation(JSContext* aContext, nsACString& aFilename,
 
 bool
 nsJSUtils::GetCallingLocation(JSContext* aContext, nsAString& aFilename,
-                              uint32_t* aLineno, uint32_t* aColumn)
+                              uint32_t* aLineno)
 {
   JS::AutoFilename filename;
-  if (!JS::DescribeScriptedCaller(aContext, &filename, aLineno, aColumn)) {
+  if (!JS::DescribeScriptedCaller(aContext, &filename, aLineno)) {
     return false;
   }
 
@@ -307,12 +307,6 @@ nsJSUtils::GetScopeChainForElement(JSContext* aCx,
   return true;
 }
 
-/* static */
-void
-nsJSUtils::ResetTimeZone()
-{
-  JS::ResetTimeZone();
-}
 
 //
 // nsDOMJSUtils.h

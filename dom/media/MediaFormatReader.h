@@ -61,6 +61,7 @@ public:
     return mSeekable;
   }
 
+  int64_t GetEvictionOffset(double aTime) override;
 protected:
   void NotifyDataArrivedInternal(uint32_t aLength, int64_t aOffset) override;
 public:
@@ -71,7 +72,10 @@ public:
   virtual bool ForceZeroStartTime() const override;
 
   // For Media Resource Management
+  void SetIdle() override;
   void ReleaseMediaResources() override;
+  void SetSharedDecoderManager(SharedDecoderManager* aManager)
+    override;
 
   nsresult ResetDecode() override;
 
@@ -101,10 +105,7 @@ private:
   void NotifyDemuxer(uint32_t aLength, int64_t aOffset);
   void ReturnOutput(MediaData* aData, TrackType aTrack);
 
-  bool EnsureDecodersCreated();
-  // It returns true when all decoders are initialized. False when there is pending
-  // initialization.
-  bool EnsureDecodersInitialized();
+  bool EnsureDecodersSetup();
 
   // Enqueues a task to call Update(aTrack) on the decoder task queue.
   // Lock for corresponding track must be held.
@@ -126,7 +127,6 @@ private:
   void NotifyError(TrackType aTrack);
   void NotifyWaitingForData(TrackType aTrack);
   void NotifyEndOfStream(TrackType aTrack);
-  void NotifyDecodingRequested(TrackType aTrack);
 
   void ExtractCryptoInitData(nsTArray<uint8_t>& aInitData);
 
@@ -193,8 +193,6 @@ private:
       , mWaitingForData(false)
       , mReceivedNewData(false)
       , mDiscontinuity(true)
-      , mDecoderInitialized(false)
-      , mDecodingRequested(false)
       , mOutputRequested(false)
       , mInputExhausted(false)
       , mError(false)
@@ -243,9 +241,6 @@ private:
     }
 
     // MediaDataDecoder handler's variables.
-    // False when decoder is created. True when decoder Init() promise is resolved.
-    bool mDecoderInitialized;
-    bool mDecodingRequested;
     bool mOutputRequested;
     bool mInputExhausted;
     bool mError;
@@ -265,7 +260,6 @@ private:
 
     // These get overriden in the templated concrete class.
     // Indicate if we have a pending promise for decoded frame.
-    // Rejecting the promise will stop the reader from decoding ahead.
     virtual bool HasPromise() = 0;
     virtual void RejectPromise(MediaDecoderReader::NotDecodedReason aReason,
                                const char* aMethodName) = 0;
@@ -285,7 +279,6 @@ private:
       mReceivedNewData = false;
       mDiscontinuity = true;
       mQueuedSamples.Clear();
-      mDecodingRequested = false;
       mOutputRequested = false;
       mInputExhausted = false;
       mNeedDraining = false;
@@ -332,7 +325,6 @@ private:
     {
       MOZ_ASSERT(mOwner->OnTaskQueue());
       mPromise.Reject(aReason, aMethodName);
-      mDecodingRequested = false;
     }
   };
 
@@ -343,9 +335,6 @@ private:
   bool NeedInput(DecoderData& aDecoder);
 
   DecoderData& GetDecoderData(TrackType aTrack);
-
-  void OnDecoderInitDone(const nsTArray<TrackType>& aTrackTypes);
-  void OnDecoderInitFailed(MediaDataDecoder::DecoderFailureReason aReason);
 
   // Demuxer objects.
   void OnDemuxerInitDone(nsresult);
@@ -400,8 +389,6 @@ private:
   // Set to true if any of our track buffers may be blocking.
   bool mTrackDemuxersMayBlock;
 
-  bool mHardwareAccelerationDisabled;
-
   // Seeking objects.
   bool IsSeeking() const { return mPendingSeekTime.isSome(); }
   void AttemptSeek();
@@ -424,12 +411,18 @@ private:
   Maybe<media::TimeUnit> mPendingSeekTime;
   MozPromiseHolder<SeekPromise> mSeekPromise;
 
-  // Pending decoders initialization.
-  MozPromiseRequestHolder<MediaDataDecoder::InitPromise::AllPromiseType> mDecodersInitRequest;
-
 #ifdef MOZ_EME
   nsRefPtr<CDMProxy> mCDMProxy;
 #endif
+
+  nsRefPtr<SharedDecoderManager> mSharedDecoderManager;
+
+  // Main thread objects
+  // Those are only used to calculate our buffered range on the main thread.
+  // The cached buffered range is calculated one when required.
+  nsRefPtr<MediaDataDemuxer> mMainThreadDemuxer;
+  nsRefPtr<MediaTrackDemuxer> mAudioTrackDemuxer;
+  nsRefPtr<MediaTrackDemuxer> mVideoTrackDemuxer;
 
 #if defined(READER_DORMANT_HEURISTIC)
   const bool mDormantEnabled;

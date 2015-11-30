@@ -10,7 +10,7 @@
 #include "nsString.h"
 #include "nsICommandParams.h"
 #include "nsCOMPtr.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 
 class nsCommandParams : public nsICommandParams
 {

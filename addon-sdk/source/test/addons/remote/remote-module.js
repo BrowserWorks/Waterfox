@@ -23,7 +23,7 @@ process.port.on('sdk/test/ping', (process, key) => {
   process.port.emit('sdk/test/pong', key);
 });
 
-var frameCount = 0;
+let frameCount = 0;
 frames.forEvery(frame => {
   frameCount++;
   frame.on('detach', () => {

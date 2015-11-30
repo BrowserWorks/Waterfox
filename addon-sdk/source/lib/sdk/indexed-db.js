@@ -12,7 +12,7 @@ const { Cc, Ci } = require("chrome");
 const { id } = require("./self");
 
 // placeholder, copied from bootstrap.js
-var sanitizeId = function(id){
+let sanitizeId = function(id){
   let uuidRe =
     /^\{([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\}$/;
 
@@ -28,13 +28,13 @@ var sanitizeId = function(id){
 const PSEUDOURI = "indexeddb://" + sanitizeId(id) // https://bugzilla.mozilla.org/show_bug.cgi?id=779197
 
 // Use XPCOM because `require("./url").URL` doesn't expose the raw uri object.
-var principaluri = Cc["@mozilla.org/network/io-service;1"].
+let principaluri = Cc["@mozilla.org/network/io-service;1"].
               getService(Ci.nsIIOService).
               newURI(PSEUDOURI, null, null);
 
-var ssm = Cc["@mozilla.org/scriptsecuritymanager;1"]
-            .getService(Ci.nsIScriptSecurityManager);
-var principal = ssm.createCodebasePrincipal(principaluri, {});
+let principal = Cc["@mozilla.org/scriptsecuritymanager;1"].
+	               getService(Ci.nsIScriptSecurityManager).
+	               getCodebasePrincipal(principaluri);
 
 function toArray(args) {
   return Array.prototype.slice.call(args);

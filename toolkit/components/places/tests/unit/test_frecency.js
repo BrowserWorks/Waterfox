@@ -266,7 +266,7 @@ function() {
  * This deferred object contains a promise that is resolved when the
  * ensure_results_internal function has finished its execution.
  */
-var deferEnsureResults;
+let deferEnsureResults;
 
 /**
  * Test adaptive autocomplete

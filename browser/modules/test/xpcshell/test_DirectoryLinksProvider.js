@@ -61,9 +61,9 @@ const BinaryInputStream = CC("@mozilla.org/binaryinputstream;1",
                               "nsIBinaryInputStream",
                               "setInputStream");
 
-var gLastRequestPath;
+let gLastRequestPath;
 
-var suggestedTile1 = {
+let suggestedTile1 = {
   url: "http://turbotax.com",
   type: "affiliate",
   lastVisitDate: 4,
@@ -75,7 +75,7 @@ var suggestedTile1 = {
     "taxslayer.com"
   ]
 };
-var suggestedTile2 = {
+let suggestedTile2 = {
   url: "http://irs.gov",
   type: "affiliate",
   lastVisitDate: 3,
@@ -87,7 +87,7 @@ var suggestedTile2 = {
     "taxslayer.com"
   ]
 };
-var suggestedTile3 = {
+let suggestedTile3 = {
   url: "http://hrblock.com",
   type: "affiliate",
   lastVisitDate: 2,
@@ -99,7 +99,7 @@ var suggestedTile3 = {
     "taxslayer.com"
   ]
 };
-var suggestedTile4 = {
+let suggestedTile4 = {
   url: "http://sponsoredtile.com",
   type: "sponsored",
   lastVisitDate: 1,
@@ -108,7 +108,7 @@ var suggestedTile4 = {
     "sponsoredtarget.com"
   ]
 }
-var suggestedTile5 = {
+let suggestedTile5 = {
   url: "http://eviltile.com",
   type: "affiliate",
   lastVisitDate: 5,
@@ -118,7 +118,7 @@ var suggestedTile5 = {
     "eviltarget.com"
   ]
 }
-var someOtherSite = {url: "http://someothersite.com", title: "Not_A_Suggested_Site"};
+let someOtherSite = {url: "http://someothersite.com", title: "Not_A_Suggested_Site"};
 
 function getHttpHandler(path) {
   let code = 200;
@@ -2001,65 +2001,5 @@ add_task(function test_reportPastImpressions() {
   // Cleanup.
   done = true;
   NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
-  DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
-});
-
-add_task(function test_blockSuggestedTiles() {
-  // Initial setup
-  let suggestedTile = suggestedTile1;
-  let topSites = ["site0.com", "1040.com", "site2.com", "hrblock.com", "site4.com", "freetaxusa.com", "site6.com"];
-  let data = {"suggested": [suggestedTile1, suggestedTile2, suggestedTile3], "directory": [someOtherSite]};
-  let dataURI = 'data:application/json,' + JSON.stringify(data);
-
-  yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
-  let links = yield fetchData();
-
-  let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
-  NewTabUtils.isTopPlacesSite = function(site) {
-    return topSites.indexOf(site) >= 0;
-  }
-
-  let origGetProviderLinks = NewTabUtils.getProviderLinks;
-  NewTabUtils.getProviderLinks = function(provider) {
-    return links;
-  }
-
-  let origCurrentTopSiteCount = DirectoryLinksProvider._getCurrentTopSiteCount;
-  DirectoryLinksProvider._getCurrentTopSiteCount = () => 8;
-
-  // load the links
-  yield new Promise(resolve => {
-    DirectoryLinksProvider.getLinks(resolve);
-  });
-
-  // ensure that tile is suggested
-  let suggestedLink = DirectoryLinksProvider._updateSuggestedTile();
-  do_check_true(suggestedLink.frecent_sites);
-
-  // block suggested tile in a regular way
-  DirectoryLinksProvider.reportSitesAction([{
-      isPinned: function() {return false;},
-      link: Object.assign({frecency: 1000},suggestedLink)
-  }], "block", 0);
-
-  // suggested tile still must be recommended
-  suggestedLink = DirectoryLinksProvider._updateSuggestedTile();
-  do_check_true(suggestedLink.frecent_sites);
-
-  // timestamp suggested_block in the frequency cap object
-  DirectoryLinksProvider.handleSuggestedTileBlock();
-  // no more recommendations should be seen
-  do_check_eq(DirectoryLinksProvider._updateSuggestedTile(), undefined);
-
-  // move lastUpdated for suggested tile into the past
-  DirectoryLinksProvider._frequencyCaps["ignore://suggested_block"].lastUpdated = Date.now() - 25*60*60*1000;
-  // ensure that suggested tile updates again
-  suggestedLink = DirectoryLinksProvider._updateSuggestedTile();
-  do_check_true(suggestedLink.frecent_sites);
-
-  // Cleanup
-  yield promiseCleanDirectoryLinksProvider();
-  NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
-  NewTabUtils.getProviderLinks = origGetProviderLinks;
   DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
 });

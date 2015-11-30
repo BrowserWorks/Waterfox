@@ -6,9 +6,9 @@
 
 this.EXPORTED_SYMBOLS = ["PromiseMessage"];
 
-var msgId = 0;
+let msgId = 0;
 
-var PromiseMessage = {
+let PromiseMessage = {
   send(messageManager, name, data = {}) {
     let id = msgId++;
 

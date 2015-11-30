@@ -124,6 +124,8 @@ SOURCES += [
 if CONFIG['MOZ_WEBSPEECH']:
     UNIFIED_SOURCES += ['SpeechRecognitionError.cpp']
 
+FAIL_ON_WARNINGS = True
+
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -133,7 +135,6 @@ LOCAL_INCLUDES += [
     '/dom/html',
     '/dom/settings',
     '/dom/storage',
-    '/dom/svg',
     '/dom/workers',
     '/dom/xml',
     '/dom/xul',

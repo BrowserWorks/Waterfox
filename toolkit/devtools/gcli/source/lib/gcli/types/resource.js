@@ -16,6 +16,8 @@
 
 'use strict';
 
+var Promise = require('../util/promise').Promise;
+
 exports.clearResourceCache = function() {
   ResourceCache.clear();
 };

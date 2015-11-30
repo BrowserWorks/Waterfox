@@ -8,8 +8,8 @@
 
 const TEST_URI = "http://example.com/";
 
-var good = true;
-var listener = {
+let good = true;
+let listener = {
   QueryInterface: XPCOMUtils.generateQI([ Ci.nsIObserver ]),
   observe: function(subject) {
     if (subject instanceof Ci.nsIScriptError &&
@@ -20,7 +20,7 @@ var listener = {
   }
 };
 
-var xhr;
+let xhr;
 
 function test() {
   Services.console.registerListener(listener);

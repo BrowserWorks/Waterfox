@@ -55,7 +55,8 @@ function cleanUpAndFinish() {
 
 function frameUpdate(aRequest) {
   if (!gDispatched) {
-    Promise.resolve().then(function() { 
+    var util = window.getInterface(Ci.nsIDOMWindowUtils);
+    util.runBeforeNextEvent(function() { 
       gRanEvent = true;
     });
     gDispatched = true;

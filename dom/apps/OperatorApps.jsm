@@ -18,7 +18,7 @@ Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/AppsUtils.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
-var Path = OS.Path;
+let Path = OS.Path;
 
 #ifdef MOZ_B2G_RIL
 XPCOMUtils.defineLazyServiceGetter(this, "gIccService",
@@ -60,7 +60,7 @@ function isFirstRunWithSIM() {
 }
 
 #ifdef MOZ_B2G_RIL
-var iccListener = {
+let iccListener = {
   notifyStkCommand: function() {},
 
   notifyStkSessionEnd: function() {},

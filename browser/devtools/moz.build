@@ -16,7 +16,6 @@ DIRS += [
     'inspector',
     'layoutview',
     'markupview',
-    'memory',
     'netmonitor',
     'performance',
     'projecteditor',

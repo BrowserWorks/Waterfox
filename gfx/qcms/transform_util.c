@@ -1,9 +1,15 @@
+#define _ISOC99_SOURCE  /* for INFINITY */
+
 #include <math.h>
 #include <assert.h>
 #include <string.h> //memcpy
 #include "qcmsint.h"
 #include "transform_util.h"
 #include "matrix.h"
+
+#if !defined(INFINITY)
+#define INFINITY HUGE_VAL
+#endif
 
 #define PARAMETRIC_CURVE_TYPE 0x70617261 //'para'
 
@@ -125,7 +131,7 @@ void compute_curve_gamma_table_type_parametric(float gamma_table[256], float par
                 c = 0;
                 e = 0;
                 f = 0;
-                interval = -1;
+                interval = -INFINITY;
         } else if(count == 1) {
                 a = parameter[1];
                 b = parameter[2];
@@ -161,12 +167,12 @@ void compute_curve_gamma_table_type_parametric(float gamma_table[256], float par
                 c = 0;
                 e = 0;
                 f = 0;
-                interval = -1;
-        }
+                interval = -INFINITY;
+        }       
         for (X = 0; X < 256; X++) {
                 if (X >= interval) {
-                        // XXX The equations are not exactly as defined in the spec but are
-                        //     algebraically equivalent.
+                        // XXX The equations are not exactly as definied in the spec but are
+                        //     algebraic equivilent.
                         // TODO Should division by 255 be for the whole expression.
                         gamma_table[X] = clamp_float(pow(a * X / 255. + b, y) + c + e);
                 } else {

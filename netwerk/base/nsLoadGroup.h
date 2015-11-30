@@ -14,7 +14,7 @@
 #include "nsWeakPtr.h"
 #include "nsWeakReference.h"
 #include "nsISupportsPriority.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "mozilla/TimeStamp.h"
 
 class nsISchedulingContext;

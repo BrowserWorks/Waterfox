@@ -6,17 +6,20 @@
 // Test "Copy color" item of the context menu #2: Test that correct color is
 // copied if the color changes.
 
-const TEST_URI = `
-  <style type="text/css">
-    div {
-      color: #123ABC;
-    }
-  </style>
-  <div>Testing the color picker tooltip!</div>
-`;
+const TEST_COLOR = "#123ABC";
 
 add_task(function* () {
-  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+  const PAGE_CONTENT = [
+    '<style type="text/css">',
+    '  div {',
+    '    color: ' + TEST_COLOR + ';',
+    '  }',
+    '</style>',
+    '<div>Testing the color picker tooltip!</div>'
+  ].join("\n");
+
+  yield addTab("data:text/html;charset=utf8,Test context menu Copy color");
+  content.document.body.innerHTML = PAGE_CONTENT;
 
   let {inspector, view} = yield openRuleView();
   yield testCopyToClipboard(inspector, view);
@@ -34,14 +37,12 @@ function* testCopyToClipboard(inspector, view) {
     .querySelector(".ruleview-colorswatch");
 
   let popup = once(view._contextmenu._menupopup, "popupshown");
-  EventUtils.synthesizeMouseAtCenter(element, {button: 2, type: "contextmenu"},
-    win);
+  EventUtils.synthesizeMouseAtCenter(element, {button: 2, type: "contextmenu"}, win);
   yield popup;
 
   ok(!view._contextmenu.menuitemCopyColor.hidden, "Copy color is visible");
 
-  yield waitForClipboard(() => view._contextmenu.menuitemCopyColor.click(),
-    "#123ABC");
+  yield waitForClipboard(() => view._contextmenu.menuitemCopyColor.click(), TEST_COLOR);
   view._contextmenu._menupopup.hidePopup();
 }
 
@@ -51,7 +52,7 @@ function* testManualEdit(inspector, view) {
 
   let {valueSpan} = getRuleViewProperty(view, "div", "color");
 
-  let newColor = "#C9184E";
+  let newColor = "#C9184E"
   let editor = yield focusEditableField(view, valueSpan);
 
   info("Typing new value");
@@ -61,8 +62,7 @@ function* testManualEdit(inspector, view) {
   yield onBlur;
   yield wait(1);
 
-  let colorValueElement = getRuleViewProperty(view, "div", "color")
-    .valueSpan.firstChild;
+  let colorValueElement = getRuleViewProperty(view, "div", "color").valueSpan.firstChild;
   is(colorValueElement.dataset.color, newColor, "data-color was updated");
 
   view.styleDocument.popupNode = colorValueElement;
@@ -89,8 +89,7 @@ function* testColorPickerEdit(inspector, view) {
   let rgbaColorText = "rgba(83, 183, 89, 1)";
   yield simulateColorPickerChange(view, picker, rgbaColor);
 
-  is(swatchElement.parentNode.dataset.color, rgbaColorText,
-    "data-color was updated");
+  is(swatchElement.parentNode.dataset.color, rgbaColorText, "data-color was updated");
   view.styleDocument.popupNode = swatchElement;
 
   let contextMenu = view._contextmenu;

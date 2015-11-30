@@ -153,12 +153,12 @@ nsStringBundleTextOverride::Init()
     rv = NS_NewChannel(getter_AddRefs(channel),
                        uri,
                        nsContentUtils::GetSystemPrincipal(),
-                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                       nsILoadInfo::SEC_NORMAL,
                        nsIContentPolicy::TYPE_OTHER);
 
     NS_ENSURE_SUCCESS(rv, rv);
     nsCOMPtr<nsIInputStream> in;
-    rv = channel->Open2(getter_AddRefs(in));
+    rv = channel->Open(getter_AddRefs(in));
     NS_ENSURE_SUCCESS(rv, rv);
 
     static NS_DEFINE_CID(kPersistentPropertiesCID, NS_IPERSISTENTPROPERTIES_CID);

@@ -16,6 +16,7 @@ import os
 import time
 
 import psutil
+from psutil._compat import print_
 
 
 def main():
@@ -26,8 +27,8 @@ def main():
     if os.name == 'posix':
         attrs.append('uids')
         attrs.append('terminal')
-    print(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
-                   "START", "TIME", "COMMAND"))
+    print_(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
+                    "START", "TIME", "COMMAND"))
     for p in psutil.process_iter():
         try:
             pinfo = p.as_dict(attrs, ad_value='')
@@ -64,17 +65,16 @@ def main():
                 int(pinfo['memory_info'].rss / 1024) or '?'
             memp = pinfo['memory_percent'] and \
                 round(pinfo['memory_percent'], 1) or '?'
-            print(templ % (
-                user[:10],
-                pinfo['pid'],
-                pinfo['cpu_percent'],
-                memp,
-                vms,
-                rss,
-                pinfo.get('terminal', '') or '?',
-                ctime,
-                cputime,
-                pinfo['name'].strip() or '?'))
+            print_(templ % (user[:10],
+                            pinfo['pid'],
+                            pinfo['cpu_percent'],
+                            memp,
+                            vms,
+                            rss,
+                            pinfo.get('terminal', '') or '?',
+                            ctime,
+                            cputime,
+                            pinfo['name'].strip() or '?'))
 
 
 if __name__ == '__main__':

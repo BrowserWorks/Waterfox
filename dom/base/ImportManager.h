@@ -265,7 +265,7 @@ public:
 
   // It finds the predecessor for an import link node that runs its
   // scripts the latest among its predecessors.
-  ImportLoader* GetNearestPredecessor(nsINode* aNode);
+  nsRefPtr<ImportLoader> GetNearestPredecessor(nsINode* aNode);
 
 private:
   ImportMap mImports;

@@ -33,7 +33,7 @@ add_task(function () {
         "X > Y has the correct total count");
 });
 
-var gThread = synthesizeProfileForTest([{
+let gThread = synthesizeProfileForTest([{
   time: 5,
   frames: [
     { location: "(root)" },

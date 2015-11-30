@@ -11,21 +11,39 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "mozilla/jni/Utils.h"
 #include "nsTArray.h"
 #include "nsString.h"
 #include "nsIFile.h"
 #include "nsAppRunner.h"
+#include "AndroidBridge.h"
 #include "APKOpen.h"
 #include "nsExceptionHandler.h"
 
 #define LOG(args...) __android_log_print(ANDROID_LOG_INFO, MOZ_APP_NAME, args)
 
-extern "C" NS_EXPORT void
-GeckoStart(JNIEnv* env, char* data, const nsXREAppData* appData)
-{
-    mozilla::jni::SetGeckoThreadEnv(env);
+// We need to put Gecko on a even more separate thread, because
+// otherwise this JNI method never returns; this leads to problems
+// with local references overrunning the local refs table, among
+// other things, since GC can't ever run on them.
 
+// Note that we don't have xpcom initialized yet, so we can't use the
+// thread manager for this.  Instead, we use pthreads directly.
+
+struct AutoAttachJavaThread {
+    AutoAttachJavaThread() {
+        attached = mozilla_AndroidBridge_SetMainThread(pthread_self());
+    }
+    ~AutoAttachJavaThread() {
+        mozilla_AndroidBridge_SetMainThread(pthread_t());
+        attached = false;
+    }
+
+    bool attached;
+};
+
+extern "C" NS_EXPORT void
+GeckoStart(void *data, const nsXREAppData *appData)
+{
 #ifdef MOZ_CRASHREPORTER
     const struct mapping_info *info = getLibraryMapping();
     while (info->name) {
@@ -35,13 +53,17 @@ GeckoStart(JNIEnv* env, char* data, const nsXREAppData* appData)
     }
 #endif
 
+    AutoAttachJavaThread attacher;
+    if (!attacher.attached)
+        return;
+
     if (!data) {
         LOG("Failed to get arguments for GeckoStart\n");
         return;
     }
 
     nsTArray<char *> targs;
-    char *arg = strtok(data, " ");
+    char *arg = strtok(static_cast<char *>(data), " ");
     while (arg) {
         targs.AppendElement(arg);
         arg = strtok(nullptr, " ");

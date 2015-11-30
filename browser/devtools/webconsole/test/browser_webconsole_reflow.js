@@ -8,7 +8,7 @@
 const TEST_URI = "data:text/html;charset=utf-8,Web Console test for " +
                  "reflow activity";
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   let { browser } = yield loadTab(TEST_URI);
 
   let hud = yield openConsole();

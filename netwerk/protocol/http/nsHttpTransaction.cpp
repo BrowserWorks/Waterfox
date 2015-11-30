@@ -129,7 +129,6 @@ nsHttpTransaction::nsHttpTransaction()
     , mReuseOnRestart(false)
     , mContentDecoding(false)
     , mContentDecodingCheck(false)
-    , mDeferredSendProgress(false)
     , mReportedStart(false)
     , mReportedResponseHeader(false)
     , mForTakeResponseHead(nullptr)
@@ -272,11 +271,13 @@ nsHttpTransaction::Init(uint32_t caps,
         }
     }
 
-    // create transport event sink proxy. it coalesces consecutive
-    // events of the same status type.
+    // create transport event sink proxy. it coalesces all events if and only
+    // if the activity observer is not active. when the observer is active
+    // we need not to coalesce any events to get all expected notifications
+    // of the transaction state, necessary for correct debugging and logging.
     rv = net_NewTransportEventSinkProxy(getter_AddRefs(mTransportSink),
-                                        eventsink, target);
-
+                                        eventsink, target,
+                                        !activityDistributorActive);
     if (NS_FAILED(rv)) return rv;
 
     mConnInfo = cinfo;
@@ -344,17 +345,9 @@ nsHttpTransaction::Init(uint32_t caps,
                                mReqHeaderBuf.Length());
     if (NS_FAILED(rv)) return rv;
 
-    mHasRequestBody = !!requestBody;
-    if (mHasRequestBody) {
-        // some non standard methods set a 0 byte content-length for
-        // clarity, we can avoid doing the mulitplexed request stream for them
-        uint64_t size;
-        if (NS_SUCCEEDED(requestBody->Available(&size)) && !size) {
-            mHasRequestBody = false;
-        }
-    }
+    if (requestBody) {
+        mHasRequestBody = true;
 
-    if (mHasRequestBody) {
         // wrap the headers and request body in a multiplexed input stream.
         nsCOMPtr<nsIMultiplexInputStream> multi =
             do_CreateInstance(kMultiplexInputStream, &rv);
@@ -590,15 +583,6 @@ nsHttpTransaction::OnTransportStatus(nsITransport* transport,
             return;
         }
 
-        if (mReader) {
-            // A mRequestStream method is on the stack - wait.
-            LOG(("nsHttpTransaction::OnSocketStatus [this=%p] "
-                 "Skipping Re-Entrant NS_NET_STATUS_SENDING_TO\n", this));
-            // its ok to coalesce several of these into one deferred event
-            mDeferredSendProgress = true;
-            return;
-        }
-
         nsCOMPtr<nsISeekableStream> seekable = do_QueryInterface(mRequestStream);
         if (!seekable) {
             LOG(("nsHttpTransaction::OnTransportStatus %p "
@@ -694,18 +678,11 @@ nsHttpTransaction::ReadSegments(nsAHttpSegmentReader *reader,
         mConnection->GetSecurityInfo(getter_AddRefs(mSecurityInfo));
     }
 
-    mDeferredSendProgress = false;
     mReader = reader;
-    nsresult rv = mRequestStream->ReadSegments(ReadRequestSegment, this, count, countRead);
-    mReader = nullptr;
 
-    if (mDeferredSendProgress && mConnection && mConnection->Transport()) {
-        // to avoid using mRequestStream concurrently, OnTransportStatus()
-        // did not report upload status off the ReadSegments() stack from nsSocketTransport
-        // do it now.
-        OnTransportStatus(mConnection->Transport(), NS_NET_STATUS_SENDING_TO, 0);
-    }
-    mDeferredSendProgress = false;
+    nsresult rv = mRequestStream->ReadSegments(ReadRequestSegment, this, count, countRead);
+
+    mReader = nullptr;
 
     if (mForceRestart) {
         // The forceRestart condition was dealt with on the stack, but it did not

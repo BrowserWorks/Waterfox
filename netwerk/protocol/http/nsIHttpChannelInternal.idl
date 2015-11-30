@@ -11,7 +11,6 @@ template<class T> class nsCOMArray;
 class nsCString;
 %}
 [ptr] native StringArray(nsTArray<nsCString>);
-[ref] native StringArrayRef(const nsTArray<nsCString>);
 [ref] native securityMessagesArray(nsCOMArray<nsISecurityConsoleMessage>);
 
 interface nsIAsyncInputStream;
@@ -26,7 +25,7 @@ interface nsIURI;
  * The callback interface for nsIHttpChannelInternal::HTTPUpgrade()
  */
 
-[scriptable, uuid(5b515449-ab64-4dba-b3cd-da8fc2f83064)]
+[scriptable, uuid(7b48d081-1dc1-4d08-b7a5-81491bf28c0e)]
 interface nsIHttpUpgradeListener : nsISupports
 {
     void onTransportAvailable(in nsISocketTransport   aTransport,
@@ -39,7 +38,7 @@ interface nsIHttpUpgradeListener : nsISupports
  * using any feature exposed by this interface, be aware that this interface
  * will change and you will be broken.  You have been warned.
  */
-[scriptable, uuid(46ef729f-4c9b-4084-b9e2-498992a31aee)]
+[scriptable, uuid(4c9e681e-efd8-4ed2-b57f-20d48c9b3c3b)]
 
 interface nsIHttpChannelInternal : nsISupports
 {
@@ -216,7 +215,11 @@ interface nsIHttpChannelInternal : nsISupports
 
     readonly attribute PRTime lastModifiedTime;
 
-    readonly attribute boolean responseSynthesized;
+    /**
+     * Force a channel that has not been AsyncOpen'ed to skip any check for possible
+     * interception and proceed immediately to the network/cache.
+     */
+    void forceNoIntercept();
 
     /**
      * Set by nsCORSListenerProxy if credentials should be included in
@@ -234,16 +237,6 @@ interface nsIHttpChannelInternal : nsISupports
      */
     attribute unsigned long corsMode;
 
-    const unsigned long REDIRECT_MODE_FOLLOW = 0;
-    const unsigned long REDIRECT_MODE_ERROR = 1;
-    const unsigned long REDIRECT_MODE_MANUAL = 2;
-    /**
-     * Set to indicate Request.redirect mode exposed during ServiceWorker
-     * interception. No policy enforcement is performed by the channel for this
-     * value.
-     */
-    attribute unsigned long redirectMode;
-
     /**
      * The URI of the top-level window that's associated with this channel.
      */
@@ -259,13 +252,4 @@ interface nsIHttpChannelInternal : nsISupports
      * proxies for this channel.
      */
     readonly attribute nsIURI proxyURI;
-
-    /**
-     * Make cross-origin CORS loads happen with a CORS preflight, and specify
-     * the CORS preflight parameters.
-     */
-    [noscript]
-    void setCorsPreflightParameters(in StringArrayRef unsafeHeaders,
-                                    in boolean withCredentials,
-                                    in nsIPrincipal preflightPrincipal);
 };

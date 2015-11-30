@@ -6,7 +6,7 @@
 
 // Whitelisted hosts:
 // (per implementation of nsPrincipal::IsOnCSSUnprefixingWhitelist())
-var gWhitelistedHosts = [
+let gWhitelistedHosts = [
   // test1.example.org is on the whitelist.
   "test1.example.org",
   // test2.example.org is on the "allow all subdomains" whitelist.
@@ -16,7 +16,7 @@ var gWhitelistedHosts = [
 ];
 
 // *NOT* whitelisted hosts:
-var gNotWhitelistedHosts = [
+let gNotWhitelistedHosts = [
   // Though test1.example.org is on the whitelist, its subdomains are not.
   "sub1.test1.example.org",
   // mochi.test is not on the whitelist.
@@ -30,7 +30,7 @@ const PREF_INCLUDE_TEST_DOMAINS =
   "layout.css.unprefixing-service.include-test-domains";
 
 // Helper-function to make unique URLs in testHost():
-var gCounter = 0;
+let gCounter = 0;
 function getIncreasingCounter() {
   return gCounter++;
 }

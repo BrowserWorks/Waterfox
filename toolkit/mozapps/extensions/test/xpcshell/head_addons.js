@@ -31,12 +31,12 @@ Components.utils.import("resource://gre/modules/AsyncShutdown.jsm");
 Components.utils.import("resource://testing-common/MockRegistrar.jsm");
 
 // We need some internal bits of AddonManager
-var AMscope = Components.utils.import("resource://gre/modules/AddonManager.jsm");
-var AddonManager = AMscope.AddonManager;
-var AddonManagerInternal = AMscope.AddonManagerInternal;
+let AMscope = Components.utils.import("resource://gre/modules/AddonManager.jsm");
+let AddonManager = AMscope.AddonManager;
+let AddonManagerInternal = AMscope.AddonManagerInternal;
 // Mock out AddonManager's reference to the AsyncShutdown module so we can shut
 // down AddonManager from the test
-var MockAsyncShutdown = {
+let MockAsyncShutdown = {
   hook: null,
   status: null,
   profileBeforeChange: {
@@ -378,7 +378,7 @@ function do_check_icons(aActual, aExpected) {
 
 // Record the error (if any) from trying to save the XPI
 // database at shutdown time
-var gXPISaveError = null;
+let gXPISaveError = null;
 
 /**
  * Starts up the add-on manager as if it was started by the application.
@@ -885,7 +885,7 @@ function writeInstallRDFToXPIFile(aData, aFile, aExtraFile) {
   zipW.close();
 }
 
-var temp_xpis = [];
+let temp_xpis = [];
 /**
  * Creates an XPI file for some manifest data in the temporary directory and
  * returns the nsIFile for it. The file will be deleted when the test completes.
@@ -1026,7 +1026,7 @@ function getFileForAddon(aDir, aId) {
 function registerDirectory(aKey, aDir) {
   var dirProvider = {
     getFile: function(aProp, aPersistent) {
-      aPersistent.value = false;
+      aPersistent.value = true;
       if (aProp == aKey)
         return aDir.clone();
       return null;
@@ -1474,11 +1474,11 @@ if ("nsIWindowsRegKey" in AM_Ci) {
 const gProfD = do_get_profile();
 
 const EXTENSIONS_DB = "extensions.json";
-var gExtensionsJSON = gProfD.clone();
+let gExtensionsJSON = gProfD.clone();
 gExtensionsJSON.append(EXTENSIONS_DB);
 
 const EXTENSIONS_INI = "extensions.ini";
-var gExtensionsINI = gProfD.clone();
+let gExtensionsINI = gProfD.clone();
 gExtensionsINI.append(EXTENSIONS_INI);
 
 // Enable more extensive EM logging

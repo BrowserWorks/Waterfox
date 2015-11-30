@@ -6,9 +6,9 @@
  * "self cost" and not "total cost".
  */
 
-var { CATEGORY_MASK } = require("devtools/performance/global");
+let { CATEGORY_MASK } = require("devtools/performance/global");
 
-var test = Task.async(function*() {
+let test = Task.async(function*() {
   let { ThreadNode } = require("devtools/performance/tree-model");
   let { CallView } = require("devtools/performance/tree-view");
 
@@ -26,7 +26,7 @@ var test = Task.async(function*() {
   finish();
 });
 
-var gSamples = synthesizeProfileForTest([{
+let gSamples = synthesizeProfileForTest([{
   time: 1,
   frames: [
     { location: "(root)" },

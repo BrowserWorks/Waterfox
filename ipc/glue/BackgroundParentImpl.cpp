@@ -6,10 +6,6 @@
 
 #include "BroadcastChannelParent.h"
 #include "FileDescriptorSetParent.h"
-#ifdef MOZ_WEBRTC
-#include "CamerasParent.h"
-#endif
-#include "mozilla/media/MediaParent.h"
 #include "mozilla/AppProcessChecker.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/dom/ContentParent.h"
@@ -17,7 +13,6 @@
 #include "mozilla/dom/PBlobParent.h"
 #include "mozilla/dom/MessagePortParent.h"
 #include "mozilla/dom/ServiceWorkerRegistrar.h"
-#include "mozilla/dom/asmjscache/AsmJSCache.h"
 #include "mozilla/dom/cache/ActorUtils.h"
 #include "mozilla/dom/indexedDB/ActorsParent.h"
 #include "mozilla/dom/ipc/BlobParent.h"
@@ -43,7 +38,6 @@
 #endif
 
 using mozilla::ipc::AssertIsOnBackgroundThread;
-using mozilla::dom::asmjscache::PAsmJSCacheEntryParent;
 using mozilla::dom::cache::PCacheParent;
 using mozilla::dom::cache::PCacheStorageParent;
 using mozilla::dom::cache::PCacheStreamControlParent;
@@ -283,35 +277,6 @@ BackgroundParentImpl::DeallocPVsyncParent(PVsyncParent* aActor)
   // This actor already has one ref-count. Please check AllocPVsyncParent().
   nsRefPtr<mozilla::layout::VsyncParent> actor =
       dont_AddRef(static_cast<mozilla::layout::VsyncParent*>(aActor));
-  return true;
-}
-
-camera::PCamerasParent*
-BackgroundParentImpl::AllocPCamerasParent()
-{
-  AssertIsInMainProcess();
-  AssertIsOnBackgroundThread();
-
-#ifdef MOZ_WEBRTC
-  nsRefPtr<mozilla::camera::CamerasParent> actor =
-      mozilla::camera::CamerasParent::Create();
-  return actor.forget().take();
-#else
-  return nullptr;
-#endif
-}
-
-bool
-BackgroundParentImpl::DeallocPCamerasParent(camera::PCamerasParent *aActor)
-{
-  AssertIsInMainProcess();
-  AssertIsOnBackgroundThread();
-  MOZ_ASSERT(aActor);
-
-#ifdef MOZ_WEBRTC
-  nsRefPtr<mozilla::camera::CamerasParent> actor =
-      dont_AddRef(static_cast<mozilla::camera::CamerasParent*>(aActor));
-#endif
   return true;
 }
 
@@ -652,30 +617,6 @@ BackgroundParentImpl::RecvMessagePortForceClose(const nsID& aUUID,
   AssertIsOnBackgroundThread();
 
   return MessagePortParent::ForceClose(aUUID, aDestinationUUID, aSequenceID);
-}
-
-PAsmJSCacheEntryParent*
-BackgroundParentImpl::AllocPAsmJSCacheEntryParent(
-                               const dom::asmjscache::OpenMode& aOpenMode,
-                               const dom::asmjscache::WriteParams& aWriteParams,
-                               const PrincipalInfo& aPrincipalInfo)
-{
-  AssertIsInMainProcess();
-  AssertIsOnBackgroundThread();
-
-  return
-    dom::asmjscache::AllocEntryParent(aOpenMode, aWriteParams, aPrincipalInfo);
-}
-
-bool
-BackgroundParentImpl::DeallocPAsmJSCacheEntryParent(
-                                                 PAsmJSCacheEntryParent* aActor)
-{
-  AssertIsInMainProcess();
-  AssertIsOnBackgroundThread();
-
-  dom::asmjscache::DeallocEntryParent(aActor);
-  return true;
 }
 
 } // namespace ipc

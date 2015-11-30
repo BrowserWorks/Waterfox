@@ -13,11 +13,7 @@
 #include "mozilla/RollingMean.h"        // for RollingMean
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "mozilla/UniquePtr.h"          // for UniquePtr
-#include "nsCOMPtr.h"                   // for nsCOMPtr
-#include "nsISupportsImpl.h"            // for NS_INLINE_DECL_THREADSAFE_REFCOUNTING
 #include "nsTArray.h"                   // for nsTArray
-
-class nsITimer;
 
 namespace tracked_objects {
 class Location;
@@ -48,8 +44,6 @@ namespace layers {
 class TaskThrottler {
 public:
   TaskThrottler(const TimeStamp& aTimeStamp, const TimeDuration& aMaxWait);
-
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(TaskThrottler)
 
   /** Post a task to be run as soon as there are no outstanding tasks, or
    * post it immediately if it has been more than the max-wait time since
@@ -113,10 +107,6 @@ private:
   TimeStamp mStartTime;
   TimeDuration mMaxWait;
   RollingMean<TimeDuration, TimeDuration> mMean;
-  nsCOMPtr<nsITimer> mTimer;
-
-  ~TaskThrottler();
-  void RunQueuedTask(const TimeStamp& aTimeStamp);
 };
 
 } // namespace layers

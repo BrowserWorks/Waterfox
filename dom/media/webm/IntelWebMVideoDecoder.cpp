@@ -21,8 +21,8 @@
 #include "vpx/vpx_decoder.h"
 
 #undef LOG
-extern PRLogModuleInfo* GetPDMLog();
-#define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+PRLogModuleInfo* GetDemuxerLog();
+#define LOG(...) MOZ_LOG(GetDemuxerLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 namespace mozilla {
 
@@ -106,12 +106,12 @@ IntelWebMVideoDecoder::IsSupportedVideoMimeType(const nsACString& aMimeType)
          mPlatform->SupportsMimeType(aMimeType);
 }
 
-nsRefPtr<InitPromise>
+nsresult
 IntelWebMVideoDecoder::Init(unsigned int aWidth, unsigned int aHeight)
 {
   mPlatform = PlatformDecoderModule::Create();
   if (!mPlatform) {
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return NS_ERROR_FAILURE;
   }
 
   mDecoderConfig = new VideoInfo();
@@ -127,12 +127,12 @@ IntelWebMVideoDecoder::Init(unsigned int aWidth, unsigned int aHeight)
     mDecoderConfig->mMimeType = "video/webm; codecs=vp9";
     break;
   default:
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return NS_ERROR_FAILURE;
   }
 
   const VideoInfo& video = *mDecoderConfig;
   if (!IsSupportedVideoMimeType(video.mMimeType)) {
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return NS_ERROR_FAILURE;
   }
   mMediaDataDecoder =
     mPlatform->CreateDecoder(video,
@@ -141,10 +141,11 @@ IntelWebMVideoDecoder::Init(unsigned int aWidth, unsigned int aHeight)
                              mReader->GetLayersBackendType(),
                              mReader->GetDecoder()->GetImageContainer());
   if (!mMediaDataDecoder) {
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return NS_ERROR_FAILURE;
   }
-
-  return mMediaDataDecoder->Init();
+  nsresult rv = mMediaDataDecoder->Init();
+  NS_ENSURE_SUCCESS(rv, rv);
+  return NS_OK;
 }
 
 bool
@@ -366,7 +367,7 @@ IntelWebMVideoDecoder::PopSample()
   }
 
   MOZ_ASSERT(!mSampleQueue.empty());
-  sample = mSampleQueue.front().forget();
+  sample = mSampleQueue.front();
   mSampleQueue.pop_front();
   return sample.forget();
 }

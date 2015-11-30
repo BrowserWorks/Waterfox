@@ -15,7 +15,6 @@
 #include "nsIMemoryReporter.h"
 #include "nsIServiceManager.h"
 #include "nsIFile.h"
-#include "mozilla/Atomics.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Module.h"
 #include "mozilla/ModuleLoader.h"
@@ -25,7 +24,7 @@
 #include "nsIFactory.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "prtime.h"
 #include "nsCOMPtr.h"
 #include "nsAutoPtr.h"
@@ -125,7 +124,7 @@ public:
 
 private:
   mozilla::Mutex mMutex;
-  mozilla::Atomic<PRThread*, mozilla::Relaxed> mOwnerThread;
+  volatile PRThread* mOwnerThread;
 };
 
 typedef mozilla::BaseAutoLock<SafeMutex> SafeMutexAutoLock;

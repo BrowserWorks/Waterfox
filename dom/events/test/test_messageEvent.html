@@ -60,7 +60,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=848294
   }
 
   SimpleTest.waitForExplicitFinish();
-  runTest();
+  SpecialPowers.pushPrefEnv({"set": [["dom.messageChannel.enabled", true]]}, runTest);
   </script>
 </body>
 </html>

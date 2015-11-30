@@ -114,7 +114,7 @@ function get_test_plugin_no_symlink() {
   return null;
 }
 
-var gGlobalScope = this;
+let gGlobalScope = this;
 function loadAddonManager() {
   let ns = {};
   Cu.import("resource://gre/modules/Services.jsm", ns);

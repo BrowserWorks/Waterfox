@@ -9,7 +9,7 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 Cu.importGlobalProperties(['Blob']);
 Cu.import("resource://gre/modules/wap_consts.js", this);
 
-var DEBUG; // set to true to see debug messages
+let DEBUG; // set to true to see debug messages
 
 // Special ASCII characters
 const NUL = 0;
@@ -2834,7 +2834,7 @@ this.OMNA_PUSH_APPLICATION_IDS = (function() {
   return ids;
 })();
 
-var debug;
+let debug;
 if (DEBUG) {
   debug = function(s) {
     dump("-@- WspPduHelper: " + s + "\n");

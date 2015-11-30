@@ -5,7 +5,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "signaling/src/sdp/SdpAttribute.h"
-#include "signaling/src/sdp/SdpHelper.h"
+
+#include "plstr.h"
 
 #include <iomanip>
 
@@ -630,39 +631,22 @@ SdpImageattrAttributeList::Set::Serialize(std::ostream& os) const
   os << "]";
 }
 
-static std::string
-GetLowercaseToken(std::istream& is, std::string* error)
-{
-  is >> std::ws;
-  std::string token;
-  while (true) {
-    switch (PeekChar(is, error)) {
-      case '\0':
-      case ' ':
-      case '\t':
-        return token;
-      default:
-        token.push_back(std::tolower(is.get()));
-    }
-  }
-
-  MOZ_ASSERT_UNREACHABLE("Unexpected break in loop");
-  return "";
-}
-
 bool
 SdpImageattrAttributeList::Imageattr::ParseSets(std::istream& is,
                                                 std::string* error)
 {
-  std::string type = GetLowercaseToken(is, error);
+  // Either "send" or "recv"
+  static const size_t kMaxTypeLength = 4;
+  char type[kMaxTypeLength + 1] = {0};
+  is.read(type, kMaxTypeLength);
 
   bool* isAll = nullptr;
   std::vector<Set>* sets = nullptr;
 
-  if (type == "send") {
+  if (!PL_strncasecmp(type, "send", kMaxTypeLength)) {
     isAll = &sendAll;
     sets = &sendSets;
-  } else if (type == "recv") {
+  } else if (!PL_strncasecmp(type, "recv", kMaxTypeLength)) {
     isAll = &recvAll;
     sets = &recvSets;
   } else {
@@ -775,7 +759,8 @@ SdpImageattrAttributeList::PushEntry(const std::string& raw,
                                      std::string* error,
                                      size_t* errorPos)
 {
-  std::istringstream is(raw);
+  std::istringstream is;
+  is.str(raw);
 
   Imageattr imageattr;
   if (!imageattr.Parse(is, error)) {
@@ -911,178 +896,6 @@ void
 SdpSetupAttribute::Serialize(std::ostream& os) const
 {
   os << "a=" << mType << ":" << mRole << CRLF;
-}
-
-void
-SdpSimulcastAttribute::Version::Serialize(std::ostream& os) const
-{
-  bool first = true;
-  for (uint16_t format : choices) {
-    if (first) {
-      first = false;
-    } else {
-      os << ",";
-    }
-
-    os << format;
-  }
-}
-
-bool
-SdpSimulcastAttribute::Version::Parse(std::istream& is, std::string* error)
-{
-  do {
-    uint16_t value;
-    if (!GetUnsigned<uint16_t>(is, 0, UINT16_MAX, &value, error)) {
-      return false;
-    }
-    choices.push_back(value);
-  } while (SkipChar(is, ',', error));
-
-  return true;
-}
-
-void
-SdpSimulcastAttribute::Version::AppendAsStrings(
-    std::vector<std::string>* formats) const
-{
-  for (uint16_t pt : choices) {
-    std::ostringstream os;
-    os << pt;
-    formats->push_back(os.str());
-  }
-}
-
-void
-SdpSimulcastAttribute::Version::AddChoice(const std::string& pt)
-{
-  uint16_t ptAsInt;
-  if (!SdpHelper::GetPtAsInt(pt, &ptAsInt)) {
-    MOZ_ASSERT(false);
-    return;
-  }
-
-  choices.push_back(ptAsInt);
-}
-
-void
-SdpSimulcastAttribute::Versions::Serialize(std::ostream& os) const
-{
-  bool first = true;
-  for (const Version& version : *this) {
-    if (!version.IsSet()) {
-      continue;
-    }
-
-    if (first) {
-      first = false;
-    } else {
-      os << ";";
-    }
-
-    version.Serialize(os);
-  }
-}
-
-bool
-SdpSimulcastAttribute::Versions::Parse(std::istream& is, std::string* error)
-{
-  do {
-    Version version;
-    if (!version.Parse(is, error)) {
-      return false;
-    }
-    push_back(version);
-  } while(SkipChar(is, ';', error));
-
-  return true;
-}
-
-void
-SdpSimulcastAttribute::Serialize(std::ostream& os) const
-{
-  MOZ_ASSERT(sendVersions.IsSet() ||
-             recvVersions.IsSet() ||
-             sendrecvVersions.IsSet());
-
-  os << "a=" << mType << ":";
-
-  if (sendVersions.IsSet()) {
-    os << " send ";
-    sendVersions.Serialize(os);
-  }
-
-  if (recvVersions.IsSet()) {
-    os << " recv ";
-    recvVersions.Serialize(os);
-  }
-
-  if (sendrecvVersions.IsSet()) {
-    os << " sendrecv ";
-    sendrecvVersions.Serialize(os);
-  }
-
-  os << CRLF;
-}
-
-bool
-SdpSimulcastAttribute::Parse(std::istream& is, std::string* error)
-{
-  bool gotRecv = false;
-  bool gotSend = false;
-  bool gotSendrecv = false;
-
-  while (true) {
-    std::string token = GetLowercaseToken(is, error);
-    if (token.empty()) {
-      break;
-    }
-
-    if (token == "send") {
-      if (gotSend) {
-        *error = "Already got a send list";
-        return false;
-      }
-      gotSend = true;
-
-      is >> std::ws;
-      if (!sendVersions.Parse(is, error)) {
-        return false;
-      }
-    } else if (token == "recv") {
-      if (gotRecv) {
-        *error = "Already got a recv list";
-        return false;
-      }
-      gotRecv = true;
-
-      is >> std::ws;
-      if (!recvVersions.Parse(is, error)) {
-        return false;
-      }
-    } else if (token == "sendrecv") {
-      if (gotSendrecv) {
-        *error = "Already got a sendrecv list";
-        return false;
-      }
-      gotSendrecv = true;
-
-      is >> std::ws;
-      if (!sendrecvVersions.Parse(is, error)) {
-        return false;
-      }
-    } else {
-      *error = "Type must be either 'send', 'recv', or 'sendrecv'";
-      return false;
-    }
-  }
-
-  if (!gotSend && !gotRecv && !gotSendrecv) {
-    *error = "Empty simulcast attribute";
-    return false;
-  }
-
-  return true;
 }
 
 void
@@ -1237,8 +1050,6 @@ SdpAttribute::IsAllowedAtMediaLevel(AttributeType type)
       return true;
     case kSetupAttribute:
       return true;
-    case kSimulcastAttribute:
-      return true;
     case kSsrcAttribute:
       return true;
     case kSsrcGroupAttribute:
@@ -1319,8 +1130,6 @@ SdpAttribute::IsAllowedAtSessionLevel(AttributeType type)
       return true;
     case kSetupAttribute:
       return true;
-    case kSimulcastAttribute:
-      return false;
     case kSsrcAttribute:
       return false;
     case kSsrcGroupAttribute:
@@ -1399,8 +1208,6 @@ SdpAttribute::GetAttributeTypeString(AttributeType type)
       return "sendrecv";
     case kSetupAttribute:
       return "setup";
-    case kSimulcastAttribute:
-      return "simulcast";
     case kSsrcAttribute:
       return "ssrc";
     case kSsrcGroupAttribute:

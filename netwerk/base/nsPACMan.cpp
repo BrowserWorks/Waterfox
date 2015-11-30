@@ -453,7 +453,7 @@ nsPACMan::StartLoading()
         NS_NewChannel(getter_AddRefs(channel),
                       pacURI,
                       nsContentUtils::GetSystemPrincipal(),
-                      nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                      nsILoadInfo::SEC_NORMAL,
                       nsIContentPolicy::TYPE_OTHER,
                       nullptr, // aLoadGroup
                       nullptr, // aCallbacks
@@ -468,7 +468,7 @@ nsPACMan::StartLoading()
       if (channel) {
         channel->SetLoadFlags(nsIRequest::LOAD_BYPASS_CACHE);
         channel->SetNotificationCallbacks(this);
-        if (NS_SUCCEEDED(channel->AsyncOpen2(mLoader)))
+        if (NS_SUCCEEDED(channel->AsyncOpen(mLoader, nullptr)))
           return;
       }
     }

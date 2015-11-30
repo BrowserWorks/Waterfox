@@ -219,13 +219,13 @@ if (arguments.length < 1) {
   throw "Usage: genRootCAHashes.js <absolute path to current RootHashes.inc>";
 }
 
-var trustAnchorsFile = FileUtils.getFile("CurWorkD", [FILENAME_TRUST_ANCHORS]);
+let trustAnchorsFile = FileUtils.getFile("CurWorkD", [FILENAME_TRUST_ANCHORS]);
 // let rootHashesFile = FileUtils.getFile("CurWorkD", arguments[0]);
-var rootHashesFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
+let rootHashesFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
 rootHashesFile.initWithPath(arguments[0]);
 
 // Open the known hashes file; this is to ensure stable bin numbers.
-var gTrustAnchors = loadTrustAnchors(trustAnchorsFile);
+let gTrustAnchors = loadTrustAnchors(trustAnchorsFile);
 
 // Collect all certificate entries
 insertTrustAnchorsFromDatabase();
@@ -249,6 +249,6 @@ gTrustAnchors.roots.sort(function(a, b) {
 });
 
 // Write the output file.
-var rootHashesFileOutputStream = FileUtils.openSafeFileOutputStream(rootHashesFile);
+let rootHashesFileOutputStream = FileUtils.openSafeFileOutputStream(rootHashesFile);
 writeRootHashes(rootHashesFileOutputStream);
 FileUtils.closeSafeFileOutputStream(rootHashesFileOutputStream);

@@ -20,14 +20,13 @@ const DEVICE_PREF="sanity-test.device-id";
 const VERSION_PREF="sanity-test.version";
 const DISABLE_VIDEO_PREF="media.hardware-video-decoding.failed";
 const RUNNING_PREF="sanity-test.running";
-const TIMEOUT_SEC=20;
+const OS_SNAPSHOT_TIMEOUT_SEC=3;
 
 // GRAPHICS_SANITY_TEST histogram enumeration values
 const TEST_PASSED=0;
 const TEST_FAILED_RENDER=1;
 const TEST_FAILED_VIDEO=2;
 const TEST_CRASHED=3;
-const TEST_TIMEOUT=4;
 
 // GRAPHICS_SANITY_TEST_REASON enumeration values.
 const REASON_FIRST_RUN=0;
@@ -65,6 +64,11 @@ function reportResult(val) {
   Services.prefs.savePrefFile(null);
 }
 
+function reportSnapshotResult(val) {
+  let histogram = Services.telemetry.getHistogramById("GRAPHICS_SANITY_TEST_OS_SNAPSHOT");
+  histogram.add(val);
+}
+
 function reportTestReason(val) {
   let histogram = Services.telemetry.getHistogramById("GRAPHICS_SANITY_TEST_REASON");
   histogram.add(val);
@@ -78,12 +82,6 @@ function annotateCrashReport(value) {
     crashReporter.annotateCrashReport("GraphicsSanityTest", value ? "1" : "");
   } catch (e) {
   }
-}
-
-function setTimeout(aMs, aCallback) {
-  var timer = Cc['@mozilla.org/timer;1'].
-                createInstance(Ci.nsITimer);
-  timer.initWithCallback(aCallback, aMs, Ci.nsITimer.TYPE_ONE_SHOT);
 }
 
 function takeWindowSnapshot(win, ctx) {
@@ -142,7 +140,7 @@ function testCompositor(win, ctx) {
   return testPassed;
 }
 
-var listener = {
+let listener = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
 
   win: null,
@@ -159,12 +157,6 @@ var listener = {
     this.win.onload = this.onWindowLoaded.bind(this);
     this.utils = this.win.QueryInterface(Ci.nsIInterfaceRequestor)
                          .getInterface(Ci.nsIDOMWindowUtils);
-    setTimeout(TIMEOUT_SEC * 1000, () => {
-      if (this.win) {
-        reportResult(TEST_TIMEOUT);
-        this.endTest();
-      }
-    });
   },
 
   runSanityTest: function() {
@@ -220,14 +212,11 @@ var listener = {
     this.utils = null;
     this.canvas = null;
 
-    if (this.mm) {
-      // We don't have a MessageManager if onWindowLoaded never fired.
-      this.messages.forEach((msgName) => {
-        this.mm.removeMessageListener(msgName, this);
-      });
+    this.messages.forEach((msgName) => {
+      this.mm.removeMessageListener(msgName, this);
+    });
 
-      this.mm = null;
-    }
+    this.mm = null;
   
     // Remove the annotation after we've cleaned everything up, to catch any
     // incidental crashes from having performed the sanity test.

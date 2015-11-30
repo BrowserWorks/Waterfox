@@ -207,9 +207,7 @@ protected:
     ePasswordFieldNotAllowed
   };
   bool CanCutOrCopy(PasswordFieldAllowed aPasswordFieldAllowed);
-  bool FireClipboardEvent(mozilla::EventMessage aEventMessage,
-                          int32_t aSelectionType,
-                          bool* aActionTaken = nullptr);
+  bool FireClipboardEvent(int32_t aType, int32_t aSelectionType, bool* aActionTaken = nullptr);
 
   bool UpdateMetaCharset(nsIDOMDocument* aDocument,
                          const nsACString& aCharacterSet);

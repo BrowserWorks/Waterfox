@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <script>
 var ac = new AudioContext();
-var runningPromise = new Promise(resolve => {
-  ac.onstatechange = event => {
-    if (ac.state == "running") {
-      resolve();
-    }
-  };
-});
 fetch("audio.ogg").then(response => {
   return response.arrayBuffer();
 }).then(ab => {
@@ -24,9 +17,7 @@ fetch("audio.ogg").then(response => {
 
 var suspendPromise;
 function suspendAC() {
-  runningPromise.then(() => {
-    suspendPromise = ac.suspend();
-  });
+  suspendPromise = ac.suspend();
 }
 
 var resumePromise;

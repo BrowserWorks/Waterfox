@@ -18,7 +18,7 @@
 //    This should result in an abort of the database rebuild; the partially-
 //    built database should be moved to 'cookies.sqlite.bak-rebuild'.
 
-var test_generator = do_run_test();
+let test_generator = do_run_test();
 
 function run_test() {
   do_test_pending();

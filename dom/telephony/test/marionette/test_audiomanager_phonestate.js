@@ -14,7 +14,7 @@ const PHONE_STATE_RINGTONE         = 1;
 const PHONE_STATE_IN_CALL          = 2;
 const PHONE_STATE_IN_COMMUNICATION = 3;
 
-var audioManager = SpecialPowers.Cc[AUDIO_MANAGER_CONTRACT_ID]
+let audioManager = SpecialPowers.Cc[AUDIO_MANAGER_CONTRACT_ID]
                                 .getService(SpecialPowers.Ci.nsIAudioManager);
 
 ok(audioManager, "nsIAudioManager instance");

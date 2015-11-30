@@ -12,33 +12,29 @@ EXPORTS.mozilla.dom += [
     'nsCSPService.h',
     'nsCSPUtils.h',
     'nsMixedContentBlocker.h',
-    'SRICheck.h',
-    'SRIMetadata.h',
 ]
 
 EXPORTS += [
     'nsContentSecurityManager.h',
+    'nsCORSListenerProxy.h'
 ]
 
 UNIFIED_SOURCES += [
     'nsContentSecurityManager.cpp',
+    'nsCORSListenerProxy.cpp',
     'nsCSPContext.cpp',
     'nsCSPParser.cpp',
     'nsCSPService.cpp',
     'nsCSPUtils.cpp',
     'nsMixedContentBlocker.cpp',
-    'SRICheck.cpp',
-    'SRIMetadata.cpp',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
+
+FAIL_ON_WARNINGS = True
 
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/caps',
     '/netwerk/base',
 ]
-
-if CONFIG['GNU_CC']:
-    CFLAGS += ['-Wshadow', '-Wformat-security']
-    CXXFLAGS += ['-Wshadow', '-Wformat-security']

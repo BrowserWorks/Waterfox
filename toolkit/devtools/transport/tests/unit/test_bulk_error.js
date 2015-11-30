@@ -1,9 +1,14 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
-var { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
-var Pipe = CC("@mozilla.org/pipe;1", "nsIPipe", "init");
+let { DebuggerServer } =
+  Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
+let { DebuggerClient } =
+  Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
+let { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
+let { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
+let Pipe = CC("@mozilla.org/pipe;1", "nsIPipe", "init");
+let { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
 
 function run_test() {
   initTestDebuggerServer();
@@ -46,7 +51,7 @@ function add_test_bulk_actor() {
 
 /*** Tests ***/
 
-var test_string_error = Task.async(function*(transportFactory, onReady) {
+let test_string_error = Task.async(function*(transportFactory, onReady) {
   let deferred = promise.defer();
   let transport = yield transportFactory();
 

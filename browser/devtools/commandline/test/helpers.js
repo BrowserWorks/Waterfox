@@ -27,6 +27,7 @@ var { TargetFactory } = require("devtools/framework/target");
 
 var assert = { ok: ok, is: is, log: info };
 var util = require('gcli/util/util');
+var Promise = require('gcli/util/promise').Promise;
 var cli = require('gcli/cli');
 var KeyEvent = require('gcli/util/util').KeyEvent;
 

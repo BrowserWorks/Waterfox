@@ -1062,10 +1062,10 @@ nsresult nsHTMLEditor::InsertObject(const char* aType, nsISupports* aObject, boo
       rv = NS_NewChannel(getter_AddRefs(channel),
                          fileURI,
                          nsContentUtils::GetSystemPrincipal(),
-                         nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                         nsILoadInfo::SEC_NORMAL,
                          nsIContentPolicy::TYPE_OTHER);
       NS_ENSURE_SUCCESS(rv, rv);
-      rv = channel->Open2(getter_AddRefs(imageStream));
+      rv = channel->Open(getter_AddRefs(imageStream));
       NS_ENSURE_SUCCESS(rv, rv);
     } else {
       imageStream = do_QueryInterface(aObject);
@@ -1323,9 +1323,8 @@ bool nsHTMLEditor::HavePrivateHTMLFlavor(nsIClipboard *aClipboard)
 
 NS_IMETHODIMP nsHTMLEditor::Paste(int32_t aSelectionType)
 {
-  if (!FireClipboardEvent(ePaste, aSelectionType)) {
+  if (!FireClipboardEvent(NS_PASTE, aSelectionType))
     return NS_OK;
-  }
 
   // Get Clipboard Service
   nsresult rv;
@@ -1407,9 +1406,8 @@ NS_IMETHODIMP nsHTMLEditor::PasteTransferable(nsITransferable *aTransferable)
 {
   // Use an invalid value for the clipboard type as data comes from aTransferable
   // and we don't currently implement a way to put that in the data transfer yet.
-  if (!FireClipboardEvent(ePaste, nsIClipboard::kGlobalClipboard)) {
+  if (!FireClipboardEvent(NS_PASTE, nsIClipboard::kGlobalClipboard))
     return NS_OK;
-  }
 
   // handle transferable hooks
   nsCOMPtr<nsIDOMDocument> domdoc = GetDOMDocument();
@@ -1426,9 +1424,8 @@ NS_IMETHODIMP nsHTMLEditor::PasteTransferable(nsITransferable *aTransferable)
 //
 NS_IMETHODIMP nsHTMLEditor::PasteNoFormatting(int32_t aSelectionType)
 {
-  if (!FireClipboardEvent(ePaste, aSelectionType)) {
+  if (!FireClipboardEvent(NS_PASTE, aSelectionType))
     return NS_OK;
-  }
 
   ForceCompositionEnd();
 

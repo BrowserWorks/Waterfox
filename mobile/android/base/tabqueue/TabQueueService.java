@@ -146,8 +146,6 @@ public class TabQueueService extends Service {
                             TabQueueHelper.removeURLFromFile(applicationContext, intentUrl, TabQueueHelper.FILE_NAME);
                         }
                         openNow(safeIntent.getUnsafe());
-
-                        Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.INTENT, "tabqueue-doubletap");
                         stopSelfResult(startId);
                     }
                 });
@@ -188,8 +186,6 @@ public class TabQueueService extends Service {
                 stopServiceRunnable = null;
                 removeView();
                 openNow(intent);
-
-                Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.INTENT, "tabqueue-now");
                 stopSelfResult(startId);
             }
         });
@@ -210,6 +206,8 @@ public class TabQueueService extends Service {
         GeckoSharedPrefs.forApp(getApplicationContext()).edit().remove(GeckoPreferences.PREFS_TAB_QUEUE_LAST_SITE)
                                                                .remove(GeckoPreferences.PREFS_TAB_QUEUE_LAST_TIME)
                                                                .apply();
+
+        Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.INTENT, "tabqueue-now");
 
         executorService.submit(new Runnable() {
             @Override

@@ -1408,7 +1408,7 @@ PlacesController.prototype = {
  * the view that the item(s) have been dropped on was not necessarily active.
  * Drop functions are passed the view that is being dropped on.
  */
-var PlacesControllerDragHelper = {
+let PlacesControllerDragHelper = {
   /**
    * DOM Element currently being dragged over
    */

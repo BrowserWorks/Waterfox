@@ -19,7 +19,7 @@ public:
   WMFAudioMFTManager(const AudioInfo& aConfig);
   ~WMFAudioMFTManager();
 
-  bool Init();
+  virtual already_AddRefed<MFTDecoder> Init() override;
 
   virtual HRESULT Input(MediaRawData* aSample) override;
 
@@ -31,13 +31,12 @@ public:
 
   virtual void Shutdown() override;
 
-  virtual TrackInfo::TrackType GetType() override {
-    return TrackInfo::kAudioTrack;
-  }
-
 private:
 
   HRESULT UpdateOutputType();
+
+  // IMFTransform wrapper that performs the decoding.
+  RefPtr<MFTDecoder> mDecoder;
 
   uint32_t mAudioChannels;
   uint32_t mAudioRate;

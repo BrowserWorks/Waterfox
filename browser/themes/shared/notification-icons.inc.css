@@ -103,21 +103,12 @@
 }
 
 @conditionalForwardWithUrlbar@ > #forward-button[disabled] + #urlbar > #notification-popup-box {
-  padding-left: calc(var(--backbutton-urlbar-overlap) + 3px);
+  padding-left: 7px;
 }
 
-/* This changes the direction of the main notification box on the url bar. */
 #notification-popup-box:-moz-locale-dir(rtl),
-/* This adds a second flip for the notification anchors, as they don't switch direction
-   for RTL mode. */
 .notification-anchor-icon:-moz-locale-dir(rtl) {
   transform: scaleX(-1);
-}
-
-/* For the anchor icons in the chat window, we don't have the notification popup box,
-   so we need to cancel the RTL transform. */
-.notification-anchor-icon.chat-toolbarbutton:-moz-locale-dir(rtl) {
-  transform: none;
 }
 
 .notification-anchor-icon {

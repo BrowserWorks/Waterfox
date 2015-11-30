@@ -23,7 +23,7 @@
 #include "nsWeakReference.h"
 #include "nsISSLStatusProvider.h"
 #include "nsIAssociatedContentSecurity.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsINetUtil.h"
 
 class nsISSLStatus;

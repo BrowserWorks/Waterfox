@@ -205,7 +205,7 @@ nsRootBoxFrame::HandleEvent(nsPresContext* aPresContext,
     return NS_OK;
   }
 
-  if (aEvent->mMessage == eMouseUp) {
+  if (aEvent->message == NS_MOUSE_BUTTON_UP) {
     nsFrame::HandleEvent(aPresContext, aEvent, aEventStatus);
   }
 

@@ -15,8 +15,7 @@ function usage() {
 
 clean=1
 platform=""
-# 3 hours. OS X doesn't support the "sleep 3h" syntax.
-TIMEOUT=10800
+TIMEOUT=3h
 while [ $# -gt 1 ]; do
     case "$1" in
         --dep)
@@ -92,8 +91,6 @@ elif [ "$OSTYPE" = "linux-gnu" ]; then
   MAKEFLAGS=-j4
   if [ "$VARIANT" = "arm-sim" ]; then
     USE_64BIT=false
-  elif [ "$VARIANT" = "arm64-sim" ]; then
-    USE_64BIT=true
   else
     case "$platform" in
     linux64)
@@ -171,8 +168,6 @@ if type setarch >/dev/null 2>&1; then
 fi
 
 RUN_JSTESTS=true
-RUN_JITTEST=true
-RUN_JSAPITESTS=true
 
 PARENT=$$
 
@@ -211,21 +206,11 @@ elif [[ "$VARIANT" = "warnaserr" ||
 elif [[ "$VARIANT" = "arm-sim" ||
         "$VARIANT" = "plaindebug" ]]; then
     export JSTESTS_EXTRA_ARGS=--jitflags=debug
-elif [[ "$VARIANT" = arm64* ]]; then
-    # The ARM64 JIT is not yet fully functional, and asm.js does not work.
-    # Just run "make check". We mostly care about not breaking the build at this point.
-    RUN_JITTEST=false
-    RUN_JSAPITESTS=false
-    RUN_JSTESTS=false
 fi
 
 $COMMAND_PREFIX $MAKE check || exit 1
-if $RUN_JITTEST; then
-    $COMMAND_PREFIX $MAKE check-jit-test || exit 1
-fi
-if $RUN_JSAPITESTS; then
-    $COMMAND_PREFIX $OBJDIR/dist/bin/jsapi-tests || exit 1
-fi
+$COMMAND_PREFIX $MAKE check-jit-test || exit 1
+$COMMAND_PREFIX $OBJDIR/dist/bin/jsapi-tests || exit 1
 if $RUN_JSTESTS; then
     $COMMAND_PREFIX $MAKE check-jstests || exit 1
 fi

@@ -18,7 +18,7 @@
 #include "nsPrintfCString.h"
 #include "nsIStringBundle.h"
 #include "prefapi.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 
 #include "nsCRT.h"
 #include "mozilla/Services.h"

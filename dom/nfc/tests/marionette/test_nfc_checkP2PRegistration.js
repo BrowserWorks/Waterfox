@@ -120,7 +120,7 @@ function handleRejectedPromiseWithNfcOn() {
   toggleNFC(false).then(runNextTest);
 }
 
-var tests = [
+let tests = [
   testNoTargetNoSessionToken,
   testWithTargetNoSessionToken,
   testWithSessionTokenWithTarget,

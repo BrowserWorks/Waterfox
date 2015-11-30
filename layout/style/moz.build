@@ -85,7 +85,6 @@ EXPORTS.mozilla += [
     'CSSVariableResolver.h',
     'CSSVariableValues.h',
     'IncrementalClearCOMRuleArray.h',
-    'LayerAnimationInfo.h',
     'RuleNodeCacheConditions.h',
     'RuleProcessorCache.h',
     'StyleAnimationValue.h',
@@ -131,7 +130,6 @@ UNIFIED_SOURCES += [
     'FontFaceSetIterator.cpp',
     'ImageLoader.cpp',
     'IncrementalClearCOMRuleArray.cpp',
-    'LayerAnimationInfo.cpp',
     'Loader.cpp',
     'MediaQueryList.cpp',
     'nsAnimationManager.cpp',
@@ -185,6 +183,8 @@ EXTRA_COMPONENTS += [
     'CSSUnprefixingService.manifest',
 ]
 
+FAIL_ON_WARNINGS = True
+
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -198,7 +198,6 @@ LOCAL_INCLUDES += [
     '/dom/html',
     '/dom/xbl',
     '/dom/xul',
-    '/image',
 ]
 
 JAR_MANIFESTS += ['jar.mn']

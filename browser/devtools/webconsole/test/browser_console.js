@@ -14,7 +14,7 @@ const TEST_XHR_ERROR_URI = `http://example.com/404.html?${Date.now()}`;
 
 "use strict";
 
-var test = asyncTest(function*() {
+let test = asyncTest(function*() {
   yield loadTab(TEST_URI);
 
   let opened = waitForConsole();

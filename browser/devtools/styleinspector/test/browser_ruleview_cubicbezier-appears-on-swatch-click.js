@@ -4,26 +4,26 @@
 
 "use strict";
 
-// Tests that cubic-bezier pickers appear when clicking on cubic-bezier
-// swatches.
+// Test that cubic-bezier pickers appear when clicking on cubic-bezier swatches
 
-const TEST_URI = `
-  <style type="text/css">
-    div {
-      animation: move 3s linear;
-      transition: top 4s cubic-bezier(.1, 1.45, 1, -1.2);
-    }
-    .test {
-      animation-timing-function: ease-in-out;
-      transition-timing-function: ease-out;
-    }
-  </style>
-  <div class="test">Testing the cubic-bezier tooltip!</div>
-`;
+const PAGE_CONTENT = [
+  '<style type="text/css">',
+  '  div {',
+  '    animation: move 3s linear;',
+  '    transition: top 4s cubic-bezier(.1, 1.45, 1, -1.2);',
+  '  }',
+  '  .test {',
+  '    animation-timing-function: ease-in-out;',
+  '    transition-timing-function: ease-out;',
+  '  }',
+  '</style>',
+  '<div class="test">Testing the cubic-bezier tooltip!</div>'
+].join("\n");
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-  let {inspector, view} = yield openRuleView();
+  yield addTab("data:text/html;charset=utf-8,rule view cubic-bezier tooltip test");
+  content.document.body.innerHTML = PAGE_CONTENT;
+  let {toolbox, inspector, view} = yield openRuleView();
   yield selectNode("div", inspector);
 
   let swatches = [];

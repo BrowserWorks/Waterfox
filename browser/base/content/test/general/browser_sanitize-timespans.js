@@ -2,19 +2,19 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
 // Bug 453440 - Test the timespan-based logic of the sanitizer code
-var now_mSec = Date.now();
-var now_uSec = now_mSec * 1000;
+let now_mSec = Date.now();
+let now_uSec = now_mSec * 1000;
 
 const kMsecPerMin = 60 * 1000;
 const kUsecPerMin = 60 * 1000000;
 
-var tempScope = {};
+let tempScope = {};
 Cc["@mozilla.org/moz/jssubscript-loader;1"].getService(Ci.mozIJSSubScriptLoader)
                                            .loadSubScript("chrome://browser/content/sanitize.js", tempScope);
-var Sanitizer = tempScope.Sanitizer;
+let Sanitizer = tempScope.Sanitizer;
 
-var FormHistory = (Components.utils.import("resource://gre/modules/FormHistory.jsm", {})).FormHistory;
-var Downloads = (Components.utils.import("resource://gre/modules/Downloads.jsm", {})).Downloads;
+let FormHistory = (Components.utils.import("resource://gre/modules/FormHistory.jsm", {})).FormHistory;
+let Downloads = (Components.utils.import("resource://gre/modules/Downloads.jsm", {})).Downloads;
 
 function promiseFormHistoryRemoved() {
   let deferred = Promise.defer();

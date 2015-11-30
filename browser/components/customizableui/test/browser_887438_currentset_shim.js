@@ -4,9 +4,9 @@
 
 "use strict";
 
-var navbar = document.getElementById("nav-bar");
-var navbarCT = navbar.customizationTarget;
-var overflowPanelList = document.getElementById("widget-overflow-list");
+let navbar = document.getElementById("nav-bar");
+let navbarCT = navbar.customizationTarget;
+let overflowPanelList = document.getElementById("widget-overflow-list");
 
 // Reading currentset
 add_task(function() {

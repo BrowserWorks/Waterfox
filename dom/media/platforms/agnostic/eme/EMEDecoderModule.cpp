@@ -45,7 +45,7 @@ public:
   {
   }
 
-  virtual nsRefPtr<InitPromise> Init() override {
+  virtual nsresult Init() override {
     MOZ_ASSERT(!mIsShutdown);
     return mDecoder->Init();
   }

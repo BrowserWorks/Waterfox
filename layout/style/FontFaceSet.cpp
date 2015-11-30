@@ -1338,12 +1338,6 @@ FontFaceSet::CheckFontLoad(const gfxFontFaceSrc* aFontFaceSrc,
         *aBypassCache = true;
       }
     }
-    uint32_t flags;
-    if (NS_SUCCEEDED(docShell->GetDefaultLoadFlags(&flags))) {
-      if (flags & nsIRequest::LOAD_BYPASS_CACHE) {
-        *aBypassCache = true;
-      }
-    }
   }
 
   return rv;

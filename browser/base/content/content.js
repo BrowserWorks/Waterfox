@@ -6,7 +6,7 @@
 /* This content script should work in any browser or iframe and should not
  * depend on the frame being contained in tabbrowser. */
 
-var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+let {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -72,7 +72,7 @@ addEventListener("blur", function(event) {
   LoginManagerContent.onUsernameInput(event);
 });
 
-var handleContentContextMenu = function (event) {
+let handleContentContextMenu = function (event) {
   let defaultPrevented = event.defaultPrevented;
   if (!Services.prefs.getBoolPref("dom.event.contextmenu.enabled")) {
     let plugin = null;
@@ -207,7 +207,7 @@ const TLS_ERROR_REPORT_TELEMETRY_EXPANDED = 1;
 const TLS_ERROR_REPORT_TELEMETRY_SUCCESS  = 6;
 const TLS_ERROR_REPORT_TELEMETRY_FAILURE  = 7;
 
-var AboutNetErrorListener = {
+let AboutNetErrorListener = {
   init: function(chromeGlobal) {
     chromeGlobal.addEventListener('AboutNetErrorLoad', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorSetAutomatic', this, false, true);
@@ -336,7 +336,7 @@ var AboutNetErrorListener = {
 AboutNetErrorListener.init(this);
 
 
-var ClickEventHandler = {
+let ClickEventHandler = {
   init: function init() {
     Cc["@mozilla.org/eventlistenerservice;1"]
       .getService(Ci.nsIEventListenerService)
@@ -518,7 +518,7 @@ ClickEventHandler.init();
 ContentLinkHandler.init(this);
 
 // TODO: Load this lazily so the JSM is run only if a relevant event/message fires.
-var pluginContent = new PluginContent(global);
+let pluginContent = new PluginContent(global);
 
 addEventListener("DOMWebNotificationClicked", function(event) {
   sendAsyncMessage("DOMWebNotificationClicked", {});
@@ -550,7 +550,7 @@ addEventListener("pageshow", function(event) {
   }
 });
 
-var PageMetadataMessenger = {
+let PageMetadataMessenger = {
   init() {
     addMessageListener("PageMetadata:GetPageData", this);
     addMessageListener("PageMetadata:GetMicrodata", this);
@@ -753,7 +753,7 @@ addMessageListener("ContextMenu:SearchFieldBookmarkData", (message) => {
                    { spec, title, description, postData, charset });
 });
 
-var LightWeightThemeWebInstallListener = {
+let LightWeightThemeWebInstallListener = {
   _previewWindow: null,
 
   init: function() {
@@ -853,7 +853,7 @@ addMessageListener("ContextMenu:SetAsDesktopBackground", (message) => {
     sendAsyncMessage("ContextMenu:SetAsDesktopBackground:Result", { disable });
 });
 
-var PageInfoListener = {
+let PageInfoListener = {
 
   init: function() {
     addMessageListener("PageInfo:getData", this);

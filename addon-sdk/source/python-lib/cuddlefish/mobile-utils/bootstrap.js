@@ -7,7 +7,7 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-var { log } = console;
+let { log } = console;
 
 function startup(data, reason) {
   // This code allow to make all stdIO work

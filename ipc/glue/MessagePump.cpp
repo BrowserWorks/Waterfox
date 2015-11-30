@@ -433,13 +433,15 @@ MessagePumpForNonMainUIThreads::OnDispatchedEvent(nsIThreadInternal *thread)
 
 NS_IMETHODIMP
 MessagePumpForNonMainUIThreads::OnProcessNextEvent(nsIThreadInternal *thread,
-                                                   bool mayWait)
+                                                   bool mayWait,
+                                                   uint32_t recursionDepth)
 {
   return NS_OK;
 }
 
 NS_IMETHODIMP
 MessagePumpForNonMainUIThreads::AfterProcessNextEvent(nsIThreadInternal *thread,
+                                                      uint32_t recursionDepth,
                                                       bool eventWasProcessed)
 {
   return NS_OK;

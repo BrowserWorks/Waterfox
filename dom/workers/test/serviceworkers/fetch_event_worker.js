@@ -14,8 +14,6 @@ onfetch = function(ev) {
     if (ev.request.method == 'OPTIONS') {
       ev.respondWith(new Response('', {headers: {'Access-Control-Allow-Origin': '*',
                                                  'Access-Control-Allow-Headers': 'X-Unsafe'}}))
-    } else if (ev.request.url.includes('example.org')) {
-      ev.respondWith(fetch(ev.request));
     }
   }
 
@@ -99,20 +97,12 @@ onfetch = function(ev) {
   }
 
   else if (ev.request.url.includes("nonexistent_image.gif")) {
-    var imageAsBinaryString = atob("R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs");
-    var imageLength = imageAsBinaryString.length;
-
-    // If we just pass |imageAsBinaryString| to the Response constructor, an
-    // encoding conversion occurs that corrupts the image. Instead, we need to
-    // convert it to a typed array.
-    // typed array.
-    var imageAsArray = new Uint8Array(imageLength);
-    for (var i = 0; i < imageLength; ++i) {
-      imageAsArray[i] = imageAsBinaryString.charCodeAt(i);
-    }
-
     ev.respondWith(Promise.resolve(
-      new Response(imageAsArray, { headers: { "Content-Type": "image/gif" } })
+      new Response(atob("R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs"), {
+        headers: {
+          "Content-Type": "image/gif"
+        }
+      })
     ));
   }
 
@@ -236,51 +226,5 @@ onfetch = function(ev) {
     // The redirected fetch should not go through the SW since the original
     // fetch was initiated from a SW.
     ev.respondWith(fetch('redirect_serviceworker.sjs'));
-  }
-
-  else if (ev.request.url.includes('load_cross_origin_xml_document_synthetic.xml')) {
-    if (ev.request.mode != 'same-origin') {
-      ev.respondWith(Promise.reject());
-      return;
-    }
-
-    ev.respondWith(Promise.resolve(
-      new Response("<response>body</response>", { headers: {'Content-Type': 'text/xtml'}})
-    ));
-  }
-
-  else if (ev.request.url.includes('load_cross_origin_xml_document_cors.xml')) {
-    if (ev.request.mode != 'same-origin') {
-      ev.respondWith(Promise.reject());
-      return;
-    }
-
-    var url = 'http://example.com/tests/dom/security/test/cors/file_CrossSiteXHR_server.sjs?status=200&allowOrigin=*';
-    ev.respondWith(fetch(url, { mode: 'cors' }));
-  }
-
-  else if (ev.request.url.includes('load_cross_origin_xml_document_opaque.xml')) {
-    if (ev.request.mode != 'same-origin') {
-      Promise.resolve(
-        new Response("<error>Invalid Request mode</error>", { headers: {'Content-Type': 'text/xtml'}})
-      );
-      return;
-    }
-
-    var url = 'http://example.com/tests/dom/security/test/cors/file_CrossSiteXHR_server.sjs?status=200';
-    ev.respondWith(fetch(url, { mode: 'no-cors' }));
-  }
-
-  else if (ev.request.url.includes('xhr-method-test.txt')) {
-    ev.respondWith(new Response('intercepted ' + ev.request.method));
-  }
-
-  else if (ev.request.url.includes('empty-header')) {
-    if (!ev.request.headers.has("emptyheader") ||
-        ev.request.headers.get("emptyheader") !== "") {
-      ev.respondWith(Promise.reject());
-      return;
-    }
-    ev.respondWith(new Response("emptyheader"));
   }
 };

@@ -100,7 +100,6 @@ private:
 
   nsString mFilename;
   uint32_t mLineNo;
-  uint32_t mColumn;
 
   ReadyState mReadyState;
   Mode mMode;
@@ -206,8 +205,7 @@ public:
   }
 
   void
-  GetCallerLocation(nsAString& aFilename, uint32_t* aLineNo,
-                    uint32_t* aColumn) const;
+  GetCallerLocation(nsAString& aFilename, uint32_t* aLineNo) const;
 
   // 'Get' prefix is to avoid name collisions with the enum
   Mode
@@ -283,7 +281,7 @@ public:
   IMPL_EVENT_HANDLER(error)
 
   already_AddRefed<DOMStringList>
-  ObjectStoreNames() const;
+  ObjectStoreNames();
 
   void
   FireCompleteOrAbortEvents(nsresult aResult);

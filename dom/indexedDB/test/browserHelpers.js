@@ -3,10 +3,10 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-var testGenerator = testSteps();
+let testGenerator = testSteps();
 
-var testResult;
-var testException;
+let testResult;
+let testException;
 
 function testFinishedCallback(result, exception)
 {

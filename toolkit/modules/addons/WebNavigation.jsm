@@ -19,7 +19,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 // getFrames, getAllFrames
 // onCreatedNavigationTarget, onHistoryStateUpdated
 
-var Manager = {
+let Manager = {
   listeners: new Map(),
 
   init() {
@@ -147,7 +147,7 @@ const EVENTS = [
   //"onHistoryStateUpdated",
 ];
 
-var WebNavigation = {};
+let WebNavigation = {};
 
 for (let event of EVENTS) {
   WebNavigation[event] = {

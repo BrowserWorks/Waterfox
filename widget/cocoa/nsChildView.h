@@ -42,10 +42,6 @@ class RectTextureImage;
 } // namespace
 
 namespace mozilla {
-class InputData;
-class PanGestureInput;
-class SwipeTracker;
-struct SwipeEventQueue;
 class VibrancyManager;
 namespace layers {
 class GLManager;
@@ -243,6 +239,7 @@ typedef NSInteger NSEventGestureAxis;
 #ifdef __LP64__
   // Support for fluid swipe tracking.
   BOOL* mCancelSwipeAnimation;
+  uint32_t mCurrentSwipeDir;
 #endif
 
   // Whether this uses off-main-thread compositing.
@@ -265,7 +262,7 @@ typedef NSInteger NSEventGestureAxis;
 // Stop NSView hierarchy being changed during [ChildView drawRect:]
 - (void)delayedTearDown;
 
-- (void)sendFocusEvent:(mozilla::EventMessage)eventMessage;
+- (void)sendFocusEvent:(uint32_t)eventType;
 
 - (void)handleMouseMoved:(NSEvent*)aEvent;
 
@@ -281,9 +278,6 @@ typedef NSInteger NSEventGestureAxis;
 - (void)postRender:(NSOpenGLContext *)aGLContext;
 
 - (BOOL)isCoveringTitlebar;
-
-- (void)viewWillStartLiveResize;
-- (void)viewDidEndLiveResize;
 
 - (NSColor*)vibrancyFillColorForThemeGeometryType:(nsITheme::ThemeGeometryType)aThemeGeometryType;
 - (NSColor*)vibrancyFontSmoothingBackgroundColorForThemeGeometryType:(nsITheme::ThemeGeometryType)aThemeGeometryType;
@@ -310,6 +304,14 @@ typedef NSInteger NSEventGestureAxis;
 
 // Helper function for Lion smart magnify events
 + (BOOL)isLionSmartMagnifyEvent:(NSEvent*)anEvent;
+
+// Support for fluid swipe tracking.
+#ifdef __LP64__
+- (void)maybeTrackScrollEventAsSwipe:(NSEvent *)anEvent
+                     scrollOverflowX:(double)anOverflowX
+                     scrollOverflowY:(double)anOverflowY
+              viewPortIsOverscrolled:(BOOL)aViewPortIsOverscrolled;
+#endif
 
 - (void)setUsingOMTCompositor:(BOOL)aUseOMTC;
 
@@ -496,8 +498,6 @@ public:
   virtual void UpdateWindowDraggingRegion(const nsIntRegion& aRegion) override;
   const nsIntRegion& GetDraggableRegion() { return mDraggableRegion; }
 
-  virtual void ReportSwipeStarted(uint64_t aInputBlockId, bool aStartSwipe) override;
-
   void              ResetParent();
 
   static bool DoHasPendingInputEvent();
@@ -553,10 +553,6 @@ public:
 
   virtual nsIntPoint GetClientOffset() override;
 
-  void DispatchAPZWheelInputEvent(mozilla::InputData& aEvent, bool aCanTriggerSwipe);
-
-  void SwipeFinished();
-
 protected:
   virtual ~nsChildView();
 
@@ -599,15 +595,6 @@ protected:
 
   virtual nsresult NotifyIMEInternal(
                      const IMENotification& aIMENotification) override;
-
-  struct SwipeInfo {
-    bool wantsSwipe;
-    uint32_t allowedDirections;
-  };
-
-  SwipeInfo SendMayStartSwipe(const mozilla::PanGestureInput& aSwipeStartEvent);
-  void TrackScrollEventAsSwipe(const mozilla::PanGestureInput& aSwipeStartEvent,
-                               uint32_t aAllowedDirections);
 
 protected:
 
@@ -674,16 +661,6 @@ protected:
   nsAutoPtr<GLPresenter> mGLPresenter;
 
   mozilla::UniquePtr<mozilla::VibrancyManager> mVibrancyManager;
-  nsRefPtr<mozilla::SwipeTracker> mSwipeTracker;
-  mozilla::UniquePtr<mozilla::SwipeEventQueue> mSwipeEventQueue;
-
-  // This flag is only used when APZ is off. It indicates that the current pan
-  // gesture was processed as a swipe. Sometimes the swipe animation can finish
-  // before momentum events of the pan gesture have stopped firing, so this
-  // flag tells us that we shouldn't allow the remaining events to cause
-  // scrolling. It is reset to false once a new gesture starts (as indicated by
-  // a PANGESTURE_(MAY)START event).
-  bool mCurrentPanGestureBelongsToSwipe;
 
   static uint32_t sLastInputEventCount;
 

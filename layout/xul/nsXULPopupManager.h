@@ -99,12 +99,6 @@ enum nsNavigationDirection {
   eNavigationDirection_After
 };
 
-enum nsIgnoreKeys {
-  eIgnoreKeys_False,
-  eIgnoreKeys_True,
-  eIgnoreKeys_Handled,
-};
-
 #define NS_DIRECTION_IS_INLINE(dir) (dir == eNavigationDirection_Start ||     \
                                      dir == eNavigationDirection_End)
 #define NS_DIRECTION_IS_BLOCK(dir) (dir == eNavigationDirection_Before || \
@@ -135,7 +129,7 @@ private:
   nsPopupType mPopupType; // the popup type of the frame
   bool mIsContext; // true for context menus
   bool mOnMenuBar; // true if the menu is on a menu bar
-  nsIgnoreKeys mIgnoreKeys; // indicates how keyboard listeners should be used
+  bool mIgnoreKeys; // true if keyboard listeners should not be used
 
   nsMenuChainItem* mParent;
   nsMenuChainItem* mChild;
@@ -146,7 +140,7 @@ public:
       mPopupType(aPopupType),
       mIsContext(aIsContext),
       mOnMenuBar(false),
-      mIgnoreKeys(eIgnoreKeys_False),
+      mIgnoreKeys(false),
       mParent(nullptr),
       mChild(nullptr)
   {
@@ -164,9 +158,9 @@ public:
   nsPopupType PopupType() { return mPopupType; }
   bool IsMenu() { return mPopupType == ePopupTypeMenu; }
   bool IsContextMenu() { return mIsContext; }
-  nsIgnoreKeys IgnoreKeys() { return mIgnoreKeys; }
-  void SetIgnoreKeys(nsIgnoreKeys aIgnoreKeys) { mIgnoreKeys = aIgnoreKeys; }
+  bool IgnoreKeys() { return mIgnoreKeys; }
   bool IsOnMenuBar() { return mOnMenuBar; }
+  void SetIgnoreKeys(bool aIgnoreKeys) { mIgnoreKeys = aIgnoreKeys; }
   void SetOnMenuBar(bool aOnMenuBar) { mOnMenuBar = aOnMenuBar; }
   nsMenuChainItem* GetParent() { return mParent; }
   nsMenuChainItem* GetChild() { return mChild; }

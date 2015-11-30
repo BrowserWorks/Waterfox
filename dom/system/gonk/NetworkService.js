@@ -37,7 +37,7 @@ const NETD_COMMAND_UNSOLICITED  = 600;
 
 const WIFI_CTRL_INTERFACE = "wl0.1";
 
-var debug;
+let debug;
 function updateDebug() {
   let debugPref = false; // set default value here.
   try {
@@ -463,11 +463,14 @@ NetworkService.prototype = {
     });
   },
 
-  setDefaultRoute: function(aInterfaceName, aCount, aGateways, aCallback) {
+  setDefaultRoute: function(aInterfaceName, aCount, aGateways,
+                            aOldInterfaceName, aCallback) {
     debug("Going to change default route to " + aInterfaceName);
     let options = {
       cmd: "setDefaultRoute",
       ifname: aInterfaceName,
+      oldIfname: (aOldInterfaceName && aOldInterfaceName !== aInterfaceName) ?
+                 aOldInterfaceName : null,
       gateways: aGateways
     };
     this.controlMessage(options, function(aResult) {

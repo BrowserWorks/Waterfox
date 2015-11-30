@@ -10,7 +10,6 @@ const Cu = Components.utils;
 const Cr = Components.results;
 
 Cu.import("resource:///modules/tabview/utils.jsm");
-Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -40,7 +39,7 @@ var gTabViewDeck = gWindow.document.getElementById("tab-view-deck");
 var gBrowserPanel = gWindow.document.getElementById("browser-panel");
 var gTabViewFrame = gWindow.document.getElementById("tab-view");
 
-var AllTabs = {
+let AllTabs = {
   _events: {
     attrModified: "TabAttrModified",
     close:        "TabClose",

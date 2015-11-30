@@ -4,8 +4,8 @@
 
 "use strict";
 
-// Tests that the computed view shows the original source link when source maps
-// are enabled.
+// Test that the computed view shows the original source link when source maps
+// are enabled
 
 const TESTCASE_URI = TEST_URL_ROOT_SSL + "doc_sourcemaps.html";
 const PREF = "devtools.styleeditor.source-maps-enabled";
@@ -18,6 +18,8 @@ add_task(function*() {
 
   yield addTab(TESTCASE_URI);
   let {toolbox, inspector, view} = yield openComputedView();
+
+  info("Select the test node");
   yield selectNode("div", inspector);
 
   info("Expanding the first property");
@@ -62,12 +64,11 @@ function* testClickingLink(toolbox, view) {
 
   let editor = yield onEditor;
 
-  let {line} = editor.sourceEditor.getCursor();
+  let {line, col} = editor.sourceEditor.getCursor();
   is(line, 3, "cursor is at correct line number in original source");
 }
 
 function verifyLinkText(view, text) {
   let link = getComputedViewLinkByIndex(view, 0);
-  is(link.textContent, text,
-    "Linked text changed to display the correct location");
+  is(link.textContent, text, "Linked text changed to display the correct location");
 }

@@ -7,7 +7,7 @@
 // It ensures that throwing an asynchronous error from add_task will
 // fail the test.
 
-var passedTests = 0;
+let passedTests = 0;
 
 function rejectWithTimeout(error = undefined) {
   let deferred = Promise.defer();

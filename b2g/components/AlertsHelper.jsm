@@ -67,7 +67,7 @@ const kMessages = [
   kMessageAlertNotificationClose
 ];
 
-var AlertsHelper = {
+let AlertsHelper = {
 
   _listeners: {},
 

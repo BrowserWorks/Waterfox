@@ -53,7 +53,7 @@ function loadWebapp(manifest, parameters, onLoad) {
 
 // Utilities for the downloads tests
 
-var MockDownloadList = function() {
+let MockDownloadList = function() {
 };
 
 MockDownloadList.prototype = {

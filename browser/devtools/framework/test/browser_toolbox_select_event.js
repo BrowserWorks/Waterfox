@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var toolbox;
+let toolbox;
 
 function test() {
   addTab("about:blank").then(function() {
@@ -10,7 +10,7 @@ function test() {
   });
 }
 
-var called = {
+let called = {
   inspector: false,
   webconsole: false,
   styleeditor: false,

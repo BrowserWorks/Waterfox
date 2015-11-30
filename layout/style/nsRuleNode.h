@@ -11,7 +11,6 @@
 #ifndef nsRuleNode_h___
 #define nsRuleNode_h___
 
-#include "mozilla/ArenaObjectID.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/RangedArray.h"
 #include "mozilla/RuleNodeCacheConditions.h"
@@ -36,7 +35,7 @@ struct nsInheritedStyleData
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsInheritedStyleData, sz);
+      AllocateByObjectID(nsPresArena::nsInheritedStyleData_id, sz);
   }
 
   void DestroyStructs(uint64_t aBits, nsPresContext* aContext) {
@@ -55,7 +54,7 @@ struct nsInheritedStyleData
   void Destroy(uint64_t aBits, nsPresContext* aContext) {
     DestroyStructs(aBits, aContext);
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsInheritedStyleData, this);
+      FreeByObjectID(nsPresArena::nsInheritedStyleData_id, this);
   }
 
   nsInheritedStyleData() {
@@ -84,7 +83,7 @@ struct nsResetStyleData
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
     return aContext->PresShell()->
-      AllocateByObjectID(mozilla::eArenaObjectID_nsResetStyleData, sz);
+      AllocateByObjectID(nsPresArena::nsResetStyleData_id, sz);
   }
 
   void Destroy(uint64_t aBits, nsPresContext* aContext) {
@@ -100,7 +99,7 @@ struct nsResetStyleData
 #undef STYLE_STRUCT_INHERITED
 
     aContext->PresShell()->
-      FreeByObjectID(mozilla::eArenaObjectID_nsResetStyleData, this);
+      FreeByObjectID(nsPresArena::nsResetStyleData_id, this);
   }
 };
 
@@ -118,8 +117,8 @@ struct nsConditionalResetStyleData
       : mConditions(aConditions), mStyleStruct(aStyleStruct), mNext(aNext) {}
 
     void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
-      return aContext->PresShell()->AllocateByObjectID(
-          mozilla::eArenaObjectID_nsConditionalResetStyleDataEntry, sz);
+      return aContext->PresShell()->
+        AllocateByObjectID(nsPresArena::nsConditionalResetStyleDataEntry_id, sz);
     }
 
     const mozilla::RuleNodeCacheConditions mConditions;
@@ -147,8 +146,8 @@ struct nsConditionalResetStyleData
   }
 
   void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
-    return aContext->PresShell()->AllocateByObjectID(
-        mozilla::eArenaObjectID_nsConditionalResetStyleData, sz);
+    return aContext->PresShell()->
+      AllocateByObjectID(nsPresArena::nsConditionalResetStyleData_id, sz);
   }
 
   void* GetStyleData(nsStyleStructID aSID) const {
@@ -222,7 +221,7 @@ struct nsConditionalResetStyleData
           static_cast<nsStyle##name*>(e->mStyleStruct)->Destroy(aContext);     \
           Entry* next = e->mNext;                                              \
           aContext->PresShell()->FreeByObjectID(                               \
-              mozilla::eArenaObjectID_nsConditionalResetStyleDataEntry, e);    \
+              nsPresArena::nsConditionalResetStyleDataEntry_id, e);            \
           e = next;                                                            \
         } while (e);                                                           \
       }                                                                        \
@@ -234,8 +233,8 @@ struct nsConditionalResetStyleData
 #undef STYLE_STRUCT_RESET
 #undef STYLE_STRUCT_INHERITED
 
-    aContext->PresShell()->FreeByObjectID(
-        mozilla::eArenaObjectID_nsConditionalResetStyleData, this);
+    aContext->PresShell()->
+      FreeByObjectID(nsPresArena::nsConditionalResetStyleData_id, this);
   }
 
 };

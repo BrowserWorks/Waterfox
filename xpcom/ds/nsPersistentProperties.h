@@ -8,7 +8,7 @@
 #define nsPersistentProperties_h___
 
 #include "nsIPersistentProperties2.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "plarena.h"
 #include "nsString.h"
 #include "nsCOMPtr.h"

@@ -6,7 +6,6 @@
            position="after_start"
            hidden="true"
            orient="vertical"
-           noautofocus="true"
            role="alert"/>
 
     <popupnotification id="webRTC-shareDevices-notification" hidden="true">

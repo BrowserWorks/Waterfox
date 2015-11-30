@@ -27,3 +27,5 @@ DEFINES['NS_NO_XPCOM'] = True
 srcdir = '.'
 
 include('sources.mozbuild')
+
+FAIL_ON_WARNINGS = True

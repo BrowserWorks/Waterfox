@@ -674,10 +674,6 @@ nsLookAndFeel::GetIntImpl(IntID aID, int32_t &aResult)
     case eIntID_ColorPickerAvailable:
         aResult = 1;
         break;
-    case eIntID_ContextMenuOffsetVertical:
-    case eIntID_ContextMenuOffsetHorizontal:
-        aResult = 2;
-        break;
     default:
         aResult = 0;
         res     = NS_ERROR_FAILURE;
@@ -987,6 +983,25 @@ nsLookAndFeel::Init()
     sMozScrollbar = GDK_RGBA_TO_NS_RGBA(color);
     g_object_unref(style);
 
+    // Text colors
+    style = create_context(path);
+    gtk_style_context_add_class(style, GTK_STYLE_CLASS_VIEW);
+    gtk_style_context_get_background_color(style, GTK_STATE_FLAG_NORMAL, &color);
+    sMozFieldBackground = GDK_RGBA_TO_NS_RGBA(color);
+    gtk_style_context_get_color(style, GTK_STATE_FLAG_NORMAL, &color);
+    sMozFieldText = GDK_RGBA_TO_NS_RGBA(color);
+
+    // Selected text and background
+    gtk_style_context_get_background_color(style,
+        static_cast<GtkStateFlags>(GTK_STATE_FLAG_FOCUSED|GTK_STATE_FLAG_SELECTED),
+        &color);
+    sTextSelectedBackground = GDK_RGBA_TO_NS_RGBA(color);
+    gtk_style_context_get_color(style,
+        static_cast<GtkStateFlags>(GTK_STATE_FLAG_FOCUSED|GTK_STATE_FLAG_SELECTED),
+        &color);
+    sTextSelectedText = GDK_RGBA_TO_NS_RGBA(color);
+    g_object_unref(style);
+
     // Window colors
     style = create_context(path);
     gtk_style_context_save(style);
@@ -1052,7 +1067,6 @@ nsLookAndFeel::Init()
     GtkWidget *linkButton = gtk_link_button_new("http://example.com/");
     GtkWidget *menuBar = gtk_menu_bar_new();
     GtkWidget *entry = gtk_entry_new();
-    GtkWidget *textView = gtk_text_view_new();
 
     gtk_container_add(GTK_CONTAINER(button), label);
     gtk_container_add(GTK_CONTAINER(parent), button);
@@ -1062,7 +1076,6 @@ nsLookAndFeel::Init()
     gtk_container_add(GTK_CONTAINER(parent), menuBar);
     gtk_container_add(GTK_CONTAINER(window), parent);
     gtk_container_add(GTK_CONTAINER(parent), entry);
-    gtk_container_add(GTK_CONTAINER(parent), textView);
     
 #if (MOZ_WIDGET_GTK == 2)
     gtk_widget_set_style(button, nullptr);
@@ -1139,26 +1152,6 @@ nsLookAndFeel::Init()
             GDK_COLOR_TO_NS_RGB(style->dark[GTK_STATE_NORMAL]);
     }
 #else
-    // Text colors
-    style = gtk_widget_get_style_context(textView);
-    gtk_style_context_save(style);
-    gtk_style_context_add_class(style, GTK_STYLE_CLASS_VIEW);
-    gtk_style_context_get_background_color(style, GTK_STATE_FLAG_NORMAL, &color);
-    sMozFieldBackground = GDK_RGBA_TO_NS_RGBA(color);
-    gtk_style_context_get_color(style, GTK_STATE_FLAG_NORMAL, &color);
-    sMozFieldText = GDK_RGBA_TO_NS_RGBA(color);
-
-    // Selected text and background
-    gtk_style_context_get_background_color(style,
-        static_cast<GtkStateFlags>(GTK_STATE_FLAG_FOCUSED|GTK_STATE_FLAG_SELECTED),
-        &color);
-    sTextSelectedBackground = GDK_RGBA_TO_NS_RGBA(color);
-    gtk_style_context_get_color(style,
-        static_cast<GtkStateFlags>(GTK_STATE_FLAG_FOCUSED|GTK_STATE_FLAG_SELECTED),
-        &color);
-    sTextSelectedText = GDK_RGBA_TO_NS_RGBA(color);
-    gtk_style_context_restore(style);
-
     // Button text, background, border
     style = gtk_widget_get_style_context(label);
     gtk_style_context_get_color(style, GTK_STATE_FLAG_NORMAL, &color);
@@ -1205,15 +1198,15 @@ nsLookAndFeel::Init()
     gtk_widget_path_free(path);
 
     // GtkInfoBar
-    GtkWidget* infoBar = gtk_info_bar_new();
-    GtkWidget* infoBarContent = gtk_info_bar_get_content_area(GTK_INFO_BAR(infoBar));
-    GtkWidget* infoBarLabel = gtk_label_new(nullptr);
-    gtk_container_add(GTK_CONTAINER(parent), infoBar);
-    gtk_container_add(GTK_CONTAINER(infoBarContent), infoBarLabel);
-    style = gtk_widget_get_style_context(infoBarLabel);
+    path = gtk_widget_path_new();
+    gtk_widget_path_append_type(path, GTK_TYPE_WINDOW);
+    gtk_widget_path_append_type(path, GTK_TYPE_INFO_BAR);
+    style = create_context(path);
     gtk_style_context_add_class(style, GTK_STYLE_CLASS_INFO);
     gtk_style_context_get_color(style, GTK_STATE_FLAG_NORMAL, &color);
     sInfoBarText = GDK_RGBA_TO_NS_RGBA(color);
+    g_object_unref(style);
+    gtk_widget_path_free(path);
 #endif
     // Some themes have a unified menu bar, and support window dragging on it
     gboolean supports_menubar_drag = FALSE;

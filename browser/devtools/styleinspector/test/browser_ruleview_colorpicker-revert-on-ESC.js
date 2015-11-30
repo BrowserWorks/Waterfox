@@ -4,16 +4,15 @@
 
 "use strict";
 
-// Tests that a color change in the color picker is reverted when ESC is
-// pressed.
+// Test that a color change in the color picker is reverted when ESC is pressed
 
-const TEST_URI = `
-  <style type="text/css">
-    body {
-      background-color: #EDEDED;
-    }
-  </style>
-`;
+let TEST_URI = [
+  "<style type='text/css'>",
+  "  body {",
+  "    background-color: #EDEDED;",
+  "  }",
+  "</style>",
+].join("\n");
 
 add_task(function*() {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));

@@ -1,8 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var origTab = gBrowser.visibleTabs[0];
-var contentWindow;
+let origTab = gBrowser.visibleTabs[0];
+let contentWindow;
 
 function test() {
   waitForExplicitFinish();

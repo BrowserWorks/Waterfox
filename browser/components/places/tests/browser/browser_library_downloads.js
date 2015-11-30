@@ -10,7 +10,7 @@
  * are shown in it.
  */
 
-var now = Date.now();
+let now = Date.now();
 
 function test() {
   waitForExplicitFinish();

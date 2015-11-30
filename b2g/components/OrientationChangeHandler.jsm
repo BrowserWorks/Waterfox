@@ -9,10 +9,10 @@ this.EXPORTED_SYMBOLS = [];
 const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 
-var window = Services.wm.getMostRecentWindow("navigator:browser");
-var system = window.document.getElementById("systemapp");
+let window = Services.wm.getMostRecentWindow("navigator:browser");
+let system = window.document.getElementById("systemapp");
 
-var OrientationChangeHandler = {
+let OrientationChangeHandler = {
   // Clockwise orientations, looping
   orientations: ["portrait-primary", "landscape-secondary",
                  "portrait-secondary", "landscape-primary",

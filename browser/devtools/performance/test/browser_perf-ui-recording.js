@@ -5,13 +5,13 @@
  * Tests that the controller handles recording via the `stopwatch` button
  * in the UI.
  */
-var WAIT_TIME = 10;
+let WAIT_TIME = 10;
 
 function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let { EVENTS, PerformanceController } = panel.panelWin;
   let front = panel.panelWin.gFront;
-  PMM_loadFrameScripts(gBrowser);
+  loadFrameScripts();
 
   ok(!(yield PMM_isProfilerActive()),
     "The built-in profiler module should not have been automatically started.");

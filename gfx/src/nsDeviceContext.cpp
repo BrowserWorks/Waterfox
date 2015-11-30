@@ -413,11 +413,9 @@ nsDeviceContext::CreateRenderingContext()
       gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(printingSurface,
                                                              gfx::IntSize(mWidth, mHeight));
 
-    // This can legitimately happen - CreateDrawTargetForSurface will fail
-    // to create a draw target if the size is too large, for instance.
     if (!dt) {
-        gfxCriticalNote << "Failed to create draw target in device context sized " << mWidth << "x" << mHeight << " and pointers " << hexa(mPrintingSurface) << " and " << hexa(printingSurface);
-        return nullptr;
+        gfxCriticalError() << "Failed to create draw target in device context sized " << mWidth << "x" << mHeight << " and pointers " << hexa(mPrintingSurface) << " and " << hexa(printingSurface);
+        MOZ_CRASH("Cannot CreateDrawTargetForSurface");
     }
 
 #ifdef XP_MACOSX

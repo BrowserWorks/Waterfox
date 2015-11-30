@@ -72,11 +72,11 @@ function accessor() {
   }
 }
 
-var nsIFile = accessor();
-var nsIFileInputStream = accessor();
-var nsIFileOutputStream = accessor();
-var nsIBinaryInputStream = accessor();
-var nsIBinaryOutputStream = accessor();
+let nsIFile = accessor();
+let nsIFileInputStream = accessor();
+let nsIFileOutputStream = accessor();
+let nsIBinaryInputStream = accessor();
+let nsIBinaryOutputStream = accessor();
 
 // Just a contstant object used to signal that all of the file
 // needs to be read.
@@ -324,7 +324,7 @@ exports.renameSync = renameSync;
  * Asynchronous rename(2). No arguments other than a possible exception are
  * given to the completion callback.
  */
-var rename = Async(renameSync);
+let rename = Async(renameSync);
 exports.rename = rename;
 
 /**
@@ -335,7 +335,7 @@ function existsSync(path) {
 }
 exports.existsSync = existsSync;
 
-var exists = Async(existsSync);
+let exists = Async(existsSync);
 exports.exists = exists;
 
 /**
@@ -385,7 +385,7 @@ function chownSync(path, uid, gid) {
 }
 exports.chownSync = chownSync;
 
-var chown = Async(chownSync);
+let chown = Async(chownSync);
 exports.chown = chown;
 
 function lchownSync(path, uid, gid) {
@@ -393,7 +393,7 @@ function lchownSync(path, uid, gid) {
 }
 exports.lchownSync = chownSync;
 
-var lchown = Async(lchown);
+let lchown = Async(lchown);
 exports.lchown = lchown;
 
 /**
@@ -414,7 +414,7 @@ exports.chmodSync = chmodSync;
  * Asynchronous chmod(2). No arguments other than a possible exception are
  * given to the completion callback.
  */
-var chmod = Async(chmodSync);
+let chmod = Async(chmodSync);
 exports.chmod = chmod;
 
 /**
@@ -428,7 +428,7 @@ exports.fchmodSync = fchmodSync;
  * Asynchronous chmod(2). No arguments other than a possible exception are
  * given to the completion callback.
  */
-var fchmod = Async(fchmodSync);
+let fchmod = Async(fchmodSync);
 exports.fchmod = fchmod;
 
 
@@ -444,7 +444,7 @@ exports.statSync = statSync;
  * Asynchronous stat(2). The callback gets two arguments (err, stats) where
  * stats is a `fs.Stats` object. It looks like this:
  */
-var stat = Async(statSync);
+let stat = Async(statSync);
 exports.stat = stat;
 
 /**
@@ -461,7 +461,7 @@ exports.lstatSync = lstatSync;
  * path is a symbolic link, then the link itself is stat-ed, not the file that
  * it refers to.
  */
-var lstat = Async(lstatSync);
+let lstat = Async(lstatSync);
 exports.lstat = lstat;
 
 /**
@@ -476,7 +476,7 @@ exports.fstatSync = fstatSync;
  * Asynchronous fstat(2). The callback gets two arguments (err, stats) where
  * stats is a fs.Stats object.
  */
-var fstat = Async(fstatSync);
+let fstat = Async(fstatSync);
 exports.fstat = fstat;
 
 /**
@@ -491,7 +491,7 @@ exports.linkSync = linkSync;
  * Asynchronous link(2). No arguments other than a possible exception are given
  * to the completion callback.
  */
-var link = Async(linkSync);
+let link = Async(linkSync);
 exports.link = link;
 
 /**
@@ -506,7 +506,7 @@ exports.symlinkSync = symlinkSync;
  * Asynchronous symlink(2). No arguments other than a possible exception are
  * given to the completion callback.
  */
-var symlink = Async(symlinkSync);
+let symlink = Async(symlinkSync);
 exports.symlink = symlink;
 
 /**
@@ -521,7 +521,7 @@ exports.readlinkSync = readlinkSync;
  * Asynchronous readlink(2). The callback gets two arguments
  * `(error, resolvedPath)`.
  */
-var readlink = Async(readlinkSync);
+let readlink = Async(readlinkSync);
 exports.readlink = readlink;
 
 /**
@@ -536,33 +536,33 @@ exports.realpathSync = realpathSync;
  * Asynchronous realpath(2). The callback gets two arguments
  * `(err, resolvedPath)`.
  */
-var realpath = Async(realpathSync);
+let realpath = Async(realpathSync);
 exports.realpath = realpath;
 
 /**
  * Synchronous unlink(2).
  */
-var unlinkSync = remove;
+let unlinkSync = remove;
 exports.unlinkSync = unlinkSync;
 
 /**
  * Asynchronous unlink(2). No arguments other than a possible exception are
  * given to the completion callback.
  */
-var unlink = Async(remove);
+let unlink = Async(remove);
 exports.unlink = unlink;
 
 /**
  * Synchronous rmdir(2).
  */
-var rmdirSync = remove;
+let rmdirSync = remove;
 exports.rmdirSync = rmdirSync;
 
 /**
  * Asynchronous rmdir(2). No arguments other than a possible exception are
  * given to the completion callback.
  */
-var rmdir = Async(rmdirSync);
+let rmdir = Async(rmdirSync);
 exports.rmdir = rmdir;
 
 /**
@@ -586,7 +586,7 @@ exports.mkdirSync = mkdirSync;
  * Asynchronous mkdir(2). No arguments other than a possible exception are
  * given to the completion callback.
  */
-var mkdir = Async(mkdirSync);
+let mkdir = Async(mkdirSync);
 exports.mkdir = mkdir;
 
 /**
@@ -615,7 +615,7 @@ exports.readdirSync = readdirSync;
  * gets two arguments `(error, files)` where `files` is an array of the names
  * of the files in the directory excluding `"."` and `".."`.
  */
-var readdir = Async(readdirSync);
+let readdir = Async(readdirSync);
 exports.readdir = readdir;
 
 /**
@@ -641,7 +641,7 @@ exports.closeSync = closeSync;
  * Asynchronous close(2). No arguments other than a possible exception are
  * given to the completion callback.
  */
-var close = Async(closeSync);
+let close = Async(closeSync);
 exports.close = close;
 
 /**
@@ -678,7 +678,7 @@ exports.openSync = openSync;
  * `"r", "r+", "w", "w+", "a"`, or `"a+"`. mode defaults to `0666`.
  * The callback gets two arguments `(error, fd).
  */
-var open = Async(openSync);
+let open = Async(openSync);
 exports.open = open;
 
 /**
@@ -895,7 +895,7 @@ function utimesSync(path, atime, mtime) {
 }
 exports.utimesSync = utimesSync;
 
-var utimes = Async(utimesSync);
+let utimes = Async(utimesSync);
 exports.utimes = utimes;
 
 function futimesSync(fd, atime, mtime, callback) {
@@ -903,7 +903,7 @@ function futimesSync(fd, atime, mtime, callback) {
 }
 exports.futimesSync = futimesSync;
 
-var futimes = Async(futimesSync);
+let futimes = Async(futimesSync);
 exports.futimes = futimes;
 
 function fsyncSync(fd, atime, mtime, callback) {
@@ -911,7 +911,7 @@ function fsyncSync(fd, atime, mtime, callback) {
 }
 exports.fsyncSync = fsyncSync;
 
-var fsync = Async(fsyncSync);
+let fsync = Async(fsyncSync);
 exports.fsync = fsync;
 
 

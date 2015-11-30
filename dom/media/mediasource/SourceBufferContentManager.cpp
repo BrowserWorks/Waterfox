@@ -6,6 +6,7 @@
 
 #include "SourceBufferContentManager.h"
 #include "mozilla/Preferences.h"
+#include "TrackBuffer.h"
 #include "TrackBuffersManager.h"
 
 namespace mozilla {
@@ -22,12 +23,24 @@ SourceBufferContentManager::CreateManager(dom::SourceBufferAttributes* aAttribut
                                           const nsACString &aType)
 {
   nsRefPtr<SourceBufferContentManager> manager;
-  manager = new TrackBuffersManager(aAttributes, aParentDecoder, aType);
+  bool useFormatReader =
+    Preferences::GetBool("media.mediasource.format-reader", false);
+  if (useFormatReader) {
+    manager = new TrackBuffersManager(aAttributes, aParentDecoder, aType);
+  } else {
+    manager = new TrackBuffer(aParentDecoder, aType);
+  }
 
   // Now that we know what type we're dealing with, enable dormant as needed.
 #if defined(MP4_READER_DORMANT_HEURISTIC)
-  aParentDecoder->NotifyDormantSupported(Preferences::GetBool("media.decoder.heuristic.dormant.enabled", false));
+  if (aType.LowerCaseEqualsLiteral("video/mp4") ||
+      aType.LowerCaseEqualsLiteral("audio/mp4") ||
+      useFormatReader)
+  {
+    aParentDecoder->NotifyDormantSupported(Preferences::GetBool("media.decoder.heuristic.dormant.enabled", false));
+  }
 #endif
+
 
   return  manager.forget();
 }

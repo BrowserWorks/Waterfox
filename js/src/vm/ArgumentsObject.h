@@ -136,9 +136,6 @@ class ArgumentsObject : public NativeObject
         return reinterpret_cast<ArgumentsData*>(getFixedSlot(DATA_SLOT).toPrivate());
     }
 
-    static bool obj_delProperty(JSContext* cx, HandleObject obj, HandleId id,
-                                ObjectOpResult& result);
-
   public:
     static const uint32_t RESERVED_SLOTS = 3;
     static const gc::AllocKind FINALIZE_KIND = gc::AllocKind::OBJECT4_BACKGROUND;
@@ -157,7 +154,7 @@ class ArgumentsObject : public NativeObject
     static ArgumentsObject* createForIon(JSContext* cx, jit::JitFrameLayout* frame,
                                          HandleObject scopeChain);
 
-    static ArgumentsObject* createTemplateObject(JSContext* cx, bool mapped);
+    static ArgumentsObject* createTemplateObject(JSContext* cx, bool strict);
 
     /*
      * Return the initial length of the arguments.  This may differ from the
@@ -313,7 +310,7 @@ class ArgumentsObject : public NativeObject
                                          ArgumentsObject* obj, ArgumentsData* data);
 };
 
-class MappedArgumentsObject : public ArgumentsObject
+class NormalArgumentsObject : public ArgumentsObject
 {
   public:
     static const Class class_;
@@ -330,20 +327,12 @@ class MappedArgumentsObject : public ArgumentsObject
     void clearCallee() {
         data()->callee = MagicValue(JS_OVERWRITTEN_CALLEE);
     }
-
-  private:
-    static bool obj_enumerate(JSContext* cx, HandleObject obj);
-    static bool obj_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp);
 };
 
-class UnmappedArgumentsObject : public ArgumentsObject
+class StrictArgumentsObject : public ArgumentsObject
 {
   public:
     static const Class class_;
-
-  private:
-    static bool obj_enumerate(JSContext* cx, HandleObject obj);
-    static bool obj_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp);
 };
 
 } // namespace js
@@ -352,7 +341,7 @@ template<>
 inline bool
 JSObject::is<js::ArgumentsObject>() const
 {
-    return is<js::MappedArgumentsObject>() || is<js::UnmappedArgumentsObject>();
+    return is<js::NormalArgumentsObject>() || is<js::StrictArgumentsObject>();
 }
 
 #endif /* vm_ArgumentsObject_h */

@@ -5,7 +5,7 @@
 
 const {GoogleImporter} = Cu.import("resource:///modules/loop/GoogleImporter.jsm", {});
 
-var importer = new GoogleImporter();
+let importer = new GoogleImporter();
 
 function promiseImport() {
   return new Promise(function(resolve, reject) {

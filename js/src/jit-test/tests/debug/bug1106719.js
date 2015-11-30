@@ -1,4 +1,4 @@
-// |jit-test| allow-oom; allow-overrecursed
+// |jit-test| allow-oom
 
 g = newGlobal()
 g.parent = this

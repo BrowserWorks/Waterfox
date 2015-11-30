@@ -34,21 +34,20 @@ public class CodeGenerator {
         this.cls = annotatedClass.wrappedClass;
         this.clsName = annotatedClass.generatedName;
 
-        final String unqualifiedName = Utils.getUnqualifiedName(clsName);
         header.append(
-                "class " + clsName + " : public mozilla::jni::Class<" + unqualifiedName + ">\n" +
+                "class " + clsName + " : public mozilla::jni::Class<" + clsName + ">\n" +
                 "{\n" +
                 "public:\n" +
-                "    typedef mozilla::jni::Ref<" + unqualifiedName + "> Ref;\n" +
-                "    typedef mozilla::jni::LocalRef<" + unqualifiedName + "> LocalRef;\n" +
-                "    typedef mozilla::jni::GlobalRef<" + unqualifiedName + "> GlobalRef;\n" +
-                "    typedef const mozilla::jni::Param<" + unqualifiedName + ">& Param;\n" +
+                "    typedef mozilla::jni::Ref<" + clsName + "> Ref;\n" +
+                "    typedef mozilla::jni::LocalRef<" + clsName + "> LocalRef;\n" +
+                "    typedef mozilla::jni::GlobalRef<" + clsName + "> GlobalRef;\n" +
+                "    typedef const mozilla::jni::Param<" + clsName + ">& Param;\n" +
                 "\n" +
                 "    static constexpr char name[] =\n" +
                 "            \"" + cls.getName().replace('.', '/') + "\";\n" +
                 "\n" +
                 "protected:\n" +
-                "    " + unqualifiedName + "(jobject instance) : Class(instance) {}\n" +
+                "    " + clsName + "(jobject instance) : Class(instance) {}\n" +
                 "\n");
 
         cpp.append(
@@ -58,7 +57,7 @@ public class CodeGenerator {
         natives.append(
                 "template<class Impl>\n" +
                 "class " + clsName + "::Natives : " +
-                        "public mozilla::jni::NativeImpl<" + unqualifiedName + ", Impl>\n" +
+                        "public mozilla::jni::NativeImpl<" + clsName + ", Impl>\n" +
                 "{\n");
     }
 
@@ -68,14 +67,14 @@ public class CodeGenerator {
 
     private String getNativeParameterType(Class<?> type, AnnotationInfo info) {
         if (type == cls) {
-            return Utils.getUnqualifiedName(clsName) + "::Param";
+            return clsName + "::Param";
         }
         return Utils.getNativeParameterType(type, info);
     }
 
     private String getNativeReturnType(Class<?> type, AnnotationInfo info) {
         if (type == cls) {
-            return Utils.getUnqualifiedName(clsName) + "::LocalRef";
+            return clsName + "::LocalRef";
         }
         return Utils.getNativeReturnType(type, info);
     }
@@ -93,7 +92,7 @@ public class CodeGenerator {
         header.append(
                 "public:\n" +
                 "    struct " + getTraitsName(uniqueName, /* includeScope */ false) + " {\n" +
-                "        typedef " + Utils.getUnqualifiedName(clsName) + " Owner;\n" +
+                "        typedef " + clsName + " Owner;\n" +
                 "        typedef " + getNativeReturnType(type, info) + " ReturnType;\n" +
                 "        typedef " + getNativeParameterType(type, info) + " SetterType;\n" +
                 "        typedef mozilla::jni::Args<" + args + "> Args;\n" +
@@ -137,13 +136,16 @@ public class CodeGenerator {
      */
     private String generatePrototype(String name, Class<?>[] argTypes,
                                      Class<?> returnType, AnnotationInfo info,
-                                     boolean includeScope, boolean includeArgName,
-                                     boolean isConst) {
+                                     boolean includeScope, boolean includeArgName) {
 
         final StringBuilder proto = new StringBuilder();
         int argIndex = 0;
 
-        proto.append("auto ");
+        if (info.catchException) {
+            proto.append("nsresult ");
+        } else {
+            proto.append(getNativeReturnType(returnType, info)).append(' ');
+        }
 
         if (includeScope) {
             proto.append(clsName).append("::");
@@ -171,18 +173,7 @@ public class CodeGenerator {
             proto.setLength(proto.length() - 2);
         }
 
-        proto.append(')');
-
-        if (isConst) {
-            proto.append(" const");
-        }
-
-        if (info.catchException) {
-            proto.append(" -> nsresult");
-        } else {
-            proto.append(" -> ").append(getNativeReturnType(returnType, info));
-        }
-        return proto.toString();
+        return proto.append(')').toString();
     }
 
     /**
@@ -195,8 +186,8 @@ public class CodeGenerator {
 
         return (isStatic ? "static " : "") +
             generatePrototype(name, argTypes, returnType, info,
-                              /* includeScope */ false, /* includeArgName */ false,
-                              /* isConst */ !isStatic) + ';';
+                              /* includeScope */ false, /* includeArgName */ false) +
+            (isStatic ? ";" : " const;");
     }
 
     /**
@@ -208,8 +199,11 @@ public class CodeGenerator {
 
         final StringBuilder def = new StringBuilder(
                 generatePrototype(name, argTypes, returnType, info,
-                                  /* includeScope */ true, /* includeArgName */ true,
-                                  /* isConst */ !isStatic));
+                                  /* includeScope */ true, /* includeArgName */ true));
+
+        if (!isStatic) {
+            def.append(" const");
+        }
         def.append("\n{\n");
 
 
@@ -489,21 +483,6 @@ public class CodeGenerator {
                         "expected member to be Constructor, Method, or Field");
             }
         }
-    }
-
-    public void generateClasses(final ClassWithOptions[] classes) {
-        if (classes.length == 0) {
-            return;
-        }
-
-        header.append(
-                "public:\n");
-        for (final ClassWithOptions cls : classes) {
-            // Extract "Inner" from "Outer::Inner".
-            header.append(
-                    "    class " + Utils.getUnqualifiedName(cls.generatedName) + ";\n");
-        }
-        header.append('\n');
     }
 
     /**

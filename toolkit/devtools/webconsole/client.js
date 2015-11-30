@@ -10,7 +10,8 @@ const {Cc, Ci, Cu} = require("chrome");
 const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const promise = require("promise");
-const {LongStringClient} = require("devtools/toolkit/client/main");
+
+loader.lazyImporter(this, "LongStringClient", "resource://gre/modules/devtools/dbg-client.jsm");
 
 /**
  * A WebConsoleClient is used as a front end for the WebConsoleActor that is
@@ -224,7 +225,7 @@ WebConsoleClient.prototype = {
    *        you to bind |_self| to the D.O of the given OA, during string
    *        evaluation.
    *
-   *        See: Debugger.Object.executeInGlobalWithBindings() for information
+   *        See: Debugger.Object.evalInGlobalWithBindings() for information
    *        about bindings.
    *
    *        Use case: the variable view needs to update objects and it does so

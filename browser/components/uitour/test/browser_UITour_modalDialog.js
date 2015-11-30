@@ -1,9 +1,9 @@
 "use strict";
 
-var gTestTab;
-var gContentAPI;
-var gContentWindow;
-var handleDialog;
+let gTestTab;
+let gContentAPI;
+let gContentWindow;
+let handleDialog;
 
 // Modified from toolkit/components/passwordmgr/test/prompt_common.js
 var didDialog;
@@ -79,7 +79,7 @@ function test() {
 }
 
 
-var tests = [
+let tests = [
   taskify(function* test_modal_dialog_while_opening_tooltip(done) {
     let panelShown;
     let popup;

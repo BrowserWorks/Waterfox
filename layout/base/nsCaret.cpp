@@ -127,9 +127,8 @@ IsKeyboardRTL()
 
 nsCaret::nsCaret()
 : mOverrideOffset(0)
-, mBlinkCount(-1)
-, mHideCount(0)
 , mIsBlinkOn(false)
+, mBlinkCount(-1)
 , mVisible(false)
 , mReadOnly(false)
 , mShowDuringSelection(false)
@@ -267,7 +266,7 @@ void nsCaret::SetVisible(bool inMakeVisible)
 
 bool nsCaret::IsVisible()
 {
-  if (!mVisible || mHideCount) {
+  if (!mVisible) {
     return false;
   }
 
@@ -302,25 +301,6 @@ bool nsCaret::IsVisible()
   }
 
   return true;
-}
-
-void nsCaret::AddForceHide()
-{
-  MOZ_ASSERT(mHideCount < UINT32_MAX);
-  if (++mHideCount > 1) {
-    return;
-  }
-  ResetBlinking();
-  SchedulePaint();
-}
-
-void nsCaret::RemoveForceHide()
-{
-  if (!mHideCount || --mHideCount) {
-    return;
-  }
-  ResetBlinking();
-  SchedulePaint();
 }
 
 void nsCaret::SetCaretReadOnly(bool inMakeReadonly)
@@ -410,10 +390,10 @@ nsCaret::GetGeometryForFrame(nsIFrame* aFrame,
   return rect;
 }
 
-nsIFrame*
-nsCaret::GetFrameAndOffset(Selection* aSelection,
-                           nsINode* aOverrideNode, int32_t aOverrideOffset,
-                           int32_t* aFrameOffset)
+static nsIFrame*
+GetFrameAndOffset(Selection* aSelection,
+                  nsINode* aOverrideNode, int32_t aOverrideOffset,
+                  int32_t* aFrameOffset)
 {
   nsINode* focusNode;
   int32_t focusOffset;
@@ -642,7 +622,7 @@ void nsCaret::ResetBlinking()
 {
   mIsBlinkOn = true;
 
-  if (mReadOnly || !mVisible || mHideCount) {
+  if (mReadOnly || !mVisible) {
     StopBlinking();
     return;
   }

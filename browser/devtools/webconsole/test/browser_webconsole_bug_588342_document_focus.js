@@ -12,9 +12,9 @@
 
 const TEST_URI = "data:text/html;charset=utf-8,Web Console test for bug 588342";
 
-var fm = Cc["@mozilla.org/focus-manager;1"].getService(Ci.nsIFocusManager);
+let fm = Cc["@mozilla.org/focus-manager;1"].getService(Ci.nsIFocusManager);
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   let { browser } = yield loadTab(TEST_URI);
 
   let hud = yield openConsole();

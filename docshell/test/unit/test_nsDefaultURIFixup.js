@@ -1,11 +1,11 @@
-var urifixup = Cc["@mozilla.org/docshell/urifixup;1"].
+let urifixup = Cc["@mozilla.org/docshell/urifixup;1"].
                getService(Ci.nsIURIFixup);
-var prefs = Cc["@mozilla.org/preferences-service;1"].
+let prefs = Cc["@mozilla.org/preferences-service;1"].
             getService(Ci.nsIPrefBranch);
 
-var pref = "browser.fixup.typo.scheme";
+let pref = "browser.fixup.typo.scheme";
 
-var data = [
+let data = [
   {
     // ttp -> http.
     wrong: 'ttp://www.example.com/',
@@ -48,7 +48,7 @@ var data = [
   },
 ];
 
-var len = data.length;
+let len = data.length;
 
 function run_test() {
   run_next_test();

@@ -4,7 +4,7 @@
 
 "use strict";
 
-var initialPageZoom = ZoomManager.zoom;
+let initialPageZoom = ZoomManager.zoom;
 
 add_task(function() {
   info("Check zoom reset button existence and functionality");

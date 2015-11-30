@@ -64,14 +64,14 @@
 #define SYNC_FIXUP() (fixupCount = 0)
 
 void
-gfxScriptItemizer::push(uint32_t endPairChar, int32_t newScriptCode)
+gfxScriptItemizer::push(uint32_t endPairChar, int32_t scriptCode)
 {
     pushCount  = LIMIT_INC(pushCount);
     fixupCount = LIMIT_INC(fixupCount);
 
     parenSP = INC1(parenSP);
     parenStack[parenSP].endPairChar = endPairChar;
-    parenStack[parenSP].scriptCode = newScriptCode;
+    parenStack[parenSP].scriptCode = scriptCode;
 }
 
 void
@@ -97,13 +97,13 @@ gfxScriptItemizer::pop()
 }
 
 void
-gfxScriptItemizer::fixup(int32_t newScriptCode)
+gfxScriptItemizer::fixup(int32_t scriptCode)
 {
     int32_t fixupSP = DEC(parenSP, fixupCount);
 
     while (fixupCount-- > 0) {
         fixupSP = INC1(fixupSP);
-        parenStack[fixupSP].scriptCode = newScriptCode;
+        parenStack[fixupSP].scriptCode = scriptCode;
     }
 }
 
@@ -113,6 +113,15 @@ SameScript(int32_t runScript, int32_t currCharScript)
     return runScript <= MOZ_SCRIPT_INHERITED ||
            currCharScript <= MOZ_SCRIPT_INHERITED ||
            currCharScript == runScript;
+}
+
+// Return whether the char has a mirrored-pair counterpart.
+// NOTE that this depends on the implementation of nsCharProps records in
+// nsUnicodeProperties, and may need to be updated if those structures change
+static inline bool
+HasMirroredChar(uint32_t aCh)
+{
+    return GetCharProps1(aCh).mMirrorOffsetIndex != 0;
 }
 
 gfxScriptItemizer::gfxScriptItemizer(const char16_t *src, uint32_t length)

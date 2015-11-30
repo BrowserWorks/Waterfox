@@ -426,9 +426,9 @@ ScrollbarActivity::StartFadeBeginTimer()
   if (!mFadeBeginTimer) {
     mFadeBeginTimer = do_CreateInstance("@mozilla.org/timer;1");
   }
-  mFadeBeginTimer->InitWithNamedFuncCallback(
-    FadeBeginTimerFired, this, mScrollbarFadeBeginDelay,
-    nsITimer::TYPE_ONE_SHOT, "ScrollbarActivity::FadeBeginTimerFired");
+  mFadeBeginTimer->InitWithFuncCallback(FadeBeginTimerFired, this,
+                                        mScrollbarFadeBeginDelay,
+                                        nsITimer::TYPE_ONE_SHOT);
 }
 
 void

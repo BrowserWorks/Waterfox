@@ -4,16 +4,16 @@
 
 Components.utils.import("resource://gre/modules/Promise.jsm", this);
 
-var {AddonTestUtils} = Components.utils.import("resource://testing-common/AddonManagerTesting.jsm", {});
-var {HttpServer} = Components.utils.import("resource://testing-common/httpd.js", {});
+let {AddonTestUtils} = Components.utils.import("resource://testing-common/AddonManagerTesting.jsm", {});
+let {HttpServer} = Components.utils.import("resource://testing-common/httpd.js", {});
 
-var gManagerWindow;
-var gCategoryUtilities;
-var gExperiments;
-var gHttpServer;
+let gManagerWindow;
+let gCategoryUtilities;
+let gExperiments;
+let gHttpServer;
 
-var gSavedManifestURI;
-var gIsEnUsLocale;
+let gSavedManifestURI;
+let gIsEnUsLocale;
 
 const SEC_IN_ONE_DAY = 24 * 60 * 60;
 const MS_IN_ONE_DAY  = SEC_IN_ONE_DAY * 1000;

@@ -4,12 +4,8 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import json
 import os
 import sys
-import tempfile
-import subprocess
-import shutil
 
 from mach.decorators import (
     CommandArgument,
@@ -18,8 +14,6 @@ from mach.decorators import (
 )
 
 from mozbuild.base import MachCommandBase
-from mozbuild.base import MachCommandConditions as conditions
-from argparse import ArgumentParser
 
 
 UNKNOWN_TEST = '''
@@ -86,6 +80,9 @@ TEST_SUITES = {
         'mach_command': 'mochitest',
         'kwargs': {'subsuite': 'devtools', 'test_paths': None},
     },
+    'mochitest-ipcplugins': {
+        'make_target': 'mochitest-ipcplugins',
+    },
     'mochitest-plain': {
         'mach_command': 'mochitest',
         'kwargs': {'flavor': 'plain', 'test_paths': None},
@@ -97,7 +94,7 @@ TEST_SUITES = {
     'reftest': {
         'aliases': ('RR', 'rr', 'Rr'),
         'mach_command': 'reftest',
-        'kwargs': {'tests': None},
+        'kwargs': {'test_file': None},
     },
     'reftest-ipc': {
         'aliases': ('Ripc',),
@@ -140,10 +137,7 @@ TEST_FLAVORS = {
         'mach_command': 'mochitest',
         'kwargs': {'flavor': 'mochitest', 'test_paths': []},
     },
-    'reftest': {
-        'mach_command': 'reftest',
-        'kwargs': {'tests': []}
-    },
+    'reftest': { },
     'steeplechase': { },
     'web-platform-tests': {
         'mach_command': 'web-platform-tests',
@@ -297,76 +291,29 @@ class MachCommands(MachCommandBase):
     def run_cppunit_test(self, **params):
         import mozinfo
         from mozlog import commandline
+        import runcppunittests as cppunittests
+
         log = commandline.setup_logging("cppunittest",
                                         {},
                                         {"tbpl": sys.stdout})
+
+        if len(params['test_files']) == 0:
+            testdir = os.path.join(self.distdir, 'cppunittests')
+            tests = cppunittests.extract_unittests_from_args([testdir], mozinfo.info)
+        else:
+            tests = cppunittests.extract_unittests_from_args(params['test_files'], mozinfo.info)
 
         # See if we have crash symbols
         symbols_path = os.path.join(self.distdir, 'crashreporter-symbols')
         if not os.path.isdir(symbols_path):
             symbols_path = None
 
-        # If no tests specified, run all tests in main manifest
-        tests = params['test_files']
-        if len(tests) == 0:
-            tests = [os.path.join(self.distdir, 'cppunittests')]
-            manifest_path = os.path.join(self.topsrcdir, 'testing', 'cppunittest.ini')
-        else:
-            manifest_path = None
-
-        if conditions.is_android(self):
-            from mozrunner.devices.android_device import verify_android_device
-            verify_android_device(self, install=False)
-            return self.run_android_test(tests, symbols_path, manifest_path, log)
-
-        return self.run_desktop_test(tests, symbols_path, manifest_path, log)
-
-    def run_desktop_test(self, tests, symbols_path, manifest_path, log):
-        import runcppunittests as cppunittests
-        from mozlog import commandline
-
-        parser = cppunittests.CPPUnittestOptions()
-        commandline.add_logging_group(parser)
-        options, args = parser.parse_args()
-
-        options.symbols_path = symbols_path
-        options.manifest_path = manifest_path
-        options.xre_path = self.bindir
-
+        tester = cppunittests.CPPUnitTests()
         try:
-            result = cppunittests.run_test_harness(options, tests)
+            result = tester.run_tests(tests, self.bindir, symbols_path, interactive=True)
         except Exception as e:
             log.error("Caught exception running cpp unit tests: %s" % str(e))
             result = False
-            raise
-
-        return 0 if result else 1
-
-    def run_android_test(self, tests, symbols_path, manifest_path, log):
-        import remotecppunittests as remotecppunittests
-        from mozlog import commandline
-
-        parser = remotecppunittests.RemoteCPPUnittestOptions()
-        commandline.add_logging_group(parser)
-        options, args = parser.parse_args()
-
-        options.symbols_path = symbols_path
-        options.manifest_path = manifest_path
-        options.xre_path = self.bindir
-        options.dm_trans = "adb"
-        options.local_lib = self.bindir.replace('bin', 'fennec')
-        for file in os.listdir(os.path.join(self.topobjdir, "dist")):
-            if file.endswith(".apk") and file.startswith("fennec"):
-                options.local_apk = os.path.join(self.topobjdir, "dist", file)
-                log.info("using APK: " + options.local_apk)
-                break
-
-        try:
-            result = remotecppunittests.run_test_harness(options, tests)
-        except Exception as e:
-            log.error("Caught exception running cpp unit tests: %s" % str(e))
-            result = False
-            raise
 
         return 0 if result else 1
 
@@ -525,9 +472,8 @@ class PushToTry(MachCommandBase):
             print('ERROR please commit changes before continuing')
             sys.exit(1)
 
-        if paths or tags:
-            driver = self._spawn(BuildDriver)
-            driver.install_tests(remove=False)
+        driver = self._spawn(BuildDriver)
+        driver.install_tests(remove=False)
 
         manifests_by_flavor = at.resolve_manifests(paths=paths, tags=tags)
 
@@ -548,153 +494,10 @@ class PushToTry(MachCommandBase):
             print('Tests from the following manifests will be selected: ')
             pprint.pprint(manifests_by_flavor)
 
-        if verbose or not push:
+        if verbose:
             print('The following try syntax was calculated:\n\n\t%s\n' % msg)
 
         if push:
             at.push_to_try(msg, verbose)
 
         return
-
-
-def get_parser(argv=None):
-    parser = ArgumentParser()
-    parser.add_argument(dest="suite_name",
-                        nargs=1,
-                        choices=['mochitest'],
-                        type=str,
-                        help="The test for which chunk should be found. It corresponds "
-                             "to the mach test invoked (only 'mochitest' currently).")
-
-    parser.add_argument(dest="test_path",
-                        nargs=1,
-                        type=str,
-                        help="The test (any mochitest) for which chunk should be found.")
-
-    parser.add_argument('--total-chunks',
-                        type=int,
-                        dest='total_chunks',
-                        required=True,
-                        help='Total number of chunks to split tests into.',
-                        default=None)
-
-    parser.add_argument('--chunk-by-runtime',
-                        action='store_true',
-                        dest='chunk_by_runtime',
-                        help='Group tests such that each chunk has roughly the same runtime.',
-                        default=False)
-
-    parser.add_argument('--chunk-by-dir',
-                        type=int,
-                        dest='chunk_by_dir',
-                        help='Group tests together in the same chunk that are in the same top '
-                             'chunkByDir directories.',
-                        default=None)
-
-    parser.add_argument('--e10s',
-                        action='store_true',
-                        dest='e10s',
-                        help='Find test on chunk with electrolysis preferences enabled.',
-                        default=False)
-
-    parser.add_argument('-p', '--platform',
-                        choices=['linux', 'linux64', 'mac', 'macosx64', 'win32', 'win64'],
-                        dest='platform',
-                        help="Platform for the chunk to find the test.",
-                        default=None)
-
-    parser.add_argument('--debug',
-                        action='store_true',
-                        dest='debug',
-                        help="Find the test on chunk in a debug build.",
-                        default=False)
-
-    return parser
-
-
-def download_mozinfo(platform=None, debug_build=False):
-    temp_dir = tempfile.mkdtemp()
-    temp_path = os.path.join(temp_dir, "mozinfo.json")
-    args = [
-        'mozdownload',
-        '-t', 'tinderbox',
-        '--ext', 'mozinfo.json',
-        '-d', temp_path,
-    ]
-    if platform:
-        if platform == 'macosx64':
-            platform = 'mac64'
-        args.extend(['-p', platform])
-    if debug_build:
-        args.extend(['--debug-build'])
-
-    subprocess.call(args)
-    return temp_dir, temp_path
-
-@CommandProvider
-class ChunkFinder(MachCommandBase):
-    @Command('find-test-chunk', category='testing',
-             description='Find which chunk a test belongs to (works for mochitest).',
-             parser=get_parser)
-    def chunk_finder(self, **kwargs):
-        total_chunks = kwargs['total_chunks']
-        test_path = kwargs['test_path'][0]
-        suite_name = kwargs['suite_name'][0]
-        _, dump_tests = tempfile.mkstemp()
-
-        from mozbuild.testing import TestResolver
-        resolver = self._spawn(TestResolver)
-        relpath = self._wrap_path_argument(test_path).relpath()
-        tests = list(resolver.resolve_tests(paths=[relpath]))
-        if len(tests) != 1:
-            print('No test found for test_path: %s' % test_path)
-            sys.exit(1)
-
-        flavor = tests[0]['flavor']
-        subsuite = tests[0]['subsuite']
-        args = {
-            'totalChunks': total_chunks,
-            'dump_tests': dump_tests,
-            'chunkByDir': kwargs['chunk_by_dir'],
-            'chunkByRuntime': kwargs['chunk_by_runtime'],
-            'e10s': kwargs['e10s'],
-            'subsuite': subsuite,
-        }
-
-        temp_dir = None
-        if kwargs['platform'] or kwargs['debug']:
-            self._activate_virtualenv()
-            self.virtualenv_manager.install_pip_package('mozdownload==1.17')
-            temp_dir, temp_path = download_mozinfo(kwargs['platform'], kwargs['debug'])
-            args['extra_mozinfo_json'] = temp_path
-
-        found = False
-        for this_chunk in range(1, total_chunks+1):
-            args['thisChunk'] = this_chunk
-            try:
-                self._mach_context.commands.dispatch(suite_name, self._mach_context, flavor=flavor, resolve_tests=False, **args)
-            except SystemExit:
-                pass
-            except KeyboardInterrupt:
-                break
-
-            fp = open(os.path.expanduser(args['dump_tests']), 'r')
-            tests = json.loads(fp.read())['active_tests']
-            for test in tests:
-                if test_path == test['path']:
-                    if 'disabled' in test:
-                        print('The test %s for flavor %s is disabled on the given platform' % (test_path, flavor))
-                    else:
-                        print('The test %s for flavor %s is present in chunk number: %d' % (test_path, flavor, this_chunk))
-                    found = True
-                    break
-
-            if found:
-                break
-
-        if not found:
-            raise Exception("Test %s not found." % test_path)
-        # Clean up the file
-        os.remove(dump_tests)
-        if temp_dir:
-            shutil.rmtree(temp_dir)

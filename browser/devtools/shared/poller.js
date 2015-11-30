@@ -6,7 +6,7 @@
 loader.lazyRequireGetter(this, "timers",
   "resource://gre/modules/Timer.jsm");
 loader.lazyRequireGetter(this, "defer",
-  "promise", true);
+  "sdk/core/promise", true);
 
 /**
  * @constructor Poller

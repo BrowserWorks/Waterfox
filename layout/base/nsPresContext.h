@@ -110,7 +110,7 @@ public:
 
   void TakeFrom(nsInvalidateRequestList* aList)
   {
-    mRequests.AppendElements(mozilla::Move(aList->mRequests));
+    mRequests.MoveElementsFrom(aList->mRequests);
   }
   bool IsEmpty() { return mRequests.IsEmpty(); }
 
@@ -854,8 +854,7 @@ public:
   void UpdateIsChrome();
 
   // Public API for native theme code to get style internals.
-  virtual bool HasAuthorSpecifiedRules(const nsIFrame *aFrame,
-                                       uint32_t ruleTypeMask) const;
+  virtual bool HasAuthorSpecifiedRules(nsIFrame *aFrame, uint32_t ruleTypeMask) const;
 
   // Is it OK to let the page specify colors and backgrounds?
   bool UseDocumentColors() const {
@@ -914,11 +913,6 @@ public:
     mUndeliveredInvalidateRequestsBeforeLastPaint.mRequests.Clear();
     mAllInvalidated = false;
   }
-
-  /**
-   * Returns the RestyleManager's restyle generation counter.
-   */
-  uint64_t GetRestyleGeneration() const;
 
   /**
    * Returns whether there are any pending restyles or reflows.

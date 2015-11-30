@@ -4,8 +4,8 @@
 // Tests that text metrics and data conversion from profiler samples
 // widget work properly in the flame graph.
 
-var {FlameGraphUtils} = require("devtools/shared/widgets/FlameGraph");
-var {PALLETTE_SIZE} = require("devtools/shared/widgets/FlameGraph");
+let {FlameGraphUtils} = require("devtools/shared/widgets/FlameGraph");
+let {PALLETTE_SIZE} = require("devtools/shared/widgets/FlameGraph");
 
 add_task(function*() {
   yield promiseTab("about:blank");
@@ -43,7 +43,7 @@ function* performTest() {
   }
 }
 
-var TEST_DATA = synthesizeProfileForTest([{
+let TEST_DATA = synthesizeProfileForTest([{
   frames: [{
     location: "M"
   }, {
@@ -99,7 +99,7 @@ var TEST_DATA = synthesizeProfileForTest([{
   time: 500
 }]);
 
-var EXPECTED_OUTPUT = [{
+let EXPECTED_OUTPUT = [{
   blocks: []
 }, {
   blocks: []

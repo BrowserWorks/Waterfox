@@ -60,7 +60,7 @@ public:
   {}
 
   void Begin(const gfx::IntRect& aTargetBounds, ScreenRotation aRotation,
-             dom::ScreenOrientationInternal aOrientation)
+             dom::ScreenOrientation aOrientation)
   {
     mOpen = true;
     mTargetBounds = aTargetBounds;
@@ -138,7 +138,7 @@ public:
   ShadowableLayerSet mMutants;
   gfx::IntRect mTargetBounds;
   ScreenRotation mTargetRotation;
-  dom::ScreenOrientationInternal mTargetOrientation;
+  dom::ScreenOrientation mTargetOrientation;
   bool mSwapRequired;
 
 private:
@@ -167,7 +167,6 @@ ShadowLayerForwarder::ShadowLayerForwarder()
  : mDiagnosticTypes(DiagnosticTypes::NO_DIAGNOSTIC)
  , mIsFirstPaint(false)
  , mWindowOverlayChanged(false)
- , mPaintSyncId(0)
 {
   mTxn = new Transaction();
 }
@@ -185,7 +184,7 @@ ShadowLayerForwarder::~ShadowLayerForwarder()
 void
 ShadowLayerForwarder::BeginTransaction(const gfx::IntRect& aTargetBounds,
                                        ScreenRotation aRotation,
-                                       dom::ScreenOrientationInternal aOrientation)
+                                       dom::ScreenOrientation aOrientation)
 {
   MOZ_ASSERT(HasShadowManager(), "no manager to forward to");
   MOZ_ASSERT(mTxn->Finished(), "uncommitted txn?");
@@ -580,11 +579,8 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
     common.clipRect() = (common.useClipRect() ?
                          *mutant->GetClipRect() : ParentLayerIntRect());
     common.isFixedPosition() = mutant->GetIsFixedPosition();
-    if (mutant->GetIsFixedPosition()) {
-      common.fixedPositionScrollContainerId() = mutant->GetFixedPositionScrollContainerId();
-      common.fixedPositionAnchor() = mutant->GetFixedPositionAnchor();
-      common.isClipFixed() = mutant->IsClipFixed();
-    }
+    common.fixedPositionAnchor() = mutant->GetFixedPositionAnchor();
+    common.fixedPositionMargin() = mutant->GetFixedPositionMargins();
     common.isStickyPosition() = mutant->GetIsStickyPosition();
     if (mutant->GetIsStickyPosition()) {
       common.stickyScrollContainerId() = mutant->GetStickyScrollContainerId();
@@ -664,7 +660,7 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
         !mShadowManager->SendUpdate(cset, aId, targetConfig, mPluginWindowData,
                                     mIsFirstPaint, aScheduleComposite,
                                     aPaintSequenceNumber, aIsRepeatTransaction,
-                                    aTransactionStart, mPaintSyncId, aReplies)) {
+                                    aTransactionStart, aReplies)) {
       MOZ_LAYERS_LOG(("[LayersForwarder] WARNING: sending transaction failed!"));
       return false;
     }
@@ -678,7 +674,7 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
         !mShadowManager->SendUpdateNoSwap(cset, aId, targetConfig, mPluginWindowData,
                                           mIsFirstPaint, aScheduleComposite,
                                           aPaintSequenceNumber, aIsRepeatTransaction,
-                                          aTransactionStart, mPaintSyncId)) {
+                                          aTransactionStart)) {
       MOZ_LAYERS_LOG(("[LayersForwarder] WARNING: sending transaction failed!"));
       return false;
     }
@@ -686,7 +682,6 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
 
   *aSent = true;
   mIsFirstPaint = false;
-  mPaintSyncId = 0;
   MOZ_LAYERS_LOG(("[LayersForwarder] ... done"));
   return true;
 }

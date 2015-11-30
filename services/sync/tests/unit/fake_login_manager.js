@@ -4,7 +4,7 @@ Cu.import("resource://services-sync/util.js");
 // Fake Sample Data
 // ----------------------------------------
 
-var fakeSampleLogins = [
+let fakeSampleLogins = [
   // Fake nsILoginInfo object.
   {hostname: "www.boogle.com",
    formSubmitURL: "http://www.boogle.com/search",

@@ -8,15 +8,34 @@ BROWSER_CHROME_MANIFESTS += ['tests/browser/browser.ini']
 MOCHITEST_CHROME_MANIFESTS += ['tests/mochitest/chrome.ini']
 XPCSHELL_TESTS_MANIFESTS += ['tests/unit/xpcshell.ini']
 
+if CONFIG['ENABLE_TESTS']:
+    DIRS += ['tests/gtest']
+
 XPIDL_SOURCES += [
     'nsIJSInspector.idl',
 ]
 
 XPIDL_MODULE = 'jsinspector'
 
-SOURCES += [
-    'nsJSInspector.cpp',
+EXPORTS.mozilla.devtools += [
+    'AutoMemMap.h',
+    'CoreDump.pb.h',
+    'DeserializedNode.h',
+    'HeapSnapshot.h',
+    'ZeroCopyNSIOutputStream.h',
 ]
+
+SOURCES += [
+    'AutoMemMap.cpp',
+    'CoreDump.pb.cc',
+    'DeserializedNode.cpp',
+    'HeapSnapshot.cpp',
+    'nsJSInspector.cpp',
+    'ZeroCopyNSIOutputStream.cpp',
+]
+
+# Disable RTTI in google protocol buffer
+DEFINES['GOOGLE_PROTOBUF_NO_RTTI'] = True
 
 FINAL_LIBRARY = 'xul'
 
@@ -50,16 +69,13 @@ EXTRA_JS_MODULES.devtools.server.actors += [
     'actors/eventlooplag.js',
     'actors/framerate.js',
     'actors/gcli.js',
-    'actors/highlighters.js',
+    'actors/highlighter.js',
     'actors/inspector.js',
     'actors/layout.js',
     'actors/memory.js',
-    'actors/memprof.js',
     'actors/monitor.js',
     'actors/object.js',
     'actors/performance-entries.js',
-    'actors/performance-recording.js',
-    'actors/performance.js',
     'actors/preference.js',
     'actors/pretty-print-worker.js',
     'actors/profiler.js',
@@ -92,17 +108,4 @@ EXTRA_JS_MODULES.devtools.server.actors.utils += [
     'actors/utils/TabSources.js'
 ]
 
-EXTRA_JS_MODULES.devtools.server.actors.highlighters += [
-    'actors/highlighters/auto-refresh.js',
-    'actors/highlighters/box-model.js',
-    'actors/highlighters/css-transform.js',
-    'actors/highlighters/geometry-editor.js',
-    'actors/highlighters/rect.js',
-    'actors/highlighters/rulers.js',
-    'actors/highlighters/selector.js',
-    'actors/highlighters/simple-outline.js'
-]
-
-EXTRA_JS_MODULES.devtools.server.actors.highlighters.utils += [
-    'actors/highlighters/utils/markup.js'
-]
+FAIL_ON_WARNINGS = True

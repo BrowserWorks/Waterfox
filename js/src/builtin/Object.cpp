@@ -13,7 +13,6 @@
 
 #include "builtin/Eval.h"
 #include "frontend/BytecodeCompiler.h"
-#include "jit/InlinableNatives.h"
 #include "vm/StringBuffer.h"
 
 #include "jsobjinlines.h"
@@ -332,8 +331,8 @@ JS_BasicObjectToString(JSContext* cx, HandleObject obj)
 }
 
 /* ES5 15.2.4.2.  Note steps 1 and 2 are errata. */
-bool
-js::obj_toString(JSContext* cx, unsigned argc, Value* vp)
+static bool
+obj_toString(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
@@ -362,6 +361,23 @@ js::obj_toString(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
+/* ES5 15.2.4.3. */
+static bool
+obj_toLocaleString(JSContext* cx, unsigned argc, Value* vp)
+{
+    JS_CHECK_RECURSION(cx, return false);
+
+    CallArgs args = CallArgsFromVp(argc, vp);
+
+    /* Step 1. */
+    RootedObject obj(cx, ToObject(cx, args.thisv()));
+    if (!obj)
+        return false;
+
+    /* Steps 2-4. */
+    RootedId id(cx, NameToId(cx->names().toString));
+    return obj->callMethod(cx, id, 0, nullptr, args.rval());
+}
 
 bool
 js::obj_valueOf(JSContext* cx, unsigned argc, Value* vp)
@@ -983,7 +999,7 @@ static const JSFunctionSpec object_methods[] = {
     JS_FN(js_toSource_str,             obj_toSource,                0,0),
 #endif
     JS_FN(js_toString_str,             obj_toString,                0,0),
-    JS_SELF_HOSTED_FN(js_toLocaleString_str, "Object_toLocaleString", 0,JSPROP_DEFINE_LATE),
+    JS_FN(js_toLocaleString_str,       obj_toLocaleString,          0,0),
     JS_FN(js_valueOf_str,              obj_valueOf,                 0,0),
 #if JS_HAS_OBJ_WATCHPOINT
     JS_FN(js_watch_str,                obj_watch,                   2,0),
@@ -1017,7 +1033,7 @@ static const JSFunctionSpec object_static_methods[] = {
     JS_FN("is",                        obj_is,                      2, 0),
     JS_FN("defineProperty",            obj_defineProperty,          3, 0),
     JS_FN("defineProperties",          obj_defineProperties,        2, 0),
-    JS_INLINABLE_FN("create",          obj_create,                  2, 0, ObjectCreate),
+    JS_FN("create",                    obj_create,                  2, 0),
     JS_FN("getOwnPropertyNames",       obj_getOwnPropertyNames,     1, 0),
     JS_FN("getOwnPropertySymbols",     obj_getOwnPropertySymbols,   1, 0),
     JS_SELF_HOSTED_FN("isExtensible",  "ObjectIsExtensible",        1, JSPROP_DEFINE_LATE),

@@ -58,8 +58,6 @@ SOURCES += [
     'pixman.c',
 ]
 
-ALLOW_COMPILER_WARNINGS = True
-
 FINAL_LIBRARY = 'gkmedias'
 LOCAL_INCLUDES += [
     '../../cairo/src',
@@ -147,7 +145,3 @@ if CONFIG['GNU_CC']:
             '-Wno-tautological-compare',
             '-Wno-tautological-constant-out-of-range-compare',
         ]
-
-# See bug 386897.
-if CONFIG['OS_TARGET'] == 'Android' and CONFIG['MOZ_OPTIMIZE']:
-    CFLAGS += ['-O2']

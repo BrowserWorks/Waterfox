@@ -245,10 +245,10 @@ nsGeolocationSettings::HandleGeolocationPerOriginSettingsChange(const JS::Value&
   AutoEntryScript aes(global, "geolocation.app_settings enumeration");
   aes.TakeOwnershipOfErrorReporting();
   JSContext *cx = aes.cx();
-  JS::Rooted<JS::IdVector> ids(cx, JS::IdVector(cx));
+  JS::AutoIdArray ids(cx, JS_Enumerate(cx, obj));
 
   // if we get no ids then the exception list is empty and we can return here.
-  if (!JS_Enumerate(cx, obj, &ids)) {
+  if (!ids) {
       return;
   }
 

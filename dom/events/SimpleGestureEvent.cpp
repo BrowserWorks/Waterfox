@@ -16,8 +16,7 @@ SimpleGestureEvent::SimpleGestureEvent(EventTarget* aOwner,
                                        WidgetSimpleGestureEvent* aEvent)
   : MouseEvent(aOwner, aPresContext,
                aEvent ? aEvent :
-                        new WidgetSimpleGestureEvent(false, eVoidEvent,
-                                                     nullptr))
+                        new WidgetSimpleGestureEvent(false, 0, nullptr))
 {
   NS_ASSERTION(mEvent->mClass == eSimpleGestureEventClass,
                "event type mismatch");
@@ -147,12 +146,14 @@ SimpleGestureEvent::InitSimpleGestureEvent(const nsAString& aTypeArg,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<SimpleGestureEvent>
-NS_NewDOMSimpleGestureEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMSimpleGestureEvent(nsIDOMEvent** aInstancePtrResult,
+                            EventTarget* aOwner,
                             nsPresContext* aPresContext,
                             WidgetSimpleGestureEvent* aEvent)
 {
-  nsRefPtr<SimpleGestureEvent> it =
-    new SimpleGestureEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  SimpleGestureEvent* it = new SimpleGestureEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

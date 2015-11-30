@@ -9,7 +9,6 @@
 #ifndef mozilla_dom_Date_h
 #define mozilla_dom_Date_h
 
-#include "js/Date.h"
 #include "js/TypeDecls.h"
 
 namespace mozilla {
@@ -18,33 +17,21 @@ namespace dom {
 class Date
 {
 public:
-  Date() {}
-  explicit Date(JS::ClippedTime aMilliseconds)
+  // Not inlining much here to avoid the includes we'd need.
+  Date();
+  explicit Date(double aMilliseconds)
     : mMsecSinceEpoch(aMilliseconds)
   {}
 
-  bool IsUndefined() const
-  {
-    return !mMsecSinceEpoch.isValid();
-  }
-
-  JS::ClippedTime TimeStamp() const
+  bool IsUndefined() const;
+  double TimeStamp() const
   {
     return mMsecSinceEpoch;
   }
-
-  // Returns an integer in the range [-8.64e15, +8.64e15] (-0 excluded), *or*
-  // returns NaN.  DO NOT ASSUME THIS IS FINITE!
-  double ToDouble() const
-  {
-    return mMsecSinceEpoch.toDouble();
-  }
-
-  void SetTimeStamp(JS::ClippedTime aMilliseconds)
+  void SetTimeStamp(double aMilliseconds)
   {
     mMsecSinceEpoch = aMilliseconds;
   }
-
   // Can return false if CheckedUnwrap fails.  This will NOT throw;
   // callers should do it as needed.
   bool SetTimeStamp(JSContext* aCx, JSObject* aObject);
@@ -52,7 +39,7 @@ public:
   bool ToDateObject(JSContext* aCx, JS::MutableHandle<JS::Value> aRval) const;
 
 private:
-  JS::ClippedTime mMsecSinceEpoch;
+  double mMsecSinceEpoch;
 };
 
 } // namespace dom

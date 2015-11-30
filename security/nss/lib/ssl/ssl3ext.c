@@ -1125,8 +1125,7 @@ ssl3_SendNewSessionTicket(sslSocket *ss)
         sslSessionID sid;
         PORT_Memset(&sid, 0, sizeof(sslSessionID));
 
-        if (ss->ssl3.hs.kea_def->kea == kea_ecdhe_rsa ||
-            ss->ssl3.hs.kea_def->kea == kea_dhe_rsa) {
+        if (ss->ssl3.hs.kea_def->kea == kea_ecdhe_rsa) {
             effectiveExchKeyType = kt_rsa;
         } else {
             effectiveExchKeyType = ss->ssl3.hs.kea_def->exchKeyType;

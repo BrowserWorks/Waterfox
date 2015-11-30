@@ -33,9 +33,9 @@
 #include "nsAutoPtr.h"
 #include "nsThreadUtils.h"
 #include "nsContentUtils.h"
-#include "timeline/ObservedDocShell.h"
-#include "timeline/TimelineConsumers.h"
 #include "timeline/TimelineMarker.h"
+#include "timeline/TimelineConsumers.h"
+#include "timeline/ObservedDocShell.h"
 
 // Threshold value in ms for META refresh based redirects
 #define REFRESH_REDIRECT_TIMER 15000
@@ -62,7 +62,6 @@
 namespace mozilla {
 namespace dom {
 class EventTarget;
-typedef uint32_t ScreenOrientationInternal;
 } // namespace dom
 } // namespace mozilla
 
@@ -275,16 +274,12 @@ private:
   // be very fast, so instead of using a Map or having to search for some
   // docshell-specific markers storage, a pointer to an `ObservedDocShell` is
   // is stored on docshells directly.
-  friend void mozilla::TimelineConsumers::AddConsumer(nsDocShell*);
-  friend void mozilla::TimelineConsumers::RemoveConsumer(nsDocShell*);
+  friend void mozilla::TimelineConsumers::AddConsumer(nsDocShell* aDocShell);
+  friend void mozilla::TimelineConsumers::RemoveConsumer(nsDocShell* aDocShell);
   friend void mozilla::TimelineConsumers::AddMarkerForDocShell(
-    nsDocShell*, const char*, MarkerTracingType);
+    nsDocShell* aDocShell, UniquePtr<TimelineMarker>&& aMarker);
   friend void mozilla::TimelineConsumers::AddMarkerForDocShell(
-    nsDocShell*, const char*, const TimeStamp&, MarkerTracingType);
-  friend void mozilla::TimelineConsumers::AddMarkerForDocShell(
-    nsDocShell*, UniquePtr<AbstractTimelineMarker>&&);
-  friend void mozilla::TimelineConsumers::AddOTMTMarkerForDocShell(
-    nsDocShell*, UniquePtr<AbstractTimelineMarker>&);
+    nsDocShell* aDocShell, const char* aName, TracingMetadata aMetaData);
 
 public:
   // Tell the favicon service that aNewURI has the same favicon as aOldURI.
@@ -329,12 +324,7 @@ protected:
   // not have an owner on the channel should just pass null.
   // If aSrcdoc is not void, the load will be considered as a srcdoc load,
   // and the contents of aSrcdoc will be loaded instead of aURI.
-  // aOriginalURI will be set as the originalURI on the channel that does the
-  // load. If aOriginalURI is null, aURI will be set as the originalURI.
-  // If aLoadReplace is true, OLOAD_REPLACE flag will be set to the nsIChannel.
   nsresult DoURILoad(nsIURI* aURI,
-                     nsIURI* aOriginalURI,
-                     bool aLoadReplace,
                      nsIURI* aReferrer,
                      bool aSendReferrer,
                      uint32_t aReferrerPolicy,
@@ -885,12 +875,11 @@ protected:
   };
   FullscreenAllowedState mFullscreenAllowed;
 
-  // The orientation lock as described by
-  // https://w3c.github.io/screen-orientation/
-  mozilla::dom::ScreenOrientationInternal mOrientationLock;
-
   // Cached value of the "browser.xul.error_pages.enabled" preference.
   static bool sUseErrorPages;
+
+  // Cached value of the "dom.serviceWorkers.interception.enabled" preference.
+  static bool sInterceptionEnabled;
 
   bool mCreated;
   bool mAllowSubframes;

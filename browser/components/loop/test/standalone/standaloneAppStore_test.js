@@ -22,8 +22,9 @@ describe("loop.store.StandaloneAppStore", function () {
     it("should throw an error if the dispatcher is missing", function() {
       expect(function() {
         new loop.store.StandaloneAppStore({
+          sdk: {},
           helper: {},
-          sdk: {}
+          conversation: {}
         });
       }).to.Throw(/dispatcher/);
     });
@@ -32,14 +33,25 @@ describe("loop.store.StandaloneAppStore", function () {
       expect(function() {
         new loop.store.StandaloneAppStore({
           dispatcher: dispatcher,
-          helper: {}
+          helper: {},
+          conversation: {}
         });
       }).to.Throw(/sdk/);
+    });
+
+    it("should throw an error if conversation is missing", function() {
+      expect(function() {
+        new loop.store.StandaloneAppStore({
+          dispatcher: dispatcher,
+          sdk: {},
+          helper: {}
+        });
+      }).to.Throw(/conversation/);
     });
   });
 
   describe("#extractTokenInfo", function() {
-    var store, fakeGetWindowData, fakeSdk, helper;
+    var store, fakeGetWindowData, fakeSdk, fakeConversation, helper;
 
     beforeEach(function() {
       fakeGetWindowData = {
@@ -54,12 +66,17 @@ describe("loop.store.StandaloneAppStore", function () {
         checkSystemRequirements: sinon.stub().returns(true)
       };
 
+      fakeConversation = {
+        set: sinon.spy()
+      };
+
       sandbox.stub(dispatcher, "dispatch");
 
       store = new loop.store.StandaloneAppStore({
         dispatcher: dispatcher,
+        sdk: fakeSdk,
         helper: helper,
-        sdk: fakeSdk
+        conversation: fakeConversation
       });
     });
 
@@ -135,6 +152,32 @@ describe("loop.store.StandaloneAppStore", function () {
 
       expect(store.getStoreState().windowType).eql("home");
     });
+
+    it("should set the loopToken on the conversation for call paths",
+      function() {
+        fakeGetWindowData.windowPath = "/c/fakecalltoken";
+
+        store.extractTokenInfo(
+          new sharedActions.ExtractTokenInfo(fakeGetWindowData));
+
+        sinon.assert.calledOnce(fakeConversation.set);
+        sinon.assert.calledWithExactly(fakeConversation.set, {
+          loopToken: "fakecalltoken"
+        });
+      });
+
+    it("should set the loopToken on the conversation for room paths",
+      function() {
+        fakeGetWindowData.windowPath = "/c/fakeroomtoken";
+
+        store.extractTokenInfo(
+          new sharedActions.ExtractTokenInfo(fakeGetWindowData));
+
+        sinon.assert.calledOnce(fakeConversation.set);
+        sinon.assert.calledWithExactly(fakeConversation.set, {
+          loopToken: "fakeroomtoken"
+        });
+      });
 
     it("should dispatch a FetchServerData action for call paths",
       function() {

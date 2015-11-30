@@ -4,7 +4,7 @@
 
 Components.utils.import('resource://gre/modules/PlacesUtils.jsm');
 
-var FavIcons = {
+let FavIcons = {
   // Pref that controls whether to display site icons.
   PREF_CHROME_SITE_ICONS: "browser.chrome.site_icons",
 

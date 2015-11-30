@@ -5,7 +5,7 @@
 // other profiles.
 EnableEngines(["addons"]);
 
-var phases = {
+let phases = {
   "phase01": "profile1",
   "phase02": "profile2",
   "phase03": "profile1",

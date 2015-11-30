@@ -32,7 +32,7 @@ using namespace mozilla::gfx;
 //----------------------------------------------------------------------
 // Helper classes
 
-class MOZ_RAII nsSVGPatternFrame::AutoPatternReferencer
+class MOZ_STACK_CLASS nsSVGPatternFrame::AutoPatternReferencer
 {
 public:
   explicit AutoPatternReferencer(nsSVGPatternFrame *aFrame

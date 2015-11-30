@@ -58,19 +58,6 @@ union OptionalHttpResponseHead
   nsHttpResponseHead;
 };
 
-struct CorsPreflightArgs
-{
-  bool          withCredentials;
-  PrincipalInfo preflightPrincipal;
-  nsCString[]   unsafeHeaders;
-};
-
-union OptionalCorsPreflightArgs
-{
-  void_t;
-  CorsPreflightArgs;
-};
-
 struct HttpChannelOpenArgs
 {
   URIParams                   uri;
@@ -104,10 +91,8 @@ struct HttpChannelOpenArgs
   OptionalFileDescriptorSet   fds;
   OptionalLoadInfoArgs        loadInfo;
   OptionalHttpResponseHead    synthesizedResponseHead;
-  nsCString                   synthesizedSecurityInfoSerialization;
   uint32_t                    cacheKey;
   nsCString                   schedulingContextID;
-  OptionalCorsPreflightArgs   preflightArgs;
 };
 
 struct HttpChannelConnectArgs

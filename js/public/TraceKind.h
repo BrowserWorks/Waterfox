@@ -98,13 +98,11 @@ JS_FOR_EACH_TRACEKIND(JS_EXPAND_DEF);
 // GCC and Clang require an explicit template declaration in front of the
 // specialization of operator() because it is a dependent template. MSVC, on
 // the other hand, gets very confused if we have a |template| token there.
-// The clang-cl front end defines _MSC_VER, but still requires the explicit
-// template declaration, so we must test for __clang__ here as well.
-// #if defined(_MSC_VER) && (!defined(__clang__) || !defined(__ICL))
+// #ifdef _MSC_VER
 // # define JS_DEPENDENT_TEMPLATE_HINT
 // #else
 # define JS_DEPENDENT_TEMPLATE_HINT template
-// #endif
+//#endif
 template <typename F, typename... Args>
 auto
 DispatchTraceKindTyped(F f, JS::TraceKind traceKind, Args&&... args)

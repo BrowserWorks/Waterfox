@@ -95,13 +95,6 @@ struct ParamTraits<nsEventStatus>
                                     nsEventStatus_eSentinel>
 { };
 
-template<>
-struct ParamTraits<nsSizeMode>
-  : public ContiguousEnumSerializer<nsSizeMode,
-                                    nsSizeMode_Normal,
-                                    nsSizeMode_Invalid>
-{ };
-
 } // namespace IPC
 
 #endif

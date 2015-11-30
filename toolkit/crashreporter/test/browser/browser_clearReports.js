@@ -39,7 +39,7 @@ function clickClearReports(tab, cb) {
 
 var promptShown = false;
 
-var oldPrompt = Services.prompt;
+let oldPrompt = Services.prompt;
 Services.prompt = {
   confirm: function() {
     promptShown = true;

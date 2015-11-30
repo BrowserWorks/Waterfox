@@ -75,7 +75,7 @@ private:
   bool Load(sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder);
   bool LoadConnection(sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder);
   bool LoadProtocol(sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder);
-  bool LoadFormats(sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder);
+  void LoadFormats(sdp_t* sdp, uint16_t level);
 
   // the following values are cached on first get
   MediaType mMediaType;

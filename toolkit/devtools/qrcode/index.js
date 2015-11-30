@@ -5,7 +5,8 @@
 "use strict";
 
 const { Cu } = require("chrome");
-const promise = require("promise");
+const { Promise: promise } =
+  Cu.import("resource://gre/modules/Promise.jsm", {});
 
 // Lazily require encoder and decoder in case only one is needed
 Object.defineProperty(this, "Encoder", {

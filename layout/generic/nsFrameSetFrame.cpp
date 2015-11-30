@@ -651,17 +651,15 @@ nsresult nsHTMLFramesetFrame::HandleEvent(nsPresContext* aPresContext,
   NS_ENSURE_ARG_POINTER(aEventStatus);
   if (mDragger) {
     // the nsFramesetBorderFrame has captured NS_MOUSE_DOWN
-    switch (aEvent->mMessage) {
-      case eMouseMove:
+    switch (aEvent->message) {
+      case NS_MOUSE_MOVE:
         MouseDrag(aPresContext, aEvent);
 	      break;
-      case eMouseUp:
+      case NS_MOUSE_BUTTON_UP:
         if (aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton) {
           EndMouseDrag(aPresContext);
         }
 	      break;
-      default:
-        break;
     }
     *aEventStatus = nsEventStatus_eConsumeNoDefault;
   } else {
@@ -831,13 +829,7 @@ nsHTMLFramesetFrame::Reflow(nsPresContext*           aPresContext,
   nscoord height = (aDesiredSize.Height() <= aReflowState.AvailableHeight())
     ? aDesiredSize.Height() : aReflowState.AvailableHeight();
 
-  // We might be reflowed more than once with NS_FRAME_FIRST_REFLOW;
-  // that's allowed.  (Though it will only happen for misuse of frameset
-  // that includes it within other content.)  So measure firstTime by
-  // what we care about, which is whether we've processed the data we
-  // process below if firstTime is true.
-  MOZ_ASSERT(!mChildFrameborder == !mChildBorderColors);
-  bool firstTime = !!mChildFrameborder;
+  bool firstTime = (GetStateBits() & NS_FRAME_FIRST_REFLOW) != 0;
 
   // subtract out the width of all of the potential borders. There are
   // only borders between <frame>s. There are none on the edges (e.g the
@@ -1545,7 +1537,7 @@ nsHTMLFramesetBorderFrame::HandleEvent(nsPresContext* aPresContext,
     return NS_OK;
   }
 
-  if (aEvent->mMessage == eMouseDown &&
+  if (aEvent->message == NS_MOUSE_BUTTON_DOWN &&
       aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton) {
     nsHTMLFramesetFrame* parentFrame = do_QueryFrame(GetParent());
     if (parentFrame) {

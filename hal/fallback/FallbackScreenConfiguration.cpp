@@ -33,7 +33,7 @@ GetCurrentScreenConfiguration(hal::ScreenConfiguration* aScreenConfiguration)
 
   nsIntRect rect;
   int32_t colorDepth, pixelDepth;
-  dom::ScreenOrientationInternal orientation;
+  dom::ScreenOrientation orientation;
   nsCOMPtr<nsIScreen> screen;
 
   screenMgr->GetPrimaryScreen(getter_AddRefs(screen));
@@ -45,11 +45,11 @@ GetCurrentScreenConfiguration(hal::ScreenConfiguration* aScreenConfiguration)
                 : dom::eScreenOrientation_PortraitPrimary;
 
   *aScreenConfiguration =
-      hal::ScreenConfiguration(rect, orientation, 0, colorDepth, pixelDepth);
+      hal::ScreenConfiguration(rect, orientation, colorDepth, pixelDepth);
 }
 
 bool
-LockScreenOrientation(const dom::ScreenOrientationInternal& aOrientation)
+LockScreenOrientation(const dom::ScreenOrientation& aOrientation)
 {
   return false;
 }

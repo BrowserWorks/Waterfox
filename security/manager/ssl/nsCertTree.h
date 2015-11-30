@@ -14,7 +14,7 @@
 #include "nsIMutableArray.h"
 #include "nsNSSComponent.h"
 #include "nsTArray.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsIX509CertDB.h"
 #include "nsCertOverrideService.h"
 #include "mozilla/Attributes.h"

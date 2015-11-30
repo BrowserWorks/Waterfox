@@ -56,7 +56,7 @@ const Services = require("Services");
 const protocol = require("devtools/server/protocol");
 const {Arg, Option, method, RetVal, types} = protocol;
 const {LongStringActor, ShortLongString} = require("devtools/server/actors/string");
-const promise = require("promise");
+const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 const object = require("sdk/util/object");
 const events = require("sdk/event/core");
@@ -67,16 +67,10 @@ const {
   HighlighterActor,
   CustomHighlighterActor,
   isTypeRegistered,
-} = require("devtools/server/actors/highlighters");
-const {
-  isAnonymous,
-  isNativeAnonymous,
-  isXBLAnonymous,
-  isShadowAnonymous,
-  getFrameElement
-} = require("devtools/toolkit/layout/utils");
+} = require("devtools/server/actors/highlighter");
 const {getLayoutChangesObserver, releaseLayoutChangesObserver} =
   require("devtools/server/actors/layout");
+const LayoutHelpers = require("devtools/toolkit/layout-helpers");
 
 const {EventParsers} = require("devtools/toolkit/event-parsers");
 
@@ -119,13 +113,11 @@ const PSEUDO_SELECTORS = [
   ["::selection", 0]
 ];
 
-var HELPER_SHEET = ".__fx-devtools-hide-shortcut__ { visibility: hidden !important } ";
+let HELPER_SHEET = ".__fx-devtools-hide-shortcut__ { visibility: hidden !important } ";
 HELPER_SHEET += ":-moz-devtools-highlighted { outline: 2px dashed #F06!important; outline-offset: -2px!important } ";
 
 loader.lazyRequireGetter(this, "DevToolsUtils",
                          "devtools/toolkit/DevToolsUtils");
-
-loader.lazyRequireGetter(this, "AsyncUtils", "devtools/toolkit/async-utils");
 
 loader.lazyGetter(this, "DOMParser", function() {
   return Cc["@mozilla.org/xmlextras/domparser;1"].createInstance(Ci.nsIDOMParser);
@@ -230,19 +222,6 @@ var NodeActor = exports.NodeActor = protocol.ActorClass({
            this.rawNode.ownerDocument.documentElement === this.rawNode;
   },
 
-  destroy: function () {
-    protocol.Actor.prototype.destroy.call(this);
-
-    if (this.mutationObserver) {
-      if (!Cu.isDeadWrapper(this.mutationObserver)) {
-        this.mutationObserver.disconnect();
-      }
-      this.mutationObserver = null;
-    }
-    this.rawNode = null;
-    this.walker = null;
-  },
-
   // Returns the JSON representation of this object over the wire.
   form: function(detail) {
     if (detail === "actorid") {
@@ -270,10 +249,10 @@ var NodeActor = exports.NodeActor = protocol.ActorClass({
       attrs: this.writeAttrs(),
       isBeforePseudoElement: this.isBeforePseudoElement,
       isAfterPseudoElement: this.isAfterPseudoElement,
-      isAnonymous: isAnonymous(this.rawNode),
-      isNativeAnonymous: isNativeAnonymous(this.rawNode),
-      isXBLAnonymous: isXBLAnonymous(this.rawNode),
-      isShadowAnonymous: isShadowAnonymous(this.rawNode),
+      isAnonymous: LayoutHelpers.isAnonymous(this.rawNode),
+      isNativeAnonymous: LayoutHelpers.isNativeAnonymous(this.rawNode),
+      isXBLAnonymous: LayoutHelpers.isXBLAnonymous(this.rawNode),
+      isShadowAnonymous: LayoutHelpers.isShadowAnonymous(this.rawNode),
       pseudoClassLocks: this.writePseudoClassLocks(),
 
       isDisplayed: this.isDisplayed,
@@ -313,25 +292,6 @@ var NodeActor = exports.NodeActor = protocol.ActorClass({
     });
 
     return form;
-  },
-
-  /**
-   * Watch the given document node for mutations using the DOM observer
-   * API.
-   */
-  watchDocument: function(callback) {
-    let node = this.rawNode;
-    // Create the observer on the node's actor.  The node will make sure
-    // the observer is cleaned up when the actor is released.
-    let observer = new node.defaultView.MutationObserver(callback);
-    observer.mergeAttributeRecords = true;
-    observer.observe(node, {
-      attributes: true,
-      characterData: true,
-      childList: true,
-      subtree: true
-    });
-    this.mutationObserver = observer;
   },
 
   get isBeforePseudoElement() {
@@ -664,12 +624,16 @@ var NodeActor = exports.NodeActor = protocol.ActorClass({
    * transfered in the longstring back to the client will be that much smaller
    */
   getImageData: method(function(maxDim) {
-    return imageToImageData(this.rawNode, maxDim).then(imageData => {
-      return {
+    // imageToImageData may fail if the node isn't an image
+    try {
+      let imageData = imageToImageData(this.rawNode, maxDim);
+      return promise.resolve({
         data: LongStringActor(this.conn, imageData.data),
         size: imageData.size
-      };
-    });
+      });
+    } catch(e) {
+      return promise.reject(new Error("Image not available"));
+    }
   }, {
     request: {maxDim: Arg(0, "nullable:number")},
     response: RetVal("imageData")
@@ -764,7 +728,7 @@ var NodeActor = exports.NodeActor = protocol.ActorClass({
  * the parent node from clients, but the `children` request should be used
  * to traverse children.
  */
-var NodeFront = protocol.FrontClass(NodeActor, {
+let NodeFront = protocol.FrontClass(NodeActor, {
   initialize: function(conn, form, detail, ctx) {
     this._parent = null; // The parent node
     this._child = null;  // The first child of this node.
@@ -779,6 +743,12 @@ var NodeFront = protocol.FrontClass(NodeActor, {
    * is being destroyed.
    */
   destroy: function() {
+    // If an observer was added on this node, shut it down.
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+
     protocol.Front.prototype.destroy.call(this);
   },
 
@@ -1225,7 +1195,7 @@ var NodeListFront = exports.NodeListFront = protocol.FrontClass(NodeListActor, {
 
 // Some common request/response templates for the dom walker
 
-var nodeArrayMethod = {
+let nodeArrayMethod = {
   request: {
     node: Arg(0, "domnode"),
     maxNodes: Option(1),
@@ -1238,7 +1208,7 @@ var nodeArrayMethod = {
   }))
 };
 
-var traversalMethod = {
+let traversalMethod = {
   request: {
     node: Arg(0, "domnode"),
     whatToShow: Option(1)
@@ -1296,6 +1266,8 @@ var WalkerActor = protocol.ActorClass({
     this._activePseudoClassLocks = new Set();
     this.showAllAnonymousContent = options.showAllAnonymousContent;
 
+    this.layoutHelpers = new LayoutHelpers(this.rootWin);
+
     // Nodes which have been removed from the client's known
     // ownership tree are considered "orphaned", and stored in
     // this set.
@@ -1326,13 +1298,7 @@ var WalkerActor = protocol.ActorClass({
   form: function() {
     return {
       actor: this.actorID,
-      root: this.rootNode.form(),
-      traits: {
-        // FF42+ Inspector starts managing the Walker, while the inspector also
-        // starts cleaning itself up automatically on client disconnection.
-        // So that there is no need to manually release the walker anymore.
-        autoReleased: true
-      }
+      root: this.rootNode.form()
     }
   },
 
@@ -1349,44 +1315,24 @@ var WalkerActor = protocol.ActorClass({
   },
 
   destroy: function() {
-    if (this._destroyed) {
-      return;
-    }
-    this._destroyed = true;
-    protocol.Actor.prototype.destroy.call(this);
     try {
+      this._destroyed = true;
+
       this.clearPseudoClassLocks();
       this._activePseudoClassLocks = null;
 
       this._hoveredNode = null;
-      this.rootWin = null;
       this.rootDoc = null;
-      this.rootNode = null;
-      this.layoutHelpers = null;
-      this._orphaned = null;
-      this._retainedOrphans = null;
-      this._refMap = null;
-
-      events.off(this.tabActor, "will-navigate", this.onFrameUnload);
-      events.off(this.tabActor, "navigate", this.onFrameLoad);
-
-      this.onFrameLoad = null;
-      this.onFrameUnload = null;
 
       this.reflowObserver.off("reflows", this._onReflows);
       this.reflowObserver = null;
-      this._onReflows = null;
       releaseLayoutChangesObserver(this.tabActor);
-
-      this.onMutations = null;
-
-      this.tabActor = null;
 
       events.emit(this, "destroyed");
     } catch(e) {
       console.error(e);
     }
-
+    protocol.Actor.prototype.destroy.call(this);
   },
 
   release: method(function() {}, { release: true }),
@@ -1402,10 +1348,6 @@ var WalkerActor = protocol.ActorClass({
     protocol.Actor.prototype.unmanage.call(this, actor);
   },
 
-  hasNode: function(node) {
-    return this._refMap.has(node);
-  },
-
   _ref: function(node) {
     let actor = this._refMap.get(node);
     if (actor) return actor;
@@ -1418,7 +1360,7 @@ var WalkerActor = protocol.ActorClass({
     this._refMap.set(node, actor);
 
     if (node.nodeType === Ci.nsIDOMNode.DOCUMENT_NODE) {
-      actor.watchDocument(this.onMutations);
+      this._watchDocument(actor);
     }
     return actor;
   },
@@ -1495,7 +1437,7 @@ var WalkerActor = protocol.ActorClass({
         // If an anonymous node was passed in and we aren't supposed to know
         // about it, then consult with the document walker as the source of
         // truth about which elements exist.
-        if (!this.showAllAnonymousContent && isAnonymous(node)) {
+        if (!this.showAllAnonymousContent && LayoutHelpers.isAnonymous(node)) {
           node = this.getDocumentWalker(node).currentNode;
         }
 
@@ -1512,6 +1454,24 @@ var WalkerActor = protocol.ActorClass({
       nodes: nodeActors,
       newParents: [...newParents]
     };
+  },
+
+  /**
+   * Watch the given document node for mutations using the DOM observer
+   * API.
+   */
+  _watchDocument: function(actor) {
+    let node = actor.rawNode;
+    // Create the observer on the node's actor.  The node will make sure
+    // the observer is cleaned up when the actor is released.
+    actor.observer = new actor.rawNode.defaultView.MutationObserver(this.onMutations);
+    actor.observer.mergeAttributeRecords = true;
+    actor.observer.observe(node, {
+      attributes: true,
+      characterData: true,
+      childList: true,
+      subtree: true
+    });
   },
 
   /**
@@ -2882,7 +2842,7 @@ var WalkerActor = protocol.ActorClass({
       });
       return;
     }
-    let frame = getFrameElement(window);
+    let frame = this.layoutHelpers.getFrameElement(window);
     let frameActor = this._refMap.get(frame);
     if (!frameActor) {
       return;
@@ -2909,7 +2869,7 @@ var WalkerActor = protocol.ActorClass({
       if (win === window) {
         return true;
       }
-      win = getFrameElement(win);
+      win = this.layoutHelpers.getFrameElement(win);
     }
     return false;
   },
@@ -3148,8 +3108,6 @@ var WalkerFront = exports.WalkerFront = protocol.FrontClass(WalkerActor, {
     this.actorID = json.actor;
     this.rootNode = types.getType("domnode").read(json.root, this);
     this._rootNodeDeferred.resolve(this.rootNode);
-    // FF42+ the actor starts exposing traits
-    this.traits = json.traits || {};
   },
 
   /**
@@ -3539,11 +3497,6 @@ var InspectorActor = exports.InspectorActor = protocol.ActorClass({
 
   destroy: function () {
     protocol.Actor.prototype.destroy.call(this);
-    this._highlighterPromise = null;
-    this._pageStylePromise = null;
-    this._walkerPromise = null;
-    this.walker = null;
-    this.tabActor = null;
   },
 
   // Forces destruction of the actor and all its children
@@ -3569,7 +3522,6 @@ var InspectorActor = exports.InspectorActor = protocol.ActorClass({
       let tabActor = this.tabActor;
       window.removeEventListener("DOMContentLoaded", domReady, true);
       this.walker = WalkerActor(this.conn, tabActor, options);
-      this.manage(this.walker);
       events.once(this.walker, "destroyed", () => {
         this._walkerPromise = null;
         this._pageStylePromise = null;
@@ -3599,9 +3551,7 @@ var InspectorActor = exports.InspectorActor = protocol.ActorClass({
     }
 
     this._pageStylePromise = this.getWalker().then(walker => {
-      let pageStyle = PageStyleActor(this);
-      this.manage(pageStyle);
-      return pageStyle;
+      return PageStyleActor(this);
     });
     return this._pageStylePromise;
   }, {
@@ -3682,16 +3632,39 @@ var InspectorActor = exports.InspectorActor = protocol.ActorClass({
    * transfered in the longstring back to the client will be that much smaller
    */
   getImageDataFromURL: method(function(url, maxDim) {
+    let deferred = promise.defer();
     let img = new this.window.Image();
+
+    // On load, get the image data and send the response
+    img.onload = () => {
+      // imageToImageData throws an error if the image is missing
+      try {
+        let imageData = imageToImageData(img, maxDim);
+        deferred.resolve({
+          data: LongStringActor(this.conn, imageData.data),
+          size: imageData.size
+        });
+      } catch (e) {
+        deferred.reject(new Error("Image " + url+ " not available"));
+      }
+    }
+
+    // If the URL doesn't point to a resource, reject
+    img.onerror = () => {
+      deferred.reject(new Error("Image " + url+ " not available"));
+    }
+
+    // If the request hangs for too long, kill it to avoid queuing up other requests
+    // to the same actor, except if we're running tests
+    if (!DevToolsUtils.testing) {
+      this.window.setTimeout(() => {
+        deferred.reject(new Error("Image " + url + " could not be retrieved in time"));
+      }, IMAGE_FETCHING_TIMEOUT);
+    }
+
     img.src = url;
 
-    // imageToImageData waits for the image to load.
-    return imageToImageData(img, maxDim).then(imageData => {
-      return {
-        data: LongStringActor(this.conn, imageData.data),
-        size: imageData.size
-      };
-    });
+    return deferred.promise;
   }, {
     request: {url: Arg(0), maxDim: Arg(1, "nullable:number")},
     response: RetVal("imageData")
@@ -3910,8 +3883,8 @@ function standardTreeWalkerFilter(aNode) {
   }
 
   // Ignore all native and XBL anonymous content inside a non-XUL document
-  if (!isInXULDocument(aNode) && (isXBLAnonymous(aNode) ||
-                                  isNativeAnonymous(aNode))) {
+  if (!isInXULDocument(aNode) && (LayoutHelpers.isXBLAnonymous(aNode) ||
+                                  LayoutHelpers.isNativeAnonymous(aNode))) {
     // Note: this will skip inspecting the contents of feedSubscribeLine since
     // that's XUL content injected in an HTML document, but we need to because
     // this also skips many other elements that need to be skipped - like form
@@ -3936,84 +3909,20 @@ function allAnonymousContentTreeWalkerFilter(aNode) {
 }
 
 /**
- * Returns a promise that is settled once the given HTMLImageElement has
- * finished loading.
- *
- * @param {HTMLImageElement} image - The image element.
- * @param {Number} timeout - Maximum amount of time the image is allowed to load
- * before the waiting is aborted. Ignored if DevToolsUtils.testing is set.
- *
- * @return {Promise} that is fulfilled once the image has loaded. If the image
- * fails to load or the load takes too long, the promise is rejected.
- */
-function ensureImageLoaded(image, timeout) {
-  let { HTMLImageElement } = image.ownerDocument.defaultView;
-  if (!(image instanceof HTMLImageElement)) {
-    return promise.reject("image must be an HTMLImageELement");
-  }
-
-  if (image.complete) {
-    // The image has already finished loading.
-    return promise.resolve();
-  }
-
-  // This image is still loading.
-  let onLoad = AsyncUtils.listenOnce(image, "load");
-
-  // Reject if loading fails.
-  let onError = AsyncUtils.listenOnce(image, "error").then(() => {
-    return promise.reject("Image '" + image.src + "' failed to load.");
-  });
-
-  // Don't timeout when testing. This is never settled.
-  let onAbort = new promise(() => {});
-
-  if (!DevToolsUtils.testing) {
-    // Tests are not running. Reject the promise after given timeout.
-    onAbort = DevToolsUtils.waitForTime(timeout).then(() => {
-      return promise.reject("Image '" + image.src + "' took too long to load.");
-    });
-  }
-
-  // See which happens first.
-  return promise.race([onLoad, onError, onAbort]);
-}
-
-/**
- * Given an <img> or <canvas> element, return the image data-uri. If @param node
- * is an <img> element, the method waits a while for the image to load before
- * the data is generated. If the image does not finish loading in a reasonable
- * time (IMAGE_FETCHING_TIMEOUT milliseconds) the process aborts.
- *
- * @param {HTMLImageElement|HTMLCanvasElement} node - The <img> or <canvas>
- * element, or Image() object. Other types cause the method to reject.
- * @param {Number} maxDim - Optionally pass a maximum size you want the longest
+ * Given an image DOMNode, return the image data-uri.
+ * @param {DOMNode} node The image node
+ * @param {Number} maxDim Optionally pass a maximum size you want the longest
  * side of the image to be resized to before getting the image data.
-
- * @return {Promise} A promise that is fulfilled with an object containing the
- * data-uri and size-related information:
- * { data: "...",
- *   size: {
- *     naturalWidth: 400,
- *     naturalHeight: 300,
- *     resized: true }
- *  }.
- *
- * If something goes wrong, the promise is rejected.
+ * @return {Object} An object containing the data-uri and size-related information
+ * {data: "...", size: {naturalWidth: 400, naturalHeight: 300, resized: true}}
+ * @throws an error if the node isn't an image or if the image is missing
  */
-var imageToImageData = Task.async(function* (node, maxDim) {
-  let { HTMLCanvasElement, HTMLImageElement } = node.ownerDocument.defaultView;
-
-  let isImg = node instanceof HTMLImageElement;
-  let isCanvas = node instanceof HTMLCanvasElement;
+function imageToImageData(node, maxDim) {
+  let isImg = node.tagName.toLowerCase() === "img";
+  let isCanvas = node.tagName.toLowerCase() === "canvas";
 
   if (!isImg && !isCanvas) {
-    throw "node is not a <canvas> or <img> element.";
-  }
-
-  if (isImg) {
-    // Ensure that the image is ready.
-    yield ensureImageLoaded(node, IMAGE_FETCHING_TIMEOUT);
+    return null;
   }
 
   // Get the image resize ratio if a maxDim was provided
@@ -4051,7 +3960,7 @@ var imageToImageData = Task.async(function* (node, maxDim) {
       resized: resizeRatio !== 1
     }
   }
-});
+}
 
 loader.lazyGetter(this, "DOMUtils", function () {
   return Cc["@mozilla.org/inspector/dom-utils;1"].getService(Ci.inIDOMUtils);

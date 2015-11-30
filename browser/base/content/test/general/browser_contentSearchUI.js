@@ -639,7 +639,7 @@ add_task(function* settings() {
   yield msg("reset");
 });
 
-var gDidInitialSetUp = false;
+let gDidInitialSetUp = false;
 
 function setUp(aNoEngine) {
   return Task.spawn(function* () {

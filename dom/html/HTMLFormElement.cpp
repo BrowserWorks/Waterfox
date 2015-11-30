@@ -256,7 +256,7 @@ HTMLFormElement::Submit(ErrorResult& aRv)
     mPendingSubmission = nullptr;
   }
 
-  aRv = DoSubmitOrReset(nullptr, eFormSubmit);
+  aRv = DoSubmitOrReset(nullptr, NS_FORM_SUBMIT);
 }
 
 NS_IMETHODIMP
@@ -270,7 +270,7 @@ HTMLFormElement::Submit()
 NS_IMETHODIMP
 HTMLFormElement::Reset()
 {
-  InternalFormEvent event(true, eFormReset);
+  InternalFormEvent event(true, NS_FORM_RESET);
   EventDispatcher::Dispatch(static_cast<nsIContent*>(this), nullptr, &event);
   return NS_OK;
 }
@@ -492,8 +492,8 @@ HTMLFormElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mWantsWillHandleEvent = true;
   if (aVisitor.mEvent->originalTarget == static_cast<nsIContent*>(this)) {
-    uint32_t msg = aVisitor.mEvent->mMessage;
-    if (msg == eFormSubmit) {
+    uint32_t msg = aVisitor.mEvent->message;
+    if (msg == NS_FORM_SUBMIT) {
       if (mGeneratingSubmit) {
         aVisitor.mCanHandle = false;
         return NS_OK;
@@ -504,7 +504,8 @@ HTMLFormElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
       // that means that if there are scripted submissions, the
       // latest one will be deferred until after the exit point of the handler.
       mDeferSubmission = true;
-    } else if (msg == eFormReset) {
+    }
+    else if (msg == NS_FORM_RESET) {
       if (mGeneratingReset) {
         aVisitor.mCanHandle = false;
         return NS_OK;
@@ -521,8 +522,8 @@ HTMLFormElement::WillHandleEvent(EventChainPostVisitor& aVisitor)
   // If this is the bubble stage and there is a nested form below us which
   // received a submit event we do *not* want to handle the submit event
   // for this form too.
-  if ((aVisitor.mEvent->mMessage == eFormSubmit ||
-       aVisitor.mEvent->mMessage == eFormReset) &&
+  if ((aVisitor.mEvent->message == NS_FORM_SUBMIT ||
+       aVisitor.mEvent->message == NS_FORM_RESET) &&
       aVisitor.mEvent->mFlags.mInBubblingPhase &&
       aVisitor.mEvent->originalTarget != static_cast<nsIContent*>(this)) {
     aVisitor.mEvent->mFlags.mPropagationStopped = true;
@@ -534,17 +535,18 @@ nsresult
 HTMLFormElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
 {
   if (aVisitor.mEvent->originalTarget == static_cast<nsIContent*>(this)) {
-    EventMessage msg = aVisitor.mEvent->mMessage;
-    if (msg == eFormSubmit) {
+    uint32_t msg = aVisitor.mEvent->message;
+    if (msg == NS_FORM_SUBMIT) {
       // let the form know not to defer subsequent submissions
       mDeferSubmission = false;
     }
 
     if (aVisitor.mEventStatus == nsEventStatus_eIgnore) {
       switch (msg) {
-        case eFormReset:
-        case eFormSubmit: {
-          if (mPendingSubmission && msg == eFormSubmit) {
+        case NS_FORM_RESET:
+        case NS_FORM_SUBMIT:
+        {
+          if (mPendingSubmission && msg == NS_FORM_SUBMIT) {
             // tell the form to forget a possible pending submission.
             // the reason is that the script returned true (the event was
             // ignored) so if there is a stored submission, it will miss
@@ -553,13 +555,11 @@ HTMLFormElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
             mPendingSubmission = nullptr;
           }
           DoSubmitOrReset(aVisitor.mEvent, msg);
-          break;
         }
-        default:
-          break;
+        break;
       }
     } else {
-      if (msg == eFormSubmit) {
+      if (msg == NS_FORM_SUBMIT) {
         // tell the form to flush a possible pending submission.
         // the reason is that the script returned false (the event was
         // not ignored) so if there is a stored submission, it needs to
@@ -568,9 +568,10 @@ HTMLFormElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
       }
     }
 
-    if (msg == eFormSubmit) {
+    if (msg == NS_FORM_SUBMIT) {
       mGeneratingSubmit = false;
-    } else if (msg == eFormReset) {
+    }
+    else if (msg == NS_FORM_RESET) {
       mGeneratingReset = false;
     }
   }
@@ -579,7 +580,7 @@ HTMLFormElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
 
 nsresult
 HTMLFormElement::DoSubmitOrReset(WidgetEvent* aEvent,
-                                 EventMessage aMessage)
+                                 int32_t aMessage)
 {
   // Make sure the presentation is up-to-date
   nsIDocument* doc = GetComposedDoc();
@@ -590,11 +591,11 @@ HTMLFormElement::DoSubmitOrReset(WidgetEvent* aEvent,
   // JBK Don't get form frames anymore - bug 34297
 
   // Submit or Reset the form
-  if (eFormReset == aMessage) {
+  if (NS_FORM_RESET == aMessage) {
     return DoReset();
   }
 
-  if (eFormSubmit == aMessage) {
+  if (NS_FORM_SUBMIT == aMessage) {
     // Don't submit if we're not in a document or if we're in
     // a sandboxed frame and form submit is disabled.
     if (!doc || (doc->GetSandboxFlags() & SANDBOXED_FORMS)) {

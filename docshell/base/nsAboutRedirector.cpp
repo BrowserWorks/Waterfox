@@ -36,35 +36,31 @@ static RedirEntry kRedirMap[] = {
   },
   { "about", "chrome://global/content/aboutAbout.xhtml", 0 },
   {
-    "addons", "chrome://mozapps/content/extensions/extensions.xul",
-    nsIAboutModule::ALLOW_SCRIPT
+    "credits", "http://www.mozilla.org/credits/",
+    nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT
   },
   {
-    "buildconfig", "chrome://global/content/buildconfig.html",
+    "mozilla", "chrome://global/content/mozilla.xhtml",
     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT
+  },
+  {
+    "plugins", "chrome://global/content/plugins.html",
+    nsIAboutModule::URI_MUST_LOAD_IN_CHILD
   },
   { "config", "chrome://global/content/config.xul", 0 },
 #ifdef MOZ_CRASHREPORTER
   { "crashes", "chrome://global/content/crashes.xhtml", 0 },
 #endif
   {
-    "credits", "http://www.mozilla.org/credits/",
-    nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT
-  },
-  {
-    "license", "chrome://global/content/license.html",
-    nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT
-  },
-  {
     "logo", "chrome://branding/content/about.png",
     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT
   },
   {
-    "memory", "chrome://global/content/aboutMemory.xhtml",
-    nsIAboutModule::ALLOW_SCRIPT
+    "buildconfig", "chrome://global/content/buildconfig.html",
+    nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT
   },
   {
-    "mozilla", "chrome://global/content/mozilla.xhtml",
+    "license", "chrome://global/content/license.html",
     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT
   },
   {
@@ -75,7 +71,15 @@ static RedirEntry kRedirMap[] = {
       nsIAboutModule::HIDE_FROM_ABOUTABOUT
   },
   {
-    "networking", "chrome://global/content/aboutNetworking.xhtml",
+    "memory", "chrome://global/content/aboutMemory.xhtml",
+    nsIAboutModule::ALLOW_SCRIPT
+  },
+  {
+    "performance", "chrome://global/content/aboutPerformance.xhtml",
+    nsIAboutModule::ALLOW_SCRIPT
+  },
+  {
+    "addons", "chrome://mozapps/content/extensions/extensions.xul",
     nsIAboutModule::ALLOW_SCRIPT
   },
   {
@@ -83,15 +87,21 @@ static RedirEntry kRedirMap[] = {
     nsIAboutModule::ALLOW_SCRIPT |
       nsIAboutModule::HIDE_FROM_ABOUTABOUT
   },
-#ifdef NIGHTLY_BUILD
   {
-    "performance", "chrome://global/content/aboutPerformance.xhtml",
+    "support", "chrome://global/content/aboutSupport.xhtml",
     nsIAboutModule::ALLOW_SCRIPT
   },
-#endif
   {
-    "plugins", "chrome://global/content/plugins.html",
-    nsIAboutModule::URI_MUST_LOAD_IN_CHILD
+    "telemetry", "chrome://global/content/aboutTelemetry.xhtml",
+    nsIAboutModule::ALLOW_SCRIPT
+  },
+  {
+    "networking", "chrome://global/content/aboutNetworking.xhtml",
+    nsIAboutModule::ALLOW_SCRIPT
+  },
+  {
+    "webrtc", "chrome://global/content/aboutwebrtc/aboutWebrtc.xhtml",
+    nsIAboutModule::ALLOW_SCRIPT
   },
   {
     "serviceworkers", "chrome://global/content/aboutServiceWorkers.xhtml",
@@ -106,18 +116,6 @@ static RedirEntry kRedirMap[] = {
     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
       nsIAboutModule::HIDE_FROM_ABOUTABOUT |
       nsIAboutModule::URI_CAN_LOAD_IN_CHILD
-  },
-  {
-    "support", "chrome://global/content/aboutSupport.xhtml",
-    nsIAboutModule::ALLOW_SCRIPT
-  },
-  {
-    "telemetry", "chrome://global/content/aboutTelemetry.xhtml",
-    nsIAboutModule::ALLOW_SCRIPT
-  },
-  {
-    "webrtc", "chrome://global/content/aboutwebrtc/aboutWebrtc.xhtml",
-    nsIAboutModule::ALLOW_SCRIPT
   }
 };
 static const int kRedirTotal = mozilla::ArrayLength(kRedirMap);

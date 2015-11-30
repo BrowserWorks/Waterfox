@@ -11,15 +11,15 @@ function Deferred()  {
   Object.freeze(this);
 }
 
-var telephony;
-var conference;
+let telephony;
+let conference;
 
 const kPrefRilDebuggingEnabled = "ril.debugging.enabled";
 
 /**
  * Emulator helper.
  */
-var emulator = (function() {
+let emulator = (function() {
   let pendingCmdCount = 0;
   let originalRunEmulatorCmd = runEmulatorCmd;
 

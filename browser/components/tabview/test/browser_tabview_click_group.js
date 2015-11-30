@@ -1,9 +1,9 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var contentWindow;
-var groupItem;
-var groupItemId;
+let contentWindow;
+let groupItem;
+let groupItemId;
 
 function test() {
   waitForExplicitFinish();

@@ -8,7 +8,7 @@
 // certificate signed by an intermediate that has an OCSP AIA to ensure
 // that an OCSP request is not made for the intermediate.
 
-var gOCSPRequestCount = 0;
+let gOCSPRequestCount = 0;
 
 function add_ocsp_test(aHost, aExpectedResult) {
   add_connection_test(aHost, aExpectedResult,

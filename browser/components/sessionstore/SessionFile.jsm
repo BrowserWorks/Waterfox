@@ -89,10 +89,10 @@ this.SessionFile = {
 
 Object.freeze(SessionFile);
 
-var Path = OS.Path;
-var profileDir = OS.Constants.Path.profileDir;
+let Path = OS.Path;
+let profileDir = OS.Constants.Path.profileDir;
 
-var SessionFileInternal = {
+let SessionFileInternal = {
   Paths: Object.freeze({
     // The path to the latest version of sessionstore written during a clean
     // shutdown. After startup, it is renamed `cleanBackup`.

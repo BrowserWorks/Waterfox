@@ -321,13 +321,11 @@ nsTreeColumn::Invalidate()
   // Figure out our column type. Default type is text.
   mType = nsITreeColumn::TYPE_TEXT;
   static nsIContent::AttrValuesArray typestrings[] =
-    {&nsGkAtoms::checkbox, &nsGkAtoms::progressmeter, &nsGkAtoms::password,
-     nullptr};
+    {&nsGkAtoms::checkbox, &nsGkAtoms::progressmeter, nullptr};
   switch (mContent->FindAttrValueIn(kNameSpaceID_None, nsGkAtoms::type,
                                     typestrings, eCaseMatters)) {
     case 0: mType = nsITreeColumn::TYPE_CHECKBOX; break;
     case 1: mType = nsITreeColumn::TYPE_PROGRESSMETER; break;
-    case 2: mType = nsITreeColumn::TYPE_PASSWORD; break;
   }
 
   // Fetch the crop style.

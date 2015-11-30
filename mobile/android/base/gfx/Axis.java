@@ -206,7 +206,9 @@ abstract class Axis {
     protected abstract float getViewportLength();
     protected abstract float getPageStart();
     protected abstract float getPageLength();
-    protected abstract float getVisibleEndOfLayerView();
+    protected abstract float getMarginStart();
+    protected abstract float getMarginEnd();
+    protected abstract boolean marginsHidden();
 
     Axis(SubdocumentScrollHelper subscroller) {
         mSubscroller = subscroller;
@@ -368,6 +370,13 @@ abstract class Axis {
             return false;
         }
 
+        // if there are margins on this axis but they are currently hidden,
+        // we must be able to scroll in order to make them visible, so allow
+        // scrolling in that case
+        if (marginsHidden()) {
+            return true;
+        }
+
         // there is scrollable space, and we're not disabled, or the document fits the viewport
         // but we always allow overscroll anyway
         return getViewportLength() <= getPageLength() - MIN_SCROLLABLE_DISTANCE ||
@@ -498,10 +507,10 @@ abstract class Axis {
         if (getOverScrollMode() == View.OVER_SCROLL_NEVER && !mSubscroller.scrolling()) {
             float originalDisplacement = mDisplacement;
 
-            if (mDisplacement + getOrigin() < getPageStart()) {
-                mDisplacement = getPageStart() - getOrigin();
-            } else if (mDisplacement + getOrigin() + getVisibleEndOfLayerView() > getPageEnd()) {
-                mDisplacement = getPageEnd() - getOrigin() - getVisibleEndOfLayerView();
+            if (mDisplacement + getOrigin() < getPageStart() - getMarginStart()) {
+                mDisplacement = getPageStart() - getMarginStart() - getOrigin();
+            } else if (mDisplacement + getViewportEnd() > getPageEnd() + getMarginEnd()) {
+                mDisplacement = getPageEnd() - getMarginEnd() - getViewportEnd();
             }
 
             // Return the amount of overscroll so that the overscroll controller can draw it for us

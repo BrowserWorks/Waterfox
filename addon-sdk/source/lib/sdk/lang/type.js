@@ -139,10 +139,10 @@ function isArguments(value) {
 }
 exports.isArguments = isArguments;
 
-var isMap = value => Object.prototype.toString.call(value) === "[object Map]"
+let isMap = value => Object.prototype.toString.call(value) === "[object Map]"
 exports.isMap = isMap;
 
-var isSet = value => Object.prototype.toString.call(value) === "[object Set]"
+let isSet = value => Object.prototype.toString.call(value) === "[object Set]"
 exports.isSet = isSet;
 
 /**

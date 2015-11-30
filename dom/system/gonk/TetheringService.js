@@ -103,7 +103,7 @@ const MOBILE_DUN_CONNECT_TIMEOUT       = 30000;
 const MOBILE_DUN_RETRY_INTERVAL        = 5000;
 const MOBILE_DUN_MAX_RETRIES           = 5;
 
-var debug;
+let debug;
 function updateDebug() {
   let debugPref = false; // set default value here.
   try {

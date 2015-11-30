@@ -242,6 +242,11 @@ endif # WINNT && !GNU_CC
 #
 _ENABLE_PIC=1
 
+# No sense in profiling tools
+ifdef INTERNAL_TOOLS
+NO_PROFILE_GUIDED_OPTIMIZE = 1
+endif
+
 # Don't build SIMPLE_PROGRAMS with PGO, since they don't need it anyway,
 # and we don't have the same build logic to re-link them in the second pass.
 ifdef SIMPLE_PROGRAMS
@@ -322,8 +327,15 @@ CFLAGS		= $(OS_CPPFLAGS) $(OS_CFLAGS)
 CXXFLAGS	= $(OS_CPPFLAGS) $(OS_CXXFLAGS)
 LDFLAGS		= $(OS_LDFLAGS) $(MOZBUILD_LDFLAGS) $(MOZ_FIX_LINK_PATHS)
 
+# Allow each module to override the *default* optimization settings
+# by setting MODULE_OPTIMIZE_FLAGS if the developer has not given
+# arguments to --enable-optimize
 ifdef MOZ_OPTIMIZE
 ifeq (1,$(MOZ_OPTIMIZE))
+ifdef MODULE_OPTIMIZE_FLAGS
+CFLAGS		+= $(MODULE_OPTIMIZE_FLAGS)
+CXXFLAGS	+= $(MODULE_OPTIMIZE_FLAGS)
+else
 ifneq (,$(if $(MOZ_PROFILE_GENERATE)$(MOZ_PROFILE_USE),$(MOZ_PGO_OPTIMIZE_FLAGS)))
 CFLAGS		+= $(MOZ_PGO_OPTIMIZE_FLAGS)
 CXXFLAGS	+= $(MOZ_PGO_OPTIMIZE_FLAGS)
@@ -331,6 +343,7 @@ else
 CFLAGS		+= $(MOZ_OPTIMIZE_FLAGS)
 CXXFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
 endif # neq (,$(MOZ_PROFILE_GENERATE)$(MOZ_PROFILE_USE))
+endif # MODULE_OPTIMIZE_FLAGS
 else
 CFLAGS		+= $(MOZ_OPTIMIZE_FLAGS)
 CXXFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
@@ -344,7 +357,11 @@ HOST_CFLAGS	+= $(HOST_OPTIMIZE_FLAGS)
 else
 ifdef MOZ_OPTIMIZE
 ifeq (1,$(MOZ_OPTIMIZE))
+ifdef MODULE_OPTIMIZE_FLAGS
+HOST_CFLAGS	+= $(MODULE_OPTIMIZE_FLAGS)
+else
 HOST_CFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
+endif # MODULE_OPTIMIZE_FLAGS
 else
 HOST_CFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
 endif # MOZ_OPTIMIZE == 1
@@ -354,39 +371,31 @@ endif # CROSS_COMPILE
 CFLAGS += $(MOZ_FRAMEPTR_FLAGS)
 CXXFLAGS += $(MOZ_FRAMEPTR_FLAGS)
 
-# Check for ALLOW_COMPILER_WARNINGS (shorthand for Makefiles to request that we
-# *don't* use the warnings-as-errors compile flags)
+# Check for FAIL_ON_WARNINGS (Shorthand for Makefiles to request that we use
+# the 'warnings as errors' compile flags)
 
-# Don't use warnings-as-errors in Windows PGO builds because it is suspected of
-# causing problems in that situation. (See bug 437002.)
+# NOTE: First, we clear FAIL_ON_WARNINGS[_DEBUG] if we're doing a Windows PGO
+# build, since WARNINGS_AS_ERRORS has been suspected of causing isuses in that
+# situation. (See bug 437002.)
 ifeq (WINNT_1,$(OS_ARCH)_$(MOZ_PROFILE_GENERATE)$(MOZ_PROFILE_USE))
-ALLOW_COMPILER_WARNINGS=1
+FAIL_ON_WARNINGS=
 endif # WINNT && (MOS_PROFILE_GENERATE ^ MOZ_PROFILE_USE)
 
-# Don't use warnings-as-errors in clang-cl because it warns about many more
+# Check for normal version of flag, and add WARNINGS_AS_ERRORS if it's set to 1.
+ifdef FAIL_ON_WARNINGS
+# Never treat warnings as errors in clang-cl, because it warns about many more
 # things than MSVC does.
-ifdef CLANG_CL
-ALLOW_COMPILER_WARNINGS=1
-endif # CLANG_CL
-
-# Use warnings-as-errors if ALLOW_COMPILER_WARNINGS is not set to 1 (which
-# includes the case where it's undefined).
-ifneq (1,$(ALLOW_COMPILER_WARNINGS))
+ifndef CLANG_CL
 CXXFLAGS += $(WARNINGS_AS_ERRORS)
 CFLAGS   += $(WARNINGS_AS_ERRORS)
-endif # ALLOW_COMPILER_WARNINGS
+endif # CLANG_CL
+endif # FAIL_ON_WARNINGS
 
 ifeq ($(OS_ARCH)_$(GNU_CC),WINNT_)
 #// Currently, unless USE_STATIC_LIBS is defined, the multithreaded
 #// DLL version of the RTL is used...
 #//
 #//------------------------------------------------------------------------
-ifdef MOZ_ASAN
-# ASAN-instrumented code tries to link against the dynamic CRT, which can't be
-# used in the same link as the static CRT.
-USE_STATIC_LIBS=
-endif # MOZ_ASAN
-
 ifdef USE_STATIC_LIBS
 RTL_FLAGS=-MT          # Statically linked multithreaded RTL
 ifdef MOZ_DEBUG
@@ -428,9 +437,6 @@ ASFLAGS += $(MOZBUILD_ASFLAGS)
 ifndef CROSS_COMPILE
 HOST_CFLAGS += $(RTL_FLAGS)
 endif
-
-HOST_CFLAGS += $(HOST_DEFINES) $(MOZBUILD_HOST_CFLAGS)
-HOST_CXXFLAGS += $(HOST_DEFINES) $(MOZBUILD_HOST_CXXFLAGS)
 
 #
 # Name of the binary code directories

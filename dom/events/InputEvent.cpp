@@ -15,8 +15,7 @@ InputEvent::InputEvent(EventTarget* aOwner,
                        nsPresContext* aPresContext,
                        InternalEditorInputEvent* aEvent)
   : UIEvent(aOwner, aPresContext,
-            aEvent ? aEvent :
-                     new InternalEditorInputEvent(false, eVoidEvent, nullptr))
+            aEvent ? aEvent : new InternalEditorInputEvent(false, 0, nullptr))
 {
   NS_ASSERTION(mEvent->mClass == eEditorInputEventClass,
                "event type mismatch");
@@ -64,11 +63,14 @@ InputEvent::Constructor(const GlobalObject& aGlobal,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<InputEvent>
-NS_NewDOMInputEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMInputEvent(nsIDOMEvent** aInstancePtrResult,
+                    EventTarget* aOwner,
                     nsPresContext* aPresContext,
                     InternalEditorInputEvent* aEvent)
 {
-  nsRefPtr<InputEvent> it = new InputEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  InputEvent* it = new InputEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

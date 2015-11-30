@@ -19,7 +19,7 @@
 
 "use strict";
 
-var SharedAll;
+let SharedAll;
 if (typeof Components != "undefined") {
   let Cu = Components.utils;
   // Module is opened as a jsm module
@@ -35,20 +35,20 @@ if (typeof Components != "undefined") {
   throw new Error("Please open this module with Component.utils.import or with require()");
 }
 
-var LOG = SharedAll.LOG.bind(SharedAll, "Unix", "allthreads");
-var Const = SharedAll.Constants.libc;
+let LOG = SharedAll.LOG.bind(SharedAll, "Unix", "allthreads");
+let Const = SharedAll.Constants.libc;
 
 // Open libc
-var libc = new SharedAll.Library("libc",
+let libc = new SharedAll.Library("libc",
                                  "libc.so", "libSystem.B.dylib", "a.out");
 exports.libc = libc;
 
 // Define declareFFI
-var declareFFI = SharedAll.declareFFI.bind(null, libc);
+let declareFFI = SharedAll.declareFFI.bind(null, libc);
 exports.declareFFI = declareFFI;
 
 // Define lazy binding
-var LazyBindings = {};
+let LazyBindings = {};
 libc.declareLazy(LazyBindings, "strerror",
                  "strerror", ctypes.default_abi,
                  /*return*/ ctypes.char.ptr,
@@ -79,7 +79,7 @@ libc.declareLazy(LazyBindings, "strerror",
  * @constructor
  * @extends {OS.Shared.Error}
  */
-var OSError = function OSError(operation = "unknown operation",
+let OSError = function OSError(operation = "unknown operation",
                                errno = ctypes.errno, path = "") {
   SharedAll.OSError.call(this, operation, path);
   this.unixErrno = errno;
@@ -184,7 +184,7 @@ exports.Error = OSError;
  *
  * @constructor
 */
-var AbstractInfo = function AbstractInfo(path, isDir, isSymLink, size, lastAccessDate,
+let AbstractInfo = function AbstractInfo(path, isDir, isSymLink, size, lastAccessDate,
                                          lastModificationDate, unixLastStatusChangeDate,
                                          unixOwner, unixGroup, unixMode) {
   this._path = path;
@@ -282,7 +282,7 @@ exports.AbstractInfo = AbstractInfo;
  *
  * @constructor
 */
-var AbstractEntry = function AbstractEntry(isDir, isSymLink, name, path) {
+let AbstractEntry = function AbstractEntry(isDir, isSymLink, name, path) {
   this._isDir = isDir;
   this._isSymlLink = isSymLink;
   this._name = name;
@@ -326,7 +326,7 @@ exports.POS_END = Const.SEEK_END;
 
 // Special types that need to be defined for communication
 // between threads
-var Type = Object.create(SharedAll.Type);
+let Type = Object.create(SharedAll.Type);
 exports.Type = Type;
 
 /**
@@ -354,7 +354,7 @@ OSError.invalidArgument = function invalidArgument(operation) {
   return new OSError(operation, Const.EINVAL);
 };
 
-var EXPORTED_SYMBOLS = [
+let EXPORTED_SYMBOLS = [
   "declareFFI",
   "libc",
   "Error",

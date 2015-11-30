@@ -1,15 +1,15 @@
 "use strict";
 
-var gTestTab;
-var gContentAPI;
-var gContentWindow;
+let gTestTab;
+let gContentAPI;
+let gContentWindow;
 
 function test() {
   requestLongerTimeout(2);
   UITourTest();
 }
 
-var tests = [
+let tests = [
   function test_bg_getConfiguration(done) {
     info("getConfiguration is on the allowed list so should work");
     loadForegroundTab().then(() => {

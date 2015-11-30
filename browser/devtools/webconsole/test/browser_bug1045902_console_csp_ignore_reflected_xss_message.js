@@ -18,12 +18,12 @@ const TEST_FILE = "http://example.com/browser/browser/devtools/webconsole/" +
                   "test/test_bug1045902_console_csp_ignore_reflected_xss_" +
                   "message.html";
 
-var hud = undefined;
+let hud = undefined;
 
-var TEST_URI = "data:text/html;charset=utf8,Web Console CSP ignoring " +
+let TEST_URI = "data:text/html;charset=utf8,Web Console CSP ignoring " +
                "reflected XSS (bug 1045902)";
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   let { browser } = yield loadTab(TEST_URI);
 
   hud = yield openConsole();

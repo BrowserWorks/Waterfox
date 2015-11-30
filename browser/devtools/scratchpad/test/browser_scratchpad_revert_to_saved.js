@@ -3,29 +3,29 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 /* Bug 751744 */
 
-var tempScope = {};
+let tempScope = {};
 Cu.import("resource://gre/modules/NetUtil.jsm", tempScope);
 Cu.import("resource://gre/modules/FileUtils.jsm", tempScope);
-var NetUtil = tempScope.NetUtil;
-var FileUtils = tempScope.FileUtils;
+let NetUtil = tempScope.NetUtil;
+let FileUtils = tempScope.FileUtils;
 
 // Reference to the Scratchpad object.
-var gScratchpad;
+let gScratchpad;
 
 // Reference to the temporary nsIFiles.
-var gFile;
+let gFile;
 
 // Temporary file name.
-var gFileName = "testFileForBug751744.tmp"
+let gFileName = "testFileForBug751744.tmp"
 
 
 // Content for the temporary file.
-var gFileContent = "/* this file is already saved */\n" +
+let gFileContent = "/* this file is already saved */\n" +
                    "function foo() { alert('bar') }";
-var gLength = gFileContent.length;
+let gLength = gFileContent.length;
 
 // Reference to the menu entry.
-var menu;
+let menu;
 
 function startTest()
 {

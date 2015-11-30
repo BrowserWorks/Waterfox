@@ -34,7 +34,6 @@
 #include "nsITheme.h"
 #include "nsLayoutUtils.h"
 #include "nsQueryFrame.h"
-#include "nsStringGlue.h"
 #include "nsStyleContext.h"
 #include "nsStyleStruct.h"
 
@@ -148,12 +147,6 @@ typedef uint32_t nsSplittableType;
 // NOTE: there are assumptions all over that these have the same value, namely NS_UNCONSTRAINEDSIZE
 //       if any are changed to be a value other than NS_UNCONSTRAINEDSIZE
 //       at least update AdjustComputedHeight/Width and test ad nauseum
-
-// 1 million CSS pixels less than our max app unit measure.
-// For reflowing with an "infinite" available inline space per [css-sizing].
-// (reflowing with an NS_UNCONSTRAINEDSIZE available inline size isn't allowed
-//  and leads to assertions)
-#define INFINITE_ISIZE_COORD nscoord(NS_MAXSIZE - (1000000*60))
 
 //----------------------------------------------------------------------
 
@@ -1267,7 +1260,7 @@ public:
   // Calculate the overflow size of all child frames, taking preserve-3d into account
   void ComputePreserve3DChildrenOverflow(nsOverflowAreas& aOverflowAreas, const nsRect& aBounds);
 
-  void RecomputePerspectiveChildrenOverflow(const nsIFrame* aStartFrame, const nsRect* aBounds);
+  void RecomputePerspectiveChildrenOverflow(const nsStyleContext* aStartStyle, const nsRect* aBounds);
 
   /**
    * Returns the number of ancestors between this and the root of our frame tree
@@ -2116,18 +2109,8 @@ public:
    *
    * NOTE: This is guaranteed to return a non-null pointer when invoked on any
    * frame other than the root frame.
-   *
-   * Requires SKIP_SCROLLED_FRAME to get behaviour matching the spec, otherwise
-   * it can return anonymous inner scrolled frames. Bug 1204044 is filed for
-   * investigating whether any of the callers actually require the default
-   * behaviour.
    */
-  enum {
-    // If the containing block is an anonymous scrolled frame, then skip over
-    // this and return the outer scroll frame.
-    SKIP_SCROLLED_FRAME = 0x01
-  };
-  nsIFrame* GetContainingBlock(uint32_t aFlags = 0) const;
+  nsIFrame* GetContainingBlock() const;
 
   /**
    * Is this frame a containing block for floating elements?
@@ -3242,11 +3225,6 @@ public:
     fputs(t.get(), out);
   }
   void ListTag(nsACString& aTo) const;
-  nsAutoCString ListTag() const {
-    nsAutoCString tag;
-    ListTag(tag);
-    return tag;
-  }
   static void ListTag(nsACString& aTo, const nsIFrame* aFrame);
   void ListGeneric(nsACString& aTo, const char* aPrefix = "", uint32_t aFlags = 0) const;
   enum {

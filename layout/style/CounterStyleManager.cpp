@@ -6,7 +6,6 @@
 
 #include "CounterStyleManager.h"
 
-#include "mozilla/ArenaObjectID.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/MathAlgorithms.h"
@@ -974,7 +973,7 @@ public:
   void* operator new(size_t sz, nsPresContext* aPresContext) CPP_THROW_NEW
   {
     return aPresContext->PresShell()->AllocateByObjectID(
-        eArenaObjectID_DependentBuiltinCounterStyle, sz);
+        nsPresArena::DependentBuiltinCounterStyle_id, sz);
   }
 
 private:
@@ -982,7 +981,7 @@ private:
   {
     nsIPresShell* shell = mManager->PresContext()->PresShell();
     this->~DependentBuiltinCounterStyle();
-    shell->FreeByObjectID(eArenaObjectID_DependentBuiltinCounterStyle, this);
+    shell->FreeByObjectID(nsPresArena::DependentBuiltinCounterStyle_id, this);
   }
 
   CounterStyleManager* mManager;
@@ -1092,7 +1091,7 @@ public:
   void* operator new(size_t sz, nsPresContext* aPresContext) CPP_THROW_NEW
   {
     return aPresContext->PresShell()->AllocateByObjectID(
-        eArenaObjectID_CustomCounterStyle, sz);
+        nsPresArena::CustomCounterStyle_id, sz);
   }
 
 private:
@@ -1100,7 +1099,7 @@ private:
   {
     nsIPresShell* shell = mManager->PresContext()->PresShell();
     this->~CustomCounterStyle();
-    shell->FreeByObjectID(eArenaObjectID_CustomCounterStyle, this);
+    shell->FreeByObjectID(nsPresArena::CustomCounterStyle_id, this);
   }
 
   const nsTArray<nsString>& GetSymbols();

@@ -3312,19 +3312,6 @@ PreliminaryObjectArray::registerNewObject(JSObject* res)
     MOZ_CRASH("There should be room for registering the new object");
 }
 
-void
-PreliminaryObjectArray::unregisterObject(JSObject* obj)
-{
-    for (size_t i = 0; i < COUNT; i++) {
-        if (objects[i] == obj) {
-            objects[i] = nullptr;
-            return;
-        }
-    }
-
-    MOZ_CRASH("The object should be in the array");
-}
-
 bool
 PreliminaryObjectArray::full() const
 {
@@ -3488,7 +3475,7 @@ PreliminaryObjectArrayWithTemplate::maybeAnalyze(ExclusiveContext* cx, ObjectGro
 
 // Make a TypeNewScript for |group|, and set it up to hold the preliminary
 // objects created with the group.
-/* static */ bool
+/* static */ void
 TypeNewScript::make(JSContext* cx, ObjectGroup* group, JSFunction* fun)
 {
     MOZ_ASSERT(cx->zone()->types.activeAnalysis);
@@ -3496,22 +3483,21 @@ TypeNewScript::make(JSContext* cx, ObjectGroup* group, JSFunction* fun)
     MOZ_ASSERT(!group->maybeUnboxedLayout());
 
     if (group->unknownProperties())
-        return true;
+        return;
 
     ScopedJSDeletePtr<TypeNewScript> newScript(cx->new_<TypeNewScript>());
     if (!newScript)
-        return false;
+        return;
 
     newScript->function_ = fun;
 
     newScript->preliminaryObjects = group->zone()->new_<PreliminaryObjectArray>();
     if (!newScript->preliminaryObjects)
-        return true;
+        return;
 
     group->setNewScript(newScript.forget());
 
     gc::TraceTypeNewScript(group);
-    return true;
 }
 
 // Make a TypeNewScript with the same initializer list as |newScript| but with

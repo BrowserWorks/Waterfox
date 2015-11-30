@@ -10,7 +10,7 @@ this.EXPORTED_SYMBOLS = ["SplitView"];
 /* this must be kept in sync with CSS (ie. splitview.css) */
 const LANDSCAPE_MEDIA_QUERY = "(min-width: 701px)";
 
-var bindings = new WeakMap();
+let bindings = new WeakMap();
 
 /**
  * SplitView constructor

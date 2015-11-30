@@ -4,7 +4,7 @@
 
 // This is a test for asyncExecuteLegacyQueries API.
 
-var tests = [
+let tests = [
 
 function test_history_query() {
   let uri = NetUtil.newURI("http://test.visit.mozilla.com/");

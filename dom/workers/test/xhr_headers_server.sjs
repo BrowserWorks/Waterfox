@@ -11,26 +11,12 @@ function handleRequest(request, response) {
         var optionsHost = request.getHeader("options-host");
       } catch(e) { }
 
-      var headerFound = false;
       if (optionsHost) {
         setState("postHost", request.host);
         setState("optionsHost", optionsHost);
-        headerFound = true;
-      }
-
-      try {
-        var emptyHeader = "nada" + request.getHeader("empty");
-      } catch(e) { }
-
-      if (emptyHeader && emptyHeader == "nada") {
-        setState("emptyHeader", "nada");
-        headerFound = true;
-      }
-      if (headerFound) {
         return;
-      } else {
-        break;
       }
+      break;
 
     case "OPTIONS":
       if (getState("optionsHost") == request.host) {
@@ -46,8 +32,7 @@ function handleRequest(request, response) {
       response.setHeader("Cache-Control", "no-cache", false);
       response.setHeader("Content-Type", "text/plain", false);
 
-      if (getState("postHost") == request.host &&
-          getState("emptyHeader") == "nada") {
+      if (getState("postHost") == request.host) {
         var result = getState("optionsHeader");
         if (result) {
           response.write("Success: expected OPTIONS request with " + result +

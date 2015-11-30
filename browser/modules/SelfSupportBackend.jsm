@@ -52,7 +52,7 @@ const UITOUR_FRAME_SCRIPT = "chrome://browser/content/content-UITour.js";
 // Changing this pref requires a restart.
 const IS_UNIFIED_TELEMETRY = Preferences.get(PREF_TELEMETRY_UNIFIED, false);
 
-var gLogAppenderDump = null;
+let gLogAppenderDump = null;
 
 this.SelfSupportBackend = Object.freeze({
   init: function () {
@@ -64,7 +64,7 @@ this.SelfSupportBackend = Object.freeze({
   },
 });
 
-var SelfSupportBackendInternal = {
+let SelfSupportBackendInternal = {
   // The browser element that will load the SelfSupport page.
   _browser: null,
   // The Id of the timer triggering delayed SelfSupport page load.

@@ -123,6 +123,11 @@
 #endif
 #endif
 #endif
+#ifdef MOZ_REPLACE_MALLOC
+#ifndef MOZ_JEMALLOC3
+@BINPATH@/@DLL_PREFIX@replace_jemalloc@DLL_SUFFIX@
+#endif
+#endif
 #ifdef MOZ_GTK3
 @BINPATH@/@DLL_PREFIX@mozgtk@DLL_SUFFIX@
 @BINPATH@/gtk2/@DLL_PREFIX@mozgtk@DLL_SUFFIX@
@@ -271,9 +276,6 @@
 @RESPATH@/components/layout_xul.xpt
 @RESPATH@/components/locale.xpt
 @RESPATH@/components/lwbrk.xpt
-#ifdef MOZ_ENABLE_PROFILER_SPS
-@RESPATH@/components/memory_profiler.xpt
-#endif
 @RESPATH@/browser/components/migration.xpt
 @RESPATH@/components/mimetype.xpt
 @RESPATH@/components/mozfind.xpt
@@ -386,6 +388,7 @@
 @RESPATH@/browser/components/webideComponents.manifest
 @RESPATH@/browser/components/Experiments.manifest
 @RESPATH@/browser/components/ExperimentsService.js
+@RESPATH@/browser/components/translation.manifest
 @RESPATH@/components/Downloads.manifest
 @RESPATH@/components/DownloadLegacy.js
 @RESPATH@/components/BrowserPageThumbs.manifest
@@ -493,6 +496,9 @@
 #ifdef XP_MACOSX
 @RESPATH@/browser/components/SafariProfileMigrator.js
 #endif
+#ifdef MOZ_ENABLE_DBUS
+@RESPATH@/components/@DLL_PREFIX@dbusservice@DLL_SUFFIX@
+#endif
 #ifdef MOZ_ENABLE_GNOME_COMPONENT
 @RESPATH@/components/@DLL_PREFIX@mozgnome@DLL_SUFFIX@
 #endif
@@ -565,6 +571,11 @@
 @RESPATH@/components/InterAppConnection.js
 @RESPATH@/components/InterAppMessagePort.js
 #endif
+
+@RESPATH@/components/TCPSocket.js
+@RESPATH@/components/TCPServerSocket.js
+@RESPATH@/components/TCPSocketParentIntermediary.js
+@RESPATH@/components/TCPSocket.manifest
 
 #ifdef MOZ_ACTIVITIES
 @RESPATH@/components/SystemMessageCache.js

@@ -30,3 +30,6 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/dom/media/webaudio',
 ]
+
+if CONFIG['GNU_CXX']:
+    FAIL_ON_WARNINGS = True

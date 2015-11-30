@@ -134,8 +134,11 @@ OmxVideoTrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
     layers::Image* img = (!mLastFrame.GetImage() || mLastFrame.GetForceBlack())
                          ? nullptr : mLastFrame.GetImage();
     rv = mEncoder->Encode(img, mFrameWidth, mFrameHeight, totalDurationUs,
-                          OMXCodecWrapper::BUFFER_EOS, &mEosSetInEncoder);
+                          OMXCodecWrapper::BUFFER_EOS);
     NS_ENSURE_SUCCESS(rv, rv);
+
+    // Keep sending EOS signal until OMXVideoEncoder gets it.
+    mEosSetInEncoder = true;
   }
 
   // Dequeue an encoded frame from the output buffers of OMXCodecWrapper.
@@ -216,7 +219,6 @@ OmxAudioTrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
   PROFILER_LABEL("OmxAACAudioTrackEncoder", "GetEncodedTrack",
     js::ProfileEntry::Category::OTHER);
   AudioSegment segment;
-  bool EOS;
   // Move all the samples from mRawSegment to segment. We only hold
   // the monitor in this block.
   {
@@ -232,15 +234,14 @@ OmxAudioTrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
     }
 
     segment.AppendFrom(&mRawSegment);
-    EOS = mEndOfStream;
   }
 
   nsresult rv;
   if (segment.GetDuration() == 0) {
     // Notify EOS at least once, even if segment is empty.
-    if (EOS && !mEosSetInEncoder) {
-      rv = mEncoder->Encode(segment, OMXCodecWrapper::BUFFER_EOS,
-                            &mEosSetInEncoder);
+    if (mEndOfStream && !mEosSetInEncoder) {
+      mEosSetInEncoder = true;
+      rv = mEncoder->Encode(segment, OMXCodecWrapper::BUFFER_EOS);
       NS_ENSURE_SUCCESS(rv, rv);
     }
     // Nothing to encode but encoder could still have encoded data for earlier
@@ -251,7 +252,8 @@ OmxAudioTrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
   // OMX encoder has limited input buffers only so we have to feed input and get
   // output more than once if there are too many samples pending in segment.
   while (segment.GetDuration() > 0) {
-    rv = mEncoder->Encode(segment, 0);
+    rv = mEncoder->Encode(segment,
+                          mEndOfStream ? OMXCodecWrapper::BUFFER_EOS : 0);
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = AppendEncodedFrames(aData);

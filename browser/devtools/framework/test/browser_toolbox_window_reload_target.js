@@ -5,9 +5,9 @@ const TEST_URL = "data:text/html;charset=utf-8,"+
                  "<html><head><title>Test reload</title></head>"+
                  "<body><h1>Testing reload from devtools</h1></body></html>";
 
-var {Toolbox} = require("devtools/framework/toolbox");
+let {Toolbox} = require("devtools/framework/toolbox");
 
-var target, toolbox, description, reloadsSent, toolIDs;
+let target, toolbox, description, reloadsSent, toolIDs;
 
 function test() {
   addTab(TEST_URL).then(() => {

@@ -37,7 +37,6 @@ EXPORTS.mozilla.gfx += [
     'ScaleFactor.h',
     'ScaleFactors2D.h',
     'SourceSurfaceCairo.h',
-    'StackArray.h',
     'Tools.h',
     'Types.h',
     'UserData.h',
@@ -82,7 +81,6 @@ if CONFIG['MOZ_ENABLE_SKIA']:
     ]
     EXPORTS.mozilla.gfx += [
         'HelpersSkia.h',
-        'RefPtrSkia.h',
     ]
 
 # Are we targeting x86 or x64?  If so, build SSE2 files.
@@ -155,6 +153,8 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
 if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
     SOURCES += ['BlurNEON.cpp']
     SOURCES['BlurNEON.cpp'].flags += ['-mfpu=neon']
+
+FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

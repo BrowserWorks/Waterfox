@@ -14,8 +14,7 @@ XULCommandEvent::XULCommandEvent(EventTarget* aOwner,
                                  nsPresContext* aPresContext,
                                  WidgetInputEvent* aEvent)
   : UIEvent(aOwner, aPresContext,
-            aEvent ? aEvent :
-                     new WidgetInputEvent(false, eVoidEvent, nullptr))
+            aEvent ? aEvent : new WidgetInputEvent(false, 0, nullptr))
 {
   if (aEvent) {
     mEventIsInternal = false;
@@ -130,12 +129,14 @@ XULCommandEvent::InitCommandEvent(const nsAString& aType,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<XULCommandEvent>
-NS_NewDOMXULCommandEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMXULCommandEvent(nsIDOMEvent** aInstancePtrResult,
+                         EventTarget* aOwner,
                          nsPresContext* aPresContext,
                          WidgetInputEvent* aEvent) 
 {
-  nsRefPtr<XULCommandEvent> it =
-    new XULCommandEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  XULCommandEvent* it = new XULCommandEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

@@ -6,16 +6,11 @@ describe("loop.store.ConversationAppStore", function () {
 
   var expect = chai.expect;
   var sharedActions = loop.shared.actions;
-  var sandbox, activeRoomStore, dispatcher, roomUsed;
+  var sandbox, dispatcher;
 
   beforeEach(function() {
-    roomUsed = false;
-    activeRoomStore = {
-      getStoreState: function() { return { used: roomUsed }; }
-    };
     sandbox = sinon.sandbox.create();
     dispatcher = new loop.Dispatcher();
-    sandbox.stub(dispatcher, "dispatch");
   });
 
   afterEach(function() {
@@ -23,51 +18,16 @@ describe("loop.store.ConversationAppStore", function () {
   });
 
   describe("#constructor", function() {
-    it("should throw an error if the activeRoomStore is missing", function() {
-      expect(function() {
-        new loop.store.ConversationAppStore({
-          dispatcher: dispatcher,
-          mozLoop: {}
-        });
-      }).to.Throw(/activeRoomStore/);
-    });
-
     it("should throw an error if the dispatcher is missing", function() {
       expect(function() {
-        new loop.store.ConversationAppStore({
-          activeRoomStore: activeRoomStore,
-          mozLoop: {}
-        });
+        new loop.store.ConversationAppStore({mozLoop: {}});
       }).to.Throw(/dispatcher/);
     });
 
     it("should throw an error if mozLoop is missing", function() {
       expect(function() {
-        new loop.store.ConversationAppStore({
-          activeRoomStore: activeRoomStore,
-          dispatcher: dispatcher
-        });
+        new loop.store.ConversationAppStore({dispatcher: dispatcher});
       }).to.Throw(/mozLoop/);
-    });
-
-    it("should start listening to events on the window object", function() {
-      var fakeWindow = {
-        addEventListener: sinon.stub()
-      };
-
-      var store = new loop.store.ConversationAppStore({
-        activeRoomStore: activeRoomStore,
-        dispatcher: dispatcher,
-        mozLoop: { getLoopPref: function() {} },
-        rootObject: fakeWindow
-      });
-
-      var eventNames = Object.getOwnPropertyNames(store._eventHandlers);
-      sinon.assert.callCount(fakeWindow.addEventListener, eventNames.length);
-      eventNames.forEach(function(eventName) {
-        sinon.assert.calledWith(fakeWindow.addEventListener, eventName,
-          store._eventHandlers[eventName]);
-      });
     });
   });
 
@@ -100,7 +60,6 @@ describe("loop.store.ConversationAppStore", function () {
       };
 
       store = new loop.store.ConversationAppStore({
-        activeRoomStore: activeRoomStore,
         dispatcher: dispatcher,
         mozLoop: fakeMozLoop
       });
@@ -111,9 +70,11 @@ describe("loop.store.ConversationAppStore", function () {
     });
 
     it("should fetch the window type from the mozLoop API", function() {
-      store.getWindowData(new sharedActions.GetWindowData(fakeGetWindowData));
+      dispatcher.dispatch(new sharedActions.GetWindowData(fakeGetWindowData));
 
-      expect(store.getStoreState().windowType).eql("incoming");
+      expect(store.getStoreState()).eql({
+        windowType: "incoming"
+      });
     });
 
     it("should have the feedback period in initial state", function() {
@@ -146,7 +107,7 @@ describe("loop.store.ConversationAppStore", function () {
     it("should set showFeedbackForm to true when action is triggered", function() {
       var showFeedbackFormStub = sandbox.stub(store, "showFeedbackForm");
 
-      store.showFeedbackForm(new sharedActions.ShowFeedbackForm());
+      dispatcher.dispatch(new sharedActions.ShowFeedbackForm());
 
       sinon.assert.calledOnce(showFeedbackFormStub);
     });
@@ -155,7 +116,7 @@ describe("loop.store.ConversationAppStore", function () {
       var clock = sandbox.useFakeTimers();
       // Make sure we round down the value.
       clock.tick(1001);
-      store.showFeedbackForm(new sharedActions.ShowFeedbackForm());
+      dispatcher.dispatch(new sharedActions.ShowFeedbackForm());
 
       sinon.assert.calledOnce(setLoopPrefStub);
       sinon.assert.calledWithExactly(setLoopPrefStub,
@@ -164,6 +125,8 @@ describe("loop.store.ConversationAppStore", function () {
 
     it("should dispatch a SetupWindowData action with the data from the mozLoop API",
       function() {
+        sandbox.stub(dispatcher, "dispatch");
+
         store.getWindowData(new sharedActions.GetWindowData(fakeGetWindowData));
 
         sinon.assert.calledOnce(dispatcher.dispatch);
@@ -172,132 +135,5 @@ describe("loop.store.ConversationAppStore", function () {
             windowId: fakeGetWindowData.windowId
           }, fakeWindowData)));
       });
-  });
-
-  describe("Window object event handlers", function() {
-    var store, fakeWindow;
-
-    beforeEach(function() {
-      fakeWindow = {
-        addEventListener: sinon.stub(),
-        removeEventListener: sinon.stub()
-      };
-
-      store = new loop.store.ConversationAppStore({
-        activeRoomStore: activeRoomStore,
-        dispatcher: dispatcher,
-        mozLoop: { getLoopPref: function() {} },
-        rootObject: fakeWindow
-      });
-    });
-
-    describe("#unloadHandler", function() {
-      it("should dispatch a 'WindowUnload' action when invoked", function() {
-        store.unloadHandler();
-
-        sinon.assert.calledOnce(dispatcher.dispatch);
-        sinon.assert.calledWithExactly(dispatcher.dispatch, new sharedActions.WindowUnload());
-      });
-
-      it("should remove all registered event handlers from the window object", function() {
-        var eventHandlers = store._eventHandlers;
-        var eventNames = Object.getOwnPropertyNames(eventHandlers);
-
-        store.unloadHandler();
-
-        sinon.assert.callCount(fakeWindow.removeEventListener, eventNames.length);
-        expect(store._eventHandlers).to.eql(null);
-        eventNames.forEach(function(eventName) {
-          sinon.assert.calledWith(fakeWindow.removeEventListener, eventName,
-            eventHandlers[eventName]);
-        });
-      });
-    });
-
-    describe("#LoopHangupNowHandler", function() {
-      beforeEach(function() {
-        sandbox.stub(loop.shared.mixins.WindowCloseMixin, "closeWindow");
-      });
-
-      it("should dispatch the correct action for windowType 'incoming'", function() {
-        store.setStoreState({ windowType: "incoming" });
-
-        store.LoopHangupNowHandler();
-
-        sinon.assert.calledOnce(dispatcher.dispatch);
-        sinon.assert.calledWithExactly(dispatcher.dispatch, new sharedActions.HangupCall());
-        sinon.assert.notCalled(loop.shared.mixins.WindowCloseMixin.closeWindow);
-      });
-
-      it("should dispatch the correct action for windowType 'outgoing'", function() {
-        store.setStoreState({ windowType: "outgoing" });
-
-        store.LoopHangupNowHandler();
-
-        sinon.assert.calledOnce(dispatcher.dispatch);
-        sinon.assert.calledWithExactly(dispatcher.dispatch, new sharedActions.HangupCall());
-        sinon.assert.notCalled(loop.shared.mixins.WindowCloseMixin.closeWindow);
-      });
-
-      it("should dispatch the correct action when a room was used", function() {
-        store.setStoreState({ windowType: "room" });
-        roomUsed = true;
-
-        store.LoopHangupNowHandler();
-
-        sinon.assert.calledOnce(dispatcher.dispatch);
-        sinon.assert.calledWithExactly(dispatcher.dispatch, new sharedActions.LeaveRoom());
-        sinon.assert.notCalled(loop.shared.mixins.WindowCloseMixin.closeWindow);
-      });
-
-      it("should close the window when a room was used and it showed feedback", function() {
-        store.setStoreState({
-          showFeedbackForm: true,
-          windowType: "room"
-        });
-        roomUsed = true;
-
-        store.LoopHangupNowHandler();
-
-        sinon.assert.notCalled(dispatcher.dispatch);
-        sinon.assert.calledOnce(loop.shared.mixins.WindowCloseMixin.closeWindow);
-      });
-
-      it("should close the window when a room was not used", function() {
-        store.setStoreState({ windowType: "room" });
-
-        store.LoopHangupNowHandler();
-
-        sinon.assert.notCalled(dispatcher.dispatch);
-        sinon.assert.calledOnce(loop.shared.mixins.WindowCloseMixin.closeWindow);
-      });
-
-      it("should close the window for all other window types", function() {
-        store.setStoreState({ windowType: "foobar" });
-
-        store.LoopHangupNowHandler();
-
-        sinon.assert.notCalled(dispatcher.dispatch);
-        sinon.assert.calledOnce(loop.shared.mixins.WindowCloseMixin.closeWindow);
-      });
-    });
-
-    describe("#socialFrameAttachedHandler", function() {
-      it("should update the store correctly to reflect the attached state", function() {
-        store.setStoreState({ chatWindowDetached: true });
-
-        store.socialFrameAttachedHandler();
-
-        expect(store.getStoreState().chatWindowDetached).to.eql(false);
-      });
-    });
-
-    describe("#socialFrameDetachedHandler", function() {
-      it("should update the store correctly to reflect the detached state", function() {
-        store.socialFrameDetachedHandler();
-
-        expect(store.getStoreState().chatWindowDetached).to.eql(true);
-      });
-    });
   });
 });

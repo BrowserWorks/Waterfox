@@ -12,7 +12,6 @@
 
 #include "ds/IdValuePair.h"
 #include "gc/Barrier.h"
-#include "vm/TaggedProto.h"
 #include "vm/TypeInference.h"
 
 namespace js {
@@ -25,6 +24,106 @@ class TypeNewScript;
 class HeapTypeSet;
 class AutoClearTypeInferenceStateOnOOM;
 class CompilerConstraintList;
+
+// Information about an object prototype, which can be either a particular
+// object, null, or a lazily generated object. The latter is only used by
+// certain kinds of proxies.
+class TaggedProto
+{
+  public:
+    static JSObject * const LazyProto;
+
+    TaggedProto() : proto(nullptr) {}
+    explicit TaggedProto(JSObject* proto) : proto(proto) {}
+
+    uintptr_t toWord() const { return uintptr_t(proto); }
+
+    bool isLazy() const {
+        return proto == LazyProto;
+    }
+    bool isObject() const {
+        /* Skip nullptr and LazyProto. */
+        return uintptr_t(proto) > uintptr_t(TaggedProto::LazyProto);
+    }
+    JSObject* toObject() const {
+        MOZ_ASSERT(isObject());
+        return proto;
+    }
+    JSObject* toObjectOrNull() const {
+        MOZ_ASSERT(!proto || isObject());
+        return proto;
+    }
+    JSObject* raw() const { return proto; }
+
+    bool operator ==(const TaggedProto& other) { return proto == other.proto; }
+    bool operator !=(const TaggedProto& other) { return proto != other.proto; }
+
+  private:
+    JSObject* proto;
+};
+
+template <>
+struct RootKind<TaggedProto>
+{
+    static ThingRootKind rootKind() { return THING_ROOT_OBJECT; }
+};
+
+template <> struct GCMethods<const TaggedProto>
+{
+    static TaggedProto initial() { return TaggedProto(); }
+};
+
+template <> struct GCMethods<TaggedProto>
+{
+    static TaggedProto initial() { return TaggedProto(); }
+};
+
+template<class Outer>
+class TaggedProtoOperations
+{
+    const TaggedProto* value() const {
+        return static_cast<const Outer*>(this)->extract();
+    }
+
+  public:
+    uintptr_t toWord() const { return value()->toWord(); }
+    inline bool isLazy() const { return value()->isLazy(); }
+    inline bool isObject() const { return value()->isObject(); }
+    inline JSObject* toObject() const { return value()->toObject(); }
+    inline JSObject* toObjectOrNull() const { return value()->toObjectOrNull(); }
+    JSObject* raw() const { return value()->raw(); }
+};
+
+template <>
+class HandleBase<TaggedProto> : public TaggedProtoOperations<Handle<TaggedProto> >
+{
+    friend class TaggedProtoOperations<Handle<TaggedProto> >;
+    const TaggedProto * extract() const {
+        return static_cast<const Handle<TaggedProto>*>(this)->address();
+    }
+};
+
+template <>
+class RootedBase<TaggedProto> : public TaggedProtoOperations<Rooted<TaggedProto> >
+{
+    friend class TaggedProtoOperations<Rooted<TaggedProto> >;
+    const TaggedProto* extract() const {
+        return static_cast<const Rooted<TaggedProto>*>(this)->address();
+    }
+};
+
+// Since JSObject pointers are either nullptr or a valid object and since the
+// object layout of TaggedProto is identical to a bare object pointer, we can
+// safely treat a pointer to an already-rooted object (e.g. HandleObject) as a
+// pointer to a TaggedProto.
+inline Handle<TaggedProto>
+AsTaggedProto(HandleObject obj)
+{
+    static_assert(sizeof(JSObject*) == sizeof(TaggedProto),
+                  "TaggedProto must be binary compatible with JSObject");
+    return Handle<TaggedProto>::fromMarkedLocation(
+            reinterpret_cast<TaggedProto const*>(obj.address()));
+}
 
 namespace gc {
 void MergeCompartments(JSCompartment* source, JSCompartment* target);
@@ -83,7 +182,7 @@ class ObjectGroup : public gc::TenuredCell
     const Class* clasp_;
 
     /* Prototype shared by objects in this group. */
-    HeapPtr<TaggedProto> proto_;
+    HeapPtrObject proto_;
 
     /* Compartment shared by objects in this group. */
     JSCompartment* compartment_;
@@ -98,13 +197,12 @@ class ObjectGroup : public gc::TenuredCell
         clasp_ = clasp;
     }
 
-    const HeapPtr<TaggedProto>& proto() const {
-        return proto_;
+    TaggedProto proto() const {
+        return TaggedProto(proto_);
     }
 
-    HeapPtr<TaggedProto>& proto() {
-        return proto_;
-    }
+    // For use during marking, don't call otherwise.
+    HeapPtrObject& protoRaw() { return proto_; }
 
     void setProto(TaggedProto proto);
     void setProtoUnchecked(TaggedProto proto);
@@ -631,14 +729,6 @@ class ObjectGroupCompartment
 PlainObject*
 NewPlainObjectWithProperties(ExclusiveContext* cx, IdValuePair* properties, size_t nproperties,
                              NewObjectKind newKind);
-
-bool
-CombineArrayElementTypes(ExclusiveContext* cx, JSObject* newObj,
-                         const Value* compare, size_t ncompare);
-
-bool
-CombinePlainObjectPropertyTypes(ExclusiveContext* cx, JSObject* newObj,
-                                const Value* compare, size_t ncompare);
 
 } // namespace js
 

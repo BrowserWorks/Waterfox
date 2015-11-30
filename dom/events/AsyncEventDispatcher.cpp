@@ -26,9 +26,8 @@ AsyncEventDispatcher::AsyncEventDispatcher(EventTarget* aTarget,
   , mOnlyChromeDispatch(false)
 {
   MOZ_ASSERT(mTarget);
-  nsRefPtr<Event> event =
-    EventDispatcher::CreateEvent(aTarget, nullptr, &aEvent, EmptyString());
-  mEvent = do_QueryInterface(event);
+  EventDispatcher::CreateEvent(aTarget, nullptr, &aEvent, EmptyString(),
+                               getter_AddRefs(mEvent));
   NS_ASSERTION(mEvent, "Should never fail to create an event");
   mEvent->DuplicatePrivateData();
   mEvent->SetTrusted(aEvent.mFlags.mIsTrusted);
@@ -37,15 +36,15 @@ AsyncEventDispatcher::AsyncEventDispatcher(EventTarget* aTarget,
 NS_IMETHODIMP
 AsyncEventDispatcher::Run()
 {
-  nsRefPtr<Event> event = mEvent ? mEvent->InternalDOMEvent() : nullptr;
+  nsCOMPtr<nsIDOMEvent> event = mEvent;
   if (!event) {
-    event = NS_NewDOMEvent(mTarget, nullptr, nullptr);
+    NS_NewDOMEvent(getter_AddRefs(event), mTarget, nullptr, nullptr);
     nsresult rv = event->InitEvent(mEventType, mBubbles, false);
     NS_ENSURE_SUCCESS(rv, rv);
     event->SetTrusted(true);
   }
   if (mOnlyChromeDispatch) {
-    MOZ_ASSERT(event->IsTrusted());
+    MOZ_ASSERT(event->InternalDOMEvent()->IsTrusted());
     event->GetInternalNSEvent()->mFlags.mOnlyChromeDispatch = true;
   }
   bool dummy;

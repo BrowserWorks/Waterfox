@@ -133,7 +133,7 @@ public class WebappImpl extends GeckoApp implements InstallCallback {
         String origin = allocator.getOrigin(index);
         boolean isInstallCompleting = (origin == null);
 
-        if (!GeckoThread.isRunning() || !isInstalled || isInstallCompleting) {
+        if (!GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning) || !isInstalled || isInstallCompleting) {
             // Show the splash screen if we need to start Gecko, or we need to install this.
             overridePendingTransition(R.anim.grow_fade_in_center, android.R.anim.fade_out);
             showSplash();
@@ -185,7 +185,7 @@ public class WebappImpl extends GeckoApp implements InstallCallback {
     }
 
     @Override
-    protected void loadStartupTab(final int flags) {
+    protected void loadStartupTabWithAboutHome(final int flags) {
         loadStartupTab(null, null, flags);
     }
 

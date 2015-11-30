@@ -8,7 +8,6 @@
 #define mozilla_image_decoders_nsGIFDecoder2_h
 
 #include "Decoder.h"
-#include "Deinterlacer.h"
 
 #include "GIF2.h"
 #include "nsCOMPtr.h"
@@ -35,9 +34,6 @@ private:
   // Decoders should only be instantiated via DecoderFactory.
   explicit nsGIFDecoder2(RasterImage* aImage);
 
-  uint8_t*  GetCurrentRowBuffer();
-  uint8_t*  GetRowBuffer(uint32_t aRow);
-
   // These functions will be called when the decoder has a decoded row,
   // frame size information, etc.
   void      BeginGIF();
@@ -51,8 +47,6 @@ private:
   bool      DoLzw(const uint8_t* q);
   bool      SetHold(const uint8_t* buf, uint32_t count,
                     const uint8_t* buf2 = nullptr, uint32_t count2 = 0);
-  bool      CheckForTransparency(const gfx::IntRect& aFrameRect);
-  gfx::IntRect ClampToImageRect(const gfx::IntRect& aFrameRect);
 
   inline int ClearCode() const { return 1 << mGIFStruct.datasize; }
 
@@ -72,7 +66,6 @@ private:
   bool mSawTransparency;
 
   gif_struct mGIFStruct;
-  Maybe<Deinterlacer> mDeinterlacer;
 };
 
 } // namespace image

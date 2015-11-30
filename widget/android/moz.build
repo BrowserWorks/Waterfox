@@ -19,7 +19,6 @@ EXPORTS += [
     'AndroidBridge.h',
     'AndroidJavaWrappers.h',
     'AndroidJNIWrapper.h',
-    'GeneratedJNINatives.h',
     'GeneratedJNIWrappers.h',
 ]
 
@@ -47,6 +46,8 @@ UNIFIED_SOURCES += [
     'nsWidgetFactory.cpp',
     'nsWindow.cpp',
 ]
+
+FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

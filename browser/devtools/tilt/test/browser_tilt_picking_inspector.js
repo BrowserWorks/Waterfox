@@ -2,8 +2,7 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
 
-Components.utils.import("resource://gre/modules/Task.jsm");
-var promise = require("promise");
+let presenter;
 
 function test() {
   if (!isTiltEnabled()) {
@@ -23,39 +22,27 @@ function test() {
     let {TargetFactory} = require("devtools/framework/target");
     let target = TargetFactory.forTab(gBrowser.selectedTab);
 
-    gDevTools.showToolbox(target, "inspector")
-             .then(Task.async(onToolbox));
+    gDevTools.showToolbox(target, "inspector").then(function(toolbox) {
+      let contentDocument = toolbox.target.tab.linkedBrowser.contentDocument;
+      let div = contentDocument.getElementById("first-law");
+      toolbox.getCurrentPanel().selection.setNode(div);
+
+      createTilt({
+        onTiltOpen: function(instance)
+        {
+          presenter = instance.presenter;
+          whenOpen();
+        }
+      }, false, function suddenDeath()
+      {
+        ok(false, "Tilt could not be initialized properly.");
+        cleanup();
+      });
+    });
   });
 }
 
-function* onToolbox(toolbox) {
-  let contentDocument = toolbox.target.tab.linkedBrowser.contentDocument;
-  let div = contentDocument.getElementById("first-law");
-  let inspector = toolbox.getPanel("inspector");
-
-  let onInspectorUpdated = inspector.once("inspector-updated");
-  inspector.selection.setNode(div);
-  yield onInspectorUpdated;
-
-  let deferred = promise.defer();
-  onInspectorUpdated = inspector.once("inspector-updated");
-  createTilt({
-    onTiltOpen: function(instance)
-    {
-      deferred.resolve(instance.presenter);
-    }
-  }, false, function suddenDeath()
-  {
-    ok(false, "Tilt could not be initialized properly.");
-    cleanup();
-  });
-  let presenter = yield deferred.promise;
-  yield onInspectorUpdated;
-
-  whenOpen(presenter);
-}
-
-function whenOpen(presenter) {
+function whenOpen() {
   ok(presenter._currentSelection > 0,
     "Highlighting a node didn't work properly.");
   ok(!presenter._highlight.disabled,

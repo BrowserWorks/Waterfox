@@ -23,7 +23,6 @@ Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/keys.js");
 Cu.import("resource://services-sync/resource.js");
 Cu.import("resource://services-sync/util.js");
-Cu.import("resource://services-common/async.js");
 
 this.WBORecord = function WBORecord(collection, id) {
   this.data = {};
@@ -236,7 +235,7 @@ RecordManager.prototype = {
       record.deserialize(this.response);
 
       return this.set(url, record);
-    } catch (ex if !Async.isShutdownException(ex)) {
+    } catch(ex) {
       this._log.debug("Failed to import record: " + Utils.exceptionStr(ex));
       return null;
     }

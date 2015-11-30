@@ -77,11 +77,11 @@ XPCOMUtils.defineLazyGetter(this, "gmpService",
 
 XPCOMUtils.defineLazyGetter(this, "telemetryService", () => Services.telemetry);
 
-var messageManager = Cc["@mozilla.org/globalmessagemanager;1"]
+let messageManager = Cc["@mozilla.org/globalmessagemanager;1"]
                        .getService(Ci.nsIMessageListenerManager);
 
-var gLogger;
-var gLogAppenderDump = null;
+let gLogger;
+let gLogAppenderDump = null;
 
 function configureLogging() {
   if (!gLogger) {
@@ -529,7 +529,7 @@ GMPWrapper.prototype = {
   },
 };
 
-var GMPProvider = {
+let GMPProvider = {
   get name() { return "GMPProvider"; },
 
   _plugins: null,

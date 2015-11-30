@@ -7,7 +7,7 @@
 Components.utils.import("resource://gre/modules/addons/AddonRepository.jsm");
 
 Components.utils.import("resource://testing-common/httpd.js");
-var gServer;
+let gServer;
 
 const PORT      = 4444;
 const BASE_URL  = "http://localhost:" + PORT;
@@ -402,7 +402,7 @@ const WITH_EXTENSION_CACHE = [{
   sourceURI:              NetUtil.newURI(ADDON_FILES[2]).spec
 }];
 
-var gDBFile = gProfD.clone();
+let gDBFile = gProfD.clone();
 gDBFile.append(FILE_DATABASE);
 
 /*

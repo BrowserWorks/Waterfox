@@ -227,7 +227,7 @@ GlobalPCList.prototype = {
     this._lifecycleobservers[winID] = cb;
   },
 };
-var _globalPCList = new GlobalPCList();
+let _globalPCList = new GlobalPCList();
 
 function RTCIceCandidate() {
   this.candidate = this.sdpMid = this.sdpMLineIndex = null;
@@ -680,7 +680,7 @@ RTCPeerConnection.prototype = {
       options = optionsOrOnSuccess;
     }
     return this._legacyCatch(onSuccess, onError, () => {
-      // TODO: Remove error on constraint-like RTCOptions next cycle (1197021).
+      // TODO: Remove old constraint-like RTCOptions support soon (Bug 1064223).
       // Note that webidl bindings make o.mandatory implicit but not o.optional.
       function convertLegacyOptions(o) {
         // Detect (mandatory OR optional) AND no other top-level members.
@@ -717,11 +717,10 @@ RTCPeerConnection.prototype = {
       }
 
       if (options && convertLegacyOptions(options)) {
-        this.logError(
-          "Mandatory/optional in createOffer options no longer works! Use " +
+        this.logWarning(
+          "Mandatory/optional in createOffer options is deprecated! Use " +
             JSON.stringify(options) + " instead (note the case difference)!",
           null, 0);
-        options = {};
       }
 
       let origin = Cu.getWebIDLCallerPrincipal().origin;

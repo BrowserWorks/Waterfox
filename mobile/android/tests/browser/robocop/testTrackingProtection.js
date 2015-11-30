@@ -83,7 +83,7 @@ function doUpdate() {
   });
 }
 
-var BrowserApp = Services.wm.getMostRecentWindow("navigator:browser").BrowserApp;
+let BrowserApp = Services.wm.getMostRecentWindow("navigator:browser").BrowserApp;
 
 // Tests the tracking protection UI in private browsing. By default, tracking protection is
 // enabled in private browsing ("privacy.trackingprotection.pbmode.enabled").

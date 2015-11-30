@@ -19,7 +19,7 @@ const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 
 this.EXPORTED_SYMBOLS = ["DebuggerServer", "ActorPool"];
 
-var server = require("devtools/server/main");
+let server = require("devtools/server/main");
 
 this.DebuggerServer = server.DebuggerServer;
 this.ActorPool = server.ActorPool;

@@ -203,7 +203,7 @@ HierarchicalClustering.prototype = {
   }
 };
 
-var clusterlib = {
+let clusterlib = {
   hcluster: function hcluster(items, distance, merge, threshold, snapshotGap,
                               snapshotCallback) {
     return (new HierarchicalClustering(distance, merge, threshold))

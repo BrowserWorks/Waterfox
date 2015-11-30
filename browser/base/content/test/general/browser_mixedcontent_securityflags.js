@@ -13,7 +13,7 @@
 const TEST_URI = "https://example.com/browser/browser/base/content/test/general/test-mixedcontent-securityerrors.html";
 const PREF_DISPLAY = "security.mixed_content.block_display_content";
 const PREF_ACTIVE = "security.mixed_content.block_active_content";
-var gTestBrowser = null;
+let gTestBrowser = null;
 waitForExplicitFinish();
 
 registerCleanupFunction(function() {

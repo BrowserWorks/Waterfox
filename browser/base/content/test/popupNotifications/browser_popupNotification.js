@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // These are shared between test #4 to #5
-var wrongBrowserNotificationObject = new BasicNotification("wrongBrowser");
-var wrongBrowserNotification;
+let wrongBrowserNotificationObject = new BasicNotification("wrongBrowser");
+let wrongBrowserNotification;
 
 function test() {
   waitForExplicitFinish();
@@ -16,7 +16,7 @@ function test() {
   goNext();
 }
 
-var tests = [
+let tests = [
   { id: "Test#1",
     run: function () {
       this.notifyObj = new BasicNotification(this.id);

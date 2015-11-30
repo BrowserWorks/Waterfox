@@ -1,0 +1,27 @@
+--- image/SurfaceCache.cpp
++++ image/SurfaceCache.cpp
+@@ -19,7 +19,8 @@
+ #include "mozilla/Pair.h"
+ #include "mozilla/RefPtr.h"
+ #include "mozilla/StaticPtr.h"
+-#include "mozilla/Tuple.h"
++//#include "mozilla/Tuple.h"
++#include <tuple>
+ #include "nsIMemoryReporter.h"
+ #include "gfx2DGlue.h"
+ #include "gfxPattern.h"  // Workaround for flaw in bug 921753 part 2.
+@@ -655,9 +656,12 @@
+     DrawableFrameRef ref;
+     MatchType matchType = MatchType::NOT_FOUND;
+     while (true) {
+-      Tie(surface, matchType) =
++		// XXX(seth): This code is begging for std::tie. See bug 1184385.
++		Pair<already_AddRefed<CachedSurface>, MatchType> lookupResult =
++//      std::tie(surface, matchType) =
+         cache->LookupBestMatch(aSurfaceKey, aAlternateFlags);
+-
++		surface = lookupResult.first();
++		matchType = lookupResult.second();
+       if (!surface) {
+         return LookupResult(matchType);  // Lookup in the per-image cache missed.
+       }

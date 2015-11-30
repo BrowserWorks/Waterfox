@@ -13,6 +13,6 @@ module.metadata = {
   }
 };
 
-var channel = {};
+let channel = {};
 
 exports.events = channel;

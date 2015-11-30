@@ -13,7 +13,7 @@ const TEST_URI = `data:text/html,<script>
   console.log("foo", window);
 </script>`;
 
-var test = asyncTest(function*() {
+let test = asyncTest(function*() {
   yield loadTab(TEST_URI);
   let hud = yield openConsole();
 

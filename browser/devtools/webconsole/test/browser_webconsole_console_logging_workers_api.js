@@ -18,7 +18,7 @@ function pushPrefEnv() {
   return deferred.promise;
 }
 
-var test = asyncTest(function*() {
+let test = asyncTest(function*() {
   yield pushPrefEnv();
   yield loadTab(TEST_URI);
 

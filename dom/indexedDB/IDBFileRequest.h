@@ -10,11 +10,10 @@
 #include "DOMRequest.h"
 #include "js/TypeDecls.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/dom/FileRequestBase.h"
+#include "mozilla/dom/FileRequest.h"
 #include "nsAutoPtr.h"
 #include "nsCycleCollectionParticipant.h"
 
-template <class> struct already_AddRefed;
 class nsPIDOMWindow;
 
 namespace mozilla {
@@ -29,65 +28,52 @@ class IDBFileHandle;
 class IDBFileRequest final : public DOMRequest,
                              public FileRequestBase
 {
-  nsRefPtr<IDBFileHandle> mFileHandle;
-
-  bool mWrapAsDOMRequest;
-
 public:
+  NS_DECL_ISUPPORTS_INHERITED
+
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(IDBFileRequest, DOMRequest)
+
   static already_AddRefed<IDBFileRequest>
   Create(nsPIDOMWindow* aOwner, IDBFileHandle* aFileHandle,
          bool aWrapAsDOMRequest);
-
-  // WebIDL
-  IDBFileHandle*
-  GetFileHandle() const
-  {
-    AssertIsOnOwningThread();
-    return mFileHandle;
-  }
-
-  IDBFileHandle*
-  GetLockedFile() const
-  {
-    AssertIsOnOwningThread();
-    return GetFileHandle();
-  }
-
-  IMPL_EVENT_HANDLER(progress)
-
-  NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(IDBFileRequest, DOMRequest)
 
   // nsIDOMEventTarget
   virtual nsresult
   PreHandleEvent(EventChainPreVisitor& aVisitor) override;
 
+  // FileRequest
+  virtual void
+  OnProgress(uint64_t aProgress, uint64_t aProgressMax) override;
+
+  virtual nsresult
+  NotifyHelperCompleted(FileHelper* aFileHelper) override;
+
   // nsWrapperCache
   virtual JSObject*
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  // FileRequestBase
-  virtual FileHandleBase*
-  FileHandle() const override;
+  // WebIDL
+  IDBFileHandle*
+  GetFileHandle() const;
 
-  virtual void
-  OnProgress(uint64_t aProgress, uint64_t aProgressMax) override;
+  IDBFileHandle*
+  GetLockedFile() const
+  {
+    return GetFileHandle();
+  }
 
-  virtual void
-  SetResultCallback(ResultCallback* aCallback) override;
-
-  virtual void
-  SetError(nsresult aError) override;
+  IMPL_EVENT_HANDLER(progress)
 
 private:
-  IDBFileRequest(nsPIDOMWindow* aWindow,
-                 IDBFileHandle* aFileHandle,
-                 bool aWrapAsDOMRequest);
-
+  explicit IDBFileRequest(nsPIDOMWindow* aWindow);
   ~IDBFileRequest();
 
   void
   FireProgressEvent(uint64_t aLoaded, uint64_t aTotal);
+
+  nsRefPtr<IDBFileHandle> mFileHandle;
+
+  bool mWrapAsDOMRequest;
 };
 
 } // namespace indexedDB

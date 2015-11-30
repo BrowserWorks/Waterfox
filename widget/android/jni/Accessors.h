@@ -5,7 +5,6 @@
 
 #include "mozilla/jni/Refs.h"
 #include "mozilla/jni/Types.h"
-#include "mozilla/jni/Utils.h"
 #include "AndroidBridge.h"
 
 namespace mozilla {
@@ -61,9 +60,9 @@ protected:
     static JNIEnv* BeginAccess()
     {
         JNIEnv* const env = Traits::isMultithreaded
-                ? GetEnvForThread() : GetGeckoThreadEnv();
+                ? GetJNIForThread() : AndroidBridge::GetJNIEnv();
 
-        EnsureClassRef<typename Traits::Owner>(env);
+        EnsureClassRef<class Traits::Owner>(env);
         return env;
     }
 
@@ -86,7 +85,7 @@ template<class Traits, typename ReturnType = typename Traits::ReturnType>
 class Method : public Accessor
 {
     typedef Accessor Base;
-    typedef typename Traits::Owner Owner;
+    typedef class Traits::Owner Owner;
 
 protected:
     static jmethodID sID;
@@ -151,7 +150,7 @@ class Method<Traits, void> : public Method<Traits, bool>
 public:
     template<typename... Args>
     static void Call(const Owner* cls, nsresult* rv,
-                     const Args&... args)
+                     const Args&... args) override
     {
         JNIEnv* const env = Base::BeginAccess();
 
@@ -173,14 +172,14 @@ public:
 // Constructor<> is used to construct a JNI instance given a traits class.
 template<class Traits>
 class Constructor : protected Method<Traits, typename Traits::ReturnType> {
-    typedef typename Traits::Owner Owner;
+    typedef class Traits::Owner Owner;
     typedef typename Traits::ReturnType ReturnType;
     typedef Method<Traits, ReturnType> Base;
 
 public:
     template<typename... Args>
     static ReturnType Call(const Owner* cls, nsresult* rv,
-                           const Args&... args)
+                           const Args&... args) override
     {
         JNIEnv* const env = Base::BeginAccess();
 
@@ -202,7 +201,7 @@ template<class Traits>
 class Field : public Accessor
 {
     typedef Accessor Base;
-    typedef typename Traits::Owner Owner;
+    typedef class Traits::Owner Owner;
     typedef typename Traits::ReturnType GetterType;
     typedef typename Traits::SetterType SetterType;
 

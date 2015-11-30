@@ -12,9 +12,9 @@
 const TEST_URI = "data:text/html;charset=utf-8,Web Console test for " +
                  "bug 613642: maintain scroll with pruning of old messages";
 
-var hud;
+let hud;
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   hud = yield openConsole();

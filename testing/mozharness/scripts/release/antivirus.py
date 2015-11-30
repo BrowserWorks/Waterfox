@@ -108,7 +108,7 @@ class AntivirusScan(BaseScript, VirtualenvMixin):
         self.dest_dir = self.CACHE_DIR
 
     def _get_candidates_prefix(self):
-        return "pub/{}/candidates/{}-candidates/build{}/".format(
+        return "pub/{}/candidates/{}-candidates/build{}".format(
             self.config['product'],
             self.config["version"],
             self.config["build_number"]
@@ -132,7 +132,6 @@ class AntivirusScan(BaseScript, VirtualenvMixin):
         from boto.s3.connection import S3Connection
         from boto.exception import S3CopyError, S3ResponseError
         from redo import retry
-        from httplib import HTTPException
 
         # suppress boto debug logging, it's too verbose with --loglevel=debug
         import logging
@@ -156,8 +155,7 @@ class AntivirusScan(BaseScript, VirtualenvMixin):
             return retry(key.get_contents_to_filename,
                          args=(destination, ),
                          sleeptime=5, max_sleeptime=60,
-                         retry_exceptions=(S3CopyError, S3ResponseError,
-                                           IOError, HTTPException))
+                         retry_exceptions=(S3CopyError, S3ResponseError))
 
         def find_release_files():
             candidates_prefix = self._get_candidates_prefix()
@@ -167,7 +165,7 @@ class AntivirusScan(BaseScript, VirtualenvMixin):
                 if self._matches_exclude(keyname):
                     self.debug("Excluding {}".format(keyname))
                 else:
-                    destination = os.path.join(self.dest_dir, keyname.replace(candidates_prefix, ''))
+                    destination = self.dest_dir + keyname.replace(candidates_prefix, '')
                     dest_dir = os.path.dirname(destination)
                     if not os.path.isdir(dest_dir):
                         os.makedirs(dest_dir)

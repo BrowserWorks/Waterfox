@@ -9,7 +9,6 @@
 #include "mozilla/layers/ImageBridgeChild.h"
 #include "mozilla/layers/SharedBufferManagerChild.h"
 #include "mozilla/layers/ISurfaceAllocator.h"     // for GfxMemoryImageReporter
-#include "mozilla/Telemetry.h"
 
 #include "mozilla/Logging.h"
 #include "mozilla/Services.h"
@@ -91,20 +90,10 @@
 #endif
 
 #include "mozilla/Hal.h"
-
 #ifdef USE_SKIA
-# ifdef __GNUC__
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wshadow"
-# endif
-# include "skia/include/core/SkGraphics.h"
+#include "skia/include/core/SkGraphics.h"
 # ifdef USE_SKIA_GPU
-#  include "skia/include/gpu/GrContext.h"
-#  include "skia/include/gpu/gl/GrGLInterface.h"
 #  include "SkiaGLGlue.h"
-# endif
-# ifdef __GNUC__
-#  pragma GCC diagnostic pop // -Wshadow
 # endif
 #endif
 
@@ -185,7 +174,6 @@ class CrashStatsLogForwarder: public mozilla::gfx::LogForwarder
 public:
   explicit CrashStatsLogForwarder(const char* aKey);
   virtual void Log(const std::string& aString) override;
-  virtual void CrashAction(LogReason aReason) override;
 
   virtual std::vector<std::pair<int32_t,std::string> > StringsVectorCopy() override;
 
@@ -280,55 +268,6 @@ void CrashStatsLogForwarder::Log(const std::string& aString)
 
   if (UpdateStringsVector(aString)) {
     UpdateCrashReport();
-  }
-}
-
-class CrashTelemetryEvent : public nsRunnable
-{
-  virtual ~CrashTelemetryEvent() {}
-
-  NS_DECL_ISUPPORTS_INHERITED
-
-  explicit CrashTelemetryEvent(uint32_t aReason) : mReason(aReason) {}
-
-  NS_IMETHOD Run() override {
-    MOZ_ASSERT(NS_IsMainThread());
-    Telemetry::Accumulate(Telemetry::GFX_CRASH, mReason);
-    return NS_OK;
-  }
-
-protected:
-  uint32_t mReason;
-};
-
-NS_IMPL_ISUPPORTS_INHERITED0(CrashTelemetryEvent, nsRunnable);
-
-void
-CrashStatsLogForwarder::CrashAction(LogReason aReason)
-{
-#ifndef RELEASE_BUILD
-  // Non-release builds crash by default, but will use telemetry
-  // if this environment variable is present.
-  static bool useTelemetry = getenv("MOZ_GFX_CRASH_TELEMETRY") != 0;
-#else
-  // Release builds use telemetry bu default, but will crash
-  // if this environment variable is present.  Double negative
-  // to make the intent clear.
-  static bool useTelemetry = !(getenv("MOZ_GFX_CRASH_MOZ_CRASH") != 0);
-#endif
-
-  if (useTelemetry) {
-    // The callers need to assure that aReason is in the range
-    // that the telemetry call below supports.
-    if (NS_IsMainThread()) {
-      Telemetry::Accumulate(Telemetry::GFX_CRASH, (uint32_t)aReason);
-    } else {
-      nsCOMPtr<nsIRunnable> r1 = new CrashTelemetryEvent((uint32_t)aReason);
-      NS_DispatchToMainThread(r1);
-    }
-  } else {
-    // ignoring aReason, we can get the information we need from the stack
-    MOZ_CRASH("GFX_CRASH");
   }
 }
 
@@ -523,18 +462,13 @@ gfxPlatform::Init()
     }
     gEverInitialized = true;
 
+    CrashStatsLogForwarder* logForwarder = new CrashStatsLogForwarder("GraphicsCriticalError");
+    mozilla::gfx::Factory::SetLogForwarder(logForwarder);
+
     // Initialize the preferences by creating the singleton.
     gfxPrefs::GetSingleton();
 
-    auto fwd = new CrashStatsLogForwarder("GraphicsCriticalError");
-    fwd->SetCircularBufferSize(gfxPrefs::GfxLoggingCrashLength());
-
-    mozilla::gfx::Config cfg;
-    cfg.mLogForwarder = fwd;
-    cfg.mMaxTextureSize = gfxPrefs::MaxTextureSize();
-    cfg.mMaxAllocSize = gfxPrefs::MaxAllocSize();
-
-    gfx::Factory::Init(cfg);
+    logForwarder->SetCircularBufferSize(gfxPrefs::GfxLoggingCrashLength());
 
     gGfxPlatformPrefsLock = new Mutex("gfxPlatform::gGfxPlatformPrefsLock");
 
@@ -644,12 +578,8 @@ gfxPlatform::Init()
 
     RegisterStrongMemoryReporter(new GfxMemoryImageReporter());
 
-    if (XRE_IsParentProcess()) {
-      if (gfxPlatform::ForceSoftwareVsync()) {
-        gPlatform->mVsyncSource = (gPlatform)->gfxPlatform::CreateHardwareVsyncSource();
-      } else {
-        gPlatform->mVsyncSource = gPlatform->CreateHardwareVsyncSource();
-      }
+    if (XRE_IsParentProcess() && gfxPrefs::HardwareVsyncEnabled()) {
+      gPlatform->mVsyncSource = gPlatform->CreateHardwareVsyncSource();
     }
 }
 
@@ -723,8 +653,6 @@ gfxPlatform::Shutdown()
     // delete it.
     delete mozilla::gfx::Factory::GetLogForwarder();
     mozilla::gfx::Factory::SetLogForwarder(nullptr);
-
-    gfx::Factory::ShutDown();
 
     delete gGfxPlatformPrefsLock;
 
@@ -831,7 +759,7 @@ gfxPlatform::CreateDrawTargetForUpdateSurface(gfxASurface *aSurface, const IntSi
     return Factory::CreateDrawTargetForCairoCGContext(static_cast<gfxQuartzSurface*>(aSurface)->GetCGContext(), aSize);
   }
 #endif
-  MOZ_CRASH("unused function");
+  MOZ_CRASH();
   return nullptr;
 }
 
@@ -2135,19 +2063,26 @@ gfxPlatform::GetLog(eGfxLog aWhichLog)
     switch (aWhichLog) {
     case eGfxLog_fontlist:
         return sFontlistLog;
+        break;
     case eGfxLog_fontinit:
         return sFontInitLog;
+        break;
     case eGfxLog_textrun:
         return sTextrunLog;
+        break;
     case eGfxLog_textrunui:
         return sTextrunuiLog;
+        break;
     case eGfxLog_cmapdata:
         return sCmapDataLog;
+        break;
     case eGfxLog_textperf:
         return sTextPerfLog;
+        break;
+    default:
+        break;
     }
 
-    MOZ_ASSERT_UNREACHABLE("Unexpected log type");
     return nullptr;
 }
 
@@ -2398,13 +2333,6 @@ gfxPlatform::UsesOffMainThreadCompositing()
   return result;
 }
 
-/***
- * The preference "layout.frame_rate" has 3 meanings depending on the value:
- *
- * -1 = Auto (default), use hardware vsync or software vsync @ 60 hz if hw vsync fails.
- *  0 = ASAP mode - used during talos testing.
- *  X = Software vsync at a rate of X times per second.
- */
 already_AddRefed<mozilla::gfx::VsyncSource>
 gfxPlatform::CreateHardwareVsyncSource()
 {
@@ -2422,29 +2350,6 @@ gfxPlatform::IsInLayoutAsapMode()
   // goes at whatever the configurated rate is. This only checks the version
   // talos uses, which is the refresh driver and compositor are in lockstep.
   return Preferences::GetInt("layout.frame_rate", -1) == 0;
-}
-
-/* static */ bool
-gfxPlatform::ForceSoftwareVsync()
-{
-  return Preferences::GetInt("layout.frame_rate", -1) > 0;
-}
-
-/* static */ int
-gfxPlatform::GetSoftwareVsyncRate()
-{
-  int preferenceRate = Preferences::GetInt("layout.frame_rate",
-                                           gfxPlatform::GetDefaultFrameRate());
-  if (preferenceRate <= 0) {
-    return gfxPlatform::GetDefaultFrameRate();
-  }
-  return preferenceRate;
-}
-
-/* static */ int
-gfxPlatform::GetDefaultFrameRate()
-{
-  return 60;
 }
 
 static nsString
@@ -2584,11 +2489,9 @@ gfxPlatform::NotifyCompositorCreated(LayersBackend aBackend)
   mCompositorBackend = aBackend;
 
   // Notify that we created a compositor, so telemetry can update.
-  NS_DispatchToMainThread(NS_NewRunnableFunction([] {
-    if (nsCOMPtr<nsIObserverService> obsvc = services::GetObserverService()) {
-      obsvc->NotifyObservers(nullptr, "compositor:created", nullptr);
-    }
-  }));
+  if (nsCOMPtr<nsIObserverService> obsvc = services::GetObserverService()) {
+    obsvc->NotifyObservers(nullptr, "compositor:created", nullptr);
+  }
 }
 
 void

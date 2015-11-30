@@ -9,8 +9,10 @@
 const TEST_URI = "data:text/html;charset=utf8,test for bug 787981 - check " +
                  "that long strings can be expanded in the output.";
 
-var test = asyncTest(function* () {
-  let { DebuggerServer } = require("devtools/server/main");
+let test = asyncTest(function* () {
+  let tempScope = {};
+  Cu.import("resource://gre/modules/devtools/dbg-server.jsm", tempScope);
+  let DebuggerServer = tempScope.DebuggerServer;
 
   let longString = (new Array(DebuggerServer.LONG_STRING_LENGTH + 4))
                     .join("a") + "foobar";

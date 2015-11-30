@@ -358,12 +358,7 @@ nsXULTooltipListener::CheckTreeBodyMove(nsIDOMMouseEvent* aMouseEvent)
     // determine if we are going to need a titletip
     // XXX check the disabletitletips attribute on the tree content
     mNeedTitletip = false;
-    int16_t colType = -1;
-    if (col) {
-      col->GetType(&colType);
-    }
-    if (row >= 0 && obj.EqualsLiteral("text") &&
-        colType != nsITreeColumn::TYPE_PASSWORD) {
+    if (row >= 0 && obj.EqualsLiteral("text")) {
       obx->IsCellCropped(row, col, &mNeedTitletip);
     }
 

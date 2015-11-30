@@ -3,9 +3,9 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-var disableWorkerTest = "Need to implement a gc() function for worker tests";
+let disableWorkerTest = "Need to implement a gc() function for worker tests";
 
-var testGenerator = testSteps();
+let testGenerator = testSteps();
 
 function testSteps()
 {

@@ -11,9 +11,7 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Messaging.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-var log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.d.bind(null, "MulticastDNS");
-
-const FAILURE_INTERNAL_ERROR = -65537;
+let log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.d.bind(null, "MulticastDNS");
 
 // Helper function for sending commands to Java.
 function send(type, data, callback) {
@@ -29,8 +27,7 @@ function send(type, data, callback) {
   }
 
   Messaging.sendRequestForResult(msg)
-    .then(result => callback(result, null),
-          err => callback(null, typeof err === "number" ? err : FAILURE_INTERNAL_ERROR));
+    .then(result => callback(result, null), err => callback(null, err));
 }
 
 // Receives service found/lost event from NsdManager
@@ -83,7 +80,6 @@ ServiceManager.prototype = {
     }
     let index = this.listeners[aServiceType].indexOf(aListener);
     if (index < 0) {
-      log("listener doesn't exist");
       return;
     }
 
@@ -150,15 +146,10 @@ MulticastDNS.prototype = {
   startDiscovery: function(aServiceType, aListener) {
     this.serviceManager.addListener(aServiceType, aListener);
 
-    let serviceInfo = {
-      serviceType: aServiceType,
-      uniqueId: aListener.uuid
-    };
-
-    send("NsdManager:DiscoverServices", serviceInfo, (result, err) => {
+    send("NsdManager:DiscoverServices", { serviceType: aServiceType }, (result, err) => {
       if (err) {
         log("onStartDiscoveryFailed: " + aServiceType + " (" + err + ")");
-        this.serviceManager.removeListener(aServiceType, aListener);
+        this.unregisterEvent();
         aListener.onStartDiscoveryFailed(aServiceType, err);
       } else {
         aListener.onDiscoveryStarted(result);
@@ -169,11 +160,7 @@ MulticastDNS.prototype = {
   stopDiscovery: function(aServiceType, aListener) {
     this.serviceManager.removeListener(aServiceType, aListener);
 
-    let serviceInfo = {
-      uniqueId: aListener.uuid
-    };
-
-    send("NsdManager:StopServiceDiscovery", serviceInfo, (result, err) => {
+    send("NsdManager:StopServiceDiscovery", {}, (result, err) => {
       if (err) {
         log("onStopDiscoveryFailed: " + aServiceType + " (" + err + ")");
         aListener.onStopDiscoveryFailed(aServiceType, err);
@@ -187,7 +174,6 @@ MulticastDNS.prototype = {
     let serviceInfo = {
       port: aServiceInfo.port,
       serviceType: aServiceInfo.serviceType,
-      uniqueId: aListener.uuid
     };
 
     try {
@@ -217,11 +203,7 @@ MulticastDNS.prototype = {
   },
 
   unregisterService: function(aServiceInfo, aListener) {
-    let serviceInfo = {
-      uniqueId: aListener.uuid
-    };
-
-    send("NsdManager:UnregisterService", serviceInfo, (result, err) => {
+    send("NsdManager:UnregisterService", {}, (result, err) => {
       if (err) {
         log("onUnregistrationFailed: (" + err + ")");
         aListener.onUnregistrationFailed(aServiceInfo, err);

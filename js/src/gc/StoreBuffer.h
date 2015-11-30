@@ -62,15 +62,17 @@ class StoreBuffer
         StoreSet stores_;
 
         /*
-         * A one element cache in front of the canonical set to speed up
-         * temporary instances of RelocatablePtr.
+         * A small, fixed-size buffer in front of the canonical set to simplify
+         * insertion via jit code.
          */
-        T last_;
+        const static size_t NumBufferEntries = 4096 / sizeof(T);
+        T buffer_[NumBufferEntries];
+        T* insert_;
 
         /* Maximum number of entries before we request a minor GC. */
         const static size_t MaxEntries = 48 * 1024 / sizeof(T);
 
-        explicit MonoTypeBuffer() : last_(T()) {}
+        explicit MonoTypeBuffer() { clearBuffer(); }
         ~MonoTypeBuffer() { stores_.finish(); }
 
         bool init() {
@@ -80,8 +82,13 @@ class StoreBuffer
             return true;
         }
 
+        void clearBuffer() {
+            JS_POISON(buffer_, JS_EMPTY_STOREBUFFER_PATTERN, NumBufferEntries * sizeof(T));
+            insert_ = buffer_;
+        }
+
         void clear() {
-            last_ = T();
+            clearBuffer();
             if (stores_.initialized())
                 stores_.clear();
         }
@@ -89,35 +96,33 @@ class StoreBuffer
         /* Add one item to the buffer. */
         void put(StoreBuffer* owner, const T& t) {
             MOZ_ASSERT(stores_.initialized());
-            sinkStore(owner);
-            last_ = t;
-        }
-
-        /* Remove an item from the store buffer. */
-        void unput(StoreBuffer* owner, const T& v) {
-            // Fast, hashless remove of last put.
-            if (last_ == v) {
-                last_ = T();
-                return;
-            }
-            stores_.remove(v);
+            *insert_++ = t;
+            if (MOZ_UNLIKELY(insert_ == buffer_ + NumBufferEntries))
+                sinkStores(owner);
         }
 
         /* Move any buffered stores to the canonical store set. */
-        void sinkStore(StoreBuffer* owner) {
+        void sinkStores(StoreBuffer* owner) {
             MOZ_ASSERT(stores_.initialized());
-            if (last_) {
-                if (!stores_.put(last_))
-                    CrashAtUnhandlableOOM("Failed to allocate for MonoTypeBuffer::put.");
+
+            for (T* p = buffer_; p < insert_; ++p) {
+                if (!stores_.put(*p))
+                    CrashAtUnhandlableOOM("Failed to allocate for MonoTypeBuffer::sinkStores.");
             }
-            last_ = T();
+            clearBuffer();
 
             if (MOZ_UNLIKELY(stores_.count() > MaxEntries))
                 owner->setAboutToOverflow();
         }
 
+        /* Remove an item from the store buffer. */
+        void unput(StoreBuffer* owner, const T& v) {
+            sinkStores(owner);
+            stores_.remove(v);
+        }
+
         bool has(StoreBuffer* owner, const T& v) {
-            sinkStore(owner);
+            sinkStores(owner);
             return stores_.has(v);
         }
 
@@ -221,8 +226,6 @@ class StoreBuffer
         CellPtrEdge untagged() const { return CellPtrEdge((Cell**)(uintptr_t(edge) & ~1)); }
         bool isTagged() const { return bool(uintptr_t(edge) & 1); }
 
-        explicit operator bool() const { return edge != nullptr; }
-
         typedef PointerEdgeHasher<CellPtrEdge> Hasher;
     };
 
@@ -247,8 +250,6 @@ class StoreBuffer
         ValueEdge tagged() const { return ValueEdge((JS::Value*)(uintptr_t(edge) | 1)); }
         ValueEdge untagged() const { return ValueEdge((JS::Value*)(uintptr_t(edge) & ~1)); }
         bool isTagged() const { return bool(uintptr_t(edge) & 1); }
-
-        explicit operator bool() const { return edge != nullptr; }
 
         typedef PointerEdgeHasher<ValueEdge> Hasher;
     };
@@ -292,8 +293,6 @@ class StoreBuffer
 
         void trace(TenuringTracer& mover) const;
 
-        explicit operator bool() const { return objectAndKind_ != 0; }
-
         typedef struct {
             typedef SlotsEdge Lookup;
             static HashNumber hash(const Lookup& l) { return l.objectAndKind_ ^ l.start_ ^ l.count_; }
@@ -319,8 +318,6 @@ class StoreBuffer
         void* deduplicationKey() const { return (void*)edge; }
 
         void trace(TenuringTracer& mover) const;
-
-        explicit operator bool() const { return edge != nullptr; }
 
         typedef PointerEdgeHasher<WholeCellEdges> Hasher;
     };

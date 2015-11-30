@@ -18,8 +18,8 @@ Cu.import("resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
                                   "resource://gre/modules/PluralForm.jsm");
 
-var navigatorBundle = Services.strings.createBundle("chrome://browser/locale/browser.properties");
-var ss = Cc["@mozilla.org/browser/sessionstore;1"].getService(Ci.nsISessionStore);
+let navigatorBundle = Services.strings.createBundle("chrome://browser/locale/browser.properties");
+let ss = Cc["@mozilla.org/browser/sessionstore;1"].getService(Ci.nsISessionStore);
 
 this.RecentlyClosedTabsAndWindowsMenuUtils = {
 

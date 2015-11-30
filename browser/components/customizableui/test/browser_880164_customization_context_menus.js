@@ -276,8 +276,6 @@ add_task(function() {
 add_task(function() {
   this.otherWin = yield openAndLoadWindow(null, true);
 
-  yield new Promise(resolve => waitForFocus(resolve, this.otherWin));
-
   yield startCustomizing(this.otherWin);
 
   let contextMenu = this.otherWin.document.getElementById("customizationPanelItemContextMenu");
@@ -300,8 +298,6 @@ add_task(function() {
   yield endCustomizing(this.otherWin);
   yield promiseWindowClosed(this.otherWin);
   this.otherWin = null;
-
-  yield new Promise(resolve => waitForFocus(resolve, window));
 });
 
 // Bug 945191 - Combined buttons show wrong context menu options

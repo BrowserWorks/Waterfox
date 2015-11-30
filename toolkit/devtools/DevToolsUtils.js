@@ -10,9 +10,6 @@ var { Ci, Cu, Cc, components } = require("chrome");
 var Services = require("Services");
 var promise = require("promise");
 
-loader.lazyRequireGetter(this, "FileUtils",
-                         "resource://gre/modules/FileUtils.jsm", true);
-
 /**
  * Turn the error |aError| into a string, without fail.
  */
@@ -118,38 +115,6 @@ exports.zip = function zip(a, b) {
   }
   return pairs;
 };
-
-
-/**
- * Converts an object into an array with 2-element arrays as key/value
- * pairs of the object. `{ foo: 1, bar: 2}` would become
- * `[[foo, 1], [bar 2]]` (order not guaranteed);
- *
- * @param object obj
- * @returns array
- */
-exports.entries = function entries(obj) {
-  return Object.keys(obj).map(k => [k, obj[k]]);
-}
-
-/**
- * Composes the given functions into a single function, which will
- * apply the results of each function right-to-left, starting with
- * applying the given arguments to the right-most function.
- * `compose(foo, bar, baz)` === `args => foo(bar(baz(args)`
- *
- * @param ...function funcs
- * @returns function
- */
-exports.compose = function compose(...funcs) {
-  return (...args) => {
-    const initialValue = funcs[funcs.length - 1].apply(null, args);
-    const leftFuncs = funcs.slice(0, -1);
-    return leftFuncs.reduceRight((composed, f) => f(composed),
-                                 initialValue);
-  };
-}
-
 
 /**
  * Waits for the next tick in the event loop to execute a callback.
@@ -310,9 +275,7 @@ exports.getProperty = function getProperty(aObj, aKey) {
  *         Whether a safe getter was found.
  */
 exports.hasSafeGetter = function hasSafeGetter(aDesc) {
-  // Scripted functions that are CCWs will not appear scripted until after
-  // unwrapping.
-  let fn = aDesc.get.unwrap();
+  let fn = aDesc.get;
   return fn && fn.callable && fn.class == "Function" && fn.script === undefined;
 };
 
@@ -709,7 +672,7 @@ exports.settleAll = values => {
  * When the testing flag is set, various behaviors may be altered from
  * production mode, typically to enable easier testing or enhanced debugging.
  */
-var testing = false;
+let testing = false;
 Object.defineProperty(exports, "testing", {
   get: function() {
     return testing;
@@ -718,27 +681,3 @@ Object.defineProperty(exports, "testing", {
     testing = state;
   }
 });
-
-/**
- * Open the file at the given path for reading.
- *
- * @param {String} filePath
- *
- * @returns Promise<nsIInputStream>
- */
-exports.openFileStream = function (filePath) {
-  return new Promise((resolve, reject) => {
-    const uri = NetUtil.newURI(new FileUtils.File(filePath));
-    NetUtil.asyncFetch(
-      { uri, loadUsingSystemPrincipal: true },
-      (stream, result) => {
-        if (!components.isSuccessCode(result)) {
-          reject(new Error(`Could not open "${filePath}": result = ${result}`));
-          return;
-        }
-
-        resolve(stream);
-      }
-    );
-  });
-}

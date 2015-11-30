@@ -9,8 +9,8 @@
 #include "WMFUtils.h"
 #include "mozilla/Logging.h"
 
-extern PRLogModuleInfo* GetPDMLog();
-#define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+PRLogModuleInfo* GetDemuxerLog();
+#define LOG(...) MOZ_LOG(GetDemuxerLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 namespace mozilla {
 
@@ -179,6 +179,10 @@ MFTDecoder::CreateOutputSample(RefPtr<IMFSample>* aOutSample)
   UINT32 alignment = (mOutputStreamInfo.cbAlignment > 1) ? mOutputStreamInfo.cbAlignment - 1 : 0;
   hr = wmf::MFCreateAlignedMemoryBuffer(bufferSize, alignment, byRef(buffer));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+  DWORD maxLength = 0;
+  DWORD currentLength = 0;
+  BYTE* dst = nullptr;
 
   hr = sample->AddBuffer(buffer);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);

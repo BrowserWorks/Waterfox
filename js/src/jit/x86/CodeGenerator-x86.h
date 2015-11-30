@@ -49,8 +49,8 @@ class CodeGeneratorX86 : public CodeGeneratorX86Shared
     void visitValue(LValue* value);
     void visitCompareB(LCompareB* lir);
     void visitCompareBAndBranch(LCompareBAndBranch* lir);
-    void visitCompareBitwise(LCompareBitwise* lir);
-    void visitCompareBitwiseAndBranch(LCompareBitwiseAndBranch* lir);
+    void visitCompareV(LCompareV* lir);
+    void visitCompareVAndBranch(LCompareVAndBranch* lir);
     void visitAsmJSUInt32ToDouble(LAsmJSUInt32ToDouble* lir);
     void visitAsmJSUInt32ToFloat32(LAsmJSUInt32ToFloat32* lir);
     void visitTruncateDToInt32(LTruncateDToInt32* ins);
@@ -72,9 +72,12 @@ class CodeGeneratorX86 : public CodeGeneratorX86Shared
     void visitOutOfLineTruncate(OutOfLineTruncate* ool);
     void visitOutOfLineTruncateFloat32(OutOfLineTruncateFloat32* ool);
 
+    void visitRandom(LRandom* ins);
+
   private:
     void asmJSAtomicComputeAddress(Register addrTemp, Register ptrReg, bool boundsCheck,
-                                   int32_t offset, int32_t endOffset);
+                                   int32_t offset, int32_t endOffset, Register out,
+                                   Label& rejoin);
 };
 
 typedef CodeGeneratorX86 CodeGeneratorSpecific;

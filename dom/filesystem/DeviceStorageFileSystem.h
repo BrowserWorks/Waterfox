@@ -48,7 +48,7 @@ private:
   nsString mStorageType;
   nsString mStorageName;
 
-  uint64_t mWindowId;
+  nsDOMDeviceStorage* mDeviceStorage;
 };
 
 } // namespace dom

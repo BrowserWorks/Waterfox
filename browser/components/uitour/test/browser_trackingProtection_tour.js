@@ -3,9 +3,9 @@
 
 "use strict";
 
-var gTestTab;
-var gContentAPI;
-var gContentWindow;
+let gTestTab;
+let gContentAPI;
+let gContentWindow;
 
 const { UrlClassifierTestUtils } = Cu.import("resource://testing-common/UrlClassifierTestUtils.jsm", {});
 
@@ -15,7 +15,7 @@ function test() {
   UITourTest();
 }
 
-var tests = [
+let tests = [
   taskify(function* test_setup() {
     Services.prefs.setBoolPref("privacy.trackingprotection.enabled", true);
     yield UrlClassifierTestUtils.addTestTrackers();

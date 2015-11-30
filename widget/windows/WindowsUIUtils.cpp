@@ -33,7 +33,7 @@ using namespace ABI::Windows::Foundation;
 
 /* All of this is win10 stuff and we're compiling against win81 headers
  * for now, so we may need to do some legwork: */
-#if MOZ_WINSDK_MAXVER < 0x0A000000
+#ifndef UserInteractionMode
 namespace ABI {
   namespace Windows {
     namespace UI {
@@ -53,7 +53,7 @@ namespace ABI {
 #define RuntimeClass_Windows_UI_ViewManagement_UIViewSettings L"Windows.UI.ViewManagement.UIViewSettings"
 #endif
 
-#if MOZ_WINSDK_MAXVER < 0x0A000000
+#ifndef IUIViewSettings
 namespace ABI {
   namespace Windows {
     namespace UI {

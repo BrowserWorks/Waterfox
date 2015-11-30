@@ -24,7 +24,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.AboutPages;
-import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
@@ -40,7 +39,7 @@ import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.favicons.decoders.FaviconDecoder;
 import org.mozilla.gecko.favicons.decoders.LoadFaviconResult;
 import org.mozilla.gecko.gfx.BitmapUtils;
-import org.mozilla.gecko.RestrictedProfiles;
+import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.util.GeckoJarReader;
 import org.mozilla.gecko.util.StringUtils;
@@ -225,21 +224,6 @@ public class LocalBrowserDB implements BrowserDB {
             }
 
             try {
-                if (RestrictedProfiles.isRestrictedProfile(context)) {
-                    // matching on variable name from strings.xml.in
-                    final String addons = "bookmarkdefaults_title_addons";
-                    final String marketplace = "bookmarkdefaults_title_marketplace";
-                    final String regularSumo = "bookmarkdefaults_title_support";
-                    if (name.equals(addons) || name.equals(marketplace) || name.equals(regularSumo)) {
-                        continue;
-                    }
-                }
-                if (!RestrictedProfiles.isRestrictedProfile(context)) {
-                    // if we're not in kidfox, skip the kidfox specific bookmark(s)
-                    if (name.startsWith("bookmarkdefaults_title_restricted")) {
-                        continue;
-                    }
-                }
                 final int titleID = fields[i].getInt(null);
                 final String title = context.getString(titleID);
 
@@ -717,21 +701,6 @@ public class LocalBrowserDB implements BrowserDB {
                         History.DATE_LAST_VISITED + " > 0",
                         null,
                         History.DATE_LAST_VISITED + " DESC");
-    }
-
-    @Override
-    public Cursor getRecentHistoryBetweenTime(ContentResolver cr, int limit, long start, long end) {
-        return cr.query(combinedUriWithLimit(limit),
-                new String[] { Combined._ID,
-                        Combined.BOOKMARK_ID,
-                        Combined.HISTORY_ID,
-                        Combined.URL,
-                        Combined.TITLE,
-                        Combined.DATE_LAST_VISITED,
-                        Combined.VISITS },
-                History.DATE_LAST_VISITED + " >= " + start + " AND " + History.DATE_LAST_VISITED + " < " + end,
-                null,
-                History.DATE_LAST_VISITED + " DESC");
     }
 
     @Override

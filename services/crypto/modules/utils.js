@@ -552,7 +552,7 @@ XPCOMUtils.defineLazyGetter(CryptoUtils, "_utf8Converter", function() {
   return converter;
 });
 
-var Svc = {};
+let Svc = {};
 
 XPCOMUtils.defineLazyServiceGetter(Svc,
                                    "KeyFactory",

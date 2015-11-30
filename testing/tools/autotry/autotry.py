@@ -38,9 +38,7 @@ class AutoTry(object):
             self._use_git = True
 
     def resolve_manifests(self, paths=None, tags=None):
-        if not (paths or tags):
-            return {}
-
+        assert tags or paths
         tests = list(self.resolver.resolve_tests(tags=tags,
                                                  paths=paths,
                                                  cwd=self.mach_context.cwd))
@@ -99,11 +97,9 @@ class AutoTry(object):
 
     def _git_push_to_try(self, msg):
         self._run_git('commit', '--allow-empty', '-m', msg)
-        try:
-            self._run_git('push', 'hg::ssh://hg.mozilla.org/try',
-                          '+HEAD:refs/heads/branches/default/tip')
-        finally:
-            self._run_git('reset', 'HEAD~')
+        self._run_git('push', 'hg::ssh://hg.mozilla.org/try',
+                      '+HEAD:refs/heads/branches/default/tip')
+        self._run_git('reset', 'HEAD~')
 
     def push_to_try(self, msg, verbose):
         if not self._use_git:
@@ -114,7 +110,7 @@ class AutoTry(object):
                 print('ERROR hg command %s returned %s' % (hg_args, e.returncode))
                 print('The "push-to-try" hg extension is required to push from '
                       'hg to try with the autotry command.\n\nIt can be installed '
-                      'to Mercurial 3.3 or above by running ./mach mercurial-setup')
+                      'by running ./mach mercurial-setup')
                 sys.exit(1)
         else:
             try:

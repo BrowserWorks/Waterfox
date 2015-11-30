@@ -27,8 +27,7 @@ __wptrunner__ = {"product": "firefox",
                               "reftest": "MarionetteRefTestExecutor"},
                  "browser_kwargs": "browser_kwargs",
                  "executor_kwargs": "executor_kwargs",
-                 "env_options": "env_options",
-                 "run_info_extras": "run_info_extras"}
+                 "env_options": "env_options"}
 
 
 def check_args(**kwargs):
@@ -44,8 +43,7 @@ def browser_kwargs(**kwargs):
             "symbols_path": kwargs["symbols_path"],
             "stackwalk_binary": kwargs["stackwalk_binary"],
             "certutil_binary": kwargs["certutil_binary"],
-            "ca_certificate_path": kwargs["ssl_env"].ca_cert_path(),
-            "e10s": kwargs["gecko_e10s"]}
+            "ca_certificate_path": kwargs["ssl_env"].ca_cert_path()}
 
 
 def executor_kwargs(test_type, server_config, cache_manager, run_info_data,
@@ -65,15 +63,13 @@ def env_options():
             "certificate_domain": "web-platform.test",
             "supports_debugger": True}
 
-def run_info_extras(**kwargs):
-    return {"e10s": kwargs["gecko_e10s"]}
 
 class FirefoxBrowser(Browser):
     used_ports = set()
 
     def __init__(self, logger, binary, prefs_root, debug_info=None,
                  symbols_path=None, stackwalk_binary=None, certutil_binary=None,
-                 ca_certificate_path=None, e10s=False):
+                 ca_certificate_path=None):
         Browser.__init__(self, logger)
         self.binary = binary
         self.prefs_root = prefs_root
@@ -85,7 +81,6 @@ class FirefoxBrowser(Browser):
         self.stackwalk_binary = stackwalk_binary
         self.ca_certificate_path = ca_certificate_path
         self.certutil_binary = certutil_binary
-        self.e10s = e10s
 
     def start(self):
         self.marionette_port = get_free_port(2828, exclude=self.used_ports)
@@ -104,8 +99,6 @@ class FirefoxBrowser(Browser):
                                       "marionette.defaultPrefs.port": self.marionette_port,
                                       "dom.disable_open_during_load": False,
                                       "network.dns.localDomains": ",".join(hostnames)})
-        if self.e10s:
-            self.profile.set_preferences({"browser.tabs.remote.autostart": True})
 
         if self.ca_certificate_path is not None:
             self.setup_ssl()

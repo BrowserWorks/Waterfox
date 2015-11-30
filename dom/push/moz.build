@@ -15,7 +15,6 @@ EXTRA_PP_JS_MODULES += [
 ]
 
 EXTRA_JS_MODULES += [
-    'PushCrypto.jsm',
     'PushDB.jsm',
     'PushRecord.jsm',
     'PushService.jsm',
@@ -38,9 +37,6 @@ EXPORTS.mozilla.dom += [
 UNIFIED_SOURCES += [
     'PushManager.cpp',
 ]
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']
 
 LOCAL_INCLUDES += [
     '../workers',

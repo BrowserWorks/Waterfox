@@ -27,7 +27,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "prefService",
                                    "@mozilla.org/preferences-service;1",
                                    "nsIPrefService");
 
-var PaymentManager =  {
+let PaymentManager =  {
   init: function init() {
     // Payment providers data are stored as a preference.
     this.registeredProviders = null;
@@ -236,9 +236,8 @@ var PaymentManager =  {
         if (systemAppId != Ci.nsIScriptSecurityManager.NO_APP_ID) {
           this.LOG("Granting firefox-accounts permission to " + provider.uri);
           let uri = Services.io.newURI(provider.uri, null, null);
-          let attrs = {appId: systemAppId, inBrowser: true};
-          let principal =
-            Services.scriptSecurityManager.createCodebasePrincipal(uri, attrs);
+          let principal = Services.scriptSecurityManager
+                            .getAppCodebasePrincipal(uri, systemAppId, true);
 
           Services.perms.addFromPrincipal(principal, "firefox-accounts",
                                           Ci.nsIPermissionManager.ALLOW_ACTION,

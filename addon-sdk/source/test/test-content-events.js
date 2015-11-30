@@ -16,7 +16,7 @@ const { open: openWindow, close: closeWindow } = require('sdk/window/helpers');
 
 const openBrowserWindow = partial(openWindow, null, {features: {toolbar: true}});
 
-var when = curry(function(options, tab) {
+let when = curry(function(options, tab) {
   let type = options.type || options;
   let capture = options.capture || false;
   let target = getBrowserForTab(tab);
@@ -32,11 +32,11 @@ var when = curry(function(options, tab) {
   return promise;
 });
 
-var use = function(value) function() value;
+let use = function(value) function() value;
 
 
-var open = curry(function(url, window) openTab(window, url));
-var close = function(tab) {
+let open = curry(function(url, window) openTab(window, url));
+let close = function(tab) {
   let promise = when("pagehide", tab);
   closeTab(tab);
   return promise;

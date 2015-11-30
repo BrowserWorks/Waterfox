@@ -212,26 +212,24 @@ ContainerRenderVR(ContainerT* aContainer,
       // from WebGL (and maybe depth video?)
       compositor->SetRenderTarget(surface);
       aContainer->ReplaceEffectiveTransform(origTransform);
-
+      
       // If this native-VR child layer does not have sizes that match
       // the eye resolution (that is, returned by the recommended
       // render rect from the HMD device), then we need to scale it
       // up/down.
-      Rect layerBounds;
+      nsIntRect layerBounds;
       // XXX this is a hack! Canvas layers aren't reporting the
       // proper bounds here (visible region bounds are 0,0,0,0)
       // and I'm not sure if this is the bounds we want anyway.
       if (layer->GetType() == Layer::TYPE_CANVAS) {
-        layerBounds = ToRect(static_cast<CanvasLayer*>(layer)->GetBounds());
+        layerBounds = static_cast<CanvasLayer*>(layer)->GetBounds();
       } else {
-        layerBounds = ToRect(layer->GetEffectiveVisibleRegion().GetBounds());
+        layerBounds = layer->GetEffectiveVisibleRegion().GetBounds();
       }
-      const gfx::Matrix4x4 childTransform = layer->GetEffectiveTransform();
-      layerBounds = childTransform.TransformBounds(layerBounds);
-
-      DUMP("  layer %p [type %d] bounds [%f %f %f %f] surfaceRect [%d %d %d %d]\n", layer, (int) layer->GetType(),
+      DUMP("  layer %p [type %d] bounds [%d %d %d %d] surfaceRect [%d %d %d %d]\n", layer, (int) layer->GetType(),
            XYWH(layerBounds), XYWH(surfaceRect));
-
+      
+      const gfx::Matrix4x4 childTransform = layer->GetEffectiveTransform();
       bool restoreTransform = false;
       if ((layerBounds.width != 0 && layerBounds.height != 0) &&
           (layerBounds.width != surfaceRect.width ||
@@ -241,8 +239,8 @@ ContainerRenderVR(ContainerT* aContainer,
              surfaceRect.width / float(layerBounds.width),
              surfaceRect.height / float(layerBounds.height));
         gfx::Matrix4x4 scaledChildTransform(childTransform);
-        scaledChildTransform.PreScale(surfaceRect.width / layerBounds.width,
-                                      surfaceRect.height / layerBounds.height,
+        scaledChildTransform.PreScale(surfaceRect.width / float(layerBounds.width),
+                                      surfaceRect.height / float(layerBounds.height),
                                       1.0f);
 
         layer->ReplaceEffectiveTransform(scaledChildTransform);
@@ -521,11 +519,7 @@ RenderLayers(ContainerT* aContainer,
 
     gfxRGBA color;
     if ((layer->GetContentFlags() & Layer::CONTENT_OPAQUE) &&
-        layer->IsOpaqueForVisibility() &&
         LayerHasCheckerboardingAPZC(layer, &color)) {
-      if (gfxPrefs::APZHighlightCheckerboardedAreas()) {
-        color = gfxRGBA(255 / 255.0, 188 / 255.0, 217 / 255.0, 1);  // "Cotton Candy"
-      }
       // Ideally we would want to intersect the checkerboard region from the APZ with the layer bounds
       // and only fill in that area. However the layer bounds takes into account the base translation
       // for the painted layer whereas the checkerboard region does not. One does not simply

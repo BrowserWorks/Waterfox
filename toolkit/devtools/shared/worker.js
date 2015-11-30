@@ -22,7 +22,7 @@
   }
 }).call(this, function (require, exports, module, { Ci, Cc }, ChromeWorker, dumpn) {
 
-var MESSAGE_COUNTER = 0;
+let MESSAGE_COUNTER = 0;
 
 /**
  * Creates a wrapper around a ChromeWorker, providing easy
@@ -38,7 +38,7 @@ var MESSAGE_COUNTER = 0;
  *        - name: a name that will be printed with logs
  *        - verbose: log incoming and outgoing messages
  */
-function DevToolsWorker(url, opts) {
+function DevToolsWorker (url, opts) {
   opts = opts || {};
   this._worker = new ChromeWorker(url);
   this._verbose = opts.verbose;
@@ -67,7 +67,7 @@ DevToolsWorker.prototype.performTask = function (task, data) {
   let id = ++MESSAGE_COUNTER;
   let payload = { task, id, data };
 
-  if (this._verbose && dumpn) {
+  if(this._verbose && dumpn) {
     dumpn("Sending message to worker" +
           (this._name ? (" (" + this._name + ")") : "" ) +
           ": " +
@@ -77,7 +77,7 @@ DevToolsWorker.prototype.performTask = function (task, data) {
 
   return new Promise((resolve, reject) => {
     let listener = ({ data }) => {
-      if (this._verbose && dumpn) {
+      if(this._verbose && dumpn) {
         dumpn("Received message from worker" +
               (this._name ? (" (" + this._name + ")") : "" ) +
               ": " +
@@ -97,7 +97,7 @@ DevToolsWorker.prototype.performTask = function (task, data) {
 
     worker.addEventListener("message", listener);
   });
-};
+}
 
 /**
  * Terminates the underlying worker. Use when no longer needing the worker.
@@ -110,7 +110,7 @@ DevToolsWorker.prototype.destroy = function () {
 
 DevToolsWorker.prototype.onError = function({ message, filename, lineno }) {
   dump(new Error(message + " @ " + filename + ":" + lineno) + "\n");
-};
+}
 
 /**
  * Takes a function and returns a Worker-wrapped version of the same function.

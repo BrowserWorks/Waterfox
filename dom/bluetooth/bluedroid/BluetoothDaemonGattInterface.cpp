@@ -5,6 +5,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "BluetoothDaemonGattInterface.h"
+#include "BluetoothDaemonSetupInterface.h"
 #include "mozilla/unused.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
@@ -27,16 +28,42 @@ BluetoothDaemonGattModule::SetNotificationHandler(
   sNotificationHandler = aNotificationHandler;
 }
 
+nsresult
+BluetoothDaemonGattModule::Send(DaemonSocketPDU* aPDU,
+                                BluetoothGattResultHandler* aRes)
+{
+  if (aRes) {
+    aRes->AddRef(); // Keep reference for response
+  }
+  return Send(aPDU, static_cast<void*>(aRes));
+}
+
+nsresult
+BluetoothDaemonGattModule::Send(DaemonSocketPDU* aPDU,
+                                BluetoothGattClientResultHandler* aRes)
+{
+  if (aRes) {
+    aRes->AddRef(); // Keep reference for response
+  }
+  return Send(aPDU, static_cast<void*>(aRes));
+}
+
+nsresult
+BluetoothDaemonGattModule::Send(DaemonSocketPDU* aPDU,
+                                BluetoothGattServerResultHandler* aRes)
+{
+  aRes->AddRef(); // Keep reference for response
+  return Send(aPDU, static_cast<void*>(aRes));
+}
+
 void
 BluetoothDaemonGattModule::HandleSvc(const DaemonSocketPDUHeader& aHeader,
-                                     DaemonSocketPDU& aPDU,
-                                     DaemonSocketResultHandler* aRes)
+                                     DaemonSocketPDU& aPDU, void* aUserData)
 {
   static void (BluetoothDaemonGattModule::* const HandleOp[])(
-    const DaemonSocketPDUHeader&, DaemonSocketPDU&,
-    DaemonSocketResultHandler*) = {
-    [0] = &BluetoothDaemonGattModule::HandleRsp,
-    [1] = &BluetoothDaemonGattModule::HandleNtf
+    const DaemonSocketPDUHeader&, DaemonSocketPDU&, void*) = {
+    INIT_ARRAY_AT(0, &BluetoothDaemonGattModule::HandleRsp),
+    INIT_ARRAY_AT(1, &BluetoothDaemonGattModule::HandleNtf),
   };
 
   MOZ_ASSERT(!NS_IsMainThread());
@@ -44,7 +71,7 @@ BluetoothDaemonGattModule::HandleSvc(const DaemonSocketPDUHeader& aHeader,
   // Negate twice to map bit to 0/1
   unsigned long isNtf = !!(aHeader.mOpcode & 0x80);
 
-  (this->*(HandleOp[isNtf]))(aHeader, aPDU, aRes);
+  (this->*(HandleOp[isNtf]))(aHeader, aPDU, aUserData);
 }
 
 // Commands
@@ -52,7 +79,7 @@ BluetoothDaemonGattModule::HandleSvc(const DaemonSocketPDUHeader& aHeader,
 
 nsresult
 BluetoothDaemonGattModule::ClientRegisterCmd(
-  const BluetoothUuid& aUuid, BluetoothGattResultHandler* aRes)
+  const BluetoothUuid& aUuid, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -75,7 +102,7 @@ BluetoothDaemonGattModule::ClientRegisterCmd(
 
 nsresult
 BluetoothDaemonGattModule::ClientUnregisterCmd(
-  int aClientIf, BluetoothGattResultHandler* aRes)
+  int aClientIf, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -97,7 +124,7 @@ BluetoothDaemonGattModule::ClientUnregisterCmd(
 
 nsresult
 BluetoothDaemonGattModule::ClientScanCmd(
-  int aClientIf, bool aStart, BluetoothGattResultHandler* aRes)
+  int aClientIf, bool aStart, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -122,7 +149,7 @@ BluetoothDaemonGattModule::ClientScanCmd(
 nsresult
 BluetoothDaemonGattModule::ClientConnectCmd(
   int aClientIf, const nsAString& aBdAddr, bool aIsDirect,
-  BluetoothTransport aTransport, BluetoothGattResultHandler* aRes)
+  BluetoothTransport aTransport, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -152,7 +179,7 @@ BluetoothDaemonGattModule::ClientConnectCmd(
 nsresult
 BluetoothDaemonGattModule::ClientDisconnectCmd(
   int aClientIf, const nsAString& aBdAddr, int aConnId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -179,7 +206,7 @@ BluetoothDaemonGattModule::ClientDisconnectCmd(
 
 nsresult
 BluetoothDaemonGattModule::ClientListenCmd(
-  int aClientIf, bool aIsStart, BluetoothGattResultHandler* aRes)
+  int aClientIf, bool aIsStart, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -204,7 +231,8 @@ BluetoothDaemonGattModule::ClientListenCmd(
 
 nsresult
 BluetoothDaemonGattModule::ClientRefreshCmd(
-  int aClientIf, const nsAString& aBdAddr, BluetoothGattResultHandler* aRes)
+  int aClientIf, const nsAString& aBdAddr,
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -230,7 +258,7 @@ BluetoothDaemonGattModule::ClientRefreshCmd(
 nsresult
 BluetoothDaemonGattModule::ClientSearchServiceCmd(
   int aConnId, bool aFiltered, const BluetoothUuid& aUuid,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -259,7 +287,7 @@ nsresult
 BluetoothDaemonGattModule::ClientGetIncludedServiceCmd(
   int aConnId, const BluetoothGattServiceId& aServiceId, bool aContinuation,
   const BluetoothGattServiceId& aStartServiceId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -288,7 +316,7 @@ nsresult
 BluetoothDaemonGattModule::ClientGetCharacteristicCmd(
   int aConnId, const BluetoothGattServiceId& aServiceId, bool aContinuation,
   const BluetoothGattId& aStartCharId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -319,7 +347,7 @@ BluetoothDaemonGattModule::ClientGetDescriptorCmd(
   int aConnId, const BluetoothGattServiceId& aServiceId,
   const BluetoothGattId& aCharId, bool aContinuation,
   const BluetoothGattId& aStartDescriptorId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -350,7 +378,7 @@ nsresult
 BluetoothDaemonGattModule::ClientReadCharacteristicCmd(
   int aConnId, const BluetoothGattServiceId& aServiceId,
   const BluetoothGattId& aCharId, BluetoothGattAuthReq aAuthReq,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -379,7 +407,7 @@ BluetoothDaemonGattModule::ClientWriteCharacteristicCmd(
   int aConnId, const BluetoothGattServiceId& aServiceId,
   const BluetoothGattId& aCharId, BluetoothGattWriteType aWriteType,
   int aLength, BluetoothGattAuthReq aAuthReq, char* aValue,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -405,7 +433,7 @@ nsresult
 BluetoothDaemonGattModule::ClientReadDescriptorCmd(
   int aConnId, const BluetoothGattServiceId& aServiceId,
   const BluetoothGattId& aCharId, const BluetoothGattId& aDescriptorId,
-  BluetoothGattAuthReq aAuthReq, BluetoothGattResultHandler* aRes)
+  BluetoothGattAuthReq aAuthReq, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -436,7 +464,7 @@ BluetoothDaemonGattModule::ClientWriteDescriptorCmd(
   const BluetoothGattId& aCharId, const BluetoothGattId& aDescriptorId,
   BluetoothGattWriteType aWriteType, int aLength,
   BluetoothGattAuthReq aAuthReq, char* aValue,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -460,7 +488,7 @@ BluetoothDaemonGattModule::ClientWriteDescriptorCmd(
 
 nsresult
 BluetoothDaemonGattModule::ClientExecuteWriteCmd(
-  int aConnId, int aIsExecute, BluetoothGattResultHandler* aRes)
+  int aConnId, int aIsExecute, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -486,7 +514,7 @@ nsresult
 BluetoothDaemonGattModule::ClientRegisterNotificationCmd(
   int aClientIf, const nsAString& aBdAddr,
   const BluetoothGattServiceId& aServiceId, const BluetoothGattId& aCharId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -515,7 +543,7 @@ nsresult
 BluetoothDaemonGattModule::ClientDeregisterNotificationCmd(
   int aClientIf, const nsAString& aBdAddr,
   const BluetoothGattServiceId& aServiceId, const BluetoothGattId& aCharId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -543,7 +571,7 @@ BluetoothDaemonGattModule::ClientDeregisterNotificationCmd(
 nsresult
 BluetoothDaemonGattModule::ClientReadRemoteRssiCmd(
   int aClientIf, const nsAString& aBdAddr,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -568,7 +596,7 @@ BluetoothDaemonGattModule::ClientReadRemoteRssiCmd(
 
 nsresult
 BluetoothDaemonGattModule::ClientGetDeviceTypeCmd(
-  const nsAString& aBdAddr, BluetoothGattResultHandler* aRes)
+  const nsAString& aBdAddr, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -596,7 +624,7 @@ BluetoothDaemonGattModule::ClientSetAdvDataCmd(
   uint16_t aManufacturerLen, char* aManufacturerData,
   uint16_t aServiceDataLen, char* aServiceData,
   uint16_t aServiceUuidLen, char* aServiceUuid,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -628,7 +656,7 @@ BluetoothDaemonGattModule::ClientSetAdvDataCmd(
 nsresult
 BluetoothDaemonGattModule::ClientTestCommandCmd(
   int aCommand, const BluetoothGattTestParam& aTestParam,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -661,7 +689,7 @@ BluetoothDaemonGattModule::ClientTestCommandCmd(
 
 nsresult
 BluetoothDaemonGattModule::ServerRegisterCmd(
-  const BluetoothUuid& aUuid, BluetoothGattResultHandler* aRes)
+  const BluetoothUuid& aUuid, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -683,7 +711,7 @@ BluetoothDaemonGattModule::ServerRegisterCmd(
 
 nsresult
 BluetoothDaemonGattModule::ServerUnregisterCmd(
-  int aServerIf, BluetoothGattResultHandler* aRes)
+  int aServerIf, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -706,7 +734,7 @@ BluetoothDaemonGattModule::ServerUnregisterCmd(
 nsresult
 BluetoothDaemonGattModule::ServerConnectPeripheralCmd(
   int aServerIf, const nsAString& aBdAddr, bool aIsDirect,
-  BluetoothTransport aTransport, BluetoothGattResultHandler* aRes)
+  BluetoothTransport aTransport, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -736,7 +764,7 @@ BluetoothDaemonGattModule::ServerConnectPeripheralCmd(
 nsresult
 BluetoothDaemonGattModule::ServerDisconnectPeripheralCmd(
   int aServerIf, const nsAString& aBdAddr, int aConnId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -763,7 +791,7 @@ BluetoothDaemonGattModule::ServerDisconnectPeripheralCmd(
 nsresult
 BluetoothDaemonGattModule::ServerAddServiceCmd(
   int aServerIf, const BluetoothGattServiceId& aServiceId, int aNumHandles,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -789,7 +817,7 @@ BluetoothDaemonGattModule::ServerAddServiceCmd(
 nsresult
 BluetoothDaemonGattModule::ServerAddIncludedServiceCmd(
   int aServerIf, int aServiceHandle, int aIncludedServiceHandle,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -818,7 +846,7 @@ nsresult
 BluetoothDaemonGattModule::ServerAddCharacteristicCmd(
   int aServerIf, int aServiceHandle, const BluetoothUuid& aUuid,
   BluetoothGattCharProp aProperties, BluetoothGattAttrPerm aPermissions,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -847,7 +875,7 @@ BluetoothDaemonGattModule::ServerAddCharacteristicCmd(
 nsresult
 BluetoothDaemonGattModule::ServerAddDescriptorCmd(
   int aServerIf, int aServiceHandle, const BluetoothUuid& aUuid,
-  BluetoothGattAttrPerm aPermissions, BluetoothGattResultHandler* aRes)
+  BluetoothGattAttrPerm aPermissions, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -875,7 +903,7 @@ BluetoothDaemonGattModule::ServerAddDescriptorCmd(
 nsresult
 BluetoothDaemonGattModule::ServerStartServiceCmd(
   int aServerIf, int aServiceHandle, BluetoothTransport aTransport,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -902,7 +930,7 @@ BluetoothDaemonGattModule::ServerStartServiceCmd(
 
 nsresult
 BluetoothDaemonGattModule::ServerStopServiceCmd(
-  int aServerIf, int aServiceHandle, BluetoothGattResultHandler* aRes)
+  int aServerIf, int aServiceHandle, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -926,7 +954,7 @@ BluetoothDaemonGattModule::ServerStopServiceCmd(
 
 nsresult
 BluetoothDaemonGattModule::ServerDeleteServiceCmd(
-  int aServerIf, int aServiceHandle, BluetoothGattResultHandler* aRes)
+  int aServerIf, int aServiceHandle, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -951,7 +979,7 @@ BluetoothDaemonGattModule::ServerDeleteServiceCmd(
 nsresult
 BluetoothDaemonGattModule::ServerSendIndicationCmd(
   int aServerIf, int aAttributeHandle, int aConnId, int aLength, bool aConfirm,
-  uint8_t* aValue, BluetoothGattResultHandler* aRes)
+  uint8_t* aValue, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -980,7 +1008,7 @@ nsresult
 BluetoothDaemonGattModule::ServerSendResponseCmd(
   int aConnId, int aTransId, BluetoothGattStatus aStatus,
   const BluetoothGattResponse& aResponse,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1024,186 +1052,186 @@ BluetoothDaemonGattModule::ErrorRsp(
 void
 BluetoothDaemonGattModule::ClientRegisterRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::RegisterClient,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::RegisterClient,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientUnregisterRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::UnregisterClient,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::UnregisterClient,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientScanRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::Scan, UnpackPDUInitOp(aPDU));
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::Scan, UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientConnectRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::Connect, UnpackPDUInitOp(aPDU));
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::Connect, UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientDisconnectRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::Disconnect,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::Disconnect,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientListenRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::Listen, UnpackPDUInitOp(aPDU));
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::Listen, UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientRefreshRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::Refresh, UnpackPDUInitOp(aPDU));
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::Refresh, UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientSearchServiceRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::SearchService,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::SearchService,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientGetIncludedServiceRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::GetIncludedService,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::GetIncludedService,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientGetCharacteristicRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::GetCharacteristic,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::GetCharacteristic,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientGetDescriptorRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::GetDescriptor,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::GetDescriptor,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientReadCharacteristicRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::ReadCharacteristic,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::ReadCharacteristic,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientWriteCharacteristicRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::WriteCharacteristic,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::WriteCharacteristic,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientReadDescriptorRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::ReadDescriptor,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::ReadDescriptor,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientWriteDescriptorRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::WriteDescriptor,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::WriteDescriptor,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientExecuteWriteRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::ExecuteWrite,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::ExecuteWrite,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientRegisterNotificationRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::RegisterNotification,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::RegisterNotification,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientDeregisterNotificationRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::DeregisterNotification,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::DeregisterNotification,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientReadRemoteRssiRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::ReadRemoteRssi,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::ReadRemoteRssi,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1233,261 +1261,325 @@ public:
 void
 BluetoothDaemonGattModule::ClientGetDeviceTypeRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   ClientGetDeviceTypeResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::GetDeviceType,
+    aRes, &BluetoothGattClientResultHandler::GetDeviceType,
     ClientGetDeviceTypeInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientSetAdvDataRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::SetAdvData,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::SetAdvData,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ClientTestCommandRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::TestCommand,
+  ClientResultRunnable::Dispatch(
+    aRes, &BluetoothGattClientResultHandler::TestCommand,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerRegisterRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::RegisterServer,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::RegisterServer,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerUnregisterRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::UnregisterServer,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::UnregisterServer,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerConnectPeripheralRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::ConnectPeripheral,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::ConnectPeripheral,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerDisconnectPeripheralRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::DisconnectPeripheral,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::DisconnectPeripheral,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerAddServiceRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::AddService,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::AddService,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerAddIncludedServiceRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::AddIncludedService,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::AddIncludedService,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerAddCharacteristicRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::AddCharacteristic,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::AddCharacteristic,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerAddDescriptorRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::AddDescriptor,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::AddDescriptor,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerStartServiceRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::StartService,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::StartService,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerStopServiceRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::StopService,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::StopService,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerDeleteServiceRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::DeleteService,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::DeleteService,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerSendIndicationRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::SendIndication,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::SendIndication,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::ServerSendResponseRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
-  ResultRunnable::Dispatch(
-    aRes, &BluetoothGattResultHandler::SendResponse,
+  ServerResultRunnable::Dispatch(
+    aRes, &BluetoothGattServerResultHandler::SendResponse,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::HandleRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  DaemonSocketResultHandler* aRes)
+  void* aUserData)
 {
   static void (BluetoothDaemonGattModule::* const HandleRsp[])(
     const DaemonSocketPDUHeader&,
     DaemonSocketPDU&,
     BluetoothGattResultHandler*) = {
-    [OPCODE_ERROR] =
-      &BluetoothDaemonGattModule::ErrorRsp,
-    [OPCODE_CLIENT_REGISTER] =
-      &BluetoothDaemonGattModule::ClientRegisterRsp,
-    [OPCODE_CLIENT_UNREGISTER] =
-      &BluetoothDaemonGattModule::ClientUnregisterRsp,
-    [OPCODE_CLIENT_SCAN] =
-      &BluetoothDaemonGattModule::ClientScanRsp,
-    [OPCODE_CLIENT_CONNECT] =
-      &BluetoothDaemonGattModule::ClientConnectRsp,
-    [OPCODE_CLIENT_DISCONNECT] =
-      &BluetoothDaemonGattModule::ClientDisconnectRsp,
-    [OPCODE_CLIENT_LISTEN] =
-      &BluetoothDaemonGattModule::ClientListenRsp,
-    [OPCODE_CLIENT_REFRESH] =
-      &BluetoothDaemonGattModule::ClientRefreshRsp,
-    [OPCODE_CLIENT_SEARCH_SERVICE] =
-      &BluetoothDaemonGattModule::ClientSearchServiceRsp,
-    [OPCODE_CLIENT_GET_INCLUDED_SERVICE] =
-      &BluetoothDaemonGattModule::ClientGetIncludedServiceRsp,
-    [OPCODE_CLIENT_GET_CHARACTERISTIC] =
-      &BluetoothDaemonGattModule::ClientGetCharacteristicRsp,
-    [OPCODE_CLIENT_GET_DESCRIPTOR] =
-      &BluetoothDaemonGattModule::ClientGetDescriptorRsp,
-    [OPCODE_CLIENT_READ_CHARACTERISTIC] =
-      &BluetoothDaemonGattModule::ClientReadCharacteristicRsp,
-    [OPCODE_CLIENT_WRITE_CHARACTERISTIC] =
-      &BluetoothDaemonGattModule::ClientWriteCharacteristicRsp,
-    [OPCODE_CLIENT_READ_DESCRIPTOR] =
-      &BluetoothDaemonGattModule::ClientReadDescriptorRsp,
-    [OPCODE_CLIENT_WRITE_DESCRIPTOR] =
-      &BluetoothDaemonGattModule::ClientWriteDescriptorRsp,
-    [OPCODE_CLIENT_EXECUTE_WRITE] =
-      &BluetoothDaemonGattModule::ClientExecuteWriteRsp,
-    [OPCODE_CLIENT_REGISTER_NOTIFICATION] =
-      &BluetoothDaemonGattModule::ClientRegisterNotificationRsp,
-    [OPCODE_CLIENT_DEREGISTER_NOTIFICATION] =
-      &BluetoothDaemonGattModule::ClientDeregisterNotificationRsp,
-    [OPCODE_CLIENT_READ_REMOTE_RSSI] =
-      &BluetoothDaemonGattModule::ClientReadRemoteRssiRsp,
-    [OPCODE_CLIENT_GET_DEVICE_TYPE] =
-      &BluetoothDaemonGattModule::ClientGetDeviceTypeRsp,
-    [OPCODE_CLIENT_SET_ADV_DATA] =
-      &BluetoothDaemonGattModule::ClientSetAdvDataRsp,
-    [OPCODE_CLIENT_TEST_COMMAND] =
-      &BluetoothDaemonGattModule::ClientTestCommandRsp,
-    [OPCODE_SERVER_REGISTER] =
-      &BluetoothDaemonGattModule::ServerRegisterRsp,
-    [OPCODE_SERVER_UNREGISTER] =
-      &BluetoothDaemonGattModule::ServerUnregisterRsp,
-    [OPCODE_SERVER_CONNECT_PERIPHERAL] =
-      &BluetoothDaemonGattModule::ServerConnectPeripheralRsp,
-    [OPCODE_SERVER_DISCONNECT_PERIPHERAL] =
-      &BluetoothDaemonGattModule::ServerDisconnectPeripheralRsp,
-    [OPCODE_SERVER_ADD_SERVICE] =
-      &BluetoothDaemonGattModule::ServerAddServiceRsp,
-    [OPCODE_SERVER_ADD_INCLUDED_SERVICE] =
-      &BluetoothDaemonGattModule::ServerAddIncludedServiceRsp,
-    [OPCODE_SERVER_ADD_CHARACTERISTIC] =
-      &BluetoothDaemonGattModule::ServerAddCharacteristicRsp,
-    [OPCODE_SERVER_ADD_DESCRIPTOR] =
-      &BluetoothDaemonGattModule::ServerAddDescriptorRsp,
-    [OPCODE_SERVER_START_SERVICE] =
-      &BluetoothDaemonGattModule::ServerStartServiceRsp,
-    [OPCODE_SERVER_STOP_SERVICE] =
-      &BluetoothDaemonGattModule::ServerStopServiceRsp,
-    [OPCODE_SERVER_DELETE_SERVICE] =
-      &BluetoothDaemonGattModule::ServerDeleteServiceRsp,
-    [OPCODE_SERVER_SEND_INDICATION] =
-      &BluetoothDaemonGattModule::ServerSendIndicationRsp,
-    [OPCODE_SERVER_SEND_RESPONSE] =
-      &BluetoothDaemonGattModule::ServerSendResponseRsp
+    INIT_ARRAY_AT(OPCODE_ERROR,
+      &BluetoothDaemonGattModule::ErrorRsp)
+    };
+
+  static void (BluetoothDaemonGattModule::* const HandleClientRsp[])(
+    const DaemonSocketPDUHeader&,
+    DaemonSocketPDU&,
+    BluetoothGattClientResultHandler*) = {
+    INIT_ARRAY_AT(0, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_REGISTER,
+      &BluetoothDaemonGattModule::ClientRegisterRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_UNREGISTER,
+      &BluetoothDaemonGattModule::ClientUnregisterRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_SCAN,
+      &BluetoothDaemonGattModule::ClientScanRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_CONNECT,
+      &BluetoothDaemonGattModule::ClientConnectRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_DISCONNECT,
+      &BluetoothDaemonGattModule::ClientDisconnectRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_LISTEN,
+      &BluetoothDaemonGattModule::ClientListenRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_REFRESH,
+      &BluetoothDaemonGattModule::ClientRefreshRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_SEARCH_SERVICE,
+      &BluetoothDaemonGattModule::ClientSearchServiceRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_GET_INCLUDED_SERVICE,
+      &BluetoothDaemonGattModule::ClientGetIncludedServiceRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_GET_CHARACTERISTIC,
+      &BluetoothDaemonGattModule::ClientGetCharacteristicRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_GET_DESCRIPTOR,
+      &BluetoothDaemonGattModule::ClientGetDescriptorRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_READ_CHARACTERISTIC,
+      &BluetoothDaemonGattModule::ClientReadCharacteristicRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_WRITE_CHARACTERISTIC,
+      &BluetoothDaemonGattModule::ClientWriteCharacteristicRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_READ_DESCRIPTOR,
+      &BluetoothDaemonGattModule::ClientReadDescriptorRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_WRITE_DESCRIPTOR,
+      &BluetoothDaemonGattModule::ClientWriteDescriptorRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_EXECUTE_WRITE,
+      &BluetoothDaemonGattModule::ClientExecuteWriteRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_REGISTER_NOTIFICATION,
+      &BluetoothDaemonGattModule::ClientRegisterNotificationRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_DEREGISTER_NOTIFICATION,
+      &BluetoothDaemonGattModule::ClientDeregisterNotificationRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_READ_REMOTE_RSSI,
+      &BluetoothDaemonGattModule::ClientReadRemoteRssiRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_GET_DEVICE_TYPE,
+      &BluetoothDaemonGattModule::ClientGetDeviceTypeRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_SET_ADV_DATA,
+      &BluetoothDaemonGattModule::ClientSetAdvDataRsp),
+    INIT_ARRAY_AT(OPCODE_CLIENT_TEST_COMMAND,
+      &BluetoothDaemonGattModule::ClientTestCommandRsp)
+  };
+
+  /**
+   * These client opcodes are added since non-trivial designated initializers
+   * are not supported.
+   * We could use a single array for GattRsp, GattClientRsp, and GattServerRsp
+   * after combining result handlers in Bug 1181512.
+   **/
+  static void (BluetoothDaemonGattModule::* const HandleServerRsp[])(
+    const DaemonSocketPDUHeader&,
+    DaemonSocketPDU&,
+    BluetoothGattServerResultHandler*) = {
+    INIT_ARRAY_AT(0, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_REGISTER, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_UNREGISTER, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_SCAN, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_CONNECT, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_DISCONNECT, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_LISTEN, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_REFRESH, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_SEARCH_SERVICE, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_GET_INCLUDED_SERVICE, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_GET_CHARACTERISTIC, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_GET_DESCRIPTOR, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_READ_CHARACTERISTIC, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_WRITE_CHARACTERISTIC, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_READ_DESCRIPTOR, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_WRITE_DESCRIPTOR, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_EXECUTE_WRITE, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_REGISTER_NOTIFICATION, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_DEREGISTER_NOTIFICATION, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_READ_REMOTE_RSSI, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_GET_DEVICE_TYPE, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_SET_ADV_DATA, nullptr),
+    INIT_ARRAY_AT(OPCODE_CLIENT_TEST_COMMAND, nullptr),
+    INIT_ARRAY_AT(OPCODE_SERVER_REGISTER,
+      &BluetoothDaemonGattModule::ServerRegisterRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_UNREGISTER,
+      &BluetoothDaemonGattModule::ServerUnregisterRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_CONNECT_PERIPHERAL,
+      &BluetoothDaemonGattModule::ServerConnectPeripheralRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_DISCONNECT_PERIPHERAL,
+      &BluetoothDaemonGattModule::ServerDisconnectPeripheralRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_ADD_SERVICE,
+      &BluetoothDaemonGattModule::ServerAddServiceRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_ADD_INCLUDED_SERVICE,
+      &BluetoothDaemonGattModule::ServerAddIncludedServiceRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_ADD_CHARACTERISTIC,
+      &BluetoothDaemonGattModule::ServerAddCharacteristicRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_ADD_DESCRIPTOR,
+      &BluetoothDaemonGattModule::ServerAddDescriptorRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_START_SERVICE,
+      &BluetoothDaemonGattModule::ServerStartServiceRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_STOP_SERVICE,
+      &BluetoothDaemonGattModule::ServerStopServiceRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_DELETE_SERVICE,
+      &BluetoothDaemonGattModule::ServerDeleteServiceRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_SEND_INDICATION,
+      &BluetoothDaemonGattModule::ServerSendIndicationRsp),
+    INIT_ARRAY_AT(OPCODE_SERVER_SEND_RESPONSE,
+      &BluetoothDaemonGattModule::ServerSendResponseRsp)
   };
 
   MOZ_ASSERT(!NS_IsMainThread()); // I/O thread
 
-  if (NS_WARN_IF(!(aHeader.mOpcode < MOZ_ARRAY_LENGTH(HandleRsp))) ||
-      NS_WARN_IF(!HandleRsp[aHeader.mOpcode])) {
+  bool isInGattArray = aHeader.mOpcode < MOZ_ARRAY_LENGTH(HandleRsp) &&
+                       HandleRsp[aHeader.mOpcode];
+  bool isInGattClientArray =
+    aHeader.mOpcode < MOZ_ARRAY_LENGTH(HandleClientRsp) &&
+    HandleClientRsp[aHeader.mOpcode];
+
+  bool isInGattServerArray =
+    aHeader.mOpcode < MOZ_ARRAY_LENGTH(HandleServerRsp) &&
+    HandleServerRsp[aHeader.mOpcode];
+
+  if (NS_WARN_IF(!isInGattArray && !isInGattClientArray &&
+                 !isInGattServerArray)) {
     return;
   }
 
-  nsRefPtr<BluetoothGattResultHandler> res =
-    static_cast<BluetoothGattResultHandler*>(aRes);
+  if (!aUserData) {
+    return; // Return early if no result handler has been set for response
+  }
 
-  if (!res) {
-    return;
-  } // Return early if no result handler has been set for response
-
-  (this->*(HandleRsp[aHeader.mOpcode]))(aHeader, aPDU, res);
+  if (isInGattArray) {
+    nsRefPtr<BluetoothGattResultHandler> res =
+      already_AddRefed<BluetoothGattResultHandler>(
+        static_cast<BluetoothGattResultHandler*>(aUserData));
+    (this->*(HandleRsp[aHeader.mOpcode]))(aHeader, aPDU, res);
+  } else if (isInGattClientArray) {
+    nsRefPtr<BluetoothGattClientResultHandler> res =
+      already_AddRefed<BluetoothGattClientResultHandler>(
+        static_cast<BluetoothGattClientResultHandler*>(aUserData));
+    (this->*(HandleClientRsp[aHeader.mOpcode]))(aHeader, aPDU, res);
+  } else { // isInGattServerArray
+    nsRefPtr<BluetoothGattServerResultHandler> res =
+      already_AddRefed<BluetoothGattServerResultHandler>(
+        static_cast<BluetoothGattServerResultHandler*>(aUserData));
+    (this->*(HandleServerRsp[aHeader.mOpcode]))(aHeader, aPDU, res);
+  }
 }
 
 // Notifications
@@ -1507,12 +1599,40 @@ public:
   }
 };
 
+// Returns the current notification handler to a notification runnable
+class BluetoothDaemonGattModule::ClientNotificationHandlerWrapper final
+{
+public:
+  typedef BluetoothGattClientNotificationHandler ObjectType;
+
+  static ObjectType* GetInstance()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    return sNotificationHandler;
+  }
+};
+
+// Returns the current notification handler to a notification runnable
+class BluetoothDaemonGattModule::ServerNotificationHandlerWrapper final
+{
+public:
+  typedef BluetoothGattServerNotificationHandler ObjectType;
+
+  static ObjectType* GetInstance()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    return sNotificationHandler;
+  }
+};
+
 void
 BluetoothDaemonGattModule::ClientRegisterNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientRegisterNotification::Dispatch(
-    &BluetoothGattNotificationHandler::RegisterClientNotification,
+    &BluetoothGattClientNotificationHandler::RegisterClientNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1565,7 +1685,7 @@ BluetoothDaemonGattModule::ClientScanResultNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientScanResultNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ScanResultNotification,
+    &BluetoothGattClientNotificationHandler::ScanResultNotification,
     ClientScanResultInitOp(aPDU));
 }
 
@@ -1618,7 +1738,7 @@ BluetoothDaemonGattModule::ClientConnectNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientConnectNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ConnectNotification,
+    &BluetoothGattClientNotificationHandler::ConnectNotification,
     ClientConnectDisconnectInitOp(aPDU));
 }
 
@@ -1627,7 +1747,7 @@ BluetoothDaemonGattModule::ClientDisconnectNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientDisconnectNotification::Dispatch(
-    &BluetoothGattNotificationHandler::DisconnectNotification,
+    &BluetoothGattClientNotificationHandler::DisconnectNotification,
     ClientConnectDisconnectInitOp(aPDU));
 }
 
@@ -1636,7 +1756,7 @@ BluetoothDaemonGattModule::ClientSearchCompleteNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientSearchCompleteNotification::Dispatch(
-    &BluetoothGattNotificationHandler::SearchCompleteNotification,
+    &BluetoothGattClientNotificationHandler::SearchCompleteNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1645,7 +1765,7 @@ BluetoothDaemonGattModule::ClientSearchResultNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientSearchResultNotification::Dispatch(
-    &BluetoothGattNotificationHandler::SearchResultNotification,
+    &BluetoothGattClientNotificationHandler::SearchResultNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1654,7 +1774,7 @@ BluetoothDaemonGattModule::ClientGetCharacteristicNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientGetCharacteristicNotification::Dispatch(
-    &BluetoothGattNotificationHandler::GetCharacteristicNotification,
+    &BluetoothGattClientNotificationHandler::GetCharacteristicNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1663,7 +1783,7 @@ BluetoothDaemonGattModule::ClientGetDescriptorNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientGetDescriptorNotification::Dispatch(
-    &BluetoothGattNotificationHandler::GetDescriptorNotification,
+    &BluetoothGattClientNotificationHandler::GetDescriptorNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1672,7 +1792,7 @@ BluetoothDaemonGattModule::ClientGetIncludedServiceNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientGetIncludedServiceNotification::Dispatch(
-    &BluetoothGattNotificationHandler::GetIncludedServiceNotification,
+    &BluetoothGattClientNotificationHandler::GetIncludedServiceNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1681,7 +1801,7 @@ BluetoothDaemonGattModule::ClientRegisterNotificationNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientRegisterNotificationNotification::Dispatch(
-    &BluetoothGattNotificationHandler::RegisterNotificationNotification,
+    &BluetoothGattClientNotificationHandler::RegisterNotificationNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1690,7 +1810,7 @@ BluetoothDaemonGattModule::ClientNotifyNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientNotifyNotification::Dispatch(
-    &BluetoothGattNotificationHandler::NotifyNotification,
+    &BluetoothGattClientNotificationHandler::NotifyNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1699,7 +1819,7 @@ BluetoothDaemonGattModule::ClientReadCharacteristicNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientReadCharacteristicNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ReadCharacteristicNotification,
+    &BluetoothGattClientNotificationHandler::ReadCharacteristicNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1708,7 +1828,7 @@ BluetoothDaemonGattModule::ClientWriteCharacteristicNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientWriteCharacteristicNotification::Dispatch(
-    &BluetoothGattNotificationHandler::WriteCharacteristicNotification,
+    &BluetoothGattClientNotificationHandler::WriteCharacteristicNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1717,7 +1837,7 @@ BluetoothDaemonGattModule::ClientReadDescriptorNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientReadDescriptorNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ReadDescriptorNotification,
+    &BluetoothGattClientNotificationHandler::ReadDescriptorNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1726,7 +1846,7 @@ BluetoothDaemonGattModule::ClientWriteDescriptorNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientWriteDescriptorNotification::Dispatch(
-    &BluetoothGattNotificationHandler::WriteDescriptorNotification,
+    &BluetoothGattClientNotificationHandler::WriteDescriptorNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1735,7 +1855,7 @@ BluetoothDaemonGattModule::ClientExecuteWriteNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientExecuteWriteNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ExecuteWriteNotification,
+    &BluetoothGattClientNotificationHandler::ExecuteWriteNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1787,7 +1907,7 @@ BluetoothDaemonGattModule::ClientReadRemoteRssiNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientReadRemoteRssiNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ReadRemoteRssiNotification,
+    &BluetoothGattClientNotificationHandler::ReadRemoteRssiNotification,
     ClientReadRemoteRssiInitOp(aPDU));
 }
 
@@ -1796,7 +1916,7 @@ BluetoothDaemonGattModule::ClientListenNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ClientListenNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ListenNotification,
+    &BluetoothGattClientNotificationHandler::ListenNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1805,7 +1925,7 @@ BluetoothDaemonGattModule::ServerRegisterNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerRegisterNotification::Dispatch(
-    &BluetoothGattNotificationHandler::RegisterServerNotification,
+    &BluetoothGattServerNotificationHandler::RegisterServerNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1837,7 +1957,7 @@ public:
       return rv;
     }
     /* Read connected */
-    rv = UnpackPDU(pdu, UnpackConversion<int32_t, bool>(aArg3));
+    rv = UnpackPDU(pdu, aArg3);
     if (NS_FAILED(rv)) {
       return rv;
     }
@@ -1858,7 +1978,7 @@ BluetoothDaemonGattModule::ServerConnectionNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerConnectionNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ConnectionNotification,
+    &BluetoothGattServerNotificationHandler::ConnectionNotification,
     ServerConnectionInitOp(aPDU));
 }
 
@@ -1867,7 +1987,7 @@ BluetoothDaemonGattModule::ServerServiceAddedNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerServiceAddedNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ServiceAddedNotification,
+    &BluetoothGattServerNotificationHandler::ServiceAddedNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1876,7 +1996,7 @@ BluetoothDaemonGattModule::ServerIncludedServiceAddedNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerIncludedServiceAddedNotification::Dispatch(
-    &BluetoothGattNotificationHandler::IncludedServiceAddedNotification,
+    &BluetoothGattServerNotificationHandler::IncludedServiceAddedNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1885,7 +2005,7 @@ BluetoothDaemonGattModule::ServerCharacteristicAddedNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerCharacteristicAddedNotification::Dispatch(
-    &BluetoothGattNotificationHandler::CharacteristicAddedNotification,
+    &BluetoothGattServerNotificationHandler::CharacteristicAddedNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1894,7 +2014,7 @@ BluetoothDaemonGattModule::ServerDescriptorAddedNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerDescriptorAddedNotification::Dispatch(
-    &BluetoothGattNotificationHandler::DescriptorAddedNotification,
+    &BluetoothGattServerNotificationHandler::DescriptorAddedNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1903,7 +2023,7 @@ BluetoothDaemonGattModule::ServerServiceStartedNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerServiceStartedNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ServiceStartedNotification,
+    &BluetoothGattServerNotificationHandler::ServiceStartedNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1912,7 +2032,7 @@ BluetoothDaemonGattModule::ServerServiceStoppedNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerServiceStoppedNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ServiceStoppedNotification,
+    &BluetoothGattServerNotificationHandler::ServiceStoppedNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1921,7 +2041,7 @@ BluetoothDaemonGattModule::ServerServiceDeletedNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerServiceDeletedNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ServiceDeletedNotification,
+    &BluetoothGattServerNotificationHandler::ServiceDeletedNotification,
     UnpackPDUInitOp(aPDU));
 }
 
@@ -1986,7 +2106,7 @@ BluetoothDaemonGattModule::ServerRequestReadNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerRequestReadNotification::Dispatch(
-    &BluetoothGattNotificationHandler::RequestReadNotification,
+    &BluetoothGattServerNotificationHandler::RequestReadNotification,
     ServerRequestReadInitOp(aPDU));
 }
 
@@ -2070,7 +2190,7 @@ BluetoothDaemonGattModule::ServerRequestWriteNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerRequestWriteNotification::Dispatch(
-    &BluetoothGattNotificationHandler::RequestWriteNotification,
+    &BluetoothGattServerNotificationHandler::RequestWriteNotification,
     ServerRequestWriteInitOp(aPDU));
 }
 
@@ -2123,7 +2243,7 @@ BluetoothDaemonGattModule::ServerRequestExecuteWriteNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerRequestExecuteWriteNotification::Dispatch(
-    &BluetoothGattNotificationHandler::RequestExecuteWriteNotification,
+    &BluetoothGattServerNotificationHandler::RequestExecuteWriteNotification,
     ServerRequestExecuteWriteInitOp(aPDU));
 }
 
@@ -2132,48 +2252,48 @@ BluetoothDaemonGattModule::ServerResponseConfirmationNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ServerResponseConfirmationNotification::Dispatch(
-    &BluetoothGattNotificationHandler::ResponseConfirmationNotification,
+    &BluetoothGattServerNotificationHandler::ResponseConfirmationNotification,
     UnpackPDUInitOp(aPDU));
 }
 
 void
 BluetoothDaemonGattModule::HandleNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  DaemonSocketResultHandler* aRes)
+  void* aUserData)
 {
   static void (BluetoothDaemonGattModule::* const HandleNtf[])(
     const DaemonSocketPDUHeader&, DaemonSocketPDU&) = {
-    [0] = &BluetoothDaemonGattModule::ClientRegisterNtf,
-    [1] = &BluetoothDaemonGattModule::ClientScanResultNtf,
-    [2] = &BluetoothDaemonGattModule::ClientConnectNtf,
-    [3] = &BluetoothDaemonGattModule::ClientDisconnectNtf,
-    [4] = &BluetoothDaemonGattModule::ClientSearchCompleteNtf,
-    [5] = &BluetoothDaemonGattModule::ClientSearchResultNtf,
-    [6] = &BluetoothDaemonGattModule::ClientGetCharacteristicNtf,
-    [7] = &BluetoothDaemonGattModule::ClientGetDescriptorNtf,
-    [8] = &BluetoothDaemonGattModule::ClientGetIncludedServiceNtf,
-    [9] = &BluetoothDaemonGattModule::ClientRegisterNotificationNtf,
-    [10] = &BluetoothDaemonGattModule::ClientNotifyNtf,
-    [11] = &BluetoothDaemonGattModule::ClientReadCharacteristicNtf,
-    [12] = &BluetoothDaemonGattModule::ClientWriteCharacteristicNtf,
-    [13] = &BluetoothDaemonGattModule::ClientReadDescriptorNtf,
-    [14] = &BluetoothDaemonGattModule::ClientWriteDescriptorNtf,
-    [15] = &BluetoothDaemonGattModule::ClientExecuteWriteNtf,
-    [16] = &BluetoothDaemonGattModule::ClientReadRemoteRssiNtf,
-    [17] = &BluetoothDaemonGattModule::ClientListenNtf,
-    [18] = &BluetoothDaemonGattModule::ServerRegisterNtf,
-    [19] = &BluetoothDaemonGattModule::ServerConnectionNtf,
-    [20] = &BluetoothDaemonGattModule::ServerServiceAddedNtf,
-    [21] = &BluetoothDaemonGattModule::ServerIncludedServiceAddedNtf,
-    [22] = &BluetoothDaemonGattModule::ServerCharacteristicAddedNtf,
-    [23] = &BluetoothDaemonGattModule::ServerDescriptorAddedNtf,
-    [24] = &BluetoothDaemonGattModule::ServerServiceStartedNtf,
-    [25] = &BluetoothDaemonGattModule::ServerServiceStoppedNtf,
-    [26] = &BluetoothDaemonGattModule::ServerServiceDeletedNtf,
-    [27] = &BluetoothDaemonGattModule::ServerRequestReadNtf,
-    [28] = &BluetoothDaemonGattModule::ServerRequestWriteNtf,
-    [29] = &BluetoothDaemonGattModule::ServerRequestExecuteWriteNtf,
-    [30] = &BluetoothDaemonGattModule::ServerResponseConfirmationNtf
+    INIT_ARRAY_AT(0, &BluetoothDaemonGattModule::ClientRegisterNtf),
+    INIT_ARRAY_AT(1, &BluetoothDaemonGattModule::ClientScanResultNtf),
+    INIT_ARRAY_AT(2, &BluetoothDaemonGattModule::ClientConnectNtf),
+    INIT_ARRAY_AT(3, &BluetoothDaemonGattModule::ClientDisconnectNtf),
+    INIT_ARRAY_AT(4, &BluetoothDaemonGattModule::ClientSearchCompleteNtf),
+    INIT_ARRAY_AT(5, &BluetoothDaemonGattModule::ClientSearchResultNtf),
+    INIT_ARRAY_AT(6, &BluetoothDaemonGattModule::ClientGetCharacteristicNtf),
+    INIT_ARRAY_AT(7, &BluetoothDaemonGattModule::ClientGetDescriptorNtf),
+    INIT_ARRAY_AT(8, &BluetoothDaemonGattModule::ClientGetIncludedServiceNtf),
+    INIT_ARRAY_AT(9, &BluetoothDaemonGattModule::ClientRegisterNotificationNtf),
+    INIT_ARRAY_AT(10, &BluetoothDaemonGattModule::ClientNotifyNtf),
+    INIT_ARRAY_AT(11, &BluetoothDaemonGattModule::ClientReadCharacteristicNtf),
+    INIT_ARRAY_AT(12, &BluetoothDaemonGattModule::ClientWriteCharacteristicNtf),
+    INIT_ARRAY_AT(13, &BluetoothDaemonGattModule::ClientReadDescriptorNtf),
+    INIT_ARRAY_AT(14, &BluetoothDaemonGattModule::ClientWriteDescriptorNtf),
+    INIT_ARRAY_AT(15, &BluetoothDaemonGattModule::ClientExecuteWriteNtf),
+    INIT_ARRAY_AT(16, &BluetoothDaemonGattModule::ClientReadRemoteRssiNtf),
+    INIT_ARRAY_AT(17, &BluetoothDaemonGattModule::ClientListenNtf),
+    INIT_ARRAY_AT(18, &BluetoothDaemonGattModule::ServerRegisterNtf),
+    INIT_ARRAY_AT(19, &BluetoothDaemonGattModule::ServerConnectionNtf),
+    INIT_ARRAY_AT(20, &BluetoothDaemonGattModule::ServerServiceAddedNtf),
+    INIT_ARRAY_AT(21, &BluetoothDaemonGattModule::ServerIncludedServiceAddedNtf),
+    INIT_ARRAY_AT(22, &BluetoothDaemonGattModule::ServerCharacteristicAddedNtf),
+    INIT_ARRAY_AT(23, &BluetoothDaemonGattModule::ServerDescriptorAddedNtf),
+    INIT_ARRAY_AT(24, &BluetoothDaemonGattModule::ServerServiceStartedNtf),
+    INIT_ARRAY_AT(25, &BluetoothDaemonGattModule::ServerServiceStoppedNtf),
+    INIT_ARRAY_AT(26, &BluetoothDaemonGattModule::ServerServiceDeletedNtf),
+    INIT_ARRAY_AT(27, &BluetoothDaemonGattModule::ServerRequestReadNtf),
+    INIT_ARRAY_AT(28, &BluetoothDaemonGattModule::ServerRequestWriteNtf),
+    INIT_ARRAY_AT(29, &BluetoothDaemonGattModule::ServerRequestExecuteWriteNtf),
+    INIT_ARRAY_AT(30, &BluetoothDaemonGattModule::ServerResponseConfirmationNtf)
   };
 
   MOZ_ASSERT(!NS_IsMainThread());
@@ -2191,6 +2311,16 @@ BluetoothDaemonGattModule::HandleNtf(
 //
 // Gatt interface
 //
+
+BluetoothDaemonGattClientInterface::BluetoothDaemonGattClientInterface(
+  BluetoothDaemonGattModule* aModule)
+  : mModule(aModule)
+{ }
+
+BluetoothDaemonGattServerInterface::BluetoothDaemonGattServerInterface(
+  BluetoothDaemonGattModule* aModule)
+  : mModule(aModule)
+{ }
 
 BluetoothDaemonGattInterface::BluetoothDaemonGattInterface(
   BluetoothDaemonGattModule* aModule)
@@ -2309,8 +2439,8 @@ BluetoothDaemonGattInterface::Cleanup(
 
 /* Register / Unregister */
 void
-BluetoothDaemonGattInterface::RegisterClient(
-  const BluetoothUuid& aUuid, BluetoothGattResultHandler* aRes)
+BluetoothDaemonGattClientInterface::RegisterClient(
+  const BluetoothUuid& aUuid, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2321,8 +2451,8 @@ BluetoothDaemonGattInterface::RegisterClient(
 }
 
 void
-BluetoothDaemonGattInterface::UnregisterClient(
-  int aClientIf, BluetoothGattResultHandler* aRes)
+BluetoothDaemonGattClientInterface::UnregisterClient(
+  int aClientIf, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2334,8 +2464,8 @@ BluetoothDaemonGattInterface::UnregisterClient(
 
 /* Start / Stop LE Scan */
 void
-BluetoothDaemonGattInterface::Scan(
-  int aClientIf, bool aStart, BluetoothGattResultHandler* aRes)
+BluetoothDaemonGattClientInterface::Scan(
+  int aClientIf, bool aStart, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2348,9 +2478,9 @@ BluetoothDaemonGattInterface::Scan(
 /* Connect / Disconnect */
 
 void
-BluetoothDaemonGattInterface::Connect(
+BluetoothDaemonGattClientInterface::Connect(
   int aClientIf, const nsAString& aBdAddr, bool aIsDirect,
-  BluetoothTransport aTransport, BluetoothGattResultHandler* aRes)
+  BluetoothTransport aTransport, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2362,9 +2492,9 @@ BluetoothDaemonGattInterface::Connect(
 }
 
 void
-BluetoothDaemonGattInterface::Disconnect(
+BluetoothDaemonGattClientInterface::Disconnect(
   int aClientIf, const nsAString& aBdAddr, int aConnId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2377,8 +2507,8 @@ BluetoothDaemonGattInterface::Disconnect(
 
 /* Start / Stop advertisements to listen for incoming connections */
 void
-BluetoothDaemonGattInterface::Listen(
-  int aClientIf, bool aIsStart, BluetoothGattResultHandler* aRes)
+BluetoothDaemonGattClientInterface::Listen(
+  int aClientIf, bool aIsStart, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2390,8 +2520,8 @@ BluetoothDaemonGattInterface::Listen(
 
 /* Clear the attribute cache for a given device*/
 void
-BluetoothDaemonGattInterface::Refresh(
-  int aClientIf, const nsAString& aBdAddr, BluetoothGattResultHandler* aRes)
+BluetoothDaemonGattClientInterface::Refresh(
+  int aClientIf, const nsAString& aBdAddr, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2403,9 +2533,9 @@ BluetoothDaemonGattInterface::Refresh(
 
 /* Enumerate Attributes */
 void
-BluetoothDaemonGattInterface::SearchService(
+BluetoothDaemonGattClientInterface::SearchService(
   int aConnId, bool aSearchAll, const BluetoothUuid& aUuid,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2417,10 +2547,10 @@ BluetoothDaemonGattInterface::SearchService(
 }
 
 void
-BluetoothDaemonGattInterface::GetIncludedService(
+BluetoothDaemonGattClientInterface::GetIncludedService(
   int aConnId, const BluetoothGattServiceId& aServiceId, bool aFirst,
   const BluetoothGattServiceId& aStartServiceId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2432,9 +2562,9 @@ BluetoothDaemonGattInterface::GetIncludedService(
 }
 
 void
-BluetoothDaemonGattInterface::GetCharacteristic(
+BluetoothDaemonGattClientInterface::GetCharacteristic(
   int aConnId, const BluetoothGattServiceId& aServiceId, bool aFirst,
-  const BluetoothGattId& aStartCharId, BluetoothGattResultHandler* aRes)
+  const BluetoothGattId& aStartCharId, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2446,10 +2576,10 @@ BluetoothDaemonGattInterface::GetCharacteristic(
 }
 
 void
-BluetoothDaemonGattInterface::GetDescriptor(
+BluetoothDaemonGattClientInterface::GetDescriptor(
   int aConnId, const BluetoothGattServiceId& aServiceId,
   const BluetoothGattId& aCharId, bool aFirst,
-  const BluetoothGattId& aDescriptorId, BluetoothGattResultHandler* aRes)
+  const BluetoothGattId& aDescriptorId, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2463,10 +2593,10 @@ BluetoothDaemonGattInterface::GetDescriptor(
 
 /* Read / Write An Attribute */
 void
-BluetoothDaemonGattInterface::ReadCharacteristic(
+BluetoothDaemonGattClientInterface::ReadCharacteristic(
   int aConnId, const BluetoothGattServiceId& aServiceId,
   const BluetoothGattId& aCharId, BluetoothGattAuthReq aAuthReq,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2478,11 +2608,11 @@ BluetoothDaemonGattInterface::ReadCharacteristic(
 }
 
 void
-BluetoothDaemonGattInterface::WriteCharacteristic(
+BluetoothDaemonGattClientInterface::WriteCharacteristic(
   int aConnId, const BluetoothGattServiceId& aServiceId,
   const BluetoothGattId& aCharId, BluetoothGattWriteType aWriteType,
   BluetoothGattAuthReq aAuthReq, const nsTArray<uint8_t>& aValue,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2497,10 +2627,10 @@ BluetoothDaemonGattInterface::WriteCharacteristic(
 }
 
 void
-BluetoothDaemonGattInterface::ReadDescriptor(
+BluetoothDaemonGattClientInterface::ReadDescriptor(
   int aConnId, const BluetoothGattServiceId& aServiceId,
   const BluetoothGattId& aCharId, const BluetoothGattId& aDescriptorId,
-  BluetoothGattAuthReq aAuthReq, BluetoothGattResultHandler* aRes)
+  BluetoothGattAuthReq aAuthReq, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2512,11 +2642,11 @@ BluetoothDaemonGattInterface::ReadDescriptor(
 }
 
 void
-BluetoothDaemonGattInterface::WriteDescriptor(
+BluetoothDaemonGattClientInterface::WriteDescriptor(
   int aConnId, const BluetoothGattServiceId& aServiceId,
   const BluetoothGattId& aCharId, const BluetoothGattId& aDescriptorId,
   BluetoothGattWriteType aWriteType, BluetoothGattAuthReq aAuthReq,
-  const nsTArray<uint8_t>& aValue, BluetoothGattResultHandler* aRes)
+  const nsTArray<uint8_t>& aValue, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2532,8 +2662,8 @@ BluetoothDaemonGattInterface::WriteDescriptor(
 
 /* Execute / Abort Prepared Write*/
 void
-BluetoothDaemonGattInterface::ExecuteWrite(
-  int aConnId, int aIsExecute, BluetoothGattResultHandler* aRes)
+BluetoothDaemonGattClientInterface::ExecuteWrite(
+  int aConnId, int aIsExecute, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2545,10 +2675,10 @@ BluetoothDaemonGattInterface::ExecuteWrite(
 
 /* Register / Deregister Characteristic Notifications or Indications */
 void
-BluetoothDaemonGattInterface::RegisterNotification(
+BluetoothDaemonGattClientInterface::RegisterNotification(
   int aClientIf, const nsAString& aBdAddr,
   const BluetoothGattServiceId& aServiceId, const BluetoothGattId& aCharId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2560,10 +2690,10 @@ BluetoothDaemonGattInterface::RegisterNotification(
 }
 
 void
-BluetoothDaemonGattInterface::DeregisterNotification(
+BluetoothDaemonGattClientInterface::DeregisterNotification(
   int aClientIf, const nsAString& aBdAddr,
   const BluetoothGattServiceId& aServiceId, const BluetoothGattId& aCharId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2575,9 +2705,9 @@ BluetoothDaemonGattInterface::DeregisterNotification(
 }
 
 void
-BluetoothDaemonGattInterface::ReadRemoteRssi(
+BluetoothDaemonGattClientInterface::ReadRemoteRssi(
   int aClientIf, const nsAString& aBdAddr,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2589,8 +2719,8 @@ BluetoothDaemonGattInterface::ReadRemoteRssi(
 }
 
 void
-BluetoothDaemonGattInterface::GetDeviceType(
-  const nsAString& aBdAddr, BluetoothGattResultHandler* aRes)
+BluetoothDaemonGattClientInterface::GetDeviceType(
+  const nsAString& aBdAddr, BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2601,13 +2731,13 @@ BluetoothDaemonGattInterface::GetDeviceType(
 }
 
 void
-BluetoothDaemonGattInterface::SetAdvData(
+BluetoothDaemonGattClientInterface::SetAdvData(
   int aServerIf, bool aIsScanRsp, bool aIsNameIncluded,
   bool aIsTxPowerIncluded, int aMinInterval, int aMaxInterval, int aApperance,
   uint16_t aManufacturerLen, char* aManufacturerData,
   uint16_t aServiceDataLen, char* aServiceData,
   uint16_t aServiceUUIDLen, char* aServiceUUID,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2622,9 +2752,9 @@ BluetoothDaemonGattInterface::SetAdvData(
 }
 
 void
-BluetoothDaemonGattInterface::TestCommand(
+BluetoothDaemonGattClientInterface::TestCommand(
   int aCommand, const BluetoothGattTestParam& aTestParam,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattClientResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2637,8 +2767,8 @@ BluetoothDaemonGattInterface::TestCommand(
 
 /* Register / Unregister */
 void
-BluetoothDaemonGattInterface::RegisterServer(
-  const BluetoothUuid& aUuid, BluetoothGattResultHandler* aRes)
+BluetoothDaemonGattServerInterface::RegisterServer(
+  const BluetoothUuid& aUuid, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2650,8 +2780,8 @@ BluetoothDaemonGattInterface::RegisterServer(
 }
 
 void
-BluetoothDaemonGattInterface::UnregisterServer(
-  int aServerIf, BluetoothGattResultHandler* aRes)
+BluetoothDaemonGattServerInterface::UnregisterServer(
+  int aServerIf, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2664,9 +2794,9 @@ BluetoothDaemonGattInterface::UnregisterServer(
 
 /* Connect / Disconnect */
 void
-BluetoothDaemonGattInterface::ConnectPeripheral(
+BluetoothDaemonGattServerInterface::ConnectPeripheral(
   int aServerIf, const nsAString& aBdAddr, bool aIsDirect, /* auto connect */
-  BluetoothTransport aTransport, BluetoothGattResultHandler* aRes)
+  BluetoothTransport aTransport, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2679,9 +2809,9 @@ BluetoothDaemonGattInterface::ConnectPeripheral(
 }
 
 void
-BluetoothDaemonGattInterface::DisconnectPeripheral(
+BluetoothDaemonGattServerInterface::DisconnectPeripheral(
   int aServerIf, const nsAString& aBdAddr, int aConnId,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2695,9 +2825,9 @@ BluetoothDaemonGattInterface::DisconnectPeripheral(
 
 /* Add a services / a characteristic / a descriptor */
 void
-BluetoothDaemonGattInterface::AddService(
+BluetoothDaemonGattServerInterface::AddService(
   int aServerIf, const BluetoothGattServiceId& aServiceId, int aNumHandles,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2710,9 +2840,9 @@ BluetoothDaemonGattInterface::AddService(
 }
 
 void
-BluetoothDaemonGattInterface::AddIncludedService(
+BluetoothDaemonGattServerInterface::AddIncludedService(
   int aServerIf, int aServiceHandle, int aIncludedServiceHandle,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2725,10 +2855,10 @@ BluetoothDaemonGattInterface::AddIncludedService(
 }
 
 void
-BluetoothDaemonGattInterface::AddCharacteristic(
+BluetoothDaemonGattServerInterface::AddCharacteristic(
   int aServerIf, int aServiceHandle, const BluetoothUuid& aUuid,
   BluetoothGattCharProp aProperties, BluetoothGattAttrPerm aPermissions,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2741,9 +2871,9 @@ BluetoothDaemonGattInterface::AddCharacteristic(
 }
 
 void
-BluetoothDaemonGattInterface::AddDescriptor(
+BluetoothDaemonGattServerInterface::AddDescriptor(
   int aServerIf, int aServiceHandle, const BluetoothUuid& aUuid,
-  BluetoothGattAttrPerm aPermissions, BluetoothGattResultHandler* aRes)
+  BluetoothGattAttrPerm aPermissions, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2757,9 +2887,9 @@ BluetoothDaemonGattInterface::AddDescriptor(
 
 /* Start / Stop / Delete a service */
 void
-BluetoothDaemonGattInterface::StartService(
+BluetoothDaemonGattServerInterface::StartService(
   int aServerIf, int aServiceHandle, BluetoothTransport aTransport,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2772,8 +2902,8 @@ BluetoothDaemonGattInterface::StartService(
 }
 
 void
-BluetoothDaemonGattInterface::StopService(
-  int aServerIf, int aServiceHandle, BluetoothGattResultHandler* aRes)
+BluetoothDaemonGattServerInterface::StopService(
+  int aServerIf, int aServiceHandle, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2785,8 +2915,8 @@ BluetoothDaemonGattInterface::StopService(
 }
 
 void
-BluetoothDaemonGattInterface::DeleteService(
-  int aServerIf, int aServiceHandle, BluetoothGattResultHandler* aRes)
+BluetoothDaemonGattServerInterface::DeleteService(
+  int aServerIf, int aServiceHandle, BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2799,10 +2929,10 @@ BluetoothDaemonGattInterface::DeleteService(
 }
 
 void
-BluetoothDaemonGattInterface::SendIndication(
+BluetoothDaemonGattServerInterface::SendIndication(
   int aServerIf, int aAttributeHandle, int aConnId,
   const nsTArray<uint8_t>& aValue, bool aConfirm,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2817,10 +2947,10 @@ BluetoothDaemonGattInterface::SendIndication(
 }
 
 void
-BluetoothDaemonGattInterface::SendResponse(
+BluetoothDaemonGattServerInterface::SendResponse(
   int aConnId, int aTransId, BluetoothGattStatus aStatus,
   const BluetoothGattResponse& aResponse,
-  BluetoothGattResultHandler* aRes)
+  BluetoothGattServerResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -2830,6 +2960,50 @@ BluetoothDaemonGattInterface::SendResponse(
   if (NS_FAILED(rv)) {
     DispatchError(aRes, rv);
   }
+}
+
+void
+BluetoothDaemonGattClientInterface::DispatchError(
+  BluetoothGattClientResultHandler* aRes, BluetoothStatus aStatus)
+{
+  DaemonResultRunnable1<BluetoothGattClientResultHandler, void,
+                        BluetoothStatus, BluetoothStatus>::Dispatch(
+    aRes, &BluetoothGattResultHandler::OnError,
+    ConstantInitOp1<BluetoothStatus>(aStatus));
+}
+
+void
+BluetoothDaemonGattClientInterface::DispatchError(
+  BluetoothGattClientResultHandler* aRes, nsresult aRv)
+{
+  BluetoothStatus status;
+
+  if (NS_WARN_IF(NS_FAILED(Convert(aRv, status)))) {
+    status = STATUS_FAIL;
+  }
+  DispatchError(aRes, status);
+}
+
+void
+BluetoothDaemonGattServerInterface::DispatchError(
+  BluetoothGattServerResultHandler* aRes, BluetoothStatus aStatus)
+{
+  DaemonResultRunnable1<BluetoothGattServerResultHandler, void,
+                        BluetoothStatus, BluetoothStatus>::Dispatch(
+    aRes, &BluetoothGattResultHandler::OnError,
+    ConstantInitOp1<BluetoothStatus>(aStatus));
+}
+
+void
+BluetoothDaemonGattServerInterface::DispatchError(
+  BluetoothGattServerResultHandler* aRes, nsresult aRv)
+{
+  BluetoothStatus status;
+
+  if (NS_WARN_IF(NS_FAILED(Convert(aRv, status)))) {
+    status = STATUS_FAIL;
+  }
+  DispatchError(aRes, status);
 }
 
 void
@@ -2852,6 +3026,28 @@ BluetoothDaemonGattInterface::DispatchError(
     status = STATUS_FAIL;
   }
   DispatchError(aRes, status);
+}
+
+BluetoothGattClientInterface*
+BluetoothDaemonGattInterface::GetBluetoothGattClientInterface()
+{
+  MOZ_ASSERT(mModule);
+
+  BluetoothDaemonGattClientInterface* gattClientInterface =
+    new BluetoothDaemonGattClientInterface(mModule);
+
+  return gattClientInterface;
+}
+
+BluetoothGattServerInterface*
+BluetoothDaemonGattInterface::GetBluetoothGattServerInterface()
+{
+  MOZ_ASSERT(mModule);
+
+  BluetoothDaemonGattServerInterface* gattServerInterface =
+    new BluetoothDaemonGattServerInterface(mModule);
+
+  return gattServerInterface;
 }
 
 END_BLUETOOTH_NAMESPACE

@@ -1,7 +1,7 @@
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 Cu.importGlobalProperties(["File"]);
 
-var file;
+let file;
 
 addMessageListener("file.open", function (stem) {
   try {

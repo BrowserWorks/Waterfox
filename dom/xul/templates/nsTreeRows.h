@@ -8,7 +8,7 @@
 
 #include "nsCOMPtr.h"
 #include "nsTArray.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsIXULTemplateResult.h"
 #include "nsTemplateMatch.h"
 #include "nsIRDFResource.h"

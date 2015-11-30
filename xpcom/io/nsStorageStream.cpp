@@ -400,15 +400,17 @@ nsStorageStream::NewInputStream(int32_t aStartingOffset,
     return NS_ERROR_NOT_INITIALIZED;
   }
 
-  nsRefPtr<nsStorageInputStream> inputStream =
+  nsStorageInputStream* inputStream =
     new nsStorageInputStream(this, mSegmentSize);
+  NS_ADDREF(inputStream);
 
   nsresult rv = inputStream->Seek(aStartingOffset);
   if (NS_FAILED(rv)) {
+    NS_RELEASE(inputStream);
     return rv;
   }
 
-  inputStream.forget(aInputStream);
+  *aInputStream = inputStream;
   return NS_OK;
 }
 
@@ -460,15 +462,7 @@ nsStorageInputStream::ReadSegments(nsWriteSegmentFun aWriter, void* aClosure,
         goto out;
       }
 
-      // We have data in the stream, but if mSegmentEnd is zero, then we
-      // were likely constructed prior to any data being written into
-      // the stream.  Therefore, if mSegmentEnd is non-zero, we should
-      // move into the next segment; otherwise, we should stay in this
-      // segment so our input state can be updated and we can properly
-      // perform the initial read.
-      if (mSegmentEnd > 0) {
-        mSegmentNum++;
-      }
+      mSegmentNum++;
       mReadCursor = 0;
       mSegmentEnd = XPCOM_MIN(mSegmentSize, available);
       availableInSegment = mSegmentEnd;
@@ -631,12 +625,14 @@ nsresult
 NS_NewStorageStream(uint32_t aSegmentSize, uint32_t aMaxSize,
                     nsIStorageStream** aResult)
 {
-  nsRefPtr<nsStorageStream> storageStream = new nsStorageStream();
+  nsStorageStream* storageStream = new nsStorageStream();
+  NS_ADDREF(storageStream);
   nsresult rv = storageStream->Init(aSegmentSize, aMaxSize);
   if (NS_FAILED(rv)) {
+    NS_RELEASE(storageStream);
     return rv;
   }
-  storageStream.forget(aResult);
+  *aResult = storageStream;
   return NS_OK;
 }
 

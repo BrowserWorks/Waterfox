@@ -687,17 +687,6 @@ nsFrame::DestroyFrom(nsIFrame* aDestructRoot)
     }
   }
 
-  if (nsLayoutUtils::HasCurrentAnimations(static_cast<nsIFrame*>(this))) {
-    // If no new frame for this element is created by the end of the
-    // restyling process, stop animations for this frame
-    RestyleManager::AnimationsWithDestroyedFrame* adf =
-      presContext->RestyleManager()->GetAnimationsWithDestroyedFrame();
-    // AnimationsWithDestroyedFrame only lives during the restyling process.
-    if (adf) {
-      adf->Put(mContent, mStyleContext);
-    }
-  }
-
   shell->NotifyDestroyingFrame(this);
 
   if (mState & NS_FRAME_EXTERNAL_REFERENCE) {
@@ -1154,11 +1143,12 @@ nsIFrame::HasPerspective() const
   if (!IsTransformed()) {
     return false;
   }
-  nsIFrame* containingBlock = GetContainingBlock(SKIP_SCROLLED_FRAME);
-  if (!containingBlock) {
+  nsStyleContext* parentStyleContext = StyleContext()->GetParent();
+  if (!parentStyleContext) {
     return false;
   }
-  return containingBlock->ChildrenHavePerspective();
+  const nsStyleDisplay* parentDisp = parentStyleContext->StyleDisplay();
+  return parentDisp->mChildPerspective.GetUnit() == eStyleUnit_Coord;
 }
 
 bool
@@ -1921,87 +1911,6 @@ public:
   }
 };
 
-class AutoHoistScrollInfoItems
-{
-  nsDisplayListBuilder& mBuilder;
-  nsDisplayList* mParentPendingList;
-  nsDisplayList mPendingList;
-
-public:
-  explicit AutoHoistScrollInfoItems(nsDisplayListBuilder& aBuilder)
-    : mBuilder(aBuilder),
-      mParentPendingList(nullptr)
-  {
-    if (!mBuilder.ShouldBuildScrollInfoItemsForHoisting()) {
-      return;
-    }
-    mParentPendingList = mBuilder.EnterScrollInfoItemHoisting(&mPendingList);
-  }
-  ~AutoHoistScrollInfoItems() {
-    if (!mParentPendingList) {
-      // If we have no parent stacking context, we will throw out any scroll
-      // info items that are pending (meaning, we can safely ignore them since
-      // the scrollable layers they represent will not be flattened).
-      return;
-    }
-    mParentPendingList->AppendToTop(&mPendingList);
-    mBuilder.LeaveScrollInfoItemHoisting(mParentPendingList);
-  }
-
-  // The current stacking context will definitely be flattened, so commit all
-  // pending scroll info items and make sure they will not be optimized away
-  // in the case they were also inside a compositor-supported mix-blend-mode.
-  void Commit() {
-    nsDisplayItem* iter = nullptr;
-    while ((iter = mPendingList.RemoveBottom()) != nullptr) {
-      MOZ_ASSERT(iter->GetType() == nsDisplayItem::TYPE_SCROLL_INFO_LAYER);
-      auto item = static_cast<nsDisplayScrollInfoLayer*>(iter);
-
-      item->UnsetIgnoreIfCompositorSupportsBlending();
-      mBuilder.CommittedScrollInfoItems()->AppendToTop(item);
-    }
-  }
-
-  // The current stacking context will only be flattened if the given mix-blend
-  // mode is not supported in the compositor. Annotate the scroll info items
-  // and keep them in the pending list.
-  void AnnotateForBlendModes(BlendModeSet aBlendModes) {
-    for (nsDisplayItem* iter = mPendingList.GetBottom(); iter; iter = iter->GetAbove()) {
-      MOZ_ASSERT(iter->GetType() == nsDisplayItem::TYPE_SCROLL_INFO_LAYER);
-      auto item = static_cast<nsDisplayScrollInfoLayer*>(iter);
-
-      item->IgnoreIfCompositorSupportsBlending(aBlendModes);
-    }
-  }
-
-  bool IsRootStackingContext() {
-    // We're only finished building the hoisted list if we have no parent
-    // stacking context.
-    return !mParentPendingList;
-  }
-
-  // Any scroll info items which contain a mix-blend mode are moved into the
-  // parent display list.
-  void Finish(nsDisplayList* aResultList) {
-    MOZ_ASSERT(IsRootStackingContext());
-
-    nsDisplayItem* iter = nullptr;
-    while ((iter = mPendingList.RemoveBottom()) != nullptr) {
-      MOZ_ASSERT(iter->GetType() == nsDisplayItem::TYPE_SCROLL_INFO_LAYER);
-      nsDisplayScrollInfoLayer *item = static_cast<decltype(item)>(iter);
-
-      if (!item->ContainedInMixBlendMode()) {
-        // Discard the item, it was not committed for having an SVG effect nor
-        // was it contained with a mix-blend mode.
-        item->~nsDisplayScrollInfoLayer();
-        continue;
-      }
-
-      aResultList->AppendToTop(item);
-    }
-  }
-};
-
 static void
 CheckForApzAwareEventHandlers(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame)
 {
@@ -2009,8 +1918,8 @@ CheckForApzAwareEventHandlers(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame)
   if (!content) {
     return;
   }
-
-  if (content->HasApzAwareListeners()) {
+  EventListenerManager* elm = nsContentUtils::GetExistingListenerManagerForNode(content);
+  if (nsLayoutUtils::HasApzAwareListeners(elm)) {
     aBuilder->SetAncestorHasApzAwareEventHandler(true);
   }
 }
@@ -2034,17 +1943,13 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
   // need to have display items built for them.
   bool needEventRegions = aBuilder->IsBuildingLayerEventRegions() &&
       StyleVisibility()->GetEffectivePointerEvents(this) != NS_STYLE_POINTER_EVENTS_NONE;
-  bool opacityItemForEventsOnly = false;
   if (disp->mOpacity == 0.0 && aBuilder->IsForPainting() &&
       !aBuilder->WillComputePluginGeometry() &&
       !(disp->mWillChangeBitField & NS_STYLE_WILL_CHANGE_OPACITY) &&
       !nsLayoutUtils::HasCurrentAnimationOfProperty(this,
-                                                    eCSSProperty_opacity)) {
-    if (needEventRegions) {
-      opacityItemForEventsOnly = true;
-    } else {
-      return;
-    }
+                                                    eCSSProperty_opacity) &&
+      !needEventRegions) {
+    return;
   }
 
   if (disp->mWillChangeBitField != 0) {
@@ -2085,13 +1990,13 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
     inTransform = true;
   }
 
-  AutoHoistScrollInfoItems hoistedScrollInfoItems(*aBuilder);
-
   bool usingSVGEffects = nsSVGIntegrationUtils::UsingEffectsForFrame(this);
   nsRect dirtyRectOutsideSVGEffects = dirtyRect;
+  nsDisplayList hoistedScrollInfoItemsStorage;
   if (usingSVGEffects) {
     dirtyRect =
       nsSVGIntegrationUtils::GetRequiredSourceForInvalidArea(this, dirtyRect);
+    aBuilder->EnterSVGEffectsContents(&hoistedScrollInfoItemsStorage);
   }
 
   bool useOpacity = HasVisualOpacity() && !nsSVGUtils::CanOptimizeOpacity(this);
@@ -2225,6 +2130,10 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
     /* List now emptied, so add the new list to the top. */
     resultList.AppendNewToTop(
         new (aBuilder) nsDisplaySVGEffects(aBuilder, this, &resultList));
+    // Also add the hoisted scroll info items. We need those for APZ scrolling
+    // because nsDisplaySVGEffects items can't build active layers.
+    aBuilder->ExitSVGEffectsContents();
+    resultList.AppendToTop(&hoistedScrollInfoItemsStorage);
   }
   /* Else, if the list is non-empty and there is CSS group opacity without SVG
    * effects, wrap it up in an opacity item.
@@ -2236,7 +2145,7 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
     DisplayListClipState::AutoSaveRestore opacityClipState(aBuilder);
     opacityClipState.Clear();
     resultList.AppendNewToTop(
-        new (aBuilder) nsDisplayOpacity(aBuilder, this, &resultList, opacityItemForEventsOnly));
+        new (aBuilder) nsDisplayOpacity(aBuilder, this, &resultList));
   }
   /* If we have sticky positioning, wrap it in a sticky position item.
    */
@@ -2293,25 +2202,8 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
    */
 
   if (aBuilder->ContainsBlendMode()) {
-    resultList.AppendNewToTop(
-      new (aBuilder) nsDisplayBlendContainer(aBuilder, this, &resultList, aBuilder->ContainedBlendModes()));
-  }
-
-  if (aBuilder->ShouldBuildScrollInfoItemsForHoisting()) {
-    if (usingSVGEffects) {
-      // We know this stacking context will be flattened, so hoist any scroll
-      // info items we created.
-      hoistedScrollInfoItems.Commit();
-    } else if (aBuilder->ContainsBlendMode()) {
-      hoistedScrollInfoItems.AnnotateForBlendModes(aBuilder->ContainedBlendModes());
-    }
-
-    if (hoistedScrollInfoItems.IsRootStackingContext()) {
-      // If we're the root stacking context, no more mix-blend modes can be
-      // introduced and it's safe to hoist scroll info items.
-      resultList.AppendToTop(aBuilder->CommittedScrollInfoItems());
-      hoistedScrollInfoItems.Finish(&resultList);
-    }
+      resultList.AppendNewToTop(
+        new (aBuilder) nsDisplayBlendContainer(aBuilder, this, &resultList, aBuilder->ContainedBlendModes()));
   }
 
   /* If there's blending, wrap up the list in a blend-mode item. Note
@@ -2544,15 +2436,12 @@ nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder*   aBuilder,
       // return early.
 
       if (aBuilder->IsBuildingLayerEventRegions()) {
-        const nsIFrame* rootReferenceFrame = aBuilder->RootReferenceFrame();
         MOZ_ASSERT(buildingForChild.GetPrevAnimatedGeometryRoot() ==
-                   aBuilder->FindAnimatedGeometryRootFor(child->GetParent(),
-                                                         rootReferenceFrame));
+                   aBuilder->FindAnimatedGeometryRootFor(child->GetParent()));
 
         // If this frame has a different animated geometry root than its parent,
         // make sure we accumulate event regions for its layer.
-        nsIFrame *animatedGeometryRoot =
-          aBuilder->FindAnimatedGeometryRootFor(child, rootReferenceFrame);
+        nsIFrame *animatedGeometryRoot = aBuilder->FindAnimatedGeometryRootFor(child);
         if (animatedGeometryRoot != buildingForChild.GetPrevAnimatedGeometryRoot()) {
           nsDisplayLayerEventRegions* eventRegions =
             new (aBuilder) nsDisplayLayerEventRegions(aBuilder, child);
@@ -2669,7 +2558,7 @@ nsFrame::HandleEvent(nsPresContext* aPresContext,
                      nsEventStatus* aEventStatus)
 {
 
-  if (aEvent->mMessage == eMouseMove) {
+  if (aEvent->message == NS_MOUSE_MOVE) {
     // XXX If the second argument of HandleDrag() is WidgetMouseEvent,
     //     the implementation becomes simpler.
     return HandleDrag(aPresContext, aEvent, aEventStatus);
@@ -2678,9 +2567,9 @@ nsFrame::HandleEvent(nsPresContext* aPresContext,
   if ((aEvent->mClass == eMouseEventClass &&
        aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton) ||
       aEvent->mClass == eTouchEventClass) {
-    if (aEvent->mMessage == eMouseDown || aEvent->mMessage == eTouchStart) {
+    if (aEvent->message == NS_MOUSE_BUTTON_DOWN || aEvent->message == NS_TOUCH_START) {
       HandlePress(aPresContext, aEvent, aEventStatus);
-    } else if (aEvent->mMessage == eMouseUp || aEvent->mMessage == eTouchEnd) {
+    } else if (aEvent->message == NS_MOUSE_BUTTON_UP || aEvent->message == NS_TOUCH_END) {
       HandleRelease(aPresContext, aEvent, aEventStatus);
     }
   }
@@ -2713,8 +2602,8 @@ nsFrame::GetDataForTableSelection(const nsFrameSelection* aFrameSelection,
   //  (Mouse down does normal selection unless Ctrl/Cmd is pressed)
   bool doTableSelection =
      displaySelection == nsISelectionDisplay::DISPLAY_ALL && selectingTableCells &&
-     (aMouseEvent->mMessage == eMouseMove ||
-      (aMouseEvent->mMessage == eMouseUp &&
+     (aMouseEvent->message == NS_MOUSE_MOVE ||
+      (aMouseEvent->message == NS_MOUSE_BUTTON_UP &&
        aMouseEvent->button == WidgetMouseEvent::eLeftButton) ||
       aMouseEvent->IsShift());
 
@@ -2830,35 +2719,23 @@ nsFrame::IsSelectable(bool* aSelectable, uint8_t* aSelectStyle) const
   // are present in the frame hierarchy, aSelectStyle returns the style of the
   // topmost parent that has either 'none' or '-moz-all'.
   //
-  // The -moz-text value acts as a way to override an ancestor's all/-moz-all value.
-  //
   // For instance, if the frame hierarchy is:
-  //    AUTO     -> _MOZ_ALL  -> NONE -> TEXT,      the returned value is ALL
-  //    AUTO     -> _MOZ_ALL  -> NONE -> _MOZ_TEXT, the returned value is TEXT.
-  //    TEXT     -> NONE      -> AUTO -> _MOZ_ALL,  the returned value is TEXT
-  //    _MOZ_ALL -> TEXT      -> AUTO -> AUTO,      the returned value is ALL
-  //    _MOZ_ALL -> _MOZ_TEXT -> AUTO -> AUTO,      the returned value is TEXT.
-  //    AUTO     -> CELL      -> TEXT -> AUTO,      the returned value is TEXT
+  //    AUTO     -> _MOZ_ALL -> NONE -> TEXT,     the returned value is _MOZ_ALL
+  //    TEXT     -> NONE     -> AUTO -> _MOZ_ALL, the returned value is TEXT
+  //    _MOZ_ALL -> TEXT     -> AUTO -> AUTO,     the returned value is _MOZ_ALL
+  //    AUTO     -> CELL     -> TEXT -> AUTO,     the returned value is TEXT
   //
   uint8_t selectStyle  = NS_STYLE_USER_SELECT_AUTO;
   nsIFrame* frame      = const_cast<nsFrame*>(this);
-  bool containsEditable = false;
 
   while (frame) {
     const nsStyleUIReset* userinterface = frame->StyleUIReset();
     switch (userinterface->mUserSelect) {
       case NS_STYLE_USER_SELECT_ALL:
       case NS_STYLE_USER_SELECT_MOZ_ALL:
-      {
         // override the previous values
-        if (selectStyle != NS_STYLE_USER_SELECT_MOZ_TEXT) {
-          selectStyle = userinterface->mUserSelect;
-        }
-        nsIContent* frameContent = frame->GetContent();
-        containsEditable = frameContent &&
-          frameContent->EditableDescendantCount() > 0;
+        selectStyle = userinterface->mUserSelect;
         break;
-      }
       default:
         // otherwise return the first value which is not 'auto'
         if (selectStyle == NS_STYLE_USER_SELECT_AUTO) {
@@ -2870,19 +2747,11 @@ nsFrame::IsSelectable(bool* aSelectable, uint8_t* aSelectStyle) const
   }
 
   // convert internal values to standard values
-  if (selectStyle == NS_STYLE_USER_SELECT_AUTO ||
-      selectStyle == NS_STYLE_USER_SELECT_MOZ_TEXT)
+  if (selectStyle == NS_STYLE_USER_SELECT_AUTO)
     selectStyle = NS_STYLE_USER_SELECT_TEXT;
   else
   if (selectStyle == NS_STYLE_USER_SELECT_MOZ_ALL)
     selectStyle = NS_STYLE_USER_SELECT_ALL;
-
-  // If user tries to select all of a non-editable content,
-  // prevent selection if it contains editable content.
-  bool allowSelection = true;
-  if (selectStyle == NS_STYLE_USER_SELECT_ALL) {
-    allowSelection = !containsEditable;
-  }
 
   // return stuff
   if (aSelectStyle)
@@ -2890,8 +2759,7 @@ nsFrame::IsSelectable(bool* aSelectable, uint8_t* aSelectStyle) const
   if (mState & NS_FRAME_GENERATED_CONTENT)
     *aSelectable = false;
   else
-    *aSelectable = allowSelection &&
-      (selectStyle != NS_STYLE_USER_SELECT_NONE);
+    *aSelectable = (selectStyle != NS_STYLE_USER_SELECT_NONE);
   return NS_OK;
 }
 
@@ -3896,13 +3764,7 @@ static nsIFrame* AdjustFrameForSelectionStyles(nsIFrame* aFrame) {
   {
     // These are the conditions that make all children not able to handle
     // a cursor.
-    uint8_t userSelect = frame->StyleUIReset()->mUserSelect;
-    if (userSelect == NS_STYLE_USER_SELECT_MOZ_TEXT) {
-      // If we see a -moz-text element, we shouldn't look further up the parent
-      // chain!
-      break;
-    }
-    if (userSelect == NS_STYLE_USER_SELECT_ALL ||
+    if (frame->StyleUIReset()->mUserSelect == NS_STYLE_USER_SELECT_ALL ||
         frame->IsGeneratedContentFrame()) {
       adjustedFrame = frame;
     }
@@ -5722,27 +5584,16 @@ GetNearestBlockContainer(nsIFrame* frame)
 }
 
 nsIFrame*
-nsIFrame::GetContainingBlock(uint32_t aFlags) const
+nsIFrame::GetContainingBlock() const
 {
-  if (!GetParent()) {
-    return nullptr;
-  }
   // MathML frames might have absolute positioning style, but they would
   // still be in-flow.  So we have to check to make sure that the frame
   // is really out-of-flow too.
-  nsIFrame* f;
   if (IsAbsolutelyPositioned() &&
       (GetStateBits() & NS_FRAME_OUT_OF_FLOW)) {
-    f = GetParent(); // the parent is always the containing block
-  } else {
-    f = GetNearestBlockContainer(GetParent());
+    return GetParent(); // the parent is always the containing block
   }
-
-  if (aFlags & SKIP_SCROLLED_FRAME && f &&
-      f->StyleContext()->GetPseudo() == nsCSSAnonBoxes::scrolledContent) {
-    f = f->GetParent();
-  }
-  return f;
+  return GetNearestBlockContainer(GetParent());
 }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -7660,7 +7511,7 @@ nsIFrame::FinishAndStoreOverflow(nsOverflowAreas& aOverflowAreas,
   nsRect bounds(nsPoint(0, 0), aNewSize);
   // Store the passed in overflow area if we are a preserve-3d frame or we have
   // a transform, and it's not just the frame bounds.
-  if (Preserves3D() || IsTransformed()) {
+  if (Preserves3D() || HasPerspective() || IsTransformed()) {
     if (!aOverflowAreas.VisualOverflow().IsEqualEdges(bounds) ||
         !aOverflowAreas.ScrollableOverflow().IsEqualEdges(bounds)) {
       nsOverflowAreas* initial =
@@ -7776,13 +7627,13 @@ nsIFrame::FinishAndStoreOverflow(nsOverflowAreas& aOverflowAreas,
     if (Preserves3DChildren()) {
       ComputePreserve3DChildrenOverflow(aOverflowAreas, newBounds);
     } else if (sizeChanged && ChildrenHavePerspective()) {
-      RecomputePerspectiveChildrenOverflow(this, &newBounds);
+      RecomputePerspectiveChildrenOverflow(this->StyleContext(), &newBounds);
     }
   } else {
     Properties().Delete(nsIFrame::PreTransformOverflowAreasProperty());
     if (ChildrenHavePerspective() && sizeChanged) {
       nsRect newBounds(nsPoint(0, 0), aNewSize);
-      RecomputePerspectiveChildrenOverflow(this, &newBounds);
+      RecomputePerspectiveChildrenOverflow(this->StyleContext(), &newBounds);
     }
   }
 
@@ -7800,7 +7651,7 @@ nsIFrame::FinishAndStoreOverflow(nsOverflowAreas& aOverflowAreas,
 }
 
 void
-nsIFrame::RecomputePerspectiveChildrenOverflow(const nsIFrame* aStartFrame, const nsRect* aBounds)
+nsIFrame::RecomputePerspectiveChildrenOverflow(const nsStyleContext* aStartStyle, const nsRect* aBounds)
 {
   // Children may check our size when getting our transform, make sure it's valid.
   nsSize oldSize = GetSize();
@@ -7827,13 +7678,14 @@ nsIFrame::RecomputePerspectiveChildrenOverflow(const nsIFrame* aStartFrame, cons
           boundsOverflow.SetAllTo(bounds);
           child->FinishAndStoreOverflow(boundsOverflow, bounds.Size());
         }
-      } else if (child->GetContainingBlock(SKIP_SCROLLED_FRAME) == aStartFrame) {
+      } else if (child->StyleContext()->GetParent() == aStartStyle ||
+                 child->StyleContext() == aStartStyle) {
         // If a frame is using perspective, then the size used to compute
         // perspective-origin is the size of the frame belonging to its parent
         // style context. We must find any descendant frames using our size
-        // (by recursing into frames that have the same containing block)
-        // to update their overflow rects too.
-        child->RecomputePerspectiveChildrenOverflow(aStartFrame, nullptr);
+        // (by recurse into frames with the same style context, or a direct
+        // child style context) to update their overflow rects too.
+        child->RecomputePerspectiveChildrenOverflow(aStartStyle, nullptr);
       }
     }
   }

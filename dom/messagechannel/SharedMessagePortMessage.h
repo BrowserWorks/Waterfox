@@ -23,8 +23,7 @@ public:
   nsTArray<uint8_t> mData;
 
   SharedMessagePortMessage()
-    : StructuredCloneHelper(CloningSupported, TransferringSupported,
-                            DifferentProcess)
+    : StructuredCloneHelper(CloningSupported, TransferringSupported)
   {}
 
   void Read(nsISupports* aParent,

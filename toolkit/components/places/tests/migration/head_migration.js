@@ -27,7 +27,7 @@ const DB_FILENAME = "places.sqlite";
  *        toolkit/components/places/tests/migration!
  * @return {Promise}
  */
-var setupPlacesDatabase = Task.async(function* (aFileName) {
+let setupPlacesDatabase = Task.async(function* (aFileName) {
   let currentDir = yield OS.File.getCurrentDirectory();
 
   let src = OS.Path.join(currentDir, aFileName);

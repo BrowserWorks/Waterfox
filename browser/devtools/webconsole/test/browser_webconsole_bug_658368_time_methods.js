@@ -20,7 +20,7 @@ const TEST_URI3 = "data:text/html;charset=utf-8,<script>" +
 const TEST_URI4 = "data:text/html;charset=utf-8," +
                   "<script>console.timeEnd('bTimer');</script>";
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud1 = yield openConsole();

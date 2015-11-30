@@ -26,7 +26,6 @@
 #include "databuffer.h"
 #include "runnable_utils.h"
 #include "transportflow.h"
-#include "AudioPacketizer.h"
 
 #if defined(MOZILLA_INTERNAL_API)
 #include "VideoSegment.h"
@@ -447,7 +446,9 @@ public:
         active_(false),
         enabled_(false),
         direct_connect_(false),
-        packetizer_(nullptr)
+        samples_10ms_buffer_(nullptr),
+        buffer_current_(0),
+        samplenum_10ms_(0)
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
         , last_img_(-1)
 #endif // MOZILLA_INTERNAL_API
@@ -525,7 +526,16 @@ public:
 
     bool direct_connect_;
 
-    nsAutoPtr<AudioPacketizer<int16_t, int16_t>> packetizer_;
+
+    // These vars handle breaking audio samples into exact 10ms chunks:
+    // The buffer of 10ms audio samples that we will send once full
+    // (can be carried over from one call to another).
+    nsAutoArrayPtr<int16_t> samples_10ms_buffer_;
+    // The location of the pointer within that buffer (in units of samples).
+    int64_t buffer_current_;
+    // The number of samples in a 10ms audio chunk.
+    int64_t samplenum_10ms_;
+
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
     int32_t last_img_; // serial number of last Image
 #endif // MOZILLA_INTERNAL_API

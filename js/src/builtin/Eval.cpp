@@ -183,7 +183,7 @@ ParseEvalStringAsJSON(JSContext* cx, const mozilla::Range<const CharT> chars, Mu
                      ? chars
                      : mozilla::Range<const CharT>(chars.start().get() + 1U, len - 2);
 
-    Rooted<JSONParser<CharT>> parser(cx, JSONParser<CharT>(cx, jsonChars, JSONParserBase::NoError));
+    JSONParser<CharT> parser(cx, jsonChars, JSONParserBase::NoError);
     if (!parser.parse(rval))
         return EvalJSON_Failure;
 
@@ -260,9 +260,11 @@ EvalKernel(JSContext* cx, const CallArgs& args, EvalType evalType, AbstractFrame
     // Per ES5, indirect eval runs in the global scope. (eval is specified this
     // way so that the compiler can make assumptions about what bindings may or
     // may not exist in the current frame if it doesn't see 'eval'.)
+    unsigned staticLevel;
     RootedValue thisv(cx);
     if (evalType == DIRECT_EVAL) {
         MOZ_ASSERT_IF(caller.isInterpreterFrame(), !caller.asInterpreterFrame()->runningInJit());
+        staticLevel = caller.script()->staticLevel() + 1;
 
         // Direct calls to eval are supposed to see the caller's |this|. If we
         // haven't wrapped that yet, do so now, before we make a copy of it for
@@ -272,6 +274,7 @@ EvalKernel(JSContext* cx, const CallArgs& args, EvalType evalType, AbstractFrame
         thisv = caller.thisValue();
     } else {
         MOZ_ASSERT(args.callee().global() == *scopeobj);
+        staticLevel = 0;
 
         // Use the global as 'this', modulo outerization.
         JSObject* thisobj = GetThisObject(cx, scopeobj);
@@ -337,7 +340,7 @@ EvalKernel(JSContext* cx, const CallArgs& args, EvalType evalType, AbstractFrame
         SourceBufferHolder srcBuf(chars, linearStr->length(), ownership);
         JSScript* compiled = frontend::CompileScript(cx, &cx->tempLifoAlloc(),
                                                      scopeobj, staticScope, callerScript,
-                                                     options, srcBuf, linearStr);
+                                                     options, srcBuf, linearStr, staticLevel);
         if (!compiled)
             return false;
 
@@ -368,6 +371,8 @@ js::DirectEvalStringFromIon(JSContext* cx,
     }
 
     // ES5 15.1.2.1 steps 2-8.
+
+    unsigned staticLevel = callerScript->staticLevel() + 1;
 
     RootedLinearString linearStr(cx, str->ensureLinear(cx));
     if (!linearStr)
@@ -419,7 +424,7 @@ js::DirectEvalStringFromIon(JSContext* cx,
         SourceBufferHolder srcBuf(chars, linearStr->length(), ownership);
         JSScript* compiled = frontend::CompileScript(cx, &cx->tempLifoAlloc(),
                                                      scopeobj, staticScope, callerScript,
-                                                     options, srcBuf, linearStr);
+                                                     options, srcBuf, linearStr, staticLevel);
         if (!compiled)
             return false;
 

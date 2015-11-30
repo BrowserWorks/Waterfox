@@ -16,6 +16,7 @@
 
 'use strict';
 
+var Promise = require('../util/promise').Promise;
 var l10n = require('../util/l10n');
 var spell = require('../util/spell');
 var Type = require('./types').Type;

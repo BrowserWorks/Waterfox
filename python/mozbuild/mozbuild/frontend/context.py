@@ -681,15 +681,6 @@ SUBCONTEXTS = {cls.__name__: cls for cls in SUBCONTEXTS}
 # A value of None means the variable has no direct effect on any tier.
 
 VARIABLES = {
-    'ALLOW_COMPILER_WARNINGS': (bool, bool,
-        """Whether to allow compiler warnings (i.e. *not* treat them as
-        errors).
-
-        This is commonplace (almost mandatory, in fact) in directories
-        containing third-party code that we regularly update from upstream and
-        thus do not control, but is otherwise discouraged.
-        """, None),
-
     # Variables controlling reading of other frontend files.
     'ANDROID_GENERATED_RESFILES': (StrictOrderingOnAppendList, list,
         """Android resource files generated as part of the build.
@@ -698,27 +689,6 @@ VARIABLES = {
         generated (often by preprocessing) into a 'res' directory as
         part of the build process, and subsequently merged into an APK
         file.
-        """, 'export'),
-
-    'ANDROID_APK_NAME': (unicode, unicode,
-        """The name of an Android APK file to generate.
-        """, 'export'),
-
-    'ANDROID_APK_PACKAGE': (unicode, unicode,
-        """The name of the Android package to generate R.java for, like org.mozilla.gecko.
-        """, 'export'),
-
-    'ANDROID_EXTRA_PACKAGES': (StrictOrderingOnAppendList, list,
-        """The name of extra Android packages to generate R.java for, like ['org.mozilla.other'].
-        """, 'export'),
-
-    'ANDROID_EXTRA_RES_DIRS': (ContextDerivedTypedListWithItems(Path, List), list,
-        """Android extra package resource directories.
-
-        This variable contains a list of directories containing static files
-        to package into a 'res' directory and merge into an APK file.  These
-        directories are packaged into the APK but are assumed to be static
-        unchecked dependencies that should not be otherwise re-distributed.
         """, 'export'),
 
     'ANDROID_RES_DIRS': (ContextDerivedTypedListWithItems(Path, List), list,
@@ -954,6 +924,10 @@ VARIABLES = {
         If the configuration token ``BIN_SUFFIX`` is set, its value will be
         automatically appended to each name. If a name already ends with
         ``BIN_SUFFIX``, the name will remain unchanged.
+        """, None),
+
+    'FAIL_ON_WARNINGS': (bool, bool,
+        """Whether to treat warnings as errors.
         """, None),
 
     'FORCE_SHARED_LIB': (bool, bool,
@@ -1519,11 +1493,6 @@ VARIABLES = {
            appear in the moz.build file.
         """, None),
 
-    'HOST_DEFINES': (OrderedDict, dict,
-        """Dictionary of compiler defines to declare for host compilation.
-        See ``DEFINES`` for specifics.
-        """, None),
-
     'CMFLAGS': (List, list,
         """Flags passed to the Objective-C compiler for all of the Objective-C
            source files declared in this directory.
@@ -1548,24 +1517,6 @@ VARIABLES = {
 
            Note that the ordering of flags matters here; these flags will be
            added to the assembler's command line in the same order as they
-           appear in the moz.build file.
-        """, None),
-
-    'HOST_CFLAGS': (List, list,
-        """Flags passed to the host C compiler for all of the C source files
-           declared in this directory.
-
-           Note that the ordering of flags matters here, these flags will be
-           added to the compiler's command line in the same order as they
-           appear in the moz.build file.
-        """, None),
-
-    'HOST_CXXFLAGS': (List, list,
-        """Flags passed to the host C++ compiler for all of the C++ source files
-           declared in this directory.
-
-           Note that the ordering of flags matters here; these flags will be
-           added to the compiler's command line in the same order as they
            appear in the moz.build file.
         """, None),
 

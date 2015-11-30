@@ -206,7 +206,7 @@ CreateNPObjectMember(NPP npp, JSContext *cx, JSObject *obj, NPObject* npobj,
 const static js::Class sNPObjectJSWrapperClass =
   {
     NPRUNTIME_JSCLASS_NAME,
-    JSCLASS_HAS_PRIVATE,
+    JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS,
     NPObjWrapper_AddProperty,
     NPObjWrapper_DelProperty,
     NPObjWrapper_GetProperty,
@@ -264,7 +264,7 @@ NPObjectMember_Trace(JSTracer *trc, JSObject *obj);
 
 static const JSClass sNPObjectMemberClass =
   {
-    "NPObject Ambiguous Member class", JSCLASS_HAS_PRIVATE,
+    "NPObject Ambiguous Member class", JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS,
     nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, NPObjectMember_Convert,
     NPObjectMember_Finalize, NPObjectMember_Call,
@@ -400,7 +400,7 @@ CreateNPObjWrapperTable()
   }
 
   sNPObjWrappers =
-    new PLDHashTable(PLDHashTable::StubOps(), sizeof(NPObjWrapperHashEntry));
+    new PLDHashTable(PL_DHashGetStubOps(), sizeof(NPObjWrapperHashEntry));
   return true;
 }
 
@@ -1032,8 +1032,8 @@ nsJSObjWrapper::NP_Enumerate(NPObject *npobj, NPIdentifier **idarray,
   JS::Rooted<JSObject*> jsobj(cx, npjsobj->mJSObj);
   JSAutoCompartment ac(cx, jsobj);
 
-  JS::Rooted<JS::IdVector> ida(cx, JS::IdVector(cx));
-  if (!JS_Enumerate(cx, jsobj, &ida)) {
+  JS::AutoIdArray ida(cx, JS_Enumerate(cx, jsobj));
+  if (!ida) {
     return false;
   }
 
@@ -1755,7 +1755,7 @@ NPObjWrapper_Finalize(js::FreeOp *fop, JSObject *obj)
   NPObject *npobj = (NPObject *)::JS_GetPrivate(obj);
   if (npobj) {
     if (sNPObjWrappers) {
-      sNPObjWrappers->Remove(npobj);
+      PL_DHashTableRemove(sNPObjWrappers, npobj);
     }
   }
 
@@ -1779,11 +1779,11 @@ NPObjWrapper_ObjectMoved(JSObject *obj, const JSObject *old)
     return;
   }
 
-  // Calling PLDHashTable::Search() will not result in GC.
+  // Calling PL_DHashTableSearch() will not result in GC.
   JS::AutoSuppressGCAnalysis nogc;
 
-  auto entry =
-    static_cast<NPObjWrapperHashEntry*>(sNPObjWrappers->Search(npobj));
+  NPObjWrapperHashEntry *entry = static_cast<NPObjWrapperHashEntry *>
+    (PL_DHashTableSearch(sNPObjWrappers, npobj));
   MOZ_ASSERT(entry && entry->mJSObj);
   MOZ_ASSERT(entry->mJSObj == old);
   entry->mJSObj = obj;
@@ -1835,8 +1835,8 @@ nsNPObjWrapper::OnDestroy(NPObject *npobj)
     return;
   }
 
-  auto entry =
-    static_cast<NPObjWrapperHashEntry*>(sNPObjWrappers->Search(npobj));
+  NPObjWrapperHashEntry *entry = static_cast<NPObjWrapperHashEntry *>
+    (PL_DHashTableSearch(sNPObjWrappers, npobj));
 
   if (entry && entry->mJSObj) {
     // Found a live NPObject wrapper, null out its JSObjects' private
@@ -1845,7 +1845,7 @@ nsNPObjWrapper::OnDestroy(NPObject *npobj)
     ::JS_SetPrivate(entry->mJSObj, nullptr);
 
     // Remove the npobj from the hash now that it went away.
-    sNPObjWrappers->RawRemove(entry);
+    PL_DHashTableRawRemove(sNPObjWrappers, entry);
 
     // The finalize hook will call OnWrapperDestroyed().
   }
@@ -1886,8 +1886,8 @@ nsNPObjWrapper::GetNewOrUsed(NPP npp, JSContext *cx, NPObject *npobj)
     }
   }
 
-  auto entry =
-    static_cast<NPObjWrapperHashEntry*>(sNPObjWrappers->Add(npobj, fallible));
+  NPObjWrapperHashEntry *entry = static_cast<NPObjWrapperHashEntry *>
+    (PL_DHashTableAdd(sNPObjWrappers, npobj, fallible));
 
   if (!entry) {
     // Out of memory
@@ -1919,14 +1919,14 @@ nsNPObjWrapper::GetNewOrUsed(NPP npp, JSContext *cx, NPObject *npobj)
       // Reload entry if the JS_NewObject call caused a GC and reallocated
       // the table (see bug 445229). This is guaranteed to succeed.
 
-      NS_ASSERTION(sNPObjWrappers->Search(npobj),
+      NS_ASSERTION(PL_DHashTableSearch(sNPObjWrappers, npobj),
                    "Hashtable didn't find what we just added?");
   }
 
   if (!obj) {
     // OOM? Remove the stale entry from the hash.
 
-    sNPObjWrappers->RawRemove(entry);
+    PL_DHashTableRawRemove(sNPObjWrappers, entry);
 
     return nullptr;
   }
@@ -2044,8 +2044,8 @@ LookupNPP(NPObject *npobj)
     return o->mNpp;
   }
 
-  auto entry =
-    static_cast<NPObjWrapperHashEntry*>(sNPObjWrappers->Add(npobj, fallible));
+  NPObjWrapperHashEntry *entry = static_cast<NPObjWrapperHashEntry *>
+    (PL_DHashTableAdd(sNPObjWrappers, npobj, fallible));
 
   if (!entry) {
     return nullptr;

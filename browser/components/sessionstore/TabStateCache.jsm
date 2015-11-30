@@ -44,7 +44,7 @@ this.TabStateCache = Object.freeze({
   }
 });
 
-var TabStateCacheInternal = {
+let TabStateCacheInternal = {
   _data: new WeakMap(),
 
   /**

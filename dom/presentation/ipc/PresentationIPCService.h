@@ -16,7 +16,7 @@ class nsIDocShell;
 namespace mozilla {
 namespace dom {
 
-class PresentationIPCRequest;
+class PresentationRequest;
 class PresentationResponderLoadingCallback;
 
 class PresentationIPCService final : public nsIPresentationService
@@ -35,9 +35,6 @@ public:
   nsresult NotifyMessage(const nsAString& aSessionId,
                          const nsACString& aData);
 
-  nsresult NotifySessionConnect(uint64_t aWindowId,
-                                const nsAString& aSessionId);
-
   void NotifyPresentationChildDestroyed();
 
   nsresult MonitorResponderLoading(const nsAString& aSessionId,
@@ -46,20 +43,11 @@ public:
 private:
   virtual ~PresentationIPCService();
   nsresult SendRequest(nsIPresentationServiceCallback* aCallback,
-                       const PresentationIPCRequest& aRequest);
+                       const PresentationRequest& aRequest);
 
-  nsTObserverArray<nsCOMPtr<nsIPresentationAvailabilityListener> > mAvailabilityListeners;
+  nsTObserverArray<nsCOMPtr<nsIPresentationListener> > mListeners;
   nsRefPtrHashtable<nsStringHashKey, nsIPresentationSessionListener> mSessionListeners;
-  nsRefPtrHashtable<nsUint64HashKey, nsIPresentationRespondingListener> mRespondingListeners;
   nsRefPtr<PresentationResponderLoadingCallback> mCallback;
-
-  // Store the mapping between the window ID of the OOP page (in this process)
-  // and the ID of the responding session. It's used for an OOP receiver page
-  // to retrieve the correspondent session ID. Besides, also keep the mapping
-  // between the responding session ID and the window ID to help look up the
-  // window ID.
-  nsClassHashtable<nsUint64HashKey, nsString> mRespondingSessionIds;
-  nsDataHashtable<nsStringHashKey, uint64_t> mRespondingWindowIds;
 };
 
 } // namespace dom

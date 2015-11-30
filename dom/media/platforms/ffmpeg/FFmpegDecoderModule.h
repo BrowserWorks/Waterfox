@@ -25,15 +25,6 @@ public:
     return pdm.forget();
   }
 
-  static bool
-  GetVersion(uint32_t& aMajor, uint32_t& aMinor)
-  {
-    uint32_t version = avcodec_version();
-    aMajor = (version >> 16) & 0xff;
-    aMinor = (version >> 8) & 0xff;
-    return true;
-  }
-
   FFmpegDecoderModule() {}
   virtual ~FFmpegDecoderModule() {}
 
@@ -62,13 +53,8 @@ public:
 
   virtual bool SupportsMimeType(const nsACString& aMimeType) override
   {
-    AVCodecID audioCodec = FFmpegAudioDecoder<V>::GetCodecId(aMimeType);
-    AVCodecID videoCodec = FFmpegH264Decoder<V>::GetCodecId(aMimeType);
-    if (audioCodec == AV_CODEC_ID_NONE && videoCodec == AV_CODEC_ID_NONE) {
-      return false;
-    }
-    AVCodecID codec = audioCodec != AV_CODEC_ID_NONE ? audioCodec : videoCodec;
-    return !!FFmpegDataDecoder<V>::FindAVCodec(codec);
+    return FFmpegAudioDecoder<V>::GetCodecId(aMimeType) != AV_CODEC_ID_NONE ||
+      FFmpegH264Decoder<V>::GetCodecId(aMimeType) != AV_CODEC_ID_NONE;
   }
 
   virtual ConversionRequired

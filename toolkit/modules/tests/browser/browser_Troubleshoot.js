@@ -27,7 +27,7 @@ registerCleanupFunction(function () {
   delete window.Troubleshoot;
 });
 
-var tests = [
+let tests = [
 
   function snapshotSchema(done) {
     Troubleshoot.snapshot(function (snapshot) {
@@ -219,7 +219,7 @@ const SNAPSHOT_SCHEMA = {
           type: "boolean",
         },
         supportsHardwareH264: {
-          type: "string",
+          type: "boolean",
         },
         numAcceleratedWindowsMessage: {
           type: "array",

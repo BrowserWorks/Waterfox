@@ -2,9 +2,9 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
 
-var tab0, tab1;
-var testStep = -1;
-var tabEvents = "";
+let tab0, tab1;
+let testStep = -1;
+let tabEvents = "";
 
 function test() {
   if (!isTiltEnabled()) {
@@ -81,7 +81,7 @@ function tab_HIDDEN(win) {
   tabEvents += "HIDDEN;";
 }
 
-var testSteps = [
+let testSteps = [
   function step0() {
     info("Selecting tab0.");
     gBrowser.selectedTab = tab0;

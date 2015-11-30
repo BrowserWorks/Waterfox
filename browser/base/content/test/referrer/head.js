@@ -11,7 +11,7 @@ const REFERRER_URL_BASE = "/browser/browser/base/content/test/referrer/";
 const REFERRER_POLICYSERVER_URL =
   "test1.example.com" + REFERRER_URL_BASE + "file_referrer_policyserver.sjs";
 
-var gTestWindow = null;
+let gTestWindow = null;
 
 // We test that the UI code propagates three pieces of state - the referrer URI
 // itself, the referrer policy, and the triggering principal. After that, we
@@ -21,7 +21,7 @@ var gTestWindow = null;
 // would break when the UI code drops either of these pieces; we don't try to
 // duplicate the entire cross-product test in bug 704320 - that would be slow,
 // especially when we're opening a new window for each case.
-var _referrerTests = [
+let _referrerTests = [
   // 1. Normal cases - no referrer policy, no special attributes.
   //    We expect a full referrer normally, and no referrer on downgrade.
   {

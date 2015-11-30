@@ -64,8 +64,6 @@ public:
   {
     kRecorderStopped,
     kRecorderStarted,
-    kRecorderPaused,
-    kRecorderResumed,
     kPosterCreated,
     kPosterFailed,
 #ifdef MOZ_B2G_CAMERA
@@ -111,8 +109,6 @@ public:
     kInTakePicture,
     kInStartRecording,
     kInStopRecording,
-    kInPauseRecording,
-    kInResumeRecording,
     kInSetConfiguration,
     kInStartPreview,
     kInStopPreview,

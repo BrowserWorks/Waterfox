@@ -9,7 +9,7 @@ EXPORTS += [
     'agnostic/VorbisDecoder.h',
     'agnostic/VPXDecoder.h',
     'PlatformDecoderModule.h',
-    'wrappers/FuzzingWrapper.h',
+    'SharedDecoderManager.h',
     'wrappers/H264Converter.h'
 ]
 
@@ -19,7 +19,7 @@ UNIFIED_SOURCES += [
     'agnostic/VorbisDecoder.cpp',
     'agnostic/VPXDecoder.cpp',
     'PlatformDecoderModule.cpp',
-    'wrappers/FuzzingWrapper.cpp',
+    'SharedDecoderManager.cpp',
     'wrappers/H264Converter.cpp'
 ]
 
@@ -36,6 +36,7 @@ if CONFIG['MOZ_FFMPEG']:
         'ffmpeg/FFmpegRuntimeLinker.h',
     ]
     UNIFIED_SOURCES += [
+        'ffmpeg/FFmpegLog.cpp',
         'ffmpeg/FFmpegRuntimeLinker.cpp',
     ]
     DIRS += [
@@ -79,3 +80,5 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
     ]
 
 FINAL_LIBRARY = 'xul'
+
+FAIL_ON_WARNINGS = True

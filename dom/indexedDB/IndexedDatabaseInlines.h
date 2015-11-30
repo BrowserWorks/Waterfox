@@ -12,7 +12,6 @@
 #endif
 
 #include "FileInfo.h"
-#include "IDBMutableFile.h"
 #include "mozilla/dom/indexedDB/PBackgroundIDBSharedTypes.h"
 #include "mozilla/dom/File.h"
 #include "nsIInputStream.h"
@@ -23,7 +22,6 @@ namespace indexedDB {
 
 inline
 StructuredCloneFile::StructuredCloneFile()
-  : mMutable(false)
 {
   MOZ_COUNT_CTOR(StructuredCloneFile);
 }
@@ -39,9 +37,7 @@ bool
 StructuredCloneFile::operator==(const StructuredCloneFile& aOther) const
 {
   return this->mBlob == aOther.mBlob &&
-         this->mMutableFile == aOther.mMutableFile &&
-         this->mFileInfo == aOther.mFileInfo &&
-         this->mMutable == aOther.mMutable;
+         this->mFileInfo == aOther.mFileInfo;
 }
 
 inline

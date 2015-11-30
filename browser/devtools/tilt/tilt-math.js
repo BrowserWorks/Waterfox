@@ -7,14 +7,14 @@
 
 const {Cu} = require("chrome");
 
-var TiltUtils = require("devtools/tilt/tilt-utils");
+let TiltUtils = require("devtools/tilt/tilt-utils");
 
 /**
  * Module containing high performance matrix and vector operations for WebGL.
  * Inspired by glMatrix, version 0.9.6, (c) 2011 Brandon Jones.
  */
 
-var EPSILON = 0.01;
+let EPSILON = 0.01;
 exports.EPSILON = EPSILON;
 
 const PI_OVER_180 = Math.PI / 180;
@@ -25,7 +25,7 @@ const ONE_OVER_255 = 1 / 255;
 /**
  * vec3 - 3 Dimensional Vector.
  */
-var vec3 = {
+let vec3 = {
 
   /**
    * Creates a new instance of a vec3 using the Float32Array type.
@@ -497,7 +497,7 @@ exports.vec3 = vec3;
 /**
  * mat3 - 3x3 Matrix.
  */
-var mat3 = {
+let mat3 = {
 
   /**
    * Creates a new instance of a mat3 using the Float32Array array type.
@@ -662,7 +662,7 @@ exports.mat3 = mat3;
 /**
  * mat4 - 4x4 Matrix.
  */
-var mat4 = {
+let mat4 = {
 
   /**
    * Creates a new instance of a mat4 using the default Float32Array type.
@@ -1632,7 +1632,7 @@ exports.mat4 = mat4;
 /**
  * quat4 - Quaternion.
  */
-var quat4 = {
+let quat4 = {
 
   /**
    * Creates a new instance of a quat4 using the default Float32Array type.
@@ -2123,7 +2123,7 @@ exports.quat4 = quat4;
 /**
  * Various algebraic math functions required by the engine.
  */
-var TiltMath = {
+let TiltMath = {
 
   /**
    * Helper function, converts degrees to radians.

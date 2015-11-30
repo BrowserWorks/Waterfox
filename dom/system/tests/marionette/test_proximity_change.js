@@ -3,8 +3,8 @@
 
 MARIONETTE_TIMEOUT = 10000;
 
-var receivedEvent = false;
-var expectedEvent;
+let receivedEvent = false;
+let expectedEvent;
 
 function enableProximityListener() {
   // Setup device proximity event listener, expect defaults

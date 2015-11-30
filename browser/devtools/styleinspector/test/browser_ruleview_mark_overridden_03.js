@@ -7,17 +7,17 @@
 // Tests that the rule view marks overridden rules correctly based on the
 // priority for the rule
 
-const TEST_URI = `
-  <style type='text/css'>
-  #testid {
-    background-color: blue;
-  }
-  .testclass {
-    background-color: green !important;
-  }
-  </style>
-  <div id='testid' class='testclass'>Styled Node</div>
-`;
+let TEST_URI = [
+  "<style type='text/css'>",
+  "#testid {",
+  "  background-color: blue;",
+  "}",
+  ".testclass {",
+  "  background-color: green !important;",
+  "}",
+  "</style>",
+  "<div id='testid' class='testclass'>Styled Node</div>"
+].join("\n");
 
 add_task(function*() {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));

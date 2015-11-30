@@ -63,9 +63,4 @@ private:
 } // namespace dom
 } // namespace mozilla
 
-already_AddRefed<mozilla::dom::TimeEvent>
-NS_NewDOMTimeEvent(mozilla::dom::EventTarget* aOwner,
-                   nsPresContext* aPresContext,
-                   mozilla::InternalSMILTimeEvent* aEvent);
-
 #endif // mozilla_dom_TimeEvent_h_

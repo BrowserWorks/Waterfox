@@ -26,7 +26,7 @@ function setPermissions() {
   perms.add(uri, "allowXULXBL", Ci.nsIPermissionManager.ALLOW_ACTION);
 }
 
-var cm = Cc["@mozilla.org/categorymanager;1"]
+let cm = Cc["@mozilla.org/categorymanager;1"]
            .getService(Components.interfaces.nsICategoryManager);
 
 // Disable update timers that cause b2g failures.
@@ -36,9 +36,9 @@ if (cm) {
 }
 
 // Load into any existing windows
-var wm = Cc["@mozilla.org/appshell/window-mediator;1"]
+let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
             .getService(Ci.nsIWindowMediator);
-var win = wm.getMostRecentWindow('');
+let win = wm.getMostRecentWindow('');
 
 // Set preferences and permissions
 setDefaultPrefs();
@@ -46,7 +46,7 @@ setPermissions();
 
 // Loading this into the global namespace causes intermittent failures.
 // See bug 882888 for more details.
-var reftest = {};
+let reftest = {};
 Cu.import("chrome://reftest/content/reftest.jsm", reftest);
 
 // Start the reftests

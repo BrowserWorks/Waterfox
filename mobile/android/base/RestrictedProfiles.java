@@ -5,9 +5,9 @@
 
 package org.mozilla.gecko;
 
-import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.AppConstants.Versions;
+import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.restrictions.DefaultConfiguration;
 import org.mozilla.gecko.restrictions.GuestProfileConfiguration;
 import org.mozilla.gecko.restrictions.RestrictedProfileConfiguration;
@@ -43,7 +43,7 @@ public class RestrictedProfiles {
 
         if (isGuestProfile(context)) {
             return new GuestProfileConfiguration();
-        } else if (isRestrictedProfile(context)) {
+        } else if(isRestrictedProfile(context)) {
             return new RestrictedProfileConfiguration(context);
         } else {
             return new DefaultConfiguration();
@@ -51,10 +51,6 @@ public class RestrictedProfiles {
     }
 
     private static boolean isGuestProfile(Context context) {
-        if (configuration != null) {
-            return configuration instanceof GuestProfileConfiguration;
-        }
-
         GeckoAppShell.GeckoInterface geckoInterface = GeckoAppShell.getGeckoInterface();
         if (geckoInterface != null) {
             return geckoInterface.getProfile().inGuestMode();
@@ -65,10 +61,6 @@ public class RestrictedProfiles {
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static boolean isRestrictedProfile(Context context) {
-        if (configuration != null) {
-            return configuration instanceof RestrictedProfileConfiguration;
-        }
-
         if (Versions.preJBMR2) {
             // Early versions don't support restrictions at all
             return false;
@@ -77,10 +69,6 @@ public class RestrictedProfiles {
         // The user is on a restricted profile if, and only if, we injected application restrictions during account setup.
         final UserManager mgr = (UserManager) context.getSystemService(Context.USER_SERVICE);
         return !mgr.getApplicationRestrictions(context.getPackageName()).isEmpty();
-    }
-
-    public static void update(Context context) {
-        getConfiguration(context).update();
     }
 
     private static Restriction geckoActionToRestriction(int action) {

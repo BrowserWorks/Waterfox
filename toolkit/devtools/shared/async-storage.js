@@ -41,7 +41,7 @@
  */
 const {Cc, Ci, Cu, Cr} = require("chrome");
 const {indexedDB} = require("sdk/indexed-db");
-const Promise = require("promise");
+const {Promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 
 module.exports = (function() {
   "use strict";

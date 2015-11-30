@@ -18,7 +18,6 @@
     int32_t                                mHandlesUsed;
     nsTArray<nsAutoArrayPtr<nsIContent*> > mOldHandles;
     nsHtml5TreeOpStage*                    mSpeculativeLoadStage;
-    nsresult                               mBroken;
     bool                                   mCurrentHtmlScriptIsAsyncOrDefer;
     bool                                   mPreventScriptExecution;
 #ifdef DEBUG
@@ -70,8 +69,6 @@
       mBuilder->MarkAsBroken(aRv);
       requestSuspension();
     }
-
-    void MarkAsBrokenFromPortability(nsresult aRv);
 
   public:
 
@@ -129,16 +126,6 @@
     {
       return mBuilder;
     }
-
-    /**
-     * Makes sure the buffers are large enough to be able to tokenize aLength
-     * UTF-16 code units before having to make the buffers larger.
-     *
-     * @param aLength the number of UTF-16 code units to be tokenized before the
-     *                next call to this method.
-     * @return true if successful; false if out of memory
-     */
-    bool EnsureBufferSpace(size_t aLength);
 
     void EnableViewSource(nsHtml5Highlighter* aHighlighter);
 
@@ -237,12 +224,3 @@
     void errEndWithUnclosedElements(nsIAtom* aName);
 
     void MarkAsBroken(nsresult aRv);
-
-    /**
-     * Checks if this parser is broken. Returns a non-NS_OK (i.e. non-0)
-     * value if broken.
-     */
-    nsresult IsBroken()
-    {
-      return mBroken;
-    }

@@ -310,14 +310,16 @@ NS_NewInputStreamChannelInternal(nsIChannel        **outChannel,
                                  nsIPrincipal       *aLoadingPrincipal,
                                  nsIPrincipal       *aTriggeringPrincipal,
                                  nsSecurityFlags     aSecurityFlags,
-                                 nsContentPolicyType aContentPolicyType)
+                                 nsContentPolicyType aContentPolicyType,
+                                 nsIURI             *aBaseURI /* = nullptr */)
 {
   nsCOMPtr<nsILoadInfo> loadInfo =
     new mozilla::LoadInfo(aLoadingPrincipal,
                           aTriggeringPrincipal,
                           aLoadingNode,
                           aSecurityFlags,
-                          aContentPolicyType);
+                          aContentPolicyType,
+                          aBaseURI);
   if (!loadInfo) {
     return NS_ERROR_UNEXPECTED;
   }
@@ -361,7 +363,8 @@ NS_NewInputStreamChannelInternal(nsIChannel        **outChannel,
                                  nsIPrincipal       *aTriggeringPrincipal,
                                  nsSecurityFlags     aSecurityFlags,
                                  nsContentPolicyType aContentPolicyType,
-                                 bool                aIsSrcdocChannel /* = false */)
+                                 bool                aIsSrcdocChannel /* = false */,
+                                 nsIURI             *aBaseURI /* = nullptr */)
 {
   nsresult rv;
   nsCOMPtr<nsIStringInputStream> stream;
@@ -387,7 +390,8 @@ NS_NewInputStreamChannelInternal(nsIChannel        **outChannel,
                                         aLoadingPrincipal,
                                         aTriggeringPrincipal,
                                         aSecurityFlags,
-                                        aContentPolicyType);
+                                        aContentPolicyType,
+                                        aBaseURI);
 
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -408,7 +412,8 @@ NS_NewInputStreamChannel(nsIChannel        **outChannel,
                          nsIPrincipal       *aLoadingPrincipal,
                          nsSecurityFlags     aSecurityFlags,
                          nsContentPolicyType aContentPolicyType,
-                         bool                aIsSrcdocChannel /* = false */)
+                         bool                aIsSrcdocChannel /* = false */,
+                         nsIURI             *aBaseURI /* = nullptr */)
 {
   return NS_NewInputStreamChannelInternal(outChannel,
                                           aUri,
@@ -419,7 +424,8 @@ NS_NewInputStreamChannel(nsIChannel        **outChannel,
                                           nullptr, // aTriggeringPrincipal
                                           aSecurityFlags,
                                           aContentPolicyType,
-                                          aIsSrcdocChannel);
+                                          aIsSrcdocChannel,
+                                          aBaseURI);
 }
 
 nsresult

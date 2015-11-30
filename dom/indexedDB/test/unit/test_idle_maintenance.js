@@ -10,9 +10,9 @@ function testSteps()
   let uri = Cc["@mozilla.org/network/io-service;1"].
             getService(Ci.nsIIOService).
             newURI("https://www.example.com", null, null);
-  let ssm = Cc["@mozilla.org/scriptsecuritymanager;1"]
-              .getService(Ci.nsIScriptSecurityManager);
-  let principal = ssm.createCodebasePrincipal(uri, {});
+  let principal = Cc["@mozilla.org/scriptsecuritymanager;1"].
+                  getService(Ci.nsIScriptSecurityManager).
+                  getNoAppCodebasePrincipal(uri);
 
   info("Setting permissions");
 
@@ -92,7 +92,7 @@ function testSteps()
 
   let usageBeforeMaintenance;
 
-  quotaManager.getUsageForPrincipal(principal, (principal, usage) => {
+  quotaManager.getUsageForURI(uri, (url, usage) => {
     ok(usage > 0, "Usage is non-zero");
     usageBeforeMaintenance = usage;
     continueToNextStep();
@@ -118,7 +118,7 @@ function testSteps()
 
   let usageAfterMaintenance;
 
-  quotaManager.getUsageForPrincipal(principal, (principal, usage) => {
+  quotaManager.getUsageForURI(uri, (url, usage) => {
     ok(usage > 0, "Usage is non-zero");
     usageAfterMaintenance = usage;
     continueToNextStep();

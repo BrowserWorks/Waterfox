@@ -10,7 +10,7 @@
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-console-column.html";
 
-var hud;
+let hud;
 
 function test() {
   loadTab(TEST_URI).then(() => {

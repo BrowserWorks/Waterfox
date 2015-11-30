@@ -483,7 +483,7 @@ class LifoAlloc
     };
 };
 
-class MOZ_NON_TEMPORARY_CLASS LifoAllocScope
+class LifoAllocScope
 {
     LifoAlloc*      lifoAlloc;
     LifoAlloc::Mark mark;

@@ -1,9 +1,15 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
-var { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
-var Pipe = CC("@mozilla.org/pipe;1", "nsIPipe", "init");
+let { DebuggerServer } =
+  Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
+let { DebuggerClient } =
+  Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
+let { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
+let { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
+let { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+let Pipe = CC("@mozilla.org/pipe;1", "nsIPipe", "init");
+let { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
 
 function run_test() {
   initTestDebuggerServer();
@@ -97,7 +103,7 @@ function add_test_bulk_actor() {
 
 /*** Reply Handlers ***/
 
-var replyHandlers = {
+let replyHandlers = {
 
   json: function(request) {
     // Receive JSON reply from server
@@ -132,7 +138,7 @@ var replyHandlers = {
 
 /*** Tests ***/
 
-var test_bulk_request_cs = Task.async(function*(transportFactory, actorType, replyType) {
+let test_bulk_request_cs = Task.async(function*(transportFactory, actorType, replyType) {
   // Ensure test files are not present from a failed run
   cleanup_files();
   writeTestTempFile("bulk-input", really_long());
@@ -189,7 +195,7 @@ var test_bulk_request_cs = Task.async(function*(transportFactory, actorType, rep
   ]);
 });
 
-var test_json_request_cs = Task.async(function*(transportFactory, actorType, replyType) {
+let test_json_request_cs = Task.async(function*(transportFactory, actorType, replyType) {
   // Ensure test files are not present from a failed run
   cleanup_files();
   writeTestTempFile("bulk-input", really_long());

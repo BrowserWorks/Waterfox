@@ -12,15 +12,6 @@
   --even-animation-timeline-background-color: rgba(128,128,128,0.03);
 }
 
-:root {
-  /* How high should toolbars be */
-  --toolbar-height: 20px;
-  /* How wide should the sidebar be */
-  --timeline-sidebar-width: 150px;
-  /* How high should animations displayed in the timeline be */
-  --timeline-animation-height: 20px;
-}
-
 html {
   height: 100%;
 }
@@ -35,45 +26,31 @@ body {
   color: var(--theme-content-color3);
 }
 
-/* The top toolbar, containing the toggle-all button. And the timeline toolbar,
-   containing playback control buttons, shown only when there are animations
-   displayed in the timeline */
+/* The top toolbar, containing the toggle-all button */
 
-#global-toolbar,
-#timeline-toolbar {
+#toolbar {
   border-bottom: 1px solid var(--theme-splitter-color);
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
-  height: var(--toolbar-height);
+  height: 20px;
 }
 
-#timeline-toolbar {
-  display: none;
-}
-
-[timeline] #global-toolbar {
-  display: none;
-}
-
-[timeline] #timeline-toolbar {
-  display: flex;
-}
-
-#global-toolbar .label {
+#toolbar .label {
   padding: 1px 4px;
+}
+
+#toggle-all {
+  border-width: 0 0 0 1px;
+  min-height: 20px;
 }
 
 /* The main animations container */
 
 #players {
-  height: calc(100% - var(--toolbar-height));
+  height: calc(100% - 20px);
   overflow: auto;
-}
-
-[empty] #players {
-  display: none;
 }
 
 /* The error message, shown when an invalid/unanimated element is selected */
@@ -88,23 +65,16 @@ body {
   display: none;
 }
 
-[empty] #error-message {
-  display: block;
-}
 
-/* Element picker, toggle-all buttons, timeline pause button, ... */
+/* Element picker and toggle-all buttons */
 
-#global-toolbar .devtools-button,
-#timeline-toolbar .devtools-button {
-  border-width: 0 0 0 1px;
-  min-height: var(--toolbar-height);
-}
-
-.devtools-button {
+#element-picker,
+#toggle-all {
   position: relative;
 }
 
-.devtools-button::before {
+#element-picker::before,
+#toggle-all::before {
   content: "";
   display: block;
   width: 16px;
@@ -113,13 +83,10 @@ body {
   left: 50%;
   top: 50%;
   margin: -8px 0 0 -8px;
-}
-
-#element-picker::before {
   background-image: url("chrome://browser/skin/devtools/command-pick.png");
 }
 
-.pause-button::before {
+#toggle-all::before {
   background-image: url("debugger-pause.png");
 }
 
@@ -128,21 +95,21 @@ body {
   filter: none; /* Icon is blue when checked, don't invert for light theme */
 }
 
-.pause-button.paused::before {
+#toggle-all.paused::before {
   background-image: url("debugger-play.png");
 }
 
-@media (min-resolution: 1.1dppx) {
+@media (min-resolution: 1.25dppx) {
   #element-picker::before {
     background-image: url("chrome://browser/skin/devtools/command-pick@2x.png");
     background-size: 64px;
   }
 
-  .pause-button::before {
+  #toggle-all::before {
     background-image: url("debugger-pause@2x.png");
   }
 
-  .pause-button.paused::before {
+  #toggle-all.paused::before {
     background-image: url("debugger-play@2x.png");
   }
 }
@@ -152,7 +119,6 @@ body {
 .animation-timeline {
   height: 100%;
   overflow: hidden;
-  position: relative;
   /* The timeline gets its background-image from a canvas element created in
      /browser/devtools/animationinspector/utils.js drawGraphElementBackground
      thanks to document.mozSetImageElement("time-graduations", canvas)
@@ -161,42 +127,17 @@ body {
   background-repeat: repeat-y;
   /* The animations are drawn 150px from the left edge so that animated nodes
      can be displayed in a sidebar */
-  background-position: var(--timeline-sidebar-width) 0;
+  background-position: 150px 0;
   display: flex;
   flex-direction: column;
 }
 
-.animation-timeline .scrubber {
-  position: absolute;
-  height: 100%;
-  width: var(--timeline-sidebar-width);
-  border-right: 1px solid red;
-  box-sizing: border-box;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.animation-timeline .scrubber::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  width: 1px;
-  right: -6px;
-  border-top: 5px solid red;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-}
-
 .animation-timeline .time-header {
-  margin-left: var(--timeline-sidebar-width);
-  min-height: var(--toolbar-height);
+  margin-left: 150px;
+  height: 20px;
   overflow: hidden;
   position: relative;
-  /* This is the same color as the time graduations in
-     browser/devtools/animationinspector/utils.js */
-  border-bottom: 1px solid rgba(128, 136, 144, .5);
-  cursor: col-resize;
-  -moz-user-select: none;
+  border-bottom: 1px solid var(--theme-splitter-color);
 }
 
 .animation-timeline .time-header .time-tick {
@@ -217,7 +158,7 @@ body {
 
 .animation-timeline .animation {
   margin: 4px 0;
-  height: var(--timeline-animation-height);
+  height: 20px;
   position: relative;
 }
 
@@ -226,7 +167,7 @@ body {
 }
 
 .animation-timeline .animation .target {
-  width: var(--timeline-sidebar-width);
+  width: 150px;
   overflow: hidden;
   height: 100%;
 }
@@ -238,7 +179,7 @@ body {
 .animation-timeline .animation .time-block {
   position: absolute;
   top: 0;
-  left: var(--timeline-sidebar-width);
+  left: 150px;
   right: 0;
   height: 100%;
 }
@@ -248,37 +189,19 @@ body {
 .animation-timeline .animation .iterations {
   position: relative;
   height: 100%;
+  border: 1px solid var(--theme-highlight-lightorange);
   box-sizing: border-box;
-
-  --timelime-border-color: var(--theme-body-color);
-  --timeline-background-color: var(--theme-splitter-color);
-
-  /* Iterations of the animation are displayed with a repeating linear-gradient
-     which size is dynamically changed from JS. The gradient only draws 1px
-     borders between each iteration. These borders must have the same color as
-     the border of this element */
+  background: var(--theme-contrast-background);
+  /* Iterations are displayed with a repeating linear-gradient which size is
+     dynamically changed from JS */
   background-image:
     linear-gradient(to right,
-                    var(--timelime-border-color) 0,
-                    var(--timelime-border-color) 1px,
+                    var(--theme-highlight-lightorange) 0,
+                    var(--theme-highlight-lightorange) 1px,
                     transparent 1px,
                     transparent 2px);
   background-repeat: repeat-x;
   background-position: -1px 0;
-  border: 1px solid var(--timelime-border-color);
-
-  /* The background color is set independently */
-  background-color: var(--timeline-background-color);
-}
-
-.animation-timeline .animation .cssanimation {
-  --timelime-border-color: var(--theme-highlight-lightorange);
-  --timeline-background-color: var(--theme-contrast-background);
-}
-
-.animation-timeline .animation .csstransition {
-  --timelime-border-color: var(--theme-highlight-bluegrey);
-  --timeline-background-color: var(--theme-highlight-blue);
 }
 
 .animation-timeline .animation .iterations.infinite {
@@ -303,41 +226,42 @@ body {
   top: unset;
 }
 
-.animation-timeline .animation .name {
-  color: var(--theme-selection-color);
-  height: 100%;
+.animation-timeline .animation .animation-title {
+  height: 1.5em;
   width: 100%;
+  box-sizing: border-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 150%;
-  padding: 0 2px;
 }
 
 .animation-timeline .animation .delay {
   position: absolute;
   top: 0;
-  /* Make sure the delay covers up the animation border */
-  transform: translate(-1px, -1px);
-  box-sizing: border-box;
-  height: calc(100% + 2px);
-
-  border: 1px solid var(--timelime-border-color);
-  border-width: 1px 0 1px 1px;
-  background-image: repeating-linear-gradient(45deg,
-                                              transparent,
-                                              transparent 1px,
-                                              var(--theme-selection-color) 1px,
-                                              var(--theme-selection-color) 4px);
-  background-color: var(--timelime-border-color);
+  height: 100%;
+  background-image: linear-gradient(to bottom,
+                                    transparent,
+                                    transparent 9px,
+                                    var(--theme-highlight-lightorange) 9px,
+                                    var(--theme-highlight-lightorange) 11px,
+                                    transparent 11px,
+                                    transparent);
 }
 
-.animation-timeline .animation .delay.negative {
-  /* Negative delays are displayed on top of the animation, so they need a
-     right border. Whereas normal delays are displayed just before the
-     animation, so there's already the animation's left border that serves as
-     a separation. */
-  border-width: 1px;
+.animation-timeline .animation .delay::before {
+  position: absolute;
+  content: "";
+  left: 0;
+  width: 2px;
+  height: 8px;
+  top: 50%;
+  margin-top: -4px;
+  background: var(--theme-highlight-lightorange);
+}
+
+.animation-timeline .animation .name {
+  position: absolute;
+  z-index: 1;
+  padding: 2px;
+  white-space: nowrap;
 }
 
 /* Animation target node gutter, contains a preview of the dom node */
@@ -402,7 +326,7 @@ body {
 /* Timeline wiget */
 
 .timeline {
-  height: var(--timeline-animation-height);
+  height: 20px;
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -438,7 +362,7 @@ body {
   background-image: url(rewind.png);
 }
 
-@media (min-resolution: 1.1dppx) {
+@media (min-resolution: 1.25dppx) {
   .timeline .toggle::before {
     background-image: url(debugger-pause@2x.png);
   }

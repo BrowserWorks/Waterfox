@@ -174,9 +174,7 @@ MediaTimer::ArmTimer(const TimeStamp& aTarget, const TimeStamp& aNow)
   unsigned long delay = std::ceil((aTarget - aNow).ToMilliseconds());
   TIMER_LOG("MediaTimer::ArmTimer delay=%lu", delay);
   mCurrentTimerTarget = aTarget;
-  nsresult rv = mTimer->InitWithNamedFuncCallback(&TimerCallback, this, delay,
-                                                  nsITimer::TYPE_ONE_SHOT,
-                                                  "MediaTimer::TimerCallback");
+  nsresult rv = mTimer->InitWithFuncCallback(&TimerCallback, this, delay, nsITimer::TYPE_ONE_SHOT);
   MOZ_DIAGNOSTIC_ASSERT(NS_SUCCEEDED(rv));
   (void) rv;
 }

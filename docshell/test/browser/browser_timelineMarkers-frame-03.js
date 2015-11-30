@@ -6,7 +6,7 @@
 // Test that the docShell profile timeline API returns the right
 // markers for DOM events.
 
-var TESTS = [{
+let TESTS = [{
   desc: "Event dispatch with single handler",
   searchFor: 'DOMEvent',
   setup: function(docShell) {

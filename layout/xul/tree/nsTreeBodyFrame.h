@@ -325,6 +325,7 @@ protected:
                           nsRect& aImageRect,
                           nsRect& aTwistyRect,
                           nsPresContext* aPresContext,
+                          nsRenderingContext& aRenderingContext,
                           nsStyleContext* aTwistyContext);
 
   // Fetch an image from the image cache.

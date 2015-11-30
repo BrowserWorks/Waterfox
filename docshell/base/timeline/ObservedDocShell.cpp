@@ -6,40 +6,31 @@
 
 #include "ObservedDocShell.h"
 
-#include "AbstractTimelineMarker.h"
-#include "LayerTimelineMarker.h"
-#include "MainThreadUtils.h"
+#include "TimelineMarker.h"
 #include "mozilla/Move.h"
 
 namespace mozilla {
 
 ObservedDocShell::ObservedDocShell(nsDocShell* aDocShell)
-  : OTMTMarkerReceiver("ObservedDocShellMutex")
-  , mDocShell(aDocShell)
+  : mDocShell(aDocShell)
+{}
+
+void
+ObservedDocShell::AddMarker(const char* aName, TracingMetadata aMetaData)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  TimelineMarker* marker = new TimelineMarker(mDocShell, aName, aMetaData);
+  mTimelineMarkers.AppendElement(marker);
 }
 
 void
-ObservedDocShell::AddMarker(UniquePtr<AbstractTimelineMarker>&& aMarker)
+ObservedDocShell::AddMarker(UniquePtr<TimelineMarker>&& aMarker)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   mTimelineMarkers.AppendElement(Move(aMarker));
-}
-
-void
-ObservedDocShell::AddOTMTMarkerClone(UniquePtr<AbstractTimelineMarker>& aMarker)
-{
-  MOZ_ASSERT(!NS_IsMainThread());
-  MutexAutoLock lock(GetLock());
-  UniquePtr<AbstractTimelineMarker> cloned = aMarker->Clone();
-  mTimelineMarkers.AppendElement(Move(cloned));
 }
 
 void
 ObservedDocShell::ClearMarkers()
 {
-  MOZ_ASSERT(NS_IsMainThread());
   mTimelineMarkers.Clear();
 }
 
@@ -47,18 +38,16 @@ void
 ObservedDocShell::PopMarkers(JSContext* aCx,
                              nsTArray<dom::ProfileTimelineMarker>& aStore)
 {
-  MOZ_ASSERT(NS_IsMainThread());
-
   // If we see an unpaired START, we keep it around for the next call
   // to ObservedDocShell::PopMarkers. We store the kept START objects here.
-  nsTArray<UniquePtr<AbstractTimelineMarker>> keptStartMarkers;
+  nsTArray<UniquePtr<TimelineMarker>> keptStartMarkers;
 
   for (uint32_t i = 0; i < mTimelineMarkers.Length(); ++i) {
-    UniquePtr<AbstractTimelineMarker>& startPayload = mTimelineMarkers[i];
+    UniquePtr<TimelineMarker>& startPayload = mTimelineMarkers[i];
 
-    // If this is a TIMESTAMP marker, there's no corresponding END,
+    // If this is a TRACING_TIMESTAMP marker, there's no corresponding END
     // as it's a single unit of time, not a duration.
-    if (startPayload->GetTracingType() == MarkerTracingType::TIMESTAMP) {
+    if (startPayload->GetMetaData() == TRACING_TIMESTAMP) {
       dom::ProfileTimelineMarker* marker = aStore.AppendElement();
       marker->mName = NS_ConvertUTF8toUTF16(startPayload->GetName());
       marker->mStart = startPayload->GetTime();
@@ -70,7 +59,7 @@ ObservedDocShell::PopMarkers(JSContext* aCx,
 
     // Whenever a START marker is found, look for the corresponding END
     // and build a {name,start,end} JS object.
-    if (startPayload->GetTracingType() == MarkerTracingType::START) {
+    if (startPayload->GetMetaData() == TRACING_INTERVAL_START) {
       bool hasSeenEnd = false;
 
       // "Paint" markers are different because painting is handled at root
@@ -93,23 +82,22 @@ ObservedDocShell::PopMarkers(JSContext* aCx,
       // enough for the amount of markers to always be small enough that the
       // nested for loop isn't going to be a performance problem.
       for (uint32_t j = i + 1; j < mTimelineMarkers.Length(); ++j) {
-        UniquePtr<AbstractTimelineMarker>& endPayload = mTimelineMarkers[j];
+        UniquePtr<TimelineMarker>& endPayload = mTimelineMarkers[j];
         bool endIsLayerType = strcmp(endPayload->GetName(), "Layer") == 0;
 
         // Look for "Layer" markers to stream out "Paint" markers.
         if (startIsPaintType && endIsLayerType) {
-          LayerTimelineMarker* layerPayload = static_cast<LayerTimelineMarker*>(endPayload.get());
-          layerPayload->AddLayerRectangles(layerRectangles);
           hasSeenLayerType = true;
+          endPayload->AddLayerRectangles(layerRectangles);
         }
         if (!startPayload->Equals(*endPayload)) {
           continue;
         }
-        if (endPayload->GetTracingType() == MarkerTracingType::START) {
+        if (endPayload->GetMetaData() == TRACING_INTERVAL_START) {
           ++markerDepth;
           continue;
         }
-        if (endPayload->GetTracingType() == MarkerTracingType::END) {
+        if (endPayload->GetMetaData() == TRACING_INTERVAL_END) {
           if (markerDepth > 0) {
             --markerDepth;
             continue;

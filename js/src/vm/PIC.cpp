@@ -295,7 +295,7 @@ ForOfPIC_traceObject(JSTracer* trc, JSObject* obj)
 }
 
 const Class ForOfPIC::jsclass = {
-    "ForOfPIC", JSCLASS_HAS_PRIVATE,
+    "ForOfPIC", JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS,
     nullptr, nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, ForOfPIC_finalize,
     nullptr,              /* call        */

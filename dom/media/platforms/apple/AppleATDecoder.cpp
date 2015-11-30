@@ -11,8 +11,8 @@
 #include "AppleATDecoder.h"
 #include "mozilla/Logging.h"
 
-extern PRLogModuleInfo* GetPDMLog();
-#define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+PRLogModuleInfo* GetAppleMediaLog();
+#define LOG(...) MOZ_LOG(GetAppleMediaLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 #define FourCC2Str(n) ((char[5]){(char)(n >> 24), (char)(n >> 16), (char)(n >> 8), (char)(n), 0})
 
 namespace mozilla {
@@ -50,15 +50,14 @@ AppleATDecoder::~AppleATDecoder()
   MOZ_ASSERT(!mConverter);
 }
 
-nsRefPtr<MediaDataDecoder::InitPromise>
+nsresult
 AppleATDecoder::Init()
 {
   if (!mFormatID) {
     NS_ERROR("Non recognised format");
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return NS_ERROR_FAILURE;
   }
-
-  return InitPromise::CreateAndResolve(TrackType::kAudioTrack, __func__);
+  return NS_OK;
 }
 
 nsresult

@@ -264,10 +264,8 @@ nsMimeType::GetDescription(nsString& aRetval) const
 nsPluginElement*
 nsMimeType::GetEnabledPlugin() const
 {
-  if (!mPluginElement || !mPluginElement->PluginTag()->IsEnabled()) {
-    return nullptr;
-  }
-  return mPluginElement;
+  return (mPluginElement && mPluginElement->PluginTag()->IsEnabled()) ?
+    mPluginElement : nullptr;
 }
 
 void

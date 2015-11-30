@@ -537,7 +537,7 @@ Accessible::ChildAtPoint(int32_t aX, int32_t aY,
   nsIntRect rootRect;
   rootWidget->GetScreenBounds(rootRect);
 
-  WidgetMouseEvent dummyEvent(true, eMouseMove, rootWidget,
+  WidgetMouseEvent dummyEvent(true, NS_MOUSE_MOVE, rootWidget,
                               WidgetMouseEvent::eSynthesized);
   dummyEvent.refPoint = LayoutDeviceIntPoint(aX - rootRect.x, aY - rootRect.y);
 
@@ -862,10 +862,10 @@ Accessible::HandleAccEvent(AccEvent* aEvent)
                                                        break;
                                                      }
         case nsIAccessibleEvent::EVENT_TEXT_CARET_MOVED: {
-          AccCaretMoveEvent* event = downcast_accEvent(aEvent);
-          ipcDoc->SendCaretMoveEvent(id, event->GetCaretOffset());
-          break;
-        }
+                                                           AccCaretMoveEvent* event = downcast_accEvent(aEvent);
+                                                           ipcDoc->SendEvent(id, event->GetCaretOffset());
+                                                           break;
+                                                         }
         case nsIAccessibleEvent::EVENT_TEXT_INSERTED:
         case nsIAccessibleEvent::EVENT_TEXT_REMOVED: {
           AccTextChangeEvent* event = downcast_accEvent(aEvent);
@@ -1834,14 +1834,10 @@ Accessible::DispatchClickEvent(nsIContent *aContent, uint32_t aActionIndex)
   int32_t y = presContext->AppUnitsToDevPixels(point.y + size.height / 2);
 
   // Simulate a touch interaction by dispatching touch events with mouse events.
-  nsCoreUtils::DispatchTouchEvent(eTouchStart, x, y, aContent, frame,
-                                  presShell, widget);
-  nsCoreUtils::DispatchMouseEvent(eMouseDown, x, y, aContent, frame,
-                                  presShell, widget);
-  nsCoreUtils::DispatchTouchEvent(eTouchEnd, x, y, aContent, frame,
-                                  presShell, widget);
-  nsCoreUtils::DispatchMouseEvent(eMouseUp, x, y, aContent, frame,
-                                  presShell, widget);
+  nsCoreUtils::DispatchTouchEvent(NS_TOUCH_START, x, y, aContent, frame, presShell, widget);
+  nsCoreUtils::DispatchMouseEvent(NS_MOUSE_BUTTON_DOWN, x, y, aContent, frame, presShell, widget);
+  nsCoreUtils::DispatchTouchEvent(NS_TOUCH_END, x, y, aContent, frame, presShell, widget);
+  nsCoreUtils::DispatchMouseEvent(NS_MOUSE_BUTTON_UP, x, y, aContent, frame, presShell, widget);
 }
 
 void

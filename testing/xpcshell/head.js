@@ -21,12 +21,12 @@ var _profileInitialized = false;
 // modules.
 _register_modules_protocol_handler();
 
-var _Promise = Components.utils.import("resource://gre/modules/Promise.jsm", {}).Promise;
+let _Promise = Components.utils.import("resource://gre/modules/Promise.jsm", {}).Promise;
 
 // Support a common assertion library, Assert.jsm.
-var AssertCls = Components.utils.import("resource://testing-common/Assert.jsm", null).Assert;
+let AssertCls = Components.utils.import("resource://testing-common/Assert.jsm", null).Assert;
 // Pass a custom report function for xpcshell-test style reporting.
-var Assert = new AssertCls(function(err, message, stack) {
+let Assert = new AssertCls(function(err, message, stack) {
   if (err) {
     do_report_result(false, err.message, err.stack);
   } else {
@@ -35,18 +35,18 @@ var Assert = new AssertCls(function(err, message, stack) {
 });
 
 
-var _add_params = function (params) {
+let _add_params = function (params) {
   if (typeof _XPCSHELL_PROCESS != "undefined") {
     params.xpcshell_process = _XPCSHELL_PROCESS;
   }
 };
 
-var _dumpLog = function (raw_msg) {
+let _dumpLog = function (raw_msg) {
   dump("\n" + raw_msg + "\n");
 }
 
-var _LoggerClass = Components.utils.import("resource://testing-common/StructuredLog.jsm", null).StructuredLogger;
-var _testLogger = new _LoggerClass("xpcshell/head.js", _dumpLog, [_add_params]);
+let _LoggerClass = Components.utils.import("resource://testing-common/StructuredLog.jsm", null).StructuredLogger;
+let _testLogger = new _LoggerClass("xpcshell/head.js", _dumpLog, [_add_params]);
 
 // Disable automatic network detection, so tests work correctly when
 // not connected to a network.
@@ -58,12 +58,12 @@ var _testLogger = new _LoggerClass("xpcshell/head.js", _dumpLog, [_add_params]);
 }
 
 // Determine if we're running on parent or child
-var runningInParent = true;
+let runningInParent = true;
 try {
   runningInParent = Components.classes["@mozilla.org/xre/runtime;1"].
                     getService(Components.interfaces.nsIXULRuntime).processType
                     == Components.interfaces.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
-}
+} 
 catch (e) { }
 
 // Only if building of places is enabled.
@@ -127,8 +127,7 @@ try {
       return this;
     },
     observe : function (msg) {
-      if (typeof do_print === "function")
-        do_print("CONSOLE_MESSAGE: (" + levelNames[msg.logLevel] + ") " + msg.toString());
+      do_print("CONSOLE_MESSAGE: (" + levelNames[msg.logLevel] + ") " + msg.toString());
     }
   };
   Components.classes["@mozilla.org/consoleservice;1"]
@@ -379,9 +378,8 @@ function _setupDebuggerServer(breakpointFiles, callback) {
     prefs.setBoolPref("devtools.debugger.log.verbose", true);
   }
 
-  let { require } = Components.utils.import("resource://gre/modules/devtools/Loader.jsm", {});
-  let { DebuggerServer } = require("devtools/server/main");
-  let { OriginalLocation } = require("devtools/server/actors/common");
+  let {DebuggerServer, OriginalLocation} =
+    Components.utils.import('resource://gre/modules/devtools/dbg-server.jsm', {});
   DebuggerServer.init();
   DebuggerServer.addBrowserActors();
   DebuggerServer.addActors("resource://testing-common/dbg-actors.js");
@@ -505,7 +503,7 @@ function _execute_test() {
     do_test_pending("MAIN run_test");
     // Check if run_test() is defined. If defined, run it.
     // Else, call run_next_test() directly to invoke tests
-    // added by add_test() and add_task().
+    // added by add_test() and add_task().  
     if (typeof run_test === "function") {
       run_test();
     } else {
@@ -1339,7 +1337,7 @@ function do_send_remote_message(name) {
  *
  * @return the test function that was passed in.
  */
-var _gTests = [];
+let _gTests = [];
 function add_test(funcOrProperties, func) {
   if (typeof funcOrProperties == "function") {
     _gTests.push([{ _isTask: false }, funcOrProperties]);
@@ -1417,16 +1415,16 @@ function add_task(funcOrProperties, func) {
     do_throw("add_task() should take a function or an object and a function");
   }
 }
-var _Task = Components.utils.import("resource://gre/modules/Task.jsm", {}).Task;
+let _Task = Components.utils.import("resource://gre/modules/Task.jsm", {}).Task;
 _Task.Debugging.maintainStack = true;
 
 
 /**
  * Runs the next test function from the list of async tests.
  */
-var _gRunningTest = null;
-var _gTestIndex = 0; // The index of the currently running test.
-var _gTaskRunning = false;
+let _gRunningTest = null;
+let _gTestIndex = 0; // The index of the currently running test.
+let _gTaskRunning = false;
 function run_next_test()
 {
   if (_gTaskRunning) {
@@ -1434,7 +1432,7 @@ function run_next_test()
                     "run_next_test() should not be called from inside add_task() " +
                     "under any circumstances!");
   }
-
+ 
   function _run_next_test()
   {
     if (_gTestIndex < _gTests.length) {

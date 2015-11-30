@@ -306,16 +306,18 @@ MediaEngineWebRTCMicrophoneSource::Allocate(const dom::MediaTrackConstraints &aC
       LOG(("Audio device %d allocated shared", mCapIndex));
     }
   }
-  ++mNrAllocations;
   return NS_OK;
 }
 
 nsresult
 MediaEngineWebRTCMicrophoneSource::Deallocate()
 {
-  --mNrAllocations;
-  MOZ_ASSERT(mNrAllocations >= 0, "Double-deallocations are prohibited");
-  if (mNrAllocations == 0) {
+  bool empty;
+  {
+    MonitorAutoLock lock(mMonitor);
+    empty = mSources.IsEmpty();
+  }
+  if (empty) {
     // If empty, no callbacks to deliver data should be occuring
     if (mState != kStopped && mState != kAllocated) {
       return NS_ERROR_FAILURE;
@@ -417,14 +419,6 @@ MediaEngineWebRTCMicrophoneSource::Stop(SourceMediaStream *aSource, TrackID aID)
   if (mVoEBase->StopReceive(mChannel)) {
     return NS_ERROR_FAILURE;
   }
-  return NS_OK;
-}
-
-nsresult
-MediaEngineWebRTCMicrophoneSource::Restart(const dom::MediaTrackConstraints& aConstraints,
-                                           const MediaEnginePrefs &aPrefs,
-                                           const nsString& aDeviceId)
-{
   return NS_OK;
 }
 
@@ -667,15 +661,6 @@ MediaEngineWebRTCAudioCaptureSource::Stop(SourceMediaStream *aMediaStream,
                                           TrackID aId)
 {
   aMediaStream->EndAllTrackAndFinish();
-  return NS_OK;
-}
-
-nsresult
-MediaEngineWebRTCAudioCaptureSource::Restart(
-    const dom::MediaTrackConstraints& aConstraints,
-    const MediaEnginePrefs &aPrefs,
-    const nsString& aDeviceId)
-{
   return NS_OK;
 }
 

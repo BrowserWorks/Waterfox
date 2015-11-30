@@ -5,15 +5,20 @@
 package org.mozilla.gecko.menu;
 
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.widget.themed.ThemedImageButton;
+import org.mozilla.gecko.util.DrawableUtil;
+import org.mozilla.gecko.widget.ThemedImageButton;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 
 public class MenuItemActionBar extends ThemedImageButton
                                implements GeckoMenuItem.Layout {
     private static final String LOGTAG = "GeckoMenuItemActionBar";
+
+    private final ColorStateList drawableColors;
 
     public MenuItemActionBar(Context context) {
         this(context, null);
@@ -25,6 +30,10 @@ public class MenuItemActionBar extends ThemedImageButton
 
     public MenuItemActionBar(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
+        final TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.MenuItemActionBar, defStyle, 0);
+        drawableColors = ta.getColorStateList(R.styleable.MenuItemActionBar_drawableTintList);
+        ta.recycle();
     }
 
     @Override
@@ -43,7 +52,9 @@ public class MenuItemActionBar extends ThemedImageButton
             setVisibility(GONE);
         } else {
             setVisibility(VISIBLE);
-            setImageDrawable(icon);
+            final Drawable tintedIcon =
+                    DrawableUtil.tintDrawableWithStateList(icon, drawableColors);
+            setImageDrawable(tintedIcon);
         }
     }
 

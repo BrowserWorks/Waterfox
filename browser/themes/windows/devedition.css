@@ -102,7 +102,14 @@
   text-shadow: none !important;
 }
 
-:root[devtoolstheme="dark"] .findbar-closebutton,
+/* This rule is specific to the dark theme, because we only set the dropdown image there */
+:root[devtoolstheme="dark"] .searchbar-dropmarker-image {
+  /* Reset image-region from the windows theme */
+  -moz-image-region: auto !important;
+  /* Add margin otherwise it looks weird */
+  -moz-margin-start: 2px;
+}
+
 /* Tab styling - make sure to use an inverted icon for the selected tab
    (brighttext only covers the unselected tabs) */
 .tab-close-button[visuallyselected=true] {
@@ -110,7 +117,6 @@
 }
 
 @media (min-resolution: 1.1dppx) {
-  :root[devtoolstheme="dark"] .findbar-closebutton,
   .tab-close-button[visuallyselected=true] {
     list-style-image: url("chrome://global/skin/icons/close-inverted@2x.png");
   }
@@ -175,13 +181,13 @@
     background: transparent;
   }
 
-  /* Ensure that the entire background is styled when maximized/fullscreen */
-  #main-window:not([sizemode="normal"]):not([customizing]) #browser-panel {
+  /* Ensure that the entire background is styled when maximized */
+  #main-window[sizemode="maximized"]:not([customizing]) #browser-panel {
     background: var(--chrome-background-color) !important;
   }
 
   /* The menu items need to be visible when the entire background is styled */
-  #main-window:not([sizemode="normal"]) #main-menubar {
+  #main-window[sizemode="maximized"] #main-menubar {
     color: var(--chrome-color);
     background-color: transparent;
   }
@@ -250,17 +256,6 @@
   border-right: none !important;
 }
 
-@media (-moz-os-version: windows-vista),
-       (-moz-os-version: windows-win7),
-       (-moz-os-version: windows-win8) {
-  /* And then we add them back on toolbars so that they don't look borderless: */
-  #main-window:not([customizing])[sizemode=normal] #navigator-toolbox::after,
-  #main-window:not([customizing])[sizemode=normal] #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar) {
-    border-left: 1px solid hsla(209,67%,12%,0.35);
-    border-right: 1px solid hsla(209,67%,12%,0.35);
-  }
-}
-
 @media (-moz-os-version: windows-win10) {
   /* Always keep draggable space on the sides of tabs since there is no top margin on Win10 */
   #main-window .tabbrowser-arrowscrollbox > .arrowscrollbox-scrollbox {
@@ -279,24 +274,6 @@
     list-style-image: url(chrome://browser/skin/caption-buttons.svg#restore-white);
   }
   :root[devtoolstheme="dark"] #titlebar-close {
-    list-style-image: url(chrome://browser/skin/caption-buttons.svg#close-white);
-  }
-
-  /* ... and normal ones for the light theme on Windows 10 */
-  :root[devtoolstheme="light"] #titlebar-min {
-    list-style-image: url(chrome://browser/skin/caption-buttons.svg#minimize);
-  }
-  :root[devtoolstheme="light"] #titlebar-max {
-    list-style-image: url(chrome://browser/skin/caption-buttons.svg#maximize);
-  }
-  #main-window[devtoolstheme="light"][sizemode="maximized"] #titlebar-max {
-    list-style-image: url(chrome://browser/skin/caption-buttons.svg#restore);
-  }
-  :root[devtoolstheme="light"] #titlebar-close {
-    list-style-image: url(chrome://browser/skin/caption-buttons.svg#close);
-  }
-
-  :root[devtoolstheme="light"] #titlebar-close:hover {
     list-style-image: url(chrome://browser/skin/caption-buttons.svg#close-white);
   }
 }

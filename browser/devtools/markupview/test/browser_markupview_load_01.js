@@ -52,11 +52,11 @@ add_task(function*() {
 });
 
 function* chooseWithInspectElementContextMenu(selector) {
-  yield BrowserTestUtils.synthesizeMouseAtCenter(selector, {
-    type: "contextmenu",
-    button: 2
-  }, gBrowser.selectedBrowser);
-
+  yield executeInContent("Test:SynthesizeMouse", {
+    center: true,
+    selector: selector,
+    options: {type: "contextmenu", button: 2}
+  });
   executeInContent("Test:SynthesizeKey", {key: "Q", options: {}});
 }
 

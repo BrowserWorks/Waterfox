@@ -10,39 +10,56 @@
 #include "BluetoothCommon.h"
 #include "BluetoothInterface.h"
 #include "BluetoothService.h"
+#ifndef MOZ_B2G_BT_API_V1
 #include "nsDataHashtable.h"
+#endif
 
 BEGIN_BLUETOOTH_NAMESPACE
 
 class BluetoothServiceBluedroid : public BluetoothService
                                 , public BluetoothNotificationHandler
 {
+  class CancelDiscoveryResultHandler;
   class CleanupResultHandler;
+  class CreateBondResultHandler;
   class DisableResultHandler;
-  class DispatchReplyErrorResultHandler;
   class EnableResultHandler;
   class GetRemoteDevicePropertiesResultHandler;
-  class GetRemoteServiceRecordResultHandler;
+#ifndef MOZ_B2G_BT_API_V1
   class GetRemoteServicesResultHandler;
+#else
+  // Missing in Bluetooth v1
+#endif
   class InitResultHandler;
   class PinReplyResultHandler;
   class ProfileDeinitResultHandler;
   class ProfileInitResultHandler;
+  class RemoveBondResultHandler;
   class SetAdapterPropertyDiscoverableResultHandler;
+  class SetAdapterPropertyResultHandler;
   class SspReplyResultHandler;
+  class StartDiscoveryResultHandler;
 
   class GetDeviceRequest;
-  struct GetRemoteServiceRecordRequest;
-  struct GetRemoteServicesRequest;
 
 public:
   BluetoothServiceBluedroid();
   ~BluetoothServiceBluedroid();
 
+#ifndef MOZ_B2G_BT_API_V1
   virtual nsresult StartInternal(BluetoothReplyRunnable* aRunnable);
   virtual nsresult StopInternal(BluetoothReplyRunnable* aRunnable);
+#else
+  virtual nsresult StartInternal();
+  virtual nsresult StopInternal();
+#endif
 
+#ifndef MOZ_B2G_BT_API_V1
   virtual nsresult GetAdaptersInternal(BluetoothReplyRunnable* aRunnable);
+#else
+  virtual nsresult GetDefaultAdapterPathInternal(
+    BluetoothReplyRunnable* aRunnable);
+#endif
 
   virtual nsresult
   GetConnectedDevicePropertiesInternal(uint16_t aProfileId,
@@ -52,9 +69,13 @@ public:
   GetPairedDevicePropertiesInternal(const nsTArray<nsString>& aDeviceAddress,
                                     BluetoothReplyRunnable* aRunnable);
 
+#ifndef MOZ_B2G_BT_API_V1
   virtual nsresult
   FetchUuidsInternal(const nsAString& aDeviceAddress,
                      BluetoothReplyRunnable* aRunnable) override;
+#else
+  // Missing in Bluetooth v1
+#endif
 
   virtual void StartDiscoveryInternal(BluetoothReplyRunnable* aRunnable);
   virtual void StopDiscoveryInternal(BluetoothReplyRunnable* aRunnable);
@@ -82,6 +103,7 @@ public:
   RemoveDeviceInternal(const nsAString& aDeviceObjectPath,
                        BluetoothReplyRunnable* aRunnable);
 
+#ifndef MOZ_B2G_BT_API_V1
   virtual void
   PinReplyInternal(const nsAString& aDeviceAddress,
                    bool aAccept,
@@ -107,12 +129,47 @@ public:
   SetPairingConfirmationInternal(const nsAString& aDeviceAddress,
                                  bool aConfirm,
                                  BluetoothReplyRunnable* aRunnable);
+#else
+  virtual bool
+  SetAuthorizationInternal(const nsAString& aDeviceAddress, bool aAllow,
+                           BluetoothReplyRunnable* aRunnable);
+
+  virtual bool
+  SetPinCodeInternal(const nsAString& aDeviceAddress,
+                     const nsAString& aPinCode,
+                     BluetoothReplyRunnable* aRunnable);
+
+  virtual bool
+  SetPasskeyInternal(const nsAString& aDeviceAddress,
+                     uint32_t aPasskey,
+                     BluetoothReplyRunnable* aRunnable);
+
+  virtual bool
+  SetPairingConfirmationInternal(const nsAString& aDeviceAddress,
+                                 bool aConfirm,
+                                 BluetoothReplyRunnable* aRunnable);
+#endif
+
+#ifndef MOZ_B2G_BT_API_V1
+  // Missing in Bluetooth v2
+#else
+  virtual nsresult
+  PrepareAdapterInternal();
+#endif
 
   virtual void
   Connect(const nsAString& aDeviceAddress,
           uint32_t aCod,
           uint16_t aServiceUuid,
           BluetoothReplyRunnable* aRunnable);
+
+#ifndef MOZ_B2G_BT_API_V1
+  // Missing in bluetooth2
+#else
+  virtual void
+  IsConnected(const uint16_t aServiceUuid,
+              BluetoothReplyRunnable* aRunnable) override;
+#endif
 
   virtual void
   Disconnect(const nsAString& aDeviceAddress, uint16_t aServiceUuid,
@@ -145,37 +202,6 @@ public:
 
   virtual void
   IsScoConnected(BluetoothReplyRunnable* aRunnable);
-
-  virtual void
-  ReplyTovCardPulling(BlobParent* aBlobParent,
-                      BlobChild* aBlobChild,
-                      BluetoothReplyRunnable* aRunnable);
-
-  virtual void
-  ReplyTovCardPulling(Blob* aBlob,
-                      BluetoothReplyRunnable* aRunnable);
-
-  virtual void
-  ReplyToPhonebookPulling(BlobParent* aBlobParent,
-                          BlobChild* aBlobChild,
-                          uint16_t aPhonebookSize,
-                          BluetoothReplyRunnable* aRunnable);
-
-  virtual void
-  ReplyToPhonebookPulling(Blob* aBlob,
-                          uint16_t aPhonebookSize,
-                          BluetoothReplyRunnable* aRunnable);
-
-  virtual void
-  ReplyTovCardListing(BlobParent* aBlobParent,
-                      BlobChild* aBlobChild,
-                      uint16_t aPhonebookSize,
-                      BluetoothReplyRunnable* aRunnable);
-
-  virtual void
-  ReplyTovCardListing(Blob* aBlob,
-                      uint16_t aPhonebookSize,
-                      BluetoothReplyRunnable* aRunnable);
 
   virtual void
   AnswerWaitingCall(BluetoothReplyRunnable* aRunnable);
@@ -218,6 +244,7 @@ public:
   // GATT Client
   //
 
+#ifndef MOZ_B2G_BT_API_V1
   virtual void StartLeScanInternal(const nsTArray<nsString>& aServiceUuids,
                                    BluetoothReplyRunnable* aRunnable);
 
@@ -293,22 +320,9 @@ public:
     const BluetoothGattId& aDescriptorId,
     const nsTArray<uint8_t>& aValue,
     BluetoothReplyRunnable* aRunnable) override;
-
-  virtual void
-  GattServerConnectPeripheralInternal(
-    const nsAString& aAppUuid,
-    const nsAString& aAddress,
-    BluetoothReplyRunnable* aRunnable) override;
-
-  virtual void
-  GattServerDisconnectPeripheralInternal(
-    const nsAString& aAppUuid,
-    const nsAString& aAddress,
-    BluetoothReplyRunnable* aRunnable) override;
-
-  virtual void
-  UnregisterGattServerInternal(int aServerIf,
-                               BluetoothReplyRunnable* aRunnable) override;
+#else
+  // Missing in Bluetooth v1
+#endif
 
   //
   // Bluetooth notifications
@@ -370,6 +384,18 @@ protected:
                                 uint16_t aServiceUuid, uint32_t aCod = 0);
   static void NextBluetoothProfileController();
 
+#ifndef MOZ_B2G_BT_API_V1
+  // Missing in Bluetooth v2
+#else
+  static bool EnsureBluetoothHalLoad();
+
+  static void ClassToIcon(uint32_t aClass, nsAString& aRetIcon);
+
+  uint16_t UuidToServiceClassInt(const BluetoothUuid& mUuid);
+
+  static bool IsConnected(const nsAString& aRemoteBdAddr);
+#endif
+
   // Adapter properties
   nsString mBdAddress;
   nsString mBdName;
@@ -377,18 +403,15 @@ protected:
   bool mDiscoverable;
   bool mDiscovering;
   nsTArray<nsString> mBondedAddresses;
+#ifndef MOZ_B2G_BT_API_V1
+  // Missing in Bluetooth v2
+#else
+  uint32_t mDiscoverableTimeout;
+#endif
 
   // Backend error recovery
   bool mIsRestart;
   bool mIsFirstTimeToggleOffBt;
-
-  // Runnable arrays
-  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mChangeAdapterStateRunnables;
-  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mSetAdapterPropertyRunnables;
-  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mChangeDiscoveryRunnables;
-  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mFetchUuidsRunnables;
-  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mCreateBondRunnables;
-  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mRemoveBondRunnables;
 
   // Array of get device requests. Each request remembers
   // 1) remaining device count to receive properties,
@@ -396,12 +419,20 @@ protected:
   // 3) runnable to reply success/error
   nsTArray<GetDeviceRequest> mGetDeviceRequests;
 
+  // Runnable arrays
+  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mSetAdapterPropertyRunnables;
+  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mCreateBondRunnables;
+  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mRemoveBondRunnables;
+
+#ifndef MOZ_B2G_BT_API_V1
+  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mChangeAdapterStateRunnables;
+  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mChangeDiscoveryRunnables;
+  nsTArray<nsRefPtr<BluetoothReplyRunnable>> mFetchUuidsRunnables;
+
   // <address, name> mapping table for remote devices
   nsDataHashtable<nsStringHashKey, nsString> mDeviceNameMap;
+#endif
 
-  // Arrays for SDP operations
-  nsTArray<GetRemoteServiceRecordRequest> mGetRemoteServiceRecordArray;
-  nsTArray<GetRemoteServicesRequest> mGetRemoteServicesArray;
 };
 
 END_BLUETOOTH_NAMESPACE

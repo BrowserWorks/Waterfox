@@ -6,7 +6,7 @@
 /**
  * View handler for toolbar events (mostly option toggling and triggering)
  */
-var ToolbarView = {
+let ToolbarView = {
   /**
    * Sets up the view with event binding.
    */

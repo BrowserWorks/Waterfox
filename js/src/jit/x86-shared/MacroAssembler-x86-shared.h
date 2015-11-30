@@ -123,6 +123,27 @@ class MacroAssemblerX86Shared : public Assembler
     void move32(Register src, const Operand& dest) {
         movl(src, dest);
     }
+    void and32(Register src, Register dest) {
+        andl(src, dest);
+    }
+    void and32(const Address& src, Register dest) {
+        andl(Operand(src), dest);
+    }
+    void and32(Imm32 imm, Register dest) {
+        andl(imm, dest);
+    }
+    void and32(Imm32 imm, const Address& dest) {
+        andl(imm, Operand(dest));
+    }
+    void or32(Register src, Register dest) {
+        orl(src, dest);
+    }
+    void or32(Imm32 imm, Register dest) {
+        orl(imm, dest);
+    }
+    void or32(Imm32 imm, const Address& dest) {
+        orl(imm, Operand(dest));
+    }
     void neg32(Register reg) {
         negl(reg);
     }
@@ -189,6 +210,15 @@ class MacroAssemblerX86Shared : public Assembler
     void branchSub32(Condition cond, T src, Register dest, Label* label) {
         sub32(src, dest);
         j(cond, label);
+    }
+    void xor32(Imm32 imm, Register dest) {
+        xorl(imm, dest);
+    }
+    void xor32(Register src, Register dest) {
+        xorl(src, dest);
+    }
+    void not32(Register reg) {
+        notl(reg);
     }
     void atomic_inc32(const Operand& addr) {
         lock_incl(addr);
@@ -651,9 +681,8 @@ class MacroAssemblerX86Shared : public Assembler
         vcvtsi2ss(src, dest, dest);
     }
     Condition testDoubleTruthy(bool truthy, FloatRegister reg) {
-        ScratchDoubleScope scratch(asMasm());
-        zeroDouble(scratch);
-        vucomisd(reg, scratch);
+        zeroDouble(ScratchDoubleReg);
+        vucomisd(reg, ScratchDoubleReg);
         return truthy ? NonZero : Zero;
     }
     void branchTestDoubleTruthy(bool truthy, FloatRegister reg, Label* label) {
@@ -879,20 +908,18 @@ class MacroAssemblerX86Shared : public Assembler
     }
     void negateDouble(FloatRegister reg) {
         // From MacroAssemblerX86Shared::maybeInlineDouble
-        ScratchDoubleScope scratch(asMasm());
-        vpcmpeqw(scratch, scratch, scratch);
-        vpsllq(Imm32(63), scratch, scratch);
+        vpcmpeqw(ScratchDoubleReg, ScratchDoubleReg, ScratchDoubleReg);
+        vpsllq(Imm32(63), ScratchDoubleReg, ScratchDoubleReg);
 
         // XOR the float in a float register with -0.0.
-        vxorpd(scratch, reg, reg); // s ^ 0x80000000000000
+        vxorpd(ScratchDoubleReg, reg, reg); // s ^ 0x80000000000000
     }
     void negateFloat(FloatRegister reg) {
-        ScratchFloat32Scope scratch(asMasm());
-        vpcmpeqw(scratch, scratch, scratch);
-        vpsllq(Imm32(31), scratch, scratch);
+        vpcmpeqw(ScratchFloat32Reg, ScratchFloat32Reg, ScratchFloat32Reg);
+        vpsllq(Imm32(31), ScratchFloat32Reg, ScratchFloat32Reg);
 
         // XOR the float in a float register with -0.0.
-        vxorps(scratch, reg, reg); // s ^ 0x80000000
+        vxorps(ScratchFloat32Reg, reg, reg); // s ^ 0x80000000
     }
     void addDouble(FloatRegister src, FloatRegister dest) {
         vaddsd(src, dest, dest);
@@ -969,19 +996,17 @@ class MacroAssemblerX86Shared : public Assembler
         BaseIndex srcZ(src);
         srcZ.offset += 2 * sizeof(int32_t);
 
-        ScratchSimdScope scratch(asMasm());
         vmovq(Operand(src), dest);
-        vmovd(Operand(srcZ), scratch);
-        vmovlhps(scratch, dest, dest);
+        vmovd(Operand(srcZ), ScratchSimdReg);
+        vmovlhps(ScratchSimdReg, dest, dest);
     }
     void loadInt32x3(const Address& src, FloatRegister dest) {
         Address srcZ(src);
         srcZ.offset += 2 * sizeof(int32_t);
 
-        ScratchSimdScope scratch(asMasm());
         vmovq(Operand(src), dest);
-        vmovd(Operand(srcZ), scratch);
-        vmovlhps(scratch, dest, dest);
+        vmovd(Operand(srcZ), ScratchSimdReg);
+        vmovlhps(ScratchSimdReg, dest, dest);
     }
 
     void loadAlignedInt32x4(const Address& src, FloatRegister dest) {
@@ -1034,17 +1059,15 @@ class MacroAssemblerX86Shared : public Assembler
         Address destZ(dest);
         destZ.offset += 2 * sizeof(int32_t);
         vmovq(src, Operand(dest));
-        ScratchSimdScope scratch(asMasm());
-        vmovhlps(src, scratch, scratch);
-        vmovd(scratch, Operand(destZ));
+        vmovhlps(src, ScratchSimdReg, ScratchSimdReg);
+        vmovd(ScratchSimdReg, Operand(destZ));
     }
     void storeInt32x3(FloatRegister src, const BaseIndex& dest) {
         BaseIndex destZ(dest);
         destZ.offset += 2 * sizeof(int32_t);
         vmovq(src, Operand(dest));
-        ScratchSimdScope scratch(asMasm());
-        vmovhlps(src, scratch, scratch);
-        vmovd(scratch, Operand(destZ));
+        vmovhlps(src, ScratchSimdReg, ScratchSimdReg);
+        vmovd(ScratchSimdReg, Operand(destZ));
     }
 
     void storeUnalignedInt32x4(FloatRegister src, const Address& dest) {
@@ -1105,17 +1128,15 @@ class MacroAssemblerX86Shared : public Assembler
         Address srcZ(src);
         srcZ.offset += 2 * sizeof(float);
         vmovsd(src, dest);
-        ScratchSimdScope scratch(asMasm());
-        vmovss(srcZ, scratch);
-        vmovlhps(scratch, dest, dest);
+        vmovss(srcZ, ScratchSimdReg);
+        vmovlhps(ScratchSimdReg, dest, dest);
     }
     void loadFloat32x3(const BaseIndex& src, FloatRegister dest) {
         BaseIndex srcZ(src);
         srcZ.offset += 2 * sizeof(float);
         vmovsd(src, dest);
-        ScratchSimdScope scratch(asMasm());
-        vmovss(srcZ, scratch);
-        vmovlhps(scratch, dest, dest);
+        vmovss(srcZ, ScratchSimdReg);
+        vmovlhps(ScratchSimdReg, dest, dest);
     }
 
     void loadAlignedFloat32x4(const Address& src, FloatRegister dest) {
@@ -1129,17 +1150,15 @@ class MacroAssemblerX86Shared : public Assembler
         Address destZ(dest);
         destZ.offset += 2 * sizeof(int32_t);
         storeDouble(src, dest);
-        ScratchSimdScope scratch(asMasm());
-        vmovhlps(src, scratch, scratch);
-        storeFloat32(scratch, destZ);
+        vmovhlps(src, ScratchSimdReg, ScratchSimdReg);
+        storeFloat32(ScratchSimdReg, destZ);
     }
     void storeFloat32x3(FloatRegister src, const BaseIndex& dest) {
         BaseIndex destZ(dest);
         destZ.offset += 2 * sizeof(int32_t);
         storeDouble(src, dest);
-        ScratchSimdScope scratch(asMasm());
-        vmovhlps(src, scratch, scratch);
-        storeFloat32(scratch, destZ);
+        vmovhlps(src, ScratchSimdReg, ScratchSimdReg);
+        storeFloat32(ScratchSimdReg, destZ);
     }
     void storeAlignedFloat32x4(FloatRegister src, const Address& dest) {
         vmovaps(src, Operand(dest));
@@ -1291,12 +1310,12 @@ class MacroAssemblerX86Shared : public Assembler
         if (negativeZeroCheck)
             branchNegativeZero(src, dest, fail);
 
-        ScratchDoubleScope scratch(asMasm());
         vcvttsd2si(src, dest);
-        convertInt32ToDouble(dest, scratch);
-        vucomisd(scratch, src);
+        convertInt32ToDouble(dest, ScratchDoubleReg);
+        vucomisd(ScratchDoubleReg, src);
         j(Assembler::Parity, fail);
         j(Assembler::NotEqual, fail);
+
     }
 
     // Checks whether a float32 is representable as a 32-bit integer. If so, the
@@ -1309,10 +1328,9 @@ class MacroAssemblerX86Shared : public Assembler
         if (negativeZeroCheck)
             branchNegativeZeroFloat32(src, dest, fail);
 
-        ScratchFloat32Scope scratch(asMasm());
         vcvttss2si(src, dest);
-        convertInt32ToFloat32(dest, scratch);
-        vucomiss(scratch, src);
+        convertInt32ToFloat32(dest, ScratchFloat32Reg);
+        vucomiss(ScratchFloat32Reg, src);
         j(Assembler::Parity, fail);
         j(Assembler::NotEqual, fail);
     }
@@ -1442,6 +1460,16 @@ class MacroAssemblerX86Shared : public Assembler
     void computeEffectiveAddress(const T& address, Register dest) {
         lea(Operand(address), dest);
     }
+
+    // Builds an exit frame on the stack, with a return address to an internal
+    // non-function. Returns offset to be passed to markSafepointAt().
+    void buildFakeExitFrame(Register scratch, uint32_t* offset);
+    void callWithExitFrame(Label* target);
+    void callWithExitFrame(JitCode* target);
+
+    void callJit(Register callee);
+    void callJitFromAsmJS(Register callee);
+    void callAndPushReturnAddress(Label* label);
 
     void checkStackAlignment() {
         // Exists for ARM compatibility.

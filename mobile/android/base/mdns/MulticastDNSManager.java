@@ -12,7 +12,6 @@ import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.GeckoRequest;
 import org.mozilla.gecko.util.NativeEventListener;
 import org.mozilla.gecko.util.NativeJSObject;
-import org.mozilla.gecko.util.ThreadUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,13 +20,11 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
-import android.support.annotation.UiThread;
 import android.util.Log;
 
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class is the bridge between XPCOM mDNS module and NsdManager.
@@ -40,7 +37,12 @@ public abstract class MulticastDNSManager {
 
     public static MulticastDNSManager getInstance(final Context context) {
         if (instance == null) {
-            instance = new DummyMulticastDNSManager();
+            // Bug 1188935: There's a bug on Android 4.4 and before.
+            if (Versions.feature21Plus) {
+                instance = new NsdMulticastDNSManager(context);
+            } else {
+                instance = new DummyMulticastDNSManager();
+            }
         }
         return instance;
     }
@@ -49,43 +51,28 @@ public abstract class MulticastDNSManager {
     public abstract void tearDown();
 }
 
-/**
- * Mix-in class for MulticastDNSManagers to call EventDispatcher.
- */
-class MulticastDNSEventManager {
-    private NativeEventListener mListener = null;
-    private boolean mEventsRegistered = false;
+class NsdMulticastDNSManager extends MulticastDNSManager implements NativeEventListener {
+    private final NsdManager nsdManager;
+    private DiscoveryListener mDiscoveryListener = null;
+    private RegistrationListener mRegistrationListener = null;
 
-    MulticastDNSEventManager(NativeEventListener listener) {
-        mListener = listener;
+    @TargetApi(16)
+    public NsdMulticastDNSManager(final Context context) {
+        nsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
     }
 
-    @UiThread
+    @Override
     public void init() {
-        ThreadUtils.assertOnUiThread();
-
-        if (mEventsRegistered || mListener == null) {
-            return;
-        }
-
         registerEvents();
-        mEventsRegistered = true;
     }
 
-    @UiThread
+    @Override
     public void tearDown() {
-        ThreadUtils.assertOnUiThread();
-
-        if (!mEventsRegistered || mListener == null) {
-            return;
-        }
-
         unregisterEvents();
-        mEventsRegistered = false;
     }
 
     private void registerEvents() {
-        EventDispatcher.getInstance().registerGeckoThreadListener(mListener,
+        EventDispatcher.getInstance().registerGeckoThreadListener(this,
                 "NsdManager:DiscoverServices",
                 "NsdManager:StopServiceDiscovery",
                 "NsdManager:RegisterService",
@@ -94,40 +81,12 @@ class MulticastDNSEventManager {
     }
 
     private void unregisterEvents() {
-        EventDispatcher.getInstance().unregisterGeckoThreadListener(mListener,
+        EventDispatcher.getInstance().unregisterGeckoThreadListener(this,
                 "NsdManager:DiscoverServices",
                 "NsdManager:StopServiceDiscovery",
                 "NsdManager:RegisterService",
                 "NsdManager:UnregisterService",
                 "NsdManager:ResolveService");
-    }
-}
-
-class NsdMulticastDNSManager extends MulticastDNSManager implements NativeEventListener {
-    private final NsdManager nsdManager;
-    private final MulticastDNSEventManager mEventManager;
-    private Map<String, DiscoveryListener> mDiscoveryListeners = null;
-    private Map<String, RegistrationListener> mRegistrationListeners = null;
-
-    @TargetApi(16)
-    public NsdMulticastDNSManager(final Context context) {
-        nsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
-        mEventManager = new MulticastDNSEventManager(this);
-        mDiscoveryListeners = new ConcurrentHashMap<String, DiscoveryListener>();
-        mRegistrationListeners = new ConcurrentHashMap<String, RegistrationListener>();
-    }
-
-    @Override
-    public void init() {
-        mEventManager.init();
-    }
-
-    @Override
-    public void tearDown() {
-        mDiscoveryListeners.clear();
-        mRegistrationListeners.clear();
-
-        mEventManager.tearDown();
     }
 
     @Override
@@ -135,49 +94,42 @@ class NsdMulticastDNSManager extends MulticastDNSManager implements NativeEventL
         Log.v(LOGTAG, "handleMessage: " + event);
 
         switch (event) {
-            case "NsdManager:DiscoverServices": {
-                DiscoveryListener listener = new DiscoveryListener(nsdManager);
-                listener.discoverServices(message.getString("serviceType"), callback);
-                mDiscoveryListeners.put(message.getString("uniqueId"), listener);
-                break;
-            }
-            case "NsdManager:StopServiceDiscovery": {
-                String uuid = message.getString("uniqueId");
-                DiscoveryListener listener = mDiscoveryListeners.remove(uuid);
-                if (listener == null) {
-                    Log.e(LOGTAG, "DiscoveryListener " + uuid + " was not found.");
-                    return;
+            case "NsdManager:DiscoverServices":
+                if (mDiscoveryListener != null) {
+                    mDiscoveryListener.stopServiceDiscovery(null);
                 }
-                listener.stopServiceDiscovery(callback);
+                mDiscoveryListener = new DiscoveryListener(nsdManager);
+                mDiscoveryListener.discoverServices(message.getString("serviceType"), callback);
                 break;
-            }
-            case "NsdManager:RegisterService": {
-                RegistrationListener listener = new RegistrationListener(nsdManager);
-                listener.registerService(message.getInt("port"),
+            case "NsdManager:StopServiceDiscovery":
+                if (mDiscoveryListener != null) {
+                    mDiscoveryListener.stopServiceDiscovery(callback);
+                    mDiscoveryListener = null;
+                }
+                break;
+            case "NsdManager:RegisterService":
+                if (mRegistrationListener != null) {
+                    mRegistrationListener.unregisterService(null);
+                }
+                mRegistrationListener = new RegistrationListener(nsdManager);
+                mRegistrationListener.registerService(message.getInt("port"),
                         message.optString("serviceName", android.os.Build.MODEL),
                         message.getString("serviceType"),
                         parseAttributes(message.optObjectArray("attributes", null)),
                         callback);
-                mRegistrationListeners.put(message.getString("uniqueId"), listener);
                 break;
-            }
-            case "NsdManager:UnregisterService": {
-                String uuid = message.getString("uniqueId");
-                RegistrationListener listener = mRegistrationListeners.remove(uuid);
-                if (listener == null) {
-                    Log.e(LOGTAG, "RegistrationListener " + uuid + " was not found.");
-                    return;
+            case "NsdManager:UnregisterService":
+                if (mRegistrationListener != null) {
+                    mRegistrationListener.unregisterService(callback);
+                    mRegistrationListener = null;
                 }
-                listener.unregisterService(callback);
                 break;
-            }
-            case "NsdManager:ResolveService": {
+            case "NsdManager:ResolveService":
                 (new ResolveListener(nsdManager)).resolveService(message.getString("serviceName"),
                         message.getString("serviceType"),
                         callback);
                 break;
-            }
-        }
+        };
     }
 
     private Map<String, String> parseAttributes(final NativeJSObject[] jsobjs) {
@@ -221,28 +173,16 @@ class NsdMulticastDNSManager extends MulticastDNSManager implements NativeEventL
     }
 }
 
-class DummyMulticastDNSManager extends MulticastDNSManager implements NativeEventListener {
-    static final int FAILURE_UNSUPPORTED = -65544;
-    private final MulticastDNSEventManager mEventManager;
-
+class DummyMulticastDNSManager extends MulticastDNSManager {
     public DummyMulticastDNSManager() {
-        mEventManager = new MulticastDNSEventManager(this);
     }
 
     @Override
     public void init() {
-        mEventManager.init();
     }
 
     @Override
     public void tearDown() {
-        mEventManager.tearDown();
-    }
-
-    @Override
-    public void handleMessage(final String event, final NativeJSObject message, final EventCallback callback) {
-        Log.v(LOGTAG, "handleMessage: " + event);
-        callback.sendError(FAILURE_UNSUPPORTED);
     }
 }
 
@@ -261,6 +201,9 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
 
     public void discoverServices(final String serviceType, final EventCallback callback) {
         synchronized (this) {
+            if (mStartCallback != null) {
+                throw new RuntimeException("Previous operation is not finished");
+            }
             mStartCallback = callback;
         }
         nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, this);
@@ -268,6 +211,9 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
 
     public void stopServiceDiscovery(final EventCallback callback) {
         synchronized (this) {
+            if (mStopCallback != null) {
+                throw new RuntimeException("Previous operation is not finished");
+            }
             mStopCallback = callback;
         }
         nsdManager.stopServiceDiscovery(this);
@@ -276,67 +222,47 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
     @Override
     public synchronized void onDiscoveryStarted(final String serviceType) {
         Log.d(LOGTAG, "onDiscoveryStarted: " + serviceType);
-
-        EventCallback callback;
-        synchronized (this) {
-            callback = mStartCallback;
-        }
-
-        if (callback == null) {
+        if (mStartCallback == null) {
             return;
         }
-
-        callback.sendSuccess(serviceType);
+        mStartCallback.sendSuccess(serviceType);
+        mStartCallback = null;
     }
 
     @Override
     public synchronized void onStartDiscoveryFailed(final String serviceType, final int errorCode) {
         Log.e(LOGTAG, "onStartDiscoveryFailed: " + serviceType + "(" + errorCode + ")");
-
-        EventCallback callback;
-        synchronized (this) {
-            callback = mStartCallback;
+        if (mStartCallback == null) {
+            return;
         }
-
-        callback.sendError(errorCode);
+        mStartCallback.sendError(errorCode);
+        mStartCallback = null;
     }
 
     @Override
     public synchronized void onDiscoveryStopped(final String serviceType) {
         Log.d(LOGTAG, "onDiscoveryStopped: " + serviceType);
-
-        EventCallback callback;
-        synchronized (this) {
-            callback = mStopCallback;
-        }
-
-        if (callback == null) {
+        if (mStopCallback == null) {
             return;
         }
-
-        callback.sendSuccess(serviceType);
+        mStopCallback.sendSuccess(serviceType);
+        mStopCallback = null;
     }
 
     @Override
     public synchronized void onStopDiscoveryFailed(final String serviceType, final int errorCode) {
         Log.e(LOGTAG, "onStopDiscoveryFailed: " + serviceType + "(" + errorCode + ")");
-
-        EventCallback callback;
-        synchronized (this) {
-            callback = mStopCallback;
-        }
-
-        if (callback == null) {
+        if (mStopCallback == null) {
             return;
         }
-
-        callback.sendError(errorCode);
+        mStopCallback.sendError(errorCode);
+        mStopCallback = null;
     }
 
     @Override
     public void onServiceFound(final NsdServiceInfo serviceInfo) {
         Log.d(LOGTAG, "onServiceFound: " + serviceInfo.getServiceName());
-        JSONObject json;
+        JSONObject json = null;
         try {
             json = NsdMulticastDNSManager.toJSON(serviceInfo);
         } catch (JSONException e) {
@@ -353,7 +279,7 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
     @Override
     public void onServiceLost(final NsdServiceInfo serviceInfo) {
         Log.d(LOGTAG, "onServiceLost: " + serviceInfo.getServiceName());
-        JSONObject json;
+        JSONObject json = null;
         try {
             json = NsdMulticastDNSManager.toJSON(serviceInfo);
         } catch (JSONException e) {
@@ -383,16 +309,18 @@ class RegistrationListener implements NsdManager.RegistrationListener {
 
     public void registerService(final int port, final String serviceName, final String serviceType, final Map<String, String> attributes, final EventCallback callback) {
         Log.d(LOGTAG, "registerService: " + serviceName + "." + serviceType + ":" + port);
+        synchronized (this) {
+            if (mStartCallback != null) {
+                throw new RuntimeException("Previous operation is not finished");
+            }
+            mStartCallback = callback;
+        }
 
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setPort(port);
         serviceInfo.setServiceName(serviceName);
         serviceInfo.setServiceType(serviceType);
         setAttributes(serviceInfo, attributes);
-
-        synchronized (this) {
-            mStartCallback = callback;
-        }
         nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, this);
     }
 
@@ -410,9 +338,11 @@ class RegistrationListener implements NsdManager.RegistrationListener {
     public void unregisterService(final EventCallback callback) {
         Log.d(LOGTAG, "unregisterService");
         synchronized (this) {
+            if (mStopCallback != null) {
+                throw new RuntimeException("Previous operation is not finished");
+            }
             mStopCallback = callback;
         }
-
         nsdManager.unregisterService(this);
     }
 
@@ -420,68 +350,51 @@ class RegistrationListener implements NsdManager.RegistrationListener {
     public synchronized void onServiceRegistered(final NsdServiceInfo serviceInfo) {
         Log.d(LOGTAG, "onServiceRegistered: " + serviceInfo.getServiceName());
 
-        EventCallback callback;
-        synchronized (this) {
-            callback = mStartCallback;
-        }
-
-        if (callback == null) {
+        if (mStartCallback == null) {
             return;
         }
 
         try {
-            callback.sendSuccess(NsdMulticastDNSManager.toJSON(serviceInfo));
+            mStartCallback.sendSuccess(NsdMulticastDNSManager.toJSON(serviceInfo));
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+        mStartCallback = null;
     }
 
     @Override
     public synchronized void onRegistrationFailed(final NsdServiceInfo serviceInfo, final int errorCode) {
         Log.e(LOGTAG, "onRegistrationFailed: " + serviceInfo.getServiceName() + "(" + errorCode + ")");
-
-        EventCallback callback;
-        synchronized (this) {
-            callback = mStartCallback;
+        if (mStartCallback == null) {
+            return;
         }
-
-        callback.sendError(errorCode);
+        mStartCallback.sendError(errorCode);
+        mStartCallback = null;
     }
 
     @Override
     public synchronized void onServiceUnregistered(final NsdServiceInfo serviceInfo) {
         Log.d(LOGTAG, "onServiceUnregistered: " + serviceInfo.getServiceName());
-
-        EventCallback callback;
-        synchronized (this) {
-            callback = mStopCallback;
-        }
-
-        if (callback == null) {
+        if (mStopCallback == null) {
             return;
         }
-
         try {
-            callback.sendSuccess(NsdMulticastDNSManager.toJSON(serviceInfo));
+            mStopCallback.sendSuccess(NsdMulticastDNSManager.toJSON(serviceInfo));
         } catch (JSONException e) {
             throw new RuntimeException(e);
+
         }
+        mStopCallback = null;
     }
 
     @Override
     public synchronized void onUnregistrationFailed(final NsdServiceInfo serviceInfo, final int errorCode) {
         Log.e(LOGTAG, "onUnregistrationFailed: " + serviceInfo.getServiceName() + "(" + errorCode + ")");
-
-        EventCallback callback;
-        synchronized (this) {
-            callback = mStopCallback;
-        }
-
-        if (callback == null) {
+        if (mStopCallback == null) {
             return;
         }
-
-        callback.sendError(errorCode);
+        mStopCallback.sendError(errorCode);
+        mStopCallback = null;
     }
 }
 
@@ -498,11 +411,16 @@ class ResolveListener implements NsdManager.ResolveListener {
     }
 
     public void resolveService(final String serviceName, final String serviceType, final EventCallback callback) {
+        synchronized (this) {
+            if (mCallback != null) {
+                throw new RuntimeException("Previous operation is not finished");
+            }
+            mCallback = callback;
+        }
+
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(serviceName);
         serviceInfo.setServiceType(serviceType);
-
-        mCallback = callback;
         nsdManager.resolveService(serviceInfo, this);
     }
 
@@ -510,17 +428,16 @@ class ResolveListener implements NsdManager.ResolveListener {
     @Override
     public synchronized void onResolveFailed(final NsdServiceInfo serviceInfo, final int errorCode) {
         Log.e(LOGTAG, "onResolveFailed: " + serviceInfo.getServiceName() + "(" + errorCode + ")");
-
         if (mCallback == null) {
             return;
         }
         mCallback.sendError(errorCode);
+        mCallback = null;
     }
 
     @Override
     public synchronized void onServiceResolved(final NsdServiceInfo serviceInfo) {
         Log.d(LOGTAG, "onServiceResolved: " + serviceInfo.getServiceName());
-
         if (mCallback == null) {
             return;
         }
@@ -530,5 +447,6 @@ class ResolveListener implements NsdManager.ResolveListener {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+        mCallback = null;
     }
 }

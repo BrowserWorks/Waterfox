@@ -24,7 +24,7 @@ types.addType("ObjectActor", {
  * The Promises Actor provides support for getting the list of live promises and
  * observing changes to their settlement state.
  */
-var PromisesActor = protocol.ActorClass({
+let PromisesActor = protocol.ActorClass({
   typeName: "promises",
 
   events: {
@@ -241,9 +241,5 @@ exports.PromisesFront = protocol.FrontClass(PromisesActor, {
     protocol.Front.prototype.initialize.call(this, client, form);
     this.actorID = form.promisesActor;
     this.manage(this);
-  },
-
-  destroy: function() {
-    protocol.Front.prototype.destroy.call(this);
   }
 });

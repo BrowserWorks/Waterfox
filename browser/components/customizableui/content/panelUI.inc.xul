@@ -25,7 +25,6 @@
                 defaultlabel="&fxaSignIn.label;"
                 signedinTooltiptext="&fxaSignedIn.tooltip;"
                 errorlabel="&fxaSignInError.label;"
-                unverifiedlabel="&fxaUnverified.label;"
                 onclick="if (event.which == 1) gFxAccounts.onMenuPanelCommand();">
             <image id="PanelUI-fxa-avatar"/>
             <toolbarbutton id="PanelUI-fxa-label"

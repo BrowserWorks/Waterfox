@@ -19,7 +19,6 @@ class AudioParamTimeline;
 class DelayNodeEngine;
 } // namespace dom
 
-class AudioBlock;
 class AudioNodeStream;
 
 /**
@@ -32,19 +31,12 @@ class ThreadSharedFloatArrayBufferList final : public ThreadSharedObject
 {
 public:
   /**
-   * Construct with null channel data pointers.
+   * Construct with null data.
    */
   explicit ThreadSharedFloatArrayBufferList(uint32_t aCount)
   {
     mContents.SetLength(aCount);
   }
-  /**
-   * Create with buffers suitable for transfer to
-   * JS_NewArrayBufferWithContents().  The buffer contents are uninitialized
-   * and so should be set using GetDataForWrite().
-   */
-  static already_AddRefed<ThreadSharedFloatArrayBufferList>
-  Create(uint32_t aChannelCount, size_t aLength, const mozilla::fallible_t&);
 
   struct Storage final
   {
@@ -66,7 +58,7 @@ public:
     }
     void* mDataToFree;
     void (*mFree)(void*);
-    float* mSampleData;
+    const float* mSampleData;
   };
 
   /**
@@ -77,21 +69,12 @@ public:
    * This can be called on any thread.
    */
   const float* GetData(uint32_t aIndex) const { return mContents[aIndex].mSampleData; }
-  /**
-   * This can be called on any thread, but only when the calling thread is the
-   * only owner.
-   */
-  float* GetDataForWrite(uint32_t aIndex)
-  {
-    MOZ_ASSERT(!IsShared());
-    return mContents[aIndex].mSampleData;
-  }
 
   /**
    * Call this only during initialization, before the object is handed to
    * any other thread.
    */
-  void SetData(uint32_t aIndex, void* aDataToFree, void (*aFreeFunc)(void*), float* aData)
+  void SetData(uint32_t aIndex, void* aDataToFree, void (*aFreeFunc)(void*), const float* aData)
   {
     Storage* s = &mContents[aIndex];
     if (s->mFree) {
@@ -131,10 +114,15 @@ private:
 };
 
 /**
+ * Allocates, if necessary, aChannelCount buffers of WEBAUDIO_BLOCK_SIZE float
+ * samples for writing to an AudioChunk.
+ */
+void AllocateAudioBlock(uint32_t aChannelCount, AudioChunk* aChunk);
+
+/**
  * aChunk must have been allocated by AllocateAudioBlock.
  */
-void WriteZeroesToAudioBlock(AudioBlock* aChunk, uint32_t aStart,
-                             uint32_t aLength);
+void WriteZeroesToAudioBlock(AudioChunk* aChunk, uint32_t aStart, uint32_t aLength);
 
 /**
  * Copy with scale. aScale == 1.0f should be optimized.
@@ -252,7 +240,7 @@ class AudioNodeEngine
 {
 public:
   // This should be compatible with AudioNodeStream::OutputChunks.
-  typedef nsAutoTArray<AudioBlock, 1> OutputChunks;
+  typedef nsAutoTArray<AudioChunk, 1> OutputChunks;
 
   explicit AudioNodeEngine(dom::AudioNode* aNode)
     : mNode(aNode)
@@ -313,15 +301,19 @@ public:
    * we'll finish the stream and not call this again.
    */
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
-                            bool* aFinished);
+                            const AudioChunk& aInput,
+                            AudioChunk* aOutput,
+                            bool* aFinished)
+  {
+    MOZ_ASSERT(mInputCount <= 1 && mOutputCount <= 1);
+    *aOutput = aInput;
+  }
   /**
    * Produce the next block of audio samples, before input is provided.
    * ProcessBlock() will be called later, and it then should not change
    * aOutput.  This is used only for DelayNodeEngine in a feedback loop.
    */
-  virtual void ProduceBlockBeforeInput(AudioBlock* aOutput)
+  virtual void ProduceBlockBeforeInput(AudioChunk* aOutput)
   {
     NS_NOTREACHED("ProduceBlockBeforeInput called on wrong engine\n");
   }
@@ -344,7 +336,12 @@ public:
   virtual void ProcessBlocksOnPorts(AudioNodeStream* aStream,
                                     const OutputChunks& aInput,
                                     OutputChunks& aOutput,
-                                    bool* aFinished);
+                                    bool* aFinished)
+  {
+    MOZ_ASSERT(mInputCount > 1 || mOutputCount > 1);
+    // Only produce one output port, and drop all other input ports.
+    aOutput[0] = aInput[0];
+  }
 
   bool HasNode() const
   {

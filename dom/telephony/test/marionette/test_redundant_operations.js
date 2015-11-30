@@ -6,7 +6,7 @@ MARIONETTE_HEAD_JS = 'head.js';
 
 const inNumber = "5555552222";
 const inInfo = gInCallStrPool(inNumber);
-var inCall;
+let inCall;
 
 function error(aEvent, aAction) {
   ok(false, "Received '" + aEvent + "' event when " + aAction);

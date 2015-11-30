@@ -66,13 +66,10 @@ nsBrowserElement::InitBrowserElementAPI()
     return;
   }
 
-  if (!mBrowserElementAPI) {
-    mBrowserElementAPI = do_CreateInstance("@mozilla.org/dom/browser-element-api;1");
-    if (NS_WARN_IF(!mBrowserElementAPI)) {
-      return;
-    }
+  mBrowserElementAPI = do_CreateInstance("@mozilla.org/dom/browser-element-api;1");
+  if (mBrowserElementAPI) {
+    mBrowserElementAPI->SetFrameLoader(frameLoader);
   }
-  mBrowserElementAPI->SetFrameLoader(frameLoader);
 }
 
 void

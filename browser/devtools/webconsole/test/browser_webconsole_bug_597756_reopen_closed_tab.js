@@ -13,21 +13,15 @@
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-bug-597756-reopen-closed-tab.html";
 
-var HUD;
+let HUD;
 
-var test = asyncTest(function* () {
-  // On e10s, the exception is triggered in child process
-  // and is ignored by test harness
-  if (!Services.appinfo.browserTabsRemoteAutostart) {
-    expectUncaughtException();
-  }
+let test = asyncTest(function* () {
+  expectUncaughtException();
 
   let { browser } = yield loadTab(TEST_URI);
   HUD = yield openConsole();
 
-  if (!Services.appinfo.browserTabsRemoteAutostart) {
-    expectUncaughtException();
-  }
+  expectUncaughtException();
 
   yield reload(browser);
 
@@ -38,16 +32,12 @@ var test = asyncTest(function* () {
   // Close and reopen
   gBrowser.removeCurrentTab();
 
-  if (!Services.appinfo.browserTabsRemoteAutostart) {
-    expectUncaughtException();
-  }
+  expectUncaughtException();
 
   let tab = yield loadTab(TEST_URI);
   HUD = yield openConsole();
 
-  if (!Services.appinfo.browserTabsRemoteAutostart) {
-    expectUncaughtException();
-  }
+  expectUncaughtException();
 
   yield reload(tab.browser);
 

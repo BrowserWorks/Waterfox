@@ -1,6 +1,6 @@
 "use strict";
 
-var stateBackup = ss.getBrowserState();
+let stateBackup = ss.getBrowserState();
 
 add_task(function* () {
   /** Bug 607016 - If a tab is never restored, attributes (eg. hidden) aren't updated correctly **/

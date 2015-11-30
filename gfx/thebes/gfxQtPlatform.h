@@ -41,11 +41,9 @@ public:
 
     virtual nsresult GetStandardFamilyName(const nsAString& aFontName, nsAString& aFamilyName) override;
 
-    gfxFontGroup*
-    CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
-                    const gfxFontStyle *aStyle,
-                    gfxTextPerfMetrics* aTextPerf,
-                    gfxUserFontSet *aUserFontSet) override;
+    virtual gfxFontGroup *CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
+                                          const gfxFontStyle *aStyle,
+                                          gfxUserFontSet* aUserFontSet) override;
 
     /**
      * Look up a local platform font using the full font face name (needed to

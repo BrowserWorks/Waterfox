@@ -25,7 +25,6 @@ public class HomeContextMenuInfo extends AdapterContextMenuInfo {
     public int historyId = -1;
     public int bookmarkId = -1;
     public int readingListItemId = -1;
-    public boolean isUnread;
     public RemoveItemType itemType = null;
 
     // Item type to be handled with "Remove" selection.

@@ -17,8 +17,7 @@ PointerEvent::PointerEvent(EventTarget* aOwner,
                            nsPresContext* aPresContext,
                            WidgetPointerEvent* aEvent)
   : MouseEvent(aOwner, aPresContext,
-               aEvent ? aEvent :
-                        new WidgetPointerEvent(false, eVoidEvent, nullptr))
+               aEvent ? aEvent : new WidgetPointerEvent(false, 0, nullptr))
 {
   NS_ASSERTION(mEvent->mClass == ePointerEventClass,
                "event type mismatch ePointerEventClass");
@@ -165,11 +164,14 @@ PointerEvent::IsPrimary()
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<PointerEvent>
-NS_NewDOMPointerEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMPointerEvent(nsIDOMEvent** aInstancePtrResult,
+                      EventTarget* aOwner,
                       nsPresContext* aPresContext,
                       WidgetPointerEvent *aEvent)
 {
-  nsRefPtr<PointerEvent> it = new PointerEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  PointerEvent *it = new PointerEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

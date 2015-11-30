@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-var gFxAccounts = {
+let gFxAccounts = {
 
   PREF_SYNC_START_DOORHANGER: "services.sync.ui.showSyncStartDoorhanger",
   DOORHANGER_ACTIVATE_DELAY_MS: 5000,
@@ -214,6 +214,10 @@ var gFxAccounts = {
     this.showDoorhanger("sync-start-panel");
   },
 
+  showSyncFailedDoorhanger: function () {
+    this.showDoorhanger("sync-error-panel");
+  },
+
   updateUI: function () {
     this.updateAppMenuItem();
     this.updateMigrationNotification();
@@ -259,7 +263,6 @@ var gFxAccounts = {
 
     let defaultLabel = this.panelUIStatus.getAttribute("defaultlabel");
     let errorLabel = this.panelUIStatus.getAttribute("errorlabel");
-    let unverifiedLabel = this.panelUIStatus.getAttribute("unverifiedlabel");
     let signedInTooltiptext = this.panelUIStatus.getAttribute("signedinTooltiptext");
 
     let updateWithUserData = (userData) => {
@@ -282,13 +285,6 @@ var gFxAccounts = {
           let tooltipDescription = this.strings.formatStringFromName("reconnectDescription", [userData.email], 1);
           this.panelUIFooter.setAttribute("fxastatus", "error");
           this.panelUILabel.setAttribute("label", errorLabel);
-          this.panelUIStatus.setAttribute("tooltiptext", tooltipDescription);
-          showErrorBadge = true;
-        } else if (!userData.verified) {
-          let tooltipDescription = this.strings.formatStringFromName("verifyDescription", [userData.email], 1);
-          this.panelUIFooter.setAttribute("fxastatus", "error");
-          this.panelUIFooter.setAttribute("unverified", "true");
-          this.panelUILabel.setAttribute("label", unverifiedLabel);
           this.panelUIStatus.setAttribute("tooltiptext", tooltipDescription);
           showErrorBadge = true;
         } else {
@@ -442,11 +438,7 @@ var gFxAccounts = {
       this.openPreferences();
       break;
     case "error":
-      if (this.panelUIFooter.getAttribute("unverified")) {
-        this.openPreferences();
-      } else {
-        this.openSignInAgainPage("menupanel");
-      }
+      this.openSignInAgainPage("menupanel");
       break;
     case "migrate-signup":
     case "migrate-verify":
@@ -455,7 +447,7 @@ var gFxAccounts = {
       this.openPreferences();
       break;
     default:
-      this.openPreferences();
+      this.openAccountsPage(null, { entryPoint: "menupanel" });
       break;
     }
 
@@ -463,16 +455,16 @@ var gFxAccounts = {
   },
 
   openPreferences: function () {
-    openPreferences("paneSync", { urlParams: { entrypoint: "menupanel" } });
+    openPreferences("paneSync");
   },
 
   openAccountsPage: function (action, urlParams={}) {
-    // An entrypoint param is used for server-side metrics.  If the current tab
+    // An entryPoint param is used for server-side metrics.  If the current tab
     // is UITour, assume that it initiated the call to this method and override
-    // the entrypoint accordingly.
+    // the entryPoint accordingly.
     if (UITour.tourBrowsersByWindow.get(window) &&
         UITour.tourBrowsersByWindow.get(window).has(gBrowser.selectedBrowser)) {
-      urlParams.entrypoint = "uitour";
+      urlParams.entryPoint = "uitour";
     }
     let params = new URLSearchParams();
     if (action) {
@@ -490,7 +482,7 @@ var gFxAccounts = {
   },
 
   openSignInAgainPage: function (entryPoint) {
-    this.openAccountsPage("reauth", { entrypoint: entryPoint });
+    this.openAccountsPage("reauth", { entryPoint: entryPoint });
   },
 };
 

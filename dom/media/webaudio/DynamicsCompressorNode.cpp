@@ -93,8 +93,8 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
+                            const AudioChunk& aInput,
+                            AudioChunk* aOutput,
                             bool* aFinished) override
   {
     if (aInput.IsNull()) {
@@ -103,11 +103,11 @@ public:
       return;
     }
 
-    const uint32_t channelCount = aInput.ChannelCount();
+    const uint32_t channelCount = aInput.mChannelData.Length();
     if (mCompressor->numberOfChannels() != channelCount) {
       // Create a new compressor object with a new channel count
       mCompressor = new WebCore::DynamicsCompressor(aStream->SampleRate(),
-                                                    aInput.ChannelCount());
+                                                    aInput.mChannelData.Length());
     }
 
     StreamTime pos = aStream->GetCurrentPosition();
@@ -122,7 +122,7 @@ public:
     mCompressor->setParameterValue(DynamicsCompressor::ParamRelease,
                                    mRelease.GetValueAtTime(pos));
 
-    aOutput->AllocateChannels(channelCount);
+    AllocateAudioBlock(channelCount, aOutput);
     mCompressor->process(&aInput, aOutput, aInput.GetDuration());
 
     SendReductionParamToMainThread(aStream,
@@ -203,8 +203,7 @@ DynamicsCompressorNode::DynamicsCompressorNode(AudioContext* aContext)
   , mRelease(new AudioParam(this, SendReleaseToStream, 0.25f, "release"))
 {
   DynamicsCompressorNodeEngine* engine = new DynamicsCompressorNodeEngine(this, aContext->Destination());
-  mStream = AudioNodeStream::Create(aContext, engine,
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+  mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);
   engine->SetSourceStream(mStream);
 }
 

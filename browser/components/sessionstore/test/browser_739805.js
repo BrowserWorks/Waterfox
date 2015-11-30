@@ -1,8 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var url = "data:text/html;charset=utf-8,<input%20id='foo'>";
-var tabState = {
+let url = "data:text/html;charset=utf-8,<input%20id='foo'>";
+let tabState = {
   entries: [{ url }], formdata: { id: { "foo": "bar" }, url }
 };
 

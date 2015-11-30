@@ -1,7 +1,7 @@
 "use strict";
 
-var { Ci, Cu } = require("chrome");
-var { DebuggerServer } = require("devtools/server/main");
+let { Ci, Cu } = require("chrome");
+let { DebuggerServer } = require("devtools/server/main");
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 

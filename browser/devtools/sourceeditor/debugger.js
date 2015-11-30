@@ -6,7 +6,7 @@
 
 const {Cu} = require("chrome");
 const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
-const promise = require("promise");
+const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const dbginfo = new WeakMap();
 
 // These functions implement search within the debugger. Since

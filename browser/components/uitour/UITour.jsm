@@ -8,7 +8,6 @@ this.EXPORTED_SYMBOLS = ["UITour", "UITourMetricsProvider"];
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
@@ -220,9 +219,24 @@ this.UITour = {
       query: "#searchbar",
       widgetName: "search-container",
     }],
+    ["searchProvider", {
+      query: (aDocument) => {
+        let searchbar = aDocument.getElementById("searchbar");
+        if (searchbar.hasAttribute("oneoffui")) {
+          return null;
+        }
+        return aDocument.getAnonymousElementByAttribute(searchbar,
+                                                        "anonid",
+                                                        "searchbar-engine-button");
+      },
+      widgetName: "search-container",
+    }],
     ["searchIcon", {
       query: (aDocument) => {
         let searchbar = aDocument.getElementById("searchbar");
+        if (!searchbar.hasAttribute("oneoffui")) {
+          return null;
+        }
         return aDocument.getAnonymousElementByAttribute(searchbar,
                                                         "anonid",
                                                         "searchbar-search-button");
@@ -233,12 +247,18 @@ this.UITour = {
       query: (aDocument) => {
         let element = null;
         let searchbar = aDocument.getElementById("searchbar");
-        let popup = aDocument.getElementById("PopupSearchAutoComplete");
-        if (popup.state != "open")
-          return null;
-        element = aDocument.getAnonymousElementByAttribute(popup,
-                                                           "anonid",
-                                                           "search-settings");
+        if (searchbar.hasAttribute("oneoffui")) {
+          let popup = aDocument.getElementById("PopupSearchAutoComplete");
+          if (popup.state != "open")
+            return null;
+          element = aDocument.getAnonymousElementByAttribute(popup,
+                                                             "anonid",
+                                                             "search-settings");
+        } else {
+          element = aDocument.getAnonymousElementByAttribute(searchbar,
+                                                             "anonid",
+                                                             "open-engine-manager");
+        }
         if (!element || !UITour.isElementVisible(element)) {
           return null;
         }
@@ -981,6 +1001,11 @@ this.UITour = {
       return deferred.promise;
     }
 
+    if (aTargetName.startsWith(TARGET_SEARCHENGINE_PREFIX)) {
+      let engineID = aTargetName.slice(TARGET_SEARCHENGINE_PREFIX.length);
+      return this.getSearchEngineTarget(aWindow, engineID);
+    }
+
     let targetObject = this.targets.get(aTargetName);
     if (!targetObject) {
       log.warn("getTarget: The specified target name is not in the allowed set");
@@ -1320,6 +1345,18 @@ this.UITour = {
    */
   showHighlight: function(aChromeWindow, aTarget, aEffect = "none") {
     function showHighlightPanel() {
+      if (aTarget.targetName.startsWith(TARGET_SEARCHENGINE_PREFIX)) {
+        // This won't affect normal higlights done via the panel, so we need to
+        // manually hide those.
+        this.hideHighlight(aChromeWindow);
+        aTarget.node.setAttribute("_moz-menuactive", true);
+        return;
+      }
+
+      // Conversely, highlights for search engines are highlighted via CSS
+      // rather than a panel, so need to be manually removed.
+      this._hideSearchEngineHighlight(aChromeWindow);
+
       let highlighter = aChromeWindow.document.getElementById("UITourHighlight");
 
       let effect = aEffect;
@@ -1396,6 +1433,24 @@ this.UITour = {
     highlighter.removeAttribute("active");
 
     this._setAppMenuStateForAnnotation(aWindow, "highlight", false);
+    this._hideSearchEngineHighlight(aWindow);
+  },
+
+  _hideSearchEngineHighlight: function(aWindow) {
+    // We special case highlighting items in the search engines dropdown,
+    // so just blindly remove any highlight there.
+    let searchMenuBtn = null;
+    try {
+      searchMenuBtn = this.targets.get("searchProvider").query(aWindow.document);
+    } catch (e) { /* This is ok to fail. */ }
+    if (searchMenuBtn) {
+      let searchPopup = aWindow.document
+                               .getAnonymousElementByAttribute(searchMenuBtn,
+                                                               "anonid",
+                                                               "searchbar-popup");
+      for (let menuItem of searchPopup.children)
+        menuItem.removeAttribute("_moz-menuactive");
+    }
   },
 
   /**
@@ -1517,6 +1572,11 @@ this.UITour = {
       return;
     }
 
+    // Due to a platform limitation, we can't anchor a panel to an element in a
+    // <menupopup>. So we can't support showing info panels for search engines.
+    if (aAnchor.targetName.startsWith(TARGET_SEARCHENGINE_PREFIX))
+      return;
+
     this._setAppMenuStateForAnnotation(aChromeWindow, "info",
                                        this.targetIsInAppMenu(aAnchor),
                                        showInfoPanel.bind(this, this._correctAnchor(aAnchor.node)));
@@ -1624,6 +1684,10 @@ this.UITour = {
       });
       panel.addEventListener("popuphidden", this.onPanelHidden);
       panel.addEventListener("popuphiding", this.hideLoopPanelAnnotations);
+    } else if (aMenuName == "searchEngines") {
+      this.getTarget(aWindow, "searchProvider").then(target => {
+        openMenuButton(target.node);
+      }).catch(log.error);
     } else if (aMenuName == "pocket") {
       this.getTarget(aWindow, "pocket").then(Task.async(function* onPocketTarget(target) {
         let widgetGroupWrapper = CustomizableUI.getWidget(target.widgetName);
@@ -1685,6 +1749,9 @@ this.UITour = {
     } else if (aMenuName == "loop") {
       let panel = aWindow.document.getElementById("loop-notification-panel");
       panel.hidePopup();
+    } else if (aMenuName == "searchEngines") {
+      let menuBtn = this.targets.get("searchProvider").query(aWindow.document);
+      closeMenuButton(menuBtn);
     }
   },
 
@@ -1798,27 +1865,6 @@ this.UITour = {
           }
         } catch (e) {}
         appinfo["defaultBrowser"] = isDefaultBrowser;
-
-        let canSetDefaultBrowserInBackground = true;
-        if (AppConstants.isPlatformAndVersionAtLeast("win", "6.2")) {
-          let prefBranch =
-            Services.prefs.getBranch("browser.shell.associationHash");
-          let prefChildren = prefBranch.getChildList("");
-          canSetDefaultBrowserInBackground = prefChildren.length > 0;
-        } else if (AppConstants.isPlatformAndVersionAtLeast("macosx", "10.10")) {
-          canSetDefaultBrowserInBackground = false;
-        } else if (AppConstants.platform == "linux") {
-          // The ShellService may not exist on some versions of Linux.
-          try {
-            let shell = aWindow.getShellService();
-          } catch (e) {
-            canSetDefaultBrowserInBackground = null;
-          }
-        }
-
-        appinfo["canSetDefaultBrowserInBackground"] =
-          canSetDefaultBrowserInBackground;
-
         this.sendPageCallback(aMessageManager, aCallbackID, appinfo);
         break;
       case "availableTargets":
@@ -1829,22 +1875,17 @@ this.UITour = {
           gettingStartedSeen: Services.prefs.getBoolPref("loop.gettingStarted.seen"),
         });
         break;
-      case "search":
       case "selectedSearchEngine":
         Services.search.init(rv => {
-          let data;
+          let engine;
           if (Components.isSuccessCode(rv)) {
-            let engines = Services.search.getVisibleEngines();
-            data = {
-              searchEngineIdentifier: Services.search.defaultEngine.identifier,
-              engines: [TARGET_SEARCHENGINE_PREFIX + engine.identifier
-                        for (engine of engines)
-                          if (engine.identifier)]
-            };
+            engine = Services.search.defaultEngine;
           } else {
-            data = {engines: [], searchEngineIdentifier: ""};
+            engine = { identifier: "" };
           }
-          this.sendPageCallback(aMessageManager, aCallbackID, data);
+          this.sendPageCallback(aMessageManager, aCallbackID, {
+            searchEngineIdentifier: engine.identifier
+          });
         });
         break;
       case "sync":
@@ -1902,6 +1943,10 @@ this.UITour = {
           targetNames.push(targetObject.targetName);
       }
 
+      targetNames = targetNames.concat(
+        yield this.getAvailableSearchEngineTargets(window)
+      );
+
       data = {
         targets: targetNames,
       };
@@ -1948,30 +1993,30 @@ this.UITour = {
   },
 
   _addAnnotationPanelMutationObserver: function(aPanelEl) {
-    if (AppConstants.platform == "linux") {
-      let observer = this._annotationPanelMutationObservers.get(aPanelEl);
-      if (observer) {
-        return;
-      }
-      let win = aPanelEl.ownerDocument.defaultView;
-      observer = new win.MutationObserver(this._annotationMutationCallback);
-      this._annotationPanelMutationObservers.set(aPanelEl, observer);
-      let observerOptions = {
-        attributeFilter: ["height", "width"],
-        attributes: true,
-      };
-      observer.observe(aPanelEl, observerOptions);
+#ifdef XP_LINUX
+    let observer = this._annotationPanelMutationObservers.get(aPanelEl);
+    if (observer) {
+      return;
     }
+    let win = aPanelEl.ownerDocument.defaultView;
+    observer = new win.MutationObserver(this._annotationMutationCallback);
+    this._annotationPanelMutationObservers.set(aPanelEl, observer);
+    let observerOptions = {
+      attributeFilter: ["height", "width"],
+      attributes: true,
+    };
+    observer.observe(aPanelEl, observerOptions);
+#endif
   },
 
   _removeAnnotationPanelMutationObserver: function(aPanelEl) {
-    if (AppConstants.platform == "linux") {
-      let observer = this._annotationPanelMutationObservers.get(aPanelEl);
-      if (observer) {
-        observer.disconnect();
-        this._annotationPanelMutationObservers.delete(aPanelEl);
-      }
+#ifdef XP_LINUX
+    let observer = this._annotationPanelMutationObservers.get(aPanelEl);
+    if (observer) {
+      observer.disconnect();
+      this._annotationPanelMutationObservers.delete(aPanelEl);
     }
+#endif
   },
 
 /**
@@ -2004,6 +2049,55 @@ this.UITour = {
           }
         }
         reject("selectSearchEngine could not find engine with given ID");
+      });
+    });
+  },
+
+  getAvailableSearchEngineTargets(aWindow) {
+    return new Promise(resolve => {
+      this.getTarget(aWindow, "search").then(searchTarget => {
+        if (!searchTarget.node || this.targetIsInAppMenu(searchTarget))
+          return resolve([]);
+
+        Services.search.init(() => {
+          let engines = Services.search.getVisibleEngines();
+          resolve([TARGET_SEARCHENGINE_PREFIX + engine.identifier
+                   for (engine of engines)
+                   if (engine.identifier)]);
+        });
+      }).catch(() => resolve([]));
+    });
+  },
+
+  // We only allow matching based on a search engine's identifier - this gives
+  // us a non-changing ID and guarentees we only match against app-provided
+  // engines.
+  getSearchEngineTarget(aWindow, aIdentifier) {
+    return new Promise((resolve, reject) => {
+      Task.spawn(function*() {
+        let searchTarget = yield this.getTarget(aWindow, "search");
+        // We're not supporting having the searchbar in the app-menu, because
+        // popups within popups gets crazy. This restriction should be lifted
+        // once bug 988151 is implemented, as the page can then be responsible
+        // for opening each menu when appropriate.
+        if (!searchTarget.node || this.targetIsInAppMenu(searchTarget))
+          return reject("Search engine not available");
+
+        yield Services.search.init();
+
+        let searchPopup = searchTarget.node._popup;
+        for (let engineNode of searchPopup.children) {
+          let engine = engineNode.engine;
+          if (engine && engine.identifier == aIdentifier) {
+            return resolve({
+              targetName: TARGET_SEARCHENGINE_PREFIX + engine.identifier,
+              node: engineNode,
+            });
+          }
+        }
+        reject("Search engine not available");
+      }.bind(this)).catch(() => {
+        reject("Search engine not available");
       });
     });
   },
@@ -2079,28 +2173,68 @@ const UITourHealthReport = {
       addClientId: true,
       addEnvironment: true,
     });
+#ifdef MOZ_SERVICES_HEALTHREPORT
+    Task.spawn(function*() {
+      let reporter = Cc["@mozilla.org/datareporting/service;1"]
+                       .getService()
+                       .wrappedJSObject
+                       .healthReporter;
 
-    if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
-      Task.spawn(function*() {
-        let reporter = Cc["@mozilla.org/datareporting/service;1"]
-                         .getService()
-                         .wrappedJSObject
-                         .healthReporter;
+      // This can happen if the FHR component of the data reporting service is
+      // disabled. This is controlled by a pref that most will never use.
+      if (!reporter) {
+        return;
+      }
 
-        // This can happen if the FHR component of the data reporting service is
-        // disabled. This is controlled by a pref that most will never use.
-        if (!reporter) {
-          return;
-        }
+      yield reporter.onInit();
 
-        yield reporter.onInit();
-
-        // Get the UITourMetricsProvider instance from the Health Reporter
-        reporter.getProvider("org.mozilla.uitour").recordTreatmentTag(tag, value);
-      });
-    }
+      // Get the UITourMetricsProvider instance from the Health Reporter
+      reporter.getProvider("org.mozilla.uitour").recordTreatmentTag(tag, value);
+    });
+#endif
   }
 };
+
+#ifdef MOZ_SERVICES_HEALTHREPORT
+const DAILY_DISCRETE_TEXT_FIELD = Metrics.Storage.FIELD_DAILY_DISCRETE_TEXT;
+
+this.UITourMetricsProvider = function() {
+  Metrics.Provider.call(this);
+}
+
+UITourMetricsProvider.prototype = Object.freeze({
+  __proto__: Metrics.Provider.prototype,
+
+  name: "org.mozilla.uitour",
+
+  measurementTypes: [
+    UITourTreatmentMeasurement1,
+  ],
+
+  recordTreatmentTag: function(tag, value) {
+    let m = this.getMeasurement(UITourTreatmentMeasurement1.prototype.name,
+                                UITourTreatmentMeasurement1.prototype.version);
+    let field = tag;
+
+    if (this.storage.hasFieldFromMeasurement(m.id, field,
+                                             DAILY_DISCRETE_TEXT_FIELD)) {
+      let fieldID = this.storage.fieldIDFromMeasurement(m.id, field);
+      return this.enqueueStorageOperation(function recordKnownField() {
+        return this.storage.addDailyDiscreteTextFromFieldID(fieldID, value);
+      }.bind(this));
+    }
+
+    // Otherwise, we first need to create the field.
+    return this.enqueueStorageOperation(function recordField() {
+      // This function has to return a promise.
+      return Task.spawn(function () {
+        let fieldID = yield this.storage.registerField(m.id, field,
+                                                       DAILY_DISCRETE_TEXT_FIELD);
+        yield this.storage.addDailyDiscreteTextFromFieldID(fieldID, value);
+      }.bind(this));
+    }.bind(this));
+  },
+});
 
 function UITourTreatmentMeasurement1() {
   Metrics.Measurement.call(this);
@@ -2113,66 +2247,24 @@ function UITourTreatmentMeasurement1() {
 
 }
 
-if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
+UITourTreatmentMeasurement1.prototype = Object.freeze({
+  __proto__: Metrics.Measurement.prototype,
 
-  const DAILY_DISCRETE_TEXT_FIELD = Metrics.Storage.FIELD_DAILY_DISCRETE_TEXT;
+  name: "treatment",
+  version: 1,
 
-  this.UITourMetricsProvider = function() {
-    Metrics.Provider.call(this);
-  }
+  // our fields are dynamic
+  fields: { },
 
-  UITourMetricsProvider.prototype = Object.freeze({
-    __proto__: Metrics.Provider.prototype,
+  // We need a custom serializer because the default one doesn't accept unknown fields
+  _serializeJSONDaily: function(data) {
+    let result = {_v: this.version };
 
-    name: "org.mozilla.uitour",
-
-    measurementTypes: [
-      UITourTreatmentMeasurement1,
-    ],
-
-    recordTreatmentTag: function(tag, value) {
-      let m = this.getMeasurement(UITourTreatmentMeasurement1.prototype.name,
-                                  UITourTreatmentMeasurement1.prototype.version);
-      let field = tag;
-
-      if (this.storage.hasFieldFromMeasurement(m.id, field,
-                                               DAILY_DISCRETE_TEXT_FIELD)) {
-        let fieldID = this.storage.fieldIDFromMeasurement(m.id, field);
-        return this.enqueueStorageOperation(function recordKnownField() {
-          return this.storage.addDailyDiscreteTextFromFieldID(fieldID, value);
-        }.bind(this));
-      }
-
-      // Otherwise, we first need to create the field.
-      return this.enqueueStorageOperation(function recordField() {
-        // This function has to return a promise.
-        return Task.spawn(function () {
-          let fieldID = yield this.storage.registerField(m.id, field,
-                                                         DAILY_DISCRETE_TEXT_FIELD);
-          yield this.storage.addDailyDiscreteTextFromFieldID(fieldID, value);
-        }.bind(this));
-      }.bind(this));
-    },
-  });
-
-  UITourTreatmentMeasurement1.prototype = Object.freeze({
-    __proto__: Metrics.Measurement.prototype,
-
-    name: "treatment",
-    version: 1,
-
-    // our fields are dynamic
-    fields: { },
-
-    // We need a custom serializer because the default one doesn't accept unknown fields
-    _serializeJSONDaily: function(data) {
-      let result = {_v: this.version };
-
-      for (let [field, data] of data) {
-        result[field] = data;
-      }
-
-      return result;
+    for (let [field, data] of data) {
+      result[field] = data;
     }
-  });
-}
+
+    return result;
+  }
+});
+#endif

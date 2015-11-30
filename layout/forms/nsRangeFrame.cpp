@@ -837,22 +837,15 @@ nsRangeFrame::GetType() const
 bool
 nsRangeFrame::ShouldUseNativeStyle() const
 {
-  nsIFrame* trackFrame = mTrackDiv->GetPrimaryFrame();
-  nsIFrame* progressFrame = mProgressDiv->GetPrimaryFrame();
-  nsIFrame* thumbFrame = mThumbDiv->GetPrimaryFrame();
-
   return (StyleDisplay()->mAppearance == NS_THEME_RANGE) &&
-         !PresContext()->HasAuthorSpecifiedRules(this,
+         !PresContext()->HasAuthorSpecifiedRules(const_cast<nsRangeFrame*>(this),
                                                  (NS_AUTHOR_SPECIFIED_BORDER |
                                                   NS_AUTHOR_SPECIFIED_BACKGROUND)) &&
-         trackFrame &&
-         !PresContext()->HasAuthorSpecifiedRules(trackFrame,
+         !PresContext()->HasAuthorSpecifiedRules(mTrackDiv->GetPrimaryFrame(),
                                                  STYLES_DISABLING_NATIVE_THEMING) &&
-         progressFrame &&
-         !PresContext()->HasAuthorSpecifiedRules(progressFrame,
+         !PresContext()->HasAuthorSpecifiedRules(mProgressDiv->GetPrimaryFrame(),
                                                  STYLES_DISABLING_NATIVE_THEMING) &&
-         thumbFrame &&
-         !PresContext()->HasAuthorSpecifiedRules(thumbFrame,
+         !PresContext()->HasAuthorSpecifiedRules(mThumbDiv->GetPrimaryFrame(),
                                                  STYLES_DISABLING_NATIVE_THEMING);
 }
 
@@ -880,10 +873,7 @@ nsRangeFrame::GetAdditionalStyleContext(int32_t aIndex) const
   // We only implement this so that SetAdditionalStyleContext will be
   // called if style changes that would change the -moz-focus-outer
   // pseudo-element have occurred.
-  if (aIndex != 0) {
-    return nullptr;
-  }
-  return mOuterFocusStyle;
+  return aIndex == 0 ? mOuterFocusStyle : nullptr;
 }
 
 void

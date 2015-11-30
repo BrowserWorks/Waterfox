@@ -455,7 +455,6 @@ frame/log.h
 frame/req.h
 freetype/freetype.h
 freetype/ftcache.h
-freetype/ftfntfmt.h
 freetype/ftglyph.h
 freetype/ftsynth.h
 freetype/ftoutln.h
@@ -748,7 +747,6 @@ media/stagefright/foundation/hexdump.h
 media/stagefright/MediaBuffer.h
 media/stagefright/MediaBufferGroup.h
 media/stagefright/MediaCodec.h
-media/stagefright/MediaCodecSource.h
 media/stagefright/MediaDefs.h
 media/stagefright/MediaErrors.h
 media/stagefright/MediaExtractor.h
@@ -1345,7 +1343,6 @@ xlocale.h
 unicode/locid.h
 unicode/numsys.h
 unicode/ucal.h
-unicode/uchar.h
 unicode/uclean.h
 unicode/ucol.h
 unicode/udat.h

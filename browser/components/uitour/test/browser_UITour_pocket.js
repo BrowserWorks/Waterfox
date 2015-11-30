@@ -3,16 +3,16 @@
 
 "use strict";
 
-var gTestTab;
-var gContentAPI;
-var gContentWindow;
-var button;
+let gTestTab;
+let gContentAPI;
+let gContentWindow;
+let button;
 
 function test() {
   UITourTest();
 }
 
-var tests = [
+let tests = [
   taskify(function* test_menu_show_navbar() {
     is(button.open, false, "Menu should initially be closed");
     gContentAPI.showMenu("pocket");

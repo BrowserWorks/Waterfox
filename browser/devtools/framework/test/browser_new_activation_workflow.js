@@ -3,9 +3,9 @@
 
 // Tests devtools API
 
-var toolbox, target;
+let toolbox, target;
 
-var tempScope = {};
+let tempScope = {};
 
 function test() {
   addTab("about:blank").then(function(aTab) {

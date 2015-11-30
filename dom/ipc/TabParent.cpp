@@ -66,9 +66,6 @@
 #include "nsIWidget.h"
 #include "nsIWindowMediator.h"
 #include "nsIWindowWatcher.h"
-#ifndef XP_WIN
-#include "nsJARProtocolHandler.h"
-#endif
 #include "nsOpenURIInFrameParams.h"
 #include "nsPIDOMWindow.h"
 #include "nsPIWindowWatcher.h"
@@ -79,7 +76,7 @@
 #include "nsWindowWatcher.h"
 #include "private/pprio.h"
 #include "PermissionMessageUtils.h"
-#include "StructuredCloneData.h"
+#include "StructuredCloneUtils.h"
 #include "ColorPickerParent.h"
 #include "FilePickerParent.h"
 #include "TabChild.h"
@@ -276,10 +273,8 @@ TabParent::TabParent(nsIContentParent* aManager,
   , mDefaultScale(0)
   , mUpdatedDimensions(false)
   , mManager(aManager)
-  , mDocShellIsActive(false)
   , mMarkedDestroying(false)
   , mIsDestroyed(false)
-  , mIsDetached(true)
   , mAppPackageFileDescriptorSent(false)
   , mSendOfflineStatus(true)
   , mChromeFlags(aChromeFlags)
@@ -292,7 +287,6 @@ TabParent::TabParent(nsIContentParent* aManager,
   , mCursor(nsCursor(-1))
   , mTabSetsCursor(false)
   , mHasContentOpener(false)
-  , mActiveSupressDisplayportCount(0)
 {
   MOZ_ASSERT(aManager);
 }
@@ -438,8 +432,12 @@ TabParent::IsVisible()
 }
 
 void
-TabParent::DestroyInternal()
+TabParent::Destroy()
 {
+  if (mIsDestroyed) {
+    return;
+  }
+
   IMEStateManager::OnTabParentDestroying(this);
 
   RemoveWindowListeners();
@@ -453,6 +451,11 @@ TabParent::DestroyInternal()
     RemoveTabParentFromTable(frame->GetLayersId());
     frame->Destroy();
   }
+  mIsDestroyed = true;
+
+  if (XRE_IsParentProcess()) {
+    Manager()->AsContentParent()->NotifyTabDestroying(this);
+  }
 
   // Let all PluginWidgets know we are tearing down. Prevents
   // these objects from sending async events after the child side
@@ -461,70 +464,20 @@ TabParent::DestroyInternal()
   for (uint32_t idx = 0; idx < kids.Length(); ++idx) {
       static_cast<mozilla::plugins::PluginWidgetParent*>(kids[idx])->ParentDestroy();
   }
-}
-
-void
-TabParent::Destroy()
-{
-  if (mIsDestroyed) {
-    return;
-  }
-
-  DestroyInternal();
-
-  mIsDestroyed = true;
-
-  if (XRE_IsParentProcess()) {
-    ContentParent::NotifyTabDestroying(this->GetTabId(), Manager()->AsContentParent()->ChildID());
-  } else {
-    ContentParent::NotifyTabDestroying(this->GetTabId(), Manager()->ChildID());
-  }
 
   mMarkedDestroying = true;
-}
-
-void
-TabParent::Detach()
-{
-  if (mIsDetached) {
-    return;
-  }
-  RemoveWindowListeners();
-  if (RenderFrameParent* frame = GetRenderFrame()) {
-    RemoveTabParentFromTable(frame->GetLayersId());
-  }
-  mIsDetached = true;
-}
-
-void
-TabParent::Attach(nsFrameLoader* aFrameLoader)
-{
-  MOZ_ASSERT(mIsDetached);
-  if (!mIsDetached) {
-    return;
-  }
-  Element* ownerElement = aFrameLoader->GetOwnerContent();
-  SetOwnerElement(ownerElement);
-  if (RenderFrameParent* frame = GetRenderFrame()) {
-    AddTabParentToTable(frame->GetLayersId(), this);
-    frame->OwnerContentChanged(ownerElement);
-  }
-  mIsDetached = false;
 }
 
 bool
 TabParent::Recv__delete__()
 {
   if (XRE_IsParentProcess()) {
+    Manager()->AsContentParent()->NotifyTabDestroyed(this, mMarkedDestroying);
     ContentParent::DeallocateTabId(mTabId,
-                                   Manager()->AsContentParent()->ChildID(),
-                                   mMarkedDestroying);
+                                   Manager()->AsContentParent()->ChildID());
   }
   else {
-    Manager()->AsContentBridgeParent()->NotifyTabDestroyed();
-    ContentParent::DeallocateTabId(mTabId,
-                                   Manager()->ChildID(),
-                                   mMarkedDestroying);
+    ContentParent::DeallocateTabId(mTabId, ContentParentId(0));
   }
 
   return true;
@@ -536,22 +489,6 @@ TabParent::ActorDestroy(ActorDestroyReason why)
   // Even though TabParent::Destroy calls this, we need to do it here too in
   // case of a crash.
   IMEStateManager::OnTabParentDestroying(this);
-
-  // Prevent executing ContentParent::NotifyTabDestroying in
-  // TabParent::Destroy() called by frameLoader->DestroyComplete() below
-  // when tab crashes in contentprocess because ContentParent::ActorDestroy()
-  // in main process will be triggered before this function
-  // and remove the process information that
-  // ContentParent::NotifyTabDestroying need from mContentParentMap.
-
-  // When tab crashes in content process,
-  // there is no need to call ContentParent::NotifyTabDestroying
-  // because the jobs in ContentParent::NotifyTabDestroying
-  // will be done by ContentParent::ActorDestroy.
-  if (XRE_IsContentProcess() && why == AbnormalShutdown && !mIsDestroyed) {
-    DestroyInternal();
-    mIsDestroyed = true;
-  }
 
   nsRefPtr<nsFrameLoader> frameLoader = GetFrameLoader(true);
   nsCOMPtr<nsIObserverService> os = services::GetObserverService();
@@ -679,10 +616,10 @@ TabParent::RecvCreateWindow(PBrowserParent* aNewTab,
                             const bool& aCalledFromJS,
                             const bool& aPositionSpecified,
                             const bool& aSizeSpecified,
-                            const nsCString& aURI,
+                            const nsString& aURI,
                             const nsString& aName,
                             const nsCString& aFeatures,
-                            const nsCString& aBaseURI,
+                            const nsString& aBaseURI,
                             nsresult* aResult,
                             bool* aWindowIsNew,
                             InfallibleTArray<FrameScriptInfo>* aFrameScripts,
@@ -766,7 +703,7 @@ TabParent::RecvCreateWindow(PBrowserParent* aNewTab,
     loadContext->GetUsePrivateBrowsing(&isPrivate);
 
     nsCOMPtr<nsIOpenURIInFrameParams> params = new nsOpenURIInFrameParams();
-    params->SetReferrer(NS_ConvertUTF8toUTF16(aBaseURI));
+    params->SetReferrer(aBaseURI);
     params->SetIsPrivate(isPrivate);
 
     AutoUseNewTab aunt(newTab, aWindowIsNew, aURLToLoad);
@@ -799,7 +736,7 @@ TabParent::RecvCreateWindow(PBrowserParent* aNewTab,
   nsAutoCString finalURIString;
   if (!aURI.IsEmpty()) {
     nsCOMPtr<nsIURI> finalURI;
-    *aResult = NS_NewURI(getter_AddRefs(finalURI), aURI.get(), baseURI);
+    *aResult = NS_NewURI(getter_AddRefs(finalURI), NS_ConvertUTF16toUTF8(aURI).get(), baseURI);
 
     if (NS_WARN_IF(NS_FAILED(*aResult)))
       return true;
@@ -811,15 +748,11 @@ TabParent::RecvCreateWindow(PBrowserParent* aNewTab,
 
   AutoUseNewTab aunt(newTab, aWindowIsNew, aURLToLoad);
 
-  // If nsWindowWatcher::OpenWindowInternal was passed a nullptr for the URI
-  // to open in the content process, we indicate that by sending up a voided
-  // nsString (since primitives are not nullable). If we detect the voided
-  // nsString, we know that we need to send OpenWindow2 a nullptr for the URI.
-  const char* uri = aURI.IsVoid() ? nullptr : finalURIString.get();
-  const char* name = aName.IsVoid() ? nullptr : NS_ConvertUTF16toUTF8(aName).get();
-  const char* features = aFeatures.IsVoid() ? nullptr : aFeatures.get();
+  const char* features = aFeatures.Length() ? aFeatures.get() : nullptr;
 
-  *aResult = pwwatch->OpenWindow2(parent, uri, name, features, aCalledFromJS,
+  *aResult = pwwatch->OpenWindow2(parent, finalURIString.get(),
+                                  NS_ConvertUTF16toUTF8(aName).get(),
+                                  features, aCalledFromJS,
                                   false, false, this, nullptr, getter_AddRefs(window));
 
   if (NS_WARN_IF(NS_FAILED(*aResult)))
@@ -964,21 +897,9 @@ TabParent::LoadURL(nsIURI* aURI)
                 rv = packageFile->GetPath(path);
                 NS_ENSURE_SUCCESS_VOID(rv);
 
-#ifndef XP_WIN
-                PRFileDesc* cachedFd = nullptr;
-                gJarHandler->JarCache()->GetFd(packageFile, &cachedFd);
-
-                if (cachedFd) {
-                    FileDescriptor::PlatformHandleType handle =
-                        FileDescriptor::PlatformHandleType(PR_FileDesc2NativeHandle(cachedFd));
-                    unused << SendCacheFileDescriptor(path, FileDescriptor(handle));
-                } else
-#endif
-                {
-                    nsRefPtr<OpenFileAndSendFDRunnable> openFileRunnable =
-                        new OpenFileAndSendFDRunnable(path, this);
-                    openFileRunnable->Dispatch();
-                }
+                nsRefPtr<OpenFileAndSendFDRunnable> openFileRunnable =
+                    new OpenFileAndSendFDRunnable(path, this);
+                openFileRunnable->Dispatch();
             }
         }
     }
@@ -1089,7 +1010,7 @@ TabParent::UpdateDimensions(const nsIntRect& rect, const ScreenIntSize& size)
   }
   hal::ScreenConfiguration config;
   hal::GetCurrentScreenConfiguration(&config);
-  ScreenOrientationInternal orientation = config.orientation();
+  ScreenOrientation orientation = config.orientation();
   LayoutDeviceIntPoint chromeOffset = -GetChildProcessOffset();
 
   nsCOMPtr<nsIWidget> widget = GetWidget();
@@ -1122,9 +1043,7 @@ TabParent::UpdateDimensions(const nsIntRect& rect, const ScreenIntSize& size)
 
     CSSRect unscaledRect = devicePixelRect / widgetScale;
     CSSSize unscaledSize = devicePixelSize / widgetScale;
-    unused << SendUpdateDimensions(unscaledRect, unscaledSize,
-                                   widget->SizeMode(),
-                                   orientation, chromeOffset);
+    unused << SendUpdateDimensions(unscaledRect, unscaledSize, orientation, chromeOffset);
   }
 }
 
@@ -1144,11 +1063,7 @@ TabParent::UIResolutionChanged()
     // mDPI being greater than 0, so this invalidates it.
     mDPI = -1;
     TryCacheDPIAndScale();
-    // If mDPI was set to -1 to invalidate it and then TryCacheDPIAndScale
-    // fails to cache the values, then mDefaultScale.scale might be invalid.
-    // We don't want to send that value to content. Just send -1 for it too in
-    // that case.
-    unused << SendUIResolutionChanged(mDPI, mDPI < 0 ? -1.0 : mDefaultScale.scale);
+    unused << SendUIResolutionChanged();
   }
 }
 
@@ -1162,16 +1077,6 @@ TabParent::ThemeChanged()
     // send down to the child. We do this for every remote tab for now,
     // but bug 1156934 has been filed to do it once per content process.
     unused << SendThemeChanged(LookAndFeel::GetIntCache());
-  }
-}
-
-void
-TabParent::HandleAccessKey(nsTArray<uint32_t>& aCharCodes,
-                           const bool& aIsTrusted,
-                           const int32_t& aModifierMask)
-{
-  if (!mIsDestroyed) {
-    unused << SendHandleAccessKey(aCharCodes, aIsTrusted, aModifierMask);
   }
 }
 
@@ -1458,24 +1363,20 @@ bool TabParent::SendRealMouseEvent(WidgetMouseEvent& event)
   if (widget) {
     // When we mouseenter the tab, the tab's cursor should
     // become the current cursor.  When we mouseexit, we stop.
-    if (eMouseEnterIntoWidget == event.mMessage) {
+    if (NS_MOUSE_ENTER_WIDGET == event.message) {
       mTabSetsCursor = true;
       if (mCustomCursor) {
         widget->SetCursor(mCustomCursor, mCustomCursorHotspotX, mCustomCursorHotspotY);
       } else if (mCursor != nsCursor(-1)) {
         widget->SetCursor(mCursor);
       }
-    } else if (eMouseExitFromWidget == event.mMessage) {
+    } else if (NS_MOUSE_EXIT_WIDGET == event.message) {
       mTabSetsCursor = false;
     }
   }
 
-  if (eMouseMove == event.mMessage) {
-    if (event.reason == WidgetMouseEvent::eSynthesized) {
-      return SendSynthMouseMoveEvent(event);
-    } else {
-      return SendRealMouseMoveEvent(event);
-    }
+  if (NS_MOUSE_MOVE == event.message) {
+    return SendRealMouseMoveEvent(event);
   }
   return SendRealMouseButtonEvent(event);
 }
@@ -1816,7 +1717,7 @@ bool TabParent::SendRealKeyEvent(WidgetKeyboardEvent& event)
 
   MaybeNativeKeyBinding bindings;
   bindings = void_t();
-  if (event.mMessage == eKeyPress) {
+  if (event.message == NS_KEY_PRESS) {
     nsCOMPtr<nsIWidget> widget = GetWidget();
 
     AutoInfallibleTArray<mozilla::CommandInt, 4> singleLine;
@@ -1848,7 +1749,7 @@ bool TabParent::SendRealTouchEvent(WidgetTouchEvent& event)
   // confuses remote content and the panning and zooming logic into thinking
   // that the added touches are part of the touchend/cancel, when actually
   // they're not.
-  if (event.mMessage == eTouchEnd || event.mMessage == eTouchCancel) {
+  if (event.message == NS_TOUCH_END || event.message == NS_TOUCH_CANCEL) {
     for (int i = event.touches.Length() - 1; i >= 0; i--) {
       if (!event.touches[i]->mChanged) {
         event.touches.RemoveElementAt(i);
@@ -1870,7 +1771,7 @@ bool TabParent::SendRealTouchEvent(WidgetTouchEvent& event)
     event.touches[i]->mRefPoint += offset;
   }
 
-  return (event.mMessage == eTouchMove) ?
+  return (event.message == NS_TOUCH_MOVE) ?
     PBrowserParent::SendRealTouchMoveEvent(event, guid, blockId, apzResponse) :
     PBrowserParent::SendRealTouchEvent(event, guid, blockId, apzResponse);
 }
@@ -1880,7 +1781,7 @@ TabParent::RecvSyncMessage(const nsString& aMessage,
                            const ClonedMessageData& aData,
                            InfallibleTArray<CpowEntry>&& aCpows,
                            const IPC::Principal& aPrincipal,
-                           nsTArray<StructuredCloneData>* aRetVal)
+                           nsTArray<OwningSerializedStructuredCloneBuffer>* aRetVal)
 {
   // FIXME Permission check for TabParent in Content process
   nsIPrincipal* principal = aPrincipal;
@@ -1892,11 +1793,9 @@ TabParent::RecvSyncMessage(const nsString& aMessage,
     }
   }
 
-  StructuredCloneData data;
-  ipc::UnpackClonedMessageDataForParent(aData, data);
-
+  StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
   CrossProcessCpowHolder cpows(Manager(), aCpows);
-  return ReceiveMessage(aMessage, true, &data, &cpows, aPrincipal, aRetVal);
+  return ReceiveMessage(aMessage, true, &cloneData, &cpows, aPrincipal, aRetVal);
 }
 
 bool
@@ -1904,7 +1803,7 @@ TabParent::RecvRpcMessage(const nsString& aMessage,
                           const ClonedMessageData& aData,
                           InfallibleTArray<CpowEntry>&& aCpows,
                           const IPC::Principal& aPrincipal,
-                          nsTArray<StructuredCloneData>* aRetVal)
+                          nsTArray<OwningSerializedStructuredCloneBuffer>* aRetVal)
 {
   // FIXME Permission check for TabParent in Content process
   nsIPrincipal* principal = aPrincipal;
@@ -1916,11 +1815,9 @@ TabParent::RecvRpcMessage(const nsString& aMessage,
     }
   }
 
-  StructuredCloneData data;
-  ipc::UnpackClonedMessageDataForParent(aData, data);
-
+  StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
   CrossProcessCpowHolder cpows(Manager(), aCpows);
-  return ReceiveMessage(aMessage, true, &data, &cpows, aPrincipal, aRetVal);
+  return ReceiveMessage(aMessage, true, &cloneData, &cpows, aPrincipal, aRetVal);
 }
 
 bool
@@ -1939,11 +1836,9 @@ TabParent::RecvAsyncMessage(const nsString& aMessage,
     }
   }
 
-  StructuredCloneData data;
-  ipc::UnpackClonedMessageDataForParent(aData, data);
-
+  StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
   CrossProcessCpowHolder cpows(Manager(), aCpows);
-  return ReceiveMessage(aMessage, false, &data, &cpows, aPrincipal, nullptr);
+  return ReceiveMessage(aMessage, false, &cloneData, &cpows, aPrincipal, nullptr);
 }
 
 bool
@@ -2210,7 +2105,7 @@ TabParent::RecvNotifyIMEPositionChange(const ContentCache& aContentCache,
 }
 
 bool
-TabParent::RecvOnEventNeedingAckHandled(const EventMessage& aMessage)
+TabParent::RecvOnEventNeedingAckHandled(const uint32_t& aMessage)
 {
   // This is called when the child process receives WidgetCompositionEvent or
   // WidgetSelectionEvent.
@@ -2363,7 +2258,7 @@ TabParent::RecvDispatchAfterKeyboardEvent(const WidgetKeyboardEvent& aEvent)
 
   if (mFrameElement &&
       PresShell::BeforeAfterKeyboardEventEnabled() &&
-      localEvent.mMessage != eKeyPress) {
+      localEvent.message != NS_KEY_PRESS) {
     presShell->DispatchAfterKeyboardEvent(mFrameElement, localEvent,
                                           aEvent.mFlags.mDefaultPrevented);
   }
@@ -2382,10 +2277,10 @@ TabParent::HandleQueryContentEvent(WidgetQueryContentEvent& aEvent)
       NS_WARN_IF(!aEvent.mSucceeded)) {
     return true;
   }
-  switch (aEvent.mMessage) {
-    case eQueryTextRect:
-    case eQueryCaretRect:
-    case eQueryEditorRect:
+  switch (aEvent.message) {
+    case NS_QUERY_TEXT_RECT:
+    case NS_QUERY_CARET_RECT:
+    case NS_QUERY_EDITOR_RECT:
       aEvent.mReply.mRect -= GetChildProcessOffset();
       break;
     default:
@@ -2677,10 +2572,10 @@ TabParent::RecvDispatchFocusToTopLevelWindow()
 bool
 TabParent::ReceiveMessage(const nsString& aMessage,
                           bool aSync,
-                          StructuredCloneData* aData,
+                          const StructuredCloneData* aCloneData,
                           CpowHolder* aCpows,
                           nsIPrincipal* aPrincipal,
-                          nsTArray<StructuredCloneData>* aRetVal)
+                          nsTArray<OwningSerializedStructuredCloneBuffer>* aRetVal)
 {
   nsRefPtr<nsFrameLoader> frameLoader = GetFrameLoader(true);
   if (frameLoader && frameLoader->GetFrameMessageManager()) {
@@ -2691,7 +2586,7 @@ TabParent::ReceiveMessage(const nsString& aMessage,
                             frameLoader,
                             aMessage,
                             aSync,
-                            aData,
+                            aCloneData,
                             aCpows,
                             aPrincipal,
                             aRetVal);
@@ -2931,16 +2826,6 @@ TabParent::RecvUpdateZoomConstraints(const uint32_t& aPresShellId,
 }
 
 bool
-TabParent::RecvRespondStartSwipeEvent(const uint64_t& aInputBlockId,
-                                      const bool& aStartSwipe)
-{
-  if (nsCOMPtr<nsIWidget> widget = GetWidget()) {
-    widget->ReportSwipeStarted(aInputBlockId, aStartSwipe);
-  }
-  return true;
-}
-
-bool
 TabParent::RecvContentReceivedInputBlock(const ScrollableLayerGuid& aGuid,
                                          const uint64_t& aInputBlockId,
                                          const bool& aPreventDefault)
@@ -3001,10 +2886,10 @@ TabParent::InjectTouchEvent(const nsAString& aType,
                             uint32_t aCount,
                             int32_t aModifiers)
 {
-  EventMessage msg;
-  nsContentUtils::GetEventMessageAndAtom(aType, eTouchEventClass, &msg);
-  if (msg != eTouchStart && msg != eTouchMove &&
-      msg != eTouchEnd && msg != eTouchCancel) {
+  uint32_t msg;
+  nsContentUtils::GetEventIdAndAtom(aType, eTouchEventClass, &msg);
+  if (msg != NS_TOUCH_START && msg != NS_TOUCH_MOVE &&
+      msg != NS_TOUCH_END && msg != NS_TOUCH_CANCEL) {
     return NS_ERROR_FAILURE;
   }
 
@@ -3059,38 +2944,10 @@ TabParent::GetUseAsyncPanZoom(bool* useAsyncPanZoom)
   return NS_OK;
 }
 
-// defined in nsITabParent
 NS_IMETHODIMP
-TabParent::SetDocShellIsActive(bool isActive)
+TabParent::SetIsDocShellActive(bool isActive)
 {
-  mDocShellIsActive = isActive;
-  unused << SendSetDocShellIsActive(isActive);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-TabParent::GetDocShellIsActive(bool* aIsActive)
-{
-  *aIsActive = mDocShellIsActive;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-TabParent::SuppressDisplayport(bool aEnabled)
-{
-  if (IsDestroyed()) {
-    return NS_OK;
-  }
-
-  if (aEnabled) {
-    mActiveSupressDisplayportCount++;
-  } else {
-    mActiveSupressDisplayportCount--;
-  }
-
-  MOZ_ASSERT(mActiveSupressDisplayportCount >= 0);
-
-  unused << SendSuppressDisplayport(aEnabled);
+  unused << SendSetIsDocShellActive(isActive);
   return NS_OK;
 }
 
@@ -3187,7 +3044,8 @@ TabParent::LayerTreeUpdate(bool aActive)
     return true;
   }
 
-  nsRefPtr<Event> event = NS_NewDOMEvent(mFrameElement, nullptr, nullptr);
+  nsCOMPtr<nsIDOMEvent> event;
+  NS_NewDOMEvent(getter_AddRefs(event), mFrameElement, nullptr, nullptr);
   if (aActive) {
     event->InitEvent(NS_LITERAL_STRING("MozLayerTreeReady"), true, false);
   } else {
@@ -3226,7 +3084,8 @@ TabParent::RecvRemotePaintIsReady()
     return true;
   }
 
-  nsRefPtr<Event> event = NS_NewDOMEvent(mFrameElement, nullptr, nullptr);
+  nsCOMPtr<nsIDOMEvent> event;
+  NS_NewDOMEvent(getter_AddRefs(event), mFrameElement, nullptr, nullptr);
   event->InitEvent(NS_LITERAL_STRING("MozAfterRemotePaint"), false, false);
   event->SetTrusted(true);
   event->GetInternalNSEvent()->mFlags.mOnlyChromeDispatch = true;
@@ -3511,7 +3370,7 @@ TabParent::AsyncPanZoomEnabled() const
 }
 
 PWebBrowserPersistDocumentParent*
-TabParent::AllocPWebBrowserPersistDocumentParent(const uint64_t& aOuterWindowID)
+TabParent::AllocPWebBrowserPersistDocumentParent()
 {
   return new WebBrowserPersistDocumentParent();
 }
@@ -3524,12 +3383,11 @@ TabParent::DeallocPWebBrowserPersistDocumentParent(PWebBrowserPersistDocumentPar
 }
 
 NS_IMETHODIMP
-TabParent::StartPersistence(uint64_t aOuterWindowID,
-                            nsIWebBrowserPersistDocumentReceiver* aRecv)
+TabParent::StartPersistence(nsIWebBrowserPersistDocumentReceiver* aRecv)
 {
   auto* actor = new WebBrowserPersistDocumentParent();
   actor->SetOnReady(aRecv);
-  return SendPWebBrowserPersistDocumentConstructor(actor, aOuterWindowID)
+  return SendPWebBrowserPersistDocumentConstructor(actor)
     ? NS_OK : NS_ERROR_FAILURE;
   // (The actor will be destroyed on constructor failure.)
 }

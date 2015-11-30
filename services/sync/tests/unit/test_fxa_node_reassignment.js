@@ -54,7 +54,7 @@ function handleReassign(handler, req, resp) {
   resp.bodyOutputStream.write(reassignBody, reassignBody.length);
 }
 
-var numTokenRequests = 0;
+let numTokenRequests = 0;
 
 function prepareServer(cbAfterTokenFetch) {
   let config = makeIdentityConfig({username: "johndoe"});

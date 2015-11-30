@@ -29,7 +29,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 
-var gTimerRegistry = new Map();
+let gTimerRegistry = new Map();
 
 /**
  * String utility to ensure that strings are a specified length. Strings

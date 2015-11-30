@@ -3,37 +3,13 @@
 
 #include <jni.h>
 
-#if defined(DEBUG) || !defined(RELEASE_BUILD)
-#include "mozilla/Assertions.h"
-#include "MainThreadUtils.h"
-#endif
+#include "mozilla/Types.h"
+
+/* See the comment in AndroidBridge about this function before using it */
+extern "C" MOZ_EXPORT JNIEnv * GetJNIForThread();
 
 namespace mozilla {
 namespace jni {
-
-extern JNIEnv* sGeckoThreadEnv;
-
-inline bool IsAvailable()
-{
-    return !!sGeckoThreadEnv;
-}
-
-inline JNIEnv* GetGeckoThreadEnv()
-{
-#if defined(DEBUG) || !defined(RELEASE_BUILD)
-    if (!NS_IsMainThread()) {
-        MOZ_CRASH("Not on main thread");
-    }
-    if (!sGeckoThreadEnv) {
-        MOZ_CRASH("Don't have a JNIEnv");
-    }
-#endif
-    return sGeckoThreadEnv;
-}
-
-void SetGeckoThreadEnv(JNIEnv* aEnv);
-
-JNIEnv* GetEnvForThread();
 
 bool ThrowException(JNIEnv *aEnv, const char *aClass,
                     const char *aMessage);
@@ -45,12 +21,12 @@ inline bool ThrowException(JNIEnv *aEnv, const char *aMessage)
 
 inline bool ThrowException(const char *aClass, const char *aMessage)
 {
-    return ThrowException(GetEnvForThread(), aClass, aMessage);
+    return ThrowException(GetJNIForThread(), aClass, aMessage);
 }
 
 inline bool ThrowException(const char *aMessage)
 {
-    return ThrowException(GetEnvForThread(), aMessage);
+    return ThrowException(GetJNIForThread(), aMessage);
 }
 
 void HandleUncaughtException(JNIEnv *aEnv);

@@ -100,21 +100,21 @@ log = '';
 g.eval('debugger;');
 assertEq(log, 'oi');
 
-// Debugger.Object.executeInGlobal
+// Debugger.Object.evalInGlobal
 dbg.onDebuggerStatement = function (frame) {
   log += 'd';
   assertEq(frame.script.source.introductionType, "debugger eval");
 };
 log = '';
-gDO.executeInGlobal('debugger;');
+gDO.evalInGlobal('debugger;');
 assertEq(log, 'd');
 
-// Debugger.Object.executeInGlobalWithBindings
+// Debugger.Object.evalInGlobalWithBindings
 dbg.onDebuggerStatement = function (frame) {
   log += 'd';
   assertEq(frame.script.source.introductionType, "debugger eval");
 };
 log = '';
-gDO.executeInGlobalWithBindings('debugger;', { x: 42 });
+gDO.evalInGlobalWithBindings('debugger;', { x: 42 });
 assertEq(log, 'd');
 

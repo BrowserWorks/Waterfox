@@ -317,9 +317,7 @@ nsHTMLEditRules::BeforeEdit(EditAction action,
     nsRefPtr<Selection> selection = mHTMLEditor->GetSelection();
 
     // get the selection location
-    if (!selection->RangeCount()) {
-      return NS_ERROR_UNEXPECTED;
-    }
+    NS_ENSURE_STATE(selection->RangeCount());
     mRangeItem->startNode = selection->GetRangeAt(0)->GetStartParent();
     mRangeItem->startOffset = selection->GetRangeAt(0)->StartOffset();
     mRangeItem->endNode = selection->GetRangeAt(0)->GetEndParent();

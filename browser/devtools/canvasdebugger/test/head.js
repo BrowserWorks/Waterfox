@@ -4,29 +4,28 @@
 
 const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
-var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+let { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 
 // Disable logging for all the tests. Both the debugger server and frontend will
 // be affected by this pref.
-var gEnableLogging = Services.prefs.getBoolPref("devtools.debugger.log");
+let gEnableLogging = Services.prefs.getBoolPref("devtools.debugger.log");
 Services.prefs.setBoolPref("devtools.debugger.log", false);
 
-var { generateUUID } = Cc['@mozilla.org/uuid-generator;1'].getService(Ci.nsIUUIDGenerator);
-var { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-var { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
-var { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-
-var promise = require("promise");
-var { DebuggerClient } = require("devtools/toolkit/client/main");
-var { DebuggerServer } = require("devtools/server/main");
-var { CallWatcherFront } = require("devtools/server/actors/call-watcher");
-var { CanvasFront } = require("devtools/server/actors/canvas");
-var { setTimeout } = require("sdk/timers");
-var DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
-var TiltGL = require("devtools/tilt/tilt-gl");
-var { TargetFactory } = require("devtools/framework/target");
-var { Toolbox } = require("devtools/framework/toolbox");
-var mm = null
+let { generateUUID } = Cc['@mozilla.org/uuid-generator;1'].getService(Ci.nsIUUIDGenerator);
+let { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
+let { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
+let { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
+let { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+let { DebuggerServer } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
+let { DebuggerClient } = Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
+let { CallWatcherFront } = require("devtools/server/actors/call-watcher");
+let { CanvasFront } = require("devtools/server/actors/canvas");
+let { setTimeout } = require("sdk/timers");
+let DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+let TiltGL = require("devtools/tilt/tilt-gl");
+let { TargetFactory } = require("devtools/framework/target");
+let { Toolbox } = require("devtools/framework/toolbox");
+let mm = null
 
 const FRAME_SCRIPT_UTILS_URL = "chrome://browser/content/devtools/frame-script-utils.js";
 const EXAMPLE_URL = "http://example.com/browser/browser/devtools/canvasdebugger/test/";
@@ -44,7 +43,7 @@ const RAF_BEGIN_URL = EXAMPLE_URL + "doc_raf-begin.html";
 // All tests are asynchronous.
 waitForExplicitFinish();
 
-var gToolEnabled = Services.prefs.getBoolPref("devtools.canvasdebugger.enabled");
+let gToolEnabled = Services.prefs.getBoolPref("devtools.canvasdebugger.enabled");
 
 DevToolsUtils.testing = true;
 
@@ -112,7 +111,7 @@ function handleError(aError) {
   finish();
 }
 
-var gRequiresWebGL = false;
+let gRequiresWebGL = false;
 
 function ifTestingSupported() {
   ok(false, "You need to define a 'ifTestingSupported' function.");

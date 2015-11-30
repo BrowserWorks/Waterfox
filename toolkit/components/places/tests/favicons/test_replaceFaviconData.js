@@ -5,17 +5,17 @@
  * Tests for mozIAsyncFavicons::replaceFaviconData()
  */
 
-var iconsvc = PlacesUtils.favicons;
-var histsvc = PlacesUtils.history;
+let iconsvc = PlacesUtils.favicons;
+let histsvc = PlacesUtils.history;
 
-var originalFavicon = {
+let originalFavicon = {
   file: do_get_file("favicon-normal16.png"),
   uri: uri(do_get_file("favicon-normal16.png")),
   data: readFileData(do_get_file("favicon-normal16.png")),
   mimetype: "image/png"
 };
 
-var uniqueFaviconId = 0;
+let uniqueFaviconId = 0;
 function createFavicon(fileName) {
   let tempdir = Services.dirsvc.get("TmpD", Ci.nsILocalFile);
 

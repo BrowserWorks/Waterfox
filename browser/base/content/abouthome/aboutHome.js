@@ -21,11 +21,10 @@ const DATABASE_NAME = "abouthome";
 const DATABASE_VERSION = 1;
 const DATABASE_STORAGE = "persistent";
 const SNIPPETS_OBJECTSTORE_NAME = "snippets";
-var searchText;
 
 // This global tracks if the page has been set up before, to prevent double inits
-var gInitialized = false;
-var gObserver = new MutationObserver(function (mutations) {
+let gInitialized = false;
+let gObserver = new MutationObserver(function (mutations) {
   for (let mutation of mutations) {
     if (mutation.attributeName == "snippetsVersion") {
       if (!gInitialized) {
@@ -55,27 +54,11 @@ window.addEventListener("pagehide", function() {
   window.removeEventListener("resize", fitToWidth);
 });
 
-window.addEventListener("keypress", ev => {
-  // focus the search-box on keypress
-  if (document.activeElement.id == "searchText") // unless already focussed
-    return;
-
-  let modifiers = ev.ctrlKey + ev.altKey + ev.metaKey;
-  // ignore Ctrl/Cmd/Alt, but not Shift
-  // also ignore Tab, Insert, PageUp, etc., and Space
-  if (modifiers != 0 || ev.charCode == 0 || ev.charCode == 32)
-    return;
-
-  searchText.focus();
-  // need to send the first keypress outside the search-box manually to it
-  searchText.value += ev.key;
-});
-
 // This object has the same interface as Map and is used to store and retrieve
 // the snippets data.  It is lazily initialized by ensureSnippetsMapThen(), so
 // be sure its callback returned before trying to use it.
-var gSnippetsMap;
-var gSnippetsMapCallbacks = [];
+let gSnippetsMap;
+let gSnippetsMapCallbacks = [];
 
 /**
  * Ensure the snippets map is properly initialized.
@@ -189,14 +172,14 @@ function onSearchSubmit(aEvent)
 }
 
 
-var gContentSearchController;
+let gContentSearchController;
 
 function setupSearch()
 {
   // The "autofocus" attribute doesn't focus the form element
   // immediately when the element is first drawn, so the
   // attribute is also used for styling when the page first loads.
-  searchText = document.getElementById("searchText");
+  let searchText = document.getElementById("searchText");
   searchText.addEventListener("blur", function searchText_onBlur() {
     searchText.removeEventListener("blur", searchText_onBlur);
     searchText.removeAttribute("autofocus");
@@ -279,7 +262,7 @@ function loadSnippets()
  * @note: snippets should never invoke showSnippets(), or they may cause
  *        a "too much recursion" exception.
  */
-var _snippetsShown = false;
+let _snippetsShown = false;
 function showSnippets()
 {
   let snippetsElt = document.getElementById("snippets");

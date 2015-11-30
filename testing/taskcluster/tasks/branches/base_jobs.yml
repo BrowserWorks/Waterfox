@@ -86,30 +86,6 @@ builds:
     types:
       opt:
         task: tasks/builds/b2g_flame_kk_spark_eng.yml
-  nexus-4:
-    platforms:
-      - b2g
-    types:
-      opt:
-        task: tasks/builds/b2g_nexus_4_user.yml
-  nexus-4-eng:
-    platforms:
-      - b2g
-    types:
-      opt:
-        task: tasks/builds/b2g_nexus_4_eng.yml
-  nexus-5l:
-    platforms:
-      - b2g
-    types:
-      opt:
-        task: tasks/builds/b2g_nexus_5l_user.yml
-  nexus-5l-eng:
-    platforms:
-      - b2g
-    types:
-      opt:
-        task: tasks/builds/b2g_nexus_5l_eng.yml
 
 tests:
   cppunit:
@@ -146,8 +122,18 @@ tests:
         task: tasks/tests/b2g_linter.yml
       tasks/builds/mulet_linux.yml:
         task: tasks/tests/mulet_linter.yml
+  gaia-ui-test-accessibility:
+    allowed_build_tasks:
+      tasks/builds/b2g_desktop_opt.yml:
+        task: tasks/tests/b2g_gaia_ui_test_accessibility.yml
+      tasks/builds/b2g_desktop_debug.yml:
+        task: tasks/tests/b2g_gaia_ui_test_accessibility.yml
   gaia-ui-test-functional:
     allowed_build_tasks:
+      tasks/builds/b2g_desktop_opt.yml:
+        task: tasks/tests/b2g_gaia_ui_test_functional.yml
+      tasks/builds/b2g_desktop_debug.yml:
+        task: tasks/tests/b2g_gaia_ui_test_functional.yml
       tasks/builds/b2g_flame_kk_eng.yml:
         task: tasks/tests/flame_kk_gaia_ui_test_functional.yml
   gaia-ui-test-functional-dsds:
@@ -160,18 +146,16 @@ tests:
         task: tasks/tests/flame_kk_gaia_ui_test_sanity.yml
   gaia-ui-test-unit:
     allowed_build_tasks:
+      tasks/builds/b2g_desktop_opt.yml:
+        task: tasks/tests/b2g_gaia_ui_test_unit.yml
+      tasks/builds/b2g_desktop_debug.yml:
+        task: tasks/tests/b2g_gaia_ui_test_unit.yml
       tasks/builds/b2g_flame_kk_eng.yml:
         task: tasks/tests/flame_kk_gaia_ui_test_unit.yml
   gaia-unit:
     allowed_build_tasks:
       tasks/builds/b2g_desktop_opt.yml:
         task: tasks/tests/b2g_gaia_unit.yml
-      tasks/builds/mulet_linux.yml:
-        task: tasks/tests/mulet_gaia_unit.yml
-  gaia-unit-oop:
-    allowed_build_tasks:
-      tasks/builds/mulet_linux.yml:
-        task: tasks/tests/mulet_gaia_unit_oop.yml
   marionette:
     allowed_build_tasks:
       tasks/builds/b2g_emulator_ics_opt.yml:

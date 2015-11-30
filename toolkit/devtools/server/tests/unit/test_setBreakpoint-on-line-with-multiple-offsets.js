@@ -1,6 +1,6 @@
 "use strict";
 
-var SOURCE_URL = getFileUrl("setBreakpoint-on-line-with-multiple-offsets.js");
+let SOURCE_URL = getFileUrl("setBreakpoint-on-line-with-multiple-offsets.js");
 
 function run_test() {
   return Task.spawn(function* () {

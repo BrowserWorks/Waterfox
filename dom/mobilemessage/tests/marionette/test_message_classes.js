@@ -17,11 +17,11 @@ const SENT_TIMESTAMP = Date.UTC(2000, 0, 1); // Must be equal to PDU_TIMESTAMP.
 
 SpecialPowers.addPermission("sms", true, document);
 
-var manager = window.navigator.mozMobileMessage;
+let manager = window.navigator.mozMobileMessage;
 ok(manager instanceof MozMobileMessageManager,
    "manager is instance of " + manager.constructor);
 
-var pendingEmulatorCmdCount = 0;
+let pendingEmulatorCmdCount = 0;
 function sendSmsPduToEmulator(pdu) {
   ++pendingEmulatorCmdCount;
 

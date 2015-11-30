@@ -41,7 +41,7 @@ public:
 
     void NotifyNativeEvent();
 
-    virtual bool ProcessNextNativeEvent(bool mayWait) override;
+    virtual bool ProcessNextNativeEvent(bool mayWait);
 
     void PostEvent(mozilla::AndroidGeckoEvent *event);
     void OnResume();
@@ -58,7 +58,7 @@ public:
     }
 
 protected:
-    virtual void ScheduleNativeEventCallback() override;
+    virtual void ScheduleNativeEventCallback();
     virtual ~nsAppShell();
 
     Mutex mQueueLock;

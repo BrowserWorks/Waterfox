@@ -98,7 +98,6 @@ EXPORTS.mozilla.layers += [
     'apz/src/APZCTreeManager.h',
     'apz/src/APZUtils.h',
     'apz/src/AsyncPanZoomAnimation.h',
-    'apz/src/TouchCounter.h',
     'apz/testutil/APZTestData.h',
     'apz/util/ActiveElementManager.h',
     'apz/util/APZCCallbackHelper.h',
@@ -242,7 +241,6 @@ UNIFIED_SOURCES += [
     'apz/src/InputQueue.cpp',
     'apz/src/OverscrollHandoffState.cpp',
     'apz/src/TaskThrottler.cpp',
-    'apz/src/TouchCounter.cpp',
     'apz/src/WheelScrollAnimation.cpp',
     'apz/testutil/APZTestData.cpp',
     'apz/util/ActiveElementManager.cpp',
@@ -380,6 +378,8 @@ IPDL_SOURCES = [
     'ipc/PSharedBufferManager.ipdl',
     'ipc/PTexture.ipdl',
 ]
+
+FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

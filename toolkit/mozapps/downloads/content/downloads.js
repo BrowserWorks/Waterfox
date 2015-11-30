@@ -17,7 +17,7 @@ const nsLocalFile = Components.Constructor("@mozilla.org/file/local;1",
 
 var Cc = Components.classes;
 var Ci = Components.interfaces;
-var Cu = Components.utils;
+let Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/DownloadUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -27,15 +27,15 @@ XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
 
 const nsIDM = Ci.nsIDownloadManager;
 
-var gDownloadManager = Cc["@mozilla.org/download-manager;1"].getService(nsIDM);
-var gDownloadManagerUI = Cc["@mozilla.org/download-manager-ui;1"].
+let gDownloadManager = Cc["@mozilla.org/download-manager;1"].getService(nsIDM);
+let gDownloadManagerUI = Cc["@mozilla.org/download-manager-ui;1"].
                          getService(Ci.nsIDownloadManagerUI);
 
-var gDownloadListener = null;
-var gDownloadsView = null;
-var gSearchBox = null;
-var gSearchTerms = [];
-var gBuilder = 0;
+let gDownloadListener = null;
+let gDownloadsView = null;
+let gSearchBox = null;
+let gSearchTerms = [];
+let gBuilder = 0;
 
 // This variable is used when performing commands on download items and gives
 // the command the ability to do something after all items have been operated
@@ -44,7 +44,7 @@ var gBuilder = 0;
 // before executing commands, the value will be set to |null|; and when
 // commands want to create a callback, they set the value to be a callback
 // function to be executed after all download items have been visited.
-var gPerformAllCallback;
+let gPerformAllCallback;
 
 // Control the performance of the incremental list building by setting how many
 // milliseconds to wait before building more of the list and how many items to
@@ -65,7 +65,7 @@ var gUserInteracted = false;
 
 // These strings will be converted to the corresponding ones from the string
 // bundle on startup.
-var gStr = {
+let gStr = {
   paused: "paused",
   cannotPause: "cannotPause",
   doneStatus: "doneStatus",
@@ -83,7 +83,7 @@ var gStr = {
 };
 
 // The statement to query for downloads that are active or match the search
-var gStmt = null;
+let gStmt = null;
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Start/Stop Observers
@@ -469,7 +469,7 @@ function Shutdown()
   gStmt.finalize();
 }
 
-var gDownloadObserver = {
+let gDownloadObserver = {
   observe: function gdo_observe(aSubject, aTopic, aData) {
     switch (aTopic) {
       case "download-manager-remove-download":

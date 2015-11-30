@@ -1,9 +1,9 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var originalTab;
-var newTabOne;
-var groupItemTwoId;
+let originalTab;
+let newTabOne;
+let groupItemTwoId;
 
 function test() {
   waitForExplicitFinish();

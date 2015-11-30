@@ -9,7 +9,7 @@
 
 EnableEngines(["addons"]);
 
-var phases = { "phase1": "profile1",
+let phases = { "phase1": "profile1",
                "phase2": "profile1" };
 
 const id = "unsigned-xpi@tests.mozilla.org";

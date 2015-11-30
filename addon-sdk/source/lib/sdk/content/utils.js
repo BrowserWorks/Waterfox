@@ -7,12 +7,11 @@ module.metadata = {
   'stability': 'unstable'
 };
 
-var { merge } = require('../util/object');
-var { data } = require('../self');
-var assetsURI = data.url();
-var isArray = Array.isArray;
-var method = require('../../method/core');
-var { uuid } = require('../util/uuid');
+let { merge } = require('../util/object');
+let { data } = require('../self');
+let assetsURI = data.url();
+let isArray = Array.isArray;
+let method = require('../../method/core');
 
 const isAddonContent = ({ contentURL }) =>
   contentURL && data.url(contentURL).startsWith(assetsURI);
@@ -43,16 +42,16 @@ function getAttachEventType(model) {
 }
 exports.getAttachEventType = getAttachEventType;
 
-var attach = method('worker-attach');
+let attach = method('worker-attach');
 exports.attach = attach;
 
-var connect = method('worker-connect');
+let connect = method('worker-connect');
 exports.connect = connect;
 
-var detach = method('worker-detach');
+let detach = method('worker-detach');
 exports.detach = detach;
 
-var destroy = method('worker-destroy');
+let destroy = method('worker-destroy');
 exports.destroy = destroy;
 
 function WorkerHost (workerFor) {
@@ -85,21 +84,3 @@ function WorkerHost (workerFor) {
   }
 }
 exports.WorkerHost = WorkerHost;
-
-function makeChildOptions(options) {
-  function makeStringArray(arrayOrValue) {
-    if (!arrayOrValue)
-      return [];
-    return [String(v) for (v of [].concat(arrayOrValue))];
-  }
-
-  return {
-    id: String(uuid()),
-    contentScript: makeStringArray(options.contentScript),
-    contentScriptFile: makeStringArray(options.contentScriptFile),
-    contentScriptOptions: options.contentScriptOptions ?
-                          JSON.stringify(options.contentScriptOptions) :
-                          null,
-  }
-}
-exports.makeChildOptions = makeChildOptions;

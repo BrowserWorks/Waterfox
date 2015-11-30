@@ -1,9 +1,9 @@
-var Ci = Components.interfaces;
-var Cc = Components.classes;
-var Cu = Components.utils;
+let Ci = Components.interfaces;
+let Cc = Components.classes;
+let Cu = Components.utils;
 
 // Stolen from SpecialPowers, since at this point we don't know we're in a test.
-var isMainProcess = function() {
+let isMainProcess = function() {
   try {
     return Cc["@mozilla.org/xre/app-info;1"].
         getService(Ci.nsIXULRuntime).

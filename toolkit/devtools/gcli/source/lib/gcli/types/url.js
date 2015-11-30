@@ -17,6 +17,7 @@
 'use strict';
 
 var host = require('../util/host');
+var Promise = require('../util/promise').Promise;
 var Status = require('./types').Status;
 var Conversion = require('./types').Conversion;
 

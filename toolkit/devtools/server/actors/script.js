@@ -20,7 +20,7 @@ const xpcInspector = require("xpcInspector");
 const ScriptStore = require("./utils/ScriptStore");
 const { DevToolsWorker } = require("devtools/toolkit/shared/worker.js");
 
-const { defer, resolve, reject, all } = promise;
+const { defer, resolve, reject, all } = require("devtools/toolkit/deprecated-sync-thenables");
 
 loader.lazyGetter(this, "Debugger", () => {
   let Debugger = require("Debugger");
@@ -1375,19 +1375,7 @@ ThreadActor.prototype = {
     }
 
     try {
-      // If execution should pause just before the next JavaScript bytecode is
-      // executed, just set an onEnterFrame handler.
-      if (aRequest.when == "onNext") {
-        let onEnterFrame = (aFrame) => {
-          return this._pauseAndRespond(aFrame, { type: "interrupted", onNext: true });
-        };
-        this.dbg.onEnterFrame = onEnterFrame;
-
-        return { type: "willInterrupt" };
-      }
-
-      // If execution should pause immediately, just put ourselves in the paused
-      // state.
+      // Put ourselves in the paused state.
       let packet = this._paused();
       if (!packet) {
         return { error: "notInterrupted" };
@@ -3729,7 +3717,7 @@ exports.AddonThreadActor = AddonThreadActor;
  * @param String aPrefix
  *        An optional prefix for the reported error message.
  */
-var oldReportError = reportError;
+let oldReportError = reportError;
 reportError = function(aError, aPrefix="") {
   dbg_assert(aError instanceof Error, "Must pass Error objects to reportError");
   let msg = aPrefix + aError.message + ":\n" + aError.stack;

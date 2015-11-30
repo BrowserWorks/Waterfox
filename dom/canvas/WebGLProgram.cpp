@@ -171,7 +171,7 @@ QueryProgramInfo(WebGLProgram* prog, gl::GLContext* gl)
 
     // Uniforms
 
-    const bool needsCheckForArrays = gl->WorkAroundDriverBugs();
+    const bool needsCheckForArrays = true;
 
     GLuint numActiveUniforms = 0;
     gl->fGetProgramiv(prog->mGLName, LOCAL_GL_ACTIVE_UNIFORMS,

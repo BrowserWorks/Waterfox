@@ -33,8 +33,8 @@ const findAndRunTests = function findAndRunTests(options) {
 };
 exports.findAndRunTests = findAndRunTests;
 
-var runnerWindows = new WeakMap();
-var runnerTabs = new WeakMap();
+let runnerWindows = new WeakMap();
+let runnerTabs = new WeakMap();
 
 const TestRunner = function TestRunner(options) {
   options = options || {};

@@ -271,18 +271,15 @@ nsProgressFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
 bool
 nsProgressFrame::ShouldUseNativeStyle() const
 {
-  nsIFrame* barFrame = mBarDiv->GetPrimaryFrame();
-
   // Use the native style if these conditions are satisfied:
   // - both frames use the native appearance;
   // - neither frame has author specified rules setting the border or the
   //   background.
   return StyleDisplay()->mAppearance == NS_THEME_PROGRESSBAR &&
-         !PresContext()->HasAuthorSpecifiedRules(this,
+         mBarDiv->GetPrimaryFrame()->StyleDisplay()->mAppearance == NS_THEME_PROGRESSBAR_CHUNK &&
+         !PresContext()->HasAuthorSpecifiedRules(const_cast<nsProgressFrame*>(this),
                                                  NS_AUTHOR_SPECIFIED_BORDER | NS_AUTHOR_SPECIFIED_BACKGROUND) &&
-         barFrame &&
-         barFrame->StyleDisplay()->mAppearance == NS_THEME_PROGRESSBAR_CHUNK &&
-         !PresContext()->HasAuthorSpecifiedRules(barFrame,
+         !PresContext()->HasAuthorSpecifiedRules(mBarDiv->GetPrimaryFrame(),
                                                  NS_AUTHOR_SPECIFIED_BORDER | NS_AUTHOR_SPECIFIED_BACKGROUND);
 }
 

@@ -29,11 +29,6 @@
 #include "nsIDocument.h"
 #include <algorithm>
 
-#ifdef LoadImage
-// Undefine LoadImage to prevent naming conflict with Windows.
-#undef LoadImage
-#endif
-
 using namespace mozilla;
 
 #define MISC_STR_PTR(_cont) \

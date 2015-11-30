@@ -8,7 +8,7 @@
 const TEST_URL = TEST_URL_ROOT + "doc_inspector_highlighter_xbl.xul";
 
 add_task(function*() {
-  let {inspector, toolbox, testActor} = yield openInspectorForURL(TEST_URL);
+  let {inspector, toolbox} = yield openInspectorForURL(TEST_URL);
 
   info("Starting element picker");
   yield toolbox.highlighterUtils.startPicker();
@@ -21,7 +21,7 @@ add_task(function*() {
 
   function doKeyPick(msg) {
     info("Key pressed. Waiting for element to be picked");
-    testActor.synthesizeKey(msg);
+    executeInContent("Test:SynthesizeKey", msg);
     return promise.all([
       toolbox.selection.once("new-node-front"),
       inspector.once("inspector-updated")
@@ -30,11 +30,11 @@ add_task(function*() {
 
   function moveMouseOver(selector) {
     info("Waiting for element " + selector + " to be highlighted");
-    testActor.synthesizeMouse({
+    executeInContent("Test:SynthesizeMouse", {
       options: {type: "mousemove"},
       center: true,
       selector: selector
-    });
+    }, null, false);
     return inspector.toolbox.once("picker-node-hovered");
   }
 

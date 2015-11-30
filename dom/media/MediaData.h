@@ -134,7 +134,7 @@ public:
   static const Type sType = AUDIO_DATA;
   static const char* sTypeName;
 
-  // Creates a new AudioData identical to aOther, but with a different
+  // Creates a new VideoData identical to aOther, but with a different
   // specified timestamp and duration. All data from aOther is copied
   // into the new AudioData but the audio data which is transferred.
   // After such call, the original aOther is unusable.
@@ -282,7 +282,7 @@ public:
 
   // Initialize PlanarYCbCrImage. Only When aCopyData is true,
   // video data is copied to PlanarYCbCrImage.
-  static bool SetVideoDataToImage(PlanarYCbCrImage* aVideoImage,
+  static void SetVideoDataToImage(PlanarYCbCrImage* aVideoImage,
                                   const VideoInfo& aInfo,
                                   const YCbCrBuffer &aBuffer,
                                   const IntRect& aPicture,
@@ -308,7 +308,7 @@ public:
             bool aKeyframe,
             int64_t aTimecode,
             IntSize aDisplay,
-            uint32_t aFrameID);
+            int32_t aFrameID);
 
 protected:
   ~VideoData();

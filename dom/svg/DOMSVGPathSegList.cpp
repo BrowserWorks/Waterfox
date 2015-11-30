@@ -55,7 +55,7 @@ NS_INTERFACE_MAP_END
 // Helper class: AutoChangePathSegListNotifier
 // Stack-based helper class to pair calls to WillChangePathSegList and
 // DidChangePathSegList.
-class MOZ_RAII AutoChangePathSegListNotifier
+class MOZ_STACK_CLASS AutoChangePathSegListNotifier
 {
 public:
   explicit AutoChangePathSegListNotifier(DOMSVGPathSegList* aPathSegList MOZ_GUARD_OBJECT_NOTIFIER_PARAM)

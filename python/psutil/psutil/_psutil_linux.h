@@ -18,4 +18,3 @@ static PyObject* psutil_proc_ioprio_get(PyObject* self, PyObject* args);
 static PyObject* psutil_disk_partitions(PyObject* self, PyObject* args);
 static PyObject* psutil_linux_sysinfo(PyObject* self, PyObject* args);
 static PyObject* psutil_users(PyObject* self, PyObject* args);
-static PyObject* psutil_net_if_stats(PyObject* self, PyObject* args);

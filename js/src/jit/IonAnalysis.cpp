@@ -1166,9 +1166,6 @@ TypeAnalyzer::insertConversions()
                 adjustPhiInputs(phi);
             }
         }
-
-        // AdjustInputs can add/remove/mutate instructions before and after the
-        // current instruction. Only increment the iterator after it is finished.
         for (MInstructionIterator iter(block->begin()); iter != block->end(); iter++) {
             if (!adjustInputs(*iter))
                 return false;
@@ -2094,7 +2091,6 @@ IsResumableMIRType(MIRType type)
       case MIRType_Shape:
       case MIRType_ObjectGroup:
       case MIRType_Doublex2: // NYI, see also RSimdBox::recover
-      case MIRType_SinCosDouble:
         return false;
     }
     MOZ_CRASH("Unknown MIRType.");
@@ -2989,7 +2985,7 @@ jit::ConvertLinearSum(TempAllocator& alloc, MBasicBlock* block, const LinearSum&
         if (term.scale == 1) {
             if (def) {
                 def = MAdd::New(alloc, def, term.term);
-                def->toAdd()->setInt32Specialization();
+                def->toAdd()->setInt32();
                 block->insertAtEnd(def->toInstruction());
                 def->computeRange(alloc);
             } else {
@@ -3002,7 +2998,7 @@ jit::ConvertLinearSum(TempAllocator& alloc, MBasicBlock* block, const LinearSum&
                 def->computeRange(alloc);
             }
             def = MSub::New(alloc, def, term.term);
-            def->toSub()->setInt32Specialization();
+            def->toSub()->setInt32();
             block->insertAtEnd(def->toInstruction());
             def->computeRange(alloc);
         } else {
@@ -3010,12 +3006,12 @@ jit::ConvertLinearSum(TempAllocator& alloc, MBasicBlock* block, const LinearSum&
             MConstant* factor = MConstant::New(alloc, Int32Value(term.scale));
             block->insertAtEnd(factor);
             MMul* mul = MMul::New(alloc, term.term, factor);
-            mul->setInt32Specialization();
+            mul->setInt32();
             block->insertAtEnd(mul);
             mul->computeRange(alloc);
             if (def) {
                 def = MAdd::New(alloc, def, mul);
-                def->toAdd()->setInt32Specialization();
+                def->toAdd()->setInt32();
                 block->insertAtEnd(def->toInstruction());
                 def->computeRange(alloc);
             } else {
@@ -3030,7 +3026,7 @@ jit::ConvertLinearSum(TempAllocator& alloc, MBasicBlock* block, const LinearSum&
         constant->computeRange(alloc);
         if (def) {
             def = MAdd::New(alloc, def, constant);
-            def->toAdd()->setInt32Specialization();
+            def->toAdd()->setInt32();
             block->insertAtEnd(def->toInstruction());
             def->computeRange(alloc);
         } else {
@@ -3096,7 +3092,7 @@ jit::ConvertLinearInequality(TempAllocator& alloc, MBasicBlock* block, const Lin
         block->insertAtEnd(constant->toInstruction());
         constant->computeRange(alloc);
         lhsDef = MAdd::New(alloc, lhsDef, constant);
-        lhsDef->toAdd()->setInt32Specialization();
+        lhsDef->toAdd()->setInt32();
         block->insertAtEnd(lhsDef->toInstruction());
         lhsDef->computeRange(alloc);
     } while (false);
@@ -3449,11 +3445,10 @@ ArgumentsUseCanBeLazy(JSContext* cx, JSScript* script, MInstruction* ins, size_t
         return true;
 
     // arguments.length length can read fp->numActualArgs() directly.
-    // arguments.callee can read fp->callee() directly if the arguments object
-    // is mapped.
+    // arguments.callee can read fp->callee() directly in non-strict code.
     if (ins->isCallGetProperty() && index == 0 &&
         (ins->toCallGetProperty()->name() == cx->names().length ||
-         (script->hasMappedArgsObj() && ins->toCallGetProperty()->name() == cx->names().callee)))
+         (!script->strict() && ins->toCallGetProperty()->name() == cx->names().callee)))
     {
         return true;
     }
@@ -3475,13 +3470,25 @@ jit::AnalyzeArgumentsUsage(JSContext* cx, JSScript* scriptArg)
     // and also simplifies handling of early returns.
     script->setNeedsArgsObj(true);
 
-    // Always construct arguments objects when in debug mode, for generator
-    // scripts (generators can be suspended when speculation fails) or when
-    // direct eval is present.
+    // Always construct arguments objects when in debug mode and for generator
+    // scripts (generators can be suspended when speculation fails).
     //
     // FIXME: Don't build arguments for ES6 generator expressions.
-    if (scriptArg->isDebuggee() || script->isGenerator() || script->bindingsAccessedDynamically())
+    if (scriptArg->isDebuggee() || script->isGenerator())
         return true;
+
+    // If the script has dynamic name accesses which could reach 'arguments',
+    // the parser will already have checked to ensure there are no explicit
+    // uses of 'arguments' in the function. If there are such uses, the script
+    // will be marked as definitely needing an arguments object.
+    //
+    // New accesses on 'arguments' can occur through 'eval' or the debugger
+    // statement. In the former case, we will dynamically detect the use and
+    // mark the arguments optimization as having failed.
+    if (script->bindingsAccessedDynamically()) {
+        script->setNeedsArgsObj(false);
+        return true;
+    }
 
     if (!jit::IsIonEnabled(cx))
         return true;

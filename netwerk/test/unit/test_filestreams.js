@@ -1,8 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var Cc = Components.classes;
-var Ci = Components.interfaces;
+let Cc = Components.classes;
+let Ci = Components.interfaces;
 
 // We need the profile directory so the test harness will clean up our test
 // files.
@@ -275,7 +275,7 @@ function test_zero_size_buffered()
 ////////////////////////////////////////////////////////////////////////////////
 //// Test Runner
 
-var tests = [
+let tests = [
   test_access,
   test_access_trick,
   test_access_defer,

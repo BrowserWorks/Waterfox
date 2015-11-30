@@ -59,14 +59,13 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
+                            const AudioChunk& aInput,
+                            AudioChunk* aOutput,
                             bool* aFinished) override
   {
     *aOutput = aInput;
 
-    nsRefPtr<TransferBuffer> transfer =
-      new TransferBuffer(aStream, aInput.AsAudioChunk());
+    nsRefPtr<TransferBuffer> transfer = new TransferBuffer(aStream, aInput);
     NS_DispatchToMainThread(transfer);
   }
 
@@ -86,14 +85,13 @@ AnalyserNode::AnalyserNode(AudioContext* aContext)
   , mMaxDecibels(-30.)
   , mSmoothingTimeConstant(.8)
 {
-  mStream = AudioNodeStream::Create(aContext,
-                                    new AnalyserNodeEngine(this),
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+  mStream = aContext->Graph()->CreateAudioNodeStream(new AnalyserNodeEngine(this),
+                                                     MediaStreamGraph::INTERNAL_STREAM);
 
   // Enough chunks must be recorded to handle the case of fftSize being
   // increased to maximum immediately before getFloatTimeDomainData() is
   // called, for example.
-  unused << mChunks.SetLength(CHUNK_COUNT, fallible);
+  (void)mChunks.SetLength(CHUNK_COUNT, fallible);
 
   AllocateBuffer();
 }
@@ -330,7 +328,7 @@ AnalyserNode::GetTimeDomainData(float* aData, size_t aLength)
 
   for (size_t writeIndex = 0; writeIndex < aLength; ) {
     const AudioChunk& chunk = mChunks[readChunk & (CHUNK_COUNT - 1)];
-    const size_t channelCount = chunk.ChannelCount();
+    const size_t channelCount = chunk.mChannelData.Length();
     size_t copyLength =
       std::min<size_t>(aLength - writeIndex, WEBAUDIO_BLOCK_SIZE);
     float* dataOut = &aData[writeIndex];

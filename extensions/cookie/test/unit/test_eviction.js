@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var test_generator = do_run_test();
+let test_generator = do_run_test();
 
 function run_test()
 {
@@ -31,10 +31,10 @@ function repeat_test()
 }
 
 // Purge threshold, in seconds.
-var gPurgeAge = 1;
+let gPurgeAge = 1;
 
 // Short expiry age, in seconds.
-var gShortExpiry = 2;
+let gShortExpiry = 2;
 
 // Required delay to ensure a purge occurs, in milliseconds. This must be at
 // least gPurgeAge + 10%, and includes a little fuzz to account for timer

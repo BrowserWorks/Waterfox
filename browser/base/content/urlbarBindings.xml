@@ -39,12 +39,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                       allowevents="true"
                       xbl:inherits="tooltiptext=inputtooltiptext,value,type,maxlength,disabled,size,readonly,placeholder,tabindex,accesskey"/>
         </xul:hbox>
-        <xul:dropmarker anonid="historydropmarker"
-                        class="autocomplete-history-dropmarker urlbar-history-dropmarker"
-                        allowevents="true"
-                        xbl:inherits="open,enablehistory,parentfocused=focused"/>
         <children includes="hbox"/>
       </xul:hbox>
+      <xul:dropmarker anonid="historydropmarker"
+                      class="autocomplete-history-dropmarker urlbar-history-dropmarker"
+                      allowevents="true"
+                      xbl:inherits="open,enablehistory,parentfocused=focused"/>
       <xul:popupset anonid="popupset"
                     class="autocomplete-result-popupset"/>
       <children includes="toolbarbutton"/>
@@ -66,7 +66,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         this.timeout = this._prefs.getIntPref("delay");
         this._formattingEnabled = this._prefs.getBoolPref("formatting.enabled");
         this._mayTrimURLs = this._prefs.getBoolPref("trimURLs");
-        this._cacheUserMadeSearchSuggestionsChoice();
+        this._userMadeSearchSuggestionsChoice =
+          this._prefs.getBoolPref("userMadeSearchSuggestionsChoice");
+        this._ignoreNextSelect = false;
+
         this.inputField.controllers.insertControllerAt(0, this._copyCutController);
         this.inputField.addEventListener("paste", this, false);
         this.inputField.addEventListener("mousedown", this, false);
@@ -228,32 +231,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
           let textNode = this.editor.rootElement.firstChild;
           let value = textNode.textContent;
-          if (!value)
+
+          let protocol = value.match(/^[a-z\d.+\-]+:(?=[^\d])/);
+          if (protocol &&
+              ["http:", "https:", "ftp:"].indexOf(protocol[0]) == -1)
             return;
-
-          // Get the URL from the fixup service:
-          let flags = Services.uriFixup.FIXUP_FLAG_FIX_SCHEME_TYPOS |
-                      Services.uriFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP;
-          let uriInfo = Services.uriFixup.getFixupURIInfo(value, flags);
-          // Ignore if we couldn't make a URI out of this, the URI resulted in a search,
-          // or the URI has a non-http(s)/ftp protocol.
-          if (!uriInfo.fixedURI ||
-              uriInfo.keywordProviderName ||
-              ["http", "https", "ftp"].indexOf(uriInfo.fixedURI.scheme) == -1) {
-            return;
-          }
-
-          // If we trimmed off the http scheme, ensure we stick it back on before
-          // trying to figure out what domain we're accessing, so we don't get
-          // confused by user:pass@host http URLs. We later use
-          // trimmedLength to ensure we don't count the length of a trimmed protocol
-          // when determining which parts of the URL to highlight as "preDomain".
-          let trimmedLength = 0;
-          if (uriInfo.fixedURI.scheme == "http" && !value.startsWith("http://")) {
-            value = "http://" + value;
-            trimmedLength = "http://".length;
-          }
-
           let matchedURL = value.match(/^((?:[a-z]+:\/\/)?(?:[^\/]+@)?)(.+?)(?::\d+)?(?:\/|$)/);
           if (!matchedURL)
             return;
@@ -272,20 +254,23 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           let [, preDomain, domain] = matchedURL;
           let baseDomain = domain;
           let subDomain = "";
-          try {
-            baseDomain = Services.eTLD.getBaseDomainFromHost(uriInfo.fixedURI.host);
-            if (!domain.endsWith(baseDomain)) {
-              // getBaseDomainFromHost converts its resultant to ACE.
-              let IDNService = Cc["@mozilla.org/network/idn-service;1"]
-                               .getService(Ci.nsIIDNService);
-              baseDomain = IDNService.convertACEtoUTF8(baseDomain);
-            }
-          } catch (e) {}
+          // getBaseDomainFromHost doesn't recognize IPv6 literals in brackets as IPs (bug 667159)
+          if (domain[0] != "[") {
+            try {
+              baseDomain = Services.eTLD.getBaseDomainFromHost(domain);
+              if (!domain.endsWith(baseDomain)) {
+                // getBaseDomainFromHost converts its resultant to ACE.
+                let IDNService = Cc["@mozilla.org/network/idn-service;1"]
+                                 .getService(Ci.nsIIDNService);
+                baseDomain = IDNService.convertACEtoUTF8(baseDomain);
+              }
+            } catch (e) {}
+          }
           if (baseDomain != domain) {
             subDomain = domain.slice(0, -baseDomain.length);
           }
 
-          let rangeLength = preDomain.length + subDomain.length - trimmedLength;
+          let rangeLength = preDomain.length + subDomain.length;
           if (rangeLength) {
             let range = document.createRange();
             range.setStart(textNode, 0);
@@ -293,11 +278,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             selection.addRange(range);
           }
 
-          let startRest = preDomain.length + domain.length - trimmedLength;
-          if (startRest < value.length - trimmedLength) {
+          let startRest = preDomain.length + domain.length;
+          if (startRest < value.length) {
             let range = document.createRange();
             range.setStart(textNode, startRest);
-            range.setEnd(textNode, value.length - trimmedLength);
+            range.setEnd(textNode, value.length);
             selection.addRange(range);
           }
         ]]></body>
@@ -679,13 +664,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                 this._formattingEnabled = this._prefs.getBoolPref(aData);
                 break;
               case "userMadeSearchSuggestionsChoice":
-              case "suggest.searches":
-                this._cacheUserMadeSearchSuggestionsChoice();
-                if (this._userMadeSearchSuggestionsChoice) {
-                  this.popup.searchSuggestionsNotificationWasDismissed(
-                    this._prefs.getBoolPref("suggest.searches")
-                  );
-                }
+                this._userMadeSearchSuggestionsChoice =
+                  this._prefs.getBoolPref(aData);
+                this.popup.searchSuggestionsNotificationWasDismissed(
+                  this._prefs.getBoolPref("suggest.searches")
+                );
                 break;
               case "trimURLs":
                 this._mayTrimURLs = this._prefs.getBoolPref(aData);
@@ -843,7 +826,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           }
 
           for (let key of [
-            "engineName",
             "input",
             "searchQuery",
             "searchSuggestion",
@@ -869,6 +851,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           let action = this._parseActionUrl(this._value);
           if (action)
             this.setAttribute("actiontype", action.type);
+        ]]></body>
+      </method>
+
+      <method name="selectTextRange">
+        <parameter name="aStartIndex"/>
+        <parameter name="aEndIndex"/>
+        <body><![CDATA[
+          this._ignoreNextSelect = true;
+          this.inputField.setSelectionRange(aStartIndex, aEndIndex);
         ]]></body>
       </method>
 
@@ -941,14 +932,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
       <field name="_userMadeSearchSuggestionsChoice"><![CDATA[
         false
       ]]></field>
-
-      <method name="_cacheUserMadeSearchSuggestionsChoice">
-        <body><![CDATA[
-          this._userMadeSearchSuggestionsChoice =
-            this._prefs.getBoolPref("userMadeSearchSuggestionsChoice") ||
-            this._prefs.getBoolPref("suggest.searches");
-        ]]></body>
-      </method>
 
       <property name="shouldShowSearchSuggestionsNotification" readonly="true">
         <getter><![CDATA[
@@ -1032,14 +1015,18 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
       <handler event="dragover" phase="capturing" action="this.onDragOver(event, this);"/>
       <handler event="drop" phase="capturing" action="this.onDrop(event, this);"/>
       <handler event="select"><![CDATA[
+        if (this._ignoreNextSelect) {
+          // If this select event is coming from autocomplete's selectTextRange,
+          // then we don't need to adjust what's on the selection keyboard here,
+          // but make sure to reset the flag since this should be a one-time
+          // suppression.
+          this._ignoreNextSelect = false;
+          return;
+        }
+
         if (!Cc["@mozilla.org/widget/clipboard;1"]
                .getService(Ci.nsIClipboard)
                .supportsSelectionClipboard())
-          return;
-
-        if (!window.QueryInterface(Ci.nsIInterfaceRequestor)
-                   .getInterface(Ci.nsIDOMWindowUtils)
-                   .isHandlingUserInput)
           return;
 
         var val = this._getSelectedValueForClipboard();
@@ -1054,7 +1041,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
   </binding>
 
-  <!-- Note: this binding is applied to the autocomplete popup used in web page content and extended in search.xml for the searchbar. -->
+  <!-- Note: this binding is applied to the autocomplete popup used in the Search bar and in web page content -->
   <binding id="browser-autocomplete-result-popup" extends="chrome://global/content/bindings/autocomplete.xml#autocomplete-result-popup">
     <implementation>
       <field name="AppConstants" readonly="true">
@@ -1131,36 +1118,408 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
     </implementation>
   </binding>
 
+  <!-- Note: this binding is applied to the autocomplete popup used in the Search bar -->
+  <binding id="browser-search-autocomplete-result-popup" extends="chrome://browser/content/urlbarBindings.xml#browser-autocomplete-result-popup">
+    <resources>
+      <stylesheet src="chrome://browser/skin/searchbar.css"/>
+    </resources>
+    <content ignorekeys="true" level="top" consumeoutsideclicks="never">
+      <xul:hbox anonid="searchbar-engine" xbl:inherits="showonlysettings"
+                class="search-panel-header search-panel-current-engine">
+        <xul:image class="searchbar-engine-image" xbl:inherits="src"/>
+        <xul:label anonid="searchbar-engine-name" flex="1" crop="end"
+                   role="presentation"/>
+      </xul:hbox>
+      <xul:tree anonid="tree" flex="1"
+                class="autocomplete-tree plain search-panel-tree"
+                hidecolumnpicker="true" seltype="single">
+        <xul:treecols anonid="treecols">
+          <xul:treecol id="treecolAutoCompleteValue" class="autocomplete-treecol" flex="1" overflow="true"/>
+        </xul:treecols>
+        <xul:treechildren class="autocomplete-treebody"/>
+      </xul:tree>
+      <xul:deck anonid="search-panel-one-offs-header"
+                selectedIndex="0"
+                class="search-panel-header search-panel-current-input">
+        <xul:label anonid="searchbar-oneoffheader-search" value="&searchWithHeader.label;"/>
+        <xul:hbox anonid="search-panel-searchforwith"
+                  class="search-panel-current-input">
+          <xul:label anonid="searchbar-oneoffheader-before" value="&searchFor.label;"/>
+          <xul:label anonid="searchbar-oneoffheader-searchtext" flex="1" crop="end" class="search-panel-input-value"/>
+          <xul:label anonid="searchbar-oneoffheader-after" flex="10000" value="&searchWith.label;"/>
+        </xul:hbox>
+        <xul:hbox anonid="search-panel-searchonengine"
+                  class="search-panel-current-input">
+          <xul:label anonid="searchbar-oneoffheader-beforeengine" value="&search.label;"/>
+          <xul:label anonid="searchbar-oneoffheader-engine" flex="1" crop="end"
+                     class="search-panel-input-value"/>
+          <xul:label anonid="searchbar-oneoffheader-afterengine" flex="10000"
+                     value="&searchAfter.label;"/>
+        </xul:hbox>
+      </xul:deck>
+      <xul:description anonid="search-panel-one-offs"
+                       role="group"
+                       class="search-panel-one-offs"/>
+      <xul:vbox anonid="add-engines"/>
+      <xul:button anonid="search-settings"
+                  oncommand="BrowserUITelemetry.countSearchSettingsEvent('searchbar');openPreferences('paneSearch')"
+                  class="search-setting-button search-panel-header"
+                  label="&changeSearchSettings.button;"/>
+    </content>
+    <implementation>
+      <!-- Popup rollup is triggered by native events before the mousedown event
+           reaches the DOM. The will be set to true by the popuphiding event and
+           false after the mousedown event has been triggered to detect what
+           caused rollup. -->
+      <field name="_isHiding">false</field>
+      <field name="_bundle">null</field>
+      <property name="bundle" readonly="true">
+        <getter>
+          <![CDATA[
+            if (!this._bundle) {
+              const kBundleURI = "chrome://browser/locale/search.properties";
+              this._bundle = Services.strings.createBundle(kBundleURI);
+            }
+            return this._bundle;
+          ]]>
+        </getter>
+      </property>
+
+      <method name="updateHeader">
+        <body><![CDATA[
+          let currentEngine = Services.search.currentEngine;
+          let uri = currentEngine.iconURI;
+          if (uri) {
+            uri = uri.spec;
+            this.setAttribute("src", PlacesUtils.getImageURLForResolution(window, uri));
+          }
+          else {
+            // If the default has just been changed to a provider without icon,
+            // avoid showing the icon of the previous default provider.
+            this.removeAttribute("src");
+          }
+
+          let headerText = this.bundle.formatStringFromName("searchHeader",
+                                                            [currentEngine.name], 1);
+          document.getAnonymousElementByAttribute(this, "anonid", "searchbar-engine-name")
+                  .setAttribute("value", headerText);
+          document.getAnonymousElementByAttribute(this, "anonid", "searchbar-engine")
+                  .engine = currentEngine;
+        ]]></body>
+      </method>
+    </implementation>
+    <handlers>
+      <handler event="popuphidden"><![CDATA[
+        Services.tm.mainThread.dispatch(function() {
+          document.getElementById("searchbar").textbox.selectedButton = null;
+        }, Ci.nsIThread.DISPATCH_NORMAL);
+      ]]></handler>
+
+      <handler event="popupshowing"><![CDATA[
+        // First handle deciding if we are showing the reduced version of the
+        // popup containing only the preferences button. We do this if the
+        // glass icon has been clicked if the text field is empty.
+        let searchbar = document.getElementById("searchbar");
+        let tree = document.getAnonymousElementByAttribute(this, "anonid",
+                                                           "tree")
+        if (searchbar.hasAttribute("showonlysettings")) {
+          searchbar.removeAttribute("showonlysettings");
+          this.setAttribute("showonlysettings", "true");
+
+          // Setting this with an xbl-inherited attribute gets overridden the
+          // second time the user clicks the glass icon for some reason...
+          tree.collapsed = true;
+        }
+        else {
+          this.removeAttribute("showonlysettings");
+          // Uncollapse as long as we have a tree with a view which has >= 1 row.
+          // The autocomplete binding itself will take care of uncollapsing later,
+          // if we currently have no rows but end up having some in the future
+          // when the search string changes
+          tree.collapsed = !tree.view || !tree.view.rowCount;
+        }
+
+        // Show the current default engine in the top header of the panel.
+        this.updateHeader();
+
+        // Update the 'Search for <keywords> with:" header.
+        let headerSearchText =
+          document.getAnonymousElementByAttribute(this, "anonid",
+                                                  "searchbar-oneoffheader-searchtext");
+        let headerPanel =
+          document.getAnonymousElementByAttribute(this, "anonid",
+                                                  "search-panel-one-offs-header");
+        let list = document.getAnonymousElementByAttribute(this, "anonid",
+                                                           "search-panel-one-offs");
+        let textbox = searchbar.textbox;
+        let self = this;
+        let inputHandler = function() {
+          headerSearchText.setAttribute("value", textbox.value);
+          let groupText;
+          let isOneOffSelected =
+            this.selectedButton &&
+            this.selectedButton.classList.contains("searchbar-engine-one-off-item");
+          if (textbox.value) {
+            self.removeAttribute("showonlysettings");
+            groupText = headerSearchText.previousSibling.value +
+                        '"' + headerSearchText.value + '"' +
+                        headerSearchText.nextSibling.value;
+            if (!isOneOffSelected)
+              headerPanel.selectedIndex = 1;
+          }
+          else {
+            let noSearchHeader =
+              document.getAnonymousElementByAttribute(self, "anonid",
+                                                      "searchbar-oneoffheader-search");
+            groupText = noSearchHeader.value;
+            if (!isOneOffSelected)
+              headerPanel.selectedIndex = 0;
+          }
+          list.setAttribute("aria-label", groupText);
+        };
+        textbox.addEventListener("input", inputHandler);
+        this.addEventListener("popuphiding", function hiding() {
+          textbox.removeEventListener("input", inputHandler);
+          this.removeEventListener("popuphiding", hiding);
+        });
+        inputHandler();
+
+        // Handle opensearch items. This needs to be done before building the
+        // list of one off providers, as that code will return early if all the
+        // alternative engines are hidden.
+        let addEngineList =
+          document.getAnonymousElementByAttribute(this, "anonid", "add-engines");
+        while (addEngineList.firstChild)
+          addEngineList.firstChild.remove();
+
+        const kXULNS =
+          "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+
+        let addEngines = gBrowser.selectedBrowser.engines;
+        if (addEngines && addEngines.length > 0) {
+          for (let engine of addEngines) {
+            let button = document.createElementNS(kXULNS, "button");
+            let label = this.bundle.formatStringFromName("cmd_addFoundEngine",
+                                                         [engine.title], 1);
+            button.id = "searchbar-add-engine-" + engine.title.replace(/ /g, '-');
+            button.setAttribute("class", "addengine-item");
+            button.setAttribute("label", label);
+            button.setAttribute("pack", "start");
+
+            button.setAttribute("crop", "end");
+            button.setAttribute("tooltiptext", engine.uri);
+            button.setAttribute("uri", engine.uri);
+            if (engine.icon) {
+              let uri = PlacesUtils.getImageURLForResolution(window, engine.icon);
+              button.setAttribute("image", uri);
+            }
+            button.setAttribute("title", engine.title);
+            addEngineList.appendChild(button);
+          }
+        }
+
+        // Finally, build the list of one-off buttons.
+        while (list.firstChild)
+          list.firstChild.remove();
+
+        // Avoid setting the selection based on mouse events before
+        // the 'popupshown' event has fired.
+        this._ignoreMouseEvents = true;
+
+        let Preferences =
+          Cu.import("resource://gre/modules/Preferences.jsm", {}).Preferences;
+        let pref = Preferences.get("browser.search.hiddenOneOffs");
+        let hiddenList = pref ? pref.split(",") : [];
+
+        let currentEngineName = Services.search.currentEngine.name;
+        let engines = Services.search.getVisibleEngines()
+                              .filter(e => e.name != currentEngineName &&
+                                           hiddenList.indexOf(e.name) == -1);
+
+        let header = document.getAnonymousElementByAttribute(this, "anonid",
+                                                             "search-panel-one-offs-header")
+        // header is a xul:deck so collapsed doesn't work on it, see bug 589569.
+        header.hidden = list.collapsed = !engines.length;
+
+        // 49px is the min-width of each search engine button,
+        // adapt this const when changing the css.
+        // It's actually 48px + 1px of right border.
+        const ENGINE_WIDTH = 49;
+        let panel = document.getElementById("PopupSearchAutoComplete");
+        // The panel width only spans to the textbox size, but we also want it
+        // to include the magnifier icon's width.
+        let ltr = getComputedStyle(this).direction == "ltr";
+        let magnifierWidth = parseInt(getComputedStyle(panel)[
+                               ltr ? "marginLeft" : "marginRight"
+                             ]) * -1;
+        let minWidth = parseInt(panel.width) + magnifierWidth;
+        if (engines.length) {
+          // Ensure the panel is wide enough to fit at least 3 engines.
+          minWidth = Math.max(minWidth, ENGINE_WIDTH * 3);
+        }
+        panel.style.minWidth = minWidth + "px";
+
+        if (!engines.length)
+          return;
+
+        let panelWidth = parseInt(panel.clientWidth);
+        // The + 1 is because the last button doesn't have a right border.
+        let enginesPerRow = Math.floor((panelWidth + 1) / ENGINE_WIDTH);
+        let buttonWidth = Math.floor(panelWidth / enginesPerRow);
+        // There will be an emtpy area of:
+        //   panelWidth - enginesPerRow * buttonWidth  px
+        // at the end of each row.
+
+        // If the <description> tag with the list of search engines doesn't have
+        // a fixed height, the panel will be sized incorrectly, causing the bottom
+        // of the suggestion <tree> to be hidden.
+        let rowCount = Math.ceil(engines.length / enginesPerRow);
+        let height = rowCount * 33; // 32px per row, 1px border.
+        list.setAttribute("height", height + "px");
+
+        // Ensure we can refer to the settings button by ID:
+        let settingsEl = document.getAnonymousElementByAttribute(this, "anonid", "search-settings");
+        settingsEl.id = this.id + "-anon-search-settings";
+
+        let dummyItems = enginesPerRow - (engines.length % enginesPerRow || enginesPerRow);
+        for (let i = 0; i < engines.length; ++i) {
+          let engine = engines[i];
+          let button = document.createElementNS(kXULNS, "button");
+          button.id = "searchbar-engine-one-off-item-" + engine.name.replace(/ /g, '-');
+          let uri = "chrome://browser/skin/search-engine-placeholder.png";
+          if (engine.iconURI) {
+            uri = PlacesUtils.getImageURLForResolution(window, engine.iconURI.spec);
+          }
+          button.setAttribute("image", uri);
+          button.setAttribute("class", "searchbar-engine-one-off-item");
+          button.setAttribute("tooltiptext", engine.name);
+          button.setAttribute("width", buttonWidth);
+          button.engine = engine;
+
+          if ((i + 1) % enginesPerRow == 0)
+            button.classList.add("last-of-row");
+
+          if (i >= engines.length + dummyItems - enginesPerRow)
+            button.classList.add("last-row");
+
+          list.appendChild(button);
+        }
+
+        while (dummyItems) {
+          let button = document.createElementNS(kXULNS, "button");
+          button.setAttribute("class", "searchbar-engine-one-off-item dummy last-row");
+          button.setAttribute("width", buttonWidth);
+
+          if (!--dummyItems)
+            button.classList.add("last-of-row");
+
+          list.appendChild(button);
+        }
+      ]]></handler>
+
+      <handler event="popupshown"><![CDATA[
+        this._ignoreMouseEvents = false;
+      ]]></handler>
+
+      <handler event="mousedown"><![CDATA[
+        // Required to receive click events from the buttons on Linux.
+        event.preventDefault();
+      ]]></handler>
+
+      <handler event="mouseover"><![CDATA[
+        let target = event.originalTarget;
+        if (target.localName != "button")
+          return;
+
+        // We ignore mouse events between the popupshowing and popupshown
+        // events to avoid selecting the button that happens to be under the
+        // mouse when the panel opens.
+        if (this._ignoreMouseEvents)
+          return;
+
+        if ((target.classList.contains("searchbar-engine-one-off-item") &&
+             !target.classList.contains("dummy")) ||
+            target.classList.contains("addengine-item") ||
+            target.classList.contains("search-setting-button"))
+          document.getElementById("searchbar").textbox.selectedButton = target;
+      ]]></handler>
+
+      <handler event="mouseout"><![CDATA[
+        let target = event.originalTarget;
+        if (target.localName != "button")
+          return;
+
+        let textbox = document.getElementById("searchbar").textbox;
+        if (textbox.selectedButton == target)
+          textbox.selectedButton = null;
+      ]]></handler>
+
+      <handler event="click"><![CDATA[
+        if (event.button == 2)
+          return; // ignore right clicks.
+
+        let button = event.originalTarget;
+        let engine = button.engine || button.parentNode.engine;
+
+        if (!engine)
+          return;
+
+        let searchbar = document.getElementById("searchbar");
+        searchbar.handleSearchCommand(event, engine);
+      ]]></handler>
+
+      <handler event="command"><![CDATA[
+        let target = event.originalTarget;
+        if (target.classList.contains("addengine-item")) {
+          // On success, hide and reshow the panel to show the new engine.
+          let installCallback = {
+            onSuccess: function(engine) {
+              event.target.hidePopup();
+              BrowserSearch.searchBar.openSuggestionsPanel();
+            },
+            onError: function(errorCode) {
+              Components.utils.reportError("Error adding search engine: " + errorCode);
+            }
+          }
+          Services.search.addEngine(target.getAttribute("uri"),
+                                    Ci.nsISearchEngine.DATA_XML,
+                                    target.getAttribute("image"), false,
+                                    installCallback);
+        }
+      ]]></handler>
+
+      <handler event="popuphiding"><![CDATA[
+        this._isHiding = true;
+        setTimeout(() => {
+          this._isHiding = false;
+        }, 0);
+      ]]></handler>
+    </handlers>
+  </binding>
+
+  <!-- Used for additional open search providers in the search panel. -->
+  <binding id="addengine-icon" extends="xul:box">
+    <content>
+      <xul:image class="addengine-icon" xbl:inherits="src"/>
+      <xul:image class="addengine-badge"/>
+    </content>
+  </binding>
+
   <binding id="urlbar-rich-result-popup" extends="chrome://global/content/bindings/autocomplete.xml#autocomplete-rich-result-popup">
 
-    <content ignorekeys="true" level="top" consumeoutsideclicks="never"
-             aria-owns="search-suggestions-notification richlistbox">
-      <xul:hbox anonid="search-suggestions-notification"
-                align="center"
-                role="alert"
-                aria-describedby="search-suggestions-notification-text">
+    <content ignorekeys="true" level="top" consumeoutsideclicks="never">
+      <xul:hbox anonid="search-suggestions-notification" align="center">
         <xul:description flex="1">
           &urlbar.searchSuggestionsNotification.question;
-          <!-- Several things here are to make the label accessibile via an
-               accesskey so that a11y doesn't suck: the accesskey, using an
-               onclick handler instead of an href attribute, the control
-               attribute, and having the control attribute refer to a valid ID
-               that is the label itself. -->
-          <xul:label id="search-suggestions-notification-learn-more"
+          <xul:label anonid="search-suggestions-notification-learn-more"
                      class="text-link"
-                     role="link"
-                     value="&urlbar.searchSuggestionsNotification.learnMore;"
-                     accesskey="&urlbar.searchSuggestionsNotification.learnMore.accesskey;"
-                     onclick="document.getBindingParent(this).openSearchSuggestionsNotificationLearnMoreURL();"
-                     control="search-suggestions-notification-learn-more"/>
+                     value="&urlbar.searchSuggestionsNotification.learnMore;"/>
         </xul:description>
         <xul:button anonid="search-suggestions-notification-disable"
                     label="&urlbar.searchSuggestionsNotification.disable;"
-                    accesskey="&urlbar.searchSuggestionsNotification.disable.accesskey;"
                     onclick="document.getBindingParent(this).dismissSearchSuggestionsNotification(false);"/>
         <xul:button anonid="search-suggestions-notification-enable"
                     label="&urlbar.searchSuggestionsNotification.enable;"
-                    accesskey="&urlbar.searchSuggestionsNotification.enable.accesskey;"
                     onclick="document.getBindingParent(this).dismissSearchSuggestionsNotification(true);"/>
       </xul:hbox>
       <xul:richlistbox anonid="richlistbox" class="autocomplete-richlistbox"
@@ -1185,29 +1544,19 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         );
       </field>
 
+      <field name="searchSuggestionsNotificationLearnMoreLink" readonly="true">
+        document.getAnonymousElementByAttribute(
+          this, "anonid", "search-suggestions-notification-learn-more"
+        );
+      </field>
+
       <field name="footer" readonly="true">
         document.getAnonymousElementByAttribute(this, "anonid", "footer");
       </field>
 
-      <method name="openSearchSuggestionsNotificationLearnMoreURL">
-        <body><![CDATA[
-        let url = Services.urlFormatter.formatURL(
-          Services.prefs.getCharPref("app.support.baseURL") + "suggestions"
-        );
-        openUILinkIn(url, "tab");
-        ]]></body>
-      </method>
-
       <method name="dismissSearchSuggestionsNotification">
         <parameter name="enableSuggestions"/>
         <body><![CDATA[
-          // Make sure the urlbar is focused.  It won't be, for example, if the
-          // user used an accesskey to make an opt-in choice.  mIgnoreFocus
-          // prevents the text from being selected.
-          this.input.mIgnoreFocus = true;
-          this.input.focus();
-          this.input.mIgnoreFocus = false;
-
           Services.prefs.setBoolPref(
             "browser.urlbar.suggest.searches", enableSuggestions
           );
@@ -1312,6 +1661,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         <parameter name="aElement"/>
         <body>
           <![CDATA[
+          // Set the learn-more link href.
+          let link = this.searchSuggestionsNotificationLearnMoreLink;
+          if (!link.hasAttribute("href")) {
+            let url = Services.urlFormatter.formatURL(
+              Services.prefs.getCharPref("app.support.baseURL") + "suggestions"
+            );
+            link.setAttribute("href", url);
+          }
+
           // With the notification shown, the listbox's height can sometimes be
           // too small when it's flexed, as it normally is.  Also, it can start
           // out slightly scrolled down.  Both problems appear together, most
@@ -1326,13 +1684,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
           this.classList.add("showSearchSuggestionsNotification");
           this._updateFooterVisibility();
-
-          // This event allows accessibility APIs to see the notification.
-          if (!this.popupOpen) {
-            let event = document.createEvent("Events");
-            event.initEvent("AlertActive", true, true);
-            this.searchSuggestionsNotification.dispatchEvent(event);
-          }
           ]]>
         </body>
       </method>
@@ -2049,20 +2400,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         }
         document.getAnonymousElementByAttribute(this, "anonid", "center-item-warning-label").value = warningString;
 
-        let chromeWin = window.QueryInterface(Ci.nsIDOMChromeWindow);
-        let isWindowPrivate = PrivateBrowsingUtils.isWindowPrivate(chromeWin);
-
-        if (isWindowPrivate) {
-          // TODO: temporary compromise of hiding some privacy leaks, remove once bug 892487 is fixed
-          let allowalways = document.getAnonymousElementByAttribute(this, "anonid", "allowalways");
-          let block = document.getAnonymousElementByAttribute(this, "anonid", "block");
-          let allownow = document.getAnonymousElementByAttribute(this, "anonid", "allownow");
-
-          allowalways.hidden = curState !== "allowalways";
-          block.hidden       = curState !== "block";
-          allownow.hidden    = curState === "allowalways";
-        }
-
         if (url || linkHandler) {
           link.value = linkString;
           if (url) {
@@ -2238,8 +2575,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         <body><![CDATA[
           var action = this._items[0].action;
           var prePath = action.pluginPermissionPrePath;
-          let chromeWin = window.QueryInterface(Ci.nsIDOMChromeWindow);
-          let isWindowPrivate = PrivateBrowsingUtils.isWindowPrivate(chromeWin);
 
           let label, linkLabel, linkUrl, button1, button2;
 
@@ -2277,11 +2612,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
             default:
               Cu.reportError(Error("Unexpected blocklist state"));
-            }
-
-            // TODO: temporary compromise, remove this once bug 892487 is fixed
-            if (isWindowPrivate) {
-              this._buttonContainer.hidden = true;
             }
           }
           else if (action.pluginTag.enabledState == Ci.nsIPluginTag.STATE_DISABLED) {
@@ -2337,12 +2667,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
             default:
               Cu.reportError(Error("Unexpected blocklist state"));
-            }
-
-            // TODO: temporary compromise, remove this once bug 892487 is fixed
-            if (isWindowPrivate) {
-              button1.default = true;
-              this._secondaryButton.hidden = true;
             }
           }
           this._setupDescription(label, action.pluginName, prePath);

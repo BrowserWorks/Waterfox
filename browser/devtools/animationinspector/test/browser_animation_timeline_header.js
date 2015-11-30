@@ -4,7 +4,8 @@
 
 "use strict";
 
-// Check that the timeline shows correct time graduations in the header.
+// Check that the timeline-based UI shows correct time graduations in the
+// header.
 
 const {findOptimalTimeInterval} = require("devtools/animationinspector/utils");
 const {TimeScale} = require("devtools/animationinspector/components");
@@ -13,7 +14,7 @@ const TIME_GRADUATION_MIN_SPACING = 40;
 
 add_task(function*() {
   yield addTab(TEST_URL_ROOT + "doc_simple_animation.html");
-  let {panel} = yield openAnimationInspector();
+  let {panel} = yield openAnimationInspectorNewUI();
 
   let timeline = panel.animationsTimelineComponent;
   let headerEl = timeline.timeHeaderEl;

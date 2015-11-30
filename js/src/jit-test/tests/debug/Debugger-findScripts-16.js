@@ -1,4 +1,4 @@
-// Bug 744731 - findScripts() finds active debugger executeInGlobal scripts.
+// Bug 744731 - findScripts() finds active debugger evalInGlobal scripts.
 
 var g = newGlobal();
 var dbg = new Debugger;
@@ -8,5 +8,5 @@ dbg.onDebuggerStatement = function (frame) {
     hits++;
     assertEq(dbg.findScripts().indexOf(dbg.getNewestFrame().script) !== -1, true);
 };
-gw.executeInGlobal("debugger;");
+gw.evalInGlobal("debugger;");
 assertEq(hits, 1);

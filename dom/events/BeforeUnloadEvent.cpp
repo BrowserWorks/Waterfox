@@ -36,12 +36,14 @@ BeforeUnloadEvent::GetReturnValue(nsAString& aReturnValue)
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<BeforeUnloadEvent>
-NS_NewDOMBeforeUnloadEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMBeforeUnloadEvent(nsIDOMEvent** aInstancePtrResult,
+                           EventTarget* aOwner,
                            nsPresContext* aPresContext,
                            WidgetEvent* aEvent) 
 {
-  nsRefPtr<BeforeUnloadEvent> it =
-    new BeforeUnloadEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  BeforeUnloadEvent* it = new BeforeUnloadEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

@@ -390,9 +390,7 @@ function GetWindowsPasswordsResource(aProfileFolder) {
         _rowToLoginInfo(row) {
           let loginInfo = {
             username: row.getResultByName("username_value"),
-            password: crypto.
-                      decryptData(crypto.arrayToString(row.getResultByName("password_value")),
-                                                       null),
+            password: crypto.decryptData(row.getResultByName("password_value")),
             hostName: NetUtil.newURI(row.getResultByName("origin_url")).prePath,
             submitURL: null,
             httpRealm: null,
@@ -492,7 +490,7 @@ ChromiumProfileMigrator.prototype.classDescription = "Chromium Profile Migrator"
 ChromiumProfileMigrator.prototype.contractID = "@mozilla.org/profile/migrator;1?app=browser&type=chromium";
 ChromiumProfileMigrator.prototype.classID = Components.ID("{8cece922-9720-42de-b7db-7cef88cb07ca}");
 
-var componentsArray = [ChromeProfileMigrator, ChromiumProfileMigrator];
+let componentsArray = [ChromeProfileMigrator, ChromiumProfileMigrator];
 
 #if defined(XP_WIN) || defined(XP_MACOSX)
 /**

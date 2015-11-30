@@ -113,5 +113,5 @@ vacuumParticipant.prototype =
   ])
 };
 
-var gComponentsArray = [vacuumParticipant];
+let gComponentsArray = [vacuumParticipant];
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(gComponentsArray);

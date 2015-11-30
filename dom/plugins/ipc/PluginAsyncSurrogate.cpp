@@ -101,6 +101,7 @@ bool RecursionGuard::sHasEntered = false;
 
 PluginAsyncSurrogate::PluginAsyncSurrogate(PluginModuleParent* aParent)
   : mParent(aParent)
+  , mInstance(nullptr)
   , mMode(0)
   , mWindow(nullptr)
   , mAcceptCalls(false)
@@ -122,10 +123,7 @@ PluginAsyncSurrogate::Init(NPMIMEType aPluginType, NPP aInstance, uint16_t aMode
                            int16_t aArgc, char* aArgn[], char* aArgv[])
 {
   mMimeType = aPluginType;
-  nsNPAPIPluginInstance* instance =
-    static_cast<nsNPAPIPluginInstance*>(aInstance->ndata);
-  MOZ_ASSERT(instance);
-  mInstance = instance;
+  mInstance = aInstance;
   mMode = aMode;
   for (int i = 0; i < aArgc; ++i) {
     mNames.AppendElement(NullableString(aArgn[i]));
@@ -164,11 +162,7 @@ PluginAsyncSurrogate::Cast(NPP aInstance)
 nsresult
 PluginAsyncSurrogate::NPP_New(NPError* aError)
 {
-  if (!mInstance) {
-    return NS_ERROR_NULL_POINTER;
-  }
-
-  nsresult rv = mParent->NPP_NewInternal(mMimeType.BeginWriting(), GetNPP(),
+  nsresult rv = mParent->NPP_NewInternal(mMimeType.BeginWriting(), mInstance,
                                          mMode, mNames, mValues, nullptr,
                                          aError);
   if (NS_FAILED(rv)) {
@@ -205,21 +199,11 @@ PluginAsyncSurrogate::NotifyDestroyPending(NPP aInstance)
   surrogate->NotifyDestroyPending();
 }
 
-NPP
-PluginAsyncSurrogate::GetNPP()
-{
-  MOZ_ASSERT(mInstance);
-  NPP npp;
-  DebugOnly<nsresult> rv = mInstance->GetNPP(&npp);
-  MOZ_ASSERT(NS_SUCCEEDED(rv));
-  return npp;
-}
-
 void
 PluginAsyncSurrogate::NotifyDestroyPending()
 {
   mDestroyPending = true;
-  nsJSNPRuntime::OnPluginDestroyPending(GetNPP());
+  nsJSNPRuntime::OnPluginDestroyPending(mInstance);
 }
 
 NPError
@@ -229,7 +213,7 @@ PluginAsyncSurrogate::NPP_Destroy(NPSavedData** aSave)
   if (!WaitForInit()) {
     return NPERR_GENERIC_ERROR;
   }
-  return PluginModuleParent::NPP_Destroy(GetNPP(), aSave);
+  return PluginModuleParent::NPP_Destroy(mInstance, aSave);
 }
 
 NPError
@@ -239,13 +223,12 @@ PluginAsyncSurrogate::NPP_GetValue(NPPVariable aVariable, void* aRetval)
     if (!WaitForInit()) {
       return NPERR_GENERIC_ERROR;
     }
-
-    PluginInstanceParent* instance = PluginInstanceParent::Cast(GetNPP());
+    PluginInstanceParent* instance = PluginInstanceParent::Cast(mInstance);
     MOZ_ASSERT(instance);
     return instance->NPP_GetValue(aVariable, aRetval);
   }
 
-  NPObject* npobject = parent::_createobject(GetNPP(),
+  NPObject* npobject = parent::_createobject(mInstance,
                                              const_cast<NPClass*>(GetClass()));
   MOZ_ASSERT(npobject);
   MOZ_ASSERT(npobject->_class == GetClass());
@@ -260,7 +243,7 @@ PluginAsyncSurrogate::NPP_SetValue(NPNVariable aVariable, void* aValue)
   if (!WaitForInit()) {
     return NPERR_GENERIC_ERROR;
   }
-  return PluginModuleParent::NPP_SetValue(GetNPP(), aVariable, aValue);
+  return PluginModuleParent::NPP_SetValue(mInstance, aVariable, aValue);
 }
 
 NPError
@@ -446,10 +429,7 @@ PluginAsyncSurrogate::DestroyAsyncStream(NPStream* aStream)
   // streamListener was suspended during async init. We must resume the stream
   // request prior to calling _destroystream for cleanup to work correctly.
   streamListener->ResumeRequest();
-  if (!mInstance) {
-    return;
-  }
-  parent::_destroystream(GetNPP(), aStream, NPRES_DONE);
+  parent::_destroystream(mInstance, aStream, NPRES_DONE);
 }
 
 /* static */ bool
@@ -589,10 +569,12 @@ PluginAsyncSurrogate::NotifyAsyncInitFailed()
   // we'll be perma-blocked
   mInitCancelled = true;
 
-  if (!mInstance) {
+  nsNPAPIPluginInstance* inst =
+    static_cast<nsNPAPIPluginInstance*>(mInstance->ndata);
+  if (!inst) {
       return;
   }
-  nsPluginInstanceOwner* owner = mInstance->GetOwner();
+  nsPluginInstanceOwner* owner = inst->GetOwner();
   if (owner) {
     owner->NotifyHostAsyncInitFailed();
   }
@@ -681,11 +663,11 @@ PluginAsyncSurrogate::ScriptableHasMethod(NPObject* aObject,
     // initialization, we should try again.
     const NPNetscapeFuncs* npn = object->mSurrogate->mParent->GetNetscapeFuncs();
     NPObject* pluginObject = nullptr;
-    NPError nperror = npn->getvalue(object->mSurrogate->GetNPP(),
+    NPError nperror = npn->getvalue(object->mSurrogate->mInstance,
                                     NPNVPluginElementNPObject,
                                     (void*)&pluginObject);
     if (nperror == NPERR_NO_ERROR) {
-      NPPAutoPusher nppPusher(object->mSurrogate->GetNPP());
+      NPPAutoPusher nppPusher(object->mSurrogate->mInstance);
       result = pluginObject->_class->hasMethod(pluginObject, aName);
       npn->releaseobject(pluginObject);
       NPUTF8* idstr = npn->utf8fromidentifier(aName);
@@ -734,10 +716,10 @@ PluginAsyncSurrogate::GetPropertyHelper(NPObject* aObject, NPIdentifier aName,
   if (!success) {
     const NPNetscapeFuncs* npn = mParent->GetNetscapeFuncs();
     NPObject* pluginObject = nullptr;
-    NPError nperror = npn->getvalue(GetNPP(), NPNVPluginElementNPObject,
+    NPError nperror = npn->getvalue(mInstance, NPNVPluginElementNPObject,
                                     (void*)&pluginObject);
     if (nperror == NPERR_NO_ERROR) {
-      NPPAutoPusher nppPusher(GetNPP());
+      NPPAutoPusher nppPusher(mInstance);
       bool hasProperty = nsJSObjWrapper::HasOwnProperty(pluginObject, aName);
       NPUTF8* idstr = npn->utf8fromidentifier(aName);
       npn->memfree(idstr);
@@ -842,11 +824,11 @@ PluginAsyncSurrogate::ScriptableHasProperty(NPObject* aObject,
     // object hadn't been set yet. Now that we're further along in
     // initialization, we should try again.
     NPObject* pluginObject = nullptr;
-    NPError nperror = npn->getvalue(object->mSurrogate->GetNPP(),
+    NPError nperror = npn->getvalue(object->mSurrogate->mInstance,
                                     NPNVPluginElementNPObject,
                                     (void*)&pluginObject);
     if (nperror == NPERR_NO_ERROR) {
-      NPPAutoPusher nppPusher(object->mSurrogate->GetNPP());
+      NPPAutoPusher nppPusher(object->mSurrogate->mInstance);
       result = nsJSObjWrapper::HasOwnProperty(pluginObject, aName);
       npn->releaseobject(pluginObject);
       idstr = npn->utf8fromidentifier(aName);

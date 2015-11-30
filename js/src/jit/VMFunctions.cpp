@@ -12,7 +12,7 @@
 #include "jit/BaselineIC.h"
 #include "jit/JitCompartment.h"
 #include "jit/JitFrames.h"
-#include "jit/mips32/Simulator-mips32.h"
+#include "jit/mips/Simulator-mips.h"
 #include "vm/ArrayObject.h"
 #include "vm/Debugger.h"
 #include "vm/Interpreter.h"
@@ -609,6 +609,25 @@ GetDynamicName(JSContext* cx, JSObject* scopeChain, JSString* str, Value* vp)
     vp->setUndefined();
 }
 
+bool
+FilterArgumentsOrEval(JSContext* cx, JSString* str)
+{
+    // ensureLinear() is fallible, but cannot GC: it can only allocate a
+    // character buffer for the flattened string. If this call fails then the
+    // calling Ion code will bailout, resume in Baseline and likely fail again
+    // when trying to flatten the string and unwind the stack.
+    JS::AutoCheckCannotGC nogc;
+    JSLinearString* linear = str->ensureLinear(cx);
+    if (!linear)
+        return false;
+
+    static const char16_t arguments[] = {'a', 'r', 'g', 'u', 'm', 'e', 'n', 't', 's'};
+    static const char16_t eval[] = {'e', 'v', 'a', 'l'};
+
+    return !StringHasPattern(linear, arguments, mozilla::ArrayLength(arguments)) &&
+        !StringHasPattern(linear, eval, mozilla::ArrayLength(eval));
+}
+
 void
 PostWriteBarrier(JSRuntime* rt, JSObject* obj)
 {
@@ -835,15 +854,15 @@ GeneratorThrowOrClose(JSContext* cx, BaselineFrame* frame, Handle<GeneratorObjec
 }
 
 bool
-InitStrictEvalScopeObjects(JSContext* cx, BaselineFrame* frame)
+StrictEvalPrologue(JSContext* cx, BaselineFrame* frame)
 {
-    return frame->initStrictEvalScopeObjects(cx);
+    return frame->strictEvalPrologue(cx);
 }
 
 bool
-InitFunctionScopeObjects(JSContext* cx, BaselineFrame* frame)
+HeavyweightFunPrologue(JSContext* cx, BaselineFrame* frame)
 {
-    return frame->initFunctionScopeObjects(cx);
+    return frame->heavyweightFunPrologue(cx);
 }
 
 bool
@@ -1041,7 +1060,11 @@ RegExpReplace(JSContext* cx, HandleString string, HandleObject regexp, HandleStr
     MOZ_ASSERT(string);
     MOZ_ASSERT(repl);
 
-    return str_replace_regexp_raw(cx, string, regexp.as<RegExpObject>(), repl);
+    RootedValue rval(cx);
+    if (!str_replace_regexp_raw(cx, string, regexp, repl, &rval))
+        return nullptr;
+
+    return rval.toString();
 }
 
 JSString*
@@ -1051,7 +1074,11 @@ StringReplace(JSContext* cx, HandleString string, HandleString pattern, HandleSt
     MOZ_ASSERT(pattern);
     MOZ_ASSERT(repl);
 
-    return str_replace_string_raw(cx, string, pattern, repl);
+    RootedValue rval(cx);
+    if (!str_replace_string_raw(cx, string, pattern, repl, &rval))
+        return nullptr;
+
+    return rval.toString();
 }
 
 bool

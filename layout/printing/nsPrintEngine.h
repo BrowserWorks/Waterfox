@@ -137,7 +137,6 @@ public:
 
   bool IsThereARangeSelection(nsIDOMWindow * aDOMWin);
 
-  void FirePrintingErrorEvent(nsresult aPrintError);
   //---------------------------------------------------------------------
 
 
@@ -166,6 +165,8 @@ public:
                              nsAString&       aTitle,
                              nsAString&       aURLStr,
                              eDocTitleDefault aDefType);
+  static void ShowPrintErrorDialog(nsresult printerror,
+                                   bool aIsPrinting = true);
 
   static bool HasFramesetChild(nsIContent* aContent);
 

@@ -16,6 +16,7 @@
 
 'use strict';
 
+var Promise = require('./util/promise').Promise;
 var util = require('./util/util');
 var Commands = require('./commands/commands').Commands;
 var Connectors = require('./connectors/connectors').Connectors;

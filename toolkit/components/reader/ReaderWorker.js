@@ -12,11 +12,11 @@ importScripts("resource://gre/modules/workers/require.js",
               "resource://gre/modules/reader/JSDOMParser.js",
               "resource://gre/modules/reader/Readability.js");
 
-var PromiseWorker = require("resource://gre/modules/workers/PromiseWorker.js");
+let PromiseWorker = require("resource://gre/modules/workers/PromiseWorker.js");
 
 const DEBUG = false;
 
-var worker = new PromiseWorker.AbstractWorker();
+let worker = new PromiseWorker.AbstractWorker();
 worker.dispatch = function(method, args = []) {
   return Agent[method](...args);
 };
@@ -34,7 +34,7 @@ worker.log = function(...args) {
 
 self.addEventListener("message", msg => worker.handleMessage(msg));
 
-var Agent = {
+let Agent = {
   /**
    * Parses structured article data from a document.
    *

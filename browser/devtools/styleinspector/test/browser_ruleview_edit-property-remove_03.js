@@ -7,16 +7,15 @@
 // Tests removing a property by clearing the property name and pressing shift
 // and tab keys, and checks if the focus is moved to the appropriate editable
 // field.
-
-const TEST_URI = `
-  <style type='text/css'>
-  #testid {
-    background-color: #00F;
-    color: #00F;
-  }
-  </style>
-  <div id='testid'>Styled Node</div>
-`;
+let TEST_URI = [
+  "<style type='text/css'>",
+  "#testid {",
+  "  background-color: #00F;",
+  "  color: #00F;",
+  "}",
+  "</style>",
+  "<div id='testid'>Styled Node</div>",
+].join("\n");
 
 add_task(function*() {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));

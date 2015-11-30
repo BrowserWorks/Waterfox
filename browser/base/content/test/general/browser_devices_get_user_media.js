@@ -225,7 +225,7 @@ function* checkNotSharing() {
 
 const permissionError = "error: PermissionDeniedError: The user did not grant permission for the operation.";
 
-var gTests = [
+let gTests = [
 
 {
   desc: "getUserMedia audio+video",

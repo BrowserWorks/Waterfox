@@ -29,7 +29,7 @@ function test() {
   nextTest();
 }
 
-var urls = [
+let urls = [
   "about:config",
   "about:addons",
   "about:permissions"

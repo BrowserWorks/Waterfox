@@ -98,18 +98,14 @@ public:
   void ComputeRotation();
 
   // Call after updating our layer tree.
-  void Updated(bool isFirstPaint, const TargetConfig& aTargetConfig,
-               int32_t aPaintSyncId)
+  void Updated(bool isFirstPaint, const TargetConfig& aTargetConfig)
   {
     mIsFirstPaint |= isFirstPaint;
     mLayersUpdated = true;
     mTargetConfig = aTargetConfig;
-    if (aPaintSyncId) {
-      mPaintSyncId = aPaintSyncId;
-    }
   }
 
-  bool RequiresReorientation(mozilla::dom::ScreenOrientationInternal aOrientation) const
+  bool RequiresReorientation(mozilla::dom::ScreenOrientation aOrientation)
   {
     return mTargetConfig.orientation() != aOrientation;
   }
@@ -128,11 +124,8 @@ public:
 private:
   void TransformScrollableLayer(Layer* aLayer);
   // Return true if an AsyncPanZoomController content transform was
-  // applied for |aLayer|. |*aOutFoundRoot| is set to true on Android only, if
-  // one of the metrics on one of the layers was determined to be the "root"
-  // and its state was synced to the Java front-end. |aOutFoundRoot| must be
-  // non-null.
-  bool ApplyAsyncContentTransformToTree(Layer* aLayer, bool* aOutFoundRoot);
+  // applied for |aLayer|.
+  bool ApplyAsyncContentTransformToTree(Layer* aLayer);
   /**
    * Update the shadow transform for aLayer assuming that is a scrollbar,
    * so that it stays in sync with the content that is being scrolled by APZ.
@@ -146,18 +139,19 @@ private:
   void SyncViewportInfo(const LayerIntRect& aDisplayPort,
                         const CSSToLayerScale& aDisplayResolution,
                         bool aLayersUpdated,
-                        int32_t aPaintSyncId,
-                        ParentLayerRect& aScrollRect,
+                        ParentLayerPoint& aScrollOffset,
                         CSSToParentLayerScale& aScale,
-                        ScreenMargin& aFixedLayerMargins);
+                        LayerMargin& aFixedLayerMargins,
+                        ScreenPoint& aOffset);
   void SyncFrameMetrics(const ParentLayerPoint& aScrollOffset,
-                        const CSSToParentLayerScale& aZoom,
+                        float aZoom,
                         const CSSRect& aCssPageRect,
-                        const CSSRect& aDisplayPort,
-                        const CSSToLayerScale& aPaintedResolution,
                         bool aLayersUpdated,
-                        int32_t aPaintSyncId,
-                        ScreenMargin& aFixedLayerMargins);
+                        const CSSRect& aDisplayPort,
+                        const CSSToLayerScale& aDisplayResolution,
+                        bool aIsFirstPaint,
+                        LayerMargin& aFixedLayerMargins,
+                        ScreenPoint& aOffset);
 
   /**
    * Adds a translation to the transform of any fixed position (whose parent
@@ -178,7 +172,7 @@ private:
                                  FrameMetrics::ViewID aTransformScrollId,
                                  const gfx::Matrix4x4& aPreviousTransformForRoot,
                                  const gfx::Matrix4x4& aCurrentTransformForRoot,
-                                 const ScreenMargin& aFixedLayerMargins);
+                                 const LayerMargin& aFixedLayerMargins);
 
   /**
    * DRAWING PHASE ONLY
@@ -211,8 +205,6 @@ private:
   // This flag is set during a layers update, so that the first composition
   // after a layers update has it set. It is cleared after that first composition.
   bool mLayersUpdated;
-
-  int32_t mPaintSyncId;
 
   bool mReadyForCompose;
 

@@ -1,12 +1,9 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et ft=cpp : */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
-#include "CamerasUtils.h"
 
 #include "CSFLog.h"
 #include "prenv.h"
@@ -26,8 +23,6 @@ GetUserMediaLog()
 #include "ImageContainer.h"
 #include "nsIComponentRegistrar.h"
 #include "MediaEngineTabVideoSource.h"
-#include "MediaEngineRemoteVideoSource.h"
-#include "CamerasChild.h"
 #include "nsITabSource.h"
 #include "MediaTrackConstraints.h"
 
@@ -47,9 +42,18 @@ GetUserMediaLog()
 namespace mozilla {
 
 MediaEngineWebRTC::MediaEngineWebRTC(MediaEnginePrefs &aPrefs)
-  : mMutex("mozilla::MediaEngineWebRTC"),
-    mVoiceEngine(nullptr),
-    mAudioEngineInit(false)
+    : mMutex("mozilla::MediaEngineWebRTC")
+    , mScreenEngine(nullptr)
+    , mBrowserEngine(nullptr)
+    , mWinEngine(nullptr)
+    , mAppEngine(nullptr)
+    , mVideoEngine(nullptr)
+    , mVoiceEngine(nullptr)
+    , mVideoEngineInit(false)
+    , mAudioEngineInit(false)
+    , mScreenEngineInit(false)
+    , mBrowserEngineInit(false)
+    , mAppEngineInit(false)
 {
 #ifndef MOZ_B2G_CAMERA
   nsCOMPtr<nsIComponentRegistrar> compMgr;
@@ -118,13 +122,15 @@ MediaEngineWebRTC::EnumerateVideoDevices(dom::MediaSourceEnum aMediaSource,
 
   return;
 #else
-  mozilla::camera::CaptureEngine capEngine = mozilla::camera::InvalidEngine;
+  ScopedCustomReleasePtr<webrtc::ViEBase> ptrViEBase;
+  ScopedCustomReleasePtr<webrtc::ViECapture> ptrViECapture;
+  webrtc::Config configSet;
+  webrtc::VideoEngine *videoEngine = nullptr;
+  bool *videoEngineInit = nullptr;
 
 #ifdef MOZ_WIDGET_ANDROID
   // get the JVM
-  JavaVM* jvm;
-  JNIEnv* const env = jni::GetEnvForThread();
-  MOZ_ALWAYS_TRUE(!env->GetJavaVM(&jvm));
+  JavaVM *jvm = mozilla::AndroidBridge::Bridge()->GetVM();
 
   if (webrtc::VideoEngine::SetAndroidObjects(jvm) != 0) {
     LOG(("VieCapture:SetAndroidObjects Failed"));
@@ -134,24 +140,74 @@ MediaEngineWebRTC::EnumerateVideoDevices(dom::MediaSourceEnum aMediaSource,
 
   switch (aMediaSource) {
     case dom::MediaSourceEnum::Window:
-      capEngine = mozilla::camera::WinEngine;
+      mWinEngineConfig.Set<webrtc::CaptureDeviceInfo>(
+          new webrtc::CaptureDeviceInfo(webrtc::CaptureDeviceType::Window));
+      if (!mWinEngine) {
+        if (!(mWinEngine = webrtc::VideoEngine::Create(mWinEngineConfig))) {
+          return;
+        }
+      }
+      videoEngine = mWinEngine;
+      videoEngineInit = &mWinEngineInit;
       break;
     case dom::MediaSourceEnum::Application:
-      capEngine = mozilla::camera::AppEngine;
+      mAppEngineConfig.Set<webrtc::CaptureDeviceInfo>(
+          new webrtc::CaptureDeviceInfo(webrtc::CaptureDeviceType::Application));
+      if (!mAppEngine) {
+        if (!(mAppEngine = webrtc::VideoEngine::Create(mAppEngineConfig))) {
+          return;
+        }
+      }
+      videoEngine = mAppEngine;
+      videoEngineInit = &mAppEngineInit;
       break;
     case dom::MediaSourceEnum::Screen:
-      capEngine = mozilla::camera::ScreenEngine;
+      mScreenEngineConfig.Set<webrtc::CaptureDeviceInfo>(
+          new webrtc::CaptureDeviceInfo(webrtc::CaptureDeviceType::Screen));
+      if (!mScreenEngine) {
+        if (!(mScreenEngine = webrtc::VideoEngine::Create(mScreenEngineConfig))) {
+          return;
+        }
+      }
+      videoEngine = mScreenEngine;
+      videoEngineInit = &mScreenEngineInit;
       break;
     case dom::MediaSourceEnum::Browser:
-      capEngine = mozilla::camera::BrowserEngine;
+      mBrowserEngineConfig.Set<webrtc::CaptureDeviceInfo>(
+          new webrtc::CaptureDeviceInfo(webrtc::CaptureDeviceType::Browser));
+      if (!mBrowserEngine) {
+        if (!(mBrowserEngine = webrtc::VideoEngine::Create(mBrowserEngineConfig))) {
+          return;
+        }
+      }
+      videoEngine = mBrowserEngine;
+      videoEngineInit = &mBrowserEngineInit;
       break;
     case dom::MediaSourceEnum::Camera:
-      capEngine = mozilla::camera::CameraEngine;
-      break;
+      // fall through
     default:
-      // BOOM
-      MOZ_CRASH("No valid video engine");
+      if (!mVideoEngine) {
+        if (!(mVideoEngine = webrtc::VideoEngine::Create())) {
+          return;
+        }
+      }
+      videoEngine = mVideoEngine;
+      videoEngineInit = &mVideoEngineInit;
       break;
+  }
+
+  ptrViEBase = webrtc::ViEBase::GetInterface(videoEngine);
+  if (!ptrViEBase) {
+    return;
+  }
+  if (ptrViEBase->Init() < 0) {
+    return;
+  }
+  *videoEngineInit = true;
+
+  ptrViECapture = webrtc::ViECapture::GetInterface(videoEngine);
+  if (!ptrViECapture) {
+    return;
   }
 
   /**
@@ -162,8 +218,7 @@ MediaEngineWebRTC::EnumerateVideoDevices(dom::MediaSourceEnum aMediaSource,
    * for a given instance of the engine. Likewise, if a device was plugged out,
    * mVideoSources must be updated.
    */
-  int num;
-  num = mozilla::camera::NumberOfCaptureDevices(capEngine);
+  int num = ptrViECapture->NumberOfCaptureDevices();
   if (num <= 0) {
     return;
   }
@@ -175,29 +230,27 @@ MediaEngineWebRTC::EnumerateVideoDevices(dom::MediaSourceEnum aMediaSource,
     // paranoia
     deviceName[0] = '\0';
     uniqueId[0] = '\0';
-    int error;
-
-    error = mozilla::camera::GetCaptureDevice(capEngine,
-                                              i, deviceName,
-                                              sizeof(deviceName), uniqueId,
-                                              sizeof(uniqueId));
+    int error = ptrViECapture->GetCaptureDevice(i, deviceName,
+                                                sizeof(deviceName), uniqueId,
+                                                sizeof(uniqueId));
 
     if (error) {
-      LOG(("camera:GetCaptureDevice: Failed %d", error ));
+      LOG((" VieCapture:GetCaptureDevice: Failed %d",
+           ptrViEBase->LastError() ));
       continue;
     }
 #ifdef DEBUG
     LOG(("  Capture Device Index %d, Name %s", i, deviceName));
 
     webrtc::CaptureCapability cap;
-    int numCaps = mozilla::camera::NumberOfCapabilities(capEngine,
-                                                        uniqueId);
+    int numCaps = ptrViECapture->NumberOfCapabilities(uniqueId,
+                                                      MediaEngineSource::kMaxUniqueIdLength);
     LOG(("Number of Capabilities %d", numCaps));
     for (int j = 0; j < numCaps; j++) {
-      if (mozilla::camera::GetCaptureCapability(capEngine,
-                                                uniqueId,
-                                                j, cap ) != 0 ) {
-       break;
+      if (ptrViECapture->GetCaptureCapability(uniqueId,
+                                              MediaEngineSource::kMaxUniqueIdLength,
+                                              j, cap ) != 0 ) {
+        break;
       }
       LOG(("type=%d width=%d height=%d maxFPS=%d",
            cap.rawType, cap.width, cap.height, cap.maxFPS ));
@@ -214,10 +267,10 @@ MediaEngineWebRTC::EnumerateVideoDevices(dom::MediaSourceEnum aMediaSource,
     NS_ConvertUTF8toUTF16 uuid(uniqueId);
     if (mVideoSources.Get(uuid, getter_AddRefs(vSource))) {
       // We've already seen this device, just refresh and append.
-      static_cast<MediaEngineRemoteVideoSource*>(vSource.get())->Refresh(i);
+      static_cast<MediaEngineWebRTCVideoSource*>(vSource.get())->Refresh(i);
       aVSources->AppendElement(vSource.get());
     } else {
-      vSource = new MediaEngineRemoteVideoSource(i, capEngine, aMediaSource);
+      vSource = new MediaEngineWebRTCVideoSource(videoEngine, i, aMediaSource);
       mVideoSources.Put(uuid, vSource); // Hashtable takes ownership.
       aVSources->AppendElement(vSource);
     }
@@ -249,9 +302,8 @@ MediaEngineWebRTC::EnumerateAudioDevices(dom::MediaSourceEnum aMediaSource,
   jobject context = mozilla::AndroidBridge::Bridge()->GetGlobalContextRef();
 
   // get the JVM
-  JavaVM* jvm;
-  JNIEnv* const env = jni::GetEnvForThread();
-  MOZ_ALWAYS_TRUE(!env->GetJavaVM(&jvm));
+  JavaVM *jvm = mozilla::AndroidBridge::Bridge()->GetVM();
+  JNIEnv *env = GetJNIForThread();
 
   if (webrtc::VoiceEngine::SetAndroidObjects(jvm, env, (void*)context) != 0) {
     LOG(("VoiceEngine:SetAndroidObjects Failed"));
@@ -362,14 +414,40 @@ MediaEngineWebRTC::Shutdown()
   mVideoSources.Clear();
   mAudioSources.Clear();
 
+  // Clear callbacks before we go away since the engines may outlive us
+  if (mVideoEngine) {
+    mVideoEngine->SetTraceCallback(nullptr);
+    webrtc::VideoEngine::Delete(mVideoEngine);
+  }
+
+  if (mScreenEngine) {
+    mScreenEngine->SetTraceCallback(nullptr);
+    webrtc::VideoEngine::Delete(mScreenEngine);
+  }
+  if (mWinEngine) {
+    mWinEngine->SetTraceCallback(nullptr);
+    webrtc::VideoEngine::Delete(mWinEngine);
+  }
+  if (mBrowserEngine) {
+    mBrowserEngine->SetTraceCallback(nullptr);
+    webrtc::VideoEngine::Delete(mBrowserEngine);
+  }
+  if (mAppEngine) {
+    mAppEngine->SetTraceCallback(nullptr);
+    webrtc::VideoEngine::Delete(mAppEngine);
+  }
+
   if (mVoiceEngine) {
     mVoiceEngine->SetTraceCallback(nullptr);
     webrtc::VoiceEngine::Delete(mVoiceEngine);
   }
 
+  mVideoEngine = nullptr;
   mVoiceEngine = nullptr;
-
-  mozilla::camera::Shutdown();
+  mScreenEngine = nullptr;
+  mWinEngine = nullptr;
+  mBrowserEngine = nullptr;
+  mAppEngine = nullptr;
 
   if (mThread) {
     mThread->Shutdown();

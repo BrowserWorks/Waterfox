@@ -34,8 +34,6 @@ var InputWidgetHelper = {
     }).addDatePicker({
       value: aElement.value,
       type: type,
-      min: aElement.min,
-      max: aElement.max,
     }).show((function(data) {
       let changed = false;
       if (data.button == -1) {

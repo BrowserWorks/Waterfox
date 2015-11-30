@@ -6,6 +6,8 @@
 
 TEST_DIRS += ['httpserver']
 
+FAIL_ON_WARNINGS = True
+
 BROWSER_CHROME_MANIFESTS += ['browser/browser.ini']
 MOCHITEST_MANIFESTS += ['mochitests/mochitest.ini']
 
@@ -19,6 +21,7 @@ GeckoSimplePrograms([
     'PropertiesTest',
     'ReadNTLM',
     'TestBlockingSocket',
+    'TestCallbacks',
     'TestDNS',
     'TestIncrementalDownload',
     'TestOpen',
@@ -36,6 +39,7 @@ GeckoSimplePrograms([
 #    TestIDN',
 #    TestIOThreads',
 #    TestSocketTransport',
+#    TestStreamChannel',
 #    TestStreamPump',
 #    TestStreamTransport',
 #    TestUDPSocketProvider',

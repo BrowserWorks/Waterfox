@@ -3,7 +3,7 @@
  */
 
 const EXPECTED_SCHEMA_VERSION = 4;
-var dbfile;
+let dbfile;
 
 function run_test() {
   do_test_pending();

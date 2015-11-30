@@ -999,14 +999,15 @@ nsWindow::mousePressEvent(QMouseEvent* aEvent)
         return nsEventStatus_eIgnore;
     }
 
-    WidgetMouseEvent event(true, eMouseDown, this, WidgetMouseEvent::eReal);
+    WidgetMouseEvent event(true, NS_MOUSE_BUTTON_DOWN, this,
+                           WidgetMouseEvent::eReal);
     InitMouseEvent(event, aEvent, 1);
     nsEventStatus status = DispatchEvent(&event);
 
     // Right click on linux should also pop up a context menu.
     if (event.button == WidgetMouseEvent::eRightButton &&
         MOZ_LIKELY(!mIsDestroyed)) {
-        WidgetMouseEvent contextMenuEvent(true, eContextMenu, this,
+        WidgetMouseEvent contextMenuEvent(true, NS_CONTEXTMENU, this,
                                           WidgetMouseEvent::eReal);
         InitMouseEvent(contextMenuEvent, aEvent, 1);
         DispatchEvent(&contextMenuEvent, status);
@@ -1024,7 +1025,8 @@ nsWindow::mouseReleaseEvent(QMouseEvent* aEvent)
     if (!IsAcceptedButton(aEvent->button()))
         return nsEventStatus_eIgnore;
 
-    WidgetMouseEvent event(true, eMouseUp, this, WidgetMouseEvent::eReal);
+    WidgetMouseEvent event(true, NS_MOUSE_BUTTON_UP, this,
+                           WidgetMouseEvent::eReal);
     InitMouseEvent(event, aEvent, 1);
     return DispatchEvent(&event);
 }
@@ -1038,7 +1040,7 @@ nsWindow::mouseDoubleClickEvent(QMouseEvent* aEvent)
     if (!IsAcceptedButton(aEvent->button()))
         return nsEventStatus_eIgnore;
 
-    WidgetMouseEvent event(true, eMouseDoubleClick, this,
+    WidgetMouseEvent event(true, NS_MOUSE_DOUBLECLICK, this,
                            WidgetMouseEvent::eReal);
     InitMouseEvent(event, aEvent, 2);
     return DispatchEvent(&event);
@@ -1098,7 +1100,7 @@ InitKeyEvent(WidgetKeyboardEvent& aEvent, QKeyEvent* aQEvent)
                               aQEvent->modifiers() & Qt::MetaModifier);
 
     aEvent.mIsRepeat =
-        (aEvent.mMessage == eKeyDown || aEvent.mMessage == eKeyPress) &&
+        (aEvent.message == NS_KEY_DOWN || aEvent.message == NS_KEY_PRESS) &&
         aQEvent->isAutoRepeat();
     aEvent.time = 0;
 
@@ -1140,7 +1142,7 @@ nsWindow::keyPressEvent(QKeyEvent* aEvent)
     // Before we dispatch a key, check if it's the context menu key.
     // If so, send a context menu key event instead.
     if (IsContextMenuKeyEvent(aEvent)) {
-        WidgetMouseEvent contextMenuEvent(true, eContextMenu, this,
+        WidgetMouseEvent contextMenuEvent(true, NS_CONTEXTMENU, this,
                                           WidgetMouseEvent::eReal,
                                           WidgetMouseEvent::eContextMenuKey);
         return DispatchEvent(&contextMenuEvent);
@@ -1154,7 +1156,7 @@ nsWindow::keyPressEvent(QKeyEvent* aEvent)
     if (!aEvent->isAutoRepeat() && !IsKeyDown(domKeyCode)) {
         SetKeyDownFlag(domKeyCode);
 
-        WidgetKeyboardEvent downEvent(true, eKeyDown, this);
+        WidgetKeyboardEvent downEvent(true, NS_KEY_DOWN, this);
         InitKeyEvent(downEvent, aEvent);
 
         nsEventStatus status = DispatchEvent(&downEvent);
@@ -1171,8 +1173,8 @@ nsWindow::keyPressEvent(QKeyEvent* aEvent)
         }
     }
 
-    // Don't pass modifiers as eKeyPress events.
-    // Instead of selectively excluding some keys from eKeyPress events,
+    // Don't pass modifiers as NS_KEY_PRESS events.
+    // Instead of selectively excluding some keys from NS_KEY_PRESS events,
     // we instead selectively include (as per MSDN spec
     // ( http://msdn.microsoft.com/en-us/library/system.windows.forms.control.keypress%28VS.71%29.aspx );
     // no official spec covers KeyPress events).
@@ -1202,27 +1204,27 @@ nsWindow::keyPressEvent(QKeyEvent* aEvent)
             return DispatchCommandEvent(nsGkAtoms::Home);
         case Qt::Key_Copy:
         case Qt::Key_F16: // F16, F20, F18, F14 are old keysyms for Copy Cut Paste Undo
-            return DispatchContentCommandEvent(eContentCommandCopy);
+            return DispatchContentCommandEvent(NS_CONTENT_COMMAND_COPY);
         case Qt::Key_Cut:
         case Qt::Key_F20:
-            return DispatchContentCommandEvent(eContentCommandCut);
+            return DispatchContentCommandEvent(NS_CONTENT_COMMAND_CUT);
         case Qt::Key_Paste:
         case Qt::Key_F18:
         case Qt::Key_F9:
-            return DispatchContentCommandEvent(eContentCommandPaste);
+            return DispatchContentCommandEvent(NS_CONTENT_COMMAND_PASTE);
         case Qt::Key_F14:
-            return DispatchContentCommandEvent(eContentCommandUndo);
+            return DispatchContentCommandEvent(NS_CONTENT_COMMAND_UNDO);
     }
 
     // Qt::Key_Redo and Qt::Key_Undo are not available yet.
     if (aEvent->nativeVirtualKey() == 0xff66) {
-        return DispatchContentCommandEvent(eContentCommandRedo);
+        return DispatchContentCommandEvent(NS_CONTENT_COMMAND_REDO);
     }
     if (aEvent->nativeVirtualKey() == 0xff65) {
-        return DispatchContentCommandEvent(eContentCommandUndo);
+        return DispatchContentCommandEvent(NS_CONTENT_COMMAND_UNDO);
     }
 
-    WidgetKeyboardEvent event(true, eKeyPress, this);
+    WidgetKeyboardEvent event(true, NS_KEY_PRESS, this);
     InitKeyEvent(event, aEvent);
     // Seend the key press event
     return DispatchEvent(&event);
@@ -1242,7 +1244,7 @@ nsWindow::keyReleaseEvent(QKeyEvent* aEvent)
     }
 
     // send the key event as a key up event
-    WidgetKeyboardEvent event(true, eKeyUp, this);
+    WidgetKeyboardEvent event(true, NS_KEY_UP, this);
     InitKeyEvent(event, aEvent);
 
     if (aEvent->key() == Qt::Key_AltGr) {
@@ -1259,7 +1261,7 @@ nsEventStatus
 nsWindow::wheelEvent(QWheelEvent* aEvent)
 {
     // check to see if we should rollup
-    WidgetWheelEvent wheelEvent(true, eWheel, this);
+    WidgetWheelEvent wheelEvent(true, NS_WHEEL_WHEEL, this);
     wheelEvent.deltaMode = nsIDOMWheelEvent::DOM_DELTA_LINE;
 
     // negative values for aEvent->delta indicate downward scrolling;
@@ -1427,7 +1429,7 @@ nsWindow::PlaceBehind(nsTopLevelWidgetZPlacement  aPlacement,
 }
 
 NS_IMETHODIMP
-nsWindow::SetSizeMode(nsSizeMode aMode)
+nsWindow::SetSizeMode(int32_t aMode)
 {
     nsresult rv;
 
@@ -1665,7 +1667,7 @@ nsWindow::DispatchCommandEvent(nsIAtom* aCommand)
 }
 
 nsEventStatus
-nsWindow::DispatchContentCommandEvent(EventMessage aMsg)
+nsWindow::DispatchContentCommandEvent(int32_t aMsg)
 {
     WidgetContentCommandEvent event(true, aMsg, this);
 
@@ -1962,7 +1964,8 @@ void
 nsWindow::ProcessMotionEvent()
 {
     if (mMoveEvent.needDispatch) {
-        WidgetMouseEvent event(true, eMouseMove, this, WidgetMouseEvent::eReal);
+        WidgetMouseEvent event(true, NS_MOUSE_MOVE, this,
+                               WidgetMouseEvent::eReal);
 
         event.refPoint.x = nscoord(mMoveEvent.pos.x());
         event.refPoint.y = nscoord(mMoveEvent.pos.y());

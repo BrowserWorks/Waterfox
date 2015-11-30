@@ -55,7 +55,7 @@ const PR_TRUNCATE = 0x20;
 const RW_OWNER = parseInt("0600", 8);
 
 const NUMBER_OF_THREADS_TO_LAUNCH = 30;
-var gNumberOfThreadsLaunched = 0;
+let gNumberOfThreadsLaunched = 0;
 
 const MS_IN_ONE_HOUR  = 60 * 60 * 1000;
 const MS_IN_ONE_DAY   = 24 * MS_IN_ONE_HOUR;
@@ -74,7 +74,7 @@ XPCOMUtils.defineLazyGetter(this, "DATAREPORTING_PATH", function() {
   return OS.Path.join(OS.Constants.Path.profileDir, DATAREPORTING_DIR);
 });
 
-var gClientID = null;
+let gClientID = null;
 
 function generateUUID() {
   let str = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator).generateUUID().toString();
@@ -100,7 +100,7 @@ function sendPing() {
   }
 }
 
-var clearPendingPings = Task.async(function*() {
+let clearPendingPings = Task.async(function*() {
   const pending = yield TelemetryStorage.loadPendingPingList();
   for (let p of pending) {
     yield TelemetryStorage.removePendingPing(p.id);
@@ -1048,7 +1048,7 @@ add_task(function* test_environmentChange() {
   Preferences.reset(PREF_TEST);
 
   const PREFS_TO_WATCH = new Map([
-    [PREF_TEST, {what: TelemetryEnvironment.RECORD_PREF_VALUE}],
+    [PREF_TEST, TelemetryEnvironment.RECORD_PREF_VALUE],
   ]);
 
   // Setup.
@@ -1153,7 +1153,7 @@ add_task(function* test_savedSessionData() {
   const PREF_TEST = "toolkit.telemetry.test.pref1";
   Preferences.reset(PREF_TEST);
   const PREFS_TO_WATCH = new Map([
-    [PREF_TEST, {what: TelemetryEnvironment.RECORD_PREF_VALUE}],
+    [PREF_TEST, TelemetryEnvironment.RECORD_PREF_VALUE],
   ]);
 
   // We expect one new subsession when starting TelemetrySession and one after triggering
@@ -1508,7 +1508,7 @@ add_task(function* test_schedulerEnvironmentReschedules() {
   const PREF_TEST = "toolkit.telemetry.test.pref1";
   Preferences.reset(PREF_TEST);
   const PREFS_TO_WATCH = new Map([
-    [PREF_TEST, {what: TelemetryEnvironment.RECORD_PREF_VALUE}],
+    [PREF_TEST, TelemetryEnvironment.RECORD_PREF_VALUE],
   ]);
 
   yield clearPendingPings();

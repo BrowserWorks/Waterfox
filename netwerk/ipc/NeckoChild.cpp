@@ -210,7 +210,8 @@ PTCPSocketChild*
 NeckoChild::AllocPTCPSocketChild(const nsString& host,
                                  const uint16_t& port)
 {
-  TCPSocketChild* p = new TCPSocketChild(host, port);
+  TCPSocketChild* p = new TCPSocketChild();
+  p->Init(host, port);
   p->AddIPDLReference();
   return p;
 }
@@ -226,7 +227,7 @@ NeckoChild::DeallocPTCPSocketChild(PTCPSocketChild* child)
 PTCPServerSocketChild*
 NeckoChild::AllocPTCPServerSocketChild(const uint16_t& aLocalPort,
                                   const uint16_t& aBacklog,
-                                  const bool& aUseArrayBuffers)
+                                  const nsString& aBinaryType)
 {
   NS_NOTREACHED("AllocPTCPServerSocket should not be called");
   return nullptr;

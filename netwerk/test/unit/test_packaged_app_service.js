@@ -7,14 +7,14 @@
 // ----------------------------------------------------------------------------
 //
 // test_bad_args
-//     - checks that calls to nsIPackagedAppService::GetResource do not accept a null argument
+//     - checks that calls to nsIPackagedAppService::requestURI do not accept a null argument
 // test_callback_gets_called
 //     - checks the regular use case -> requesting a resource should asynchronously return an entry
 // test_same_content
 //     - makes another request for the same file, and checks that the same content is returned
 // test_request_number
 //     - this test does not make a request, but checks that the package has only
-//       been requested once. The entry returned by the call to getResource in
+//       been requested once. The entry returned by the call to requestURI in
 //       test_same_content should be returned from the cache.
 //
 // test_package_does_not_exist
@@ -34,7 +34,6 @@
 Cu.import('resource://gre/modules/LoadContextInfo.jsm');
 Cu.import("resource://testing-common/httpd.js");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/NetUtil.jsm");
 
 // The number of times this package has been requested
 // This number might be reset by tests that use it
@@ -58,26 +57,6 @@ function packagedAppContentHandler(metadata, response)
     body = body.replace(/\.\.\./g, 'xxx');
   }
   response.bodyOutputStream.write(body, body.length);
-}
-
-function getChannelForURL(url) {
-  let uri = createURI(url);
-  let ssm = Cc["@mozilla.org/scriptsecuritymanager;1"]
-              .getService(Ci.nsIScriptSecurityManager);
-  let principal = ssm.createCodebasePrincipal(uri, {});
-  let tmpChannel =
-    NetUtil.newChannel({
-      uri: url,
-      loadingPrincipal: principal,
-      contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER
-    });
-
-  tmpChannel.notificationCallbacks =
-    new LoadContextCallback(principal.appId,
-                            principal.isInBrowserElement,
-                            false,
-                            false);
-  return tmpChannel;
 }
 
 // The package content
@@ -113,7 +92,7 @@ XPCOMUtils.defineLazyGetter(this, "uri", function() {
 var httpserver = null;
 // The packaged app service initialized in run_test
 var paservice = null;
-// This variable is set before getResource is called. The listener uses this variable
+// This variable is set before requestURI is called. The listener uses this variable
 // to check the correct resource path for the returned entry
 var packagePath = null;
 
@@ -143,15 +122,6 @@ function run_test()
   add_test(test_bad_package);
   add_test(test_bad_package_404);
 
-  // Channels created by addons could have no load info.
-  // In debug mode this triggers an assertion, but we still want to test that
-  // it works in optimized mode. See bug 1196021 comment 17
-  if (Components.classes["@mozilla.org/xpcom/debug;1"]
-                .getService(Components.interfaces.nsIDebug2)
-                .isDebugBuild == false) {
-    add_test(test_channel_no_loadinfo);
-  }
-
   // run tests
   run_next_test();
 }
@@ -159,10 +129,8 @@ function run_test()
 // This checks the proper metadata is on the entry
 var metadataListener = {
   onMetaDataElement: function(key, value) {
-    if (key == 'response-head') {
-      var kExpectedResponseHead = "HTTP/1.1 200 \r\nContent-Location: /index.html\r\nContent-Type: text/html\r\n";
-      ok(0 === value.indexOf(kExpectedResponseHead), 'The cached response header not matched');
-    }
+    if (key == 'response-head')
+      equal(value, "HTTP/1.1 200 \r\nContent-Location: /index.html\r\nContent-Type: text/html\r\n");
     else if (key == 'request-method')
       equal(value, "GET");
     else
@@ -202,10 +170,10 @@ var cacheListener = new packagedResourceListener(testData.content[0].data);
 
 // These calls should fail, since one of the arguments is invalid or null
 function test_bad_args() {
-  Assert.throws(() => { paservice.getResource(getChannelForURL("http://test.com"), cacheListener); }, "url's with no !// aren't allowed");
-  Assert.throws(() => { paservice.getResource(getChannelForURL("http://test.com/package!//test"), null); }, "should have a callback");
-  Assert.throws(() => { paservice.getResource(null, cacheListener); }, "should have a channel");
-
+  Assert.throws(() => { paservice.requestURI(createURI("http://test.com"), LoadContextInfo.default, cacheListener); }, "url's with no !// aren't allowed");
+  Assert.throws(() => { paservice.requestURI(createURI("http://test.com/package!//test"), LoadContextInfo.default, null); }, "should have a callback");
+  Assert.throws(() => { paservice.requestURI(null, LoadContextInfo.default, cacheListener); }, "should have a URI");
+  Assert.throws(() => { paservice.requestURI(createURI("http://test.com/package!//test"), null, cacheListener); }, "should have a LoadContextInfo");
   run_next_test();
 }
 
@@ -214,15 +182,13 @@ function test_bad_args() {
 // This tests that the callback gets called, and the cacheListener gets the proper content.
 function test_callback_gets_called() {
   packagePath = "/package";
-  let url = uri + packagePath + "!//index.html";
-  paservice.getResource(getChannelForURL(url), cacheListener);
+  paservice.requestURI(createURI(uri + packagePath + "!//index.html"), LoadContextInfo.default, cacheListener);
 }
 
 // Tests that requesting the same resource returns the same content
 function test_same_content() {
   packagePath = "/package";
-  let url = uri + packagePath + "!//index.html";
-  paservice.getResource(getChannelForURL(url), cacheListener);
+  paservice.requestURI(createURI(uri + packagePath + "!//index.html"), LoadContextInfo.default, cacheListener);
 }
 
 // Check the content handler has been called the expected number of times.
@@ -234,9 +200,8 @@ function test_request_number() {
 // This tests that new content is returned if the package has been updated
 function test_updated_package() {
   packagePath = "/package";
-  let url = uri + packagePath + "!//index.html";
-  paservice.getResource(getChannelForURL(url),
-    new packagedResourceListener(testData.content[0].data.replace(/\.\.\./g, 'xxx')));
+  paservice.requestURI(createURI(uri + packagePath + "!//index.html"), LoadContextInfo.default,
+      new packagedResourceListener(testData.content[0].data.replace(/\.\.\./g, 'xxx')));
 }
 
 // ----------------------------------------------------------------------------
@@ -259,15 +224,13 @@ var listener404 = {
 // Tests that an error is returned for a non existing package
 function test_package_does_not_exist() {
   packagePath = "/package_non_existent";
-  let url = uri + packagePath + "!//index.html";
-  paservice.getResource(getChannelForURL(url), listener404);
+  paservice.requestURI(createURI(uri + packagePath + "!//index.html"), LoadContextInfo.default, listener404);
 }
 
 // Tests that an error is returned for a non existing resource in a package
 function test_file_does_not_exist() {
   packagePath = "/package"; // This package exists
-  let url = uri + packagePath + "!//file_non_existent.html";
-  paservice.getResource(getChannelForURL(url), listener404);
+  paservice.requestURI(createURI(uri + packagePath + "!//file_non_existent.html"), LoadContextInfo.default, listener404);
 }
 
 // ----------------------------------------------------------------------------
@@ -308,24 +271,13 @@ function packagedAppBadContentHandler(metadata, response)
 // Checks that the resource with the proper headers inside the bad package is still returned
 function test_bad_package() {
   packagePath = "/badPackage";
-  let url = uri + packagePath + "!//index.html";
-  paservice.getResource(getChannelForURL(url), cacheListener);
+  paservice.requestURI(createURI(uri + packagePath + "!//index.html"), LoadContextInfo.default, cacheListener);
 }
 
 // Checks that the request for a non-existent resource doesn't hang for a bad package
 function test_bad_package_404() {
   packagePath = "/badPackage";
-  let url = uri + packagePath + "!//file_non_existent.html";
-  paservice.getResource(getChannelForURL(url), listener404);
+  paservice.requestURI(createURI(uri + packagePath + "!//file_non_existent.html"), LoadContextInfo.default, listener404);
 }
 
 // ----------------------------------------------------------------------------
-
-// NOTE: This test only runs in NON-DEBUG mode.
-function test_channel_no_loadinfo() {
-  packagePath = "/package";
-  let url = uri + packagePath + "!//index.html";
-  let channel = getChannelForURL(url);
-  channel.loadInfo = null;
-  paservice.getResource(channel, cacheListener);
-}

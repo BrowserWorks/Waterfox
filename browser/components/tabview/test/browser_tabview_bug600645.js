@@ -10,7 +10,7 @@
 const fi = Cc["@mozilla.org/browser/favicon-service;1"].
            getService(Ci.nsIFaviconService);
 
-var newTab;
+let newTab;
 
 function test() {
   waitForExplicitFinish();

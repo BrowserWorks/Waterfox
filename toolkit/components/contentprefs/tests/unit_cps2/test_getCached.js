@@ -6,7 +6,7 @@ function run_test() {
   runAsyncTests(tests);
 }
 
-var tests = [
+let tests = [
 
   function nonexistent() {
     getCachedOK(["a.com", "foo"], false, undefined);

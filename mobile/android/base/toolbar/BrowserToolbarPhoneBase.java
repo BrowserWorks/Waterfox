@@ -13,8 +13,7 @@ import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.ViewHelper;
-import org.mozilla.gecko.util.ColorUtils;
-import org.mozilla.gecko.widget.themed.ThemedImageView;
+import org.mozilla.gecko.widget.ThemedImageView;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -64,7 +63,7 @@ abstract class BrowserToolbarPhoneBase extends BrowserToolbar {
 
         roundCornerPaint = new Paint();
         roundCornerPaint.setAntiAlias(true);
-        roundCornerPaint.setColor(ColorUtils.getColor(context, R.color.text_and_tabs_tray_grey));
+        roundCornerPaint.setColor(res.getColor(R.color.text_and_tabs_tray_grey));
         roundCornerPaint.setStrokeWidth(0.0f);
     }
 

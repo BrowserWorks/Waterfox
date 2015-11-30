@@ -659,6 +659,282 @@ class ICNewObject_WithTemplate : public ICStub
     {}
 };
 
+// Compare
+//      JSOP_LT
+//      JSOP_GT
+
+class ICCompare_Fallback : public ICFallbackStub
+{
+    friend class ICStubSpace;
+
+    explicit ICCompare_Fallback(JitCode* stubCode)
+      : ICFallbackStub(ICStub::Compare_Fallback, stubCode) {}
+
+  public:
+    static const uint32_t MAX_OPTIMIZED_STUBS = 8;
+
+    static const size_t UNOPTIMIZABLE_ACCESS_BIT = 0;
+    void noteUnoptimizableAccess() {
+        extra_ |= (1u << UNOPTIMIZABLE_ACCESS_BIT);
+    }
+    bool hadUnoptimizableAccess() const {
+        return extra_ & (1u << UNOPTIMIZABLE_ACCESS_BIT);
+    }
+
+    // Compiler for this stub kind.
+    class Compiler : public ICStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        explicit Compiler(JSContext* cx)
+          : ICStubCompiler(cx, ICStub::Compare_Fallback, Engine::Baseline) {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICCompare_Fallback>(space, getStubCode());
+        }
+    };
+};
+
+class ICCompare_Int32 : public ICStub
+{
+    friend class ICStubSpace;
+
+    explicit ICCompare_Int32(JitCode* stubCode)
+      : ICStub(ICStub::Compare_Int32, stubCode) {}
+
+  public:
+    // Compiler for this stub kind.
+    class Compiler : public ICMultiStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        Compiler(JSContext* cx, JSOp op)
+          : ICMultiStubCompiler(cx, ICStub::Compare_Int32, op, Engine::Baseline) {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICCompare_Int32>(space, getStubCode());
+        }
+    };
+};
+
+class ICCompare_Double : public ICStub
+{
+    friend class ICStubSpace;
+
+    explicit ICCompare_Double(JitCode* stubCode)
+      : ICStub(ICStub::Compare_Double, stubCode)
+    {}
+
+  public:
+    class Compiler : public ICMultiStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        Compiler(JSContext* cx, JSOp op)
+          : ICMultiStubCompiler(cx, ICStub::Compare_Double, op, Engine::Baseline)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICCompare_Double>(space, getStubCode());
+        }
+    };
+};
+
+class ICCompare_NumberWithUndefined : public ICStub
+{
+    friend class ICStubSpace;
+
+    ICCompare_NumberWithUndefined(JitCode* stubCode, bool lhsIsUndefined)
+      : ICStub(ICStub::Compare_NumberWithUndefined, stubCode)
+    {
+        extra_ = lhsIsUndefined;
+    }
+
+  public:
+    bool lhsIsUndefined() {
+        return extra_;
+    }
+
+    class Compiler : public ICMultiStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+        bool lhsIsUndefined;
+
+      public:
+        Compiler(JSContext* cx, JSOp op, bool lhsIsUndefined)
+          : ICMultiStubCompiler(cx, ICStub::Compare_NumberWithUndefined, op, Engine::Baseline),
+            lhsIsUndefined(lhsIsUndefined)
+        {}
+
+        virtual int32_t getKey() const {
+            return static_cast<int32_t>(engine_) |
+                  (static_cast<int32_t>(kind) << 1) |
+                  (static_cast<int32_t>(op) << 17) |
+                  (static_cast<int32_t>(lhsIsUndefined) << 25);
+        }
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICCompare_NumberWithUndefined>(space, getStubCode(),
+                                                              lhsIsUndefined);
+        }
+    };
+};
+
+class ICCompare_String : public ICStub
+{
+    friend class ICStubSpace;
+
+    explicit ICCompare_String(JitCode* stubCode)
+      : ICStub(ICStub::Compare_String, stubCode)
+    {}
+
+  public:
+    class Compiler : public ICMultiStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        Compiler(JSContext* cx, JSOp op)
+          : ICMultiStubCompiler(cx, ICStub::Compare_String, op, Engine::Baseline)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICCompare_String>(space, getStubCode());
+        }
+    };
+};
+
+class ICCompare_Boolean : public ICStub
+{
+    friend class ICStubSpace;
+
+    explicit ICCompare_Boolean(JitCode* stubCode)
+      : ICStub(ICStub::Compare_Boolean, stubCode)
+    {}
+
+  public:
+    class Compiler : public ICMultiStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        Compiler(JSContext* cx, JSOp op)
+          : ICMultiStubCompiler(cx, ICStub::Compare_Boolean, op, Engine::Baseline)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICCompare_Boolean>(space, getStubCode());
+        }
+    };
+};
+
+class ICCompare_Object : public ICStub
+{
+    friend class ICStubSpace;
+
+    explicit ICCompare_Object(JitCode* stubCode)
+      : ICStub(ICStub::Compare_Object, stubCode)
+    {}
+
+  public:
+    class Compiler : public ICMultiStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        Compiler(JSContext* cx, JSOp op)
+          : ICMultiStubCompiler(cx, ICStub::Compare_Object, op, Engine::Baseline)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICCompare_Object>(space, getStubCode());
+        }
+    };
+};
+
+class ICCompare_ObjectWithUndefined : public ICStub
+{
+    friend class ICStubSpace;
+
+    explicit ICCompare_ObjectWithUndefined(JitCode* stubCode)
+      : ICStub(ICStub::Compare_ObjectWithUndefined, stubCode)
+    {}
+
+  public:
+    class Compiler : public ICMultiStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+        bool lhsIsUndefined;
+        bool compareWithNull;
+
+      public:
+        Compiler(JSContext* cx, JSOp op, bool lhsIsUndefined, bool compareWithNull)
+          : ICMultiStubCompiler(cx, ICStub::Compare_ObjectWithUndefined, op, Engine::Baseline),
+            lhsIsUndefined(lhsIsUndefined),
+            compareWithNull(compareWithNull)
+        {}
+
+        virtual int32_t getKey() const {
+            return static_cast<int32_t>(engine_) |
+                  (static_cast<int32_t>(kind) << 1) |
+                  (static_cast<int32_t>(op) << 17) |
+                  (static_cast<int32_t>(lhsIsUndefined) << 25) |
+                  (static_cast<int32_t>(compareWithNull) << 26);
+        }
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICCompare_ObjectWithUndefined>(space, getStubCode());
+        }
+    };
+};
+
+class ICCompare_Int32WithBoolean : public ICStub
+{
+    friend class ICStubSpace;
+
+    ICCompare_Int32WithBoolean(JitCode* stubCode, bool lhsIsInt32)
+      : ICStub(ICStub::Compare_Int32WithBoolean, stubCode)
+    {
+        extra_ = lhsIsInt32;
+    }
+
+  public:
+    bool lhsIsInt32() const {
+        return extra_;
+    }
+
+    // Compiler for this stub kind.
+    class Compiler : public ICStubCompiler {
+      protected:
+        JSOp op_;
+        bool lhsIsInt32_;
+        bool generateStubCode(MacroAssembler& masm);
+
+        virtual int32_t getKey() const {
+            return static_cast<int32_t>(engine_) |
+                  (static_cast<int32_t>(kind) << 1) |
+                  (static_cast<int32_t>(op_) << 17) |
+                  (static_cast<int32_t>(lhsIsInt32_) << 25);
+        }
+
+      public:
+        Compiler(JSContext* cx, JSOp op, bool lhsIsInt32)
+          : ICStubCompiler(cx, ICStub::Compare_Int32WithBoolean, Engine::Baseline),
+            op_(op),
+            lhsIsInt32_(lhsIsInt32)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICCompare_Int32WithBoolean>(space, getStubCode(), lhsIsInt32_);
+        }
+    };
+};
+
 // ToBool
 //      JSOP_IFNE
 
@@ -824,6 +1100,368 @@ class ICToNumber_Fallback : public ICFallbackStub
 
         ICStub* getStub(ICStubSpace* space) {
             return newStub<ICToNumber_Fallback>(space, getStubCode());
+        }
+    };
+};
+
+// BinaryArith
+//      JSOP_ADD
+//      JSOP_BITAND, JSOP_BITXOR, JSOP_BITOR
+//      JSOP_LSH, JSOP_RSH, JSOP_URSH
+
+class ICBinaryArith_Fallback : public ICFallbackStub
+{
+    friend class ICStubSpace;
+
+    explicit ICBinaryArith_Fallback(JitCode* stubCode)
+      : ICFallbackStub(BinaryArith_Fallback, stubCode)
+    {
+        extra_ = 0;
+    }
+
+    static const uint16_t SAW_DOUBLE_RESULT_BIT = 0x1;
+    static const uint16_t UNOPTIMIZABLE_OPERANDS_BIT = 0x2;
+
+  public:
+    static const uint32_t MAX_OPTIMIZED_STUBS = 8;
+
+    bool sawDoubleResult() const {
+        return extra_ & SAW_DOUBLE_RESULT_BIT;
+    }
+    void setSawDoubleResult() {
+        extra_ |= SAW_DOUBLE_RESULT_BIT;
+    }
+    bool hadUnoptimizableOperands() const {
+        return extra_ & UNOPTIMIZABLE_OPERANDS_BIT;
+    }
+    void noteUnoptimizableOperands() {
+        extra_ |= UNOPTIMIZABLE_OPERANDS_BIT;
+    }
+
+    // Compiler for this stub kind.
+    class Compiler : public ICStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        explicit Compiler(JSContext* cx)
+          : ICStubCompiler(cx, ICStub::BinaryArith_Fallback, Engine::Baseline) {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICBinaryArith_Fallback>(space, getStubCode());
+        }
+    };
+};
+
+class ICBinaryArith_Int32 : public ICStub
+{
+    friend class ICStubSpace;
+
+    ICBinaryArith_Int32(JitCode* stubCode, bool allowDouble)
+      : ICStub(BinaryArith_Int32, stubCode)
+    {
+        extra_ = allowDouble;
+    }
+
+  public:
+    bool allowDouble() const {
+        return extra_;
+    }
+
+    // Compiler for this stub kind.
+    class Compiler : public ICStubCompiler {
+      protected:
+        JSOp op_;
+        bool allowDouble_;
+
+        bool generateStubCode(MacroAssembler& masm);
+
+        // Stub keys shift-stubs need to encode the kind, the JSOp and if we allow doubles.
+        virtual int32_t getKey() const {
+            return static_cast<int32_t>(engine_) |
+                  (static_cast<int32_t>(kind) << 1) |
+                  (static_cast<int32_t>(op_) << 17) |
+                  (static_cast<int32_t>(allowDouble_) << 25);
+        }
+
+      public:
+        Compiler(JSContext* cx, JSOp op, bool allowDouble)
+          : ICStubCompiler(cx, ICStub::BinaryArith_Int32, Engine::Baseline),
+            op_(op), allowDouble_(allowDouble) {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICBinaryArith_Int32>(space, getStubCode(), allowDouble_);
+        }
+    };
+};
+
+class ICBinaryArith_StringConcat : public ICStub
+{
+    friend class ICStubSpace;
+
+    explicit ICBinaryArith_StringConcat(JitCode* stubCode)
+      : ICStub(BinaryArith_StringConcat, stubCode)
+    {}
+
+  public:
+    class Compiler : public ICStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        explicit Compiler(JSContext* cx)
+          : ICStubCompiler(cx, ICStub::BinaryArith_StringConcat, Engine::Baseline)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICBinaryArith_StringConcat>(space, getStubCode());
+        }
+    };
+};
+
+class ICBinaryArith_StringObjectConcat : public ICStub
+{
+    friend class ICStubSpace;
+
+    ICBinaryArith_StringObjectConcat(JitCode* stubCode, bool lhsIsString)
+      : ICStub(BinaryArith_StringObjectConcat, stubCode)
+    {
+        extra_ = lhsIsString;
+    }
+
+  public:
+    bool lhsIsString() const {
+        return extra_;
+    }
+
+    class Compiler : public ICStubCompiler {
+      protected:
+        bool lhsIsString_;
+        bool generateStubCode(MacroAssembler& masm);
+
+        virtual int32_t getKey() const {
+            return static_cast<int32_t>(engine_) |
+                  (static_cast<int32_t>(kind) << 1) |
+                  (static_cast<int32_t>(lhsIsString_) << 17);
+        }
+
+      public:
+        Compiler(JSContext* cx, bool lhsIsString)
+          : ICStubCompiler(cx, ICStub::BinaryArith_StringObjectConcat, Engine::Baseline),
+            lhsIsString_(lhsIsString)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICBinaryArith_StringObjectConcat>(space, getStubCode(),
+                                                                 lhsIsString_);
+        }
+    };
+};
+
+class ICBinaryArith_Double : public ICStub
+{
+    friend class ICStubSpace;
+
+    explicit ICBinaryArith_Double(JitCode* stubCode)
+      : ICStub(BinaryArith_Double, stubCode)
+    {}
+
+  public:
+    class Compiler : public ICMultiStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        Compiler(JSContext* cx, JSOp op)
+          : ICMultiStubCompiler(cx, ICStub::BinaryArith_Double, op, Engine::Baseline)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICBinaryArith_Double>(space, getStubCode());
+        }
+    };
+};
+
+class ICBinaryArith_BooleanWithInt32 : public ICStub
+{
+    friend class ICStubSpace;
+
+    ICBinaryArith_BooleanWithInt32(JitCode* stubCode, bool lhsIsBool, bool rhsIsBool)
+      : ICStub(BinaryArith_BooleanWithInt32, stubCode)
+    {
+        MOZ_ASSERT(lhsIsBool || rhsIsBool);
+        extra_ = 0;
+        if (lhsIsBool)
+            extra_ |= 1;
+        if (rhsIsBool)
+            extra_ |= 2;
+    }
+
+  public:
+    bool lhsIsBoolean() const {
+        return extra_ & 1;
+    }
+
+    bool rhsIsBoolean() const {
+        return extra_ & 2;
+    }
+
+    class Compiler : public ICStubCompiler {
+      protected:
+        JSOp op_;
+        bool lhsIsBool_;
+        bool rhsIsBool_;
+        bool generateStubCode(MacroAssembler& masm);
+
+        virtual int32_t getKey() const {
+            return static_cast<int32_t>(engine_) |
+                  (static_cast<int32_t>(kind) << 1) |
+                  (static_cast<int32_t>(op_) << 17) |
+                  (static_cast<int32_t>(lhsIsBool_) << 25) |
+                  (static_cast<int32_t>(rhsIsBool_) << 26);
+        }
+
+      public:
+        Compiler(JSContext* cx, JSOp op, bool lhsIsBool, bool rhsIsBool)
+          : ICStubCompiler(cx, ICStub::BinaryArith_BooleanWithInt32, Engine::Baseline),
+            op_(op), lhsIsBool_(lhsIsBool), rhsIsBool_(rhsIsBool)
+        {
+            MOZ_ASSERT(op_ == JSOP_ADD || op_ == JSOP_SUB || op_ == JSOP_BITOR ||
+                       op_ == JSOP_BITAND || op_ == JSOP_BITXOR);
+            MOZ_ASSERT(lhsIsBool_ || rhsIsBool_);
+        }
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICBinaryArith_BooleanWithInt32>(space, getStubCode(),
+                                                               lhsIsBool_, rhsIsBool_);
+        }
+    };
+};
+
+class ICBinaryArith_DoubleWithInt32 : public ICStub
+{
+    friend class ICStubSpace;
+
+    ICBinaryArith_DoubleWithInt32(JitCode* stubCode, bool lhsIsDouble)
+      : ICStub(BinaryArith_DoubleWithInt32, stubCode)
+    {
+        extra_ = lhsIsDouble;
+    }
+
+  public:
+    bool lhsIsDouble() const {
+        return extra_;
+    }
+
+    class Compiler : public ICMultiStubCompiler {
+      protected:
+        bool lhsIsDouble_;
+        bool generateStubCode(MacroAssembler& masm);
+
+        virtual int32_t getKey() const {
+            return static_cast<int32_t>(engine_) |
+                  (static_cast<int32_t>(kind) << 1) |
+                  (static_cast<int32_t>(op) << 17) |
+                  (static_cast<int32_t>(lhsIsDouble_) << 25);
+        }
+
+      public:
+        Compiler(JSContext* cx, JSOp op, bool lhsIsDouble)
+          : ICMultiStubCompiler(cx, ICStub::BinaryArith_DoubleWithInt32, op, Engine::Baseline),
+            lhsIsDouble_(lhsIsDouble)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICBinaryArith_DoubleWithInt32>(space, getStubCode(),
+                                                              lhsIsDouble_);
+        }
+    };
+};
+
+// UnaryArith
+//     JSOP_BITNOT
+//     JSOP_NEG
+
+class ICUnaryArith_Fallback : public ICFallbackStub
+{
+    friend class ICStubSpace;
+
+    explicit ICUnaryArith_Fallback(JitCode* stubCode)
+      : ICFallbackStub(UnaryArith_Fallback, stubCode)
+    {
+        extra_ = 0;
+    }
+
+  public:
+    static const uint32_t MAX_OPTIMIZED_STUBS = 8;
+
+    bool sawDoubleResult() {
+        return extra_;
+    }
+    void setSawDoubleResult() {
+        extra_ = 1;
+    }
+
+    // Compiler for this stub kind.
+    class Compiler : public ICStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        explicit Compiler(JSContext* cx)
+          : ICStubCompiler(cx, ICStub::UnaryArith_Fallback, Engine::Baseline)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICUnaryArith_Fallback>(space, getStubCode());
+        }
+    };
+};
+
+class ICUnaryArith_Int32 : public ICStub
+{
+    friend class ICStubSpace;
+
+    explicit ICUnaryArith_Int32(JitCode* stubCode)
+      : ICStub(UnaryArith_Int32, stubCode)
+    {}
+
+  public:
+    class Compiler : public ICMultiStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        Compiler(JSContext* cx, JSOp op)
+          : ICMultiStubCompiler(cx, ICStub::UnaryArith_Int32, op, Engine::Baseline)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICUnaryArith_Int32>(space, getStubCode());
+        }
+    };
+};
+
+class ICUnaryArith_Double : public ICStub
+{
+    friend class ICStubSpace;
+
+    explicit ICUnaryArith_Double(JitCode* stubCode)
+      : ICStub(UnaryArith_Double, stubCode)
+    {}
+
+  public:
+    class Compiler : public ICMultiStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler& masm);
+
+      public:
+        Compiler(JSContext* cx, JSOp op)
+          : ICMultiStubCompiler(cx, ICStub::UnaryArith_Double, op, Engine::Baseline)
+        {}
+
+        ICStub* getStub(ICStubSpace* space) {
+            return newStub<ICUnaryArith_Double>(space, getStubCode());
         }
     };
 };
@@ -1492,7 +2130,7 @@ class ICGetElem_Arguments : public ICMonitoredStub
 {
     friend class ICStubSpace;
   public:
-    enum Which { Mapped, Unmapped, Magic };
+    enum Which { Normal, Strict, Magic };
 
   private:
     ICGetElem_Arguments(JitCode* stubCode, ICStub* firstMonitorStub, Which which)
@@ -3243,7 +3881,7 @@ class ICGetProp_ArgumentsLength : public ICStub
 {
   friend class ICStubSpace;
   public:
-    enum Which { Mapped, Unmapped, Magic };
+    enum Which { Normal, Strict, Magic };
 
   protected:
     explicit ICGetProp_ArgumentsLength(JitCode* stubCode)

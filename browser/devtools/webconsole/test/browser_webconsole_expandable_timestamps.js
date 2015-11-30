@@ -9,9 +9,9 @@
 const TEST_URI = "data:text/html;charset=utf-8,Web Console test for " +
                  "bug 722267 - preference for toggling timestamps in messages";
 const PREF_MESSAGE_TIMESTAMP = "devtools.webconsole.timestampMessages";
-var hud;
+let hud;
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   hud = yield openConsole();

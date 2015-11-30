@@ -20,7 +20,6 @@ import org.mozilla.gecko.util.ThreadUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
@@ -92,9 +91,9 @@ public class ContactService implements GeckoEventListener {
     private HashMap<String, Integer> mImTypesMap;
 
     private final ContentResolver mContentResolver;
-    private final Activity mActivity;
+    private final GeckoApp mActivity;
 
-    public ContactService(EventDispatcher eventDispatcher, Activity activity) {
+    ContactService(EventDispatcher eventDispatcher, GeckoApp activity) {
         mEventDispatcher = eventDispatcher;
         mActivity = activity;
         mContentResolver = mActivity.getContentResolver();

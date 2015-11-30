@@ -27,7 +27,7 @@ const { when } = require('../system/unload');
 
 const emitter = EventTarget();
 
-var HISTORY_ARGS = {
+let HISTORY_ARGS = {
   onBeginUpdateBatch: [],
   onEndUpdateBatch: [],
   onClearHistory: [],
@@ -40,7 +40,7 @@ var HISTORY_ARGS = {
   ]
 };
 
-var HISTORY_EVENTS = {
+let HISTORY_EVENTS = {
   onBeginUpdateBatch: 'history-start-batch',
   onEndUpdateBatch: 'history-end-batch',
   onClearHistory: 'history-start-clear',
@@ -51,7 +51,7 @@ var HISTORY_EVENTS = {
   onVisit: 'history-visit'
 };
 
-var BOOKMARK_ARGS = {
+let BOOKMARK_ARGS = {
   onItemAdded: [
     'id', 'parentId', 'index', 'type', 'url', 'title', 'dateAdded'
   ],
@@ -66,7 +66,7 @@ var BOOKMARK_ARGS = {
   onItemVisited: ['id', 'visitId', 'time', 'transitionType', 'url', 'parentId']
 };
 
-var BOOKMARK_EVENTS = {
+let BOOKMARK_EVENTS = {
   onItemAdded: 'bookmark-item-added',
   onItemChanged: 'bookmark-item-changed',
   onItemMoved: 'bookmark-item-moved',
@@ -114,10 +114,10 @@ function formatValue (type, data) {
   return data;
 }
 
-var historyObserver = createObserverInstance(HISTORY_EVENTS, HISTORY_ARGS);
+let historyObserver = createObserverInstance(HISTORY_EVENTS, HISTORY_ARGS);
 historyService.addObserver(historyObserver, false);
 
-var bookmarkObserver = createObserverInstance(BOOKMARK_EVENTS, BOOKMARK_ARGS);
+let bookmarkObserver = createObserverInstance(BOOKMARK_EVENTS, BOOKMARK_ARGS);
 bookmarkService.addObserver(bookmarkObserver, false);
 
 when(() => {

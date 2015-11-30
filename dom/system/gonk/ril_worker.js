@@ -47,8 +47,8 @@ importScripts("ril_worker_buf_object.js");
 importScripts("ril_worker_telephony_request_queue.js");
 
 // set to true in ril_consts.js to see debug messages
-var DEBUG = DEBUG_WORKER;
-var GLOBAL = this;
+let DEBUG = DEBUG_WORKER;
+let GLOBAL = this;
 
 if (!this.debug) {
   // Debugging stub that goes nowhere.
@@ -64,23 +64,23 @@ const ICC_MAX_LINEAR_FIXED_RECORDS = 0xfe;
 
 const GET_CURRENT_CALLS_RETRY_MAX = 3;
 
-var RILQUIRKS_CALLSTATE_EXTRA_UINT32;
-var RILQUIRKS_REQUEST_USE_DIAL_EMERGENCY_CALL;
-var RILQUIRKS_SIM_APP_STATE_EXTRA_FIELDS;
-var RILQUIRKS_SIGNAL_EXTRA_INT32;
-var RILQUIRKS_AVAILABLE_NETWORKS_EXTRA_STRING;
+let RILQUIRKS_CALLSTATE_EXTRA_UINT32;
+let RILQUIRKS_REQUEST_USE_DIAL_EMERGENCY_CALL;
+let RILQUIRKS_SIM_APP_STATE_EXTRA_FIELDS;
+let RILQUIRKS_SIGNAL_EXTRA_INT32;
+let RILQUIRKS_AVAILABLE_NETWORKS_EXTRA_STRING;
 // Needed for call-waiting on Peak device
-var RILQUIRKS_EXTRA_UINT32_2ND_CALL;
+let RILQUIRKS_EXTRA_UINT32_2ND_CALL;
 // On the emulator we support querying the number of lock retries
-var RILQUIRKS_HAVE_QUERY_ICC_LOCK_RETRY_COUNT;
+let RILQUIRKS_HAVE_QUERY_ICC_LOCK_RETRY_COUNT;
 // Ril quirk to Send STK Profile Download
-var RILQUIRKS_SEND_STK_PROFILE_DOWNLOAD;
+let RILQUIRKS_SEND_STK_PROFILE_DOWNLOAD;
 // Ril quirk to attach data registration on demand.
-var RILQUIRKS_DATA_REGISTRATION_ON_DEMAND;
+let RILQUIRKS_DATA_REGISTRATION_ON_DEMAND;
 // Ril quirk to control the uicc/data subscription.
-var RILQUIRKS_SUBSCRIPTION_CONTROL;
+let RILQUIRKS_SUBSCRIPTION_CONTROL;
 // Ril quirk to describe the SMSC address format.
-var RILQUIRKS_SMSC_ADDRESS_FORMAT;
+let RILQUIRKS_SMSC_ADDRESS_FORMAT;
 
 /**
  * The RIL state machine.
@@ -4236,11 +4236,12 @@ RilObject.prototype[REQUEST_SETUP_DATA_CALL] = function REQUEST_SETUP_DATA_CALL(
   }
 
   let Buf = this.context.Buf;
-  let version = Buf.readInt32();
+  // Skip version of data call.
+  Buf.readInt32();
   // Skip number of data calls.
   Buf.readInt32();
 
-  this.readDataCall(options, version);
+  this.readDataCall_v6(options);
   this.sendChromeMessage(options);
 };
 RilObject.prototype[REQUEST_SIM_IO] = function REQUEST_SIM_IO(length, options) {
@@ -4511,13 +4512,9 @@ RilObject.prototype[REQUEST_LAST_DATA_CALL_FAIL_CAUSE] = null;
  *                length.
  *  # dnses     - A space-delimited list of DNS server addresses.
  *  # gateways  - A space-delimited list of default gateway addresses.
- *
- * V10:
- *  # pcscf     - A space-delimited list of Proxy Call State Control Function
- *                addresses.
  */
 
-RilObject.prototype.readDataCall = function(options, version) {
+RilObject.prototype.readDataCall_v6 = function(options) {
   if (!options) {
     options = {};
   }
@@ -4531,10 +4528,6 @@ RilObject.prototype.readDataCall = function(options, version) {
   options.addresses = Buf.readString();
   options.dnses = Buf.readString();
   options.gateways = Buf.readString();
-
-  if (version >= 10) {
-    options.pcscf = Buf.readString();
-  }
 
   return options;
 };
@@ -4564,7 +4557,7 @@ RilObject.prototype[REQUEST_DATA_CALL_LIST] = function REQUEST_DATA_CALL_LIST(le
   let datacalls = [];
   for (let i = 0; i < num; i++) {
     let datacall;
-    datacall = this.readDataCall({}, version);
+    datacall = this.readDataCall_v6();
     datacalls.push(datacall);
   }
 
@@ -9684,24 +9677,10 @@ StkCommandParamsFactoryObject.prototype = {
       textMsg.text = ctlv.value.identifier;
     }
 
-    // According to section 6.4.10 of |ETSI TS 102 223|:
-    //
-    // - if the alpha identifier is provided by the UICC and is a null data
-    //   object (i.e. length = '00' and no value part), this is an indication
-    //   that the terminal should not give any information to the user on the
-    //   fact that the terminal is sending a short message;
-    //
-    // - if the alpha identifier is not provided by the UICC, the terminal may
-    //   give information to the user concerning what is happening.
-    //
-    // ICCPDUHelper reads alpha id as an empty string if the length is zero,
-    // hence we'll notify the caller when it's not an empty string.
-    if (textMsg.text !== "") {
-      // Icon identifier is optional.
-      this.appendIconIfNecessary(selectedCtlvs[COMPREHENSIONTLV_TAG_ICON_ID] || null,
-                                 textMsg,
-                                 onComplete);
-    }
+    // Icon identifier is optional.
+    this.appendIconIfNecessary(selectedCtlvs[COMPREHENSIONTLV_TAG_ICON_ID] || null,
+                               textMsg,
+                               onComplete);
   },
 
   /**
@@ -14460,16 +14439,7 @@ ICCContactHelperObject.prototype = {
       this.updateContactField(pbr, contact, field, (fieldEntry) => {
         contactField = Object.assign(contactField, fieldEntry);
         updateField.call(this);
-      }, (errorMsg) => {
-        // Bug 1194149, there are some sim cards without sufficient
-        // Type 2 USIM contact fields record. We allow user continue
-        // importing contacts.
-        if (errorMsg === CONTACT_ERR_NO_FREE_RECORD_FOUND) {
-          updateField.call(this);
-          return;
-        }
-        onerror(errorMsg);
-      });
+      }, onerror);
     }).call(this);
   },
 
@@ -14844,7 +14814,7 @@ Context.prototype = {
   }
 })();
 
-var ContextPool = {
+let ContextPool = {
   _contexts: [],
 
   handleRilMessage: function(aClientId, aUint8Array) {

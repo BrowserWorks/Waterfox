@@ -14,26 +14,26 @@ Cu.import("resource://testing-common/MockRegistrar.jsm");
 // === Mocks ===
 
 // Globals representing server state
-var passwordResetOnServer = false;
-var deletedOnServer = false;
+let passwordResetOnServer = false;
+let deletedOnServer = false;
 
 // Global representing FxAccounts state
-var certExpired = false;
+let certExpired = false;
 
 // Mock RP
 function makePrincipal(origin, appId) {
   let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
                  .getService(Ci.nsIScriptSecurityManager);
   let uri = Services.io.newURI(origin, null, null);
-  return secMan.createCodebasePrincipal(uri, {appId: appId});
+  return secMan.getAppCodebasePrincipal(uri, appId, false);
 }
-var principal = makePrincipal('app://settings.gaiamobile.org', 27, false);
+let principal = makePrincipal('app://settings.gaiamobile.org', 27, false);
 
 // For override FxAccountsUIGlue.
-var fakeFxAccountsUIGlueCID;
+let fakeFxAccountsUIGlueCID;
 
 // FxAccountsUIGlue fake component.
-var FxAccountsUIGlue = {
+let FxAccountsUIGlue = {
   _reject: false,
 
   _error: 'error',
@@ -177,7 +177,7 @@ FxAccountsManager._fxAccounts = {
 const kFxAccountsClient = FxAccountsManager._getFxAccountsClient;
 
 // and change it for a fake client factory.
-var FakeFxAccountsClient = {
+let FakeFxAccountsClient = {
   _reject: false,
   _recoveryEmailStatusCalled: false,
   _signInCalled: false,
@@ -396,7 +396,6 @@ add_test(function() {
       do_throw("Unexpected success");
     },
     error => {
-      do_check_eq(error.error, ERROR_OFFLINE);
       FxAccountsManager._fxAccounts._reset();
       Services.io.offline = false;
       certExpired = false;

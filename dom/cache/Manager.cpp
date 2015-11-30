@@ -54,9 +54,16 @@ public:
     nsresult rv = BodyCreateDir(aDBDir);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-    // executes in its own transaction
-    rv = db::CreateOrMigrateSchema(aConn);
-    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+    {
+      mozStorageTransaction trans(aConn, false,
+                                  mozIStorageConnection::TRANSACTION_IMMEDIATE);
+
+      rv = db::CreateSchema(aConn);
+      if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+      rv = trans.Commit();
+      if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+    }
 
     // If the Context marker file exists, then the last session was
     // not cleanly shutdown.  In these cases sqlite will ensure that
@@ -393,7 +400,7 @@ private:
       while (iter.HasMore()) {
         nsRefPtr<Manager> manager = iter.GetNext();
         if (aOrigin.IsVoid() ||
-            manager->mManagerId->QuotaOrigin() == aOrigin) {
+            manager->mManagerId->ExtendedOrigin() == aOrigin) {
           manager->Abort();
         }
       }

@@ -10,10 +10,10 @@
  * Ensure that History (through category cache) notifies us just once.
  */
 
-var os = Cc["@mozilla.org/observer-service;1"].
+let os = Cc["@mozilla.org/observer-service;1"].
          getService(Ci.nsIObserverService);
 
-var gObserver = {
+let gObserver = {
   notifications: 0,
   observe: function(aSubject, aTopic, aData) {
     this.notifications++;

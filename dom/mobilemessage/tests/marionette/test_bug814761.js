@@ -6,7 +6,7 @@ MARIONETTE_TIMEOUT = 60000;
 SpecialPowers.setBoolPref("dom.sms.enabled", true);
 SpecialPowers.addPermission("sms", true, document);
 
-var manager = window.navigator.mozMobileMessage;
+let manager = window.navigator.mozMobileMessage;
 ok(manager instanceof MozMobileMessageManager,
    "manager is instance of " + manager.constructor);
 
@@ -15,11 +15,11 @@ ok(manager instanceof MozMobileMessageManager,
 // the actual SMS is never received, so script will timeout waiting for the
 // onreceived event. Also note that a single larger message (i.e. 1600
 // characters) works; so it is not a compounded send limit.
-var fromNumber = "5551110000";
-var msgLength = 379;
-var msgText = new Array(msgLength + 1).join('a');
+let fromNumber = "5551110000";
+let msgLength = 379;
+let msgText = new Array(msgLength + 1).join('a');
 
-var pendingEmulatorCmdCount = 0;
+let pendingEmulatorCmdCount = 0;
 function sendSmsToEmulator(from, text) {
   ++pendingEmulatorCmdCount;
 

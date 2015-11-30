@@ -7,11 +7,11 @@
 const URL1 = MAIN_DOMAIN + "navigate-first.html";
 const URL2 = MAIN_DOMAIN + "navigate-second.html";
 
-var events = require("sdk/event/core");
-var client;
+let events = require("sdk/event/core");
+let client;
 
 // State machine to check events order
-var i = 0;
+let i = 0;
 function assertEvent(event, data) {
   let x = 0;
   switch(i++) {
@@ -74,7 +74,7 @@ function waitForOnBeforeUnloadDialog(browser, callback) {
   }, true);
 }
 
-var httpObserver = function (subject, topic, state) {
+let httpObserver = function (subject, topic, state) {
   let channel = subject.QueryInterface(Ci.nsIHttpChannel);
   let url = channel.URI.spec;
   // Only listen for our document request, as many other requests can happen

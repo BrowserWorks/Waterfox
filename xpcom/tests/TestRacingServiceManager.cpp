@@ -259,7 +259,7 @@ int main(int argc, char** argv)
   ScopedXPCOM xpcom("RacingServiceManager");
   NS_ENSURE_FALSE(xpcom.failed(), 1);
 
-  AutoCreateAndDestroyReentrantMonitor mon1(&gReentrantMonitor);
+  AutoCreateAndDestroyReentrantMonitor mon(&gReentrantMonitor);
 
   nsRefPtr<Runnable> runnable = new Runnable();
   NS_ENSURE_TRUE(runnable, 1);
@@ -270,13 +270,13 @@ int main(int argc, char** argv)
   NS_ENSURE_SUCCESS(rv, 1);
 
   {
-    ReentrantMonitorAutoEnter mon2(*gReentrantMonitor);
+    ReentrantMonitorAutoEnter mon(*gReentrantMonitor);
 
     gMainThreadWaiting = true;
-    mon2.Notify();
+    mon.Notify();
 
     while (!gCreateInstanceCalled) {
-      mon2.Wait();
+      mon.Wait();
     }
   }
 
@@ -292,13 +292,13 @@ int main(int argc, char** argv)
   NS_ENSURE_SUCCESS(rv, 1);
 
   {
-    ReentrantMonitorAutoEnter mon3(*gReentrantMonitor);
+    ReentrantMonitorAutoEnter mon(*gReentrantMonitor);
 
     gMainThreadWaiting = true;
-    mon3.Notify();
+    mon.Notify();
 
     while (!gCreateInstanceCalled) {
-      mon3.Wait();
+      mon.Wait();
     }
   }
 

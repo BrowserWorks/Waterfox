@@ -5,6 +5,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "BluetoothDaemonA2dpInterface.h"
+#include "BluetoothDaemonSetupInterface.h"
 #include "mozilla/unused.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
@@ -27,16 +28,22 @@ BluetoothDaemonA2dpModule::SetNotificationHandler(
   sNotificationHandler = aNotificationHandler;
 }
 
+nsresult
+BluetoothDaemonA2dpModule::Send(DaemonSocketPDU* aPDU,
+                                BluetoothA2dpResultHandler* aRes)
+{
+  aRes->AddRef(); // Keep reference for response
+  return Send(aPDU, static_cast<void*>(aRes));
+}
+
 void
 BluetoothDaemonA2dpModule::HandleSvc(const DaemonSocketPDUHeader& aHeader,
-                                     DaemonSocketPDU& aPDU,
-                                     DaemonSocketResultHandler* aRes)
+                                     DaemonSocketPDU& aPDU, void* aUserData)
 {
   static void (BluetoothDaemonA2dpModule::* const HandleOp[])(
-    const DaemonSocketPDUHeader&, DaemonSocketPDU&,
-    DaemonSocketResultHandler*) = {
-    [0] = &BluetoothDaemonA2dpModule::HandleRsp,
-    [1] = &BluetoothDaemonA2dpModule::HandleNtf
+    const DaemonSocketPDUHeader&, DaemonSocketPDU&, void*) = {
+    INIT_ARRAY_AT(0, &BluetoothDaemonA2dpModule::HandleRsp),
+    INIT_ARRAY_AT(1, &BluetoothDaemonA2dpModule::HandleNtf),
   };
 
   MOZ_ASSERT(!NS_IsMainThread());
@@ -44,7 +51,7 @@ BluetoothDaemonA2dpModule::HandleSvc(const DaemonSocketPDUHeader& aHeader,
   // negate twice to map bit to 0/1
   unsigned int isNtf = !!(aHeader.mOpcode & 0x80);
 
-  (this->*(HandleOp[isNtf]))(aHeader, aPDU, aRes);
+  (this->*(HandleOp[isNtf]))(aHeader, aPDU, aUserData);
 }
 
 // Commands
@@ -127,15 +134,18 @@ BluetoothDaemonA2dpModule::DisconnectRsp(
 void
 BluetoothDaemonA2dpModule::HandleRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  DaemonSocketResultHandler* aRes)
+  void* aUserData)
 {
   static void (BluetoothDaemonA2dpModule::* const HandleRsp[])(
     const DaemonSocketPDUHeader&,
     DaemonSocketPDU&,
     BluetoothA2dpResultHandler*) = {
-    [OPCODE_ERROR] = &BluetoothDaemonA2dpModule::ErrorRsp,
-    [OPCODE_CONNECT] = &BluetoothDaemonA2dpModule::ConnectRsp,
-    [OPCODE_DISCONNECT] = &BluetoothDaemonA2dpModule::DisconnectRsp
+    INIT_ARRAY_AT(OPCODE_ERROR,
+      &BluetoothDaemonA2dpModule::ErrorRsp),
+    INIT_ARRAY_AT(OPCODE_CONNECT,
+      &BluetoothDaemonA2dpModule::ConnectRsp),
+    INIT_ARRAY_AT(OPCODE_DISCONNECT,
+      &BluetoothDaemonA2dpModule::DisconnectRsp),
   };
 
   MOZ_ASSERT(!NS_IsMainThread()); // I/O thread
@@ -146,7 +156,8 @@ BluetoothDaemonA2dpModule::HandleRsp(
   }
 
   nsRefPtr<BluetoothA2dpResultHandler> res =
-    static_cast<BluetoothA2dpResultHandler*>(aRes);
+    already_AddRefed<BluetoothA2dpResultHandler>(
+      static_cast<BluetoothA2dpResultHandler*>(aUserData));
 
   if (!res) {
     return; // Return early if no result handler has been set for response
@@ -302,14 +313,14 @@ BluetoothDaemonA2dpModule::AudioConfigNtf(
 void
 BluetoothDaemonA2dpModule::HandleNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  DaemonSocketResultHandler* aRes)
+  void* aUserData)
 {
   static void (BluetoothDaemonA2dpModule::* const HandleNtf[])(
     const DaemonSocketPDUHeader&, DaemonSocketPDU&) = {
-    [0] = &BluetoothDaemonA2dpModule::ConnectionStateNtf,
-    [1] = &BluetoothDaemonA2dpModule::AudioStateNtf,
+    INIT_ARRAY_AT(0, &BluetoothDaemonA2dpModule::ConnectionStateNtf),
+    INIT_ARRAY_AT(1, &BluetoothDaemonA2dpModule::AudioStateNtf),
 #if ANDROID_VERSION >= 21
-    [2] = &BluetoothDaemonA2dpModule::AudioConfigNtf
+    INIT_ARRAY_AT(2, &BluetoothDaemonA2dpModule::AudioConfigNtf),
 #endif
   };
 

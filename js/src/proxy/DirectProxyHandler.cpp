@@ -97,7 +97,7 @@ DirectProxyHandler::construct(JSContext* cx, HandleObject proxy, const CallArgs&
 
 bool
 DirectProxyHandler::nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                               const CallArgs& args) const
+                               CallArgs args) const
 {
     args.setThis(ObjectValue(*args.thisv().toObject().as<ProxyObject>().target()));
     if (!test(args.thisv())) {
@@ -217,7 +217,7 @@ DirectProxyHandler::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool*
 }
 
 bool
-DirectProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue receiver,
+DirectProxyHandler::get(JSContext* cx, HandleObject proxy, HandleObject receiver,
                         HandleId id, MutableHandleValue vp) const
 {
     assertEnteredPolicy(cx, proxy, id, GET);

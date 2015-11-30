@@ -396,10 +396,7 @@ SingleAccIterator::Next()
 {
   nsRefPtr<Accessible> nextAcc;
   mAcc.swap(nextAcc);
-  if (!nextAcc || nextAcc->IsDefunct()) {
-    return nullptr;
-  }
-  return nextAcc;
+  return (nextAcc && !nextAcc->IsDefunct()) ? nextAcc : nullptr;
 }
 
 

@@ -875,8 +875,8 @@ gfxFontEntry::HasGraphiteSpaceContextuals()
             const gr_faceinfo* faceInfo = gr_face_info(face, 0);
             mHasGraphiteSpaceContextuals =
                 faceInfo->space_contextuals != gr_faceinfo::gr_space_none;
+            ReleaseGrFace(face);
         }
-        ReleaseGrFace(face); // always balance GetGrFace, even if face is null
         mGraphiteSpaceContextualsInitialized = true;
     }
     return mHasGraphiteSpaceContextuals;
@@ -1055,7 +1055,7 @@ gfxFontEntry::SupportsGraphiteFeature(uint32_t aFeatureTag)
     }
 
     gr_face* face = GetGrFace();
-    result = face ? gr_face_find_fref(face, aFeatureTag) != nullptr : false;
+    result = gr_face_find_fref(face, aFeatureTag) != nullptr;
     ReleaseGrFace(face);
 
     mSupportedFeatures->Put(scriptFeature, result);
@@ -1119,15 +1119,15 @@ gfxFontEntry::AddSizeOfIncludingThis(MallocSizeOf aMallocSizeOf,
 //
 //////////////////////////////////////////////////////////////////////////////
 
-// we consider faces with mStandardFace == true to be "less than" those with false,
-// because during style matching, earlier entries are tried first
+// we consider faces with mStandardFace == true to be "greater than" those with false,
+// because during style matching, later entries will replace earlier ones
 class FontEntryStandardFaceComparator {
   public:
     bool Equals(const nsRefPtr<gfxFontEntry>& a, const nsRefPtr<gfxFontEntry>& b) const {
         return a->mStandardFace == b->mStandardFace;
     }
     bool LessThan(const nsRefPtr<gfxFontEntry>& a, const nsRefPtr<gfxFontEntry>& b) const {
-        return (a->mStandardFace == true && b->mStandardFace == false);
+        return (a->mStandardFace == false && b->mStandardFace == true);
     }
 };
 

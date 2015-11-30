@@ -145,7 +145,7 @@ private:
  * MUCH PREFERRED to bare calls to Mutex.Lock and Unlock.
  */
 template<typename T>
-class MOZ_RAII BaseAutoLock
+class MOZ_STACK_CLASS BaseAutoLock
 {
 public:
   /**
@@ -190,7 +190,7 @@ typedef BaseAutoLock<OffTheBooksMutex> OffTheBooksMutexAutoLock;
  * MUCH PREFERRED to bare calls to Mutex.Unlock and Lock.
  */
 template<typename T>
-class MOZ_RAII BaseAutoUnlock
+class MOZ_STACK_CLASS BaseAutoUnlock
 {
 public:
   explicit BaseAutoUnlock(T& aLock MOZ_GUARD_OBJECT_NOTIFIER_PARAM)

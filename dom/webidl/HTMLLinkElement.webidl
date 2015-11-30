@@ -48,8 +48,3 @@ partial interface HTMLLinkElement {
     readonly attribute Document? import;
 };
 
-// https://w3c.github.io/webappsec/specs/subresourceintegrity/#htmllinkelement-1
-partial interface HTMLLinkElement {
-  [SetterThrows]
-  attribute DOMString integrity;
-};

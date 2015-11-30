@@ -52,7 +52,7 @@ public:
 
   virtual ~MediaCodecDataDecoder();
 
-  virtual nsRefPtr<MediaDataDecoder::InitPromise> Init() override;
+  virtual nsresult Init() override;
   virtual nsresult Flush() override;
   virtual nsresult Drain() override;
   virtual nsresult Shutdown() override;

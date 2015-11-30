@@ -3,11 +3,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var Ci = Components.interfaces;
+let Ci = Components.interfaces;
 
 // --- REMOVE ---
-var noop = function() {};
-var endl = '\n';
+let noop = function() {};
+let endl = '\n';
 // --------------
 
 function BrowserView(container, visibleRect) {

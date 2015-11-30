@@ -4,24 +4,24 @@
 
 "use strict";
 
-var {Cu, Cc, Ci} = require("chrome");
+let {Cu, Cc, Ci} = require("chrome");
 
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
-Cu.import("resource://gre/modules/UserCustomizations.jsm");
 
-var promise = require("promise");
-var DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
-var { ActorPool } = require("devtools/server/actors/common");
-var { DebuggerServer } = require("devtools/server/main");
-var Services = require("Services");
+let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+
+let DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
+let { ActorPool } = require("devtools/server/actors/common");
+let { DebuggerServer } = require("devtools/server/main");
+let Services = require("Services");
 
 // Comma separated list of permissions that a sideloaded app can't ask for
 const UNSAFE_PERMISSIONS = Services.prefs.getCharPref("devtools.apps.forbidden-permissions");
 
-var FramesMock = null;
+let FramesMock = null;
 
 exports.setFramesMock = function (mock) {
   FramesMock = mock;
@@ -213,9 +213,6 @@ function WebappsActor(aConnection) {
   Cu.import("resource://gre/modules/AppsUtils.jsm");
   Cu.import("resource://gre/modules/FileUtils.jsm");
   Cu.import("resource://gre/modules/MessageBroadcaster.jsm");
-
-  this.appsChild = {};
-  Cu.import("resource://gre/modules/AppsServiceChild.jsm", this.appsChild);
 
   // Keep reference of already connected app processes.
   // values: app frame message manager
@@ -480,41 +477,21 @@ WebappsActor.prototype = {
                             .createInstance(Ci.nsIZipReader);
           zipReader.open(zipFile);
 
-          // Prefer manifest.webapp when available
-          let hasWebappManifest = zipReader.hasEntry("manifest.webapp");
-          let hasJsonManifest = zipReader.hasEntry("manifest.json");
-
-          if (!hasWebappManifest && !hasJsonManifest) {
-            self._sendError(deferred, "Missing manifest.webapp or manifest.json", aId);
-            return;
-          }
-
-          let manifestName = hasWebappManifest ? "manifest.webapp" : "manifest.json";
-
-          // Read app manifest from `application.zip`
-          let istream = zipReader.getInputStream(manifestName);
+          // Read app manifest `manifest.webapp` from `application.zip`
+          let istream = zipReader.getInputStream("manifest.webapp");
           let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
                             .createInstance(Ci.nsIScriptableUnicodeConverter);
           converter.charset = "UTF-8";
           let jsonString = converter.ConvertToUnicode(
             NetUtil.readInputStreamToString(istream, istream.available())
           );
-          zipReader.close();
 
           let manifest;
           try {
             manifest = JSON.parse(jsonString);
           } catch(e) {
-            self._sendError(deferred, "Error Parsing " + manifestName + ": " + e, aId);
+            self._sendError(deferred, "Error Parsing manifest.webapp: " + e, aId);
             return;
-          }
-
-          if (manifestName === "manifest.json") {
-            if (!UserCustomizations.checkExtensionManifest(manifest)) {
-              self._sendError(deferred, "Invalid manifest", aId);
-              return;
-            }
-            manifest = UserCustomizations.convertManifest(manifest);
           }
 
           // Completely forbid pushing apps asking for unsafe permissions
@@ -559,57 +536,56 @@ WebappsActor.prototype = {
 
           // Only after security checks are made and after final app id is computed
           // we can move application.zip to the destination directory, and
-          // write manifest.webapp there.
+          // extract manifest.webapp there.
           let installDir = DOMApplicationRegistry._getAppDir(id);
-          zipFile.moveTo(installDir, "application.zip");
-
           let manFile = installDir.clone();
           manFile.append("manifest.webapp");
-          DOMApplicationRegistry._writeFile(manFile.path, JSON.stringify(manifest))
-            .then(() => {
-              let origin = "app://" + id;
-              let manifestURL = origin + "/manifest.webapp";
+          zipReader.extract("manifest.webapp", manFile);
+          zipReader.close();
+          zipFile.moveTo(installDir, "application.zip");
 
-              // Refresh application.zip content (e.g. reinstall app), as done here:
-              // http://hg.mozilla.org/mozilla-central/annotate/aaefec5d34f8/dom/apps/src/Webapps.jsm#l1125
-              // Do it in parent process for the simulator
-              let jar = installDir.clone();
-              jar.append("application.zip");
-              Services.obs.notifyObservers(jar, "flush-cache-entry", null);
+          let origin = "app://" + id;
+          let manifestURL = origin + "/manifest.webapp";
 
-              // And then in app content process
-              // This function will be evaluated in the scope of the content process
-              // frame script. That will flush the jar cache for this app and allow
-              // loading fresh updated resources if we reload its document.
-              let FlushFrameScript = function (path) {
-                let jar = Cc["@mozilla.org/file/local;1"]
-                            .createInstance(Ci.nsILocalFile);
-                jar.initWithPath(path);
-                let obs = Cc["@mozilla.org/observer-service;1"]
-                            .getService(Ci.nsIObserverService);
-                obs.notifyObservers(jar, "flush-cache-entry", null);
-              };
-              for (let frame of self._appFrames()) {
-                if (frame.getAttribute("mozapp") == manifestURL) {
-                  let mm = frame.QueryInterface(Ci.nsIFrameLoaderOwner).frameLoader.messageManager;
-                  mm.loadFrameScript("data:," +
-                    encodeURIComponent("(" + FlushFrameScript.toString() + ")" +
-                                       "('" + jar.path + "')"), false);
-                }
-              }
+          // Refresh application.zip content (e.g. reinstall app), as done here:
+          // http://hg.mozilla.org/mozilla-central/annotate/aaefec5d34f8/dom/apps/src/Webapps.jsm#l1125
+          // Do it in parent process for the simulator
+          let jar = installDir.clone();
+          jar.append("application.zip");
+          Services.obs.notifyObservers(jar, "flush-cache-entry", null);
 
-              // Create a fake app object with the minimum set of properties we need.
-              let app = {
-                origin: origin,
-                installOrigin: origin,
-                manifestURL: manifestURL,
-                appStatus: appType,
-                receipts: aReceipts,
-                kind: DOMApplicationRegistry.kPackaged,
-              }
+          // And then in app content process
+          // This function will be evaluated in the scope of the content process
+          // frame script. That will flush the jar cache for this app and allow
+          // loading fresh updated resources if we reload its document.
+          let FlushFrameScript = function (path) {
+            let jar = Cc["@mozilla.org/file/local;1"]
+                        .createInstance(Ci.nsILocalFile);
+            jar.initWithPath(path);
+            let obs = Cc["@mozilla.org/observer-service;1"]
+                        .getService(Ci.nsIObserverService);
+            obs.notifyObservers(jar, "flush-cache-entry", null);
+          };
+          for (let frame of self._appFrames()) {
+            if (frame.getAttribute("mozapp") == manifestURL) {
+              let mm = frame.QueryInterface(Ci.nsIFrameLoaderOwner).frameLoader.messageManager;
+              mm.loadFrameScript("data:," +
+                encodeURIComponent("(" + FlushFrameScript.toString() + ")" +
+                                   "('" + jar.path + "')"), false);
+            }
+          }
 
-              self._registerApp(deferred, app, id, aDir);
-            });
+          // Create a fake app object with the minimum set of properties we need.
+          let app = {
+            origin: origin,
+            installOrigin: origin,
+            manifestURL: manifestURL,
+            appStatus: appType,
+            receipts: aReceipts,
+            kind: DOMApplicationRegistry.kPackaged,
+          }
+
+          self._registerApp(deferred, app, id, aDir);
         } catch(e) {
           // If anything goes wrong, just send it back.
           self._sendError(deferred, e.toString(), aId);
@@ -712,7 +688,8 @@ WebappsActor.prototype = {
     debug("getAll");
 
     let deferred = promise.defer();
-    this.appsChild.DOMApplicationRegistry.getAll(apps => {
+    let reg = DOMApplicationRegistry;
+    reg.getAll(apps => {
       deferred.resolve({ apps: this._filterAllowedApps(apps) });
     });
 

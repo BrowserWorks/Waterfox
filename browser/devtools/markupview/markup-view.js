@@ -24,7 +24,7 @@ const {UndoStack} = require("devtools/shared/undo");
 const {editableField, InplaceEditor} = require("devtools/shared/inplace-editor");
 const {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
 const {HTMLEditor} = require("devtools/markupview/html-editor");
-const promise = require("promise");
+const promise = require("resource://gre/modules/Promise.jsm").Promise;
 const {Tooltip} = require("devtools/shared/widgets/Tooltip");
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const Heritage = require("sdk/core/heritage");
@@ -32,7 +32,7 @@ const {setTimeout, clearTimeout, setInterval, clearInterval} = require("sdk/time
 const {parseAttribute} = require("devtools/shared/node-attribute-parser");
 const ELLIPSIS = Services.prefs.getComplexValue("intl.ellipsis", Ci.nsIPrefLocalizedString).data;
 const {Task} = require("resource://gre/modules/Task.jsm");
-const {scrollIntoViewIfNeeded} = require("devtools/toolkit/layout/utils");
+const LayoutHelpers = require("devtools/toolkit/layout-helpers");
 
 Cu.import("resource://gre/modules/devtools/Templater.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -74,6 +74,8 @@ function MarkupView(aInspector, aFrame, aControllerWindow) {
   this.doc = this._frame.contentDocument;
   this._elt = this.doc.querySelector("#root");
   this.htmlEditor = new HTMLEditor(this.doc);
+
+  this.layoutHelpers = new LayoutHelpers(this.doc.defaultView);
 
   try {
     this.maxChildren = Services.prefs.getIntPref("devtools.markup.pagesize");
@@ -257,33 +259,16 @@ MarkupView.prototype = {
   },
 
   _onMouseUp: function() {
-    this.indicateDropTarget(null);
-    this.indicateDragTarget(null);
+    if (this._lastDropTarget) {
+      this.indicateDropTarget(null);
+    }
+    if (this._lastDragTarget) {
+      this.indicateDragTarget(null);
+    }
     if (this._scrollInterval) {
       clearInterval(this._scrollInterval);
     }
   },
-
-  cancelDragging: function() {
-    if (!this.isDragging) {
-      return;
-    }
-
-    for (let [, container] of this._containers) {
-      if (container.isDragging) {
-        container.cancelDragging();
-        break;
-      }
-    }
-
-    this.indicateDropTarget(null);
-    this.indicateDragTarget(null);
-    if (this._scrollInterval) {
-      clearInterval(this._scrollInterval);
-    }
-  },
-
-
 
   _hoveredNode: null,
 
@@ -345,24 +330,17 @@ MarkupView.prototype = {
   _clearBriefBoxModelTimer: function() {
     if (this._briefBoxModelTimer) {
       clearTimeout(this._briefBoxModelTimer);
-      this._briefBoxModelPromise.resolve();
-      this._briefBoxModelPromise = null;
       this._briefBoxModelTimer = null;
     }
   },
 
   _brieflyShowBoxModel: function(nodeFront) {
     this._clearBriefBoxModelTimer();
-    let onShown = this._showBoxModel(nodeFront);
-    this._briefBoxModelPromise = promise.defer();
+    this._showBoxModel(nodeFront);
 
     this._briefBoxModelTimer = setTimeout(() => {
-      this._hideBoxModel()
-          .then(this._briefBoxModelPromise.resolve,
-                this._briefBoxModelPromise.resolve);
+      this._hideBoxModel();
     }, NEW_SELECTION_HIGHLIGHTER_TIMER);
-
-    return promise.all([onShown, this._briefBoxModelPromise.promise]);
   },
 
   template: function(aName, aDest, aOptions={stack: "markup-view.xhtml"}) {
@@ -469,14 +447,13 @@ MarkupView.prototype = {
     }
 
     let done = this._inspector.updating("markup-view");
-    let onShowBoxModel, onShow;
 
     // Highlight the element briefly if needed.
     if (this._shouldNewSelectionBeHighlighted()) {
-      onShowBoxModel = this._brieflyShowBoxModel(selection.nodeFront);
+      this._brieflyShowBoxModel(selection.nodeFront);
     }
 
-    onShow = this.showNode(selection.nodeFront).then(() => {
+    this.showNode(selection.nodeFront).then(() => {
       // We could be destroyed by now.
       if (this._destroyer) {
         return promise.reject("markupview destroyed");
@@ -487,6 +464,8 @@ MarkupView.prototype = {
 
       // Make sure the new selection receives focus so the keyboard can be used.
       this.maybeFocusNewSelection();
+
+      done();
     }).catch(e => {
       if (!this._destroyer) {
         console.error(e);
@@ -494,9 +473,9 @@ MarkupView.prototype = {
         console.warn("Could not mark node as selected, the markup-view was " +
           "destroyed while showing the node.");
       }
-    });
 
-    promise.all([onShowBoxModel, onShow]).then(done);
+      done();
+    });
   },
 
   /**
@@ -646,12 +625,6 @@ MarkupView.prototype = {
       case Ci.nsIDOMKeyEvent.DOM_VK_F2: {
         this.beginEditingOuterHTML(this._selectedContainer.node);
         break;
-      }
-      case Ci.nsIDOMKeyEvent.DOM_VK_ESCAPE: {
-        if (this.isDragging) {
-          this.cancelDragging();
-          break;
-        }
       }
       default:
         handled = false;
@@ -831,8 +804,6 @@ MarkupView.prototype = {
         container.childrenDirty = true;
         // Update the children to take care of changes in the markup view DOM.
         this._updateChildren(container, {flash: true});
-      } else if (type === "pseudoClassLock") {
-        container.update();
       }
     }
 
@@ -938,7 +909,7 @@ MarkupView.prototype = {
       }
       return this._ensureVisible(aNode);
     }).then(() => {
-      scrollIntoViewIfNeeded(this.getContainer(aNode).editor.elt, centered);
+      this.layoutHelpers.scrollIntoViewIfNeeded(this.getContainer(aNode).editor.elt, centered);
     }, e => {
       // Only report this rejection as an error if the panel hasn't been
       // destroyed in the meantime.
@@ -1840,19 +1811,12 @@ MarkupContainer.prototype = {
     return this._hasChildren && !this.node.singleTextChild;
   },
 
-  /**
-   * True if this is the root <html> element and can't be collapsed
-   */
-  get mustExpand() {
-    return this.node._parent === this.markup.walker.rootNode;
-  },
-
   updateExpander: function() {
     if (!this.expander) {
       return;
     }
 
-    if (this.canExpand && !this.mustExpand) {
+    if (this.canExpand) {
       this.expander.style.visibility = "visible";
     } else {
       this.expander.style.visibility = "hidden";
@@ -1885,9 +1849,6 @@ MarkupContainer.prototype = {
 
     if (!this.canExpand) {
       aValue = false;
-    }
-    if (this.mustExpand) {
-      aValue = true;
     }
 
     if (aValue && this.elt.classList.contains("collapsed")) {
@@ -1948,18 +1909,6 @@ MarkupContainer.prototype = {
     return this._isDragging;
   },
 
-  /**
-   * Check if element is draggable
-   */
-  isDraggable: function(target) {
-    return this._isMouseDown &&
-           this.markup._dragStartEl === target &&
-           !this.node.isPseudoElement &&
-           !this.node.isAnonymous &&
-           this.win.getSelection().isCollapsed &&
-           this.node.parentNode().tagName !== null;
-  },
-
   _onMouseDown: function(event) {
     let target = event.target;
 
@@ -1997,7 +1946,9 @@ MarkupContainer.prototype = {
     this.markup._dragStartEl = target;
     setTimeout(() => {
       // Make sure the mouse is still down and on target.
-      if (!this.isDraggable(target)) {
+      if (!this._isMouseDown || this.markup._dragStartEl !== target ||
+          this.node.isPseudoElement || this.node.isAnonymous ||
+          !this.win.getSelection().isCollapsed) {
         return;
       }
       this.isDragging = true;
@@ -2021,7 +1972,8 @@ MarkupContainer.prototype = {
       return;
     }
 
-    this.cancelDragging();
+    this.isDragging = false;
+    this.elt.style.removeProperty("top");
 
     let dropTargetNodes = this.markup.dropTargetNodes;
 
@@ -2049,16 +2001,6 @@ MarkupContainer.prototype = {
                                               event.pageY - this.win.scrollY);
 
     this.markup.indicateDropTarget(el);
-  },
-
-  cancelDragging: function() {
-    if (!this.isDragging) {
-      return;
-    }
-
-    this._isMouseDown = false;
-    this.isDragging = false;
-    this.elt.style.removeProperty("top");
   },
 
   /**
@@ -2139,12 +2081,6 @@ MarkupContainer.prototype = {
    * viewed node.
    */
   update: function() {
-    if (this.node.pseudoClassLocks.length) {
-      this.elt.classList.add("pseudoclass-locked");
-    } else {
-      this.elt.classList.remove("pseudoclass-locked");
-    }
-
     if (this.editor.update) {
       this.editor.update();
     }
@@ -2267,6 +2203,9 @@ function MarkupElementContainer(markupView, node) {
   }
 
   this.tagLine.appendChild(this.editor.elt);
+
+  // Prepare the image preview tooltip data if any
+  this._prepareImagePreview();
 }
 
 MarkupElementContainer.prototype = Heritage.extend(MarkupContainer.prototype, {
@@ -2292,44 +2231,37 @@ MarkupElementContainer.prototype = Heritage.extend(MarkupContainer.prototype, {
   },
 
   /**
-   * Generates the an image preview for this Element. The element must be an
-   * image or canvas (@see isPreviewable).
-   *
-   * @return A Promise that is resolved with an object of form
-   * { data, size: { naturalWidth, naturalHeight, resizeRatio } } where
-   *   - data is the data-uri for the image preview.
-   *   - size contains information about the original image size and if the
-   *     preview has been resized.
-   *
-   * If this element is not previewable or the preview cannot be generated for
-   * some reason, the Promise is rejected.
+   * If the node is an image or canvas (@see isPreviewable), then get the
+   * image data uri from the server so that it can then later be previewed in
+   * a tooltip if needed.
+   * Stores a promise in this.tooltipData.data that resolves when the data has
+   * been retrieved
    */
-  _getPreview: function() {
-    if (!this.isPreviewable()) {
-      return promise.reject("_getPreview called on a non-previewable element.");
+  _prepareImagePreview: function() {
+    if (this.isPreviewable()) {
+      // Get the image data for later so that when the user actually hovers over
+      // the element, the tooltip does contain the image
+      let def = promise.defer();
+
+      let hasSrc = this.editor.getAttributeElement("src");
+      this.tooltipData = {
+        target: hasSrc ? hasSrc.querySelector(".link") : this.editor.tag,
+        data: def.promise
+      };
+
+      let maxDim = Services.prefs.getIntPref("devtools.inspector.imagePreviewTooltipSize");
+      this.node.getImageData(maxDim).then(data => {
+        data.data.string().then(str => {
+          let res = {data: str, size: data.size};
+          // Resolving the data promise and, to always keep tooltipData.data
+          // as a promise, create a new one that resolves immediately
+          def.resolve(res);
+          this.tooltipData.data = promise.resolve(res);
+        });
+      }, () => {
+        this.tooltipData.data = promise.resolve({});
+      });
     }
-
-    if (this.tooltipDataPromise) {
-      // A preview request is already pending. Re-use that request.
-      return this.tooltipDataPromise;
-    }
-
-    let maxDim =
-      Services.prefs.getIntPref("devtools.inspector.imagePreviewTooltipSize");
-
-    // Fetch the preview from the server.
-    this.tooltipDataPromise = Task.spawn(function*() {
-      let preview = yield this.node.getImageData(maxDim);
-      let data = yield preview.data.string();
-
-      // Clear the pending preview request. We can't reuse the results later as
-      // the preview contents might have changed.
-      this.tooltipDataPromise = null;
-
-      return { data, size: preview.size };
-    }.bind(this));
-
-    return this.tooltipDataPromise;
   },
 
   /**
@@ -2342,26 +2274,16 @@ MarkupElementContainer.prototype = Heritage.extend(MarkupContainer.prototype, {
    * to decide if/when to show the tooltip
    */
   isImagePreviewTarget: function(target, tooltip) {
-    // Is this Element previewable.
-    if (!this.isPreviewable()) {
+    if (!this.tooltipData || this.tooltipData.target !== target) {
       return promise.reject(false);
     }
 
-    // If the Element has an src attribute, the tooltip is shown when hovering
-    // over the src url. If not, the tooltip is shown when hovering over the tag
-    // name.
-    let src = this.editor.getAttributeElement("src");
-    let expectedTarget = src ? src.querySelector(".link") : this.editor.tag;
-    if (target !== expectedTarget) {
-      return promise.reject(false);
-    }
-
-    return this._getPreview().then(({data, size}) => {
-      // The preview is ready.
-      tooltip.setImageContent(data, size);
-    }, () => {
-      // Indicate the failure but show the tooltip anyway.
-      tooltip.setBrokenImageContent();
+    return this.tooltipData.data.then(({data, size}) => {
+      if (data && size) {
+        tooltip.setImageContent(data, size);
+      } else {
+        tooltip.setBrokenImageContent();
+      }
     });
   },
 

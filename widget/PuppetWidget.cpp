@@ -575,7 +575,8 @@ PuppetWidget::IMEEndComposition(bool aCancel)
 
   nsEventStatus status;
   bool noCompositionEvent = true;
-  WidgetCompositionEvent compositionCommitEvent(true, eCompositionCommit, this);
+  WidgetCompositionEvent compositionCommitEvent(true, NS_COMPOSITION_COMMIT,
+                                                this);
   InitEvent(compositionCommitEvent, nullptr);
   // SendEndIMEComposition is always called since ResetInputState
   // should always be called even if we aren't composing something.

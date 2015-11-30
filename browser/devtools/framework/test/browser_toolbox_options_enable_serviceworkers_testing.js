@@ -16,7 +16,7 @@ const TEST_URI = URL_ROOT +
 
 const ELEMENT_ID = "devtools-enable-serviceWorkersTesting";
 
-var toolbox;
+let toolbox;
 
 function test() {
   // Note: Pref dom.serviceWorkers.testing.enabled is false since we are testing

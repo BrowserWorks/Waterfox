@@ -78,7 +78,7 @@ HTMLMenuElement::SendShowEvent()
     return NS_ERROR_FAILURE;
   }
 
-  WidgetEvent event(true, eShow);
+  WidgetEvent event(true, NS_SHOW_EVENT);
   event.mFlags.mBubbles = false;
   event.mFlags.mCancelable = false;
 

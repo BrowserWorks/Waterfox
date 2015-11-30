@@ -4,7 +4,7 @@
 
 "use strict";
 
-var Preferences = Cu.import("resource://gre/modules/Preferences.jsm", {}).Preferences;
+let Preferences = Cu.import("resource://gre/modules/Preferences.jsm", {}).Preferences;
 
 const {FxAccounts, AccountState} = Cu.import("resource://gre/modules/FxAccounts.jsm", {});
 

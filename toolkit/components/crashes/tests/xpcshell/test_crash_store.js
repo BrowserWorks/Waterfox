@@ -9,7 +9,7 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
-var bsp = Cu.import("resource://gre/modules/CrashManager.jsm", this);
+let bsp = Cu.import("resource://gre/modules/CrashManager.jsm", this);
 Cu.import("resource://gre/modules/osfile.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 
@@ -32,7 +32,7 @@ const {
 
 const CrashStore = bsp.CrashStore;
 
-var STORE_DIR_COUNT = 0;
+let STORE_DIR_COUNT = 0;
 
 function getStore() {
   return Task.spawn(function* () {

@@ -12,16 +12,12 @@ const TEST_URI = "data:text/html;charset=utf-8,Web Console test for bug 618078";
 const TEST_URI2 = "http://example.com/browser/browser/devtools/webconsole/" +
                   "test/test-bug-618078-network-exceptions.html";
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();
 
-  // On e10s, the exception is triggered in child process
-  // and is ignored by test harness
-  if (!Services.appinfo.browserTabsRemoteAutostart) {
-    expectUncaughtException();
-  }
+  expectUncaughtException();
 
   content.location = TEST_URI2;
 

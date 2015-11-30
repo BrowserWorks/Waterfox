@@ -106,7 +106,7 @@ static const PLDHashTableOps hash_table_ops =
 {
   GlobalNameHashHashKey,
   GlobalNameHashMatchEntry,
-  PLDHashTable::MoveEntryStub,
+  PL_DHashMoveEntryStub,
   GlobalNameHashClearEntry,
   GlobalNameHashInitEntry
 };
@@ -132,7 +132,9 @@ nsGlobalNameStruct *
 nsScriptNameSpaceManager::AddToHash(PLDHashTable *aTable, const nsAString *aKey,
                                     const char16_t **aClassName)
 {
-  auto entry = static_cast<GlobalNameMapEntry*>(aTable->Add(aKey, fallible));
+  GlobalNameMapEntry *entry = static_cast<GlobalNameMapEntry *>
+    (PL_DHashTableAdd(aTable, aKey, fallible));
+
   if (!entry) {
     return nullptr;
   }
@@ -148,7 +150,7 @@ void
 nsScriptNameSpaceManager::RemoveFromHash(PLDHashTable *aTable,
                                          const nsAString *aKey)
 {
-  aTable->Remove(aKey);
+  PL_DHashTableRemove(aTable, aKey);
 }
 
 nsGlobalNameStruct*
@@ -157,8 +159,10 @@ nsScriptNameSpaceManager::GetConstructorProto(const nsGlobalNameStruct* aStruct)
   NS_ASSERTION(aStruct->mType == nsGlobalNameStruct::eTypeExternalConstructorAlias,
                "This function only works on constructor aliases!");
   if (!aStruct->mAlias->mProto) {
-    auto proto = static_cast<GlobalNameMapEntry*>
-                            (mGlobalNames.Search(&aStruct->mAlias->mProtoName));
+    GlobalNameMapEntry *proto =
+      static_cast<GlobalNameMapEntry *>
+                 (PL_DHashTableSearch(&mGlobalNames,
+                                      &aStruct->mAlias->mProtoName));
     if (proto) {
       aStruct->mAlias->mProto = &proto->mGlobalName;
     }
@@ -340,7 +344,9 @@ nsGlobalNameStruct*
 nsScriptNameSpaceManager::LookupNameInternal(const nsAString& aName,
                                              const char16_t **aClassName)
 {
-  auto entry = static_cast<GlobalNameMapEntry*>(mGlobalNames.Search(&aName));
+  GlobalNameMapEntry *entry =
+    static_cast<GlobalNameMapEntry *>
+               (PL_DHashTableSearch(&mGlobalNames, &aName));
 
   if (entry) {
     if (aClassName) {
@@ -358,7 +364,9 @@ nsScriptNameSpaceManager::LookupNameInternal(const nsAString& aName,
 const nsGlobalNameStruct*
 nsScriptNameSpaceManager::LookupNavigatorName(const nsAString& aName)
 {
-  auto entry = static_cast<GlobalNameMapEntry*>(mNavigatorNames.Search(&aName));
+  GlobalNameMapEntry *entry =
+    static_cast<GlobalNameMapEntry *>
+               (PL_DHashTableSearch(&mNavigatorNames, &aName));
 
   return entry ? &entry->mGlobalName : nullptr;
 }

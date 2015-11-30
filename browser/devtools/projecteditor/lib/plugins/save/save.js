@@ -46,7 +46,7 @@ var SavePlugin = Class({
 
   onCommand: function(cmd) {
     if (cmd === "cmd-save") {
-      this.onEditorSaveRequested();
+      this.save();
     } else if (cmd === "cmd-saveas") {
       this.saveAs();
     }
@@ -71,7 +71,7 @@ var SavePlugin = Class({
     }).then(null, console.error);
   },
 
-  onEditorSaveRequested: function() {
+  save: function() {
     let editor = this.host.currentEditor;
     let resource = this.host.resourceFor(editor);
     if (!resource) {

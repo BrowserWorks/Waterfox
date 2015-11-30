@@ -4,23 +4,24 @@
 
 "use strict";
 
-// Tests that the color picker tooltip hides when an image tooltip appears.
+// Test that the color picker tooltip hides when an image tooltip appears
 
-const TEST_URI = `
-  <style type="text/css">
-    body {
-      color: red;
-      background-color: #ededed;
-      background-image: url(chrome://global/skin/icons/warning-64.png);
-      border: 2em solid rgba(120, 120, 120, .5);
-    }
-  </style>
-  Testing the color picker tooltip!
-`;
+const PAGE_CONTENT = [
+  '<style type="text/css">',
+  '  body {',
+  '    color: red;',
+  '    background-color: #ededed;',
+  '    background-image: url(chrome://global/skin/icons/warning-64.png);',
+  '    border: 2em solid rgba(120, 120, 120, .5);',
+  '  }',
+  '</style>',
+  'Testing the color picker tooltip!'
+].join("\n");
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-  let {view} = yield openRuleView();
+  yield addTab("data:text/html;charset=utf-8,rule view color picker tooltip test");
+  content.document.body.innerHTML = PAGE_CONTENT;
+  let {toolbox, inspector, view} = yield openRuleView();
 
   let swatch = getRuleViewProperty(view, "body", "color").valueSpan
     .querySelector(".ruleview-colorswatch");
@@ -29,8 +30,7 @@ add_task(function*() {
 });
 
 function* testColorPickerHidesWhenImageTooltipAppears(view, swatch) {
-  let bgImageSpan = getRuleViewProperty(view, "body", "background-image")
-    .valueSpan;
+  let bgImageSpan = getRuleViewProperty(view, "body", "background-image").valueSpan;
   let uriSpan = bgImageSpan.querySelector(".theme-link");
   let tooltip = view.tooltips.colorPicker.tooltip;
 

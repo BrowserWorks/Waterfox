@@ -35,7 +35,7 @@ const DIALOG_URL = "chrome://browser/content/places/bookmarkProperties.xul";
 const DIALOG_URL_MINIMAL_UI = "chrome://browser/content/places/bookmarkProperties2.xul";
 
 Cu.import("resource:///modules/RecentWindow.jsm");
-var win = RecentWindow.getMostRecentBrowserWindow();
+let win = RecentWindow.getMostRecentBrowserWindow();
 var ww = Cc["@mozilla.org/embedcomp/window-watcher;1"].
          getService(Ci.nsIWindowWatcher);
 

@@ -4,11 +4,15 @@
 
 "use strict";
 
-// Tests for matched selector texts in the computed view.
+// Tests for matched selector texts in the computed view
 
 add_task(function*() {
   yield addTab("data:text/html;charset=utf-8,<div style='color:blue;'></div>");
-  let {inspector, view} = yield openComputedView();
+
+  info("Opening the computed view");
+  let {toolbox, inspector, view} = yield openComputedView();
+
+  info("Selecting the test node");
   yield selectNode("div", inspector);
 
   info("Checking the color property view");
@@ -20,8 +24,7 @@ add_task(function*() {
   propertyView.matchedExpanded = true;
   yield propertyView.refreshMatchedSelectors();
 
-  let span = propertyView.matchedSelectorsContainer
-    .querySelector("span.rule-text");
+  let span = propertyView.matchedSelectorsContainer.querySelector("span.rule-text");
   ok(span, "Found the first table row");
 
   let selector = propertyView.matchedSelectorViews[0];

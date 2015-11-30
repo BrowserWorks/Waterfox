@@ -29,7 +29,7 @@
 #include "nsIScriptContext.h"
 #include "mozilla/Preferences.h"
 #include "nsIHTMLDocument.h"
-#include "nsIViewSourceChannel.h"
+#include "nsILoadInfo.h"
 
 using namespace mozilla;
 
@@ -275,9 +275,8 @@ nsHtml5TreeOpExecutor::ContinueInterruptedParsingAsync()
       // The timer value 50 should not hopefully slow down background pages too
       // much, yet lets event loop to process enough between ticks.
       // See bug 734015.
-      gFlushTimer->InitWithNamedFuncCallback(FlushTimerCallback, nullptr,
-                                             50, nsITimer::TYPE_REPEATING_SLACK,
-                                             "FlushTimerCallback");
+      gFlushTimer->InitWithFuncCallback(FlushTimerCallback, nullptr,
+                                        50, nsITimer::TYPE_REPEATING_SLACK);
     }
   }
 }
@@ -787,7 +786,11 @@ void
 nsHtml5TreeOpExecutor::MoveOpsFrom(nsTArray<nsHtml5TreeOperation>& aOpQueue)
 {
   NS_PRECONDITION(mFlushState == eNotFlushing, "mOpQueue modified during tree op execution.");
-  mOpQueue.AppendElements(Move(aOpQueue));
+  if (mOpQueue.IsEmpty()) {
+    mOpQueue.SwapElements(aOpQueue);
+    return;
+  }
+  mOpQueue.MoveElementsFrom(aOpQueue);
 }
 
 void
@@ -804,12 +807,15 @@ nsHtml5TreeOpExecutor::GetViewSourceBaseURI()
     // We query the channel for the baseURI because in certain situations it
     // cannot otherwise be determined. If this process fails, fall back to the
     // standard method.
-    nsCOMPtr<nsIViewSourceChannel> vsc =
-      do_QueryInterface(mDocument->GetChannel());
-    if (vsc) {
-      nsresult rv =  vsc->GetBaseURI(getter_AddRefs(mViewSourceBaseURI));
-      if (NS_SUCCEEDED(rv) && mViewSourceBaseURI) {
-        return mViewSourceBaseURI;
+    nsCOMPtr<nsIChannel> channel = mDocument->GetChannel();
+    if (channel) {
+      nsCOMPtr<nsILoadInfo> loadInfo;
+      nsresult rv = channel->GetLoadInfo(getter_AddRefs(loadInfo));
+      if (NS_SUCCEEDED(rv) && loadInfo) {
+        rv = loadInfo->GetBaseURI(getter_AddRefs(mViewSourceBaseURI));
+        if (NS_SUCCEEDED(rv) && mViewSourceBaseURI) {
+          return mViewSourceBaseURI;
+        }
       }
     }
 
@@ -909,7 +915,6 @@ nsHtml5TreeOpExecutor::PreloadScript(const nsAString& aURL,
                                      const nsAString& aCharset,
                                      const nsAString& aType,
                                      const nsAString& aCrossOrigin,
-                                     const nsAString& aIntegrity,
                                      bool aScriptFromHead)
 {
   nsCOMPtr<nsIURI> uri = ConvertIfNotPreloadedYet(aURL);
@@ -917,22 +922,21 @@ nsHtml5TreeOpExecutor::PreloadScript(const nsAString& aURL,
     return;
   }
   mDocument->ScriptLoader()->PreloadURI(uri, aCharset, aType, aCrossOrigin,
-                                        aIntegrity, aScriptFromHead,
+                                        aScriptFromHead,
                                         mSpeculationReferrerPolicy);
 }
 
 void
 nsHtml5TreeOpExecutor::PreloadStyle(const nsAString& aURL,
                                     const nsAString& aCharset,
-                                    const nsAString& aCrossOrigin,
-                                    const nsAString& aIntegrity)
+                                    const nsAString& aCrossOrigin)
 {
   nsCOMPtr<nsIURI> uri = ConvertIfNotPreloadedYet(aURL);
   if (!uri) {
     return;
   }
   mDocument->PreloadStyle(uri, aCharset, aCrossOrigin,
-                          mSpeculationReferrerPolicy, aIntegrity);
+                          mSpeculationReferrerPolicy);
 }
 
 void

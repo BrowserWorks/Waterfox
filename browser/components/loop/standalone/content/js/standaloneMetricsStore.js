@@ -50,9 +50,7 @@ loop.store.StandaloneMetricsStore = (function() {
       "mediaConnected",
       "recordClick",
       "remotePeerConnected",
-      "retryAfterRoomFailure",
-      "tileShown",
-      "windowUnload"
+      "retryAfterRoomFailure"
     ],
 
     /**
@@ -203,14 +201,6 @@ loop.store.StandaloneMetricsStore = (function() {
     },
 
     /**
-     * Handles when a tile was finally shown (potentially after a delay)
-     */
-    tileShown: function() {
-      this._storeEvent(METRICS_GA_CATEGORY.general, METRICS_GA_ACTIONS.pageLoad,
-        "Tile shown");
-    },
-
-    /**
      * Handles notifications that the activeRoomStore has changed, updating
      * the metrics for room state and mute state as necessary.
      */
@@ -267,17 +257,6 @@ loop.store.StandaloneMetricsStore = (function() {
       var muteState = muted ? "mute" : "unmute";
 
       this._storeEvent(METRICS_GA_CATEGORY.general, muteType, muteState);
-    },
-
-    /**
-     * Called when the window is unloaded, either by code, or by the user
-     * explicitly closing it.  Expected to do any necessary housekeeping, such
-     * as shutting down the call cleanly and adding any relevant telemetry data.
-     */
-    windowUnload: function() {
-      if (this.activeRoomStore) {
-        this.stopListening(this.activeRoomStore);
-      }
     }
   });
 

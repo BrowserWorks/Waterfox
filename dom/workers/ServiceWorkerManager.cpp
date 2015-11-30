@@ -7,6 +7,7 @@
 #include "ServiceWorkerManager.h"
 
 #include "mozIApplication.h"
+#include "mozIApplicationClearPrivateDataParams.h"
 #include "nsIAppsService.h"
 #include "nsIDOMEventTarget.h"
 #include "nsIDocument.h"
@@ -35,7 +36,6 @@
 #include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/ErrorEvent.h"
 #include "mozilla/dom/Headers.h"
-#include "mozilla/dom/indexedDB/IndexedDatabaseManager.h"
 #include "mozilla/dom/indexedDB/IDBFactory.h"
 #include "mozilla/dom/InternalHeaders.h"
 #include "mozilla/dom/Navigator.h"
@@ -47,7 +47,6 @@
 #include "mozilla/ipc/PBackgroundChild.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
 #include "mozilla/unused.h"
-#include "mozilla/EnumSet.h"
 
 #include "nsContentUtils.h"
 #include "nsGlobalWindow.h"
@@ -72,10 +71,6 @@
 #include "WorkerRunnable.h"
 #include "WorkerScope.h"
 
-#ifndef MOZ_SIMPLEPUSH
-#include "mozilla/dom/TypedArray.h"
-#endif
-
 #ifdef PostMessage
 #undef PostMessage
 #endif
@@ -88,7 +83,7 @@ BEGIN_WORKERS_NAMESPACE
 
 #define PURGE_DOMAIN_DATA "browser:purge-domain-data"
 #define PURGE_SESSION_HISTORY "browser:purge-session-history"
-#define CLEAR_ORIGIN_DATA "clear-origin-data"
+#define WEBAPPS_CLEAR_DATA "webapps-clear-data"
 
 static_assert(nsIHttpChannelInternal::CORS_MODE_SAME_ORIGIN == static_cast<uint32_t>(RequestMode::Same_origin),
               "RequestMode enumeration value should match Necko CORS mode value.");
@@ -98,15 +93,6 @@ static_assert(nsIHttpChannelInternal::CORS_MODE_CORS == static_cast<uint32_t>(Re
               "RequestMode enumeration value should match Necko CORS mode value.");
 static_assert(nsIHttpChannelInternal::CORS_MODE_CORS_WITH_FORCED_PREFLIGHT == static_cast<uint32_t>(RequestMode::Cors_with_forced_preflight),
               "RequestMode enumeration value should match Necko CORS mode value.");
-
-static_assert(nsIHttpChannelInternal::REDIRECT_MODE_FOLLOW == static_cast<uint32_t>(RequestRedirect::Follow),
-              "RequestRedirect enumeration value should make Necko Redirect mode value.");
-static_assert(nsIHttpChannelInternal::REDIRECT_MODE_ERROR == static_cast<uint32_t>(RequestRedirect::Error),
-              "RequestRedirect enumeration value should make Necko Redirect mode value.");
-static_assert(nsIHttpChannelInternal::REDIRECT_MODE_MANUAL == static_cast<uint32_t>(RequestRedirect::Manual),
-              "RequestRedirect enumeration value should make Necko Redirect mode value.");
-static_assert(3 == static_cast<uint32_t>(RequestRedirect::EndGuard_),
-              "RequestRedirect enumeration value should make Necko Redirect mode value.");
 
 static StaticRefPtr<ServiceWorkerManager> gInstance;
 
@@ -445,7 +431,7 @@ ServiceWorkerManager::Init()
       MOZ_ASSERT(NS_SUCCEEDED(rv));
       rv = obs->AddObserver(this, PURGE_DOMAIN_DATA, false /* ownsWeak */);
       MOZ_ASSERT(NS_SUCCEEDED(rv));
-      rv = obs->AddObserver(this, CLEAR_ORIGIN_DATA, false /* ownsWeak */);
+      rv = obs->AddObserver(this, WEBAPPS_CLEAR_DATA, false /* ownsWeak */);
       MOZ_ASSERT(NS_SUCCEEDED(rv));
     }
   }
@@ -556,6 +542,28 @@ private:
 
 };
 
+class ServiceWorkerUpdateFinishCallback
+{
+protected:
+  virtual ~ServiceWorkerUpdateFinishCallback()
+  { }
+
+public:
+  NS_INLINE_DECL_REFCOUNTING(ServiceWorkerUpdateFinishCallback)
+
+  virtual
+  void UpdateSucceeded(ServiceWorkerRegistrationInfo* aInfo)
+  { }
+
+  virtual
+  void UpdateFailed(nsresult aStatus)
+  { }
+
+  virtual
+  void UpdateFailed(const ErrorEventInit& aDesc)
+  { }
+};
+
 class ServiceWorkerResolveWindowPromiseOnUpdateCallback final : public ServiceWorkerUpdateFinishCallback
 {
   nsRefPtr<nsPIDOMWindow> mWindow;
@@ -589,7 +597,7 @@ public:
   }
 
   void
-  UpdateFailed(JSExnType aExnType, const ErrorEventInit& aErrorDesc) override
+  UpdateFailed(const ErrorEventInit& aErrorDesc) override
   {
     AutoJSAPI jsapi;
     jsapi.Init(mWindow);
@@ -613,8 +621,7 @@ public:
     JS::Rooted<JSString*> msg(cx, msgval.toString());
 
     JS::Rooted<JS::Value> error(cx);
-    if ((aExnType < JSEXN_ERR) ||
-        !JS::CreateError(cx, aExnType, nullptr, fn, aErrorDesc.mLineno,
+    if (!JS::CreateError(cx, JSEXN_ERR, nullptr, fn, aErrorDesc.mLineno,
                          aErrorDesc.mColno, nullptr, msg, &error)) {
       JS_ClearPendingException(cx);
       mPromise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
@@ -991,17 +998,13 @@ public:
                    const nsACString& aMaxScope) override
   {
     nsRefPtr<ServiceWorkerRegisterJob> kungFuDeathGrip = this;
-    if (NS_WARN_IF(mCanceled)) {
+    if (mCanceled) {
       Fail(NS_ERROR_DOM_TYPE_ERR);
       return;
     }
 
     if (NS_WARN_IF(NS_FAILED(aStatus))) {
-      if (aStatus == NS_ERROR_DOM_SECURITY_ERR) {
-        Fail(aStatus);
-      } else {
-        Fail(NS_ERROR_DOM_TYPE_ERR);
-      }
+      Fail(NS_ERROR_DOM_TYPE_ERR);
       return;
     }
 
@@ -1121,7 +1124,7 @@ public:
   // Public so our error handling code can use it.
   // Callers MUST hold a strong ref before calling this!
   void
-  Fail(JSExnType aExnType, const ErrorEventInit& aError)
+  Fail(const ErrorEventInit& aError)
   {
     MOZ_ASSERT(mCallback);
     nsRefPtr<ServiceWorkerUpdateFinishCallback> callback = mCallback.forget();
@@ -1131,7 +1134,7 @@ public:
     // FailCommon relies on it.
     // FailCommon does check for cancellation, but let's be safe here.
     nsRefPtr<ServiceWorkerRegisterJob> kungFuDeathGrip = this;
-    callback->UpdateFailed(aExnType, aError);
+    callback->UpdateFailed(aError);
     FailCommon(NS_ERROR_DOM_JS_EXCEPTION);
   }
 
@@ -1923,7 +1926,7 @@ LifecycleEventWorkerRunnable::DispatchLifecycleEvent(JSContext* aCx, WorkerPriva
     // FIXME(nsm): Bug 982787 pass previous active worker.
     ExtendableEventInit init;
     init.mBubbles = false;
-    init.mCancelable = false;
+    init.mCancelable = true;
     event = ExtendableEvent::Constructor(target, mEventName, init);
   } else {
     MOZ_CRASH("Unexpected lifecycle event");
@@ -2297,22 +2300,22 @@ public:
 
 class SendPushEventRunnable final : public WorkerRunnable
 {
-  Maybe<nsTArray<uint8_t>> mData;
+  nsString mData;
   nsMainThreadPtrHandle<ServiceWorker> mServiceWorker;
 
 public:
   SendPushEventRunnable(
     WorkerPrivate* aWorkerPrivate,
+    const nsAString& aData,
     nsMainThreadPtrHandle<ServiceWorker>& aServiceWorker)
-      : SendPushEventRunnable(aWorkerPrivate, aServiceWorker,
-                              Nothing()) {}
-
-  SendPushEventRunnable(
-    WorkerPrivate* aWorkerPrivate,
-    const nsTArray<uint8_t>& aData,
-    nsMainThreadPtrHandle<ServiceWorker>& aServiceWorker)
-      : SendPushEventRunnable(aWorkerPrivate, aServiceWorker,
-                              Some(aData)) {}
+      : WorkerRunnable(aWorkerPrivate, WorkerThreadModifyBusyCount)
+      , mData(aData)
+      , mServiceWorker(aServiceWorker)
+  {
+    AssertIsOnMainThread();
+    MOZ_ASSERT(aWorkerPrivate);
+    MOZ_ASSERT(aWorkerPrivate->IsServiceWorker());
+  }
 
   bool
   WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
@@ -2320,18 +2323,11 @@ public:
     MOZ_ASSERT(aWorkerPrivate);
     GlobalObject globalObj(aCx, aWorkerPrivate->GlobalScope()->GetWrapper());
 
-
     PushEventInit pei;
-    if (mData) {
-      const nsTArray<uint8_t>& bytes = mData.ref();
-      JSObject* data = Uint8Array::Create(aCx, bytes.Length(), bytes.Elements());
-      if (!data) {
-        return false;
-      }
-      pei.mData.Construct().SetAsArrayBufferView().Init(data);
-    }
+    // FIXME(nsm): Bug 1149195.
+    // pei.mData.Construct(mData);
     pei.mBubbles = false;
-    pei.mCancelable = false;
+    pei.mCancelable = true;
 
     ErrorResult result;
     nsRefPtr<PushEvent> event =
@@ -2352,20 +2348,6 @@ public:
     }
 
     return true;
-  }
-
-private:
-  SendPushEventRunnable(
-    WorkerPrivate* aWorkerPrivate,
-    nsMainThreadPtrHandle<ServiceWorker>& aServiceWorker,
-    Maybe<nsTArray<uint8_t>> aData)
-      : WorkerRunnable(aWorkerPrivate, WorkerThreadModifyBusyCount)
-      , mData(aData)
-      , mServiceWorker(aServiceWorker)
-  {
-    AssertIsOnMainThread();
-    MOZ_ASSERT(aWorkerPrivate);
-    MOZ_ASSERT(aWorkerPrivate->IsServiceWorker());
   }
 };
 
@@ -2392,10 +2374,14 @@ public:
 
     WorkerGlobalScope* globalScope = aWorkerPrivate->GlobalScope();
 
-    nsRefPtr<Event> event = NS_NewDOMEvent(globalScope, nullptr, nullptr);
+    nsCOMPtr<nsIDOMEvent> event;
+    nsresult rv =
+      NS_NewDOMEvent(getter_AddRefs(event), globalScope, nullptr, nullptr);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return false;
+    }
 
-    nsresult rv = event->InitEvent(NS_LITERAL_STRING("pushsubscriptionchange"),
-                                   false, false);
+    rv = event->InitEvent(NS_LITERAL_STRING("pushsubscriptionchange"), false, false);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return false;
     }
@@ -2412,9 +2398,7 @@ public:
 NS_IMETHODIMP
 ServiceWorkerManager::SendPushEvent(const nsACString& aOriginAttributes,
                                     const nsACString& aScope,
-                                    uint32_t aDataLength,
-                                    uint8_t* aDataBytes,
-                                    uint8_t optional_argc)
+                                    const nsAString& aData)
 {
 #ifdef MOZ_SIMPLEPUSH
   return NS_ERROR_NOT_AVAILABLE;
@@ -2433,19 +2417,9 @@ ServiceWorkerManager::SendPushEvent(const nsACString& aOriginAttributes,
   nsMainThreadPtrHandle<ServiceWorker> serviceWorkerHandle(
     new nsMainThreadPtrHolder<ServiceWorker>(serviceWorker));
 
-  nsRefPtr<SendPushEventRunnable> r;
-  if (optional_argc == 2) {
-    nsTArray<uint8_t> data;
-    if (!data.InsertElementsAt(0, aDataBytes, aDataLength, fallible)) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
-    r = new SendPushEventRunnable(serviceWorker->GetWorkerPrivate(), data,
-                                  serviceWorkerHandle);
-  } else {
-    MOZ_ASSERT(optional_argc == 0);
-    r = new SendPushEventRunnable(serviceWorker->GetWorkerPrivate(),
-                                  serviceWorkerHandle);
-  }
+  nsRefPtr<SendPushEventRunnable> r =
+    new SendPushEventRunnable(serviceWorker->GetWorkerPrivate(), aData,
+                              serviceWorkerHandle);
 
   AutoJSAPI jsapi;
   jsapi.Init();
@@ -2556,7 +2530,7 @@ public:
     NotificationEventInit nei;
     nei.mNotification = notification;
     nei.mBubbles = false;
-    nei.mCancelable = false;
+    nei.mCancelable = true;
 
     nsRefPtr<NotificationEvent> event =
       NotificationEvent::Constructor(target, NS_LITERAL_STRING("notificationclick"), nei, result);
@@ -2980,8 +2954,7 @@ ServiceWorkerManager::HandleError(JSContext* aCx,
                                   nsString aLine,
                                   uint32_t aLineNumber,
                                   uint32_t aColumnNumber,
-                                  uint32_t aFlags,
-                                  JSExnType aExnType)
+                                  uint32_t aFlags)
 {
   AssertIsOnMainThread();
   MOZ_ASSERT(aPrincipal);
@@ -3021,7 +2994,7 @@ ServiceWorkerManager::HandleError(JSContext* aCx,
               "Script error caused ServiceWorker registration to fail: %s:%u '%s'",
               NS_ConvertUTF16toUTF8(aFilename).get(), aLineNumber,
               NS_ConvertUTF16toUTF8(aMessage).get()).get());
-    regJob->Fail(aExnType, init);
+    regJob->Fail(init);
   }
 
   return true;
@@ -3034,10 +3007,14 @@ ServiceWorkerRegistrationInfo::FinishActivate(bool aSuccess)
     return;
   }
 
-  // Activation never fails, so aSuccess is ignored.
-  mActiveWorker->UpdateState(ServiceWorkerState::Activated);
-  nsRefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-  swm->StoreRegistration(mPrincipal, this);
+  if (aSuccess) {
+    mActiveWorker->UpdateState(ServiceWorkerState::Activated);
+    nsRefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+    swm->StoreRegistration(mPrincipal, this);
+  } else {
+    mActiveWorker->UpdateState(ServiceWorkerState::Redundant);
+    mActiveWorker = nullptr;
+  }
 }
 
 NS_IMETHODIMP
@@ -3663,9 +3640,7 @@ class FetchEventRunnable : public WorkerRunnable
   nsCString mSpec;
   nsCString mMethod;
   bool mIsReload;
-  DebugOnly<bool> mIsHttpChannel;
   RequestMode mRequestMode;
-  RequestRedirect mRequestRedirect;
   RequestCredentials mRequestCredentials;
   nsContentPolicyType mContentPolicyType;
   nsCOMPtr<nsIInputStream> mUploadStream;
@@ -3681,9 +3656,7 @@ public:
     , mServiceWorker(aServiceWorker)
     , mClientInfo(aClientInfo)
     , mIsReload(aIsReload)
-    , mIsHttpChannel(false)
     , mRequestMode(RequestMode::No_cors)
-    , mRequestRedirect(RequestRedirect::Follow)
     // By default we set it to same-origin since normal HTTP fetches always
     // send credentials to same-origin websites unless explicitly forbidden.
     , mRequestCredentials(RequestCredentials::Same_origin)
@@ -3739,20 +3712,28 @@ public:
 
     nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(channel);
     if (httpChannel) {
-      mIsHttpChannel = true;
-
       rv = httpChannel->GetRequestMethod(mMethod);
       NS_ENSURE_SUCCESS(rv, rv);
 
       nsCOMPtr<nsIHttpChannelInternal> internalChannel = do_QueryInterface(httpChannel);
       NS_ENSURE_TRUE(internalChannel, NS_ERROR_NOT_AVAILABLE);
 
-      mRequestMode = InternalRequest::MapChannelToRequestMode(channel);
-
-      // This is safe due to static_asserts at top of file.
-      uint32_t redirectMode;
-      internalChannel->GetRedirectMode(&redirectMode);
-      mRequestRedirect = static_cast<RequestRedirect>(redirectMode);
+      uint32_t mode;
+      internalChannel->GetCorsMode(&mode);
+      switch (mode) {
+        case nsIHttpChannelInternal::CORS_MODE_SAME_ORIGIN:
+          mRequestMode = RequestMode::Same_origin;
+          break;
+        case nsIHttpChannelInternal::CORS_MODE_NO_CORS:
+          mRequestMode = RequestMode::No_cors;
+          break;
+        case nsIHttpChannelInternal::CORS_MODE_CORS:
+        case nsIHttpChannelInternal::CORS_MODE_CORS_WITH_FORCED_PREFLIGHT:
+          mRequestMode = RequestMode::Cors;
+          break;
+        default:
+          MOZ_CRASH("Unexpected CORS mode");
+      }
 
       if (loadFlags & nsIRequest::LOAD_ANONYMOUS) {
         mRequestCredentials = RequestCredentials::Omit;
@@ -3764,7 +3745,7 @@ public:
         }
       }
 
-      rv = httpChannel->VisitNonDefaultRequestHeaders(this);
+      rv = httpChannel->VisitRequestHeaders(this);
       NS_ENSURE_SUCCESS(rv, rv);
 
       nsCOMPtr<nsIUploadChannel2> uploadChannel = do_QueryInterface(httpChannel);
@@ -3779,8 +3760,6 @@ public:
       NS_ENSURE_TRUE(jarChannel, NS_ERROR_NOT_AVAILABLE);
 
       mMethod = "GET";
-
-      mRequestMode = InternalRequest::MapChannelToRequestMode(channel);
 
       if (loadFlags & nsIRequest::LOAD_ANONYMOUS) {
         mRequestCredentials = RequestCredentials::Omit;
@@ -3848,7 +3827,6 @@ private:
     reqInit.mHeaders.Value().SetAsHeaders() = headers;
 
     reqInit.mMode.Construct(mRequestMode);
-    reqInit.mRedirect.Construct(mRequestRedirect);
     reqInit.mCredentials.Construct(mRequestCredentials);
 
     ErrorResult result;
@@ -3866,11 +3844,6 @@ private:
     internalReq->SetReferrer(NS_ConvertUTF8toUTF16(mReferrer));
 
     request->SetContentPolicyType(mContentPolicyType);
-
-    // TODO: remove conditional on http here once app protocol support is
-    //       removed from service worker interception
-    MOZ_ASSERT_IF(mIsHttpChannel && internalReq->IsNavigationRequest(),
-                  request->Redirect() == RequestRedirect::Manual);
 
     RootedDictionary<FetchEventInit> init(aCx);
     init.mRequest.Construct();
@@ -3891,94 +3864,12 @@ private:
     nsRefPtr<EventTarget> target = do_QueryObject(aWorkerPrivate->GlobalScope());
     nsresult rv2 = target->DispatchDOMEvent(nullptr, event, nullptr, nullptr);
     if (NS_WARN_IF(NS_FAILED(rv2)) || !event->WaitToRespond()) {
-      nsCOMPtr<nsIRunnable> runnable;
-      if (event->DefaultPrevented(aCx)) {
-        runnable = new CancelChannelRunnable(mInterceptedChannel, NS_ERROR_INTERCEPTION_CANCELED);
-      } else {
-        runnable = new ResumeRequest(mInterceptedChannel);
-      }
-
+      nsCOMPtr<nsIRunnable> runnable = new ResumeRequest(mInterceptedChannel);
       MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
     }
     return true;
   }
 };
-
-namespace {
-
-class ContinueDispatchFetchEventRunnable : public nsRunnable
-{
-  WorkerPrivate* mWorkerPrivate;
-  nsMainThreadPtrHandle<nsIInterceptedChannel> mChannel;
-  nsMainThreadPtrHandle<ServiceWorker> mServiceWorker;
-  nsAutoPtr<ServiceWorkerClientInfo> mClientInfo;
-  bool mIsReload;
-public:
-  ContinueDispatchFetchEventRunnable(WorkerPrivate* aWorkerPrivate,
-                                     nsMainThreadPtrHandle<nsIInterceptedChannel>& aChannel,
-                                     nsMainThreadPtrHandle<ServiceWorker>& aServiceWorker,
-                                     nsAutoPtr<ServiceWorkerClientInfo>& aClientInfo,
-                                     bool aIsReload)
-    : mWorkerPrivate(aWorkerPrivate)
-    , mChannel(aChannel)
-    , mServiceWorker(aServiceWorker)
-    , mClientInfo(aClientInfo)
-    , mIsReload(aIsReload)
-  {
-  }
-
-  void
-  HandleError()
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-    NS_WARNING("Unexpected error while dispatching fetch event!");
-    DebugOnly<nsresult> rv = mChannel->ResetInterception();
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to resume intercepted network request");
-  }
-
-  NS_IMETHOD
-  Run() override
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-
-    nsCOMPtr<nsIChannel> channel;
-    nsresult rv = mChannel->GetChannel(getter_AddRefs(channel));
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      HandleError();
-      return NS_OK;
-    }
-
-    // The channel might have encountered an unexpected error while ensuring
-    // the upload stream is cloneable.  Check here and reset the interception
-    // if that happens.
-    nsresult status;
-    rv = channel->GetStatus(&status);
-    if (NS_WARN_IF(NS_FAILED(rv) || NS_FAILED(status))) {
-      HandleError();
-      return NS_OK;
-    }
-
-    nsRefPtr<FetchEventRunnable> event =
-      new FetchEventRunnable(mWorkerPrivate, mChannel, mServiceWorker,
-                             mClientInfo, mIsReload);
-    rv = event->Init();
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      HandleError();
-      return NS_OK;
-    }
-
-    AutoJSAPI jsapi;
-    jsapi.Init();
-    if (NS_WARN_IF(!event->Dispatch(jsapi.cx()))) {
-      HandleError();
-      return NS_OK;
-    }
-
-    return NS_OK;
-  }
-};
-
-} // anonymous namespace
 
 NS_IMPL_ISUPPORTS_INHERITED(FetchEventRunnable, WorkerRunnable, nsIHttpHeaderVisitor)
 
@@ -4009,7 +3900,7 @@ ServiceWorkerManager::DispatchFetchEvent(const OriginAttributes& aOriginAttribut
     MOZ_ASSERT(aDoc);
     aRv = GetDocumentController(aDoc->GetInnerWindow(), failRunnable,
                                 getter_AddRefs(serviceWorker));
-    clientInfo = new ServiceWorkerClientInfo(aDoc);
+    clientInfo = new ServiceWorkerClientInfo(aDoc, aDoc->GetWindow());
   } else {
     nsCOMPtr<nsIChannel> internalChannel;
     aRv = aChannel->GetChannel(getter_AddRefs(internalChannel));
@@ -4053,28 +3944,21 @@ ServiceWorkerManager::DispatchFetchEvent(const OriginAttributes& aOriginAttribut
   nsMainThreadPtrHandle<ServiceWorker> serviceWorkerHandle(
     new nsMainThreadPtrHolder<ServiceWorker>(sw));
 
-  nsCOMPtr<nsIRunnable> continueRunnable =
-    new ContinueDispatchFetchEventRunnable(sw->GetWorkerPrivate(), handle,
-                                           serviceWorkerHandle, clientInfo,
-                                           aIsReload);
-
-  nsCOMPtr<nsIChannel> innerChannel;
-  aRv = aChannel->GetChannel(getter_AddRefs(innerChannel));
+  // clientInfo is null if we don't have a controlled document
+  nsRefPtr<FetchEventRunnable> event =
+    new FetchEventRunnable(sw->GetWorkerPrivate(), handle, serviceWorkerHandle,
+                           clientInfo, aIsReload);
+  aRv = event->Init();
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 
-  nsCOMPtr<nsIUploadChannel2> uploadChannel = do_QueryInterface(innerChannel);
-
-  // If there is no upload stream, then continue immediately
-  if (!uploadChannel) {
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(continueRunnable->Run()));
+  AutoJSAPI api;
+  api.Init();
+  if (NS_WARN_IF(!event->Dispatch(api.cx()))) {
+    aRv.Throw(NS_ERROR_FAILURE);
     return;
   }
-
-  // Otherwise, ensure the upload stream can be cloned directly.  This may
-  // require some async copying, so provide a callback.
-  aRv = uploadChannel->EnsureUploadStreamIsCloneable(continueRunnable);
 }
 
 bool
@@ -4198,9 +4082,6 @@ ServiceWorkerManager::CreateServiceWorker(nsIPrincipal* aPrincipal,
   AssertIsOnMainThread();
   MOZ_ASSERT(aPrincipal);
 
-  // Ensure that the IndexedDatabaseManager is initialized
-  NS_WARN_IF(!indexedDB::IndexedDatabaseManager::GetOrCreate());
-
   WorkerLoadInfo info;
   nsresult rv = NS_NewURI(getter_AddRefs(info.mBaseURI), aInfo->ScriptSpec(),
                           nullptr, nullptr);
@@ -4220,12 +4101,9 @@ ServiceWorkerManager::CreateServiceWorker(nsIPrincipal* aPrincipal,
 
   info.mPrincipal = aPrincipal;
 
-  nsContentUtils::StorageAccess access =
-    nsContentUtils::StorageAllowedForPrincipal(aPrincipal);
-  info.mStorageAllowed =
-    access > nsContentUtils::StorageAccess::ePrivateBrowsing;
-
-  info.mPrivateBrowsing = false;
+  info.mIndexedDBAllowed =
+    indexedDB::IDBFactory::AllowedForPrincipal(aPrincipal);
+   info.mPrivateBrowsing = false;
 
   nsCOMPtr<nsIContentSecurityPolicy> csp;
   rv = aPrincipal->GetCsp(getter_AddRefs(csp));
@@ -4301,8 +4179,7 @@ ServiceWorkerManager::InvalidateServiceWorkerRegistrationWorker(ServiceWorkerReg
 
 void
 ServiceWorkerManager::SoftUpdate(nsIPrincipal* aPrincipal,
-                                 const nsACString& aScope,
-                                 ServiceWorkerUpdateFinishCallback* aCallback)
+                                 const nsACString& aScope)
 {
   MOZ_ASSERT(aPrincipal);
 
@@ -4312,23 +4189,21 @@ ServiceWorkerManager::SoftUpdate(nsIPrincipal* aPrincipal,
     return;
   }
 
-  SoftUpdate(scopeKey, aScope, aCallback);
+  SoftUpdate(scopeKey, aScope);
 }
 
 void
 ServiceWorkerManager::SoftUpdate(const OriginAttributes& aOriginAttributes,
-                                 const nsACString& aScope,
-                                 ServiceWorkerUpdateFinishCallback* aCallback)
+                                 const nsACString& aScope)
 {
   nsAutoCString scopeKey;
   aOriginAttributes.CreateSuffix(scopeKey);
-  SoftUpdate(scopeKey, aScope, aCallback);
+  SoftUpdate(scopeKey, aScope);
 }
 
 void
 ServiceWorkerManager::SoftUpdate(const nsACString& aScopeKey,
-                                 const nsACString& aScope,
-                                 ServiceWorkerUpdateFinishCallback* aCallback)
+                                 const nsACString& aScope)
 {
   nsRefPtr<ServiceWorkerRegistrationInfo> registration =
     GetRegistration(aScopeKey, aScope);
@@ -4361,10 +4236,8 @@ ServiceWorkerManager::SoftUpdate(const nsACString& aScopeKey,
     GetOrCreateJobQueue(aScopeKey, aScope);
   MOZ_ASSERT(queue);
 
-  nsRefPtr<ServiceWorkerUpdateFinishCallback> cb(aCallback);
-  if (!cb) {
-    cb = new ServiceWorkerUpdateFinishCallback();
-  }
+  nsRefPtr<ServiceWorkerUpdateFinishCallback> cb =
+    new ServiceWorkerUpdateFinishCallback();
 
   // "Invoke Update algorithm, or its equivalent, with client, registration as
   // its argument."
@@ -4407,7 +4280,7 @@ EnumControlledDocuments(nsISupports* aKey,
     return PL_DHASH_NEXT;
   }
 
-  ServiceWorkerClientInfo clientInfo(document);
+  ServiceWorkerClientInfo clientInfo(document, document->GetWindow());
   data->mDocuments.AppendElement(clientInfo);
 
   return PL_DHASH_NEXT;
@@ -4794,36 +4667,46 @@ UnregisterIfMatchesHostPerPrincipal(const nsACString& aKey,
 }
 
 PLDHashOperator
-UnregisterIfMatchesClearOriginParams(const nsACString& aScope,
-                                     ServiceWorkerRegistrationInfo* aReg,
-                                     void* aPtr)
+UnregisterIfMatchesClearPrivateDataParams(const nsACString& aScope,
+                                          ServiceWorkerRegistrationInfo* aReg,
+                                          void* aPtr)
 {
   UnregisterIfMatchesUserData* data =
     static_cast<UnregisterIfMatchesUserData*>(aPtr);
-  MOZ_ASSERT(data);
 
   if (data->mUserData) {
-    OriginAttributes* params = static_cast<OriginAttributes*>(data->mUserData);
+    mozIApplicationClearPrivateDataParams *params =
+      static_cast<mozIApplicationClearPrivateDataParams*>(data->mUserData);
     MOZ_ASSERT(params);
-    MOZ_ASSERT(aReg);
     MOZ_ASSERT(aReg->mPrincipal);
+
+    uint32_t appId;
+    nsresult rv = params->GetAppId(&appId);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return PL_DHASH_NEXT;
+    }
+
+    bool browserOnly;
+    rv = params->GetBrowserOnly(&browserOnly);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return PL_DHASH_NEXT;
+    }
 
     bool equals = false;
 
-    if (params->mInBrowser) {
+    if (browserOnly) {
       // When we do a system wide "clear cookies and stored data" on B2G we get
-      // the "clear-origin-data" notification with the System app appID and
+      // the "webapps-clear-data" notification with the System app appID and
       // the browserOnly flag set to true.
       // Web sites registering a service worker on B2G have a principal with the
       // following information: web site origin + System app appId + inBrowser=1
       // So we need to check if the service worker registration info contains
       // the System app appID and the enabled inBrowser flag and in that case
       // remove it from the registry.
-      OriginAttributes attrs =
-        mozilla::BasePrincipal::Cast(aReg->mPrincipal)->OriginAttributesRef();
-      equals = attrs == *params;
+      equals = (appId == aReg->mPrincipal->GetAppId()) &&
+               aReg->mPrincipal->GetIsInBrowserElement();
     } else {
-      // If we get the "clear-origin-data" notification because of an app
+      // If we get the "webapps-clear-data" notification because of an app
       // uninstallation, we need to check the full principal to get the match
       // in the service workers registry. If we find a match, we unregister the
       // worker.
@@ -4834,7 +4717,7 @@ UnregisterIfMatchesClearOriginParams(const nsACString& aScope,
       }
 
       nsCOMPtr<mozIApplication> app;
-      appsService->GetAppByLocalId(params->mAppId, getter_AddRefs(app));
+      appsService->GetAppByLocalId(appId, getter_AddRefs(app));
       if (NS_WARN_IF(!app)) {
         return PL_DHASH_NEXT;
       }
@@ -4858,7 +4741,7 @@ UnregisterIfMatchesClearOriginParams(const nsACString& aScope,
 }
 
 PLDHashOperator
-UnregisterIfMatchesClearOriginParams(const nsACString& aKey,
+UnregisterIfMatchesClearPrivateDataParams(const nsACString& aKey,
                              ServiceWorkerManager::RegistrationDataPerPrincipal* aData,
                              void* aUserData)
 {
@@ -4866,7 +4749,7 @@ UnregisterIfMatchesClearOriginParams(const nsACString& aKey,
   // We can use EnumerateRead because ForceUnregister (and Unregister) are async.
   // Otherwise doing some R/W operations on an hashtable during an EnumerateRead
   // will crash.
-  aData->mInfos.EnumerateRead(UnregisterIfMatchesClearOriginParams,
+  aData->mInfos.EnumerateRead(UnregisterIfMatchesClearPrivateDataParams,
                               &data);
   return PL_DHASH_NEXT;
 }
@@ -5084,13 +4967,14 @@ UpdateEachRegistration(const nsACString& aKey,
 }
 
 void
-ServiceWorkerManager::RemoveAllRegistrations(OriginAttributes* aParams)
+ServiceWorkerManager::RemoveAllRegistrations(
+    mozIApplicationClearPrivateDataParams* aParams)
 {
   AssertIsOnMainThread();
 
   MOZ_ASSERT(aParams);
 
-  mRegistrationInfos.EnumerateRead(UnregisterIfMatchesClearOriginParams,
+  mRegistrationInfos.EnumerateRead(UnregisterIfMatchesClearPrivateDataParams,
                                    aParams);
 }
 
@@ -5131,12 +5015,15 @@ ServiceWorkerManager::Observe(nsISupports* aSubject,
     return NS_OK;
   }
 
-  if (strcmp(aTopic, CLEAR_ORIGIN_DATA) == 0) {
+  if (strcmp(aTopic, WEBAPPS_CLEAR_DATA) == 0) {
     MOZ_ASSERT(XRE_IsParentProcess());
-    OriginAttributes attrs;
-    MOZ_ALWAYS_TRUE(attrs.Init(nsAutoString(aData)));
+    nsCOMPtr<mozIApplicationClearPrivateDataParams> params =
+      do_QueryInterface(aSubject);
+    if (NS_WARN_IF(!params)) {
+      return NS_OK;
+    }
 
-    RemoveAllRegistrations(&attrs);
+    RemoveAllRegistrations(params);
     return NS_OK;
   }
 
@@ -5150,7 +5037,7 @@ ServiceWorkerManager::Observe(nsISupports* aSubject,
       if (XRE_IsParentProcess()) {
         obs->RemoveObserver(this, PURGE_SESSION_HISTORY);
         obs->RemoveObserver(this, PURGE_DOMAIN_DATA);
-        obs->RemoveObserver(this, CLEAR_ORIGIN_DATA);
+        obs->RemoveObserver(this, WEBAPPS_CLEAR_DATA);
       }
     }
 

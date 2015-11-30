@@ -4,13 +4,13 @@
 
 'use strict';
 
-var Cu = Components.utils;
-var Cc = Components.classes;
-var Ci = Components.interfaces;
+let Cu = Components.utils;
+let Cc = Components.classes;
+let Ci = Components.interfaces;
 
 dump("############ ErrorPage.js\n");
 
-var ErrorPageHandler = {
+let ErrorPageHandler = {
   _reload: function() {
     docShell.QueryInterface(Ci.nsIWebNavigation).reload(Ci.nsIWebNavigation.LOAD_FLAGS_NONE);
   },

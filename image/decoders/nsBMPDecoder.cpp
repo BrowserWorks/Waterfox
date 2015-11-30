@@ -19,8 +19,6 @@
 #include "RasterImage.h"
 #include <algorithm>
 
-using namespace mozilla::gfx;
-
 namespace mozilla {
 namespace image {
 
@@ -124,6 +122,15 @@ nsBMPDecoder::GetCompressedImageSize() const
   return pixelArraySize;
 }
 
+// Obtains whether or not a BMP file had alpha data in its 4th byte
+// for 32BPP bitmaps.  Only use after the bitmap has been processed.
+bool
+nsBMPDecoder::HasAlphaData() const
+{
+  return mHaveAlphaData;
+}
+
+
 void
 nsBMPDecoder::FinishInternal()
 {
@@ -140,7 +147,7 @@ nsBMPDecoder::FinishInternal()
         nsIntRect r(0, 0, mBIH.width, GetHeight());
         PostInvalidation(r);
 
-        if (mUseAlphaData && mHaveAlphaData) {
+        if (mUseAlphaData) {
           PostFrameStop(Opacity::SOME_TRANSPARENCY);
         } else {
           PostFrameStop(Opacity::OPAQUE);
@@ -362,16 +369,6 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
         return;
       }
 
-      // We treat BMPs as transparent if they're 32bpp and alpha is enabled, but
-      // also if they use RLE encoding, because the 'delta' mode can skip pixels
-      // and cause implicit transparency.
-      bool hasTransparency = (mBIH.compression == BMPINFOHEADER::RLE8) ||
-                             (mBIH.compression == BMPINFOHEADER::RLE4) ||
-                             (mBIH.bpp == 32 && mUseAlphaData);
-      if (hasTransparency) {
-        PostHasTransparency();
-      }
-
       // We have the size. If we're doing a metadata decode, we're done.
       if (IsMetadataDecode()) {
         return;
@@ -447,26 +444,18 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
       }
 
       MOZ_ASSERT(!mImageData, "Already have a buffer allocated?");
-      IntSize targetSize = mDownscaler ? mDownscaler->TargetSize()
-                                       : GetSize();
-      nsresult rv = AllocateFrame(/* aFrameNum = */ 0, targetSize,
-                                  IntRect(IntPoint(), targetSize),
-                                  SurfaceFormat::B8G8R8A8);
+      nsresult rv = AllocateBasicFrame();
       if (NS_FAILED(rv)) {
           return;
       }
 
       MOZ_ASSERT(mImageData, "Should have a buffer now");
 
-      if (mDownscaler) {
-        // BMPs store their rows in reverse order, so the downscaler needs to
-        // reverse them again when writing its output.
-        rv = mDownscaler->BeginFrame(GetSize(), Nothing(),
-                                     mImageData, hasTransparency,
-                                     /* aFlipVertically = */ true);
-        if (NS_FAILED(rv)) {
-          return;
-        }
+      // Prepare for transparency
+      if ((mBIH.compression == BMPINFOHEADER::RLE8) ||
+          (mBIH.compression == BMPINFOHEADER::RLE4)) {
+        // Clear the image, as the RLE may jump over areas
+        memset(mImageData, 0, mImageDataLength);
       }
   }
 
@@ -608,10 +597,8 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
         if (rowSize == mRowBytes) {
           // Collected a whole row into mRow, process it
           uint8_t* p = mRow;
-          uint32_t* d = mDownscaler
-                      ? reinterpret_cast<uint32_t*>(mDownscaler->RowBuffer())
-                      : reinterpret_cast<uint32_t*>(mImageData)
-                        + PIXEL_OFFSET(mCurLine, 0);
+          uint32_t* d = reinterpret_cast<uint32_t*>(mImageData) +
+                        PIXEL_OFFSET(mCurLine, 0);
           uint32_t lpos = mBIH.width;
           switch (mBIH.bpp) {
             case 1:
@@ -668,11 +655,28 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
             case 32:
               while (lpos > 0) {
                 if (mUseAlphaData) {
-                  if (MOZ_UNLIKELY(!mHaveAlphaData && p[3])) {
+                  if (!mHaveAlphaData && p[3]) {
+                    // Non-zero alpha byte detected! Clear previous
+                    // pixels that we have already processed.
+                    // This works because we know that if we
+                    // are reaching here then the alpha data in byte
+                    // 4 has been right all along.  And we know it
+                    // has been set to 0 the whole time, so that
+                    // means that everything is transparent so far.
+                    uint32_t* start = reinterpret_cast<uint32_t*>
+                                      (mImageData) + GetWidth() *
+                                      (mCurLine - 1);
+                    uint32_t heightDifference = GetHeight() -
+                                                mCurLine + 1;
+                    uint32_t pixelCount = GetWidth() *
+                                          heightDifference;
+
+                    memset(start, 0, pixelCount * sizeof(uint32_t));
+
                     PostHasTransparency();
                     mHaveAlphaData = true;
                   }
-                  SetPixel(d, p[2], p[1], p[0], p[3]);
+                  SetPixel(d, p[2], p[1], p[0], mHaveAlphaData ?  p[3] : 0xFF);
                 } else {
                   SetPixel(d, p[2], p[1], p[0]);
                 }
@@ -684,11 +688,6 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
               NS_NOTREACHED("Unsupported color depth,"
                             " but earlier check didn't catch it");
           }
-
-          if (mDownscaler) {
-            mDownscaler->CommitRow();
-          }
-          
           mCurLine --;
           if (mCurLine == 0) { // Finished last line
             break;
@@ -733,12 +732,8 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
               uint32_t pixelsNeeded = std::min<uint32_t>(mBIH.width - mCurPos,
                                     mStateData);
               if (pixelsNeeded) {
-                uint32_t* d = mDownscaler
-                  ? reinterpret_cast<uint32_t*>(mDownscaler->RowBuffer())
-                      + mCurPos
-                  : reinterpret_cast<uint32_t*>(mImageData)
-                      + PIXEL_OFFSET(mCurLine, mCurPos);
-
+                uint32_t* d = reinterpret_cast<uint32_t*>
+                              (mImageData) + PIXEL_OFFSET(mCurLine, mCurPos);
                 mCurPos += pixelsNeeded;
                 if (mBIH.compression == BMPINFOHEADER::RLE8) {
                   do {
@@ -757,10 +752,6 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
             switch(byte) {
               case RLE::ESCAPE_EOL:
                 // End of Line: Go to next row
-                if (mDownscaler) {
-                  mDownscaler->CommitRow();
-                }
-
                 mCurLine --;
                 mCurPos = 0;
                 mState = eRLEStateInitial;
@@ -810,20 +801,11 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
             // Handle the XDelta and proceed to get Y Delta
             byte = *aBuffer++;
             aCount--;
-
-            if (mDownscaler) {
-              // Clear the skipped pixels. (This clears to the end of the row,
-              // which is perfect if there's a Y delta and harmless if not).
-              mDownscaler->ClearRow(/* aStartingAtCol = */ mCurPos);
-            }
-
             mCurPos += byte;
-
             // Delta encoding makes it possible to skip pixels
             // making the image transparent.
             if (MOZ_UNLIKELY(!mHaveAlphaData)) {
                 PostHasTransparency();
-                mHaveAlphaData = true;
             }
             mUseAlphaData = mHaveAlphaData = true;
             if (mCurPos > mBIH.width) {
@@ -833,7 +815,7 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
             mState = eRLEStateNeedYDelta;
             continue;
 
-          case eRLEStateNeedYDelta: {
+          case eRLEStateNeedYDelta:
             // Get the Y Delta and then "handle" the move
             byte = *aBuffer++;
             aCount--;
@@ -842,26 +824,10 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
             // making the image transparent.
             if (MOZ_UNLIKELY(!mHaveAlphaData)) {
                 PostHasTransparency();
-                mHaveAlphaData = true;
             }
             mUseAlphaData = mHaveAlphaData = true;
-
-            int32_t yDelta = std::min<int32_t>(byte, mCurLine);
-            mCurLine -= yDelta;
-
-            if (mDownscaler && yDelta > 0) {
-              // Commit the current row (the first of the skipped rows).
-              mDownscaler->CommitRow();
-
-              // Clear and commit the remaining skipped rows. 
-              for (int32_t line = 1 ; line < yDelta ; ++line) {
-                mDownscaler->ClearRow();
-                mDownscaler->CommitRow();
-              }
-            }
-
+            mCurLine -= std::min<int32_t>(byte, mCurLine);
             break;
-          }
 
           case eRLEStateAbsoluteMode: // Absolute Mode
           case eRLEStateAbsoluteModePadded:
@@ -870,12 +836,9 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
               // represents the number of pixels
               // that follow, each of which contains
               // the color index of a single pixel.
-              uint32_t* d = mDownscaler
-                ? reinterpret_cast<uint32_t*>(mDownscaler->RowBuffer())
-                    + mCurPos
-                : reinterpret_cast<uint32_t*>(mImageData)
-                    + PIXEL_OFFSET(mCurLine, mCurPos);
-
+              uint32_t* d = reinterpret_cast<uint32_t*>
+                            (mImageData) +
+                            PIXEL_OFFSET(mCurLine, mCurPos);
               uint32_t* oldPos = d;
               if (mBIH.compression == BMPINFOHEADER::RLE8) {
                   while (aCount > 0 && mStateData > 0) {
@@ -931,15 +894,9 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
   const uint32_t rows = mOldLine - mCurLine;
   if (rows) {
     // Invalidate
-    if (!mDownscaler) {
-      nsIntRect r(0, mBIH.height < 0 ? -mBIH.height - mOldLine : mCurLine,
-                  mBIH.width, rows);
-      PostInvalidation(r);
-    } else if (mDownscaler->HasInvalidation()) {
-      DownscalerInvalidRect invalidRect = mDownscaler->TakeInvalidRect();
-      PostInvalidation(invalidRect.mOriginalSizeRect,
-                       Some(invalidRect.mTargetSizeRect));
-    }
+    nsIntRect r(0, mBIH.height < 0 ? -mBIH.height - mOldLine : mCurLine,
+                mBIH.width, rows);
+    PostInvalidation(r);
 
     mOldLine = mCurLine;
   }

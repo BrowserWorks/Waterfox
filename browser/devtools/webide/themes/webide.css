@@ -16,14 +16,6 @@
   padding: 0 12px;
 }
 
-/*
- * Hide dropdown anchor when we switch to the sidebar layout.
- * TODO: Remove if/when we remove the dropdown layout permanently.
- */
-#main-toolbar.sidebar-layout .panel-button-anchor {
-  display: none;
-}
-
 #action-buttons-container {
   -moz-box-pack: center;
   height: 50px;
@@ -162,12 +154,8 @@ panel > .panel-arrowcontainer > .panel-arrowcontent {
 .panel-list {
   display: none;
   position: relative;
-  max-width: 180px;
+  max-width: 250px;
   overflow: hidden;
-}
-
-#project-listing-panel.panel-list {
-  max-width: 165px;
 }
 
 .panel-list-wrapper {

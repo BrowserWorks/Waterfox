@@ -1,29 +1,31 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
 import os
 
 from browsermobproxy import Server
 from marionette import MarionetteTestCase
 
 
-class BrowserMobProxyArguments(object):
-    name = 'Browsermob Proxy'
-    args = [
-        [['--browsermob-script'],
-         {'help': 'path to the browsermob-proxy shell script or batch file',
-          }],
-        [['--browsermob-port'],
-         {'type': int,
-          'help': 'port to run the browsermob proxy on',
-          }],
-    ]
+class BrowserMobProxyOptionsMixin(object):
 
-    def verify_usage_handler(self, args):
-        if args.browsermob_script is not None:
-            if not os.path.exists(args.browsermob_script):
-                raise ValueError('%s not found' % args.browsermob_script)
+    # verify_usage
+    def browsermob_verify_usage(self, options, tests):
+        if options.browsermob_script is not None:
+            if not os.path.exists(options.browsermob_script):
+                raise ValueError('%s not found' % options.browsermob_script)
+
+    def __init__(self, **kwargs):
+        # Inheriting object must call this __init__ to set up option handling
+        group = self.add_option_group('Browsermob Proxy')
+        group.add_option('--browsermob-script',
+                         action='store',
+                         dest='browsermob_script',
+                         type='string',
+                         help='path to the browsermob-proxy shell script or batch file')
+        group.add_option('--browsermob-port',
+                         action='store',
+                         dest='browsermob_port',
+                         type='int',
+                         help='port to run the browsermob proxy on')
+        self.verify_usage_handlers.append(self.browsermob_verify_usage)
 
 
 class BrowserMobProxyTestCaseMixin(object):

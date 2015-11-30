@@ -12,7 +12,6 @@
 #include "nsIconURI.h"
 #include "nsIIOService.h"
 #include "nsIURL.h"
-#include "nsNetUtil.h"
 #include "prprf.h"
 #include "plstr.h"
 #include <stdlib.h>
@@ -467,12 +466,6 @@ nsMozIconURI::GetAsciiSpec(nsACString& aSpecA)
 }
 
 NS_IMETHODIMP
-nsMozIconURI::GetAsciiHostPort(nsACString& aHostPortA)
-{
-  return GetHostPort(aHostPortA);
-}
-
-NS_IMETHODIMP
 nsMozIconURI::GetAsciiHost(nsACString& aHostA)
 {
   return GetHost(aHostA);
@@ -648,33 +641,3 @@ nsMozIconURI::Deserialize(const URIParams& aParams)
 
   return true;
 }
-
-////////////////////////////////////////////////////////////
-// Nested version of nsIconURI
-
-nsNestedMozIconURI::nsNestedMozIconURI()
-{ }
-
-nsNestedMozIconURI::~nsNestedMozIconURI()
-{ }
-
-NS_IMPL_ISUPPORTS_INHERITED(nsNestedMozIconURI, nsMozIconURI, nsINestedURI)
-
-NS_IMETHODIMP
-nsNestedMozIconURI::GetInnerURI(nsIURI** aURI)
-{
-  nsCOMPtr<nsIURI> iconURL = do_QueryInterface(mIconURL);
-  if (iconURL) {
-    iconURL.forget(aURI);
-  } else {
-    *aURI = nullptr;
-  }
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNestedMozIconURI::GetInnermostURI(nsIURI** aURI)
-{
-  return NS_ImplGetInnermostURI(this, aURI);
-}
-

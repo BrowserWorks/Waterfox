@@ -7,14 +7,14 @@
 // Tests editing a property name or value and escaping will revert the
 // changes and restore the original value.
 
-const TEST_URI = `
-  <style type='text/css'>
-  #testid {
-    background-color: #00F;
-  }
-  </style>
-  <div id='testid'>Styled Node</div>
-`;
+let TEST_URI = [
+  "<style type='text/css'>",
+  "#testid {",
+  "  background-color: #00F;",
+  "}",
+  "</style>",
+  "<div id='testid'>Styled Node</div>",
+].join("\n");
 
 add_task(function*() {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));

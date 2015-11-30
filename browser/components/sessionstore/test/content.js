@@ -4,12 +4,12 @@
 
 "use strict";
 
-var Cu = Components.utils;
-var Ci = Components.interfaces;
+let Cu = Components.utils;
+let Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource:///modules/sessionstore/FrameTree.jsm", this);
-var gFrameTree = new FrameTree(this);
+let gFrameTree = new FrameTree(this);
 
 function executeSoon(callback) {
   Services.tm.mainThread.dispatch(callback, Components.interfaces.nsIThread.DISPATCH_NORMAL);
@@ -25,7 +25,7 @@ gFrameTree.addObserver({
   }
 });
 
-var historyListener = {
+let historyListener = {
   OnHistoryNewEntry: function () {
     sendAsyncMessage("ss-test:OnHistoryNewEntry");
   },
@@ -65,7 +65,7 @@ var historyListener = {
   ])
 };
 
-var {sessionHistory} = docShell.QueryInterface(Ci.nsIWebNavigation);
+let {sessionHistory} = docShell.QueryInterface(Ci.nsIWebNavigation);
 if (sessionHistory) {
   sessionHistory.addSHistoryListener(historyListener);
 }

@@ -3,7 +3,7 @@
 
 "use strict";
 
-var cert = require("devtools/toolkit/security/cert");
+let cert = require("devtools/toolkit/security/cert");
 
 // Test basic functionality of DevTools client and server OOB_CERT auth (used
 // with WiFi debugging)

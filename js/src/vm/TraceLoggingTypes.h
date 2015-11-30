@@ -32,7 +32,6 @@
     _(ParserCompileFunction)                          \
     _(ParserCompileLazy)                              \
     _(ParserCompileScript)                            \
-    _(ParserCompileModule)                            \
     _(Scripts)                                        \
     _(VM)                                             \
                                                       \
@@ -49,13 +48,11 @@
     _(AliasAnalysis)                                  \
     _(GVN)                                            \
     _(LICM)                                           \
-    _(Sincos)                                         \
     _(RangeAnalysis)                                  \
     _(LoopUnrolling)                                  \
     _(EffectiveAddressAnalysis)                       \
     _(AlignmentMaskAnalysis)                          \
     _(EliminateDeadCode)                              \
-    _(ReorderInstructions)                            \
     _(EdgeCaseAnalysis)                               \
     _(EliminateRedundantChecks)                       \
     _(AddKeepAliveInstructions)                       \

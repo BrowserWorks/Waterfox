@@ -35,6 +35,6 @@ assertEq(log, 'd');
 dbg.addDebuggee(g);
 g.eval('function f() { }');
 let env = gw.getOwnPropertyDescriptor('f').value.environment;
-assertEq(env.type, 'declarative');
+assertEq(env.type, 'object');
 dbg.removeDebuggee(g);
 check(env);

@@ -13,8 +13,7 @@
 #include "nsThreadUtils.h"
 #include "prnetdb.h"
 
-#include "mozilla/jni/Utils.h"
-#include "GeneratedJNIWrappers.h"
+#include "AndroidBridge.h"
 
 namespace mozilla {
 namespace net {
@@ -81,7 +80,7 @@ Tickler::Init()
   MOZ_ASSERT(!mThread);
   MOZ_ASSERT(!mFD);
 
-  if (jni::IsAvailable()) {
+  if (AndroidBridge::HasEnv()) {
       widget::GeckoAppShell::EnableNetworkNotifications();
   }
 

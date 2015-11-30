@@ -6,8 +6,10 @@
 # Shortcut for mochitest* and xpcshell-tests targets
 ifdef TEST_PATH
 TEST_PATH_ARG := '$(TEST_PATH)'
+IPCPLUGINS_PATH_ARG := '$(TEST_PATH)'
 else
 TEST_PATH_ARG :=
+IPCPLUGINS_PATH_ARG := dom/plugins/test
 endif
 
 # include automation-build.mk to get the path to the binary
@@ -17,7 +19,7 @@ include $(topsrcdir)/build/binary-location.mk
 SYMBOLS_PATH := --symbols-path=$(DIST)/crashreporter-symbols
 
 # Usage: |make [TEST_PATH=...] [EXTRA_TEST_ARGS=...] mochitest*|.
-MOCHITESTS := mochitest-plain mochitest-chrome mochitest-devtools mochitest-a11y
+MOCHITESTS := mochitest-plain mochitest-chrome mochitest-devtools mochitest-a11y mochitest-ipcplugins
 mochitest:: $(MOCHITESTS)
 
 ifndef TEST_PACKAGE_NAME
@@ -146,6 +148,22 @@ mochitest-a11y:
 	$(RUN_MOCHITEST) --a11y
 	$(CHECK_TEST_ERROR)
 
+mochitest-ipcplugins:
+ifeq (Darwin,$(OS_ARCH))
+ifeq (i386,$(TARGET_CPU))
+	$(RUN_MOCHITEST) --setpref=dom.ipc.plugins.enabled.i386.test.plugin=false $(IPCPLUGINS_PATH_ARG)
+endif
+ifeq (x86_64,$(TARGET_CPU))
+	$(RUN_MOCHITEST) --setpref=dom.ipc.plugins.enabled.x86_64.test.plugin=false $(IPCPLUGINS_PATH_ARG)
+endif
+ifeq (powerpc,$(TARGET_CPU))
+	$(RUN_MOCHITEST) --setpref=dom.ipc.plugins.enabled.ppc.test.plugin=false $(IPCPLUGINS_PATH_ARG)
+endif
+else
+	$(RUN_MOCHITEST) --setpref=dom.ipc.plugins.enabled=false dom/plugins/test
+endif
+	$(CHECK_TEST_ERROR)
+
 ifeq ($(OS_ARCH),Darwin)
 webapprt_stub_path = $(TARGET_DIST)/$(MOZ_MACBUNDLE_NAME)/Contents/Resources/webapprt-stub$(BIN_SUFFIX)
 endif
@@ -174,7 +192,7 @@ REMOTE_REFTEST = rm -f ./$@.log && $(PYTHON) _tests/reftest/remotereftest.py \
   --dm_trans=$(DM_TRANS) --ignore-window-size \
   --app=$(TEST_PACKAGE_NAME) --deviceIP=${TEST_DEVICE} --xre-path=${MOZ_HOST_BIN} \
   --httpd-path=_tests/modules \
-  $(SYMBOLS_PATH) $(EXTRA_TEST_ARGS) $(1) | tee ./$@.log
+  $(SYMBOLS_PATH) $(EXTRA_TEST_ARGS) '$(1)' | tee ./$@.log
 
 RUN_REFTEST_B2G = rm -f ./$@.log && $(PYTHON) _tests/reftest/runreftestb2g.py \
   --remote-webserver=10.0.2.2 --b2gpath=${B2G_PATH} --adbpath=${ADB_PATH} \
@@ -209,7 +227,7 @@ reftest-remote:
         echo 'please prepare your host with the environment variable TEST_DEVICE'; \
     else \
         ln -s $(abspath $(topsrcdir)) _tests/reftest/tests; \
-        $(call REMOTE_REFTEST,'tests/$(TEST_PATH)'); \
+        $(call REMOTE_REFTEST,tests/$(TEST_PATH)); \
         $(CHECK_TEST_ERROR); \
     fi
 
@@ -369,13 +387,12 @@ pgo-profile-run:
 # Package up the tests and test harnesses
 include $(topsrcdir)/toolkit/mozapps/installer/package-name.mk
 
+ifndef UNIVERSAL_BINARY
 PKG_STAGE = $(DIST)/test-stage
-
 package-tests: \
   stage-config \
   stage-mach \
   stage-mochitest \
-  stage-talos \
   stage-reftest \
   stage-xpcshell \
   stage-jstests \
@@ -394,12 +411,15 @@ package-tests: \
 ifdef MOZ_WEBRTC
 package-tests: stage-steeplechase
 endif
+else
+# This staging area has been built for us by universal/flight.mk
+PKG_STAGE = $(DIST)/universal/test-stage
+endif
 
 TEST_PKGS := \
   cppunittest \
   mochitest \
   reftest \
-  talos \
   xpcshell \
   web-platform \
   $(NULL)
@@ -408,7 +428,9 @@ PKG_ARG = --$(1) '$(PKG_BASENAME).$(1).tests.zip'
 
 test-packages-manifest-tc:
 	@rm -f $(MOZ_TEST_PACKAGES_FILE_TC)
+ifndef UNIVERSAL_BINARY
 	$(NSINSTALL) -D $(dir $(MOZ_TEST_PACKAGES_FILE_TC))
+endif
 	$(PYTHON) $(topsrcdir)/build/gen_test_packages_manifest.py \
       --jsshell $(JSSHELL_NAME) \
       --dest-file $(MOZ_TEST_PACKAGES_FILE_TC) \
@@ -418,7 +440,9 @@ test-packages-manifest-tc:
 
 test-packages-manifest:
 	@rm -f $(MOZ_TEST_PACKAGES_FILE)
+ifndef UNIVERSAL_BINARY
 	$(NSINSTALL) -D $(dir $(MOZ_TEST_PACKAGES_FILE))
+endif
 	$(PYTHON) $(topsrcdir)/build/gen_test_packages_manifest.py \
       --jsshell $(JSSHELL_NAME) \
       --dest-file $(MOZ_TEST_PACKAGES_FILE) \
@@ -427,25 +451,21 @@ test-packages-manifest:
 
 package-tests:
 	@rm -f '$(DIST)/$(PKG_PATH)$(TEST_PACKAGE)'
+ifndef UNIVERSAL_BINARY
 	$(NSINSTALL) -D $(DIST)/$(PKG_PATH)
+endif
 # Exclude harness specific directories when generating the common zip.
 	$(MKDIR) -p $(abspath $(DIST))/$(PKG_PATH) && \
-	cd $(topsrcdir)/testing/ && \
-	  zip -rq9D $(abspath $(DIST))/$(PKG_PATH)mozharness.zip mozharness && \
-	cd $(abspath $(PKG_STAGE)) && \
+	cd $(PKG_STAGE) && \
 	  zip -rq9D '$(abspath $(DIST))/$(PKG_PATH)$(TEST_PACKAGE)' \
 	  * -x \*/.mkdir.done \*.pyc $(foreach name,$(TEST_PKGS),$(name)\*) && \
 	$(foreach name,$(TEST_PKGS),rm -f '$(DIST)/$(PKG_PATH)$(PKG_BASENAME).'$(name)'.tests.zip' && \
                                 zip -rq9D '$(abspath $(DIST))/$(PKG_PATH)$(PKG_BASENAME).'$(name)'.tests.zip' \
                                 $(name) -x \*/.mkdir.done \*.pyc ;)
 
-ifeq ($(MOZ_BUILD_APP),mobile/android)
+ifeq ($(MOZ_WIDGET_TOOLKIT),android)
 package-tests: stage-android
 package-tests: stage-instrumentation-tests
-endif
-
-ifeq ($(MOZ_BUILD_APP),mobile/android/b2gdroid)
-package-tests: stage-android
 endif
 
 ifeq ($(MOZ_WIDGET_TOOLKIT),gonk)
@@ -481,11 +501,6 @@ stage-mochitest: make-stage-dir
 ifeq ($(MOZ_BUILD_APP),mobile/android)
 	$(NSINSTALL) $(DEPTH)/mobile/android/base/fennec_ids.txt $(PKG_STAGE)/mochitest
 endif
-
-TALOS_DIR=$(PKG_STAGE)/talos
-stage-talos: make-stage-dir
-	$(NSINSTALL) -D $(TALOS_DIR)
-	@(cd $(topsrcdir)/testing/talos && tar $(TAR_CREATE_FLAGS) - *) | (cd $(TALOS_DIR)/ && tar -xf -)
 
 stage-reftest: make-stage-dir
 	$(MAKE) -C $(DEPTH)/layout/tools/reftest stage-package
@@ -601,6 +616,7 @@ stage-instrumentation-tests: make-stage-dir
   mochitest-chrome \
   mochitest-devtools \
   mochitest-a11y \
+  mochitest-ipcplugins \
   reftest \
   crashtest \
   xpcshell-tests \
@@ -610,7 +626,6 @@ stage-instrumentation-tests: make-stage-dir
   stage-b2g \
   stage-config \
   stage-mochitest \
-  stage-talos \
   stage-reftest \
   stage-xpcshell \
   stage-jstests \

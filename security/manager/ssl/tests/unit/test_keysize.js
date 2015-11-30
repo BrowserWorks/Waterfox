@@ -12,6 +12,17 @@ do_get_profile(); // must be called before getting nsIX509CertDB
 const certdb = Cc["@mozilla.org/security/x509certdb;1"]
                  .getService(Ci.nsIX509CertDB);
 
+function certFromFile(filename) {
+  let der = readFile(do_get_file("test_keysize/" + filename, false));
+  return certdb.constructX509(der, der.length);
+}
+
+function loadCert(certName, trustString) {
+  let certFilename = certName + ".der";
+  addCertFromFile(certdb, "test_keysize/" + certFilename, trustString);
+  return certFromFile(certFilename);
+}
+
 /**
  * Tests a cert chain.
  *
@@ -34,9 +45,9 @@ function checkChain(rootKeyType, rootKeySize, intKeyType, intKeySize,
   let intFullName = intName + "-" + rootName;
   let eeFullName = eeName + "-" + intName + "-" + rootName;
 
-  addCertFromFile(certdb, `test_keysize/${rootName}.pem`, "CTu,CTu,CTu");
-  addCertFromFile(certdb, `test_keysize/${intFullName}.pem`, ",,");
-  let eeCert = constructCertFromFile(`test_keysize/${eeFullName}.pem`);
+  loadCert(rootName, "CTu,CTu,CTu");
+  loadCert(intFullName, ",,");
+  let eeCert = certFromFile(eeFullName + ".der");
 
   do_print("cert o=" + eeCert.organization);
   do_print("cert issuer o=" + eeCert.issuerOrganization);
@@ -77,44 +88,44 @@ function checkRSAChains(inadequateKeySize, adequateKeySize) {
 }
 
 function checkECCChains() {
-  checkChain("secp256r1", 256,
+  checkChain("prime256v1", 256,
              "secp384r1", 384,
              "secp521r1", 521,
              PRErrorCodeSuccess);
-  checkChain("secp256r1", 256,
+  checkChain("prime256v1", 256,
              "secp224r1", 224,
-             "secp256r1", 256,
+             "prime256v1", 256,
              SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
-  checkChain("secp256r1", 256,
-             "secp256r1", 256,
+  checkChain("prime256v1", 256,
+             "prime256v1", 256,
              "secp224r1", 224,
              SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
   checkChain("secp224r1", 224,
-             "secp256r1", 256,
-             "secp256r1", 256,
+             "prime256v1", 256,
+             "prime256v1", 256,
              SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
-  checkChain("secp256r1", 256,
-             "secp256r1", 256,
+  checkChain("prime256v1", 256,
+             "prime256v1", 256,
              "secp256k1", 256,
              SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
   checkChain("secp256k1", 256,
-             "secp256r1", 256,
-             "secp256r1", 256,
+             "prime256v1", 256,
+             "prime256v1", 256,
              SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
 }
 
 function checkCombinationChains() {
   checkChain("rsa", 2048,
-             "secp256r1", 256,
+             "prime256v1", 256,
              "secp384r1", 384,
              PRErrorCodeSuccess);
   checkChain("rsa", 2048,
-             "secp256r1", 256,
+             "prime256v1", 256,
              "secp224r1", 224,
              SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
-  checkChain("secp256r1", 256,
+  checkChain("prime256v1", 256,
              "rsa", 1016,
-             "secp256r1", 256,
+             "prime256v1", 256,
              MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE);
 }
 

@@ -35,7 +35,7 @@
 #include "nsCycleCollectionNoteRootCallback.h"
 #include "nsCycleCollector.h"
 #include "nsScriptLoader.h"
-#include "jsapi.h"
+#include "jsfriendapi.h"
 #include "jsprf.h"
 #include "js/MemoryMetrics.h"
 #include "mozilla/dom/GeneratedAtomList.h"
@@ -55,10 +55,6 @@
 
 #ifdef MOZ_CRASHREPORTER
 #include "nsExceptionHandler.h"
-#endif
-
-#if defined(MOZ_JEMALLOC4)
-#include "mozmemory.h"
 #endif
 
 using namespace mozilla;
@@ -150,40 +146,26 @@ public:
               mActive = false;
           }
       } else {
-#if defined(MOZ_JEMALLOC4)
-          if (mPurge) {
-              /* Jemalloc purges dirty pages regularly during free() when the
-               * ratio of dirty pages compared to active pages is higher than
-               * 1 << lg_dirty_mult. A high ratio can have an impact on
-               * performance, so we use the default ratio of 8, but force a
-               * regular purge of all remaining dirty pages, after cycle
-               * collection. */
-              Telemetry::AutoTimer<Telemetry::MEMORY_FREE_PURGED_PAGES_MS> timer;
-              jemalloc_free_dirty_pages();
-          }
-#endif
           mActive = false;
       }
       return NS_OK;
   }
 
-  void Dispatch(bool aContinuation = false, bool aPurge = false)
+  void Dispatch(bool aContinuation = false)
   {
       if (mContinuation) {
           mContinuation = aContinuation;
       }
-      mPurge = aPurge;
       if (!mActive && NS_SUCCEEDED(NS_DispatchToCurrentThread(this))) {
           mActive = true;
       }
   }
 
-  AsyncFreeSnowWhite() : mContinuation(false), mActive(false), mPurge(false) {}
+  AsyncFreeSnowWhite() : mContinuation(false), mActive(false) {}
 
 public:
   bool mContinuation;
   bool mActive;
-  bool mPurge;
 };
 
 namespace xpc {
@@ -648,9 +630,9 @@ XPCJSRuntime::EndCycleCollectionCallback(CycleCollectorResults& aResults)
 }
 
 void
-XPCJSRuntime::DispatchDeferredDeletion(bool aContinuation, bool aPurge)
+XPCJSRuntime::DispatchDeferredDeletion(bool aContinuation)
 {
-    mAsyncSnowWhiteFreer->Dispatch(aContinuation, aPurge);
+    mAsyncSnowWhiteFreer->Dispatch(aContinuation);
 }
 
 void
@@ -2525,6 +2507,14 @@ ReportJSRuntimeExplicitTreeStats(const JS::RuntimeStats& rtStats,
         KIND_HEAP, rtStats.runtime.gc.storeBufferWholeCells,
         "Whole cells in the store buffer.");
 
+    RREPORT_BYTES(rtPath + NS_LITERAL_CSTRING("runtime/gc/store-buffer/reloc-vals"),
+        KIND_HEAP, rtStats.runtime.gc.storeBufferRelocVals,
+        "Relocatable values in the store buffer.");
+
+    RREPORT_BYTES(rtPath + NS_LITERAL_CSTRING("runtime/gc/store-buffer/reloc-cells"),
+        KIND_HEAP, rtStats.runtime.gc.storeBufferRelocCells,
+        "Relocatable cells in the store buffer.");
+
     RREPORT_BYTES(rtPath + NS_LITERAL_CSTRING("runtime/gc/store-buffer/generics"),
         KIND_HEAP, rtStats.runtime.gc.storeBufferGenerics,
         "Generic things in the store buffer.");
@@ -3164,7 +3154,7 @@ ReadSourceFromFilename(JSContext* cx, const char* filename, char16_t** src, size
     rv = NS_NewChannel(getter_AddRefs(scriptChannel),
                        uri,
                        nsContentUtils::GetSystemPrincipal(),
-                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                       nsILoadInfo::SEC_NORMAL,
                        nsIContentPolicy::TYPE_OTHER);
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -3183,7 +3173,7 @@ ReadSourceFromFilename(JSContext* cx, const char* filename, char16_t** src, size
     scriptChannel->SetContentType(NS_LITERAL_CSTRING("text/plain"));
 
     nsCOMPtr<nsIInputStream> scriptStream;
-    rv = scriptChannel->Open2(getter_AddRefs(scriptStream));
+    rv = scriptChannel->Open(getter_AddRefs(scriptStream));
     NS_ENSURE_SUCCESS(rv, rv);
 
     uint64_t rawLen;
@@ -3582,66 +3572,6 @@ XPCJSRuntime::NoteCustomGCThingXPCOMChildren(const js::Class* clasp, JSObject* o
     NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "xpc_GetJSPrivate(obj)->mNative");
     cb.NoteXPCOMChild(to->GetNative());
     return true;
-}
-
-void
-XPCJSRuntime::BeforeProcessTask(bool aMightBlock)
-{
-    MOZ_ASSERT(NS_IsMainThread());
-
-    // If ProcessNextEvent was called during a Promise "then" callback, we
-    // must process any pending microtasks before blocking in the event loop,
-    // otherwise we may deadlock until an event enters the queue later.
-    if (aMightBlock) {
-        if (Promise::PerformMicroTaskCheckpoint()) {
-            // If any microtask was processed, we post a dummy event in order to
-            // force the ProcessNextEvent call not to block.  This is required
-            // to support nested event loops implemented using a pattern like
-            // "while (condition) thread.processNextEvent(true)", in case the
-            // condition is triggered here by a Promise "then" callback.
-
-            class DummyRunnable : public nsRunnable {
-            public:
-                NS_IMETHOD Run() { return NS_OK; }
-            };
-
-            NS_DispatchToMainThread(new DummyRunnable());
-        }
-    }
-
-    // Start the slow script timer.
-    mSlowScriptCheckpoint = mozilla::TimeStamp::NowLoRes();
-    mSlowScriptSecondHalf = false;
-
-    // As we may be entering a nested event loop, we need to
-    // cancel any ongoing performance measurement.
-    js::ResetPerformanceMonitoring(Get()->Runtime());
-
-    // Push a null JSContext so that we don't see any script during
-    // event processing.
-    PushNullJSContext();
-
-    CycleCollectedJSRuntime::BeforeProcessTask(aMightBlock);
-}
-
-void
-XPCJSRuntime::AfterProcessTask(uint32_t aNewRecursionDepth)
-{
-    // Now that we're back to the event loop, reset the slow script checkpoint.
-    mSlowScriptCheckpoint = mozilla::TimeStamp();
-    mSlowScriptSecondHalf = false;
-
-    // Call cycle collector occasionally.
-    MOZ_ASSERT(NS_IsMainThread());
-    nsJSContext::MaybePokeCC();
-
-    CycleCollectedJSRuntime::AfterProcessTask(aNewRecursionDepth);
-
-    // Now that we are certain that the event is complete,
-    // we can flush any ongoing performance measurement.
-    js::FlushPerformanceMonitoring(Get()->Runtime());
-
-    PopNullJSContext();
 }
 
 /***************************************************************************/

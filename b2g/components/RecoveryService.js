@@ -18,7 +18,7 @@ function log(msg) {
 }
 
 #ifdef MOZ_WIDGET_GONK
-var librecovery = (function() {
+let librecovery = (function() {
   let library;
   try {
     library = ctypes.open("librecovery.so");

@@ -178,13 +178,8 @@ Site.prototype = {
     let link = this._querySelector(".newtab-link");
     link.setAttribute("title", tooltip);
     link.setAttribute("href", url);
+    this._querySelector(".newtab-title").textContent = title;
     this.node.setAttribute("type", this.link.type);
-
-    let titleNode = this._querySelector(".newtab-title");
-    titleNode.textContent = title;
-    if (this.link.titleBgColor) {
-      titleNode.style.backgroundColor = this.link.titleBgColor;
-    }
 
     // remove "suggested" attribute to avoid showing "suggested" tag
     // after site was pinned or dropped
@@ -367,12 +362,6 @@ Site.prototype = {
     else if (button == 0) {
       aEvent.preventDefault();
       if (target.classList.contains("newtab-control-block")) {
-        // Notify DirectoryLinksProvider of suggested tile block, this may
-        // affect if and how suggested tiles are recommended and needs to
-        // be reported before pages are updated inside block() call
-        if (this.link.targetedSite) {
-          DirectoryLinksProvider.handleSuggestedTileBlock();
-        }
         this.block();
         action = "block";
       }

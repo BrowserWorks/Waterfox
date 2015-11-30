@@ -37,7 +37,6 @@ class Rooted;
 class JS_FRIEND_API(CompileOptions);
 class JS_FRIEND_API(ReadOnlyCompileOptions);
 class JS_FRIEND_API(OwningCompileOptions);
-class JS_FRIEND_API(TransitiveCompileOptions);
 class JS_PUBLIC_API(CompartmentOptions);
 
 class Value;
@@ -94,6 +93,7 @@ struct JSCrossCompartmentCall;
 class JSErrorReport;
 struct JSExceptionState;
 struct JSFunctionSpec;
+struct JSIdArray;
 struct JSLocaleCallbacks;
 struct JSObjectMap;
 struct JSPrincipals;
@@ -218,18 +218,23 @@ class JS_PUBLIC_API(AutoGCRooter)
     enum {
         VALARRAY =     -2, /* js::AutoValueArray */
         PARSER =       -3, /* js::frontend::Parser */
+        IDARRAY =      -6, /* js::AutoIdArray */
         VALVECTOR =   -10, /* js::AutoValueVector */
         IDVECTOR =    -11, /* js::AutoIdVector */
         OBJVECTOR =   -14, /* js::AutoObjectVector */
+        SCRIPTVECTOR =-16, /* js::AutoScriptVector */
+        NAMEVECTOR =  -17, /* js::AutoNameVector */
         IONMASM =     -19, /* js::jit::MacroAssembler */
         WRAPVECTOR =  -20, /* js::AutoWrapperVector */
         WRAPPER =     -21, /* js::AutoWrapperRooter */
+        JSONPARSER =  -25, /* js::JSONParser */
         CUSTOM =      -26  /* js::CustomAutoRooter */
     };
 
     static ptrdiff_t GetTag(const Value& value) { return VALVECTOR; }
     static ptrdiff_t GetTag(const jsid& id) { return IDVECTOR; }
     static ptrdiff_t GetTag(JSObject* obj) { return OBJVECTOR; }
+    static ptrdiff_t GetTag(JSScript* script) { return SCRIPTVECTOR; }
 
   private:
     AutoGCRooter ** const stackTop;

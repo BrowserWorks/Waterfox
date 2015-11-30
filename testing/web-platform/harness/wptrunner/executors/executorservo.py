@@ -62,12 +62,9 @@ class ServoTestharnessExecutor(ProcessTestExecutor):
         self.result_data = None
         self.result_flag = threading.Event()
 
-        args = ["--cpu", "--hard-fail", "-u", "Servo/wptrunner", "-z", self.test_url(test)]
-        for stylesheet in self.browser.user_stylesheets:
-            args += ["--user-stylesheet", stylesheet]
-        for pref in test.environment.get('prefs', {}):
-            args += ["--pref", pref]
-        debug_args, command = browser_command(self.binary, args, self.debug_info)
+        debug_args, command = browser_command(self.binary,
+            ["--cpu", "--hard-fail", "-u", "Servo/wptrunner", "-z", self.test_url(test)],
+            self.debug_info)
 
         self.command = command
 
@@ -191,44 +188,24 @@ class ServoRefTestExecutor(ProcessTestExecutor):
         full_url = self.test_url(test)
 
         with TempFilename(self.tempdir) as output_path:
-            debug_args, command = browser_command(
-                self.binary,
-                ["--cpu", "--hard-fail", "--exit", "-u", "Servo/wptrunner",
-                 "-Z", "disable-text-aa", "--output=%s" % output_path, full_url],
-                self.debug_info)
-
-            for stylesheet in self.browser.user_stylesheets:
-                command += ["--user-stylesheet", stylesheet]
-
-            for pref in test.environment.get('prefs', {}):
-                command += ["--pref", pref]
-
-            self.command = debug_args + command
+            self.command = [self.binary, "--cpu", "--hard-fail", "--exit",
+                            "-u", "Servo/wptrunner", "-Z", "disable-text-aa",
+                            "--output=%s" % output_path, full_url]
 
             env = os.environ.copy()
             env["HOST_FILE"] = self.hosts_path
 
-            if not self.interactive:
-                self.proc = ProcessHandler(self.command,
-                                           processOutputLine=[self.on_output],
-                                           env=env)
+            self.proc = ProcessHandler(self.command,
+                                       processOutputLine=[self.on_output],
+                                       env=env)
 
-
-                try:
-                    self.proc.run()
-                    timeout = test.timeout * self.timeout_multiplier + 5
-                    rv = self.proc.wait(timeout=timeout)
-                except KeyboardInterrupt:
-                    self.proc.kill()
-                    raise
-            else:
-                self.proc = subprocess.Popen(self.command,
-                                             env=env)
-                try:
-                    rv = self.proc.wait()
-                except KeyboardInterrupt:
-                    self.proc.kill()
-                    raise
+            try:
+                self.proc.run()
+                timeout = test.timeout * self.timeout_multiplier + 5
+                rv = self.proc.wait(timeout=timeout)
+            except KeyboardInterrupt:
+                self.proc.kill()
+                raise
 
             if rv is None:
                 self.proc.kill()

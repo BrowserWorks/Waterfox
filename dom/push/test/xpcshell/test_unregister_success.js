@@ -25,8 +25,7 @@ add_task(function* test_unregister_success() {
     quota: Infinity,
   });
 
-  let unregisterDone;
-  let unregisterPromise = new Promise(resolve => unregisterDone = resolve);
+  let unregisterDefer = Promise.defer();
   PushService.init({
     serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
@@ -47,7 +46,7 @@ add_task(function* test_unregister_success() {
             status: 200,
             channelID
           }));
-          unregisterDone();
+          unregisterDefer.resolve();
         }
       });
     }
@@ -58,6 +57,6 @@ add_task(function* test_unregister_success() {
   let record = yield db.getByKeyID(channelID);
   ok(!record, 'Unregister did not remove record');
 
-  yield waitForPromise(unregisterPromise, DEFAULT_TIMEOUT,
+  yield waitForPromise(unregisterDefer.promise, DEFAULT_TIMEOUT,
     'Timed out waiting for unregister');
 });

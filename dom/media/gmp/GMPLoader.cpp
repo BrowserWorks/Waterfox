@@ -135,11 +135,6 @@ GetStackAfterCurrentFrame(uint8_t** aOutTop, uint8_t** aOutBottom)
 }
 #endif
 
-// The RAII variable holding the activation context that we create before
-// lowering the sandbox is getting optimized out.
-#if defined(_MSC_VER)
-#pragma optimize("g", off)
-#endif
 bool
 GMPLoaderImpl::Load(const char* aUTF8LibPath,
                     uint32_t aUTF8LibPathLen,
@@ -269,9 +264,6 @@ GMPLoaderImpl::Load(const char* aUTF8LibPath,
 
   return true;
 }
-#if defined(_MSC_VER)
-#pragma optimize("", on)
-#endif
 
 GMPErr
 GMPLoaderImpl::GetAPI(const char* aAPIName,

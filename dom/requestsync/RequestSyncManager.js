@@ -46,8 +46,9 @@ RequestSyncManager.prototype = {
 
   sendMessage: function(aMsg, aObj) {
     let self = this;
-    return this.createPromiseWithId(function(aResolverId) {
-      aObj.requestID = aResolverId;
+    return this.createPromise(function(aResolve, aReject) {
+      aObj.requestID =
+        self.getPromiseResolverId({ resolve: aResolve, reject: aReject });
       cpmm.sendAsyncMessage(aMsg, aObj, null,
                             self._window.document.nodePrincipal);
     });

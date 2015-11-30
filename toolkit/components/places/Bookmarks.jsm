@@ -82,7 +82,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
 const DB_URL_LENGTH_MAX = 65536;
 const DB_TITLE_LENGTH_MAX = 4096;
 
-var Bookmarks = Object.freeze({
+let Bookmarks = Object.freeze({
   /**
    * Item's type constants.
    * These should stay consistent with nsINavBookmarksService.idl
@@ -1271,7 +1271,7 @@ function validateBookmarkObject(input, behavior={}) {
  * @param urls
  *        the array of URLs to update.
  */
-var updateFrecency = Task.async(function* (db, urls) {
+let updateFrecency = Task.async(function* (db, urls) {
   yield db.execute(
     `UPDATE moz_places
      SET frecency = NOTIFY_FRECENCY(
@@ -1293,7 +1293,7 @@ var updateFrecency = Task.async(function* (db, urls) {
  * @param db
  *        the Sqlite.jsm connection handle.
  */
-var removeOrphanAnnotations = Task.async(function* (db) {
+let removeOrphanAnnotations = Task.async(function* (db) {
   yield db.executeCached(
     `DELETE FROM moz_items_annos
      WHERE id IN (SELECT a.id from moz_items_annos a
@@ -1317,7 +1317,7 @@ var removeOrphanAnnotations = Task.async(function* (db) {
  * @param itemId
  *        internal id of the item for which to remove annotations.
  */
-var removeAnnotationsForItem = Task.async(function* (db, itemId) {
+let removeAnnotationsForItem = Task.async(function* (db, itemId) {
   yield db.executeCached(
     `DELETE FROM moz_items_annos
      WHERE item_id = :id
@@ -1343,7 +1343,7 @@ var removeAnnotationsForItem = Task.async(function* (db, itemId) {
  *
  * @note the folder itself is also updated.
  */
-var setAncestorsLastModified = Task.async(function* (db, folderGuid, time) {
+let setAncestorsLastModified = Task.async(function* (db, folderGuid, time) {
   yield db.executeCached(
     `WITH RECURSIVE
      ancestors(aid) AS (
@@ -1367,7 +1367,7 @@ var setAncestorsLastModified = Task.async(function* (db, folderGuid, time) {
  * @param folderGuids
  *        array of folder guids.
  */
-var removeFoldersContents =
+let removeFoldersContents =
 Task.async(function* (db, folderGuids) {
   let itemsRemoved = [];
   for (let folderGuid of folderGuids) {

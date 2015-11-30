@@ -39,7 +39,7 @@ ArgumentsObject::MaybeForwardToCallObject(AbstractFramePtr frame, ArgumentsObjec
                                           ArgumentsData* data)
 {
     JSScript* script = frame.script();
-    if (frame.fun()->needsCallObject() && script->argsObjAliasesFormals()) {
+    if (frame.fun()->isHeavyweight() && script->argsObjAliasesFormals()) {
         obj->initFixedSlot(MAYBE_CALL_SLOT, ObjectValue(frame.callObj()));
         for (AliasedFormalIter fi(script); fi; fi++)
             data->args[fi.frameIndex()] = MagicScopeSlotValue(fi.scopeSlot());
@@ -52,7 +52,7 @@ ArgumentsObject::MaybeForwardToCallObject(jit::JitFrameLayout* frame, HandleObje
 {
     JSFunction* callee = jit::CalleeTokenToFunction(frame->calleeToken());
     JSScript* script = callee->nonLazyScript();
-    if (callee->needsCallObject() && script->argsObjAliasesFormals()) {
+    if (callee->isHeavyweight() && script->argsObjAliasesFormals()) {
         MOZ_ASSERT(callObj && callObj->is<CallObject>());
         obj->initFixedSlot(MAYBE_CALL_SLOT, ObjectValue(*callObj.get()));
         for (AliasedFormalIter fi(script); fi; fi++)
@@ -158,11 +158,9 @@ struct CopyScriptFrameIterArgs
 };
 
 ArgumentsObject*
-ArgumentsObject::createTemplateObject(JSContext* cx, bool mapped)
+ArgumentsObject::createTemplateObject(JSContext* cx, bool strict)
 {
-    const Class* clasp = mapped
-                         ? &MappedArgumentsObject::class_
-                         : &UnmappedArgumentsObject::class_;
+    const Class* clasp = strict ? &StrictArgumentsObject::class_ : &NormalArgumentsObject::class_;
 
     RootedObject proto(cx, cx->global()->getOrCreateObjectPrototype(cx));
     if (!proto)
@@ -188,16 +186,16 @@ ArgumentsObject::createTemplateObject(JSContext* cx, bool mapped)
 }
 
 ArgumentsObject*
-JSCompartment::getOrCreateArgumentsTemplateObject(JSContext* cx, bool mapped)
+JSCompartment::getOrCreateArgumentsTemplateObject(JSContext* cx, bool strict)
 {
     ReadBarriered<ArgumentsObject*>& obj =
-        mapped ? mappedArgumentsTemplate_ : unmappedArgumentsTemplate_;
+        strict ? strictArgumentsTemplate_ : normalArgumentsTemplate_;
 
     ArgumentsObject* templateObj = obj;
     if (templateObj)
         return templateObj;
 
-    templateObj = ArgumentsObject::createTemplateObject(cx, mapped);
+    templateObj = ArgumentsObject::createTemplateObject(cx, strict);
     if (!templateObj)
         return nullptr;
 
@@ -209,8 +207,8 @@ template <typename CopyArgs>
 /* static */ ArgumentsObject*
 ArgumentsObject::create(JSContext* cx, HandleFunction callee, unsigned numActuals, CopyArgs& copy)
 {
-    bool mapped = callee->nonLazyScript()->hasMappedArgsObj();
-    ArgumentsObject* templateObj = cx->compartment()->getOrCreateArgumentsTemplateObject(cx, mapped);
+    bool strict = callee->strict();
+    ArgumentsObject* templateObj = cx->compartment()->getOrCreateArgumentsTemplateObject(cx, strict);
     if (!templateObj)
         return nullptr;
 
@@ -315,9 +313,8 @@ ArgumentsObject::createForIon(JSContext* cx, jit::JitFrameLayout* frame, HandleO
     return create(cx, callee, frame->numActualArgs(), copy);
 }
 
-/* static */ bool
-ArgumentsObject::obj_delProperty(JSContext* cx, HandleObject obj, HandleId id,
-                                 ObjectOpResult& result)
+static bool
+args_delProperty(JSContext* cx, HandleObject obj, HandleId id, ObjectOpResult& result)
 {
     ArgumentsObject& argsobj = obj->as<ArgumentsObject>();
     if (JSID_IS_INT(id)) {
@@ -327,15 +324,15 @@ ArgumentsObject::obj_delProperty(JSContext* cx, HandleObject obj, HandleId id,
     } else if (JSID_IS_ATOM(id, cx->names().length)) {
         argsobj.markLengthOverridden();
     } else if (JSID_IS_ATOM(id, cx->names().callee)) {
-        argsobj.as<MappedArgumentsObject>().clearCallee();
+        argsobj.as<NormalArgumentsObject>().clearCallee();
     }
     return result.succeed();
 }
 
 static bool
-MappedArgGetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp)
+ArgGetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp)
 {
-    MappedArgumentsObject& argsobj = obj->as<MappedArgumentsObject>();
+    NormalArgumentsObject& argsobj = obj->as<NormalArgumentsObject>();
     if (JSID_IS_INT(id)) {
         /*
          * arg can exceed the number of arguments if a script changed the
@@ -356,12 +353,12 @@ MappedArgGetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue
 }
 
 static bool
-MappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp,
-                ObjectOpResult& result)
+ArgSetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp,
+          ObjectOpResult& result)
 {
-    if (!obj->is<MappedArgumentsObject>())
+    if (!obj->is<NormalArgumentsObject>())
         return result.succeed();
-    Handle<MappedArgumentsObject*> argsobj = obj.as<MappedArgumentsObject>();
+    Handle<NormalArgumentsObject*> argsobj = obj.as<NormalArgumentsObject>();
 
     Rooted<PropertyDescriptor> desc(cx);
     if (!GetOwnPropertyDescriptor(cx, argsobj, id, &desc))
@@ -387,21 +384,20 @@ MappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue
 
     /*
      * For simplicity we use delete/define to replace the property with a
-     * simple data property. Note that we rely on ArgumentsObject::obj_delProperty
-     * to clear the corresponding reserved slot so the GC can collect its value.
-     * Note also that we must define the property instead of setting it in case
-     * the user has changed the prototype to an object that has a setter for
-     * this id.
+     * simple data property. Note that we rely on args_delProperty to clear the
+     * corresponding reserved slot so the GC can collect its value. Note also
+     * that we must define the property instead of setting it in case the user
+     * has changed the prototype to an object that has a setter for this id.
      */
     ObjectOpResult ignored;
     return NativeDeleteProperty(cx, argsobj, id, ignored) &&
            NativeDefineProperty(cx, argsobj, id, vp, nullptr, nullptr, attrs, result);
 }
 
-/* static */ bool
-MappedArgumentsObject::obj_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
+static bool
+args_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
 {
-    Rooted<MappedArgumentsObject*> argsobj(cx, &obj->as<MappedArgumentsObject>());
+    Rooted<NormalArgumentsObject*> argsobj(cx, &obj->as<NormalArgumentsObject>());
 
     unsigned attrs = JSPROP_SHARED | JSPROP_SHADOWABLE | JSPROP_RESOLVING;
     if (JSID_IS_INT(id)) {
@@ -421,20 +417,17 @@ MappedArgumentsObject::obj_resolve(JSContext* cx, HandleObject obj, HandleId id,
             return true;
     }
 
-    if (!NativeDefineProperty(cx, argsobj, id, UndefinedHandleValue,
-                              MappedArgGetter, MappedArgSetter, attrs))
-    {
+    if (!NativeDefineProperty(cx, argsobj, id, UndefinedHandleValue, ArgGetter, ArgSetter, attrs))
         return false;
-    }
 
     *resolvedp = true;
     return true;
 }
 
-/* static */ bool
-MappedArgumentsObject::obj_enumerate(JSContext* cx, HandleObject obj)
+static bool
+args_enumerate(JSContext* cx, HandleObject obj)
 {
-    Rooted<MappedArgumentsObject*> argsobj(cx, &obj->as<MappedArgumentsObject>());
+    Rooted<NormalArgumentsObject*> argsobj(cx, &obj->as<NormalArgumentsObject>());
 
     RootedId id(cx);
     bool found;
@@ -458,9 +451,9 @@ MappedArgumentsObject::obj_enumerate(JSContext* cx, HandleObject obj)
 }
 
 static bool
-UnmappedArgGetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp)
+StrictArgGetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp)
 {
-    UnmappedArgumentsObject& argsobj = obj->as<UnmappedArgumentsObject>();
+    StrictArgumentsObject& argsobj = obj->as<StrictArgumentsObject>();
 
     if (JSID_IS_INT(id)) {
         /*
@@ -479,12 +472,12 @@ UnmappedArgGetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleVal
 }
 
 static bool
-UnmappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp,
-                  ObjectOpResult& result)
+StrictArgSetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp,
+                ObjectOpResult& result)
 {
-    if (!obj->is<UnmappedArgumentsObject>())
+    if (!obj->is<StrictArgumentsObject>())
         return result.succeed();
-    Handle<UnmappedArgumentsObject*> argsobj = obj.as<UnmappedArgumentsObject>();
+    Handle<StrictArgumentsObject*> argsobj = obj.as<StrictArgumentsObject>();
 
     Rooted<PropertyDescriptor> desc(cx);
     if (!GetOwnPropertyDescriptor(cx, argsobj, id, &desc))
@@ -506,22 +499,22 @@ UnmappedArgSetter(JSContext* cx, HandleObject obj, HandleId id, MutableHandleVal
 
     /*
      * For simplicity we use delete/define to replace the property with a
-     * simple data property. Note that we rely on ArgumentsObject::obj_delProperty
-     * to clear the corresponding reserved slot so the GC can collect its value.
+     * simple data property. Note that we rely on args_delProperty to clear the
+     * corresponding reserved slot so the GC can collect its value.
      */
     ObjectOpResult ignored;
     return NativeDeleteProperty(cx, argsobj, id, ignored) &&
            NativeDefineProperty(cx, argsobj, id, vp, nullptr, nullptr, attrs, result);
 }
 
-/* static */ bool
-UnmappedArgumentsObject::obj_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
+static bool
+strictargs_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
 {
-    Rooted<UnmappedArgumentsObject*> argsobj(cx, &obj->as<UnmappedArgumentsObject>());
+    Rooted<StrictArgumentsObject*> argsobj(cx, &obj->as<StrictArgumentsObject>());
 
     unsigned attrs = JSPROP_SHARED | JSPROP_SHADOWABLE;
-    GetterOp getter = UnmappedArgGetter;
-    SetterOp setter = UnmappedArgSetter;
+    GetterOp getter = StrictArgGetter;
+    SetterOp setter = StrictArgSetter;
 
     if (JSID_IS_INT(id)) {
         uint32_t arg = uint32_t(JSID_TO_INT(id));
@@ -549,10 +542,10 @@ UnmappedArgumentsObject::obj_resolve(JSContext* cx, HandleObject obj, HandleId i
     return true;
 }
 
-/* static */ bool
-UnmappedArgumentsObject::obj_enumerate(JSContext* cx, HandleObject obj)
+static bool
+strictargs_enumerate(JSContext* cx, HandleObject obj)
 {
-    Rooted<UnmappedArgumentsObject*> argsobj(cx, &obj->as<UnmappedArgumentsObject>());
+    Rooted<StrictArgumentsObject*> argsobj(cx, &obj->as<StrictArgumentsObject>());
 
     RootedId id(cx);
     bool found;
@@ -631,19 +624,19 @@ ArgumentsObject::objectMovedDuringMinorGC(JSTracer* trc, JSObject* dst, JSObject
  * stack frame with their corresponding property values in the frame's
  * arguments object.
  */
-const Class MappedArgumentsObject::class_ = {
+const Class NormalArgumentsObject::class_ = {
     "Arguments",
-    JSCLASS_DELAY_METADATA_CALLBACK |
-    JSCLASS_HAS_RESERVED_SLOTS(MappedArgumentsObject::RESERVED_SLOTS) |
+    JSCLASS_IMPLEMENTS_BARRIERS | JSCLASS_DELAY_METADATA_CALLBACK |
+    JSCLASS_HAS_RESERVED_SLOTS(NormalArgumentsObject::RESERVED_SLOTS) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_Object) |
     JSCLASS_SKIP_NURSERY_FINALIZE |
     JSCLASS_BACKGROUND_FINALIZE,
     nullptr,                 /* addProperty */
-    ArgumentsObject::obj_delProperty,
+    args_delProperty,
     nullptr,                 /* getProperty */
     nullptr,                 /* setProperty */
-    MappedArgumentsObject::obj_enumerate,
-    MappedArgumentsObject::obj_resolve,
+    args_enumerate,
+    args_resolve,
     nullptr,                 /* mayResolve  */
     nullptr,                 /* convert     */
     ArgumentsObject::finalize,
@@ -654,22 +647,23 @@ const Class MappedArgumentsObject::class_ = {
 };
 
 /*
- * Unmapped arguments is significantly less magical than mapped arguments, so
- * it is represented by a different class while sharing some functionality.
+ * Strict mode arguments is significantly less magical than non-strict mode
+ * arguments, so it is represented by a different class while sharing some
+ * functionality.
  */
-const Class UnmappedArgumentsObject::class_ = {
+const Class StrictArgumentsObject::class_ = {
     "Arguments",
-    JSCLASS_DELAY_METADATA_CALLBACK |
-    JSCLASS_HAS_RESERVED_SLOTS(UnmappedArgumentsObject::RESERVED_SLOTS) |
+    JSCLASS_IMPLEMENTS_BARRIERS | JSCLASS_DELAY_METADATA_CALLBACK |
+    JSCLASS_HAS_RESERVED_SLOTS(StrictArgumentsObject::RESERVED_SLOTS) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_Object) |
     JSCLASS_SKIP_NURSERY_FINALIZE |
     JSCLASS_BACKGROUND_FINALIZE,
     nullptr,                 /* addProperty */
-    ArgumentsObject::obj_delProperty,
+    args_delProperty,
     nullptr,                 /* getProperty */
     nullptr,                 /* setProperty */
-    UnmappedArgumentsObject::obj_enumerate,
-    UnmappedArgumentsObject::obj_resolve,
+    strictargs_enumerate,
+    strictargs_resolve,
     nullptr,                 /* mayResolve  */
     nullptr,                 /* convert     */
     ArgumentsObject::finalize,

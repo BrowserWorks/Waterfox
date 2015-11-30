@@ -18,17 +18,13 @@ XPCOMUtils.defineLazyServiceGetter(this,
                                    "@mozilla.org/serviceworkers/manager;1",
                                    "nsIServiceWorkerManager");
 
-var processType = Cc["@mozilla.org/xre/app-info;1"]
+let processType = Cc["@mozilla.org/xre/app-info;1"]
                     .getService(Ci.nsIXULRuntime).processType;
-var isParent = processType === Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
+let isParent = processType === Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
 
 Services.cpmm.addMessageListener("push", function (aMessage) {
-  let {originAttributes, scope, payload} = aMessage.data;
-  if (payload) {
-    swm.sendPushEvent(originAttributes, scope, payload.length, payload);
-  } else {
-    swm.sendPushEvent(originAttributes, scope);
-  }
+  swm.sendPushEvent(aMessage.data.originAttributes,
+                    aMessage.data.scope, aMessage.data.payload);
 });
 
 Services.cpmm.addMessageListener("pushsubscriptionchange", function (aMessage) {

@@ -17,7 +17,7 @@ Cu.import("resource://gre/modules/TelemetryController.jsm", this);
 Cu.import("resource://gre/modules/TelemetrySend.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-var {OS: {File, Path, Constants}} = Cu.import("resource://gre/modules/osfile.jsm", {});
+let {OS: {File, Path, Constants}} = Cu.import("resource://gre/modules/osfile.jsm", {});
 
 XPCOMUtils.defineLazyGetter(this, "gDatareportingService",
   () => Cc["@mozilla.org/datareporting/service;1"]
@@ -40,8 +40,8 @@ const TOTAL_EXPECTED_PINGS = OVERDUE_PINGS + RECENT_PINGS + OLD_FORMAT_PINGS;
 
 const PREF_FHR_UPLOAD = "datareporting.healthreport.uploadEnabled";
 
-var gCreatedPings = 0;
-var gSeenPings = 0;
+let gCreatedPings = 0;
+let gSeenPings = 0;
 
 /**
  * Creates some Telemetry pings for the and saves them to disk. Each ping gets a
@@ -55,7 +55,7 @@ var gSeenPings = 0;
  * @returns Promise
  * @resolve an Array with the created pings ids.
  */
-var createSavedPings = Task.async(function* (aPingInfos) {
+let createSavedPings = Task.async(function* (aPingInfos) {
   let pingIds = [];
   let now = Date.now();
 
@@ -84,7 +84,7 @@ var createSavedPings = Task.async(function* (aPingInfos) {
  * @param aPingIds an Array of ping ids to delete.
  * @returns Promise
  */
-var clearPings = Task.async(function* (aPingIds) {
+let clearPings = Task.async(function* (aPingIds) {
   for (let pingId of aPingIds) {
     yield TelemetryStorage.removePendingPing(pingId);
   }
@@ -125,7 +125,7 @@ function assertReceivedPings(aExpectedNum) {
  * @param aPingIds an Array of pings ids to check.
  * @returns Promise
  */
-var assertNotSaved = Task.async(function* (aPingIds) {
+let assertNotSaved = Task.async(function* (aPingIds) {
   let saved = 0;
   for (let id of aPingIds) {
     let filePath = getSavePathForPingId(id);
@@ -152,7 +152,7 @@ function pingHandler(aRequest) {
 /**
  * Clear out all pending pings.
  */
-var clearPendingPings = Task.async(function*() {
+let clearPendingPings = Task.async(function*() {
   const pending = yield TelemetryStorage.loadPendingPingList();
   for (let p of pending) {
     yield TelemetryStorage.removePendingPing(p.id);

@@ -8,7 +8,7 @@
  * Manages the addon-sdk loader instance used to load the developer tools.
  */
 
-var { Constructor: CC, classes: Cc, interfaces: Ci, utils: Cu } = Components;
+let { Constructor: CC, classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -17,21 +17,20 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil", "resource://gre/modules/NetUt
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils", "resource://gre/modules/FileUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 
-var { Loader } = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {});
-var promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
+let loader = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {}).Loader;
+let promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
 
 this.EXPORTED_SYMBOLS = ["DevToolsLoader", "devtools", "BuiltinProvider",
-                         "SrcdirProvider", "require", "loader"];
+                         "SrcdirProvider", "require"];
 
 /**
  * Providers are different strategies for loading the devtools.
  */
 
-var loaderModules = {
+let loaderModules = {
   "Services": Object.create(Services),
-  "toolkit/loader": Loader,
-  PromiseDebugging,
-  ThreadSafeChromeUtils,
+  "toolkit/loader": loader,
+  "PromiseDebugging": PromiseDebugging
 };
 XPCOMUtils.defineLazyGetter(loaderModules, "Debugger", () => {
   // addDebuggerToGlobal only allows adding the Debugger object to a global. The
@@ -65,13 +64,13 @@ XPCOMUtils.defineLazyGetter(loaderModules, "indexedDB", () => {
   }
 });
 
-var sharedGlobalBlacklist = ["sdk/indexed-db"];
+let sharedGlobalBlacklist = ["sdk/indexed-db"];
 
 // Used when the tools should be loaded from the Firefox package itself (the default)
 function BuiltinProvider() {}
 BuiltinProvider.prototype = {
   load: function() {
-    this.loader = new Loader.Loader({
+    this.loader = new loader.Loader({
       id: "fx-devtools",
       modules: loaderModules,
       paths: {
@@ -114,7 +113,7 @@ BuiltinProvider.prototype = {
   },
 
   unload: function(reason) {
-    Loader.unload(this.loader, reason);
+    loader.unload(this.loader, reason);
     delete this.loader;
   },
 };
@@ -141,7 +140,6 @@ SrcdirProvider.prototype = {
     let devtoolsURI = this.fileURI(devtoolsDir);
     let toolkitURI = this.fileURI(toolkitDir);
     let serverURI = this.fileURI(OS.Path.join(toolkitDir, "server"));
-    let webideURI = this.fileURI(OS.Path.join(devtoolsDir, "webide", "modules"));
     let webconsoleURI = this.fileURI(OS.Path.join(toolkitDir, "webconsole"));
     let appActorURI = this.fileURI(OS.Path.join(toolkitDir, "apps", "app-actor-front.js"));
     let cssLogicURI = this.fileURI(OS.Path.join(toolkitDir, "styleinspector", "css-logic"));
@@ -153,13 +151,13 @@ SrcdirProvider.prototype = {
     let asyncUtilsURI = this.fileURI(OS.Path.join(toolkitDir, "async-utils.js"));
     let contentObserverURI = this.fileURI(OS.Path.join(toolkitDir), "content-observer.js");
     let gcliURI = this.fileURI(OS.Path.join(toolkitDir, "gcli", "source", "lib", "gcli"));
-    let projecteditorURI = this.fileURI(OS.Path.join(devtoolsDir, "projecteditor", "lib"));
+    let projecteditorURI = this.fileURI(OS.Path.join(devtoolsDir, "projecteditor"));
     let promiseURI = this.fileURI(OS.Path.join(modulesDir, "Promise-backend.js"));
     let acornURI = this.fileURI(OS.Path.join(toolkitDir, "acorn"));
     let acornWalkURI = OS.Path.join(acornURI, "walk.js");
     let ternURI = OS.Path.join(toolkitDir, "tern");
     let sourceMapURI = this.fileURI(OS.Path.join(toolkitDir, "sourcemap", "source-map.js"));
-    this.loader = new Loader.Loader({
+    this.loader = new loader.Loader({
       id: "fx-devtools",
       modules: loaderModules,
       paths: {
@@ -169,7 +167,6 @@ SrcdirProvider.prototype = {
         "devtools": devtoolsURI,
         "devtools/toolkit": toolkitURI,
         "devtools/server": serverURI,
-        "devtools/webide": webideURI,
         "devtools/toolkit/webconsole": webconsoleURI,
         "devtools/app-actor-front": appActorURI,
         "devtools/styleinspector/css-logic": cssLogicURI,
@@ -198,7 +195,7 @@ SrcdirProvider.prototype = {
   },
 
   unload: function(reason) {
-    Loader.unload(this.loader, reason);
+    loader.unload(this.loader, reason);
     delete this.loader;
   },
 
@@ -349,8 +346,8 @@ DevToolsLoader.prototype = {
    * @returns The module's exports.
    */
   loadURI: function(id, uri) {
-    let module = Loader.Module(id, uri);
-    return Loader.load(this.provider.loader, module).exports;
+    let module = loader.Module(id, uri);
+    return loader.load(this.provider.loader, module).exports;
   },
 
   /**
@@ -369,7 +366,7 @@ DevToolsLoader.prototype = {
       return;
     }
     this._mainid = id;
-    this._main = Loader.main(this.provider.loader, id);
+    this._main = loader.main(this.provider.loader, id);
 
     // Mirror the main module's exports on this object.
     Object.getOwnPropertyNames(this._main).forEach(key => {
@@ -414,7 +411,7 @@ DevToolsLoader.prototype = {
     });
 
     this._provider.load();
-    this.require = Loader.Require(this._provider.loader, { id: "devtools" });
+    this.require = loader.Require(this._provider.loader, { id: "devtools" });
 
     if (this._mainid) {
       this.main(this._mainid);
@@ -460,6 +457,6 @@ DevToolsLoader.prototype = {
 };
 
 // Export the standard instance of DevToolsLoader used by the tools.
-this.devtools = this.loader = new DevToolsLoader();
+this.devtools = new DevToolsLoader();
 
 this.require = this.devtools.require.bind(this.devtools);

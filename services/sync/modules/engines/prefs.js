@@ -8,7 +8,7 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-const PREF_SYNC_PREFS_PREFIX = "services.sync.prefs.sync.";
+const WEAVE_SYNC_PREFS = "services.sync.prefs.sync.";
 
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/record.js");
@@ -43,7 +43,7 @@ PrefsEngine.prototype = {
 
   syncPriority: 1,
 
-  getChangedIDs: function () {
+  getChangedIDs: function getChangedIDs() {
     // No need for a proper timestamp (no conflict resolution needed).
     let changedIDs = {};
     if (this._tracker.modified)
@@ -51,12 +51,12 @@ PrefsEngine.prototype = {
     return changedIDs;
   },
 
-  _wipeClient: function () {
+  _wipeClient: function _wipeClient() {
     SyncEngine.prototype._wipeClient.call(this);
     this.justWiped = true;
   },
 
-  _reconcile: function (item) {
+  _reconcile: function _reconcile(item) {
     // Apply the incoming item if we don't care about the local data
     if (this.justWiped) {
       this.justWiped = false;
@@ -78,25 +78,24 @@ PrefStore.prototype = {
 
  __prefs: null,
   get _prefs() {
-    if (!this.__prefs) {
+    if (!this.__prefs)
       this.__prefs = new Preferences();
-    }
     return this.__prefs;
   },
 
-  _getSyncPrefs: function () {
+  _getSyncPrefs: function _getSyncPrefs() {
     let syncPrefs = Cc["@mozilla.org/preferences-service;1"]
                       .getService(Ci.nsIPrefService)
-                      .getBranch(PREF_SYNC_PREFS_PREFIX)
+                      .getBranch(WEAVE_SYNC_PREFS)
                       .getChildList("", {});
     // Also sync preferences that determine which prefs get synced.
-    let controlPrefs = syncPrefs.map(pref => PREF_SYNC_PREFS_PREFIX + pref);
-    return controlPrefs.concat(syncPrefs);
+    return syncPrefs.concat(
+      syncPrefs.map(function (pref) { return WEAVE_SYNC_PREFS + pref; }));
   },
 
-  _isSynced: function (pref) {
-    return pref.startsWith(PREF_SYNC_PREFS_PREFIX) ||
-           this._prefs.get(PREF_SYNC_PREFS_PREFIX + pref, false);
+  _isSynced: function _isSyncedPref(pref) {
+    return (pref.indexOf(WEAVE_SYNC_PREFS) == 0)
+            || this._prefs.get(WEAVE_SYNC_PREFS + pref, false);
   },
 
   _getAllPrefs: function () {
@@ -110,21 +109,15 @@ PrefStore.prototype = {
     return values;
   },
 
-  _setAllPrefs: function (values) {
+  _setAllPrefs: function PrefStore__setAllPrefs(values) {
     let selectedThemeIDPref = "lightweightThemes.selectedThemeID";
     let selectedThemeIDBefore = this._prefs.get(selectedThemeIDPref, null);
 
-    // Update 'services.sync.prefs.sync.foo.pref' before 'foo.pref', otherwise
-    // _isSynced returns false when 'foo.pref' doesn't exist (e.g., on a new device).
-    let prefs = Object.keys(values).sort(a => -a.indexOf(PREF_SYNC_PREFS_PREFIX));
-    for (let pref of prefs) {
-      if (!this._isSynced(pref)) {
+    for (let [pref, value] in Iterator(values)) {
+      if (!this._isSynced(pref))
         continue;
-      }
 
-      let value = values[pref];
-
-      // Pref has gone missing. The best we can do is reset it.
+      // Pref has gone missing, best we can do is reset it.
       if (value == null) {
         this._prefs.reset(pref);
         continue;
@@ -148,22 +141,22 @@ PrefStore.prototype = {
     }
   },
 
-  getAllIDs: function () {
+  getAllIDs: function PrefStore_getAllIDs() {
     /* We store all prefs in just one WBO, with just one GUID */
     let allprefs = {};
     allprefs[PREFS_GUID] = true;
     return allprefs;
   },
 
-  changeItemID: function (oldID, newID) {
+  changeItemID: function PrefStore_changeItemID(oldID, newID) {
     this._log.trace("PrefStore GUID is constant!");
   },
 
-  itemExists: function (id) {
+  itemExists: function FormStore_itemExists(id) {
     return (id === PREFS_GUID);
   },
 
-  createRecord: function (id, collection) {
+  createRecord: function createRecord(id, collection) {
     let record = new PrefRec(collection, id);
 
     if (id == PREFS_GUID) {
@@ -175,15 +168,15 @@ PrefStore.prototype = {
     return record;
   },
 
-  create: function (record) {
+  create: function PrefStore_create(record) {
     this._log.trace("Ignoring create request");
   },
 
-  remove: function (record) {
+  remove: function PrefStore_remove(record) {
     this._log.trace("Ignoring remove request");
   },
 
-  update: function (record) {
+  update: function PrefStore_update(record) {
     // Silently ignore pref updates that are for other apps.
     if (record.id != PREFS_GUID)
       return;
@@ -192,7 +185,7 @@ PrefStore.prototype = {
     this._setAllPrefs(record.value);
   },
 
-  wipe: function () {
+  wipe: function PrefStore_wipe() {
     this._log.trace("Ignoring wipe request");
   }
 };
@@ -248,8 +241,8 @@ PrefTracker.prototype = {
       case "nsPref:changed":
         // Trigger a sync for MULTI-DEVICE for a change that determines
         // which prefs are synced or a regular pref change.
-        if (data.indexOf(PREF_SYNC_PREFS_PREFIX) == 0 ||
-            this._prefs.get(PREF_SYNC_PREFS_PREFIX + data, false)) {
+        if (data.indexOf(WEAVE_SYNC_PREFS) == 0 ||
+            this._prefs.get(WEAVE_SYNC_PREFS + data, false)) {
           this.score += SCORE_INCREMENT_XLARGE;
           this.modified = true;
           this._log.trace("Preference " + data + " changed");

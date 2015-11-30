@@ -186,7 +186,7 @@ class RegExpStatics
     }
 };
 
-class MOZ_RAII AutoRegExpStaticsBuffer : private JS::CustomAutoRooter
+class AutoRegExpStaticsBuffer : private JS::CustomAutoRooter
 {
   public:
     explicit AutoRegExpStaticsBuffer(JSContext* cx

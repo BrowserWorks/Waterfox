@@ -6,11 +6,9 @@
 
 #include "InternalResponse.h"
 
-#include "mozilla/Assertions.h"
 #include "mozilla/dom/InternalHeaders.h"
 #include "mozilla/dom/cache/CacheTypes.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
-#include "nsIURI.h"
 #include "nsStreamUtils.h"
 
 namespace mozilla {
@@ -87,37 +85,6 @@ InternalResponse::SetPrincipalInfo(UniquePtr<mozilla::ipc::PrincipalInfo> aPrinc
   mPrincipalInfo = Move(aPrincipalInfo);
 }
 
-nsresult
-InternalResponse::StripFragmentAndSetUrl(const nsACString& aUrl)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-
-  nsCOMPtr<nsIURI> iuri;
-  nsresult rv;
-
-  rv = NS_NewURI(getter_AddRefs(iuri), aUrl);
-  if(NS_WARN_IF(NS_FAILED(rv))){
-    return rv;
-  }
-
-  nsCOMPtr<nsIURI> iuriClone;
-  // We use CloneIgnoringRef to strip away the fragment even if the original URI
-  // is immutable.
-  rv = iuri->CloneIgnoringRef(getter_AddRefs(iuriClone));
-  if(NS_WARN_IF(NS_FAILED(rv))){
-    return rv;
-  }
-
-  nsCString spec;
-  rv = iuriClone->GetSpec(spec);
-  if(NS_WARN_IF(NS_FAILED(rv))){
-    return rv;
-  }
-
-  SetUrl(spec);
-  return NS_OK;
-}
-
 already_AddRefed<InternalResponse>
 InternalResponse::OpaqueResponse()
 {
@@ -130,16 +97,6 @@ InternalResponse::OpaqueResponse()
     response->mPrincipalInfo = MakeUnique<mozilla::ipc::PrincipalInfo>(*mPrincipalInfo);
   }
   response->mWrappedResponse = this;
-  return response.forget();
-}
-
-already_AddRefed<InternalResponse>
-InternalResponse::OpaqueRedirectResponse()
-{
-  MOZ_ASSERT(!mWrappedResponse, "Can't OpaqueRedirectResponse a already wrapped response");
-  nsRefPtr<InternalResponse> response = OpaqueResponse();
-  response->mType = ResponseType::Opaqueredirect;
-  response->mURL = mURL;
   return response.forget();
 }
 

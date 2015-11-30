@@ -26,7 +26,7 @@ public:
 
   virtual ~GonkAudioDecoderManager() override;
 
-  virtual nsRefPtr<InitPromise> Init(MediaDataDecoderCallback* aCallback) override;
+  virtual android::sp<MediaCodecProxy> Init(MediaDataDecoderCallback* aCallback) override;
 
   virtual nsresult Input(MediaRawData* aSample) override;
 
@@ -38,8 +38,6 @@ public:
   virtual bool HasQueuedSample() override;
 
 private:
-  bool InitMediaCodecProxy(MediaDataDecoderCallback* aCallback);
-
   nsresult CreateAudioData(int64_t aStreamOffset,
                               AudioData** aOutData);
 
@@ -54,6 +52,9 @@ private:
   MediaDataDecoderCallback*  mReaderCallback;
   android::MediaBuffer* mAudioBuffer;
   android::sp<ALooper> mLooper;
+
+  // MediaCodedc's wrapper that performs the decoding.
+  android::sp<android::MediaCodecProxy> mDecoder;
 
   // This monitor protects mQueueSample.
   Monitor mMonitor;

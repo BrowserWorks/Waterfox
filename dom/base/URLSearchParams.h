@@ -45,7 +45,7 @@ public:
     : mParams(aOther.mParams)
   {}
 
-  URLParams(const URLParams&& aOther)
+  explicit URLParams(const URLParams&& aOther)
     : mParams(Move(aOther.mParams))
   {}
 

@@ -7,6 +7,7 @@ package org.mozilla.gecko.tests.helpers;
 import org.mozilla.gecko.Actions;
 import org.mozilla.gecko.Actions.EventExpecter;
 import org.mozilla.gecko.GeckoThread;
+import org.mozilla.gecko.GeckoThread.LaunchState;
 import org.mozilla.gecko.tests.UITestContext;
 
 import android.app.Activity;
@@ -40,7 +41,8 @@ public final class GeckoHelper {
     private static void blockForEvent(final String eventName) {
         final EventExpecter eventExpecter = sActions.expectGeckoEvent(eventName);
 
-        if (!GeckoThread.isRunning()) {
+        final boolean isRunning = GeckoThread.checkLaunchState(LaunchState.GeckoRunning);
+        if (!isRunning) {
             eventExpecter.blockForEvent();
         }
 

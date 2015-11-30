@@ -10,8 +10,10 @@
 #include "mozilla/Preferences.h"
 #include "MediaDecoderStateMachine.h"
 #include "MediaSource.h"
+#include "MediaSourceReader.h"
 #include "MediaSourceResource.h"
 #include "MediaSourceUtils.h"
+#include "SourceBufferDecoder.h"
 #include "VideoUtils.h"
 #include "MediaFormatReader.h"
 #include "MediaSourceDemuxer.h"
@@ -26,8 +28,11 @@ using namespace mozilla::media;
 
 namespace mozilla {
 
+class SourceBufferDecoder;
+
 MediaSourceDecoder::MediaSourceDecoder(dom::HTMLMediaElement* aElement)
   : mMediaSource(nullptr)
+  , mIsUsingFormatReader(Preferences::GetBool("media.mediasource.format-reader", false))
   , mEnded(false)
 {
   SetExplicitDuration(UnspecifiedNaN<double>());
@@ -44,9 +49,13 @@ MediaSourceDecoder::Clone()
 MediaDecoderStateMachine*
 MediaSourceDecoder::CreateStateMachine()
 {
-  mDemuxer = new MediaSourceDemuxer();
-  nsRefPtr<MediaFormatReader> reader = new MediaFormatReader(this, mDemuxer);
-  return new MediaDecoderStateMachine(this, reader);
+  if (mIsUsingFormatReader) {
+    mDemuxer = new MediaSourceDemuxer();
+    mReader = new MediaFormatReader(this, mDemuxer);
+  } else {
+    mReader = new MediaSourceReader(this);
+  }
+  return new MediaDecoderStateMachine(this, mReader);
 }
 
 nsresult
@@ -82,8 +91,7 @@ MediaSourceDecoder::GetSeekable()
   } else if (duration > 0 && mozilla::IsInfinite(duration)) {
     media::TimeIntervals buffered = GetBuffered();
     if (buffered.Length()) {
-      seekable +=
-        media::TimeInterval(media::TimeUnit::FromSeconds(0), buffered.GetEnd());
+      seekable += media::TimeInterval(buffered.GetStart(), buffered.GetEnd());
     }
   } else {
     seekable += media::TimeInterval(media::TimeUnit::FromSeconds(0),
@@ -169,11 +177,42 @@ MediaSourceDecoder::DetachMediaSource()
   mMediaSource = nullptr;
 }
 
+already_AddRefed<SourceBufferDecoder>
+MediaSourceDecoder::CreateSubDecoder(const nsACString& aType, int64_t aTimestampOffset)
+{
+  MOZ_ASSERT(mReader && !mIsUsingFormatReader);
+  return GetReader()->CreateSubDecoder(aType, aTimestampOffset);
+}
+
+void
+MediaSourceDecoder::AddTrackBuffer(TrackBuffer* aTrackBuffer)
+{
+  MOZ_ASSERT(mReader && !mIsUsingFormatReader);
+  GetReader()->AddTrackBuffer(aTrackBuffer);
+}
+
+void
+MediaSourceDecoder::RemoveTrackBuffer(TrackBuffer* aTrackBuffer)
+{
+  MOZ_ASSERT(mReader && !mIsUsingFormatReader);
+  GetReader()->RemoveTrackBuffer(aTrackBuffer);
+}
+
+void
+MediaSourceDecoder::OnTrackBufferConfigured(TrackBuffer* aTrackBuffer, const MediaInfo& aInfo)
+{
+  MOZ_ASSERT(mReader && !mIsUsingFormatReader);
+  GetReader()->OnTrackBufferConfigured(aTrackBuffer, aInfo);
+}
+
 void
 MediaSourceDecoder::Ended(bool aEnded)
 {
   ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
   static_cast<MediaSourceResource*>(GetResource())->SetEnded(aEnded);
+  if (!mIsUsingFormatReader) {
+    GetReader()->Ended(aEnded);
+  }
   mEnded = true;
   mon.NotifyAll();
 }
@@ -213,6 +252,9 @@ MediaSourceDecoder::SetMediaSourceDuration(double aDuration, MSRangeRemovalActio
   } else {
     SetExplicitDuration(PositiveInfinity<double>());
   }
+  if (!mIsUsingFormatReader && GetReader()) {
+    GetReader()->SetMediaSourceDuration(ExplicitDuration());
+  }
 
   if (mMediaSource && aAction != MSRangeRemovalAction::SKIP) {
     mMediaSource->DurationChange(oldDuration, aDuration);
@@ -227,9 +269,30 @@ MediaSourceDecoder::GetMediaSourceDuration()
 }
 
 void
+MediaSourceDecoder::NotifyTimeRangesChanged()
+{
+  MOZ_ASSERT(mReader && !mIsUsingFormatReader);
+  GetReader()->NotifyTimeRangesChanged();
+}
+
+void
+MediaSourceDecoder::PrepareReaderInitialization()
+{
+  if (mIsUsingFormatReader) {
+    return;
+  }
+  MOZ_ASSERT(mReader);
+  GetReader()->PrepareInitialization();
+}
+
+void
 MediaSourceDecoder::GetMozDebugReaderData(nsAString& aString)
 {
-  mDemuxer->GetMozDebugReaderData(aString);
+  if (mIsUsingFormatReader) {
+    mDemuxer->GetMozDebugReaderData(aString);
+    return;
+  }
+  GetReader()->GetMozDebugReaderData(aString);
 }
 
 #ifdef MOZ_EME
@@ -238,6 +301,10 @@ MediaSourceDecoder::SetCDMProxy(CDMProxy* aProxy)
 {
   nsresult rv = MediaDecoder::SetCDMProxy(aProxy);
   NS_ENSURE_SUCCESS(rv, rv);
+  if (!mIsUsingFormatReader) {
+    rv = GetReader()->SetCDMProxy(aProxy);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
   if (aProxy) {
     // The sub readers can't decrypt EME content until they have a CDMProxy,
     // and the CDMProxy knows the capabilities of the CDM. The MediaSourceReader
@@ -253,6 +320,12 @@ MediaSourceDecoder::SetCDMProxy(CDMProxy* aProxy)
   return NS_OK;
 }
 #endif
+
+bool
+MediaSourceDecoder::IsActiveReader(MediaDecoderReader* aReader)
+{
+  return !mIsUsingFormatReader && GetReader()->IsActiveReader(aReader);
+}
 
 double
 MediaSourceDecoder::GetDuration()

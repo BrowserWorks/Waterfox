@@ -4,10 +4,10 @@
 
 "use strict";
 
-var tab;
-var notification;
-var notificationURL = "http://example.org/browser/browser/base/content/test/general/file_dom_notifications.html";
-var newWindowOpenedFromTab;
+let tab;
+let notification;
+let notificationURL = "http://example.org/browser/browser/base/content/test/general/file_dom_notifications.html";
+let newWindowOpenedFromTab;
 
 function test () {
   waitForExplicitFinish();

@@ -27,37 +27,27 @@ public:
     Create(nsPIDOMWindow* aWindow,
            const nsAString& aId,
            PresentationSessionState aState);
-
-  virtual void DisconnectFromOwner() override;
-
-  virtual JSObject* WrapObject(JSContext* aCx,
-                               JS::Handle<JSObject*> aGivenProto) override;
+  virtual JSObject*
+    WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL (public APIs)
   void GetId(nsAString& aId) const;
-
   PresentationSessionState State() const;
-
   void Send(const nsAString& aData, ErrorResult& aRv);
-
   void Close();
 
   IMPL_EVENT_HANDLER(statechange);
   IMPL_EVENT_HANDLER(message);
 
 private:
-  PresentationSession(nsPIDOMWindow* aWindow,
-                      const nsAString& aId,
-                      PresentationSessionState aState);
-
+  explicit PresentationSession(nsPIDOMWindow* aWindow,
+                               const nsAString& aId,
+                               PresentationSessionState aState);
   ~PresentationSession();
 
   bool Init();
-
   void Shutdown();
-
   nsresult DispatchStateChangeEvent();
-
   nsresult DispatchMessageEvent(JS::Handle<JS::Value> aData);
 
   nsString mId;

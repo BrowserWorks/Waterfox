@@ -358,7 +358,7 @@ NS_NewInputStreamTeeAsync(nsIInputStream** aResult,
     return rv;
   }
 
-  tee.forget(aResult);
+  NS_ADDREF(*aResult = tee);
   return rv;
 }
 

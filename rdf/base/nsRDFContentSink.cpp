@@ -223,7 +223,7 @@ protected:
 
     nsAutoTArray<RDFContextStackElement, 8>* mContextStack;
 
-    nsCOMPtr<nsIURI> mDocumentURL;
+    nsIURI*      mDocumentURL;
 
 private:
     static PRLogModuleInfo* gLog;
@@ -263,7 +263,8 @@ RDFContentSinkImpl::RDFContentSinkImpl()
       mTextSize(0),
       mState(eRDFContentSinkState_InProlog),
       mParseMode(eRDFContentSinkParseMode_Literal),
-      mContextStack(nullptr)
+      mContextStack(nullptr),
+      mDocumentURL(nullptr)
 {
     if (gRefCnt++ == 0) {
         NS_DEFINE_CID(kRDFServiceCID, NS_RDFSERVICE_CID);
@@ -302,6 +303,8 @@ RDFContentSinkImpl::~RDFContentSinkImpl()
     --gInstanceCount;
     fprintf(stdout, "%d - RDF: RDFContentSinkImpl\n", gInstanceCount);
 #endif
+
+    NS_IF_RELEASE(mDocumentURL);
 
     if (mContextStack) {
         MOZ_LOG(gLog, LogLevel::Warning,
@@ -605,6 +608,8 @@ RDFContentSinkImpl::Init(nsIURI* aURL)
         return NS_ERROR_NULL_POINTER;
 
     mDocumentURL = aURL;
+    NS_ADDREF(aURL);
+
     mState = eRDFContentSinkState_InProlog;
     return NS_OK;
 }

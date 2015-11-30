@@ -36,9 +36,9 @@ function addLoadListener(target, listener)
   });
 }
 
-var gWin;
-var gBrowser;
-var ok, is, info;
+let gWin;
+let gBrowser;
+let ok, is, info;
 
 // Make sure that the shims for window.content, browser.contentWindow,
 // and browser.contentDocument are working.

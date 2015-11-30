@@ -8,10 +8,10 @@
  */
 
 // Define some shared uris and titles (each page needs its own uri)
-var kURIs = [
+let kURIs = [
   "http://url/0",
 ];
-var kTitles = [
+let kTitles = [
   "title",
 ];
 
@@ -19,7 +19,7 @@ addPageBook(0, 0); // visited page
 
 // Provide for each test: description; search terms; array of gPages indices of
 // pages that should match; optional function to be run before the test
-var gTests = [
+let gTests = [
   ["1: plain search",
    "url", [0]],
   ["2: search disabled",

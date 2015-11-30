@@ -44,7 +44,7 @@ const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const kPrefCustomizationDebug = "browser.uiCustomization.debug";
 const kWidePanelItemClass = "panel-wide-item";
 
-var gModuleName = "[CustomizableWidgets]";
+let gModuleName = "[CustomizableWidgets]";
 #include logging.js
 
 function setAttributes(aNode, aAttrs) {
@@ -1129,7 +1129,7 @@ if (Services.prefs.getBoolPref("browser.pocket.enabled")) {
 }
 
 #ifdef E10S_TESTING_ONLY
-var e10sDisabled = false;
+let e10sDisabled = false;
 #ifdef XP_MACOSX
 // On OS X, "Disable Hardware Acceleration" also disables OMTC and forces
 // a fallback to Basic Layers. This is incompatible with e10s.

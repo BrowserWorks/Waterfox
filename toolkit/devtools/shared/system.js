@@ -8,7 +8,7 @@ const { Task } = require("resource://gre/modules/Task.jsm");
 
 loader.lazyRequireGetter(this, "Services");
 loader.lazyRequireGetter(this, "promise");
-loader.lazyRequireGetter(this, "OS", "resource://gre/modules/commonjs/node/os.js");
+loader.lazyRequireGetter(this, "OS", "resource://gre/modules/commonjs/node/os");
 loader.lazyRequireGetter(this, "DebuggerServer", "devtools/server/main", true);
 loader.lazyRequireGetter(this, "AppConstants",
   "resource://gre/modules/AppConstants.jsm", true);
@@ -30,7 +30,7 @@ const APP_MAP = {
   "{a23983c0-fd0e-11dc-95ff-0800200c9a66}": "mobile/xul"
 };
 
-var CACHED_INFO = null;
+let CACHED_INFO = null;
 
 function *getSystemInfo() {
   if (CACHED_INFO) {
@@ -40,28 +40,22 @@ function *getSystemInfo() {
   let appInfo = Services.appinfo;
   let win = Services.wm.getMostRecentWindow(DebuggerServer.chromeWindowType);
   let [processor, compiler] = appInfo.XPCOMABI.split("-");
-  let dpi, useragent, width, height, os, brandName;
+  let dpi, useragent, width, height, os, hardware, version, brandName;
   let appid = appInfo.ID;
   let apptype = APP_MAP[appid];
   let geckoVersion = appInfo.platformVersion;
-  let hardware = "unknown";
-  let version = "unknown";
 
   // B2G specific
   if (apptype === "b2g") {
     os = "B2G";
-    // `getSetting` does not work in child processes on b2g.
-    // TODO bug 1205797, make this work in child processes.
-    try {
-      hardware = yield exports.getSetting("deviceinfo.hardware");
-      version = yield exports.getSetting("deviceinfo.os");
-    } catch (e) {
-    }
+    hardware = yield exports.getSetting("deviceinfo.hardware");
+    version = yield exports.getSetting("deviceinfo.os");
   }
   // Not B2G
   else {
     os = appInfo.OS;
     version = appInfo.version;
+    hardware = "unknown";
   }
 
   let bundle = Services.strings.createBundle("chrome://branding/locale/brand.properties");
@@ -170,23 +164,18 @@ function *getSystemInfo() {
   return info;
 }
 
-function getProfileLocation () {
-  // In child processes, we cannot access the profile location.
-  try {
-    let profd = Services.dirsvc.get("ProfD", Ci.nsILocalFile);
-    let profservice = Cc["@mozilla.org/toolkit/profile-service;1"].getService(Ci.nsIToolkitProfileService);
-    var profiles = profservice.profiles;
-    while (profiles.hasMoreElements()) {
-      let profile = profiles.getNext().QueryInterface(Ci.nsIToolkitProfile);
-      if (profile.rootDir.path == profd.path) {
-        return profile = profile.name;
-      }
+function getProfileLocation() {
+  let profd = Services.dirsvc.get("ProfD", Ci.nsILocalFile);
+  let profservice = Cc["@mozilla.org/toolkit/profile-service;1"].getService(Ci.nsIToolkitProfileService);
+  var profiles = profservice.profiles;
+  while (profiles.hasMoreElements()) {
+    let profile = profiles.getNext().QueryInterface(Ci.nsIToolkitProfile);
+    if (profile.rootDir.path == profd.path) {
+      return profile = profile.name;
     }
-
-    return profd.leafName;
-  } catch (e) {
-    return "";
   }
+
+  return profd.leafName;
 }
 
 function getAppIniString(section, key) {
@@ -288,9 +277,7 @@ function getOSCPU() {
   if (oscpu.includes("Linux")) {
     return 6;
   }
-  if (oscpu.includes("NT 10.")) {
-    return 7;
-  }
+
   // Other OS.
   return 12;
 }
@@ -299,16 +286,7 @@ function getSetting(name) {
   let deferred = promise.defer();
 
   if ("@mozilla.org/settingsService;1" in Cc) {
-    let settingsService;
-
-    // settingsService fails in b2g child processes
-    // TODO bug 1205797, make this work in child processes.
-    try {
-      settingsService = Cc["@mozilla.org/settingsService;1"].getService(Ci.nsISettingsService);
-    } catch (e) {
-      return promise.reject(e);
-    }
-
+    let settingsService = Cc["@mozilla.org/settingsService;1"].getService(Ci.nsISettingsService);
     let req = settingsService.createLock().get(name, {
       handle: (name, value) => deferred.resolve(value),
       handleError: (error) => deferred.reject(error),

@@ -15,7 +15,6 @@ Cu.import("resource://gre/modules/Services.jsm");
 
 const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const { TargetFactory } = require("devtools/framework/target");
-const promise = require("promise");
 
 const Node = Ci.nsIDOMNode;
 
@@ -62,10 +61,12 @@ Object.defineProperty(this, "ConsoleServiceListener", {
   enumerable: true
 });
 
+const promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
+
 /**
  * A collection of utilities to help working with commands
  */
-var CommandUtils = {
+let CommandUtils = {
   /**
    * Utility to ensure that things are loaded in the correct order
    */
@@ -306,7 +307,7 @@ Object.defineProperty(DeveloperToolbar.prototype, "visible", {
   enumerable: true
 });
 
-var _gSequenceId = 0;
+let _gSequenceId = 0;
 
 /**
  * Getter for a unique ID.

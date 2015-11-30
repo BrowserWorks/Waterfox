@@ -16,7 +16,7 @@ function SignonsStartup() {
   kSignonBundle = document.getElementById("signonBundle");
   document.getElementById("togglePasswords").label = kSignonBundle.getString("showPasswords");
   document.getElementById("togglePasswords").accessKey = kSignonBundle.getString("showPasswordsAccessKey");
-  document.getElementById("signonsIntro").textContent = kSignonBundle.getString("loginsDescriptionAll");
+  document.getElementById("signonsIntro").textContent = kSignonBundle.getString("loginsSpielAll");
 
   let treecols = document.getElementsByTagName("treecols")[0];
   treecols.addEventListener("click", HandleTreeColumnClick.bind(null, SignonColumnSort));
@@ -314,7 +314,7 @@ function SignonClearFilter() {
   }
   signonsTreeView._lastSelectedRanges = [];
 
-  document.getElementById("signonsIntro").textContent = kSignonBundle.getString("loginsDescriptionAll");
+  document.getElementById("signonsIntro").textContent = kSignonBundle.getString("loginsSpielAll");
 }
 
 function FocusFilterBox() {
@@ -384,7 +384,7 @@ function _filterPasswords()
   if (signonsTreeView.rowCount > 0)
     signonsTreeView.selection.select(0);
 
-  document.getElementById("signonsIntro").textContent = kSignonBundle.getString("loginsDescriptionFiltered");
+  document.getElementById("signonsIntro").textContent = kSignonBundle.getString("loginsSpielFiltered");
 }
 
 function CopyPassword() {
@@ -485,6 +485,5 @@ function escapeKeyHandler() {
 
 function OpenMigrator() {
   const { MigrationUtils } = Cu.import("resource:///modules/MigrationUtils.jsm", {});
-  // We pass in the type of source we're using for use in telemetry:
-  MigrationUtils.showMigrationWizard(window, [MigrationUtils.MIGRATION_ENTRYPOINT_PASSWORDS]);
+  MigrationUtils.showMigrationWizard(window);
 }

@@ -74,7 +74,7 @@ const {DeferredTask} = Cu.import("resource://gre/modules/DeferredTask.jsm", {});
 /**
  * Object defining the network monitor view components.
  */
-var NetMonitorView = {
+let NetMonitorView = {
   /**
    * Initializes the network monitor view.
    */
@@ -1164,10 +1164,8 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
   },
 
   isFreetextMatch: function({ attachment: { url } }, text) {
-    let lowerCaseUrl = url.toLowerCase();
-    let lowerCaseText = text.toLowerCase();
     //no text is a positive match
-    return !text || lowerCaseUrl.includes(lowerCaseText);
+    return !text || url.includes(text);
   },
 
   /**
@@ -1612,7 +1610,6 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
         }
         let nameWithQuery = this._getUriNameWithQuery(uri);
         let hostPort = this._getUriHostPort(uri);
-        let host = this._getUriHost(uri);
         let unicodeUrl = NetworkHelper.convertToUnicode(unescape(uri.spec));
 
         let file = $(".requests-menu-file", target);
@@ -1622,27 +1619,6 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
         let domain = $(".requests-menu-domain", target);
         domain.setAttribute("value", hostPort);
         domain.setAttribute("tooltiptext", hostPort);
-
-        // Mark local hosts specially, where "local" is  as defined in the W3C
-        // spec for secure contexts.
-        // http://www.w3.org/TR/powerful-features/
-        //
-        //  * If the name falls under 'localhost'
-        //  * If the name is an IPv4 address within 127.0.0.0/8
-        //  * If the name is an IPv6 address within ::1/128
-        //
-        // IPv6 parsing is a little sloppy; it assumes that the address has
-        // been validated before it gets here.
-        let icon = $(".requests-security-state-icon", target);
-        icon.classList.remove("security-state-local");
-        if (host.match(/(.+\.)?localhost$/) ||
-            host.match(/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}/) ||
-            host.match(/\[[0:]+1\]/)) {
-          let tooltip = L10N.getStr("netmonitor.security.state.secure");
-          icon.classList.add("security-state-local");
-          icon.setAttribute("tooltiptext", tooltip);
-        }
-
         break;
       }
       case "remoteAddress":
@@ -1652,17 +1628,12 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
         domain.setAttribute("tooltiptext", tooltip);
         break;
       case "securityState": {
-        let icon = $(".requests-security-state-icon", target);
-        this.attachSecurityIconClickListener(aItem);
-
-        // Security icon for local hosts is set in the "url" branch
-        if (icon.classList.contains("security-state-local")) {
-          break;
-        }
-
         let tooltip = L10N.getStr("netmonitor.security.state." + aValue);
+        let icon = $(".requests-security-state-icon", target);
         icon.classList.add("security-state-" + aValue);
         icon.setAttribute("tooltiptext", tooltip);
+
+        this.attachSecurityIconClickListener(aItem);
         break;
       }
       case "status": {
@@ -2139,9 +2110,6 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
       aUrl = NetworkHelper.nsIURL(aUrl);
     }
     return NetworkHelper.convertToUnicode(unescape(aUrl.hostPort));
-  },
-  _getUriHost: function(aUrl) {
-    return this._getUriHostPort(aUrl).replace(/:\d+$/, "");
   },
 
   /**
@@ -3403,8 +3371,8 @@ PerformanceStatisticsView.prototype = {
 /**
  * DOM query helper.
  */
-var $ = (aSelector, aTarget = document) => aTarget.querySelector(aSelector);
-var $all = (aSelector, aTarget = document) => aTarget.querySelectorAll(aSelector);
+let $ = (aSelector, aTarget = document) => aTarget.querySelector(aSelector);
+let $all = (aSelector, aTarget = document) => aTarget.querySelectorAll(aSelector);
 
 /**
  * Parse text representation of multiple HTTP headers.

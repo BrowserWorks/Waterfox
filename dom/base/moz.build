@@ -186,13 +186,9 @@ EXPORTS.mozilla.dom += [
     'NodeInfo.h',
     'NodeInfoInlines.h',
     'NodeIterator.h',
-    'PerformanceCompositeTiming.h',
     'PerformanceEntry.h',
     'PerformanceMark.h',
     'PerformanceMeasure.h',
-    'PerformanceObserver.h',
-    'PerformanceObserverEntryList.h',
-    'PerformanceRenderTiming.h',
     'PerformanceResourceTiming.h',
     'ProcessGlobal.h',
     'ResponsiveImageSelector.h',
@@ -329,19 +325,14 @@ UNIFIED_SOURCES += [
     'nsXMLContentSerializer.cpp',
     'nsXMLHttpRequest.cpp',
     'nsXMLNameSpaceMap.cpp',
-    'PerformanceCompositeTiming.cpp',
     'PerformanceEntry.cpp',
     'PerformanceMark.cpp',
     'PerformanceMeasure.cpp',
-    'PerformanceObserver.cpp',
-    'PerformanceObserverEntryList.cpp',
-    'PerformanceRenderTiming.cpp',
     'PerformanceResourceTiming.cpp',
     'PostMessageEvent.cpp',
     'ProcessGlobal.cpp',
     'ResponsiveImageSelector.cpp',
     'SameProcessMessageQueue.cpp',
-    'ScreenOrientation.cpp',
     'ScriptSettings.cpp',
     'ShadowRoot.cpp',
     'StructuredCloneHelper.cpp',
@@ -409,10 +400,11 @@ EXTRA_JS_MODULES += [
     'IndexedDBHelper.jsm',
 ]
 
+FAIL_ON_WARNINGS = True
+
 LOCAL_INCLUDES += [
     '../battery',
-    '../bluetooth/common',
-    '../bluetooth/common/webapi',
+    '../bluetooth',
     '../events',
     '../media',
     '../network',
@@ -440,10 +432,18 @@ LOCAL_INCLUDES += [
     '/layout/svg',
     '/layout/xul',
     '/netwerk/base',
-    '/security/manager/ssl',
     '/widget',
     '/xpcom/ds',
 ]
+
+if CONFIG['MOZ_B2G_BT_API_V1']:
+    LOCAL_INCLUDES += [
+        '../bluetooth/bluetooth1',
+    ]
+else:
+    LOCAL_INCLUDES += [
+        '../bluetooth/bluetooth2',
+    ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     LOCAL_INCLUDES += [

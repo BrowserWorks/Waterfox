@@ -70,8 +70,6 @@ public:
 
   void DestroyRequest(imgIRequest* aRequest);
 
-  void FlushUseCounters();
-
 private:
   ~ImageLoader() {}
 

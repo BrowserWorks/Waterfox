@@ -20,7 +20,6 @@ function maketest(attach_media, name, type, check_metadata) {
   return function (token) {
     var e = document.createElement('video');
     e.preload = "metadata";
-    token = name + "-" + token;
     manager.started(token);
     var errorRun = false;
     if (check_metadata) {

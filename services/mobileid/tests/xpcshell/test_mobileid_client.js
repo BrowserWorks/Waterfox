@@ -9,8 +9,8 @@ Cu.import("resource://gre/modules/MobileIdentityClient.jsm");
 
 /* Setup */
 
-var client;
-var server = new HttpServer();
+let client;
+let server = new HttpServer();
 
 function httpd_setup(handlers, port = -1) {
   for (let path in handlers) {

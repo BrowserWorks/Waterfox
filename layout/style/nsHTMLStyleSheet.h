@@ -17,7 +17,7 @@
 #include "nsCOMPtr.h"
 #include "nsIStyleRule.h"
 #include "nsIStyleRuleProcessor.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/MemoryReporting.h"
 #include "nsString.h"

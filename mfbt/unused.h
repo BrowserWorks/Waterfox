@@ -9,8 +9,6 @@
 
 #include "mozilla/Types.h"
 
-#ifdef __cplusplus
-
 namespace mozilla {
 
 //
@@ -19,20 +17,16 @@ namespace mozilla {
 //
 struct unused_t
 {
-  template<typename T>
-  inline void
-  operator<<(const T& /*unused*/) const {}
 };
 
 extern MFBT_DATA const unused_t unused;
 
+template<typename T>
+inline void
+operator<<(const unused_t& /*unused*/, const T& /*unused*/)
+{
+}
+
 } // namespace mozilla
-
-#endif // __cplusplus
-
-// An alternative to mozilla::unused for use in (a) C code and (b) code where
-// linking with unused.o is difficult.
-#define MOZ_UNUSED(expr) \
-  do { if (expr) { (void)0; } } while (0)
 
 #endif // mozilla_unused_h

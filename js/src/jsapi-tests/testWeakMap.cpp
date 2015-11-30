@@ -70,6 +70,7 @@ BEGIN_TEST(testWeakMap_keyDelegates)
 {
     JS_SetGCParameter(rt, JSGC_MODE, JSGC_MODE_INCREMENTAL);
     JS_GC(rt);
+
     JS::RootedObject map(cx, JS::NewWeakMapObject(cx));
     CHECK(map);
 
@@ -80,26 +81,16 @@ BEGIN_TEST(testWeakMap_keyDelegates)
     CHECK(delegate);
     keyDelegate = delegate;
 
-    JS::RootedObject delegateRoot(cx);
-    {
-        JSAutoCompartment ac(cx, delegate);
-        delegateRoot = JS_NewPlainObject(cx);
-        CHECK(delegateRoot);
-        JS::RootedValue delegateValue(cx, ObjectValue(*delegate));
-        CHECK(JS_DefineProperty(cx, delegateRoot, "delegate", delegateValue, 0));
-    }
-    delegate = nullptr;
-
     /*
      * Perform an incremental GC, introducing an unmarked CCW to force the map
      * zone to finish marking before the delegate zone.
      */
-    CHECK(newCCW(map, delegateRoot));
+    CHECK(newCCW(map, delegate));
     js::SliceBudget budget(js::WorkBudget(1000000));
     rt->gc.startDebugGC(GC_NORMAL, budget);
     CHECK(!JS::IsIncrementalGCInProgress(rt));
 #ifdef DEBUG
-    CHECK(map->zone()->lastZoneGroupIndex() < delegateRoot->zone()->lastZoneGroupIndex());
+    CHECK(map->zone()->lastZoneGroupIndex() < delegate->zone()->lastZoneGroupIndex());
 #endif
 
     /* Add our entry to the weakmap. */
@@ -109,7 +100,7 @@ BEGIN_TEST(testWeakMap_keyDelegates)
 
     /* Check the delegate keeps the entry alive even if the key is not reachable. */
     key = nullptr;
-    CHECK(newCCW(map, delegateRoot));
+    CHECK(newCCW(map, delegate));
     budget = js::SliceBudget(js::WorkBudget(100000));
     rt->gc.startDebugGC(GC_NORMAL, budget);
     CHECK(!JS::IsIncrementalGCInProgress(rt));
@@ -117,14 +108,14 @@ BEGIN_TEST(testWeakMap_keyDelegates)
 
     /*
      * Check that the zones finished marking at the same time, which is
-     * necessary because of the presence of the delegate and the CCW.
+     * neccessary because of the presence of the delegate and the CCW.
      */
 #ifdef DEBUG
-    CHECK(map->zone()->lastZoneGroupIndex() == delegateRoot->zone()->lastZoneGroupIndex());
+    CHECK(map->zone()->lastZoneGroupIndex() == delegate->zone()->lastZoneGroupIndex());
 #endif
 
     /* Check that when the delegate becomes unreachable the entry is removed. */
-    delegateRoot = nullptr;
+    delegate = nullptr;
     keyDelegate = nullptr;
     JS_GC(rt);
     CHECK(checkSize(map, 0));

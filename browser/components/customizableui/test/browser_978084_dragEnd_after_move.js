@@ -3,7 +3,7 @@
 
 "use strict";
 
-var draggedItem;
+let draggedItem;
 
 /**
  * Check that customizing-movingItem gets removed on a drop when the item is moved.

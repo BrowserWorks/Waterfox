@@ -7,7 +7,7 @@ Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://services-common/utils.js");
 
 
-var prefs = new Preferences("servicescommon.tests.");
+let prefs = new Preferences("servicescommon.tests.");
 
 function DummyLogger() {
   this.messages = [];

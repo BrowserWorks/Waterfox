@@ -34,10 +34,10 @@ class BaseMediaMgrError
 protected:
   BaseMediaMgrError(const nsAString& aName,
                     const nsAString& aMessage,
-                    const nsAString& aConstraint);
+                    const nsAString& aConstraintName);
   const nsString mName;
   nsString mMessage;
-  const nsString mConstraint;
+  const nsString mConstraintName;
 };
 
 class MediaMgrError final : public nsISupports,
@@ -46,8 +46,8 @@ class MediaMgrError final : public nsISupports,
 public:
   explicit MediaMgrError(const nsAString& aName,
                          const nsAString& aMessage =  EmptyString(),
-                         const nsAString& aConstraint =  EmptyString())
-  : BaseMediaMgrError(aName, aMessage, aConstraint) {}
+                         const nsAString& aConstraintName =  EmptyString())
+  : BaseMediaMgrError(aName, aMessage, aConstraintName) {}
 
   NS_DECL_THREADSAFE_ISUPPORTS
 
@@ -64,11 +64,11 @@ public:
   MediaStreamError(nsPIDOMWindow* aParent,
                    const nsAString& aName,
                    const nsAString& aMessage = EmptyString(),
-                   const nsAString& aConstraint =  EmptyString());
+                   const nsAString& aConstraintName =  EmptyString());
 
   MediaStreamError(nsPIDOMWindow* aParent,
                    const BaseMediaMgrError& aOther)
-  : BaseMediaMgrError(aOther.mName, aOther.mMessage, aOther.mConstraint)
+  : BaseMediaMgrError(aOther.mName, aOther.mMessage, aOther.mConstraintName)
   , mParent(aParent) {}
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -83,7 +83,7 @@ public:
   }
   void GetName(nsAString& aName) const;
   void GetMessage(nsAString& aMessage) const;
-  void GetConstraint(nsAString& aConstraint) const;
+  void GetConstraintName(nsAString& aConstraintName) const;
 
 private:
   virtual ~MediaStreamError() {}

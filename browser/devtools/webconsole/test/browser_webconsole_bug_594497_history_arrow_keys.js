@@ -10,12 +10,12 @@
 
 "use strict";
 
-var inputNode, values;
+let inputNode, values;
 
-var TEST_URI = "data:text/html;charset=utf-8,Web Console test for " +
+let TEST_URI = "data:text/html;charset=utf-8,Web Console test for " +
                "bug 594497 and bug 619598";
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();

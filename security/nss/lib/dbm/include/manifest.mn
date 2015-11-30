@@ -8,7 +8,8 @@ CORE_DEPTH = ../../..
 
 MODULE = dbm
 
-EXPORTS =	mcom_db.h \
+EXPORTS =	cdefs.h   \
+		mcom_db.h \
 		ncompat.h \
 		winfile.h \
 		$(NULL)
@@ -18,6 +19,7 @@ PRIVATE_EXPORTS =	hsearch.h \
 			extern.h  \
 			queue.h   \
 			hash.h    \
+			mpool.h   \
 			search.h  \
 			$(NULL)
 

@@ -20,7 +20,6 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/MemoryReporting.h"
 #include "nsIIPCSerializableURI.h"
-#include "nsISensitiveInfoHiddenURI.h"
 
 #ifdef NS_BUILD_REFCNT_LOGGING
 #define DEBUG_DUMP_URLS_AT_SHUTDOWN
@@ -43,7 +42,6 @@ class nsStandardURL : public nsIFileURL
                     , public nsIClassInfo
                     , public nsISizeOf
                     , public nsIIPCSerializableURI
-                    , public nsISensitiveInfoHiddenURI
 {
 protected:
     virtual ~nsStandardURL();
@@ -58,7 +56,6 @@ public:
     NS_DECL_NSICLASSINFO
     NS_DECL_NSIMUTABLE
     NS_DECL_NSIIPCSERIALIZABLEURI
-    NS_DECL_NSISENSITIVEINFOHIDDENURI
 
     // nsISizeOf
     virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;

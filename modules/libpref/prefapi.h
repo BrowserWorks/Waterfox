@@ -10,7 +10,7 @@
 #define PREFAPI_H
 
 #include "nscore.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 
 #ifdef __cplusplus
 extern "C" {

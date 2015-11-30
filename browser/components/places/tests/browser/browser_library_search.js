@@ -28,9 +28,9 @@
 const TEST_URL = "http://dummy.mozilla.org/";
 const TEST_DOWNLOAD_URL = "http://dummy.mozilla.org/dummy.pdf";
 
-var gLibrary;
+let gLibrary;
 
-var testCases = [
+let testCases = [
   function allBookmarksScope() {
     let defScope = getDefaultScope(PlacesUIUtils.allBookmarksFolderId);
     search(PlacesUIUtils.allBookmarksFolderId, "dummy", defScope);

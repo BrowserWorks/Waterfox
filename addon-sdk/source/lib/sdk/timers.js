@@ -19,13 +19,13 @@ const prefBranch = Cc["@mozilla.org/preferences-service;1"].
                     getService(Ci.nsIPrefService).
                     QueryInterface(Ci.nsIPrefBranch);
 
-var MIN_DELAY = 4;
+let MIN_DELAY = 4;
 // Try to get min timeout delay used by browser.
 try { MIN_DELAY = prefBranch.getIntPref("dom.min_timeout_value"); } finally {}
 
 
 // Last timer id.
-var lastID = 0;
+let lastID = 0;
 
 // Sets typer either by timeout or by interval
 // depending on a given type.
@@ -53,9 +53,9 @@ function unsetTimer(id) {
   if (timer) timer.cancel();
 }
 
-var immediates = new Map();
+let immediates = new Map();
 
-var dispatcher = _ => {
+let dispatcher = _ => {
   // Allow scheduling of a new dispatch loop.
   dispatcher.scheduled = false;
   // Take a snapshot of timer `id`'s that have being present before

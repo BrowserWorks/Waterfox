@@ -8,7 +8,7 @@
  * customization mode by handling customizationstarting and customizationending
  * events.
  */
-var CustomizationHandler = {
+let CustomizationHandler = {
   handleEvent: function(aEvent) {
     switch(aEvent.type) {
       case "customizationstarting":
@@ -52,6 +52,7 @@ var CustomizationHandler = {
   },
 
   _customizationChange: function() {
+    gHomeButton.updatePersonalToolbarStyle();
     PlacesToolbarHelper.customizeChange();
   },
 

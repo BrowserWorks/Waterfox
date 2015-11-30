@@ -5,7 +5,6 @@
 
 package org.mozilla.gecko.health;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 
 import org.json.JSONObject;
@@ -46,7 +45,7 @@ public class StubbedHealthRecorder implements HealthRecorder {
     public void onEnvironmentChanged(final boolean startNewSession, final String sessionEndReason) { }
 
     @Override
-    public void close(final Context context) { }
+    public void close() { }
 
     @Override
     public void processDelayed() { }

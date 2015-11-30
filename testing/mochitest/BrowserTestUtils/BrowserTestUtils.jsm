@@ -49,15 +49,14 @@ this.BrowserTestUtils = {
    *        the tab is loaded. The first argument passed to the function is a
    *        reference to the browser object for the new tab.
    *
-   * @return {} Returns the value that is returned from taskFn.
+   * @return {Promise}
    * @resolves When the tab has been closed.
    * @rejects Any exception from taskFn is propagated.
    */
   withNewTab: Task.async(function* (options, taskFn) {
     let tab = yield BrowserTestUtils.openNewForegroundTab(options.gBrowser, options.url);
-    let result = yield taskFn(tab.linkedBrowser);
+    yield taskFn(tab.linkedBrowser);
     options.gBrowser.removeTab(tab);
-    return Promise.resolve(result);
   }),
 
   /**

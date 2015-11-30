@@ -76,8 +76,8 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
+                            const AudioChunk& aInput,
+                            AudioChunk* aOutput,
                             bool* aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
@@ -119,7 +119,7 @@ public:
     mBuffer.NextBlock();
   }
 
-  void UpdateOutputBlock(AudioBlock* aOutput, double minDelay)
+  void UpdateOutputBlock(AudioChunk* aOutput, double minDelay)
   {
     double maxDelay = mMaxDelay;
     double sampleRate = mSource->SampleRate();
@@ -151,7 +151,7 @@ public:
     }
   }
 
-  virtual void ProduceBlockBeforeInput(AudioBlock* aOutput) override
+  virtual void ProduceBlockBeforeInput(AudioChunk* aOutput) override
   {
     if (mLeftOverData <= 0) {
       aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
@@ -198,8 +198,7 @@ DelayNode::DelayNode(AudioContext* aContext, double aMaxDelay)
   DelayNodeEngine* engine =
     new DelayNodeEngine(this, aContext->Destination(),
                         aContext->SampleRate() * aMaxDelay);
-  mStream = AudioNodeStream::Create(aContext, engine,
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+  mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);
   engine->SetSourceStream(mStream);
 }
 

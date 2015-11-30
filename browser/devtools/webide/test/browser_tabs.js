@@ -9,9 +9,8 @@ function test() {
   requestCompleteLog();
 
   Task.spawn(function*() {
-    const { DebuggerServer } = require("devtools/server/main");
-
-    Services.prefs.setBoolPref("devtools.webide.sidebars", false);
+    const { DebuggerServer } =
+      Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
 
     // Since we test the connections set below, destroy the server in case it
     // was left open.

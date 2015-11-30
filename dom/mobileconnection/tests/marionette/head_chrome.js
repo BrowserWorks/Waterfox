@@ -3,16 +3,16 @@
 
 MARIONETTE_CONTEXT = "chrome";
 
-var XPCOMUtils = Cu.import("resource://gre/modules/XPCOMUtils.jsm").XPCOMUtils;
-var Promise = Cu.import("resource://gre/modules/Promise.jsm").Promise;
+let XPCOMUtils = Cu.import("resource://gre/modules/XPCOMUtils.jsm").XPCOMUtils;
+let Promise = Cu.import("resource://gre/modules/Promise.jsm").Promise;
 
-var mobileConnectionService =
+let mobileConnectionService =
   Cc["@mozilla.org/mobileconnection/gonkmobileconnectionservice;1"]
   .getService(Ci.nsIMobileConnectionService);
 ok(mobileConnectionService,
    "mobileConnectionService.constructor is " + mobileConnectionService.constructor);
 
-var _pendingEmulatorShellCmdCount = 0;
+let _pendingEmulatorShellCmdCount = 0;
 
 /**
  * Send emulator shell command with safe guard.

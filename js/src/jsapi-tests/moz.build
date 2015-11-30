@@ -93,7 +93,7 @@ if CONFIG['ENABLE_ION']:
         'testJitDCEinGVN.cpp',
         'testJitFoldsTo.cpp',
         'testJitGVN.cpp',
-        'testJitMoveEmitterCycles-mips32.cpp',
+        'testJitMoveEmitterCycles-mips.cpp',
         'testJitMoveEmitterCycles.cpp',
         'testJitRangeAnalysis.cpp',
         'testJitRegisterSet.cpp',
@@ -111,5 +111,5 @@ USE_LIBS += [
 
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
 
-if not CONFIG['GNU_CXX']:
-    ALLOW_COMPILER_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    FAIL_ON_WARNINGS = True

@@ -124,7 +124,7 @@ class RematerializedFrame
     bool initFunctionScopeObjects(JSContext* cx);
 
     bool hasCallObj() const {
-        MOZ_ASSERT(fun()->needsCallObject());
+        MOZ_ASSERT(fun()->isHeavyweight());
         return hasCallObj_;
     }
     CallObject& callObj() const;

@@ -5,11 +5,8 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXTRA_COMPONENTS += [
-    'SettingsManager.manifest'
-]
-
-EXTRA_PP_COMPONENTS += [
-    'SettingsManager.js'
+    'SettingsManager.js',
+    'SettingsManager.manifest',
 ]
 
 if CONFIG['MOZ_B2G']:

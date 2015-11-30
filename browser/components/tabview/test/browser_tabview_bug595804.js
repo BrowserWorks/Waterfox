@@ -7,7 +7,7 @@ var prefsBranch = Cc["@mozilla.org/preferences-service;1"].
 
 function animateZoom() prefsBranch.getBoolPref("animate_zoom");
 
-var contentWindow = null;
+let contentWindow = null;
 
 registerCleanupFunction(function() {
   // reset to default: true

@@ -2,13 +2,13 @@
 
 const { interfaces: Ci, classes: Cc, utils: Cu, results: Cr } = Components;
 
-var {WebRequest} = Cu.import("resource://gre/modules/WebRequest.jsm", {});
-var {MatchPattern} = Cu.import("resource://gre/modules/MatchPattern.jsm", {});
+let {WebRequest} = Cu.import("resource://gre/modules/WebRequest.jsm", {});
+let {MatchPattern} = Cu.import("resource://gre/modules/MatchPattern.jsm", {});
 
 const BASE = "http://example.com/browser/toolkit/modules/tests/browser";
 const URL = BASE + "/file_WebRequest_page2.html";
 
-var requested = [];
+let requested = [];
 
 function onBeforeRequest(details)
 {
@@ -18,7 +18,7 @@ function onBeforeRequest(details)
   }
 }
 
-var sendHeaders = [];
+let sendHeaders = [];
 
 function onBeforeSendHeaders(details)
 {
@@ -28,7 +28,7 @@ function onBeforeSendHeaders(details)
   }
 }
 
-var completed = [];
+let completed = [];
 
 function onResponseStarted(details)
 {

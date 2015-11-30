@@ -2,11 +2,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-"use strict";
-
 Components.utils.import("resource://gre/modules/Task.jsm");
-var {require} = Components.utils.import("resource://gre/modules/devtools/Loader.jsm", {});
-var promise = require("promise");
+let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 
 const TESTCASE_URI_HTML = TEST_BASE_HTTP + "sourcemaps-watching.html";
 const TESTCASE_URI_CSS = TEST_BASE_HTTP + "sourcemap-css/sourcemaps.css";
@@ -22,13 +19,14 @@ const CSS_TEXT = "* { color: blue }";
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 
-var tempScope = {};
+let tempScope = {};
 Components.utils.import("resource://gre/modules/FileUtils.jsm", tempScope);
 Components.utils.import("resource://gre/modules/NetUtil.jsm", tempScope);
-var FileUtils = tempScope.FileUtils;
-var NetUtil = tempScope.NetUtil;
+let FileUtils = tempScope.FileUtils;
+let NetUtil = tempScope.NetUtil;
 
-function test() {
+function test()
+{
   waitForExplicitFinish();
 
   Services.prefs.setBoolPref(TRANSITIONS_PREF, false);
@@ -36,8 +34,7 @@ function test() {
   Task.spawn(function*() {
     // copy all our files over so we don't screw them up for other tests
     let HTMLFile = yield copy(TESTCASE_URI_HTML, ["sourcemaps.html"]);
-    let CSSFile = yield copy(TESTCASE_URI_CSS,
-      ["sourcemap-css", "sourcemaps.css"]);
+    let CSSFile = yield copy(TESTCASE_URI_CSS, ["sourcemap-css", "sourcemaps.css"]);
     yield copy(TESTCASE_URI_SCSS, ["sourcemap-sass", "sourcemaps.scss"]);
     yield copy(TESTCASE_URI_MAP, ["sourcemap-css", "sourcemaps.css.map"]);
     yield copy(TESTCASE_URI_REG_CSS, ["simple.css"]);
@@ -80,7 +77,7 @@ function test() {
     yield editCSSFile(CSSFile);
 
     info("wrote to CSS file");
-  });
+  })
 }
 
 function editSCSS(editor) {
@@ -89,7 +86,7 @@ function editSCSS(editor) {
   let pos = {line: 0, ch: 0};
   editor.sourceEditor.replaceText(CSS_TEXT, pos, pos);
 
-  editor.saveToFile(null, function(file) {
+  editor.saveToFile(null, function (file) {
     ok(file, "Scss file should be saved");
     deferred.resolve();
   });
@@ -125,25 +122,26 @@ function getLinkFor(editor) {
 
 function getStylesheetNameFor(editor) {
   return editor.summary.querySelector(".stylesheet-name > label")
-    .getAttribute("value");
+         .getAttribute("value")
 }
 
-function copy(srcChromeURL, destFilePath) {
-  let destFile = FileUtils.getFile("ProfD", destFilePath);
-  return write(read(srcChromeURL), destFile);
+function copy(aSrcChromeURL, aDestFilePath)
+{
+  let destFile = FileUtils.getFile("ProfD", aDestFilePath);
+  return write(read(aSrcChromeURL), destFile);
 }
 
-function read(srcChromeURL) {
+function read(aSrcChromeURL)
+{
   let scriptableStream = Cc["@mozilla.org/scriptableinputstream;1"]
     .getService(Ci.nsIScriptableInputStream);
-  let principal = Services.scriptSecurityManager.getSystemPrincipal();
 
-  let channel = Services.io.newChannel2(srcChromeURL,
+  let channel = Services.io.newChannel2(aSrcChromeURL,
                                         null,
                                         null,
-                                        null,
-                                        principal,
-                                        null,
+                                        null,      // aLoadingNode
+                                        Services.scriptSecurityManager.getSystemPrincipal(),
+                                        null,      // aTriggeringPrincipal
                                         Ci.nsILoadInfo.SEC_NORMAL,
                                         Ci.nsIContentPolicy.TYPE_OTHER);
   let input = channel.open();
@@ -159,7 +157,8 @@ function read(srcChromeURL) {
   return data;
 }
 
-function write(aData, aFile) {
+function write(aData, aFile)
+{
   let deferred = promise.defer();
 
   let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]

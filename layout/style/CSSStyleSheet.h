@@ -26,7 +26,6 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsWrapperCache.h"
 #include "mozilla/net/ReferrerPolicy.h"
-#include "mozilla/dom/SRIMetadata.h"
 
 class CSSRuleListImpl;
 class nsCSSRuleProcessor;
@@ -64,8 +63,7 @@ public:
 private:
   CSSStyleSheetInner(CSSStyleSheet* aPrimarySheet,
                      CORSMode aCORSMode,
-                     ReferrerPolicy aReferrerPolicy,
-                     const dom::SRIMetadata& aIntegrity);
+                     ReferrerPolicy aReferrerPolicy);
   CSSStyleSheetInner(CSSStyleSheetInner& aCopy,
                      CSSStyleSheet* aPrimarySheet);
   ~CSSStyleSheetInner();
@@ -98,7 +96,6 @@ private:
   // The Referrer Policy of a stylesheet is used for its child sheets, so it is
   // stored here.
   ReferrerPolicy         mReferrerPolicy;
-  dom::SRIMetadata       mIntegrity;
   bool                   mComplete;
 
 #ifdef DEBUG
@@ -126,8 +123,6 @@ class CSSStyleSheet final : public nsIStyleSheet,
 public:
   typedef net::ReferrerPolicy ReferrerPolicy;
   CSSStyleSheet(CORSMode aCORSMode, ReferrerPolicy aReferrerPolicy);
-  CSSStyleSheet(CORSMode aCORSMode, ReferrerPolicy aReferrerPolicy,
-                const dom::SRIMetadata& aIntegrity);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_AMBIGUOUS(CSSStyleSheet,
@@ -263,9 +258,6 @@ public:
 
   // Get this style sheet's Referrer Policy
   ReferrerPolicy GetReferrerPolicy() const { return mInner->mReferrerPolicy; }
-
-  // Get this style sheet's integrity metadata
-  dom::SRIMetadata GetIntegrity() const { return mInner->mIntegrity; }
 
   dom::Element* GetScopeElement() const { return mScopeElement; }
   void SetScopeElement(dom::Element* aScopeElement)

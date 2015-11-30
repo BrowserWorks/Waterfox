@@ -11,11 +11,11 @@ Cu.import("resource://gre/modules/ReaderMode.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
-var Reader = Services.wm.getMostRecentWindow("navigator:browser").Reader;
+let Reader = Services.wm.getMostRecentWindow("navigator:browser").Reader;
 
 const URL_PREFIX = "http://mochi.test:8888/tests/robocop/reader_mode_pages/";
 
-var TEST_PAGES = [
+let TEST_PAGES = [
   {
     url: URL_PREFIX + "basic_article.html",
     expected: {

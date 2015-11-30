@@ -312,7 +312,7 @@ describe("loop.store.ActiveRoomStore", function () {
         decryptedContext: {
           roomName: "Monkeys"
         },
-        participants: [],
+        roomOwner: "Alfred",
         roomUrl: "http://invalid"
       };
 
@@ -353,9 +353,9 @@ describe("loop.store.ActiveRoomStore", function () {
           new sharedActions.SetupRoomInfo({
             roomContextUrls: undefined,
             roomDescription: undefined,
-            participants: [],
             roomToken: fakeToken,
             roomName: fakeRoomData.decryptedContext.roomName,
+            roomOwner: fakeRoomData.roomOwner,
             roomUrl: fakeRoomData.roomUrl,
             socialShareProviders: []
           }));
@@ -428,6 +428,7 @@ describe("loop.store.ActiveRoomStore", function () {
 
     it("should dispatch an UpdateRoomInfo message with 'no data' failure if neither roomName nor context are supplied", function() {
       fakeMozLoop.rooms.get.callsArgWith(1, null, {
+        roomOwner: "Dan",
         roomUrl: "http://invalid"
       });
 
@@ -437,6 +438,7 @@ describe("loop.store.ActiveRoomStore", function () {
       sinon.assert.calledWithExactly(dispatcher.dispatch,
         new sharedActions.UpdateRoomInfo({
           roomInfoFailure: ROOM_INFO_FAILURES.NO_DATA,
+          roomOwner: "Dan",
           roomState: ROOM_STATES.READY,
           roomUrl: "http://invalid"
         }));
@@ -446,7 +448,8 @@ describe("loop.store.ActiveRoomStore", function () {
       it("should dispatch UpdateRoomInfo if mozLoop.rooms.get is successful", function() {
         var roomDetails = {
           roomName: "fakeName",
-          roomUrl: "http://invalid"
+          roomUrl: "http://invalid",
+          roomOwner: "gavin"
         };
 
         fakeMozLoop.rooms.get.callsArgWith(1, null, roomDetails);
@@ -469,10 +472,12 @@ describe("loop.store.ActiveRoomStore", function () {
           context: {
             value: "fakeContext"
           },
-          roomUrl: "http://invalid"
+          roomUrl: "http://invalid",
+          roomOwner: "Mark"
         };
         expectedDetails = {
-          roomUrl: "http://invalid"
+          roomUrl: "http://invalid",
+          roomOwner: "Mark"
         };
 
         fakeMozLoop.rooms.get.callsArgWith(1, null, roomDetails);
@@ -594,6 +599,7 @@ describe("loop.store.ActiveRoomStore", function () {
     beforeEach(function() {
       fakeRoomInfo = {
         roomName: "Its a room",
+        roomOwner: "Me",
         roomToken: "fakeToken",
         roomUrl: "http://invalid",
         socialShareProviders: []
@@ -611,6 +617,7 @@ describe("loop.store.ActiveRoomStore", function () {
 
       var state = store.getStoreState();
       expect(state.roomName).eql(fakeRoomInfo.roomName);
+      expect(state.roomOwner).eql(fakeRoomInfo.roomOwner);
       expect(state.roomToken).eql(fakeRoomInfo.roomToken);
       expect(state.roomUrl).eql(fakeRoomInfo.roomUrl);
       expect(state.socialShareProviders).eql([]);
@@ -623,6 +630,7 @@ describe("loop.store.ActiveRoomStore", function () {
     beforeEach(function() {
       fakeRoomInfo = {
         roomName: "Its a room",
+        roomOwner: "Me",
         roomUrl: "http://invalid",
         urls: [{
           description: "fake site",
@@ -637,6 +645,7 @@ describe("loop.store.ActiveRoomStore", function () {
 
       var state = store.getStoreState();
       expect(state.roomName).eql(fakeRoomInfo.roomName);
+      expect(state.roomOwner).eql(fakeRoomInfo.roomOwner);
       expect(state.roomUrl).eql(fakeRoomInfo.roomUrl);
       expect(state.roomContextUrls).eql(fakeRoomInfo.urls);
     });
@@ -997,23 +1006,23 @@ describe("loop.store.ActiveRoomStore", function () {
   });
 
   describe("#mediaStreamCreated", function() {
-    var fakeStreamElement;
+    var fakeVideoElement;
 
     beforeEach(function() {
-      fakeStreamElement = {name: "fakeStreamElement"};
+      fakeVideoElement = {name: "fakeVideoElement"};
     });
 
     it("should add a local video object to the store", function() {
-      expect(store.getStoreState()).to.not.have.property("localSrcMediaElement");
+      expect(store.getStoreState()).to.not.have.property("localSrcVideoObject");
 
       store.mediaStreamCreated(new sharedActions.MediaStreamCreated({
         hasVideo: false,
         isLocal: true,
-        srcMediaElement: fakeStreamElement
+        srcVideoObject: fakeVideoElement
       }));
 
-      expect(store.getStoreState().localSrcMediaElement).eql(fakeStreamElement);
-      expect(store.getStoreState()).to.not.have.property("remoteSrcMediaElement");
+      expect(store.getStoreState().localSrcVideoObject).eql(fakeVideoElement);
+      expect(store.getStoreState()).to.not.have.property("remoteSrcVideoObject");
     });
 
     it("should set the local video enabled", function() {
@@ -1025,7 +1034,7 @@ describe("loop.store.ActiveRoomStore", function () {
       store.mediaStreamCreated(new sharedActions.MediaStreamCreated({
         hasVideo: true,
         isLocal: true,
-        srcMediaElement: fakeStreamElement
+        srcVideoObject: fakeVideoElement
       }));
 
       expect(store.getStoreState().localVideoEnabled).eql(true);
@@ -1033,16 +1042,16 @@ describe("loop.store.ActiveRoomStore", function () {
     });
 
     it("should add a remote video object to the store", function() {
-      expect(store.getStoreState()).to.not.have.property("remoteSrcMediaElement");
+      expect(store.getStoreState()).to.not.have.property("remoteSrcVideoObject");
 
       store.mediaStreamCreated(new sharedActions.MediaStreamCreated({
         hasVideo: false,
         isLocal: false,
-        srcMediaElement: fakeStreamElement
+        srcVideoObject: fakeVideoElement
       }));
 
-      expect(store.getStoreState()).not.have.property("localSrcMediaElement");
-      expect(store.getStoreState().remoteSrcMediaElement).eql(fakeStreamElement);
+      expect(store.getStoreState()).not.have.property("localSrcVideoObject");
+      expect(store.getStoreState().remoteSrcVideoObject).eql(fakeVideoElement);
     });
 
     it("should set the remote video enabled", function() {
@@ -1054,7 +1063,7 @@ describe("loop.store.ActiveRoomStore", function () {
       store.mediaStreamCreated(new sharedActions.MediaStreamCreated({
         hasVideo: true,
         isLocal: false,
-        srcMediaElement: fakeStreamElement
+        srcVideoObject: fakeVideoElement
       }));
 
       expect(store.getStoreState().localVideoEnabled).eql(false);
@@ -1063,14 +1072,14 @@ describe("loop.store.ActiveRoomStore", function () {
   });
 
   describe("#mediaStreamDestroyed", function() {
-    var fakeStreamElement;
+    var fakeVideoElement;
 
     beforeEach(function() {
-      fakeStreamElement = {name: "fakeStreamElement"};
+      fakeVideoElement = {name: "fakeVideoElement"};
 
       store.setStoreState({
-        localSrcMediaElement: fakeStreamElement,
-        remoteSrcMediaElement: fakeStreamElement
+        localSrcVideoObject: fakeVideoElement,
+        remoteSrcVideoObject: fakeVideoElement
       });
     });
 
@@ -1079,8 +1088,8 @@ describe("loop.store.ActiveRoomStore", function () {
         isLocal: true
       }));
 
-      expect(store.getStoreState().localSrcMediaElement).eql(null);
-      expect(store.getStoreState().remoteSrcMediaElement).eql(fakeStreamElement);
+      expect(store.getStoreState().localSrcVideoObject).eql(null);
+      expect(store.getStoreState().remoteSrcVideoObject).eql(fakeVideoElement);
     });
 
     it("should clear the remote video object", function() {
@@ -1088,8 +1097,8 @@ describe("loop.store.ActiveRoomStore", function () {
         isLocal: false
       }));
 
-      expect(store.getStoreState().localSrcMediaElement).eql(fakeStreamElement);
-      expect(store.getStoreState().remoteSrcMediaElement).eql(null);
+      expect(store.getStoreState().localSrcVideoObject).eql(fakeVideoElement);
+      expect(store.getStoreState().remoteSrcVideoObject).eql(null);
     });
   });
 
@@ -1168,32 +1177,32 @@ describe("loop.store.ActiveRoomStore", function () {
       expect(store.getStoreState().receivingScreenShare).eql(true);
     });
 
-    it("should add a screenShareMediaElement to the store when sharing is active", function() {
-      var fakeStreamElement = {name: "fakeStreamElement"};
-      expect(store.getStoreState()).to.not.have.property("screenShareMediaElement");
+    it("should add a screenShareVideoObject to the store when sharing is active", function() {
+      var fakeVideoElement = {name: "fakeVideoElement"};
+      expect(store.getStoreState()).to.not.have.property("screenShareVideoObject");
 
       store.receivingScreenShare(new sharedActions.ReceivingScreenShare({
         receiving: true,
-        srcMediaElement: fakeStreamElement
+        srcVideoObject: fakeVideoElement
       }));
 
-      expect(store.getStoreState()).to.have.property("screenShareMediaElement",
-        fakeStreamElement);
+      expect(store.getStoreState()).to.have.property("screenShareVideoObject",
+        fakeVideoElement);
     });
 
-    it("should clear the screenShareMediaElement from the store when sharing is inactive", function() {
+    it("should clear the screenShareVideoObject from the store when sharing is inactive", function() {
       store.setStoreState({
-        screenShareMediaElement: {
-          name: "fakeStreamElement"
+        screenShareVideoObject: {
+          name: "fakeVideoElement"
         }
       });
 
       store.receivingScreenShare(new sharedActions.ReceivingScreenShare({
         receiving: false,
-        srcMediaElement: null
+        srcVideoObject: null
       }));
 
-      expect(store.getStoreState().screenShareMediaElement).eql(null);
+      expect(store.getStoreState().screenShareVideoObject).eql(null);
     });
 
     it("should delete the screen remote video dimensions if screen sharing is not active", function() {
@@ -1358,38 +1367,14 @@ describe("loop.store.ActiveRoomStore", function () {
       expect(store.getStoreState().mediaConnected).eql(false);
     });
 
-    it("should clear the remoteSrcMediaElement", function() {
+    it("should clear the remoteSrcVideoObject", function() {
       store.setStoreState({
-        remoteSrcMediaElement: { name: "fakeStreamElement" }
+        remoteSrcVideoObject: { name: "fakeVideoElement" }
       });
 
       store.remotePeerDisconnected();
 
-      expect(store.getStoreState().remoteSrcMediaElement).eql(null);
-    });
-
-    it("should remove non-owner participants", function() {
-      store.setStoreState({
-        participants: [{owner: true}, {}]
-      });
-
-      store.remotePeerDisconnected();
-
-      var participants = store.getStoreState().participants;
-      expect(participants).to.have.length.of(1);
-      expect(participants[0].owner).eql(true);
-    });
-
-    it("should keep the owner participant", function() {
-      store.setStoreState({
-        participants: [{owner: true}]
-      });
-
-      store.remotePeerDisconnected();
-
-      var participants = store.getStoreState().participants;
-      expect(participants).to.have.length.of(1);
-      expect(participants[0].owner).eql(true);
+      expect(store.getStoreState().remoteSrcVideoObject).eql(null);
     });
   });
 
@@ -1675,6 +1660,7 @@ describe("loop.store.ActiveRoomStore", function () {
       beforeEach(function() {
         store.setupRoomInfo(new sharedActions.SetupRoomInfo({
           roomName: "Its a room",
+          roomOwner: "Me",
           roomToken: "fakeToken",
           roomUrl: "http://invalid",
           socialShareProviders: []
@@ -1692,6 +1678,7 @@ describe("loop.store.ActiveRoomStore", function () {
               fake: "url"
             }
           },
+          roomOwner: "you",
           roomUrl: "original"
         };
 
@@ -1701,8 +1688,8 @@ describe("loop.store.ActiveRoomStore", function () {
         sinon.assert.calledWithExactly(dispatcher.dispatch,
           new sharedActions.UpdateRoomInfo({
             description: "fakeDescription",
-            participants: undefined,
             roomName: fakeRoomData.decryptedContext.roomName,
+            roomOwner: fakeRoomData.roomOwner,
             roomUrl: fakeRoomData.roomUrl,
             urls: {
               fake: "url"
@@ -1719,6 +1706,7 @@ describe("loop.store.ActiveRoomStore", function () {
               fake: "url"
             }
           },
+          roomOwner: "you",
           roomUrl: "original"
         };
 
@@ -1733,6 +1721,7 @@ describe("loop.store.ActiveRoomStore", function () {
         decryptedContext: {
           roomName: "Its a room"
         },
+        roomOwner: "Me",
         roomToken: "fakeToken",
         roomUrl: "http://invalid"
       };

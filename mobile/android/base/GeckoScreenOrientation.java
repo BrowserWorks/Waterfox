@@ -152,9 +152,7 @@ public class GeckoScreenOrientation {
             } else if (aScreenOrientation == ScreenOrientation.LANDSCAPE) {
                 aScreenOrientation = ScreenOrientation.LANDSCAPE_PRIMARY;
             }
-            GeckoAppShell.sendEventToGecko(
-                GeckoEvent.createScreenOrientationEvent(aScreenOrientation.value,
-                                                        getAngle()));
+            GeckoAppShell.sendEventToGecko(GeckoEvent.createScreenOrientationEvent(aScreenOrientation.value));
         }
         return true;
     }
@@ -264,25 +262,6 @@ public class GeckoScreenOrientation {
             return ScreenOrientation.LANDSCAPE_SECONDARY;
         }
         return ScreenOrientation.NONE;
-    }
-
-    /*
-     * @return Device rotation converted to an angle.
-     */
-    public short getAngle() {
-        switch (getRotation()) {
-            case Surface.ROTATION_0:
-                return 0;
-            case Surface.ROTATION_90:
-                return 90;
-            case Surface.ROTATION_180:
-                return 180;
-            case Surface.ROTATION_270:
-                return 270;
-            default:
-                Log.w(LOGTAG, "getAngle: unexpected rotation value");
-                return 0;
-        }
     }
 
     /*

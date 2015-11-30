@@ -17,9 +17,8 @@ let Cu = Components.utils;
 let Cc = Components.classes;
 let Ci = Components.interfaces;
 
-let { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm");
-let { DebuggerClient } = require("devtools/toolkit/client/main");
-let { DebuggerServer } = require("devtools/server/main");
+Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
+Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
 
 window.onload = function() {
   SimpleTest.waitForExplicitFinish();
@@ -44,8 +43,7 @@ function runTests() {
   // Register a test actor in the child process so that we can know if and when
   // this fake actor is disconnected.
   mm.loadFrameScript("data:text/javascript,new " + function FrameScriptScope() {
-    const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm");
-    const { DebuggerServer } = require("devtools/server/main");
+    const {DebuggerServer} = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
 
     if (!DebuggerServer.initialized) {
       DebuggerServer.init();

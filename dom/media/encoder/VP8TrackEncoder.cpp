@@ -20,7 +20,7 @@ PRLogModuleInfo* gVP8TrackEncoderLog;
                                   (msg, ##__VA_ARGS__))
 // Debug logging macro with object pointer and class name.
 
-#define DEFAULT_BITRATE_BPS 2500000
+#define DEFAULT_BITRATE 2500 // in kbit/s
 #define DEFAULT_ENCODE_FRAMERATE 30
 
 using namespace mozilla::layers;
@@ -87,9 +87,7 @@ VP8TrackEncoder::Init(int32_t aWidth, int32_t aHeight, int32_t aDisplayWidth,
   config.g_h = mFrameHeight;
   // TODO: Maybe we should have various aFrameRate bitrate pair for each devices?
   // or for different platform
-
-  // rc_target_bitrate needs kbit/s
-  config.rc_target_bitrate = (mVideoBitrate != 0 ? mVideoBitrate : DEFAULT_BITRATE_BPS)/1000;
+  config.rc_target_bitrate = DEFAULT_BITRATE; // in kbit/s
 
   // Setting the time base of the codec
   config.g_timebase.num = 1;
@@ -448,7 +446,6 @@ VP8TrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
 {
   PROFILER_LABEL("VP8TrackEncoder", "GetEncodedTrack",
     js::ProfileEntry::Category::OTHER);
-  bool EOS;
   {
     // Move all the samples from mRawSegment to mSourceSegment. We only hold
     // the monitor in this block.
@@ -464,7 +461,6 @@ VP8TrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
       return NS_ERROR_FAILURE;
     }
     mSourceSegment.AppendFrom(&mRawSegment);
-    EOS = mEndOfStream;
   }
 
   VideoSegment::ChunkIterator iter(mSourceSegment);
@@ -538,7 +534,7 @@ VP8TrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
   VP8LOG("RemoveLeading %lld\n",totalProcessedDuration);
 
   // End of stream, pull the rest frames in encoder.
-  if (EOS) {
+  if (mEndOfStream) {
     VP8LOG("mEndOfStream is true\n");
     mEncodingComplete = true;
     if (vpx_codec_encode(mVPXContext, nullptr, mEncodedTimestamp,

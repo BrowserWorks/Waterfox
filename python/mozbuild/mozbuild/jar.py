@@ -388,7 +388,7 @@ class JarMaker(object):
                 m.group('optPreprocess') or '',
                 m.group('optOverwrite') or '',
                 out,
-                m.group('locale').replace('%', '%%') or '',
+                m.group('locale') or '',
             )
             for _srcdir in src_base:
                 finder = FileFinder(_srcdir, find_executables=False)

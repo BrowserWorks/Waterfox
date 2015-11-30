@@ -27,7 +27,7 @@ addMessageListener("Extension:DisableWebNavigation", () => {
   removeEventListener("DOMContentLoaded", loadListener);
 });
 
-var WebProgressListener = {
+let WebProgressListener = {
   init: function() {
     let webProgress = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                               .getInterface(Ci.nsIWebProgress);
@@ -92,7 +92,7 @@ var WebProgressListener = {
   }
 };
 
-var disabled = false;
+let disabled = false;
 WebProgressListener.init();
 addEventListener("unload", () => {
   if (!disabled) {

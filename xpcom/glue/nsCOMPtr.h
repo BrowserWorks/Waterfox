@@ -339,12 +339,6 @@ protected:
 
 // template<class T> class nsGetterAddRefs;
 
-// Helper for assert_validity method
-template<class T>
-char (&TestForIID(decltype(&NS_GET_TEMPLATE_IID(T))))[2];
-template<class T>
-char TestForIID(...);
-
 template<class T>
 class nsCOMPtr final
 #ifdef NSCAP_FEATURE_USE_BASE
@@ -385,15 +379,6 @@ private:
   T* MOZ_OWNING_REF mRawPtr;
 #endif
 
-  void assert_validity()
-  {
-    static_assert(1 < sizeof(TestForIID<T>(nullptr)), "nsCOMPtr only works "
-                  "for types with IIDs.  Either use nsRefPtr; add an IID to "
-                  "your type with NS_DECLARE_STATIC_IID_ACCESSOR/"
-                  "NS_DEFINE_STATIC_IID_ACCESSOR; or make the nsCOMPtr point "
-                  "to a base class with an IID.");
-  }
-
 public:
   typedef T element_type;
 
@@ -427,14 +412,12 @@ public:
   nsCOMPtr()
     : NSCAP_CTOR_BASE(0)
   {
-    assert_validity();
     NSCAP_LOG_ASSIGNMENT(this, 0);
   }
 
   nsCOMPtr(const nsCOMPtr<T>& aSmartPtr)
     : NSCAP_CTOR_BASE(aSmartPtr.mRawPtr)
   {
-    assert_validity();
     if (mRawPtr) {
       NSCAP_ADDREF(this, mRawPtr);
     }
@@ -444,7 +427,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(T* aRawPtr)
     : NSCAP_CTOR_BASE(aRawPtr)
   {
-    assert_validity();
     if (mRawPtr) {
       NSCAP_ADDREF(this, mRawPtr);
     }
@@ -455,7 +437,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(already_AddRefed<T>& aSmartPtr)
     : NSCAP_CTOR_BASE(aSmartPtr.take())
   {
-    assert_validity();
     NSCAP_LOG_ASSIGNMENT(this, mRawPtr);
     NSCAP_ASSERT_NO_QUERY_NEEDED();
   }
@@ -464,7 +445,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(already_AddRefed<T>&& aSmartPtr)
     : NSCAP_CTOR_BASE(aSmartPtr.take())
   {
-    assert_validity();
     NSCAP_LOG_ASSIGNMENT(this, mRawPtr);
     NSCAP_ASSERT_NO_QUERY_NEEDED();
   }
@@ -474,7 +454,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(already_AddRefed<U>& aSmartPtr)
     : NSCAP_CTOR_BASE(static_cast<T*>(aSmartPtr.take()))
   {
-    assert_validity();
     // But make sure that U actually inherits from T.
     static_assert(mozilla::IsBaseOf<T, U>::value,
                   "U is not a subclass of T");
@@ -487,7 +466,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(already_AddRefed<U>&& aSmartPtr)
     : NSCAP_CTOR_BASE(static_cast<T*>(aSmartPtr.take()))
   {
-    assert_validity();
     // But make sure that U actually inherits from T.
     static_assert(mozilla::IsBaseOf<T, U>::value,
                   "U is not a subclass of T");
@@ -499,7 +477,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(const nsQueryInterface aQI)
     : NSCAP_CTOR_BASE(0)
   {
-    assert_validity();
     NSCAP_LOG_ASSIGNMENT(this, 0);
     assign_from_qi(aQI, NS_GET_TEMPLATE_IID(T));
   }
@@ -508,7 +485,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(const nsQueryInterfaceWithError& aQI)
     : NSCAP_CTOR_BASE(0)
   {
-    assert_validity();
     NSCAP_LOG_ASSIGNMENT(this, 0);
     assign_from_qi_with_error(aQI, NS_GET_TEMPLATE_IID(T));
   }
@@ -517,7 +493,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(const nsGetServiceByCID aGS)
     : NSCAP_CTOR_BASE(0)
   {
-    assert_validity();
     NSCAP_LOG_ASSIGNMENT(this, 0);
     assign_from_gs_cid(aGS, NS_GET_TEMPLATE_IID(T));
   }
@@ -526,7 +501,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(const nsGetServiceByCIDWithError& aGS)
     : NSCAP_CTOR_BASE(0)
   {
-    assert_validity();
     NSCAP_LOG_ASSIGNMENT(this, 0);
     assign_from_gs_cid_with_error(aGS, NS_GET_TEMPLATE_IID(T));
   }
@@ -535,7 +509,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(const nsGetServiceByContractID aGS)
     : NSCAP_CTOR_BASE(0)
   {
-    assert_validity();
     NSCAP_LOG_ASSIGNMENT(this, 0);
     assign_from_gs_contractid(aGS, NS_GET_TEMPLATE_IID(T));
   }
@@ -544,7 +517,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(const nsGetServiceByContractIDWithError& aGS)
     : NSCAP_CTOR_BASE(0)
   {
-    assert_validity();
     NSCAP_LOG_ASSIGNMENT(this, 0);
     assign_from_gs_contractid_with_error(aGS, NS_GET_TEMPLATE_IID(T));
   }
@@ -554,7 +526,6 @@ public:
   MOZ_IMPLICIT nsCOMPtr(const nsCOMPtr_helper& aHelper)
     : NSCAP_CTOR_BASE(0)
   {
-    assert_validity();
     NSCAP_LOG_ASSIGNMENT(this, 0);
     assign_from_helper(aHelper, NS_GET_TEMPLATE_IID(T));
     NSCAP_ASSERT_NO_QUERY_NEEDED();
@@ -1350,34 +1321,40 @@ operator!=(U* aLhs, const nsCOMPtr<T>& aRhs)
 
 
 
-// Comparing an |nsCOMPtr| to |nullptr|
+// Comparing an |nsCOMPtr| to |0|
 
+class NSCAP_Zero;
+
+// Specifically to allow |smartPtr == 0|.
 template<class T>
 inline bool
-operator==(const nsCOMPtr<T>& aLhs, decltype(nullptr))
+operator==(const nsCOMPtr<T>& aLhs, NSCAP_Zero* aRhs)
 {
-  return aLhs.get() == nullptr;
+  return static_cast<const void*>(aLhs.get()) == reinterpret_cast<const void*>(aRhs);
 }
 
+// Specifically to allow |0 == smartPtr|.
 template<class T>
 inline bool
-operator==(decltype(nullptr), const nsCOMPtr<T>& aRhs)
+operator==(NSCAP_Zero* aLhs, const nsCOMPtr<T>& aRhs)
 {
-  return nullptr == aRhs.get();
+  return reinterpret_cast<const void*>(aLhs) == static_cast<const void*>(aRhs.get());
 }
 
+// Specifically to allow |smartPtr != 0|.
 template<class T>
 inline bool
-operator!=(const nsCOMPtr<T>& aLhs, decltype(nullptr))
+operator!=(const nsCOMPtr<T>& aLhs, NSCAP_Zero* aRhs)
 {
-  return aLhs.get() != nullptr;
+  return static_cast<const void*>(aLhs.get()) != reinterpret_cast<const void*>(aRhs);
 }
 
+// Specifically to allow |0 != smartPtr|.
 template<class T>
 inline bool
-operator!=(decltype(nullptr), const nsCOMPtr<T>& aRhs)
+operator!=(NSCAP_Zero* aLhs, const nsCOMPtr<T>& aRhs)
 {
-  return nullptr != aRhs.get();
+  return reinterpret_cast<const void*>(aLhs) != static_cast<const void*>(aRhs.get());
 }
 
 

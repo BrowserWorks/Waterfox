@@ -217,7 +217,7 @@ nsBaseDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
   // stash the document of the dom node
   aDOMNode->GetOwnerDocument(getter_AddRefs(mSourceDocument));
   mSourceNode = aDOMNode;
-  mEndDragPoint = LayoutDeviceIntPoint(0, 0);
+  mEndDragPoint = nsIntPoint(0, 0);
 
   // When the mouse goes down, the selection code starts a mouse
   // capture. However, this gets in the way of determining drag
@@ -356,9 +356,8 @@ nsBaseDragService::EndDragSession(bool aDoneDrag)
     return NS_ERROR_FAILURE;
   }
 
-  if (aDoneDrag && !mSuppressLevel) {
-    FireDragEventAtSource(eDragEnd);
-  }
+  if (aDoneDrag && !mSuppressLevel)
+    FireDragEventAtSource(NS_DRAGDROP_END);
 
   if (mDragPopup) {
     nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
@@ -389,14 +388,14 @@ nsBaseDragService::EndDragSession(bool aDoneDrag)
   mImageY = 0;
   mScreenX = -1;
   mScreenY = -1;
-  mEndDragPoint = LayoutDeviceIntPoint(0, 0);
+  mEndDragPoint = nsIntPoint(0, 0);
   mInputSource = nsIDOMMouseEvent::MOZ_SOURCE_MOUSE;
 
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsBaseDragService::FireDragEventAtSource(EventMessage aEventMessage)
+nsBaseDragService::FireDragEventAtSource(uint32_t aMsg)
 {
   if (mSourceNode && !mSuppressLevel) {
     nsCOMPtr<nsIDocument> doc = do_QueryInterface(mSourceDocument);
@@ -404,9 +403,9 @@ nsBaseDragService::FireDragEventAtSource(EventMessage aEventMessage)
       nsCOMPtr<nsIPresShell> presShell = doc->GetShell();
       if (presShell) {
         nsEventStatus status = nsEventStatus_eIgnore;
-        WidgetDragEvent event(true, aEventMessage, nullptr);
+        WidgetDragEvent event(true, aMsg, nullptr);
         event.inputSource = mInputSource;
-        if (aEventMessage == eDragEnd) {
+        if (aMsg == NS_DRAGDROP_END) {
           event.refPoint.x = mEndDragPoint.x;
           event.refPoint.y = mEndDragPoint.y;
           event.userCancelled = mUserCancelled;
@@ -431,10 +430,7 @@ nsBaseDragService::DragMoved(int32_t aX, int32_t aY)
   if (mDragPopup) {
     nsIFrame* frame = mDragPopup->GetPrimaryFrame();
     if (frame && frame->GetType() == nsGkAtoms::menuPopupFrame) {
-      nsPresContext* presContext = frame->PresContext();
-      int32_t x = presContext->DevPixelsToIntCSSPixels(aX - mImageX);
-      int32_t y = presContext->DevPixelsToIntCSSPixels(aY - mImageY);
-      (static_cast<nsMenuPopupFrame *>(frame))->MoveTo(x, y, true);
+      (static_cast<nsMenuPopupFrame *>(frame))->MoveTo(aX - mImageX, aY - mImageY, true);
     }
   }
 

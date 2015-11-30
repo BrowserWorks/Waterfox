@@ -41,11 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_HTTP_CONNECT_ADDR_SIZE 256
 #define MAX_HTTP_CONNECT_BUFFER_SIZE 1024
-#define MAX_ALPN_LENGTH 64
-#ifndef CRLF
-#define CRLF "\r\n"
-#endif
-#define END_HEADERS CRLF CRLF
+#define ENDLN "\r\n\r\n"
 
 typedef struct nr_socket_proxy_tunnel_ {
   nr_proxy_tunnel_config *config;
@@ -98,8 +94,7 @@ static int send_http_connect(nr_socket_proxy_tunnel *sock)
   int port;
   int printed;
   char addr[MAX_HTTP_CONNECT_ADDR_SIZE];
-  char mesg[MAX_HTTP_CONNECT_ADDR_SIZE + MAX_ALPN_LENGTH + 128];
-  size_t offset = 0;
+  char mesg[MAX_HTTP_CONNECT_ADDR_SIZE + 64];
   size_t bytes_sent;
 
   r_log(LOG_GENERIC,LOG_DEBUG,"send_http_connect");
@@ -112,32 +107,16 @@ static int send_http_connect(nr_socket_proxy_tunnel *sock)
     ABORT(r);
   }
 
-  printed = snprintf(mesg + offset, sizeof(mesg) - offset,
-                     "CONNECT %s:%d HTTP/1.0", addr, port);
-  offset += printed;
-  if (printed < 0 || (offset >= sizeof(mesg))) {
+  printed = snprintf(mesg, sizeof(mesg), "CONNECT %s:%d HTTP/1.0%s", addr, port, ENDLN);
+  if (printed < 0 || ((size_t)printed >= sizeof(mesg))) {
     ABORT(R_FAILED);
   }
 
-  if (sock->config->alpn) {
-    printed = snprintf(mesg + offset, sizeof(mesg) - offset,
-                       CRLF "ALPN: %s", sock->config->alpn);
-    offset += printed;
-    if (printed < 0 || (offset >= sizeof(mesg))) {
-      ABORT(R_FAILED);
-    }
-  }
-  if (offset + sizeof(END_HEADERS) >= sizeof(mesg)) {
-    ABORT(R_FAILED);
-  }
-  memcpy(mesg + offset, END_HEADERS, strlen(END_HEADERS));
-  offset += strlen(END_HEADERS);
-
-  if ((r=nr_socket_write(sock->inner, mesg, offset, &bytes_sent, 0))) {
+  if ((r=nr_socket_write(sock->inner, mesg, strlen(mesg), &bytes_sent, 0))) {
     ABORT(r);
   }
 
-  if (bytes_sent < offset) {
+  if (bytes_sent < strlen(mesg)) {
     /* TODO(bug 1116583): buffering and wait for */
     r_log(LOG_GENERIC,LOG_DEBUG,"send_http_connect should be buffering %lu", (unsigned long)bytes_sent);
     ABORT(R_IO_ERROR);
@@ -154,10 +133,10 @@ static char *find_http_terminator(char *response, size_t len)
 {
   char *term = response;
   char *end = response + len;
-  int N = strlen(END_HEADERS);
+  int N = strlen(ENDLN);
 
   for (; term = memchr(term, '\r', end - term); ++term) {
-    if (end - term >= N && memcmp(term, END_HEADERS, N) == 0) {
+    if (end - term >= N && memcmp(term, ENDLN, N) == 0) {
       return term;
     }
   }
@@ -388,7 +367,7 @@ int nr_socket_proxy_tunnel_read(void *obj, void * restrict buf, size_t maxlen,
       ABORT(R_FAILED);
     }
 
-    ptr = http_term + strlen(END_HEADERS);
+    ptr = http_term + strlen(ENDLN);
     pending = sock->buffered_bytes - (ptr - sock->buffer);
 
     if (pending == 0) {
@@ -452,7 +431,6 @@ int nr_proxy_tunnel_config_destroy(nr_proxy_tunnel_config **configpp)
   *configpp = 0;
 
   RFREE(configp->proxy_host);
-  RFREE(configp->alpn);
   RFREE(configp);
 
   return 0;
@@ -493,34 +471,6 @@ int nr_proxy_tunnel_config_set_resolver(nr_proxy_tunnel_config *config,
   return 0;
 }
 
-int nr_proxy_tunnel_config_set_alpn(nr_proxy_tunnel_config *config,
-                                    const char *alpn)
-{
-  r_log(LOG_GENERIC,LOG_DEBUG,"nr_proxy_tunnel_config_set_alpn");
-
-  if (alpn && (strlen(alpn) > MAX_ALPN_LENGTH)) {
-    return R_BAD_ARGS;
-  }
-
-  if (config->alpn) {
-    RFREE(config->alpn);
-  }
-
-  config->alpn = NULL;
-
-  if (alpn) {
-    char *alpndup = r_strdup(alpn);
-
-    if (!alpndup) {
-      return R_NO_MEMORY;
-    }
-
-    config->alpn = alpndup;
-  }
-
-  return 0;
-}
-
 int nr_proxy_tunnel_config_copy(nr_proxy_tunnel_config *config, nr_proxy_tunnel_config **copypp)
 {
   int r,_status;
@@ -533,9 +483,6 @@ int nr_proxy_tunnel_config_copy(nr_proxy_tunnel_config *config, nr_proxy_tunnel_
     ABORT(r);
 
   if ((r=nr_proxy_tunnel_config_set_resolver(copy, config->resolver)))
-    ABORT(r);
-
-  if ((r=nr_proxy_tunnel_config_set_alpn(copy, config->alpn)))
     ABORT(r);
 
   *copypp = copy;

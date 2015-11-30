@@ -76,12 +76,13 @@ loop.shared.views.chat = (function(mozL10n) {
     mixins: [React.addons.PureRenderMixin],
 
     propTypes: {
-      message: React.PropTypes.string.isRequired
+      message: React.PropTypes.string.isRequired,
+      useDesktopPaths: React.PropTypes.bool.isRequired
     },
 
     render: function() {
       return (
-        React.createElement("div", {className: "text-chat-header special room-name"}, 
+        React.createElement("div", {className: "text-chat-entry special room-name"}, 
           React.createElement("p", null, mozL10n.get("rooms_welcome_title", {conversationName: this.props.message}))
         )
       );
@@ -115,21 +116,13 @@ loop.shared.views.chat = (function(mozL10n) {
       };
     },
 
-    _hasChatMessages: function() {
-      return this.props.messageList.some(function(message) {
-        return message.contentType === CHAT_CONTENT_TYPES.TEXT;
-      });
-    },
-
     componentWillUpdate: function() {
       var node = this.getDOMNode();
       if (!node) {
         return;
       }
-      // Scroll only if we're right at the bottom of the display, or if we've
-      // not had any chat messages so far.
-      this.shouldScroll = !this._hasChatMessages() ||
-        node.scrollHeight === node.scrollTop + node.clientHeight;
+      // Scroll only if we're right at the bottom of the display.
+      this.shouldScroll = node.scrollHeight === node.scrollTop + node.clientHeight;
     },
 
     componentWillReceiveProps: function(nextProps) {
@@ -145,9 +138,7 @@ loop.shared.views.chat = (function(mozL10n) {
     },
 
     componentDidUpdate: function() {
-      // Don't scroll if we haven't got any chat messages yet - e.g. for context
-      // display, we want to display starting at the top.
-      if (this.shouldScroll && this._hasChatMessages()) {
+      if (this.shouldScroll) {
         // This ensures the paint is complete.
         window.requestAnimationFrame(function() {
           try {
@@ -179,7 +170,8 @@ loop.shared.views.chat = (function(mozL10n) {
                       return (
                         React.createElement(TextChatRoomName, {
                           key: i, 
-                          message: entry.message})
+                          message: entry.message, 
+                          useDesktopPaths: this.props.useDesktopPaths})
                       );
                     case CHAT_CONTENT_TYPES.CONTEXT:
                       return (
@@ -378,27 +370,22 @@ loop.shared.views.chat = (function(mozL10n) {
 
     render: function() {
       var messageList;
-      var showingRoomName = false;
+      var hasNonSpecialMessages;
 
       if (this.props.showRoomName) {
         messageList = this.state.messageList;
-        showingRoomName = this.state.messageList.some(function(item) {
-          return item.contentType === CHAT_CONTENT_TYPES.ROOM_NAME;
+        hasNonSpecialMessages = messageList.some(function(item) {
+          return item.type !== CHAT_MESSAGE_TYPES.SPECIAL;
         });
       } else {
         messageList = this.state.messageList.filter(function(item) {
           return item.type !== CHAT_MESSAGE_TYPES.SPECIAL ||
             item.contentType !== CHAT_CONTENT_TYPES.ROOM_NAME;
         });
+        hasNonSpecialMessages = !!messageList.length;
       }
 
-      // Only show the placeholder if we've sent messages.
-      var hasSentMessages = messageList.some(function(item) {
-        return item.type === CHAT_MESSAGE_TYPES.SENT;
-      });
-
       var textChatViewClasses = React.addons.classSet({
-        "showing-room-name": showingRoomName,
         "text-chat-view": true,
         "text-chat-disabled": !this.state.textChatEnabled,
         "text-chat-entries-empty": !messageList.length
@@ -412,7 +399,7 @@ loop.shared.views.chat = (function(mozL10n) {
             useDesktopPaths: this.props.useDesktopPaths}), 
           React.createElement(TextChatInputView, {
             dispatcher: this.props.dispatcher, 
-            showPlaceholder: !hasSentMessages, 
+            showPlaceholder: !hasNonSpecialMessages, 
             textChatEnabled: this.state.textChatEnabled})
         )
       );

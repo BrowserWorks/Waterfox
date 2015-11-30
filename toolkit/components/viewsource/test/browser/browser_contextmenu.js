@@ -8,7 +8,6 @@ var gViewSourceWindow, gContextMenu, gCopyLinkMenuItem, gCopyEmailMenuItem;
 var expectedData = [];
 
 add_task(function *() {
-  // Full source in view source window
   let newWindow = yield loadViewSourceWindow(source);
   yield SimpleTest.promiseFocus(newWindow);
 
@@ -24,7 +23,6 @@ add_task(function *() {
     closeViewSourceWindow(newWindow, resolve);
   });
 
-  // Selection source in view source tab
   expectedData = [];
   let newTab = yield openDocumentSelect(source, "body");
   yield* onViewSourceWindowOpen(window, true);
@@ -36,25 +34,6 @@ add_task(function *() {
   }
 
   gBrowser.removeTab(newTab);
-
-  // Selection source in view source window
-  yield pushPrefs(["view_source.tab", false]);
-
-  expectedData = [];
-  newWindow = yield openDocumentSelect(source, "body");
-  yield SimpleTest.promiseFocus(newWindow);
-
-  yield* onViewSourceWindowOpen(newWindow, false);
-
-  contextMenu = newWindow.document.getElementById("viewSourceContextMenu");
-
-  for (let test of expectedData) {
-    yield* checkMenuItems(contextMenu, false, test[0], test[1], test[2], test[3]);
-  }
-
-  yield new Promise(resolve => {
-    closeViewSourceWindow(newWindow, resolve);
-  });
 });
 
 function* onViewSourceWindowOpen(aWindow, aIsTab) {

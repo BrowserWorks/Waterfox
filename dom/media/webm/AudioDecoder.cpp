@@ -47,14 +47,14 @@ ogg_packet InitOggPacket(const unsigned char* aData, size_t aLength,
 class VorbisDecoder : public WebMAudioDecoder
 {
 public:
-  nsRefPtr<InitPromise> Init() override;
-  void Shutdown() override;
-  nsresult ResetDecode() override;
-  nsresult DecodeHeader(const unsigned char* aData, size_t aLength) override;
-  nsresult FinishInit(AudioInfo& aInfo) override;
+  nsresult Init();
+  void Shutdown();
+  nsresult ResetDecode();
+  nsresult DecodeHeader(const unsigned char* aData, size_t aLength);
+  nsresult FinishInit(AudioInfo& aInfo);
   bool Decode(const unsigned char* aData, size_t aLength,
               int64_t aOffset, uint64_t aTstampUsecs,
-              int64_t aDiscardPadding, int32_t* aTotalFrames) override;
+              int64_t aDiscardPadding, int32_t* aTotalFrames);
   explicit VorbisDecoder(WebMReader* aReader);
   ~VorbisDecoder();
 private:
@@ -94,14 +94,14 @@ VorbisDecoder::Shutdown()
   mReader = nullptr;
 }
 
-nsRefPtr<InitPromise>
+nsresult
 VorbisDecoder::Init()
 {
   vorbis_info_init(&mVorbisInfo);
   vorbis_comment_init(&mVorbisComment);
   PodZero(&mVorbisDsp);
   PodZero(&mVorbisBlock);
-  return InitPromise::CreateAndResolve(TrackType::kAudioTrack, __func__);
+  return NS_OK;
 }
 
 nsresult
@@ -229,14 +229,14 @@ VorbisDecoder::Decode(const unsigned char* aData, size_t aLength,
 class OpusDecoder : public WebMAudioDecoder
 {
 public:
-  nsRefPtr<InitPromise> Init() override;
-  void Shutdown() override;
-  nsresult ResetDecode() override;
-  nsresult DecodeHeader(const unsigned char* aData, size_t aLength) override;
-  nsresult FinishInit(AudioInfo& aInfo) override;
+  nsresult Init();
+  void Shutdown();
+  nsresult ResetDecode();
+  nsresult DecodeHeader(const unsigned char* aData, size_t aLength);
+  nsresult FinishInit(AudioInfo& aInfo);
   bool Decode(const unsigned char* aData, size_t aLength,
               int64_t aOffset, uint64_t aTstampUsecs,
-              int64_t aDiscardPadding, int32_t* aTotalFrames) override;
+              int64_t aDiscardPadding, int32_t* aTotalFrames);
   explicit OpusDecoder(WebMReader* aReader);
   ~OpusDecoder();
 private:
@@ -277,10 +277,10 @@ OpusDecoder::Shutdown()
   mReader = nullptr;
 }
 
-nsRefPtr<InitPromise>
+nsresult
 OpusDecoder::Init()
 {
-  return InitPromise::CreateAndResolve(TrackType::kAudioTrack, __func__);
+  return NS_OK;
 }
 
 nsresult

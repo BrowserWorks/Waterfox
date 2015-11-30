@@ -459,14 +459,14 @@ OMNIJAR_NAME := $(notdir $(OMNIJAR_NAME))
 # and the res/ directory is taken from the ap_ as part of the regular
 # packaging.
 
-PKG_SUFFIX = .apk
-
-INNER_SZIP_LIBRARIES = \
-  $(if $(ALREADY_SZIPPED),,$(foreach lib,$(SZIP_LIBRARIES),host/bin/szip $(MOZ_SZIP_FLAGS) $(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH)/$(lib) && )) true
-
-# Insert $(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH)/classes.dex into
-# $(_ABS_DIST)/gecko.ap_, producing $(_ABS_DIST)/gecko.apk.
-INNER_MAKE_APK = \
+PKG_SUFFIX      = .apk
+INNER_MAKE_PACKAGE	= \
+  $(if $(ALREADY_SZIPPED),,$(foreach lib,$(SZIP_LIBRARIES),host/bin/szip $(MOZ_SZIP_FLAGS) $(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH)/$(lib) && )) \
+  make -C $(GECKO_APP_AP_PATH) gecko-nodeps.ap_ && \
+  cp $(GECKO_APP_AP_PATH)/gecko-nodeps.ap_ $(_ABS_DIST)/gecko.ap_ && \
+  ( (test ! -f $(GECKO_APP_AP_PATH)/R.txt && echo "*** Warning: The R.txt that is being packaged might not agree with the R.txt that was built. This is normal during l10n repacks.") || \
+    diff $(GECKO_APP_AP_PATH)/R.txt $(GECKO_APP_AP_PATH)/gecko-nodeps/R.txt >/dev/null || \
+    (echo "*** Error: The R.txt that was built and the R.txt that is being packaged are not the same. Rebuild mobile/android/base and re-package." && exit 1)) && \
   ( cd $(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH) && \
     unzip -o $(_ABS_DIST)/gecko.ap_ && \
     rm $(_ABS_DIST)/gecko.ap_ && \
@@ -481,30 +481,11 @@ INNER_MAKE_APK = \
   $(ZIP) -j0 $(_ABS_DIST)/gecko.apk $(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH)/classes.dex && \
   cp $(_ABS_DIST)/gecko.apk $(_ABS_DIST)/gecko-unsigned-unaligned.apk && \
   $(RELEASE_JARSIGNER) $(_ABS_DIST)/gecko.apk && \
-  $(ZIPALIGN) -f -v 4 $(_ABS_DIST)/gecko.apk $(PACKAGE)
-
-ifeq ($(MOZ_BUILD_APP),mobile/android)
-INNER_MAKE_PACKAGE	= \
-  $(INNER_SZIP_LIBRARIES) && \
-  make -C $(GECKO_APP_AP_PATH) gecko-nodeps.ap_ && \
-  cp $(GECKO_APP_AP_PATH)/gecko-nodeps.ap_ $(_ABS_DIST)/gecko.ap_ && \
-  ( (test ! -f $(GECKO_APP_AP_PATH)/R.txt && echo "*** Warning: The R.txt that is being packaged might not agree with the R.txt that was built. This is normal during l10n repacks.") || \
-    diff $(GECKO_APP_AP_PATH)/R.txt $(GECKO_APP_AP_PATH)/gecko-nodeps/R.txt >/dev/null || \
-    (echo "*** Error: The R.txt that was built and the R.txt that is being packaged are not the same. Rebuild mobile/android/base and re-package." && exit 1)) && \
-  $(INNER_MAKE_APK) && \
+  $(ZIPALIGN) -f -v 4 $(_ABS_DIST)/gecko.apk $(PACKAGE) && \
   $(INNER_ROBOCOP_PACKAGE) && \
   $(INNER_MAKE_GECKOLIBS_AAR) && \
   $(INNER_MAKE_GECKOVIEW_LIBRARY) && \
   $(INNER_MAKE_GECKOVIEW_EXAMPLE)
-endif
-
-ifeq ($(MOZ_BUILD_APP),mobile/android/b2gdroid)
-INNER_MAKE_PACKAGE	= \
-  $(INNER_SZIP_LIBRARIES) && \
-  cp $(abspath $(DEPTH)/mobile/android/b2gdroid/app)/classes.dex $(_ABS_DIST)/classes.dex && \
-  cp $(abspath $(DEPTH)/mobile/android/b2gdroid/app)/b2gdroid-unsigned-unaligned.apk $(_ABS_DIST)/gecko.ap_ && \
-  $(INNER_MAKE_APK)
-endif
 
 # Language repacks root the resources contained in assets/omni.ja
 # under assets/, but the repacks expect them to be rooted at /.
@@ -523,10 +504,29 @@ endif
 
 ifeq ($(MOZ_PKG_FORMAT),DMG)
 PKG_SUFFIX	= .dmg
-
+PKG_DMG_FLAGS	=
+ifneq (,$(MOZ_PKG_MAC_DSSTORE))
+PKG_DMG_FLAGS += --copy '$(MOZ_PKG_MAC_DSSTORE):/.DS_Store'
+endif
+ifneq (,$(MOZ_PKG_MAC_BACKGROUND))
+PKG_DMG_FLAGS += --mkdir /.background --copy '$(MOZ_PKG_MAC_BACKGROUND):/.background'
+endif
+ifneq (,$(MOZ_PKG_MAC_ICON))
+PKG_DMG_FLAGS += --icon '$(MOZ_PKG_MAC_ICON)'
+endif
+ifneq (,$(MOZ_PKG_MAC_RSRC))
+PKG_DMG_FLAGS += --resource '$(MOZ_PKG_MAC_RSRC)'
+endif
+ifneq (,$(MOZ_PKG_MAC_EXTRA))
+PKG_DMG_FLAGS += $(MOZ_PKG_MAC_EXTRA)
+endif
 _ABS_MOZSRCDIR = $(shell cd $(MOZILLA_DIR) && pwd)
+ifndef PKG_DMG_SOURCE
 PKG_DMG_SOURCE = $(STAGEPATH)$(MOZ_PKG_DIR)
-INNER_MAKE_PACKAGE	= $(call py_action,make_dmg,'$(PKG_DMG_SOURCE)' '$(PACKAGE)')
+endif
+INNER_MAKE_PACKAGE	= $(_ABS_MOZSRCDIR)/build/package/mac_osx/pkg-dmg \
+  --source '$(PKG_DMG_SOURCE)' --target '$(PACKAGE)' \
+  --volname '$(MOZ_APP_DISPLAYNAME)' $(PKG_DMG_FLAGS)
 INNER_UNMAKE_PACKAGE	= \
   set -ex; \
   rm -rf $(_ABS_DIST)/unpack.tmp; \
@@ -738,7 +738,6 @@ UPLOAD_FILES= \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(CPP_TEST_PACKAGE)) \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(XPC_TEST_PACKAGE)) \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(MOCHITEST_PACKAGE)) \
-  $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(TALOS_PACKAGE)) \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(REFTEST_PACKAGE)) \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(WP_TEST_PACKAGE)) \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(SYMBOL_ARCHIVE_BASENAME).zip) \

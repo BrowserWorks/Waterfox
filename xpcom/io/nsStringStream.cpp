@@ -380,7 +380,8 @@ NS_NewByteInputStream(nsIInputStream** aStreamResult,
 {
   NS_PRECONDITION(aStreamResult, "null out ptr");
 
-  nsRefPtr<nsStringInputStream> stream = new nsStringInputStream();
+  nsStringInputStream* stream = new nsStringInputStream();
+  NS_ADDREF(stream);
 
   nsresult rv;
   switch (aAssignment) {
@@ -399,10 +400,11 @@ NS_NewByteInputStream(nsIInputStream** aStreamResult,
   }
 
   if (NS_FAILED(rv)) {
+    NS_RELEASE(stream);
     return rv;
   }
 
-  stream.forget(aStreamResult);
+  *aStreamResult = stream;
   return NS_OK;
 }
 
@@ -420,11 +422,12 @@ NS_NewCStringInputStream(nsIInputStream** aStreamResult,
 {
   NS_PRECONDITION(aStreamResult, "null out ptr");
 
-  nsRefPtr<nsStringInputStream> stream = new nsStringInputStream();
+  nsStringInputStream* stream = new nsStringInputStream();
+  NS_ADDREF(stream);
 
   stream->SetData(aStringToRead);
 
-  stream.forget(aStreamResult);
+  *aStreamResult = stream;
   return NS_OK;
 }
 
@@ -439,6 +442,10 @@ nsStringInputStreamConstructor(nsISupports* aOuter, REFNSIID aIID,
     return NS_ERROR_NO_AGGREGATION;
   }
 
-  nsRefPtr<nsStringInputStream> inst = new nsStringInputStream();
-  return inst->QueryInterface(aIID, aResult);
+  nsStringInputStream* inst = new nsStringInputStream();
+  NS_ADDREF(inst);
+  nsresult rv = inst->QueryInterface(aIID, aResult);
+  NS_RELEASE(inst);
+
+  return rv;
 }

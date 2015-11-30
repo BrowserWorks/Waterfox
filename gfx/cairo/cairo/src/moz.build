@@ -185,8 +185,6 @@ UNIFIED_SOURCES += [
     'cairo.c',
 ]
 
-ALLOW_COMPILER_WARNINGS = True
-
 FINAL_LIBRARY = 'gkmedias'
 
 DEFINES['PACKAGE_VERSION'] = '"moz"'
@@ -235,11 +233,6 @@ if CONFIG['GNU_CC']:
             '-Wno-tautological-constant-out-of-range-compare',
             '-Wno-error=uninitialized',
         ]
-
-# See bug 386897.
-if CONFIG['GNU_CC'] and CONFIG['OS_TARGET'] == 'Android' and CONFIG['MOZ_OPTIMIZE']:
-    CFLAGS += ['-O2']
-    CXXFLAGS += ['-O2']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
     CFLAGS += CONFIG['MOZ_QT_CFLAGS']

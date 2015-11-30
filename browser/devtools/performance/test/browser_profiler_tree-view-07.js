@@ -35,7 +35,7 @@ function* spawnTest() {
     "The .A.B.D node has the correct container node.");
 }
 
-var gThread = synthesizeProfileForTest([{
+let gThread = synthesizeProfileForTest([{
   time: 5,
   frames: [
     { category: 8,  location: "(root)" },

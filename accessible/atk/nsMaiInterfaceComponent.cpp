@@ -11,7 +11,6 @@
 #include "nsCoreUtils.h"
 #include "nsMai.h"
 #include "mozilla/Likely.h"
-#include "mozilla/a11y/ProxyAccessible.h"
 
 using namespace mozilla::a11y;
 
@@ -21,7 +20,7 @@ static AtkObject*
 refAccessibleAtPointCB(AtkComponent* aComponent, gint aAccX, gint aAccY,
                        AtkCoordType aCoordType)
 {
-  return refAccessibleAtPointHelper(ATK_OBJECT(aComponent),
+  return refAccessibleAtPointHelper(GetAccessibleWrap(ATK_OBJECT(aComponent)),
                                     aAccX, aAccY, aCoordType);
 }
 
@@ -29,109 +28,73 @@ static void
 getExtentsCB(AtkComponent* aComponent, gint* aX, gint* aY,
              gint* aWidth, gint* aHeight, AtkCoordType aCoordType)
 {
-  getExtentsHelper(ATK_OBJECT(aComponent),
+  getExtentsHelper(GetAccessibleWrap(ATK_OBJECT(aComponent)),
                    aX, aY, aWidth, aHeight, aCoordType);
 }
 
 static gboolean
 grabFocusCB(AtkComponent* aComponent)
 {
-  AtkObject* atkObject = ATK_OBJECT(aComponent);
-  AccessibleWrap* accWrap = GetAccessibleWrap(atkObject);
-  if (accWrap) {
-    accWrap->TakeFocus();
-    return TRUE;
-  }
+  AccessibleWrap* accWrap = GetAccessibleWrap(ATK_OBJECT(aComponent));
+  if (!accWrap)
+    return FALSE;
 
-  ProxyAccessible* proxy = GetProxy(atkObject);
-  if (proxy) {
-    proxy->TakeFocus();
-    return TRUE;
-  }
-
-  return FALSE;
+  accWrap->TakeFocus();
+  return TRUE;
 }
 }
 
 AtkObject*
-refAccessibleAtPointHelper(AtkObject* aAtkObj, gint aX, gint aY,
+refAccessibleAtPointHelper(AccessibleWrap* aAccWrap, gint aX, gint aY,
                            AtkCoordType aCoordType)
 {
-  AccessibleWrap* accWrap = GetAccessibleWrap(aAtkObj);
-  if (accWrap) {
-    if (accWrap->IsDefunct() || nsAccUtils::MustPrune(accWrap)) {
-      return nullptr;
-    }
+  if (!aAccWrap || aAccWrap->IsDefunct() || nsAccUtils::MustPrune(aAccWrap))
+    return nullptr;
 
-    // Accessible::ChildAtPoint(x,y) is in screen pixels.
-    if (aCoordType == ATK_XY_WINDOW) {
-      nsIntPoint winCoords =
-        nsCoreUtils::GetScreenCoordsForWindow(accWrap->GetNode());
-      aX += winCoords.x;
-      aY += winCoords.y;
-    }
-
-    Accessible* accAtPoint = accWrap->ChildAtPoint(aX, aY,
-                                                   Accessible::eDirectChild);
-    if (!accAtPoint) {
-      return nullptr;
-    }
-
-    AtkObject* atkObj = AccessibleWrap::GetAtkObject(accAtPoint);
-    if (atkObj) {
-      g_object_ref(atkObj);
-    }
-
-    return atkObj;
+  // Accessible::ChildAtPoint(x,y) is in screen pixels.
+  if (aCoordType == ATK_XY_WINDOW) {
+    nsIntPoint winCoords =
+      nsCoreUtils::GetScreenCoordsForWindow(aAccWrap->GetNode());
+    aX += winCoords.x;
+    aY += winCoords.y;
   }
 
-  if (ProxyAccessible* proxy = GetProxy(aAtkObj)) {
-    ProxyAccessible* result =
-      proxy->AccessibleAtPoint(aX, aY, aCoordType == ATK_XY_WINDOW);
-    AtkObject* atkObj = result ? GetWrapperFor(result) : nullptr;
-    if (atkObj) {
-      g_object_ref(atkObj);
-    }
-    return atkObj;
-  }
+  Accessible* accAtPoint = aAccWrap->ChildAtPoint(aX, aY,
+                                                  Accessible::eDirectChild);
+  if (!accAtPoint)
+    return nullptr;
 
-  return nullptr;
+  AtkObject* atkObj = AccessibleWrap::GetAtkObject(accAtPoint);
+  if (atkObj)
+    g_object_ref(atkObj);
+  return atkObj;
 }
 
 void
-getExtentsHelper(AtkObject* aAtkObj,
+getExtentsHelper(AccessibleWrap* aAccWrap,
                  gint* aX, gint* aY, gint* aWidth, gint* aHeight,
                  AtkCoordType aCoordType)
 {
-  AccessibleWrap* accWrap = GetAccessibleWrap(aAtkObj);
   *aX = *aY = *aWidth = *aHeight = 0;
 
-  if (accWrap) {
-    if (accWrap->IsDefunct()) {
-      return;
-    }
-
-    nsIntRect screenRect = accWrap->Bounds();
-    if (screenRect.IsEmpty())
-      return;
-
-    if (aCoordType == ATK_XY_WINDOW) {
-      nsIntPoint winCoords =
-        nsCoreUtils::GetScreenCoordsForWindow(accWrap->GetNode());
-      screenRect.x -= winCoords.x;
-      screenRect.y -= winCoords.y;
-    }
-
-    *aX = screenRect.x;
-    *aY = screenRect.y;
-    *aWidth = screenRect.width;
-    *aHeight = screenRect.height;
+  if (!aAccWrap || aAccWrap->IsDefunct())
     return;
+
+  nsIntRect screenRect = aAccWrap->Bounds();
+  if (screenRect.IsEmpty())
+    return;
+
+  if (aCoordType == ATK_XY_WINDOW) {
+    nsIntPoint winCoords =
+      nsCoreUtils::GetScreenCoordsForWindow(aAccWrap->GetNode());
+    screenRect.x -= winCoords.x;
+    screenRect.y -= winCoords.y;
   }
 
-  if (ProxyAccessible* proxy = GetProxy(aAtkObj)) {
-    proxy->Extents(aCoordType == ATK_XY_WINDOW, aX, aY, aWidth, aHeight);
-  }
+  *aX = screenRect.x;
+  *aY = screenRect.y;
+  *aWidth = screenRect.width;
+  *aHeight = screenRect.height;
 }
 
 void

@@ -147,9 +147,6 @@ namespace js {
 
 class SavedStacks {
     friend JSObject* SavedStacksMetadataCallback(JSContext* cx, JSObject* target);
-    friend bool JS::ubi::ConstructSavedFrameStackSlow(JSContext* cx,
-                                                      JS::ubi::StackFrame& ubiFrame,
-                                                      MutableHandleObject outSavedFrameStack);
 
   public:
     SavedStacks()
@@ -181,7 +178,7 @@ class SavedStacks {
     // Similar to mozilla::ReentrancyGuard, but instead of asserting against
     // reentrancy, just change the behavior of SavedStacks::saveCurrentStack to
     // return a nullptr SavedFrame.
-    struct MOZ_RAII AutoReentrancyGuard {
+    struct MOZ_STACK_CLASS AutoReentrancyGuard {
         MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER;
         SavedStacks& stacks;
 

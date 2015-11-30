@@ -3,9 +3,9 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-var disableWorkerTest = "This test uses SpecialPowers";
+let disableWorkerTest = "This test uses SpecialPowers";
 
-var testGenerator = testSteps();
+let testGenerator = testSteps();
 
 function createFileReader() {
   return SpecialPowers.Cc["@mozilla.org/files/filereader;1"]

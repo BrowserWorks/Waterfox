@@ -130,7 +130,7 @@ class VRHMDInfo;
 } // namespace mozilla
 
 extern already_AddRefed<nsIScriptTimeoutHandler>
-NS_CreateJSTimeoutHandler(JSContext* aCx, nsGlobalWindow *aWindow,
+NS_CreateJSTimeoutHandler(nsGlobalWindow *aWindow,
                           mozilla::dom::Function& aFunction,
                           const mozilla::dom::Sequence<JS::Value>& aArguments,
                           mozilla::ErrorResult& aError);
@@ -159,7 +159,11 @@ public:
   NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(nsTimeout)
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(nsTimeout)
 
-  nsresult InitTimer(uint32_t aDelay);
+  nsresult InitTimer(nsTimerCallbackFunc aFunc, uint32_t aDelay)
+  {
+    return mTimer->InitWithFuncCallback(aFunc, this, aDelay,
+                                        nsITimer::TYPE_ONE_SHOT);
+  }
 
   bool HasRefCntOne();
 
@@ -675,9 +679,8 @@ public:
 
 #ifdef MOZ_B2G
   // Inner windows only.
-  virtual void EnableNetworkEvent(mozilla::EventMessage aEventMessage) override;
-  virtual void DisableNetworkEvent(
-                 mozilla::EventMessage aEventMessage) override;
+  virtual void EnableNetworkEvent(uint32_t aType) override;
+  virtual void DisableNetworkEvent(uint32_t aType) override;
 #endif // MOZ_B2G
 
   virtual nsresult SetArguments(nsIArray* aArguments) override;
@@ -1390,8 +1393,7 @@ public:
   nsresult SetTimeoutOrInterval(nsIScriptTimeoutHandler *aHandler,
                                 int32_t interval,
                                 bool aIsInterval, int32_t* aReturn) override;
-  int32_t SetTimeoutOrInterval(JSContext* aCx,
-                               mozilla::dom::Function& aFunction,
+  int32_t SetTimeoutOrInterval(mozilla::dom::Function& aFunction,
                                int32_t aTimeout,
                                const mozilla::dom::Sequence<JS::Value>& aArguments,
                                bool aIsInterval, mozilla::ErrorResult& aError);
@@ -1424,8 +1426,6 @@ public:
   // fire after it, but no earlier than mTimeoutInsertionPoint, if any.
   void InsertTimeoutIntoList(nsTimeout *aTimeout);
   static void TimerCallback(nsITimer *aTimer, void *aClosure);
-  static void TimerNameCallback(nsITimer* aTimer, void* aClosure, char* aBuf,
-                                size_t aLen);
 
   // Helper Functions
   already_AddRefed<nsIDocShellTreeOwner> GetTreeOwner();
@@ -1508,7 +1508,7 @@ public:
   bool WindowExists(const nsAString& aName, bool aLookForCallerOnJSStack);
 
   already_AddRefed<nsIWidget> GetMainWidget();
-  nsIWidget* GetNearestWidget() const;
+  nsIWidget* GetNearestWidget();
 
   void Freeze()
   {
@@ -1632,6 +1632,13 @@ private:
   void DisconnectEventTargetObjects();
 
 protected:
+  // When adding new member variables, be careful not to create cycles
+  // through JavaScript.  If there is any chance that a member variable
+  // could own objects that are implemented in JavaScript, then those
+  // objects will keep the global object (this object) alive.  To prevent
+  // these cycles, ownership of such members must be released in
+  // |CleanUp| and |DetachFromDocShell|.
+
   // This member is also used on both inner and outer windows, but
   // for slightly different purposes. On inner windows it means the
   // inner window is held onto by session history and should not

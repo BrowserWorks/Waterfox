@@ -4,8 +4,8 @@
 
 "use strict";
 
-var openUILinkInCalled = false;
-var expectOpenUILinkInCall = false;
+let openUILinkInCalled = false;
+let expectOpenUILinkInCall = false;
 this.originalOpenUILinkIn = openUILinkIn;
 openUILinkIn = (aUrl, aWhichTab) => {
   is(aUrl, "about:home", "about:home should be requested to open.");

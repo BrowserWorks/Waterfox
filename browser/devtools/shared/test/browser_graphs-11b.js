@@ -3,7 +3,8 @@
 
 // Tests that bar graph's legend items handle mouseover/mouseout.
 
-var BarGraphWidget = require("devtools/shared/widgets/BarGraphWidget");
+let BarGraphWidget = require("devtools/shared/widgets/BarGraphWidget");
+let {Promise} = require("resource://gre/modules/Promise.jsm");
 
 const CATEGORIES = [
   { color: "#46afe3", label: "Foo" },

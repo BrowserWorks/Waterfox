@@ -223,12 +223,7 @@ IMETextTxn::SetIMESelection(nsEditor& aEditor,
                  static_cast<uint32_t>(caretOffset) <= maxOffset);
       rv = selection->Collapse(aTextNode, caretOffset);
       setCaret = setCaret || NS_SUCCEEDED(rv);
-      if (NS_WARN_IF(!setCaret)) {
-        continue;
-      }
-      // If caret range is specified explicitly, we should show the caret if
-      // it should be so.
-      aEditor.HideCaret(false);
+      NS_ASSERTION(setCaret, "Failed to collapse normal selection");
       continue;
     }
 
@@ -297,8 +292,6 @@ IMETextTxn::SetIMESelection(nsEditor& aEditor,
     rv = selection->Collapse(aTextNode, caretOffset);
     NS_ASSERTION(NS_SUCCEEDED(rv),
                  "Failed to set caret at the end of composition string");
-    // If caret range isn't specified explicitly, we should hide the caret.
-    aEditor.HideCaret(true);
   }
 
   rv = selection->EndBatchChanges();

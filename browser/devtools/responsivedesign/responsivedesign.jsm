@@ -12,15 +12,15 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource:///modules/devtools/gDevTools.jsm");
 Cu.import("resource://gre/modules/devtools/event-emitter.js");
 Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
+let { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
 XPCOMUtils.defineLazyModuleGetter(this, "SystemAppProxy",
                                   "resource://gre/modules/SystemAppProxy.jsm");
 
-var { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-var Telemetry = require("devtools/shared/telemetry");
-var { showDoorhanger } = require("devtools/shared/doorhanger");
-var { TouchEventSimulator } = require("devtools/toolkit/touch/simulator");
-var { Task } = require("resource://gre/modules/Task.jsm");
-var promise = require("promise");
+let { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+let Telemetry = require("devtools/shared/telemetry");
+let { showDoorhanger } = require("devtools/shared/doorhanger");
+let { TouchEventSimulator } = require("devtools/toolkit/touch/simulator");
+let { Task } = require("resource://gre/modules/Task.jsm");
 
 this.EXPORTED_SYMBOLS = ["ResponsiveUIManager"];
 
@@ -37,7 +37,7 @@ const INPUT_PARSER = /(\d+)[^\d]+(\d+)/;
 
 const SHARED_L10N = new ViewHelpers.L10N("chrome://browser/locale/devtools/shared.properties");
 
-var ActiveTabs = new Map();
+let ActiveTabs = new Map();
 
 this.ResponsiveUIManager = {
   /**
@@ -107,7 +107,7 @@ this.ResponsiveUIManager = {
 
 EventEmitter.decorate(ResponsiveUIManager);
 
-var presets = [
+let presets = [
   // Phones
   {key: "320x480", width: 320, height: 480},    // iPhone, B2G, with <meta viewport>
   {key: "360x640", width: 360, height: 640},    // Android 4, phones, with <meta viewport>
@@ -389,7 +389,6 @@ ResponsiveUI.prototype = {
     // Toolbar
     this.toolbar = this.chromeDoc.createElement("toolbar");
     this.toolbar.className = "devtools-responsiveui-toolbar";
-    this.toolbar.setAttribute("fullscreentoolbar", "true");
 
     this.menulist = this.chromeDoc.createElement("menulist");
     this.menulist.className = "devtools-responsiveui-menulist";

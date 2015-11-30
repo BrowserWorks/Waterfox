@@ -7,10 +7,10 @@
 // Checks various aspects of the OCSP cache, mainly to to ensure we do not fetch
 // responses more than necessary.
 
-var gFetchCount = 0;
-var gGoodOCSPResponse = null;
-var gResponsePattern = [];
-var gMessage= "";
+let gFetchCount = 0;
+let gGoodOCSPResponse = null;
+let gResponsePattern = [];
+let gMessage= "";
 
 function respondWithGoodOCSP(request, response) {
   do_print("returning 200 OK");

@@ -92,7 +92,6 @@
     macro(format, format, "format") \
     macro(frame, frame, "frame") \
     macro(from, from, "from") \
-    macro(gcCycleNumber, gcCycleNumber, "gcCycleNumber") \
     macro(get, get, "get") \
     macro(getInternals, getInternals, "getInternals") \
     macro(getOwnPropertyDescriptor, getOwnPropertyDescriptor, "getOwnPropertyDescriptor") \
@@ -109,7 +108,6 @@
     macro(InitializeCollator, InitializeCollator, "InitializeCollator") \
     macro(InitializeDateTimeFormat, InitializeDateTimeFormat, "InitializeDateTimeFormat") \
     macro(InitializeNumberFormat, InitializeNumberFormat, "InitializeNumberFormat") \
-    macro(inNursery, inNursery, "inNursery") \
     macro(innermost, innermost, "innermost") \
     macro(input, input, "input") \
     macro(int8x16, int8x16, "Int8x16") \
@@ -150,7 +148,6 @@
     macro(multiline, multiline, "multiline") \
     macro(name, name, "name") \
     macro(NaN, NaN, "NaN") \
-    macro(new, new_, "new") \
     macro(next, next, "next") \
     macro(NFC, NFC, "NFC") \
     macro(NFD, NFD, "NFD") \
@@ -191,7 +188,6 @@
     macro(resumeGenerator, resumeGenerator, "resumeGenerator") \
     macro(return, return_, "return") \
     macro(revoke, revoke, "revoke") \
-    macro(script, script, "script") \
     macro(scripts, scripts, "scripts") \
     macro(sensitivity, sensitivity, "sensitivity") \
     macro(set, set, "set") \
@@ -271,6 +267,7 @@
     macro(Symbol_create, Symbol_create, "Symbol.create") \
     macro(Symbol_hasInstance, Symbol_hasInstance, "Symbol.hasInstance") \
     macro(Symbol_isConcatSpreadable, Symbol_isConcatSpreadable, "Symbol.isConcatSpreadable") \
+    macro(Symbol_isRegExp, Symbol_isRegExp, "Symbol.isRegExp") \
     macro(Symbol_iterator, Symbol_iterator, "Symbol.iterator") \
     macro(Symbol_match,    Symbol_match,    "Symbol.match") \
     macro(Symbol_species,  Symbol_species,  "Symbol.species") \

@@ -20,7 +20,7 @@ const {getJSON} = require("devtools/shared/getjson");
 
 const TEMPLATES_URL = "devtools.webide.templatesURL";
 
-var gTemplateList = null;
+let gTemplateList = null;
 
 // See bug 989619
 console.log = console.log.bind(console);

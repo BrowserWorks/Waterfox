@@ -6,7 +6,7 @@
 
 const { Cu } = require("chrome");
 const { Class } = require("sdk/core/heritage");
-const promise = require("promise");
+const promise = require("projecteditor/helpers/promise");
 const { registerPlugin, Plugin } = require("projecteditor/plugins/core");
 
 /**

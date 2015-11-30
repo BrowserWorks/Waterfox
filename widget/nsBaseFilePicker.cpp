@@ -348,9 +348,8 @@ nsBaseFilePicker::GetDomfile(nsISupports** aDomfile)
     return NS_OK;
   }
 
-  nsRefPtr<File> domFile = File::CreateFromFile(mParent, localFile);
-  domFile->Impl()->SetIsDirectory(mMode == nsIFilePicker::modeGetFolder);
-  nsCOMPtr<nsIDOMBlob>(domFile).forget(aDomfile);
+  nsCOMPtr<nsIDOMBlob> domFile = File::CreateFromFile(mParent, localFile);
+  domFile.forget(aDomfile);
   return NS_OK;
 }
 

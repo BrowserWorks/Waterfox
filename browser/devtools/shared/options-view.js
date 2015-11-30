@@ -1,6 +1,6 @@
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const { Services } = require("resource://gre/modules/Services.jsm");
-const { Preferences } = require("resource://gre/modules/Preferences.jsm");
+
 const OPTIONS_SHOWN_EVENT = "options-shown";
 const OPTIONS_HIDDEN_EVENT = "options-hidden";
 const PREF_CHANGE_EVENT = "pref-changed";
@@ -162,14 +162,14 @@ PrefObserver.prototype = {
    */
   get: function (prefName) {
     let fullName = this.branchName + prefName;
-    return Preferences.get(fullName);
+    return Services.prefs.getBoolPref(fullName);
   },
   /**
    * Sets `prefName`'s `value`. Does not require the branch name.
    */
   set: function (prefName, value) {
     let fullName = this.branchName + prefName;
-    Preferences.set(fullName, value);
+    Services.prefs.setBoolPref(fullName, value);
   },
   register: function () {
     this.branch.addObserver("", this, false);

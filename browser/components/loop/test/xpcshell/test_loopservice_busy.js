@@ -9,13 +9,13 @@ const { LoopCallsInternal } = Cu.import("resource:///modules/loop/LoopCalls.jsm"
 XPCOMUtils.defineLazyModuleGetter(this, "Chat",
                                   "resource:///modules/Chat.jsm");
 
-var actionReceived = false;
-var openChatOrig = Chat.open;
+let actionReceived = false;
+let openChatOrig = Chat.open;
 
 const firstCallId = 4444333221;
 const secondCallId = 1001100101;
 
-var msgHandler = function(msg) {
+let msgHandler = function(msg) {
   if (msg.messageType &&
       msg.messageType === "action" &&
       msg.event === "terminate" &&
@@ -114,6 +114,9 @@ function run_test() {
 
     // Revert fake login state
     MozLoopServiceInternal.fxAOAuthTokenData = null;
+
+    // clear test pref
+    Services.prefs.clearUserPref("loop.seenToS");
 
     LoopCallsInternal.mocks.webSocket = undefined;
   });

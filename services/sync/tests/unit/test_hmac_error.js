@@ -8,7 +8,7 @@ Cu.import("resource://testing-common/services/sync/rotaryengine.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 
 // Track HMAC error counts.
-var hmacErrorCount = 0;
+let hmacErrorCount = 0;
 (function () {
   let hHE = Service.handleHMACEvent;
   Service.handleHMACEvent = function () {

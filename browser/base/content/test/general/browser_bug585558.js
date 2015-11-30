@@ -2,7 +2,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-var tabs = [];
+let tabs = [];
 
 function addTab(aURL) {
   tabs.push(gBrowser.addTab(aURL, {skipAnimation: true}));

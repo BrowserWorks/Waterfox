@@ -22,7 +22,7 @@ const ORIGINAL_SENDERROR = AboutServiceWorkers.sendError;
 
 do_get_profile();
 
-var mockSendResult = (aId, aResult) => {
+let mockSendResult = (aId, aResult) => {
   let msg = {
     id: aId,
     result: aResult
@@ -30,7 +30,7 @@ var mockSendResult = (aId, aResult) => {
   Services.obs.notifyObservers({wrappedJSObject: msg}, CHROME_MSG, null);
 };
 
-var mockSendError = (aId, aError) => {
+let mockSendError = (aId, aError) => {
   let msg = {
     id: aId,
     result: aError

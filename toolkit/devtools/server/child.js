@@ -6,7 +6,7 @@
 
 try {
 
-var chromeGlobal = this;
+let chromeGlobal = this;
 
 // Encapsulate in its own scope to allows loading this frame script
 // more than once.
@@ -15,7 +15,7 @@ var chromeGlobal = this;
   let { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
   const DevToolsUtils = require("devtools/toolkit/DevToolsUtils.js");
   const { dumpn } = DevToolsUtils;
-  const { DebuggerServer, ActorPool } = require("devtools/server/main");
+  const { DebuggerServer, ActorPool } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
 
   // Note that this frame script may be evaluated in non-e10s build
   // In such case, DebuggerServer is already going to be initialized.

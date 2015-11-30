@@ -114,10 +114,8 @@ SourceSurfaceSkia::InitFromTexture(DrawTargetSkia* aOwner,
   GrTexture *skiaTexture = aOwner->mGrContext->wrapBackendTexture(skiaTexGlue);
   SkImageInfo imgInfo = SkImageInfo::Make(aSize.width, aSize.height, GfxFormatToSkiaColorType(aFormat), kOpaque_SkAlphaType);
   SkGrPixelRef *texRef = new SkGrPixelRef(imgInfo, skiaTexture, false);
-  mBitmap.setInfo(imgInfo);
+  mBitmap.setInfo(imgInfo, aSize.width*aSize.height*4);
   mBitmap.setPixelRef(texRef);
-  mFormat = aFormat;
-  mStride = mBitmap.rowBytes();
 #endif
 
   mDrawTarget = aOwner;

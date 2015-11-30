@@ -23,13 +23,13 @@ const BUNDLE_URL = "chrome://global/locale/viewSource.properties";
 const MARK_SELECTION_START = "\uFDD0";
 const MARK_SELECTION_END = "\uFDEF";
 
-var global = this;
+let global = this;
 
 /**
  * ViewSourceContent should be loaded in the <xul:browser> of the
  * view source window, and initialized as soon as it has loaded.
  */
-var ViewSourceContent = {
+let ViewSourceContent = {
   /**
    * We'll act as an nsISelectionListener as well so that we can send
    * updates to the view source window's status bar.
@@ -44,11 +44,11 @@ var ViewSourceContent = {
   messages: [
     "ViewSource:LoadSource",
     "ViewSource:LoadSourceDeprecated",
-    "ViewSource:LoadSourceWithSelection",
     "ViewSource:GoToLine",
     "ViewSource:ToggleWrapping",
     "ViewSource:ToggleSyntaxHighlighting",
     "ViewSource:SetCharacterSet",
+    "ViewSource:ScheduleDrawSelection",
   ],
 
   /**
@@ -135,9 +135,6 @@ var ViewSourceContent = {
         this.viewSourceDeprecated(data.URL, objects.pageDescriptor, data.lineNumber,
                                   data.forcedCharSet);
         break;
-      case "ViewSource:LoadSourceWithSelection":
-        this.viewSourceWithSelection(data.URL, data.drawSelection, data.baseURI);
-        break;
       case "ViewSource:GoToLine":
         this.goToLine(data.lineNumber);
         break;
@@ -149,6 +146,9 @@ var ViewSourceContent = {
         break;
       case "ViewSource:SetCharacterSet":
         this.setCharacterSet(data.charset, data.doPageLoad);
+        break;
+      case "ViewSource:ScheduleDrawSelection":
+        this.scheduleDrawSelection();
         break;
     }
   },
@@ -760,28 +760,6 @@ var ViewSourceContent = {
   },
 
   /**
-   * Loads a view source selection showing the given view-source url and
-   * highlight the selection.
-   *
-   * @param uri view-source uri to show
-   * @param drawSelection true to highlight the selection
-   * @param baseURI base URI of the original document
-   */
-  viewSourceWithSelection(uri, drawSelection, baseURI)
-  {
-    this.needsDrawSelection = drawSelection;
-
-    // all our content is held by the data:URI and URIs are internally stored as utf-8 (see nsIURI.idl)
-    let loadFlags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
-    let referrerPolicy = Ci.nsIHttpChannel.REFERRER_POLICY_DEFAULT;
-    let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
-    webNav.loadURIWithOptions(uri, loadFlags,
-                              null, referrerPolicy,  // referrer
-                              null, null,  // postData, headers
-                              Services.io.newURI(baseURI, null, null));
-  },
-
-  /**
    * nsISelectionListener
    */
 
@@ -798,6 +776,15 @@ var ViewSourceContent = {
     }
 
     this.updateStatusTask.arm();
+  },
+
+  /**
+   * Chrome has requested that we draw a selection once the content loads.
+   * We set a flag, and wait for the load event, where drawSelection() will be
+   * called to do the real work.
+   */
+  scheduleDrawSelection() {
+    this.needsDrawSelection = true;
   },
 
   /**

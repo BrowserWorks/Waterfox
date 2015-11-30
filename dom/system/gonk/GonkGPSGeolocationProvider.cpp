@@ -15,13 +15,10 @@
  */
 
 #include "GonkGPSGeolocationProvider.h"
-#include "mozstumbler/MozStumbler.h"
 
 #include <pthread.h>
 #include <hardware/gps.h>
 
-#include "GeolocationUtil.h"
-#include "mozstumbler/MozStumbler.h"
 #include "mozilla/Constants.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
@@ -90,7 +87,6 @@ AGpsCallbacks GonkGPSGeolocationProvider::mAGPSCallbacks;
 AGpsRilCallbacks GonkGPSGeolocationProvider::mAGPSRILCallbacks;
 #endif // MOZ_B2G_RIL
 
-
 void
 GonkGPSGeolocationProvider::LocationCallback(GpsLocation* location)
 {
@@ -145,10 +141,7 @@ GonkGPSGeolocationProvider::LocationCallback(GpsLocation* location)
                                         location->accuracy);
   }
 
-  nsRefPtr<UpdateLocationEvent> event = new UpdateLocationEvent(somewhere);
-  NS_DispatchToMainThread(event);
-
-  MozStumble(somewhere);
+  NS_DispatchToMainThread(new UpdateLocationEvent(somewhere));
 }
 
 void
@@ -893,7 +886,23 @@ GonkGPSGeolocationProvider::NetworkLocationUpdate::Update(nsIDOMGeoPosition *pos
   static double sLastMLSPosLon = 0;
 
   if (0 != sLastMLSPosLon || 0 != sLastMLSPosLat) {
-    delta = CalculateDeltaInMeter(lat, lon, sLastMLSPosLat, sLastMLSPosLon);
+    // Use spherical law of cosines to calculate difference
+    // Not quite as correct as the Haversine but simpler and cheaper
+    // Should the following be a utility function? Others might need this calc.
+    const double radsInDeg = M_PI / 180.0;
+    const double rNewLat = lat * radsInDeg;
+    const double rNewLon = lon * radsInDeg;
+    const double rOldLat = sLastMLSPosLat * radsInDeg;
+    const double rOldLon = sLastMLSPosLon * radsInDeg;
+    // WGS84 equatorial radius of earth = 6378137m
+    double cosDelta = (sin(rNewLat) * sin(rOldLat)) +
+                      (cos(rNewLat) * cos(rOldLat) * cos(rOldLon - rNewLon));
+    if (cosDelta > 1.0) {
+      cosDelta = 1.0;
+    } else if (cosDelta < -1.0) {
+      cosDelta = -1.0;
+    }
+    delta = acos(cosDelta) * 6378137;
   }
 
   sLastMLSPosLat = lat;

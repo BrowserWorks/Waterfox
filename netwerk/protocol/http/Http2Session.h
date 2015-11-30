@@ -106,8 +106,7 @@ public:
     CONNECT_ERROR = 10,
     ENHANCE_YOUR_CALM = 11,
     INADEQUATE_SECURITY = 12,
-    HTTP_1_1_REQUIRED = 13,
-    UNASSIGNED = 31
+    HTTP_1_1_REQUIRED = 13
   };
 
   // These are frame flags. If they, or other undefined flags, are
@@ -413,11 +412,6 @@ private:
   // A specifc reason code for the eventual GoAway frame. If set to NO_HTTP_ERROR
   // only NO_HTTP_ERROR, PROTOCOL_ERROR, or INTERNAL_ERROR will be sent.
   errorType            mGoAwayReason;
-
-  // The error code sent/received on the session goaway frame. UNASSIGNED/31
-  // if not transmitted.
-  int32_t             mClientGoAwayReason;
-  int32_t             mPeerGoAwayReason;
 
   // If a GoAway message was received this is the ID of the last valid
   // stream. 0 otherwise. (0 is never a valid stream id.)

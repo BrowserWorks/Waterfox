@@ -5,7 +5,7 @@
 /**
  * Collects telemetry data for Tabview.
  */
-var Telemetry = {
+let Telemetry = {
   TOPIC_GATHER_TELEMETRY: "gather-telemetry",
 
   /**

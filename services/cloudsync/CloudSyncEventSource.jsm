@@ -6,7 +6,7 @@ this.EXPORTED_SYMBOLS = ["EventSource"];
 
 Components.utils.import("resource://services-common/utils.js");
 
-var EventSource = function (types, suspendFunc, resumeFunc) {
+let EventSource = function (types, suspendFunc, resumeFunc) {
   this.listeners = new Map();
   for each (let type in types) {
     this.listeners.set(type, new Set());

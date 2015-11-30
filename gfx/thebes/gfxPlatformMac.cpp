@@ -141,10 +141,9 @@ gfxPlatformMac::GetStandardFamilyName(const nsAString& aFontName, nsAString& aFa
 gfxFontGroup *
 gfxPlatformMac::CreateFontGroup(const FontFamilyList& aFontFamilyList,
                                 const gfxFontStyle *aStyle,
-                                gfxTextPerfMetrics* aTextPerf,
                                 gfxUserFontSet *aUserFontSet)
 {
-    return new gfxFontGroup(aFontFamilyList, aStyle, aTextPerf, aUserFontSet);
+    return new gfxFontGroup(aFontFamilyList, aStyle, aUserFontSet);
 }
 
 // these will move to gfxPlatform once all platforms support the fontlist
@@ -386,17 +385,6 @@ gfxPlatformMac::GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh,
 
     // Arial Unicode MS has lots of glyphs for obscure, use it as a last resort
     aFontList.AppendElement(kFontArialUnicodeMS);
-}
-
-/*static*/ void
-gfxPlatformMac::LookupSystemFont(mozilla::LookAndFeel::FontID aSystemFontID,
-                                 nsAString& aSystemFontName,
-                                 gfxFontStyle& aFontStyle,
-                                 float aDevPixPerCSSPixel)
-{
-    gfxMacPlatformFontList* pfl = gfxMacPlatformFontList::PlatformFontList();
-    return pfl->LookupSystemFont(aSystemFontID, aSystemFontName, aFontStyle,
-                                 aDevPixPerCSSPixel);
 }
 
 uint32_t

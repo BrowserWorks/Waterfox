@@ -3,6 +3,6 @@
 
 "use strict";
 
-var URL = "data:text/html;charset=utf-8,<p>Test page</p>";
+let URL = "data:text/html;charset=utf-8,<p>Test page</p>";
 
-var test = makeTimelineTest("browser_timelineMarkers-frame-03.js", URL);
+let test = makeTimelineTest("browser_timelineMarkers-frame-03.js", URL);

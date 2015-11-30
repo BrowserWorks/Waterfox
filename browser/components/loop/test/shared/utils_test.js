@@ -54,6 +54,39 @@ describe("loop.shared.utils", function() {
     });
   });
 
+  describe("#isFirefoxOS", function() {
+    describe("without mozActivities", function() {
+      it("shouldn't detect FirefoxOS on mobile platform", function() {
+        expect(sharedUtils.isFirefoxOS("mobi")).eql(false);
+      });
+
+      it("shouldn't detect FirefoxOS on non mobile platform", function() {
+        expect(sharedUtils.isFirefoxOS("whatever")).eql(false);
+      });
+    });
+
+    describe("with mozActivities", function() {
+      var realMozActivity;
+
+      before(function() {
+        realMozActivity = window.MozActivity;
+        window.MozActivity = {};
+      });
+
+      after(function() {
+        window.MozActivity = realMozActivity;
+      });
+
+      it("should detect FirefoxOS on mobile platform", function() {
+        expect(sharedUtils.isFirefoxOS("mobi")).eql(true);
+      });
+
+      it("shouldn't detect FirefoxOS on non mobile platform", function() {
+        expect(sharedUtils.isFirefoxOS("whatever")).eql(false);
+      });
+    });
+  });
+
   describe("#formatDate", function() {
     beforeEach(function() {
       sandbox.stub(Date.prototype, "toLocaleDateString").returns("fake result");
@@ -630,47 +663,6 @@ describe("loop.shared.utils", function() {
 
       sharedUtils.stripFalsyValues(obj);
       expect(obj).to.eql({ prop1: "null", prop3: true });
-    });
-  });
-
-  describe("#truncate", function() {
-    describe("ltr support", function() {
-      it("should default to 72 chars", function() {
-        var output = sharedUtils.truncate(new Array(75).join());
-
-        expect(output.length).to.eql(73); // 72 + …
-      });
-
-      it("should take a max size argument", function() {
-        var output = sharedUtils.truncate(new Array(73).join(), 20);
-
-        expect(output.length).to.eql(21); // 20 + …
-      });
-    });
-
-    describe("rtl support", function() {
-      var directionStub;
-
-      beforeEach(function() {
-        // XXX should use sandbox
-        // https://github.com/cjohansen/Sinon.JS/issues/781
-        directionStub = sinon.stub(navigator.mozL10n.language, "direction", {
-          get: function() {
-            return "rtl";
-          }
-        });
-      });
-
-      afterEach(function() {
-        directionStub.restore();
-      });
-
-      it("should support RTL", function() {
-        var output = sharedUtils.truncate(new Array(73).join(), 20);
-
-        expect(output.length).to.eql(21); // 20 + …
-        expect(output.substr(0, 1)).to.eql("…");
-      });
     });
   });
 });

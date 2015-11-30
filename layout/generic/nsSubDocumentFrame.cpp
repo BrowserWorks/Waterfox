@@ -594,23 +594,19 @@ nscoord
 nsSubDocumentFrame::GetIntrinsicISize()
 {
   if (!IsInline()) {
-    return 0;  // HTML <frame> has no useful intrinsic isize
+    return 0;  // HTML <frame> has no useful intrinsic width
   }
 
   if (mContent->IsXULElement()) {
-    return 0;  // XUL <iframe> and <browser> have no useful intrinsic isize
+    return 0;  // XUL <iframe> and <browser> have no useful intrinsic width
   }
 
   NS_ASSERTION(ObtainIntrinsicSizeFrame() == nullptr,
-               "Intrinsic isize should come from the embedded document.");
+               "Intrinsic width should come from the embedded document.");
 
-  // We must be an HTML <iframe>.  Default to size of 300px x 150px, for IE
+  // We must be an HTML <iframe>.  Default to a width of 300, for IE
   // compat (and per CSS2.1 draft).
-  // This depends on the applied styles, which the comments in nsLeafFrame.h
-  // say it should not, but we know it cannot change during the lifetime of
-  // the frame because changing writing-mode leads to frame reconstruction.
-  WritingMode wm = GetWritingMode();
-  return nsPresContext::CSSPixelsToAppUnits(wm.IsVertical() ? 150 : 300);
+  return nsPresContext::CSSPixelsToAppUnits(300);
 }
 
 nscoord
@@ -624,11 +620,10 @@ nsSubDocumentFrame::GetIntrinsicBSize()
   }
 
   NS_ASSERTION(ObtainIntrinsicSizeFrame() == nullptr,
-               "Intrinsic bsize should come from the embedded document.");
+               "Intrinsic height should come from the embedded document.");
 
-  // Use size of 300px x 150px, for compatibility with IE, and per CSS2.1 draft.
-  WritingMode wm = GetWritingMode();
-  return nsPresContext::CSSPixelsToAppUnits(wm.IsVertical() ? 300 : 150);
+  // Use 150px, for compatibility with IE, and per CSS2.1 draft.
+  return nsPresContext::CSSPixelsToAppUnits(150);
 }
 
 #ifdef DEBUG_FRAME_DUMP

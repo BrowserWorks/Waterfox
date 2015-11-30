@@ -12,8 +12,8 @@ import os
 import sys
 import time
 
-from ._common import sdiskusage, usage_percent, memoize
-from ._compat import PY3, unicode
+from psutil._common import sdiskusage, usage_percent, memoize
+from psutil._compat import PY3, unicode
 
 
 class TimeoutExpired(Exception):
@@ -31,7 +31,8 @@ def pid_exists(pid):
         return True
     try:
         os.kill(pid, 0)
-    except OSError as err:
+    except OSError:
+        err = sys.exc_info()[1]
         if err.errno == errno.ESRCH:
             # ESRCH == No such process
             return False
@@ -68,18 +69,17 @@ def wait_pid(pid, timeout=None):
 
     timer = getattr(time, 'monotonic', time.time)
     if timeout is not None:
-        def waitcall():
-            return os.waitpid(pid, os.WNOHANG)
+        waitcall = lambda: os.waitpid(pid, os.WNOHANG)
         stop_at = timer() + timeout
     else:
-        def waitcall():
-            return os.waitpid(pid, 0)
+        waitcall = lambda: os.waitpid(pid, 0)
 
     delay = 0.0001
-    while True:
+    while 1:
         try:
             retpid, status = waitcall()
-        except OSError as err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno == errno.EINTR:
                 delay = check_timeout(delay)
                 continue
@@ -90,7 +90,7 @@ def wait_pid(pid, timeout=None):
                 # - pid never existed in the first place
                 # In both cases we'll eventually return None as we
                 # can't determine its exit status code.
-                while True:
+                while 1:
                     if pid_exists(pid):
                         delay = check_timeout(delay)
                     else:
@@ -150,7 +150,8 @@ def _get_terminal_map():
         assert name not in ret
         try:
             ret[os.stat(name).st_rdev] = name
-        except OSError as err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno != errno.ENOENT:
                 raise
     return ret

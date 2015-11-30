@@ -352,11 +352,6 @@ struct BasicTiledLayerPaintData {
    * progressively.
    */
   bool mPaintFinished : 1;
-
-  /*
-   * Initializes/clears data to prepare for paint action.
-   */
-  void ResetPaintData();
 };
 
 class SharedFrameMetricsHelper
@@ -591,10 +586,8 @@ private:
 class TiledContentClient : public CompositableClient
 {
 public:
-  TiledContentClient(ClientLayerManager* aManager,
-                     const char* aName = "")
+  TiledContentClient(ClientLayerManager* aManager)
     : CompositableClient(aManager->AsShadowForwarder())
-    , mName(aName)
   {}
 
 protected:
@@ -622,9 +615,6 @@ public:
     LOW_PRECISION_TILED_BUFFER
   };
   virtual void UpdatedBuffer(TiledBufferType aType) = 0;
-
-private:
-  const char* mName;
 };
 
 /**

@@ -221,7 +221,7 @@ this.FxAccountsManager = {
         }
       );
     }
-    return Promise.reject(reason.message ? { error: reason.message } : reason);
+    return Promise.reject(reason);
   },
 
   _getAssertion: function(aAudience, aPrincipal) {

@@ -1,4 +1,4 @@
-var rootDir = getRootDirectory(gTestPath);
+let rootDir = getRootDirectory(gTestPath);
 const gTestRoot = rootDir.replace("chrome://mochitests/content/", "http://127.0.0.1:8888/");
 
 add_task(function* () {

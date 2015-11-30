@@ -52,7 +52,6 @@
 #include "mozilla/layers/InputAPZContext.h"
 #include "mozilla/layers/APZCCallbackHelper.h"
 #include "mozilla/dom/TabParent.h"
-#include "mozilla/Move.h"
 #include "mozilla/Services.h"
 #include "mozilla/Snprintf.h"
 #include "nsRefPtrHashtable.h"
@@ -107,14 +106,14 @@ namespace mozilla {
 namespace widget {
 
 void
-IMENotification::SelectionChangeDataBase::SetWritingMode(
+IMENotification::SelectionChangeData::SetWritingMode(
                                         const WritingMode& aWritingMode)
 {
   mWritingMode = aWritingMode.mWritingMode;
 }
 
 WritingMode
-IMENotification::SelectionChangeDataBase::GetWritingMode() const
+IMENotification::SelectionChangeData::GetWritingMode() const
 {
   return WritingMode(mWritingMode);
 }
@@ -641,15 +640,17 @@ NS_IMETHODIMP nsBaseWidget::PlaceBehind(nsTopLevelWidgetZPlacement aPlacement,
 // merely stores the state.
 //
 //-------------------------------------------------------------------------
-NS_IMETHODIMP
-nsBaseWidget::SetSizeMode(nsSizeMode aMode)
+NS_IMETHODIMP nsBaseWidget::SetSizeMode(int32_t aMode)
 {
-  MOZ_ASSERT(aMode == nsSizeMode_Normal ||
-             aMode == nsSizeMode_Minimized ||
-             aMode == nsSizeMode_Maximized ||
-             aMode == nsSizeMode_Fullscreen);
-  mSizeMode = aMode;
-  return NS_OK;
+  if (aMode == nsSizeMode_Normal ||
+      aMode == nsSizeMode_Minimized ||
+      aMode == nsSizeMode_Maximized ||
+      aMode == nsSizeMode_Fullscreen) {
+
+    mSizeMode = (nsSizeMode) aMode;
+    return NS_OK;
+  }
+  return NS_ERROR_ILLEGAL_VALUE;
 }
 
 //-------------------------------------------------------------------------
@@ -870,9 +871,43 @@ void nsBaseWidget::CreateCompositor()
 already_AddRefed<GeckoContentController>
 nsBaseWidget::CreateRootContentController()
 {
-  nsRefPtr<GeckoContentController> controller = new ChromeProcessController(this, mAPZEventState, mAPZC);
+  nsRefPtr<GeckoContentController> controller = new ChromeProcessController(this, mAPZEventState);
   return controller.forget();
 }
+
+class ChromeProcessSetAllowedTouchBehaviorCallback : public SetAllowedTouchBehaviorCallback {
+public:
+  explicit ChromeProcessSetAllowedTouchBehaviorCallback(APZCTreeManager* aTreeManager)
+    : mTreeManager(aTreeManager)
+  {}
+
+  void Run(uint64_t aInputBlockId, const nsTArray<TouchBehaviorFlags>& aFlags) const override {
+    MOZ_ASSERT(NS_IsMainThread());
+    APZThreadUtils::RunOnControllerThread(NewRunnableMethod(
+        mTreeManager.get(), &APZCTreeManager::SetAllowedTouchBehavior,
+        aInputBlockId, aFlags));
+  }
+
+private:
+  nsRefPtr<APZCTreeManager> mTreeManager;
+};
+
+class ChromeProcessContentReceivedInputBlockCallback : public ContentReceivedInputBlockCallback {
+public:
+  explicit ChromeProcessContentReceivedInputBlockCallback(APZCTreeManager* aTreeManager)
+    : mTreeManager(aTreeManager)
+  {}
+
+  void Run(const ScrollableLayerGuid& aGuid, uint64_t aInputBlockId, bool aPreventDefault) const override {
+    MOZ_ASSERT(NS_IsMainThread());
+    APZThreadUtils::RunOnControllerThread(NewRunnableMethod(
+        mTreeManager.get(), &APZCTreeManager::ContentReceivedInputBlock,
+        aInputBlockId, aPreventDefault));
+  }
+
+private:
+  nsRefPtr<APZCTreeManager> mTreeManager;
+};
 
 void nsBaseWidget::ConfigureAPZCTreeManager()
 {
@@ -881,29 +916,9 @@ void nsBaseWidget::ConfigureAPZCTreeManager()
   ConfigureAPZControllerThread();
 
   mAPZC->SetDPI(GetDPI());
-
-  nsRefPtr<APZCTreeManager> treeManager = mAPZC;  // for capture by the lambdas
-
-  ContentReceivedInputBlockCallback callback(
-      [treeManager](const ScrollableLayerGuid& aGuid,
-                    uint64_t aInputBlockId,
-                    bool aPreventDefault)
-      {
-        MOZ_ASSERT(NS_IsMainThread());
-        APZThreadUtils::RunOnControllerThread(NewRunnableMethod(
-            treeManager.get(), &APZCTreeManager::ContentReceivedInputBlock,
-            aInputBlockId, aPreventDefault));
-      });
-  mAPZEventState = new APZEventState(this, mozilla::Move(callback));
-
-  mSetAllowedTouchBehaviorCallback = [treeManager](uint64_t aInputBlockId,
-                                                   const nsTArray<TouchBehaviorFlags>& aFlags)
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-    APZThreadUtils::RunOnControllerThread(NewRunnableMethod(
-        treeManager.get(), &APZCTreeManager::SetAllowedTouchBehavior,
-        aInputBlockId, aFlags));
-  };
+  mAPZEventState = new APZEventState(this,
+      new ChromeProcessContentReceivedInputBlockCallback(mAPZC));
+  mSetAllowedTouchBehaviorCallback = new ChromeProcessSetAllowedTouchBehaviorCallback(mAPZC);
 
   nsRefPtr<GeckoContentController> controller = CreateRootContentController();
   if (controller) {
@@ -977,7 +992,7 @@ nsBaseWidget::ProcessUntransformedAPZEvent(WidgetInputEvent* aEvent,
     // TODO: Eventually we'll be able to move the SendSetTargetAPZCNotification
     // call into APZEventState::Process*Event() as well.
     if (WidgetTouchEvent* touchEvent = aEvent->AsTouchEvent()) {
-      if (touchEvent->mMessage == eTouchStart) {
+      if (touchEvent->message == NS_TOUCH_START) {
         if (gfxPrefs::TouchActionEnabled()) {
           APZCCallbackHelper::SendSetAllowedTouchBehaviorNotification(this, *touchEvent,
               aInputBlockId, mSetAllowedTouchBehaviorCallback);
@@ -987,14 +1002,9 @@ nsBaseWidget::ProcessUntransformedAPZEvent(WidgetInputEvent* aEvent,
       }
       mAPZEventState->ProcessTouchEvent(*touchEvent, aGuid, aInputBlockId, aApzResponse);
     } else if (WidgetWheelEvent* wheelEvent = aEvent->AsWheelEvent()) {
-      if (wheelEvent->mFlags.mHandledByAPZ) {
-        APZCCallbackHelper::SendSetTargetAPZCNotification(this, GetDocument(), *aEvent,
-                  aGuid, aInputBlockId);
-        if (wheelEvent->mCanTriggerSwipe) {
-          ReportSwipeStarted(aInputBlockId, wheelEvent->TriggersSwipe());
-        }
-        mAPZEventState->ProcessWheelEvent(*wheelEvent, aGuid, aInputBlockId);
-      }
+      APZCCallbackHelper::SendSetTargetAPZCNotification(this, GetDocument(), *aEvent,
+                aGuid, aInputBlockId);
+      mAPZEventState->ProcessWheelEvent(*wheelEvent, aGuid, aInputBlockId);
     }
   }
 
@@ -1048,11 +1058,13 @@ nsBaseWidget::GetDocument() const
 
 void nsBaseWidget::CreateCompositorVsyncDispatcher()
 {
-  // Parent directly listens to the vsync source whereas
-  // child process communicate via IPC
-  // Should be called AFTER gfxPlatform is initialized
-  if (XRE_IsParentProcess()) {
-    mCompositorVsyncDispatcher = new CompositorVsyncDispatcher();
+  if (gfxPrefs::HardwareVsyncEnabled()) {
+    // Parent directly listens to the vsync source whereas
+    // child process communicate via IPC
+    // Should be called AFTER gfxPlatform is initialized
+    if (XRE_IsParentProcess()) {
+      mCompositorVsyncDispatcher = new CompositorVsyncDispatcher();
+    }
   }
 }
 
@@ -1861,7 +1873,6 @@ nsIWidget::LookupRegisteredPluginWindow(uintptr_t aWindowID)
 struct VisEnumContext {
   uintptr_t parentWidget;
   const nsTArray<uintptr_t>* list;
-  bool widgetVisibilityFlag;
 };
 
 static PLDHashOperator
@@ -1874,8 +1885,9 @@ RegisteredPluginEnumerator(const void* aWindowId, nsIWidget* aWidget, void* aUse
 
   if (!aWidget->Destroyed()) {
     VisEnumContext* pctx = static_cast<VisEnumContext*>(aUserArg);
-    if ((uintptr_t)aWidget->GetParent() == pctx->parentWidget) {
-      aWidget->Show(pctx->list->Contains((uintptr_t)aWindowId));
+    if ((uintptr_t)aWidget->GetParent() == pctx->parentWidget &&
+        !pctx->list->Contains((uintptr_t)aWindowId)) {
+      aWidget->Show(false);
     }
   }
   return PLDHashOperator::PL_DHASH_NEXT;
@@ -1885,7 +1897,7 @@ RegisteredPluginEnumerator(const void* aWindowId, nsIWidget* aWidget, void* aUse
 // static
 void
 nsIWidget::UpdateRegisteredPluginWindowVisibility(uintptr_t aOwnerWidget,
-                                                  nsTArray<uintptr_t>& aPluginIds)
+                                                  nsTArray<uintptr_t>& aVisibleList)
 {
 #if !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
   NS_NOTREACHED("nsBaseWidget::UpdateRegisteredPluginWindowVisibility not implemented!");
@@ -1896,7 +1908,7 @@ nsIWidget::UpdateRegisteredPluginWindowVisibility(uintptr_t aOwnerWidget,
   // Our visible list is associated with a compositor which is associated with
   // a specific top level window. We hand the parent widget in here so the
   // enumerator can skip the plugin widgets owned by other top level windows.
-  VisEnumContext ctx = { aOwnerWidget, &aPluginIds };
+  VisEnumContext ctx = { aOwnerWidget, &aVisibleList };
   sPluginWidgetList->EnumerateRead(RegisteredPluginEnumerator, static_cast<void*>(&ctx));
 #endif
 }
@@ -2620,41 +2632,41 @@ nsBaseWidget::debug_GuiEventToString(WidgetGUIEvent* aGuiEvent)
 #define _ASSIGN_eventName(_value,_name)\
 case _value: eventName.AssignLiteral(_name) ; break
 
-  switch(aGuiEvent->mMessage)
+  switch(aGuiEvent->message)
   {
-    _ASSIGN_eventName(eBlur,"eBlur");
-    _ASSIGN_eventName(eLegacyDragGesture,"eLegacyDragGesture");
-    _ASSIGN_eventName(eDrop,"eDrop");
-    _ASSIGN_eventName(eDragEnter,"eDragEnter");
-    _ASSIGN_eventName(eDragExit,"eDragExit");
-    _ASSIGN_eventName(eDragOver,"eDragOver");
-    _ASSIGN_eventName(eEditorInput,"eEditorInput");
-    _ASSIGN_eventName(eFocus,"eFocus");
-    _ASSIGN_eventName(eFormSelect,"eFormSelect");
-    _ASSIGN_eventName(eFormChange,"eFormChange");
-    _ASSIGN_eventName(eFormReset,"eFormReset");
-    _ASSIGN_eventName(eFormSubmit,"eFormSubmit");
-    _ASSIGN_eventName(eImageAbort,"eImageAbort");
-    _ASSIGN_eventName(eLoadError,"eLoadError");
-    _ASSIGN_eventName(eKeyDown,"eKeyDown");
-    _ASSIGN_eventName(eKeyPress,"eKeyPress");
-    _ASSIGN_eventName(eKeyUp,"eKeyUp");
-    _ASSIGN_eventName(eMouseEnterIntoWidget,"eMouseEnterIntoWidget");
-    _ASSIGN_eventName(eMouseExitFromWidget,"eMouseExitFromWidget");
-    _ASSIGN_eventName(eMouseDown,"eMouseDown");
-    _ASSIGN_eventName(eMouseUp,"eMouseUp");
-    _ASSIGN_eventName(eMouseClick,"eMouseClick");
-    _ASSIGN_eventName(eMouseDoubleClick,"eMouseDoubleClick");
-    _ASSIGN_eventName(eMouseMove,"eMouseMove");
-    _ASSIGN_eventName(eLoad,"eLoad");
-    _ASSIGN_eventName(ePopState,"ePopState");
-    _ASSIGN_eventName(eBeforeScriptExecute,"eBeforeScriptExecute");
-    _ASSIGN_eventName(eAfterScriptExecute,"eAfterScriptExecute");
-    _ASSIGN_eventName(eUnload,"eUnload");
-    _ASSIGN_eventName(eHashChange,"eHashChange");
-    _ASSIGN_eventName(eReadyStateChange,"eReadyStateChange");
-    _ASSIGN_eventName(eXULBroadcast, "eXULBroadcast");
-    _ASSIGN_eventName(eXULCommandUpdate, "eXULCommandUpdate");
+    _ASSIGN_eventName(NS_BLUR_CONTENT,"NS_BLUR_CONTENT");
+    _ASSIGN_eventName(NS_DRAGDROP_GESTURE,"NS_DND_GESTURE");
+    _ASSIGN_eventName(NS_DRAGDROP_DROP,"NS_DND_DROP");
+    _ASSIGN_eventName(NS_DRAGDROP_ENTER,"NS_DND_ENTER");
+    _ASSIGN_eventName(NS_DRAGDROP_EXIT,"NS_DND_EXIT");
+    _ASSIGN_eventName(NS_DRAGDROP_OVER,"NS_DND_OVER");
+    _ASSIGN_eventName(NS_EDITOR_INPUT,"NS_EDITOR_INPUT");
+    _ASSIGN_eventName(NS_FOCUS_CONTENT,"NS_FOCUS_CONTENT");
+    _ASSIGN_eventName(NS_FORM_SELECTED,"NS_FORM_SELECTED");
+    _ASSIGN_eventName(NS_FORM_CHANGE,"NS_FORM_CHANGE");
+    _ASSIGN_eventName(NS_FORM_RESET,"NS_FORM_RESET");
+    _ASSIGN_eventName(NS_FORM_SUBMIT,"NS_FORM_SUBMIT");
+    _ASSIGN_eventName(NS_IMAGE_ABORT,"NS_IMAGE_ABORT");
+    _ASSIGN_eventName(NS_LOAD_ERROR,"NS_LOAD_ERROR");
+    _ASSIGN_eventName(NS_KEY_DOWN,"NS_KEY_DOWN");
+    _ASSIGN_eventName(NS_KEY_PRESS,"NS_KEY_PRESS");
+    _ASSIGN_eventName(NS_KEY_UP,"NS_KEY_UP");
+    _ASSIGN_eventName(NS_MOUSE_ENTER_WIDGET,"NS_MOUSE_ENTER_WIDGET");
+    _ASSIGN_eventName(NS_MOUSE_EXIT_WIDGET,"NS_MOUSE_EXIT_WIDGET");
+    _ASSIGN_eventName(NS_MOUSE_BUTTON_DOWN,"NS_MOUSE_BUTTON_DOWN");
+    _ASSIGN_eventName(NS_MOUSE_BUTTON_UP,"NS_MOUSE_BUTTON_UP");
+    _ASSIGN_eventName(NS_MOUSE_CLICK,"NS_MOUSE_CLICK");
+    _ASSIGN_eventName(NS_MOUSE_DOUBLECLICK,"NS_MOUSE_DBLCLICK");
+    _ASSIGN_eventName(NS_MOUSE_MOVE,"NS_MOUSE_MOVE");
+    _ASSIGN_eventName(NS_LOAD,"NS_LOAD");
+    _ASSIGN_eventName(NS_POPSTATE,"NS_POPSTATE");
+    _ASSIGN_eventName(NS_BEFORE_SCRIPT_EXECUTE,"NS_BEFORE_SCRIPT_EXECUTE");
+    _ASSIGN_eventName(NS_AFTER_SCRIPT_EXECUTE,"NS_AFTER_SCRIPT_EXECUTE");
+    _ASSIGN_eventName(NS_PAGE_UNLOAD,"NS_PAGE_UNLOAD");
+    _ASSIGN_eventName(NS_HASHCHANGE,"NS_HASHCHANGE");
+    _ASSIGN_eventName(NS_READYSTATECHANGE,"NS_READYSTATECHANGE");
+    _ASSIGN_eventName(NS_XUL_BROADCAST, "NS_XUL_BROADCAST");
+    _ASSIGN_eventName(NS_XUL_COMMAND_UPDATE, "NS_XUL_COMMAND_UPDATE");
 
 #undef _ASSIGN_eventName
 
@@ -2662,7 +2674,7 @@ case _value: eventName.AssignLiteral(_name) ; break
     {
       char buf[32];
 
-      snprintf_literal(buf,"UNKNOWN: %d",aGuiEvent->mMessage);
+      snprintf_literal(buf,"UNKNOWN: %d",aGuiEvent->message);
 
       CopyASCIItoUTF16(buf, eventName);
     }
@@ -2794,13 +2806,15 @@ nsBaseWidget::debug_DumpEvent(FILE *                aFileOut,
                               const nsAutoCString & aWidgetName,
                               int32_t               aWindowID)
 {
-  if (aGuiEvent->mMessage == eMouseMove) {
+  if (aGuiEvent->message == NS_MOUSE_MOVE)
+  {
     if (!debug_GetCachedBoolPref("nglayout.debug.motion_event_dumping"))
       return;
   }
 
-  if (aGuiEvent->mMessage == eMouseEnterIntoWidget ||
-      aGuiEvent->mMessage == eMouseExitFromWidget) {
+  if (aGuiEvent->message == NS_MOUSE_ENTER_WIDGET ||
+      aGuiEvent->message == NS_MOUSE_EXIT_WIDGET)
+  {
     if (!debug_GetCachedBoolPref("nglayout.debug.crossing_event_dumping"))
       return;
   }

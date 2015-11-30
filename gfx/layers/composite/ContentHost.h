@@ -112,7 +112,6 @@ public:
   explicit ContentHostTexture(const TextureInfo& aTextureInfo)
     : ContentHostBase(aTextureInfo)
     , mLocked(false)
-    , mReceivedNewHost(false)
   { }
 
   virtual void Composite(LayerComposite* aLayer,
@@ -172,7 +171,6 @@ protected:
   CompositableTextureSourceRef mTextureSource;
   CompositableTextureSourceRef mTextureSourceOnWhite;
   bool mLocked;
-  bool mReceivedNewHost;
 };
 
 /**

@@ -218,13 +218,6 @@ ViewSourceChrome.prototype = {
   },
 
   /**
-   * Getter for the nsIWebNavigation of the view source browser.
-   */
-  get webNav() {
-    return this.browser.webNavigation;
-  },
-
-  /**
    * Send the browser forward in its history.
    */
   goForward() {
@@ -312,11 +305,7 @@ ViewSourceChrome.prototype = {
     // We're using the modern API, which allows us to view the
     // source of documents from out of process browsers.
     let args = window.arguments[0];
-
-    // viewPartialSource.js will take care of loading the content in partial mode.
-    if (!args.partial) {
-      this.loadViewSource(args);
-    }
+    this.loadViewSource(args);
   },
 
   /**
@@ -333,6 +322,12 @@ ViewSourceChrome.prototype = {
     //    arg[2] - Page descriptor used to load content from the cache.
     //    arg[3] - Line number to go to.
     //    arg[4] - Whether charset was forced by the user
+
+    if (aArguments[3] == "selection" ||
+        aArguments[3] == "mathml") {
+      // viewPartialSource.js will take care of loading the content.
+      return;
+    }
 
     if (aArguments[2]) {
       let pageDescriptor = aArguments[2];
@@ -698,12 +693,12 @@ ViewSourceChrome.prototype = {
   },
 };
 
-var viewSourceChrome = new ViewSourceChrome();
+let viewSourceChrome = new ViewSourceChrome();
 
 /**
  * PrintUtils uses this to make Print Preview work.
  */
-var PrintPreviewListener = {
+let PrintPreviewListener = {
   _ppBrowser: null,
 
   getPrintPreviewBrowser() {

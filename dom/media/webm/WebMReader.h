@@ -8,10 +8,8 @@
 
 #include <stdint.h>
 
-#include "FlushableTaskQueue.h"
 #include "MediaDecoderReader.h"
 #include "MediaResource.h"
-#include "PlatformDecoderModule.h"
 #include "nsAutoRef.h"
 #include "nestegg/nestegg.h"
 
@@ -26,10 +24,6 @@ namespace mozilla {
 static const unsigned NS_PER_USEC = 1000;
 static const double NS_PER_S = 1e9;
 
-typedef MediaDataDecoder::InitPromise InitPromise;
-typedef TrackInfo::TrackType TrackType;
-typedef MediaDataDecoder::DecoderFailureReason DecoderFailureReason;
-
 class WebMBufferedState;
 class WebMPacketQueue;
 
@@ -39,7 +33,7 @@ class WebMReader;
 class WebMVideoDecoder
 {
 public:
-  virtual nsRefPtr<InitPromise> Init(unsigned int aWidth = 0, unsigned int aHeight = 0) = 0;
+  virtual nsresult Init(unsigned int aWidth = 0, unsigned int aHeight = 0) = 0;
   virtual nsresult Flush() { return NS_OK; }
   virtual void Shutdown() = 0;
   virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
@@ -52,7 +46,7 @@ public:
 class WebMAudioDecoder
 {
 public:
-  virtual nsRefPtr<InitPromise> Init() = 0;
+  virtual nsresult Init() = 0;
   virtual void Shutdown() = 0;
   virtual nsresult ResetDecode() = 0;
   virtual nsresult DecodeHeader(const unsigned char* aData, size_t aLength) = 0;
@@ -92,12 +86,13 @@ public:
     return mHasVideo;
   }
 
-  virtual nsRefPtr<MetadataPromise> AsyncReadMetadata() override;
-
+  virtual nsresult ReadMetadata(MediaInfo* aInfo,
+                                MetadataTags** aTags) override;
   virtual nsRefPtr<SeekPromise>
   Seek(int64_t aTime, int64_t aEndTime) override;
 
   virtual media::TimeIntervals GetBuffered() override;
+  virtual int64_t GetEvictionOffset(double aTime) override;
 
   virtual bool IsMediaSeekable() override;
 
@@ -126,6 +121,7 @@ public:
   uint64_t GetCodecDelay() { return mCodecDelay; }
 
 protected:
+
   virtual void NotifyDataArrivedInternal(uint32_t aLength, int64_t aOffset) override;
 
   // Decode a nestegg packet of audio data. Push the audio data on the
@@ -148,8 +144,6 @@ protected:
   bool ShouldSkipVideoFrame(int64_t aTimeThreshold);
 
 private:
-  nsresult RetrieveWebMMetadata(MediaInfo* aInfo);
-
   // Get the timestamp of keyframe greater than aTimeThreshold.
   int64_t GetNextKeyframeTime(int64_t aTimeThreshold);
   // Push the packets into aOutput which's timestamp is less than aEndTime.
@@ -166,8 +160,6 @@ private:
 
   nsAutoPtr<WebMAudioDecoder> mAudioDecoder;
   nsAutoPtr<WebMVideoDecoder> mVideoDecoder;
-
-  nsTArray<nsRefPtr<InitPromise>> mInitPromises;
 
   // Queue of video and audio packets that have been read but not decoded. These
   // must only be accessed from the decode thread.

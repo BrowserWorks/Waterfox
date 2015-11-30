@@ -82,6 +82,13 @@ MarkExactStackRoots(JSRuntime* rt, JSTracer* trc)
     MarkExactStackRootsAcrossTypes<PerThreadData*>(&rt->mainThread, trc);
 }
 
+void
+JS::AutoIdArray::trace(JSTracer* trc)
+{
+    MOZ_ASSERT(tag_ == IDARRAY);
+    TraceRange(trc, idArray->length, idArray->begin(), "JSAutoIdArray.idArray");
+}
+
 inline void
 AutoGCRooter::trace(JSTracer* trc)
 {
@@ -89,6 +96,12 @@ AutoGCRooter::trace(JSTracer* trc)
       case PARSER:
         frontend::MarkParser(trc, this);
         return;
+
+      case IDARRAY: {
+        JSIdArray* ida = static_cast<AutoIdArray*>(this)->idArray;
+        TraceRange(trc, ida->length, ida->begin(), "JS::AutoIdArray.idArray");
+        return;
+      }
 
       case VALVECTOR: {
         AutoValueVector::VectorImpl& vector = static_cast<AutoValueVector*>(this)->vector;
@@ -108,6 +121,12 @@ AutoGCRooter::trace(JSTracer* trc)
         return;
       }
 
+      case NAMEVECTOR: {
+        AutoNameVector::VectorImpl& vector = static_cast<AutoNameVector*>(this)->vector;
+        TraceRootRange(trc, vector.length(), vector.begin(), "js::AutoNameVector.vector");
+        return;
+      }
+
       case VALARRAY: {
         /*
          * We don't know the template size parameter, but we can safely treat it
@@ -115,6 +134,12 @@ AutoGCRooter::trace(JSTracer* trc)
          */
         AutoValueArray<1>* array = static_cast<AutoValueArray<1>*>(this);
         TraceRootRange(trc, array->length(), array->begin(), "js::AutoValueArray");
+        return;
+      }
+
+      case SCRIPTVECTOR: {
+        AutoScriptVector::VectorImpl& vector = static_cast<AutoScriptVector*>(this)->vector;
+        TraceRootRange(trc, vector.length(), vector.begin(), "js::AutoScriptVector.vector");
         return;
       }
 
@@ -145,6 +170,10 @@ AutoGCRooter::trace(JSTracer* trc)
             TraceManuallyBarrieredEdge(trc, &p->get(), "js::AutoWrapperVector.vector");
         return;
       }
+
+      case JSONPARSER:
+        static_cast<js::JSONParserBase*>(this)->trace(trc);
+        return;
 
       case CUSTOM:
         static_cast<JS::CustomAutoRooter*>(this)->trace(trc);
@@ -291,6 +320,18 @@ js::gc::GCRuntime::markRuntime(JSTracer* trc, TraceOrMarkRuntime traceOrMark)
         MarkPersistentRootedChains(trc);
     }
 
+    if (rt->asyncStackForNewActivations)
+        TraceRoot(trc, &rt->asyncStackForNewActivations, "asyncStackForNewActivations");
+
+    if (rt->asyncCauseForNewActivations)
+        TraceRoot(trc, &rt->asyncCauseForNewActivations, "asyncCauseForNewActivations");
+
+    if (rt->scriptAndCountsVector) {
+        ScriptAndCountsVector& vec = *rt->scriptAndCountsVector;
+        for (size_t i = 0; i < vec.length(); i++)
+            TraceRoot(trc, &vec[i].script, "scriptAndCountsVector");
+    }
+
     if (!rt->isBeingDestroyed() && !rt->isHeapMinorCollecting()) {
         gcstats::AutoPhase ap(stats, gcstats::PHASE_MARK_RUNTIME_DATA);
 
@@ -307,6 +348,22 @@ js::gc::GCRuntime::markRuntime(JSTracer* trc, TraceOrMarkRuntime traceOrMark)
 
     for (ContextIter acx(rt); !acx.done(); acx.next())
         acx->mark(trc);
+
+    for (ZonesIter zone(rt, SkipAtoms); !zone.done(); zone.next()) {
+        if (traceOrMark == MarkRuntime && !zone->isCollecting())
+            continue;
+
+        /* Do not discard scripts with counts while profiling. */
+        if (rt->profilingScripts && !rt->isHeapMinorCollecting()) {
+            for (ZoneCellIterUnderGC i(zone, AllocKind::SCRIPT); !i.done(); i.next()) {
+                JSScript* script = i.get<JSScript>();
+                if (script->hasScriptCounts()) {
+                    TraceRoot(trc, &script, "profilingScripts");
+                    MOZ_ASSERT(script == i.get<JSScript>());
+                }
+            }
+        }
+    }
 
     for (CompartmentsIter c(rt, SkipAtoms); !c.done(); c.next())
         c->traceRoots(trc, traceOrMark);

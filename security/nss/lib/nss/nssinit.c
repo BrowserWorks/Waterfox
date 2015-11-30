@@ -1230,7 +1230,8 @@ NSS_IsInitialized(void)
 }
 	
 
-extern const char __nss_base_version[];
+extern const char __nss_base_rcsid[];
+extern const char __nss_base_sccsid[];
 
 PRBool
 NSS_VersionCheck(const char *importedVersion)
@@ -1248,7 +1249,7 @@ NSS_VersionCheck(const char *importedVersion)
     const char *ptr = importedVersion;
     volatile char c; /* force a reference that won't get optimized away */
 
-    c = __nss_base_version[0];
+    c = __nss_base_rcsid[0] + __nss_base_sccsid[0]; 
 
     while (isdigit(*ptr)) {
         vmajor = 10 * vmajor + *ptr - '0';

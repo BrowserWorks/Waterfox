@@ -8,7 +8,6 @@
 
 #include "nsTArrayForwardDeclare.h"
 #include "gfxPlatform.h"
-#include "mozilla/LookAndFeel.h"
 
 namespace mozilla {
 namespace gfx {
@@ -38,7 +37,6 @@ public:
     gfxFontGroup*
     CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
                     const gfxFontStyle *aStyle,
-                    gfxTextPerfMetrics* aTextPerf,
                     gfxUserFontSet *aUserFontSet) override;
 
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
@@ -65,14 +63,6 @@ public:
     virtual void GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh,
                                         int32_t aRunScript,
                                         nsTArray<const char*>& aFontList) override;
-
-    // lookup the system font for a particular system font type and set
-    // the name and style characteristics
-    static void
-    LookupSystemFont(mozilla::LookAndFeel::FontID aSystemFontID,
-                     nsAString& aSystemFontName,
-                     gfxFontStyle &aFontStyle,
-                     float aDevPixPerCSSPixel);
 
     virtual bool CanRenderContentToDataSurface() const override {
       return true;

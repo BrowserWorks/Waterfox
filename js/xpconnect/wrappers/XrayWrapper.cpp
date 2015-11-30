@@ -199,13 +199,13 @@ ReportWrapperDenial(JSContext* cx, HandleId id, WrapperDenialType type, const ch
     if (!propertyName.init(cx, id))
         return false;
     AutoFilename filename;
-    unsigned line = 0, column = 0;
-    DescribeScriptedCaller(cx, &filename, &line, &column);
+    unsigned line = 0;
+    DescribeScriptedCaller(cx, &filename, &line);
 
     // Warn to the terminal for the logs.
-    NS_WARNING(nsPrintfCString("Silently denied access to property |%s|: %s (@%s:%u:%u)",
+    NS_WARNING(nsPrintfCString("Silently denied access to property |%s|: %s (@%s:%u)",
                                NS_LossyConvertUTF16toASCII(propertyName).get(), reason,
-                               filename.get(), line, column).get());
+                               filename.get(), line).get());
 
     // If this isn't the first warning on this topic for this global, we've
     // already bailed out in opt builds. Now that the NS_WARNING is done, bail
@@ -252,7 +252,7 @@ ReportWrapperDenial(JSContext* cx, HandleId id, WrapperDenialType type, const ch
     nsresult rv = errorObject->InitWithWindowID(NS_ConvertASCIItoUTF16(errorMessage.ref()),
                                                 filenameStr,
                                                 EmptyString(),
-                                                line, column,
+                                                line, 0,
                                                 nsIScriptError::warningFlag,
                                                 "XPConnect",
                                                 windowId);
@@ -2092,18 +2092,13 @@ XrayWrapper<Base, Traits>::delete_(JSContext* cx, HandleObject wrapper,
 template <typename Base, typename Traits>
 bool
 XrayWrapper<Base, Traits>::get(JSContext* cx, HandleObject wrapper,
-                               HandleValue receiver, HandleId id,
+                               HandleObject receiver, HandleId id,
                                MutableHandleValue vp) const
 {
     // Skip our Base if it isn't already ProxyHandler.
     // NB: None of the functions we call are prepared for the receiver not
     // being the wrapper, so ignore the receiver here.
-    RootedValue thisv(cx);
-    if (Traits::HasPrototype)
-      thisv = receiver;
-    else
-      thisv.setObject(*wrapper);
-    return js::BaseProxyHandler::get(cx, wrapper, thisv, id, vp);
+    return js::BaseProxyHandler::get(cx, wrapper, Traits::HasPrototype ? receiver : wrapper, id, vp);
 }
 
 template <typename Base, typename Traits>

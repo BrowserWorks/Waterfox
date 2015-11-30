@@ -11,7 +11,7 @@ const { Ci } = require("chrome");
 const { dispatcher } = require("../util/dispatcher");
 const { add, remove, iterator } = require("../lang/weak-set");
 
-var getTargetWindow = dispatcher("getTargetWindow");
+let getTargetWindow = dispatcher("getTargetWindow");
 
 getTargetWindow.define(function (target) {
   if (target instanceof Ci.nsIDOMWindow)
@@ -24,10 +24,10 @@ getTargetWindow.define(function (target) {
 
 exports.getTargetWindow = getTargetWindow;
 
-var attachTo = dispatcher("attachTo");
+let attachTo = dispatcher("attachTo");
 exports.attachTo = attachTo;
 
-var detachFrom = dispatcher("detatchFrom");
+let detachFrom = dispatcher("detatchFrom");
 exports.detachFrom = detachFrom;
 
 function attach(modification, target) {

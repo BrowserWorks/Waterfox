@@ -44,7 +44,7 @@ PresentationChild::ActorDestroy(ActorDestroyReason aWhy)
 }
 
 PPresentationRequestChild*
-PresentationChild::AllocPPresentationRequestChild(const PresentationIPCRequest& aRequest)
+PresentationChild::AllocPPresentationRequestChild(const PresentationRequest& aRequest)
 {
   NS_NOTREACHED("We should never be manually allocating PPresentationRequestChild actors");
   return nullptr;
@@ -82,16 +82,6 @@ PresentationChild::RecvNotifyMessage(const nsString& aSessionId,
 {
   if (mService) {
     NS_WARN_IF(NS_FAILED(mService->NotifyMessage(aSessionId, aData)));
-  }
-  return true;
-}
-
-bool
-PresentationChild::RecvNotifySessionConnect(const uint64_t& aWindowId,
-                                            const nsString& aSessionId)
-{
-  if (mService) {
-    NS_WARN_IF(NS_FAILED(mService->NotifySessionConnect(aWindowId, aSessionId)));
   }
   return true;
 }

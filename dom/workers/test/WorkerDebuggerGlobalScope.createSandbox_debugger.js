@@ -2,8 +2,8 @@
 
 const SANDBOX_URL = "WorkerDebuggerGlobalScope.createSandbox_sandbox.js";
 
-var prototype = {
+let prototype = {
   self: this,
 };
-var sandbox = createSandbox(SANDBOX_URL, prototype);
+let sandbox = createSandbox(SANDBOX_URL, prototype);
 loadSubScript(SANDBOX_URL, sandbox);

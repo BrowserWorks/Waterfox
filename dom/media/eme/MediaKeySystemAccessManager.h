@@ -30,14 +30,14 @@ public:
 
   void Request(DetailedPromise* aPromise,
                const nsAString& aKeySystem,
-               const Sequence<MediaKeySystemConfiguration>& aConfig);
+               const Optional<Sequence<MediaKeySystemOptions>>& aOptions);
 
   void Shutdown();
 
   struct PendingRequest {
     PendingRequest(DetailedPromise* aPromise,
                    const nsAString& aKeySystem,
-                   const Sequence<MediaKeySystemConfiguration>& aConfig,
+                   const Sequence<MediaKeySystemOptions>& aOptions,
                    nsITimer* aTimer);
     PendingRequest(const PendingRequest& aOther);
     ~PendingRequest();
@@ -46,7 +46,7 @@ public:
 
     nsRefPtr<DetailedPromise> mPromise;
     const nsString mKeySystem;
-    const Sequence<MediaKeySystemConfiguration> mConfigs;
+    const Sequence<MediaKeySystemOptions> mOptions;
     nsCOMPtr<nsITimer> mTimer;
   };
 
@@ -59,7 +59,7 @@ private:
 
   void Request(DetailedPromise* aPromise,
                const nsAString& aKeySystem,
-               const Sequence<MediaKeySystemConfiguration>& aConfig,
+               const Sequence<MediaKeySystemOptions>& aOptions,
                RequestType aType);
 
   ~MediaKeySystemAccessManager();
@@ -68,7 +68,7 @@ private:
 
   bool AwaitInstall(DetailedPromise* aPromise,
                     const nsAString& aKeySystem,
-                    const Sequence<MediaKeySystemConfiguration>& aConfig);
+                    const Sequence<MediaKeySystemOptions>& aOptions);
 
   void RetryRequest(PendingRequest& aRequest);
 

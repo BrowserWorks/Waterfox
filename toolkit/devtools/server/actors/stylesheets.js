@@ -4,15 +4,15 @@
 
 "use strict";
 
-var { components, Cc, Ci, Cu } = require("chrome");
-var Services = require("Services");
+let { components, Cc, Ci, Cu } = require("chrome");
+let Services = require("Services");
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
-const promise = require("promise");
+const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const events = require("sdk/event/core");
 const protocol = require("devtools/server/protocol");
 const {Arg, Option, method, RetVal, types} = protocol;
@@ -23,19 +23,19 @@ const {SourceMapConsumer} = require("source-map");
 
 loader.lazyGetter(this, "CssLogic", () => require("devtools/styleinspector/css-logic").CssLogic);
 
-var TRANSITION_CLASS = "moz-styleeditor-transitioning";
-var TRANSITION_DURATION_MS = 500;
-var TRANSITION_BUFFER_MS = 1000;
-var TRANSITION_RULE_SELECTOR =
+let TRANSITION_CLASS = "moz-styleeditor-transitioning";
+let TRANSITION_DURATION_MS = 500;
+let TRANSITION_BUFFER_MS = 1000;
+let TRANSITION_RULE_SELECTOR =
 ".moz-styleeditor-transitioning:root, .moz-styleeditor-transitioning:root *";
-var TRANSITION_RULE = TRANSITION_RULE_SELECTOR + " {\
+let TRANSITION_RULE = TRANSITION_RULE_SELECTOR + " {\
 transition-duration: " + TRANSITION_DURATION_MS + "ms !important; \
 transition-delay: 0ms !important;\
 transition-timing-function: ease-out !important;\
 transition-property: all !important;\
 }";
 
-var LOAD_ERROR = "error-load";
+let LOAD_ERROR = "error-load";
 
 types.addActorType("stylesheet");
 types.addActorType("originalsource");
@@ -44,7 +44,7 @@ types.addActorType("originalsource");
  * Creates a StyleSheetsActor. StyleSheetsActor provides remote access to the
  * stylesheets of a document.
  */
-var StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
+let StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
   typeName: "stylesheets",
 
   /**
@@ -240,7 +240,7 @@ var StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
 /**
  * The corresponding Front object for the StyleSheetsActor.
  */
-var StyleSheetsFront = protocol.FrontClass(StyleSheetsActor, {
+let StyleSheetsFront = protocol.FrontClass(StyleSheetsActor, {
   initialize: function(client, tabForm) {
     protocol.Front.prototype.initialize.call(this, client);
     this.actorID = tabForm.styleSheetsActor;
@@ -252,7 +252,7 @@ var StyleSheetsFront = protocol.FrontClass(StyleSheetsActor, {
  * A MediaRuleActor lives on the server and provides access to properties
  * of a DOM @media rule and emits events when it changes.
  */
-var MediaRuleActor = protocol.ActorClass({
+let MediaRuleActor = protocol.ActorClass({
   typeName: "mediarule",
 
   events: {
@@ -331,7 +331,7 @@ var MediaRuleActor = protocol.ActorClass({
 /**
  * Cooresponding client-side front for a MediaRuleActor.
  */
-var MediaRuleFront = protocol.FrontClass(MediaRuleActor, {
+let MediaRuleFront = protocol.FrontClass(MediaRuleActor, {
   initialize: function(client, form) {
     protocol.Front.prototype.initialize.call(this, client, form);
 
@@ -375,7 +375,7 @@ var MediaRuleFront = protocol.FrontClass(MediaRuleActor, {
 /**
  * A StyleSheetActor represents a stylesheet on the server.
  */
-var StyleSheetActor = protocol.ActorClass({
+let StyleSheetActor = protocol.ActorClass({
   typeName: "stylesheet",
 
   events: {
@@ -933,6 +933,53 @@ var StyleSheetActor = protocol.ActorClass({
 })
 
 /**
+ * Find the line/column for a rule.
+ * This is like DOMUtils.getRule[Line|Column] except for inline <style> sheets,
+ * the line number returned here is relative to the <style> tag rather than the
+ * containing HTML document (which is what DOMUtils does).
+ * This is hacky, but we don't know of a better implementation right now.
+ */
+const getRuleLocation = exports.getRuleLocation = function(rule) {
+  let reply = {
+    line: DOMUtils.getRuleLine(rule),
+    column: DOMUtils.getRuleColumn(rule)
+  };
+
+  let sheet = rule.parentStyleSheet;
+  if (sheet.ownerNode && sheet.ownerNode.localName === "style") {
+     // For inline sheets, the line is relative to HTML not the stylesheet, so
+     // Get the location of the first { to know the line num of the first rule,
+     // relative to this sheet, to get the offset
+     let text = sheet.ownerNode.textContent;
+     // Hacky for now, because this will fail if { appears in a comment before
+     // but better than nothing, and faster than parsing the whole text
+     let start = text.substring(0, text.indexOf("{"));
+     let relativeStartLine = start.split("\n").length;
+
+     let absoluteStartLine;
+     let i = 0;
+     while (absoluteStartLine == null) {
+       let irule = sheet.cssRules[i];
+       if (irule instanceof Ci.nsIDOMCSSStyleRule) {
+         absoluteStartLine = DOMUtils.getRuleLine(irule);
+       }
+       else if (irule == null) {
+         break;
+       }
+
+       i++;
+     }
+
+     if (absoluteStartLine != null) {
+       let offset = absoluteStartLine - relativeStartLine;
+       reply.line -= offset;
+     }
+  }
+
+  return reply;
+};
+
+/**
  * StyleSheetFront is the client-side counterpart to a StyleSheetActor.
  */
 var StyleSheetFront = protocol.FrontClass(StyleSheetActor, {
@@ -988,7 +1035,7 @@ var StyleSheetFront = protocol.FrontClass(StyleSheetActor, {
  * Actor representing an original source of a style sheet that was specified
  * in a source map.
  */
-var OriginalSourceActor = protocol.ActorClass({
+let OriginalSourceActor = protocol.ActorClass({
   typeName: "originalsource",
 
   initialize: function(aUrl, aSourceMap, aParentActor) {
@@ -1046,7 +1093,7 @@ var OriginalSourceActor = protocol.ActorClass({
 /**
  * The client-side counterpart for an OriginalSourceActor.
  */
-var OriginalSourceFront = protocol.FrontClass(OriginalSourceActor, {
+let OriginalSourceFront = protocol.FrontClass(OriginalSourceActor, {
   initialize: function(client, form) {
     protocol.Front.prototype.initialize.call(this, client, form);
 

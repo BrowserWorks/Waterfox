@@ -732,9 +732,8 @@ public:
     static void Shutdown(); // platform must call this to release the languageAtomService
 
     gfxFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
-                 const gfxFontStyle* aStyle,
-                 gfxTextPerfMetrics* aTextPerf,
-                 gfxUserFontSet* aUserFontSet = nullptr);
+                 const gfxFontStyle *aStyle,
+                 gfxUserFontSet *aUserFontSet = nullptr);
 
     virtual ~gfxFontGroup();
 
@@ -845,6 +844,7 @@ public:
 
     // used when logging text performance
     gfxTextPerfMetrics *GetTextPerfMetrics() { return mTextPerf; }
+    void SetTextPerfMetrics(gfxTextPerfMetrics *aTextPerf) { mTextPerf = aTextPerf; }
 
     // This will call UpdateUserFonts() if the user font set is changed.
     void SetUserFontSet(gfxUserFontSet *aUserFontSet);

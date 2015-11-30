@@ -754,11 +754,11 @@ nsViewManager::DispatchEvent(WidgetGUIEvent *aEvent,
        // Ignore mouse exit and enter (we'll get moves if the user
        // is really moving the mouse) since we get them when we
        // create and destroy widgets.
-       mouseEvent->mMessage != eMouseExitFromWidget &&
-       mouseEvent->mMessage != eMouseEnterIntoWidget) ||
+       mouseEvent->message != NS_MOUSE_EXIT_WIDGET &&
+       mouseEvent->message != NS_MOUSE_ENTER_WIDGET) ||
       aEvent->HasKeyEventMessage() ||
       aEvent->HasIMEEventMessage() ||
-      aEvent->mMessage == ePluginInputEvent) {
+      aEvent->message == NS_PLUGIN_INPUT_EVENT) {
     gLastUserEventTime = PR_IntervalToMicroseconds(PR_IntervalNow());
   }
 

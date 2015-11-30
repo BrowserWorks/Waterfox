@@ -37,7 +37,7 @@ function findGraphNodeParent (el) {
  * - `_animated`
  * - `_delayed`
  */
-var ToggleMixin = {
+let ToggleMixin = {
 
   bindToggle: function () {
     this._onToggle = this._onToggle.bind(this);

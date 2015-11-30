@@ -486,10 +486,7 @@ HTMLTextFieldAccessible::IsWidget() const
 Accessible*
 HTMLTextFieldAccessible::ContainerWidget() const
 {
-  if (!mParent || mParent->Role() != roles::AUTOCOMPLETE) {
-    return nullptr;
-  }
-  return mParent;
+  return mParent && mParent->Role() == roles::AUTOCOMPLETE ? mParent : nullptr;
 }
 
 

@@ -5,15 +5,15 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-var gTestTab;
-var gContentAPI;
-var gContentWindow;
+let gTestTab;
+let gContentAPI;
+let gContentWindow;
 
 function test() {
   UITourTest();
 }
 
-var tests = [
+let tests = [
   taskify(function* test_openPreferences() {
     let promiseTabOpened = BrowserTestUtils.waitForNewTab(gBrowser, "about:preferences");
     gContentAPI.openPreferences();

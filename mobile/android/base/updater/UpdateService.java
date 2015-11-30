@@ -30,7 +30,6 @@ import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Environment;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.net.ConnectivityManagerCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
@@ -78,7 +77,7 @@ public class UpdateService extends IntentService {
 
     private SharedPreferences mPrefs;
 
-    private NotificationManagerCompat mNotificationManager;
+    private NotificationManager mNotificationManager;
     private ConnectivityManager mConnectivityManager;
     private Builder mBuilder;
 
@@ -143,7 +142,7 @@ public class UpdateService extends IntentService {
         super.onCreate();
 
         mPrefs = getSharedPreferences(PREFS_NAME, 0);
-        mNotificationManager = NotificationManagerCompat.from(this);
+        mNotificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         mConnectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE))
                     .createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, PREFS_NAME);
@@ -301,19 +300,19 @@ public class UpdateService extends IntentService {
             sendCheckUpdateResult(CheckUpdateResult.AVAILABLE);
 
             // We aren't autodownloading here, so prompt to start the update
+            Notification notification = new Notification(R.drawable.ic_status_logo, null, System.currentTimeMillis());
+
             Intent notificationIntent = new Intent(UpdateServiceHelper.ACTION_DOWNLOAD_UPDATE);
             notificationIntent.setClass(this, UpdateService.class);
+
             PendingIntent contentIntent = PendingIntent.getService(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            notification.flags = Notification.FLAG_AUTO_CANCEL;
 
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-            builder.setSmallIcon(R.drawable.ic_status_logo);
-            builder.setWhen(System.currentTimeMillis());
-            builder.setAutoCancel(true);
-            builder.setContentTitle(getString(R.string.updater_start_title));
-            builder.setContentText(getString(R.string.updater_start_select));
-            builder.setContentIntent(contentIntent);
+            notification.setLatestEventInfo(this, getResources().getString(R.string.updater_start_title),
+                                            getResources().getString(R.string.updater_start_select),
+                                            contentIntent);
 
-            mNotificationManager.notify(NOTIFICATION_ID, builder.build());
+            mNotificationManager.notify(NOTIFICATION_ID, notification);
 
             return;
         }
@@ -333,22 +332,20 @@ public class UpdateService extends IntentService {
             applyUpdate(pkg);
         } else {
             // Prompt to apply the update
+            Notification notification = new Notification(R.drawable.ic_status_logo, null, System.currentTimeMillis());
 
             Intent notificationIntent = new Intent(UpdateServiceHelper.ACTION_APPLY_UPDATE);
             notificationIntent.setClass(this, UpdateService.class);
             notificationIntent.putExtra(UpdateServiceHelper.EXTRA_PACKAGE_PATH_NAME, pkg.getAbsolutePath());
+
             PendingIntent contentIntent = PendingIntent.getService(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            notification.flags = Notification.FLAG_AUTO_CANCEL;
 
+            notification.setLatestEventInfo(this, getResources().getString(R.string.updater_apply_title),
+                                            getResources().getString(R.string.updater_apply_select),
+                                            contentIntent);
 
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-            builder.setSmallIcon(R.drawable.ic_status_logo);
-            builder.setWhen(System.currentTimeMillis());
-            builder.setAutoCancel(true);
-            builder.setContentTitle(getString(R.string.updater_apply_title));
-            builder.setContentText(getString(R.string.updater_apply_select));
-            builder.setContentIntent(contentIntent);
-
-            mNotificationManager.notify(NOTIFICATION_ID, builder.build());
+            mNotificationManager.notify(NOTIFICATION_ID, notification);
         }
     }
 
@@ -478,18 +475,18 @@ public class UpdateService extends IntentService {
     }
 
     private void showDownloadFailure() {
+        Notification notification = new Notification(R.drawable.ic_status_logo, null, System.currentTimeMillis());
+
         Intent notificationIntent = new Intent(UpdateServiceHelper.ACTION_CHECK_FOR_UPDATE);
         notificationIntent.setClass(this, UpdateService.class);
+
         PendingIntent contentIntent = PendingIntent.getService(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_status_logo);
-        builder.setWhen(System.currentTimeMillis());
-        builder.setContentTitle(getString(R.string.updater_downloading_title_failed));
-        builder.setContentText(getString(R.string.updater_downloading_retry));
-        builder.setContentIntent(contentIntent);
+        notification.setLatestEventInfo(this, getResources().getString(R.string.updater_downloading_title_failed),
+                                        getResources().getString(R.string.updater_downloading_retry),
+                                        contentIntent);
 
-        mNotificationManager.notify(NOTIFICATION_ID, builder.build());
+        mNotificationManager.notify(NOTIFICATION_ID, notification);
     }
 
     private boolean deleteUpdatePackage(String path) {

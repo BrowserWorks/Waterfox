@@ -3,9 +3,9 @@
 
 "use strict";
 
-var dummyCallback = () => {};
-var mockWebSocket = new MockWebSocketChannel();
-var pushServerRequestCount = 0;
+let dummyCallback = () => {};
+let mockWebSocket = new MockWebSocketChannel();
+let pushServerRequestCount = 0;
 
 add_test(function test_initalize_missing_chanid() {
   Assert.throws(() => MozLoopPushHandler.register(null, dummyCallback, dummyCallback));
@@ -154,27 +154,28 @@ add_test(function test_retry_pushurl() {
   loopServer.registerPathHandler("/push-server-config", (request, response) => {
     // The PushHandler should retry the request for the push-server-config for
     // each of these cases without throwing an error.
+    let n = 0;
     switch (++pushServerRequestCount) {
-    case 1:
+    case ++n:
       // Non-200 response
       response.setStatusLine(null, 500, "Retry");
       response.processAsync();
       response.finish();
       break;
-    case 2:
+    case ++n:
       // missing parameter
       response.setStatusLine(null, 200, "OK");
       response.write(JSON.stringify({pushServerURI: null}));
       response.processAsync();
       response.finish();
       break;
-    case 3:
+    case ++n:
       // json parse error
       response.setStatusLine(null, 200, "OK");
       response.processAsync();
       response.finish();
       break;
-    case 4:
+    case ++n:
       response.setStatusLine(null, 200, "OK");
       response.write(JSON.stringify({pushServerURI: kServerPushUrl}));
       response.processAsync();

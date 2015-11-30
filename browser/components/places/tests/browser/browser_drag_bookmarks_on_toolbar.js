@@ -242,8 +242,8 @@ function nextTest() {
   }
 }
 
-var toolbar = document.getElementById("PersonalToolbar");
-var wasCollapsed = toolbar.collapsed;
+let toolbar = document.getElementById("PersonalToolbar");
+let wasCollapsed = toolbar.collapsed;
 
 function test() {
   waitForExplicitFinish();

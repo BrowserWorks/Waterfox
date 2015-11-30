@@ -31,9 +31,9 @@ const CHILD_SCRIPT = "resource://gre/modules/addons/Content.js";
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-var gSingleton = null;
+let gSingleton = null;
 
-var gParentMM = null;
+let gParentMM = null;
 
 
 function amManager() {

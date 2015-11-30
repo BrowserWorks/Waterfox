@@ -4,7 +4,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
 Cu.import("resource://gre/modules/devtools/event-emitter.js");
 
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
-var {
+let {
   EventManager,
   DefaultWeakMap,
   ignoreEvent,
@@ -12,7 +12,7 @@ var {
 } = ExtensionUtils;
 
 // WeakMap[Extension -> BrowserAction]
-var browserActionMap = new WeakMap();
+let browserActionMap = new WeakMap();
 
 function browserActionOf(extension)
 {
@@ -25,7 +25,7 @@ function makeWidgetId(id)
   return id.replace(/[^a-z0-9_-]/g, "_");
 }
 
-var nextActionId = 0;
+let nextActionId = 0;
 
 // Responsible for the browser_action section of the manifest as well
 // as the associated popup.
@@ -140,7 +140,6 @@ BrowserAction.prototype = {
         panel.setAttribute("flip", "slide");
         node.appendChild(panel);
 
-        const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
         let browser = document.createElementNS(XUL_NS, "browser");
         browser.setAttribute("type", "content");
         browser.setAttribute("disableglobalhistory", "true");

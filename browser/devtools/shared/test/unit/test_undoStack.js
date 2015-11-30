@@ -4,18 +4,18 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 const Cu = Components.utils;
-var {Loader} = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {});
+let {Loader} = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {});
 
-var loader = new Loader.Loader({
+let loader = new Loader.Loader({
   paths: {
     "": "resource://gre/modules/commonjs/",
     "devtools": "resource:///modules/devtools",
   },
   globals: {},
 });
-var require = Loader.Require(loader, { id: "undo-test" })
+let require = Loader.Require(loader, { id: "undo-test" })
 
-var {UndoStack} = require("devtools/shared/undo");
+let {UndoStack} = require("devtools/shared/undo");
 
 const MAX_SIZE = 5;
 

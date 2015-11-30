@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ArrayUtils.h"
-#include "mozilla/unused.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -1012,12 +1011,7 @@ static bool test_fallible()
   const unsigned numArrays = 36;
   FallibleTArray<char> arrays[numArrays];
   for (size_t i = 0; i < numArrays; i++) {
-    // SetCapacity allocates the requested capacity + a header, and we want to
-    // avoid allocating more than 128MB overall because of the size padding it
-    // will cause, which depends on allocator behavior, so use 128MB - an
-    // arbitrary size larger than the array header, so that chances are good
-    // that allocations will always be 128MB.
-    bool success = arrays[i].SetCapacity(128 * 1024 * 1024 - 1024, fallible);
+    bool success = arrays[i].SetCapacity(128 * 1024 * 1024, fallible);
     if (!success) {
       // We got our OOM.  Check that it didn't come too early.
       if (i < 8) {
@@ -1116,9 +1110,9 @@ static bool test_SetLengthAndRetainStorage_no_ctor() {
     pre t post;                                                \
     pre tauto post;                                            \
   } while (0)
-
+  
   // Setup test arrays.
-  FOR_EACH(; unused << , .SetLength(N, fallible));
+  FOR_EACH(;, .SetLength(N, fallible));
   for (int n = 0; n < N; ++n) {
     FOR_EACH(;, [n] = n);
   }

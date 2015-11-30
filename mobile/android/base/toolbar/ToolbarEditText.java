@@ -5,7 +5,6 @@
 
 package org.mozilla.gecko.toolbar;
 
-import org.mozilla.gecko.AboutPages;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.CustomEditText;
 import org.mozilla.gecko.InputMethods;
@@ -125,17 +124,7 @@ public class ToolbarEditText extends CustomEditText
 
     @Override
     public void setText(final CharSequence text, final TextView.BufferType type) {
-        final String textString = (text == null) ? "" : text.toString();
-
-        // If we're on the home or private browsing page, we don't set the "about" url.
-        final CharSequence finalText;
-        if (AboutPages.isAboutHome(textString) || AboutPages.isAboutPrivateBrowsing(textString)) {
-            finalText = "";
-        } else {
-            finalText = text;
-        }
-
-        super.setText(finalText, type);
+        super.setText(text, type);
 
         // Any autocomplete text would have been overwritten, so reset our autocomplete states.
         resetAutocompleteState();

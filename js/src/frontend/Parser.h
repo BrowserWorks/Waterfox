@@ -21,16 +21,10 @@
 #include "frontend/SyntaxParseHandler.h"
 
 namespace js {
-
-class ModuleObject;
-class StaticFunctionBoxScopeObject;
-
 namespace frontend {
 
 struct StmtInfoPC : public StmtInfoBase
 {
-    static const unsigned BlockIdLimit = 1 << ParseNode::NumBlockIdBits;
-
     StmtInfoPC*     enclosing;
     StmtInfoPC*     enclosingScope;
 
@@ -47,7 +41,6 @@ struct StmtInfoPC : public StmtInfoBase
 
     explicit StmtInfoPC(ExclusiveContext* cx)
       : StmtInfoBase(cx),
-        blockid(BlockIdLimit),
         innerBlockScopeDepth(0),
         firstDominatingLexicalInCase(0)
     {}
@@ -75,11 +68,19 @@ struct GenericParseContext
     // Function has 'return;'
     bool funHasReturnVoid:1;
 
+    // The following flags are set when parsing enters a particular region of
+    // source code, and cleared when that region is exited.
+
+    // true while we are within a with-statement in the current ParseContext
+    // chain (which stops at the top-level or an eval()
+    bool parsingWith:1;
+
     GenericParseContext(GenericParseContext* parent, SharedContext* sc)
       : parent(parent),
         sc(sc),
         funHasReturnExpr(false),
-        funHasReturnVoid(false)
+        funHasReturnVoid(false),
+        parsingWith(parent ? parent->parsingWith : false)
     {}
 };
 
@@ -96,21 +97,19 @@ GenerateBlockId(TokenStream& ts, ParseContext<ParseHandler>* pc, uint32_t& block
  * context in which it encountered the definition.
  */
 template <typename ParseHandler>
-struct MOZ_STACK_CLASS ParseContext : public GenericParseContext
+struct ParseContext : public GenericParseContext
 {
     typedef typename ParseHandler::Node Node;
     typedef typename ParseHandler::DefinitionNode DefinitionNode;
 
     uint32_t        bodyid;         /* block number of program/function body */
+    uint32_t        blockidGen;     /* preincremented block number generator */
 
     StmtInfoStack<StmtInfoPC> stmtStack;
 
     Node            maybeFunction;  /* sc->isFunctionBox, the pn where pn->pn_funbox == sc */
 
-    // If sc->isFunctionBox(), this is used to temporarily link up the
-    // FunctionBox with the JSFunction so the static scope chain may be walked
-    // without a JSScript.
-    mozilla::Maybe<JSFunction::AutoParseUsingFunctionBox> parseUsingFunctionBox;
+    const unsigned  staticLevel;    /* static compilation unit nesting level */
 
     // lastYieldOffset stores the offset of the last yield that was parsed.
     // NoYieldOffset is its initial value.
@@ -198,21 +197,22 @@ struct MOZ_STACK_CLASS ParseContext : public GenericParseContext
     void updateDecl(JSAtom* atom, Node newDecl);
 
     /*
-     * After a function body or module has been parsed, the parser generates the
-     * code's "bindings". Bindings are a data-structure, ultimately stored in
-     * the compiled JSScript, that serve three purposes:
+     * After a function body has been parsed, the parser generates the
+     * function's "bindings". Bindings are a data-structure, ultimately stored
+     * in the compiled JSScript, that serve three purposes:
      *  - After parsing, the ParseContext is destroyed and 'decls' along with
      *    it. Mostly, the emitter just uses the binding information stored in
      *    the use/def nodes, but the emitter occasionally needs 'bindings' for
      *    various scope-related queries.
      *  - Bindings provide the initial js::Shape to use when creating a dynamic
-     *    scope object (js::CallObject). This shape is used during dynamic name
-     *    lookup.
+     *    scope object (js::CallObject) for the function. This shape is used
+     *    during dynamic name lookup.
      *  - Sometimes a script's bindings are accessed at runtime to retrieve the
      *    contents of the lexical scope (e.g., from the debugger).
      */
-    bool generateBindings(ExclusiveContext* cx, TokenStream& ts, LifoAlloc& alloc,
-                          MutableHandle<Bindings> bindings) const;
+    bool generateFunctionBindings(ExclusiveContext* cx, TokenStream& ts,
+                                  LifoAlloc& alloc,
+                                  MutableHandle<Bindings> bindings) const;
 
   private:
     ParseContext**  parserPC;     /* this points to the Parser's active pc
@@ -232,7 +232,7 @@ struct MOZ_STACK_CLASS ParseContext : public GenericParseContext
                                        the same name. */
 
     // All inner functions in this context. Only filled in when parsing syntax.
-    Rooted<TraceableVector<JSFunction*>> innerFunctions;
+    AutoFunctionVector innerFunctions;
 
     // In a function context, points to a Directive struct that can be updated
     // to reflect new directives encountered in the Directive Prologue that
@@ -253,12 +253,15 @@ struct MOZ_STACK_CLASS ParseContext : public GenericParseContext
     bool            inDeclDestructuring:1;
 
     ParseContext(Parser<ParseHandler>* prs, GenericParseContext* parent,
-                 Node maybeFunction, SharedContext* sc, Directives* newDirectives,
-                 uint32_t blockScopeDepth)
+                 Node maybeFunction, SharedContext* sc,
+                 Directives* newDirectives,
+                 unsigned staticLevel, uint32_t bodyid, uint32_t blockScopeDepth)
       : GenericParseContext(parent, sc),
         bodyid(0),           // initialized in init()
+        blockidGen(bodyid),  // used to set |bodyid| and subsequently incremented in init()
         stmtStack(prs->context),
         maybeFunction(maybeFunction),
+        staticLevel(staticLevel),
         lastYieldOffset(NoYieldOffset),
         blockScopeDepth(blockScopeDepth),
         blockNode(ParseHandler::null()),
@@ -270,28 +273,21 @@ struct MOZ_STACK_CLASS ParseContext : public GenericParseContext
         oldpc(prs->pc),
         lexdeps(prs->context),
         funcStmts(nullptr),
-        innerFunctions(prs->context, TraceableVector<JSFunction*>(prs->context)),
+        innerFunctions(prs->context),
         newDirectives(newDirectives),
         inDeclDestructuring(false)
     {
         prs->pc = this;
-        if (sc->isFunctionBox())
-            parseUsingFunctionBox.emplace(prs->context, sc->asFunctionBox());
     }
 
     ~ParseContext();
 
-    bool init(Parser<ParseHandler>& parser);
+    bool init(TokenStream& ts);
 
     unsigned blockid() { return stmtStack.innermost() ? stmtStack.innermost()->blockid : bodyid; }
 
     StmtInfoPC* innermostStmt() const { return stmtStack.innermost(); }
     StmtInfoPC* innermostScopeStmt() const { return stmtStack.innermostScopeStmt(); }
-    JSObject* innermostStaticScope() const {
-        if (StmtInfoPC* stmt = innermostScopeStmt())
-            return stmt->staticScope;
-        return sc->staticScope();
-    }
 
     // True if we are at the topmost level of a entire script or function body.
     // For example, while parsing this code we would encounter f1 and f2 at
@@ -300,39 +296,13 @@ struct MOZ_STACK_CLASS ParseContext : public GenericParseContext
     //   function f1() { function f2() { } }
     //   if (cond) { function f3() { if (cond) { function f4() { } } } }
     //
-    bool atBodyLevel() {
-        // 'eval' scripts are always under an invisible lexical scope, but
-        // since it is not syntactic, it should still be considered at body
-        // level.
-        if (sc->staticScope() && sc->staticScope()->is<StaticEvalObject>()) {
-            bool bl = !innermostStmt()->enclosing;
-            MOZ_ASSERT_IF(bl, innermostStmt()->type == StmtType::BLOCK);
-            MOZ_ASSERT_IF(bl, innermostStmt()->staticScope
-                                             ->template as<StaticBlockObject>()
-                                             .maybeEnclosingEval() == sc->staticScope());
-            return bl;
-        }
-        return !innermostStmt();
-    }
-
-    bool atGlobalLevel() {
-        return atBodyLevel() && sc->isGlobalContext() && !innermostScopeStmt();
-    }
-
-    // True if we are at the topmost level of a module only.
-    bool atModuleLevel() {
-        return atBodyLevel() && sc->isModuleBox();
-    }
-
-    // True if the current lexical scope is the topmost level of a module.
-    bool atModuleScope() {
-        return sc->isModuleBox() && !innermostScopeStmt();
-    }
+    bool atBodyLevel() { return !innermostStmt(); }
+    bool atGlobalLevel() { return atBodyLevel() && !sc->isFunctionBox() && !innermostScopeStmt(); }
 
     // True if this is the ParseContext for the body of a function created by
     // the Function constructor.
     bool isFunctionConstructorBody() const {
-        return sc->isFunctionBox() && !parent && sc->asFunctionBox()->function()->isLambda();
+        return sc->isFunctionBox() && staticLevel == 0;
     }
 
     inline bool useAsmOrInsideUseAsm() const {
@@ -354,18 +324,12 @@ class CompExprTransplanter;
 
 enum VarContext { HoistVars, DontHoistVars };
 enum PropListType { ObjectLiteral, ClassBody, DerivedClassBody };
-enum class PropertyType {
-    Normal,
-    Shorthand,
-    Getter,
-    GetterNoExpressionClosure,
-    Setter,
-    SetterNoExpressionClosure,
-    Method,
-    GeneratorMethod,
-    Constructor,
-    DerivedConstructor
-};
+
+inline bool
+IsClassBody(PropListType type)
+{
+    return type == ClassBody || type == DerivedClassBody;
+}
 
 // Specify a value for an ES6 grammar parametrization.  We have no enum for
 // [Return] because its behavior is exactly equivalent to checking whether
@@ -409,9 +373,6 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
 
     /* innermost parse context (stack-allocated) */
     ParseContext<ParseHandler>* pc;
-
-    // List of all block scopes.
-    AutoObjectVector blockScopes;
 
     /* Compression token for aborting. */
     SourceCompressionTask* sct;
@@ -502,27 +463,8 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
      * cx->tempLifoAlloc.
      */
     ObjectBox* newObjectBox(JSObject* obj);
-    FunctionBox* newFunctionBox(Node fn, JSFunction* fun, ParseContext<ParseHandler>* outerpc,
-                                Directives directives, GeneratorKind generatorKind,
-                                JSObject* enclosingStaticScope);
-
-    // Use when the funbox is the outermost.
-    FunctionBox* newFunctionBox(Node fn, HandleFunction fun, Directives directives,
-                                GeneratorKind generatorKind, HandleObject enclosingStaticScope)
-    {
-        return newFunctionBox(fn, fun, nullptr, directives, generatorKind,
-                              enclosingStaticScope);
-    }
-
-    // Use when the funbox should be linked to the outerpc's innermost scope.
-    FunctionBox* newFunctionBox(Node fn, HandleFunction fun, ParseContext<ParseHandler>* outerpc,
-                                Directives directives, GeneratorKind generatorKind)
-    {
-        RootedObject enclosing(context, outerpc->innermostStaticScope());
-        return newFunctionBox(fn, fun, outerpc, directives, generatorKind, enclosing);
-    }
-
-    ModuleBox* newModuleBox(Node pn, HandleModuleObject module);
+    FunctionBox* newFunctionBox(Node fn, JSFunction* fun, ParseContext<ParseHandler>* pc,
+                                Directives directives, GeneratorKind generatorKind);
 
     /*
      * Create a new function object given a name (which is optional if this is
@@ -530,16 +472,6 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
      */
     JSFunction* newFunction(HandleAtom atom, FunctionSyntaxKind kind, GeneratorKind generatorKind,
                             HandleObject proto);
-
-    bool generateBlockId(JSObject* staticScope, uint32_t* blockIdOut) {
-        if (blockScopes.length() == StmtInfoPC::BlockIdLimit) {
-            tokenStream.reportError(JSMSG_NEED_DIET, "program");
-            return false;
-        }
-        MOZ_ASSERT(blockScopes.length() < StmtInfoPC::BlockIdLimit);
-        *blockIdOut = blockScopes.length();
-        return blockScopes.append(staticScope);
-    }
 
     void trace(JSTracer* trc);
 
@@ -551,8 +483,6 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     }
 
     bool isUnexpectedEOF() const { return isUnexpectedEOF_; }
-
-    bool checkUnescapedName();
 
   private:
     Parser* thisForCtor() { return this; }
@@ -578,24 +508,16 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
 
     bool maybeParseDirective(Node list, Node pn, bool* cont);
 
-    // Parse the body of an eval. It is distinguished from global scripts in
-    // that in ES6, per 18.2.1.1 steps 9 and 10, all eval scripts are executed
-    // under a fresh lexical scope.
-    Node evalBody();
-
-    // Parse a module.
-    Node standaloneModule(Handle<ModuleObject*> module);
-
     // Parse a function, given only its body. Used for the Function and
     // Generator constructors.
-    Node standaloneFunctionBody(HandleFunction fun, Handle<PropertyNameVector> formals,
+    Node standaloneFunctionBody(HandleFunction fun, const AutoNameVector& formals,
                                 GeneratorKind generatorKind,
-                                Directives inheritedDirectives, Directives* newDirectives,
-                                HandleObject enclosingStaticScope);
+                                Directives inheritedDirectives, Directives* newDirectives);
 
     // Parse a function, given only its arguments and body. Used for lazily
     // parsed functions.
-    Node standaloneLazyFunction(HandleFunction fun, bool strict, GeneratorKind generatorKind);
+    Node standaloneLazyFunction(HandleFunction fun, unsigned staticLevel, bool strict,
+                                GeneratorKind generatorKind);
 
     /*
      * Parse a function body.  Pass StatementListBody if the body is a list of
@@ -695,11 +617,14 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     Node parenExprOrGeneratorComprehension(YieldHandling yieldHandling);
     Node exprInParens(InHandling inHandling, YieldHandling yieldHandling);
 
+    bool checkAllowedNestedSyntax(SharedContext::AllowedSyntax allowed,
+                                  SharedContext** allowingContext = nullptr);
     bool tryNewTarget(Node& newTarget);
     bool checkAndMarkSuperScope();
 
-    Node methodDefinition(YieldHandling yieldHandling, PropertyType propType,
-                          HandlePropertyName funName);
+    bool methodDefinition(YieldHandling yieldHandling, PropListType listType, Node propList,
+                          Node propname, FunctionSyntaxKind kind, GeneratorKind generatorKind,
+                          bool isStatic, JSOp Op);
 
     /*
      * Additional JS parsers.
@@ -741,9 +666,7 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     Node destructuringExprWithoutYield(YieldHandling yieldHandling, BindData<ParseHandler>* data,
                                        TokenKind tt, unsigned msg);
 
-    Node newBoundImportForCurrentName();
     bool namedImportsOrNamespaceImport(TokenKind tt, Node importSpecSet);
-    bool addExportName(JSAtom* exportName);
 
     enum ClassContext { ClassStatement, ClassExpression };
     Node classDefinition(YieldHandling yieldHandling, ClassContext classContext, DefaultHandling defaultHandling);
@@ -806,13 +729,12 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     Node pushLexicalScope(Handle<StaticBlockObject*> blockObj, AutoPushStmtInfoPC& stmt);
     Node pushLetScope(Handle<StaticBlockObject*> blockObj, AutoPushStmtInfoPC& stmt);
     bool noteNameUse(HandlePropertyName name, Node pn);
-    Node propertyName(YieldHandling yieldHandling, Node propList,
-                      PropertyType* propType, MutableHandleAtom propAtom);
     Node computedPropertyName(YieldHandling yieldHandling, Node literal);
     Node arrayInitializer(YieldHandling yieldHandling);
     Node newRegExp();
 
-    Node objectLiteral(YieldHandling yieldHandling);
+    Node propertyList(YieldHandling yieldHandling, PropListType type);
+    Node newPropertyListNode(PropListType type);
 
     bool checkAndPrepareLexical(bool isConst, const TokenPos& errorPos);
     Node makeInitializedLexicalBinding(HandlePropertyName name, bool isConst, const TokenPos& pos);
@@ -831,7 +753,6 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     bool checkDestructuringName(BindData<ParseHandler>* data, Node expr);
 
     bool bindInitialized(BindData<ParseHandler>* data, Node pn);
-    bool bindUninitialized(BindData<ParseHandler>* data, Node pn);
     bool makeSetCall(Node node, unsigned errnum);
     Node cloneDestructuringDefault(Node opn);
     Node cloneLeftHandSide(Node opn);

@@ -27,7 +27,7 @@ function nextTest() {
   }
 }
 
-var tests = [
+let tests = [
   function revert(next) {
     loadTabInWindow(window, function (tab) {
       gURLBar.handleRevert();

@@ -99,8 +99,6 @@ protected:
   static nsresult GetProviderAndPath(nsIURL* aChromeURL,
                                      nsACString& aProvider, nsACString& aPath);
 
-  bool GetDirectionForLocale(const nsACString& aLocale);
-
 public:
   static already_AddRefed<nsChromeRegistry> GetSingleton();
 

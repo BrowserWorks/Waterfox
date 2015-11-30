@@ -1,4 +1,4 @@
-var noop = function() {};
+let noop = function() {};
 Browser = {
   updateViewportSize: noop
     /*************************************************************
@@ -19,14 +19,14 @@ Browser = {
                                        false);
   *************************************************************/
 };
-var ws = {
+let ws = {
   beginUpdateBatch: noop,
   panTo: noop,
   endUpdateBatch: noop
 };
-var Ci = Components.interfaces;
-var bv = null;
-var endl = "\n";
+let Ci = Components.interfaces;
+let bv = null;
+let endl = "\n";
 
 
 function BrowserView() {

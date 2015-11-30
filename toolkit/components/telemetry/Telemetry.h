@@ -76,8 +76,6 @@ void AccumulateTimeDelta(ID id, TimeStamp start, TimeStamp end = TimeStamp::Now(
  */
 base::Histogram* GetHistogramById(ID id);
 
-const char* GetHistogramName(ID id);
-
 /**
  * Return a raw histogram for keyed histograms.
  */
@@ -118,7 +116,7 @@ struct AccumulateDelta_impl<Microsecond>
 
 
 template<ID id, TimerResolution res = Millisecond>
-class MOZ_RAII AutoTimer {
+class AutoTimer {
 public:
   explicit AutoTimer(TimeStamp aStart = TimeStamp::Now() MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
      : start(aStart)
@@ -148,7 +146,7 @@ private:
 };
 
 template<ID id>
-class MOZ_RAII AutoCounter {
+class AutoCounter {
 public:
   explicit AutoCounter(uint32_t counterStart = 0 MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
     : counter(counterStart)

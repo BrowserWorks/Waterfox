@@ -288,7 +288,8 @@ nsresult NS_NewInputStreamChannelInternal(nsIChannel        **outChannel,
                                           nsIPrincipal       *aLoadingPrincipal,
                                           nsIPrincipal       *aTriggeringPrincipal,
                                           nsSecurityFlags     aSecurityFlags,
-                                          nsContentPolicyType aContentPolicyType);
+                                          nsContentPolicyType aContentPolicyType,
+                                          nsIURI             *aBaseURI = nullptr);
 
 
 nsresult /* NS_NewInputStreamChannelPrincipal */
@@ -310,7 +311,8 @@ nsresult NS_NewInputStreamChannelInternal(nsIChannel        **outChannel,
                                           nsIPrincipal       *aTriggeringPrincipal,
                                           nsSecurityFlags     aSecurityFlags,
                                           nsContentPolicyType aContentPolicyType,
-                                          bool                aIsSrcdocChannel = false);
+                                          bool                aIsSrcdocChannel = false,
+                                          nsIURI             *aBaseURI = nullptr);
 
 nsresult NS_NewInputStreamChannel(nsIChannel        **outChannel,
                                   nsIURI             *aUri,
@@ -319,7 +321,8 @@ nsresult NS_NewInputStreamChannel(nsIChannel        **outChannel,
                                   nsIPrincipal       *aLoadingPrincipal,
                                   nsSecurityFlags     aSecurityFlags,
                                   nsContentPolicyType aContentPolicyType,
-                                  bool                aIsSrcdocChannel = false);
+                                  bool                aIsSrcdocChannel = false,
+                                  nsIURI             *aBaseURI = nullptr);
 
 nsresult NS_NewInputStreamPump(nsIInputStreamPump **result,
                                nsIInputStream      *stream,

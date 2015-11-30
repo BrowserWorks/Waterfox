@@ -5,7 +5,7 @@
 "use strict";
 
 const {Cc, Ci, Cu} = require("chrome");
-const promise = require("promise");
+const {Promise: promise} = require("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 

@@ -407,7 +407,7 @@ private:
 
 // Helper class to automatically manage temporary changes to an SVG document's
 // state for rendering purposes.
-class MOZ_RAII AutoSVGRenderingState
+class MOZ_STACK_CLASS AutoSVGRenderingState
 {
 public:
   AutoSVGRenderingState(const Maybe<SVGImageContext>& aSVGContext,

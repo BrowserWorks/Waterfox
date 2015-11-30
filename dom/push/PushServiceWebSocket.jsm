@@ -12,12 +12,6 @@ const Cr = Components.results;
 
 const {PushDB} = Cu.import("resource://gre/modules/PushDB.jsm");
 const {PushRecord} = Cu.import("resource://gre/modules/PushRecord.jsm");
-const {
-  PushCrypto,
-  base64UrlDecode,
-  getEncryptionKeyParams,
-  getEncryptionParams,
-} = Cu.import("resource://gre/modules/PushCrypto.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
@@ -39,40 +33,24 @@ var threadManager = Cc["@mozilla.org/thread-manager;1"]
                       .getService(Ci.nsIThreadManager);
 
 const kPUSHWSDB_DB_NAME = "pushapi";
-const kPUSHWSDB_DB_VERSION = 5; // Change this if the IndexedDB format changes
+const kPUSHWSDB_DB_VERSION = 4; // Change this if the IndexedDB format changes
 const kPUSHWSDB_STORE_NAME = "pushapi";
 
 const kUDP_WAKEUP_WS_STATUS_CODE = 4774;  // WebSocket Close status code sent
                                           // by server to signal that it can
                                           // wake client up using UDP.
 
+const kWS_MAX_WENTDOWN = 2;
+
+// 1 minute is the least allowed ping interval
+const kWS_MIN_PING_INTERVAL = 60000;
+
 const prefs = new Preferences("dom.push.");
 
 this.EXPORTED_SYMBOLS = ["PushServiceWebSocket"];
 
 // Don't modify this, instead set dom.push.debug.
-var gDebuggingEnabled = true;
-
-function getCryptoParams(headers) {
-  if (!headers) {
-    return null;
-  }
-  var keymap = getEncryptionKeyParams(headers.encryption_key);
-  if (!keymap) {
-    return null;
-  }
-  var enc = getEncryptionParams(headers.encryption);
-  if (!enc || !enc.keyid) {
-    return null;
-  }
-  var dh = keymap[enc.keyid];
-  var salt = enc.salt;
-  var rs = (enc.rs)? parseInt(enc.rs, 10) : 4096;
-  if (!dh || !salt || isNaN(rs) || (rs <= 1)) {
-    return null;
-  }
-  return {dh, salt, rs};
-}
+let gDebuggingEnabled = true;
 
 function debug(s) {
   if (gDebuggingEnabled) {
@@ -163,11 +141,11 @@ this.PushServiceWebSocket = {
   observe: function(aSubject, aTopic, aData) {
 
     switch (aTopic) {
-    case "nsPref:changed":
-      if (aData == "dom.push.debug") {
-        gDebuggingEnabled = prefs.get("debug");
-      }
-      break;
+      case "nsPref:changed":
+        if (aData == "dom.push.debug") {
+          gDebuggingEnabled = prefs.get("debug");
+        }
+        break;
     case "timer-callback":
       if (aSubject == this._requestTimeoutTimer) {
         if (Object.keys(this._pendingRequests).length === 0) {
@@ -292,8 +270,11 @@ this.PushServiceWebSocket = {
    */
   _upperLimit: 0,
 
-  /** Indicates whether the server supports Web Push-style message delivery. */
-  _dataEnabled: false,
+  /**
+   * Count the times WebSocket goes down without receiving Pings
+   * so we can re-enable the ping recalculation algorithm
+   */
+  _wsWentDownCounter: 0,
 
   /**
    * Sends a message to the Push Server through an open websocket.
@@ -386,8 +367,6 @@ this.PushServiceWebSocket = {
     }
 
     this._mainPushService = null;
-
-    this._dataEnabled = false;
   },
 
   /**
@@ -466,6 +445,11 @@ this.PushServiceWebSocket = {
       return;
     }
 
+    if (!wsWentDown) {
+      debug('Setting websocket down counter to 0');
+      this._wsWentDownCounter = 0;
+    }
+
     if (!this._recalculatePing && !wsWentDown) {
       debug('We do not need to recalculate the ping now, based on previous ' +
             'data');
@@ -511,6 +495,27 @@ this.PushServiceWebSocket = {
 
     let nextPingInterval;
     let lastTriedPingInterval = prefs.get('pingInterval');
+
+    if (!this._recalculatePing && wsWentDown) {
+      debug('Websocket disconnected without ping adaptative algorithm running');
+      this._wsWentDownCounter++;
+      if (this._wsWentDownCounter > kWS_MAX_WENTDOWN) {
+        debug('Too many disconnects. Reenabling ping adaptative algoritm');
+        this._wsWentDownCounter = 0;
+        this._recalculatePing = true;
+        this._lastGoodPingInterval = Math.floor(lastTriedPingInterval / 2);
+        if (this._lastGoodPingInterval < kWS_MIN_PING_INTERVAL) {
+          nextPingInterval = kWS_MIN_PING_INTERVAL;
+        } else {
+          nextPingInterval = this._lastGoodPingInterval;
+        }
+        prefs.set('pingInterval', nextPingInterval);
+        this._save(ns, nextPingInterval);
+        return;
+      }
+
+      debug('We do not need to recalculate the ping, based on previous data');
+    }
 
     if (wsWentDown) {
       debug('The WebSocket was disconnected, calculating next ping');
@@ -562,6 +567,10 @@ this.PushServiceWebSocket = {
     debug('Setting the pingInterval to ' + nextPingInterval);
     prefs.set('pingInterval', nextPingInterval);
 
+    this._save(ns, nextPingInterval);
+  },
+
+  _save: function(ns, nextPingInterval){
     //Save values for our current network
     if (ns.ip) {
       prefs.set('pingInterval.mobile', nextPingInterval);
@@ -781,27 +790,12 @@ this.PushServiceWebSocket = {
       return;
     }
 
-    let notifyRequestQueue = () => {
-      if (this._notifyRequestQueue) {
-        this._notifyRequestQueue();
-        this._notifyRequestQueue = null;
-      }
-    };
-
     function finishHandshake() {
       this._UAID = reply.uaid;
       this._currentState = STATE_READY;
-      this._dataEnabled = !!reply.use_webpush;
-      if (this._dataEnabled) {
-        this._mainPushService.getAllUnexpired().then(records =>
-          Promise.all(records.map(record =>
-            this._mainPushService.ensureP256dhKey(record).catch(error => {
-              debug("finishHandshake: Error updating record " + record.keyID);
-            })
-          ))
-        ).then(notifyRequestQueue);
-      } else {
-        notifyRequestQueue();
+      if (this._notifyRequestQueue) {
+        this._notifyRequestQueue();
+        this._notifyRequestQueue = null;
       }
     }
 
@@ -858,46 +852,12 @@ this.PushServiceWebSocket = {
         originAttributes: tmp.record.originAttributes,
         version: null,
         quota: tmp.record.maxQuota,
-        ctime: Date.now(),
       });
       dump("PushWebSocket " +  JSON.stringify(record));
-      Services.telemetry.getHistogramById("PUSH_API_SUBSCRIBE_WS_TIME").add(Date.now() - tmp.ctime);
       tmp.resolve(record);
     } else {
       tmp.reject(reply);
     }
-  },
-
-  _handleDataUpdate: function(update) {
-    let promise;
-    if (typeof update.channelID != "string") {
-      debug("handleDataUpdate: Discarding message without channel ID");
-      return;
-    }
-    if (typeof update.data != "string") {
-      promise = this._mainPushService.receivedPushMessage(
-        update.channelID,
-        null,
-        null,
-        record => record
-      );
-    } else {
-      let params = getCryptoParams(update.headers);
-      if (!params) {
-        debug("handleDataUpdate: Discarding invalid encrypted message");
-        return;
-      }
-      let message = base64UrlDecode(update.data);
-      promise = this._mainPushService.receivedPushMessage(
-        update.channelID,
-        message,
-        params,
-        record => record
-      );
-    }
-    promise.then(() => this._sendAck(update.channelID)).catch(err => {
-      debug("handleDataUpdate: Error delivering message: " + err);
-    });
   },
 
   /**
@@ -905,11 +865,6 @@ this.PushServiceWebSocket = {
    */
   _handleNotificationReply: function(reply) {
     debug("handleNotificationReply()");
-    if (this._dataEnabled) {
-      this._handleDataUpdate(reply);
-      return;
-    }
-
     if (typeof reply.updates !== 'object') {
       debug("No 'updates' field in response. Type = " + typeof reply.updates);
       return;
@@ -986,16 +941,6 @@ this.PushServiceWebSocket = {
                                                  ctime: Date.now()
                                                 };
         this._queueRequest(data);
-      }).then(record => {
-        if (!this._dataEnabled) {
-          return record;
-        }
-        return PushCrypto.generateKeys()
-          .then(([publicKey, privateKey]) => {
-            record.p256dhPublicKey = publicKey;
-            record.p256dhPrivateKey = privateKey;
-            return record;
-          });
       });
     }
 
@@ -1055,7 +1000,7 @@ this.PushServiceWebSocket = {
   _receivedUpdate: function(aChannelID, aLatestVersion) {
     debug("Updating: " + aChannelID + " -> " + aLatestVersion);
 
-    this._mainPushService.receivedPushMessage(aChannelID, null, null, record => {
+    this._mainPushService.receivedPushMessage(aChannelID, "", record => {
       if (record.version === null ||
           record.version < aLatestVersion) {
         debug("Version changed for " + aChannelID + ": " + aLatestVersion);
@@ -1084,7 +1029,6 @@ this.PushServiceWebSocket = {
 
     let data = {
       messageType: "hello",
-      use_webpush: true,
     };
 
     if (this._UAID) {
@@ -1297,7 +1241,7 @@ this.PushServiceWebSocket = {
   },
 };
 
-var PushNetworkInfo = {
+let PushNetworkInfo = {
   /**
    * Returns information about MCC-MNC and the IP of the current connection.
    */

@@ -15,7 +15,11 @@ public interface Actions {
         RIGHT,
         ENTER,
         MENU,
-        DELETE,
+        /**
+         * @deprecated Use Solo.goBack() in Robocop instead.
+         */
+        @Deprecated
+        BACK
     }
 
     public interface EventExpecter {

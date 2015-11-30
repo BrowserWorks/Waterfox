@@ -18,8 +18,7 @@ package org.mozilla.gecko.toolbar;
 
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.util.ColorUtils;
-import org.mozilla.gecko.widget.themed.ThemedImageView;
+import org.mozilla.gecko.widget.ThemedImageView;
 import org.mozilla.gecko.util.WeakReferenceHandler;
 
 import android.content.Context;
@@ -71,7 +70,7 @@ public class ToolbarProgressView extends ThemedImageView {
         mTargetProgress = 0;
 
         mPrivateBrowsingColorFilter = new PorterDuffColorFilter(
-                ColorUtils.getColor(ctx, R.color.private_browsing_purple), PorterDuff.Mode.SRC_IN);
+                getResources().getColor(R.color.private_browsing_purple), PorterDuff.Mode.SRC_IN);
 
         mHandler = new ToolbarProgressHandler(this);
     }

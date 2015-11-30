@@ -3,7 +3,7 @@
 
 // Test the LayoutChangesObserver
 
-var {
+let {
   getLayoutChangesObserver,
   releaseLayoutChangesObserver,
   LayoutChangesObserver

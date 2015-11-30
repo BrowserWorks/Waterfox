@@ -27,7 +27,7 @@ interface PushManager {
   [ChromeOnly, Throws, Exposed=Window]
   void setPushManagerImpl(PushManagerImpl store);
 
-  [Throws, UseCounter]
+  [Throws]
   Promise<PushSubscription>     subscribe();
   [Throws]
   Promise<PushSubscription?>    getSubscription();

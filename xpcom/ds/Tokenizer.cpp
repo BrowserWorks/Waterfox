@@ -7,29 +7,20 @@
 #include "Tokenizer.h"
 
 #include "nsUnicharUtils.h"
+#include "mozilla/CheckedInt.h"
 
 namespace mozilla {
 
 static const char sWhitespaces[] = " \t";
 
-Tokenizer::Tokenizer(const nsACString& aSource,
-                     const char* aWhitespaces,
-                     const char* aAdditionalWordChars)
+Tokenizer::Tokenizer(const nsACString& aSource)
   : mPastEof(false)
   , mHasFailed(false)
-  , mWhitespaces(aWhitespaces ? aWhitespaces : sWhitespaces)
-  , mAdditionalWordChars(aAdditionalWordChars)
+  , mWhitespaces(sWhitespaces)
 {
   aSource.BeginReading(mCursor);
   mRecord = mRollback = mCursor;
   aSource.EndReading(mEnd);
-}
-
-Tokenizer::Tokenizer(const char* aSource,
-                     const char* aWhitespaces,
-                     const char* aAdditionalWordChars)
-  : Tokenizer(nsDependentCString(aSource), aWhitespaces, aAdditionalWordChars)
-{
 }
 
 bool
@@ -42,9 +33,6 @@ Tokenizer::Next(Token& aToken)
 
   mRollback = mCursor;
   mCursor = Parse(aToken);
-
-  aToken.AssignFragment(mRollback, mCursor);
-
   mPastEof = aToken.Type() == TOKEN_EOF;
   mHasFailed = false;
   return true;
@@ -66,11 +54,7 @@ Tokenizer::Check(const TokenType aTokenType, Token& aResult)
 
   mRollback = mCursor;
   mCursor = next;
-
-  aResult.AssignFragment(mRollback, mCursor);
-
   mPastEof = aResult.Type() == TOKEN_EOF;
-  mHasFailed = false;
   return true;
 }
 
@@ -92,7 +76,6 @@ Tokenizer::Check(const Token& aToken)
   mRollback = mCursor;
   mCursor = next;
   mPastEof = parsed.Type() == TOKEN_EOF;
-  mHasFailed = false;
   return true;
 }
 
@@ -103,14 +86,14 @@ Tokenizer::HasFailed() const
 }
 
 void
-Tokenizer::SkipWhites(WhiteSkipping aIncludeNewLines)
+Tokenizer::SkipWhites()
 {
-  if (!CheckWhite() && (aIncludeNewLines == DONT_INCLUDE_NEW_LINE || !CheckEOL())) {
+  if (!CheckWhite()) {
     return;
   }
 
   nsACString::const_char_iterator rollback = mRollback;
-  while (CheckWhite() || (aIncludeNewLines == INCLUDE_NEW_LINE && CheckEOL())) {
+  while (CheckWhite()) {
   }
 
   mHasFailed = false;
@@ -141,57 +124,6 @@ Tokenizer::CheckChar(bool (*aClassifier)(const char aChar))
   return true;
 }
 
-bool
-Tokenizer::ReadChar(char* aValue)
-{
-  MOZ_RELEASE_ASSERT(aValue);
-
-  Token t;
-  if (!Check(TOKEN_CHAR, t)) {
-    return false;
-  }
-
-  *aValue = t.AsChar();
-  return true;
-}
-
-bool
-Tokenizer::ReadChar(bool (*aClassifier)(const char aChar), char* aValue)
-{
-  MOZ_RELEASE_ASSERT(aValue);
-
-  if (!CheckChar(aClassifier)) {
-    return false;
-  }
-
-  *aValue = *mRollback;
-  return true;
-}
-
-bool
-Tokenizer::ReadWord(nsACString& aValue)
-{
-  Token t;
-  if (!Check(TOKEN_WORD, t)) {
-    return false;
-  }
-
-  aValue.Assign(t.AsString());
-  return true;
-}
-
-bool
-Tokenizer::ReadWord(nsDependentCSubstring& aValue)
-{
-  Token t;
-  if (!Check(TOKEN_WORD, t)) {
-    return false;
-  }
-
-  aValue.Rebind(t.AsString().BeginReading(), t.AsString().Length());
-  return true;
-}
-
 void
 Tokenizer::Rollback()
 {
@@ -218,15 +150,6 @@ Tokenizer::Claim(nsACString& aResult, ClaimInclusion aInclusion)
     ? mRollback
     : mCursor;
   aResult.Assign(Substring(mRecord, close));
-}
-
-void
-Tokenizer::Claim(nsDependentCSubstring& aResult, ClaimInclusion aInclusion)
-{
-  nsACString::const_char_iterator close = aInclusion == EXCLUDE_LAST
-    ? mRollback
-    : mCursor;
-  aResult.Rebind(mRecord, close - mRecord);
 }
 
 // protected
@@ -270,14 +193,14 @@ Tokenizer::Parse(Token& aToken) const
     state = PARSE_CHAR;
   }
 
-  mozilla::CheckedUint64 resultingNumber = 0;
+  mozilla::CheckedInt64 resultingNumber = 0;
 
   while (next < mEnd) {
     switch (state) {
     case PARSE_INTEGER:
       // Keep it simple for now
       resultingNumber *= 10;
-      resultingNumber += static_cast<uint64_t>(*next - '0');
+      resultingNumber += static_cast<int64_t>(*next - '0');
 
       ++next;
       if (IsEnd(next) || !IsNumber(*next)) {
@@ -338,8 +261,7 @@ Tokenizer::IsWordFirst(const char aInput) const
   // TODO: make this fully work with unicode
   return (ToLowerCase(static_cast<uint32_t>(aInput)) !=
           ToUpperCase(static_cast<uint32_t>(aInput))) ||
-          '_' == aInput ||
-          (mAdditionalWordChars ? !!strchr(mAdditionalWordChars, aInput) : false);
+          '_' == aInput;
 }
 
 bool
@@ -357,40 +279,13 @@ Tokenizer::IsNumber(const char aInput) const
 
 // Tokenizer::Token
 
-Tokenizer::Token::Token(const Token& aOther)
-  : mType(aOther.mType)
-  , mChar(aOther.mChar)
-  , mInteger(aOther.mInteger)
-{
-  if (mType == TOKEN_WORD) {
-    mWord.Rebind(aOther.mWord.BeginReading(), aOther.mWord.Length());
-  }
-}
-
-Tokenizer::Token&
-Tokenizer::Token::operator=(const Token& aOther)
-{
-  mType = aOther.mType;
-  mChar = aOther.mChar;
-  mWord.Rebind(aOther.mWord.BeginReading(), aOther.mWord.Length());
-  mInteger = aOther.mInteger;
-  return *this;
-}
-
-void
-Tokenizer::Token::AssignFragment(nsACString::const_char_iterator begin,
-                                 nsACString::const_char_iterator end)
-{
-  mFragment.Rebind(begin, end - begin);
-}
-
 // static
 Tokenizer::Token
 Tokenizer::Token::Word(const nsACString& aValue)
 {
   Token t;
   t.mType = TOKEN_WORD;
-  t.mWord.Rebind(aValue.BeginReading(), aValue.Length());
+  t.mWord = aValue;
   return t;
 }
 
@@ -406,7 +301,7 @@ Tokenizer::Token::Char(const char aValue)
 
 // static
 Tokenizer::Token
-Tokenizer::Token::Number(const uint64_t aValue)
+Tokenizer::Token::Number(const int64_t aValue)
 {
   Token t;
   t.mType = TOKEN_INTEGER;
@@ -477,14 +372,14 @@ Tokenizer::Token::AsChar() const
   return mChar;
 }
 
-nsDependentCSubstring
+nsCString
 Tokenizer::Token::AsString() const
 {
   MOZ_ASSERT(mType == TOKEN_WORD);
   return mWord;
 }
 
-uint64_t
+int64_t
 Tokenizer::Token::AsInteger() const
 {
   MOZ_ASSERT(mType == TOKEN_INTEGER);

@@ -16,19 +16,19 @@ const NEW_TSTAMP = 1396046918000;
 
 const gAppDir = FileUtils.getFile(KEY_APPDIR, []);
 
-var oldAddon = {
+let oldAddon = {
   id: "old@tests.mozilla.org",
   version: 1
 }
-var newAddon = {
+let newAddon = {
   id: "new@tests.mozilla.org",
   version: 1
 }
-var ancientAddon = {
+let ancientAddon = {
   id: "ancient@tests.mozilla.org",
   version: 1
 }
-var invalidAddon = {
+let invalidAddon = {
   id: "invalid@tests.mozilla.org",
   version: 1
 }

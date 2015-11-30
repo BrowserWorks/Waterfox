@@ -380,7 +380,8 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
 
 /* Apply crisp rendering for favicons at exactly 2dppx resolution */
 @media (resolution: 2dppx) {
-  .searchbar-engine-image {
+  .searchbar-engine-image,
+  .searchbar-engine-menuitem > .menu-iconic-left > .menu-iconic-icon {
     image-rendering: -moz-crisp-edges;
   }
 }
@@ -458,14 +459,18 @@ panel[noactions] > richlistbox > richlistitem.overridable-action > .ac-url-box >
 }
 
 #PopupSearchAutoComplete {
-  -moz-binding: url("chrome://browser/content/search/search.xml#browser-search-autocomplete-result-popup");
+  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#browser-search-autocomplete-result-popup");
 }
 
 /* Overlay a badge on top of the icon of additional open search providers
    in the search panel. */
 .addengine-item > .button-box > .button-icon {
-  -moz-binding: url("chrome://browser/content/search/search.xml#addengine-icon");
+  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#addengine-icon");
   display: -moz-stack;
+}
+
+searchbar[oneoffui] {
+  -moz-binding: url("chrome://browser/content/search/search.xml#searchbar-flare") !important;
 }
 
 #PopupAutoCompleteRichResult {
@@ -592,7 +597,8 @@ toolbarbutton.bookmark-item {
 toolbar[mode="text"] #bookmarks-menu-button > .toolbarbutton-menubutton-button > .toolbarbutton-icon {
   display: -moz-box !important;
 }
-toolbar[mode="text"] #bookmarks-menu-button > .toolbarbutton-menubutton-button > .toolbarbutton-text {
+toolbar[mode="text"] #bookmarks-menu-button > .toolbarbutton-menubutton-button > .toolbarbutton-text,
+toolbar[mode="full"] #bookmarks-menu-button.bookmark-item > .toolbarbutton-menubutton-button > .toolbarbutton-text {
   display: none;
 }
 
@@ -663,44 +669,32 @@ window[chromehidden~="toolbar"] toolbar:not(#nav-bar):not(#TabsToolbar):not(#pri
   background: black;
 }
 
-html|*#fullscreen-warning {
+#full-screen-warning-container {
   position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 2147483647 !important;
-  visibility: visible;
-  transition: transform 300ms ease-in;
-  /* To center the warning box horizontally,
-     we use left: 50% with translateX(-50%). */
-  top: 0; left: 50%;
-  transform: translate(-50%, -100%);
-  box-sizing: border-box;
-  width: -moz-max-content;
-  max-width: 95%;
   pointer-events: none;
 }
-html|*#fullscreen-warning:not([hidden]) {
-  display: flex;
-  will-change: transform;
-}
-html|*#fullscreen-warning[onscreen] {
-  transform: translate(-50%, 50px);
-}
-html|*#fullscreen-warning[ontop] {
-  /* Use -10px to hide the border and border-radius on the top */
-  transform: translate(-50%, -10px);
+
+#full-screen-warning-container[fade-warning-out] {
+  transition-property: opacity !important;
+  transition-duration: 500ms !important;
+  opacity: 0.0;
 }
 
-html|*#fullscreen-domain-text,
-html|*#fullscreen-generic-text {
+#full-screen-warning-message {
+  /* We must specify a max-width, otherwise word-wrap:break-word doesn't
+     work in descendant <description> and <label> elements. Bug 630864. */
+  max-width: 800px;
+}
+
+#full-screen-domain-text {
   word-wrap: break-word;
   /* We must specify a min-width, otherwise word-wrap:break-word doesn't work. Bug 630864. */
-  min-width: 1px
-}
-html|*#fullscreen-domain-text:not([hidden]) + html|*#fullscreen-generic-text {
-  display: none;
-}
-
-html|*#fullscreen-exit-button {
-  pointer-events: auto;
+  min-width: 1px;
 }
 
 /* ::::: Ctrl-Tab Panel ::::: */

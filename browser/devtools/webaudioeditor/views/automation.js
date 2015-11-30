@@ -7,7 +7,7 @@
  * Functions handling the audio node inspector UI.
  */
 
-var AutomationView = {
+let AutomationView = {
 
   /**
    * Initialization function called when the tool starts up.

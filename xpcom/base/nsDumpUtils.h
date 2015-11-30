@@ -180,15 +180,10 @@ private:
 
 #endif // XP_UNIX }
 
+
 class nsDumpUtils
 {
 public:
-
-  enum Mode {
-    CREATE,
-    CREATE_UNIQUE
-  };
-
   /**
    * This function creates a new unique file based on |aFilename| in a
    * world-readable temp directory. This is the system temp directory
@@ -198,8 +193,7 @@ public:
    */
   static nsresult OpenTempFile(const nsACString& aFilename,
                                nsIFile** aFile,
-                               const nsACString& aFoldername = EmptyCString(),
-                               Mode aMode = CREATE_UNIQUE);
+                               const nsACString& aFoldername = EmptyCString());
 };
 
 #endif

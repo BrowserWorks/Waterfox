@@ -13,7 +13,14 @@
 #endif
 
 /*
- * Version information
+ * Version information for the 'ident' and 'what commands
+ *
+ * NOTE: the first component of the concatenated rcsid string
+ * must not end in a '$' to prevent rcs keyword substitution.
  */
-const char __nss_builtins_version[] = "Version: NSS Builtin Trusted Root CAs "
-        NSS_BUILTINS_LIBRARY_VERSION _DEBUG_STRING;
+const char __nss_builtins_rcsid[] = "$Header: NSS Builtin Trusted Root CAs "
+        NSS_BUILTINS_LIBRARY_VERSION _DEBUG_STRING
+        "  " __DATE__ " " __TIME__ " $";
+const char __nss_builtins_sccsid[] = "@(#)NSS Builtin Trusted Root CAs "
+        NSS_BUILTINS_LIBRARY_VERSION _DEBUG_STRING
+        "  " __DATE__ " " __TIME__;

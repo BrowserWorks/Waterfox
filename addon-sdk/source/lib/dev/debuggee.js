@@ -11,8 +11,7 @@ module.metadata = {
 const { Cu } = require("chrome");
 const { Class } = require("../sdk/core/heritage");
 const { MessagePort, MessageChannel } = require("../sdk/messaging");
-const { require: devtoolsRequire } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const { DebuggerServer } = devtoolsRequire("devtools/server/main");
+const { DebuggerServer } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
 
 const outputs = new WeakMap();
 const inputs = new WeakMap();

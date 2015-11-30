@@ -67,7 +67,6 @@ class nsHtml5UTF16Buffer
     char16_t* getBuffer();
     int32_t getEnd();
     bool hasMore();
-    int32_t getLength();
     void adjust(bool lastWasCR);
     void setEnd(int32_t end);
     static void initializeStatics();

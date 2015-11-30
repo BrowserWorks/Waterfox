@@ -223,14 +223,15 @@ class HTMLReportingTestRunnerMixin(object):
         return doc.unicode(indent=2)
 
 
-class HTMLReportingArguments(object):
-    name = 'htmlreporting'
-    args = [
-        [['--html-output'],
-         {'help': 'html output',
-          'metavar': 'path',
-          }],
-    ]
+class HTMLReportingOptionsMixin(object):
+
+    def __init__(self, **kwargs):
+        group = self.add_option_group('htmlreporting')
+        group.add_option('--html-output',
+                         action='store',
+                         dest='html_output',
+                         help='html output',
+                         metavar='path')
 
 
 class HTMLReportingTestResultMixin(object):

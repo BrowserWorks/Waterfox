@@ -7,20 +7,20 @@
 // Tests that the correct editable fields are focused when tabbing and entering
 // through the rule view.
 
-const TEST_URI = `
-  <style type='text/css'>
-  #testid {
-    background-color: blue;
-    color: red;
-    margin: 0;
-    padding: 0;
-  }
-  div {
-    border-color: red
-  }
-  </style>
-  <div id='testid'>Styled Node</div>
-`;
+let TEST_URI = [
+  "<style type='text/css'>",
+  "#testid {",
+  "  background-color: blue;",
+  "  color: red;",
+  "  margin: 0;",
+  "  padding: 0;",
+  "}",
+  "div {",
+  "  border-color: red",
+  "}",
+  "</style>",
+  "<div id='testid'>Styled Node</div>",
+].join("\n");
 
 add_task(function*() {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));

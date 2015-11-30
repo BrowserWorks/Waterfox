@@ -28,7 +28,6 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(MediaEncryptedEvent, Event)
   tmp->mInitData = nullptr;
-  mozilla::DropJSObjects(this);
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(MediaEncryptedEvent)
@@ -113,7 +112,6 @@ MediaEncryptedEvent::GetInitData(JSContext* cx,
 {
   if (mRawInitData.Length()) {
     mInitData = ArrayBuffer::Create(cx,
-                                    this,
                                     mRawInitData.Length(),
                                     mRawInitData.Elements());
     if (!mInitData) {

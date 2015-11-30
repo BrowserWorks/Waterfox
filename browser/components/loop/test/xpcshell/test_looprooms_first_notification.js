@@ -42,8 +42,8 @@ const kRoomsResponses = new Map([
   }]
 ]);
 
-var gRoomsAdded = [];
-var gRoomsUpdated = [];
+let gRoomsAdded = [];
+let gRoomsUpdated = [];
 
 const onRoomAdded = function(e, room) {
   gRoomsAdded.push(room);
@@ -53,7 +53,7 @@ const onRoomUpdated = function(e, room) {
   gRoomsUpdated.push(room);
 };
 
-var gQueryString = null;
+let gQueryString = null;
 
 add_task(function* setup_server() {
   loopServer.registerPathHandler("/registration", (req, res) => {

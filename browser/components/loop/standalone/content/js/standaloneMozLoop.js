@@ -15,6 +15,7 @@ loop.StandaloneMozLoop = (function(mozL10n) {
    */
   var ROOM_MAX_CLIENTS = 2;
 
+
   /**
    * Validates a data object to confirm it has the specified properties.
    *
@@ -35,13 +36,16 @@ loop.StandaloneMozLoop = (function(mozL10n) {
    * Generic handler for XHR failures.
    *
    * @param {Function} callback Callback(err)
-   * @param xhrReq
+   * @param jqXHR See jQuery docs
+   * @param textStatus See jQuery docs
+   * @param errorThrown See jQuery docs
    */
-  function failureHandler(callback, xhrReq) {
-    var jsonErr = JSON.parse(xhrReq.responseText && xhrReq.responseText || "{}");
-    var message = "HTTP " + xhrReq.status + " " + xhrReq.statusText;
+  function failureHandler(callback, jqXHR, textStatus, errorThrown) {
+    var jsonErr = jqXHR && jqXHR.responseJSON || {};
+    var message = "HTTP " + jqXHR.status + " " + errorThrown;
+
     // Create an error with server error `errno` code attached as a property
-    var err = new Error(message);
+    var err = new Error(message + (jsonErr.error ? "; " + jsonErr.error : ""));
     err.errno = jsonErr.errno;
 
     callback(err);
@@ -72,34 +76,31 @@ loop.StandaloneMozLoop = (function(mozL10n) {
      *                             be the list of rooms, if it was fetched successfully.
      */
     get: function(roomToken, callback) {
-      var url = this._baseServerUrl + "/rooms/" + roomToken;
-
-      this._xhrReq = new XMLHttpRequest();
-      this._xhrReq.open("GET", url, true);
-      this._xhrReq.setRequestHeader("Content-type", "application/json");
-
-      if (this.sessionToken) {
-        this._xhrReq.setRequestHeader("Authorization", "Basic " + btoa(this.sessionToken));
-      }
-
-      this._xhrReq.onload = function() {
-        var request = this._xhrReq;
-        var responseJSON = JSON.parse(request.responseText || "{}");
-
-        if (request.readyState === 4 && request.status >= 200 && request.status < 300) {
-          try {
-            // We currently only require things we need rather than everything possible.
-            callback(null, validate(responseJSON, { roomUrl: String }));
-          } catch (err) {
-            console.error("Error requesting call info", err.message);
-            callback(err);
+      var req = $.ajax({
+        url: this._baseServerUrl + "/rooms/" + roomToken,
+        method: "GET",
+        contentType: "application/json",
+        beforeSend: function(xhr) {
+          if (this.sessionToken) {
+            xhr.setRequestHeader("Authorization", "Basic " + btoa(this.sessionToken));
           }
-        } else {
-          failureHandler(callback, request);
-        }
-      }.bind(this);
+        }.bind(this)
+      });
 
-      this._xhrReq.send();
+      req.done(function(responseData) {
+        try {
+          // We currently only require things we need rather than everything possible.
+          callback(null, validate(responseData, {
+            roomOwner: String,
+            roomUrl: String
+          }));
+        } catch (err) {
+          console.error("Error requesting call info", err.message);
+          callback(err);
+        }
+      }.bind(this));
+
+      req.fail(failureHandler.bind(this, callback));
     },
 
     /**
@@ -117,33 +118,28 @@ loop.StandaloneMozLoop = (function(mozL10n) {
      */
     _postToRoom: function(roomToken, sessionToken, roomData, expectedProps,
                           async, callback) {
-      var url = this._baseServerUrl + "/rooms/" + roomToken;
-      var xhrReq = new XMLHttpRequest();
-
-      xhrReq.open("POST", url, async);
-      xhrReq.setRequestHeader("Content-type", "application/json");
-
-      if (sessionToken) {
-        xhrReq.setRequestHeader("Authorization", "Basic " + btoa(sessionToken));
-      }
-
-      xhrReq.onload = function() {
-        var request = xhrReq;
-        var responseJSON = JSON.parse(request.responseText || null);
-
-        if (request.readyState === 4 && request.status >= 200 && request.status < 300) {
+      var req = $.ajax({
+        url: this._baseServerUrl + "/rooms/" + roomToken,
+        method: "POST",
+        contentType: "application/json",
+        dataType: "json",
+        data: JSON.stringify(roomData),
+        beforeSend: function(xhr) {
+          if (sessionToken) {
+            xhr.setRequestHeader("Authorization", "Basic " + btoa(sessionToken));
+          }
+        },
+        async: async,
+        success: function(responseData) {
           try {
-            callback(null, validate(responseJSON, expectedProps));
+            callback(null, validate(responseData, expectedProps));
           } catch (err) {
             console.error("Error requesting call info", err.message);
             callback(err);
           }
-        } else {
-          failureHandler(callback, request);
-        }
-      }.bind(this, xhrReq);
-
-      xhrReq.send(JSON.stringify(roomData));
+        }.bind(this),
+        error: failureHandler.bind(this, callback)
+      });
     },
 
     /**
@@ -281,6 +277,7 @@ loop.StandaloneMozLoop = (function(mozL10n) {
      * Gets a preference from the local storage for standalone.
      *
      * @param {String} prefName The name of the pref
+     * @param {String} value The value to set.
      */
     getLoopPref: function(prefName) {
       return localStorage.getItem(prefName);

@@ -63,7 +63,7 @@ class Pledge : public PledgeBase
   };
 
 public:
-  explicit Pledge() : mDone(false), mRejected(false) {}
+  explicit Pledge() : mDone(false), mError(nullptr) {}
   Pledge(const Pledge& aOther) = delete;
   Pledge& operator = (const Pledge&) = delete;
 
@@ -97,7 +97,100 @@ public:
     mFunctors = new Functors(aOnSuccess, aOnFailure);
 
     if (mDone) {
-      if (!mRejected) {
+      if (!mError) {
+        mFunctors->Succeed(mValue);
+      } else {
+        mFunctors->Fail(*mError);
+      }
+    }
+  }
+
+  void Resolve(const ValueType& aValue)
+  {
+    mValue = aValue;
+    Resolve();
+  }
+protected:
+  void Resolve()
+  {
+    if (!mDone) {
+      mDone = true;
+      MOZ_ASSERT(!mError);
+      if (mFunctors) {
+        mFunctors->Succeed(mValue);
+      }
+    }
+  }
+
+  void Reject(ErrorType rv)
+  {
+    if (!mDone) {
+      mDone = true;
+      mError = rv;
+      if (mFunctors) {
+        mFunctors->Fail(mError);
+      }
+    }
+  }
+
+  ValueType mValue;
+private:
+  ~Pledge() {};
+  bool mDone;
+  nsRefPtr<ErrorType> mError;
+  ScopedDeletePtr<FunctorsBase> mFunctors;
+};
+
+template<typename ValueType>
+class Pledge<ValueType, nsresult>  : public PledgeBase
+{
+  // TODO: Remove workaround once mozilla allows std::function from <functional>
+  // wo/std::function support, do template + virtual trick to accept lambdas
+  class FunctorsBase
+  {
+  public:
+    FunctorsBase() {}
+    virtual void Succeed(ValueType& result) = 0;
+    virtual void Fail(nsresult error) = 0;
+    virtual ~FunctorsBase() {};
+  };
+
+public:
+  explicit Pledge() : mDone(false), mError(NS_OK) {}
+  Pledge(const Pledge& aOther) = delete;
+  Pledge& operator = (const Pledge&) = delete;
+
+  template<typename OnSuccessType>
+  void Then(OnSuccessType aOnSuccess)
+  {
+    Then(aOnSuccess, [](nsresult){});
+  }
+
+  template<typename OnSuccessType, typename OnFailureType>
+  void Then(OnSuccessType aOnSuccess, OnFailureType aOnFailure)
+  {
+    class Functors : public FunctorsBase
+    {
+    public:
+      Functors(OnSuccessType& aOnSuccess, OnFailureType& aOnFailure)
+        : mOnSuccess(aOnSuccess), mOnFailure(aOnFailure) {}
+
+      void Succeed(ValueType& result)
+      {
+        mOnSuccess(result);
+      }
+      void Fail(nsresult rv)
+      {
+        mOnFailure(rv);
+      };
+
+      OnSuccessType mOnSuccess;
+      OnFailureType mOnFailure;
+    };
+    mFunctors = new Functors(aOnSuccess, aOnFailure);
+
+    if (mDone) {
+      if (mError == NS_OK) {
         mFunctors->Succeed(mValue);
       } else {
         mFunctors->Fail(mError);
@@ -110,26 +203,25 @@ public:
     mValue = aValue;
     Resolve();
   }
-
-  void Reject(ErrorType rv)
-  {
-    if (!mDone) {
-      mDone = mRejected = true;
-      mError = rv;
-      if (mFunctors) {
-        mFunctors->Fail(mError);
-      }
-    }
-  }
-
 protected:
   void Resolve()
   {
     if (!mDone) {
       mDone = true;
-      MOZ_ASSERT(!mRejected);
+      MOZ_ASSERT(mError == NS_OK);
       if (mFunctors) {
         mFunctors->Succeed(mValue);
+      }
+    }
+  }
+
+  void Reject(nsresult error)
+  {
+    if (!mDone) {
+      mDone = true;
+      mError = error;
+      if (mFunctors) {
+        mFunctors->Fail(mError);
       }
     }
   }
@@ -138,8 +230,7 @@ protected:
 private:
   ~Pledge() {};
   bool mDone;
-  bool mRejected;
-  ErrorType mError;
+  nsresult mError;
   ScopedDeletePtr<FunctorsBase> mFunctors;
 };
 
@@ -320,41 +411,6 @@ private:
     return ++counter;
   };
   nsAutoTArray<Element, 3> mElements;
-};
-
-/* media::Refcountable - Add threadsafe ref-counting to something that isn't.
- *
- * Often, reference counting is the most practical way to share an object with
- * another thread without imposing lifetime restrictions, even if there's
- * otherwise no concurrent access happening on the object.  For instance, an
- * algorithm on another thread may find it more expedient to modify a passed-in
- * object, rather than pass expensive copies back and forth.
- *
- * Lists in particular often aren't ref-countable, yet are expensive to copy,
- * e.g. nsTArray<nsRefPtr<Foo>>. Refcountable can be used to make such objects
- * (or owning smart-pointers to such objects) refcountable.
- *
- * Technical limitation: A template specialization is needed for types that take
- * a constructor. Please add below (ScopedDeletePtr covers a lot of ground though).
- */
-
-template<typename T>
-class Refcountable : public T
-{
-public:
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Refcountable<T>)
-private:
-  ~Refcountable<T>() {}
-};
-
-template<typename T>
-class Refcountable<ScopedDeletePtr<T>> : public ScopedDeletePtr<T>
-{
-public:
-  explicit Refcountable<ScopedDeletePtr<T>>(T* aPtr) : ScopedDeletePtr<T>(aPtr) {}
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Refcountable<T>)
-private:
-  ~Refcountable<ScopedDeletePtr<T>>() {}
 };
 
 } // namespace media

@@ -18,7 +18,6 @@
 #include "jsopcode.h"
 #include "jstypes.h"
 
-#include "builtin/ModuleObject.h"
 #include "gc/Barrier.h"
 #include "gc/Rooting.h"
 #include "jit/IonCode.h"
@@ -39,7 +38,6 @@ namespace jit {
 
 # define ION_DISABLED_SCRIPT ((js::jit::IonScript*)0x1)
 # define ION_COMPILING_SCRIPT ((js::jit::IonScript*)0x2)
-# define ION_PENDING_SCRIPT ((js::jit::IonScript*)0x3)
 
 # define BASELINE_DISABLED_SCRIPT ((js::jit::BaselineScript*)0x1)
 
@@ -47,16 +45,14 @@ class BreakpointSite;
 class BindingIter;
 class Debugger;
 class LazyScript;
-class NestedScopeObject;
 class RegExpObject;
 struct SourceCompressionTask;
 class Shape;
+class NestedScopeObject;
 
 namespace frontend {
     struct BytecodeEmitter;
     class UpvarCookie;
-    class FunctionBox;
-    class ModuleBox;
 } // namespace frontend
 
 namespace detail {
@@ -274,8 +270,7 @@ class Bindings : public JS::Traceable
                                          uint32_t numBlockScoped,
                                          uint32_t numUnaliasedVars,
                                          uint32_t numUnaliasedBodyLevelLexicals,
-                                         const Binding* bindingArray,
-                                         bool isModule = false);
+                                         const Binding* bindingArray);
 
     // Initialize a trivial Bindings with no slots and an empty callObjShape.
     bool initTrivial(ExclusiveContext* cx);
@@ -352,7 +347,7 @@ class Bindings : public JS::Traceable
 template <class Outer>
 class BindingsOperations
 {
-    const Bindings& bindings() const { return static_cast<const Outer*>(this)->get(); }
+    const Bindings& bindings() const { return static_cast<const Outer*>(this)->extract(); }
 
   public:
     // Direct data access to the underlying bindings.
@@ -416,7 +411,7 @@ class BindingsOperations
 template <class Outer>
 class MutableBindingsOperations : public BindingsOperations<Outer>
 {
-    Bindings& bindings() { return static_cast<Outer*>(this)->get(); }
+    Bindings& bindings() { return static_cast<Outer*>(this)->extractMutable(); }
 
   public:
     void setCallObjShape(HandleShape shape) { bindings().callObjShape_ = shape; }
@@ -441,52 +436,52 @@ class MutableBindingsOperations : public BindingsOperations<Outer>
 
 template <>
 class HandleBase<Bindings> : public BindingsOperations<JS::Handle<Bindings>>
-{};
+{
+    friend class BindingsOperations<JS::Handle<Bindings>>;
+    const Bindings& extract() const {
+        return static_cast<const JS::Handle<Bindings>*>(this)->get();
+    }
+};
 
 template <>
 class MutableHandleBase<Bindings>
   : public MutableBindingsOperations<JS::MutableHandle<Bindings>>
-{};
+{
+    friend class BindingsOperations<JS::MutableHandle<Bindings>>;
+    const Bindings& extract() const {
+        return static_cast<const JS::MutableHandle<Bindings>*>(this)->get();
+    }
+
+    friend class MutableBindingsOperations<JS::MutableHandle<Bindings>>;
+    Bindings& extractMutable() {
+        return static_cast<JS::MutableHandle<Bindings>*>(this)->get();
+    }
+};
 
 class ScriptCounts
 {
-  public:
-    typedef mozilla::Vector<PCCounts, 0, SystemAllocPolicy> PCCountsVector;
-
-    inline ScriptCounts();
-    inline explicit ScriptCounts(PCCountsVector&& jumpTargets);
-    inline ScriptCounts(ScriptCounts&& src);
-    inline ~ScriptCounts();
-
-    inline ScriptCounts& operator=(ScriptCounts&& src);
-
-    // Return the counter used to count the number of visits. Returns null if
-    // the element is not found.
-    PCCounts* maybeGetPCCounts(size_t offset);
-    const PCCounts* maybeGetPCCounts(size_t offset) const;
-
-    // Return the counter used to count the number of throws. Returns null if
-    // the element is not found.
-    const PCCounts* maybeGetThrowCounts(size_t offset) const;
-
-    // Return the counter used to count the number of throws. Allocate it if
-    // none exists yet. Returns null if the allocation failed.
-    PCCounts* getThrowCounts(size_t offset);
-
-  private:
     friend class ::JSScript;
     friend struct ScriptAndCounts;
 
-    // This sorted array is used to map an offset to the number of times a
-    // branch got visited.
-    PCCountsVector pcCounts_;
+    /*
+     * This points to a single block that holds an array of PCCounts followed
+     * by an array of doubles.  Each element in the PCCounts array has a
+     * pointer into the array of doubles.
+     */
+    PCCounts* pcCountsVector;
 
-    // This sorted vector is used to map an offset to the number of times an
-    // instruction throw.
-    PCCountsVector throwCounts_;
+    /* Information about any Ion compilations for the script. */
+    jit::IonScriptCounts* ionCounts;
 
-    // Information about any Ion compilations for the script.
-    jit::IonScriptCounts* ionCounts_;
+ public:
+    ScriptCounts() : pcCountsVector(nullptr), ionCounts(nullptr) { }
+
+    inline void destroy(FreeOp* fop);
+
+    void set(js::ScriptCounts counts) {
+        pcCountsVector = counts.pcCountsVector;
+        ionCounts = counts.ionCounts;
+    }
 };
 
 typedef HashMap<JSScript*,
@@ -967,18 +962,10 @@ class JSScript : public js::gc::TenuredCell
     js::HeapPtrObject sourceObject_;
 
     js::HeapPtrFunction function_;
-    js::HeapPtr<js::ModuleObject*> module_;
     js::HeapPtrObject   enclosingStaticScope_;
 
-    /*
-     * Information attached by Ion. Nexto a valid IonScript this could be
-     * ION_DISABLED_SCRIPT, ION_COMPILING_SCRIPT or ION_PENDING_SCRIPT.
-     * The later is a ion compilation that is ready, but hasn't been linked
-     * yet.
-     */
+    /* Information attached by Baseline/Ion for sequential mode execution. */
     js::jit::IonScript* ion;
-
-    /* Information attached by Baseline. */
     js::jit::BaselineScript* baseline;
 
     /* Information used to re-lazify a lazily-parsed interpreted function. */
@@ -1027,6 +1014,8 @@ class JSScript : public js::gc::TenuredCell
 
     uint16_t        nTypeSets_; /* number of type sets used in this script for
                                    dynamic type monitoring */
+
+    uint16_t        staticLevel_;/* static level for display maintenance */
 
     // Bit fields.
 
@@ -1102,6 +1091,9 @@ class JSScript : public js::gc::TenuredCell
     // Script came from eval(), and is in eval cache.
     bool isCachedEval_:1;
 
+    // Set for functions defined at the top level within an 'eval' script.
+    bool directlyInsideEval_:1;
+
     // 'this', 'arguments' and f.apply() are used. This is likely to be a wrapper.
     bool usesArgumentsApplyAndThis_:1;
 
@@ -1135,10 +1127,6 @@ class JSScript : public js::gc::TenuredCell
     bool needsArgsAnalysis_:1;
     bool needsArgsObj_:1;
 
-    // Whether the arguments object for this script, if it needs one, should be
-    // mapped (alias formal parameters).
-    bool hasMappedArgsObj_:1;
-
     // Generation for this script's TypeScript. If out of sync with the
     // TypeZone's generation, the TypeScript needs to be swept.
     //
@@ -1162,7 +1150,7 @@ class JSScript : public js::gc::TenuredCell
     // instead of private to suppress -Wunused-private-field compiler warnings.
   protected:
 #if JS_BITS_PER_WORD == 32
-    // No padding currently required.
+    uint32_t padding;
 #endif
 
     //
@@ -1172,7 +1160,7 @@ class JSScript : public js::gc::TenuredCell
   public:
     static JSScript* Create(js::ExclusiveContext* cx,
                             js::HandleObject enclosingScope, bool savedCallerFun,
-                            const JS::ReadOnlyCompileOptions& options,
+                            const JS::ReadOnlyCompileOptions& options, unsigned staticLevel,
                             js::HandleObject sourceObject, uint32_t sourceStart,
                             uint32_t sourceEnd);
 
@@ -1188,10 +1176,6 @@ class JSScript : public js::gc::TenuredCell
                               uint32_t nTypeSets);
     static bool fullyInitFromEmitter(js::ExclusiveContext* cx, JS::Handle<JSScript*> script,
                                      js::frontend::BytecodeEmitter* bce);
-    static void linkToFunctionFromEmitter(js::ExclusiveContext* cx, JS::Handle<JSScript*> script,
-                                          js::frontend::FunctionBox* funbox);
-    static void linkToModuleFromEmitter(js::ExclusiveContext* cx, JS::Handle<JSScript*> script,
-                                        js::frontend::ModuleBox* funbox);
     // Initialize a no-op script.
     static bool fullyInitTrivial(js::ExclusiveContext* cx, JS::Handle<JSScript*> script);
 
@@ -1284,6 +1268,10 @@ class JSScript : public js::gc::TenuredCell
         return nslots_;
     }
 
+    size_t staticLevel() const {
+        return staticLevel_;
+    }
+
     size_t nTypeSets() const {
         return nTypeSets_;
     }
@@ -1341,6 +1329,7 @@ class JSScript : public js::gc::TenuredCell
 
     bool isActiveEval() const { return isActiveEval_; }
     bool isCachedEval() const { return isCachedEval_; }
+    bool directlyInsideEval() const { return directlyInsideEval_; }
 
     void cacheForEval() {
         MOZ_ASSERT(isActiveEval() && !isCachedEval());
@@ -1359,6 +1348,7 @@ class JSScript : public js::gc::TenuredCell
     }
 
     void setActiveEval() { isActiveEval_ = true; }
+    void setDirectlyInsideEval() { directlyInsideEval_ = true; }
 
     bool usesArgumentsApplyAndThis() const {
         return usesArgumentsApplyAndThis_;
@@ -1408,7 +1398,7 @@ class JSScript : public js::gc::TenuredCell
     jsbytecode* argumentsBytecode() const { MOZ_ASSERT(code()[0] == JSOP_ARGUMENTS); return code(); }
     void setArgumentsHasVarBinding();
     bool argumentsAliasesFormals() const {
-        return argumentsHasVarBinding() && hasMappedArgsObj();
+        return argumentsHasVarBinding() && !strict();
     }
 
     js::GeneratorKind generatorKind() const {
@@ -1454,20 +1444,17 @@ class JSScript : public js::gc::TenuredCell
     void setNeedsArgsObj(bool needsArgsObj);
     static bool argumentsOptimizationFailed(JSContext* cx, js::HandleScript script);
 
-    bool hasMappedArgsObj() const {
-        return hasMappedArgsObj_;
-    }
-
     /*
      * Arguments access (via JSOP_*ARG* opcodes) must access the canonical
-     * location for the argument. If an arguments object exists AND it's mapped
-     * ('arguments' aliases formals), then all access must go through the
-     * arguments object. Otherwise, the local slot is the canonical location for
-     * the arguments. Note: if a formal is aliased through the scope chain, then
-     * script->formalIsAliased and JSOP_*ARG* opcodes won't be emitted at all.
+     * location for the argument. If an arguments object exists AND this is a
+     * non-strict function (where 'arguments' aliases formals), then all access
+     * must go through the arguments object. Otherwise, the local slot is the
+     * canonical location for the arguments. Note: if a formal is aliased
+     * through the scope chain, then script->formalIsAliased and JSOP_*ARG*
+     * opcodes won't be emitted at all.
      */
     bool argsObjAliasesFormals() const {
-        return needsArgsObj() && hasMappedArgsObj();
+        return needsArgsObj() && !strict();
     }
 
     uint32_t typesGeneration() const {
@@ -1488,14 +1475,14 @@ class JSScript : public js::gc::TenuredCell
     }
 
     bool hasIonScript() const {
-        bool res = ion && ion != ION_DISABLED_SCRIPT && ion != ION_COMPILING_SCRIPT &&
-                          ion != ION_PENDING_SCRIPT;
+        bool res = ion && ion != ION_DISABLED_SCRIPT && ion != ION_COMPILING_SCRIPT;
         MOZ_ASSERT_IF(res, baseline);
         return res;
     }
     bool canIonCompile() const {
         return ion != ION_DISABLED_SCRIPT;
     }
+
     bool isIonCompilingOffThread() const {
         return ion == ION_COMPILING_SCRIPT;
     }
@@ -1510,7 +1497,13 @@ class JSScript : public js::gc::TenuredCell
     js::jit::IonScript* const* addressOfIonScript() const {
         return &ion;
     }
-    void setIonScript(JSContext* maybecx, js::jit::IonScript* ionScript);
+    void setIonScript(JSContext* maybecx, js::jit::IonScript* ionScript) {
+        if (hasIonScript())
+            js::jit::IonScript::writeBarrierPre(zone(), ion);
+        ion = ionScript;
+        MOZ_ASSERT_IF(hasIonScript(), hasBaselineScript());
+        updateBaselineOrIonRaw(maybecx);
+    }
 
     bool hasBaselineScript() const {
         bool res = baseline && baseline != BASELINE_DISABLED_SCRIPT;
@@ -1527,6 +1520,16 @@ class JSScript : public js::gc::TenuredCell
     inline void setBaselineScript(JSContext* maybecx, js::jit::BaselineScript* baselineScript);
 
     void updateBaselineOrIonRaw(JSContext* maybecx);
+
+    void setPendingIonBuilder(JSContext* maybecx, js::jit::IonBuilder* builder) {
+        MOZ_ASSERT(!builder || !ion->pendingBuilder());
+        ion->setPendingBuilderPrivate(builder);
+        updateBaselineOrIonRaw(maybecx);
+    }
+    js::jit::IonBuilder* pendingIonBuilder() {
+        MOZ_ASSERT(hasIonScript());
+        return ion->pendingBuilder();
+    }
 
     static size_t offsetOfBaselineScript() {
         return offsetof(JSScript, baseline);
@@ -1574,11 +1577,6 @@ class JSScript : public js::gc::TenuredCell
      * that expects the function to be non-lazy.
      */
     inline void ensureNonLazyCanonicalFunction(JSContext* cx);
-
-    js::ModuleObject* module() const {
-        return module_;
-    }
-    inline void setModule(js::ModuleObject* module);
 
     JSFlatString* sourceData(JSContext* cx);
 
@@ -1631,16 +1629,11 @@ class JSScript : public js::gc::TenuredCell
 
   public:
     bool initScriptCounts(JSContext* cx);
-    js::ScriptCounts& getScriptCounts();
-    js::PCCounts* maybeGetPCCounts(jsbytecode* pc);
-    const js::PCCounts* maybeGetThrowCounts(jsbytecode* pc);
-    js::PCCounts* getThrowCounts(jsbytecode* pc);
+    js::PCCounts& getPCCounts(jsbytecode* pc);
     void addIonCounts(js::jit::IonScriptCounts* ionCounts);
     js::jit::IonScriptCounts* getIonCounts();
-    void releaseScriptCounts(js::ScriptCounts* counts);
+    js::ScriptCounts releaseScriptCounts();
     void destroyScriptCounts(js::FreeOp* fop);
-    // The entry should be removed after using this function.
-    void takeOverScriptCountsMapEntry(js::ScriptCounts* entryValue);
 
     jsbytecode* main() {
         return code() + mainOffset();
@@ -1771,7 +1764,7 @@ class JSScript : public js::gc::TenuredCell
         return arr->vector[index];
     }
 
-    // The following 4 functions find the static scope just before the
+    // The following 3 functions find the static scope just before the
     // execution of the instruction pointed to by pc.
 
     js::NestedScopeObject* getStaticBlockScope(jsbytecode* pc);
@@ -1783,8 +1776,6 @@ class JSScript : public js::gc::TenuredCell
     // As innermostStaticScopeInScript, but returns the enclosing static scope
     // if the innermost static scope falls without the extent of the script.
     JSObject* innermostStaticScope(jsbytecode* pc);
-
-    JSObject* innermostStaticScope() { return innermostStaticScope(main()); }
 
     /*
      * The isEmpty method tells whether this script has code that computes any
@@ -1804,7 +1795,9 @@ class JSScript : public js::gc::TenuredCell
     bool bindingIsAliased(const js::BindingIter& bi);
     bool formalIsAliased(unsigned argSlot);
     bool formalLivesInArgumentsObject(unsigned argSlot);
-    bool localIsAliased(unsigned localSlot);
+
+    // Frontend-only.
+    bool cookieIsAliased(const js::frontend::UpvarCookie& cookie);
 
   private:
     /* Change this->stepMode to |newValue|. */
@@ -2071,7 +2064,7 @@ class LazyScript : public gc::TenuredCell
         uint32_t version : 8;
 
         uint32_t numFreeVariables : 24;
-        uint32_t numInnerFunctions : 20;
+        uint32_t numInnerFunctions : 21;
 
         uint32_t generatorKindBits : 2;
 
@@ -2082,11 +2075,11 @@ class LazyScript : public gc::TenuredCell
         uint32_t bindingsAccessedDynamically : 1;
         uint32_t hasDebuggerStatement : 1;
         uint32_t hasDirectEval : 1;
+        uint32_t directlyInsideEval : 1;
         uint32_t usesArgumentsApplyAndThis : 1;
         uint32_t hasBeenCloned : 1;
         uint32_t treatAsRunOnce : 1;
         uint32_t isDerivedClassConstructor : 1;
-        uint32_t needsHomeObject : 1;
     };
 
     union {
@@ -2230,6 +2223,13 @@ class LazyScript : public gc::TenuredCell
         p_.hasDirectEval = true;
     }
 
+    bool directlyInsideEval() const {
+        return p_.directlyInsideEval;
+    }
+    void setDirectlyInsideEval() {
+        p_.directlyInsideEval = true;
+    }
+
     bool usesArgumentsApplyAndThis() const {
         return p_.usesArgumentsApplyAndThis;
     }
@@ -2258,13 +2258,6 @@ class LazyScript : public gc::TenuredCell
         p_.isDerivedClassConstructor = true;
     }
 
-    bool needsHomeObject() const {
-        return p_.needsHomeObject;
-    }
-    void setNeedsHomeObject() {
-        p_.needsHomeObject = true;
-    }
-
     const char* filename() const {
         return scriptSource()->filename();
     }
@@ -2282,6 +2275,7 @@ class LazyScript : public gc::TenuredCell
     }
 
     bool hasUncompiledEnclosingScript() const;
+    uint32_t staticLevel(JSContext* cx) const;
 
     friend class GCMarker;
     void traceChildren(JSTracer* trc);
@@ -2364,22 +2358,12 @@ struct ScriptAndCounts
     JSScript* script;
     ScriptCounts scriptCounts;
 
-    inline explicit ScriptAndCounts(JSScript* script);
-    inline ScriptAndCounts(ScriptAndCounts&& sac);
-
-    const PCCounts* maybeGetPCCounts(jsbytecode* pc) const {
-        return scriptCounts.maybeGetPCCounts(script->pcToOffset(pc));
-    }
-    const PCCounts* maybeGetThrowCounts(jsbytecode* pc) const {
-        return scriptCounts.maybeGetThrowCounts(script->pcToOffset(pc));
+    PCCounts& getPCCounts(jsbytecode* pc) const {
+        return scriptCounts.pcCountsVector[script->pcToOffset(pc)];
     }
 
     jit::IonScriptCounts* getIonCounts() const {
-        return scriptCounts.ionCounts_;
-    }
-
-    void trace(JSTracer* trc) {
-        TraceRoot(trc, &script, "ScriptAndCounts::script");
+        return scriptCounts.ionCounts;
     }
 };
 
@@ -2441,16 +2425,7 @@ CloneGlobalScript(JSContext* cx, Handle<ScopeObject*> enclosingScope, HandleScri
 // with no associated compartment.
 namespace JS {
 namespace ubi {
-template<>
-struct Concrete<js::LazyScript> : TracerConcrete<js::LazyScript> {
-    CoarseType coarseType() const final { return CoarseType::Script; }
-
-  protected:
-    explicit Concrete(js::LazyScript *ptr) : TracerConcrete<js::LazyScript>(ptr) { }
-
-  public:
-    static void construct(void *storage, js::LazyScript *ptr) { new (storage) Concrete(ptr); }
-};
+template<> struct Concrete<js::LazyScript> : TracerConcrete<js::LazyScript> { };
 } // namespace ubi
 } // namespace JS
 

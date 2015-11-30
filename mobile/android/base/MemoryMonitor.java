@@ -175,7 +175,7 @@ class MemoryMonitor extends BroadcastReceiver {
         // TODO hook in memory-reduction stuff for different levels here
         if (level >= MEMORY_PRESSURE_MEDIUM) {
             //Only send medium or higher events because that's all that is used right now
-            if (GeckoThread.isRunning()) {
+            if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
                 GeckoAppShell.dispatchMemoryPressure();
             }
 
@@ -253,7 +253,7 @@ class MemoryMonitor extends BroadcastReceiver {
         @Override
         public void run() {
             // this might get run right on startup, if so wait 10 seconds and try again
-            if (!GeckoThread.isRunning()) {
+            if (!GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
                 ThreadUtils.getBackgroundHandler().postDelayed(this, 10000);
                 return;
             }

@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // Ensure that an inner frame from a different origin can't initiate an install
 
-var wasOriginBlocked = false;
+let wasOriginBlocked = false;
 
 function test() {
   Harness.installOriginBlockedCallback = install_blocked;

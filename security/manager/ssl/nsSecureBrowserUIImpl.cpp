@@ -70,10 +70,10 @@ RequestMapInitEntry(PLDHashEntryHdr *hdr, const void *key)
 }
 
 static const PLDHashTableOps gMapOps = {
-  PLDHashTable::HashVoidPtrKeyStub,
+  PL_DHashVoidPtrKeyStub,
   RequestMapMatchEntry,
-  PLDHashTable::MoveEntryStub,
-  PLDHashTable::ClearEntryStub,
+  PL_DHashMoveEntryStub,
+  PL_DHashClearEntryStub,
   RequestMapInitEntry
 };
 
@@ -859,7 +859,7 @@ nsSecureBrowserUIImpl::OnStateChange(nsIWebProgress* aWebProgress,
     // means, there has already been data transfered.
 
     ReentrantMonitorAutoEnter lock(mReentrantMonitor);
-    mTransferringRequests.Add(aRequest, fallible);
+    PL_DHashTableAdd(&mTransferringRequests, aRequest, fallible);
 
     return NS_OK;
   }
@@ -872,9 +872,8 @@ nsSecureBrowserUIImpl::OnStateChange(nsIWebProgress* aWebProgress,
   {
     { /* scope for the ReentrantMonitorAutoEnter */
       ReentrantMonitorAutoEnter lock(mReentrantMonitor);
-      PLDHashEntryHdr* entry = mTransferringRequests.Search(aRequest);
-      if (entry) {
-        mTransferringRequests.RemoveEntry(entry);
+      if (PL_DHashTableSearch(&mTransferringRequests, aRequest)) {
+        PL_DHashTableRemove(&mTransferringRequests, aRequest);
         requestHasTransferedData = true;
       }
     }

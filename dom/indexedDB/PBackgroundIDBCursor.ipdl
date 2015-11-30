@@ -4,7 +4,6 @@
 
 include protocol PBackgroundIDBTransaction;
 include protocol PBackgroundIDBVersionChangeTransaction;
-include protocol PBackgroundMutableFile;
 include protocol PBlob;
 
 include PBackgroundIDBSharedTypes;
@@ -51,7 +50,6 @@ struct ObjectStoreKeyCursorResponse
 struct IndexCursorResponse
 {
   Key key;
-  Key sortKey;
   Key objectKey;
   SerializedStructuredCloneReadInfo cloneInfo;
 };
@@ -59,7 +57,6 @@ struct IndexCursorResponse
 struct IndexKeyCursorResponse
 {
   Key key;
-  Key sortKey;
   Key objectKey;
 };
 
@@ -67,7 +64,7 @@ union CursorResponse
 {
   void_t;
   nsresult;
-  ObjectStoreCursorResponse[];
+  ObjectStoreCursorResponse;
   ObjectStoreKeyCursorResponse;
   IndexCursorResponse;
   IndexKeyCursorResponse;
@@ -80,7 +77,7 @@ protocol PBackgroundIDBCursor
 parent:
   DeleteMe();
 
-  Continue(CursorRequestParams params, Key key);
+  Continue(CursorRequestParams params);
 
 child:
   __delete__();

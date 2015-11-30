@@ -51,7 +51,7 @@ from mozprofile.permissions import ServerLocations
 from urllib import quote_plus as encodeURIComponent
 from mozlog.formatters import TbplFormatter
 from mozlog import commandline
-from mozrunner.utils import get_stack_fixer_function, test_environment
+from mozrunner.utils import test_environment
 from mozscreenshot import dump_screen
 import mozleak
 
@@ -332,7 +332,7 @@ class MochitestServer(object):
         if isinstance(options, Namespace):
             options = vars(options)
         self._log = logger
-        self._keep_open = bool(options['keep_open'])
+        self._closeWhenDone = options['closeWhenDone']
         self._utilityPath = options['utilityPath']
         self._xrePath = options['xrePath']
         self._profileDir = options['profilePath']
@@ -390,7 +390,7 @@ class MochitestServer(object):
                 "server": self.webServer,
                 "testPrefix": self.testPrefix,
                 "displayResults": str(
-                    self._keep_open).lower()},
+                    not self._closeWhenDone).lower()},
             "-f",
             os.path.join(
                 SCRIPT_DIR,
@@ -594,7 +594,7 @@ class MochitestUtilsMixin(object):
                 self.urlOpts.append("timeout=%d" % options.timeout)
             if options.maxTimeouts:
                 self.urlOpts.append("maxTimeouts=%d" % options.maxTimeouts)
-            if not options.keep_open:
+            if options.closeWhenDone:
                 self.urlOpts.append("closeWhenDone=1")
             if options.webapprtContent:
                 self.urlOpts.append("testRoot=webapprtContent")
@@ -1217,6 +1217,7 @@ class Mochitest(MochitestUtilsMixin):
     _active_tests = None
     certdbNew = False
     sslTunnel = None
+    vmwareHelper = None
     DEFAULT_TIMEOUT = 60.0
     mediaDevices = None
 
@@ -1522,6 +1523,11 @@ class Mochitest(MochitestUtilsMixin):
         if not options.enableCPOWWarnings:
             browserEnv["DISABLE_UNSAFE_CPOW_WARNINGS"] = "1"
 
+        # Force use of core Xlib events on GTK3 to work around focus bug.
+        # See bug 1170342.
+        if mozinfo.info.get('toolkit') == 'gtk3':
+            browserEnv["GDK_CORE_DEVICE_EVENTS"] = "1"
+
         return browserEnv
 
     def cleanup(self, options):
@@ -1617,6 +1623,37 @@ class Mochitest(MochitestUtilsMixin):
                     dump_screen=not debuggerInfo)
 
         return foundZombie
+
+    def startVMwareRecording(self, options):
+        """ starts recording inside VMware VM using the recording helper dll """
+        assert mozinfo.isWin
+        from ctypes import cdll
+        self.vmwareHelper = cdll.LoadLibrary(self.vmwareHelperPath)
+        if self.vmwareHelper is None:
+            self.log.warning("runtests.py | Failed to load "
+                             "VMware recording helper")
+            return
+        self.log.info("runtests.py | Starting VMware recording.")
+        try:
+            self.vmwareHelper.StartRecording()
+        except Exception as e:
+            self.log.warning("runtests.py | Failed to start "
+                             "VMware recording: (%s)" % str(e))
+            self.vmwareHelper = None
+
+    def stopVMwareRecording(self):
+        """ stops recording inside VMware VM using the recording helper dll """
+        try:
+            assert mozinfo.isWin
+            if self.vmwareHelper is not None:
+                self.log.info("runtests.py | Stopping VMware recording.")
+                self.vmwareHelper.StopRecording()
+        except Exception as e:
+            self.log.warning("runtests.py | Failed to stop "
+                             "VMware recording: (%s)" % str(e))
+            self.log.exception('Error stopping VMWare recording')
+
+        self.vmwareHelper = None
 
     def runApp(self,
                testUrl,
@@ -1809,8 +1846,12 @@ class Mochitest(MochitestUtilsMixin):
         options.profilePath = None
         self.urlOpts = []
 
-    def resolve_runtime_file(self, options):
-        data_dir = os.path.join(SCRIPT_DIR, 'runtimes')
+    def resolve_runtime_file(self, options, info):
+        platform = info['platform_guess']
+        buildtype = info['buildtype_guess']
+
+        data_dir = os.path.join(SCRIPT_DIR, 'runtimes', '{}-{}'.format(
+            platform, buildtype))
 
         flavor = self.getTestFlavor(options)
         if flavor == 'browser-chrome' and options.subsuite == 'devtools':
@@ -1844,8 +1885,6 @@ class Mochitest(MochitestUtilsMixin):
 
         manifest = self.getTestManifest(options)
         if manifest:
-            if options.extra_mozinfo_json:
-                mozinfo.update(options.extra_mozinfo_json)
             info = mozinfo.info
 
             # Bug 1089034 - imptest failure expectations are encoded as
@@ -1872,7 +1911,7 @@ class Mochitest(MochitestUtilsMixin):
             # Add chunking filters if specified
             if options.totalChunks:
                 if options.chunkByRuntime:
-                    runtime_file = self.resolve_runtime_file(options)
+                    runtime_file = self.resolve_runtime_file(options, info)
                     if not os.path.exists(runtime_file):
                         self.log.warning("runtime file %s not found; defaulting to chunk-by-dir" %
                                          runtime_file)
@@ -1939,15 +1978,6 @@ class Mochitest(MochitestUtilsMixin):
 
         paths.sort(path_sort)
         self._active_tests = paths
-        if options.dump_tests:
-            options.dump_tests = os.path.expanduser(options.dump_tests)
-            assert os.path.exists(os.path.dirname(options.dump_tests))
-            with open(options.dump_tests, 'w') as dumpFile:
-                dumpFile.write(json.dumps({'active_tests': self._active_tests}))
-
-            self.log.info("Dumping active_tests to %s file." % options.dump_tests)
-            sys.exit()
-
         return self._active_tests
 
     def logPreamble(self, tests):
@@ -2051,7 +2081,9 @@ class Mochitest(MochitestUtilsMixin):
         self.killNamedOrphans('xpcshell')
 
         # Until we have all green, this only runs on bc*/dt*/mochitest-chrome
-        # jobs, not webapprt*, jetpack*, a11yr (for perf reasons), or plain
+        # jobs, not webapprt*, jetpack*, or plain
+        if options.browserChrome:
+            options.runByDir = True
 
         testsToRun = self.getTestsToRun(options)
         if not options.runByDir:
@@ -2205,6 +2237,9 @@ class Mochitest(MochitestUtilsMixin):
             else:
                 timeout = 330.0  # default JS harness timeout is 300 seconds
 
+            if options.vmwareRecording:
+                self.startVMwareRecording(options)
+
             # detect shutdown leaks for m-bc runs
             detectShutdownLeaks = mozinfo.info[
                 "debug"] and options.browserChrome and not options.webapprtChrome
@@ -2236,6 +2271,8 @@ class Mochitest(MochitestUtilsMixin):
                 status = 1
 
         finally:
+            if options.vmwareRecording:
+                self.stopVMwareRecording()
             self.stopServers()
 
         mozleak.process_leak_log(
@@ -2243,8 +2280,6 @@ class Mochitest(MochitestUtilsMixin):
             leak_thresholds=options.leakThresholds,
             ignore_missing_leaks=options.ignoreMissingLeaks,
             log=self.log,
-            stack_fixer=get_stack_fixer_function(options.utilityPath,
-                                                 options.symbolsPath),
         )
 
         if self.nsprLogs:
@@ -2354,9 +2389,47 @@ class Mochitest(MochitestUtilsMixin):
 
         def stackFixer(self):
             """
-            return get_stack_fixer_function, if any, to use on the output lines
+            return stackFixerFunction, if any, to use on the output lines
             """
-            return get_stack_fixer_function(self.utilityPath, self.symbolsPath)
+
+            if not mozinfo.info.get('debug'):
+                return None
+
+            stackFixerFunction = None
+
+            def import_stackFixerModule(module_name):
+                sys.path.insert(0, self.utilityPath)
+                module = __import__(module_name, globals(), locals(), [])
+                sys.path.pop(0)
+                return module
+
+            if self.symbolsPath and os.path.exists(self.symbolsPath):
+                # Run each line through a function in fix_stack_using_bpsyms.py (uses breakpad symbol files).
+                # This method is preferred for Tinderbox builds, since native
+                # symbols may have been stripped.
+                stackFixerModule = import_stackFixerModule(
+                    'fix_stack_using_bpsyms')
+                stackFixerFunction = lambda line: stackFixerModule.fixSymbols(
+                    line,
+                    self.symbolsPath)
+
+            elif mozinfo.isMac:
+                # Run each line through fix_macosx_stack.py (uses atos).
+                # This method is preferred for developer machines, so we don't
+                # have to run "make buildsymbols".
+                stackFixerModule = import_stackFixerModule('fix_macosx_stack')
+                stackFixerFunction = lambda line: stackFixerModule.fixSymbols(
+                    line)
+
+            elif mozinfo.isLinux:
+                # Run each line through fix_linux_stack.py (uses addr2line).
+                # This method is preferred for developer machines, so we don't
+                # have to run "make buildsymbols".
+                stackFixerModule = import_stackFixerModule('fix_linux_stack')
+                stackFixerFunction = lambda line: stackFixerModule.fixSymbols(
+                    line)
+
+            return stackFixerFunction
 
         def finish(self):
             if self.shutdownLeaks:
@@ -2460,8 +2533,6 @@ class Mochitest(MochitestUtilsMixin):
         d = dict((k, v) for k, v in options.__dict__.items() if (v is None) or
             isinstance(v,(basestring,numbers.Number)))
         d['testRoot'] = self.testRoot
-        if not options.keep_open:
-            d['closeWhenDone'] = '1'
         content = json.dumps(d)
 
         with open(os.path.join(options.profilePath, "testConfig.js"), "w") as config:
@@ -2515,24 +2586,6 @@ def run_test_harness(options):
     logger_options = {
         key: value for key, value in vars(options).iteritems() if key.startswith('log')}
     runner = Mochitest(logger_options)
-
-    options.runByDir = False
-
-    if runner.getTestFlavor(options) == 'mochitest':
-        options.runByDir = True
-
-    if mozinfo.info['asan'] and options.e10s:
-        options.runByDir = False
-
-    if mozinfo.isMac and mozinfo.info['debug']:
-        options.runByDir = False
-
-    if runner.getTestFlavor(options) == 'browser-chrome':
-        options.runByDir = True
-
-    if mozinfo.info.get('buildapp') == 'mulet':
-        options.runByDir = False
-
     result = runner.runTests(options)
 
     # don't dump failures if running from automation as treeherder already displays them

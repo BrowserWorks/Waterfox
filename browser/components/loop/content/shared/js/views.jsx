@@ -60,7 +60,7 @@ loop.shared.views = (function(_, mozL10n) {
       }
 
       var prefix = this.props.enabled ? "mute" : "unmute";
-      var suffix = (this.props.type === "video") ? "button_title2" : "button_title";
+      var suffix = "button_title";
       var msgId = [prefix, this.props.scope, this.props.type, suffix].join("_");
       return mozL10n.get(msgId);
     },
@@ -120,12 +120,10 @@ loop.shared.views = (function(_, mozL10n) {
 
     _handleShareTabs: function() {
       this._startScreenShare("browser");
-      this.hideDropdownMenu();
     },
 
     _handleShareWindows: function() {
       this._startScreenShare("window");
-      this.hideDropdownMenu();
     },
 
     _getTitle: function() {
@@ -152,12 +150,12 @@ loop.shared.views = (function(_, mozL10n) {
         "disabled": this.props.state === SCREEN_SHARE_STATES.PENDING
       });
       var dropdownMenuClasses = cx({
-        "screen-share-menu": true,
-        "dropdown-menu": true,
-        "hide": !this.state.showMenu
+        "native-dropdown-menu": true,
+        "conversation-window-dropdown": true,
+        "hide": !this.state.showMenu,
+        "visually-hidden": true
       });
       var windowSharingClasses = cx({
-        "dropdown-menu-item": true,
         "disabled": this.state.windowSharingDisabled
       });
 
@@ -165,203 +163,17 @@ loop.shared.views = (function(_, mozL10n) {
         <div>
           <button className={screenShareClasses}
                   onClick={this.handleClick}
-                  ref="anchor"
+                  ref="menu-button"
                   title={this._getTitle()}>
             {isActive ? null : <span className="chevron"/>}
           </button>
           <ul className={dropdownMenuClasses} ref="menu">
-            <li className="dropdown-menu-item" onClick={this._handleShareTabs}>
+            <li onClick={this._handleShareTabs}>
               {mozL10n.get("share_tabs_button_title2")}
             </li>
             <li className={windowSharingClasses} onClick={this._handleShareWindows}>
               {mozL10n.get("share_windows_button_title")}
             </li>
-          </ul>
-        </div>
-      );
-    }
-  });
-
-  /**
-   * Settings control button.
-   */
-  var SettingsControlButton = React.createClass({
-    propTypes: {
-      // Set to true if the menu should be below the button rather than above.
-      menuBelow: React.PropTypes.bool,
-      menuItems: React.PropTypes.array,
-      mozLoop: React.PropTypes.object
-    },
-
-    mixins: [
-      sharedMixins.DropdownMenuMixin(),
-      React.addons.PureRenderMixin
-    ],
-
-    getDefaultProps: function() {
-      return {
-        menuBelow: false
-      };
-    },
-
-    /**
-     * Reposition Menu if cropped
-     *
-     * Added to reposition the menu if it is cropped on the left side because of
-     * a long text string. This function measures how much the menu is cropped
-     * on the left or right and adjusts the coordinates so the menu isn't cropped.
-     * Also, sets the left style to auto, to prevent complexity in calculations
-     *
-     * The dropdownmenu mixin needs to be revamped, along with all components
-     * using dropdown menus. Components should be utilizing a global function
-     * for menu positions and it should be consistent throughout.
-     *
-     */
-    _repositionMenu: function() {
-      if (this.refs.menu && this.state.showMenu) {
-        var menuNode = this.refs.menu && this.refs.menu.getDOMNode();
-
-        if (menuNode) {
-          // Amount of pixels that the dropdown needs to stay away from the edges
-          // of the page body. Copied from the mixin.
-          var boundOffset = 4;
-          var menuNodeRect = menuNode.getBoundingClientRect();
-          var menuComputedStyle = window.getComputedStyle(menuNode);
-          var documentBody = this.getDOMNode().ownerDocument.body;
-          var bodyRect = documentBody.getBoundingClientRect();
-          var menuLeft = parseFloat(menuNodeRect.left);
-          var menuRight = parseFloat(menuNodeRect.right);
-          var bodyRight = parseFloat(bodyRect.right);
-
-          menuNode.style.left = "auto";
-
-          // If menu is too close or cropped on left, move right
-          if (menuLeft < -boundOffset) {
-            menuNode.style.right =
-              (parseFloat(menuComputedStyle.right) + menuLeft - boundOffset) + "px";
-          }
-          // If menu is too close or cropped on right, move left
-          if (menuRight > bodyRight - boundOffset) {
-            menuNode.style.right =
-              (parseFloat(menuComputedStyle.right) + (menuRight - bodyRight) + boundOffset) + "px";
-          }
-        }
-      }
-    },
-
-    /**
-     * Return the function that Show or hide the edit context edition form
-     */
-    getHandleToggleEdit: function(editItem) {
-      return function _handleToglleEdit(event) {
-          event.preventDefault();
-          if (editItem.onClick) {
-            editItem.onClick(!editItem.enabled);
-          }
-        };
-    },
-
-    /**
-     * Load on the browser the help (support) url from prefs
-     */
-    handleHelpEntry: function(event) {
-      event.preventDefault();
-      var helloSupportUrl = this.props.mozLoop.getLoopPref("support_url");
-      this.props.mozLoop.openURL(helloSupportUrl);
-    },
-
-    /**
-     * Load on the browser the feedback url from prefs
-     */
-    handleSubmitFeedback: function(event) {
-      event.preventDefault();
-      var helloFeedbackUrl = this.props.mozLoop.getLoopPref("feedback.formURL");
-      this.props.mozLoop.openURL(helloFeedbackUrl);
-    },
-
-    /**
-     * Recover the needed info for generating an specific menu Item
-     */
-    getItemInfo: function(menuItem) {
-      var cx = React.addons.classSet;
-      switch (menuItem.id) {
-        case "feedback":
-          return {
-            cssClasses: "dropdown-menu-item",
-            handler: this.handleSubmitFeedback,
-            label: mozL10n.get("feedback_request_button")
-          };
-        case "help":
-          return {
-            cssClasses: "dropdown-menu-item",
-            handler: this.handleHelpEntry,
-            label: mozL10n.get("help_label")
-          };
-        case "edit":
-          return {
-            cssClasses: cx({
-              "dropdown-menu-item": true,
-              "entry-settings-edit": true,
-              "hide": !menuItem.visible
-            }),
-            handler: this.getHandleToggleEdit(menuItem),
-            label: mozL10n.get(menuItem.enabled ?
-              "conversation_settings_menu_edit_context" :
-              "conversation_settings_menu_hide_context"),
-            scope: "local",
-            type: "edit"
-          };
-        default:
-          console.error("Invalid menu item", menuItem);
-          return null;
-       }
-    },
-
-    /**
-     * Generate a menu item after recover its info
-     */
-    generateMenuItem: function(menuItem) {
-      var itemInfo = this.getItemInfo(menuItem);
-      if (!itemInfo) {
-        return null;
-      }
-      return (
-        <li className={itemInfo.cssClasses}
-            key={menuItem.id}
-            onClick={itemInfo.handler}
-            scope={itemInfo.scope || ""}
-            type={itemInfo.type || ""} >
-          {itemInfo.label}
-        </li>
-        );
-    },
-
-    render: function() {
-      if (!this.props.menuItems || !this.props.menuItems.length) {
-        return null;
-      }
-      var menuItemRows = this.props.menuItems.map(this.generateMenuItem)
-        .filter(function(item) { return item; });
-
-      if (!menuItemRows || !menuItemRows.length) {
-        return null;
-      }
-
-      var cx = React.addons.classSet;
-      var settingsDropdownMenuClasses = cx({
-        "settings-menu": true,
-        "dropdown-menu": true,
-        "menu-below": this.props.menuBelow,
-        "hide": !this.state.showMenu
-      });
-      return (
-        <div className="settings-control">
-          <button className="btn btn-settings transparent-button"
-             onClick={this.toggleDropdownMenu}
-             ref="anchor"
-             title={mozL10n.get("settings_menu_button_tooltip")} />
-          <ul className={settingsDropdownMenuClasses} ref="menu">
-            {menuItemRows}
           </ul>
         </div>
       );
@@ -376,31 +188,22 @@ loop.shared.views = (function(_, mozL10n) {
       return {
         video: {enabled: true, visible: true},
         audio: {enabled: true, visible: true},
+        edit: {enabled: false, visible: false},
         screenShare: {state: SCREEN_SHARE_STATES.INACTIVE, visible: false},
-        settingsMenuItems: null,
-        enableHangup: true,
-        showHangup: true
-      };
-    },
-
-    getInitialState: function() {
-      return {
-        idle: false
+        enableHangup: true
       };
     },
 
     propTypes: {
       audio: React.PropTypes.object.isRequired,
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
+      edit: React.PropTypes.object.isRequired,
       enableHangup: React.PropTypes.bool,
       hangup: React.PropTypes.func.isRequired,
       hangupButtonLabel: React.PropTypes.string,
-      mozLoop: React.PropTypes.object,
+      onEditClick: React.PropTypes.func,
       publishStream: React.PropTypes.func.isRequired,
       screenShare: React.PropTypes.object,
-      settingsMenuItems: React.PropTypes.array,
-      show: React.PropTypes.bool.isRequired,
-      showHangup: React.PropTypes.bool,
       video: React.PropTypes.object.isRequired
     },
 
@@ -416,65 +219,10 @@ loop.shared.views = (function(_, mozL10n) {
       this.props.publishStream("audio", !this.props.audio.enabled);
     },
 
-    componentDidMount: function() {
-      this.userActivity = false;
-      this.startIdleCountDown();
-      document.body.addEventListener("mousemove", this._onBodyMouseMove);
-    },
-
-    componentWillUnmount: function() {
-      clearTimeout(this.inactivityTimeout);
-      clearInterval(this.inactivityPollInterval);
-      document.body.removeEventListener("mousemove", this._onBodyMouseMove);
-    },
-
-    /**
-     * If the conversation toolbar is idle, update its state and initialize the countdown
-     * to return of the idle state. If the toolbar is active, only it's updated the userActivity flag.
-     */
-    _onBodyMouseMove: function() {
-      if (this.state.idle) {
-        this.setState({idle: false});
-        this.startIdleCountDown();
-      } else {
-        this.userActivity = true;
+    handleToggleEdit: function() {
+      if (this.props.onEditClick) {
+        this.props.onEditClick(!this.props.edit.enabled);
       }
-    },
-
-    /**
-     * Instead of resetting the timeout for every mousemove (this event is called to many times,
-     * when the mouse is moving, we check the flat userActivity every 4 seconds. If the flag is activated,
-     * the user is still active, and we can restart the countdown for the idle state
-     */
-    checkUserActivity: function() {
-      this.inactivityPollInterval = setInterval(function() {
-        if (this.userActivity) {
-          this.userActivity = false;
-          this.restartIdleCountDown();
-        }
-      }.bind(this), 4000);
-    },
-
-    /**
-     * Stop the execution of the current inactivity countdown and it starts a new one.
-     */
-    restartIdleCountDown: function() {
-      clearTimeout(this.inactivityTimeout);
-      this.startIdleCountDown();
-    },
-
-    /**
-     * Launchs the process to check the user activity and the inactivity countdown to change
-     * the toolbar to idle.
-     * When the toolbar changes to idle, we remove the procces to check the user activity,
-     * because the toolbar is going to be updated directly when the user moves the mouse.
-     */
-    startIdleCountDown: function() {
-      this.checkUserActivity();
-      this.inactivityTimeout = setTimeout(function() {
-        this.setState({idle: true});
-        clearInterval(this.inactivityPollInterval);
-      }.bind(this), 6000);
     },
 
     _getHangupButtonLabel: function() {
@@ -482,43 +230,27 @@ loop.shared.views = (function(_, mozL10n) {
     },
 
     render: function() {
-      if (!this.props.show) {
-        return null;
-      }
-
-      var cx = React.addons.classSet;
-      var conversationToolbarCssClasses = cx({
-        "conversation-toolbar": true,
-        "idle": this.state.idle
-      });
-      var mediaButtonGroupCssClasses = cx({
-        "conversation-toolbar-media-btn-group-box": true,
-        "hide": (!this.props.video.visible && !this.props.audio.visible)
-      });
       return (
-        <ul className={conversationToolbarCssClasses}>
-          {
-            this.props.showHangup ?
-            <li className="conversation-toolbar-btn-box btn-hangup-entry">
-              <button className="btn btn-hangup"
-                      disabled={!this.props.enableHangup}
-                      onClick={this.handleClickHangup}
-                      title={mozL10n.get("hangup_button_title")}>
-                {this._getHangupButtonLabel()}
-              </button>
-            </li> : null
-          }
+        <ul className="conversation-toolbar">
+          <li className="conversation-toolbar-btn-box btn-hangup-entry">
+            <button className="btn btn-hangup"
+                    disabled={!this.props.enableHangup}
+                    onClick={this.handleClickHangup}
+                    title={mozL10n.get("hangup_button_title")}>
+              {this._getHangupButtonLabel()}
+            </button>
+          </li>
           <li className="conversation-toolbar-btn-box">
-            <div className={mediaButtonGroupCssClasses}>
-                <MediaControlButton action={this.handleToggleVideo}
-                                    enabled={this.props.video.enabled}
-                                    scope="local" type="video"
-                                    visible={this.props.video.visible}/>
-                <MediaControlButton action={this.handleToggleAudio}
-                                    enabled={this.props.audio.enabled}
-                                    scope="local" type="audio"
-                                    visible={this.props.audio.visible}/>
-            </div>
+            <MediaControlButton action={this.handleToggleVideo}
+                                enabled={this.props.video.enabled}
+                                scope="local" type="video"
+                                visible={this.props.video.visible} />
+          </li>
+          <li className="conversation-toolbar-btn-box">
+            <MediaControlButton action={this.handleToggleAudio}
+                                enabled={this.props.audio.enabled}
+                                scope="local" type="audio"
+                                visible={this.props.audio.visible} />
           </li>
           <li className="conversation-toolbar-btn-box">
             <ScreenShareControlButton dispatcher={this.props.dispatcher}
@@ -526,10 +258,237 @@ loop.shared.views = (function(_, mozL10n) {
                                       visible={this.props.screenShare.visible} />
           </li>
           <li className="conversation-toolbar-btn-box btn-edit-entry">
-            <SettingsControlButton menuItems={this.props.settingsMenuItems}
-                                   mozLoop={this.props.mozLoop} />
+            <MediaControlButton action={this.handleToggleEdit}
+                                enabled={this.props.edit.enabled}
+                                scope="local"
+                                title={mozL10n.get(this.props.edit.enabled ?
+                                  "context_edit_tooltip" : "context_hide_tooltip")}
+                                type="edit"
+                                visible={this.props.edit.visible} />
           </li>
         </ul>
+      );
+    }
+  });
+
+  /**
+   * Conversation view.
+   */
+  var ConversationView = React.createClass({
+    mixins: [
+      Backbone.Events,
+      sharedMixins.AudioMixin,
+      sharedMixins.MediaSetupMixin
+    ],
+
+    propTypes: {
+      audio: React.PropTypes.object,
+      dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
+      initiate: React.PropTypes.bool,
+      isDesktop: React.PropTypes.bool,
+      model: React.PropTypes.object.isRequired,
+      sdk: React.PropTypes.object.isRequired,
+      video: React.PropTypes.object
+    },
+
+    getDefaultProps: function() {
+      return {
+        initiate: true,
+        isDesktop: false,
+        video: {enabled: true, visible: true},
+        audio: {enabled: true, visible: true}
+      };
+    },
+
+    getInitialState: function() {
+      return {
+        video: this.props.video,
+        audio: this.props.audio
+      };
+    },
+
+    componentDidMount: function() {
+      if (this.props.initiate) {
+        /**
+         * XXX This is a workaround for desktop machines that do not have a
+         * camera installed. As we don't yet have device enumeration, when
+         * we do, this can be removed (bug 1138851), and the sdk should handle it.
+         */
+        if (this.props.isDesktop &&
+            !window.MediaStreamTrack.getSources) {
+          // If there's no getSources function, the sdk defines its own and caches
+          // the result. So here we define the "normal" one which doesn't get cached, so
+          // we can change it later.
+          window.MediaStreamTrack.getSources = function(callback) {
+            callback([{kind: "audio"}, {kind: "video"}]);
+          };
+        }
+
+        this.listenTo(this.props.sdk, "exception", this._handleSdkException);
+
+        this.listenTo(this.props.model, "session:connected",
+                                        this._onSessionConnected);
+        this.listenTo(this.props.model, "session:stream-created",
+                                        this._streamCreated);
+        this.listenTo(this.props.model, ["session:peer-hungup",
+                                         "session:network-disconnected",
+                                         "session:ended"].join(" "),
+                                         this.stopPublishing);
+        this.props.model.startSession();
+      }
+    },
+
+    componentWillUnmount: function() {
+      // Unregister all local event listeners
+      this.stopListening();
+      this.hangup();
+    },
+
+    hangup: function() {
+      this.stopPublishing();
+      this.props.model.endSession();
+    },
+
+    _onSessionConnected: function(event) {
+      this.startPublishing(event);
+      this.play("connected");
+    },
+
+    /**
+     * Subscribes and attaches each created stream to a DOM element.
+     *
+     * XXX: for now we only support a single remote stream, hence a single DOM
+     *      element.
+     *
+     * http://tokbox.com/opentok/libraries/client/js/reference/StreamEvent.html
+     *
+     * @param  {StreamEvent} event
+     */
+    _streamCreated: function(event) {
+      var incoming = this.getDOMNode().querySelector(".remote");
+      this.props.model.subscribe(event.stream, incoming,
+        this.getDefaultPublisherConfig({
+          publishVideo: this.props.video.enabled
+        }));
+    },
+
+    /**
+     * Handles the SDK Exception event.
+     *
+     * https://tokbox.com/opentok/libraries/client/js/reference/ExceptionEvent.html
+     *
+     * @param {ExceptionEvent} event
+     */
+    _handleSdkException: function(event) {
+      /**
+       * XXX This is a workaround for desktop machines that do not have a
+       * camera installed. As we don't yet have device enumeration, when
+       * we do, this can be removed (bug 1138851), and the sdk should handle it.
+       */
+      if (this.publisher &&
+          event.code === OT.ExceptionCodes.UNABLE_TO_PUBLISH &&
+          event.message === "GetUserMedia" &&
+          this.state.video.enabled) {
+        this.state.video.enabled = false;
+
+        window.MediaStreamTrack.getSources = function(callback) {
+          callback([{kind: "audio"}]);
+        };
+
+        this.stopListening(this.publisher);
+        this.publisher.destroy();
+        this.startPublishing();
+      }
+    },
+
+    /**
+     * Publishes remote streams available once a session is connected.
+     *
+     * http://tokbox.com/opentok/libraries/client/js/reference/SessionConnectEvent.html
+     *
+     * @param  {SessionConnectEvent} event
+     */
+    startPublishing: function(event) {
+      var outgoing = this.getDOMNode().querySelector(".local");
+
+      // XXX move this into its StreamingVideo component?
+      this.publisher = this.props.sdk.initPublisher(
+        outgoing, this.getDefaultPublisherConfig({publishVideo: this.props.video.enabled}));
+
+      // Suppress OT GuM custom dialog, see bug 1018875
+      this.listenTo(this.publisher, "accessDialogOpened accessDenied",
+                    function(ev) {
+                      ev.preventDefault();
+                    });
+
+      this.listenTo(this.publisher, "streamCreated", function(ev) {
+        this.setState({
+          audio: {enabled: ev.stream.hasAudio},
+          video: {enabled: ev.stream.hasVideo}
+        });
+      });
+
+      this.listenTo(this.publisher, "streamDestroyed", function() {
+        this.setState({
+          audio: {enabled: false},
+          video: {enabled: false}
+        });
+      });
+
+      this.props.model.publish(this.publisher);
+    },
+
+    /**
+     * Toggles streaming status for a given stream type.
+     *
+     * @param  {String}  type     Stream type ("audio" or "video").
+     * @param  {Boolean} enabled  Enabled stream flag.
+     */
+    publishStream: function(type, enabled) {
+      if (type === "audio") {
+        this.publisher.publishAudio(enabled);
+        this.setState({audio: {enabled: enabled}});
+      } else {
+        this.publisher.publishVideo(enabled);
+        this.setState({video: {enabled: enabled}});
+      }
+    },
+
+    /**
+     * Unpublishes local stream.
+     */
+    stopPublishing: function() {
+      if (this.publisher) {
+        // Unregister listeners for publisher events
+        this.stopListening(this.publisher);
+
+        this.props.model.session.unpublish(this.publisher);
+      }
+    },
+
+    render: function() {
+      var localStreamClasses = React.addons.classSet({
+        local: true,
+        "local-stream": true,
+        "local-stream-audio": !this.state.video.enabled
+      });
+      return (
+        <div className="video-layout-wrapper">
+          <div className="conversation in-call">
+            <div className="media nested">
+              <div className="video_wrapper remote_wrapper">
+                <div className="video_inner remote focus-stream"></div>
+              </div>
+              <div className={localStreamClasses}></div>
+            </div>
+            <ConversationToolbar
+              audio={this.state.audio}
+              dispatcher={this.props.dispatcher}
+              hangup={this.hangup}
+              publishStream={this.publishStream}
+              video={this.state.video} />
+          </div>
+        </div>
       );
     }
   });
@@ -847,7 +806,7 @@ loop.shared.views = (function(_, mozL10n) {
         return null;
       }
 
-      return <p>{mozL10n.get("context_inroom_label2")}</p>;
+      return <p>{mozL10n.get("context_inroom_label")}</p>;
     },
 
     render: function() {
@@ -867,27 +826,20 @@ loop.shared.views = (function(_, mozL10n) {
           "shared/img/icons-16x16.svg#globe";
       }
 
-      var wrapperClasses = React.addons.classSet({
-        "context-wrapper": true,
-        "clicks-allowed": this.props.allowClick
-      });
-
       return (
         <div className="context-content">
           {this.renderContextTitle()}
-          <a className={wrapperClasses}
-             href={this.props.allowClick ? this.props.url : null}
-             onClick={this.handleLinkClick}
-             rel="noreferrer"
-             target="_blank">
+          <div className="context-wrapper">
             <img className="context-preview" src={thumbnail} />
-            <span className="context-info">
+            <span className="context-description">
               {this.props.description}
-              <span className="context-url">
-                {hostname}
-              </span>
+              <a className="context-url"
+                 href={this.props.allowClick ? this.props.url : null}
+                 onClick={this.handleLinkClick}
+                 rel="noreferrer"
+                 target="_blank">{hostname}</a>
             </span>
-          </a>
+          </div>
         </div>
       );
     }
@@ -898,7 +850,7 @@ loop.shared.views = (function(_, mozL10n) {
    * instead of the video, and attaching a video stream to the video element.
    */
   var MediaView = React.createClass({
-    // srcMediaElement should be ok for a shallow comparison, so we are safe
+    // srcVideoObject should be ok for a shallow comparison, so we are safe
     // to use the pure render mixin here.
     mixins: [React.addons.PureRenderMixin],
 
@@ -908,18 +860,18 @@ loop.shared.views = (function(_, mozL10n) {
       mediaType: React.PropTypes.string.isRequired,
       posterUrl: React.PropTypes.string,
       // Expecting "local" or "remote".
-      srcMediaElement: React.PropTypes.object
+      srcVideoObject: React.PropTypes.object
     },
 
     componentDidMount: function() {
       if (!this.props.displayAvatar) {
-        this.attachVideo(this.props.srcMediaElement);
+        this.attachVideo(this.props.srcVideoObject);
       }
     },
 
     componentDidUpdate: function() {
       if (!this.props.displayAvatar) {
-        this.attachVideo(this.props.srcMediaElement);
+        this.attachVideo(this.props.srcVideoObject);
       }
     },
 
@@ -927,14 +879,14 @@ loop.shared.views = (function(_, mozL10n) {
      * Attaches a video stream from a donor video element to this component's
      * video element if the component is displaying one.
      *
-     * @param {Object} srcMediaElement The src video object to clone the stream
+     * @param {Object} srcVideoObject The src video object to clone the stream
      *                                from.
      *
      * XXX need to have a corresponding detachVideo or change this to syncVideo
      * to protect from leaks (bug 1171978)
      */
-    attachVideo: function(srcMediaElement) {
-      if (!srcMediaElement) {
+    attachVideo: function(srcVideoObject) {
+      if (!srcVideoObject) {
         // Not got anything to display.
         return;
       }
@@ -964,8 +916,8 @@ loop.shared.views = (function(_, mozL10n) {
       }
 
       // If the object hasn't changed it, then don't reattach it.
-      if (videoElement[attrName] !== srcMediaElement[attrName]) {
-        videoElement[attrName] = srcMediaElement[attrName];
+      if (videoElement[attrName] !== srcVideoObject[attrName]) {
+        videoElement[attrName] = srcVideoObject[attrName];
       }
       videoElement.play();
     },
@@ -979,7 +931,7 @@ loop.shared.views = (function(_, mozL10n) {
         return <AvatarView />;
       }
 
-      if (!this.props.srcMediaElement && !this.props.posterUrl) {
+      if (!this.props.srcVideoObject && !this.props.posterUrl) {
         return <div className="no-video"/>;
       }
 
@@ -1015,16 +967,16 @@ loop.shared.views = (function(_, mozL10n) {
       isScreenShareLoading: React.PropTypes.bool.isRequired,
       // The poster URLs are for UI-showcase testing and development.
       localPosterUrl: React.PropTypes.string,
-      localSrcMediaElement: React.PropTypes.object,
+      localSrcVideoObject: React.PropTypes.object,
       localVideoMuted: React.PropTypes.bool.isRequired,
       // Passing in matchMedia, allows it to be overriden for ui-showcase's
       // benefit. We expect either the override or window.matchMedia.
       matchMedia: React.PropTypes.func.isRequired,
       remotePosterUrl: React.PropTypes.string,
-      remoteSrcMediaElement: React.PropTypes.object,
+      remoteSrcVideoObject: React.PropTypes.object,
       renderRemoteVideo: React.PropTypes.bool.isRequired,
-      screenShareMediaElement: React.PropTypes.object,
       screenSharePosterUrl: React.PropTypes.string,
+      screenShareVideoObject: React.PropTypes.object,
       showContextRoomName: React.PropTypes.bool.isRequired,
       useDesktopPaths: React.PropTypes.bool.isRequired
     },
@@ -1049,7 +1001,7 @@ loop.shared.views = (function(_, mozL10n) {
 
     componentWillReceiveProps: function(nextProps) {
       // This is all for the ui-showcase's benefit.
-      if (this.props.matchMedia !== nextProps.matchMedia) {
+      if (this.props.matchMedia != nextProps.matchMedia) {
         this.updateLocalMediaState(null, nextProps.matchMedia);
       }
     },
@@ -1064,7 +1016,7 @@ loop.shared.views = (function(_, mozL10n) {
 
     updateLocalMediaState: function(event, matchMedia) {
       var newState = this.isLocalMediaAbsolutelyPositioned(matchMedia);
-      if (this.state.localMediaAboslutelyPositioned !== newState) {
+      if (this.state.localMediaAboslutelyPositioned != newState) {
         this.setState({
           localMediaAboslutelyPositioned: newState
         });
@@ -1078,7 +1030,7 @@ loop.shared.views = (function(_, mozL10n) {
             isLoading={this.props.isLocalLoading}
             mediaType="local"
             posterUrl={this.props.localPosterUrl}
-            srcMediaElement={this.props.localSrcMediaElement} />
+            srcVideoObject={this.props.localSrcVideoObject} />
         </div>
       );
     },
@@ -1097,9 +1049,9 @@ loop.shared.views = (function(_, mozL10n) {
       var mediaWrapperClasses = React.addons.classSet({
         "media-wrapper": true,
         "receiving-screen-share": this.props.displayScreenShare,
-        "showing-local-streams": this.props.localSrcMediaElement ||
+        "showing-local-streams": this.props.localSrcVideoObject ||
           this.props.localPosterUrl,
-        "showing-remote-streams": this.props.remoteSrcMediaElement ||
+        "showing-remote-streams": this.props.remoteSrcVideoObject ||
           this.props.remotePosterUrl || this.props.isRemoteLoading
       });
 
@@ -1114,23 +1066,22 @@ loop.shared.views = (function(_, mozL10n) {
                 isLoading={this.props.isRemoteLoading}
                 mediaType="remote"
                 posterUrl={this.props.remotePosterUrl}
-                srcMediaElement={this.props.remoteSrcMediaElement} />
+                srcVideoObject={this.props.remoteSrcVideoObject} />
               { this.state.localMediaAboslutelyPositioned ?
                 this.renderLocalVideo() : null }
               { this.props.children }
-
             </div>
             <div className={screenShareStreamClasses}>
               <MediaView displayAvatar={false}
                 isLoading={this.props.isScreenShareLoading}
                 mediaType="screen-share"
                 posterUrl={this.props.screenSharePosterUrl}
-                srcMediaElement={this.props.screenShareMediaElement} />
+                srcVideoObject={this.props.screenShareVideoObject} />
             </div>
             <loop.shared.views.chat.TextChatView
               dispatcher={this.props.dispatcher}
               showRoomName={this.props.showContextRoomName}
-              useDesktopPaths={this.props.useDesktopPaths} />
+              useDesktopPaths={false} />
             { this.state.localMediaAboslutelyPositioned ?
               null : this.renderLocalVideo() }
           </div>
@@ -1145,12 +1096,12 @@ loop.shared.views = (function(_, mozL10n) {
     ButtonGroup: ButtonGroup,
     Checkbox: Checkbox,
     ContextUrlView: ContextUrlView,
+    ConversationView: ConversationView,
     ConversationToolbar: ConversationToolbar,
     MediaControlButton: MediaControlButton,
     MediaLayoutView: MediaLayoutView,
     MediaView: MediaView,
     LoadingView: LoadingView,
-    SettingsControlButton: SettingsControlButton,
     ScreenShareControlButton: ScreenShareControlButton,
     NotificationListView: NotificationListView
   };

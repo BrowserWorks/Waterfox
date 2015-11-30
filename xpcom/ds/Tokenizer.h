@@ -8,7 +8,6 @@
 #define Tokenizer_h__
 
 #include "nsString.h"
-#include "mozilla/CheckedInt.h"
 
 namespace mozilla {
 
@@ -44,28 +43,17 @@ public:
    */
   class Token {
     TokenType mType;
-    nsDependentCSubstring mWord;
+    nsCString mWord;
     char mChar;
-    uint64_t mInteger;
-
-    // If this token is a result of the parsing process, this member is referencing
-    // a sub-string in the input buffer.  If this is externally created Token this
-    // member is left an empty string.
-    nsDependentCSubstring mFragment;
-
-    friend class Tokenizer;
-    void AssignFragment(nsACString::const_char_iterator begin,
-                        nsACString::const_char_iterator end);
+    int64_t mInteger;
 
   public:
     Token() : mType(TOKEN_UNKNOWN), mChar(0), mInteger(0) {}
-    Token(const Token& aOther);
-    Token& operator=(const Token& aOther);
 
     // Static constructors of tokens by type and value
     static Token Word(const nsACString& aWord);
     static Token Char(const char aChar);
-    static Token Number(const uint64_t aNumber);
+    static Token Number(const int64_t aNumber);
     static Token Whitespace();
     static Token NewLine();
     static Token EndOfFile();
@@ -77,37 +65,28 @@ public:
 
     TokenType Type() const { return mType; }
     char AsChar() const;
-    nsDependentCSubstring AsString() const;
-    uint64_t AsInteger() const;
-
-    nsDependentCSubstring Fragment() const { return mFragment; }
+    nsCString AsString() const;
+    int64_t AsInteger() const;
   };
 
 public:
+  explicit Tokenizer(const nsACString& aSource);
+
   /**
-   * @param aSource
-   *    The string to parse.
-   *    IMPORTANT NOTE: Tokenizer doesn't ensure the input string buffer lifetime.
-   *    It's up to the consumer to make sure the string's buffer outlives the Tokenizer!
-   * @param aWhitespaces
-   *    If non-null Tokenizer will use this custom set of whitespaces for CheckWhite()
-   *    and SkipWhites() calls.
-   *    By default the list consists of space and tab.
-   * @param aAdditionalWordChars
-   *    If non-null it will be added to the list of characters that consist a word.
-   *    This is useful when you want to accept e.g. '-' in HTTP headers.
-   *    By default a word character is consider any character for which upper case
-   *    is different from lower case.
-   *
-   * If there is an overlap between aWhitespaces and aAdditionalWordChars, the check for
-   * word characters is made first.
+   * Some methods are collecting the input as it is being parsed to obtain
+   * a substring between particular syntax bounderies defined by any recursive
+   * descent parser or simple parser the Tokenizer is used to read the input for.
    */
-  explicit Tokenizer(const nsACString& aSource,
-                     const char* aWhitespaces = nullptr,
-                     const char* aAdditionalWordChars = nullptr);
-  explicit Tokenizer(const char* aSource,
-                     const char* aWhitespaces = nullptr,
-                     const char* aAdditionalWordChars = nullptr);
+  enum ClaimInclusion {
+    /**
+     * Include resulting (or passed) token of the last lexical analyzer operation in the result.
+     */
+    INCLUDE_LAST,
+    /**
+     * Do not include it.
+     */
+    EXCLUDE_LAST
+  };
 
   /**
    * When there is still anything to read from the input, tokenize it, store the token type
@@ -141,25 +120,9 @@ public:
   bool HasFailed() const;
 
   /**
-   * SkipWhites method (below) may also skip new line characters automatically.
+   * Skips any occurence of whitespaces specified in mWhitespaces member.
    */
-  enum WhiteSkipping {
-    /**
-     * SkipWhites will only skip what is defined as a white space (default).
-     */
-    DONT_INCLUDE_NEW_LINE = 0,
-    /**
-     * SkipWhites will skip definited white spaces as well as new lines
-     * automatically.
-     */
-    INCLUDE_NEW_LINE = 1
-  };
-
-  /**
-   * Skips any occurence of whitespaces specified in mWhitespaces member,
-   * optionally skip also new lines.
-   */
-  void SkipWhites(WhiteSkipping aIncludeNewLines = DONT_INCLUDE_NEW_LINE);
+  void SkipWhites();
 
   // These are mostly shortcuts for the Check() methods above.
 
@@ -184,16 +147,11 @@ public:
   MOZ_WARN_UNUSED_RESULT
   bool CheckChar(bool (*aClassifier)(const char aChar));
   /**
-   * Check for a whole expected word.
+   * Shortcut for direct word check.
    */
+  template <size_t N>
   MOZ_WARN_UNUSED_RESULT
-  bool CheckWord(const nsACString& aWord) { return Check(Token::Word(aWord)); }
-  /**
-   * Shortcut for literal const word check with compile time length calculation.
-   */
-  template <uint32_t N>
-  MOZ_WARN_UNUSED_RESULT
-  bool CheckWord(const char (&aWord)[N]) { return Check(Token::Word(nsDependentCString(aWord, N - 1))); }
+  bool CheckWord(const char (&aWord)[N]) { return Check(Token::Word(nsLiteralCString(aWord))); }
   /**
    * Checks \r, \n or \r\n.
    */
@@ -207,47 +165,6 @@ public:
   bool CheckEOF() { return Check(Token::EndOfFile()); }
 
   /**
-   * These are shortcuts to obtain the value immediately when the token type matches.
-   */
-  bool ReadChar(char* aValue);
-  bool ReadChar(bool (*aClassifier)(const char aChar), char* aValue);
-  bool ReadWord(nsACString& aValue);
-  bool ReadWord(nsDependentCSubstring& aValue);
-
-  /**
-   * This is an integer read helper.  It returns false and doesn't move the read
-   * cursor when any of the following happens:
-   *  - the token at the read cursor is not an integer
-   *  - the final number doesn't fit the T type
-   * Otherwise true is returned, aValue is filled with the integral number
-   * and the cursor is moved forward.
-   */
-  template <typename T>
-  bool ReadInteger(T* aValue)
-  {
-    MOZ_RELEASE_ASSERT(aValue);
-
-    nsACString::const_char_iterator rollback = mRollback;
-    nsACString::const_char_iterator cursor = mCursor;
-    Token t;
-    if (!Check(TOKEN_INTEGER, t)) {
-      return false;
-    }
-
-    mozilla::CheckedInt<T> checked(t.AsInteger());
-    if (!checked.isValid()) {
-      // Move to a state as if Check() call has failed
-      mRollback = rollback;
-      mCursor = cursor;
-      mHasFailed = true;
-      return false;
-    }
-
-    *aValue = checked.value();
-    return true;
-  }
-
-  /**
    * Returns the read cursor position back as it was before the last call of any parsing
    * method of Tokenizer (Next, Check*, Skip*) so that the last operation can be repeated.
    * Rollback cannot be used multiple times, it only reverts the last successfull parse
@@ -255,23 +172,6 @@ public:
    * on the Tokenizer.
    */
   void Rollback();
-
-  /**
-   * Record() and Claim() are collecting the input as it is being parsed to obtain
-   * a substring between particular syntax bounderies defined by any recursive
-   * descent parser or simple parser the Tokenizer is used to read the input for.
-   * Inlucsion of a token that has just been parsed can be controlled using an arguemnt.
-   */
-  enum ClaimInclusion {
-    /**
-     * Include resulting (or passed) token of the last lexical analyzer operation in the result.
-     */
-    INCLUDE_LAST,
-    /**
-     * Do not include it.
-     */
-    EXCLUDE_LAST
-  };
 
   /**
    * Start the process of recording.  Based on aInclude value the begining of the recorded
@@ -285,10 +185,9 @@ public:
    * token.
    */
   void Claim(nsACString& aResult, ClaimInclusion aInclude = EXCLUDE_LAST);
-  void Claim(nsDependentCSubstring& aResult, ClaimInclusion aInclude = EXCLUDE_LAST);
 
 protected:
-  // false if we have already read the EOF token.
+  // true if we have already read the EOF token.
   bool HasInput() const;
   // Main parsing function, it doesn't shift the read cursor, just returns the next
   // token position.
@@ -303,28 +202,22 @@ protected:
   // TODO - support multiple radix
   bool IsNumber(const char aInput) const;
 
+private:
+  Tokenizer() = delete;
+
   // true iff we have already read the EOF token
   bool mPastEof;
   // true iff the last Check*() call has returned false, reverts to true on Rollback() call
   bool mHasFailed;
 
   // Customizable list of whitespaces
-  const char* mWhitespaces;
-  // Additinal custom word characters
-  const char* mAdditionalWordChars;
+  char const* mWhitespaces;
 
   // All these point to the original buffer passed to the Tokenizer
   nsACString::const_char_iterator mRecord; // Position where the recorded sub-string for Claim() is
   nsACString::const_char_iterator mRollback; // Position of the previous token start
   nsACString::const_char_iterator mCursor; // Position of the current (actually next to read) token start
   nsACString::const_char_iterator mEnd; // End of the input position
-
-private:
-  Tokenizer() = delete;
-  Tokenizer(const Tokenizer&) = delete;
-  Tokenizer(Tokenizer&&) = delete;
-  Tokenizer(const Tokenizer&&) = delete;
-  Tokenizer &operator=(const Tokenizer&) = delete;
 };
 
 } // mozilla

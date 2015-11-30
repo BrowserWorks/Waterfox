@@ -6,18 +6,18 @@
 
 // Tests that the search filter clear button works properly.
 
-const TEST_URI = `
-  <style type="text/css">
-    .matches {
-      color: #F00;
-    }
-  </style>
-  <span id="matches" class="matches">Some styled text</span>
-`;
+let TEST_URI = [
+  '<style type="text/css">',
+  '  .matches {',
+  '    color: #F00;',
+  '  }',
+  '</style>',
+  '<span id="matches" class="matches">Some styled text</span>'
+].join("\n");
 
 add_task(function*() {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-  let {inspector, view} = yield openComputedView();
+  let {toolbox, inspector, view} = yield openComputedView();
   yield selectNode("#matches", inspector);
   yield testAddTextInFilter(inspector, view);
   yield testClearSearchFilter(inspector, view);
@@ -27,6 +27,7 @@ function* testAddTextInFilter(inspector, computedView) {
   info("Setting filter text to \"background-color\"");
 
   let win = computedView.styleWindow;
+  let doc = computedView.styleDocument;
   let propertyViews = computedView.propertyViews;
   let searchField = computedView.searchField;
   let checkbox = computedView.includeBrowserStylesCheckbox;
@@ -52,6 +53,7 @@ function* testClearSearchFilter(inspector, computedView) {
   info("Clearing the search filter");
 
   let win = computedView.styleWindow;
+  let doc = computedView.styleDocument;
   let propertyViews = computedView.propertyViews;
   let searchField = computedView.searchField;
   let searchClearButton = computedView.searchClearButton;

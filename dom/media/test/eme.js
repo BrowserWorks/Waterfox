@@ -346,11 +346,6 @@ function SetupEME(test, token, params)
     });
   }
 
-  function streamType(type) {
-    var x = test.tracks.find(o => o.name == type);
-    return x ? x.type : undefined;
-  }
-
   // All 'initDataType's should be the same.
   // null indicates no 'encrypted' event received yet.
   var initDataType = null;
@@ -369,15 +364,14 @@ function SetupEME(test, token, params)
         })
       }
 
-      var options = { initDataTypes: [ev.initDataType] };
-      if (streamType("video")) {
-        options.videoCapabilities = [{contentType: streamType("video")}];
-      }
-      if (streamType("audio")) {
-        options.audioCapabilities = [{contentType: streamType("audio")}];
-      }
-
-      var p = navigator.requestMediaKeySystemAccess(KEYSYSTEM_TYPE, [options]);
+      var options = [
+         {
+           initDataType: ev.initDataType,
+           videoType: test.type,
+           audioType: test.type,
+         }
+       ];
+      var p = navigator.requestMediaKeySystemAccess(KEYSYSTEM_TYPE, options);
       var r = bail(token + " Failed to request key system access.");
       chain(p, r)
       .then(function(keySystemAccess) {
@@ -419,13 +413,16 @@ function SetupEME(test, token, params)
 function SetupEMEPref(callback) {
   var prefs = [
     [ "media.mediasource.enabled", true ],
+    [ "media.fragmented-mp4.exposed", true ],
     [ "media.eme.apiVisible", true ],
   ];
 
-  if (SpecialPowers.Services.appinfo.name == "B2G" ||
-      !manifestVideo().canPlayType("video/mp4")) {
-    // XXX remove once we have mp4 PlatformDecoderModules on all platforms.
-    prefs.push([ "media.fragmented-mp4.use-blank-decoder", true ]);
+  if (/Linux/.test(manifestNavigator().userAgent)) {
+    prefs.push([ "media.fragmented-mp4.ffmpeg.enabled", true ]);
+  } else if (SpecialPowers.Services.appinfo.name == "B2G" ||
+             !manifestVideo().canPlayType("video/mp4")) {
+   // XXX remove once we have mp4 PlatformDecoderModules on all platforms.
+   prefs.push([ "media.fragmented-mp4.use-blank-decoder", true ]);
   }
 
   SpecialPowers.pushPrefEnv({ "set" : prefs }, callback);

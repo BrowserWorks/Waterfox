@@ -108,9 +108,8 @@ Presenter.prototype = {
    * The viewport has changed, either a scroll, pan, zoom, or
    *    landscape/portrait toggle.
    * @param {Window} aWindow window of viewport that changed.
-   * @param {PivotContext} aCurrentContext context of last pivot change.
    */
-  viewportChanged: function viewportChanged(aWindow, aCurrentContext) {}, // jshint ignore:line
+  viewportChanged: function viewportChanged(aWindow) {}, // jshint ignore:line
 
   /**
    * We have entered or left text editing mode.
@@ -143,7 +142,9 @@ Presenter.prototype = {
 /**
  * Visual presenter. Draws a box around the virtual cursor's position.
  */
-function VisualPresenter() {}
+function VisualPresenter() {
+  this._displayedAccessibles = new WeakMap();
+}
 
 VisualPresenter.prototype = Object.create(Presenter.prototype);
 
@@ -155,14 +156,15 @@ VisualPresenter.prototype.type = 'Visual';
 VisualPresenter.prototype.BORDER_PADDING = 2;
 
 VisualPresenter.prototype.viewportChanged =
-  function VisualPresenter_viewportChanged(aWindow, aCurrentContext) {
-    if (!aCurrentContext) {
+  function VisualPresenter_viewportChanged(aWindow) {
+    let currentDisplay = this._displayedAccessibles.get(aWindow);
+    if (!currentDisplay) {
       return null;
     }
 
-    let currentAcc = aCurrentContext.accessibleForBounds;
-    let start = aCurrentContext.startOffset;
-    let end = aCurrentContext.endOffset;
+    let currentAcc = currentDisplay.accessible;
+    let start = currentDisplay.startOffset;
+    let end = currentDisplay.endOffset;
     if (Utils.isAliveAndVisible(currentAcc)) {
       let bounds = (start === -1 && end === -1) ? Utils.getBounds(currentAcc) :
                    Utils.getTextBounds(currentAcc, start, end);
@@ -186,6 +188,11 @@ VisualPresenter.prototype.pivotChanged =
       // XXX: Don't hide because another vc may be using the highlight.
       return null;
     }
+
+    this._displayedAccessibles.set(aContext.accessible.document.window,
+                                   { accessible: aContext.accessibleForBounds,
+                                     startOffset: aContext.startOffset,
+                                     endOffset: aContext.endOffset });
 
     try {
       aContext.accessibleForBounds.scrollTo(
@@ -406,33 +413,21 @@ AndroidPresenter.prototype.textSelectionChanged =
   };
 
 AndroidPresenter.prototype.viewportChanged =
-  function AndroidPresenter_viewportChanged(aWindow, aCurrentContext) {
+  function AndroidPresenter_viewportChanged(aWindow) {
     if (Utils.AndroidSdkVersion < 14) {
       return null;
     }
 
-    let events = [{
-      eventType: this.ANDROID_VIEW_SCROLLED,
-      text: [],
-      scrollX: aWindow.scrollX,
-      scrollY: aWindow.scrollY,
-      maxScrollX: aWindow.scrollMaxX,
-      maxScrollY: aWindow.scrollMaxY
-    }];
-
-    if (Utils.AndroidSdkVersion >= 16 && aCurrentContext) {
-      let currentAcc = aCurrentContext.accessibleForBounds;
-      if (Utils.isAliveAndVisible(currentAcc)) {
-        events.push({
-          eventType: this.ANDROID_VIEW_ACCESSIBILITY_FOCUSED,
-          bounds: Utils.getBounds(currentAcc)
-        });
-      }
-    }
-
     return {
       type: this.type,
-      details: events
+      details: [{
+        eventType: this.ANDROID_VIEW_SCROLLED,
+        text: [],
+        scrollX: aWindow.scrollX,
+        scrollY: aWindow.scrollY,
+        maxScrollX: aWindow.scrollMaxX,
+        maxScrollY: aWindow.scrollMaxY
+      }]
     };
   };
 
@@ -688,18 +683,10 @@ this.Presentation = { // jshint ignore:line
     return this.presenters;
   },
 
-  get displayedAccessibles() {
-    delete this.displayedAccessibles;
-    this.displayedAccessibles = new WeakMap();
-    return this.displayedAccessibles;
-  },
-
   pivotChanged: function Presentation_pivotChanged(
     aPosition, aOldPosition, aReason, aStartOffset, aEndOffset, aIsUserInput) {
     let context = new PivotContext(
       aPosition, aOldPosition, aStartOffset, aEndOffset);
-    this.displayedAccessibles.set(context.accessible.document.window, context);
-
     return [p.pivotChanged(context, aReason, aIsUserInput)
       for each (p in this.presenters)]; // jshint ignore:line
   },
@@ -737,9 +724,7 @@ this.Presentation = { // jshint ignore:line
   },
 
   viewportChanged: function Presentation_viewportChanged(aWindow) {
-    let context = this.displayedAccessibles.get(aWindow);
-    return [p.viewportChanged(aWindow, context) // jshint ignore:line
-      for each (p in this.presenters)]; // jshint ignore:line
+    return [p.viewportChanged(aWindow) for each (p in this.presenters)]; // jshint ignore:line
   },
 
   editingModeChanged: function Presentation_editingModeChanged(aIsEditing) {

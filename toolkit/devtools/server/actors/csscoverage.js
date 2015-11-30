@@ -74,7 +74,7 @@ const l10n = exports.l10n = {
  *       }, ...
  *     });
  */
-var CSSUsageActor = protocol.ActorClass({
+let CSSUsageActor = protocol.ActorClass({
   typeName: "cssUsage",
 
   events: {
@@ -564,9 +564,8 @@ function getImportedSheets(stylesheet) {
  * @see deconstructRuleId(ruleId)
  */
 function ruleToId(rule) {
-  let line = DOMUtils.getRelativeRuleLine(rule);
-  let column = DOMUtils.getRuleColumn(rule);
-  return sheetToUrl(rule.parentStyleSheet) + "|" + line + "|" + column;
+  let loc = stylesheets.getRuleLocation(rule);
+  return sheetToUrl(rule.parentStyleSheet) + "|" + loc.line + "|" + loc.column;
 }
 
 /**
@@ -595,7 +594,7 @@ const deconstructRuleId = exports.deconstructRuleId = function(ruleId) {
  */
 const getURL = exports.getURL = function(document) {
   let url = new document.defaultView.URL(document.documentURI);
-  return url == 'about:blank' ? '' : '' + url.origin + url.pathname;
+  return '' + url.origin + url.pathname;
 };
 
 /**
@@ -744,10 +743,10 @@ const sheetToUrl = exports.sheetToUrl = function(stylesheet) {
  * and it isn't particularly useful, and it's confusing from a notification POV
  * so we only allow one.
  */
-var isRunning = false;
-var notification;
-var target;
-var chromeWindow;
+let isRunning = false;
+let notification;
+let target;
+let chromeWindow;
 
 /**
  * Front for CSSUsageActor

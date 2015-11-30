@@ -10,7 +10,7 @@
        orient="vertical">
 
   <broadcasterset>
-    <broadcaster id="identity-popup-content-host" class="identity-popup-headline" crop="start"/>
+    <broadcaster id="identity-popup-content-host" class="identity-popup-headline" crop="end"/>
     <broadcaster id="identity-popup-mcb-learn-more" class="text-link plain" value="&identity.learnMore;"/>
   </broadcasterset>
 
@@ -81,12 +81,11 @@
       </hbox>
 
       <!-- Permissions Section -->
-      <hbox class="identity-popup-section">
+      <hbox id="identity-popup-permissions" class="identity-popup-section">
         <vbox id="identity-popup-permissions-content" flex="1">
           <label class="identity-popup-headline"
                  value="&identity.permissions;"/>
           <vbox id="identity-popup-permission-list"/>
-          <description>&identity.permissionsEmpty;</description>
         </vbox>
       </hbox>
     </panelview>
@@ -106,7 +105,7 @@
       <vbox id="identity-popup-securityView-body">
         <!-- (EV) Certificate Information -->
         <description id="identity-popup-content-verified-by"
-                     when-connection="secure-ev">&identity.connectionVerified1;</description>
+                     when-connection="secure-ev">&identity.connectionVerified;</description>
         <description id="identity-popup-content-owner"
                      when-connection="secure-ev"
                      class="header"/>

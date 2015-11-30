@@ -3,7 +3,6 @@
 <script>
 function init() {
     var editor = document.getElementById('editor');
-    // invalid language will default to en-US
     editor.setAttribute('lang', 'testing-XX');
     editor.addEventListener("focus", function() {
         window.setTimeout(function() {
@@ -14,6 +13,6 @@ function init() {
 }
 </script>
 <body onload="init()">
-    <textarea id="editor" lang="en-US">good possible word</textarea>
+    <textarea id="editor" lang="en-US">strangeimpossibleword</textarea>
 </body>
 </html>

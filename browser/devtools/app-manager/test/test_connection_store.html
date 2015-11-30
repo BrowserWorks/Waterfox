@@ -25,8 +25,7 @@ Bug 901519 - [app manager] data store for connections
     <script type="application/javascript;version=1.8" src="chrome://browser/content/devtools/app-manager/template.js"></script>
     <script type="application/javascript;version=1.8">
       const Cu = Components.utils;
-      const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm");
-      const {DebuggerServer} = require("devtools/server/main");
+      Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
 
       if (!DebuggerServer.initialized) {
         DebuggerServer.init();
@@ -38,6 +37,8 @@ Bug 901519 - [app manager] data store for connections
 
         Cu.import("resource://gre/modules/Services.jsm");
         Cu.import("resource:///modules/devtools/gDevTools.jsm");
+
+        const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 
         const {ConnectionManager} = require("devtools/client/connection-manager");
         const ConnectionStore = require("devtools/app-manager/connection-store");

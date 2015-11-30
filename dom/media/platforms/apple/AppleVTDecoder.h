@@ -20,9 +20,9 @@ public:
                  MediaDataDecoderCallback* aCallback,
                  layers::ImageContainer* aImageContainer);
   virtual ~AppleVTDecoder();
-  virtual nsRefPtr<InitPromise> Init() override;
+  virtual nsresult Init() override;
   virtual nsresult Input(MediaRawData* aSample) override;
-  virtual bool IsHardwareAccelerated(nsACString& aFailureReason) const override
+  virtual bool IsHardwareAccelerated() const override
   {
     return mIsHardwareAccelerated;
   }

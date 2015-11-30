@@ -289,37 +289,7 @@ const DOM = {
     }
 
     return container;
-  },
-
-  /**
-   * Builds any custom fields specific to the marker.
-   *
-   * @param {Document} doc
-   * @param {ProfileTimelineMarker} marker
-   * @param {object} options
-   * @return {Array<Element>}
-   */
-  buildCustom: function (doc, marker, options) {
-    let elements = [];
-
-    if (options.allocations && showAllocationsTrigger(marker)) {
-      let hbox = doc.createElement("hbox");
-      hbox.className = "marker-details-customcontainer";
-
-      let label = doc.createElement("label");
-      label.className = "custom-button devtools-button";
-      label.setAttribute("value", "Show allocation triggers");
-      label.setAttribute("type", "show-allocations");
-      label.setAttribute("data-action", JSON.stringify({
-        endTime: marker.start, action: "show-allocations"
-      }));
-
-      hbox.appendChild(label);
-      elements.push(hbox);
-    }
-
-    return elements;
-  },
+  }
 };
 
 /**
@@ -354,16 +324,13 @@ const Formatters = {
     return marker.name || L10N.getStr("marker.label.unknown");
   },
 
-  GCLabel: function (marker) {
-    if (!marker) {
-      return L10N.getStr("marker.label.garbageCollection2");
-    }
+  GCLabel: function (marker={}) {
     // Only if a `nonincrementalReason` exists, do we want to label
     // this as a non incremental GC event.
     if ("nonincrementalReason" in marker) {
       return L10N.getStr("marker.label.garbageCollection.nonIncremental");
     }
-    return L10N.getStr("marker.label.garbageCollection.incremental");
+    return L10N.getStr("marker.label.garbageCollection");
   },
 
   JSLabel: function (marker={}) {
@@ -395,7 +362,7 @@ const Formatters = {
 
   GCFields: function (marker) {
     let fields = Object.create(null);
-    let cause = marker.causeName;
+    let cause = marker.cause;
     let label = L10N.getStr(`marker.gcreason.label.${cause}`) || cause;
 
     fields[L10N.getStr("marker.field.causeName")] = label;
@@ -450,18 +417,6 @@ const Formatters = {
  */
 function getBlueprintFor (marker) {
   return TIMELINE_BLUEPRINT[marker.name] || TIMELINE_BLUEPRINT.UNKNOWN;
-}
-
-/**
- * Takes a marker and determines if this marker should display
- * the allocations trigger button.
- *
- * @param {Marker} marker
- * @return {boolean}
- */
-function showAllocationsTrigger (marker) {
-  return marker.name === "GarbageCollection" &&
-         PREFS["show-triggers-for-gc-types"].split(" ").indexOf(marker.causeName) !== -1;
 }
 
 exports.isMarkerValid = isMarkerValid;

@@ -263,7 +263,7 @@ function extractComponents(signedObject) {
           cryptoSegment: cryptoSegment};
 };
 
-var TESTS = [
+let TESTS = [
   test_sanity,
   test_generate,
   test_get_assertion,

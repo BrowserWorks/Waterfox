@@ -88,13 +88,6 @@ BaselineFrame::trace(JSTracer* trc, JitFrameIterator& frameIterator)
 }
 
 bool
-BaselineFrame::isDirectEvalFrame() const
-{
-    return isEvalFrame() &&
-           script()->enclosingStaticScope()->as<StaticEvalObject>().isDirect();
-}
-
-bool
 BaselineFrame::copyRawFrameSlots(AutoValueVector* vec) const
 {
     unsigned nfixed = script()->nfixed();
@@ -110,7 +103,7 @@ BaselineFrame::copyRawFrameSlots(AutoValueVector* vec) const
 }
 
 bool
-BaselineFrame::initStrictEvalScopeObjects(JSContext* cx)
+BaselineFrame::strictEvalPrologue(JSContext* cx)
 {
     MOZ_ASSERT(isStrictEvalFrame());
 
@@ -124,10 +117,16 @@ BaselineFrame::initStrictEvalScopeObjects(JSContext* cx)
 }
 
 bool
+BaselineFrame::heavyweightFunPrologue(JSContext* cx)
+{
+    return initFunctionScopeObjects(cx);
+}
+
+bool
 BaselineFrame::initFunctionScopeObjects(JSContext* cx)
 {
     MOZ_ASSERT(isNonEvalFunctionFrame());
-    MOZ_ASSERT(fun()->needsCallObject());
+    MOZ_ASSERT(fun()->isHeavyweight());
 
     CallObject* callobj = CallObject::createForFunction(cx, this);
     if (!callobj)

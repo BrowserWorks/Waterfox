@@ -21,7 +21,6 @@ namespace mozilla {
 
 namespace layers {
 
-class APZCTreeManager;
 class APZEventState;
 
 // A ChromeProcessController is attached to the root of a compositor's layer
@@ -32,8 +31,7 @@ class ChromeProcessController : public mozilla::layers::GeckoContentController
   typedef mozilla::layers::ScrollableLayerGuid ScrollableLayerGuid;
 
 public:
-  explicit ChromeProcessController(nsIWidget* aWidget, APZEventState* aAPZEventState, APZCTreeManager* aAPZCTreeManager);
-  ~ChromeProcessController();
+  explicit ChromeProcessController(nsIWidget* aWidget, APZEventState* aAPZEventState);
   virtual void Destroy() override;
 
   // GeckoContentController interface
@@ -45,7 +43,7 @@ public:
                                        const uint32_t& aScrollGeneration) override;
 
   virtual void HandleDoubleTap(const mozilla::CSSPoint& aPoint, Modifiers aModifiers,
-                               const ScrollableLayerGuid& aGuid) override;
+                               const ScrollableLayerGuid& aGuid) override {}
   virtual void HandleSingleTap(const mozilla::CSSPoint& aPoint, Modifiers aModifiers,
                                const ScrollableLayerGuid& aGuid) override;
   virtual void HandleLongTap(const mozilla::CSSPoint& aPoint, Modifiers aModifiers,
@@ -62,13 +60,12 @@ public:
 private:
   nsCOMPtr<nsIWidget> mWidget;
   nsRefPtr<APZEventState> mAPZEventState;
-  nsRefPtr<APZCTreeManager> mAPZCTreeManager;
   MessageLoop* mUILoop;
 
   void InitializeRoot();
   nsIPresShell* GetPresShell() const;
-  nsIDocument* GetRootDocument() const;
-  nsIDocument* GetRootContentDocument(const FrameMetrics::ViewID& aScrollId) const;
+  nsIDocument* GetDocument() const;
+  already_AddRefed<nsIDOMWindowUtils> GetDOMWindowUtils() const;
 };
 
 } // namespace layers

@@ -5,7 +5,7 @@ Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/identity.js");
 Cu.import("resource://services-sync/util.js");
 
-var identity = new IdentityManager();
+let identity = new IdentityManager();
 
 function run_test() {
   initTestLogging("Trace");

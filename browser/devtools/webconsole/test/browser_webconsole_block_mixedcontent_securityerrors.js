@@ -19,7 +19,7 @@ const TEST_URI = "https://example.com/browser/browser/devtools/webconsole/" +
 const LEARN_MORE_URI = "https://developer.mozilla.org/docs/Security/" +
                        "MixedContent";
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   yield pushPrefEnv();
 
   let { browser } = yield loadTab(TEST_URI);

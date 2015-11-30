@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // Tests that navigating to a new origin cancels ongoing installs and closes
 // the install UI.
-var sawUnload = null;
+let sawUnload = null;
 
 function test() {
   Harness.installConfirmCallback = confirm_install;

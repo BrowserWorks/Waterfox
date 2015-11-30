@@ -3,7 +3,7 @@
 
 Components.utils.import("resource://gre/modules/Promise.jsm");
 
-var WORKER_SOURCE_URI =
+let WORKER_SOURCE_URI =
   "chrome://test_sqlite_internal/content/worker_sqlite_internal.js";
 do_load_manifest("data/chrome.manifest");
 

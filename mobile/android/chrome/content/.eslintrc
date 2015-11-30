@@ -10,6 +10,7 @@ globals:
     SimpleServiceDiscovery: false
     TabMirror: false
     MediaPlayerApp: false
+    MatchstickApp: false
     RokuApp: false
     SearchEngines: false
     ConsoleAPI: true

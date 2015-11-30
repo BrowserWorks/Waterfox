@@ -33,7 +33,6 @@ private:
 public:
   void Init(nsIPresShell* aPresShell, nsIDocument *aDocument);
   void Destroy();
-  void ScreenSizeChanged();
 
 private:
   void RefreshZoomConstraints();

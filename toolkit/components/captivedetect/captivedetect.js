@@ -454,7 +454,7 @@ CaptivePortalDetector.prototype = {
   },
 };
 
-var debug;
+let debug;
 if (DEBUG) {
   debug = function (s) {
     dump('-*- CaptivePortalDetector component: ' + s + '\n');

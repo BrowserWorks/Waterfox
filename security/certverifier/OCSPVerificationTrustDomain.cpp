@@ -51,7 +51,7 @@ OCSPVerificationTrustDomain::CheckRevocation(EndEntityOrCA, const CertID&,
 
 Result
 OCSPVerificationTrustDomain::CheckSignatureDigestAlgorithm(
-  DigestAlgorithm aAlg, EndEntityOrCA aEEOrCA, Time notBefore)
+  DigestAlgorithm aAlg, EndEntityOrCA aEEOrCA)
 {
   // The reason for wrapping the NSSCertDBTrustDomain in an
   // OCSPVerificationTrustDomain is to allow us to bypass the weaker signature

@@ -2,10 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var tempScope = {};
+let tempScope = {};
 Components.utils.import("resource://gre/modules/Geometry.jsm", tempScope);
-var Point = tempScope.Point;
-var Rect = tempScope.Rect;
+let Point = tempScope.Point;
+let Rect = tempScope.Rect;
 
 function test() {
   ok(Rect, "Rect class exists");
@@ -14,7 +14,7 @@ function test() {
   }
 }
 
-var tests = {
+let tests = {
   testGetDimensions: function() {
     let r = new Rect(5, 10, 100, 50);
     ok(r.left == 5, "rect has correct left value");

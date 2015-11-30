@@ -201,14 +201,6 @@ MediaEngineDefaultVideoSource::Stop(SourceMediaStream *aSource, TrackID aID)
   return NS_OK;
 }
 
-nsresult
-MediaEngineDefaultVideoSource::Restart(const dom::MediaTrackConstraints& aConstraints,
-                                       const MediaEnginePrefs &aPrefs,
-                                       const nsString& aDeviceId)
-{
-  return NS_OK;
-}
-
 NS_IMETHODIMP
 MediaEngineDefaultVideoSource::Notify(nsITimer* aTimer)
 {
@@ -250,15 +242,9 @@ MediaEngineDefaultVideoSource::Notify(nsITimer* aTimer)
 		     0, 0);
 #endif
 
-  bool setData = ycbcr_image->SetData(data);
-  MOZ_ASSERT(setData);
-
+  ycbcr_image->SetData(data);
   // SetData copies data, so we can free the frame
   ReleaseFrame(data);
-
-  if (!setData) {
-    return NS_ERROR_FAILURE;
-  }
 
   MonitorAutoLock lock(mMonitor);
 
@@ -481,14 +467,6 @@ MediaEngineDefaultAudioSource::Stop(SourceMediaStream *aSource, TrackID aID)
   }
 
   mState = kStopped;
-  return NS_OK;
-}
-
-nsresult
-MediaEngineDefaultAudioSource::Restart(const dom::MediaTrackConstraints& aConstraints,
-                                       const MediaEnginePrefs &aPrefs,
-                                       const nsString& aDeviceId)
-{
   return NS_OK;
 }
 

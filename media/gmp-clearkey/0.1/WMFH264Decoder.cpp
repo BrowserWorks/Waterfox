@@ -16,7 +16,6 @@
 
 #include "WMFH264Decoder.h"
 #include <algorithm>
-#include <codecapi.h>
 
 namespace wmf {
 
@@ -32,7 +31,7 @@ WMFH264Decoder::~WMFH264Decoder()
 }
 
 HRESULT
-WMFH264Decoder::Init(int32_t aCoreCount)
+WMFH264Decoder::Init()
 {
   HRESULT hr;
 
@@ -46,13 +45,6 @@ WMFH264Decoder::Init(int32_t aCoreCount)
                    WMFDecoderDllNameFor(H264),
                    mDecoder);
   }
-  ENSURE(SUCCEEDED(hr), hr);
-
-  CComPtr<IMFAttributes> attr;
-  hr = mDecoder->GetAttributes(&attr);
-  ENSURE(SUCCEEDED(hr), hr);
-  hr = attr->SetUINT32(CODECAPI_AVDecNumWorkerThreads,
-                       GetNumThreads(aCoreCount));
   ENSURE(SUCCEEDED(hr), hr);
 
   hr = SetDecoderInputType();

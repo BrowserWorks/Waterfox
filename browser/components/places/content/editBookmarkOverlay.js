@@ -9,7 +9,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
 const LAST_USED_ANNO = "bookmarkPropertiesDialog/folderLastUsed";
 const MAX_FOLDER_ITEM_IN_MENU_LIST = 5;
 
-var gEditItemOverlay = {
+let gEditItemOverlay = {
   _observersAdded: false,
   _staticFoldersListBuilt: false,
 

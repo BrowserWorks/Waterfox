@@ -1,6 +1,6 @@
 "use strict";
 
-var SOURCE_URL = getFileUrl("setBreakpoint-on-line.js");
+let SOURCE_URL = getFileUrl("setBreakpoint-on-line.js");
 
 function run_test() {
   return Task.spawn(function* () {

@@ -483,7 +483,7 @@ function AddonWrapper(aTheme) {
   }, this);
 
   this.__defineGetter__("creator", function AddonWrapper_creatorGetter() {
-    return "author" in aTheme ? new AddonManagerPrivate.AddonAuthor(aTheme.author) : null;
+    return new AddonManagerPrivate.AddonAuthor(aTheme.author);
   });
 
   this.__defineGetter__("screenshots", function AddonWrapper_screenshotsGetter() {

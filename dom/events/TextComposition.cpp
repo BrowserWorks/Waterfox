@@ -93,14 +93,14 @@ TextComposition::MaybeDispatchCompositionUpdate(
   if (mLastData == aCompositionEvent->mData) {
     return true;
   }
-  CloneAndDispatchAs(aCompositionEvent, eCompositionUpdate);
+  CloneAndDispatchAs(aCompositionEvent, NS_COMPOSITION_UPDATE);
   return IsValidStateForComposition(aCompositionEvent->widget);
 }
 
 BaseEventFlags
 TextComposition::CloneAndDispatchAs(
                    const WidgetCompositionEvent* aCompositionEvent,
-                   EventMessage aMessage,
+                   uint32_t aMessage,
                    nsEventStatus* aStatus,
                    EventDispatchingCallback* aCallBack)
 {
@@ -114,13 +114,12 @@ TextComposition::CloneAndDispatchAs(
   compositionEvent.time = aCompositionEvent->time;
   compositionEvent.timeStamp = aCompositionEvent->timeStamp;
   compositionEvent.mData = aCompositionEvent->mData;
-  compositionEvent.mOriginalMessage = aCompositionEvent->mMessage;
   compositionEvent.mFlags.mIsSynthesizedForTests =
     aCompositionEvent->mFlags.mIsSynthesizedForTests;
 
   nsEventStatus dummyStatus = nsEventStatus_eConsumeNoDefault;
   nsEventStatus* status = aStatus ? aStatus : &dummyStatus;
-  if (aMessage == eCompositionUpdate) {
+  if (aMessage == NS_COMPOSITION_UPDATE) {
     mLastData = compositionEvent.mData;
   }
   EventDispatcher::Dispatch(mNode, mPresContext,
@@ -234,12 +233,12 @@ TextComposition::DispatchCompositionEvent(
     RemoveControlCharactersFrom(aCompositionEvent->mData,
                                 aCompositionEvent->mRanges);
   }
-  if (aCompositionEvent->mMessage == eCompositionCommitAsIs) {
+  if (aCompositionEvent->message == NS_COMPOSITION_COMMIT_AS_IS) {
     NS_ASSERTION(!aCompositionEvent->mRanges,
-                 "mRanges of eCompositionCommitAsIs should be null");
+                 "mRanges of NS_COMPOSITION_COMMIT_AS_IS should be null");
     aCompositionEvent->mRanges = nullptr;
     NS_ASSERTION(aCompositionEvent->mData.IsEmpty(),
-                 "mData of eCompositionCommitAsIs should be empty string");
+                 "mData of NS_COMPOSITION_COMMIT_AS_IS should be empty string");
     if (mLastData == IDEOGRAPHIC_SPACE) {
       // If the last data is an ideographic space (FullWidth space), it must be
       // a placeholder character of some Chinese IME.  So, committing with
@@ -248,9 +247,9 @@ TextComposition::DispatchCompositionEvent(
     } else {
       aCompositionEvent->mData = mLastData;
     }
-  } else if (aCompositionEvent->mMessage == eCompositionCommit) {
+  } else if (aCompositionEvent->message == NS_COMPOSITION_COMMIT) {
     NS_ASSERTION(!aCompositionEvent->mRanges,
-                 "mRanges of eCompositionCommit should be null");
+                 "mRanges of NS_COMPOSITION_COMMIT should be null");
     aCompositionEvent->mRanges = nullptr;
   }
 
@@ -283,11 +282,11 @@ TextComposition::DispatchCompositionEvent(
   // 2. non-empty string is committed at requesting cancel.
   if (!aIsSynthesized && (mIsRequestingCommit || mIsRequestingCancel)) {
     nsString* committingData = nullptr;
-    switch (aCompositionEvent->mMessage) {
-      case eCompositionEnd:
-      case eCompositionChange:
-      case eCompositionCommitAsIs:
-      case eCompositionCommit:
+    switch (aCompositionEvent->message) {
+      case NS_COMPOSITION_END:
+      case NS_COMPOSITION_CHANGE:
+      case NS_COMPOSITION_COMMIT_AS_IS:
+      case NS_COMPOSITION_COMMIT:
         committingData = &aCompositionEvent->mData;
         break;
       default:
@@ -309,20 +308,20 @@ TextComposition::DispatchCompositionEvent(
   bool dispatchDOMTextEvent = aCompositionEvent->CausesDOMTextEvent();
 
   // When mIsComposing is false but the committing string is different from
-  // the last data (E.g., previous eCompositionChange event made the
+  // the last data (E.g., previous NS_COMPOSITION_CHANGE event made the
   // composition string empty or didn't have clause information), we don't
   // need to dispatch redundant DOM text event.
   if (dispatchDOMTextEvent &&
-      aCompositionEvent->mMessage != eCompositionChange &&
+      aCompositionEvent->message != NS_COMPOSITION_CHANGE &&
       !mIsComposing && mLastData == aCompositionEvent->mData) {
     dispatchEvent = dispatchDOMTextEvent = false;
   }
 
-  // widget may dispatch redundant eCompositionChange event
+  // widget may dispatch redundant NS_COMPOSITION_CHANGE event
   // which modifies neither composition string, clauses nor caret
   // position.  In such case, we shouldn't dispatch DOM events.
   if (dispatchDOMTextEvent &&
-      aCompositionEvent->mMessage == eCompositionChange &&
+      aCompositionEvent->message == NS_COMPOSITION_CHANGE &&
       mLastData == aCompositionEvent->mData &&
       mRanges && aCompositionEvent->mRanges &&
       mRanges->Equals(*aCompositionEvent->mRanges)) {
@@ -337,13 +336,13 @@ TextComposition::DispatchCompositionEvent(
 
   if (dispatchEvent) {
     // If the composition event should cause a DOM text event, we should
-    // overwrite the event message as eCompositionChange because due to
+    // overwrite the event message as NS_COMPOSITION_CHANGE because due to
     // the limitation of mapping between event messages and DOM event types,
     // we cannot map multiple event messages to a DOM event type.
     if (dispatchDOMTextEvent &&
-        aCompositionEvent->mMessage != eCompositionChange) {
+        aCompositionEvent->message != NS_COMPOSITION_CHANGE) {
       aCompositionEvent->mFlags =
-        CloneAndDispatchAs(aCompositionEvent, eCompositionChange,
+        CloneAndDispatchAs(aCompositionEvent, NS_COMPOSITION_CHANGE,
                            aStatus, aCallBack);
     } else {
       EventDispatcher::Dispatch(mNode, mPresContext,
@@ -366,8 +365,8 @@ TextComposition::DispatchCompositionEvent(
 
   if (aCompositionEvent->CausesDOMCompositionEndEvent()) {
     // Dispatch a compositionend event if it's necessary.
-    if (aCompositionEvent->mMessage != eCompositionEnd) {
-      CloneAndDispatchAs(aCompositionEvent, eCompositionEnd);
+    if (aCompositionEvent->message != NS_COMPOSITION_END) {
+      CloneAndDispatchAs(aCompositionEvent, NS_COMPOSITION_END);
     }
     MOZ_ASSERT(!mIsComposing, "Why is the editor still composing?");
     MOZ_ASSERT(!HasEditor(), "Why does the editor still keep to hold this?");
@@ -412,10 +411,12 @@ TextComposition::NotityUpdateComposition(
   // When compositon start, notify the rect of first offset character.
   // When not compositon start, notify the rect of selected composition
   // string if compositionchange event.
-  if (aCompositionEvent->mMessage == eCompositionStart) {
+  if (aCompositionEvent->message == NS_COMPOSITION_START) {
     nsCOMPtr<nsIWidget> widget = mPresContext->GetRootWidget();
     // Update composition start offset
-    WidgetQueryContentEvent selectedTextEvent(true, eQuerySelectedText, widget);
+    WidgetQueryContentEvent selectedTextEvent(true,
+                                              NS_QUERY_SELECTED_TEXT,
+                                              widget);
     widget->DispatchEvent(&selectedTextEvent, status);
     if (selectedTextEvent.mSucceeded) {
       mCompositionStartOffset = selectedTextEvent.mReply.mOffset;
@@ -436,7 +437,7 @@ TextComposition::NotityUpdateComposition(
 }
 
 void
-TextComposition::DispatchCompositionEventRunnable(EventMessage aEventMessage,
+TextComposition::DispatchCompositionEventRunnable(uint32_t aEventMessage,
                                                   const nsAString& aData,
                                                   bool aIsSynthesizingCommit)
 {
@@ -490,10 +491,10 @@ TextComposition::RequestToCommit(nsIWidget* aWidget, bool aDiscard)
   // Otherwise, synthesize the commit in content.
   nsAutoString data(aDiscard ? EmptyString() : lastData);
   if (data == mLastData) {
-    DispatchCompositionEventRunnable(eCompositionCommitAsIs, EmptyString(),
+    DispatchCompositionEventRunnable(NS_COMPOSITION_COMMIT_AS_IS, EmptyString(),
                                      true);
   } else {
-    DispatchCompositionEventRunnable(eCompositionCommit, data, true);
+    DispatchCompositionEventRunnable(NS_COMPOSITION_COMMIT, data, true);
   }
   return NS_OK;
 }
@@ -584,13 +585,13 @@ TextComposition::HasEditor() const
 TextComposition::CompositionEventDispatcher::CompositionEventDispatcher(
                                                TextComposition* aComposition,
                                                nsINode* aEventTarget,
-                                               EventMessage aEventMessage,
+                                               uint32_t aEventMessage,
                                                const nsAString& aData,
                                                bool aIsSynthesizedEvent)
   : mTextComposition(aComposition)
   , mEventTarget(aEventTarget)
-  , mData(aData)
   , mEventMessage(aEventMessage)
+  , mData(aData)
   , mIsSynthesizedEvent(aIsSynthesizedEvent)
 {
 }
@@ -611,9 +612,10 @@ TextComposition::CompositionEventDispatcher::Run()
   nsRefPtr<nsPresContext> presContext = mTextComposition->mPresContext;
   nsEventStatus status = nsEventStatus_eIgnore;
   switch (mEventMessage) {
-    case eCompositionStart: {
-      WidgetCompositionEvent compStart(true, eCompositionStart, widget);
-      WidgetQueryContentEvent selectedText(true, eQuerySelectedText, widget);
+    case NS_COMPOSITION_START: {
+      WidgetCompositionEvent compStart(true, NS_COMPOSITION_START, widget);
+      WidgetQueryContentEvent selectedText(true, NS_QUERY_SELECTED_TEXT,
+                                           widget);
       ContentEventHandler handler(presContext);
       handler.OnQuerySelectedText(&selectedText);
       NS_ASSERTION(selectedText.mSucceeded, "Failed to get selected text");
@@ -625,11 +627,11 @@ TextComposition::CompositionEventDispatcher::Run()
                                                 mIsSynthesizedEvent);
       break;
     }
-    case eCompositionChange:
-    case eCompositionCommitAsIs:
-    case eCompositionCommit: {
+    case NS_COMPOSITION_CHANGE:
+    case NS_COMPOSITION_COMMIT_AS_IS:
+    case NS_COMPOSITION_COMMIT: {
       WidgetCompositionEvent compEvent(true, mEventMessage, widget);
-      if (mEventMessage != eCompositionCommitAsIs) {
+      if (mEventMessage != NS_COMPOSITION_COMMIT_AS_IS) {
         compEvent.mData = mData;
       }
       compEvent.mFlags.mIsSynthesizedForTests =
@@ -687,10 +689,7 @@ TextComposition*
 TextCompositionArray::GetCompositionFor(nsIWidget* aWidget)
 {
   index_type i = IndexOf(aWidget);
-  if (i == NoIndex) {
-    return nullptr;
-  }
-  return ElementAt(i);
+  return i != NoIndex ? ElementAt(i) : nullptr;
 }
 
 TextComposition*
@@ -698,10 +697,7 @@ TextCompositionArray::GetCompositionFor(nsPresContext* aPresContext,
                                            nsINode* aNode)
 {
   index_type i = IndexOf(aPresContext, aNode);
-  if (i == NoIndex) {
-    return nullptr;
-  }
-  return ElementAt(i);
+  return i != NoIndex ? ElementAt(i) : nullptr;
 }
 
 TextComposition*

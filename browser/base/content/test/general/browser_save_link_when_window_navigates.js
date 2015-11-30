@@ -89,7 +89,7 @@ function triggerSave(aWindow, aCallback) {
 }
 
 
-var windowObserver = {
+let windowObserver = {
   setCallback: function(aCallback) {
     if (this._callback) {
       ok(false, "Should only be dealing with one callback at a time.");

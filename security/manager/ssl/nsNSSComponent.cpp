@@ -888,13 +888,6 @@ void nsNSSComponent::setValidationOptions(bool isInitialSetting,
     pinningMode = CertVerifier::pinningDisabled;
   }
 
-  CertVerifier::SHA1Mode sha1Mode = static_cast<CertVerifier::SHA1Mode>
-      (Preferences::GetInt("security.pki.sha1_enforcement_level",
-                           static_cast<int32_t>(CertVerifier::SHA1Mode::Allowed)));
-  if (sha1Mode > CertVerifier::SHA1Mode::OnlyBefore2016) {
-    sha1Mode = CertVerifier::SHA1Mode::Allowed;
-  }
-
   CertVerifier::OcspDownloadConfig odc;
   CertVerifier::OcspStrictConfig osc;
   CertVerifier::OcspGetConfig ogc;
@@ -904,7 +897,7 @@ void nsNSSComponent::setValidationOptions(bool isInitialSetting,
                                  lock);
   mDefaultCertVerifier = new SharedCertVerifier(odc, osc, ogc,
                                                 certShortLifetimeInDays,
-                                                pinningMode, sha1Mode);
+                                                pinningMode);
 }
 
 // Enable the TLS versions given in the prefs, defaulting to TLS 1.0 (min) and
@@ -1377,8 +1370,7 @@ nsNSSComponent::Observe(nsISupports* aSubject, const char* aTopic,
                prefName.EqualsLiteral("security.OCSP.GET.enabled") ||
                prefName.EqualsLiteral("security.pki.cert_short_lifetime_in_days") ||
                prefName.EqualsLiteral("security.ssl.enable_ocsp_stapling") ||
-               prefName.EqualsLiteral("security.cert_pinning.enforcement_level") ||
-               prefName.EqualsLiteral("security.pki.sha1_enforcement_level")) {
+               prefName.EqualsLiteral("security.cert_pinning.enforcement_level")) {
       MutexAutoLock lock(mutex);
       setValidationOptions(false, lock);
     } else {

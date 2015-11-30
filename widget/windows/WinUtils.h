@@ -35,7 +35,6 @@
 #include "nsIThread.h"
 
 #include "mozilla/Attributes.h"
-#include "mozilla/EventForwards.h"
 
 /**
  * NS_INLINE_DECL_IUNKNOWN_REFCOUNTING should be used for defining and
@@ -309,7 +308,7 @@ public:
    */
   static uint16_t GetMouseInputSource();
 
-  static bool GetIsMouseFromTouch(EventMessage aEventType);
+  static bool GetIsMouseFromTouch(uint32_t aEventType);
 
   /**
    * SHCreateItemFromParsingName() calls native SHCreateItemFromParsingName()

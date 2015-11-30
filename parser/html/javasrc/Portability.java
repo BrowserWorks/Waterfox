@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -39,9 +39,7 @@ public final class Portability {
         return new String(buf, offset, length).intern();
     }
 
-    public static String newStringFromBuffer(@NoLength char[] buf, int offset, int length
-        // CPPONLY: , TreeBuilder treeBuilder
-    ) {
+    public static String newStringFromBuffer(@NoLength char[] buf, int offset, int length) {
         return new String(buf, offset, length);
     }
 

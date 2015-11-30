@@ -3,15 +3,15 @@
 
 "use strict";
 
-var gTestTab;
-var gContentAPI;
-var gContentWindow;
+let gTestTab;
+let gContentAPI;
+let gContentWindow;
 
 function test() {
   UITourTest();
 }
 
-var tests = [
+let tests = [
   function test_info_customize_auto_open_close(done) {
     let popup = document.getElementById("UITourTooltip");
     gContentAPI.showInfo("customize", "Customization", "Customize me please!");

@@ -10,20 +10,21 @@
 // Note that in this test, we mock the highlighter front, merely testing the
 // behavior of the style-inspector UI for now
 
-const TEST_URI = `
-  <style type="text/css">
-    body {
-      background: red;
-    }
-    p {
-      color: white;
-    }
-  </style>
-  <p>Testing the selector highlighter</p>
-`;
+const PAGE_CONTENT = [
+  '<style type="text/css">',
+  '  body {',
+  '    background: red;',
+  '  }',
+  '  p {',
+  '    color: white;',
+  '  }',
+  '</style>',
+  '<p>Testing the selector highlighter</p>'
+].join("\n");
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+  yield addTab("data:text/html;charset=utf-8," + PAGE_CONTENT);
+
   let {inspector, view} = yield openRuleView();
 
   // Mock the highlighter front to get the reference of the NodeFront

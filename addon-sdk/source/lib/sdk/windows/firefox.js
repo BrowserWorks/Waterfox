@@ -188,7 +188,7 @@ for (let domWindow of windows()) {
     addListItem(browserWindows, window);
 }
 
-var windowEventListener = (event, domWindow, ...args) => {
+let windowEventListener = (event, domWindow, ...args) => {
   if (ignoreWindow(domWindow))
     return;
 

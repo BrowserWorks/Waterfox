@@ -67,10 +67,7 @@ SOURCES += [
 
 # Suppress warnings in third-party code.
 if CONFIG['GNU_CC']:
-    CFLAGS += [
-        '-Wno-parentheses',
-        '-Wno-sign-compare',
-    ]
+    CFLAGS += ['-Wno-sign-compare']
 
 # Add define required of third party code.
 if CONFIG['GNU_CC']:
@@ -78,7 +75,5 @@ if CONFIG['GNU_CC']:
 
 if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
     NO_VISIBILITY_FLAGS = True,
-
-ALLOW_COMPILER_WARNINGS = True
 
 FINAL_LIBRARY = 'gkmedias'

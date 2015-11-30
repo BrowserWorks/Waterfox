@@ -10,6 +10,7 @@ import os
 import shutil
 import stat
 import sys
+import which
 import subprocess
 
 from distutils.version import LooseVersion
@@ -17,7 +18,7 @@ from distutils.version import LooseVersion
 from configobj import ConfigObjError
 from StringIO import StringIO
 
-from mozversioncontrol import get_hg_path, get_hg_version
+from mozversioncontrol import get_hg_version
 
 from .update import MercurialUpdater
 from .config import (
@@ -129,36 +130,18 @@ Please upgrade to Mercurial %s or newer to use this extension.
 '''.strip()
 
 MISSING_BUGZILLA_CREDENTIALS = '''
-You do not have your Bugzilla API Key defined in your Mercurial config.
+You do not have your Bugzilla credentials defined in your Mercurial config.
 
-Various extensions make use of a Bugzilla API Key to interface with
+Various extensions make use of your Bugzilla credentials to interface with
 Bugzilla to enrich your development experience.
 
-The Bugzilla API Key is optional. If you do not provide one, associated
+Bugzilla credentials are optional. If you do not provide them, associated
 functionality will not be enabled, we will attempt to find a Bugzilla cookie
 from a Firefox profile, or you will be prompted for your Bugzilla credentials
 when they are needed.
 
-You should only need to configure a Bugzilla API Key once.
-'''.lstrip()
-
-BUGZILLA_API_KEY_INSTRUCTIONS = '''
-Bugzilla API Keys can only be obtained through the Bugzilla web interface.
-
-Please perform the following steps:
-
-  1) Open https://bugzilla.mozilla.org/userprefs.cgi?tab=apikey
-  2) Generate a new API Key
-  3) Copy the generated key and paste it here
-'''.lstrip()
-
-LEGACY_BUGZILLA_CREDENTIALS_DETECTED = '''
-Your existing Mercurial config uses a legacy method for defining Bugzilla
-credentials. Bugzilla API Keys are the most secure and preferred method
-for defining Bugzilla credentials. Bugzilla API Keys are also required
-if you have enabled 2 Factor Authentication in Bugzilla.
-
-All consumers formerly looking at these options should support API Keys.
+Your Bugzilla credentials will be stored in *PLAIN TEXT* in your hgrc config
+file. If this is not wanted, do not enter your credentials.
 '''.lstrip()
 
 BZPOST_MINIMUM_VERSION = LooseVersion('3.1')
@@ -253,6 +236,7 @@ class MercurialSetupWizard(object):
         self.state_dir = os.path.normpath(state_dir)
         self.ext_dir = os.path.join(self.state_dir, 'mercurial', 'extensions')
         self.vcs_tools_dir = os.path.join(self.state_dir, 'version-control-tools')
+        self.update_vcs_tools = False
         self.updater = MercurialUpdater(state_dir)
 
     def run(self, config_paths):
@@ -262,7 +246,22 @@ class MercurialSetupWizard(object):
             if e.errno != errno.EEXIST:
                 raise
 
-        hg = get_hg_path()
+        # We use subprocess in places, which expects a Win32 executable or
+        # batch script. On some versions of MozillaBuild, we have "hg.exe",
+        # "hg.bat," and "hg" (a Python script). "which" will happily return the
+        # Python script, which will cause subprocess to choke. Explicitly favor
+        # the Windows version over the plain script.
+        try:
+            hg = which.which('hg.exe')
+        except which.WhichError:
+            try:
+                hg = which.which('hg')
+            except which.WhichError as e:
+                print(e)
+                print('Try running |mach bootstrap| to ensure your environment is '
+                      'up to date.')
+                return 1
+
         config_path = config_file(config_paths)
 
         try:
@@ -278,8 +277,6 @@ class MercurialSetupWizard(object):
             print('Line %d: %s' % (e.line, e.message))
 
             return 1
-
-        self.updater.update_all()
 
         print(INITIAL_MESSAGE)
         raw_input()
@@ -385,33 +382,30 @@ class MercurialSetupWizard(object):
                     print('')
 
         if 'reviewboard' in c.extensions or 'bzpost' in c.extensions:
-            bzuser, bzpass, bzuserid, bzcookie, bzapikey = c.get_bugzilla_credentials()
+            bzuser, bzpass, bzuserid, bzcookie = c.get_bugzilla_credentials()
 
-            if not bzuser or not bzapikey:
+            if (not bzuser or not bzpass) and (not bzuserid or not bzcookie):
                 print(MISSING_BUGZILLA_CREDENTIALS)
 
-            if not bzuser:
+            # Don't prompt for username if cookie is set.
+            if not bzuser and not bzuserid:
                 bzuser = self._prompt('What is your Bugzilla email address? (optional)',
                     allow_empty=True)
 
-            if bzuser and not bzapikey:
-                print(BUGZILLA_API_KEY_INSTRUCTIONS)
-                bzapikey = self._prompt('Please enter a Bugzilla API Key: (optional)',
+            if bzuser and not bzpass:
+                bzpass = self._prompt('What is your Bugzilla password? (optional)',
                     allow_empty=True)
 
-            if bzuser or bzapikey:
-                c.set_bugzilla_credentials(bzuser, bzapikey)
+            if bzuser or bzpass:
+                c.set_bugzilla_credentials(bzuser, bzpass)
 
-            if bzpass or bzuserid or bzcookie:
-                print(LEGACY_BUGZILLA_CREDENTIALS_DETECTED)
-
-                # Clear legacy credentials automatically if an API Key is
-                # found as it supercedes all other credentials.
-                if bzapikey:
-                    print('The legacy credentials have been removed.\n')
-                    c.clear_legacy_bugzilla_credentials()
-                elif self._prompt_yn('Remove legacy credentials'):
-                    c.clear_legacy_bugzilla_credentials()
+        if self.update_vcs_tools:
+            self.updater.update_mercurial_repo(
+                hg,
+                'https://hg.mozilla.org/hgcustom/version-control-tools',
+                self.vcs_tools_dir,
+                'default',
+                'Ensuring version-control-tools is up to date...')
 
         # Look for and clean up old extensions.
         for ext in {'bzexport', 'qimportbz', 'mqext'}:
@@ -473,19 +467,18 @@ class MercurialSetupWizard(object):
                 c.write(sys.stdout)
                 return 1
 
-        if sys.platform != 'win32':
-            # Config file may contain sensitive content, such as passwords.
-            # Prompt to remove global permissions.
-            mode = os.stat(config_path).st_mode
-            if mode & (stat.S_IRWXG | stat.S_IRWXO):
-                print(FILE_PERMISSIONS_WARNING)
-                if self._prompt_yn('Remove permissions for others to '
-                                   'read your hgrc file'):
-                    # We don't care about sticky and set UID bits because
-                    # this is a regular file.
-                    mode = mode & stat.S_IRWXU
-                    print('Changing permissions of %s' % config_path)
-                    os.chmod(config_path, mode)
+        # Config file may contain sensitive content, such as passwords.
+        # Prompt to remove global permissions.
+        mode = os.stat(config_path).st_mode
+        if mode & (stat.S_IRWXG | stat.S_IRWXO):
+            print(FILE_PERMISSIONS_WARNING)
+            if self._prompt_yn('Remove permissions for others to read '
+                               'your hgrc file'):
+                # We don't care about sticky and set UID bits because this is
+                # a regular file.
+                mode = mode & stat.S_IRWXU
+                print('Changing permissions of %s' % config_path)
+                os.chmod(config_path, mode)
 
         print(FINISHED)
         return 0
@@ -524,6 +517,7 @@ class MercurialSetupWizard(object):
                 return
         if not path:
             path = os.path.join(self.vcs_tools_dir, 'hgext', name)
+        self.update_vcs_tools = True
         c.activate_extension(name, path)
         print('Activated %s extension.\n' % name)
 

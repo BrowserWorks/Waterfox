@@ -84,23 +84,21 @@ ImageDataSerializerBase::ComputeMinBufferSize(IntSize aSize,
                                               SurfaceFormat aFormat)
 {
   MOZ_ASSERT(aSize.height >= 0 && aSize.width >= 0);
-
-  // This takes care of checking whether there could be overflow
-  // with enough margin for the metadata.
-  if (!gfx::Factory::AllowedSurfaceSize(aSize)) {
+  if (aSize.height <= 0 || aSize.width <= 0) {
+    gfxDebug() << "Non-positive image buffer size request " << aSize.width << "x" << aSize.height;
     return 0;
   }
 
-  int32_t bufsize = GetAlignedStride<16>(ComputeStride(aFormat, aSize.width)
-                                         * aSize.height)
-                  + SurfaceBufferInfo::GetOffset();
+  CheckedInt<int32_t> bufsize = ComputeStride(aFormat, aSize.width);
+  bufsize *= aSize.height;
 
-  if (bufsize < 0) {
-    // This should not be possible thanks to Factory::AllowedSurfaceSize
+  if (!bufsize.isValid() || bufsize.value() <= 0) {
+    gfxDebug() << "Buffer size overflow " << aSize.width << "x" << aSize.height;
     return 0;
   }
 
-  return bufsize;
+  return SurfaceBufferInfo::GetOffset()
+       + GetAlignedStride<16>(bufsize.value());
 }
 
 void
@@ -116,8 +114,7 @@ ImageDataSerializerBase::Validate()
   }
   size_t requiredSize =
            ComputeMinBufferSize(IntSize(info->width, info->height), info->format);
-
-  mIsValid = !!requiredSize && requiredSize <= mDataSize;
+  mIsValid = requiredSize <= mDataSize;
 }
 
 uint8_t*
@@ -154,13 +151,9 @@ already_AddRefed<DrawTarget>
 ImageDataSerializerBase::GetAsDrawTarget(gfx::BackendType aBackend)
 {
   MOZ_ASSERT(IsValid());
-  RefPtr<DrawTarget> dt = gfx::Factory::CreateDrawTargetForData(aBackend,
+  return gfx::Factory::CreateDrawTargetForData(aBackend,
                                                GetData(), GetSize(),
                                                GetStride(), GetFormat());
-  if (!dt) {
-    gfxCriticalNote << "Failed GetAsDrawTarget " << IsValid() << ", " << hexa(size_t(mData)) << " + " << SurfaceBufferInfo::GetOffset() << ", " << GetSize() << ", " << GetStride() << ", " << (int)GetFormat();
-  }
-  return dt.forget();
 }
 
 already_AddRefed<gfx::DataSourceSurface>

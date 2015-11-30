@@ -12,7 +12,7 @@ const TEST_PREFS = [
 
 const TEST_PATH = "http://example.com/browser/browser/base/content/test/general/";
 
-var readerButton = document.getElementById("reader-mode-button");
+let readerButton = document.getElementById("reader-mode-button");
 
 add_task(function* test_reader_button() {
   registerCleanupFunction(function() {

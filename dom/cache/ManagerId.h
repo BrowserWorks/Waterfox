@@ -29,15 +29,16 @@ public:
   // Main thread only
   already_AddRefed<nsIPrincipal> Principal() const;
 
-  const nsACString& QuotaOrigin() const { return mQuotaOrigin; }
+  const nsACString& ExtendedOrigin() const { return mExtendedOrigin; }
 
   bool operator==(const ManagerId& aOther) const
   {
-    return mQuotaOrigin == aOther.mQuotaOrigin;
+    return mExtendedOrigin == aOther.mExtendedOrigin;
   }
 
 private:
-  ManagerId(nsIPrincipal* aPrincipal, const nsACString& aOrigin);
+  ManagerId(nsIPrincipal* aPrincipal, const nsACString& aOrigin,
+            const nsACString& aJarPrefix);
   ~ManagerId();
 
   ManagerId(const ManagerId&) = delete;
@@ -47,7 +48,7 @@ private:
   nsCOMPtr<nsIPrincipal> mPrincipal;
 
   // immutable to allow threadsfe access
-  const nsCString mQuotaOrigin;
+  const nsCString mExtendedOrigin;
 
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(mozilla::dom::cache::ManagerId)

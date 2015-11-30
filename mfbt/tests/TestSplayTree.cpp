@@ -7,7 +7,6 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/SplayTree.h"
-#include "mozilla/unused.h"
 
 using mozilla::SplayTree;
 using mozilla::SplayTreeNode;
@@ -119,8 +118,6 @@ static SplayTree<SplayNoCopy, SplayNoCopy> testNoCopy;
 int
 main()
 {
-  mozilla::unused << testNoCopy;
-
   SplayTree<SplayInt, SplayInt> tree;
 
   MOZ_RELEASE_ASSERT(tree.empty());

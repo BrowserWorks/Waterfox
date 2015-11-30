@@ -523,10 +523,6 @@ var LoginManagerParent = {
         log("...passwords differ, prompting to change.");
         prompter = getPrompter();
         prompter.promptToChangePassword(existingLogin, formLogin);
-      } else if (!existingLogin.username && formLogin.username) {
-        log("...empty username update, prompting to change.");
-        prompter = getPrompter();
-        prompter.promptToChangePassword(existingLogin, formLogin);
       } else {
         recordLoginUse(existingLogin);
       }

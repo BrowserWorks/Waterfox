@@ -37,12 +37,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
                                   "resource://gre/modules/LightweightThemeManager.jsm");
 
 
-var gModuleName = "[CustomizeMode]";
+let gModuleName = "[CustomizeMode]";
 #include logging.js
 
-var gDisableAnimation = null;
+let gDisableAnimation = null;
 
-var gDraggingInToolbars;
+let gDraggingInToolbars;
 
 function CustomizeMode(aWindow) {
   if (gDisableAnimation === null) {

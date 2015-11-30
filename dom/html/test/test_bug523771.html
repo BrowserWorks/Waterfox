@@ -20,6 +20,7 @@ method="POST" enctype="multipart/form-data">
 <pre id="test">
 <script class="testbody" type="text/javascript">
 
+var filesToKill = [];
 singleFileInput = document.getElementById('singleFile');
 multiFileInput = document.getElementById('multiFile');
 var input1File = { name: "523771_file1", type: "", body: "file1 contents"};
@@ -32,24 +33,44 @@ var input2Files =
 SimpleTest.waitForExplicitFinish();
 
 function setFileInputs () {
-  var f = createFileWithData(input1File.name, input1File.body, input1File.type);
-  SpecialPowers.wrap(singleFileInput).mozSetFileArray([f]);
+  f = createFileWithData(input1File.name, input1File.body);
+  SpecialPowers.wrap(singleFileInput).mozSetFileNameArray([f.path], 1);
 
   var input2FileNames = [];
   for (file of input2Files) {
-    f = createFileWithData(file.name, file.body, file.type);
-    input2FileNames.push(f);
+    f = createFileWithData(file.name, file.body);
+    input2FileNames.push(f.path);
   }
-  SpecialPowers.wrap(multiFileInput).mozSetFileArray(input2FileNames);
+  SpecialPowers.wrap(multiFileInput).mozSetFileNameArray(input2FileNames, input2FileNames.length);
 }
 
-function createFileWithData(fileName, fileData, fileType) {
-  return new File([fileData], fileName, { type: fileType });
+function createFileWithData(fileName, fileData) {
+  var dirSvc = SpecialPowers.Cc["@mozilla.org/file/directory_service;1"]
+                            .getService(SpecialPowers.Ci.nsIProperties);
+  var testFile = dirSvc.get("ProfD", SpecialPowers.Ci.nsIFile);
+  testFile.append(fileName);
+  var outStream = SpecialPowers.Cc["@mozilla.org/network/file-output-stream;1"].
+                    createInstance(SpecialPowers.Ci.nsIFileOutputStream);
+  outStream.init(testFile, 0x02 | 0x08 | 0x20, // write, create, truncate
+                 0666, 0);
+  outStream.write(fileData, fileData.length);
+  outStream.close();
+
+  filesToKill.push(testFile);
+
+  return testFile;
 }
 
 function cleanupFiles() {
   singleFileInput.value = "";
   multiFileInput.value = "";
+  filesToKill.forEach(
+      function (testFile) {
+        try {
+          testFile.remove(false);
+        } catch (e) {}
+      }
+  );
 }
 
 is(singleFileInput.files.length, 0, "single-file .files.length"); // bug 524421

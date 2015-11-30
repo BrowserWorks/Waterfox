@@ -9,7 +9,7 @@
  * indicate the transformation that results from dropping a cell at a certain
  * position.
  */
-var gDropPreview = {
+let gDropPreview = {
   /**
    * Rearranges the sites currently contained in the grid when a site would be
    * dropped onto the given cell.

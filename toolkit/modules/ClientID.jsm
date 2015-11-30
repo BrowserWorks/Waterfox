@@ -58,7 +58,7 @@ this.ClientID = Object.freeze({
   },
 });
 
-var ClientIDImpl = {
+let ClientIDImpl = {
   _clientID: null,
   _loadClientIdTask: null,
   _saveClientIdTask: null,

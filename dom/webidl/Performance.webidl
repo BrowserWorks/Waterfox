@@ -71,4 +71,3 @@ partial interface Performance {
   [Func="nsPerformance::IsEnabled"]
   void clearMeasures(optional DOMString measureName);
 };
-

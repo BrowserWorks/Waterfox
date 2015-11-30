@@ -80,10 +80,7 @@ VideoFrame::CreateBlackImage(const gfxIntSize& aSize)
   data.mStereoMode = StereoMode::MONO;
 
   // SetData copies data, so we can free data.
-  if (!planar->SetData(data)) {
-    MOZ_ASSERT(false);
-    return nullptr;
-  }
+  planar->SetData(data);
 
   return image.forget();
 }

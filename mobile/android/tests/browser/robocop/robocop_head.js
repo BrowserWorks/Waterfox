@@ -30,7 +30,7 @@ function _dump(str) {
 }
 
 // Determine if we're running on parent or child
-var runningInParent = true;
+let runningInParent = true;
 try {
   runningInParent = Components.classes["@mozilla.org/xre/runtime;1"].
                     getService(Components.interfaces.nsIXULRuntime).processType
@@ -679,14 +679,14 @@ function _do_execute_cleanup() {
  *
  * @return the test function that was passed in.
  */
-var _gTests = [];
+let _gTests = [];
 function add_test(func) {
   _gTests.push([false, func]);
   return func;
 }
 
 // We lazy import Task.jsm so we don't incur a run-time penalty for all tests.
-var _Task;
+let _Task;
 
 /**
  * Add a test function which is a Task function.
@@ -737,8 +737,8 @@ function add_task(func) {
 /**
  * Runs the next test function from the list of async tests.
  */
-var _gRunningTest = null;
-var _gTestIndex = 0; // The index of the currently running test.
+let _gRunningTest = null;
+let _gTestIndex = 0; // The index of the currently running test.
 function run_next_test()
 {
   function _run_next_test()

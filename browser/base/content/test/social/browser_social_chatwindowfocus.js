@@ -52,7 +52,7 @@ function openChatViaWorkerMessage(port, data, callback) {
 }
 
 
-var isSidebarLoaded = false;
+let isSidebarLoaded = false;
 
 function startTestAndWaitForSidebar(callback) {
   let doneCallback;
@@ -82,7 +82,7 @@ function startTestAndWaitForSidebar(callback) {
   port.postMessage({topic: "test-init"});
 }
 
-var manifest = { // normal provider
+let manifest = { // normal provider
   name: "provider 1",
   origin: "https://example.com",
   sidebarURL: "https://example.com/browser/browser/base/content/test/social/social_sidebar.html",

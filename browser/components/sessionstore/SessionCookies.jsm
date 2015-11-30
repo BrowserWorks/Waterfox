@@ -40,7 +40,7 @@ this.SessionCookies = Object.freeze({
 /**
  * The internal API.
  */
-var SessionCookiesInternal = {
+let SessionCookiesInternal = {
   /**
    * Stores whether we're initialized, yet.
    */
@@ -314,7 +314,7 @@ function* getPossibleSubdomainVariants(host) {
  * The internal cookie storage that keeps track of every active session cookie.
  * These are stored using maps per host, path, and cookie name.
  */
-var CookieStore = {
+let CookieStore = {
   /**
    * The internal structure holding all known cookies.
    *

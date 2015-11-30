@@ -21,7 +21,6 @@
 # include "builtin/Intl.h"
 #endif
 #include "builtin/MapObject.h"
-#include "builtin/ModuleObject.h"
 #include "builtin/Object.h"
 #include "builtin/RegExp.h"
 #include "builtin/SIMD.h"
@@ -451,17 +450,10 @@ GlobalObject::warnOnceAbout(JSContext* cx, HandleObject obj, WarnOnceFlag flag,
 
 JSFunction*
 GlobalObject::createConstructor(JSContext* cx, Native ctor, JSAtom* nameArg, unsigned length,
-                                gc::AllocKind kind, const JSJitInfo* jitInfo)
+                                gc::AllocKind kind)
 {
     RootedAtom name(cx, nameArg);
-    JSFunction* fun = NewNativeConstructor(cx, ctor, length, name, kind);
-    if (!fun)
-        return nullptr;
-
-    if (jitInfo)
-        fun->setJitInfo(jitInfo);
-
-    return fun;
+    return NewNativeConstructor(cx, ctor, length, name, kind);
 }
 
 static NativeObject*
@@ -677,7 +669,7 @@ GlobalObject::addIntrinsicValue(JSContext* cx, Handle<GlobalObject*> global,
     Rooted<UnownedBaseShape*> base(cx, last->base()->unowned());
 
     RootedId id(cx, NameToId(name));
-    Rooted<StackShape> child(cx, StackShape(base, id, slot, 0, 0));
+    StackShape child(base, id, slot, 0, 0);
     Shape* shape = cx->compartment()->propertyTree.getChild(cx, last, child);
     if (!shape)
         return false;

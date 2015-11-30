@@ -16,7 +16,7 @@ thisTestLeaksUncaughtRejectionsAndShouldBeFixed("TypeError: this.toolbox is null
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-console-output-dom-elements.html";
 
-var inputTests = [
+let inputTests = [
   {
     input: "testBodyNode()",
     output: '<body id="body-id" class="body-class">',

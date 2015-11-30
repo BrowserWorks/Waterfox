@@ -1,4 +1,4 @@
-from slugid import nice as slugid
+from taskcluster_graph.slugid import slugid
 
 class SlugidJar():
     '''

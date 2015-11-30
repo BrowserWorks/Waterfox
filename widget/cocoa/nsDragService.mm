@@ -35,7 +35,7 @@ extern PRLogModuleInfo* sCocoaLog;
 
 extern void EnsureLogInitialized();
 
-extern NSPasteboardWrapper* globalDragPboard;
+extern NSPasteboard* globalDragPboard;
 extern NSView* gLastDragView;
 extern NSEvent* gLastDragMouseDownEvent;
 extern bool gUserCancelledDrag;
@@ -48,46 +48,6 @@ NSString* const kWildcardPboardType = @"MozillaWildcard";
 NSString* const kCorePboardType_url  = @"CorePasteboardFlavorType 0x75726C20"; // 'url '  url
 NSString* const kCorePboardType_urld = @"CorePasteboardFlavorType 0x75726C64"; // 'urld'  desc
 NSString* const kCorePboardType_urln = @"CorePasteboardFlavorType 0x75726C6E"; // 'urln'  title
-
-@implementation NSPasteboardWrapper
-- (id)initWithPasteboard:(NSPasteboard*)aPasteboard
-{
-  if ((self = [super init])) {
-    mPasteboard = [aPasteboard retain];
-    mFilenames = nil;
-  }
-  return self;
-}
-
-- (id)propertyListForType:(NSString *)aType
-{
-  if (![aType isEqualToString:NSFilenamesPboardType]) {
-    return [mPasteboard propertyListForType:aType];
-  }
-
-  if (!mFilenames) {
-    mFilenames = [[mPasteboard propertyListForType:aType] retain];
-  }
-
-  return mFilenames;
-}
-
-- (NSPasteboard*) pasteboard
-{
-  return mPasteboard;
-}
-
-- (void)dealloc
-{
-  [mPasteboard release];
-  mPasteboard = nil;
-
-  [mFilenames release];
-  mFilenames = nil;
-
-  [super dealloc];
-}
-@end
 
 nsDragService::nsDragService()
 {
@@ -441,7 +401,7 @@ nsDragService::GetData(nsITransferable* aTransferable, uint32_t aItemIndex)
         flavorStr.EqualsLiteral(kURLMime) ||
         flavorStr.EqualsLiteral(kURLDataMime) ||
         flavorStr.EqualsLiteral(kURLDescriptionMime)) {
-      NSString* pString = [[globalDragPboard pasteboard] stringForType:pboardType];
+      NSString* pString = [globalDragPboard stringForType:pboardType];
       if (!pString)
         continue;
 
@@ -540,17 +500,17 @@ nsDragService::IsDataFlavorSupported(const char *aDataFlavor, bool *_retval)
   NSString *pboardType = nil;
 
   if (dataFlavor.EqualsLiteral(kFileMime)) {
-    NSString* availableType = [[globalDragPboard pasteboard] availableTypeFromArray:[NSArray arrayWithObject:NSFilenamesPboardType]];
+    NSString* availableType = [globalDragPboard availableTypeFromArray:[NSArray arrayWithObject:NSFilenamesPboardType]];
     if (availableType && [availableType isEqualToString:NSFilenamesPboardType])
       *_retval = true;
   }
   else if (dataFlavor.EqualsLiteral(kURLMime)) {
-    NSString* availableType = [[globalDragPboard pasteboard] availableTypeFromArray:[NSArray arrayWithObject:kCorePboardType_url]];
+    NSString* availableType = [globalDragPboard availableTypeFromArray:[NSArray arrayWithObject:kCorePboardType_url]];
     if (availableType && [availableType isEqualToString:kCorePboardType_url])
       *_retval = true;
   }
   else if (nsClipboard::IsStringType(dataFlavor, &pboardType)) {
-    NSString* availableType = [[globalDragPboard pasteboard] availableTypeFromArray:[NSArray arrayWithObject:pboardType]];
+    NSString* availableType = [globalDragPboard availableTypeFromArray:[NSArray arrayWithObject:pboardType]];
     if (availableType && [availableType isEqualToString:pboardType])
       *_retval = true;
   }
@@ -574,7 +534,7 @@ nsDragService::GetNumDropItems(uint32_t* aNumItems)
   }
 
   // if there is a clipboard and there is something on it, then there is at least 1 item
-  NSArray* clipboardTypes = [[globalDragPboard pasteboard] types];
+  NSArray* clipboardTypes = [globalDragPboard types];
   if (globalDragPboard && [clipboardTypes count] > 0)
     *aNumItems = 1;
   else 

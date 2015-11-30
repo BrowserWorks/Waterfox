@@ -9,7 +9,7 @@ const { TabSources } = require("devtools/server/actors/utils/TabSources");
 const promise = require("promise");
 const makeDebugger = require("devtools/server/actors/utils/make-debugger");
 
-var gTestGlobals = [];
+let gTestGlobals = [];
 DebuggerServer.addTestGlobal = function(aGlobal) {
   gTestGlobals.push(aGlobal);
 };

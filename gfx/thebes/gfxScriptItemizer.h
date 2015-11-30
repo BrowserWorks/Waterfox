@@ -75,9 +75,9 @@ protected:
         fixupCount  =  0;
     }
 
-    void push(uint32_t endPairChar, int32_t newScriptCode);
+    void push(uint32_t endPairChar, int32_t scriptCode);
     void pop();
-    void fixup(int32_t newScriptCode);
+    void fixup(int32_t scriptCode);
 
     struct ParenStackEntry {
         uint32_t endPairChar;

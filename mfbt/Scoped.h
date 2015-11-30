@@ -77,7 +77,7 @@ namespace mozilla {
  *   }
  */
 template<typename Traits>
-class MOZ_NON_TEMPORARY_CLASS Scoped
+class Scoped
 {
 public:
   typedef typename Traits::type Resource;
@@ -96,8 +96,8 @@ public:
   }
 
   /* Move constructor. */
-  Scoped(Scoped&& aOther
-         MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+  explicit Scoped(Scoped&& aOther
+                  MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
     : mValue(Move(aOther.mValue))
   {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
@@ -187,7 +187,7 @@ private:
  */
 #define SCOPED_TEMPLATE(name, Traits)                                         \
 template<typename Type>                                                       \
-struct MOZ_NON_TEMPORARY_CLASS name : public mozilla::Scoped<Traits<Type> >   \
+struct name : public mozilla::Scoped<Traits<Type> >                           \
 {                                                                             \
   typedef mozilla::Scoped<Traits<Type> > Super;                               \
   typedef typename Super::Resource Resource;                                  \
@@ -209,8 +209,8 @@ struct MOZ_NON_TEMPORARY_CLASS name : public mozilla::Scoped<Traits<Type> >   \
     : Super(aRhs                                                              \
             MOZ_GUARD_OBJECT_NOTIFIER_PARAM_TO_PARENT)                        \
   {}                                                                          \
-  name(name&& aRhs                                                            \
-       MOZ_GUARD_OBJECT_NOTIFIER_PARAM)                                       \
+  explicit name(name&& aRhs                                                   \
+                MOZ_GUARD_OBJECT_NOTIFIER_PARAM)                              \
     : Super(Move(aRhs)                                                        \
             MOZ_GUARD_OBJECT_NOTIFIER_PARAM_TO_PARENT)                        \
   {}                                                                          \

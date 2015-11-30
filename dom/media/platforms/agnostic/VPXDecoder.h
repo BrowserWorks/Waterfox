@@ -28,7 +28,7 @@ public:
 
   ~VPXDecoder();
 
-  nsRefPtr<InitPromise> Init() override;
+  nsresult Init() override;
   nsresult Input(MediaRawData* aSample) override;
   nsresult Flush() override;
   nsresult Drain() override;

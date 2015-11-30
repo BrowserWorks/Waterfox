@@ -200,7 +200,7 @@ HTMLButtonElement::ParseAttribute(int32_t aNamespaceID,
 }
 
 bool
-HTMLButtonElement::IsDisabledForEvents(EventMessage aMessage)
+HTMLButtonElement::IsDisabledForEvents(uint32_t aMessage)
 {
   nsIFormControlFrame* formControlFrame = GetFormControlFrame(false);
   nsIFrame* formFrame = do_QueryFrame(formControlFrame);
@@ -211,7 +211,7 @@ nsresult
 HTMLButtonElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mCanHandle = false;
-  if (IsDisabledForEvents(aVisitor.mEvent->mMessage)) {
+  if (IsDisabledForEvents(aVisitor.mEvent->message)) {
     return NS_OK;
   }
 
@@ -222,7 +222,7 @@ HTMLButtonElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
   WidgetMouseEvent* mouseEvent = aVisitor.mEvent->AsMouseEvent();
   bool outerActivateEvent =
     ((mouseEvent && mouseEvent->IsLeftClickEvent()) ||
-     (aVisitor.mEvent->mMessage == eLegacyDOMActivate &&
+     (aVisitor.mEvent->message == NS_UI_ACTIVATE &&
       !mInInternalActivate));
 
   if (outerActivateEvent) {
@@ -250,9 +250,10 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
   if (aVisitor.mEventStatus != nsEventStatus_eConsumeNoDefault) {
     WidgetMouseEvent* mouseEvent = aVisitor.mEvent->AsMouseEvent();
     if (mouseEvent && mouseEvent->IsLeftClickEvent()) {
-      // DOMActive event should be trusted since the activation is actually
-      // occurred even if the cause is an untrusted click event.
-      InternalUIEvent actEvent(true, eLegacyDOMActivate, mouseEvent);
+      // XXX Activating actually occurs even if it's caused by untrusted event.
+      //     Therefore, shouldn't this be always trusted event?
+      InternalUIEvent actEvent(aVisitor.mEvent->mFlags.mIsTrusted,
+                               NS_UI_ACTIVATE);
       actEvent.detail = 1;
 
       nsCOMPtr<nsIPresShell> shell = aVisitor.mPresContext->GetPresShell();
@@ -281,21 +282,21 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
   }
 
   if (nsEventStatus_eIgnore == aVisitor.mEventStatus) {
-    switch (aVisitor.mEvent->mMessage) {
-      case eKeyPress:
-      case eKeyUp:
+    switch (aVisitor.mEvent->message) {
+      case NS_KEY_PRESS:
+      case NS_KEY_UP:
         {
           // For backwards compat, trigger buttons with space or enter
           // (bug 25300)
           WidgetKeyboardEvent* keyEvent = aVisitor.mEvent->AsKeyboardEvent();
           if ((keyEvent->keyCode == NS_VK_RETURN &&
-               eKeyPress == aVisitor.mEvent->mMessage) ||
+               NS_KEY_PRESS == aVisitor.mEvent->message) ||
               (keyEvent->keyCode == NS_VK_SPACE &&
-               eKeyUp == aVisitor.mEvent->mMessage)) {
+               NS_KEY_UP == aVisitor.mEvent->message)) {
             nsEventStatus status = nsEventStatus_eIgnore;
 
             WidgetMouseEvent event(aVisitor.mEvent->mFlags.mIsTrusted,
-                                   eMouseClick, nullptr,
+                                   NS_MOUSE_CLICK, nullptr,
                                    WidgetMouseEvent::eReal);
             event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD;
             EventDispatcher::Dispatch(static_cast<nsIContent*>(this),
@@ -304,9 +305,9 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
             aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
           }
         }
-        break;
+        break;// NS_KEY_PRESS
 
-      case eMouseDown:
+      case NS_MOUSE_BUTTON_DOWN:
         {
           WidgetMouseEvent* mouseEvent = aVisitor.mEvent->AsMouseEvent();
           if (mouseEvent->button == WidgetMouseEvent::eLeftButton) {
@@ -317,15 +318,9 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
                 static_cast<EventStateManager*>(esm), this);
             }
             nsIFocusManager* fm = nsFocusManager::GetFocusManager();
-            if (fm) {
-              uint32_t flags = nsIFocusManager::FLAG_BYMOUSE |
-                               nsIFocusManager::FLAG_NOSCROLL;
-              // If this was a touch-generated event, pass that information:
-              if (mouseEvent->inputSource == nsIDOMMouseEvent::MOZ_SOURCE_TOUCH) {
-                flags |= nsIFocusManager::FLAG_BYTOUCH;
-              }
-              fm->SetFocus(this, flags);
-            }
+            if (fm)
+              fm->SetFocus(this, nsIFocusManager::FLAG_BYMOUSE |
+                                 nsIFocusManager::FLAG_NOSCROLL);
             mouseEvent->mFlags.mMultipleActionsPrevented = true;
           } else if (mouseEvent->button == WidgetMouseEvent::eMiddleButton ||
                      mouseEvent->button == WidgetMouseEvent::eRightButton) {
@@ -340,8 +335,8 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
 
       // cancel all of these events for buttons
       //XXXsmaug What to do with these events? Why these should be cancelled?
-      case eMouseUp:
-      case eMouseDoubleClick:
+      case NS_MOUSE_BUTTON_UP:
+      case NS_MOUSE_DOUBLECLICK:
         {
           WidgetMouseEvent* mouseEvent = aVisitor.mEvent->AsMouseEvent();
           if (aVisitor.mDOMEvent &&
@@ -352,7 +347,7 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
         }
         break;
 
-      case eMouseOver:
+      case NS_MOUSE_OVER:
         {
           aVisitor.mPresContext->EventStateManager()->
             SetContentState(this, NS_EVENT_STATE_HOVER);
@@ -361,7 +356,7 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
         break;
 
         // XXX this doesn't seem to do anything yet
-      case eMouseOut:
+      case NS_MOUSE_OUT:
         {
           aVisitor.mPresContext->EventStateManager()->
             SetContentState(nullptr, NS_EVENT_STATE_HOVER);
@@ -376,7 +371,7 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
       if (mForm && (mType == NS_FORM_BUTTON_SUBMIT ||
                     mType == NS_FORM_BUTTON_RESET)) {
         InternalFormEvent event(true,
-          (mType == NS_FORM_BUTTON_RESET) ? eFormReset : eFormSubmit);
+          (mType == NS_FORM_BUTTON_RESET) ? NS_FORM_RESET : NS_FORM_SUBMIT);
         event.originator     = this;
         nsEventStatus status = nsEventStatus_eIgnore;
 
@@ -388,7 +383,7 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
         //
         // Using presShell to dispatch the event. It makes sure that
         // event is not handled if the window is being destroyed.
-        if (presShell && (event.mMessage != eFormSubmit ||
+        if (presShell && (event.message != NS_FORM_SUBMIT ||
                           mForm->HasAttr(kNameSpaceID_None, nsGkAtoms::novalidate) ||
                           // We know the element is a submit control, if this check is moved,
                           // make sure formnovalidate is used only if it's a submit control.

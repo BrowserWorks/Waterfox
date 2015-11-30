@@ -7,14 +7,14 @@
 // Tests that a disabled property remains disabled when the escaping out of
 // the property editor.
 
-const TEST_URI = `
-  <style type='text/css'>
-  #testid {
-    background-color: blue;
-  }
-  </style>
-  <div id='testid'>Styled Node</div>
-`;
+let TEST_URI = [
+  "<style type='text/css'>",
+  "#testid {",
+  "  background-color: blue;",
+  "}",
+  "</style>",
+  "<div id='testid'>Styled Node</div>",
+].join("\n");
 
 add_task(function*() {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));

@@ -3,15 +3,15 @@
 
 "use strict";
 
-var gTestTab;
-var gContentAPI;
-var gContentWindow;
+let gTestTab;
+let gContentAPI;
+let gContentWindow;
 
 function test() {
   UITourTest();
 }
 
-var tests = [
+let tests = [
   // Test that a reset profile dialog appears when "resetFirefox" event is triggered
   function test_resetFirefox(done) {
     let winWatcher = Cc["@mozilla.org/embedcomp/window-watcher;1"].

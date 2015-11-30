@@ -99,8 +99,8 @@ AvailableMaybeSeek(nsIInputStream* aStream, uint64_t* aResult)
     // Seek() could reopen the file if REOPEN_ON_REWIND flag is set.
     nsCOMPtr<nsISeekableStream> seekable = do_QueryInterface(aStream);
     if (seekable) {
-      nsresult rvSeek = seekable->Seek(nsISeekableStream::NS_SEEK_CUR, 0);
-      if (NS_SUCCEEDED(rvSeek)) {
+      nsresult rv = seekable->Seek(nsISeekableStream::NS_SEEK_CUR, 0);
+      if (NS_SUCCEEDED(rv)) {
         rv = aStream->Available(aResult);
       }
     }
@@ -117,8 +117,8 @@ TellMaybeSeek(nsISeekableStream* aSeekable, int64_t* aResult)
     // NS_BASE_STREAM_CLOSED.
     // If nsIFileInputStream is closed in Read() due to CLOSE_ON_EOF flag,
     // Seek() could reopen the file if REOPEN_ON_REWIND flag is set.
-    nsresult rvSeek = aSeekable->Seek(nsISeekableStream::NS_SEEK_CUR, 0);
-    if (NS_SUCCEEDED(rvSeek)) {
+    nsresult rv = aSeekable->Seek(nsISeekableStream::NS_SEEK_CUR, 0);
+    if (NS_SUCCEEDED(rv)) {
       rv = aSeekable->Tell(aResult);
     }
   }
@@ -696,9 +696,13 @@ nsMultiplexInputStreamConstructor(nsISupports* aOuter,
     return NS_ERROR_NO_AGGREGATION;
   }
 
-  nsRefPtr<nsMultiplexInputStream> inst = new nsMultiplexInputStream();
+  nsMultiplexInputStream* inst = new nsMultiplexInputStream();
 
-  return inst->QueryInterface(aIID, aResult);
+  NS_ADDREF(inst);
+  nsresult rv = inst->QueryInterface(aIID, aResult);
+  NS_RELEASE(inst);
+
+  return rv;
 }
 
 void
@@ -828,3 +832,4 @@ nsMultiplexInputStream::Clone(nsIInputStream** aClone)
   clone.forget(aClone);
   return NS_OK;
 }
+

@@ -29,8 +29,7 @@
         SimpleTest.waitForExplicitFinish();
 
         Task.spawn(function* () {
-          const { DebuggerServer } = require("devtools/server/main");
-          Services.prefs.setBoolPref("devtools.webide.sidebars", false);
+          Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
           win = yield openWebIDE();
           win.AppManager.update("runtime-list");
 
@@ -61,6 +60,7 @@
 
           yield closeWebIDE(win);
 
+          const { DebuggerServer } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
           DebuggerServer.destroy();
 
           SimpleTest.finish();

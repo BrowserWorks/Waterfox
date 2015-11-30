@@ -35,7 +35,7 @@ const PROPERTIES = [
   "url", "impp", "tel"
 ];
 
-var mozContactInitWarned = false;
+let mozContactInitWarned = false;
 
 function Contact() { }
 

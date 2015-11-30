@@ -63,14 +63,14 @@ using namespace mozilla::layers;
 class nsImageBoxFrameEvent : public nsRunnable
 {
 public:
-  nsImageBoxFrameEvent(nsIContent *content, EventMessage message)
+  nsImageBoxFrameEvent(nsIContent *content, uint32_t message)
     : mContent(content), mMessage(message) {}
 
   NS_IMETHOD Run() override;
 
 private:
   nsCOMPtr<nsIContent> mContent;
-  EventMessage mMessage;
+  uint32_t mMessage;
 };
 
 NS_IMETHODIMP
@@ -103,9 +103,9 @@ nsImageBoxFrameEvent::Run()
 // asynchronously.
 
 void
-FireImageDOMEvent(nsIContent* aContent, EventMessage aMessage)
+FireImageDOMEvent(nsIContent* aContent, uint32_t aMessage)
 {
-  NS_ASSERTION(aMessage == eLoad || aMessage == eLoadError,
+  NS_ASSERTION(aMessage == NS_LOAD || aMessage == NS_LOAD_ERROR,
                "invalid message");
 
   nsCOMPtr<nsIRunnable> event = new nsImageBoxFrameEvent(aContent, aMessage);
@@ -780,13 +780,13 @@ nsImageBoxFrame::OnLoadComplete(imgIRequest* aRequest, nsresult aStatus)
 {
   if (NS_SUCCEEDED(aStatus)) {
     // Fire an onload DOM event.
-    FireImageDOMEvent(mContent, eLoad);
+    FireImageDOMEvent(mContent, NS_LOAD);
   } else {
     // Fire an onerror DOM event.
     mIntrinsicSize.SizeTo(0, 0);
     PresContext()->PresShell()->
       FrameNeedsReflow(this, nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
-    FireImageDOMEvent(mContent, eLoadError);
+    FireImageDOMEvent(mContent, NS_LOAD_ERROR);
   }
 
   return NS_OK;

@@ -23,7 +23,8 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    nsIPrincipal* aTriggeringPrincipal,
                    nsINode* aLoadingContext,
                    nsSecurityFlags aSecurityFlags,
-                   nsContentPolicyType aContentPolicyType)
+                   nsContentPolicyType aContentPolicyType,
+                   nsIURI* aBaseURI)
   : mLoadingPrincipal(aLoadingContext ?
                         aLoadingContext->NodePrincipal() : aLoadingPrincipal)
   , mTriggeringPrincipal(aTriggeringPrincipal ?
@@ -31,6 +32,7 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   , mLoadingContext(do_GetWeakReference(aLoadingContext))
   , mSecurityFlags(aSecurityFlags)
   , mContentPolicyType(aContentPolicyType)
+  , mBaseURI(aBaseURI)
   , mUpgradeInsecureRequests(false)
   , mInnerWindowID(0)
   , mOuterWindowID(0)
@@ -83,21 +85,6 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   }
 }
 
-LoadInfo::LoadInfo(const LoadInfo& rhs)
-  : mLoadingPrincipal(rhs.mLoadingPrincipal)
-  , mTriggeringPrincipal(rhs.mTriggeringPrincipal)
-  , mLoadingContext(rhs.mLoadingContext)
-  , mSecurityFlags(rhs.mSecurityFlags)
-  , mContentPolicyType(rhs.mContentPolicyType)
-  , mUpgradeInsecureRequests(rhs.mUpgradeInsecureRequests)
-  , mInnerWindowID(rhs.mInnerWindowID)
-  , mOuterWindowID(rhs.mOuterWindowID)
-  , mParentOuterWindowID(rhs.mParentOuterWindowID)
-  , mEnforceSecurity(false)
-  , mInitialSecurityCheckDone(false)
-{
-}
-
 LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    nsIPrincipal* aTriggeringPrincipal,
                    nsSecurityFlags aSecurityFlags,
@@ -131,13 +118,6 @@ LoadInfo::~LoadInfo()
 }
 
 NS_IMPL_ISUPPORTS(LoadInfo, nsILoadInfo)
-
-already_AddRefed<nsILoadInfo>
-LoadInfo::Clone() const
-{
-  nsRefPtr<LoadInfo> copy(new LoadInfo(*this));
-  return copy.forget();
-}
 
 NS_IMETHODIMP
 LoadInfo::GetLoadingPrincipal(nsIPrincipal** aLoadingPrincipal)
@@ -234,14 +214,6 @@ LoadInfo::GetAboutBlankInherits(bool* aResult)
 }
 
 NS_IMETHODIMP
-LoadInfo::GetAllowChrome(bool* aResult)
-{
-  *aResult =
-    (mSecurityFlags & nsILoadInfo::SEC_ALLOW_CHROME);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 LoadInfo::GetContentPolicyType(nsContentPolicyType* aResult)
 {
   *aResult = nsContentUtils::InternalContentPolicyTypeToExternal(mContentPolicyType);
@@ -252,6 +224,20 @@ nsContentPolicyType
 LoadInfo::InternalContentPolicyType()
 {
   return mContentPolicyType;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetBaseURI(nsIURI** aBaseURI)
+{
+  *aBaseURI = mBaseURI;
+  NS_IF_ADDREF(*aBaseURI);
+  return NS_OK;
+}
+
+nsIURI*
+LoadInfo::BaseURI()
+{
+  return mBaseURI;
 }
 
 NS_IMETHODIMP

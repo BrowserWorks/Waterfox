@@ -3,7 +3,7 @@ function test() {
   testNext();
 }
 
-var pairs = [
+let pairs = [
   ["javascript:", ""],
   ["javascript:1+1", "1+1"],
   ["javascript:document.domain", "document.domain"],
@@ -16,7 +16,7 @@ var pairs = [
   ["data:data:text/html,javascript:alert('hi!')", "data:data:text/html,javascript:alert('hi!')"],
 ];
 
-var clipboardHelper = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
+let clipboardHelper = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
 
 function paste(input, cb) {
   waitForClipboard(input, function() {

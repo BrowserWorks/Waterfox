@@ -2836,8 +2836,8 @@ nsXPCComponents_Utils::MakeObjectPropsNormal(HandleValue vobj, JSContext* cx)
 
     RootedObject obj(cx, js::UncheckedUnwrap(&vobj.toObject()));
     JSAutoCompartment ac(cx, obj);
-    Rooted<IdVector> ida(cx, IdVector(cx));
-    if (!JS_Enumerate(cx, obj, &ida))
+    AutoIdArray ida(cx, JS_Enumerate(cx, obj));
+    if (!ida)
         return NS_ERROR_FAILURE;
 
     RootedId id(cx);

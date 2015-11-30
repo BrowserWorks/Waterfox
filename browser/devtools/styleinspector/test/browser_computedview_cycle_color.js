@@ -6,18 +6,22 @@
 
 // Computed view color cycling test.
 
-const TEST_URI = `
-  <style type="text/css">
-    .matches {
-      color: #F00;
-    }
-  </style>
-  <span id="matches" class="matches">Some styled text</span>
-`;
+const PAGE_CONTENT = [
+  "<style type=\"text/css\">",
+  ".matches {color: #F00;}</style>",
+  "<span id=\"matches\" class=\"matches\">Some styled text</span>",
+  "</div>"
+].join("\n");
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-  let {inspector, view} = yield openComputedView();
+  yield addTab("data:text/html;charset=utf-8," +
+               "Computed view color cycling test.");
+  content.document.body.innerHTML = PAGE_CONTENT;
+
+  info("Opening the computed view");
+  let {toolbox, inspector, view} = yield openComputedView();
+
+  info("Selecting the test node");
   yield selectNode("#matches", inspector);
 
   info("Checking the property itself");
@@ -38,32 +42,27 @@ function checkColorCycling(container, inspector) {
   is(valueNode.textContent, "#F00", "Color displayed as a hex value.");
 
   // HSL
-  EventUtils.synthesizeMouseAtCenter(swatch,
-                                     {type: "mousedown", shiftKey: true}, win);
+  EventUtils.synthesizeMouseAtCenter(swatch, {type: "mousedown", shiftKey: true}, win);
   is(valueNode.textContent, "hsl(0, 100%, 50%)",
                             "Color displayed as an HSL value.");
 
   // RGB
-  EventUtils.synthesizeMouseAtCenter(swatch,
-                                     {type: "mousedown", shiftKey: true}, win);
+  EventUtils.synthesizeMouseAtCenter(swatch, {type: "mousedown", shiftKey: true}, win);
   is(valueNode.textContent, "rgb(255, 0, 0)",
                             "Color displayed as an RGB value.");
 
   // Color name
-  EventUtils.synthesizeMouseAtCenter(swatch,
-                                     {type: "mousedown", shiftKey: true}, win);
+  EventUtils.synthesizeMouseAtCenter(swatch, {type: "mousedown", shiftKey: true}, win);
   is(valueNode.textContent, "red",
                             "Color displayed as a color name.");
 
   // "Authored" (currently the computed value)
-  EventUtils.synthesizeMouseAtCenter(swatch,
-                                     {type: "mousedown", shiftKey: true}, win);
+  EventUtils.synthesizeMouseAtCenter(swatch, {type: "mousedown", shiftKey: true}, win);
   is(valueNode.textContent, "rgb(255, 0, 0)",
                             "Color displayed as an RGB value.");
 
   // Back to hex
-  EventUtils.synthesizeMouseAtCenter(swatch,
-                                     {type: "mousedown", shiftKey: true}, win);
+  EventUtils.synthesizeMouseAtCenter(swatch, {type: "mousedown", shiftKey: true}, win);
   is(valueNode.textContent, "#F00",
                             "Color displayed as hex again.");
 }

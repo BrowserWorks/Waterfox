@@ -86,7 +86,6 @@ EXPORTS += [
     'nsIReflowCallback.h',
     'nsLayoutUtils.h',
     'nsPresArena.h',
-    'nsPresArenaObjectList.h',
     'nsPresContext.h',
     'nsPresState.h',
     'nsRefreshDriver.h',
@@ -99,9 +98,6 @@ EXPORTS += [
 ]
 
 EXPORTS.mozilla += [
-    'ArenaObjectID.h',
-    'ArenaRefPtr.h',
-    'ArenaRefPtrInlines.h',
     'GeometryUtils.h',
     'PaintTracker.h',
     'RestyleLogging.h',
@@ -164,6 +160,8 @@ SOURCES += [
 
 if CONFIG['ENABLE_TESTS']:
     DIRS += ['gtest']
+
+FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

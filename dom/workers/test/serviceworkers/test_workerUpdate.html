@@ -23,9 +23,6 @@
         if (e.data === "FINISH") {
           ok(true, "The worker has updated itself");
           resolve();
-        } else if (e.data === "FAIL") {
-          ok(false, "The worker failed to update itself");
-          resolve();
         }
       }
     });

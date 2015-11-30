@@ -23,7 +23,7 @@ namespace ipc {
  * current thread will be neutered. It is safe to nest multiple instances of
  * this class.
  */
-class MOZ_RAII NeuteredWindowRegion
+class MOZ_STACK_CLASS NeuteredWindowRegion
 {
 public:
   explicit NeuteredWindowRegion(bool aDoNeuter MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
@@ -46,7 +46,7 @@ private:
  * disabling neutering for the remainder of its enclosing block.
  * @see NeuteredWindowRegion
  */
-class MOZ_RAII DeneuteredWindowRegion
+class MOZ_STACK_CLASS DeneuteredWindowRegion
 {
 public:
   DeneuteredWindowRegion(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM);

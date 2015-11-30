@@ -78,12 +78,6 @@ public:
     return mRequest->GetCacheMode();
   }
 
-  RequestRedirect
-  Redirect() const
-  {
-    return mRequest->GetRedirectMode();
-  }
-
   RequestContext
   Context() const
   {
@@ -112,9 +106,6 @@ public:
 
   void
   GetBody(nsIInputStream** aStream) { return mRequest->GetBody(aStream); }
-
-  void
-  SetBody(nsIInputStream* aStream) { return mRequest->SetBody(aStream); }
 
   static already_AddRefed<Request>
   Constructor(const GlobalObject& aGlobal, const RequestOrUSVString& aInput,

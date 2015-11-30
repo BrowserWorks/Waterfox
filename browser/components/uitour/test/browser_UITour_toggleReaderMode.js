@@ -1,14 +1,14 @@
 "use strict";
 
-var gTestTab;
-var gContentAPI;
-var gContentWindow;
+let gTestTab;
+let gContentAPI;
+let gContentWindow;
 
 function test() {
   UITourTest();
 }
 
-var tests = [
+let tests = [
   taskify(function*() {
     ok(!gBrowser.selectedBrowser.currentURI.spec.startsWith("about:reader"), "Should not be in reader mode at start of test.");
     gContentAPI.toggleReaderMode();

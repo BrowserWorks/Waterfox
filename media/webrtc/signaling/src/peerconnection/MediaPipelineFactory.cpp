@@ -281,7 +281,8 @@ MediaPipelineFactory::GetTransportParameters(
   }
 
   if (aTrackPair.mBundleLevel.isSome()) {
-    bool receiving = aTrack.GetDirection() == sdp::kRecv;
+    bool receiving =
+        aTrack.GetDirection() == JsepTrack::Direction::kJsepTrackReceiving;
 
     *aFilterOut = new MediaPipelineFilter;
 
@@ -328,7 +329,8 @@ MediaPipelineFactory::CreateOrUpdateMediaPipeline(
 
   MOZ_ASSERT(aTrackPair.mRtpTransport);
 
-  bool receiving = aTrack.GetDirection() == sdp::kRecv;
+  bool receiving =
+      aTrack.GetDirection() == JsepTrack::Direction::kJsepTrackReceiving;
 
   size_t level;
   RefPtr<TransportFlow> rtpFlow;
@@ -568,15 +570,6 @@ MediaPipelineFactory::CreateMediaPipelineSending(
   return NS_OK;
 }
 
-static const JsepCodecDescription*
-GetBestCodec(const JsepTrackNegotiatedDetails& details)
-{
-  if (details.GetCodecCount()) {
-    return details.GetCodec(0);
-  }
-  return nullptr;
-}
-
 nsresult
 MediaPipelineFactory::GetOrCreateAudioConduit(
     const JsepTrackPair& aTrackPair,
@@ -589,7 +582,8 @@ MediaPipelineFactory::GetOrCreateAudioConduit(
     return NS_ERROR_INVALID_ARG;
   }
 
-  bool receiving = aTrack.GetDirection() == sdp::kRecv;
+  bool receiving =
+      aTrack.GetDirection() == JsepTrack::Direction::kJsepTrackReceiving;
 
   RefPtr<AudioSessionConduit> conduit =
     mPCMedia->GetAudioConduit(aTrackPair.mLevel);
@@ -604,21 +598,27 @@ MediaPipelineFactory::GetOrCreateAudioConduit(
     mPCMedia->AddAudioConduit(aTrackPair.mLevel, conduit);
   }
 
-  if (!GetBestCodec(*aTrack.GetNegotiatedDetails())) {
+  size_t numCodecs = aTrack.GetNegotiatedDetails()->GetCodecCount();
+  if (numCodecs == 0) {
     MOZ_MTLOG(ML_ERROR, "Can't set up a conduit with 0 codecs");
     return NS_ERROR_FAILURE;
   }
 
-  size_t numCodecs = aTrack.GetNegotiatedDetails()->GetCodecCount();
   if (receiving) {
     PtrVector<AudioCodecConfig> configs;
 
     for (size_t i = 0; i < numCodecs; i++) {
-      const JsepCodecDescription* cdesc =
-        aTrack.GetNegotiatedDetails()->GetCodec(i);
+      const JsepCodecDescription* cdesc;
+      nsresult rv = aTrack.GetNegotiatedDetails()->GetCodec(i, &cdesc);
+      MOZ_ASSERT(NS_SUCCEEDED(rv));
+      if (NS_FAILED(rv)) {
+        MOZ_MTLOG(ML_ERROR, "Failed to get codec from jsep track, rv="
+                                << static_cast<uint32_t>(rv));
+        return rv;
+      }
 
       AudioCodecConfig* configRaw;
-      nsresult rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
+      rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
       if (NS_FAILED(rv))
         return rv;
 
@@ -652,11 +652,18 @@ MediaPipelineFactory::GetOrCreateAudioConduit(
 
     conduit->SetLocalCNAME(aTrack.GetCNAME().c_str());
 
-    const JsepCodecDescription* cdesc =
-      GetBestCodec(*aTrack.GetNegotiatedDetails());
+    const JsepCodecDescription* cdesc;
+    // Best codec.
+    nsresult rv = aTrack.GetNegotiatedDetails()->GetCodec(0, &cdesc);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
+    if (NS_FAILED(rv)) {
+      MOZ_MTLOG(ML_ERROR, "Failed to get codec from jsep track, rv="
+                              << static_cast<uint32_t>(rv));
+      return rv;
+    }
 
     AudioCodecConfig* configRaw;
-    nsresult rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
+    rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
     if (NS_FAILED(rv))
       return rv;
 
@@ -699,7 +706,8 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
     return NS_ERROR_INVALID_ARG;
   }
 
-  bool receiving = aTrack.GetDirection() == sdp::kRecv;
+  bool receiving =
+      aTrack.GetDirection() == JsepTrack::Direction::kJsepTrackReceiving;
 
   RefPtr<VideoSessionConduit> conduit =
     mPCMedia->GetVideoConduit(aTrackPair.mLevel);
@@ -707,35 +715,35 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
   if (!conduit) {
     conduit = VideoSessionConduit::Create();
     if (!conduit) {
-      MOZ_MTLOG(ML_ERROR, "Could not create video conduit");
+      MOZ_MTLOG(ML_ERROR, "Could not create audio conduit");
       return NS_ERROR_FAILURE;
     }
 
     mPCMedia->AddVideoConduit(aTrackPair.mLevel, conduit);
   }
 
-  if (!GetBestCodec(*aTrack.GetNegotiatedDetails())) {
+  size_t numCodecs = aTrack.GetNegotiatedDetails()->GetCodecCount();
+  if (numCodecs == 0) {
     MOZ_MTLOG(ML_ERROR, "Can't set up a conduit with 0 codecs");
     return NS_ERROR_FAILURE;
   }
 
-  size_t numCodecs = aTrack.GetNegotiatedDetails()->GetCodecCount();
-
-  bool configuredH264 = false;
   if (receiving) {
     PtrVector<VideoCodecConfig> configs;
 
     for (size_t i = 0; i < numCodecs; i++) {
-      const JsepCodecDescription* cdesc =
-        aTrack.GetNegotiatedDetails()->GetCodec(i);
+      const JsepCodecDescription* cdesc;
 
-      // We can only handle configuring one recv H264 codec
-      if (configuredH264 && (cdesc->mName == "H264")) {
-        continue;
+      nsresult rv = aTrack.GetNegotiatedDetails()->GetCodec(i, &cdesc);
+      MOZ_ASSERT(NS_SUCCEEDED(rv));
+      if (NS_FAILED(rv)) {
+        MOZ_MTLOG(ML_ERROR, "Failed to get codec from jsep track, rv="
+                                << static_cast<uint32_t>(rv));
+        return rv;
       }
 
       VideoCodecConfig* configRaw;
-      nsresult rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
+      rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
       if (NS_FAILED(rv))
         return rv;
 
@@ -744,9 +752,6 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
         continue;
       }
 
-      if (cdesc->mName == "H264") {
-        configuredH264 = true;
-      }
       configs.values.push_back(config.release());
     }
 
@@ -777,11 +782,18 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
 
     conduit->SetLocalCNAME(aTrack.GetCNAME().c_str());
 
-    const JsepCodecDescription* cdesc =
-      GetBestCodec(*aTrack.GetNegotiatedDetails());
+    const JsepCodecDescription* cdesc;
+    // Best codec.
+    nsresult rv = aTrack.GetNegotiatedDetails()->GetCodec(0, &cdesc);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
+    if (NS_FAILED(rv)) {
+      MOZ_MTLOG(ML_ERROR, "Failed to get codec from jsep track, rv="
+                              << static_cast<uint32_t>(rv));
+      return rv;
+    }
 
     VideoCodecConfig* configRaw;
-    nsresult rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
+    rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
     if (NS_FAILED(rv))
       return rv;
 

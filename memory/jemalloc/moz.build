@@ -19,7 +19,6 @@ UNIFIED_SOURCES += [
     'src/src/jemalloc.c',
     'src/src/mb.c',
     'src/src/mutex.c',
-    'src/src/pages.c',
     'src/src/prof.c',
     'src/src/quarantine.c',
     'src/src/rtree.c',
@@ -61,7 +60,7 @@ if CONFIG['OS_TARGET'] == 'Linux':
     # For mremap
     DEFINES['_GNU_SOURCE'] = True
 
-if CONFIG['MOZ_NUWA_PROCESS'] and CONFIG['MOZ_JEMALLOC4']:
+if CONFIG['MOZ_NUWA_PROCESS'] and CONFIG['MOZ_JEMALLOC3']:
     DEFINES['pthread_mutex_lock'] = '__real_pthread_mutex_lock'
 
 if CONFIG['GNU_CC']:
@@ -71,5 +70,3 @@ DEFINES['abort'] = 'moz_abort'
 
 GENERATED_INCLUDES += ['src/include']
 LOCAL_INCLUDES += ['src/include']
-
-ALLOW_COMPILER_WARNINGS = True

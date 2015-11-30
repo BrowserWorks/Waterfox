@@ -30,7 +30,7 @@ struct TerminateRequest
   nsString sessionId;
 };
 
-union PresentationIPCRequest
+union PresentationRequest
 {
   StartSessionRequest;
   SendSessionMessageRequest;
@@ -46,21 +46,20 @@ child:
   NotifyAvailableChange(bool aAvailable);
   NotifySessionStateChange(nsString aSessionId, uint16_t aState);
   NotifyMessage(nsString aSessionId, nsCString aData);
-  NotifySessionConnect(uint64_t aWindowId, nsString aSessionId);
 
 parent:
   __delete__();
 
-  RegisterAvailabilityHandler();
-  UnregisterAvailabilityHandler();
+  RegisterHandler();
+  UnregisterHandler();
 
   RegisterSessionHandler(nsString aSessionId);
   UnregisterSessionHandler(nsString aSessionId);
 
-  RegisterRespondingHandler(uint64_t aWindowId);
-  UnregisterRespondingHandler(uint64_t aWindowId);
+  PPresentationRequest(PresentationRequest aRequest);
 
-  PPresentationRequest(PresentationIPCRequest aRequest);
+  sync GetExistentSessionIdAtLaunch()
+    returns (nsString aSessionId);
 
   NotifyReceiverReady(nsString aSessionId);
 };

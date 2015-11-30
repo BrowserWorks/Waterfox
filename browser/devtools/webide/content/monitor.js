@@ -38,7 +38,7 @@ window.addEventListener('load', function onLoad() {
  * or an array of such objects. For more details on the data format, see the
  * `Graph.update(data)` method.
  */
-var Monitor = {
+let Monitor = {
 
   apps: new Map(),
   graphs: new Map(),

@@ -3,7 +3,7 @@
 // runapp.js:
 // Provide a --runapp APPNAME command-line option.
 
-var runAppObj;
+let runAppObj;
 window.addEventListener('load', function() {
   // Get the command line arguments that were passed to the b2g client
   let args;

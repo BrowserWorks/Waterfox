@@ -158,9 +158,9 @@ private:
     if (sender.state == UIGestureRecognizerStateEnded) {
         ALOG("[ChildView[%p] handleTap]", self);
         LayoutDeviceIntPoint lp = UIKitPointsToDevPixels([sender locationInView:self], [self contentScaleFactor]);
-        [self sendMouseEvent:eMouseMove point:lp widget:mGeckoChild];
-        [self sendMouseEvent:eMouseDown point:lp widget:mGeckoChild];
-        [self sendMouseEvent:eMouseUp point:lp widget:mGeckoChild];
+        [self sendMouseEvent:NS_MOUSE_MOVE point:lp widget:mGeckoChild];
+        [self sendMouseEvent:NS_MOUSE_BUTTON_DOWN point:lp widget:mGeckoChild];
+        [self sendMouseEvent:NS_MOUSE_BUTTON_UP point:lp widget:mGeckoChild];
     }
 }
 
@@ -201,15 +201,13 @@ private:
         CFDictionaryAddValue(mTouches, touch, (void*)mNextTouchID);
         mNextTouchID++;
     }
-    [self sendTouchEvent:eTouchStart
-                 touches:[event allTouches]
-                  widget:mGeckoChild];
+    [self sendTouchEvent:NS_TOUCH_START touches:[event allTouches] widget:mGeckoChild];
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {
     ALOG("[ChildView[%p] touchesCancelled", self);
-    [self sendTouchEvent:eTouchCancel touches:touches widget:mGeckoChild];
+    [self sendTouchEvent:NS_TOUCH_CANCEL touches:touches widget:mGeckoChild];
     for (UITouch* touch : touches) {
         CFDictionaryRemoveValue(mTouches, touch);
     }
@@ -224,7 +222,7 @@ private:
     if (!mGeckoChild)
         return;
 
-    [self sendTouchEvent:eTouchEnd touches:touches widget:mGeckoChild];
+    [self sendTouchEvent:NS_TOUCH_END touches:touches widget:mGeckoChild];
     for (UITouch* touch : touches) {
         CFDictionaryRemoveValue(mTouches, touch);
     }
@@ -239,9 +237,7 @@ private:
     if (!mGeckoChild)
         return;
 
-    [self sendTouchEvent:eTouchMove
-                 touches:[event allTouches]
-                  widget:mGeckoChild];
+    [self sendTouchEvent:NS_TOUCH_MOVE touches:[event allTouches] widget:mGeckoChild];
 }
 
 - (void)setNeedsDisplayInRect:(CGRect)aRect
@@ -686,7 +682,7 @@ nsWindow::PlaceBehind(nsTopLevelWidgetZPlacement aPlacement,
 }
 
 NS_IMETHODIMP
-nsWindow::SetSizeMode(nsSizeMode aMode)
+nsWindow::SetSizeMode(int32_t aMode)
 {
     if (aMode == static_cast<int32_t>(mSizeMode)) {
         return NS_OK;
@@ -753,7 +749,7 @@ void nsWindow::ReportMoveEvent()
     NotifyWindowMoved(mBounds.x, mBounds.y);
 }
 
-void nsWindow::ReportSizeModeEvent(nsSizeMode aMode)
+void nsWindow::ReportSizeModeEvent(int32_t aMode)
 {
     if (mWidgetListener) {
         // This is terrible.

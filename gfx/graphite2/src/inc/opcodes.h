@@ -61,7 +61,6 @@ of the License or (at your option) any later version.
 //        isl       = The last positioned slot
 //        ip        = The current instruction pointer
 //        endPos    = Position of advance of last cluster
-//        dir       = writing system directionality of the font
      
 
 // #define NOT_IMPLEMENTED     assert(false)
@@ -242,24 +241,20 @@ ENDOP
 STARTOP(put_copy)
     declare_params(1);
     const int  slot_ref = int8(*param);
-    if (is)
+    if (is && (slot_ref ||is != *map))
     {
+        int16 *tempUserAttrs = is->userAttrs();
         slotref ref = slotat(slot_ref);
-        if (ref && ref != is)
+        if (ref)
         {
-            int16 *tempUserAttrs = is->userAttrs();
-            if (is->attachedTo() || is->firstChild()) DIE
+            memcpy(tempUserAttrs, ref->userAttrs(), seg.numAttrs() * sizeof(uint16));
             Slot *prev = is->prev();
             Slot *next = is->next();
-            memcpy(tempUserAttrs, ref->userAttrs(), seg.numAttrs() * sizeof(uint16));
-            memcpy(is, ref, sizeof(Slot));
-            is->firstChild(NULL);
-            is->nextSibling(NULL);
+            memcpy(is, slotat(slot_ref), sizeof(Slot));
             is->userAttrs(tempUserAttrs);
             is->next(next);
             is->prev(prev);
-            if (is->attachedTo())
-                is->attachedTo()->child(is);
+            is->sibling(NULL);
         }
         is->markCopied(false);
         is->markDeleted(false);
@@ -314,8 +309,6 @@ STARTOP(insert)
     {
         newSlot->originate(seg.defaultOriginal());
     }
-    if (is == smap.highwater())
-        smap.highpassed(false);
     is = newSlot;
     seg.extendLength(1);
     if (map != &smap[-1]) 
@@ -323,7 +316,7 @@ STARTOP(insert)
 ENDOP
 
 STARTOP(delete_)
-    if (!is || is->isDeleted()) DIE
+    if (!is) DIE
     is->markDeleted(true);
     if (is->prev())
         is->prev()->next(is->next());
@@ -392,7 +385,7 @@ STARTOP(attr_add)
     const          int  val  = int(pop());
     if ((slat == gr_slatPosX || slat == gr_slatPosY) && (flags & POSITIONED) == 0)
     {
-        seg.positionSlots(0, *smap.begin(), *(smap.end()-1), dir);
+        seg.positionSlots(0, *smap.begin(), *(smap.end()-1));
         flags |= POSITIONED;
     }
     int res = is->getAttr(&seg, slat, 0);
@@ -405,7 +398,7 @@ STARTOP(attr_sub)
     const          int  val  = int(pop());
     if ((slat == gr_slatPosX || slat == gr_slatPosY) && (flags & POSITIONED) == 0)
     {
-        seg.positionSlots(0, *smap.begin(), *(smap.end()-1), dir);
+        seg.positionSlots(0, *smap.begin(), *(smap.end()-1));
         flags |= POSITIONED;
     }
     int res = is->getAttr(&seg, slat, 0);
@@ -434,7 +427,7 @@ STARTOP(push_slot_attr)
     const int           slot_ref = int8(param[1]);
     if ((slat == gr_slatPosX || slat == gr_slatPosY) && (flags & POSITIONED) == 0)
     {
-        seg.positionSlots(0, *smap.begin(), *(smap.end()-1), dir);
+        seg.positionSlots(0, *smap.begin(), *(smap.end()-1));
         flags |= POSITIONED;
     }
     slotref slot = slotat(slot_ref);
@@ -461,7 +454,7 @@ STARTOP(push_glyph_metric)
     const signed int    attr_level  = uint8(param[2]);
     slotref slot = slotat(slot_ref);
     if (slot)
-        push(seg.getGlyphMetric(slot, glyph_attr, attr_level, dir));
+        push(seg.getGlyphMetric(slot, glyph_attr, attr_level));
 ENDOP
 
 STARTOP(push_feat)
@@ -499,7 +492,7 @@ STARTOP(push_att_to_glyph_metric)
     {
         slotref att = slot->attachedTo();
         if (att) slot = att;
-        push(int32(seg.getGlyphMetric(slot, glyph_attr, attr_level, dir)));
+        push(int32(seg.getGlyphMetric(slot, glyph_attr, attr_level)));
     }
 ENDOP
 
@@ -510,7 +503,7 @@ STARTOP(push_islot_attr)
                         idx      = uint8(param[2]);
     if ((slat == gr_slatPosX || slat == gr_slatPosY) && (flags & POSITIONED) == 0)
     {
-        seg.positionSlots(0, *smap.begin(), *(smap.end()-1), dir);
+        seg.positionSlots(0, *smap.begin(), *(smap.end()-1));
         flags |= POSITIONED;
     }
     slotref slot = slotat(slot_ref);
@@ -555,7 +548,7 @@ STARTOP(iattr_add)
     const          int  val  = int(pop());
     if ((slat == gr_slatPosX || slat == gr_slatPosY) && (flags & POSITIONED) == 0)
     {
-        seg.positionSlots(0, *smap.begin(), *(smap.end()-1), dir);
+        seg.positionSlots(0, *smap.begin(), *(smap.end()-1));
         flags |= POSITIONED;
     }
     int res = is->getAttr(&seg, slat, idx);
@@ -569,7 +562,7 @@ STARTOP(iattr_sub)
     const          int  val  = int(pop());
     if ((slat == gr_slatPosX || slat == gr_slatPosY) && (flags & POSITIONED) == 0)
     {
-        seg.positionSlots(0, *smap.begin(), *(smap.end()-1), dir);
+        seg.positionSlots(0, *smap.begin(), *(smap.end()-1));
         flags |= POSITIONED;
     }
     int res = is->getAttr(&seg, slat, idx);
@@ -643,7 +636,7 @@ ENDOP
 
 STARTOP(temp_copy)
     slotref newSlot = seg.newSlot();
-    if (!newSlot || !is) DIE;
+    if (!newSlot) DIE;
     int16 *tempUserAttrs = newSlot->userAttrs();
     memcpy(newSlot, is, sizeof(Slot));
     memcpy(tempUserAttrs, is->userAttrs(), seg.numAttrs() * sizeof(uint16));
@@ -651,37 +644,3 @@ STARTOP(temp_copy)
     newSlot->markCopied(true);
     *map = newSlot;
 ENDOP
-
-STARTOP(band)
-    binop(&);
-ENDOP
-
-STARTOP(bor)
-    binop(|);
-ENDOP
-
-STARTOP(bnot)
-    *sp = ~*sp;
-ENDOP
-
-STARTOP(setbits)
-    declare_params(4);
-    const uint16 m  = uint16(param[0]) << 8
-                    | uint8(param[1]);
-    const uint16 v  = uint16(param[2]) << 8
-                    | uint8(param[3]);
-    *sp = ((*sp) & ~m) | v;
-ENDOP
-
-STARTOP(set_feat)
-    declare_params(2);
-    const unsigned int  feat        = uint8(param[0]);
-    const int           slot_ref    = int8(param[1]);
-    slotref slot = slotat(slot_ref);
-    if (slot)
-    {
-        uint8 fid = seg.charinfo(slot->original())->fid();
-        seg.setFeature(fid, feat, pop());
-    }
-ENDOP
-

@@ -481,7 +481,8 @@ class TypedArrayObjectTemplate : public TypedArrayObject
   public:
     static JSObject*
     fromBuffer(JSContext* cx, HandleObject bufobj, uint32_t byteOffset, int32_t lengthInt) {
-        return fromBufferWithProto(cx, bufobj, byteOffset, lengthInt, nullptr);
+        RootedObject proto(cx, nullptr);
+        return fromBufferWithProto(cx, bufobj, byteOffset, lengthInt, proto);
     }
 
     static JSObject*
@@ -663,8 +664,8 @@ template<typename T>
 TypedArrayObjectTemplate<T>::fromArray(JSContext* cx, HandleObject other)
 {
     uint32_t len;
-    if (IsAnyTypedArray(other)) {
-        len = AnyTypedArrayLength(other);
+    if (other->is<TypedArrayObject>()) {
+        len = other->as<TypedArrayObject>().length();
     } else if (!GetLengthProperty(cx, other, &len)) {
         return nullptr;
     }
@@ -738,7 +739,7 @@ TypedArray_byteOffsetGetter(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-BufferGetterImpl(JSContext* cx, const CallArgs& args)
+BufferGetterImpl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(TypedArrayObject::is(args.thisv()));
     Rooted<TypedArrayObject*> tarray(cx, &args.thisv().toObject().as<TypedArrayObject>());
@@ -801,7 +802,9 @@ TypedArrayObject::protoFunctions[] = {
     // Both of these are actually defined to the same object in FinishTypedArrayInit.
     JS_SELF_HOSTED_FN("values", "TypedArrayValues", 0, JSPROP_DEFINE_LATE),
     JS_SELF_HOSTED_SYM_FN(iterator, "TypedArrayValues", 0, JSPROP_DEFINE_LATE),
+#ifdef NIGHTLY_BUILD
     JS_SELF_HOSTED_FN("includes", "TypedArrayIncludes", 2, 0),
+#endif
     JS_FS_END
 };
 
@@ -849,7 +852,7 @@ TypedArrayObject::sharedTypedArrayPrototypeClass = {
 
 template<typename T>
 bool
-ArrayBufferObject::createTypedArrayFromBufferImpl(JSContext* cx, const CallArgs& args)
+ArrayBufferObject::createTypedArrayFromBufferImpl(JSContext* cx, CallArgs args)
 {
     typedef TypedArrayObjectTemplate<T> ArrayType;
     MOZ_ASSERT(IsArrayBuffer(args.thisv()));
@@ -966,10 +969,16 @@ DataViewObject::create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
 {
     MOZ_ASSERT(byteOffset <= INT32_MAX);
     MOZ_ASSERT(byteLength <= INT32_MAX);
-    MOZ_ASSERT(byteOffset + byteLength < UINT32_MAX);
 
     RootedObject proto(cx, protoArg);
     RootedObject obj(cx);
+
+    // This is overflow-safe: 2 * INT32_MAX is still a valid uint32_t.
+    if (byteOffset + byteLength > arrayBuffer->byteLength()) {
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_ARG_INDEX_OUT_OF_RANGE, "1");
+        return nullptr;
+
+    }
 
     NewObjectKind newKind = DataViewNewObjectKind(cx, byteLength, proto);
     obj = NewBuiltinClassInstance(cx, &class_, newKind);
@@ -993,17 +1002,12 @@ DataViewObject::create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
         }
     }
 
-    // Caller should have established these preconditions, and no
-    // (non-self-hosted) JS code has had an opportunity to run so nothing can
-    // have invalidated them.
-    MOZ_ASSERT(byteOffset <= arrayBuffer->byteLength());
-    MOZ_ASSERT(byteOffset + byteLength <= arrayBuffer->byteLength());
-
     DataViewObject& dvobj = obj->as<DataViewObject>();
     dvobj.setFixedSlot(TypedArrayLayout::BYTEOFFSET_SLOT, Int32Value(byteOffset));
     dvobj.setFixedSlot(TypedArrayLayout::LENGTH_SLOT, Int32Value(byteLength));
     dvobj.setFixedSlot(TypedArrayLayout::BUFFER_SLOT, ObjectValue(*arrayBuffer));
     dvobj.initPrivate(arrayBuffer->dataPointer() + byteOffset);
+    MOZ_ASSERT(byteOffset + byteLength <= arrayBuffer->byteLength());
 
     // Include a barrier if the data view's data pointer is in the nursery, as
     // is done for typed arrays.
@@ -1029,8 +1033,9 @@ DataViewObject::construct(JSContext* cx, JSObject* bufobj, const CallArgs& args,
     }
 
     Rooted<ArrayBufferObject*> buffer(cx, &AsArrayBuffer(bufobj));
+    uint32_t bufferLength = buffer->byteLength();
     uint32_t byteOffset = 0;
-    uint32_t byteLength = buffer->byteLength();
+    uint32_t byteLength = bufferLength;
 
     if (args.length() > 1) {
         if (!ToUint32(cx, args[1], &byteOffset))
@@ -1050,8 +1055,6 @@ DataViewObject::construct(JSContext* cx, JSObject* bufobj, const CallArgs& args,
                 return false;
             }
         } else {
-            uint32_t bufferLength = buffer->byteLength();
-
             if (byteOffset > bufferLength) {
                 JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                                      JSMSG_ARG_INDEX_OUT_OF_RANGE, "1");
@@ -1066,7 +1069,7 @@ DataViewObject::construct(JSContext* cx, JSObject* bufobj, const CallArgs& args,
     MOZ_ASSERT(byteOffset <= INT32_MAX);
     MOZ_ASSERT(byteLength <= INT32_MAX);
 
-    if (byteOffset + byteLength > buffer->byteLength()) {
+    if (byteOffset + byteLength > bufferLength) {
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_ARG_INDEX_OUT_OF_RANGE, "1");
         return false;
     }
@@ -1202,7 +1205,7 @@ struct DataViewIO
 template<typename NativeType>
 /* static */ bool
 DataViewObject::read(JSContext* cx, Handle<DataViewObject*> obj,
-                     const CallArgs& args, NativeType* val, const char* method)
+                     CallArgs& args, NativeType* val, const char* method)
 {
     if (args.length() < 1) {
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
@@ -1259,7 +1262,7 @@ WebIDLCast<double>(JSContext* cx, HandleValue value, double* out)
 template<typename NativeType>
 /* static */ bool
 DataViewObject::write(JSContext* cx, Handle<DataViewObject*> obj,
-                      const CallArgs& args, const char* method)
+                      CallArgs& args, const char* method)
 {
     if (args.length() < 2) {
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
@@ -1286,7 +1289,7 @@ DataViewObject::write(JSContext* cx, Handle<DataViewObject*> obj,
 }
 
 bool
-DataViewObject::getInt8Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::getInt8Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1307,7 +1310,7 @@ DataViewObject::fun_getInt8(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getUint8Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::getUint8Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1328,7 +1331,7 @@ DataViewObject::fun_getUint8(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getInt16Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::getInt16Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1349,7 +1352,7 @@ DataViewObject::fun_getInt16(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getUint16Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::getUint16Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1370,7 +1373,7 @@ DataViewObject::fun_getUint16(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getInt32Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::getInt32Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1391,7 +1394,7 @@ DataViewObject::fun_getInt32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getUint32Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::getUint32Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1412,7 +1415,7 @@ DataViewObject::fun_getUint32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getFloat32Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::getFloat32Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1434,7 +1437,7 @@ DataViewObject::fun_getFloat32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::getFloat64Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::getFloat64Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1456,7 +1459,7 @@ DataViewObject::fun_getFloat64(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setInt8Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::setInt8Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1476,7 +1479,7 @@ DataViewObject::fun_setInt8(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setUint8Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::setUint8Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1496,7 +1499,7 @@ DataViewObject::fun_setUint8(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setInt16Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::setInt16Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1516,7 +1519,7 @@ DataViewObject::fun_setInt16(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setUint16Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::setUint16Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1536,7 +1539,7 @@ DataViewObject::fun_setUint16(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setInt32Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::setInt32Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1556,7 +1559,7 @@ DataViewObject::fun_setInt32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setUint32Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::setUint32Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1576,7 +1579,7 @@ DataViewObject::fun_setUint32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setFloat32Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::setFloat32Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1596,7 +1599,7 @@ DataViewObject::fun_setFloat32(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-DataViewObject::setFloat64Impl(JSContext* cx, const CallArgs& args)
+DataViewObject::setFloat64Impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(is(args.thisv()));
 
@@ -1786,7 +1789,7 @@ IMPL_TYPED_ARRAY_COMBINED_UNWRAPPERS(Float64, double, double)
 {                                                                              \
     #_typedArray,                                                              \
     JSCLASS_HAS_RESERVED_SLOTS(TypedArrayLayout::RESERVED_SLOTS) |             \
-    JSCLASS_HAS_PRIVATE |                                                      \
+    JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS |                        \
     JSCLASS_HAS_CACHED_PROTO(JSProto_##_typedArray) |                          \
     JSCLASS_DELAY_METADATA_CALLBACK,                                           \
     nullptr,                 /* addProperty */                                 \
@@ -1888,6 +1891,7 @@ const Class DataViewObject::protoClass = {
 const Class DataViewObject::class_ = {
     "DataView",
     JSCLASS_HAS_PRIVATE |
+    JSCLASS_IMPLEMENTS_BARRIERS |
     JSCLASS_HAS_RESERVED_SLOTS(TypedArrayLayout::RESERVED_SLOTS) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_DataView),
     nullptr, /* addProperty */
@@ -1927,7 +1931,7 @@ const JSFunctionSpec DataViewObject::jsfuncs[] = {
 
 template<Value ValueGetter(DataViewObject* view)>
 bool
-DataViewObject::getterImpl(JSContext* cx, const CallArgs& args)
+DataViewObject::getterImpl(JSContext* cx, CallArgs args)
 {
     args.rval().set(ValueGetter(&args.thisv().toObject().as<DataViewObject>()));
     return true;
@@ -2343,28 +2347,4 @@ JS_GetDataViewByteLength(JSObject* obj)
     if (!obj)
         return 0;
     return obj->as<DataViewObject>().byteLength();
-}
-
-JS_FRIEND_API(JSObject*)
-JS_NewDataView(JSContext* cx, HandleObject arrayBuffer, uint32_t byteOffset, int32_t byteLength)
-{
-    ConstructArgs cargs(cx);
-    if (!cargs.init(3))
-        return nullptr;
-
-    RootedObject constructor(cx);
-    JSProtoKey key = JSCLASS_CACHED_PROTO_KEY(&DataViewObject::class_);
-    if (!GetBuiltinConstructor(cx, key, &constructor))
-        return nullptr;
-
-    cargs[0].setObject(*arrayBuffer);
-    cargs[1].setNumber(byteOffset);
-    cargs[2].setInt32(byteLength);
-
-    RootedValue fun(cx, ObjectValue(*constructor));
-    RootedValue rval(cx);
-    if (!Construct(cx, fun, cargs, fun, &rval))
-        return nullptr;
-    MOZ_ASSERT(rval.isObject());
-    return &rval.toObject();
 }

@@ -983,12 +983,13 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
          aGdkKeyEvent->keyval, aGdkKeyEvent->state,
          aGdkKeyEvent->hardware_keycode,
          GetBoolName(aGdkKeyEvent->is_modifier),
-         ((aKeyEvent.mMessage == eKeyDown) ? "eKeyDown" :
-              (aKeyEvent.mMessage == eKeyPress) ? "eKeyPress" : "eKeyUp"),
+         ((aKeyEvent.message == NS_KEY_DOWN) ? "NS_KEY_DOWN" :
+               (aKeyEvent.message == NS_KEY_PRESS) ? "NS_KEY_PRESS" :
+                                                      "NS_KEY_UP"),
          GetBoolName(aKeyEvent.IsShift()), GetBoolName(aKeyEvent.IsControl()),
          GetBoolName(aKeyEvent.IsAlt()), GetBoolName(aKeyEvent.IsMeta())));
 
-    if (aKeyEvent.mMessage == eKeyPress) {
+    if (aKeyEvent.message == NS_KEY_PRESS) {
         keymapWrapper->InitKeypressEvent(aKeyEvent, aGdkKeyEvent);
     }
 
@@ -1322,7 +1323,7 @@ void
 KeymapWrapper::InitKeypressEvent(WidgetKeyboardEvent& aKeyEvent,
                                  GdkEventKey* aGdkKeyEvent)
 {
-    NS_ENSURE_TRUE_VOID(aKeyEvent.mMessage == eKeyPress);
+    NS_ENSURE_TRUE_VOID(aKeyEvent.message == NS_KEY_PRESS);
 
     aKeyEvent.charCode = GetCharCodeFor(aGdkKeyEvent);
     if (!aKeyEvent.charCode) {

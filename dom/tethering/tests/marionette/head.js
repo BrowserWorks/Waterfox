@@ -38,7 +38,7 @@ function Deferred()  {
   Object.freeze(this);
 }
 
-var gTestSuite = (function() {
+let gTestSuite = (function() {
   let suite = {};
 
   let tetheringManager;

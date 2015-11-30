@@ -191,13 +191,5 @@ SpeechTaskChild::ForceEnd()
   mActor->SendForceEnd();
 }
 
-void
-SpeechTaskChild::SetAudioOutputVolume(float aVolume)
-{
-  if (mActor) {
-    mActor->SendSetAudioOutputVolume(aVolume);
-  }
-}
-
 } // namespace dom
 } // namespace mozilla

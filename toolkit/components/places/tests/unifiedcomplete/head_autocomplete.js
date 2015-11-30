@@ -261,7 +261,7 @@ function* check_autocomplete(test) {
   }
 }
 
-var addBookmark = Task.async(function* (aBookmarkObj) {
+let addBookmark = Task.async(function* (aBookmarkObj) {
   Assert.ok(!!aBookmarkObj.uri, "Bookmark object contains an uri");
   let parentId = aBookmarkObj.parentId ? aBookmarkObj.parentId
                                        : PlacesUtils.unfiledBookmarksFolderId;

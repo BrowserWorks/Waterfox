@@ -15,7 +15,7 @@ function test()
   content.location = "data:text/html;charset=utf8,test Scratchpad pretty print.";
 }
 
-var gTabsize;
+let gTabsize;
 
 function runTests(sw)
 {

@@ -7,7 +7,7 @@
  * Details view containing call trees, flamegraphs and markers waterfall.
  * Manages subviews and toggles visibility between them.
  */
-var DetailsView = {
+let DetailsView = {
   /**
    * Name to (node id, view object, actor requirements, pref killswitch)
    * mapping of subviews.
@@ -34,9 +34,13 @@ var DetailsView = {
     "memory-flamegraph": {
       id: "memory-flamegraph-view",
       view: MemoryFlameGraphView,
-      features: ["withAllocations"],
-      prefs: ["enable-memory-flame"],
+      features: ["withAllocations"]
     },
+    "optimizations": {
+      id: "optimizations-view",
+      view: OptimizationsView,
+      features: ["withJITOptimizations"],
+    }
   },
 
   /**
@@ -56,7 +60,7 @@ var DetailsView = {
 
     yield this.setAvailableViews();
 
-    PerformanceController.on(EVENTS.RECORDING_STATE_CHANGE, this._onRecordingStoppedOrSelected);
+    PerformanceController.on(EVENTS.RECORDING_STOPPED, this._onRecordingStoppedOrSelected);
     PerformanceController.on(EVENTS.RECORDING_SELECTED, this._onRecordingStoppedOrSelected);
     PerformanceController.on(EVENTS.PREF_CHANGED, this.setAvailableViews);
   }),
@@ -73,7 +77,7 @@ var DetailsView = {
       component.initialized && (yield component.view.destroy());
     }
 
-    PerformanceController.off(EVENTS.RECORDING_STATE_CHANGE, this._onRecordingStoppedOrSelected);
+    PerformanceController.off(EVENTS.RECORDING_STOPPED, this._onRecordingStoppedOrSelected);
     PerformanceController.off(EVENTS.RECORDING_SELECTED, this._onRecordingStoppedOrSelected);
     PerformanceController.off(EVENTS.PREF_CHANGED, this.setAvailableViews);
   }),
@@ -122,17 +126,14 @@ var DetailsView = {
    * @return {boolean}
    */
   _isViewSupported: function (viewName) {
-    let { features, prefs } = this.components[viewName];
+    let { features } = this.components[viewName];
     let recording = PerformanceController.getCurrentRecording();
 
     if (!recording || !recording.isCompleted()) {
       return false;
     }
 
-    let prefSupported = (prefs && prefs.length) ?
-                        prefs.every(p => PerformanceController.getPref(p)) :
-                        true;
-    return PerformanceController.isFeatureSupported(features) && prefSupported;
+    return PerformanceController.isFeatureSupported(features);
   },
 
   /**
@@ -247,10 +248,7 @@ var DetailsView = {
   /**
    * Called when recording stops or is selected.
    */
-  _onRecordingStoppedOrSelected: function(_, state, recording) {
-    if (typeof state === "string" && state !== "recording-stopped") {
-      return;
-    }
+  _onRecordingStoppedOrSelected: function(_, recording) {
     this.setAvailableViews();
   },
 

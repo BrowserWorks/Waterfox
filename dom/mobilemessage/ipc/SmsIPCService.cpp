@@ -260,7 +260,6 @@ SmsIPCService::CreateMessageCursor(bool aHasStartDate,
                                    const nsAString& aDelivery,
                                    bool aHasRead,
                                    bool aRead,
-                                   bool aHasThreadId,
                                    uint64_t aThreadId,
                                    bool aReverse,
                                    nsIMobileMessageCursorCallback* aCursorCallback,
@@ -285,7 +284,6 @@ SmsIPCService::CreateMessageCursor(bool aHasStartDate,
   data.delivery() = aDelivery;
   data.hasRead() = aHasRead;
   data.read() = aRead;
-  data.hasThreadId() = aHasThreadId;
   data.threadId() = aThreadId;
 
   return SendCursorRequest(CreateMessageCursorRequest(data, aReverse),

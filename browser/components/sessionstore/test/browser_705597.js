@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var tabState = {
+let tabState = {
   entries: [{url: "about:robots", children: [{url: "about:mozilla"}]}]
 };
 

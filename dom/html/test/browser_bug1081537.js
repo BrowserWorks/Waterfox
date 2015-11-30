@@ -1,6 +1,6 @@
 // This test is useful because mochitest-browser runs as an addon, so we test
 // addon-scope paths here.
-var ifr;
+let ifr;
 function test() {
   ifr = document.createElement('iframe');
   document.getElementById('main-window').appendChild(ifr);

@@ -29,7 +29,6 @@ import org.mozilla.gecko.db.TabsAccessor;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
-import org.mozilla.gecko.fxa.SyncStatusListener;
 import org.mozilla.gecko.overlays.ui.ShareDialog;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.R;
@@ -337,7 +336,7 @@ public class ActivityChooserModel extends DataSetObservable {
     /**
      * Mozilla: Share overlay variables.
      */
-    private final SyncStatusListener mSyncStatusListener = new SyncStatusDelegate();
+    private final SyncStatusListener mSyncStatusListener = new SyncStatusListener();
 
     /**
      * Gets the data model backed by the contents of the provided file with historical data.
@@ -1333,7 +1332,7 @@ public class ActivityChooserModel extends DataSetObservable {
     /**
      * Mozilla: Reload activities on sync.
      */
-    private class SyncStatusDelegate implements SyncStatusListener {
+    private class SyncStatusListener implements FirefoxAccounts.SyncStatusListener {
         @Override
         public Context getContext() {
             return mContext;

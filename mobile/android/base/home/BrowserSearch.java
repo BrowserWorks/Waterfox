@@ -14,7 +14,6 @@ import java.util.Locale;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
@@ -29,6 +28,7 @@ import org.mozilla.gecko.db.BrowserContract.History;
 import org.mozilla.gecko.db.BrowserContract.URLColumns;
 import org.mozilla.gecko.home.HomePager.OnUrlOpenListener;
 import org.mozilla.gecko.home.SearchLoader.SearchCursorLoader;
+import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.toolbar.AutocompleteHandler;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.StringUtils;
@@ -721,11 +721,10 @@ public class BrowserSearch extends HomeFragment
                         mList.clearAnimation();
                         mSuggestionsOptInPrompt = null;
 
-                        // Reset the view height
-                        mView.getLayoutParams().height = LayoutParams.MATCH_PARENT;
-
-                        // Show search suggestions and update them
                         if (enabled) {
+                            // Reset the view height
+                            mView.getLayoutParams().height = LayoutParams.MATCH_PARENT;
+
                             mSuggestionsEnabled = enabled;
                             mAnimateSuggestions = true;
                             mAdapter.notifyDataSetChanged();
@@ -909,7 +908,7 @@ public class BrowserSearch extends HomeFragment
 
                 final SearchEngine engine = mSearchEngines.get(position);
                 final boolean animate = (mAnimateSuggestions && engine.hasSuggestions());
-                row.updateSuggestions(mSuggestionsEnabled, engine, mSearchTerm, animate);
+                row.updateFromSearchEngine(engine, animate);
                 if (animate) {
                     // Only animate suggestions the first time they are shown
                     mAnimateSuggestions = false;

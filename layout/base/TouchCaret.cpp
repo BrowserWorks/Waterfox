@@ -759,41 +759,41 @@ TouchCaret::HandleEvent(WidgetEvent* aEvent)
 
   nsEventStatus status = nsEventStatus_eIgnore;
 
-  switch (aEvent->mMessage) {
-    case eTouchStart:
+  switch (aEvent->message) {
+    case NS_TOUCH_START:
       status = HandleTouchDownEvent(aEvent->AsTouchEvent());
       break;
-    case eMouseDown:
+    case NS_MOUSE_BUTTON_DOWN:
       status = HandleMouseDownEvent(aEvent->AsMouseEvent());
       break;
-    case eTouchEnd:
+    case NS_TOUCH_END:
       status = HandleTouchUpEvent(aEvent->AsTouchEvent());
       break;
-    case eMouseUp:
+    case NS_MOUSE_BUTTON_UP:
       status = HandleMouseUpEvent(aEvent->AsMouseEvent());
       break;
-    case eTouchMove:
+    case NS_TOUCH_MOVE:
       status = HandleTouchMoveEvent(aEvent->AsTouchEvent());
       break;
-    case eMouseMove:
+    case NS_MOUSE_MOVE:
       status = HandleMouseMoveEvent(aEvent->AsMouseEvent());
       break;
-    case eTouchCancel:
+    case NS_TOUCH_CANCEL:
       mTouchesId.Clear();
       SetState(TOUCHCARET_NONE);
       LaunchExpirationTimer();
       break;
-    case eKeyUp:
-    case eKeyDown:
-    case eKeyPress:
-    case eWheel:
-    case eWheelOperationStart:
-    case eWheelOperationEnd:
+    case NS_KEY_UP:
+    case NS_KEY_DOWN:
+    case NS_KEY_PRESS:
+    case NS_WHEEL_WHEEL:
+    case NS_WHEEL_START:
+    case NS_WHEEL_STOP:
       // Disable touch caret while key/wheel event is received.
-      TOUCHCARET_LOG("Receive key/wheel event %d", aEvent->mMessage);
+      TOUCHCARET_LOG("Receive key/wheel event %d", aEvent->message);
       SetVisibility(false);
       break;
-    case eMouseLongTap:
+    case NS_MOUSE_MOZLONGTAP:
       if (mState == TOUCHCARET_TOUCHDRAG_ACTIVE) {
         // Disable long tap event from APZ while dragging the touch caret.
         status = nsEventStatus_eConsumeNoDefault;
@@ -895,7 +895,7 @@ TouchCaret::HandleTouchMoveEvent(WidgetTouchEvent* aEvent)
       break;
 
     case TOUCHCARET_TOUCHDRAG_INACTIVE:
-      // Consume eTouchMove event in TOUCHCARET_TOUCHDRAG_INACTIVE state.
+      // Consume NS_TOUCH_MOVE event in TOUCHCARET_TOUCHDRAG_INACTIVE state.
       status = nsEventStatus_eConsumeNoDefault;
       break;
   }
@@ -1095,7 +1095,7 @@ TouchCaret::HandleTouchDownEvent(WidgetTouchEvent* aEvent)
     case TOUCHCARET_MOUSEDRAG_ACTIVE:
     case TOUCHCARET_TOUCHDRAG_ACTIVE:
     case TOUCHCARET_TOUCHDRAG_INACTIVE:
-      // Consume eTouchStart event.
+      // Consume NS_TOUCH_START event.
       status = nsEventStatus_eConsumeNoDefault;
       break;
   }

@@ -378,7 +378,8 @@ HTMLInputElement::nsFilePickerShownCallback::Done(int16_t aResult)
 
   // Collect new selected filenames
   nsTArray<nsRefPtr<File>> newFiles;
-  if (mode == static_cast<int16_t>(nsIFilePicker::modeOpenMultiple)) {
+  if (mode == static_cast<int16_t>(nsIFilePicker::modeOpenMultiple) ||
+      mode == static_cast<int16_t>(nsIFilePicker::modeGetFolder)) {
     nsCOMPtr<nsISimpleEnumerator> iter;
     nsresult rv = mFilePicker->GetDomfiles(getter_AddRefs(iter));
     NS_ENSURE_SUCCESS(rv, rv);
@@ -400,8 +401,7 @@ HTMLInputElement::nsFilePickerShownCallback::Done(int16_t aResult)
       }
     }
   } else {
-    MOZ_ASSERT(mode == static_cast<int16_t>(nsIFilePicker::modeOpen) ||
-               mode == static_cast<int16_t>(nsIFilePicker::modeGetFolder));
+    MOZ_ASSERT(mode == static_cast<int16_t>(nsIFilePicker::modeOpen));
     nsCOMPtr<nsISupports> tmp;
     nsresult rv = mFilePicker->GetDomfile(getter_AddRefs(tmp));
     NS_ENSURE_SUCCESS(rv, rv);
@@ -1514,12 +1514,12 @@ HTMLInputElement::ConvertStringToNumber(nsAString& aValue,
           return false;
         }
 
-        JS::ClippedTime time = JS::TimeClip(JS::MakeDate(year, month - 1, day));
-        if (!time.isValid()) {
+        double date = JS::MakeDate(year, month - 1, day);
+        if (IsNaN(date)) {
           return false;
         }
 
-        aResultValue = Decimal::fromDouble(time.toDouble());
+        aResultValue = Decimal::fromDouble(date);
         return true;
       }
     case NS_FORM_INPUT_TIME:
@@ -1762,8 +1762,7 @@ HTMLInputElement::GetValueAsDate(ErrorResult& aRv)
         return Nullable<Date>();
       }
 
-      JS::ClippedTime time = JS::TimeClip(JS::MakeDate(year, month - 1, day));
-      return Nullable<Date>(Date(time));
+      return Nullable<Date>(Date(JS::MakeDate(year, month - 1, day)));
     }
     case NS_FORM_INPUT_TIME:
     {
@@ -1774,11 +1773,7 @@ HTMLInputElement::GetValueAsDate(ErrorResult& aRv)
         return Nullable<Date>();
       }
 
-      JS::ClippedTime time = JS::TimeClip(millisecond);
-      MOZ_ASSERT(time.toDouble() == millisecond,
-                 "HTML times are restricted to the day after the epoch and "
-                 "never clip");
-      return Nullable<Date>(Date(time));
+      return Nullable<Date>(Date(millisecond));
     }
   }
 
@@ -1800,7 +1795,7 @@ HTMLInputElement::SetValueAsDate(Nullable<Date> aDate, ErrorResult& aRv)
     return;
   }
 
-  SetValue(Decimal::fromDouble(aDate.Value().TimeStamp().toDouble()));
+  SetValue(Decimal::fromDouble(aDate.Value().TimeStamp()));
 }
 
 NS_IMETHODIMP
@@ -2481,10 +2476,6 @@ HTMLInputElement::GetFiles()
     return nullptr;
   }
 
-  if (HasAttr(kNameSpaceID_None, nsGkAtoms::directory)) {
-    return nullptr;
-  }
-
   if (!mFileList) {
     mFileList = new FileList(static_cast<nsIContent*>(this));
     UpdateFileList();
@@ -2810,7 +2801,8 @@ HTMLInputElement::MaybeSubmitForm(nsPresContext* aPresContext)
     NS_ASSERTION(submitContent, "Form control not implementing nsIContent?!");
     // Fire the button's onclick handler and let the button handle
     // submitting the form.
-    WidgetMouseEvent event(true, eMouseClick, nullptr, WidgetMouseEvent::eReal);
+    WidgetMouseEvent event(true, NS_MOUSE_CLICK, nullptr,
+                           WidgetMouseEvent::eReal);
     nsEventStatus status = nsEventStatus_eIgnore;
     shell->HandleDOMEventWithTarget(submitContent, &event, &status);
   } else if (!mForm->ImplicitSubmissionIsDisabled() &&
@@ -2821,7 +2813,7 @@ HTMLInputElement::MaybeSubmitForm(nsPresContext* aPresContext)
     // If there's only one text control, just submit the form
     // Hold strong ref across the event
     nsRefPtr<mozilla::dom::HTMLFormElement> form = mForm;
-    InternalFormEvent event(true, eFormSubmit);
+    InternalFormEvent event(true, NS_FORM_SUBMIT);
     nsEventStatus status = nsEventStatus_eIgnore;
     shell->HandleDOMEventWithTarget(mForm, &event, &status);
   }
@@ -2991,7 +2983,7 @@ HTMLInputElement::DispatchSelectEvent(nsPresContext* aPresContext)
 
   // If already handling select event, don't dispatch a second.
   if (!mHandlingSelectEvent) {
-    WidgetEvent event(nsContentUtils::IsCallerChrome(), eFormSelect);
+    WidgetEvent event(nsContentUtils::IsCallerChrome(), NS_FORM_SELECTED);
 
     mHandlingSelectEvent = true;
     EventDispatcher::Dispatch(static_cast<nsIContent*>(this),
@@ -3028,14 +3020,14 @@ HTMLInputElement::NeedToInitializeEditorForEvent(
     return false;
   }
 
-  switch (aVisitor.mEvent->mMessage) {
-  case eMouseMove:
-  case eMouseEnterIntoWidget:
-  case eMouseExitFromWidget:
-  case eMouseOver:
-  case eMouseOut:
-  case eScrollPortUnderflow:
-  case eScrollPortOverflow:
+  switch (aVisitor.mEvent->message) {
+  case NS_MOUSE_MOVE:
+  case NS_MOUSE_ENTER_WIDGET:
+  case NS_MOUSE_EXIT_WIDGET:
+  case NS_MOUSE_OVER:
+  case NS_MOUSE_OUT:
+  case NS_SCROLLPORT_UNDERFLOW:
+  case NS_SCROLLPORT_OVERFLOW:
     return false;
   default:
     return true;
@@ -3043,7 +3035,7 @@ HTMLInputElement::NeedToInitializeEditorForEvent(
 }
 
 bool
-HTMLInputElement::IsDisabledForEvents(EventMessage aMessage)
+HTMLInputElement::IsDisabledForEvents(uint32_t aMessage)
 {
   return IsElementDisabledForEvents(aMessage, GetPrimaryFrame());
 }
@@ -3053,7 +3045,7 @@ HTMLInputElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
   // Do not process any DOM events if the element is disabled
   aVisitor.mCanHandle = false;
-  if (IsDisabledForEvents(aVisitor.mEvent->mMessage)) {
+  if (IsDisabledForEvents(aVisitor.mEvent->message)) {
     return NS_OK;
   }
 
@@ -3091,7 +3083,7 @@ HTMLInputElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
   WidgetMouseEvent* mouseEvent = aVisitor.mEvent->AsMouseEvent();
   bool outerActivateEvent =
     ((mouseEvent && mouseEvent->IsLeftClickEvent()) ||
-     (aVisitor.mEvent->mMessage == eLegacyDOMActivate && !mInInternalActivate));
+     (aVisitor.mEvent->message == NS_UI_ACTIVATE && !mInInternalActivate));
 
   if (outerActivateEvent) {
     aVisitor.mItemFlags |= NS_OUTER_ACTIVATE_EVENT;
@@ -3156,7 +3148,7 @@ HTMLInputElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
     aVisitor.mItemFlags |= NS_NO_CONTENT_DISPATCH;
   }
   if (IsSingleLineTextControl(false) &&
-      aVisitor.mEvent->mMessage == eMouseClick &&
+      aVisitor.mEvent->message == NS_MOUSE_CLICK &&
       aVisitor.mEvent->AsMouseEvent()->button ==
         WidgetMouseEvent::eMiddleButton) {
     aVisitor.mEvent->mFlags.mNoContentDispatch = false;
@@ -3166,7 +3158,7 @@ HTMLInputElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
   aVisitor.mItemFlags |= mType;
 
   // Fire onchange (if necessary), before we do the blur, bug 357684.
-  if (aVisitor.mEvent->mMessage == eBlur) {
+  if (aVisitor.mEvent->message == NS_BLUR_CONTENT) {
     // Experimental mobile types rely on the system UI to prevent users to not
     // set invalid values but we have to be extra-careful. Especially if the
     // option has been enabled on desktop.
@@ -3181,8 +3173,8 @@ HTMLInputElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
   }
 
   if (mType == NS_FORM_INPUT_RANGE &&
-      (aVisitor.mEvent->mMessage == eFocus ||
-       aVisitor.mEvent->mMessage == eBlur)) {
+      (aVisitor.mEvent->message == NS_FOCUS_CONTENT ||
+       aVisitor.mEvent->message == NS_BLUR_CONTENT)) {
     // Just as nsGenericHTMLFormElementWithState::PreHandleEvent calls
     // nsIFormControlFrame::SetFocus, we handle focus here.
     nsIFrame* frame = GetPrimaryFrame();
@@ -3200,7 +3192,7 @@ HTMLInputElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
       // we want to end the spin. We do this here (rather than in
       // PostHandleEvent) because we don't want to let content preventDefault()
       // the end of the spin.
-      if (aVisitor.mEvent->mMessage == eMouseMove) {
+      if (aVisitor.mEvent->message == NS_MOUSE_MOVE) {
         // Be aggressive about stopping the spin:
         bool stopSpin = true;
         nsNumberControlFrame* numberControlFrame =
@@ -3231,13 +3223,13 @@ HTMLInputElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
         if (stopSpin) {
           StopNumberControlSpinnerSpin();
         }
-      } else if (aVisitor.mEvent->mMessage == eMouseUp) {
+      } else if (aVisitor.mEvent->message == NS_MOUSE_BUTTON_UP) {
         StopNumberControlSpinnerSpin();
       }
     }
-    if (aVisitor.mEvent->mMessage == eFocus ||
-        aVisitor.mEvent->mMessage == eBlur) {
-      if (aVisitor.mEvent->mMessage == eFocus) {
+    if (aVisitor.mEvent->message == NS_FOCUS_CONTENT ||
+        aVisitor.mEvent->message == NS_BLUR_CONTENT) {
+      if (aVisitor.mEvent->message == NS_FOCUS_CONTENT) {
         // Tell our frame it's getting focus so that it can make sure focus
         // is moved to our anonymous text control.
         nsNumberControlFrame* numberControlFrame =
@@ -3257,7 +3249,7 @@ HTMLInputElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
         // that).
         frame->InvalidateFrame();
       }
-    } else if (aVisitor.mEvent->mMessage == eKeyUp) {
+    } else if (aVisitor.mEvent->message == NS_KEY_UP) {
       WidgetKeyboardEvent* keyEvent = aVisitor.mEvent->AsKeyboardEvent();
       if ((keyEvent->keyCode == NS_VK_UP || keyEvent->keyCode == NS_VK_DOWN) &&
           !(keyEvent->IsShift() || keyEvent->IsControl() ||
@@ -3289,7 +3281,7 @@ HTMLInputElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
       textControl = numberControlFrame->GetAnonTextControl();
     }
     if (textControl && aVisitor.mEvent->originalTarget == textControl) {
-      if (aVisitor.mEvent->mMessage == eEditorInput) {
+      if (aVisitor.mEvent->message == NS_EDITOR_INPUT) {
         // Propogate the anon text control's new value to our HTMLInputElement:
         nsAutoString value;
         numberControlFrame->GetValueOfAnonTextControl(value);
@@ -3303,7 +3295,7 @@ HTMLInputElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
           numberControlFrame->HandlingInputEvent(false);
         }
       }
-      else if (aVisitor.mEvent->mMessage == eFormChange) {
+      else if (aVisitor.mEvent->message == NS_FORM_CHANGE) {
         // We cancel the DOM 'change' event that is fired for any change to our
         // anonymous text control since we fire our own 'change' events and
         // content shouldn't be seeing two 'change' events. Besides that we
@@ -3591,15 +3583,15 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
     return MaybeInitPickers(aVisitor);
   }
 
-  if (aVisitor.mEvent->mMessage == eFocus ||
-      aVisitor.mEvent->mMessage == eBlur) {
-    if (aVisitor.mEvent->mMessage == eFocus &&
+  if (aVisitor.mEvent->message == NS_FOCUS_CONTENT ||
+      aVisitor.mEvent->message == NS_BLUR_CONTENT) {
+    if (aVisitor.mEvent->message == NS_FOCUS_CONTENT &&
         MayFireChangeOnBlur() &&
         !mIsDraggingRange) { // StartRangeThumbDrag already set mFocusedValue
       GetValue(mFocusedValue);
     }
 
-    if (aVisitor.mEvent->mMessage == eBlur) {
+    if (aVisitor.mEvent->message == NS_BLUR_CONTENT) {
       if (mIsDraggingRange) {
         FinishRangeThumbDrag();
       } else if (mNumberControlSpinnerIsSpinning) {
@@ -3607,7 +3599,7 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
       }
     }
 
-    UpdateValidityUIBits(aVisitor.mEvent->mMessage == eFocus);
+    UpdateValidityUIBits(aVisitor.mEvent->message == NS_FOCUS_CONTENT);
 
     UpdateState(true);
   }
@@ -3632,9 +3624,10 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
     WidgetMouseEvent* mouseEvent = aVisitor.mEvent->AsMouseEvent();
     if (mouseEvent && mouseEvent->IsLeftClickEvent() &&
         !ShouldPreventDOMActivateDispatch(aVisitor.mEvent->originalTarget)) {
-      // DOMActive event should be trusted since the activation is actually
-      // occurred even if the cause is an untrusted click event.
-      InternalUIEvent actEvent(true, eLegacyDOMActivate, mouseEvent);
+      // XXX Activating actually occurs even if it's caused by untrusted event.
+      //     Therefore, shouldn't this be always trusted event?
+      InternalUIEvent actEvent(aVisitor.mEvent->mFlags.mIsTrusted,
+                               NS_UI_ACTIVATE);
       actEvent.detail = 1;
 
       nsCOMPtr<nsIPresShell> shell = aVisitor.mPresContext->GetPresShell();
@@ -3664,8 +3657,6 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
           // will be flushed or forgoten.
           mForm->OnSubmitClickEnd();
         }
-        break;
-      default:
         break;
     }
   }
@@ -3725,7 +3716,7 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
   if (NS_SUCCEEDED(rv)) {
     WidgetKeyboardEvent* keyEvent = aVisitor.mEvent->AsKeyboardEvent();
     if (mType ==  NS_FORM_INPUT_NUMBER &&
-        keyEvent && keyEvent->mMessage == eKeyPress &&
+        keyEvent && keyEvent->message == NS_KEY_PRESS &&
         aVisitor.mEvent->mFlags.mIsTrusted &&
         (keyEvent->keyCode == NS_VK_UP || keyEvent->keyCode == NS_VK_DOWN) &&
         !(keyEvent->IsShift() || keyEvent->IsControl() ||
@@ -3748,8 +3739,10 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
         aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
       }
     } else if (nsEventStatus_eIgnore == aVisitor.mEventStatus) {
-      switch (aVisitor.mEvent->mMessage) {
-        case eFocus: {
+      switch (aVisitor.mEvent->message) {
+
+        case NS_FOCUS_CONTENT:
+        {
           // see if we should select the contents of the textbox. This happens
           // for text and password fields when the field was focused by the
           // keyboard or a navigation, the platform allows it, and it wasn't
@@ -3775,15 +3768,15 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
           break;
         }
 
-        case eKeyPress:
-        case eKeyUp:
+        case NS_KEY_PRESS:
+        case NS_KEY_UP:
         {
           // For backwards compat, trigger checks/radios/buttons with
           // space or enter (bug 25300)
           WidgetKeyboardEvent* keyEvent = aVisitor.mEvent->AsKeyboardEvent();
-          if ((aVisitor.mEvent->mMessage == eKeyPress &&
+          if ((aVisitor.mEvent->message == NS_KEY_PRESS &&
                keyEvent->keyCode == NS_VK_RETURN) ||
-              (aVisitor.mEvent->mMessage == eKeyUp &&
+              (aVisitor.mEvent->message == NS_KEY_UP &&
                keyEvent->keyCode == NS_VK_SPACE)) {
             switch(mType) {
               case NS_FORM_INPUT_CHECKBOX:
@@ -3804,7 +3797,7 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
               case NS_FORM_INPUT_COLOR:
               {
                 WidgetMouseEvent event(aVisitor.mEvent->mFlags.mIsTrusted,
-                                       eMouseClick, nullptr,
+                                       NS_MOUSE_CLICK, nullptr,
                                        WidgetMouseEvent::eReal);
                 event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD;
                 nsEventStatus status = nsEventStatus_eIgnore;
@@ -3816,7 +3809,7 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
               } // case
             } // switch
           }
-          if (aVisitor.mEvent->mMessage == eKeyPress &&
+          if (aVisitor.mEvent->message == NS_KEY_PRESS &&
               mType == NS_FORM_INPUT_RADIO && !keyEvent->IsAlt() &&
               !keyEvent->IsControl() && !keyEvent->IsMeta()) {
             bool isMovingBack = false;
@@ -3840,7 +3833,7 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
                   if (NS_SUCCEEDED(rv)) {
                     nsEventStatus status = nsEventStatus_eIgnore;
                     WidgetMouseEvent event(aVisitor.mEvent->mFlags.mIsTrusted,
-                                           eMouseClick, nullptr,
+                                           NS_MOUSE_CLICK, nullptr,
                                            WidgetMouseEvent::eReal);
                     event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD;
                     rv =
@@ -3868,7 +3861,7 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
            *     not submit, period.
            */
 
-          if (aVisitor.mEvent->mMessage == eKeyPress &&
+          if (aVisitor.mEvent->message == NS_KEY_PRESS &&
               keyEvent->keyCode == NS_VK_RETURN &&
                (IsSingleLineTextControl(false, mType) ||
                 mType == NS_FORM_INPUT_NUMBER ||
@@ -3878,7 +3871,7 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
             NS_ENSURE_SUCCESS(rv, rv);
           }
 
-          if (aVisitor.mEvent->mMessage == eKeyPress &&
+          if (aVisitor.mEvent->message == NS_KEY_PRESS &&
               mType == NS_FORM_INPUT_RANGE && !keyEvent->IsAlt() &&
               !keyEvent->IsControl() && !keyEvent->IsMeta() &&
               (keyEvent->keyCode == NS_VK_LEFT ||
@@ -3937,11 +3930,12 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
             }
           }
 
-        } break; // eKeyPress || eKeyUp
+        } break; // NS_KEY_PRESS || NS_KEY_UP
 
-        case eMouseDown:
-        case eMouseUp:
-        case eMouseDoubleClick: {
+        case NS_MOUSE_BUTTON_DOWN:
+        case NS_MOUSE_BUTTON_UP:
+        case NS_MOUSE_DOUBLECLICK:
+        {
           // cancel all of these events for buttons
           //XXXsmaug Why?
           WidgetMouseEvent* mouseEvent = aVisitor.mEvent->AsMouseEvent();
@@ -3967,7 +3961,7 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
               nsNumberControlFrame* numberControlFrame =
                 do_QueryFrame(GetPrimaryFrame());
               if (numberControlFrame) {
-                if (aVisitor.mEvent->mMessage == eMouseDown && 
+                if (aVisitor.mEvent->message == NS_MOUSE_BUTTON_DOWN && 
                     IsMutable()) {
                   switch (numberControlFrame->GetSpinButtonForPointerEvent(
                             aVisitor.mEvent->AsMouseEvent())) {
@@ -4017,7 +4011,7 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
         case NS_FORM_INPUT_IMAGE:
           if (mForm) {
             InternalFormEvent event(true,
-              (mType == NS_FORM_INPUT_RESET) ? eFormReset : eFormSubmit);
+              (mType == NS_FORM_INPUT_RESET) ? NS_FORM_RESET : NS_FORM_SUBMIT);
             event.originator      = this;
             nsEventStatus status  = nsEventStatus_eIgnore;
 
@@ -4029,7 +4023,7 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
             // pres shell.  See bug 125624.
             // TODO: removing this code and have the submit event sent by the
             // form, see bug 592124.
-            if (presShell && (event.mMessage != eFormSubmit ||
+            if (presShell && (event.message != NS_FORM_SUBMIT ||
                               mForm->HasAttr(kNameSpaceID_None, nsGkAtoms::novalidate) ||
                               // We know the element is a submit control, if this check is moved,
                               // make sure formnovalidate is used only if it's a submit control.
@@ -4084,10 +4078,10 @@ HTMLInputElement::PostHandleEventForRangeThumb(EventChainPostVisitor& aVisitor)
     return;
   }
 
-  switch (aVisitor.mEvent->mMessage)
+  switch (aVisitor.mEvent->message)
   {
-    case eMouseDown:
-    case eTouchStart: {
+    case NS_MOUSE_BUTTON_DOWN:
+    case NS_TOUCH_START: {
       if (mIsDraggingRange) {
         break;
       }
@@ -4101,7 +4095,7 @@ HTMLInputElement::PostHandleEventForRangeThumb(EventChainPostVisitor& aVisitor)
           inputEvent->IsOS()) {
         break; // ignore
       }
-      if (aVisitor.mEvent->mMessage == eMouseDown) {
+      if (aVisitor.mEvent->message == NS_MOUSE_BUTTON_DOWN) {
         if (aVisitor.mEvent->AsMouseEvent()->buttons ==
               WidgetMouseEvent::eLeftButtonFlag) {
           StartRangeThumbDrag(inputEvent);
@@ -4118,8 +4112,8 @@ HTMLInputElement::PostHandleEventForRangeThumb(EventChainPostVisitor& aVisitor)
       aVisitor.mEvent->mFlags.mMultipleActionsPrevented = true;
     } break;
 
-    case eMouseMove:
-    case eTouchMove:
+    case NS_MOUSE_MOVE:
+    case NS_TOUCH_MOVE:
       if (!mIsDraggingRange) {
         break;
       }
@@ -4133,8 +4127,8 @@ HTMLInputElement::PostHandleEventForRangeThumb(EventChainPostVisitor& aVisitor)
       aVisitor.mEvent->mFlags.mMultipleActionsPrevented = true;
       break;
 
-    case eMouseUp:
-    case eTouchEnd:
+    case NS_MOUSE_BUTTON_UP:
+    case NS_TOUCH_END:
       if (!mIsDraggingRange) {
         break;
       }
@@ -4146,20 +4140,17 @@ HTMLInputElement::PostHandleEventForRangeThumb(EventChainPostVisitor& aVisitor)
       aVisitor.mEvent->mFlags.mMultipleActionsPrevented = true;
       break;
 
-    case eKeyPress:
+    case NS_KEY_PRESS:
       if (mIsDraggingRange &&
           aVisitor.mEvent->AsKeyboardEvent()->keyCode == NS_VK_ESCAPE) {
         CancelRangeThumbDrag();
       }
       break;
 
-    case eTouchCancel:
+    case NS_TOUCH_CANCEL:
       if (mIsDraggingRange) {
         CancelRangeThumbDrag();
       }
-      break;
-
-    default:
       break;
   }
 }
@@ -4921,10 +4912,9 @@ HTMLInputElement::GetFilesAndDirectories(ErrorResult& aRv)
       }
       int32_t leafSeparatorIndex = path.RFind(FILE_PATH_SEPARATOR);
       nsDependentSubstring dirname = Substring(path, 0, leafSeparatorIndex);
+      nsDependentSubstring basename = Substring(path, leafSeparatorIndex);
       fs = MakeOrReuseFileSystem(dirname, fs, window);
-      nsAutoString dompath(NS_LITERAL_STRING(FILESYSTEM_DOM_PATH_SEPARATOR));
-      dompath.Append(Substring(path, leafSeparatorIndex + 1));
-      filesAndDirsSeq[i].SetAsDirectory() = new Directory(fs, dompath);
+      filesAndDirsSeq[i].SetAsDirectory() = new Directory(fs, basename);
     } else {
       filesAndDirsSeq[i].SetAsFile() = filesAndDirs[i];
     }
@@ -5408,13 +5398,17 @@ FireEventForAccessibility(nsIDOMHTMLInputElement* aTarget,
                           nsPresContext* aPresContext,
                           const nsAString& aEventType)
 {
+  nsCOMPtr<nsIDOMEvent> event;
   nsCOMPtr<mozilla::dom::Element> element = do_QueryInterface(aTarget);
-  nsRefPtr<Event> event = NS_NewDOMEvent(element, aPresContext, nullptr);
-  event->InitEvent(aEventType, true, true);
-  event->SetTrusted(true);
+  if (NS_SUCCEEDED(EventDispatcher::CreateEvent(element, aPresContext, nullptr,
+                                                NS_LITERAL_STRING("Events"),
+                                                getter_AddRefs(event)))) {
+    event->InitEvent(aEventType, true, true);
+    event->SetTrusted(true);
 
-  EventDispatcher::DispatchDOMEvent(aTarget, nullptr, event, aPresContext,
-                                    nullptr);
+    EventDispatcher::DispatchDOMEvent(aTarget, nullptr, event, aPresContext,
+                                      nullptr);
+  }
 
   return NS_OK;
 }

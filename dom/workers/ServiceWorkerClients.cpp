@@ -65,7 +65,7 @@ public:
     MOZ_ASSERT(aWorkerPrivate);
     aWorkerPrivate->AssertIsOnWorkerThread();
 
-    Promise* promise = mPromiseProxy->WorkerPromise();
+    Promise* promise = mPromiseProxy->GetWorkerPromise();
     MOZ_ASSERT(promise);
 
     nsTArray<nsRefPtr<ServiceWorkerClient>> ret;
@@ -74,24 +74,30 @@ public:
             new ServiceWorkerWindowClient(promise->GetParentObject(),
                                           mValue.ElementAt(i))));
     }
-
     promise->MaybeResolve(ret);
+
+    // release the reference on the worker thread.
     mPromiseProxy->CleanUp(aCx);
+
     return true;
   }
 };
 
 class MatchAllRunnable final : public nsRunnable
 {
+  WorkerPrivate* mWorkerPrivate;
   nsRefPtr<PromiseWorkerProxy> mPromiseProxy;
   nsCString mScope;
 public:
-  MatchAllRunnable(PromiseWorkerProxy* aPromiseProxy,
+  MatchAllRunnable(WorkerPrivate* aWorkerPrivate,
+                   PromiseWorkerProxy* aPromiseProxy,
                    const nsCString& aScope)
-    : mPromiseProxy(aPromiseProxy),
+    : mWorkerPrivate(aWorkerPrivate),
+      mPromiseProxy(aPromiseProxy),
       mScope(aScope)
   {
-    MOZ_ASSERT(mPromiseProxy);
+    MOZ_ASSERT(aWorkerPrivate);
+    aWorkerPrivate->AssertIsOnWorkerThread();
   }
 
   NS_IMETHOD
@@ -99,22 +105,33 @@ public:
   {
     AssertIsOnMainThread();
 
-    MutexAutoLock lock(mPromiseProxy->Lock());
-    if (mPromiseProxy->CleanedUp()) {
+    MutexAutoLock lock(mPromiseProxy->GetCleanUpLock());
+    if (mPromiseProxy->IsClean()) {
+      // Don't resolve the promise if it was already released.
       return NS_OK;
     }
 
     nsRefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
     nsTArray<ServiceWorkerClientInfo> result;
 
-    swm->GetAllClients(mPromiseProxy->GetWorkerPrivate()->GetPrincipal(), mScope, result);
+    swm->GetAllClients(mWorkerPrivate->GetPrincipal(), mScope, result);
     nsRefPtr<ResolvePromiseWorkerRunnable> r =
-      new ResolvePromiseWorkerRunnable(mPromiseProxy->GetWorkerPrivate(),
-                                       mPromiseProxy, result);
+      new ResolvePromiseWorkerRunnable(mWorkerPrivate, mPromiseProxy, result);
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
-    r->Dispatch(jsapi.cx());
+    AutoSafeJSContext cx;
+    if (r->Dispatch(cx)) {
+      return NS_OK;
+    }
+
+    // Dispatch to worker thread failed because the worker is shutting down.
+    // Use a control runnable to release the runnable on the worker thread.
+    nsRefPtr<PromiseWorkerProxyControlRunnable> releaseRunnable =
+      new PromiseWorkerProxyControlRunnable(mWorkerPrivate, mPromiseProxy);
+
+    if (!releaseRunnable->Dispatch(cx)) {
+      NS_RUNTIMEABORT("Failed to dispatch MatchAll promise control runnable.");
+    }
+
     return NS_OK;
   }
 };
@@ -141,7 +158,7 @@ public:
     MOZ_ASSERT(aWorkerPrivate);
     aWorkerPrivate->AssertIsOnWorkerThread();
 
-    nsRefPtr<Promise> promise = mPromiseProxy->WorkerPromise();
+    Promise* promise = mPromiseProxy->GetWorkerPromise();
     MOZ_ASSERT(promise);
 
     if (NS_SUCCEEDED(mResult)) {
@@ -150,7 +167,9 @@ public:
       promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
     }
 
+    // Release the reference on the worker thread.
     mPromiseProxy->CleanUp(aCx);
+
     return true;
   }
 };
@@ -159,14 +178,14 @@ class ClaimRunnable final : public nsRunnable
 {
   nsRefPtr<PromiseWorkerProxy> mPromiseProxy;
   nsCString mScope;
+  // We grab the ID so we don't have to hold a lock the entire time the claim
+  // operation is happening on the main thread.
   uint64_t mServiceWorkerID;
 
 public:
   ClaimRunnable(PromiseWorkerProxy* aPromiseProxy, const nsCString& aScope)
     : mPromiseProxy(aPromiseProxy)
     , mScope(aScope)
-    // Safe to call GetWorkerPrivate() since we are being called on the worker
-    // thread via script (so no clean up has occured yet).
     , mServiceWorkerID(aPromiseProxy->GetWorkerPrivate()->ServiceWorkerID())
   {
     MOZ_ASSERT(aPromiseProxy);
@@ -175,8 +194,9 @@ public:
   NS_IMETHOD
   Run() override
   {
-    MutexAutoLock lock(mPromiseProxy->Lock());
-    if (mPromiseProxy->CleanedUp()) {
+    MutexAutoLock lock(mPromiseProxy->GetCleanUpLock());
+    if (mPromiseProxy->IsClean()) {
+      // Don't resolve the promise if it was already released.
       return NS_OK;
     }
 
@@ -194,7 +214,20 @@ public:
 
     AutoJSAPI jsapi;
     jsapi.Init();
-    r->Dispatch(jsapi.cx());
+    JSContext* cx = jsapi.cx();
+    if (r->Dispatch(cx)) {
+      return NS_OK;
+    }
+
+    // Dispatch to worker thread failed because the worker is shutting down.
+    // Use a control runnable to release the runnable on the worker thread.
+    nsRefPtr<PromiseWorkerProxyControlRunnable> releaseRunnable =
+      new PromiseWorkerProxyControlRunnable(workerPrivate, mPromiseProxy);
+
+    if (!releaseRunnable->Dispatch(cx)) {
+      NS_RUNTIMEABORT("Failed to dispatch Claim control runnable.");
+    }
+
     return NS_OK;
   }
 };
@@ -224,15 +257,21 @@ ServiceWorkerClients::MatchAll(const ClientQueryOptions& aOptions,
 
   nsRefPtr<PromiseWorkerProxy> promiseProxy =
     PromiseWorkerProxy::Create(workerPrivate, promise);
-  if (!promiseProxy) {
-    promise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
+  if (!promiseProxy->GetWorkerPromise()) {
+    // Don't dispatch if adding the worker feature failed.
     return promise.forget();
   }
 
   nsRefPtr<MatchAllRunnable> r =
-    new MatchAllRunnable(promiseProxy,
+    new MatchAllRunnable(workerPrivate,
+                         promiseProxy,
                          NS_ConvertUTF16toUTF8(scope));
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(r)));
+  nsresult rv = NS_DispatchToMainThread(r);
+
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    promise->MaybeReject(NS_ERROR_NOT_AVAILABLE);
+  }
+
   return promise.forget();
 }
 
@@ -262,8 +301,8 @@ ServiceWorkerClients::Claim(ErrorResult& aRv)
 
   nsRefPtr<PromiseWorkerProxy> promiseProxy =
     PromiseWorkerProxy::Create(workerPrivate, promise);
-  if (!promiseProxy) {
-    promise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
+  if (!promiseProxy->GetWorkerPromise()) {
+    // Don't dispatch if adding the worker feature failed.
     return promise.forget();
   }
 
@@ -273,6 +312,10 @@ ServiceWorkerClients::Claim(ErrorResult& aRv)
   nsRefPtr<ClaimRunnable> runnable =
     new ClaimRunnable(promiseProxy, NS_ConvertUTF16toUTF8(scope));
 
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
+  aRv = NS_DispatchToMainThread(runnable);
+  if (NS_WARN_IF(aRv.Failed())) {
+    promise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
+  }
+
   return promise.forget();
 }

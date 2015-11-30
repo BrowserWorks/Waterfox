@@ -15,8 +15,7 @@ KeyboardEvent::KeyboardEvent(EventTarget* aOwner,
                              nsPresContext* aPresContext,
                              WidgetKeyboardEvent* aEvent)
   : UIEvent(aOwner, aPresContext,
-            aEvent ? aEvent :
-                     new WidgetKeyboardEvent(false, eVoidEvent, nullptr))
+            aEvent ? aEvent : new WidgetKeyboardEvent(false, 0, nullptr))
   , mInitializedByCtor(false)
   , mInitializedWhichValue(0)
 {
@@ -152,18 +151,16 @@ KeyboardEvent::CharCode()
     return mEvent->AsKeyboardEvent()->charCode;
   }
 
-  switch (mEvent->mMessage) {
-  case eBeforeKeyDown:
-  case eKeyDown:
-  case eAfterKeyDown:
-  case eBeforeKeyUp:
-  case eKeyUp:
-  case eAfterKeyUp:
+  switch (mEvent->message) {
+  case NS_KEY_BEFORE_DOWN:
+  case NS_KEY_DOWN:
+  case NS_KEY_AFTER_DOWN:
+  case NS_KEY_BEFORE_UP:
+  case NS_KEY_UP:
+  case NS_KEY_AFTER_UP:
     return 0;
-  case eKeyPress:
+  case NS_KEY_PRESS:
     return mEvent->AsKeyboardEvent()->charCode;
-  default:
-    break;
   }
   return 0;
 }
@@ -198,15 +195,15 @@ KeyboardEvent::Which()
     return mInitializedWhichValue;
   }
 
-  switch (mEvent->mMessage) {
-    case eBeforeKeyDown:
-    case eKeyDown:
-    case eAfterKeyDown:
-    case eBeforeKeyUp:
-    case eKeyUp:
-    case eAfterKeyUp:
+  switch (mEvent->message) {
+    case NS_KEY_BEFORE_DOWN:
+    case NS_KEY_DOWN:
+    case NS_KEY_AFTER_DOWN:
+    case NS_KEY_BEFORE_UP:
+    case NS_KEY_UP:
+    case NS_KEY_AFTER_UP:
       return KeyCode();
-    case eKeyPress:
+    case NS_KEY_PRESS:
       //Special case for 4xp bug 62878.  Try to make value of which
       //more closely mirror the values that 4.x gave for RETURN and BACKSPACE
       {
@@ -216,8 +213,6 @@ KeyboardEvent::Which()
         }
         return CharCode();
       }
-    default:
-      break;
   }
 
   return 0;
@@ -314,11 +309,14 @@ KeyboardEvent::InitKeyEvent(const nsAString& aType,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<KeyboardEvent>
-NS_NewDOMKeyboardEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMKeyboardEvent(nsIDOMEvent** aInstancePtrResult,
+                       EventTarget* aOwner,
                        nsPresContext* aPresContext,
                        WidgetKeyboardEvent* aEvent)
 {
-  nsRefPtr<KeyboardEvent> it = new KeyboardEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  KeyboardEvent* it = new KeyboardEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

@@ -23,29 +23,31 @@ const {setBaseCssDocsUrl} = require("devtools/shared/widgets/MdnDocsWidget");
  * code by having a tag called "padding" and a property
  * value called "margin".
  */
-const TEST_URI = `
-  <html>
-    <head>
-      <style>
-        padding {font-family: margin;}
-      </style>
-    </head>
+const TEST_DOC =`
+<html>
+  <head>
+    <style>
+      padding {font-family: margin;}
+    </style>
+  </head>
 
-    <body>
-      <padding>MDN tooltip testing</padding>
-    </body>
-  </html>
-`;
+  <body>
+    <padding>MDN tooltip testing</padding>
+  </body>
+</html>`;
 
 add_task(function* () {
-  yield addTab("data:text/html;charset=utf8," + encodeURIComponent(TEST_URI));
+
+  yield addTab("data:text/html;charset=utf8," + encodeURIComponent(TEST_DOC));
+
   let {inspector, view} = yield openRuleView();
   yield selectNode("padding", inspector);
+
   yield testMdnContextMenuItemVisibility(view);
 });
 
 /**
- * Tests that the MDN context menu item is shown when it should be,
+ * Test that the MDN context menu item is shown when it should be,
  * and hidden when it should be.
  *   - iterate through every node in the rule view
  *   - set that node as popupNode (the node that the context menu
@@ -66,10 +68,9 @@ function* testMdnContextMenuItemVisibility(view) {
     view._contextmenu._updateMenuItems();
     let isVisible = !view._contextmenu.menuitemShowMdnDocs.hidden;
     let shouldBeVisible = isPropertyNameNode(node);
-    let message = shouldBeVisible ? "shown" : "hidden";
+    let message = shouldBeVisible? "shown": "hidden";
     is(isVisible, shouldBeVisible,
-       "The MDN context menu item is " + message + " ; content : " +
-       node.textContent + " ; type : " + node.nodeType);
+       "The MDN context menu item is " + message + " ; content : " + node.textContent + " ; type : " + node.nodeType);
   }
 }
 
@@ -94,4 +95,4 @@ function* iterateNodes(baseNode) {
 /**
  * Returns the root element for the rule view.
  */
-var rootElement = view => (view.element) ? view.element : view.styleDocument;
+let rootElement = view => (view.element) ? view.element : view.styleDocument;

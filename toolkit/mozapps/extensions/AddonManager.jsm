@@ -97,9 +97,9 @@ Cu.import("resource://gre/modules/Log.jsm");
 // Configure a logger at the parent 'addons' level to format
 // messages for all the modules under addons.*
 const PARENT_LOGGER_ID = "addons";
-var parentLogger = Log.repository.getLogger(PARENT_LOGGER_ID);
+let parentLogger = Log.repository.getLogger(PARENT_LOGGER_ID);
 parentLogger.level = Log.Level.Warn;
-var formatter = new Log.BasicFormatter();
+let formatter = new Log.BasicFormatter();
 // Set parent logger (and its children) to append to
 // the Javascript section of the Browser Console
 parentLogger.addAppender(new Log.ConsoleAppender(formatter));
@@ -110,7 +110,7 @@ parentLogger.addAppender(new Log.DumpAppender(formatter));
 // Create a new logger (child of 'addons' logger)
 // for use by the Addons Manager
 const LOGGER_ID = "addons.manager";
-var logger = Log.repository.getLogger(LOGGER_ID);
+let logger = Log.repository.getLogger(LOGGER_ID);
 
 // Provide the ability to enable/disable logging
 // messages at runtime.
@@ -1646,7 +1646,6 @@ var AddonManagerInternal = {
 
     if (gStartupComplete)
       return;
-    logger.debug("Registering startup change '" + aType + "' for " + aID);
 
     // Ensure that an ID is only listed in one type of change
     for (let type in this.startupChanges)
@@ -2998,8 +2997,6 @@ this.AddonManager = {
   SIGNEDSTATE_PRELIMINARY: 1,
   // Add-on is fully reviewed.
   SIGNEDSTATE_SIGNED: 2,
-  // Add-on is system add-on.
-  SIGNEDSTATE_SYSTEM: 3,
 
   // Constants for the Addon.userDisabled property
   // Indicates that the userDisabled state of this add-on is currently

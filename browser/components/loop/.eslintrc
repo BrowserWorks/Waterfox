@@ -15,10 +15,13 @@
   "extends": "eslint:recommended",
   "globals": {
     "_": false,
+    "$": false,
     "Backbone": false,
     "chai": false,
     "console": false,
+    "jQuery": false,
     "loop": true,
+    "MozActivity": false,
     "mozRTCSessionDescription": false,
     "OT": false,
     "performance": false,
@@ -33,7 +36,6 @@
     // problems they find, one at a time.
 
     // Eslint built-in rules are documented at <http://eslint.org/docs/rules/>
-    "block-spacing": [2, "always"],
     "callback-return": 0,         // TBD
     "camelcase": 0,               // TODO: set to 2
     "comma-spacing": 2,
@@ -42,7 +44,7 @@
     "curly": [2, "all"],
     "dot-location": [2, "property"],
     "eol-last": 2,
-    "eqeqeq": [2, "smart"],
+    "eqeqeq": 0,                  // TBD. Might need to be separate for content & chrome
     "key-spacing": [2, {"beforeColon": false, "afterColon": true }],
     "linebreak-style": [2, "unix"],
     "new-cap": 0,                 // TODO: set to 2

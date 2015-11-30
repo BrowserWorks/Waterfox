@@ -10,7 +10,7 @@ function writeLine(aLine, aOutputStream) {
   aOutputStream.write(aLine, aLine.length);
 }
 
-var gSSService = null;
+let gSSService = null;
 
 function checkStateRead(aSubject, aTopic, aData) {
   do_check_eq(aData, SSS_STATE_FILE_NAME);

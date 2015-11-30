@@ -53,8 +53,6 @@ builds:
     types:
       opt:
         task: tasks/builds/b2g_emulator_x86_kk_opt.yml
-      debug:
-        task: tasks/builds/b2g_emulator_x86_kk_debug.yml
   emulator-jb:
     platforms:
       - b2g
@@ -134,15 +132,9 @@ builds:
       - Linux64
     types:
       opt:
-        task: tasks/builds/opt_linux64_clobber.yml
+        task: tasks/builds/opt_linux64.yml
       debug:
-        task: tasks/builds/dbg_linux64_clobber.yml
-  macosx64:
-    platforms:
-      - MacOSX64
-    types:
-      debug:
-        task: tasks/builds/dbg_macosx64.yml
+        task: tasks/builds/dbg_linux64.yml
   sm-plain:
     platforms:
       - Linux64
@@ -205,13 +197,9 @@ tests:
         task: tasks/tests/b2g_emulator_cpp_unit.yml
       tasks/builds/b2g_emulator_ics_debug.yml:
         task: tasks/tests/b2g_emulator_cpp_unit.yml
-      tasks/builds/b2g_emulator_x86_kk_opt.yml:
-        task: tasks/tests/b2g_emulator_cpp_unit.yml
   crashtest:
     allowed_build_tasks:
       tasks/builds/b2g_emulator_ics_opt.yml:
-        task: tasks/tests/b2g_emulator_crashtest.yml
-      tasks/builds/b2g_emulator_x86_kk_opt.yml:
         task: tasks/tests/b2g_emulator_crashtest.yml
   gaia-build:
     allowed_build_tasks:
@@ -237,30 +225,46 @@ tests:
         task: tasks/tests/b2g_linter.yml
       tasks/builds/mulet_linux.yml:
         task: tasks/tests/mulet_linter.yml
+  gaia-ui-test-accessibility:
+    allowed_build_tasks:
+      tasks/builds/b2g_desktop_opt.yml:
+        task: tasks/tests/b2g_gaia_ui_test_accessibility.yml
+      tasks/builds/b2g_desktop_debug.yml:
+        task: tasks/tests/b2g_gaia_ui_test_accessibility.yml
+  gaia-ui-test-functional:
+    allowed_build_tasks:
+      tasks/builds/b2g_desktop_opt.yml:
+        task: tasks/tests/b2g_gaia_ui_test_functional.yml
+      tasks/builds/b2g_desktop_debug.yml:
+        task: tasks/tests/b2g_gaia_ui_test_functional.yml
+  gaia-ui-test-unit:
+    allowed_build_tasks:
+      tasks/builds/b2g_desktop_opt.yml:
+        task: tasks/tests/b2g_gaia_ui_test_unit.yml
+      tasks/builds/b2g_desktop_debug.yml:
+        task: tasks/tests/b2g_gaia_ui_test_unit.yml
   gaia-unit:
     allowed_build_tasks:
       tasks/builds/b2g_desktop_opt.yml:
         task: tasks/tests/b2g_gaia_unit.yml
-      tasks/builds/mulet_linux.yml:
-        task: tasks/tests/mulet_gaia_unit.yml
-  gaia-unit-oop:
-    allowed_build_tasks:
-      tasks/builds/mulet_linux.yml:
-        task: tasks/tests/mulet_gaia_unit_oop.yml
   marionette:
     allowed_build_tasks:
-      tasks/builds/b2g_emulator_x86_kk_opt.yml:
+      tasks/builds/b2g_emulator_kk_opt.yml:
         task: tasks/tests/b2g_emulator_marionette.yml
       tasks/builds/b2g_emulator_ics_opt.yml:
         task: tasks/tests/b2g_emulator_marionette.yml
   marionette-webapi:
     allowed_build_tasks:
-      tasks/builds/b2g_emulator_x86_kk_opt.yml:
+      tasks/builds/b2g_emulator_kk_opt.yml:
         task: tasks/tests/b2g_emulator_marionette_webapi.yml
       tasks/builds/b2g_emulator_ics_opt.yml:
         task: tasks/tests/b2g_emulator_marionette_webapi.yml
   mochitest:
     allowed_build_tasks:
+      tasks/builds/b2g_emulator_kk_debug.yml:
+        task: tasks/tests/b2g_emulator_mochitest.yml
+      tasks/builds/b2g_emulator_kk_opt.yml:
+        task: tasks/tests/b2g_emulator_mochitest.yml
       tasks/builds/b2g_emulator_x86_l_opt.yml:
         task: tasks/tests/b2g_emulator_mochitest.yml
       tasks/builds/b2g_emulator_x86_kk_opt.yml:
@@ -279,6 +283,8 @@ tests:
     allowed_build_tasks:
       tasks/builds/mulet_linux.yml:
         task: tasks/tests/mulet_reftests.yml
+      tasks/builds/b2g_emulator_kk_opt.yml:
+        task: tasks/tests/b2g_emulator_reftest.yml
       tasks/builds/b2g_emulator_x86_l_opt.yml:
         task: tasks/tests/b2g_emulator_reftest.yml
       tasks/builds/b2g_emulator_x86_kk_opt.yml:
@@ -292,6 +298,8 @@ tests:
   xpcshell:
     allowed_build_tasks:
       tasks/builds/b2g_emulator_x86_kk_opt.yml:
+        task: tasks/tests/b2g_emulator_xpcshell_chunked.yml
+      tasks/builds/b2g_emulator_kk_opt.yml:
         task: tasks/tests/b2g_emulator_xpcshell_chunked.yml
       tasks/builds/b2g_emulator_ics_opt.yml:
         task: tasks/tests/b2g_emulator_xpcshell_chunked.yml

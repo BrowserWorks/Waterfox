@@ -24,13 +24,15 @@
   <script type="application/javascript" src="performance/views/details-js-flamegraph.js"/>
   <script type="application/javascript" src="performance/views/details-memory-call-tree.js"/>
   <script type="application/javascript" src="performance/views/details-memory-flamegraph.js"/>
+  <script type="application/javascript" src="performance/views/details-optimizations.js"/>
   <script type="application/javascript" src="performance/views/details.js"/>
   <script type="application/javascript" src="performance/views/recordings.js"/>
   <script type="application/javascript" src="performance/views/optimizations-list.js"/>
+  <script type="application/javascript" src="performance/views/frames-list.js"/>
 
   <popupset id="performance-options-popupset">
     <menupopup id="performance-filter-menupopup"/>
-    <menupopup id="performance-options-menupopup" position="before_end">
+    <menupopup id="performance-options-menupopup">
       <menuitem id="option-show-platform-data"
                 type="checkbox"
                 data-pref="show-platform-data"
@@ -77,7 +79,7 @@
     </menupopup>
   </popupset>
 
-  <hbox id="body" class="theme-body" flex="1">
+  <hbox class="theme-body" flex="1">
 
     <!-- Sidebar: controls and recording list -->
     <vbox id="recordings-pane">
@@ -118,31 +120,32 @@
                          class="devtools-toolbarbutton devtools-button"
                          label="&performanceUI.toolbar.waterfall;"
                          hidden="true"
-                         data-view="waterfall"
-                         tooltiptext="&performanceUI.toolbar.waterfall.tooltiptext;" />
+                         data-view="waterfall" />
           <toolbarbutton id="select-js-calltree-view"
                          class="devtools-toolbarbutton devtools-button"
                          label="&performanceUI.toolbar.js-calltree;"
                          hidden="true"
-                         data-view="js-calltree"
-                         tooltiptext="&performanceUI.toolbar.js-calltree.tooltiptext;" />
+                         data-view="js-calltree" />
           <toolbarbutton id="select-js-flamegraph-view"
                          class="devtools-toolbarbutton devtools-button"
                          label="&performanceUI.toolbar.js-flamegraph;"
                          hidden="true"
-                         data-view="js-flamegraph"
-                         tooltiptext="&performanceUI.toolbar.js-flamegraph.tooltiptext;" />
+                         data-view="js-flamegraph" />
           <toolbarbutton id="select-memory-calltree-view"
                          class="devtools-toolbarbutton devtools-button"
                          label="&performanceUI.toolbar.memory-calltree;"
                          hidden="true"
-                         data-view="memory-calltree"
-                         tooltiptext="&performanceUI.toolbar.allocations.tooltiptext;" />
+                         data-view="memory-calltree" />
           <toolbarbutton id="select-memory-flamegraph-view"
                          class="devtools-toolbarbutton devtools-button"
                          label="&performanceUI.toolbar.memory-flamegraph;"
                          hidden="true"
                          data-view="memory-flamegraph" />
+          <toolbarbutton id="select-optimizations-view"
+                         class="devtools-toolbarbutton devtools-button"
+                         label="Optimizations"
+                         hidden="true"
+                         data-view="optimizations" />
         </hbox>
         <spacer flex="1"></spacer>
         <hbox id="performance-toolbar-controls-options"
@@ -292,21 +295,6 @@
                   </hbox>
                   <vbox class="call-tree-cells-container" flex="1"/>
                 </vbox>
-                <splitter class="devtools-side-splitter"/>
-                <!-- Optimizations Panel -->
-                <vbox id="jit-optimizations-view"
-                      class="hidden">
-                  <toolbar id="jit-optimizations-toolbar" class="devtools-toolbar">
-                    <hbox id="jit-optimizations-header">
-                      <span class="jit-optimizations-title">&performanceUI.JITOptimizationsTitle;</span>
-                      <span class="header-function-name" />
-                      <span class="header-file opt-url debugger-link" />
-                      <span class="header-line opt-line" />
-                    </hbox>
-                  </toolbar>
-                  <hbox id="optimizations-graph"></hbox>
-                  <vbox id="jit-optimizations-raw-view"></vbox>
-                </vbox>
               </hbox>
 
               <!-- JS FlameChart -->
@@ -317,45 +305,15 @@
               <vbox id="memory-calltree-view" flex="1">
                 <hbox class="call-tree-headers-container">
                   <label class="plain call-tree-header"
-                         type="self-size"
+                         type="count"
                          crop="end"
-                         value="Self Bytes"
-                         tooltiptext="&performanceUI.table.totalAlloc.tooltip;"/>
-                  <label class="plain call-tree-header"
-                         type="self-size-percentage"
-                         crop="end"
-                         value="Self Bytes %"
+                         value="&performanceUI.table.totalAlloc;"
                          tooltiptext="&performanceUI.table.totalAlloc.tooltip;"/>
                   <label class="plain call-tree-header"
                          type="self-count"
                          crop="end"
-                         value="Self Count"
-                         tooltiptext="&performanceUI.table.totalAlloc.tooltip;"/>
-                  <label class="plain call-tree-header"
-                         type="self-count-percentage"
-                         crop="end"
-                         value="Self Count %"
-                         tooltiptext="&performanceUI.table.totalAlloc.tooltip;"/>
-                  <label class="plain call-tree-header"
-                         type="size"
-                         crop="end"
-                         value="Total Size"
-                         tooltiptext="&performanceUI.table.totalAlloc.tooltip;"/>
-                  <label class="plain call-tree-header"
-                         type="size-percentage"
-                         crop="end"
-                         value="Total Size %"
-                         tooltiptext="&performanceUI.table.totalAlloc.tooltip;"/>
-                  <label class="plain call-tree-header"
-                         type="count"
-                         crop="end"
-                         value="Total Count"
-                         tooltiptext="&performanceUI.table.totalAlloc.tooltip;"/>
-                  <label class="plain call-tree-header"
-                         type="count-percentage"
-                         crop="end"
-                         value="Total Count %"
-                         tooltiptext="&performanceUI.table.totalAlloc.tooltip;"/>
+                         value="&performanceUI.table.selfAlloc;"
+                         tooltiptext="&performanceUI.table.selfAlloc.tooltip;"/>
                   <label class="plain call-tree-header"
                          type="function"
                          crop="end"
@@ -365,7 +323,49 @@
               </vbox>
 
               <!-- Memory FlameChart -->
-              <hbox id="memory-flamegraph-view" flex="1"></hbox>
+              <hbox id="memory-flamegraph-view" flex="1">
+              </hbox>
+
+              <!-- JIT View -->
+              <hbox id="optimizations-view" flex="1">
+                <hbox id="graph-placeholder" flex="1">
+                </hbox>
+                <splitter id="optimizations-splitter" class="devtools-side-splitter"/>
+                <tabbox id="optimizations-tabs"
+                        class="devtools-sidebar-tabs"
+                        handleCtrlTab="false">
+                  <tabs>
+                    <tab id="optimizations-optimizations-tab"
+                         label="Optimizations" />
+                    <tab id="optimizations-frames-tab"
+                         label="Frames" />
+                  </tabs>
+                  <tabpanels flex="1">
+
+                    <!-- Optimizations Panel -->
+                    <tabpanel id="optimizations-tabpanel"
+                              class="tabpanel-content">
+                      <vbox id="jit-optimizations-view">
+                        <toolbar id="jit-optimizations-toolbar" class="devtools-toolbar">
+                          <hbox id="jit-optimizations-header">
+                            <span class="jit-optimizations-title">&performanceUI.JITOptimizationsTitle;</span>
+                            <span class="header-function-name" />
+                            <span class="header-file opt-url debugger-link" />
+                            <span class="header-line opt-line" />
+                          </hbox>
+                        </toolbar>
+                        <vbox id="jit-optimizations-raw-view"></vbox>
+                      </vbox>
+                    </tabpanel>
+
+                    <!-- Frames Panel -->
+                    <tabpanel id="frames-tabpanel"
+                              class="tabpanel-content">
+                    </tabpanel>
+                  </tabpanels>
+                </tabbox>
+              </hbox>
+              <!-- /JIT View -->
             </deck>
           </deck>
         </vbox>

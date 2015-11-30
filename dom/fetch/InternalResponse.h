@@ -49,9 +49,6 @@ public:
   OpaqueResponse();
 
   already_AddRefed<InternalResponse>
-  OpaqueRedirectResponse();
-
-  already_AddRefed<InternalResponse>
   BasicResponse();
 
   already_AddRefed<InternalResponse>
@@ -65,7 +62,6 @@ public:
     MOZ_ASSERT_IF(mType == ResponseType::Basic, mWrappedResponse);
     MOZ_ASSERT_IF(mType == ResponseType::Cors, mWrappedResponse);
     MOZ_ASSERT_IF(mType == ResponseType::Opaque, mWrappedResponse);
-    MOZ_ASSERT_IF(mType == ResponseType::Opaqueredirect, mWrappedResponse);
     return mType;
   }
 
@@ -83,17 +79,6 @@ public:
   }
 
   void
-  GetUnfilteredUrl(nsCString& aURL) const
-  {
-    if (mWrappedResponse) {
-      return mWrappedResponse->GetUrl(aURL);
-    }
-
-    return GetUrl(aURL);
-  }
-
-  // SetUrl should only be called when the fragment has alredy been stripped
-  void
   SetUrl(const nsACString& aURL)
   {
     mURL.Assign(aURL);
@@ -105,30 +90,10 @@ public:
     return mStatus;
   }
 
-  uint16_t
-  GetUnfilteredStatus() const
-  {
-    if (mWrappedResponse) {
-      return mWrappedResponse->GetStatus();
-    }
-
-    return GetStatus();
-  }
-
   const nsCString&
   GetStatusText() const
   {
     return mStatusText;
-  }
-
-  const nsCString&
-  GetUnfilteredStatusText() const
-  {
-    if (mWrappedResponse) {
-      return mWrappedResponse->GetStatusText();
-    }
-
-    return GetStatusText();
   }
 
   InternalHeaders*
@@ -148,7 +113,7 @@ public:
   }
 
   void
-  GetUnfilteredBody(nsIInputStream** aStream)
+  GetInternalBody(nsIInputStream** aStream)
   {
     if (mWrappedResponse) {
       MOZ_ASSERT(!mBody);
@@ -161,13 +126,12 @@ public:
   void
   GetBody(nsIInputStream** aStream)
   {
-    if (Type() == ResponseType::Opaque ||
-        Type() == ResponseType::Opaqueredirect) {
+    if (Type() == ResponseType::Opaque) {
       *aStream = nullptr;
       return;
     }
 
-    return GetUnfilteredBody(aStream);
+    return GetInternalBody(aStream);
   }
 
   void
@@ -214,9 +178,6 @@ public:
   // Takes ownership of the principal info.
   void
   SetPrincipalInfo(UniquePtr<mozilla::ipc::PrincipalInfo> aPrincipalInfo);
-
-  nsresult
-  StripFragmentAndSetUrl(const nsACString& aUrl);
 
 private:
   ~InternalResponse();

@@ -38,7 +38,7 @@ function indirectCallCannotGC(fullCaller, fullVariable)
     if (name == "op" && /GetWeakmapKeyDelegate/.test(caller))
         return true;
 
-    var CheckCallArgs = "AsmJSValidate.cpp:uint8 CheckCallArgs(FunctionValidator*, js::frontend::ParseNode*, (uint8)(FunctionValidator*,js::frontend::ParseNode*,js::wasm::Type)*, js::wasm::Signature*)";
+    var CheckCallArgs = "AsmJSValidate.cpp:uint8 CheckCallArgs(FunctionBuilder*, js::frontend::ParseNode*, (uint8)(FunctionBuilder*,js::frontend::ParseNode*,Type)*, Signature*)";
     if (name == "checkArg" && caller == CheckCallArgs)
         return true;
 
@@ -176,7 +176,7 @@ var ignoreFunctions = {
     "void js::AutoCompartment::AutoCompartment(js::ExclusiveContext*, JSCompartment*)": true,
 
     // The nsScriptNameSpaceManager functions can't actually GC.  They
-    // just use a PLDHashTable which has function pointers, which makes the
+    // just use a pldhash which has function pointers, which makes the
     // analysis think maybe they can.
     "nsGlobalNameStruct* nsScriptNameSpaceManager::LookupNavigatorName(nsAString_internal*)": true,
     "nsGlobalNameStruct* nsScriptNameSpaceManager::LookupName(nsAString_internal*, uint16**)": true,
@@ -239,10 +239,6 @@ function ignoreGCFunction(mangled)
     if (fun.indexOf("void nsCOMPtr<T>::Assert_NoQueryNeeded()") >= 0)
         return true;
 
-    // These call through an 'op' function pointer.
-    if (fun.indexOf("js::WeakMap<Key, Value, HashPolicy>::getDelegate(") >= 0)
-        return true;
-
     // XXX modify refillFreeList<NoGC> to not need data flow analysis to understand it cannot GC.
     if (/refillFreeList/.test(fun) && /\(js::AllowGC\)0u/.test(fun))
         return true;
@@ -251,8 +247,23 @@ function ignoreGCFunction(mangled)
 
 function stripUCSAndNamespace(name)
 {
-    name = name.replace(/(struct|class|union|const) /g, "");
-    name = name.replace(/(js::ctypes::|js::|JS::|mozilla::dom::|mozilla::)/g, "");
+    if (name.startsWith('struct '))
+        name = name.substr(7);
+    if (name.startsWith('class '))
+        name = name.substr(6);
+    if (name.startsWith('const '))
+        name = name.substr(6);
+    if (name.startsWith('js::ctypes::'))
+        name = name.substr(12);
+    if (name.startsWith('js::'))
+        name = name.substr(4);
+    if (name.startsWith('JS::'))
+        name = name.substr(4);
+    if (name.startsWith('mozilla::dom::'))
+        name = name.substr(14);
+    if (name.startsWith('mozilla::'))
+        name = name.substr(9);
+
     return name;
 }
 
@@ -273,8 +284,7 @@ function isRootedGCPointerTypeName(name)
         name == "WrappableJSErrorResult" ||
         name == "frontend::TokenStream" ||
         name == "frontend::TokenStream::Position" ||
-        name == "ModuleCompiler" ||
-        name == "ModuleValidator")
+        name == "ModuleCompiler")
     {
         return true;
     }
@@ -332,7 +342,6 @@ function isOverridableField(initialCSU, csu, field)
 
 function listGCTypes() {
     return [
-        'js::gc::Cell',
         'JSObject',
         'JSString',
         'JSFatInlineString',

@@ -1,6 +1,6 @@
 "use strict";
 
-var SOURCE_URL = getFileUrl("setBreakpoint-on-column-in-gcd-script.js");
+let SOURCE_URL = getFileUrl("setBreakpoint-on-column-in-gcd-script.js");
 
 function run_test() {
   return Task.spawn(function* () {

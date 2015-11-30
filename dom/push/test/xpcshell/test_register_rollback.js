@@ -27,8 +27,7 @@ add_task(function* test_register_rollback() {
 
   let handshakes = 0;
   let registers = 0;
-  let unregisterDone;
-  let unregisterPromise = new Promise(resolve => unregisterDone = resolve);
+  let unregisterDefer = Promise.defer();
   PushServiceWebSocket._generateID = () => channelID;
   PushService.init({
     serverURI: "wss://push.example.org/",
@@ -67,7 +66,7 @@ add_task(function* test_register_rollback() {
             status: 200,
             channelID
           }));
-          unregisterDone();
+          unregisterDefer.resolve();
         }
       });
     }
@@ -84,7 +83,7 @@ add_task(function* test_register_rollback() {
   );
 
   // Should send an out-of-band unregister request.
-  yield waitForPromise(unregisterPromise, DEFAULT_TIMEOUT,
+  yield waitForPromise(unregisterDefer.promise, DEFAULT_TIMEOUT,
     'Unregister request timed out');
   equal(handshakes, 1, 'Wrong handshake count');
   equal(registers, 1, 'Wrong register count');

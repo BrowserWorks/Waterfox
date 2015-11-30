@@ -5,6 +5,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "BluetoothDaemonAvrcpInterface.h"
+#include "BluetoothDaemonSetupInterface.h"
 #include "mozilla/unused.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
@@ -27,23 +28,31 @@ BluetoothDaemonAvrcpModule::SetNotificationHandler(
   sNotificationHandler = aNotificationHandler;
 }
 
+nsresult
+BluetoothDaemonAvrcpModule::Send(DaemonSocketPDU* aPDU,
+                                 BluetoothAvrcpResultHandler* aRes)
+{
+  if (aRes) {
+    aRes->AddRef(); // Keep reference for response
+  }
+  return Send(aPDU, static_cast<void*>(aRes));
+}
+
 void
 BluetoothDaemonAvrcpModule::HandleSvc(const DaemonSocketPDUHeader& aHeader,
-                                      DaemonSocketPDU& aPDU,
-                                      DaemonSocketResultHandler* aRes)
+                                      DaemonSocketPDU& aPDU, void* aUserData)
 {
   static void (BluetoothDaemonAvrcpModule::* const HandleOp[])(
-    const DaemonSocketPDUHeader&, DaemonSocketPDU&,
-    DaemonSocketResultHandler*) = {
-    [0] = &BluetoothDaemonAvrcpModule::HandleRsp,
-    [1] = &BluetoothDaemonAvrcpModule::HandleNtf
+    const DaemonSocketPDUHeader&, DaemonSocketPDU&, void*) = {
+    INIT_ARRAY_AT(0, &BluetoothDaemonAvrcpModule::HandleRsp),
+    INIT_ARRAY_AT(1, &BluetoothDaemonAvrcpModule::HandleNtf),
   };
 
   MOZ_ASSERT(!NS_IsMainThread());
 
   unsigned int isNtf = !!(aHeader.mOpcode & 0x80);
 
-  (this->*(HandleOp[isNtf]))(aHeader, aPDU, aRes);
+  (this->*(HandleOp[isNtf]))(aHeader, aPDU, aUserData);
 }
 
 // Commands
@@ -409,34 +418,34 @@ BluetoothDaemonAvrcpModule::SetVolumeRsp(
 void
 BluetoothDaemonAvrcpModule::HandleRsp(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  DaemonSocketResultHandler* aRes)
+  void* aUserData)
 {
   static void (BluetoothDaemonAvrcpModule::* const HandleRsp[])(
     const DaemonSocketPDUHeader&,
     DaemonSocketPDU&,
     BluetoothAvrcpResultHandler*) = {
-    [OPCODE_ERROR] =
-      &BluetoothDaemonAvrcpModule::ErrorRsp,
-    [OPCODE_GET_PLAY_STATUS_RSP] =
-      &BluetoothDaemonAvrcpModule::GetPlayStatusRspRsp,
-    [OPCODE_LIST_PLAYER_APP_ATTR_RSP] =
-      &BluetoothDaemonAvrcpModule::ListPlayerAppAttrRspRsp,
-    [OPCODE_LIST_PLAYER_APP_VALUE_RSP] =
-      &BluetoothDaemonAvrcpModule::ListPlayerAppValueRspRsp,
-    [OPCODE_GET_PLAYER_APP_VALUE_RSP] =
-      &BluetoothDaemonAvrcpModule::GetPlayerAppValueRspRsp,
-    [OPCODE_GET_PLAYER_APP_ATTR_TEXT_RSP] =
-      &BluetoothDaemonAvrcpModule::GetPlayerAppAttrTextRspRsp,
-    [OPCODE_GET_PLAYER_APP_VALUE_TEXT_RSP] =
-      &BluetoothDaemonAvrcpModule::GetPlayerAppValueTextRspRsp,
-    [OPCODE_GET_ELEMENT_ATTR_RSP]=
-      &BluetoothDaemonAvrcpModule::GetElementAttrRspRsp,
-    [OPCODE_SET_PLAYER_APP_VALUE_RSP] =
-      &BluetoothDaemonAvrcpModule::SetPlayerAppValueRspRsp,
-    [OPCODE_REGISTER_NOTIFICATION_RSP] =
-      &BluetoothDaemonAvrcpModule::RegisterNotificationRspRsp,
-    [OPCODE_SET_VOLUME] =
-      &BluetoothDaemonAvrcpModule::SetVolumeRsp
+    INIT_ARRAY_AT(OPCODE_ERROR,
+      &BluetoothDaemonAvrcpModule::ErrorRsp),
+    INIT_ARRAY_AT(OPCODE_GET_PLAY_STATUS_RSP,
+      &BluetoothDaemonAvrcpModule::GetPlayStatusRspRsp),
+    INIT_ARRAY_AT(OPCODE_LIST_PLAYER_APP_ATTR_RSP,
+      &BluetoothDaemonAvrcpModule::ListPlayerAppAttrRspRsp),
+    INIT_ARRAY_AT(OPCODE_LIST_PLAYER_APP_VALUE_RSP,
+      &BluetoothDaemonAvrcpModule::ListPlayerAppValueRspRsp),
+    INIT_ARRAY_AT(OPCODE_GET_PLAYER_APP_VALUE_RSP,
+      &BluetoothDaemonAvrcpModule::GetPlayerAppValueRspRsp),
+    INIT_ARRAY_AT(OPCODE_GET_PLAYER_APP_ATTR_TEXT_RSP,
+      &BluetoothDaemonAvrcpModule::GetPlayerAppAttrTextRspRsp),
+    INIT_ARRAY_AT(OPCODE_GET_PLAYER_APP_VALUE_TEXT_RSP,
+      &BluetoothDaemonAvrcpModule::GetPlayerAppValueTextRspRsp),
+    INIT_ARRAY_AT(OPCODE_GET_ELEMENT_ATTR_RSP,
+      &BluetoothDaemonAvrcpModule::GetElementAttrRspRsp),
+    INIT_ARRAY_AT(OPCODE_SET_PLAYER_APP_VALUE_RSP,
+      &BluetoothDaemonAvrcpModule::SetPlayerAppValueRspRsp),
+    INIT_ARRAY_AT(OPCODE_REGISTER_NOTIFICATION_RSP,
+      &BluetoothDaemonAvrcpModule::RegisterNotificationRspRsp),
+    INIT_ARRAY_AT(OPCODE_SET_VOLUME,
+      &BluetoothDaemonAvrcpModule::SetVolumeRsp)
   };
 
   MOZ_ASSERT(!NS_IsMainThread()); // I/O thread
@@ -447,7 +456,8 @@ BluetoothDaemonAvrcpModule::HandleRsp(
   }
 
   nsRefPtr<BluetoothAvrcpResultHandler> res =
-    static_cast<BluetoothAvrcpResultHandler*>(aRes);
+    already_AddRefed<BluetoothAvrcpResultHandler>(
+      static_cast<BluetoothAvrcpResultHandler*>(aUserData));
 
   if (!res) {
     return; // Return early if no result handler has been set for response
@@ -779,33 +789,33 @@ BluetoothDaemonAvrcpModule::PassthroughCmdNtf(
 void
 BluetoothDaemonAvrcpModule::HandleNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU,
-  DaemonSocketResultHandler* aRes)
+  void* aUserData)
 {
   static void (BluetoothDaemonAvrcpModule::* const HandleNtf[])(
     const DaemonSocketPDUHeader&, DaemonSocketPDU&) = {
 #if ANDROID_VERSION >= 19
-    [0] = &BluetoothDaemonAvrcpModule::RemoteFeatureNtf,
-    [1] = &BluetoothDaemonAvrcpModule::GetPlayStatusNtf,
-    [2] = &BluetoothDaemonAvrcpModule::ListPlayerAppAttrNtf,
-    [3] = &BluetoothDaemonAvrcpModule::ListPlayerAppValuesNtf,
-    [4] = &BluetoothDaemonAvrcpModule::GetPlayerAppValueNtf,
-    [5] = &BluetoothDaemonAvrcpModule::GetPlayerAppAttrsTextNtf,
-    [6] = &BluetoothDaemonAvrcpModule::GetPlayerAppValuesTextNtf,
-    [7] = &BluetoothDaemonAvrcpModule::SetPlayerAppValueNtf,
-    [8] = &BluetoothDaemonAvrcpModule::GetElementAttrNtf,
-    [9] = &BluetoothDaemonAvrcpModule::RegisterNotificationNtf,
-    [10] = &BluetoothDaemonAvrcpModule::VolumeChangeNtf,
-    [11] = &BluetoothDaemonAvrcpModule::PassthroughCmdNtf
+    INIT_ARRAY_AT(0, &BluetoothDaemonAvrcpModule::RemoteFeatureNtf),
+    INIT_ARRAY_AT(1, &BluetoothDaemonAvrcpModule::GetPlayStatusNtf),
+    INIT_ARRAY_AT(2, &BluetoothDaemonAvrcpModule::ListPlayerAppAttrNtf),
+    INIT_ARRAY_AT(3, &BluetoothDaemonAvrcpModule::ListPlayerAppValuesNtf),
+    INIT_ARRAY_AT(4, &BluetoothDaemonAvrcpModule::GetPlayerAppValueNtf),
+    INIT_ARRAY_AT(5, &BluetoothDaemonAvrcpModule::GetPlayerAppAttrsTextNtf),
+    INIT_ARRAY_AT(6, &BluetoothDaemonAvrcpModule::GetPlayerAppValuesTextNtf),
+    INIT_ARRAY_AT(7, &BluetoothDaemonAvrcpModule::SetPlayerAppValueNtf),
+    INIT_ARRAY_AT(8, &BluetoothDaemonAvrcpModule::GetElementAttrNtf),
+    INIT_ARRAY_AT(9, &BluetoothDaemonAvrcpModule::RegisterNotificationNtf),
+    INIT_ARRAY_AT(10, &BluetoothDaemonAvrcpModule::VolumeChangeNtf),
+    INIT_ARRAY_AT(11, &BluetoothDaemonAvrcpModule::PassthroughCmdNtf)
 #else
-    [0] = &BluetoothDaemonAvrcpModule::GetPlayStatusNtf,
-    [1] = &BluetoothDaemonAvrcpModule::ListPlayerAppAttrNtf,
-    [2] = &BluetoothDaemonAvrcpModule::ListPlayerAppValuesNtf,
-    [3] = &BluetoothDaemonAvrcpModule::GetPlayerAppValueNtf,
-    [4] = &BluetoothDaemonAvrcpModule::GetPlayerAppAttrsTextNtf,
-    [5] = &BluetoothDaemonAvrcpModule::GetPlayerAppValuesTextNtf,
-    [6] = &BluetoothDaemonAvrcpModule::SetPlayerAppValueNtf,
-    [7] = &BluetoothDaemonAvrcpModule::GetElementAttrNtf,
-    [8] = &BluetoothDaemonAvrcpModule::RegisterNotificationNtf
+    INIT_ARRAY_AT(0, &BluetoothDaemonAvrcpModule::GetPlayStatusNtf),
+    INIT_ARRAY_AT(1, &BluetoothDaemonAvrcpModule::ListPlayerAppAttrNtf),
+    INIT_ARRAY_AT(2, &BluetoothDaemonAvrcpModule::ListPlayerAppValuesNtf),
+    INIT_ARRAY_AT(3, &BluetoothDaemonAvrcpModule::GetPlayerAppValueNtf),
+    INIT_ARRAY_AT(4, &BluetoothDaemonAvrcpModule::GetPlayerAppAttrsTextNtf),
+    INIT_ARRAY_AT(5, &BluetoothDaemonAvrcpModule::GetPlayerAppValuesTextNtf),
+    INIT_ARRAY_AT(6, &BluetoothDaemonAvrcpModule::SetPlayerAppValueNtf),
+    INIT_ARRAY_AT(7, &BluetoothDaemonAvrcpModule::GetElementAttrNtf),
+    INIT_ARRAY_AT(8, &BluetoothDaemonAvrcpModule::RegisterNotificationNtf)
 #endif
   };
 

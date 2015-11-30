@@ -23,22 +23,22 @@ const {findOptimalTimeInterval} = require("devtools/animationinspector/utils");
 //   interval, this string will be eval'd and tested to be truthy.
 const TEST_DATA = [{
   desc: "With 1px being 1ms and no minSpacing, expect the interval to be the " +
-        "interval multiple",
+        "default min spacing",
   timeScale: 1,
   minSpacing: undefined,
-  expectedInterval: 25
+  expectedInterval: 10
 }, {
-  desc: "With 1px being 1ms and a custom minSpacing being a multiple of 25 " +
+  desc: "With 1px being 1ms and a custom minSpacing being a multiple of 10 " +
         "expect the interval to be the custom min spacing",
   timeScale: 1,
-  minSpacing: 50,
-  expectedInterval: 50
+  minSpacing: 40,
+  expectedInterval: 40
 }, {
-  desc: "With 1px being 1ms and a custom minSpacing not being multiple of 25 " +
+  desc: "With 1px being 1ms and a custom minSpacing not being multiple of 10 " +
         "expect the interval to be the next multiple of 10",
   timeScale: 1,
-  minSpacing: 26,
-  expectedInterval: 50
+  minSpacing: 13,
+  expectedInterval: 20
 }, {
   desc: "If 1ms corresponds to a distance that is greater than the min " +
         "spacing then, expect the interval to be this distance",
@@ -48,17 +48,17 @@ const TEST_DATA = [{
 }, {
   desc: "If 1ms corresponds to a distance that is greater than the min " +
         "spacing then, expect the interval to be this distance, even if it " +
-        "isn't a multiple of 25",
+        "isn't a multiple of 10",
   timeScale: 33,
   minSpacing: undefined,
   expectedInterval: 33
 }, {
   desc: "If 1ms is a very small distance, then expect this distance to be " +
-        "multiplied by 25, 50, 100, 200, etc... until it goes over the min " +
+        "multiplied by 10, 20, 40, 80, etc... until it goes over the min " +
         "spacing",
   timeScale: 0.001,
   minSpacing: undefined,
-  expectedInterval: 12.8
+  expectedInterval: 10.24
 }, {
   desc: "If the time scale is such that we need to iterate more than the " +
         "maximum allowed number of iterations, then expect an interval lower " +

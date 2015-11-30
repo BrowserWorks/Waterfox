@@ -16,7 +16,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerParent",
 /*
  * Password manager object for the browser contextual menu.
  */
-var LoginManagerContextMenu = {
+let LoginManagerContextMenu = {
   dateAndTimeFormatter: new Intl.DateTimeFormat(undefined,
                         { day: "numeric", month: "short", year: "numeric" }),
   /**

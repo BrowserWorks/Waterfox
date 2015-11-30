@@ -8,10 +8,10 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 
 // use ppmm to handle file-picker message.
-var ppmm = Cc['@mozilla.org/parentprocessmessagemanager;1']
+let ppmm = Cc['@mozilla.org/parentprocessmessagemanager;1']
              .getService(Ci.nsIMessageListenerManager);
 
-var pickResult = null;
+let pickResult = null;
 
 function processPickMessage(message) {
   let sender = message.target.QueryInterface(Ci.nsIMessageSender);

@@ -1,13 +1,25 @@
-FROM          taskcluster/centos6-build:0.0.2
-MAINTAINER    Dustin J. Mitchell <dustin@mozilla.com>
+FROM          quay.io/djmitche/ubuntu-build:0.0.4
+MAINTAINER    Morgan Reece Phillips <winter2718@gmail.com>
 
 # Add build scripts; these are the entry points from the taskcluster worker, and
 # operate on environment variables
 ADD             bin /home/worker/bin
 RUN             chmod +x /home/worker/bin/*
 
-# Generate machine uuid file
-RUN dbus-uuidgen --ensure=/var/lib/dbus/machine-id
+# Add custom mozharness configs
+ADD             configs /home/worker/configs
+
+##
+# COMPILER HACKS
+##
+ADD             hacks.sh /tmp/
+RUN             /tmp/hacks.sh
+
+# So that the compilers can find necessary libraries
+# gcc
+ENV           LIBRARY_PATH  /usr/lib/x86_64-linux-gnu
+# clang
+ENV           CPLUS_INCLUDE_PATH /usr/include/c++/4.8:/usr/include/c++/4.8/backward:/usr/include/x86_64-linux-gnu/c++/4.8
 
 # Stubbed out credentials; mozharness looks for this file an issues a WARNING
 # if it's not found, which causes the build to fail.  Note that this needs to
@@ -19,11 +31,6 @@ ADD           oauth.txt /home/worker/
 # Note that this needs to be in the parent of the workspace directory and in
 # the directory where mozharness is run (not its --work-dir)
 ADD           buildprops.json /home/worker/
-
-# install tooltool directly from github where tooltool_wrapper.sh et al. expect
-# to find it
-RUN wget -O /builds/tooltool.py https://raw.githubusercontent.com/mozilla/build-tooltool/master/tooltool.py
-RUN chmod +x /builds/tooltool.py
 
 # Set a default command useful for debugging
 CMD ["/bin/bash", "--login"]

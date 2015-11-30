@@ -19,7 +19,6 @@ SOURCES += [
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
-    '../hunspell/glue',
     '../hunspell/src',
     '/dom/base',
     '/editor/libeditor',
@@ -27,3 +26,5 @@ LOCAL_INCLUDES += [
 EXPORTS.mozilla += [
      'mozSpellChecker.h',
 ]
+
+FAIL_ON_WARNINGS = True

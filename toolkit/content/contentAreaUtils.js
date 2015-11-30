@@ -129,7 +129,7 @@ function saveImageURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
 // This is like saveDocument, but takes any browser/frame-like element
 // (nsIFrameLoaderOwner) and saves the current document inside it,
 // whether in-process or out-of-process.
-function saveBrowser(aBrowser, aSkipPrompt, aOuterWindowID=0)
+function saveBrowser(aBrowser, aSkipPrompt)
 {
   if (!aBrowser) {
     throw "Must have a browser when calling saveBrowser";
@@ -137,15 +137,13 @@ function saveBrowser(aBrowser, aSkipPrompt, aOuterWindowID=0)
   let persistable = aBrowser.QueryInterface(Ci.nsIFrameLoaderOwner)
                     .frameLoader
                     .QueryInterface(Ci.nsIWebBrowserPersistable);
-  let stack = Components.stack.caller;
-  persistable.startPersistence(aOuterWindowID, {
+  persistable.startPersistence({
     onDocumentReady: function (document) {
       saveDocument(document, aSkipPrompt);
-    },
-    onError: function (status) {
-      throw new Components.Exception("saveBrowser failed asynchronously in startPersistence",
-                                     status, stack);
     }
+    // This interface also has an |onError| method which takes an
+    // nsresult, but in case of asynchronous failure there isn't
+    // really anything useful that can be done here.
   });
 }
 
@@ -155,7 +153,8 @@ function saveBrowser(aBrowser, aSkipPrompt, aOuterWindowID=0)
 // aDocument can also be a CPOW for a remote nsIDOMDocument, in which
 // case "save as" modes that serialize the document's DOM are
 // unavailable.  This is a temporary measure for the "Save Frame As"
-// command (bug 1141337) and pre-e10s add-ons.
+// command (bug 1141337), and it's possible that there could be
+// add-ons doing something similar.
 function saveDocument(aDocument, aSkipPrompt)
 {
   const Ci = Components.interfaces;

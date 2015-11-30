@@ -48,7 +48,7 @@ protected:
   virtual PTCPServerSocketChild*
     AllocPTCPServerSocketChild(const uint16_t& aLocalPort,
                                const uint16_t& aBacklog,
-                               const bool& aUseArrayBuffers) override;
+                               const nsString& aBinaryType) override;
   virtual bool DeallocPTCPServerSocketChild(PTCPServerSocketChild*) override;
   virtual PUDPSocketChild* AllocPUDPSocketChild(const Principal& aPrincipal,
                                                 const nsCString& aFilter) override;

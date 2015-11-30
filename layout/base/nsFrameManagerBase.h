@@ -20,7 +20,7 @@
 #define _nsFrameManagerBase_h_
 
 #include "nsDebug.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "mozilla/Attributes.h"
 
 class nsIFrame;

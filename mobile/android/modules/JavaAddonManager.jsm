@@ -29,7 +29,7 @@ function resolveGeckoURI(uri) {
 /**
  * A promise-based API
  */
-var JavaAddonManager = Object.freeze({
+let JavaAddonManager = Object.freeze({
   classInstanceFromFile: function(classname, filename) {
     if (!classname) {
       throw new Error("classname cannot be null");

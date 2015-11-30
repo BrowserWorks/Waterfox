@@ -67,7 +67,7 @@ SharedPlanarYCbCrImage::GetTextureClient(CompositableClient* aClient)
 uint8_t*
 SharedPlanarYCbCrImage::GetBuffer()
 {
-  return mTextureClient ? mTextureClient->GetBuffer() : nullptr;
+  return mTextureClient->GetBuffer();
 }
 
 already_AddRefed<gfx::SourceSurface>
@@ -80,7 +80,7 @@ SharedPlanarYCbCrImage::GetAsSourceSurface()
   return PlanarYCbCrImage::GetAsSourceSurface();
 }
 
-bool
+void
 SharedPlanarYCbCrImage::SetData(const PlanarYCbCrData& aData)
 {
   // If mTextureClient has not already been allocated (through Allocate(aData))
@@ -88,21 +88,20 @@ SharedPlanarYCbCrImage::SetData(const PlanarYCbCrData& aData)
   // been called since it will trigger a full copy.
   PlanarYCbCrData data = aData;
   if (!mTextureClient && !Allocate(data)) {
-    return false;
+    return;
   }
 
   MOZ_ASSERT(mTextureClient->AsTextureClientYCbCr());
   if (!mTextureClient->Lock(OpenMode::OPEN_WRITE_ONLY)) {
     MOZ_ASSERT(false, "Failed to lock the texture.");
-    return false;
+    return;
   }
   TextureClientAutoUnlock unlock(mTextureClient);
   if (!mTextureClient->AsTextureClientYCbCr()->UpdateYCbCr(aData)) {
     MOZ_ASSERT(false, "Failed to copy YCbCr data into the TextureClient");
-    return false;
+    return;
   }
   mTextureClient->MarkImmutable();
-  return true;
 }
 
 // needs to be overriden because the parent class sets mBuffer which we
@@ -132,13 +131,10 @@ SharedPlanarYCbCrImage::AllocateAndGetNewBuffer(uint32_t aSize)
   return serializer.GetData();
 }
 
-bool
+void
 SharedPlanarYCbCrImage::SetDataNoCopy(const Data &aData)
 {
   MOZ_ASSERT(mTextureClient, "This Image should have already allocated data");
-  if (!mTextureClient) {
-    return false;
-  }
   mData = aData;
   mSize = aData.mPicSize;
   /* SetDataNoCopy is used to update YUV plane offsets without (re)allocating
@@ -160,7 +156,6 @@ SharedPlanarYCbCrImage::SetDataNoCopy(const Data &aData)
                                   aData.mYSize,
                                   aData.mCbCrSize,
                                   aData.mStereoMode);
-  return true;
 }
 
 uint8_t*

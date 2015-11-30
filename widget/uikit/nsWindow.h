@@ -57,14 +57,14 @@ public:
     NS_IMETHOD              Move(double aX, double aY) override;
     NS_IMETHOD              PlaceBehind(nsTopLevelWidgetZPlacement aPlacement,
                                         nsIWidget *aWidget, bool aActivate) override;
-    NS_IMETHOD              SetSizeMode(nsSizeMode aMode) override;
+    NS_IMETHOD              SetSizeMode(int32_t aMode) override;
     void                    EnteredFullScreen(bool aFullScreen);
     NS_IMETHOD              Resize(double aWidth, double aHeight, bool aRepaint) override;
     NS_IMETHOD              Resize(double aX, double aY, double aWidth, double aHeight, bool aRepaint) override;
     NS_IMETHOD              GetScreenBounds(nsIntRect &aRect) override;
     void                    ReportMoveEvent();
     void                    ReportSizeEvent();
-    void                    ReportSizeModeEvent(nsSizeMode aMode);
+    void                    ReportSizeModeEvent(int32_t aMode);
 
     CGFloat                 BackingScaleFactor();
     void                    BackingScaleFactorChanged();

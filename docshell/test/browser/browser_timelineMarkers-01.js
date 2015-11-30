@@ -5,7 +5,7 @@
 
 // Test that the docShell has the right profile timeline API
 
-var test = Task.async(function*() {
+let test = Task.async(function*() {
   waitForExplicitFinish();
 
   yield openUrl("data:text/html;charset=utf-8,Test page");

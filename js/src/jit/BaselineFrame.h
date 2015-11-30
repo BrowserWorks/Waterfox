@@ -280,7 +280,8 @@ class BaselineFrame
     inline void popBlock(JSContext* cx);
     inline bool freshenBlock(JSContext* cx);
 
-    bool initStrictEvalScopeObjects(JSContext* cx);
+    bool strictEvalPrologue(JSContext* cx);
+    bool heavyweightFunPrologue(JSContext* cx);
     bool initFunctionScopeObjects(JSContext* cx);
 
     void initArgsObjUnchecked(ArgumentsObject& argsobj) {
@@ -408,7 +409,9 @@ class BaselineFrame
     bool isNonStrictEvalFrame() const {
         return isEvalFrame() && !script()->strict();
     }
-    bool isDirectEvalFrame() const;
+    bool isDirectEvalFrame() const {
+        return isEvalFrame() && script()->staticLevel() > 0;
+    }
     bool isNonStrictDirectEvalFrame() const {
         return isNonStrictEvalFrame() && isDirectEvalFrame();
     }

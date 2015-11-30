@@ -703,5 +703,5 @@ TagAutoCompleteSearch.prototype = {
   ])
 };
 
-var component = [TaggingService, TagAutoCompleteSearch];
+let component = [TaggingService, TagAutoCompleteSearch];
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(component);

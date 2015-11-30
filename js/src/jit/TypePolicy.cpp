@@ -136,7 +136,7 @@ ComparePolicy::adjustInputs(TempAllocator& alloc, MInstruction* def)
 
     // Box inputs to get value
     if (compare->compareType() == MCompare::Compare_Unknown ||
-        compare->compareType() == MCompare::Compare_Bitwise)
+        compare->compareType() == MCompare::Compare_Value)
     {
         return BoxInputsPolicy::staticAdjustInputs(alloc, def);
     }
@@ -493,7 +493,7 @@ bool
 DoublePolicy<Op>::staticAdjustInputs(TempAllocator& alloc, MInstruction* def)
 {
     MDefinition* in = def->getOperand(Op);
-    if (in->type() == MIRType_Double || in->type() == MIRType_SinCosDouble)
+    if (in->type() == MIRType_Double)
         return true;
 
     MToDouble* replace = MToDouble::New(alloc, in);
@@ -1082,30 +1082,6 @@ FilterTypeSetPolicy::adjustInputs(TempAllocator& alloc, MInstruction* ins)
     MIRType inputType = ins->getOperand(0)->type();
     MIRType outputType = ins->type();
 
-    // Special case when output is a Float32, but input isn't.
-    if (outputType == MIRType_Float32 && inputType != MIRType_Float32) {
-        // Create a MToFloat32 to add between the MFilterTypeSet and
-        // its uses.
-        MInstruction* replace = MToFloat32::New(alloc, ins);
-        ins->justReplaceAllUsesWithExcept(replace);
-        ins->block()->insertAfter(ins, replace);
-
-        // Reset the type to not MIRType_Float32
-        // Note: setResultType shouldn't happen in TypePolicies,
-        //       Here it is fine, since there is just one use we just
-        //       added ourself. And the resulting type after MToFloat32
-        //       equals the original type.
-        ins->setResultType(ins->resultTypeSet()->getKnownMIRType());
-        outputType = ins->type();
-
-        // Do the type analysis
-        if (!replace->typePolicy()->adjustInputs(alloc, replace))
-            return false;
-
-        // Fall through to let the MFilterTypeSet adjust its input based
-        // on its new type.
-    }
-
     // Input and output type are already in accordance.
     if (inputType == outputType)
         return true;
@@ -1221,7 +1197,6 @@ FilterTypeSetPolicy::adjustInputs(TempAllocator& alloc, MInstruction* ins)
     _(MixPolicy<SimdSameAsReturnedTypePolicy<0>, SimdScalarPolicy<1> >) \
     _(MixPolicy<StringPolicy<0>, IntPolicy<1> >)                        \
     _(MixPolicy<StringPolicy<0>, StringPolicy<1> >)                     \
-    _(MixPolicy<BoxPolicy<0>, BoxPolicy<1> >)                           \
     _(NoFloatPolicy<0>)                                                 \
     _(NoFloatPolicyAfter<1>)                                            \
     _(NoFloatPolicyAfter<2>)                                            \

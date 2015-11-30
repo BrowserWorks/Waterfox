@@ -4,23 +4,23 @@
 
 "use strict";
 
-// Tests that a color change in the color picker is committed when ENTER is
-// pressed.
+// Test that a color change in the color picker is committed when ENTER is pressed
 
-const TEST_URI = `
-  <style type="text/css">
-    body {
-      border: 2em solid rgba(120, 120, 120, .5);
-    }
-  </style>
-  Testing the color picker tooltip!
-`;
+const PAGE_CONTENT = [
+  '<style type="text/css">',
+  '  body {',
+  '    border: 2em solid rgba(120, 120, 120, .5);',
+  '  }',
+  '</style>',
+  'Testing the color picker tooltip!'
+].join("\n");
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-  let {view} = yield openRuleView();
+  yield addTab("data:text/html;charset=utf-8,rule view color picker tooltip test");
+  content.document.body.innerHTML = PAGE_CONTENT;
+  let {toolbox, inspector, view} = yield openRuleView();
 
-  let swatch = getRuleViewProperty(view, "body", "border").valueSpan
+  let swatch = getRuleViewProperty(view, "body" , "border").valueSpan
     .querySelector(".ruleview-colorswatch");
   yield testPressingEnterCommitsChanges(swatch, view);
 });
@@ -42,7 +42,7 @@ function* testPressingEnterCommitsChanges(swatch, ruleView) {
     "The color swatch's background was updated");
   is(getRuleViewProperty(ruleView, "body", "border").valueSpan.textContent,
     "2em solid rgba(0, 255, 0, 0.5)",
-    "The text of the border css property was updated");
+    "The text of the border css property was updated");;
 
   let spectrum = yield cPicker.spectrum;
   let onHidden = cPicker.tooltip.once("hidden");

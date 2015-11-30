@@ -64,5 +64,7 @@ if CONFIG['OS_ARCH'] == 'WINNT':
 
 FINAL_LIBRARY = 'browsercomps'
 
+FAIL_ON_WARNINGS = True
+
 with Files('**'):
     BUG_COMPONENT = ('Firefox', 'Migration')

@@ -6,7 +6,7 @@ const Cu = Components.utils;
 const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const RuntimeList = require("devtools/webide/runtime-list");
 
-var runtimeList = new RuntimeList(window, window.parent);
+let runtimeList = new RuntimeList(window, window.parent);
 
 window.addEventListener("load", function onLoad() {
   window.removeEventListener("load", onLoad, true);

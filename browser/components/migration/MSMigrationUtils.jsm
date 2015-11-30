@@ -27,6 +27,7 @@ const EDGE_COOKIE_PATH_OPTIONS = ["", "#!001\\", "#!002\\"];
 const EDGE_COOKIES_SUFFIX = "MicrosoftEdge\\Cookies";
 const EDGE_FAVORITES = "AC\\MicrosoftEdge\\User\\Default\\Favorites";
 const EDGE_READINGLIST = "AC\\MicrosoftEdge\\User\\Default\\DataStore\\Data\\";
+
 const FREE_CLOSE_FAILED = 0;
 const INTERNET_EXPLORER_EDGE_GUID = [0x3CCD5499,
                                      0x4B1087A8,
@@ -72,15 +73,13 @@ function CtypesKernelHelpers() {
     {wSecond: wintypes.WORD},
     {wMilliseconds: wintypes.WORD}
   ]);
-
-  this._structs.FILETIME = new ctypes.StructType("FILETIME", [
+  this._structs.FILETIME = new ctypes.StructType('FILETIME', [
     {dwLowDateTime: wintypes.DWORD},
     {dwHighDateTime: wintypes.DWORD}
   ]);
 
   try {
     this._libs.kernel32 = ctypes.open("Kernel32");
-
     this._functions.FileTimeToSystemTime =
       this._libs.kernel32.declare("FileTimeToSystemTime",
                                   ctypes.default_abi,
@@ -107,7 +106,7 @@ CtypesKernelHelpers.prototype = {
     this._libs = {};
   },
 
-   /**
+  /**
    * Converts a FILETIME struct (2 DWORDS), to a SYSTEMTIME struct,
    * and then deduces the number of seconds since the epoch (which
    * is the data we want for the cookie expiry date).
@@ -285,7 +284,7 @@ function hostIsIPAddress(aHost) {
   return false;
 }
 
-var gEdgeDir;
+let gEdgeDir;
 function getEdgeLocalDataFolder() {
   if (gEdgeDir) {
     return gEdgeDir.clone();
@@ -510,9 +509,7 @@ Bookmarks.prototype = {
 
   _ensureEdgeReadingListFolder: Task.async(function*(parentGuid) {
     if (!this.__edgeReadingListFolderGuid) {
-      let folderTitle = MigrationUtils.getLocalizedString("importedEdgeReadingList");
-      let folderSpec = {type: PlacesUtils.bookmarks.TYPE_FOLDER, parentGuid, title: folderTitle};
-      this.__edgeReadingListFolderGuid = (yield PlacesUtils.bookmarks.insert(folderSpec)).guid;
+      this.__edgeReadingListFolderGuid = yield MigrationUtils.createImportedBookmarksFolder("Edge", parentGuid);
     }
     return this.__edgeReadingListFolderGuid;
   }),
@@ -907,7 +904,7 @@ WindowsVaultFormPasswords.prototype = {
   }
 };
 
-var MSMigrationUtils = {
+let MSMigrationUtils = {
   MIGRATION_TYPE_IE: 1,
   MIGRATION_TYPE_EDGE: 2,
   CtypesKernelHelpers: CtypesKernelHelpers,

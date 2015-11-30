@@ -11,10 +11,10 @@ const PAGE_URL = BASE_URL + "/framedPage.html";
 const LEFT_URL = BASE_URL + "/frameLeft.html";
 const RIGHT_URL = BASE_URL + "/frameRight.html";
 
-var gTabLoaded = false;
-var gLeftFrameVisited = false;
+let gTabLoaded = false;
+let gLeftFrameVisited = false;
 
-var observer = {
+let observer = {
   observe: function(aSubject, aTopic, aData)
   {
     let url = aSubject.QueryInterface(Ci.nsIURI).spec;

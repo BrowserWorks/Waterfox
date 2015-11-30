@@ -39,8 +39,7 @@ public class GuestProfileConfiguration implements RestrictionConfiguration {
     );
 
     private static final List<String> BANNED_URLS = Arrays.asList(
-            "about:config",
-            "about:addons"
+            "about:config"
     );
 
     @Override
@@ -61,7 +60,6 @@ public class GuestProfileConfiguration implements RestrictionConfiguration {
             return false;
         }
 
-        url = url.toLowerCase();
         for (String banned : BANNED_URLS) {
             if (url.startsWith(banned)) {
                 return false;
@@ -75,7 +73,4 @@ public class GuestProfileConfiguration implements RestrictionConfiguration {
     public boolean isRestricted() {
         return true;
     }
-
-    @Override
-    public void update() {}
 }

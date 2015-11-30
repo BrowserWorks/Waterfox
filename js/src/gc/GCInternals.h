@@ -22,7 +22,7 @@ namespace gc {
 void
 MarkPersistentRootedChains(JSTracer* trc);
 
-class MOZ_RAII AutoCopyFreeListToArenas
+class AutoCopyFreeListToArenas
 {
     JSRuntime* runtime;
     ZoneSelector selector;
@@ -32,7 +32,7 @@ class MOZ_RAII AutoCopyFreeListToArenas
     ~AutoCopyFreeListToArenas();
 };
 
-struct MOZ_RAII AutoFinishGC
+struct AutoFinishGC
 {
     explicit AutoFinishGC(JSRuntime* rt);
 };
@@ -41,7 +41,7 @@ struct MOZ_RAII AutoFinishGC
  * This class should be used by any code that needs to exclusive access to the
  * heap in order to trace through it...
  */
-class MOZ_RAII AutoTraceSession
+class AutoTraceSession
 {
   public:
     explicit AutoTraceSession(JSRuntime* rt, JS::HeapState state = JS::HeapState::Tracing);
@@ -56,10 +56,9 @@ class MOZ_RAII AutoTraceSession
     void operator=(const AutoTraceSession&) = delete;
 
     JS::HeapState prevState;
-    AutoSPSEntry pseudoFrame;
 };
 
-struct MOZ_RAII AutoPrepareForTracing
+struct AutoPrepareForTracing
 {
     AutoFinishGC finish;
     AutoTraceSession session;
@@ -93,16 +92,19 @@ IsIncrementalGCSafe(JSRuntime* rt);
 
 #ifdef JS_GC_ZEAL
 
-class MOZ_RAII AutoStopVerifyingBarriers
+class AutoStopVerifyingBarriers
 {
     GCRuntime* gc;
     bool restartPreVerifier;
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
   public:
-    AutoStopVerifyingBarriers(JSRuntime* rt, bool isShutdown)
+    AutoStopVerifyingBarriers(JSRuntime* rt, bool isShutdown
+                              MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
       : gc(&rt->gc)
     {
         restartPreVerifier = gc->endVerifyPreBarriers() && !isShutdown;
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     }
 
     ~AutoStopVerifyingBarriers() {
@@ -125,7 +127,7 @@ class MOZ_RAII AutoStopVerifyingBarriers
     }
 };
 #else
-struct MOZ_RAII AutoStopVerifyingBarriers
+struct AutoStopVerifyingBarriers
 {
     AutoStopVerifyingBarriers(JSRuntime*, bool) {}
 };
@@ -150,15 +152,18 @@ struct MovingTracer : JS::CallbackTracer
 #endif
 };
 
-class MOZ_RAII AutoMaybeStartBackgroundAllocation
+class AutoMaybeStartBackgroundAllocation
 {
   private:
     JSRuntime* runtime;
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
   public:
-    AutoMaybeStartBackgroundAllocation()
+    explicit AutoMaybeStartBackgroundAllocation(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM)
       : runtime(nullptr)
-    {}
+    {
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+    }
 
     void tryToStartBackgroundAllocation(JSRuntime* rt) {
         runtime = rt;
@@ -171,14 +176,15 @@ class MOZ_RAII AutoMaybeStartBackgroundAllocation
 };
 
 // In debug builds, set/unset the GC sweeping flag for the current thread.
-struct MOZ_RAII AutoSetThreadIsSweeping
+struct AutoSetThreadIsSweeping
 {
 #ifdef DEBUG
-    AutoSetThreadIsSweeping()
+    explicit AutoSetThreadIsSweeping(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM)
       : threadData_(js::TlsPerThreadData.get())
     {
         MOZ_ASSERT(!threadData_->gcSweeping);
         threadData_->gcSweeping = true;
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     }
 
     ~AutoSetThreadIsSweeping() {
@@ -188,6 +194,7 @@ struct MOZ_RAII AutoSetThreadIsSweeping
 
   private:
     PerThreadData* threadData_;
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 #else
     AutoSetThreadIsSweeping() {}
 #endif

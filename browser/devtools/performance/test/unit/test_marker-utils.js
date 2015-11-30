@@ -19,8 +19,6 @@ add_task(function () {
     "getMarkerLabel() returns a simple label");
   equal(Utils.getMarkerLabel({ name: "Javascript", causeName: "setTimeout handler" }), "setTimeout",
     "getMarkerLabel() returns a label defined via function");
-  equal(Utils.getMarkerLabel({ name: "GarbageCollection", causeName: "ALLOC_TRIGGER" }), "Incremental GC",
-    "getMarkerLabel() returns a label for a function that is generalizable");
 
   ok(Utils.getMarkerFields({ name: "Paint" }).length === 0,
     "getMarkerFields() returns an empty array when no fields defined");
@@ -41,10 +39,10 @@ add_task(function () {
   equal(fields[1].label, "Phase:", "getMarkerFields() correctly returns fields via function (3)");
   equal(fields[1].value, "Target", "getMarkerFields() correctly returns fields via function (4)");
 
-  fields = Utils.getMarkerFields({ name: "GarbageCollection", causeName: "ALLOC_TRIGGER" });
+  fields = Utils.getMarkerFields({ name: "GarbageCollection", cause: "ALLOC_TRIGGER" });
   equal(fields[0].value, "Too Many Allocations", "Uses L10N for GC reasons");
 
-  fields = Utils.getMarkerFields({ name: "GarbageCollection", causeName: "NOT_A_GC_REASON" });
+  fields = Utils.getMarkerFields({ name: "GarbageCollection", cause: "NOT_A_GC_REASON" });
   equal(fields[0].value, "NOT_A_GC_REASON", "Defaults to enum for GC reasons when not L10N'd");
 
   equal(Utils.getMarkerFields({ name: "Javascript", causeName: "Some Platform Field" })[0].value, "(Gecko)",
@@ -55,7 +53,7 @@ add_task(function () {
 
   equal(Utils.getMarkerClassName("Javascript"), "Function Call",
     "getMarkerClassName() returns correct string when defined via function");
-  equal(Utils.getMarkerClassName("GarbageCollection"), "Garbage Collection",
+  equal(Utils.getMarkerClassName("GarbageCollection"), "Incremental GC",
     "getMarkerClassName() returns correct string when defined via function");
   equal(Utils.getMarkerClassName("Reflow"), "Layout",
     "getMarkerClassName() returns correct string when defined via string");

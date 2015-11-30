@@ -52,7 +52,7 @@ function fakePingId(type, number) {
   return id;
 }
 
-var checkPingsSaved = Task.async(function* (pingIds) {
+let checkPingsSaved = Task.async(function* (pingIds) {
   let allFound = true;
   for (let id of pingIds) {
     const path = OS.Path.join(TelemetryStorage.pingDirectoryPath, id);

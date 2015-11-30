@@ -64,7 +64,6 @@
 #include "nsIScriptableRegion.h"
 #include <algorithm>
 #include "ScrollbarActivity.h"
-#include "../../editor/libeditor/nsTextEditRules.h"
 
 #ifdef ACCESSIBILITY
 #include "nsAccessibilityService.h"
@@ -917,7 +916,7 @@ nsTreeBodyFrame::CheckOverflow(const ScrollParts& aParts)
 
   if (verticalOverflowChanged) {
     InternalScrollPortEvent event(true,
-      mVerticalOverflow ? eScrollPortOverflow : eScrollPortUnderflow,
+      mVerticalOverflow ? NS_SCROLLPORT_OVERFLOW : NS_SCROLLPORT_UNDERFLOW,
       nullptr);
     event.orient = InternalScrollPortEvent::vertical;
     EventDispatcher::Dispatch(content, presContext, &event);
@@ -925,7 +924,7 @@ nsTreeBodyFrame::CheckOverflow(const ScrollParts& aParts)
 
   if (horizontalOverflowChanged) {
     InternalScrollPortEvent event(true,
-      mHorizontalOverflow ? eScrollPortOverflow : eScrollPortUnderflow,
+      mHorizontalOverflow ? NS_SCROLLPORT_OVERFLOW : NS_SCROLLPORT_UNDERFLOW,
       nullptr);
     event.orient = InternalScrollPortEvent::horizontal;
     EventDispatcher::Dispatch(content, presContext, &event);
@@ -1190,7 +1189,7 @@ nsTreeBodyFrame::GetCoordsForCellItem(int32_t aRow, nsITreeColumn* aCol, const n
       nsRect twistyRect(cellRect);
       nsStyleContext* twistyContext = GetPseudoStyleContext(nsCSSAnonBoxes::moztreetwisty);
       GetTwistyRect(aRow, currCol, imageRect, twistyRect, presContext,
-                    twistyContext);
+                    rc, twistyContext);
 
       if (NS_LITERAL_CSTRING("twisty").Equals(aElement)) {
         // If we're looking for the twisty Rect, just return the size
@@ -1555,7 +1554,7 @@ nsTreeBodyFrame::GetItemWithinCellAt(nscoord aX, const nsRect& aCellRect,
 
     nsRect imageSize;
     GetTwistyRect(aRowIndex, aColumn, imageSize, twistyRect, presContext,
-                  twistyContext);
+                  rc, twistyContext);
 
     // We will treat a click as hitting the twisty if it happens on the margins, borders, padding,
     // or content of the twisty object.  By allowing a "slop" into the margin, we make it a little
@@ -1715,7 +1714,7 @@ nsTreeBodyFrame::GetCellWidth(int32_t aRow, nsTreeColumn* aCol,
     nsRect imageSize;
     nsRect twistyRect(cellRect);
     GetTwistyRect(aRow, aCol, imageSize, twistyRect, PresContext(),
-                  twistyContext);
+                  *aRenderingContext, twistyContext);
 
     // Add in the margins of the twisty element.
     nsMargin twistyMargin;
@@ -2060,6 +2059,7 @@ nsTreeBodyFrame::GetTwistyRect(int32_t aRowIndex,
                                nsRect& aImageRect,
                                nsRect& aTwistyRect,
                                nsPresContext* aPresContext,
+                               nsRenderingContext& aRenderingContext,
                                nsStyleContext* aTwistyContext)
 {
   // The twisty rect extends all the way to the end of the cell.  This is incorrect.  We need to
@@ -2563,7 +2563,7 @@ nsTreeBodyFrame::HandleEvent(nsPresContext* aPresContext,
                              WidgetGUIEvent* aEvent,
                              nsEventStatus* aEventStatus)
 {
-  if (aEvent->mMessage == eMouseOver || aEvent->mMessage == eMouseMove) {
+  if (aEvent->message == NS_MOUSE_OVER || aEvent->message == NS_MOUSE_MOVE) {
     nsPoint pt = nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent, this);
     int32_t xTwips = pt.x - mInnerBox.x;
     int32_t yTwips = pt.y - mInnerBox.y;
@@ -2576,12 +2576,14 @@ nsTreeBodyFrame::HandleEvent(nsPresContext* aPresContext,
       if (mMouseOverRow != -1)
         InvalidateRow(mMouseOverRow);
     }
-  } else if (aEvent->mMessage == eMouseOut) {
+  }
+  else if (aEvent->message == NS_MOUSE_OUT) {
     if (mMouseOverRow != -1) {
       InvalidateRow(mMouseOverRow);
       mMouseOverRow = -1;
     }
-  } else if (aEvent->mMessage == eDragEnter) {
+  }
+  else if (aEvent->message == NS_DRAGDROP_ENTER) {
     if (!mSlots)
       mSlots = new Slots();
 
@@ -2598,7 +2600,8 @@ nsTreeBodyFrame::HandleEvent(nsPresContext* aPresContext,
     mSlots->mDropRow = -1;
     mSlots->mDropOrient = -1;
     mSlots->mDragAction = GetDropEffect(aEvent);
-  } else if (aEvent->mMessage == eDragOver) {
+  }
+  else if (aEvent->message == NS_DRAGDROP_OVER) {
     // The mouse is hovering over this tree. If we determine things are
     // different from the last time, invalidate the drop feedback at the old
     // position, query the view to see if the current location is droppable,
@@ -2707,7 +2710,8 @@ nsTreeBodyFrame::HandleEvent(nsPresContext* aPresContext,
     // Indicate that the drop is allowed by preventing the default behaviour.
     if (mSlots->mDropAllowed)
       *aEventStatus = nsEventStatus_eConsumeNoDefault;
-  } else if (aEvent->mMessage == eDrop) {
+  }
+  else if (aEvent->message == NS_DRAGDROP_DROP) {
      // this event was meant for another frame, so ignore it
      if (!mSlots)
        return NS_OK;
@@ -2731,7 +2735,8 @@ nsTreeBodyFrame::HandleEvent(nsPresContext* aPresContext,
     mSlots->mDropOrient = -1;
     mSlots->mIsDragging = false;
     *aEventStatus = nsEventStatus_eConsumeNoDefault; // already handled the drop
-  } else if (aEvent->mMessage == eDragExit) {
+  }
+  else if (aEvent->message == NS_DRAGDROP_EXIT) {
     // this event was meant for another frame, so ignore it
     if (!mSlots)
       return NS_OK;
@@ -3207,7 +3212,7 @@ nsTreeBodyFrame::PaintCell(int32_t              aRowIndex,
       nsRect imageSize;
       nsRect twistyRect(aCellRect);
       GetTwistyRect(aRowIndex, aColumn, imageSize, twistyRect, aPresContext,
-                    twistyContext);
+                    aRenderingContext, twistyContext);
 
       nsMargin twistyMargin;
       twistyContext->StyleMargin()->GetMargin(twistyMargin);
@@ -3309,7 +3314,6 @@ nsTreeBodyFrame::PaintCell(int32_t              aRowIndex,
     if (dirtyRect.IntersectRect(aDirtyRect, elementRect)) {
       switch (aColumn->GetType()) {
         case nsITreeColumn::TYPE_TEXT:
-        case nsITreeColumn::TYPE_PASSWORD:
           PaintText(aRowIndex, aColumn, elementRect, aPresContext, aRenderingContext, aDirtyRect, currX);
           break;
         case nsITreeColumn::TYPE_CHECKBOX:
@@ -3373,7 +3377,7 @@ nsTreeBodyFrame::PaintTwisty(int32_t              aRowIndex,
 
   nsRect imageSize;
   nsITheme* theme = GetTwistyRect(aRowIndex, aColumn, imageSize, twistyRect,
-                                  aPresContext, twistyContext);
+                                  aPresContext, aRenderingContext, twistyContext);
 
   // Subtract out the remaining width.  This is done even when we don't actually paint a twisty in 
   // this cell, so that cells in different rows still line up.
@@ -3596,11 +3600,6 @@ nsTreeBodyFrame::PaintText(int32_t              aRowIndex,
   // Now obtain the text for our cell.
   nsAutoString text;
   mView->GetCellText(aRowIndex, aColumn, text);
-
-  if (aColumn->Type() == nsITreeColumn::TYPE_PASSWORD) {
-    nsTextEditRules::FillBufWithPWChars(&text, text.Length());
-  }
-
   // We're going to paint this text so we need to ensure bidi is enabled if
   // necessary
   CheckTextForBidi(text);
@@ -3926,8 +3925,8 @@ nsTreeBodyFrame::PaintDropFeedback(const nsRect&        aDropFeedbackRect,
       nsStyleContext* twistyContext = GetPseudoStyleContext(nsCSSAnonBoxes::moztreetwisty);
       nsRect imageSize;
       nsRect twistyRect;
-      GetTwistyRect(mSlots->mDropRow, primaryCol, imageSize, twistyRect,
-                    aPresContext, twistyContext);
+      GetTwistyRect(mSlots->mDropRow, primaryCol, imageSize, twistyRect, aPresContext,
+                    aRenderingContext, twistyContext);
       nsMargin twistyMargin;
       twistyContext->StyleMargin()->GetMargin(twistyMargin);
       twistyRect.Inflate(twistyMargin);
@@ -4554,7 +4553,7 @@ void
 nsTreeBodyFrame::FireScrollEvent()
 {
   mScrollEvent.Forget();
-  WidgetGUIEvent event(true, eScroll, nullptr);
+  WidgetGUIEvent event(true, NS_SCROLL_EVENT, nullptr);
   // scroll events fired at elements don't bubble
   event.mFlags.mBubbles = false;
   EventDispatcher::Dispatch(GetContent(), PresContext(), &event);

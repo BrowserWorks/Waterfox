@@ -31,7 +31,7 @@ function paymentFailed(aRequestId) {
   };
 }
 
-var payments = {};
+let payments = {};
 
 function closePaymentWindow(aId, aCallback) {
   if (payments[aId]) {

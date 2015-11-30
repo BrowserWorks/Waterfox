@@ -37,11 +37,11 @@ namespace mozilla {
 // that SetPosition() works correctly, the caller must make sure the layout is
 // up to date.
 //
-class AccessibleCaret
+class AccessibleCaret final
 {
 public:
   explicit AccessibleCaret(nsIPresShell* aPresShell);
-  virtual ~AccessibleCaret();
+  ~AccessibleCaret();
 
   // This enumeration representing the visibility and visual style of an
   // AccessibleCaret.
@@ -69,15 +69,12 @@ public:
     Right
   };
 
-  friend std::ostream& operator<<(std::ostream& aStream,
-                                  const Appearance& aAppearance);
-
   Appearance GetAppearance() const
   {
     return mAppearance;
   }
 
-  virtual void SetAppearance(Appearance aAppearance);
+  void SetAppearance(Appearance aAppearance);
 
   // Return true if current appearance is either Normal, NormalNotShown, Left,
   // or Right.
@@ -95,7 +92,7 @@ public:
 
   // Set true to enable the "Text Selection Bar" described in "Text Selection
   // Visual Spec" in bug 921965.
-  virtual void SetSelectionBarEnabled(bool aEnabled);
+  void SetSelectionBarEnabled(bool aEnabled);
 
   // This enumeration representing the result returned by SetPosition().
   enum class PositionChangedResult : uint8_t {
@@ -108,11 +105,7 @@ public:
     // Position is out of scroll port.
     Invisible
   };
-
-  friend std::ostream& operator<<(std::ostream& aStream,
-                                  const PositionChangedResult& aResult);
-
-  virtual PositionChangedResult SetPosition(nsIFrame* aFrame, int32_t aOffset);
+  PositionChangedResult SetPosition(nsIFrame* aFrame, int32_t aOffset);
 
   // Does two AccessibleCarets overlap?
   bool Intersects(const AccessibleCaret& aCaret) const;
@@ -134,7 +127,7 @@ public:
     return mCaretElementHolder->GetContentNode();
   }
 
-protected:
+private:
   // Argument aRect should be relative to CustomContentContainerFrame().
   void SetCaretElementStyle(const nsRect& aRect);
   void SetSelectionBarElementStyle(const nsRect& aRect);
@@ -219,12 +212,6 @@ protected:
   static float sBarWidth;
 
 }; // class AccessibleCaret
-
-std::ostream& operator<<(std::ostream& aStream,
-                         const AccessibleCaret::Appearance& aAppearance);
-
-std::ostream& operator<<(std::ostream& aStream,
-                         const AccessibleCaret::PositionChangedResult& aResult);
 
 } // namespace mozilla
 

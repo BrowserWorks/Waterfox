@@ -37,7 +37,7 @@
 #include "nsPrintfCString.h"
 
 #include "nsQuickSort.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 
 #include "prefapi.h"
 #include "prefread.h"
@@ -1514,7 +1514,7 @@ Preferences::SetCString(const char* aPref, const nsACString &aValue)
 
 // static
 nsresult
-Preferences::SetString(const char* aPref, const char16ptr_t aValue)
+Preferences::SetString(const char* aPref, const char16_t* aValue)
 {
   ENSURE_MAIN_PROCESS("Cannot SetString from content process:", aPref);
   NS_ENSURE_TRUE(InitStaticMembers(), NS_ERROR_NOT_AVAILABLE);

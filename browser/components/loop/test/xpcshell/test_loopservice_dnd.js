@@ -6,7 +6,7 @@
 
 XPCOMUtils.defineLazyModuleGetter(this, "Chat",
                                   "resource:///modules/Chat.jsm");
-var openChatOrig = Chat.open;
+let openChatOrig = Chat.open;
 
 add_test(function test_get_do_not_disturb() {
   Services.prefs.setBoolPref("loop.do_not_disturb", false);

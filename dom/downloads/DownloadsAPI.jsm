@@ -46,7 +46,7 @@ function sendPromiseMessage(aMm, aMessageName, aData, aError) {
   aMm.sendAsyncMessage(aMessageName, msg);
 }
 
-var DownloadsAPI = {
+let DownloadsAPI = {
   init: function() {
     debug("init");
 

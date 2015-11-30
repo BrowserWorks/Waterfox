@@ -236,9 +236,10 @@ private:
     // True if TCP keepalive is enabled globally.
     bool        mKeepaliveEnabledPref;
 
+    bool                   mServeMultipleEventsPerPollIter;
     mozilla::Atomic<bool>  mServingPendingQueue;
-    mozilla::Atomic<int32_t, mozilla::Relaxed> mMaxTimePerPollIter;
-    mozilla::Atomic<bool, mozilla::Relaxed>  mTelemetryEnabledPref;
+    int32_t                mMaxTimePerPollIter;
+    bool                   mTelemetryEnabledPref;
 
     void OnKeepaliveEnabledPrefChange();
     void NotifyKeepaliveEnabledPrefChange(SocketContext *sock);

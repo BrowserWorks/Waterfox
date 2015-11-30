@@ -55,7 +55,7 @@ function generateFields(json) {
   };
 }
 
-var getDescriptionPromise; // Used by tests
+let getDescriptionPromise; // Used by tests
 function BuildUI() {
   let table = document.querySelector("table");
   table.innerHTML = "";

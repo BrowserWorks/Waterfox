@@ -1921,7 +1921,6 @@ this.PlacesUtils = {
         { tags_folder: PlacesUtils.tagsFolderId,
           charset_anno: PlacesUtils.CHARSET_ANNO,
           item_guid: aItemGuid });
-    let yieldCounter = 0;
     for (let row of rows) {
       let item;
       if (!rootItem) {
@@ -1960,14 +1959,6 @@ this.PlacesUtils = {
 
       if (item.type == this.TYPE_X_MOZ_PLACE_CONTAINER)
         parentsMap.set(item.guid, item);
-
-      // With many bookmarks we end up stealing the CPU - even with yielding!
-      // So we let everyone else have a go every few items (bug 1186714).
-      if (++yieldCounter % 50 == 0) {
-        yield new Promise(resolve => {
-          Services.tm.currentThread.dispatch(resolve, Ci.nsIThread.DISPATCH_NORMAL);
-        });
-      }
     }
 
     return rootItem;
@@ -2123,7 +2114,7 @@ XPCOMUtils.defineLazyGetter(this, "gAsyncDBWrapperPromised",
  * Keywords are associated with URLs and can have POST data.
  * A single URL can have multiple keywords, provided they differ by POST data.
  */
-var Keywords = {
+let Keywords = {
   /**
    * Fetches a keyword entry based on keyword or URL.
    *
@@ -2298,7 +2289,7 @@ var Keywords = {
 
 // Set by the keywords API to distinguish notifications fired by the old API.
 // Once the old API will be gone, we can remove this and stop observing.
-var gIgnoreKeywordNotifications = false;
+let gIgnoreKeywordNotifications = false;
 
 XPCOMUtils.defineLazyGetter(this, "gKeywordsCachePromise", () =>
   PlacesUtils.withConnectionWrapper("PlacesUtils: gKeywordsCachePromise",
@@ -2405,7 +2396,7 @@ XPCOMUtils.defineLazyGetter(this, "gKeywordsCachePromise", () =>
 // working with GUIDs.  So, until it does, this helper object accesses the
 // Places database directly in order to switch between GUIDs and itemIds, and
 // "restore" GUIDs on items re-created items.
-var GuidHelper = {
+let GuidHelper = {
   // Cache for GUID<->itemId paris.
   guidsForIds: new Map(),
   idsForGuids: new Map(),

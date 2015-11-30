@@ -6,9 +6,7 @@
 #ifndef nsIFormControl_h___
 #define nsIFormControl_h___
 
-#include "mozilla/EventForwards.h"
 #include "nsISupports.h"
-
 class nsIDOMHTMLFormElement;
 class nsPresState;
 class nsFormSubmission;
@@ -197,7 +195,7 @@ public:
    */
   inline bool AllowDraggableChildren() const;
 
-  virtual bool IsDisabledForEvents(mozilla::EventMessage aMessage)
+  virtual bool IsDisabledForEvents(uint32_t aMessage)
   {
     return false;
   }

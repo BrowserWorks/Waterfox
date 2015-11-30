@@ -47,7 +47,7 @@ CallbackCaller.prototype = {
   },
 };
 
-var ContentPrefServiceChild = {
+let ContentPrefServiceChild = {
   QueryInterface: XPCOMUtils.generateQI([ Ci.nsIContentPrefService2 ]),
 
   // Map from pref name -> set of observers

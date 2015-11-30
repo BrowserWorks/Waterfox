@@ -5,7 +5,6 @@
  
 /* the interface (to internal code) for retrieving computed style data */
 
-#include "CSSVariableImageTable.h"
 #include "mozilla/DebugOnly.h"
 
 #include "nsCSSAnonBoxes.h"
@@ -25,7 +24,6 @@
 #include "nsIDocument.h"
 #include "nsPrintfCString.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/ArenaObjectID.h"
 
 #ifdef DEBUG
 // #define NOISY_DEBUG
@@ -167,9 +165,6 @@ nsStyleContext::~nsStyleContext()
   if (mCachedResetData) {
     mCachedResetData->Destroy(mBits, presContext);
   }
-
-  // Free any ImageValues we were holding on to for CSS variable values.
-  CSSVariableImageTable::RemoveAll(this);
 }
 
 #ifdef DEBUG
@@ -776,19 +771,16 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
     }
   }
 
-  /*
-   * According to https://drafts.csswg.org/css-writing-modes-3/#block-flow:
-   *
-   * If a box has a different block flow direction than its containing block:
-   *   * If the box has a specified display of inline, its display computes
-   *     to inline-block. [CSS21]
-   *   ...etc.
-   */
+  // Elements with display:inline whose writing-mode is orthogonal to their
+  // parent's mode will be converted to display:inline-block.
   if (disp->mDisplay == NS_STYLE_DISPLAY_INLINE && mParent) {
-    // We don't need the full mozilla::WritingMode value (incorporating dir
-    // and text-orientation) here; just the writing-mode property is enough.
-    if (StyleVisibility()->mWritingMode !=
-        mParent->StyleVisibility()->mWritingMode) {
+    // We don't need the full mozilla::WritingMode value (incorporating dir and
+    // text-orientation) here, all we care about is vertical vs horizontal.
+    bool thisHorizontal =
+      StyleVisibility()->mWritingMode == NS_STYLE_WRITING_MODE_HORIZONTAL_TB;
+    bool parentHorizontal = mParent->StyleVisibility()->mWritingMode ==
+                              NS_STYLE_WRITING_MODE_HORIZONTAL_TB;
+    if (thisHorizontal != parentHorizontal) {
       nsStyleDisplay *mutable_display =
         static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
       mutable_display->mOriginalDisplay = mutable_display->mDisplay =
@@ -878,7 +870,7 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aOther,
                                   differenceAlwaysHandledForDescendants) &    \
                   aParentHintsNotHandledForDescendants)) {                    \
         nsChangeHint difference =                                             \
-          this##struct_->CalcDifference(*other##struct_ EXTRA_DIFF_ARGS);     \
+            this##struct_->CalcDifference(*other##struct_);                   \
         NS_ASSERTION(NS_IsHintSubset(difference, maxDifference),              \
                      "CalcDifference() returned bigger hint than "            \
                      "MaxDifference()");                                      \
@@ -890,7 +882,7 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aOther,
         /* We still must call CalcDifference to see if there were any */      \
         /* changes so that we can set *aEqualStructs appropriately.   */      \
         nsChangeHint difference =                                             \
-          this##struct_->CalcDifference(*other##struct_ EXTRA_DIFF_ARGS);     \
+            this##struct_->CalcDifference(*other##struct_);                   \
         NS_ASSERTION(NS_IsHintSubset(difference, maxDifference),              \
                      "CalcDifference() returned bigger hint than "            \
                      "MaxDifference()");                                      \
@@ -909,7 +901,6 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aOther,
   // smallest.  This lets us skip later ones if we already have a hint
   // that subsumes their MaxDifference.  (As the hints get
   // finer-grained, this optimization is becoming less useful, though.)
-#define EXTRA_DIFF_ARGS /* nothing */
   DO_STRUCT_DIFFERENCE(Display);
   DO_STRUCT_DIFFERENCE(XUL);
   DO_STRUCT_DIFFERENCE(Column);
@@ -925,11 +916,7 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aOther,
   DO_STRUCT_DIFFERENCE(Quotes);
   DO_STRUCT_DIFFERENCE(SVGReset);
   DO_STRUCT_DIFFERENCE(SVG);
-#undef EXTRA_DIFF_ARGS
-#define EXTRA_DIFF_ARGS , this
   DO_STRUCT_DIFFERENCE(Position);
-#undef EXTRA_DIFF_ARGS
-#define EXTRA_DIFF_ARGS /* nothing */
   DO_STRUCT_DIFFERENCE(Font);
   DO_STRUCT_DIFFERENCE(Margin);
   DO_STRUCT_DIFFERENCE(Padding);
@@ -937,7 +924,6 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aOther,
   DO_STRUCT_DIFFERENCE(TextReset);
   DO_STRUCT_DIFFERENCE(Background);
   DO_STRUCT_DIFFERENCE(Color);
-#undef EXTRA_DIFF_ARGS
 
 #undef DO_STRUCT_DIFFERENCE
 
@@ -1179,8 +1165,7 @@ void*
 nsStyleContext::operator new(size_t sz, nsPresContext* aPresContext) CPP_THROW_NEW
 {
   // Check the recycle list first.
-  return aPresContext->PresShell()->
-    AllocateByObjectID(eArenaObjectID_nsStyleContext, sz);
+  return aPresContext->PresShell()->AllocateByObjectID(nsPresArena::nsStyleContext_id, sz);
 }
 
 // Overridden to prevent the global delete from being called, since the memory
@@ -1196,8 +1181,7 @@ nsStyleContext::Destroy()
 
   // Don't let the memory be freed, since it will be recycled
   // instead. Don't call the global operator delete.
-  presContext->PresShell()->
-    FreeByObjectID(eArenaObjectID_nsStyleContext, this);
+  presContext->PresShell()->FreeByObjectID(nsPresArena::nsStyleContext_id, this);
 }
 
 already_AddRefed<nsStyleContext>
@@ -1212,12 +1196,6 @@ NS_NewStyleContext(nsStyleContext* aParentContext,
     nsStyleContext(aParentContext, aPseudoTag, aPseudoType, aRuleNode,
                    aSkipParentDisplayBasedStyleFixup);
   return context.forget();
-}
-
-nsIPresShell*
-nsStyleContext::Arena()
-{
-  return mRuleNode->PresContext()->PresShell();
 }
 
 static inline void

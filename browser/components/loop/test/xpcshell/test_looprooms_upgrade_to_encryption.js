@@ -9,14 +9,14 @@ Cu.import("resource://services-common/utils.js");
 const loopCrypto = Cu.import("resource:///modules/loop/crypto.js", {}).LoopCrypto;
 const { LOOP_ROOMS_CACHE_FILENAME } = Cu.import("resource:///modules/loop/LoopRoomsCache.jsm", {});
 
-var gTimerArgs = [];
+let gTimerArgs = [];
 
 timerHandlers.startTimer = function(callback, delay) {
   gTimerArgs.push({callback, delay});
   return gTimerArgs.length;
 };
 
-var gRoomPatches = [];
+let gRoomPatches = [];
 
 const kContextEnabledPref = "loop.contextInConverations.enabled";
 

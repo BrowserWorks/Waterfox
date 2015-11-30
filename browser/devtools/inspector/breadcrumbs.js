@@ -9,7 +9,7 @@
 const {Cu, Ci} = require("chrome");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-const promise = require("promise");
+const {Promise: promise} = require("resource://gre/modules/Promise.jsm");
 
 const ENSURE_SELECTION_VISIBLE_DELAY = 50; // ms
 const ELLIPSIS = Services.prefs.getComplexValue("intl.ellipsis", Ci.nsIPrefLocalizedString).data;
@@ -237,7 +237,7 @@ HTMLBreadcrumbs.prototype = {
     // We make sure that the targeted node is selected
     // because we want to use the nodemenu that only works
     // for inspector.selection
-    this.navigateTo(node);
+    this.selection.setNodeFront(node, "breadcrumbs");
 
     // Build a list of extra menu items that will be appended at the end of the
     // inspector node context menu.
@@ -262,10 +262,10 @@ HTMLBreadcrumbs.prototype = {
         item.setAttribute("type", "radio");
         item.setAttribute("label", this.prettyPrintNodeAsText(nodes[i]));
 
-        let self = this;
+        let selection = this.selection;
         item.onmouseup = (function(node) {
           return function() {
-            self.navigateTo(node);
+            selection.setNodeFront(node, "breadcrumbs");
           };
         })(nodes[i]);
 
@@ -353,37 +353,39 @@ HTMLBreadcrumbs.prototype = {
    * @param {DOMEvent} event.
    */
   handleKeyPress: function(event) {
-    let navigate = promise.resolve(null);
+    let node = null;
+    this._keyPromise = this._keyPromise || promise.resolve(null);
 
     this._keyPromise = (this._keyPromise || promise.resolve(null)).then(() => {
       switch (event.keyCode) {
         case this.chromeWin.KeyEvent.DOM_VK_LEFT:
           if (this.currentIndex != 0) {
-            navigate = promise.resolve(
-              this.nodeHierarchy[this.currentIndex - 1].node);
+            node = promise.resolve(this.nodeHierarchy[this.currentIndex - 1].node);
           }
           break;
         case this.chromeWin.KeyEvent.DOM_VK_RIGHT:
           if (this.currentIndex < this.nodeHierarchy.length - 1) {
-            navigate = promise.resolve(
-              this.nodeHierarchy[this.currentIndex + 1].node);
+            node = promise.resolve(this.nodeHierarchy[this.currentIndex + 1].node);
           }
           break;
         case this.chromeWin.KeyEvent.DOM_VK_UP:
-          navigate = this.walker.previousSibling(this.selection.nodeFront, {
+          node = this.walker.previousSibling(this.selection.nodeFront, {
             whatToShow: Ci.nsIDOMNodeFilter.SHOW_ELEMENT
           });
           break;
         case this.chromeWin.KeyEvent.DOM_VK_DOWN:
-          navigate = this.walker.nextSibling(this.selection.nodeFront, {
+          node = this.walker.nextSibling(this.selection.nodeFront, {
             whatToShow: Ci.nsIDOMNodeFilter.SHOW_ELEMENT
           });
           break;
       }
 
-      return navigate.then(node => this.navigateTo(node));
+      return node.then((node) => {
+        if (node) {
+          this.selection.setNodeFront(node, "breadcrumbs");
+        }
+      });
     });
-
     event.preventDefault();
     event.stopPropagation();
   },
@@ -468,14 +470,6 @@ HTMLBreadcrumbs.prototype = {
     }
   },
 
-  navigateTo: function(node) {
-    if (node) {
-      this.selection.setNodeFront(node, "breadcrumbs");
-    } else {
-      this.inspector.emit("breadcrumbs-navigation-cancelled");
-    }
-  },
-
   /**
    * Build a button representing the node.
    * @param {NodeFront} node The node from the page.
@@ -496,7 +490,7 @@ HTMLBreadcrumbs.prototype = {
     };
 
     button.onBreadcrumbsClick = () => {
-      this.navigateTo(node);
+      this.selection.setNodeFront(node, "breadcrumbs");
     };
 
     button.onBreadcrumbsHover = () => {

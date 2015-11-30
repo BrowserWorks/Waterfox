@@ -39,14 +39,9 @@ var tests = [
   { message: "browser screensharing requires permission",
     constraints: { video: { mediaSource: 'browser' } },
     error: "PermissionDeniedError" },
-  { message: "unknown mediaSource in video fails",
+  { message: "unknown mediaSource fails",
     constraints: { video: { mediaSource: 'uncle' } },
-    error: "OverconstrainedError",
-    constraint: "mediaSource" },
-  { message: "unknown mediaSource in audio fails",
-    constraints: { audio: { mediaSource: 'uncle' } },
-    error: "OverconstrainedError",
-    constraint: "mediaSource" },
+    error: "NotFoundError" },
   { message: "emtpy constraint fails",
     constraints: { },
     error: "NotSupportedError" },
@@ -111,18 +106,8 @@ runTest(function() {
 
   return tests.reduce((p, test) =>
     p.then(() => navigator.mediaDevices.getUserMedia(test.constraints))
-    .then(() => is(null, test.error, test.message), e => {
-      is(e.name, test.error, test.message + ": " + e.message);
-      if (test.constraint) {
-        is(e.constraint, test.constraint,
-           test.message + " w/correct constraint.");
-      }
-    }), p)
-    .then(() => navigator.mediaDevices.getUserMedia({video: true, audio: true}))
-    .then(stream => stream.getVideoTracks()[0].applyConstraints({ width: 320 })
-      .then(() => stream.getAudioTracks()[0].applyConstraints({ })))
-    .then(() => ok(true, "applyConstraints code exercised"))
-    // TODO: Test outcome once fake devices support constraints (Bug 1088621)
+    .then(() => is(null, test.error, test.message),
+          e => is(e.name, test.error, test.message + ": " + e.message)), p);
 });
 
 </script>

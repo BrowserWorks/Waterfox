@@ -88,10 +88,10 @@ class WebMPacketQueue {
     mQueue.push_front(Move(aItem));
   }
 
-  already_AddRefed<NesteggPacketHolder> PopFront() {
-    nsRefPtr<NesteggPacketHolder> result = mQueue.front().forget();
+  nsRefPtr<NesteggPacketHolder> PopFront() {
+    nsRefPtr<NesteggPacketHolder> result = mQueue.front();
     mQueue.pop_front();
-    return result.forget();
+    return result;
   }
 
   void Reset() {

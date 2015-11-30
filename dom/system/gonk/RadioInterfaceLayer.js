@@ -32,7 +32,7 @@ XPCOMUtils.defineLazyGetter(this, "RIL", function () {
 
 // Ril quirk to always turn the radio off for the client without SIM card
 // except hw default client.
-var RILQUIRKS_RADIO_OFF_WO_CARD =
+let RILQUIRKS_RADIO_OFF_WO_CARD =
   libcutils.property_get("ro.moz.ril.radio_off_wo_card", "false") == "true";
 
 const RADIOINTERFACELAYER_CID =
@@ -392,8 +392,7 @@ DataCall.prototype = {
   ifname: null,
   addreses: null,
   dnses: null,
-  gateways: null,
-  pcscf: null
+  gateways: null
 };
 
 function RadioInterfaceLayer() {

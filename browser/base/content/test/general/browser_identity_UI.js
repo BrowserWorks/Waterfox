@@ -1,15 +1,14 @@
 /* Tests for correct behaviour of getEffectiveHost on identity handler */
-
 function test() {
   waitForExplicitFinish();
   requestLongerTimeout(2);
 
   ok(gIdentityHandler, "gIdentityHandler should exist");
 
-  BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank", true).then(() => {
-    gBrowser.selectedBrowser.addEventListener("load", checkResult, true);
-    nextTest();
-  });
+  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedBrowser.addEventListener("load", checkResult, true);
+
+  nextTest();
 }
 
 // Greek IDN for 'example.test'.
@@ -18,7 +17,7 @@ var tests = [
   {
     name: "normal domain",
     location: "http://test1.example.org/",
-    effectiveHost: "test1.example.org"
+    effectiveHost: "example.org"
   },
   {
     name: "view-source",
@@ -34,17 +33,17 @@ var tests = [
   {
     name: "IDN subdomain",
     location: "http://sub1." + idnDomain + "/",
-    effectiveHost: "sub1." + idnDomain
+    effectiveHost: idnDomain
   },
   {
     name: "subdomain with port",
     location: "http://sub1.test1.example.org:8000/",
-    effectiveHost: "sub1.test1.example.org"
+    effectiveHost: "example.org"
   },
   {
     name: "subdomain HTTPS",
     location: "https://test1.example.com/",
-    effectiveHost: "test1.example.com",
+    effectiveHost: "example.com",
     isHTTPS: true
   },
   {
@@ -60,11 +59,11 @@ var tests = [
   },
 ]
 
-var gCurrentTest, gCurrentTestIndex = -1, gTestDesc, gPopupHidden;
+let gCurrentTest, gCurrentTestIndex = -1, gTestDesc;
 // Go through the tests in both directions, to add additional coverage for
 // transitions between different states.
-var gForward = true;
-var gCheckETLD = false;
+let gForward = true;
+let gCheckETLD = false;
 function nextTest() {
   if (!gCheckETLD) {
     if (gForward)
@@ -92,25 +91,7 @@ function nextTest() {
     if (gCurrentTest.isHTTPS) {
       gCheckETLD = true;
     }
-
-    // Navigate to the next page, which will cause checkResult to fire.
-    let spec = gBrowser.selectedBrowser.currentURI.spec;
-    if (spec == "about:blank" || spec == gCurrentTest.location) {
-      BrowserTestUtils.loadURI(gBrowser.selectedBrowser, gCurrentTest.location);
-    } else {
-      // Open the Control Center and make sure it closes after nav (Bug 1207542).
-      let popupShown = promisePopupShown(gIdentityHandler._identityPopup);
-      gPopupHidden = promisePopupHidden(gIdentityHandler._identityPopup);
-      gIdentityHandler._identityBox.click();
-      info("Waiting for the Control Center to be shown");
-      popupShown.then(() => {
-        is_element_visible(gIdentityHandler._identityPopup, "Control Center is visible");
-        // Show the subview, which is an easy way in automation to reproduce
-        // Bug 1207542, where the CC wouldn't close on navigation.
-        gBrowser.ownerDocument.querySelector("#identity-popup-security-expander").click();
-        BrowserTestUtils.loadURI(gBrowser.selectedBrowser, gCurrentTest.location);
-      });
-    }
+    content.location = gCurrentTest.location;
   } else {
     gCheckETLD = false;
     gTestDesc = "#" + gCurrentTestIndex + " (" + gCurrentTest.name + " without eTLD in identity icon label)";
@@ -126,20 +107,10 @@ function checkResult() {
   // getEffectiveHost can't be called for all modes
   if (gCurrentTest.effectiveHost === null) {
     let identityBox = document.getElementById("identity-box");
-    ok(identityBox.className == "unknownIdentity" ||
-       identityBox.className == "chromeUI", "mode matched");
+    is(identityBox.className == gIdentityHandler.IDENTITY_MODE_UNKNOWN || identityBox.className == gIdentityHandler.IDENTITY_MODE_CHROMEUI, true, "mode matched");
   } else {
     is(gIdentityHandler.getEffectiveHost(), gCurrentTest.effectiveHost, "effectiveHost matches for test " + gTestDesc);
   }
 
-  if (gPopupHidden) {
-    info("Waiting for the Control Center to hide");
-    gPopupHidden.then(() => {
-      gPopupHidden = null;
-      is_element_hidden(gIdentityHandler._identityPopup, "control center is hidden");
-      executeSoon(nextTest);
-    });
-  } else {
-    executeSoon(nextTest);
-  }
+  executeSoon(nextTest);
 }

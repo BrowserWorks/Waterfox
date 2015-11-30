@@ -4,9 +4,9 @@
 
 "use strict";
 
-var Cc = Components.classes;
-var Ci = Components.interfaces;
-var Cu = Components.utils;
+let Cc = Components.classes;
+let Ci = Components.interfaces;
+let Cu = Components.utils;
 
 this.EXPORTED_SYMBOLS = [ "NewTabURL" ];
 

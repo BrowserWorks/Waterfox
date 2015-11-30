@@ -14,11 +14,12 @@ public interface PanZoomTarget {
     public ImmutableViewportMetrics getViewportMetrics();
     public ZoomConstraints getZoomConstraints();
     public FullScreenState getFullScreenState();
-    public PointF getVisibleEndOfLayerView();
+    public RectF getMaxMargins();
 
     public void setAnimationTarget(ImmutableViewportMetrics viewport);
     public void setViewportMetrics(ImmutableViewportMetrics viewport);
     public void scrollBy(float dx, float dy);
+    public void scrollMarginsBy(float dx, float dy);
     public void panZoomStopped();
     /** This triggers an (asynchronous) viewport update/redraw. */
     public void forceRedraw(DisplayPortMetrics displayPort);

@@ -19,14 +19,14 @@ using mozilla::FloorLog2;
 
 void
 LIRGeneratorARM::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1,
-                             Register reg2, bool useAtStart)
+                             Register reg2)
 {
     MOZ_ASSERT(mir->type() == MIRType_Value);
     MOZ_ASSERT(reg1 != reg2);
 
     ensureDefined(mir);
-    lir->setOperand(n, LUse(reg1, mir->virtualRegister(), useAtStart));
-    lir->setOperand(n + 1, LUse(reg2, VirtualRegisterOfPayload(mir), useAtStart));
+    lir->setOperand(n, LUse(reg1, mir->virtualRegister()));
+    lir->setOperand(n + 1, LUse(reg2, VirtualRegisterOfPayload(mir)));
 }
 
 LAllocation
@@ -592,29 +592,30 @@ LIRGeneratorARM::visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop
 
     if (!ins->hasUses()) {
         LAtomicTypedArrayElementBinopForEffect* lir =
-            new(alloc()) LAtomicTypedArrayElementBinopForEffect(elements, index, value,
-                                                                /* flagTemp= */ temp());
+            new(alloc()) LAtomicTypedArrayElementBinopForEffect(elements, index, value);
         add(lir, ins);
         return;
     }
 
+    // For most operations we don't need any temps because there are
+    // enough scratch registers.  tempDef2 is never needed on ARM.
+    //
     // For a Uint32Array with a known double result we need a temp for
-    // the intermediate output.
+    // the intermediate output, this is tempDef1.
     //
     // Optimization opportunity (bug 1077317): We can do better by
     // allowing 'value' to remain as an imm32 if it is small enough to
     // fit in an instruction.
 
-    LDefinition flagTemp = temp();
-    LDefinition outTemp = LDefinition::BogusTemp();
+    LDefinition tempDef1 = LDefinition::BogusTemp();
+    LDefinition tempDef2 = LDefinition::BogusTemp();
 
     if (ins->arrayType() == Scalar::Uint32 && IsFloatingPointType(ins->type()))
-        outTemp = temp();
-
-    // On arm, map flagTemp to temp1 and outTemp to temp2, at least for now.
+        tempDef1 = temp();
 
     LAtomicTypedArrayElementBinop* lir =
-        new(alloc()) LAtomicTypedArrayElementBinop(elements, index, value, flagTemp, outTemp);
+        new(alloc()) LAtomicTypedArrayElementBinop(elements, index, value, tempDef1, tempDef2);
+
     define(lir, ins);
 }
 
@@ -711,8 +712,7 @@ LIRGeneratorARM::visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins)
     if (!ins->hasUses()) {
         LAsmJSAtomicBinopHeapForEffect* lir =
             new(alloc()) LAsmJSAtomicBinopHeapForEffect(useRegister(ptr),
-                                                        useRegister(ins->value()),
-                                                        /* flagTemp= */ temp());
+                                                        useRegister(ins->value()));
         add(lir, ins);
         return;
     }
@@ -720,8 +720,8 @@ LIRGeneratorARM::visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins)
     LAsmJSAtomicBinopHeap* lir =
         new(alloc()) LAsmJSAtomicBinopHeap(useRegister(ptr),
                                            useRegister(ins->value()),
-                                           /* temp = */ LDefinition::BogusTemp(),
-                                           /* flagTemp= */ temp());
+                                           LDefinition::BogusTemp());
+
     define(lir, ins);
 }
 
@@ -741,10 +741,6 @@ LIRGeneratorARM::visitSubstr(MSubstr* ins)
 void
 LIRGeneratorARM::visitRandom(MRandom* ins)
 {
-    LRandom *lir = new(alloc()) LRandom(temp(),
-                                        temp(),
-                                        temp(),
-                                        temp(),
-                                        temp());
-    defineFixed(lir, ins, LFloatReg(ReturnDoubleReg));
+    LRandom* lir = new(alloc()) LRandom(tempFixed(CallTempReg0), tempFixed(CallTempReg1));
+    defineReturn(lir, ins);
 }

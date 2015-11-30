@@ -4,30 +4,49 @@
 
 "use strict";
 
-// Tests that the rule view search filter works properly for stylesheet source.
+// Tests that the rule view search filter works properly for multiple rule selectors.
 
-const SEARCH = "doc_urls_clickable.css";
-const TEST_URI = TEST_URL_ROOT + "doc_urls_clickable.html";
+const SEARCH = "body";
+
+let TEST_URI = [
+  '<style type="text/css">',
+  '  html, body, div {',
+  '    background-color: #00F;',
+  '  }',
+  '  .testclass {',
+  '    width: 100%;',
+  '  }',
+  '</style>',
+  '<div id="testid" class="testclass">Styled Node</div>'
+].join("\n");
 
 add_task(function*() {
-  yield addTab(TEST_URI);
-  let {inspector, view} = yield openRuleView();
-  yield selectNode(".relative1", inspector);
+  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+  let {toolbox, inspector, view} = yield openRuleView();
+  yield selectNode("#testid", inspector);
   yield testAddTextInFilter(inspector, view);
 });
 
-function* testAddTextInFilter(inspector, view) {
-  yield setSearchFilter(view, SEARCH);
+function* testAddTextInFilter(inspector, ruleView) {
+  info("Setting filter text to \"" + SEARCH + "\"");
+
+  let win = ruleView.styleWindow;
+  let searchField = ruleView.searchField;
+  let onRuleViewFilter = inspector.once("ruleview-filtered");
+
+  searchField.focus();
+  synthesizeKeys(SEARCH, win);
+  yield onRuleViewFilter;
 
   info("Check that the correct rules are visible");
-  is(view.element.children.length, 2, "Should have 2 rules.");
-  is(getRuleViewRuleEditor(view, 0).rule.selectorText, "element",
+  is(ruleView.element.children.length, 2, "Should have 2 rules.");
+  is(getRuleViewRuleEditor(ruleView, 0).rule.selectorText, "element",
     "First rule is inline element.");
 
-  let rule = getRuleViewRuleEditor(view, 1).rule;
-  let source = rule.textProps[0].editor.ruleEditor.source;
+  let ruleEditor = getRuleViewRuleEditor(ruleView, 1);
 
-  is(rule.selectorText, ".relative1", "Second rule is .relative1.");
-  ok(source.classList.contains("ruleview-highlight"),
-    "stylesheet source is correctly highlighted.");
+  is(ruleEditor.rule.selectorText, "html, body, div",
+    "Second rule is html, body, div.");
+  ok(ruleEditor.selectorText.children[2].classList.contains("ruleview-highlight"),
+    "body selector is highlighted.")
 }

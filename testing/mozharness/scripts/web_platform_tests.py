@@ -26,11 +26,6 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
             "dest": "test_type",
             "help": "Specify the test types to run."}
          ],
-        [['--e10s'], {
-            "action": "store_true",
-            "dest": "e10s",
-            "help": "Run with e10s enabled"}
-         ],
         [["--total-chunks"], {
             "action": "store",
             "dest": "total_chunks",
@@ -133,15 +128,12 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
         for test_type in c.get("test_type", []):
             base_cmd.append("--test-type=%s" % test_type)
 
-        if c.get("e10s"):
-            base_cmd.append("--e10s")
-
         for opt in ["total_chunks", "this_chunk"]:
             val = c.get(opt)
             if val:
                 base_cmd.append("--%s=%s" % (opt.replace("_", "-"), val))
 
-        options = list(c.get("options", []))
+        options = list(c.get("options", [])) + list(self.tree_config["options"])
 
         str_format_values = {
             'binary_path': self.binary_path,

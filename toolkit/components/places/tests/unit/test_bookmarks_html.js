@@ -8,7 +8,7 @@ const LOAD_IN_SIDEBAR_ANNO = "bookmarkProperties/loadInSidebar";
 const DESCRIPTION_ANNO = "bookmarkProperties/description";
 
 // An object representing the contents of bookmarks.preplaces.html.
-var test_bookmarks = {
+let test_bookmarks = {
   menu: [
     { title: "Mozilla Firefox",
       children: [
@@ -69,9 +69,9 @@ var test_bookmarks = {
 };
 
 // Pre-Places bookmarks.html file pointer.
-var gBookmarksFileOld;
+let gBookmarksFileOld;
 // Places bookmarks.html file pointer.
-var gBookmarksFileNew;
+let gBookmarksFileNew;
 
 function run_test()
 {

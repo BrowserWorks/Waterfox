@@ -258,14 +258,6 @@ public:
   {
     return mValue != aOther.mValue;
   }
-  bool IsZero() const
-  {
-    return mValue == 0;
-  }
-  explicit operator bool() const
-  {
-    return mValue != 0;
-  }
 
   // Return a best guess at the system's current timing resolution,
   // which might be variable.  BaseTimeDurations below this order of
@@ -422,15 +414,6 @@ public:
   bool IsNull() const { return mValue == 0; }
 
   /**
-   * Return true if this is not the "null" moment, may be used in tests, e.g.:
-   * |if (timestamp) { ... }|
-   */
-  explicit operator bool() const
-  {
-    return mValue != 0;
-  }
-
-  /**
    * Return a timestamp reflecting the current elapsed system time. This
    * is monotonically increasing (i.e., does not decrease) over the
    * lifetime of this process' XPCOM session.
@@ -491,40 +474,24 @@ public:
 
   TimeStamp operator+(const TimeDuration& aOther) const
   {
-    TimeStamp result = *this;
-    result += aOther;
-    return result;
+    MOZ_ASSERT(!IsNull(), "Cannot compute with a null value");
+    return TimeStamp(mValue + aOther.mValue);
   }
   TimeStamp operator-(const TimeDuration& aOther) const
   {
-    TimeStamp result = *this;
-    result -= aOther;
-    return result;
+    MOZ_ASSERT(!IsNull(), "Cannot compute with a null value");
+    return TimeStamp(mValue - aOther.mValue);
   }
   TimeStamp& operator+=(const TimeDuration& aOther)
   {
     MOZ_ASSERT(!IsNull(), "Cannot compute with a null value");
-    TimeStampValue value = mValue + aOther.mValue;
-    // Check for underflow.
-    // (We don't check for overflow because it's not obvious what the error
-    //  behavior should be in that case.)
-    if (aOther.mValue < 0 && value > mValue) {
-      value = 0;
-    }
-    mValue = value;
+    mValue += aOther.mValue;
     return *this;
   }
   TimeStamp& operator-=(const TimeDuration& aOther)
   {
     MOZ_ASSERT(!IsNull(), "Cannot compute with a null value");
-    TimeStampValue value = mValue - aOther.mValue;
-    // Check for underflow.
-    // (We don't check for overflow because it's not obvious what the error
-    //  behavior should be in that case.)
-    if (aOther.mValue > 0 && value > mValue) {
-      value = 0;
-    }
-    mValue = value;
+    mValue -= aOther.mValue;
     return *this;
   }
 

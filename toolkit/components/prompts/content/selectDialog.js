@@ -7,7 +7,7 @@ const Cr = Components.results;
 const Cc = Components.classes;
 const Cu = Components.utils;
 
-var gArgs, listBox;
+let gArgs, listBox;
 
 function dialogOnLoad() {
     gArgs = window.arguments[0].QueryInterface(Ci.nsIWritablePropertyBag2)

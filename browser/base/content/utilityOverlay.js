@@ -531,17 +531,7 @@ function openPreferences(paneID, extraArgs)
 
   let win = Services.wm.getMostRecentWindow("navigator:browser");
   let friendlyCategoryName = internalPrefCategoryNameToFriendlyName(paneID);
-  let params;
-  if (extraArgs && extraArgs["urlParams"]) {
-    params = new URLSearchParams();
-    let urlParams = extraArgs["urlParams"];
-    for (let name in urlParams) {
-      if (urlParams[name] !== undefined) {
-        params.set(name, urlParams[name]);
-      }
-    }
-  }
-  let preferencesURL = "about:preferences" + (params ? "?" + params : "") +
+  let preferencesURL = "about:preferences" +
                        (friendlyCategoryName ? "#" + friendlyCategoryName : "");
   let newLoad = true;
   let browser = null;

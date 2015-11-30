@@ -5,7 +5,7 @@
 
 /* This content script contains code that requires a tab browser. */
 
-var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+let {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -97,7 +97,7 @@ addMessageListener("SecondScreen:tab-mirror", function(message) {
   }
 });
 
-var AboutHomeListener = {
+let AboutHomeListener = {
   init: function(chromeGlobal) {
     chromeGlobal.addEventListener('AboutHomeLoad', this, false, true);
   },
@@ -158,6 +158,10 @@ var AboutHomeListener = {
     addMessageListener("AboutHome:Update", this);
     addEventListener("click", this, true);
     addEventListener("pagehide", this, true);
+
+    if (!Services.prefs.getBoolPref("browser.search.showOneOffButtons")) {
+      doc.documentElement.setAttribute("searchUIConfiguration", "oldsearchui");
+    }
 
     sendAsyncMessage("AboutHome:RequestUpdate");
   },
@@ -227,7 +231,7 @@ var AboutHomeListener = {
 };
 AboutHomeListener.init(this);
 
-var AboutPrivateBrowsingListener = {
+let AboutPrivateBrowsingListener = {
   init(chromeGlobal) {
     chromeGlobal.addEventListener("AboutPrivateBrowsingOpenWindow", this,
                                   false, true);
@@ -255,7 +259,7 @@ var AboutPrivateBrowsingListener = {
 };
 AboutPrivateBrowsingListener.init(this);
 
-var AboutReaderListener = {
+let AboutReaderListener = {
 
   _articlePromise: null,
 
@@ -282,9 +286,6 @@ var AboutReaderListener = {
   },
 
   get isAboutReader() {
-    if (!content) {
-      return false;
-    }
     return content.document.documentURI.startsWith("about:reader");
   },
 
@@ -328,7 +329,7 @@ var AboutReaderListener = {
 
   /**
    * NB: this function will update the state of the reader button asynchronously
-   * after the next mozAfterPaint call (assuming reader mode is enabled and
+   * after the next mozAfterPaint call (assuming reader mode is enabled and 
    * this is a suitable document). Calling it on things which won't be
    * painted is not going to work.
    */
@@ -373,7 +374,7 @@ var AboutReaderListener = {
 AboutReaderListener.init();
 
 
-var ContentSearchMediator = {
+let ContentSearchMediator = {
 
   whitelist: new Set([
     "about:home",
@@ -428,7 +429,7 @@ var ContentSearchMediator = {
 };
 ContentSearchMediator.init(this);
 
-var PageStyleHandler = {
+let PageStyleHandler = {
   init: function() {
     addMessageListener("PageStyle:Switch", this);
     addMessageListener("PageStyle:Disable", this);
@@ -525,7 +526,7 @@ var PageStyleHandler = {
 PageStyleHandler.init();
 
 // Keep a reference to the translation content handler to avoid it it being GC'ed.
-var trHandler = null;
+let trHandler = null;
 if (Services.prefs.getBoolPref("browser.translation.detectLanguage")) {
   Cu.import("resource:///modules/translation/TranslationContentHandler.jsm");
   trHandler = new TranslationContentHandler(global, docShell);
@@ -564,7 +565,7 @@ addMessageListener("Browser:AppTab", function(message) {
   }
 });
 
-var WebBrowserChrome = {
+let WebBrowserChrome = {
   onBeforeLinkTraversal: function(originalTarget, linkURI, linkNode, isAppTab) {
     return BrowserUtils.onBeforeLinkTraversal(originalTarget, linkURI, linkNode, isAppTab);
   },
@@ -587,7 +588,7 @@ if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
 }
 
 
-var DOMFullscreenHandler = {
+let DOMFullscreenHandler = {
   _fullscreenDoc: null,
 
   init: function() {

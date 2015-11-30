@@ -46,7 +46,6 @@ SandboxChroot::SendCommand(Command aComm)
 {
   MOZ_ALWAYS_ZERO(pthread_mutex_lock(&mMutex));
   if (mCommand == NO_THREAD) {
-    MOZ_RELEASE_ASSERT(aComm == JUST_EXIT);
     MOZ_ALWAYS_ZERO(pthread_mutex_unlock(&mMutex));
     return false;
   } else {

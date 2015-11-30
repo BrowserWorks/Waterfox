@@ -6,7 +6,7 @@
 #ifndef nsTemplateMap_h__
 #define nsTemplateMap_h__
 
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsXULElement.h"
 
 class nsTemplateMap {
@@ -19,15 +19,17 @@ protected:
     PLDHashTable mTable;
 
 public:
-    nsTemplateMap() : mTable(PLDHashTable::StubOps(), sizeof(Entry)) { }
+    nsTemplateMap() : mTable(PL_DHashGetStubOps(), sizeof(Entry)) { }
 
     ~nsTemplateMap() { }
 
     void
     Put(nsIContent* aContent, nsIContent* aTemplate) {
-        NS_ASSERTION(!mTable.Search(aContent), "aContent already in map");
+        NS_ASSERTION(!PL_DHashTableSearch(&mTable, aContent),
+                     "aContent already in map");
 
-        auto entry = static_cast<Entry*>(mTable.Add(aContent, fallible));
+        Entry* entry = static_cast<Entry*>
+            (PL_DHashTableAdd(&mTable, aContent, fallible));
 
         if (entry) {
             entry->mContent = aContent;
@@ -37,7 +39,7 @@ public:
 
     void
     Remove(nsIContent* aContent) {
-        mTable.Remove(aContent);
+        PL_DHashTableRemove(&mTable, aContent);
 
         for (nsIContent* child = aContent->GetFirstChild();
              child;
@@ -49,7 +51,9 @@ public:
 
     void
     GetTemplateFor(nsIContent* aContent, nsIContent** aResult) {
-        auto entry = static_cast<Entry*>(mTable.Search(aContent));
+        Entry* entry =
+            static_cast<Entry*>(PL_DHashTableSearch(&mTable, aContent));
+
         if (entry)
             NS_IF_ADDREF(*aResult = entry->mTemplate);
         else

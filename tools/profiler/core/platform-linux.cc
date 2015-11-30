@@ -76,7 +76,7 @@
 #include "GeckoSampler.h"
 #include "ThreadResponsiveness.h"
 
-#if defined(__ARM_EABI__) && defined(ANDROID)
+#if defined(__ARM_EABI__) && defined(MOZ_WIDGET_GONK)
  // Should also work on other Android and ARM Linux, but not tested there yet.
 # define USE_EHABI_STACKWALK
 # include "EHABIStackWalk.h"

@@ -11,8 +11,7 @@
 
   // Color names
   let colors = utils.getCSSValuesForProperty("color");
-  let notColor = ["hsl", "hsla", "inherit", "initial", "rgb", "rgba",
-                  "unset", "transparent", "currentColor"];
+  let notColor = ["hsl", "hsla", "inherit", "initial", "rgb", "rgba", "unset"];
   for (let color of colors) {
     if (notColor.indexOf(color) !== -1) {
       continue;

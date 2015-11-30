@@ -65,6 +65,13 @@ Java_org_mozilla_gecko_GeckoAppShell_registerJavaUiThread(JNIEnv *jenv, jclass j
 }
 
 NS_EXPORT void JNICALL
+Java_org_mozilla_gecko_GeckoAppShell_nativeInit(JNIEnv *jenv, jclass, jobject clsLoader, jobject msgQueue)
+{
+    AndroidBridge::ConstructBridge(
+            jenv, jni::Object::Ref::From(clsLoader), jni::Object::Ref::From(msgQueue));
+}
+
+NS_EXPORT void JNICALL
 Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoOfEvent(JNIEnv *jenv, jclass jc, jobject event)
 {
     // poke the appshell
@@ -77,7 +84,7 @@ Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoObservers(JNIEnv *aEnv, jclass,
                                                          jstring aTopic, jstring aData)
 {
     if (!NS_IsMainThread()) {
-        jni::ThrowException(aEnv,
+        AndroidBridge::ThrowException(aEnv,
             "java/lang/IllegalThreadStateException", "Not on Gecko main thread");
         return;
     }
@@ -85,7 +92,7 @@ Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoObservers(JNIEnv *aEnv, jclass,
     nsCOMPtr<nsIObserverService> obsServ =
         mozilla::services::GetObserverService();
     if (!obsServ) {
-        jni::ThrowException(aEnv,
+        AndroidBridge::ThrowException(aEnv,
             "java/lang/IllegalStateException", "No observer service");
         return;
     }
@@ -680,7 +687,7 @@ Java_org_mozilla_gecko_GeckoAppShell_notifyFilePickerResult(JNIEnv* jenv, jclass
 {
     class NotifyFilePickerResultRunnable : public nsRunnable {
     public:
-        NotifyFilePickerResultRunnable(nsString& fileDir, long callback) :
+        NotifyFilePickerResultRunnable(nsString& fileDir, long callback) : 
             mFileDir(fileDir), mCallback(callback) {}
 
         NS_IMETHODIMP Run() {
@@ -694,7 +701,7 @@ Java_org_mozilla_gecko_GeckoAppShell_notifyFilePickerResult(JNIEnv* jenv, jclass
         long mCallback;
     };
     nsString path = nsJNIString(filePath, jenv);
-
+    
     nsCOMPtr<nsIRunnable> runnable =
         new NotifyFilePickerResultRunnable(path, (long)callback);
     NS_DispatchToMainThread(runnable);
@@ -767,7 +774,7 @@ Java_org_mozilla_gecko_GeckoAppShell_getSurfaceBits(JNIEnv* jenv, jclass, jobjec
     for (int i = 0; i < srcHeight; i++) {
         memcpy(bitsCopy + ((dstHeight - i - 1) * dstWidth * bpp), bits + (i * srcStride * bpp), srcStride * bpp);
     }
-
+    
     if (!jSurfaceBitsClass) {
         jSurfaceBitsClass = (jclass)jenv->NewGlobalRef(jenv->FindClass("org/mozilla/gecko/SurfaceBits"));
         jSurfaceBitsCtor = jenv->GetMethodID(jSurfaceBitsClass, "<init>", "()V");
@@ -820,7 +827,7 @@ Java_org_mozilla_gecko_GeckoAppShell_onFullScreenPluginHidden(JNIEnv* jenv, jcla
       ExitFullScreenRunnable(jobject view) : mView(view) {}
 
       NS_IMETHODIMP Run() {
-        JNIEnv* const env = jni::GetGeckoThreadEnv();
+        JNIEnv* env = AndroidBridge::GetJNIEnv();
         nsPluginInstanceOwner::ExitFullScreen(mView);
         env->DeleteGlobalRef(mView);
         return NS_OK;
@@ -850,6 +857,15 @@ NS_EXPORT void JNICALL
 Java_org_mozilla_gecko_GeckoAppShell_dispatchMemoryPressure(JNIEnv* jenv, jclass)
 {
     NS_DispatchMemoryPressure(MemPressure_New);
+}
+
+NS_EXPORT jdouble JNICALL
+Java_org_mozilla_gecko_GeckoJavaSampler_getProfilerTime(JNIEnv *jenv, jclass jc)
+{
+  if (!profiler_is_active()) {
+    return 0.0;
+  }
+  return profiler_time();
 }
 
 NS_EXPORT void JNICALL

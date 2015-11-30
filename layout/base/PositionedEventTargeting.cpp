@@ -76,9 +76,8 @@ struct EventRadiusPrefs
   bool mRegistered;
   bool mTouchOnly;
   bool mRepositionEventCoords;
-  bool mTouchClusterDetectionEnabled;
+  bool mTouchClusterDetectionDisabled;
   uint32_t mLimitReadableSize;
-  uint32_t mKeepLimitSizeForCluster;
 };
 
 static EventRadiusPrefs sMouseEventRadiusPrefs;
@@ -126,14 +125,11 @@ GetPrefsFor(EventClassID aEventClassID)
     nsPrintfCString repositionPref("ui.%s.radius.reposition", prefBranch);
     Preferences::AddBoolVarCache(&prefs->mRepositionEventCoords, repositionPref.get(), false);
 
-    nsPrintfCString touchClusterPref("ui.zoomedview.enabled", prefBranch);
-    Preferences::AddBoolVarCache(&prefs->mTouchClusterDetectionEnabled, touchClusterPref.get(), false);
+    nsPrintfCString touchClusterPref("ui.zoomedview.disabled", prefBranch);
+    Preferences::AddBoolVarCache(&prefs->mTouchClusterDetectionDisabled, touchClusterPref.get(), true);
 
     nsPrintfCString limitReadableSizePref("ui.zoomedview.limitReadableSize", prefBranch);
     Preferences::AddUintVarCache(&prefs->mLimitReadableSize, limitReadableSizePref.get(), 8);
-
-    nsPrintfCString keepLimitSize("ui.zoomedview.keepLimitSize", prefBranch);
-    Preferences::AddUintVarCache(&prefs->mKeepLimitSizeForCluster, keepLimitSize.get(), 16);
   }
 
   return prefs;
@@ -360,21 +356,6 @@ static bool IsElementPresent(nsTArray<nsIFrame*>& aCandidates, const nsAutoStrin
   return false;
 }
 
-static bool
-IsLargeElement(nsIFrame* aFrame, const EventRadiusPrefs* aPrefs)
-{
-  uint32_t keepLimitSizeForCluster = aPrefs->mKeepLimitSizeForCluster;
-  nsSize frameSize = aFrame->GetSize();
-  nsPresContext* pc = aFrame->PresContext();
-  nsIPresShell* presShell = pc->PresShell();
-  float cumulativeResolution = presShell->GetCumulativeResolution();
-  if ((pc->AppUnitsToGfxUnits(frameSize.height) * cumulativeResolution) > keepLimitSizeForCluster &&
-      (pc->AppUnitsToGfxUnits(frameSize.width) * cumulativeResolution) > keepLimitSizeForCluster) {
-    return true;
-  }
-  return false;
-}
-
 static nsIFrame*
 GetClosest(nsIFrame* aRoot, const nsPoint& aPointRelativeToRootFrame,
            const nsRect& aTargetRect, const EventRadiusPrefs* aPrefs,
@@ -432,8 +413,7 @@ GetClosest(nsIFrame* aRoot, const nsPoint& aPointRelativeToRootFrame,
     // and "for" attribute is present in label element, search the frame list for the "for" element
     // If this element is present in the current list, do not count the frame in
     // the cluster elements counter
-    if ((labelTargetId.IsEmpty() || !IsElementPresent(aCandidates, labelTargetId)) &&
-        !IsLargeElement(f, aPrefs)) {
+    if (labelTargetId.IsEmpty() || !IsElementPresent(aCandidates, labelTargetId)) {
       if (std::find(mContentsInCluster.begin(), mContentsInCluster.end(), clickableContent) == mContentsInCluster.end()) {
         mContentsInCluster.push_back(clickableContent);
       }
@@ -471,7 +451,7 @@ GetClosest(nsIFrame* aRoot, const nsPoint& aPointRelativeToRootFrame,
 static bool
 IsElementClickableAndReadable(nsIFrame* aFrame, WidgetGUIEvent* aEvent, const EventRadiusPrefs* aPrefs)
 {
-  if (!aPrefs->mTouchClusterDetectionEnabled) {
+  if (aPrefs->mTouchClusterDetectionDisabled) {
     return true;
   }
 
@@ -555,11 +535,6 @@ FindFrameTargetedByInputEvent(WidgetGUIEvent* aEvent,
         aEvent->AsMouseEventBase()->hitCluster = true;
       }
       PET_LOG("Target %p is clickable\n", target);
-      // If the target that was directly hit has a clickable ancestor, that
-      // means it too is clickable. And since it is the same as or a descendant
-      // of clickableAncestor, it should become the root for the GetClosest
-      // search.
-      clickableAncestor = target->GetContent();
     }
   }
 
@@ -598,7 +573,7 @@ FindFrameTargetedByInputEvent(WidgetGUIEvent* aEvent,
                restrictToDescendants, clickableAncestor, candidates,
                &elementsInCluster);
   if (closestClickable) {
-    if ((prefs->mTouchClusterDetectionEnabled && elementsInCluster > 1) ||
+    if ((!prefs->mTouchClusterDetectionDisabled && elementsInCluster > 1) ||
         (!IsElementClickableAndReadable(closestClickable, aEvent, prefs))) {
       if (aEvent->mClass == eMouseEventClass) {
         WidgetMouseEventBase* mouseEventBase = aEvent->AsMouseEventBase();

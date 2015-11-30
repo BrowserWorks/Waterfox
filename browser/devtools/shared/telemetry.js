@@ -54,9 +54,9 @@ this.Telemetry = function() {
 
 module.exports = Telemetry;
 
-var {Cc, Ci, Cu} = require("chrome");
-var {Services} = Cu.import("resource://gre/modules/Services.jsm", {});
-var {XPCOMUtils} = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
+let {Cc, Ci, Cu} = require("chrome");
+let {Services} = Cu.import("resource://gre/modules/Services.jsm", {});
+let {XPCOMUtils} = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
 
 Telemetry.prototype = {
   _histograms: {
@@ -276,18 +276,12 @@ Telemetry.prototype = {
    *
    * @param String histogramId
    *        Histogram in which the data is to be stored.
-   * @param String key [optional]
-   *        Optional key for a keyed histogram.
    */
-  stopTimer: function(histogramId, key) {
+  stopTimer: function(histogramId) {
     let startTime = this._timers.get(histogramId);
     if (startTime) {
       let time = (new Date() - startTime) / 1000;
-      if (!key) {
-        this.log(histogramId, time);
-      } else {
-        this.logKeyed(histogramId, key, time);
-      }
+      this.log(histogramId, time);
       this._timers.delete(histogramId);
     }
   },

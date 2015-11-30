@@ -49,7 +49,7 @@ this.LightweightThemeImageOptimizer = {
 
 Object.freeze(LightweightThemeImageOptimizer);
 
-var ImageCropper = {
+let ImageCropper = {
   _inProgress: {},
 
   getCroppedImageURL:
@@ -114,7 +114,7 @@ var ImageCropper = {
   }
 };
 
-var ImageFile = {
+let ImageFile = {
   read: function ImageFile_read(aURI, aCallback) {
     this._netUtil.asyncFetch({
       uri: aURI,
@@ -150,7 +150,7 @@ var ImageFile = {
 XPCOMUtils.defineLazyModuleGetter(ImageFile, "_netUtil",
   "resource://gre/modules/NetUtil.jsm", "NetUtil");
 
-var ImageTools = {
+let ImageTools = {
   decode: function ImageTools_decode(aInputStream, aContentType) {
     let outParam = {value: null};
 
@@ -179,7 +179,7 @@ var ImageTools = {
 XPCOMUtils.defineLazyServiceGetter(ImageTools, "_imgTools",
   "@mozilla.org/image/tools;1", "imgITools");
 
-var Utils = {
+let Utils = {
   createCopy: function Utils_createCopy(aData) {
     let copy = {};
     for (let [k, v] in Iterator(aData)) {

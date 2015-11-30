@@ -8,10 +8,10 @@ function test() {
   TabView.toggle();
 }
 
-var moves = 0;
-var contentWindow = null;
-var newTabs = [];
-var originalTab = null;
+let moves = 0;
+let contentWindow = null;
+let newTabs = [];
+let originalTab = null;
 
 function onTabMove(e) {
   let tab = e.target;

@@ -14,7 +14,7 @@
 // than six months range.
 // The correspondence between item in |testData| and date range is stored in
 // leveledTestData.
-var testData = [
+let testData = [
   {
     isVisit: true,
     uri: "file:///directory/1",
@@ -65,8 +65,8 @@ var testData = [
     isInQuery: true
   }
 ];
-var domainsInRange = [2, 3];
-var leveledTestData = [// Today
+let domainsInRange = [2, 3];
+let leveledTestData = [// Today
                        [[0],    // Today, local files
                         [1,2]], // Today, example.com
                        // Older than six months
@@ -77,7 +77,7 @@ var leveledTestData = [// Today
 
 // This test data is meant for live updating. The |levels| property indicates
 // date range index and then domain index.
-var testDataAddedLater = [
+let testDataAddedLater = [
   {
     isVisit: true,
     uri: "http://example.com/5",

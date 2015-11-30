@@ -60,7 +60,7 @@ public:
   virtual PluginInstanceParent*
   GetInstance() { return nullptr; }
 
-  NPP GetNPP();
+  NPP GetNPP() { return mInstance; }
 
   bool GetPropertyHelper(NPObject* aObject, NPIdentifier aName,
                          bool* aHasProperty, bool* aHasMethod,
@@ -141,7 +141,7 @@ private:
   PluginModuleParent*             mParent;
   // These values are used to construct the plugin instance
   nsCString                       mMimeType;
-  mozilla::WeakPtr<nsNPAPIPluginInstance> mInstance;
+  NPP                             mInstance;
   uint16_t                        mMode;
   InfallibleTArray<nsCString>     mNames;
   InfallibleTArray<nsCString>     mValues;

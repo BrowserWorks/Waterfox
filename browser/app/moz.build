@@ -29,8 +29,9 @@ FINAL_TARGET_FILES.defaults.profile += ['profile/prefs.js']
 
 DEFINES['APP_VERSION'] = CONFIG['MOZ_APP_VERSION']
 
-if CONFIG['LIBXUL_SDK']:
-    DEFINES['LIBXUL_SDK'] = True
+for var in ('MOZILLA_OFFICIAL', 'LIBXUL_SDK'):
+    if CONFIG[var]:
+        DEFINES[var] = True
 
 GENERATED_INCLUDES += [
     '/build',
@@ -83,5 +84,4 @@ if CONFIG['HAVE_CLOCK_MONOTONIC']:
 
 JAR_MANIFESTS += ['jar.mn']
 
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']
+FAIL_ON_WARNINGS = True

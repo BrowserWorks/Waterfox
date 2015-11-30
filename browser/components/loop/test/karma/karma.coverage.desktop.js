@@ -12,10 +12,11 @@ module.exports = function(config) {
   baseConfig.files = baseConfig.files.concat([
     "content/libs/l10n.js",
     "content/shared/libs/react-0.12.2.js",
+    "content/shared/libs/jquery-2.1.4.js",
     "content/shared/libs/lodash-3.9.3.js",
     "content/shared/libs/backbone-1.2.1.js",
     "test/shared/vendor/*.js",
-    "test/karma/head.js", // Stub out DOM event listener due to races.
+    "test/karma/stubs.js", // Stub out DOM event listener due to races.
     "content/shared/js/utils.js",
     "content/shared/js/models.js",
     "content/shared/js/mixins.js",
@@ -26,6 +27,8 @@ module.exports = function(config) {
     "content/shared/js/dispatcher.js",
     "content/shared/js/store.js",
     "content/shared/js/conversationStore.js",
+    "content/shared/js/roomStates.js",
+    "content/shared/js/fxOSActiveRoomStore.js",
     "content/shared/js/activeRoomStore.js",
     "content/shared/js/views.js",
     "content/shared/js/textChatStore.js",

@@ -29,7 +29,10 @@
   --toolbarbutton-active-bordercolor: rgb(154,154,154);
   --toolbarbutton-active-background: rgba(154,154,154,.5) linear-gradient(hsla(0,0%,100%,.7), hsla(0,0%,100%,.4));
 
-  --toolbarbutton-checkedhover-backgroundcolor: rgba(154,154,154,.15);
+  --toolbarbutton-checkedhover-backgroundcolor: rgba(90%,90%,90%,.4);
+
+  --toolbarbutton-combined-boxshadow: 0 0 0 1px hsla(0,0%,100%,.2);
+  --toolbarbutton-combined-backgroundimage: linear-gradient(hsla(210,54%,20%,.2) 0, hsla(210,54%,20%,.2) 18px);
 
   --identity-box-verified-background-color: #fff;
 
@@ -58,10 +61,6 @@
   -moz-box-ordinal-group: 101; /* tabs toolbar is 100 */
   height: 1px;
   background-color: ThreeDShadow;
-}
-
-#navigator-toolbox:-moz-lwtheme::after {
-  background-color: rgba(0,0,0,.3);
 }
 
 #navigator-toolbox > toolbar:not(:-moz-lwtheme):not(#toolbar-menubar):not(#TabsToolbar) {
@@ -145,7 +144,7 @@ toolbarbutton.bookmark-item[open="true"] {
   -moz-padding-end: 2px;
 }
 
-.bookmark-item > .toolbarbutton-icon,
+.bookmark-item:not(#home-button) > .toolbarbutton-icon,
 #personal-bookmarks[cui-areatype="toolbar"] > #bookmarks-toolbar-placeholder > .toolbarbutton-icon {
   width: 16px;
   height: 16px;
@@ -331,7 +330,7 @@ menuitem.bookmark-item {
 }
 
 /* Stock icons for the menu bar items */
-menuitem:not([type]):not(.menuitem-tooltip):not(.menuitem-iconic-tooltip) {
+menuitem:not([type]):not(.menuitem-tooltip):not(.menuitem-iconic-tooltip):not([endimage]) {
   -moz-binding: url("chrome://global/content/bindings/menu.xml#menuitem-iconic");
 }
 
@@ -662,33 +661,18 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
   padding: 3px;
 }
 
-:-moz-any(#TabsToolbar, #nav-bar) .toolbaritem-combined-buttons {
-  margin-left: 2px;
-  margin-right: 2px;
-}
-
-:-moz-any(#TabsToolbar, #nav-bar) .toolbaritem-combined-buttons > .toolbarbutton-1 {
-  padding-left: 0;
-  padding-right: 0;
-}
-
-:-moz-any(#TabsToolbar, #nav-bar) .toolbaritem-combined-buttons:not(:hover) > separator,
 :-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not(:hover):not(:active):not([open]) > .toolbarbutton-menubutton-dropmarker::before {
   content: "";
   display: -moz-box;
   width: 1px;
   height: 18px;
   -moz-margin-end: -1px;
-  background-image: linear-gradient(currentColor 0, currentColor 100%);
+  background-image: var(--toolbarbutton-combined-backgroundimage);
+  background-clip: padding-box;
   background-position: center;
   background-repeat: no-repeat;
   background-size: 1px 18px;
-  opacity: .2;
-}
-
-:-moz-any(#TabsToolbar, #nav-bar)[brighttext] .toolbaritem-combined-buttons > separator,
-:-moz-any(#TabsToolbar, #nav-bar)[brighttext] .toolbarbutton-1:not(:hover):not(:active):not([open]) > .toolbarbutton-menubutton-dropmarker::before {
-  opacity: .3;
+  box-shadow: var(--toolbarbutton-combined-boxshadow);
 }
 
 :-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
@@ -765,7 +749,7 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
 
 #forward-button > .toolbarbutton-icon {
   background-clip: padding-box;
-  padding-left: calc(var(--backbutton-urlbar-overlap) + 4px);
+  padding-left: 9px;
   padding-right: 3px;
   border: 1px solid #9a9a9a;
   border-left-style: none;
@@ -890,11 +874,6 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
 
 .urlbar-history-dropmarker {
   -moz-appearance: toolbarbutton-dropdown;
-  transition: opacity 0.15s ease;
-}
-
-#urlbar:not(:hover) > .urlbar-textbox-container > .urlbar-history-dropmarker {
-  opacity: 0;
 }
 
 #urlbar-container {
@@ -1131,7 +1110,8 @@ notification[value="loop-sharing-notification"] .messageImage {
 
 .ac-result-type-bookmark,
 .autocomplete-treebody::-moz-tree-image(bookmark, treecolAutoCompleteImage) {
-  list-style-image: url("chrome://browser/skin/places/autocomplete-star.png");
+  list-style-image: url("chrome://browser/skin/places/star-icons.png");
+  -moz-image-region: rect(0px 32px 16px 16px);
   width: 16px;
   height: 16px;
 }
@@ -1636,14 +1616,6 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
   box-shadow: inset -5px 0 ThreeDShadow;
 }
 
-.alltabs-endimage[muted] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted);
-}
-
-.alltabs-endimage[soundplaying] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio);
-}
-
 /* Sidebar */
 #sidebar-throbber[loading="true"] {
   list-style-image: url("chrome://global/skin/icons/loading_16.png");
@@ -1725,13 +1697,15 @@ toolbarbutton.chevron > .toolbarbutton-icon {
   margin-top: 1em;
 }
 
+#sync-error-panel-title,
 #sync-start-panel-title {
   font-size: 120%;
   font-weight: bold;
   margin-bottom: 5px;
 }
 
-#sync-start-panel-subtitle {
+#sync-start-panel-subtitle,
+#sync-error-panel-subtitle {
   margin: 0;
 }
 
@@ -1761,7 +1735,23 @@ toolbarbutton.chevron > .toolbarbutton-icon {
   margin-left: 1em;
 }
 
-%include ../shared/fullscreen/warning.inc.css
+#full-screen-warning-message {
+  background-image: url("chrome://browser/skin/fullscreen-darknoise.png");
+  color: white;
+  border-radius: 4px;
+  margin-top: 30px;
+  padding: 30px 50px;
+  box-shadow: 0 0 2px white;
+}
+
+.full-screen-description {
+  font-size: 150%;
+}
+
+#full-screen-domain-text {
+  font-size: 300%;
+}
+
 %include ../shared/devtools/responsivedesign.inc.css
 %include ../shared/devtools/commandline.inc.css
 %include ../shared/plugin-doorhanger.inc.css
@@ -1828,6 +1818,39 @@ toolbarbutton.chevron > .toolbarbutton-icon {
 }
 
 %include ../shared/social/chat.inc.css
+
+.chat-titlebar {
+  background-color: #d9d9d9;
+  background-image: linear-gradient(@toolbarHighlight@, transparent);
+}
+
+.chat-titlebar[selected] {
+  background-color: #f0f0f0;
+}
+
+.chatbar-button {
+  -moz-appearance: none;
+  background-color: #d9d9d9;
+  background-image: linear-gradient(@toolbarHighlight@, transparent);
+}
+
+.chatbar-button > .toolbarbutton-icon {
+  -moz-margin-end: 0;
+}
+
+.chatbar-button:hover,
+.chatbar-button[open="true"] {
+  background-color: #f0f0f0;
+}
+
+.chatbar-button[activity] {
+  background-image: radial-gradient(circle farthest-corner at center 3px, rgb(233,242,252) 3%, rgba(172,206,255,0.75) 40%, rgba(87,151,201,0.5) 80%, transparent);
+}
+
+chatbox {
+  border-top-left-radius: 2.5px;
+  border-top-right-radius: 2.5px;
+}
 
 /* Customization mode */
 

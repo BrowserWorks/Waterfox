@@ -37,7 +37,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gStkCmdFactory",
                                    "@mozilla.org/icc/stkcmdfactory;1",
                                    "nsIStkCmdFactory");
 
-var DEBUG = RIL.DEBUG_RIL;
+let DEBUG = RIL.DEBUG_RIL;
 function debug(s) {
   dump("IccService: " + s);
 }

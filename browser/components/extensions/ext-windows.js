@@ -2,7 +2,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "NewTabURL",
                                   "resource:///modules/NewTabURL.jsm");
 
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
-var {
+let {
   EventManager,
   ignoreEvent,
   runSafe,
@@ -60,7 +60,7 @@ extensions.registerAPI((extension, context) => {
         runSafe(context, callback, WindowManager.convert(extension, window, getInfo));
       },
 
-      getAll: function(getInfo, callback) {
+      getAll: function(getAll, callback) {
         let e = Services.wm.getEnumerator("navigator:browser");
         let windows = [];
         while (e.hasMoreElements()) {
@@ -131,10 +131,7 @@ extensions.registerAPI((extension, context) => {
           Services.focus.activeWindow = window;
         }
         // TODO: All the other properties...
-
-        if (callback) {
-          runSafe(context, callback, WindowManager.convert(extension, window));
-        }
+        runSafe(context, callback, WindowManager.convert(extension, window));
       },
 
       remove: function(windowId, callback) {

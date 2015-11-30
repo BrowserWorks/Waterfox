@@ -81,20 +81,19 @@
     </style>
 
     <style name="Widget.GeckoMenuListView" parent="Widget.ListView">
-        <item name="android:listSelector">@drawable/menu_item_action_bar_bg</item>
         <item name="android:divider">@color/divider_light</item>
     </style>
 
     <style name="Widget.MenuItemActionBar">
         <item name="android:padding">8dip</item>
-        <item name="android:background">@drawable/menu_item_action_bar_bg</item>
+        <item name="android:background">@drawable/action_bar_button</item>
         <item name="android:scaleType">fitCenter</item>
         <item name="drawableTintList">@color/action_bar_menu_item_colors</item>"
     </style>
 
     <style name="Widget.MenuItemSecondaryActionBar">
         <item name="android:padding">8dip</item>
-        <item name="android:background">@drawable/menu_item_action_bar_bg</item>
+        <item name="android:background">@drawable/action_bar_button</item>
         <item name="android:scaleType">centerInside</item>
         <item name="drawableTintList">@color/action_bar_secondary_menu_item_colors</item>
     </style>
@@ -104,7 +103,7 @@
     </style>
 
     <style name="Widget.MenuItemDefault">
-        <item name="android:paddingLeft">15dip</item>
+        <item name="android:paddingLeft">10dip</item>
         <item name="android:paddingRight">10dip</item>
         <item name="android:drawablePadding">6dip</item>
         <item name="android:gravity">center_vertical</item>
@@ -135,27 +134,11 @@
         <item name="android:ellipsize">end</item>
     </style>
 
-    <style name="Widget.ReadingListRow.Title.Read" parent="Widget.ReadingListRow.Title">
-        <item name="android:textColor">@color/disabled_grey</item>
-    </style>
-
-    <style name="Widget.ReadingListRow.Title.Unread" parent="Widget.ReadingListRow.Title">
-        <item name="android:textColor">@color/text_and_tabs_tray_grey</item>
-    </style>
-
     <style name="Widget.ReadingListRow.Description">
         <item name="android:textAppearance">@style/TextAppearance.Widget.Home.ItemDescription</item>
         <item name="android:maxLines">3</item>
         <item name="android:ellipsize">end</item>
         <item name="android:lineSpacingMultiplier">1.3</item>
-    </style>
-
-    <style name="Widget.ReadingListRow.Description.Read" parent="Widget.ReadingListRow.Description">
-        <item name="android:textColor">@color/disabled_grey</item>
-    </style>
-
-    <style name="Widget.ReadingListRow.Description.Unread" parent="Widget.ReadingListRow.Description">
-        <item name="android:textColor">@color/text_and_tabs_tray_grey</item>
     </style>
 
     <style name="Widget.ReadingListRow.ReadTime">
@@ -206,9 +189,9 @@
         <item name="android:scrollbarStyle">outsideOverlay</item>
         <item name="android:gravity">center</item>
         <item name="android:numColumns">auto_fit</item>
-        <item name="android:columnWidth">@dimen/tab_panel_column_width</item>
+        <item name="android:columnWidth">@dimen/new_tablet_tab_panel_column_width</item>
         <item name="android:horizontalSpacing">2dp</item>
-        <item name="android:verticalSpacing">@dimen/tab_panel_grid_vspacing</item>
+        <item name="android:verticalSpacing">@dimen/new_tablet_tab_panel_grid_vspacing</item>
         <item name="android:drawSelectorOnTop">true</item>
         <item name="android:clipToPadding">false</item>
     </style>
@@ -236,7 +219,7 @@
     </style>
 
     <style name="Widget.HomeListView" parent="Widget.ListView">
-        <item name="android:divider">@color/divider_light</item>
+        <item name="android:divider">#E7ECF0</item>
     </style>
 
     <style name="Widget.TopSitesListView" parent="Widget.BookmarksListView"/>
@@ -457,6 +440,13 @@
         <item name="android:orientation">horizontal</item>
     </style>
 
+    <style name="UrlBar.ImageButton.TabCount">
+        <item name="android:background">@drawable/tabs_count</item>
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:clipChildren">false</item>
+        <item name="android:clipToPadding">false</item>
+    </style>
+
     <!-- URL bar -->
     <style name="UrlBar">
         <item name="android:layout_width">match_parent</item>
@@ -486,14 +476,18 @@
     </style>
 
     <!-- URL bar - Image Button -->
-    <style name="UrlBar.ImageButtonBase" parent="UrlBar.Button">
+    <style name="UrlBar.ImageButton" parent="UrlBar.Button">
+        <item name="android:layout_width">@dimen/browser_toolbar_height</item>
         <item name="android:scaleType">center</item>
         <item name="android:layout_gravity">center_vertical</item>
         <item name="android:background">@android:color/transparent</item>
     </style>
 
-    <style name="UrlBar.ImageButton" parent="UrlBar.ImageButtonBase">
-        <item name="android:layout_width">@dimen/browser_toolbar_height</item>
+    <!-- URL bar - Image Button - Icon -->
+    <style name="UrlBar.ImageButton.Icon">
+         <item name="android:layout_width">@dimen/browser_toolbar_icon_width</item>
+         <item name="android:layout_height">@dimen/browser_toolbar_height</item>
+         <item name="android:layout_weight">0.0</item>
     </style>
 
     <!-- TabsLayout -->
@@ -560,12 +554,7 @@
     </style>
 
     <style name="Widget.RemoteTabsListView" parent="Widget.HomeListView">
-        <item name="android:childDivider">@color/divider_light</item>
-        <item name="android:drawSelectorOnTop">true</item>
-    </style>
-
-    <style name="Widget.HistoryListView" parent="Widget.HomeListView">
-        <item name="android:childDivider">@color/divider_light</item>
+        <item name="android:childDivider">#E7ECF0</item>
         <item name="android:drawSelectorOnTop">true</item>
     </style>
 
@@ -730,8 +719,7 @@
 
     <style name="GeckoActionBar.Button.MenuButton">
         <item name="android:scaleType">center</item>
-        <item name="android:src">@drawable/menu</item>
-        <item name="android:tint">@color/toolbar_icon_grey</item>
+        <item name="android:src">@drawable/menu_light</item>
         <item name="android:contentDescription">@string/actionbar_menu</item>
         <item name="android:background">@android:color/transparent</item>
     </style>

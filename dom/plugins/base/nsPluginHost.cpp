@@ -1101,6 +1101,18 @@ nsPluginHost::GetBlocklistStateForType(const nsACString &aMimeType,
 }
 
 NS_IMETHODIMP
+nsPluginHost::IsPluginOOP(const nsACString& aMimeType,
+                          bool* aResult)
+{
+  nsPluginTag* tag = FindNativePluginForType(aMimeType, true);
+  if (!tag) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  *aResult = nsNPAPIPlugin::RunPluginOOP(tag);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsPluginHost::GetPermissionStringForType(const nsACString &aMimeType,
                                          uint32_t aExcludeFlags,
                                          nsACString &aPermissionString)
@@ -1622,6 +1634,58 @@ nsPluginHost::UnregisterFakePlugin(const nsACString& aHandlerURI)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsPluginHost::RegisterPlayPreviewMimeType(const nsACString& mimeType,
+                                          bool ignoreCTP,
+                                          const nsACString& redirectURL,
+                                          const nsACString& whitelist)
+{
+  nsAutoCString mt(mimeType);
+  nsAutoCString url(redirectURL);
+  if (url.Length() == 0) {
+    // using default play preview iframe URL, if redirectURL is not specified
+    url.AssignLiteral("data:application/x-moz-playpreview;,");
+    url.Append(mimeType);
+  }
+  nsAutoCString wl(whitelist);
+
+  nsRefPtr<nsPluginPlayPreviewInfo> playPreview =
+    new nsPluginPlayPreviewInfo(mt.get(), ignoreCTP, url.get(), wl.get());
+  mPlayPreviewMimeTypes.AppendElement(playPreview);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsPluginHost::UnregisterPlayPreviewMimeType(const nsACString& mimeType)
+{
+  nsAutoCString mimeTypeToRemove(mimeType);
+  for (uint32_t i = mPlayPreviewMimeTypes.Length(); i > 0; i--) {
+    nsRefPtr<nsPluginPlayPreviewInfo> pp = mPlayPreviewMimeTypes[i - 1];
+    if (PL_strcasecmp(pp.get()->mMimeType.get(), mimeTypeToRemove.get()) == 0) {
+      mPlayPreviewMimeTypes.RemoveElementAt(i - 1);
+      break;
+    }
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsPluginHost::GetPlayPreviewInfo(const nsACString& mimeType,
+                                 nsIPluginPlayPreviewInfo** aResult)
+{
+  nsAutoCString mimeTypeToFind(mimeType);
+  for (uint32_t i = 0; i < mPlayPreviewMimeTypes.Length(); i++) {
+    nsRefPtr<nsPluginPlayPreviewInfo> pp = mPlayPreviewMimeTypes[i];
+    if (PL_strcasecmp(pp.get()->mMimeType.get(), mimeTypeToFind.get()) == 0) {
+      *aResult = new nsPluginPlayPreviewInfo(pp.get());
+      NS_ADDREF(*aResult);
+      return NS_OK;
+    }
+  }
+  *aResult = nullptr;
+  return NS_ERROR_NOT_AVAILABLE;
+}
+
 // FIXME-jsplugins Is this method actually needed?
 NS_IMETHODIMP
 nsPluginHost::GetFakePlugin(const nsACString & aMimeType,
@@ -1847,10 +1911,6 @@ nsPluginHost::SiteHasData(nsIPluginTag* plugin, const nsACString& domain,
 nsPluginHost::SpecialType
 nsPluginHost::GetSpecialType(const nsACString & aMIMEType)
 {
-  if (aMIMEType.LowerCaseEqualsASCII("application/x-test")) {
-    return eSpecialType_Test;
-  }
-
   if (aMIMEType.LowerCaseEqualsASCII("application/x-shockwave-flash") ||
       aMIMEType.LowerCaseEqualsASCII("application/futuresplash")) {
     return eSpecialType_Flash;
@@ -2038,17 +2098,11 @@ bool
 nsPluginHost::ShouldAddPlugin(nsPluginTag* aPluginTag)
 {
 #if defined(XP_WIN) && (defined(__x86_64__) || defined(_M_X64))
-  // On 64-bit windows, the only plugins we should load are flash and
-  // silverlight. Use library filename and MIME type to check.
+  // On 64-bit windows, the only plugin we should load is flash. Use library
+  // filename and MIME type to check.
   if (StringBeginsWith(aPluginTag->FileName(), NS_LITERAL_CSTRING("NPSWF"), nsCaseInsensitiveCStringComparator()) &&
       (aPluginTag->HasMimeType(NS_LITERAL_CSTRING("application/x-shockwave-flash")) ||
        aPluginTag->HasMimeType(NS_LITERAL_CSTRING("application/x-shockwave-flash-test")))) {
-    return true;
-  }
-  if (StringBeginsWith(aPluginTag->FileName(), NS_LITERAL_CSTRING("npctrl"), nsCaseInsensitiveCStringComparator()) &&
-      (aPluginTag->HasMimeType(NS_LITERAL_CSTRING("application/x-silverlight-test")) ||
-       aPluginTag->HasMimeType(NS_LITERAL_CSTRING("application/x-silverlight-2")) ||
-       aPluginTag->HasMimeType(NS_LITERAL_CSTRING("application/x-silverlight")))) {
     return true;
   }
   // Accept the test plugin MIME types, so mochitests still work.
@@ -2456,7 +2510,6 @@ nsPluginHost::FindPluginsInContent(bool aCreatePluginList, bool* aPluginsChanged
                                                nsTArray<nsCString>(tag.extensions()),
                                                tag.isJavaPlugin(),
                                                tag.isFlashPlugin(),
-                                               tag.supportsAsyncInit(),
                                                tag.lastModifiedTime(),
                                                tag.isFromExtension());
       AddPluginTag(pluginTag);
@@ -2685,6 +2738,12 @@ nsPluginHost::FindPluginsForContent(uint32_t aPluginEpoch,
     /// to be more sane and avoid this dance
     nsPluginTag *tag = static_cast<nsPluginTag *>(basetag.get());
 
+    if (!nsNPAPIPlugin::RunPluginOOP(tag)) {
+      // Don't expose non-OOP plugins to content processes since we have no way
+      // to bridge them over.
+      continue;
+    }
+
     aPlugins->AppendElement(PluginTag(tag->mId,
                                       tag->Name(),
                                       tag->Description(),
@@ -2693,7 +2752,6 @@ nsPluginHost::FindPluginsForContent(uint32_t aPluginEpoch,
                                       tag->Extensions(),
                                       tag->mIsJavaPlugin,
                                       tag->mIsFlashPlugin,
-                                      tag->mSupportsAsyncInit,
                                       tag->FileName(),
                                       tag->Version(),
                                       tag->mLastModifiedTime,
@@ -3506,6 +3564,7 @@ nsPluginHost::AddHeadersToChannel(const char *aHeadersData,
       return rv;
     }
   }
+  return rv;
 }
 
 nsresult

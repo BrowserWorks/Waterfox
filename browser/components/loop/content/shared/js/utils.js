@@ -151,6 +151,15 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
     return platform.toLowerCase().indexOf("firefox") !== -1;
   }
 
+  function isFirefoxOS(platform) {
+    // So far WebActivities are exposed only in FxOS, but they may be
+    // exposed in Firefox Desktop soon, so we check for its existence
+    // and also check if the UA belongs to a mobile platform.
+    // XXX WebActivities are also exposed in WebRT on Firefox for Android,
+    //     so we need a better check. Bug 1065403.
+    return !!window.MozActivity && /mobi/i.test(platform);
+  }
+
   function isOpera(platform) {
     return platform.toLowerCase().indexOf("opera") > -1 ||
            platform.toLowerCase().indexOf("opr") > -1;
@@ -685,7 +694,7 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
     var prop;
     for (var i = 0, lA = propsA.length; i < lA; ++i) {
       prop = propsA[i];
-      if (propsB.indexOf(prop) === -1) {
+      if (propsB.indexOf(prop) == -1) {
         diff.removed.push(prop);
       } else if (a[prop] !== b[prop]) {
         diff.updated.push(prop);
@@ -694,7 +703,7 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
 
     for (var j = 0, lB = propsB.length; j < lB; ++j) {
       prop = propsB[j];
-      if (propsA.indexOf(prop) === -1) {
+      if (propsA.indexOf(prop) == -1) {
         diff.added.push(prop);
       }
     }
@@ -723,59 +732,6 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
     return obj;
   }
 
-  /**
-   * Truncate a string if it exceeds the length as defined in `maxLen`, which
-   * is defined as '72' characters by default. If the string needs trimming,
-   * it'll be suffixed with the unicode ellipsis char, \u2026.
-   *
-   * @param  {String} str    The string to truncate, if needed.
-   * @param  {Number} maxLen Maximum number of characters that the string is
-   *                         allowed to contain. Optional, defaults to 72.
-   * @return {String} Truncated version of `str`.
-   */
-  function truncate(str, maxLen) {
-    maxLen = maxLen || 72;
-
-    if (str.length > maxLen) {
-      var substring = str.substr(0, maxLen);
-      // XXX Due to the fact that we have two different l10n libraries.
-      var direction = mozL10n.getDirection ? mozL10n.getDirection() :
-                      mozL10n.language.direction;
-      if (direction === "rtl") {
-        return "…" + substring;
-      }
-
-      return substring + "…";
-    }
-
-    return str;
-  }
-
-  /**
-   * Look up the DOM hierarchy for a node matching `selector`.
-   * If it is not found return the parent node, this is a sane default so
-   * that subsequent queries on the result do no fail.
-   * Better choice than the alternative `document.querySelector(selector)`
-   * because we ensure it works in the UI showcase as well.
-   *
-   * @param {HTMLElement} node Child element of the node we are looking for.
-   * @param {String} selector  CSS class value of element we are looking for.
-   * @return {HTMLElement}     Parent of node that matches selector query.
-   */
-  function findParentNode(node, selector) {
-    var parentNode = node.parentNode;
-
-    while (parentNode) {
-      if (parentNode.classList.contains(selector)) {
-        return parentNode;
-      }
-
-      parentNode = parentNode.parentNode;
-    }
-
-    return node;
-  }
-
   this.utils = {
     CALL_TYPES: CALL_TYPES,
     CHAT_CONTENT_TYPES: CHAT_CONTENT_TYPES,
@@ -787,7 +743,6 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
     ROOM_INFO_FAILURES: ROOM_INFO_FAILURES,
     setRootObjects: setRootObjects,
     composeCallUrlEmail: composeCallUrlEmail,
-    findParentNode: findParentNode,
     formatDate: formatDate,
     formatURL: formatURL,
     getBoolPreference: getBoolPreference,
@@ -796,6 +751,7 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
     getPlatform: getPlatform,
     isChrome: isChrome,
     isFirefox: isFirefox,
+    isFirefoxOS: isFirefoxOS,
     isOpera: isOpera,
     getUnsupportedPlatform: getUnsupportedPlatform,
     hasAudioOrVideoDevices: hasAudioOrVideoDevices,
@@ -805,7 +761,6 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
     strToUint8Array: strToUint8Array,
     Uint8ArrayToStr: Uint8ArrayToStr,
     objectDiff: objectDiff,
-    stripFalsyValues: stripFalsyValues,
-    truncate: truncate
+    stripFalsyValues: stripFalsyValues
   };
 }).call(inChrome ? this : loop.shared);

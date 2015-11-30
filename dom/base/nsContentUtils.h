@@ -165,8 +165,8 @@ struct EventNameMapping
   // This holds pointers to nsGkAtoms members, and is therefore safe as a
   // non-owning reference.
   nsIAtom* MOZ_NON_OWNING_REF mAtom;
+  uint32_t mId;
   int32_t  mType;
-  mozilla::EventMessage mMessage;
   mozilla::EventClassID mEventClassID;
 };
 
@@ -324,23 +324,6 @@ public:
    * @see nsIDOMNode
    */
   static uint16_t ReverseDocumentPosition(uint16_t aDocumentPosition);
-
-  /**
-   * Returns a subdocument for aDocument with a particular outer window ID.
-   *
-   * @param aDocument
-   *        The document whose subdocuments will be searched.
-   * @param aOuterWindowID
-   *        The outer window ID for the subdocument to be found. This must
-   *        be a value greater than 0.
-   * @return nsIDocument*
-   *        A pointer to the found nsIDocument. nullptr if the subdocument
-   *        cannot be found, or if either aDocument or aOuterWindowId were
-   *        invalid. If the outer window ID belongs to aDocument itself, this
-   *        will return a pointer to aDocument.
-   */
-  static nsIDocument* GetSubdocumentWithOuterWindowId(nsIDocument *aDocument,
-                                                      uint64_t aOuterWindowId);
 
   static uint32_t CopyNewlineNormalizedUnicodeTo(const nsAString& aSource,
                                                  uint32_t aSrcOffset,
@@ -1112,13 +1095,13 @@ public:
   static bool IsEventAttributeName(nsIAtom* aName, int32_t aType);
 
   /**
-   * Return the event message for the event with the given name. The name is
-   * the event name with the 'on' prefix. Returns eUnidentifiedEvent if the
+   * Return the event id for the event with the given name. The name is the
+   * event name with the 'on' prefix. Returns NS_USER_DEFINED_EVENT if the
    * event doesn't match a known event name.
    *
    * @param aName the event name to look up
    */
-  static mozilla::EventMessage GetEventMessage(nsIAtom* aName);
+  static uint32_t GetEventId(nsIAtom* aName);
 
   /**
    * Return the EventClassID for the event with the given name. The name is the
@@ -1130,17 +1113,17 @@ public:
   static mozilla::EventClassID GetEventClassID(const nsAString& aName);
 
   /**
-   * Return the event message and atom for the event with the given name.
+   * Return the event id and atom for the event with the given name.
    * The name is the event name *without* the 'on' prefix.
-   * Returns eUnidentifiedEvent on the aEventID if the
+   * Returns NS_USER_DEFINED_EVENT on the aEventID if the
    * event doesn't match a known event name in the category.
    *
    * @param aName the event name to look up
    * @param aEventClassID only return event id for aEventClassID
    */
-  static nsIAtom* GetEventMessageAndAtom(const nsAString& aName,
-                                         mozilla::EventClassID aEventClassID,
-                                         mozilla::EventMessage* aEventMessage);
+  static nsIAtom* GetEventIdAndAtom(const nsAString& aName,
+                                    mozilla::EventClassID aEventClassID,
+                                    uint32_t* aEventID);
 
   /**
    * Used only during traversal of the XPCOM graph by the cycle
@@ -1324,8 +1307,6 @@ public:
    * are not converted into newlines. Only textnodes and cdata nodes are
    * added to the result.
    *
-   * @see nsLayoutUtils::GetFrameTextContent
-   *
    * @param aNode Node to get textual contents of.
    * @param aDeep If true child elements of aNode are recursivly descended
    *              into to find text children.
@@ -1377,6 +1358,38 @@ public:
    * FALSE.
    */
   static void NotifyInstalledMenuKeyboardListener(bool aInstalling);
+
+  /**
+   * Do security checks before loading a resource. Does the following checks:
+   *   nsIScriptSecurityManager::CheckLoadURIWithPrincipal
+   *   NS_CheckContentLoadPolicy
+   *   nsIScriptSecurityManager::CheckSameOriginURI
+   *
+   * You will still need to do at least SameOrigin checks before on redirects.
+   *
+   * @param aURIToLoad         URI that is getting loaded.
+   * @param aLoadingPrincipal  Principal of the resource that is initiating
+   *                           the load
+   * @param aCheckLoadFlags    Flags to be passed to
+   *                           nsIScriptSecurityManager::CheckLoadURIWithPrincipal
+   *                           NOTE: If this contains ALLOW_CHROME the
+   *                                 CheckSameOriginURI check will be skipped if
+   *                                 aURIToLoad is a chrome uri.
+   * @param aAllowData         Set to true to skip CheckSameOriginURI check when
+                               aURIToLoad is a data uri.
+   * @param aContentPolicyType Type     \
+   * @param aContext           Context   |- to be passed to
+   * @param aMimeGuess         Mimetype  |      NS_CheckContentLoadPolicy
+   * @param aExtra             Extra    /
+   */
+  static nsresult CheckSecurityBeforeLoad(nsIURI* aURIToLoad,
+                                          nsIPrincipal* aLoadingPrincipal,
+                                          uint32_t aCheckLoadFlags,
+                                          bool aAllowData,
+                                          uint32_t aContentPolicyType,
+                                          nsISupports* aContext,
+                                          const nsAFlatCString& aMimeGuess = EmptyCString(),
+                                          nsISupports* aExtra = nullptr);
 
   /**
    * Returns true if aPrincipal is the system principal.
@@ -1597,6 +1610,12 @@ public:
   static void WarnScriptWasIgnored(nsIDocument* aDocument);
 
   /**
+   * Whether to assert that RunInStableState() succeeds, or ignore failure,
+   * which may happen late in shutdown.
+   */
+  enum class DispatchFailureHandling { AssertSuccess, IgnoreFailure };
+
+  /**
    * Add a "synchronous section", in the form of an nsIRunnable run once the
    * event loop has reached a "stable state". |aRunnable| must not cause any
    * queued events to be processed (i.e. must not spin the event loop).
@@ -1607,19 +1626,9 @@ public:
    * finishes. If called multiple times per task/event, all the runnables will
    * be executed, in the order in which RunInStableState() was called.
    */
-  static void RunInStableState(already_AddRefed<nsIRunnable> aRunnable);
-
-  /* Add a "synchronous section", in the form of an nsIRunnable run once the
-   * event loop has reached a "metastable state". |aRunnable| must not cause any
-   * queued events to be processed (i.e. must not spin the event loop).
-   * We've reached a metastable state when the currently executing task or
-   * microtask has finished.  This is not specced at this time.
-   * In practice this runs aRunnable once the currently executing task or
-   * microtask finishes.  If called multiple times per microtask, all the
-   * runnables will be executed, in the order in which RunInMetastableState()
-   * was called
-   */
-  static void RunInMetastableState(already_AddRefed<nsIRunnable> aRunnable);
+  static void RunInStableState(already_AddRefed<nsIRunnable> aRunnable,
+                               DispatchFailureHandling aHandling =
+                                 DispatchFailureHandling::AssertSuccess);
 
   /**
    * Retrieve information about the viewport as a data structure.
@@ -1678,12 +1687,16 @@ public:
 
   /**
    * Convert ASCII A-Z to a-z.
+   * @return NS_OK on success, or NS_ERROR_OUT_OF_MEMORY if making the string
+   * writable needs to allocate memory and that allocation fails.
    */
   static void ASCIIToLower(nsAString& aStr);
   static void ASCIIToLower(const nsAString& aSource, nsAString& aDest);
 
   /**
    * Convert ASCII a-z to A-Z.
+   * @return NS_OK on success, or NS_ERROR_OUT_OF_MEMORY if making the string
+   * writable needs to allocate memory and that allocation fails.
    */
   static void ASCIIToUpper(nsAString& aStr);
   static void ASCIIToUpper(const nsAString& aSource, nsAString& aDest);
@@ -1956,19 +1969,6 @@ public:
   }
 
   /*
-   * Returns true if ServiceWorker Interception is enabled by pref.
-   */
-  static bool ServiceWorkerInterceptionEnabled()
-  {
-    return sSWInterceptionEnabled;
-  }
-
-  /*
-   * Returns true if the frame timing APIs are enabled.
-   */
-  static bool IsFrameTimingEnabled();
-
-  /*
    * Returns true if URL setters should percent encode the Hash/Ref segment
    * and getters should return the percent decoded value of the segment
    */
@@ -2002,11 +2002,6 @@ public:
    * control? This always returns false on MacOSX.
    */
   static bool HasPluginWithUncontrolledEventDispatch(nsIDocument* aDoc);
-
-  /**
-   * Return true if this doc is controlled by a ServiceWorker.
-   */
-  static bool IsControlledByServiceWorker(nsIDocument* aDocument);
 
   /**
    * Fire mutation events for changes caused by parsing directly into a
@@ -2102,11 +2097,6 @@ public:
    * Checks if internal PDF viewer is enabled.
    */
   static bool IsPDFJSEnabled();
-
-  /**
-   * Checks if internal SWF player is enabled.
-   */
-  static bool IsSWFPlayerEnabled();
 
   enum ContentViewerType
   {
@@ -2471,38 +2461,6 @@ public:
 
   static bool PushEnabled(JSContext* aCx, JSObject* aObj);
 
-  // The order of these entries matters, as we use std::min for total ordering
-  // of permissions. Private Browsing is considered to be more limiting
-  // then session scoping
-  enum class StorageAccess {
-    // Don't allow access to the storage
-    eDeny = 0,
-    // Allow access to the storage, but only if it is secure to do so in a
-    // private browsing context.
-    ePrivateBrowsing = 1,
-    // Allow access to the storage, but only persist it for the current session
-    eSessionScoped = 2,
-    // Allow access to the storage
-    eAllow = 3,
-  };
-
-  /*
-   * Checks if storage for the given window is permitted by a combination of
-   * the user's preferences, and whether the window is a third-party iframe.
-   *
-   * This logic is intended to be shared between the different forms of
-   * persistent storage which are available to web pages. Cookies don't use
-   * this logic, and security logic related to them must be updated separately.
-   */
-  static StorageAccess StorageAllowedForWindow(nsPIDOMWindow* aWindow);
-
-  /*
-   * Checks if storage for the given principal is permitted by the user's
-   * preferences. The caller is assumed to not be a third-party iframe.
-   * (if that is possible, the caller should use StorageAllowedForWindow)
-   */
-  static StorageAccess StorageAllowedForPrincipal(nsIPrincipal* aPrincipal);
-
 private:
   static bool InitializeEventTable();
 
@@ -2542,18 +2500,6 @@ private:
   static void CallOnAllRemoteChildren(nsIMessageBroadcaster* aManager,
                                       CallOnRemoteChildFunction aCallback,
                                       void* aArg);
-
-  /*
-   * Checks if storage for a given principal is permitted by the user's
-   * preferences. If aWindow is non-null, its principal must be passed as
-   * aPrincipal, and the third-party iframe and sandboxing status of the window
-   * are also checked.
-   *
-   * Used in the implementation of StorageAllowedForWindow and
-   * StorageAllowedForPrincipal.
-   */
-  static StorageAccess InternalStorageAllowedForPrincipal(nsIPrincipal* aPrincipal,
-                                                          nsPIDOMWindow* aWindow);
 
   static nsIXPConnect *sXPConnect;
 
@@ -2614,15 +2560,11 @@ private:
   static bool sIsPerformanceTimingEnabled;
   static bool sIsResourceTimingEnabled;
   static bool sIsUserTimingLoggingEnabled;
-  static bool sIsFrameTimingPrefEnabled;
   static bool sIsExperimentalAutocompleteEnabled;
   static bool sEncodeDecodeURLHash;
   static bool sGettersDecodeURLHash;
   static bool sPrivacyResistFingerprinting;
   static bool sSendPerformanceTimingNotifications;
-  static bool sSWInterceptionEnabled;
-  static uint32_t sCookiesLifetimePolicy;
-  static uint32_t sCookiesBehavior;
 
   static nsHtml5StringParser* sHTMLFragmentParser;
   static nsIParser* sXMLFragmentParser;
@@ -2645,7 +2587,7 @@ private:
 #endif
 };
 
-class MOZ_RAII nsAutoScriptBlocker {
+class MOZ_STACK_CLASS nsAutoScriptBlocker {
 public:
   explicit nsAutoScriptBlocker(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM) {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;

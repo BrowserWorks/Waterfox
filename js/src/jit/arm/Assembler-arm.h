@@ -46,15 +46,6 @@ static MOZ_CONSTEXPR_VAR Register pc  = { Registers::pc };
 
 static MOZ_CONSTEXPR_VAR Register ScratchRegister = {Registers::ip};
 
-// Helper class for ScratchRegister usage. Asserts that only one piece
-// of code thinks it has exclusive ownership of the scratch register.
-struct ScratchRegisterScope : public AutoRegisterScope
-{
-    explicit ScratchRegisterScope(MacroAssembler& masm)
-      : AutoRegisterScope(masm, ScratchRegister)
-    { }
-};
-
 static MOZ_CONSTEXPR_VAR Register OsrFrameReg = r3;
 static MOZ_CONSTEXPR_VAR Register ArgumentsRectifierReg = r8;
 static MOZ_CONSTEXPR_VAR Register CallTempReg0 = r5;
@@ -81,23 +72,9 @@ class ABIArgGenerator
     uint32_t stackOffset_;
     ABIArg current_;
 
-    // ARM can either use HardFp (use float registers for float arguments), or
-    // SoftFp (use general registers for float arguments) ABI.  We keep this
-    // switch as a runtime switch because AsmJS always use the HardFp back-end
-    // while the calls to native functions have to use the one provided by the
-    // system.
-    bool useHardFp_;
-
-    ABIArg softNext(MIRType argType);
-    ABIArg hardNext(MIRType argType);
-
   public:
     ABIArgGenerator();
 
-    void setUseHardFp(bool useHardFp) {
-        MOZ_ASSERT(intRegIndex_ == 0 && floatRegIndex_ == 0);
-        useHardFp_ = useHardFp;
-    }
     ABIArg next(MIRType argType);
     ABIArg& current() { return current_; }
     uint32_t stackBytesConsumedSoFar() const { return stackOffset_; }
@@ -127,19 +104,6 @@ static MOZ_CONSTEXPR_VAR FloatRegister ScratchDoubleReg = { FloatRegisters::d15,
 static MOZ_CONSTEXPR_VAR FloatRegister ScratchSimdReg = InvalidFloatReg;
 static MOZ_CONSTEXPR_VAR FloatRegister ScratchUIntReg = { FloatRegisters::d15, VFPRegister::UInt };
 static MOZ_CONSTEXPR_VAR FloatRegister ScratchIntReg = { FloatRegisters::d15, VFPRegister::Int };
-
-struct ScratchFloat32Scope : public AutoFloatRegisterScope
-{
-    explicit ScratchFloat32Scope(MacroAssembler& masm)
-      : AutoFloatRegisterScope(masm, ScratchFloat32Reg)
-    { }
-};
-struct ScratchDoubleScope : public AutoFloatRegisterScope
-{
-    explicit ScratchDoubleScope(MacroAssembler& masm)
-      : AutoFloatRegisterScope(masm, ScratchDoubleReg)
-    { }
-};
 
 // A bias applied to the GlobalReg to allow the use of instructions with small
 // negative immediate offsets which doubles the range of global data that can be
@@ -1250,25 +1214,13 @@ class Assembler : public AssemblerShared
     }
 
   protected:
-    // Shim around AssemblerBufferWithConstantPools::allocEntry.
-    BufferOffset allocEntry(size_t numInst, unsigned numPoolEntries,
-                            uint8_t* inst, uint8_t* data, ARMBuffer::PoolEntry* pe = nullptr,
-                            bool markAsBranch = false, bool loadToPC = false);
+    BufferOffset labelOffset (Label* l) {
+        return BufferOffset(l->bound());
+    }
 
     Instruction* editSrc (BufferOffset bo) {
         return m_buffer.getInst(bo);
     }
-
-#ifdef JS_DISASM_ARM
-    static void spewInst(Instruction* i);
-    void spew(Instruction* i);
-    void spewBranch(Instruction* i, Label* target);
-    void spewData(BufferOffset addr, size_t numInstr, bool loadToPC);
-    void spewLabel(Label* label);
-    void spewRetarget(Label* label, Label* target);
-    void spewTarget(Label* l);
-#endif
-
   public:
     void resetCounter();
     uint32_t actualOffset(uint32_t) const;
@@ -1306,47 +1258,11 @@ class Assembler : public AssemblerShared
 
     ARMBuffer m_buffer;
 
-#ifdef JS_DISASM_ARM
-  private:
-    class SpewNodes {
-        struct Node {
-            uint32_t key;
-            uint32_t value;
-            Node* next;
-        };
-
-        Node* nodes;
-
-    public:
-        SpewNodes() : nodes(nullptr) {}
-        ~SpewNodes();
-
-        bool lookup(uint32_t key, uint32_t* value);
-        bool add(uint32_t key, uint32_t value);
-        bool remove(uint32_t key);
-    };
-
-    SpewNodes spewNodes_;
-    uint32_t spewNext_;
-    Sprinter* printer_;
-
-    bool spewDisabled();
-    uint32_t spewResolve(Label* l);
-    uint32_t spewProbe(Label* l);
-    uint32_t spewDefine(Label* l);
-    void spew(const char* fmt, ...);
-    void spew(const char* fmt, va_list args);
-#endif
-
   public:
     // For the alignment fill use NOP: 0x0320f000 or (Always | InstNOP::NopInst).
     // For the nopFill use a branch to the next instruction: 0xeaffffff.
     Assembler()
       : m_buffer(1, 1, 8, GetPoolMaxOffset(), 8, 0xe320f000, 0xeaffffff, GetNopFill()),
-#ifdef JS_DISASM_ARM
-        spewNext_(1000),
-        printer_(nullptr),
-#endif
         isFinished(false),
         dtmActive(false),
         dtmCond(Always)
@@ -1406,9 +1322,6 @@ class Assembler : public AssemblerShared
     bool oom() const;
 
     void setPrinter(Sprinter* sp) {
-#ifdef JS_DISASM_ARM
-        printer_ = sp;
-#endif
     }
 
     static const Register getStackPointer() {
@@ -1447,12 +1360,7 @@ class Assembler : public AssemblerShared
     BufferOffset writeInst(uint32_t x);
 
     // As above, but also mark the instruction as a branch.
-    BufferOffset writeBranchInst(uint32_t x, Label* documentation = nullptr);
-
-    // Write a placeholder NOP for a branch into the instruction stream
-    // (in order to adjust assembler addresses and mark it as a branch), it will
-    // be overwritten subsequently.
-    BufferOffset allocBranchInst();
+    BufferOffset writeBranchInst(uint32_t x);
 
     // A static variant for the cases where we don't want to have an assembler
     // object.
@@ -1564,8 +1472,7 @@ class Assembler : public AssemblerShared
     BufferOffset as_Imm32Pool(Register dest, uint32_t value, Condition c = Always);
     // Make a patchable jump that can target the entire 32 bit address space.
     BufferOffset as_BranchPool(uint32_t value, RepatchLabel* label,
-                               ARMBuffer::PoolEntry* pe = nullptr, Condition c = Always,
-                               Label* documentation = nullptr);
+                               ARMBuffer::PoolEntry* pe = nullptr, Condition c = Always);
 
     // Load a 64 bit floating point immediate from a pool into a register.
     BufferOffset as_FImm64Pool(VFPRegister dest, double value, Condition c = Always);
@@ -1584,7 +1491,7 @@ class Assembler : public AssemblerShared
     BufferOffset as_ldrexh(Register rt, Register rn, Condition c = Always);
     BufferOffset as_ldrexb(Register rt, Register rn, Condition c = Always);
 
-    // STREX rd, rt, [rn].  Constraint: rd != rn, rd != rt.
+    // STREX rd, rt, [rn]
     BufferOffset as_strex(Register rd, Register rt, Register rn, Condition c = Always);
     BufferOffset as_strexh(Register rd, Register rt, Register rn, Condition c = Always);
     BufferOffset as_strexb(Register rd, Register rt, Register rn, Condition c = Always);
@@ -1607,7 +1514,7 @@ class Assembler : public AssemblerShared
 
     // Branch can branch to an immediate *or* to a register. Branches to
     // immediates are pc relative, branches to registers are absolute.
-    BufferOffset as_b(BOffImm off, Condition c, Label* documentation = nullptr);
+    BufferOffset as_b(BOffImm off, Condition c);
 
     BufferOffset as_b(Label* l, Condition c = Always);
     BufferOffset as_b(BOffImm off, Condition c, BufferOffset inst);
@@ -1619,7 +1526,7 @@ class Assembler : public AssemblerShared
     BufferOffset as_blx(Label* l);
 
     BufferOffset as_blx(Register r, Condition c = Always);
-    BufferOffset as_bl(BOffImm off, Condition c, Label* documentation = nullptr);
+    BufferOffset as_bl(BOffImm off, Condition c);
     // bl can only branch+link to an immediate, never to a register it never
     // changes processor state.
     BufferOffset as_bl();
@@ -1986,9 +1893,9 @@ class Instruction
     }
     // Since almost all instructions have condition codes, the condition code
     // extractor resides in the base class.
-    Assembler::Condition extractCond() {
-        MOZ_ASSERT(data >> 28 != 0xf, "The instruction does not have condition code");
-        return (Assembler::Condition)(data & 0xf0000000);
+    void extractCond(Assembler::Condition* c) {
+        if (data >> 28 != 0xf )
+            *c = (Assembler::Condition)(data & 0xf0000000);
     }
     // Get the next instruction in the instruction stream.
     // This does neat things like ignoreconstant pools and their guards.

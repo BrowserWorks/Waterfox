@@ -315,18 +315,20 @@ FatalError(const char* aProtocolName, const char* aMsg,
   formattedMessage.AppendLiteral("]: \"");
   formattedMessage.AppendASCII(aMsg);
   if (aIsParent) {
-#ifdef MOZ_CRASHREPORTER
-    // We're going to crash the parent process because at this time
-    // there's no other really nice way of getting a minidump out of
-    // this process if we're off the main thread.
-    formattedMessage.AppendLiteral("\". Intentionally crashing.");
+    formattedMessage.AppendLiteral("\". Killing child side as a result.");
     NS_ERROR(formattedMessage.get());
-    CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("IPCFatalErrorProtocol"),
-                                       nsDependentCString(aProtocolName));
-    CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("IPCFatalErrorMsg"),
-                                       nsDependentCString(aMsg));
-#endif
-    MOZ_CRASH("IPC FatalError in the parent process!");
+
+    if (aOtherPid != kInvalidProcessId && aOtherPid != base::GetCurrentProcId()) {
+      ScopedProcessHandle otherProcessHandle;
+      if (base::OpenProcessHandle(aOtherPid, &otherProcessHandle.rwget())) {
+        if (!base::KillProcess(otherProcessHandle,
+                               base::PROCESS_END_KILLED_BY_USER, false)) {
+          NS_ERROR("May have failed to kill child!");
+        }
+      } else {
+        NS_ERROR("Failed to open child process when attempting kill.");
+      }
+    }
   } else {
     formattedMessage.AppendLiteral("\". abort()ing as a result.");
     NS_RUNTIMEABORT(formattedMessage.get());

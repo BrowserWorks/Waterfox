@@ -191,7 +191,7 @@ AsyncExecuteStatements::execute(StatementDataArray &aStatements,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Return it as the pending statement object and track it.
-  event.forget(_stmt);
+  NS_ADDREF(*_stmt = event);
   return NS_OK;
 }
 

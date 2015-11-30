@@ -7,7 +7,7 @@ const { Cc, Ci, Cu, Cr } = require("chrome");
 
 const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 const { Heritage, setNamedTimeout, clearNamedTimeout } = require("resource:///modules/devtools/ViewHelpers.jsm");
-const { getCurrentZoom } = require("devtools/toolkit/layout/utils");
+const LayoutHelpers = require("devtools/toolkit/layout-helpers");
 
 loader.lazyRequireGetter(this, "promise");
 loader.lazyRequireGetter(this, "EventEmitter",
@@ -925,7 +925,7 @@ AbstractCanvasGraph.prototype = {
 
     // The coordinates need to be modified with the current zoom level
     // to prevent them from being wrong.
-    let zoom = getCurrentZoom(this._canvas);
+    let zoom = LayoutHelpers.getCurrentZoom(this._canvas);
     mouseX /= zoom;
     mouseY /= zoom;
 

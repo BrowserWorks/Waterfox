@@ -95,7 +95,7 @@ WebGLContext::ClearDepth(GLclampf v)
 
     MakeContextCurrent();
     mDepthClearValue = GLClampFloat(v);
-    gl->fClearDepth(mDepthClearValue);
+    gl->fClearDepth(v);
 }
 
 void

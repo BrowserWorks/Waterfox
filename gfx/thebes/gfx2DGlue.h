@@ -24,11 +24,6 @@ inline Rect ToRect(const gfxRect &aRect)
               Float(aRect.width), Float(aRect.height));
 }
 
-inline RectDouble ToRectDouble(const gfxRect &aRect)
-{
-  return RectDouble(aRect.x, aRect.y, aRect.width, aRect.height);
-}
-
 inline Rect ToRect(const IntRect &aRect)
 {
   return Rect(aRect.x, aRect.y, aRect.width, aRect.height);
@@ -144,11 +139,6 @@ inline gfxSize ThebesSize(const Size &aSize)
 }
 
 inline gfxRect ThebesRect(const Rect &aRect)
-{
-  return gfxRect(aRect.x, aRect.y, aRect.width, aRect.height);
-}
-
-inline gfxRect ThebesRect(const RectDouble &aRect)
 {
   return gfxRect(aRect.x, aRect.y, aRect.width, aRect.height);
 }

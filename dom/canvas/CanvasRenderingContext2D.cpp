@@ -948,9 +948,7 @@ CanvasRenderingContext2D::CanvasRenderingContext2D()
   , mIPC(false)
   , mDrawObserver(nullptr)
   , mIsEntireFrameInvalid(false)
-  , mPredictManyRedrawCalls(false)
-  , mIsCapturedFrameInvalid(false)
-  , mPathTransformWillUpdate(false)
+  , mPredictManyRedrawCalls(false), mPathTransformWillUpdate(false)
   , mInvalidateCount(0)
 {
   sNumLivingContexts++;
@@ -1055,7 +1053,6 @@ CanvasRenderingContext2D::Reset()
   // no longer be valid.
   mIsEntireFrameInvalid = false;
   mPredictManyRedrawCalls = false;
-  mIsCapturedFrameInvalid = false;
 
   return NS_OK;
 }
@@ -1114,8 +1111,6 @@ CanvasRenderingContext2D::StyleColorToString(const nscolor& aColor, nsAString& a
 nsresult
 CanvasRenderingContext2D::Redraw()
 {
-  mIsCapturedFrameInvalid = true;
-
   if (mIsEntireFrameInvalid) {
     return NS_OK;
   }
@@ -1137,8 +1132,6 @@ CanvasRenderingContext2D::Redraw()
 void
 CanvasRenderingContext2D::Redraw(const mgfx::Rect &r)
 {
-  mIsCapturedFrameInvalid = true;
-
   ++mInvalidateCount;
 
   if (mIsEntireFrameInvalid) {
@@ -1176,8 +1169,6 @@ CanvasRenderingContext2D::DidRefresh()
 void
 CanvasRenderingContext2D::RedrawUser(const gfxRect& r)
 {
-  mIsCapturedFrameInvalid = true;
-
   if (mIsEntireFrameInvalid) {
     ++mInvalidateCount;
     return;
@@ -1739,11 +1730,7 @@ CanvasRenderingContext2D::Scale(double x, double y, ErrorResult& error)
   }
 
   Matrix newMatrix = mTarget->GetTransform();
-  newMatrix.PreScale(x, y);
-  if (!newMatrix.IsFinite()) {
-    return;
-  }
-  mTarget->SetTransform(newMatrix);
+  mTarget->SetTransform(newMatrix.PreScale(x, y));
 }
 
 void
@@ -1755,11 +1742,8 @@ CanvasRenderingContext2D::Rotate(double angle, ErrorResult& error)
     return;
   }
 
-  Matrix newMatrix = Matrix::Rotation(angle) * mTarget->GetTransform();
-  if (!newMatrix.IsFinite()) {
-    return;
-  }
-  mTarget->SetTransform(newMatrix);
+  Matrix rotation = Matrix::Rotation(angle);
+  mTarget->SetTransform(rotation * mTarget->GetTransform());
 }
 
 void
@@ -1771,12 +1755,7 @@ CanvasRenderingContext2D::Translate(double x, double y, ErrorResult& error)
     return;
   }
 
-  Matrix newMatrix = mTarget->GetTransform();
-  newMatrix.PreTranslate(x, y);
-  if (!newMatrix.IsFinite()) {
-    return;
-  }
-  mTarget->SetTransform(newMatrix);
+  mTarget->SetTransform(Matrix(mTarget->GetTransform()).PreTranslate(x, y));
 }
 
 void
@@ -1790,12 +1769,8 @@ CanvasRenderingContext2D::Transform(double m11, double m12, double m21,
     return;
   }
 
-  Matrix newMatrix(m11, m12, m21, m22, dx, dy);
-  newMatrix *= mTarget->GetTransform();
-  if (!newMatrix.IsFinite()) {
-    return;
-  }
-  mTarget->SetTransform(newMatrix);
+  Matrix matrix(m11, m12, m21, m22, dx, dy);
+  mTarget->SetTransform(matrix * mTarget->GetTransform());
 }
 
 void
@@ -1811,9 +1786,6 @@ CanvasRenderingContext2D::SetTransform(double m11, double m12,
   }
 
   Matrix matrix(m11, m12, m21, m22, dx, dy);
-  if (!matrix.IsFinite()) {
-    return;
-  }
   mTarget->SetTransform(matrix);
 }
 
@@ -2486,30 +2458,10 @@ CanvasRenderingContext2D::UpdateFilter()
 // rects
 //
 
-// bug 1074733
-// The canvas spec does not forbid rects with negative w or h, so given
-// corners (x, y), (x+w, y), (x+w, y+h), and (x, y+h) we must generate
-// the appropriate rect by flipping negative dimensions. This prevents
-// draw targets from receiving "empty" rects later on.
-static void
-NormalizeRect(double& aX, double& aY, double& aWidth, double& aHeight)
-{
-  if (aWidth < 0) {
-    aWidth = -aWidth;
-    aX -= aWidth;
-  }
-  if (aHeight < 0) {
-    aHeight = -aHeight;
-    aY -= aHeight;
-  }
-}
-
 void
 CanvasRenderingContext2D::ClearRect(double x, double y, double w,
                                     double h)
 {
-  NormalizeRect(x, y, w, h);
-
   EnsureTarget();
 
   mTarget->ClearRect(mgfx::Rect(x, y, w, h));
@@ -2522,8 +2474,6 @@ CanvasRenderingContext2D::FillRect(double x, double y, double w,
                                    double h)
 {
   const ContextState &state = CurrentState();
-
-  NormalizeRect(x, y, w, h);
 
   if (state.patternStyles[Style::FILL]) {
     CanvasPattern::RepeatMode repeat =
@@ -2598,7 +2548,6 @@ CanvasRenderingContext2D::StrokeRect(double x, double y, double w,
   if (!w && !h) {
     return;
   }
-  NormalizeRect(x, y, w, h);
 
   EnsureTarget();
   if (!IsTargetValid()) {
@@ -3982,16 +3931,16 @@ gfxFontGroup *CanvasRenderingContext2D::GetCurrentFontStyle()
     if (err.Failed() || !fontUpdated) {
       gfxFontStyle style;
       style.size = kDefaultFontSize;
-      gfxTextPerfMetrics* tp = nullptr;
-      if (presShell && !presShell->IsDestroying()) {
-        tp = presShell->GetPresContext()->GetTextPerfMetrics();
-      }
       CurrentState().fontGroup =
         gfxPlatform::GetPlatform()->CreateFontGroup(FontFamilyList(eFamily_sans_serif),
-                                                    &style, tp,
+                                                    &style,
                                                     nullptr);
       if (CurrentState().fontGroup) {
         CurrentState().font = kDefaultFontStyle;
+        if (presShell && !presShell->IsDestroying()) {
+          CurrentState().fontGroup->SetTextPerfMetrics(
+            presShell->GetPresContext()->GetTextPerfMetrics());
+        }
       } else {
         NS_ERROR("Default canvas font is invalid");
       }
@@ -4323,25 +4272,6 @@ CanvasRenderingContext2D::CachedSurfaceFromElement(Element* aElement)
 // image
 //
 
-static void
-ClipImageDimension(double& aSourceCoord, double& aSourceSize, int32_t aImageSize,
-                   double& aDestCoord, double& aDestSize)
-{
-  double scale = aDestSize / aSourceSize;
-  if (aSourceCoord < 0.0) {
-    double destEnd = aDestCoord + aDestSize;
-    aDestCoord -= aSourceCoord * scale;
-    aDestSize = destEnd - aDestCoord;
-    aSourceSize += aSourceCoord;
-    aSourceCoord = 0.0;
-  }
-  double delta = aImageSize - (aSourceCoord + aSourceSize);
-  if (delta < 0.0) {
-    aDestSize += delta * scale;
-    aSourceSize = aImageSize - aSourceCoord;
-  }
-}
-
 // drawImage(in HTMLImageElement image, in float dx, in float dy);
 //   -- render image from 0,0 at dx,dy top-left coords
 // drawImage(in HTMLImageElement image, in float dx, in float dy, in float sw, in float sh);
@@ -4367,11 +4297,6 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& image,
   }
 
   MOZ_ASSERT(optional_argc == 0 || optional_argc == 2 || optional_argc == 6);
-
-  if (optional_argc == 6) {
-    NormalizeRect(sx, sy, sw, sh);
-    NormalizeRect(dx, dy, dw, dh);
-  }
 
   RefPtr<SourceSurface> srcSurf;
   gfx::IntSize imgSize;
@@ -4579,12 +4504,18 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& image,
     return;
   }
 
-  ClipImageDimension(sx, sw, imgSize.width, dx, dw);
-  ClipImageDimension(sy, sh, imgSize.height, dy, dh);
+  if (dw == 0.0 || dh == 0.0) {
+    // not really failure, but nothing to do --
+    // and noone likes a divide-by-zero
+    return;
+  }
 
-  if (sw <= 0.0 || sh <= 0.0 ||
-      dw <= 0.0 || dh <= 0.0) {
-    // source and/or destination are fully clipped, so nothing is painted
+  if (sx < 0.0 || sy < 0.0 ||
+      sw < 0.0 || sw > (double) imgSize.width ||
+      sh < 0.0 || sh > (double) imgSize.height ||
+      dw < 0.0 || dh < 0.0) {
+    // XXX - Unresolved spec issues here, for now return error.
+    error.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
     return;
   }
 
@@ -5664,17 +5595,6 @@ CanvasRenderingContext2D::MarkContextClean()
   mInvalidateCount = 0;
 }
 
-void
-CanvasRenderingContext2D::MarkContextCleanForFrameCapture()
-{
-  mIsCapturedFrameInvalid = false;
-}
-
-bool
-CanvasRenderingContext2D::IsContextCleanForFrameCapture()
-{
-  return !mIsCapturedFrameInvalid;
-}
 
 bool
 CanvasRenderingContext2D::ShouldForceInactiveLayer(LayerManager *aManager)

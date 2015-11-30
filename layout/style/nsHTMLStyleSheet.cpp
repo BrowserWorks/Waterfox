@@ -171,7 +171,7 @@ MappedAttrTable_MatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
 static const PLDHashTableOps MappedAttrTable_Ops = {
   MappedAttrTable_HashKey,
   MappedAttrTable_MatchEntry,
-  PLDHashTable::MoveEntryStub,
+  PL_DHashMoveEntryStub,
   MappedAttrTable_ClearEntry,
   nullptr
 };
@@ -222,7 +222,7 @@ LangRuleTable_InitEntry(PLDHashEntryHdr *hdr, const void *key)
 static const PLDHashTableOps LangRuleTable_Ops = {
   LangRuleTable_HashKey,
   LangRuleTable_MatchEntry,
-  PLDHashTable::MoveEntryStub,
+  PL_DHashMoveEntryStub,
   LangRuleTable_ClearEntry,
   LangRuleTable_InitEntry
 };
@@ -471,8 +471,9 @@ nsHTMLStyleSheet::SetVisitedLinkColor(nscolor aColor)
 already_AddRefed<nsMappedAttributes>
 nsHTMLStyleSheet::UniqueMappedAttributes(nsMappedAttributes* aMapped)
 {
-  auto entry = static_cast<MappedAttrTableEntry*>
-                          (mMappedAttrTable.Add(aMapped, fallible));
+  MappedAttrTableEntry *entry =
+    static_cast<MappedAttrTableEntry*>
+               (PL_DHashTableAdd(&mMappedAttrTable, aMapped, fallible));
   if (!entry)
     return nullptr;
   if (!entry->mAttributes) {
@@ -492,7 +493,7 @@ nsHTMLStyleSheet::DropMappedAttributes(nsMappedAttributes* aMapped)
   uint32_t entryCount = mMappedAttrTable.EntryCount() - 1;
 #endif
 
-  mMappedAttrTable.Remove(aMapped);
+  PL_DHashTableRemove(&mMappedAttrTable, aMapped);
 
   NS_ASSERTION(entryCount == mMappedAttrTable.EntryCount(), "not removed");
 }
@@ -500,8 +501,8 @@ nsHTMLStyleSheet::DropMappedAttributes(nsMappedAttributes* aMapped)
 nsIStyleRule*
 nsHTMLStyleSheet::LangRuleFor(const nsString& aLanguage)
 {
-  auto entry =
-    static_cast<LangRuleTableEntry*>(mLangRuleTable.Add(&aLanguage, fallible));
+  LangRuleTableEntry *entry = static_cast<LangRuleTableEntry*>
+    (PL_DHashTableAdd(&mLangRuleTable, &aLanguage, fallible));
   if (!entry) {
     NS_ASSERTION(false, "out of memory");
     return nullptr;

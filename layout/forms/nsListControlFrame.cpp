@@ -881,7 +881,7 @@ nsListControlFrame::HandleEvent(nsPresContext* aPresContext,
 {
   NS_ENSURE_ARG_POINTER(aEventStatus);
 
-  /*const char * desc[] = {"eMouseMove", 
+  /*const char * desc[] = {"NS_MOUSE_MOVE", 
                           "NS_MOUSE_LEFT_BUTTON_UP",
                           "NS_MOUSE_LEFT_BUTTON_DOWN",
                           "<NA>","<NA>","<NA>","<NA>","<NA>","<NA>","<NA>",
@@ -890,19 +890,19 @@ nsListControlFrame::HandleEvent(nsPresContext* aPresContext,
                           "<NA>","<NA>","<NA>","<NA>","<NA>","<NA>","<NA>","<NA>",
                           "NS_MOUSE_RIGHT_BUTTON_UP",
                           "NS_MOUSE_RIGHT_BUTTON_DOWN",
-                          "eMouseOver",
-                          "eMouseOut",
+                          "NS_MOUSE_OVER",
+                          "NS_MOUSE_OUT",
                           "NS_MOUSE_LEFT_DOUBLECLICK",
                           "NS_MOUSE_MIDDLE_DOUBLECLICK",
                           "NS_MOUSE_RIGHT_DOUBLECLICK",
                           "NS_MOUSE_LEFT_CLICK",
                           "NS_MOUSE_MIDDLE_CLICK",
                           "NS_MOUSE_RIGHT_CLICK"};
-  int inx = aEvent->mMessage - eMouseEventFirst;
-  if (inx >= 0 && inx <= (NS_MOUSE_RIGHT_CLICK - eMouseEventFirst)) {
-    printf("Mouse in ListFrame %s [%d]\n", desc[inx], aEvent->mMessage);
+  int inx = aEvent->message-NS_MOUSE_MESSAGE_START;
+  if (inx >= 0 && inx <= (NS_MOUSE_RIGHT_CLICK-NS_MOUSE_MESSAGE_START)) {
+    printf("Mouse in ListFrame %s [%d]\n", desc[inx], aEvent->message);
   } else {
-    printf("Mouse in ListFrame <UNKNOWN> [%d]\n", aEvent->mMessage);
+    printf("Mouse in ListFrame <UNKNOWN> [%d]\n", aEvent->message);
   }*/
 
   if (nsEventStatus_eConsumeNoDefault == *aEventStatus)

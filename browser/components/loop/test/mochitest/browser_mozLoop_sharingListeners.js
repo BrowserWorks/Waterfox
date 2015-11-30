@@ -9,7 +9,7 @@
 const {injectLoopAPI} = Cu.import("resource:///modules/loop/MozLoopAPI.jsm", {});
 gMozLoopAPI = injectLoopAPI({});
 
-var handlers = [
+let handlers = [
   {
     resolve: null,
     windowId: null,
@@ -35,7 +35,7 @@ function promiseWindowIdReceivedOnAdd(handler) {
   });
 }
 
-var createdTabs = [];
+let createdTabs = [];
 
 function promiseWindowIdReceivedNewTab(handlersParam = []) {
   let promiseHandlers = [];

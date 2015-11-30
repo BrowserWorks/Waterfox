@@ -16,8 +16,7 @@ DragEvent::DragEvent(EventTarget* aOwner,
                      nsPresContext* aPresContext,
                      WidgetDragEvent* aEvent)
   : MouseEvent(aOwner, aPresContext,
-               aEvent ? aEvent :
-                        new WidgetDragEvent(false, eVoidEvent, nullptr))
+               aEvent ? aEvent : new WidgetDragEvent(false, 0, nullptr))
 {
   if (aEvent) {
     mEventIsInternal = false;
@@ -160,12 +159,12 @@ DragEvent::Constructor(const GlobalObject& aGlobal,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<DragEvent>
-NS_NewDOMDragEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMDragEvent(nsIDOMEvent** aInstancePtrResult,
+                   EventTarget* aOwner,
                    nsPresContext* aPresContext,
                    WidgetDragEvent* aEvent) 
 {
-  nsRefPtr<DragEvent> event =
-    new DragEvent(aOwner, aPresContext, aEvent);
-  return event.forget();
+  DragEvent* event = new DragEvent(aOwner, aPresContext, aEvent);
+  return CallQueryInterface(event, aInstancePtrResult);
 }

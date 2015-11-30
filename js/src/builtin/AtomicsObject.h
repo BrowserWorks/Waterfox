@@ -29,6 +29,8 @@ class AtomicsObject : public JSObject
     };
 };
 
+void atomics_fullMemoryBarrier();
+
 bool atomics_compareExchange(JSContext* cx, unsigned argc, Value* vp);
 bool atomics_exchange(JSContext* cx, unsigned argc, Value* vp);
 bool atomics_load(JSContext* cx, unsigned argc, Value* vp);

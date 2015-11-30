@@ -56,7 +56,6 @@ public:
   nsresult Init(const nsACString &aKey,
                 bool aCreateNew,
                 bool aMemoryOnly,
-                bool aSkipSizeCheck,
                 bool aPriority,
                 CacheFileListener *aCallback);
 
@@ -194,7 +193,6 @@ private:
   bool           mOpeningFile;
   bool           mReady;
   bool           mMemoryOnly;
-  bool           mSkipSizeCheck;
   bool           mOpenAsMemoryOnly;
   bool           mPriority;
   bool           mDataAccessed;

@@ -10,7 +10,7 @@
 
 package org.webrtc.videoengine;
 
-import org.mozilla.gecko.annotation.WebRTCJNITarget;
+import org.mozilla.gecko.mozglue.WebRTCJNITarget;
 
 @WebRTCJNITarget
 public class CaptureCapabilityAndroid {

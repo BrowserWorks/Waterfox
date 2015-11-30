@@ -13,10 +13,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "Promise",
 
 const WORKER_URL = "resource:///modules/translation/cld-worker.js";
 
-var detectionQueue = [];
+let detectionQueue = [];
 
-var workerReady = false;
-var pendingStrings = [];
+let workerReady = false;
+let pendingStrings = [];
 
 XPCOMUtils.defineLazyGetter(this, "worker", () => {
   let worker = new Worker(WORKER_URL);

@@ -69,7 +69,7 @@ describe("loop.store.RoomStore", function () {
     var defaultStoreState = {
       error: undefined,
       pendingCreation: false,
-      pendingInitialRetrieval: true,
+      pendingInitialRetrieval: false,
       rooms: [],
       activeRoom: {}
     };
@@ -243,7 +243,8 @@ describe("loop.store.RoomStore", function () {
         sandbox.stub(dispatcher, "dispatch");
         store.setStoreState({pendingCreation: false, rooms: []});
         fakeRoomCreationData = {
-          nameTemplate: fakeNameTemplate
+          nameTemplate: fakeNameTemplate,
+          roomOwner: fakeOwner
         };
       });
 
@@ -284,6 +285,7 @@ describe("loop.store.RoomStore", function () {
           decryptedContext: {
             roomName: "Conversation 1"
           },
+          roomOwner: fakeOwner,
           maxSize: store.maxRoomCreationSize
         });
       });
@@ -308,6 +310,7 @@ describe("loop.store.RoomStore", function () {
               thumbnail: "fakeimage.png"
             }]
           },
+          roomOwner: fakeOwner,
           maxSize: store.maxRoomCreationSize
         });
       });

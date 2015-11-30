@@ -84,7 +84,7 @@ WebappsRegistry.prototype = {
         break;
       case "Webapps:CheckInstalled:Return:OK":
         this.removeMessageListeners(aMessage.name);
-        Services.DOMRequest.fireSuccess(req, createContentApplicationObject(this._window, msg.app));
+        Services.DOMRequest.fireSuccess(req, msg.app);
         break;
       case "Webapps:GetInstalled:Return:OK":
         this.removeMessageListeners(aMessage.name);
@@ -316,7 +316,7 @@ WebappsRegistry.prototype = {
     }
 
     this.addMessageListeners(["Webapps:GetLocalizationResource:Return"]);
-    return this.createPromiseWithId((aResolverId) => {
+    return this.createPromise((aResolve, aReject) => {
       cpmm.sendAsyncMessage("Webapps:GetLocalizationResource", {
         manifestURL: manifestURL,
         lang: aLanguage,
@@ -325,7 +325,10 @@ WebappsRegistry.prototype = {
         dataType: aType,
         oid: this._id,
         topId: this._topId,
-        requestID: aResolverId
+        requestID: this.getPromiseResolverId({
+          resolve: aResolve,
+          reject: aReject
+        })
       });
     });
   },
@@ -606,7 +609,7 @@ WebappsApplication.prototype = {
   connect: function(aKeyword, aRules) {
     this.addMessageListeners(["Webapps:Connect:Return:OK",
                               "Webapps:Connect:Return:KO"]);
-    return this.createPromiseWithId((aResolverId) => {
+    return this.createPromise(function (aResolve, aReject) {
       let from = this._window.location.origin + this._window.location.pathname;
       cpmm.sendAsyncMessage("Webapps:Connect", {
         keyword: aKeyword,
@@ -615,21 +618,27 @@ WebappsApplication.prototype = {
         pubPageURL: from,
         outerWindowID: this._id,
         topWindowID: this._topId,
-        requestID: aResolverId
+        requestID: this.getPromiseResolverId({
+          resolve: aResolve,
+          reject: aReject
+        })
       });
-    });
+    }.bind(this));
   },
 
   getConnections: function() {
     this.addMessageListeners("Webapps:GetConnections:Return:OK");
-    return this.createPromiseWithId((aResolverId) => {
+    return this.createPromise(function (aResolve, aReject) {
       cpmm.sendAsyncMessage("Webapps:GetConnections", {
         manifestURL: this.manifestURL,
         outerWindowID: this._id,
         topWindowID: this._topId,
-        requestID: aResolverId
+        requestID: this.getPromiseResolverId({
+          resolve: aResolve,
+          reject: aReject
+        })
       });
-    });
+    }.bind(this));
   },
 
   addReceipt: function(receipt) {
@@ -680,19 +689,22 @@ WebappsApplication.prototype = {
 
   export: function() {
     this.addMessageListeners(["Webapps:Export:Return"]);
-    return this.createPromiseWithId((aResolverId) => {
+    return this.createPromise((aResolve, aReject) => {
       cpmm.sendAsyncMessage("Webapps:Export",
         { manifestURL: this.manifestURL,
           oid: this._id,
           topId: this._topId,
-          requestID: aResolverId
+          requestID: this.getPromiseResolverId({
+            resolve: aResolve,
+            reject: aReject
+          })
         });
     });
   },
 
   getLocalizedValue: function(aProperty, aLang, aEntryPoint) {
     this.addMessageListeners(["Webapps:GetLocalizedValue:Return"]);
-    return this.createPromiseWithId((aResolverId) => {
+    return this.createPromise((aResolve, aReject) => {
       cpmm.sendAsyncMessage("Webapps:GetLocalizedValue",
         { manifestURL: this.manifestURL,
           oid: this._id,
@@ -700,7 +712,10 @@ WebappsApplication.prototype = {
           property: aProperty,
           lang: aLang,
           entryPoint: aEntryPoint,
-          requestID: aResolverId
+          requestID: this.getPromiseResolverId({
+            resolve: aResolve,
+            reject: aReject
+          })
         });
     });
   },
@@ -943,16 +958,19 @@ WebappsApplicationMgmt.prototype = {
   },
 
   getIcon: function(aApp, aIconID, aEntryPoint) {
-    return this.createPromiseWithId((aResolverId) => {
+    return this.createPromise(function(aResolve, aReject) {
       cpmm.sendAsyncMessage("Webapps:GetIcon", {
         oid: this._id,
         topId: this._topId,
         manifestURL: aApp.manifestURL,
         iconID: aIconID,
         entryPoint: aEntryPoint,
-        requestID: aResolverId
+        requestID: this.getPromiseResolverId({
+          resolve: aResolve,
+          reject: aReject
+        })
       });
-    });
+    }.bind(this));
   },
 
   getNotInstalled: function() {
@@ -970,25 +988,29 @@ WebappsApplicationMgmt.prototype = {
 
   import: function(aBlob) {
     let principal = this._window.document.nodePrincipal;
-    return this.createPromiseWithId((aResolverId) => {
+    return this.createPromise((aResolve, aReject) => {
       cpmm.sendAsyncMessage("Webapps:Import",
         { blob: aBlob,
           oid: this._id,
           topId: this._topId,
-          requestID: aResolverId
-        }, null, principal);
+          requestID: this.getPromiseResolverId({
+            resolve: aResolve,
+            reject: aReject
+          })}, null, principal);
     });
   },
 
   extractManifest: function(aBlob) {
     let principal = this._window.document.nodePrincipal;
-    return this.createPromiseWithId((aResolverId) => {
+    return this.createPromise((aResolve, aReject) => {
       cpmm.sendAsyncMessage("Webapps:ExtractManifest",
         { blob: aBlob,
           oid: this._id,
           topId: this._topId,
-          requestID: aResolverId
-        }, null, principal);
+          requestID: this.getPromiseResolverId({
+            resolve: aResolve,
+            reject: aReject
+          })}, null, principal);
     });
   },
 

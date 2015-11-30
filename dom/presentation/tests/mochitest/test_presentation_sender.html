@@ -15,27 +15,16 @@
 'use strict';
 
 var gScript = SpecialPowers.loadChromeScript(SimpleTest.getTestFileURL('PresentationSessionChromeScript.js'));
-var request;
+var presentation;
 var session;
 
 function testSetup() {
   return new Promise(function(aResolve, aReject) {
-    request = new PresentationRequest("http://example.com");
-
-    request.getAvailability().then(
-      function(aAvailability) {
-        aAvailability.onchange = function() {
-          aAvailability.onchange = null;
-          ok(aAvailability.value, "Device should be available.");
-          aResolve();
-        }
-      },
-      function(aError) {
-        ok(false, "Error occurred when getting availability: " + aError);
-        teardown();
-        aReject();
-      }
-    );
+    presentation.onavailablechange = function(aIsAvailable) {
+      presentation.onavailablechange = null;
+      ok(aIsAvailable, "Device should be available.");
+      aResolve();
+    };
 
     gScript.sendAsyncMessage('trigger-device-add');
   });
@@ -52,12 +41,6 @@ function testStartSession() {
     gScript.addMessageListener('control-channel-established', function controlChannelEstablishedHandler() {
       gScript.removeMessageListener('control-channel-established', controlChannelEstablishedHandler);
       info("A control channel is established.");
-      gScript.sendAsyncMessage('trigger-control-channel-open');
-    });
-
-    gScript.addMessageListener('control-channel-opened', function controlChannelOpenedHandler(aReason) {
-      gScript.removeMessageListener('control-channel-opened', controlChannelOpenedHandler);
-      info("The control channel is opened.");
     });
 
     gScript.addMessageListener('control-channel-closed', function controlChannelClosedHandler(aReason) {
@@ -65,9 +48,9 @@ function testStartSession() {
       info("The control channel is closed. " + aReason);
     });
 
-    gScript.addMessageListener('offer-sent', function offerSentHandler(aIsValid) {
+    gScript.addMessageListener('offer-sent', function offerSentHandler() {
       gScript.removeMessageListener('offer-sent', offerSentHandler);
-      ok(aIsValid, "A valid offer is sent out.");
+      info("An offer is sent out.");
       gScript.sendAsyncMessage('trigger-incoming-transport');
     });
 
@@ -82,34 +65,13 @@ function testStartSession() {
       gScript.sendAsyncMessage('trigger-incoming-answer');
     });
 
-    gScript.addMessageListener('data-transport-notification-enabled', function dataTransportNotificationEnabledHandler() {
-      gScript.removeMessageListener('data-transport-notification-enabled', dataTransportNotificationEnabledHandler);
-      info("Data notification is enabled for data transport channel.");
-    });
-
-    var sessionFromEvent;
-    request.onsessionconnect = function(aEvent) {
-      request.onsessionconnect = null;
-      sessionFromEvent = aEvent.session;
-      ok(sessionFromEvent, "|sessionconnect| event is fired with a session.");
-
-      if (session) {
-        is(session, sessionFromEvent, "The session from promise and the one from |sessionconnect| event should be the same.");
-        aResolve();
-      }
-    };
-
-    request.start().then(
+    presentation.startSession("http://example.com").then(
       function(aSession) {
         session = aSession;
         ok(session, "Session should be availlable.");
         ok(session.id, "Session ID should be set.");
         is(session.state, "connected", "Session state at sender side should be connected by default.");
-
-        if (sessionFromEvent) {
-          is(session, sessionFromEvent, "The session from promise and the one from |sessionconnect| event should be the same.");
-          aResolve();
-        }
+        aResolve();
       },
       function(aError) {
         ok(false, "Error occurred when starting session: " + aError);
@@ -176,7 +138,8 @@ function teardown() {
 }
 
 function runTests() {
-  ok(window.PresentationRequest, "PresentationRequest should be available.");
+  ok(navigator.presentation, "navigator.presentation should be available.");
+  presentation = navigator.presentation;
 
   testSetup().
   then(testStartSession).

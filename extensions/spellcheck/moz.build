@@ -7,4 +7,3 @@
 DIRS += ['idl', 'locales', 'hunspell', 'src']
 
 MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
-MOCHITEST_MANIFESTS += ['tests/mochitest/mochitest.ini']

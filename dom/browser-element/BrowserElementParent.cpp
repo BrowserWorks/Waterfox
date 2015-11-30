@@ -102,10 +102,16 @@ DispatchCustomDOMEvent(Element* aFrameElement, const nsAString& aEventName,
     presContext = shell->GetPresContext();
   }
 
-  nsRefPtr<CustomEvent> event =
-    NS_NewDOMCustomEvent(aFrameElement, presContext, nullptr);
+  nsCOMPtr<nsIDOMEvent> domEvent;
+  EventDispatcher::CreateEvent(aFrameElement, presContext, nullptr,
+                               NS_LITERAL_STRING("customevent"),
+                               getter_AddRefs(domEvent));
+  NS_ENSURE_TRUE(domEvent, false);
 
+  nsCOMPtr<nsIDOMCustomEvent> customEvent = do_QueryInterface(domEvent);
+  NS_ENSURE_TRUE(customEvent, false);
   ErrorResult res;
+  CustomEvent* event = static_cast<CustomEvent*>(customEvent.get());
   event->InitCustomEvent(cx,
                          aEventName,
                          /* bubbles = */ true,
@@ -115,13 +121,12 @@ DispatchCustomDOMEvent(Element* aFrameElement, const nsAString& aEventName,
   if (res.Failed()) {
     return false;
   }
-  event->SetTrusted(true);
+  customEvent->SetTrusted(true);
   // Dispatch the event.
-  // We don't initialize aStatus here, as our callers have already done so.
+  *aStatus = nsEventStatus_eConsumeNoDefault;
   nsresult rv =
     EventDispatcher::DispatchDOMEvent(aFrameElement, nullptr,
-                                      static_cast<Event*>(event),
-                                      presContext, aStatus);
+                                      domEvent, presContext, aStatus);
   return NS_SUCCEEDED(rv);
 }
 
@@ -177,7 +182,7 @@ BrowserElementParent::DispatchOpenWindowEvent(Element* aOpenerFrameElement,
     return BrowserElementParent::OPEN_WINDOW_CANCELLED;
   }
 
-  nsEventStatus status = nsEventStatus_eIgnore;
+  nsEventStatus status;
   bool dispatchSucceeded =
     DispatchCustomDOMEvent(aOpenerFrameElement,
                            NS_LITERAL_STRING("mozbrowseropenwindow"),

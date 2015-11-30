@@ -58,9 +58,4 @@ public:
 } // namespace dom
 } // namespace mozilla
 
-already_AddRefed<mozilla::dom::CustomEvent>
-NS_NewDOMCustomEvent(mozilla::dom::EventTarget* aOwner,
-                     nsPresContext* aPresContext,
-                     mozilla::WidgetEvent* aEvent);
-
 #endif // CustomEvent_h__

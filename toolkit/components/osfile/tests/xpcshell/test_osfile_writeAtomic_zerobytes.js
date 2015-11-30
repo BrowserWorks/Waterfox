@@ -2,7 +2,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
-var SHARED_PATH;
+let SHARED_PATH;
 
 add_task(function* init() {
   do_get_profile();

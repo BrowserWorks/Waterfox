@@ -92,7 +92,6 @@ public:
     RESPONSETAINT_BASIC,
     RESPONSETAINT_CORS,
     RESPONSETAINT_OPAQUE,
-    RESPONSETAINT_OPAQUEREDIRECT,
   };
 
   explicit InternalRequest()
@@ -103,7 +102,6 @@ public:
     , mCredentialsMode(RequestCredentials::Omit)
     , mResponseTainting(RESPONSETAINT_BASIC)
     , mCacheMode(RequestCache::Default)
-    , mRedirectMode(RequestRedirect::Follow)
     , mAuthenticationFlag(false)
     , mForceOriginHeader(false)
     , mPreserveContentCodings(false)
@@ -266,18 +264,6 @@ public:
     mCacheMode = aCacheMode;
   }
 
-  RequestRedirect
-  GetRedirectMode() const
-  {
-    return mRedirectMode;
-  }
-
-  void
-  SetRedirectMode(RequestRedirect aRedirectMode)
-  {
-    mRedirectMode = aRedirectMode;
-  }
-
   nsContentPolicyType
   ContentPolicyType() const
   {
@@ -333,7 +319,7 @@ public:
   SetBody(nsIInputStream* aStream)
   {
     // A request's body may not be reset once set.
-    MOZ_ASSERT_IF(aStream, !mBodyStream);
+    MOZ_ASSERT(!mBodyStream);
     mBodyStream = aStream;
   }
 
@@ -377,8 +363,6 @@ public:
   bool
   IsClientRequest() const;
 
-  static RequestMode
-  MapChannelToRequestMode(nsIChannel* aChannel);
 
 private:
   // Does not copy mBodyStream.  Use fallible Clone() for complete copy.
@@ -389,14 +373,7 @@ private:
   static RequestContext
   MapContentPolicyTypeToRequestContext(nsContentPolicyType aContentPolicyType);
 
-  static bool
-  IsNavigationContentPolicy(nsContentPolicyType aContentPolicyType);
-
-  static bool
-  IsWorkerContentPolicy(nsContentPolicyType aContentPolicyType);
-
   nsCString mMethod;
-  // mURL always stores the url with the ref stripped
   nsCString mURL;
   nsRefPtr<InternalHeaders> mHeaders;
   nsCOMPtr<nsIInputStream> mBodyStream;
@@ -412,7 +389,6 @@ private:
   RequestCredentials mCredentialsMode;
   ResponseTainting mResponseTainting;
   RequestCache mCacheMode;
-  RequestRedirect mRedirectMode;
 
   bool mAuthenticationFlag;
   bool mForceOriginHeader;

@@ -1793,7 +1793,7 @@ TypedObject::obj_hasProperty(JSContext* cx, HandleObject obj, HandleId id, bool*
 }
 
 bool
-TypedObject::obj_getProperty(JSContext* cx, HandleObject obj, HandleValue receiver,
+TypedObject::obj_getProperty(JSContext* cx, HandleObject obj, HandleObject receiver,
                              HandleId id, MutableHandleValue vp)
 {
     Rooted<TypedObject*> typedObj(cx, &obj->as<TypedObject>());
@@ -1850,7 +1850,7 @@ TypedObject::obj_getProperty(JSContext* cx, HandleObject obj, HandleValue receiv
 }
 
 bool
-TypedObject::obj_getElement(JSContext* cx, HandleObject obj, HandleValue receiver,
+TypedObject::obj_getElement(JSContext* cx, HandleObject obj, HandleObject receiver,
                             uint32_t index, MutableHandleValue vp)
 {
     MOZ_ASSERT(obj->is<TypedObject>());
@@ -1922,7 +1922,7 @@ TypedObject::obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, Handl
         uint32_t index;
         if (IdIsIndex(id, &index)) {
             if (!receiver.isObject() || obj != &receiver.toObject())
-                return SetPropertyByDefining(cx, obj, id, v, receiver, result);
+                return SetPropertyByDefining(cx, obj, id, v, receiver, false, result);
 
             if (index >= uint32_t(typedObj->length())) {
                 JS_ReportErrorNumber(cx, GetErrorMessage,
@@ -1948,7 +1948,7 @@ TypedObject::obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, Handl
             break;
 
         if (!receiver.isObject() || obj != &receiver.toObject())
-            return SetPropertyByDefining(cx, obj, id, v, receiver, result);
+            return SetPropertyByDefining(cx, obj, id, v, receiver, false, result);
 
         size_t offset = descr->fieldOffset(fieldIndex);
         Rooted<TypeDescr*> fieldType(cx, &descr->fieldDescr(fieldIndex));
@@ -2189,7 +2189,7 @@ InlineTransparentTypedObject::getOrCreateBuffer(JSContext* cx)
     ObjectWeakMap*& table = cx->compartment()->lazyArrayBuffers;
     if (!table) {
         table = cx->new_<ObjectWeakMap>(cx);
-        if (!table || !table->init())
+        if (!table)
             return nullptr;
     }
 
@@ -2247,7 +2247,7 @@ OutlineTransparentTypedObject::getOrCreateBuffer(JSContext* cx)
 #define DEFINE_TYPEDOBJ_CLASS(Name, Trace)        \
     const Class Name::class_ = {                         \
         # Name,                                          \
-        Class::NON_NATIVE, \
+        Class::NON_NATIVE | JSCLASS_IMPLEMENTS_BARRIERS, \
         nullptr,        /* addProperty */                \
         nullptr,        /* delProperty */                \
         nullptr,        /* getProperty */                \

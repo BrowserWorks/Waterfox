@@ -424,7 +424,8 @@ NS_IMETHODIMP nsPK11TokenDB::GetInternalKeyToken(nsIPK11Token **_retval)
   if (!slot) { rv = NS_ERROR_FAILURE; goto done; }
 
   token = new nsPK11Token(slot);
-  token.forget(_retval);
+  *_retval = token;
+  NS_ADDREF(*_retval);
 
 done:
   if (slot) PK11_FreeSlot(slot);
@@ -437,13 +438,12 @@ FindTokenByName(const char16_t* tokenName, nsIPK11Token **_retval)
   nsNSSShutDownPreventionLock locker;
   nsresult rv = NS_OK;
   PK11SlotInfo *slot = 0;
-  nsCOMPtr<nsIPK11Token> token;
   NS_ConvertUTF16toUTF8 aUtf8TokenName(tokenName);
   slot = PK11_FindSlotByName(const_cast<char*>(aUtf8TokenName.get()));
   if (!slot) { rv = NS_ERROR_FAILURE; goto done; }
 
-  token = new nsPK11Token(slot);
-  token.forget(_retval);
+  *_retval = new nsPK11Token(slot);
+  NS_ADDREF(*_retval);
 
 done:
   if (slot) PK11_FreeSlot(slot);

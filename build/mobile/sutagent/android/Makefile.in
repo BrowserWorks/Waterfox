@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-include $(topsrcdir)/config/config.mk
+ANDROID_APK_NAME := sutAgentAndroid
 
 JAVAFILES = \
   AlertLooperThread.java \
@@ -24,5 +24,7 @@ ANDROID_EXTRA_JARS = \
   $(srcdir)/network-libs/commons-net-2.0.jar \
   $(srcdir)/network-libs/jmdns.jar \
   $(NULL)
+
+include $(topsrcdir)/config/rules.mk
 
 tools:: $(ANDROID_APK_NAME).apk

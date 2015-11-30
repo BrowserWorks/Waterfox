@@ -1,9 +1,9 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var {method, RetVal, Actor, ActorClass, Front, FrontClass} =
+let {method, RetVal, Actor, ActorClass, Front, FrontClass} =
   require("devtools/server/protocol");
-var Services = require("Services");
+let Services = require("Services");
 
 exports.LazyActor = ActorClass({
   typeName: "lazy",

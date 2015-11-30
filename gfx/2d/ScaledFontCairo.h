@@ -37,7 +37,6 @@ public:
   GlyphRenderingOptionsCairo()
     : mHinting(FontHinting::NORMAL)
     , mAutoHinting(false)
-    , mAntialiasMode(AntialiasMode::DEFAULT)
   {
   }
 
@@ -45,13 +44,10 @@ public:
   void SetAutoHinting(bool aAutoHinting) { mAutoHinting = aAutoHinting; }
   FontHinting GetHinting() const { return mHinting; }
   bool GetAutoHinting() const { return mAutoHinting; }
-  void SetAntialiasMode(AntialiasMode aAntialiasMode) { mAntialiasMode = aAntialiasMode; }
-  virtual AntialiasMode GetAntialiasMode() const { return mAntialiasMode; }
   virtual FontType GetType() const { return FontType::CAIRO; }
 private:
   FontHinting mHinting;
   bool mAutoHinting;
-  AntialiasMode mAntialiasMode;
 };
 
 } // namespace gfx

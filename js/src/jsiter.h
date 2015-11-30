@@ -147,6 +147,9 @@ class StringIteratorObject : public JSObject
 };
 
 bool
+VectorToIdArray(JSContext* cx, AutoIdVector& props, JSIdArray** idap);
+
+bool
 GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleObject objp);
 
 JSObject*

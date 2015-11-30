@@ -25,7 +25,7 @@ Cu.import("resource://gre/modules/Promise.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/Timer.jsm", this);
 
-var loggingConfigured = false;
+let loggingConfigured = false;
 
 this.configureLogging = function () {
   if (loggingConfigured) {
@@ -144,7 +144,7 @@ this.TestingCrashManager.prototype = {
   },
 };
 
-var DUMMY_DIR_COUNT = 0;
+let DUMMY_DIR_COUNT = 0;
 
 this.getManager = function () {
   return Task.spawn(function* () {

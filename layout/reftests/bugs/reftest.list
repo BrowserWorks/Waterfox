@@ -688,7 +688,7 @@ skip-if(B2G||Mulet) == 378937-1.html 378937-1-ref.html # Initial mulet triage: p
 == 379178-html.html 379178-html-ref.html
 == 379178-svg.svg 379178-svg-ref.svg
 == 379316-1.html 379316-1-ref.html
-skip-if(B2G||Mulet) fails-if(Android) random-if(cocoaWidget) random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) fuzzy-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\.2/.test(http.oscpu),1,170) fuzzy-if(gtkWidget,1,191) == 379316-2.html 379316-2-ref.html # bug 379786 # Initial mulet triage: parity with B2G/B2G Desktop
+skip-if(B2G||Mulet) fails-if(Android) random-if(cocoaWidget) random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) fuzzy-if(/^Windows\x20NT\x206\.2/.test(http.oscpu),1,170) fuzzy-if(gtkWidget,1,191) == 379316-2.html 379316-2-ref.html # bug 379786 # Initial mulet triage: parity with B2G/B2G Desktop
 == 379328-1.html 379328-1-ref.html
 == 379349-1a.xhtml 379349-1-ref.xhtml
 # fuzzy because of different border rendering approach in bug 1185636
@@ -1198,9 +1198,9 @@ test-pref(dom.use_xbl_scopes_for_remote_xul,true) != 449149-1b.html about:blank
 skip-if(B2G||Mulet) == 455826-1.html 455826-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 skip-if(B2G||Mulet) fails-if(cocoaWidget) fails-if(Android) == 456147.xul 456147-ref.html # bug 458047 # Initial mulet triage: parity with B2G/B2G Desktop
 # The next three tests are fuzzy due to bug 1128229.
-fuzzy-if(Android||B2G,11,41) fuzzy-if(d2d&&(/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\.2/.test(http.oscpu)),1,69) == 456219-1a.html 456219-1-ref.html # bug 853273
-fuzzy-if(Android||B2G,11,41) fuzzy-if(d2d&&(/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\.2/.test(http.oscpu)),1,69) == 456219-1b.html 456219-1-ref.html # bug 853273
-fuzzy-if(Android||B2G,11,41) fuzzy-if(d2d&&(/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\.2/.test(http.oscpu)),1,69) == 456219-1c.html 456219-1-ref.html # bug 853273
+fuzzy-if(Android||B2G,11,41) fuzzy-if(d2d&&/^Windows\x20NT\x206\.2/.test(http.oscpu),1,69) == 456219-1a.html 456219-1-ref.html # bug 853273
+fuzzy-if(Android||B2G,11,41) fuzzy-if(d2d&&/^Windows\x20NT\x206\.2/.test(http.oscpu),1,69) == 456219-1b.html 456219-1-ref.html # bug 853273
+fuzzy-if(Android||B2G,11,41) fuzzy-if(d2d&&/^Windows\x20NT\x206\.2/.test(http.oscpu),1,69) == 456219-1c.html 456219-1-ref.html # bug 853273
 == 456219-2.html 456219-2-ref.html
 == 456330-1.gif 456330-1-ref.png
 == 456484-1.html 456484-1-ref.html
@@ -1594,8 +1594,8 @@ skip-if(B2G||Mulet) fuzzy-if(d2d,52,1051) fuzzy-if(OSX==1008,129,1068) == 586683
 == 589615-1b.html 589615-1-ref.html
 == 589672-1.html 589672-1-ref.html
 != 589682-1.html 589682-1-notref.html
-pref(dom.meta-viewport.enabled,true) skip-if(Android) == 593243-1.html 593243-1-ref.html # bug 593168
-pref(dom.meta-viewport.enabled,true) skip-if(Android) == 593243-2.html 593243-2-ref.html # bug 593168
+skip-if(Android) == 593243-1.html 593243-1-ref.html # bug 593168
+skip-if(Android) == 593243-2.html 593243-2-ref.html # bug 593168
 == 593544-1.html 593544-1-ref.html
 random-if(Android) == 594333-1.html 594333-1-ref.html
 fuzzy-if(B2G,1,40000) == 594624-1.html 594624-1-ref.html
@@ -1755,12 +1755,12 @@ skip-if(B2G||Mulet) fuzzy-if(Android,4,400) == 815593-1.html 815593-1-ref.html #
 == 816359-1.html 816359-1-ref.html
 == 816458-1.html 816458-1-ref.html
 == 816948-1.html 816948-1-ref.html
-random-if(Android&&AndroidVersion==15) == 817019-1.html about:blank # see bug 1192616, re-enable once we're off the pandaboards
+== 817019-1.html about:blank
 skip-if(B2G||Mulet) == 818276-1.html 818276-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 fuzzy-if(asyncPan,190,510) fuzzy-if(asyncPan&&!layersGPUAccelerated,102,510) == 825999.html 825999-ref.html
 == 827577-1a.html 827577-1-ref.html
 == 827577-1b.html 827577-1-ref.html
-random-if(Android&&AndroidVersion==15) == 827799-1.html about:blank # see bug 1192616, re-enable once we're off the pandaboards
+== 827799-1.html about:blank
 == 829958.html 829958-ref.html
 == 836844-1.html 836844-1-ref.html
 == 841192-1.html 841192-1-ref.html
@@ -1820,14 +1820,14 @@ HTTP(..) == 983985-2.html 983985-2-ref.html
 == 985303-1a.html 985303-1-ref.html
 == 985303-1b.html 985303-1-ref.html
 == 987680-1.html 987680-1-ref.html
-fuzzy-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\.2/.test(http.oscpu),1,24) == 991046-1.html 991046-1-ref.html
+fuzzy-if(/^Windows\x20NT\x206\.2/.test(http.oscpu),1,24) == 991046-1.html 991046-1-ref.html
 pref(layout.css.overflow-clip-box.enabled,true) == 992447.html 992447-ref.html
 == 1003425-1.html 1003425-1-ref.html
 == 1003425-2.html 1003425-2-ref.html
 pref(layout.css.sticky.enabled,true) == 1005405-1.html 1005405-1-ref.html
 == 1012640-1.html 1012640-1-ref.html
 fuzzy-if(/^Windows\x20NT\x205\.1/.test(http.oscpu),255,1) == 1013054-1.html 1013054-1-ref.html
-== 1018522-1.html 1018522-1-ref.html
+pref(layout.css.will-change.enabled,true) == 1018522-1.html 1018522-1-ref.html
 == 1021564-1.html 1021564-ref.html
 == 1021564-2.html 1021564-ref.html
 == 1021564-3.html 1021564-ref.html
@@ -1840,7 +1840,7 @@ pref(browser.display.use_document_fonts,0) == 1022481-1.html 1022481-1-ref.html
 == 1044198-1.html 1044198-1-ref.html
 == 1049499-1.html 1049499-1-ref.html
 == 1050493-1.html 1050493-1-ref.html
-random-if(Android&&AndroidVersion==15) == 1050788-1.html about:blank # see bug 1192616, re-enable once we're off the pandaboards
+== 1050788-1.html about:blank
 == 1053035-1-flex.html 1053035-1-ref.html
 test-pref(layout.css.grid.enabled,true) == 1053035-1-grid.html 1053035-1-ref.html
 == 1059167-1.html 1059167-1-ref.html
@@ -1852,14 +1852,14 @@ fuzzy-if(Mulet,1,5) == 1062792-1.html 1062792-1-ref.html
 == 1062963-floatmanager-reflow.html 1062963-floatmanager-reflow-ref.html
 test-pref(dom.webcomponents.enabled,true) == 1066554-1.html 1066554-1-ref.html
 == 1069716-1.html 1069716-1-ref.html
-random-if(Android&&AndroidVersion==15) == 1078262-1.html about:blank # see bug 1192616, re-enable once we're off the pandaboards
+== 1078262-1.html about:blank
 test-pref(layout.testing.overlay-scrollbars.always-visible,false) == 1081072-1.html 1081072-1-ref.html
 == 1081185-1.html 1081185-1-ref.html
 == 1097437-1.html 1097437-1-ref.html
 == 1103258-1.html 1103258-1-ref.html # assertion crash test with layers culling test
 == 1105137-1.html 1105137-1-ref.html
 fuzzy-if(d2d,36,304) HTTP(..) == 1116480-1-fakeitalic-overflow.html 1116480-1-fakeitalic-overflow-ref.html
-random-if(Android&&AndroidVersion==15) == 1111753-1.html about:blank # see bug 1192616, re-enable once we're off the pandaboards
+== 1111753-1.html about:blank
 == 1114526-1.html 1114526-1-ref.html
 == 1119117-1a.html 1119117-1-ref.html
 == 1119117-1b.html 1119117-1-ref.html
@@ -1934,9 +1934,3 @@ fuzzy(1,74) fuzzy-if(gtkWidget,6,79) == 1174332-1.html 1174332-1-ref.html
 == 1190635-1.html 1190635-1-ref.html
 == 1202512-1.html 1202512-1-ref.html
 == 1202512-2.html 1202512-2-ref.html
-!= 1207326-1.html about:blank
-== 1209994-1.html 1209994-1-ref.html
-== 1209994-2.html 1209994-2-ref.html
-== 1209994-3.html 1209994-3-ref.html
-== 1209994-4.html 1209994-4-ref.html
-== 1222226-1.html 1222226-1-ref.html

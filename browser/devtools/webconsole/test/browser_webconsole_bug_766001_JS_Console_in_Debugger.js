@@ -18,11 +18,7 @@ function test() {
   Task.spawn(runner).then(finishTest);
 
   function* runner() {
-    // On e10s, the exception is triggered in child process
-    // and is ignored by test harness
-    if (!Services.appinfo.browserTabsRemoteAutostart) {
-      expectUncaughtException();
-    }
+    expectUncaughtException();
 
     let {tab} = yield loadTab(TEST_URI);
     hud = yield openConsole(tab);

@@ -369,7 +369,7 @@ class JitcodeGlobalEntry
                                          IonTrackedOptimizationsTypeInfo::ForEachOpAdapter& op);
 
         template <class ShouldMarkProvider> bool mark(JSTracer* trc);
-        void sweepChildren();
+        void sweep();
         bool isMarkedFromAnyThread();
     };
 
@@ -427,7 +427,7 @@ class JitcodeGlobalEntry
                                          JSScript** script, jsbytecode** pc) const;
 
         template <class ShouldMarkProvider> bool mark(JSTracer* trc);
-        void sweepChildren();
+        void sweep();
         bool isMarkedFromAnyThread();
     };
 
@@ -476,7 +476,7 @@ class JitcodeGlobalEntry
                                          IonTrackedOptimizationsTypeInfo::ForEachOpAdapter& op);
 
         template <class ShouldMarkProvider> bool mark(JSTracer* trc);
-        void sweepChildren(JSRuntime* rt);
+        void sweep(JSRuntime* rt);
         bool isMarkedFromAnyThread(JSRuntime* rt);
     };
 
@@ -931,16 +931,16 @@ class JitcodeGlobalEntry
         return markedAny;
     }
 
-    void sweepChildren(JSRuntime* rt) {
+    void sweep(JSRuntime* rt) {
         switch (kind()) {
           case Ion:
-            ionEntry().sweepChildren();
+            ionEntry().sweep();
             break;
           case Baseline:
-            baselineEntry().sweepChildren();
+            baselineEntry().sweep();
             break;
           case IonCache:
-            ionCacheEntry().sweepChildren(rt);
+            ionCacheEntry().sweep(rt);
           case Dummy:
             break;
           default:

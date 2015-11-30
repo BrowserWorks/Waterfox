@@ -175,11 +175,7 @@ nsPluginArray::IndexedGetter(uint32_t aIndex, bool &aFound)
 
   aFound = aIndex < mPlugins.Length();
 
-  if (!aFound) {
-    return nullptr;
-  }
-
-  return mPlugins[aIndex];
+  return aFound ? mPlugins[aIndex] : nullptr;
 }
 
 void
@@ -395,11 +391,7 @@ nsPluginElement::IndexedGetter(uint32_t aIndex, bool &aFound)
 
   aFound = aIndex < mMimeTypes.Length();
 
-  if (!aFound) {
-    return nullptr;
-  }
-
-  return mMimeTypes[aIndex];
+  return aFound ? mMimeTypes[aIndex] : nullptr;
 }
 
 nsMimeType*

@@ -348,15 +348,10 @@ public class ShareDialog extends Locales.LocaleAwareActivity implements SendTabT
 
     @Override
     public void finish() {
-        finish(true);
-    }
-
-    private void finish(final boolean shouldOverrideAnimations) {
         super.finish();
-        if (shouldOverrideAnimations) {
-            // Don't perform an activity-dismiss animation.
-            overridePendingTransition(0, 0);
-        }
+
+        // Don't perform an activity-dismiss animation.
+        overridePendingTransition(0, 0);
     }
 
     /*
@@ -418,8 +413,7 @@ public class ShareDialog extends Locales.LocaleAwareActivity implements SendTabT
         } catch (URISyntaxException e) {
             // Nothing much we can do.
         } finally {
-            // Since we're changing apps, users expect the default app switch animations.
-            finish(false);
+            slideOut();
         }
     }
 

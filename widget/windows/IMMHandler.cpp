@@ -1250,7 +1250,7 @@ IMMHandler::HandleStartComposition(nsWindow* aWindow,
   mCompositionStart = selection.mOffset;
   mCursorPosition = NO_IME_CARET;
 
-  WidgetCompositionEvent event(true, eCompositionStart, aWindow);
+  WidgetCompositionEvent event(true, NS_COMPOSITION_START, aWindow);
   nsIntPoint point(0, 0);
   aWindow->InitEvent(event, &point);
   aWindow->DispatchWindowEvent(&event);
@@ -1524,8 +1524,8 @@ IMMHandler::HandleEndComposition(nsWindow* aWindow,
     mNativeCaretIsCreated = false;
   }
 
-  EventMessage message =
-    aCommitString ? eCompositionCommit : eCompositionCommitAsIs;
+  uint32_t message =
+    aCommitString ? NS_COMPOSITION_COMMIT : NS_COMPOSITION_COMMIT_AS_IS;
   WidgetCompositionEvent compositionCommitEvent(true, message, aWindow);
   nsIntPoint point(0, 0);
   aWindow->InitEvent(compositionCommitEvent, &point);
@@ -1654,12 +1654,12 @@ IMMHandler::HandleQueryCharPosition(nsWindow* aWindow,
 
   pCharPosition->cLineHeight = r.height;
 
-  WidgetQueryContentEvent editorRect(true, eQueryEditorRect, aWindow);
+  WidgetQueryContentEvent editorRect(true, NS_QUERY_EDITOR_RECT, aWindow);
   aWindow->InitEvent(editorRect);
   aWindow->DispatchWindowEvent(&editorRect);
   if (NS_WARN_IF(!editorRect.mSucceeded)) {
     MOZ_LOG(gIMMLog, LogLevel::Error,
-      ("IMM: HandleQueryCharPosition, eQueryEditorRect failed"));
+      ("IMM: HandleQueryCharPosition, NS_QUERY_EDITOR_RECT failed"));
     ::GetWindowRect(aWindow->GetWindowHandle(), &pCharPosition->rcDocument);
   } else {
     nsIntRect editorRectInWindow =
@@ -1726,13 +1726,14 @@ IMMHandler::HandleDocumentFeed(nsWindow* aWindow,
   }
 
   // Get all contents of the focused editor.
-  WidgetQueryContentEvent textContent(true, eQueryTextContent, aWindow);
+  WidgetQueryContentEvent textContent(true, NS_QUERY_TEXT_CONTENT, aWindow);
   textContent.InitForQueryTextContent(0, UINT32_MAX);
   aWindow->InitEvent(textContent, &point);
   aWindow->DispatchWindowEvent(&textContent);
   if (!textContent.mSucceeded) {
     MOZ_LOG(gIMMLog, LogLevel::Error,
-      ("IMM: HandleDocumentFeed, FAILED, due to eQueryTextContent failure"));
+      ("IMM: HandleDocumentFeed, FAILED, due to NS_QUERY_TEXT_CONTENT "
+       "failure"));
     return false;
   }
 
@@ -1897,7 +1898,7 @@ IMMHandler::DispatchCompositionChangeEvent(nsWindow* aWindow,
 
   nsIntPoint point(0, 0);
 
-  WidgetCompositionEvent event(true, eCompositionChange, aWindow);
+  WidgetCompositionEvent event(true, NS_COMPOSITION_CHANGE, aWindow);
 
   aWindow->InitEvent(event, &point);
 
@@ -1970,25 +1971,13 @@ IMMHandler::CreateTextRangeArray()
     return textRangeArray.forget();
   }
 
-  uint32_t cursor = static_cast<uint32_t>(mCursorPosition);
-  if (cursor > mCompositionString.Length()) {
+  int32_t cursor = mCursorPosition;
+  if (uint32_t(cursor) > mCompositionString.Length()) {
     MOZ_LOG(gIMMLog, LogLevel::Info,
       ("IMM: CreateTextRangeArray, mCursorPosition=%ld. "
        "This is larger than mCompositionString.Length()=%lu",
        mCursorPosition, mCompositionString.Length()));
     cursor = mCompositionString.Length();
-  }
-
-  // If caret is in the target clause, the target clause will be painted as
-  // normal selection range.  Since caret shouldn't be in selection range on
-  // Windows, we shouldn't append caret range in such case.
-  const TextRange* targetClause = textRangeArray->GetTargetClause();
-  if (targetClause &&
-      cursor >= targetClause->mStartOffset &&
-      cursor <= targetClause->mEndOffset) {
-    MOZ_LOG(gIMMLog, LogLevel::Info,
-      ("IMM: CreateTextRangeArray, no caret due to it's in the target clause"));
-    return textRangeArray.forget();
   }
 
   range.mStartOffset = range.mEndOffset = cursor;
@@ -2165,7 +2154,7 @@ IMMHandler::GetCharacterRectOfSelectedTextAt(nsWindow* aWindow,
   // If there is a caret and retrieving offset is same as the caret offset,
   // we should use the caret rect.
   if (offset != caretOffset) {
-    WidgetQueryContentEvent charRect(true, eQueryTextRect, aWindow);
+    WidgetQueryContentEvent charRect(true, NS_QUERY_TEXT_RECT, aWindow);
     charRect.InitForQueryTextRect(offset, 1);
     aWindow->InitEvent(charRect, &point);
     aWindow->DispatchWindowEvent(&charRect);
@@ -2202,13 +2191,13 @@ IMMHandler::GetCaretRect(nsWindow* aWindow,
     return false;
   }
 
-  WidgetQueryContentEvent caretRect(true, eQueryCaretRect, aWindow);
+  WidgetQueryContentEvent caretRect(true, NS_QUERY_CARET_RECT, aWindow);
   caretRect.InitForQueryCaretRect(selection.mOffset);
   aWindow->InitEvent(caretRect, &point);
   aWindow->DispatchWindowEvent(&caretRect);
   if (!caretRect.mSucceeded) {
     MOZ_LOG(gIMMLog, LogLevel::Info,
-      ("IMM: GetCaretRect, FAILED, due to eQueryCaretRect failure"));
+      ("IMM: GetCaretRect, FAILED, due to NS_QUERY_CARET_RECT failure"));
     return false;
   }
   aCaretRect = LayoutDevicePixel::ToUntyped(caretRect.mReply.mRect);
@@ -2376,13 +2365,13 @@ void
 IMMHandler::SetIMERelatedWindowsPosOnPlugin(nsWindow* aWindow,
                                             const IMEContext& aContext)
 {
-  WidgetQueryContentEvent editorRectEvent(true, eQueryEditorRect, aWindow);
+  WidgetQueryContentEvent editorRectEvent(true, NS_QUERY_EDITOR_RECT, aWindow);
   aWindow->InitEvent(editorRectEvent);
   aWindow->DispatchWindowEvent(&editorRectEvent);
   if (!editorRectEvent.mSucceeded) {
     MOZ_LOG(gIMMLog, LogLevel::Info,
       ("IMM: SetIMERelatedWindowsPosOnPlugin, "
-       "FAILED, due to eQueryEditorRect failure"));
+       "FAILED, due to NS_QUERY_EDITOR_RECT failure"));
     return;
   }
 
@@ -2600,7 +2589,8 @@ IMMHandler::OnMouseButtonEvent(nsWindow* aWindow,
   }
 
   // We need to handle only mousedown event.
-  if (aIMENotification.mMouseButtonEventData.mEventMessage != eMouseDown) {
+  if (aIMENotification.mMouseButtonEventData.mEventMessage !=
+        NS_MOUSE_BUTTON_DOWN) {
     return NS_OK;
   }
 
@@ -2693,13 +2683,13 @@ IMMHandler::OnKeyDownEvent(nsWindow* aWindow,
     case VK_UP:
     case VK_RIGHT:
     case VK_DOWN:
-    case VK_RETURN:
       // If IME didn't process the key message (the virtual key code wasn't
       // converted to VK_PROCESSKEY), and the virtual key code event causes
-      // moving caret or editing text with keeping composing state, we should
-      // cancel the composition here because we cannot support moving
-      // composition string with DOM events (IE also cancels the composition
-      // in same cases).  Then, this event will be dispatched.
+      // to move caret, we should cancel the composition here.  Then, this
+      // event will be dispatched.
+      // XXX I think that we should dispatch all key events during composition,
+      //     and nsEditor should cancel/commit the composition if it *thinks*
+      //     it's needed.
       if (IsComposingOnOurEditor()) {
         // NOTE: We don't need to cancel the composition on another window.
         CancelComposition(aWindow, false);
@@ -2752,13 +2742,14 @@ IMMHandler::Selection::Init(nsWindow* aWindow)
 {
   Clear();
 
-  WidgetQueryContentEvent selection(true, eQuerySelectedText, aWindow);
+  WidgetQueryContentEvent selection(true, NS_QUERY_SELECTED_TEXT, aWindow);
   nsIntPoint point(0, 0);
   aWindow->InitEvent(selection, &point);
   aWindow->DispatchWindowEvent(&selection);
   if (NS_WARN_IF(!selection.mSucceeded)) {
     MOZ_LOG(gIMMLog, LogLevel::Error,
-      ("IMM: Selection::Init, FAILED, due to eQuerySelectedText failure"));
+      ("IMM: Selection::Init, FAILED, due to NS_QUERY_SELECTED_TEXT "
+       "failure"));
     return false;
   }
   // If the window is destroyed during querying selected text, we shouldn't

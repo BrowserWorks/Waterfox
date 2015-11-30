@@ -5,9 +5,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/EventDispatcher.h"
-#include "mozilla/dom/Event.h"
 #include "mozilla/dom/TabMessageUtils.h"
 #include "nsCOMPtr.h"
+#include "nsIDOMEvent.h"
 
 namespace mozilla {
 namespace dom {
@@ -20,8 +20,11 @@ ReadRemoteEvent(const IPC::Message* aMsg, void** aIter,
   nsString type;
   NS_ENSURE_TRUE(ReadParam(aMsg, aIter, &type), false);
 
-  aResult->mEvent = EventDispatcher::CreateEvent(nullptr, nullptr, nullptr,
-                                                 type);
+  nsCOMPtr<nsIDOMEvent> event;
+  EventDispatcher::CreateEvent(nullptr, nullptr, nullptr, type,
+                               getter_AddRefs(event));
+  aResult->mEvent = do_QueryInterface(event);
+  NS_ENSURE_TRUE(aResult->mEvent, false);
 
   return aResult->mEvent->Deserialize(aMsg, aIter);
 }

@@ -10,7 +10,8 @@ const CC = Components.Constructor;
 
 const { require } =
   Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const promise = require("promise");
+const { Promise: promise } =
+  Cu.import("resource://gre/modules/Promise.jsm", {});
 const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 
 const Services = require("Services");
@@ -25,8 +26,19 @@ const DevToolsUtils = require("devtools/toolkit/DevToolsUtils.js");
 // Enable remote debugging for the relevant tests.
 Services.prefs.setBoolPref("devtools.debugger.remote-enabled", true);
 
-const { DebuggerServer } = require("devtools/server/main");
-const { DebuggerClient } = require("devtools/toolkit/client/main");
+function tryImport(url) {
+  try {
+    Cu.import(url);
+  } catch (e) {
+    dump("Error importing " + url + "\n");
+    dump(DevToolsUtils.safeErrorString(e) + "\n");
+    throw e;
+  }
+}
+
+tryImport("resource://gre/modules/devtools/dbg-server.jsm");
+tryImport("resource://gre/modules/devtools/dbg-client.jsm");
+tryImport("resource://gre/modules/devtools/Loader.jsm");
 
 function testExceptionHook(ex) {
   try {
@@ -62,8 +74,8 @@ function dbg_assert(cond, e) {
 
 // Register a console listener, so console messages don't just disappear
 // into the ether.
-var errorCount = 0;
-var listener = {
+let errorCount = 0;
+let listener = {
   observe: function (aMessage) {
     errorCount++;
     try {
@@ -96,7 +108,7 @@ var listener = {
   }
 };
 
-var consoleService = Cc["@mozilla.org/consoleservice;1"]
+let consoleService = Cc["@mozilla.org/consoleservice;1"]
                      .getService(Ci.nsIConsoleService);
 consoleService.registerListener(listener);
 
@@ -247,7 +259,7 @@ function writeTestTempFile(aFileName, aContent) {
 
 /*** Transport Factories ***/
 
-var socket_transport = Task.async(function*() {
+let socket_transport = Task.async(function*() {
   if (!DebuggerServer.listeningSockets) {
     let AuthenticatorType = DebuggerServer.Authenticators.get("PROMPT");
     let authenticator = new AuthenticatorType.Server();
@@ -270,7 +282,7 @@ function local_transport() {
 
 /*** Sample Data ***/
 
-var gReallyLong;
+let gReallyLong;
 function really_long() {
   if (gReallyLong) {
     return gReallyLong;

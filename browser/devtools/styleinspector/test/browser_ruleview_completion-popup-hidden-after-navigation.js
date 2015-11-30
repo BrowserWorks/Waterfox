@@ -4,12 +4,12 @@
 
 "use strict";
 
-// Tests that the ruleview autocomplete popup is hidden after page navigation.
+// Test that the ruleview autocomplete popup is hidden after page navigation
 
-const TEST_URI = "<h1 style='font: 24px serif'></h1>";
+let TEST_URL = "data:text/html;charset=utf-8,<h1 style='font: 24px serif'></h1>";
 
 add_task(function*() {
-  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+  yield addTab(TEST_URL);
   let {inspector, view} = yield openRuleView();
 
   info("Test autocompletion popup is hidden after page navigation");
@@ -18,8 +18,7 @@ add_task(function*() {
   yield selectNode("h1", inspector);
 
   info("Focusing the css property editable field");
-  let propertyName = view.styleDocument
-    .querySelectorAll(".ruleview-propertyname")[0];
+  let propertyName = view.styleDocument.querySelectorAll(".ruleview-propertyname")[0];
   let editor = yield focusEditableField(view, propertyName);
 
   info("Pressing key VK_DOWN");

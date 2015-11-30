@@ -6,7 +6,7 @@
 
 Components.utils.import("resource://gre/modules/Extension.jsm");
 
-var extension;
+let extension;
 
 function install(data, reason)
 {

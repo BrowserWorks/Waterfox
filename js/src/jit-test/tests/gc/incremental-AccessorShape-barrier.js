@@ -1,6 +1,3 @@
-gczeal(0);
-gc();
-
 var o = {};
 function foo() {
     var i = 0;

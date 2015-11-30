@@ -12,11 +12,11 @@ function run_test() {
   run_next_test();
 }
 
-var BODY = "response body";
+let BODY = "response body";
 // contentLength needs to be longer than the response body
 // length in order to get a mismatch between what is sent in
 // the response and the content-length header value.
-var contentLength = BODY.length + 1;
+let contentLength = BODY.length + 1;
 
 function contentHandler(request, response) {
   _("Handling request.");

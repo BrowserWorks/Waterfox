@@ -2,7 +2,8 @@
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Tests that scrollIntoViewIfNeeded works properly.
-let {scrollIntoViewIfNeeded} = require("devtools/toolkit/layout/utils");
+const LayoutHelpers = require("devtools/toolkit/layout-helpers");
+
 
 const TEST_URI = TEST_URI_ROOT + "browser_layoutHelpers.html";
 
@@ -13,6 +14,7 @@ add_task(function*() {
 });
 
 function runTest(win) {
+  let lh = new LayoutHelpers(win);
   let some = win.document.getElementById('some');
 
   some.style.top = win.innerHeight + 'px';
@@ -22,35 +24,35 @@ function runTest(win) {
 
   let xPos = Math.floor(win.innerWidth / 2);
   win.scroll(xPos, win.innerHeight + 2);  // Above the viewport.
-  scrollIntoViewIfNeeded(some);
+  lh.scrollIntoViewIfNeeded(some);
   is(win.scrollY, Math.floor(win.innerHeight / 2) + 1,
      'Element completely hidden above should appear centered.');
   is(win.scrollX, xPos,
      'scrollX position has not changed.');
 
   win.scroll(win.innerWidth / 2, win.innerHeight + 1);  // On the top edge.
-  scrollIntoViewIfNeeded(some);
+  lh.scrollIntoViewIfNeeded(some);
   is(win.scrollY, win.innerHeight,
      'Element partially visible above should appear above.');
   is(win.scrollX, xPos,
      'scrollX position has not changed.');
 
   win.scroll(win.innerWidth / 2, 0);  // Just below the viewport.
-  scrollIntoViewIfNeeded(some);
+  lh.scrollIntoViewIfNeeded(some);
   is(win.scrollY, Math.floor(win.innerHeight / 2) + 1,
      'Element completely hidden below should appear centered.');
   is(win.scrollX, xPos,
      'scrollX position has not changed.');
 
   win.scroll(win.innerWidth / 2, 1);  // On the bottom edge.
-  scrollIntoViewIfNeeded(some);
+  lh.scrollIntoViewIfNeeded(some);
   is(win.scrollY, 2,
      'Element partially visible below should appear below.');
   is(win.scrollX, xPos,
      'scrollX position has not changed.');
 
   win.scroll(win.innerWidth / 2, win.innerHeight + 2);  // Above the viewport.
-  scrollIntoViewIfNeeded(some, false);
+  lh.scrollIntoViewIfNeeded(some, false);
   is(win.scrollY, win.innerHeight,
      'Element completely hidden above should appear above ' +
      'if parameter is false.');
@@ -58,7 +60,7 @@ function runTest(win) {
      'scrollX position has not changed.');
 
   win.scroll(win.innerWidth / 2, win.innerHeight + 1);  // On the top edge.
-  scrollIntoViewIfNeeded(some, false);
+  lh.scrollIntoViewIfNeeded(some, false);
   is(win.scrollY, win.innerHeight,
      'Element partially visible above should appear above ' +
      'if parameter is false.');
@@ -66,7 +68,7 @@ function runTest(win) {
      'scrollX position has not changed.');
 
   win.scroll(win.innerWidth / 2, 0);  // Below the viewport.
-  scrollIntoViewIfNeeded(some, false);
+  lh.scrollIntoViewIfNeeded(some, false);
   is(win.scrollY, 2,
      'Element completely hidden below should appear below ' +
      'if parameter is false.');
@@ -74,7 +76,7 @@ function runTest(win) {
      'scrollX position has not changed.');
 
   win.scroll(win.innerWidth / 2, 1);  // On the bottom edge.
-  scrollIntoViewIfNeeded(some, false);
+  lh.scrollIntoViewIfNeeded(some, false);
   is(win.scrollY, 2,
      'Element partially visible below should appear below ' +
      'if parameter is false.');

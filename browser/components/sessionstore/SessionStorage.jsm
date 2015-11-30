@@ -9,7 +9,6 @@ this.EXPORTED_SYMBOLS = ["SessionStorage"];
 const Cu = Components.utils;
 const Ci = Components.interfaces;
 
-Cu.import("resource://gre/modules/BrowserUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -52,7 +51,7 @@ this.SessionStorage = Object.freeze({
   }
 });
 
-var SessionStorageInternal = {
+let SessionStorageInternal = {
   /**
    * Reads all session storage data from the given docShell.
    * @param docShell
@@ -73,9 +72,9 @@ var SessionStorageInternal = {
         return;
       }
 
-      // Get the origin of the current history entry
-      // and use that as a key for the per-principal storage data.
-      let origin = principal.origin;
+      // Get the root domain of the current history entry
+      // and use that as a key for the per-host storage data.
+      let origin = principal.jarPrefix + principal.originNoSuffix;
       if (visitedOrigins.has(origin)) {
         // Don't read a host twice.
         return;
@@ -103,9 +102,10 @@ var SessionStorageInternal = {
    *        {"example.com": {"key": "value", "my_number": 123}}
    */
   restore: function (aDocShell, aStorageData) {
-    for (let origin of Object.keys(aStorageData)) {
-      let data = aStorageData[origin];
-      let principal = BrowserUtils.principalFromOrigin(origin);
+    for (let host of Object.keys(aStorageData)) {
+      let data = aStorageData[host];
+      let uri = Services.io.newURI(host, null, null);
+      let principal = Services.scriptSecurityManager.getDocShellCodebasePrincipal(uri, aDocShell);
       let storageManager = aDocShell.QueryInterface(Ci.nsIDOMStorageManager);
       let window = aDocShell.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
 

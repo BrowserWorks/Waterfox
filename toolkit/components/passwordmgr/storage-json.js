@@ -2,9 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*
+/**
  * nsILoginManagerStorage implementation for the JSON back-end.
  */
+
+////////////////////////////////////////////////////////////////////////////////
+//// Globals
 
 "use strict";
 
@@ -27,13 +30,16 @@ XPCOMUtils.defineLazyServiceGetter(this, "gUUIDGenerator",
                                    "@mozilla.org/uuid-generator;1",
                                    "nsIUUIDGenerator");
 
+////////////////////////////////////////////////////////////////////////////////
+//// LoginManagerStorage_json
+
 this.LoginManagerStorage_json = function () {};
 
 this.LoginManagerStorage_json.prototype = {
-  classID: Components.ID("{c00c432d-a0c9-46d7-bef6-9c45b4d07341}"),
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsILoginManagerStorage]),
+  classID : Components.ID("{c00c432d-a0c9-46d7-bef6-9c45b4d07341}"),
+  QueryInterface : XPCOMUtils.generateQI([Ci.nsILoginManagerStorage]),
 
-  __crypto: null,  // nsILoginManagerCrypto service
+  __crypto : null,  // nsILoginManagerCrypto service
   get _crypto() {
     if (!this.__crypto)
       this.__crypto = Cc["@mozilla.org/login-manager/crypto/SDR;1"].
@@ -41,7 +47,7 @@ this.LoginManagerStorage_json.prototype = {
     return this.__crypto;
   },
 
-  initialize() {
+  initialize : function () {
     try {
       // Force initialization of the crypto module.
       // See bug 717490 comment 17.
@@ -91,16 +97,24 @@ this.LoginManagerStorage_json.prototype = {
     }
   },
 
-  /**
+
+  /*
+   * terminate
+   *
    * Internal method used by regression tests only.  It is called before
    * replacing this storage module with a new instance.
    */
-  terminate() {
+  terminate : function () {
     this._store._saver.disarm();
     return this._store.save();
   },
 
-  addLogin(login) {
+
+  /*
+   * addLogin
+   *
+   */
+  addLogin : function (login) {
     this._store.ensureDataReady();
 
     // Throws if there are bogus values.
@@ -153,7 +167,12 @@ this.LoginManagerStorage_json.prototype = {
     this._sendNotification("addLogin", loginClone);
   },
 
-  removeLogin(login) {
+
+  /*
+   * removeLogin
+   *
+   */
+  removeLogin : function (login) {
     this._store.ensureDataReady();
 
     let [idToDelete, storedLogin] = this._getIdForLogin(login);
@@ -169,7 +188,12 @@ this.LoginManagerStorage_json.prototype = {
     this._sendNotification("removeLogin", storedLogin);
   },
 
-  modifyLogin(oldLogin, newLoginData) {
+
+  /*
+   * modifyLogin
+   *
+   */
+  modifyLogin : function (oldLogin, newLoginData) {
     this._store.ensureDataReady();
 
     let [idToModify, oldStoredLogin] = this._getIdForLogin(oldLogin);
@@ -221,10 +245,13 @@ this.LoginManagerStorage_json.prototype = {
     this._sendNotification("modifyLogin", [oldStoredLogin, newLogin]);
   },
 
-  /**
-   * @return {nsILoginInfo[]}
+
+  /*
+   * getAllLogins
+   *
+   * Returns an array of nsILoginInfo.
    */
-  getAllLogins(count) {
+  getAllLogins : function (count) {
     let [logins, ids] = this._searchLogins({});
 
     // decrypt entries for caller.
@@ -236,13 +263,16 @@ this.LoginManagerStorage_json.prototype = {
     return logins;
   },
 
-  /**
+
+  /*
+   * searchLogins
+   *
    * Public wrapper around _searchLogins to convert the nsIPropertyBag to a
    * JavaScript object and decrypt the results.
    *
-   * @return {nsILoginInfo[]} which are decrypted.
+   * Returns an array of decrypted nsILoginInfo.
    */
-  searchLogins(count, matchData) {
+  searchLogins : function(count, matchData) {
     let realMatchData = {};
     // Convert nsIPropertyBag to normal JS object
     let propEnum = matchData.enumerator;
@@ -260,7 +290,10 @@ this.LoginManagerStorage_json.prototype = {
     return logins;
   },
 
-  /**
+
+  /*
+   * _searchLogins
+   *
    * Private method to perform arbitrary searches on any field. Decryption is
    * left to the caller.
    *
@@ -268,7 +301,7 @@ this.LoginManagerStorage_json.prototype = {
    * is an array of encrypted nsLoginInfo and ids is an array of associated
    * ids in the database.
    */
-  _searchLogins(matchData) {
+  _searchLogins : function (matchData) {
     this._store.ensureDataReady();
 
     let conditions = [];
@@ -377,12 +410,14 @@ this.LoginManagerStorage_json.prototype = {
     return [foundLogins, foundIds];
   },
 
-  /**
+  /*
+   * removeAllLogins
+   *
    * Removes all logins from storage.
    *
    * Disabled hosts are kept, as one presumably doesn't want to erase those.
    */
-  removeAllLogins() {
+  removeAllLogins : function () {
     this._store.ensureDataReady();
 
     this.log("Removing all logins");
@@ -392,7 +427,12 @@ this.LoginManagerStorage_json.prototype = {
     this._sendNotification("removeAllLogins", null);
   },
 
-  getAllDisabledHosts(count) {
+
+  /*
+   * getAllDisabledHosts
+   *
+   */
+  getAllDisabledHosts : function (count) {
     this._store.ensureDataReady();
 
     let disabledHosts = this._store.data.disabledHosts.slice(0);
@@ -403,14 +443,24 @@ this.LoginManagerStorage_json.prototype = {
     return disabledHosts;
   },
 
-  getLoginSavingEnabled(hostname) {
+
+  /*
+   * getLoginSavingEnabled
+   *
+   */
+  getLoginSavingEnabled : function (hostname) {
     this._store.ensureDataReady();
 
     this.log("Getting login saving is enabled for", hostname);
     return this._store.data.disabledHosts.indexOf(hostname) == -1;
   },
 
-  setLoginSavingEnabled(hostname, enabled) {
+
+  /*
+   * setLoginSavingEnabled
+   *
+   */
+  setLoginSavingEnabled : function (hostname, enabled) {
     this._store.ensureDataReady();
 
     // Throws if there are bogus values.
@@ -433,7 +483,12 @@ this.LoginManagerStorage_json.prototype = {
     this._sendNotification(enabled ? "hostSavingEnabled" : "hostSavingDisabled", hostname);
   },
 
-  findLogins(count, hostname, formSubmitURL, httpRealm) {
+
+  /*
+   * findLogins
+   *
+   */
+  findLogins : function (count, hostname, formSubmitURL, httpRealm) {
     let loginData = {
       hostname: hostname,
       formSubmitURL: formSubmitURL,
@@ -453,7 +508,12 @@ this.LoginManagerStorage_json.prototype = {
     return logins;
   },
 
-  countLogins(hostname, formSubmitURL, httpRealm) {
+
+  /*
+   * countLogins
+   *
+   */
+  countLogins : function (hostname, formSubmitURL, httpRealm) {
     let count = {};
     let loginData = {
       hostname: hostname,
@@ -470,18 +530,29 @@ this.LoginManagerStorage_json.prototype = {
     return logins.length;
   },
 
+
+  /*
+   * uiBusy
+   */
   get uiBusy() {
     return this._crypto.uiBusy;
   },
 
+
+  /*
+   * isLoggedIn
+   */
   get isLoggedIn() {
     return this._crypto.isLoggedIn;
   },
 
-  /**
+
+  /*
+   * _sendNotification
+   *
    * Send a notification when stored data is changed.
    */
-  _sendNotification(changeType, data) {
+  _sendNotification : function (changeType, data) {
     let dataObject = data;
     // Can't pass a raw JS string or array though notifyObservers(). :-(
     if (data instanceof Array) {
@@ -497,12 +568,15 @@ this.LoginManagerStorage_json.prototype = {
     Services.obs.notifyObservers(dataObject, "passwordmgr-storage-changed", changeType);
   },
 
-  /**
+
+  /*
+   * _getIdForLogin
+   *
    * Returns an array with two items: [id, login]. If the login was not
    * found, both items will be null. The returned login contains the actual
    * stored login (useful for looking at the actual nsILoginMetaInfo values).
    */
-  _getIdForLogin(login) {
+  _getIdForLogin : function (login) {
     let matchData = { };
     for each (let field in ["hostname", "formSubmitURL", "httpRealm"])
       if (login[field] != '')
@@ -531,20 +605,26 @@ this.LoginManagerStorage_json.prototype = {
     return [id, foundLogin];
   },
 
-  /**
+
+  /*
+   * _isGuidUnique
+   *
    * Checks to see if the specified GUID already exists.
    */
-  _isGuidUnique(guid) {
+  _isGuidUnique : function (guid) {
     this._store.ensureDataReady();
 
     return this._store.data.logins.every(l => l.guid != guid);
   },
 
-  /**
+
+  /*
+   * _encryptLogin
+   *
    * Returns the encrypted username, password, and encrypton type for the specified
    * login. Can throw if the user cancels a master password entry.
    */
-  _encryptLogin(login) {
+  _encryptLogin : function (login) {
     let encUsername = this._crypto.encrypt(login.username);
     let encPassword = this._crypto.encrypt(login.password);
     let encType     = this._crypto.defaultEncType;
@@ -552,7 +632,10 @@ this.LoginManagerStorage_json.prototype = {
     return [encUsername, encPassword, encType];
   },
 
-  /**
+
+  /*
+   * _decryptLogins
+   *
    * Decrypts username and password fields in the provided array of
    * logins.
    *
@@ -563,7 +646,7 @@ this.LoginManagerStorage_json.prototype = {
    * to lose unencrypted entries (eg, because the user clicked Cancel
    * instead of entering their master password)
    */
-  _decryptLogins(logins) {
+  _decryptLogins : function (logins) {
     let result = [];
 
     for each (let login in logins) {

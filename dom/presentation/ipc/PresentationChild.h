@@ -26,7 +26,7 @@ public:
   ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual PPresentationRequestChild*
-  AllocPPresentationRequestChild(const PresentationIPCRequest& aRequest) override;
+  AllocPPresentationRequestChild(const PresentationRequest& aRequest) override;
 
   virtual bool
   DeallocPPresentationRequestChild(PPresentationRequestChild* aActor) override;
@@ -41,10 +41,6 @@ public:
   virtual bool
   RecvNotifyMessage(const nsString& aSessionId,
                     const nsCString& aData) override;
-
-  virtual bool
-  RecvNotifySessionConnect(const uint64_t& aWindowId,
-                           const nsString& aSessionId) override;
 
 private:
   virtual ~PresentationChild();

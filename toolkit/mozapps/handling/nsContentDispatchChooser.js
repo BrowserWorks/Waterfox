@@ -85,6 +85,6 @@ nsContentDispatchChooser.prototype =
 ////////////////////////////////////////////////////////////////////////////////
 //// Module
 
-var components = [nsContentDispatchChooser];
+let components = [nsContentDispatchChooser];
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(components);

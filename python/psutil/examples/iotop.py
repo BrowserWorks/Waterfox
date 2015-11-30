@@ -30,15 +30,14 @@ PID   USER      DISK READ  DISK WRITE  COMMAND
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 """
 
-import atexit
-import time
+import os
 import sys
-try:
-    import curses
-except ImportError:
-    sys.exit('platform not supported')
-
 import psutil
+if not hasattr(psutil.Process, 'io_counters') or os.name != 'posix':
+    sys.exit('platform not supported')
+import time
+import curses
+import atexit
 
 
 # --- curses stuff
@@ -117,7 +116,7 @@ def poll(interval):
             if not p._cmdline:
                 p._cmdline = p.name()
             p._username = p.username()
-        except (psutil.NoSuchProcess, psutil.ZombieProcess):
+        except psutil.NoSuchProcess:
             procs.remove(p)
     disks_after = psutil.disk_io_counters()
 
@@ -168,7 +167,7 @@ def refresh_window(procs, disks_read, disks_write):
 def main():
     try:
         interval = 0
-        while True:
+        while 1:
             args = poll(interval)
             refresh_window(*args)
             interval = 1

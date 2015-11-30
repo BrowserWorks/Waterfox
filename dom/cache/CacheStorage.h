@@ -49,15 +49,12 @@ class CacheStorage final : public nsIIPCBackgroundChildCreateCallback
 public:
   static already_AddRefed<CacheStorage>
   CreateOnMainThread(Namespace aNamespace, nsIGlobalObject* aGlobal,
-                     nsIPrincipal* aPrincipal, bool aStorageDisabled,
+                     nsIPrincipal* aPrincipal, bool aPrivateBrowsing,
                      bool aForceTrustedOrigin, ErrorResult& aRv);
 
   static already_AddRefed<CacheStorage>
   CreateOnWorker(Namespace aNamespace, nsIGlobalObject* aGlobal,
                  workers::WorkerPrivate* aWorkerPrivate, ErrorResult& aRv);
-
-  static bool
-  DefineCaches(JSContext* aCx, JS::Handle<JSObject*> aGlobal);
 
   // webidl interface methods
   already_AddRefed<Promise> Match(const RequestOrUSVString& aRequest,

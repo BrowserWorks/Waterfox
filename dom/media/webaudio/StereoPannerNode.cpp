@@ -83,7 +83,7 @@ public:
     aRightGain = sin(0.5 * M_PI * aPanning);
   }
 
-  void SetToSilentStereoBlock(AudioBlock* aChunk)
+  void SetToSilentStereoBlock(AudioChunk* aChunk)
   {
     for (uint32_t channel = 0; channel < 2; channel++) {
       float* samples = aChunk->ChannelFloatsForWrite(channel);
@@ -93,13 +93,13 @@ public:
     }
   }
 
-  void UpmixToStereoIfNeeded(const AudioBlock& aInput, AudioBlock* aOutput)
+  void UpmixToStereoIfNeeded(const AudioChunk& aInput, AudioChunk* aOutput)
   {
     if (aInput.ChannelCount() == 2) {
       *aOutput = aInput;
     } else {
       MOZ_ASSERT(aInput.ChannelCount() == 1);
-      aOutput->AllocateChannels(2);
+      AllocateAudioBlock(2, aOutput);
       const float* input = static_cast<const float*>(aInput.mChannelData[0]);
       for (uint32_t channel = 0; channel < 2; channel++) {
         float* output = aOutput->ChannelFloatsForWrite(channel);
@@ -109,15 +109,15 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
+                            const AudioChunk& aInput,
+                            AudioChunk* aOutput,
                             bool *aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
 
     // The output of this node is always stereo, no matter what the inputs are.
     MOZ_ASSERT(aInput.ChannelCount() <= 2);
-    aOutput->AllocateChannels(2);
+    AllocateAudioBlock(2, aOutput);
     bool monoToStereo = aInput.ChannelCount() == 1;
 
     if (aInput.IsNull()) {
@@ -181,8 +181,8 @@ StereoPannerNode::StereoPannerNode(AudioContext* aContext)
   , mPan(new AudioParam(this, SendPanToStream, 0.f, "pan"))
 {
   StereoPannerNodeEngine* engine = new StereoPannerNodeEngine(this, aContext->Destination());
-  mStream = AudioNodeStream::Create(aContext, engine,
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+  mStream = aContext->Graph()->CreateAudioNodeStream(engine,
+                                                     MediaStreamGraph::INTERNAL_STREAM);
   engine->SetSourceStream(mStream);
 }
 

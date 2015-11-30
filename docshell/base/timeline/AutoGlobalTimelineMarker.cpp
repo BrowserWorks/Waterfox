@@ -6,7 +6,7 @@
 
 #include "mozilla/AutoGlobalTimelineMarker.h"
 
-#include "TimelineConsumers.h"
+#include "mozilla/TimelineConsumers.h"
 #include "MainThreadUtils.h"
 
 namespace mozilla {
@@ -22,7 +22,7 @@ AutoGlobalTimelineMarker::AutoGlobalTimelineMarker(const char* aName
     return;
   }
 
-  TimelineConsumers::AddMarkerForAllObservedDocShells(mName, MarkerTracingType::START);
+  TimelineConsumers::AddMarkerForAllObservedDocShells(mName, TRACING_INTERVAL_START);
 }
 
 AutoGlobalTimelineMarker::~AutoGlobalTimelineMarker()
@@ -31,7 +31,7 @@ AutoGlobalTimelineMarker::~AutoGlobalTimelineMarker()
     return;
   }
 
-  TimelineConsumers::AddMarkerForAllObservedDocShells(mName, MarkerTracingType::END);
+  TimelineConsumers::AddMarkerForAllObservedDocShells(mName, TRACING_INTERVAL_END);
 }
 
 } // namespace mozilla

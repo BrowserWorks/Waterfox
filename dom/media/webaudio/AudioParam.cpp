@@ -100,8 +100,9 @@ AudioParam::Stream()
 
   AudioNodeEngine* engine = new AudioNodeEngine(nullptr);
   nsRefPtr<AudioNodeStream> stream =
-    AudioNodeStream::Create(mNode->Context(), engine,
-                            AudioNodeStream::NO_STREAM_FLAGS);
+    mNode->Context()->Graph()->CreateAudioNodeStream(engine,
+                                                     MediaStreamGraph::INTERNAL_STREAM,
+                                                     Node()->Context()->SampleRate());
 
   // Force the input to have only one channel, and make it down-mix using
   // the speaker rules if needed.
@@ -114,7 +115,8 @@ AudioParam::Stream()
   // Setup the AudioParam's stream as an input to the owner AudioNode's stream
   AudioNodeStream* nodeStream = mNode->GetStream();
   if (nodeStream) {
-    mNodeStreamPort = nodeStream->AllocateInputPort(mStream);
+    mNodeStreamPort =
+      nodeStream->AllocateInputPort(mStream, MediaInputPort::FLAG_BLOCK_INPUT);
   }
 
   // Let the MSG's copy of AudioParamTimeline know about the change in the stream
@@ -132,7 +134,7 @@ AudioParamTimeline::AudioNodeInputValue(size_t aCounter) const
   // get its value now.  We use aCounter to tell us which frame of the last
   // AudioChunk to look at.
   float audioNodeInputValue = 0.0f;
-  const AudioBlock& lastAudioNodeChunk =
+  const AudioChunk& lastAudioNodeChunk =
     static_cast<AudioNodeStream*>(mStream.get())->LastChunks()[0];
   if (!lastAudioNodeChunk.IsNull()) {
     MOZ_ASSERT(lastAudioNodeChunk.GetDuration() == WEBAUDIO_BLOCK_SIZE);

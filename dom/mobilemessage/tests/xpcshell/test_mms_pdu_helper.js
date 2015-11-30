@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var MMS = {};
+let MMS = {};
 subscriptLoader.loadSubScript("resource://gre/modules/MmsPduHelper.jsm", MMS);
 MMS.debug = do_print;
 

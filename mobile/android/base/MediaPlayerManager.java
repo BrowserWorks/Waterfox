@@ -16,9 +16,8 @@ import android.util.Log;
 import com.google.android.gms.cast.CastMediaControlIntent;
 
 import org.json.JSONObject;
-import org.mozilla.gecko.annotation.JNITarget;
-import org.mozilla.gecko.annotation.ReflectionTarget;
 import org.mozilla.gecko.AppConstants.Versions;
+import org.mozilla.gecko.mozglue.JNITarget;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.NativeEventListener;
 import org.mozilla.gecko.util.NativeJSObject;
@@ -35,7 +34,7 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
      * Create a new instance of DetailsFragment, initialized to
      * show the text at 'index'.
      */
-    @ReflectionTarget
+    @JNITarget
     public static MediaPlayerManager newInstance() {
         if (Versions.feature17Plus) {
             return new PresentationMediaPlayerManager();
@@ -46,7 +45,7 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
 
     private static final String LOGTAG = "GeckoMediaPlayerManager";
 
-    @ReflectionTarget
+    @JNITarget
     public static final String MEDIA_PLAYER_TAG = "MPManagerFragment";
 
     private static final boolean SHOW_DEBUG = false;

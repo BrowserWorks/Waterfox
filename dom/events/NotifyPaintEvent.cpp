@@ -18,15 +18,15 @@ namespace dom {
 NotifyPaintEvent::NotifyPaintEvent(EventTarget* aOwner,
                                    nsPresContext* aPresContext,
                                    WidgetEvent* aEvent,
-                                   EventMessage aEventMessage,
+                                   uint32_t aEventType,
                                    nsInvalidateRequestList* aInvalidateRequests)
   : Event(aOwner, aPresContext, aEvent)
 {
   if (mEvent) {
-    mEvent->mMessage = aEventMessage;
+    mEvent->message = aEventType;
   }
   if (aInvalidateRequests) {
-    mInvalidateRequests.AppendElements(Move(aInvalidateRequests->mRequests));
+    mInvalidateRequests.MoveElementsFrom(aInvalidateRequests->mRequests);
   }
 }
 
@@ -162,15 +162,17 @@ NotifyPaintEvent::Deserialize(const IPC::Message* aMsg, void** aIter)
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<NotifyPaintEvent>
-NS_NewDOMNotifyPaintEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMNotifyPaintEvent(nsIDOMEvent** aInstancePtrResult,
+                          EventTarget* aOwner,
                           nsPresContext* aPresContext,
                           WidgetEvent* aEvent,
-                          EventMessage aEventMessage,
+                          uint32_t aEventType,
                           nsInvalidateRequestList* aInvalidateRequests) 
 {
-  nsRefPtr<NotifyPaintEvent> it =
-    new NotifyPaintEvent(aOwner, aPresContext, aEvent, aEventMessage,
-                         aInvalidateRequests);
-  return it.forget();
+  NotifyPaintEvent* it = new NotifyPaintEvent(aOwner, aPresContext, aEvent,
+                                              aEventType, aInvalidateRequests);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

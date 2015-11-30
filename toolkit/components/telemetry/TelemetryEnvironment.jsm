@@ -37,13 +37,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "UpdateChannel",
 
 const CHANGE_THROTTLE_INTERVAL_MS = 5 * 60 * 1000;
 
-// The maximum length of a string (e.g. description) in the addons section.
-const MAX_ADDON_STRING_LENGTH = 100;
-
 /**
  * This is a policy object used to override behavior for testing.
  */
-var Policy = {
+let Policy = {
   now: () => new Date(),
 };
 
@@ -75,6 +72,7 @@ this.TelemetryEnvironment = {
   // Policy to use when saving preferences. Exported for using them in tests.
   RECORD_PREF_STATE: 1, // Don't record the preference value
   RECORD_PREF_VALUE: 2, // We only record user-set prefs.
+  RECORD_PREF_NOTIFY_ONLY: 3, // Record nothing, just notify of changes.
 
   // Testing method
   _watchPreferences: function(prefMap) {
@@ -82,77 +80,72 @@ this.TelemetryEnvironment = {
   },
 };
 
-const RECORD_PREF_STATE = TelemetryEnvironment.RECORD_PREF_STATE;
-const RECORD_PREF_VALUE = TelemetryEnvironment.RECORD_PREF_VALUE;
 const DEFAULT_ENVIRONMENT_PREFS = new Map([
-  ["app.feedback.baseURL", {what: RECORD_PREF_VALUE}],
-  ["app.support.baseURL", {what: RECORD_PREF_VALUE}],
-  ["accessibility.browsewithcaret", {what: RECORD_PREF_VALUE}],
-  ["accessibility.force_disabled", {what:  RECORD_PREF_VALUE}],
-  ["app.update.auto", {what: RECORD_PREF_VALUE}],
-  ["app.update.enabled", {what: RECORD_PREF_VALUE}],
-  ["app.update.interval", {what: RECORD_PREF_VALUE}],
-  ["app.update.service.enabled", {what: RECORD_PREF_VALUE}],
-  ["app.update.silent", {what: RECORD_PREF_VALUE}],
-  ["app.update.url", {what: RECORD_PREF_VALUE}],
-  ["browser.cache.disk.enable", {what: RECORD_PREF_VALUE}],
-  ["browser.cache.disk.capacity", {what: RECORD_PREF_VALUE}],
-  ["browser.cache.memory.enable", {what: RECORD_PREF_VALUE}],
-  ["browser.cache.offline.enable", {what: RECORD_PREF_VALUE}],
-  ["browser.formfill.enable", {what: RECORD_PREF_VALUE}],
-  ["browser.newtab.url", {what: RECORD_PREF_STATE}],
-  ["browser.newtabpage.enabled", {what: RECORD_PREF_VALUE}],
-  ["browser.newtabpage.enhanced", {what: RECORD_PREF_VALUE}],
-  ["browser.polaris.enabled", {what: RECORD_PREF_VALUE}],
-  ["browser.shell.checkDefaultBrowser", {what: RECORD_PREF_VALUE}],
-  ["browser.search.suggest.enabled", {what: RECORD_PREF_VALUE}],
-  ["browser.startup.homepage", {what: RECORD_PREF_STATE}],
-  ["browser.startup.page", {what: RECORD_PREF_VALUE}],
-  ["browser.urlbar.suggest.searches", {what: RECORD_PREF_VALUE}],
-  ["browser.urlbar.unifiedcomplete", {what: RECORD_PREF_VALUE}],
-  ["browser.urlbar.userMadeSearchSuggestionsChoice", {what: RECORD_PREF_VALUE}],
-  ["devtools.chrome.enabled", {what: RECORD_PREF_VALUE}],
-  ["devtools.debugger.enabled", {what: RECORD_PREF_VALUE}],
-  ["devtools.debugger.remote-enabled", {what: RECORD_PREF_VALUE}],
-  ["dom.ipc.plugins.asyncInit.enabled", {what: RECORD_PREF_VALUE}],
-  ["dom.ipc.plugins.enabled", {what: RECORD_PREF_VALUE}],
-  ["dom.ipc.processCount", {what: RECORD_PREF_VALUE, requiresRestart: true}],
-  ["experiments.manifest.uri", {what: RECORD_PREF_VALUE}],
-  ["extensions.autoDisableScopes", {what: RECORD_PREF_VALUE}],
-  ["extensions.enabledScopes", {what: RECORD_PREF_VALUE}],
-  ["extensions.blocklist.enabled", {what: RECORD_PREF_VALUE}],
-  ["extensions.blocklist.url", {what: RECORD_PREF_VALUE}],
-  ["extensions.strictCompatibility", {what: RECORD_PREF_VALUE}],
-  ["extensions.update.enabled", {what: RECORD_PREF_VALUE}],
-  ["extensions.update.url", {what: RECORD_PREF_VALUE}],
-  ["extensions.update.background.url", {what: RECORD_PREF_VALUE}],
-  ["general.smoothScroll", {what: RECORD_PREF_VALUE}],
-  ["gfx.direct2d.disabled", {what: RECORD_PREF_VALUE}],
-  ["gfx.direct2d.force-enabled", {what: RECORD_PREF_VALUE}],
-  ["gfx.direct2d.use1_1", {what: RECORD_PREF_VALUE}],
-  ["layers.acceleration.disabled", {what: RECORD_PREF_VALUE}],
-  ["layers.acceleration.force-enabled", {what: RECORD_PREF_VALUE}],
-  ["layers.async-pan-zoom.enabled", {what: RECORD_PREF_VALUE}],
-  ["layers.async-video-oop.enabled", {what: RECORD_PREF_VALUE}],
-  ["layers.async-video.enabled", {what: RECORD_PREF_VALUE}],
-  ["layers.componentalpha.enabled", {what: RECORD_PREF_VALUE}],
-  ["layers.d3d11.disable-warp", {what: RECORD_PREF_VALUE}],
-  ["layers.d3d11.force-warp", {what: RECORD_PREF_VALUE}],
-  ["layers.offmainthreadcomposition.enabled", {what: RECORD_PREF_VALUE}],
-  ["layers.prefer-d3d9", {what: RECORD_PREF_VALUE}],
-  ["layers.prefer-opengl", {what: RECORD_PREF_VALUE}],
-  ["layout.css.devPixelsPerPx", {what: RECORD_PREF_VALUE}],
-  ["network.proxy.autoconfig_url", {what: RECORD_PREF_STATE}],
-  ["network.proxy.http", {what: RECORD_PREF_STATE}],
-  ["network.proxy.ssl", {what: RECORD_PREF_STATE}],
-  ["pdfjs.disabled", {what: RECORD_PREF_VALUE}],
-  ["places.history.enabled", {what: RECORD_PREF_VALUE}],
-  ["privacy.trackingprotection.enabled", {what: RECORD_PREF_VALUE}],
-  ["privacy.donottrackheader.enabled", {what: RECORD_PREF_VALUE}],
-  ["services.sync.serverURL", {what: RECORD_PREF_STATE}],
-  ["security.mixed_content.block_active_content", {what: RECORD_PREF_VALUE}],
-  ["security.mixed_content.block_display_content", {what: RECORD_PREF_VALUE}],
-  ["xpinstall.signatures.required", {what: RECORD_PREF_VALUE}],
+  ["app.feedback.baseURL", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["app.support.baseURL", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["accessibility.browsewithcaret", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["accessibility.force_disabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["app.update.auto", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["app.update.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["app.update.interval", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["app.update.service.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["app.update.silent", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["app.update.url", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.cache.disk.enable", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.cache.disk.capacity", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.cache.memory.enable", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.cache.offline.enable", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.formfill.enable", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.newtab.url", TelemetryEnvironment.RECORD_PREF_STATE],
+  ["browser.newtabpage.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.newtabpage.enhanced", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.polaris.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.shell.checkDefaultBrowser", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.search.suggest.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.startup.homepage", TelemetryEnvironment.RECORD_PREF_STATE],
+  ["browser.startup.page", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.urlbar.suggest.searches", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.urlbar.unifiedcomplete", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["browser.urlbar.userMadeSearchSuggestionsChoice", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["devtools.chrome.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["devtools.debugger.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["devtools.debugger.remote-enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["dom.ipc.plugins.asyncInit.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["dom.ipc.plugins.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["experiments.manifest.uri", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["extensions.autoDisableScopes", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["extensions.enabledScopes", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["extensions.blocklist.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["extensions.blocklist.url", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["extensions.strictCompatibility", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["extensions.update.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["extensions.update.url", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["extensions.update.background.url", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["general.smoothScroll", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["gfx.direct2d.disabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["gfx.direct2d.force-enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["gfx.direct2d.use1_1", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layers.acceleration.disabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layers.acceleration.force-enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layers.async-pan-zoom.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layers.async-video-oop.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layers.async-video.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layers.componentalpha.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layers.d3d11.disable-warp", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layers.d3d11.force-warp", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layers.offmainthreadcomposition.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layers.prefer-d3d9", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layers.prefer-opengl", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["layout.css.devPixelsPerPx", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["network.proxy.autoconfig_url", TelemetryEnvironment.RECORD_PREF_STATE],
+  ["network.proxy.http", TelemetryEnvironment.RECORD_PREF_STATE],
+  ["network.proxy.ssl", TelemetryEnvironment.RECORD_PREF_STATE],
+  ["pdfjs.disabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["places.history.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["privacy.trackingprotection.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["privacy.donottrackheader.enabled", TelemetryEnvironment.RECORD_PREF_VALUE],
+  ["services.sync.serverURL", TelemetryEnvironment.RECORD_PREF_STATE],
+  ["xpinstall.signatures.required", TelemetryEnvironment.RECORD_PREF_STATE],
 ]);
 
 const LOGGER_NAME = "Toolkit.Telemetry";
@@ -249,21 +242,6 @@ function getGfxField(aPropertyName, aDefault) {
   } catch (e) {}
 
   return aDefault;
-}
-
-/**
- * Returns a substring of the input string.
- *
- * @param {String} aString The input string.
- * @param {Integer} aMaxLength The maximum length of the returned substring. If this is
- *        greater than the length of the input string, we return the whole input string.
- * @return {String} The substring or null if the input string is null.
- */
-function limitStringToLength(aString, aMaxLength) {
-  if (aString === null) {
-    return null;
-  }
-  return aString.substring(0, aMaxLength);
 }
 
 /**
@@ -516,11 +494,11 @@ EnvironmentAddonBuilder.prototype = {
 
       activeAddons[addon.id] = {
         blocklisted: (addon.blocklistState !== Ci.nsIBlocklistService.STATE_NOT_BLOCKED),
-        description: limitStringToLength(addon.description, MAX_ADDON_STRING_LENGTH),
-        name: limitStringToLength(addon.name, MAX_ADDON_STRING_LENGTH),
+        description: addon.description,
+        name: addon.name,
         userDisabled: addon.userDisabled,
         appDisabled: addon.appDisabled,
-        version: limitStringToLength(addon.version, MAX_ADDON_STRING_LENGTH),
+        version: addon.version,
         scope: addon.scope,
         type: addon.type,
         foreignInstall: addon.foreignInstall,
@@ -556,11 +534,11 @@ EnvironmentAddonBuilder.prototype = {
       activeTheme = {
         id: theme.id,
         blocklisted: (theme.blocklistState !== Ci.nsIBlocklistService.STATE_NOT_BLOCKED),
-        description: limitStringToLength(theme.description, MAX_ADDON_STRING_LENGTH),
-        name: limitStringToLength(theme.name, MAX_ADDON_STRING_LENGTH),
+        description: theme.description,
+        name: theme.name,
         userDisabled: theme.userDisabled,
         appDisabled: theme.appDisabled,
-        version: limitStringToLength(theme.version, MAX_ADDON_STRING_LENGTH),
+        version: theme.version,
         scope: theme.scope,
         foreignInstall: theme.foreignInstall,
         hasBinaryComponents: theme.hasBinaryComponents,
@@ -591,9 +569,9 @@ EnvironmentAddonBuilder.prototype = {
       let updateDate = new Date(Math.max(0, tag.lastModifiedTime));
 
       activePlugins.push({
-        name: limitStringToLength(tag.name, MAX_ADDON_STRING_LENGTH),
-        version: limitStringToLength(tag.version, MAX_ADDON_STRING_LENGTH),
-        description: limitStringToLength(tag.description, MAX_ADDON_STRING_LENGTH),
+        name: tag.name,
+        version: tag.version,
+        description: tag.description,
         blocklisted: tag.blocklisted,
         disabled: tag.disabled,
         clicktoplay: tag.clicktoplay,
@@ -790,15 +768,16 @@ EnvironmentCache.prototype = {
   _getPrefData: function () {
     let prefData = {};
     for (let [pref, policy] of this._watchedPrefs.entries()) {
-      // Only record preferences if they are non-default
-      if (!Preferences.isSet(pref)) {
+      // Only record preferences if they are non-default and policy allows recording.
+      if (!Preferences.isSet(pref) ||
+          policy == TelemetryEnvironment.RECORD_PREF_NOTIFY_ONLY) {
         continue;
       }
-      
+
       // Check the policy for the preference and decide if we need to store its value
       // or whether it changed from the default value.
       let prefValue = undefined;
-      if (policy.what == TelemetryEnvironment.RECORD_PREF_STATE) {
+      if (policy == TelemetryEnvironment.RECORD_PREF_STATE) {
         prefValue = "<user-set>";
       } else {
         prefValue = Preferences.get(pref, null);
@@ -814,10 +793,8 @@ EnvironmentCache.prototype = {
   _startWatchingPrefs: function () {
     this._log.trace("_startWatchingPrefs - " + this._watchedPrefs);
 
-    for (let [pref, options] of this._watchedPrefs) {
-      if(!("requiresRestart" in options) || !options.requiresRestart) {
-        Preferences.observe(pref, this._onPrefChanged, this);
-      }
+    for (let pref of this._watchedPrefs.keys()) {
+      Preferences.observe(pref, this._onPrefChanged, this);
     }
   },
 
@@ -834,10 +811,8 @@ EnvironmentCache.prototype = {
   _stopWatchingPrefs: function () {
     this._log.trace("_stopWatchingPrefs");
 
-    for (let [pref, options] of this._watchedPrefs) {
-      if(!("requiresRestart" in options) || !options.requiresRestart) {
-        Preferences.ignore(pref, this._onPrefChanged, this);
-      }
+    for (let pref of this._watchedPrefs.keys()) {
+      Preferences.ignore(pref, this._onPrefChanged, this);
     }
   },
 
@@ -1097,14 +1072,10 @@ EnvironmentCache.prototype = {
   _getCpuData: function () {
     let cpuData = {
       count: getSysinfoProperty("cpucount", null),
-      cores: getSysinfoProperty("cpucores", null),
-      vendor: getSysinfoProperty("cpuvendor", null),
-      family: getSysinfoProperty("cpufamily", null),
-      model: getSysinfoProperty("cpumodel", null),
-      stepping: getSysinfoProperty("cpustepping", null),
-      l2cacheKB: getSysinfoProperty("cpucachel2", null),
-      l3cacheKB: getSysinfoProperty("cpucachel3", null),
-      speedMHz: getSysinfoProperty("cpuspeed", null),
+      vendor: null, // TODO: bug 1128472
+      family: null, // TODO: bug 1128472
+      model: null, // TODO: bug 1128472
+      stepping: null, // TODO: bug 1128472
     };
 
     const CPU_EXTENSIONS = ["hasMMX", "hasSSE", "hasSSE2", "hasSSE3", "hasSSSE3",
@@ -1247,16 +1218,8 @@ EnvironmentCache.prototype = {
       memoryMB = Math.round(memoryMB / 1024 / 1024);
     }
 
-    let virtualMB = getSysinfoProperty("virtualmemsize", null);
-    if (virtualMB) {
-      // Send the total virtual memory size in megabytes. Rounding because
-      // sysinfo doesn't always provide RAM in multiples of 1024.
-      virtualMB = Math.round(virtualMB / 1024 / 1024);
-    }
-
     return {
       memoryMB: memoryMB,
-      virtualMaxMB: virtualMB,
 #ifdef XP_WIN
       isWow64: getSysinfoProperty("isWow64", null),
 #endif

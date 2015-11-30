@@ -16,7 +16,7 @@ const SETTINGS_DEBUG_ENABLED = "geolocation.debugging.enabled";
 const SETTINGS_CHANGED_TOPIC = "mozsettings-changed";
 const SETTINGS_WIFI_ENABLED = "wifi.enabled";
 
-var gLoggingEnabled = false;
+let gLoggingEnabled = false;
 
 /*
    The gLocationRequestTimeout controls how long we wait on receiving an update
@@ -29,10 +29,10 @@ var gLoggingEnabled = false;
    data and xhr it to the location server.
 */
 
-var gLocationRequestTimeout = 5000;
+let gLocationRequestTimeout = 5000;
 
-var gWifiScanningEnabled = true;
-var gCellScanningEnabled = false;
+let gWifiScanningEnabled = true;
+let gCellScanningEnabled = false;
 
 function LOG(aMsg) {
   if (gLoggingEnabled) {
@@ -127,8 +127,8 @@ function CachedRequest(loc, cellInfo, wifiList) {
   };
  }
 
-var gCachedRequest = null;
-var gDebugCacheReasoning = ""; // for logging the caching logic
+let gCachedRequest = null;
+let gDebugCacheReasoning = ""; // for logging the caching logic
 
 // This function serves two purposes:
 // 1) do we have a cached request

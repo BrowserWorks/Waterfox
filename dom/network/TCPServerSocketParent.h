@@ -4,32 +4,29 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_TCPServerSocketParent_h
-#define mozilla_dom_TCPServerSocketParent_h
-
 #include "mozilla/net/PNeckoParent.h"
 #include "mozilla/net/PTCPServerSocketParent.h"
+#include "nsITCPSocketParent.h"
+#include "nsITCPServerSocketParent.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsCOMPtr.h"
+#include "nsIDOMTCPSocket.h"
 
 namespace mozilla {
 namespace dom {
 
-class TCPServerSocket;
-class TCPServerSocketEvent;
-class TCPSocketParent;
-
 class TCPServerSocketParent : public mozilla::net::PTCPServerSocketParent
-                            , public nsISupports
+                            , public nsITCPServerSocketParent
 {
 public:
   NS_DECL_CYCLE_COLLECTION_CLASS(TCPServerSocketParent)
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+  NS_DECL_NSITCPSERVERSOCKETPARENT
 
-  TCPServerSocketParent(PNeckoParent* neckoParent, uint16_t aLocalPort,
-                        uint16_t aBacklog, bool aUseArrayBuffers);
+  TCPServerSocketParent() : mNeckoParent(nullptr), mIPCOpen(false) {}
 
-  void Init();
+  bool Init(PNeckoParent* neckoParent, const uint16_t& aLocalPort, const uint16_t& aBacklog,
+            const nsString& aBinaryType);
 
   virtual bool RecvClose() override;
   virtual bool RecvRequestDelete() override;
@@ -40,21 +37,16 @@ public:
   void AddIPDLReference();
   void ReleaseIPDLReference();
 
-  void OnConnect(TCPServerSocketEvent* event);
-
 private:
-  ~TCPServerSocketParent();
-
-  nsresult SendCallbackAccept(TCPSocketParent *socket);
+  ~TCPServerSocketParent() {}
 
   virtual void ActorDestroy(ActorDestroyReason why) override;
 
   PNeckoParent* mNeckoParent;
-  nsRefPtr<TCPServerSocket> mServerSocket;
+  nsCOMPtr<nsITCPSocketIntermediary> mIntermediary;
+  nsCOMPtr<nsIDOMTCPServerSocket> mServerSocket;
   bool mIPCOpen;
 };
 
 } // namespace dom
 } // namespace mozilla
-
-#endif // mozilla_dom_TCPServerSocketParent_h

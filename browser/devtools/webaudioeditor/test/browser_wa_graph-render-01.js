@@ -5,7 +5,7 @@
  * Tests that SVG nodes and edges were created for the Graph View.
  */
 
-var connectCount = 0;
+let connectCount = 0;
 
 add_task(function*() {
   let { target, panel } = yield initWebAudioEditor(SIMPLE_CONTEXT_URL);

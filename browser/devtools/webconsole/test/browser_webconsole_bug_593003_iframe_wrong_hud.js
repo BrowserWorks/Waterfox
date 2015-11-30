@@ -15,7 +15,7 @@ const TEST_IFRAME_URI = "http://example.com/browser/browser/devtools/" +
 const TEST_DUMMY_URI = "http://example.com/browser/browser/devtools/" +
                        "webconsole/test/test-console.html";
 
-var tab1, tab2;
+let tab1, tab2;
 
 function test() {
   loadTab(TEST_URI).then(({tab}) => {

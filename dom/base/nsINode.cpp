@@ -110,8 +110,7 @@ using namespace mozilla;
 using namespace mozilla::dom;
 
 nsINode::nsSlots::nsSlots()
-  : mWeakReference(nullptr),
-    mEditableDescendantCount(0)
+  : mWeakReference(nullptr)
 {
 }
 
@@ -1346,38 +1345,6 @@ nsINode::GetOwnerGlobal() const
   return OwnerDoc()->GetScriptHandlingObject(dummy);
 }
 
-void
-nsINode::ChangeEditableDescendantCount(int32_t aDelta)
-{
-  if (aDelta == 0) {
-    return;
-  }
-
-  nsSlots* s = Slots();
-  MOZ_ASSERT(aDelta > 0 ||
-             s->mEditableDescendantCount >= (uint32_t) (-1 * aDelta));
-  s->mEditableDescendantCount += aDelta;
-}
-
-void
-nsINode::ResetEditableDescendantCount()
-{
-  nsSlots* s = GetExistingSlots();
-  if (s) {
-    s->mEditableDescendantCount = 0;
-  }
-}
-
-uint32_t
-nsINode::EditableDescendantCount()
-{
-  nsSlots* s = GetExistingSlots();
-  if (s) {
-    return s->mEditableDescendantCount;
-  }
-  return 0;
-}
-
 bool
 nsINode::UnoptimizableCCNode() const
 {
@@ -1610,7 +1577,7 @@ nsINode::doInsertChildAt(nsIContent* aKid, uint32_t aIndex,
 
     if (nsContentUtils::HasMutationListeners(aKid,
           NS_EVENT_BITS_MUTATION_NODEINSERTED, this)) {
-      InternalMutationEvent mutation(true, eLegacyNodeInserted);
+      InternalMutationEvent mutation(true, NS_MUTATION_NODEINSERTED);
       mutation.mRelatedNode = do_QueryInterface(this);
 
       mozAutoSubtreeModified subtree(OwnerDoc(), this);
@@ -2832,13 +2799,4 @@ nsINode::AddAnimationObserverUnlessExists(
 {
   AddMutationObserverUnlessExists(aAnimationObserver);
   OwnerDoc()->SetMayHaveAnimationObservers();
-}
-
-bool
-nsINode::HasApzAwareListeners() const
-{
-  if (NodeMayHaveApzAwareListeners()) {
-    return EventTarget::HasApzAwareListeners();
-  }
-  return false;
 }

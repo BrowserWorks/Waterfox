@@ -82,15 +82,12 @@ namespace
   {
   protected:
     nsRefPtr<nsIContent> mTarget;
-    EventMessage         mMsg;
+    uint32_t             mMsg;
     int32_t              mDetail;
 
   public:
-    AsyncTimeEventRunner(nsIContent* aTarget, EventMessage aMsg,
-                         int32_t aDetail)
-      : mTarget(aTarget)
-      , mMsg(aMsg)
-      , mDetail(aDetail)
+    AsyncTimeEventRunner(nsIContent* aTarget, uint32_t aMsg, int32_t aDetail)
+      : mTarget(aTarget), mMsg(aMsg), mDetail(aDetail)
     {
     }
 
@@ -643,7 +640,7 @@ nsSMILTimedElement::DoSampleAt(nsSMILTime aContainerTime, bool aEndOnly)
             mClient->Activate(mCurrentInterval->Begin()->Time().GetMillis());
           }
           if (mSeekState == SEEK_NOT_SEEKING) {
-            FireTimeEventAsync(eSMILBeginEvent, 0);
+            FireTimeEventAsync(NS_SMIL_BEGIN, 0);
           }
           if (HasPlayed()) {
             Reset(); // Apply restart behaviour
@@ -679,7 +676,7 @@ nsSMILTimedElement::DoSampleAt(nsSMILTime aContainerTime, bool aEndOnly)
           }
           mCurrentInterval->FixEnd();
           if (mSeekState == SEEK_NOT_SEEKING) {
-            FireTimeEventAsync(eSMILEndEvent, 0);
+            FireTimeEventAsync(NS_SMIL_END, 0);
           }
           mCurrentRepeatIteration = 0;
           mOldIntervals.AppendElement(mCurrentInterval.forget());
@@ -727,7 +724,7 @@ nsSMILTimedElement::DoSampleAt(nsSMILTime aContainerTime, bool aEndOnly)
               mCurrentRepeatIteration != prevRepeatIteration &&
               mCurrentRepeatIteration &&
               mSeekState == SEEK_NOT_SEEKING) {
-              FireTimeEventAsync(eSMILRepeatEvent,
+              FireTimeEventAsync(NS_SMIL_REPEAT,
                             static_cast<int32_t>(mCurrentRepeatIteration));
             }
           }
@@ -1518,14 +1515,14 @@ nsSMILTimedElement::DoPostSeek()
   case SEEK_FORWARD_FROM_ACTIVE:
   case SEEK_BACKWARD_FROM_ACTIVE:
     if (mElementState != STATE_ACTIVE) {
-      FireTimeEventAsync(eSMILEndEvent, 0);
+      FireTimeEventAsync(NS_SMIL_END, 0);
     }
     break;
 
   case SEEK_FORWARD_FROM_INACTIVE:
   case SEEK_BACKWARD_FROM_INACTIVE:
     if (mElementState == STATE_ACTIVE) {
-      FireTimeEventAsync(eSMILBeginEvent, 0);
+      FireTimeEventAsync(NS_SMIL_BEGIN, 0);
     }
     break;
 
@@ -2368,7 +2365,7 @@ nsSMILTimedElement::NotifyChangedInterval(nsSMILInterval* aInterval,
 }
 
 void
-nsSMILTimedElement::FireTimeEventAsync(EventMessage aMsg, int32_t aDetail)
+nsSMILTimedElement::FireTimeEventAsync(uint32_t aMsg, int32_t aDetail)
 {
   if (!mAnimationElement)
     return;

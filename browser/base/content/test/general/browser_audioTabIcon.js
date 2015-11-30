@@ -56,19 +56,11 @@ function leave_icon(icon) {
   disable_non_test_mouse(false);
 }
 
-function* test_tooltip(icon, expectedTooltip, isActiveTab) {
+function* test_tooltip(icon, expectedTooltip) {
   let tooltip = document.getElementById("tabbrowser-tab-tooltip");
 
   yield hover_icon(icon, tooltip);
-  if (isActiveTab) {
-    // The active tab should have the keybinding shortcut in the tooltip.
-    // We check this by ensuring that the strings are not equal but the expected
-    // message appears in the beginning.
-    isnot(tooltip.getAttribute("label"), expectedTooltip, "Tooltips should not be equal");
-    is(tooltip.getAttribute("label").indexOf(expectedTooltip), 0, "Correct tooltip expected");
-  } else {
-    is(tooltip.getAttribute("label"), expectedTooltip, "Tooltips should not be equal");
-  }
+  is(tooltip.getAttribute("label").indexOf(expectedTooltip), 0, "Correct tooltip expected");
   leave_icon(icon);
 }
 
@@ -104,48 +96,13 @@ function get_tab_attributes(tab) {
   return attributes;
 }
 
-function* test_muting_using_menu(tab, expectMuted) {
-  // Show the popup menu
-  let contextMenu = document.getElementById("tabContextMenu");
-  let popupShownPromise = BrowserTestUtils.waitForEvent(contextMenu, "popupshown");
-  EventUtils.synthesizeMouseAtCenter(tab, {type: "contextmenu", button: 2});
-  yield popupShownPromise;
-
-  // Check the menu
-  let expectedLabel = expectMuted ? "Unmute Tab" : "Mute Tab";
-  let toggleMute = document.getElementById("context_toggleMuteTab");
-  is(toggleMute.label, expectedLabel, "Correct label expected");
-  is(toggleMute.accessKey, "M", "Correct accessKey expected");
-
-  is(toggleMute.hasAttribute("muted"), expectMuted, "Should have the correct state for the muted attribute");
-  ok(!toggleMute.hasAttribute("soundplaying"), "Should not have the soundplaying attribute");
-
-  yield play(tab);
-
-  is(toggleMute.hasAttribute("muted"), expectMuted, "Should have the correct state for the muted attribute");
-  ok(toggleMute.hasAttribute("soundplaying"), "Should have the soundplaying attribute");
-
-  yield pause(tab);
-
-  is(toggleMute.hasAttribute("muted"), expectMuted, "Should have the correct state for the muted attribute");
-  ok(!toggleMute.hasAttribute("soundplaying"), "Should not have the soundplaying attribute");
-
-  // Click on the menu and wait for the tab to be muted.
-  let mutedPromise = get_wait_for_mute_promise(tab, !expectMuted);
-  let popupHiddenPromise = BrowserTestUtils.waitForEvent(contextMenu, "popuphidden");
-  EventUtils.synthesizeMouseAtCenter(toggleMute, {});
-  yield popupHiddenPromise;
-  yield mutedPromise;
-}
-
 function* test_playing_icon_on_tab(tab, browser, isPinned) {
   let icon = document.getAnonymousElementByAttribute(tab, "anonid",
                                                      isPinned ? "overlay-icon" : "soundplaying-icon");
-  let isActiveTab = tab === gBrowser.selectedTab;
 
   yield play(tab);
 
-  yield test_tooltip(icon, "Mute tab", isActiveTab);
+  yield test_tooltip(icon, "Mute tab");
 
   ok(!("muted" in get_tab_attributes(tab)), "No muted attribute should be persisted");
 
@@ -153,13 +110,13 @@ function* test_playing_icon_on_tab(tab, browser, isPinned) {
 
   ok("muted" in get_tab_attributes(tab), "Muted attribute should be persisted");
 
-  yield test_tooltip(icon, "Unmute tab", isActiveTab);
+  yield test_tooltip(icon, "Unmute tab");
 
   yield test_mute_tab(tab, icon, false);
 
   ok(!("muted" in get_tab_attributes(tab)), "No muted attribute should be persisted");
 
-  yield test_tooltip(icon, "Mute tab", isActiveTab);
+  yield test_tooltip(icon, "Mute tab");
 
   yield test_mute_tab(tab, icon, true);
 
@@ -168,18 +125,12 @@ function* test_playing_icon_on_tab(tab, browser, isPinned) {
   ok(tab.hasAttribute("muted") &&
      !tab.hasAttribute("soundplaying"), "Tab should still be muted but not playing");
 
-  yield test_tooltip(icon, "Unmute tab", isActiveTab);
+  yield test_tooltip(icon, "Unmute tab");
 
   yield test_mute_tab(tab, icon, false);
 
   ok(!tab.hasAttribute("muted") &&
      !tab.hasAttribute("soundplaying"), "Tab should not be be muted or playing");
-
-  // Make sure it's possible to mute using the context menu.
-  yield test_muting_using_menu(tab, false);
-
-  // Make sure it's possible to unmute using the context menu.
-  yield test_muting_using_menu(tab, true);
 }
 
 function* test_swapped_browser(oldTab, newBrowser, isPlaying) {
@@ -233,6 +184,9 @@ function* test_browser_swapping(tab, browser) {
   }, function*(newBrowser) {
     yield test_swapped_browser(tab, newBrowser, true)
 
+    // FIXME: this is needed to work around bug 1190903.
+    yield new Promise(resolve => setTimeout(resolve, 1000));
+
     // Now, test swapping with a muted but not playing tab.
     // Note that the tab remains muted, so we only need to pause playback.
     tab = gBrowser.getTabForBrowser(newBrowser);
@@ -281,33 +235,6 @@ function* test_click_on_pinned_tab_after_mute() {
   }
 
   let originallySelectedTab = gBrowser.selectedTab;
-
-  yield BrowserTestUtils.withNewTab({
-    gBrowser,
-    url: PAGE
-  }, test_on_browser);
-}
-
-// This test only does something useful in e10s!
-function* test_cross_process_load() {
-  function* test_on_browser(browser) {
-    let tab = gBrowser.getTabForBrowser(browser);
-
-    //   Start playback and wait for it to finish.
-    yield play(tab);
-
-    let soundPlayingStoppedPromise = BrowserTestUtils.waitForEvent(tab, "TabAttrModified", false,
-      event => event.detail.changed.indexOf("soundplaying") >= 0
-    );
-
-    // Go to a different process.
-    browser.loadURI("about:");
-    yield BrowserTestUtils.browserLoaded(browser);
-
-    yield soundPlayingStoppedPromise;
-
-    ok(!tab.hasAttribute("soundplaying"), "Tab should not be playing sound any more");
-  }
 
   yield BrowserTestUtils.withNewTab({
     gBrowser,
@@ -387,12 +314,12 @@ function* test_on_browser(browser) {
 add_task(function*() {
   yield new Promise((resolve) => {
     SpecialPowers.pushPrefEnv({"set": [
+                                ["media.useAudioChannelService", true],
                                 ["browser.tabs.showAudioPlayingIcon", true],
                               ]}, resolve);
   });
 });
 
-requestLongerTimeout(2);
 add_task(function* test_page() {
   yield BrowserTestUtils.withNewTab({
     gBrowser,
@@ -401,7 +328,5 @@ add_task(function* test_page() {
 });
 
 add_task(test_click_on_pinned_tab_after_mute);
-
-add_task(test_cross_process_load);
 
 add_task(test_mute_keybinding);

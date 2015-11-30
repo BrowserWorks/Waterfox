@@ -14,7 +14,7 @@ const URL_STRING = "http://example.com";
 const VALID_WEB_CHANNEL_ORIGIN = Services.io.newURI(URL_STRING, null, null);
 const TEST_PERMISSION_NAME = "test-webchannel-permissions";
 
-var MockWebChannelBroker = {
+let MockWebChannelBroker = {
   _channelMap: new Map(),
   registerChannel: function(channel) {
     if (!this._channelMap.has(channel)) {

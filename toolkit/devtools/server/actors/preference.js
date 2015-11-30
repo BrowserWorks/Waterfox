@@ -5,6 +5,7 @@
 const {Cc, Ci, Cu, CC} = require("chrome");
 const protocol = require("devtools/server/protocol");
 const {Arg, method, RetVal} = protocol;
+const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 
 Cu.import("resource://gre/modules/Services.jsm");
 
@@ -15,7 +16,7 @@ exports.register = function(handle) {
 exports.unregister = function(handle) {
 };
 
-var PreferenceActor = exports.PreferenceActor = protocol.ActorClass({
+let PreferenceActor = exports.PreferenceActor = protocol.ActorClass({
   typeName: "preference",
 
   getBoolPref: method(function(name) {
@@ -104,7 +105,7 @@ var PreferenceActor = exports.PreferenceActor = protocol.ActorClass({
   }),
 });
 
-var PreferenceFront = protocol.FrontClass(PreferenceActor, {
+let PreferenceFront = protocol.FrontClass(PreferenceActor, {
   initialize: function(client, form) {
     protocol.Front.prototype.initialize.call(this, client);
     this.actorID = form.preferenceActor;

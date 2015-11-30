@@ -71,4 +71,6 @@ if CONFIG['_MSC_VER']:
     '-wd4946', # reinterpret_cast used between related types
   ]
 
+FAIL_ON_WARNINGS = True
+
 FINAL_LIBRARY = 'xul'

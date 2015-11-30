@@ -2,20 +2,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+let {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 this.EXPORTED_SYMBOLS = ["FrameManager"];
 
-var FRAME_SCRIPT = "chrome://marionette/content/listener.js";
+let FRAME_SCRIPT = "chrome://marionette/content/listener.js";
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-var loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
+let loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
                .getService(Ci.mozIJSSubScriptLoader);
 
 //list of OOP frames that has the frame script loaded
-var remoteFrames = [];
+let remoteFrames = [];
 
 /**
  * An object representing a frame that Marionette has loaded a

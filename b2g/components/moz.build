@@ -18,7 +18,6 @@ EXTRA_COMPONENTS += [
     'FxAccountsUIGlue.js',
     'HelperAppDialog.js',
     'InterAppCommUIGlue.js',
-    'KillSwitch.js',
     'MailtoProtocolHandler.js',
     'MobileIdentityUIGlue.js',
     'OMAContentHandler.js',
@@ -32,7 +31,7 @@ EXTRA_COMPONENTS += [
     'WebappsUpdateTimer.js',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk' and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
+if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
     EXTRA_COMPONENTS += [
       'CommandLine.js',
       'OopCommandLine.js',
@@ -41,13 +40,9 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk' and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'a
 
 EXTRA_PP_COMPONENTS += [
     'B2GComponents.manifest',
+    'DirectoryProvider.js',
+    'RecoveryService.js',
 ]
-
-if CONFIG['MOZ_B2G'] and not CONFIG['MOZ_B2GDROID']:
-    EXTRA_PP_COMPONENTS += [
-        'DirectoryProvider.js',
-        'RecoveryService.js',
-    ]
 
 if CONFIG['MOZ_UPDATER']:
     EXTRA_PP_COMPONENTS += [
@@ -56,7 +51,6 @@ if CONFIG['MOZ_UPDATER']:
 
 EXTRA_JS_MODULES += [
     'AboutServiceWorkers.jsm',
-    'ActivityChannel.jsm',
     'AlertsHelper.jsm',
     'Bootstraper.jsm',
     'ContentRequestHelper.jsm',
@@ -68,16 +62,11 @@ EXTRA_JS_MODULES += [
     'LogParser.jsm',
     'LogShake.jsm',
     'OrientationChangeHandler.jsm',
-    'SafeMode.jsm',
     'Screenshot.jsm',
     'SignInToWebsite.jsm',
     'SystemAppProxy.jsm',
     'TelURIParser.jsm',
     'WebappsUpdater.jsm',
-]
-
-EXTRA_PP_JS_MODULES += [
-    'KillSwitchMain.jsm'
 ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':

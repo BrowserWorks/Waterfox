@@ -69,10 +69,10 @@ PlaceholderMapMatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
 }
 
 static const PLDHashTableOps PlaceholderMapOps = {
-  PLDHashTable::HashVoidPtrKeyStub,
+  PL_DHashVoidPtrKeyStub,
   PlaceholderMapMatchEntry,
-  PLDHashTable::MoveEntryStub,
-  PLDHashTable::ClearEntryStub,
+  PL_DHashMoveEntryStub,
+  PL_DHashClearEntryStub,
   nullptr
 };
 
@@ -90,7 +90,7 @@ nsFrameManagerBase::nsFrameManagerBase()
 //----------------------------------------------------------------------
 
 // XXXldb This seems too complicated for what I think it's doing, and it
-// should also be using PLDHashTable rather than plhash to use less memory.
+// should also be using pldhash rather than plhash to use less memory.
 
 class nsFrameManagerBase::UndisplayedMap {
 public:
@@ -164,8 +164,9 @@ nsFrameManager::GetPlaceholderFrameFor(const nsIFrame* aFrame)
 {
   NS_PRECONDITION(aFrame, "null param unexpected");
 
-  auto entry = static_cast<PlaceholderMapEntry*>
-    (const_cast<PLDHashTable*>(&mPlaceholderMap)->Search(aFrame));
+  PlaceholderMapEntry *entry = static_cast<PlaceholderMapEntry*>
+                                          (PL_DHashTableSearch(const_cast<PLDHashTable*>(&mPlaceholderMap),
+                              aFrame));
   if (entry) {
     return entry->placeholderFrame;
   }
@@ -179,8 +180,9 @@ nsFrameManager::RegisterPlaceholderFrame(nsPlaceholderFrame* aPlaceholderFrame)
   NS_PRECONDITION(aPlaceholderFrame, "null param unexpected");
   NS_PRECONDITION(nsGkAtoms::placeholderFrame == aPlaceholderFrame->GetType(),
                   "unexpected frame type");
-  auto entry = static_cast<PlaceholderMapEntry*>
-    (mPlaceholderMap.Add(aPlaceholderFrame->GetOutOfFlowFrame(), fallible));
+  PlaceholderMapEntry *entry = static_cast<PlaceholderMapEntry*>
+    (PL_DHashTableAdd(&mPlaceholderMap,
+                      aPlaceholderFrame->GetOutOfFlowFrame(), fallible));
   if (!entry)
     return NS_ERROR_OUT_OF_MEMORY;
 
@@ -197,7 +199,8 @@ nsFrameManager::UnregisterPlaceholderFrame(nsPlaceholderFrame* aPlaceholderFrame
   NS_PRECONDITION(nsGkAtoms::placeholderFrame == aPlaceholderFrame->GetType(),
                   "unexpected frame type");
 
-  mPlaceholderMap.Remove(aPlaceholderFrame->GetOutOfFlowFrame());
+  PL_DHashTableRemove(&mPlaceholderMap,
+                      aPlaceholderFrame->GetOutOfFlowFrame());
 }
 
 void

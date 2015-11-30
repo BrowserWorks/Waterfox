@@ -621,9 +621,7 @@ SourcesView.prototype = Heritage.extend(WidgetMethods, {
       let promisePane = this.DebuggerView._promisePane;
       promisePane.hidden = !promisePane.hidden;
 
-      if (!this.DebuggerView._promiseDebuggerIframe) {
-        this.DebuggerView._initializePromiseDebugger();
-      }
+      this.DebuggerView._initializePromiseDebugger();
     }
   },
 

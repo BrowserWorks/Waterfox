@@ -11,6 +11,9 @@ const constructors = [
 ];
 
 for (var constructor of constructors) {
+    if (!("includes" in constructor.prototype))
+        break;
+
     assertEq(constructor.prototype.includes.length, 1);
 
     assertEq(new constructor([1, 2, 3]).includes(1), true);

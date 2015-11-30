@@ -15,11 +15,11 @@
 //
 // Some listeners do not send a response message back.
 
-var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+let {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-var {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-var {CssLogic} = require("devtools/styleinspector/css-logic");
-var promise = require("promise");
+let {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+let {CssLogic} = require("devtools/styleinspector/css-logic");
+let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 
 /**
  * Get a value for a given property name in a css rule in a stylesheet, given
@@ -112,7 +112,7 @@ addMessageListener("Test:WaitForComputedStylePropertyValue", function(msg) {
 });
 
 
-var dumpn = msg => dump(msg + "\n");
+let dumpn = msg => dump(msg + "\n");
 
 /**
  * Polls a given function waiting for it to return true.

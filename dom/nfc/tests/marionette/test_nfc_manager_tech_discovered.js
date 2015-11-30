@@ -29,7 +29,7 @@ function testRfDiscover() {
   .then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0));
 }
 
-var tests = [
+let tests = [
   testActivateRE0,
   testRfDiscover
 ];

@@ -812,10 +812,6 @@ CompositorOGL::GetShaderConfigFor(Effect *aEffect,
   case EffectTypes::YCBCR:
     config.SetYCbCr(true);
     break;
-  case EffectTypes::NV12:
-    config.SetNV12(true);
-    config.SetTextureTarget(LOCAL_GL_TEXTURE_RECTANGLE_ARB);
-    break;
   case EffectTypes::COMPONENT_ALPHA:
   {
     config.SetComponentAlpha(true);
@@ -844,8 +840,7 @@ CompositorOGL::GetShaderConfigFor(Effect *aEffect,
                   source->GetFormat() == gfx::SurfaceFormat::R5G6B5);
     config = ShaderConfigFromTargetAndFormat(source->GetTextureTarget(),
                                              source->GetFormat());
-    if ((aOp == gfx::CompositionOp::OP_MULTIPLY ||
-         aOp == gfx::CompositionOp::OP_SCREEN) &&
+    if (aOp == gfx::CompositionOp::OP_MULTIPLY &&
         !texturedEffect->mPremultiplied) {
       // We can do these blend modes just using glBlendFunc but we need the data
       // to be premultiplied first.
@@ -914,9 +909,7 @@ static bool SetBlendMode(GLContext* aGL, gfx::CompositionOp aBlendMode, bool aIs
       dstBlend = LOCAL_GL_ONE_MINUS_SRC_ALPHA;
       break;
     case gfx::CompositionOp::OP_SCREEN:
-      // If the source data was un-premultiplied we should have already
-      // asked the fragment shader to fix that.
-      srcBlend = LOCAL_GL_ONE;
+      srcBlend = aIsPremultiplied ? LOCAL_GL_ONE : LOCAL_GL_SRC_ALPHA;
       dstBlend = LOCAL_GL_ONE_MINUS_SRC_COLOR;
       break;
     case gfx::CompositionOp::OP_MULTIPLY:
@@ -988,16 +981,12 @@ CompositorOGL::DrawQuad(const Rect& aRect,
     return;
   }
 
-  IntPoint offset = mCurrentRenderTarget->GetOrigin();
-  Rect renderBound = mRenderBound;
-  renderBound.IntersectRect(renderBound, aClipRect);
-  renderBound.MoveBy(offset);
-
-  Rect destRect = aTransform.TransformAndClipBounds(aRect, renderBound);
-
   // XXX: This doesn't handle 3D transforms. It also doesn't handled rotated
   //      quads. Fix me.
+  Rect destRect = aTransform.TransformBounds(aRect);
   mPixelsFilled += destRect.width * destRect.height;
+
+  IntPoint offset = mCurrentRenderTarget->GetOrigin();
 
   // Do a simple culling if this rect is out of target buffer.
   // Inflate a small size to avoid some numerical imprecision issue.
@@ -1264,40 +1253,6 @@ CompositorOGL::DrawQuad(const Rect& aRect,
                                      sourceYCbCr->GetSubSource(Y));
     }
     break;
-  case EffectTypes::NV12: {
-      EffectNV12* effectNV12 =
-        static_cast<EffectNV12*>(aEffectChain.mPrimaryEffect.get());
-      TextureSource* sourceNV12 = effectNV12->mTexture;
-      const int Y = 0, CbCr = 1;
-      TextureSourceOGL* sourceY =  sourceNV12->GetSubSource(Y)->AsSourceOGL();
-      TextureSourceOGL* sourceCbCr = sourceNV12->GetSubSource(CbCr)->AsSourceOGL();
-
-      if (!sourceY || !sourceCbCr) {
-        NS_WARNING("Invalid layer texture.");
-        return;
-      }
-
-      sourceY->BindTexture(LOCAL_GL_TEXTURE0, effectNV12->mFilter);
-      sourceCbCr->BindTexture(LOCAL_GL_TEXTURE1, effectNV12->mFilter);
-
-      if (config.mFeatures & ENABLE_TEXTURE_RECT) {
-        // This is used by IOSurface that use 0,0...w,h coordinate rather then 0,0..1,1.
-        program->SetCbCrTexCoordMultiplier(sourceCbCr->GetSize().width, sourceCbCr->GetSize().height);
-      }
-
-      program->SetNV12TextureUnits(Y, CbCr);
-      program->SetTextureTransform(Matrix4x4());
-
-      if (maskType != MaskType::MaskNone) {
-        BindMaskForProgram(program, sourceMask, LOCAL_GL_TEXTURE2, maskQuadTransform);
-      }
-      didSetBlendMode = SetBlendMode(gl(), blendMode);
-      BindAndDrawQuadWithTextureRect(program,
-                                     aRect,
-                                     effectNV12->mTextureCoords,
-                                     sourceNV12->GetSubSource(Y));
-    }
-    break;
   case EffectTypes::RENDER_TARGET: {
       EffectRenderTarget* effectRenderTarget =
         static_cast<EffectRenderTarget*>(aEffectChain.mPrimaryEffect.get());
@@ -1480,7 +1435,7 @@ CompositorOGL::EndFrame()
 
 #if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
 void
-CompositorOGL::SetDispAcquireFence(Layer* aLayer, nsIWidget* aWidget)
+CompositorOGL::SetDispAcquireFence(Layer* aLayer)
 {
   // OpenGL does not provide ReleaseFence for rendering.
   // Instead use DispAcquireFence as layer buffer's ReleaseFence
@@ -1489,10 +1444,10 @@ CompositorOGL::SetDispAcquireFence(Layer* aLayer, nsIWidget* aWidget)
   // AcquireFence will be signaled when a buffer's content is available.
   // See Bug 974152.
 
-  if (!aLayer || !aWidget) {
+  if (!aLayer) {
     return;
   }
-  nsWindow* window = static_cast<nsWindow*>(aWidget);
+  nsWindow* window = static_cast<nsWindow*>(mWidget);
   RefPtr<FenceHandle::FdObj> fence = new FenceHandle::FdObj(
       window->GetScreen()->GetPrevDispAcquireFd());
   mReleaseFenceHandle.Merge(FenceHandle(fence));
@@ -1511,7 +1466,7 @@ CompositorOGL::GetReleaseFence()
 
 #else
 void
-CompositorOGL::SetDispAcquireFence(Layer* aLayer, nsIWidget* aWidget)
+CompositorOGL::SetDispAcquireFence(Layer* aLayer)
 {
 }
 

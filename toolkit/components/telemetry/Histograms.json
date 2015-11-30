@@ -575,7 +575,8 @@
     "high": "1024",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time(ms) to purge dirty heap pages."
+    "description": "Time(ms) to purge MADV_FREE'd heap pages.",
+    "cpp_guard": "XP_MACOSX"
   },
   "LOW_MEMORY_EVENTS_VIRTUAL": {
     "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
@@ -715,13 +716,6 @@
     "n_buckets": 10,
     "extended_statistics_ok": true,
     "description": "gfxDWriteFontList::DelayedInitFontList GetSystemFontCollection (ms)",
-    "cpp_guard": "XP_WIN"
-  },
-  "DWRITEFONT_INIT_PROBLEM": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 8,
-    "description": "DirectWrite system fontlist initialization problem (1=GDI interop, 2=system font collection, 3=no fonts)",
     "cpp_guard": "XP_WIN"
   },
   "GDI_INITFONTLIST_TOTAL": {
@@ -1279,12 +1273,6 @@
     "n_values": 10,
     "description": "Was the URL upgraded to HTTPS?  (0=already HTTPS, 1=no reason to upgrade, 2=STS upgrade blocked by pref, 3=upgraded with STS, 4=upgraded with CSP)"
   },
-  "HTTP_AUTH_DIALOG_STATS": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 3,
-    "description": "Stats about what kind of resource requested http authentication. (0=top-level doc, 1=same origin subresources 2=cross-origin subresources)"
-  },
   "SSL_HANDSHAKE_VERSION": {
     "expires_in_version": "never",
     "kind": "enumerated",
@@ -1366,14 +1354,6 @@
     "kind": "enumerated",
     "n_values": 16,
     "description": "SSL Handshake Key Exchange Algorithm for resumed handshake (null=0, rsa=1, dh=2, fortezza=3, ecdh=4)"
-  },
-  "SSL_OBSERVED_END_ENTITY_CERTIFICATE_LIFETIME": {
-    "expires_in_version": "55",
-    "alert_emails": ["seceng-telemetry@mozilla.com"],
-    "kind": "enumerated",
-    "n_values": 125,
-    "releaseChannelCollection": "opt-out",
-    "description": "The lifetime of accepted HTTPS server certificates, in weeks, up to 2 years. Bucket 105 is all end-entity HTTPS server certificates with a lifetime > 2 years."
   },
   "WEBSOCKETS_HANDSHAKE_TYPE": {
     "expires_in_version": "never",
@@ -1530,18 +1510,6 @@
     "n_buckets": 50,
     "extended_statistics_ok": true,
     "description": "H2: Settings Initial Window (rounded to KB)"
-  },
-  "SPDY_GOAWAY_LOCAL": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 32,
-    "description": "H2: goaway reason client sent from rfc 7540. 31 is none sent."
-  },
-  "SPDY_GOAWAY_PEER": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 32,
-    "description": "H2: goaway reason from peer from rfc 7540. 31 is none received."
   },
   "DISK_CACHE_CORRUPT_DETAILS": {
     "expires_in_version": "40",
@@ -2586,70 +2554,35 @@
     "n_buckets": 1000,
     "description": "Time spent blocked in PR_ConnectContinue when the offline state has changed in the last 60s (ms)."
   },
-  "PRCLOSE_TCP_BLOCKING_TIME_NORMAL": {
+  "PRCLOSE_BLOCKING_TIME_NORMAL": {
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "60000",
     "n_buckets": 1000,
     "description": "Time spent blocked in PR_Close when we are not shutting down and there has been niether a network nor an offline state change in the last 60s (ms)."
   },
-  "PRCLOSE_TCP_BLOCKING_TIME_SHUTDOWN": {
+  "PRCLOSE_BLOCKING_TIME_SHUTDOWN": {
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "60000",
     "n_buckets": 1000,
     "description": "Time spent blocked in PR_Close during a shutdown (ms)."
   },
-  "PRCLOSE_TCP_BLOCKING_TIME_CONNECTIVITY_CHANGE": {
+  "PRCLOSE_BLOCKING_TIME_CONNECTIVITY_CHANGE": {
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "60000",
     "n_buckets": 1000,
     "description": "Time spent blocked in PR_Close when there has been the connectivity change in the last 60s (ms)."
   },
-  "PRCLOSE_TCP_BLOCKING_TIME_LINK_CHANGE": {
+  "PRCLOSE_BLOCKING_TIME_LINK_CHANGE": {
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "60000",
     "n_buckets": 1000,
     "description": "Time spent blocked in PR_Close when there has been a link change in the last 60s (ms)."
   },
-  "PRCLOSE_TCP_BLOCKING_TIME_OFFLINE": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "60000",
-    "n_buckets": 1000,
-    "description": "Time spent blocked in PR_Close when the offline state has changed in the last 60s (ms)."
-  },
-  "PRCLOSE_UDP_BLOCKING_TIME_NORMAL": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "60000",
-    "n_buckets": 1000,
-    "description": "Time spent blocked in PR_Close when we are not shutting down and there has been niether a network nor an offline state change in the last 60s (ms)."
-  },
-  "PRCLOSE_UDP_BLOCKING_TIME_SHUTDOWN": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "60000",
-    "n_buckets": 1000,
-    "description": "Time spent blocked in PR_Close during a shutdown (ms)."
-  },
-  "PRCLOSE_UDP_BLOCKING_TIME_CONNECTIVITY_CHANGE": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "60000",
-    "n_buckets": 1000,
-    "description": "Time spent blocked in PR_Close when there has been the connectivity change in the last 60s (ms)."
-  },
-  "PRCLOSE_UDP_BLOCKING_TIME_LINK_CHANGE": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "60000",
-    "n_buckets": 1000,
-    "description": "Time spent blocked in PR_Close when there has been a link change in the last 60s (ms)."
-  },
-  "PRCLOSE_UDP_BLOCKING_TIME_OFFLINE": {
+  "PRCLOSE_BLOCKING_TIME_OFFLINE": {
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "60000",
@@ -4056,12 +3989,12 @@
     "n_buckets": 30,
     "description": "Average paint duration during any tab open/close animation (excluding tabstrip scroll) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
-  "FX_REFRESH_DRIVER_CHROME_FRAME_DELAY_MS": {
+  "FX_REFRESH_DRIVER_FRAME_DELAY_MS": {
     "expires_in_version": "default",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 50,
-    "description": "Delay in ms between the target and the actual handling time of the frame at refresh driver in chrome process."
+    "description": "Delay in ms between the target and the actual handling time of the frame at refresh driver"
   },
   "FX_TAB_SWITCH_UPDATE_MS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
@@ -4116,11 +4049,6 @@
     "extended_statistics_ok": true,
     "description": "Firefox: Time to initialize the bookmarks toolbar view (ms)"
   },
-  "FX_BROWSER_FULLSCREEN_USED": {
-    "expires_in_version": "46",
-    "kind": "count",
-    "description": "The number of times that a session enters browser fullscreen (f11-fullscreen)"
-  },
   "FX_NEW_WINDOW_MS": {
     "expires_in_version": "default",
     "kind": "exponential",
@@ -4163,49 +4091,14 @@
     "kind": "boolean",
     "description": "THUMBNAILS: Thumbnail found"
   },
-  "FX_MIGRATION_ENTRY_POINT": {
-    "expires_in_version": "49",
-    "kind": "enumerated",
-    "n_values": 10,
-    "releaseChannelCollection": "opt-out",
-    "description": "Where the migration wizard was entered from. 0=Other/catch-all, 1=first-run, 2=refresh-firefox, 3=Places window, 4=Password manager"
-  },
-  "FX_MIGRATION_SOURCE_BROWSER": {
-    "expires_in_version": "49",
-    "kind": "enumerated",
-    "n_values": 15,
-    "releaseChannelCollection": "opt-out",
-    "description": "The browser that data is pulled from. The values correspond to the internal browser ID (see MigrationUtils.jsm)"
-  },
-  "FX_MIGRATION_ERRORS": {
-    "expires_in_version": "49",
-    "kind": "enumerated",
-    "keyed": "true",
-    "n_values": 12,
-    "releaseChannelCollection": "opt-out",
-    "description": "Errors encountered during migration in buckets defined by the datatype, keyed by the string description of the browser."
-  },
-  "FX_MIGRATION_USAGE": {
-    "expires_in_version": "49",
-    "kind": "enumerated",
-    "keyed": "true",
-    "n_values": 12,
-    "releaseChannelCollection": "opt-out",
-    "description": "Usage of migration for each datatype when migration is run through the post-firstrun flow which allows individual datatypes, keyed by the string description of the browser."
-  },
-  "FX_MIGRATION_HOMEPAGE_IMPORTED": {
-    "expires_in_version": "49",
-    "kind": "boolean",
-    "keyed": "true",
-    "releaseChannelCollection": "opt-out",
-    "description": "Whether the homepage was imported during browser migration. Only available on release builds during firstrun."
-  },
-  "EVENTLOOP_UI_ACTIVITY_EXP_MS": {
+  "EVENTLOOP_UI_LAG_EXP_MS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
+    "low": 50,
     "high": "60000",
-    "n_buckets": 50,
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
     "description": "Widget: Time it takes for the message before a UI message (ms)"
   },
   "FX_SESSION_RESTORE_STARTUP_INIT_SESSION_MS": {
@@ -5228,19 +5121,6 @@
     "keyed": true,
     "description": "Longest blocking operation performed by the add-on (log2(duration in ms), keyed by add-on, updated every 15s by default)"
   },
-  "SLOW_ADDON_WARNING_STATES": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 20,
-    "description": "The states the Slow Add-on Warning goes through. 0: Displayed the warning. 1: User clicked on 'Disable add-on'. 2: User clicked 'Ignore add-on for now'. 3: User clicked 'Ignore add-on permanently'. 4: User closed notification. Other values are reserved for future uses."
-  },
-  "SLOW_ADDON_WARNING_RESPONSE_TIME": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "86400000",
-    "n_buckets": 30,
-    "description": "Time elapsed between before responding to Slow Add-on Warning UI (ms). Not updated if the user doesn't respond at all."
-  },
   "SEARCH_COUNTS": {
     "expires_in_version": "never",
     "kind": "count",
@@ -5673,33 +5553,13 @@
     "kind": "boolean",
     "description": "Count the number of times the user clicked 'allow' on the hidden-plugin infobar."
   },
-  "POPUP_NOTIFICATION_STATS": {
-    "alert_emails": ["firefox-dev@mozilla.org"],
-    "expires_in_version": "48",
-    "kind": "enumerated",
-    "keyed": true,
-    "n_values": 40,
-    "description": "(Bug 1207089) Usage of popup notifications, keyed by ID (0 = Offered, 1..4 = Action, 5 = Click outside, 6 = Leave page, 7 = Use 'X', 8 = Not now, 10 = Open submenu, 11 = Learn more. Add 20 if happened after reopen.)"
-  },
-  "POPUP_NOTIFICATION_MAIN_ACTION_MS": {
-    "alert_emails": ["firefox-dev@mozilla.org"],
-    "expires_in_version": "48",
-    "kind": "exponential",
-    "keyed": true,
-    "low": 100,
-    "high": 600000,
-    "n_buckets": 40,
-    "description": "(Bug 1207089) Time in ms between initially requesting a popup notification and triggering the main action, keyed by ID"
-  },
-  "POPUP_NOTIFICATION_DISMISSAL_MS": {
-    "alert_emails": ["firefox-dev@mozilla.org"],
-    "expires_in_version": "48",
-    "kind": "exponential",
-    "keyed": true,
-    "low": 200,
-    "high": 20000,
-    "n_buckets": 50,
-    "description": "(Bug 1207089) Time in ms between displaying a popup notification and dismissing it without an action the first time, keyed by ID"
+  "POPUP_NOTIFICATION_MAINACTION_TRIGGERED_MS": {
+    "expires_in_version": "40",
+    "kind": "linear",
+    "low": 25,
+    "high": "80 * 25",
+    "n_buckets": "80 + 1",
+    "description": "The time (in milliseconds) after showing a PopupNotification that the mainAction was first triggered"
   },
   "DEVTOOLS_DEBUGGER_RDP_LOCAL_RELOAD_MS": {
     "expires_in_version": "never",
@@ -7323,7 +7183,7 @@
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 13,
-    "description": "OS of DevTools user (0:Windows XP, 1:Windows Vista, 2:Windows 7, 3:Windows 8, 4:Windows 8.1, 5:OSX, 6:Linux 7:Windows 10, 8:reserved, 9:reserved, 10:reserved, 11:reserved, 12:other)"
+    "description": "OS of DevTools user (0:Windows XP, 1:Windows Vista, 2:Windows 7, 3:Windows 8, 4:Windows 8.1, 5:OSX, 6:Linux 7:reserved, 8:reserved, 9:reserved, 10:reserved, 11:reserved, 12:other)"
   },
   "DEVTOOLS_OS_IS_64_BITS_PER_USER": {
     "expires_in_version": "never",
@@ -7392,65 +7252,6 @@
     "high": "10000000",
     "n_buckets": "10000",
     "description": "The number of edges serialized into a heap snapshot."
-  },
-  "DEVTOOLS_PERFTOOLS_RECORDING_COUNT": {
-    "expires_in_version": "never",
-    "kind": "count",
-    "description": "Incremented whenever a performance tool recording is completed."
-  },
-  "DEVTOOLS_PERFTOOLS_CONSOLE_RECORDING_COUNT": {
-    "expires_in_version": "never",
-    "kind": "count",
-    "description": "Incremented whenever a performance tool recording is completed that was initiated via console.profile."
-  },
-  "DEVTOOLS_PERFTOOLS_RECORDING_IMPORT_FLAG": {
-    "expires_in_version": "never",
-    "kind": "flag",
-    "description": "When a user imports a recording in the performance tool."
-  },
-  "DEVTOOLS_PERFTOOLS_RECORDING_EXPORT_FLAG": {
-    "expires_in_version": "never",
-    "kind": "flag",
-    "description": "When a user imports a recording in the performance tool."
-  },
-  "DEVTOOLS_PERFTOOLS_RECORDING_FEATURES_USED": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "keyed": true,
-    "description": "When a user starts a recording with specific recording options, keyed by feature name (withMarkers, withAllocations, etc.)."
-  },
-  "DEVTOOLS_PERFTOOLS_RECORDING_DURATION_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "600000",
-    "n_buckets": 20,
-    "description": "The length of a duration in MS of a performance tool recording."
-  },
-  "DEVTOOLS_PERFTOOLS_SELECTED_VIEW_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "keyed": true,
-    "high": "600000",
-    "n_buckets": 20,
-    "description": "The amount of time spent in a specific performance tool view, keyed by view name (waterfall, js-calltree, js-flamegraph, etc)."
-  },
-  "VIEW_SOURCE_IN_BROWSER_OPENED_BOOLEAN": {
-    "alert_emails": ["mozilla-dev-developer-tools@lists.mozilla.org", "jryans@mozilla.com"],
-    "expires_in_version": "53",
-    "kind": "boolean",
-    "description": "How many times has view source in browser / tab been opened?"
-  },
-  "VIEW_SOURCE_IN_WINDOW_OPENED_BOOLEAN": {
-    "alert_emails": ["mozilla-dev-developer-tools@lists.mozilla.org", "jryans@mozilla.com"],
-    "expires_in_version": "53",
-    "kind": "boolean",
-    "description": "How many times has view source in a new window been opened?"
-  },
-  "VIEW_SOURCE_EXTERNAL_RESULT_BOOLEAN": {
-    "alert_emails": ["mozilla-dev-developer-tools@lists.mozilla.org", "jryans@mozilla.com"],
-    "expires_in_version": "53",
-    "kind": "boolean",
-    "description": "How many times has view source in an external editor been opened, and did it succeed?"
   },
   "BROWSER_IS_USER_DEFAULT": {
     "expires_in_version": "never",
@@ -8238,7 +8039,7 @@
   },
   "LOOP_SHARING_ROOM_URL": {
     "alert_emails": ["firefox-dev@mozilla.org", "mdeboer@mozilla.com"],
-    "expires_in_version": "45",
+    "expires_in_version": "44",
     "kind": "enumerated",
     "n_values": 8,
     "releaseChannelCollection": "opt-out",
@@ -8246,7 +8047,7 @@
   },
   "LOOP_ROOM_CREATE": {
     "alert_emails": ["firefox-dev@mozilla.org", "mdeboer@mozilla.com"],
-    "expires_in_version": "45",
+    "expires_in_version": "44",
     "kind": "enumerated",
     "n_values": 4,
     "releaseChannelCollection": "opt-out",
@@ -8254,7 +8055,7 @@
   },
   "LOOP_ROOM_DELETE": {
     "alert_emails": ["firefox-dev@mozilla.org", "mdeboer@mozilla.com"],
-    "expires_in_version": "45",
+    "expires_in_version": "44",
     "kind": "enumerated",
     "n_values": 4,
     "releaseChannelCollection": "opt-out",
@@ -8262,7 +8063,7 @@
   },
   "LOOP_ROOM_CONTEXT_ADD": {
     "alert_emails": ["firefox-dev@mozilla.org", "mdeboer@mozilla.com"],
-    "expires_in_version": "45",
+    "expires_in_version": "44",
     "kind": "enumerated",
     "n_values": 8,
     "releaseChannelCollection": "opt-out",
@@ -8270,7 +8071,7 @@
   },
   "LOOP_ROOM_CONTEXT_CLICK": {
     "alert_emails": ["firefox-dev@mozilla.org", "mdeboer@mozilla.com"],
-    "expires_in_version": "45",
+    "expires_in_version": "44",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Number times room context is clicked to visit the attached URL"
@@ -8667,19 +8468,6 @@
     "n_values" : 20,
     "description": "The result of auto-filling a login form. See http://mzl.la/1Mbs6jL for bucket descriptions."
   },
-  "PWMGR_LOGIN_LAST_USED_DAYS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 750,
-    "n_buckets" : 40,
-    "description": "Time in days each saved login was last used"
-  },
-  "PWMGR_LOGIN_PAGE_SAFETY": {
-    "expires_in_version": "55",
-    "kind": "enumerated",
-    "n_values": 8,
-    "description": "The safety of a page where we see a password field. (0: safe page & safe submit; 1: safe page & unsafe submit; 2: safe page & unknown submit; 3: unsafe page & safe submit; 4: unsafe page & unsafe submit; 5: unsafe page & unknown submit)"
-  },
   "PWMGR_MANAGE_COPIED_PASSWORD": {
     "expires_in_version": "never",
     "kind": "count",
@@ -8738,6 +8526,13 @@
     "high": 750,
     "n_buckets" : 50,
     "description": "Number of HTTP Auth logins"
+  },
+  "PWMGR_LOGIN_LAST_USED_DAYS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 750,
+    "n_buckets" : 40,
+    "description": "Time in days each saved login was last used"
   },
   "PWMGR_PASSWORD_INPUT_IN_FORM": {
     "expires_in_version": "never",
@@ -8825,6 +8620,20 @@
     "kind": "count",
     "description": "Count plugin hang notices in e10s"
   },
+  "UDP_SOCKET_PARALLEL_CLOSE_COUNT": {
+    "expires_in_version": "41",
+    "kind": "linear",
+    "high": "20",
+    "n_buckets": 19,
+    "description": "Number of concurrent UDP socket closing threads"
+  },
+  "UDP_SOCKET_CLOSE_TIME": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "high": "60000",
+    "n_buckets": 30,
+    "description": "Time PR_Close of a UDP socket taken (ms)"
+  },
   "SERVICE_WORKER_SPAWN_ATTEMPTS": {
     "expires_in_version": "50",
     "kind": "count",
@@ -8839,11 +8648,6 @@
     "expires_in_version": "50",
     "kind": "count",
     "description": "Tracking whether a ServiceWorker spawn gets queued due to hitting max workers per domain limit. File bugs in Core::DOM in case of a Telemetry regression."
-  },
-  "SHARED_WORKER_SPAWN_GETS_QUEUED": {
-    "expires_in_version": "50",
-    "kind": "count",
-    "description": "Tracking whether a SharedWorker spawn gets queued due to hitting max workers per domain limit. File bugs in Core::DOM in case of a Telemetry regression."
   },
   "SERVICE_WORKER_REGISTRATIONS": {
     "expires_in_version": "50",
@@ -8965,165 +8769,16 @@
     "releaseChannelCollection": "opt-out",
     "description": "Reports whether the graphics sanity test passed an OS snapshot test. 0=Pass, 1=Fail, 2=Error, 3=Timed out."
   },
-  "DEVTOOLS_HUD_JANK": {
+  "NONLOWERCASE_NONHTML_ATTR_NODE_SET": {
     "expires_in_version": "never",
-    "kind": "exponential",
-    "keyed": "true",
-    "description": "The duration which a thread is blocked in ms, keyed by appName.",
-    "high": "5000",
-    "n_buckets": 10
+    "kind": "flag",
+    "description": "An Attr node that's not namespace-aware and was created from an HTML document is set on a non-HTML element and has a name containing uppercase ASCII chars"
   },
-  "DEVTOOLS_HUD_REFLOW_DURATION": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "keyed": "true",
-    "description": "The duration a reflow takes in ms, keyed by appName.",
-    "high": "1000",
-    "n_buckets": 10
-  },
-  "DEVTOOLS_HUD_REFLOWS": {
-    "expires_in_version": "never",
-    "kind": "count",
-    "keyed": "true",
-    "description": "A count of the number of reflows, keyed by appName."
-  },
-  "DEVTOOLS_HUD_SECURITY_CATEGORY": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "keyed": "true",
-    "description": "The security error enums, keyed by appName.",
-    "n_values": 8
-  },
-  "DEVTOOLS_HUD_ERRORS": {
-    "expires_in_version": "never",
-    "kind": "count",
-    "keyed": "true",
-    "description": "Number of errors, keyed by appName."
-  },
-  "DEVTOOLS_HUD_WARNINGS": {
-    "expires_in_version": "never",
-    "kind": "count",
-    "keyed": "true",
-    "description": "Number of warnings, keyed by appName."
-  },
-  "DEVTOOLS_HUD_APP_STARTUP_TIME_CONTENTINTERACTIVE": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The duration in ms between application launch and the 'contentInteractive' performance mark, keyed by appName.",
-    "high": "2000",
-    "n_buckets": 10
-  },
-  "DEVTOOLS_HUD_APP_STARTUP_TIME_NAVIGATIONINTERACTIVE": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The duration in ms between application launch and the 'navigationInteractive' performance mark, keyed by appName.",
-    "high": "3000",
-    "n_buckets": 10
-  },
-  "DEVTOOLS_HUD_APP_STARTUP_TIME_NAVIGATIONLOADED": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The duration in ms between application launch and the 'navigationLoaded' performance mark, keyed by appName.",
-    "high": "4000",
-    "n_buckets": 10
-  },
-  "DEVTOOLS_HUD_APP_STARTUP_TIME_VISUALLYLOADED": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The duration in ms between application launch and the 'visuallyLoaded' performance mark, keyed by appName.",
-    "high": "5000",
-    "n_buckets": 10
-  },
-  "DEVTOOLS_HUD_APP_STARTUP_TIME_MEDIAENUMERATED": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The duration in ms between application launch and the 'mediaEnumerated' performance mark, keyed by appName.",
-    "high": "5000",
-    "n_buckets": 10
-  },
-  "DEVTOOLS_HUD_APP_STARTUP_TIME_FULLYLOADED": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The duration in ms between application launch and the 'fullyLoaded' performance mark, keyed by appName.",
-    "high": "30000",
-    "n_buckets": 30
-  },
-  "DEVTOOLS_HUD_APP_STARTUP_TIME_SCANEND": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The duration in ms between application launch and the 'scanEnd' performance mark, keyed by appName.",
-    "high": "30000",
-    "n_buckets": 30
-  },
-  "DEVTOOLS_HUD_APP_MEMORY_CONTENTINTERACTIVE": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The USS memory consumed by an application at the time of the 'contentInteractive' performance mark, keyed by appName.",
-    "low": "2000000",
-    "high": "3000000",
-    "n_buckets": 10
-  },
-  "DEVTOOLS_HUD_APP_MEMORY_NAVIGATIONINTERACTIVE": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The USS memory consumed by an application at the time of the 'navigationInteractive' performance mark, keyed by appName.",
-    "low": "2000000",
-    "high": "3000000",
-    "n_buckets": 10
-  },
-  "DEVTOOLS_HUD_APP_MEMORY_NAVIGATIONLOADED": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The USS memory consumed by an application at the time of the 'navigationLoaded' performance mark, keyed by appName.",
-    "low": "2000000",
-    "high": "3000000",
-    "n_buckets": 10
-  },
-  "DEVTOOLS_HUD_APP_MEMORY_VISUALLYLOADED": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The USS memory consumed by an application at the time of the 'visuallyLoaded' performance mark, keyed by appName.",
-    "low": "2000000",
-    "high": "3000000",
-    "n_buckets": 10
-  },
-  "DEVTOOLS_HUD_APP_MEMORY_MEDIAENUMERATED": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The USS memory consumed by an application at the time of the 'mediaEnumerated' performance mark, keyed by appName.",
-    "low": "2000000",
-    "high": "3000000",
-    "n_buckets": 10
-  },
-  "DEVTOOLS_HUD_APP_MEMORY_FULLYLOADED": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The USS memory consumed by an application at the time of the 'fullyLoaded' performance mark, keyed by appName.",
-    "low": "2000000",
-    "high": "4000000",
-    "n_buckets": 20
-  },
-  "DEVTOOLS_HUD_APP_MEMORY_SCANEND": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "keyed": "true",
-    "description": "The USS memory consumed by an application at the time of the 'scanEnd' performance mark, keyed by appName.",
-    "low": "2000000",
-    "high": "4000000",
-    "n_buckets": 20
+  "FENNEC_TITLE_IN_TITLEBAR_ENABLED": {
+    "alert_emails": ["michael.l.comella@gmail.com"],
+    "expires_in_version": "43",
+    "kind": "boolean",
+    "description": "Is the title shown in the url bar (as determined by the titlebar title or url preference)?"
   },
   "GRAPHICS_SANITY_TEST_REASON": {
     "alert_emails": ["danderson@mozilla.com"],
@@ -9132,70 +8787,6 @@
     "n_values": 20,
     "releaseChannelCollection": "opt-out",
     "description": "Reports why a graphics sanity test was run. 0=First Run, 1=App Updated, 2=Device Change, 3=Driver Change."
-  },
-  "TRANSLATION_OPPORTUNITIES": {
-    "expires_in_version": "default",
-    "kind": "boolean",
-    "description": "A number of successful and failed attempts to translate a document"
-  },
-  "TRANSLATION_OPPORTUNITIES_BY_LANGUAGE": {
-    "expires_in_version": "default",
-    "kind": "boolean",
-    "keyed": true,
-    "description": "A number of successful and failed attempts to translate a document grouped by language"
-  },
-  "TRANSLATED_PAGES": {
-    "expires_in_version": "default",
-    "kind": "count",
-    "description": "A number of sucessfully translated pages"
-  },
-  "TRANSLATED_PAGES_BY_LANGUAGE": {
-    "expires_in_version": "default",
-    "kind": "count",
-    "keyed": true,
-    "description": "A number of sucessfully translated pages by language"
-  },
-  "TRANSLATED_CHARACTERS": {
-    "expires_in_version": "default",
-    "kind": "exponential",
-    "high": "10 * 1024",
-    "n_buckets": 50,
-    "description": "A number of sucessfully translated characters"
-  },
-  "DENIED_TRANSLATION_OFFERS": {
-    "expires_in_version": "default",
-    "kind": "count",
-    "description": "A number of tranlation offers the user denied"
-  },
-  "AUTO_REJECTED_TRANSLATION_OFFERS": {
-    "expires_in_version": "default",
-    "kind": "count",
-    "description": "A number of auto-rejected tranlation offers"
-  },
-  "REQUESTS_OF_ORIGINAL_CONTENT": {
-    "expires_in_version": "default",
-    "kind": "count",
-    "description": "A number of times the user requested to see the original content of a translated page"
-  },
-  "CHANGES_OF_TARGET_LANGUAGE": {
-    "expires_in_version": "default",
-    "kind": "count",
-    "description": "A number of times when the target language was changed by the user"
-  },
-  "CHANGES_OF_DETECTED_LANGUAGE": {
-    "expires_in_version": "default",
-    "kind": "boolean",
-    "description": "A number of changes of detected language before (true) or after (false) translating a page for the first time."
-  },
-  "SHOULD_TRANSLATION_UI_APPEAR": {
-    "expires_in_version": "default",
-    "kind": "flag",
-    "description": "Tracks situations when the user opts for displaying translation UI"
-  },
-  "SHOULD_AUTO_DETECT_LANGUAGE": {
-    "expires_in_version": "default",
-    "kind": "flag",
-    "description": "Tracks situations when the user opts for auto-detecting the language of a page"
   },
   "PERMISSIONS_REMIGRATION_COMPARISON": {
     "alert_emails": ["michael@thelayzells.com"],
@@ -9408,276 +8999,11 @@
     "n_buckets": "29",
     "description": "The number of times AddIceCandidate failed on a given PeerConnection, given that ICE failed."
   },
-  "PERF_MONITORING_TEST_CPU_RESCHEDULING_PROPORTION_MOVED": {
-    "alert_emails": ["dteller@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "linear",
-    "high": "100",
-    "n_buckets": "20",
-    "description": "Proportion (%) of reschedulings of the main process to another CPU during the execution of code inside a JS compartment. Updated while we are measuring jank."
-  },
-  "VIDEO_EME_ADOBE_INSTALL_FAILED_REASON": {
-    "alert_emails": ["edwin@mozilla.com"],
-    "expires_in_version": "50",
-    "kind": "enumerated",
-    "n_values": 10,
-    "releaseChannelCollection": "opt-out",
-    "description": "Reason for Adobe CDM failing to update. (1 = GMP_INVALID; 2 = GMP_HIDDEN; 3 = GMP_DISABLED; 4 = GMP_UPDATE_DISABLED)"
-  },
-  "VIDEO_EME_ADOBE_HIDDEN_REASON": {
-    "alert_emails": ["edwin@mozilla.com"],
-    "expires_in_version": "50",
-    "kind": "enumerated",
-    "n_values": 10,
-    "releaseChannelCollection": "opt-out",
-    "description": "Reason for Adobe CDM being hidden. (1 = UNSUPPORTED; 2 = EME_DISABLED)"
-  },
-  "VIDEO_EME_ADOBE_UNSUPPORTED_REASON": {
-    "alert_emails": ["edwin@mozilla.com"],
-    "expires_in_version": "50",
-    "kind": "enumerated",
-    "n_values": 10,
-    "releaseChannelCollection": "opt-out",
-    "description": "Reason for reporting the Adobe CDM to be unsupported. (1 = NOT_WINDOWS; 2 = WINDOWS_VERSION)"
-  },
-  "FXA_CONFIGURED": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "flag",
-    "releaseChannelCollection": "opt-out",
-    "description": "If the user is signed in to a Firefox Account on this device"
-  },
-  "FXA_UNVERIFIED_ACCOUNT_ERRORS": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "FxA key fetch and certificate signing errors caused by an unverified account. Keyed on the FxA auth server endpoint."
-  },
-  "FXA_HAWK_ERRORS": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "FxA error responses caused by invalid Hawk credentials. Keyed on the FxA auth server endpoint."
-  },
-  "FXA_SERVER_ERRORS": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "400 and 500-class server errors returned by the FxA auth server. Keyed on the endpoint."
-  },
-  "TOKENSERVER_AUTH_ERRORS": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "Token server errors caused by invalid BrowserID assertions. Keyed on the token server error cause."
-  },
-  "WEAVE_ENGINE_APPLY_NEW_FAILURES": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "Number of records that a Sync engine failed to apply. Keyed on the engine name."
-  },
-  "WEAVE_ENGINE_APPLY_FAILURES": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "Failures encountered applying incoming records. Keyed on the engine name."
-  },
-  "WEAVE_ENGINE_SYNC_ERRORS": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "Exceptions thrown by a Sync engine. Keyed on the engine name."
-  },
-  "WEAVE_CAN_FETCH_KEYS": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "flag",
-    "releaseChannelCollection": "opt-out",
-    "description": "Whether Sync keys are present in account storage."
-  },
-  "WEAVE_FXA_KEY_FETCH_ERRORS": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "count",
-    "releaseChannelCollection": "opt-out",
-    "description": "Errors encountered fetching Sync keys, including network errors."
-  },
-  "WEAVE_STORAGE_AUTH_ERRORS": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "Sync storage server authentication errors. Keyed on the Sync record name."
-  },
-  "WEAVE_HMAC_ERRORS": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "expires_in_version": "45",
-    "kind": "count",
-    "releaseChannelCollection": "opt-out",
-    "description": "Sync cryptoKeys collection HMAC mismatches."
-  },
-  "CONTENT_DOCUMENTS_DESTROYED": {
-    "expires_in_version": "never",
-    "kind": "count",
-    "description": "Number of content documents destroyed; used in conjunction with use counter histograms"
-  },
-  "TOP_LEVEL_CONTENT_DOCUMENTS_DESTROYED": {
-    "expires_in_version": "never",
-    "kind": "count",
-    "description": "Number of top-level content documents destroyed; used in conjunction with use counter histograms"
-  },
-  "PUSH_API_USED": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "flag",
-    "description": "A Push API subscribe() operation was performed at least once this session."
-  },
-  "PUSH_API_PERMISSION_REQUESTED": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "Count of number of times the PermissionManager explicitly prompted user for Push Notifications permission"
-  },
-  "PUSH_API_PERMISSION_DENIED": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "User explicitly denied Push Notifications permission"
-  },
-  "PUSH_API_PERMISSION_GRANTED": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "User explicitly granted Push Notifications permission"
-  },
-  "PUSH_API_SUBSCRIBE_ATTEMPT": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "Push Service attempts to subscribe with Push Server."
-  },
-  "PUSH_API_SUBSCRIBE_FAILED": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "Attempt to subscribe with Push Server failed."
-  },
-  "PUSH_API_SUBSCRIBE_SUCCEEDED": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "Attempt to subscribe with Push Server succeeded."
-  },
-  "PUSH_API_UNSUBSCRIBE_ATTEMPT": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "Push Service attempts to unsubscribe with Push Server."
-  },
-  "PUSH_API_UNSUBSCRIBE_FAILED": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "Attempt to unsubscribe with Push Server failed."
-  },
-  "PUSH_API_UNSUBSCRIBE_SUCCEEDED": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "Attempt to unsubscribe with Push Server succeeded."
-  },
-  "PUSH_API_SUBSCRIBE_WS_TIME": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "exponential",
-    "high": "15000",
-    "n_buckets": 10,
-    "description": "Time taken to subscribe over WebSocket (ms)."
-  },
-  "PUSH_API_SUBSCRIBE_HTTP2_TIME": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "exponential",
-    "high": "15000",
-    "n_buckets": 10,
-    "description": "Time taken to subscribe over HTTP2 (ms)."
-  },
-  "PUSH_API_QUOTA_EXPIRATION_TIME": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "exponential",
-    "high": "31622400",
-    "n_buckets": 20,
-    "description": "Time taken for a push subscription to expire its quota (seconds). The maximum is just over an year."
-  },
-  "PUSH_API_QUOTA_RESET_TO": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "exponential",
-    "high": "200",
-    "n_buckets": 10,
-    "description": "The value a push record quota (a count) is reset to based on the user's browsing history."
-  },
-  "PUSH_API_NOTIFICATION_RECEIVED": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "Push notification was received from server."
-  },
-  "PUSH_API_NOTIFICATION_RECEIVED_BUT_DID_NOT_NOTIFY": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "enumerated",
-    "n_values": 16,
-    "description": "Push notification was received from server, but not delivered to ServiceWorker. Enumeration values are defined in dom/push/PushService.jsm as kDROP_NOTIFICATION_REASON_*."
-  },
-  "PUSH_API_NOTIFY": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "Attempt to notify ServiceWorker of push notification."
-  },
-  "PUSH_API_NOTIFY_REGISTRATION_LOST": {
-    "alert_emails": ["push@mozilla.com"],
-    "expires_in_version": "55",
-    "kind": "count",
-    "description": "Attempt to notify ServiceWorker of push notification resubscription."
-  },
-  "GFX_CRASH": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 100,
-    "releaseChannelCollection": "opt-out",
-    "description": "Graphics Crash Reason (...)"
-  },
   "PLUGIN_ACTIVATION_COUNT": {
     "alert_emails": ["cpeterson@mozilla.com"],
     "expires_in_version": "48",
     "kind": "count",
     "keyed": true,
-    "releaseChannelCollection": "opt-out",
     "description": "Counts number of times a certain plugin has been activated."
-  },
-  "YOUTUBE_EMBED_SEEN": {
-    "alert_emails": ["cpeterson@mozilla.com"],
-    "expires_in_version": "48",
-    "kind": "flag",
-    "description": "Flag activated whenever a youtube flash embed is seen during a session."
   }
 }

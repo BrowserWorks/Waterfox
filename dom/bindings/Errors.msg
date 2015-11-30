@@ -5,7 +5,7 @@
 /*
  * The format for each error message is:
  *
- * MSG_DEF(<SYMBOLIC_NAME>, <ARGUMENT_COUNT>, <JS_EXN_TYPE>, <FORMAT_STRING>)
+ * MSG_DEF(<SYMBOLIC_NAME>, <ARGUMENT_COUNT>, <FORMAT_STRING>)
  *
  * where
  *
@@ -13,9 +13,6 @@
  *
  * <ARGUMENT_COUNT> is an integer literal specifying the total number of
  * replaceable arguments in the following format string.
- *
- * <JS_EXN_TYPE> is a JSExnType which specifies which kind of error the JS
- * engine should throw.
  *
  * <FORMAT_STRING> is a string literal, containing <ARGUMENT_COUNT> sequences
  * {X} where X  is an integer representing the argument number that will
@@ -54,7 +51,6 @@ MSG_DEF(MSG_NOT_DATE, 1, JSEXN_TYPEERR, "{0} is not a date.")
 MSG_DEF(MSG_INVALID_ADVANCE_COUNT, 0, JSEXN_TYPEERR, "0 (Zero) is not a valid advance count.")
 MSG_DEF(MSG_DEFINEPROPERTY_ON_GSP, 0, JSEXN_TYPEERR, "Not allowed to define a property on the named properties object.")
 MSG_DEF(MSG_INVALID_URL, 1, JSEXN_TYPEERR, "{0} is not a valid URL.")
-MSG_DEF(MSG_URL_HAS_CREDENTIALS, 1, JSEXN_TYPEERR, "{0} is an url with embedded credentials.")
 MSG_DEF(MSG_METADATA_NOT_CONFIGURED, 0, JSEXN_TYPEERR, "Either size or lastModified should be true.")
 MSG_DEF(MSG_INVALID_READ_SIZE, 0, JSEXN_TYPEERR, "0 (Zero) is not a valid read size.")
 MSG_DEF(MSG_HEADERS_IMMUTABLE, 0, JSEXN_TYPEERR, "Headers are immutable and cannot be modified.")

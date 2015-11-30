@@ -189,7 +189,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "console",
 
 Components.utils.importGlobalProperties(["URL"]);
 
-var TransactionsHistory = [];
+let TransactionsHistory = [];
 TransactionsHistory.__proto__ = {
   __proto__: Array.prototype,
 
@@ -306,7 +306,7 @@ TransactionsHistory.__proto__ = {
 };
 
 
-var PlacesTransactions = {
+let PlacesTransactions = {
   /**
    * @see Batches in the module documentation.
    */
@@ -486,7 +486,7 @@ Enqueuer.prototype = {
   }
 };
 
-var TransactionsManager = {
+let TransactionsManager = {
   // See the documentation at the top of this file. |transact| calls are not
   // serialized with |batch| calls.
   _mainEnqueuer: new Enqueuer(),
@@ -1065,7 +1065,7 @@ function* createItemsFromBookmarksTree(aBookmarksTree, aRestoring = false,
  * are also documented there.
  *****************************************************************************/
 
-var PT = PlacesTransactions;
+let PT = PlacesTransactions;
 
 /**
  * Transaction for creating a bookmark.

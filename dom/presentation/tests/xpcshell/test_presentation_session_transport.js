@@ -95,7 +95,6 @@ TestServer.prototype = {
     serverTransport = Cc["@mozilla.org/presentation/presentationsessiontransport;1"]
                         .createInstance(Ci.nsIPresentationSessionTransport);
     serverTransport.initWithSocketTransport(aTransport, serverCallback);
-    serverTransport.enableDataNotification();
   },
   onStopListening: function(aSocket) {
     print("Test server stops listening.");
@@ -145,9 +144,6 @@ function serverSendMessage() {
                  .createInstance(Ci.nsIStringInputStream);
   stream.setData(serverMessage, serverMessage.length);
   serverTransport.send(stream);
-  // The client enables data notification even after the incoming message has
-  // been sent, and should still be able to consume it.
-  clientTransport.enableDataNotification();
 }
 
 function transportClose() {

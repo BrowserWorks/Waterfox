@@ -13,7 +13,7 @@ Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
 Cu.import("resource://gre/modules/devtools/Console.jsm");
 
 const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const promise = require("promise");
+const promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const {Tooltip} = require("devtools/shared/widgets/Tooltip");
 const Editor = require("devtools/sourceeditor/editor");
@@ -54,7 +54,7 @@ const DEFAULT_EDITOR_CONFIG = {
 /**
  * The current target and the WebGL Editor front, set by this tool's host.
  */
-var gToolbox, gTarget, gFront;
+let gToolbox, gTarget, gFront;
 
 /**
  * Initializes the shader editor controller and views.
@@ -81,7 +81,7 @@ function shutdownShaderEditor() {
 /**
  * Functions handling target-related lifetime events.
  */
-var EventsHandler = {
+let EventsHandler = {
   /**
    * Listen for events emitted by the current tab target.
    */
@@ -95,8 +95,7 @@ var EventsHandler = {
     gTarget.on("will-navigate", this._onTabNavigated);
     gTarget.on("navigate", this._onTabNavigated);
     gFront.on("program-linked", this._onProgramLinked);
-    this.reloadButton = $("#requests-menu-reload-notice-button");
-    this.reloadButton.addEventListener("command", this._onReloadCommand);
+
   },
 
   /**
@@ -108,14 +107,6 @@ var EventsHandler = {
     gTarget.off("will-navigate", this._onTabNavigated);
     gTarget.off("navigate", this._onTabNavigated);
     gFront.off("program-linked", this._onProgramLinked);
-    this.reloadButton.removeEventListener("command", this._onReloadCommand);
-  },
-
-  /**
-   * Handles a command event on reload button
-   */
-  _onReloadCommand() {
-    gFront.setup({ reload: true });
   },
 
   /**
@@ -196,7 +187,7 @@ var EventsHandler = {
 /**
  * Functions handling the sources UI.
  */
-var ShadersListView = Heritage.extend(WidgetMethods, {
+let ShadersListView = Heritage.extend(WidgetMethods, {
   /**
    * Initialization function, called when the tool is started.
    */
@@ -363,7 +354,7 @@ var ShadersListView = Heritage.extend(WidgetMethods, {
 /**
  * Functions handling the editors displaying the vertex and fragment shaders.
  */
-var ShadersEditorsView = {
+let ShadersEditorsView = {
   /**
    * Initialization function, called when the tool is started.
    */
@@ -621,7 +612,7 @@ var ShadersEditorsView = {
 /**
  * Localization convenience methods.
  */
-var L10N = new ViewHelpers.L10N(STRINGS_URI);
+let L10N = new ViewHelpers.L10N(STRINGS_URI);
 
 /**
  * Convenient way of emitting events from the panel window.
@@ -631,4 +622,4 @@ EventEmitter.decorate(this);
 /**
  * DOM query helper.
  */
-var $ = (selector, target = document) => target.querySelector(selector);
+let $ = (selector, target = document) => target.querySelector(selector);

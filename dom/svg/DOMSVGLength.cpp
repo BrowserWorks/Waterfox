@@ -66,7 +66,7 @@ NS_INTERFACE_MAP_END
 // Helper class: AutoChangeLengthNotifier
 // Stack-based helper class to pair calls to WillChangeLengthList and
 // DidChangeLengthList.
-class MOZ_RAII AutoChangeLengthNotifier
+class MOZ_STACK_CLASS AutoChangeLengthNotifier
 {
 public:
   explicit AutoChangeLengthNotifier(DOMSVGLength* aLength MOZ_GUARD_OBJECT_NOTIFIER_PARAM)

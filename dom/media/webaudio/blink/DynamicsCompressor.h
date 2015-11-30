@@ -37,12 +37,12 @@
 #include "mozilla/MemoryReporting.h"
 
 namespace mozilla {
-class AudioBlock;
+struct AudioChunk;
 } // namespace mozilla
 
 namespace WebCore {
 
-using mozilla::AudioBlock;
+using mozilla::AudioChunk;
 
 // DynamicsCompressor implements a flexible audio dynamics compression effect such as
 // is commonly used in musical production and game audio. It lowers the volume
@@ -73,7 +73,7 @@ public:
 
     DynamicsCompressor(float sampleRate, unsigned numberOfChannels);
 
-    void process(const AudioBlock* sourceChunk, AudioBlock* destinationChunk, unsigned framesToProcess);
+    void process(const AudioChunk* sourceChunk, AudioChunk* destinationChunk, unsigned framesToProcess);
     void reset();
     void setNumberOfChannels(unsigned);
     unsigned numberOfChannels() const { return m_numberOfChannels; }

@@ -4,7 +4,7 @@
 // Tests that getPanelWhenReady returns the correct panel in promise
 // resolutions regardless of whether it has opened first.
 
-var toolbox = null;
+let toolbox = null;
 
 const URL = "data:text/html;charset=utf8,test for getPanelWhenReady";
 

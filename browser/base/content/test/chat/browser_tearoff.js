@@ -4,7 +4,7 @@
 
 Components.utils.import("resource://gre/modules/Promise.jsm", this);
 
-var chatbar = document.getElementById("pinnedchats");
+let chatbar = document.getElementById("pinnedchats");
 
 function promiseNewWindowLoaded() {
   let deferred = Promise.defer();

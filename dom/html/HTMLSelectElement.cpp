@@ -1487,7 +1487,7 @@ HTMLSelectElement::GetAttributeMappingFunction() const
 }
 
 bool
-HTMLSelectElement::IsDisabledForEvents(EventMessage aMessage)
+HTMLSelectElement::IsDisabledForEvents(uint32_t aMessage)
 {
   nsIFormControlFrame* formControlFrame = GetFormControlFrame(false);
   nsIFrame* formFrame = nullptr;
@@ -1501,7 +1501,7 @@ nsresult
 HTMLSelectElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mCanHandle = false;
-  if (IsDisabledForEvents(aVisitor.mEvent->mMessage)) {
+  if (IsDisabledForEvents(aVisitor.mEvent->message)) {
     return NS_OK;
   }
 
@@ -1511,7 +1511,7 @@ HTMLSelectElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 nsresult
 HTMLSelectElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
 {
-  if (aVisitor.mEvent->mMessage == eFocus) {
+  if (aVisitor.mEvent->message == NS_FOCUS_CONTENT) {
     // If the invalid UI is shown, we should show it while focused and
     // update the invalid/valid UI.
     mCanShowInvalidUI = !IsValid() && ShouldShowValidityUI();
@@ -1522,7 +1522,7 @@ HTMLSelectElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
 
     // We don't have to update NS_EVENT_STATE_MOZ_UI_INVALID nor
     // NS_EVENT_STATE_MOZ_UI_VALID given that the states should not change.
-  } else if (aVisitor.mEvent->mMessage == eBlur) {
+  } else if (aVisitor.mEvent->message == NS_BLUR_CONTENT) {
     mCanShowInvalidUI = true;
     mCanShowValidUI = true;
 

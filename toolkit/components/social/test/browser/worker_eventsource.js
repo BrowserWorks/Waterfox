@@ -1,6 +1,6 @@
-var port, es;
+let port, es;
 
-var url = "https://example.com/browser/toolkit/components/social/test/browser/eventsource.resource";
+let url = "https://example.com/browser/toolkit/components/social/test/browser/eventsource.resource";
 
 function ok(a, msg) {
   port.postMessage({topic: "eventSourceTest",

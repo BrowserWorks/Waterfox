@@ -37,8 +37,8 @@ add_task(function* test_register_flush() {
 
   let notifyPromise = promiseObserverNotification('push-notification');
 
-  let ackDone;
-  let ackPromise = new Promise(resolve => ackDone = after(2, resolve));
+  let ackDefer = Promise.defer();
+  let ackDone = after(2, ackDefer.resolve);
   PushService.init({
     serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
@@ -87,7 +87,7 @@ add_task(function* test_register_flush() {
     'Timed out waiting for notification');
   equal(scope, 'https://example.com/page/1', 'Wrong notification scope');
 
-  yield waitForPromise(ackPromise, DEFAULT_TIMEOUT,
+  yield waitForPromise(ackDefer.promise, DEFAULT_TIMEOUT,
      'Timed out waiting for acknowledgements');
 
   let prevRecord = yield db.getByKeyID(

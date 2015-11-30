@@ -7,7 +7,7 @@
 
 const URL = "data:text/html;charset=utf8,test page";
 
-var {Toolbox} = require("devtools/framework/toolbox");
+let {Toolbox} = require("devtools/framework/toolbox");
 
 add_task(function*() {
   info("Create a test tab and open the toolbox");
@@ -24,33 +24,18 @@ add_task(function*() {
     yield checkKeyBindings(toolbox);
   }
 
-  Services.prefs.clearUserPref("devtools.toolbox.zoomValue");
+  Services.prefs.clearUserPref("devtools.toolbox.zoomValue", BOTTOM);
   Services.prefs.setCharPref("devtools.toolbox.host", BOTTOM);
   yield toolbox.destroy();
   gBrowser.removeCurrentTab();
 });
 
-function zoomWithKey(toolbox, key) {
-  if (!key) {
-    info("Key was empty, skipping zoomWithKey");
-    return;
-  }
-
-  info("Zooming with key: " + key);
-  let currentZoom = toolbox.zoomValue;
-  EventUtils.synthesizeKey(key, {accelKey: true}, toolbox.doc.defaultView);
-  isnot(toolbox.zoomValue, currentZoom, "The zoom level was changed in the toolbox");
-}
-
 function* checkKeyBindings(toolbox) {
-  zoomWithKey(toolbox, toolbox.doc.getElementById("toolbox-zoom-in-key").getAttribute("key"));
-  zoomWithKey(toolbox, toolbox.doc.getElementById("toolbox-zoom-in-key2").getAttribute("key"));
-  zoomWithKey(toolbox, toolbox.doc.getElementById("toolbox-zoom-in-key3").getAttribute("key"));
+  let currentZoom = toolbox.zoomValue;
 
-  zoomWithKey(toolbox, toolbox.doc.getElementById("toolbox-zoom-reset-key").getAttribute("key"));
+  let key = toolbox.doc.getElementById("toolbox-zoom-in-key").getAttribute("key");
+  EventUtils.synthesizeKey(key, {accelKey: true}, toolbox.doc.defaultView);
 
-  zoomWithKey(toolbox, toolbox.doc.getElementById("toolbox-zoom-out-key").getAttribute("key"));
-  zoomWithKey(toolbox, toolbox.doc.getElementById("toolbox-zoom-out-key2").getAttribute("key"));
-
-  zoomWithKey(toolbox, toolbox.doc.getElementById("toolbox-zoom-reset-key2").getAttribute("key"));
+  let newZoom = toolbox.zoomValue;
+  isnot(newZoom, currentZoom, "The zoom level was changed in the toolbox");
 }

@@ -8,4 +8,6 @@ SOURCES += [
     'nsIconChannelCocoa.mm',
 ]
 
+FAIL_ON_WARNINGS = True
+
 FINAL_LIBRARY = 'xul'

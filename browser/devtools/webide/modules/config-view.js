@@ -4,11 +4,12 @@
 
 const {Cu} = require("chrome");
 
+const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm");
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
 const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
 
-var ConfigView;
+let ConfigView;
 
 module.exports = ConfigView = function(window) {
   EventEmitter.decorate(this);

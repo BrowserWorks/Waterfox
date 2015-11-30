@@ -17,8 +17,6 @@ UNIFIED_SOURCES += [
     'src/snappy.cc',
 ]
 
-ALLOW_COMPILER_WARNINGS = True
-
 FINAL_LIBRARY = 'xul'
 
 # Suppress warnings in third-party code.

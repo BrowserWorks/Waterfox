@@ -10,8 +10,6 @@
 #include <mach/vm_map.h>
 #include <mach/mach_port.h>
 #include <mach/mach_vm.h>
-#include <pthread.h>
-#include <unistd.h>
 #include "SharedMemoryBasic.h"
 #include "chrome/common/mach_ipc_mac.h"
 

@@ -520,15 +520,13 @@ nsClipboardCommand::DoCommand(const char *aCommandName, nsISupports *aContext)
   nsCOMPtr<nsIPresShell> presShell = docShell->GetPresShell();
   NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
 
-  EventMessage eventMessage = eCopy;
+  int32_t eventType = NS_COPY;
   if (strcmp(aCommandName, "cmd_cut") == 0) {
-    eventMessage = eCut;
+    eventType = NS_CUT;
   }
 
   bool actionTaken = false;
-  nsCopySupport::FireClipboardEvent(eventMessage,
-                                    nsIClipboard::kGlobalClipboard,
-                                    presShell, nullptr, &actionTaken);
+  nsCopySupport::FireClipboardEvent(eventType, nsIClipboard::kGlobalClipboard, presShell, nullptr, &actionTaken);
 
   if (!strcmp(aCommandName, "cmd_copyAndCollapseToEnd")) {
     dom::Selection *sel =

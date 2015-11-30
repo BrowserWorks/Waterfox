@@ -4,8 +4,8 @@
 
 "use strict";
 
-var Cu = Components.utils;
-var Ci = Components.interfaces;
+let Cu = Components.utils;
+let Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -21,7 +21,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "UpdateChannel",
   "resource://gre/modules/UpdateChannel.jsm");
 
-var {
+let {
   links: gLinks,
   allPages: gAllPages,
   linkChecker: gLinkChecker,

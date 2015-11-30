@@ -49,7 +49,7 @@ interface nsIJSRAIIHelper;
 interface nsIContentPermissionRequest;
 interface nsIObserver;
 
-[scriptable, uuid(a30a95ac-3b95-4251-88dc-8efa89ba9f9c)]
+[scriptable, uuid(7a37e173-ea6e-495e-8702-013f8063352a)]
 interface nsIDOMWindowUtils : nsISupports {
 
   /**
@@ -105,6 +105,15 @@ interface nsIDOMWindowUtils : nsISupports {
    * Force a synchronous layer transaction for this window if necessary.
    */
   void updateLayerTree();
+
+  /**
+   * Set the CSS viewport to be |widthPx| x |heightPx| in units of CSS
+   * pixels, regardless of the size of the enclosing widget/view.
+   * This will trigger reflow.
+   *
+   * The caller of this method must have chrome privileges.
+   */
+  void setCSSViewport(in float aWidthPx, in float aHeightPx);
 
   /**
    * Information retrieved from the <meta name="viewport"> tag.
@@ -810,11 +819,11 @@ interface nsIDOMWindowUtils : nsISupports {
   void runNextCollectorTimer();
 
   /** Synthesize a simple gesture event for a window. The event types
-   *  supported are: MozSwipeGestureMayStart, MozSwipeGestureStart,
-   *  MozSwipeGestureUpdate, MozSwipeGestureEnd, MozSwipeGesture,
-   *  MozMagnifyGestureStart, MozMagnifyGestureUpdate, MozMagnifyGesture,
-   *  MozRotateGestureStart, MozRotateGestureUpdate, MozRotateGesture,
-   *  MozPressTapGesture, MozTapGesture, and MozEdgeUIGesture.
+   *  supported are: MozSwipeGestureStart, MozSwipeGestureUpdate,
+   *  MozSwipeGestureEnd, MozSwipeGesture, MozMagnifyGestureStart,
+   *  MozMagnifyGestureUpdate, MozMagnifyGesture, MozRotateGestureStart,
+   *  MozRotateGestureUpdate, MozRotateGesture, MozPressTapGesture,
+   *  MozTapGesture, and MozEdgeUIGesture.
    *
    * Cannot be accessed from unprivileged context (not
    * content-accessible) Will throw a DOM security error if called
@@ -1082,6 +1091,8 @@ interface nsIDOMWindowUtils : nsISupports {
                                in long aY,
                                [optional] in unsigned long aAdditionalFlags);
 
+  // NOTE: following values are same as NS_QUERY_* in BasicEvents.h
+
   /**
    * QUERY_SELECTED_TEXT queries the first selection range's information.
    *
@@ -1331,7 +1342,7 @@ interface nsIDOMWindowUtils : nsISupports {
    * test video, does not mean that all h264 video decoding will be done
    * in hardware.
    */
-  readonly attribute AString supportsHardwareH264Decoding;
+  readonly attribute boolean supportsHardwareH264Decoding;
 
   /**
    * Record (and return) frame-intervals for frames which were presented
@@ -1615,6 +1626,19 @@ interface nsIDOMWindowUtils : nsISupports {
   void setScrollPositionClampingScrollPortSize(in float aWidth, in float aHeight);
 
   /**
+   * Set margins for the layout of fixed position elements in the content
+   * document. These are used on mobile, where the viewable area can be
+   * temporarily obscured by the browser chrome. In this situation, we're ok
+   * with scrollable page content being obscured, but fixed position content
+   * cannot be revealed without removing the obscuring chrome, so we use these
+   * margins so that it can remain visible.
+   *
+   * The caller of this method must have chrome privileges.
+   */
+  void setContentDocumentFixedPositionMargins(in float aTop, in float aRight,
+                                              in float aBottom, in float aLeft);
+
+  /**
    * These are used to control whether dialogs (alert, prompt, confirm) are
    * allowed.
    */
@@ -1697,6 +1721,32 @@ interface nsIDOMWindowUtils : nsISupports {
    * Setting paintFlashing to true will flash newly painted area.
    */
   attribute boolean paintFlashing;
+
+  /**
+   * Add a "synchronous section", in the form of an nsIRunnable run once the
+   * event loop has reached a "stable state". |runnable| must not cause any
+   * queued events to be processed (i.e. must not spin the event loop).
+   * We've reached a stable state when the currently executing task/event has
+   * finished, see:
+   * http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#synchronous-section
+   * In practice this runs aRunnable once the currently executing event
+   * finishes. If called multiple times per task/event, all the runnables will
+   * be executed, in the order in which runInStableState() was called.
+   *
+   * XXX - This can wreak havoc if you're not using this for very simple
+   * purposes, eg testing or setting a flag.
+   */
+  void runInStableState(in nsIRunnable runnable);
+
+  /**
+   * Run the given runnable before the next iteration of the event loop (this
+   * includes native events too). If a nested loop is spawned within the current
+   * event then the runnable will not be run until that loop has terminated.
+   *
+   * XXX - This can wreak havoc if you're not using this for very simple
+   * purposes, eg testing or setting a flag.
+   */
+  void runBeforeNextEvent(in nsIRunnable runnable);
 
   /*
    * Returns the value of a given property animated on the compositor thread.
@@ -1823,19 +1873,6 @@ interface nsIDOMWindowUtils : nsISupports {
    * @param aSheetType One of the nsIStyleSheetService.*_SHEET constants.
    */
   bool hasRuleProcessorUsedByMultipleStyleSets(in unsigned long aSheetType);
-
-  /*
-   * Force the use counters for the node's associated document(s) to be
-   * flushed to telemetry.  For example, a document node will flush its own
-   * counters and an image node with an SVG source will flush the SVG
-   * document's counters.  Normally, use counters are flushed to telemetry
-   * upon document destruction, but as document destruction is somewhat
-   * non-deterministic, we have this method here for more determinism when
-   * running tests.
-   */
-  void forceUseCounterFlush(in nsIDOMNode aNode);
-
-  void setNextPaintSyncId(in long aSyncId);
 };
 
 [scriptable, uuid(c694e359-7227-4392-a138-33c0cc1f15a6)]

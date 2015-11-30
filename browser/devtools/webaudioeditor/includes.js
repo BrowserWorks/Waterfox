@@ -10,10 +10,10 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
 Cu.import("resource:///modules/devtools/gDevTools.jsm");
 
-const { loader, require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const { devtools: loader, require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 
-var { console } = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
-var { EventTarget } = require("sdk/event/target");
+let { console } = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
+let { EventTarget } = require("sdk/event/target");
 
 const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 const { Class } = require("sdk/core/heritage");
@@ -29,10 +29,10 @@ loader.lazyRequireGetter(this, "LineGraphWidget",
 
 // `AUDIO_NODE_DEFINITION` defined in the controller's initialization,
 // which describes all the properties of an AudioNode
-var AUDIO_NODE_DEFINITION;
+let AUDIO_NODE_DEFINITION;
 
 // Override DOM promises with Promise.jsm helpers
-const { defer, all } = require("promise");
+const { defer, all } = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
 
 /* Events fired on `window` to indicate state or actions*/
 const EVENTS = {
@@ -78,7 +78,7 @@ const EVENTS = {
 /**
  * The current target and the Web Audio Editor front, set by this tool's host.
  */
-var gToolbox, gTarget, gFront;
+let gToolbox, gTarget, gFront;
 
 /**
  * Convenient way of emitting events from the panel window.

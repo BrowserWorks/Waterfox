@@ -55,7 +55,7 @@ const TEST_DATA = [
   }
 ];
 
-var MMI_PREFIX = [
+let MMI_PREFIX = [
   "*03*330*",
   "**03*330*",
   "*03**",

@@ -205,7 +205,11 @@ function beginTest() {
   }
 }
 
-beginTest();
+var prefs = [
+  [ "canvas.capturestream.enabled", true ],
+];
+SpecialPowers.pushPrefEnv({ "set" : prefs }, beginTest);
+
 </script>
 </pre>
 </body>

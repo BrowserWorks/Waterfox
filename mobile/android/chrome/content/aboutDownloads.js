@@ -14,7 +14,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services", "resource://gre/modules/Services.jsm");
 
-var gStrings = Services.strings.createBundle("chrome://browser/locale/aboutDownloads.properties");
+let gStrings = Services.strings.createBundle("chrome://browser/locale/aboutDownloads.properties");
 XPCOMUtils.defineLazyGetter(this, "strings",
                             () => Services.strings.createBundle("chrome://browser/locale/aboutDownloads.properties"));
 
@@ -27,7 +27,7 @@ function deleteDownload(download) {
   });
 }
 
-var contextMenu = {
+let contextMenu = {
   _items: [],
   _targetDownload: null,
 
@@ -191,7 +191,7 @@ DownloadListView.prototype = {
   }
 };
 
-var downloadLists = {
+let downloadLists = {
   init: function () {
     this.publicDownloads = new DownloadListView(Downloads.PUBLIC, "public-downloads-list");
     this.privateDownloads = new DownloadListView(Downloads.PRIVATE, "private-downloads-list");

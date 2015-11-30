@@ -81,8 +81,8 @@ const kTargetBlank = {
 
 // We'll be changing these preferences a lot, so we'll stash their original
 // values and make sure we restore them at the end of the test.
-var originalNewWindowPref = Services.prefs.getIntPref(kNewWindowPrefKey);
-var originalNewWindowRestrictionPref =
+let originalNewWindowPref = Services.prefs.getIntPref(kNewWindowPrefKey);
+let originalNewWindowRestrictionPref =
   Services.prefs.getIntPref(kNewWindowRestrictionPrefKey);
 
 registerCleanupFunction(function() {

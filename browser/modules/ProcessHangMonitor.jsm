@@ -5,9 +5,9 @@
 
 "use strict";
 
-var Cc = Components.classes;
-var Ci = Components.interfaces;
-var Cu = Components.utils;
+let Cc = Components.classes;
+let Ci = Components.interfaces;
+let Cu = Components.utils;
 
 this.EXPORTED_SYMBOLS = ["ProcessHangMonitor"];
 
@@ -25,7 +25,7 @@ Cu.import("resource://gre/modules/Services.jsm");
  */
 const HANG_EXPIRATION_TIME = 10000;
 
-var ProcessHangMonitor = {
+let ProcessHangMonitor = {
   /**
    * Collection of hang reports that haven't expired or been dismissed
    * by the user. The keys are nsIHangReports and values keys are

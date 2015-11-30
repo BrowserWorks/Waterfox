@@ -11,7 +11,6 @@
 
 #include "jsscriptinlines.h"
 
-#include "jit/MacroAssembler-inl.h"
 #include "jit/shared/CodeGenerator-shared-inl.h"
 
 using namespace js;
@@ -72,11 +71,10 @@ CodeGeneratorX64::visitBox(LBox* box)
     const LDefinition* result = box->getDef(0);
 
     if (IsFloatingPointType(box->type())) {
-        ScratchDoubleScope scratch(masm);
         FloatRegister reg = ToFloatRegister(in);
         if (box->type() == MIRType_Float32) {
-            masm.convertFloat32ToDouble(reg, scratch);
-            reg = scratch;
+            masm.convertFloat32ToDouble(reg, ScratchDoubleReg);
+            reg = ScratchDoubleReg;
         }
         masm.vmovq(reg, ToRegister(result));
     } else {
@@ -149,14 +147,13 @@ CodeGeneratorX64::visitCompareB(LCompareB* lir)
     MOZ_ASSERT(mir->jsop() == JSOP_STRICTEQ || mir->jsop() == JSOP_STRICTNE);
 
     // Load boxed boolean in ScratchReg.
-    ScratchRegisterScope scratch(masm);
     if (rhs->isConstant())
-        masm.moveValue(*rhs->toConstant(), scratch);
+        masm.moveValue(*rhs->toConstant(), ScratchReg);
     else
-        masm.boxValue(JSVAL_TYPE_BOOLEAN, ToRegister(rhs), scratch);
+        masm.boxValue(JSVAL_TYPE_BOOLEAN, ToRegister(rhs), ScratchReg);
 
     // Perform the comparison.
-    masm.cmpPtr(lhs.valueReg(), scratch);
+    masm.cmpPtr(lhs.valueReg(), ScratchReg);
     masm.emitSet(JSOpToCondition(mir->compareType(), mir->jsop()), output);
 }
 
@@ -171,23 +168,22 @@ CodeGeneratorX64::visitCompareBAndBranch(LCompareBAndBranch* lir)
     MOZ_ASSERT(mir->jsop() == JSOP_STRICTEQ || mir->jsop() == JSOP_STRICTNE);
 
     // Load boxed boolean in ScratchReg.
-    ScratchRegisterScope scratch(masm);
     if (rhs->isConstant())
-        masm.moveValue(*rhs->toConstant(), scratch);
+        masm.moveValue(*rhs->toConstant(), ScratchReg);
     else
-        masm.boxValue(JSVAL_TYPE_BOOLEAN, ToRegister(rhs), scratch);
+        masm.boxValue(JSVAL_TYPE_BOOLEAN, ToRegister(rhs), ScratchReg);
 
     // Perform the comparison.
-    masm.cmpPtr(lhs.valueReg(), scratch);
+    masm.cmpPtr(lhs.valueReg(), ScratchReg);
     emitBranch(JSOpToCondition(mir->compareType(), mir->jsop()), lir->ifTrue(), lir->ifFalse());
 }
 
 void
-CodeGeneratorX64::visitCompareBitwise(LCompareBitwise* lir)
+CodeGeneratorX64::visitCompareV(LCompareV* lir)
 {
     MCompare* mir = lir->mir();
-    const ValueOperand lhs = ToValue(lir, LCompareBitwise::LhsInput);
-    const ValueOperand rhs = ToValue(lir, LCompareBitwise::RhsInput);
+    const ValueOperand lhs = ToValue(lir, LCompareV::LhsInput);
+    const ValueOperand rhs = ToValue(lir, LCompareV::RhsInput);
     const Register output = ToRegister(lir->output());
 
     MOZ_ASSERT(IsEqualityOp(mir->jsop()));
@@ -197,12 +193,12 @@ CodeGeneratorX64::visitCompareBitwise(LCompareBitwise* lir)
 }
 
 void
-CodeGeneratorX64::visitCompareBitwiseAndBranch(LCompareBitwiseAndBranch* lir)
+CodeGeneratorX64::visitCompareVAndBranch(LCompareVAndBranch* lir)
 {
     MCompare* mir = lir->cmpMir();
 
-    const ValueOperand lhs = ToValue(lir, LCompareBitwiseAndBranch::LhsInput);
-    const ValueOperand rhs = ToValue(lir, LCompareBitwiseAndBranch::RhsInput);
+    const ValueOperand lhs = ToValue(lir, LCompareVAndBranch::LhsInput);
+    const ValueOperand rhs = ToValue(lir, LCompareVAndBranch::RhsInput);
 
     MOZ_ASSERT(mir->jsop() == JSOP_EQ || mir->jsop() == JSOP_STRICTEQ ||
                mir->jsop() == JSOP_NE || mir->jsop() == JSOP_STRICTNE);
@@ -375,15 +371,9 @@ CodeGeneratorX64::visitAsmJSLoadHeap(LAsmJSLoadHeap* ins)
     OutOfLineLoadTypedArrayOutOfBounds* ool = nullptr;
     uint32_t maybeCmpOffset = AsmJSHeapAccess::NoLengthCheck;
     if (gen->needsAsmJSBoundsCheckBranch(mir)) {
-        Label* jumpTo = nullptr;
-        if (mir->isAtomicAccess()) {
-            jumpTo = gen->outOfBoundsLabel();
-        } else {
-            ool = new(alloc()) OutOfLineLoadTypedArrayOutOfBounds(ToAnyRegister(out), accessType);
-            addOutOfLineCode(ool, mir);
-            jumpTo = ool->entry();
-        }
-        maybeCmpOffset = emitAsmJSBoundsCheckBranch(mir, mir, ToRegister(ptr), jumpTo);
+        ool = new(alloc()) OutOfLineLoadTypedArrayOutOfBounds(ToAnyRegister(out), accessType);
+        addOutOfLineCode(ool, mir);
+        maybeCmpOffset = emitAsmJSBoundsCheckBranch(mir, mir, ToRegister(ptr), ool->entry());
     }
 
     uint32_t before = masm.size();
@@ -527,12 +517,8 @@ CodeGeneratorX64::visitAsmJSStoreHeap(LAsmJSStoreHeap* ins)
     Label* rejoin = nullptr;
     uint32_t maybeCmpOffset = AsmJSHeapAccess::NoLengthCheck;
     if (gen->needsAsmJSBoundsCheckBranch(mir)) {
-        Label* jumpTo = nullptr;
-        if (mir->isAtomicAccess())
-            jumpTo = gen->outOfBoundsLabel();
-        else
-            rejoin = jumpTo = alloc().lifoAlloc()->new_<Label>();
-        maybeCmpOffset = emitAsmJSBoundsCheckBranch(mir, mir, ToRegister(ptr), jumpTo);
+        rejoin = alloc().lifoAlloc()->new_<Label>();
+        maybeCmpOffset = emitAsmJSBoundsCheckBranch(mir, mir, ToRegister(ptr), rejoin);
     }
 
     uint32_t before = masm.size();
@@ -596,10 +582,17 @@ CodeGeneratorX64::visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap* ins)
     // Note that we can't use
     // needsAsmJSBoundsCheckBranch/emitAsmJSBoundsCheckBranch/cleanupAfterAsmJSBoundsCheckBranch
     // since signal-handler bounds checking is not yet implemented for atomic accesses.
+    Label rejoin;
     uint32_t maybeCmpOffset = AsmJSHeapAccess::NoLengthCheck;
     if (mir->needsBoundsCheck()) {
         maybeCmpOffset = masm.cmp32WithPatch(ToRegister(ptr), Imm32(-mir->endOffset())).offset();
-        masm.j(Assembler::Above, gen->outOfBoundsLabel());
+        Label goahead;
+        masm.j(Assembler::BelowOrEqual, &goahead);
+        memoryBarrier(MembarFull);
+        Register out = ToRegister(ins->output());
+        masm.xorl(out, out);
+        masm.jmp(&rejoin);
+        masm.bind(&goahead);
     }
     uint32_t before = masm.size();
     masm.compareExchangeToTypedIntArray(accessType == Scalar::Uint32 ? Scalar::Int32 : accessType,
@@ -608,6 +601,8 @@ CodeGeneratorX64::visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap* ins)
                                         newval,
                                         InvalidReg,
                                         ToAnyRegister(ins->output()));
+    if (rejoin.used())
+        masm.bind(&rejoin);
     MOZ_ASSERT(mir->offset() == 0,
                "The AsmJS signal handler doesn't yet support emulating "
                "atomic accesses in the case of a fault from an unwrapped offset");
@@ -631,10 +626,17 @@ CodeGeneratorX64::visitAsmJSAtomicExchangeHeap(LAsmJSAtomicExchangeHeap* ins)
     // Note that we can't use
     // needsAsmJSBoundsCheckBranch/emitAsmJSBoundsCheckBranch/cleanupAfterAsmJSBoundsCheckBranch
     // since signal-handler bounds checking is not yet implemented for atomic accesses.
+    Label rejoin;
     uint32_t maybeCmpOffset = AsmJSHeapAccess::NoLengthCheck;
     if (mir->needsBoundsCheck()) {
         maybeCmpOffset = masm.cmp32WithPatch(ToRegister(ptr), Imm32(-mir->endOffset())).offset();
-        masm.j(Assembler::Above, gen->outOfBoundsLabel());
+        Label goahead;
+        masm.j(Assembler::BelowOrEqual, &goahead);
+        memoryBarrier(MembarFull);
+        Register out = ToRegister(ins->output());
+        masm.xorl(out, out);
+        masm.jmp(&rejoin);
+        masm.bind(&goahead);
     }
     uint32_t before = masm.size();
     masm.atomicExchangeToTypedIntArray(accessType == Scalar::Uint32 ? Scalar::Int32 : accessType,
@@ -642,6 +644,8 @@ CodeGeneratorX64::visitAsmJSAtomicExchangeHeap(LAsmJSAtomicExchangeHeap* ins)
                                        value,
                                        InvalidReg,
                                        ToAnyRegister(ins->output()));
+    if (rejoin.used())
+        masm.bind(&rejoin);
     MOZ_ASSERT(mir->offset() == 0,
                "The AsmJS signal handler doesn't yet support emulating "
                "atomic accesses in the case of a fault from an unwrapped offset");
@@ -666,27 +670,36 @@ CodeGeneratorX64::visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins)
     // Note that we can't use
     // needsAsmJSBoundsCheckBranch/emitAsmJSBoundsCheckBranch/cleanupAfterAsmJSBoundsCheckBranch
     // since signal-handler bounds checking is not yet implemented for atomic accesses.
+    Label rejoin;
     uint32_t maybeCmpOffset = AsmJSHeapAccess::NoLengthCheck;
     if (mir->needsBoundsCheck()) {
         maybeCmpOffset = masm.cmp32WithPatch(ptrReg, Imm32(-mir->endOffset())).offset();
-        masm.j(Assembler::Above, gen->outOfBoundsLabel());
+        Label goahead;
+        masm.j(Assembler::BelowOrEqual, &goahead);
+        memoryBarrier(MembarFull);
+        Register out = ToRegister(ins->output());
+        masm.xorl(out,out);
+        masm.jmp(&rejoin);
+        masm.bind(&goahead);
     }
     uint32_t before = masm.size();
     if (value->isConstant()) {
-        atomicBinopToTypedIntArray(op, accessType == Scalar::Uint32 ? Scalar::Int32 : accessType,
-                                   Imm32(ToInt32(value)),
-                                   srcAddr,
-                                   temp,
-                                   InvalidReg,
-                                   ToAnyRegister(ins->output()));
+        masm.atomicBinopToTypedIntArray(op, accessType == Scalar::Uint32 ? Scalar::Int32 : accessType,
+                                        Imm32(ToInt32(value)),
+                                        srcAddr,
+                                        temp,
+                                        InvalidReg,
+                                        ToAnyRegister(ins->output()));
     } else {
-        atomicBinopToTypedIntArray(op, accessType == Scalar::Uint32 ? Scalar::Int32 : accessType,
-                                   ToRegister(value),
-                                   srcAddr,
-                                   temp,
-                                   InvalidReg,
-                                   ToAnyRegister(ins->output()));
+        masm.atomicBinopToTypedIntArray(op, accessType == Scalar::Uint32 ? Scalar::Int32 : accessType,
+                                        ToRegister(value),
+                                        srcAddr,
+                                        temp,
+                                        InvalidReg,
+                                        ToAnyRegister(ins->output()));
     }
+    if (rejoin.used())
+        masm.bind(&rejoin);
     MOZ_ASSERT(mir->offset() == 0,
                "The AsmJS signal handler doesn't yet support emulating "
                "atomic accesses in the case of a fault from an unwrapped offset");
@@ -710,17 +723,25 @@ CodeGeneratorX64::visitAsmJSAtomicBinopHeapForEffect(LAsmJSAtomicBinopHeapForEff
     // Note that we can't use
     // needsAsmJSBoundsCheckBranch/emitAsmJSBoundsCheckBranch/cleanupAfterAsmJSBoundsCheckBranch
     // since signal-handler bounds checking is not yet implemented for atomic accesses.
+    Label rejoin;
     uint32_t maybeCmpOffset = AsmJSHeapAccess::NoLengthCheck;
     if (mir->needsBoundsCheck()) {
         maybeCmpOffset = masm.cmp32WithPatch(ptrReg, Imm32(-mir->endOffset())).offset();
-        masm.j(Assembler::Above, gen->outOfBoundsLabel());
+        Label goahead;
+        masm.j(Assembler::BelowOrEqual, &goahead);
+        memoryBarrier(MembarFull);
+        masm.jmp(&rejoin);
+        masm.bind(&goahead);
     }
 
     uint32_t before = masm.size();
     if (value->isConstant())
-        atomicBinopToTypedIntArray(op, accessType, Imm32(ToInt32(value)), srcAddr);
+        masm.atomicBinopToTypedIntArray(op, accessType, Imm32(ToInt32(value)), srcAddr);
     else
-        atomicBinopToTypedIntArray(op, accessType, ToRegister(value), srcAddr);
+        masm.atomicBinopToTypedIntArray(op, accessType, ToRegister(value), srcAddr);
+
+    if (rejoin.used())
+        masm.bind(&rejoin);
     MOZ_ASSERT(mir->offset() == 0,
                "The AsmJS signal handler doesn't yet support emulating "
                "atomic accesses in the case of a fault from an unwrapped offset");
@@ -840,4 +861,130 @@ CodeGeneratorX64::visitTruncateFToInt32(LTruncateFToInt32* ins)
     // implementation, this should handle most floats and we can just
     // call a stub if it fails.
     emitTruncateFloat32(input, output, ins->mir());
+}
+
+namespace js {
+namespace jit {
+
+// Out-of-line math_random_no_outparam call for LRandom.
+class OutOfLineRandom : public OutOfLineCodeBase<CodeGeneratorX64>
+{
+    LRandom* lir_;
+
+  public:
+    explicit OutOfLineRandom(LRandom* lir)
+      : lir_(lir)
+    { }
+
+    void accept(CodeGeneratorX64* codegen) {
+        codegen->visitOutOfLineRandom(this);
+    }
+
+    LRandom* lir() const {
+        return lir_;
+    }
+};
+
+} // namespace jit
+} // namespace js
+
+static const double RNG_DSCALE_INV = 1 / RNG_DSCALE;
+
+void
+CodeGeneratorX64::visitRandom(LRandom* ins)
+{
+    FloatRegister output = ToFloatRegister(ins->output());
+
+    Register JSCompartmentReg = ToRegister(ins->temp());
+    Register rngStateReg = ToRegister(ins->temp2());
+    Register highReg = ToRegister(ins->temp3());
+    Register lowReg = ToRegister(ins->temp4());
+    Register rngMaskReg = ToRegister(ins->temp5());
+
+    // rngState = cx->compartment()->rngState
+    masm.loadJSContext(JSCompartmentReg);
+    masm.loadPtr(Address(JSCompartmentReg, JSContext::offsetOfCompartment()), JSCompartmentReg);
+    masm.loadPtr(Address(JSCompartmentReg, JSCompartment::offsetOfRngState()), rngStateReg);
+
+    // if rngState == 0, escape from inlined code and call
+    // math_random_no_outparam.
+    OutOfLineRandom* ool = new(alloc()) OutOfLineRandom(ins);
+    addOutOfLineCode(ool, ins->mir());
+    masm.branchTestPtr(Assembler::Zero, rngStateReg, rngStateReg, ool->entry());
+
+    // nextstate = rngState * RNG_MULTIPLIER;
+    Register& rngMultiplierReg = lowReg;
+    masm.movq(ImmWord(RNG_MULTIPLIER), rngMultiplierReg);
+    masm.imulq(rngMultiplierReg, rngStateReg);
+
+    // nextstate += RNG_ADDEND;
+    masm.addq(Imm32(RNG_ADDEND), rngStateReg);
+
+    // nextstate &= RNG_MASK;
+    masm.movq(ImmWord(RNG_MASK), rngMaskReg);
+    masm.andq(rngMaskReg, rngStateReg);
+
+    // rngState = nextstate
+
+    // if rngState == 0, escape from inlined code and call
+    // math_random_no_outparam.
+    masm.j(Assembler::Zero, ool->entry());
+
+    // high = (nextstate >> (RNG_STATE_WIDTH - RNG_HIGH_BITS)) << RNG_LOW_BITS;
+    masm.movq(rngStateReg, highReg);
+    masm.shrq(Imm32(RNG_STATE_WIDTH - RNG_HIGH_BITS), highReg);
+    masm.shlq(Imm32(RNG_LOW_BITS), highReg);
+
+    // nextstate = rngState * RNG_MULTIPLIER;
+    masm.imulq(rngMultiplierReg, rngStateReg);
+
+    // nextstate += RNG_ADDEND;
+    masm.addq(Imm32(RNG_ADDEND), rngStateReg);
+
+    // nextstate &= RNG_MASK;
+    masm.andq(rngMaskReg, rngStateReg);
+
+    // low = nextstate >> (RNG_STATE_WIDTH - RNG_LOW_BITS);
+    masm.movq(rngStateReg, lowReg);
+    masm.shrq(Imm32(RNG_STATE_WIDTH - RNG_LOW_BITS), lowReg);
+
+    // output = double(high | low);
+    masm.orq(highReg, lowReg);
+    masm.vcvtsi2sdq(lowReg, output);
+
+    // output = output * RNG_DSCALE_INV;
+    Register& rngDscaleInvReg = lowReg;
+    masm.movq(ImmPtr(&RNG_DSCALE_INV), rngDscaleInvReg);
+    masm.vmulsd(Operand(rngDscaleInvReg, 0), output, output);
+
+    // cx->compartment()->rngState = nextstate
+    masm.storePtr(rngStateReg, Address(JSCompartmentReg, JSCompartment::offsetOfRngState()));
+
+    masm.bind(ool->rejoin());
+}
+
+void
+CodeGeneratorX64::visitOutOfLineRandom(OutOfLineRandom* ool)
+{
+    LRandom* ins = ool->lir();
+    Register temp = ToRegister(ins->temp());
+    Register temp2 = ToRegister(ins->temp2());
+    MOZ_ASSERT(ToFloatRegister(ins->output()) == ReturnDoubleReg);
+
+    LiveRegisterSet regs;
+    regs.add(ReturnFloat32Reg);
+    regs.add(ReturnDoubleReg);
+    regs.add(ReturnInt32x4Reg);
+    regs.add(ReturnFloat32x4Reg);
+    saveVolatile(regs);
+
+    masm.loadJSContext(temp);
+
+    masm.setupUnalignedABICall(1, temp2);
+    masm.passABIArg(temp);
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, math_random_no_outparam), MoveOp::DOUBLE);
+
+    restoreVolatile(regs);
+
+    masm.jump(ool->rejoin());
 }

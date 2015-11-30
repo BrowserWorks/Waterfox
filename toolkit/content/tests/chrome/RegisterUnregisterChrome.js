@@ -7,11 +7,11 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-var gDirSvc    = Cc["@mozilla.org/file/directory_service;1"].
+let gDirSvc    = Cc["@mozilla.org/file/directory_service;1"].
   getService(Ci.nsIDirectoryService).QueryInterface(Ci.nsIProperties);
-var gChromeReg = Cc["@mozilla.org/chrome/chrome-registry;1"].
+let gChromeReg = Cc["@mozilla.org/chrome/chrome-registry;1"].
                     getService(Ci.nsIXULChromeRegistry);
-var gPrefs     = Cc["@mozilla.org/preferences-service;1"].
+let gPrefs     = Cc["@mozilla.org/preferences-service;1"].
                     getService(Ci.nsIPrefBranch);
 
 // Create the temporary file in the profile, instead of in TmpD, because

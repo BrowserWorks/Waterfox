@@ -15,6 +15,7 @@
 #include "nsIHttpChannel.h"
 #include "nsIIOService.h"
 #include "nsIPrefService.h"
+#include "nsIScriptSecurityManager.h"
 #include "nsISimpleEnumerator.h"
 #include "nsIStreamListener.h"
 #include "nsIStringStream.h"
@@ -27,7 +28,6 @@
 #include "nsIX509CertDB.h"
 #include "nsIX509CertList.h"
 
-#include "mozilla/BasePrincipal.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/Telemetry.h"
@@ -50,8 +50,6 @@
 #include "nsILoadInfo.h"
 #include "nsContentUtils.h"
 
-using mozilla::BasePrincipal;
-using mozilla::OriginAttributes;
 using mozilla::Preferences;
 using mozilla::TimeStamp;
 using mozilla::Telemetry::Accumulate;
@@ -295,12 +293,13 @@ PendingDBLookup::LookupSpecInternal(const nsACString& aSpec)
   rv = ios->NewURI(aSpec, nullptr, nullptr, getter_AddRefs(uri));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  OriginAttributes attrs;
-  nsCOMPtr<nsIPrincipal> principal =
-    BasePrincipal::CreateCodebasePrincipal(uri, attrs);
-  if (!principal) {
-    return NS_ERROR_FAILURE;
-  }
+  nsCOMPtr<nsIPrincipal> principal;
+  nsCOMPtr<nsIScriptSecurityManager> secMan =
+    do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  rv = secMan->GetNoAppCodebasePrincipal(uri, getter_AddRefs(principal));
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // Check local lists to see if the URI has already been whitelisted or
   // blacklisted.
@@ -954,7 +953,7 @@ PendingLookup::SendRemoteQueryInternal()
                         nullptr, // aLoadingNode
                         nsContentUtils::GetSystemPrincipal(),
                         nullptr, // aTriggeringPrincipal
-                        nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                        nsILoadInfo::SEC_NORMAL,
                         nsIContentPolicy::TYPE_OTHER,
                         getter_AddRefs(mChannel));
   NS_ENSURE_SUCCESS(rv, rv);
@@ -982,7 +981,7 @@ PendingLookup::SendRemoteQueryInternal()
   mTimeoutTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
   mTimeoutTimer->InitWithCallback(this, timeoutMs, nsITimer::TYPE_ONE_SHOT);
 
-  rv = mChannel->AsyncOpen2(this);
+  rv = mChannel->AsyncOpen(this, nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;

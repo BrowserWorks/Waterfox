@@ -13,7 +13,6 @@
 #endif
 #include <cstring>
 #include "mozilla/Assertions.h"
-#include "mozilla/unused.h"
 
 /* Template class allowing a limited number of increments on a value */
 template <typename T>
@@ -126,7 +125,7 @@ out:
   DWORD written;
   WriteFile(reinterpret_cast<HANDLE>(aFd), buf, b - buf, &written, nullptr);
 #else
-  MOZ_UNUSED(write(aFd, buf, b - buf));
+  write(aFd, buf, b - buf);
 #endif
   va_end(ap);
 }

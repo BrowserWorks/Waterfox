@@ -3,7 +3,7 @@
 
 "use strict";
 
-var notificationObserver;
+let notificationObserver;
 registerCleanupFunction(function() {
   Services.prefs.clearUserPref("browser.fixup.domainwhitelist.localhost");
   if (notificationObserver) {

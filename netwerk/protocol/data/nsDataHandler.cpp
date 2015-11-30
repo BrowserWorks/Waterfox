@@ -169,8 +169,7 @@ nsDataHandler::ParseURI(nsCString& spec,
 
     // First, find the start of the data
     char *comma = strchr(buffer, ',');
-    char *hash = strchr(buffer, '#');
-    if (!comma || (hash && hash < comma))
+    if (!comma)
         return NS_ERROR_MALFORMED_URI;
 
     *comma = '\0';
@@ -225,6 +224,7 @@ nsDataHandler::ParseURI(nsCString& spec,
 
     // Split encoded data from terminal "#ref" (if present)
     char *data = comma + 1;
+    char *hash = strchr(data, '#');
     if (!hash) {
         dataBuffer.Assign(data);
         hashRef.Truncate();

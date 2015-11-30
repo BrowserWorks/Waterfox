@@ -4,19 +4,13 @@
 
 MOZ_APP_BUILDID=$(shell cat $(DEPTH)/config/buildid)
 
-# Set the appropriate version code, based on the existance of the
-# MOZ_APP_ANDROID_VERSION_CODE variable.
-ifdef MOZ_APP_ANDROID_VERSION_CODE
-    ANDROID_VERSION_CODE:=$(MOZ_APP_ANDROID_VERSION_CODE)
-else
-    ANDROID_VERSION_CODE:=$(shell $(PYTHON) \
-      $(topsrcdir)/python/mozbuild/mozbuild/android_version_code.py \
-        --verbose \
-        --with-android-cpu-arch=$(ANDROID_CPU_ARCH) \
-        $(if $(MOZ_ANDROID_MIN_SDK_VERSION),--with-android-min-sdk=$(MOZ_ANDROID_MIN_SDK_VERSION)) \
-        $(if $(MOZ_ANDROID_MAX_SDK_VERSION),--with-android-max-sdk=$(MOZ_ANDROID_MAX_SDK_VERSION)) \
-        $(MOZ_APP_BUILDID))
-endif
+ANDROID_VERSION_CODE:=$(shell $(PYTHON) \
+  $(topsrcdir)/python/mozbuild/mozbuild/android_version_code.py \
+    --verbose \
+    --with-android-cpu-arch=$(ANDROID_CPU_ARCH) \
+    $(if $(MOZ_ANDROID_MIN_SDK_VERSION),--with-android-min-sdk=$(MOZ_ANDROID_MIN_SDK_VERSION)) \
+    $(if $(MOZ_ANDROID_MAX_SDK_VERSION),--with-android-max-sdk=$(MOZ_ANDROID_MAX_SDK_VERSION)) \
+    $(MOZ_APP_BUILDID))
 
 DEFINES += \
   -DANDROID_VERSION_CODE=$(ANDROID_VERSION_CODE) \
@@ -27,6 +21,8 @@ DEFINES += \
   $(NULL)
 
 GARBAGE += \
+  AndroidManifest.xml  \
+  WebappManifestFragment.xml.frag \
   classes.dex  \
   gecko.ap_  \
   res/values/strings.xml \
@@ -107,7 +103,9 @@ ALL_JARS += search-activity.jar
 endif
 
 ifdef MOZ_ANDROID_MLS_STUMBLER
+extra_packages += org.mozilla.mozstumbler
 ALL_JARS += ../stumbler/stumbler.jar
+generated/org/mozilla/mozstumbler/R.java: .aapt.deps ;
 endif
 
 ifdef MOZ_INSTALL_TRACKING
@@ -211,7 +209,7 @@ ifdef MOZ_WEBSMS_BACKEND
 CLASSES_WITH_JNI += org.mozilla.gecko.GeckoSmsManager
 endif
 
-jni-stubs.inc: gecko-browser.jar constants.jar gecko-mozglue.jar gecko-util.jar sync-thirdparty.jar
+jni-stubs.inc: gecko-browser.jar gecko-mozglue.jar gecko-util.jar sync-thirdparty.jar
 	$(JAVAH) -o javah.out -bootclasspath $(JAVA_BOOTCLASSPATH) -classpath $(subst $(NULL) $(NULL),:,$^) $(CLASSES_WITH_JNI)
 	$(PYTHON) $(topsrcdir)/mobile/android/base/jni-generator.py javah.out $@
 
@@ -221,10 +219,11 @@ ANNOTATION_PROCESSOR_JAR_FILES := $(DEPTH)/build/annotationProcessors/annotation
 # GeneratedJNIWrappers.h and GeneratedJNINatives.h
 GeneratedJNIWrappers.cpp: $(ANNOTATION_PROCESSOR_JAR_FILES)
 GeneratedJNIWrappers.cpp: $(ALL_JARS)
-	$(JAVA) -classpath constants.jar:$(JAVA_BOOTCLASSPATH):$(JAVA_CLASSPATH):$(ANNOTATION_PROCESSOR_JAR_FILES) org.mozilla.gecko.annotationProcessors.AnnotationProcessor $(ALL_JARS)
+	$(JAVA) -classpath gecko-mozglue.jar:$(JAVA_BOOTCLASSPATH):$(JAVA_CLASSPATH):$(ANNOTATION_PROCESSOR_JAR_FILES) org.mozilla.gecko.annotationProcessors.AnnotationProcessor $(ALL_JARS)
 
 manifest := \
   AndroidManifest.xml.in \
+  WebappManifestFragment.xml.frag.in \
   fennec_ids.txt.in \
   $(NULL)
 
@@ -317,7 +316,8 @@ res/raw/browsersearch.json: .locales.deps ;
 res/raw/suggestedsites.json: .locales.deps ;
 
 all_resources = \
-  $(abspath $(CURDIR)/AndroidManifest.xml) \
+  $(CURDIR)/AndroidManifest.xml \
+  $(CURDIR)/WebappManifestFragment.xml.frag \
   $(android_res_files) \
   $(ANDROID_GENERATED_RESFILES) \
   $(NULL)
@@ -363,6 +363,20 @@ generated/android/support/v7/mediarouter/R.java: .aapt.deps ;
 generated/android/support/v7/recyclerview/R.java: .aapt.deps ;
 generated/com/google/android/gms/R.java: .aapt.deps ;
 
+ifdef MOZ_NATIVE_DEVICES
+    extra_packages += android.support.v7.appcompat
+    extra_res_dirs += $(ANDROID_APPCOMPAT_RES)
+
+    extra_packages += android.support.v7.mediarouter
+    extra_res_dirs += $(ANDROID_MEDIAROUTER_RES)
+
+    extra_packages += com.google.android.gms
+    extra_res_dirs += $(GOOGLE_PLAY_SERVICES_RES)
+endif
+
+extra_packages += android.support.v7.recyclerview
+extra_res_dirs += $(ANDROID_RECYCLERVIEW_RES)
+
 gecko.ap_: .aapt.deps ;
 R.txt: .aapt.deps ;
 
@@ -382,6 +396,8 @@ gecko-nodeps/R.txt: .aapt.nodeps ;
 # not_android_res_files as well.
 
 ANDROID_AAPT_IGNORE := !.svn:!.git:.*:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*.scc:*~:\#*:*.rej:*.orig
+
+extra_packages := $(subst $(NULL) ,:,$(strip $(extra_packages)))
 
 # 1: target file.
 # 2: dependencies.
@@ -405,8 +421,8 @@ $(1): $$(call mkdir_deps,$(filter-out ./,$(dir $(3) $(4) $(5)))) $(2)
 		--auto-add-overlay \
 		$$(addprefix -S ,$$(ANDROID_RES_DIRS)) \
 		$$(addprefix -A ,$$(ANDROID_ASSETS_DIRS)) \
-		$(if $(ANDROID_EXTRA_PACKAGES),--extra-packages $$(subst $$(NULL) ,:,$$(strip $$(ANDROID_EXTRA_PACKAGES)))) \
-		$(if $(ANDROID_EXTRA_RES_DIRS),$$(addprefix -S ,$$(ANDROID_EXTRA_RES_DIRS))) \
+		$(if $(extra_res_dirs),$$(addprefix -S ,$$(extra_res_dirs)),) \
+		$(if $(extra_packages),--extra-packages $$(extra_packages),) \
 		--custom-package org.mozilla.gecko \
 		--non-constant-id \
 		-F $(3) \
@@ -426,8 +442,8 @@ endef
 # .aapt.deps: $(all_resources)
 $(eval $(call aapt_command,.aapt.deps,$(all_resources),gecko.ap_,generated/,./))
 
-# .aapt.nodeps: $(abspath $(CURDIR)/AndroidManifest.xml) FORCE
-$(eval $(call aapt_command,.aapt.nodeps,$(abspath $(CURDIR)/AndroidManifest.xml) FORCE,gecko-nodeps.ap_,gecko-nodeps/,gecko-nodeps/))
+# .aapt.nodeps: $(CURDIR)/AndroidManifest.xml FORCE
+$(eval $(call aapt_command,.aapt.nodeps,$(CURDIR)/AndroidManifest.xml FORCE,gecko-nodeps.ap_,gecko-nodeps/,gecko-nodeps/))
 
 # Override the Java settings with some specific android settings
 include $(topsrcdir)/config/android-common.mk
@@ -452,7 +468,6 @@ $(abspath $(DIST)/fennec/$(OMNIJAR_NAME)): FORCE
 	$(MAKE) -C ../app
 	$(MAKE) -C ../themes/core
 	$(MAKE) -C ../installer stage-package
-	$(MKDIR) -p $(@D)
 	rsync --update $(DIST)/fennec/$(notdir $(OMNIJAR_NAME)) $@
 	$(RM) $(DIST)/fennec/$(notdir $(OMNIJAR_NAME))
 

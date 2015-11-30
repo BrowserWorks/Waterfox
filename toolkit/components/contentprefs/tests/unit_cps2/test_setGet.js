@@ -6,7 +6,7 @@ function run_test() {
   runAsyncTests(tests);
 }
 
-var tests = [
+let tests = [
 
   function get_nonexistent() {
     yield getOK(["a.com", "foo"], undefined);

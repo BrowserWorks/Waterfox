@@ -22,26 +22,23 @@ class ImageMetadata
 {
 public:
   ImageMetadata()
-    : mLoopCount(-1)
-    , mFirstFrameTimeout(0)
-    , mHasAnimation(false)
+    : mHotspotX(-1)
+    , mHotspotY(-1)
+    , mLoopCount(-1)
   { }
 
-  void SetHotspot(uint16_t aHotspotX, uint16_t aHotspotY)
-  {
-    mHotspot = Some(gfx::IntPoint(aHotspotX, aHotspotY));
-  }
-  gfx::IntPoint GetHotspot() const { return *mHotspot; }
-  bool HasHotspot() const { return mHotspot.isSome(); }
+  // Set the metadata this object represents on an image.
+  nsresult SetOnImage(RasterImage* aImage);
 
+  void SetHotspot(uint16_t hotspotx, uint16_t hotspoty)
+  {
+    mHotspotX = hotspotx;
+    mHotspotY = hotspoty;
+  }
   void SetLoopCount(int32_t loopcount)
   {
     mLoopCount = loopcount;
   }
-  int32_t GetLoopCount() const { return mLoopCount; }
-
-  void SetFirstFrameTimeout(int32_t aTimeout) { mFirstFrameTimeout = aTimeout; }
-  int32_t GetFirstFrameTimeout() const { return mFirstFrameTimeout; }
 
   void SetSize(int32_t width, int32_t height, Orientation orientation)
   {
@@ -50,28 +47,25 @@ public:
       mOrientation.emplace(orientation);
     }
   }
-  nsIntSize GetSize() const { return *mSize; }
-  Orientation GetOrientation() const { return *mOrientation; }
+
   bool HasSize() const { return mSize.isSome(); }
   bool HasOrientation() const { return mOrientation.isSome(); }
 
-  void SetHasAnimation() { mHasAnimation = true; }
-  bool HasAnimation() const { return mHasAnimation; }
+  int32_t GetWidth() const { return mSize->width; }
+  int32_t GetHeight() const { return mSize->height; }
+  nsIntSize GetSize() const { return *mSize; }
+  Orientation GetOrientation() const { return *mOrientation; }
 
 private:
-  /// The hotspot found on cursors, if present.
-  Maybe<gfx::IntPoint> mHotspot;
+  // The hotspot found on cursors, or -1 if none was found.
+  int32_t mHotspotX;
+  int32_t mHotspotY;
 
-  /// The loop count for animated images, or -1 for infinite loop.
+  // The loop count for animated images, or -1 for infinite loop.
   int32_t mLoopCount;
-
-  /// The timeout of an animated image's first frame.
-  int32_t mFirstFrameTimeout;
 
   Maybe<nsIntSize> mSize;
   Maybe<Orientation> mOrientation;
-
-  bool mHasAnimation : 1;
 };
 
 } // namespace image

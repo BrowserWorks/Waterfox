@@ -97,25 +97,25 @@ const TELEMETRY_LOG = {
 
 const gPrefs = new Preferences(PREF_BRANCH);
 const gPrefsTelemetry = new Preferences(PREF_BRANCH_TELEMETRY);
-var gExperimentsEnabled = false;
-var gAddonProvider = null;
-var gExperiments = null;
-var gLogAppenderDump = null;
-var gPolicyCounter = 0;
-var gExperimentsCounter = 0;
-var gExperimentEntryCounter = 0;
-var gPreviousProviderCounter = 0;
+let gExperimentsEnabled = false;
+let gAddonProvider = null;
+let gExperiments = null;
+let gLogAppenderDump = null;
+let gPolicyCounter = 0;
+let gExperimentsCounter = 0;
+let gExperimentEntryCounter = 0;
+let gPreviousProviderCounter = 0;
 
 // Tracks active AddonInstall we know about so we can deny external
 // installs.
-var gActiveInstallURLs = new Set();
+let gActiveInstallURLs = new Set();
 
 // Tracks add-on IDs that are being uninstalled by us. This allows us
 // to differentiate between expected uninstalled and user-driven uninstalls.
-var gActiveUninstallAddonIDs = new Set();
+let gActiveUninstallAddonIDs = new Set();
 
-var gLogger;
-var gLogDumping = false;
+let gLogger;
+let gLogDumping = false;
 
 function configureLogging() {
   if (!gLogger) {
@@ -217,7 +217,7 @@ function uninstallAddons(addons) {
  * The experiments module.
  */
 
-var Experiments = {
+let Experiments = {
   /**
    * Provides access to the global `Experiments.Experiments` instance.
    */
@@ -2086,7 +2086,7 @@ Experiments.ExperimentEntry.prototype = {
  *
  * This will return a cloned Date object. The original is unchanged.
  */
-var stripDateToMidnight = function (d) {
+let stripDateToMidnight = function (d) {
   let m = new Date(d);
   m.setUTCHours(0, 0, 0, 0);
 

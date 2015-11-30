@@ -23,7 +23,7 @@
 
 #include "mozilla/MemoryReporting.h"
 
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsError.h"
 #include "nsIAtom.h"
 
@@ -93,8 +93,9 @@ nsPropertyTable::TransferOrDeleteAllPropertiesFor(nsPropertyOwner aObject,
   nsresult rv = NS_OK;
   for (PropertyList* prop = mPropertyList; prop; prop = prop->mNext) {
     if (prop->mTransfer) {
-      auto entry = static_cast<PropertyListMapEntry*>
-                              (prop->mObjectValueMap.Search(aObject));
+      PropertyListMapEntry *entry =
+          static_cast<PropertyListMapEntry*>
+                     (PL_DHashTableSearch(&prop->mObjectValueMap, aObject));
       if (entry) {
         rv = aOtherTable->SetProperty(aObject, prop->mName,
                                       entry->value, prop->mDtorFunc,
@@ -106,7 +107,7 @@ nsPropertyTable::TransferOrDeleteAllPropertiesFor(nsPropertyOwner aObject,
           break;
         }
 
-        prop->mObjectValueMap.RemoveEntry(entry);
+        PL_DHashTableRawRemove(&prop->mObjectValueMap, entry);
       }
     }
     else {
@@ -123,8 +124,8 @@ nsPropertyTable::Enumerate(nsPropertyOwner aObject,
 {
   PropertyList* prop;
   for (prop = mPropertyList; prop; prop = prop->mNext) {
-    auto entry = static_cast<PropertyListMapEntry*>
-                            (prop->mObjectValueMap.Search(aObject));
+    PropertyListMapEntry *entry = static_cast<PropertyListMapEntry*>
+      (PL_DHashTableSearch(&prop->mObjectValueMap, aObject));
     if (entry) {
       aCallback(const_cast<void*>(aObject.get()), prop->mName, entry->value,
                 aData);
@@ -156,13 +157,14 @@ nsPropertyTable::GetPropertyInternal(nsPropertyOwner aObject,
 
   PropertyList* propertyList = GetPropertyListFor(aPropertyName);
   if (propertyList) {
-    auto entry = static_cast<PropertyListMapEntry*>
-                            (propertyList->mObjectValueMap.Search(aObject));
+    PropertyListMapEntry *entry =
+        static_cast<PropertyListMapEntry*>
+                   (PL_DHashTableSearch(&propertyList->mObjectValueMap, aObject));
     if (entry) {
       propValue = entry->value;
       if (aRemove) {
         // don't call propertyList->mDtorFunc.  That's the caller's job now.
-        propertyList->mObjectValueMap.RemoveEntry(entry);
+        PL_DHashTableRawRemove(&propertyList->mObjectValueMap, entry);
       }
       rv = NS_OK;
     }
@@ -206,8 +208,8 @@ nsPropertyTable::SetPropertyInternal(nsPropertyOwner     aObject,
   // The current property value (if there is one) is replaced and the current
   // value is destroyed
   nsresult result = NS_OK;
-  auto entry = static_cast<PropertyListMapEntry*>
-    (propertyList->mObjectValueMap.Add(aObject, mozilla::fallible));
+  PropertyListMapEntry *entry = static_cast<PropertyListMapEntry*>
+    (PL_DHashTableAdd(&propertyList->mObjectValueMap, aObject, mozilla::fallible));
   if (!entry)
     return NS_ERROR_OUT_OF_MEMORY;
   // A nullptr entry->key is the sign that the entry has just been allocated
@@ -265,7 +267,7 @@ nsPropertyTable::PropertyList::PropertyList(nsIAtom            *aName,
                                             void               *aDtorData,
                                             bool                aTransfer)
   : mName(aName),
-    mObjectValueMap(PLDHashTable::StubOps(), sizeof(PropertyListMapEntry)),
+    mObjectValueMap(PL_DHashGetStubOps(), sizeof(PropertyListMapEntry)),
     mDtorFunc(aDtorFunc),
     mDtorData(aDtorData),
     mTransfer(aTransfer),
@@ -292,13 +294,14 @@ nsPropertyTable::PropertyList::Destroy()
 bool
 nsPropertyTable::PropertyList::DeletePropertyFor(nsPropertyOwner aObject)
 {
-  auto entry =
-    static_cast<PropertyListMapEntry*>(mObjectValueMap.Search(aObject));
+  PropertyListMapEntry *entry =
+      static_cast<PropertyListMapEntry*>
+                 (PL_DHashTableSearch(&mObjectValueMap, aObject));
   if (!entry)
     return false;
 
   void* value = entry->value;
-  mObjectValueMap.RemoveEntry(entry);
+  PL_DHashTableRawRemove(&mObjectValueMap, entry);
 
   if (mDtorFunc)
     mDtorFunc(const_cast<void*>(aObject.get()), mName, value, mDtorData);

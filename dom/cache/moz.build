@@ -87,6 +87,8 @@ LOCAL_INCLUDES += [
     '../workers',
 ]
 
+FAIL_ON_WARNINGS = True
+
 FINAL_LIBRARY = 'xul'
 
 MOCHITEST_MANIFESTS += [
@@ -99,8 +101,4 @@ MOCHITEST_CHROME_MANIFESTS += [
 
 BROWSER_CHROME_MANIFESTS += [
     'test/mochitest/browser.ini',
-]
-
-XPCSHELL_TESTS_MANIFESTS += [
-    'test/xpcshell/xpcshell.ini',
 ]

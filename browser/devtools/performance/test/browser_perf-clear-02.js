@@ -6,7 +6,7 @@
  * a current recording if recording and can continue recording after.
  */
 
-var test = Task.async(function*() {
+let test = Task.async(function*() {
   let { target, panel, toolbox } = yield initPerformance(SIMPLE_URL);
   let { EVENTS, PerformanceController, PerformanceView, RecordingsView } = panel.panelWin;
 

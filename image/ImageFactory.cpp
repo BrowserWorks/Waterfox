@@ -32,6 +32,14 @@ namespace image {
 ImageFactory::Initialize()
 { }
 
+static bool
+ShouldDownscaleDuringDecode(const nsCString& aMimeType)
+{
+  return aMimeType.EqualsLiteral(IMAGE_JPEG) ||
+         aMimeType.EqualsLiteral(IMAGE_JPG) ||
+         aMimeType.EqualsLiteral(IMAGE_PJPEG);
+}
+
 static uint32_t
 ComputeImageFlags(ImageURL* uri, const nsCString& aMimeType, bool isMultiPart)
 {
@@ -40,6 +48,7 @@ ComputeImageFlags(ImageURL* uri, const nsCString& aMimeType, bool isMultiPart)
   // We default to the static globals.
   bool isDiscardable = gfxPrefs::ImageMemDiscardable();
   bool doDecodeImmediately = gfxPrefs::ImageDecodeImmediatelyEnabled();
+  bool doDownscaleDuringDecode = gfxPrefs::ImageDownscaleDuringDecodeEnabled();
 
   // We want UI to be as snappy as possible and not to flicker. Disable
   // discarding for chrome URLS.
@@ -56,10 +65,15 @@ ComputeImageFlags(ImageURL* uri, const nsCString& aMimeType, bool isMultiPart)
     isDiscardable = false;
   }
 
+  // Downscale-during-decode is only enabled for certain content types.
+  if (doDownscaleDuringDecode && !ShouldDownscaleDuringDecode(aMimeType)) {
+    doDownscaleDuringDecode = false;
+  }
+
   // For multipart/x-mixed-replace, we basically want a direct channel to the
   // decoder. Disable everything for this case.
   if (isMultiPart) {
-    isDiscardable = false;
+    isDiscardable = doDownscaleDuringDecode = false;
   }
 
   // We have all the information we need.
@@ -72,6 +86,9 @@ ComputeImageFlags(ImageURL* uri, const nsCString& aMimeType, bool isMultiPart)
   }
   if (isMultiPart) {
     imageFlags |= Image::INIT_FLAG_TRANSIENT;
+  }
+  if (doDownscaleDuringDecode) {
+    imageFlags |= Image::INIT_FLAG_DOWNSCALE_DURING_DECODE;
   }
 
   return imageFlags;
@@ -101,14 +118,15 @@ ImageFactory::CreateImage(nsIRequest* aRequest,
   }
 }
 
-// Marks an image as having an error before returning it.
+// Marks an image as having an error before returning it. Used with macros like
+// NS_ENSURE_SUCCESS, since we guarantee to always return an image even if an
+// error occurs, but callers need to be able to tell that this happened.
 template <typename T>
 static already_AddRefed<Image>
-BadImage(const char* aMessage, nsRefPtr<T>& aImage)
+BadImage(nsRefPtr<T>& image)
 {
-  NS_WARNING(aMessage);
-  aImage->SetHasError();
-  return aImage.forget();
+  image->SetHasError();
+  return image.forget();
 }
 
 /* static */ already_AddRefed<Image>
@@ -123,9 +141,7 @@ ImageFactory::CreateAnonymousImage(const nsCString& aMimeType)
   newImage->SetProgressTracker(newTracker);
 
   rv = newImage->Init(aMimeType.get(), Image::INIT_FLAG_SYNC_LOAD);
-  if (NS_FAILED(rv)) {
-    return BadImage("RasterImage::Init failed", newImage);
-  }
+  NS_ENSURE_SUCCESS(rv, BadImage(newImage));
 
   return newImage.forget();
 }
@@ -229,9 +245,7 @@ ImageFactory::CreateRasterImage(nsIRequest* aRequest,
   }
 
   rv = newImage->Init(aMimeType.get(), aImageFlags);
-  if (NS_FAILED(rv)) {
-    return BadImage("RasterImage::Init failed", newImage);
-  }
+  NS_ENSURE_SUCCESS(rv, BadImage(newImage));
 
   newImage->SetInnerWindowID(aInnerWindowId);
 
@@ -274,16 +288,12 @@ ImageFactory::CreateVectorImage(nsIRequest* aRequest,
   newImage->SetProgressTracker(aProgressTracker);
 
   rv = newImage->Init(aMimeType.get(), aImageFlags);
-  if (NS_FAILED(rv)) {
-    return BadImage("VectorImage::Init failed", newImage);
-  }
+  NS_ENSURE_SUCCESS(rv, BadImage(newImage));
 
   newImage->SetInnerWindowID(aInnerWindowId);
 
   rv = newImage->OnStartRequest(aRequest, nullptr);
-  if (NS_FAILED(rv)) {
-    return BadImage("VectorImage::OnStartRequest failed", newImage);
-  }
+  NS_ENSURE_SUCCESS(rv, BadImage(newImage));
 
   return newImage.forget();
 }

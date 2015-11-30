@@ -2,7 +2,7 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
 
-var tabEvents = "";
+let tabEvents = "";
 
 function test() {
   if (!isTiltEnabled()) {

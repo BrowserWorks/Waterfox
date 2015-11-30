@@ -4,12 +4,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var manifests = [
+let manifests = [
   do_get_file("data/test_data_protocol_registration.manifest"),
 ];
 registerManifests(manifests);
 
-var XULAppInfoFactory = {
+let XULAppInfoFactory = {
   // These two are used when we register all our factories (and unregister)
   CID: XULAPPINFO_CID,
   scheme: "XULAppInfo",

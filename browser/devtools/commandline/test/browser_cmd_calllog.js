@@ -5,7 +5,7 @@
 
 const TEST_URI = "data:text/html;charset=utf-8,gcli-calllog";
 
-var tests = {};
+let tests = {};
 
 function test() {
   return Task.spawn(function*() {

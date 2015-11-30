@@ -299,8 +299,7 @@ class GlobalObject : public NativeObject
      */
     JSFunction*
     createConstructor(JSContext* cx, JSNative ctor, JSAtom* name, unsigned length,
-                      gc::AllocKind kind = gc::AllocKind::FUNCTION,
-                      const JSJitInfo* jitInfo = nullptr);
+                      gc::AllocKind kind = gc::AllocKind::FUNCTION);
 
     /*
      * Create an object to serve as [[Prototype]] for instances of the given
@@ -901,14 +900,14 @@ typedef HashSet<GlobalObject*, DefaultHasher<GlobalObject*>, SystemAllocPolicy> 
  * for ClassSpecs.
  */
 
-template<JSNative ctor, unsigned length, gc::AllocKind kind, const JSJitInfo* jitInfo = nullptr>
+template<JSNative ctor, unsigned length, gc::AllocKind kind>
 JSObject*
 GenericCreateConstructor(JSContext* cx, JSProtoKey key)
 {
     // Note - We duplicate the trick from ClassName() so that we don't need to
     // include jsatominlines.h here.
     PropertyName* name = (&cx->names().Null)[key];
-    return cx->global()->createConstructor(cx, ctor, name, length, kind, jitInfo);
+    return cx->global()->createConstructor(cx, ctor, name, length, kind);
 }
 
 inline JSObject*

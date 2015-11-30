@@ -215,11 +215,11 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
+                            const AudioChunk& aInput,
+                            AudioChunk* aOutput,
                             bool* aFinished) override
   {
-    uint32_t channelCount = aInput.ChannelCount();
+    uint32_t channelCount = aInput.mChannelData.Length();
     if (!mCurve.Length() || !channelCount) {
       // Optimize the case where we don't have a curve buffer,
       // or the input is null.
@@ -227,11 +227,11 @@ public:
       return;
     }
 
-    aOutput->AllocateChannels(channelCount);
+    AllocateAudioBlock(channelCount, aOutput);
     for (uint32_t i = 0; i < channelCount; ++i) {
       const float* inputSamples;
       float scaledInput[WEBAUDIO_BLOCK_SIZE];
-      if (aInput.mVolume != 1.0) {
+      if (aInput.mVolume != 1.0f) {
         AudioBlockCopyChannelWithScale(
             static_cast<const float*>(aInput.mChannelData[i]),
                                       aInput.mVolume,
@@ -296,8 +296,7 @@ WaveShaperNode::WaveShaperNode(AudioContext* aContext)
   mozilla::HoldJSObjects(this);
 
   WaveShaperNodeEngine* engine = new WaveShaperNodeEngine(this);
-  mStream = AudioNodeStream::Create(aContext, engine,
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+  mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);
 }
 
 WaveShaperNode::~WaveShaperNode()

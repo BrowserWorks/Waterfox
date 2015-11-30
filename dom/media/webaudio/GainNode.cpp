@@ -59,8 +59,8 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
+                            const AudioChunk& aInput,
+                            AudioChunk* aOutput,
                             bool* aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
@@ -81,7 +81,7 @@ public:
       // First, compute a vector of gains for each track tick based on the
       // timeline at hand, and then for each channel, multiply the values
       // in the buffer with the gain vector.
-      aOutput->AllocateChannels(aInput.ChannelCount());
+      AllocateAudioBlock(aInput.mChannelData.Length(), aOutput);
 
       // Compute the gain values for the duration of the input AudioChunk
       StreamTime tick = aStream->GetCurrentPosition();
@@ -93,7 +93,7 @@ public:
       }
 
       // Apply the gain to the output buffer
-      for (size_t channel = 0; channel < aOutput->ChannelCount(); ++channel) {
+      for (size_t channel = 0; channel < aOutput->mChannelData.Length(); ++channel) {
         const float* inputBuffer = static_cast<const float*> (aInput.mChannelData[channel]);
         float* buffer = aOutput->ChannelFloatsForWrite(channel);
         AudioBlockCopyChannelWithScale(inputBuffer, computedGain, buffer);
@@ -128,8 +128,7 @@ GainNode::GainNode(AudioContext* aContext)
   , mGain(new AudioParam(this, SendGainToStream, 1.0f, "gain"))
 {
   GainNodeEngine* engine = new GainNodeEngine(this, aContext->Destination());
-  mStream = AudioNodeStream::Create(aContext, engine,
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+  mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);
   engine->SetSourceStream(mStream);
 }
 

@@ -729,8 +729,8 @@ JavaScriptShared::Wrap(JSContext* cx, HandleObject aObj, InfallibleTArray<CpowEn
     if (!aObj)
         return true;
 
-    Rooted<IdVector> ids(cx, IdVector(cx));
-    if (!JS_Enumerate(cx, aObj, &ids))
+    AutoIdArray ids(cx, JS_Enumerate(cx, aObj));
+    if (!ids)
         return false;
 
     RootedId id(cx);

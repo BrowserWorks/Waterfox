@@ -53,6 +53,7 @@ public:
     virtual void NotifyBootAnimationStopped();
 
 private:
+    void StopBootAnim();
     void CreateSurface(android::sp<ANativeWindow>& aNativeWindow,
                        android::sp<android::DisplaySurface>& aDisplaySurface,
                        uint32_t aWidth, uint32_t aHeight);

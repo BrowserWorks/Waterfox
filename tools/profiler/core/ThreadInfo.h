@@ -47,7 +47,7 @@ class ThreadInfo {
   PseudoStack* mPseudoStack;
   PlatformData* mPlatformData;
   ThreadProfile* mProfile;
-  void* mStackTop;
+  void* const mStackTop;
 #ifndef SPS_STANDALONE
   nsCOMPtr<nsIThread> mThread;
 #endif

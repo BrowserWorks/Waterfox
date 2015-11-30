@@ -40,14 +40,7 @@ NS_IMETHODIMP
 DataChannelChild::CompleteRedirectSetup(nsIStreamListener *aListener,
                                         nsISupports *aContext)
 {
-    nsresult rv;
-    if (mLoadInfo && mLoadInfo->GetEnforceSecurity()) {
-        MOZ_ASSERT(!aContext, "aContext should be null!");
-        rv = AsyncOpen2(aListener);
-    }
-    else {
-        rv = AsyncOpen(aListener, aContext);
-    }
+    nsresult rv = AsyncOpen(aListener, aContext);
     if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
     }

@@ -11,10 +11,8 @@
 <div id="d"></div>
 <script>
 onload = function() {
-  var nodes = SpecialPowers.wrap(document).getAnonymousNodes(document.getElementById('d'));
-  parent.postMessage({test: "dataIsAllowed",
-                      result: nodes ? nodes.length : 0,
-                      senderURL: "http://mochi.test:8888"}, "*");
+  nodes = SpecialPowers.wrap(document).getAnonymousNodes(document.getElementById('d'));
+  parent.postMessage(nodes ? nodes.length : 0, "http://mochi.test:8888");
 }
 </script>
 </html>

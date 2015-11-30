@@ -1,10 +1,10 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var prefsBranch = Cc["@mozilla.org/preferences-service;1"].
+let prefsBranch = Cc["@mozilla.org/preferences-service;1"].
                   getService(Ci.nsIPrefService).
                   getBranch("browser.panorama.");
-var originalPrefState;
+let originalPrefState;
 
 function test() {
   waitForExplicitFinish();

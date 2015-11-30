@@ -6,8 +6,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
   "resource://testing-common/PlacesTestUtils.jsm");
 
 // We need to cache this before test runs...
-var cachedLeftPaneFolderIdGetter;
-var getter = PlacesUIUtils.__lookupGetter__("leftPaneFolderId");
+let cachedLeftPaneFolderIdGetter;
+let getter = PlacesUIUtils.__lookupGetter__("leftPaneFolderId");
 if (!cachedLeftPaneFolderIdGetter && typeof(getter) == "function") {
   cachedLeftPaneFolderIdGetter = getter;
 }
@@ -166,13 +166,13 @@ function promiseBookmarksNotification(notification, conditionFn) {
           return XPCOMUtils.generateQI([ Ci.nsINavBookmarkObserver ]);
         info(`promiseBookmarksNotification: got ${name} notification`);
         if (name == notification)
-          return (...args) => {
-            if (conditionFn.apply(this, args)) {
+          return () => {
+            if (conditionFn.apply(this, arguments)) {
               clearTimeout(timeout);
               PlacesUtils.bookmarks.removeObserver(proxifiedObserver, false);
               executeSoon(resolve);
             } else {
-              info(`promiseBookmarksNotification: skip cause condition doesn't apply to ${JSON.stringify(args)}`);
+              info(`promiseBookmarksNotification: skip cause condition doesn't apply to ${JSON.stringify(arguments)}`);
             }
           }
         return () => {};
@@ -194,8 +194,8 @@ function promiseHistoryNotification(notification, conditionFn) {
         if (name == "QueryInterface")
           return XPCOMUtils.generateQI([ Ci.nsINavHistoryObserver ]);
         if (name == notification)
-          return (...args) => {
-            if (conditionFn.apply(this, args)) {
+          return () => {
+            if (conditionFn.apply(this, arguments)) {
               clearTimeout(timeout);
               PlacesUtils.history.removeObserver(proxifiedObserver, false);
               executeSoon(resolve);
@@ -288,7 +288,7 @@ function isToolbarVisible(aToolbar) {
  * @param task
  *        the task to execute once the dialog is open
  */
-var withBookmarksDialog = Task.async(function* (autoCancel, openFn, taskFn) {
+let withBookmarksDialog = Task.async(function* (autoCancel, openFn, taskFn) {
   let closed = false;
   let dialogPromise = new Promise(resolve => {
     Services.ww.registerNotification(function winObserver(subject, topic, data) {
@@ -352,7 +352,7 @@ var withBookmarksDialog = Task.async(function* (autoCancel, openFn, taskFn) {
  *        Valid selector syntax
  * @return the target DOM node.
  */
-var openContextMenuForContentSelector = Task.async(function* (browser, selector) {
+let openContextMenuForContentSelector = Task.async(function* (browser, selector) {
   info("wait for the context menu");
   let contextPromise = BrowserTestUtils.waitForEvent(document.getElementById("contentAreaContextMenu"),
                                                      "popupshown");
@@ -386,7 +386,7 @@ var openContextMenuForContentSelector = Task.async(function* (browser, selector)
  *        Error message to use if the condition has not been satisfied after a
  *        meaningful amount of tries.
  */
-var waitForCondition = Task.async(function* (conditionFn, errorMsg) {
+let waitForCondition = Task.async(function* (conditionFn, errorMsg) {
   for (let tries = 0; tries < 100; ++tries) {
     if ((yield conditionFn()))
       return;
@@ -442,7 +442,7 @@ function fillBookmarkTextField(id, text, win, blur = true) {
  *        The task to execute once the sidebar is ready. Will get the Places
  *        tree view as input.
  */
-var withSidebarTree = Task.async(function* (type, taskFn) {
+let withSidebarTree = Task.async(function* (type, taskFn) {
   let sidebar = document.getElementById("sidebar");
   info("withSidebarTree: waiting sidebar load");
   let sidebarLoadedPromise = new Promise(resolve => {

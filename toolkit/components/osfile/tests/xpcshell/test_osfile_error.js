@@ -3,7 +3,7 @@
 
 "use strict";
 
-var {OS: {File, Path, Constants}} = Components.utils.import("resource://gre/modules/osfile.jsm", {});
+let {OS: {File, Path, Constants}} = Components.utils.import("resource://gre/modules/osfile.jsm", {});
 Components.utils.import("resource://gre/modules/Task.jsm");
 
 function run_test() {

@@ -83,6 +83,7 @@ WEBIDL_FILES = [
     'Comment.webidl',
     'CompositionEvent.webidl',
     'Console.webidl',
+    'Constraints.webidl',
     'Contacts.webidl',
     'ContainerBoxObject.webidl',
     'ConvolverNode.webidl',
@@ -275,7 +276,6 @@ WEBIDL_FILES = [
     'KeyboardEvent.webidl',
     'KeyEvent.webidl',
     'KeyframeEffect.webidl',
-    'KillSwitch.webidl',
     'LegacyQueryInterface.webidl',
     'LinkStyle.webidl',
     'ListBoxObject.webidl',
@@ -349,14 +349,10 @@ WEBIDL_FILES = [
     'PannerNode.webidl',
     'ParentNode.webidl',
     'Performance.webidl',
-    'PerformanceCompositeTiming.webidl',
     'PerformanceEntry.webidl',
     'PerformanceMark.webidl',
     'PerformanceMeasure.webidl',
     'PerformanceNavigation.webidl',
-    'PerformanceObserver.webidl',
-    'PerformanceObserverEntryList.webidl',
-    'PerformanceRenderTiming.webidl',
     'PerformanceResourceTiming.webidl',
     'PerformanceTiming.webidl',
     'PeriodicWave.webidl',
@@ -371,9 +367,7 @@ WEBIDL_FILES = [
     'Position.webidl',
     'PositionError.webidl',
     'Presentation.webidl',
-    'PresentationAvailability.webidl',
     'PresentationDeviceInfoManager.webidl',
-    'PresentationRequest.webidl',
     'PresentationSession.webidl',
     'ProcessingInstruction.webidl',
     'ProfileTimelineMarker.webidl',
@@ -391,7 +385,6 @@ WEBIDL_FILES = [
     'RGBColor.webidl',
     'RTCStatsReport.webidl',
     'Screen.webidl',
-    'ScreenOrientation.webidl',
     'ScriptProcessorNode.webidl',
     'ScrollAreaEvent.webidl',
     'ScrollBoxObject.webidl',
@@ -524,11 +517,6 @@ WEBIDL_FILES = [
     'SVGZoomAndPan.webidl',
     'SVGZoomEvent.webidl',
     'SystemUpdate.webidl',
-    'TCPServerSocket.webidl',
-    'TCPServerSocketEvent.webidl',
-    'TCPSocket.webidl',
-    'TCPSocketErrorEvent.webidl',
-    'TCPSocketEvent.webidl',
     'Telephony.webidl',
     'TelephonyCall.webidl',
     'TelephonyCallGroup.webidl',
@@ -677,23 +665,28 @@ if CONFIG['MOZ_DEBUG']:
                      'TestInterfaceJSMaplikeSetlike.webidl']
 
 if CONFIG['MOZ_B2G_BT']:
-    WEBIDL_FILES += [
-        'BluetoothAdapter.webidl',
-        'BluetoothClassOfDevice.webidl',
-        'BluetoothDevice.webidl',
-        'BluetoothDiscoveryHandle.webidl',
-        'BluetoothGatt.webidl',
-        'BluetoothGattCharacteristic.webidl',
-        'BluetoothGattDescriptor.webidl',
-        'BluetoothGattServer.webidl',
-        'BluetoothGattService.webidl',
-        'BluetoothLeDeviceEvent.webidl',
-        'BluetoothManager.webidl',
-        'BluetoothPairingHandle.webidl',
-        'BluetoothPairingListener.webidl',
-        'BluetoothPbapParameters.webidl',
-        'BluetoothPbapRequestHandle.webidl',
-    ]
+    if CONFIG['MOZ_B2G_BT_API_V1']:
+        WEBIDL_FILES += [
+            'BluetoothAdapter.webidl',
+            'BluetoothDevice.webidl',
+            'BluetoothManager.webidl',
+        ]
+    else:
+        WEBIDL_FILES += [
+            'BluetoothAdapter2.webidl',
+            'BluetoothClassOfDevice.webidl',
+            'BluetoothDevice2.webidl',
+            'BluetoothDiscoveryHandle.webidl',
+            'BluetoothGatt.webidl',
+            'BluetoothGattCharacteristic.webidl',
+            'BluetoothGattDescriptor.webidl',
+            'BluetoothGattServer.webidl',
+            'BluetoothGattService.webidl',
+            'BluetoothLeDeviceEvent.webidl',
+            'BluetoothManager2.webidl',
+            'BluetoothPairingHandle.webidl',
+            'BluetoothPairingListener.webidl',
+        ]
 
 if CONFIG['MOZ_SIMPLEPUSH']:
     WEBIDL_FILES += [
@@ -793,7 +786,7 @@ GENERATED_EVENTS_WEBIDL_FILES = [
     'PluginCrashedEvent.webidl',
     'PopStateEvent.webidl',
     'PopupBlockedEvent.webidl',
-    'PresentationSessionConnectEvent.webidl',
+    'PresentationAvailableEvent.webidl',
     'ProgressEvent.webidl',
     'RecordErrorEvent.webidl',
     'ScrollViewChangeEvent.webidl',
@@ -801,9 +794,6 @@ GENERATED_EVENTS_WEBIDL_FILES = [
     'StyleRuleChangeEvent.webidl',
     'StyleSheetApplicableStateChangeEvent.webidl',
     'StyleSheetChangeEvent.webidl',
-    'TCPServerSocketEvent.webidl',
-    'TCPSocketErrorEvent.webidl',
-    'TCPSocketEvent.webidl',
     'TrackEvent.webidl',
     'TVCurrentChannelChangedEvent.webidl',
     'TVCurrentSourceChangedEvent.webidl',
@@ -836,16 +826,21 @@ if CONFIG['MOZ_GAMEPAD']:
     ]
 
 if CONFIG['MOZ_B2G_BT']:
+    if CONFIG['MOZ_B2G_BT_API_V1']:
+        GENERATED_EVENTS_WEBIDL_FILES += [
+            'BluetoothDiscoveryStateChangedEvent.webidl',
+        ]
+    else:
+        GENERATED_EVENTS_WEBIDL_FILES += [
+            'BluetoothAdapterEvent.webidl',
+            'BluetoothAttributeEvent.webidl',
+            'BluetoothGattCharacteristicEvent.webidl',
+            'BluetoothPairingEvent.webidl',
+        ]
+
     GENERATED_EVENTS_WEBIDL_FILES += [
-        'BluetoothAdapterEvent.webidl',
-        'BluetoothAttributeEvent.webidl',
         'BluetoothDeviceEvent.webidl',
-        'BluetoothGattCharacteristicEvent.webidl',
-        'BluetoothPairingEvent.webidl',
-        'BluetoothPhonebookPullingEvent.webidl',
         'BluetoothStatusChangedEvent.webidl',
-        'BluetoothVCardListingEvent.webidl',
-        'BluetoothVCardPullingEvent.webidl'
     ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':

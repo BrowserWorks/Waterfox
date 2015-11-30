@@ -21,6 +21,7 @@ from mach.decorators import (
 ROOT = os.path.dirname(os.path.realpath(__file__))
 GECKO = os.path.realpath(os.path.join(ROOT, '..', '..'))
 DOCKER_ROOT = os.path.join(ROOT, '..', 'docker')
+MOZHARNESS_CONFIG = os.path.join(GECKO, 'testing', 'mozharness', 'mozharness.json')
 
 # XXX: If/when we have the taskcluster queue use construct url instead
 ARTIFACT_URL = 'https://queue.taskcluster.net/v1/task/{}/artifacts/{}'
@@ -38,6 +39,10 @@ DEFAULT_TRY = 'try: -b do -p all -u all'
 DEFAULT_JOB_PATH = os.path.join(
     ROOT, 'tasks', 'branches', 'base_jobs.yml'
 )
+
+def load_mozharness_info():
+    with open(MOZHARNESS_CONFIG) as content:
+        return json.load(content)
 
 def docker_image(name):
     ''' Determine the docker tag/revision from an in tree docker file '''
@@ -170,38 +175,6 @@ def configure_dependent_task(task_path, parameters, taskid, templates, build_tre
 
     return task
 
-def set_interactive_task(task, interactive):
-    r"""Make the task interactive.
-
-    :param task: task definition.
-    :param interactive: True if the task should be interactive.
-    """
-    if not interactive:
-        return
-
-    payload = task["task"]["payload"]
-    if "features" not in payload:
-        payload["features"] = {}
-    payload["features"]["interactive"] = True
-
-def remove_caches_from_task(task):
-    r"""Remove all caches but tc-vcs from the task.
-
-    :param task: task definition.
-    """
-    whitelist = [
-        "tc-vcs",
-        "tc-vcs-public-sources",
-        "tooltool-cache",
-    ]
-    try:
-        caches = task["task"]["payload"]["cache"]
-        for cache in caches.keys():
-            if cache not in whitelist:
-                caches.pop(cache)
-    except KeyError:
-        pass
-
 @CommandProvider
 class DecisionTask(object):
     @Command('taskcluster-decision', category="ci",
@@ -282,15 +255,9 @@ class Graph(object):
         help='email address of who owns this graph')
     @CommandArgument('--extend-graph',
         action="store_true", dest="ci", help='Omit create graph arguments')
-    @CommandArgument('--interactive',
-        required=False,
-        default=False,
-        action="store_true",
-        dest="interactive",
-        help="Run the tasks with the interactive feature enabled")
     def create_graph(self, **params):
         from taskcluster_graph.commit_parser import parse_commit
-        from slugid import nice as slugid
+        from taskcluster_graph.slugid import slugid
         from taskcluster_graph.from_now import (
             json_time_from_now,
             current_json_time,
@@ -316,12 +283,11 @@ class Graph(object):
         jobs = templates.load(job_path, {})
 
         job_graph = parse_commit(message, jobs)
-
-        cmdline_interactive = params.get('interactive', False)
+        mozharness = load_mozharness_info()
 
         # Template parameters used when expanding the graph
         parameters = dict(gaia_info().items() + {
-            'index': 'index',
+            'index': 'index.garbage.staging.mshal-testing', #TODO
             'project': project,
             'pushlog_id': params.get('pushlog_id', 0),
             'docker_image': docker_image,
@@ -333,6 +299,9 @@ class Graph(object):
             'owner': params['owner'],
             'from_now': json_time_from_now,
             'now': current_json_time(),
+            'mozharness_repository': mozharness['repo'],
+            'mozharness_rev': mozharness['revision'],
+            'mozharness_ref':mozharness.get('reference', mozharness['revision']),
             'revision_hash': params['revision_hash']
         }.items())
 
@@ -366,15 +335,9 @@ class Graph(object):
         }
 
         for build in job_graph:
-            interactive = cmdline_interactive or build["interactive"]
             build_parameters = dict(parameters)
             build_parameters['build_slugid'] = slugid()
             build_task = templates.load(build['task'], build_parameters)
-            set_interactive_task(build_task, interactive)
-
-            # try builds don't use cache
-            if project == "try":
-                remove_caches_from_task(build_task)
 
             if params['revision_hash']:
                 decorate_task_treeherder_routes(build_task['task'],
@@ -388,7 +351,7 @@ class Graph(object):
             taskcluster_graph.build_task.validate(build_task)
             graph['tasks'].append(build_task)
 
-            test_packages_url, tests_url, mozharness_url = None, None, None
+            test_packages_url, tests_url = None, None
 
             if 'test_packages' in build_task['task']['extra']['locations']:
                 test_packages_url = ARTIFACT_URL.format(
@@ -400,12 +363,6 @@ class Graph(object):
                 tests_url = ARTIFACT_URL.format(
                     build_parameters['build_slugid'],
                     build_task['task']['extra']['locations']['tests']
-                )
-
-            if 'mozharness' in build_task['task']['extra']['locations']:
-                mozharness_url = ARTIFACT_URL.format(
-                    build_parameters['build_slugid'],
-                    build_task['task']['extra']['locations']['mozharness']
                 )
 
             build_url = ARTIFACT_URL.format(
@@ -453,7 +410,6 @@ class Graph(object):
                                                      slugid(),
                                                      templates,
                                                      build_treeherder_config)
-                set_interactive_task(post_task, interactive)
                 graph['tasks'].append(post_task)
 
             for test in build['dependents']:
@@ -465,8 +421,6 @@ class Graph(object):
                     test_parameters['tests_url'] = tests_url
                 if test_packages_url:
                     test_parameters['test_packages_url'] = test_packages_url
-                if mozharness_url:
-                    test_parameters['mozharness_url'] = mozharness_url
                 test_definition = templates.load(test['task'], {})['task']
                 chunk_config = test_definition['extra']['chunks']
 
@@ -487,7 +441,6 @@ class Graph(object):
                                                          slugid(),
                                                          templates,
                                                          build_treeherder_config)
-                    set_interactive_task(test_task, interactive)
 
                     if params['revision_hash']:
                         decorate_task_treeherder_routes(
@@ -530,12 +483,6 @@ class CIBuild(object):
         help='email address of who owns this graph')
     @CommandArgument('build_task',
         help='path to build task definition')
-    @CommandArgument('--interactive',
-        required=False,
-        default=False,
-        action="store_true",
-        dest="interactive",
-        help="Run the task with the interactive feature enabled")
     def create_ci_build(self, **params):
         from taskcluster_graph.templates import Templates
         import taskcluster_graph.build_task
@@ -569,7 +516,6 @@ class CIBuild(object):
 
         try:
             build_task = templates.load(params['build_task'], build_parameters)
-            set_interactive_task(build_task, params.get('interactive', False))
         except IOError:
             sys.stderr.write(
                 "Could not load build task file.  Ensure path is a relative " \

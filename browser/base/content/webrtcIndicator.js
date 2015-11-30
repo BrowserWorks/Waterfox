@@ -7,7 +7,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource:///modules/webrtcUI.jsm");
 
 const BUNDLE_URL = "chrome://browser/locale/webrtcIndicator.properties";
-var gStringBundle;
+let gStringBundle;
 
 function init(event) {
   gStringBundle = Services.strings.createBundle(BUNDLE_URL);
@@ -129,7 +129,7 @@ function onFirefoxButtonClick(event) {
   activeStreams[0].browser.ownerDocument.defaultView.focus();
 }
 
-var PositionHandler = {
+let PositionHandler = {
   positionCustomized: false,
   threshold: 10,
   adjustPosition: function() {

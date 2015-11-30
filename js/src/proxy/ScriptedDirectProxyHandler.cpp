@@ -846,7 +846,7 @@ ScriptedDirectProxyHandler::has(JSContext* cx, HandleObject proxy, HandleId id, 
 
 // ES6 (22 May, 2014) 9.5.8 Proxy.[[GetP]](P, Receiver)
 bool
-ScriptedDirectProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue receiver,
+ScriptedDirectProxyHandler::get(JSContext* cx, HandleObject proxy, HandleObject receiver,
                                 HandleId id, MutableHandleValue vp) const
 {
     // step 2
@@ -877,7 +877,7 @@ ScriptedDirectProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue r
     Value argv[] = {
         ObjectOrNullValue(target),
         value,
-        receiver
+        ObjectOrNullValue(receiver)
     };
     RootedValue trapResult(cx);
     if (!Invoke(cx, ObjectValue(*handler), trap, ArrayLength(argv), argv, &trapResult))
@@ -1080,7 +1080,7 @@ ScriptedDirectProxyHandler::construct(JSContext* cx, HandleObject proxy, const C
 
 bool
 ScriptedDirectProxyHandler::nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                                       const CallArgs& args) const
+                                       CallArgs args) const
 {
     ReportIncompatible(cx, args);
     return false;

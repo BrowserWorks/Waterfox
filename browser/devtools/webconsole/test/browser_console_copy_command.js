@@ -7,9 +7,9 @@
 
 "use strict";
 
-var gWebConsole, gJSTerm;
+let gWebConsole, gJSTerm;
 
-var TEXT = "Lorem ipsum dolor sit amet, consectetur adipisicing " +
+let TEXT = "Lorem ipsum dolor sit amet, consectetur adipisicing " +
     "elit, sed do eiusmod tempor incididunt ut labore et dolore magna " +
     "aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco " +
     "laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure " +
@@ -18,7 +18,7 @@ var TEXT = "Lorem ipsum dolor sit amet, consectetur adipisicing " +
     "proident, sunt in culpa qui officia deserunt mollit anim id est laborum." +
     new Date();
 
-var ID = "select-me";
+let ID = "select-me";
 
 add_task(function* init() {
   yield loadTab("data:text/html;charset=utf-8," +

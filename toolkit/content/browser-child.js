@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var Cc = Components.classes;
-var Ci = Components.interfaces;
-var Cu = Components.utils;
+let Cc = Components.classes;
+let Ci = Components.interfaces;
+let Cu = Components.utils;
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -28,7 +28,7 @@ function makeInputStream(aString) {
   return stream; // XPConnect will QI this to nsIInputStream for us.
 }
 
-var WebProgressListener = {
+let WebProgressListener = {
   init: function() {
     this._filter = Cc["@mozilla.org/appshell/component/browser-status-filter;1"]
                      .createInstance(Ci.nsIWebProgress);
@@ -209,7 +209,7 @@ addEventListener("unload", () => {
   WebProgressListener.uninit();
 });
 
-var WebNavigation =  {
+let WebNavigation =  {
   init: function() {
     addMessageListener("WebNavigation:GoBack", this);
     addMessageListener("WebNavigation:GoForward", this);
@@ -312,7 +312,7 @@ var WebNavigation =  {
 
 WebNavigation.init();
 
-var SecurityUI = {
+let SecurityUI = {
   getSSLStatusAsString: function() {
     let status = docShell.securityUI.QueryInterface(Ci.nsISSLStatusProvider).SSLStatus;
 
@@ -328,7 +328,7 @@ var SecurityUI = {
   }
 };
 
-var ControllerCommands = {
+let ControllerCommands = {
   init: function () {
     addMessageListener("ControllerCommands:Do", this);
   },
@@ -501,7 +501,7 @@ addMessageListener("Browser:Thumbnail:CheckState", function (aMessage) {
 
 // The AddonsChild needs to be rooted so that it stays alive as long as
 // the tab.
-var AddonsChild = RemoteAddonsChild.init(this);
+let AddonsChild = RemoteAddonsChild.init(this);
 if (AddonsChild) {
   addEventListener("unload", () => {
     RemoteAddonsChild.uninit(AddonsChild);
@@ -515,7 +515,7 @@ addMessageListener("NetworkPrioritizer:AdjustPriority", (msg) => {
   loadGroup.adjustPriority(msg.data.adjustment);
 });
 
-var AutoCompletePopup = {
+let AutoCompletePopup = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIAutoCompletePopup]),
 
   init: function() {
@@ -593,10 +593,10 @@ var AutoCompletePopup = {
 
 // We may not get any responses to Browser:Init if the browser element
 // is torn down too quickly.
-var outerWindowID = content.QueryInterface(Ci.nsIInterfaceRequestor)
+let outerWindowID = content.QueryInterface(Ci.nsIInterfaceRequestor)
                            .getInterface(Ci.nsIDOMWindowUtils)
                            .outerWindowID;
-var initData = sendSyncMessage("Browser:Init", {outerWindowID: outerWindowID});
+let initData = sendSyncMessage("Browser:Init", {outerWindowID: outerWindowID});
 if (initData.length) {
   docShell.useGlobalHistory = initData[0].useGlobalHistory;
   if (initData[0].initPopup) {

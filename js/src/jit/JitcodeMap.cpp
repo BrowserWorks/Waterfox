@@ -858,7 +858,7 @@ JitcodeGlobalTable::sweep(JSRuntime* rt)
         if (entry->baseEntry().isJitcodeAboutToBeFinalized())
             e.removeFront();
         else
-            entry->sweepChildren(rt);
+            entry->sweep(rt);
     }
 }
 
@@ -898,7 +898,7 @@ JitcodeGlobalEntry::BaselineEntry::mark(JSTracer* trc)
 }
 
 void
-JitcodeGlobalEntry::BaselineEntry::sweepChildren()
+JitcodeGlobalEntry::BaselineEntry::sweep()
 {
     MOZ_ALWAYS_FALSE(IsAboutToBeFinalizedUnbarriered(&script_));
 }
@@ -949,7 +949,7 @@ JitcodeGlobalEntry::IonEntry::mark(JSTracer* trc)
 }
 
 void
-JitcodeGlobalEntry::IonEntry::sweepChildren()
+JitcodeGlobalEntry::IonEntry::sweep()
 {
     for (unsigned i = 0; i < numScripts(); i++)
         MOZ_ALWAYS_FALSE(IsAboutToBeFinalizedUnbarriered(&sizedScriptList()->pairs[i].script));
@@ -1007,11 +1007,11 @@ JitcodeGlobalEntry::IonCacheEntry::mark(JSTracer* trc)
 }
 
 void
-JitcodeGlobalEntry::IonCacheEntry::sweepChildren(JSRuntime* rt)
+JitcodeGlobalEntry::IonCacheEntry::sweep(JSRuntime* rt)
 {
     JitcodeGlobalEntry entry;
     RejoinEntry(rt, *this, nativeStartAddr(), &entry);
-    entry.sweepChildren(rt);
+    entry.sweep(rt);
 }
 
 bool

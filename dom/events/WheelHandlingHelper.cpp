@@ -94,7 +94,7 @@ WheelTransaction::BeginTransaction(nsIFrame* aTargetFrame,
                                    WidgetWheelEvent* aEvent)
 {
   NS_ASSERTION(!sTargetFrame, "previous transaction is not finished!");
-  MOZ_ASSERT(aEvent->mMessage == eWheel,
+  MOZ_ASSERT(aEvent->message == NS_WHEEL_WHEEL,
              "Transaction must be started with a wheel event");
   ScrollbarsForWheel::OwnWheelTransaction(false);
   sTargetFrame = aTargetFrame;
@@ -175,8 +175,8 @@ WheelTransaction::OnEvent(WidgetEvent* aEvent)
     return;
   }
 
-  switch (aEvent->mMessage) {
-    case eWheel:
+  switch (aEvent->message) {
+    case NS_WHEEL_WHEEL:
       if (sMouseMoved != 0 &&
           OutOfTime(sMouseMoved, GetIgnoreMoveDelayTime())) {
         // Terminate the current mousewheel transaction if the mouse moved more
@@ -184,8 +184,8 @@ WheelTransaction::OnEvent(WidgetEvent* aEvent)
         EndTransaction();
       }
       return;
-    case eMouseMove:
-    case eDragOver: {
+    case NS_MOUSE_MOVE:
+    case NS_DRAGDROP_OVER: {
       WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
       if (mouseEvent->IsReal()) {
         // If the cursor is moving to be outside the frame,
@@ -207,19 +207,17 @@ WheelTransaction::OnEvent(WidgetEvent* aEvent)
       }
       return;
     }
-    case eKeyPress:
-    case eKeyUp:
-    case eKeyDown:
-    case eMouseUp:
-    case eMouseDown:
-    case eMouseDoubleClick:
-    case eMouseClick:
-    case eContextMenu:
-    case eDrop:
+    case NS_KEY_PRESS:
+    case NS_KEY_UP:
+    case NS_KEY_DOWN:
+    case NS_MOUSE_BUTTON_UP:
+    case NS_MOUSE_BUTTON_DOWN:
+    case NS_MOUSE_DOUBLECLICK:
+    case NS_MOUSE_CLICK:
+    case NS_CONTEXTMENU:
+    case NS_DRAGDROP_DROP:
       EndTransaction();
       return;
-    default:
-      break;
   }
 }
 
@@ -415,7 +413,7 @@ ScrollbarsForWheel::PrepareToScrollText(EventStateManager* aESM,
                                         nsIFrame* aTargetFrame,
                                         WidgetWheelEvent* aEvent)
 {
-  if (aEvent->mMessage == eWheelOperationStart) {
+  if (aEvent->message == NS_WHEEL_START) {
     WheelTransaction::OwnScrollbars(false);
     if (!IsActive()) {
       TemporarilyActivateAllPossibleScrollTargets(aESM, aTargetFrame, aEvent);

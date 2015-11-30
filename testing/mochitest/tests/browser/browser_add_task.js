@@ -3,8 +3,8 @@
 
 "use strict";
 
-var test1Complete = false;
-var test2Complete = false;
+let test1Complete = false;
+let test2Complete = false;
 
 function executeWithTimeout() {
   return new Promise(resolve =>

@@ -544,9 +544,9 @@ LayoutView.prototype = {
   }
 };
 
-var elts;
+let elts;
 
-var onmouseover = function(e) {
+let onmouseover = function(e) {
   let region = e.target.getAttribute("data-box");
   if (!region) {
     return false;
@@ -561,7 +561,7 @@ var onmouseover = function(e) {
   return false;
 }.bind(window);
 
-var onmouseout = function() {
+let onmouseout = function() {
   this.layoutview.hideBoxModel();
   return false;
 }.bind(window);

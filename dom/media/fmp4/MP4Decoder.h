@@ -39,12 +39,10 @@ public:
                                  bool& aOutContainsH264,
                                  bool& aOutContainsMP3);
 
-  static bool CanHandleMediaType(const nsAString& aMIMEType);
-
   // Returns true if the MP4 backend is preffed on.
   static bool IsEnabled();
 
-  static bool IsVideoAccelerated(layers::LayersBackend aBackend, nsACString& aReason);
+  static bool IsVideoAccelerated(layers::LayersBackend aBackend);
   static bool CanCreateAACDecoder();
   static bool CanCreateH264Decoder();
 };

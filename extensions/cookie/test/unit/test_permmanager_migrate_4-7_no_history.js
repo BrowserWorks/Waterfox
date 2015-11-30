@@ -1,14 +1,14 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var PERMISSIONS_FILE_NAME = "permissions.sqlite";
+let PERMISSIONS_FILE_NAME = "permissions.sqlite";
 
 /*
  * Prevent the nsINavHistoryService from being avaliable for the migration
  */
 
-var CONTRACT_ID = "@mozilla.org/browser/nav-history-service;1";
-var factory = {
+let CONTRACT_ID = "@mozilla.org/browser/nav-history-service;1";
+let factory = {
   createInstance: function() {
     throw new Error("There is no history service");
   },
@@ -18,11 +18,11 @@ var factory = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIFactory])
 };
 
-var newClassID = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator).generateUUID();
+let newClassID = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator).generateUUID();
 
-var registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
-var oldClassID = registrar.contractIDToCID(CONTRACT_ID);
-var oldFactory = Components.manager.getClassObject(Cc[CONTRACT_ID], Ci.nsIFactory);
+let registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
+let oldClassID = registrar.contractIDToCID(CONTRACT_ID);
+let oldFactory = Components.manager.getClassObject(Cc[CONTRACT_ID], Ci.nsIFactory);
 registrar.unregisterFactory(oldClassID, oldFactory);
 registrar.registerFactory(newClassID, "", CONTRACT_ID, factory);
 

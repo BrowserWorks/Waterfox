@@ -44,7 +44,7 @@ function expectNotifications() {
       }
 
       if (name.startsWith("onItemChanged")) {
-        return function(id, prop, isAnno, val, lastMod, itemType, parentId, guid, parentGuid, oldVal) {
+        return (id, prop, isAnno, val, lastMod, itemType, parentId, guid, parentGuid, oldVal) => {
           if (prop != "keyword")
             return;
           let args = Array.from(arguments, arg => {

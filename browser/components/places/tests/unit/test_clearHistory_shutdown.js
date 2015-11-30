@@ -17,7 +17,7 @@ const URIS = [
 
 const TOPIC_CONNECTION_CLOSED = "places-connection-closed";
 
-var EXPECTED_NOTIFICATIONS = [
+let EXPECTED_NOTIFICATIONS = [
   "places-shutdown"
 , "places-will-close-connection"
 , "places-expiration-finished"
@@ -36,7 +36,7 @@ var formHistoryStartup = Cc["@mozilla.org/satchel/form-history-startup;1"].
                          getService(Ci.nsIObserver);
 formHistoryStartup.observe(null, "profile-after-change", null);
 
-var timeInMicroseconds = Date.now() * 1000;
+let timeInMicroseconds = Date.now() * 1000;
 
 function run_test() {
   run_next_test();

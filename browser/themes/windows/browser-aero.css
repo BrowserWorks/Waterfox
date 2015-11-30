@@ -73,6 +73,16 @@
     .tab-background-middle[visuallyselected=true]:not(:-moz-lwtheme) {
       background-color: @customToolbarColor@;
     }
+
+    #urlbar:not(:-moz-lwtheme):not([focused]):hover,
+    .searchbar-textbox:not(:-moz-lwtheme):not([focused]):hover {
+      border-color: hsla(210,54%,20%,.35) hsla(210,54%,20%,.37) hsla(210,54%,20%,.4);
+    }
+
+    #urlbar:not(:-moz-lwtheme)[focused],
+    .searchbar-textbox:not(:-moz-lwtheme)[focused] {
+      border-color: hsla(206,100%,60%,.65) hsla(206,100%,55%,.65) hsla(206,100%,50%,.65);
+    }
   }
 }
 
@@ -292,13 +302,16 @@
     #appcontent {
       -moz-appearance: -moz-win-exclude-glass;
     }
-  }
 
-  @media (-moz-os-version: windows-win8) {
     /* Artificially draw window borders that are covered by lwtheme, see bug 591930.
-     * Borders for vista/win7 are below, win10 doesn't need them. */
+     * Not necessary on windows 10+ */
     #main-window[sizemode="normal"] > #tab-view-deck > #browser-panel:-moz-lwtheme {
-      border-top: 1px solid @toolbarShadowColor@;
+      border-top: 2px solid;
+      -moz-border-top-colors: @glassActiveBorderColor@ rgba(255,255,255,.6);
+    }
+
+    #main-window[sizemode="normal"] > #tab-view-deck > #browser-panel:-moz-lwtheme:-moz-window-inactive {
+      -moz-border-top-colors: @glassInactiveBorderColor@ rgba(255,255,255,.6);
     }
   }
 
@@ -388,17 +401,6 @@
          (-moz-os-version: windows-win7) {
     #main-menubar:not(:-moz-lwtheme):not(:-moz-window-inactive) {
       border-radius: 4px;
-    }
-
-    /* Artificially draw window borders that are covered by lwtheme, see bug 591930.
-     * We use a different border for win8, and this is not necessary on win10+ */
-    #main-window[sizemode="normal"] > #tab-view-deck > #browser-panel:-moz-lwtheme {
-      border-top: 2px solid;
-      -moz-border-top-colors: @glassActiveBorderColor@ rgba(255,255,255,.6);
-    }
-
-    #main-window[sizemode="normal"] > #tab-view-deck > #browser-panel:-moz-lwtheme:-moz-window-inactive {
-      -moz-border-top-colors: @glassInactiveBorderColor@ rgba(255,255,255,.6);
     }
   }
 

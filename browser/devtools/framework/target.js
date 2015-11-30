@@ -5,12 +5,14 @@
 "use strict";
 
 const {Cc, Ci, Cu} = require("chrome");
-const promise = require("promise");
+const {Promise: promise} = require("resource://gre/modules/Promise.jsm");
 const EventEmitter = require("devtools/toolkit/event-emitter");
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-loader.lazyRequireGetter(this, "DebuggerServer", "devtools/server/main", true);
-loader.lazyRequireGetter(this, "DebuggerClient", "devtools/toolkit/client/main", true);
+XPCOMUtils.defineLazyModuleGetter(this, "DebuggerServer",
+  "resource://gre/modules/devtools/dbg-server.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "DebuggerClient",
+  "resource://gre/modules/devtools/dbg-client.jsm");
 
 const targets = new WeakMap();
 const promiseTargets = new WeakMap();

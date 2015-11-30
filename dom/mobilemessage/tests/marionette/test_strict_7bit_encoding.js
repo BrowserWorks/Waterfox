@@ -127,11 +127,11 @@ const SELF = "5554";
 SpecialPowers.setBoolPref("dom.sms.enabled", true);
 SpecialPowers.addPermission("sms", true, document);
 
-var manager = window.navigator.mozMobileMessage;
+let manager = window.navigator.mozMobileMessage;
 ok(manager instanceof MozMobileMessageManager,
    "manager is instance of " + manager.constructor);
 
-var tasks = {
+let tasks = {
   // List of test fuctions. Each of them should call |tasks.next()| when
   // completed or |tasks.finish()| to jump to the last one.
   _tasks: [],

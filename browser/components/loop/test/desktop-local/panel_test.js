@@ -11,9 +11,8 @@ describe("loop.panel", function() {
   var sharedUtils = loop.shared.utils;
 
   var sandbox, notifications;
-  var fakeXHR, fakeWindow, fakeMozLoop, fakeEvent;
+  var fakeXHR, fakeWindow, fakeMozLoop;
   var requests = [];
-  var mozL10nGetSpy;
 
   beforeEach(function() {
     sandbox = sinon.sandbox.create();
@@ -22,12 +21,6 @@ describe("loop.panel", function() {
     // https://github.com/cjohansen/Sinon.JS/issues/393
     fakeXHR.xhr.onCreate = function (xhr) {
       requests.push(xhr);
-    };
-
-    fakeEvent = {
-      preventDefault: sandbox.stub(),
-      stopPropagation: sandbox.stub(),
-      pageY: 42
     };
 
     fakeWindow = {
@@ -79,12 +72,10 @@ describe("loop.panel", function() {
       logOutFromFxA: sandbox.stub(),
       notifyUITour: sandbox.stub(),
       openURL: sandbox.stub(),
-      getSelectedTabMetadata: sandbox.stub(),
-      userProfile: null
+      getSelectedTabMetadata: sandbox.stub()
     };
 
     document.mozL10n.initialize(navigator.mozLoop);
-    sandbox.stub(document.mozL10n, "get").returns("Fake title");
   });
 
   afterEach(function() {
@@ -97,6 +88,7 @@ describe("loop.panel", function() {
     beforeEach(function() {
       sandbox.stub(React, "render");
       sandbox.stub(document.mozL10n, "initialize");
+      sandbox.stub(document.mozL10n, "get").returns("Fake title");
     });
 
     it("should initalize L10n", function() {
@@ -144,9 +136,9 @@ describe("loop.panel", function() {
         navigator.mozLoop.doNotDisturb = true;
       });
 
-      it("should toggle mozLoop.doNotDisturb to false", function() {
+      it("should toggle the value of mozLoop.doNotDisturb", function() {
         var availableMenuOption = view.getDOMNode()
-                                      .querySelector(".status-available");
+                                    .querySelector(".dnd-make-available");
 
         TestUtils.Simulate.click(availableMenuOption);
 
@@ -155,7 +147,7 @@ describe("loop.panel", function() {
 
       it("should toggle the dropdown menu", function() {
         var availableMenuOption = view.getDOMNode()
-                                      .querySelector(".dnd-status span");
+                                    .querySelector(".dnd-status span");
 
         TestUtils.Simulate.click(availableMenuOption);
 
@@ -243,37 +235,8 @@ describe("loop.panel", function() {
       });
     });
 
-    describe("Contacts", function() {
-      var view, roomsTab, contactsTab;
+    describe("AuthLink", function() {
 
-      beforeEach(function() {
-        view = TestUtils.renderIntoDocument(
-          React.createElement(loop.panel.PanelView, {
-            dispatcher: dispatcher,
-            initialSelectedTabComponent: "contactList",
-            mozLoop: navigator.mozLoop,
-            notifications: notifications,
-            roomStore: roomStore,
-            selectedTab: "contacts",
-            showTabButtons: true
-          }));
-
-        [roomsTab, contactsTab] =
-          TestUtils.scryRenderedDOMComponentsWithClass(view, "tab");
-      });
-
-      it("should expect Contacts tab to be selected when Contacts List displayed", function() {
-        expect(contactsTab.getDOMNode().classList.contains("selected"))
-          .to.be.true;
-      });
-
-      it("should expect Rooms tab to be not selected when Contacts List displayed", function() {
-        expect(roomsTab.getDOMNode().classList.contains("selected"))
-          .to.be.false;
-      });
-    });
-
-    describe("AccountLink", function() {
       beforeEach(function() {
         navigator.mozLoop.calls = { clearCallInProgress: function() {} };
       });
@@ -286,12 +249,13 @@ describe("loop.panel", function() {
 
       it("should trigger the FxA sign in/up process when clicking the link",
         function() {
+          navigator.mozLoop.loggedInToFxA = false;
           navigator.mozLoop.logInToFxA = sandbox.stub();
 
           var view = createTestPanelView();
 
           TestUtils.Simulate.click(
-            view.getDOMNode().querySelector(".signin-link > a"));
+            view.getDOMNode().querySelector(".signin-link a"));
 
           sinon.assert.calledOnce(navigator.mozLoop.logInToFxA);
         });
@@ -304,7 +268,7 @@ describe("loop.panel", function() {
           var view = createTestPanelView();
 
           TestUtils.Simulate.click(
-            view.getDOMNode().querySelector(".signin-link > a"));
+            view.getDOMNode().querySelector(".signin-link a"));
 
           sinon.assert.calledOnce(fakeWindow.close);
         });
@@ -313,49 +277,8 @@ describe("loop.panel", function() {
         function() {
           navigator.mozLoop.fxAEnabled = false;
           var view = TestUtils.renderIntoDocument(
-            React.createElement(loop.panel.AccountLink, {
-              fxAEnabled: false,
-              userProfile: null
-            }));
+            React.createElement(loop.panel.AuthLink));
           expect(view.getDOMNode()).to.be.null;
-      });
-
-      it("should add ellipsis to text over 24chars", function() {
-        navigator.mozLoop.userProfile = {
-          email: "reallyreallylongtext@example.com"
-        };
-        var view = createTestPanelView();
-        var node = view.getDOMNode().querySelector(".user-identity");
-
-        expect(node.textContent).to.eql("reallyreallylongtext@exa…");
-      });
-
-      it("should throw an error when user profile is different from {} or null",
-         function() {
-          var warnstub = sandbox.stub(console, "warn");
-          var view = TestUtils.renderIntoDocument(React.createElement(
-            loop.panel.AccountLink, {
-              fxAEnabled: false,
-              userProfile: []
-            }
-          ));
-
-          sinon.assert.calledOnce(warnstub);
-          sinon.assert.calledWithExactly(warnstub, "Warning: Required prop `userProfile` was not correctly specified in `AccountLink`.");
-      });
-
-      it("should throw an error when user profile is different from {} or null",
-         function() {
-          var warnstub = sandbox.stub(console, "warn");
-          var view = TestUtils.renderIntoDocument(React.createElement(
-            loop.panel.AccountLink, {
-              fxAEnabled: false,
-              userProfile: function() {}
-            }
-          ));
-
-          sinon.assert.calledOnce(warnstub);
-          sinon.assert.calledWithExactly(warnstub, "Warning: Required prop `userProfile` was not correctly specified in `AccountLink`.");
       });
     });
 
@@ -377,49 +300,27 @@ describe("loop.panel", function() {
         navigator.mozLoop.fxAEnabled = true;
       });
 
-      describe("UserLoggedOut", function() {
-        beforeEach(function() {
-          fakeMozLoop.userProfile = null;
-        });
-
-        it("should show a signin entry when user is not authenticated",
-           function() {
-             var view = mountTestComponent();
-
-             expect(view.getDOMNode().querySelectorAll(".entry-settings-signout"))
-               .to.have.length.of(0);
-             expect(view.getDOMNode().querySelectorAll(".entry-settings-signin"))
-               .to.have.length.of(1);
-           });
-
-        it("should hide any account entry when user is not authenticated",
-           function() {
-             var view = mountTestComponent();
-
-             expect(view.getDOMNode().querySelectorAll(".icon-account"))
-               .to.have.length.of(0);
-           });
-
-        it("should sign in the user on click when unauthenticated", function() {
+      it("should show a signin entry when user is not authenticated",
+        function() {
           navigator.mozLoop.loggedInToFxA = false;
+
           var view = mountTestComponent();
 
-          TestUtils.Simulate.click(view.getDOMNode()
-                                     .querySelector(".entry-settings-signin"));
-
-          sinon.assert.calledOnce(navigator.mozLoop.logInToFxA);
+          expect(view.getDOMNode().querySelectorAll(".icon-signout"))
+            .to.have.length.of(0);
+          expect(view.getDOMNode().querySelectorAll(".icon-signin"))
+            .to.have.length.of(1);
         });
-      });
 
       it("should show a signout entry when user is authenticated", function() {
         navigator.mozLoop.userProfile = {email: "test@example.com"};
 
         var view = mountTestComponent();
 
-        sinon.assert.calledWithExactly(document.mozL10n.get,
-                                       "settings_menu_item_signout");
-        sinon.assert.neverCalledWith(document.mozL10n.get,
-                                     "settings_menu_item_signin");
+        expect(view.getDOMNode().querySelectorAll(".icon-signout"))
+          .to.have.length.of(1);
+        expect(view.getDOMNode().querySelectorAll(".icon-signin"))
+          .to.have.length.of(0);
       });
 
       it("should show an account entry when user is authenticated", function() {
@@ -427,28 +328,47 @@ describe("loop.panel", function() {
 
         var view = mountTestComponent();
 
-        sinon.assert.calledWithExactly(document.mozL10n.get,
-                                       "settings_menu_item_settings");
+        expect(view.getDOMNode().querySelectorAll(".icon-account"))
+          .to.have.length.of(1);
       });
 
-      it("should open the FxA settings when the account entry is clicked",
-         function() {
-           navigator.mozLoop.userProfile = {email: "test@example.com"};
+      it("should open the FxA settings when the account entry is clicked", function() {
+        navigator.mozLoop.userProfile = {email: "test@example.com"};
 
-           var view = mountTestComponent();
+        var view = mountTestComponent();
 
-           TestUtils.Simulate.click(view.getDOMNode()
-                                      .querySelector(".entry-settings-account"));
+        TestUtils.Simulate.click(
+          view.getDOMNode().querySelector(".icon-account"));
 
-           sinon.assert.calledOnce(navigator.mozLoop.openFxASettings);
-         });
+        sinon.assert.calledOnce(navigator.mozLoop.openFxASettings);
+      });
+
+      it("should hide any account entry when user is not authenticated",
+        function() {
+          navigator.mozLoop.loggedInToFxA = false;
+
+          var view = mountTestComponent();
+
+          expect(view.getDOMNode().querySelectorAll(".icon-account"))
+            .to.have.length.of(0);
+        });
+
+      it("should sign in the user on click when unauthenticated", function() {
+        navigator.mozLoop.loggedInToFxA = false;
+        var view = mountTestComponent();
+
+        TestUtils.Simulate.click(
+          view.getDOMNode().querySelector(".icon-signin"));
+
+        sinon.assert.calledOnce(navigator.mozLoop.logInToFxA);
+      });
 
       it("should sign out the user on click when authenticated", function() {
         navigator.mozLoop.userProfile = {email: "test@example.com"};
         var view = mountTestComponent();
 
-        TestUtils.Simulate.click(view.getDOMNode()
-                                   .querySelector(".entry-settings-signout"));
+        TestUtils.Simulate.click(
+          view.getDOMNode().querySelector(".icon-signout"));
 
         sinon.assert.calledOnce(navigator.mozLoop.logOutFromFxA);
       });
@@ -479,7 +399,7 @@ describe("loop.panel", function() {
         view = mountTestComponent();
 
         TestUtils.Simulate
-          .click(view.getDOMNode().querySelector(".entry-settings-help"));
+          .click(view.getDOMNode().querySelector(".icon-help"));
 
         sinon.assert.calledOnce(fakeMozLoop.openURL);
         sinon.assert.calledWithExactly(fakeMozLoop.openURL, supportUrl);
@@ -489,7 +409,7 @@ describe("loop.panel", function() {
         view = mountTestComponent();
 
         TestUtils.Simulate
-          .click(view.getDOMNode().querySelector(".entry-settings-help"));
+          .click(view.getDOMNode().querySelector(".icon-help"));
 
         sinon.assert.calledOnce(fakeWindow.close);
       });
@@ -593,86 +513,91 @@ describe("loop.panel", function() {
         React.createElement(loop.panel.RoomEntry, props));
     }
 
-    describe("handleContextChevronClick", function() {
-      var view;
-
-      beforeEach(function() {
-        // Stub to prevent warnings due to stores not being set up to handle
-        // the actions we are triggering.
-        sandbox.stub(dispatcher, "dispatch");
-
-        view = mountRoomEntry({room: new loop.store.Room(roomData)});
-      });
-
-      // XXX Current version of React cannot use TestUtils.Simulate, please
-      // enable when we upgrade.
-      it.skip("should close the menu when you move out the cursor", function() {
-        expect(view.refs.contextActions.state.showMenu).to.eql(false);
-      });
-
-      it("should set eventPosY when handleContextChevronClick is called", function() {
-        view.handleContextChevronClick(fakeEvent);
-
-        expect(view.state.eventPosY).to.eql(fakeEvent.pageY);
-      });
-
-      it("toggle state.showMenu when handleContextChevronClick is called", function() {
-        var prevState = view.state.showMenu;
-        view.handleContextChevronClick(fakeEvent);
-
-        expect(view.state.showMenu).to.eql(!prevState);
-      });
-
-      it("should toggle the menu when the button is clicked", function() {
-        var prevState = view.state.showMenu;
-        var node = view.refs.contextActions.refs["menu-button"].getDOMNode();
-
-        TestUtils.Simulate.click(node, fakeEvent);
-
-        expect(view.state.showMenu).to.eql(!prevState);
-      });
-    });
-
     describe("Copy button", function() {
-      var roomEntry;
+      var roomEntry, copyButton;
 
       beforeEach(function() {
-        // Stub to prevent warnings where no stores are set up to handle the
-        // actions we are testing.
-        sandbox.stub(dispatcher, "dispatch");
-
         roomEntry = mountRoomEntry({
           deleteRoom: sandbox.stub(),
           room: new loop.store.Room(roomData)
         });
+        copyButton = roomEntry.getDOMNode().querySelector("button.copy-link");
       });
 
-      it("should render context actions button", function() {
-        expect(roomEntry.refs.contextActions).to.not.eql(null);
+      it("should not display a copy button by default", function() {
+        expect(copyButton).to.not.equal(null);
       });
 
-      describe("OpenRoom", function() {
-        it("should dispatch an OpenRoom action when button is clicked", function() {
-          TestUtils.Simulate.click(roomEntry.refs.roomEntry.getDOMNode());
+      it("should copy the URL when the click event fires", function() {
+        sandbox.stub(dispatcher, "dispatch");
 
-          sinon.assert.calledOnce(dispatcher.dispatch);
-          sinon.assert.calledWithExactly(dispatcher.dispatch,
-            new sharedActions.OpenRoom({roomToken: roomData.roomToken}));
+        TestUtils.Simulate.click(copyButton);
+
+        sinon.assert.called(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch, new sharedActions.CopyRoomUrl({
+          roomUrl: roomData.roomUrl,
+          from: "panel"
+        }));
+      });
+
+      it("should set state.urlCopied when the click event fires", function() {
+        TestUtils.Simulate.click(copyButton);
+
+        expect(roomEntry.state.urlCopied).to.equal(true);
+      });
+
+      it("should switch to displaying a check icon when the URL has been copied",
+        function() {
+          TestUtils.Simulate.click(copyButton);
+
+          expect(copyButton.classList.contains("checked")).eql(true);
         });
 
-        it("should dispatch an OpenRoom action when callback is called", function() {
-          roomEntry.handleClickEntry(fakeEvent);
+      it("should not display a check icon after mouse leaves the entry",
+        function() {
+          var roomNode = roomEntry.getDOMNode();
+          TestUtils.Simulate.click(copyButton);
 
-          sinon.assert.calledOnce(dispatcher.dispatch);
-          sinon.assert.calledWithExactly(dispatcher.dispatch,
-            new sharedActions.OpenRoom({roomToken: roomData.roomToken}));
+          TestUtils.SimulateNative.mouseOut(roomNode);
+
+          expect(copyButton.classList.contains("checked")).eql(false);
         });
+    });
 
-        it("should call window.close", function() {
-          roomEntry.handleClickEntry(fakeEvent);
+    describe("Delete button click", function() {
+      var roomEntry, deleteButton;
 
-          sinon.assert.calledOnce(fakeWindow.close);
+      beforeEach(function() {
+        roomEntry = mountRoomEntry({
+          room: new loop.store.Room(roomData)
         });
+        deleteButton = roomEntry.getDOMNode().querySelector("button.delete-link");
+      });
+
+      it("should not display a delete button by default", function() {
+        expect(deleteButton).to.not.equal(null);
+      });
+
+      it("should dispatch a delete action when confirmation is granted", function() {
+        sandbox.stub(dispatcher, "dispatch");
+
+        navigator.mozLoop.confirm.callsArgWith(1, null, true);
+        TestUtils.Simulate.click(deleteButton);
+
+        sinon.assert.calledOnce(navigator.mozLoop.confirm);
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.DeleteRoom({roomToken: roomData.roomToken}));
+      });
+
+      it("should not dispatch an action when the confirmation is cancelled", function() {
+        sandbox.stub(dispatcher, "dispatch");
+
+        navigator.mozLoop.confirm.callsArgWith(1, null, false);
+        TestUtils.Simulate.click(deleteButton);
+
+        sinon.assert.calledOnce(navigator.mozLoop.confirm);
+        sinon.assert.notCalled(dispatcher.dispatch);
       });
     });
 
@@ -746,6 +671,19 @@ describe("loop.panel", function() {
         roomEntryNode = roomEntry.getDOMNode();
       });
 
+      it("should dispatch an OpenRoom action", function() {
+        TestUtils.Simulate.click(roomEntryNode);
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.OpenRoom({roomToken: roomData.roomToken}));
+      });
+
+      it("should call window.close", function() {
+        TestUtils.Simulate.click(roomEntryNode);
+
+        sinon.assert.calledOnce(fakeWindow.close);
+      });
     });
 
     describe("Room name updated", function() {
@@ -771,7 +709,7 @@ describe("loop.panel", function() {
   });
 
   describe("loop.panel.RoomList", function() {
-    var roomStore, dispatcher, fakeEmail, dispatch, roomData;
+    var roomStore, dispatcher, fakeEmail, dispatch;
 
     beforeEach(function() {
       fakeEmail = "fakeEmail@example.com";
@@ -785,26 +723,7 @@ describe("loop.panel", function() {
         rooms: [],
         error: undefined
       });
-
       dispatch = sandbox.stub(dispatcher, "dispatch");
-
-      roomData = {
-        roomToken: "QzBbvGmIZWU",
-        roomUrl: "http://sample/QzBbvGmIZWU",
-        decryptedContext: {
-          roomName: "Second Room Name"
-        },
-        maxSize: 2,
-        participants: [{
-          displayName: "Alexis",
-          account: "alexis@example.com",
-          roomConnectionId: "2a1787a6-4a73-43b5-ae3e-906ec1e763cb"
-        }, {
-          displayName: "Adam",
-          roomConnectionId: "781f012b-f1ea-4ce1-9105-7cfc36fb4ec7"
-        }],
-        ctime: 1405517418
-      };
     });
 
     function createTestComponent() {
@@ -813,8 +732,7 @@ describe("loop.panel", function() {
           store: roomStore,
           dispatcher: dispatcher,
           userDisplayName: fakeEmail,
-          mozLoop: fakeMozLoop,
-          userProfile: null
+          mozLoop: fakeMozLoop
         }));
     }
 
@@ -835,29 +753,6 @@ describe("loop.panel", function() {
       roomStore.setStoreState({pendingCreation: false});
 
       sinon.assert.calledOnce(fakeWindow.close);
-    });
-
-    it("should render the no rooms view when no rooms available", function() {
-      var view = createTestComponent();
-      var node = view.getDOMNode();
-
-      expect(node.querySelectorAll(".room-list-empty").length).to.eql(1);
-    });
-
-    it("should call mozL10n.get for room empty strings", function() {
-      var view = createTestComponent();
-
-      sinon.assert.calledWithExactly(document.mozL10n.get,
-                                     "no_conversations_message_heading2");
-      sinon.assert.calledWithExactly(document.mozL10n.get,
-                                     "no_conversations_start_message2");
-    });
-
-    it("should display a loading animation when rooms are pending", function() {
-      var view = createTestComponent();
-      roomStore.setStoreState({pendingInitialRetrieval: true});
-
-      expect(view.getDOMNode().querySelectorAll(".room-list-loading").length).to.eql(1);
     });
   });
 
@@ -898,7 +793,8 @@ describe("loop.panel", function() {
         TestUtils.Simulate.click(view.getDOMNode().querySelector(".new-room-button"));
 
         sinon.assert.calledWith(dispatch, new sharedActions.CreateRoom({
-          nameTemplate: "Fake title"
+          nameTemplate: "fakeText",
+          roomOwner: fakeEmail
         }));
       });
 
@@ -928,7 +824,8 @@ describe("loop.panel", function() {
       TestUtils.Simulate.click(node.querySelector(".new-room-button"));
 
       sinon.assert.calledWith(dispatch, new sharedActions.CreateRoom({
-        nameTemplate: "Fake title",
+        nameTemplate: "fakeText",
+        roomOwner: fakeEmail,
         urls: [{
           location: "http://invalid.com",
           description: "fakeSite",
@@ -1081,141 +978,6 @@ describe("loop.panel", function() {
       TestUtils.Simulate.click(view.getDOMNode().querySelector("a"));
 
       sinon.assert.calledOnce(fakeMozLoop.logOutFromFxA);
-    });
-  });
-
-  describe("ConversationDropdown", function() {
-    var view;
-
-    function createTestComponent() {
-      return TestUtils.renderIntoDocument(
-        React.createElement(loop.panel.ConversationDropdown, {
-          handleCopyButtonClick: sandbox.stub(),
-          handleDeleteButtonClick: sandbox.stub(),
-          handleEmailButtonClick: sandbox.stub(),
-          eventPosY: 0
-        }));
-    }
-
-    beforeEach(function() {
-      view = createTestComponent();
-    });
-
-    it("should trigger handleCopyButtonClick when copy button is clicked",
-       function() {
-         TestUtils.Simulate.click(view.refs.copyButton.getDOMNode());
-
-         sinon.assert.calledOnce(view.props.handleCopyButtonClick);
-       });
-
-    it("should trigger handleEmailButtonClick when email button is clicked",
-       function() {
-         TestUtils.Simulate.click(view.refs.emailButton.getDOMNode());
-
-         sinon.assert.calledOnce(view.props.handleEmailButtonClick);
-       });
-
-    it("should trigger handleDeleteButtonClick when delete button is clicked",
-       function() {
-         TestUtils.Simulate.click(view.refs.deleteButton.getDOMNode());
-
-         sinon.assert.calledOnce(view.props.handleDeleteButtonClick);
-       });
-  });
-
-  describe("RoomEntryContextButtons", function() {
-    var view, dispatcher, roomData;
-
-    function createTestComponent(extraProps) {
-      var props = _.extend({
-        dispatcher: dispatcher,
-        eventPosY: 0,
-        handleClickEntry: sandbox.stub(),
-        showMenu: false,
-        room: roomData,
-        toggleDropdownMenu: sandbox.stub(),
-        handleContextChevronClick: sandbox.stub()
-      }, extraProps);
-      return TestUtils.renderIntoDocument(
-        React.createElement(loop.panel.RoomEntryContextButtons, props));
-    }
-
-    beforeEach(function() {
-      roomData = {
-        roomToken: "QzBbvGmIZWU",
-        roomUrl: "http://sample/QzBbvGmIZWU",
-        decryptedContext: {
-          roomName: "Second Room Name"
-        },
-        maxSize: 2,
-        participants: [{
-          displayName: "Alexis",
-          account: "alexis@example.com",
-          roomConnectionId: "2a1787a6-4a73-43b5-ae3e-906ec1e763cb"
-        }, {
-          displayName: "Adam",
-          roomConnectionId: "781f012b-f1ea-4ce1-9105-7cfc36fb4ec7"
-        }],
-        ctime: 1405517418
-      };
-
-      dispatcher = new loop.Dispatcher();
-      sandbox.stub(dispatcher, "dispatch");
-
-      view = createTestComponent();
-    });
-
-    it("should render ConversationDropdown if state.showMenu=true", function() {
-      view = createTestComponent({showMenu: true});
-
-      expect(view.refs.menu).to.not.eql(undefined);
-    });
-
-    it("should not render ConversationDropdown by default", function() {
-      view = createTestComponent({showMenu: false});
-
-      expect(view.refs.menu).to.eql(undefined);
-    });
-
-    it("should call toggleDropdownMenu after link is emailed", function() {
-      view.handleEmailButtonClick(fakeEvent);
-
-      sinon.assert.calledOnce(view.props.toggleDropdownMenu);
-    });
-
-    it("should call toggleDropdownMenu after conversation deleted", function() {
-      view.handleDeleteButtonClick(fakeEvent);
-
-      sinon.assert.calledOnce(view.props.toggleDropdownMenu);
-    });
-
-    it("should call toggleDropdownMenu after link is copied", function() {
-      view.handleCopyButtonClick(fakeEvent);
-
-      sinon.assert.calledOnce(view.props.toggleDropdownMenu);
-    });
-
-    it("should copy the URL when the callback is called", function() {
-      view.handleCopyButtonClick(fakeEvent);
-
-      sinon.assert.called(dispatcher.dispatch);
-      sinon.assert.calledWithExactly(dispatcher.dispatch, new sharedActions.CopyRoomUrl({
-        roomUrl: roomData.roomUrl,
-        from: "panel"
-      }));
-    });
-
-    it("should dispatch a delete action when callback is called", function() {
-      view.handleDeleteButtonClick(fakeEvent);
-
-      sinon.assert.calledWithExactly(dispatcher.dispatch,
-        new sharedActions.DeleteRoom({roomToken: roomData.roomToken}));
-    });
-
-    it("should trigger handleClickEntry when button is clicked", function() {
-      TestUtils.Simulate.click(view.refs.callButton.getDOMNode());
-
-      sinon.assert.calledOnce(view.props.handleClickEntry);
     });
   });
 });

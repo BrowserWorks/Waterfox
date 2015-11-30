@@ -36,7 +36,6 @@ done
 mv test_packages_tc.json        $HOME/artifacts/test_packages.json
 mv *.crashreporter-symbols.zip  $HOME/artifacts/target.crashreporter-symbols.zip
 mv jsshell-linux-x86_64.zip     $HOME/artifacts/jsshell-linux-x86_64.zip
-mv mozharness.zip               $HOME/artifacts/mozharness.zip
 
 ccache -s
 

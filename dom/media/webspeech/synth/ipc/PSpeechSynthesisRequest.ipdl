@@ -23,8 +23,6 @@ async protocol PSpeechSynthesisRequest
 
   ForceEnd();
 
-  SetAudioOutputVolume(float aVolume);
-
  child:
 
   __delete__(bool aIsError, float aElapsedTime, uint32_t aCharIndex);

@@ -417,33 +417,37 @@ operator!=( U* lhs, const nsHtml5RefPtr<T>& rhs )
 template <class T>
 inline
 bool
-operator==( const nsHtml5RefPtr<T>& lhs, decltype(nullptr) )
+operator==( const nsHtml5RefPtr<T>& lhs, NSCAP_Zero* rhs )
+    // specifically to allow |smartPtr == 0|
   {
-    return lhs.get() == nullptr;
+    return static_cast<const void*>(lhs.get()) == reinterpret_cast<const void*>(rhs);
   }
 
 template <class T>
 inline
 bool
-operator==( decltype(nullptr), const nsHtml5RefPtr<T>& rhs )
+operator==( NSCAP_Zero* lhs, const nsHtml5RefPtr<T>& rhs )
+    // specifically to allow |0 == smartPtr|
   {
-    return nullptr == rhs.get();
+    return reinterpret_cast<const void*>(lhs) == static_cast<const void*>(rhs.get());
   }
 
 template <class T>
 inline
 bool
-operator!=( const nsHtml5RefPtr<T>& lhs, decltype(nullptr) )
+operator!=( const nsHtml5RefPtr<T>& lhs, NSCAP_Zero* rhs )
+    // specifically to allow |smartPtr != 0|
   {
-    return lhs.get() != nullptr;
+    return static_cast<const void*>(lhs.get()) != reinterpret_cast<const void*>(rhs);
   }
 
 template <class T>
 inline
 bool
-operator!=( decltype(nullptr), const nsHtml5RefPtr<T>& rhs )
+operator!=( NSCAP_Zero* lhs, const nsHtml5RefPtr<T>& rhs )
+    // specifically to allow |0 != smartPtr|
   {
-    return nullptr != rhs.get();
+    return reinterpret_cast<const void*>(lhs) != static_cast<const void*>(rhs.get());
   }
 
 #endif // !defined(nsHtml5RefPtr_h)

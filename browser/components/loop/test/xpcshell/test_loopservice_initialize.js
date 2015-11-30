@@ -3,7 +3,7 @@
 
 "use strict";
 
-var startTimerCalled = false;
+let startTimerCalled = false;
 
 /**
  * Tests that registration doesn't happen when the expiry time is

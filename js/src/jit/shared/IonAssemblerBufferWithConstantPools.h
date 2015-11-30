@@ -518,9 +518,7 @@ struct AssemblerBufferWithConstantPools : public AssemblerBuffer<SliceSize, Inst
     void markNextAsBranch() {
         // If the previous thing inserted was the last instruction of the node,
         // then whoops, we want to mark the first instruction of the next node.
-        if (!this->ensureSpace(InstSize))
-            return;
-
+        this->ensureSpace(InstSize);
         MOZ_ASSERT(this->getTail() != nullptr);
         this->getTail()->markNextAsBranch();
     }

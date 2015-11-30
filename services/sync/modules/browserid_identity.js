@@ -39,7 +39,7 @@ XPCOMUtils.defineLazyGetter(this, 'log', function() {
 });
 
 // FxAccountsCommon.js doesn't use a "namespace", so create one here.
-var fxAccountsCommon = {};
+let fxAccountsCommon = {};
 Cu.import("resource://gre/modules/FxAccountsCommon.js", fxAccountsCommon);
 
 const OBSERVER_TOPICS = [
@@ -104,6 +104,12 @@ this.BrowserIDManager.prototype = {
   // we don't consider the lack of a keybundle as a failure state.
   _shouldHaveSyncKeyBundle: false,
 
+  get readyToAuthenticate() {
+    // We are finished initializing when we *should* have a sync key bundle,
+    // although we might not actually have one due to auth failures etc.
+    return this._shouldHaveSyncKeyBundle;
+  },
+
   get needsCustomization() {
     try {
       return Services.prefs.getBoolPref(PREF_SYNC_SHOW_CUSTOMIZATION);
@@ -116,19 +122,7 @@ this.BrowserIDManager.prototype = {
     for (let topic of OBSERVER_TOPICS) {
       Services.obs.addObserver(this, topic, false);
     }
-    // and a background fetch of account data just so we can set this.account,
-    // so we have a username available before we've actually done a login.
-    // XXX - this is actually a hack just for tests and really shouldn't be
-    // necessary. Also, you'd think it would be safe to allow this.account to
-    // be set to null when there's no user logged in, but argue with the test
-    // suite, not with me :)
-    this._fxaService.getSignedInUser().then(accountData => {
-      if (accountData) {
-        this.account = accountData.email;
-      }
-    }).catch(err => {
-      // As above, this is only for tests so it is safe to ignore.
-    });
+    return this.initializeWithCurrentIdentity();
   },
 
   /**
@@ -136,7 +130,7 @@ this.BrowserIDManager.prototype = {
    * the user is logged in, or is rejected if the login attempt has failed.
    */
   ensureLoggedIn: function() {
-    if (!this._shouldHaveSyncKeyBundle && this.whenReadyToAuthenticate) {
+    if (!this._shouldHaveSyncKeyBundle) {
       // We are already in the process of logging in.
       return this.whenReadyToAuthenticate.promise;
     }
@@ -166,6 +160,7 @@ this.BrowserIDManager.prototype = {
     }
     this.resetCredentials();
     this._signedInUser = null;
+    return Promise.resolve();
   },
 
   offerSyncOptions: function () {
@@ -189,7 +184,7 @@ this.BrowserIDManager.prototype = {
 
     // Reset the world before we do anything async.
     this.whenReadyToAuthenticate = Promise.defer();
-    this.whenReadyToAuthenticate.promise.catch(err => {
+    this.whenReadyToAuthenticate.promise.then(null, (err) => {
       this._log.error("Could not authenticate", err);
     });
 
@@ -245,25 +240,14 @@ this.BrowserIDManager.prototype = {
           Services.obs.notifyObservers(null, "weave:service:setup-complete", null);
           Weave.Utils.nextTick(Weave.Service.sync, Weave.Service);
         }
-      }).catch(err => {
-        let authErr = err; // note that we must reject with this error and not a
-                           // subsequent one
+      }).then(null, err => {
+        this._shouldHaveSyncKeyBundle = true; // but we probably don't have one...
+        this.whenReadyToAuthenticate.reject(err);
         // report what failed...
-        this._log.error("Background fetch for key bundle failed", authErr);
-        // check if the account still exists
-        this._fxaService.accountStatus().then(exists => {
-          if (!exists) {
-            return fxAccounts.signOut(true);
-          }
-        }).catch(err => {
-          this._log.error("Error while trying to determine FXA existence", err);
-        }).then(() => {
-          this._shouldHaveSyncKeyBundle = true; // but we probably don't have one...
-          this.whenReadyToAuthenticate.reject(authErr)
-        });
+        this._log.error("Background fetch for key bundle failed", err);
       });
       // and we are done - the fetch continues on in the background...
-    }).catch(err => {
+    }).then(null, err => {
       this._log.error("Processing logged in account", err);
     });
   },
@@ -299,8 +283,7 @@ this.BrowserIDManager.prototype = {
       // reauth with the server - in that case we will also get here, but
       // should have the same identity.
       // initializeWithCurrentIdentity will throw and log if these constraints
-      // aren't met (indirectly, via _updateSignedInUser()), so just go ahead
-      // and do the init.
+      // aren't met, so just go ahead and do the init.
       this.initializeWithCurrentIdentity(true);
       break;
 
@@ -475,7 +458,6 @@ this.BrowserIDManager.prototype = {
   unlockAndVerifyAuthState: function() {
     if (this._canFetchKeys()) {
       log.debug("unlockAndVerifyAuthState already has (or can fetch) sync keys");
-      Services.telemetry.getHistogramById("WEAVE_CAN_FETCH_KEYS").add(1);
       return Promise.resolve(STATUS_OK);
     }
     // so no keys - ensure MP unlocked.
@@ -492,16 +474,7 @@ this.BrowserIDManager.prototype = {
         // If we still can't get keys it probably means the user authenticated
         // without unlocking the MP or cleared the saved logins, so we've now
         // lost them - the user will need to reauth before continuing.
-        let result;
-        if (this._canFetchKeys()) {
-          // A ternary would be more compact, but adding 0 to a flag histogram
-          // crashes the process with a C++ assertion error. See
-          // FlagHistogram::Accumulate in ipc/chromium/src/base/histogram.cc.
-          Services.telemetry.getHistogramById("WEAVE_CAN_FETCH_KEYS").add(1);
-          result = STATUS_OK;
-        } else {
-          result = LOGIN_FAILED_LOGIN_REJECTED;
-        }
+        let result = this._canFetchKeys() ? STATUS_OK : LOGIN_FAILED_LOGIN_REJECTED;
         log.debug("unlockAndVerifyAuthState re-fetched credentials and is returning", result);
         return result;
       }
@@ -622,7 +595,7 @@ this.BrowserIDManager.prototype = {
         }
         return token;
       })
-      .catch(err => {
+      .then(null, err => {
         // TODO: unify these errors - we need to handle errors thrown by
         // both tokenserverclient and hawkclient.
         // A tokenserver error thrown based on a bad response.
@@ -632,7 +605,6 @@ this.BrowserIDManager.prototype = {
         } else if (err.code && err.code === 401) {
           err = new AuthenticationError(err);
         }
-        Services.telemetry.getHistogramById("WEAVE_FXA_KEY_FETCH_ERRORS").add();
 
         // TODO: write tests to make sure that different auth error cases are handled here
         // properly: auth error getting assertion, auth error getting token (invalid generation
@@ -653,6 +625,7 @@ this.BrowserIDManager.prototype = {
         // that there is no authentication dance still under way.
         this._shouldHaveSyncKeyBundle = true;
         Weave.Status.login = this._authFailureReason;
+        Services.obs.notifyObservers(null, "weave:ui:login:error", null);
         throw err;
       });
   },
@@ -694,7 +667,7 @@ this.BrowserIDManager.prototype = {
     this._ensureValidToken().then(cb, cb);
     try {
       cb.wait();
-    } catch (ex if !Async.isShutdownException(ex)) {
+    } catch (ex) {
       this._log.error("Failed to fetch a token for authentication", ex);
       return null;
     }

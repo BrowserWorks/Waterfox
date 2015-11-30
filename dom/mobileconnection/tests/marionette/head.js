@@ -24,8 +24,8 @@ function Deferred() {
   Object.freeze(this);
 }
 
-var _pendingEmulatorCmdCount = 0;
-var _pendingEmulatorShellCmdCount = 0;
+let _pendingEmulatorCmdCount = 0;
+let _pendingEmulatorShellCmdCount = 0;
 
 /**
  * Send emulator command with safe guard.
@@ -93,7 +93,7 @@ function runEmulatorShellCmdSafe(aCommands) {
   return deferred.promise;
 }
 
-var workingFrame;
+let workingFrame;
 
 /**
  * Get mozSettings value specified by @aKey.
@@ -222,7 +222,7 @@ function setDataApnSettings(aApnSettings, aAllowError) {
   return setSettings1(SETTINGS_KEY_DATA_APN_SETTINGS, aApnSettings, aAllowError);
 }
 
-var mobileConnection;
+let mobileConnection;
 
 /**
  * Push required permissions and test if
@@ -1136,7 +1136,7 @@ function setEmulatorLteSignalStrengthAndWait(aRxlev, aRsrp, aRssnr,
   return Promise.all(promises);
 }
 
-var _networkManager;
+let _networkManager;
 
 /**
  * Get internal NetworkManager service.
@@ -1151,7 +1151,7 @@ function getNetworkManager() {
   return _networkManager;
 }
 
-var _numOfRadioInterfaces;
+let _numOfRadioInterfaces;
 
 /*
  * Get number of radio interfaces. Default is 1 if preference is not set.

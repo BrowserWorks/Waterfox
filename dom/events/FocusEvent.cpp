@@ -17,7 +17,7 @@ FocusEvent::FocusEvent(EventTarget* aOwner,
                        nsPresContext* aPresContext,
                        InternalFocusEvent* aEvent)
   : UIEvent(aOwner, aPresContext,
-            aEvent ? aEvent : new InternalFocusEvent(false, eFocus))
+            aEvent ? aEvent : new InternalFocusEvent(false, NS_FOCUS_CONTENT))
 {
   if (aEvent) {
     mEventIsInternal = false;
@@ -77,11 +77,14 @@ FocusEvent::Constructor(const GlobalObject& aGlobal,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<FocusEvent>
-NS_NewDOMFocusEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMFocusEvent(nsIDOMEvent** aInstancePtrResult,
+                    EventTarget* aOwner,
                     nsPresContext* aPresContext,
                     InternalFocusEvent* aEvent)
 {
-  nsRefPtr<FocusEvent> it = new FocusEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  FocusEvent* it = new FocusEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

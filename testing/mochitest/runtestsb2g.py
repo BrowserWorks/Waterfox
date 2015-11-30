@@ -19,7 +19,6 @@ from runtests import MochitestUtilsMixin
 from mochitest_options import MochitestArgumentParser
 from marionette import Marionette
 from mozprofile import Profile, Preferences
-from mozrunner.utils import get_stack_fixer_function
 import mozinfo
 import mozleak
 
@@ -279,8 +278,6 @@ class B2GMochitest(MochitestUtilsMixin):
                 leak_thresholds=options.leakThresholds,
                 ignore_missing_leaks=options.ignoreMissingLeaks,
                 log=self.log,
-                stack_fixer=get_stack_fixer_function(options.utilityPath,
-                                                     options.symbolsPath),
             )
         except KeyboardInterrupt:
             self.log.info("runtests.py | Received keyboard interrupt.\n")
@@ -520,7 +517,7 @@ def run_desktop_mochitests(options):
         raise Exception("must specify --profile when specifying --desktop")
 
     options.browserArgs += ['-marionette']
-    options.runByDir = False
+
     retVal = mochitest.runTests(options, onLaunch=mochitest.startTests)
     mochitest.message_logger.finish()
 

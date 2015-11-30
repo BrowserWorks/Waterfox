@@ -30,7 +30,7 @@ function assertUint8ArraysEqual(a, b, comparingWhat) {
 /**
  * Helper method to add event listeners to a socket and provide two Promise-returning
  * helpers (see below for docs on them).  This *must* be called during the turn of
- * the event loop where TCPSocket's constructor is called or the onconnect method is being
+ * the event loop where TCPSocket.open is called or the onconnect method is being
  * invoked.
  */
 function listenForEventsOnSocket(socket, socketType) {
@@ -55,8 +55,6 @@ function listenForEventsOnSocket(socket, socketType) {
   socket.ondata = function(event) {
     dump('(' + socketType + ' event: ' + event.type + ' length: ' +
          event.data.byteLength + ')\n');
-    ok(socketCompartmentInstanceOfArrayBuffer(event.data),
-       'payload is ArrayBuffer');
     var arr = new Uint8Array(event.data);
     if (receivedData === null) {
       receivedData = arr;
@@ -129,7 +127,7 @@ function waitForConnection(listeningServer) {
     // Because of the event model of sockets, we can't use the
     // listenForEventsOnSocket mechanism; we need to hook up listeners during
     // the connect event.
-    listeningServer.onconnect = function(event) {
+    listeningServer.onconnect = function(socket) {
       // Clobber the listener to get upset if it receives any more connections
       // after this.
       listeningServer.onconnect = function() {
@@ -137,8 +135,8 @@ function waitForConnection(listeningServer) {
       };
       ok(true, 'Listening server accepted socket');
       resolve({
-        socket: event.socket,
-        queue: listenForEventsOnSocket(event.socket, 'server')
+        socket: socket,
+        queue: listenForEventsOnSocket(socket, 'server')
       });
     };
   });
@@ -155,36 +153,35 @@ function defer() {
 
 
 function* test_basics() {
-  if (enablePrefsAndPermissions()) {
-    // Enable our use of TCPSocket
-    let prefDeferred = defer();
-    SpecialPowers.pushPrefEnv(
-      { set: [ ['dom.mozTCPSocket.enabled', true] ] },
-      prefDeferred.resolve);
-    yield prefDeferred.promise;
+  // Enable our use of TCPSocket
+  let prefDeferred = defer();
+  SpecialPowers.pushPrefEnv(
+    { set: [ ['dom.mozTCPSocket.enabled', true] ] },
+    prefDeferred.resolve);
+  yield prefDeferred.promise;
 
-    let permDeferred = defer();
-    SpecialPowers.pushPermissions(
-      [ { type: 'tcp-socket', allow: true, context: document } ],
-      permDeferred.resolve);
-    yield permDeferred.promise;
-  }
+  let permDeferred = defer();
+  SpecialPowers.pushPermissions(
+    [ { type: 'tcp-socket', allow: true, context: document } ],
+    permDeferred.resolve);
+  yield permDeferred.promise;
 
   // See bug 903830; in e10s mode we never get to find out the localPort if we
   // let it pick a free port by choosing 0.  This is the same port the xpcshell
   // test was using.
   let serverPort = 8085;
 
+  let TCPSocket = navigator.mozTCPSocket;
   // - Start up a listening socket.
-  let listeningServer = createServer(serverPort,
-                                     { binaryType: 'arraybuffer' },
-                                     SERVER_BACKLOG);
+  let listeningServer = TCPSocket.listen(serverPort,
+                                         { binaryType: 'arraybuffer' },
+                                         SERVER_BACKLOG);
 
   let connectedPromise = waitForConnection(listeningServer);
 
   // -- Open a connection to the server
-  let clientSocket = createSocket('127.0.0.1', serverPort,
-                                  { binaryType: 'arraybuffer' });
+  let clientSocket = TCPSocket.open('127.0.0.1', serverPort,
+                                    { binaryType: 'arraybuffer' });
   let clientQueue = listenForEventsOnSocket(clientSocket, 'client');
 
   // (the client connects)
@@ -290,8 +287,8 @@ function* test_basics() {
 
   // -- Re-establish connection
   connectedPromise = waitForConnection(listeningServer);
-  clientSocket = createSocket('127.0.0.1', serverPort,
-                              { binaryType: 'arraybuffer' });
+  clientSocket = TCPSocket.open('127.0.0.1', serverPort,
+                                { binaryType: 'arraybuffer' });
   clientQueue = listenForEventsOnSocket(clientSocket, 'client');
   is((yield clientQueue.waitForEvent()).type, 'open', 'got open event');
 
@@ -317,8 +314,8 @@ function* test_basics() {
 
   // -- Re-establish connection
   connectedPromise = waitForConnection(listeningServer);
-  clientSocket = createSocket('127.0.0.1', serverPort,
-                              { binaryType: 'arraybuffer' });
+  clientSocket = TCPSocket.open('127.0.0.1', serverPort,
+                                { binaryType: 'arraybuffer' });
   clientQueue = listenForEventsOnSocket(clientSocket, 'client');
   is((yield clientQueue.waitForEvent()).type, 'open', 'got open event');
 
@@ -351,8 +348,8 @@ function* test_basics() {
 
   // -- Re-establish connection
   connectedPromise = waitForConnection(listeningServer);
-  clientSocket = createSocket('127.0.0.1', serverPort,
-                              { binaryType: 'string' });
+  clientSocket = TCPSocket.open('127.0.0.1', serverPort,
+                                { binaryType: 'string' });
   clientQueue = listenForEventsOnSocket(clientSocket, 'client');
   is((yield clientQueue.waitForEvent()).type, 'open', 'got open event');
 
@@ -379,8 +376,8 @@ function* test_basics() {
   listeningServer.close();
 
   // - try and connect, get an error
-  clientSocket = createSocket('127.0.0.1', serverPort,
-                              { binaryType: 'arraybuffer' });
+  clientSocket = TCPSocket.open('127.0.0.1', serverPort,
+                                { binaryType: 'arraybuffer' });
   clientQueue = listenForEventsOnSocket(clientSocket, 'client');
   is((yield clientQueue.waitForEvent()).type, 'error', 'fail to connect');
   is(clientSocket.readyState, 'closed',

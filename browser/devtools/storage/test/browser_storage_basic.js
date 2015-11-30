@@ -17,10 +17,7 @@
 // These entries are formed by the cookies, local storage, session storage and
 // indexedDB entries created in storage-listings.html,
 // storage-secured-iframe.html and storage-unsecured-iframe.html
-
-"use strict";
-
-const testCases = [
+const storeItems = [
   [["cookies", "test1.example.org"],
    ["c1", "cs2", "c3", "uc1"]],
   [["cookies", "sectest1.example.org"],
@@ -68,7 +65,7 @@ const testCases = [
  */
 function testTree() {
   let doc = gPanelWindow.document;
-  for (let item of testCases) {
+  for (let item of storeItems) {
     ok(doc.querySelector("[data-id='" + JSON.stringify(item[0]) + "']"),
        "Tree item " + item[0] + " should be present in the storage tree");
   }
@@ -77,20 +74,21 @@ function testTree() {
 /**
  * Test that correct table entries are shown for each of the tree item
  */
-function* testTables() {
+let testTables = Task.async(function*() {
   let doc = gPanelWindow.document;
   // Expand all nodes so that the synthesized click event actually works
   gUI.tree.expandAll();
 
   // First tree item is already selected so no clicking and waiting for update
-  for (let id of testCases[0][1]) {
+  for (let id of storeItems[0][1]) {
     ok(doc.querySelector(".table-widget-cell[data-id='" + id + "']"),
        "Table item " + id + " should be present");
   }
 
   // Click rest of the tree items and wait for the table to be updated
-  for (let item of testCases.slice(1)) {
-    yield selectTreeItem(item[0]);
+  for (let item of storeItems.slice(1)) {
+    selectTreeItem(item[0]);
+    yield gUI.once("store-objects-updated");
 
     // Check whether correct number of items are present in the table
     is(doc.querySelectorAll(
@@ -103,13 +101,14 @@ function* testTables() {
          "Table item " + id + " should be present");
     }
   }
-}
+});
 
-add_task(function*() {
-  yield openTabAndSetupStorage(MAIN_DOMAIN + "storage-listings.html");
-
+let startTest = Task.async(function*() {
   testTree();
   yield testTables();
-
-  yield finishTests();
+  finishTests();
 });
+
+function test() {
+  openTabAndSetupStorage(MAIN_DOMAIN + "storage-listings.html").then(startTest);
+}

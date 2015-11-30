@@ -2,7 +2,7 @@
 
 const { interfaces: Ci, classes: Cc, utils: Cu, results: Cr } = Components;
 
-var {WebNavigation} = Cu.import("resource://gre/modules/WebNavigation.jsm", {});
+let {WebNavigation} = Cu.import("resource://gre/modules/WebNavigation.jsm", {});
 
 const BASE = "http://example.com/browser/toolkit/modules/tests/browser";
 const URL = BASE + "/file_WebNavigation_page1.html";
@@ -25,11 +25,11 @@ const REQUIRED = [
   "onCompleted",
 ];
 
-var expectedBrowser;
-var received = [];
-var completedResolve;
-var waitingURL, waitingEvent;
-var rootWindowID;
+let expectedBrowser;
+let received = [];
+let completedResolve;
+let waitingURL, waitingEvent;
+let rootWindowID;
 
 function gotEvent(event, details)
 {

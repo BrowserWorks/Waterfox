@@ -6,10 +6,10 @@
 
 #include "TCPServerSocketChild.h"
 #include "TCPSocketChild.h"
-#include "TCPServerSocket.h"
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/dom/PBrowserChild.h"
 #include "mozilla/dom/TabChild.h"
+#include "nsIDOMTCPSocket.h"
 #include "nsJSUtils.h"
 #include "jsfriendapi.h"
 
@@ -23,6 +23,7 @@ NS_IMPL_CYCLE_COLLECTING_ADDREF(TCPServerSocketChildBase)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(TCPServerSocketChildBase)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(TCPServerSocketChildBase)
+  NS_INTERFACE_MAP_ENTRY(nsITCPServerSocketChild)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
@@ -45,12 +46,18 @@ NS_IMETHODIMP_(MozExternalRefCountType) TCPServerSocketChild::Release(void)
   return refcnt;
 }
 
-TCPServerSocketChild::TCPServerSocketChild(TCPServerSocket* aServerSocket, uint16_t aLocalPort,
-                                           uint16_t aBacklog, bool aUseArrayBuffers)
+TCPServerSocketChild::TCPServerSocketChild()
+{
+}
+
+NS_IMETHODIMP
+TCPServerSocketChild::Listen(nsITCPServerSocketInternal* aServerSocket, uint16_t aLocalPort,
+                             uint16_t aBacklog, const nsAString & aBinaryType, JSContext* aCx)
 {
   mServerSocket = aServerSocket;
   AddIPDLReference();
-  gNeckoChild->SendPTCPServerSocketConstructor(this, aLocalPort, aBacklog, aUseArrayBuffers);
+  gNeckoChild->SendPTCPServerSocketConstructor(this, aLocalPort, aBacklog, nsString(aBinaryType));
+  return NS_OK;
 }
 
 void
@@ -76,16 +83,34 @@ TCPServerSocketChild::~TCPServerSocketChild()
 bool
 TCPServerSocketChild::RecvCallbackAccept(PTCPSocketChild *psocket)
 {
-  nsRefPtr<TCPSocketChild> socket = static_cast<TCPSocketChild*>(psocket);
-  nsresult rv = mServerSocket->AcceptChildSocket(socket);
-  NS_ENSURE_SUCCESS(rv, true);
+  TCPSocketChild* socket = static_cast<TCPSocketChild*>(psocket);
+
+  nsresult rv = mServerSocket->CallListenerAccept(static_cast<nsITCPSocketChild*>(socket));
+  if (NS_FAILED(rv)) {
+    NS_WARNING("CallListenerAccept threw exception.");
+  }
   return true;
 }
 
-void
+bool
+TCPServerSocketChild::RecvCallbackError(const nsString& aMessage,
+                                        const nsString& aFilename,
+                                        const uint32_t& aLineNumber,
+                                        const uint32_t& aColumnNumber)
+{
+  nsresult rv = mServerSocket->CallListenerError(aMessage, aFilename,
+                                                 aLineNumber, aColumnNumber);
+  if (NS_FAILED(rv)) {
+    NS_WARNING("CallListenerError threw exception.");
+  }
+  return true;
+}
+
+NS_IMETHODIMP
 TCPServerSocketChild::Close()
 {
   SendClose();
+  return NS_OK;
 }
 
 } // namespace dom

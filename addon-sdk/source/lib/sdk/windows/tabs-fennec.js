@@ -90,7 +90,7 @@ const Tabs = Class({
     return tab;
   }
 });
-var gTabs = exports.tabs = Tabs(mainWindow);
+let gTabs = exports.tabs = Tabs(mainWindow);
 
 function tabsUnloader(event, window) {
   window = window || (event && event.target);

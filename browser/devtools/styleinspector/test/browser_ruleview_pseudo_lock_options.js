@@ -6,23 +6,23 @@
 
 // Tests that the rule view pseudo lock options work properly.
 
-const TEST_URI = `
-  <style type='text/css'>
-    div {
-      color: red;
-    }
-    div:hover {
-      color: blue;
-    }
-    div:active {
-      color: yellow;
-    }
-    div:focus {
-      color: green;
-    }
-  </style>
-  <div>test div</div>
-`;
+let TEST_URI = [
+  "<style type='text/css'>",
+  "  div {",
+  "    color: red;",
+  "  }",
+  "  div:hover {",
+  "    color: blue;",
+  "  }",
+  "  div:active {",
+  "    color: yellow;",
+  "  }",
+  "  div:focus {",
+  "    color: green;",
+  "  }",
+  "</style>",
+  "<div>test div</div>"
+].join("\n");
 
 add_task(function*() {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));

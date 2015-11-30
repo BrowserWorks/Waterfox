@@ -81,7 +81,9 @@ public:
   inline void NotifyInputReady(nsIAsyncInputStream* aStream,
                                nsIInputStreamCallback* aCallback)
   {
-    mInputList.AppendElement(InputEntry(aStream, aCallback));
+    NS_ASSERTION(!mInputCallback, "already have an input event");
+    mInputStream = aStream;
+    mInputCallback = aCallback;
   }
 
   inline void NotifyOutputReady(nsIAsyncOutputStream* aStream,
@@ -93,22 +95,8 @@ public:
   }
 
 private:
-  struct InputEntry
-  {
-    InputEntry(nsIAsyncInputStream* aStream, nsIInputStreamCallback* aCallback)
-      : mStream(aStream)
-      , mCallback(aCallback)
-    {
-      MOZ_ASSERT(mStream);
-      MOZ_ASSERT(mCallback);
-    }
-
-    nsCOMPtr<nsIAsyncInputStream> mStream;
-    nsCOMPtr<nsIInputStreamCallback> mCallback;
-  };
-
-  nsTArray<InputEntry> mInputList;
-
+  nsCOMPtr<nsIAsyncInputStream>     mInputStream;
+  nsCOMPtr<nsIInputStreamCallback>  mInputCallback;
   nsCOMPtr<nsIAsyncOutputStream>    mOutputStream;
   nsCOMPtr<nsIOutputStreamCallback> mOutputCallback;
 };
@@ -1094,15 +1082,15 @@ nsPipeEvents::~nsPipeEvents()
 {
   // dispatch any pending events
 
-  for (uint32_t i = 0; i < mInputList.Length(); ++i) {
-    mInputList[i].mCallback->OnInputStreamReady(mInputList[i].mStream);
+  if (mInputCallback) {
+    mInputCallback->OnInputStreamReady(mInputStream);
+    mInputCallback = 0;
+    mInputStream = 0;
   }
-  mInputList.Clear();
-
   if (mOutputCallback) {
     mOutputCallback->OnOutputStreamReady(mOutputStream);
-    mOutputCallback = nullptr;
-    mOutputStream = nullptr;
+    mOutputCallback = 0;
+    mOutputStream = 0;
   }
 }
 

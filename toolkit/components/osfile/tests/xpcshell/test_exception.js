@@ -7,7 +7,7 @@
 
 "use strict";
 
-var EXISTING_FILE = do_get_file("xpcshell.ini").path;
+let EXISTING_FILE = do_get_file("xpcshell.ini").path;
 
 
 // Tests on |open|

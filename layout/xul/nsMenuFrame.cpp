@@ -44,7 +44,6 @@
 #include "mozilla/Services.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/dom/Element.h"
-#include "mozilla/dom/Event.h"
 #include <algorithm>
 
 using namespace mozilla;
@@ -95,13 +94,17 @@ public:
       domEventToFire.AssignLiteral("DOMMenuItemInactive");
     }
 
-    nsRefPtr<Event> event = NS_NewDOMEvent(mMenu, mPresContext, nullptr);
-    event->InitEvent(domEventToFire, true, true);
+    nsCOMPtr<nsIDOMEvent> event;
+    if (NS_SUCCEEDED(EventDispatcher::CreateEvent(mMenu, mPresContext, nullptr,
+                                                  NS_LITERAL_STRING("Events"),
+                                                  getter_AddRefs(event)))) {
+      event->InitEvent(domEventToFire, true, true);
 
-    event->SetTrusted(true);
+      event->SetTrusted(true);
 
-    EventDispatcher::DispatchDOMEvent(mMenu, nullptr, event,
-        mPresContext, nullptr);
+      EventDispatcher::DispatchDOMEvent(mMenu, nullptr, event,
+                                        mPresContext, nullptr);
+    }
 
     return NS_OK;
   }
@@ -394,7 +397,7 @@ nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
 
   bool onmenu = IsOnMenu();
 
-  if (aEvent->mMessage == eKeyPress && !IsDisabled()) {
+  if (aEvent->message == NS_KEY_PRESS && !IsDisabled()) {
     WidgetKeyboardEvent* keyEvent = aEvent->AsKeyboardEvent();
     uint32_t keyCode = keyEvent->keyCode;
 #ifdef XP_MACOSX
@@ -413,7 +416,7 @@ nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
     }
 #endif
   }
-  else if (aEvent->mMessage == eMouseDown &&
+  else if (aEvent->message == NS_MOUSE_BUTTON_DOWN &&
            aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton &&
            !IsDisabled() && IsMenu()) {
     // The menu item was selected. Bring up the menu.
@@ -432,10 +435,10 @@ nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
   }
   else if (
 #ifndef NSCONTEXTMENUISMOUSEUP
-           (aEvent->mMessage == eMouseUp &&
+           (aEvent->message == NS_MOUSE_BUTTON_UP &&
             aEvent->AsMouseEvent()->button == WidgetMouseEvent::eRightButton) &&
 #else
-           aEvent->mMessage == eContextMenu &&
+           aEvent->message == NS_CONTEXTMENU &&
 #endif
            onmenu && !IsMenu() && !IsDisabled()) {
     // if this menu is a context menu it accepts right-clicks...fire away!
@@ -453,14 +456,14 @@ nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
       Execute(aEvent);
     }
   }
-  else if (aEvent->mMessage == eMouseUp &&
+  else if (aEvent->message == NS_MOUSE_BUTTON_UP &&
            aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton &&
            !IsMenu() && !IsDisabled()) {
     // Execute the execute event handler.
     *aEventStatus = nsEventStatus_eConsumeNoDefault;
     Execute(aEvent);
   }
-  else if (aEvent->mMessage == eMouseOut) {
+  else if (aEvent->message == NS_MOUSE_OUT) {
     // Kill our timer if one is active.
     if (mOpenTimer) {
       mOpenTimer->Cancel();
@@ -480,7 +483,7 @@ nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
       }
     }
   }
-  else if (aEvent->mMessage == eMouseMove &&
+  else if (aEvent->message == NS_MOUSE_MOVE &&
            (onmenu || (menuParent && menuParent->IsMenuBar()))) {
     if (gEatMouseMove) {
       gEatMouseMove = false;

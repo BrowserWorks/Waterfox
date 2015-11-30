@@ -66,13 +66,6 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
-  MOZ_ANDROID_NATIVE_ACCOUNT_UI:
-#ifdef MOZ_ANDROID_NATIVE_ACCOUNT_UI
-  true,
-#else
-  false,
-#endif
-
   MOZ_SAFE_BROWSING:
 #ifdef MOZ_SAFE_BROWSING
   true,
@@ -96,13 +89,6 @@ this.AppConstants = Object.freeze({
 
   MOZ_UPDATER:
 #ifdef MOZ_UPDATER
-  true,
-#else
-  false,
-#endif
-
-  MOZ_SWITCHBOARD:
-#ifdef MOZ_SWITCHBOARD
   true,
 #else
   false,
@@ -150,21 +136,8 @@ this.AppConstants = Object.freeze({
            Services.vc.compare(platformVersion, version) >= 0;
   },
 
-  isPlatformAndVersionAtMost(platform, version) {
-    let platformVersion = Services.sysinfo.getProperty("version");
-    return platform == this.platform &&
-           Services.vc.compare(platformVersion, version) <= 0;
-  },
-
   MOZ_CRASHREPORTER:
 #ifdef MOZ_CRASHREPORTER
-  true,
-#else
-  false,
-#endif
-
-  MOZ_VERIFY_MAR_SIGNATURE:
-#ifdef MOZ_VERIFY_MAR_SIGNATURE
   true,
 #else
   false,
@@ -186,20 +159,6 @@ this.AppConstants = Object.freeze({
 
   DEBUG:
 #ifdef DEBUG
-  true,
-#else
-  false,
-#endif
-
-  MOZ_B2G:
-#ifdef MOZ_B2G
-  true,
-#else
-  false,
-#endif
-
-  MOZ_B2GDROID:
-#ifdef MOZ_B2GDROID
   true,
 #else
   false,

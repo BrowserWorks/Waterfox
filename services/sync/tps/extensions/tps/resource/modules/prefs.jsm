@@ -13,7 +13,7 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 const WEAVE_PREF_PREFIX = "services.sync.prefs.sync.";
 
-var prefs = Cc["@mozilla.org/preferences-service;1"]
+let prefs = Cc["@mozilla.org/preferences-service;1"]
             .getService(Ci.nsIPrefBranch);
 
 Cu.import("resource://tps/logger.jsm");

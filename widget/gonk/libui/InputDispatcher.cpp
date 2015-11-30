@@ -1112,6 +1112,8 @@ int32_t InputDispatcher::findTouchedWindowTargetsLocked(nsecs_t currentTime,
         INJECTION_PERMISSION_DENIED
     };
 
+    nsecs_t startTime = now();
+
     // For security reasons, we defer updating the touch state until we are sure that
     // event injection will be allowed.
     //
@@ -2239,6 +2241,7 @@ InputDispatcher::MotionEntry*
 InputDispatcher::splitMotionEvent(const MotionEntry* originalMotionEntry, BitSet32 pointerIds) {
     ALOG_ASSERT(pointerIds.value != 0);
 
+    uint32_t splitPointerIndexMap[MAX_POINTERS];
     PointerProperties splitPointerProperties[MAX_POINTERS];
     PointerCoords splitPointerCoords[MAX_POINTERS];
 
@@ -2251,6 +2254,7 @@ InputDispatcher::splitMotionEvent(const MotionEntry* originalMotionEntry, BitSet
                 originalMotionEntry->pointerProperties[originalPointerIndex];
         uint32_t pointerId = uint32_t(pointerProperties.id);
         if (pointerIds.hasBit(pointerId)) {
+            splitPointerIndexMap[splitPointerCount] = originalPointerIndex;
             splitPointerProperties[splitPointerCount].copyFrom(pointerProperties);
             splitPointerCoords[splitPointerCount].copyFrom(
                     originalMotionEntry->pointerCoords[originalPointerIndex]);

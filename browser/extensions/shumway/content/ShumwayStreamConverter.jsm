@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Mozilla Foundation
+ * Copyright 2013 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,6 @@ XPCOMUtils.defineLazyModuleGetter(this, 'PrivateBrowsingUtils',
 XPCOMUtils.defineLazyModuleGetter(this, 'ShumwayTelemetry',
   'resource://shumway/ShumwayTelemetry.jsm');
 
-Components.utils.import('chrome://shumway/content/StartupInfo.jsm');
-
 function getBoolPref(pref, def) {
   try {
     return Services.prefs.getBoolPref(pref);
@@ -60,6 +58,31 @@ function getDOMWindow(aChannel) {
                   aChannel.loadGroup.notificationCallbacks;
   var win = requestor.getInterface(Components.interfaces.nsIDOMWindow);
   return win;
+}
+
+function parseQueryString(qs) {
+  if (!qs)
+    return {};
+
+  if (qs.charAt(0) == '?')
+    qs = qs.slice(1);
+
+  var values = qs.split('&');
+  var obj = {};
+  for (var i = 0; i < values.length; i++) {
+    var kv = values[i].split('=');
+    var key = kv[0], value = kv[1];
+    obj[decodeURIComponent(key)] = decodeURIComponent(value);
+  }
+
+  return obj;
+}
+
+function isContentWindowPrivate(win) {
+  if (!('isContentWindowPrivate' in PrivateBrowsingUtils)) {
+    return PrivateBrowsingUtils.isWindowPrivate(win);
+  }
+  return PrivateBrowsingUtils.isContentWindowPrivate(win);
 }
 
 function isShumwayEnabledFor(startupInfo) {
@@ -201,10 +224,13 @@ ShumwayStreamConverterBase.prototype = {
     return requestUrl.spec;
   },
 
-  getStartupInfo: function(window, url) {
-    var initStartTime = Date.now();
+  getStartupInfo: function(window, urlHint) {
+    var url = urlHint;
+    var baseUrl;
+    var pageUrl;
     var element = window.frameElement;
     var isOverlay = false;
+    var objectParams = {};
     if (element) {
       // PlayPreview overlay "belongs" to the embed/object tag and consists of
       // DIV and IFRAME. Starting from IFRAME and looking for first object tag.
@@ -237,14 +263,43 @@ ShumwayStreamConverterBase.prototype = {
     }
 
     if (element) {
-      return getStartupInfo(element);
+      // Getting absolute URL from the EMBED tag
+      url = element.srcURI && element.srcURI.spec;
+
+      pageUrl = element.ownerDocument.location.href; // proper page url?
+
+      if (tagName == 'EMBED') {
+        for (var i = 0; i < element.attributes.length; ++i) {
+          var paramName = element.attributes[i].localName.toLowerCase();
+          objectParams[paramName] = element.attributes[i].value;
+        }
+      } else {
+        for (var i = 0; i < element.childNodes.length; ++i) {
+          var paramElement = element.childNodes[i];
+          if (paramElement.nodeType != 1 ||
+              paramElement.nodeName != 'PARAM') {
+            continue;
+          }
+          var paramName = paramElement.getAttribute('name').toLowerCase();
+          objectParams[paramName] = paramElement.getAttribute('value');
+        }
+      }
     }
 
-    // Stream converter is used in top level window, just providing basic
-    // information about SWF.
+    baseUrl = pageUrl;
+    if (objectParams.base) {
+      try {
+        // Verifying base URL, passed in object parameters. It shall be okay to
+        // ignore bad/corrupted base.
+        var parsedPageUrl = Services.io.newURI(pageUrl);
+        baseUrl = Services.io.newURI(objectParams.base, null, parsedPageUrl).spec;
+      } catch (e) { /* it's okay to ignore any exception */ }
+    }
 
-    var objectParams = {};
     var movieParams = {};
+    if (objectParams.flashvars) {
+      movieParams = parseQueryString(objectParams.flashvars);
+    }
     var queryStringMatch = url && /\?([^#]+)/.exec(url);
     if (queryStringMatch) {
       var queryStringParams = parseQueryString(queryStringMatch[1]);
@@ -255,22 +310,21 @@ ShumwayStreamConverterBase.prototype = {
       }
     }
 
-    // Using the same data structure as we return in StartupInfo.jsm and
-    // assigning constant values for fields that is not applicable for
-    // the stream converter when it is used in a top level window.
+    var allowScriptAccess = !!url &&
+      isScriptAllowed(objectParams.allowscriptaccess, url, pageUrl);
+
     var startupInfo = {};
     startupInfo.window = window;
     startupInfo.url = url;
     startupInfo.privateBrowsing = isContentWindowPrivate(window);
     startupInfo.objectParams = objectParams;
     startupInfo.movieParams = movieParams;
-    startupInfo.baseUrl = url;
-    startupInfo.isOverlay = false;
-    startupInfo.refererUrl = null;
-    startupInfo.embedTag = null;
-    startupInfo.isPausedAtStart = /\bpaused=true$/.test(url);
-    startupInfo.initStartTime = initStartTime;
-    startupInfo.allowScriptAccess = false;
+    startupInfo.baseUrl = baseUrl || url;
+    startupInfo.isOverlay = isOverlay;
+    startupInfo.embedTag = element;
+    startupInfo.isPausedAtStart = /\bpaused=true$/.test(urlHint);
+    startupInfo.allowScriptAccess = allowScriptAccess;
+    startupInfo.pageIndex = 0;
     return startupInfo;
   },
 
@@ -333,7 +387,8 @@ ShumwayStreamConverterBase.prototype = {
         aRequest.cancel(Cr.NS_BINDING_ABORTED);
 
         var domWindow = getDOMWindow(channel);
-        let startupInfo = converter.getStartupInfo(domWindow, converter.getUrlHint(originalURI));
+        let startupInfo = converter.getStartupInfo(domWindow,
+                                                   converter.getUrlHint(originalURI));
 
         listener.onStopRequest(aRequest, context, statusCode);
 
@@ -391,6 +446,32 @@ function setupSimpleExternalInterface(embedTag) {
   }, embedTag.wrappedJSObject, {defineAs: 'GetVariable'});
 }
 
+function isScriptAllowed(allowScriptAccessParameter, url, pageUrl) {
+  if (!allowScriptAccessParameter) {
+    allowScriptAccessParameter = 'sameDomain';
+  }
+  var allowScriptAccess = false;
+  switch (allowScriptAccessParameter.toLowerCase()) { // ignoring case here
+    case 'always':
+      allowScriptAccess = true;
+      break;
+    case 'never':
+      allowScriptAccess = false;
+      break;
+    default: // 'samedomain'
+      if (!pageUrl)
+        break;
+      try {
+        // checking if page is in same domain (? same protocol and port)
+        allowScriptAccess =
+          Services.io.newURI('/', null, Services.io.newURI(pageUrl, null, null)).spec ==
+          Services.io.newURI('/', null, Services.io.newURI(url, null, null)).spec;
+      } catch (ex) {}
+      break;
+  }
+  return allowScriptAccess;
+}
+
 // properties required for XPCOM registration:
 function copyProperties(obj, template) {
   for (var prop in template) {
@@ -403,10 +484,7 @@ ShumwayStreamConverter.prototype = new ShumwayStreamConverterBase();
 copyProperties(ShumwayStreamConverter.prototype, {
   classID: Components.ID('{4c6030f7-e20a-264f-5b0e-ada3a9e97384}'),
   classDescription: 'Shumway Content Converter Component',
-  contractID: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=*/*',
-
-  classID2: Components.ID('{4c6030f8-e20a-264f-5b0e-ada3a9e97384}'),
-  contractID2: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=text/html'
+  contractID: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=*/*'
 });
 
 function ShumwayStreamOverlayConverter() {}

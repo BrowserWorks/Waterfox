@@ -847,7 +847,6 @@ MobileMessageCursorParent::DoRequest(const CreateMessageCursorRequest& aRequest)
                                         filter.delivery(),
                                         filter.hasRead(),
                                         filter.read(),
-                                        filter.hasThreadId(),
                                         filter.threadId(),
                                         aRequest.reverse(),
                                         this,

@@ -6,6 +6,7 @@
 package org.mozilla.gecko;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -29,8 +30,6 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.mozilla.gecko.annotation.JNITarget;
-import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.db.BrowserDB;
@@ -40,13 +39,15 @@ import org.mozilla.gecko.gfx.BitmapUtils;
 import org.mozilla.gecko.gfx.LayerView;
 import org.mozilla.gecko.gfx.PanZoomController;
 import org.mozilla.gecko.mozglue.ContextUtils;
+import org.mozilla.gecko.mozglue.GeckoLoader;
+import org.mozilla.gecko.mozglue.JNITarget;
+import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.overlays.ui.ShareDialog;
 import org.mozilla.gecko.prompts.PromptService;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.GeckoRequest;
 import org.mozilla.gecko.util.HardwareCodecCapabilityUtils;
 import org.mozilla.gecko.util.HardwareUtils;
-import org.mozilla.gecko.util.IOUtils;
 import org.mozilla.gecko.util.NativeEventListener;
 import org.mozilla.gecko.util.NativeJSContainer;
 import org.mozilla.gecko.util.NativeJSObject;
@@ -96,6 +97,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.os.MessageQueue;
 import android.os.SystemClock;
 import android.os.Vibrator;
@@ -154,7 +156,7 @@ public class GeckoAppShell
 
         @Override
         public void uncaughtException(final Thread thread, final Throwable exc) {
-            if (GeckoThread.isStateAtLeast(GeckoThread.State.EXITING)) {
+            if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoExited)) {
                 // We've called System.exit. All exceptions after this point are Android
                 // berating us for being nasty to it.
                 return;
@@ -257,6 +259,7 @@ public class GeckoAppShell
 
     // Initialization methods
     public static native void registerJavaUiThread();
+    public static native void nativeInit(ClassLoader clsLoader, MessageQueue msgQueue);
 
     // helper methods
     public static native void onResume();
@@ -336,6 +339,56 @@ public class GeckoAppShell
         return sLayerView;
     }
 
+    public static void runGecko(String apkPath, String args, String url, String type) {
+        // Preparation for pumpMessageLoop()
+        MessageQueue.IdleHandler idleHandler = new MessageQueue.IdleHandler() {
+            @Override public boolean queueIdle() {
+                final Handler geckoHandler = ThreadUtils.sGeckoHandler;
+                Message idleMsg = Message.obtain(geckoHandler);
+                // Use |Message.obj == GeckoHandler| to identify our "queue is empty" message
+                idleMsg.obj = geckoHandler;
+                geckoHandler.sendMessageAtFrontOfQueue(idleMsg);
+                // Keep this IdleHandler
+                return true;
+            }
+        };
+        Looper.myQueue().addIdleHandler(idleHandler);
+
+        // Initialize AndroidBridge.
+        nativeInit(GeckoAppShell.class.getClassLoader(), Looper.myQueue());
+
+        // First argument is the .apk path
+        String combinedArgs = apkPath + " -greomni " + apkPath;
+        if (args != null)
+            combinedArgs += " " + args;
+        if (url != null)
+            combinedArgs += " -url " + url;
+        if (type != null)
+            combinedArgs += " " + type;
+
+        // In un-official builds, we want to load Javascript resources fresh
+        // with each build.  In official builds, the startup cache is purged by
+        // the buildid mechanism, but most un-official builds don't bump the
+        // buildid, so we purge here instead.
+        if (!AppConstants.MOZILLA_OFFICIAL) {
+            Log.w(LOGTAG, "STARTUP PERFORMANCE WARNING: un-official build: purging the " +
+                          "startup (JavaScript) caches.");
+            combinedArgs += " -purgecaches";
+        }
+
+        DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        combinedArgs += " -width " + metrics.widthPixels + " -height " + metrics.heightPixels;
+
+        if (!AppConstants.MOZILLA_OFFICIAL) {
+            Log.d(LOGTAG, "GeckoLoader.nativeRun " + combinedArgs);
+        }
+        // and go
+        GeckoLoader.nativeRun(combinedArgs);
+
+        // Remove pumpMessageLoop() idle handler
+        Looper.myQueue().removeIdleHandler(idleHandler);
+    }
+
     /**
      * If the Gecko thread is running, immediately dispatches the event to
      * Gecko.
@@ -357,7 +410,7 @@ public class GeckoAppShell
             throw new IllegalArgumentException("e cannot be null.");
         }
 
-        if (GeckoThread.isRunning()) {
+        if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
             notifyGeckoOfEvent(e);
             // Gecko will copy the event data into a normal C++ object.
             // We can recycle the event now.
@@ -458,7 +511,8 @@ public class GeckoAppShell
             sendEventToGecko(e);
             sWaitingForEventAck = true;
             while (true) {
-                if (GeckoThread.isStateAtLeast(GeckoThread.State.EXITING)) {
+                if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoExiting) ||
+                        GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoExited)) {
                     // Gecko is quitting; don't do anything.
                     Log.d(LOGTAG, "Skipping Gecko event sync during exit");
                     sWaitingForEventAck = false;
@@ -1002,6 +1056,13 @@ public class GeckoAppShell
         if (subType == null)
             subType = "*";
         return type + "/" + subType;
+    }
+
+    static void safeStreamClose(Closeable stream) {
+        try {
+            if (stream != null)
+                stream.close();
+        } catch (IOException e) {}
     }
 
     static boolean isUriSafeForScheme(Uri aUri) {
@@ -2384,20 +2445,12 @@ public class GeckoAppShell
         return HardwareUtils.isTablet();
     }
 
-    private static boolean sImeWasEnabledOnLastResize = false;
     public static void viewSizeChanged() {
         LayerView v = getLayerView();
-        if (v == null) {
-            return;
-        }
-        boolean imeIsEnabled = v.isIMEEnabled();
-        if (imeIsEnabled && !sImeWasEnabledOnLastResize) {
-            // The IME just came up after not being up, so let's scroll
-            // to the focused input.
+        if (v != null && v.isIMEEnabled()) {
             sendEventToGecko(GeckoEvent.createBroadcastEvent(
                     "ScrollTo:FocusedInput", ""));
         }
-        sImeWasEnabledOnLastResize = imeIsEnabled;
     }
 
     @WrapForJNI(stubName = "GetCurrentNetworkInformationWrapper")
@@ -2431,11 +2484,6 @@ public class GeckoAppShell
     }
 
     @WrapForJNI
-    public static int getScreenAngle() {
-        return GeckoScreenOrientation.getInstance().getAngle();
-    }
-
-    @WrapForJNI
     public static void enableScreenOrientationNotifications() {
         GeckoScreenOrientation.getInstance().enableNotifications();
     }
@@ -2453,6 +2501,24 @@ public class GeckoAppShell
     @WrapForJNI
     public static void unlockScreenOrientation() {
         GeckoScreenOrientation.getInstance().unlock();
+    }
+
+    @WrapForJNI
+    public static boolean pumpMessageLoop(final Message msg) {
+        final Handler geckoHandler = ThreadUtils.sGeckoHandler;
+
+        if (msg.obj == geckoHandler && msg.getTarget() == geckoHandler) {
+            // Our "queue is empty" message; see runGecko()
+            return false;
+        }
+
+        if (msg.getTarget() == null) {
+            Looper.myLooper().quit();
+        } else {
+            msg.getTarget().dispatchMessage(msg);
+        }
+
+        return true;
     }
 
     @WrapForJNI
@@ -2569,13 +2635,13 @@ public class GeckoAppShell
                     // Only alter the intent when we're sure everything has worked
                     intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(imageFile));
                 } finally {
-                    IOUtils.safeStreamClose(is);
+                    safeStreamClose(is);
                 }
             }
         } catch(IOException ex) {
             // If something went wrong, we'll just leave the intent un-changed
         } finally {
-            IOUtils.safeStreamClose(os);
+            safeStreamClose(os);
         }
     }
 

@@ -2,8 +2,8 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
 
-var nodeDeleted = false;
-var presenter;
+let nodeDeleted = false;
+let presenter;
 
 function test() {
   if (!isTiltEnabled()) {

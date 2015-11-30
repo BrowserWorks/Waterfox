@@ -15,7 +15,8 @@ BEGIN_BLUETOOTH_NAMESPACE
 
 using mozilla::ipc::DaemonSocketPDU;
 using mozilla::ipc::DaemonSocketPDUHeader;
-using mozilla::ipc::DaemonSocketResultHandler;
+
+class BluetoothSetupResultHandler;
 
 class BluetoothDaemonA2dpModule
 {
@@ -32,8 +33,7 @@ public:
 
   static const int MAX_NUM_CLIENTS;
 
-  virtual nsresult Send(DaemonSocketPDU* aPDU,
-                        DaemonSocketResultHandler* aRes) = 0;
+  virtual nsresult Send(DaemonSocketPDU* aPDU, void* aUserData) = 0;
 
   virtual nsresult RegisterModule(uint8_t aId, uint8_t aMode,
                                   uint32_t aMaxNumClients,
@@ -55,8 +55,11 @@ public:
                          BluetoothA2dpResultHandler* aRes);
 
 protected:
+  nsresult Send(DaemonSocketPDU* aPDU,
+                BluetoothA2dpResultHandler* aRes);
+
   void HandleSvc(const DaemonSocketPDUHeader& aHeader,
-                 DaemonSocketPDU& aPDU, DaemonSocketResultHandler* aRes);
+                 DaemonSocketPDU& aPDU, void* aUserData);
 
   //
   // Responses
@@ -84,7 +87,7 @@ protected:
 
   void HandleRsp(const DaemonSocketPDUHeader& aHeader,
                  DaemonSocketPDU& aPDU,
-                 DaemonSocketResultHandler* aRes);
+                 void* aUserData);
 
   //
   // Notifications
@@ -122,7 +125,7 @@ protected:
 
   void HandleNtf(const DaemonSocketPDUHeader& aHeader,
                  DaemonSocketPDU& aPDU,
-                 DaemonSocketResultHandler* aRes);
+                 void* aUserData);
 
   static BluetoothA2dpNotificationHandler* sNotificationHandler;
 };
@@ -139,15 +142,15 @@ public:
 
   void Init(
     BluetoothA2dpNotificationHandler* aNotificationHandler,
-    BluetoothA2dpResultHandler* aRes) override;
-  void Cleanup(BluetoothA2dpResultHandler* aRes) override;
+    BluetoothA2dpResultHandler* aRes);
+  void Cleanup(BluetoothA2dpResultHandler* aRes);
 
   /* Connect / Disconnect */
 
   void Connect(const nsAString& aBdAddr,
-               BluetoothA2dpResultHandler* aRes) override;
+               BluetoothA2dpResultHandler* aRes);
   void Disconnect(const nsAString& aBdAddr,
-                  BluetoothA2dpResultHandler* aRes) override;
+                  BluetoothA2dpResultHandler* aRes);
 
 private:
   void DispatchError(BluetoothA2dpResultHandler* aRes,

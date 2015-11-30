@@ -127,6 +127,10 @@ public:
     return mIterationEnd;
   }
 
+  GraphTime StateComputedTime() {
+    return mStateComputedTime;
+  }
+
   virtual void GetAudioBuffer(float** aBuffer, long& aFrames) {
     MOZ_CRASH("This is not an Audio GraphDriver!");
   }
@@ -151,7 +155,15 @@ public:
    */
   void SetGraphTime(GraphDriver* aPreviousDriver,
                     GraphTime aLastSwitchNextIterationStart,
-                    GraphTime aLastSwitchNextIterationEnd);
+                    GraphTime aLastSwitchNextIterationEnd,
+                    GraphTime aLastSwitchStateComputedTime);
+
+  /**
+   * Whenever the graph has computed the time until it has all state
+   * (mStateComputedState), it calls this to indicate the new time until which
+   * we have computed state.
+   */
+  void UpdateStateComputedTime(GraphTime aStateComputedTime);
 
   /**
    * Call this to indicate that another iteration of the control loop is
@@ -178,12 +190,12 @@ public:
   virtual bool OnThread() = 0;
 
 protected:
-  GraphTime StateComputedTime() const;
-
   // Time of the start of this graph iteration.
   GraphTime mIterationStart;
   // Time of the end of this graph iteration.
   GraphTime mIterationEnd;
+  // Time, in the future, for which blocking has been computed.
+  GraphTime mStateComputedTime;
   // The MediaStreamGraphImpl that owns this driver. This has a lifetime longer
   // than the driver, and will never be null.
   MediaStreamGraphImpl* mGraphImpl;
@@ -330,7 +342,8 @@ class AudioCallbackDriver : public GraphDriver,
                             public MixerCallbackReceiver
 {
 public:
-  explicit AudioCallbackDriver(MediaStreamGraphImpl* aGraphImpl);
+  explicit AudioCallbackDriver(MediaStreamGraphImpl* aGraphImpl,
+                               dom::AudioChannel aChannel = dom::AudioChannel::Normal);
   virtual ~AudioCallbackDriver();
 
   virtual void Destroy() override;

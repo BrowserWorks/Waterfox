@@ -28,7 +28,7 @@ Cu.import("resource://gre/modules/services/healthreport/providers.jsm");
 Cu.import("resource://testing-common/services/datareporting/mocks.jsm");
 
 
-var APP_INFO = {
+let APP_INFO = {
   vendor: "Mozilla",
   name: "xpcshell",
   ID: "xpcshell@tests.mozilla.org",

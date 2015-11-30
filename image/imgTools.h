@@ -17,9 +17,6 @@
     {0xbd, 0xef, 0x2c, 0x7a, 0xe2, 0x49, 0x96, 0x7a} \
 }
 
-namespace mozilla {
-namespace image {
-
 class imgTools final : public imgITools
 {
 public:
@@ -31,8 +28,4 @@ public:
 private:
   virtual ~imgTools();
 };
-
-} // namespace image
-} // namespace mozilla
-
 #endif // mozilla_image_imgITools_h

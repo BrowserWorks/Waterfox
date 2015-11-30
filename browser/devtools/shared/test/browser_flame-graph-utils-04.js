@@ -3,9 +3,9 @@
 
 // Tests if (idle) nodes are added when necessary in the flame graph data.
 
-var {FlameGraphUtils} = require("devtools/shared/widgets/FlameGraph");
-var {PALLETTE_SIZE} = require("devtools/shared/widgets/FlameGraph");
-var {FrameNode} = require("devtools/performance/tree-model");
+let {FlameGraphUtils} = require("devtools/shared/widgets/FlameGraph");
+let {PALLETTE_SIZE} = require("devtools/shared/widgets/FlameGraph");
+let {FrameNode} = require("devtools/performance/tree-model");
 
 add_task(function*() {
   yield promiseTab("about:blank");
@@ -47,7 +47,7 @@ function* performTest() {
   }
 }
 
-var TEST_DATA = synthesizeProfileForTest([{
+let TEST_DATA = synthesizeProfileForTest([{
   frames: [{
     location: "http://A"
   }, {
@@ -80,7 +80,7 @@ var TEST_DATA = synthesizeProfileForTest([{
   time: 150
 }]);
 
-var EXPECTED_OUTPUT = [{
+let EXPECTED_OUTPUT = [{
   blocks: []
 }, {
   blocks: []

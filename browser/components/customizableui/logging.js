@@ -7,7 +7,7 @@
 XPCOMUtils.defineLazyModuleGetter(this, "console",
   "resource://gre/modules/devtools/Console.jsm");
 
-var gDebug = false;
+let gDebug = false;
 try {
   gDebug = Services.prefs.getBoolPref(kPrefCustomizationDebug);
 } catch (e) {}

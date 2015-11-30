@@ -17,7 +17,7 @@ TimeEvent::TimeEvent(EventTarget* aOwner,
                      nsPresContext* aPresContext,
                      InternalSMILTimeEvent* aEvent)
   : Event(aOwner, aPresContext,
-          aEvent ? aEvent : new InternalSMILTimeEvent(false, eVoidEvent))
+          aEvent ? aEvent : new InternalSMILTimeEvent(false, 0))
   , mDetail(mEvent->AsSMILTimeEvent()->detail)
 {
   if (aEvent) {
@@ -80,11 +80,14 @@ TimeEvent::InitTimeEvent(const nsAString& aTypeArg,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-already_AddRefed<TimeEvent>
-NS_NewDOMTimeEvent(EventTarget* aOwner,
+nsresult
+NS_NewDOMTimeEvent(nsIDOMEvent** aInstancePtrResult,
+                   EventTarget* aOwner,
                    nsPresContext* aPresContext,
                    InternalSMILTimeEvent* aEvent)
 {
-  nsRefPtr<TimeEvent> it = new TimeEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
+  TimeEvent* it = new TimeEvent(aOwner, aPresContext, aEvent);
+  NS_ADDREF(it);
+  *aInstancePtrResult = static_cast<Event*>(it);
+  return NS_OK;
 }

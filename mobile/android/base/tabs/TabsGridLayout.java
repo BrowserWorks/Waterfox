@@ -5,22 +5,21 @@
 
 package org.mozilla.gecko.tabs;
 
-import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.animation.PropertyAnimator;
+import org.mozilla.gecko.animation.ViewHelper;
 import org.mozilla.gecko.tabs.TabsPanel.TabsLayout;
-import org.mozilla.gecko.widget.themed.ThemedRelativeLayout;
+import org.mozilla.gecko.widget.ThemedRelativeLayout;
 
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.view.MotionEvent;
@@ -39,13 +38,13 @@ import com.nineoldandroids.animation.AnimatorSet;
 import com.nineoldandroids.animation.ObjectAnimator;
 import com.nineoldandroids.animation.PropertyValuesHolder;
 import com.nineoldandroids.animation.ValueAnimator;
-import com.nineoldandroids.view.ViewHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A tabs layout implementation for the tablet redesign (bug 1014156) and later ported to mobile (bug 1193745).
+ * A tabs layout implementation for the tablet redesign (bug 1014156).
+ * Expected to replace TabsListLayout once complete.
  */
 
 class TabsGridLayout extends GridView
@@ -57,22 +56,24 @@ class TabsGridLayout extends GridView
     private static final int ANIM_TIME_MS = 200;
     private static final DecelerateInterpolator ANIM_INTERPOLATOR = new DecelerateInterpolator();
 
-    private final SparseArray<PointF> tabLocations = new SparseArray<PointF>();
-    private final boolean isPrivate;
-    private final TabsLayoutAdapter tabsAdapter;
-    private final int columnWidth;
-    private TabsPanel tabsPanel;
+    private final Context mContext;
+    private final SparseArray<PointF> mTabLocations = new SparseArray<PointF>();
+    private final boolean mIsPrivate;
+    private final TabsLayoutAdapter mTabsAdapter;
+    private final int mColumnWidth;
+    private TabsPanel mTabsPanel;
     private int lastSelectedTabId;
 
-    public TabsGridLayout(final Context context, final AttributeSet attrs) {
+    public TabsGridLayout(Context context, AttributeSet attrs) {
         super(context, attrs, R.attr.tabGridLayoutViewStyle);
+        mContext = context;
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TabsLayout);
-        isPrivate = (a.getInt(R.styleable.TabsLayout_tabs, 0x0) == 1);
+        mIsPrivate = (a.getInt(R.styleable.TabsLayout_tabs, 0x0) == 1);
         a.recycle();
 
-        tabsAdapter = new TabsGridLayoutAdapter(context);
-        setAdapter(tabsAdapter);
+        mTabsAdapter = new TabsGridLayoutAdapter(mContext);
+        setAdapter(mTabsAdapter);
 
         setRecyclerListener(new RecyclerListener() {
             @Override
@@ -87,10 +88,10 @@ class TabsGridLayout extends GridView
         setClipToPadding(false);
 
         final Resources resources = getResources();
-        columnWidth = resources.getDimensionPixelSize(R.dimen.tab_panel_column_width);
+        mColumnWidth = resources.getDimensionPixelSize(R.dimen.new_tablet_tab_panel_column_width);
 
-        final int padding = resources.getDimensionPixelSize(R.dimen.tab_panel_grid_padding);
-        final int paddingTop = resources.getDimensionPixelSize(R.dimen.tab_panel_grid_padding_top);
+        final int padding = resources.getDimensionPixelSize(R.dimen.new_tablet_tab_panel_grid_padding);
+        final int paddingTop = resources.getDimensionPixelSize(R.dimen.new_tablet_tab_panel_grid_padding_top);
 
         // Lets set double the top padding on the bottom so that the last row shows up properly!
         // Your demise, GridView, cannot come fast enough.
@@ -113,13 +114,13 @@ class TabsGridLayout extends GridView
     }
 
     private void populateTabLocations(final Tab removedTab) {
-        tabLocations.clear();
+        mTabLocations.clear();
 
         final int firstPosition = getFirstVisiblePosition();
         final int lastPosition = getLastVisiblePosition();
         final int numberOfColumns = getNumColumns();
         final int childCount = getChildCount();
-        final int removedPosition = tabsAdapter.getPositionForTab(removedTab);
+        final int removedPosition = mTabsAdapter.getPositionForTab(removedTab);
 
         for (int x = 1, i = (removedPosition - firstPosition) + 1; i < childCount; i++, x++) {
             final View child = getChildAt(i);
@@ -127,8 +128,7 @@ class TabsGridLayout extends GridView
                 // Reset the transformations here in case the user is swiping tabs away fast and they swipe a tab
                 // before the last animation has finished (bug 1179195).
                 resetTransforms(child);
-
-                tabLocations.append(x, new PointF(child.getX(), child.getY()));
+                mTabLocations.append(x, new PointF(child.getX(), child.getY()));
             }
         }
 
@@ -142,7 +142,7 @@ class TabsGridLayout extends GridView
 
             final int removedHeight = getChildAt(0).getMeasuredHeight();
             final int verticalSpacing =
-                    getResources().getDimensionPixelOffset(R.dimen.tab_panel_grid_vspacing);
+                    getResources().getDimensionPixelOffset(R.dimen.new_tablet_tab_panel_grid_vspacing);
 
             ValueAnimator paddingAnimator = ValueAnimator.ofInt(getPaddingBottom() + removedHeight + verticalSpacing, getPaddingBottom());
             paddingAnimator.setDuration(ANIM_TIME_MS * 2);
@@ -160,7 +160,7 @@ class TabsGridLayout extends GridView
 
     @Override
     public void setTabsPanel(TabsPanel panel) {
-        tabsPanel = panel;
+        mTabsPanel = panel;
     }
 
     @Override
@@ -172,7 +172,7 @@ class TabsGridLayout extends GridView
 
         Tab currentlySelectedTab = Tabs.getInstance().getSelectedTab();
         if (lastSelectedTabId != currentlySelectedTab.getId()) {
-            smoothScrollToPosition(tabsAdapter.getPositionForTab(currentlySelectedTab));
+            smoothScrollToPosition(mTabsAdapter.getPositionForTab(currentlySelectedTab));
         }
     }
 
@@ -182,7 +182,7 @@ class TabsGridLayout extends GridView
         setVisibility(View.GONE);
         Tabs.unregisterOnTabsChangedListener(this);
         GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Tab:Screenshot:Cancel", ""));
-        tabsAdapter.clear();
+        mTabsAdapter.clear();
     }
 
     @Override
@@ -191,7 +191,7 @@ class TabsGridLayout extends GridView
     }
 
     private void autoHidePanel() {
-        tabsPanel.autoHidePanel();
+        mTabsPanel.autoHidePanel();
     }
 
     @Override
@@ -203,17 +203,15 @@ class TabsGridLayout extends GridView
                 break;
 
             case CLOSED:
-
-                // This is limited to >= ICS as animations on GB devices are generally pants
-                if (Build.VERSION.SDK_INT >= 11 && tabsAdapter.getCount() > 0) {
+                if (mTabsAdapter.getCount() > 0) {
                     animateRemoveTab(tab);
                 }
 
                 final Tabs tabsInstance = Tabs.getInstance();
 
-                if (tabsAdapter.removeTab(tab)) {
-                    if (tab.isPrivate() == isPrivate && tabsAdapter.getCount() > 0) {
-                        int selected = tabsAdapter.getPositionForTab(tabsInstance.getSelectedTab());
+                if (mTabsAdapter.removeTab(tab)) {
+                    if (tab.isPrivate() == mIsPrivate && mTabsAdapter.getCount() > 0) {
+                        int selected = mTabsAdapter.getPositionForTab(tabsInstance.getSelectedTab());
                         updateSelectedStyle(selected);
                     }
                     if (!tab.isPrivate()) {
@@ -242,7 +240,7 @@ class TabsGridLayout extends GridView
             case TITLE:
             case RECORDING_CHANGE:
             case AUDIO_PLAYING_CHANGE:
-                View view = getChildAt(tabsAdapter.getPositionForTab(tab) - getFirstVisiblePosition());
+                View view = getChildAt(mTabsAdapter.getPositionForTab(tab) - getFirstVisiblePosition());
                 if (view == null)
                     return;
 
@@ -253,7 +251,7 @@ class TabsGridLayout extends GridView
 
     // Updates the selected position in the list so that it will be scrolled to the right place.
     private void updateSelectedPosition() {
-        int selected = tabsAdapter.getPositionForTab(Tabs.getInstance().getSelectedTab());
+        int selected = mTabsAdapter.getPositionForTab(Tabs.getInstance().getSelectedTab());
         updateSelectedStyle(selected);
 
         if (selected != -1) {
@@ -267,13 +265,8 @@ class TabsGridLayout extends GridView
      * @param selected position of the selected tab
      */
     private void updateSelectedStyle(int selected) {
-        for (int i = 0; i < tabsAdapter.getCount(); i++) {
-            // setItemChecked doesn't exist until API 11, despite what the API docs say!
-            if (AppConstants.Versions.feature11Plus) {
-                setItemChecked(i, (i == selected));
-            } else {
-                setSelection(i);
-            }
+        for (int i = 0; i < mTabsAdapter.getCount(); i++) {
+            setItemChecked(i, (i == selected));
         }
     }
 
@@ -284,11 +277,11 @@ class TabsGridLayout extends GridView
 
         Iterable<Tab> allTabs = Tabs.getInstance().getTabsInOrder();
         for (Tab tab : allTabs) {
-            if (tab.isPrivate() == isPrivate)
+            if (tab.isPrivate() == mIsPrivate)
                 tabData.add(tab);
         }
 
-        tabsAdapter.setTabs(tabData);
+        mTabsAdapter.setTabs(tabData);
         updateSelectedPosition();
     }
 
@@ -313,14 +306,14 @@ class TabsGridLayout extends GridView
         for (Tab tab : tabs) {
             // In the normal panel we want to close all tabs (both private and normal),
             // but in the private panel we only want to close private tabs.
-            if (!isPrivate || tab.isPrivate()) {
+            if (!mIsPrivate || tab.isPrivate()) {
                 Tabs.getInstance().closeTab(tab, false);
             }
         }
     }
 
     private View getViewForTab(Tab tab) {
-        final int position = tabsAdapter.getPositionForTab(tab);
+        final int position = mTabsAdapter.getPositionForTab(tab);
         return getChildAt(position - getFirstVisiblePosition());
     }
 
@@ -332,7 +325,7 @@ class TabsGridLayout extends GridView
     }
 
     private void animateRemoveTab(final Tab removedTab) {
-        final int removedPosition = tabsAdapter.getPositionForTab(removedTab);
+        final int removedPosition = mTabsAdapter.getPositionForTab(removedTab);
 
         final View removedView = getViewForTab(removedTab);
 
@@ -365,12 +358,12 @@ class TabsGridLayout extends GridView
 
                     if (i % numberOfColumns == numberOfColumns - 1) {
                         // Animate X & Y
-                        translateX = PropertyValuesHolder.ofFloat("translationX", -(columnWidth * numberOfColumns), 0);
+                        translateX = PropertyValuesHolder.ofFloat("translationX", -(mColumnWidth * numberOfColumns), 0);
                         translateY = PropertyValuesHolder.ofFloat("translationY", removedHeight, 0);
                         animator = ObjectAnimator.ofPropertyValuesHolder(child, translateX, translateY);
                     } else {
                         // Just animate X
-                        translateX = PropertyValuesHolder.ofFloat("translationX", columnWidth, 0);
+                        translateX = PropertyValuesHolder.ofFloat("translationX", mColumnWidth, 0);
                         animator = ObjectAnimator.ofPropertyValuesHolder(child, translateX);
                     }
                     animator.setStartDelay(x * ANIM_DELAY_MULTIPLE_MS);
@@ -389,7 +382,7 @@ class TabsGridLayout extends GridView
                 for (int x = 1, i = (removedPosition - firstPosition) + 1; i < childCount; i++, x++) {
                     final View child = getChildAt(i);
 
-                    final PointF targetLocation = tabLocations.get(x + 1);
+                    final PointF targetLocation = mTabLocations.get(x + 1);
                     if (targetLocation == null) {
                         continue;
                     }
@@ -402,7 +395,6 @@ class TabsGridLayout extends GridView
             }
         });
     }
-
 
     private void animateCancel(final View view) {
         PropertyAnimator animator = new PropertyAnimator(ANIM_TIME_MS);
@@ -429,7 +421,7 @@ class TabsGridLayout extends GridView
         final private Button.OnClickListener mCloseClickListener;
 
         public TabsGridLayoutAdapter(Context context) {
-            super(context, R.layout.tabs_layout_item_view);
+            super(context, R.layout.new_tablet_tabs_item_cell);
 
             mCloseClickListener = new Button.OnClickListener() {
                 @Override
@@ -444,7 +436,7 @@ class TabsGridLayout extends GridView
             final TabsLayoutItemView item = super.newView(position, parent);
 
             item.setCloseOnClickListener(mCloseClickListener);
-            ((ThemedRelativeLayout) item.findViewById(R.id.wrapper)).setPrivateMode(isPrivate);
+            ((ThemedRelativeLayout) item.findViewById(R.id.wrapper)).setPrivateMode(mIsPrivate);
 
             return item;
         }

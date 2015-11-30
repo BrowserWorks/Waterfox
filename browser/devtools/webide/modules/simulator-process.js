@@ -165,7 +165,7 @@ function CustomSimulatorProcess(options) {
   this.options = options;
 }
 
-var CSPp = CustomSimulatorProcess.prototype = Object.create(SimulatorProcess.prototype);
+let CSPp = CustomSimulatorProcess.prototype = Object.create(SimulatorProcess.prototype);
 
 // Compute B2G binary file handle.
 Object.defineProperty(CSPp, "b2gBinary", {
@@ -193,7 +193,7 @@ function AddonSimulatorProcess(addon, options) {
   this.options = options;
 }
 
-var ASPp = AddonSimulatorProcess.prototype = Object.create(SimulatorProcess.prototype);
+let ASPp = AddonSimulatorProcess.prototype = Object.create(SimulatorProcess.prototype);
 
 // Compute B2G binary file handle.
 Object.defineProperty(ASPp, "b2gBinary", {
@@ -253,7 +253,7 @@ function OldAddonSimulatorProcess(addon, options) {
   this.options = options;
 }
 
-var OASPp = OldAddonSimulatorProcess.prototype = Object.create(AddonSimulatorProcess.prototype);
+let OASPp = OldAddonSimulatorProcess.prototype = Object.create(AddonSimulatorProcess.prototype);
 
 // Compute B2G binary file handle.
 Object.defineProperty(OASPp, "b2gBinary", {

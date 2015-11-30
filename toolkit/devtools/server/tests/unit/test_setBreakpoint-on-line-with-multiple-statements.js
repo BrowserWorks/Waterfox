@@ -1,6 +1,6 @@
 "use strict";
 
-var SOURCE_URL = getFileUrl("setBreakpoint-on-line-with-multiple-statements.js");
+let SOURCE_URL = getFileUrl("setBreakpoint-on-line-with-multiple-statements.js");
 
 function run_test() {
   return Task.spawn(function* () {

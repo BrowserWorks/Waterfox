@@ -281,7 +281,7 @@ FrameAnimator::GetCompositedFrame(uint32_t aFrameNum)
   LookupResult result =
     SurfaceCache::Lookup(ImageKey(mImage),
                          RasterSurfaceKey(mSize,
-                                          DefaultSurfaceFlags(),
+                                          0,  // Default decode flags.
                                           aFrameNum));
   MOZ_ASSERT(!result || !result.DrawableRef()->GetIsPaletted(),
              "About to return a paletted frame");
@@ -291,18 +291,13 @@ FrameAnimator::GetCompositedFrame(uint32_t aFrameNum)
 int32_t
 FrameAnimator::GetTimeoutForFrame(uint32_t aFrameNum) const
 {
-  int32_t rawTimeout = 0;
-
   RawAccessFrameRef frame = GetRawFrame(aFrameNum);
-  if (frame) {
-    AnimationData data = frame->GetAnimationData();
-    rawTimeout = data.mRawTimeout;
-  } else if (aFrameNum == 0) {
-    rawTimeout = mFirstFrameTimeout;
-  } else {
+  if (!frame) {
     NS_WARNING("No frame; called GetTimeoutForFrame too early?");
     return 100;
   }
+
+  AnimationData data = frame->GetAnimationData();
 
   // Ensure a minimal time between updates so we don't throttle the UI thread.
   // consider 0 == unspecified and make it fast but not too fast.  Unless we
@@ -317,11 +312,11 @@ FrameAnimator::GetTimeoutForFrame(uint32_t aFrameNum) const
   // It seems that there are broken tools out there that set a 0ms or 10ms
   // timeout when they really want a "default" one.  So munge values in that
   // range.
-  if (rawTimeout >= 0 && rawTimeout <= 10) {
+  if (data.mRawTimeout >= 0 && data.mRawTimeout <= 10) {
     return 100;
   }
 
-  return rawTimeout;
+  return data.mRawTimeout;
 }
 
 static void
@@ -332,7 +327,7 @@ DoCollectSizeOfCompositingSurfaces(const RawAccessFrameRef& aSurface,
 {
   // Concoct a SurfaceKey for this surface.
   SurfaceKey key = RasterSurfaceKey(aSurface->GetImageSize(),
-                                    DefaultSurfaceFlags(),
+                                    imgIContainer::DECODE_FLAGS_DEFAULT,
                                     /* aFrameNum = */ 0);
 
   // Create a counter for this surface.
@@ -374,7 +369,7 @@ FrameAnimator::GetRawFrame(uint32_t aFrameNum) const
   LookupResult result =
     SurfaceCache::Lookup(ImageKey(mImage),
                          RasterSurfaceKey(mSize,
-                                          DefaultSurfaceFlags(),
+                                          0,  // Default decode flags.
                                           aFrameNum));
   return result ? result.DrawableRef()->RawAccessRef()
                 : RawAccessFrameRef();

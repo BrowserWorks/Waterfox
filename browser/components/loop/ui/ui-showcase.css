@@ -2,20 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-html[dir="rtl"]:not(#outer-html) {
-  /* Temporary work around and visual hack -
-   * Scope the root body overflow visible to remove the scroll bars that appear
-   * inside an iFrame. Can remove this rule after core layout fix for
-   * https://bugzilla.mozilla.org/show_bug.cgi?id=1204680 has landed.
-   */
-  overflow: hidden;
-}
-
 body {
-  /* Override the "overflow: hidden" rule on the body in common.css.
-   * Very important; otherwise you can't scroll the showcase.
+  /* Override the hidden in common.css. Very important otherwise you can't
+   * scroll the showcase.
    */
   overflow: visible;
+}
+
+.overflow-hidden {
+  overflow: hidden;
 }
 
 .showcase {
@@ -63,8 +58,6 @@ body {
 }
 
 .showcase > section .comp {
-  /* contain absolute positioned elements such as dropdowns */
-  position: relative;
   margin: 0 auto; /* width is usually set programmatically */
 }
 
@@ -76,7 +69,6 @@ body {
 
 .showcase > section > .example {
   margin-bottom: 6em;
-  background: #fbfbfb;
 }
 
 .showcase > section > h2 {
@@ -98,6 +90,10 @@ body {
 .showcase > section .example > h3 a {
   text-decoration: none;
   color: #555;
+}
+
+.showcase .checkbox-wrapper label {
+  font-weight: bold;
 }
 
 .showcase .checkbox.checked {
@@ -168,10 +164,4 @@ body {
 /* Temporary until bug 1168829 is completed */
 .standalone.text-chat-example .text-chat-view {
   height: 400px;
-}
-
-/* Force dropdown menus to display. */
-.force-menu-show .icons,
-.force-menu-show .dropdown-menu {
-  display: inline-block !important;
 }

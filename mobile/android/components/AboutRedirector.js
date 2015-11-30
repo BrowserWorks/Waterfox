@@ -8,7 +8,7 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-var modules = {
+let modules = {
   // about:
   "": {
     uri: "chrome://browser/content/about.xhtml",
@@ -36,7 +36,7 @@ var modules = {
   rights: {
     uri: AppConstants.MOZ_OFFICIAL_BRANDING ?
       "chrome://browser/content/aboutRights.xhtml" :
-      "chrome://global/content/aboutRights.xhtml",
+      "chrome://global/content/aboutRights-unbranded.xhtml",
     privileged: false
   },
   blocked: {
@@ -86,12 +86,6 @@ if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
 if (AppConstants.MOZ_DEVICES) {
   modules['devices'] = {
     uri: "chrome://browser/content/aboutDevices.xhtml",
-    privileged: true
-  };
-}
-if (!AppConstants.MOZ_ANDROID_NATIVE_ACCOUNT_UI) {
-  modules['accounts'] = {
-    uri: "chrome://browser/content/aboutAccounts.xhtml",
     privileged: true
   };
 }

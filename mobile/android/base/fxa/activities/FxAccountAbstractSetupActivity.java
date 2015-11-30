@@ -32,7 +32,6 @@ import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
-import org.mozilla.gecko.util.ColorUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -136,12 +135,12 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
       passwordEdit.setTransformationMethod(PasswordTransformationMethod.getInstance());
       showPasswordButton.setText(R.string.fxaccount_password_show);
       showPasswordButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.fxaccount_password_button_show_background));
-      showPasswordButton.setTextColor(ColorUtils.getColor(this, R.color.fxaccount_password_show_textcolor));
+      showPasswordButton.setTextColor(getResources().getColor(R.color.fxaccount_password_show_textcolor));
     } else {
       passwordEdit.setTransformationMethod(SingleLineTransformationMethod.getInstance());
       showPasswordButton.setText(R.string.fxaccount_password_hide);
       showPasswordButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.fxaccount_password_button_hide_background));
-      showPasswordButton.setTextColor(ColorUtils.getColor(this, R.color.fxaccount_password_hide_textcolor));
+      showPasswordButton.setTextColor(getResources().getColor(R.color.fxaccount_password_hide_textcolor));
     }
     passwordEdit.setSelection(start, stop);
   }

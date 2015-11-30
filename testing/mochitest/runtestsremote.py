@@ -283,8 +283,6 @@ def run_test_harness(options):
     if options is None:
         raise ValueError("Invalid options specified, use --help for a list of valid options")
 
-    options.runByDir = False
-
     dm = options.dm
     auto.setDeviceManager(dm)
     mochitest = MochiRemote(auto, dm, options)
@@ -292,13 +290,6 @@ def run_test_harness(options):
     log = mochitest.log
     message_logger.logger = log
     mochitest.message_logger = message_logger
-
-    # Check that Firefox is installed
-    expected = options.app.split('/')[-1]
-    installed = dm.shellCheckOutput(['pm', 'list', 'packages', expected])
-    if expected not in installed:
-        log.error("%s is not installed on this device" % expected)
-        return 1
 
     productPieces = options.remoteProductName.split('.')
     if (productPieces is not None):

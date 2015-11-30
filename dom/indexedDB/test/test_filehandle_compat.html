@@ -35,9 +35,6 @@
 
     request = lockedFile.getMetadata({ size: true });
     ok(request.lockedFile === lockedFile, "Correct property");
-    request.onerror = errorHandler;
-    request.onsuccess = grabEventAndContinueHandler;
-    event = yield undefined;
 
     finishTest();
     yield undefined;

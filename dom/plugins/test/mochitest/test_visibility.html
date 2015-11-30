@@ -21,9 +21,11 @@
   var didPaint = function() {};
 
   function startTest() {
-    if (p.getPaintCount() < 1) {
-      setTimeout(startTest, 0);
-      return;
+    if (SimpleTest.testPluginIsOOP()) {
+      if (p.getPaintCount() < 1) {
+        setTimeout(startTest, 0);
+        return;
+      }
     }
 
     didPaint = function() {

@@ -14,7 +14,7 @@ const {
 } = require("devtools/server/protocol");
 const events = require("sdk/event/core");
 
-var PerformanceEntriesActor = exports.PerformanceEntriesActor = ActorClass({
+let PerformanceEntriesActor = exports.PerformanceEntriesActor = ActorClass({
 
   typeName: "performanceEntries",
 

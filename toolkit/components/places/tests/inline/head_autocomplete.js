@@ -184,7 +184,7 @@ function run_test() {
   run_next_test();
 }
 
-var gAutoCompleteTests = [];
+let gAutoCompleteTests = [];
 function add_autocomplete_test(aTestData) {
   gAutoCompleteTests.push(aTestData);
 }

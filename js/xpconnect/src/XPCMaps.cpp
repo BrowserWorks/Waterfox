@@ -173,7 +173,7 @@ Native2WrappedNativeMap::newMap(int length)
 }
 
 Native2WrappedNativeMap::Native2WrappedNativeMap(int length)
-  : mTable(new PLDHashTable(PLDHashTable::StubOps(), sizeof(Entry), length))
+  : mTable(new PLDHashTable(PL_DHashGetStubOps(), sizeof(Entry), length))
 {
 }
 
@@ -201,8 +201,8 @@ const struct PLDHashTableOps IID2WrappedJSClassMap::Entry::sOps =
 {
     HashIIDPtrKey,
     MatchIIDPtrKey,
-    PLDHashTable::MoveEntryStub,
-    PLDHashTable::ClearEntryStub
+    PL_DHashMoveEntryStub,
+    PL_DHashClearEntryStub
 };
 
 // static
@@ -229,8 +229,8 @@ const struct PLDHashTableOps IID2NativeInterfaceMap::Entry::sOps =
 {
     HashIIDPtrKey,
     MatchIIDPtrKey,
-    PLDHashTable::MoveEntryStub,
-    PLDHashTable::ClearEntryStub
+    PL_DHashMoveEntryStub,
+    PL_DHashClearEntryStub
 };
 
 // static
@@ -273,7 +273,7 @@ ClassInfo2NativeSetMap::newMap(int length)
 }
 
 ClassInfo2NativeSetMap::ClassInfo2NativeSetMap(int length)
-  : mTable(new PLDHashTable(PLDHashTable::StubOps(), sizeof(Entry), length))
+  : mTable(new PLDHashTable(PL_DHashGetStubOps(), sizeof(Entry), length))
 {
 }
 
@@ -301,7 +301,7 @@ ClassInfo2WrappedNativeProtoMap::newMap(int length)
 }
 
 ClassInfo2WrappedNativeProtoMap::ClassInfo2WrappedNativeProtoMap(int length)
-  : mTable(new PLDHashTable(PLDHashTable::StubOps(), sizeof(Entry), length))
+  : mTable(new PLDHashTable(PL_DHashGetStubOps(), sizeof(Entry), length))
 {
 }
 
@@ -401,8 +401,8 @@ const struct PLDHashTableOps NativeSetMap::Entry::sOps =
 {
     HashNativeKey,
     Match,
-    PLDHashTable::MoveEntryStub,
-    PLDHashTable::ClearEntryStub
+    PL_DHashMoveEntryStub,
+    PL_DHashClearEntryStub
 };
 
 // static
@@ -456,7 +456,7 @@ const struct PLDHashTableOps IID2ThisTranslatorMap::Entry::sOps =
 {
     HashIIDPtrKey,
     Match,
-    PLDHashTable::MoveEntryStub,
+    PL_DHashMoveEntryStub,
     Clear
 };
 
@@ -527,8 +527,8 @@ const struct PLDHashTableOps XPCNativeScriptableSharedMap::Entry::sOps =
 {
     Hash,
     Match,
-    PLDHashTable::MoveEntryStub,
-    PLDHashTable::ClearEntryStub
+    PL_DHashMoveEntryStub,
+    PL_DHashClearEntryStub
 };
 
 // static
@@ -557,7 +557,8 @@ XPCNativeScriptableSharedMap::GetNewOrUsed(uint32_t flags,
     NS_PRECONDITION(si,"bad param");
 
     XPCNativeScriptableShared key(flags, name);
-    auto entry = static_cast<Entry*>(mTable->Add(&key, fallible));
+    Entry* entry = static_cast<Entry*>
+        (PL_DHashTableAdd(mTable, &key, fallible));
     if (!entry)
         return false;
 
@@ -585,7 +586,7 @@ XPCWrappedNativeProtoMap::newMap(int length)
 }
 
 XPCWrappedNativeProtoMap::XPCWrappedNativeProtoMap(int length)
-  : mTable(new PLDHashTable(PLDHashTable::StubOps(), sizeof(PLDHashEntryStub),
+  : mTable(new PLDHashTable(PL_DHashGetStubOps(), sizeof(PLDHashEntryStub),
                             length))
 {
 }

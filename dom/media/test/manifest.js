@@ -62,7 +62,7 @@ var gVideoTests = [
 // during resource download.
 var gProgressTests = [
   { name:"r11025_u8_c1.wav", type:"audio/x-wav", duration:1.0, size:11069 },
-  { name:"big.wav", type:"audio/x-wav", duration:9.278982, size:102444 },
+  { name:"big.wav", type:"audio/x-wav", duration:9.278981, size:102444 },
   { name:"seek.ogv", type:"video/ogg", duration:3.966, size:285310 },
   { name:"320x240.ogv", type:"video/ogg", width:320, height:240, duration:0.266, size:28942 },
   { name:"seek.webm", type:"video/webm", duration:3.966, size:215529 },
@@ -109,7 +109,7 @@ var gPausedAfterEndedTests = gSmallTests.concat([
 // Test the mozHasAudio property, and APIs that detect different kinds of
 // tracks
 var gTrackTests = [
-  { name:"big.wav", type:"audio/x-wav", duration:9.278982, size:102444, hasAudio:true, hasVideo:false },
+  { name:"big.wav", type:"audio/x-wav", duration:9.278981, size:102444, hasAudio:true, hasVideo:false },
   { name:"320x240.ogv", type:"video/ogg", width:320, height:240, duration:0.266, size:28942, hasAudio:false, hasVideo:true },
   { name:"short-video.ogv", type:"video/ogg", duration:1.081, hasAudio:true, hasVideo:true },
   { name:"seek.webm", type:"video/webm", duration:3.966, size:215529, hasAudio:false, hasVideo:true },
@@ -124,11 +124,6 @@ var gClosingConnectionsTest = [
 // currently supported by the media encoder.
 var gMediaRecorderTests = [
   { name:"detodos.opus", type:"audio/ogg; codecs=opus", duration:2.9135 }
-];
-
-// Used by video media recorder tests
-var gMediaRecorderVideoTests = [
-  { name:"seek.webm", type:"video/webm", width:320, height:240, duration:3.966 },
 ];
 
 // These are files that we want to make sure we can play through.  We can
@@ -261,7 +256,7 @@ var gPlayTests = [
 
 // A file for each type we can support.
 var gSnifferTests = [
-  { name:"big.wav", type:"audio/x-wav", duration:9.278982, size:102444 },
+  { name:"big.wav", type:"audio/x-wav", duration:9.278981, size:102444 },
   { name:"320x240.ogv", type:"video/ogg", width:320, height:240, duration:0.233, size:28942 },
   { name:"seek.webm", type:"video/webm", duration:3.966, size:215529 },
   { name:"gizmo.mp4", type:"video/mp4", duration:5.56, size:383631 },
@@ -554,7 +549,7 @@ var gDecodeErrorTests = [
 
 // These are files that are used for media fragments tests
 var gFragmentTests = [
-  { name:"big.wav", type:"audio/x-wav", duration:9.278982, size:102444 }
+  { name:"big.wav", type:"audio/x-wav", duration:9.278981, size:102444 }
 ];
 
 // Used by test_chaining.html. The |links| attributes is the number of links in
@@ -792,6 +787,7 @@ var gEMETests = [
   },
   {
     name:"400x300 audio&video tracks, each with its key",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -823,6 +819,7 @@ var gEMETests = [
   },
   {
     name:"640x480@624kbps audio&video tracks, each with its key",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -854,6 +851,7 @@ var gEMETests = [
   },
   {
     name:"640x480@959kbps audio&video tracks, each with its key",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -885,6 +883,7 @@ var gEMETests = [
   },
   {
     name:"640x480 then 400x300, same key (1st) per track",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -917,6 +916,7 @@ var gEMETests = [
   },
   {
     name:"640x480 then 400x300, same key (2nd) per track",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -949,6 +949,7 @@ var gEMETests = [
   },
   {
     name:"640x480 with 1st keys then 400x300 with 2nd keys",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -982,6 +983,7 @@ var gEMETests = [
   },
   {
     name:"400x300 with 1st keys then 640x480 with 2nd keys",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -1015,6 +1017,7 @@ var gEMETests = [
   },
   {
     name:"640x480@959kbps with 1st keys then 640x480@624kbps with 2nd keys",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -1048,6 +1051,7 @@ var gEMETests = [
   },
   {
     name:"640x480@624kbps with 1st keys then 640x480@959kbps with 2nd keys",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -1081,6 +1085,7 @@ var gEMETests = [
   },
   {
     name:"400x300 with presentation size 533x300",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -1112,6 +1117,7 @@ var gEMETests = [
   },
   {
     name:"400x300 as-is then 400x300 presented as 533x300",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -1145,6 +1151,7 @@ var gEMETests = [
   },
   {
     name:"400x225",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -1175,6 +1182,7 @@ var gEMETests = [
   },
   {
     name:"640x360",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -1205,6 +1213,7 @@ var gEMETests = [
   },
   {
     name:"400x225 then 640x360",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -1238,6 +1247,7 @@ var gEMETests = [
   },
   {
     name:"640x360 then 640x480",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     tracks: [
       {
         name:"audio",
@@ -1274,8 +1284,7 @@ var gEMETests = [
 var gEMENonMSEFailTests = [
   {
     name:"short-cenc.mp4",
-    audioType:"audio/mp4; codecs=\"mp4a.40.2\"",
-    videoType:"video/mp4; codecs=\"avc1.64000d\"",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     duration:0.47,
   },
 ];

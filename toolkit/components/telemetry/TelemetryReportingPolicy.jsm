@@ -66,7 +66,7 @@ const NOTIFICATION_DELAY_NEXT_RUNS_MSEC = 10 * 1000; // 10s
  * Tests override properties on this object to allow for control of behavior
  * that would otherwise be very hard to cover.
  */
-var Policy = {
+let Policy = {
   now: () => new Date(),
   setShowInfobarTimeout: (callback, delayMs) => setTimeout(callback, delayMs),
   clearShowInfobarTimeout: (id) => clearTimeout(id),
@@ -164,7 +164,7 @@ this.TelemetryReportingPolicy = {
   },
 };
 
-var TelemetryReportingPolicyImpl = {
+let TelemetryReportingPolicyImpl = {
   _logger: null,
   // Keep track of the notification status if user wasn't notified already.
   _notificationInProgress: false,
@@ -184,17 +184,16 @@ var TelemetryReportingPolicyImpl = {
    * @return {Object} A date object or null on errors.
    */
   get dataSubmissionPolicyNotifiedDate() {
-    let prefString = Preferences.get(PREF_ACCEPTED_POLICY_DATE, "0");
-    let valueInteger = parseInt(prefString, 10);
-
-    // Bail out if we didn't store any value yet.
-    if (valueInteger == 0) {
+    if (!Preferences.has(PREF_ACCEPTED_POLICY_DATE)) {
       this._log.info("get dataSubmissionPolicyNotifiedDate - No date stored yet.");
       return null;
     }
 
-    // If an invalid value is saved in the prefs, bail out too.
-    if (Number.isNaN(valueInteger)) {
+    let prefString = Preferences.get(PREF_ACCEPTED_POLICY_DATE, 0);
+    let valueInteger = parseInt(prefString, 10);
+
+    // If nothing or an invalid value is saved in the prefs, bail out.
+    if (Number.isNaN(valueInteger) || valueInteger == 0) {
       this._log.error("get dataSubmissionPolicyNotifiedDate - Invalid date stored.");
       return null;
     }

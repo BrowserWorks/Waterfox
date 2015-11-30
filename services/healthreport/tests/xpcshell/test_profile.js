@@ -9,7 +9,7 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // Create profile directory before use.
 // It can be no older than a day ago….
-var profile_creation_lower = Date.now() - MILLISECONDS_PER_DAY;
+let profile_creation_lower = Date.now() - MILLISECONDS_PER_DAY;
 do_get_profile();
 
 Cu.import("resource://gre/modules/Promise.jsm");

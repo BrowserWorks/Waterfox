@@ -6,6 +6,8 @@
 
 const { Cc, Ci, Cu } = require("chrome");
 
+const { Promise: promise } = require("resource://gre/modules/Promise.jsm");
+
 const { OS } = Cu.import("resource://gre/modules/osfile.jsm", {});
 const { TextEncoder, TextDecoder } = Cu.import('resource://gre/modules/commonjs/toolkit/loader.js', {});
 const gcli = require("gcli/index");
@@ -33,7 +35,7 @@ function loadItemsFromMozDir() {
   let dirName = prefBranch.getComplexValue(PREF_DIR,
                                            Ci.nsISupportsString).data.trim();
   if (dirName == "") {
-    return Promise.resolve([]);
+    return promise.resolve([]);
   }
 
   // replaces ~ with the home directory path in unix and windows
@@ -78,7 +80,7 @@ function loadItemsFromMozDir() {
 
     return iterPromise.then(() => {
       iterator.close();
-      return Promise.all(itemPromises).then((itemsArray) => {
+      return promise.all(itemPromises).then((itemsArray) => {
         return itemsArray.reduce((prev, curr) => {
           return prev.concat(curr);
         }, []);

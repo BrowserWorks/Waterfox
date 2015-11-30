@@ -26,18 +26,9 @@ class nsHttpHeaderArray
 public:
     const char *PeekHeader(nsHttpAtom header) const;
 
-    enum HeaderVariety
-    {
-        eVarietyOverride,
-        eVarietyDefault,
-    };
-
     // Used by internal setters: to set header from network use SetHeaderFromNet
     nsresult SetHeader(nsHttpAtom header, const nsACString &value,
-                       bool merge = false, HeaderVariety variety = eVarietyOverride);
-
-    // Used by internal setters to set an empty header
-    nsresult SetEmptyHeader(nsHttpAtom header);
+                       bool merge = false);
 
     // Merges supported headers. For other duplicate values, determines if error
     // needs to be thrown or 1st value kept.
@@ -59,13 +50,7 @@ public:
         return FindHeaderValue(header, value) != nullptr;
     }
 
-    enum VisitorFilter
-    {
-        eFilterAll,
-        eFilterSkipDefault,
-    };
-
-    nsresult VisitHeaders(nsIHttpHeaderVisitor *visitor, VisitorFilter filter = eFilterAll);
+    nsresult VisitHeaders(nsIHttpHeaderVisitor *visitor);
 
     // parse a header line, return the header atom and a pointer to the
     // header value (the substring of the header line -- do not free).
@@ -88,7 +73,6 @@ public:
     {
         nsHttpAtom header;
         nsCString value;
-        HeaderVariety variety = eVarietyOverride;
 
         struct MatchHeader {
           bool Equals(const nsEntry &entry, const nsHttpAtom &header) const {
@@ -185,23 +169,20 @@ nsHttpHeaderArray::MergeHeader(nsHttpAtom header,
     if (value.IsEmpty())
         return;   // merge of empty header = no-op
 
-    if (!entry->value.IsEmpty()) {
-        // Append the new value to the existing value
-        if (header == nsHttp::Set_Cookie ||
-            header == nsHttp::WWW_Authenticate ||
-            header == nsHttp::Proxy_Authenticate)
-        {
-            // Special case these headers and use a newline delimiter to
-            // delimit the values from one another as commas may appear
-            // in the values of these headers contrary to what the spec says.
-            entry->value.Append('\n');
-        } else {
-            // Delimit each value from the others using a comma (per HTTP spec)
-            entry->value.AppendLiteral(", ");
-        }
+    // Append the new value to the existing value
+    if (header == nsHttp::Set_Cookie ||
+        header == nsHttp::WWW_Authenticate ||
+        header == nsHttp::Proxy_Authenticate)
+    {
+        // Special case these headers and use a newline delimiter to
+        // delimit the values from one another as commas may appear
+        // in the values of these headers contrary to what the spec says.
+        entry->value.Append('\n');
+    } else {
+        // Delimit each value from the others using a comma (per HTTP spec)
+        entry->value.AppendLiteral(", ");
     }
     entry->value.Append(value);
-    entry->variety = eVarietyOverride;
 }
 
 inline bool

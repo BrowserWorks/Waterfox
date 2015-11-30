@@ -6,8 +6,6 @@
 #ifndef nsPerformanceStats_h
 #define nsPerformanceStats_h
 
-#include "nsIObserver.h"
-
 #include "nsIPerformanceStats.h"
 
 class nsPerformanceStatsService : public nsIPerformanceStatsService
@@ -19,13 +17,9 @@ public:
   nsPerformanceStatsService();
 
 private:
-  nsresult UpdateTelemetry();
   virtual ~nsPerformanceStatsService();
 
   const uint64_t mProcessId;
-  uint64_t mProcessStayed;
-  uint64_t mProcessMoved;
-  uint32_t mProcessUpdateCounter;
 protected:
 };
 

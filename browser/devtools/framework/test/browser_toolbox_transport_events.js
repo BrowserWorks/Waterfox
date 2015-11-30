@@ -2,7 +2,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 const { on, off } = require("sdk/event/core");
-const { DebuggerClient } = require("devtools/toolkit/client/main");
+const { DebuggerClient } = Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
 
 function test() {
   gDevTools.on("toolbox-created", onToolboxCreated);
@@ -54,8 +54,8 @@ function testPackets(sent, received) {
 
 // Listen to the transport object that is associated with the
 // default Toolbox debugger client
-var sent1 = [];
-var received1 = [];
+let sent1 = [];
+let received1 = [];
 
 function send1(eventId, packet) {
   sent1.push(packet);
@@ -80,8 +80,8 @@ function onToolboxCreated(eventId, toolbox) {
 }
 
 // Listen to all debugger client object protocols.
-var sent2 = [];
-var received2 = [];
+let sent2 = [];
+let received2 = [];
 
 function send2(eventId, packet) {
   sent2.push(packet);

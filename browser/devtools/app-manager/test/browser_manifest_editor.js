@@ -6,7 +6,7 @@ const {Services} = Cu.import("resource://gre/modules/Services.jsm");
 
 const MANIFEST_EDITOR_ENABLED = "devtools.appmanager.manifestEditor.enabled";
 
-var gManifestWindow, gManifestEditor;
+let gManifestWindow, gManifestEditor;
 
 function test() {
   waitForExplicitFinish();

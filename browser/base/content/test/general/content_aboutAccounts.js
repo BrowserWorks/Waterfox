@@ -13,12 +13,6 @@ addEventListener("load", function load(event) {
   }
 //  content.document.removeEventListener("load", load, true);
   sendAsyncMessage("test:document:load");
-  // Opening Sync prefs in tests is a pain as leaks are reported due to the
-  // in-flight promises. For now we just mock the openPrefs() function and have
-  // it send a message back to the test so we know it was called.
-  content.openPrefs = function() {
-    sendAsyncMessage("test:openPrefsCalled");
-  }
 }, true);
 
 addEventListener("DOMContentLoaded", function domContentLoaded(event) {
@@ -28,15 +22,13 @@ addEventListener("DOMContentLoaded", function domContentLoaded(event) {
     // at least one test initially loads about:blank - in that case, we are done.
     return;
   }
-  // We use DOMContentLoaded here as that fires for our iframe even when we've
-  // arranged for the URL in the iframe to cause an error.
-  addEventListener("DOMContentLoaded", function iframeLoaded(event) {
+  iframe.addEventListener("load", function iframeLoaded(event) {
     if (iframe.contentWindow.location.href == "about:blank" ||
-        event.target != iframe.contentDocument) {
+        event.target != iframe) {
       return;
     }
-    removeEventListener("DOMContentLoaded", iframeLoaded, true);
-    sendAsyncMessage("test:iframe:load", {url: iframe.contentDocument.location.href});
+    iframe.removeEventListener("load", iframeLoaded, true);
+    sendAsyncMessage("test:iframe:load", {url: iframe.getAttribute("src")});
     // And an event listener for the test responses, which we send to the test
     // via a message.
     iframe.contentWindow.addEventListener("FirefoxAccountsTestResponse", function (event) {
@@ -79,7 +71,7 @@ addMessageListener("test:load-with-mocked-profile-path", function (message) {
       }
       iframe.removeEventListener("load", iframeLoaded, true);
       sendAsyncMessage("test:load-with-mocked-profile-path-response",
-                       {url: iframe.contentDocument.location.href});
+                       {url: iframe.getAttribute("src")});
     }, true);
   });
   let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);

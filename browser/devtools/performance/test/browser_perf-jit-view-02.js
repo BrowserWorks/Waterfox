@@ -2,18 +2,20 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
- * Tests that the OptimizationsListView does not display information
+ * Tests that the JIT Optimizations view does not display information
  * for meta nodes when viewing "content only".
  */
 
+const { CATEGORY_MASK } = require("devtools/performance/global");
+const RecordingUtils = require("devtools/performance/recording-utils");
+
 Services.prefs.setBoolPref(INVERT_PREF, false);
 Services.prefs.setBoolPref(PLATFORM_DATA_PREF, false);
-var { CATEGORY_MASK } = require("devtools/performance/global");
 
 function* spawnTest() {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let { EVENTS, $, $$, window, PerformanceController } = panel.panelWin;
-  let { OverviewView, DetailsView, OptimizationsListView, JsCallTreeView, RecordingsView } = panel.panelWin;
+  let { OverviewView, DetailsView, JITOptimizationsView, JsCallTreeView, RecordingsView } = panel.panelWin;
 
   let profilerData = { threads: [gThread] };
 
@@ -32,14 +34,14 @@ function* spawnTest() {
   yield injectAndRenderProfilerData();
 
   // Click the frame
-  let rendered = once(OptimizationsListView, EVENTS.OPTIMIZATIONS_RENDERED);
+  let rendered = once(JITOptimizationsView, EVENTS.OPTIMIZATIONS_RENDERED);
   mousedown(window, $$(".call-tree-item")[2]);
   yield rendered;
 
   ok($("#jit-optimizations-view").classList.contains("empty"),
     "platform meta frame shows as empty");
 
-  let { $headerName, $headerLine, $headerFile } = OptimizationsListView;
+  let { $headerName, $headerLine, $headerFile } = JITOptimizationsView;
   ok(!$headerName.hidden, "header function name should be shown");
   ok($headerLine.hidden, "header line should be hidden");
   ok($headerFile.hidden, "header file should be hidden");
@@ -66,13 +68,13 @@ function* spawnTest() {
   }
 }
 
-var gUniqueStacks = new RecordingUtils.UniqueStacks();
+let gUniqueStacks = new RecordingUtils.UniqueStacks();
 
 function uniqStr(s) {
   return gUniqueStacks.getOrAddStringIndex(s);
 }
 
-var gThread = RecordingUtils.deflateThread({
+let gThread = RecordingUtils.deflateThread({
   samples: [{
     time: 0,
     frames: [
@@ -96,7 +98,7 @@ var gThread = RecordingUtils.deflateThread({
 }, gUniqueStacks);
 
 // 3 RawOptimizationSites
-var gRawSite1 = {
+let gRawSite1 = {
   line: 12,
   column: 2,
   types: [{
@@ -124,7 +126,7 @@ var gRawSite1 = {
   }
 };
 
-var gRawSite2 = {
+let gRawSite2 = {
   line: 22,
   types: [{
     mirType: uniqStr("Int32"),

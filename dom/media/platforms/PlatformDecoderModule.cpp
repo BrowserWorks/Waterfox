@@ -33,20 +33,11 @@
 #include "mozilla/SharedThreadPool.h"
 
 #include "MediaInfo.h"
-#include "FuzzingWrapper.h"
 #include "H264Converter.h"
 
 #include "OpusDecoder.h"
 #include "VorbisDecoder.h"
 #include "VPXDecoder.h"
-
-PRLogModuleInfo* GetPDMLog() {
-  static PRLogModuleInfo* log = nullptr;
-  if (!log) {
-    log = PR_NewLogModule("PlatformDecoderModule");
-  }
-  return log;
-}
 
 namespace mozilla {
 
@@ -59,9 +50,6 @@ bool PlatformDecoderModule::sGonkDecoderEnabled = false;
 bool PlatformDecoderModule::sAndroidMCDecoderEnabled = false;
 bool PlatformDecoderModule::sAndroidMCDecoderPreferred = false;
 bool PlatformDecoderModule::sGMPDecoderEnabled = false;
-bool PlatformDecoderModule::sEnableFuzzingWrapper = false;
-uint32_t PlatformDecoderModule::sVideoOutputMinimumInterval_ms = 0;
-bool PlatformDecoderModule::sDontDelayInputExhausted = false;
 
 /* static */
 void
@@ -92,13 +80,6 @@ PlatformDecoderModule::Init()
 
   Preferences::AddBoolVarCache(&sGMPDecoderEnabled,
                                "media.fragmented-mp4.gmp.enabled", false);
-
-  Preferences::AddBoolVarCache(&sEnableFuzzingWrapper,
-                               "media.decoder.fuzzing.enabled", false);
-  Preferences::AddUintVarCache(&sVideoOutputMinimumInterval_ms,
-                               "media.decoder.fuzzing.video-output-minimum-interval-ms", 0);
-  Preferences::AddBoolVarCache(&sDontDelayInputExhausted,
-                               "media.decoder.fuzzing.dont-delay-inputexhausted", false);
 
 #ifdef XP_WIN
   WMFDecoderModule::Init();
@@ -155,10 +136,6 @@ PlatformDecoderModule::Create()
 already_AddRefed<PlatformDecoderModule>
 PlatformDecoderModule::CreatePDM()
 {
-  if (sGMPDecoderEnabled) {
-    nsRefPtr<PlatformDecoderModule> m(new GMPDecoderModule());
-    return m.forget();
-  }
 #ifdef MOZ_WIDGET_ANDROID
   if(sAndroidMCDecoderPreferred && sAndroidMCDecoderEnabled){
     nsRefPtr<PlatformDecoderModule> m(new AndroidDecoderModule());
@@ -196,6 +173,10 @@ PlatformDecoderModule::CreatePDM()
     return m.forget();
   }
 #endif
+  if (sGMPDecoderEnabled) {
+    nsRefPtr<PlatformDecoderModule> m(new GMPDecoderModule());
+    return m.forget();
+  }
   return nullptr;
 }
 
@@ -231,16 +212,6 @@ PlatformDecoderModule::CreateDecoder(const TrackInfo& aConfig,
     return nullptr;
   }
 
-  MediaDataDecoderCallback* callback = aCallback;
-  nsRefPtr<DecoderCallbackFuzzingWrapper> callbackWrapper;
-  if (sEnableFuzzingWrapper) {
-    callbackWrapper = new DecoderCallbackFuzzingWrapper(aCallback);
-    callbackWrapper->SetVideoOutputMinimumInterval(
-      TimeDuration::FromMilliseconds(sVideoOutputMinimumInterval_ms));
-    callbackWrapper->SetDontDelayInputExhausted(sDontDelayInputExhausted);
-    callback = callbackWrapper.get();
-  }
-
   if (H264Converter::IsH264(aConfig)) {
     nsRefPtr<H264Converter> h
       = new H264Converter(this,
@@ -248,7 +219,7 @@ PlatformDecoderModule::CreateDecoder(const TrackInfo& aConfig,
                           aLayersBackend,
                           aImageContainer,
                           aTaskQueue,
-                          callback);
+                          aCallback);
     const nsresult rv = h->GetLastError();
     if (NS_SUCCEEDED(rv) || rv == NS_ERROR_NOT_INITIALIZED) {
       // The H264Converter either successfully created the wrapped decoder,
@@ -260,19 +231,14 @@ PlatformDecoderModule::CreateDecoder(const TrackInfo& aConfig,
     m = new VPXDecoder(*aConfig.GetAsVideoInfo(),
                        aImageContainer,
                        aTaskQueue,
-                       callback);
+                       aCallback);
   } else {
     m = CreateVideoDecoder(*aConfig.GetAsVideoInfo(),
                            aLayersBackend,
                            aImageContainer,
                            aTaskQueue,
-                           callback);
+                           aCallback);
   }
-
-  if (callbackWrapper && m) {
-    m = new DecoderFuzzingWrapper(m.forget(), callbackWrapper.forget());
-  }
-
   return m.forget();
 }
 

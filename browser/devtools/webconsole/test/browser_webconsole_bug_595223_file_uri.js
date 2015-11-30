@@ -9,9 +9,9 @@ const PREF = "devtools.webconsole.persistlog";
 const TEST_FILE = "test-network.html";
 const TEST_URI = "data:text/html;charset=utf8,<p>test file URI";
 
-var hud;
+let hud;
 
-var test = asyncTest(function* () {
+let test = asyncTest(function* () {
   Services.prefs.setBoolPref(PREF, true);
 
   let jar = getJar(getRootDirectory(gTestPath));

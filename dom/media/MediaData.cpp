@@ -200,14 +200,14 @@ VideoData::ShallowCopyUpdateTimestampAndDuration(const VideoData* aOther,
 }
 
 /* static */
-bool VideoData::SetVideoDataToImage(PlanarYCbCrImage* aVideoImage,
+void VideoData::SetVideoDataToImage(PlanarYCbCrImage* aVideoImage,
                                     const VideoInfo& aInfo,
                                     const YCbCrBuffer &aBuffer,
                                     const IntRect& aPicture,
                                     bool aCopyData)
 {
   if (!aVideoImage) {
-    return false;
+    return;
   }
   const YCbCrBuffer::Plane &Y = aBuffer.mPlanes[0];
   const YCbCrBuffer::Plane &Cb = aBuffer.mPlanes[1];
@@ -231,9 +231,9 @@ bool VideoData::SetVideoDataToImage(PlanarYCbCrImage* aVideoImage,
 
   aVideoImage->SetDelayedConversion(true);
   if (aCopyData) {
-    return aVideoImage->SetData(data);
+    aVideoImage->SetData(data);
   } else {
-    return aVideoImage->SetDataNoCopy(data);
+    aVideoImage->SetDataNoCopy(data);
   }
 }
 
@@ -332,10 +332,12 @@ VideoData::Create(const VideoInfo& aInfo,
                "Wrong format?");
   PlanarYCbCrImage* videoImage = static_cast<PlanarYCbCrImage*>(v->mImage.get());
 
-  bool shouldCopyData = (aImage == nullptr);
-  if (!VideoData::SetVideoDataToImage(videoImage, aInfo, aBuffer, aPicture,
-                                      shouldCopyData)) {
-    return nullptr;
+  if (!aImage) {
+    VideoData::SetVideoDataToImage(videoImage, aInfo, aBuffer, aPicture,
+                                   true /* aCopyData */);
+  } else {
+    VideoData::SetVideoDataToImage(videoImage, aInfo, aBuffer, aPicture,
+                                   false /* aCopyData */);
   }
 
 #ifdef MOZ_WIDGET_GONK
@@ -346,10 +348,8 @@ VideoData::Create(const VideoInfo& aInfo,
       return nullptr;
     }
     videoImage = static_cast<PlanarYCbCrImage*>(v->mImage.get());
-    if(!VideoData::SetVideoDataToImage(videoImage, aInfo, aBuffer, aPicture,
-                                       true /* aCopyData */)) {
-      return nullptr;
-    }
+    VideoData::SetVideoDataToImage(videoImage, aInfo, aBuffer, aPicture,
+                                   true /* aCopyData */);
   }
 #endif
   return v.forget();
@@ -475,9 +475,7 @@ VideoData::Create(const VideoInfo& aInfo,
   data.mPicSize = aPicture.Size();
   data.mGraphicBuffer = aBuffer;
 
-  if (!videoImage->SetData(data)) {
-    return nullptr;
-  }
+  videoImage->SetData(data);
 
   return v.forget();
 }

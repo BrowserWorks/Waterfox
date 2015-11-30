@@ -19,7 +19,7 @@ const GENERIC_VARIABLES_VIEW_SETTINGS = {
  * Functions handling the audio node inspector UI.
  */
 
-var PropertiesView = {
+let PropertiesView = {
 
   /**
    * Initialization function called when the tool starts up.

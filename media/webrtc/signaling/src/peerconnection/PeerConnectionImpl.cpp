@@ -87,7 +87,6 @@
 #include "AudioStreamTrack.h"
 #include "VideoStreamTrack.h"
 #include "nsIScriptGlobalObject.h"
-#include "MediaStreamGraph.h"
 #include "DOMMediaStream.h"
 #include "rlogringbuffer.h"
 #include "WebrtcGlobalInformation.h"
@@ -389,7 +388,6 @@ PeerConnectionImpl::PeerConnectionImpl(const GlobalObject* aGlobal)
   , mUuidGen(MakeUnique<PCUuidGenerator>())
   , mNumAudioStreams(0)
   , mNumVideoStreams(0)
-  , mHaveConfiguredCodecs(false)
   , mHaveDataStream(false)
   , mAddCandidateErrorCount(0)
   , mTrickle(true) // TODO(ekr@rtfm.com): Use pref
@@ -445,12 +443,9 @@ PeerConnectionImpl::~PeerConnectionImpl()
 already_AddRefed<DOMMediaStream>
 PeerConnectionImpl::MakeMediaStream()
 {
-  MediaStreamGraph* graph =
-    MediaStreamGraph::GetInstance(MediaStreamGraph::AUDIO_THREAD_DRIVER,
-                                  AudioChannel::Normal);
-
   nsRefPtr<DOMMediaStream> stream =
-    DOMMediaStream::CreateSourceStream(GetWindow(), graph);
+    DOMMediaStream::CreateSourceStream(GetWindow());
+
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
   // Make the stream data (audio/video samples) accessible to the receiving page.
   // We're only certain that privacy hasn't been requested if we're connected.
@@ -621,6 +616,12 @@ PeerConnectionConfiguration::AddIceServer(const RTCIceServer &aServer)
     if (isTurn || isTurns) {
       NS_ConvertUTF16toUTF8 credential(aServer.mCredential);
       NS_ConvertUTF16toUTF8 username(aServer.mUsername);
+
+      // Bug 1039655 - TURN TCP is not e10s ready
+      if ((transport == kNrIceTransportTcp) &&
+          (!XRE_IsParentProcess())) {
+        continue;
+      }
 
       if (!addTurnServer(host.get(), port,
                          username.get(),
@@ -924,11 +925,6 @@ class CompareCodecPriority {
 
 nsresult
 PeerConnectionImpl::ConfigureJsepSessionCodecs() {
-  if (mHaveConfiguredCodecs) {
-    return NS_OK;
-  }
-  mHaveConfiguredCodecs = true;
-
 #if !defined(MOZILLA_XPCOMRT_API)
   nsresult res;
   nsCOMPtr<nsIPrefService> prefs =
@@ -1063,13 +1059,9 @@ PeerConnectionImpl::ConfigureJsepSessionCodecs() {
 
           }
 
-          // TMMBR is enabled from a pref in about:config
-          bool useTmmbr = false;
+          videoCodec.mUseTmmbr = false;
           branch->GetBoolPref("media.navigator.video.use_tmmbr",
-            &useTmmbr);
-          if (useTmmbr) {
-            videoCodec.EnableTmmbr();
-          }
+            &videoCodec.mUseTmmbr);
         }
         break;
       case SdpMediaSection::kText:
@@ -1099,7 +1091,7 @@ PeerConnectionImpl::ConfigureJsepSessionCodecs() {
 NS_IMETHODIMP
 PeerConnectionImpl::EnsureDataConnection(uint16_t aNumstreams)
 {
-  PC_AUTO_ENTER_API_CALL(false);
+  PC_AUTO_ENTER_API_CALL_NO_CHECK();
 
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
   if (mDataConnection) {
@@ -1150,8 +1142,15 @@ PeerConnectionImpl::GetDatachannelParameters(
       for (size_t i = 0;
            i < trackPair.mSending->GetNegotiatedDetails()->GetCodecCount();
            ++i) {
-        const JsepCodecDescription* codec =
-          trackPair.mSending->GetNegotiatedDetails()->GetCodec(i);
+        const JsepCodecDescription* codec;
+        nsresult res =
+          trackPair.mSending->GetNegotiatedDetails()->GetCodec(i, &codec);
+
+        if (NS_FAILED(res)) {
+          CSFLogError(logTag, "%s: Failed getting codec for m=application.",
+                              __FUNCTION__);
+          continue;
+        }
 
         if (codec->mType != SdpMediaSection::kApplication) {
           CSFLogError(logTag, "%s: Codec type for m=application was %u, this "
@@ -1187,67 +1186,10 @@ PeerConnectionImpl::GetDatachannelParameters(
   return NS_OK;
 }
 
-/* static */
-void
-PeerConnectionImpl::DeferredAddTrackToJsepSession(
-    const std::string& pcHandle,
-    SdpMediaSection::MediaType type,
-    const std::string& streamId,
-    const std::string& trackId)
-{
-  PeerConnectionWrapper wrapper(pcHandle);
-
-  if (wrapper.impl()) {
-    if (!PeerConnectionCtx::GetInstance()->isReady()) {
-      MOZ_CRASH("Why is DeferredAddTrackToJsepSession being executed when the "
-                "PeerConnectionCtx isn't ready?");
-    }
-    wrapper.impl()->AddTrackToJsepSession(type, streamId, trackId);
-  }
-}
-
-nsresult
-PeerConnectionImpl::AddTrackToJsepSession(SdpMediaSection::MediaType type,
-                                          const std::string& streamId,
-                                          const std::string& trackId)
-{
-  if (!PeerConnectionCtx::GetInstance()->isReady()) {
-    // We are not ready to configure codecs for this track. We need to defer.
-    PeerConnectionCtx::GetInstance()->queueJSEPOperation(
-        WrapRunnableNM(DeferredAddTrackToJsepSession,
-                       mHandle,
-                       type,
-                       streamId,
-                       trackId));
-    return NS_OK;
-  }
-
-  nsresult res = ConfigureJsepSessionCodecs();
-  if (NS_FAILED(res)) {
-    CSFLogError(logTag, "Failed to configure codecs");
-    return res;
-  }
-
-  res = mJsepSession->AddTrack(
-      new JsepTrack(type, streamId, trackId, sdp::kSend));
-
-  if (NS_FAILED(res)) {
-    std::string errorString = mJsepSession->GetLastError();
-    CSFLogError(logTag, "%s (%s) : pc = %s, error = %s",
-                __FUNCTION__,
-                type == SdpMediaSection::kAudio ? "audio" : "video",
-                mHandle.c_str(),
-                errorString.c_str());
-    return NS_ERROR_FAILURE;
-  }
-
-  return NS_OK;
-}
-
 nsresult
 PeerConnectionImpl::InitializeDataChannel()
 {
-  PC_AUTO_ENTER_API_CALL(false);
+  PC_AUTO_ENTER_API_CALL_NO_CHECK();
   CSFLogDebug(logTag, "%s", __FUNCTION__);
 
   const JsepApplicationCodecDescription* codec;
@@ -1267,7 +1209,7 @@ PeerConnectionImpl::InitializeDataChannel()
     channels = MAX_NUM_STREAMS;
   }
 
-  rv = EnsureDataConnection(channels);
+  rv = EnsureDataConnection(codec->mChannels);
   if (NS_SUCCEEDED(rv)) {
     uint16_t localport = 5000;
     uint16_t remoteport = 0;
@@ -1329,7 +1271,7 @@ PeerConnectionImpl::CreateDataChannel(const nsAString& aLabel,
                                       uint16_t aStream,
                                       nsDOMDataChannel** aRetval)
 {
-  PC_AUTO_ENTER_API_CALL(false);
+  PC_AUTO_ENTER_API_CALL_NO_CHECK();
   MOZ_ASSERT(aRetval);
 
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
@@ -1369,7 +1311,7 @@ PeerConnectionImpl::CreateDataChannel(const nsAString& aLabel,
           mozilla::SdpMediaSection::kApplication,
           streamId,
           trackId,
-          sdp::kSend));
+          JsepTrack::kJsepTrackSending));
 
     rv = mJsepSession->AddTrack(track);
     if (NS_FAILED(rv)) {
@@ -2127,7 +2069,6 @@ PeerConnectionImpl::AddTrack(MediaStreamTrack& aTrack,
     CSFLogError(logTag, "%s: At least one stream arg required", __FUNCTION__);
     return NS_ERROR_FAILURE;
   }
-
   return AddTrack(aTrack, aStreams[0]);
 }
 
@@ -2156,9 +2097,16 @@ PeerConnectionImpl::AddTrack(MediaStreamTrack& aTrack,
   }
 
   if (aTrack.AsAudioStreamTrack()) {
-    res = AddTrackToJsepSession(SdpMediaSection::kAudio, streamId, trackId);
+    res = mJsepSession->AddTrack(new JsepTrack(
+        mozilla::SdpMediaSection::kAudio,
+        streamId,
+        trackId,
+        JsepTrack::kJsepTrackSending));
     if (NS_FAILED(res)) {
-      return res;
+      std::string errorString = mJsepSession->GetLastError();
+      CSFLogError(logTag, "%s (audio) : pc = %s, error = %s",
+                  __FUNCTION__, mHandle.c_str(), errorString.c_str());
+      return NS_ERROR_FAILURE;
     }
     mNumAudioStreams++;
   }
@@ -2172,9 +2120,16 @@ PeerConnectionImpl::AddTrack(MediaStreamTrack& aTrack,
     }
 #endif
 
-    res = AddTrackToJsepSession(SdpMediaSection::kVideo, streamId, trackId);
+    res = mJsepSession->AddTrack(new JsepTrack(
+        mozilla::SdpMediaSection::kVideo,
+        streamId,
+        trackId,
+        JsepTrack::kJsepTrackSending));
     if (NS_FAILED(res)) {
-      return res;
+      std::string errorString = mJsepSession->GetLastError();
+      CSFLogError(logTag, "%s (video) : pc = %s, error = %s",
+                  __FUNCTION__, mHandle.c_str(), errorString.c_str());
+      return NS_ERROR_FAILURE;
     }
     mNumVideoStreams++;
   }
@@ -2712,11 +2667,15 @@ PeerConnectionImpl::CandidateReady(const std::string& candidate,
                                    uint16_t level) {
   PC_AUTO_ENTER_API_CALL_VOID_RETURN(false);
 
+  // TODO: What about mid? Is this something that we will choose, or will
+  // JsepSession choose for us? If the latter, we'll need to make it an
+  // outparam or something. Bug 1051052.
   std::string mid;
+
   bool skipped = false;
   nsresult res = mJsepSession->AddLocalIceCandidate(candidate,
+                                                    mid,
                                                     level,
-                                                    &mid,
                                                     &skipped);
 
   if (NS_FAILED(res)) {
@@ -2728,7 +2687,6 @@ PeerConnectionImpl::CandidateReady(const std::string& candidate,
                         candidate.c_str(),
                         static_cast<unsigned>(level),
                         errorString.c_str());
-    return;
   }
 
   if (skipped) {

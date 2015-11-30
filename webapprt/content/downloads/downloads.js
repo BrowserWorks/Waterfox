@@ -22,9 +22,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "DownloadUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
   "resource://gre/modules/PluralForm.jsm");
 
-var gStr = {};
+let gStr = {};
 
-var DownloadItem = function(aID, aDownload) {
+let DownloadItem = function(aID, aDownload) {
   this.id = aID;
   this._download = aDownload;
 
@@ -576,7 +576,7 @@ DownloadItem.prototype = {
   },
 };
 
-var gDownloadList = {
+let gDownloadList = {
   downloadItemsMap: new Map(),
   idToDownloadItemMap: new Map(),
   _autoIncrementID: 0,

@@ -193,5 +193,5 @@ add_task(function test_getTemporaryDownloadsDirectory()
 ////////////////////////////////////////////////////////////////////////////////
 //// Termination
 
-var tailFile = do_get_file("tail.js");
+let tailFile = do_get_file("tail.js");
 Services.scriptloader.loadSubScript(NetUtil.newURI(tailFile).spec);

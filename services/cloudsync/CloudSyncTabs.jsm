@@ -19,7 +19,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "Session", "@mozilla.org/browser/sessio
 
 const DATA_VERSION = 1;
 
-var ClientRecord = function (params) {
+let ClientRecord = function (params) {
   this.id = params.id;
   this.name = params.name || "?";
   this.tabs = new Set();
@@ -37,7 +37,7 @@ ClientRecord.prototype = {
   }
 };
 
-var TabRecord = function (params) {
+let TabRecord = function (params) {
   this.url = params.url || "";
   this.update(params);
 };
@@ -60,7 +60,7 @@ TabRecord.prototype = {
   },
 };
 
-var TabCache = function () {
+let TabCache = function () {
   this.tabs = new Map();
   this.clients = new Map();
 };

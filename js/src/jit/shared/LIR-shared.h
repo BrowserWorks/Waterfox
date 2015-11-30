@@ -1874,6 +1874,64 @@ class LGetDynamicName : public LCallInstructionHelper<BOX_PIECES, 2, 3>
     }
 };
 
+class LFilterArgumentsOrEvalS : public LCallInstructionHelper<0, 1, 2>
+{
+  public:
+    LIR_HEADER(FilterArgumentsOrEvalS)
+
+    LFilterArgumentsOrEvalS(const LAllocation& string, const LDefinition& temp1,
+                            const LDefinition& temp2)
+    {
+        setOperand(0, string);
+        setTemp(0, temp1);
+        setTemp(1, temp2);
+    }
+
+    MFilterArgumentsOrEval* mir() const {
+        return mir_->toFilterArgumentsOrEval();
+    }
+
+    const LAllocation* getString() {
+        return getOperand(0);
+    }
+    const LDefinition* temp1() {
+        return getTemp(0);
+    }
+    const LDefinition* temp2() {
+        return getTemp(1);
+    }
+};
+
+class LFilterArgumentsOrEvalV : public LCallInstructionHelper<0, BOX_PIECES, 3>
+{
+  public:
+    LIR_HEADER(FilterArgumentsOrEvalV)
+
+    LFilterArgumentsOrEvalV(const LDefinition& temp1, const LDefinition& temp2,
+                            const LDefinition& temp3)
+    {
+        setTemp(0, temp1);
+        setTemp(1, temp2);
+        setTemp(2, temp3);
+    }
+
+    static const size_t Input = 0;
+
+    MFilterArgumentsOrEval* mir() const {
+        return mir_->toFilterArgumentsOrEval();
+    }
+
+    const LDefinition* temp1() {
+        return getTemp(0);
+    }
+    const LDefinition* temp2() {
+        return getTemp(1);
+    }
+    const LDefinition* temp3() {
+        return getTemp(2);
+    }
+};
+
 class LCallDirectEval : public LCallInstructionHelper<BOX_PIECES, 2 + (2 * BOX_PIECES), 0>
 {
   public:
@@ -2378,10 +2436,10 @@ class LCompareBAndBranch : public LControlInstructionHelper<2, BOX_PIECES + 1, 0
     }
 };
 
-class LCompareBitwise : public LInstructionHelper<1, 2 * BOX_PIECES, 0>
+class LCompareV : public LInstructionHelper<1, 2 * BOX_PIECES, 0>
 {
   public:
-    LIR_HEADER(CompareBitwise)
+    LIR_HEADER(CompareV)
 
     static const size_t LhsInput = 0;
     static const size_t RhsInput = BOX_PIECES;
@@ -2391,17 +2449,17 @@ class LCompareBitwise : public LInstructionHelper<1, 2 * BOX_PIECES, 0>
     }
 };
 
-class LCompareBitwiseAndBranch : public LControlInstructionHelper<2, 2 * BOX_PIECES, 0>
+class LCompareVAndBranch : public LControlInstructionHelper<2, 2 * BOX_PIECES, 0>
 {
     MCompare* cmpMir_;
 
   public:
-    LIR_HEADER(CompareBitwiseAndBranch)
+    LIR_HEADER(CompareVAndBranch)
 
     static const size_t LhsInput = 0;
     static const size_t RhsInput = BOX_PIECES;
 
-    LCompareBitwiseAndBranch(MCompare* cmpMir, MBasicBlock* ifTrue, MBasicBlock* ifFalse)
+    LCompareVAndBranch(MCompare* cmpMir, MBasicBlock* ifTrue, MBasicBlock* ifFalse)
       : cmpMir_(cmpMir)
     {
         setSuccessor(0, ifTrue);
@@ -3311,38 +3369,6 @@ class LFromCharCode : public LInstructionHelper<1, 1, 0>
     }
 };
 
-// Calculates sincos(x) and returns two values (sin/cos).
-class LSinCos : public LCallInstructionHelper<2, 1, 2>
-{
-  public:
-    LIR_HEADER(SinCos)
-
-    LSinCos(const LAllocation &input, const LDefinition &temp, const LDefinition &temp2)
-    {
-        setOperand(0, input);
-        setTemp(0, temp);
-        setTemp(1, temp2);
-    }
-    const LAllocation *input() {
-        return getOperand(0);
-    }
-    const LDefinition *outputSin() {
-        return getDef(0);
-    }
-    const LDefinition *outputCos() {
-        return getDef(1);
-    }
-    const LDefinition *temp() {
-        return getTemp(0);
-    }
-    const LDefinition *temp2() {
-        return getTemp(1);
-    }
-    const MSinCos *mir() const {
-        return mir_->toSinCos();
-    }
-};
-
 class LStringSplit : public LCallInstructionHelper<1, 2, 0>
 {
   public:
@@ -3950,31 +3976,6 @@ class LStringReplace: public LStrReplace
     const MStringReplace* mir() const {
         return mir_->toStringReplace();
     }
-};
-
-class LBinarySharedStub : public LCallInstructionHelper<BOX_PIECES, 2 * BOX_PIECES, 0>
-{
-  public:
-    LIR_HEADER(BinarySharedStub)
-
-    const MBinarySharedStub* mir() const {
-        return mir_->toBinarySharedStub();
-    }
-
-    static const size_t LhsInput = 0;
-    static const size_t RhsInput = BOX_PIECES;
-};
-
-class LUnarySharedStub : public LCallInstructionHelper<BOX_PIECES, BOX_PIECES, 0>
-{
-  public:
-    LIR_HEADER(UnarySharedStub)
-
-    const MUnarySharedStub* mir() const {
-        return mir_->toUnarySharedStub();
-    }
-
-    static const size_t Input = 0;
 };
 
 class LLambdaForSingleton : public LCallInstructionHelper<1, 1, 0>
@@ -5269,19 +5270,17 @@ class LAtomicTypedArrayElementBinop : public LInstructionHelper<1, 3, 2>
 };
 
 // Atomic binary operation where the result is discarded.
-class LAtomicTypedArrayElementBinopForEffect : public LInstructionHelper<0, 3, 1>
+class LAtomicTypedArrayElementBinopForEffect : public LInstructionHelper<0, 3, 0>
 {
   public:
     LIR_HEADER(AtomicTypedArrayElementBinopForEffect)
 
     LAtomicTypedArrayElementBinopForEffect(const LAllocation& elements, const LAllocation& index,
-                                           const LAllocation& value,
-                                           const LDefinition& flagTemp = LDefinition::BogusTemp())
+                                           const LAllocation& value)
     {
         setOperand(0, elements);
         setOperand(1, index);
         setOperand(2, value);
-        setTemp(0, flagTemp);
     }
 
     const LAllocation* elements() {
@@ -5292,11 +5291,6 @@ class LAtomicTypedArrayElementBinopForEffect : public LInstructionHelper<0, 3, 1
     }
     const LAllocation* value() {
         return getOperand(2);
-    }
-
-    // Temp that may be used on LL/SC platforms for the flag result of the store.
-    const LDefinition* flagTemp() {
-        return getTemp(0);
     }
 
     const MAtomicTypedArrayElementBinop* mir() const {
@@ -6734,7 +6728,7 @@ class LAsmJSAtomicExchangeHeap : public LInstructionHelper<1, 2, 1>
     }
 };
 
-class LAsmJSAtomicBinopHeap : public LInstructionHelper<1, 2, 3>
+class LAsmJSAtomicBinopHeap : public LInstructionHelper<1, 2, 2>
 {
   public:
     LIR_HEADER(AsmJSAtomicBinopHeap);
@@ -6742,14 +6736,12 @@ class LAsmJSAtomicBinopHeap : public LInstructionHelper<1, 2, 3>
     static const int32_t valueOp = 1;
 
     LAsmJSAtomicBinopHeap(const LAllocation& ptr, const LAllocation& value,
-                          const LDefinition& temp,
-                          const LDefinition& flagTemp = LDefinition::BogusTemp())
+                          const LDefinition& temp)
     {
         setOperand(0, ptr);
         setOperand(1, value);
         setTemp(0, temp);
         setTemp(1, LDefinition::BogusTemp());
-        setTemp(2, flagTemp);
     }
     const LAllocation* ptr() {
         return getOperand(0);
@@ -6761,18 +6753,12 @@ class LAsmJSAtomicBinopHeap : public LInstructionHelper<1, 2, 3>
     const LDefinition* temp() {
         return getTemp(0);
     }
-
-    // Temp that may be used on some platforms to hold a computed address.
     const LDefinition* addrTemp() {
         return getTemp(1);
     }
+
     void setAddrTemp(const LDefinition& addrTemp) {
         setTemp(1, addrTemp);
-    }
-
-    // Temp that may be used on LL/SC platforms for the flag result of the store.
-    const LDefinition* flagTemp() {
-        return getTemp(2);
     }
 
     MAsmJSAtomicBinopHeap* mir() const {
@@ -6781,17 +6767,15 @@ class LAsmJSAtomicBinopHeap : public LInstructionHelper<1, 2, 3>
 };
 
 // Atomic binary operation where the result is discarded.
-class LAsmJSAtomicBinopHeapForEffect : public LInstructionHelper<0, 2, 2>
+class LAsmJSAtomicBinopHeapForEffect : public LInstructionHelper<0, 2, 1>
 {
   public:
     LIR_HEADER(AsmJSAtomicBinopHeapForEffect);
-    LAsmJSAtomicBinopHeapForEffect(const LAllocation& ptr, const LAllocation& value,
-                                   const LDefinition& flagTemp = LDefinition::BogusTemp())
+    LAsmJSAtomicBinopHeapForEffect(const LAllocation& ptr, const LAllocation& value)
     {
         setOperand(0, ptr);
         setOperand(1, value);
         setTemp(0, LDefinition::BogusTemp());
-        setTemp(1, flagTemp);
     }
     const LAllocation* ptr() {
         return getOperand(0);
@@ -6799,18 +6783,15 @@ class LAsmJSAtomicBinopHeapForEffect : public LInstructionHelper<0, 2, 2>
     const LAllocation* value() {
         return getOperand(1);
     }
-
-    // Temp that may be used on some platforms to hold a computed address.
+    const LDefinition* temp() {
+        return getTemp(0);
+    }
     const LDefinition* addrTemp() {
         return getTemp(0);
     }
+
     void setAddrTemp(const LDefinition& addrTemp) {
         setTemp(0, addrTemp);
-    }
-
-    // Temp that may be used on LL/SC platforms for the flag result of the store.
-    const LDefinition* flagTemp() {
-        return getTemp(1);
     }
 
     MAsmJSAtomicBinopHeap* mir() const {
@@ -7173,57 +7154,6 @@ class LArrowNewTarget : public LInstructionHelper<BOX_PIECES, 1, 0>
 
     const LAllocation* callee() {
         return getOperand(0);
-    }
-};
-
-// Math.random().
-#ifdef JS_PUNBOX64
-# define LRANDOM_NUM_TEMPS 3
-#else
-# define LRANDOM_NUM_TEMPS 5
-#endif
-
-class LRandom : public LInstructionHelper<1, 0, LRANDOM_NUM_TEMPS>
-{
-  public:
-    LIR_HEADER(Random)
-    LRandom(const LDefinition &tempMaybeEAX, const LDefinition &tempMaybeEDX,
-            const LDefinition &temp1
-#ifndef JS_PUNBOX64
-            , const LDefinition &temp2, const LDefinition &temp3
-#endif
-            )
-    {
-        setTemp(0, tempMaybeEAX);
-        setTemp(1, tempMaybeEDX);
-        setTemp(2, temp1);
-#ifndef JS_PUNBOX64
-        setTemp(3, temp2);
-        setTemp(4, temp3);
-#endif
-    }
-    // On x86, following 2 methods return eax and edx necessary for mull.
-    // On others, following 2 methods return ordinary temporary registers.
-    const LDefinition* tempMaybeEAX() {
-        return getTemp(0);
-    }
-    const LDefinition* tempMaybeEDX() {
-        return getTemp(1);
-    }
-    const LDefinition *temp1() {
-        return getTemp(2);
-    }
-#ifndef JS_PUNBOX64
-    const LDefinition *temp2() {
-        return getTemp(3);
-    }
-    const LDefinition *temp3() {
-        return getTemp(4);
-    }
-#endif
-
-    MRandom* mir() const {
-        return mir_->toRandom();
     }
 };
 

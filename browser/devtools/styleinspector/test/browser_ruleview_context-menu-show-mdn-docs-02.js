@@ -22,19 +22,21 @@ const {setBaseCssDocsUrl} = require("devtools/shared/widgets/MdnDocsWidget");
 const PROPERTYNAME = "color";
 
 const TEST_DOC = `
-  <html>
-    <body>
-      <div style="color: red">
-        Test "Show MDN Docs" context menu option
-      </div>
-    </body>
-  </html>
-`;
+<html>
+  <body>
+    <div style="color: red">
+      Test "Show MDN Docs" context menu option
+    </div>
+  </body>
+</html>`;
 
 add_task(function* () {
+
   yield addTab("data:text/html;charset=utf8," + encodeURIComponent(TEST_DOC));
+
   let {inspector, view} = yield openRuleView();
   yield selectNode("div", inspector);
+
   yield testShowAndHideMdnTooltip(view);
 });
 
@@ -84,4 +86,4 @@ function* testShowAndHideMdnTooltip(view) {
 /**
  * Returns the root element for the rule view.
  */
-var rootElement = view => (view.element) ? view.element : view.styleDocument;
+let rootElement = view => (view.element) ? view.element : view.styleDocument;

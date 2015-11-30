@@ -1,9 +1,9 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var {Toolbox} = require("devtools/framework/toolbox");
+let {Toolbox} = require("devtools/framework/toolbox");
 
-var toolbox = null;
+let toolbox = null;
 
 function test() {
   const URL = "data:text/plain;charset=UTF-8,Nothing to see here, move along";

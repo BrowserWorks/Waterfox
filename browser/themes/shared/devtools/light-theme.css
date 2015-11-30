@@ -38,7 +38,6 @@
   /* Colors used in Graphs, like performance tools. Similar colors to Chrome's timeline. */
   --theme-graphs-green: #85d175;
   --theme-graphs-blue: #83b7f6;
-  --theme-graphs-bluegrey: #0072ab;
   --theme-graphs-purple: #b693eb;
   --theme-graphs-yellow: #efc052;
   --theme-graphs-red: #e57180;
@@ -344,7 +343,7 @@ div.CodeMirror span.eval-text {
   background-position: -14px 0;
 }
 
-@media (min-resolution: 1.1dppx) {
+@media (min-resolution: 1.25dppx) {
   .theme-twisty, .theme-checkbox {
     background-image: url("chrome://browser/skin/devtools/controls@2x.png");
   }
@@ -382,7 +381,7 @@ div.CodeMirror span.eval-text {
   margin-left: -4px;
 }
 
-@media (min-resolution: 1.1dppx) {
+@media (min-resolution: 1.25dppx) {
   .theme-tooltip-panel .panel-arrow[side="top"],
   .theme-tooltip-panel .panel-arrow[side="bottom"] {
     list-style-image: url("chrome://browser/skin/devtools/tooltip/arrow-vertical-light@2x.png");

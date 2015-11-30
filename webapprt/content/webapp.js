@@ -20,7 +20,12 @@ XPCOMUtils.defineLazyServiceGetter(this, "gCrashReporter",
                                    "nsICrashReporter");
 #endif
 
-var progressListener = {
+function isSameOrigin(url) {
+  let origin = Services.io.newURI(url, null, null).prePath;
+  return (origin == WebappRT.config.app.origin);
+}
+
+let progressListener = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
                                          Ci.nsISupportsWeakReference]),
   onLocationChange: function onLocationChange(progress, request, location,
@@ -46,30 +51,15 @@ var progressListener = {
       }
     }
 
-    let isSameOrigin = (location.prePath === WebappRT.config.app.origin);
-
     // Set the title of the window to the name of the webapp, adding the origin
     // of the page being loaded if it's from a different origin than the app
     // (per security bug 741955, which specifies that other-origin pages loaded
     // in runtime windows must be identified in chrome).
     let title = WebappRT.localeManifest.name;
-    if (!isSameOrigin) {
+    if (!isSameOrigin(location.spec)) {
       title = location.prePath + " - " + title;
     }
     document.documentElement.setAttribute("title", title);
-
-#ifndef XP_WIN
-#ifndef XP_MACOSX
-    if (isSameOrigin) {
-      // On non-Windows platforms, we open new windows in fullscreen mode
-      // if the opener window is in fullscreen mode, so we hide the menubar;
-      // but on Mac we don't need to hide the menubar.
-      if (document.mozFullScreenElement) {
-        document.getElementById("main-menubar").style.display = "none";
-      }
-    }
-#endif
-#endif
   },
 
   onStateChange: function onStateChange(aProgress, aRequest, aFlags, aStatus) {
@@ -82,38 +72,42 @@ var progressListener = {
 };
 
 function onOpenWindow(event) {
-  if (event.detail.name === "_blank") {
-    let uri = Services.io.newURI(event.detail.url, null, null);
+  let name = event.detail.name;
 
-    // Prevent the default handler so nsContentTreeOwner.ProvideWindow
-    // doesn't create the window itself.
-    event.preventDefault();
+  if (name == "_blank") {
+    let uri = Services.io.newURI(event.detail.url, null, null);
 
     // Direct the URL to the browser.
     Cc["@mozilla.org/uriloader/external-protocol-service;1"].
     getService(Ci.nsIExternalProtocolService).
     getProtocolHandlerInfo(uri.scheme).
     launchWithURI(uri);
-  }
+  } else {
+    let win = window.openDialog("chrome://webapprt/content/webapp.xul",
+                                name,
+                                "chrome,dialog=no,resizable," + event.detail.features);
 
-  // Otherwise, don't do anything to make nsContentTreeOwner.ProvideWindow
-  // create the window itself and return it to the window.open caller.
-}
+    win.addEventListener("load", function onLoad() {
+      win.removeEventListener("load", onLoad, false);
 
-function onDOMContentLoaded() {
-  window.removeEventListener("DOMContentLoaded", onDOMContentLoaded, false);
-  // The initial window's app ID is set by Startup.jsm before the app
-  // is loaded, so this code only handles subsequent windows that are opened
-  // by the app via window.open calls.  We do this on DOMContentLoaded
-  // in order to ensure it gets set before the window's content is loaded.
-  if (gAppBrowser.docShell.appId === Ci.nsIScriptSecurityManager.NO_APP_ID) {
-    // Set the principal to the correct app ID.  Since this is a subsequent
-    // window, we know that WebappRT.configPromise has been resolved, so we
-    // don't have to yield to it before accessing WebappRT.appID.
-    gAppBrowser.docShell.setIsApp(WebappRT.appID);
+#ifndef XP_WIN
+#ifndef XP_MACOSX
+      if (isSameOrigin(event.detail.url)) {
+        // On non-Windows platforms, we open new windows in fullscreen mode
+        // if the opener window is in fullscreen mode, so we hide the menubar;
+        // but on Mac we don't need to hide the menubar.
+        if (document.mozFullScreenElement) {
+          win.document.getElementById("main-menubar").style.display = "none";
+        }
+      }
+#endif
+#endif
+
+      win.document.getElementById("content").docShell.setIsApp(WebappRT.appID);
+      win.document.getElementById("content").setAttribute("src", event.detail.url);
+    }, false);
   }
 }
-window.addEventListener("DOMContentLoaded", onDOMContentLoaded, false);
 
 function onLoad() {
   window.removeEventListener("load", onLoad, false);
@@ -148,7 +142,7 @@ document.addEventListener('mozfullscreenchange', function() {
 
 // On Mac, we dynamically create the label for the Quit menuitem, using
 // a string property to inject the name of the webapp into it.
-var updateMenuItems = Task.async(function*() {
+let updateMenuItems = Task.async(function*() {
 #ifdef XP_MACOSX
   yield WebappRT.configPromise;
 
@@ -165,7 +159,7 @@ var updateMenuItems = Task.async(function*() {
 });
 
 #ifndef XP_MACOSX
-var gEditUIVisible = true;
+let gEditUIVisible = true;
 #endif
 
 function updateEditUIVisibility() {
@@ -225,7 +219,7 @@ function updateCrashReportURL(aURI) {
 // At the moment there isn't any built-in menu, we only support HTML5 custom
 // menus.
 
-var gContextMenu = null;
+let gContextMenu = null;
 
 XPCOMUtils.defineLazyGetter(this, "PageMenu", function() {
   let tmp = {};

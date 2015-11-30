@@ -39,26 +39,23 @@ public:
 
   explicit ContentEventHandler(nsPresContext* aPresContext);
 
-  // Handle aEvent in the current process.
-  nsresult HandleQueryContentEvent(WidgetQueryContentEvent* aEvent);
-
-  // eQuerySelectedText event handler
+  // NS_QUERY_SELECTED_TEXT event handler
   nsresult OnQuerySelectedText(WidgetQueryContentEvent* aEvent);
-  // eQueryTextContent event handler
+  // NS_QUERY_TEXT_CONTENT event handler
   nsresult OnQueryTextContent(WidgetQueryContentEvent* aEvent);
-  // eQueryCaretRect event handler
+  // NS_QUERY_CARET_RECT event handler
   nsresult OnQueryCaretRect(WidgetQueryContentEvent* aEvent);
-  // eQueryTextRect event handler
+  // NS_QUERY_TEXT_RECT event handler
   nsresult OnQueryTextRect(WidgetQueryContentEvent* aEvent);
-  // eQueryEditorRect event handler
+  // NS_QUERY_EDITOR_RECT event handler
   nsresult OnQueryEditorRect(WidgetQueryContentEvent* aEvent);
-  // eQueryContentState event handler
+  // NS_QUERY_CONTENT_STATE event handler
   nsresult OnQueryContentState(WidgetQueryContentEvent* aEvent);
-  // eQuerySelectionAsTransferable event handler
+  // NS_QUERY_SELECTION_AS_TRANSFERABLE event handler
   nsresult OnQuerySelectionAsTransferable(WidgetQueryContentEvent* aEvent);
-  // eQueryCharacterAtPoint event handler
+  // NS_QUERY_CHARACTER_AT_POINT event handler
   nsresult OnQueryCharacterAtPoint(WidgetQueryContentEvent* aEvent);
-  // eQueryDOMWidgetHittest event handler
+  // NS_QUERY_DOM_WIDGET_HITTEST event handler
   nsresult OnQueryDOMWidgetHittest(WidgetQueryContentEvent* aEvent);
 
   // NS_SELECTION_* event

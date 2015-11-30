@@ -9,13 +9,11 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/IntegerRange.h"
 #include "mozilla/ReentrancyGuard.h"
-#include "mozilla/ScopeExit.h"
 #include "mozilla/TypeTraits.h"
 
 #include "jsgc.h"
 #include "jsprf.h"
 
-#include "builtin/ModuleObject.h"
 #include "gc/GCInternals.h"
 #include "jit/IonCode.h"
 #include "js/SliceBudget.h"
@@ -257,13 +255,6 @@ CheckTracedThing<jsid>(JSTracer* trc, jsid id)
     DispatchIdTyped(CheckTracedFunctor<jsid>(), id, trc);
 }
 
-template <>
-void
-CheckTracedThing<TaggedProto>(JSTracer* trc, TaggedProto proto)
-{
-    DispatchTaggedProtoTyped(CheckTracedFunctor<TaggedProto>(), proto, trc);
-}
-
 #define IMPL_CHECK_TRACED_THING(_, type, __) \
     template void CheckTracedThing<type*>(JSTracer*, type*);
 JS_FOR_EACH_TRACEKIND(IMPL_CHECK_TRACED_THING);
@@ -370,7 +361,6 @@ AssertRootMarkingPhase(JSTracer* trc)
     D(GlobalObject*) \
     D(JSObject*) \
     D(JSFunction*) \
-    D(ModuleObject*)      \
     D(NestedScopeObject*) \
     D(PlainObject*) \
     D(SavedFrame*) \
@@ -378,8 +368,6 @@ AssertRootMarkingPhase(JSTracer* trc)
     D(ScriptSourceObject*) \
     D(SharedArrayBufferObject*) \
     D(SharedTypedArrayObject*) \
-    D(ImportEntryObject*) \
-    D(ExportEntryObject*) \
     D(JSScript*) \
     D(LazyScript*) \
     D(Shape*) \
@@ -391,8 +379,7 @@ AssertRootMarkingPhase(JSTracer* trc)
     D(JS::Symbol*) \
     D(js::ObjectGroup*) \
     D(Value) \
-    D(jsid) \
-    D(TaggedProto)
+    D(jsid)
 
 // The second parameter to BaseGCType is derived automatically based on T. The
 // relation here is that for any T, the TraceKind will automatically,
@@ -429,7 +416,6 @@ JS_FOR_EACH_TRACEKIND(IMPL_BASE_GC_TYPE);
 template <typename T> struct PtrBaseGCType {};
 template <> struct PtrBaseGCType<Value> { typedef Value type; };
 template <> struct PtrBaseGCType<jsid> { typedef jsid type; };
-template <> struct PtrBaseGCType<TaggedProto> { typedef TaggedProto type; };
 template <typename T> struct PtrBaseGCType<T*> { typedef typename BaseGCType<T>::type* type; };
 
 template <typename T>
@@ -602,8 +588,7 @@ DispatchToTracer(JSTracer* trc, T* thingp, const char* name)
     static_assert(
             JS_FOR_EACH_TRACEKIND(IS_SAME_TYPE_OR)
             mozilla::IsSame<T, JS::Value>::value ||
-            mozilla::IsSame<T, jsid>::value ||
-            mozilla::IsSame<T, TaggedProto>::value,
+            mozilla::IsSame<T, jsid>::value,
             "Only the base cell layout types are allowed into marking/tracing internals");
 #undef IS_SAME_TYPE_OR
     if (trc->isMarkingTracer())
@@ -616,74 +601,6 @@ DispatchToTracer(JSTracer* trc, T* thingp, const char* name)
 
 
 /*** GC Marking Interface *************************************************************************/
-
-namespace js {
-
-typedef bool DoNothingMarkingType;
-
-template <typename T>
-struct LinearlyMarkedEphemeronKeyType {
-    typedef DoNothingMarkingType Type;
-};
-
-// For now, we only handle JSObject* keys, but the linear time algorithm can be
-// easily extended by adding in more types here, then making
-// GCMarker::traverse<T> call markPotentialEphemeronKey.
-template <>
-struct LinearlyMarkedEphemeronKeyType<JSObject*> {
-    typedef JSObject* Type;
-};
-
-template <>
-struct LinearlyMarkedEphemeronKeyType<JSScript*> {
-    typedef JSScript* Type;
-};
-
-void
-GCMarker::markEphemeronValues(gc::Cell* markedCell, WeakEntryVector& values)
-{
-    size_t initialLen = values.length();
-    for (size_t i = 0; i < initialLen; i++)
-        values[i].weakmap->maybeMarkEntry(this, markedCell, values[i].key);
-
-    // The vector should not be appended to during iteration because the key is
-    // already marked, and even in cases where we have a multipart key, we
-    // should only be inserting entries for the unmarked portions.
-    MOZ_ASSERT(values.length() == initialLen);
-}
-
-template <typename T>
-void
-GCMarker::markPotentialEphemeronKeyHelper(T markedThing)
-{
-    if (!isWeakMarkingTracer())
-        return;
-
-    MOZ_ASSERT(gc::TenuredCell::fromPointer(markedThing)->zone()->isGCMarking());
-    MOZ_ASSERT(!gc::TenuredCell::fromPointer(markedThing)->zone()->isGCSweeping());
-
-    auto weakValues = weakKeys.get(JS::GCCellPtr(markedThing));
-    if (!weakValues)
-        return;
-
-    markEphemeronValues(markedThing, weakValues->value);
-    weakValues->value.clear(); // If key address is reused, it should do nothing
-}
-
-template <>
-void
-GCMarker::markPotentialEphemeronKeyHelper(bool)
-{
-}
-
-template <typename T>
-void
-GCMarker::markPotentialEphemeronKey(T* thing)
-{
-    markPotentialEphemeronKeyHelper<typename LinearlyMarkedEphemeronKeyType<T*>::Type>(thing);
-}
-
-} // namespace js
 
 template <typename T>
 static inline bool
@@ -766,14 +683,6 @@ DoMarking<jsid>(GCMarker* gcmarker, jsid id)
     DispatchIdTyped(DoMarkingFunctor<jsid>(), id, gcmarker);
 }
 
-template <>
-void
-DoMarking<TaggedProto>(GCMarker* gcmarker, TaggedProto proto)
-{
-    if (proto.isObject())
-        DoMarking<JSObject*>(gcmarker, proto.toObject());
-}
-
 // The simplest traversal calls out to the fully generic traceChildren function
 // to visit the child edges. In the absence of other traversal mechanisms, this
 // function will rapidly grow the stack past its bounds and crash the process.
@@ -791,6 +700,7 @@ js::GCMarker::markAndTraceChildren(T* thing)
 namespace js {
 template <> void GCMarker::traverse(BaseShape* thing) { markAndTraceChildren(thing); }
 template <> void GCMarker::traverse(JS::Symbol* thing) { markAndTraceChildren(thing); }
+template <> void GCMarker::traverse(JSScript* thing) { markAndTraceChildren(thing); }
 } // namespace js
 
 // Shape, BaseShape, String, and Symbol are extremely common, but have simple
@@ -814,22 +724,18 @@ template <> void GCMarker::traverse(Shape* thing) { markAndScan(thing); }
 // Object and ObjectGroup are extremely common and can contain arbitrarily
 // nested graphs, so are not trivially inlined. In this case we use a mark
 // stack to control recursion. JitCode shares none of these properties, but is
-// included for historical reasons. JSScript normally cannot recurse, but may
-// be used as a weakmap key and thereby recurse into weakmapped values.
+// included for historical reasons.
 template <typename T>
 void
 js::GCMarker::markAndPush(StackTag tag, T* thing)
 {
-    if (!mark(thing))
-        return;
-    pushTaggedPtr(tag, thing);
-    markPotentialEphemeronKey(thing);
+    if (mark(thing))
+        pushTaggedPtr(tag, thing);
 }
 namespace js {
 template <> void GCMarker::traverse(JSObject* thing) { markAndPush(ObjectTag, thing); }
 template <> void GCMarker::traverse(ObjectGroup* thing) { markAndPush(GroupTag, thing); }
 template <> void GCMarker::traverse(jit::JitCode* thing) { markAndPush(JitCodeTag, thing); }
-template <> void GCMarker::traverse(JSScript* thing) { markAndPush(ScriptTag, thing); }
 } // namespace js
 
 namespace js {
@@ -1038,33 +944,7 @@ js::GCMarker::eagerlyMarkChildren(JSRope* rope)
     // types.
     ptrdiff_t savedPos = stack.position();
     JS_DIAGNOSTICS_ASSERT(rope->getTraceKind() == JS::TraceKind::String);
-#ifdef JS_DEBUG
-    static const size_t DEEP_ROPE_THRESHOLD = 100000;
-    static const size_t ROPE_CYCLE_HISTORY = 100;
-    DebugOnly<size_t> ropeDepth = 0;
-    JSRope* history[ROPE_CYCLE_HISTORY];
-#endif
     while (true) {
-#ifdef JS_DEBUG
-        if (++ropeDepth >= DEEP_ROPE_THRESHOLD) {
-            // Bug 1011786 comment 294 - detect cyclic ropes. There are some
-            // legitimate deep ropes, at least in tests. So if we hit a deep
-            // rope, start recording the nodes we visit and check whether we
-            // repeat. But do it on a finite window size W so that we're not
-            // scanning the full history for every node. And only check every
-            // Wth push, to add only constant overhead per node. This will only
-            // catch cycles of size up to W (but it seems most likely that any
-            // cycles will be size 1 or maybe 2.)
-            if ((ropeDepth > DEEP_ROPE_THRESHOLD + ROPE_CYCLE_HISTORY) &&
-                (ropeDepth % ROPE_CYCLE_HISTORY) == 0)
-            {
-                for (size_t i = 0; i < ROPE_CYCLE_HISTORY; i++)
-                    MOZ_ASSERT(history[i] != rope, "cycle detected in rope");
-            }
-            history[ropeDepth % ROPE_CYCLE_HISTORY] = rope;
-        }
-#endif
-
         JS_DIAGNOSTICS_ASSERT(rope->getTraceKind() == JS::TraceKind::String);
         JS_DIAGNOSTICS_ASSERT(rope->JSString::isRope());
         AssertZoneIsMarking(rope);
@@ -1117,7 +997,7 @@ js::ObjectGroup::traceChildren(JSTracer* trc)
     }
 
     if (proto().isObject())
-        TraceEdge(trc, &proto(), "group_proto");
+        TraceEdge(trc, &protoRaw(), "group_proto");
 
     if (newScript())
         newScript()->trace(trc);
@@ -1201,6 +1081,13 @@ CallTraceHook(Functor f, JSTracer* trc, JSObject* obj, CheckGeneration check, Ar
     if (!clasp->trace)
         return &obj->as<NativeObject>();
 
+    // Global objects all have the same trace hook. That hook is safe without barriers
+    // if the global has no custom trace hook of its own, or has been moved to a different
+    // compartment, and so can't have one.
+    MOZ_ASSERT_IF(!(clasp->trace == JS_GlobalObjectTraceHook &&
+                    (!obj->compartment()->options().getTrace() || !obj->isOwnGlobal())),
+                  clasp->flags & JSCLASS_IMPLEMENTS_BARRIERS);
+
     if (clasp->trace == InlineTypedObject::obj_trace) {
         Shape** pshape = obj->as<InlineTypedObject>().addressOfShapeFromGC();
         f(pshape, mozilla::Forward<Args>(args)...);
@@ -1267,9 +1154,14 @@ bool
 GCMarker::drainMarkStack(SliceBudget& budget)
 {
 #ifdef DEBUG
-    MOZ_ASSERT(!strictCompartmentChecking);
-    strictCompartmentChecking = true;
-    auto acc = mozilla::MakeScopeExit([&] {strictCompartmentChecking = false;});
+    struct AutoCheckCompartment {
+        bool& flag;
+        explicit AutoCheckCompartment(bool& comparmentCheckFlag) : flag(comparmentCheckFlag) {
+            MOZ_ASSERT(!flag);
+            flag = true;
+        }
+        ~AutoCheckCompartment() { flag = false; }
+    } acc(strictCompartmentChecking);
 #endif
 
     if (budget.isOverBudget())
@@ -1382,10 +1274,6 @@ GCMarker::processMarkStackTop(SliceBudget& budget)
         return reinterpret_cast<jit::JitCode*>(addr)->traceChildren(this);
       }
 
-      case ScriptTag: {
-        return reinterpret_cast<JSScript*>(addr)->traceChildren(this);
-      }
-
       case SavedValueArrayTag: {
         MOZ_ASSERT(!(addr & CellMask));
         JSObject* obj = reinterpret_cast<JSObject*>(addr);
@@ -1439,7 +1327,6 @@ GCMarker::processMarkStackTop(SliceBudget& budget)
             return;
         }
 
-        markPotentialEphemeronKey(obj);
         ObjectGroup* group = obj->groupFromGC();
         traverseEdge(obj, group);
 
@@ -1704,13 +1591,11 @@ MarkStack::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
 /*** GCMarker *************************************************************************************/
 
 /*
- * ExpandWeakMaps: the GC is recomputing the liveness of WeakMap entries by
- * expanding each live WeakMap into its constituent key->value edges, a table
- * of which will be consulted in a later phase whenever marking a potential
- * key.
+ * DoNotTraceWeakMaps: the GC is recomputing the liveness of WeakMap entries,
+ * so we delay visting entries.
  */
 GCMarker::GCMarker(JSRuntime* rt)
-  : JSTracer(rt, JSTracer::TracerKindTag::Marking, ExpandWeakMaps),
+  : JSTracer(rt, JSTracer::TracerKindTag::Marking, DoNotTraceWeakMaps),
     stack(size_t(-1)),
     color(BLACK),
     unmarkedArenaStackTop(nullptr),
@@ -1723,7 +1608,7 @@ GCMarker::GCMarker(JSRuntime* rt)
 bool
 GCMarker::init(JSGCMode gcMode)
 {
-    return stack.init(gcMode) && weakKeys.init();
+    return stack.init(gcMode);
 }
 
 void
@@ -1732,10 +1617,10 @@ GCMarker::start()
     MOZ_ASSERT(!started);
     started = true;
     color = BLACK;
-    linearWeakMarkingDisabled_ = false;
 
     MOZ_ASSERT(!unmarkedArenaStackTop);
     MOZ_ASSERT(markLaterArenas == 0);
+
 }
 
 void
@@ -1751,7 +1636,6 @@ GCMarker::stop()
 
     /* Free non-ballast stack memory. */
     stack.reset();
-    weakKeys.clear();
 }
 
 void
@@ -1777,27 +1661,6 @@ GCMarker::reset()
 }
 
 void
-GCMarker::enterWeakMarkingMode()
-{
-    MOZ_ASSERT(tag_ == TracerKindTag::Marking);
-    if (linearWeakMarkingDisabled_)
-        return;
-
-    // During weak marking mode, we maintain a table mapping weak keys to
-    // entries in known-live weakmaps.
-    if (weakMapAction() == ExpandWeakMaps) {
-        tag_ = TracerKindTag::WeakMarking;
-
-        for (GCCompartmentGroupIter c(runtime()); !c.done(); c.next()) {
-            for (WeakMapBase* m = c->gcWeakMapList; m; m = m->next) {
-                if (m->marked)
-                    m->markEphemeronEntries(this);
-            }
-        }
-    }
-}
-
-void
 GCMarker::markDelayedChildren(ArenaHeader* aheader)
 {
     if (aheader->markOverflow) {
@@ -1808,7 +1671,7 @@ GCMarker::markDelayedChildren(ArenaHeader* aheader)
             TenuredCell* t = i.getCell();
             if (always || t->isMarked()) {
                 t->markIfUnmarked();
-                js::TraceChildren(this, t, MapAllocToTraceKind(aheader->getAllocKind()));
+                JS_TraceChildren(this, t, MapAllocToTraceKind(aheader->getAllocKind()));
             }
         }
     } else {
@@ -1919,18 +1782,6 @@ TenuringTracer::traverse(Value* valp)
     valp->setObject(*obj);
 }
 
-template <>
-void
-TenuringTracer::traverse(TaggedProto* protop)
-{
-    if (!protop->isObject())
-        return;
-
-    JSObject *obj = protop->toObject();
-    traverse(&obj);
-    *protop = TaggedProto(obj);
-}
-
 template <> void js::TenuringTracer::traverse(js::BaseShape**) {}
 template <> void js::TenuringTracer::traverse(js::jit::JitCode**) {}
 template <> void js::TenuringTracer::traverse(JSScript**) {}
@@ -1949,7 +1800,7 @@ js::gc::StoreBuffer::MonoTypeBuffer<T>::trace(StoreBuffer* owner, TenuringTracer
     mozilla::ReentrancyGuard g(*owner);
     MOZ_ASSERT(owner->isEnabled());
     MOZ_ASSERT(stores_.initialized());
-    sinkStore(owner);
+    sinkStores(owner);
     for (typename StoreSet::Range r = stores_.all(); !r.empty(); r.popFront())
         r.front().trace(mover);
 }
@@ -2065,6 +1916,7 @@ js::TenuringTracer::moveToTenured(JSObject* src)
             CrashAtUnhandlableOOM("Failed to allocate object while tenuring.");
     }
     JSObject* dst = reinterpret_cast<JSObject*>(t);
+
     tenuredSize += moveObjectToTenured(dst, src, dstKind);
 
     RelocationOverlay* overlay = RelocationOverlay::fromCell(src);
@@ -2076,7 +1928,6 @@ js::TenuringTracer::moveToTenured(JSObject* src)
     }
 
     TracePromoteToTenured(src, dst);
-    MemProfiler::MoveNurseryToTenured(src, dst);
     return dst;
 }
 
@@ -2319,7 +2170,7 @@ template <typename S>
 struct IsMarkedFunctor : public IdentityDefaultAdaptor<S> {
     template <typename T> S operator()(T* t, bool* rv) {
         *rv = IsMarkedInternal(&t);
-        return js::gc::RewrapTaggedPointer<S, T*>::wrap(t);
+        return js::gc::RewrapValueOrId<S, T*>::wrap(t);
     }
 };
 
@@ -2338,15 +2189,6 @@ IsMarkedInternal<jsid>(jsid* idp)
 {
     bool rv = true;
     *idp = DispatchIdTyped(IsMarkedFunctor<jsid>(), *idp, &rv);
-    return rv;
-}
-
-template <>
-bool
-IsMarkedInternal<TaggedProto>(TaggedProto* protop)
-{
-    bool rv = true;
-    *protop = DispatchTaggedProtoTyped(IsMarkedFunctor<TaggedProto>(), *protop, &rv);
     return rv;
 }
 
@@ -2388,7 +2230,7 @@ template <typename S>
 struct IsAboutToBeFinalizedFunctor : public IdentityDefaultAdaptor<S> {
     template <typename T> S operator()(T* t, bool* rv) {
         *rv = IsAboutToBeFinalizedInternal(&t);
-        return js::gc::RewrapTaggedPointer<S, T*>::wrap(t);
+        return js::gc::RewrapValueOrId<S, T*>::wrap(t);
     }
 };
 
@@ -2407,15 +2249,6 @@ IsAboutToBeFinalizedInternal<jsid>(jsid* idp)
 {
     bool rv = false;
     *idp = DispatchIdTyped(IsAboutToBeFinalizedFunctor<jsid>(), *idp, &rv);
-    return rv;
-}
-
-template <>
-bool
-IsAboutToBeFinalizedInternal<TaggedProto>(TaggedProto* protop)
-{
-    bool rv = false;
-    *protop = DispatchTaggedProtoTyped(IsAboutToBeFinalizedFunctor<TaggedProto>(), *protop, &rv);
     return rv;
 }
 
@@ -2518,8 +2351,8 @@ struct AssertNonGrayTracer : public JS::CallbackTracer {
 struct UnmarkGrayTracer : public JS::CallbackTracer
 {
     /*
-     * We set weakMapAction to DoNotTraceWeakMaps because the cycle collector
-     * will fix up any color mismatches involving weakmaps when it runs.
+     * We set eagerlyTraceWeakMaps to false because the cycle collector will fix
+     * up any color mismatches involving weakmaps when it runs.
      */
     explicit UnmarkGrayTracer(JSRuntime* rt)
       : JS::CallbackTracer(rt, DoNotTraceWeakMaps),
@@ -2635,51 +2468,40 @@ UnmarkGrayTracer::onChild(const JS::GCCellPtr& thing)
 
     do {
         MOZ_ASSERT(!shape->isMarked(js::gc::GRAY));
-        shape->traceChildren(&childTracer);
+        TraceChildren(&childTracer, shape, JS::TraceKind::Shape);
         shape = childTracer.previousShape;
         childTracer.previousShape = nullptr;
     } while (shape);
     unmarkedAny |= childTracer.unmarkedAny;
 }
 
-template <typename T>
-static bool
-TypedUnmarkGrayCellRecursively(T* t)
+bool
+js::UnmarkGrayCellRecursively(gc::Cell* cell, JS::TraceKind kind)
 {
-    MOZ_ASSERT(t);
+    MOZ_ASSERT(cell);
 
-    JSRuntime* rt = t->runtimeFromMainThread();
+    JSRuntime* rt = cell->runtimeFromMainThread();
     MOZ_ASSERT(!rt->isHeapBusy());
 
     bool unmarkedArg = false;
-    if (t->isTenured()) {
-        if (!t->asTenured().isMarked(GRAY))
+    if (cell->isTenured()) {
+        if (!cell->asTenured().isMarked(GRAY))
             return false;
 
-        t->asTenured().unmark(GRAY);
+        cell->asTenured().unmark(GRAY);
         unmarkedArg = true;
     }
 
     UnmarkGrayTracer trc(rt);
-    t->traceChildren(&trc);
+    TraceChildren(&trc, cell, kind);
 
     return unmarkedArg || trc.unmarkedAny;
-}
-
-struct UnmarkGrayCellRecursivelyFunctor {
-    template <typename T> bool operator()(T* t) { return TypedUnmarkGrayCellRecursively(t); }
-};
-
-bool
-js::UnmarkGrayCellRecursively(Cell* cell, JS::TraceKind kind)
-{
-    return DispatchTraceKindTyped(UnmarkGrayCellRecursivelyFunctor(), cell, kind);
 }
 
 bool
 js::UnmarkGrayShapeRecursively(Shape* shape)
 {
-    return TypedUnmarkGrayCellRecursively(shape);
+    return js::UnmarkGrayCellRecursively(shape, JS::TraceKind::Shape);
 }
 
 JS_FRIEND_API(bool)

@@ -51,7 +51,6 @@ ToolbarView.prototype = {
     let stepOutKey = ShortcutUtils.prettifyShortcut(document.getElementById("stepOutKey"));
     this._resumeTooltip = L10N.getFormatStr("resumeButtonTooltip", resumeKey);
     this._pauseTooltip = L10N.getFormatStr("pauseButtonTooltip", resumeKey);
-    this._pausePendingTooltip = L10N.getStr("pausePendingButtonTooltip");
     this._stepOverTooltip = L10N.getFormatStr("stepOverTooltip", stepOverKey);
     this._stepInTooltip = L10N.getFormatStr("stepInTooltip", stepInKey);
     this._stepOutTooltip = L10N.getFormatStr("stepOutTooltip", stepOutKey);
@@ -113,23 +112,11 @@ ToolbarView.prototype = {
    * Sets the resume button state based on the debugger active thread.
    *
    * @param string aState
-   *        Either "paused", "attached", or "breakOnNext".
+   *        Either "paused" or "attached".
    * @param boolean hasLocation
    *        True if we are paused at a specific JS location
    */
   toggleResumeButtonState: function(aState, hasLocation) {
-    // Intermidiate state after pressing the pause button and waiting
-    // for the next script execution to happen.
-    if (aState == "breakOnNext") {
-      this._resumeButton.setAttribute("break-on-next", "true");
-      this._resumeButton.disabled = true;
-      this._resumeButton.setAttribute("tooltiptext", this._pausePendingTooltip);
-      return;
-    }
-
-    this._resumeButton.removeAttribute("break-on-next");
-    this._resumeButton.disabled = false;
-
     // If we're paused, check and show a resume label on the button.
     if (aState == "paused") {
       this._resumeButton.setAttribute("checked", "true");
@@ -148,7 +135,7 @@ ToolbarView.prototype = {
       this._resumeButton.removeAttribute("checked");
       this._resumeButton.setAttribute("tooltiptext", this._pauseTooltip);
       this._toggleButtonsState({ enabled: false });
-    }
+   }
   },
 
   _toggleButtonsState: function({ enabled }) {
@@ -159,7 +146,7 @@ ToolbarView.prototype = {
     ];
     for (let button of buttons) {
       button.disabled = !enabled;
-    }
+    };
   },
 
   /**
@@ -177,8 +164,7 @@ ToolbarView.prototype = {
    * Listener handling the pause/resume button click event.
    */
   _onResumePressed: function() {
-    if (this.StackFrames._currentFrameDescription != FRAME_TYPE.NORMAL ||
-        this._resumeButton.disabled) {
+    if (this.StackFrames._currentFrameDescription != FRAME_TYPE.NORMAL) {
       return;
     }
 
@@ -187,8 +173,7 @@ ToolbarView.prototype = {
       this.activeThread.resume(this.resumptionWarnFunc);
     } else {
       this.ThreadState.interruptedByResumeButton = true;
-      this.toggleResumeButtonState("breakOnNext");
-      this.activeThread.breakOnNext();
+      this.activeThread.interrupt();
     }
   },
 

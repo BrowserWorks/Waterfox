@@ -21,10 +21,6 @@
 #include "nsIDOMWindow.h"
 #include "nsGlobalWindow.h"
 
-#include "mozilla/unused.h"
-#include "mozilla/Services.h"
-#include "mozilla/Telemetry.h"
-
 #if defined(XP_WIN)
 #include "windows.h"
 #else
@@ -452,9 +448,6 @@ nsPerformanceStatsService::nsPerformanceStatsService()
 #else
   : mProcessId(getpid())
 #endif
-  , mProcessStayed(0)
-  , mProcessMoved(0)
-  , mProcessUpdateCounter(0)
 {
 }
 
@@ -506,27 +499,6 @@ NS_IMETHODIMP nsPerformanceStatsService::SetIsMonitoringPerCompartment(JSContext
   return NS_OK;
 }
 
-nsresult nsPerformanceStatsService::UpdateTelemetry()
-{
-  // Promote everything to floating-point explicitly before dividing.
-  const double processStayed = mProcessStayed;
-  const double processMoved = mProcessMoved;
-
-  if (processStayed <= 0 || processMoved <= 0 || processStayed + processMoved <= 0) {
-    // Overflow/underflow/nothing to report
-    return NS_OK;
-  }
-
-  const double proportion = (100 * processStayed) / (processStayed + processMoved);
-  if (proportion < 0 || proportion > 100) {
-    // Overflow/underflow
-    return NS_OK;
-  }
-
-  mozilla::Telemetry::Accumulate(mozilla::Telemetry::PERF_MONITORING_TEST_CPU_RESCHEDULING_PROPORTION_MOVED, (uint32_t)proportion);
-  return NS_OK;
-}
-
 NS_IMETHODIMP nsPerformanceStatsService::GetSnapshot(JSContext* cx, nsIPerformanceSnapshot * *aSnapshot)
 {
   nsRefPtr<nsPerformanceSnapshot> snapshot = new nsPerformanceSnapshot();
@@ -535,14 +507,7 @@ NS_IMETHODIMP nsPerformanceStatsService::GetSnapshot(JSContext* cx, nsIPerforman
     return rv;
   }
 
-  js::GetPerfMonitoringTestCpuRescheduling(JS_GetRuntime(cx), &mProcessStayed, &mProcessMoved);
-
-  if (++mProcessUpdateCounter % 10 == 0) {
-    mozilla::unused << UpdateTelemetry();
-  }
-
   snapshot.forget(aSnapshot);
-
   return NS_OK;
 }
 

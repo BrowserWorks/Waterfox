@@ -39,7 +39,7 @@ protocol.types.addType("array-of-numbers-as-strings", {
 /**
  * The timeline actor pops and forwards timeline markers registered in docshells.
  */
-var TimelineActor = exports.TimelineActor = protocol.ActorClass({
+let TimelineActor = exports.TimelineActor = protocol.ActorClass({
   typeName: "timeline",
 
   events: {

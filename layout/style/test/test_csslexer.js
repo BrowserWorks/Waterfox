@@ -29,7 +29,7 @@ function test_lexer(domutils, cssText, tokenTypes) {
   equal(reconstructed, cssText);
 }
 
-var LEX_TESTS = [
+let LEX_TESTS = [
   ["simple", ["ident:simple"]],
   ["simple: { hi; }",
              ["ident:simple", "symbol::",
@@ -102,7 +102,7 @@ function test_lexer_linecol(domutils, cssText, locations) {
   equal(i, locations.length);
 }
 
-var LINECOL_TESTS = [
+let LINECOL_TESTS = [
   ["simple", ["ident:0:0", ":0:6"]],
   ["\n    stuff", ["whitespace:0:0", "ident:1:4", ":1:9"]],
   ['"string with \\\nnewline"    \r\n', ["string:0:0", "whitespace:1:8",

@@ -6,7 +6,7 @@
 
 /*globals gChromeWin */
 
-var Ci = Components.interfaces, Cc = Components.classes, Cu = Components.utils;
+let Ci = Components.interfaces, Cc = Components.classes, Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm")
 Cu.import("resource://gre/modules/AddonManager.jsm");
@@ -14,7 +14,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const AMO_ICON = "chrome://browser/skin/images/amo-logo.png";
 
-var gStringBundle = Services.strings.createBundle("chrome://browser/locale/aboutAddons.properties");
+let gStringBundle = Services.strings.createBundle("chrome://browser/locale/aboutAddons.properties");
 
 XPCOMUtils.defineLazyGetter(window, "gChromeWin", function() {
   return window.QueryInterface(Ci.nsIInterfaceRequestor)

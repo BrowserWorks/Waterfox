@@ -17,7 +17,7 @@ const ERR_FENNEC_MSG = 'This method is not yet supported by Fennec, consider usi
 
 // NOTE: On Fennec there is only one window.
 
-var BrowserWindows = Class({
+let BrowserWindows = Class({
   implements: [ List ],
   extends: EventTarget,
   initialize: function() {

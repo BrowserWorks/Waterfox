@@ -9,7 +9,7 @@
 #include "nscore.h"
 #include "npapi.h"
 #include "npruntime.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 
 class nsJSNPRuntime
 {

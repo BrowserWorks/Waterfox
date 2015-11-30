@@ -3,7 +3,7 @@
 
 MARIONETTE_TIMEOUT = 10000;
 
-var Services = SpecialPowers.Services;
+let Services = SpecialPowers.Services;
 
 function testScreenState(on, expected, msg) {
   // send event to RadioInterface
@@ -25,7 +25,7 @@ function testScreenStateEnabled() {
   testScreenState('on', '+CREG: 2', 'screen is enabled');
 }
 
-var tests = [
+let tests = [
   testScreenStateDisabled,
   testScreenStateEnabled
 ];

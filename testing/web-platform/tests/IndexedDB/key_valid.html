@@ -35,8 +35,7 @@
                            .objectStore("store2")
                            .get(['v', key])
                 rq.onsuccess = t.step_func(function(e) {
-                    assert_equals(e.target.result.x, 'v');
-                    assert_key_equals(e.target.result.keypath, key);
+                    assert_object_equals(e.target.result, { x: 'v', keypath: key })
                     t.done()
                 })
             })

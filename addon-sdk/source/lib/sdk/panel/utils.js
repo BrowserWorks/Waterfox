@@ -223,20 +223,6 @@ function show(panel, options, anchor) {
 }
 exports.show = show
 
-function onPanelClick(event) {
-  let { target, metaKey, ctrlKey, shiftKey, button } = event;
-  let accel = platform === "darwin" ? metaKey : ctrlKey;
-  let isLeftClick = button === 0;
-  let isMiddleClick = button === 1;
-
-  if ((isLeftClick && (accel || shiftKey)) || isMiddleClick) {
-    let link = target.closest('a');
-
-    if (link && link.href)
-       getMostRecentBrowserWindow().openUILink(link.href, event)
-  }
-}
-
 function setupPanelFrame(frame) {
   frame.setAttribute("flex", 1);
   frame.setAttribute("transparent", "transparent");
@@ -323,8 +309,6 @@ function make(document, options) {
   panel.addEventListener("popuphiding", onDisplayChange, false);
   panel.addEventListener("popupshown", onPanelStateChange, false);
   panel.addEventListener("popuphidden", onPanelStateChange, false);
-
-  panel.addEventListener("click", onPanelClick, false);
 
   // Panel content document can be either in panel `viewFrame` or in
   // a `backgroundFrame` depending on panel state. Listeners are set
@@ -423,7 +407,7 @@ function style(panel) {
 }
 exports.style = style;
 
-var getContentFrame = panel =>
+let getContentFrame = panel =>
     (isOpen(panel) || isOpening(panel)) ?
     panel.firstChild :
     panel.backgroundFrame

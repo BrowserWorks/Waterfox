@@ -95,9 +95,9 @@ class nsDefaultComparator <nsDocLoader::nsListenerInfo, nsIWebProgressListener*>
 
 /* static */ const PLDHashTableOps nsDocLoader::sRequestInfoHashOps =
 {
-  PLDHashTable::HashVoidPtrKeyStub,
-  PLDHashTable::MatchEntryStub,
-  PLDHashTable::MoveEntryStub,
+  PL_DHashVoidPtrKeyStub,
+  PL_DHashMatchEntryStub,
+  PL_DHashMoveEntryStub,
   nsDocLoader::RequestInfoHashClearEntry,
   nsDocLoader::RequestInfoHashInitEntry
 };
@@ -1325,7 +1325,7 @@ nsDocLoader::RefreshAttempted(nsIWebProgress* aWebProgress,
 
 nsresult nsDocLoader::AddRequestInfo(nsIRequest *aRequest)
 {
-  if (!mRequestInfoHash.Add(aRequest, mozilla::fallible)) {
+  if (!PL_DHashTableAdd(&mRequestInfoHash, aRequest, mozilla::fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -1334,12 +1334,13 @@ nsresult nsDocLoader::AddRequestInfo(nsIRequest *aRequest)
 
 void nsDocLoader::RemoveRequestInfo(nsIRequest *aRequest)
 {
-  mRequestInfoHash.Remove(aRequest);
+  PL_DHashTableRemove(&mRequestInfoHash, aRequest);
 }
 
 nsDocLoader::nsRequestInfo* nsDocLoader::GetRequestInfo(nsIRequest* aRequest)
 {
-  return static_cast<nsRequestInfo*>(mRequestInfoHash.Search(aRequest));
+  return static_cast<nsRequestInfo*>
+                    (PL_DHashTableSearch(&mRequestInfoHash, aRequest));
 }
 
 void nsDocLoader::ClearRequestInfoHash(void)

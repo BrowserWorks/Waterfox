@@ -104,9 +104,10 @@ PresentationDeviceInfoManager.prototype = {
   getAll: function() {
     log("getAll");
     let self = this;
-    return this.createPromiseWithId(function(aResolverId) {
+    return this.createPromise(function(aResolve, aReject) {
+      let resolverId = self.getPromiseResolverId({ resolve: aResolve, reject: aReject });
       cpmm.sendAsyncMessage("PresentationDeviceInfoManager:GetAll", {
-        requestId: aResolverId,
+        requestId: resolverId,
       });
     });
   },

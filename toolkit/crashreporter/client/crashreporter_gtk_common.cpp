@@ -409,15 +409,17 @@ bool UIMoveFile(const string& file, const string& newfile)
   }
   if (pID == 0) {
     char* const args[4] = {
-      const_cast<char*>("mv"),
+      "mv",
       strdup(file.c_str()),
       strdup(newfile.c_str()),
       0
     };
     if (args[1] && args[2])
       execve("/bin/mv", args, 0);
-    free(args[1]);
-    free(args[2]);
+    if (args[1])
+      free(args[1]);
+    if (args[2])
+      free(args[2]);
     exit(-1);
   }
   int status;

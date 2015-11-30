@@ -52,8 +52,7 @@ class ProfileEntry
     enum Flags {
         // Indicate whether a profile entry represents a CPP frame. If not set,
         // a JS frame is assumed by default. You're not allowed to publicly
-        // change the frame type. Instead, initialize the ProfileEntry as either
-        // a JS or CPP frame with `initJsFrame` or `initCppFrame` respectively.
+        // change the frame type. Instead, call `setJsFrame` or `setCppFrame`.
         IS_CPP_ENTRY = 0x01,
 
         // Indicate that copying the frame label is not necessary when taking a
@@ -68,11 +67,8 @@ class ProfileEntry
         // into baseline.
         OSR = 0x08,
 
-        // Union of all flags.
-        ALL = IS_CPP_ENTRY|FRAME_LABEL_COPY|BEGIN_PSEUDO_JS|OSR,
-
         // Mask for removing all flags except the category information.
-        CATEGORY_MASK = ~ALL
+        CATEGORY_MASK = ~IS_CPP_ENTRY & ~FRAME_LABEL_COPY & ~BEGIN_PSEUDO_JS & ~OSR
     };
 
     // Keep these in sync with browser/devtools/performance/modules/global.js
@@ -91,9 +87,6 @@ class ProfileEntry
         LAST     = EVENTS
     };
 
-    static_assert((static_cast<int>(Category::FIRST) & Flags::ALL) == 0,
-                  "The category bitflags should not intersect with the other flags!");
-
     // All of these methods are marked with the 'volatile' keyword because SPS's
     // representation of the stack is stored such that all ProfileEntry
     // instances are volatile. These methods would not be available unless they
@@ -107,12 +100,12 @@ class ProfileEntry
     void setLabel(const char* aString) volatile { string = aString; }
     const char* label() const volatile { return string; }
 
-    void initJsFrame(JSScript* aScript, jsbytecode* aPc) volatile {
+    void setJsFrame(JSScript* aScript, jsbytecode* aPc) volatile {
         flags_ = 0;
         spOrScript = aScript;
         setPC(aPc);
     }
-    void initCppFrame(void* aSp, uint32_t aLine) volatile {
+    void setCppFrame(void* aSp, uint32_t aLine) volatile {
         flags_ = IS_CPP_ENTRY;
         spOrScript = aSp;
         lineOrPc = static_cast<int32_t>(aLine);
@@ -133,15 +126,8 @@ class ProfileEntry
     uint32_t flags() const volatile {
         return flags_;
     }
-
     uint32_t category() const volatile {
         return flags_ & CATEGORY_MASK;
-    }
-    void setCategory(Category c) volatile {
-        MOZ_ASSERT(c >= Category::FIRST);
-        MOZ_ASSERT(c <= Category::LAST);
-        flags_ &= ~CATEGORY_MASK;
-        setFlag(static_cast<uint32_t>(c));
     }
 
     void setOSR() volatile {

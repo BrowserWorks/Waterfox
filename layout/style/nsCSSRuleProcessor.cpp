@@ -20,7 +20,7 @@
 #include "nsRuleProcessorData.h"
 #include <algorithm>
 #include "nsIAtom.h"
-#include "PLDHashTable.h"
+#include "pldhash.h"
 #include "nsICSSPseudoComparator.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/css/StyleRule.h"
@@ -359,7 +359,7 @@ RuleHash_NameSpaceTable_MatchEntry(PLDHashTable *table,
 }
 
 static const PLDHashTableOps RuleHash_TagTable_Ops = {
-  PLDHashTable::HashVoidPtrKeyStub,
+  PL_DHashVoidPtrKeyStub,
   RuleHash_TagTable_MatchEntry,
   RuleHash_TagTable_MoveEntry,
   RuleHash_TagTable_ClearEntry,
@@ -369,7 +369,7 @@ static const PLDHashTableOps RuleHash_TagTable_Ops = {
 // Case-sensitive ops.
 static const RuleHashTableOps RuleHash_ClassTable_CSOps = {
   {
-  PLDHashTable::HashVoidPtrKeyStub,
+  PL_DHashVoidPtrKeyStub,
   RuleHash_CSMatchEntry,
   RuleHash_MoveEntry,
   RuleHash_ClearEntry,
@@ -393,7 +393,7 @@ static const RuleHashTableOps RuleHash_ClassTable_CIOps = {
 // Case-sensitive ops.
 static const RuleHashTableOps RuleHash_IdTable_CSOps = {
   {
-  PLDHashTable::HashVoidPtrKeyStub,
+  PL_DHashVoidPtrKeyStub,
   RuleHash_CSMatchEntry,
   RuleHash_MoveEntry,
   RuleHash_ClearEntry,
@@ -565,7 +565,8 @@ void RuleHash::AppendRuleToTable(PLDHashTable* aTable, const void* aKey,
                                  const RuleSelectorPair& aRuleInfo)
 {
   // Get a new or existing entry.
-  auto entry = static_cast<RuleHashTableEntry*>(aTable->Add(aKey, fallible));
+  RuleHashTableEntry *entry = static_cast<RuleHashTableEntry*>
+    (PL_DHashTableAdd(aTable, aKey, fallible));
   if (!entry)
     return;
   entry->mRules.AppendElement(RuleValue(aRuleInfo, mRuleCount++, mQuirksMode));
@@ -576,7 +577,8 @@ AppendRuleToTagTable(PLDHashTable* aTable, nsIAtom* aKey,
                      const RuleValue& aRuleInfo)
 {
   // Get a new or exisiting entry
-  auto entry = static_cast<RuleHashTagTableEntry*>(aTable->Add(aKey, fallible));
+  RuleHashTagTableEntry *entry = static_cast<RuleHashTagTableEntry*>
+    (PL_DHashTableAdd(aTable, aKey, fallible));
   if (!entry)
     return;
 
@@ -670,22 +672,24 @@ void RuleHash::EnumerateAllRules(Element* aElement, ElementDependentRuleProcesso
   }
   // universal rules within the namespace
   if (kNameSpaceID_Unknown != nameSpace && mNameSpaceTable.EntryCount() > 0) {
-    auto entry = static_cast<RuleHashTableEntry*>
-      (mNameSpaceTable.Search(NS_INT32_TO_PTR(nameSpace)));
+    RuleHashTableEntry *entry = static_cast<RuleHashTableEntry*>
+                                           (PL_DHashTableSearch(&mNameSpaceTable, NS_INT32_TO_PTR(nameSpace)));
     if (entry) {
       mEnumList[valueCount++] = ToEnumData(entry->mRules);
       RULE_HASH_STAT_INCREMENT_LIST_COUNT(entry->mRules, mElementNameSpaceCalls);
     }
   }
   if (mTagTable.EntryCount() > 0) {
-    auto entry = static_cast<RuleHashTableEntry*>(mTagTable.Search(tag));
+    RuleHashTableEntry *entry = static_cast<RuleHashTableEntry*>
+                                           (PL_DHashTableSearch(&mTagTable, tag));
     if (entry) {
       mEnumList[valueCount++] = ToEnumData(entry->mRules);
       RULE_HASH_STAT_INCREMENT_LIST_COUNT(entry->mRules, mElementTagCalls);
     }
   }
   if (id && mIdTable.EntryCount() > 0) {
-    auto entry = static_cast<RuleHashTableEntry*>(mIdTable.Search(id));
+    RuleHashTableEntry *entry = static_cast<RuleHashTableEntry*>
+                                           (PL_DHashTableSearch(&mIdTable, id));
     if (entry) {
       mEnumList[valueCount++] = ToEnumData(entry->mRules);
       RULE_HASH_STAT_INCREMENT_LIST_COUNT(entry->mRules, mElementIdCalls);
@@ -693,8 +697,8 @@ void RuleHash::EnumerateAllRules(Element* aElement, ElementDependentRuleProcesso
   }
   if (mClassTable.EntryCount() > 0) {
     for (int32_t index = 0; index < classCount; ++index) {
-      auto entry = static_cast<RuleHashTableEntry*>
-        (mClassTable.Search(classList->AtomAt(index)));
+      RuleHashTableEntry *entry = static_cast<RuleHashTableEntry*>
+                                             (PL_DHashTableSearch(&mClassTable, classList->AtomAt(index)));
       if (entry) {
         mEnumList[valueCount++] = ToEnumData(entry->mRules);
         RULE_HASH_STAT_INCREMENT_LIST_COUNT(entry->mRules, mElementClassCalls);
@@ -850,8 +854,8 @@ AtomSelector_GetKey(PLDHashTable *table, const PLDHashEntryHdr *hdr)
 
 // Case-sensitive ops.
 static const PLDHashTableOps AtomSelector_CSOps = {
-  PLDHashTable::HashVoidPtrKeyStub,
-  PLDHashTable::MatchEntryStub,
+  PL_DHashVoidPtrKeyStub,
+  PL_DHashMatchEntryStub,
   AtomSelector_MoveEntry,
   AtomSelector_ClearEntry,
   AtomSelector_InitEntry
@@ -1001,8 +1005,9 @@ RuleCascadeData::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 nsTArray<SelectorPair>*
 RuleCascadeData::AttributeListFor(nsIAtom* aAttribute)
 {
-  auto entry = static_cast<AtomSelectorEntry*>
-                          (mAttributeSelectors.Add(aAttribute, fallible));
+  AtomSelectorEntry *entry =
+    static_cast<AtomSelectorEntry*>
+               (PL_DHashTableAdd(&mAttributeSelectors, aAttribute, fallible));
   if (!entry)
     return nullptr;
   return &entry->mSelectors;
@@ -1198,17 +1203,11 @@ InitSystemMetrics()
     sSystemMetrics->AppendElement(nsGkAtoms::swipe_animation_enabled);
   }
 
-// On b2gdroid, make it so that we always have a physical home button from
-// gecko's point of view, event if it's just the Android home button remapped.
-#ifdef MOZ_B2GDROID
-  sSystemMetrics->AppendElement(nsGkAtoms::physical_home_button);
-#else
   rv = LookAndFeel::GetInt(LookAndFeel::eIntID_PhysicalHomeButton,
                            &metricResult);
   if (NS_SUCCEEDED(rv) && metricResult) {
     sSystemMetrics->AppendElement(nsGkAtoms::physical_home_button);
   }
-#endif
 
 #ifdef XP_WIN
   if (NS_SUCCEEDED(
@@ -2645,8 +2644,8 @@ nsCSSRuleProcessor::RulesMatching(AnonBoxRuleProcessorData* aData)
   RuleCascadeData* cascade = GetRuleCascade(aData->mPresContext);
 
   if (cascade && cascade->mAnonBoxRules.EntryCount()) {
-    auto entry = static_cast<RuleHashTagTableEntry*>
-                            (cascade->mAnonBoxRules.Search(aData->mPseudoTag));
+    RuleHashTagTableEntry* entry = static_cast<RuleHashTagTableEntry*>
+      (PL_DHashTableSearch(&cascade->mAnonBoxRules, aData->mPseudoTag));
     if (entry) {
       nsTArray<RuleValue>& rules = entry->mRules;
       for (RuleValue *value = rules.Elements(), *end = value + rules.Length();
@@ -2665,8 +2664,8 @@ nsCSSRuleProcessor::RulesMatching(XULTreeRuleProcessorData* aData)
   RuleCascadeData* cascade = GetRuleCascade(aData->mPresContext);
 
   if (cascade && cascade->mXULTreeRules.EntryCount()) {
-    auto entry = static_cast<RuleHashTagTableEntry*>
-                            (cascade->mXULTreeRules.Search(aData->mPseudoTag));
+    RuleHashTagTableEntry* entry = static_cast<RuleHashTagTableEntry*>
+      (PL_DHashTableSearch(&cascade->mXULTreeRules, aData->mPseudoTag));
     if (entry) {
       NodeMatchContext nodeContext(EventStates(),
                                    nsCSSRuleProcessor::IsLink(aData->mElement));
@@ -2985,8 +2984,9 @@ nsCSSRuleProcessor::HasAttributeDependentStyle(
     if (aData->mAttribute == nsGkAtoms::id) {
       nsIAtom* id = aData->mElement->GetID();
       if (id) {
-        auto entry =
-          static_cast<AtomSelectorEntry*>(cascade->mIdSelectors.Search(id));
+        AtomSelectorEntry *entry =
+          static_cast<AtomSelectorEntry*>
+                     (PL_DHashTableSearch(&cascade->mIdSelectors, id));
         if (entry) {
           EnumerateSelectors(entry->mSelectors, &data);
         }
@@ -3021,9 +3021,10 @@ nsCSSRuleProcessor::HasAttributeDependentStyle(
           for (int32_t i = 0; i < atomCount; ++i) {
             nsIAtom* curClass = elementClasses->AtomAt(i);
             if (!otherClassesTable.Contains(curClass)) {
-              auto entry =
+              AtomSelectorEntry *entry =
                 static_cast<AtomSelectorEntry*>
-                           (cascade->mClassSelectors.Search(curClass));
+                           (PL_DHashTableSearch(&cascade->mClassSelectors,
+                                                curClass));
               if (entry) {
                 EnumerateSelectors(entry->mSelectors, &data);
               }
@@ -3035,9 +3036,10 @@ nsCSSRuleProcessor::HasAttributeDependentStyle(
       EnumerateSelectors(cascade->mPossiblyNegatedClassSelectors, &data);
     }
 
-    auto entry =
+    AtomSelectorEntry *entry =
       static_cast<AtomSelectorEntry*>
-                 (cascade->mAttributeSelectors.Search(aData->mAttribute));
+                 (PL_DHashTableSearch(&cascade->mAttributeSelectors,
+                                      aData->mAttribute));
     if (entry) {
       EnumerateSelectors(entry->mSelectors, &data);
     }
@@ -3323,8 +3325,8 @@ AddSelector(RuleCascadeData* aCascade,
     if (negation == aSelectorInTopLevel) {
       for (nsAtomList* curID = negation->mIDList; curID;
            curID = curID->mNext) {
-        auto entry = static_cast<AtomSelectorEntry*>
-          (aCascade->mIdSelectors.Add(curID->mAtom, fallible));
+        AtomSelectorEntry *entry = static_cast<AtomSelectorEntry*>
+          (PL_DHashTableAdd(&aCascade->mIdSelectors, curID->mAtom, fallible));
         if (entry) {
           entry->mSelectors.AppendElement(SelectorPair(aSelectorInTopLevel,
                                                        aRightmostSelector));
@@ -3338,8 +3340,9 @@ AddSelector(RuleCascadeData* aCascade,
     if (negation == aSelectorInTopLevel) {
       for (nsAtomList* curClass = negation->mClassList; curClass;
            curClass = curClass->mNext) {
-        auto entry = static_cast<AtomSelectorEntry*>
-          (aCascade->mClassSelectors.Add(curClass->mAtom, fallible));
+        AtomSelectorEntry *entry = static_cast<AtomSelectorEntry*>
+          (PL_DHashTableAdd(&aCascade->mClassSelectors, curClass->mAtom,
+                            fallible));
         if (entry) {
           entry->mSelectors.AppendElement(SelectorPair(aSelectorInTopLevel,
                                                        aRightmostSelector));
@@ -3522,8 +3525,8 @@ InitWeightEntry(PLDHashEntryHdr *hdr, const void *key)
 static const PLDHashTableOps gRulesByWeightOps = {
     HashIntKey,
     MatchWeightEntry,
-    PLDHashTable::MoveEntryStub,
-    PLDHashTable::ClearEntryStub,
+    PL_DHashMoveEntryStub,
+    PL_DHashClearEntryStub,
     InitWeightEntry
 };
 
@@ -3663,8 +3666,9 @@ CascadeRuleEnumFunc(css::Rule* aRule, void* aData)
     for (nsCSSSelectorList *sel = styleRule->Selector();
          sel; sel = sel->mNext) {
       int32_t weight = sel->mWeight;
-      auto entry = static_cast<RuleByWeightEntry*>
-        (data->mRulesByWeight.Add(NS_INT32_TO_PTR(weight), fallible));
+      RuleByWeightEntry *entry = static_cast<RuleByWeightEntry*>(
+        PL_DHashTableAdd(&data->mRulesByWeight, NS_INT32_TO_PTR(weight),
+                         fallible));
       if (!entry)
         return false;
       entry->data.mWeight = weight;

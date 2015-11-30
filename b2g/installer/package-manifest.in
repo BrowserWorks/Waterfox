@@ -32,8 +32,7 @@
 @APPNAME@/Contents/Info.plist
 @APPNAME@/Contents/PkgInfo
 @APPNAME@/Contents/Plug-Ins/
-@RESPATH@/@MOZ_APP_NAME@.icns
-@RESPATH@/@LPROJ_ROOT@.lproj/*
+@RESPATH@
 #endif
 
 [@AB_CD@]
@@ -56,7 +55,9 @@
 #endif
 
 [xpcom]
+#ifndef XP_MACOSX
 @RESPATH@/dependentlibs.list
+#endif
 #ifdef GKMEDIAS_SHARED_LIBRARY
 @BINPATH@/@DLL_PREFIX@gkmedias@DLL_SUFFIX@
 #endif
@@ -113,6 +114,11 @@
 #ifdef MOZ_SHARED_MOZGLUE
 @BINPATH@/@DLL_PREFIX@mozglue@DLL_SUFFIX@
 #endif
+#ifdef MOZ_REPLACE_MALLOC
+#ifndef MOZ_JEMALLOC3
+@BINPATH@/@DLL_PREFIX@replace_jemalloc@DLL_SUFFIX@
+#endif
+#endif
 #ifdef ANDROID
 @RESPATH@/AndroidManifest.xml
 @RESPATH@/resources.arsc
@@ -148,7 +154,7 @@
 #endif
 #endif
 #ifdef MOZ_WEBSPEECH_MODELS
-@RESPATH@/models/
+@BINPATH@/models/
 #endif
 
 ; [Components]
@@ -160,34 +166,34 @@
 #endif
 @RESPATH@/components/accessibility.xpt
 #endif
-@RESPATH@/components/appshell.xpt
-@RESPATH@/components/appstartup.xpt
-@RESPATH@/components/autocomplete.xpt
-@RESPATH@/components/autoconfig.xpt
-@RESPATH@/components/browsercompsbase.xpt
-@RESPATH@/components/browser-element.xpt
-@RESPATH@/components/browser-feeds.xpt
-@RESPATH@/components/caps.xpt
-@RESPATH@/components/chardet.xpt
-@RESPATH@/components/chrome.xpt
-@RESPATH@/components/commandhandler.xpt
-@RESPATH@/components/commandlines.xpt
-@RESPATH@/components/composer.xpt
-@RESPATH@/components/content_events.xpt
-@RESPATH@/components/content_geckomediaplugins.xpt
-@RESPATH@/components/content_html.xpt
-@RESPATH@/components/content_xslt.xpt
-@RESPATH@/components/cookie.xpt
-@RESPATH@/components/devtools_security.xpt
-@RESPATH@/components/directory.xpt
-@RESPATH@/components/diskspacewatcher.xpt
-@RESPATH@/components/docshell.xpt
-@RESPATH@/components/dom.xpt
-@RESPATH@/components/dom_activities.xpt
-@RESPATH@/components/dom_apps.xpt
-@RESPATH@/components/dom_audiochannel.xpt
-@RESPATH@/components/dom_base.xpt
-@RESPATH@/components/dom_system.xpt
+@BINPATH@/components/appshell.xpt
+@BINPATH@/components/appstartup.xpt
+@BINPATH@/components/autocomplete.xpt
+@BINPATH@/components/autoconfig.xpt
+@BINPATH@/components/browsercompsbase.xpt
+@BINPATH@/components/browser-element.xpt
+@BINPATH@/components/browser-feeds.xpt
+@BINPATH@/components/caps.xpt
+@BINPATH@/components/chardet.xpt
+@BINPATH@/components/chrome.xpt
+@BINPATH@/components/commandhandler.xpt
+@BINPATH@/components/commandlines.xpt
+@BINPATH@/components/composer.xpt
+@BINPATH@/components/content_events.xpt
+@BINPATH@/components/content_geckomediaplugins.xpt
+@BINPATH@/components/content_html.xpt
+@BINPATH@/components/content_xslt.xpt
+@BINPATH@/components/cookie.xpt
+@BINPATH@/components/devtools_security.xpt
+@BINPATH@/components/directory.xpt
+@BINPATH@/components/diskspacewatcher.xpt
+@BINPATH@/components/docshell.xpt
+@BINPATH@/components/dom.xpt
+@BINPATH@/components/dom_activities.xpt
+@BINPATH@/components/dom_apps.xpt
+@BINPATH@/components/dom_audiochannel.xpt
+@BINPATH@/components/dom_base.xpt
+@BINPATH@/components/dom_system.xpt
 #ifdef MOZ_WIDGET_GONK
 @RESPATH@/components/dom_wifi.xpt
 @RESPATH@/components/dom_system_gonk.xpt
@@ -200,7 +206,7 @@
 @RESPATH@/components/dom_bluetooth.xpt
 #endif
 #ifdef MOZ_B2G_CAMERA
-@RESPATH@/components/dom_camera.xpt
+@BINPATH@/components/dom_camera.xpt
 #endif
 @RESPATH@/components/dom_canvas.xpt
 @RESPATH@/components/dom_contacts.xpt
@@ -285,9 +291,6 @@
 @RESPATH@/components/layout_xul.xpt
 @RESPATH@/components/locale.xpt
 @RESPATH@/components/lwbrk.xpt
-#ifdef MOZ_ENABLE_PROFILER_SPS
-@RESPATH@/components/memory_profiler.xpt
-#endif
 @RESPATH@/components/migration.xpt
 @RESPATH@/components/mimetype.xpt
 @RESPATH@/components/mozfind.xpt
@@ -488,8 +491,8 @@
 
 ; Camera
 #ifdef MOZ_B2G_CAMERA
-@RESPATH@/components/CameraTestHardware.js
-@RESPATH@/components/CameraTestHardware.manifest
+@BINPATH@/components/CameraTestHardware.js
+@BINPATH@/components/CameraTestHardware.manifest
 #endif // MOZ_B2G_CAMERA
 
 ; Tethering
@@ -625,6 +628,9 @@
 @RESPATH@/components/DOMSecureElement.manifest
 @RESPATH@/components/DOMSecureElement.js
 #endif
+#ifdef MOZ_ENABLE_DBUS
+@RESPATH@/components/@DLL_PREFIX@dbusservice@DLL_SUFFIX@
+#endif
 @RESPATH@/components/nsINIProcessor.manifest
 @RESPATH@/components/nsINIProcessor.js
 @RESPATH@/components/nsPrompter.manifest
@@ -678,6 +684,11 @@
 @RESPATH@/components/ActivityRequestHandler.js
 @RESPATH@/components/ActivityWrapper.js
 @RESPATH@/components/ActivityMessageConfigurator.js
+
+@RESPATH@/components/TCPSocket.js
+@RESPATH@/components/TCPServerSocket.js
+@RESPATH@/components/TCPSocketParentIntermediary.js
+@RESPATH@/components/TCPSocket.manifest
 
 @RESPATH@/components/Payment.js
 @RESPATH@/components/PaymentFlowInfo.js
@@ -950,7 +961,6 @@ bin/libfreebl_32int64_3.so
 @RESPATH@/components/B2GAppMigrator.js
 @RESPATH@/components/B2GPresentationDevicePrompt.js
 @RESPATH@/components/PresentationRequestUIGlue.js
-@RESPATH@/components/KillSwitch.js
 
 #ifndef MOZ_WIDGET_GONK
 @RESPATH@/components/SimulatorScreen.js
@@ -996,6 +1006,3 @@ bin/libfreebl_32int64_3.so
 #ifdef PKG_LOCALE_MANIFEST
 #include @PKG_LOCALE_MANIFEST@
 #endif
-
-@RESPATH@/components/simpleServices.js
-@RESPATH@/components/utils.manifest

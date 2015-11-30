@@ -26,7 +26,7 @@ of the License or (at your option) any later version.
 */
 #pragma once
 
-#include <cstdio>
+#include <stdio.h>
 
 #include "graphite2/Font.h"
 
@@ -43,7 +43,6 @@ class FileFace;
 class GlyphCache;
 class NameTable;
 class json;
-class Font;
 
 
 using TtfUtil::Tag;
@@ -171,15 +170,10 @@ class Face::Table
     const Face *            _f;
     mutable const byte *    _p;
     uint32                  _sz;
-    bool                    _compressed;
-
-    Error decompress();
-
-    void releaseBuffers();
 
 public:
     Table() throw();
-    Table(const Face & face, const Tag n, uint32 version=0xffffffff) throw();
+    Table(const Face & face, const Tag n) throw();
     Table(const Table & rhs) throw();
     ~Table() throw();
 
@@ -191,13 +185,13 @@ public:
 
 inline
 Face::Table::Table() throw()
-: _f(0), _p(0), _sz(0), _compressed(false)
+: _f(0), _p(0), _sz(0)
 {
 }
 
 inline
 Face::Table::Table(const Table & rhs) throw()
-: _f(rhs._f), _p(rhs._p), _sz(rhs._sz), _compressed(rhs._compressed)
+: _f(rhs._f), _p(rhs._p), _sz(rhs._sz)
 {
     rhs._p = 0;
 }
@@ -205,7 +199,8 @@ Face::Table::Table(const Table & rhs) throw()
 inline
 Face::Table::~Table() throw()
 {
-    releaseBuffers();
+    if (_p && _f->m_ops.release_table)
+        (*_f->m_ops.release_table)(_f->m_appFaceHandle, _p);
 }
 
 inline

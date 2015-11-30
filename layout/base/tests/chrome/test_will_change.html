@@ -4,7 +4,8 @@
   <title>Tests for MozAfterPaint</title>
   <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
   <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/paint_listener.js"></script>
-  <style>
+  <!-- This CSS must not be parsed before we get a change to set layout.css.will-change.enabled=true -->
+  <script type="css_but_do_not_parse" id="csscode">
     #checkOpacityRepaint {
       will-change: opacity;
     }
@@ -16,7 +17,7 @@
       height: 100px;
       background: radial-gradient(ellipse at center, #87e0fd 0%,#53cbf1 40%,#05abe0 100%);
     }
-  </style>
+  </script>
 </head>
 <body>
   <div id="checkRepaint">
@@ -86,14 +87,22 @@ function test_checkTransformRepaint(next) {
   });
 }
 
-SimpleTest.waitForExplicitFinish();
-test_checkRepaint(function(){
-  test_checkOpacityRepaint(function(){
-    test_checkTransformRepaint(function(){
-      SimpleTest.finish();
+function runTest() {
+  var csscode = document.getElementById("csscode").firstChild.textContent;
+  var style = document.createElement("style");
+  style.textContent = csscode;
+  document.body.appendChild(style);
+  test_checkRepaint(function(){
+    test_checkOpacityRepaint(function(){
+      test_checkTransformRepaint(function(){
+        SimpleTest.finish();
+      });
     });
   });
-});
+}
+
+SimpleTest.waitForExplicitFinish();
+SpecialPowers.pushPrefEnv({ "set": [["layout.css.will-change.enabled", true]] }, runTest);
 
 </script>
 </html>

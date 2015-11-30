@@ -49,7 +49,6 @@ public:
 
   // XXX evaluate if this is fast enough.
   size_t IndexInParent() const { return Parent()->mChildren.IndexOf(this); }
-  uint32_t EmbeddedChildCount() const;
   int32_t IndexOfEmbeddedChild(const ProxyAccessible*);
   ProxyAccessible* EmbeddedChildAt(size_t aChildIdx);
   bool MustPruneChildren() const;
@@ -318,12 +317,6 @@ public:
   void MimeType(nsString aMime);
   void URLDocTypeMimeType(nsString& aURL, nsString& aDocType,
                           nsString& aMimeType);
-
-  ProxyAccessible* AccessibleAtPoint(int32_t aX, int32_t aY,
-                                     bool aNeedsScreenCoords);
-
-  void Extents(bool aNeedsScreenCoords, int32_t* aX, int32_t* aY,
-               int32_t* aWidth, int32_t* aHeight);
 
   /**
    * Allow the platform to store a pointers worth of data on us.

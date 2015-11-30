@@ -69,9 +69,7 @@ public:
                        CertVerifier::PinningMode pinningMode,
                        unsigned int minRSABits,
                        ValidityCheckingMode validityCheckingMode,
-                       SignatureDigestOption signatureDigestOption,
-                       CertVerifier::SHA1Mode sha1Mode,
-          /*optional*/ PinningTelemetryInfo* pinningTelemetryInfo = nullptr,
+                       SignatureDigestOption,
           /*optional*/ const char* hostname = nullptr,
       /*optional out*/ ScopedCERTCertList* builtChain = nullptr);
 
@@ -87,8 +85,7 @@ public:
 
   virtual Result CheckSignatureDigestAlgorithm(
                    mozilla::pkix::DigestAlgorithm digestAlg,
-                   mozilla::pkix::EndEntityOrCA endEntityOrCA,
-                   mozilla::pkix::Time notBefore) override;
+                   mozilla::pkix::EndEntityOrCA endEntityOrCA) override;
 
   virtual Result CheckRSAPublicKeyModulusSizeInBits(
                    mozilla::pkix::EndEntityOrCA endEntityOrCA,
@@ -157,8 +154,6 @@ private:
   const unsigned int mMinRSABits;
   ValidityCheckingMode mValidityCheckingMode;
   SignatureDigestOption mSignatureDigestOption;
-  CertVerifier::SHA1Mode mSHA1Mode;
-  PinningTelemetryInfo* mPinningTelemetryInfo;
   const char* mHostname; // non-owning - only used for pinning checks
   ScopedCERTCertList* mBuiltChain; // non-owning
   nsCOMPtr<nsICertBlocklist> mCertBlocklist;

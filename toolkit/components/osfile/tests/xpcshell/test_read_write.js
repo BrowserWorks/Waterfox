@@ -3,11 +3,11 @@
 
 "use strict";
 
-var {utils: Cu} = Components;
+let {utils: Cu} = Components;
 
-var SHARED_PATH;
+let SHARED_PATH;
 
-var EXISTING_FILE = do_get_file("xpcshell.ini").path;
+let EXISTING_FILE = do_get_file("xpcshell.ini").path;
 
 add_task(function* init() {
   do_get_profile();

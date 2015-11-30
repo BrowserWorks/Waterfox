@@ -452,7 +452,7 @@ protected:
   };
 
   nsresult DoSubmitOrReset(WidgetEvent* aEvent,
-                           EventMessage aMessage);
+                           int32_t aMessage);
   nsresult DoReset();
 
   // Async callback to handle removal of our default submit

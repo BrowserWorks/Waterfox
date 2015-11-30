@@ -6,10 +6,10 @@
 #include "nsURIChecker.h"
 #include "nsIAuthPrompt.h"
 #include "nsIHttpChannel.h"
-#include "nsContentUtils.h"
 #include "nsNetUtil.h"
 #include "nsString.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
+#include "nsNullPrincipal.h"
 
 //-----------------------------------------------------------------------------
 
@@ -137,10 +137,12 @@ NS_IMETHODIMP
 nsURIChecker::Init(nsIURI *aURI)
 {
     nsresult rv;
+    nsCOMPtr<nsIPrincipal> nullPrincipal = nsNullPrincipal::Create();
+    NS_ENSURE_TRUE(nullPrincipal, NS_ERROR_FAILURE);
     rv = NS_NewChannel(getter_AddRefs(mChannel),
                        aURI,
-                       nsContentUtils::GetSystemPrincipal(),
-                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                       nullPrincipal,
+                       nsILoadInfo::SEC_NORMAL,
                        nsIContentPolicy::TYPE_OTHER);
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -178,9 +180,9 @@ nsURIChecker::AsyncCheck(nsIRequestObserver *aObserver,
     // Hook us up to listen to redirects and the like (this creates a reference
     // cycle!)
     mChannel->SetNotificationCallbacks(this);
-
+    
     // and start the request:
-    nsresult rv = mChannel->AsyncOpen2(this);
+    nsresult rv = mChannel->AsyncOpen(this, nullptr);
     if (NS_FAILED(rv))
         mChannel = nullptr;
     else {

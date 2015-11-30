@@ -8,7 +8,7 @@
  * "last time".
  */
 
-var Cu = Components.utils;
+let Cu = Components.utils;
 Cu.import("resource://gre/modules/DownloadUtils.jsm");
 
 function run_test()

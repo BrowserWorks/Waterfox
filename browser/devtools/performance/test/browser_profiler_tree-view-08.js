@@ -6,7 +6,7 @@
  * when `contentOnly` is on correctly.
  */
 
-var { CATEGORY_MASK } = require("devtools/performance/global");
+let { CATEGORY_MASK } = require("devtools/performance/global");
 
 function test() {
   let { ThreadNode } = require("devtools/performance/tree-model");
@@ -63,7 +63,7 @@ function test() {
   finish();
 }
 
-var gThread = synthesizeProfileForTest([{
+let gThread = synthesizeProfileForTest([{
   time: 5,
   frames: [
     { location: "(root)" },

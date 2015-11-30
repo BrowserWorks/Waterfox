@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+include protocol PAsmJSCacheEntry;
 include protocol PBackground;
 include protocol PBlob;
 include protocol PBluetooth;
@@ -80,6 +81,8 @@ using struct IPC::Permission from "mozilla/net/NeckoMessageUtils.h";
 using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
 using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
+using mozilla::dom::asmjscache::OpenMode from "mozilla/dom/asmjscache/AsmJSCache.h";
+using mozilla::dom::asmjscache::WriteParams from "mozilla/dom/asmjscache/AsmJSCache.h";
 using mozilla::dom::NativeThreadId from "mozilla/dom/TabMessageUtils.h";
 using mozilla::dom::quota::PersistenceType from "mozilla/dom/quota/PersistenceType.h";
 using mozilla::hal::ProcessPriority from "mozilla/HalTypes.h";
@@ -87,7 +90,7 @@ using gfxIntSize from "nsSize.h";
 using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
 using mozilla::dom::ContentParentId from "mozilla/dom/ipc/IdType.h";
 using struct LookAndFeelInt from "mozilla/widget/WidgetMessageUtils.h";
-using class mozilla::dom::ipc::StructuredCloneData from "ipc/IPCMessageUtils.h";
+using struct mozilla::OwningSerializedStructuredCloneBuffer from "ipc/IPCMessageUtils.h";
 
 union ChromeRegistryItem
 {
@@ -418,6 +421,7 @@ prio(normal upto urgent) sync protocol PContent
     parent opens PGMPService;
     child opens PBackground;
 
+    manages PAsmJSCacheEntry;
     manages PBlob;
     manages PBluetooth;
     manages PBrowser;
@@ -659,12 +663,6 @@ child:
      */
     async NotifyPresentationReceiverLaunched(PBrowser aIframe, nsString aSessionId);
 
-    /**
-     * Notify the child that the info about a presentation receiver needs to be
-     * cleaned up.
-     */
-    async NotifyPresentationReceiverCleanUp(nsString aSessionId);
-
 parent:
     /**
      * Tell the content process some attributes of itself.  This is
@@ -685,7 +683,7 @@ parent:
         returns (bool isOffline, bool isConnected, bool isLangRTL, nsString[] dictionaries,
                  ClipboardCapabilities clipboardCaps,
                  DomainPolicyClone domainPolicy,
-                 StructuredCloneData initialData);
+                 OwningSerializedStructuredCloneBuffer initialData);
 
     sync CreateChildProcess(IPCTabContext context,
                             ProcessPriority priority,
@@ -696,8 +694,6 @@ parent:
     async CreateGMPService();
     sync GetGMPPluginVersionForAPI(nsCString api, nsCString[] tags)
         returns (bool hasPlugin, nsCString version);
-    sync IsGMPPresentOnDisk(nsString keySystem, nsCString version)
-        returns (bool isPresent, nsCString message);
 
     /**
      * This call connects the content process to a plugin process. While this
@@ -789,8 +785,10 @@ parent:
 
     PFMRadio();
 
-    PWebrtcGlobal();
+    PAsmJSCacheEntry(OpenMode openMode, WriteParams write, Principal principal);
 
+    PWebrtcGlobal();
+    
     PPresentation();
 
     // Services remoting
@@ -808,11 +806,11 @@ parent:
 
     sync SyncMessage(nsString aMessage, ClonedMessageData aData,
                      CpowEntry[] aCpows, Principal aPrincipal)
-      returns (StructuredCloneData[] retval);
+      returns (OwningSerializedStructuredCloneBuffer[] retval);
 
     prio(high) sync RpcMessage(nsString aMessage, ClonedMessageData aData,
                                CpowEntry[] aCpows, Principal aPrincipal)
-      returns (StructuredCloneData[] retval);
+      returns (OwningSerializedStructuredCloneBuffer[] retval);
 
     ShowAlertNotification(nsString imageUrl,
                           nsString title,
@@ -937,10 +935,6 @@ parent:
 
     sync GetGraphicsFeatureStatus(int32_t aFeature) returns (int32_t aStatus, bool aSuccess);
 
-    // Driver crash guards. aGuardType must be a member of CrashGuardType.
-    sync BeginDriverCrashGuard(uint32_t aGuardType) returns (bool crashDetected);
-    sync EndDriverCrashGuard(uint32_t aGuardType);
-
     AddIdleObserver(uint64_t observerId, uint32_t idleTimeInS);
     RemoveIdleObserver(uint64_t observerId, uint32_t idleTimeInS);
 
@@ -993,15 +987,8 @@ parent:
      */
     sync AllocateTabId(TabId openerTabId, IPCTabContext context, ContentParentId cpId)
         returns (TabId tabId);
-    async DeallocateTabId(TabId tabId,
-                          ContentParentId cpId,
-                          bool aMarkedDestroying);
+    async DeallocateTabId(TabId tabId);
 
-    /**
-     * Tell the chrome process there is a destruction of PBrowser(Tab)
-     */
-    async NotifyTabDestroying(TabId tabId,
-                              ContentParentId cpId);
     /**
      * Starts an offline application cache update.
      * @param manifestURI
@@ -1085,9 +1072,6 @@ parent:
      */
     sync GetGraphicsDeviceInitData()
         returns (DeviceInitData aData);
-
-    sync GetDeviceStorageLocation(nsString type)
-        returns (nsString path);
 
 both:
      AsyncMessage(nsString aMessage, ClonedMessageData aData,

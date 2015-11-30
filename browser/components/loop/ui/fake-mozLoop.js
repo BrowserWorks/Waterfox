@@ -15,6 +15,7 @@ var fakeRooms = [
       }]
     },
     "roomUrl": "http://localhost:3000/rooms/_nxD4V4FflQ",
+    "roomOwner": "Alexis",
     "maxSize": 2,
     "creationTime": 1405517546,
     "ctime": 1405517546,
@@ -27,6 +28,7 @@ var fakeRooms = [
       "roomName": "Second Room Name"
     },
     "roomUrl": "http://localhost:3000/rooms/QzBbvGmIZWU",
+    "roomOwner": "Alexis",
     "maxSize": 2,
     "creationTime": 1405517546,
     "ctime": 1405517546,
@@ -39,6 +41,7 @@ var fakeRooms = [
       "roomName": "UX Discussion"
     },
     "roomUrl": "http://localhost:3000/rooms/3jKS_Els9IU",
+    "roomOwner": "Alexis",
     "maxSize": 2,
     "clientMaxSize": 2,
     "creationTime": 1405517546,
@@ -48,62 +51,10 @@ var fakeRooms = [
        { "displayName": "Alexis", "account": "alexis@example.com", "roomConnectionId": "2a1787a6-4a73-43b5-ae3e-906ec1e763cb" },
        { "displayName": "Adam", "roomConnectionId": "781f012b-f1ea-4ce1-9105-7cfc36fb4ec7" }
      ]
-  },
-  {
-    "roomToken": "REJRFfkdfkf",
-    "decryptedContext": {
-      "roomName": "Third Room Name"
-    },
-    "roomUrl": "http://localhost:3000/rooms/REJRFfkdfkf",
-    "roomOwner": "Alexis",
-    "maxSize": 2,
-    "creationTime": 1405537485,
-    "ctime": 1405537485,
-    "expiresAt": 1405554180,
-    "participants": []
-  },
-  {
-    "roomToken": "fjdkreFJDer",
-    "decryptedContext": {
-      "roomName": "Forth Room Name"
-    },
-    "roomUrl": "http://localhost:3000/rooms/fjdkreFJDer",
-    "roomOwner": "Alexis",
-    "maxSize": 2,
-    "creationTime": 1405546564,
-    "ctime": 1405546564,
-    "expiresAt": 1405564180,
-    "participants": []
-  },
-  {
-    "roomToken": "preFDREJhdf",
-    "decryptedContext": {
-      "roomName": "Fifth Room Name"
-    },
-    "roomUrl": "http://localhost:3000/rooms/preFDREJhdf",
-    "roomOwner": "Alexis",
-    "maxSize": 2,
-    "creationTime": 1405566934,
-    "ctime": 1405566934,
-    "expiresAt": 1405584180,
-    "participants": []
-  },
-  {
-    "roomToken": "preFLighdf",
-    "decryptedContext": {
-      "roomName": "Sixth Room Name"
-    },
-    "roomUrl": "http://localhost:3000/rooms/preFLighdf",
-    "roomOwner": "Alexis",
-    "maxSize": 2,
-    "creationTime": 1405576934,
-    "ctime": 1405576934,
-    "expiresAt": 1405614180,
-    "participants": []
   }
 ];
 
-var fakeManyContacts = [{
+var fakeContacts = [{
   id: 1,
   _guid: 1,
   name: ["Ally Avocado"],
@@ -161,44 +112,7 @@ var fakeManyContacts = [{
   category: ["google"],
   published: 1406798311748,
   updated: 1406798311748
-}, {
-  id: 5,
-  _guid: 5,
-  name: ["Erin J. Bazile"],
-  email: [{
-    "pref": true,
-    "type": ["work"],
-    "value": "erinjbazile@armyspy.com"
-  }],
-  category: ["google"],
-  published: 1406798311748,
-  updated: 1406798311748
-}, {
-  id: 6,
-  _guid: 6,
-  name: ["Kelly F. Maldanado"],
-  email: [{
-    "pref": true,
-    "type": ["work"],
-    "value": "kellyfmaldonado@jourrapide.com"
-  }],
-  category: ["google"],
-  published: 1406798311748,
-  updated: 1406798311748
-}, {
-  id: 7,
-  _guid: 7,
-  name: ["John J. Brown"],
-  email: [{
-    "pref": true,
-    "type": ["work"],
-    "value": "johnjbrow@johndoe.com"
-  }],
-  category: ["google"],
-  published: 1406798311748,
-  updated: 1406798311748
 }];
-var fakeFewerContacts = fakeManyContacts.slice(0, 4);
 
 (function() {
   "use strict";
@@ -226,8 +140,8 @@ var fakeFewerContacts = fakeManyContacts.slice(0, 4);
     releaseCallData: function() {},
     copyString: function() {},
     getUserAvatar: function(emailAddress) {
-      var avatarUrl = "http://www.gravatar.com/avatar/0a996f0fe2727ef1668bdb11897e4459.jpg?default=blank&s=40";
-      return Math.ceil(Math.random() * 3) === 2 ? avatarUrl : null;
+      return "http://www.gravatar.com/avatar/" + (Math.ceil(Math.random() * 3) === 2 ?
+        "0a996f0fe2727ef1668bdb11897e4459" : "foo") + ".jpg?default=blank&s=40";
     },
     getSelectedTabMetadata: function(callback) {
       callback({
@@ -238,7 +152,7 @@ var fakeFewerContacts = fakeManyContacts.slice(0, 4);
     },
     contacts: {
       getAll: function(callback) {
-        callback(null, [].concat(fakeManyContacts));
+        callback(null, [].concat(fakeContacts));
       },
       on: function() {}
     },
@@ -250,7 +164,6 @@ var fakeFewerContacts = fakeManyContacts.slice(0, 4);
     },
     fxAEnabled: true,
     startAlerting: function() {},
-    stopAlerting: function() {},
-    userProfile: null
+    stopAlerting: function() {}
   };
 })();

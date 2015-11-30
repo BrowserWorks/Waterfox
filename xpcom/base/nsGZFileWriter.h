@@ -18,14 +18,7 @@ class nsGZFileWriter final : public nsIGZFileWriter
   virtual ~nsGZFileWriter();
 
 public:
-
-  enum Operation {
-    Append,
-    Create
-  };
-
-
-  explicit nsGZFileWriter(Operation aMode = Create);
+  nsGZFileWriter();
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIGZFILEWRITER
@@ -46,7 +39,6 @@ public:
   }
 
 private:
-  Operation mMode;
   bool mInitialized;
   bool mFinished;
   gzFile mGZFile;

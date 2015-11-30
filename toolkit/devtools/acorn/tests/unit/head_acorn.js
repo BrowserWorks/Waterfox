@@ -40,8 +40,8 @@ function checkEquivalentASTs(expected, actual, prop = []) {
 
 // Register a console listener, so console messages don't just disappear
 // into the ether.
-var errorCount = 0;
-var listener = {
+let errorCount = 0;
+let listener = {
   observe: function (aMessage) {
     errorCount++;
     try {
@@ -66,5 +66,5 @@ var listener = {
   }
 };
 
-var consoleService = Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
+let consoleService = Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
 consoleService.registerListener(listener);

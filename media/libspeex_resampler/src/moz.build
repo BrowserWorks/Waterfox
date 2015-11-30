@@ -15,8 +15,6 @@ SOURCES += [
     'simd_detect.cpp',
 ]
 
-ALLOW_COMPILER_WARNINGS = True
-
 FINAL_LIBRARY = 'gkmedias'
 
 # We don't compile the full speex codec, only the resampler.

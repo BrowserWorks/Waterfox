@@ -160,10 +160,6 @@ validate.define(Panel, contract({
     is: ["string"],
     ok: x => isLocalURL(x),
     msg: "The `options.url` must be a valid local URI."
-  },
-  invertIconForLightTheme: {
-    is: ["boolean", "undefined"],
-    msg: "The `options.invertIconForLightTheme` must be a boolean."
   }
 }));
 

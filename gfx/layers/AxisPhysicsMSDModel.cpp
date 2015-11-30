@@ -70,23 +70,30 @@ AxisPhysicsMSDModel::SetDestination(double aDestination)
 }
 
 bool
-AxisPhysicsMSDModel::IsFinished(double aSmallestVisibleIncrement)
+AxisPhysicsMSDModel::IsFinished()
 {
   // In order to satisfy the condition of reaching the destination, the distance
   // between the simulation position and the destination must be less than
-  // aSmallestVisibleIncrement while the speed is simultaneously less than
-  // finishVelocity.  This enables an under-damped system to overshoot the
+  // kFinishDistance while the speed is simultaneously less than
+  // kFinishVelocity.  This enables an under-damped system to overshoot the
   // destination when desired without prematurely triggering the finished state.
-  // If finishVelocity is set too low, the animation may end long after
+
+  // As the number of app units per css pixel is 60 and retina / HiDPI displays
+  // may display two pixels for every css pixel, setting kFinishDistance to 30.0
+  // ensures that there will be no perceptable shift in position at the end
+  // of the animation.
+  const double kFinishDistance = 30.0;
+
+  // If kFinishVelocity is set too low, the animation may end long after
   // oscillation has finished, resulting in unnecessary processing.
   // If set too high, the animation may prematurely terminate when expected
   // to overshoot the destination in an under-damped system.
-  // aSmallestVisibleIncrement * 2 was selected through experimentation that
-  // revealed that a critically damped system will terminate within 100ms.
-  const double finishVelocity = aSmallestVisibleIncrement * 2;
+  // 60.0 was selected through experimentation that revealed that a
+  // critically damped system will terminate within 100ms.
+  const double kFinishVelocity = 60.0;
 
-  return fabs(mDestination - GetPosition ()) < aSmallestVisibleIncrement
-    && fabs(GetVelocity()) <= finishVelocity;
+  return fabs(mDestination - GetPosition ()) < kFinishDistance
+    && fabs(GetVelocity()) <= kFinishVelocity;
 }
 
 } // namespace layers

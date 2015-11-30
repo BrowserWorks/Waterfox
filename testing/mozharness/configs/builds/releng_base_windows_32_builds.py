@@ -30,10 +30,16 @@ config = {
                 os.getcwd(), 'build', 'tools', 'buildfarm', 'utils', 'hgtool.py'
             )
         ],
-        "buildbot": [
-            sys.executable,
-            'c:\\mozilla-build\\buildbotve\\scripts\\buildbot'
-        ],
+        "buildbot": {
+            'gpo_location': [
+                sys.executable,
+                'c:\\mozilla-build\\buildbotve\\scripts\\buildbot'
+            ],
+            'puppet_location': [
+                'c:\\mozilla-build\\buildbot-0.8.4-pre-moz6\\Scripts\\python.exe',
+                'c:\\mozilla-build\\buildbot-0.8.4-pre-moz6\\scripts\\buildbot'
+            ]
+        },
         "make": [
             sys.executable,
             os.path.join(
@@ -48,7 +54,7 @@ config = {
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
     # decides whether we want to use moz_sign_cmd in env
     'enable_signing': True,
-    'purge_skip': ['info', 'rel-*:10d', 'tb-rel-*:10d'],
+    'purge_skip': ['info', 'rel-*:45d', 'tb-rel-*:45d'],
     'purge_basedirs':  [],
     'enable_ccache': False,
     'vcs_share_base': 'C:/builds/hg-shared',

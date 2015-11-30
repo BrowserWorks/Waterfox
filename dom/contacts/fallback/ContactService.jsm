@@ -27,7 +27,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "ppmm",
 
 
 /* all exported symbols need to be bound to this on B2G - Bug 961777 */
-var ContactService = this.ContactService = {
+let ContactService = this.ContactService = {
   init: function() {
     if (DEBUG) debug("Init");
     this._messages = ["Contacts:Find", "Contacts:GetAll", "Contacts:GetAll:SendNow",

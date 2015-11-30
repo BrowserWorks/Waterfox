@@ -12,9 +12,9 @@ const PREF_MIN_PLATFORM_COMPAT        = "extensions.minCompatiblePlatformVersion
 
 Services.prefs.setBoolPref(PREF_STRICT_COMPAT, true);
 // avoid the 'leaked window property' check
-var scope = {};
+let scope = {};
 Components.utils.import("resource://gre/modules/TelemetrySession.jsm", scope);
-var TelemetrySession = scope.TelemetrySession;
+let TelemetrySession = scope.TelemetrySession;
 
 /**
  * Test add-ons:

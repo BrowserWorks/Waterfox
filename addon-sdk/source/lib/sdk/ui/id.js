@@ -22,6 +22,6 @@ function memoize(f) {
   };
 }
 
-var identify = method('identify');
+let identify = method('identify');
 identify.define(Object, memoize(function() { return uuid(); }));
 exports.identify = identify;

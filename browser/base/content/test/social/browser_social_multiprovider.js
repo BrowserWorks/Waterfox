@@ -12,7 +12,7 @@ function test() {
   });
 }
 
-var gProviders = [
+let gProviders = [
   {
     name: "provider 1",
     origin: "https://test1.example.com",

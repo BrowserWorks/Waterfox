@@ -1,5 +1,5 @@
-var gTestRoot = getRootDirectory(gTestPath).replace("chrome://mochitests/content/", "http://127.0.0.1:8888/");
-var gNewWindow = null;
+let gTestRoot = getRootDirectory(gTestPath).replace("chrome://mochitests/content/", "http://127.0.0.1:8888/");
+let gNewWindow = null;
 
 add_task(function* () {
   registerCleanupFunction(function () {

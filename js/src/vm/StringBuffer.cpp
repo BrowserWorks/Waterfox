@@ -31,7 +31,6 @@ ExtractWellSized(ExclusiveContext* cx, Buffer& cb)
         CharT* tmp = cx->zone()->pod_realloc<CharT>(buf, capacity, length + 1);
         if (!tmp) {
             js_free(buf);
-            ReportOutOfMemory(cx);
             return nullptr;
         }
         buf = tmp;

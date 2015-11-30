@@ -6,7 +6,7 @@ const {Cu, Ci} = require("chrome");
 const {Devices} = Cu.import("resource://gre/modules/devtools/Devices.jsm");
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
 const {Connection} = require("devtools/client/connection-manager");
-const {DebuggerServer} = require("devtools/server/main");
+const {DebuggerServer} = require("resource://gre/modules/devtools/dbg-server.jsm");
 const {Simulators} = require("devtools/webide/simulators");
 const discovery = require("devtools/toolkit/discovery/discovery");
 const EventEmitter = require("devtools/toolkit/event-emitter");
@@ -84,7 +84,7 @@ const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/
 
 /* SCANNER REGISTRY */
 
-var RuntimeScanners = {
+let RuntimeScanners = {
 
   _enabledCount: 0,
   _scanners: new Set(),
@@ -193,7 +193,7 @@ exports.RuntimeScanners = RuntimeScanners;
 
 /* SCANNERS */
 
-var SimulatorScanner = {
+let SimulatorScanner = {
 
   _runtimes: [],
 
@@ -242,7 +242,7 @@ RuntimeScanners.add(SimulatorScanner);
  * not actually connect (since the |DeprecatedUSBRuntime| assumes a Firefox OS
  * device).
  */
-var DeprecatedAdbScanner = {
+let DeprecatedAdbScanner = {
 
   _runtimes: [],
 
@@ -298,7 +298,7 @@ exports.DeprecatedAdbScanner = DeprecatedAdbScanner;
  * ADB Helper 0.8.0 and later wait until these signals are received before
  * starting ADB polling.  For earlier versions, they have no effect.
  */
-var LazyAdbScanner = {
+let LazyAdbScanner = {
 
   enable() {
     Devices.emit("adb-start-polling");
@@ -321,7 +321,7 @@ var LazyAdbScanner = {
 EventEmitter.decorate(LazyAdbScanner);
 RuntimeScanners.add(LazyAdbScanner);
 
-var WiFiScanner = {
+let WiFiScanner = {
 
   _runtimes: [],
 
@@ -394,7 +394,7 @@ WiFiScanner.init();
 
 exports.WiFiScanner = WiFiScanner;
 
-var StaticScanner = {
+let StaticScanner = {
   enable() {},
   disable() {},
   scan() { return promise.resolve(); },
@@ -414,7 +414,7 @@ RuntimeScanners.add(StaticScanner);
 
 // These type strings are used for logging events to Telemetry.
 // You must update Histograms.json if new types are added.
-var RuntimeTypes = exports.RuntimeTypes = {
+let RuntimeTypes = exports.RuntimeTypes = {
   USB: "USB",
   WIFI: "WIFI",
   SIMULATOR: "SIMULATOR",
@@ -615,7 +615,7 @@ SimulatorRuntime.prototype = {
 // For testing use only
 exports._SimulatorRuntime = SimulatorRuntime;
 
-var gLocalRuntime = {
+let gLocalRuntime = {
   type: RuntimeTypes.LOCAL,
   connect: function(connection) {
     if (!DebuggerServer.initialized) {
@@ -639,7 +639,7 @@ var gLocalRuntime = {
 // For testing use only
 exports._gLocalRuntime = gLocalRuntime;
 
-var gRemoteRuntime = {
+let gRemoteRuntime = {
   type: RuntimeTypes.REMOTE,
   connect: function(connection) {
     let win = Services.wm.getMostRecentWindow("devtools:webide");

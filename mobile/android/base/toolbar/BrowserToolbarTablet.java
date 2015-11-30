@@ -36,7 +36,7 @@ class BrowserToolbarTablet extends BrowserToolbarTabletBase {
         super(context, attrs);
 
         forwardButtonTranslationWidth =
-                getResources().getDimensionPixelOffset(R.dimen.tablet_nav_button_width);
+                getResources().getDimensionPixelOffset(R.dimen.new_tablet_nav_button_width);
 
         // The forward button is initially expanded (in the layout file)
         // so translate it for start of the expansion animation; future
@@ -47,7 +47,7 @@ class BrowserToolbarTablet extends BrowserToolbarTabletBase {
         // We don't want users clicking the forward button in transitions, but we don't want it to
         // look disabled to avoid flickering complications (e.g. disabled in editing mode), so undo
         // the work of the super class' constructor.
-        forwardButton.setEnabled(true);
+        setButtonEnabled(forwardButton, true);
 
         updateForwardButtonState(ForwardButtonState.HIDDEN);
     }
@@ -171,8 +171,8 @@ class BrowserToolbarTablet extends BrowserToolbarTabletBase {
         // We already know the forward button state - no need to store it here.
         backButtonWasEnabledOnStartEditing = backButton.isEnabled();
 
-        backButton.setEnabled(false);
-        forwardButton.setEnabled(false);
+        setButtonEnabled(backButton, false);
+        setButtonEnabled(forwardButton, false);
 
         super.startEditing(url, animator);
     }
@@ -190,7 +190,7 @@ class BrowserToolbarTablet extends BrowserToolbarTabletBase {
         if (isEditing()) {
             stopEditingNewTablet();
 
-            backButton.setEnabled(backButtonWasEnabledOnStartEditing);
+            setButtonEnabled(backButton, backButtonWasEnabledOnStartEditing);
             updateForwardButtonState(forwardButtonState);
         }
 
@@ -198,14 +198,15 @@ class BrowserToolbarTablet extends BrowserToolbarTabletBase {
     }
 
     private void stopEditingNewTablet() {
-        // Undo the changes caused by calling setEnabled for forwardButton in startEditing.
+        // Undo the changes caused by calling setButtonEnabled in startEditing.
         // Note that this should be called first so the enabled state of the
         // forward button is set to the proper value.
-        forwardButton.setEnabled(true);
+        setButtonEnabled(forwardButton, true);
     }
 
     @Override
     protected Drawable getLWTDefaultStateSetDrawable() {
-        return BrowserToolbar.getLightweightThemeDrawable(this, getTheme(), R.color.toolbar_grey);
+        return BrowserToolbar.getLightweightThemeDrawable(this, getResources(), getTheme(),
+                R.color.toolbar_grey);
     }
 }

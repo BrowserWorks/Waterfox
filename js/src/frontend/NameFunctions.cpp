@@ -337,7 +337,7 @@ class NameResolver
         if (cur == nullptr)
             return true;
 
-        MOZ_ASSERT((cur->isKind(PNK_FUNCTION) || cur->isKind(PNK_MODULE)) == cur->isArity(PN_CODE));
+        MOZ_ASSERT(cur->isKind(PNK_FUNCTION) == cur->isArity(PN_CODE));
         if (cur->isKind(PNK_FUNCTION)) {
             RootedAtom prefix2(cx);
             if (!resolveFun(cur, prefix, &prefix2))
@@ -375,7 +375,9 @@ class NameResolver
           case PNK_DEBUGGER:
           case PNK_EXPORT_BATCH_SPEC:
           case PNK_FRESHENBLOCK:
+          case PNK_SUPERPROP:
           case PNK_OBJECT_PROPERTY_NAME:
+          case PNK_NEWTARGET:
             MOZ_ASSERT(cur->isArity(PN_NULLARY));
             break;
 
@@ -383,12 +385,6 @@ class NameResolver
             MOZ_ASSERT(cur->isArity(PN_UNARY));
             MOZ_ASSERT(cur->pn_kid->isKind(PNK_NAME));
             MOZ_ASSERT(!cur->pn_kid->maybeExpr());
-            break;
-
-          case PNK_NEWTARGET:
-            MOZ_ASSERT(cur->isArity(PN_BINARY));
-            MOZ_ASSERT(cur->pn_left->isKind(PNK_POSHOLDER));
-            MOZ_ASSERT(cur->pn_right->isKind(PNK_POSHOLDER));
             break;
 
           // Nodes with a single non-null child requiring name resolution.
@@ -399,7 +395,9 @@ class NameResolver
           case PNK_THROW:
           case PNK_DELETENAME:
           case PNK_DELETEPROP:
+          case PNK_DELETESUPERPROP:
           case PNK_DELETEELEM:
+          case PNK_DELETESUPERELEM:
           case PNK_DELETEEXPR:
           case PNK_NEG:
           case PNK_POS:
@@ -411,7 +409,9 @@ class NameResolver
           case PNK_ARRAYPUSH:
           case PNK_SPREAD:
           case PNK_MUTATEPROTO:
+          case PNK_SUPERELEM:
           case PNK_EXPORT:
+          case PNK_EXPORT_DEFAULT:
             MOZ_ASSERT(cur->isArity(PN_UNARY));
             if (!resolve(cur->pn_kid, prefix))
                 return false;
@@ -440,6 +440,7 @@ class NameResolver
           case PNK_DIVASSIGN:
           case PNK_MODASSIGN:
           case PNK_POWASSIGN:
+          case PNK_ELEM:
           case PNK_COLON:
           case PNK_CASE:
           case PNK_SHORTHAND:
@@ -451,14 +452,6 @@ class NameResolver
           case PNK_CLASSMETHOD:
             MOZ_ASSERT(cur->isArity(PN_BINARY));
             if (!resolve(cur->pn_left, prefix))
-                return false;
-            if (!resolve(cur->pn_right, prefix))
-                return false;
-            break;
-
-          case PNK_ELEM:
-            MOZ_ASSERT(cur->isArity(PN_BINARY));
-            if (!cur->as<PropertyByValue>().isSuper() && !resolve(cur->pn_left, prefix))
                 return false;
             if (!resolve(cur->pn_right, prefix))
                 return false;
@@ -516,15 +509,13 @@ class NameResolver
 
           case PNK_IMPORT:
           case PNK_EXPORT_FROM:
-          case PNK_EXPORT_DEFAULT:
             MOZ_ASSERT(cur->isArity(PN_BINARY));
             // The left halves of these nodes don't contain any unconstrained
             // expressions, but it's very hard to assert this to safely rely on
             // it.  So recur anyway.
             if (!resolve(cur->pn_left, prefix))
                 return false;
-            MOZ_ASSERT_IF(!cur->isKind(PNK_EXPORT_DEFAULT),
-                          cur->pn_right->isKind(PNK_STRING));
+            MOZ_ASSERT(cur->pn_right->isKind(PNK_STRING));
             break;
 
           // Ternary nodes with three expression children.
@@ -761,17 +752,8 @@ class NameResolver
             break;
           }
 
-          case PNK_DOT:
-            MOZ_ASSERT(cur->isArity(PN_NAME));
-
-            // Super prop nodes do not have a meaningful LHS
-            if (cur->as<PropertyAccess>().isSuper())
-                break;
-            if (!resolve(cur->expr(), prefix))
-                return false;
-            break;
-
           case PNK_LABEL:
+          case PNK_DOT:
             MOZ_ASSERT(cur->isArity(PN_NAME));
             if (!resolve(cur->expr(), prefix))
                 return false;
@@ -785,7 +767,6 @@ class NameResolver
             break;
 
           case PNK_FUNCTION:
-          case PNK_MODULE:
             MOZ_ASSERT(cur->isArity(PN_CODE));
             if (!resolve(cur->pn_body, prefix))
                 return false;
@@ -797,7 +778,6 @@ class NameResolver
           case PNK_EXPORT_SPEC: // by PNK_EXPORT_SPEC_LIST
           case PNK_CALLSITEOBJ: // by PNK_TAGGED_TEMPLATE
           case PNK_CLASSNAMES:  // by PNK_CLASS
-          case PNK_POSHOLDER:   // by PNK_NEWTARGET, PNK_DOT
             MOZ_CRASH("should have been handled by a parent node");
 
           case PNK_LIMIT: // invalid sentinel value

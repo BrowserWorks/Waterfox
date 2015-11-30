@@ -18,6 +18,8 @@ UNIFIED_SOURCES += [
     'FMRadioRequestParent.cpp',
 ]
 
+FAIL_ON_WARNINGS = True
+
 LOCAL_INCLUDES += [
     '/dom/base',
 ]

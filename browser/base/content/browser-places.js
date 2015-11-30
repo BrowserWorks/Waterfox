@@ -1021,7 +1021,7 @@ var PlacesMenuDNDHandler = {
  * This object handles the initialization and uninitialization of the bookmarks
  * toolbar.
  */
-var PlacesToolbarHelper = {
+let PlacesToolbarHelper = {
   _place: "place:folder=TOOLBAR",
 
   get _viewElt() {
@@ -1168,7 +1168,7 @@ var PlacesToolbarHelper = {
  * Handles the bookmarks menu-button in the toolbar.
  */
 
-var BookmarkingUI = {
+let BookmarkingUI = {
   BOOKMARK_BUTTON_ID: "bookmarks-menu-button",
   BOOKMARK_BUTTON_SHORTCUT: "addBookmarkAsKb",
   get button() {
@@ -1347,11 +1347,26 @@ var BookmarkingUI = {
       this.broadcaster.removeAttribute("stardisabled");
       this._updateStar();
     }
+    this._updateToolbarStyle();
   },
 
   _updateCustomizationState: function BUI__updateCustomizationState() {
     let placement = CustomizableUI.getPlacementOfWidget(this.BOOKMARK_BUTTON_ID);
     this._currentAreaType = placement && CustomizableUI.getAreaType(placement.area);
+  },
+
+  _updateToolbarStyle: function BUI__updateToolbarStyle() {
+    let onPersonalToolbar = false;
+    if (this._currentAreaType == CustomizableUI.TYPE_TOOLBAR) {
+      let personalToolbar = document.getElementById("PersonalToolbar");
+      onPersonalToolbar = this.button.parentNode == personalToolbar ||
+                          this.button.parentNode.parentNode == personalToolbar;
+    }
+
+    if (onPersonalToolbar)
+      this.button.classList.add("bookmark-item");
+    else
+      this.button.classList.remove("bookmark-item");
   },
 
   _uninitView: function BUI__uninitView() {
@@ -1416,12 +1431,14 @@ var BookmarkingUI = {
     if (!this._isCustomizing) {
       this._uninitView();
     }
+    this._updateToolbarStyle();
   },
 
   onCustomizeEnd: function BUI_customizeEnd(aWindow) {
     if (aWindow == window) {
       this._isCustomizing = false;
       this.onToolbarVisibilityChange();
+      this._updateToolbarStyle();
     }
   },
 

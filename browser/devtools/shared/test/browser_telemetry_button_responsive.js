@@ -31,7 +31,6 @@ function* testButton(toolbox, Telemetry) {
   ok(button, "Captain, we have the button");
 
   yield delayedClicks(button, 4);
-
   checkResults("_RESPONSIVE_", Telemetry);
 }
 
@@ -42,17 +41,14 @@ function delayedClicks(node, clicks) {
     // See TOOL_DELAY for why we need setTimeout here
     setTimeout(function delayedClick() {
       info("Clicking button " + node.id);
+      node.click();
+      clicked++;
+
       if (clicked >= clicks) {
-        node.addEventListener("click", function listener() {
-          node.removeEventListener("click", listener);
-          resolve();
-        });
+        resolve(node);
       } else {
         setTimeout(delayedClick, TOOL_DELAY);
       }
-
-      node.click();
-      clicked++;
     }, TOOL_DELAY);
   });
 }

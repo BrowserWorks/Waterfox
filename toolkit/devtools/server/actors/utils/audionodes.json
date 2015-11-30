@@ -1,6 +1,5 @@
 {
   "OscillatorNode": {
-    "source": true,
     "properties": {
       "type": {},
       "frequency": {
@@ -18,7 +17,6 @@
     "properties": { "delayTime": { "param": true }}
   },
   "AudioBufferSourceNode": {
-    "source": true,
     "properties": {
       "buffer": { "Buffer": true },
       "playbackRate": {
@@ -93,12 +91,8 @@
   "ChannelMergerNode": {
     "unbypassable": true
   },
-  "MediaElementAudioSourceNode": {
-    "source": true
-  },
-  "MediaStreamAudioSourceNode": {
-    "source": true
-  },
+  "MediaElementAudioSourceNode": {},
+  "MediaStreamAudioSourceNode": {},
   "MediaStreamAudioDestinationNode": {
     "unbypassable": true,
     "properties": {

@@ -637,6 +637,8 @@ bool CreateThis(JSContext* cx, HandleObject callee, MutableHandleValue rval);
 
 void GetDynamicName(JSContext* cx, JSObject* scopeChain, JSString* str, Value* vp);
 
+bool FilterArgumentsOrEval(JSContext* cx, JSString* str);
+
 void PostWriteBarrier(JSRuntime* rt, JSObject* obj);
 void PostGlobalWriteBarrier(JSRuntime* rt, JSObject* obj);
 
@@ -657,8 +659,8 @@ bool DebugAfterYield(JSContext* cx, BaselineFrame* frame);
 bool GeneratorThrowOrClose(JSContext* cx, BaselineFrame* frame, Handle<GeneratorObject*> genObj,
                            HandleValue arg, uint32_t resumeKind);
 
-bool InitStrictEvalScopeObjects(JSContext* cx, BaselineFrame* frame);
-bool InitFunctionScopeObjects(JSContext* cx, BaselineFrame* frame);
+bool StrictEvalPrologue(JSContext* cx, BaselineFrame* frame);
+bool HeavyweightFunPrologue(JSContext* cx, BaselineFrame* frame);
 
 bool NewArgumentsObject(JSContext* cx, BaselineFrame* frame, MutableHandleValue res);
 

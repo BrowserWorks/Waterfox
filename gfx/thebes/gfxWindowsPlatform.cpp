@@ -73,7 +73,7 @@
 #include "gfxPrefs.h"
 
 #include "VsyncSource.h"
-#include "DriverCrashGuard.h"
+#include "DriverInitCrashDetection.h"
 #include "mozilla/dom/ContentParent.h"
 
 using namespace mozilla;
@@ -333,6 +333,26 @@ public:
 
 NS_IMPL_ISUPPORTS(D3D9TextureReporter, nsIMemoryReporter)
 
+Atomic<size_t> gfxWindowsPlatform::sD3D9SurfaceImageUsed;
+
+class D3D9SurfaceImageReporter final : public nsIMemoryReporter
+{
+  ~D3D9SurfaceImageReporter() {}
+
+public:
+  NS_DECL_ISUPPORTS
+
+  NS_IMETHOD CollectReports(nsIHandleReportCallback *aHandleReport,
+                            nsISupports* aData, bool aAnonymize) override
+  {
+    return MOZ_COLLECT_REPORT("d3d9-surface-image", KIND_OTHER, UNITS_BYTES,
+                              gfxWindowsPlatform::sD3D9SurfaceImageUsed,
+                              "Memory used for D3D9 surface images");
+  }
+};
+
+NS_IMPL_ISUPPORTS(D3D9SurfaceImageReporter, nsIMemoryReporter)
+
 Atomic<size_t> gfxWindowsPlatform::sD3D9SharedTextureUsed;
 
 class D3D9SharedTextureReporter final : public nsIMemoryReporter
@@ -400,6 +420,7 @@ gfxWindowsPlatform::gfxWindowsPlatform()
     RegisterStrongMemoryReporter(new GPUAdapterReporter());
     RegisterStrongMemoryReporter(new D3D11TextureReporter());
     RegisterStrongMemoryReporter(new D3D9TextureReporter());
+    RegisterStrongMemoryReporter(new D3D9SurfaceImageReporter());
     RegisterStrongMemoryReporter(new D3D9SharedTextureReporter());
 }
 
@@ -655,7 +676,7 @@ gfxWindowsPlatform::VerifyD2DDevice(bool aAttemptForce)
         mozilla::gfx::Factory::SetDirect3D10Device(mD3D10Device);
     }
 
-    ScopedGfxFeatureReporter reporter1_1("D2D1.1V");
+    ScopedGfxFeatureReporter reporter1_1("D2D1.1");
 
     if (Factory::SupportsD2D1()) {
       reporter1_1.SetSuccessful();
@@ -1024,10 +1045,9 @@ gfxWindowsPlatform::GetStandardFamilyName(const nsAString& aFontName, nsAString&
 gfxFontGroup *
 gfxWindowsPlatform::CreateFontGroup(const FontFamilyList& aFontFamilyList,
                                     const gfxFontStyle *aStyle,
-                                    gfxTextPerfMetrics* aTextPerf,
                                     gfxUserFontSet *aUserFontSet)
 {
-    return new gfxFontGroup(aFontFamilyList, aStyle, aTextPerf, aUserFontSet);
+    return new gfxFontGroup(aFontFamilyList, aStyle, aUserFontSet);
 }
 
 gfxFontEntry* 
@@ -1729,13 +1749,12 @@ CheckForAdapterMismatch(ID3D11Device *device)
   }
 }
 
-bool DoesRenderTargetViewNeedsRecreating(ID3D11Device *device)
+void CheckIfRenderTargetViewNeedsRecreating(ID3D11Device *device)
 {
-    bool result = false;
     // CreateTexture2D is known to crash on lower feature levels, see bugs
     // 1170211 and 1089413.
     if (device->GetFeatureLevel() < D3D_FEATURE_LEVEL_10_0) {
-        return true;
+        return;
     }
 
     nsRefPtr<ID3D11DeviceContext> deviceContext;
@@ -1757,17 +1776,9 @@ bool DoesRenderTargetViewNeedsRecreating(ID3D11Device *device)
     offscreenTextureDesc.CPUAccessFlags = 0;
     offscreenTextureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
-    HRESULT hr = device->CreateTexture2D(&offscreenTextureDesc, NULL, getter_AddRefs(offscreenTexture));
-    if (FAILED(hr)) {
-        gfxCriticalNote << "DoesRecreatingCreateTexture2DFail";
-        return false;
-    }
+    HRESULT result = device->CreateTexture2D(&offscreenTextureDesc, NULL, getter_AddRefs(offscreenTexture));
 
-    hr = offscreenTexture->QueryInterface(__uuidof(IDXGIKeyedMutex), (void**)getter_AddRefs(keyedMutex));
-    if (FAILED(hr)) {
-        gfxCriticalNote << "DoesRecreatingKeyedMutexFailed";
-        return false;
-    }
+    result = offscreenTexture->QueryInterface(__uuidof(IDXGIKeyedMutex), (void**)getter_AddRefs(keyedMutex));
 
     D3D11_RENDER_TARGET_VIEW_DESC offscreenRTVDesc;
     offscreenRTVDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -1775,11 +1786,7 @@ bool DoesRenderTargetViewNeedsRecreating(ID3D11Device *device)
     offscreenRTVDesc.Texture2D.MipSlice = 0;
 
     nsRefPtr<ID3D11RenderTargetView> offscreenRTView;
-    hr = device->CreateRenderTargetView(offscreenTexture, &offscreenRTVDesc, getter_AddRefs(offscreenRTView));
-    if (FAILED(hr)) {
-        gfxCriticalNote << "DoesRecreatingCreateRenderTargetViewFailed";
-        return false;
-    }
+    result = device->CreateRenderTargetView(offscreenTexture, &offscreenRTVDesc, getter_AddRefs(offscreenRTView));
 
     // Acquire and clear
     keyedMutex->AcquireSync(0, INFINITE);
@@ -1800,20 +1807,12 @@ bool DoesRenderTargetViewNeedsRecreating(ID3D11Device *device)
     desc.MiscFlags = 0;
     desc.BindFlags = 0;
     ID3D11Texture2D* cpuTexture;
-    hr = device->CreateTexture2D(&desc, NULL, &cpuTexture);
-    if (FAILED(hr)) {
-        gfxCriticalNote << "DoesRecreatingCreateCPUTextureFailed";
-        return false;
-    }
+    device->CreateTexture2D(&desc, NULL, &cpuTexture);
 
     deviceContext->CopyResource(cpuTexture, offscreenTexture);
 
     D3D11_MAPPED_SUBRESOURCE mapped;
-    hr = deviceContext->Map(cpuTexture, 0, D3D11_MAP_READ, 0, &mapped);
-    if (FAILED(hr)) {
-        gfxCriticalNote << "DoesRecreatingMapFailed " << hexa(hr);
-        return false;
-    }
+    deviceContext->Map(cpuTexture, 0, D3D11_MAP_READ, 0, &mapped);
     int resultColor = *(int*)mapped.pData;
     deviceContext->Unmap(cpuTexture, 0);
     cpuTexture->Release();
@@ -1822,14 +1821,13 @@ bool DoesRenderTargetViewNeedsRecreating(ID3D11Device *device)
     // match the clear
     if (resultColor != 0xffffff00) {
         gfxCriticalNote << "RenderTargetViewNeedsRecreating";
-        result = true;
+        gANGLESupportsD3D11 = false;
     }
 
     keyedMutex->ReleaseSync(0);
 
     // It seems like this may only happen when we're using the NVIDIA gpu
     CheckForAdapterMismatch(device);
-    return result;
 }
 
 
@@ -2030,14 +2028,11 @@ gfxWindowsPlatform::AttemptD3D11DeviceCreation()
     return FeatureStatus::Failed;
   }
 
+  CheckIfRenderTargetViewNeedsRecreating(mD3D11Device);
+
   // Only test this when not using WARP since it can fail and cause
   // GetDeviceRemovedReason to return weird values.
   mCompositorD3D11TextureSharingWorks = ::DoesD3D11TextureSharingWork(mD3D11Device);
-
-  if (!mCompositorD3D11TextureSharingWorks || !DoesRenderTargetViewNeedsRecreating(mD3D11Device)) {
-      gANGLESupportsD3D11 = false;
-  }
-
   mD3D11Device->SetExceptionMode(0);
   mIsWARP = false;
   return FeatureStatus::Available;
@@ -2203,8 +2198,8 @@ gfxWindowsPlatform::InitializeDevices()
   // If we previously crashed initializing devices, bail out now. This is
   // effectively a parent-process only check, since the content process
   // cannot create a lock file.
-  D3D11LayersCrashGuard detectCrashes;
-  if (detectCrashes.Crashed()) {
+  DriverInitCrashDetection detectCrashes;
+  if (detectCrashes.DisableAcceleration()) {
     mAcceleration = FeatureStatus::Blocked;
     return;
   }

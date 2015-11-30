@@ -143,7 +143,7 @@ bool
 RematerializedFrame::initFunctionScopeObjects(JSContext* cx)
 {
     MOZ_ASSERT(isNonEvalFunctionFrame());
-    MOZ_ASSERT(fun()->needsCallObject());
+    MOZ_ASSERT(fun()->isHeavyweight());
     CallObject* callobj = CallObject::createForFunction(cx, this);
     if (!callobj)
         return false;
@@ -159,8 +159,6 @@ RematerializedFrame::mark(JSTracer* trc)
     TraceRoot(trc, &scopeChain_, "remat ion frame scope chain");
     if (callee_)
         TraceRoot(trc, &callee_, "remat ion frame callee");
-    if (argsObj_)
-        TraceRoot(trc, &argsObj_, "remat ion frame argsobj");
     TraceRoot(trc, &returnValue_, "remat ion frame return value");
     TraceRoot(trc, &thisValue_, "remat ion frame this");
     TraceRootRange(trc, numActualArgs_ + isConstructing_ + script_->nfixed(),

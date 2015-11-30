@@ -460,7 +460,7 @@ class CompileInfo
         return scriptNeedsArgsObj_;
     }
     bool argsObjAliasesFormals() const {
-        return scriptNeedsArgsObj_ && script()->hasMappedArgsObj();
+        return scriptNeedsArgsObj_ && !script()->strict();
     }
 
     AnalysisMode analysisMode() const {
@@ -493,7 +493,7 @@ class CompileInfo
         if (slot == thisSlot())
             return true;
 
-        if (funMaybeLazy()->needsCallObject() && slot == scopeChainSlot())
+        if (funMaybeLazy()->isHeavyweight() && slot == scopeChainSlot())
             return true;
 
         // If the function may need an arguments object, then make sure to

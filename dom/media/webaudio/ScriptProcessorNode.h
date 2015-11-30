@@ -28,9 +28,6 @@ public:
 
   IMPL_EVENT_HANDLER(audioprocess)
 
-  virtual void EventListenerAdded(nsIAtom* aType) override;
-  virtual void EventListenerRemoved(nsIAtom* aType) override;
-
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual void Connect(AudioNode& aDestination, uint32_t aOutput,
@@ -38,7 +35,7 @@ public:
   {
     AudioNode::Connect(aDestination, aOutput, aInput, aRv);
     if (!aRv.Failed()) {
-      UpdateConnectedStatus();
+      MarkActive();
     }
   }
 
@@ -47,26 +44,16 @@ public:
   {
     AudioNode::Connect(aDestination, aOutput, aRv);
     if (!aRv.Failed()) {
-      UpdateConnectedStatus();
+      MarkActive();
     }
   }
 
   virtual void Disconnect(uint32_t aOutput, ErrorResult& aRv) override
   {
     AudioNode::Disconnect(aOutput, aRv);
-    if (!aRv.Failed()) {
-      UpdateConnectedStatus();
+    if (!aRv.Failed() && OutputNodes().IsEmpty() && OutputParams().IsEmpty()) {
+      MarkInactive();
     }
-  }
-  virtual void NotifyInputsChanged() override
-  {
-    UpdateConnectedStatus();
-  }
-  virtual void NotifyHasPhantomInput() override
-  {
-    mHasPhantomInput = true;
-    // No need to UpdateConnectedStatus() because there was previously an
-    // input in InputNodes().
   }
 
   virtual void SetChannelCount(uint32_t aChannelCount, ErrorResult& aRv) override
@@ -104,14 +91,12 @@ public:
   virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
   virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
 
-private:
+protected:
   virtual ~ScriptProcessorNode();
 
-  void UpdateConnectedStatus();
-
+private:
   const uint32_t mBufferSize;
   const uint32_t mNumberOfOutputChannels;
-  bool mHasPhantomInput = false;
 };
 
 } // namespace dom

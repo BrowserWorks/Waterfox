@@ -8,6 +8,7 @@
 
 #include <stddef.h>                     // for size_t
 #include <stdint.h>                     // for uint8_t, uint32_t
+#include "gfxCore.h"                    // for NS_GFX_
 #include "nscore.h"                     // for nsAString
 
 class nsAString;
@@ -52,37 +53,37 @@ typedef uint32_t nscolor;
 // Translate a hex string to a color. Return true if it parses ok,
 // otherwise return false.
 // This accepts only 3 or 6 digits
-bool NS_HexToRGB(const nsAString& aBuf, nscolor* aResult);
+NS_GFX_(bool) NS_HexToRGB(const nsAString& aBuf, nscolor* aResult);
 
 // Compose one NS_RGB color onto another. The result is what
 // you get if you draw aFG on top of aBG with operator OVER.
-nscolor NS_ComposeColors(nscolor aBG, nscolor aFG);
+NS_GFX_(nscolor) NS_ComposeColors(nscolor aBG, nscolor aFG);
 
 // Translate a hex string to a color. Return true if it parses ok,
 // otherwise return false.
 // This version accepts 1 to 9 digits (missing digits are 0)
-bool NS_LooseHexToRGB(const nsString& aBuf, nscolor* aResult);
+NS_GFX_(bool) NS_LooseHexToRGB(const nsString& aBuf, nscolor* aResult);
 
 // There is no function to translate a color to a hex string, because
 // the hex-string syntax does not support transparency.
 
 // Translate a color name to a color. Return true if it parses ok,
 // otherwise return false.
-bool NS_ColorNameToRGB(const nsAString& aBuf, nscolor* aResult);
+NS_GFX_(bool) NS_ColorNameToRGB(const nsAString& aBuf, nscolor* aResult);
 
 // Returns an array of all possible color names, and sets
 // *aSizeArray to the size of that array. Do NOT call |free()| on this array.
-const char * const * NS_AllColorNames(size_t *aSizeArray);
+NS_GFX_(const char * const *) NS_AllColorNames(size_t *aSizeArray);
 
 // function to convert from HSL color space to RGB color space
 // the float parameters are all expected to be in the range 0-1
-nscolor NS_HSL2RGB(float h, float s, float l);
+NS_GFX_(nscolor) NS_HSL2RGB(float h, float s, float l);
 
 // Return a color name for the given nscolor.  If there is no color
 // name for it, returns null.  If there are multiple possible color
 // names for the given color, the first one in nsColorNameList.h
 // (which is generally the first one in alphabetical order) will be
 // returned.
-const char* NS_RGBToColorName(nscolor aColor);
+NS_GFX_(const char*) NS_RGBToColorName(nscolor aColor);
 
 #endif /* nsColor_h___ */

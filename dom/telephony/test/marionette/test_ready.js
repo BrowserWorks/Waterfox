@@ -10,7 +10,7 @@ function cleanUp() {
   finish();
 }
 
-var telephony = window.navigator.mozTelephony;
+let telephony = window.navigator.mozTelephony;
 ok(telephony);
 
 telephony.ready.then(function() {

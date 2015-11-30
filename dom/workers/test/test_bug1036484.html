@@ -25,7 +25,7 @@ function test(script) {
 
   worker.onerror = function(event) {
     is(event.target, worker);
-    is(event.message, ": NetworkError: A network error occurred.");
+    is(event.message, "Error: Script file not found: " + script);
     event.preventDefault();
     runTests();
   };

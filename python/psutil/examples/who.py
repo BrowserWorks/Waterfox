@@ -18,12 +18,13 @@ giampaolo       pts/9           2014-02-27 01:32  (:0)
 from datetime import datetime
 
 import psutil
+from psutil._compat import print_
 
 
 def main():
     users = psutil.users()
     for user in users:
-        print("%-15s %-15s %s  (%s)" % (
+        print_("%-15s %-15s %s  (%s)" % (
             user.name,
             user.terminal or '-',
             datetime.fromtimestamp(user.started).strftime("%Y-%m-%d %H:%M"),

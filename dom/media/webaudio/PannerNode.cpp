@@ -135,8 +135,8 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
+                            const AudioChunk& aInput,
+                            AudioChunk* aOutput,
                             bool *aFinished) override
   {
     if (aInput.IsNull()) {
@@ -177,8 +177,8 @@ public:
   // Compute how much the distance contributes to the gain reduction.
   float ComputeDistanceGain();
 
-  void EqualPowerPanningFunction(const AudioBlock& aInput, AudioBlock* aOutput);
-  void HRTFPanningFunction(const AudioBlock& aInput, AudioBlock* aOutput);
+  void EqualPowerPanningFunction(const AudioChunk& aInput, AudioChunk* aOutput);
+  void HRTFPanningFunction(const AudioChunk& aInput, AudioChunk* aOutput);
 
   float LinearGainFunction(float aDistance);
   float InverseGainFunction(float aDistance);
@@ -200,7 +200,7 @@ public:
   }
 
   nsAutoPtr<HRTFPanner> mHRTFPanner;
-  typedef void (PannerNodeEngine::*PanningModelFunction)(const AudioBlock& aInput, AudioBlock* aOutput);
+  typedef void (PannerNodeEngine::*PanningModelFunction)(const AudioChunk& aInput, AudioChunk* aOutput);
   PanningModelFunction mPanningModelFunction;
   typedef float (PannerNodeEngine::*DistanceModelFunction)(float aDistance);
   DistanceModelFunction mDistanceModelFunction;
@@ -240,9 +240,8 @@ PannerNode::PannerNode(AudioContext* aContext)
   , mConeOuterAngle(360.)
   , mConeOuterGain(0.)
 {
-  mStream = AudioNodeStream::Create(aContext,
-                                    new PannerNodeEngine(this),
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+  mStream = aContext->Graph()->CreateAudioNodeStream(new PannerNodeEngine(this),
+                                                     MediaStreamGraph::INTERNAL_STREAM);
   // We should register once we have set up our stream and engine.
   Context()->Listener()->RegisterPannerNode(this);
 }
@@ -302,16 +301,16 @@ PannerNodeEngine::ExponentialGainFunction(float aDistance)
 }
 
 void
-PannerNodeEngine::HRTFPanningFunction(const AudioBlock& aInput,
-                                      AudioBlock* aOutput)
+PannerNodeEngine::HRTFPanningFunction(const AudioChunk& aInput,
+                                      AudioChunk* aOutput)
 {
   // The output of this node is always stereo, no matter what the inputs are.
-  aOutput->AllocateChannels(2);
+  AllocateAudioBlock(2, aOutput);
 
   float azimuth, elevation;
   ComputeAzimuthAndElevation(azimuth, elevation);
 
-  AudioBlock input = aInput;
+  AudioChunk input = aInput;
   // Gain is applied before the delay and convolution of the HRTF.
   input.mVolume *= ComputeConeGain() * ComputeDistanceGain();
 
@@ -319,11 +318,11 @@ PannerNodeEngine::HRTFPanningFunction(const AudioBlock& aInput,
 }
 
 void
-PannerNodeEngine::EqualPowerPanningFunction(const AudioBlock& aInput,
-                                            AudioBlock* aOutput)
+PannerNodeEngine::EqualPowerPanningFunction(const AudioChunk& aInput,
+                                            AudioChunk* aOutput)
 {
   float azimuth, elevation, gainL, gainR, normalizedAzimuth, distanceGain, coneGain;
-  int inputChannels = aInput.ChannelCount();
+  int inputChannels = aInput.mChannelData.Length();
 
   // If both the listener are in the same spot, and no cone gain is specified,
   // this node is noop.
@@ -335,7 +334,7 @@ PannerNodeEngine::EqualPowerPanningFunction(const AudioBlock& aInput,
   }
 
   // The output of this node is always stereo, no matter what the inputs are.
-  aOutput->AllocateChannels(2);
+  AllocateAudioBlock(2, aOutput);
 
   ComputeAzimuthAndElevation(azimuth, elevation);
   coneGain = ComputeConeGain();

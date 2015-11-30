@@ -55,7 +55,7 @@ public:
   NS_DECL_NSIRUNNABLE
 
   CacheEntry(const nsACString& aStorageID, nsIURI* aURI, const nsACString& aEnhanceID,
-             bool aUseDisk, bool aSkipSizeCheck);
+             bool aUseDisk);
 
   void AsyncOpen(nsICacheEntryOpenCallback* aCallback, uint32_t aFlags);
 
@@ -275,9 +275,6 @@ private:
 
   // Whether it's allowed to persist the data to disk
   bool const mUseDisk;
-
-  // Whether it should skip max size check.
-  bool const mSkipSizeCheck;
 
   // Set when entry is doomed with AsyncDoom() or DoomAlreadyRemoved().
   // Left as a standalone flag to not bother with locking (there is no need).

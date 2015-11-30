@@ -9,7 +9,7 @@ const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 // it will make the Promise object immutable before assigning.
 // Using Object.defineProperty() instead.
 Object.defineProperty(this, "Promise", {
-  value: require("promise"),
+  value: Cu.import("resource://gre/modules/Promise.jsm", {}).Promise,
   writable: false, configurable: false
 });
 const {async, asyncOnce, promiseInvoke, promiseCall} = require("devtools/async-utils");

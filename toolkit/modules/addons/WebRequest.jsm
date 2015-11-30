@@ -51,7 +51,7 @@ function parseExtra(extra, allowed) {
   return result;
 }
 
-var ContentPolicyManager = {
+let ContentPolicyManager = {
   policyData: new Map(),
   policies: new Map(),
   idMap: new Map(),
@@ -149,7 +149,7 @@ StartStopListener.prototype = {
   }
 };
 
-var HttpObserverManager = {
+let HttpObserverManager = {
   modifyInitialized: false,
   examineInitialized: false,
 
@@ -354,7 +354,7 @@ var HttpObserverManager = {
   },
 };
 
-var onBeforeRequest = {
+let onBeforeRequest = {
   addListener(callback, filter = null, opt_extraInfoSpec = null) {
     // FIXME: Add requestBody support.
     let opts = parseExtra(opt_extraInfoSpec, ["blocking"]);
@@ -367,7 +367,7 @@ var onBeforeRequest = {
   }
 };
 
-var onBeforeSendHeaders = {
+let onBeforeSendHeaders = {
   addListener(callback, filter = null, opt_extraInfoSpec = null) {
     let opts = parseExtra(opt_extraInfoSpec, ["requestHeaders", "blocking"]);
     opts.filter = parseFilter(filter);
@@ -379,7 +379,7 @@ var onBeforeSendHeaders = {
   }
 };
 
-var onSendHeaders = {
+let onSendHeaders = {
   addListener(callback, filter = null, opt_extraInfoSpec = null) {
     let opts = parseExtra(opt_extraInfoSpec, ["requestHeaders"]);
     opts.filter = parseFilter(filter);
@@ -391,7 +391,7 @@ var onSendHeaders = {
   }
 };
 
-var onHeadersReceived = {
+let onHeadersReceived = {
   addListener(callback, filter = null, opt_extraInfoSpec = null) {
     let opts = parseExtra(opt_extraInfoSpec, ["blocking", "responseHeaders"]);
     opts.filter = parseFilter(filter);
@@ -403,7 +403,7 @@ var onHeadersReceived = {
   }
 };
 
-var onResponseStarted = {
+let onResponseStarted = {
   addListener(callback, filter = null, opt_extraInfoSpec = null) {
     let opts = parseExtra(opt_extraInfoSpec, ["responseHeaders"]);
     opts.filter = parseFilter(filter);
@@ -415,7 +415,7 @@ var onResponseStarted = {
   }
 };
 
-var onCompleted = {
+let onCompleted = {
   addListener(callback, filter = null, opt_extraInfoSpec = null) {
     let opts = parseExtra(opt_extraInfoSpec, ["responseHeaders"]);
     opts.filter = parseFilter(filter);
@@ -427,7 +427,7 @@ var onCompleted = {
   }
 };
 
-var WebRequest = {
+let WebRequest = {
   // Handled via content policy.
   onBeforeRequest: onBeforeRequest,
 

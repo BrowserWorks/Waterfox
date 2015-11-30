@@ -20,10 +20,6 @@ flags:
     - flame-kk       # b2g flame kitkat
     - flame-kk-eng   # b2g flame eng build
     - flame-kk-spark-eng
-    - nexus-4
-    - nexus-4-eng
-    - nexus-5l
-    - nexus-5l-eng
     - dolphin
     - dolphin-eng
     - dolphin-512
@@ -34,7 +30,6 @@ flags:
     - aries-dogfood
     - android-api-11
     - linux64
-    - macosx64
 
   tests:
     - cppunit
@@ -47,6 +42,8 @@ flags:
     - gaia-unit
     - gaia-unit-oop
     - gaia-ui-test-sanity
+    - gaia-ui-test-oop
+    - gaia-ui-test-accessibility
     - gaia-ui-test-functional
     - gaia-ui-test-functional-dsds
     - gaia-ui-test-unit

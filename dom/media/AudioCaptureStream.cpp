@@ -65,7 +65,8 @@ AudioCaptureStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
   // HTMLMediaElement with a stream as source, or an AudioContext), a cycle
   // situation occur. This can work if it's an AudioContext with at least one
   // DelayNode, but the MSG will mute the whole cycle otherwise.
-  if (mFinished || InMutedCycle() || inputCount == 0) {
+  bool blocked = mFinished || mBlocked.GetAt(aFrom);
+  if (blocked || InMutedCycle() || inputCount == 0) {
     track->Get<AudioSegment>()->AppendNullData(aTo - aFrom);
   } else {
     // We mix down all the tracks of all inputs, to a stereo track. Everything
@@ -77,8 +78,8 @@ AudioCaptureStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
       StreamBuffer::TrackIter tracks(s->GetStreamBuffer(), MediaSegment::AUDIO);
       while (!tracks.IsEnded()) {
         AudioSegment* inputSegment = tracks->Get<AudioSegment>();
-        StreamTime inputStart = s->GraphTimeToStreamTimeWithBlocking(aFrom);
-        StreamTime inputEnd = s->GraphTimeToStreamTimeWithBlocking(aTo);
+        StreamTime inputStart = s->GraphTimeToStreamTime(aFrom);
+        StreamTime inputEnd = s->GraphTimeToStreamTime(aTo);
         AudioSegment toMix;
         toMix.AppendSlice(*inputSegment, inputStart, inputEnd);
         // Care for streams blocked in the [aTo, aFrom] range.
@@ -94,7 +95,7 @@ AudioCaptureStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
   }
 
   // Regardless of the status of the input tracks, we go foward.
-  mBuffer.AdvanceKnownTracksTime(GraphTimeToStreamTimeWithBlocking((aTo)));
+  mBuffer.AdvanceKnownTracksTime(GraphTimeToStreamTime((aTo)));
 }
 
 void

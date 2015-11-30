@@ -14,7 +14,8 @@ window.onload = function() {
   const { utils: Cu } = Components;
   const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
   const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-  const promise = require("promise");
+  const { Promise: promise } =
+    Cu.import("resource://gre/modules/Promise.jsm", {});
 
   const QR = require("devtools/toolkit/qrcode/index");
 

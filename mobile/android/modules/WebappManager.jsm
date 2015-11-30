@@ -26,11 +26,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "Notifications", "resource://gre/modules
 XPCOMUtils.defineLazyModuleGetter(this, "Messaging", "resource://gre/modules/Messaging.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
 
-// Import AppsServiceChild.DOMApplicationRegistry for its getAll method.
-var AppsServiceChild = {};
-XPCOMUtils.defineLazyModuleGetter(AppsServiceChild, "DOMApplicationRegistry",
-                                  "resource://gre/modules/AppsServiceChild.jsm");
-
 XPCOMUtils.defineLazyGetter(this, "Strings", function() {
   return Services.strings.createBundle("chrome://browser/locale/webapp.properties");
 });
@@ -63,8 +58,8 @@ function getFormattedPluralForm(stringName, formatterArgs, pluralNum) {
   return unescapedString;
 }
 
-var Log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog;
-var debug = Log.d.bind(null, "WebappManager");
+let Log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog;
+let debug = Log.d.bind(null, "WebappManager");
 
 this.WebappManager = {
   __proto__: DOMRequestIpcHelper.prototype,
@@ -468,7 +463,7 @@ this.WebappManager = {
 
   _getInstalledApps: function() {
     let deferred = Promise.defer();
-    AppsServiceChild.DOMApplicationRegistry.getAll(apps => deferred.resolve(apps));
+    DOMApplicationRegistry.getAll(apps => deferred.resolve(apps));
     return deferred.promise;
   },
 

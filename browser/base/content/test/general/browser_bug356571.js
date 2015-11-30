@@ -14,7 +14,7 @@ const kPromptServiceContractID = "@mozilla.org/embedcomp/prompt-service;1";
 const kPromptServiceFactory = Cm.getClassObject(Cc[kPromptServiceContractID],
                                                 Ci.nsIFactory);
 
-var fakePromptServiceFactory = {
+let fakePromptServiceFactory = {
   createInstance: function(aOuter, aIid) {
     if (aOuter != null)
       throw Cr.NS_ERROR_NO_AGGREGATION;
@@ -22,7 +22,7 @@ var fakePromptServiceFactory = {
   }
 };
 
-var promptService = {
+let promptService = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPromptService]),
   alert: function() {
     didFail = true;

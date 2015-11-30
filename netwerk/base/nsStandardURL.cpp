@@ -578,9 +578,9 @@ nsStandardURL::BuildNormalizedSpec(const char *spec)
     if (mHost.mLen > 0) {
         const nsCSubstring& tempHost =
             Substring(spec + mHost.mPos, spec + mHost.mPos + mHost.mLen);
-        if (tempHost.Contains('\0'))
+        if (tempHost.FindChar('\0') != kNotFound)
             return NS_ERROR_MALFORMED_URI;  // null embedded in hostname
-        if (tempHost.Contains(' '))
+        if (tempHost.FindChar(' ') != kNotFound)
             return NS_ERROR_MALFORMED_URI;  // don't allow spaces in the hostname
         if ((useEncHost = NormalizeIDN(tempHost, encHost)))
             approxLen += encHost.Length();
@@ -973,7 +973,6 @@ NS_INTERFACE_MAP_BEGIN(nsStandardURL)
     NS_INTERFACE_MAP_ENTRY(nsIClassInfo)
     NS_INTERFACE_MAP_ENTRY(nsIMutable)
     NS_INTERFACE_MAP_ENTRY(nsIIPCSerializableURI)
-    NS_INTERFACE_MAP_ENTRY(nsISensitiveInfoHiddenURI)
     // see nsStandardURL::Equals
     if (aIID.Equals(kThisImplCID))
         foundInterface = static_cast<nsIURI *>(this);
@@ -990,17 +989,6 @@ NS_IMETHODIMP
 nsStandardURL::GetSpec(nsACString &result)
 {
     result = mSpec;
-    return NS_OK;
-}
-
-// result may contain unescaped UTF-8 characters
-NS_IMETHODIMP
-nsStandardURL::GetSensitiveInfoHiddenSpec(nsACString &result)
-{
-    result = mSpec;
-    if (mPassword.mLen >= 0) {
-      result.Replace(mPassword.mPos, mPassword.mLen, "****");
-    }
     return NS_OK;
 }
 
@@ -1111,35 +1099,20 @@ nsStandardURL::GetAsciiSpec(nsACString &result)
 
     NS_EscapeURL(Userpass(true), esc_OnlyNonASCII | esc_AlwaysCopy, result);
 
-    // get the hostport
-    nsAutoCString hostport;
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(GetAsciiHostPort(hostport)));
-    result += hostport;
+    // get escaped host
+    nsAutoCString escHostport;
+    if (mHost.mLen > 0) {
+        // this doesn't fail
+        (void) GetAsciiHost(escHostport);
+
+        // escHostport = "hostA" + ":port"
+        uint32_t pos = mHost.mPos + mHost.mLen;
+        if (pos < mPath.mPos)
+            escHostport += Substring(mSpec, pos, mPath.mPos - pos);
+    }
+    result += escHostport;
 
     NS_EscapeURL(Path(), esc_OnlyNonASCII | esc_AlwaysCopy, result);
-    return NS_OK;
-}
-
-// result is ASCII
-NS_IMETHODIMP
-nsStandardURL::GetAsciiHostPort(nsACString &result)
-{
-    if (mHostEncoding == eEncoding_ASCII) {
-        result = Hostport();
-        return NS_OK;
-    }
-
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(GetAsciiHost(result)));
-
-    // As our mHostEncoding is not eEncoding_ASCII, we know that
-    // the our host is not ipv6, and we can avoid looking at it.
-    MOZ_ASSERT(result.FindChar(':') == -1, "The host must not be ipv6");
-
-    // hostport = "hostA" + ":port"
-    uint32_t pos = mHost.mPos + mHost.mLen;
-    if (pos < mPath.mPos)
-        result += Substring(mSpec, pos, mPath.mPos - pos);
-
     return NS_OK;
 }
 
@@ -1203,7 +1176,7 @@ nsStandardURL::SetSpec(const nsACString &input)
 
     // NUL characters aren't allowed
     // \r\n\t are stripped out instead of returning error(see below)
-    if (input.Contains('\0')) {
+    if (input.FindChar('\0') != kNotFound) {
         return NS_ERROR_MALFORMED_URI;
     }
 
@@ -2489,7 +2462,7 @@ nsStandardURL::SetRef(const nsACString &input)
 
     LOG(("nsStandardURL::SetRef [ref=%s]\n", ref));
 
-    if (input.Contains('\0')) {
+    if (input.FindChar('\0') != kNotFound) {
         return NS_ERROR_MALFORMED_URI;
     }
 

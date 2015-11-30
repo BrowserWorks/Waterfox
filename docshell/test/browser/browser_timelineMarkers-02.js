@@ -3,7 +3,7 @@
 
 "use strict";
 
-var URL = '<!DOCTYPE html><style>' +
+let URL = '<!DOCTYPE html><style>' +
           'body {margin:0; padding: 0;} ' +
           'div {width:100px;height:100px;background:red;} ' +
           '.resize-change-color {width:50px;height:50px;background:blue;} ' +
@@ -12,4 +12,4 @@ var URL = '<!DOCTYPE html><style>' +
           '</style><div></div>';
 URL = "data:text/html;charset=utf8," + encodeURIComponent(URL);
 
-var test = makeTimelineTest("browser_timelineMarkers-frame-02.js", URL);
+let test = makeTimelineTest("browser_timelineMarkers-frame-02.js", URL);

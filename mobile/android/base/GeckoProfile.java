@@ -21,7 +21,6 @@ import java.util.regex.Pattern;
 
 import org.json.JSONException;
 import org.json.JSONArray;
-import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.GeckoProfileDirectories.NoMozillaDirectoryException;
 import org.mozilla.gecko.GeckoProfileDirectories.NoSuchProfileException;
 import org.mozilla.gecko.db.BrowserDB;
@@ -29,6 +28,7 @@ import org.mozilla.gecko.db.LocalBrowserDB;
 import org.mozilla.gecko.db.StubBrowserDB;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.mozglue.ContextUtils;
+import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.firstrun.FirstrunPane;
 import org.mozilla.gecko.RestrictedProfiles;
 import org.mozilla.gecko.util.INIParser;
@@ -907,6 +907,9 @@ public final class GeckoProfile {
                 synchronized (GeckoProfile.this) {
                     // Skip initialization if the profile directory has been removed.
                     if (!profileDir.exists()) {
+                        return;
+                    }
+                    if (RestrictedProfiles.isUserRestricted(context)) {
                         return;
                     }
 

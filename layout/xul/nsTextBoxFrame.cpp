@@ -457,8 +457,6 @@ nsTextBoxFrame::DrawText(nsRenderingContext& aRenderingContext,
 
     nsRefPtr<nsFontMetrics> fontMet;
     nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fontMet));
-    fontMet->SetVertical(wm.IsVertical());
-    fontMet->SetTextOrientation(StyleVisibility()->mTextOrientation);
 
     nscoord offset;
     nscoord size;

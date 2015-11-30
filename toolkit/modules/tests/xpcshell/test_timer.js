@@ -5,7 +5,7 @@
 
 // Tests exports from Timer.jsm
 
-var imported = {};
+let imported = {};
 Components.utils.import("resource://gre/modules/Timer.jsm", imported);
 
 function run_test() {

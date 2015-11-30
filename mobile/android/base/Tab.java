@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.URLMetadata;
 import org.mozilla.gecko.favicons.Favicons;
@@ -24,6 +23,7 @@ import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
 import org.mozilla.gecko.favicons.RemoteFavicon;
 import org.mozilla.gecko.gfx.BitmapUtils;
 import org.mozilla.gecko.gfx.Layer;
+import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.toolbar.BrowserToolbar.TabEditingState;
 import org.mozilla.gecko.util.ThreadUtils;
 
@@ -424,11 +424,6 @@ public class Tab {
     }
 
     public void loadFavicon() {
-        // Static Favicons never change
-        if (AboutPages.isBuiltinIconPage(mUrl) && mFavicon != null) {
-            return;
-        }
-
         // If we have a Favicon explicitly set, load it.
         if (!mAvailableFavicons.isEmpty()) {
             RemoteFavicon newFavicon = mAvailableFavicons.first();
@@ -614,8 +609,8 @@ public class Tab {
         return mEnteringReaderMode;
     }
 
-    public void doReload(boolean bypassCache) {
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Reload", "{\"bypassCache\":" + String.valueOf(bypassCache) + "}");
+    public void doReload() {
+        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Reload", "");
         GeckoAppShell.sendEventToGecko(e);
     }
 
@@ -672,12 +667,6 @@ public class Tab {
                 // spurious location change, so we're definitely loading a new
                 // page.
                 clearFavicon();
-
-                // Load local static Favicons immediately
-                if (AboutPages.isBuiltinIconPage(uri)) {
-                    loadFavicon();
-                }
-
                 updateTitle(null);
             }
         }

@@ -7,7 +7,7 @@
 const BUTTONID = "test-widget-saved-earlier";
 const AREAID = "test-area-saved-earlier";
 
-var hadSavedState;
+let hadSavedState;
 function test() {
   // Hack our way into the module to fake a saved state that isn't there...
   let backstagePass = Cu.import("resource:///modules/CustomizableUI.jsm", {});

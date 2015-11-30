@@ -5,13 +5,10 @@
 /* globals DebuggerServer */
 "use strict";
 
-XPCOMUtils.defineLazyGetter(this, "DebuggerServer", () => {
-  let { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-  let { DebuggerServer } = require("devtools/server/main");
-  return DebuggerServer;
-});
+XPCOMUtils.defineLazyModuleGetter(this, "DebuggerServer",
+                                  "resource://gre/modules/devtools/dbg-server.jsm");
 
-var RemoteDebugger = {
+let RemoteDebugger = {
   init() {
     USBRemoteDebugger.init();
     WiFiRemoteDebugger.init();
@@ -183,7 +180,7 @@ RemoteDebugger.allowConnection =
 RemoteDebugger.receiveOOB =
   RemoteDebugger.receiveOOB.bind(RemoteDebugger);
 
-var USBRemoteDebugger = {
+let USBRemoteDebugger = {
 
   init() {
     Services.prefs.addObserver("devtools.", this, false);
@@ -263,7 +260,7 @@ var USBRemoteDebugger = {
 
 };
 
-var WiFiRemoteDebugger = {
+let WiFiRemoteDebugger = {
 
   init() {
     Services.prefs.addObserver("devtools.", this, false);

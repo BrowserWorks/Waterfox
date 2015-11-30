@@ -35,7 +35,7 @@ function get_remote_history(browser) {
   });
 }
 
-var check_history = Task.async(function*() {
+let check_history = Task.async(function*() {
   let sessionHistory = yield get_remote_history(gBrowser.selectedBrowser);
 
   let count = sessionHistory.entries.length;
@@ -55,7 +55,7 @@ function clear_history() {
 }
 
 // Waits for a load and updates the known history
-var waitForLoad = Task.async(function*(uri) {
+let waitForLoad = Task.async(function*(uri) {
   info("Loading " + uri);
   // Longwinded but this ensures we don't just shortcut to LoadInNewProcess
   gBrowser.selectedBrowser.webNavigation.loadURI(uri, Ci.nsIWebNavigation.LOAD_FLAGS_NONE, null, null, null);
@@ -69,7 +69,7 @@ var waitForLoad = Task.async(function*(uri) {
 });
 
 // Waits for a load and updates the known history
-var waitForLoadWithFlags = Task.async(function*(uri, flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE) {
+let waitForLoadWithFlags = Task.async(function*(uri, flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE) {
   info("Loading " + uri + " flags = " + flags);
   gBrowser.selectedBrowser.loadURIWithFlags(uri, flags, null, null, null);
 
@@ -90,14 +90,14 @@ var waitForLoadWithFlags = Task.async(function*(uri, flags = Ci.nsIWebNavigation
   }
 });
 
-var back = Task.async(function*() {
+let back = Task.async(function*() {
   info("Going back");
   gBrowser.goBack();
   yield waitForDocLoadComplete();
   gExpectedHistory.index--;
 });
 
-var forward = Task.async(function*() {
+let forward = Task.async(function*() {
   info("Going forward");
   gBrowser.goForward();
   yield waitForDocLoadComplete();

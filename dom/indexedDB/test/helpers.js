@@ -44,7 +44,7 @@ function clearAllDatabases(callback) {
   SpecialPowers.clearStorageForURI(document.documentURI, callback, appId, inBrowser);
 }
 
-var testHarnessGenerator = testHarnessSteps();
+let testHarnessGenerator = testHarnessSteps();
 testHarnessGenerator.next();
 
 function testHarnessSteps() {
@@ -332,6 +332,10 @@ function workerScript() {
       return "undefined";
     }
 
+    if (_thing_ === null) {
+      return "null";
+    }
+
     let str;
 
     try {
@@ -470,16 +474,6 @@ function workerScript() {
 
     return false;
   }
-
-  self.getRandomBuffer = function(_size_) {
-    let buffer = new ArrayBuffer(_size_);
-    is(buffer.byteLength, _size_, "Correct byte length");
-    let view = new Uint8Array(buffer);
-    for (let i = 0; i < _size_; i++) {
-      view[i] = parseInt(Math.random() * 255)
-    }
-    return buffer;
-  };
 
   self.onerror = function(_message_, _file_, _line_) {
     ok(false,

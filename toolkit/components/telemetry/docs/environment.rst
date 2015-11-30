@@ -41,7 +41,6 @@ Structure::
           loadPath: <string>, // where the engine line is located; missing if no default
           submissionURL: <string> // missing if no default or for user-installed engines
         },
-        searchCohort: <string>, // optional, contains an identifier for any active search A/B experiments
         e10sEnabled: <bool>, // whether e10s is on, i.e. browser tabs open by default in a different process
         telemetryEnabled: <bool>, // false on failure
         isInOptoutSample: <bool>, // whether this client is part of the opt-out sample
@@ -75,18 +74,13 @@ Structure::
       },
       system: {
         memoryMB: <number>,
-        virtualMaxMB: <number>, // windows-only
         isWow64: <bool>, // windows-only
         cpu: {
-            count: <number>,  // desktop only, e.g. 8, or null on failure - logical cpus
-            cores: <number>, // desktop only, e.g., 4, or null on failure - physical cores
-            vendor: <string>, // desktop only, e.g. "GenuineIntel", or null on failure
-            family: <string>, // desktop only, null on failure
-            model: <string>, // desktop only, null on failure
-            stepping: <string>, // desktop only, null on failure
-            l2cacheKB: <number>, // L2 cache size in KB, only on windows & mac
-            l3cacheKB: <number>, // desktop only, L3 cache size in KB
-            speedMHz: <number>, // desktop only, cpu clock speed in MHz
+            count: <number>,  // e.g. 8, or null on failure
+            vendor: <string>, // e.g. "GenuineIntel", or null on failure
+            family: <string>, // null on failure
+            model: <string>, // null on failure
+            stepping: <string>, // null on failure
             extensions: [
               <string>,
               ...
@@ -299,8 +293,3 @@ The following is a partial list of collected preferences.
 - ``browser.urlbar.unifiedcomplete``: True if the urlbar's UnifiedComplete back-end is enabled.
 
 - ``browser.urlbar.userMadeSearchSuggestionsChoice``: True if the user has clicked Yes or No in the urlbar's opt-in notification. Defaults to false.
-
-activeAddons
-~~~~~~~~~~~~
-
-Starting from Firefox 44, the length of the following string fields: ``name``, ``description`` and ``version`` is limited to 100 characters. The same limitation applies to the same fields in ``theme`` and ``activePlugins``.

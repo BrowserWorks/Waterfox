@@ -48,7 +48,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "MessageLoop",
  *   InitLater(() => Foo.init());
  *   InitLater(() => Bar.init(), this, "Bar");
  */
-var DelayedInit = {
+let DelayedInit = {
   schedule: function (fn, object, name, maxWait) {
     return Impl.scheduleInit(fn, object, name, maxWait);
   },
@@ -58,7 +58,7 @@ var DelayedInit = {
 // duration is exceeded; then we wait for next idling period.
 const MAX_IDLE_RUN_MS = 50;
 
-var Impl = {
+let Impl = {
   pendingInits: [],
 
   onIdle: function () {

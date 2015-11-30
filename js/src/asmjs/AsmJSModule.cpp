@@ -152,6 +152,10 @@ AsmJSModule::trace(JSTracer* trc)
     for (unsigned i = 0; i < profiledFunctions_.length(); i++)
         profiledFunctions_[i].trace(trc);
 #endif
+#if defined(JS_ION_PERF)
+    for (unsigned i = 0; i < perfProfiledBlocksFunctions_.length(); i++)
+        perfProfiledBlocksFunctions_[i].trace(trc);
+#endif
     if (globalArgumentName_)
         TraceManuallyBarrieredEdge(trc, &globalArgumentName_, "asm.js global argument name");
     if (importArgumentName_)
@@ -180,6 +184,9 @@ AsmJSModule::addSizeOfMisc(mozilla::MallocSizeOf mallocSizeOf, size_t* asmJSModu
                         functionCounts_.sizeOfExcludingThis(mallocSizeOf) +
 #if defined(MOZ_VTUNE) || defined(JS_ION_PERF)
                         profiledFunctions_.sizeOfExcludingThis(mallocSizeOf) +
+#endif
+#if defined(JS_ION_PERF)
+                        perfProfiledBlocksFunctions_.sizeOfExcludingThis(mallocSizeOf) +
 #endif
                         staticLinkData_.sizeOfExcludingThis(mallocSizeOf);
 }
@@ -282,7 +289,7 @@ AsmJSModule::finish(ExclusiveContext* cx, TokenStream& tokenStream, MacroAssembl
 
     uint32_t endBeforeCurly = tokenStream.currentToken().pos.end;
     TokenPos pos;
-    if (!tokenStream.peekTokenPos(&pos, TokenStream::Operand))
+    if (!tokenStream.peekTokenPos(&pos))
         return false;
     uint32_t endAfterCurly = pos.end;
     MOZ_ASSERT(endBeforeCurly >= srcBodyStart_);
@@ -312,7 +319,7 @@ AsmJSModule::finish(ExclusiveContext* cx, TokenStream& tokenStream, MacroAssembl
     MOZ_ASSERT(masm.jumpRelocationTableBytes() == 0);
     MOZ_ASSERT(masm.dataRelocationTableBytes() == 0);
     MOZ_ASSERT(masm.preBarrierTableBytes() == 0);
-    MOZ_ASSERT(!masm.hasSelfReference());
+    MOZ_ASSERT(!masm.hasEnteredExitFrame());
 
     // Copy over metadata, making sure to update all offsets on ARM.
 
@@ -398,7 +405,7 @@ AsmJSModule::finish(ExclusiveContext* cx, TokenStream& tokenStream, MacroAssembl
     }
 #endif
 
-#if defined(JS_CODEGEN_MIPS32)
+#if defined(JS_CODEGEN_MIPS)
     // On MIPS we need to update all the long jumps because they contain an
     // absolute adress.
     for (size_t i = 0; i < masm.numLongJumps(); i++) {
@@ -426,6 +433,20 @@ AsmJSModule::finish(ExclusiveContext* cx, TokenStream& tokenStream, MacroAssembl
         ProfiledFunction& pf = profiledFunctions_[i];
         pf.pod.startCodeOffset = masm.actualOffset(pf.pod.startCodeOffset);
         pf.pod.endCodeOffset = masm.actualOffset(pf.pod.endCodeOffset);
+    }
+#endif
+#ifdef JS_ION_PERF
+    for (size_t i = 0; i < perfProfiledBlocksFunctions_.length(); i++) {
+        ProfiledBlocksFunction& pbf = perfProfiledBlocksFunctions_[i];
+        pbf.pod.startCodeOffset = masm.actualOffset(pbf.pod.startCodeOffset);
+        pbf.endInlineCodeOffset = masm.actualOffset(pbf.endInlineCodeOffset);
+        pbf.pod.endCodeOffset = masm.actualOffset(pbf.pod.endCodeOffset);
+        BasicBlocksVector& basicBlocks = pbf.blocks;
+        for (uint32_t i = 0; i < basicBlocks.length(); i++) {
+            Record& r = basicBlocks[i];
+            r.startOffset = masm.actualOffset(r.startOffset);
+            r.endOffset = masm.actualOffset(r.endOffset);
+        }
     }
 #endif
 
@@ -517,12 +538,6 @@ TryEnablingJit(JSContext* cx, AsmJSModule& module, HandleFunction fun, uint32_t 
         MOZ_ASSERT(!script->hasIonScript());
         return true;
     }
-
-    // Don't enable jit entry when we have a pending ion builder.
-    // Take the interpreter path which will link it and enable
-    // the fast path on the next call.
-    if (script->baselineScript()->hasPendingIonBuilder())
-        return true;
 
     // Currently we can't rectify arguments. Therefore disabling if argc is too low.
     if (fun->nargs() > size_t(argc))
@@ -857,7 +872,7 @@ AsmJSModule::initHeap(Handle<ArrayBufferObjectMaybeShared*> heap, JSContext* cx)
         if (access.hasLengthCheck())
             X86Encoding::AddInt32(access.patchLengthAt(code_), heapLength);
     }
-#elif defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS)
     uint32_t heapLength = heap->byteLength();
     for (unsigned i = 0; i < heapAccesses_.length(); i++) {
         jit::Assembler::UpdateBoundsCheck(heapLength,
@@ -1004,7 +1019,7 @@ AsmJSModuleObject_trace(JSTracer* trc, JSObject* obj)
 
 const Class AsmJSModuleObject::class_ = {
     "AsmJSModuleObject",
-    JSCLASS_IS_ANONYMOUS | JSCLASS_DELAY_METADATA_CALLBACK |
+    JSCLASS_IS_ANONYMOUS | JSCLASS_IMPLEMENTS_BARRIERS | JSCLASS_DELAY_METADATA_CALLBACK |
     JSCLASS_HAS_RESERVED_SLOTS(AsmJSModuleObject::RESERVED_SLOTS),
     nullptr, /* addProperty */
     nullptr, /* delProperty */
@@ -1438,9 +1453,7 @@ AsmJSModule::CodeRange::CodeRange(AsmJSExit::BuiltinKind builtin, uint32_t begin
 void
 AsmJSModule::CodeRange::updateOffsets(jit::MacroAssembler& masm)
 {
-    uint32_t entryBefore = 0;
-    uint32_t profilingJumpBefore = 0;
-    uint32_t profilingEpilogueBefore = 0;
+    uint32_t entryBefore, profilingJumpBefore, profilingEpilogueBefore;
     if (isFunction()) {
         entryBefore = entry();
         profilingJumpBefore = profilingJump();
@@ -1790,7 +1803,7 @@ AsmJSModule::setProfilingEnabled(bool enabled, JSContext* cx)
 #elif defined(JS_CODEGEN_ARM64)
         MOZ_CRASH();
         void* callee = nullptr;
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS)
         Instruction* instr = (Instruction*)(callerRetAddr - 4 * sizeof(uint32_t));
         void* callee = (void*)Assembler::ExtractLuiOriValue(instr, instr->next());
 #elif defined(JS_CODEGEN_NONE)
@@ -1816,7 +1829,7 @@ AsmJSModule::setProfilingEnabled(bool enabled, JSContext* cx)
         new (caller) InstBLImm(BOffImm(newCallee - caller), Assembler::Always);
 #elif defined(JS_CODEGEN_ARM64)
         MOZ_CRASH();
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS)
         Assembler::WriteLuiOriInstructions(instr, instr->next(),
                                            ScratchRegister, (uint32_t)newCallee);
         instr[2] = InstReg(op_special, ScratchRegister, zero, ra, ff_jalr);
@@ -1881,7 +1894,7 @@ AsmJSModule::setProfilingEnabled(bool enabled, JSContext* cx)
         }
 #elif defined(JS_CODEGEN_ARM64)
         MOZ_CRASH();
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS)
         Instruction* instr = (Instruction*)jump;
         if (enabled) {
             Assembler::WriteLuiOriInstructions(instr, instr->next(),
@@ -1947,7 +1960,7 @@ GetCPUID(uint32_t* cpuId)
     MOZ_ASSERT(GetARMFlags() <= (UINT32_MAX >> ARCH_BITS));
     *cpuId = ARM | (GetARMFlags() << ARCH_BITS);
     return true;
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS)
     MOZ_ASSERT(GetMIPSFlags() <= (UINT32_MAX >> ARCH_BITS));
     *cpuId = MIPS | (GetMIPSFlags() << ARCH_BITS);
     return true;
@@ -2033,7 +2046,7 @@ class ModuleChars
 
     static uint32_t endOffset(AsmJSParser& parser) {
         TokenPos pos(0, 0);  // initialize to silence GCC warning
-        MOZ_ALWAYS_TRUE(parser.tokenStream.peekTokenPos(&pos, TokenStream::Operand));
+        MOZ_ALWAYS_TRUE(parser.tokenStream.peekTokenPos(&pos));
         return pos.end;
     }
 };

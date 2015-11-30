@@ -50,12 +50,11 @@ TransformReferenceBox::EnsureDimensionsAreCached()
   mIsCached = true;
 
   if (mFrame->GetStateBits() & NS_FRAME_SVG_LAYOUT) {
-    if (!nsLayoutUtils::SVGTransformBoxEnabled()) {
+    if (!nsLayoutUtils::SVGTransformOriginEnabled()) {
       mX = -mFrame->GetPosition().x;
       mY = -mFrame->GetPosition().y;
-      Size contextSize = nsSVGUtils::GetContextSize(mFrame);
-      mWidth = nsPresContext::CSSPixelsToAppUnits(contextSize.width);
-      mHeight = nsPresContext::CSSPixelsToAppUnits(contextSize.height);
+      mWidth = 0;
+      mHeight = 0;
     } else
     if (mFrame->StyleDisplay()->mTransformBox ==
           NS_STYLE_TRANSFORM_BOX_FILL_BOX) {
@@ -81,7 +80,7 @@ TransformReferenceBox::EnsureDimensionsAreCached()
                    NS_STYLE_TRANSFORM_BOX_BORDER_BOX,
                  "Unexpected value for 'transform-box'");
       // Percentages in transforms resolve against the width/height of the
-      // nearest viewport (or its viewBox if one is applied), and the
+      // nearest viewport (or it's viewBox if one is applied), and the
       // transform is relative to {0,0} in current user space.
       mX = -mFrame->GetPosition().x;
       mY = -mFrame->GetPosition().y;

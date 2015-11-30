@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var Path = OS.Constants.Path;
+let Path = OS.Constants.Path;
 
 add_task(function* init() {
   do_get_profile();
