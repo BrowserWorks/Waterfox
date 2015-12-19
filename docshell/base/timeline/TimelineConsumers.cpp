@@ -10,6 +10,7 @@ namespace mozilla {
 
 unsigned long TimelineConsumers::sActiveConsumers = 0;
 LinkedList<ObservedDocShell>* TimelineConsumers::sObservedDocShells = nullptr;
+Mutex* TimelineConsumers::sLock = nullptr;
 
 LinkedList<ObservedDocShell>&
 TimelineConsumers::GetOrCreateObservedDocShellsList()
@@ -20,9 +21,19 @@ TimelineConsumers::GetOrCreateObservedDocShellsList()
   return *sObservedDocShells;
 }
 
+Mutex&
+TimelineConsumers::GetLock()
+{
+  if (!sLock) {
+    sLock = new Mutex("TimelineConsumersMutex");
+  }
+  return *sLock;
+}
+
 void
 TimelineConsumers::AddConsumer(nsDocShell* aDocShell)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   UniquePtr<ObservedDocShell>& observed = aDocShell->mObserved;
 
   MOZ_ASSERT(!observed);
@@ -34,6 +45,7 @@ TimelineConsumers::AddConsumer(nsDocShell* aDocShell)
 void
 TimelineConsumers::RemoveConsumer(nsDocShell* aDocShell)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   UniquePtr<ObservedDocShell>& observed = aDocShell->mObserved;
 
   MOZ_ASSERT(observed);
@@ -46,12 +58,14 @@ TimelineConsumers::RemoveConsumer(nsDocShell* aDocShell)
 bool
 TimelineConsumers::IsEmpty()
 {
+  MOZ_ASSERT(NS_IsMainThread());
   return sActiveConsumers == 0;
 }
 
 bool
 TimelineConsumers::GetKnownDocShells(Vector<nsRefPtr<nsDocShell>>& aStore)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   const LinkedList<ObservedDocShell>& docShells = GetOrCreateObservedDocShellsList();
 
   for (const ObservedDocShell* rds = docShells.getFirst();
@@ -67,44 +81,179 @@ TimelineConsumers::GetKnownDocShells(Vector<nsRefPtr<nsDocShell>>& aStore)
 
 void
 TimelineConsumers::AddMarkerForDocShell(nsDocShell* aDocShell,
-                                        UniquePtr<TimelineMarker>&& aMarker)
+                                        const char* aName,
+                                        MarkerTracingType aTracingType)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+  if (aDocShell->IsObserved()) {
+    aDocShell->mObserved->AddMarker(Move(MakeUnique<TimelineMarker>(aName, aTracingType)));
+  }
+}
+
+void
+TimelineConsumers::AddMarkerForDocShell(nsDocShell* aDocShell,
+                                        const char* aName,
+                                        const TimeStamp& aTime,
+                                        MarkerTracingType aTracingType)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  if (aDocShell->IsObserved()) {
+    aDocShell->mObserved->AddMarker(Move(MakeUnique<TimelineMarker>(aName, aTime, aTracingType)));
+  }
+}
+
+void
+TimelineConsumers::AddMarkerForDocShell(nsDocShell* aDocShell,
+                                        UniquePtr<AbstractTimelineMarker>&& aMarker)
+{
+  MOZ_ASSERT(NS_IsMainThread());
   if (aDocShell->IsObserved()) {
     aDocShell->mObserved->AddMarker(Move(aMarker));
   }
 }
 
 void
-TimelineConsumers::AddMarkerForDocShell(nsDocShell* aDocShell,
-                                        const char* aName, TracingMetadata aMetaData)
+TimelineConsumers::AddOTMTMarkerForDocShell(nsDocShell* aDocShell,
+                                            UniquePtr<AbstractTimelineMarker>& aMarker)
 {
+  MOZ_ASSERT(!NS_IsMainThread());
+  GetLock().AssertCurrentThreadOwns();
   if (aDocShell->IsObserved()) {
-    aDocShell->mObserved->AddMarker(aName, aMetaData);
+    aDocShell->mObserved->AddOTMTMarkerClone(aMarker);
+  }
+}
+
+void
+TimelineConsumers::AddMarkerForDocShell(nsIDocShell* aDocShell,
+                                        const char* aName,
+                                        MarkerTracingType aTracingType)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  AddMarkerForDocShell(static_cast<nsDocShell*>(aDocShell), aName, aTracingType);
+}
+
+void
+TimelineConsumers::AddMarkerForDocShell(nsIDocShell* aDocShell,
+                                        const char* aName,
+                                        const TimeStamp& aTime,
+                                        MarkerTracingType aTracingType)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  AddMarkerForDocShell(static_cast<nsDocShell*>(aDocShell), aName, aTime, aTracingType);
+}
+
+void
+TimelineConsumers::AddMarkerForDocShell(nsIDocShell* aDocShell,
+                                        UniquePtr<AbstractTimelineMarker>&& aMarker)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  AddMarkerForDocShell(static_cast<nsDocShell*>(aDocShell), Move(aMarker));
+}
+
+void
+TimelineConsumers::AddOTMTMarkerForDocShell(nsIDocShell* aDocShell,
+                                            UniquePtr<AbstractTimelineMarker>& aMarker)
+{
+  MOZ_ASSERT(!NS_IsMainThread());
+  GetLock().AssertCurrentThreadOwns();
+  AddOTMTMarkerForDocShell(static_cast<nsDocShell*>(aDocShell), aMarker);
+}
+
+void
+TimelineConsumers::AddMarkerForDocShellsList(Vector<nsRefPtr<nsDocShell>>& aDocShells,
+                                             const char* aName,
+                                             MarkerTracingType aTracingType)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  for (Vector<nsRefPtr<nsDocShell>>::Range range = aDocShells.all();
+       !range.empty();
+       range.popFront()) {
+    AddMarkerForDocShell(range.front(), aName, aTracingType);
   }
 }
 
 void
 TimelineConsumers::AddMarkerForDocShellsList(Vector<nsRefPtr<nsDocShell>>& aDocShells,
-                                             const char* aName, TracingMetadata aMetaData)
+                                             const char* aName,
+                                             const TimeStamp& aTime,
+                                             MarkerTracingType aTracingType)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   for (Vector<nsRefPtr<nsDocShell>>::Range range = aDocShells.all();
        !range.empty();
        range.popFront()) {
-    AddMarkerForDocShell(range.front(), aName, aMetaData);
+    AddMarkerForDocShell(range.front(), aName, aTime, aTracingType);
   }
 }
 
 void
-TimelineConsumers::AddMarkerForAllObservedDocShells(const char* aName, TracingMetadata aMetaData)
+TimelineConsumers::AddMarkerForDocShellsList(Vector<nsRefPtr<nsDocShell>>& aDocShells,
+                                             UniquePtr<AbstractTimelineMarker>& aMarker)
 {
-  Vector<nsRefPtr<nsDocShell>> docShells;
-  if (!GetKnownDocShells(docShells)) {
-    // If we don't successfully populate our vector with *all* docshells being
-    // observed, don't add the marker to *any* of them.
-    return;
+  MOZ_ASSERT(NS_IsMainThread());
+  for (Vector<nsRefPtr<nsDocShell>>::Range range = aDocShells.all();
+       !range.empty();
+       range.popFront()) {
+    UniquePtr<AbstractTimelineMarker> cloned = aMarker->Clone();
+    AddMarkerForDocShell(range.front(), Move(cloned));
   }
+}
 
-  AddMarkerForDocShellsList(docShells, aName, aMetaData);
+void
+TimelineConsumers::AddOTMTMarkerForDocShellsList(Vector<nsRefPtr<nsDocShell>>& aDocShells,
+                                                 UniquePtr<AbstractTimelineMarker>& aMarker)
+{
+  MOZ_ASSERT(!NS_IsMainThread());
+  GetLock().AssertCurrentThreadOwns();
+  for (Vector<nsRefPtr<nsDocShell>>::Range range = aDocShells.all();
+       !range.empty();
+       range.popFront()) {
+    AddOTMTMarkerForDocShell(range.front(), aMarker);
+  }
+}
+
+void
+TimelineConsumers::AddMarkerForAllObservedDocShells(const char* aName,
+                                                    MarkerTracingType aTracingType)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  Vector<nsRefPtr<nsDocShell>> docShells;
+  if (GetKnownDocShells(docShells)) {
+    AddMarkerForDocShellsList(docShells, aName, aTracingType);
+  }
+}
+
+void
+TimelineConsumers::AddMarkerForAllObservedDocShells(const char* aName,
+                                                    const TimeStamp& aTime,
+                                                    MarkerTracingType aTracingType)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  Vector<nsRefPtr<nsDocShell>> docShells;
+  if (GetKnownDocShells(docShells)) {
+    AddMarkerForDocShellsList(docShells, aName, aTime, aTracingType);
+  }
+}
+
+void
+TimelineConsumers::AddMarkerForAllObservedDocShells(UniquePtr<AbstractTimelineMarker>& aMarker)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  Vector<nsRefPtr<nsDocShell>> docShells;
+  if (GetKnownDocShells(docShells)) {
+    AddMarkerForDocShellsList(docShells, aMarker);
+  }
+}
+
+void
+TimelineConsumers::AddOTMTMarkerForAllObservedDocShells(UniquePtr<AbstractTimelineMarker>& aMarker)
+{
+  MOZ_ASSERT(!NS_IsMainThread());
+  GetLock().AssertCurrentThreadOwns();
+  Vector<nsRefPtr<nsDocShell>> docShells;
+  if (GetKnownDocShells(docShells)) {
+    AddOTMTMarkerForDocShellsList(docShells, aMarker);
+  }
 }
 
 } // namespace mozilla

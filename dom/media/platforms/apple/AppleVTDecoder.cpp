@@ -19,8 +19,8 @@
 #include "VideoUtils.h"
 #include "gfxPlatform.h"
 
-PRLogModuleInfo* GetAppleMediaLog();
-#define LOG(...) MOZ_LOG(GetAppleMediaLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+extern PRLogModuleInfo* GetPDMLog();
+#define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 //#define LOG_MEDIA_SHA1
 
 #ifdef LOG_MEDIA_SHA1
@@ -51,11 +51,16 @@ AppleVTDecoder::~AppleVTDecoder()
   MOZ_COUNT_DTOR(AppleVTDecoder);
 }
 
-nsresult
+nsRefPtr<MediaDataDecoder::InitPromise>
 AppleVTDecoder::Init()
 {
   nsresult rv = InitializeSession();
-  return rv;
+
+  if (NS_SUCCEEDED(rv)) {
+    return InitPromise::CreateAndResolve(TrackType::kVideoTrack, __func__);
+  }
+
+  return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
 }
 
 void

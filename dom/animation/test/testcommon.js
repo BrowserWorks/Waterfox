@@ -30,6 +30,18 @@ function addDiv(t, attrs) {
 }
 
 /**
+ * Some tests cause animations to continue to exist even after their target
+ * element has been removed from the document tree. To ensure that these
+ * animations do not impact other tests we should cancel them when the test
+ * is complete.
+ */
+function cancelAllAnimationsOnEnd(t) {
+  t.add_cleanup(function() {
+    document.timeline.getAnimations().forEach(animation => animation.cancel());
+  });
+}
+
+/**
  * Promise wrapper for requestAnimationFrame.
  */
 function waitForFrame() {
@@ -77,20 +89,22 @@ function flushComputedStyle(elem) {
   cs.marginLeft;
 }
 
-for (var funcName of ["async_test", "assert_not_equals", "assert_equals",
-                      "assert_approx_equals", "assert_less_than",
-                      "assert_less_than_equal", "assert_between_inclusive",
-                      "assert_true", "assert_false",
-                      "assert_class_string", "assert_throws",
-                      "assert_unreached", "test"]) {
-  window[funcName] = opener[funcName].bind(opener);
-}
+if (opener) {
+  for (var funcName of ["async_test", "assert_not_equals", "assert_equals",
+                        "assert_approx_equals", "assert_less_than",
+                        "assert_less_than_equal", "assert_between_inclusive",
+                        "assert_true", "assert_false",
+                        "assert_class_string", "assert_throws",
+                        "assert_unreached", "test"]) {
+    window[funcName] = opener[funcName].bind(opener);
+  }
 
-window.EventWatcher = opener.EventWatcher;
+  window.EventWatcher = opener.EventWatcher;
 
-function done() {
-  opener.add_completion_callback(function() {
-    self.close();
-  });
-  opener.done();
+  function done() {
+    opener.add_completion_callback(function() {
+      self.close();
+    });
+    opener.done();
+  }
 }

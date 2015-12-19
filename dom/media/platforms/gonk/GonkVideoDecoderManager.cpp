@@ -25,14 +25,15 @@
 #include "GonkNativeWindowClient.h"
 #include "mozilla/layers/GrallocTextureClient.h"
 #include "mozilla/layers/TextureClient.h"
+#include <cutils/properties.h>
 
 #define READ_OUTPUT_BUFFER_TIMEOUT_US  3000
 
 #include <android/log.h>
 #define GVDM_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "GonkVideoDecoderManager", __VA_ARGS__)
 
-PRLogModuleInfo* GetDemuxerLog();
-#define LOG(...) MOZ_LOG(GetDemuxerLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+extern PRLogModuleInfo* GetPDMLog();
+#define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 using namespace mozilla::layers;
 using namespace android;
 typedef android::MediaCodecProxy MediaCodecProxy;
@@ -73,23 +74,39 @@ GonkVideoDecoderManager::~GonkVideoDecoderManager()
   MOZ_COUNT_DTOR(GonkVideoDecoderManager);
 }
 
-android::sp<MediaCodecProxy>
+nsRefPtr<MediaDataDecoder::InitPromise>
 GonkVideoDecoderManager::Init(MediaDataDecoderCallback* aCallback)
 {
   nsIntSize displaySize(mDisplayWidth, mDisplayHeight);
   nsIntRect pictureRect(0, 0, mVideoWidth, mVideoHeight);
+
+  uint32_t maxWidth, maxHeight;
+  char propValue[PROPERTY_VALUE_MAX];
+  property_get("ro.moz.omx.hw.max_width", propValue, "-1");
+  maxWidth = -1 == atoi(propValue) ? MAX_VIDEO_WIDTH : atoi(propValue);
+  property_get("ro.moz.omx.hw.max_height", propValue, "-1");
+  maxHeight = -1 == atoi(propValue) ? MAX_VIDEO_HEIGHT : atoi(propValue) ;
+
+  if (mVideoWidth * mVideoHeight > maxWidth * maxHeight) {
+    GVDM_LOG("Video resolution exceeds hw codec capability");
+    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+  }
+
   // Validate the container-reported frame and pictureRect sizes. This ensures
   // that our video frame creation code doesn't overflow.
   nsIntSize frameSize(mVideoWidth, mVideoHeight);
   if (!IsValidVideoRegion(frameSize, pictureRect, displaySize)) {
     GVDM_LOG("It is not a valid region");
-    return nullptr;
+    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
   }
 
   mReaderCallback = aCallback;
 
+  mReaderTaskQueue = AbstractThread::GetCurrent()->AsTaskQueue();
+  MOZ_ASSERT(mReaderTaskQueue);
+
   if (mLooper.get() != nullptr) {
-    return nullptr;
+    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
   }
   // Create ALooper
   mLooper = new ALooper;
@@ -99,17 +116,19 @@ GonkVideoDecoderManager::Init(MediaDataDecoderCallback* aCallback)
   mManagerLooper->registerHandler(mHandler);
   // Start ALooper thread.
   if (mLooper->start() != OK || mManagerLooper->start() != OK ) {
-    return nullptr;
+    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
   }
+  nsRefPtr<InitPromise> p = mInitPromise.Ensure(__func__);
   mDecoder = MediaCodecProxy::CreateByType(mLooper, mMimeType.get(), false, mVideoListener);
-  mDecoder->AskMediaCodecAndWait();
+  mDecoder->AsyncAskMediaCodec();
+
   uint32_t capability = MediaCodecProxy::kEmptyCapability;
   if (mDecoder->getCapability(&capability) == OK && (capability &
       MediaCodecProxy::kCanExposeGraphicBuffer)) {
     mNativeWindow = new GonkNativeWindow();
   }
 
-  return mDecoder;
+  return p;
 }
 
 nsresult
@@ -350,6 +369,10 @@ GonkVideoDecoderManager::SetVideoFormat()
 nsresult
 GonkVideoDecoderManager::Flush()
 {
+  if (mDecoder == nullptr) {
+    GVDM_LOG("Decoder is not inited");
+    return NS_ERROR_UNEXPECTED;
+  }
   {
     MonitorAutoLock mon(mMonitor);
     mQueueSample.Clear();
@@ -460,7 +483,7 @@ GonkVideoDecoderManager::codecReserved()
   sp<Surface> surface;
   status_t rv = OK;
   // Fixed values
-  GVDM_LOG("Configure video mime type: %s, widht:%d, height:%d", mMimeType.get(), mVideoWidth, mVideoHeight);
+  GVDM_LOG("Configure video mime type: %s, width:%d, height:%d", mMimeType.get(), mVideoWidth, mVideoHeight);
   format->setString("mime", mMimeType.get());
   format->setInt32("width", mVideoWidth);
   format->setInt32("height", mVideoHeight);
@@ -478,14 +501,18 @@ GonkVideoDecoderManager::codecReserved()
 
   if (rv != OK) {
     GVDM_LOG("Failed to configure codec!!!!");
-    mReaderCallback->Error();
+    mInitPromise.Reject(DecoderFailureReason::INIT_ERROR, __func__);
+    return;
   }
+
+  mInitPromise.ResolveIfExists(TrackType::kVideoTrack, __func__);
 }
 
 void
 GonkVideoDecoderManager::codecCanceled()
 {
-  mDecoder = nullptr;
+  GVDM_LOG("codecCanceled");
+  mInitPromise.RejectIfExists(DecoderFailureReason::CANCELED, __func__);
 }
 
 // Called on GonkVideoDecoderManager::mManagerLooper thread.
@@ -536,16 +563,20 @@ GonkVideoDecoderManager::VideoResourceListener::~VideoResourceListener()
 void
 GonkVideoDecoderManager::VideoResourceListener::codecReserved()
 {
-  if (mManager != nullptr) {
-    mManager->codecReserved();
+  if (mManager) {
+    nsCOMPtr<nsIRunnable> r =
+      NS_NewNonOwningRunnableMethod(mManager, &GonkVideoDecoderManager::codecReserved);
+    mManager->mReaderTaskQueue->Dispatch(r.forget());
   }
 }
 
 void
 GonkVideoDecoderManager::VideoResourceListener::codecCanceled()
 {
-  if (mManager != nullptr) {
-    mManager->codecCanceled();
+  if (mManager) {
+    nsCOMPtr<nsIRunnable> r =
+      NS_NewNonOwningRunnableMethod(mManager, &GonkVideoDecoderManager::codecCanceled);
+    mManager->mReaderTaskQueue->Dispatch(r.forget());
   }
 }
 

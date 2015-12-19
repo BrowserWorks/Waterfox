@@ -60,6 +60,7 @@ class TalosRunner(MozbuildObject):
 
     def make_config(self):
         self.config = {
+            'run_local': True,
             'talos_json': self.talos_json,
             'binary_path': self.binary_path,
             'log_name': 'talos',
@@ -73,12 +74,11 @@ class TalosRunner(MozbuildObject):
             },
             'title': socket.gethostname(),
             'default_actions': [
-                'clone-talos',
+                'populate-webroot',
                 'create-virtualenv',
                 'run-tests',
             ],
             'python_webserver': False,
-            'populate_webroot': True,
             'talos_extra_options': ['--develop'],
         }
 

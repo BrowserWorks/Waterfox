@@ -10,14 +10,16 @@
 // interval in the timeline graph.
 const OPTIMAL_TIME_INTERVAL_MAX_ITERS = 100;
 // Background time graduations should be multiple of this number of millis.
-const TIME_INTERVAL_MULTIPLE = 10;
+const TIME_INTERVAL_MULTIPLE = 25;
 const TIME_INTERVAL_SCALES = 3;
 // The default minimum spacing between time graduations in px.
 const TIME_GRADUATION_MIN_SPACING = 10;
 // RGB color for the time interval background.
 const TIME_INTERVAL_COLOR = [128, 136, 144];
-const TIME_INTERVAL_OPACITY_MIN = 32; // byte
-const TIME_INTERVAL_OPACITY_ADD = 32; // byte
+// byte
+const TIME_INTERVAL_OPACITY_MIN = 32;
+// byte
+const TIME_INTERVAL_OPACITY_ADD = 32;
 
 /**
  * DOM node creation helper function.

@@ -36,10 +36,20 @@ function testSessionAvailable() {
   return new Promise(function(aResolve, aReject) {
     ok(navigator.presentation, "navigator.presentation should be available.");
 
-    session = navigator.presentation.session;
-    ok(session.id, "Session ID should be set: " + session.id);
-    is(session.state, "disconnected", "Session state at receiver side should be disconnected by default.");
-    aResolve();
+    navigator.presentation.getSession().then(
+      function(aSession) {
+        session = aSession;
+
+        ok(session.id, "Session ID should be set: " + session.id);
+        is(session.state, "disconnected", "Session state at receiver side should be disconnected by default.");
+        aResolve();
+      },
+      function(aError) {
+        ok(false, "Error occurred when getting the session: " + aError);
+        teardown();
+        aReject();
+      }
+    );
   });
 }
 
@@ -52,6 +62,21 @@ function testSessionReady() {
     };
 
     command({ name: 'trigger-incoming-offer' });
+  });
+}
+
+function testIncomingMessage() {
+  return new Promise(function(aResolve, aReject) {
+    const incomingMessage = "test incoming message";
+
+    session.addEventListener('message', function messageHandler(aEvent) {
+      session.removeEventListener('message', messageHandler);
+      is(aEvent.data, incomingMessage, "An incoming message should be received.");
+      aResolve();
+    });
+
+    command({ name: 'trigger-incoming-message',
+    	      data: incomingMessage });
   });
 }
 
@@ -69,6 +94,7 @@ function testCloseSession() {
 
 testSessionAvailable().
 then(testSessionReady).
+then(testIncomingMessage).
 then(testCloseSession).
 then(finish);
 

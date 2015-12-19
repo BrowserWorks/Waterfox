@@ -14,7 +14,15 @@
   navigator.mozL10n = document.mozL10n = {
     initialize: function(){},
 
-    getDirection: function(){},
+    getLanguage: function(){},
+
+    getDirection: function(){
+      if (document.location.search === "?rtl=1") {
+        return "rtl";
+      }
+
+      return "ltr";
+    },
 
     get: function(stringId, vars) {
 

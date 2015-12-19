@@ -10,6 +10,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 
 import org.mozilla.gecko.AndroidGamepadManager;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.EventDispatcher;
@@ -20,7 +21,6 @@ import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.ZoomConstraints;
-import org.mozilla.gecko.mozglue.RobocopTarget;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -44,17 +44,18 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.InputDevice;
-import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 
 /**
  * A view rendered by the layer compositor.
  */
-public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener {
+public class LayerView extends ScrollView implements Tabs.OnTabsChangedListener {
     private static final String LOGTAG = "GeckoLayerView";
 
     private GeckoLayerClient mLayerClient;
     private PanZoomController mPanZoomController;
-    private LayerMarginsAnimator mMarginsAnimator;
+    private DynamicToolbarAnimator mToolbarAnimator;
     private final GLController mGLController;
     private InputConnectionHandler mInputConnectionHandler;
     private LayerRenderer mRenderer;
@@ -65,11 +66,14 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
 
     private SurfaceView mSurfaceView;
     private TextureView mTextureView;
+    private View mFillerView;
 
     private Listener mListener;
 
     private PointF mInitialTouchPoint;
     private boolean mGeckoIsReady;
+
+    private float mSurfaceTranslation;
 
     /* This should only be modified on the Java UI thread. */
     private final Overscroll mOverscroll;
@@ -129,7 +133,7 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
         }
 
         mPanZoomController = mLayerClient.getPanZoomController();
-        mMarginsAnimator = mLayerClient.getLayerMarginsAnimator();
+        mToolbarAnimator = mLayerClient.getDynamicToolbarAnimator();
 
         mRenderer = new LayerRenderer(this);
         mInputConnectionHandler = null;
@@ -232,8 +236,9 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
         if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
             requestFocus();
         }
+        event.offsetLocation(0, -mSurfaceTranslation);
 
-        if (mMarginsAnimator != null && mMarginsAnimator.onInterceptTouchEvent(event)) {
+        if (mToolbarAnimator != null && mToolbarAnimator.onInterceptTouchEvent(event)) {
             return true;
         }
         if (mPanZoomController != null && mPanZoomController.onTouchEvent(event)) {
@@ -267,6 +272,10 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
 
     @Override
     protected void onAttachedToWindow() {
+        // We are adding descendants to this LayerView, but we don't want the
+        // descendants to affect the way LayerView retains its focus.
+        setDescendantFocusability(FOCUS_BLOCK_DESCENDANTS);
+
         // This check should not be done before the view is attached to a window
         // as hardware acceleration will not be enabled at that point.
         // We must create and add the SurfaceView instance before the view tree
@@ -288,7 +297,26 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
 
             mSurfaceView = new LayerSurfaceView(getContext(), this);
             mSurfaceView.setBackgroundColor(Color.WHITE);
-            addView(mSurfaceView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            Log.i("GeckoBug1151102", "Initialized surfaceview");
+
+            // The "filler" view sits behind the URL bar and should never be
+            // visible. It exists solely to make this LayerView actually
+            // scrollable so that we can shift the surface around on the screen.
+            // Once we drop support for pre-Honeycomb Android versions this
+            // should not be needed; we can just turn LayerView back into a
+            // FrameLayout that holds mSurfaceView and nothing else.
+            mFillerView = new View(getContext()) {
+                @Override protected void onMeasure(int aWidthSpec, int aHeightSpec) {
+                    setMeasuredDimension(0, Math.round(mToolbarAnimator.getMaxTranslation()));
+                }
+            };
+            mFillerView.setBackgroundColor(Color.RED);
+
+            LinearLayout container = new LinearLayout(getContext());
+            container.setOrientation(LinearLayout.VERTICAL);
+            container.addView(mFillerView);
+            container.addView(mSurfaceView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            addView(container, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
             SurfaceHolder holder = mSurfaceView.getHolder();
             holder.addCallback(new SurfaceListener());
@@ -300,7 +328,7 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
     public Object getLayerClientObject() { return mLayerClient; }
 
     public PanZoomController getPanZoomController() { return mPanZoomController; }
-    public LayerMarginsAnimator getLayerMarginsAnimator() { return mMarginsAnimator; }
+    public DynamicToolbarAnimator getDynamicToolbarAnimator() { return mToolbarAnimator; }
 
     public ImmutableViewportMetrics getViewportMetrics() {
         return mLayerClient.getViewportMetrics();
@@ -324,6 +352,12 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
     public void setBackgroundColor(int newColor) {
         mBackgroundColor = newColor;
         requestRender();
+    }
+
+    void setSurfaceBackgroundColor(int newColor) {
+        if (mSurfaceView != null) {
+            mSurfaceView.setBackgroundColor(newColor);
+        }
     }
 
     public void setZoomConstraints(ZoomConstraints constraints) {
@@ -563,19 +597,48 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
         }
     }
 
+    @Override
+    protected void onMeasure(int aWidthSpec, int aHeightSpec) {
+        super.onMeasure(aWidthSpec, aHeightSpec);
+        if (mSurfaceView != null) {
+            // Because of the crazy setup where this LayerView is a ScrollView
+            // and the SurfaceView is inside a LinearLayout, the SurfaceView
+            // doesn't get the right information to size itself the way we want.
+            // We always want it to be the same size as this LayerView, so we
+            // use a hack to make sure it sizes itself that way.
+            ((LayerSurfaceView)mSurfaceView).overrideSize(getMeasuredWidth(), getMeasuredHeight());
+        }
+    }
+
     /* A subclass of SurfaceView to listen to layout changes, as
      * View.OnLayoutChangeListener requires API level 11.
      */
     private class LayerSurfaceView extends SurfaceView {
-        LayerView mParent;
+        private LayerView mParent;
+        private int mForcedWidth;
+        private int mForcedHeight;
 
         public LayerSurfaceView(Context aContext, LayerView aParent) {
             super(aContext);
             mParent = aParent;
         }
 
+        void overrideSize(int aWidth, int aHeight) {
+            if (mForcedWidth != aWidth || mForcedHeight != aHeight) {
+                mForcedWidth = aWidth;
+                mForcedHeight = aHeight;
+                requestLayout();
+            }
+        }
+
+        @Override
+        protected void onMeasure(int aWidthSpec, int aHeightSpec) {
+            setMeasuredDimension(mForcedWidth, mForcedHeight);
+        }
+
         @Override
         protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+            super.onLayout(changed, left, top, right, bottom);
             if (changed) {
                 mParent.surfaceChanged(right - left, bottom - top);
             }
@@ -657,6 +720,26 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
         return mFullScreenState;
     }
 
+    public void setMaxTranslation(float aMaxTranslation) {
+        mToolbarAnimator.setMaxTranslation(aMaxTranslation);
+        if (mFillerView != null) {
+            mFillerView.requestLayout();
+        }
+    }
+
+    public void setSurfaceTranslation(float translation) {
+        // Once we drop support for pre-Honeycomb Android versions, we can
+        // revert bug 1197811 and just use ViewHelper here.
+        if (mSurfaceTranslation != translation) {
+            mSurfaceTranslation = translation;
+            scrollTo(0, Math.round(mToolbarAnimator.getMaxTranslation() - translation));
+        }
+    }
+
+    public float getSurfaceTranslation() {
+        return mSurfaceTranslation;
+    }
+
     @Override
     public void onTabChanged(Tab tab, Tabs.TabEvents msg, Object data) {
         if (msg == Tabs.TabEvents.VIEWPORT_CHANGE && Tabs.getInstance().isSelectedTab(tab) && mLayerClient != null) {
@@ -665,19 +748,12 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
         }
     }
 
-    // Public hooks for listening to metrics changing
+    // Public hooks for dynamic toolbar translation
 
-    public interface OnMetricsChangedListener {
-        public void onMetricsChanged(ImmutableViewportMetrics viewport);
+    public interface DynamicToolbarListener {
+        public void onTranslationChanged(float aToolbarTranslation, float aLayerViewTranslation);
         public void onPanZoomStopped();
-    }
-
-    public void setOnMetricsChangedDynamicToolbarViewportListener(OnMetricsChangedListener listener) {
-        mLayerClient.setOnMetricsChangedDynamicToolbarViewportListener(listener);
-    }
-
-    public void setOnMetricsChangedZoomedViewportListener(OnMetricsChangedListener listener) {
-        mLayerClient.setOnMetricsChangedZoomedViewportListener(listener);
+        public void onMetricsChanged(ImmutableViewportMetrics viewport);
     }
 
     // Public hooks for zoomed view

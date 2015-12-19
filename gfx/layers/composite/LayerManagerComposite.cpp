@@ -240,7 +240,7 @@ LayerManagerComposite::ApplyOcclusionCulling(Layer* aLayer, nsIntRegion& aOpaque
   // aOpaqueRegion.
   if (isTranslation &&
       !aLayer->HasMaskLayers() &&
-      aLayer->GetLocalOpacity() == 1.0f) {
+      aLayer->IsOpaqueForVisibility()) {
     if (aLayer->GetContentFlags() & Layer::CONTENT_OPAQUE) {
       localOpaque.Or(localOpaque, composite->GetFullyRenderedRegion());
     }
@@ -774,7 +774,8 @@ LayerManagerComposite::Render()
       js::ProfileEntry::Category::GRAPHICS);
 
     mCompositor->EndFrame();
-    mCompositor->SetDispAcquireFence(mRoot); // Call after EndFrame()
+    mCompositor->SetDispAcquireFence(mRoot,
+                                     mCompositor->GetWidget()); // Call after EndFrame()
   }
 
   if (composer2D) {
@@ -992,9 +993,10 @@ LayerManagerComposite::RenderToPresentationSurface()
   RootLayer()->RenderLayer(clipRect);
 
   mCompositor->EndFrame();
-  mCompositor->SetDispAcquireFence(mRoot); // Call after EndFrame()
-
 #ifdef MOZ_WIDGET_GONK
+  mCompositor->SetDispAcquireFence(mRoot,
+                                   mirrorScreenWidget); // Call after EndFrame()
+
   nsRefPtr<Composer2D> composer2D;
   composer2D = mCompositor->GetWidget()->GetComposer2D();
   if (composer2D) {
@@ -1017,7 +1019,8 @@ SubtractTransformedRegion(nsIntRegion& aRegion,
   // subtract it from the screen region.
   nsIntRegionRectIterator it(aRegionToSubtract);
   while (const IntRect* rect = it.Next()) {
-    Rect incompleteRect = aTransform.TransformBounds(ToRect(*rect));
+    Rect incompleteRect = aTransform.TransformAndClipBounds(ToRect(*rect),
+                                                            Rect::MaxIntRect());
     aRegion.Sub(aRegion, IntRect(incompleteRect.x,
                                    incompleteRect.y,
                                    incompleteRect.width,

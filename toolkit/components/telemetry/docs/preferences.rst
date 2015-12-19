@@ -24,6 +24,11 @@ Preferences
   When true, we enable the Telemetry system only for people that opted into Telemetry, even if unified Telemetry is enabled.
   Defaults to false & requires a restart.
 
+``toolkit.telemetry.optoutSample``
+
+  When true, we enable Telemetry opt-out for a sample of users when ``.unified`` and ``unifiedIsOptIn`` are on.
+  Defaults to false.
+
 ``toolkit.telemetry.enabled``
 
   If ``unified`` is off, this controls whether the Telemetry module is enabled.
@@ -89,3 +94,32 @@ Data-choices notification
 ``datareporting.policy.minimumPolicyVersion.channel-NAME``
 
   This is the only channel-specific version that we currently use for the minimum policy version.
+
+Testing
+-------
+
+The following prefs are for testing purpose only.
+
+``toolkit.telemetry.initDelay``
+
+  Delay before initializing telemetry (seconds).
+
+``toolkit.telemetry.minSubsessionLength``
+
+  Minimum length of a telemetry subsession (seconds).
+
+``toolkit.telemetry.collectInterval``
+
+  Minimum interval between data collection (seconds).
+
+``toolkit.telemetry.scheduler.tickInterval``
+
+  Interval between scheduler ticks (seconds).
+
+``toolkit.telemetry.scheduler.idleTickInterval``
+
+  Interval between scheduler ticks when the user is idle (seconds).
+
+``toolkit.telemetry.idleTimeout``
+
+  Timeout until we decide whether a user is idle or not (seconds).

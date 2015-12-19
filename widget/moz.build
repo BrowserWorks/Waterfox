@@ -15,7 +15,6 @@ if toolkit == 'windows':
     DIRS += ['windows']
 
     XPIDL_SOURCES += [
-        'nsIGfxInfo2.idl',
         'nsIJumpListBuilder.idl',
         'nsIJumpListItem.idl',
         'nsIPrintSettingsWin.idl',
@@ -31,7 +30,6 @@ if toolkit == 'windows':
     ]
 elif toolkit == 'cocoa':
     XPIDL_SOURCES += [
-        'nsIGfxInfo2.idl',
         'nsIMacDockSupport.idl',
         'nsIMacWebAppUtils.idl',
         'nsIStandaloneNativeMenu.idl',
@@ -115,6 +113,7 @@ EXPORTS.mozilla += [
     'ContentEvents.h',
     'EventClassList.h',
     'EventForwards.h',
+    'EventMessageList.h',
     'FontRange.h',
     'LookAndFeel.h',
     'MiscEvents.h',
@@ -220,8 +219,6 @@ if toolkit == 'gtk3':
 
 if not CONFIG['MOZ_B2G']:
     DEFINES['MOZ_CROSS_PROCESS_IME'] = True
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

@@ -6,31 +6,29 @@
 "use strict";
 
 const {Cu} = require("chrome");
-const STORAGE_STRINGS = "chrome://browser/locale/devtools/storage.properties";
+const EventEmitter = require("devtools/toolkit/event-emitter");
 
-Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyGetter(this, "TreeWidget",
-  () => require("devtools/shared/widgets/TreeWidget").TreeWidget);
-XPCOMUtils.defineLazyGetter(this, "TableWidget",
-  () => require("devtools/shared/widgets/TableWidget").TableWidget);
-XPCOMUtils.defineLazyModuleGetter(this, "EventEmitter",
-  "resource://gre/modules/devtools/event-emitter.js");
-XPCOMUtils.defineLazyModuleGetter(this, "ViewHelpers",
+loader.lazyRequireGetter(this, "TreeWidget",
+                         "devtools/shared/widgets/TreeWidget", true);
+loader.lazyRequireGetter(this, "TableWidget",
+                         "devtools/shared/widgets/TableWidget", true);
+loader.lazyImporter(this, "ViewHelpers",
   "resource:///modules/devtools/ViewHelpers.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "VariablesView",
+loader.lazyImporter(this, "VariablesView",
   "resource:///modules/devtools/VariablesView.jsm");
 
-let Telemetry = require("devtools/shared/telemetry");
+const Telemetry = require("devtools/shared/telemetry");
 
 /**
  * Localization convenience methods.
  */
-let L10N = new ViewHelpers.L10N(STORAGE_STRINGS);
+const STORAGE_STRINGS = "chrome://browser/locale/devtools/storage.properties";
+const L10N = new ViewHelpers.L10N(STORAGE_STRINGS);
 
 const GENERIC_VARIABLES_VIEW_SETTINGS = {
   lazyEmpty: true,
-  lazyEmptyDelay: 10, // ms
+   // ms
+  lazyEmptyDelay: 10,
   searchEnabled: true,
   searchPlaceholder: L10N.getStr("storage.search.placeholder"),
   preventDescriptorModifiers: true
@@ -53,7 +51,7 @@ const HIDDEN_COLUMNS = [
  * @param {Window} panelWin
  *        Window of the toolbox panel to populate UI in.
  */
-this.StorageUI = function StorageUI(front, target, panelWin) {
+var StorageUI = this.StorageUI = function StorageUI(front, target, panelWin) {
   EventEmitter.decorate(this);
 
   this._target = target;
@@ -72,7 +70,7 @@ this.StorageUI = function StorageUI(front, target, panelWin) {
     highlightUpdated: true,
   });
   this.displayObjectSidebar = this.displayObjectSidebar.bind(this);
-  this.table.on(TableWidget.EVENTS.ROW_SELECTED, this.displayObjectSidebar)
+  this.table.on(TableWidget.EVENTS.ROW_SELECTED, this.displayObjectSidebar);
 
   this.sidebar = this._panelDoc.getElementById("storage-sidebar");
   this.sidebar.setAttribute("width", "300");
@@ -81,16 +79,19 @@ this.StorageUI = function StorageUI(front, target, panelWin) {
 
   this.front.listStores().then(storageTypes => {
     this.populateStorageTree(storageTypes);
-  }).then(null, Cu.reportError);
+  }).then(null, console.error);
+
   this.onUpdate = this.onUpdate.bind(this);
   this.front.on("stores-update", this.onUpdate);
+  this.onCleared = this.onCleared.bind(this);
+  this.front.on("stores-cleared", this.onCleared);
 
   this.handleKeypress = this.handleKeypress.bind(this);
   this._panelDoc.addEventListener("keypress", this.handleKeypress);
 
   this._telemetry = new Telemetry();
   this._telemetry.toolOpened("storage");
-}
+};
 
 exports.StorageUI = StorageUI;
 
@@ -101,6 +102,7 @@ StorageUI.prototype = {
 
   destroy: function() {
     this.front.off("stores-update", this.onUpdate);
+    this.front.off("stores-cleared", this.onCleared);
     this._panelDoc.removeEventListener("keypress", this.handleKeypress);
     this._telemetry.toolClosed("storage");
   },
@@ -122,16 +124,29 @@ StorageUI.prototype = {
   removeItemFromTable: function(name) {
     if (this.table.isSelected(name)) {
       if (this.table.selectedIndex == 0) {
-        this.table.selectNextRow()
-      }
-      else {
+        this.table.selectNextRow();
+      } else {
         this.table.selectPreviousRow();
       }
       this.table.remove(name);
       this.displayObjectSidebar();
-    }
-    else {
+    } else {
       this.table.remove(name);
+    }
+  },
+
+  /**
+   * Event handler for "stores-cleared" event coming from the storage actor.
+   *
+   * @param {object} argument0
+   *        An object containing which storage types were cleared
+   */
+  onCleared: function(response) {
+    let [type, host, db, objectStore] = this.tree.selectedItem;
+    if (response.hasOwnProperty(type) && response[type].indexOf(host) > -1) {
+      this.table.clear();
+      this.hideSidebar();
+      this.emit("store-objects-cleared");
     }
   },
 
@@ -160,93 +175,119 @@ StorageUI.prototype = {
    */
   onUpdate: function({ changed, added, deleted }) {
     if (deleted) {
-      for (let type in deleted) {
-        for (let host in deleted[type]) {
-          if (!deleted[type][host].length) {
-            // This means that the whole host is deleted, thus the item should
-            // be removed from the storage tree
-            if (this.tree.isSelected([type, host])) {
-              this.table.clear();
-              this.hideSidebar();
-              this.tree.selectPreviousItem();
-            }
-
-            this.tree.remove([type, host]);
-          }
-          else if (this.tree.isSelected([type, host])) {
-            for (let name of deleted[type][host]) {
-              try {
-                // trying to parse names in case its for indexedDB
-                let names = JSON.parse(name);
-                if (!names[2]) {
-                  if (this.tree.isSelected([type, host, names[0], names[1]])) {
-                    this.tree.selectPreviousItem();
-                    this.tree.remove([type, host, names[0], names[1]]);
-                    this.table.clear();
-                    this.hideSidebar();
-                  }
-                }
-                else if (this.tree.isSelected([type, host, names[0], names[1]])) {
-                  this.removeItemFromTable(names[2]);
-                }
-              }
-              catch (ex) {
-                this.removeItemFromTable(name);
-              }
-            }
-          }
-        }
-      }
+      this.handleDeletedItems(deleted);
     }
 
     if (added) {
-      for (let type in added) {
-        for (let host in added[type]) {
-          this.tree.add([type, {id: host, type: "url"}]);
-          for (let name of added[type][host]) {
-            try {
-              name = JSON.parse(name);
-              if (name.length == 3) {
-                name.splice(2, 1);
-              }
-              this.tree.add([type, host, ...name]);
-              if (!this.tree.selectedItem) {
-                this.tree.selectedItem = [type, host, name[0], name[1]];
-                this.fetchStorageObjects(type, host, [JSON.stringify(name)], 1);
-              }
-            } catch(ex) {}
-          }
-
-          if (this.tree.isSelected([type, host])) {
-            this.fetchStorageObjects(type, host, added[type][host], 1);
-          }
-        }
-      }
+      this.handleAddedItems(added);
     }
 
     if (changed) {
-      let [type, host, db, objectStore] = this.tree.selectedItem;
-      if (changed[type] && changed[type][host]) {
-        if (changed[type][host].length) {
-          try {
-            let toUpdate = [];
-            for (let name of changed[type][host]) {
-              let names = JSON.parse(name);
-              if (names[0] == db && names[1] == objectStore && names[2]) {
-                toUpdate.push(name);
-              }
-            }
-            this.fetchStorageObjects(type, host, toUpdate, 2);
-          }
-          catch (ex) {
-            this.fetchStorageObjects(type, host, changed[type][host], 2);
-          }
-        }
-      }
+      this.handleChangedItems(changed);
     }
 
     if (added || deleted || changed) {
       this.emit("store-objects-updated");
+    }
+  },
+
+  /**
+   * Handle added items received by onUpdate
+   *
+   * @param {object} See onUpdate docs
+   */
+  handleAddedItems: function(added) {
+    for (let type in added) {
+      for (let host in added[type]) {
+        this.tree.add([type, {id: host, type: "url"}]);
+        for (let name of added[type][host]) {
+          try {
+            name = JSON.parse(name);
+            if (name.length == 3) {
+              name.splice(2, 1);
+            }
+            this.tree.add([type, host, ...name]);
+            if (!this.tree.selectedItem) {
+              this.tree.selectedItem = [type, host, name[0], name[1]];
+              this.fetchStorageObjects(type, host, [JSON.stringify(name)], 1);
+            }
+          } catch(ex) {
+            // Do nothing
+          }
+        }
+
+        if (this.tree.isSelected([type, host])) {
+          this.fetchStorageObjects(type, host, added[type][host], 1);
+        }
+      }
+    }
+  },
+
+  /**
+   * Handle deleted items received by onUpdate
+   *
+   * @param {object} See onUpdate docs
+   */
+  handleDeletedItems: function(deleted) {
+    for (let type in deleted) {
+      for (let host in deleted[type]) {
+        if (!deleted[type][host].length) {
+          // This means that the whole host is deleted, thus the item should
+          // be removed from the storage tree
+          if (this.tree.isSelected([type, host])) {
+            this.table.clear();
+            this.hideSidebar();
+            this.tree.selectPreviousItem();
+          }
+
+          this.tree.remove([type, host]);
+        } else if (this.tree.isSelected([type, host])) {
+          for (let name of deleted[type][host]) {
+            try {
+              // trying to parse names in case its for indexedDB
+              let names = JSON.parse(name);
+              if (!this.tree.isSelected([type, host, names[0], names[1]])) {
+                return;
+              }
+              if (!names[2]) {
+                this.tree.selectPreviousItem();
+                this.tree.remove([type, host, names[0], names[1]]);
+                this.table.clear();
+                this.hideSidebar();
+              } else {
+                this.removeItemFromTable(names[2]);
+              }
+            } catch (ex) {
+              this.removeItemFromTable(name);
+            }
+          }
+        }
+      }
+    }
+  },
+
+  /**
+   * Handle changed items received by onUpdate
+   *
+   * @param {object} See onUpdate docs
+   */
+  handleChangedItems: function(changed) {
+    let [type, host, db, objectStore] = this.tree.selectedItem;
+    if (!changed[type] || !changed[type][host] ||
+        changed[type][host].length == 0) {
+      return;
+    }
+    try {
+      let toUpdate = [];
+      for (let name of changed[type][host]) {
+        let names = JSON.parse(name);
+        if (names[0] == db && names[1] == objectStore && names[2]) {
+          toUpdate.push(name);
+        }
+      }
+      this.fetchStorageObjects(type, host, toUpdate, 2);
+    } catch (ex) {
+      this.fetchStorageObjects(type, host, changed[type][host], 2);
     }
   },
 
@@ -289,27 +330,33 @@ StorageUI.prototype = {
   populateStorageTree: function(storageTypes) {
     this.storageTypes = {};
     for (let type in storageTypes) {
+      if (type === "from") {
+        continue;
+      }
+
       let typeLabel = L10N.getStr("tree.labels." + type);
       this.tree.add([{id: type, label: typeLabel, type: "store"}]);
-      if (storageTypes[type].hosts) {
-        this.storageTypes[type] = storageTypes[type];
-        for (let host in storageTypes[type].hosts) {
-          this.tree.add([type, {id: host, type: "url"}]);
-          for (let name of storageTypes[type].hosts[host]) {
-
-            try {
-              let names = JSON.parse(name);
-              this.tree.add([type, host, ...names]);
-              if (!this.tree.selectedItem) {
-                this.tree.selectedItem = [type, host, names[0], names[1]];
-                this.fetchStorageObjects(type, host, [name], 0);
-              }
-            } catch(ex) {}
+      if (!storageTypes[type].hosts) {
+        continue;
+      }
+      this.storageTypes[type] = storageTypes[type];
+      for (let host in storageTypes[type].hosts) {
+        this.tree.add([type, {id: host, type: "url"}]);
+        for (let name of storageTypes[type].hosts[host]) {
+          try {
+            let names = JSON.parse(name);
+            this.tree.add([type, host, ...names]);
+            if (!this.tree.selectedItem) {
+              this.tree.selectedItem = [type, host, names[0], names[1]];
+              this.fetchStorageObjects(type, host, [name], 0);
+            }
+          } catch(ex) {
+            // Do Nothing
           }
-          if (!this.tree.selectedItem) {
-            this.tree.selectedItem = [type, host];
-            this.fetchStorageObjects(type, host, null, 0);
-          }
+        }
+        if (!this.tree.selectedItem) {
+          this.tree.selectedItem = [type, host];
+          this.fetchStorageObjects(type, host, null, 0);
         }
       }
     }
@@ -353,7 +400,9 @@ StorageUI.prototype = {
         // which may be available.
         let rawObject = Object.create(null);
         let otherProps =
-          itemProps.filter(e => e != "name" && e != "value" && e != "valueActor");
+          itemProps.filter(e => e != "name" &&
+                                e != "value" &&
+                                e != "valueActor");
         for (let prop of otherProps) {
           rawObject[prop] = item[prop];
         }
@@ -384,11 +433,10 @@ StorageUI.prototype = {
    *        The string to be parsed into an object
    */
   parseItemValue: function(name, value) {
-    let json = null
+    let json = null;
     try {
       json = JSON.parse(value);
-    }
-    catch (ex) {
+    } catch (ex) {
       json = null;
     }
 
@@ -408,9 +456,10 @@ StorageUI.prototype = {
     }
 
     let jsonObject = Object.create(null);
+    let view = this.view;
     jsonObject[name] = json;
-    let valueScope = this.view.getScopeAtIndex(1) ||
-                     this.view.addScope(L10N.getStr("storage.parsedValue.label"));
+    let valueScope = view.getScopeAtIndex(1) ||
+                     view.addScope(L10N.getStr("storage.parsedValue.label"));
     valueScope.expanded = true;
     let jsonVar = valueScope.addItem("", Object.create(null), true);
     jsonVar.expanded = true;
@@ -455,8 +504,7 @@ StorageUI.prototype = {
       }
     }
     // Testing for array
-    for (let i = 0; i < separators.length; i++) {
-      let p = separators[i];
+    for (let p of separators) {
       let regex = new RegExp("^[^" + p + "]+(" + p + "+[^" + p + "]*)+$", "g");
       if (value.match(regex)) {
         return value.split(p.replace(/\\*/g, ""));
@@ -544,8 +592,7 @@ StorageUI.prototype = {
       }
       if (reason < 2) {
         this.table.push(item, reason == 0);
-      }
-      else {
+      } else {
         this.table.update(item);
         if (item == this.table.selectedRow && !this.sidebar.hidden) {
           this.displayObjectSidebar();
@@ -568,4 +615,4 @@ StorageUI.prototype = {
       event.preventDefault();
     }
   }
-}
+};

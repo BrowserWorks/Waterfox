@@ -92,6 +92,8 @@ public:
 
   virtual void ForceEnd() override;
 
+  virtual void SetAudioOutputVolume(float aVolume) override;
+
 private:
   SpeechSynthesisRequestChild* mActor;
 };

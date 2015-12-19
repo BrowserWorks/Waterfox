@@ -183,6 +183,10 @@ static DllBlockInfo sWindowsDllBlocklist[] = {
   // NetOp School, discontinued product, bug 763395
   { "nlsp.dll", MAKE_VERSION(6, 23, 2012, 19) },
 
+  // Orbit Downloader, bug 1222819
+  { "grabdll.dll", MAKE_VERSION(2, 6, 1, 0) },
+  { "grabkernel.dll", MAKE_VERSION(1, 0, 0, 1) },
+
   { nullptr, 0 }
 };
 
@@ -437,12 +441,16 @@ DllBlockSet::Add(const char* name, unsigned long long version)
 void
 DllBlockSet::Write(HANDLE file)
 {
-  AutoCriticalSection lock(&sLock);
-  DWORD nBytes;
+  // It would be nicer to use AutoCriticalSection here. However, its destructor
+  // might not run if an exception occurs, in which case we would never leave
+  // the critical section. (MSVC warns about this possibility.) So we
+  // enter and leave manually.
+  ::EnterCriticalSection(&sLock);
 
   // Because this method is called after a crash occurs, and uses heap memory,
   // protect this entire block with a structured exception handler.
   MOZ_SEH_TRY {
+    DWORD nBytes;
     for (DllBlockSet* b = gFirst; b; b = b->mNext) {
       // write name[,v.v.v.v];
       WriteFile(file, b->mName, strlen(b->mName), &nBytes, nullptr);
@@ -466,6 +474,8 @@ DllBlockSet::Write(HANDLE file)
     }
   }
   MOZ_SEH_EXCEPT (EXCEPTION_EXECUTE_HANDLER) { }
+
+  ::LeaveCriticalSection(&sLock);
 }
 
 static

@@ -4,10 +4,10 @@
 /**
  * Test simple requests using the protocol helpers.
  */
-let protocol = require("devtools/server/protocol");
-let {method, preEvent, types, Arg, Option, RetVal} = protocol;
+var protocol = require("devtools/server/protocol");
+var {method, preEvent, types, Arg, Option, RetVal} = protocol;
 
-let events = require("sdk/event/core");
+var events = require("sdk/event/core");
 
 function simpleHello() {
   return {
@@ -17,13 +17,13 @@ function simpleHello() {
   }
 }
 
-let testTypes = {};
+var testTypes = {};
 
 // Predeclaring the actor type so that it can be used in the
 // implementation of the child actor.
 types.addActorType("childActor");
 
-let ChildActor = protocol.ActorClass({
+var ChildActor = protocol.ActorClass({
   typeName: "childActor",
 
   // Actors returned by this actor should be owned by the root actor.
@@ -104,6 +104,7 @@ let ChildActor = protocol.ActorClass({
 
   emitEvents: method(function() {
     events.emit(this, "event1", 1, 2, 3);
+    events.emit(this, "event2", 4, 5, 6);
     events.emit(this, "named-event", 1, 2, 3);
     events.emit(this, "object-event", this);
     events.emit(this, "array-object-event", [this]);
@@ -115,6 +116,11 @@ let ChildActor = protocol.ActorClass({
 
   events: {
     "event1" : {
+      a: Arg(0),
+      b: Arg(1),
+      c: Arg(2)
+    },
+    "event2" : {
       a: Arg(0),
       b: Arg(1),
       c: Arg(2)
@@ -136,7 +142,7 @@ let ChildActor = protocol.ActorClass({
   }
 });
 
-let ChildFront = protocol.FrontClass(ChildActor, {
+var ChildFront = protocol.FrontClass(ChildActor, {
   initialize: function(client, form) {
     protocol.Front.prototype.initialize.call(this, client, form);
   },
@@ -161,6 +167,14 @@ let ChildFront = protocol.FrontClass(ChildActor, {
   onEvent1: preEvent("event1", function(a, b, c) {
     this.event1arg3 = c;
   }),
+
+  onEvent2a: preEvent("event2", function(a, b, c) {
+    return promise.resolve().then(() => this.event2arg3 = c);
+  }),
+
+  onEvent2b: preEvent("event2", function(a, b, c) {
+    this.event2arg2 = b;
+  }),
 });
 
 types.addDictType("manyChildrenDict", {
@@ -170,8 +184,8 @@ types.addDictType("manyChildrenDict", {
 
 types.addLifetime("temp", "_temporaryHolder");
 
-let rootActor = null;
-let RootActor = protocol.ActorClass({
+var rootActor = null;
+var RootActor = protocol.ActorClass({
   typeName: "root",
 
   toString: function() { return "[root actor]"; },
@@ -248,7 +262,7 @@ let RootActor = protocol.ActorClass({
   })
 });
 
-let RootFront = protocol.FrontClass(RootActor, {
+var RootFront = protocol.FrontClass(RootActor, {
   toString: function() { return "[root front]"; },
   initialize: function(client) {
     this.actorID = "root";
@@ -409,7 +423,7 @@ function run_test()
       // going to trigger events on the first child, so an event
       // triggered on the second should cause immediate failures.
 
-      let set = new Set(["event1", "named-event", "object-event", "array-object-event"]);
+      let set = new Set(["event1", "event2", "named-event", "object-event", "array-object-event"]);
 
       childFront.on("event1", (a, b, c) => {
         do_check_eq(a, 1);
@@ -418,6 +432,18 @@ function run_test()
         // Verify that the pre-event handler was called.
         do_check_eq(childFront.event1arg3, 3);
         set.delete("event1");
+      });
+      childFront.on("event2", (a, b, c) => {
+        do_check_eq(a, 4);
+        do_check_eq(b, 5);
+        do_check_eq(c, 6);
+        // Verify that the async pre-event handler was called,
+        // setting the property before this handler was called.
+        do_check_eq(childFront.event2arg3, 6);
+        // And check that the sync preEvent with the same name is also
+        // executed
+        do_check_eq(childFront.event2arg2, 5);
+        set.delete("event2");
       });
       childFront.on("named-event", (a, b, c) => {
         do_check_eq(a, 1);
@@ -440,6 +466,7 @@ function run_test()
         do_throw("Unexpected event");
       }
       ret[1].on("event1", fail);
+      ret[1].on("event2", fail);
       ret[1].on("named-event", fail);
       ret[1].on("object-event", fail);
       ret[1].on("array-object-event", fail);
@@ -447,6 +474,7 @@ function run_test()
       return childFront.emitEvents().then(() => {
         trace.expectSend({"type":"emitEvents","to":"<actorid>"});
         trace.expectReceive({"type":"event1","a":1,"b":2,"c":3,"from":"<actorid>"});
+        trace.expectReceive({"type":"event2","a":4,"b":5,"c":6,"from":"<actorid>"});
         trace.expectReceive({"type":"namedEvent","a":1,"b":2,"c":3,"from":"<actorid>"});
         trace.expectReceive({"type":"objectEvent","detail":{"actor":"<actorid>","childID":"child1","detail":"detail1"},"from":"<actorid>"});
         trace.expectReceive({"type":"arrayObjectEvent","detail":[{"actor":"<actorid>","childID":"child1","detail":"detail2"}],"from":"<actorid>"});

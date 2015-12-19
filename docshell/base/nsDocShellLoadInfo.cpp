@@ -51,6 +51,37 @@ nsDocShellLoadInfo::SetReferrer(nsIURI* aReferrer)
 }
 
 NS_IMETHODIMP
+nsDocShellLoadInfo::GetOriginalURI(nsIURI** aOriginalURI)
+{
+  NS_ENSURE_ARG_POINTER(aOriginalURI);
+
+  *aOriginalURI = mOriginalURI;
+  NS_IF_ADDREF(*aOriginalURI);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocShellLoadInfo::SetOriginalURI(nsIURI* aOriginalURI)
+{
+  mOriginalURI = aOriginalURI;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocShellLoadInfo::GetLoadReplace(bool* aLoadReplace)
+{
+  *aLoadReplace = mLoadReplace;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocShellLoadInfo::SetLoadReplace(bool aLoadReplace)
+{
+  mLoadReplace = aLoadReplace;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsDocShellLoadInfo::GetOwner(nsISupports** aOwner)
 {
   NS_ENSURE_ARG_POINTER(aOwner);

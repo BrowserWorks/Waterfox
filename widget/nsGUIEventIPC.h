@@ -19,6 +19,25 @@ namespace IPC
 {
 
 template<>
+struct ParamTraits<mozilla::EventMessage>
+{
+  typedef mozilla::EventMessage paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam)
+  {
+    WriteParam(aMsg, static_cast<const mozilla::EventMessageType&>(aParam));
+  }
+
+  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  {
+    mozilla::EventMessageType eventMessage = 0;
+    bool ret = ReadParam(aMsg, aIter, &eventMessage);
+    *aResult = static_cast<paramType>(eventMessage);
+    return ret;
+  }
+};
+
+template<>
 struct ParamTraits<mozilla::BaseEventFlags>
 {
   typedef mozilla::BaseEventFlags paramType;
@@ -48,7 +67,7 @@ struct ParamTraits<mozilla::WidgetEvent>
   {
     WriteParam(aMsg,
       static_cast<mozilla::EventClassIDType>(aParam.mClass));
-    WriteParam(aMsg, aParam.message);
+    WriteParam(aMsg, aParam.mMessage);
     WriteParam(aMsg, aParam.refPoint);
     WriteParam(aMsg, aParam.time);
     WriteParam(aMsg, aParam.timeStamp);
@@ -59,7 +78,7 @@ struct ParamTraits<mozilla::WidgetEvent>
   {
     mozilla::EventClassIDType eventClassID = 0;
     bool ret = ReadParam(aMsg, aIter, &eventClassID) &&
-               ReadParam(aMsg, aIter, &aResult->message) &&
+               ReadParam(aMsg, aIter, &aResult->mMessage) &&
                ReadParam(aMsg, aIter, &aResult->refPoint) &&
                ReadParam(aMsg, aIter, &aResult->time) &&
                ReadParam(aMsg, aIter, &aResult->timeStamp) &&
@@ -154,6 +173,7 @@ struct ParamTraits<mozilla::WidgetWheelEvent>
     WriteParam(aMsg, aParam.overflowDeltaX);
     WriteParam(aMsg, aParam.overflowDeltaY);
     WriteParam(aMsg, aParam.mViewPortIsOverscrolled);
+    WriteParam(aMsg, aParam.mCanTriggerSwipe);
   }
 
   static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
@@ -174,7 +194,8 @@ struct ParamTraits<mozilla::WidgetWheelEvent>
       ReadParam(aMsg, aIter, &scrollType) &&
       ReadParam(aMsg, aIter, &aResult->overflowDeltaX) &&
       ReadParam(aMsg, aIter, &aResult->overflowDeltaY) &&
-      ReadParam(aMsg, aIter, &aResult->mViewPortIsOverscrolled);
+      ReadParam(aMsg, aIter, &aResult->mViewPortIsOverscrolled) &&
+      ReadParam(aMsg, aIter, &aResult->mCanTriggerSwipe);
     aResult->scrollType =
       static_cast<mozilla::WidgetWheelEvent::ScrollType>(scrollType);
     return rv;
@@ -701,9 +722,9 @@ struct ParamTraits<mozilla::widget::IMENotification::Rect>
 };
 
 template<>
-struct ParamTraits<mozilla::widget::IMENotification::SelectionChangeData>
+struct ParamTraits<mozilla::widget::IMENotification::SelectionChangeDataBase>
 {
-  typedef mozilla::widget::IMENotification::SelectionChangeData paramType;
+  typedef mozilla::widget::IMENotification::SelectionChangeDataBase paramType;
 
   static void Write(Message* aMsg, const paramType& aParam)
   {

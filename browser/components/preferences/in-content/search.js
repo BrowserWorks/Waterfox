@@ -16,13 +16,6 @@ document.addEventListener("Initialized", () => {
   if (!AppConstants.isPlatformAndVersionAtLeast("win", "10")) {
     document.getElementById("redirectSearchCheckbox").hidden = true;
   }
-
-  if (Services.prefs.getBoolPref("browser.search.showOneOffButtons"))
-    return;
-
-  document.getElementById("category-search").hidden = true;
-  if (document.location.hash == "#search")
-    document.location.hash = "";
 });
 
 var gEngineView = null;
@@ -68,15 +61,35 @@ var gSearchPane = {
 
     this._initAutocomplete();
 
-    let urlbarSuggests = document.getElementById("urlBarSuggestion");
-    urlbarSuggests.hidden = !Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete");
+    let suggestsPref =
+      document.getElementById("browser.search.suggest.enabled");
+    suggestsPref.addEventListener("change", () => {
+      this.updateSuggestsCheckbox();
+    });
+    this.updateSuggestsCheckbox();
+  },
 
-    let suggestsPref = document.getElementById("browser.search.suggest.enabled")
-    let updateSuggestsCheckbox = () => {
-      urlbarSuggests.disabled = !suggestsPref.value;
+  updateSuggestsCheckbox() {
+    let urlbarSuggests = document.getElementById("urlBarSuggestion");
+    urlbarSuggests.hidden =
+      !Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete");
+
+    let suggestsPref =
+      document.getElementById("browser.search.suggest.enabled");
+    let permanentPB =
+      Services.prefs.getBoolPref("browser.privatebrowsing.autostart");
+    urlbarSuggests.disabled = !suggestsPref.value || permanentPB;
+
+    let urlbarSuggestsPref =
+      document.getElementById("browser.urlbar.suggest.searches");
+    urlbarSuggests.checked = urlbarSuggestsPref.value;
+    if (urlbarSuggests.disabled) {
+      urlbarSuggests.checked = false;
     }
-    suggestsPref.addEventListener("change", updateSuggestsCheckbox);
-    updateSuggestsCheckbox();
+
+    let permanentPBLabel =
+      document.getElementById("urlBarSuggestionPermanentPBLabel");
+    permanentPBLabel.hidden = urlbarSuggests.hidden || !permanentPB;
   },
 
   buildDefaultEngineDropDown: function() {

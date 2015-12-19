@@ -19,7 +19,6 @@ class ContentBridgeParent : public PContentBridgeParent
                           , public nsIContentParent
                           , public nsIObserver
 {
-    typedef mozilla::OwningSerializedStructuredCloneBuffer OwningSerializedStructuredCloneBuffer;
 public:
   explicit ContentBridgeParent(Transport* aTransport);
 
@@ -28,6 +27,8 @@ public:
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
   void DeferredDestroy();
+  virtual bool IsContentBridgeParent() override { return true; }
+  void NotifyTabDestroyed();
 
   static ContentBridgeParent*
   Create(Transport* aTransport, ProcessId aOtherProcess);
@@ -81,7 +82,7 @@ protected:
                                const ClonedMessageData& aData,
                                InfallibleTArray<jsipc::CpowEntry>&& aCpows,
                                const IPC::Principal& aPrincipal,
-                               nsTArray<OwningSerializedStructuredCloneBuffer>* aRetvals) override;
+                               nsTArray<StructuredCloneData>* aRetvals) override;
   virtual bool RecvAsyncMessage(const nsString& aMsg,
                                 const ClonedMessageData& aData,
                                 InfallibleTArray<jsipc::CpowEntry>&& aCpows,

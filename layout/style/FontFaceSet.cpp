@@ -333,6 +333,11 @@ FontFaceSet::Load(JSContext* aCx,
   }
 
   nsIGlobalObject* globalObject = GetParentObject();
+  if (!globalObject) {
+    aRv.Throw(NS_ERROR_FAILURE);
+    return nullptr;
+  }
+
   JS::Rooted<JSObject*> jsGlobal(aCx, globalObject->GetGlobalJSObject());
   GlobalObject global(aCx, jsGlobal);
 
@@ -1335,6 +1340,12 @@ FontFaceSet::CheckFontLoad(const gfxFontFaceSrc* aFontFaceSrc,
     uint32_t loadType;
     if (NS_SUCCEEDED(docShell->GetLoadType(&loadType))) {
       if ((loadType >> 16) & nsIWebNavigation::LOAD_FLAGS_BYPASS_CACHE) {
+        *aBypassCache = true;
+      }
+    }
+    uint32_t flags;
+    if (NS_SUCCEEDED(docShell->GetDefaultLoadFlags(&flags))) {
+      if (flags & nsIRequest::LOAD_BYPASS_CACHE) {
         *aBypassCache = true;
       }
     }

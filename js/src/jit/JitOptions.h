@@ -47,21 +47,22 @@ struct JitOptions
 #endif
     bool checkRangeAnalysis;
     bool runExtraChecks;
-    bool disableScalarReplacement;
-    bool disableEagerSimdUnbox;
-    bool disableGvn;
-    bool disableLicm;
-    bool disableInlining;
-    bool disableEdgeCaseAnalysis;
-    bool disableRangeAnalysis;
-    bool disableSink;
-    bool disableLoopUnrolling;
-    bool disableEaa;
     bool disableAma;
+    bool disableEaa;
+    bool disableEagerSimdUnbox;
+    bool disableEdgeCaseAnalysis;
+    bool disableGvn;
+    bool disableInlining;
+    bool disableLicm;
+    bool disableLoopUnrolling;
+    bool disableInstructionReordering;
+    bool disableRangeAnalysis;
+    bool disableScalarReplacement;
+    bool disableSharedStubs;
+    bool disableSincos;
+    bool disableSink;
     bool eagerCompilation;
     bool forceInlineCaches;
-    mozilla::Maybe<uint32_t> forcedDefaultIonWarmUpThreshold;
-    mozilla::Maybe<IonRegisterAllocator> forcedRegisterAllocator;
     bool limitScriptSize;
     bool osr;
     uint32_t baselineWarmUpThreshold;
@@ -70,6 +71,8 @@ struct JitOptions
     uint32_t maxStackArgs;
     uint32_t osrPcMismatchesBeforeRecompile;
     uint32_t smallFunctionMaxBytecodeLength_;
+    mozilla::Maybe<uint32_t> forcedDefaultIonWarmUpThreshold;
+    mozilla::Maybe<IonRegisterAllocator> forcedRegisterAllocator;
 
     // The options below affect the rest of the VM, and not just the JIT.
     bool disableUnboxedObjects;

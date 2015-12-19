@@ -9,7 +9,6 @@ EXPORTS += [
     'AsyncEventRunner.h',
     'MediaSourceDecoder.h',
     'MediaSourceDemuxer.h',
-    'MediaSourceReader.h',
     'SourceBufferContentManager.h',
 ]
 
@@ -24,15 +23,12 @@ UNIFIED_SOURCES += [
     'MediaSource.cpp',
     'MediaSourceDecoder.cpp',
     'MediaSourceDemuxer.cpp',
-    'MediaSourceReader.cpp',
     'MediaSourceUtils.cpp',
     'ResourceQueue.cpp',
     'SourceBuffer.cpp',
     'SourceBufferContentManager.cpp',
-    'SourceBufferDecoder.cpp',
     'SourceBufferList.cpp',
     'SourceBufferResource.cpp',
-    'TrackBuffer.cpp',
     'TrackBuffersManager.cpp',
 ]
 
@@ -40,6 +36,7 @@ TEST_DIRS += [
     'gtest',
 ]
 
-FAIL_ON_WARNINGS = True
+if CONFIG['MOZ_GONK_MEDIACODEC']:
+    DEFINES['MOZ_GONK_MEDIACODEC'] = True
 
 FINAL_LIBRARY = 'xul'

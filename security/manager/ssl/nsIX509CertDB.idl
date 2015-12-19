@@ -46,7 +46,7 @@ interface nsIVerifySignedManifestCallback : nsISupports
  * This represents a service to access and manipulate
  * X.509 certificates stored in a database.
  */
-[scriptable, uuid(fbe2a0c8-ec51-4ea4-80b3-e16793141967)]
+[scriptable, uuid(3fe3702b-766b-47dd-8f77-c08c3a339a74)]
 interface nsIX509CertDB : nsISupports {
 
   /**
@@ -316,10 +316,8 @@ interface nsIX509CertDB : nsISupports {
   const AppTrustedRoot AppMarketplaceDevReviewersRoot = 4;
   const AppTrustedRoot AppMarketplaceStageRoot = 5;
   const AppTrustedRoot AppXPCShellRoot = 6;
-  const AppTrustedRoot TrustedHostedAppPublicRoot = 7;
-  const AppTrustedRoot TrustedHostedAppTestRoot = 8;
-  const AppTrustedRoot AddonsPublicRoot = 9;
-  const AppTrustedRoot AddonsStageRoot = 10;
+  const AppTrustedRoot AddonsPublicRoot = 7;
+  const AppTrustedRoot AddonsStageRoot = 8;
   void openSignedAppFileAsync(in AppTrustedRoot trustedRoot,
                               in nsIFile aJarFile,
                               in nsIOpenSignedAppFileCallback callback);
@@ -387,11 +385,20 @@ interface nsIX509CertDB : nsISupports {
    *  @param aUsage a integer representing the usage from NSS
    *  @param aFlags flags as described above
    *  @param aHostname the (optional) hostname to verify for
+   *  @param aTime the time at which to verify, in seconds since the epoch
    *  @param aVerifiedChain chain of verification up to the root if success
    *  @param aHasEVPolicy bool that signified that the cert was an EV cert
    *  @return 0 if success or the value or the error code for the verification
    *          failure
    */
+  int32_t /*PRErrorCode*/
+    verifyCertAtTime(in nsIX509Cert aCert,
+                     in int64_t /*SECCertificateUsage*/ aUsage,
+                     in uint32_t aFlags,
+                     in string aHostname,
+                     in uint64_t aTime,
+                     out nsIX509CertList aVerifiedChain,
+                     out bool aHasEVPolicy);
   int32_t /*PRErrorCode*/
     verifyCertNow(in nsIX509Cert aCert,
                   in int64_t /*SECCertificateUsage*/ aUsage,

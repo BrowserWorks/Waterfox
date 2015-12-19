@@ -111,6 +111,8 @@ public:
 #endif // #ifdef DEBUG
 
 private:
+  static InputContextAction::Cause sLastContextActionCause;
+
 #ifdef NS_ENABLE_TSF
   static decltype(SetInputScopes)* sSetInputScopes;
   static void SetInputScopeForIMM32(nsWindow* aWindow,
@@ -124,12 +126,15 @@ private:
 
   static bool IsTSFAvailable() { return (sIsInTSFMode && !sPluginHasFocus); }
   static bool IsIMMActive();
+#endif // #ifdef NS_ENABLE_TSF
 
   static void MaybeShowOnScreenKeyboard();
   static void MaybeDismissOnScreenKeyboard();
   static bool WStringStartsWithCaseInsensitive(const std::wstring& aHaystack,
                                                const std::wstring& aNeedle);
   static bool IsKeyboardPresentOnSlate();
+  static bool IsInTabletMode();
+  static bool AutoInvokeOnScreenKeyboardInDesktopMode();
 
   /**
    * Show the Windows on-screen keyboard. Only allowed for
@@ -142,7 +147,6 @@ private:
    * Windows 8 and higher.
    */
   static void DismissOnScreenKeyboard();
-#endif // #ifdef NS_ENABLE_TSF
 };
 
 } // namespace widget

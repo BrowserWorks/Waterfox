@@ -101,6 +101,21 @@ struct prof_tctx_s {
 	/* Associated global context. */
 	prof_gctx_t		*gctx;
 
+	/*
+	 * UID that distinguishes multiple tctx's created by the same thread,
+	 * but coexisting in gctx->tctxs.  There are two ways that such
+	 * coexistence can occur:
+	 * - A dumper thread can cause a tctx to be retained in the purgatory
+	 *   state.
+	 * - Although a single "producer" thread must create all tctx's which
+	 *   share the same thr_uid, multiple "consumers" can each concurrently
+	 *   execute portions of prof_tctx_destroy().  prof_tctx_destroy() only
+	 *   gets called once each time cnts.cur{objs,bytes} drop to 0, but this
+	 *   threshold can be hit again before the first consumer finishes
+	 *   executing prof_tctx_destroy().
+	 */
+	uint64_t		tctx_uid;
+
 	/* Linkage into gctx's tctxs. */
 	rb_node(prof_tctx_t)	tctx_link;
 
@@ -178,6 +193,13 @@ struct prof_tdata_s {
 	rb_node(prof_tdata_t)	tdata_link;
 
 	/*
+	 * Counter used to initialize prof_tctx_t's tctx_uid.  No locking is
+	 * necessary when incrementing this field, because only one thread ever
+	 * does so.
+	 */
+	uint64_t		tctx_uid_next;
+
+	/*
 	 * Hash of (prof_bt_t *)-->(prof_tctx_t *).  Each thread tracks
 	 * backtraces for which it has non-zero allocation/deallocation counters
 	 * associated with thread-specific prof_tctx_t objects.  Other threads
@@ -239,6 +261,9 @@ extern char	opt_prof_prefix[
 /* Accessed via prof_active_[gs]et{_unlocked,}(). */
 extern bool	prof_active;
 
+/* Accessed via prof_gdump_[gs]et{_unlocked,}(). */
+extern bool	prof_gdump_val;
+
 /*
  * Profile dump interval, measured in bytes allocated.  Each arena triggers a
  * profile dump when it reaches this threshold.  The effect is that the
@@ -285,6 +310,8 @@ bool	prof_thread_active_get(void);
 bool	prof_thread_active_set(bool active);
 bool	prof_thread_active_init_get(void);
 bool	prof_thread_active_init_set(bool active_init);
+bool	prof_gdump_get(void);
+bool	prof_gdump_set(bool active);
 void	prof_boot0(void);
 void	prof_boot1(void);
 bool	prof_boot2(void);
@@ -299,12 +326,13 @@ void	prof_sample_threshold_update(prof_tdata_t *tdata);
 
 #ifndef JEMALLOC_ENABLE_INLINE
 bool	prof_active_get_unlocked(void);
+bool	prof_gdump_get_unlocked(void);
 prof_tdata_t	*prof_tdata_get(tsd_t *tsd, bool create);
 bool	prof_sample_accum_update(tsd_t *tsd, size_t usize, bool commit,
     prof_tdata_t **tdata_out);
 prof_tctx_t	*prof_alloc_prep(tsd_t *tsd, size_t usize, bool update);
 prof_tctx_t	*prof_tctx_get(const void *ptr);
-void	prof_tctx_set(const void *ptr, prof_tctx_t *tctx);
+void	prof_tctx_set(const void *ptr, size_t usize, prof_tctx_t *tctx);
 void	prof_malloc_sample_object(const void *ptr, size_t usize,
     prof_tctx_t *tctx);
 void	prof_malloc(const void *ptr, size_t usize, prof_tctx_t *tctx);
@@ -325,6 +353,18 @@ prof_active_get_unlocked(void)
 	 * how long it will take for all threads to notice state changes.
 	 */
 	return (prof_active);
+}
+
+JEMALLOC_ALWAYS_INLINE bool
+prof_gdump_get_unlocked(void)
+{
+
+	/*
+	 * No locking is used when reading prof_gdump_val in the fast path, so
+	 * there are no guarantees regarding how long it will take for all
+	 * threads to notice state changes.
+	 */
+	return (prof_gdump_val);
 }
 
 JEMALLOC_ALWAYS_INLINE prof_tdata_t *
@@ -354,34 +394,21 @@ prof_tdata_get(tsd_t *tsd, bool create)
 JEMALLOC_ALWAYS_INLINE prof_tctx_t *
 prof_tctx_get(const void *ptr)
 {
-	prof_tctx_t *ret;
-	arena_chunk_t *chunk;
 
 	cassert(config_prof);
 	assert(ptr != NULL);
 
-	chunk = (arena_chunk_t *)CHUNK_ADDR2BASE(ptr);
-	if (likely(chunk != ptr))
-		ret = arena_prof_tctx_get(ptr);
-	else
-		ret = huge_prof_tctx_get(ptr);
-
-	return (ret);
+	return (arena_prof_tctx_get(ptr));
 }
 
 JEMALLOC_ALWAYS_INLINE void
-prof_tctx_set(const void *ptr, prof_tctx_t *tctx)
+prof_tctx_set(const void *ptr, size_t usize, prof_tctx_t *tctx)
 {
-	arena_chunk_t *chunk;
 
 	cassert(config_prof);
 	assert(ptr != NULL);
 
-	chunk = (arena_chunk_t *)CHUNK_ADDR2BASE(ptr);
-	if (likely(chunk != ptr))
-		arena_prof_tctx_set(ptr, tctx);
-	else
-		huge_prof_tctx_set(ptr, tctx);
+	arena_prof_tctx_set(ptr, usize, tctx);
 }
 
 JEMALLOC_ALWAYS_INLINE bool
@@ -446,7 +473,7 @@ prof_malloc(const void *ptr, size_t usize, prof_tctx_t *tctx)
 	if (unlikely((uintptr_t)tctx > (uintptr_t)1U))
 		prof_malloc_sample_object(ptr, usize, tctx);
 	else
-		prof_tctx_set(ptr, (prof_tctx_t *)(uintptr_t)1U);
+		prof_tctx_set(ptr, usize, (prof_tctx_t *)(uintptr_t)1U);
 }
 
 JEMALLOC_ALWAYS_INLINE void
@@ -476,7 +503,7 @@ prof_realloc(tsd_t *tsd, const void *ptr, size_t usize, prof_tctx_t *tctx,
 	if (unlikely((uintptr_t)tctx > (uintptr_t)1U))
 		prof_malloc_sample_object(ptr, usize, tctx);
 	else
-		prof_tctx_set(ptr, (prof_tctx_t *)(uintptr_t)1U);
+		prof_tctx_set(ptr, usize, (prof_tctx_t *)(uintptr_t)1U);
 }
 
 JEMALLOC_ALWAYS_INLINE void

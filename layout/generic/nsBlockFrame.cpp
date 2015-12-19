@@ -1599,7 +1599,8 @@ nsBlockFrame::ComputeFinalSize(const nsHTMLReflowState& aReflowState,
   aMetrics.SetSize(wm, finalSize);
 
 #ifdef DEBUG_blocks
-  if (CRAZY_SIZE(aMetrics.Width()) || CRAZY_SIZE(aMetrics.Height())) {
+  if ((CRAZY_SIZE(aMetrics.Width()) || CRAZY_SIZE(aMetrics.Height())) &&
+      !GetParent()->IsCrazySizeAssertSuppressed()) {
     ListTag(stdout);
     printf(": WARNING: desired:%d,%d\n", aMetrics.Width(), aMetrics.Height());
   }
@@ -4411,7 +4412,7 @@ nsBlockFrame::PlaceLine(nsBlockReflowState& aState,
   }
 
 #ifdef DEBUG
-  {
+  if (!GetParent()->IsCrazySizeAssertSuppressed()) {
     static nscoord lastHeight = 0;
     if (CRAZY_SIZE(aLine->BStart())) {
       lastHeight = aLine->BStart();
@@ -7337,7 +7338,6 @@ nsBlockFrame::ISizeToClearPastFloats(const nsBlockReflowState& aState,
   LogicalMargin computedMargin =
     offsetState.ComputedLogicalMargin().ConvertTo(wm, frWM);
   result.marginIStart = computedMargin.IStart(wm);
-  result.marginIEnd = computedMargin.IEnd(wm);
   return result;
 }
  

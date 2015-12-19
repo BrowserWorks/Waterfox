@@ -17,8 +17,9 @@ MouseEvent::MouseEvent(EventTarget* aOwner,
                        nsPresContext* aPresContext,
                        WidgetMouseEventBase* aEvent)
   : UIEvent(aOwner, aPresContext,
-            aEvent ? aEvent : new WidgetMouseEvent(false, 0, nullptr,
-                                                   WidgetMouseEvent::eReal))
+            aEvent ? aEvent :
+                     new WidgetMouseEvent(false, eVoidEvent, nullptr,
+                                          WidgetMouseEvent::eReal))
 {
   // There's no way to make this class' ctor allocate an WidgetMouseScrollEvent.
   // It's not that important, though, since a scroll event is not a real
@@ -504,14 +505,11 @@ MouseEvent::GetMozInputSource(uint16_t* aInputSource)
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsresult
-NS_NewDOMMouseEvent(nsIDOMEvent** aInstancePtrResult,
-                    EventTarget* aOwner,
+already_AddRefed<MouseEvent>
+NS_NewDOMMouseEvent(EventTarget* aOwner,
                     nsPresContext* aPresContext,
                     WidgetMouseEvent* aEvent)
 {
-  MouseEvent* it = new MouseEvent(aOwner, aPresContext, aEvent);
-  NS_ADDREF(it);
-  *aInstancePtrResult = static_cast<Event*>(it);
-  return NS_OK;
+  nsRefPtr<MouseEvent> it = new MouseEvent(aOwner, aPresContext, aEvent);
+  return it.forget();
 }

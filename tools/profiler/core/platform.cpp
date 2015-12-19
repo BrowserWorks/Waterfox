@@ -35,12 +35,32 @@
   #include "AndroidBridge.h"
 #endif
 
+#if defined(SPS_OS_android) && !defined(MOZ_WIDGET_GONK)
+#include "GeneratedJNINatives.h"
+#endif
+
 #ifndef SPS_STANDALONE
 #if defined(SPS_PLAT_amd64_linux) || defined(SPS_PLAT_x86_linux)
 # define USE_LUL_STACKWALK
 # include "lul/LulMain.h"
 # include "lul/platform-linux-lul.h"
 #endif
+#endif
+
+#if defined(SPS_OS_android) && !defined(MOZ_WIDGET_GONK)
+class GeckoJavaSampler : public widget::GeckoJavaSampler::Natives<GeckoJavaSampler>
+{
+private:
+  GeckoJavaSampler();
+
+public:
+  static double GetProfilerTime() {
+    if (!profiler_is_active()) {
+      return 0.0;
+    }
+    return profiler_time();
+  };
+};
 #endif
 
 mozilla::ThreadLocal<PseudoStack *> tlsPseudoStack;
@@ -471,6 +491,12 @@ void mozilla_sampler_init(void* stackTop)
 
 #ifndef SPS_STANDALONE
   set_stderr_callback(mozilla_sampler_log);
+#endif
+
+#if defined(SPS_OS_android) && !defined(MOZ_WIDGET_GONK)
+  if (mozilla::jni::IsAvailable()) {
+    GeckoJavaSampler::Init();
+  }
 #endif
 
   // We can't open pref so we use an environment variable
@@ -1025,6 +1051,33 @@ ProfilerBacktrace* mozilla_sampler_get_backtrace()
 void mozilla_sampler_free_backtrace(ProfilerBacktrace* aBacktrace)
 {
   delete aBacktrace;
+}
+
+// Fill the output buffer with the following pattern:
+// "Lable 1" "\0" "Label 2" "\0" ... "Label N" "\0" "\0"
+// TODO: use the unwinder instead of pseudo stack.
+void mozilla_sampler_get_backtrace_noalloc(char *output, size_t outputSize)
+{
+  MOZ_ASSERT(outputSize >= 2);
+  char *bound = output + outputSize - 2;
+  output[0] = output[1] = '\0';
+  PseudoStack *pseudoStack = tlsPseudoStack.get();
+  if (!pseudoStack) {
+    return;
+  }
+
+  volatile StackEntry *pseudoFrames = pseudoStack->mStack;
+  uint32_t pseudoCount = pseudoStack->stackSize();
+
+  for (uint32_t i = 0; i < pseudoCount; i++) {
+    size_t len = strlen(pseudoFrames[i].label());
+    if (output + len >= bound)
+      break;
+    strcpy(output, pseudoFrames[i].label());
+    output += len;
+    *output++ = '\0';
+    *output = '\0';
+  }
 }
 
 void mozilla_sampler_tracing(const char* aCategory, const char* aInfo,

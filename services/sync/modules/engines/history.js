@@ -44,6 +44,25 @@ HistoryEngine.prototype = {
   applyIncomingBatchSize: HISTORY_STORE_BATCH_SIZE,
 
   syncPriority: 7,
+
+  _processIncoming: function (newitems) {
+    // We want to notify history observers that a batch operation is underway
+    // so they don't do lots of work for each incoming record.
+    let observers = PlacesUtils.history.getObservers();
+    function notifyHistoryObservers(notification) {
+      for (let observer of observers) {
+        try {
+          observer[notification]();
+        } catch (ex) { }
+      }
+    }
+    notifyHistoryObservers("onBeginUpdateBatch");
+    try {
+      return SyncEngine.prototype._processIncoming.call(this, newitems);
+    } finally {
+      notifyHistoryObservers("onEndUpdateBatch");
+    }
+  },
 };
 
 function HistoryStore(name, engine) {
@@ -203,7 +222,7 @@ HistoryStore.prototype = {
         } else {
           shouldApply = this._recordToPlaceInfo(record);
         }
-      } catch(ex) {
+      } catch (ex if !Async.isShutdownException(ex)) {
         failed.push(record.id);
         shouldApply = false;
       }

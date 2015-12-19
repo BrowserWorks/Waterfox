@@ -60,7 +60,8 @@ if CONFIG['MOZ_X11']:
         'nsDragService.cpp',
     ]
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CC']:
+    CFLAGS += ['-Wshadow']
 
 if CONFIG['ACCESSIBILITY']:
     UNIFIED_SOURCES += [

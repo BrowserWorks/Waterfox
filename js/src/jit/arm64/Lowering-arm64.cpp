@@ -18,7 +18,7 @@ using namespace js::jit;
 using mozilla::FloorLog2;
 
 void
-LIRGeneratorARM64::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1, Register)
+LIRGeneratorARM64::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1, Register,                               bool useAtStart)
 {
     MOZ_CRASH("useBoxFixed");
 }
@@ -304,5 +304,8 @@ LIRGeneratorARM64::visitSubstr(MSubstr* ins)
 void
 LIRGeneratorARM64::visitRandom(MRandom* ins)
 {
-    MOZ_CRASH("visitRandom");
+    LRandom *lir = new(alloc()) LRandom(temp(),
+                                        temp(),
+                                        temp());
+    defineFixed(lir, ins, LFloatReg(ReturnDoubleReg));
 }

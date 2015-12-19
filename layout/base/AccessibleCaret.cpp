@@ -8,6 +8,7 @@
 
 #include "AccessibleCaretLogger.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/ToString.h"
 #include "nsCanvasFrame.h"
 #include "nsCaret.h"
 #include "nsDOMTokenList.h"
@@ -31,6 +32,35 @@ float AccessibleCaret::sHeight = 0.0f;
 float AccessibleCaret::sMarginLeft = 0.0f;
 float AccessibleCaret::sBarWidth = 0.0f;
 
+#define AC_PROCESS_ENUM_TO_STREAM(e) case(e): aStream << #e; break;
+std::ostream&
+operator<<(std::ostream& aStream, const AccessibleCaret::Appearance& aAppearance)
+{
+  using Appearance = AccessibleCaret::Appearance;
+  switch (aAppearance) {
+    AC_PROCESS_ENUM_TO_STREAM(Appearance::None);
+    AC_PROCESS_ENUM_TO_STREAM(Appearance::Normal);
+    AC_PROCESS_ENUM_TO_STREAM(Appearance::NormalNotShown);
+    AC_PROCESS_ENUM_TO_STREAM(Appearance::Left);
+    AC_PROCESS_ENUM_TO_STREAM(Appearance::Right);
+  }
+  return aStream;
+}
+
+std::ostream&
+operator<<(std::ostream& aStream,
+           const AccessibleCaret::PositionChangedResult& aResult)
+{
+  using PositionChangedResult = AccessibleCaret::PositionChangedResult;
+  switch (aResult) {
+    AC_PROCESS_ENUM_TO_STREAM(PositionChangedResult::NotChanged);
+    AC_PROCESS_ENUM_TO_STREAM(PositionChangedResult::Changed);
+    AC_PROCESS_ENUM_TO_STREAM(PositionChangedResult::Invisible);
+  }
+  return aStream;
+}
+#undef AC_PROCESS_ENUM_TO_STREAM
+
 // -----------------------------------------------------------------------------
 // Implementation of AccessibleCaret methods
 
@@ -38,13 +68,14 @@ AccessibleCaret::AccessibleCaret(nsIPresShell* aPresShell)
   : mPresShell(aPresShell)
 {
   // Check all resources required.
-  MOZ_ASSERT(mPresShell);
-  MOZ_ASSERT(RootFrame());
-  MOZ_ASSERT(mPresShell->GetDocument());
-  MOZ_ASSERT(mPresShell->GetCanvasFrame());
-  MOZ_ASSERT(mPresShell->GetCanvasFrame()->GetCustomContentContainer());
+  if (mPresShell) {
+    MOZ_ASSERT(RootFrame());
+    MOZ_ASSERT(mPresShell->GetDocument());
+    MOZ_ASSERT(mPresShell->GetCanvasFrame());
+    MOZ_ASSERT(mPresShell->GetCanvasFrame()->GetCustomContentContainer());
 
-  InjectCaretElement(mPresShell->GetDocument());
+    InjectCaretElement(mPresShell->GetDocument());
+  }
 
   static bool prefsAdded = false;
   if (!prefsAdded) {
@@ -58,7 +89,9 @@ AccessibleCaret::AccessibleCaret(nsIPresShell* aPresShell)
 
 AccessibleCaret::~AccessibleCaret()
 {
-  RemoveCaretElement(mPresShell->GetDocument());
+  if (mPresShell) {
+    RemoveCaretElement(mPresShell->GetDocument());
+  }
 }
 
 void
@@ -75,6 +108,9 @@ AccessibleCaret::SetAppearance(Appearance aAppearance)
   CaretElement()->ClassList()->Add(AppearanceString(aAppearance), rv);
   MOZ_ASSERT(!rv.Failed(), "Add new appearance failed!");
 
+  AC_LOG("%s: %s -> %s", __FUNCTION__, ToString(mAppearance).c_str(),
+         ToString(aAppearance).c_str());
+
   mAppearance = aAppearance;
 
   // Need to reset rect since the cached rect will be compared in SetPosition.
@@ -90,7 +126,7 @@ AccessibleCaret::SetSelectionBarEnabled(bool aEnabled)
     return;
   }
 
-  AC_LOG("%s, enabled %d", __FUNCTION__, aEnabled);
+  AC_LOG("Set selection bar %s", __FUNCTION__, aEnabled ? "Enabled" : "Disabled");
 
   ErrorResult rv;
   CaretElement()->ClassList()->Toggle(NS_LITERAL_STRING("no-bar"),

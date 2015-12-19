@@ -219,13 +219,14 @@
       <property name="docShellIsActive">
         <getter>
           <![CDATA[
-            throw new Error("not supported");
+            let {frameLoader} = this.QueryInterface(Ci.nsIFrameLoaderOwner);
+            return frameLoader.tabParent.docShellIsActive;
           ]]>
         </getter>
         <setter>
           <![CDATA[
             let {frameLoader} = this.QueryInterface(Ci.nsIFrameLoaderOwner);
-            frameLoader.tabParent.setIsDocShellActive(val);
+            frameLoader.tabParent.docShellIsActive = val;
             return val;
           ]]>
         </setter>
@@ -261,6 +262,10 @@
             this.messageManager.loadFrameScript("chrome://global/content/select-child.js", true);
           }
 
+          if (!this.hasAttribute("disablehistory")) {
+            Services.obs.addObserver(this, "browser:purge-session-history", false)
+          }
+
           jsm = "resource://gre/modules/RemoteController.jsm";
           let RemoteController = Components.utils.import(jsm, {}).RemoteController;
           this._controller = new RemoteController(this);
@@ -275,7 +280,9 @@
       </destructor>
 
       <!-- This is necessary because the destructor doesn't always get called when
-           we are removed from a tabbrowser. This will be explicitly called by tabbrowser -->
+           we are removed from a tabbrowser. This will be explicitly called by tabbrowser.
+
+           Note: This overrides the destroy() method from browser.xml. -->
       <method name="destroy">
         <body><![CDATA[
           if (this.mDestroyed)
@@ -283,6 +290,14 @@
           this.mDestroyed = true;
 
           this.controllers.removeController(this._controller);
+
+          if (!this.hasAttribute("disablehistory")) {
+            try {
+              Services.obs.removeObserver(this, "browser:purge-session-history");
+            } catch (ex) {
+              // It's not clear why this sometimes throws an exception.
+            }
+          }
         ]]></body>
       </method>
 
@@ -389,6 +404,19 @@
         </body>
       </method>
 
+      <method name="purgeSessionHistory">
+        <body>
+          <![CDATA[
+            try {
+              this.messageManager.sendAsyncMessage("Browser:PurgeSessionHistory");
+            } catch (ex if ex.result == Components.results.NS_ERROR_NOT_INITIALIZED) {
+              // This can throw if the browser has started to go away.
+            }
+            this.webNavigation.canGoBack = false;
+            this.webNavigation.canGoForward = false;
+          ]]>
+        </body>
+      </method>
     </implementation>
 
   </binding>

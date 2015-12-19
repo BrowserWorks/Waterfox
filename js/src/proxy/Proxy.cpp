@@ -88,17 +88,6 @@ js::assertEnteredPolicy(JSContext* cx, JSObject* proxy, jsid id,
 }
 #endif
 
-#define INVOKE_ON_PROTOTYPE(cx, handler, proxy, protoCall)                   \
-    JS_BEGIN_MACRO                                                           \
-        RootedObject proto(cx);                                              \
-        if (!GetPrototype(cx, proxy, &proto))                                \
-            return false;                                                    \
-        if (!proto)                                                          \
-            return true;                                                     \
-        assertSameCompartment(cx, proxy, proto);                             \
-        return protoCall;                                                    \
-    JS_END_MACRO                                                             \
-
 bool
 Proxy::getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
                              MutableHandle<PropertyDescriptor> desc)
@@ -109,13 +98,12 @@ Proxy::getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
     AutoEnterPolicy policy(cx, handler, proxy, id, BaseProxyHandler::GET_PROPERTY_DESCRIPTOR, true);
     if (!policy.allowed())
         return policy.returnValue();
-    if (!handler->hasPrototype())
-        return handler->getPropertyDescriptor(cx, proxy, id, desc);
-    if (!handler->getOwnPropertyDescriptor(cx, proxy, id, desc))
-        return false;
-    if (desc.object())
-        return true;
-    INVOKE_ON_PROTOTYPE(cx, handler, proxy, GetPropertyDescriptor(cx, proto, id, desc));
+
+    // Special case. See the comment on BaseProxyHandler::mHasPrototype.
+    if (handler->hasPrototype())
+        return handler->BaseProxyHandler::getPropertyDescriptor(cx, proxy, id, desc);
+
+    return handler->getPropertyDescriptor(cx, proxy, id, desc);
 }
 
 bool
@@ -241,16 +229,23 @@ Proxy::has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp)
     AutoEnterPolicy policy(cx, handler, proxy, id, BaseProxyHandler::GET, true);
     if (!policy.allowed())
         return policy.returnValue();
-    if (!handler->hasPrototype())
-        return handler->has(cx, proxy, id, bp);
-    if (!handler->hasOwn(cx, proxy, id, bp))
-        return false;
-    if (*bp)
-        return true;
-    bool Bp;
-    INVOKE_ON_PROTOTYPE(cx, handler, proxy,
-                        JS_HasPropertyById(cx, proto, id, &Bp) &&
-                        ((*bp = Bp) || true));
+
+    if (handler->hasPrototype()) {
+        if (!handler->hasOwn(cx, proxy, id, bp))
+            return false;
+        if (*bp)
+            return true;
+
+        RootedObject proto(cx);
+        if (!GetPrototype(cx, proxy, &proto))
+            return false;
+        if (!proto)
+            return true;
+
+        return HasProperty(cx, proto, id, bp);
+    }
+
+    return handler->has(cx, proxy, id, bp);
 }
 
 bool
@@ -276,7 +271,7 @@ OuterizeValue(JSContext* cx, HandleValue v)
 }
 
 bool
-Proxy::get(JSContext* cx, HandleObject proxy, HandleObject receiver_, HandleId id,
+Proxy::get(JSContext* cx, HandleObject proxy, HandleValue receiver_, HandleId id,
            MutableHandleValue vp)
 {
     JS_CHECK_RECURSION(cx, return false);
@@ -288,22 +283,27 @@ Proxy::get(JSContext* cx, HandleObject proxy, HandleObject receiver_, HandleId i
 
     // Outerize the receiver. Proxy handlers shouldn't have to know about
     // the Window/WindowProxy distinction.
-    RootedObject receiver(cx, GetOuterObject(cx, receiver_));
+    RootedValue receiver(cx, OuterizeValue(cx, receiver_));
 
-    bool own;
-    if (!handler->hasPrototype()) {
-        own = true;
-    } else {
+    if (handler->hasPrototype()) {
+        bool own;
         if (!handler->hasOwn(cx, proxy, id, &own))
             return false;
+        if (!own) {
+            RootedObject proto(cx);
+            if (!GetPrototype(cx, proxy, &proto))
+                return false;
+            if (!proto)
+                return true;
+            return GetProperty(cx, proto, receiver, id, vp);
+        }
     }
-    if (own)
-        return handler->get(cx, proxy, receiver, id, vp);
-    INVOKE_ON_PROTOTYPE(cx, handler, proxy, GetProperty(cx, proto, receiver, id, vp));
+
+    return handler->get(cx, proxy, receiver, id, vp);
 }
 
 bool
-Proxy::callProp(JSContext* cx, HandleObject proxy, HandleObject receiver, HandleId id,
+Proxy::callProp(JSContext* cx, HandleObject proxy, HandleValue receiver, HandleId id,
                 MutableHandleValue vp)
 {
     // The inline caches need an access point for JSOP_CALLPROP sites that accounts
@@ -362,33 +362,35 @@ Proxy::enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp)
     JS_CHECK_RECURSION(cx, return false);
     const BaseProxyHandler* handler = proxy->as<ProxyObject>().handler();
     objp.set(nullptr); // default result if we refuse to perform this action
-    if (!handler->hasPrototype()) {
-        AutoEnterPolicy policy(cx, handler, proxy, JSID_VOIDHANDLE,
-                               BaseProxyHandler::ENUMERATE, true);
-        // If the policy denies access but wants us to return true, we need
-        // to hand a valid (empty) iterator object to the caller.
-        if (!policy.allowed()) {
-            return policy.returnValue() &&
-                   NewEmptyPropertyIterator(cx, 0, objp);
-        }
-        return handler->enumerate(cx, proxy, objp);
+
+    if (handler->hasPrototype()) {
+        AutoIdVector props(cx);
+        if (!Proxy::getOwnEnumerablePropertyKeys(cx, proxy, props))
+            return false;
+
+        RootedObject proto(cx);
+        if (!GetPrototype(cx, proxy, &proto))
+            return false;
+        if (!proto)
+            return EnumeratedIdVectorToIterator(cx, proxy, 0, props, objp);
+        assertSameCompartment(cx, proxy, proto);
+
+        AutoIdVector protoProps(cx);
+        return GetPropertyKeys(cx, proto, 0, &protoProps) &&
+               AppendUnique(cx, props, protoProps) &&
+               EnumeratedIdVectorToIterator(cx, proxy, 0, props, objp);
     }
 
-    AutoIdVector props(cx);
-    if (!Proxy::getOwnEnumerablePropertyKeys(cx, proxy, props))
-        return false;
+    AutoEnterPolicy policy(cx, handler, proxy, JSID_VOIDHANDLE,
+                           BaseProxyHandler::ENUMERATE, true);
 
-    RootedObject proto(cx);
-    if (!GetPrototype(cx, proxy, &proto))
-        return false;
-    if (!proto)
-        return EnumeratedIdVectorToIterator(cx, proxy, 0, props, objp);
-    assertSameCompartment(cx, proxy, proto);
-
-    AutoIdVector protoProps(cx);
-    return GetPropertyKeys(cx, proto, 0, &protoProps) &&
-           AppendUnique(cx, props, protoProps) &&
-           EnumeratedIdVectorToIterator(cx, proxy, 0, props, objp);
+    // If the policy denies access but wants us to return true, we need
+    // to hand a valid (empty) iterator object to the caller.
+    if (!policy.allowed()) {
+        return policy.returnValue() &&
+            NewEmptyPropertyIterator(cx, 0, objp);
+    }
+    return handler->enumerate(cx, proxy, objp);
 }
 
 bool
@@ -430,7 +432,7 @@ Proxy::construct(JSContext* cx, HandleObject proxy, const CallArgs& args)
 }
 
 bool
-Proxy::nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl, CallArgs args)
+Proxy::nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl, const CallArgs& args)
 {
     JS_CHECK_RECURSION(cx, return false);
     RootedObject proxy(cx, &args.thisv().toObject());
@@ -592,7 +594,7 @@ js::proxy_HasProperty(JSContext* cx, JS::HandleObject obj, JS::HandleId id, bool
 }
 
 bool
-js::proxy_GetProperty(JSContext* cx, HandleObject obj, HandleObject receiver, HandleId id,
+js::proxy_GetProperty(JSContext* cx, HandleObject obj, HandleValue receiver, HandleId id,
                       MutableHandleValue vp)
 {
     return Proxy::get(cx, obj, receiver, id, vp);

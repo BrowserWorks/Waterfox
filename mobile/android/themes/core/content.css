@@ -304,6 +304,12 @@ select:disabled > button {
   -moz-binding: url("chrome://global/content/bindings/videocontrols.xml#touchControls");
 }
 
+/* display click to play when autoplay is blocked for videos */
+video:not([controls]) > xul|videocontrols {
+  visibility: visible;
+  -moz-binding: url("chrome://global/content/bindings/videocontrols.xml#noControls");
+}
+
 *:-moz-any-link:active,
 *[role=button]:active,
 button:not(:disabled):active,
@@ -314,6 +320,15 @@ option:active,
 label:active,
 xul|menulist:active {
   background-color: @color_background_highlight_overlay@;
+}
+
+button:active:hover,
+input[type="color"]:-moz-system-metric(color-picker-available):active:hover,
+input[type="reset"]:active:hover,
+input[type="button"]:active:hover,
+input[type="submit"]:active:hover {
+  -moz-padding-end: 7px;
+  -moz-padding-start: 7px;
 }
 
 input[type=number] > div > div, /* work around bug 946184 */

@@ -16,14 +16,14 @@ using namespace js::jit;
 
 void
 LIRGeneratorX86::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1,
-                             Register reg2)
+                             Register reg2, bool useAtStart)
 {
     MOZ_ASSERT(mir->type() == MIRType_Value);
     MOZ_ASSERT(reg1 != reg2);
 
     ensureDefined(mir);
-    lir->setOperand(n, LUse(reg1, mir->virtualRegister()));
-    lir->setOperand(n + 1, LUse(reg2, VirtualRegisterOfPayload(mir)));
+    lir->setOperand(n, LUse(reg1, mir->virtualRegister(), useAtStart));
+    lir->setOperand(n + 1, LUse(reg2, VirtualRegisterOfPayload(mir), useAtStart));
 }
 
 LAllocation
@@ -441,6 +441,11 @@ LIRGeneratorX86::visitSubstr(MSubstr* ins)
 void
 LIRGeneratorX86::visitRandom(MRandom* ins)
 {
-    LRandom* lir = new(alloc()) LRandom(tempFixed(CallTempReg0), tempFixed(CallTempReg1));
-    defineReturn(lir, ins);
+    // eax and edx are necessary for mull.
+    LRandom *lir = new(alloc()) LRandom(tempFixed(eax),
+                                        tempFixed(edx),
+                                        temp(),
+                                        temp(),
+                                        temp());
+    defineFixed(lir, ins, LFloatReg(ReturnDoubleReg));
 }

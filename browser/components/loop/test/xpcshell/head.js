@@ -71,7 +71,7 @@ function setupFakeFxAUserProfile() {
   });
 }
 
-function waitForCondition(aConditionFn, aMaxTries=50, aCheckInterval=100) {
+function waitForCondition(aConditionFn, aMaxTries = 50, aCheckInterval = 100) {
   function tryAgain() {
     function tryNow() {
       tries++;
@@ -100,7 +100,7 @@ function getLoopString(stringID) {
  * MozLoopService tests. There is only one object created per test instance, as
  * once registration has taken place, the object cannot currently be changed.
  */
-let mockPushHandler = {
+var mockPushHandler = {
   // This sets the registration result to be returned when initialize
   // is called. By default, it is equivalent to success.
   registrationResult: null,

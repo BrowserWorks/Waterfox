@@ -23,7 +23,7 @@ Object.defineProperty(this, "WebConsoleUtils", {
 });
 
 const STRINGS_URI = "chrome://global/locale/security/security.properties";
-let l10n = new WebConsoleUtils.l10n(STRINGS_URI);
+var l10n = new WebConsoleUtils.l10n(STRINGS_URI);
 
 this.InsecurePasswordUtils = {
 
@@ -137,10 +137,37 @@ this.InsecurePasswordUtils = {
     // insecure iframe or document.
     if (this._checkForInsecureNestedDocuments(domDoc)) {
       this._sendWebConsoleMessage("InsecurePasswordsPresentOnIframe", domDoc);
+      isSafePage = false;
     }
 
+    let isFormSubmitHTTP = false, isFormSubmitHTTPS = false;
     if (aForm.action.match(/^http:\/\//)) {
       this._sendWebConsoleMessage("InsecureFormActionPasswordsPresent", domDoc);
+      isFormSubmitHTTP = true;
+    } else if (aForm.action.match(/^https:\/\//)) {
+      isFormSubmitHTTPS = true;
     }
+
+    // The safety of a password field determined by the form action and the page protocol
+    let passwordSafety;
+    if (isSafePage) {
+      if (isFormSubmitHTTPS) {
+        passwordSafety = 0;
+      } else if (isFormSubmitHTTP) {
+        passwordSafety = 1;
+      } else {
+        passwordSafety = 2;
+      }
+    } else {
+      if (isFormSubmitHTTPS) {
+        passwordSafety = 3;
+      } else if (isFormSubmitHTTP) {
+        passwordSafety = 4;
+      } else {
+        passwordSafety = 5;
+      }
+    }
+
+    Services.telemetry.getHistogramById("PWMGR_LOGIN_PAGE_SAFETY").add(passwordSafety);
   },
 };

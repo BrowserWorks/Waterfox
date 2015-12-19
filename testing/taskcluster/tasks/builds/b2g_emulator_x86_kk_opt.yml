@@ -4,22 +4,27 @@ $inherits:
     build_name: 'emulator-x86-kk'
     build_type: 'opt'
 task:
-  workerType: emualtor-x86-kk
+  workerType: emulator-x86-kk
   scopes:
     - 'docker-worker:cache:workspace-emulator-kk-x86-opt'
+    - 'docker-worker:cache:workspace-emulator-kk-x86-opt-objdir-gecko-{{project}}'
   metadata:
     name: '[TC] B2G KK X86 Emulator (Opt)'
 
   extra:
     treeherderEnv:
+      - production
       - staging
     treeherder:
       # Disable "TC" prefix...
+      groupSymbol: "?"
       machine:
-        platform: b2g-emu-kk
+        platform: b2g-emu-x86-kk
 
   payload:
     cache:
       workspace-emulator-kk-x86-opt: /home/worker/workspace
+      workspace-emulator-kk-x86-opt-objdir-gecko-{{project}}: /home/worker/objdir-gecko
     env:
       TARGET: 'emulator-x86-kk'
+      TOOLTOOL_MANIFEST: 'b2g/config/emulator-x86-kk/releng-emulator-kk.tt'

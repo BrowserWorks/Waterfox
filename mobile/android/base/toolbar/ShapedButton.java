@@ -4,15 +4,12 @@
 
 package org.mozilla.gecko.toolbar;
 
-import org.mozilla.gecko.GeckoApplication;
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.lwt.LightweightTheme;
 import org.mozilla.gecko.lwt.LightweightThemeDrawable;
-import org.mozilla.gecko.tabs.TabCurve;
-import org.mozilla.gecko.widget.ThemedImageButton;
+import org.mozilla.gecko.util.ColorUtils;
+import org.mozilla.gecko.widget.themed.ThemedImageButton;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -21,6 +18,10 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.util.AttributeSet;
 
+/**
+ * A ImageButton with a custom drawn path and lightweight theme support. Note that {@link ShapedButtonFrameLayout}
+ * copies the lwt support so if you change it here, you should probably change it there.
+ */
 public class ShapedButton extends ThemedImageButton
                           implements CanvasDelegate.DrawManager {
 
@@ -35,7 +36,7 @@ public class ShapedButton extends ThemedImageButton
 
         final Paint paint = new Paint();
         paint.setAntiAlias(true);
-        paint.setColor(getResources().getColor(R.color.canvas_delegate_paint));
+        paint.setColor(ColorUtils.getColor(context, R.color.canvas_delegate_paint));
         paint.setStrokeWidth(0.0f);
         mCanvasDelegate = new CanvasDelegate(this, Mode.DST_IN, paint);
 
@@ -58,7 +59,7 @@ public class ShapedButton extends ThemedImageButton
     // The drawable is constructed as per @drawable/shaped_button.
     @Override
     public void onLightweightThemeChanged() {
-        final int background = getResources().getColor(R.color.text_and_tabs_tray_grey);
+        final int background = ColorUtils.getColor(getContext(), R.color.text_and_tabs_tray_grey);
         final LightweightThemeDrawable lightWeight = getTheme().getColorDrawable(this, background);
 
         if (lightWeight == null)

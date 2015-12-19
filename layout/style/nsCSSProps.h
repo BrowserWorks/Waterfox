@@ -15,6 +15,7 @@
 #include "nsCSSProperty.h"
 #include "nsStyleStructFwd.h"
 #include "nsCSSKeywords.h"
+#include "mozilla/UseCounter.h"
 
 // Length of the "--" prefix on custom names (such as custom property names,
 // and, in the future, custom media query names).
@@ -206,13 +207,7 @@ static_assert((CSS_PROPERTY_PARSE_PROPERTY_MASK &
 // In other words, this bit has no effect on the use of aliases.
 #define CSS_PROPERTY_ALWAYS_ENABLED_IN_UA_SHEETS  (1<<22)
 
-// This property is always enabled in chrome and in certified apps. This is
-// meant to be used together with a pref that enables the property for
-// non-privileged content. Note that if such a property has an alias, then any
-// use of that alias in privileged content will still be ignored unless the
-// pref is enabled. In other words, this bit has no effect on the use of
-// aliases.
-#define CSS_PROPERTY_ALWAYS_ENABLED_IN_CHROME_OR_CERTIFIED_APP (1<<23)
+// XXX (1<<23) will shortly be reused in bug 1069192.
 
 // This property's unitless values are pixels.
 #define CSS_PROPERTY_NUMBERS_ARE_PIXELS           (1<<24)
@@ -298,8 +293,6 @@ public:
     eEnabledForAllContent = 0,
     // Enable a property in UA sheets.
     eEnabledInUASheets    = 0x01,
-    // Enable a property in privileged content, i.e. chrome or Certified Apps
-    eEnabledInChromeOrCertifiedApp = 0x02,
     // Special value to unconditionally enable a property. This implies all the
     // bits above, but is strictly more than just their OR-ed union.
     // This just skips any test so a property will be enabled even if it would
@@ -516,6 +509,20 @@ public:
     return gPropertyEnabled[aProperty];
   }
 
+private:
+  // A table for the use counter associated with each CSS property.  If a
+  // property does not have a use counter defined in UseCounters.conf, then
+  // its associated entry is |eUseCounter_UNKNOWN|.
+  static const mozilla::UseCounter gPropertyUseCounter[eCSSProperty_COUNT_no_shorthands];
+
+public:
+
+  static mozilla::UseCounter UseCounterFor(nsCSSProperty aProperty) {
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT_no_shorthands,
+               "out of range");
+    return gPropertyUseCounter[aProperty];
+  }
+
   static bool IsEnabled(nsCSSProperty aProperty, EnabledState aEnabled)
   {
     if (IsEnabled(aProperty)) {
@@ -526,11 +533,6 @@ public:
     }
     if ((aEnabled & eEnabledInUASheets) &&
         PropHasFlags(aProperty, CSS_PROPERTY_ALWAYS_ENABLED_IN_UA_SHEETS))
-    {
-      return true;
-    }
-    if ((aEnabled & eEnabledInChromeOrCertifiedApp) &&
-        PropHasFlags(aProperty, CSS_PROPERTY_ALWAYS_ENABLED_IN_CHROME_OR_CERTIFIED_APP))
     {
       return true;
     }

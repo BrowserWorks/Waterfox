@@ -10,28 +10,71 @@
  * liability, trademark and document use rules apply.
  */
 
+// These two enums are in the spec even though they're not used directly in the
+// API due to https://www.w3.org/Bugs/Public/show_bug.cgi?id=19936
+// Their binding code is used in the implementation.
+
+enum VideoFacingModeEnum {
+    "user",
+    "environment",
+    "left",
+    "right"
+};
+
+enum MediaSourceEnum {
+    "camera",
+    "screen",
+    "application",
+    "window",
+    "browser",
+    "microphone",
+    "audioCapture",
+    "other"
+};
+
+typedef (long or ConstrainLongRange) ConstrainLong;
+typedef (double or ConstrainDoubleRange) ConstrainDouble;
+typedef (boolean or ConstrainBooleanParameters) ConstrainBoolean;
+typedef (DOMString or sequence<DOMString> or ConstrainDOMStringParameters) ConstrainDOMString;
+
+// Note: When adding new constraints, remember to update the SelectSettings()
+// function in MediaManager.cpp to make OverconstrainedError's constraint work!
+
+dictionary MediaTrackConstraintSet {
+    ConstrainLong width;
+    ConstrainLong height;
+    ConstrainDouble frameRate;
+    ConstrainDOMString facingMode;
+    DOMString mediaSource = "camera";
+    long long browserWindow;
+    boolean scrollWithPage;
+    ConstrainDOMString deviceId;
+};
+
 dictionary MediaTrackConstraints : MediaTrackConstraintSet {
     sequence<MediaTrackConstraintSet> advanced;
 };
 
-interface MediaStreamTrack {
+[Exposed=Window]
+interface MediaStreamTrack : EventTarget {
     readonly    attribute DOMString             kind;
     readonly    attribute DOMString             id;
     readonly    attribute DOMString             label;
                 attribute boolean               enabled;
-//    readonly    attribute MediaStreamTrackState readyState;
-//    readonly    attribute SourceTypeEnum        sourceType;
-//    readonly    attribute DOMString             sourceId;
-//                attribute EventHandler          onstarted;
-//                attribute EventHandler          onmute;
-//                attribute EventHandler          onunmute;
+//  readonly    attribute boolean               muted;
+//              attribute EventHandler          onmute;
+//              attribute EventHandler          onunmute;
+//  readonly    attribute boolean               _readonly;
+//  readonly    attribute boolean               remote;
+//  readonly    attribute MediaStreamTrackState readyState;
 //                attribute EventHandler          onended;
-//    any                    getConstraint (DOMString constraintName, optional boolean mandatory = false);
-//    void                   setConstraint (DOMString constraintName, any constraintValue, optional boolean mandatory = false);
-//    MediaTrackConstraints? constraints ();
-//    void                   applyConstraints (MediaTrackConstraints constraints);
-//    void                   prependConstraint (DOMString constraintName, any constraintValue);
-//    void                   appendConstraint (DOMString constraintName, any constraintValue);
-//                attribute EventHandler          onoverconstrained;
+//  MediaStreamTrack       clone ();
     void                   stop ();
+//  MediaTrackCapabilities getCapabilities ();
+//  MediaTrackConstraints  getConstraints ();
+//  MediaTrackSettings     getSettings ();
+
+    [Throws]
+    Promise<void>          applyConstraints (optional MediaTrackConstraints constraints);
+//              attribute EventHandler          onoverconstrained;
 };

@@ -147,6 +147,7 @@ nsEditor::nsEditor()
 ,  mDidPostCreate(false)
 ,  mDispatchInputEvent(true)
 ,  mIsInEditAction(false)
+,  mHidingCaret(false)
 {
 }
 
@@ -158,6 +159,8 @@ nsEditor::~nsEditor()
     mComposition->OnEditorDestroyed();
     mComposition = nullptr;
   }
+  // If this editor is still hiding the caret, we need to restore it.
+  HideCaret(false);
   mTxnMgr = nullptr;
 
   delete mPhonetic;
@@ -251,7 +254,7 @@ nsEditor::Init(nsIDOMDocument *aDoc, nsIContent *aRoot,
   // recreated with same content. Therefore, we need to forget mIMETextNode,
   // but we need to keep storing mIMETextOffset and mIMETextLength becuase
   // they are necessary to restore IME selection and replacing composing string
-  // when this receives NS_COMPOSITION_CHANGE event next time.
+  // when this receives eCompositionChange event next time.
   if (mIMETextNode && !mIMETextNode->IsInComposedDoc()) {
     mIMETextNode = nullptr;
   }
@@ -464,6 +467,8 @@ nsEditor::PreDestroy(bool aDestroyingFrames)
 
   // Unregister event listeners
   RemoveEventListeners();
+  // If this editor is still hiding the caret, we need to restore it.
+  HideCaret(false);
   mActionListeners.Clear();
   mEditorObservers.Clear();
   mDocStateListeners.Clear();
@@ -656,7 +661,9 @@ nsEditor::GetSelection(int16_t aSelectionType, nsISelection** aSelection)
   *aSelection = nullptr;
   nsCOMPtr<nsISelectionController> selcon;
   GetSelectionController(getter_AddRefs(selcon));
-  NS_ENSURE_TRUE(selcon, NS_ERROR_NOT_INITIALIZED);
+  if (!selcon) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
   return selcon->GetSelection(aSelectionType, aSelection);  // does an addref
 }
 
@@ -665,7 +672,9 @@ nsEditor::GetSelection(int16_t aSelectionType)
 {
   nsCOMPtr<nsISelection> sel;
   nsresult res = GetSelection(aSelectionType, getter_AddRefs(sel));
-  NS_ENSURE_SUCCESS(res, nullptr);
+  if (NS_FAILED(res)) {
+    return nullptr;
+  }
 
   return static_cast<Selection*>(sel.get());
 }
@@ -1813,7 +1822,7 @@ public:
 
     // Even if the change is caused by untrusted event, we need to dispatch
     // trusted input event since it's a fact.
-    InternalEditorInputEvent inputEvent(true, NS_EDITOR_INPUT, widget);
+    InternalEditorInputEvent inputEvent(true, eEditorInput, widget);
     inputEvent.time = static_cast<uint64_t>(PR_Now() / 1000);
     inputEvent.mIsComposing = mIsComposing;
     nsEventStatus status = nsEventStatus_eIgnore;
@@ -1848,6 +1857,9 @@ nsEditor::NotifyEditorObservers(NotificationForEditorObservers aNotification)
       FireInputEvent();
       break;
     case eNotifyEditorObserversOfBefore:
+      if (NS_WARN_IF(mIsInEditAction)) {
+        break;
+      }
       mIsInEditAction = true;
       for (auto& observer : observers) {
         observer->BeforeEditAction();
@@ -2060,6 +2072,10 @@ nsEditor::EndIMEComposition()
                    "nsIAbsorbingTransaction::Commit() failed");
     }
   }
+
+  // Composition string may have hidden the caret.  Therefore, we need to
+  // cancel it here.
+  HideCaret(false);
 
   /* reset the data we need to construct a transaction */
   mIMETextNode = nullptr;
@@ -4648,11 +4664,8 @@ nsEditor::CreateHTMLContent(nsIAtom* aTag)
     return nullptr;
   }
 
-  nsCOMPtr<nsIContent> ret;
-  nsresult res = doc->CreateElem(nsDependentAtomString(aTag), nullptr,
-                                 kNameSpaceID_XHTML, getter_AddRefs(ret));
-  NS_ENSURE_SUCCESS(res, nullptr);
-  return dont_AddRef(ret.forget().take()->AsElement());
+  return doc->CreateElem(nsDependentAtomString(aTag), nullptr,
+                         kNameSpaceID_XHTML);
 }
 
 nsresult
@@ -4685,7 +4698,7 @@ nsEditor::HandleKeyPressEvent(nsIDOMKeyEvent* aKeyEvent)
   WidgetKeyboardEvent* nativeKeyEvent =
     aKeyEvent->GetInternalNSEvent()->AsKeyboardEvent();
   NS_ENSURE_TRUE(nativeKeyEvent, NS_ERROR_UNEXPECTED);
-  NS_ASSERTION(nativeKeyEvent->message == NS_KEY_PRESS,
+  NS_ASSERTION(nativeKeyEvent->mMessage == eKeyPress,
                "HandleKeyPressEvent gets non-keypress event");
 
   // if we are readonly or disabled, then do nothing.
@@ -5141,16 +5154,16 @@ nsEditor::IsAcceptableInputEvent(nsIDOMEvent* aEvent)
   // strange event order.
   bool needsWidget = false;
   WidgetGUIEvent* widgetGUIEvent = nullptr;
-  switch (widgetEvent->message) {
-    case NS_USER_DEFINED_EVENT:
+  switch (widgetEvent->mMessage) {
+    case eUnidentifiedEvent:
       // If events are not created with proper event interface, their message
-      // are initialized with NS_USER_DEFINED_EVENT.  Let's ignore such event.
+      // are initialized with eUnidentifiedEvent.  Let's ignore such event.
       return false;
-    case NS_COMPOSITION_START:
-    case NS_COMPOSITION_END:
-    case NS_COMPOSITION_UPDATE:
-    case NS_COMPOSITION_CHANGE:
-    case NS_COMPOSITION_COMMIT_AS_IS:
+    case eCompositionStart:
+    case eCompositionEnd:
+    case eCompositionUpdate:
+    case eCompositionChange:
+    case eCompositionCommitAsIs:
       // Don't allow composition events whose internal event are not
       // WidgetCompositionEvent.
       widgetGUIEvent = aEvent->GetInternalNSEvent()->AsCompositionEvent();
@@ -5256,4 +5269,24 @@ nsEditor::GetIMESelectionStartOffsetIn(nsINode* aTextNode)
     }
   }
   return minOffset < INT32_MAX ? minOffset : -1;
+}
+
+void
+nsEditor::HideCaret(bool aHide)
+{
+  if (mHidingCaret == aHide) {
+    return;
+  }
+
+  nsCOMPtr<nsIPresShell> presShell = GetPresShell();
+  NS_ENSURE_TRUE_VOID(presShell);
+  nsRefPtr<nsCaret> caret = presShell->GetCaret();
+  NS_ENSURE_TRUE_VOID(caret);
+
+  mHidingCaret = aHide;
+  if (aHide) {
+    caret->AddForceHide();
+  } else {
+    caret->RemoveForceHide();
+  }
 }

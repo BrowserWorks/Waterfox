@@ -234,8 +234,6 @@ function setupEnvironment() {
   window.finish = () => SimpleTest.finish();
   SpecialPowers.pushPrefEnv({
     'set': [
-      ['canvas.capturestream.enabled', true],
-      ['dom.messageChannel.enabled', true],
       ['media.peerconnection.enabled', true],
       ['media.peerconnection.identity.enabled', true],
       ['media.peerconnection.identity.timeout', 120000],
@@ -246,7 +244,6 @@ function setupEnvironment() {
       ['media.getusermedia.screensharing.enabled', true],
       ['media.getusermedia.screensharing.allowed_domains', "mochi.test"],
       ['media.getusermedia.audiocapture.enabled', true],
-      ['media.useAudioChannelService', true],
       ['media.recorder.audio_node.enabled', true]
     ]
   }, setTestOptions);

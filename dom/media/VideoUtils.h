@@ -7,6 +7,7 @@
 #ifndef VideoUtils_h
 #define VideoUtils_h
 
+#include "FlushableTaskQueue.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/MozPromise.h"
@@ -263,9 +264,6 @@ GenerateRandomName(nsCString& aOutSalt, uint32_t aLength);
 nsresult
 GenerateRandomPathName(nsCString& aOutSalt, uint32_t aLength);
 
-class TaskQueue;
-class FlushableTaskQueue;
-
 already_AddRefed<TaskQueue>
 CreateMediaDecodeTaskQueue();
 
@@ -325,6 +323,15 @@ private:
 
 void
 LogToBrowserConsole(const nsAString& aMsg);
+
+bool
+ParseCodecsString(const nsAString& aCodecs, nsTArray<nsString>& aOutCodecs);
+
+bool
+IsH264ContentType(const nsAString& aContentType);
+
+bool
+IsAACContentType(const nsAString& aContentType);
 
 } // end namespace mozilla
 

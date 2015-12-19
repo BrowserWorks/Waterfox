@@ -40,8 +40,8 @@ enum nsLinkState {
 
 // IID for the nsIContent interface
 #define NS_ICONTENT_IID \
-{ 0x70f7e9ea, 0xa9bf, 0x48cc, \
-  { 0xad, 0x9d, 0x8a, 0xca, 0xee, 0xd2, 0x9b, 0x68 } }
+{ 0x8e1bab9d, 0x8815, 0x4d2c, \
+  { 0xa2, 0x4d, 0x7a, 0xba, 0x52, 0x39, 0xdc, 0x22 } }
 
 /**
  * A node of content in a document's content model. This interface
@@ -581,10 +581,12 @@ public:
    * @param aKeyCausesActivation - if true then element should be activated
    * @param aIsTrustedEvent - if true then event that is cause of accesskey
    *                          execution is trusted.
+   * @return true if the focus was changed.
    */
-  virtual void PerformAccesskey(bool aKeyCausesActivation,
+  virtual bool PerformAccesskey(bool aKeyCausesActivation,
                                 bool aIsTrustedEvent)
   {
+    return false;
   }
 
   /*

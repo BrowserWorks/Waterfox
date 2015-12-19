@@ -32,7 +32,6 @@ EXPORTS += [
     'nsPluginLogging.h',
     'nsPluginNativeWindow.h',
     'nsPluginNativeWindowGtk.h',
-    'nsPluginPlayPreviewInfo.h',
     'nsPluginsCID.h',
     'nsPluginsDir.h',
     'nsPluginTags.h',
@@ -48,7 +47,6 @@ UNIFIED_SOURCES += [
     'nsNPAPIPluginStreamListener.cpp',
     'nsPluginInstanceOwner.cpp',
     'nsPluginModule.cpp',
-    'nsPluginPlayPreviewInfo.cpp',
     'nsPluginStreamListenerPeer.cpp',
     'nsPluginTags.cpp',
     'PluginPRLibrary.cpp',
@@ -87,8 +85,6 @@ else:
         UNIFIED_SOURCES += [
             'nsPluginNativeWindow.cpp',
         ]
-
-FAIL_ON_WARNINGS = True
 
 LOCAL_INCLUDES += [
     '/dom/base',

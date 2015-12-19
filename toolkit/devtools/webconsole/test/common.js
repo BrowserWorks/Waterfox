@@ -13,21 +13,20 @@ const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 // This gives logging to stdout for tests
 var {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
 
-let {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-let WebConsoleUtils = require("devtools/toolkit/webconsole/utils").Utils;
+var {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+var WebConsoleUtils = require("devtools/toolkit/webconsole/utils").Utils;
 
-let ConsoleAPIStorage = Cc["@mozilla.org/consoleAPI-storage;1"]
+var ConsoleAPIStorage = Cc["@mozilla.org/consoleAPI-storage;1"]
                           .getService(Ci.nsIConsoleAPIStorage);
+var {DebuggerServer} = require("devtools/server/main");
+var {DebuggerClient, ObjectClient} = require("devtools/toolkit/client/main");
 
-let {ConsoleServiceListener, ConsoleAPIListener} =
+var {ConsoleServiceListener, ConsoleAPIListener} =
   require("devtools/toolkit/webconsole/utils");
 
 function initCommon()
 {
   //Services.prefs.setBoolPref("devtools.debugger.log", true);
-
-  Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
-  Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
 }
 
 function initDebuggerServer()
@@ -81,17 +80,22 @@ function attachConsole(aListeners, aCallback, aAttachToTab)
           aCallback(aState, aResponse);
           return;
         }
-        let consoleActor = aResponse.tabs[aResponse.selected].consoleActor;
-        aState.actor = consoleActor;
-        aState.dbgClient.attachConsole(consoleActor, aListeners,
-                                       _onAttachConsole.bind(null, aState));
+        let tab = aResponse.tabs[aResponse.selected];
+        let consoleActor = tab.consoleActor;
+        aState.dbgClient.attachTab(tab.actor, function () {
+          aState.actor = consoleActor;
+          aState.dbgClient.attachConsole(consoleActor, aListeners,
+                                         _onAttachConsole.bind(null, aState));
+        });
       });
     } else {
       aState.dbgClient.getProcess().then(response => {
-        let consoleActor = response.form.consoleActor;
-        aState.actor = consoleActor;
-        aState.dbgClient.attachConsole(consoleActor, aListeners,
-                                       _onAttachConsole.bind(null, aState));
+        aState.dbgClient.attachTab(response.form.actor, function () {
+          let consoleActor = response.form.consoleActor;
+          aState.actor = consoleActor;
+          aState.dbgClient.attachConsole(consoleActor, aListeners,
+                                         _onAttachConsole.bind(null, aState));
+        });
       });
     }
   });

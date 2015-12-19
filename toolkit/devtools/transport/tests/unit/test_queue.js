@@ -6,10 +6,8 @@
  * packets are scheduled simultaneously.
  */
 
-let { DebuggerServer } =
-  Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
-let { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
-let { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
+var { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
+var { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
 
 function run_test() {
   initTestDebuggerServer();
@@ -25,7 +23,7 @@ function run_test() {
 
 /*** Tests ***/
 
-let test_transport = Task.async(function*(transportFactory) {
+var test_transport = Task.async(function*(transportFactory) {
   let clientDeferred = promise.defer();
   let serverDeferred = promise.defer();
 

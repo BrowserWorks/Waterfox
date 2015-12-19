@@ -5,6 +5,7 @@
 package org.mozilla.gecko.toolbar;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.util.ColorUtils;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -27,8 +28,8 @@ abstract class NavButton extends ShapedButton {
         super(context, attrs);
 
         final Resources res = getResources();
-        mBorderColor = res.getColor(R.color.disabled_grey);
-        mBorderColorPrivate = res.getColor(R.color.toolbar_icon_grey);
+        mBorderColor = ColorUtils.getColor(context, R.color.disabled_grey);
+        mBorderColorPrivate = ColorUtils.getColor(context, R.color.toolbar_icon_grey);
         mBorderWidth = res.getDimension(R.dimen.nav_button_border_width);
 
         // Paint to draw the border.
@@ -57,11 +58,10 @@ abstract class NavButton extends ShapedButton {
         canvas.drawPath(mBorderPath, mBorderPaint);
     }
 
-    // The drawable is constructed as per @drawable/new_tablet_url_bar_nav_button.
+    // The drawable is constructed as per @drawable/url_bar_nav_button.
     @Override
     public void onLightweightThemeChanged() {
-        final Drawable drawable = BrowserToolbar.getLightweightThemeDrawable(this, getResources(),
-                getTheme(), R.color.toolbar_grey);
+        final Drawable drawable = BrowserToolbar.getLightweightThemeDrawable(this, getTheme(), R.color.toolbar_grey);
 
         if (drawable == null) {
             return;
@@ -71,7 +71,7 @@ abstract class NavButton extends ShapedButton {
         stateList.addState(PRIVATE_PRESSED_STATE_SET, getColorDrawable(R.color.placeholder_active_grey));
         stateList.addState(PRESSED_ENABLED_STATE_SET, getColorDrawable(R.color.toolbar_grey_pressed));
         stateList.addState(PRIVATE_FOCUSED_STATE_SET, getColorDrawable(R.color.text_and_tabs_tray_grey));
-        stateList.addState(FOCUSED_STATE_SET, getColorDrawable(R.color.new_tablet_highlight_focused));
+        stateList.addState(FOCUSED_STATE_SET, getColorDrawable(R.color.tablet_highlight_focused));
         stateList.addState(PRIVATE_STATE_SET, getColorDrawable(R.color.tabs_tray_grey_pressed));
         stateList.addState(EMPTY_STATE_SET, drawable);
 
@@ -80,6 +80,6 @@ abstract class NavButton extends ShapedButton {
 
     @Override
     public void onLightweightThemeReset() {
-        setBackgroundResource(R.drawable.new_tablet_url_bar_nav_button);
+        setBackgroundResource(R.drawable.url_bar_nav_button);
     }
 }

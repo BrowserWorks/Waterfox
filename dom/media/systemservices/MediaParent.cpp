@@ -15,8 +15,9 @@
 #include "nsThreadUtils.h"
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
-#include "nsIOutputStream.h"
+#include "nsIInputStream.h"
 #include "nsILineInputStream.h"
+#include "nsIOutputStream.h"
 #include "nsISafeOutputStream.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsISupportsImpl.h"
@@ -544,6 +545,7 @@ DeallocPMediaParent(media::PMediaParent *aActor)
 {
   MOZ_ASSERT(sIPCServingParent == static_cast<Parent<PMediaParent>*>(aActor));
   delete sIPCServingParent;
+  sIPCServingParent = nullptr;
   return true;
 }
 

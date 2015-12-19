@@ -5,6 +5,7 @@
 
 package org.mozilla.gecko.preferences;
 
+import android.os.Build;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
@@ -22,7 +23,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
-class AndroidImport implements Runnable {
+public class AndroidImport implements Runnable {
     /**
      * The Android M SDK removed several fields and methods from android.provider.Browser. This class is used as a
      * replacement to support building with the new SDK but at the same time still use these fields on lower Android
@@ -42,6 +43,10 @@ class AndroidImport implements Runnable {
             public static final String FAVICON = "favicon";
         }
     }
+
+    public static final Uri SAMSUNG_BOOKMARKS_URI = Uri.parse("content://com.sec.android.app.sbrowser.browser/bookmarks");
+    public static final Uri SAMSUNG_HISTORY_URI = Uri.parse("content://com.sec.android.app.sbrowser.browser/history");
+    public static final String SAMSUNG_MANUFACTURER = "samsung";
 
     private static final String LOGTAG = "AndroidImport";
     private final Context mContext;
@@ -71,6 +76,10 @@ class AndroidImport implements Runnable {
                                LegacyBrowserProvider.BookmarkColumns.BOOKMARK + " = 1",
                                null,
                                null);
+
+            if (Build.MANUFACTURER.equals(SAMSUNG_MANUFACTURER) && cursor != null && cursor.getCount() == 0) {
+                cursor = mCr.query(SAMSUNG_BOOKMARKS_URI, null, null, null, null);
+            }
 
             if (cursor != null) {
                 final int faviconCol = cursor.getColumnIndexOrThrow(LegacyBrowserProvider.BookmarkColumns.FAVICON);
@@ -120,6 +129,10 @@ class AndroidImport implements Runnable {
                                LegacyBrowserProvider.BookmarkColumns.VISITS + " > 0",
                                null,
                                null);
+
+            if (Build.MANUFACTURER.equals(SAMSUNG_MANUFACTURER) && cursor.getCount() == 0) {
+                cursor = mCr.query(SAMSUNG_HISTORY_URI, null, null, null, null);
+            }
 
             if (cursor != null) {
                 final int dateCol = cursor.getColumnIndexOrThrow(LegacyBrowserProvider.BookmarkColumns.DATE);

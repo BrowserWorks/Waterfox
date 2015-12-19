@@ -23,8 +23,8 @@
 #include <algorithm>
 #include "gfxPlatform.h"
 
-PRLogModuleInfo* GetAppleMediaLog();
-#define LOG(...) MOZ_LOG(GetAppleMediaLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+extern PRLogModuleInfo* GetPDMLog();
+#define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 //#define LOG_MEDIA_SHA1
 
 namespace mozilla {
@@ -42,7 +42,7 @@ AppleVDADecoder::AppleVDADecoder(const VideoInfo& aConfig,
   , mDisplayHeight(aConfig.mDisplay.height)
   , mInputIncoming(0)
   , mIsShutDown(false)
-  , mUseSoftwareImages(true)
+  , mUseSoftwareImages(false)
   , mIs106(!nsCocoaFeatures::OnLionOrLater())
   , mQueuedSamples(0)
   , mMonitor("AppleVideoDecoder")
@@ -78,19 +78,10 @@ AppleVDADecoder::~AppleVDADecoder()
   MOZ_COUNT_DTOR(AppleVDADecoder);
 }
 
-nsresult
+nsRefPtr<MediaDataDecoder::InitPromise>
 AppleVDADecoder::Init()
 {
-  if (!gfxPlatform::GetPlatform()->CanUseHardwareVideoDecoding()) {
-    // This GPU is blacklisted for hardware decoding.
-    return NS_ERROR_FAILURE;
-  }
-
-  if (mDecoder) {
-    return NS_OK;
-  }
-  nsresult rv = InitializeSession();
-  return rv;
+  return InitPromise::CreateAndResolve(TrackType::kVideoTrack, __func__);
 }
 
 nsresult
@@ -280,7 +271,7 @@ AppleVDADecoder::DrainReorderedFrames()
 {
   MonitorAutoLock mon(mMonitor);
   while (!mReorderQueue.IsEmpty()) {
-    mCallback->Output(mReorderQueue.Pop());
+    mCallback->Output(mReorderQueue.Pop().get());
   }
   mQueuedSamples = 0;
 }
@@ -425,7 +416,7 @@ AppleVDADecoder::OutputFrame(CVPixelBufferRef aImage,
   MonitorAutoLock mon(mMonitor);
   mReorderQueue.Push(data);
   while (mReorderQueue.Length() > mMaxRefFrames) {
-    mCallback->Output(mReorderQueue.Pop());
+    mCallback->Output(mReorderQueue.Pop().get());
   }
   LOG("%llu decoded frames queued",
       static_cast<unsigned long long>(mReorderQueue.Length()));
@@ -596,9 +587,7 @@ CFDictionaryRef
 AppleVDADecoder::CreateOutputConfiguration()
 {
   // Output format type:
-  SInt32 PixelFormatTypeValue = mUseSoftwareImages ?
-    kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange : kCVPixelFormatType_32BGRA;
-
+  SInt32 PixelFormatTypeValue = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
   AutoCFRelease<CFNumberRef> PixelFormatTypeNumber =
     CFNumberCreate(kCFAllocatorDefault,
                    kCFNumberSInt32Type,
@@ -658,11 +647,18 @@ AppleVDADecoder::CreateVDADecoder(
   MediaDataDecoderCallback* aCallback,
   layers::ImageContainer* aImageContainer)
 {
-  nsRefPtr<AppleVDADecoder> decoder =
-    new AppleVDADecoder(aConfig, aVideoTaskQueue, aCallback, aImageContainer);
-  if (NS_FAILED(decoder->Init())) {
+  if (!gfxPlatform::GetPlatform()->CanUseHardwareVideoDecoding()) {
+    // This GPU is blacklisted for hardware decoding.
     return nullptr;
   }
+
+  nsRefPtr<AppleVDADecoder> decoder =
+    new AppleVDADecoder(aConfig, aVideoTaskQueue, aCallback, aImageContainer);
+
+  if (NS_FAILED(decoder->InitializeSession())) {
+    return nullptr;
+  }
+
   return decoder.forget();
 }
 

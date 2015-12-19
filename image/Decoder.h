@@ -10,9 +10,12 @@
 #include "RasterImage.h"
 #include "mozilla/RefPtr.h"
 #include "DecodePool.h"
+#include "DecoderFlags.h"
+#include "Downscaler.h"
 #include "ImageMetadata.h"
 #include "Orientation.h"
 #include "SourceBuffer.h"
+#include "SurfaceFlags.h"
 
 namespace mozilla {
 
@@ -34,13 +37,16 @@ public:
   void Init();
 
   /**
-   * Decodes, reading all data currently available in the SourceBuffer. If more
-   * data is needed, Decode() automatically ensures that it will be called again
-   * on a DecodePool thread when the data becomes available.
+   * Decodes, reading all data currently available in the SourceBuffer.
+   *
+   * If more data is needed, Decode() will schedule @aOnResume to be called when
+   * more data is available. If @aOnResume is null or unspecified, the default
+   * implementation resumes decoding on a DecodePool thread. Most callers should
+   * use the default implementation.
    *
    * Any errors are reported by setting the appropriate state on the decoder.
    */
-  nsresult Decode();
+  nsresult Decode(IResumable* aOnResume = nullptr);
 
   /**
    * Given a maximum number of bytes we're willing to decode, @aByteLimit,
@@ -107,19 +113,14 @@ public:
    * If this decoder supports downscale-during-decode, sets the target size that
    * this image should be decoded to.
    *
-   * If this decoder *doesn't* support downscale-during-decode, returns
-   * NS_ERROR_NOT_AVAILABLE. If the provided size is unacceptable, returns
-   * another error.
+   * If the provided size is unacceptable, an error is returned.
    *
    * Returning NS_OK from this method is a promise that the decoder will decode
    * the image to the requested target size unless it encounters an error.
    *
    * This must be called before Init() is called.
    */
-  virtual nsresult SetTargetSize(const nsIntSize& aSize)
-  {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
+  nsresult SetTargetSize(const nsIntSize& aSize);
 
   /**
    * Set the requested sample size for this decoder. Used to implement the
@@ -138,24 +139,6 @@ public:
   virtual void SetResolution(const gfx::IntSize& aResolution) { }
 
   /**
-   * Set whether should send partial invalidations.
-   *
-   * If @aSend is true, we'll send partial invalidations when decoding the first
-   * frame of the image, so image notifications observers will be able to
-   * gradually draw in the image as it downloads.
-   *
-   * If @aSend is false (the default), we'll only send an invalidation when we
-   * complete the first frame.
-   *
-   * This must be called before Init() is called.
-   */
-  void SetSendPartialInvalidations(bool aSend)
-  {
-    MOZ_ASSERT(!mInitialized, "Shouldn't be initialized yet");
-    mSendPartialInvalidations = aSend;
-  }
-
-  /**
    * Set an iterator to the SourceBuffer which will feed data to this decoder.
    *
    * This should be called for almost all decoders; the exceptions are the
@@ -171,40 +154,20 @@ public:
   }
 
   /**
-   * Set whether this decoder is associated with a transient image. The decoder
-   * may choose to avoid certain optimizations that don't pay off for
-   * short-lived images in this case.
+   * Should this decoder send partial invalidations?
    */
-  void SetImageIsTransient(bool aIsTransient)
+  bool ShouldSendPartialInvalidations() const
   {
-    MOZ_ASSERT(!mInitialized, "Shouldn't be initialized yet");
-    mImageIsTransient = aIsTransient;
+    return !(mDecoderFlags & DecoderFlags::IS_REDECODE);
   }
 
   /**
-   * Set whether the image is locked for the lifetime of this decoder. We lock
-   * the image during our initial decode to ensure that we don't evict any
-   * surfaces before we realize that the image is animated.
+   * Should we stop decoding after the first frame?
    */
-  void SetImageIsLocked()
+  bool IsFirstFrameDecode() const
   {
-    MOZ_ASSERT(!mInitialized, "Shouldn't be initialized yet");
-    mImageIsLocked = true;
+    return bool(mDecoderFlags & DecoderFlags::FIRST_FRAME_ONLY);
   }
-
-  bool ImageIsLocked() const { return mImageIsLocked; }
-
-
-  /**
-   * Set whether we should stop decoding after the first frame.
-   */
-  void SetIsFirstFrameDecode()
-  {
-    MOZ_ASSERT(!mInitialized, "Shouldn't be initialized yet");
-    mFirstFrameDecode = true;
-  }
-
-  bool IsFirstFrameDecode() const { return mFirstFrameDecode; }
 
   size_t BytesDecoded() const { return mBytesDecoded; }
 
@@ -225,7 +188,7 @@ public:
   }
 
   // Did we discover that the image we're decoding is animated?
-  bool HasAnimation() const { return mIsAnimated; }
+  bool HasAnimation() const { return mImageMetadata.HasAnimation(); }
 
   // Error tracking
   bool HasError() const { return HasDataError() || HasDecoderError(); }
@@ -233,7 +196,6 @@ public:
   bool HasDecoderError() const { return NS_FAILED(mFailCode); }
   bool ShouldReportError() const { return mShouldReportError; }
   nsresult GetDecoderError() const { return mFailCode; }
-  void PostResizeError() { PostDataError(); }
 
   /// Did we finish decoding enough that calling Decode() again would be useless?
   bool GetDecodeDone() const
@@ -241,10 +203,6 @@ public:
     return mDecodeDone || (mMetadataDecode && HasSize()) ||
            HasError() || mDataDone;
   }
-
-  /// Did we finish decoding enough to set |RasterImage::mHasBeenDecoded|?
-  // XXX(seth): This will be removed in bug 1187401.
-  bool GetDecodeTotallyDone() const { return mDecodeDone && !IsMetadataDecode(); }
 
   /// Are we in the middle of a frame right now? Used for assertions only.
   bool InFrame() const { return mInFrame; }
@@ -269,9 +227,26 @@ public:
       SEQUENTIAL   // decode to final image immediately
   };
 
-  void SetFlags(uint32_t aFlags) { mFlags = aFlags; }
-  uint32_t GetFlags() const { return mFlags; }
-  uint32_t GetDecodeFlags() const { return DecodeFlags(mFlags); }
+  /**
+   * Get or set the DecoderFlags that influence the behavior of this decoder.
+   */
+  void SetDecoderFlags(DecoderFlags aDecoderFlags)
+  {
+    MOZ_ASSERT(!mInitialized);
+    mDecoderFlags = aDecoderFlags;
+  }
+  DecoderFlags GetDecoderFlags() const { return mDecoderFlags; }
+
+  /**
+   * Get or set the SurfaceFlags that select the kind of output this decoder
+   * will produce.
+   */
+  void SetSurfaceFlags(SurfaceFlags aSurfaceFlags)
+  {
+    MOZ_ASSERT(!mInitialized);
+    mSurfaceFlags = aSurfaceFlags;
+  }
+  SurfaceFlags GetSurfaceFlags() const { return mSurfaceFlags; }
 
   bool HasSize() const { return mImageMetadata.HasSize(); }
 
@@ -344,9 +319,11 @@ protected:
   // actual contents of the frame and give a more accurate result.
   void PostHasTransparency();
 
-  // Called by decoders when they begin a frame. Informs the image, sends
-  // notifications, and does internal book-keeping.
-  void PostFrameStart();
+  // Called by decoders if they determine that the image is animated.
+  //
+  // @param aTimeout The time for which the first frame should be shown before
+  //                 we advance to the next frame.
+  void PostIsAnimated(int32_t aFirstFrameTimeout);
 
   // Called by decoders when they end a frame. Informs the image, sends
   // notifications, and does internal book-keeping.
@@ -417,12 +394,13 @@ protected:
   RawAccessFrameRef AllocateFrameInternal(uint32_t aFrameNum,
                                           const nsIntSize& aTargetSize,
                                           const nsIntRect& aFrameRect,
-                                          uint32_t aDecodeFlags,
                                           gfx::SurfaceFormat aFormat,
                                           uint8_t aPaletteDepth,
                                           imgFrame* aPreviousFrame);
 
 protected:
+  Maybe<Downscaler> mDownscaler;
+
   uint8_t* mImageData;  // Pointer to image data in either Cairo or 8bit format
   uint32_t mImageDataLength;
   uint32_t* mColormap;  // Current colormap to be used in Cairo format
@@ -444,17 +422,13 @@ private:
   TimeDuration mDecodeTime;
   uint32_t mChunkCount;
 
-  uint32_t mFlags;
+  DecoderFlags mDecoderFlags;
+  SurfaceFlags mSurfaceFlags;
   size_t mBytesDecoded;
 
   bool mInitialized : 1;
   bool mMetadataDecode : 1;
-  bool mSendPartialInvalidations : 1;
-  bool mImageIsTransient : 1;
-  bool mImageIsLocked : 1;
-  bool mFirstFrameDecode : 1;
   bool mInFrame : 1;
-  bool mIsAnimated : 1;
   bool mDataDone : 1;
   bool mDecodeDone : 1;
   bool mDataError : 1;

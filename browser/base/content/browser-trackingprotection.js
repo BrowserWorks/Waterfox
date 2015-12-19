@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-let TrackingProtection = {
+var TrackingProtection = {
   MAX_INTROS: 0,
   PREF_ENABLED_GLOBALLY: "privacy.trackingprotection.enabled",
   PREF_ENABLED_IN_PRIVATE_WINDOWS: "privacy.trackingprotection.pbmode.enabled",
@@ -210,7 +210,7 @@ let TrackingProtection = {
     ];
 
     let panelTarget = yield UITour.getTarget(window, "trackingProtection");
-    UITour.initForBrowser(gBrowser.selectedBrowser);
+    UITour.initForBrowser(gBrowser.selectedBrowser, window);
     UITour.showInfo(window, mm, panelTarget,
                     gNavigatorBundle.getString("trackingProtection.intro.title"),
                     gNavigatorBundle.getFormattedString("trackingProtection.intro.description",

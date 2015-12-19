@@ -133,7 +133,7 @@ class JS_FRIEND_API(CrossCompartmentWrapper) : public Wrapper
                                    ObjectOpResult& result) const override;
     virtual bool isExtensible(JSContext* cx, HandleObject wrapper, bool* extensible) const override;
     virtual bool has(JSContext* cx, HandleObject wrapper, HandleId id, bool* bp) const override;
-    virtual bool get(JSContext* cx, HandleObject wrapper, HandleObject receiver,
+    virtual bool get(JSContext* cx, HandleObject wrapper, HandleValue receiver,
                      HandleId id, MutableHandleValue vp) const override;
     virtual bool set(JSContext* cx, HandleObject wrapper, HandleId id, HandleValue v,
                      HandleValue receiver, ObjectOpResult& result) const override;
@@ -147,7 +147,7 @@ class JS_FRIEND_API(CrossCompartmentWrapper) : public Wrapper
     virtual bool getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject wrapper,
                                               AutoIdVector& props) const override;
     virtual bool nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                            CallArgs args) const override;
+                            const CallArgs& args) const override;
     virtual bool hasInstance(JSContext* cx, HandleObject wrapper, MutableHandleValue v,
                              bool* bp) const override;
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
@@ -191,7 +191,7 @@ class JS_FRIEND_API(OpaqueCrossCompartmentWrapper) : public CrossCompartmentWrap
     virtual bool isExtensible(JSContext* cx, HandleObject wrapper, bool* extensible) const override;
     virtual bool has(JSContext* cx, HandleObject wrapper, HandleId id,
                      bool* bp) const override;
-    virtual bool get(JSContext* cx, HandleObject wrapper, HandleObject receiver,
+    virtual bool get(JSContext* cx, HandleObject wrapper, HandleValue receiver,
                      HandleId id, MutableHandleValue vp) const override;
     virtual bool set(JSContext* cx, HandleObject wrapper, HandleId id, HandleValue v,
                      HandleValue receiver, ObjectOpResult& result) const override;
@@ -244,7 +244,7 @@ class JS_FRIEND_API(SecurityWrapper) : public Base
     virtual bool setImmutablePrototype(JSContext* cx, HandleObject proxy, bool* succeeded) const override;
 
     virtual bool nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                            CallArgs args) const override;
+                            const CallArgs& args) const override;
     virtual bool objectClassIs(HandleObject obj, ESClassValue classValue,
                                JSContext* cx) const override;
     virtual bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const override;

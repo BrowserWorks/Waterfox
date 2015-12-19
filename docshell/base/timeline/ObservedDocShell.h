@@ -4,17 +4,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef ObservedDocShell_h_
-#define ObservedDocShell_h_
+#ifndef mozilla_ObservedDocShell_h_
+#define mozilla_ObservedDocShell_h_
 
-#include "GeckoProfiler.h"
+#include "OTMTMarkerReceiver.h"
 #include "nsTArray.h"
 #include "mozilla/nsRefPtr.h"
 
 class nsDocShell;
-class TimelineMarker;
 
 namespace mozilla {
+class AbstractTimelineMarker;
+
 namespace dom {
 struct ProfileTimelineMarker;
 }
@@ -23,22 +24,24 @@ struct ProfileTimelineMarker;
 //
 // A wrapper around a docshell for which docshell-specific markers are
 // allowed to exist. See TimelineConsumers for register/unregister logic.
-class ObservedDocShell : public LinkedListElement<ObservedDocShell>
+class ObservedDocShell : public LinkedListElement<ObservedDocShell>,
+                         public OTMTMarkerReceiver
 {
 private:
   nsRefPtr<nsDocShell> mDocShell;
-  nsTArray<UniquePtr<TimelineMarker>> mTimelineMarkers;
+  nsTArray<UniquePtr<AbstractTimelineMarker>> mTimelineMarkers;
 
 public:
   explicit ObservedDocShell(nsDocShell* aDocShell);
   nsDocShell* operator*() const { return mDocShell.get(); }
 
-  void AddMarker(const char* aName, TracingMetadata aMetaData);
-  void AddMarker(UniquePtr<TimelineMarker>&& aMarker);
+  void AddMarker(UniquePtr<AbstractTimelineMarker>&& aMarker);
+  void AddOTMTMarkerClone(UniquePtr<AbstractTimelineMarker>& aMarker) override;
+
   void ClearMarkers();
   void PopMarkers(JSContext* aCx, nsTArray<dom::ProfileTimelineMarker>& aStore);
 };
 
 } // namespace mozilla
 
-#endif /* ObservedDocShell_h_ */
+#endif /* mozilla_ObservedDocShell_h_ */

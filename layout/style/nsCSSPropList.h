@@ -2663,7 +2663,8 @@ CSS_PROP_DISPLAY(
     Opacity,
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_APPLIES_TO_PLACEHOLDER |
-        CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR,
+        CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR |
+        CSS_PROPERTY_CREATES_STACKING_CONTEXT,
     "",
     VARIANT_HN,
     nullptr,
@@ -3335,7 +3336,7 @@ CSS_PROP_DISPLAY(
     transform_box,
     TransformBox,
     CSS_PROPERTY_PARSE_VALUE,
-    "svg.transform-origin.enabled",
+    "svg.transform-box.enabled",
     VARIANT_HK,
     kTransformBoxKTable,
     CSS_PROP_NO_OFFSET,
@@ -3639,9 +3640,9 @@ CSS_PROP_TEXT(
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_None)
 CSS_PROP_TEXT(
-    -moz-hyphens,
     hyphens,
-    CSS_PROP_DOMPROP_PREFIXED(Hyphens),
+    hyphens,
+    Hyphens,
     CSS_PROPERTY_PARSE_VALUE,
     "",
     VARIANT_HK,
@@ -4150,9 +4151,8 @@ CSS_PROP_DISPLAY(
     will_change,
     WillChange,
     CSS_PROPERTY_PARSE_FUNCTION |
-        CSS_PROPERTY_VALUE_LIST_USES_COMMAS |
-        CSS_PROPERTY_ALWAYS_ENABLED_IN_CHROME_OR_CERTIFIED_APP,
-    "layout.css.will-change.enabled",
+        CSS_PROPERTY_VALUE_LIST_USES_COMMAS,
+    "",
     0,
     nullptr,
     CSS_PROP_NO_OFFSET,

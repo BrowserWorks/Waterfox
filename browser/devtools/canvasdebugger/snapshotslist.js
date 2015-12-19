@@ -6,7 +6,7 @@
 /**
  * Functions handling the recorded animation frame snapshots UI.
  */
-let SnapshotsListView = Heritage.extend(WidgetMethods, {
+var SnapshotsListView = Heritage.extend(WidgetMethods, {
   /**
    * Initialization function, called when the tool is started.
    */
@@ -420,7 +420,7 @@ let SnapshotsListView = Heritage.extend(WidgetMethods, {
 
       // Prepare all the function calls for serialization.
       yield DevToolsUtils.yieldingEach(functionCalls, (call, i) => {
-        let { type, name, file, line, argsPreview, callerPreview } = call;
+        let { type, name, file, line, timestamp, argsPreview, callerPreview } = call;
         return call.getDetails().then(({ stack }) => {
           data.calls[i] = {
             type: type,
@@ -428,6 +428,7 @@ let SnapshotsListView = Heritage.extend(WidgetMethods, {
             file: file,
             line: line,
             stack: stack,
+            timestamp: timestamp,
             argsPreview: argsPreview,
             callerPreview: callerPreview
           };

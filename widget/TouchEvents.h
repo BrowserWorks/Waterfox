@@ -36,7 +36,7 @@ public:
     return this;
   }
 
-  WidgetGestureNotifyEvent(bool aIsTrusted, uint32_t aMessage,
+  WidgetGestureNotifyEvent(bool aIsTrusted, EventMessage aMessage,
                            nsIWidget *aWidget)
     : WidgetGUIEvent(aIsTrusted, aMessage, aWidget, eGestureNotifyEventClass)
     , panDirection(ePanNone)
@@ -55,7 +55,7 @@ public:
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
     WidgetGestureNotifyEvent* result =
-      new WidgetGestureNotifyEvent(false, message, nullptr);
+      new WidgetGestureNotifyEvent(false, mMessage, nullptr);
     result->AssignGestureNotifyEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -94,7 +94,7 @@ public:
     return this;
   }
 
-  WidgetSimpleGestureEvent(bool aIsTrusted, uint32_t aMessage,
+  WidgetSimpleGestureEvent(bool aIsTrusted, EventMessage aMessage,
                            nsIWidget* aWidget)
     : WidgetMouseEventBase(aIsTrusted, aMessage, aWidget,
                            eSimpleGestureEventClass)
@@ -106,7 +106,7 @@ public:
   }
 
   WidgetSimpleGestureEvent(const WidgetSimpleGestureEvent& aOther)
-    : WidgetMouseEventBase(aOther.mFlags.mIsTrusted, aOther.message,
+    : WidgetMouseEventBase(aOther.mFlags.mIsTrusted, aOther.mMessage,
                            aOther.widget, eSimpleGestureEventClass)
     , allowedDirections(aOther.allowedDirections)
     , direction(aOther.direction)
@@ -121,7 +121,7 @@ public:
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
     WidgetSimpleGestureEvent* result =
-      new WidgetSimpleGestureEvent(false, message, nullptr);
+      new WidgetSimpleGestureEvent(false, mMessage, nullptr);
     result->AssignSimpleGestureEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -166,22 +166,22 @@ public:
   }
 
   WidgetTouchEvent(const WidgetTouchEvent& aOther)
-    : WidgetInputEvent(aOther.mFlags.mIsTrusted, aOther.message, aOther.widget,
+    : WidgetInputEvent(aOther.mFlags.mIsTrusted, aOther.mMessage, aOther.widget,
                        eTouchEventClass)
   {
     modifiers = aOther.modifiers;
     time = aOther.time;
     timeStamp = aOther.timeStamp;
     touches.AppendElements(aOther.touches);
-    mFlags.mCancelable = message != NS_TOUCH_CANCEL;
+    mFlags.mCancelable = mMessage != eTouchCancel;
     MOZ_COUNT_CTOR(WidgetTouchEvent);
   }
 
-  WidgetTouchEvent(bool aIsTrusted, uint32_t aMessage, nsIWidget* aWidget)
+  WidgetTouchEvent(bool aIsTrusted, EventMessage aMessage, nsIWidget* aWidget)
     : WidgetInputEvent(aIsTrusted, aMessage, aWidget, eTouchEventClass)
   {
     MOZ_COUNT_CTOR(WidgetTouchEvent);
-    mFlags.mCancelable = message != NS_TOUCH_CANCEL;
+    mFlags.mCancelable = mMessage != eTouchCancel;
   }
 
   virtual ~WidgetTouchEvent()
@@ -194,7 +194,7 @@ public:
     MOZ_ASSERT(mClass == eTouchEventClass,
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
-    WidgetTouchEvent* result = new WidgetTouchEvent(false, message, nullptr);
+    WidgetTouchEvent* result = new WidgetTouchEvent(false, mMessage, nullptr);
     result->AssignTouchEventData(*this, true);
     result->mFlags = mFlags;
     return result;

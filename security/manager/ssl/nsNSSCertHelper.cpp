@@ -130,8 +130,7 @@ ProcessVersion(SECItem         *versionItem,
   if (NS_FAILED(rv))
     return rv;
 
-  *retItem = printableItem;
-  NS_ADDREF(*retItem);
+  printableItem.forget(retItem);
   return NS_OK;
 }
 
@@ -158,8 +157,7 @@ ProcessSerialNumberDER(SECItem         *serialItem,
     return NS_ERROR_OUT_OF_MEMORY;
 
   rv = printableItem->SetDisplayValue(NS_ConvertASCIItoUTF16(serialNumber));
-  *retItem = printableItem;
-  NS_ADDREF(*retItem);
+  printableItem.forget(retItem);
   return rv;
 }
 
@@ -1610,8 +1608,7 @@ ProcessSingleExtension(CERTCertExtension *extension,
   text.Append(extvalue);
 
   extensionItem->SetDisplayValue(text);
-  *retExtension = extensionItem;
-  NS_ADDREF(*retExtension);
+  extensionItem.forget(retExtension);
   return NS_OK;
 }
 
@@ -1656,20 +1653,20 @@ ProcessSECAlgorithmID(SECAlgorithmID *algID,
     }
     printableItem->SetDisplayValue(text);
   }
-  *retSequence = sequence;
-  NS_ADDREF(*retSequence);
+  sequence.forget(retSequence);
   return NS_OK;
 }
 
 static nsresult
-ProcessTime(PRTime dispTime, const char16_t *displayName, 
-            nsIASN1Sequence *parentSequence)
+ProcessTime(PRTime dispTime, const char16_t* displayName,
+            nsIASN1Sequence* parentSequence)
 {
   nsresult rv;
   nsCOMPtr<nsIDateTimeFormat> dateFormatter =
      do_CreateInstance(NS_DATETIMEFORMAT_CONTRACTID, &rv);
-  if (NS_FAILED(rv)) 
+  if (NS_FAILED(rv)) {
     return rv;
+  }
 
   nsString text;
   nsString tempString;
@@ -1677,8 +1674,9 @@ ProcessTime(PRTime dispTime, const char16_t *displayName,
   PRExplodedTime explodedTime;
   PR_ExplodeTime(dispTime, PR_LocalTimeParameters, &explodedTime);
 
-  dateFormatter->FormatPRExplodedTime(nullptr, kDateFormatShort, kTimeFormatSecondsForce24Hour,
-                              &explodedTime, tempString);
+  dateFormatter->FormatPRExplodedTime(nullptr, kDateFormatLong,
+                                      kTimeFormatSeconds, &explodedTime,
+                                      tempString);
 
   text.Append(tempString);
   text.AppendLiteral("\n(");
@@ -1686,8 +1684,9 @@ ProcessTime(PRTime dispTime, const char16_t *displayName,
   PRExplodedTime explodedTimeGMT;
   PR_ExplodeTime(dispTime, PR_GMTParameters, &explodedTimeGMT);
 
-  dateFormatter->FormatPRExplodedTime(nullptr, kDateFormatShort, kTimeFormatSecondsForce24Hour,
-                              &explodedTimeGMT, tempString);
+  dateFormatter->FormatPRExplodedTime(nullptr, kDateFormatLong,
+                                      kTimeFormatSeconds, &explodedTimeGMT,
+                                      tempString);
 
   text.Append(tempString);
   text.AppendLiteral(" GMT)");
@@ -2012,8 +2011,7 @@ nsNSSCertificate::CreateTBSCertificateASN1Struct(nsIASN1Sequence **retSequence,
     if (NS_FAILED(rv))
       return rv;
   }
-  *retSequence = sequence;
-  NS_ADDREF(*retSequence);  
+  sequence.forget(retSequence);
   return NS_OK;
 }
 

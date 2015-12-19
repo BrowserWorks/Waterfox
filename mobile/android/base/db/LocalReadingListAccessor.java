@@ -13,11 +13,11 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 import org.mozilla.gecko.AboutPages;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.ReaderModeUtils;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
-import org.mozilla.gecko.mozglue.RobocopTarget;
 
 
 @RobocopTarget
@@ -186,6 +186,14 @@ public class LocalReadingListAccessor implements ReadingListAccessor {
         values.put(ReadingListItems.IS_UNREAD, 0);
 
         // The ContentProvider will take care of updating the sync metadata.
+        cr.update(mReadingListUriWithProfile, values, ReadingListItems._ID + " = " + itemID, null);
+    }
+
+    @Override
+    public void markAsUnread(ContentResolver cr, long itemID) {
+        final ContentValues values = new ContentValues();
+        values.put(ReadingListItems.IS_UNREAD, 1);
+
         cr.update(mReadingListUriWithProfile, values, ReadingListItems._ID + " = " + itemID, null);
     }
 

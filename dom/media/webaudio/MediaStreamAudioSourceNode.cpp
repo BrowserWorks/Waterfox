@@ -39,10 +39,9 @@ MediaStreamAudioSourceNode::MediaStreamAudioSourceNode(AudioContext* aContext,
     mInputStream(aMediaStream)
 {
   AudioNodeEngine* engine = new MediaStreamAudioSourceNodeEngine(this);
-  mStream = aContext->Graph()->CreateAudioNodeExternalInputStream(engine);
+  mStream = AudioNodeExternalInputStream::Create(aContext->Graph(), engine);
   ProcessedMediaStream* outputStream = static_cast<ProcessedMediaStream*>(mStream.get());
-  mInputPort = outputStream->AllocateInputPort(aMediaStream->GetStream(),
-                                               MediaInputPort::FLAG_BLOCK_INPUT);
+  mInputPort = outputStream->AllocateInputPort(aMediaStream->GetStream());
   mInputStream->AddConsumerToKeepAlive(static_cast<nsIDOMEventTarget*>(this));
 
   PrincipalChanged(mInputStream); // trigger enabling/disabling of the connector

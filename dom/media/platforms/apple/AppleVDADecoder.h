@@ -71,12 +71,12 @@ public:
                   MediaDataDecoderCallback* aCallback,
                   layers::ImageContainer* aImageContainer);
   virtual ~AppleVDADecoder();
-  virtual nsresult Init() override;
+  virtual nsRefPtr<InitPromise> Init() override;
   virtual nsresult Input(MediaRawData* aSample) override;
   virtual nsresult Flush() override;
   virtual nsresult Drain() override;
   virtual nsresult Shutdown() override;
-  virtual bool IsHardwareAccelerated() const override
+  virtual bool IsHardwareAccelerated(nsACString& aFailureReason) const override
   {
     return true;
   }
@@ -132,10 +132,11 @@ protected:
 private:
   VDADecoder mDecoder;
 
-  // Method to pass a frame to VideoToolbox for decoding.
-  nsresult SubmitFrame(MediaRawData* aSample);
   // Method to set up the decompression session.
   nsresult InitializeSession();
+
+  // Method to pass a frame to VideoToolbox for decoding.
+  nsresult SubmitFrame(MediaRawData* aSample);
   CFDictionaryRef CreateDecoderSpecification();
 };
 

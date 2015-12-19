@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // the "exported" symbols
-let LoopUI;
+var LoopUI;
 
 (function() {
   const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
@@ -154,7 +154,10 @@ let LoopUI;
           }
 
           this.PanelFrame.showPopup(window, event ? event.target : this.toolbarButton.node,
-                               "loop", null, "about:looppanel", null, callback);
+            "loop", null, "about:looppanel",
+            // Loop wants a fixed size for the panel. This also stops it dynamically resizing.
+            { width: 330, height: 410 },
+            callback);
         });
       });
     },

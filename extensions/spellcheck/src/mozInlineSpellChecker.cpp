@@ -64,6 +64,7 @@
 #include "nsRange.h"
 #include "nsContentUtils.h"
 #include "nsEditor.h"
+#include "nsEditorUtils.h"
 #include "mozilla/Services.h"
 #include "nsIObserverService.h"
 #include "nsITextControlElement.h"
@@ -945,20 +946,25 @@ mozInlineSpellChecker::ReplaceWord(nsIDOMNode *aNode, int32_t aOffset,
 
   if (range)
   {
-    editor->BeginTransaction();
+    // This range was retrieved from the spellchecker selection. As
+    // ranges cannot be shared between selections, we must clone it
+    // before adding it to the editor's selection.
+    nsCOMPtr<nsIDOMRange> editorRange;
+    res = range->CloneRange(getter_AddRefs(editorRange));
+    NS_ENSURE_SUCCESS(res, res);
+
+    nsAutoPlaceHolderBatch phb(editor, nullptr);
   
     nsCOMPtr<nsISelection> selection;
     res = editor->GetSelection(getter_AddRefs(selection));
     NS_ENSURE_SUCCESS(res, res);
     selection->RemoveAllRanges();
-    selection->AddRange(range);
+    selection->AddRange(editorRange);
     editor->DeleteSelection(nsIEditor::eNone, nsIEditor::eStrip);
 
     nsCOMPtr<nsIPlaintextEditor> textEditor(do_QueryReferent(mEditor));
     if (textEditor)
       textEditor->InsertText(newword);
-
-    editor->EndTransaction();
   }
 
   return NS_OK;
@@ -1992,7 +1998,7 @@ NS_IMETHODIMP mozInlineSpellChecker::UpdateCurrentDictionary()
   nsresult rv = spellCheck->UpdateCurrentDictionary(cb);
   if (NS_FAILED(rv)) {
     cb = nullptr;
-    NS_ENSURE_SUCCESS(rv, rv);
+    return rv;
   }
   mNumPendingUpdateCurrentDictionary++;
   ChangeNumPendingSpellChecks(1);

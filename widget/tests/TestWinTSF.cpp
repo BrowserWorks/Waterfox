@@ -1886,12 +1886,12 @@ TestApp::TestSelection(void)
   bool succeeded = true;
 
   /* If these fail the cause is probably one or more of:
-   * nsTextStore::GetSelection not sending NS_QUERY_SELECTED_TEXT
-   * NS_QUERY_SELECTED_TEXT not handled by ContentEventHandler
-   * Bug in NS_QUERY_SELECTED_TEXT handler
-   * nsTextStore::SetSelection not sending NS_SELECTION_SET
-   * NS_SELECTION_SET not handled by ContentEventHandler
-   * Bug in NS_SELECTION_SET handler
+   * nsTextStore::GetSelection not sending eQuerySelectedText
+   * eQuerySelectedText not handled by ContentEventHandler
+   * Bug in eQuerySelectedText handler
+   * nsTextStore::SetSelection not sending eSetSelection
+   * eSetSelection not handled by ContentEventHandler
+   * Bug in eSetSelection handler
    */
 
   TS_SELECTION_ACP testSel;
@@ -1960,12 +1960,12 @@ TestApp::TestText(void)
   HRESULT hr;
 
   /* If these fail the cause is probably one or more of:
-   * nsTextStore::GetText not sending NS_QUERY_TEXT_CONTENT
-   * NS_QUERY_TEXT_CONTENT not handled by ContentEventHandler
-   * Bug in NS_QUERY_TEXT_CONTENT handler
+   * nsTextStore::GetText not sending eQueryTextContent
+   * eQueryTextContent not handled by ContentEventHandler
+   * Bug in eQueryTextContent handler
    * nsTextStore::SetText not calling SetSelection or InsertTextAtSelection
    * Bug in SetSelection or InsertTextAtSelection
-   *  NS_SELECTION_SET bug or NS_COMPOSITION_* / NS_COMPOSITION_CHANGE bug
+   *  eSetSelection bug or eComposition* / eCompositionChange bug
    */
 
   if (!mMgr->GetFocusedStore()) {

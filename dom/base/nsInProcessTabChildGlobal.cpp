@@ -18,21 +18,18 @@
 #include "nsDOMClassInfoID.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/dom/SameProcessMessageQueue.h"
-#include "mozilla/dom/StructuredCloneUtils.h"
-#include "js/StructuredClone.h"
 
-using mozilla::dom::StructuredCloneData;
-using mozilla::dom::StructuredCloneClosure;
 using namespace mozilla;
 using namespace mozilla::dom;
+using namespace mozilla::dom::ipc;
 
 bool
 nsInProcessTabChildGlobal::DoSendBlockingMessage(JSContext* aCx,
                                                  const nsAString& aMessage,
-                                                 const dom::StructuredCloneData& aData,
+                                                 StructuredCloneData& aData,
                                                  JS::Handle<JSObject *> aCpows,
                                                  nsIPrincipal* aPrincipal,
-                                                 nsTArray<OwningSerializedStructuredCloneBuffer>* aRetVal,
+                                                 nsTArray<StructuredCloneData>* aRetVal,
                                                  bool aIsSync)
 {
   SameProcessMessageQueue* queue = SameProcessMessageQueue::Get();
@@ -55,7 +52,7 @@ public:
   nsAsyncMessageToParent(JSContext* aCx,
                          nsInProcessTabChildGlobal* aTabChild,
                          const nsAString& aMessage,
-                         const StructuredCloneData& aData,
+                         StructuredCloneData& aData,
                          JS::Handle<JSObject *> aCpows,
                          nsIPrincipal* aPrincipal)
     : nsSameProcessAsyncMessageBase(aCx, aMessage, aData, aCpows, aPrincipal),
@@ -75,7 +72,7 @@ public:
 bool
 nsInProcessTabChildGlobal::DoSendAsyncMessage(JSContext* aCx,
                                               const nsAString& aMessage,
-                                              const StructuredCloneData& aData,
+                                              StructuredCloneData& aData,
                                               JS::Handle<JSObject *> aCpows,
                                               nsIPrincipal* aPrincipal)
 {

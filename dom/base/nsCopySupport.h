@@ -6,7 +6,7 @@
 #ifndef nsCopySupport_h__
 #define nsCopySupport_h__
 
-#include "nscore.h"
+#include "mozilla/EventForwards.h"
 
 class nsINode;
 class nsISelection;
@@ -64,8 +64,8 @@ class nsCopySupport
 
     /**
      * Fires a cut, copy or paste event, on the given presshell, depending
-     * on the value of aType, which should be either NS_CUT, NS_COPY or
-     * NS_PASTE, and perform the default copy action if the event was not
+     * on the value of aEventMessage, which should be either eCut, eCopy or
+     * ePaste, and perform the default copy action if the event was not
      * cancelled.
      *
      * If aSelection is specified, then this selection is used as the target
@@ -88,7 +88,7 @@ class nsCopySupport
      *
      * If the event is cancelled or an error occurs, false will be returned.
      */
-    static bool FireClipboardEvent(int32_t aType,
+    static bool FireClipboardEvent(mozilla::EventMessage aEventMessage,
                                    int32_t aClipboardType,
                                    nsIPresShell* aPresShell,
                                    nsISelection* aSelection,

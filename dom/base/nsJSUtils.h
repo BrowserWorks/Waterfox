@@ -35,9 +35,11 @@ class nsJSUtils
 {
 public:
   static bool GetCallingLocation(JSContext* aContext, nsACString& aFilename,
-                                 uint32_t* aLineno);
+                                 uint32_t* aLineno = nullptr,
+                                 uint32_t* aColumn = nullptr);
   static bool GetCallingLocation(JSContext* aContext, nsAString& aFilename,
-                                 uint32_t* aLineno);
+                                 uint32_t* aLineno = nullptr,
+                                 uint32_t* aColumn = nullptr);
 
   static nsIScriptGlobalObject *GetStaticScriptGlobal(JSObject* aObj);
 
@@ -113,6 +115,9 @@ public:
   static bool GetScopeChainForElement(JSContext* aCx,
                                       mozilla::dom::Element* aElement,
                                       JS::AutoObjectVector& aScopeChain);
+
+  static void ResetTimeZone();
+
 private:
   // Implementation for our EvaluateString bits
   static nsresult EvaluateString(JSContext* aCx,

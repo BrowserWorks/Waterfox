@@ -28,6 +28,7 @@
 
 #include <cairo.h>
 #include <cairo-ft.h>
+#include "mozilla/gfx/HelpersCairo.h"
 
 #include <fontconfig/fcfreetype.h>
 #include <pango/pango.h>
@@ -1004,13 +1005,13 @@ gfxFcFontSet::SortPreferredFonts(bool &aWaitForUserFont)
         // Aliases seem to often end up occurring more than once, but
         // duplicate families can't be removed from the sort pattern without
         // knowing whether duplicates have the same binding.
-        gfxFontconfigUtils::DepFcStrEntry *entry =
+        gfxFontconfigUtils::DepFcStrEntry *familyEntry =
             existingFamilies.PutEntry(family);
-        if (entry) {
-            if (entry->mKey) // old entry
+        if (familyEntry) {
+            if (familyEntry->mKey) // old entry
                 continue;
 
-            entry->mKey = family; // initialize new entry
+            familyEntry->mKey = family; // initialize new entry
         }
 
         for (uint32_t f = 0; f < familyFonts->Length(); ++f) {
@@ -1031,10 +1032,10 @@ gfxFcFontSet::SortPreferredFonts(bool &aWaitForUserFont)
                 continue;
 
             for (uint32_t r = 0; r < requiredLangs.Length(); ++r) {
-                const LangSupportEntry& entry = requiredLangs[r];
+                const LangSupportEntry& langEntry = requiredLangs[r];
                 FcLangResult support =
-                    gfxFontconfigUtils::GetLangSupport(font, entry.mLang);
-                if (support <= entry.mBestSupport) { // lower is better
+                    gfxFontconfigUtils::GetLangSupport(font, langEntry.mLang);
+                if (support <= langEntry.mBestSupport) { // lower is better
                     requiredLangs.RemoveElementAt(r);
                     --r;
                 }
@@ -1255,7 +1256,7 @@ PrepareSortPattern(FcPattern *aPattern, double aFallbackSize,
 gfxPangoFontGroup::gfxPangoFontGroup(const FontFamilyList& aFontFamilyList,
                                      const gfxFontStyle *aStyle,
                                      gfxUserFontSet *aUserFontSet)
-    : gfxFontGroup(aFontFamilyList, aStyle, aUserFontSet),
+    : gfxFontGroup(aFontFamilyList, aStyle, nullptr, aUserFontSet),
       mPangoLanguage(GuessPangoLanguage(aStyle->language))
 {
     // This language is passed to the font for shaping.
@@ -2143,27 +2144,17 @@ gfxFcFont::GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams)
   cairo_font_options_t *options = cairo_font_options_create();
   cairo_scaled_font_get_font_options(scaled_font, options);
   cairo_hint_style_t hint_style = cairo_font_options_get_hint_style(options);     
+  cairo_antialias_t antialias = cairo_font_options_get_antialias(options);
   cairo_font_options_destroy(options);
 
-  mozilla::gfx::FontHinting hinting;
+  mozilla::gfx::FontHinting hinting =
+    mozilla::gfx::CairoHintingToGfxHinting(hint_style);
 
-  switch (hint_style) {
-    case CAIRO_HINT_STYLE_NONE:
-      hinting = mozilla::gfx::FontHinting::NONE;
-      break;
-    case CAIRO_HINT_STYLE_SLIGHT:
-      hinting = mozilla::gfx::FontHinting::LIGHT;
-      break;
-    case CAIRO_HINT_STYLE_FULL:
-      hinting = mozilla::gfx::FontHinting::FULL;
-      break;
-    default:
-      hinting = mozilla::gfx::FontHinting::NORMAL;
-      break;
-  }
+  mozilla::gfx::AntialiasMode aaMode =
+    mozilla::gfx::CairoAntialiasToGfxAntialias(antialias);
 
   // We don't want to force the use of the autohinter over the font's built in hints
-  return mozilla::gfx::Factory::CreateCairoGlyphRenderingOptions(hinting, false);
+  // The fontconfig AA mode must be passed along because it may override the hinting style.
+  return mozilla::gfx::Factory::CreateCairoGlyphRenderingOptions(hinting, false, aaMode);
 }
 #endif
-

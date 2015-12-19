@@ -136,25 +136,11 @@ nsJPEGDecoder::SpeedHistogram()
   return Telemetry::IMAGE_DECODE_SPEED_JPEG;
 }
 
-nsresult
-nsJPEGDecoder::SetTargetSize(const nsIntSize& aSize)
-{
-  // Make sure the size is reasonable.
-  if (MOZ_UNLIKELY(aSize.width <= 0 || aSize.height <= 0)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  // Create a downscaler that we'll filter our output through.
-  mDownscaler.emplace(aSize);
-
-  return NS_OK;
-}
-
 void
 nsJPEGDecoder::InitInternal()
 {
   mCMSMode = gfxPlatform::GetCMSMode();
-  if (GetDecodeFlags() & imgIContainer::FLAG_DECODE_NO_COLORSPACE_CONVERSION) {
+  if (GetSurfaceFlags() & SurfaceFlags::NO_COLORSPACE_CONVERSION) {
     mCMSMode = eCMSMode_Off;
   }
 
@@ -412,7 +398,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
     MOZ_ASSERT(mImageData, "Should have a buffer now");
 
     if (mDownscaler) {
-      nsresult rv = mDownscaler->BeginFrame(GetSize(),
+      nsresult rv = mDownscaler->BeginFrame(GetSize(), Nothing(),
                                             mImageData,
                                             /* aHasAlpha = */ false);
       if (NS_FAILED(rv)) {

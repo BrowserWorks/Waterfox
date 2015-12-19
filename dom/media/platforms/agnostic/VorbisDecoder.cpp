@@ -12,11 +12,10 @@
 #include "nsAutoPtr.h"
 
 #undef LOG
-#define LOG(type, msg) MOZ_LOG(gMediaDecoderLog, type, msg)
+extern PRLogModuleInfo* GetPDMLog();
+#define LOG(type, msg) MOZ_LOG(GetPDMLog(), type, msg)
 
 namespace mozilla {
-
-extern PRLogModuleInfo* gMediaDecoderLog;
 
 ogg_packet InitVorbisPacket(const unsigned char* aData, size_t aLength,
                          bool aBOS, bool aEOS,
@@ -64,7 +63,7 @@ VorbisDataDecoder::Shutdown()
   return NS_OK;
 }
 
-nsresult
+nsRefPtr<MediaDataDecoder::InitPromise>
 VorbisDataDecoder::Init()
 {
   vorbis_info_init(&mVorbisInfo);
@@ -77,11 +76,11 @@ VorbisDataDecoder::Init()
   if (!XiphExtradataToHeaders(headers, headerLens,
                               mInfo.mCodecSpecificConfig->Elements(),
                               mInfo.mCodecSpecificConfig->Length())) {
-    return NS_ERROR_FAILURE;
+    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
   }
   for (size_t i = 0; i < headers.Length(); i++) {
     if (NS_FAILED(DecodeHeader(headers[i], headerLens[i]))) {
-      return NS_ERROR_FAILURE;
+      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
     }
   }
 
@@ -89,12 +88,12 @@ VorbisDataDecoder::Init()
 
   int r = vorbis_synthesis_init(&mVorbisDsp, &mVorbisInfo);
   if (r) {
-    return NS_ERROR_FAILURE;
+    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
   }
 
   r = vorbis_block_init(&mVorbisDsp, &mVorbisBlock);
   if (r) {
-    return NS_ERROR_FAILURE;
+    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
   }
 
   if (mInfo.mRate != (uint32_t)mVorbisDsp.vi->rate) {
@@ -106,7 +105,7 @@ VorbisDataDecoder::Init()
         ("Invalid Vorbis header: container and codec channels do not match!"));
   }
 
-  return NS_OK;
+  return InitPromise::CreateAndResolve(TrackInfo::kAudioTrack, __func__);
 }
 
 nsresult

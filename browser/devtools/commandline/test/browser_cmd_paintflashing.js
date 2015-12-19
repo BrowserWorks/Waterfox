@@ -12,9 +12,11 @@ function test() {
   return Task.spawn(testTask).then(finish, helpers.handleError);
 }
 
-let tests = {
+var tests = {
   testInput: function(options) {
     let toggleCommand = options.requisition.system.commands.get("paintflashing toggle");
+
+    let _tab = options.tab;
 
     let actions = [
       {
@@ -42,7 +44,7 @@ let tests = {
     return helpers.audit(options, actions.map(spec => ({
       setup: spec.command,
       exec: {},
-      post: () => is(toggleCommand.state.isChecked(), spec.isChecked, spec.label)
+      post: () => is(toggleCommand.state.isChecked({_tab}), spec.isChecked, spec.label)
     })));
   },
 };

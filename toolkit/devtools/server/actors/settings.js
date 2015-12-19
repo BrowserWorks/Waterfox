@@ -6,14 +6,14 @@ const {Cc, Ci, Cu, CC} = require("chrome");
 const protocol = require("devtools/server/protocol");
 const {Arg, method, RetVal} = protocol;
 const {DebuggerServer} = require("devtools/server/main");
-const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const promise = require("promise");
 
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-let defaultSettings = {};
-let settingsFile;
+var defaultSettings = {};
+var settingsFile;
 
 exports.register = function(handle) {
   handle.addGlobalActor(SettingsActor, "settingsActor");
@@ -63,7 +63,7 @@ function loadSettingsFile() {
   }
 }
 
-let SettingsActor = exports.SettingsActor = protocol.ActorClass({
+var SettingsActor = exports.SettingsActor = protocol.ActorClass({
   typeName: "settings",
 
   _getSettingsService: function() {
@@ -153,7 +153,7 @@ let SettingsActor = exports.SettingsActor = protocol.ActorClass({
   })
 });
 
-let SettingsFront = protocol.FrontClass(SettingsActor, {
+var SettingsFront = protocol.FrontClass(SettingsActor, {
   initialize: function(client, form) {
     protocol.Front.prototype.initialize.call(this, client);
     this.actorID = form.settingsActor;

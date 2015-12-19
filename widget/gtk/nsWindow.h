@@ -67,6 +67,11 @@ class nsPluginNativeWindowGtk;
 class nsShmImage;
 #endif
 
+namespace mozilla {
+class TimeStamp;
+class CurrentX11TimeGetter;
+}
+
 class nsWindow : public nsBaseWidget
 {
 public:
@@ -121,7 +126,7 @@ public:
                                    nsIWidget                  *aWidget,
                                    bool                        aActivate) override;
     void               SetZIndex(int32_t aZIndex) override;
-    NS_IMETHOD         SetSizeMode(int32_t aMode) override;
+    NS_IMETHOD         SetSizeMode(nsSizeMode aMode) override;
     NS_IMETHOD         Enable(bool aState) override;
     NS_IMETHOD         SetFocus(bool aRaise = false) override;
     NS_IMETHOD         GetScreenBounds(nsIntRect &aRect) override;
@@ -202,7 +207,7 @@ public:
                                                gpointer         aData);
 
     virtual already_AddRefed<mozilla::gfx::DrawTarget>
-                       StartRemoteDrawing() override;
+                       StartRemoteDrawingInRegion(nsIntRegion& aInvalidRegion) override;
     virtual void       EndRemoteDrawingInRegion(mozilla::gfx::DrawTarget* aDrawTarget,
                                                 nsIntRegion& aInvalidRegion) override;
 
@@ -254,8 +259,8 @@ public:
     GdkWindow*         GetGdkWindow() { return mGdkWindow; }
     bool               IsDestroyed() { return mIsDestroyed; }
 
-    void               DispatchDragEvent(uint32_t aMsg,
-                                         const nsIntPoint& aRefPoint,
+    void               DispatchDragEvent(mozilla::EventMessage aMsg,
+                                         const mozilla::LayoutDeviceIntPoint& aRefPoint,
                                          guint aTime);
     static void        UpdateDragStatus (GdkDragContext *aDragContext,
                                          nsIDragService *aDragService);
@@ -263,6 +268,8 @@ public:
     // otherwise, FALSE.
     bool               DispatchKeyDownEvent(GdkEventKey *aEvent,
                                             bool *aIsCancelled);
+    mozilla::TimeStamp GetEventTimeStamp(guint32 aEventTime);
+    mozilla::CurrentX11TimeGetter* GetCurrentTimeGetter();
 
     NS_IMETHOD_(void) SetInputContext(const InputContext& aContext,
                                       const InputContextAction& aAction) override;
@@ -293,7 +300,7 @@ public:
    virtual nsresult    ConfigureChildren(const nsTArray<Configuration>& aConfigurations) override;
    nsresult            UpdateTranslucentWindowAlphaInternal(const nsIntRect& aRect,
                                                             uint8_t* aAlphas, int32_t aStride);
-    virtual gfxASurface *GetThebesSurface();
+    virtual already_AddRefed<mozilla::gfx::DrawTarget> GetDrawTarget(const nsIntRegion& aRegion);
 
 #if (MOZ_WIDGET_GTK == 2)
     static already_AddRefed<gfxASurface> GetSurfaceForGdkDrawable(GdkDrawable* aDrawable,
@@ -325,7 +332,8 @@ protected:
     // event handling code
     void DispatchActivateEvent(void);
     void DispatchDeactivateEvent(void);
-    void DispatchResized(int32_t aWidth, int32_t aHeight);
+    void DispatchResized();
+    void MaybeDispatchResized();
 
     // Helper for SetParent and ReparentNativeWidget.
     void ReparentNativeWidgetInternal(nsIWidget* aNewParent,
@@ -344,6 +352,8 @@ protected:
 
     // Should we send resize events on all resizes?
     bool                mListenForResizes;
+    // Does WindowResized need to be called on listeners?
+    bool                mNeedsDispatchResized;
     // This flag tracks if we're hidden or shown.
     bool                mIsShown;
     bool                mNeedsShow;
@@ -362,7 +372,7 @@ private:
     void               InitButtonEvent(mozilla::WidgetMouseEvent& aEvent,
                                        GdkEventButton* aGdkEvent);
     bool               DispatchCommandEvent(nsIAtom* aCommand);
-    bool               DispatchContentCommandEvent(int32_t aMsg);
+    bool               DispatchContentCommandEvent(mozilla::EventMessage aMsg);
     bool               CheckForRollup(gdouble aMouseX, gdouble aMouseY,
                                       bool aIsWheel, bool aAlwaysRollup);
     bool               GetDragInfo(mozilla::WidgetMouseEvent* aMouseEvent,
@@ -388,11 +398,17 @@ private:
     guint32             mLastScrollEventTime;
 #endif
 
+#ifdef MOZ_X11
+    Display*            mXDisplay;
+    Drawable            mXWindow;
+    Visual*             mXVisual;
+    int                 mXDepth;
+#endif
+
 #ifdef MOZ_HAVE_SHMIMAGE
-    // If we're using xshm rendering, mThebesSurface wraps mShmImage
+    // If we're using xshm rendering
     nsRefPtr<nsShmImage>  mShmImage;
 #endif
-    nsRefPtr<gfxASurface> mThebesSurface;
 
 #ifdef ACCESSIBILITY
     nsRefPtr<mozilla::a11y::Accessible> mRootAccessible;
@@ -494,6 +510,8 @@ private:
      */
     nsRefPtr<mozilla::widget::IMContextWrapper> mIMContext;
 
+    nsAutoPtr<mozilla::CurrentX11TimeGetter> mCurrentTimeGetter;
+
     // HiDPI scale conversion
     gint GdkScaleFactor();
 
@@ -505,7 +523,10 @@ private:
 
     // From GDK
     int GdkCoordToDevicePixels(gint coord);
+public:
     mozilla::LayoutDeviceIntPoint GdkPointToDevicePixels(GdkPoint point);
+private:
+    mozilla::LayoutDeviceIntPoint GdkEventCoordsToDevicePixels(gdouble x, gdouble y);
     nsIntRect GdkRectToDevicePixels(GdkRectangle rect);
 };
 

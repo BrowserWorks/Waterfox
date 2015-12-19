@@ -15,6 +15,7 @@
 #include "AnimationCommon.h" // For GetLayerAnimationInfo
 #include "FrameLayerBuilder.h"
 #include "GeckoProfiler.h"
+#include "LayerAnimationInfo.h" // For LayerAnimationInfo::sRecords
 #include "nsStyleChangeList.h"
 #include "nsRuleProcessorData.h"
 #include "nsStyleUtil.h"
@@ -82,6 +83,7 @@ RestyleManager::RestyleManager(nsPresContext* aPresContext)
   , mInStyleRefresh(false)
   , mSkipAnimationRules(false)
   , mHavePendingNonAnimationRestyles(false)
+  , mRestyleGeneration(1)
   , mHoverGeneration(0)
   , mRebuildAllExtraHint(nsChangeHint(0))
   , mRebuildAllRestyleHint(nsRestyleHint(0))
@@ -89,6 +91,7 @@ RestyleManager::RestyleManager(nsPresContext* aPresContext)
                                         MostRecentRefresh())
   , mAnimationGeneration(0)
   , mReframingStyleContexts(nullptr)
+  , mAnimationsWithDestroyedFrame(nullptr)
   , mPendingRestyles(ELEMENT_HAS_PENDING_RESTYLE |
                      ELEMENT_IS_POTENTIAL_RESTYLE_ROOT |
                      ELEMENT_IS_CONDITIONAL_RESTYLE_ANCESTOR)
@@ -1080,6 +1083,44 @@ RestyleManager::ReframingStyleContexts::~ReframingStyleContexts()
   mRestyleManager->mPresContext->FrameConstructor()->CreateNeededFrames();
 }
 
+RestyleManager::AnimationsWithDestroyedFrame::AnimationsWithDestroyedFrame(
+                                          RestyleManager* aRestyleManager)
+  : mRestyleManager(aRestyleManager)
+  , mRestorePointer(mRestyleManager->mAnimationsWithDestroyedFrame)
+{
+  MOZ_ASSERT(!mRestyleManager->mAnimationsWithDestroyedFrame,
+             "shouldn't construct recursively");
+  mRestyleManager->mAnimationsWithDestroyedFrame = this;
+}
+
+void
+RestyleManager::AnimationsWithDestroyedFrame::StopAnimationsForElementsWithoutFrames()
+{
+  StopAnimationsWithoutFrame(mContents,
+    nsCSSPseudoElements::ePseudo_NotPseudoElement);
+  StopAnimationsWithoutFrame(mBeforeContents,
+    nsCSSPseudoElements::ePseudo_before);
+  StopAnimationsWithoutFrame(mAfterContents,
+    nsCSSPseudoElements::ePseudo_after);
+}
+
+void
+RestyleManager::AnimationsWithDestroyedFrame::StopAnimationsWithoutFrame(
+  nsTArray<nsRefPtr<nsIContent>>& aArray,
+  nsCSSPseudoElements::Type aPseudoType)
+{
+  nsAnimationManager* animationManager =
+    mRestyleManager->PresContext()->AnimationManager();
+  for (nsIContent* content : aArray) {
+    if (content->GetPrimaryFrame()) {
+      continue;
+    }
+    dom::Element* element = content->AsElement();
+
+    animationManager->StopAnimationsForElement(element, aPseudoType);
+  }
+}
+
 static inline dom::Element*
 ElementForStyleContext(nsIContent* aParentContent,
                        nsIFrame* aFrame,
@@ -1778,6 +1819,10 @@ void
 RestyleManager::EndProcessingRestyles()
 {
   FlushOverflowChangedTracker();
+
+  MOZ_ASSERT(mAnimationsWithDestroyedFrame);
+  mAnimationsWithDestroyedFrame->
+    StopAnimationsForElementsWithoutFrames();
 
   // Set mInStyleRefresh to false now, since the EndUpdate call might
   // add more restyles.
@@ -2667,10 +2712,10 @@ ElementRestyler::AddLayerChangesForAnimation()
     RestyleManager::GetMaxAnimationGenerationForFrame(mFrame);
 
   nsChangeHint hint = nsChangeHint(0);
-  const auto& layerInfo = CommonAnimationManager::sLayerAnimationInfo;
-  for (size_t i = 0; i < ArrayLength(layerInfo); i++) {
+  for (const LayerAnimationInfo::Record& layerInfo :
+         LayerAnimationInfo::sRecords) {
     Layer* layer =
-      FrameLayerBuilder::GetDedicatedLayer(mFrame, layerInfo[i].mLayerType);
+      FrameLayerBuilder::GetDedicatedLayer(mFrame, layerInfo.mLayerType);
     if (layer && frameGeneration > layer->GetAnimationGeneration()) {
       // If we have a transform layer but don't have any transform style, we
       // probably just removed the transform but haven't destroyed the layer
@@ -2679,11 +2724,11 @@ ElementRestyler::AddLayerChangesForAnimation()
       // so we can skip adding any change hint here. (If we *were* to add
       // nsChangeHint_UpdateTransformLayer, ApplyRenderingChangeToTree would
       // complain that we're updating a transform layer without a transform).
-      if (layerInfo[i].mLayerType == nsDisplayItem::TYPE_TRANSFORM &&
+      if (layerInfo.mLayerType == nsDisplayItem::TYPE_TRANSFORM &&
           !mFrame->StyleDisplay()->HasTransformStyle()) {
         continue;
       }
-      NS_UpdateHint(hint, layerInfo[i].mChangeHint);
+      NS_UpdateHint(hint, layerInfo.mChangeHint);
     }
   }
   if (hint) {
@@ -3925,6 +3970,15 @@ ElementRestyler::RestyleSelf(nsIFrame* aSelf,
       // for the other frames sharing the style context.
       LOG_RESTYLE_CONTINUE("the old style context is shared");
       result = eRestyleResult_Continue;
+
+      // It's not safe to return eRestyleResult_StopWithStyleChange,
+      // as even though we might not have cached structs for inherited
+      // properties on oldContext (and thus our samePointerStructs
+      // check later will look OK), oldContext and newContext might
+      // represent different inherited style data, and some of the
+      // elements currently sharing oldContext might need to keep it
+      // rather than get restyled to use newContext.
+      canStopWithStyleChange = false;
     }
 
     // Look at some details of the new style context to see if it would

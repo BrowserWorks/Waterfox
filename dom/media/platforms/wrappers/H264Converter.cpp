@@ -38,13 +38,16 @@ H264Converter::~H264Converter()
 {
 }
 
-nsresult
+nsRefPtr<MediaDataDecoder::InitPromise>
 H264Converter::Init()
 {
   if (mDecoder) {
     return mDecoder->Init();
   }
-  return mLastError;
+
+  // We haven't been able to initialize a decoder due to a missing SPS/PPS.
+  return MediaDataDecoder::InitPromise::CreateAndResolve(
+           TrackType::kVideoTrack, __func__);
 }
 
 nsresult
@@ -59,6 +62,12 @@ H264Converter::Input(MediaRawData* aSample)
       return NS_ERROR_FAILURE;
     }
   }
+
+  if (mInitPromiseRequest.Exists()) {
+    mMediaRawSamples.AppendElement(aSample);
+    return NS_OK;
+  }
+
   nsresult rv;
   if (!mDecoder) {
     // It is not possible to create an AVCC H264 decoder without SPS.
@@ -104,6 +113,7 @@ H264Converter::Shutdown()
 {
   if (mDecoder) {
     nsresult rv = mDecoder->Shutdown();
+    mInitPromiseRequest.DisconnectIfExists();
     mDecoder = nullptr;
     return rv;
   }
@@ -111,12 +121,12 @@ H264Converter::Shutdown()
 }
 
 bool
-H264Converter::IsHardwareAccelerated() const
+H264Converter::IsHardwareAccelerated(nsACString& aFailureReason) const
 {
   if (mDecoder) {
-    return mDecoder->IsHardwareAccelerated();
+    return mDecoder->IsHardwareAccelerated(aFailureReason);
   }
-  return MediaDataDecoder::IsHardwareAccelerated();
+  return MediaDataDecoder::IsHardwareAccelerated(aFailureReason);
 }
 
 nsresult
@@ -151,8 +161,38 @@ H264Converter::CreateDecoderAndInit(MediaRawData* aSample)
   UpdateConfigFromExtraData(extra_data);
 
   nsresult rv = CreateDecoder();
-  NS_ENSURE_SUCCESS(rv, rv);
-  return Init();
+
+  if (NS_SUCCEEDED(rv)) {
+    // Queue the incoming sample.
+    mMediaRawSamples.AppendElement(aSample);
+
+    nsRefPtr<H264Converter> self = this;
+
+    mInitPromiseRequest.Begin(mDecoder->Init()
+      ->Then(AbstractThread::GetCurrent()->AsTaskQueue(), __func__, this,
+             &H264Converter::OnDecoderInitDone,
+             &H264Converter::OnDecoderInitFailed));
+  }
+  return rv;
+}
+
+void
+H264Converter::OnDecoderInitDone(const TrackType aTrackType)
+{
+  mInitPromiseRequest.Complete();
+  for (uint32_t i = 0 ; i < mMediaRawSamples.Length(); i++) {
+    if (NS_FAILED(mDecoder->Input(mMediaRawSamples[i]))) {
+      mCallback->Error();
+    }
+  }
+  mMediaRawSamples.Clear();
+}
+
+void
+H264Converter::OnDecoderInitFailed(MediaDataDecoder::DecoderFailureReason aReason)
+{
+  mInitPromiseRequest.Complete();
+  mCallback->Error();
 }
 
 nsresult

@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
-import org.mozilla.gecko.Tab;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.favicons.decoders.LoadFaviconResult;
-import org.mozilla.gecko.mozglue.RobocopTarget;
+import org.mozilla.gecko.Tab;
 
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
@@ -71,6 +71,10 @@ class StubReadingListAccessor implements ReadingListAccessor {
 
     @Override
     public void markAsRead(ContentResolver cr, long itemID) {
+    }
+
+    @Override
+    public void markAsUnread(ContentResolver cr, long itemID) {
     }
 
     @Override
@@ -217,6 +221,11 @@ public class StubBrowserDB implements BrowserDB {
     }
 
     public Cursor getRecentHistory(ContentResolver cr, int limit) {
+        return null;
+    }
+
+    @Override
+    public Cursor getRecentHistoryBetweenTime(ContentResolver cr, int limit, long time, long end) {
         return null;
     }
 

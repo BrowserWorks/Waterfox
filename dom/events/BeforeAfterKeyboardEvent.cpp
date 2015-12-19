@@ -17,7 +17,8 @@ BeforeAfterKeyboardEvent::BeforeAfterKeyboardEvent(
                                        InternalBeforeAfterKeyboardEvent* aEvent)
   : KeyboardEvent(aOwner, aPresContext,
                   aEvent ? aEvent :
-                           new InternalBeforeAfterKeyboardEvent(false, 0,
+                           new InternalBeforeAfterKeyboardEvent(false,
+                                                                eVoidEvent,
                                                                 nullptr))
 {
   MOZ_ASSERT(mEvent->mClass == eBeforeAfterKeyboardEventClass,
@@ -78,16 +79,12 @@ BeforeAfterKeyboardEvent::GetEmbeddedCancelled()
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsresult
-NS_NewDOMBeforeAfterKeyboardEvent(nsIDOMEvent** aInstancePtrResult,
-                                  EventTarget* aOwner,
+already_AddRefed<BeforeAfterKeyboardEvent>
+NS_NewDOMBeforeAfterKeyboardEvent(EventTarget* aOwner,
                                   nsPresContext* aPresContext,
                                   InternalBeforeAfterKeyboardEvent* aEvent)
 {
-  BeforeAfterKeyboardEvent* it =
+  nsRefPtr<BeforeAfterKeyboardEvent> it =
     new BeforeAfterKeyboardEvent(aOwner, aPresContext, aEvent);
-
-  NS_ADDREF(it);
-  *aInstancePtrResult = static_cast<Event*>(it);
-  return NS_OK;
+  return it.forget();
 }

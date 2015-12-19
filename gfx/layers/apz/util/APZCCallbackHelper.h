@@ -8,6 +8,7 @@
 
 #include "FrameMetrics.h"
 #include "mozilla/EventForwards.h"
+#include "mozilla/Function.h"
 #include "mozilla/layers/APZUtils.h"
 #include "nsIDOMWindowUtils.h"
 
@@ -22,15 +23,8 @@ template<class T> class nsRefPtr;
 namespace mozilla {
 namespace layers {
 
-/* A base class for callbacks to be passed to
- * APZCCallbackHelper::SendSetAllowedTouchBehaviorNotification. */
-struct SetAllowedTouchBehaviorCallback {
-public:
-  NS_INLINE_DECL_REFCOUNTING(SetAllowedTouchBehaviorCallback)
-  virtual void Run(uint64_t aInputBlockId, const nsTArray<TouchBehaviorFlags>& aFlags) const = 0;
-protected:
-  virtual ~SetAllowedTouchBehaviorCallback() {}
-};
+typedef Function<void(uint64_t, const nsTArray<TouchBehaviorFlags>&)>
+        SetAllowedTouchBehaviorCallback;
 
 /* This class contains some helper methods that facilitate implementing the
    GeckoContentController callback interface required by the AsyncPanZoomController.
@@ -85,6 +79,9 @@ public:
     static void AcknowledgeScrollUpdate(const FrameMetrics::ViewID& aScrollId,
                                         const uint32_t& aScrollGeneration);
 
+    /* Get the pres shell associated with the root content document enclosing |aContent|. */
+    static nsIPresShell* GetRootContentDocumentPresShellForContent(nsIContent* aContent);
+
     /* Apply an "input transform" to the given |aInput| and return the transformed value.
        The input transform applied is the one for the content element corresponding to
        |aGuid|; this is populated in a previous call to UpdateCallbackTransform. See that
@@ -116,7 +113,7 @@ public:
 
     /* Synthesize a mouse event with the given parameters, and dispatch it
      * via the given widget. */
-    static nsEventStatus DispatchSynthesizedMouseEvent(uint32_t aMsg,
+    static nsEventStatus DispatchSynthesizedMouseEvent(EventMessage aMsg,
                                                        uint64_t aTime,
                                                        const LayoutDevicePoint& aRefPoint,
                                                        Modifiers aModifiers,
@@ -159,13 +156,20 @@ public:
     static void SendSetAllowedTouchBehaviorNotification(nsIWidget* aWidget,
                                                          const WidgetTouchEvent& aEvent,
                                                          uint64_t aInputBlockId,
-                                                         const nsRefPtr<SetAllowedTouchBehaviorCallback>& aCallback);
+                                                         const SetAllowedTouchBehaviorCallback& aCallback);
 
     /* Notify content of a mouse scroll testing event. */
     static void NotifyMozMouseScrollEvent(const FrameMetrics::ViewID& aScrollId, const nsString& aEvent);
 
     /* Notify content that the repaint flush is complete. */
     static void NotifyFlushComplete();
+
+    /* Temporarily ignore the Displayport for better paint performance. */
+    static void SuppressDisplayport(const bool& aEnabled);
+    static bool IsDisplayportSuppressed();
+
+private:
+  static uint64_t sLastTargetAPZCNotificationInputBlock;
 };
 
 } // namespace layers

@@ -55,8 +55,8 @@ fuzzy-if(!contentSameGfxBackendAsCanvas,3,88500) fuzzy-if(azureSkiaGL,3,89700) f
 fails-if(OSX==1010) fuzzy-if(Android,4,248) == linear-zero-length-1a.html linear-zero-length-1-ref.html
 fails-if(OSX==1010) fuzzy-if(Android,4,248) == linear-zero-length-1b.html linear-zero-length-1-ref.html
 fails-if(OSX==1010) fuzzy-if(Android,4,248) == linear-zero-length-1c.html linear-zero-length-1-ref.html
-== nostops.html about:blank
-== onestop.html about:blank
+random-if(Android&&AndroidVersion==15) == nostops.html about:blank # see bug 1192616, re-enable once we're off the pandaboards
+random-if(Android&&AndroidVersion==15) == onestop.html about:blank # see bug 1192616, re-enable once we're off the pandaboards
 fuzzy-if(!contentSameGfxBackendAsCanvas,1,5884) fuzzy-if(cocoaWidget,9,87824) fuzzy-if(azureSkiaGL,6,88024) random-if(d2d) == radial-1a.html radial-1-ref.html
 fuzzy-if(!contentSameGfxBackendAsCanvas,1,5884) fuzzy-if(cocoaWidget,9,87824) fuzzy-if(azureSkiaGL,6,88024) random-if(d2d) == radial-1b.html radial-1-ref.html
 fuzzy-if(!contentSameGfxBackendAsCanvas,1,5884) fuzzy-if(cocoaWidget,9,87824) fuzzy-if(azureSkiaGL,6,88024) random-if(d2d) == radial-1c.html radial-1-ref.html
@@ -69,11 +69,11 @@ fuzzy(3,7860) fuzzy-if(cocoaWidget,5,89041) fuzzy-if(azureSkiaGL,4,90000) == rad
 == radial-position-1a.html radial-position-1-ref.html
 fuzzy-if(cocoaWidget,1,28) fuzzy-if(winWidget,1,18) == radial-position-1b.html radial-position-1-ref.html
 fuzzy-if(cocoaWidget,4,22317) fuzzy-if(Android,8,771) == radial-shape-closest-corner-1a.html radial-shape-closest-corner-1-ref.html
-fuzzy(1,238) fuzzy-if(cocoaWidget,4,22608) fuzzy-if(/^Windows\x20NT\x206\./.test(http.oscpu)&&d2d,1,336) fuzzy-if(Android,8,787) == radial-shape-closest-corner-1b.html radial-shape-closest-corner-1-ref.html
+fuzzy(1,238) fuzzy-if(cocoaWidget,4,22608) fuzzy-if((/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\./.test(http.oscpu))&&d2d,1,336) fuzzy-if(Android,8,787) == radial-shape-closest-corner-1b.html radial-shape-closest-corner-1-ref.html
 fuzzy-if(azureQuartz,2,41171) fuzzy-if(Android,8,771) == radial-shape-closest-corner-1c.html radial-shape-closest-corner-1-ref.html
-fuzzy-if(/^Windows\x20NT\x206\.2/.test(http.oscpu),1,5) fuzzy-if(Android,17,3880) == radial-shape-closest-side-1a.html radial-shape-closest-side-1-ref.html
-fuzzy-if(/^Windows\x20NT\x206\.2/.test(http.oscpu),1,5) fuzzy-if(Android,17,3880) == radial-shape-closest-side-1b.html radial-shape-closest-side-1-ref.html
-fuzzy-if(/^Windows\x20NT\x206\.2/.test(http.oscpu),1,5) fuzzy-if(Android,17,3880) == radial-shape-closest-side-1c.html radial-shape-closest-side-1-ref.html
+fuzzy-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\.2/.test(http.oscpu),1,5) fuzzy-if(Android,17,3880) == radial-shape-closest-side-1a.html radial-shape-closest-side-1-ref.html
+fuzzy-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\.2/.test(http.oscpu),1,5) fuzzy-if(Android,17,3880) == radial-shape-closest-side-1b.html radial-shape-closest-side-1-ref.html
+fuzzy-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\.2/.test(http.oscpu),1,5) fuzzy-if(Android,17,3880) == radial-shape-closest-side-1c.html radial-shape-closest-side-1-ref.html
 fuzzy-if(Android,8,771) == radial-shape-farthest-corner-1a.html radial-shape-farthest-corner-1-ref.html
 fails-if(gtkWidget&&/x86_64-/.test(xulRuntime.XPCOMABI)) fuzzy(1,1569) fuzzy-if(cocoaWidget,2,41281) fuzzy-if(Android,8,1091) == radial-shape-farthest-corner-1b.html radial-shape-farthest-corner-1-ref.html
 fuzzy-if(Android,8,771) == radial-shape-farthest-corner-1c.html radial-shape-farthest-corner-1-ref.html

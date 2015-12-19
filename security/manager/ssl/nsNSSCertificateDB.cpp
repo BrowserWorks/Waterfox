@@ -14,6 +14,7 @@
 #include "ExtendedValidation.h"
 #include "NSSCertDBTrustDomain.h"
 #include "pkix/pkixtypes.h"
+#include "pkix/Time.h"
 #include "nsNSSComponent.h"
 #include "mozilla/Base64.h"
 #include "nsCOMPtr.h"
@@ -1385,12 +1386,11 @@ nsNSSCertificateDB::FindCertByEmailAddress(nsISupports *aToken, const char *aEma
   }
 
   // node now contains the first valid certificate with correct usage 
-  nsNSSCertificate *nssCert = nsNSSCertificate::Create(node->cert);
+  nsRefPtr<nsNSSCertificate> nssCert = nsNSSCertificate::Create(node->cert);
   if (!nssCert)
     return NS_ERROR_OUT_OF_MEMORY;
 
-  NS_ADDREF(nssCert);
-  *_retval = static_cast<nsIX509Cert*>(nssCert);
+  nssCert.forget(_retval);
   return NS_OK;
 }
 
@@ -1695,19 +1695,20 @@ nsNSSCertificateDB::GetCerts(nsIX509CertList **_retval)
   // (returns an empty list) 
   nssCertList = new nsNSSCertList(certList, locker);
 
-  *_retval = nssCertList;
-  NS_ADDREF(*_retval);
+  nssCertList.forget(_retval);
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsNSSCertificateDB::VerifyCertNow(nsIX509Cert* aCert,
-                                  int64_t /*SECCertificateUsage*/ aUsage,
-                                  uint32_t aFlags,
-                                  const char* aHostname,
-                                  nsIX509CertList** aVerifiedChain,
-                                  bool* aHasEVPolicy,
-                                  int32_t* /*PRErrorCode*/ _retval )
+nsresult
+VerifyCertAtTime(nsIX509Cert* aCert,
+                 int64_t /*SECCertificateUsage*/ aUsage,
+                 uint32_t aFlags,
+                 const char* aHostname,
+                 mozilla::pkix::Time aTime,
+                 nsIX509CertList** aVerifiedChain,
+                 bool* aHasEVPolicy,
+                 int32_t* /*PRErrorCode*/ _retval,
+                 const nsNSSShutDownPreventionLock& locker)
 {
   NS_ENSURE_ARG_POINTER(aCert);
   NS_ENSURE_ARG_POINTER(aHasEVPolicy);
@@ -1717,11 +1718,6 @@ nsNSSCertificateDB::VerifyCertNow(nsIX509Cert* aCert,
   *aVerifiedChain = nullptr;
   *aHasEVPolicy = false;
   *_retval = PR_UNKNOWN_ERROR;
-
-  nsNSSShutDownPreventionLock locker;
-  if (isAlreadyShutDown()) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
 
 #ifndef MOZ_NO_EV_CERTS
   EnsureIdentityInfoLoaded();
@@ -1742,7 +1738,7 @@ nsNSSCertificateDB::VerifyCertNow(nsIX509Cert* aCert,
   if (aHostname && aUsage == certificateUsageSSLServer) {
     srv = certVerifier->VerifySSLServerCert(nssCert,
                                             nullptr, // stapledOCSPResponse
-                                            mozilla::pkix::Now(),
+                                            aTime,
                                             nullptr, // Assume no context
                                             aHostname,
                                             false, // don't save intermediates
@@ -1750,7 +1746,7 @@ nsNSSCertificateDB::VerifyCertNow(nsIX509Cert* aCert,
                                             &resultChain,
                                             &evOidPolicy);
   } else {
-    srv = certVerifier->VerifyCert(nssCert, aUsage, mozilla::pkix::Now(),
+    srv = certVerifier->VerifyCert(nssCert, aUsage, aTime,
                                    nullptr, // Assume no context
                                    aHostname,
                                    aFlags,
@@ -1779,6 +1775,45 @@ nsNSSCertificateDB::VerifyCertNow(nsIX509Cert* aCert,
   nssCertList.forget(aVerifiedChain);
 
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsNSSCertificateDB::VerifyCertNow(nsIX509Cert* aCert,
+                                  int64_t /*SECCertificateUsage*/ aUsage,
+                                  uint32_t aFlags,
+                                  const char* aHostname,
+                                  nsIX509CertList** aVerifiedChain,
+                                  bool* aHasEVPolicy,
+                                  int32_t* /*PRErrorCode*/ _retval)
+{
+  nsNSSShutDownPreventionLock locker;
+  if (isAlreadyShutDown()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  return ::VerifyCertAtTime(aCert, aUsage, aFlags, aHostname,
+                            mozilla::pkix::Now(),
+                            aVerifiedChain, aHasEVPolicy, _retval, locker);
+}
+
+NS_IMETHODIMP
+nsNSSCertificateDB::VerifyCertAtTime(nsIX509Cert* aCert,
+                                     int64_t /*SECCertificateUsage*/ aUsage,
+                                     uint32_t aFlags,
+                                     const char* aHostname,
+                                     uint64_t aTime,
+                                     nsIX509CertList** aVerifiedChain,
+                                     bool* aHasEVPolicy,
+                                     int32_t* /*PRErrorCode*/ _retval)
+{
+  nsNSSShutDownPreventionLock locker;
+  if (isAlreadyShutDown()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  return ::VerifyCertAtTime(aCert, aUsage, aFlags, aHostname,
+                            mozilla::pkix::TimeFromEpochInSeconds(aTime),
+                            aVerifiedChain, aHasEVPolicy, _retval, locker);
 }
 
 NS_IMETHODIMP

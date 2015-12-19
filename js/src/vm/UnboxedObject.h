@@ -250,7 +250,7 @@ class UnboxedPlainObject : public JSObject
 
     static bool obj_hasProperty(JSContext* cx, HandleObject obj, HandleId id, bool* foundp);
 
-    static bool obj_getProperty(JSContext* cx, HandleObject obj, HandleObject receiver,
+    static bool obj_getProperty(JSContext* cx, HandleObject obj, HandleValue receiver,
                                 HandleId id, MutableHandleValue vp);
 
     static bool obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
@@ -386,7 +386,7 @@ class UnboxedArrayObject : public JSObject
 
     static bool obj_hasProperty(JSContext* cx, HandleObject obj, HandleId id, bool* foundp);
 
-    static bool obj_getProperty(JSContext* cx, HandleObject obj, HandleObject receiver,
+    static bool obj_getProperty(JSContext* cx, HandleObject obj, HandleValue receiver,
                                 HandleId id, MutableHandleValue vp);
 
     static bool obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
@@ -420,6 +420,10 @@ class UnboxedArrayObject : public JSObject
     static UnboxedArrayObject* create(ExclusiveContext* cx, HandleObjectGroup group,
                                       uint32_t length, NewObjectKind newKind,
                                       uint32_t maxLength = MaximumCapacity);
+
+    static bool convertToNativeWithGroup(ExclusiveContext* cx, JSObject* obj,
+                                         ObjectGroup* group, Shape* shape);
+    bool convertInt32ToDouble(ExclusiveContext* cx, ObjectGroup* group);
 
     void fillAfterConvert(ExclusiveContext* cx,
                           const AutoValueVector& values, size_t* valueCursor);

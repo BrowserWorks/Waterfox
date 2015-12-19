@@ -134,29 +134,6 @@ GetIMEStateSetOpenName(IMEState::Open aOpen)
 }
 
 static const char*
-GetEventMessageName(uint32_t aMessage)
-{
-  switch (aMessage) {
-    case NS_COMPOSITION_START:
-      return "NS_COMPOSITION_START";
-    case NS_COMPOSITION_END:
-      return "NS_COMPOSITION_END";
-    case NS_COMPOSITION_UPDATE:
-      return "NS_COMPOSITION_UPDATE";
-    case NS_COMPOSITION_CHANGE:
-      return "NS_COMPOSITION_CHANGE";
-    case NS_COMPOSITION_COMMIT_AS_IS:
-      return "NS_COMPOSITION_COMMIT_AS_IS";
-    case NS_COMPOSITION_COMMIT:
-      return "NS_COMPOSITION_COMMIT";
-    case NS_SELECTION_SET:
-      return "NS_SELECTION_SET";
-    default:
-      return "unacceptable event message";
-  }
-}
-
-static const char*
 GetNotifyIMEMessageName(IMEMessage aMessage)
 {
   switch (aMessage) {
@@ -1137,7 +1114,7 @@ IMEStateManager::DispatchCompositionEvent(
      "mFlags={ mIsTrusted=%s, mPropagationStopped=%s } }, "
      "aIsSynthesized=%s), tabParent=%p",
      aEventTargetNode, aPresContext,
-     GetEventMessageName(aCompositionEvent->message),
+     ToChar(aCompositionEvent->mMessage),
      GetBoolName(aCompositionEvent->mFlags.mIsTrusted),
      GetBoolName(aCompositionEvent->mFlags.mPropagationStopped),
      GetBoolName(aIsSynthesized), tabParent.get()));
@@ -1147,7 +1124,7 @@ IMEStateManager::DispatchCompositionEvent(
     return;
   }
 
-  MOZ_ASSERT(aCompositionEvent->message != NS_COMPOSITION_UPDATE,
+  MOZ_ASSERT(aCompositionEvent->mMessage != eCompositionUpdate,
              "compositionupdate event shouldn't be dispatched manually");
 
   EnsureTextCompositionArray();
@@ -1163,7 +1140,7 @@ IMEStateManager::DispatchCompositionEvent(
     MOZ_LOG(sISMLog, LogLevel::Debug,
       ("ISM:   IMEStateManager::DispatchCompositionEvent(), "
        "adding new TextComposition to the array"));
-    MOZ_ASSERT(aCompositionEvent->message == NS_COMPOSITION_START);
+    MOZ_ASSERT(aCompositionEvent->mMessage == eCompositionStart);
     composition =
       new TextComposition(aPresContext, aEventTargetNode, tabParent,
                           aCompositionEvent);
@@ -1171,7 +1148,7 @@ IMEStateManager::DispatchCompositionEvent(
   }
 #ifdef DEBUG
   else {
-    MOZ_ASSERT(aCompositionEvent->message != NS_COMPOSITION_START);
+    MOZ_ASSERT(aCompositionEvent->mMessage != eCompositionStart);
   }
 #endif // #ifdef DEBUG
 
@@ -1232,10 +1209,10 @@ IMEStateManager::HandleSelectionEvent(nsPresContext* aPresContext,
 
   MOZ_LOG(sISMLog, LogLevel::Info,
     ("ISM: IMEStateManager::HandleSelectionEvent(aPresContext=0x%p, "
-     "aEventTargetContent=0x%p, aSelectionEvent={ message=%s, "
+     "aEventTargetContent=0x%p, aSelectionEvent={ mMessage=%s, "
      "mFlags={ mIsTrusted=%s } }), tabParent=%p",
      aPresContext, aEventTargetContent,
-     GetEventMessageName(aSelectionEvent->message),
+     ToChar(aSelectionEvent->mMessage),
      GetBoolName(aSelectionEvent->mFlags.mIsTrusted),
      tabParent.get()));
 
@@ -1267,8 +1244,8 @@ IMEStateManager::OnCompositionEventDiscarded(
 
   MOZ_LOG(sISMLog, LogLevel::Info,
     ("ISM: IMEStateManager::OnCompositionEventDiscarded(aCompositionEvent={ "
-     "message=%s, mFlags={ mIsTrusted=%s } })",
-     GetEventMessageName(aCompositionEvent->message),
+     "mMessage=%s, mFlags={ mIsTrusted=%s } })",
+     ToChar(aCompositionEvent->mMessage),
      GetBoolName(aCompositionEvent->mFlags.mIsTrusted)));
 
   if (!aCompositionEvent->mFlags.mIsTrusted) {
@@ -1277,7 +1254,7 @@ IMEStateManager::OnCompositionEventDiscarded(
 
   // Ignore compositionstart for now because sTextCompositions may not have
   // been created yet.
-  if (aCompositionEvent->message == NS_COMPOSITION_START) {
+  if (aCompositionEvent->mMessage == eCompositionStart) {
     return;
   }
 

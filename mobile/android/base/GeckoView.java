@@ -188,7 +188,7 @@ public class GeckoView extends LayerView
             // This is the first launch, so finish initialization and go.
             GeckoProfile profile = GeckoProfile.get(context).forceCreate();
 
-        } else if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
+        } else if (GeckoThread.isRunning()) {
             // If Gecko is already running, that means the Activity was
             // destroyed, so we need to re-attach Gecko to this GeckoView.
             connectToGecko();
@@ -434,7 +434,7 @@ public class GeckoView extends LayerView
         public void reload() {
             Tab tab = Tabs.getInstance().getTab(mId);
             if (tab != null) {
-                tab.doReload();
+                tab.doReload(true);
             }
         }
 

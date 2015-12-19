@@ -2,8 +2,7 @@ browser/components/translation/cld2/
 build/stlport/
 db/sqlite3/src/
 dom/media/platforms/ffmpeg/libav
-extensions/spellcheck/hunspell/src/*.cxx
-extensions/spellcheck/hunspell/src/*.hxx
+extensions/spellcheck/hunspell/src/
 gfx/2d/convolver
 gfx/2d/image_operations
 gfx/angle/
@@ -14,10 +13,13 @@ gfx/ots/
 gfx/qcms/
 gfx/skia/
 gfx/ycbcr/
-intl/hyphenation/
+intl/hyphenation/hyphen/
 intl/icu/
 ipc/chromium/
+js/src/ctypes/libffi/
+js/src/dtoa.c
 js/src/jit/arm64/vixl/
+media/gmp-clearkey/0.1/openaes/
 media/kiss_ftt/
 media/libav/
 media/libcubeb/
@@ -44,6 +46,7 @@ memory/jemalloc/src/
 mfbt/decimal/
 mfbt/double-conversion/
 mfbt/lz4
+mobile/android/thirdparty/
 modules/brotli/
 modules/freetype2/
 modules/libbz2/

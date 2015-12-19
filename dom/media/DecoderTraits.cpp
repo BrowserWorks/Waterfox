@@ -10,10 +10,6 @@
 #include "nsMimeTypes.h"
 #include "mozilla/Preferences.h"
 
-#ifdef MOZ_ANDROID_OMX
-#include "AndroidMediaPluginHost.h"
-#endif
-
 #include "OggDecoder.h"
 #include "OggReader.h"
 #ifdef MOZ_WAVE
@@ -34,7 +30,6 @@
 #include "GStreamerReader.h"
 #endif
 #ifdef MOZ_ANDROID_OMX
-#include "AndroidMediaPluginHost.h"
 #include "AndroidMediaDecoder.h"
 #include "AndroidMediaReader.h"
 #include "AndroidMediaPluginHost.h"
@@ -189,7 +184,7 @@ static char const *const gWebMCodecs[7] = {
 #endif
 
 /* static */ bool
-DecoderTraits::IsWebMType(const nsACString& aType)
+DecoderTraits::IsWebMTypeAndEnabled(const nsACString& aType)
 {
 #ifdef MOZ_WEBM
   if (!MediaDecoder::IsWebMEnabled()) {
@@ -208,7 +203,7 @@ IsGStreamerSupportedType(const nsACString& aMimeType)
   if (!MediaDecoder::IsGStreamerEnabled())
     return false;
 
-  if (DecoderTraits::IsWebMType(aMimeType) && !Preferences::GetBool("media.prefer-gstreamer", false))
+  if (DecoderTraits::IsWebMTypeAndEnabled(aMimeType) && !Preferences::GetBool("media.prefer-gstreamer", false))
     return false;
 
   if (IsOggType(aMimeType) && !Preferences::GetBool("media.prefer-gstreamer", false))
@@ -226,6 +221,7 @@ static const char* const gOmxTypes[] = {
   "audio/3gpp",
   "audio/flac",
   "video/mp4",
+  "video/x-m4v",
   "video/3gpp",
   "video/3gpp2",
   "video/quicktime",
@@ -332,7 +328,7 @@ IsAndroidMediaType(const nsACString& aType)
   }
 
   static const char* supportedTypes[] = {
-    "audio/mpeg", "audio/mp4", "video/mp4", nullptr
+    "audio/mpeg", "audio/mp4", "video/mp4", "video/x-m4v", nullptr
   };
   return CodecListContains(supportedTypes, aType);
 }
@@ -353,13 +349,12 @@ IsMP4SupportedType(const nsACString& aType,
 {
   // MP4Decoder/Reader is currently used for MSE and mp4 files local playback.
   bool haveAAC, haveMP3, haveH264;
-  return Preferences::GetBool("media.fragmented-mp4.exposed", false) &&
-         MP4Decoder::CanHandleMediaType(aType, aCodecs, haveAAC, haveH264, haveMP3);
+  return MP4Decoder::CanHandleMediaType(aType, aCodecs, haveAAC, haveH264, haveMP3);
 }
 #endif
 
 /* static */ bool
-DecoderTraits::IsMP4Type(const nsACString& aType)
+DecoderTraits::IsMP4TypeAndEnabled(const nsACString& aType)
 {
 #ifdef MOZ_FMP4
   return IsMP4SupportedType(aType);
@@ -442,12 +437,12 @@ DecoderTraits::CanHandleCodecsType(const char* aMIMEType,
   }
 #endif
 #if !defined(MOZ_OMX_WEBM_DECODER)
-  if (IsWebMType(nsDependentCString(aMIMEType))) {
+  if (IsWebMTypeAndEnabled(nsDependentCString(aMIMEType))) {
     codecList = gWebMCodecs;
   }
 #endif
 #ifdef MOZ_FMP4
-  if (IsMP4Type(nsDependentCString(aMIMEType))) {
+  if (IsMP4TypeAndEnabled(nsDependentCString(aMIMEType))) {
     if (IsMP4SupportedType(nsDependentCString(aMIMEType), aRequestedCodecs)) {
       return CANPLAY_YES;
     } else {
@@ -537,11 +532,11 @@ DecoderTraits::CanHandleMediaType(const char* aMIMEType,
     return CANPLAY_MAYBE;
   }
 #endif
-  if (IsMP4Type(nsDependentCString(aMIMEType))) {
+  if (IsMP4TypeAndEnabled(nsDependentCString(aMIMEType))) {
     return CANPLAY_MAYBE;
   }
 #if !defined(MOZ_OMX_WEBM_DECODER)
-  if (IsWebMType(nsDependentCString(aMIMEType))) {
+  if (IsWebMTypeAndEnabled(nsDependentCString(aMIMEType))) {
     return CANPLAY_MAYBE;
   }
 #endif
@@ -669,7 +664,7 @@ InstantiateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
     return decoder.forget();
   }
 #endif
-  if (DecoderTraits::IsWebMType(aType)) {
+  if (DecoderTraits::IsWebMTypeAndEnabled(aType)) {
     decoder = new WebMDecoder();
     return decoder.forget();
   }
@@ -757,7 +752,7 @@ MediaDecoderReader* DecoderTraits::CreateReader(const nsACString& aType, Abstrac
     decoderReader = new AndroidMediaReader(aDecoder, aType);
   } else
 #endif
-  if (IsWebMType(aType)) {
+  if (IsWebMTypeAndEnabled(aType)) {
     decoderReader = Preferences::GetBool("media.format-reader.webm", true) ?
       static_cast<MediaDecoderReader*>(new MediaFormatReader(aDecoder, new WebMDemuxer(aDecoder->GetResource()))) :
       new WebMReader(aDecoder);
@@ -797,7 +792,7 @@ bool DecoderTraits::IsSupportedInVideoDocument(const nsACString& aType)
     (IsOmxSupportedType(aType) &&
      !IsB2GSupportOnlyType(aType)) ||
 #endif
-    IsWebMType(aType) ||
+    IsWebMTypeAndEnabled(aType) ||
 #ifdef MOZ_GSTREAMER
     IsGStreamerSupportedType(aType) ||
 #endif

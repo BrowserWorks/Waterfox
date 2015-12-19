@@ -224,7 +224,8 @@ public:
                        const nsAString& aRevisionId,
                        ErrorResult& aRv)
     : DataStoreProxyRunnable(aWorkerPrivate, aBackingStore, aWorkerPromise)
-    , StructuredCloneHelper(CloningNotSupported, TransferringNotSupported)
+    , StructuredCloneHelper(CloningNotSupported, TransferringNotSupported,
+                            SameProcessDifferentThread)
     , mId(aId)
     , mRevisionId(aRevisionId)
     , mRv(aRv)
@@ -285,7 +286,8 @@ public:
                        const nsAString& aRevisionId,
                        ErrorResult& aRv)
     : DataStoreProxyRunnable(aWorkerPrivate, aBackingStore, aWorkerPromise)
-    , StructuredCloneHelper(CloningNotSupported, TransferringNotSupported)
+    , StructuredCloneHelper(CloningNotSupported, TransferringNotSupported,
+                            SameProcessDifferentThread)
     , mId(aId)
     , mRevisionId(aRevisionId)
     , mRv(aRv)

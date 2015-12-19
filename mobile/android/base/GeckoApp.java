@@ -631,10 +631,17 @@ public abstract class GeckoApp
 
         } else if ("Share:Text".equals(event)) {
             String text = message.getString("text");
-            GeckoAppShell.openUriExternal(text, "text/plain", "", "", Intent.ACTION_SEND, "");
+            final Tab tab = Tabs.getInstance().getSelectedTab();
+            String title = "";
+            if (tab != null) {
+                title = tab.getDisplayTitle();
+                final String url = ReaderModeUtils.stripAboutReaderUrl(tab.getURL());
+                text += "\n\n" + url;
+            }
+            GeckoAppShell.openUriExternal(text, "text/plain", "", "", Intent.ACTION_SEND, title);
 
             // Context: Sharing via chrome list (no explicit session is active)
-            Telemetry.sendUIEvent(TelemetryContract.Event.SHARE, TelemetryContract.Method.LIST);
+            Telemetry.sendUIEvent(TelemetryContract.Event.SHARE, TelemetryContract.Method.LIST, "text");
 
         } else if ("SystemUI:Visibility".equals(event)) {
             setSystemUiVisible(message.getBoolean("visible"));
@@ -1222,6 +1229,11 @@ public abstract class GeckoApp
             GeckoThread.ensureInit(args, action,
                     TextUtils.isEmpty(uri) ? null : uri,
                     /* debugging */ ACTION_DEBUG.equals(action));
+
+            if (!TextUtils.isEmpty(uri)) {
+                // Start a speculative connection as soon as Gecko loads.
+                GeckoThread.speculativeConnect(uri);
+            }
         }
 
         // GeckoThread has to register for "Gecko:Ready" first, so GeckoApp registers
@@ -1435,17 +1447,19 @@ public abstract class GeckoApp
 
     /**
      * Loads the initial tab at Fennec startup. If we don't restore tabs, this
-     * tab will be about:home. If we restore tabs, we don't need to create a new tab.
+     * tab will be about:home, or the homepage if the use has set one.
+     * If we restore tabs, we don't need to create a new tab.
      */
-    protected void loadStartupTabWithAboutHome(final int flags) {
+    protected void loadStartupTab(final int flags) {
         if (!mShouldRestore) {
-            Tabs.getInstance().loadUrl(AboutPages.HOME, flags);
+            final String homepage = getHomepage();
+            Tabs.getInstance().loadUrl(!TextUtils.isEmpty(homepage) ? homepage : AboutPages.HOME, flags);
         }
     }
 
     /**
      * Loads the initial tab at Fennec startup. This tab will load with the given
-     * external URL. If that URL is invalid, about:home will be loaded.
+     * external URL. If that URL is invalid, a startup tab will be loaded.
      *
      * @param url    External URL to load.
      * @param intent External intent whose extras modify the request
@@ -1454,11 +1468,15 @@ public abstract class GeckoApp
     protected void loadStartupTab(final String url, final SafeIntent intent, final int flags) {
         // Invalid url
         if (url == null) {
-            loadStartupTabWithAboutHome(flags);
+            loadStartupTab(flags);
             return;
         }
 
         Tabs.getInstance().loadUrlWithIntentExtras(url, intent, flags);
+    }
+
+    public String getHomepage() {
+        return null;
     }
 
     private void initialize() {
@@ -1526,7 +1544,7 @@ public abstract class GeckoApp
             });
         } else {
             if (!mIsRestoringActivity) {
-                loadStartupTabWithAboutHome(Tabs.LOADURL_NEW_TAB);
+                loadStartupTab(Tabs.LOADURL_NEW_TAB);
             }
 
             Tabs.getInstance().notifyListeners(null, Tabs.TabEvents.RESTORED);
@@ -1583,9 +1601,6 @@ public abstract class GeckoApp
                 // receiver, which uses the system alarm infrastructure to perform tasks at
                 // intervals.
                 GeckoPreferences.broadcastHealthReportUploadPref(GeckoApp.this);
-                if (!GeckoThread.checkLaunchState(GeckoThread.LaunchState.Launched)) {
-                    return;
-                }
             }
         }, 50);
 
@@ -1603,7 +1618,7 @@ public abstract class GeckoApp
                 Tabs.getInstance().notifyListeners(selectedTab, Tabs.TabEvents.SELECTED);
             }
 
-            if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
+            if (GeckoThread.isRunning()) {
                 geckoConnected();
                 GeckoAppShell.sendEventToGecko(
                         GeckoEvent.createBroadcastEvent("Viewport:Flush", null));
@@ -1958,6 +1973,8 @@ public abstract class GeckoApp
                 }
             }
         });
+
+        RestrictedProfiles.update(this);
     }
 
     @Override
@@ -2103,7 +2120,7 @@ public abstract class GeckoApp
             ThreadUtils.postToBackgroundThread(new Runnable() {
                 @Override
                 public void run() {
-                    rec.close();
+                    rec.close(GeckoApp.this);
                 }
             });
         }
@@ -2119,7 +2136,7 @@ public abstract class GeckoApp
             return;
         }
 
-        if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
+        if (GeckoThread.isRunning()) {
             // Let the Gecko thread prepare for exit.
             GeckoAppShell.sendEventToGeckoSync(GeckoEvent.createAppBackgroundingEvent());
         }
@@ -2237,7 +2254,7 @@ public abstract class GeckoApp
         // If Gecko isn't running yet, we ignore the notification. Note that
         // even if Gecko is running but it was restarted since the notification
         // was created, the notification won't be handled (bug 849653).
-        if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
+        if (GeckoThread.isRunning()) {
             GeckoAppShell.handleNotification(action, alertName, alertCookie);
         }
     }

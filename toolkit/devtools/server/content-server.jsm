@@ -13,7 +13,7 @@ const { DevToolsLoader } = Cu.import("resource://gre/modules/devtools/Loader.jsm
 
 this.EXPORTED_SYMBOLS = ["init"];
 
-let started = false;
+var started = false;
 
 function init(msg) {
   if (started) {
@@ -31,6 +31,7 @@ function init(msg) {
 
   if (!DebuggerServer.initialized) {
     DebuggerServer.init();
+    DebuggerServer.isInChildProcess = true;
   }
 
   // In case of apps being loaded in parent process, DebuggerServer is already
@@ -45,6 +46,7 @@ function init(msg) {
 
   // Connect both parent/child processes debugger servers RDP via message managers
   let conn = DebuggerServer.connectToParent(prefix, mm);
+  conn.parentMessageManager = mm;
 
   let { ChildProcessActor } = devtools.require("devtools/server/actors/child-process");
   let actor = new ChildProcessActor(conn);

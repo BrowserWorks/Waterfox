@@ -33,6 +33,12 @@ using JS::AutoValueArray;
 using mozilla::ArrayLength;
 using mozilla::DebugOnly;
 
+enum class ParseTarget
+{
+    Script,
+    Module
+};
+
 enum ASTType {
     AST_ERROR = -1,
 #define ASTDEF(ast, str, method) ast,
@@ -756,7 +762,9 @@ class NodeBuilder
     bool generatorExpression(HandleValue body, NodeVector& blocks, HandleValue filter,
                              bool isLegacy, TokenPos* pos, MutableHandleValue dst);
 
-    bool newTargetExpression(TokenPos* pos, MutableHandleValue dst);
+    bool metaProperty(HandleValue meta, HandleValue property, TokenPos* pos, MutableHandleValue dst);
+
+    bool super(TokenPos* pos, MutableHandleValue dst);
 
     /*
      * declarations
@@ -1819,20 +1827,33 @@ NodeBuilder::classDefinition(bool expr, HandleValue name, HandleValue heritage, 
         return callback(cb, name, heritage, block, pos, dst);
 
     return newNode(type, pos,
-                   "name", name,
-                   "heritage", heritage,
+                   "id", name,
+                   "superClass", heritage,
                    "body", block,
                    dst);
 }
 
 bool
-NodeBuilder::newTargetExpression(TokenPos* pos, MutableHandleValue dst)
+NodeBuilder::metaProperty(HandleValue meta, HandleValue property, TokenPos* pos, MutableHandleValue dst)
 {
-    RootedValue cb(cx, callbacks[AST_NEWTARGET_EXPR]);
+    RootedValue cb(cx, callbacks[AST_METAPROPERTY]);
+    if (!cb.isNull())
+        return callback(cb, meta, property, pos, dst);
+
+    return newNode(AST_METAPROPERTY, pos,
+                   "meta", meta,
+                   "property", property,
+                   dst);
+}
+
+bool
+NodeBuilder::super(TokenPos* pos, MutableHandleValue dst)
+{
+    RootedValue cb(cx, callbacks[AST_SUPER]);
     if (!cb.isNull())
         return callback(cb, pos, dst);
 
-    return newNode(AST_NEWTARGET_EXPR, pos, dst);
+    return newNode(AST_SUPER, pos, dst);
 }
 
 namespace {
@@ -2287,12 +2308,13 @@ ASTSerializer::exportDeclaration(ParseNode* pn, MutableHandleValue dst)
     MOZ_ASSERT(pn->isKind(PNK_EXPORT) ||
                pn->isKind(PNK_EXPORT_FROM) ||
                pn->isKind(PNK_EXPORT_DEFAULT));
+    MOZ_ASSERT(pn->getArity() == pn->isKind(PNK_EXPORT) ? PN_UNARY : PN_BINARY);
     MOZ_ASSERT_IF(pn->isKind(PNK_EXPORT_FROM), pn->pn_right->isKind(PNK_STRING));
 
     RootedValue decl(cx, NullValue());
     NodeVector elts(cx);
 
-    ParseNode* kid = pn->isKind(PNK_EXPORT_FROM) ? pn->pn_left: pn->pn_kid;
+    ParseNode* kid = pn->isKind(PNK_EXPORT) ? pn->pn_kid : pn->pn_left;
     switch (ParseNodeKind kind = kid->getKind()) {
       case PNK_EXPORT_SPEC_LIST:
         if (!elts.reserve(pn->pn_left->pn_count))
@@ -2325,7 +2347,7 @@ ASTSerializer::exportDeclaration(ParseNode* pn, MutableHandleValue dst)
       case PNK_CONST:
       case PNK_GLOBALCONST:
       case PNK_LET:
-        if (!variableDeclaration(kid, kind == PNK_LET, &decl))
+        if (!variableDeclaration(kid, (kind == PNK_LET || kind == PNK_CONST), &decl))
             return false;
         break;
 
@@ -3066,9 +3088,7 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
 
       case PNK_DELETENAME:
       case PNK_DELETEPROP:
-      case PNK_DELETESUPERPROP:
       case PNK_DELETEELEM:
-      case PNK_DELETESUPERELEM:
       case PNK_DELETEEXPR:
       case PNK_TYPEOFNAME:
       case PNK_TYPEOFEXPR:
@@ -3129,21 +3149,20 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
       {
         MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_expr->pn_pos));
 
-        RootedValue expr(cx), id(cx);
+        RootedValue expr(cx);
+        RootedValue propname(cx);
         RootedAtom pnAtom(cx, pn->pn_atom);
-        return expression(pn->pn_expr, &expr) &&
-               identifier(pnAtom, nullptr, &id) &&
-               builder.memberExpression(false, expr, id, &pn->pn_pos, dst);
-      }
 
-      case PNK_SUPERPROP:
-      {
-        RootedValue superBase(cx), id(cx);
-        RootedAtom superAtom(cx, cx->names().super);
-        RootedAtom pnAtom(cx, pn->pn_atom);
-        return identifier(superAtom, nullptr, &superBase) &&
-               identifier(pnAtom, nullptr, &id) &&
-               builder.memberExpression(false, superBase, id, &pn->pn_pos, dst);
+        if (pn->as<PropertyAccess>().isSuper()) {
+            if (!builder.super(&pn->pn_expr->pn_pos, &expr))
+                return false;
+        } else {
+            if (!expression(pn->pn_expr, &expr))
+                return false;
+        }
+
+        return identifier(pnAtom, nullptr, &propname) &&
+               builder.memberExpression(false, expr, propname, &pn->pn_pos, dst);
       }
 
       case PNK_ELEM:
@@ -3152,20 +3171,17 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
         MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_right->pn_pos));
 
         RootedValue left(cx), right(cx);
-        return expression(pn->pn_left, &left) &&
-               expression(pn->pn_right, &right) &&
+
+        if (pn->as<PropertyByValue>().isSuper()) {
+            if (!builder.super(&pn->pn_left->pn_pos, &left))
+                return false;
+        } else {
+            if (!expression(pn->pn_left, &left))
+                return false;
+        }
+
+        return expression(pn->pn_right, &right) &&
                builder.memberExpression(true, left, right, &pn->pn_pos, dst);
-      }
-
-      case PNK_SUPERELEM:
-      {
-        MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_kid->pn_pos));
-
-        RootedValue superBase(cx), expr(cx);
-        RootedAtom superAtom(cx, cx->names().super);
-        return identifier(superAtom, nullptr, &superBase) &&
-               expression(pn->pn_kid, &expr) &&
-               builder.memberExpression(true, superBase, expr, &pn->pn_pos, dst);
       }
 
       case PNK_CALLSITEOBJ:
@@ -3312,7 +3328,22 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
         return classDefinition(pn, true, dst);
 
       case PNK_NEWTARGET:
-        return builder.newTargetExpression(&pn->pn_pos, dst);
+      {
+        MOZ_ASSERT(pn->pn_left->isKind(PNK_POSHOLDER));
+        MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_left->pn_pos));
+        MOZ_ASSERT(pn->pn_right->isKind(PNK_POSHOLDER));
+        MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_right->pn_pos));
+
+        RootedValue newIdent(cx);
+        RootedValue targetIdent(cx);
+
+        RootedAtom newStr(cx, cx->names().new_);
+        RootedAtom targetStr(cx, cx->names().target);
+
+        return identifier(newStr, &pn->pn_left->pn_pos, &newIdent) &&
+               identifier(targetStr, &pn->pn_right->pn_pos, &targetIdent) &&
+               builder.metaProperty(newIdent, targetIdent, &pn->pn_pos, dst);
+      }
 
       default:
         LOCAL_NOT_REACHED("unexpected expression type");
@@ -3692,8 +3723,8 @@ reflect_parse(JSContext* cx, uint32_t argc, Value* vp)
     ScopedJSFreePtr<char> filename;
     uint32_t lineno = 1;
     bool loc = true;
-
     RootedObject builder(cx);
+    ParseTarget target = ParseTarget::Script;
 
     RootedValue arg(cx, args.get(1));
 
@@ -3758,6 +3789,36 @@ reflect_parse(JSContext* cx, uint32_t argc, Value* vp)
             }
             builder = &prop.toObject();
         }
+
+        /* config.target */
+        RootedId targetId(cx, NameToId(cx->names().target));
+        RootedValue scriptVal(cx, StringValue(cx->names().script));
+        if (!GetPropertyDefault(cx, config, targetId, scriptVal, &prop))
+            return false;
+
+        if (!prop.isString()) {
+            ReportValueErrorFlags(cx, JSREPORT_ERROR, JSMSG_UNEXPECTED_TYPE, JSDVG_SEARCH_STACK,
+                                  prop, nullptr, "not 'script' or 'module'", nullptr);
+            return false;
+        }
+
+        RootedString stringProp(cx, prop.toString());
+        bool isScript = false;
+        bool isModule = false;
+        if (!EqualStrings(cx, stringProp, cx->names().script, &isScript))
+            return false;
+
+        if (!EqualStrings(cx, stringProp, cx->names().module, &isModule))
+            return false;
+
+        if (isScript) {
+            target = ParseTarget::Script;
+        } else if (isModule) {
+            target = ParseTarget::Module;
+        } else {
+            JS_ReportError(cx, "Bad target value, expected 'script' or 'module'");
+            return false;
+        }
     }
 
     /* Extract the builder methods first to report errors before parsing. */
@@ -3784,9 +3845,23 @@ reflect_parse(JSContext* cx, uint32_t argc, Value* vp)
 
     serialize.setParser(&parser);
 
-    ParseNode* pn = parser.parse();
-    if (!pn)
-        return false;
+    ParseNode* pn;
+    if (target == ParseTarget::Script) {
+        pn = parser.parse();
+        if (!pn)
+            return false;
+    } else {
+        Rooted<ModuleObject*> module(cx, ModuleObject::create(cx));
+        if (!module)
+            return false;
+
+        pn = parser.standaloneModule(module);
+        if (!pn)
+            return false;
+
+        MOZ_ASSERT(pn->getKind() == PNK_MODULE);
+        pn = pn->pn_body;
+    }
 
     RootedValue val(cx);
     if (!serialize.program(pn, &val)) {

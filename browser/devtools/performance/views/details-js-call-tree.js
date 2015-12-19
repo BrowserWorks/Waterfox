@@ -6,7 +6,7 @@
 /**
  * CallTree view containing profiler call tree, controlled by DetailsView.
  */
-let JsCallTreeView = Heritage.extend(DetailsSubview, {
+var JsCallTreeView = Heritage.extend(DetailsSubview, {
 
   rerenderPrefs: [
     "invert-call-tree",
@@ -23,15 +23,20 @@ let JsCallTreeView = Heritage.extend(DetailsSubview, {
     DetailsSubview.initialize.call(this);
 
     this._onLink = this._onLink.bind(this);
+    this._onFocus = this._onFocus.bind(this);
 
     this.container = $("#js-calltree-view .call-tree-cells-container");
+
+    OptimizationsListView.initialize();
   },
 
   /**
    * Unbinds events.
    */
   destroy: function () {
+    OptimizationsListView.destroy();
     this.container = null;
+    this.threadNode = null;
     DetailsSubview.destroy.call(this);
   },
 
@@ -44,15 +49,42 @@ let JsCallTreeView = Heritage.extend(DetailsSubview, {
   render: function (interval={}) {
     let recording = PerformanceController.getCurrentRecording();
     let profile = recording.getProfile();
+    let optimizations = recording.getConfiguration().withJITOptimizations;
+
     let options = {
       contentOnly: !PerformanceController.getOption("show-platform-data"),
       invertTree: PerformanceController.getOption("invert-call-tree"),
       flattenRecursion: PerformanceController.getOption("flatten-tree-recursion"),
-      showOptimizationHint: recording.getConfiguration().withJITOptimizations,
+      showOptimizationHint: optimizations
     };
-    let threadNode = this._prepareCallTree(profile, interval, options);
+    let threadNode = this.threadNode = this._prepareCallTree(profile, interval, options);
     this._populateCallTree(threadNode, options);
+
+    if (optimizations) {
+      this.showOptimizations();
+    } else {
+      this.hideOptimizations();
+    }
+    OptimizationsListView.reset();
+
     this.emit(EVENTS.JS_CALL_TREE_RENDERED);
+  },
+
+  showOptimizations: function () {
+    $("#jit-optimizations-view").classList.remove("hidden");
+  },
+
+  hideOptimizations: function () {
+    $("#jit-optimizations-view").classList.add("hidden");
+  },
+
+  _onFocus: function (_, treeItem) {
+    if (PerformanceController.getCurrentRecording().getConfiguration().withJITOptimizations) {
+      OptimizationsListView.setCurrentFrame(this.threadNode, treeItem.frame);
+      OptimizationsListView.render();
+    }
+
+    this.emit("focus", treeItem);
   },
 
   /**
@@ -111,12 +143,7 @@ let JsCallTreeView = Heritage.extend(DetailsSubview, {
 
     // Bind events.
     root.on("link", this._onLink);
-
-    // Pipe "focus" events to the view, mostly for tests
-    root.on("focus", () => this.emit("focus"));
-    // TODO tests for optimization event and rendering
-    // optimization bubbles in call tree
-    root.on("optimization", (_, node) => this.emit("optimization", node));
+    root.on("focus", this._onFocus);
 
     // Clear out other call trees.
     this.container.innerHTML = "";

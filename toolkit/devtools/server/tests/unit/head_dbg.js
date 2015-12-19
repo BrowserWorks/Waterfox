@@ -8,9 +8,9 @@ const Cu = Components.utils;
 const Cr = Components.results;
 const CC = Components.Constructor;
 
-const { require } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const { require, loader } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const { worker } = Cu.import("resource://gre/modules/devtools/worker-loader.js", {})
-const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const promise = require("promise");
 const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 const { promiseInvoke } = require("devtools/async-utils");
 
@@ -24,10 +24,52 @@ Services.prefs.setBoolPref("devtools.debugger.remote-enabled", true);
 const DevToolsUtils = require("devtools/toolkit/DevToolsUtils.js");
 const { DebuggerServer } = require("devtools/server/main");
 const { DebuggerServer: WorkerDebuggerServer } = worker.require("devtools/server/main");
+const { DebuggerClient, ObjectClient } = require("devtools/toolkit/client/main");
+const { MemoryFront } = require("devtools/server/actors/memory");
 
-let loadSubScript = Cc[
+const { addDebuggerToGlobal } = Cu.import("resource://gre/modules/jsdebugger.jsm", {});
+
+const systemPrincipal = Cc["@mozilla.org/systemprincipal;1"].createInstance(Ci.nsIPrincipal);
+
+var loadSubScript = Cc[
   '@mozilla.org/moz/jssubscript-loader;1'
 ].getService(Ci.mozIJSSubScriptLoader).loadSubScript;
+
+/**
+ * Create a `run_test` function that runs the given generator in a task after
+ * having attached to a memory actor. When done, the memory actor is detached
+ * from, the client is finished, and the test is finished.
+ *
+ * @param {GeneratorFunction} testGeneratorFunction
+ *        The generator function is passed (DebuggerClient, MemoryFront)
+ *        arguments.
+ *
+ * @returns `run_test` function
+ */
+function makeMemoryActorTest(testGeneratorFunction) {
+  const TEST_GLOBAL_NAME = "test_MemoryActor";
+
+  return function run_test() {
+    do_test_pending();
+    startTestDebuggerServer(TEST_GLOBAL_NAME).then(client => {
+      getTestTab(client, TEST_GLOBAL_NAME, function (tabForm) {
+        Task.spawn(function* () {
+          try {
+            const memoryFront = new MemoryFront(client, tabForm);
+            yield memoryFront.attach();
+            yield* testGeneratorFunction(client, memoryFront);
+            yield memoryFront.detach();
+          } catch(err) {
+            DevToolsUtils.reportException("makeMemoryActorTest", err);
+            ok(false, "Got an error: " + err);
+          }
+
+          finishClient(client);
+        });
+      });
+    });
+  };
+}
 
 function createTestGlobal(name) {
   let sandbox = Cu.Sandbox(
@@ -131,7 +173,6 @@ function tryImport(url) {
   }
 }
 
-tryImport("resource://gre/modules/devtools/dbg-client.jsm");
 tryImport("resource://gre/modules/devtools/Loader.jsm");
 tryImport("resource://gre/modules/devtools/Console.jsm");
 
@@ -169,48 +210,54 @@ function dbg_assert(cond, e) {
 
 // Register a console listener, so console messages don't just disappear
 // into the ether.
-let errorCount = 0;
-let listener = {
+var errorCount = 0;
+var listener = {
   observe: function (aMessage) {
-    errorCount++;
     try {
-      // If we've been given an nsIScriptError, then we can print out
-      // something nicely formatted, for tools like Emacs to pick up.
-      var scriptError = aMessage.QueryInterface(Ci.nsIScriptError);
-      dumpn(aMessage.sourceName + ":" + aMessage.lineNumber + ": " +
-            scriptErrorFlagsToKind(aMessage.flags) + ": " +
-            aMessage.errorMessage);
-      var string = aMessage.errorMessage;
-    } catch (x) {
-      // Be a little paranoid with message, as the whole goal here is to lose
-      // no information.
+      errorCount++;
       try {
-        var string = "" + aMessage.message;
+        // If we've been given an nsIScriptError, then we can print out
+        // something nicely formatted, for tools like Emacs to pick up.
+        var scriptError = aMessage.QueryInterface(Ci.nsIScriptError);
+        dumpn(aMessage.sourceName + ":" + aMessage.lineNumber + ": " +
+              scriptErrorFlagsToKind(aMessage.flags) + ": " +
+              aMessage.errorMessage);
+        var string = aMessage.errorMessage;
       } catch (x) {
-        var string = "<error converting error message to string>";
+        // Be a little paranoid with message, as the whole goal here is to lose
+        // no information.
+        try {
+          var string = "" + aMessage.message;
+        } catch (x) {
+          var string = "<error converting error message to string>";
+        }
       }
-    }
 
-    // Make sure we exit all nested event loops so that the test can finish.
-    while (DebuggerServer.xpcInspector
-           && DebuggerServer.xpcInspector.eventLoopNestLevel > 0) {
-      DebuggerServer.xpcInspector.exitNestedEventLoop();
-    }
+      // Make sure we exit all nested event loops so that the test can finish.
+      while (DebuggerServer
+             && DebuggerServer.xpcInspector
+             && DebuggerServer.xpcInspector.eventLoopNestLevel > 0) {
+        DebuggerServer.xpcInspector.exitNestedEventLoop();
+      }
 
-    // In the world before bug 997440, exceptions were getting lost because of
-    // the arbitrary JSContext being used in nsXPCWrappedJSClass::CallMethod.
-    // In the new world, the wanderers have returned. However, because of the,
-    // currently very-broken, exception reporting machinery in XPCWrappedJSClass
-    // these get reported as errors to the console, even if there's actually JS
-    // on the stack above that will catch them.
-    // If we throw an error here because of them our tests start failing.
-    // So, we'll just dump the message to the logs instead, to make sure the
-    // information isn't lost.
-    dumpn("head_dbg.js observed a console message: " + string);
+      // In the world before bug 997440, exceptions were getting lost because of
+      // the arbitrary JSContext being used in nsXPCWrappedJSClass::CallMethod.
+      // In the new world, the wanderers have returned. However, because of the,
+      // currently very-broken, exception reporting machinery in
+      // XPCWrappedJSClass these get reported as errors to the console, even if
+      // there's actually JS on the stack above that will catch them.  If we
+      // throw an error here because of them our tests start failing.  So, we'll
+      // just dump the message to the logs instead, to make sure the information
+      // isn't lost.
+      dumpn("head_dbg.js observed a console message: " + string);
+    } catch (_) {
+      // Swallow everything to avoid console reentrancy errors. We did our best
+      // to log above, but apparently that didn't cut it.
+    }
   }
 };
 
-let consoleService = Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
+var consoleService = Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
 consoleService.registerListener(listener);
 
 function check_except(func)
@@ -501,28 +548,28 @@ function executeSoon(aFunc) {
 //
 // TODO: Remove this once bug 906232 is resolved
 //
-let do_check_true_old = do_check_true;
-let do_check_true = function (condition) {
+var do_check_true_old = do_check_true;
+var do_check_true = function (condition) {
   do_check_true_old(condition);
 };
 
-let do_check_false_old = do_check_false;
-let do_check_false = function (condition) {
+var do_check_false_old = do_check_false;
+var do_check_false = function (condition) {
   do_check_false_old(condition);
 };
 
-let do_check_eq_old = do_check_eq;
-let do_check_eq = function (left, right) {
+var do_check_eq_old = do_check_eq;
+var do_check_eq = function (left, right) {
   do_check_eq_old(left, right);
 };
 
-let do_check_neq_old = do_check_neq;
-let do_check_neq = function (left, right) {
+var do_check_neq_old = do_check_neq;
+var do_check_neq = function (left, right) {
   do_check_neq_old(left, right);
 };
 
-let do_check_matches_old = do_check_matches;
-let do_check_matches = function (pattern, value) {
+var do_check_matches_old = do_check_matches;
+var do_check_matches = function (pattern, value) {
   do_check_matches_old(pattern, value);
 };
 

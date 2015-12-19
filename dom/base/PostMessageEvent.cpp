@@ -28,7 +28,8 @@ PostMessageEvent::PostMessageEvent(nsGlobalWindow* aSource,
                                    nsGlobalWindow* aTargetWindow,
                                    nsIPrincipal* aProvidedPrincipal,
                                    bool aTrustedCaller)
-: StructuredCloneHelper(CloningSupported, TransferringSupported),
+: StructuredCloneHelper(CloningSupported, TransferringSupported,
+                        SameProcessSameThread),
   mSource(aSource),
   mCallerOrigin(aCallerOrigin),
   mTargetWindow(aTargetWindow),
@@ -113,8 +114,10 @@ PostMessageEvent::Run()
                           false /*cancelable */, messageData, mCallerOrigin,
                           EmptyString(), mSource);
 
+  nsTArray<nsRefPtr<MessagePort>> ports = TakeTransferredPorts();
+
   event->SetPorts(new MessagePortList(static_cast<dom::Event*>(event.get()),
-                                      GetTransferredPorts()));
+                                      ports));
 
   // We can't simply call dispatchEvent on the window because doing so ends
   // up flipping the trusted bit on the event, and we don't want that to

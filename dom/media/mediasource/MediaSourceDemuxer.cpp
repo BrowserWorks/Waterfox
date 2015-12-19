@@ -35,8 +35,8 @@ MediaSourceDemuxer::MediaSourceDemuxer()
 nsRefPtr<MediaSourceDemuxer::InitPromise>
 MediaSourceDemuxer::Init()
 {
-  return ProxyMediaCall(GetTaskQueue(), this, __func__,
-                        &MediaSourceDemuxer::AttemptInit);
+  return InvokeAsync(GetTaskQueue(), this, __func__,
+                     &MediaSourceDemuxer::AttemptInit);
 }
 
 nsRefPtr<MediaSourceDemuxer::InitPromise>
@@ -47,8 +47,25 @@ MediaSourceDemuxer::AttemptInit()
   if (ScanSourceBuffersForContent()) {
     return InitPromise::CreateAndResolve(NS_OK, __func__);
   }
-  return InitPromise::CreateAndReject(DemuxerFailureReason::WAITING_FOR_DATA,
-                                      __func__);
+
+  nsRefPtr<InitPromise> p = mInitPromise.Ensure(__func__);
+
+  return p;
+}
+
+void MediaSourceDemuxer::NotifyDataArrived(uint32_t aLength, int64_t aOffset)
+{
+  nsRefPtr<MediaSourceDemuxer> self = this;
+  nsCOMPtr<nsIRunnable> task =
+    NS_NewRunnableFunction([self] () {
+      if (self->mInitPromise.IsEmpty()) {
+        return;
+      }
+      if (self->ScanSourceBuffersForContent()) {
+        self->mInitPromise.ResolveIfExists(NS_OK, __func__);
+      }
+    });
+  GetTaskQueue()->Dispatch(task.forget());
 }
 
 bool
@@ -213,6 +230,7 @@ MediaSourceDemuxer::GetManager(TrackType aTrack)
 
 MediaSourceDemuxer::~MediaSourceDemuxer()
 {
+  mInitPromise.RejectIfExists(DemuxerFailureReason::SHUTDOWN, __func__);
   mTaskQueue->BeginShutdown();
   mTaskQueue = nullptr;
 }
@@ -272,16 +290,16 @@ nsRefPtr<MediaSourceTrackDemuxer::SeekPromise>
 MediaSourceTrackDemuxer::Seek(media::TimeUnit aTime)
 {
   MOZ_ASSERT(mParent, "Called after BreackCycle()");
-  return ProxyMediaCall(mParent->GetTaskQueue(), this, __func__,
-                        &MediaSourceTrackDemuxer::DoSeek, aTime);
+  return InvokeAsync(mParent->GetTaskQueue(), this, __func__,
+                     &MediaSourceTrackDemuxer::DoSeek, aTime);
 }
 
 nsRefPtr<MediaSourceTrackDemuxer::SamplesPromise>
 MediaSourceTrackDemuxer::GetSamples(int32_t aNumSamples)
 {
   MOZ_ASSERT(mParent, "Called after BreackCycle()");
-  return ProxyMediaCall(mParent->GetTaskQueue(), this, __func__,
-                        &MediaSourceTrackDemuxer::DoGetSamples, aNumSamples);
+  return InvokeAsync(mParent->GetTaskQueue(), this, __func__,
+                     &MediaSourceTrackDemuxer::DoGetSamples, aNumSamples);
 }
 
 void
@@ -312,16 +330,9 @@ MediaSourceTrackDemuxer::GetNextRandomAccessPoint(media::TimeUnit* aTime)
 nsRefPtr<MediaSourceTrackDemuxer::SkipAccessPointPromise>
 MediaSourceTrackDemuxer::SkipToNextRandomAccessPoint(media::TimeUnit aTimeThreshold)
 {
-  return ProxyMediaCall(mParent->GetTaskQueue(), this, __func__,
-                        &MediaSourceTrackDemuxer::DoSkipToNextRandomAccessPoint,
-                        aTimeThreshold);
-}
-
-int64_t
-MediaSourceTrackDemuxer::GetEvictionOffset(media::TimeUnit aTime)
-{
-  // Unused.
-  return 0;
+  return InvokeAsync(mParent->GetTaskQueue(), this, __func__,
+                     &MediaSourceTrackDemuxer::DoSkipToNextRandomAccessPoint,
+                     aTimeThreshold);
 }
 
 media::TimeIntervals

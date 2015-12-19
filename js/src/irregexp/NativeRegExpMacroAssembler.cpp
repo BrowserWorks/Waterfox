@@ -395,14 +395,14 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
         LiveGeneralRegisterSet volatileRegs(GeneralRegisterSet::Volatile());
 #if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64)
         volatileRegs.add(Register::FromCode(Registers::lr));
-#elif defined(JS_CODEGEN_MIPS)
+#elif defined(JS_CODEGEN_MIPS32)
         volatileRegs.add(Register::FromCode(Registers::ra));
 #endif
         volatileRegs.takeUnchecked(temp0);
         volatileRegs.takeUnchecked(temp1);
         masm.PushRegsInMask(volatileRegs);
 
-        masm.setupUnalignedABICall(1, temp0);
+        masm.setupUnalignedABICall(temp0);
         masm.passABIArg(temp1);
         masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, GrowBacktrackStack));
         masm.storeCallResult(temp0);
@@ -814,7 +814,7 @@ NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label
         //   Address byte_offset1 - Address captured substring's start.
         //   Address byte_offset2 - Address of current character position.
         //   size_t byte_length - length of capture in bytes(!)
-        masm.setupUnalignedABICall(3, temp0);
+        masm.setupUnalignedABICall(temp0);
         masm.passABIArg(current_character);
         masm.passABIArg(current_position);
         masm.passABIArg(temp1);
@@ -1324,7 +1324,7 @@ NativeRegExpMacroAssembler::CanReadUnaligned()
 {
 #if defined(JS_CODEGEN_ARM)
     return !jit::HasAlignmentFault();
-#elif defined(JS_CODEGEN_MIPS)
+#elif defined(JS_CODEGEN_MIPS32)
     return false;
 #else
     return true;

@@ -12,16 +12,17 @@ const { getMostRecentBrowserWindow } = require('sdk/window/utils');
 const { data } = require('sdk/self');
 const { set } = require('sdk/preferences/service');
 
-const { DebuggerServer } = Cu.import('resource://gre/modules/devtools/dbg-server.jsm', {});
-const { DebuggerClient } = Cu.import('resource://gre/modules/devtools/dbg-client.jsm', {});
+const { require: devtoolsRequire } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const { DebuggerServer } = devtoolsRequire("devtools/server/main");
+const { DebuggerClient } = devtoolsRequire("devtools/toolkit/client/main");
 
-let gClient;
-let ok;
-let testName = 'testDebugger';
-let iframeURL = 'data:text/html;charset=utf-8,' + testName;
-let TAB_URL = 'data:text/html;charset=utf-8,' + encodeURIComponent('<iframe src="' + iframeURL + '" />');
+var gClient;
+var ok;
+var testName = 'testDebugger';
+var iframeURL = 'data:text/html;charset=utf-8,' + testName;
+var TAB_URL = 'data:text/html;charset=utf-8,' + encodeURIComponent('<iframe src="' + iframeURL + '" />');
 TAB_URL = data.url('index.html');
-let mod;
+var mod;
 
 exports.testDebugger = function(assert, done) {
   ok = assert.ok.bind(assert);

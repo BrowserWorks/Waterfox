@@ -18,12 +18,14 @@
 #include "PerformanceEntry.h"
 #include "PerformanceMark.h"
 #include "PerformanceMeasure.h"
+#include "PerformanceObserver.h"
 #include "PerformanceResourceTiming.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/PerformanceBinding.h"
 #include "mozilla/dom/PerformanceEntryEvent.h"
 #include "mozilla/dom/PerformanceTimingBinding.h"
 #include "mozilla/dom/PerformanceNavigationBinding.h"
+#include "mozilla/dom/PerformanceObserverBinding.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/TimeStamp.h"
@@ -348,7 +350,7 @@ nsPerformanceTiming::ResponseStart()
 DOMHighResTimeStamp
 nsPerformanceTiming::ResponseEndHighRes()
 {
-  if (!IsInitialized()) {
+  if (!nsContentUtils::IsPerformanceTimingEnabled() || !IsInitialized()) {
     return mZeroTime;
   }
   if (mResponseEnd.IsNull() ||
@@ -478,16 +480,15 @@ nsPerformance::Timing()
 void
 nsPerformance::DispatchBufferFullEvent()
 {
-  nsCOMPtr<nsIDOMEvent> event;
-  nsresult rv = NS_NewDOMEvent(getter_AddRefs(event), this, nullptr, nullptr);
-  if (NS_SUCCEEDED(rv)) {
-    // it bubbles, and it isn't cancelable
-    rv = event->InitEvent(NS_LITERAL_STRING("resourcetimingbufferfull"), true, false);
-    if (NS_SUCCEEDED(rv)) {
-      event->SetTrusted(true);
-      DispatchDOMEvent(nullptr, event, nullptr, nullptr);
-    }
+  nsRefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
+  // it bubbles, and it isn't cancelable
+  nsresult rv = event->InitEvent(NS_LITERAL_STRING("resourcetimingbufferfull"),
+                                 true, false);
+  if (NS_FAILED(rv)) {
+    return;
   }
+  event->SetTrusted(true);
+  DispatchDOMEvent(nullptr, event, nullptr, nullptr);
 }
 
 nsPerformanceNavigation*
@@ -693,15 +694,17 @@ public:
 class PrefEnabledRunnable final : public WorkerMainThreadRunnable
 {
 public:
-  explicit PrefEnabledRunnable(WorkerPrivate* aWorkerPrivate)
+  PrefEnabledRunnable(WorkerPrivate* aWorkerPrivate,
+                      const nsCString& aPrefName)
     : WorkerMainThreadRunnable(aWorkerPrivate)
     , mEnabled(false)
+    , mPrefName(aPrefName)
   { }
 
   bool MainThreadRun() override
   {
     MOZ_ASSERT(NS_IsMainThread());
-    mEnabled = Preferences::GetBool("dom.enable_user_timing", false);
+    mEnabled = Preferences::GetBool(mPrefName.get(), false);
     return true;
   }
 
@@ -712,6 +715,7 @@ public:
 
 private:
   bool mEnabled;
+  nsCString mPrefName;
 };
 
 } // namespace
@@ -728,7 +732,27 @@ nsPerformance::IsEnabled(JSContext* aCx, JSObject* aGlobal)
   workerPrivate->AssertIsOnWorkerThread();
 
   nsRefPtr<PrefEnabledRunnable> runnable =
-    new PrefEnabledRunnable(workerPrivate);
+    new PrefEnabledRunnable(workerPrivate,
+                            NS_LITERAL_CSTRING("dom.enable_user_timing"));
+  runnable->Dispatch(workerPrivate->GetJSContext());
+
+  return runnable->IsEnabled();
+}
+
+/* static */ bool
+nsPerformance::IsObserverEnabled(JSContext* aCx, JSObject* aGlobal)
+{
+  if (NS_IsMainThread()) {
+    return Preferences::GetBool("dom.enable_performance_observer", false);
+  }
+
+  WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+  MOZ_ASSERT(workerPrivate);
+  workerPrivate->AssertIsOnWorkerThread();
+
+  nsRefPtr<PrefEnabledRunnable> runnable =
+    new PrefEnabledRunnable(workerPrivate,
+                            NS_LITERAL_CSTRING("dom.enable_performance_observer"));
   runnable->Dispatch(workerPrivate->GetJSContext());
 
   return runnable->IsEnabled();
@@ -788,6 +812,7 @@ NS_IMPL_RELEASE_INHERITED(PerformanceBase, DOMEventTargetHelper)
 
 PerformanceBase::PerformanceBase()
   : mResourceTimingBufferSize(kDefaultResourceTimingBufferSize)
+  , mPendingNotificationObserversTask(false)
 {
   MOZ_ASSERT(!NS_IsMainThread());
 }
@@ -795,6 +820,7 @@ PerformanceBase::PerformanceBase()
 PerformanceBase::PerformanceBase(nsPIDOMWindow* aWindow)
   : DOMEventTargetHelper(aWindow)
   , mResourceTimingBufferSize(kDefaultResourceTimingBufferSize)
+  , mPendingNotificationObserversTask(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
 }
@@ -1025,6 +1051,8 @@ PerformanceBase::InsertUserEntry(PerformanceEntry* aEntry)
 {
   mUserEntries.InsertElementSorted(aEntry,
                                    PerformanceEntryComparator());
+
+  QueueEntry(aEntry);
 }
 
 void
@@ -1047,5 +1075,90 @@ PerformanceBase::InsertResourceEntry(PerformanceEntry* aEntry)
   if (mResourceEntries.Length() == mResourceTimingBufferSize) {
     // call onresourcetimingbufferfull
     DispatchBufferFullEvent();
+  }
+  QueueEntry(aEntry);
+}
+
+void
+PerformanceBase::AddObserver(PerformanceObserver* aObserver)
+{
+  mObservers.AppendElementUnlessExists(aObserver);
+}
+
+void
+PerformanceBase::RemoveObserver(PerformanceObserver* aObserver)
+{
+  mObservers.RemoveElement(aObserver);
+}
+
+void
+PerformanceBase::NotifyObservers()
+{
+  mPendingNotificationObserversTask = false;
+  NS_OBSERVER_ARRAY_NOTIFY_XPCOM_OBSERVERS(mObservers,
+                                           PerformanceObserver,
+                                           Notify, ());
+}
+
+void
+PerformanceBase::CancelNotificationObservers()
+{
+  mPendingNotificationObserversTask = false;
+}
+
+class NotifyObserversTask final : public nsCancelableRunnable
+{
+public:
+  explicit NotifyObserversTask(PerformanceBase* aPerformance)
+    : mPerformance(aPerformance)
+  {
+    MOZ_ASSERT(mPerformance);
+  }
+
+  NS_IMETHOD Run() override
+  {
+    MOZ_ASSERT(mPerformance);
+    mPerformance->NotifyObservers();
+    return NS_OK;
+  }
+
+  NS_IMETHOD Cancel() override
+  {
+    mPerformance->CancelNotificationObservers();
+    mPerformance = nullptr;
+    return NS_OK;
+  }
+
+private:
+  ~NotifyObserversTask()
+  {
+  }
+
+  nsRefPtr<PerformanceBase> mPerformance;
+};
+
+void
+PerformanceBase::RunNotificationObserversTask()
+{
+  mPendingNotificationObserversTask = true;
+  nsCOMPtr<nsIRunnable> task = new NotifyObserversTask(this);
+  nsresult rv = NS_DispatchToCurrentThread(task);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    mPendingNotificationObserversTask = false;
+  }
+}
+
+void
+PerformanceBase::QueueEntry(PerformanceEntry* aEntry)
+{
+  if (mObservers.IsEmpty()) {
+    return;
+  }
+  NS_OBSERVER_ARRAY_NOTIFY_XPCOM_OBSERVERS(mObservers,
+                                           PerformanceObserver,
+                                           QueueEntry, (aEntry));
+
+  if (!mPendingNotificationObserversTask) {
+    RunNotificationObserversTask();
   }
 }

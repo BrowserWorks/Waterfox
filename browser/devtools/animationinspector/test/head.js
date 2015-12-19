@@ -7,7 +7,7 @@
 const Cu = Components.utils;
 const {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
 const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const promise = require("promise");
 const {TargetFactory} = require("devtools/framework/target");
 const {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
 const {ViewHelpers} = Cu.import("resource:///modules/devtools/ViewHelpers.jsm", {});
@@ -21,6 +21,7 @@ const ROOT_TEST_DIR = getRootDirectory(gTestPath);
 const FRAME_SCRIPT_URL = ROOT_TEST_DIR + "doc_frame_script.js";
 const COMMON_FRAME_SCRIPT_URL = "chrome://browser/content/devtools/frame-script-utils.js";
 const NEW_UI_PREF = "devtools.inspector.animationInspectorV3";
+const TAB_NAME = "animationinspector";
 
 // Auto clean-up when a test ends
 registerCleanupFunction(function*() {
@@ -83,13 +84,6 @@ function addTab(url) {
 }
 
 /**
- * Switch ON the new UI pref.
- */
-function enableNewUI() {
-  Services.prefs.setBoolPref(NEW_UI_PREF, true);
-}
-
-/**
  * Reload the current tab location.
  */
 function reloadTab() {
@@ -120,7 +114,7 @@ function getNodeFront(selector, {walker}) {
  *        to highlight the node upon selection
  * @return {Promise} Resolves when the inspector is updated with the new node
  */
-let selectNode = Task.async(function*(data, inspector, reason="test") {
+var selectNode = Task.async(function*(data, inspector, reason="test") {
   info("Selecting the node for '" + data + "'");
   let nodeFront = data;
   if (!data._form) {
@@ -129,6 +123,13 @@ let selectNode = Task.async(function*(data, inspector, reason="test") {
   let updated = inspector.once("inspector-updated");
   inspector.selection.setNodeFront(nodeFront, reason);
   yield updated;
+
+  // 99% of the times, selectNode is called to select an animated node, and we
+  // want to make sure the rest of the test waits for the animations to be
+  // properly displayed (wait for all target DOM nodes to be previewed).
+  // Even if there are no animations, this is safe to do.
+  let {AnimationsPanel} = inspector.sidebar.getWindowForTab(TAB_NAME);
+  yield waitForAllAnimationTargets(AnimationsPanel);
 });
 
 /**
@@ -139,15 +140,9 @@ let selectNode = Task.async(function*(data, inspector, reason="test") {
  * @param {String} msg An optional string to be used as the assertion message.
  */
 function assertAnimationsDisplayed(panel, nbAnimations, msg="") {
-  let isNewUI = Services.prefs.getBoolPref(NEW_UI_PREF);
   msg = msg || `There are ${nbAnimations} animations in the panel`;
-  if (isNewUI) {
-    is(panel.animationsTimelineComponent.animationsEl.childNodes.length,
-       nbAnimations, msg);
-  } else {
-    is(panel.playersEl.querySelectorAll(".player-widget").length,
-       nbAnimations, msg);
-  }
+  is(panel.animationsTimelineComponent.animationsEl.childNodes.length,
+     nbAnimations, msg);
 }
 
 /**
@@ -158,8 +153,8 @@ function assertAnimationsDisplayed(panel, nbAnimations, msg="") {
  * @param {InspectorPanel} inspector
  * @return {Promise}
  */
-let waitForAnimationInspectorReady = Task.async(function*(inspector) {
-  let win = inspector.sidebar.getWindowForTab("animationinspector");
+var waitForAnimationInspectorReady = Task.async(function*(inspector) {
+  let win = inspector.sidebar.getWindowForTab(TAB_NAME);
   let updated = inspector.once("inspector-updated");
 
   // In e10s, if we wait for underlying toolbox actors to
@@ -178,7 +173,7 @@ let waitForAnimationInspectorReady = Task.async(function*(inspector) {
  * sidebar selected.
  * @return a promise that resolves when the inspector is ready.
  */
-let openAnimationInspector = Task.async(function*() {
+var openAnimationInspector = Task.async(function*() {
   let target = TargetFactory.forTab(gBrowser.selectedTab);
 
   info("Opening the toolbox with the inspector selected");
@@ -192,12 +187,12 @@ let openAnimationInspector = Task.async(function*() {
   info("Waiting for toolbox focus");
   yield waitForToolboxFrameFocus(toolbox);
 
-  inspector.sidebar.select("animationinspector");
+  inspector.sidebar.select(TAB_NAME);
 
   info("Waiting for the inspector and sidebar to be ready");
   yield panelReady;
 
-  let win = inspector.sidebar.getWindowForTab("animationinspector");
+  let win = inspector.sidebar.getWindowForTab(TAB_NAME);
   let {AnimationsController, AnimationsPanel} = win;
 
   info("Waiting for the animation controller and panel to be ready");
@@ -206,6 +201,11 @@ let openAnimationInspector = Task.async(function*() {
   } else {
     yield AnimationsPanel.once(AnimationsPanel.PANEL_INITIALIZED);
   }
+
+  // Make sure we wait for all animations to be loaded (especially their target
+  // nodes to be lazily displayed). This is safe to do even if there are no
+  // animations displayed.
+  yield waitForAllAnimationTargets(AnimationsPanel);
 
   return {
     toolbox: toolbox,
@@ -217,43 +217,13 @@ let openAnimationInspector = Task.async(function*() {
 });
 
 /**
- * Turn on the new timeline-based UI pref ON, and then open the toolbox, with
- * the inspector tool visible and the animationinspector sidebar selected.
- * @return a promise that resolves when the inspector is ready.
- */
-function openAnimationInspectorNewUI() {
-  enableNewUI();
-  return openAnimationInspector();
-}
-
-/**
  * Close the toolbox.
  * @return a promise that resolves when the toolbox has closed.
  */
-let closeAnimationInspector = Task.async(function*() {
+var closeAnimationInspector = Task.async(function*() {
   let target = TargetFactory.forTab(gBrowser.selectedTab);
   yield gDevTools.closeToolbox(target);
 });
-
-/**
- * During the time period we migrate from the playerWidgets-based UI to the new
- * AnimationTimeline UI, we'll want to run certain tests against both UI.
- * This closes the toolbox, switch the new UI pref ON, and opens the toolbox
- * again, with the animation inspector panel selected.
- * @param {Boolean} reload Optionally reload the page after the toolbox was
- * closed and before it is opened again.
- * @return a promise that resolves when the animation inspector is ready.
- */
-let closeAnimationInspectorAndRestartWithNewUI = Task.async(function*(reload) {
-  info("Close the toolbox and test again with the new UI");
-  yield closeAnimationInspector();
-  if (reload) {
-    yield reloadTab();
-  }
-  enableNewUI();
-  return yield openAnimationInspector();
-});
-
 
 /**
  * Wait for the toolbox frame to receive focus after it loads
@@ -362,7 +332,7 @@ function onceNextPlayerRefresh(player) {
 /**
  * Simulate a click on the playPause button of a playerWidget.
  */
-let togglePlayPauseButton = Task.async(function*(widget) {
+var togglePlayPauseButton = Task.async(function*(widget) {
   let nextState = widget.player.state.playState === "running"
                   ? "paused"
                   : "running";
@@ -395,7 +365,7 @@ let togglePlayPauseButton = Task.async(function*(widget) {
  * time the state is refreshed, until the condition passes.
  * @return {Promise} Resolves when the condition passes.
  */
-let waitForStateCondition = Task.async(function*(player, conditionCheck, desc="") {
+var waitForStateCondition = Task.async(function*(player, conditionCheck, desc="") {
   if (desc) {
     desc = "(" + desc + ")";
   }
@@ -432,7 +402,7 @@ function waitForPlayState(player, playState) {
  * @param {Numer} time.
  * @return {Promise} Resolves when the animation is paused and tests have ran.
  */
-let checkPausedAt = Task.async(function*(widget, time) {
+var checkPausedAt = Task.async(function*(widget, time) {
   info("Wait for the next auto-refresh");
 
   yield waitForStateCondition(widget.player, state => {
@@ -448,7 +418,7 @@ let checkPausedAt = Task.async(function*(widget, time) {
 /**
  * Get the current playState of an animation player on a given node.
  */
-let getAnimationPlayerState = Task.async(function*(selector, animationIndex=0) {
+var getAnimationPlayerState = Task.async(function*(selector, animationIndex=0) {
   let playState = yield executeInContent("Test:GetAnimationPlayerState",
                                          {selector, animationIndex});
   return playState;
@@ -462,3 +432,20 @@ let getAnimationPlayerState = Task.async(function*(selector, animationIndex=0) {
 function isNodeVisible(node) {
   return !!node.getClientRects().length;
 }
+
+/**
+ * Wait for all AnimationTargetNode instances to be fully loaded
+ * (fetched their related actor and rendered), and return them.
+ * @param {AnimationsPanel} panel
+ * @return {Array} all AnimationTargetNode instances
+ */
+var waitForAllAnimationTargets = Task.async(function*(panel) {
+  let targets = panel.animationsTimelineComponent.targetNodes;
+  yield promise.all(targets.map(t => {
+    if (!t.nodeFront) {
+      return t.once("target-retrieved");
+    }
+    return false;
+  }));
+  return targets;
+});

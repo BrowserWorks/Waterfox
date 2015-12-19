@@ -30,6 +30,7 @@ this.SpecialPowersObserverAPI = function SpecialPowersObserverAPI() {
   this._crashDumpDir = null;
   this._processCrashObserversRegistered = false;
   this._chromeScriptListeners = [];
+  this._extensions = new Map();
 }
 
 function parseKeyValuePairs(text) {
@@ -229,6 +230,14 @@ SpecialPowersObserverAPI.prototype = {
     return output;
   },
 
+  _sendReply: function(aMessage, aReplyName, aReplyMsg) {
+    let mm = aMessage.target
+                     .QueryInterface(Ci.nsIFrameLoaderOwner)
+                     .frameLoader
+                     .messageManager;
+    mm.sendAsyncMessage(aReplyName, aReplyMsg);
+  },
+
   /**
    * messageManager callback function
    * This will get requests from our API in the window and process them in chrome for it
@@ -314,7 +323,9 @@ SpecialPowersObserverAPI.prototype = {
         let msg = aMessage.json;
 
         let secMan = Services.scriptSecurityManager;
-        let principal = secMan.getAppCodebasePrincipal(this._getURI(msg.url), msg.appId, msg.isInBrowserElement);
+        // TODO: Bug 1196665 - Add originAttributes into SpecialPowers
+        let attrs = {appId: msg.appId, inBrowser: msg.isInBrowserElement};
+        let principal = secMan.createCodebasePrincipal(this._getURI(msg.url), attrs);
 
         switch (msg.op) {
           case "add":
@@ -505,24 +516,22 @@ SpecialPowersObserverAPI.prototype = {
           throw new SpecialPowersError('Invalid operation for SPQuotaManager');
         }
 
-        let uri = this._getURI(msg.uri);
+        let secMan = Services.scriptSecurityManager;
+        let principal = secMan.createCodebasePrincipal(this._getURI(msg.uri), {
+          appId: msg.appId,
+          inBrowser: msg.inBrowser,
+        });
 
         if (op == 'clear') {
-          if (('inBrowser' in msg) && msg.inBrowser !== undefined) {
-            qm.clearStoragesForURI(uri, msg.appId, msg.inBrowser);
-          } else if (('appId' in msg) && msg.appId !== undefined) {
-            qm.clearStoragesForURI(uri, msg.appId);
-          } else {
-            qm.clearStoragesForURI(uri);
-          }
+          qm.clearStoragesForPrincipal(principal);
         } else if (op == 'reset') {
           qm.reset();
         }
 
-        // We always use the getUsageForURI callback even if we're clearing
-        // since we know that clear and getUsageForURI are synchronized by the
+        // We always use the getUsageForPrincipal callback even if we're clearing
+        // since we know that clear and getUsageForPrincipal are synchronized by the
         // QuotaManager.
-        let callback = function(uri, usage, fileUsage) {
+        let callback = function(principal, usage, fileUsage) {
           let reply = { id: msg.id };
           if (op == 'getUsage') {
             reply.usage = usage;
@@ -531,13 +540,7 @@ SpecialPowersObserverAPI.prototype = {
           mm.sendAsyncMessage(aMessage.name, reply);
         };
 
-        if (('inBrowser' in msg) && msg.inBrowser !== undefined) {
-          qm.getUsageForURI(uri, callback, msg.appId, msg.inBrowser);
-        } else if (('appId' in msg) && msg.appId !== undefined) {
-          qm.getUsageForURI(uri, callback, msg.appId);
-        } else {
-          qm.getUsageForURI(uri, callback);
-        }
+        qm.getUsageForPrincipal(principal, callback);
 
         return undefined;	// See comment at the beginning of this function.
       }
@@ -551,6 +554,74 @@ SpecialPowersObserverAPI.prototype = {
           observe(null, "idle-daily", "Caller:SpecialPowers");
 
         return undefined;	// See comment at the beginning of this function.
+      }
+
+      case "SPLoadExtension": {
+        let {Extension} = Components.utils.import("resource://gre/modules/Extension.jsm", {});
+
+        let id = aMessage.data.id;
+        let ext = aMessage.data.ext;
+        let extension;
+        if (typeof(ext) == "string") {
+          let target = "resource://testing-common/extensions/" + ext + "/";
+          let resourceHandler = Services.io.getProtocolHandler("resource")
+                                        .QueryInterface(Ci.nsISubstitutingProtocolHandler);
+          let resURI = Services.io.newURI(target, null, null);
+          let uri = Services.io.newURI(resourceHandler.resolveURI(resURI), null, null);
+          extension = new Extension({
+            id,
+            resourceURI: uri
+          });
+        } else {
+          extension = Extension.generate(ext);
+        }
+
+        let resultListener = (...args) => {
+          this._sendReply(aMessage, "SPExtensionMessage", {id, type: "testResult", args});
+        };
+
+        let messageListener = (...args) => {
+          args.shift();
+          this._sendReply(aMessage, "SPExtensionMessage", {id, type: "testMessage", args});
+        };
+
+        // Register pass/fail handlers.
+        extension.on("test-result", resultListener);
+        extension.on("test-eq", resultListener);
+        extension.on("test-log", resultListener);
+        extension.on("test-done", resultListener);
+
+        extension.on("test-message", messageListener);
+
+        this._extensions.set(id, extension);
+        return undefined;
+      }
+
+      case "SPStartupExtension": {
+        let id = aMessage.data.id;
+        let extension = this._extensions.get(id);
+        extension.startup().then(() => {
+          this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionStarted", args: []});
+        }).catch(e => {
+          this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionFailed", args: []});
+        });
+        return undefined;
+      }
+
+      case "SPExtensionMessage": {
+        let id = aMessage.data.id;
+        let extension = this._extensions.get(id);
+        extension.testMessage(...aMessage.data.args);
+        return undefined;
+      }
+
+      case "SPUnloadExtension": {
+        let id = aMessage.data.id;
+        let extension = this._extensions.get(id);
+        this._extensions.delete(id);
+        extension.shutdown();
+        this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionUnloaded", args: []});
+        return undefined;
       }
 
       default:

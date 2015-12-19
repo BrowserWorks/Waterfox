@@ -29,4 +29,5 @@ UNIFIED_SOURCES += [
 
 FINAL_LIBRARY = 'xul-gtest'
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

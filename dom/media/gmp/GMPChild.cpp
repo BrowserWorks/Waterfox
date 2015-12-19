@@ -426,7 +426,7 @@ GMPChild::GetUTF8LibPath(nsACString& aOutLibPath)
 }
 
 bool
-GMPChild::RecvStartPlugin()
+GMPChild::AnswerStartPlugin()
 {
   LOGD("%s", __FUNCTION__);
 

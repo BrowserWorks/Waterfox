@@ -4,7 +4,7 @@
 
 "use strict";
 
-const EXPORTED_SYMBOLS = ["ExtensionContent"];
+this.EXPORTED_SYMBOLS = ["ExtensionContent"];
 
 /*
  * This file handles the content process side of extensions. It mainly
@@ -19,6 +19,7 @@ const Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionManagement",
                                   "resource://gre/modules/ExtensionManagement.jsm");
@@ -28,12 +29,13 @@ XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
                                   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
-let {
+var {
   runSafeWithoutClone,
   MessageBroker,
   Messenger,
   ignoreEvent,
   injectAPI,
+  flushJarCache,
 } = ExtensionUtils;
 
 function isWhenBeforeOrSame(when1, when2)
@@ -46,7 +48,7 @@ function isWhenBeforeOrSame(when1, when2)
 
 // This is the fairly simple API that we inject into content
 // scripts.
-let api = context => { return {
+var api = context => { return {
   runtime: {
     connect: function(extensionId, connectInfo) {
       let name = connectInfo && connectInfo.name || "";
@@ -147,8 +149,20 @@ Script.prototype = {
     let scheduled = this.run_at || "document_idle";
     if (shouldRun(scheduled)) {
       for (let url of this.js) {
+        // On gonk we need to load the resources asynchronously because the
+        // app: channels only support asyncOpen. This is safe only in the
+        // `document_idle` state.
+        if (AppConstants.platform == "gonk" && scheduled != "document_idle") {
+          Cu.reportError(`Script injection: ignoring ${url} at ${scheduled}`);
+        }
         url = extension.baseURI.resolve(url);
-        Services.scriptloader.loadSubScript(url, sandbox);
+
+        let options = {
+          target: sandbox,
+          charset: "UTF-8",
+          async: AppConstants.platform == "gonk"
+        }
+        Services.scriptloader.loadSubScriptWithOptions(url, options);
       }
 
       if (this.options.jsCode) {
@@ -208,7 +222,11 @@ function ExtensionContext(extensionId, contentWindow)
   this.messenger = new Messenger(this, broker, {id: extensionId, frameId, url},
                                  {id: extensionId, frameId}, delegate);
 
-  let chromeObj = Cu.createObjectIn(this.sandbox, {defineAs: "chrome"});
+  let chromeObj = Cu.createObjectIn(this.sandbox, {defineAs: "browser"});
+
+  // Sandboxes don't get Xrays for some weird compatibility
+  // reason. However, we waive here anyway in case that changes.
+  Cu.waiveXrays(this.sandbox).chrome = Cu.waiveXrays(this.sandbox).browser;
   injectAPI(api(this), chromeObj);
 
   this.onClose = new Set();
@@ -235,12 +253,13 @@ ExtensionContext.prototype = {
     for (let obj of this.onClose) {
       obj.close();
     }
+    Cu.nukeSandbox(this.sandbox);
   },
 };
 
 // Responsible for creating ExtensionContexts and injecting content
 // scripts into them when new documents are created.
-let DocumentManager = {
+var DocumentManager = {
   extensionCount: 0,
 
   // WeakMap[window -> Map[extensionId -> ExtensionContext]]
@@ -317,18 +336,17 @@ let DocumentManager = {
 
   executeScript(global, extensionId, script) {
     let window = global.content;
-    let extensions = this.windows.get(window);
-    if (!extensions) {
-      return;
-    }
-    let context = extensions.get(extensionId);
+    let context = this.getContext(extensionId, window);
     if (!context) {
       return;
     }
 
     // TODO: Somehow make sure we have the right permissions for this origin!
-    // FIXME: Need to keep this around so that I will execute it later if we're not in the right state.
-    context.execute(script, scheduled => scheduled == state);
+
+    // FIXME: Script should be executed only if current state has
+    // already reached its run_at state, or we have to keep it around
+    // somewhere to execute later.
+    context.execute(script, scheduled => true);
   },
 
   enumerateWindows: function*(docShell) {
@@ -400,7 +418,7 @@ let DocumentManager = {
       for (let script of extension.scripts) {
         if (script.matches(window)) {
           let context = this.getContext(extensionId, window);
-          context.execute(script, scheduled => isWhenBeforeOrSame(scheduled, state));
+          context.execute(script, scheduled => scheduled == state);
         }
       }
     }
@@ -436,13 +454,14 @@ BrowserExtensionContent.prototype = {
   },
 };
 
-let ExtensionManager = {
+var ExtensionManager = {
   // Map[extensionId, BrowserExtensionContent]
   extensions: new Map(),
 
   init() {
     Services.cpmm.addMessageListener("Extension:Startup", this);
     Services.cpmm.addMessageListener("Extension:Shutdown", this);
+    Services.cpmm.addMessageListener("Extension:FlushJarCache", this);
 
     if (Services.cpmm.initialProcessData && "Extension:Extensions" in Services.cpmm.initialProcessData) {
       let extensions = Services.cpmm.initialProcessData["Extension:Extensions"];
@@ -460,23 +479,34 @@ let ExtensionManager = {
   receiveMessage({name, data}) {
     let extension;
     switch (name) {
-    case "Extension:Startup":
-      extension = new BrowserExtensionContent(data);
-      this.extensions.set(data.id, extension);
-      DocumentManager.startupExtension(data.id);
-      break;
+      case "Extension:Startup": {
+        extension = new BrowserExtensionContent(data);
+        this.extensions.set(data.id, extension);
+        DocumentManager.startupExtension(data.id);
+        break;
+      }
 
-    case "Extension:Shutdown":
-      extension = this.extensions.get(data.id);
-      extension.shutdown();
-      DocumentManager.shutdownExtension(data.id);
-      this.extensions.delete(data.id);
-      break;
+      case "Extension:Shutdown": {
+        extension = this.extensions.get(data.id);
+        extension.shutdown();
+        DocumentManager.shutdownExtension(data.id);
+        this.extensions.delete(data.id);
+        break;
+      }
+
+      case "Extension:FlushJarCache": {
+        let nsIFile = Components.Constructor("@mozilla.org/file/local;1", "nsIFile",
+                                             "initWithPath");
+        let file = new nsIFile(data.path);
+        flushJarCache(file);
+        Services.cpmm.sendAsyncMessage("Extension:FlushJarCacheComplete");
+        break;
+      }
     }
   }
 };
 
-let ExtensionContent = {
+this.ExtensionContent = {
   globals: new Map(),
 
   init(global) {

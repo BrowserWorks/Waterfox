@@ -235,10 +235,12 @@ OnSourceGrabEventAfter(GtkWidget *widget, GdkEvent *event, gpointer user_data)
         sMotionEvent = gdk_event_copy(event);
 
         // Update the cursor position.  The last of these recorded gets used for
-        // the NS_DRAGDROP_END event.
+        // the eDragEnd event.
         nsDragService *dragService = static_cast<nsDragService*>(user_data);
-        dragService->SetDragEndPoint(nsIntPoint(event->motion.x_root,
-                                                event->motion.y_root));
+        gint scale = nsScreenGtk::GetGtkMonitorScaleFactor();
+        LayoutDeviceIntPoint p(floor(event->motion.x_root * scale + 0.5),
+                               floor(event->motion.y_root * scale + 0.5));
+        dragService->SetDragEndPoint(p);
     } else if (sMotionEvent && (event->type == GDK_KEY_PRESS ||
                                 event->type == GDK_KEY_RELEASE)) {
         // Update modifier state from key events.
@@ -390,7 +392,7 @@ nsDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
                              G_CALLBACK(OnSourceGrabEventAfter), this);
         }
         // We don't have a drag end point yet.
-        mEndDragPoint = nsIntPoint(-1, -1);
+        mEndDragPoint = LayoutDeviceIntPoint(-1, -1);
     }
     else {
         rv = NS_ERROR_FAILURE;
@@ -784,8 +786,8 @@ nsDragService::GetData(nsITransferable * aTransferable,
                         if (convertedText) {
                             nsCOMPtr<nsIIOService> ioService = do_GetIOService(&rv);
                             nsCOMPtr<nsIURI> fileURI;
-                            nsresult rv = ioService->NewURI(NS_ConvertUTF16toUTF8(convertedText),
-                                                            nullptr, nullptr, getter_AddRefs(fileURI));
+                            rv = ioService->NewURI(NS_ConvertUTF16toUTF8(convertedText),
+                                                   nullptr, nullptr, getter_AddRefs(fileURI));
                             if (NS_SUCCEEDED(rv)) {
                                 nsCOMPtr<nsIFileURL> fileURL = do_QueryInterface(fileURI, &rv);
                                 if (NS_SUCCEEDED(rv)) {
@@ -1389,8 +1391,9 @@ nsDragService::SourceEndDragSession(GdkDragContext *aContext,
         gint x, y;
         GdkDisplay* display = gdk_display_get_default();
         if (display) {
+            gint scale = nsScreenGtk::GetGtkMonitorScaleFactor();
             gdk_display_get_pointer(display, nullptr, &x, &y, nullptr);
-            SetDragEndPoint(nsIntPoint(x, y));
+            SetDragEndPoint(LayoutDeviceIntPoint(x * scale, y * scale));
         }
     }
 
@@ -1438,7 +1441,7 @@ nsDragService::SourceEndDragSession(GdkDragContext *aContext,
     }
 
     // Schedule the appropriate drag end dom events.
-    Schedule(eDragTaskSourceEnd, nullptr, nullptr, nsIntPoint(), 0);
+    Schedule(eDragTaskSourceEnd, nullptr, nullptr, LayoutDeviceIntPoint(), 0);
 }
 
 static void
@@ -1768,7 +1771,7 @@ invisibleSourceDragEnd(GtkWidget        *aWidget,
 gboolean
 nsDragService::ScheduleMotionEvent(nsWindow *aWindow,
                                    GdkDragContext *aDragContext,
-                                   nsIntPoint aWindowPoint, guint aTime)
+                                   LayoutDeviceIntPoint aWindowPoint, guint aTime)
 {
     if (mScheduledTask == eDragTaskMotion) {
         // The drag source has sent another motion message before we've
@@ -1791,7 +1794,7 @@ nsDragService::ScheduleLeaveEvent()
     // We don't know at this stage whether a drop signal will immediately
     // follow.  If the drop signal gets sent it will happen before we return
     // to the main loop and the scheduled leave task will be replaced.
-    if (!Schedule(eDragTaskLeave, nullptr, nullptr, nsIntPoint(), 0)) {
+    if (!Schedule(eDragTaskLeave, nullptr, nullptr, LayoutDeviceIntPoint(), 0)) {
         NS_WARNING("Drag leave after drop");
     }        
 }
@@ -1799,7 +1802,7 @@ nsDragService::ScheduleLeaveEvent()
 gboolean
 nsDragService::ScheduleDropEvent(nsWindow *aWindow,
                                  GdkDragContext *aDragContext,
-                                 nsIntPoint aWindowPoint, guint aTime)
+                                 LayoutDeviceIntPoint aWindowPoint, guint aTime)
 {
     if (!Schedule(eDragTaskDrop, aWindow,
                   aDragContext, aWindowPoint, aTime)) {
@@ -1807,7 +1810,7 @@ nsDragService::ScheduleDropEvent(nsWindow *aWindow,
         return FALSE;        
     }
 
-    SetDragEndPoint(aWindowPoint + aWindow->WidgetToScreenOffsetUntyped());
+    SetDragEndPoint(aWindowPoint + aWindow->WidgetToScreenOffset());
 
     // We'll reply with gtk_drag_finish().
     return TRUE;
@@ -1816,7 +1819,7 @@ nsDragService::ScheduleDropEvent(nsWindow *aWindow,
 gboolean
 nsDragService::Schedule(DragTask aTask, nsWindow *aWindow,
                         GdkDragContext *aDragContext,
-                        nsIntPoint aWindowPoint, guint aTime)
+                        LayoutDeviceIntPoint aWindowPoint, guint aTime)
 {
     // If there is an existing leave or motion task scheduled, then that
     // will be replaced.  When the new task is run, it will dispatch
@@ -1864,8 +1867,7 @@ nsDragService::RunScheduledTask()
         MOZ_LOG(sDragLm, LogLevel::Debug,
                ("nsDragService: dispatch drag leave (%p)\n",
                 mTargetWindow.get()));
-        mTargetWindow->
-            DispatchDragEvent(NS_DRAGDROP_EXIT, mTargetWindowPoint, 0);
+        mTargetWindow->DispatchDragEvent(eDragExit, mTargetWindowPoint, 0);
 
         if (!mSourceNode) {
             // The drag that was initiated in a different app. End the drag
@@ -2036,10 +2038,10 @@ nsDragService::DispatchMotionEvents()
 {
     mCanDrop = false;
 
-    FireDragEventAtSource(NS_DRAGDROP_DRAG);
+    FireDragEventAtSource(eDrag);
 
-    mTargetWindow->
-        DispatchDragEvent(NS_DRAGDROP_OVER, mTargetWindowPoint, mTargetTime);
+    mTargetWindow->DispatchDragEvent(eDragOver, mTargetWindowPoint,
+                                     mTargetTime);
 }
 
 // Returns true if the drop was successful
@@ -2052,7 +2054,7 @@ nsDragService::DispatchDropEvent()
     if (mTargetWindow->IsDestroyed())
         return FALSE;
 
-    uint32_t msg = mCanDrop ? NS_DRAGDROP_DROP : NS_DRAGDROP_EXIT;
+    EventMessage msg = mCanDrop ? eDrop : eDragExit;
 
     mTargetWindow->DispatchDragEvent(msg, mTargetWindowPoint, mTargetTime);
 

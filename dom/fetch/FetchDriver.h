@@ -12,6 +12,7 @@
 #include "nsIChannelEventSink.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIStreamListener.h"
+#include "nsIThreadRetargetableStreamListener.h"
 #include "mozilla/nsRefPtr.h"
 
 #include "mozilla/DebugOnly.h"
@@ -31,20 +32,34 @@ class InternalResponse;
 class FetchDriverObserver
 {
 public:
+  FetchDriverObserver() : mGotResponseAvailable(false)
+  { }
+
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(FetchDriverObserver);
-  virtual void OnResponseAvailable(InternalResponse* aResponse) = 0;
+  void OnResponseAvailable(InternalResponse* aResponse)
+  {
+    MOZ_ASSERT(!mGotResponseAvailable);
+    mGotResponseAvailable = true;
+    OnResponseAvailableInternal(aResponse);
+  }
   virtual void OnResponseEnd()
   { };
 
 protected:
   virtual ~FetchDriverObserver()
   { };
+
+  virtual void OnResponseAvailableInternal(InternalResponse* aResponse) = 0;
+
+private:
+  bool mGotResponseAvailable;
 };
 
 class FetchDriver final : public nsIStreamListener,
                           public nsIChannelEventSink,
                           public nsIInterfaceRequestor,
-                          public nsIAsyncVerifyRedirectCallback
+                          public nsIAsyncVerifyRedirectCallback,
+                          public nsIThreadRetargetableStreamListener
 {
 public:
   NS_DECL_ISUPPORTS
@@ -53,6 +68,7 @@ public:
   NS_DECL_NSICHANNELEVENTSINK
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSIASYNCVERIFYREDIRECTCALLBACK
+  NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
 
   explicit FetchDriver(InternalRequest* aRequest, nsIPrincipal* aPrincipal,
                        nsILoadGroup* aLoadGroup);

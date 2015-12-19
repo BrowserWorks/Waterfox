@@ -31,6 +31,10 @@ XPCOMUtils.defineLazyGetter(this, "ConsoleProgressListener", () => {
 XPCOMUtils.defineLazyGetter(this, "events", () => {
   return require("sdk/event/core");
 });
+XPCOMUtils.defineLazyGetter(this, "ServerLoggingListener", () => {
+  return require("devtools/toolkit/webconsole/server-logger")
+         .ServerLoggingListener;
+});
 
 for (let name of ["WebConsoleUtils", "ConsoleServiceListener",
     "ConsoleAPIListener", "addWebConsoleCommands", "JSPropertyProvider",
@@ -354,14 +358,22 @@ WebConsoleActor.prototype =
       this.consoleReflowListener.destroy();
       this.consoleReflowListener = null;
     }
-    events.off(this.parentActor, "changed-toplevel-document", this._onChangedToplevelDocument);
+    if (this.serverLoggingListener) {
+      this.serverLoggingListener.destroy();
+      this.serverLoggingListener = null;
+    }
+
+    events.off(this.parentActor, "changed-toplevel-document",
+               this._onChangedToplevelDocument);
+
     this.conn.removeActorPool(this._actorPool);
+
     if (this.parentActor.isRootActor) {
       Services.obs.removeObserver(this._onObserverNotification,
                                   "last-pb-context-exited");
     }
-    this._actorPool = null;
 
+    this._actorPool = null;
     this._webConsoleCommandsCache = null;
     this._lastConsoleInputEvaluation = null;
     this._evalWindow = null;
@@ -604,6 +616,13 @@ WebConsoleActor.prototype =
           }
           startedListeners.push(listener);
           break;
+        case "ServerLogging":
+          if (!this.serverLoggingListener) {
+            this.serverLoggingListener =
+              new ServerLoggingListener(this.window, this);
+          }
+          startedListeners.push(listener);
+          break;
       }
     }
 
@@ -634,7 +653,7 @@ WebConsoleActor.prototype =
     // listeners.
     let toDetach = aRequest.listeners ||
                    ["PageError", "ConsoleAPI", "NetworkActivity",
-                    "FileActivity"];
+                    "FileActivity", "ServerLogging"];
 
     while (toDetach.length > 0) {
       let listener = toDetach.shift();
@@ -672,6 +691,13 @@ WebConsoleActor.prototype =
           if (this.consoleReflowListener) {
             this.consoleReflowListener.destroy();
             this.consoleReflowListener = null;
+          }
+          stoppedListeners.push(listener);
+          break;
+        case "ServerLogging":
+          if (this.serverLoggingListener) {
+            this.serverLoggingListener.destroy();
+            this.serverLoggingListener = null;
           }
           stoppedListeners.push(listener);
           break;
@@ -1034,7 +1060,7 @@ WebConsoleActor.prototype =
    * provide the "bindObjectActor" mechanism: the Web Console tells the
    * ObjectActor ID for which it desires to evaluate an expression. The
    * Debugger.Object pointed at by the actor ID is bound such that it is
-   * available during expression evaluation (evalInGlobalWithBindings()).
+   * available during expression evaluation (executeInGlobalWithBindings()).
    *
    * Example:
    *   _self['foobar'] = 'test'
@@ -1192,7 +1218,7 @@ WebConsoleActor.prototype =
       result = frame.evalWithBindings(aString, bindings, evalOptions);
     }
     else {
-      result = dbgWindow.evalInGlobalWithBindings(aString, bindings, evalOptions);
+      result = dbgWindow.executeInGlobalWithBindings(aString, bindings, evalOptions);
     }
 
     let helperResult = helpers.helperResult;
@@ -1262,6 +1288,21 @@ WebConsoleActor.prototype =
    */
   preparePageErrorForRemote: function WCA_preparePageErrorForRemote(aPageError)
   {
+    let stack = null;
+    // Convert stack objects to the JSON attributes expected by client code
+    if (aPageError.stack) {
+      stack = [];
+      let s = aPageError.stack;
+      while (s !== null) {
+        stack.push({
+          filename: s.source,
+          lineNumber: s.line,
+          columnNumber: s.column,
+          functionName: s.functionDisplayName
+        });
+        s = s.parent;
+      }
+    }
     let lineText = aPageError.sourceLine;
     if (lineText && lineText.length > DebuggerServer.LONG_STRING_INITIAL_LENGTH) {
       lineText = lineText.substr(0, DebuggerServer.LONG_STRING_INITIAL_LENGTH);
@@ -1281,6 +1322,7 @@ WebConsoleActor.prototype =
       strict: !!(aPageError.flags & aPageError.strictFlag),
       info: !!(aPageError.flags & aPageError.infoFlag),
       private: aPageError.isFromPrivateWindow,
+      stacktrace: stack
     };
   },
 
@@ -1427,6 +1469,40 @@ WebConsoleActor.prototype =
     this.conn.send(packet);
   },
 
+  /**
+   * Handler for server logging. This method forwards log events to the
+   * remote Web Console client.
+   *
+   * @see ServerLoggingListener
+   * @param object aMessage
+   *        The console API call on the server we need to send to the remote client.
+   */
+  onServerLogCall: function WCA_onServerLogCall(aMessage)
+  {
+    // Clone all data into the content scope (that's where
+    // passed arguments comes from).
+    let msg = Cu.cloneInto(aMessage, this.window);
+
+    // All arguments within the message need to be converted into
+    // debuggees to properly send it to the client side.
+    // Use the default target: this.window as the global object
+    // since that's the correct scope for data in the message.
+    // The 'false' argument passed into prepareConsoleMessageForRemote()
+    // ensures that makeDebuggeeValue uses content debuggee.
+    // See also:
+    // * makeDebuggeeValue()
+    // * prepareConsoleMessageForRemote()
+    msg = this.prepareConsoleMessageForRemote(msg, false);
+
+    let packet = {
+      from: this.actorID,
+      type: "serverLogCall",
+      message: msg,
+    };
+
+    this.conn.send(packet);
+  },
+
   //////////////////
   // End of event handlers for various listeners.
   //////////////////
@@ -1437,11 +1513,14 @@ WebConsoleActor.prototype =
    *
    * @param object aMessage
    *        The original message received from console-api-log-event.
+   * @param boolean aUseObjectGlobal
+   *        If |true| the object global is determined and added as a debuggee,
+   *        otherwise |this.window| is used when makeDebuggeeValue() is invoked.
    * @return object
    *         The object that can be sent to the remote client.
    */
   prepareConsoleMessageForRemote:
-  function WCA_prepareConsoleMessageForRemote(aMessage)
+  function WCA_prepareConsoleMessageForRemote(aMessage, aUseObjectGlobal = true)
   {
     let result = WebConsoleUtils.cloneObject(aMessage);
 
@@ -1454,13 +1533,15 @@ WebConsoleActor.prototype =
     delete result.consoleID;
 
     result.arguments = Array.map(aMessage.arguments || [], (aObj) => {
-      let dbgObj = this.makeDebuggeeValue(aObj, true);
+      let dbgObj = this.makeDebuggeeValue(aObj, aUseObjectGlobal);
       return this.createValueGrip(dbgObj);
     });
 
     result.styles = Array.map(aMessage.styles || [], (aString) => {
       return this.createValueGrip(aString);
     });
+
+    result.category = aMessage.category || "webdev";
 
     return result;
   },

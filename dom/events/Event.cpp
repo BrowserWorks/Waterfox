@@ -106,7 +106,7 @@ Event::ConstructorInit(EventTarget* aOwner,
           ...
         }
      */
-    mEvent = new WidgetEvent(false, 0);
+    mEvent = new WidgetEvent(false, eVoidEvent);
     mEvent->time = PR_Now();
   }
 
@@ -265,12 +265,12 @@ Event::GetType(nsAString& aType)
     aType = mEvent->typeString;
     return NS_OK;
   }
-  const char* name = GetEventName(mEvent->message);
+  const char* name = GetEventName(mEvent->mMessage);
 
   if (name) {
     CopyASCIItoUTF16(name, aType);
     return NS_OK;
-  } else if (mEvent->message == NS_USER_DEFINED_EVENT && mEvent->userType) {
+  } else if (mEvent->mMessage == eUnidentifiedEvent && mEvent->userType) {
     aType = Substring(nsDependentAtomString(mEvent->userType), 2); // Remove "on"
     mEvent->typeString = aType;
     return NS_OK;
@@ -563,11 +563,11 @@ Event::SetEventType(const nsAString& aEventTypeArg)
   if (mIsMainThreadEvent) {
     mEvent->typeString.Truncate();
     mEvent->userType =
-      nsContentUtils::GetEventIdAndAtom(aEventTypeArg, mEvent->mClass,
-                                        &(mEvent->message));
+      nsContentUtils::GetEventMessageAndAtom(aEventTypeArg, mEvent->mClass,
+                                             &(mEvent->mMessage));
   } else {
     mEvent->userType = nullptr;
-    mEvent->message = NS_USER_DEFINED_EVENT;
+    mEvent->mMessage = eUnidentifiedEvent;
     mEvent->typeString = aEventTypeArg;
   }
 }
@@ -715,16 +715,18 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
     // triggered while handling user input. See
     // nsPresShell::HandleEventInternal() for details.
     if (EventStateManager::IsHandlingUserInput()) {
-      switch(aEvent->message) {
-      case NS_FORM_SELECTED :
+      switch(aEvent->mMessage) {
+      case eFormSelect:
         if (PopupAllowedForEvent("select")) {
           abuse = openControlled;
         }
         break;
-      case NS_FORM_CHANGE :
+      case eFormChange:
         if (PopupAllowedForEvent("change")) {
           abuse = openControlled;
         }
+        break;
+      default:
         break;
       }
     }
@@ -734,11 +736,13 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
     // while handling user input. See
     // nsPresShell::HandleEventInternal() for details.
     if (EventStateManager::IsHandlingUserInput()) {
-      switch(aEvent->message) {
-      case NS_EDITOR_INPUT:
+      switch(aEvent->mMessage) {
+      case eEditorInput:
         if (PopupAllowedForEvent("input")) {
           abuse = openControlled;
         }
+        break;
+      default:
         break;
       }
     }
@@ -748,14 +752,16 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
     // while handling user input. See
     // nsPresShell::HandleEventInternal() for details.
     if (EventStateManager::IsHandlingUserInput()) {
-      switch(aEvent->message) {
-      case NS_FORM_CHANGE :
+      switch(aEvent->mMessage) {
+      case eFormChange:
         if (PopupAllowedForEvent("change")) {
           abuse = openControlled;
         }
         break;
-      case NS_XUL_COMMAND:
+      case eXULCommand:
         abuse = openControlled;
+        break;
+      default:
         break;
       }
     }
@@ -763,43 +769,47 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
   case eKeyboardEventClass:
     if (aEvent->mFlags.mIsTrusted) {
       uint32_t key = aEvent->AsKeyboardEvent()->keyCode;
-      switch(aEvent->message) {
-      case NS_KEY_PRESS :
-        // return key on focused button. see note at NS_MOUSE_CLICK.
+      switch(aEvent->mMessage) {
+      case eKeyPress:
+        // return key on focused button. see note at eMouseClick.
         if (key == nsIDOMKeyEvent::DOM_VK_RETURN) {
           abuse = openAllowed;
         } else if (PopupAllowedForEvent("keypress")) {
           abuse = openControlled;
         }
         break;
-      case NS_KEY_UP :
-        // space key on focused button. see note at NS_MOUSE_CLICK.
+      case eKeyUp:
+        // space key on focused button. see note at eMouseClick.
         if (key == nsIDOMKeyEvent::DOM_VK_SPACE) {
           abuse = openAllowed;
         } else if (PopupAllowedForEvent("keyup")) {
           abuse = openControlled;
         }
         break;
-      case NS_KEY_DOWN :
+      case eKeyDown:
         if (PopupAllowedForEvent("keydown")) {
           abuse = openControlled;
         }
+        break;
+      default:
         break;
       }
     }
     break;
   case eTouchEventClass:
     if (aEvent->mFlags.mIsTrusted) {
-      switch (aEvent->message) {
-      case NS_TOUCH_START :
+      switch (aEvent->mMessage) {
+      case eTouchStart:
         if (PopupAllowedForEvent("touchstart")) {
           abuse = openControlled;
         }
         break;
-      case NS_TOUCH_END :
+      case eTouchEnd:
         if (PopupAllowedForEvent("touchend")) {
           abuse = openControlled;
         }
+        break;
+      default:
         break;
       }
     }
@@ -807,18 +817,18 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
   case eMouseEventClass:
     if (aEvent->mFlags.mIsTrusted &&
         aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton) {
-      switch(aEvent->message) {
-      case NS_MOUSE_BUTTON_UP :
+      switch(aEvent->mMessage) {
+      case eMouseUp:
         if (PopupAllowedForEvent("mouseup")) {
           abuse = openControlled;
         }
         break;
-      case NS_MOUSE_BUTTON_DOWN :
+      case eMouseDown:
         if (PopupAllowedForEvent("mousedown")) {
           abuse = openControlled;
         }
         break;
-      case NS_MOUSE_CLICK :
+      case eMouseClick:
         /* Click events get special treatment because of their
            historical status as a more legitimate event handler. If
            click popups are enabled in the prefs, clear the popup
@@ -827,10 +837,12 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
           abuse = openAllowed;
         }
         break;
-      case NS_MOUSE_DOUBLECLICK :
+      case eMouseDoubleClick:
         if (PopupAllowedForEvent("dblclick")) {
           abuse = openControlled;
         }
+        break;
+      default:
         break;
       }
     }
@@ -840,16 +852,18 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
     // triggered while handling user input. See
     // nsPresShell::HandleEventInternal() for details.
     if (EventStateManager::IsHandlingUserInput()) {
-      switch(aEvent->message) {
-      case NS_FORM_SUBMIT :
+      switch(aEvent->mMessage) {
+      case eFormSubmit:
         if (PopupAllowedForEvent("submit")) {
           abuse = openControlled;
         }
         break;
-      case NS_FORM_RESET :
+      case eFormReset:
         if (PopupAllowedForEvent("reset")) {
           abuse = openControlled;
         }
+        break;
+      default:
         break;
       }
     }
@@ -991,7 +1005,7 @@ Event::GetOffsetCoords(nsPresContext* aPresContext,
                        LayoutDeviceIntPoint aPoint,
                        CSSIntPoint aDefaultPoint)
 {
-  if (!aEvent->mFlags.mIsBeingDispatched) {
+  if (!aEvent->target) {
     return GetPageCoords(aPresContext, aEvent, aPoint, aDefaultPoint);
   }
   nsCOMPtr<nsIContent> content = do_QueryInterface(aEvent->target);
@@ -1026,13 +1040,13 @@ Event::GetOffsetCoords(nsPresContext* aPresContext,
 // logic for handling user-defined events).
 // static
 const char*
-Event::GetEventName(uint32_t aEventType)
+Event::GetEventName(EventMessage aEventType)
 {
   switch(aEventType) {
-#define ID_TO_EVENT(name_, _id, _type, _struct) \
-  case _id: return #name_;
+#define MESSAGE_TO_EVENT(name_, _message, _type, _struct) \
+  case _message: return #name_;
 #include "mozilla/EventNameList.h"
-#undef ID_TO_EVENT
+#undef MESSAGE_TO_EVENT
   default:
     break;
   }
@@ -1257,14 +1271,11 @@ Event::GetShadowRelatedTarget(nsIContent* aCurrentTarget,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsresult
-NS_NewDOMEvent(nsIDOMEvent** aInstancePtrResult,
-               EventTarget* aOwner,
+already_AddRefed<Event>
+NS_NewDOMEvent(EventTarget* aOwner,
                nsPresContext* aPresContext,
                WidgetEvent* aEvent) 
 {
-  Event* it = new Event(aOwner, aPresContext, aEvent);
-  NS_ADDREF(it);
-  *aInstancePtrResult = static_cast<Event*>(it);
-  return NS_OK;
+  nsRefPtr<Event> it = new Event(aOwner, aPresContext, aEvent);
+  return it.forget();
 }

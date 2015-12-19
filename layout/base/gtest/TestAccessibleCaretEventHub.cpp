@@ -47,7 +47,6 @@ public:
   MOCK_METHOD1(SelectWordOrShortcut, nsresult(const nsPoint& aPoint));
   MOCK_METHOD0(OnScrollStart, void());
   MOCK_METHOD0(OnScrollEnd, void());
-  MOCK_METHOD0(OnScrolling, void());
   MOCK_METHOD0(OnScrollPositionChanged, void());
   MOCK_METHOD0(OnBlur, void());
 };
@@ -111,7 +110,8 @@ public:
     EXPECT_EQ(mHub->GetState(), MockAccessibleCaretEventHub::NoActionState());
   }
 
-  static UniquePtr<WidgetEvent> CreateMouseEvent(uint32_t aMessage, nscoord aX,
+  static UniquePtr<WidgetEvent> CreateMouseEvent(EventMessage aMessage,
+                                                 nscoord aX,
                                                  nscoord aY)
   {
     auto event = MakeUnique<WidgetMouseEvent>(true, aMessage, nullptr,
@@ -125,25 +125,26 @@ public:
 
   static UniquePtr<WidgetEvent> CreateMousePressEvent(nscoord aX, nscoord aY)
   {
-    return CreateMouseEvent(NS_MOUSE_BUTTON_DOWN, aX, aY);
+    return CreateMouseEvent(eMouseDown, aX, aY);
   }
 
   static UniquePtr<WidgetEvent> CreateMouseMoveEvent(nscoord aX, nscoord aY)
   {
-    return CreateMouseEvent(NS_MOUSE_MOVE, aX, aY);
+    return CreateMouseEvent(eMouseMove, aX, aY);
   }
 
   static UniquePtr<WidgetEvent> CreateMouseReleaseEvent(nscoord aX, nscoord aY)
   {
-    return CreateMouseEvent(NS_MOUSE_BUTTON_UP, aX, aY);
+    return CreateMouseEvent(eMouseUp, aX, aY);
   }
 
   static UniquePtr<WidgetEvent> CreateLongTapEvent(nscoord aX, nscoord aY)
   {
-    return CreateMouseEvent(NS_MOUSE_MOZLONGTAP, aX, aY);
+    return CreateMouseEvent(eMouseLongTap, aX, aY);
   }
 
-  static UniquePtr<WidgetEvent> CreateTouchEvent(uint32_t aMessage, nscoord aX,
+  static UniquePtr<WidgetEvent> CreateTouchEvent(EventMessage aMessage,
+                                                 nscoord aX,
                                                  nscoord aY)
   {
     auto event = MakeUnique<WidgetTouchEvent>(true, aMessage, nullptr);
@@ -162,20 +163,20 @@ public:
 
   static UniquePtr<WidgetEvent> CreateTouchPressEvent(nscoord aX, nscoord aY)
   {
-    return CreateTouchEvent(NS_TOUCH_START, aX, aY);
+    return CreateTouchEvent(eTouchStart, aX, aY);
   }
 
   static UniquePtr<WidgetEvent> CreateTouchMoveEvent(nscoord aX, nscoord aY)
   {
-    return CreateTouchEvent(NS_TOUCH_MOVE, aX, aY);
+    return CreateTouchEvent(eTouchMove, aX, aY);
   }
 
   static UniquePtr<WidgetEvent> CreateTouchReleaseEvent(nscoord aX, nscoord aY)
   {
-    return CreateTouchEvent(NS_TOUCH_END, aX, aY);
+    return CreateTouchEvent(eTouchEnd, aX, aY);
   }
 
-  static UniquePtr<WidgetEvent> CreateWheelEvent(uint32_t aMessage)
+  static UniquePtr<WidgetEvent> CreateWheelEvent(EventMessage aMessage)
   {
     auto event = MakeUnique<WidgetWheelEvent>(true, aMessage, nullptr);
 
@@ -633,7 +634,6 @@ TEST_F(AccessibleCaretEventHubTester, TestNoEventAsyncPanZoomScroll)
     EXPECT_CALL(check, Call("1"));
     EXPECT_CALL(*mHub->GetMockAccessibleCaretManager(), OnScrollStart());
 
-    EXPECT_CALL(*mHub->GetMockAccessibleCaretManager(), OnScrolling()).Times(0);
     EXPECT_CALL(*mHub->GetMockAccessibleCaretManager(),
                 OnScrollPositionChanged()).Times(0);
 
@@ -732,22 +732,22 @@ TEST_F(AccessibleCaretEventHubTester, TestWheelEventScroll)
 
   check.Call("1");
 
-  HandleEventAndCheckState(CreateWheelEvent(NS_WHEEL_START),
+  HandleEventAndCheckState(CreateWheelEvent(eWheelOperationStart),
                            MockAccessibleCaretEventHub::ScrollState(),
                            nsEventStatus_eIgnore);
 
-  HandleEventAndCheckState(CreateWheelEvent(NS_WHEEL_WHEEL),
+  HandleEventAndCheckState(CreateWheelEvent(eWheel),
                            MockAccessibleCaretEventHub::ScrollState(),
                            nsEventStatus_eIgnore);
 
   mHub->ScrollPositionChanged();
 
-  HandleEventAndCheckState(CreateWheelEvent(NS_WHEEL_STOP),
+  HandleEventAndCheckState(CreateWheelEvent(eWheelOperationEnd),
                            MockAccessibleCaretEventHub::PostScrollState(),
                            nsEventStatus_eIgnore);
 
   // Momentum scroll
-  HandleEventAndCheckState(CreateWheelEvent(NS_WHEEL_WHEEL),
+  HandleEventAndCheckState(CreateWheelEvent(eWheel),
                            MockAccessibleCaretEventHub::PostScrollState(),
                            nsEventStatus_eIgnore);
 

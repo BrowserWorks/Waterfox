@@ -43,6 +43,7 @@
 #include "mozilla/dom/Permissions.h"
 #include "mozilla/dom/Presentation.h"
 #include "mozilla/dom/ServiceWorkerContainer.h"
+#include "mozilla/dom/TCPSocket.h"
 #include "mozilla/dom/Telephony.h"
 #include "mozilla/dom/Voicemail.h"
 #include "mozilla/dom/TVManager.h"
@@ -76,8 +77,6 @@
 #include "nsIAppsService.h"
 #include "mozIApplication.h"
 #include "WidgetUtils.h"
-#include "mozIThirdPartyUtil.h"
-#include "nsINetworkInterceptController.h"
 
 #ifdef MOZ_MEDIA_NAVIGATOR
 #include "mozilla/dom/MediaDevices.h"
@@ -107,7 +106,6 @@
 
 #include "nsIUploadChannel2.h"
 #include "nsFormData.h"
-#include "nsIPrivateBrowsingChannel.h"
 #include "nsIDocShell.h"
 
 #include "WorkerPrivate.h"
@@ -189,6 +187,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Navigator)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mGeolocation)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mNotification)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBatteryManager)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBatteryPromise)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPowerManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCellBroadcast)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mIccManager)
@@ -210,7 +209,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Navigator)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCameraManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMediaDevices)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMessagesManager)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDeviceStorageStores)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTimeManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mServiceWorkerContainer)
 
@@ -256,6 +254,8 @@ Navigator::Invalidate()
     mBatteryManager->Shutdown();
     mBatteryManager = nullptr;
   }
+
+  mBatteryPromise = nullptr;
 
 #ifdef MOZ_B2G_FM
   if (mFMRadio) {
@@ -332,7 +332,10 @@ Navigator::Invalidate()
 
   uint32_t len = mDeviceStorageStores.Length();
   for (uint32_t i = 0; i < len; ++i) {
-    mDeviceStorageStores[i]->Shutdown();
+    nsRefPtr<nsDOMDeviceStorage> ds = do_QueryReferent(mDeviceStorageStores[i]);
+    if (ds) {
+      ds->Shutdown();
+    }
   }
   mDeviceStorageStores.Clear();
 
@@ -965,7 +968,26 @@ Navigator::GetDeviceStorageAreaListener(ErrorResult& aRv)
   return mDeviceStorageAreaListener;
 }
 
-nsDOMDeviceStorage*
+already_AddRefed<nsDOMDeviceStorage>
+Navigator::FindDeviceStorage(const nsAString& aName, const nsAString& aType)
+{
+  auto i = mDeviceStorageStores.Length();
+  while (i > 0) {
+    --i;
+    nsRefPtr<nsDOMDeviceStorage> storage =
+      do_QueryReferent(mDeviceStorageStores[i]);
+    if (storage) {
+      if (storage->Equals(mWindow, aName, aType)) {
+        return storage.forget();
+      }
+    } else {
+      mDeviceStorageStores.RemoveElementAt(i);
+    }
+  }
+  return nullptr;
+}
+
+already_AddRefed<nsDOMDeviceStorage>
 Navigator::GetDeviceStorage(const nsAString& aType, ErrorResult& aRv)
 {
   if (!mWindow || !mWindow->GetOuterWindow() || !mWindow->GetDocShell()) {
@@ -973,7 +995,13 @@ Navigator::GetDeviceStorage(const nsAString& aType, ErrorResult& aRv)
     return nullptr;
   }
 
-  nsRefPtr<nsDOMDeviceStorage> storage;
+  nsString name;
+  nsDOMDeviceStorage::GetDefaultStorageName(aType, name);
+  nsRefPtr<nsDOMDeviceStorage> storage = FindDeviceStorage(name, aType);
+  if (storage) {
+    return storage.forget();
+  }
+
   nsDOMDeviceStorage::CreateDeviceStorageFor(mWindow, aType,
                                              getter_AddRefs(storage));
 
@@ -981,8 +1009,9 @@ Navigator::GetDeviceStorage(const nsAString& aType, ErrorResult& aRv)
     return nullptr;
   }
 
-  mDeviceStorageStores.AppendElement(storage);
-  return storage;
+  mDeviceStorageStores.AppendElement(
+    do_GetWeakReference(static_cast<DOMEventTargetHelper*>(storage)));
+  return storage.forget();
 }
 
 void
@@ -995,12 +1024,31 @@ Navigator::GetDeviceStorages(const nsAString& aType,
     return;
   }
 
-  nsDOMDeviceStorage::CreateDeviceStoragesFor(mWindow, aType, aStores);
+  nsDOMDeviceStorage::VolumeNameArray volumes;
+  nsDOMDeviceStorage::GetOrderedVolumeNames(aType, volumes);
+  if (volumes.IsEmpty()) {
+    nsRefPtr<nsDOMDeviceStorage> storage = GetDeviceStorage(aType, aRv);
+    if (storage) {
+      aStores.AppendElement(storage.forget());
+    }
+  } else {
+    uint32_t len = volumes.Length();
+    aStores.SetCapacity(len);
+    for (uint32_t i = 0; i < len; ++i) {
+      nsRefPtr<nsDOMDeviceStorage> storage =
+        GetDeviceStorageByNameAndType(volumes[i], aType, aRv);
+      if (aRv.Failed()) {
+        break;
+      }
 
-  mDeviceStorageStores.AppendElements(aStores);
+      if (storage) {
+        aStores.AppendElement(storage.forget());
+      }
+    }
+  }
 }
 
-nsDOMDeviceStorage*
+already_AddRefed<nsDOMDeviceStorage>
 Navigator::GetDeviceStorageByNameAndType(const nsAString& aName,
                                          const nsAString& aType,
                                          ErrorResult& aRv)
@@ -1010,7 +1058,10 @@ Navigator::GetDeviceStorageByNameAndType(const nsAString& aName,
     return nullptr;
   }
 
-  nsRefPtr<nsDOMDeviceStorage> storage;
+  nsRefPtr<nsDOMDeviceStorage> storage = FindDeviceStorage(aName, aType);
+  if (storage) {
+    return storage.forget();
+  }
   nsDOMDeviceStorage::CreateDeviceStorageByNameAndType(mWindow, aName, aType,
                                                        getter_AddRefs(storage));
 
@@ -1018,8 +1069,9 @@ Navigator::GetDeviceStorageByNameAndType(const nsAString& aName,
     return nullptr;
   }
 
-  mDeviceStorageStores.AppendElement(storage);
-  return storage;
+  mDeviceStorageStores.AppendElement(
+    do_GetWeakReference(static_cast<DOMEventTargetHelper*>(storage)));
+  return storage.forget();
 }
 
 Geolocation*
@@ -1049,22 +1101,32 @@ class BeaconStreamListener final : public nsIStreamListener
     ~BeaconStreamListener() {}
 
   public:
-    BeaconStreamListener() {}
+    BeaconStreamListener() : mLoadGroup(nullptr) {}
+
+    void SetLoadGroup(nsILoadGroup* aLoadGroup) {
+      mLoadGroup = aLoadGroup;
+    }
 
     NS_DECL_ISUPPORTS
     NS_DECL_NSISTREAMLISTENER
     NS_DECL_NSIREQUESTOBSERVER
+
+  private:
+    nsCOMPtr<nsILoadGroup> mLoadGroup;
+
 };
 
 NS_IMPL_ISUPPORTS(BeaconStreamListener,
                   nsIStreamListener,
                   nsIRequestObserver)
 
-
 NS_IMETHODIMP
 BeaconStreamListener::OnStartRequest(nsIRequest *aRequest,
                                      nsISupports *aContext)
 {
+  // release the loadgroup first
+  mLoadGroup = nullptr;
+
   aRequest->Cancel(NS_ERROR_NET_INTERRUPT);
   return NS_BINDING_ABORTED;
 }
@@ -1121,34 +1183,10 @@ Navigator::SendBeacon(const nsAString& aUrl,
     return false;
   }
 
-  // Check whether this is a sane URI to load
-  // Explicitly disallow things like chrome:, javascript:, and data: URIs
-  nsCOMPtr<nsIPrincipal> principal = doc->NodePrincipal();
-  nsCOMPtr<nsIScriptSecurityManager> secMan = nsContentUtils::GetSecurityManager();
-  uint32_t flags = nsIScriptSecurityManager::DISALLOW_INHERIT_PRINCIPAL
-                   & nsIScriptSecurityManager::DISALLOW_SCRIPT;
-  rv = secMan->CheckLoadURIWithPrincipal(principal,
-                                         uri,
-                                         flags);
-  if (NS_FAILED(rv)) {
-    // Bad URI
-    aRv.Throw(rv);
-    return false;
-  }
-
-  // Check whether the CSP allows us to load
-  int16_t shouldLoad = nsIContentPolicy::ACCEPT;
-  rv = NS_CheckContentLoadPolicy(nsIContentPolicy::TYPE_BEACON,
-                                 uri,
-                                 principal,
-                                 doc,
-                                 EmptyCString(), //mime guess
-                                 nullptr,         //extra
-                                 &shouldLoad,
-                                 nsContentUtils::GetContentPolicy(),
-                                 nsContentUtils::GetSecurityManager());
-  if (NS_FAILED(rv) || NS_CP_REJECTED(shouldLoad)) {
-    // Disallowed by content policy
+  // Explicitly disallow loading data: URIs
+  bool isDataScheme = false;
+  rv = uri->SchemeIs("data", &isDataScheme);
+  if (NS_FAILED(rv) || isDataScheme) {
     aRv.Throw(NS_ERROR_CONTENT_BLOCKED);
     return false;
   }
@@ -1157,24 +1195,12 @@ Navigator::SendBeacon(const nsAString& aUrl,
   rv = NS_NewChannel(getter_AddRefs(channel),
                      uri,
                      doc,
-                     nsILoadInfo::SEC_NORMAL,
+                     nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS,
                      nsIContentPolicy::TYPE_BEACON);
 
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
     return false;
-  }
-
-  nsIDocShell* docShell = mWindow->GetDocShell();
-  nsCOMPtr<nsIPrivateBrowsingChannel> pbChannel = do_QueryInterface(channel);
-  if (pbChannel) {
-    nsCOMPtr<nsILoadContext> loadContext = do_QueryInterface(docShell);
-    if (loadContext) {
-      rv = pbChannel->SetPrivate(loadContext->UsePrivateBrowsing());
-      if (NS_FAILED(rv)) {
-        NS_WARNING("Setting the privacy status on the beacon channel failed");
-      }
-    }
   }
 
   nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(channel);
@@ -1184,25 +1210,6 @@ Navigator::SendBeacon(const nsAString& aUrl,
     return false;
   }
   httpChannel->SetReferrer(documentURI);
-
-  // Anything that will need to refer to the window during the request
-  // will need to be done now.  For example, detection of whether any
-  // cookies set by this request are foreign.  Note that ThirdPartyUtil
-  // (nsIThirdPartyUtil.isThirdPartyChannel) does a secondary check between
-  // the channel URI and the cookie URI even when forceAllowThirdPartyCookie
-  // is set, so this is safe with regard to redirects.
-  nsCOMPtr<nsIHttpChannelInternal> httpChannelInternal(do_QueryInterface(channel));
-  nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil = do_GetService(THIRDPARTYUTIL_CONTRACTID);
-  if (!httpChannelInternal) {
-    aRv.Throw(NS_ERROR_DOM_BAD_URI);
-    return false;
-  }
-  bool isForeign = true;
-  thirdPartyUtil->IsThirdPartyWindow(mWindow, uri, &isForeign);
-  uint32_t thirdPartyFlags = isForeign ?
-    0 :
-    nsIHttpChannelInternal::THIRD_PARTY_FORCE_ALLOW;
-  httpChannelInternal->SetThirdPartyFlags(thirdPartyFlags);
 
   nsCString mimeType;
   if (!aData.IsNull()) {
@@ -1290,17 +1297,18 @@ Navigator::SendBeacon(const nsAString& aUrl,
     cos->AddClassFlags(nsIClassOfService::Background);
   }
 
-  nsRefPtr<nsCORSListenerProxy> cors = new nsCORSListenerProxy(new BeaconStreamListener(),
-                                                               principal,
-                                                               true);
+  // The channel needs to have a loadgroup associated with it, so that we can
+  // cancel the channel and any redirected channels it may create.
+  nsCOMPtr<nsILoadGroup> loadGroup = do_CreateInstance(NS_LOADGROUP_CONTRACTID);
+  nsCOMPtr<nsIInterfaceRequestor> callbacks =
+    do_QueryInterface(mWindow->GetDocShell());
+  loadGroup->SetNotificationCallbacks(callbacks);
+  channel->SetLoadGroup(loadGroup);
 
-  rv = cors->Init(channel, DataURIHandling::Allow);
-  NS_ENSURE_SUCCESS(rv, false);
-
-  nsCOMPtr<nsINetworkInterceptController> interceptController = do_QueryInterface(docShell);
-  cors->SetInterceptController(interceptController);
+  nsRefPtr<BeaconStreamListener> beaconListener = new BeaconStreamListener();
 
   // Start a preflight if cross-origin and content type is not whitelisted
+  nsCOMPtr<nsIScriptSecurityManager> secMan = nsContentUtils::GetSecurityManager();
   rv = secMan->CheckSameOriginURI(documentURI, uri, false);
   bool crossOrigin = NS_FAILED(rv);
   nsAutoCString contentType, parsedCharset;
@@ -1316,22 +1324,32 @@ Navigator::SendBeacon(const nsAString& aUrl,
     nsCOMPtr<nsIInterfaceRequestor> soc = nsContentUtils::SameOriginChecker();
     channel->SetNotificationCallbacks(soc);
 
-    nsCOMPtr<nsIChannel> preflightChannel;
+    nsCOMPtr<nsIHttpChannelInternal> internalChannel =
+      do_QueryInterface(channel);
+    if (!internalChannel) {
+      aRv.Throw(NS_ERROR_FAILURE);
+      return false;
+    }
     nsTArray<nsCString> unsafeHeaders;
     unsafeHeaders.AppendElement(NS_LITERAL_CSTRING("Content-Type"));
-    rv = NS_StartCORSPreflight(channel,
-                               cors,
-                               principal,
-                               true,
-                               unsafeHeaders,
-                               getter_AddRefs(preflightChannel));
-  } else {
-    rv = channel->AsyncOpen(cors, nullptr);
+    rv = internalChannel->SetCorsPreflightParameters(unsafeHeaders,
+                                                     true,
+                                                     doc->NodePrincipal());
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      aRv.Throw(rv);
+      return false;
+    }
   }
+
+  rv = channel->AsyncOpen2(beaconListener);
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
     return false;
   }
+  // make the beaconListener hold a strong reference to the loadgroup
+  // which is released in ::OnStartRequest
+  beaconListener->SetLoadGroup(loadGroup);
+
   return true;
 }
 
@@ -1448,8 +1466,37 @@ Navigator::GetMozFMRadio(ErrorResult& aRv)
 //    Navigator::nsINavigatorBattery
 //*****************************************************************************
 
-battery::BatteryManager*
+Promise*
 Navigator::GetBattery(ErrorResult& aRv)
+{
+  if (mBatteryPromise) {
+    return mBatteryPromise;
+  }
+
+  if (!mWindow || !mWindow->GetDocShell()) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+
+  nsCOMPtr<nsIGlobalObject> go = do_QueryInterface(mWindow);
+  nsRefPtr<Promise> batteryPromise = Promise::Create(go, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+  mBatteryPromise = batteryPromise;
+
+  if (!mBatteryManager) {
+    mBatteryManager = new battery::BatteryManager(mWindow);
+    mBatteryManager->Init();
+  }
+
+  mBatteryPromise->MaybeResolve(mBatteryManager);
+
+  return mBatteryPromise;
+}
+
+battery::BatteryManager*
+Navigator::GetDeprecatedBattery(ErrorResult& aRv)
 {
   if (!mBatteryManager) {
     if (!mWindow) {
@@ -1558,6 +1605,14 @@ Navigator::HasFeature(const nsAString& aName, ErrorResult& aRv)
   if (aRv.Failed()) {
     return nullptr;
   }
+
+  // Hardcoded web-extensions feature which is b2g specific.
+#ifdef MOZ_B2G
+  if (aName.EqualsLiteral("web-extensions")) {
+    p->MaybeResolve(true);
+    return p.forget();
+  }
+#endif
 
   // Hardcoded manifest features. Some are still b2g specific.
   const char manifestFeatures[][64] = {
@@ -1749,6 +1804,13 @@ Navigator::GetInputPortManager(ErrorResult& aRv)
   }
 
   return mInputPortManager;
+}
+
+already_AddRefed<LegacyMozTCPSocket>
+Navigator::MozTCPSocket()
+{
+  nsRefPtr<LegacyMozTCPSocket> socket = new LegacyMozTCPSocket(GetWindow());
+  return socket.forget();
 }
 
 #ifdef MOZ_B2G
@@ -2431,24 +2493,6 @@ Navigator::HasUserMediaSupport(JSContext* /* unused */,
 
 /* static */
 bool
-Navigator::HasInputMethodSupport(JSContext* /* unused */,
-                                 JSObject* aGlobal)
-{
-  nsCOMPtr<nsPIDOMWindow> win = GetWindowFromGlobal(aGlobal);
-  if (!win || !Preferences::GetBool("dom.mozInputMethod.enabled", false)) {
-    return false;
-  }
-
-  if (Preferences::GetBool("dom.mozInputMethod.testing", false)) {
-    return true;
-  }
-
-  return CheckPermission(win, "input") ||
-         CheckPermission(win, "input-manage");
-}
-
-/* static */
-bool
 Navigator::HasDataStoreSupport(nsIPrincipal* aPrincipal)
 {
   workers::AssertIsOnMainThread();
@@ -2748,53 +2792,96 @@ Navigator::GetUserAgent(nsPIDOMWindow* aWindow, nsIURI* aURI,
 }
 
 #ifdef MOZ_EME
+static nsCString
+ToCString(const nsString& aString)
+{
+  return NS_ConvertUTF16toUTF8(aString);
+}
+
+static nsCString
+ToCString(const MediaKeySystemMediaCapability& aValue)
+{
+  nsCString str;
+  str.AppendLiteral("{contentType='");
+  if (!aValue.mContentType.IsEmpty()) {
+    str.Append(ToCString(aValue.mContentType));
+  }
+  str.AppendLiteral("'}");
+  return str;
+}
+
+template<class Type>
+static nsCString
+ToCString(const Sequence<Type>& aSequence)
+{
+  nsCString s;
+  s.AppendLiteral("[");
+  for (size_t i = 0; i < aSequence.Length(); i++) {
+    if (i != 0) {
+      s.AppendLiteral(",");
+    }
+    s.Append(ToCString(aSequence[i]));
+  }
+  s.AppendLiteral("]");
+  return s;
+}
+
+static nsCString
+ToCString(const MediaKeySystemConfiguration& aConfig)
+{
+  nsCString str;
+  str.AppendLiteral("{");
+  str.AppendPrintf("label='%s'", NS_ConvertUTF16toUTF8(aConfig.mLabel).get());
+
+  if (aConfig.mInitDataTypes.WasPassed()) {
+    str.AppendLiteral(", initDataTypes=");
+    str.Append(ToCString(aConfig.mInitDataTypes.Value()));
+  }
+
+  if (aConfig.mAudioCapabilities.WasPassed()) {
+    str.AppendLiteral(", audioCapabilities=");
+    str.Append(ToCString(aConfig.mAudioCapabilities.Value()));
+  }
+  if (aConfig.mVideoCapabilities.WasPassed()) {
+    str.AppendLiteral(", videoCapabilities=");
+    str.Append(ToCString(aConfig.mVideoCapabilities.Value()));
+  }
+
+  if (!aConfig.mAudioType.IsEmpty()) {
+    str.AppendPrintf(", audioType='%s'",
+      NS_ConvertUTF16toUTF8(aConfig.mAudioType).get());
+  }
+  if (!aConfig.mInitDataType.IsEmpty()) {
+    str.AppendPrintf(", initDataType='%s'",
+      NS_ConvertUTF16toUTF8(aConfig.mInitDataType).get());
+  }
+  if (!aConfig.mVideoType.IsEmpty()) {
+    str.AppendPrintf(", videoType='%s'",
+      NS_ConvertUTF16toUTF8(aConfig.mVideoType).get());
+  }
+  str.AppendLiteral("}");
+
+  return str;
+}
+
+static nsCString
+RequestKeySystemAccessLogString(const nsAString& aKeySystem,
+                                const Sequence<MediaKeySystemConfiguration>& aConfigs)
+{
+  nsCString str;
+  str.AppendPrintf("Navigator::RequestMediaKeySystemAccess(keySystem='%s' options=",
+                   NS_ConvertUTF16toUTF8(aKeySystem).get());
+  str.Append(ToCString(aConfigs));
+  str.AppendLiteral(")");
+  return str;
+}
+
 already_AddRefed<Promise>
 Navigator::RequestMediaKeySystemAccess(const nsAString& aKeySystem,
-                                       const Optional<Sequence<MediaKeySystemOptions>>& aOptions,
+                                       const Sequence<MediaKeySystemConfiguration>& aConfigs,
                                        ErrorResult& aRv)
 {
-  nsAutoCString logMsg;
-  logMsg.AppendPrintf("Navigator::RequestMediaKeySystemAccess(keySystem='%s' options=[",
-                      NS_ConvertUTF16toUTF8(aKeySystem).get());
-  if (aOptions.WasPassed()) {
-    const Sequence<MediaKeySystemOptions>& options = aOptions.Value();
-    for (size_t i = 0; i < options.Length(); i++) {
-      const MediaKeySystemOptions& op = options[i];
-      if (i > 0) {
-        logMsg.AppendLiteral(",");
-      }
-      logMsg.AppendLiteral("{");
-      logMsg.AppendPrintf("stateful='%s'",
-        MediaKeysRequirementValues::strings[(size_t)op.mStateful].value);
-
-      logMsg.AppendPrintf(", uniqueIdentifier='%s'",
-        MediaKeysRequirementValues::strings[(size_t)op.mUniqueidentifier].value);
-
-      if (!op.mAudioCapability.IsEmpty()) {
-        logMsg.AppendPrintf(", audioCapability='%s'",
-                            NS_ConvertUTF16toUTF8(op.mAudioCapability).get());
-      }
-      if (!op.mAudioType.IsEmpty()) {
-        logMsg.AppendPrintf(", audioType='%s'",
-          NS_ConvertUTF16toUTF8(op.mAudioType).get());
-      }
-      if (!op.mInitDataType.IsEmpty()) {
-        logMsg.AppendPrintf(", initDataType='%s'",
-          NS_ConvertUTF16toUTF8(op.mInitDataType).get());
-      }
-      if (!op.mVideoCapability.IsEmpty()) {
-        logMsg.AppendPrintf(", videoCapability='%s'",
-          NS_ConvertUTF16toUTF8(op.mVideoCapability).get());
-      }
-      if (!op.mVideoType.IsEmpty()) {
-        logMsg.AppendPrintf(", videoType='%s'",
-          NS_ConvertUTF16toUTF8(op.mVideoType).get());
-      }
-      logMsg.AppendLiteral("}");
-    }
-  }
-  logMsg.AppendPrintf("])");
-  EME_LOG(logMsg.get());
+  EME_LOG("%s", RequestKeySystemAccessLogString(aKeySystem, aConfigs).get());
 
   nsCOMPtr<nsIGlobalObject> go = do_QueryInterface(mWindow);
   nsRefPtr<DetailedPromise> promise = DetailedPromise::Create(go, aRv,
@@ -2807,10 +2894,9 @@ Navigator::RequestMediaKeySystemAccess(const nsAString& aKeySystem,
     mMediaKeySystemAccessManager = new MediaKeySystemAccessManager(mWindow);
   }
 
-  mMediaKeySystemAccessManager->Request(promise, aKeySystem, aOptions);
+  mMediaKeySystemAccessManager->Request(promise, aKeySystem, aConfigs);
   return promise.forget();
 }
-
 #endif
 
 Presentation*

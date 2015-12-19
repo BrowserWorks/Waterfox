@@ -323,4 +323,18 @@ public class AppConstants {
 //#else
     false;
 //#endif
+
+    public static final boolean MOZ_SWITCHBOARD =
+//#ifdef MOZ_SWITCHBOARD
+    true;
+//#else
+    false;
+//#endif
+
+    public static final boolean MOZ_ANDROID_NATIVE_ACCOUNT_UI =
+//#ifdef MOZ_ANDROID_NATIVE_ACCOUNT_UI
+    true;
+//#else
+    false;
+//#endif
 }

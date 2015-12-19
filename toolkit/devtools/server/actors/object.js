@@ -577,8 +577,68 @@ ObjectActor.prototype = {
   },
 
   /**
-   * Helper function for onAllocationStack which fetches the source location
-   * for a SavedFrame stack.
+   * Handle a protocol request to get the fulfillment stack of a promise.
+   */
+  onFulfillmentStack: function() {
+    if (this.obj.class != "Promise") {
+      return { error: "objectNotPromise",
+               message: "'fulfillmentStack' request is only valid for " +
+                        "object grips with a 'Promise' class." };
+    }
+
+    let rawPromise = this.obj.unsafeDereference();
+    let stack = PromiseDebugging.getFullfillmentStack(rawPromise);
+    let fulfillmentStacks = [];
+
+    while (stack) {
+      if (stack.source) {
+        let source = this._getSourceOriginalLocation(stack);
+
+        if (source) {
+          fulfillmentStacks.push(source);
+        }
+      }
+      stack = stack.parent;
+    }
+
+    return Promise.all(fulfillmentStacks).then(stacks => {
+      return { fulfillmentStack: stacks };
+    });
+  },
+
+  /**
+   * Handle a protocol request to get the rejection stack of a promise.
+   */
+  onRejectionStack: function() {
+    if (this.obj.class != "Promise") {
+      return { error: "objectNotPromise",
+               message: "'rejectionStack' request is only valid for " +
+                        "object grips with a 'Promise' class." };
+    }
+
+    let rawPromise = this.obj.unsafeDereference();
+    let stack = PromiseDebugging.getRejectionStack(rawPromise);
+    let rejectionStacks = [];
+
+    while (stack) {
+      if (stack.source) {
+        let source = this._getSourceOriginalLocation(stack);
+
+        if (source) {
+          rejectionStacks.push(source);
+        }
+      }
+      stack = stack.parent;
+    }
+
+    return Promise.all(rejectionStacks).then(stacks => {
+      return { rejectionStack: stacks };
+    });
+  },
+
+  /**
+   * Helper function for fetching the source location of a SavedFrame stack.
+   *
    * @param SavedFrame stack
    *        The promise allocation stack frame
    * @return object
@@ -625,7 +685,9 @@ ObjectActor.prototype.requestTypes = {
   "release": ObjectActor.prototype.onRelease,
   "scope": ObjectActor.prototype.onScope,
   "dependentPromises": ObjectActor.prototype.onDependentPromises,
-  "allocationStack": ObjectActor.prototype.onAllocationStack
+  "allocationStack": ObjectActor.prototype.onAllocationStack,
+  "fulfillmentStack": ObjectActor.prototype.onFulfillmentStack,
+  "rejectionStack": ObjectActor.prototype.onRejectionStack
 };
 
 /**
@@ -1631,9 +1693,9 @@ function stringify(obj) {
 }
 
 // Used to prevent infinite recursion when an array is found inside itself.
-let seen = null;
+var seen = null;
 
-let stringifiers = {
+var stringifiers = {
   Error: errorStringify,
   EvalError: errorStringify,
   RangeError: errorStringify,
@@ -1836,9 +1898,9 @@ function createValueGrip(value, pool, makeObjectGrip) {
       if (value === null) {
         return { type: "null" };
       }
-    else if(value.optimizedOut ||
-            value.uninitialized ||
-            value.missingArguments) {
+    else if (value.optimizedOut ||
+             value.uninitialized ||
+             value.missingArguments) {
         // The slot is optimized out, an uninitialized binding, or
         // arguments on a dead scope
         return {

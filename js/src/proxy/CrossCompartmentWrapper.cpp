@@ -153,10 +153,10 @@ CrossCompartmentWrapper::hasOwn(JSContext* cx, HandleObject wrapper, HandleId id
 }
 
 bool
-CrossCompartmentWrapper::get(JSContext* cx, HandleObject wrapper, HandleObject receiver,
+CrossCompartmentWrapper::get(JSContext* cx, HandleObject wrapper, HandleValue receiver,
                              HandleId id, MutableHandleValue vp) const
 {
-    RootedObject receiverCopy(cx, receiver);
+    RootedValue receiverCopy(cx, receiver);
     {
         AutoCompartment call(cx, wrappedObject(wrapper));
         if (!cx->compartment()->wrap(cx, &receiverCopy))
@@ -314,7 +314,7 @@ CrossCompartmentWrapper::construct(JSContext* cx, HandleObject wrapper, const Ca
 
 bool
 CrossCompartmentWrapper::nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                                    CallArgs srcArgs) const
+                                    const CallArgs& srcArgs) const
 {
     RootedObject wrapper(cx, &srcArgs.thisv().toObject());
     MOZ_ASSERT(srcArgs.thisv().isMagic(JS_IS_CONSTRUCTING) ||

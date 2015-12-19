@@ -2,7 +2,7 @@ const Cu = Components.utils;
 const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm", {});
 const {NetUtil} = Cu.import("resource://gre/modules/NetUtil.jsm", {});
-const promise = require("projecteditor/helpers/promise");
+const promise = require("promise");
 const ProjectEditor = require("projecteditor/projecteditor");
 
 const SAMPLE_PATH = buildTempDirectoryStructure();
@@ -15,7 +15,7 @@ const SAMPLE_ICON = "chrome://browser/skin/devtools/tool-debugger.svg";
  * chrome://browser/content/devtools/projecteditor-loader.xul.
  * This emulates the integration points that the app manager uses.
  */
-let appManagerEditor;
+var appManagerEditor;
 
 // Log a message to the project overview URL to make development easier
 function log(msg) {

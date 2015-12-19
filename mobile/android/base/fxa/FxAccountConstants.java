@@ -32,7 +32,7 @@ public class FxAccountConstants {
   // Key for avatar URI in profile JSON.
   public static final String KEY_PROFILE_JSON_AVATAR = "avatar";
   // Key for username in profile JSON.
-  public static final String KEY_PROFILE_JSON_USERNAME = "username";
+  public static final String KEY_PROFILE_JSON_USERNAME = "displayName";
 
   // You must wait 15 minutes after failing an age check before trying to create a different account.
   public static final long MINIMUM_TIME_TO_WAIT_AFTER_AGE_CHECK_FAILED_IN_MILLISECONDS = 15 * 60 * 1000;
@@ -94,4 +94,14 @@ public class FxAccountConstants {
    * Account type.
    */
   public static final String ACCOUNT_STATE_CHANGED_ACTION = AppConstants.MOZ_ANDROID_SHARED_FXACCOUNT_TYPE + ".accounts.ACCOUNT_STATE_CHANGED_ACTION";
+
+  public static final String ACTION_FXA_CONFIRM_ACCOUNT            = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_CONFIRM_ACCOUNT";
+  public static final String ACTION_FXA_FINISH_MIGRATING           = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_FINISH_MIGRATING";
+  public static final String ACTION_FXA_GET_STARTED                = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_GET_STARTED";
+  public static final String ACTION_FXA_STATUS                     = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_STATUS";
+  public static final String ACTION_FXA_UPDATE_CREDENTIALS         = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_UPDATE_CREDENTIALS";
+
+  public static final String ENDPOINT_PREFERENCES  = "preferences";
+  public static final String ENDPOINT_NOTIFICATION = "notification";
+  public static final String ENDPOINT_FIRSTRUN = "firstrun";
 }

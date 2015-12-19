@@ -315,6 +315,10 @@ public:
     // contents of the buffer.
     void MarkContextClean() override { mInvalidated = false; }
 
+    void MarkContextCleanForFrameCapture() override { mCapturedFrameInvalidated = false; }
+
+    bool IsContextCleanForFrameCapture() override { return !mCapturedFrameInvalidated; }
+
     gl::GLContext* GL() const { return gl; }
 
     bool IsPremultAlpha() const { return mOptions.premultipliedAlpha; }
@@ -361,6 +365,8 @@ public:
     GLsizei DrawingBufferHeight() const {
         return IsContextLost() ? 0 : mHeight;
     }
+
+    layers::LayersBackend GetCompositorBackendType() const;
 
     void
     GetContextAttributes(dom::Nullable<dom::WebGLContextAttributes>& retval);
@@ -1031,6 +1037,7 @@ protected:
     WebGLContextOptions mOptions;
 
     bool mInvalidated;
+    bool mCapturedFrameInvalidated;
     bool mResetLayer;
     bool mOptionsFrozen;
     bool mMinCapability;
@@ -1076,6 +1083,8 @@ protected:
     uint32_t  mGLMaxTransformFeedbackSeparateAttribs;
     GLuint  mGLMaxUniformBufferBindings;
     GLsizei mGLMaxSamples;
+    GLuint  mGLMax3DTextureSize;
+    GLuint  mGLMaxArrayTextureLayers;
 
 public:
     GLuint MaxVertexAttribs() const {

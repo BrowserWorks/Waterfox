@@ -10,21 +10,18 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-const {require, devtools: loader} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const { require, loader } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const promise = require("promise");
 // Load target and toolbox lazily as they need gDevTools to be fully initialized
 loader.lazyRequireGetter(this, "TargetFactory", "devtools/framework/target", true);
 loader.lazyRequireGetter(this, "Toolbox", "devtools/framework/toolbox", true);
 
-XPCOMUtils.defineLazyModuleGetter(this, "promise",
-                                  "resource://gre/modules/Promise.jsm", "Promise");
 XPCOMUtils.defineLazyModuleGetter(this, "console",
                                   "resource://gre/modules/devtools/Console.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
                                   "resource:///modules/CustomizableUI.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "DebuggerServer",
-                                  "resource://gre/modules/devtools/dbg-server.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "DebuggerClient",
-                                  "resource://gre/modules/devtools/dbg-client.jsm");
+loader.lazyRequireGetter(this, "DebuggerServer", "devtools/server/main", true);
+loader.lazyRequireGetter(this, "DebuggerClient", "devtools/toolkit/client/main", true);
 
 const DefaultTools = require("definitions").defaultTools;
 const EventEmitter = require("devtools/toolkit/event-emitter");
@@ -86,6 +83,9 @@ DevTools.prototype = {
    *        (string|required)
    * - label: Localized name for the tool to be displayed to the user
    *          (string|required)
+   * - hideInOptions: Boolean indicating whether or not this tool should be
+                      shown in toolbox options or not. Defaults to false.
+   *                  (boolean)
    * - build: Function that takes an iframe, which has been populated with the
    *          markup from |url|, and also the toolbox containing the panel.
    *          And returns an instance of ToolPanel (function|required)
@@ -514,14 +514,14 @@ DevTools.prototype = {
  * It is an instance of a DevTools class that holds a set of tools. It has the
  * same lifetime as the browser.
  */
-let gDevTools = new DevTools();
+var gDevTools = new DevTools();
 this.gDevTools = gDevTools;
 
 /**
  * gDevToolsBrowser exposes functions to connect the gDevTools instance with a
  * Firefox instance.
  */
-let gDevToolsBrowser = {
+var gDevToolsBrowser = {
   /**
    * A record of the windows whose menus we altered, so we can undo the changes
    * as the window is closed
@@ -886,13 +886,13 @@ let gDevToolsBrowser = {
         switch (threadClient.state) {
           case "paused":
             // When the debugger is already paused.
-            threadClient.breakOnNext();
+            threadClient.resumeThenPause();
             aCallback();
             break;
           case "attached":
             // When the debugger is already open.
             threadClient.interrupt(() => {
-              threadClient.breakOnNext();
+              threadClient.resumeThenPause();
               aCallback();
             });
             break;
@@ -900,7 +900,7 @@ let gDevToolsBrowser = {
             // The debugger is newly opened.
             threadClient.addOneTimeListener("resumed", () => {
               threadClient.interrupt(() => {
-                threadClient.breakOnNext();
+                threadClient.resumeThenPause();
                 aCallback();
               });
             });

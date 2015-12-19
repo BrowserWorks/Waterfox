@@ -52,7 +52,7 @@ public:
   // minidump was written.
   void PluginCrashed(const nsAString& pluginDumpID,
                      const nsAString& browserDumpID);
-  
+
   static bool RunPluginOOP(const nsPluginTag *aPluginTag);
 
   nsresult Shutdown();

@@ -203,7 +203,6 @@ nsJARChannel::nsJARChannel()
     , mIsUnsafe(true)
     , mOpeningRemote(false)
     , mSynthesizedStreamLength(0)
-    , mForceNoIntercept(false)
     , mBlockRemoteFiles(false)
 {
     if (!gJarProtocolLog)
@@ -864,6 +863,12 @@ nsJARChannel::Open2(nsIInputStream** aStream)
 }
 
 bool
+nsJARChannel::BypassServiceWorker() const
+{
+  return mLoadFlags & LOAD_BYPASS_SERVICE_WORKER;
+}
+
+bool
 nsJARChannel::ShouldIntercept()
 {
     LOG(("nsJARChannel::ShouldIntercept [this=%x]\n", this));
@@ -877,7 +882,7 @@ nsJARChannel::ShouldIntercept()
                                   NS_GET_IID(nsINetworkInterceptController),
                                   getter_AddRefs(controller));
     bool shouldIntercept = false;
-    if (controller && !mForceNoIntercept) {
+    if (controller && !BypassServiceWorker() && mLoadInfo) {
       bool isNavigation = mLoadFlags & LOAD_DOCUMENT_URI;
       nsresult rv = controller->ShouldPrepareForIntercept(mAppURI,
                                                           isNavigation,
@@ -933,6 +938,10 @@ nsJARChannel::OverrideWithSynthesizedResponse(nsIInputStream* aSynthesizedInput,
 NS_IMETHODIMP
 nsJARChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctx)
 {
+    MOZ_ASSERT(!mLoadInfo || mLoadInfo->GetSecurityMode() == 0 ||
+               mLoadInfo->GetEnforceSecurity(),
+               "security flags in loadInfo but asyncOpen2() not called");
+
     LOG(("nsJARChannel::AsyncOpen [this=%x]\n", this));
 
     NS_ENSURE_ARG_POINTER(listener);
@@ -1108,13 +1117,6 @@ nsJARChannel::GetZipEntry(nsIZipEntry **aZipEntry)
         return rv;
 
     return reader->GetEntry(mJarEntry, aZipEntry);
-}
-
-NS_IMETHODIMP
-nsJARChannel::ForceNoIntercept()
-{
-    mForceNoIntercept = true;
-    return NS_OK;
 }
 
 //-----------------------------------------------------------------------------

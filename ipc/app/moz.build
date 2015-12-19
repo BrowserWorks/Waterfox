@@ -17,7 +17,7 @@ else:
     kwargs = {
         'linkage': None,
     }
-    if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
+    if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT' and not CONFIG['MOZ_ASAN']:
         kwargs['msvcrt'] = 'static'
         if not CONFIG['GNU_CC']:
             USE_LIBS += [
@@ -55,12 +55,25 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
     ]
     USE_LIBS += [
         'rlz',
-        'sandbox_staticruntime_s',
     ]
-    DELAYLOAD_DLLS += [
-        'nss3.dll',
-        'xul.dll'
-    ]
+
+    if CONFIG['MOZ_ASAN']:
+        USE_LIBS += [
+            'sandbox_s',
+        ]
+    else:
+        USE_LIBS += [
+            'sandbox_staticruntime_s',
+        ]
+
+    # clang-cl can't deal with this delay-load due to bug 1188045
+    # (also filed as https://llvm.org/bugs/show_bug.cgi?id=24291)
+    if not CONFIG['CLANG_CL']:
+        DELAYLOAD_DLLS += [
+            'nss3.dll',
+            'xul.dll'
+        ]
+
     DEFINES['HASH_NODE_ID_WITH_DEVICE_ID'] = 1;
     SOURCES += [
         'sha256.c',
@@ -99,10 +112,6 @@ LDFLAGS += [CONFIG['MOZ_ALLOW_HEAP_EXECUTE_FLAGS']]
 # Set it to 256k.  See bug 127069.
 if CONFIG['OS_ARCH'] == 'WINNT' and not CONFIG['GNU_CC']:
     LDFLAGS += ['/HEAP:0x40000']
-
-# Windows builds have dll linkage warnings due to msvcrt static linkage
-if CONFIG['OS_ARCH'] != 'WINNT':
-    FAIL_ON_WARNINGS = True
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     OS_LIBS += [

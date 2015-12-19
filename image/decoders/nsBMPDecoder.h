@@ -40,13 +40,17 @@ public:
 
     // Obtains the internal output image buffer
     uint32_t* GetImageData();
+    size_t GetImageDataLength() const { return mImageDataLength; }
 
     // Obtains the size of the compressed image resource
     int32_t GetCompressedImageSize() const;
 
     // Obtains whether or not a BMP file had alpha data in its 4th byte
     // for 32BPP bitmaps.  Only use after the bitmap has been processed.
-    bool HasAlphaData() const;
+    bool HasAlphaData() const { return mHaveAlphaData; }
+
+    /// Marks this BMP as having alpha data (due to e.g. an ICO alpha mask).
+    void SetHasAlphaData() { mHaveAlphaData = true; }
 
     virtual void WriteInternal(const char* aBuffer,
                                uint32_t aCount) override;

@@ -7,8 +7,8 @@ module.metadata = {
   "stability": "unstable"
 };
 
-let usingJSON = false;
-let hash = {}, bestMatchingLocale = null;
+var usingJSON = false;
+var hash = {}, bestMatchingLocale = null;
 try {
   let data = require("@l10n/data");
   hash = data.hash;
@@ -32,5 +32,5 @@ exports.locale = function locale() {
 // Returns the short locale code: ja, en, fr
 exports.language = function language() {
   return bestMatchingLocale ? bestMatchingLocale.split("-")[0].toLowerCase()
-                            : null;
+                            : "en";
 }

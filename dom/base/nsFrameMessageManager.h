@@ -28,15 +28,12 @@
 #include "js/RootingAPI.h"
 #include "nsTObserverArray.h"
 #include "mozilla/dom/SameProcessMessageQueue.h"
-#include "mozilla/dom/StructuredCloneUtils.h"
+#include "mozilla/dom/ipc/StructuredCloneData.h"
 #include "mozilla/jsipc/CpowHolder.h"
 
 class nsIFrameLoader;
 
 namespace mozilla {
-
-struct OwningSerializedStructuredCloneBuffer;
-
 namespace dom {
 
 class nsIContentParent;
@@ -57,9 +54,6 @@ enum MessageManagerFlags {
 
 class MessageManagerCallback
 {
-protected:
-  typedef mozilla::OwningSerializedStructuredCloneBuffer OwningSerializedStructuredCloneBuffer;
-
 public:
   virtual ~MessageManagerCallback() {}
 
@@ -70,10 +64,10 @@ public:
 
   virtual bool DoSendBlockingMessage(JSContext* aCx,
                                      const nsAString& aMessage,
-                                     const StructuredCloneData& aData,
+                                     StructuredCloneData& aData,
                                      JS::Handle<JSObject*> aCpows,
                                      nsIPrincipal* aPrincipal,
-                                     nsTArray<OwningSerializedStructuredCloneBuffer>* aRetVal,
+                                     nsTArray<StructuredCloneData>* aRetVal,
                                      bool aIsSync)
   {
     return true;
@@ -81,7 +75,7 @@ public:
 
   virtual bool DoSendAsyncMessage(JSContext* aCx,
                                   const nsAString& aMessage,
-                                  const StructuredCloneData& aData,
+                                  StructuredCloneData& aData,
                                   JS::Handle<JSObject*> aCpows,
                                   nsIPrincipal* aPrincipal)
   {
@@ -116,15 +110,18 @@ public:
 
 protected:
   bool BuildClonedMessageDataForParent(nsIContentParent* aParent,
-                                       const StructuredCloneData& aData,
+                                       StructuredCloneData& aData,
                                        ClonedMessageData& aClonedData);
   bool BuildClonedMessageDataForChild(nsIContentChild* aChild,
-                                      const StructuredCloneData& aData,
+                                      StructuredCloneData& aData,
                                       ClonedMessageData& aClonedData);
 };
 
-StructuredCloneData UnpackClonedMessageDataForParent(const ClonedMessageData& aData);
-StructuredCloneData UnpackClonedMessageDataForChild(const ClonedMessageData& aData);
+void UnpackClonedMessageDataForParent(const ClonedMessageData& aClonedData,
+                                      StructuredCloneData& aData);
+
+void UnpackClonedMessageDataForChild(const ClonedMessageData& aClonedData,
+                                     StructuredCloneData& aData);
 
 } // namespace ipc
 } // namespace dom
@@ -166,8 +163,7 @@ class nsFrameMessageManager final : public nsIContentFrameMessageManager,
                                     public nsIProcessChecker
 {
   friend class mozilla::dom::MessageManagerReporter;
-  typedef mozilla::dom::StructuredCloneData StructuredCloneData;
-  typedef mozilla::OwningSerializedStructuredCloneBuffer OwningSerializedStructuredCloneBuffer;
+  typedef mozilla::dom::ipc::StructuredCloneData StructuredCloneData;
 public:
   nsFrameMessageManager(mozilla::dom::ipc::MessageManagerCallback* aCallback,
                         nsFrameMessageManager* aParentManager,
@@ -196,9 +192,9 @@ public:
 
   nsresult ReceiveMessage(nsISupports* aTarget, nsIFrameLoader* aTargetFrameLoader,
                           const nsAString& aMessage,
-                          bool aIsSync, const StructuredCloneData* aCloneData,
+                          bool aIsSync, StructuredCloneData* aCloneData,
                           mozilla::jsipc::CpowHolder* aCpows, nsIPrincipal* aPrincipal,
-                          nsTArray<OwningSerializedStructuredCloneBuffer>* aRetVal);
+                          nsTArray<StructuredCloneData>* aRetVal);
 
   void AddChildManager(nsFrameMessageManager* aManager);
   void RemoveChildManager(nsFrameMessageManager* aManager)
@@ -223,7 +219,7 @@ public:
                                 uint8_t aArgc);
   nsresult DispatchAsyncMessageInternal(JSContext* aCx,
                                         const nsAString& aMessage,
-                                        const StructuredCloneData& aData,
+                                        StructuredCloneData& aData,
                                         JS::Handle<JSObject*> aCpows,
                                         nsIPrincipal* aPrincipal);
   void RemoveFromParent();
@@ -264,9 +260,9 @@ private:
 
   nsresult ReceiveMessage(nsISupports* aTarget, nsIFrameLoader* aTargetFrameLoader,
                           bool aTargetClosed, const nsAString& aMessage,
-                          bool aIsSync, const StructuredCloneData* aCloneData,
+                          bool aIsSync, StructuredCloneData* aCloneData,
                           mozilla::jsipc::CpowHolder* aCpows, nsIPrincipal* aPrincipal,
-                          nsTArray<OwningSerializedStructuredCloneBuffer>* aRetVal);
+                          nsTArray<StructuredCloneData>* aRetVal);
 
   NS_IMETHOD LoadScript(const nsAString& aURL,
                         bool aAllowDelayedLoad,
@@ -329,14 +325,12 @@ private:
  */
 class nsSameProcessAsyncMessageBase
 {
-  typedef mozilla::dom::StructuredCloneClosure StructuredCloneClosure;
-
 public:
-  typedef mozilla::dom::StructuredCloneData StructuredCloneData;
+  typedef mozilla::dom::ipc::StructuredCloneData StructuredCloneData;
 
   nsSameProcessAsyncMessageBase(JSContext* aCx,
                                 const nsAString& aMessage,
-                                const StructuredCloneData& aData,
+                                StructuredCloneData& aData,
                                 JS::Handle<JSObject*> aCpows,
                                 nsIPrincipal* aPrincipal);
 
@@ -348,8 +342,7 @@ private:
 
   JSRuntime* mRuntime;
   nsString mMessage;
-  JSAutoStructuredCloneBuffer mData;
-  StructuredCloneClosure mClosure;
+  StructuredCloneData mData;
   JS::PersistentRooted<JSObject*> mCpows;
   nsCOMPtr<nsIPrincipal> mPrincipal;
 };

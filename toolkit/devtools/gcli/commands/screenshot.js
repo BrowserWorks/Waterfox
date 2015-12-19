@@ -7,7 +7,7 @@
 const { Cc, Ci, Cu } = require("chrome");
 const l10n = require("gcli/l10n");
 const { Services } = require("resource://gre/modules/Services.jsm");
-const LayoutHelpers = require("devtools/toolkit/layout-helpers");
+const { getRect } = require("devtools/toolkit/layout/utils");
 
 loader.lazyImporter(this, "Downloads", "resource://gre/modules/Downloads.jsm");
 loader.lazyImporter(this, "Task", "resource://gre/modules/Task.jsm");
@@ -65,6 +65,13 @@ const standardParams = {
       defaultValue: 0,
       description: l10n.lookup("screenshotDelayDesc"),
       manual: l10n.lookup("screenshotDelayManual")
+    },
+    {
+      name: "dpi",
+      type: { name: "number", min: 0, allowFloat: true },
+      defaultValue: 0,
+      description: l10n.lookup("screenshotDPIDesc"),
+      manual: l10n.lookup("screenshotDPIManual")
     },
     {
       name: "fullpage",
@@ -267,8 +274,7 @@ function createScreenshotData(document, args) {
     height = window.innerHeight + window.scrollMaxY;
   }
   else if (args.selector) {
-    const lh = new LayoutHelpers(window);
-    ({ top, left, width, height } = lh.getRect(args.selector, window));
+    ({ top, left, width, height } = getRect(window, args.selector, window));
   }
   else {
     left = window.scrollX;
@@ -287,7 +293,7 @@ function createScreenshotData(document, args) {
 
   const canvas = document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
   const ctx = canvas.getContext("2d");
-  const ratio = window.devicePixelRatio;
+  const ratio = args.dpi ? args.dpi : window.devicePixelRatio;
   canvas.width = width * ratio;
   canvas.height = height * ratio;
   ctx.scale(ratio, ratio);

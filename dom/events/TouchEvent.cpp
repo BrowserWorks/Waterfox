@@ -63,7 +63,8 @@ TouchEvent::TouchEvent(EventTarget* aOwner,
                        nsPresContext* aPresContext,
                        WidgetTouchEvent* aEvent)
   : UIEvent(aOwner, aPresContext,
-            aEvent ? aEvent : new WidgetTouchEvent(false, 0, nullptr))
+            aEvent ? aEvent :
+                     new WidgetTouchEvent(false, eVoidEvent, nullptr))
 {
   if (aEvent) {
     mEventIsInternal = false;
@@ -121,7 +122,7 @@ TouchEvent::Touches()
 {
   if (!mTouches) {
     WidgetTouchEvent* touchEvent = mEvent->AsTouchEvent();
-    if (mEvent->message == NS_TOUCH_END || mEvent->message == NS_TOUCH_CANCEL) {
+    if (mEvent->mMessage == eTouchEnd || mEvent->mMessage == eTouchCancel) {
       // for touchend events, remove any changed touches from the touches array
       WidgetTouchEvent::AutoTouchArray unchangedTouches;
       const WidgetTouchEvent::TouchArray& touches = touchEvent->touches;
@@ -148,8 +149,8 @@ TouchEvent::TargetTouches()
     for (uint32_t i = 0; i < touches.Length(); ++i) {
       // for touchend/cancel events, don't append to the target list if this is a
       // touch that is ending
-      if ((mEvent->message != NS_TOUCH_END &&
-           mEvent->message != NS_TOUCH_CANCEL) || !touches[i]->mChanged) {
+      if ((mEvent->mMessage != eTouchEnd && mEvent->mMessage != eTouchCancel) ||
+          !touches[i]->mChanged) {
         if (touches[i]->mTarget == mEvent->originalTarget) {
           targetTouches.AppendElement(touches[i]);
         }
@@ -238,14 +239,11 @@ TouchEvent::ShiftKey()
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsresult
-NS_NewDOMTouchEvent(nsIDOMEvent** aInstancePtrResult,
-                    EventTarget* aOwner,
+already_AddRefed<TouchEvent>
+NS_NewDOMTouchEvent(EventTarget* aOwner,
                     nsPresContext* aPresContext,
                     WidgetTouchEvent* aEvent)
 {
-  TouchEvent* it = new TouchEvent(aOwner, aPresContext, aEvent);
-  NS_ADDREF(it);
-  *aInstancePtrResult = static_cast<Event*>(it);
-  return NS_OK;
+  nsRefPtr<TouchEvent> it = new TouchEvent(aOwner, aPresContext, aEvent);
+  return it.forget();
 }

@@ -4,8 +4,8 @@ SimpleTest.waitForExplicitFinish();
 browserElementTestHelpers.setEnabledPref(true);
 browserElementTestHelpers.addPermission();
 
-let audioUrl = 'http://mochi.test:8888/tests/dom/browser-element/mochitest/audio.ogg';
-let videoUrl = 'http://mochi.test:8888/tests/dom/browser-element/mochitest/short-video.ogv';
+var audioUrl = 'http://mochi.test:8888/tests/dom/browser-element/mochitest/audio.ogg';
+var videoUrl = 'http://mochi.test:8888/tests/dom/browser-element/mochitest/short-video.ogv';
 
 function runTests() {
   createIframe(function onIframeLoaded() {
@@ -24,7 +24,7 @@ function checkEmptyContextMenu() {
 function checkInnerContextMenu() {
   sendContextMenuTo('#inner-link', function onContextMenu(detail) {
     is(detail.systemTargets.length, 1, 'Includes anchor data');
-    is(detail.contextmenu.items.length, 2, 'Inner clicks trigger correct menu');
+    is(detail.contextmenu.items.length, 3, 'Inner clicks trigger correct menu');
     var target = detail.systemTargets[0];
     is(target.nodeName, 'A', 'Reports correct nodeName');
     is(target.data.uri, 'foo.html', 'Reports correct uri');

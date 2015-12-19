@@ -24,14 +24,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     const MacroAssembler& asMasm() const;
 
   private:
-    // Number of bytes the stack is adjusted inside a call to C. Calls to C may
-    // not be nested.
-    bool inCall_;
-    uint32_t args_;
-    uint32_t passedArgs_;
-    uint32_t stackForCall_;
-    bool dynamicAlignment_;
-
     struct Double {
         double value;
         AbsoluteLabel uses;
@@ -91,7 +83,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     void setupABICall(uint32_t args);
 
   public:
-    using MacroAssemblerX86Shared::callWithExitFrame;
     using MacroAssemblerX86Shared::branch32;
     using MacroAssemblerX86Shared::branchTest32;
     using MacroAssemblerX86Shared::load32;
@@ -99,7 +90,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     using MacroAssemblerX86Shared::call;
 
     MacroAssemblerX86()
-      : inCall_(false)
     {
     }
 
@@ -249,6 +239,14 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     void pushValue(const Address& addr) {
         push(tagOf(addr));
         push(payloadOfAfterStackPush(addr));
+    }
+    void push64(Register64 src) {
+        push(src.high);
+        push(src.low);
+    }
+    void pop64(Register64 dest) {
+        pop(dest.low);
+        pop(dest.high);
     }
     void storePayload(const Value& val, Operand dest) {
         jsval_layout jv = JSVAL_TO_IMPL(val);
@@ -617,6 +615,10 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     void addPtr(const Address& src, Register dest) {
         addl(Operand(src), dest);
     }
+    void add64(Imm32 imm, Register64 dest) {
+        addl(imm, dest.low);
+        adcl(Imm32(0), dest.high);
+    }
     void subPtr(Imm32 imm, Register dest) {
         sub32(imm, dest);
     }
@@ -631,6 +633,38 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     }
     void mulBy3(const Register& src, const Register& dest) {
         lea(Operand(src, src, TimesTwo), dest);
+    }
+    // Note: this function clobbers eax and edx.
+    void mul64(Imm64 imm, const Register64& dest) {
+        // LOW32  = LOW(LOW(dest) * LOW(imm));
+        // HIGH32 = LOW(HIGH(dest) * LOW(imm)) [multiply imm into upper bits]
+        //        + LOW(LOW(dest) * HIGH(imm)) [multiply dest into upper bits]
+        //        + HIGH(LOW(dest) * LOW(imm)) [carry]
+
+        MOZ_ASSERT(dest.low != eax && dest.low != edx);
+        MOZ_ASSERT(dest.high != eax && dest.high != edx);
+
+        // HIGH(dest) = LOW(HIGH(dest) * LOW(imm));
+        movl(Imm32(imm.value & 0xFFFFFFFFL), edx);
+        imull(edx, dest.high);
+
+        // edx:eax = LOW(dest) * LOW(imm);
+        movl(Imm32(imm.value & 0xFFFFFFFFL), edx);
+        movl(dest.low, eax);
+        mull(edx);
+
+        // HIGH(dest) += edx;
+        addl(edx, dest.high);
+
+        // HIGH(dest) += LOW(LOW(dest) * HIGH(imm));
+        if (((imm.value >> 32) & 0xFFFFFFFFL) == 5)
+            leal(Operand(dest.low, dest.low, TimesFour), edx);
+        else
+            MOZ_CRASH("Unsupported imm");
+        addl(edx, dest.high);
+
+        // LOW(dest) = eax;
+        movl(eax, dest.low);
     }
 
     void branch32(Condition cond, AbsoluteAddress lhs, Imm32 rhs, Label* label) {
@@ -676,17 +710,19 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
         j(cond, label);
     }
 
-    CodeOffsetJump jumpWithPatch(RepatchLabel* label) {
+    CodeOffsetJump jumpWithPatch(RepatchLabel* label, Label* documentation = nullptr) {
         jump(label);
         return CodeOffsetJump(size());
     }
 
-    CodeOffsetJump jumpWithPatch(RepatchLabel* label, Assembler::Condition cond) {
+    CodeOffsetJump jumpWithPatch(RepatchLabel* label, Assembler::Condition cond,
+                                 Label* documentation = nullptr)
+    {
         j(cond, label);
         return CodeOffsetJump(size());
     }
 
-    CodeOffsetJump backedgeJump(RepatchLabel* label) {
+    CodeOffsetJump backedgeJump(RepatchLabel* label, Label* documentation = nullptr) {
         return jumpWithPatch(label);
     }
 
@@ -720,6 +756,18 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
         j(cond, label);
     }
 
+    void branchTest64(Condition cond, Register64 lhs, Register64 rhs, Register temp, Label* label) {
+        if (cond == Assembler::Zero) {
+            MOZ_ASSERT(lhs.low == rhs.low);
+            MOZ_ASSERT(lhs.high == rhs.high);
+            movl(lhs.low, temp);
+            orl(lhs.high, temp);
+            branchTestPtr(cond, temp, temp, label);
+        } else {
+            MOZ_CRASH("Unsupported condition");
+        }
+    }
+
     void movePtr(ImmWord imm, Register dest) {
         movl(Imm32(imm.value), dest);
     }
@@ -731,6 +779,10 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     }
     void movePtr(ImmGCPtr imm, Register dest) {
         movl(imm, dest);
+    }
+    void move64(Register64 src, Register64 dest) {
+        movl(src.low, dest.low);
+        movl(src.high, dest.high);
     }
     void loadPtr(const Address& address, Register dest) {
         movl(Operand(address), dest);
@@ -749,6 +801,10 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     }
     void load32(AbsoluteAddress address, Register dest) {
         movl(Operand(address), dest);
+    }
+    void load64(const Address& address, Register64 dest) {
+        movl(Operand(address), dest.low);
+        movl(Operand(Address(address.base, address.offset + 4)), dest.high);
     }
     template <typename T>
     void storePtr(ImmWord imm, T address) {
@@ -776,6 +832,10 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     }
     void store32(Register src, AbsoluteAddress address) {
         movl(src, Operand(address));
+    }
+    void store64(Register64 src, Address address) {
+        movl(src.low, Operand(address));
+        movl(src.high, Operand(Address(address.base, address.offset + 4)));
     }
 
     void setStackArg(Register reg, uint32_t arg) {
@@ -1062,34 +1122,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
         }
     }
 
-    void rshiftPtr(Imm32 imm, Register dest) {
-        shrl(imm, dest);
-    }
-    void rshiftPtrArithmetic(Imm32 imm, Register dest) {
-        sarl(imm, dest);
-    }
-    void lshiftPtr(Imm32 imm, Register dest) {
-        shll(imm, dest);
-    }
-    void xorPtr(Imm32 imm, Register dest) {
-        xorl(imm, dest);
-    }
-    void xorPtr(Register src, Register dest) {
-        xorl(src, dest);
-    }
-    void orPtr(Imm32 imm, Register dest) {
-        orl(imm, dest);
-    }
-    void orPtr(Register src, Register dest) {
-        orl(src, dest);
-    }
-    void andPtr(Imm32 imm, Register dest) {
-        andl(imm, dest);
-    }
-    void andPtr(Register src, Register dest) {
-        andl(src, dest);
-    }
-
     void loadInstructionPointerAfterCall(Register dest) {
         movl(Operand(StackPointer, 0x0), dest);
     }
@@ -1111,6 +1143,13 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     void convertUInt32ToFloat32(Register src, FloatRegister dest) {
         convertUInt32ToDouble(src, dest);
         convertDoubleToFloat32(dest, dest);
+    }
+
+    void convertUInt64ToDouble(Register64 src, Register temp, FloatRegister dest);
+
+    void mulDoublePtr(ImmPtr imm, Register temp, FloatRegister dest) {
+        movl(imm, temp);
+        vmulsd(Operand(temp, 0), dest, dest);
     }
 
     void inc64(AbsoluteAddress dest) {
@@ -1141,49 +1180,9 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
         bind(&done);
     }
 
-    // Setup a call to C/C++ code, given the number of general arguments it
-    // takes. Note that this only supports cdecl.
-    //
-    // In order for alignment to work correctly, the MacroAssembler must have a
-    // consistent view of the stack displacement. It is okay to call "push"
-    // manually, however, if the stack alignment were to change, the macro
-    // assembler should be notified before starting a call.
-    void setupAlignedABICall(uint32_t args);
-
-    // Sets up an ABI call for when the alignment is not known. This may need a
-    // scratch register.
-    void setupUnalignedABICall(uint32_t args, Register scratch);
-
-    // Arguments must be assigned to a C/C++ call in order. They are moved
-    // in parallel immediately before performing the call. This process may
-    // temporarily use more stack, in which case esp-relative addresses will be
-    // automatically adjusted. It is extremely important that esp-relative
-    // addresses are computed *after* setupABICall(). Furthermore, no
-    // operations should be emitted while setting arguments.
-    void passABIArg(const MoveOperand& from, MoveOp::Type type);
-    void passABIArg(Register reg);
-    void passABIArg(FloatRegister reg, MoveOp::Type type);
-
-  private:
-    void callWithABIPre(uint32_t* stackAdjust);
-    void callWithABIPost(uint32_t stackAdjust, MoveOp::Type result);
-
   public:
-    // Emits a call to a C/C++ function, resolving all argument moves.
-    void callWithABI(void* fun, MoveOp::Type result = MoveOp::GENERAL);
-    void callWithABI(AsmJSImmPtr fun, MoveOp::Type result = MoveOp::GENERAL);
-    void callWithABI(const Address& fun, MoveOp::Type result = MoveOp::GENERAL);
-    void callWithABI(Register fun, MoveOp::Type result = MoveOp::GENERAL);
-
     // Used from within an Exit frame to handle a pending exception.
     void handleFailureWithHandlerTail(void* handler);
-
-    void makeFrameDescriptor(Register frameSizeReg, FrameType type) {
-        shll(Imm32(FRAMESIZE_SHIFT), frameSizeReg);
-        orl(Imm32(type), frameSizeReg);
-    }
-
-    void callWithExitFrame(JitCode* target, Register dynStack);
 
     void branchPtrInNurseryRange(Condition cond, Register ptr, Register temp, Label* label);
     void branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp, Label* label);

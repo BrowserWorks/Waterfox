@@ -34,7 +34,7 @@
 #include "jsalloc.h"
 
 #include "jit/arm/Simulator-arm.h"
-#include "jit/mips/Simulator-mips.h"
+#include "jit/mips32/Simulator-mips32.h"
 #include "js/GCAPI.h"
 #include "js/HashTable.h"
 #include "js/Vector.h"
@@ -55,7 +55,7 @@ extern  "C" void sync_instruction_memory(caddr_t v, u_int len);
 #endif
 #endif
 
-#if defined(JS_CODEGEN_MIPS) && defined(__linux__) && !defined(JS_SIMULATOR_MIPS)
+#if defined(JS_CODEGEN_MIPS32) && defined(__linux__) && !defined(JS_SIMULATOR_MIPS32)
 #include <sys/cachectl.h>
 #endif
 
@@ -236,7 +236,11 @@ class ExecutableAllocator
         }
         systemRelease(pool->m_allocation);
         MOZ_ASSERT(m_pools.initialized());
-        m_pools.remove(m_pools.lookup(pool));   // this asserts if |pool| is not in m_pools
+
+        // Pool may not be present in m_pools if we hit OOM during creation.
+        auto ptr = m_pools.lookup(pool);
+        if (ptr)
+            m_pools.remove(ptr);
     }
 
     void addSizeOfCode(JS::CodeSizes* sizes) const;
@@ -299,7 +303,13 @@ class ExecutableAllocator
             systemRelease(a);
             return nullptr;
         }
-        m_pools.put(pool);
+
+        if (!m_pools.put(pool)) {
+            js_delete(pool);
+            systemRelease(a);
+            return nullptr;
+        }
+
         return pool;
     }
 
@@ -379,12 +389,12 @@ class ExecutableAllocator
     static void cacheFlush(void*, size_t)
     {
     }
-#elif defined(JS_SIMULATOR_ARM) || defined(JS_SIMULATOR_MIPS)
+#elif defined(JS_SIMULATOR_ARM) || defined(JS_SIMULATOR_MIPS32)
     static void cacheFlush(void* code, size_t size)
     {
         js::jit::Simulator::FlushICache(code, size);
     }
-#elif defined(JS_CODEGEN_MIPS)
+#elif defined(JS_CODEGEN_MIPS32)
     static void cacheFlush(void* code, size_t size)
     {
 #if defined(__GNUC__)

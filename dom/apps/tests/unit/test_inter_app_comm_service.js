@@ -1,13 +1,10 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
-
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/InterAppCommService.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
 
-let UUIDGenerator = Cc["@mozilla.org/uuid-generator;1"]
+var UUIDGenerator = Cc["@mozilla.org/uuid-generator;1"]
                       .getService(Ci.nsIUUIDGenerator);
 
 const MESSAGE_PORT_ID = UUIDGenerator.generateUUID().toString();

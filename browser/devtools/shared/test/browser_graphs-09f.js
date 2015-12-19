@@ -5,8 +5,7 @@
 // gutter/tooltips and lines.
 
 const TEST_DATA = [{ delta: 100, value: 60 }, { delta: 200, value: 1 }];
-let LineGraphWidget = require("devtools/shared/widgets/LineGraphWidget");
-let {Promise} = require("resource://gre/modules/Promise.jsm");
+var LineGraphWidget = require("devtools/shared/widgets/LineGraphWidget");
 
 add_task(function*() {
   yield promiseTab("about:blank");

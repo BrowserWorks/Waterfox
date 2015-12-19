@@ -1,7 +1,14 @@
 import os
+import platform
 
 PYTHON = '/tools/buildbot/bin/python'
 VENV_PATH = '%s/build/venv' % os.getcwd()
+if platform.architecture()[0] == '64bit':
+    TOOLTOOL_MANIFEST_PATH = "config/tooltool-manifests/linux64/releng.manifest"
+    MINIDUMP_STACKWALK_PATH = "linux64-minidump_stackwalk"
+else:
+    TOOLTOOL_MANIFEST_PATH = "config/tooltool-manifests/linux32/releng.manifest"
+    MINIDUMP_STACKWALK_PATH = "linux32-minidump_stackwalk"
 
 config = {
     "log_name": "talos",
@@ -17,22 +24,26 @@ config = {
     "exes": {
         'python': PYTHON,
         'virtualenv': [PYTHON, '/tools/misc-python/virtualenv.py'],
+        'tooltool.py': "/tools/tooltool.py",
     },
     "title": os.uname()[1].lower().split('.')[0],
     "default_actions": [
         "clobber",
         "read-buildbot-config",
         "download-and-extract",
-        "clone-talos",
+        "populate-webroot",
         "create-virtualenv",
         "install",
         "run-tests",
     ],
     "python_webserver": False,
     "webroot": '%s/../talos-data' % os.getcwd(),
-    "populate_webroot": True,
     "default_blob_upload_servers": [
         "https://blobupload.elasticbeanstalk.com",
     ],
     "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
+    "download_minidump_stackwalk": True,
+    "minidump_stackwalk_path": MINIDUMP_STACKWALK_PATH,
+    "minidump_tooltool_manifest_path": TOOLTOOL_MANIFEST_PATH,
+    "tooltool_cache": "/builds/tooltool_cache",
 }

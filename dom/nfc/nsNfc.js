@@ -37,11 +37,8 @@ NfcCallback.prototype = {
   _requestId: null,
 
   _createPromise: function _createPromise() {
-    this.promise = this.createPromise((aResolve, aReject) => {
-      this._requestId = btoa(this.getPromiseResolverId({
-        resolve: aResolve,
-        reject: aReject
-      }));
+    this.promise = this.createPromiseWithId((aResolverId) => {
+      this._requestId = btoa(aResolverId);
     });
   },
 
@@ -110,7 +107,7 @@ NfcCallback.prototype = {
 };
 
 // Should be mapped to the NFCTagType defined in MozNFCTag.webidl.
-let TagType = {
+var TagType = {
   TYPE1: "Type1",
   TYPE2: "Type2",
   TYPE3: "Type3",
@@ -317,7 +314,7 @@ MozNFCPeerImpl.prototype = {
 };
 
 // Should be mapped to the RFState defined in WebIDL.
-let RFState = {
+var RFState = {
   IDLE: "idle",
   LISTEN: "listen",
   DISCOVERY: "discovery"

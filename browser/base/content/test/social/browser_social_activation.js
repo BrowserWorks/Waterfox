@@ -10,9 +10,9 @@
 thisTestLeaksUncaughtRejectionsAndShouldBeFixed("TypeError: Assert is null");
 
 
-let SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
+var SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
 
-let tabsToRemove = [];
+var tabsToRemove = [];
 
 
 function removeAllProviders(callback) {
@@ -84,8 +84,8 @@ function waitForProviderLoad(cb) {
     waitForCondition(function() {
       let sbrowser = document.getElementById("social-sidebar-browser");
       let provider = SocialSidebar.provider;
-      let postActivation = provider && gBrowser.contentDocument &&
-                            gBrowser.contentDocument.location.href == provider.origin + "/browser/browser/base/content/test/social/social_postActivation.html";
+      let postActivation = provider && gBrowser.currentURI &&
+                            gBrowser.currentURI.spec == provider.origin + "/browser/browser/base/content/test/social/social_postActivation.html";
 
       return postActivation && sbrowser.docShellIsActive;
     }, function() {
@@ -163,8 +163,8 @@ function activateOneProvider(manifest, finishActivation, aCallback) {
   });
 }
 
-let gTestDomains = ["https://example.com", "https://test1.example.com", "https://test2.example.com"];
-let gProviders = [
+var gTestDomains = ["https://example.com", "https://test1.example.com", "https://test2.example.com"];
+var gProviders = [
   {
     name: "provider 1",
     origin: "https://example.com",

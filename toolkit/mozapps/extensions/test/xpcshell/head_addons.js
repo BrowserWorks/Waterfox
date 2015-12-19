@@ -31,12 +31,12 @@ Components.utils.import("resource://gre/modules/AsyncShutdown.jsm");
 Components.utils.import("resource://testing-common/MockRegistrar.jsm");
 
 // We need some internal bits of AddonManager
-let AMscope = Components.utils.import("resource://gre/modules/AddonManager.jsm");
-let AddonManager = AMscope.AddonManager;
-let AddonManagerInternal = AMscope.AddonManagerInternal;
+var AMscope = Components.utils.import("resource://gre/modules/AddonManager.jsm");
+var AddonManager = AMscope.AddonManager;
+var AddonManagerInternal = AMscope.AddonManagerInternal;
 // Mock out AddonManager's reference to the AsyncShutdown module so we can shut
 // down AddonManager from the test
-let MockAsyncShutdown = {
+var MockAsyncShutdown = {
   hook: null,
   status: null,
   profileBeforeChange: {
@@ -60,6 +60,29 @@ var gPort = null;
 var gUrlToFileMap = {};
 
 var TEST_UNPACKED = false;
+
+function isManifestRegistered(file) {
+  let manifests = Components.manager.getManifestLocations();
+  for (let i = 0; i < manifests.length; i++) {
+    let manifest = manifests.queryElementAt(i, AM_Ci.nsIURI);
+
+    // manifest is the url to the manifest file either in an XPI or a directory.
+    // We want the location of the XPI or directory itself.
+    if (manifest instanceof AM_Ci.nsIJARURI) {
+      manifest = manifest.JARFile.QueryInterface(AM_Ci.nsIFileURL).file;
+    }
+    else if (manifest instanceof AM_Ci.nsIFileURL) {
+      manifest = manifest.file.parent;
+    }
+    else {
+      continue;
+    }
+
+    if (manifest.equals(file))
+      return true;
+  }
+  return false;
+}
 
 function isNightlyChannel() {
   var channel = "default";
@@ -378,7 +401,7 @@ function do_check_icons(aActual, aExpected) {
 
 // Record the error (if any) from trying to save the XPI
 // database at shutdown time
-let gXPISaveError = null;
+var gXPISaveError = null;
 
 /**
  * Starts up the add-on manager as if it was started by the application.
@@ -885,7 +908,7 @@ function writeInstallRDFToXPIFile(aData, aFile, aExtraFile) {
   zipW.close();
 }
 
-let temp_xpis = [];
+var temp_xpis = [];
 /**
  * Creates an XPI file for some manifest data in the temporary directory and
  * returns the nsIFile for it. The file will be deleted when the test completes.
@@ -1026,7 +1049,7 @@ function getFileForAddon(aDir, aId) {
 function registerDirectory(aKey, aDir) {
   var dirProvider = {
     getFile: function(aProp, aPersistent) {
-      aPersistent.value = true;
+      aPersistent.value = false;
       if (aProp == aKey)
         return aDir.clone();
       return null;
@@ -1474,11 +1497,11 @@ if ("nsIWindowsRegKey" in AM_Ci) {
 const gProfD = do_get_profile();
 
 const EXTENSIONS_DB = "extensions.json";
-let gExtensionsJSON = gProfD.clone();
+var gExtensionsJSON = gProfD.clone();
 gExtensionsJSON.append(EXTENSIONS_DB);
 
 const EXTENSIONS_INI = "extensions.ini";
-let gExtensionsINI = gProfD.clone();
+var gExtensionsINI = gProfD.clone();
 gExtensionsINI.append(EXTENSIONS_INI);
 
 // Enable more extensive EM logging

@@ -1,0 +1,121 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace html url(http://www.w3.org/1999/xhtml);
+
+/* Do not change this without also changing the appropriate line in
+ * browser-plugins.js (near where this file is mentioned). */
+html|object:not([width]), html|object[width=""],
+html|embed:not([width]), html|embed[width=""],
+html|applet:not([width]), html|applet[width=""] {
+  width: 240px;
+}
+
+/* Do not change this without also changing the appropriate line in
+ * browser-plugins.js (near where this file is mentioned). */
+html|object:not([height]), html|object[height=""],
+html|embed:not([height]), html|embed[height=""],
+html|applet:not([height]), html|applet[height=""] {
+  height: 200px;
+}
+
+:-moz-type-unsupported .mainBox,
+:-moz-type-unsupported-platform .mainBox,
+:-moz-handler-clicktoplay .mainBox,
+:-moz-handler-vulnerable-updatable .mainBox,
+:-moz-handler-vulnerable-no-update .mainBox,
+:-moz-handler-disabled .mainBox,
+:-moz-handler-blocked .mainBox {
+  -moz-user-focus: normal;
+}
+:-moz-type-unsupported .mainBox:focus,
+:-moz-type-unsupported-platform .mainBox:focus,
+:-moz-handler-clicktoplay .mainBox:focus,
+:-moz-handler-vulnerable-updatable .mainBox:focus,
+:-moz-handler-vulnerable-no-update .mainBox:focus,
+:-moz-handler-disabled .mainBox:focus,
+:-moz-handler-blocked .mainBox:focus {
+  outline: 1px dotted;
+}
+
+.mainBox {
+  width: inherit;
+  height: inherit;
+  overflow: hidden;
+  direction: ltr;
+  unicode-bidi: embed;
+  /* used to block inherited properties */
+  text-transform: none;
+  text-indent: 0;
+  cursor: initial;
+  white-space: initial;
+  word-spacing: initial;
+  letter-spacing: initial;
+  line-height: initial;
+}
+
+/* Initialize the overlay with visibility:hidden to prevent flickering if
+* the plugin is too small to show the overlay */
+.mainBox > .hoverBox,
+.mainBox > .closeIcon {
+  visibility: hidden;
+}
+
+.visible > .hoverBox,
+.visible > .closeIcon {
+  visibility: visible;
+}
+
+.mainBox[chromedir="rtl"] {
+  direction: rtl;
+}
+
+:-moz-handler-clicktoplay .hoverBox,
+:-moz-handler-vulnerable-updatable .hoverBox,
+:-moz-handler-vulnerable-no-update .hoverBox {
+  cursor: pointer;
+}
+
+.hoverBox > label {
+  cursor: inherit;
+}
+.icon {
+  cursor: inherit;
+}
+
+.msg {
+  display: none;
+}
+
+:-moz-type-unsupported .msgUnsupported,
+:-moz-type-unsupported-platform .msgUnsupportedPlatform,
+:-moz-handler-clicktoplay .msgClickToPlay,
+:-moz-handler-vulnerable-updatable .msgVulnerabilityStatus,
+:-moz-handler-vulnerable-updatable .msgCheckForUpdates,
+:-moz-handler-vulnerable-updatable .msgClickToPlay,
+:-moz-handler-vulnerable-no-update .msgVulnerabilityStatus,
+:-moz-handler-vulnerable-no-update .msgClickToPlay,
+:-moz-handler-clicktoplay .msgTapToPlay,
+:-moz-handler-disabled .msgDisabled,
+:-moz-handler-disabled .msgManagePlugins,
+:-moz-handler-blocked .msgBlocked,
+:-moz-handler-crashed .msgCrashed {
+  display: block;
+}
+
+.submitStatus[status] {
+  display: -moz-box;
+  -moz-box-align: center;
+  -moz-box-pack: center;
+  height: 160px;
+}
+
+.submitStatus[status="noReport"]   .msgNoCrashReport,
+.submitStatus[status="please"]     .msgPleaseSubmit,
+.submitStatus[status="noSubmit"]   .msgNotSubmitted,
+.submitStatus[status="submitting"] .msgSubmitting,
+.submitStatus[status="success"]    .msgSubmitted,
+.submitStatus[status="failed"]     .msgSubmitFailed {
+  display: block;
+}

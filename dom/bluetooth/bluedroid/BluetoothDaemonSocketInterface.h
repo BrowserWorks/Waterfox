@@ -15,13 +15,25 @@ BEGIN_BLUETOOTH_NAMESPACE
 
 using mozilla::ipc::DaemonSocketPDU;
 using mozilla::ipc::DaemonSocketPDUHeader;
+using mozilla::ipc::DaemonSocketResultHandler;
 
 class BluetoothDaemonSocketModule
 {
 public:
+  enum {
+    SERVICE_ID = 0x02
+  };
+
+  enum {
+    OPCODE_ERROR = 0x00,
+    OPCODE_LISTEN = 0x01,
+    OPCODE_CONNECT = 0x02
+  };
+
   static const int MAX_NUM_CLIENTS;
 
-  virtual nsresult Send(DaemonSocketPDU* aPDU, void* aUserData) = 0;
+  virtual nsresult Send(DaemonSocketPDU* aPDU,
+                        DaemonSocketResultHandler* aRes) = 0;
 
   // Commands
   //
@@ -45,9 +57,7 @@ public:
 protected:
 
   void HandleSvc(const DaemonSocketPDUHeader& aHeader,
-                 DaemonSocketPDU& aPDU, void* aUserData);
-
-  nsresult Send(DaemonSocketPDU* aPDU, BluetoothSocketResultHandler* aRes);
+                 DaemonSocketPDU& aPDU, DaemonSocketResultHandler* aRes);
 
 private:
   class AcceptWatcher;
@@ -100,17 +110,17 @@ public:
               const nsAString& aServiceName,
               const uint8_t aServiceUuid[16],
               int aChannel, bool aEncrypt, bool aAuth,
-              BluetoothSocketResultHandler* aRes);
+              BluetoothSocketResultHandler* aRes) override;
 
   void Connect(const nsAString& aBdAddr,
                BluetoothSocketType aType,
                const uint8_t aUuid[16],
                int aChannel, bool aEncrypt, bool aAuth,
-               BluetoothSocketResultHandler* aRes);
+               BluetoothSocketResultHandler* aRes) override;
 
-  void Accept(int aFd, BluetoothSocketResultHandler* aRes);
+  void Accept(int aFd, BluetoothSocketResultHandler* aRes) override;
 
-  void Close(BluetoothSocketResultHandler* aRes);
+  void Close(BluetoothSocketResultHandler* aRes) override;
 
 private:
   void DispatchError(BluetoothSocketResultHandler* aRes,

@@ -15,6 +15,7 @@
 
 #include "gc/Heap.h"
 #include "jit/ExecutableAllocator.h"
+#include "jit/ICStubSpace.h"
 #include "jit/IonOptimizationLevels.h"
 #include "jit/IonTypes.h"
 #include "js/UbiNode.h"
@@ -27,6 +28,7 @@ namespace jit {
 class MacroAssembler;
 class PatchableBackedge;
 class IonBuilder;
+class IonICEntry;
 
 typedef Vector<JSObject*, 4, JitAllocPolicy> ObjectVector;
 
@@ -259,6 +261,10 @@ struct IonScript
     uint32_t backedgeList_;
     uint32_t backedgeEntries_;
 
+    // List of entries to the shared stub.
+    uint32_t sharedStubList_;
+    uint32_t sharedStubEntries_;
+
     // Number of references from invalidation records.
     uint32_t invalidationCount_;
 
@@ -272,10 +278,11 @@ struct IonScript
     // a LOOPENTRY pc other than osrPc_.
     uint32_t osrPcMismatchCounter_;
 
+    // Allocated space for fallback stubs.
+    FallbackICStubSpace fallbackStubSpace_;
+
     // The tracelogger event used to log the start/stop of this IonScript.
     TraceLoggerEvent traceLoggerScriptEvent_;
-
-    IonBuilder* pendingBuilder_;
 
   private:
     inline uint8_t* bottomBuffer() {
@@ -286,14 +293,6 @@ struct IonScript
     }
 
   public:
-
-    // SHOULD ONLY BE CALLED FROM JSScript
-    void setPendingBuilderPrivate(IonBuilder* builder) {
-        pendingBuilder_ = builder;
-    }
-    IonBuilder* pendingBuilder() const {
-        return pendingBuilder_;
-    }
 
     SnapshotOffset* bailoutTable() {
         return (SnapshotOffset*) &bottomBuffer()[bailoutTable_];
@@ -337,7 +336,8 @@ struct IonScript
                           size_t constants, size_t safepointIndexEntries,
                           size_t osiIndexEntries, size_t cacheEntries,
                           size_t runtimeSize, size_t safepointsSize,
-                          size_t backedgeEntries, OptimizationLevel optimizationLevel);
+                          size_t backedgeEntries, size_t sharedStubEntries,
+                          OptimizationLevel optimizationLevel);
     static void Trace(JSTracer* trc, IonScript* script);
     static void Destroy(FreeOp* fop, IonScript* script);
 
@@ -496,6 +496,12 @@ struct IonScript
     size_t numCaches() const {
         return cacheEntries_;
     }
+    IonICEntry* sharedStubList() {
+        return (IonICEntry*) &bottomBuffer()[sharedStubList_];
+    }
+    size_t numSharedStubs() const {
+        return sharedStubEntries_;
+    }
     size_t runtimeSize() const {
         return runtimeSize_;
     }
@@ -565,6 +571,12 @@ struct IonScript
     void clearRecompiling() {
         recompiling_ = false;
     }
+
+    FallbackICStubSpace* fallbackStubSpace() {
+        return &fallbackStubSpace_;
+    }
+    void adoptFallbackStubs(FallbackICStubSpace* stubSpace);
+    void purgeOptimizedStubs(Zone* zone);
 
     enum ShouldIncreaseAge {
         IncreaseAge = true,
@@ -728,7 +740,7 @@ struct VMFunction;
 struct AutoFlushICache
 {
   private:
-#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS)
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32)
     uintptr_t start_;
     uintptr_t stop_;
     const char* name_;
@@ -764,7 +776,17 @@ IsMarked(const jit::VMFunction*)
 // instances with no associated compartment.
 namespace JS {
 namespace ubi {
-template<> struct Concrete<js::jit::JitCode> : TracerConcrete<js::jit::JitCode> { };
+template<>
+struct Concrete<js::jit::JitCode> : TracerConcrete<js::jit::JitCode> {
+    CoarseType coarseType() const final { return CoarseType::Script; }
+
+  protected:
+    explicit Concrete(js::jit::JitCode *ptr) : TracerConcrete<js::jit::JitCode>(ptr) { }
+
+  public:
+    static void construct(void *storage, js::jit::JitCode *ptr) { new (storage) Concrete(ptr); }
+};
+
 } // namespace ubi
 } // namespace JS
 

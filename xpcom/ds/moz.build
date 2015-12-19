@@ -95,10 +95,11 @@ EXTRA_COMPONENTS += [
     'nsINIProcessor.manifest',
 ]
 
-FAIL_ON_WARNINGS = True
-
 LOCAL_INCLUDES += [
     '../io',
 ]
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

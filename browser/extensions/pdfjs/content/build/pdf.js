@@ -22,8 +22,8 @@ if (typeof PDFJS === 'undefined') {
   (typeof window !== 'undefined' ? window : this).PDFJS = {};
 }
 
-PDFJS.version = '1.1.366';
-PDFJS.build = '9e9df56';
+PDFJS.version = '1.1.469';
+PDFJS.build = 'f06aa6a';
 
 (function pdfjsWrapper() {
   // Use strict in our context only - users might not want it
@@ -1196,6 +1196,10 @@ function MessageHandler(name, comObj) {
             data: result
           });
         }, function (reason) {
+          if (reason instanceof Error) {
+            // Serialize error to avoid "DataCloneError"
+            reason = reason + '';
+          }
           comObj.postMessage({
             isReply: true,
             callbackId: data.callbackId,
@@ -1440,6 +1444,14 @@ PDFJS.openExternalLinksInNewWindow = (
     false : PDFJS.openExternalLinksInNewWindow);
 
 /**
+  * Determines if we can eval strings as JS. Primarily used to improve
+  * performance for font rendering.
+  * @var {boolean}
+  */
+PDFJS.isEvalSupported = (PDFJS.isEvalSupported === undefined ?
+                         true : PDFJS.isEvalSupported);
+
+/**
  * Document initialization / loading parameters object.
  *
  * @typedef {Object} DocumentInitParameters
@@ -1548,6 +1560,8 @@ PDFJS.getDocument = function getDocument(src,
         params[key] = stringToBytes(pdfBytes);
       } else if (typeof pdfBytes === 'object' && pdfBytes !== null &&
                  !isNaN(pdfBytes.length)) {
+        params[key] = new Uint8Array(pdfBytes);
+      } else if (isArrayBuffer(pdfBytes)) {
         params[key] = new Uint8Array(pdfBytes);
       } else {
         error('Invalid PDF binary data: either typed array, string or ' +
@@ -3939,6 +3953,9 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
         this.current = this.stateStack.pop();
         this.ctx.restore();
 
+        // Ensure that the clipping path is reset (fixes issue6413.pdf).
+        this.pendingClip = null;
+
         this.cachedGetSinglePixelWidth = null;
       }
     },
@@ -4326,6 +4343,7 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
       var textHScale = current.textHScale * fontDirection;
       var glyphsLength = glyphs.length;
       var vertical = font.vertical;
+      var spacingDir = vertical ? 1 : -1;
       var defaultVMetrics = font.defaultVMetrics;
       var widthAdvanceScale = fontSize * current.fontMatrix[0];
 
@@ -4372,7 +4390,7 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
           x += fontDirection * wordSpacing;
           continue;
         } else if (isNum(glyph)) {
-          x += -glyph * fontSize * 0.001;
+          x += spacingDir * glyph * fontSize / 1000;
           continue;
         }
 
@@ -4442,6 +4460,7 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
       var font = current.font;
       var fontSize = current.fontSize;
       var fontDirection = current.fontDirection;
+      var spacingDir = font.vertical ? 1 : -1;
       var charSpacing = current.charSpacing;
       var wordSpacing = current.wordSpacing;
       var textHScale = current.textHScale * fontDirection;
@@ -4449,7 +4468,7 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
       var glyphsLength = glyphs.length;
       var isTextInvisible =
         current.textRenderingMode === TextRenderingMode.INVISIBLE;
-      var i, glyph, width;
+      var i, glyph, width, spacingLength;
 
       if (isTextInvisible || fontSize === 0) {
         return;
@@ -4470,7 +4489,7 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
           current.x += wordSpacing * textHScale;
           continue;
         } else if (isNum(glyph)) {
-          var spacingLength = -glyph * 0.001 * fontSize;
+          spacingLength = spacingDir * glyph * fontSize / 1000;
           this.ctx.translate(spacingLength, 0);
           current.x += spacingLength * textHScale;
           continue;
@@ -5461,7 +5480,7 @@ var WebGLUtils = (function WebGLUtilsClosure() {
           for (var j = 0, jj = ps.length; j < jj; j++) {
             coords[pIndex] = coordsMap[ps[j]];
             coords[pIndex + 1] = coordsMap[ps[j] + 1];
-            colors[cIndex] = colorsMap[cs[i]];
+            colors[cIndex] = colorsMap[cs[j]];
             colors[cIndex + 1] = colorsMap[cs[j] + 1];
             colors[cIndex + 2] = colorsMap[cs[j] + 2];
             pIndex += 2;
@@ -6026,9 +6045,40 @@ var FontFaceObject = (function FontFaceObjectClosure() {
 
     getPathGenerator: function FontLoader_getPathGenerator(objs, character) {
       if (!(character in this.compiledGlyphs)) {
-        var js = objs.get(this.loadedName + '_path_' + character);
-        /*jshint -W054 */
-        this.compiledGlyphs[character] = new Function('c', 'size', js);
+        var cmds = objs.get(this.loadedName + '_path_' + character);
+        var current, i, len;
+
+        // If we can, compile cmds into JS for MAXIMUM SPEED
+        if (FontLoader.isEvalSupported) {
+          var args, js = '';
+          for (i = 0, len = cmds.length; i < len; i++) {
+            current = cmds[i];
+
+            if (current.args !== undefined) {
+              args = current.args.join(',');
+            } else {
+              args = '';
+            }
+
+            js += 'c.' + current.cmd + '(' + args + ');\n';
+          }
+          /* jshint -W054 */
+          this.compiledGlyphs[character] = new Function('c', 'size', js);
+        } else {
+          // But fall back on using Function.prototype.apply() if we're
+          // blocked from using eval() for whatever reason (like CSP policies)
+          this.compiledGlyphs[character] = function(c, size) {
+            for (i = 0, len = cmds.length; i < len; i++) {
+              current = cmds[i];
+
+              if (current.cmd === 'scale') {
+                current.args = [size, -size];
+              }
+
+              c[current.cmd].apply(c, current.args);
+            }
+          };
+        }
       }
       return this.compiledGlyphs[character];
     }

@@ -6,7 +6,7 @@ const Cu = Components.utils;
 const {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 const {TargetFactory} = require("devtools/framework/target");
 const {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
-const promise = require("sdk/core/promise");
+const promise = require("promise");
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm", {});
 const {NetUtil} = Cu.import("resource://gre/modules/NetUtil.jsm", {});
 const ProjectEditor = require("projecteditor/projecteditor");
@@ -14,8 +14,8 @@ const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 
 const TEST_URL_ROOT = "http://mochi.test:8888/browser/browser/devtools/projecteditor/test/";
 const SAMPLE_WEBAPP_URL = TEST_URL_ROOT + "/helper_homepage.html";
-let TEMP_PATH;
-let TEMP_FOLDER_NAME = "ProjectEditor" + (new Date().getTime());
+var TEMP_PATH;
+var TEMP_FOLDER_NAME = "ProjectEditor" + (new Date().getTime());
 
 // All test are asynchronous
 waitForExplicitFinish();

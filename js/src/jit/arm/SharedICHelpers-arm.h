@@ -79,7 +79,7 @@ EmitChangeICReturnAddress(MacroAssembler& masm, Register reg)
 }
 
 inline void
-EmitTailCallVM(JitCode* target, MacroAssembler& masm, uint32_t argSize)
+EmitBaselineTailCallVM(JitCode* target, MacroAssembler& masm, uint32_t argSize)
 {
     // We assume during this that R0 and R1 have been pushed, and that R2 is
     // unused.
@@ -106,7 +106,29 @@ EmitTailCallVM(JitCode* target, MacroAssembler& masm, uint32_t argSize)
 }
 
 inline void
-EmitCreateStubFrameDescriptor(MacroAssembler& masm, Register reg)
+EmitIonTailCallVM(JitCode* target, MacroAssembler& masm, uint32_t stackSize)
+{
+    // We assume during this that R0 and R1 have been pushed, and that R2 is
+    // unused.
+    MOZ_ASSERT(R2 == ValueOperand(r1, r0));
+
+    masm.loadPtr(Address(sp, stackSize), r0);
+    masm.rshiftPtr(Imm32(FRAMESIZE_SHIFT), r0);
+    masm.add32(Imm32(stackSize + JitStubFrameLayout::Size() - sizeof(intptr_t)), r0);
+
+    // Push frame descriptor and perform the tail call.
+    // ICTailCallReg (lr) already contains the return address (as we keep
+    // it there through the stub calls), but the VMWrapper code being called
+    // expects the return address to also be pushed on the stack.
+    MOZ_ASSERT(ICTailCallReg == lr);
+    masm.makeFrameDescriptor(r0, JitFrame_IonJS);
+    masm.push(r0);
+    masm.push(lr);
+    masm.branch(target);
+}
+
+inline void
+EmitBaselineCreateStubFrameDescriptor(MacroAssembler& masm, Register reg)
 {
     // Compute stub frame size. We have to add two pointers: the stub reg and
     // previous frame pointer pushed by EmitEnterStubFrame.
@@ -118,11 +140,26 @@ EmitCreateStubFrameDescriptor(MacroAssembler& masm, Register reg)
 }
 
 inline void
-EmitCallVM(JitCode* target, MacroAssembler& masm)
+EmitBaselineCallVM(JitCode* target, MacroAssembler& masm)
 {
-    EmitCreateStubFrameDescriptor(masm, r0);
+    EmitBaselineCreateStubFrameDescriptor(masm, r0);
     masm.push(r0);
     masm.call(target);
+}
+
+inline void
+EmitIonCallVM(JitCode* target, size_t stackSlots, MacroAssembler& masm)
+{
+    uint32_t descriptor = MakeFrameDescriptor(masm.framePushed(), JitFrame_IonStub);
+    masm.Push(Imm32(descriptor));
+    masm.callJit(target);
+
+    // Remove rest of the frame left on the stack. We remove the return address
+    // which is implicitly popped when returning.
+    size_t framePop = sizeof(ExitFrameLayout) - sizeof(void*);
+
+    // Pop arguments from framePushed.
+    masm.implicitPop(stackSlots * sizeof(void*) + framePop);
 }
 
 // Size of vales pushed by EmitEnterStubFrame.
@@ -130,7 +167,7 @@ static const uint32_t STUB_FRAME_SIZE = 4 * sizeof(void*);
 static const uint32_t STUB_FRAME_SAVED_STUB_OFFSET = sizeof(void*);
 
 inline void
-EmitEnterStubFrame(MacroAssembler& masm, Register scratch)
+EmitBaselineEnterStubFrame(MacroAssembler& masm, Register scratch)
 {
     MOZ_ASSERT(scratch != ICTailCallReg);
 
@@ -159,16 +196,26 @@ EmitEnterStubFrame(MacroAssembler& masm, Register scratch)
 }
 
 inline void
-EmitLeaveStubFrame(MacroAssembler& masm, bool calledIntoIon = false)
+EmitIonEnterStubFrame(MacroAssembler& masm, Register scratch)
 {
+    MOZ_ASSERT(ICTailCallReg == lr);
+    masm.push(ICTailCallReg);
+    masm.push(ICStubReg);
+}
+
+inline void
+EmitBaselineLeaveStubFrame(MacroAssembler& masm, bool calledIntoIon = false)
+{
+    ScratchRegisterScope scratch(masm);
+
     // Ion frames do not save and restore the frame pointer. If we called into
     // Ion, we have to restore the stack pointer from the frame descriptor. If
     // we performed a VM call, the descriptor has been popped already so in that
     // case we use the frame pointer.
     if (calledIntoIon) {
-        masm.pop(ScratchRegister);
-        masm.ma_lsr(Imm32(FRAMESIZE_SHIFT), ScratchRegister, ScratchRegister);
-        masm.ma_add(ScratchRegister, BaselineStackReg);
+        masm.pop(scratch);
+        masm.rshiftPtr(Imm32(FRAMESIZE_SHIFT), scratch);
+        masm.add32(scratch, BaselineStackReg);
     } else {
         masm.mov(BaselineFrameReg, BaselineStackReg);
     }
@@ -180,7 +227,14 @@ EmitLeaveStubFrame(MacroAssembler& masm, bool calledIntoIon = false)
     masm.pop(ICTailCallReg);
 
     // Discard the frame descriptor.
-    masm.pop(ScratchRegister);
+    masm.pop(scratch);
+}
+
+inline void
+EmitIonLeaveStubFrame(MacroAssembler& masm)
+{
+    masm.pop(ICStubReg);
+    masm.pop(ICTailCallReg);
 }
 
 inline void
@@ -262,7 +316,7 @@ EmitCallTypeUpdateIC(MacroAssembler& masm, JitCode* code, uint32_t objectOffset)
     masm.j(Assembler::Equal, &success);
 
     // If the IC failed, then call the update fallback function.
-    EmitEnterStubFrame(masm, R1.scratchReg());
+    EmitBaselineEnterStubFrame(masm, R1.scratchReg());
 
     masm.loadValue(Address(BaselineStackReg, STUB_FRAME_SIZE + objectOffset), R1);
 
@@ -274,8 +328,8 @@ EmitCallTypeUpdateIC(MacroAssembler& masm, JitCode* code, uint32_t objectOffset)
     masm.loadPtr(Address(BaselineFrameReg, 0), R0.scratchReg());
     masm.pushBaselineFramePtr(R0.scratchReg(), R0.scratchReg());
 
-    EmitCallVM(code, masm);
-    EmitLeaveStubFrame(masm);
+    EmitBaselineCallVM(code, masm);
+    EmitBaselineLeaveStubFrame(masm);
 
     // Success at end.
     masm.bind(&success);

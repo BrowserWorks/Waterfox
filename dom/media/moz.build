@@ -25,6 +25,7 @@ DIRS += [
     'gmp-plugin',
     'gmp-plugin-openh264',
     'imagecapture',
+    'mediasink',
     'mediasource',
     'ogg',
     'platforms',
@@ -100,16 +101,18 @@ EXPORTS += [
     'AudioChannelFormat.h',
     'AudioCompactor.h',
     'AudioMixer.h',
+    'AudioPacketizer.h',
     'AudioSampleFormat.h',
     'AudioSegment.h',
     'AudioStream.h',
     'BufferMediaResource.h',
     'CubebUtils.h',
-    'DecodedStream.h',
     'DecoderTraits.h',
     'DOMMediaStream.h',
     'EncodedBufferCache.h',
     'FileBlockCache.h',
+    'FlushableTaskQueue.h',
+    'FrameStatistics.h',
     'Intervals.h',
     'Latency.h',
     'MediaCache.h',
@@ -127,6 +130,7 @@ EXPORTS += [
     'MediaRecorder.h',
     'MediaResource.h',
     'MediaSegment.h',
+    'MediaStatistics.h',
     'MediaStreamGraph.h',
     'MediaTimer.h',
     'MediaTrack.h',
@@ -141,7 +145,6 @@ EXPORTS += [
     'StreamBuffer.h',
     'ThreadPoolCOMListener.h',
     'TimeUnits.h',
-    'TimeVarying.h',
     'TrackUnionStream.h',
     'VideoFrameContainer.h',
     'VideoSegment.h',
@@ -152,10 +155,6 @@ EXPORTS += [
 
 EXPORTS.mozilla += [
     'MediaManager.h',
-    'MozPromise.h',
-    'StateMirroring.h',
-    'StateWatching.h',
-    'TaskQueue.h',
 ]
 
 EXPORTS.mozilla.media.webrtc += [
@@ -197,17 +196,16 @@ UNIFIED_SOURCES += [
     'AudioChannelFormat.cpp',
     'AudioCompactor.cpp',
     'AudioSegment.cpp',
-    'AudioSink.cpp',
     'AudioStream.cpp',
     'AudioStreamTrack.cpp',
     'AudioTrack.cpp',
     'AudioTrackList.cpp',
     'CanvasCaptureMediaStream.cpp',
     'CubebUtils.cpp',
-    'DecodedStream.cpp',
     'DOMMediaStream.cpp',
     'EncodedBufferCache.cpp',
     'FileBlockCache.cpp',
+    'FlushableTaskQueue.cpp',
     'GetUserMediaRequest.cpp',
     'GraphDriver.cpp',
     'Latency.cpp',
@@ -234,7 +232,6 @@ UNIFIED_SOURCES += [
     'MP3FrameParser.cpp',
     'RtspMediaResource.cpp',
     'StreamBuffer.cpp',
-    'TaskQueue.cpp',
     'TextTrack.cpp',
     'TextTrackCue.cpp',
     'TextTrackCueList.cpp',
@@ -280,8 +277,6 @@ EXTRA_JS_MODULES.media += [
     'PeerConnectionIdp.jsm',
     'RTCStatsReport.jsm',
 ]
-
-FAIL_ON_WARNINGS = True
 
 LOCAL_INCLUDES += [
     '/caps',

@@ -19,8 +19,8 @@
 # include "jit/arm/Lowering-arm.h"
 #elif defined(JS_CODEGEN_ARM64)
 # include "jit/arm64/Lowering-arm64.h"
-#elif defined(JS_CODEGEN_MIPS)
-# include "jit/mips/Lowering-mips.h"
+#elif defined(JS_CODEGEN_MIPS32)
+# include "jit/mips32/Lowering-mips32.h"
 #elif defined(JS_CODEGEN_NONE)
 # include "jit/none/Lowering-none.h"
 #else
@@ -50,6 +50,7 @@ class LIRGenerator : public LIRGeneratorSpecific
 
     void useBoxAtStart(LInstruction* lir, size_t n, MDefinition* mir,
                        LUse::Policy policy = LUse::REGISTER);
+    void useBoxFixedAtStart(LInstruction* lir, size_t n, MDefinition* mir, ValueOperand op);
 
     void lowerBitOp(JSOp op, MInstruction* ins);
     void lowerShiftOp(JSOp op, MShiftInstruction* ins);
@@ -106,7 +107,6 @@ class LIRGenerator : public LIRGeneratorSpecific
     void visitAssertFloat32(MAssertFloat32* ins);
     void visitAssertRecoveredOnBailout(MAssertRecoveredOnBailout* ins);
     void visitGetDynamicName(MGetDynamicName* ins);
-    void visitFilterArgumentsOrEval(MFilterArgumentsOrEval* ins);
     void visitCallDirectEval(MCallDirectEval* ins);
     void visitTest(MTest* test);
     void visitGotoWithFake(MGotoWithFake* ins);
@@ -141,6 +141,7 @@ class LIRGenerator : public LIRGeneratorSpecific
     void visitConcat(MConcat* ins);
     void visitCharCodeAt(MCharCodeAt* ins);
     void visitFromCharCode(MFromCharCode* ins);
+    void visitSinCos(MSinCos *ins);
     void visitStringSplit(MStringSplit* ins);
     void visitStart(MStart* start);
     void visitOsrEntry(MOsrEntry* entry);
@@ -161,6 +162,8 @@ class LIRGenerator : public LIRGeneratorSpecific
     void visitRegExpTest(MRegExpTest* ins);
     void visitRegExpReplace(MRegExpReplace* ins);
     void visitStringReplace(MStringReplace* ins);
+    void visitBinarySharedStub(MBinarySharedStub* ins);
+    void visitUnarySharedStub(MUnarySharedStub* ins);
     void visitLambda(MLambda* ins);
     void visitLambdaArrow(MLambdaArrow* ins);
     void visitKeepAliveObject(MKeepAliveObject* ins);

@@ -125,6 +125,10 @@
   padding-top: 0;
 }
 
+.category[selected="true"]:hover {
+  background-color:#1A2533;
+}
+
 .category[disabled] {
   overflow: hidden;
   height: 0;
@@ -970,7 +974,7 @@ button.button-link {
   color: #0095dd;
   cursor: pointer;
   min-width: 0;
-  height: 20px;
+  min-height: 20px;
   margin: 0 6px;
 }
 

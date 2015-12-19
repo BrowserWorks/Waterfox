@@ -20,11 +20,11 @@ XPCOMUtils.defineLazyGetter(this, "Telemetry", function () {
 XPCOMUtils.defineLazyGetter(this, "EventEmitter", function () {
   return require("devtools/toolkit/event-emitter");
 });
-const { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
+const promise = require("promise");
 
 this.EXPORTED_SYMBOLS = ["BrowserToolboxProcess"];
 
-let processes = new Set();
+var processes = new Set();
 
 /**
  * Constructor for creating a process that will hold a chrome toolbox.
@@ -268,7 +268,7 @@ function dumpn(str) {
   }
 }
 
-let wantLogging = Services.prefs.getBoolPref("devtools.debugger.log");
+var wantLogging = Services.prefs.getBoolPref("devtools.debugger.log");
 
 Services.prefs.addObserver("devtools.debugger.log", {
   observe: (...args) => wantLogging = Services.prefs.getBoolPref(args.pop())

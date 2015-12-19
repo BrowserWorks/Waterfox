@@ -69,6 +69,7 @@ XPIDL_SOURCES += [
     'nsINullChannel.idl',
     'nsIPACGenerator.idl',
     'nsIPackagedAppService.idl',
+    'nsIPackagedAppVerifier.idl',
     'nsIParentChannel.idl',
     'nsIParentRedirectingChannel.idl',
     'nsIPermission.idl',
@@ -98,6 +99,7 @@ XPIDL_SOURCES += [
     'nsISecureBrowserUI.idl',
     'nsISecurityEventSink.idl',
     'nsISecurityInfoProvider.idl',
+    'nsISensitiveInfoHiddenURI.idl',
     'nsISerializationHelper.idl',
     'nsIServerSocket.idl',
     'nsISimpleStreamListener.idl',
@@ -187,6 +189,7 @@ UNIFIED_SOURCES += [
     'CaptivePortalService.cpp',
     'ChannelDiverterChild.cpp',
     'ChannelDiverterParent.cpp',
+    'ClosingService.cpp',
     'Dashboard.cpp',
     'EventTokenBucket.cpp',
     'LoadContextInfo.cpp',
@@ -278,8 +281,6 @@ EXTRA_COMPONENTS += [
 EXTRA_JS_MODULES += [
     'NetUtil.jsm',
 ]
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

@@ -142,8 +142,8 @@ class CodeGeneratorARM64 : public CodeGeneratorShared
     virtual void visitCompareFAndBranch(LCompareFAndBranch* comp);
     virtual void visitCompareB(LCompareB* lir);
     virtual void visitCompareBAndBranch(LCompareBAndBranch* lir);
-    virtual void visitCompareV(LCompareV* lir);
-    virtual void visitCompareVAndBranch(LCompareVAndBranch* lir);
+    virtual void visitCompareBitwise(LCompareBitwise* lir);
+    virtual void visitCompareBitwiseAndBranch(LCompareBitwiseAndBranch* lir);
     virtual void visitBitAndAndBranch(LBitAndAndBranch* baab);
     virtual void visitAsmJSUInt32ToDouble(LAsmJSUInt32ToDouble* lir);
     virtual void visitAsmJSUInt32ToFloat32(LAsmJSUInt32ToFloat32* lir);
@@ -220,7 +220,7 @@ class CodeGeneratorARM64 : public CodeGeneratorShared
 
     void generateInvalidateEpilogue();
 
-    void visitRandom(LRandom* ins);
+    void setReturnDoubleRegs(LiveRegisterSet* regs);
 
   protected:
     void postAsmJSCall(LAsmJSCall* lir) {

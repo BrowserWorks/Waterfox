@@ -53,14 +53,18 @@ public:
 
   }
 
-  nsresult Init() override {
+  nsRefPtr<InitPromise> Init() override {
     mSurfaceTexture = AndroidSurfaceTexture::Create();
     if (!mSurfaceTexture) {
       NS_WARNING("Failed to create SurfaceTexture for video decode\n");
-      return NS_ERROR_FAILURE;
+      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
     }
 
-    return InitDecoder(mSurfaceTexture->JavaSurface());
+    if (NS_FAILED(InitDecoder(mSurfaceTexture->JavaSurface()))) {
+      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    }
+
+    return InitPromise::CreateAndResolve(TrackInfo::kVideoTrack, __func__);
   }
 
   void Cleanup() override {
@@ -202,7 +206,7 @@ public:
   AudioDataDecoder(const AudioInfo& aConfig, MediaFormat::Param aFormat, MediaDataDecoderCallback* aCallback)
     : MediaCodecDataDecoder(MediaData::Type::AUDIO_DATA, aConfig.mMimeType, aFormat, aCallback)
   {
-    JNIEnv* env = GetJNIForThread();
+    JNIEnv* const env = jni::GetEnvForThread();
 
     jni::Object::LocalRef buffer(env);
     NS_ENSURE_SUCCESS_VOID(aFormat->GetByteBuffer(NS_LITERAL_STRING("csd-0"), &buffer));
@@ -357,9 +361,17 @@ MediaCodecDataDecoder::~MediaCodecDataDecoder()
   Shutdown();
 }
 
-nsresult MediaCodecDataDecoder::Init()
+nsRefPtr<MediaDataDecoder::InitPromise> MediaCodecDataDecoder::Init()
 {
-  return InitDecoder(nullptr);
+  nsresult rv = InitDecoder(nullptr);
+
+  TrackInfo::TrackType type =
+    (mType == MediaData::AUDIO_DATA ? TrackInfo::TrackType::kAudioTrack
+                                    : TrackInfo::TrackType::kVideoTrack);
+
+  return NS_SUCCEEDED(rv) ?
+           InitPromise::CreateAndResolve(type, __func__) :
+           InitPromise::CreateAndReject(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
 }
 
 nsresult MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
@@ -427,7 +439,7 @@ void MediaCodecDataDecoder::DecoderLoop()
   bool draining = false;
   bool waitingEOF = false;
 
-  AutoLocalJNIFrame frame(GetJNIForThread(), 1);
+  AutoLocalJNIFrame frame(jni::GetEnvForThread(), 1);
   nsRefPtr<MediaRawData> sample;
 
   MediaFormat::LocalRef outputFormat(frame.GetEnv());

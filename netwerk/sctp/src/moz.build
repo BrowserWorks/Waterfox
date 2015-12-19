@@ -43,6 +43,8 @@ Library('nksctp_s')
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
+ALLOW_COMPILER_WARNINGS = True
+
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [

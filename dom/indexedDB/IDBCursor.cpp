@@ -64,6 +64,14 @@ IDBCursor::IDBCursor(Type aType,
   }
 }
 
+#ifdef ENABLE_INTL_API
+bool
+IDBCursor::IsLocaleAware() const
+{
+  return mSourceIndex && !mSourceIndex->Locale().IsEmpty();
+}
+#endif
+
 IDBCursor::~IDBCursor()
 {
   AssertIsOnOwningThread();
@@ -117,6 +125,7 @@ IDBCursor::Create(BackgroundCursorChild* aBackgroundActor,
 already_AddRefed<IDBCursor>
 IDBCursor::Create(BackgroundCursorChild* aBackgroundActor,
                   const Key& aKey,
+                  const Key& aSortKey,
                   const Key& aPrimaryKey,
                   StructuredCloneReadInfo&& aCloneInfo)
 {
@@ -130,6 +139,7 @@ IDBCursor::Create(BackgroundCursorChild* aBackgroundActor,
   nsRefPtr<IDBCursor> cursor =
     new IDBCursor(Type_Index, aBackgroundActor, aKey);
 
+  cursor->mSortKey = Move(aSortKey);
   cursor->mPrimaryKey = Move(aPrimaryKey);
   cursor->mCloneInfo = Move(aCloneInfo);
 
@@ -140,6 +150,7 @@ IDBCursor::Create(BackgroundCursorChild* aBackgroundActor,
 already_AddRefed<IDBCursor>
 IDBCursor::Create(BackgroundCursorChild* aBackgroundActor,
                   const Key& aKey,
+                  const Key& aSortKey,
                   const Key& aPrimaryKey)
 {
   MOZ_ASSERT(aBackgroundActor);
@@ -152,6 +163,7 @@ IDBCursor::Create(BackgroundCursorChild* aBackgroundActor,
   nsRefPtr<IDBCursor> cursor =
     new IDBCursor(Type_IndexKey, aBackgroundActor, aKey);
 
+  cursor->mSortKey = Move(aSortKey);
   cursor->mPrimaryKey = Move(aPrimaryKey);
 
   return cursor.forget();
@@ -309,7 +321,6 @@ IDBCursor::GetKey(JSContext* aCx, JS::MutableHandle<JS::Value> aResult,
                   ErrorResult& aRv)
 {
   AssertIsOnOwningThread();
-
   MOZ_ASSERT(!mKey.IsUnset() || !mHaveValue);
 
   if (!mHaveValue) {
@@ -428,11 +439,26 @@ IDBCursor::Continue(JSContext* aCx,
     return;
   }
 
+#ifdef ENABLE_INTL_API
+  if (IsLocaleAware() && !key.IsUnset()) {
+    Key tmp;
+    aRv = key.ToLocaleBasedKey(tmp, mSourceIndex->Locale());
+    if (aRv.Failed()) {
+      return;
+    }
+    key = tmp;
+  }
+
+  const Key& sortKey = IsLocaleAware() ? mSortKey : mKey;
+#else
+  const Key& sortKey = mKey;
+#endif
+
   if (!key.IsUnset()) {
     switch (mDirection) {
       case NEXT:
       case NEXT_UNIQUE:
-        if (key <= mKey) {
+        if (key <= sortKey) {
           aRv.Throw(NS_ERROR_DOM_INDEXEDDB_DATA_ERR);
           return;
         }
@@ -440,7 +466,7 @@ IDBCursor::Continue(JSContext* aCx,
 
       case PREV:
       case PREV_UNIQUE:
-        if (key >= mKey) {
+        if (key >= sortKey) {
           aRv.Throw(NS_ERROR_DOM_INDEXEDDB_DATA_ERR);
           return;
         }
@@ -483,7 +509,7 @@ IDBCursor::Continue(JSContext* aCx,
                  IDB_LOG_STRINGIFY(key));
   }
 
-  mBackgroundActor->SendContinueInternal(ContinueParams(key));
+  mBackgroundActor->SendContinueInternal(ContinueParams(key), mKey);
 
   mContinueCalled = true;
 }
@@ -541,7 +567,7 @@ IDBCursor::Advance(uint32_t aCount, ErrorResult &aRv)
                  aCount);
   }
 
-  mBackgroundActor->SendContinueInternal(AdvanceParams(aCount));
+  mBackgroundActor->SendContinueInternal(AdvanceParams(aCount), mKey);
 
   mContinueCalled = true;
 }
@@ -573,6 +599,8 @@ IDBCursor::Update(JSContext* aCx, JS::Handle<JS::Value> aValue,
   MOZ_ASSERT(mType == Type_ObjectStore || mType == Type_Index);
   MOZ_ASSERT(!mKey.IsUnset());
   MOZ_ASSERT_IF(mType == Type_Index, !mPrimaryKey.IsUnset());
+
+  mBackgroundActor->InvalidateCachedResponses();
 
   IDBObjectStore* objectStore;
   if (mType == Type_ObjectStore) {
@@ -691,6 +719,8 @@ IDBCursor::Delete(JSContext* aCx, ErrorResult& aRv)
   MOZ_ASSERT(mType == Type_ObjectStore || mType == Type_Index);
   MOZ_ASSERT(!mKey.IsUnset());
 
+  mBackgroundActor->InvalidateCachedResponses();
+
   IDBObjectStore* objectStore;
   if (mType == Type_ObjectStore) {
     objectStore = mSourceObjectStore;
@@ -777,6 +807,7 @@ IDBCursor::Reset(Key&& aKey)
 
 void
 IDBCursor::Reset(Key&& aKey,
+                 Key&& aSortKey,
                  Key&& aPrimaryKey,
                  StructuredCloneReadInfo&& aValue)
 {
@@ -786,6 +817,7 @@ IDBCursor::Reset(Key&& aKey,
   Reset();
 
   mKey = Move(aKey);
+  mSortKey = Move(aSortKey);
   mPrimaryKey = Move(aPrimaryKey);
   mCloneInfo = Move(aValue);
 
@@ -793,7 +825,9 @@ IDBCursor::Reset(Key&& aKey,
 }
 
 void
-IDBCursor::Reset(Key&& aKey, Key&& aPrimaryKey)
+IDBCursor::Reset(Key&& aKey,
+                 Key&& aSortKey,
+                 Key&& aPrimaryKey)
 {
   AssertIsOnOwningThread();
   MOZ_ASSERT(mType == Type_IndexKey);
@@ -801,6 +835,7 @@ IDBCursor::Reset(Key&& aKey, Key&& aPrimaryKey)
   Reset();
 
   mKey = Move(aKey);
+  mSortKey = Move(aSortKey);
   mPrimaryKey = Move(aPrimaryKey);
 
   mHaveValue = !mKey.IsUnset();

@@ -15,15 +15,15 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AppsUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 
-let Namespace = CC('@mozilla.org/network/application-cache-namespace;1',
+var Namespace = CC('@mozilla.org/network/application-cache-namespace;1',
                    'nsIApplicationCacheNamespace',
                    'init');
-let makeFile = CC('@mozilla.org/file/local;1',
+var makeFile = CC('@mozilla.org/file/local;1',
                 'nsIFile',
                 'initWithPath');
-let MutableArray = CC('@mozilla.org/array;1', 'nsIMutableArray');
+var MutableArray = CC('@mozilla.org/array;1', 'nsIMutableArray');
 
-let {LoadContextInfo} = Cu.import("resource://gre/modules/LoadContextInfo.jsm", {});
+var {LoadContextInfo} = Cu.import("resource://gre/modules/LoadContextInfo.jsm", {});
 
 const nsICacheStorage = Ci.nsICacheStorage;
 const nsIApplicationCache = Ci.nsIApplicationCache;
@@ -228,8 +228,8 @@ function installCache(app) {
   if (!cacheManifest.exists())
     return;
 
-  let principal = Services.scriptSecurityManager.getAppCodebasePrincipal(
-      app.origin, app.localId, false);
+  let principal =
+    Services.scriptSecurityManager.createCodebasePrincipal(app.origin, {appId: aApp.localId});
 
   // If the build has been correctly configured, this should not happen!
   // If we install the cache anyway, it won't be updateable. If we don't install

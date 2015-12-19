@@ -10,7 +10,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/DOMRequestHelper.jsm");
 
-let debug = Services.prefs.getBoolPref("dom.system_update.debug")
+var debug = Services.prefs.getBoolPref("dom.system_update.debug")
               ? (aMsg) => dump("-*- SystemUpdateManager.js : " + aMsg + "\n")
               : (aMsg) => {};
 
@@ -225,7 +225,7 @@ SystemUpdateManager.prototype = {
   },
 
   getProviders: function() {
-    return this._sendPromise(function(aResolverId) {
+    return this.createPromiseWithId(function(aResolverId) {
       cpmm.sendAsyncMessage("SystemUpdate:GetProviders", {
         requestId: aResolverId,
       });
@@ -233,7 +233,7 @@ SystemUpdateManager.prototype = {
   },
 
   getActiveProvider: function() {
-    return this._sendPromise(function(aResolverId) {
+    return this.createPromiseWithId(function(aResolverId) {
       cpmm.sendAsyncMessage("SystemUpdate:GetActiveProvider", {
         requestId: aResolverId,
       });
@@ -241,20 +241,11 @@ SystemUpdateManager.prototype = {
   },
 
   setActiveProvider: function(aUuid) {
-    return this._sendPromise(function(aResolverId) {
+    return this.createPromiseWithId(function(aResolverId) {
       cpmm.sendAsyncMessage("SystemUpdate:SetActiveProvider", {
         requestId: aResolverId,
         uuid: aUuid
       });
-    });
-  },
-
-  _sendPromise: function(aCallback) {
-    let self = this;
-    return this.createPromise(function(aResolve, aReject) {
-      let resolverId = self.getPromiseResolverId({resolve: aResolve,
-                                                  reject: aReject});
-      aCallback(resolverId);
     });
   }
 };

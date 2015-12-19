@@ -124,6 +124,8 @@ public:
   NS_DECL_NSIQUOTAMANAGER
   NS_DECL_NSIOBSERVER
 
+  static const char kReplaceChars[];
+
   // Returns a non-owning reference.
   static QuotaManager*
   GetOrCreate();
@@ -305,14 +307,6 @@ public:
                const nsACString& aOrigin,
                Client::Type aClientType,
                nsACString& aDatabaseId);
-
-  static nsresult
-  GetInfoFromURI(nsIURI* aURI,
-                 uint32_t aAppId,
-                 bool aInMozBrowser,
-                 nsACString* aGroup,
-                 nsACString* aOrigin,
-                 bool* aIsApp);
 
   static nsresult
   GetInfoFromPrincipal(nsIPrincipal* aPrincipal,

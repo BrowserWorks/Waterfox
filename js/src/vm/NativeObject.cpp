@@ -1194,7 +1194,7 @@ static bool IsDataDescriptor(unsigned attrs) {
 template <AllowGC allowGC>
 static MOZ_ALWAYS_INLINE bool
 GetExistingProperty(JSContext* cx,
-                    typename MaybeRooted<JSObject*, allowGC>::HandleType receiver,
+                    typename MaybeRooted<Value, allowGC>::HandleType receiver,
                     typename MaybeRooted<NativeObject*, allowGC>::HandleType obj,
                     typename MaybeRooted<Shape*, allowGC>::HandleType shape,
                     typename MaybeRooted<Value, allowGC>::MutableHandleType vp);
@@ -1213,7 +1213,8 @@ GetExistingPropertyValue(ExclusiveContext* cx, HandleNativeObject obj, HandleId 
     MOZ_ASSERT(shape->propid() == id);
     MOZ_ASSERT(obj->contains(cx, shape));
 
-    return GetExistingProperty<CanGC>(cx->asJSContext(), obj, obj, shape, vp);
+    RootedValue receiver(cx, ObjectValue(*obj));
+    return GetExistingProperty<CanGC>(cx->asJSContext(), receiver, obj, shape, vp);
 }
 
 /*
@@ -1644,7 +1645,7 @@ js::NativeHasProperty(JSContext* cx, HandleNativeObject obj, HandleId id, bool* 
 /*** [[Get]] *************************************************************************************/
 
 static inline bool
-CallGetter(JSContext* cx, HandleObject obj, HandleObject receiver, HandleShape shape,
+CallGetter(JSContext* cx, HandleObject obj, HandleValue receiver, HandleShape shape,
            MutableHandleValue vp)
 {
     MOZ_ASSERT(!shape->hasDefaultGetter());
@@ -1662,7 +1663,7 @@ CallGetter(JSContext* cx, HandleObject obj, HandleObject receiver, HandleShape s
 template <AllowGC allowGC>
 static MOZ_ALWAYS_INLINE bool
 GetExistingProperty(JSContext* cx,
-                    typename MaybeRooted<JSObject*, allowGC>::HandleType receiver,
+                    typename MaybeRooted<Value, allowGC>::HandleType receiver,
                     typename MaybeRooted<NativeObject*, allowGC>::HandleType obj,
                     typename MaybeRooted<Shape*, allowGC>::HandleType shape,
                     typename MaybeRooted<Value, allowGC>::MutableHandleType vp)
@@ -1701,7 +1702,7 @@ GetExistingProperty(JSContext* cx,
 
     if (!CallGetter(cx,
                     MaybeRooted<JSObject*, allowGC>::toHandle(obj),
-                    MaybeRooted<JSObject*, allowGC>::toHandle(receiver),
+                    MaybeRooted<Value, allowGC>::toHandle(receiver),
                     MaybeRooted<Shape*, allowGC>::toHandle(shape),
                     MaybeRooted<Value, allowGC>::toMutableHandle(vp)))
     {
@@ -1721,7 +1722,8 @@ bool
 js::NativeGetExistingProperty(JSContext* cx, HandleObject receiver, HandleNativeObject obj,
                               HandleShape shape, MutableHandleValue vp)
 {
-    return GetExistingProperty<CanGC>(cx, receiver, obj, shape, vp);
+    RootedValue receiverValue(cx, ObjectValue(*receiver));
+    return GetExistingProperty<CanGC>(cx, receiverValue, obj, shape, vp);
 }
 
 /*
@@ -1784,7 +1786,7 @@ enum IsNameLookup { NotNameLookup = false, NameLookup = true };
  */
 static bool
 GetNonexistentProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
-                       HandleObject receiver, IsNameLookup nameLookup, MutableHandleValue vp)
+                       HandleValue receiver, IsNameLookup nameLookup, MutableHandleValue vp)
 {
     vp.setUndefined();
 
@@ -1849,14 +1851,14 @@ GetNonexistentProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
 
 /* The NoGC version of GetNonexistentProperty, present only to make types line up. */
 bool
-GetNonexistentProperty(JSContext* cx, NativeObject* obj, jsid id, JSObject* receiver,
+GetNonexistentProperty(JSContext* cx, NativeObject* obj, jsid id, Value& receiver,
                        IsNameLookup nameLookup, FakeMutableHandle<Value> vp)
 {
     return false;
 }
 
 static inline bool
-GeneralizedGetProperty(JSContext* cx, HandleObject obj, HandleId id, HandleObject receiver,
+GeneralizedGetProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue receiver,
                        IsNameLookup nameLookup, MutableHandleValue vp)
 {
     JS_CHECK_RECURSION(cx, return false);
@@ -1881,7 +1883,7 @@ GeneralizedGetProperty(JSContext* cx, HandleObject obj, HandleId id, HandleObjec
 }
 
 static inline bool
-GeneralizedGetProperty(JSContext* cx, JSObject* obj, jsid id, JSObject* receiver,
+GeneralizedGetProperty(JSContext* cx, JSObject* obj, jsid id, const Value& receiver,
                        IsNameLookup nameLookup, FakeMutableHandle<Value> vp)
 {
     JS_CHECK_RECURSION_DONT_REPORT(cx, return false);
@@ -1894,7 +1896,7 @@ template <AllowGC allowGC>
 static MOZ_ALWAYS_INLINE bool
 NativeGetPropertyInline(JSContext* cx,
                         typename MaybeRooted<NativeObject*, allowGC>::HandleType obj,
-                        typename MaybeRooted<JSObject*, allowGC>::HandleType receiver,
+                        typename MaybeRooted<Value, allowGC>::HandleType receiver,
                         typename MaybeRooted<jsid, allowGC>::HandleType id,
                         IsNameLookup nameLookup,
                         typename MaybeRooted<Value, allowGC>::MutableHandleType vp)
@@ -1948,14 +1950,14 @@ NativeGetPropertyInline(JSContext* cx,
 }
 
 bool
-js::NativeGetProperty(JSContext* cx, HandleNativeObject obj, HandleObject receiver, HandleId id,
+js::NativeGetProperty(JSContext* cx, HandleNativeObject obj, HandleValue receiver, HandleId id,
                       MutableHandleValue vp)
 {
     return NativeGetPropertyInline<CanGC>(cx, obj, receiver, id, NotNameLookup, vp);
 }
 
 bool
-js::NativeGetPropertyNoGC(JSContext* cx, NativeObject* obj, JSObject* receiver, jsid id, Value* vp)
+js::NativeGetPropertyNoGC(JSContext* cx, NativeObject* obj, const Value& receiver, jsid id, Value* vp)
 {
     AutoAssertNoException noexc(cx);
     return NativeGetPropertyInline<NoGC>(cx, obj, receiver, id, NotNameLookup, vp);
@@ -1964,9 +1966,10 @@ js::NativeGetPropertyNoGC(JSContext* cx, NativeObject* obj, JSObject* receiver, 
 bool
 js::GetPropertyForNameLookup(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp)
 {
+    RootedValue receiver(cx, ObjectValue(*obj));
     if (obj->getOps()->getProperty)
-        return GeneralizedGetProperty(cx, obj, id, obj, NameLookup, vp);
-    return NativeGetPropertyInline<CanGC>(cx, obj.as<NativeObject>(), obj, id, NameLookup, vp);
+        return GeneralizedGetProperty(cx, obj, id, receiver, NameLookup, vp);
+    return NativeGetPropertyInline<CanGC>(cx, obj.as<NativeObject>(), receiver, id, NameLookup, vp);
 }
 
 
@@ -2055,7 +2058,7 @@ NativeSetExistingDataProperty(JSContext* cx, HandleNativeObject obj, HandleShape
  */
 bool
 js::SetPropertyByDefining(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
-                          HandleValue receiverValue, bool objHasOwn, ObjectOpResult& result)
+                          HandleValue receiverValue, ObjectOpResult& result)
 {
     // Step 5.b.
     if (!receiverValue.isObject())
@@ -2063,25 +2066,7 @@ js::SetPropertyByDefining(JSContext* cx, HandleObject obj, HandleId id, HandleVa
     RootedObject receiver(cx, &receiverValue.toObject());
 
     bool existing;
-    if (receiver == obj) {
-        // Steps 5.c-e.ii.
-        // The common case. The caller has necessarily done a property lookup
-        // on obj and passed us the answer as objHasOwn.
-        // We also know that the property is a data property and writable
-        // if it exists.
-#ifdef DEBUG
-        // Check that objHasOwn is correct. This could fail if receiver or a
-        // native object on its prototype chain has a nondeterministic resolve
-        // hook. We shouldn't have any that are quite that badly behaved.
-        Rooted<PropertyDescriptor> desc(cx);
-        if (!GetOwnPropertyDescriptor(cx, receiver, id, &desc))
-            return false;
-        MOZ_ASSERT(!!desc.object() == objHasOwn);
-        MOZ_ASSERT_IF(desc.object(), desc.isDataDescriptor());
-        MOZ_ASSERT_IF(desc.object(), desc.writable());
-#endif
-        existing = objHasOwn;
-    } else {
+    {
         // Steps 5.c-d.
         Rooted<PropertyDescriptor> desc(cx);
         if (!GetOwnPropertyDescriptor(cx, receiver, id, &desc))
@@ -2156,7 +2141,7 @@ js::SetPropertyOnProto(JSContext* cx, HandleObject obj, HandleId id, HandleValue
     RootedObject proto(cx, obj->getProto());
     if (proto)
         return SetProperty(cx, proto, id, v, receiver, result);
-    return SetPropertyByDefining(cx, obj, id, v, receiver, false, result);
+    return SetPropertyByDefining(cx, obj, id, v, receiver, result);
 }
 
 /*
@@ -2178,7 +2163,7 @@ SetNonexistentProperty(JSContext* cx, HandleNativeObject obj, HandleId id, Handl
             return false;
     }
 
-    return SetPropertyByDefining(cx, obj, id, v, receiver, false, result);
+    return SetPropertyByDefining(cx, obj, id, v, receiver, result);
 }
 
 /*
@@ -2239,7 +2224,7 @@ SetExistingProperty(JSContext* cx, HandleNativeObject obj, HandleId id, HandleVa
             return SetDenseOrTypedArrayElement(cx, pobj, JSID_TO_INT(id), v, result);
 
         // Steps 5.b-f.
-        return SetPropertyByDefining(cx, obj, id, v, receiver, obj == pobj, result);
+        return SetPropertyByDefining(cx, obj, id, v, receiver, result);
     }
 
     // Step 5 for all other properties.
@@ -2277,7 +2262,7 @@ SetExistingProperty(JSContext* cx, HandleNativeObject obj, HandleId id, HandleVa
 
         // Shadow pobj[id] by defining a new data property receiver[id].
         // Delegate everything to SetPropertyByDefining.
-        return SetPropertyByDefining(cx, obj, id, v, receiver, obj == pobj, result);
+        return SetPropertyByDefining(cx, obj, id, v, receiver, result);
     }
 
     // Steps 6-11.

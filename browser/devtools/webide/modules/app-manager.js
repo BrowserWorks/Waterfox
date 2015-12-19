@@ -4,8 +4,7 @@
 
 const {Cu} = require("chrome");
 
-let { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
-
+const promise = require("promise");
 const {TargetFactory} = require("devtools/framework/target");
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm");
@@ -28,7 +27,7 @@ const {ProjectBuilding} = require("./build");
 
 const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
 
-let AppManager = exports.AppManager = {
+var AppManager = exports.AppManager = {
 
   // FIXME: will break when devtools/app-manager will be removed:
   DEFAULT_PROJECT_ICON: "chrome://browser/skin/devtools/app-manager/default-app-icon.png",
@@ -660,7 +659,7 @@ let AppManager = exports.AppManager = {
 
       // Addons don't have any document to load (yet?)
       // So that there is no need to run them, installing is enough
-      if (project.manifest.role && project.manifest.role === "addon") {
+      if (project.manifest.manifest_version || project.manifest.role === "addon") {
         return;
       }
 

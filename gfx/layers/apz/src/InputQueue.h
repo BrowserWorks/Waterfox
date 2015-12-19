@@ -23,6 +23,7 @@ class AsyncPanZoomController;
 class CancelableBlockState;
 class TouchBlockState;
 class WheelBlockState;
+class PanGestureBlockState;
 
 /**
  * This class stores incoming input events, separated into "input blocks", until
@@ -80,15 +81,13 @@ public:
    */
   CancelableBlockState* CurrentBlock() const;
   /**
-   * Returns the current pending input block as a touch block. It must only be
-   * called if the current pending block is a touch block.
+   * Returns the current pending input block as a specific kind of block.
+   * These methods must only be called if the current pending block is of the
+   * requested type.
    */
   TouchBlockState* CurrentTouchBlock() const;
-  /**
-   * Returns the current pending input block as a wheel block. It must only be
-   * called if the current pending block is a wheel block.
-   */
   WheelBlockState* CurrentWheelBlock() const;
+  PanGestureBlockState* CurrentPanGestureBlock() const;
   /**
    * Returns true iff the pending block at the head of the queue is ready for
    * handling.
@@ -103,6 +102,10 @@ public:
    * Remove all input blocks from the input queue.
    */
   void Clear();
+  /**
+   * Whether the current pending block allows scroll handoff.
+   */
+  bool AllowScrollHandoff() const;
 
 private:
   ~InputQueue();
@@ -131,6 +134,10 @@ private:
                                         bool aTargetConfirmed,
                                         const ScrollWheelInput& aEvent,
                                         uint64_t* aOutInputBlockId);
+  nsEventStatus ReceivePanGestureInput(const nsRefPtr<AsyncPanZoomController>& aTarget,
+                                        bool aTargetConfirmed,
+                                        const PanGestureInput& aEvent,
+                                        uint64_t* aOutInputBlockId);
 
   /**
    * Remove any blocks that are inactive - not ready, and having no events.
@@ -147,11 +154,18 @@ private:
   void ScheduleMainThreadTimeout(const nsRefPtr<AsyncPanZoomController>& aTarget, uint64_t aInputBlockId);
   void MainThreadTimeout(const uint64_t& aInputBlockId);
   void ProcessInputBlocks();
+  void UpdateActiveApzc(const nsRefPtr<AsyncPanZoomController>& aNewActive);
 
 private:
   // The queue of touch blocks that have not yet been fully processed.
   // This member must only be accessed on the controller/UI thread.
   nsTArray<UniquePtr<CancelableBlockState>> mInputBlockQueue;
+
+  // The APZC to which the last event was delivered
+  nsRefPtr<AsyncPanZoomController> mLastActiveApzc;
+
+  // Track touches so we know when to clear mLastActiveApzc
+  TouchCounter mTouchCounter;
 };
 
 } // namespace layers

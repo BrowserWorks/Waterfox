@@ -70,8 +70,8 @@ typedef ucontext_t tickcontext_t;
 pid_t gettid();
 #endif
 
-#if defined(SPS_ARCH_arm) && defined(MOZ_WIDGET_GONK)
- // Should also work on other Android and ARM Linux, but not tested there yet.
+#if defined(__arm__) && defined(ANDROID)
+ // Should also work on ARM Linux, but not tested there yet.
  #define USE_EHABI_STACKWALK
 #endif
 #ifdef USE_EHABI_STACKWALK
@@ -549,7 +549,11 @@ void GeckoSampler::StreamJSON(SpliceableJSONWriter& aWriter, double aSinceTime)
       if (ProfileJava()) {
         mozilla::widget::GeckoJavaSampler::PauseJavaProfiling();
 
-        BuildJavaThreadJSObject(aWriter);
+        aWriter.Start();
+        {
+          BuildJavaThreadJSObject(aWriter);
+        }
+        aWriter.End();
 
         mozilla::widget::GeckoJavaSampler::UnpauseJavaProfiling();
       }
@@ -946,10 +950,7 @@ void GeckoSampler::doNativeBacktrace(ThreadProfile &aProfile, TickSample* aSampl
 
   uint32_t maxFrames = uint32_t(nativeStack.size - nativeStack.count);
 #ifdef XP_MACOSX
-  pthread_t pt = GetProfiledThread(aSample->threadProfile->GetPlatformData());
-  void *stackEnd = reinterpret_cast<void*>(-1);
-  if (pt)
-    stackEnd = static_cast<char*>(pthread_get_stackaddr_np(pt));
+  void *stackEnd = aSample->threadProfile->GetStackTop();
   bool rv = true;
   if (aSample->fp >= aSample->sp && aSample->fp <= stackEnd)
     rv = FramePointerStackWalk(StackWalkCallback, /* skipFrames */ 0,

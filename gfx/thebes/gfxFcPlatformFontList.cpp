@@ -21,6 +21,8 @@
 #include "nsDirectoryServiceDefs.h"
 #include "nsAppDirectoryServiceDefs.h"
 
+#include "mozilla/gfx/HelpersCairo.h"
+
 #include <fontconfig/fcfreetype.h>
 
 #ifdef MOZ_WIDGET_GTK
@@ -368,7 +370,7 @@ gfxFontconfigFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
 
     nsRefPtr<gfxCharacterMap> charmap;
     nsresult rv;
-    bool symbolFont;
+    bool symbolFont = false; // currently ignored
 
     if (aFontInfoData && (charmap = GetCMAPFromFontInfo(aFontInfoData,
                                                         mUVSOffset,
@@ -380,7 +382,7 @@ gfxFontconfigFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
         AutoTable cmapTable(this, kCMAP);
 
         if (cmapTable) {
-            bool unicodeFont = false, symbolFont = false; // currently ignored
+            bool unicodeFont = false; // currently ignored
             uint32_t cmapLen;
             const uint8_t* cmapData =
                 reinterpret_cast<const uint8_t*>(hb_blob_get_data(cmapTable,
@@ -902,27 +904,18 @@ gfxFontconfigFont::GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams)
   cairo_font_options_t *options = cairo_font_options_create();
   cairo_scaled_font_get_font_options(scaled_font, options);
   cairo_hint_style_t hint_style = cairo_font_options_get_hint_style(options);
+  cairo_antialias_t antialias = cairo_font_options_get_antialias(options);
   cairo_font_options_destroy(options);
 
-  mozilla::gfx::FontHinting hinting;
+  mozilla::gfx::FontHinting hinting =
+    mozilla::gfx::CairoHintingToGfxHinting(hint_style);
 
-  switch (hint_style) {
-    case CAIRO_HINT_STYLE_NONE:
-      hinting = mozilla::gfx::FontHinting::NONE;
-      break;
-    case CAIRO_HINT_STYLE_SLIGHT:
-      hinting = mozilla::gfx::FontHinting::LIGHT;
-      break;
-    case CAIRO_HINT_STYLE_FULL:
-      hinting = mozilla::gfx::FontHinting::FULL;
-      break;
-    default:
-      hinting = mozilla::gfx::FontHinting::NORMAL;
-      break;
-  }
+  mozilla::gfx::AntialiasMode aaMode =
+    mozilla::gfx::CairoAntialiasToGfxAntialias(antialias);
 
   // We don't want to force the use of the autohinter over the font's built in hints
-  return mozilla::gfx::Factory::CreateCairoGlyphRenderingOptions(hinting, false);
+  // The fontconfig AA mode must be passed along because it may override the hinting style.
+  return mozilla::gfx::Factory::CreateCairoGlyphRenderingOptions(hinting, false, aaMode);
 }
 #endif
 
@@ -1516,5 +1509,3 @@ ApplyGdkScreenFontOptions(FcPattern *aPattern)
 }
 
 #endif // MOZ_WIDGET_GTK2
-
-

@@ -243,6 +243,7 @@ class Thread {
 #undef HAVE_NATIVE_UNWIND
 #if defined(MOZ_PROFILING) \
     && (defined(SPS_PLAT_amd64_linux) || defined(SPS_PLAT_arm_android) \
+        || (defined(MOZ_WIDGET_ANDROID) && defined(__arm__)) \
         || defined(SPS_PLAT_x86_linux) \
         || defined(SPS_OS_windows) \
         || defined(SPS_OS_darwin))
@@ -281,18 +282,18 @@ class ThreadProfile;
 class TickSample {
  public:
   TickSample()
-      :
-        pc(NULL),
-        sp(NULL),
-        fp(NULL),
+      : pc(NULL)
+      , sp(NULL)
+      , fp(NULL)
 #ifdef ENABLE_ARM_LR_SAVING
-        lr(NULL),
+      , lr(NULL)
 #endif
-        context(NULL),
-        isSamplingCurrentThread(false),
-        threadProfile(nullptr),
-        rssMemory(0),
-        ussMemory(0) {}
+      , context(NULL)
+      , isSamplingCurrentThread(false)
+      , threadProfile(nullptr)
+      , rssMemory(0)
+      , ussMemory(0)
+  {}
 
   void PopulateContext(void* aContext);
 

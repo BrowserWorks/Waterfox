@@ -14,6 +14,9 @@ loader.lazyRequireGetter(this, "DeferredTask",
   "resource://gre/modules/DeferredTask.jsm", true);
 loader.lazyRequireGetter(this, "StackFrameCache",
   "devtools/server/actors/utils/stack", true);
+loader.lazyRequireGetter(this, "ThreadSafeChromeUtils");
+loader.lazyRequireGetter(this, "HeapSnapshotFileUtils",
+  "devtools/toolkit/heapsnapshot/HeapSnapshotFileUtils");
 
 /**
  * A class that returns memory data for a parent actor's window.
@@ -25,7 +28,7 @@ loader.lazyRequireGetter(this, "StackFrameCache",
  * send information over RDP, and TimelineActor for using more light-weight
  * utilities like GC events and measuring memory consumption.
  */
-let Memory = exports.Memory = Class({
+var Memory = exports.Memory = Class({
   extends: EventTarget,
 
   /**
@@ -61,7 +64,6 @@ let Memory = exports.Memory = Class({
     }
     return this._dbg;
   },
-
 
   /**
    * Attach to this MemoryBridge.
@@ -131,6 +133,17 @@ let Memory = exports.Memory = Class({
   },
 
   /**
+   * Save a heap snapshot scoped to the current debuggees' portion of the heap
+   * graph.
+   *
+   * @returns {String} The snapshot id.
+   */
+  saveHeapSnapshot: expectState("attached", function () {
+    const path = ThreadSafeChromeUtils.saveHeapSnapshot({ debugger: this.dbg });
+    return HeapSnapshotFileUtils.getSnapshotIdFromPath(path);
+  }, "saveHeapSnapshot"),
+
+  /**
    * Take a census of the heap. See js/src/doc/Debugger/Debugger.Memory.md for
    * more information.
    */
@@ -146,8 +159,8 @@ let Memory = exports.Memory = Class({
    *                 Must be between 0 and 1 -- defaults to 1.
    * @param {number} options.maxLogLength
    *                 The maximum number of allocation events to keep in the
-   *                 log. If new allocs occur while at capacity, oldest allocs are lost.
-   *                 Must fit in a 32 bit signed integer.
+   *                 log. If new allocs occur while at capacity, oldest
+   *                 allocations are lost. Must fit in a 32 bit signed integer.
    * @param {number} options.drainAllocationsTimeout
    *                 A number in milliseconds of how often, at least, an `allocation` event
    *                 gets emitted (and drained), and also emits and drains on every GC event,

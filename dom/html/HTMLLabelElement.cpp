@@ -104,7 +104,7 @@ HTMLLabelElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
   WidgetMouseEvent* mouseEvent = aVisitor.mEvent->AsMouseEvent();
   if (mHandlingEvent ||
       (!(mouseEvent && mouseEvent->IsLeftClickEvent()) &&
-       aVisitor.mEvent->message != NS_MOUSE_BUTTON_DOWN) ||
+       aVisitor.mEvent->mMessage != eMouseDown) ||
       aVisitor.mEventStatus == nsEventStatus_eConsumeNoDefault ||
       !aVisitor.mPresContext ||
       // Don't handle the event if it's already been handled by another label
@@ -122,11 +122,11 @@ HTMLLabelElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
 
   if (content) {
     mHandlingEvent = true;
-    switch (aVisitor.mEvent->message) {
-      case NS_MOUSE_BUTTON_DOWN:
+    switch (aVisitor.mEvent->mMessage) {
+      case eMouseDown:
         if (mouseEvent->button == WidgetMouseEvent::eLeftButton) {
           // We reset the mouse-down point on every event because there is
-          // no guarantee we will reach the NS_MOUSE_CLICK code below.
+          // no guarantee we will reach the eMouseClick code below.
           LayoutDeviceIntPoint* curPoint =
             new LayoutDeviceIntPoint(mouseEvent->refPoint);
           SetProperty(nsGkAtoms::labelMouseDownPtProperty,
@@ -135,7 +135,7 @@ HTMLLabelElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
         }
         break;
 
-      case NS_MOUSE_CLICK:
+      case eMouseClick:
         if (mouseEvent->IsLeftClickEvent()) {
           LayoutDeviceIntPoint* mouseDownPoint =
             static_cast<LayoutDeviceIntPoint*>(
@@ -175,8 +175,10 @@ HTMLLabelElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
               // caused by the user pressing an accesskey.
               nsCOMPtr<nsIDOMElement> elem = do_QueryInterface(content);
               bool byMouse = (mouseEvent->inputSource != nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD);
+              bool byTouch = (mouseEvent->inputSource == nsIDOMMouseEvent::MOZ_SOURCE_TOUCH);
               fm->SetFocus(elem, nsIFocusManager::FLAG_BYMOVEFOCUS |
-                                 (byMouse ? nsIFocusManager::FLAG_BYMOUSE : 0));
+                                 (byMouse ? nsIFocusManager::FLAG_BYMOUSE : 0) |
+                                 (byTouch ? nsIFocusManager::FLAG_BYTOUCH : 0));
             }
           }
           // Dispatch a new click event to |content|
@@ -197,6 +199,9 @@ HTMLLabelElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
           mouseEvent->mFlags.mMultipleActionsPrevented = true;
         }
         break;
+
+      default:
+        break;
     }
     mHandlingEvent = false;
   }
@@ -215,21 +220,23 @@ HTMLLabelElement::SubmitNamesValues(nsFormSubmission* aFormSubmission)
   return NS_OK;
 }
 
-void
+bool
 HTMLLabelElement::PerformAccesskey(bool aKeyCausesActivation,
                                    bool aIsTrustedEvent)
 {
   if (!aKeyCausesActivation) {
     nsRefPtr<Element> element = GetLabeledElement();
-    if (element)
-      element->PerformAccesskey(aKeyCausesActivation, aIsTrustedEvent);
+    if (element) {
+      return element->PerformAccesskey(aKeyCausesActivation, aIsTrustedEvent);
+    }
   } else {
     nsPresContext *presContext = GetPresContext(eForUncomposedDoc);
-    if (!presContext)
-      return;
+    if (!presContext) {
+      return false;
+    }
 
     // Click on it if the users prefs indicate to do so.
-    WidgetMouseEvent event(aIsTrustedEvent, NS_MOUSE_CLICK,
+    WidgetMouseEvent event(aIsTrustedEvent, eMouseClick,
                            nullptr, WidgetMouseEvent::eReal);
     event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD;
 
@@ -239,6 +246,8 @@ HTMLLabelElement::PerformAccesskey(bool aKeyCausesActivation,
     EventDispatcher::Dispatch(static_cast<nsIContent*>(this), presContext,
                               &event);
   }
+
+  return aKeyCausesActivation;
 }
 
 nsGenericHTMLElement*

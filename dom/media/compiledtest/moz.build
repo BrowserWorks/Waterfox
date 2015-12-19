@@ -6,10 +6,10 @@
 
 GeckoCppUnitTests([
     'TestAudioBuffers',
-    'TestAudioMixer'
+    'TestAudioMixer',
+    'TestAudioPacketizer',
+    'TestAudioSegment'
 ])
-
-FAIL_ON_WARNINGS = True
 
 LOCAL_INCLUDES += [
     '..',

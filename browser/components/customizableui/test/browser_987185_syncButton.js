@@ -4,13 +4,13 @@
  */
 "use strict";
 
-let syncService = {};
+var syncService = {};
 Components.utils.import("resource://services-sync/service.js", syncService);
 
-let needsSetup;
-let originalSync;
-let service = syncService.Service;
-let syncWasCalled = false;
+var needsSetup;
+var originalSync;
+var service = syncService.Service;
+var syncWasCalled = false;
 
 add_task(function* testSyncButtonFunctionality() {
   info("Check Sync button functionality");
@@ -48,7 +48,7 @@ add_task(function* asyncCleanup() {
 
 function mockFunctions() {
   // mock needsSetup
-  gSyncUI._needsSetup = function() false;
+  gSyncUI._needsSetup = function() Promise.resolve(false);
 
   // mock service.errorHandler.syncAndReportErrors()
   service.errorHandler.syncAndReportErrors = mocked_syncAndReportErrors;

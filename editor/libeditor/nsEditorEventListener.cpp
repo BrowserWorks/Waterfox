@@ -369,46 +369,46 @@ nsEditorEventListener::HandleEvent(nsIDOMEvent* aEvent)
   //       calling it, this queries the specific interface.  If it would fail,
   //       each event handler would just ignore the event.  So, in this method,
   //       you don't need to check if the QI succeeded before each call.
-  switch (internalEvent->message) {
+  switch (internalEvent->mMessage) {
     // dragenter
-    case NS_DRAGDROP_ENTER: {
+    case eDragEnter: {
       nsCOMPtr<nsIDOMDragEvent> dragEvent = do_QueryInterface(aEvent);
       return DragEnter(dragEvent);
     }
     // dragover
-    case NS_DRAGDROP_OVER: {
+    case eDragOver: {
       nsCOMPtr<nsIDOMDragEvent> dragEvent = do_QueryInterface(aEvent);
       return DragOver(dragEvent);
     }
     // dragexit
-    case NS_DRAGDROP_EXIT: {
+    case eDragExit: {
       nsCOMPtr<nsIDOMDragEvent> dragEvent = do_QueryInterface(aEvent);
       return DragExit(dragEvent);
     }
     // drop
-    case NS_DRAGDROP_DROP: {
+    case eDrop: {
       nsCOMPtr<nsIDOMDragEvent> dragEvent = do_QueryInterface(aEvent);
       return Drop(dragEvent);
     }
 #ifdef HANDLE_NATIVE_TEXT_DIRECTION_SWITCH
     // keydown
-    case NS_KEY_DOWN: {
+    case eKeyDown: {
       nsCOMPtr<nsIDOMKeyEvent> keyEvent = do_QueryInterface(aEvent);
       return KeyDown(keyEvent);
     }
     // keyup
-    case NS_KEY_UP: {
+    case eKeyUp: {
       nsCOMPtr<nsIDOMKeyEvent> keyEvent = do_QueryInterface(aEvent);
       return KeyUp(keyEvent);
     }
 #endif // #ifdef HANDLE_NATIVE_TEXT_DIRECTION_SWITCH
     // keypress
-    case NS_KEY_PRESS: {
+    case eKeyPress: {
       nsCOMPtr<nsIDOMKeyEvent> keyEvent = do_QueryInterface(aEvent);
       return KeyPress(keyEvent);
     }
     // mousedown
-    case NS_MOUSE_BUTTON_DOWN: {
+    case eMouseDown: {
       nsCOMPtr<nsIDOMMouseEvent> mouseEvent = do_QueryInterface(aEvent);
       NS_ENSURE_TRUE(mouseEvent, NS_OK);
       // nsEditorEventListener may receive (1) all mousedown, mouseup and click
@@ -422,26 +422,26 @@ nsEditorEventListener::HandleEvent(nsIDOMEvent* aEvent)
       return mMouseDownOrUpConsumedByIME ? NS_OK : MouseDown(mouseEvent);
     }
     // mouseup
-    case NS_MOUSE_BUTTON_UP: {
+    case eMouseUp: {
       nsCOMPtr<nsIDOMMouseEvent> mouseEvent = do_QueryInterface(aEvent);
       NS_ENSURE_TRUE(mouseEvent, NS_OK);
-      // See above comment in the NS_MOUSE_BUTTON_DOWN case, first.
+      // See above comment in the eMouseDown case, first.
       // This code assumes that case #1 is occuring.  However, if case #3 may
       // occurs after case #2 and the mousedown is consumed,
       // mMouseDownOrUpConsumedByIME is true even though nsEditorEventListener
       // has not received the preceding mousedown event of this mouseup event.
       // So, mMouseDownOrUpConsumedByIME may be invalid here.  However,
       // this is not a matter because mMouseDownOrUpConsumedByIME is referred
-      // only by NS_MOUSE_CLICK case but click event is fired only in case #1.
+      // only by eMouseClick case but click event is fired only in case #1.
       // So, before a click event is fired, mMouseDownOrUpConsumedByIME is
-      // always initialized in the NS_MOUSE_BUTTON_DOWN case if it's referred.
+      // always initialized in the eMouseDown case if it's referred.
       if (NotifyIMEOfMouseButtonEvent(mouseEvent)) {
         mMouseDownOrUpConsumedByIME = true;
       }
       return mMouseDownOrUpConsumedByIME ? NS_OK : MouseUp(mouseEvent);
     }
     // click
-    case NS_MOUSE_CLICK: {
+    case eMouseClick: {
       nsCOMPtr<nsIDOMMouseEvent> mouseEvent = do_QueryInterface(aEvent);
       NS_ENSURE_TRUE(mouseEvent, NS_OK);
       // If the preceding mousedown event or mouseup event was consumed,
@@ -454,21 +454,23 @@ nsEditorEventListener::HandleEvent(nsIDOMEvent* aEvent)
       return MouseClick(mouseEvent);
     }
     // focus
-    case NS_FOCUS_CONTENT:
+    case eFocus:
       return Focus(aEvent);
     // blur
-    case NS_BLUR_CONTENT:
+    case eBlur:
       return Blur(aEvent);
     // text
-    case NS_COMPOSITION_CHANGE:
+    case eCompositionChange:
       return HandleText(aEvent);
     // compositionstart
-    case NS_COMPOSITION_START:
+    case eCompositionStart:
       return HandleStartComposition(aEvent);
     // compositionend
-    case NS_COMPOSITION_END:
+    case eCompositionEnd:
       HandleEndComposition(aEvent);
       return NS_OK;
+    default:
+      break;
   }
 
   nsAutoString eventType;

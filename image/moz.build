@@ -46,6 +46,7 @@ EXPORTS += [
     'IProgressObserver.h',
     'Orientation.h',
     'SurfaceCache.h',
+    'SurfaceFlags.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -53,13 +54,13 @@ UNIFIED_SOURCES += [
     'DecodePool.cpp',
     'Decoder.cpp',
     'DecoderFactory.cpp',
+    'Deinterlacer.cpp',
     'DynamicImage.cpp',
     'FrameAnimator.cpp',
     'FrozenImage.cpp',
     'Image.cpp',
     'ImageCacheKey.cpp',
     'ImageFactory.cpp',
-    'ImageMetadata.cpp',
     'ImageOps.cpp',
     'ImageWrapper.cpp',
     'imgFrame.cpp',
@@ -84,8 +85,6 @@ SOURCES += [
     'ProgressTracker.cpp',
     'RasterImage.cpp',
 ]
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

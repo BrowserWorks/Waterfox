@@ -20,8 +20,8 @@ function runTests() {
   var Ci = Components.interfaces;
 
   var {require} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-  Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
-  Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
+  var {DebuggerClient} = require("devtools/toolkit/client/main");
+  var {DebuggerServer} = require("devtools/server/main");
 
   if (SpecialPowers.isMainProcess()) {
     Cu.import("resource://gre/modules/SettingsRequestManager.jsm");

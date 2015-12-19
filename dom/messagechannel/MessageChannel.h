@@ -28,9 +28,6 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(MessageChannel)
 
-  static bool Enabled(JSContext* aCx, JSObject* aGlobal);
-
-public:
   nsPIDOMWindow*
   GetParentObject() const
   {
@@ -42,6 +39,9 @@ public:
 
   static already_AddRefed<MessageChannel>
   Constructor(const GlobalObject& aGlobal, ErrorResult& aRv);
+
+  static already_AddRefed<MessageChannel>
+  Constructor(nsPIDOMWindow* aWindow, ErrorResult& aRv);
 
   MessagePort*
   Port1() const

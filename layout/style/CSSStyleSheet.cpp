@@ -47,6 +47,7 @@
 #include "nsComponentManagerUtils.h"
 #include "nsNullPrincipal.h"
 #include "mozilla/RuleProcessorCache.h"
+#include "nsIStyleSheetLinkingElement.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -815,10 +816,12 @@ namespace mozilla {
 
 CSSStyleSheetInner::CSSStyleSheetInner(CSSStyleSheet* aPrimarySheet,
                                        CORSMode aCORSMode,
-                                       ReferrerPolicy aReferrerPolicy)
+                                       ReferrerPolicy aReferrerPolicy,
+                                       const SRIMetadata& aIntegrity)
   : mSheets()
   , mCORSMode(aCORSMode)
   , mReferrerPolicy (aReferrerPolicy)
+  , mIntegrity(aIntegrity)
   , mComplete(false)
 #ifdef DEBUG
   , mPrincipalSet(false)
@@ -940,6 +943,7 @@ CSSStyleSheetInner::CSSStyleSheetInner(CSSStyleSheetInner& aCopy,
     mPrincipal(aCopy.mPrincipal),
     mCORSMode(aCopy.mCORSMode),
     mReferrerPolicy(aCopy.mReferrerPolicy),
+    mIntegrity(aCopy.mIntegrity),
     mComplete(aCopy.mComplete)
 #ifdef DEBUG
     , mPrincipalSet(aCopy.mPrincipalSet)
@@ -1080,7 +1084,26 @@ CSSStyleSheet::CSSStyleSheet(CORSMode aCORSMode, ReferrerPolicy aReferrerPolicy)
     mScopeElement(nullptr),
     mRuleProcessors(nullptr)
 {
-  mInner = new CSSStyleSheetInner(this, aCORSMode, aReferrerPolicy);
+  mInner = new CSSStyleSheetInner(this, aCORSMode, aReferrerPolicy,
+                                  SRIMetadata());
+}
+
+CSSStyleSheet::CSSStyleSheet(CORSMode aCORSMode,
+                             ReferrerPolicy aReferrerPolicy,
+                             const SRIMetadata& aIntegrity)
+  : mTitle(),
+    mParent(nullptr),
+    mOwnerRule(nullptr),
+    mDocument(nullptr),
+    mOwningNode(nullptr),
+    mDisabled(false),
+    mDirty(false),
+    mInRuleProcessorCache(false),
+    mScopeElement(nullptr),
+    mRuleProcessors(nullptr)
+{
+  mInner = new CSSStyleSheetInner(this, aCORSMode, aReferrerPolicy,
+                                  aIntegrity);
 }
 
 CSSStyleSheet::CSSStyleSheet(const CSSStyleSheet& aCopy,
@@ -2289,9 +2312,18 @@ CSSStyleSheet::ParseSheet(const nsAString& aInput)
   // allow unsafe rules if the style sheet's principal is the system principal
   bool allowUnsafeRules = nsContentUtils::IsSystemPrincipal(mInner->mPrincipal);
 
+  uint32_t lineNumber = 1;
+  if (mOwningNode) {
+    nsCOMPtr<nsIStyleSheetLinkingElement> link = do_QueryInterface(mOwningNode);
+    if (link) {
+      lineNumber = link->GetLineNumber();
+    }
+  }
+
   nsCSSParser parser(loader, this);
   nsresult rv = parser.ParseSheet(aInput, mInner->mSheetURI, mInner->mBaseURI,
-                                  mInner->mPrincipal, 1, allowUnsafeRules);
+                                  mInner->mPrincipal, lineNumber,
+                                  allowUnsafeRules);
   DidDirty(); // we are always 'dirty' here since we always remove rules first
   NS_ENSURE_SUCCESS(rv, rv);
 

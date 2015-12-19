@@ -28,6 +28,8 @@ from .common import CommonBackend
 from ..frontend.data import (
     AndroidAssetsDirs,
     AndroidResDirs,
+    AndroidExtraResDirs,
+    AndroidExtraPackages,
     AndroidEclipseProjectData,
     BrandingFiles,
     ConfigFileSubstitution,
@@ -42,6 +44,7 @@ from ..frontend.data import (
     GeneratedFile,
     GeneratedInclude,
     GeneratedSources,
+    HostDefines,
     HostLibrary,
     HostProgram,
     HostSimpleProgram,
@@ -72,7 +75,11 @@ from ..util import (
 from ..makeutil import Makefile
 
 MOZBUILD_VARIABLES = [
+    b'ANDROID_APK_NAME',
+    b'ANDROID_APK_PACKAGE',
     b'ANDROID_ASSETS_DIRS',
+    b'ANDROID_EXTRA_PACKAGES',
+    b'ANDROID_EXTRA_RES_DIRS',
     b'ANDROID_GENERATED_RESFILES',
     b'ANDROID_RES_DIRS',
     b'ASFLAGS',
@@ -88,8 +95,10 @@ MOZBUILD_VARIABLES = [
     b'FORCE_SHARED_LIB',
     b'FORCE_STATIC_LIB',
     b'FINAL_LIBRARY',
+    b'HOST_CFLAGS',
     b'HOST_CSRCS',
     b'HOST_CMMSRCS',
+    b'HOST_CXXFLAGS',
     b'HOST_EXTRA_LIBS',
     b'HOST_LIBRARY_NAME',
     b'HOST_PROGRAM',
@@ -141,6 +150,7 @@ DEPRECATED_VARIABLES = [
     b'MOCHITEST_FILES_PARTS',
     b'MOCHITEST_METRO_FILES',
     b'MOCHITEST_ROBOCOP_FILES',
+    b'MODULE_OPTIMIZE_FLAGS',
     b'MOZ_CHROME_FILE_FORMAT',
     b'SHORT_LIBNAME',
     b'TESTING_JS_MODULES',
@@ -497,7 +507,8 @@ class RecursiveMakeBackend(CommonBackend):
                         backend_file.write('%s := 1\n' % k)
                 else:
                     backend_file.write('%s := %s\n' % (k, v))
-
+        elif isinstance(obj, HostDefines):
+            self._process_defines(obj, backend_file, which='HOST_DEFINES')
         elif isinstance(obj, Defines):
             self._process_defines(obj, backend_file)
 
@@ -608,6 +619,14 @@ class RecursiveMakeBackend(CommonBackend):
         elif isinstance(obj, AndroidAssetsDirs):
             for p in obj.paths:
                 backend_file.write('ANDROID_ASSETS_DIRS += %s\n' % p.full_path)
+
+        elif isinstance(obj, AndroidExtraResDirs):
+            for p in obj.paths:
+                backend_file.write('ANDROID_EXTRA_RES_DIRS += %s\n' % p.full_path)
+
+        elif isinstance(obj, AndroidExtraPackages):
+            for p in obj.packages:
+                backend_file.write('ANDROID_EXTRA_PACKAGES += %s\n' % p)
 
         else:
             return
@@ -930,11 +949,11 @@ class RecursiveMakeBackend(CommonBackend):
                 dest = mozpath.join(namespace, path, mozpath.basename(s))
                 yield source, dest, strings.flags_for(s)
 
-    def _process_defines(self, obj, backend_file):
+    def _process_defines(self, obj, backend_file, which='DEFINES'):
         """Output the DEFINES rules to the given backend file."""
         defines = list(obj.get_defines())
         if defines:
-            backend_file.write('DEFINES +=')
+            backend_file.write(which + ' +=')
             for define in defines:
                 backend_file.write(' %s' % define)
             backend_file.write('\n')
@@ -1081,6 +1100,7 @@ INSTALL_TARGETS += %(prefix)s
         modules = manager.modules
         xpt_modules = sorted(modules.keys())
         xpt_files = set()
+        registered_xpt_files = set()
 
         mk = Makefile()
 
@@ -1112,15 +1132,16 @@ INSTALL_TARGETS += %(prefix)s
         rules = StringIO()
         mk.dump(rules, removal_guard=False)
 
-        # Write out manifests defining interfaces
+        interfaces_manifests = []
         dist_dir = mozpath.join(self.environment.topobjdir, 'dist')
         for manifest, entries in manager.interface_manifests.items():
-            path = mozpath.join(self.environment.topobjdir, manifest)
-            with self._write_file(path) as fh:
-                for xpt in sorted(entries):
-                    fh.write('interfaces %s\n' % xpt)
+            interfaces_manifests.append(mozpath.join('$(DEPTH)', manifest))
+            for xpt in sorted(entries):
+                registered_xpt_files.add(mozpath.join(
+                    '$(DEPTH)', mozpath.dirname(manifest), xpt))
 
             if install_target.startswith('dist/'):
+                path = mozpath.join(self.environment.topobjdir, manifest)
                 path = mozpath.relpath(path, dist_dir)
                 prefix, subpath = path.split('/', 1)
                 key = 'dist_%s' % prefix
@@ -1143,9 +1164,11 @@ INSTALL_TARGETS += %(prefix)s
         obj.config = self.environment
         self._create_makefile(obj, extra=dict(
             chrome_manifests = ' '.join(chrome_manifests),
+            interfaces_manifests = ' '.join(interfaces_manifests),
             xpidl_rules=rules.getvalue(),
             xpidl_modules=' '.join(xpt_modules),
-            xpt_files=' '.join(sorted(xpt_files)),
+            xpt_files=' '.join(sorted(xpt_files - registered_xpt_files)),
+            registered_xpt_files=' '.join(sorted(registered_xpt_files)),
         ))
 
     def _process_program(self, program, backend_file):

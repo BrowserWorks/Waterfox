@@ -5,9 +5,10 @@
 "use strict";
 
 const { Cc, Ci, Cu } = require("chrome");
-const {TargetFactory} = require("devtools/framework/target");
 const l10n = require("gcli/l10n");
 const gcli = require("gcli/index");
+
+loader.lazyRequireGetter(this, "TargetFactory", "devtools/framework/target", true);
 
 loader.lazyImporter(this, "gDevTools", "resource:///modules/devtools/gDevTools.jsm");
 
@@ -18,9 +19,9 @@ loader.lazyGetter(this, "Debugger", () => {
   return global.Debugger;
 });
 
-let debuggers = [];
-let chromeDebuggers = [];
-let sandboxes = [];
+var debuggers = [];
+var chromeDebuggers = [];
+var sandboxes = [];
 
 exports.items = [
   {

@@ -33,7 +33,7 @@
 #include "nsCCUncollectableMarker.h"
 #include "mozAutoDocUpdate.h"
 
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "prprf.h"
 #include "nsWrapperCacheInlines.h"
 
@@ -387,7 +387,7 @@ nsGenericDOMDataNode::SetTextInternal(uint32_t aOffset, uint32_t aCount,
     nsNodeUtils::CharacterDataChanged(this, &info);
 
     if (haveMutationListeners) {
-      InternalMutationEvent mutation(true, NS_MUTATION_CHARACTERDATAMODIFIED);
+      InternalMutationEvent mutation(true, eLegacyCharacterDataModified);
 
       mutation.mPrevAttrValue = oldValue;
       if (aLength > 0) {
@@ -696,7 +696,10 @@ ShadowRoot *
 nsGenericDOMDataNode::GetContainingShadow() const
 {
   nsDataSlots *slots = GetExistingDataSlots();
-  return slots ? slots->mContainingShadow : nullptr;
+  if (!slots) {
+    return nullptr;
+  }
+  return slots->mContainingShadow;
 }
 
 void

@@ -193,22 +193,6 @@ class MacroAssemblerNone : public Assembler
     uint32_t labelOffsetToPatchOffset(uint32_t) { MOZ_CRASH(); }
     CodeOffsetLabel labelForPatch() { MOZ_CRASH(); }
 
-    template <typename T> void call(T) { MOZ_CRASH(); }
-    template <typename T, typename S> void call(T, S) { MOZ_CRASH(); }
-    template <typename T> void callWithABI(T, MoveOp::Type v = MoveOp::GENERAL) { MOZ_CRASH(); }
-    void callAndPushReturnAddress(Label* label) { MOZ_CRASH(); }
-
-    void setupAlignedABICall(uint32_t) { MOZ_CRASH(); }
-    void setupUnalignedABICall(uint32_t, Register) { MOZ_CRASH(); }
-    template <typename T> void passABIArg(T, MoveOp::Type v = MoveOp::GENERAL) { MOZ_CRASH(); }
-
-    void callWithExitFrame(Label*) { MOZ_CRASH(); }
-    void callWithExitFrame(JitCode*) { MOZ_CRASH(); }
-    void callWithExitFrame(JitCode*, Register) { MOZ_CRASH(); }
-
-    void callJit(Register callee) { MOZ_CRASH(); }
-    void callJitFromAsmJS(Register callee) { MOZ_CRASH(); }
-
     void nop() { MOZ_CRASH(); }
     void breakpoint() { MOZ_CRASH(); }
     void abiret() { MOZ_CRASH(); }
@@ -238,9 +222,9 @@ class MacroAssemblerNone : public Assembler
     template <typename T> void Pop(T) { MOZ_CRASH(); }
     template <typename T> CodeOffsetLabel pushWithPatch(T) { MOZ_CRASH(); }
 
-    CodeOffsetJump jumpWithPatch(RepatchLabel*) { MOZ_CRASH(); }
-    CodeOffsetJump jumpWithPatch(RepatchLabel*, Condition) { MOZ_CRASH(); }
-    CodeOffsetJump backedgeJump(RepatchLabel* label) { MOZ_CRASH(); }
+    CodeOffsetJump jumpWithPatch(RepatchLabel*, Label* doc = nullptr) { MOZ_CRASH(); }
+    CodeOffsetJump jumpWithPatch(RepatchLabel*, Condition, Label* doc = nullptr) { MOZ_CRASH(); }
+    CodeOffsetJump backedgeJump(RepatchLabel* label, Label* doc = nullptr) { MOZ_CRASH(); }
     template <typename T, typename S>
     CodeOffsetJump branchPtrWithPatch(Condition, T, S, RepatchLabel*) { MOZ_CRASH(); }
 
@@ -254,10 +238,12 @@ class MacroAssemblerNone : public Assembler
 
     template <typename T, typename S> void add32(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void addPtr(T, S) { MOZ_CRASH(); }
+    template <typename T, typename S> void add64(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void sub32(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void subPtr(T, S) { MOZ_CRASH(); }
     void neg32(Register) { MOZ_CRASH(); }
     void mulBy3(Register, Register) { MOZ_CRASH(); }
+    void mul64(Imm64, const Register64&) { MOZ_CRASH(); }
 
     void negateDouble(FloatRegister) { MOZ_CRASH(); }
     void addDouble(FloatRegister, FloatRegister) { MOZ_CRASH(); }
@@ -275,12 +261,14 @@ class MacroAssemblerNone : public Assembler
     template <typename T, typename S> void branchFloat(DoubleCondition, T, S, Label*) { MOZ_CRASH(); }
     template <typename T, typename S> void branchPrivatePtr(Condition, T, S, Label*) { MOZ_CRASH(); }
     template <typename T, typename S> void decBranchPtr(Condition, T, S, Label*) { MOZ_CRASH(); }
+    template <typename T, typename S> void branchTest64(Condition, T, T, S, Label*) { MOZ_CRASH(); }
     template <typename T, typename S> void mov(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void movq(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void movePtr(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void move32(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void moveFloat32(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void moveDouble(T, S) { MOZ_CRASH(); }
+    template <typename T, typename S> void move64(T, S) { MOZ_CRASH(); }
     template <typename T> CodeOffsetLabel movWithPatch(T, Register) { MOZ_CRASH(); }
 
     template <typename T> void loadInt32x1(T, FloatRegister dest) { MOZ_CRASH(); }
@@ -301,6 +289,7 @@ class MacroAssemblerNone : public Assembler
     template <typename T> void load8ZeroExtend(T, Register) { MOZ_CRASH(); }
     template <typename T> void load16SignExtend(T, Register) { MOZ_CRASH(); }
     template <typename T> void load16ZeroExtend(T, Register) { MOZ_CRASH(); }
+    template <typename T> void load64(T, Register64 ) { MOZ_CRASH(); }
 
     template <typename T, typename S> void storePtr(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void store32(T, S) { MOZ_CRASH(); }
@@ -317,6 +306,7 @@ class MacroAssemblerNone : public Assembler
     template <typename T, typename S> void storeInt32x2(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void storeInt32x3(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void storeFloat32x3(T, S) { MOZ_CRASH(); }
+    template <typename T, typename S> void store64(T, S) { MOZ_CRASH(); }
 
     template <typename T> void computeEffectiveAddress(T, Register) { MOZ_CRASH(); }
 
@@ -414,6 +404,8 @@ class MacroAssemblerNone : public Assembler
 
     template <typename T> void convertInt32ToDouble(T, FloatRegister) { MOZ_CRASH(); }
     void convertFloat32ToDouble(FloatRegister, FloatRegister) { MOZ_CRASH(); }
+    void convertUInt64ToDouble(Register64, Register, FloatRegister) { MOZ_CRASH(); }
+    void mulDoublePtr(ImmPtr, Register, FloatRegister) { MOZ_CRASH(); }
 
     void branchTruncateDouble(FloatRegister, Register, Label*) { MOZ_CRASH(); }
     void branchTruncateFloat32(FloatRegister, Register, Label*) { MOZ_CRASH(); }
@@ -438,23 +430,12 @@ class MacroAssemblerNone : public Assembler
     template <typename T> void storeUnboxedValue(ConstantOrRegister, MIRType, T, MIRType) { MOZ_CRASH(); }
     template <typename T> void storeUnboxedPayload(ValueOperand value, T, size_t) { MOZ_CRASH(); }
 
-    void rshiftPtr(Imm32, Register) { MOZ_CRASH(); }
-    void rshiftPtrArithmetic(Imm32, Register) { MOZ_CRASH(); }
-    void lshiftPtr(Imm32, Register) { MOZ_CRASH(); }
-    template <typename T, typename S> void xorPtr(T, S) { MOZ_CRASH(); }
-    template <typename T, typename S> void xor32(T, S) { MOZ_CRASH(); }
-    template <typename T, typename S> void orPtr(T, S) { MOZ_CRASH(); }
-    template <typename T, typename S> void or32(T, S) { MOZ_CRASH(); }
-    template <typename T, typename S> void andPtr(T, S) { MOZ_CRASH(); }
-    template <typename T, typename S> void and32(T, S) { MOZ_CRASH(); }
-    template <typename T> void not32(T) { MOZ_CRASH(); }
     void convertUInt32ToDouble(Register, FloatRegister) { MOZ_CRASH(); }
     void convertUInt32ToFloat32(Register, FloatRegister) { MOZ_CRASH(); }
     void inc64(AbsoluteAddress) { MOZ_CRASH(); }
     void incrementInt32Value(Address) { MOZ_CRASH(); }
     void ensureDouble(ValueOperand, FloatRegister, Label*) { MOZ_CRASH(); }
     void handleFailureWithHandlerTail(void*) { MOZ_CRASH(); }
-    void makeFrameDescriptor(Register, FrameType) { MOZ_CRASH(); }
 
     void branchPtrInNurseryRange(Condition, Register, Register, Label*) { MOZ_CRASH(); }
     void branchValueIsNurseryObject(Condition, ValueOperand, Register, Label*) { MOZ_CRASH(); }

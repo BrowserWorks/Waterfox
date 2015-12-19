@@ -171,7 +171,7 @@ QueryProgramInfo(WebGLProgram* prog, gl::GLContext* gl)
 
     // Uniforms
 
-    const bool needsCheckForArrays = true;
+    const bool needsCheckForArrays = gl->WorkAroundDriverBugs();
 
     GLuint numActiveUniforms = 0;
     gl->fGetProgramiv(prog->mGLName, LOCAL_GL_ACTIVE_UNIFORMS,
@@ -812,18 +812,26 @@ WebGLProgram::LinkProgram()
     gl::GLContext* gl = mContext->gl;
     gl->MakeCurrent();
 
-    // Bug 777028: Mesa can't handle more than 16 samplers per program,
-    // counting each array entry.
-    size_t numSamplerUniforms_upperBound = mVertShader->CalcNumSamplerUniforms() +
-                                           mFragShader->CalcNumSamplerUniforms();
     if (gl->WorkAroundDriverBugs() &&
-        mContext->mIsMesa &&
-        numSamplerUniforms_upperBound > 16)
+        mContext->mIsMesa)
     {
-        mLinkLog.AssignLiteral("Programs with more than 16 samplers are disallowed on"
-                               " Mesa drivers to avoid crashing.");
-        mContext->GenerateWarning("linkProgram: %s", mLinkLog.BeginReading());
-        return false;
+        // Bug 777028: Mesa can't handle more than 16 samplers per program,
+        // counting each array entry.
+        size_t numSamplerUniforms_upperBound = mVertShader->CalcNumSamplerUniforms() +
+                                               mFragShader->CalcNumSamplerUniforms();
+        if (numSamplerUniforms_upperBound > 16) {
+            mLinkLog.AssignLiteral("Programs with more than 16 samplers are disallowed on"
+                                   " Mesa drivers to avoid crashing.");
+            mContext->GenerateWarning("linkProgram: %s", mLinkLog.BeginReading());
+            return false;
+        }
+
+        // Bug 1203135: Mesa crashes internally if we exceed the reported maximum attribute count.
+        if (mVertShader->NumAttributes() > mContext->MaxVertexAttribs()) {
+            mLinkLog.AssignLiteral("Number of attributes exceeds Mesa's reported max attribute count.");
+            mContext->GenerateWarning("linkProgram: %s", mLinkLog.BeginReading());
+            return false;
+        }
     }
 
     // Bind the attrib locations.

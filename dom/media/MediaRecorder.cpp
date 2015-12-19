@@ -367,7 +367,7 @@ public:
     : mRecorder(aRecorder)
     , mTimeSlice(aTimeSlice)
     , mStopIssued(false)
-    , mCanRetrieveData(false)
+    , mIsStartEventFired(false)
     , mIsRegisterProfiler(false)
     , mNeedSessionEndTask(true)
   {
@@ -407,7 +407,7 @@ public:
     MOZ_ASSERT(NS_IsMainThread());
 
     NS_ENSURE_TRUE(mTrackUnionStream, NS_ERROR_FAILURE);
-    mTrackUnionStream->ChangeExplicitBlockerCount(1);
+    mTrackUnionStream->Suspend();
 
     return NS_OK;
   }
@@ -418,7 +418,7 @@ public:
     MOZ_ASSERT(NS_IsMainThread());
 
     NS_ENSURE_TRUE(mTrackUnionStream, NS_ERROR_FAILURE);
-    mTrackUnionStream->ChangeExplicitBlockerCount(-1);
+    mTrackUnionStream->Resume();
 
     return NS_OK;
   }
@@ -494,10 +494,10 @@ private:
       if (!encodedBuf[i].IsEmpty()) {
         mEncodedBufferCache->AppendBuffer(encodedBuf[i]);
         // Fire the start event when encoded data is available.
-        if (!mCanRetrieveData) {
+        if (!mIsStartEventFired) {
           NS_DispatchToMainThread(
             new DispatchStartEventRunnable(this, NS_LITERAL_STRING("start")));
-          mCanRetrieveData = true;
+          mIsStartEventFired = true;
         }
       }
     }
@@ -510,6 +510,12 @@ private:
       pushBlob = true;
     }
     if (pushBlob || aForceFlush) {
+      // Fire the start event before the blob.
+      if (!mIsStartEventFired) {
+        NS_DispatchToMainThread(
+          new DispatchStartEventRunnable(this, NS_LITERAL_STRING("start")));
+        mIsStartEventFired = true;
+      }
       if (NS_FAILED(NS_DispatchToMainThread(new EncoderErrorNotifierRunnable(this)))) {
         MOZ_ASSERT(false, "NS_DispatchToMainThread EncoderErrorNotifierRunnable failed");
       }
@@ -535,7 +541,7 @@ private:
 
     // Bind this Track Union Stream with Source Media.
     mInputPort = mTrackUnionStream->AllocateInputPort(mRecorder->GetSourceMediaStream(),
-                                                      MediaInputPort::FLAG_BLOCK_OUTPUT);
+                                                      0);
 
     DOMMediaStream* domStream = mRecorder->Stream();
     if (domStream) {
@@ -589,9 +595,17 @@ private:
 
     // Make sure the application has permission to assign AUDIO_3GPP
     if (mRecorder->mMimeType.EqualsLiteral(AUDIO_3GPP) && Check3gppPermission()) {
-      mEncoder = MediaEncoder::CreateEncoder(NS_LITERAL_STRING(AUDIO_3GPP), aTrackTypes);
+      mEncoder = MediaEncoder::CreateEncoder(NS_LITERAL_STRING(AUDIO_3GPP),
+                                             mRecorder->GetAudioBitrate(),
+                                             mRecorder->GetVideoBitrate(),
+                                             mRecorder->GetBitrate(),
+                                             aTrackTypes);
     } else {
-      mEncoder = MediaEncoder::CreateEncoder(NS_LITERAL_STRING(""), aTrackTypes);
+      mEncoder = MediaEncoder::CreateEncoder(NS_LITERAL_STRING(""),
+                                             mRecorder->GetAudioBitrate(),
+                                             mRecorder->GetVideoBitrate(),
+                                             mRecorder->GetBitrate(),
+                                             aTrackTypes);
     }
 
     if (!mEncoder) {
@@ -639,6 +653,9 @@ private:
   {
     MOZ_ASSERT(NS_IsMainThread());
     CleanupStreams();
+    NS_DispatchToMainThread(
+      new DispatchStartEventRunnable(this, NS_LITERAL_STRING("start")));
+
     if (NS_FAILED(rv)) {
       nsCOMPtr<nsIRunnable> runnable =
         NS_NewRunnableMethodWithArg<nsresult>(mRecorder,
@@ -724,8 +741,8 @@ private:
   const int32_t mTimeSlice;
   // Indicate this session's stop has been called.
   bool mStopIssued;
-  // Indicate session has encoded data. This can be changed in recording thread.
-  bool mCanRetrieveData;
+  // Indicate the session had fire start event. Encoding thread only.
+  bool mIsStartEventFired;
   // The register flag for "Media_Encoder" thread to profiler
   bool mIsRegisterProfiler;
   // False if the InitEncoder called successfully, ensure the
@@ -776,15 +793,14 @@ MediaRecorder::MediaRecorder(AudioNode& aSrcAudioNode,
   if (aSrcAudioNode.NumberOfOutputs() > 0) {
     AudioContext* ctx = aSrcAudioNode.Context();
     AudioNodeEngine* engine = new AudioNodeEngine(nullptr);
-    mPipeStream = ctx->Graph()->CreateAudioNodeStream(engine,
-                                                      MediaStreamGraph::EXTERNAL_STREAM,
-                                                      ctx->SampleRate());
+    AudioNodeStream::Flags flags =
+      AudioNodeStream::EXTERNAL_OUTPUT |
+      AudioNodeStream::NEED_MAIN_THREAD_FINISHED;
+    mPipeStream = AudioNodeStream::Create(ctx, engine, flags);
     AudioNodeStream* ns = aSrcAudioNode.GetStream();
     if (ns) {
       mInputPort = mPipeStream->AllocateInputPort(aSrcAudioNode.GetStream(),
-                                                  MediaInputPort::FLAG_BLOCK_INPUT,
-                                                  0,
-                                                  aSrcOutput);
+                                                  0, aSrcOutput);
     }
   }
   mAudioNode = &aSrcAudioNode;
@@ -957,7 +973,7 @@ MediaRecorder::Constructor(const GlobalObject& aGlobal,
   }
 
   nsRefPtr<MediaRecorder> object = new MediaRecorder(aStream, ownerWindow);
-  object->SetMimeType(aInitDict.mMimeType);
+  object->SetOptions(aInitDict);
   return object.forget();
 }
 
@@ -993,8 +1009,31 @@ MediaRecorder::Constructor(const GlobalObject& aGlobal,
   nsRefPtr<MediaRecorder> object = new MediaRecorder(aSrcAudioNode,
                                                      aSrcOutput,
                                                      ownerWindow);
-  object->SetMimeType(aInitDict.mMimeType);
+  object->SetOptions(aInitDict);
   return object.forget();
+}
+
+void
+MediaRecorder::SetOptions(const MediaRecorderOptions& aInitDict)
+{
+  SetMimeType(aInitDict.mMimeType);
+  mAudioBitsPerSecond = aInitDict.mAudioBitsPerSecond.WasPassed() ?
+                        aInitDict.mAudioBitsPerSecond.Value() : 0;
+  mVideoBitsPerSecond = aInitDict.mVideoBitsPerSecond.WasPassed() ?
+                        aInitDict.mVideoBitsPerSecond.Value() : 0;
+  mBitsPerSecond = aInitDict.mBitsPerSecond.WasPassed() ?
+                   aInitDict.mBitsPerSecond.Value() : 0;
+  // We're not handling dynamic changes yet. Eventually we'll handle
+  // setting audio, video and/or total -- and anything that isn't set,
+  // we'll derive. Calculated versions require querying bitrates after
+  // the encoder is Init()ed. This happens only after data is
+  // available and thus requires dynamic changes.
+  //
+  // Until dynamic changes are supported, I prefer to be safe and err
+  // slightly high
+  if (aInitDict.mBitsPerSecond.WasPassed() && !aInitDict.mVideoBitsPerSecond.WasPassed()) {
+    mVideoBitsPerSecond = mBitsPerSecond;
+  }
 }
 
 nsresult
@@ -1030,12 +1069,7 @@ MediaRecorder::DispatchSimpleEvent(const nsAString & aStr)
     return;
   }
 
-  nsCOMPtr<nsIDOMEvent> event;
-  rv = NS_NewDOMEvent(getter_AddRefs(event), this, nullptr, nullptr);
-  if (NS_FAILED(rv)) {
-    NS_WARNING("Failed to create the error event!!!");
-    return;
-  }
+  nsRefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
   rv = event->InitEvent(aStr, false, false);
 
   if (NS_FAILED(rv)) {

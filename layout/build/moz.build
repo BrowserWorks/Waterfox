@@ -21,8 +21,6 @@ if CONFIG['MOZ_NFC']:
         '/dom/nfc'
     ]
 
-FAIL_ON_WARNINGS = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 LOCAL_INCLUDES += [
@@ -106,16 +104,8 @@ if CONFIG['MOZ_B2G_FM']:
 
 if CONFIG['MOZ_B2G_BT']:
     LOCAL_INCLUDES += [
-        '/dom/bluetooth',
+        '/dom/bluetooth/common',
     ]
-    if CONFIG['MOZ_B2G_BT_API_V1']:
-        LOCAL_INCLUDES += [
-            '/dom/bluetooth/bluetooth1',
-        ]
-    else:
-        LOCAL_INCLUDES += [
-            '/dom/bluetooth/bluetooth2',
-        ]
 
 if CONFIG['MOZ_WEBSPEECH']:
     LOCAL_INCLUDES += [

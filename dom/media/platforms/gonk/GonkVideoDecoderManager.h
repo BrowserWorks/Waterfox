@@ -44,7 +44,7 @@ public:
 
   virtual ~GonkVideoDecoderManager() override;
 
-  virtual android::sp<MediaCodecProxy> Init(MediaDataDecoderCallback* aCallback) override;
+  virtual nsRefPtr<InitPromise> Init(MediaDataDecoderCallback* aCallback) override;
 
   virtual nsresult Input(MediaRawData* aSample) override;
 
@@ -165,11 +165,12 @@ private:
   // The lock protects mPendingReleaseItems.
   Mutex mPendingReleaseItemsLock;
 
-  // MediaCodedc's wrapper that performs the decoding.
-  android::sp<android::MediaCodecProxy> mDecoder;
-
   // This monitor protects mQueueSample.
   Monitor mMonitor;
+
+  // This TaskQueue should be the same one in mReaderCallback->OnReaderTaskQueue().
+  // It is for codec resource mangement, decoding task should not dispatch to it.
+  nsRefPtr<TaskQueue> mReaderTaskQueue;
 
   // An queue with the MP4 samples which are waiting to be sent into OMX.
   // If an element is an empty MP4Sample, that menas EOS. There should not

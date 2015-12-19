@@ -123,7 +123,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         dirs = self.query_abs_dirs()
         suite_category = self.test_suite_definitions[self.test_suite]["category"]
         try:
-            test_dir = self.tree_config["suite_definitions"][suite_category]["testsdir"]
+            test_dir = self.config["suite_definitions"][suite_category]["testsdir"]
         except:
             test_dir = suite_category
         return os.path.join(dirs['abs_test_install_dir'], test_dir)
@@ -413,10 +413,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         except OSError, err:
             self.warning("Failed to take screenshot: %s" % err.strerror)
 
-    @PostScriptRun
-    def _post_script(self):
-        self._kill_processes(self.config["emulator_process_name"])
-
     def _query_package_name(self):
         if self.app_name is None:
             #find appname from package-name.txt - assumes download-and-extract has completed successfully
@@ -438,16 +434,15 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         dirs = self.query_abs_dirs()
         suite_category = self.test_suite_definitions[self.test_suite]["category"]
 
-        if suite_category not in self.tree_config["suite_definitions"]:
-            self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'. "
-                       "See bug 981030 for more details." % (suite_category,
-                       os.path.join('gecko', 'testing', self.config['in_tree_config'])))
+        if suite_category not in self.config["suite_definitions"]:
+            self.fatal("Key '%s' not defined in the config!" % suite_category)
+
         cmd = [
             self.query_python_path('python'),
             '-u',
             os.path.join(
                 self._query_tests_dir(),
-                self.tree_config["suite_definitions"][suite_category]["run_filename"]
+                self.config["suite_definitions"][suite_category]["run_filename"]
             ),
         ]
 
@@ -478,7 +473,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
                 'device_ip': c['device_ip'],
                 'device_port': str(self.emulator['sut_port1']),
             })
-        for option in self.tree_config["suite_definitions"][suite_category]["options"]:
+        for option in self.config["suite_definitions"][suite_category]["options"]:
             cmd.extend([option % str_format_values])
 
         for arg in self.test_suite_definitions[self.test_suite]["extra_args"]:
@@ -487,6 +482,15 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             if any(a.split('=')[0] == argname for a in cmd):
                 continue
             cmd.append(arg)
+
+        tests = None
+        if "tests" in self.test_suite_definitions[self.test_suite]:
+            tests = self.test_suite_definitions[self.test_suite]["tests"]
+        elif "tests" in self.config["suite_definitions"][suite_category]:
+            tests = self.config["suite_definitions"][suite_category]["tests"]
+
+        if tests:
+            cmd.extend(tests)
 
         return cmd
 
@@ -645,13 +649,13 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         # Install Fennec
         install_ok = self._retry(3, 30, self._install_fennec_apk, "Install Fennec APK")
         if not install_ok:
-            self.fatal('Failed to install %s on %s' % (self.installer_path, self.emulator["name"]))
+            self.fatal('INFRA-ERROR: Failed to install %s on %s' % (self.installer_path, self.emulator["name"]))
 
         # Install Robocop if required
         if self.test_suite.startswith('robocop'):
             install_ok = self._retry(3, 30, self._install_robocop_apk, "Install Robocop APK")
             if not install_ok:
-                self.fatal('Failed to install %s on %s' % (self.robocop_path, self.emulator["name"]))
+                self.fatal('INFRA-ERROR: Failed to install %s on %s' % (self.robocop_path, self.emulator["name"]))
 
         self.info("Finished installing apps for %s" % self.emulator["name"])
 
@@ -696,6 +700,15 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         '''
         self._verify_emulator()
         self._kill_processes(self.config["emulator_process_name"])
+
+    def upload_blobber_files(self):
+        '''
+        Override BlobUploadMixin.upload_blobber_files to ensure emulator is killed
+        first (if the emulator is still running, logcat may still be running, which
+        may lock the blob upload directory, causing a hang).
+        '''
+        self._kill_processes(self.config["emulator_process_name"])
+        super(AndroidEmulatorTest, self).upload_blobber_files()
 
 if __name__ == '__main__':
     emulatorTest = AndroidEmulatorTest()

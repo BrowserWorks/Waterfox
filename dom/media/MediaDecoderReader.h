@@ -11,6 +11,7 @@
 #include "AbstractMediaDecoder.h"
 #include "MediaInfo.h"
 #include "MediaData.h"
+#include "MediaMetadataManager.h"
 #include "MediaQueue.h"
 #include "MediaTimer.h"
 #include "AudioCompactor.h"
@@ -20,7 +21,6 @@
 namespace mozilla {
 
 class MediaDecoderReader;
-class SharedDecoderManager;
 
 struct WaitForDataRejectValue
 {
@@ -68,8 +68,8 @@ public:
   };
 
   typedef MozPromise<nsRefPtr<MetadataHolder>, ReadMetadataFailureReason, /* IsExclusive = */ true> MetadataPromise;
-  typedef MozPromise<nsRefPtr<AudioData>, NotDecodedReason, /* IsExclusive = */ true> AudioDataPromise;
-  typedef MozPromise<nsRefPtr<VideoData>, NotDecodedReason, /* IsExclusive = */ true> VideoDataPromise;
+  typedef MozPromise<nsRefPtr<MediaData>, NotDecodedReason, /* IsExclusive = */ true> AudioDataPromise;
+  typedef MozPromise<nsRefPtr<MediaData>, NotDecodedReason, /* IsExclusive = */ true> VideoDataPromise;
   typedef MozPromise<int64_t, nsresult, /* IsExclusive = */ true> SeekPromise;
 
   // Note that, conceptually, WaitForData makes sense in a non-exclusive sense.
@@ -102,7 +102,6 @@ public:
   // Release media resources they should be released in dormant state
   // The reader can be made usable again by calling ReadMetadata().
   virtual void ReleaseMediaResources() {};
-  virtual void SetSharedDecoderManager(SharedDecoderManager* aManager) {}
   // Breaks reference-counted cycles. Called during shutdown.
   // WARNING: If you override this, you must call the base implementation
   // in your override.
@@ -279,7 +278,6 @@ public:
 
   // Notify the reader that data from the resource was evicted (MediaSource only)
   virtual void NotifyDataRemoved() {}
-  virtual int64_t GetEvictionOffset(double aTime) { return -1; }
 
   virtual MediaQueue<AudioData>& AudioQueue() { return mAudioQueue; }
   virtual MediaQueue<VideoData>& VideoQueue() { return mVideoQueue; }
@@ -326,6 +324,10 @@ public:
   virtual bool VideoIsHardwareAccelerated() const { return false; }
 
   virtual void DisableHardwareAcceleration() {}
+
+  TimedMetadataEventSource& TimedMetadataEvent() {
+    return mTimedMetadataEvent;
+  }
 
 protected:
   virtual ~MediaDecoderReader();
@@ -417,6 +419,9 @@ protected:
   // async.
   bool mHitAudioDecodeError;
   bool mShutdown;
+
+  // Used to send TimedMetadata to the listener.
+  TimedMetadataEventProducer mTimedMetadataEvent;
 
 private:
   // Promises used only for the base-class (sync->async adapter) implementation

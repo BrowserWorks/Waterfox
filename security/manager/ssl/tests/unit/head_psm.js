@@ -6,14 +6,14 @@
 
 const { 'classes': Cc, 'interfaces': Ci, 'utils': Cu, 'results': Cr } = Components;
 
-let { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
-let { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
-let { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
-let { Promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
-let { HttpServer } = Cu.import("resource://testing-common/httpd.js", {});
-let { ctypes } = Cu.import("resource://gre/modules/ctypes.jsm");
+var { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
+var { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
+var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+var { Promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
+var { HttpServer } = Cu.import("resource://testing-common/httpd.js", {});
+var { ctypes } = Cu.import("resource://gre/modules/ctypes.jsm");
 
-let gIsWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
+var gIsWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
 
 const isDebugBuild = Cc["@mozilla.org/xpcom/debug;1"]
                        .getService(Ci.nsIDebug2).isDebugBuild;
@@ -37,6 +37,7 @@ const PRErrorCodeSuccess = 0;
 // Sort in numerical order
 const SEC_ERROR_INVALID_TIME                            = SEC_ERROR_BASE +   8;
 const SEC_ERROR_BAD_DER                                 = SEC_ERROR_BASE +   9;
+const SEC_ERROR_BAD_SIGNATURE                           = SEC_ERROR_BASE +  10;
 const SEC_ERROR_EXPIRED_CERTIFICATE                     = SEC_ERROR_BASE +  11;
 const SEC_ERROR_REVOKED_CERTIFICATE                     = SEC_ERROR_BASE +  12; // -8180
 const SEC_ERROR_UNKNOWN_ISSUER                          = SEC_ERROR_BASE +  13;
@@ -150,6 +151,20 @@ function getXPCOMStatusFromNSS(statusNSS) {
   let nssErrorsService = Cc["@mozilla.org/nss_errors_service;1"]
                            .getService(Ci.nsINSSErrorsService);
   return nssErrorsService.getXPCOMFromNSSError(statusNSS);
+}
+
+// certdb implements nsIX509CertDB. See nsIX509CertDB.idl for documentation.
+// In particular, hostname is optional.
+function checkCertErrorGenericAtTime(certdb, cert, expectedError, usage, time,
+                                     /*optional*/ hasEVPolicy,
+                                     /*optional*/ hostname) {
+  do_print(`cert cn=${cert.commonName}`);
+  do_print(`cert issuer cn=${cert.issuerCommonName}`);
+  let verifiedChain = {};
+  let error = certdb.verifyCertAtTime(cert, usage, NO_FLAGS, hostname, time,
+                                      verifiedChain, hasEVPolicy || {});
+  Assert.equal(error, expectedError,
+               "Actual and expected error should match");
 }
 
 // certdb implements nsIX509CertDB. See nsIX509CertDB.idl for documentation.
@@ -598,7 +613,7 @@ function startOCSPResponder(serverPort, identity, invalidIdentities,
 }
 
 // A prototype for a fake, error-free sslstatus
-let FakeSSLStatus = function(certificate) {
+var FakeSSLStatus = function(certificate) {
   this.serverCert = certificate;
 };
 

@@ -38,6 +38,7 @@ class BlobConstructorParams;
 class BlobImpl;
 class BlobParent;
 class ContentParent;
+class ContentBridgeParent;
 class IPCTabContext;
 class PBlobParent;
 class PBrowserParent;
@@ -46,8 +47,6 @@ class nsIContentParent : public nsISupports
                        , public mozilla::dom::ipc::MessageManagerCallback
                        , public CPOWManagerGetter
 {
-    typedef mozilla::OwningSerializedStructuredCloneBuffer OwningSerializedStructuredCloneBuffer;
-
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_ICONTENTPARENT_IID)
 
@@ -77,6 +76,8 @@ public:
 
   virtual bool IsContentParent() { return false; }
   ContentParent* AsContentParent();
+  virtual bool IsContentBridgeParent() { return false; }
+  ContentBridgeParent* AsContentBridgeParent();
 
 protected: // methods
   bool CanOpenBrowser(const IPCTabContext& aContext);
@@ -101,12 +102,12 @@ protected: // IPDL methods
                                const ClonedMessageData& aData,
                                InfallibleTArray<jsipc::CpowEntry>&& aCpows,
                                const IPC::Principal& aPrincipal,
-                               nsTArray<OwningSerializedStructuredCloneBuffer>* aRetvals);
+                               nsTArray<ipc::StructuredCloneData>* aRetvals);
   virtual bool RecvRpcMessage(const nsString& aMsg,
                               const ClonedMessageData& aData,
                               InfallibleTArray<jsipc::CpowEntry>&& aCpows,
                               const IPC::Principal& aPrincipal,
-                              nsTArray<OwningSerializedStructuredCloneBuffer>* aRetvals);
+                              nsTArray<ipc::StructuredCloneData>* aRetvals);
   virtual bool RecvAsyncMessage(const nsString& aMsg,
                                 const ClonedMessageData& aData,
                                 InfallibleTArray<jsipc::CpowEntry>&& aCpows,

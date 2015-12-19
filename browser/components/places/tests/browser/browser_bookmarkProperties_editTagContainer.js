@@ -60,12 +60,12 @@ add_task(function* () {
       // Check the tags have been edited.
       let tags = PlacesUtils.tagging.getTagsForURI(uri);
       is(tags.length, 1, "Found the right number of tags");
-      ok(tags.indexOf("tag2") != -1, "Found the expected tag");
+      ok(tags.includes("tag2"), "Found the expected tag");
     }
   );
 
   // Check the tag change has been reverted.
   let tags = PlacesUtils.tagging.getTagsForURI(uri);
   is(tags.length, 1, "Found the right number of tags");
-  ok(tags.indexOf("tag1") != -1, "Found the expected tag");
+  ok(tags.includes("tag1"), "Found the expected tag");
 });

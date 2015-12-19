@@ -30,7 +30,7 @@ namespace dom {
  * initialized with an |InitWithSocketTransport| call if at the presenting sender
  * side; whereas it's initialized with an |InitWithChannelDescription| if at the
  * presenting receiver side. The lifetime is managed in either
- * |PresentationRequesterInfo| (sender side) or |PresentationResponderInfo|
+ * |PresentationControllingInfo| (sender side) or |PresentationPresentingInfo|
  * (receiver side) in PresentationSessionInfo.cpp.
  *
  * TODO bug 1148307 Implement PresentationSessionTransport with DataChannel.
@@ -73,9 +73,15 @@ private:
 
   void SetReadyState(ReadyState aReadyState);
 
+  bool IsReadyToNotifyData()
+  {
+    return mDataNotificationEnabled && mReadyState == OPEN;
+  }
+
   ReadyState mReadyState;
   bool mAsyncCopierActive;
   nsresult mCloseStatus;
+  bool mDataNotificationEnabled;
 
   // Raw socket streams
   nsCOMPtr<nsISocketTransport> mTransport;

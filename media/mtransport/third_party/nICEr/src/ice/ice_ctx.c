@@ -953,4 +953,3 @@ int nr_ice_ctx_hide_candidate(nr_ice_ctx *ctx, nr_ice_candidate *cand)
 
     return 0;
   }
-

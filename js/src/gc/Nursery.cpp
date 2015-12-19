@@ -7,10 +7,12 @@
 
 #include "gc/Nursery-inl.h"
 
+#include "mozilla/DebugOnly.h"
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Move.h"
 
 #include "jscompartment.h"
+#include "jsfriendapi.h"
 #include "jsgc.h"
 #include "jsutil.h"
 
@@ -34,6 +36,7 @@ using namespace js;
 using namespace gc;
 
 using mozilla::ArrayLength;
+using mozilla::DebugOnly;
 using mozilla::PodCopy;
 using mozilla::PodZero;
 
@@ -232,6 +235,7 @@ js::Nursery::allocate(size_t size)
     position_ = position() + size;
 
     JS_EXTRA_POISON(thing, JS_ALLOCATED_NURSERY_PATTERN, size);
+    MemProfiler::SampleNursery(reinterpret_cast<void*>(thing), size);
     return thing;
 }
 
@@ -302,7 +306,11 @@ void
 Nursery::setForwardingPointer(void* oldData, void* newData, bool direct)
 {
     MOZ_ASSERT(isInside(oldData));
-    MOZ_ASSERT(!isInside(newData));
+
+    // Bug 1196210: If a zero-capacity header lands in the last 2 words of the
+    // jemalloc chunk abutting the start of the nursery, the (invalid) newData
+    // pointer will appear to be "inside" the nursery.
+    MOZ_ASSERT(!isInside(newData) || uintptr_t(newData) == heapStart_);
 
     if (direct) {
         *reinterpret_cast<void**>(oldData) = newData;
@@ -377,7 +385,6 @@ js::TenuringTracer::TenuringTracer(JSRuntime* rt, Nursery* nursery)
   , head(nullptr)
   , tail(&head)
 {
-    rt->gc.incGcNumber();
 }
 
 #define TIME_START(name) int64_t timestampStart_##name = enableProfiling_ ? PRMJ_Now() : 0
@@ -672,6 +679,7 @@ js::Nursery::sweep()
 
     /* Set current start position for isEmpty checks. */
     currentStart_ = position();
+    MemProfiler::SweepNursery(runtime());
 }
 
 void

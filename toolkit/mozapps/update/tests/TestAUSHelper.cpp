@@ -11,10 +11,16 @@
 # include <io.h>
   typedef WCHAR NS_tchar;
 # define NS_main wmain
-# define F_OK 00
-# define W_OK 02
-# define R_OK 04
-# if _MSC_VER < 1900
+# ifndef F_OK
+#   define F_OK 00
+# endif
+# ifndef W_OK
+#   define W_OK 02
+# endif
+# ifndef R_OK
+#   define R_OK 04
+# endif
+# if defined(_MSC_VER) && _MSC_VER < 1900
 #  define stat _stat
 # endif
 # define NS_T(str) L ## str
@@ -239,7 +245,9 @@ int NS_main(int argc, NS_tchar **argv)
       NS_tfputs(NS_T("test"), file);
       fclose(file);
     }
-    symlink(path, argv[5]);
+    if (symlink(path, argv[5]) != 0) {
+      return 1;
+    }
     NS_tsnprintf(path, sizeof(path)/sizeof(path[0]),
                  NS_T("%s/%s"), NS_T("/tmp"), argv[2]);
     if (argc > 6 && !NS_tstrcmp(argv[6], NS_T("change-perm"))) {

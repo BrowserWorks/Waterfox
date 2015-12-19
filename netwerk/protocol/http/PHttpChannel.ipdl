@@ -8,6 +8,7 @@
 include protocol PNecko;
 include InputStreamParams;
 include URIParams;
+include PBackgroundSharedTypes;
 
 include protocol PBlob; //FIXME: bug #792908
 
@@ -46,7 +47,7 @@ parent:
 
   // Reports approval/veto of redirect by child process redirect observers
   Redirect2Verify(nsresult result, RequestHeaderTuples changedHeaders,
-                  OptionalURIParams apiRedirectTo);
+                  uint32_t loadFlags, OptionalURIParams apiRedirectTo);
 
   // For document loads we keep this protocol open after child's
   // OnStopRequest, and send this msg (instead of __delete__) to allow
@@ -78,6 +79,11 @@ parent:
 
   // Child has no more events/messages to divert to the parent.
   DivertComplete();
+
+  // Child has detected a CORS check failure, so needs to tell the parent
+  // to remove any matching entry from the CORS preflight cache.
+  RemoveCorsPreflightCacheEntry(URIParams uri,
+                                PrincipalInfo requestingPrincipal);
 
   __delete__();
 
@@ -121,7 +127,8 @@ child:
   Redirect1Begin(uint32_t           newChannelId,
                  URIParams          newUri,
                  uint32_t           redirectFlags,
-                 nsHttpResponseHead responseHead);
+                 nsHttpResponseHead responseHead,
+                 nsCString          securityInfoSerialization);
 
   // Called if redirect successful so that child can complete setup.
   Redirect3Complete();

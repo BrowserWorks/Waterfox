@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import collections
 import json
 import math
 import os
@@ -279,8 +280,33 @@ def from_Histograms_json(filename):
 def from_UseCounters_conf(filename):
     return usecounters.generate_histograms(filename)
 
+def from_nsDeprecatedOperationList(filename):
+    operation_regex = re.compile('^DEPRECATED_OPERATION\\(([^)]+)\\)')
+    histograms = collections.OrderedDict()
+
+    with open(filename, 'r') as f:
+        for line in f:
+            match = operation_regex.search(line)
+            if not match:
+                continue
+
+            op = match.group(1)
+
+            def add_counter(context):
+                name = 'USE_COUNTER2_DEPRECATED_%s_%s' % (op, context.upper())
+                histograms[name] = {
+                    'expires_in_version': 'never',
+                    'kind': 'boolean',
+                    'description': 'Whether a %s used %s' % (context, op)
+                }
+            add_counter('document')
+            add_counter('page')
+
+    return histograms
+
 FILENAME_PARSERS = {
     'Histograms.json': from_Histograms_json,
+    'nsDeprecatedOperationList.h': from_nsDeprecatedOperationList,
 }
 
 # Similarly to the dance above with buildconfig, usecounters may not be
@@ -313,9 +339,9 @@ the histograms defined in filenames.
                 raise DefinitionException, "duplicate histogram name %s" % name
             all_histograms[name] = definition
 
-    # We require that all USE_COUNTER_* histograms be defined in a contiguous
+    # We require that all USE_COUNTER2_* histograms be defined in a contiguous
     # block.
-    use_counter_indices = filter(lambda x: x[1].startswith("USE_COUNTER_"),
+    use_counter_indices = filter(lambda x: x[1].startswith("USE_COUNTER2_"),
                                  enumerate(all_histograms.iterkeys()));
     if use_counter_indices:
         lower_bound = use_counter_indices[0][0]

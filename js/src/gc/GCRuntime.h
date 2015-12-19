@@ -9,6 +9,7 @@
 
 #include "mozilla/Atomics.h"
 
+#include "jsfriendapi.h"
 #include "jsgc.h"
 
 #include "gc/Heap.h"
@@ -720,19 +721,19 @@ class GCRuntime
 
     void setAlwaysPreserveCode() { alwaysPreserveCode = true; }
 
-    bool isIncrementalGCAllowed() { return incrementalAllowed; }
+    bool isIncrementalGCAllowed() const { return incrementalAllowed; }
     void disallowIncrementalGC() { incrementalAllowed = false; }
 
-    bool isIncrementalGCEnabled() { return mode == JSGC_MODE_INCREMENTAL && incrementalAllowed; }
-    bool isIncrementalGCInProgress() { return state() != gc::NO_INCREMENTAL; }
+    bool isIncrementalGCEnabled() const { return mode == JSGC_MODE_INCREMENTAL && incrementalAllowed; }
+    bool isIncrementalGCInProgress() const { return state() != gc::NO_INCREMENTAL; }
 
-    bool isGenerationalGCEnabled() { return generationalDisabled == 0; }
+    bool isGenerationalGCEnabled() const { return generationalDisabled == 0; }
     void disableGenerationalGC();
     void enableGenerationalGC();
 
     void disableCompactingGC();
     void enableCompactingGC();
-    bool isCompactingGCEnabled();
+    bool isCompactingGCEnabled() const;
 
     void setGrayRootsTracer(JSTraceDataOp traceOp, void* data);
     bool addBlackRootsTracer(JSTraceDataOp traceOp, void* data);
@@ -767,15 +768,14 @@ class GCRuntime
     void setFoundBlackGrayEdges() { foundBlackGrayEdges = true; }
 
     uint64_t gcNumber() const { return number; }
-    void incGcNumber() { ++number; }
 
     uint64_t minorGCCount() const { return minorGCNumber; }
-    void incMinorGcNumber() { ++minorGCNumber; }
+    void incMinorGcNumber() { ++minorGCNumber; ++number; }
 
     uint64_t majorGCCount() const { return majorGCNumber; }
-    void incMajorGcNumber() { ++majorGCNumber; }
+    void incMajorGcNumber() { ++majorGCNumber; ++number; }
 
-    int64_t defaultSliceBudget() const { return sliceBudget; }
+    int64_t defaultSliceBudget() const { return defaultTimeBudget_; }
 
     bool isIncrementalGc() const { return isIncremental; }
     bool isFullGc() const { return isFull; }
@@ -887,12 +887,22 @@ class GCRuntime
 
     void requestMajorGC(JS::gcreason::Reason reason);
     SliceBudget defaultBudget(JS::gcreason::Reason reason, int64_t millis);
-    void collect(bool incremental, SliceBudget budget, JS::gcreason::Reason reason);
-    bool gcCycle(bool incremental, SliceBudget& budget, JS::gcreason::Reason reason);
-    gcstats::ZoneGCStats scanZonesBeforeGC();
     void budgetIncrementalGC(SliceBudget& budget);
     void resetIncrementalGC(const char* reason);
+
+    // Assert if the system state is such that we should never
+    // receive a request to do GC work.
+    void checkCanCallAPI();
+
+    // Check if the system state is such that GC has been supressed
+    // or otherwise delayed.
+    bool checkIfGCAllowedInCurrentState(JS::gcreason::Reason reason);
+
+    gcstats::ZoneGCStats scanZonesBeforeGC();
+    void collect(bool nonincrementalByAPI, SliceBudget budget, JS::gcreason::Reason reason);
+    bool gcCycle(bool nonincrementalByAPI, SliceBudget& budget, JS::gcreason::Reason reason);
     void incrementalCollectSlice(SliceBudget& budget, JS::gcreason::Reason reason);
+
     void pushZealSelectedObjects();
     void purgeRuntime();
     bool beginMarkPhase(JS::gcreason::Reason reason);
@@ -975,6 +985,8 @@ class GCRuntime
     /* GC scheduling state and parameters. */
     GCSchedulingTunables tunables;
     GCSchedulingState schedulingState;
+
+    MemProfiler mMemProfiler;
 
   private:
     // When empty, chunks reside in the emptyChunks pool and are re-used as
@@ -1162,7 +1174,7 @@ class GCRuntime
     bool interFrameGC;
 
     /* Default budget for incremental GC slice. See js/SliceBudget.h. */
-    int64_t sliceBudget;
+    int64_t defaultTimeBudget_;
 
     /*
      * We disable incremental GC if we encounter a js::Class with a trace hook
@@ -1304,7 +1316,7 @@ class GCRuntime
 };
 
 /* Prevent compartments and zones from being collected during iteration. */
-class AutoEnterIteration {
+class MOZ_RAII AutoEnterIteration {
     GCRuntime* gc;
 
   public:

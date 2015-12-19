@@ -84,6 +84,8 @@ public:
     mReentrantMonitor.NotifyAll();
   }
 
+  virtual void SetBitrate(const uint32_t aBitrate) {}
+
 protected:
   /**
    * Notifies track encoder that we have reached the end of source stream, and
@@ -141,12 +143,35 @@ public:
     : TrackEncoder()
     , mChannels(0)
     , mSamplingRate(0)
+    , mAudioBitrate(0)
   {}
 
   virtual void NotifyQueuedTrackChanges(MediaStreamGraph* aGraph, TrackID aID,
                                         StreamTime aTrackOffset,
                                         uint32_t aTrackEvents,
                                         const MediaSegment& aQueuedMedia) override;
+
+  template<typename T>
+  static
+  void InterleaveTrackData(nsTArray<const T*>& aInput,
+                           int32_t aDuration,
+                           uint32_t aOutputChannels,
+                           AudioDataValue* aOutput,
+                           float aVolume)
+  {
+    if (aInput.Length() < aOutputChannels) {
+      // Up-mix. This might make the mChannelData have more than aChannels.
+      AudioChannelsUpMix(&aInput, aOutputChannels, SilentChannel::ZeroChannel<T>());
+    }
+
+    if (aInput.Length() > aOutputChannels) {
+      DownmixAndInterleave(aInput, aDuration,
+                           aVolume, aOutputChannels, aOutput);
+    } else {
+      InterleaveAndConvertBuffer(aInput.Elements(), aDuration, aVolume,
+                                 aOutputChannels, aOutput);
+    }
+  }
 
   /**
    * Interleaves the track data and stores the result into aOutput. Might need
@@ -169,6 +194,10 @@ public:
   */
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
+  virtual void SetBitrate(const uint32_t aBitrate) override
+  {
+    mAudioBitrate = aBitrate;
+  }
 protected:
   /**
    * Number of samples per channel in a pcm buffer. This is also the value of
@@ -217,6 +246,8 @@ protected:
    * A segment queue of audio track data, protected by mReentrantMonitor.
    */
   AudioSegment mRawSegment;
+
+  uint32_t mAudioBitrate;
 };
 
 class VideoTrackEncoder : public TrackEncoder
@@ -230,6 +261,7 @@ public:
     , mDisplayHeight(0)
     , mTrackRate(0)
     , mTotalFrameDuration(0)
+    , mVideoBitrate(0)
   {}
 
   /**
@@ -245,6 +277,10 @@ public:
   */
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
+  virtual void SetBitrate(const uint32_t aBitrate) override
+  {
+    mVideoBitrate = aBitrate;
+  }
 protected:
   /**
    * Initialized the video encoder. In order to collect the value of width and
@@ -310,6 +346,8 @@ protected:
    * A segment queue of audio track data, protected by mReentrantMonitor.
    */
   VideoSegment mRawSegment;
+
+  uint32_t mVideoBitrate;
 };
 
 } // namespace mozilla

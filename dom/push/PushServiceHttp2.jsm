@@ -19,6 +19,13 @@ Cu.import("resource://gre/modules/Timer.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 
+const {
+  PushCrypto,
+  concatArray,
+  getEncryptionKeyParams,
+  getEncryptionParams,
+} = Cu.import("resource://gre/modules/PushCrypto.jsm");
+
 this.EXPORTED_SYMBOLS = ["PushServiceHttp2"];
 
 const prefs = new Preferences("dom.push.");
@@ -34,7 +41,7 @@ function debug(s) {
 }
 
 const kPUSHHTTP2DB_DB_NAME = "pushHttp2";
-const kPUSHHTTP2DB_DB_VERSION = 4; // Change this if the IndexedDB format changes
+const kPUSHHTTP2DB_DB_VERSION = 5; // Change this if the IndexedDB format changes
 const kPUSHHTTP2DB_STORE_NAME = "pushHttp2";
 
 /**
@@ -114,12 +121,11 @@ PushSubscriptionListener.prototype = {
 var PushChannelListener = function(pushSubscriptionListener) {
   debug("Creating a new push channel listener.");
   this._mainListener = pushSubscriptionListener;
+  this._message = [];
+  this._ackUri = null;
 };
 
 PushChannelListener.prototype = {
-
-  _message: null,
-  _ackUri: null,
 
   onStartRequest: function(aRequest, aContext) {
     this._ackUri = aRequest.URI.spec;
@@ -132,15 +138,13 @@ PushChannelListener.prototype = {
       return;
     }
 
-    let inputStream = Cc["@mozilla.org/scriptableinputstream;1"]
-                        .createInstance(Ci.nsIScriptableInputStream);
+    let inputStream = Cc["@mozilla.org/binaryinputstream;1"]
+                        .createInstance(Ci.nsIBinaryInputStream);
 
-    inputStream.init(aStream);
-    if (!this._message) {
-      this._message = inputStream.read(aCount);
-    } else {
-      this._message.concat(inputStream.read(aCount));
-    }
+    inputStream.setInputStream(aStream);
+    let chunk = new ArrayBuffer(aCount);
+    inputStream.readArrayBuffer(aCount, chunk);
+    this._message.push(chunk);
   },
 
   onStopRequest: function(aRequest, aContext, aStatusCode) {
@@ -148,12 +152,53 @@ PushChannelListener.prototype = {
     if (Components.isSuccessCode(aStatusCode) &&
         this._mainListener &&
         this._mainListener._pushService) {
+
+      var keymap = encryptKeyFieldParser(aRequest);
+      if (!keymap) {
+        return;
+      }
+      var enc = encryptFieldParser(aRequest);
+      if (!enc || !enc.keyid) {
+        return;
+      }
+      var dh = keymap[enc.keyid];
+      var salt = enc.salt;
+      var rs = (enc.rs)? parseInt(enc.rs, 10) : 4096;
+      if (!dh || !salt || isNaN(rs) || (rs <= 1)) {
+        return;
+      }
+
+      var msg = concatArray(this._message);
+
       this._mainListener._pushService._pushChannelOnStop(this._mainListener.uri,
                                                          this._ackUri,
-                                                         this._message);
+                                                         msg,
+                                                         dh,
+                                                         salt,
+                                                         rs);
     }
   }
 };
+
+function encryptKeyFieldParser(aRequest) {
+  try {
+    var encryptKeyField = aRequest.getRequestHeader("Encryption-Key");
+    return getEncryptionKeyParams(encryptKeyField);
+  } catch(e) {
+    // getRequestHeader can throw.
+    return null;
+  }
+}
+
+function encryptFieldParser(aRequest) {
+  try {
+    var encryptField = aRequest.getRequestHeader("Encryption");
+    return getEncryptionParams(encryptField);
+  } catch(e) {
+    // getRequestHeader can throw.
+    return null;
+  }
+}
 
 var PushServiceDelete = function(resolve, reject) {
   this._resolve = resolve;
@@ -188,12 +233,16 @@ PushServiceDelete.prototype = {
   }
 };
 
-var SubscriptionListener = function(aSubInfo, aServerURI, aPushServiceHttp2) {
+var SubscriptionListener = function(aSubInfo, aResolve, aReject,
+                                    aServerURI, aPushServiceHttp2) {
   debug("Creating a new subscription listener.");
   this._subInfo = aSubInfo;
+  this._resolve = aResolve;
+  this._reject = aReject;
   this._data = '';
   this._serverURI = aServerURI;
   this._service = aPushServiceHttp2;
+  this._ctime = Date.now();
 };
 
 SubscriptionListener.prototype = {
@@ -221,12 +270,12 @@ SubscriptionListener.prototype = {
 
     // Check if pushService is still active.
     if (!this._service.hasmainPushService()) {
-      this._subInfo.reject({error: "Service deactivated"});
+      this._reject({error: "Service deactivated"});
       return;
     }
 
     if (!Components.isSuccessCode(aStatus)) {
-      this._subInfo.reject({error: "Error status" + aStatus});
+      this._reject({error: "Error status" + aStatus});
       return;
     }
 
@@ -236,15 +285,18 @@ SubscriptionListener.prototype = {
       if (this._subInfo.retries < prefs.get("http2.maxRetries")) {
         this._subInfo.retries++;
         var retryAfter = retryAfterParser(aRequest);
-        setTimeout(this._service.retrySubscription.bind(this._service,
-                                                        this._subInfo),
-                   retryAfter);
+        setTimeout(_ => this._reject(
+          {
+            retry: true,
+            subInfo: this._subInfo
+          }),
+          retryAfter);
       } else {
-        this._subInfo.reject({error: "Error response code: " + statusCode });
+        this._reject({error: "Error response code: " + statusCode });
       }
       return;
     } else if (statusCode != 201) {
-      this._subInfo.reject({error: "Error response code: " + statusCode });
+      this._reject({error: "Error response code: " + statusCode });
       return;
     }
 
@@ -252,7 +304,7 @@ SubscriptionListener.prototype = {
     try {
       subscriptionUri = aRequest.getResponseHeader("location");
     } catch (err) {
-      this._subInfo.reject({error: "Return code 201, but the answer is bogus"});
+      this._reject({error: "Return code 201, but the answer is bogus"});
       return;
     }
 
@@ -262,27 +314,27 @@ SubscriptionListener.prototype = {
     try {
       linkList = aRequest.getResponseHeader("link");
     } catch (err) {
-      this._subInfo.reject({error: "Return code 201, but the answer is bogus"});
+      this._reject({error: "Return code 201, but the answer is bogus"});
       return;
     }
 
     var linkParserResult = linkParser(linkList, this._serverURI);
     if (linkParserResult.error) {
-      this._subInfo.reject(linkParserResult);
+      this._reject(linkParserResult);
       return;
     }
 
     if (!subscriptionUri) {
-      this._subInfo.reject({error: "Return code 201, but the answer is bogus," +
-                                   " missing subscriptionUri"});
+      this._reject({error: "Return code 201, but the answer is bogus," +
+                           " missing subscriptionUri"});
       return;
     }
     try {
       let uriTry = Services.io.newURI(subscriptionUri, null, null);
     } catch (e) {
       debug("Invalid URI " + subscriptionUri);
-      this._subInfo.reject({error: "Return code 201, but URI is bogus. " +
-                                   subscriptionUri});
+      this._reject({error: "Return code 201, but URI is bogus. " +
+                    subscriptionUri});
       return;
     }
 
@@ -293,9 +345,11 @@ SubscriptionListener.prototype = {
       scope: this._subInfo.record.scope,
       originAttributes: this._subInfo.record.originAttributes,
       quota: this._subInfo.record.maxQuota,
+      ctime: Date.now(),
     });
 
-    this._subInfo.resolve(reply);
+    Services.telemetry.getHistogramById("PUSH_API_SUBSCRIBE_HTTP2_TIME").add(Date.now() - this._ctime);
+    this._resolve(reply);
   },
 };
 
@@ -456,41 +510,53 @@ this.PushServiceHttp2 = {
   _subscribeResource: function(aRecord) {
     debug("subscribeResource()");
 
-    return new Promise((resolve, reject) => {
-      this._subscribeResourceInternal({record: aRecord,
-                                       resolve,
-                                       reject,
-                                       retries: 0});
+    return this._subscribeResourceInternal({
+      record: aRecord,
+      retries: 0
     })
-    .then(result => {
-      this._conns[result.subscriptionUri] = {channel: null,
-                                             listener: null,
-                                             countUnableToConnect: 0,
-                                             lastStartListening: 0,
-                                             waitingForAlarm: false};
-      this._listenForMsgs(result.subscriptionUri);
-      return result;
-    });
+    .then(result =>
+      PushCrypto.generateKeys()
+      .then(exportedKeys => {
+        result.p256dhPublicKey = exportedKeys[0];
+        result.p256dhPrivateKey = exportedKeys[1];
+        this._conns[result.subscriptionUri] = {
+          channel: null,
+          listener: null,
+          countUnableToConnect: 0,
+          lastStartListening: 0,
+          waitingForAlarm: false
+        };
+        this._listenForMsgs(result.subscriptionUri);
+        return result;
+      })
+    );
   },
 
   _subscribeResourceInternal: function(aSubInfo) {
-    debug("subscribeResource()");
+    debug("subscribeResourceInternal()");
 
-    var listener = new SubscriptionListener(aSubInfo,
-                                            this._serverURI,
-                                            this);
+    return new Promise((resolve, reject) => {
+      var listener = new SubscriptionListener(aSubInfo,
+                                              resolve,
+                                              reject,
+                                              this._serverURI,
+                                              this);
 
-    var chan = this._makeChannel(this._serverURI.spec);
-    chan.requestMethod = "POST";
-    try{
-      chan.asyncOpen(listener, null);
-    } catch(e) {
-      aSubInfo.reject({status: 0, error: "NetworkError"});
-    }
-  },
-
-  retrySubscription: function(aSubInfo) {
-    this._subscribeResourceInternal(aSubInfo);
+      var chan = this._makeChannel(this._serverURI.spec);
+      chan.requestMethod = "POST";
+      try {
+        chan.asyncOpen(listener, null);
+      } catch(e) {
+        reject({status: 0, error: "NetworkError"});
+      }
+    })
+    .catch(err => {
+      if ("retry" in err) {
+        return this._subscribeResourceInternal(err.subInfo);
+      } else {
+        throw err;
+      }
+    })
   },
 
   _deleteResource: function(aUri) {
@@ -640,16 +706,25 @@ this.PushServiceHttp2 = {
 
     for (let i = 0; i < aSubscriptions.length; i++) {
       let record = aSubscriptions[i];
-      if (typeof this._conns[record.subscriptionUri] != "object") {
-        this._conns[record.subscriptionUri] = {channel: null,
-                                               listener: null,
-                                               countUnableToConnect: 0,
-                                               waitingForAlarm: false};
-      }
-      if (!this._conns[record.subscriptionUri].conn) {
-        this._conns[record.subscriptionUri].waitingForAlarm = false;
-        this._listenForMsgs(record.subscriptionUri);
-      }
+      this._mainPushService.ensureP256dhKey(record).then(record => {
+        this._startSingleConnection(record);
+      }, error => {
+        debug("startConnections: Error updating record " + record.keyID);
+      });
+    }
+  },
+
+  _startSingleConnection: function(record) {
+    debug("_startSingleConnection()");
+    if (typeof this._conns[record.subscriptionUri] != "object") {
+      this._conns[record.subscriptionUri] = {channel: null,
+                                             listener: null,
+                                             countUnableToConnect: 0,
+                                             waitingForAlarm: false};
+    }
+    if (!this._conns[record.subscriptionUri].conn) {
+      this._conns[record.subscriptionUri].waitingForAlarm = false;
+      this._listenForMsgs(record.subscriptionUri);
     }
   },
 
@@ -756,19 +831,27 @@ this.PushServiceHttp2 = {
     }
   },
 
-  _pushChannelOnStop: function(aUri, aAckUri, aMessage) {
+  _pushChannelOnStop: function(aUri, aAckUri, aMessage, dh, salt, rs) {
     debug("pushChannelOnStop() ");
 
-    this._mainPushService.receivedPushMessage(aUri, aMessage, record => {
-      // Always update the stored record.
-      return record;
+    let cryptoParams = {
+      dh: dh,
+      salt: salt,
+      rs: rs,
+    };
+    this._mainPushService.receivedPushMessage(
+      aUri, aMessage, cryptoParams, record => {
+        // Always update the stored record.
+        return record;
+      }
+    )
+    .then(_ => this._ackMsgRecv(aAckUri))
+    .catch(err => {
+      debug("Error receiving message: " + err);
     });
-    this._ackMsgRecv(aAckUri);
   },
 
   onAlarmFired: function() {
-    // Conditions are arranged in decreasing specificity.
-    // i.e. when _waitingForPong is true, other conditions are also true.
     this._startConnectionsWaitingForAlarm();
   },
 };

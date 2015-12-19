@@ -12,9 +12,9 @@
 #ifndef mozilla_image_Downscaler_h
 #define mozilla_image_Downscaler_h
 
+#include "mozilla/Maybe.h"
 #include "mozilla/UniquePtr.h"
 #include "nsRect.h"
-
 
 namespace skia {
   class ConvolutionFilter1D;
@@ -64,19 +64,35 @@ public:
    * Begins a new frame and reinitializes the Downscaler.
    *
    * @param aOriginalSize The original size of this frame, before scaling.
+   * @param aFrameRect The region of  the original image which has data.
+   *                   Every pixel outside @aFrameRect is considered blank and
+   *                   has zero alpha.
    * @param aOutputBuffer The buffer to which the Downscaler should write its
    *                      output; this is the same buffer where the Decoder
    *                      would write its output when not downscaling during
    *                      decode.
    * @param aHasAlpha Whether or not this frame has an alpha channel.
    *                  Performance is a little better if it doesn't have one.
+   * @param aFlipVertically If true, output rows will be written to the output
+   *                        buffer in reverse order vertically, which matches
+   *                        the way they are stored in some image formats.
    */
   nsresult BeginFrame(const nsIntSize& aOriginalSize,
+                      const Maybe<nsIntRect>& aFrameRect,
                       uint8_t* aOutputBuffer,
-                      bool aHasAlpha);
+                      bool aHasAlpha,
+                      bool aFlipVertically = false);
+
+  bool IsFrameComplete() const { return mCurrentInLine >= mOriginalSize.height; }
 
   /// Retrieves the buffer into which the Decoder should write each row.
-  uint8_t* RowBuffer() { return mRowBuffer.get(); }
+  uint8_t* RowBuffer()
+  {
+    return mRowBuffer.get() + mFrameRect.x * sizeof(uint32_t);
+  }
+
+  /// Clears the current row buffer (optionally starting at @aStartingAtCol).
+  void ClearRow(uint32_t aStartingAtCol = 0);
 
   /// Signals that the decoder has finished writing a row into the row buffer.
   void CommitRow();
@@ -97,9 +113,11 @@ public:
 private:
   void DownscaleInputLine();
   void ReleaseWindow();
+  void SkipToRow(int32_t aRow);
 
   nsIntSize mOriginalSize;
   nsIntSize mTargetSize;
+  nsIntRect mFrameRect;
   gfxSize mScale;
 
   uint8_t* mOutputBuffer;
@@ -117,7 +135,8 @@ private:
   int32_t mCurrentOutLine;
   int32_t mCurrentInLine;
 
-  bool mHasAlpha;
+  bool mHasAlpha : 1;
+  bool mFlipVertically : 1;
 };
 
 #else
@@ -139,12 +158,14 @@ public:
   const nsIntSize& TargetSize() const { return nsIntSize(); }
   const gfxSize& Scale() const { return gfxSize(1.0, 1.0); }
 
-  nsresult BeginFrame(const nsIntSize&, uint8_t*, bool)
+  nsresult BeginFrame(const nsIntSize&, const Maybe<nsIntRect>&, uint8_t*, bool, bool = false)
   {
     return NS_ERROR_FAILURE;
   }
 
+  bool IsFrameComplete() const { return false; }
   uint8_t* RowBuffer() { return nullptr; }
+  void ClearRow(uint32_t = 0) { }
   void CommitRow() { }
   bool HasInvalidation() const { return false; }
   DownscalerInvalidRect TakeInvalidRect() { return DownscalerInvalidRect(); }

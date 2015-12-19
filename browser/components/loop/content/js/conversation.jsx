@@ -12,7 +12,7 @@ loop.conversation = (function(mozL10n) {
   var CallControllerView = loop.conversationViews.CallControllerView;
   var DesktopRoomConversationView = loop.roomViews.DesktopRoomConversationView;
   var FeedbackView = loop.feedbackViews.FeedbackView;
-  var GenericFailureView = loop.conversationViews.GenericFailureView;
+  var DirectCallFailureView = loop.conversationViews.DirectCallFailureView;
 
   /**
    * Master controller view for handling if incoming or outgoing calls are
@@ -72,19 +72,25 @@ loop.conversation = (function(mozL10n) {
         case "incoming":
         case "outgoing": {
           return (<CallControllerView
+            chatWindowDetached={this.state.chatWindowDetached}
             dispatcher={this.props.dispatcher}
             mozLoop={this.props.mozLoop}
             onCallTerminated={this.handleCallTerminated} />);
         }
         case "room": {
           return (<DesktopRoomConversationView
+            chatWindowDetached={this.state.chatWindowDetached}
             dispatcher={this.props.dispatcher}
             mozLoop={this.props.mozLoop}
             onCallTerminated={this.handleCallTerminated}
             roomStore={this.props.roomStore} />);
         }
         case "failed": {
-          return <GenericFailureView cancelCall={this.closeWindow} />;
+          return (<DirectCallFailureView
+            contact={{}}
+            dispatcher={this.props.dispatcher}
+            mozLoop={this.props.mozLoop}
+            outgoing={false} />);
         }
         default: {
           // If we don't have a windowType, we don't know what we are yet,
@@ -134,10 +140,6 @@ loop.conversation = (function(mozL10n) {
     loop.conversation._sdkDriver = sdkDriver;
 
     // Create the stores.
-    var conversationAppStore = new loop.store.ConversationAppStore({
-      dispatcher: dispatcher,
-      mozLoop: navigator.mozLoop
-    });
     var conversationStore = new loop.store.ConversationStore(dispatcher, {
       client: client,
       isDesktop: true,
@@ -148,6 +150,11 @@ loop.conversation = (function(mozL10n) {
       isDesktop: true,
       mozLoop: navigator.mozLoop,
       sdkDriver: sdkDriver
+    });
+    var conversationAppStore = new loop.store.ConversationAppStore({
+      activeRoomStore: activeRoomStore,
+      dispatcher: dispatcher,
+      mozLoop: navigator.mozLoop
     });
     var roomStore = new loop.store.RoomStore(dispatcher, {
       mozLoop: navigator.mozLoop,
@@ -171,10 +178,6 @@ loop.conversation = (function(mozL10n) {
     if (hash) {
       windowId = hash[1];
     }
-
-    window.addEventListener("unload", function(event) {
-      dispatcher.dispatch(new sharedActions.WindowUnload());
-    });
 
     React.render(
       <AppControllerView

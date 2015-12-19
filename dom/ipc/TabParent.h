@@ -67,7 +67,10 @@ class ClonedMessageData;
 class nsIContentParent;
 class Element;
 class DataTransfer;
-struct StructuredCloneData;
+
+namespace ipc {
+class StructuredCloneData;
+} // ipc namespace
 
 class TabParent final : public PBrowserParent
                       , public nsIDOMEventListener
@@ -80,7 +83,6 @@ class TabParent final : public PBrowserParent
                       , public nsIWebBrowserPersistable
 {
     typedef mozilla::dom::ClonedMessageData ClonedMessageData;
-    typedef mozilla::OwningSerializedStructuredCloneBuffer OwningSerializedStructuredCloneBuffer;
 
     virtual ~TabParent();
 
@@ -122,6 +124,8 @@ public:
     nsIXULBrowserWindow* GetXULBrowserWindow();
 
     void Destroy();
+    void Detach();
+    void Attach(nsFrameLoader* aFrameLoader);
 
     void RemoveWindowListeners();
     void AddWindowListeners();
@@ -142,10 +146,10 @@ public:
                                   const bool& aCalledFromJS,
                                   const bool& aPositionSpecified,
                                   const bool& aSizeSpecified,
-                                  const nsString& aURI,
+                                  const nsCString& aURI,
                                   const nsString& aName,
                                   const nsCString& aFeatures,
-                                  const nsString& aBaseURI,
+                                  const nsCString& aBaseURI,
                                   nsresult* aResult,
                                   bool* aWindowIsNew,
                                   InfallibleTArray<FrameScriptInfo>* aFrameScripts,
@@ -154,12 +158,12 @@ public:
                                  const ClonedMessageData& aData,
                                  InfallibleTArray<CpowEntry>&& aCpows,
                                  const IPC::Principal& aPrincipal,
-                                 nsTArray<OwningSerializedStructuredCloneBuffer>* aRetVal) override;
+                                 nsTArray<ipc::StructuredCloneData>* aRetVal) override;
     virtual bool RecvRpcMessage(const nsString& aMessage,
                                 const ClonedMessageData& aData,
                                 InfallibleTArray<CpowEntry>&& aCpows,
                                 const IPC::Principal& aPrincipal,
-                                nsTArray<OwningSerializedStructuredCloneBuffer>* aRetVal) override;
+                                nsTArray<ipc::StructuredCloneData>* aRetVal) override;
     virtual bool RecvAsyncMessage(const nsString& aMessage,
                                   const ClonedMessageData& aData,
                                   InfallibleTArray<CpowEntry>&& aCpows,
@@ -179,7 +183,7 @@ public:
                                                bool* aConsumedByIME) override;
     virtual bool RecvNotifyIMEPositionChange(const ContentCache& aContentCache,
                                              const widget::IMENotification& aEventMessage) override;
-    virtual bool RecvOnEventNeedingAckHandled(const uint32_t& aMessage) override;
+    virtual bool RecvOnEventNeedingAckHandled(const EventMessage& aMessage) override;
     virtual bool RecvEndIMEComposition(const bool& aCancel,
                                        bool* aNoCompositionEvent,
                                        nsString* aComposition) override;
@@ -229,6 +233,8 @@ public:
     virtual bool RecvUpdateZoomConstraints(const uint32_t& aPresShellId,
                                            const ViewID& aViewId,
                                            const MaybeZoomConstraints& aConstraints) override;
+    virtual bool RecvRespondStartSwipeEvent(const uint64_t& aInputBlockId,
+                                            const bool& aStartSwipe) override;
     virtual bool RecvContentReceivedInputBlock(const ScrollableLayerGuid& aGuid,
                                                const uint64_t& aInputBlockId,
                                                const bool& aPreventDefault) override;
@@ -261,6 +267,9 @@ public:
     void UpdateFrame(const layers::FrameMetrics& aFrameMetrics);
     void UIResolutionChanged();
     void ThemeChanged();
+    void HandleAccessKey(nsTArray<uint32_t>& aCharCodes,
+                         const bool& aIsTrusted,
+                         const int32_t& aModifierMask);
     void RequestFlingSnap(const FrameMetrics::ViewID& aScrollId,
                           const mozilla::CSSPoint& aDestination);
     void AcknowledgeScrollUpdate(const ViewID& aScrollId, const uint32_t& aScrollGeneration);
@@ -435,16 +444,16 @@ public:
                                int32_t& aDragAreaX, int32_t& aDragAreaY);
     layout::RenderFrameParent* GetRenderFrame();
 
-    virtual PWebBrowserPersistDocumentParent* AllocPWebBrowserPersistDocumentParent() override;
+    virtual PWebBrowserPersistDocumentParent* AllocPWebBrowserPersistDocumentParent(const uint64_t& aOuterWindowID) override;
     virtual bool DeallocPWebBrowserPersistDocumentParent(PWebBrowserPersistDocumentParent* aActor) override;
 
 protected:
     bool ReceiveMessage(const nsString& aMessage,
                         bool aSync,
-                        const StructuredCloneData* aCloneData,
+                        ipc::StructuredCloneData* aData,
                         mozilla::jsipc::CpowHolder* aCpows,
                         nsIPrincipal* aPrincipal,
-                        nsTArray<OwningSerializedStructuredCloneBuffer>* aJSONRetVal = nullptr);
+                        nsTArray<ipc::StructuredCloneData>* aJSONRetVal = nullptr);
 
     virtual bool RecvAsyncAuthPrompt(const nsCString& aUri,
                                      const nsString& aRealm,
@@ -482,13 +491,14 @@ protected:
 
     nsIntRect mRect;
     ScreenIntSize mDimensions;
-    ScreenOrientation mOrientation;
+    ScreenOrientationInternal mOrientation;
     float mDPI;
     CSSToLayoutDeviceScale mDefaultScale;
     bool mUpdatedDimensions;
     LayoutDeviceIntPoint mChromeOffset;
 
 private:
+    void DestroyInternal();
     already_AddRefed<nsFrameLoader> GetFrameLoader(bool aUseCachedFrameLoaderAfterDestroy = false) const;
     nsRefPtr<nsIContentParent> mManager;
     void TryCacheDPIAndScale();
@@ -498,6 +508,9 @@ private:
     CSSPoint AdjustTapToChildWidget(const CSSPoint& aPoint);
 
     bool AsyncPanZoomEnabled() const;
+
+    // Cached value indicating the docshell active state of the remote browser.
+    bool mDocShellIsActive;
 
     // Update state prior to routing an APZ-aware event to the child process.
     // |aOutTargetGuid| will contain the identifier
@@ -513,6 +526,8 @@ private:
     bool mMarkedDestroying;
     // When true, the TabParent is invalid and we should not send IPC messages anymore.
     bool mIsDestroyed;
+    // When true, the TabParent is detached from the frame loader.
+    bool mIsDetached;
     // Whether we have already sent a FileDescriptor for the app package.
     bool mAppPackageFileDescriptorSent;
 
@@ -609,6 +624,8 @@ private:
     nsRefPtr<nsIPresShell> mPresShellWithRefreshListener;
 
     bool mHasContentOpener;
+
+    DebugOnly<int32_t> mActiveSupressDisplayportCount;
 private:
     // This is used when APZ needs to find the TabParent associated with a layer
     // to dispatch events.

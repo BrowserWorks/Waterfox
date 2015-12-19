@@ -7,6 +7,7 @@
 #ifndef mozilla_psm__CertVerifier_h
 #define mozilla_psm__CertVerifier_h
 
+#include "mozilla/Telemetry.h"
 #include "pkix/pkixtypes.h"
 #include "OCSPCache.h"
 #include "ScopedNSSTypes.h"
@@ -29,6 +30,20 @@ enum class SignatureDigestStatus {
   WeakCACert = 3,
   WeakCAAndEE = 4,
   AlreadyBad = 5,
+};
+
+class PinningTelemetryInfo
+{
+public:
+  // Should we accumulate pinning telemetry for the result?
+  bool accumulateResult;
+  Telemetry::ID certPinningResultHistogram;
+  int32_t certPinningResultBucket;
+  // Should we accumulate telemetry for the root?
+  bool accumulateForRoot;
+  int32_t rootBucket;
+
+  void Reset() { accumulateForRoot = false; accumulateResult = false; }
 };
 
 class CertVerifier
@@ -62,7 +77,8 @@ public:
       /*optional out*/ SECOidTag* evOidPolicy = nullptr,
       /*optional out*/ OCSPStaplingStatus* ocspStaplingStatus = nullptr,
       /*optional out*/ KeySizeStatus* keySizeStatus = nullptr,
-      /*optional out*/ SignatureDigestStatus* sigDigestStatus = nullptr);
+      /*optional out*/ SignatureDigestStatus* sigDigestStatus = nullptr,
+      /*optional out*/ PinningTelemetryInfo* pinningTelemetryInfo = nullptr);
 
   SECStatus VerifySSLServerCert(
                     CERTCertificate* peerCert,
@@ -76,13 +92,20 @@ public:
    /*optional out*/ SECOidTag* evOidPolicy = nullptr,
    /*optional out*/ OCSPStaplingStatus* ocspStaplingStatus = nullptr,
    /*optional out*/ KeySizeStatus* keySizeStatus = nullptr,
-   /*optional out*/ SignatureDigestStatus* sigDigestStatus = nullptr);
+   /*optional out*/ SignatureDigestStatus* sigDigestStatus = nullptr,
+   /*optional out*/ PinningTelemetryInfo* pinningTelemetryInfo = nullptr);
 
   enum PinningMode {
     pinningDisabled = 0,
     pinningAllowUserCAMITM = 1,
     pinningStrict = 2,
     pinningEnforceTestMode = 3
+  };
+
+  enum class SHA1Mode {
+    Allowed = 0,
+    Forbidden = 1,
+    OnlyBefore2016 = 2
   };
 
   enum OcspDownloadConfig {
@@ -95,7 +118,7 @@ public:
 
   CertVerifier(OcspDownloadConfig odc, OcspStrictConfig osc,
                OcspGetConfig ogc, uint32_t certShortLifetimeInDays,
-               PinningMode pinningMode);
+               PinningMode pinningMode, SHA1Mode sha1Mode);
   ~CertVerifier();
 
   void ClearOCSPCache() { mOCSPCache.Clear(); }
@@ -105,6 +128,7 @@ public:
   const bool mOCSPGETEnabled;
   const uint32_t mCertShortLifetimeInDays;
   const PinningMode mPinningMode;
+  const SHA1Mode mSHA1Mode;
 
 private:
   OCSPCache mOCSPCache;

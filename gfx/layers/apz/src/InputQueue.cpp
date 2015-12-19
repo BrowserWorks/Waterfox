@@ -45,6 +45,11 @@ InputQueue::ReceiveInputEvent(const nsRefPtr<AsyncPanZoomController>& aTarget,
       return ReceiveScrollWheelInput(aTarget, aTargetConfirmed, event, aOutInputBlockId);
     }
 
+    case PANGESTURE_INPUT: {
+      const PanGestureInput& event = aEvent.AsPanGestureInput();
+      return ReceivePanGestureInput(aTarget, aTargetConfirmed, event, aOutInputBlockId);
+    }
+
     default:
       // The return value for non-touch input is only used by tests, so just pass
       // through the return value for now. This can be changed later if needed.
@@ -64,6 +69,7 @@ InputQueue::MaybeHandleCurrentBlock(CancelableBlockState *block,
     if (!target || block->IsDefaultPrevented()) {
       return true;
     }
+    UpdateActiveApzc(block->GetTargetApzc());
     block->DispatchImmediate(aEvent);
     return true;
   }
@@ -208,6 +214,83 @@ InputQueue::ReceiveScrollWheelInput(const nsRefPtr<AsyncPanZoomController>& aTar
   return nsEventStatus_eConsumeDoDefault;
 }
 
+static bool
+CanScrollTargetHorizontally(const PanGestureInput& aInitialEvent,
+                            PanGestureBlockState* aBlock)
+{
+  PanGestureInput horizontalComponent = aInitialEvent;
+  horizontalComponent.mPanDisplacement.y = 0;
+  nsRefPtr<AsyncPanZoomController> horizontallyScrollableAPZC =
+    aBlock->GetOverscrollHandoffChain()->FindFirstScrollable(horizontalComponent);
+  return horizontallyScrollableAPZC && horizontallyScrollableAPZC == aBlock->GetTargetApzc();
+}
+
+nsEventStatus
+InputQueue::ReceivePanGestureInput(const nsRefPtr<AsyncPanZoomController>& aTarget,
+                                   bool aTargetConfirmed,
+                                   const PanGestureInput& aEvent,
+                                   uint64_t* aOutInputBlockId) {
+  if (aEvent.mType == PanGestureInput::PANGESTURE_MAYSTART ||
+      aEvent.mType == PanGestureInput::PANGESTURE_CANCELLED) {
+    // Ignore these events for now.
+    return nsEventStatus_eConsumeDoDefault;
+  }
+
+  PanGestureBlockState* block = nullptr;
+  if (!mInputBlockQueue.IsEmpty() &&
+      aEvent.mType != PanGestureInput::PANGESTURE_START) {
+    block = mInputBlockQueue.LastElement()->AsPanGestureBlock();
+  }
+
+  nsEventStatus result = nsEventStatus_eConsumeDoDefault;
+
+  if (!block || block->WasInterrupted()) {
+    if (aEvent.mType != PanGestureInput::PANGESTURE_START) {
+      // Only PANGESTURE_START events are allowed to start a new pan gesture block.
+      return nsEventStatus_eConsumeDoDefault;
+    }
+    block = new PanGestureBlockState(aTarget, aTargetConfirmed, aEvent);
+    INPQ_LOG("started new pan gesture block %p for target %p\n", block, aTarget.get());
+
+    if (aTargetConfirmed &&
+        aEvent.mRequiresContentResponseIfCannotScrollHorizontallyInStartDirection &&
+        !CanScrollTargetHorizontally(aEvent, block)) {
+      // This event may trigger a swipe gesture, depending on what our caller
+      // wants to do it. We need to suspend handling of this block until we get
+      // a content response which will tell us whether to proceed or abort the
+      // block.
+      block->SetNeedsToWaitForContentResponse(true);
+
+      // Inform our caller that we haven't scrolled in response to the event
+      // and that a swipe can be started from this event if desired.
+      result = nsEventStatus_eIgnore;
+    }
+
+    SweepDepletedBlocks();
+    mInputBlockQueue.AppendElement(block);
+
+    CancelAnimationsForNewBlock(block);
+    MaybeRequestContentResponse(aTarget, block);
+  } else {
+    INPQ_LOG("received new event in block %p\n", block);
+  }
+
+  if (aOutInputBlockId) {
+    *aOutInputBlockId = block->GetBlockId();
+  }
+
+  // Note that the |aTarget| the APZCTM sent us may contradict the confirmed
+  // target set on the block. In this case the confirmed target (which may be
+  // null) should take priority. This is equivalent to just always using the
+  // target (confirmed or not) from the block, which is what
+  // MaybeHandleCurrentBlock() does.
+  if (!MaybeHandleCurrentBlock(block, aEvent)) {
+    block->AddEvent(aEvent.AsPanGestureInput());
+  }
+
+  return result;
+}
+
 void
 InputQueue::CancelAnimationsForNewBlock(CancelableBlockState* aBlock)
 {
@@ -282,7 +365,8 @@ InputQueue::StartNewTouchBlock(const nsRefPtr<AsyncPanZoomController>& aTarget,
                                bool aTargetConfirmed,
                                bool aCopyPropertiesFromCurrent)
 {
-  TouchBlockState* newBlock = new TouchBlockState(aTarget, aTargetConfirmed);
+  TouchBlockState* newBlock = new TouchBlockState(aTarget, aTargetConfirmed,
+      mTouchCounter);
   if (aCopyPropertiesFromCurrent) {
     newBlock->CopyPropertiesFrom(*CurrentTouchBlock());
   }
@@ -319,6 +403,14 @@ InputQueue::CurrentWheelBlock() const
   return block;
 }
 
+PanGestureBlockState*
+InputQueue::CurrentPanGestureBlock() const
+{
+  PanGestureBlockState* block = CurrentBlock()->AsPanGestureBlock();
+  MOZ_ASSERT(block);
+  return block;
+}
+
 WheelBlockState*
 InputQueue::GetCurrentWheelTransaction() const
 {
@@ -338,6 +430,19 @@ InputQueue::HasReadyTouchBlock() const
   return !mInputBlockQueue.IsEmpty() &&
          mInputBlockQueue[0]->AsTouchBlock() &&
          mInputBlockQueue[0]->IsReadyForHandling();
+}
+
+bool
+InputQueue::AllowScrollHandoff() const
+{
+  MOZ_ASSERT(CurrentBlock());
+  if (CurrentBlock()->AsWheelBlock()) {
+    return CurrentBlock()->AsWheelBlock()->AllowScrollHandoff();
+  }
+  if (CurrentBlock()->AsPanGestureBlock()) {
+    return CurrentBlock()->AsPanGestureBlock()->AllowScrollHandoff();
+  }
+  return true;
 }
 
 void
@@ -449,6 +554,7 @@ InputQueue::ProcessInputBlocks() {
       curBlock->DropEvents();
       target->ResetInputState();
     } else {
+      UpdateActiveApzc(curBlock->GetTargetApzc());
       curBlock->HandleEvents();
     }
     MOZ_ASSERT(!curBlock->HasEvents());
@@ -469,11 +575,21 @@ InputQueue::ProcessInputBlocks() {
 }
 
 void
+InputQueue::UpdateActiveApzc(const nsRefPtr<AsyncPanZoomController>& aNewActive) {
+  if (mLastActiveApzc && mLastActiveApzc != aNewActive
+      && mTouchCounter.GetActiveTouchCount() > 0) {
+    mLastActiveApzc->ResetInputState();
+  }
+  mLastActiveApzc = aNewActive;
+}
+
+void
 InputQueue::Clear()
 {
   APZThreadUtils::AssertOnControllerThread();
 
   mInputBlockQueue.Clear();
+  mLastActiveApzc = nullptr;
 }
 
 } // namespace layers

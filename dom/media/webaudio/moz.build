@@ -20,6 +20,7 @@ MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
 
 EXPORTS += [
     'AlignedTArray.h',
+    'AudioBlock.h',
     'AudioContext.h',
     'AudioEventTimeline.h',
     'AudioNodeEngine.h',
@@ -67,6 +68,7 @@ EXPORTS.mozilla.dom += [
 
 UNIFIED_SOURCES += [
     'AnalyserNode.cpp',
+    'AudioBlock.cpp',
     'AudioBuffer.cpp',
     'AudioBufferSourceNode.cpp',
     'AudioContext.cpp',
@@ -109,8 +111,6 @@ if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
     LOCAL_INCLUDES += [
         '/media/openmax_dl/dl/api/'
     ]
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

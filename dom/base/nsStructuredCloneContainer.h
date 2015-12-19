@@ -9,6 +9,7 @@
 
 #include "nsIStructuredCloneContainer.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/ipc/StructuredCloneData.h"
 
 #define NS_STRUCTUREDCLONECONTAINER_CONTRACTID \
   "@mozilla.org/docshell/structured-clone-container;1"
@@ -20,7 +21,9 @@
   {0xb8, 0x5f, 0x13, 0xce, 0xd8, 0x89, 0xee, 0xec} \
 }
 
-class nsStructuredCloneContainer final : public nsIStructuredCloneContainer
+class nsStructuredCloneContainer final
+  : public nsIStructuredCloneContainer
+  , public mozilla::dom::ipc::StructuredCloneData
 {
   public:
     nsStructuredCloneContainer();
@@ -31,10 +34,6 @@ class nsStructuredCloneContainer final : public nsIStructuredCloneContainer
   private:
     ~nsStructuredCloneContainer();
 
-    uint64_t* mData;
-
-    // This needs to be size_t rather than a PR-type so it matches the JS API.
-    size_t mSize;
     uint32_t mVersion;
 };
 

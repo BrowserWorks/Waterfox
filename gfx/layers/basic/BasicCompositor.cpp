@@ -109,6 +109,20 @@ void BasicCompositor::Destroy()
   mWidget = nullptr;
 }
 
+TextureFactoryIdentifier
+BasicCompositor::GetTextureFactoryIdentifier()
+{
+  TextureFactoryIdentifier ident(LayersBackend::LAYERS_BASIC,
+                                 XRE_GetProcessType(),
+                                 GetMaxTextureSize());
+
+  // All composition ops are supported in software.
+  for (uint8_t op = 0; op < uint8_t(CompositionOp::OP_COUNT); op++) {
+    ident.mSupportedBlendModes += CompositionOp(op);
+  }
+  return ident;
+}
+
 already_AddRefed<CompositingRenderTarget>
 BasicCompositor::CreateRenderTarget(const IntRect& aRect, SurfaceInitMode aInit)
 {
@@ -157,7 +171,7 @@ DrawSurfaceWithTextureCoords(DrawTarget *aDest,
                              SourceSurface *aSource,
                              const gfx::Rect& aTextureCoords,
                              gfx::Filter aFilter,
-                             float aOpacity,
+                             const DrawOptions& aOptions,
                              SourceSurface *aMask,
                              const Matrix* aMaskTransform)
 {
@@ -182,7 +196,7 @@ DrawSurfaceWithTextureCoords(DrawTarget *aDest,
   gfx::Rect unitRect(0, 0, 1, 1);
   ExtendMode mode = unitRect.Contains(aTextureCoords) ? ExtendMode::CLAMP : ExtendMode::REPEAT;
 
-  FillRectWithMask(aDest, aDestRect, aSource, aFilter, DrawOptions(aOpacity),
+  FillRectWithMask(aDest, aDestRect, aSource, aFilter, aOptions,
                    mode, aMask, aMaskTransform, &matrix);
 }
 
@@ -358,12 +372,7 @@ BasicCompositor::DrawQuad(const gfx::Rect& aRect,
     dest->SetTransform(Matrix::Translation(-aRect.x, -aRect.y));
 
     // Get the bounds post-transform.
-    new3DTransform = aTransform;
-    gfxRect bounds = ThebesRect(aRect);
-    bounds.TransformBounds(new3DTransform);
-    bounds.IntersectRect(bounds, gfxRect(offset.x, offset.y, buffer->GetSize().width, buffer->GetSize().height));
-
-    transformBounds = ToRect(bounds);
+    transformBounds = aTransform.TransformAndClipBounds(aRect, Rect(offset.x, offset.y, buffer->GetSize().width, buffer->GetSize().height));
     transformBounds.RoundOut();
 
     // Propagate the coordinate offset to our 2D draw target.
@@ -371,7 +380,7 @@ BasicCompositor::DrawQuad(const gfx::Rect& aRect,
 
     // When we apply the 3D transformation, we do it against a temporary
     // surface, so undo the coordinate offset.
-    new3DTransform = Matrix4x4::Translation(aRect.x, aRect.y, 0) * new3DTransform;
+    new3DTransform = Matrix4x4::Translation(aRect.x, aRect.y, 0) * aTransform;
   }
 
   newTransform.PostTranslate(-offset.x, -offset.y);
@@ -388,13 +397,18 @@ BasicCompositor::DrawQuad(const gfx::Rect& aRect,
     maskTransform.PreTranslate(-offset.x, -offset.y);
   }
 
+  CompositionOp blendMode = CompositionOp::OP_OVER;
+  if (Effect* effect = aEffectChain.mSecondaryEffects[EffectTypes::BLEND_MODE].get()) {
+    blendMode = static_cast<EffectBlendMode*>(effect)->mBlendMode;
+  }
+
   switch (aEffectChain.mPrimaryEffect->mType) {
     case EffectTypes::SOLID_COLOR: {
       EffectSolidColor* effectSolidColor =
         static_cast<EffectSolidColor*>(aEffectChain.mPrimaryEffect.get());
 
       FillRectWithMask(dest, aRect, effectSolidColor->mColor,
-                       DrawOptions(aOpacity), sourceMask, &maskTransform);
+                       DrawOptions(aOpacity, blendMode), sourceMask, &maskTransform);
       break;
     }
     case EffectTypes::RGB: {
@@ -407,7 +421,8 @@ BasicCompositor::DrawQuad(const gfx::Rect& aRect,
                                        source->GetSurface(dest),
                                        texturedEffect->mTextureCoords,
                                        texturedEffect->mFilter,
-                                       aOpacity, sourceMask, &maskTransform);
+                                       DrawOptions(aOpacity, blendMode),
+                                       sourceMask, &maskTransform);
       } else {
           RefPtr<DataSourceSurface> srcData = source->GetSurface(dest)->GetDataSurface();
 
@@ -419,7 +434,8 @@ BasicCompositor::DrawQuad(const gfx::Rect& aRect,
                                        premultData,
                                        texturedEffect->mTextureCoords,
                                        texturedEffect->mFilter,
-                                       aOpacity, sourceMask, &maskTransform);
+                                       DrawOptions(aOpacity, blendMode),
+                                       sourceMask, &maskTransform);
       }
       break;
     }
@@ -438,7 +454,8 @@ BasicCompositor::DrawQuad(const gfx::Rect& aRect,
                                    sourceSurf,
                                    effectRenderTarget->mTextureCoords,
                                    effectRenderTarget->mFilter,
-                                   aOpacity, sourceMask, &maskTransform);
+                                   DrawOptions(aOpacity, blendMode),
+                                   sourceMask, &maskTransform);
       break;
     }
     case EffectTypes::COMPONENT_ALPHA: {
@@ -510,11 +527,11 @@ BasicCompositor::BeginFrame(const nsIntRegion& aInvalidRegion,
   }
 
   if (mTarget) {
-    // If we have a copy target, then we don't have a widget-provided mDrawTarget (currently). Create a dummy
+    // If we have a copy target, then we don't have a widget-provided mDrawTarget (currently). Use a dummy
     // placeholder so that CreateRenderTarget() works.
-    mDrawTarget = gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(IntSize(1,1), SurfaceFormat::B8G8R8A8);
+    mDrawTarget = gfxPlatform::GetPlatform()->ScreenReferenceDrawTarget();
   } else {
-    mDrawTarget = mWidget->StartRemoteDrawing();
+    mDrawTarget = mWidget->StartRemoteDrawingInRegion(mInvalidRegion);
   }
   if (!mDrawTarget) {
     return;

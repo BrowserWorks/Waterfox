@@ -221,6 +221,7 @@ WebGLContext::WebGLContext()
 {
     mGeneration = 0;
     mInvalidated = false;
+    mCapturedFrameInvalidated = false;
     mShouldPresent = true;
     mResetLayer = true;
     mOptionsFrozen = false;
@@ -272,6 +273,8 @@ WebGLContext::WebGLContext()
     mGLMaxDrawBuffers = 1;
     mGLMaxTransformFeedbackSeparateAttribs = 0;
     mGLMaxUniformBufferBindings = 0;
+    mGLMax3DTextureSize = 0;
+    mGLMaxArrayTextureLayers = 0;
 
     // See OpenGL ES 2.0.25 spec, 6.2 State Tables, table 6.13
     mPixelStorePackAlignment = 4;
@@ -412,10 +415,12 @@ WebGLContext::DestroyResourcesAndContext()
 void
 WebGLContext::Invalidate()
 {
-    if (mInvalidated)
+    if (!mCanvasElement)
         return;
 
-    if (!mCanvasElement)
+    mCapturedFrameInvalidated = true;
+
+    if (mInvalidated)
         return;
 
     nsSVGEffects::InvalidateDirectRenderingObservers(mCanvasElement);
@@ -668,6 +673,7 @@ PopulateCapFallbackQueue(const SurfaceCaps& baseCaps,
 static bool
 CreateOffscreen(GLContext* gl, const WebGLContextOptions& options,
                 const nsCOMPtr<nsIGfxInfo>& gfxInfo, WebGLContext* webgl,
+                layers::LayersBackend layersBackend,
                 layers::ISurfaceAllocator* surfAllocator)
 {
     SurfaceCaps baseCaps;
@@ -685,7 +691,7 @@ CreateOffscreen(GLContext* gl, const WebGLContextOptions& options,
 
     if (gl->IsANGLE() ||
         (gl->GetContextType() == GLContextType::GLX &&
-         gfxPlatform::GetPlatform()->GetCompositorBackend() == LayersBackend::LAYERS_OPENGL))
+         layersBackend == LayersBackend::LAYERS_OPENGL))
     {
         // We can't use no-alpha formats on ANGLE yet because of:
         // https://code.google.com/p/angleproject/issues/detail?id=764
@@ -759,7 +765,8 @@ WebGLContext::CreateOffscreenGL(bool forceEnabled)
         if (!gl)
             break;
 
-        if (!CreateOffscreen(gl, mOptions, gfxInfo, this, surfAllocator))
+        if (!CreateOffscreen(gl, mOptions, gfxInfo, this,
+                             GetCompositorBackendType(), surfAllocator))
             break;
 
         if (!InitAndValidateGL())
@@ -1286,6 +1293,17 @@ WebGLContext::GetCanvasLayer(nsDisplayListBuilder* builder,
     mResetLayer = false;
 
     return canvasLayer.forget();
+}
+
+layers::LayersBackend
+WebGLContext::GetCompositorBackendType() const
+{
+    nsIWidget* docWidget = nsContentUtils::WidgetForDocument(mCanvasElement->OwnerDoc());
+    if (docWidget) {
+        layers::LayerManager* layerManager = docWidget->GetLayerManager();
+        return layerManager->GetCompositorBackendType();
+    }
+    return LayersBackend::LAYERS_NONE;
 }
 
 void

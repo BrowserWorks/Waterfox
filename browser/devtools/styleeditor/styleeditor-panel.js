@@ -9,8 +9,8 @@ const {Cc, Ci, Cu, Cr} = require("chrome");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
-let EventEmitter = require("devtools/toolkit/event-emitter");
+var promise = require("promise");
+var EventEmitter = require("devtools/toolkit/event-emitter");
 
 Cu.import("resource:///modules/devtools/StyleEditorUI.jsm");
 Cu.import("resource:///modules/devtools/StyleEditorUtil.jsm");

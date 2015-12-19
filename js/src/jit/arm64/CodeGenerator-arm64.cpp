@@ -494,15 +494,15 @@ CodeGeneratorARM64::visitCompareBAndBranch(LCompareBAndBranch* lir)
 }
 
 void
-CodeGeneratorARM64::visitCompareV(LCompareV* lir)
+CodeGeneratorARM64::visitCompareBitwise(LCompareBitwise* lir)
 {
-    MOZ_CRASH("visitCompareV");
+    MOZ_CRASH("visitCompareBitwise");
 }
 
 void
-CodeGeneratorARM64::visitCompareVAndBranch(LCompareVAndBranch* lir)
+CodeGeneratorARM64::visitCompareBitwiseAndBranch(LCompareBitwiseAndBranch* lir)
 {
-    MOZ_CRASH("visitCompareVAndBranch");
+    MOZ_CRASH("visitCompareBitwiseAndBranch");
 }
 
 void
@@ -606,12 +606,6 @@ void
 CodeGeneratorARM64::generateInvalidateEpilogue()
 {
     MOZ_CRASH("generateInvalidateEpilogue");
-}
-
-void
-CodeGeneratorARM64::visitRandom(LRandom* ins)
-{
-    MOZ_CRASH("visitRandom");
 }
 
 template <class U>
@@ -731,4 +725,15 @@ void
 CodeGeneratorARM64::visitNegF(LNegF* ins)
 {
     MOZ_CRASH("visitNegF");
+}
+
+void
+CodeGeneratorARM64::setReturnDoubleRegs(LiveRegisterSet* regs)
+{
+    MOZ_ASSERT(ReturnFloat32Reg.code_ == FloatRegisters::s0);
+    MOZ_ASSERT(ReturnDoubleReg.code_ == FloatRegisters::d0);
+    FloatRegister s1 = {FloatRegisters::s1, FloatRegisters::Single};
+    regs->add(ReturnFloat32Reg);
+    regs->add(s1);
+    regs->add(ReturnDoubleReg);
 }

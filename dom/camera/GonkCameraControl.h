@@ -138,6 +138,8 @@ protected:
   virtual nsresult StartRecordingImpl(DeviceStorageFileDescriptor* aFileDescriptor,
                                       const StartRecordingOptions* aOptions = nullptr) override;
   virtual nsresult StopRecordingImpl() override;
+  virtual nsresult PauseRecordingImpl() override;
+  virtual nsresult ResumeRecordingImpl() override;
   virtual nsresult ResumeContinuousFocusImpl() override;
   virtual nsresult PushParametersImpl() override;
   virtual nsresult PullParametersImpl() override;
@@ -177,6 +179,7 @@ protected:
 
   Size                      mLastThumbnailSize;
   Size                      mLastRecorderSize;
+  Size                      mRequestedPreviewSize;
   uint32_t                  mPreviewFps;
   bool                      mResumePreviewAfterTakingPicture;
   bool                      mFlashSupported;

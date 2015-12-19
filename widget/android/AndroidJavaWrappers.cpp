@@ -61,6 +61,7 @@ jfieldID AndroidGeckoEvent::jConnectionTypeField = 0;
 jfieldID AndroidGeckoEvent::jIsWifiField = 0;
 jfieldID AndroidGeckoEvent::jDHCPGatewayField = 0;
 jfieldID AndroidGeckoEvent::jScreenOrientationField = 0;
+jfieldID AndroidGeckoEvent::jScreenAngleField = 0;
 jfieldID AndroidGeckoEvent::jByteBufferField = 0;
 jfieldID AndroidGeckoEvent::jWidthField = 0;
 jfieldID AndroidGeckoEvent::jHeightField = 0;
@@ -105,7 +106,7 @@ jmethodID AndroidLayerRendererFrame::jEndDrawingMethod = 0;
 
 RefCountedJavaObject::~RefCountedJavaObject() {
     if (mObject)
-        GetJNIForThread()->DeleteGlobalRef(mObject);
+        GetEnvForThread()->DeleteGlobalRef(mObject);
     mObject = nullptr;
 }
 
@@ -169,6 +170,7 @@ AndroidGeckoEvent::InitGeckoEventClass(JNIEnv *jEnv)
     jIsWifiField = geckoEvent.getField("mIsWifi", "Z");
     jDHCPGatewayField = geckoEvent.getField("mDHCPGateway", "I");
     jScreenOrientationField = geckoEvent.getField("mScreenOrientation", "S");
+    jScreenAngleField = geckoEvent.getField("mScreenAngle", "S");
     jByteBufferField = geckoEvent.getField("mBuffer", "Ljava/nio/ByteBuffer;");
     jWidthField = geckoEvent.getField("mWidth", "I");
     jHeightField = geckoEvent.getField("mHeight", "I");
@@ -528,6 +530,7 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
 
         case SCREENORIENTATION_CHANGED: {
             mScreenOrientation = jenv->GetShortField(jobj, jScreenOrientationField);
+            mScreenAngle = jenv->GetShortField(jobj, jScreenAngleField);
             break;
         }
 
@@ -686,7 +689,7 @@ AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
         return mApzInput.ToWidgetTouchEvent(widget);
     }
 
-    int type = NS_EVENT_NULL;
+    EventMessage type = eVoidEvent;
     int startIndex = 0;
     int endIndex = Count();
 
@@ -698,7 +701,7 @@ AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
         }
         case AndroidMotionEvent::ACTION_DOWN:
         case AndroidMotionEvent::ACTION_POINTER_DOWN: {
-            type = NS_TOUCH_START;
+            type = eTouchStart;
             break;
         }
         case AndroidMotionEvent::ACTION_HOVER_MOVE: {
@@ -707,7 +710,7 @@ AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
             }
         }
         case AndroidMotionEvent::ACTION_MOVE: {
-            type = NS_TOUCH_MOVE;
+            type = eTouchMove;
             break;
         }
         case AndroidMotionEvent::ACTION_HOVER_EXIT: {
@@ -717,7 +720,7 @@ AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
         }
         case AndroidMotionEvent::ACTION_UP:
         case AndroidMotionEvent::ACTION_POINTER_UP: {
-            type = NS_TOUCH_END;
+            type = eTouchEnd;
             // for pointer-up events we only want the data from
             // the one pointer that went up
             startIndex = PointerIndex();
@@ -726,13 +729,13 @@ AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
         }
         case AndroidMotionEvent::ACTION_OUTSIDE:
         case AndroidMotionEvent::ACTION_CANCEL: {
-            type = NS_TOUCH_CANCEL;
+            type = eTouchCancel;
             break;
         }
     }
 
     WidgetTouchEvent event(true, type, widget);
-    if (type == NS_EVENT_NULL) {
+    if (type == eVoidEvent) {
         // An event we don't know about
         return event;
     }
@@ -827,17 +830,17 @@ AndroidGeckoEvent::MakeMultiTouchInput(nsIWidget* widget)
 WidgetMouseEvent
 AndroidGeckoEvent::MakeMouseEvent(nsIWidget* widget)
 {
-    uint32_t msg = NS_EVENT_NULL;
+    EventMessage msg = eVoidEvent;
     if (Points().Length() > 0) {
         switch (Action()) {
             case AndroidMotionEvent::ACTION_HOVER_MOVE:
-                msg = NS_MOUSE_MOVE;
+                msg = eMouseMove;
                 break;
             case AndroidMotionEvent::ACTION_HOVER_ENTER:
-                msg = NS_MOUSE_ENTER_WIDGET;
+                msg = eMouseEnterIntoWidget;
                 break;
             case AndroidMotionEvent::ACTION_HOVER_EXIT:
-                msg = NS_MOUSE_EXIT_WIDGET;
+                msg = eMouseExitFromWidget;
                 break;
             default:
                 break;
@@ -847,14 +850,14 @@ AndroidGeckoEvent::MakeMouseEvent(nsIWidget* widget)
     WidgetMouseEvent event(true, msg, widget,
                            WidgetMouseEvent::eReal, WidgetMouseEvent::eNormal);
 
-    if (msg == NS_EVENT_NULL) {
+    if (msg == eVoidEvent) {
         // unknown type, or no point data. abort
         return event;
     }
 
     // XXX can we synthesize different buttons?
     event.button = WidgetMouseEvent::eLeftButton;
-    if (msg != NS_MOUSE_MOVE) {
+    if (msg != eMouseMove) {
         event.clickCount = 1;
     }
     event.modifiers = DOMModifiers();
@@ -1036,7 +1039,7 @@ nsJNIString::nsJNIString(jstring jstr, JNIEnv *jenv)
     }
     JNIEnv *jni = jenv;
     if (!jni) {
-        jni = AndroidBridge::GetJNIEnv();
+        jni = jni::GetGeckoThreadEnv();
     }
     const jchar* jCharPtr = jni->GetStringChars(jstr, nullptr);
 
@@ -1063,7 +1066,7 @@ nsJNICString::nsJNICString(jstring jstr, JNIEnv *jenv)
     }
     JNIEnv *jni = jenv;
     if (!jni) {
-        jni = AndroidBridge::GetJNIEnv();
+        jni = jni::GetGeckoThreadEnv();
     }
     const char* jCharPtr = jni->GetStringUTFChars(jstr, nullptr);
 

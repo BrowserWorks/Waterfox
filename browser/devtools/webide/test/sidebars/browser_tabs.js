@@ -9,10 +9,7 @@ function test() {
   requestCompleteLog();
 
   Task.spawn(function*() {
-    const { DebuggerServer } =
-      Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
-
-    Services.prefs.setBoolPref("devtools.webide.sidebars", true);
+    const { DebuggerServer } = require("devtools/server/main");
 
     // Since we test the connections set below, destroy the server in case it
     // was left open.
@@ -45,6 +42,20 @@ function test() {
     yield removeTab(tab);
     yield waitForUpdate(win, "project");
     yield waitForUpdate(win, "runtime-targets");
+    is(tabsNode.querySelectorAll(".panel-item").length, 1, "1 tab available");
+
+    tab = yield addTab(TEST_URI);
+
+    is(tabsNode.querySelectorAll(".panel-item").length, 2, "2 tabs available");
+
+    yield removeTab(tab);
+
+    is(tabsNode.querySelectorAll(".panel-item").length, 2, "2 tabs available");
+
+    docProject.querySelector("#refresh-tabs").click();
+
+    yield waitForUpdate(win, "runtime-targets");
+
     is(tabsNode.querySelectorAll(".panel-item").length, 1, "1 tab available");
 
     yield win.Cmds.disconnectRuntime();

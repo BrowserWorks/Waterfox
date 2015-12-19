@@ -1,6 +1,10 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+html {
+  font-size: 10px;
+  font-family: menu;
+}
 
 body {
   background: none;
@@ -11,11 +15,25 @@ body {
 .panel {
   /* hide the extra margin space that the panel resizer now wants to show */
   overflow: hidden;
+  font: menu;
+  background-color: #fbfbfb;
+  height: 410px;
+  width: 330px;
+}
+
+/* Panel container flexbox */
+.panel-content {
+  height: 410px;
+  width: 330px;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: flex-start;
 }
 
 /* Notifications displayed over tabs */
 
 .panel .messages {
+  width: 100%;
   margin: 0;
 }
 
@@ -61,72 +79,142 @@ body {
 /* Tabs and tab selection buttons */
 
 .tab-view-container {
+  width: 100%;
   background-image: url("../shared/img/beta-ribbon.svg#beta-ribbon");
+  background-color: #fbfbfb;
   background-size: 36px 36px;
   background-repeat: no-repeat;
+  flex: 1;
+  display: flex;
+  flex-flow: column nowrap;
+  overflow: hidden;
 }
 
 .tab-view {
-  display: flex;
-  flex-direction: row;
-  padding: 10px 0;
-  border-bottom: 1px solid #ccc;
-  color: #000;
-  border-top-right-radius: 2px;
-  border-top-left-radius: 2px;
+  position: relative;
+  width: 100%;
+  height: 4rem;
+  line-height: 3.7rem;
+  color: #4A4A4A;
   list-style: none;
+  border-bottom: 2px solid #ccc;
 }
 
 .tab-view > li {
-  flex: 1;
+  display: inline-block;
   text-align: center;
-  color: #ccc;
-  -moz-border-end: 1px solid #ccc;
-  padding: 0 10px;
-  height: 16px;
+  padding: 0;
   cursor: pointer;
-  background-repeat: no-repeat;
-  background-size: 16px 16px;
-  background-position: center;
 }
 
-.tab-view > li:last-child {
-  -moz-border-end-style: none;
+.tab-view > .slide-bar {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  height: .2em;
+  width: 50%;
+  background: #00A9DC;
+  border: none;
+  transition: margin .3s ease-in-out;
 }
 
-.tab-view > li[data-tab-name="call"],
-.tab-view > li[data-tab-name="rooms"] {
-  background-image: url("../shared/img/icons-16x16.svg#precall");
+.tab-view li:nth-child(1).selected ~ .slide-bar {
+  margin-left: 0;
 }
 
-.tab-view > li[data-tab-name="call"]:hover,
-.tab-view > li[data-tab-name="rooms"]:hover {
-  background-image: url("../shared/img/icons-16x16.svg#precall-hover");
+.tab-view li:nth-child(2).selected ~ .slide-bar {
+  margin-left: 50%;
 }
 
-.tab-view > li[data-tab-name="call"].selected,
-.tab-view > li[data-tab-name="rooms"].selected {
-  background-image: url("../shared/img/icons-16x16.svg#precall-active");
+html[dir="rtl"] .tab-view li:nth-child(1).selected ~ .slide-bar {
+  margin-left: 50%;
 }
 
-.tab-view > li[data-tab-name="contacts"] {
-  background-image: url("../shared/img/icons-16x16.svg#contacts");
+html[dir="rtl"] .tab-view li:nth-child(2).selected ~ .slide-bar {
+  margin-left: 0;
 }
 
-.tab-view > li[data-tab-name="contacts"]:hover {
-  background-image: url("../shared/img/icons-16x16.svg#contacts-hover");
+.tab-view > li > div {
+  font-size: 1.2rem;
+  pointer-events: none;
+  display: inline;
 }
 
-.tab-view > li[data-tab-name="contacts"].selected {
-  background-image: url("../shared/img/icons-16x16.svg#contacts-active");
+.tab-view > li:before {
+  content: "";
+  pointer-events: none;
+  display: inline-block;
+  -moz-margin-end: .5rem;
+  vertical-align: middle;
+  height: 1.4rem;
+  width: 1.4rem;
+  transition-property: background-image;
+}
+
+.tab-view > li.selected {
+  transition-delay: .3s;
+}
+
+.tab-view > li[data-tab-name="rooms"]:before {
+  background-image: url("../shared/img/icons-14x14.svg#hello");
+}
+
+.tab-view > li[data-tab-name="rooms"]:hover:before {
+  background-image: url("../shared/img/icons-14x14.svg#hello-hover");
+}
+
+.tab-view > li[data-tab-name="rooms"].selected:before {
+  background-image: url("../shared/img/icons-14x14.svg#hello-active");
+}
+
+.tab-view > li[data-tab-name="contacts"]:before {
+  background-image: url("../shared/img/icons-14x14.svg#contacts");
+}
+
+.tab-view > li[data-tab-name="contacts"]:hover:before {
+  background-image: url("../shared/img/icons-14x14.svg#contacts-hover");
+}
+
+.tab-view > li[data-tab-name="contacts"].selected:before {
+  background-image: url("../shared/img/icons-14x14.svg#contacts-active");
+}
+
+/* Styling for one tab */
+.tab-view li:first-child:nth-last-child(2) {
+  width: 100%;
+}
+
+.tab-view li:first-child:nth-last-child(2) > span {
+  display: none;
+}
+
+.tab-view li:first-child:nth-last-child(2) > span {
+  display: none;
+}
+
+.tab-view li:first-child:nth-last-child(2):before {
+  background-image: url("../shared/img/icons-14x14.svg#hello-hover");
+}
+
+.tab-view li:first-child:nth-last-child(2) ~ li {
+  /* hide the tab-slider when there is only one tab shown */
+  display: none;
+}
+
+.tab-view li:first-child:nth-last-child(3),
+.tab-view li:first-child:nth-last-child(3) ~ li {
+  width: 50%;
 }
 
 .tab {
   display: none;
+  flex: 1;
+  overflow: auto;
 }
 
 .tab.selected {
-  display: block;
+  display: flex;
+  flex-flow: column nowrap;
 }
 
 /* Content area and input fields */
@@ -139,35 +227,12 @@ body {
   font-weight: 700;
 }
 
-#fte-getstarted {
-  padding-top: .5rem;
-  padding-bottom: .5rem;
-}
-
-#fte-title {
-  text-align: center;
-  margin-bottom: .5rem;
-}
-
-#fte-button {
-  width: 50%;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  font-size: 1rem;
-  padding: .5rem 1rem;
-}
-
-#fte-getstarted + #powered-by-wrapper {
-  position: absolute;
-  bottom: 0;
-}
-
 /* Need to remove when these rules when the Beta tag is removed */
 #share-link-header {
   -moz-padding-start: 20px;
 }
-#fte-getstarted + .generate-url > #share-link-header,
+
+.fte-get-started-container + .generate-url > #share-link-header,
 .tab-view + .tab .content-area > .generate-url > #share-link-header {
   /* The header shouldn't be indented if the tabs are present. */
   -moz-padding-start: 0;
@@ -177,7 +242,7 @@ body {
   display: block;
   width: 100%;
   margin-top: 10px;
-  font-size: 10px;
+  font-size: 1rem;
   color: #777;
 }
 
@@ -185,39 +250,114 @@ body {
   display: block;
   width: 100%;
   outline: none;
-  border-radius: 2px;
-  margin: 5px 0;
-  border: 1px solid #ccc;
-  height: 24px;
-  padding: 0 10px;
-}
-
-.content-area input:invalid {
+  border-radius: 4px;
+  margin: 10px 0;
+  border: 1px solid #c3c3c3;
+  height: 2.6rem;
+  padding: 0 6px;
+  font-size: 1.1rem;
+  color: #4a4a4a;
   box-shadow: none;
 }
 
-.content-area input:not(.pristine):invalid {
-  border-color: #d74345;
-  box-shadow: 0 0 4px #c43c3e;
+.content-area input::-moz-placeholder {
+  color: #999;
 }
+
+.content-area input:not(.pristine):invalid {
+  border: 0.1rem solid #d13f1a;
+}
+
+.content-area input:focus {
+  border: 0.1rem solid #5cccee;
+}
+
+/* Rooms and contacts shared CSS */
+
+.contact-list-empty,
+.contact-search-list-empty,
+.no-conversations-message {
+  background-repeat: no-repeat;
+  background-position: top center;
+  text-align: center;
+  color: #4a4a4a;
+  font-weight: lighter;
+}
+
+
+
+.no-conversations-message {
+  /* example of vertical aligning a container in an element
+    see: http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/ */
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+  padding-top: 11rem;
+  padding-bottom: 1rem;
+  background-image: url("../shared/img/empty_conversations.svg");
+}
+
+.panel-text-medium,
+.panel-text-large {
+  margin: 3px 0;
+}
+
+.panel-text-medium {
+  font-size: 1.6rem;
+}
+
+.panel-text-large {
+  font-size: 2.2rem;
+}
+
+.room-list-loading {
+  position: relative;
+  text-align: center;
+  /* makes sure that buttons are anchored above footer */
+  flex: 1;
+}
+
+.room-list-loading > img {
+  width: 66px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 
 /* Rooms */
 .rooms {
-  min-height: 100px;
-  padding: 0 1rem;
+  flex: 1;
+  display: flex;
+  flex-flow: column nowrap;
 }
 
 .rooms > h1 {
   font-weight: bold;
-  color: #999;
+  color: #666;
   padding: .5rem 0;
+  height: 3rem;
+  line-height: 3rem;
+  font-size: 1.1rem;
+  margin: 0 15px;
+}
+
+.new-room-view {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #d8d8d8;
+}
+
+.new-room-view > .context-checkbox-checked {
+  background-color: #dbf7ff;
 }
 
 .new-room-view > .context {
-  margin: .5rem 0 0;
-  background-color: #dbf7ff;
+  border-top: 1px solid #ebebeb;
+  flex: 1;
   border-radius: 3px 3px 0 0;
-  padding: .5rem;
+  padding: 6px 15px 8px;
 }
 
 .new-room-view > .context > .context-enabled {
@@ -230,11 +370,13 @@ body {
 }
 
 .new-room-view > .context > .checkbox-wrapper {
+  height: 2rem;
   margin-bottom: .5em;
+  line-height: 2rem;
 }
 
 .new-room-view > .context > .checkbox-wrapper > .checkbox {
-  border-color: #0096dd;
+  border-color: #d8d8d8;
   background-color: #fff;
 }
 
@@ -244,16 +386,17 @@ body {
 
 .new-room-view > .context > .checkbox-wrapper > label {
   color: #333;
-  font-weight: 700;
+  font-size: 1.1rem;
 }
 
 .new-room-view > .btn {
+  flex: 1;
+  height: 3rem;
   display: block;
-  font-size: 1rem;
-  margin: 0 auto .5rem;
-  width: 100%;
+  font-size: 1.2rem;
+  margin: 7px 15px 0 15px;
   padding: .5rem 1rem;
-  border-radius: 0 0 3px 3px;
+  border-radius: 4px;
 }
 
 /* Remove when bug 1142671 is backed out. */
@@ -263,31 +406,40 @@ body {
 }
 
 .room-list {
-  max-height: 335px; /* XXX better computation needed */
-  min-height: 7px;
-  overflow: auto;
-  border-top: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
-  margin-left: -1rem;
-  margin-right: -1rem;
+  /* xxx  not sure why flex needs the 3 value setting
+    but setting flex to just 1, the whole tab including the new room is scrollable.
+    seems to not like the 0% of the default setting - may be FF bug */
+  flex: 1 1 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-flow: column nowrap;
 }
 
-.room-list:empty {
+.room-list-empty {
   border-bottom-width: 0;
+  flex: 1;
+  /* the child no-conversations-message is vertical aligned inside this container
+    see: http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/
+    stops blurring from decimal pixels being rendered - pixel rounding */
+  transform-style: preserve-3d;
 }
 
 .room-list > .room-entry {
-  padding: .5rem 1rem;
+  padding: .2rem 15px;
   /* Always show the default pointer, even over the text part of the entry. */
   cursor: default;
 }
 
 .room-list > .room-entry > h2 {
   display: inline-block;
-  font-size: .85rem;
-  color: #777;
-  /* See .room-entry-context-item for the margin/size reductions. */
-  width: calc(100% - 1rem - 16px);
+  font-size: 1.3rem;
+  line-height: 2.4rem;
+  color: #000;
+  /* See .room-entry-context-item for the margin/size reductions.
+    * An extra 40px to make space for the call button and chevron. */
+  width: calc(100% - 1rem - 56px);
+
 }
 
 .room-list > .room-entry.room-active > h2 {
@@ -295,25 +447,8 @@ body {
   color: #000;
 }
 
-.room-list > .room-entry > h2 > .room-notification {
-  display: none;
-  background: #00a0ec;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  -moz-margin-end: .3rem;
-}
-
-.room-list > .room-entry.room-active > h2 > .room-notification {
-  display: inline-block;
-}
-
 .room-list > .room-entry:hover {
-  background: #f1f1f1;
-}
-
-.room-list > .room-entry:not(:last-child) {
-  border-bottom: 1px solid #ccc;
+  background: #dbf7ff;
 }
 
 .room-list > .room-entry > p {
@@ -336,7 +471,7 @@ body {
 @keyframes drop-and-fade-in {
   0%   {opacity: 0; top: -15px;}
   25%  {opacity: 0; top: -15px;}
-  100% {opacity: 1; top: 0px;}
+  100% {opacity: 1; top: 0;}
 }
 
 .room-list > .room-entry > h2 > button {
@@ -374,13 +509,89 @@ body {
   background: transparent url(../shared/img/icons-16x16.svg#checkmark);
   animation: pulse .150s;
   animation-timing-function: ease-in-out;
-  top: 0px;
+  top: 0;
 }
 
 /* keep the various room-entry row pieces aligned with each other */
 .room-list > .room-entry > h2 > button,
 .room-list > .room-entry > h2 > span {
   vertical-align: middle;
+}
+
+.room-list > .room-entry > h2:before {
+  content: "";
+  display: inline-block;
+  background-image: url("../shared/img/icons-14x14.svg#hello");
+  background-repeat: no-repeat;
+  background-size: cover;
+  width: 13px;
+  height: 13px;
+  -moz-margin-end: 1rem;
+  margin-bottom: -3px;
+}
+
+.room-list > .room-entry.room-active > h2:before {
+  background-image: url("../shared/img/icons-14x14.svg#hello-active");
+}
+
+/* Room entry context button (call button + chevron) */
+.room-entry-context-actions {
+  display: none;
+  border-radius: 30px;
+  background: #56b397;
+  vertical-align: top;
+}
+
+.room-entry:hover .room-entry-context-actions {
+  display: inline-block;
+}
+
+.room-entry:hover .room-entry-context-actions:hover {
+  background: #50e3c2;
+}
+
+/* Room entry call button */
+.room-entry-call-btn {
+  border-top-left-radius: 30px;
+  border-bottom-left-radius: 30px;
+  background-color: transparent;
+  background-image: url("../shared/img/icons-14x14.svg#video-white");
+  background-position: right center;
+}
+
+html[dir="rtl"] .room-entry-call-btn {
+  background-position: left center;
+}
+
+/* Room entry context menu */
+.room-entry-context-menu-chevron {
+  display: inline-block;
+  border-top-right-radius: 30px;
+  border-bottom-right-radius: 30px;
+  background-image: url("../shared/img/icons-10x10.svg#dropdown-white");
+  background-position: center;
+  cursor: pointer;
+}
+
+/* Common styles for chevron and call button. */
+.room-entry-context-menu-chevron,
+.room-entry-call-btn {
+  width: 30px;
+  height: 24px;
+  background-size: 12px;
+  background-repeat: no-repeat;
+  vertical-align: middle;
+}
+
+html[dir="rtl"] .room-entry-context-actions > .dropdown-menu {
+  right: auto;
+  left: 21px;
+}
+
+.room-entry-context-actions > .dropdown-menu {
+  right: 21px;
+  bottom: auto;
+  left: auto;
 }
 
 /* Keep ".room-list > .room-entry > h2" in sync with these. */
@@ -391,71 +602,13 @@ body {
   height: 16px;
 }
 
+.room-entry:hover .room-entry-context-item {
+  display: none;
+}
+
 .room-entry-context-item > a > img {
   height: 16px;
   width: 16px;
-}
-
-/* Buttons */
-
-.button-group {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-}
-
-.button-group > .button {
-  flex: 1;
-  margin: 0 7px;
-}
-
-.button-group > .button:first-child {
-  -moz-margin-start: 0;
-}
-
-.button-group > .button:last-child {
-  -moz-margin-end: 0;
-}
-
-.button {
-  padding: 2px 5px;
-  background-color: #fbfbfb;
-  color: #333;
-  border: 1px solid #c1c1c1;
-  border-radius: 2px;
-  min-height: 26px;
-  font-size: 12px;
-}
-
-.button > .button-caption {
-  vertical-align: middle;
-}
-
-.button:hover {
-  background-color: #ebebeb;
-}
-
-.button:hover:active {
-  background-color: #ccc;
-  color: #111;
-}
-
-.button.button-accept {
-  background-color: #5bc0a4;
-  border-color: #5bc0a4;
-  color: #fff;
-}
-
-.button.button-accept:hover {
-  background-color: #47b396;
-  border-color: #47b396;
-  color: #fff;
-}
-
-.button.button-accept:hover:active {
-  background-color: #3aa689;
-  border-color: #3aa689;
-  color: #fff;
 }
 
 .button-close {
@@ -534,9 +687,8 @@ html[dir="rtl"] .generate-url-spinner {
   right: auto;
 }
 
-#fte-button,
 .generate-url .button {
-  background-color: #0096dd;
+  background-color: #00a9dc;
   border-color: #0096dd;
   color: #fff;
 }
@@ -544,18 +696,17 @@ html[dir="rtl"] .generate-url-spinner {
 .generate-url .button:hover {
   background-color: #008acb;
   border-color: #008acb;
-  color: #fff;
 }
 
 #powered-by,
 .terms-service {
-  color: #888;
-  font-size: .9em;
+  color: #4a4a4a;
+  font-size: 1.1rem;
 }
 
 #powered-by {
   border-top: 1px solid #ccc;
-  padding-top: .5rem;
+  padding-top: 1.5rem;
   text-align: center;
   margin-top: 0;
 }
@@ -613,13 +764,15 @@ html[dir="rtl"] .generate-url-spinner {
 }
 
 .terms-service {
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-bottom: .5rem;
+  padding-left: 5rem;
+  padding-right: 5rem;
+  padding-bottom: 1rem;
+  text-align: center;
 }
 
 .terms-service > a {
-  color: #00caee;
+  color: #00a9dc;
+  text-decoration: none;
 }
 
 /* DnD menu */
@@ -631,7 +784,6 @@ html[dir="rtl"] .generate-url-spinner {
   /* Undo the start border + padding so that unhovered dnd-status is aligned
      as if there was no additional spacing. */
   -moz-margin-start: calc(-1px + -4px);
-  font-size: .9em;
   cursor: pointer;
   border-radius: 3px;
 }
@@ -641,22 +793,44 @@ html[dir="rtl"] .generate-url-spinner {
   background-color: #f1f1f1;
 }
 
-/* Status badges -- Available/Unavailable */
+.status-available:before,
+.status-unavailable:before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: bottom;
+  background-repeat: no-repeat;
+  background-size: cover;
+  -moz-margin-end: .2rem;
+  margin-bottom: -3px;
+}
 
+.dropdown-menu-item.status-available:before,
+.dropdown-menu-item.status-unavailable:before {
+  margin-bottom: 2px;
+}
+
+html[dir="rtl"] .dropdown-menu-item.status-available:before,
+html[dir="rtl"] .dropdown-menu-item.status-unavailable:before {
+  margin-right: -3px;
+}
+
+.status-available:before {
+  background-image: url("../shared/img/icons-16x16.svg#status-available");
+}
+
+.status-unavailable:before {
+  background-image: url("../shared/img/icons-16x16.svg#status-unavailable");
+}
+
+/* Status badges -- Available/Unavailable */
 .status {
   display: inline-block;
   width: 8px;
   height: 8px;
   margin: 0 5px;
   border-radius: 50%;
-}
-
-.status-available {
-  background-color: #6cb23e;
-}
-
-.status-dnd {
-  border: 1px solid #888;
 }
 
 /* Sign in/up link */
@@ -667,42 +841,36 @@ html[dir="rtl"] .generate-url-spinner {
   text-align: right;
 }
 
-.signin-link a {
-  font-size: .9em;
+.signin-link > a {
+  font-weight: 500;
   text-decoration: none;
-  color: #888;
-}
-
-.footer-signin-separator {
-  border-right: 1px solid #aaa;
-  height: 16px;
-  margin: 0 1em;
+  color: #00A9DC;
 }
 
 /* Settings (gear) menu */
 
 .button-settings {
-  display: inline-block;
-  overflow: hidden;
+  width: 10px;
+  height: 10px;
   margin: 0;
   padding: 0;
   border: none;
-  background-color: #a5a;
-  color: #fff;
-  text-align: center;
-  text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: .9em;
   cursor: pointer;
-  background: transparent url(../shared/img/svg/glyph-settings-16x16.svg) no-repeat center center;
-  background-size: contain;
-  width: 12px;
-  height: 12px;
+  vertical-align: middle;
+  background: transparent url("../shared/img/icons-10x10.svg#settings-cog");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  -moz-margin-start: .5em;
 }
 
-.footer .button-settings {
-  opacity: .6;      /* used to "grey" the icon a little */
+.user-details .dropdown-menu {
+  bottom: 1.3rem; /* Just above the text. */
+  left: -5px; /* Compensate for button padding. */
+}
+
+html[dir="rtl"] .user-details .dropdown-menu {
+  right: -5px;
 }
 
 .settings-menu .dropdown-menu {
@@ -711,7 +879,7 @@ html[dir="rtl"] .generate-url-spinner {
      set by .dropdown-menu */
   top: auto;
   left: auto;
-  bottom: -8px;
+  bottom: 1.1em;
   right: 14px;
 }
 
@@ -725,34 +893,32 @@ html[dir="rtl"] .settings-menu .dropdown-menu {
 
 .settings-menu .icon {
   background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   width: 12px;
   height: 12px;
   -moz-margin-end: 1em;
   margin-top: 2px;
 }
 
-.settings-menu .icon-settings {
-  background: transparent url(../shared/img/svg/glyph-settings-16x16.svg) no-repeat center center;
-}
-
 .settings-menu .icon-tour {
-  background: transparent url("../shared/img/icons-16x16.svg#tour") no-repeat center center;
+  background-image: url("../shared/img/icons-16x16.svg#tour");
 }
 
 .settings-menu .icon-account {
-  background: transparent url(../shared/img/svg/glyph-account-16x16.svg) no-repeat center center;
+  background-image: url(../shared/img/svg/glyph-account-16x16.svg);
 }
 
 .settings-menu .icon-signin {
-  background: transparent url(../shared/img/svg/glyph-signin-16x16.svg) no-repeat center center;
+  background-image: url(../shared/img/svg/glyph-signin-16x16.svg);
 }
 
 .settings-menu .icon-signout {
-  background: transparent url(../shared/img/svg/glyph-signout-16x16.svg) no-repeat center center;
+  background-image: url(../shared/img/svg/glyph-signout-16x16.svg);
 }
 
 .settings-menu .icon-help {
-  background: transparent url(../shared/img/svg/glyph-help-16x16.svg) no-repeat center center;
+  background-image: url(../shared/img/svg/glyph-help-16x16.svg);
 }
 
 /* Footer */
@@ -764,11 +930,11 @@ html[dir="rtl"] .settings-menu .dropdown-menu {
   justify-content: space-between;
   align-content: stretch;
   align-items: center;
-  font-size: 1em;
-  border-top: 1px solid #D1D1D1;
-  background-color: #eaeaea;
-  color: #7f7f7f;
-  padding: .5rem 1rem;
+  font-size: 1rem;
+  color: #666666;
+  padding: 10px 15px 6px 15px;
+  width: 100%;
+  height: 42px;
 }
 
 .footer .signin-details {
@@ -780,4 +946,60 @@ html[dir="rtl"] .settings-menu .dropdown-menu {
   color: #000;
   font-weight: bold;
   margin: 0;
+}
+
+/* First time use */
+
+.fte-get-started-content {
+  /* Manual vertical centering */
+  flex: 1;
+  padding: 7.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fte-title {
+  margin: 0 44px;
+}
+
+.fte-title > img {
+  width: 100%;
+}
+
+.fte-subheader {
+  text-align: center;
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  color: #4a4a4a;
+}
+
+.fte-get-started-content + .powered-by-wrapper {
+  width: 100%;
+}
+
+.fte-get-started-container {
+  height: 410px;
+  width: 330px;
+  display: flex;
+  flex-flow: column nowrap;
+  background: #fbfbfb;
+}
+
+.fte-get-started-button {
+  border: none;
+  color: #fff;
+  background-color: #00a9dc;
+  line-height: 43px;
+  margin: 0 15px;
+  padding: 0;
+  border-radius: 4px;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.fte-get-started-button:hover,
+.fte-get-started-button:focus,
+.fte-get-started-button:active {
+  background-color: #5cccee;
+  color: #fff;
 }

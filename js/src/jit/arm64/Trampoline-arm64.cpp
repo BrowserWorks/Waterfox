@@ -14,6 +14,8 @@
 #include "jit/arm64/SharedICHelpers-arm64.h"
 #include "jit/VMFunctions.h"
 
+#include "jit/MacroAssembler-inl.h"
+
 using namespace js;
 using namespace js::jit;
 
@@ -187,12 +189,12 @@ JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
         masm.makeFrameDescriptor(r19, JitFrame_BaselineJS);
         masm.asVIXL().Push(x19, xzr); // Push xzr for a fake return address.
         // No GC things to mark: push a bare token.
-        masm.enterFakeExitFrame(ExitFrameLayout::BareToken());
+        masm.enterFakeExitFrame(ExitFrameLayoutBareToken);
 
         masm.push(BaselineFrameReg, reg_code);
 
         // Initialize the frame, including filling in the slots.
-        masm.setupUnalignedABICall(3, r19);
+        masm.setupUnalignedABICall(r19);
         masm.passABIArg(BaselineFrameReg); // BaselineFrame.
         masm.passABIArg(reg_osrFrame); // InterpreterFrame.
         masm.passABIArg(reg_osrNStack);
@@ -223,7 +225,7 @@ JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
 
     // Call function.
     // Since AArch64 doesn't have the pc register available, the callee must push lr.
-    masm.call(reg_code);
+    masm.callJitNoProfiler(reg_code);
 
     // Baseline OSR will return here.
     if (type == EnterJitBaseline)
@@ -293,7 +295,7 @@ JitRuntime::generateInvalidator(JSContext* cx)
     masm.Sub(x2, masm.GetStackPointer64(), Operand(sizeof(size_t) + sizeof(void*)));
     masm.moveToStackPtr(r2);
 
-    masm.setupUnalignedABICall(3, r10);
+    masm.setupUnalignedABICall(r10);
     masm.passABIArg(r0);
     masm.passABIArg(r1);
     masm.passABIArg(r2);
@@ -403,8 +405,7 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
     // Load the address of the code that is getting called.
     masm.Ldr(x3, MemOperand(x5, JSFunction::offsetOfNativeOrScript()));
     masm.loadBaselineOrIonRaw(r3, r3, nullptr);
-    masm.call(r3);
-    uint32_t returnOffset = masm.currentOffset();
+    uint32_t returnOffset = masm.callJitNoProfiler(r3);
 
     // Clean up!
     // Get the size of the stack frame, and clean up the later fixed frame.
@@ -494,7 +495,7 @@ GenerateBailoutThunk(JSContext* cx, MacroAssembler& masm, uint32_t frameClass)
     masm.reserveStack(sizeOfBailoutInfo);
     masm.moveStackPtrTo(r1);
 
-    masm.setupUnalignedABICall(2, r2);
+    masm.setupUnalignedABICall(r2);
     masm.passABIArg(r0);
     masm.passABIArg(r1);
     masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, Bailout));
@@ -634,7 +635,7 @@ JitRuntime::generateVMWrapper(JSContext* cx, const VMFunction& f)
         break;
     }
 
-    masm.setupUnalignedABICall(f.argc(), regs.getAny());
+    masm.setupUnalignedABICall(regs.getAny());
     masm.passABIArg(reg_cx);
 
     size_t argDisp = 0;
@@ -761,7 +762,7 @@ JitRuntime::generatePreBarrier(JSContext* cx, MIRType type)
     MOZ_ASSERT(PreBarrierReg == r1);
     masm.movePtr(ImmPtr(cx->runtime()), r3);
 
-    masm.setupUnalignedABICall(2, r0);
+    masm.setupUnalignedABICall(r0);
     masm.passABIArg(r3);
     masm.passABIArg(PreBarrierReg);
     masm.callWithABI(IonMarkFunction(type));
@@ -793,16 +794,16 @@ JitRuntime::generateDebugTrapHandler(JSContext* cx)
     // stub frame has a nullptr ICStub pointer, since this pointer is marked
     // during GC.
     masm.movePtr(ImmPtr(nullptr), ICStubReg);
-    EmitEnterStubFrame(masm, scratch2);
+    EmitBaselineEnterStubFrame(masm, scratch2);
 
     JitCode* code = cx->runtime()->jitRuntime()->getVMWrapper(HandleDebugTrapInfo);
     if (!code)
         return nullptr;
 
     masm.asVIXL().Push(vixl::lr, ARMRegister(scratch1, 64));
-    EmitCallVM(code, masm);
+    EmitBaselineCallVM(code, masm);
 
-    EmitLeaveStubFrame(masm);
+    EmitBaselineLeaveStubFrame(masm);
 
     // If the stub returns |true|, we have to perform a forced return (return
     // from the JS frame). If the stub returns |false|, just return from the

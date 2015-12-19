@@ -1080,8 +1080,7 @@ bool
 Notification::DispatchClickEvent()
 {
   AssertIsOnTargetThread();
-  nsCOMPtr<nsIDOMEvent> event;
-  NS_NewDOMEvent(getter_AddRefs(event), this, nullptr, nullptr);
+  nsRefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
   nsresult rv = event->InitEvent(NS_LITERAL_STRING("click"), false, true);
   NS_ENSURE_SUCCESS(rv, false);
   event->SetTrusted(true);
@@ -1723,7 +1722,7 @@ public:
   void
   WorkerRunInternal(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
-    nsRefPtr<Promise> workerPromise = mPromiseProxy->GetWorkerPromise();
+    nsRefPtr<Promise> workerPromise = mPromiseProxy->WorkerPromise();
 
     ErrorResult result;
     nsAutoTArray<nsRefPtr<Notification>, 5> notifications;
@@ -1772,27 +1771,19 @@ public:
   {
     AssertIsOnMainThread();
     MOZ_ASSERT(mPromiseProxy, "Was Done() called twice?");
-    MutexAutoLock lock(mPromiseProxy->GetCleanUpLock());
-    if (mPromiseProxy->IsClean()) {
+
+    nsRefPtr<PromiseWorkerProxy> proxy = mPromiseProxy.forget();
+    MutexAutoLock lock(proxy->Lock());
+    if (proxy->CleanedUp()) {
       return NS_OK;
     }
 
-    MOZ_ASSERT(mPromiseProxy->GetWorkerPrivate());
     nsRefPtr<WorkerGetResultRunnable> r =
-      new WorkerGetResultRunnable(mPromiseProxy->GetWorkerPrivate(),
-                                  mPromiseProxy,
+      new WorkerGetResultRunnable(proxy->GetWorkerPrivate(),
+                                  proxy,
                                   Move(mStrings));
 
-    if (!r->Dispatch(aCx)) {
-      nsRefPtr<PromiseWorkerProxyControlRunnable> cr =
-        new PromiseWorkerProxyControlRunnable(mPromiseProxy->GetWorkerPrivate(),
-                                              mPromiseProxy);
-
-      DebugOnly<bool> ok = cr->Dispatch(aCx);
-      MOZ_ASSERT(ok);
-    }
-
-    mPromiseProxy = nullptr;
+    r->Dispatch(aCx);
     return NS_OK;
   }
 
@@ -1809,31 +1800,18 @@ class WorkerGetRunnable final : public nsRunnable
   const nsString mTag;
   const nsString mScope;
 public:
-  WorkerGetRunnable(WorkerPrivate* aWorkerPrivate,
-                    Promise* aWorkerPromise,
+  WorkerGetRunnable(PromiseWorkerProxy* aProxy,
                     const nsAString& aTag,
                     const nsAString& aScope)
-    : mTag(aTag), mScope(aScope)
+    : mPromiseProxy(aProxy), mTag(aTag), mScope(aScope)
   {
-    aWorkerPrivate->AssertIsOnWorkerThread();
-    mPromiseProxy =
-      PromiseWorkerProxy::Create(aWorkerPrivate,
-                                 aWorkerPromise);
-
-    if (!mPromiseProxy || !mPromiseProxy->GetWorkerPromise()) {
-      aWorkerPromise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
-      mPromiseProxy = nullptr;
-    }
+    MOZ_ASSERT(mPromiseProxy);
   }
 
   NS_IMETHOD
   Run() override
   {
     AssertIsOnMainThread();
-    if (!mPromiseProxy) {
-      return NS_OK;
-    }
-
     nsCOMPtr<nsINotificationStorageCallback> callback =
       new WorkerGetCallback(mPromiseProxy, mScope);
 
@@ -1848,8 +1826,8 @@ public:
       return rv;
     }
 
-    MutexAutoLock lock(mPromiseProxy->GetCleanUpLock());
-    if (mPromiseProxy->IsClean()) {
+    MutexAutoLock lock(mPromiseProxy->Lock());
+    if (mPromiseProxy->CleanedUp()) {
       return NS_OK;
     }
 
@@ -1888,13 +1866,18 @@ Notification::WorkerGet(WorkerPrivate* aWorkerPrivate,
     return nullptr;
   }
 
-  nsRefPtr<WorkerGetRunnable> r =
-    new WorkerGetRunnable(aWorkerPrivate, p, aFilter.mTag, aScope);
-  if (NS_WARN_IF(NS_FAILED(NS_DispatchToMainThread(r)))) {
+  nsRefPtr<PromiseWorkerProxy> proxy =
+    PromiseWorkerProxy::Create(aWorkerPrivate, p);
+  if (!proxy) {
     aRv.Throw(NS_ERROR_DOM_ABORT_ERR);
     return nullptr;
   }
 
+  nsRefPtr<WorkerGetRunnable> r =
+    new WorkerGetRunnable(proxy, aFilter.mTag, aScope);
+  // Since this is called from script via
+  // ServiceWorkerRegistration::GetNotifications, we can assert dispatch.
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(r)));
   return p.forget();
 }
 
@@ -2287,7 +2270,8 @@ Notification::ShowPersistentNotification(nsIGlobalObject *aGlobal,
 
     if (NS_WARN_IF(NS_FAILED(loadChecker->Result()))) {
       if (loadChecker->Result() == NS_ERROR_NOT_AVAILABLE) {
-        aRv.ThrowTypeError(MSG_NO_ACTIVE_WORKER);
+        nsAutoString scope(aScope);
+        aRv.ThrowTypeError(MSG_NO_ACTIVE_WORKER, &scope);
       } else {
         aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
       }

@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 #include "mozilla/EventForwards.h"
+#include "mozilla/TimeStamp.h"
 
 class nsView;
 class nsIntRegion;
@@ -23,7 +24,8 @@ enum nsSizeMode
   nsSizeMode_Normal = 0,
   nsSizeMode_Minimized,
   nsSizeMode_Maximized,
-  nsSizeMode_Fullscreen
+  nsSizeMode_Fullscreen,
+  nsSizeMode_Invalid
 };
 
 /**
@@ -135,7 +137,8 @@ public:
    */
   virtual void DidPaintWindow();
 
-  virtual void DidCompositeWindow();
+  virtual void DidCompositeWindow(const mozilla::TimeStamp& aCompositeStart,
+                                  const mozilla::TimeStamp& aCompositeEnd);
 
   /**
    * Request that layout schedules a repaint on the next refresh driver tick.

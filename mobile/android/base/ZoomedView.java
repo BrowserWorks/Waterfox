@@ -5,6 +5,7 @@
 
 package org.mozilla.gecko;
 
+import org.mozilla.gecko.animation.ViewHelper;
 import org.mozilla.gecko.gfx.ImmutableViewportMetrics;
 import org.mozilla.gecko.gfx.LayerView;
 import org.mozilla.gecko.gfx.PanZoomController;
@@ -48,7 +49,7 @@ import android.widget.TextView;
 import java.nio.ByteBuffer;
 import java.text.DecimalFormat;
 
-public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChangedListener,
+public class ZoomedView extends FrameLayout implements LayerView.DynamicToolbarListener,
         LayerView.ZoomedViewListener, GeckoEventListener {
     private static final String LOGTAG = "Gecko" + ZoomedView.class.getSimpleName();
 
@@ -77,6 +78,7 @@ public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChange
     private int containterSize; // shadow, margin, ...
     private Point lastPosition;
     private boolean shouldSetVisibleOnUpdate;
+    private boolean isBlockedFromAppearing; // Prevent the display of the zoomedview while FormAssistantPopup is visible
     private PointF returnValue;
     private final PointF animationStart;
     private ImageView closeButton;
@@ -85,6 +87,7 @@ public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChange
     private float offsetDueToToolBarPosition;
     private int toolbarHeight;
     private int cornerRadius;
+    private float dynamicToolbarOverlap;
 
     private boolean stopUpdateView;
 
@@ -163,6 +166,9 @@ public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChange
                         layerView.dispatchTouchEvent(actionDownEvent);
                         actionDownEvent.recycle();
                         PointF convertedPosition = getUnzoomedPositionFromPointInZoomedView(event.getX(), event.getY());
+                        // the LayerView expects the coordinates relative to the window, not the surface, so we need
+                        // to adjust that here.
+                        convertedPosition.y += layerView.getSurfaceTranslation();
                         MotionEvent e = MotionEvent.obtain(event.getDownTime(), event.getEventTime(),
                                 MotionEvent.ACTION_UP, convertedPosition.x, convertedPosition.y,
                                 event.getMetaState());
@@ -177,6 +183,9 @@ public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChange
                 originRawX = event.getRawX();
                 originRawY = event.getRawY();
                 PointF convertedPosition = getUnzoomedPositionFromPointInZoomedView(event.getX(), event.getY());
+                // the LayerView expects the coordinates relative to the window, not the surface, so we need
+                // to adjust that here.
+                convertedPosition.y += layerView.getSurfaceTranslation();
                 actionDownEvent = MotionEvent.obtain(event.getDownTime(), event.getEventTime(),
                         MotionEvent.ACTION_DOWN, convertedPosition.x, convertedPosition.y,
                         event.getMetaState());
@@ -220,6 +229,7 @@ public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChange
     public ZoomedView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         isSimplifiedUI = true;
+        isBlockedFromAppearing = false;
         getPrefs();
         currentZoomFactorIndex = 0;
         returnValue = new PointF();
@@ -233,7 +243,8 @@ public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChange
         touchListener = new ZoomedViewTouchListener();
         EventDispatcher.getInstance().registerGeckoThreadListener(this,
                 "Gesture:clusteredLinksClicked", "Window:Resize", "Content:LocationChange",
-                "Gesture:CloseZoomedView");
+                "Gesture:CloseZoomedView", "Browser:ZoomToPageWidth", "Browser:ZoomToRect",
+                "FormAssist:AutoComplete", "FormAssist:Hide");
     }
 
     void destroy() {
@@ -242,7 +253,8 @@ public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChange
         ThreadUtils.removeCallbacksFromUiThread(requestRenderRunnable);
         EventDispatcher.getInstance().unregisterGeckoThreadListener(this,
                 "Gesture:clusteredLinksClicked", "Window:Resize", "Content:LocationChange",
-                "Gesture:CloseZoomedView");
+                "Gesture:CloseZoomedView", "Browser:ZoomToPageWidth", "Browser:ZoomToRect",
+                "FormAssist:AutoComplete", "FormAssist:Hide");
     }
 
     // This method (onFinishInflate) is called only when the zoomed view class is used inside
@@ -300,37 +312,41 @@ public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChange
      * LayerView
      */
     private PointF getUnzoomedPositionFromPointInZoomedView(float x, float y) {
-        if (toolbarOnTop && y > toolbarHeight) {
-           y = y - toolbarHeight;
-        }
-
         ImmutableViewportMetrics metrics = layerView.getViewportMetrics();
-        PointF offset = metrics.getMarginOffset();
         final float parentWidth = metrics.getWidth();
         final float parentHeight = metrics.getHeight();
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) getLayoutParams();
 
-        returnValue.x = (int) ((x / zoomFactor) +     // Conversion of the x offset inside the zoomed view (using the scale factor)
+        // The number of unzoomed content pixels that can be displayed in the
+        // zoomed area.
+        float visibleContentPixels = viewWidth / zoomFactor;
+        // The offset in content pixels of the leftmost zoomed pixel from the
+        // layerview's left edge when the zoomed view is moved to the right as
+        // far as it can go.
+        float maxContentOffset = parentWidth - visibleContentPixels;
+        // The maximum offset in screen pixels that the zoomed view can have
+        float maxZoomedViewOffset = parentWidth - viewContainerWidth;
 
-                        offset.x +               // The offset of the layerView
+        // The above values allow us to compute the term
+        //   maxContentOffset / maxZoomedViewOffset
+        // which is the number of content pixels that we should move over by
+        // for every screen pixel that the zoomed view is moved over by.
+        // This allows a smooth transition from when the zoomed view is at the
+        // leftmost extent to when it is at the rightmost extent.
 
-                        /* Conversion of the left side position of the zoomed view
-                         *   Minimum value for the left side of the zoomed view is 0
-                         *     and we return 0 after conversion
-                         *   Maximum value for the left side of the zoomed view is (parentWidth - offset.x - viewContainerWidth)
-                         *     and we return (parentWidth - offset.x - (viewWidth / zoomFactor)) after conversion.
-                         */
-                        (((float) params.leftMargin) - offset.x) *
-                            ((parentWidth - offset.x - (viewWidth / zoomFactor)) /
-                            (parentWidth - offset.x - viewContainerWidth)));
+        // This is the offset in content pixels of the leftmost zoomed pixel
+        // visible in the zoomed view. This value is relative to the layerview
+        // edge.
+        float zoomedContentOffset = ((float)params.leftMargin) * maxContentOffset / maxZoomedViewOffset;
+        returnValue.x = (int)(zoomedContentOffset + (x / zoomFactor));
 
         // Same comments here vertically
-        returnValue.y = (int) ((y / zoomFactor) +
-                        offset.y -
-                        offsetDueToToolBarPosition +
-                        (((float) params.topMargin) - offset.y) *
-                            ((parentHeight - offset.y + offsetDueToToolBarPosition - (viewHeight / zoomFactor)) /
-                            (parentHeight - offset.y - viewContainerHeight)));
+        visibleContentPixels = viewHeight / zoomFactor;
+        maxContentOffset = parentHeight - visibleContentPixels;
+        maxZoomedViewOffset = parentHeight - (viewContainerHeight - toolbarHeight);
+        float zoomedAreaOffset = (float)params.topMargin + offsetDueToToolBarPosition - layerView.getSurfaceTranslation();
+        zoomedContentOffset = zoomedAreaOffset * maxContentOffset / maxZoomedViewOffset;
+        returnValue.y = (int)(zoomedContentOffset + ((y - offsetDueToToolBarPosition) / zoomFactor));
 
         return returnValue;
     }
@@ -342,61 +358,53 @@ public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChange
      */
     private PointF getZoomedViewTopLeftPositionFromTouchPosition(float x, float y) {
         ImmutableViewportMetrics metrics = layerView.getViewportMetrics();
-        PointF offset = metrics.getMarginOffset();
         final float parentWidth = metrics.getWidth();
         final float parentHeight = metrics.getHeight();
 
-        returnValue.x = (int) ((((x - (viewWidth / (2 * zoomFactor)))) /   // Translation to get the left side position of the zoomed view
-                                                                        // centered on x (the value 2 to get the middle).
+        // See comments in getUnzoomedPositionFromPointInZoomedView, but the
+        // transformations here are largely the reverse of that function.
 
-                        /* Conversion of the left side position of the zoomed view.
-                         * See the comment in getUnzoomedPositionFromPointInZoomedView.
-                         * The proportional factor is the same. It is used in a division
-                         * and not in a multiplication to convert the position from
-                         * the LayerView to the ZoomedView.
-                         */
-                        ((parentWidth - offset.x - (viewWidth / zoomFactor)) /
-                        (parentWidth - offset.x - viewContainerWidth)))
+        float visibleContentPixels = viewWidth / zoomFactor;
+        float maxContentOffset = parentWidth - visibleContentPixels;
+        float maxZoomedViewOffset = parentWidth - viewContainerWidth;
+        float contentPixelOffset = x - (visibleContentPixels / 2.0f);
+        returnValue.x = (int)(contentPixelOffset * (maxZoomedViewOffset / maxContentOffset));
 
-                + offset.x);     // The offset of the layerView
-
-        // Same comments here vertically
-        returnValue.y = (int) ((((y + offsetDueToToolBarPosition - (viewHeight / (2 * zoomFactor)))) /
-                        ((parentHeight - offset.y + offsetDueToToolBarPosition - (viewHeight / zoomFactor)) /
-                        (parentHeight - offset.y - viewContainerHeight)))
-                + offset.y);
+        visibleContentPixels = viewHeight / zoomFactor;
+        maxContentOffset = parentHeight - visibleContentPixels;
+        maxZoomedViewOffset = parentHeight - (viewContainerHeight - toolbarHeight);
+        contentPixelOffset = y - (visibleContentPixels / 2.0f);
+        float unscaledViewOffset = layerView.getSurfaceTranslation() - offsetDueToToolBarPosition;
+        returnValue.y = (int)((contentPixelOffset * (maxZoomedViewOffset / maxContentOffset)) + unscaledViewOffset);
 
         return returnValue;
     }
 
     private void moveZoomedView(ImmutableViewportMetrics metrics, float newLeftMargin, float newTopMargin,
             StartPointUpdate animateStartPoint) {
-        final float parentWidth = metrics.getWidth();
-        final float parentHeight = metrics.getHeight();
         RelativeLayout.LayoutParams newLayoutParams = (RelativeLayout.LayoutParams) getLayoutParams();
         newLayoutParams.leftMargin = (int) newLeftMargin;
         newLayoutParams.topMargin = (int) newTopMargin;
-        int topMarginMin;
-        int leftMarginMin;
-        PointF offset = metrics.getMarginOffset();
-        topMarginMin = (int) offset.y;
-        leftMarginMin = (int) offset.x;
+        int topMarginMin = (int)(layerView.getSurfaceTranslation() + dynamicToolbarOverlap);
+        int topMarginMax = layerView.getHeight() - viewContainerHeight;
+        int leftMarginMin = 0;
+        int leftMarginMax = layerView.getWidth() - viewContainerWidth;
 
         if (newTopMargin < topMarginMin) {
             newLayoutParams.topMargin = topMarginMin;
-        } else if (newTopMargin + viewContainerHeight > parentHeight) {
-            newLayoutParams.topMargin = (int) (parentHeight - viewContainerHeight);
+        } else if (newTopMargin > topMarginMax) {
+            newLayoutParams.topMargin = topMarginMax;
         }
 
         if (newLeftMargin < leftMarginMin) {
             newLayoutParams.leftMargin = leftMarginMin;
-        } else if (newLeftMargin + viewContainerWidth > parentWidth) {
-            newLayoutParams.leftMargin = (int) (parentWidth - viewContainerWidth);
+        } else if (newLeftMargin > leftMarginMax) {
+            newLayoutParams.leftMargin = leftMarginMax;
         }
 
         if (newLayoutParams.topMargin < topMarginMin + 1) {
             moveToolbar(false);
-        } else if (newLayoutParams.topMargin + viewContainerHeight > parentHeight - 1) {
+        } else if (newLayoutParams.topMargin > topMarginMax - 1) {
             moveToolbar(true);
         }
 
@@ -417,7 +425,7 @@ public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChange
         }
 
         setLayoutParams(newLayoutParams);
-        PointF convertedPosition = getUnzoomedPositionFromPointInZoomedView(0, 0);
+        PointF convertedPosition = getUnzoomedPositionFromPointInZoomedView(0, offsetDueToToolBarPosition);
         lastPosition = PointUtils.round(convertedPosition);
         requestZoomedViewRender();
     }
@@ -536,11 +544,14 @@ public class ZoomedView extends FrameLayout implements LayerView.OnMetricsChange
         });
     }
 
-private void startZoomDisplay(LayerView aLayerView, final int leftFromGecko, final int topFromGecko) {
+    private void startZoomDisplay(LayerView aLayerView, final int leftFromGecko, final int topFromGecko) {
+        if (isBlockedFromAppearing) {
+            return;
+        }
         if (layerView == null) {
             layerView = aLayerView;
             layerView.addZoomedViewListener(this);
-            layerView.setOnMetricsChangedZoomedViewportListener(this);
+            layerView.getDynamicToolbarAnimator().addTranslationListener(this);
             ImmutableViewportMetrics metrics = layerView.getViewportMetrics();
             setCapturedSize(metrics);
         }
@@ -548,23 +559,27 @@ private void startZoomDisplay(LayerView aLayerView, final int leftFromGecko, fin
         shouldSetVisibleOnUpdate = true;
 
         ImmutableViewportMetrics metrics = layerView.getViewportMetrics();
-        PointF offset = metrics.getMarginOffset();
         // At this point, the start point is relative to the layerView.
         // Later, it will be converted relative to the zoomed view as soon as
         // the position of the zoomed view will be calculated.
-        animationStart.x = (float) leftFromGecko * metrics.zoomFactor + offset.x;
-        animationStart.y = (float) topFromGecko * metrics.zoomFactor + offset.y;
+        animationStart.x = (float) leftFromGecko * metrics.zoomFactor;
+        animationStart.y = (float) topFromGecko * metrics.zoomFactor + layerView.getSurfaceTranslation();
 
         moveUsingGeckoPosition(leftFromGecko, topFromGecko);
     }
 
     public void stopZoomDisplay(boolean withAnimation) {
+        // If "startZoomDisplay" is running and not totally completed (Gecko thread is still
+        // running and "showZoomedView" has not yet been called), the zoomed view will be
+        // displayed after this call and it should not.
+        // Force the stop of the zoomed view, changing the shouldSetVisibleOnUpdate flag
+        // before the test of the visibility.
+        shouldSetVisibleOnUpdate = false;
         if (getVisibility() == View.VISIBLE) {
-            shouldSetVisibleOnUpdate = false;
             hideZoomedView(withAnimation);
             ThreadUtils.removeCallbacksFromUiThread(requestRenderRunnable);
             if (layerView != null) {
-                layerView.setOnMetricsChangedZoomedViewportListener(null);
+                layerView.getDynamicToolbarAnimator().removeTranslationListener(this);
                 layerView.removeZoomedViewListener(this);
                 layerView = null;
             }
@@ -613,8 +628,15 @@ private void startZoomDisplay(LayerView aLayerView, final int leftFromGecko, fin
                         refreshZoomedViewSize(metrics);
                     } else if (event.equals("Content:LocationChange")) {
                         stopZoomDisplay(false);
-                    } else if (event.equals("Gesture:CloseZoomedView")) {
+                    } else if (event.equals("Gesture:CloseZoomedView") ||
+                            event.equals("Browser:ZoomToPageWidth") ||
+                            event.equals("Browser:ZoomToRect")) {
                         stopZoomDisplay(true);
+                    } else if (event.equals("FormAssist:AutoComplete")) {
+                        isBlockedFromAppearing = true;
+                        stopZoomDisplay(true);
+                    } else if (event.equals("FormAssist:Hide")) {
+                        isBlockedFromAppearing = false;
                     }
                 } catch (JSONException e) {
                     Log.e(LOGTAG, "JSON exception", e);
@@ -632,6 +654,15 @@ private void startZoomDisplay(LayerView aLayerView, final int leftFromGecko, fin
         PointF convertedPosition = getZoomedViewTopLeftPositionFromTouchPosition((leftFromGecko * metrics.zoomFactor),
                 (topFromGecko * metrics.zoomFactor));
         moveZoomedView(metrics, convertedPosition.x, convertedPosition.y, StartPointUpdate.GECKO_POSITION);
+    }
+
+    @Override
+    public void onTranslationChanged(float aToolbarTranslation, float aLayerViewTranslation) {
+        ThreadUtils.assertOnUiThread();
+        if (layerView != null) {
+            dynamicToolbarOverlap = aLayerViewTranslation - aToolbarTranslation;
+            refreshZoomedViewSize(layerView.getViewportMetrics());
+        }
     }
 
     @Override
@@ -788,10 +819,9 @@ private void startZoomDisplay(LayerView aLayerView, final int leftFromGecko, fin
 
         ImmutableViewportMetrics metrics = layerView.getViewportMetrics();
         PointF origin = metrics.getOrigin();
-        PointF offset = metrics.getMarginOffset();
 
-        final int xPos = (int) (origin.x - offset.x) + lastPosition.x;
-        final int yPos = (int) (origin.y - offset.y) + lastPosition.y;
+        final int xPos = (int)origin.x + lastPosition.x;
+        final int yPos = (int)origin.y + lastPosition.y;
 
         GeckoEvent e = GeckoEvent.createZoomedViewEvent(tabId, xPos, yPos, viewWidth,
                 viewHeight, zoomFactor * metrics.zoomFactor, buffer);

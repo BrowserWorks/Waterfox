@@ -38,31 +38,29 @@
   <label class="header-name">&paneSync.title;</label>
 </hbox>
 
-<hbox id="sync-migration-container"
-       data-category="paneSync"
-       hidden="true">
-
-  <vbox id="sync-migration" flex="1" hidden="true">
-
-    <deck id="sync-migration-deck">
-      <!-- When we are in the "need FxA user" state -->
-      <hbox align="center">
-        <description id="sync-migrate-upgrade-description" flex="1"/>
-        <spacer flex="1"/>
-        <button id="sync-migrate-unlink"/>
-        <button id="sync-migrate-upgrade"/>
-      </hbox>
-
-      <!-- When we are in the "need the user to be verified" state -->
-      <hbox align="center">
-        <label id="sync-migrate-verify-label"/>
-        <spacer flex="1"/>
-        <button id="sync-migrate-forget"/>
-        <button id="sync-migrate-resend"/>
-      </hbox>
-    </deck>
-  </vbox>
-</hbox>
+<vbox id="syncStatusMessage-container" data-category="paneSync" hidden="true">
+  <hbox id="syncStatusMessage">
+    <vbox id="syncStatusMessageWrapper">
+      <label id="syncStatusMessageTitle"></label>
+      <description id="syncStatusMessageDescription"></description>
+      <deck id="sync-migration-buttons-deck">
+        <!-- When we are in the "need FxA user" state -->
+        <hbox>
+          <button id="sync-migrate-unlink"/>
+          <button id="sync-migrate-upgrade"/>
+        </hbox>
+        <!-- When we are in the "need the user to be verified" state -->
+        <hbox>
+          <button id="sync-migrate-forget"/>
+          <button id="sync-migrate-resend"/>
+        </hbox>
+      </deck>
+    </vbox>
+    <vbox>
+      <button id="syncStatusMessageClose" class="close-icon"/>
+    </vbox>
+  </hbox>
+</vbox>
 
 <deck id="weavePrefsDeck" data-category="paneSync" hidden="true">
   <!-- These panels are for the "legacy" sync provider -->
@@ -211,10 +209,10 @@
               </vbox>
               <vbox flex="1">
                 <label id="signedOutAccountBoxTitle">&signedOut.accountBox.title;</label>
-                <description class="fxaAccountBoxButtons">
+                <hbox class="fxaAccountBoxButtons" align="center">
                   <button id="noFxaSignUp">&signedOut.accountBox.create;</button>
                   <button id="noFxaSignIn">&signedOut.accountBox.signin;</button>
-                </description>
+                </hbox>
               </vbox>
             </hbox>
           </vbox>
@@ -251,10 +249,10 @@
               <vbox flex="1">
                 <label id="fxaEmailAddress1"/>
                 <label id="fxaDisplayName" hidden="true"/>
-                <description class="fxaAccountBoxButtons">
-                  <button id="verifiedManage">&manage.label;</button>
+                <hbox class="fxaAccountBoxButtons" align="center">
                   <button id="fxaUnlinkButton">&disconnect.label;</button>
-                </description>
+                  <label id="verifiedManage" class="text-link">&verifiedManage.label;</label>
+                </hbox>
               </vbox>
             </hbox>
 
@@ -272,10 +270,10 @@
                     &signedInUnverified.aftername.label;
                   </description>
                 </hbox>
-                <description class="fxaAccountBoxButtons">
+                <hbox class="fxaAccountBoxButtons" align="center">
                   <button id="verifyFxaAccount">&verify.label;</button>
                   <button id="unverifiedUnlinkFxaAccount">&forget.label;</button>
-                </description>
+                </hbox>
               </vbox>
             </hbox>
 
@@ -293,10 +291,10 @@
                     &signedInLoginFailure.aftername.label;
                   </description>
                 </hbox>
-                <description class="fxaAccountBoxButtons">
+                <hbox class="fxaAccountBoxButtons" align="center">
                   <button id="rejectReSignIn">&signIn.label;</button>
                   <button id="rejectUnlinkFxaAccount">&forget.label;</button>
-                </description>
+                </hbox>
               </vbox>
             </hbox>
           </deck>

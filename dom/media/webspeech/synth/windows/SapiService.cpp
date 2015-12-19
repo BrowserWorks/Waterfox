@@ -103,6 +103,13 @@ SapiCallback::OnCancel()
   return NS_OK;
 }
 
+NS_IMETHODIMP
+SapiCallback::OnVolumeChanged(float aVolume)
+{
+  mSapiClient->SetVolume(static_cast<USHORT>(aVolume * 100));
+  return NS_OK;
+}
+
 void
 SapiCallback::OnSpeechEvent(const SPEVENT& speechEvent)
 {
@@ -180,7 +187,8 @@ SapiService::Init()
 {
   MOZ_ASSERT(!mInitialized);
 
-  if (Preferences::GetBool("media.webspeech.synth.test")) {
+  if (Preferences::GetBool("media.webspeech.synth.test") ||
+      !Preferences::GetBool("media.webspeech.synth.enabled")) {
     // When enabled, we shouldn't add OS backend (Bug 1160844)
     return false;
   }

@@ -66,18 +66,18 @@ public class TabStripView extends TwoWayView {
 
         final Resources resources = getResources();
 
-        divider = resources.getDrawable(R.drawable.new_tablet_tab_strip_divider);
+        divider = resources.getDrawable(R.drawable.tab_strip_divider);
         divider.getPadding(dividerPadding);
 
         final int itemMargin =
-                resources.getDimensionPixelSize(R.dimen.new_tablet_tab_strip_item_margin);
+                resources.getDimensionPixelSize(R.dimen.tablet_tab_strip_item_margin);
         setItemMargin(itemMargin);
 
         animatorListener = new TabAnimatorListener();
 
         fadingEdgePaint = new Paint();
         fadingEdgeSize =
-                resources.getDimensionPixelOffset(R.dimen.new_tablet_tab_strip_fading_edge_size);
+                resources.getDimensionPixelOffset(R.dimen.tablet_tab_strip_fading_edge_size);
 
         adapter = new TabStripAdapter(context);
         setAdapter(adapter);

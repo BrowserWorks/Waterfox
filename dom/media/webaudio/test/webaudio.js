@@ -45,6 +45,14 @@ function expectRejectedPromise(that, func, exceptionName) {
   });
 }
 
+// For a given frequency and AnalyserNode, return the index of the bin that
+// measures this frequency.
+function binIndexForFrequency(frequency, analyser) {
+  return 1 + Math.round(frequency *
+                        analyser.fftSize /
+                        analyser.context.sampleRate);
+}
+
 function fuzzyCompare(a, b) {
   return Math.abs(a - b) < 9e-3;
 }
@@ -206,9 +214,8 @@ function runTest()
     function testOnNormalContext(callback) {
       function testOutput(nodeToInspect, expectedBuffers, callback) {
         testLength = 0;
-        var sp = context.createScriptProcessor(expectedBuffers[0].length, gTest.numberOfChannels);
+        var sp = context.createScriptProcessor(expectedBuffers[0].length, gTest.numberOfChannels, 0);
         nodeToInspect.connect(sp);
-        sp.connect(context.destination);
         sp.onaudioprocess = function(e) {
           var expectedBuffer = expectedBuffers.shift();
           testLength += expectedBuffer.length;

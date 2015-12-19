@@ -27,6 +27,7 @@
 #include <algorithm>
 #include "GeckoProfiler.h"
 #include "mozilla/Atomics.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/CondVar.h"
 #include "mozilla/dom/PContent.h"
 #include "mozilla/dom/asmjscache/AsmJSCache.h"
@@ -90,6 +91,12 @@
 namespace mozilla {
 namespace dom {
 namespace quota {
+
+// We want profiles to be platform-independent so we always need to replace
+// the same characters on every platform. Windows has the most extensive set
+// of illegal characters so we use its FILE_ILLEGAL_CHARACTERS and
+// FILE_PATH_SEPARATOR.
+const char QuotaManager::kReplaceChars[] = CONTROL_CHARACTERS "/:*?\"<>|\\";
 
 namespace {
 
@@ -669,20 +676,16 @@ class GetUsageOp
   UsageInfo mUsageInfo;
 
   const nsCString mGroup;
-  nsCOMPtr<nsIURI> mURI;
+  nsCOMPtr<nsIPrincipal> mPrincipal;
   nsCOMPtr<nsIUsageCallback> mCallback;
-  const uint32_t mAppId;
   const bool mIsApp;
-  const bool mInMozBrowserOnly;
 
 public:
   GetUsageOp(const nsACString& aGroup,
              const nsACString& aOrigin,
              bool aIsApp,
-             nsIURI* aURI,
-             nsIUsageCallback* aCallback,
-             uint32_t aAppId,
-             bool aInMozBrowserOnly);
+             nsIPrincipal* aPrincipal,
+             nsIUsageCallback* aCallback);
 
 private:
   ~GetUsageOp()
@@ -1078,19 +1081,14 @@ public:
 void
 SanitizeOriginString(nsCString& aOrigin)
 {
-  // We want profiles to be platform-independent so we always need to replace
-  // the same characters on every platform. Windows has the most extensive set
-  // of illegal characters so we use its FILE_ILLEGAL_CHARACTERS and
-  // FILE_PATH_SEPARATOR.
-  static const char kReplaceChars[] = CONTROL_CHARACTERS "/:*?\"<>|\\";
 
 #ifdef XP_WIN
-  NS_ASSERTION(!strcmp(kReplaceChars,
+  NS_ASSERTION(!strcmp(QuotaManager::kReplaceChars,
                        FILE_ILLEGAL_CHARACTERS FILE_PATH_SEPARATOR),
                "Illegal file characters have changed!");
 #endif
 
-  aOrigin.ReplaceChar(kReplaceChars, '+');
+  aOrigin.ReplaceChar(QuotaManager::kReplaceChars, '+');
 }
 
 bool
@@ -3404,32 +3402,6 @@ QuotaManager::GetStorageId(PersistenceType aPersistenceType,
   aDatabaseId = str;
 }
 
-// static
-nsresult
-QuotaManager::GetInfoFromURI(nsIURI* aURI,
-                             uint32_t aAppId,
-                             bool aInMozBrowser,
-                             nsACString* aGroup,
-                             nsACString* aOrigin,
-                             bool* aIsApp)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aURI);
-
-  nsIScriptSecurityManager* secMan = nsContentUtils::GetSecurityManager();
-  NS_ENSURE_TRUE(secMan, NS_ERROR_FAILURE);
-
-  nsCOMPtr<nsIPrincipal> principal;
-  nsresult rv = secMan->GetAppCodebasePrincipal(aURI, aAppId, aInMozBrowser,
-                                                getter_AddRefs(principal));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = GetInfoFromPrincipal(principal, aGroup, aOrigin, aIsApp);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  return NS_OK;
-}
-
 static nsresult
 TryGetInfoForAboutURI(nsIPrincipal* aPrincipal,
                       nsACString& aGroup,
@@ -3709,36 +3681,27 @@ QuotaManager::GetDirectoryMetadata(nsIFile* aDirectory,
 NS_IMPL_ISUPPORTS(QuotaManager, nsIQuotaManager, nsIObserver)
 
 NS_IMETHODIMP
-QuotaManager::GetUsageForURI(nsIURI* aURI,
-                             nsIUsageCallback* aCallback,
-                             uint32_t aAppId,
-                             bool aInMozBrowserOnly,
-                             uint8_t aOptionalArgCount,
-                             nsIQuotaRequest** _retval)
+QuotaManager::GetUsageForPrincipal(nsIPrincipal* aPrincipal,
+                                   nsIUsageCallback* aCallback,
+                                   nsIQuotaRequest** _retval)
 {
   NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
 
-  NS_ENSURE_ARG_POINTER(aURI);
+  NS_ENSURE_ARG_POINTER(aPrincipal);
   NS_ENSURE_ARG_POINTER(aCallback);
 
   // This only works from the main process.
   NS_ENSURE_TRUE(XRE_IsParentProcess(), NS_ERROR_NOT_AVAILABLE);
 
-  if (!aOptionalArgCount) {
-    aAppId = nsIScriptSecurityManager::NO_APP_ID;
-  }
-
   // Figure out which origin we're dealing with.
   nsCString group;
   nsCString origin;
   bool isApp;
-  nsresult rv = GetInfoFromURI(aURI, aAppId, aInMozBrowserOnly, &group, &origin,
-                               &isApp);
+  nsresult rv = GetInfoFromPrincipal(aPrincipal, &group, &origin, &isApp);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsRefPtr<GetUsageOp> op =
-    new GetUsageOp(group, origin, isApp, aURI, aCallback, aAppId,
-                   aInMozBrowserOnly);
+    new GetUsageOp(group, origin, isApp, aPrincipal, aCallback);
 
   op->RunImmediately();
 
@@ -3764,15 +3727,12 @@ QuotaManager::Clear()
 }
 
 NS_IMETHODIMP
-QuotaManager::ClearStoragesForURI(nsIURI* aURI,
-                                  uint32_t aAppId,
-                                  bool aInMozBrowserOnly,
-                                  const nsACString& aPersistenceType,
-                                  uint8_t aOptionalArgCount)
+QuotaManager::ClearStoragesForPrincipal(nsIPrincipal* aPrincipal,
+                                        const nsACString& aPersistenceType)
 {
   NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
 
-  NS_ENSURE_ARG_POINTER(aURI);
+  NS_ENSURE_ARG_POINTER(aPrincipal);
 
   Nullable<PersistenceType> persistenceType;
   nsresult rv =
@@ -3784,18 +3744,16 @@ QuotaManager::ClearStoragesForURI(nsIURI* aURI,
   // This only works from the main process.
   NS_ENSURE_TRUE(XRE_IsParentProcess(), NS_ERROR_NOT_AVAILABLE);
 
-  if (!aOptionalArgCount) {
-    aAppId = nsIScriptSecurityManager::NO_APP_ID;
-  }
-
   // Figure out which origin we're dealing with.
   nsCString origin;
-  rv = GetInfoFromURI(aURI, aAppId, aInMozBrowserOnly, nullptr, &origin,
-                      nullptr);
+  rv = GetInfoFromPrincipal(aPrincipal, nullptr, &origin, nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  const mozilla::OriginAttributes& attrs =
+    mozilla::BasePrincipal::Cast(aPrincipal)->OriginAttributesRef();
+
   nsAutoCString pattern;
-  GetOriginPatternString(aAppId, aInMozBrowserOnly, origin, pattern);
+  GetOriginPatternString(attrs.mAppId, attrs.mInBrowser, origin, pattern);
 
   nsRefPtr<OriginClearOp> op =
     new OriginClearOp(persistenceType, OriginScope::FromPattern(pattern));
@@ -4625,24 +4583,20 @@ SaveOriginAccessTimeOp::DoDirectoryWork(QuotaManager* aQuotaManager)
 GetUsageOp::GetUsageOp(const nsACString& aGroup,
                        const nsACString& aOrigin,
                        bool aIsApp,
-                       nsIURI* aURI,
-                       nsIUsageCallback* aCallback,
-                       uint32_t aAppId,
-                       bool aInMozBrowserOnly)
+                       nsIPrincipal* aPrincipal,
+                       nsIUsageCallback* aCallback)
   : NormalOriginOperationBase(Nullable<PersistenceType>(),
                               OriginScope::FromOrigin(aOrigin),
                               /* aExclusive */ false)
   , mGroup(aGroup)
-  , mURI(aURI)
+  , mPrincipal(aPrincipal)
   , mCallback(aCallback)
-  , mAppId(aAppId)
   , mIsApp(aIsApp)
-  , mInMozBrowserOnly(aInMozBrowserOnly)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!aGroup.IsEmpty());
   MOZ_ASSERT(!aOrigin.IsEmpty());
-  MOZ_ASSERT(aURI);
+  MOZ_ASSERT(aPrincipal);
   MOZ_ASSERT(aCallback);
 }
 
@@ -4777,12 +4731,11 @@ GetUsageOp::SendResults()
       mUsageInfo.ResetUsage();
     }
 
-    mCallback->OnUsageResult(mURI, mUsageInfo.TotalUsage(), mUsageInfo.FileUsage(), mAppId,
-                             mInMozBrowserOnly);
+    mCallback->OnUsageResult(mPrincipal, mUsageInfo.TotalUsage(), mUsageInfo.FileUsage());
   }
 
   // Clean up.
-  mURI = nullptr;
+  mPrincipal = nullptr;
   mCallback = nullptr;
 }
 
@@ -5335,10 +5288,9 @@ StorageDirectoryHelper::RunOnMainThread()
           rv = secMan->GetSimpleCodebasePrincipal(uri,
                                                   getter_AddRefs(principal));
         } else {
-          rv = secMan->GetAppCodebasePrincipal(uri,
-                                               originProps.mAppId,
-                                               originProps.mInMozBrowser,
-                                               getter_AddRefs(principal));
+          OriginAttributes attrs(originProps.mAppId, originProps.mInMozBrowser);
+          principal = BasePrincipal::CreateCodebasePrincipal(uri, attrs);
+          rv = principal ? NS_OK : NS_ERROR_FAILURE;
         }
         if (NS_WARN_IF(NS_FAILED(rv))) {
           return rv;

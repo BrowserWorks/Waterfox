@@ -16,6 +16,7 @@
 #ifndef mozilla_dom_system_b2g_audiomanager_h__
 #define mozilla_dom_system_b2g_audiomanager_h__
 
+#include "mozilla/HalTypes.h"
 #include "mozilla/Observer.h"
 #include "nsAutoPtr.h"
 #include "nsIAudioManager.h"
@@ -43,6 +44,7 @@ namespace gonk {
  * (3) Bluetooth : BT SCO/A2DP devices
  **/
 enum AudioOutputProfiles {
+  DEVICE_ERROR        = -1,
   DEVICE_PRIMARY      = 0,
   DEVICE_HEADSET      = 1,
   DEVICE_BLUETOOTH    = 2,
@@ -73,7 +75,7 @@ struct VolumeData {
 };
 
 class RecoverTask;
-class AudioChannelVolInitCallback;
+class VolumeInitCallback;
 class AudioProfileData;
 
 class AudioManager final : public nsIAudioManager
@@ -89,7 +91,7 @@ public:
   // When audio backend is dead, recovery task needs to read all volume
   // settings then set back into audio backend.
   friend class RecoverTask;
-  friend class AudioChannelVolInitCallback;
+  friend class VolumeInitCallback;
 
   // Open or close the specific profile
   void SwitchProfileData(AudioOutputProfiles aProfile, bool aActive);
@@ -97,8 +99,25 @@ public:
   // Validate whether the volume index is within the range
   nsresult ValidateVolumeIndex(uint32_t aCategory, uint32_t aIndex) const;
 
+  // Called when android AudioFlinger in mediaserver is died
+  void HandleAudioFlingerDied();
+
+  void HandleHeadphoneSwitchEvent(const hal::SwitchEvent& aEvent);
+
 protected:
   int32_t mPhoneState;
+
+  // A bitwise variable for recording what kind of headset/headphone is attached.
+  int32_t mHeadsetState;
+
+  bool mSwitchDone;
+
+#if defined(MOZ_B2G_BT) || ANDROID_VERSION >= 17
+  bool mBluetoothA2dpEnabled;
+#endif
+#ifdef MOZ_B2G_BT
+  bool mA2dpSwitchDone;
+#endif
   uint32_t mCurrentStreamVolumeTbl[AUDIO_STREAM_CNT];
 
   nsresult SetStreamVolumeIndex(int32_t aStream, uint32_t aIndex);
@@ -122,7 +141,8 @@ private:
   void CreateAudioProfilesData();
 
   // Init the volume setting from the init setting callback
-  void InitProfilesVolume(uint32_t aCatogory, uint32_t aIndex);
+  void InitProfileVolume(AudioOutputProfiles aProfile,
+                        uint32_t aCatogory, uint32_t aIndex);
 
   // Update volume data of profiles
   void UpdateVolumeToProfile(AudioProfileData* aProfileData);
@@ -142,6 +162,19 @@ private:
   uint32_t GetMaxVolumeByCategory(uint32_t aCategory) const;
 
   AudioProfileData* FindAudioProfileData(AudioOutputProfiles aProfile);
+
+  // Append the profile to the volume setting string.
+  nsAutoCString AppendProfileToVolumeSetting(const char* aName,
+                                             AudioOutputProfiles aProfile);
+
+  // Init volume from the settings database.
+  void InitVolumeFromDatabase();
+
+  // Promise functions.
+  void InitProfileVolumeSucceeded();
+  void InitProfileVolumeFailed(const char* aError);
+
+  void UpdateHeadsetConnectionState(hal::SwitchState aState);
 
   AudioManager();
   ~AudioManager();

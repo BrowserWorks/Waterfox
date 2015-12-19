@@ -13,6 +13,7 @@
 #include "jsscript.h"
 #include "jstypes.h"
 
+#include "builtin/ModuleObject.h"
 #include "frontend/ParseMaps.h"
 #include "frontend/ParseNode.h"
 #include "frontend/TokenStream.h"
@@ -141,8 +142,6 @@ class FunctionContextFlags
     { }
 };
 
-class GlobalSharedContext;
-
 // List of directives that may be encountered in a Directive Prologue (ES5 15.1).
 class Directives
 {
@@ -187,20 +186,47 @@ class SharedContext
     bool localStrict;
     bool extraWarnings;
 
-    // If it's function code, funbox must be non-nullptr and scopeChain must be
-    // nullptr. If it's global code, funbox must be nullptr.
-    SharedContext(ExclusiveContext* cx, Directives directives, bool extraWarnings)
+  private:
+    bool allowNewTarget_;
+    bool allowSuperProperty_;
+    bool inWith_;
+    bool superScopeAlreadyNeedsHomeObject_;
+
+  public:
+    SharedContext(ExclusiveContext* cx, Directives directives,
+                  bool extraWarnings)
       : context(cx),
         anyCxFlags(),
         strictScript(directives.strict()),
         localStrict(false),
-        extraWarnings(extraWarnings)
-    {}
+        extraWarnings(extraWarnings),
+        allowNewTarget_(false),
+        allowSuperProperty_(false),
+        inWith_(false),
+        superScopeAlreadyNeedsHomeObject_(false)
+    { }
 
-    virtual ObjectBox* toObjectBox() = 0;
-    inline bool isFunctionBox() { return toObjectBox() && toObjectBox()->isFunctionBox(); }
+    // The unfortunate reason that staticScope() is a virtual is because
+    // GlobalSharedContext and FunctionBox have different lifetimes.
+    // GlobalSharedContexts are stack allocated and thus may use RootedObject
+    // for the static scope. FunctionBoxes are LifoAlloc'd and need to
+    // manually trace their static scope.
+    virtual JSObject* staticScope() const = 0;
+    void computeAllowSyntax(JSObject* staticScope);
+    void computeInWith(JSObject* staticScope);
+
+    virtual ObjectBox* toObjectBox() { return nullptr; }
+    bool isObjectBox() { return toObjectBox() != nullptr; }
+    bool isFunctionBox() { return isObjectBox() && toObjectBox()->isFunctionBox(); }
     inline FunctionBox* asFunctionBox();
-    inline GlobalSharedContext* asGlobalSharedContext();
+    bool isModuleBox() { return isObjectBox() && toObjectBox()->isModuleBox(); }
+    inline ModuleBox* asModuleBox();
+    bool isGlobalContext() { return !toObjectBox(); }
+
+    bool allowNewTarget()              const { return allowNewTarget_; }
+    bool allowSuperProperty()          const { return allowSuperProperty_; }
+    bool inWith()                      const { return inWith_; }
+    void markSuperScopeNeedsHomeObject();
 
     bool hasExplicitUseStrict()        const { return anyCxFlags.hasExplicitUseStrict; }
     bool bindingsAccessedDynamically() const { return anyCxFlags.bindingsAccessedDynamically; }
@@ -214,7 +240,7 @@ class SharedContext
 
     inline bool allLocalsAliased();
 
-    bool strict() {
+    bool strict() const {
         return strictScript || localStrict;
     }
     bool setLocalStrictMode(bool strict) {
@@ -224,97 +250,37 @@ class SharedContext
     }
 
     // JSOPTION_EXTRA_WARNINGS warnings or strict mode errors.
-    bool needStrictChecks() {
+    bool needStrictChecks() const {
         return strict() || extraWarnings;
     }
 
     bool isDotVariable(JSAtom* atom) const {
         return atom == context->names().dotGenerator || atom == context->names().dotGenRVal;
     }
-
-    enum class AllowedSyntax {
-        NewTarget,
-        SuperProperty
-    };
-    virtual bool allowSyntax(AllowedSyntax allowed) const = 0;
-    virtual bool inWith() const = 0;
-
-  protected:
-    static bool FunctionAllowsSyntax(JSFunction* func, AllowedSyntax allowed)
-    {
-        MOZ_ASSERT(!func->isArrow());
-
-        switch (allowed) {
-          case AllowedSyntax::NewTarget:
-            // Any function supports new.target
-            return true;
-          case AllowedSyntax::SuperProperty:
-            return func->allowSuperProperty();
-          default:;
-        }
-        MOZ_CRASH("Unknown AllowedSyntax query");
-    }
 };
 
-class GlobalSharedContext : public SharedContext
+class MOZ_STACK_CLASS GlobalSharedContext : public SharedContext
 {
-  private:
-    Handle<ScopeObject*> topStaticScope_;
-    bool allowNewTarget_;
-    bool allowSuperProperty_;
-    bool inWith_;
-
-    bool computeAllowSyntax(AllowedSyntax allowed) const {
-        StaticScopeIter<CanGC> it(context, topStaticScope_);
-        for (; !it.done(); it++) {
-            if (it.type() == StaticScopeIter<CanGC>::Function &&
-                !it.fun().isArrow())
-            {
-                return FunctionAllowsSyntax(&it.fun(), allowed);
-            }
-        }
-        return false;
-    }
-
-    bool computeInWith() const {
-        for (StaticScopeIter<CanGC> it(context, topStaticScope_); !it.done(); it++) {
-            if (it.type() == StaticScopeIter<CanGC>::With)
-                return true;
-        }
-        return false;
-    }
+    Rooted<ScopeObject*> staticScope_;
 
   public:
-    GlobalSharedContext(ExclusiveContext* cx,
-                        Directives directives, Handle<ScopeObject*> topStaticScope,
+    GlobalSharedContext(ExclusiveContext* cx, ScopeObject* staticScope, Directives directives,
                         bool extraWarnings)
       : SharedContext(cx, directives, extraWarnings),
-        topStaticScope_(topStaticScope),
-        allowNewTarget_(computeAllowSyntax(AllowedSyntax::NewTarget)),
-        allowSuperProperty_(computeAllowSyntax(AllowedSyntax::SuperProperty)),
-        inWith_(computeInWith())
-    {}
-
-    ObjectBox* toObjectBox() override { return nullptr; }
-    HandleObject topStaticScope() const { return topStaticScope_; }
-    bool allowSyntax(AllowedSyntax allowSyntax) const override {
-        switch (allowSyntax) {
-          case AllowedSyntax::NewTarget:
-            // Any function supports new.target
-            return allowNewTarget_;
-          case AllowedSyntax::SuperProperty:
-            return allowSuperProperty_;
-          default:;
-        }
-        MOZ_CRASH("Unknown AllowedSyntax query");
+        staticScope_(cx, staticScope)
+    {
+        computeAllowSyntax(staticScope);
+        computeInWith(staticScope);
     }
-    bool inWith() const override { return inWith_; }
+
+    JSObject* staticScope() const override { return staticScope_; }
 };
 
 class FunctionBox : public ObjectBox, public SharedContext
 {
   public:
     Bindings        bindings;               /* bindings for this function */
+    JSObject*       enclosingStaticScope_;
     uint32_t        bufStart;
     uint32_t        bufEnd;
     uint32_t        startLine;
@@ -322,11 +288,11 @@ class FunctionBox : public ObjectBox, public SharedContext
     uint16_t        length;
 
     uint8_t         generatorKindBits_;     /* The GeneratorKind of this function. */
-    bool            inWith_:1;              /* some enclosing scope is a with-statement */
     bool            inGenexpLambda:1;       /* lambda from generator expression */
     bool            hasDestructuringArgs:1; /* arguments list contains destructuring expression */
     bool            useAsm:1;               /* see useAsmOrInsideUseAsm */
     bool            insideUseAsm:1;         /* see useAsmOrInsideUseAsm */
+    bool            wasEmitted:1;           /* Bytecode has been emitted for this function. */
 
     // Fields for use in heuristics.
     bool            usesArguments:1;  /* contains a free use of 'arguments' */
@@ -337,16 +303,19 @@ class FunctionBox : public ObjectBox, public SharedContext
 
     template <typename ParseHandler>
     FunctionBox(ExclusiveContext* cx, ObjectBox* traceListHead, JSFunction* fun,
-                ParseContext<ParseHandler>* pc, Directives directives,
-                bool extraWarnings, GeneratorKind generatorKind);
+                JSObject* enclosingStaticScope, ParseContext<ParseHandler>* pc,
+                Directives directives, bool extraWarnings, GeneratorKind generatorKind);
 
     ObjectBox* toObjectBox() override { return this; }
     JSFunction* function() const { return &object->as<JSFunction>(); }
+    JSObject* staticScope() const override { return function(); }
+    JSObject* enclosingStaticScope() const { return enclosingStaticScope_; }
 
     GeneratorKind generatorKind() const { return GeneratorKindFromBits(generatorKindBits_); }
     bool isGenerator() const { return generatorKind() != NotGenerator; }
     bool isLegacyGenerator() const { return generatorKind() == LegacyGenerator; }
     bool isStarGenerator() const { return generatorKind() == StarGenerator; }
+    bool isArrow() const { return function()->isArrow(); }
 
     void setGeneratorKind(GeneratorKind kind) {
         // A generator kind can be set at initialization, or when "yield" is
@@ -379,6 +348,10 @@ class FunctionBox : public ObjectBox, public SharedContext
         return length != function()->nargs() - function()->hasRest();
     }
 
+    bool hasMappedArgsObj() const {
+        return !strict() && !function()->hasRest() && !hasDefaults() && !hasDestructuringArgs;
+    }
+
     // Return whether this or an enclosing function is being parsed and
     // validated as asm.js. Note: if asm.js validation fails, this will be false
     // while the function is being reparsed. This flag can be used to disable
@@ -394,23 +367,30 @@ class FunctionBox : public ObjectBox, public SharedContext
         startColumn = tokenStream.getColumn();
     }
 
-    bool isHeavyweight()
+    bool needsCallObject()
     {
-        // Note: this should be kept in sync with JSFunction::isHeavyweight().
+        // Note: this should be kept in sync with JSFunction::needsCallObject().
         return bindings.hasAnyAliasedBindings() ||
                hasExtensibleScope() ||
                needsDeclEnvObject() ||
                needsHomeObject()    ||
                isGenerator();
     }
+};
 
-    bool allowSyntax(AllowedSyntax allowed) const override {
-        return FunctionAllowsSyntax(function(), allowed);
-    }
+class ModuleBox : public ObjectBox, public SharedContext
+{
+  public:
+    Bindings bindings;
+    TraceableVector<JSAtom*> exportNames;
 
-    bool inWith() const override {
-        return inWith_;
-    }
+    template <typename ParseHandler>
+    ModuleBox(ExclusiveContext* cx, ObjectBox* traceListHead, ModuleObject* module,
+              ParseContext<ParseHandler>* pc);
+
+    ObjectBox* toObjectBox() override { return this; }
+    ModuleObject* module() const { return &object->as<ModuleObject>(); }
+    JSObject* staticScope() const override { return module(); }
 };
 
 inline FunctionBox*
@@ -420,11 +400,11 @@ SharedContext::asFunctionBox()
     return static_cast<FunctionBox*>(this);
 }
 
-inline GlobalSharedContext*
-SharedContext::asGlobalSharedContext()
+inline ModuleBox*
+SharedContext::asModuleBox()
 {
-    MOZ_ASSERT(!isFunctionBox());
-    return static_cast<GlobalSharedContext*>(this);
+    MOZ_ASSERT(isModuleBox());
+    return static_cast<ModuleBox*>(this);
 }
 
 

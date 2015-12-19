@@ -13,6 +13,7 @@
 #include "FFmpegLog.h"
 #include "FFmpegDataDecoder.h"
 #include "prsystem.h"
+#include "FFmpegDecoderModule.h"
 
 namespace mozilla
 {
@@ -21,12 +22,17 @@ bool FFmpegDataDecoder<LIBAV_VER>::sFFmpegInitDone = false;
 StaticMutex FFmpegDataDecoder<LIBAV_VER>::sMonitor;
 
 FFmpegDataDecoder<LIBAV_VER>::FFmpegDataDecoder(FlushableTaskQueue* aTaskQueue,
+                                                MediaDataDecoderCallback* aCallback,
                                                 AVCodecID aCodecID)
   : mTaskQueue(aTaskQueue)
+  , mCallback(aCallback)
   , mCodecContext(nullptr)
   , mFrame(NULL)
   , mExtraData(nullptr)
   , mCodecID(aCodecID)
+  , mMonitor("FFMpegaDataDecoder")
+  , mIsFlushing(false)
+  , mCodecParser(nullptr)
 {
   MOZ_COUNT_CTOR(FFmpegDataDecoder);
 }
@@ -34,6 +40,10 @@ FFmpegDataDecoder<LIBAV_VER>::FFmpegDataDecoder(FlushableTaskQueue* aTaskQueue,
 FFmpegDataDecoder<LIBAV_VER>::~FFmpegDataDecoder()
 {
   MOZ_COUNT_DTOR(FFmpegDataDecoder);
+  if (mCodecParser) {
+    av_parser_close(mCodecParser);
+    mCodecParser = nullptr;
+  }
 }
 
 /**
@@ -58,25 +68,17 @@ ChoosePixelFormat(AVCodecContext* aCodecContext, const PixelFormat* aFormats)
 }
 
 nsresult
-FFmpegDataDecoder<LIBAV_VER>::Init()
+FFmpegDataDecoder<LIBAV_VER>::InitDecoder()
 {
-  StaticMutexAutoLock mon(sMonitor);
-
   FFMPEG_LOG("Initialising FFmpeg decoder.");
 
-  if (!sFFmpegInitDone) {
-    av_register_all();
-#ifdef DEBUG
-    av_log_set_level(AV_LOG_DEBUG);
-#endif
-    sFFmpegInitDone = true;
-  }
-
-  AVCodec* codec = avcodec_find_decoder(mCodecID);
+  AVCodec* codec = FindAVCodec(mCodecID);
   if (!codec) {
     NS_WARNING("Couldn't find ffmpeg decoder");
     return NS_ERROR_FAILURE;
   }
+
+  StaticMutexAutoLock mon(sMonitor);
 
   if (!(mCodecContext = avcodec_alloc_context3(codec))) {
     NS_WARNING("Couldn't init ffmpeg context");
@@ -86,7 +88,11 @@ FFmpegDataDecoder<LIBAV_VER>::Init()
   mCodecContext->opaque = this;
 
   // FFmpeg takes this as a suggestion for what format to use for audio samples.
-  mCodecContext->request_sample_fmt = AV_SAMPLE_FMT_FLT;
+  uint32_t major, minor;
+  FFmpegDecoderModule<LIBAV_VER>::GetVersion(major, minor);
+  // LibAV 0.8 produces rubbish float interlaved samples, request 16 bits audio.
+  mCodecContext->request_sample_fmt = major == 53 && minor <= 34 ?
+    AV_SAMPLE_FMT_S16 : AV_SAMPLE_FMT_FLT;
 
   // FFmpeg will call back to this to negotiate a video pixel format.
   mCodecContext->get_format = ChoosePixelFormat;
@@ -123,24 +129,72 @@ FFmpegDataDecoder<LIBAV_VER>::Init()
     return NS_ERROR_FAILURE;
   }
 
-  FFMPEG_LOG("FFmpeg init successful.");
-  return NS_OK;
-}
+  mCodecParser = av_parser_init(mCodecID);
+  if (mCodecParser) {
+    mCodecParser->flags |= PARSER_FLAG_COMPLETE_FRAMES;
+  }
 
-nsresult
-FFmpegDataDecoder<LIBAV_VER>::Flush()
-{
-  mTaskQueue->Flush();
-  avcodec_flush_buffers(mCodecContext);
+  FFMPEG_LOG("FFmpeg init successful.");
   return NS_OK;
 }
 
 nsresult
 FFmpegDataDecoder<LIBAV_VER>::Shutdown()
 {
+  if (mTaskQueue) {
+    nsCOMPtr<nsIRunnable> runnable =
+      NS_NewRunnableMethod(this, &FFmpegDataDecoder<LIBAV_VER>::ProcessShutdown);
+    mTaskQueue->Dispatch(runnable.forget());
+  } else {
+    ProcessShutdown();
+  }
+  return NS_OK;
+}
+
+nsresult
+FFmpegDataDecoder<LIBAV_VER>::Flush()
+{
+  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
+  mIsFlushing = true;
+  mTaskQueue->Flush();
+  nsCOMPtr<nsIRunnable> runnable =
+    NS_NewRunnableMethod(this, &FFmpegDataDecoder<LIBAV_VER>::ProcessFlush);
+  MonitorAutoLock mon(mMonitor);
+  mTaskQueue->Dispatch(runnable.forget());
+  while (mIsFlushing) {
+    mon.Wait();
+  }
+  return NS_OK;
+}
+
+nsresult
+FFmpegDataDecoder<LIBAV_VER>::Drain()
+{
+  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
+  nsCOMPtr<nsIRunnable> runnable =
+    NS_NewRunnableMethod(this, &FFmpegDataDecoder<LIBAV_VER>::ProcessDrain);
+  mTaskQueue->Dispatch(runnable.forget());
+  return NS_OK;
+}
+
+void
+FFmpegDataDecoder<LIBAV_VER>::ProcessFlush()
+{
+  MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
+  if (mCodecContext) {
+    avcodec_flush_buffers(mCodecContext);
+  }
+  MonitorAutoLock mon(mMonitor);
+  mIsFlushing = false;
+  mon.NotifyAll();
+}
+
+void
+FFmpegDataDecoder<LIBAV_VER>::ProcessShutdown()
+{
   StaticMutexAutoLock mon(sMonitor);
 
-  if (sFFmpegInitDone) {
+  if (sFFmpegInitDone && mCodecContext) {
     avcodec_close(mCodecContext);
     av_freep(&mCodecContext);
 #if LIBAVCODEC_VERSION_MAJOR >= 55
@@ -152,12 +206,12 @@ FFmpegDataDecoder<LIBAV_VER>::Shutdown()
     mFrame = nullptr;
 #endif
   }
-  return NS_OK;
 }
 
 AVFrame*
 FFmpegDataDecoder<LIBAV_VER>::PrepareFrame()
 {
+  MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
 #if LIBAVCODEC_VERSION_MAJOR >= 55
   if (mFrame) {
     av_frame_unref(mFrame);
@@ -178,4 +232,18 @@ FFmpegDataDecoder<LIBAV_VER>::PrepareFrame()
   return mFrame;
 }
 
+/* static */ AVCodec*
+FFmpegDataDecoder<LIBAV_VER>::FindAVCodec(AVCodecID aCodec)
+{
+  StaticMutexAutoLock mon(sMonitor);
+  if (!sFFmpegInitDone) {
+    avcodec_register_all();
+#ifdef DEBUG
+    av_log_set_level(AV_LOG_DEBUG);
+#endif
+    sFFmpegInitDone = true;
+  }
+  return avcodec_find_decoder(aCodec);
+}
+  
 } // namespace mozilla

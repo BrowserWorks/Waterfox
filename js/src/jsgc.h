@@ -1200,7 +1200,7 @@ Forwarded(T* t)
 
 struct ForwardedFunctor : public IdentityDefaultAdaptor<Value> {
     template <typename T> inline Value operator()(T* t) {
-        return js::gc::RewrapValueOrId<Value, T*>::wrap(Forwarded(t));
+        return js::gc::RewrapTaggedPointer<Value, T*>::wrap(Forwarded(t));
     }
 };
 
@@ -1227,6 +1227,13 @@ CheckGCThingAfterMovingGC(T* t)
         MOZ_RELEASE_ASSERT(!IsInsideNursery(t));
         MOZ_RELEASE_ASSERT(!RelocationOverlay::isCellForwarded(t));
     }
+}
+
+template <typename T>
+inline void
+CheckGCThingAfterMovingGC(const ReadBarriered<T*>& t)
+{
+    CheckGCThingAfterMovingGC(t.get());
 }
 
 struct CheckValueAfterMovingGCFunctor : public VoidDefaultAdaptor<Value> {
@@ -1290,7 +1297,7 @@ MaybeVerifyBarriers(JSContext* cx, bool always = false)
  * read the comment in vm/Runtime.h above |suppressGC| and take all appropriate
  * precautions before instantiating this class.
  */
-class AutoSuppressGC
+class MOZ_RAII AutoSuppressGC
 {
     int32_t& suppressGC_;
 
@@ -1307,7 +1314,7 @@ class AutoSuppressGC
 
 #ifdef DEBUG
 /* Disable OOM testing in sections which are not OOM safe. */
-class AutoEnterOOMUnsafeRegion
+class MOZ_RAII AutoEnterOOMUnsafeRegion
 {
     bool oomEnabled_;
     int64_t oomAfter_;
@@ -1329,7 +1336,7 @@ class AutoEnterOOMUnsafeRegion
     }
 };
 #else
-class AutoEnterOOMUnsafeRegion {};
+class MOZ_RAII AutoEnterOOMUnsafeRegion {};
 #endif /* DEBUG */
 
 // A singly linked list of zones.
@@ -1367,24 +1374,22 @@ NewMemoryStatisticsObject(JSContext* cx);
 
 #ifdef DEBUG
 /* Use this to avoid assertions when manipulating the wrapper map. */
-class AutoDisableProxyCheck
+class MOZ_RAII AutoDisableProxyCheck
 {
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER;
     gc::GCRuntime& gc;
 
   public:
-    explicit AutoDisableProxyCheck(JSRuntime* rt
-                                   MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+    explicit AutoDisableProxyCheck(JSRuntime* rt);
     ~AutoDisableProxyCheck();
 };
 #else
-struct AutoDisableProxyCheck
+struct MOZ_RAII AutoDisableProxyCheck
 {
     explicit AutoDisableProxyCheck(JSRuntime* rt) {}
 };
 #endif
 
-struct AutoDisableCompactingGC
+struct MOZ_RAII AutoDisableCompactingGC
 {
     explicit AutoDisableCompactingGC(JSRuntime* rt);
     ~AutoDisableCompactingGC();

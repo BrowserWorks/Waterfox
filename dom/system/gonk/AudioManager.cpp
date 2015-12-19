@@ -31,6 +31,7 @@
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/ClearOnShutdown.h"
+#include "mozilla/MozPromise.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "base/message_loop.h"
 
@@ -64,8 +65,6 @@ using namespace mozilla::dom::bluetooth;
 #define AUDIO_POLICY_SERVICE_NAME     "media.audio_policy"
 #define SETTINGS_SERVICE              "@mozilla.org/settingsService;1"
 
-static void BinderDeadCallback(status_t aErr);
-static void InternalSetAudioRoutes(SwitchState aState);
 // Refer AudioService.java from Android
 static const uint32_t sMaxStreamVolumeTbl[AUDIO_STREAM_CNT] = {
   5,   // voice call
@@ -80,26 +79,52 @@ static const uint32_t sMaxStreamVolumeTbl[AUDIO_STREAM_CNT] = {
   15,  // TTS
   15,  // FM
 };
-// A bitwise variable for recording what kind of headset is attached.
-static int sHeadsetState;
-#if defined(MOZ_B2G_BT) || ANDROID_VERSION >= 17
-static bool sBluetoothA2dpEnabled;
-#endif
+
+// Use a half value of each volume category as the default volume.
+static const uint32_t sDefaultVolumeCategoriesTbl[VOLUME_TOTAL_NUMBER] = {
+  8, // VOLUME_MEDIA
+  8, // VOLUME_NOTIFICATION
+  8, // VOLUME_ALARM
+  3, // VOLUME_TELEPHONY
+  8, // VOLUME_BLUETOOTH_SCO
+};
+
+// Mappings AudioOutputProfiles to strings.
+static const nsAttrValue::EnumTable kAudioOutputProfilesTable[] = {
+  { "primary",   DEVICE_PRIMARY },
+  { "headset",   DEVICE_HEADSET },
+  { "bluetooth", DEVICE_BLUETOOTH },
+  { nullptr }
+};
+
 static const int kBtSampleRate = 8000;
-static bool sSwitchDone = true;
-#ifdef MOZ_B2G_BT
-static bool sA2dpSwitchDone = true;
-#endif
+
+typedef MozPromise<bool, const char*, true> VolumeInitPromise;
 
 namespace mozilla {
 namespace dom {
 namespace gonk {
+
 static const VolumeData gVolumeData[VOLUME_TOTAL_NUMBER] = {
   {"audio.volume.content",      VOLUME_MEDIA},
   {"audio.volume.notification", VOLUME_NOTIFICATION},
   {"audio.volume.alarm",        VOLUME_ALARM},
   {"audio.volume.telephony",    VOLUME_TELEPHONY},
   {"audio.volume.bt_sco",       VOLUME_BLUETOOTH_SCO}
+};
+
+class RunnableCallTask : public Task
+{
+public:
+  explicit RunnableCallTask(nsIRunnable* aRunnable)
+    : mRunnable(aRunnable) {}
+
+  void Run() override
+  {
+    mRunnable->Run();
+  }
+protected:
+  nsCOMPtr<nsIRunnable> mRunnable;
 };
 
 class AudioProfileData final
@@ -135,178 +160,180 @@ private:
   bool mActive;
 };
 
-class RecoverTask : public nsRunnable
+void
+AudioManager::HandleAudioFlingerDied()
 {
-public:
-  RecoverTask() {}
-  NS_IMETHODIMP Run() {
-    nsCOMPtr<nsIAudioManager> amService = do_GetService(NS_AUDIOMANAGER_CONTRACTID);
-    NS_ENSURE_TRUE(amService, NS_OK);
-    AudioManager *am = static_cast<AudioManager *>(amService.get());
-
-    uint32_t attempt;
-    for (attempt = 0; attempt < 50; attempt++) {
-      if (defaultServiceManager()->checkService(String16(AUDIO_POLICY_SERVICE_NAME)) != 0) {
-        break;
-      }
-
-      LOG("AudioPolicyService is dead! attempt=%d", attempt);
-      usleep(1000 * 200);
+  uint32_t attempt;
+  for (attempt = 0; attempt < 50; attempt++) {
+    if (defaultServiceManager()->checkService(String16(AUDIO_POLICY_SERVICE_NAME)) != 0) {
+      break;
     }
 
-    MOZ_RELEASE_ASSERT(attempt < 50);
+    LOG("AudioPolicyService is dead! attempt=%d", attempt);
+    usleep(1000 * 200);
+  }
 
-    for (uint32_t loop = 0; loop < AUDIO_STREAM_CNT; ++loop) {
-      AudioSystem::initStreamVolume(static_cast<audio_stream_type_t>(loop), 0,
-                                   sMaxStreamVolumeTbl[loop]);
-      uint32_t index;
-      am->GetStreamVolumeIndex(loop, &index);
-      am->SetStreamVolumeIndex(loop, index);
-    }
+  MOZ_RELEASE_ASSERT(attempt < 50);
 
-    if (sHeadsetState & AUDIO_DEVICE_OUT_WIRED_HEADSET)
-      InternalSetAudioRoutes(SWITCH_STATE_HEADSET);
-    else if (sHeadsetState & AUDIO_DEVICE_OUT_WIRED_HEADPHONE)
-      InternalSetAudioRoutes(SWITCH_STATE_HEADPHONE);
-    else
-      InternalSetAudioRoutes(SWITCH_STATE_OFF);
+  for (uint32_t loop = 0; loop < AUDIO_STREAM_CNT; ++loop) {
+    AudioSystem::initStreamVolume(static_cast<audio_stream_type_t>(loop),
+                                  0,
+                                  sMaxStreamVolumeTbl[loop]);
+    uint32_t index;
+    GetStreamVolumeIndex(loop, &index);
+    SetStreamVolumeIndex(loop, index);
+  }
 
-    int32_t phoneState = nsIAudioManager::PHONE_STATE_INVALID;
-    am->GetPhoneState(&phoneState);
+  if (mHeadsetState & AUDIO_DEVICE_OUT_WIRED_HEADSET) {
+    UpdateHeadsetConnectionState(SWITCH_STATE_HEADSET);
+  } else if (mHeadsetState & AUDIO_DEVICE_OUT_WIRED_HEADPHONE) {
+    UpdateHeadsetConnectionState(SWITCH_STATE_HEADPHONE);
+  } else {
+    UpdateHeadsetConnectionState(SWITCH_STATE_OFF);
+  }
+
+  int32_t phoneState = nsIAudioManager::PHONE_STATE_INVALID;
+  GetPhoneState(&phoneState);
 #if ANDROID_VERSION < 17
-    AudioSystem::setPhoneState(phoneState);
+  AudioSystem::setPhoneState(phoneState);
 #else
-    AudioSystem::setPhoneState(static_cast<audio_mode_t>(phoneState));
+  AudioSystem::setPhoneState(static_cast<audio_mode_t>(phoneState));
 #endif
 
-    AudioSystem::get_audio_flinger();
-    return NS_OK;
-  }
-};
+  AudioSystem::get_audio_flinger();
+}
 
-class AudioChannelVolInitCallback final : public nsISettingsServiceCallback
+class VolumeInitCallback final : public nsISettingsServiceCallback
 {
 public:
   NS_DECL_ISUPPORTS
 
-  AudioChannelVolInitCallback() {}
+  VolumeInitCallback()
+    : mInitCounter(0)
+  {
+    mPromise = mPromiseHolder.Ensure(__func__);
+  }
+
+  nsRefPtr<VolumeInitPromise> GetPromise() const
+  {
+    return mPromise;
+  }
 
   NS_IMETHOD Handle(const nsAString& aName, JS::Handle<JS::Value> aResult)
   {
-    NS_ENSURE_TRUE(aResult.isInt32(), NS_OK);
     nsRefPtr<AudioManager> audioManager = AudioManager::GetInstance();
     MOZ_ASSERT(audioManager);
-    uint32_t volIndex = aResult.toInt32();
     for (uint32_t idx = 0; idx < VOLUME_TOTAL_NUMBER; ++idx) {
-      if (aName.EqualsASCII(gVolumeData[idx].mChannelName)) {
+      NS_ConvertASCIItoUTF16 volumeType(gVolumeData[idx].mChannelName);
+      if (StringBeginsWith(aName, volumeType)) {
+        AudioOutputProfiles profile = GetProfileFromSettingName(aName);
+        MOZ_ASSERT(profile != DEVICE_ERROR);
+
         uint32_t category = gVolumeData[idx].mCategory;
+        uint32_t volIndex = aResult.isInt32() ?
+                  aResult.toInt32() : sDefaultVolumeCategoriesTbl[category];
         nsresult rv = audioManager->ValidateVolumeIndex(category, volIndex);
         if (NS_WARN_IF(NS_FAILED(rv))) {
+          mPromiseHolder.Reject("Error : invalid volume index.", __func__);
           return rv;
         }
-        audioManager->InitProfilesVolume(gVolumeData[idx].mCategory, volIndex);
+
+        audioManager->InitProfileVolume(profile, category, volIndex);
+        if (++mInitCounter == DEVICE_TOTAL_NUMBER * VOLUME_TOTAL_NUMBER) {
+          mPromiseHolder.Resolve(true, __func__);
+        }
         return NS_OK;
       }
     }
-    NS_WARNING("unexpected event name for initializing volume control");
+    mPromiseHolder.Reject("Error : unexpected audio init event.", __func__);
     return NS_OK;
   }
 
   NS_IMETHOD HandleError(const nsAString& aName)
   {
-    LOG("AudioChannelVolInitCallback::HandleError: %s\n",
-      NS_ConvertUTF16toUTF8(aName).get());
+    mPromiseHolder.Reject(NS_ConvertUTF16toUTF8(aName).get(), __func__);
     return NS_OK;
   }
 
 protected:
-  ~AudioChannelVolInitCallback() {}
+  ~VolumeInitCallback() {}
+
+  AudioOutputProfiles GetProfileFromSettingName(const nsAString& aName) const
+  {
+    for (uint32_t idx = 0; kAudioOutputProfilesTable[idx].tag; ++idx) {
+      NS_ConvertASCIItoUTF16 profile(kAudioOutputProfilesTable[idx].tag);
+      if (StringEndsWith(aName, profile)) {
+        return static_cast<AudioOutputProfiles>(kAudioOutputProfilesTable[idx].value);
+      }
+    }
+    return DEVICE_ERROR;
+  }
+
+  nsRefPtr<VolumeInitPromise> mPromise;
+  MozPromiseHolder<VolumeInitPromise> mPromiseHolder;
+  uint32_t mInitCounter;
 };
 
-NS_IMPL_ISUPPORTS(AudioChannelVolInitCallback, nsISettingsServiceCallback)
-} /* namespace gonk */
-} /* namespace dom */
-} /* namespace mozilla */
+NS_IMPL_ISUPPORTS(VolumeInitCallback, nsISettingsServiceCallback)
 
 static void
 BinderDeadCallback(status_t aErr)
 {
-  if (aErr == DEAD_OBJECT) {
-    NS_DispatchToMainThread(new RecoverTask());
+  if (aErr != DEAD_OBJECT) {
+    return;
   }
+
+  nsCOMPtr<nsIRunnable> runnable =
+    NS_NewRunnableFunction([]() {
+      MOZ_ASSERT(NS_IsMainThread());
+      nsRefPtr<AudioManager> audioManager = AudioManager::GetInstance();
+      NS_ENSURE_TRUE(audioManager.get(), );
+      audioManager->HandleAudioFlingerDied();
+    });
+
+  NS_DispatchToMainThread(runnable);
 }
 
 static bool
 IsDeviceOn(audio_devices_t device)
 {
-  if (static_cast<
-      audio_policy_dev_state_t (*) (audio_devices_t, const char *)
-      >(AudioSystem::getDeviceConnectionState))
-    return AudioSystem::getDeviceConnectionState(device, "") ==
+#if ANDROID_VERSION >= 15
+  return AudioSystem::getDeviceConnectionState(device, "") ==
            AUDIO_POLICY_DEVICE_STATE_AVAILABLE;
-
+#else
   return false;
-}
-
-static void ProcessDelayedAudioRoute(SwitchState aState)
-{
-  if (sSwitchDone)
-    return;
-  InternalSetAudioRoutes(aState);
-  sSwitchDone = true;
-}
-
-#ifdef MOZ_B2G_BT
-static void ProcessDelayedA2dpRoute(audio_policy_dev_state_t aState, const nsCString aAddress)
-{
-  if (sA2dpSwitchDone)
-    return;
-  AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_OUT_BLUETOOTH_A2DP,
-                                        aState, aAddress.get());
-  String8 cmd("bluetooth_enabled=false");
-  AudioSystem::setParameters(0, cmd);
-  cmd.setTo("A2dpSuspended=true");
-  AudioSystem::setParameters(0, cmd);
-  sA2dpSwitchDone = true;
-}
 #endif
+}
 
 NS_IMPL_ISUPPORTS(AudioManager, nsIAudioManager, nsIObserver)
 
-static void
-InternalSetAudioRoutesICS(SwitchState aState)
+void
+AudioManager::UpdateHeadsetConnectionState(hal::SwitchState aState)
 {
+#if ANDROID_VERSION >= 15
   if (aState == SWITCH_STATE_HEADSET) {
     AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_OUT_WIRED_HEADSET,
                                           AUDIO_POLICY_DEVICE_STATE_AVAILABLE, "");
-    sHeadsetState |= AUDIO_DEVICE_OUT_WIRED_HEADSET;
+    mHeadsetState |= AUDIO_DEVICE_OUT_WIRED_HEADSET;
   } else if (aState == SWITCH_STATE_HEADPHONE) {
     AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_OUT_WIRED_HEADPHONE,
                                           AUDIO_POLICY_DEVICE_STATE_AVAILABLE, "");
-    sHeadsetState |= AUDIO_DEVICE_OUT_WIRED_HEADPHONE;
+    mHeadsetState |= AUDIO_DEVICE_OUT_WIRED_HEADPHONE;
   } else if (aState == SWITCH_STATE_OFF) {
-    if (sHeadsetState & AUDIO_DEVICE_OUT_WIRED_HEADSET) {
+    if (mHeadsetState & AUDIO_DEVICE_OUT_WIRED_HEADSET) {
       AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_OUT_WIRED_HEADSET,
                                             AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE, "");
     }
-    if (sHeadsetState & AUDIO_DEVICE_OUT_WIRED_HEADPHONE) {
+    if (mHeadsetState & AUDIO_DEVICE_OUT_WIRED_HEADPHONE) {
       AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_OUT_WIRED_HEADPHONE,
                                             AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE, "");
     }
-    sHeadsetState = 0;
+    mHeadsetState = 0;
   }
-}
 
-static void
-InternalSetAudioRoutes(SwitchState aState)
-{
-  if (static_cast<
-    status_t (*)(audio_devices_t, audio_policy_dev_state_t, const char*)
-    >(AudioSystem::setDeviceConnectionState)) {
-    InternalSetAudioRoutesICS(aState);
-  } else {
-    NS_NOTREACHED("Doesn't support audio routing on GB version");
-  }
+#else
+  NS_NOTREACHED("Doesn't support audio routing on GB version");
+#endif
 }
 
 void
@@ -346,10 +373,26 @@ AudioManager::HandleBluetoothStatusChanged(nsISupports* aSubject,
       SwitchProfileData(DEVICE_BLUETOOTH, false);
     }
   } else if (!strcmp(aTopic, BLUETOOTH_A2DP_STATUS_CHANGED_ID)) {
-    if (audioState == AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE && sA2dpSwitchDone) {
+    if (audioState == AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE && mA2dpSwitchDone) {
+      nsRefPtr<AudioManager> self = this;
+      nsCOMPtr<nsIRunnable> runnable =
+        NS_NewRunnableFunction([self, audioState, aAddress]() {
+          if (self->mA2dpSwitchDone) {
+            return;
+          }
+          AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_OUT_BLUETOOTH_A2DP,
+                                                audioState,
+                                                aAddress.get());
+          String8 cmd("bluetooth_enabled=false");
+          AudioSystem::setParameters(0, cmd);
+          cmd.setTo("A2dpSuspended=true");
+          AudioSystem::setParameters(0, cmd);
+          self->mA2dpSwitchDone = true;
+        });
       MessageLoop::current()->PostDelayedTask(
-        FROM_HERE, NewRunnableFunction(&ProcessDelayedA2dpRoute, audioState, aAddress), 1000);
-      sA2dpSwitchDone = false;
+        FROM_HERE, new RunnableCallTask(runnable), 1000);
+
+      mA2dpSwitchDone = false;
       SwitchProfileData(DEVICE_BLUETOOTH, false);
     } else {
       AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_OUT_BLUETOOTH_A2DP,
@@ -358,7 +401,7 @@ AudioManager::HandleBluetoothStatusChanged(nsISupports* aSubject,
       AudioSystem::setParameters(0, cmd);
       cmd.setTo("A2dpSuspended=false");
       AudioSystem::setParameters(0, cmd);
-      sA2dpSwitchDone = true;
+      mA2dpSwitchDone = true;
       SwitchProfileData(DEVICE_BLUETOOTH, true);
 #if ANDROID_VERSION >= 17
       if (AudioSystem::getForceUse(AUDIO_POLICY_FORCE_FOR_MEDIA) == AUDIO_POLICY_FORCE_NO_BT_A2DP) {
@@ -366,12 +409,23 @@ AudioManager::HandleBluetoothStatusChanged(nsISupports* aSubject,
       }
 #endif
     }
-    sBluetoothA2dpEnabled = audioState == AUDIO_POLICY_DEVICE_STATE_AVAILABLE;
+    mBluetoothA2dpEnabled = audioState == AUDIO_POLICY_DEVICE_STATE_AVAILABLE;
   } else if (!strcmp(aTopic, BLUETOOTH_HFP_STATUS_CHANGED_ID)) {
     AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET,
                                           audioState, aAddress.get());
     AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET,
                                           audioState, aAddress.get());
+  } else if (!strcmp(aTopic, BLUETOOTH_HFP_NREC_STATUS_CHANGED_ID)) {
+      String8 cmd;
+      BluetoothHfpManagerBase* hfp =
+          static_cast<BluetoothHfpManagerBase*>(aSubject);
+      if (hfp->IsNrecEnabled()) {
+          cmd.setTo("bt_headset_name=<unknown>;bt_headset_nrec=on");
+          AudioSystem::setParameters(0, cmd);
+      } else {
+          cmd.setTo("bt_headset_name=<unknown>;bt_headset_nrec=off");
+          AudioSystem::setParameters(0, cmd);
+      }
   }
 #endif
 }
@@ -409,6 +463,7 @@ AudioManager::Observe(nsISupports* aSubject,
 {
   if ((strcmp(aTopic, BLUETOOTH_SCO_STATUS_CHANGED_ID) == 0) ||
       (strcmp(aTopic, BLUETOOTH_HFP_STATUS_CHANGED_ID) == 0) ||
+      (strcmp(aTopic, BLUETOOTH_HFP_NREC_STATUS_CHANGED_ID) == 0) ||
       (strcmp(aTopic, BLUETOOTH_A2DP_STATUS_CHANGED_ID) == 0)) {
     nsCString address = NS_ConvertUTF16toUTF8(nsDependentString(aData));
     if (address.IsEmpty()) {
@@ -472,46 +527,68 @@ NotifyHeadphonesStatus(SwitchState aState)
 class HeadphoneSwitchObserver : public SwitchObserver
 {
 public:
-  HeadphoneSwitchObserver(AudioManager* aAudioManager)
-  : mAudioManager(aAudioManager) { }
-  void Notify(const SwitchEvent& aEvent) {
-    NotifyHeadphonesStatus(aEvent.status());
-    // When user pulled out the headset, a delay of routing here can avoid the leakage of audio from speaker.
-    if (aEvent.status() == SWITCH_STATE_OFF && sSwitchDone) {
-      MessageLoop::current()->PostDelayedTask(
-        FROM_HERE, NewRunnableFunction(&ProcessDelayedAudioRoute, SWITCH_STATE_OFF), 1000);
-      mAudioManager->SwitchProfileData(DEVICE_HEADSET, false);
-      sSwitchDone = false;
-    } else if (aEvent.status() != SWITCH_STATE_OFF) {
-      InternalSetAudioRoutes(aEvent.status());
-      mAudioManager->SwitchProfileData(DEVICE_HEADSET, true);
-      sSwitchDone = true;
-    }
-    // Handle the coexistence of a2dp / headset device, latest one wins.
-#if ANDROID_VERSION >= 17
-    int32_t forceUse = 0;
-    mAudioManager->GetForceForUse(AUDIO_POLICY_FORCE_FOR_MEDIA, &forceUse);
-    if (aEvent.status() != SWITCH_STATE_OFF && sBluetoothA2dpEnabled) {
-      mAudioManager->SetForceForUse(AUDIO_POLICY_FORCE_FOR_MEDIA, AUDIO_POLICY_FORCE_NO_BT_A2DP);
-    } else if (forceUse == AUDIO_POLICY_FORCE_NO_BT_A2DP) {
-      mAudioManager->SetForceForUse(AUDIO_POLICY_FORCE_FOR_MEDIA, AUDIO_POLICY_FORCE_NONE);
-    }
-#endif
+  void Notify(const hal::SwitchEvent& aEvent) {
+    nsRefPtr<AudioManager> audioManager = AudioManager::GetInstance();
+    MOZ_ASSERT(audioManager);
+    audioManager->HandleHeadphoneSwitchEvent(aEvent);
   }
-private:
-  AudioManager* mAudioManager;
 };
+
+void
+AudioManager::HandleHeadphoneSwitchEvent(const hal::SwitchEvent& aEvent)
+{
+  NotifyHeadphonesStatus(aEvent.status());
+  // When user pulled out the headset, a delay of routing here can avoid the leakage of audio from speaker.
+  if (aEvent.status() == SWITCH_STATE_OFF && mSwitchDone) {
+
+    nsRefPtr<AudioManager> self = this;
+    nsCOMPtr<nsIRunnable> runnable =
+      NS_NewRunnableFunction([self]() {
+        if (self->mSwitchDone) {
+          return;
+        }
+        self->UpdateHeadsetConnectionState(SWITCH_STATE_OFF);
+        self->mSwitchDone = true;
+    });
+    MessageLoop::current()->PostDelayedTask(FROM_HERE, new RunnableCallTask(runnable), 1000);
+
+    SwitchProfileData(DEVICE_HEADSET, false);
+    mSwitchDone = false;
+  } else if (aEvent.status() != SWITCH_STATE_OFF) {
+    UpdateHeadsetConnectionState(aEvent.status());
+    SwitchProfileData(DEVICE_HEADSET, true);
+    mSwitchDone = true;
+  }
+  // Handle the coexistence of a2dp / headset device, latest one wins.
+#if ANDROID_VERSION >= 17
+  int32_t forceUse = 0;
+  GetForceForUse(AUDIO_POLICY_FORCE_FOR_MEDIA, &forceUse);
+  if (aEvent.status() != SWITCH_STATE_OFF && mBluetoothA2dpEnabled) {
+    SetForceForUse(AUDIO_POLICY_FORCE_FOR_MEDIA, AUDIO_POLICY_FORCE_NO_BT_A2DP);
+  } else if (forceUse == AUDIO_POLICY_FORCE_NO_BT_A2DP) {
+    SetForceForUse(AUDIO_POLICY_FORCE_FOR_MEDIA, AUDIO_POLICY_FORCE_NONE);
+  }
+#endif
+}
 
 AudioManager::AudioManager()
   : mPhoneState(PHONE_STATE_CURRENT)
-  , mObserver(new HeadphoneSwitchObserver(this))
+  , mHeadsetState(0)
+  , mSwitchDone(true)
+#if defined(MOZ_B2G_BT) || ANDROID_VERSION >= 17
+  , mBluetoothA2dpEnabled(false)
+#endif
+#ifdef MOZ_B2G_BT
+  , mA2dpSwitchDone(true)
+#endif
+  , mObserver(new HeadphoneSwitchObserver())
 #ifdef MOZ_B2G_RIL
   , mMuteCallToRIL(false)
 #endif
 {
   RegisterSwitchObserver(SWITCH_HEADPHONES, mObserver);
 
-  InternalSetAudioRoutes(GetCurrentSwitchState(SWITCH_HEADPHONES));
+  UpdateHeadsetConnectionState(GetCurrentSwitchState(SWITCH_HEADPHONES));
   NotifyHeadphonesStatus(GetCurrentSwitchState(SWITCH_HEADPHONES));
 
   for (uint32_t loop = 0; loop < AUDIO_STREAM_CNT; ++loop) {
@@ -525,17 +602,7 @@ AudioManager::AudioManager()
   CreateAudioProfilesData();
 
   // Get the initial volume index from settings DB during boot up.
-  nsCOMPtr<nsISettingsService> settingsService =
-    do_GetService("@mozilla.org/settingsService;1");
-  NS_ENSURE_TRUE_VOID(settingsService);
-  nsCOMPtr<nsISettingsServiceLock> lock;
-  nsresult rv = settingsService->CreateLock(nullptr, getter_AddRefs(lock));
-  NS_ENSURE_SUCCESS_VOID(rv);
-  nsCOMPtr<nsISettingsServiceCallback> callback = new AudioChannelVolInitCallback();
-  NS_ENSURE_TRUE_VOID(callback);
-  for (uint32_t idx = 0; idx < VOLUME_TOTAL_NUMBER; ++idx) {
-    lock->Get(gVolumeData[idx].mChannelName, callback);
-  }
+  InitVolumeFromDatabase();
 
   // Gecko only control stream volume not master so set to default value
   // directly.
@@ -552,6 +619,9 @@ AudioManager::AudioManager()
   }
   if (NS_FAILED(obs->AddObserver(this, BLUETOOTH_HFP_STATUS_CHANGED_ID, false))) {
     NS_WARNING("Failed to add bluetooth hfp status changed observer!");
+  }
+  if (NS_FAILED(obs->AddObserver(this, BLUETOOTH_HFP_NREC_STATUS_CHANGED_ID, false))) {
+    NS_WARNING("Failed to add bluetooth hfp NREC status changed observer!");
   }
   if (NS_FAILED(obs->AddObserver(this, MOZ_SETTINGS_CHANGE_ID, false))) {
     NS_WARNING("Failed to add mozsettings-changed observer!");
@@ -583,12 +653,18 @@ AudioManager::~AudioManager() {
   if (NS_FAILED(obs->RemoveObserver(this, BLUETOOTH_HFP_STATUS_CHANGED_ID))) {
     NS_WARNING("Failed to remove bluetooth hfp status changed observer!");
   }
+  if (NS_FAILED(obs->RemoveObserver(this, BLUETOOTH_HFP_NREC_STATUS_CHANGED_ID))) {
+    NS_WARNING("Failed to remove bluetooth hfp NREC status changed observer!");
+  }
   if (NS_FAILED(obs->RemoveObserver(this, MOZ_SETTINGS_CHANGE_ID))) {
     NS_WARNING("Failed to remove mozsettings-changed observer!");
   }
   if (NS_FAILED(obs->RemoveObserver(this,  AUDIO_CHANNEL_PROCESS_CHANGED))) {
     NS_WARNING("Failed to remove audio-channel-process-changed!");
   }
+
+  // Store the present volume setting to setting database.
+  SendVolumeChangeNotification(FindAudioProfileData(mPresentProfile));
 }
 
 static StaticRefPtr<AudioManager> sAudioManager;
@@ -682,32 +758,26 @@ AudioManager::SetPhoneState(int32_t aState)
 NS_IMETHODIMP
 AudioManager::SetForceForUse(int32_t aUsage, int32_t aForce)
 {
-  if (static_cast<
-             status_t (*)(audio_policy_force_use_t, audio_policy_forced_cfg_t)
-             >(AudioSystem::setForceUse)) {
-    // Dynamically resolved the ICS signature.
-    status_t status = AudioSystem::setForceUse(
-                        (audio_policy_force_use_t)aUsage,
-                        (audio_policy_forced_cfg_t)aForce);
-    return status ? NS_ERROR_FAILURE : NS_OK;
-  }
-
+#if ANDROID_VERSION >= 15
+  status_t status = AudioSystem::setForceUse(
+                      (audio_policy_force_use_t)aUsage,
+                      (audio_policy_forced_cfg_t)aForce);
+  return status ? NS_ERROR_FAILURE : NS_OK;
+#else
   NS_NOTREACHED("Doesn't support force routing on GB version");
   return NS_ERROR_UNEXPECTED;
+#endif
 }
 
 NS_IMETHODIMP
 AudioManager::GetForceForUse(int32_t aUsage, int32_t* aForce) {
-  if (static_cast<
-      audio_policy_forced_cfg_t (*)(audio_policy_force_use_t)
-      >(AudioSystem::getForceUse)) {
-    // Dynamically resolved the ICS signature.
-    *aForce = AudioSystem::getForceUse((audio_policy_force_use_t)aUsage);
-    return NS_OK;
-  }
-
+#if ANDROID_VERSION >= 15
+   *aForce = AudioSystem::getForceUse((audio_policy_force_use_t)aUsage);
+   return NS_OK;
+#else
   NS_NOTREACHED("Doesn't support force routing on GB version");
   return NS_ERROR_UNEXPECTED;
+#endif
 }
 
 NS_IMETHODIMP
@@ -723,7 +793,7 @@ AudioManager::SetFmRadioAudioEnabled(bool aFmRadioAudioEnabled)
   AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_OUT_FM,
     aFmRadioAudioEnabled ? AUDIO_POLICY_DEVICE_STATE_AVAILABLE :
     AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE, "");
-  InternalSetAudioRoutes(GetCurrentSwitchState(SWITCH_HEADPHONES));
+  UpdateHeadsetConnectionState(GetCurrentSwitchState(SWITCH_HEADPHONES));
   // sync volume with music after powering on fm radio
   if (aFmRadioAudioEnabled) {
     uint32_t volIndex = mCurrentStreamVolumeTbl[AUDIO_STREAM_MUSIC];
@@ -1006,6 +1076,63 @@ AudioManager::FindAudioProfileData(AudioOutputProfiles aProfile)
   return nullptr;
 }
 
+nsAutoCString
+AudioManager::AppendProfileToVolumeSetting(const char* aName, AudioOutputProfiles aProfile)
+{
+  nsAutoCString topic;
+  topic.Assign(aName);
+  for (uint32_t idx = 0; kAudioOutputProfilesTable[idx].tag; ++idx) {
+    if (kAudioOutputProfilesTable[idx].value == aProfile) {
+      topic.Append(".");
+      topic.Append(kAudioOutputProfilesTable[idx].tag);
+      break;
+    }
+  }
+  return topic;
+}
+
+
+void
+AudioManager::InitVolumeFromDatabase()
+{
+  nsresult rv;
+  nsCOMPtr<nsISettingsService> service = do_GetService(SETTINGS_SERVICE, &rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  nsCOMPtr<nsISettingsServiceLock> lock;
+  rv = service->CreateLock(nullptr, getter_AddRefs(lock));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  nsRefPtr<VolumeInitCallback> callback = new VolumeInitCallback();
+  MOZ_ASSERT(callback);
+  callback->GetPromise()->Then(AbstractThread::MainThread(), __func__, this,
+                               &AudioManager::InitProfileVolumeSucceeded,
+                               &AudioManager::InitProfileVolumeFailed);
+
+  for (uint32_t idx = 0; idx < VOLUME_TOTAL_NUMBER; ++idx) {
+    for (uint32_t pIdx = 0; pIdx < DEVICE_TOTAL_NUMBER; ++pIdx) {
+      lock->Get(AppendProfileToVolumeSetting(gVolumeData[idx].mChannelName,
+                  static_cast<AudioOutputProfiles>(pIdx)).get(), callback);
+    }
+  }
+}
+
+void
+AudioManager::InitProfileVolumeSucceeded()
+{
+  SendVolumeChangeNotification(FindAudioProfileData(mPresentProfile));
+}
+
+void
+AudioManager::InitProfileVolumeFailed(const char* aError)
+{
+  NS_WARNING(aError);
+}
+
 void
 AudioManager::SendVolumeChangeNotification(AudioProfileData* aProfileData)
 {
@@ -1027,7 +1154,13 @@ AudioManager::SendVolumeChangeNotification(AudioProfileData* aProfileData)
   JS::Rooted<JS::Value> value(cx);
   for (uint32_t idx = 0; idx < VOLUME_TOTAL_NUMBER; ++idx) {
     value.setInt32(aProfileData->mVolumeTable[gVolumeData[idx].mCategory]);
+    // For reducing the code dependency, Gaia doesn't need to know the current
+    // profile, it only need to care about different volume categories.
+    // However, we need to send the setting volume to the permanent database,
+    // so that we can store the volume setting even if the phone reboots.
     lock->Set(gVolumeData[idx].mChannelName, value, nullptr, nullptr);
+    lock->Set(AppendProfileToVolumeSetting(gVolumeData[idx].mChannelName,
+               mPresentProfile).get(), value, nullptr, nullptr);
   }
 }
 
@@ -1043,13 +1176,13 @@ AudioManager::CreateAudioProfilesData()
 }
 
 void
-AudioManager::InitProfilesVolume(uint32_t aCategory, uint32_t aIndex)
+AudioManager::InitProfileVolume(AudioOutputProfiles aProfile,
+                                 uint32_t aCategory,
+                                 uint32_t aIndex)
 {
-  uint32_t profilesNum = mAudioProfiles.Length();
-  MOZ_ASSERT(profilesNum == DEVICE_TOTAL_NUMBER, "Error profile numbers!");
-  for (uint32_t idx = 0; idx < profilesNum; ++idx) {
-    mAudioProfiles[idx]->mVolumeTable[aCategory] = aIndex;
-  }
+  AudioProfileData* profileData = FindAudioProfileData(aProfile);
+  MOZ_ASSERT(profileData);
+  profileData->mVolumeTable[aCategory] = aIndex;
   SetVolumeByCategory(aCategory, aIndex);
 }
 
@@ -1126,3 +1259,7 @@ AudioManager::UpdateVolumeFromProfile(AudioProfileData* aProfileData)
                         aProfileData->mVolumeTable[gVolumeData[idx].mCategory]);
   }
 }
+
+} /* namespace gonk */
+} /* namespace dom */
+} /* namespace mozilla */

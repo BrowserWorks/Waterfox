@@ -621,14 +621,18 @@ IsSelectionInsideRuby(nsISelection* aSelection)
 }
 
 bool
-nsCopySupport::FireClipboardEvent(int32_t aType, int32_t aClipboardType, nsIPresShell* aPresShell,
-                                  nsISelection* aSelection, bool* aActionTaken)
+nsCopySupport::FireClipboardEvent(EventMessage aEventMessage,
+                                  int32_t aClipboardType,
+                                  nsIPresShell* aPresShell,
+                                  nsISelection* aSelection,
+                                  bool* aActionTaken)
 {
   if (aActionTaken) {
     *aActionTaken = false;
   }
 
-  NS_ASSERTION(aType == NS_CUT || aType == NS_COPY || aType == NS_PASTE,
+  NS_ASSERTION(aEventMessage == eCut || aEventMessage == eCopy ||
+               aEventMessage == ePaste,
                "Invalid clipboard event type");
 
   nsCOMPtr<nsIPresShell> presShell = aPresShell;
@@ -684,10 +688,11 @@ nsCopySupport::FireClipboardEvent(int32_t aType, int32_t aClipboardType, nsIPres
   nsRefPtr<DataTransfer> clipboardData;
   if (chromeShell || Preferences::GetBool("dom.event.clipboardevents.enabled", true)) {
     clipboardData =
-      new DataTransfer(piWindow, aType, aType == NS_PASTE, aClipboardType);
+      new DataTransfer(piWindow, aEventMessage, aEventMessage == ePaste,
+                       aClipboardType);
 
     nsEventStatus status = nsEventStatus_eIgnore;
-    InternalClipboardEvent evt(true, aType);
+    InternalClipboardEvent evt(true, aEventMessage);
     evt.clipboardData = clipboardData;
     EventDispatcher::Dispatch(content, presShell->GetPresContext(), &evt,
                               nullptr, &status);
@@ -698,7 +703,7 @@ nsCopySupport::FireClipboardEvent(int32_t aType, int32_t aClipboardType, nsIPres
   // No need to do anything special during a paste. Either an event listener
   // took care of it and cancelled the event, or the caller will handle it.
   // Return true to indicate that the event wasn't cancelled.
-  if (aType == NS_PASTE) {
+  if (aEventMessage == ePaste) {
     // Clear and mark the clipboardData as readonly. This prevents someone
     // from reading the clipboard contents after the paste event has fired.
     if (clipboardData) {
@@ -738,7 +743,7 @@ nsCopySupport::FireClipboardEvent(int32_t aType, int32_t aClipboardType, nsIPres
 
     // when cutting non-editable content, do nothing
     // XXX this is probably the wrong editable flag to check
-    if (aType != NS_CUT || content->IsEditable()) {
+    if (aEventMessage != eCut || content->IsEditable()) {
       // get the data from the selection if any
       bool isCollapsed;
       sel->GetIsCollapsed(&isCollapsed);

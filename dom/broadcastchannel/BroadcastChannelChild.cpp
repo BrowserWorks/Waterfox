@@ -11,11 +11,11 @@
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/MessageEvent.h"
 #include "mozilla/dom/MessageEventBinding.h"
-#include "mozilla/dom/StructuredCloneHelper.h"
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/dom/WorkerScope.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/ipc/PBackgroundChild.h"
+#include "mozilla/dom/ipc/StructuredCloneData.h"
 #include "WorkerPrivate.h"
 
 namespace mozilla {
@@ -85,18 +85,17 @@ BroadcastChannelChild::RecvNotify(const ClonedMessageData& aData)
     return true;
   }
 
-  JSContext* cx = jsapi.cx();
+  ipc::StructuredCloneData cloneData;
+  cloneData.BlobImpls().AppendElements(blobs);
+
   const SerializedStructuredCloneBuffer& buffer = aData.data();
-  StructuredCloneHelper cloneHelper(StructuredCloneHelper::CloningSupported,
-                                    StructuredCloneHelper::TransferringNotSupported);
+  cloneData.UseExternalData(buffer.data, buffer.dataLength);
 
-  cloneHelper.BlobImpls().AppendElements(blobs);
-
+  JSContext* cx = jsapi.cx();
   JS::Rooted<JS::Value> value(cx, JS::NullValue());
   if (buffer.dataLength) {
     ErrorResult rv;
-    cloneHelper.ReadFromBuffer(mBC->GetParentObject(), cx,
-                               buffer.data, buffer.dataLength, &value, rv);
+    cloneData.Read(cx, &value, rv);
     if (NS_WARN_IF(rv.Failed())) {
       return true;
     }

@@ -18,21 +18,22 @@ import android.support.v4.graphics.drawable.DrawableCompat;
 public class DrawableUtil {
 
     /**
-     * Tints the given drawable with the given color and returns it. Note that this
-     * transformation does not occur in place on pre-Lollipop devices (bug 1193950).
+     * Tints the given drawable with the given color and returns it.
      */
     @CheckResult
     public static Drawable tintDrawable(@NonNull final Context context, @DrawableRes final int drawableID,
                 @ColorRes final int colorID) {
         final Drawable icon = DrawableCompat.wrap(
                 ContextCompat.getDrawable(context, drawableID).mutate());
-        DrawableCompat.setTint(icon, context.getResources().getColor(colorID));
+        DrawableCompat.setTint(icon, ColorUtils.getColor(context, colorID));
         return icon;
     }
 
     /**
-     * Tints the given drawable with the given tint list and returns it. Note that this
-     * transformation does not occur in place on pre-Lollipop devices (bug 1193950).
+     * Tints the given drawable with the given tint list and returns it. Note that you
+     * should no longer use the argument Drawable because the argument is not mutated
+     * on pre-Lollipop devices but is mutated on L+ due to differences in the Support
+     * Library implementation (bug 1193950).
      */
     @CheckResult
     public static Drawable tintDrawableWithStateList(@NonNull final Drawable drawable,

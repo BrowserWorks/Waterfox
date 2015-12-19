@@ -4,13 +4,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <cmath>
 #include <limits>
 #include "BatteryManager.h"
 #include "Constants.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/Hal.h"
 #include "mozilla/dom/BatteryManagerBinding.h"
+#include "mozilla/Preferences.h"
 #include "nsIDOMClassInfo.h"
+#include "nsIDocument.h"
 
 /**
  * We have to use macros here because our leak analysis tool things we are
@@ -56,10 +59,37 @@ BatteryManager::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
   return BatteryManagerBinding::Wrap(aCx, this, aGivenProto);
 }
 
+bool
+BatteryManager::Charging() const
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  // For testing, unable to report the battery status information
+  if (Preferences::GetBool("dom.battery.test.default", false)) {
+    return true;
+  }
+  if (Preferences::GetBool("dom.battery.test.charging", false)) {
+    return true;
+  }
+  if (Preferences::GetBool("dom.battery.test.discharging", false)) {
+    return false;
+  }
+
+  return mCharging;
+}
+
 double
 BatteryManager::DischargingTime() const
 {
-  if (mCharging || mRemainingTime == kUnknownRemainingTime) {
+  MOZ_ASSERT(NS_IsMainThread());
+  // For testing, unable to report the battery status information
+  if (Preferences::GetBool("dom.battery.test.default", false)) {
+    return std::numeric_limits<double>::infinity();
+  }
+  if (Preferences::GetBool("dom.battery.test.discharging", false)) {
+    return 42.0;
+  }
+
+  if (Charging() || mRemainingTime == kUnknownRemainingTime) {
     return std::numeric_limits<double>::infinity();
   }
 
@@ -69,17 +99,52 @@ BatteryManager::DischargingTime() const
 double
 BatteryManager::ChargingTime() const
 {
-  if (!mCharging || mRemainingTime == kUnknownRemainingTime) {
+  MOZ_ASSERT(NS_IsMainThread());
+  // For testing, unable to report the battery status information
+  if (Preferences::GetBool("dom.battery.test.default", false)) {
+    return 0.0;
+  }
+  if (Preferences::GetBool("dom.battery.test.charging", false)) {
+    return 42.0;
+  }
+
+  if (!Charging() || mRemainingTime == kUnknownRemainingTime) {
     return std::numeric_limits<double>::infinity();
   }
 
   return mRemainingTime;
 }
 
+double
+BatteryManager::Level() const
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  // For testing, unable to report the battery status information
+  if (Preferences::GetBool("dom.battery.test.default")) {
+    return 1.0;
+  }
+
+  return mLevel;
+}
+
 void
 BatteryManager::UpdateFromBatteryInfo(const hal::BatteryInformation& aBatteryInfo)
 {
   mLevel = aBatteryInfo.level();
+
+  // Round to the nearest ten percent for non-chrome and non-certified apps
+  nsIDocument* doc = GetOwner()->GetDoc();
+  uint16_t status = nsIPrincipal::APP_STATUS_NOT_INSTALLED;
+  if (doc) {
+    doc->NodePrincipal()->GetAppStatus(&status);
+  }
+
+  if (!nsContentUtils::IsChromeDoc(doc) &&
+      status != nsIPrincipal::APP_STATUS_CERTIFIED)
+  {
+    mLevel = lround(mLevel * 10.0) / 10.0;
+  }
+
   mCharging = aBatteryInfo.charging();
   mRemainingTime = aBatteryInfo.remainingTime();
 

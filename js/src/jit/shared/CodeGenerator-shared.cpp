@@ -55,6 +55,7 @@ CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph, Mac
     lastOsiPointOffset_(0),
     safepoints_(graph->totalSlotCount(), (gen->info().nargs() + 1) * sizeof(Value)),
     returnLabel_(),
+    stubSpace_(),
     nativeToBytecodeMap_(nullptr),
     nativeToBytecodeMapSize_(0),
     nativeToBytecodeTableOffset_(0),
@@ -587,7 +588,7 @@ CodeGeneratorShared::encode(LSnapshot* snapshot)
     for (LRecoverInfo::OperandIter it(recoverInfo); !it; ++it) {
         DebugOnly<uint32_t> allocWritten = snapshots_.allocWritten();
         encodeAllocation(snapshot, *it, &allocIndex);
-        MOZ_ASSERT(allocWritten + 1 == snapshots_.allocWritten());
+        MOZ_ASSERT_IF(!snapshots_.oom(), allocWritten + 1 == snapshots_.allocWritten());
     }
 
     MOZ_ASSERT(allocIndex == snapshot->numSlots());
@@ -1349,16 +1350,22 @@ CodeGeneratorShared::callVM(const VMFunction& fun, LInstruction* ins, const Regi
         StoreAllLiveRegs(masm, ins->safepoint()->liveRegs());
 #endif
 
+    // Push an exit frame descriptor. If |dynStack| is a valid pointer to a
+    // register, then its value is added to the value of the |framePushed()| to
+    // fill the frame descriptor.
+    if (dynStack) {
+        masm.addPtr(Imm32(masm.framePushed()), *dynStack);
+        masm.makeFrameDescriptor(*dynStack, JitFrame_IonJS);
+        masm.Push(*dynStack); // descriptor
+    } else {
+        masm.pushStaticFrameDescriptor(JitFrame_IonJS);
+    }
+
     // Call the wrapper function.  The wrapper is in charge to unwind the stack
     // when returning from the call.  Failures are handled with exceptions based
     // on the return value of the C functions.  To guard the outcome of the
     // returned value, use another LIR instruction.
-    uint32_t callOffset;
-    if (dynStack)
-        callOffset = masm.callWithExitFrame(wrapper, *dynStack);
-    else
-        callOffset = masm.callWithExitFrame(wrapper);
-
+    uint32_t callOffset = masm.callJit(wrapper);
     markSafepointAt(callOffset, ins);
 
     // Remove rest of the frame left on the stack. We remove the return address
@@ -1451,7 +1458,7 @@ CodeGeneratorShared::visitOutOfLineTruncateSlow(OutOfLineTruncateSlow* ool)
     }
 #endif
 
-    masm.setupUnalignedABICall(1, dest);
+    masm.setupUnalignedABICall(dest);
     masm.passABIArg(src, MoveOp::DOUBLE);
     if (gen->compilingAsmJS())
         masm.callWithABI(AsmJSImm_ToInt32);
@@ -1574,7 +1581,7 @@ CodeGeneratorShared::jumpToBlock(MBasicBlock* mir)
         // Note: the backedge is initially a jump to the next instruction.
         // It will be patched to the target block's label during link().
         RepatchLabel rejoin;
-        CodeOffsetJump backedge = masm.backedgeJump(&rejoin);
+        CodeOffsetJump backedge = masm.backedgeJump(&rejoin, mir->lir()->label());
         masm.bind(&rejoin);
 
         masm.propagateOOM(patchableBackedges_.append(PatchableBackedgeInfo(backedge, mir->lir()->label(), oolEntry)));
@@ -1584,7 +1591,7 @@ CodeGeneratorShared::jumpToBlock(MBasicBlock* mir)
 }
 
 // This function is not used for MIPS. MIPS has branchToBlock.
-#ifndef JS_CODEGEN_MIPS
+#ifndef JS_CODEGEN_MIPS32
 void
 CodeGeneratorShared::jumpToBlock(MBasicBlock* mir, Assembler::Condition cond)
 {
@@ -1595,7 +1602,7 @@ CodeGeneratorShared::jumpToBlock(MBasicBlock* mir, Assembler::Condition cond)
         // Note: the backedge is initially a jump to the next instruction.
         // It will be patched to the target block's label during link().
         RepatchLabel rejoin;
-        CodeOffsetJump backedge = masm.jumpWithPatch(&rejoin, cond);
+        CodeOffsetJump backedge = masm.jumpWithPatch(&rejoin, cond, mir->lir()->label());
         masm.bind(&rejoin);
 
         masm.propagateOOM(patchableBackedges_.append(PatchableBackedgeInfo(backedge, mir->lir()->label(), oolEntry)));

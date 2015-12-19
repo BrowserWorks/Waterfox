@@ -8,7 +8,8 @@ GeckoCppUnitTests([
     'TestWebGLElementArrayCache',
 ])
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']
 
 LOCAL_INCLUDES += [
     '../',

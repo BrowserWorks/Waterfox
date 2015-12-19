@@ -9,12 +9,18 @@
 
 interface Principal;
 
+enum PushEncryptionKeyName
+{
+  "p256dh"
+};
+
 [Exposed=(Window,Worker), Func="nsContentUtils::PushEnabled",
- ChromeConstructor(DOMString pushEndpoint, DOMString scope)]
+ ChromeConstructor(DOMString pushEndpoint, DOMString scope, ArrayBuffer? key)]
 interface PushSubscription
 {
     readonly attribute USVString endpoint;
-    [Throws]
+    ArrayBuffer? getKey(PushEncryptionKeyName name);
+    [Throws, UseCounter]
     Promise<boolean> unsubscribe();
     jsonifier;
 

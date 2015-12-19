@@ -14,9 +14,8 @@ XPIDL_MODULE = 'gfx'
 DEFINES['MOZ_APP_VERSION'] = '"%s"' % CONFIG['MOZ_APP_VERSION']
 
 EXPORTS += [
-    'DriverInitCrashDetection.h',
+    'DriverCrashGuard.h',
     'FilterSupport.h',
-    'gfxCore.h',
     'gfxCrashReporterUtils.h',
     'gfxTelemetry.h',
     'nsBoundingMetrics.h',
@@ -54,7 +53,7 @@ if CONFIG['MOZ_X11']:
     ]
 
 UNIFIED_SOURCES += [
-    'DriverInitCrashDetection.cpp',
+    'DriverCrashGuard.cpp',
     'FilterSupport.cpp',
     'gfxCrashReporterUtils.cpp',
     'gfxTelemetry.cpp',
@@ -75,7 +74,11 @@ SOURCES += [
     'nsDeviceContext.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
+include('/ipc/chromium/chromium-config.mozbuild')
+
+LOCAL_INCLUDES += [
+    '/dom/ipc',  # for ContentChild.h
+]
 
 FINAL_LIBRARY = 'xul'
 

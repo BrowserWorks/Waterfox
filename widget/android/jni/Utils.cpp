@@ -1,6 +1,8 @@
 #include "Utils.h"
 #include "Types.h"
 
+#include <pthread.h>
+
 #include "mozilla/Assertions.h"
 
 #include "AndroidBridge.h"
@@ -11,29 +13,29 @@ namespace jni {
 
 namespace detail {
 
-#define DEFINE_PRIMITIVE_TYPE_ADAPTER(NativeType, JNIType, JNIName) \
+#define DEFINE_PRIMITIVE_TYPE_ADAPTER(NativeType, JNIType, JNIName, ABIName)	\
     \
     constexpr JNIType (JNIEnv::*TypeAdapter<NativeType>::Call) \
-            (jobject, jmethodID, jvalue*); \
+            (jobject, jmethodID, jvalue*) MOZ_JNICALL_ABI; \
     constexpr JNIType (JNIEnv::*TypeAdapter<NativeType>::StaticCall) \
-            (jclass, jmethodID, jvalue*); \
+            (jclass, jmethodID, jvalue*) MOZ_JNICALL_ABI; \
     constexpr JNIType (JNIEnv::*TypeAdapter<NativeType>::Get) \
-            (jobject, jfieldID); \
+            (jobject, jfieldID) ABIName; \
     constexpr JNIType (JNIEnv::*TypeAdapter<NativeType>::StaticGet) \
-            (jclass, jfieldID); \
+            (jclass, jfieldID) ABIName; \
     constexpr void (JNIEnv::*TypeAdapter<NativeType>::Set) \
-            (jobject, jfieldID, JNIType); \
+            (jobject, jfieldID, JNIType) ABIName; \
     constexpr void (JNIEnv::*TypeAdapter<NativeType>::StaticSet) \
-            (jclass, jfieldID, JNIType)
+            (jclass, jfieldID, JNIType) ABIName
 
-DEFINE_PRIMITIVE_TYPE_ADAPTER(bool,     jboolean, Boolean);
-DEFINE_PRIMITIVE_TYPE_ADAPTER(int8_t,   jbyte,    Byte);
-DEFINE_PRIMITIVE_TYPE_ADAPTER(char16_t, jchar,    Char);
-DEFINE_PRIMITIVE_TYPE_ADAPTER(int16_t,  jshort,   Short);
-DEFINE_PRIMITIVE_TYPE_ADAPTER(int32_t,  jint,     Int);
-DEFINE_PRIMITIVE_TYPE_ADAPTER(int64_t,  jlong,    Long);
-DEFINE_PRIMITIVE_TYPE_ADAPTER(float,    jfloat,   Float);
-DEFINE_PRIMITIVE_TYPE_ADAPTER(double,   jdouble,  Double);
+DEFINE_PRIMITIVE_TYPE_ADAPTER(bool,     jboolean, Boolean, /*nothing*/);
+DEFINE_PRIMITIVE_TYPE_ADAPTER(int8_t,   jbyte,    Byte,    /*nothing*/);
+DEFINE_PRIMITIVE_TYPE_ADAPTER(char16_t, jchar,    Char,    /*nothing*/);
+DEFINE_PRIMITIVE_TYPE_ADAPTER(int16_t,  jshort,   Short,   /*nothing*/);
+DEFINE_PRIMITIVE_TYPE_ADAPTER(int32_t,  jint,     Int,     /*nothing*/);
+DEFINE_PRIMITIVE_TYPE_ADAPTER(int64_t,  jlong,    Long,    /*nothing*/);
+DEFINE_PRIMITIVE_TYPE_ADAPTER(float,    jfloat,   Float,   MOZ_JNICALL_ABI);
+DEFINE_PRIMITIVE_TYPE_ADAPTER(double,   jdouble,  Double,  MOZ_JNICALL_ABI);
 
 #undef DEFINE_PRIMITIVE_TYPE_ADAPTER
 
@@ -53,6 +55,67 @@ template<> const char TypedObject<jfloatArray>::name[] = "[F";
 template<> const char TypedObject<jdoubleArray>::name[] = "[D";
 template<> const char TypedObject<jobjectArray>::name[] = "[Ljava/lang/Object;";
 
+
+JNIEnv* sGeckoThreadEnv;
+
+namespace {
+
+JavaVM* sJavaVM;
+pthread_key_t sThreadEnvKey;
+
+void UnregisterThreadEnv(void* env)
+{
+    if (!env) {
+        // We were never attached.
+        return;
+    }
+    // The thread may have already been detached. In that case, it's still
+    // okay to call DetachCurrentThread(); it'll simply return an error.
+    // However, we must not access | env | because it may be invalid.
+    MOZ_ASSERT(sJavaVM);
+    sJavaVM->DetachCurrentThread();
+}
+
+} // namespace
+
+void SetGeckoThreadEnv(JNIEnv* aEnv)
+{
+    MOZ_ASSERT(aEnv);
+    MOZ_ASSERT(!sGeckoThreadEnv || sGeckoThreadEnv == aEnv);
+
+    if (!sGeckoThreadEnv
+            && pthread_key_create(&sThreadEnvKey, UnregisterThreadEnv)) {
+        MOZ_CRASH("Failed to initialize required TLS");
+    }
+
+    sGeckoThreadEnv = aEnv;
+    MOZ_ALWAYS_TRUE(!pthread_setspecific(sThreadEnvKey, aEnv));
+
+    MOZ_ALWAYS_TRUE(!aEnv->GetJavaVM(&sJavaVM));
+    MOZ_ASSERT(sJavaVM);
+}
+
+JNIEnv* GetEnvForThread()
+{
+    MOZ_ASSERT(sGeckoThreadEnv);
+
+    JNIEnv* env = static_cast<JNIEnv*>(pthread_getspecific(sThreadEnvKey));
+    if (env) {
+        return env;
+    }
+
+    // We don't have a saved JNIEnv, so try to get one.
+    // AttachCurrentThread() does the same thing as GetEnv() when a thread is
+    // already attached, so we don't have to call GetEnv() at all.
+    if (!sJavaVM->AttachCurrentThread(&env, nullptr)) {
+        MOZ_ASSERT(env);
+        MOZ_ALWAYS_TRUE(!pthread_setspecific(sThreadEnvKey, env));
+        return env;
+    }
+
+    MOZ_CRASH("Failed to get JNIEnv for thread");
+    return nullptr; // unreachable
+}
 
 bool ThrowException(JNIEnv *aEnv, const char *aClass,
                     const char *aMessage)

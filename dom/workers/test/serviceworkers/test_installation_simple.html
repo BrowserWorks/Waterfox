@@ -90,9 +90,9 @@
 
   function redirectError() {
     return navigator.serviceWorker.register("redirect_serviceworker.sjs", { scope: "redirect_error/" }).then(function(swr) {
-        ok(false, "redirection should fail with TypeError");
+        ok(false, "redirection should fail");
       }, function (e) {
-        ok(e.name === "TypeError", "redirection should fail with TypeError");
+        ok(e.name === "SecurityError", "redirection should fail with SecurityError");
       });
   }
 
@@ -202,7 +202,6 @@
   SpecialPowers.pushPrefEnv({"set": [
     ["dom.serviceWorkers.exemptFromPerDomainMax", true],
     ["dom.serviceWorkers.interception.enabled", true],
-    ["dom.messageChannel.enabled", true],
     ["dom.serviceWorkers.enabled", true],
     ["dom.serviceWorkers.testing.enabled", true],
     ["dom.caches.testing.enabled", true],

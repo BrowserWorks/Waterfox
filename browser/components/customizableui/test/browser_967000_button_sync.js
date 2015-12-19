@@ -8,8 +8,8 @@
 
 XPCOMUtils.defineLazyModuleGetter(this, "UITour", "resource:///modules/UITour.jsm");
 
-let initialLocation = gBrowser.currentURI.spec;
-let newTab = null;
+var initialLocation = gBrowser.currentURI.spec;
+var newTab = null;
 
 function openAboutAccountsFromMenuPanel(entryPoint) {
   info("Check Sync button functionality");
@@ -45,8 +45,8 @@ function openAboutAccountsFromMenuPanel(entryPoint) {
   yield deferred.promise;
   newTab = gBrowser.selectedTab;
 
-  is(gBrowser.currentURI.spec, "about:accounts?entrypoint=" + entryPoint,
-    "Firefox Sync page opened with `menupanel` entrypoint");
+  is(gBrowser.currentURI.spec, "about:preferences?entrypoint=" + entryPoint + "#sync",
+    "Firefox Sync preference page opened with `menupanel` entrypoint");
   ok(!isPanelUIOpen(), "The panel closed");
 
   if(isPanelUIOpen()) {

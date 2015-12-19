@@ -26,7 +26,7 @@
 
 const {Cc, Cu, Ci} = require("chrome");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
+const Promise = require("promise");
 const DOMUtils = Cc["@mozilla.org/inspector/dom-utils;1"]
                  .getService(Ci.inIDOMUtils);
 
@@ -378,7 +378,7 @@ MdnDocsWidget.prototype = {
 function L10N() {}
 L10N.prototype = {};
 
-let l10n = new L10N();
+var l10n = new L10N();
 
 loader.lazyGetter(L10N.prototype, "strings", () => {
   return Services.strings.createBundle(

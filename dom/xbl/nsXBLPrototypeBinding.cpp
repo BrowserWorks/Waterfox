@@ -880,8 +880,8 @@ nsXBLPrototypeBinding::Read(nsIObjectInputStream* aStream,
     mBaseTag = do_GetAtom(baseTag);
   }
 
-  aDocument->CreateElem(NS_LITERAL_STRING("binding"), nullptr, kNameSpaceID_XBL,
-                        getter_AddRefs(mBinding));
+  mBinding = aDocument->CreateElem(NS_LITERAL_STRING("binding"), nullptr,
+                                   kNameSpaceID_XBL);
 
   nsCOMPtr<nsIContent> child;
   rv = ReadContentNode(aStream, aDocument, aDocument->NodeInfoManager(), getter_AddRefs(child));
@@ -901,7 +901,8 @@ nsXBLPrototypeBinding::Read(nsIObjectInputStream* aStream,
 
   for (; interfaceCount > 0; interfaceCount--) {
     nsIID iid;
-    aStream->ReadID(&iid);
+    rv = aStream->ReadID(&iid);
+    NS_ENSURE_SUCCESS(rv, rv);
     mInterfaceTable.Put(iid, mBinding);
   }
 

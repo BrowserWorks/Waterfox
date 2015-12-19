@@ -33,9 +33,6 @@ public:
 
   bool SupportsMimeType(const nsACString& aMimeType) override;
 
-  virtual void DisableHardwareAcceleration() override;
-  virtual bool SupportsSharedDecoders(const VideoInfo& aConfig) const override;
-
   virtual ConversionRequired
   DecoderNeedsConversion(const TrackInfo& aConfig) const override;
 
@@ -53,7 +50,6 @@ public:
   static int GetNumDecoderThreads();
   static bool LowLatencyMFTEnabled();
 private:
-  bool ShouldUseDXVA(const VideoInfo& aConfig) const;
   bool mWMFInitialized;
 };
 

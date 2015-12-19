@@ -362,7 +362,7 @@ nsPlaintextEditor::HandleKeyPressEvent(nsIDOMKeyEvent* aKeyEvent)
   WidgetKeyboardEvent* nativeKeyEvent =
     aKeyEvent->GetInternalNSEvent()->AsKeyboardEvent();
   NS_ENSURE_TRUE(nativeKeyEvent, NS_ERROR_UNEXPECTED);
-  NS_ASSERTION(nativeKeyEvent->message == NS_KEY_PRESS,
+  NS_ASSERTION(nativeKeyEvent->mMessage == eKeyPress,
                "HandleKeyPressEvent gets non-keypress event");
 
   switch (nativeKeyEvent->keyCode) {
@@ -845,8 +845,8 @@ nsPlaintextEditor::UpdateIMEComposition(nsIDOMEvent* aDOMTextEvent)
   WidgetCompositionEvent* compositionChangeEvent =
     aDOMTextEvent->GetInternalNSEvent()->AsCompositionEvent();
   NS_ENSURE_TRUE(compositionChangeEvent, NS_ERROR_INVALID_ARG);
-  MOZ_ASSERT(compositionChangeEvent->message == NS_COMPOSITION_CHANGE,
-             "The internal event should be NS_COMPOSITION_CHANGE");
+  MOZ_ASSERT(compositionChangeEvent->mMessage == eCompositionChange,
+             "The internal event should be eCompositionChange");
 
   EnsureComposition(compositionChangeEvent);
 
@@ -885,10 +885,11 @@ nsPlaintextEditor::UpdateIMEComposition(nsIDOMEvent* aDOMTextEvent)
   }
 
   // If still composing, we should fire input event via observer.
-  // Note that if committed, we don't need to notify it since it will be
-  // notified at followed compositionend event.
+  // Note that if the composition will be committed by the following
+  // compositionend event, we don't need to notify editor observes of this
+  // change.
   // NOTE: We must notify after the auto batch will be gone.
-  if (IsIMEComposing()) {
+  if (!compositionChangeEvent->IsFollowedByCompositionEnd()) {
     NotifyEditorObservers(eNotifyEditorObserversOfEnd);
   }
 
@@ -1168,10 +1169,13 @@ nsPlaintextEditor::CanCutOrCopy(PasswordFieldAllowed aPasswordFieldAllowed)
 }
 
 bool
-nsPlaintextEditor::FireClipboardEvent(int32_t aType, int32_t aSelectionType, bool* aActionTaken)
+nsPlaintextEditor::FireClipboardEvent(EventMessage aEventMessage,
+                                      int32_t aSelectionType,
+                                      bool* aActionTaken)
 {
-  if (aType == NS_PASTE)
+  if (aEventMessage == ePaste) {
     ForceCompositionEnd();
+  }
 
   nsCOMPtr<nsIPresShell> presShell = GetPresShell();
   NS_ENSURE_TRUE(presShell, false);
@@ -1181,8 +1185,10 @@ nsPlaintextEditor::FireClipboardEvent(int32_t aType, int32_t aSelectionType, boo
     return false;
   }
 
-  if (!nsCopySupport::FireClipboardEvent(aType, aSelectionType, presShell, selection, aActionTaken))
+  if (!nsCopySupport::FireClipboardEvent(aEventMessage, aSelectionType,
+                                         presShell, selection, aActionTaken)) {
     return false;
+  }
 
   // If the event handler caused the editor to be destroyed, return false.
   // Otherwise return true to indicate that the event was not cancelled.
@@ -1192,7 +1198,7 @@ nsPlaintextEditor::FireClipboardEvent(int32_t aType, int32_t aSelectionType, boo
 NS_IMETHODIMP nsPlaintextEditor::Cut()
 {
   bool actionTaken = false;
-  if (FireClipboardEvent(NS_CUT, nsIClipboard::kGlobalClipboard, &actionTaken)) {
+  if (FireClipboardEvent(eCut, nsIClipboard::kGlobalClipboard, &actionTaken)) {
     DeleteSelection(eNone, eStrip);
   }
   return actionTaken ? NS_OK : NS_ERROR_FAILURE;
@@ -1211,7 +1217,7 @@ NS_IMETHODIMP nsPlaintextEditor::CanCut(bool *aCanCut)
 NS_IMETHODIMP nsPlaintextEditor::Copy()
 {
   bool actionTaken = false;
-  FireClipboardEvent(NS_COPY, nsIClipboard::kGlobalClipboard, &actionTaken);
+  FireClipboardEvent(eCopy, nsIClipboard::kGlobalClipboard, &actionTaken);
 
   return actionTaken ? NS_OK : NS_ERROR_FAILURE;
 }

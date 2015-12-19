@@ -61,7 +61,7 @@ const CONNECTION_TYPE_NONE      = 5;
 const PROXY_TYPE_MANUAL = Ci.nsIProtocolProxyService.PROXYCONFIG_MANUAL;
 const PROXY_TYPE_PAC    = Ci.nsIProtocolProxyService.PROXYCONFIG_PAC;
 
-let debug;
+var debug;
 function updateDebug() {
   let debugPref = false; // set default value here.
   try {
@@ -485,6 +485,18 @@ NetworkManager.prototype = {
   networkInterfaces: null,
 
   networkInterfaceLinks: null,
+
+  get allNetworkInfo() {
+    let allNetworkInfo = {};
+
+    for (let networkId in this.networkInterfaces) {
+      if (this.networkInterfaces.hasOwnProperty(networkId)) {
+        allNetworkInfo[networkId] = this.networkInterfaces[networkId].info;
+      }
+    }
+
+    return allNetworkInfo;
+  },
 
   _preferredNetworkType: DEFAULT_PREFERRED_NETWORK_TYPE,
   get preferredNetworkType() {
@@ -981,13 +993,18 @@ NetworkManager.prototype = {
     });
   },
 
-  _setDefaultRouteAndProxy: function(aNetwork, aOldInterface) {
+  _setDefaultRouteAndProxy: function(aNetwork, aOldNetwork) {
+    if (aOldNetwork) {
+      return this._removeDefaultRoute(aOldNetwork.info)
+        .then(() => this._setDefaultRouteAndProxy(aNetwork, null));
+    }
+
     return new Promise((aResolve, aReject) => {
       let networkInfo = aNetwork.info;
       let gateways = networkInfo.getGateways();
-      let oldInterfaceName = (aOldInterface ? aOldInterface.info.name : "");
+
       gNetworkService.setDefaultRoute(networkInfo.name, gateways.length, gateways,
-                                      oldInterfaceName, (aSuccess) => {
+                                      (aSuccess) => {
         if (!aSuccess) {
           gNetworkService.destroyNetwork(networkInfo.name, function() {
             aReject("setDefaultRoute failed");
@@ -1062,7 +1079,7 @@ NetworkManager.prototype = {
   },
 };
 
-let CaptivePortalDetectionHelper = (function() {
+var CaptivePortalDetectionHelper = (function() {
 
   const EVENT_CONNECT = "Connect";
   const EVENT_DISCONNECT = "Disconnect";

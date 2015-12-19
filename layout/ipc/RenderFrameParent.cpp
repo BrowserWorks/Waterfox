@@ -169,7 +169,7 @@ public:
       return;
     }
     if (mRenderFrame) {
-      mRenderFrame->TakeFocusForClick();
+      mRenderFrame->TakeFocusForClickFromTap();
       TabParent* browser = TabParent::GetFrom(mRenderFrame->Manager());
       browser->HandleSingleTap(aPoint, aModifiers, aGuid);
     }
@@ -424,6 +424,9 @@ RenderFrameParent::OwnerContentChanged(nsIContent* aContent)
       static_cast<ClientLayerManager*>(lm.get());
     clientManager->GetRemoteRenderer()->SendAdoptChild(mLayersId);
   }
+  // The APZCTreeManager associated with this RenderFrameParent may have changed
+  // so reset it and let GetApzcTreeManager() pick it up again.
+  mApzcTreeManager = nullptr;
 }
 
 void
@@ -597,7 +600,7 @@ RenderFrameParent::GetTextureFactoryIdentifier(TextureFactoryIdentifier* aTextur
 }
 
 void
-RenderFrameParent::TakeFocusForClick()
+RenderFrameParent::TakeFocusForClickFromTap()
 {
   nsIFocusManager* fm = nsFocusManager::GetFocusManager();
   if (!fm) {
@@ -612,6 +615,7 @@ RenderFrameParent::TakeFocusForClick()
     return;
   }
   fm->SetFocus(element, nsIFocusManager::FLAG_BYMOUSE |
+                        nsIFocusManager::FLAG_BYTOUCH |
                         nsIFocusManager::FLAG_NOSCROLL);
 }
 

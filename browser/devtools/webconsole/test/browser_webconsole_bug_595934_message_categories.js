@@ -87,18 +87,18 @@ const TESTS = [
   },
 ];
 
-let pos = -1;
+var pos = -1;
 
-let foundCategory = false;
-let foundText = false;
-let pageLoaded = false;
-let pageError = false;
-let output = null;
-let jsterm = null;
-let hud = null;
-let testEnded = false;
+var foundCategory = false;
+var foundText = false;
+var pageLoaded = false;
+var pageError = false;
+var output = null;
+var jsterm = null;
+var hud = null;
+var testEnded = false;
 
-let TestObserver = {
+var TestObserver = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
 
   observe: function testObserve(subject) {
@@ -172,7 +172,11 @@ function testNext() {
           pageError = true;
           startNextTest();
         });
-        expectUncaughtException();
+        // On e10s, the exception is triggered in child process
+        // and is ignored by test harness
+        if (!Services.appinfo.browserTabsRemoteAutostart) {
+          expectUncaughtException();
+        }
       } else {
         pageError = true;
       }

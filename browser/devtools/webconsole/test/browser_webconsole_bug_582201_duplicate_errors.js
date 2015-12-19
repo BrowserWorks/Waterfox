@@ -12,12 +12,16 @@ const INIT_URI = "data:text/html;charset=utf8,hello world";
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-duplicate-error.html";
 
-let test = asyncTest(function* () {
+var test = asyncTest(function* () {
   yield loadTab(INIT_URI);
 
   let hud = yield openConsole();
 
-  expectUncaughtException();
+  // On e10s, the exception is triggered in child process
+  // and is ignored by test harness
+  if (!Services.appinfo.browserTabsRemoteAutostart) {
+    expectUncaughtException();
+  }
 
   content.location = TEST_URI;
 

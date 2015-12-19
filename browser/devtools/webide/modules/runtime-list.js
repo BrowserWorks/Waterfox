@@ -7,7 +7,6 @@ const {Cu} = require("chrome");
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
 const {AppProjects} = require("devtools/app-manager/app-projects");
 const {AppManager} = require("devtools/webide/app-manager");
-const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const {RuntimeScanners, WiFiScanner} = require("devtools/webide/runtimes");
 const {Devices} = Cu.import("resource://gre/modules/devtools/Devices.jsm");
@@ -16,7 +15,7 @@ const utils = require("devtools/webide/utils");
 
 const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
 
-let RuntimeList;
+var RuntimeList;
 
 module.exports = RuntimeList = function(window, parentWindow) {
   EventEmitter.decorate(this);

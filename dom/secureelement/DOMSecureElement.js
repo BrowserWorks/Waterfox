@@ -62,12 +62,8 @@ PromiseHelpersSubclass.prototype = {
       callback(resolverId);
     };
 
-    return this.createPromise((resolve, reject) => {
-      let resolverId = this.getPromiseResolverId({
-        resolve: resolve,
-        reject: reject
-      });
-      ctxCallback(resolverId);
+    return this.createPromiseWithId((aResolverId) => {
+      ctxCallback(aResolverId);
     });
   },
 
@@ -93,7 +89,7 @@ PromiseHelpersSubclass.prototype = {
 };
 
 // Helper wrapper class to do promises related chores
-let PromiseHelpers;
+var PromiseHelpers;
 
 /**
  * Instance of 'SEReaderImpl' class is the connector to a secure element.

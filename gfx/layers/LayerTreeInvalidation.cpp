@@ -43,7 +43,7 @@ TransformRect(const IntRect& aRect, const Matrix4x4& aTransform)
   }
 
   Rect rect(aRect.x, aRect.y, aRect.width, aRect.height);
-  rect = aTransform.TransformBounds(rect);
+  rect = aTransform.TransformAndClipBounds(rect, Rect::MaxIntRect());
   rect.RoundOut();
 
   IntRect intRect;
@@ -483,11 +483,15 @@ CloneLayerTreePropertiesInternal(Layer* aRoot, bool aIsMask /* = false */)
       return MakeUnique<ColorLayerProperties>(static_cast<ColorLayer*>(aRoot));
     case Layer::TYPE_IMAGE:
       return MakeUnique<ImageLayerProperties>(static_cast<ImageLayer*>(aRoot), aIsMask);
-    default:
+    case Layer::TYPE_CANVAS:
+    case Layer::TYPE_READBACK:
+    case Layer::TYPE_SHADOW:
+    case Layer::TYPE_PAINTED:
       return MakeUnique<LayerPropertiesBase>(aRoot);
   }
 
-  return UniquePtr<LayerPropertiesBase>(nullptr);
+  MOZ_ASSERT_UNREACHABLE("Unexpected root layer type");
+  return MakeUnique<LayerPropertiesBase>(aRoot);
 }
 
 /* static */ UniquePtr<LayerProperties>

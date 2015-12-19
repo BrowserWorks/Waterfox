@@ -29,11 +29,13 @@ import org.mozilla.gecko.toolbar.ToolbarDisplayLayout.OnStopListener;
 import org.mozilla.gecko.toolbar.ToolbarDisplayLayout.OnTitleChangeListener;
 import org.mozilla.gecko.toolbar.ToolbarDisplayLayout.UpdateFlags;
 import org.mozilla.gecko.util.Clipboard;
+import org.mozilla.gecko.util.ColorUtils;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.MenuUtils;
-import org.mozilla.gecko.widget.ThemedImageButton;
-import org.mozilla.gecko.widget.ThemedImageView;
-import org.mozilla.gecko.widget.ThemedRelativeLayout;
+import org.mozilla.gecko.widget.themed.ThemedFrameLayout;
+import org.mozilla.gecko.widget.themed.ThemedImageButton;
+import org.mozilla.gecko.widget.themed.ThemedImageView;
+import org.mozilla.gecko.widget.themed.ThemedRelativeLayout;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -116,7 +118,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
 
     private ToolbarProgressView progressBar;
     protected final TabCounter tabsCounter;
-    protected final ThemedImageButton menuButton;
+    protected final ThemedFrameLayout menuButton;
     protected final ThemedImageView menuIcon;
     private MenuPopup menuPopup;
     protected final List<View> focusOrder;
@@ -191,7 +193,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
             tabsCounter.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
 
-        menuButton = (ThemedImageButton) findViewById(R.id.menu);
+        menuButton = (ThemedFrameLayout) findViewById(R.id.menu);
         menuIcon = (ThemedImageView) findViewById(R.id.menu_icon);
         hasSoftMenuButton = !HardwareUtils.hasMenuButton();
 
@@ -202,8 +204,8 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
         shadowSize = res.getDimensionPixelSize(R.dimen.browser_toolbar_shadow_size);
 
         shadowPaint = new Paint();
-        shadowColor = res.getColor(R.color.url_bar_shadow);
-        shadowPrivateColor = res.getColor(R.color.url_bar_shadow_private);
+        shadowColor = ColorUtils.getColor(context, R.color.url_bar_shadow);
+        shadowPrivateColor = ColorUtils.getColor(context, R.color.url_bar_shadow_private);
         shadowPaint.setColor(shadowColor);
         shadowPaint.setStrokeWidth(0.0f);
 
@@ -323,8 +325,6 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
 
         if (hasSoftMenuButton) {
             menuButton.setVisibility(View.VISIBLE);
-            menuIcon.setVisibility(View.VISIBLE);
-
             menuButton.setOnClickListener(new Button.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -926,8 +926,8 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
     }
 
     public static LightweightThemeDrawable getLightweightThemeDrawable(final View view,
-            final Resources res, final LightweightTheme theme, final int colorResID) {
-        final int color = res.getColor(colorResID);
+            final LightweightTheme theme, final int colorResID) {
+        final int color = ColorUtils.getColor(view.getContext(), colorResID);
 
         final LightweightThemeDrawable drawable = theme.getColorDrawable(view, color);
         if (drawable != null) {

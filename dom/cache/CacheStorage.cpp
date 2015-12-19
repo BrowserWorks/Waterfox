@@ -145,15 +145,15 @@ IsTrusted(const PrincipalInfo& aPrincipalInfo, bool aTestingPrefEnabled)
 // static
 already_AddRefed<CacheStorage>
 CacheStorage::CreateOnMainThread(Namespace aNamespace, nsIGlobalObject* aGlobal,
-                                 nsIPrincipal* aPrincipal, bool aPrivateBrowsing,
+                                 nsIPrincipal* aPrincipal, bool aStorageDisabled,
                                  bool aForceTrustedOrigin, ErrorResult& aRv)
 {
   MOZ_ASSERT(aGlobal);
   MOZ_ASSERT(aPrincipal);
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (aPrivateBrowsing) {
-    NS_WARNING("CacheStorage not supported during private browsing.");
+  if (aStorageDisabled) {
+    NS_WARNING("CacheStorage has been disabled.");
     nsRefPtr<CacheStorage> ref = new CacheStorage(NS_ERROR_DOM_SECURITY_ERR);
     return ref.forget();
   }
@@ -188,6 +188,12 @@ CacheStorage::CreateOnWorker(Namespace aNamespace, nsIGlobalObject* aGlobal,
   MOZ_ASSERT(aGlobal);
   MOZ_ASSERT(aWorkerPrivate);
   aWorkerPrivate->AssertIsOnWorkerThread();
+
+  if (!aWorkerPrivate->IsStorageAllowed()) {
+    NS_WARNING("CacheStorage is not allowed.");
+    nsRefPtr<CacheStorage> ref = new CacheStorage(NS_ERROR_DOM_SECURITY_ERR);
+    return ref.forget();
+  }
 
   if (aWorkerPrivate->IsInPrivateBrowsing()) {
     NS_WARNING("CacheStorage not supported during private browsing.");
@@ -231,6 +237,41 @@ CacheStorage::CreateOnWorker(Namespace aNamespace, nsIGlobalObject* aGlobal,
   nsRefPtr<CacheStorage> ref = new CacheStorage(aNamespace, aGlobal,
                                                 principalInfo, feature);
   return ref.forget();
+}
+
+// static
+bool
+CacheStorage::DefineCaches(JSContext* aCx, JS::Handle<JSObject*> aGlobal)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(js::GetObjectClass(aGlobal)->flags & JSCLASS_DOM_GLOBAL,
+             "Passed object is not a global object!");
+
+  if (NS_WARN_IF(!CacheStorageBinding::GetConstructorObject(aCx, aGlobal) ||
+                 !CacheBinding::GetConstructorObject(aCx, aGlobal))) {
+    return false;
+  }
+
+  nsIPrincipal* principal = nsContentUtils::ObjectPrincipal(aGlobal);
+  MOZ_ASSERT(principal);
+
+  ErrorResult rv;
+  nsRefPtr<CacheStorage> storage =
+    CreateOnMainThread(DEFAULT_NAMESPACE, xpc::NativeGlobal(aGlobal), principal,
+                       false, /* private browsing */
+                       true,  /* force trusted */
+                       rv);
+  if (NS_WARN_IF(rv.Failed())) {
+    return ThrowMethodFailed(aCx, rv);
+  }
+
+  JS::Rooted<JS::Value> caches(aCx);
+  js::AssertSameCompartment(aCx, aGlobal);
+  if (NS_WARN_IF(!ToJSValue(aCx, storage, &caches))) {
+    return false;
+  }
+
+  return JS_DefineProperty(aCx, aGlobal, "caches", caches, JSPROP_ENUMERATE);
 }
 
 CacheStorage::CacheStorage(Namespace aNamespace, nsIGlobalObject* aGlobal,

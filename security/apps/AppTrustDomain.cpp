@@ -84,16 +84,6 @@ AppTrustDomain::SetTrustedRoot(AppTrustedRoot trustedRoot)
       trustedDER.len = mozilla::ArrayLength(xpcshellRoot);
       break;
 
-    case nsIX509CertDB::TrustedHostedAppPublicRoot:
-      trustedDER.data = const_cast<uint8_t*>(trustedAppPublicRoot);
-      trustedDER.len = mozilla::ArrayLength(trustedAppPublicRoot);
-      break;
-
-    case nsIX509CertDB::TrustedHostedAppTestRoot:
-      trustedDER.data = const_cast<uint8_t*>(trustedAppTestRoot);
-      trustedDER.len = mozilla::ArrayLength(trustedAppTestRoot);
-      break;
-
     case nsIX509CertDB::AddonsPublicRoot:
       trustedDER.data = const_cast<uint8_t*>(addonsPublicRoot);
       trustedDER.len = mozilla::ArrayLength(addonsPublicRoot);
@@ -255,7 +245,9 @@ AppTrustDomain::IsChainValid(const DERArray& certChain, Time time)
 }
 
 Result
-AppTrustDomain::CheckSignatureDigestAlgorithm(DigestAlgorithm, EndEntityOrCA)
+AppTrustDomain::CheckSignatureDigestAlgorithm(DigestAlgorithm,
+                                              EndEntityOrCA,
+                                              Time)
 {
   // TODO: We should restrict signatures to SHA-256 or better.
   return Success;

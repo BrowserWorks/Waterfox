@@ -20,6 +20,7 @@
 #include "nsIPrincipal.h"
 #include "nsIPushClient.h"
 
+#include "nsComponentManagerUtils.h"
 #include "nsFrameMessageManager.h"
 #include "nsContentCID.h"
 
@@ -89,18 +90,37 @@ PushSubscription::Unsubscribe(ErrorResult& aRv)
 
 PushSubscription::PushSubscription(nsIGlobalObject* aGlobal,
                                    const nsAString& aEndpoint,
-                                   const nsAString& aScope)
-  : mGlobal(aGlobal), mEndpoint(aEndpoint), mScope(aScope)
+                                   const nsAString& aScope,
+                                   const nsTArray<uint8_t>& aRawP256dhKey)
+  : mGlobal(aGlobal)
+  , mEndpoint(aEndpoint)
+  , mScope(aScope)
+  , mRawP256dhKey(aRawP256dhKey)
 {
 }
 
 PushSubscription::~PushSubscription()
-{}
+{
+}
 
 JSObject*
 PushSubscription::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   return PushSubscriptionBinding::Wrap(aCx, this, aGivenProto);
+}
+
+void
+PushSubscription::GetKey(JSContext* aCx,
+                         PushEncryptionKeyName aType,
+                         JS::MutableHandle<JSObject*> aP256dhKey)
+{
+  if (aType == PushEncryptionKeyName::P256dh && !mRawP256dhKey.IsEmpty()) {
+    aP256dhKey.set(ArrayBuffer::Create(aCx,
+                                       mRawP256dhKey.Length(),
+                                       mRawP256dhKey.Elements()));
+  } else {
+    aP256dhKey.set(nullptr);
+  }
 }
 
 void
@@ -112,16 +132,34 @@ PushSubscription::SetPrincipal(nsIPrincipal* aPrincipal)
 
 // static
 already_AddRefed<PushSubscription>
-PushSubscription::Constructor(GlobalObject& aGlobal, const nsAString& aEndpoint, const nsAString& aScope, ErrorResult& aRv)
+PushSubscription::Constructor(GlobalObject& aGlobal,
+                              const nsAString& aEndpoint,
+                              const nsAString& aScope,
+                              const Nullable<ArrayBuffer>& aP256dhKey,
+                              ErrorResult& aRv)
 {
   MOZ_ASSERT(!aEndpoint.IsEmpty());
   MOZ_ASSERT(!aScope.IsEmpty());
+
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
-  nsRefPtr<PushSubscription> sub = new PushSubscription(global, aEndpoint, aScope);
+
+  nsTArray<uint8_t> rawKey;
+  if (!aP256dhKey.IsNull()) {
+    const ArrayBuffer& key = aP256dhKey.Value();
+    key.ComputeLengthAndData();
+    rawKey.SetLength(key.Length());
+    rawKey.ReplaceElementsAt(0, key.Length(), key.Data(), key.Length());
+  }
+  nsRefPtr<PushSubscription> sub = new PushSubscription(global,
+                                                        aEndpoint,
+                                                        aScope,
+                                                        rawKey);
+
   return sub.forget();
 }
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(PushSubscription, mGlobal, mPrincipal)
+
 NS_IMPL_CYCLE_COLLECTING_ADDREF(PushSubscription)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(PushSubscription)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(PushSubscription)
@@ -187,8 +225,9 @@ NS_INTERFACE_MAP_END
 // WorkerPushSubscription
 
 WorkerPushSubscription::WorkerPushSubscription(const nsAString& aEndpoint,
-                                               const nsAString& aScope)
-  : mEndpoint(aEndpoint), mScope(aScope)
+                                               const nsAString& aScope,
+                                               const nsTArray<uint8_t>& aRawP256dhKey)
+  : mEndpoint(aEndpoint), mScope(aScope), mRawP256dhKey(aRawP256dhKey)
 {
   MOZ_ASSERT(!aScope.IsEmpty());
   MOZ_ASSERT(!aEndpoint.IsEmpty());
@@ -205,39 +244,44 @@ WorkerPushSubscription::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenP
 
 // static
 already_AddRefed<WorkerPushSubscription>
-WorkerPushSubscription::Constructor(GlobalObject& aGlobal, const nsAString& aEndpoint, const nsAString& aScope, ErrorResult& aRv)
+WorkerPushSubscription::Constructor(GlobalObject& aGlobal,
+                                    const nsAString& aEndpoint,
+                                    const nsAString& aScope,
+                                    const Nullable<ArrayBuffer>& aP256dhKey,
+                                    ErrorResult& aRv)
 {
   WorkerPrivate* worker = GetCurrentThreadWorkerPrivate();
   MOZ_ASSERT(worker);
   worker->AssertIsOnWorkerThread();
 
-  nsRefPtr<WorkerPushSubscription> sub = new WorkerPushSubscription(aEndpoint, aScope);
+  nsTArray<uint8_t> rawKey;
+  if (!aP256dhKey.IsNull()) {
+    const ArrayBuffer& key = aP256dhKey.Value();
+    key.ComputeLengthAndData();
+    rawKey.SetLength(key.Length());
+    rawKey.ReplaceElementsAt(0, key.Length(), key.Data(), key.Length());
+  }
+  nsRefPtr<WorkerPushSubscription> sub = new WorkerPushSubscription(aEndpoint,
+                                                                    aScope,
+                                                                    rawKey);
+
   return sub.forget();
 }
 
-namespace {
-// The caller MUST take ownership of the proxy's lock before it calls this.
 void
-ReleasePromiseWorkerProxy(already_AddRefed<PromiseWorkerProxy> aProxy)
+WorkerPushSubscription::GetKey(JSContext* aCx,
+                               PushEncryptionKeyName aType,
+                               JS::MutableHandle<JSObject*> aP256dhKey)
 {
-  AssertIsOnMainThread();
-  nsRefPtr<PromiseWorkerProxy> proxy = aProxy;
-  MOZ_ASSERT(proxy);
-  proxy->GetCleanUpLock().AssertCurrentThreadOwns();
-  if (proxy->IsClean()) {
-    return;
+  if (aType == mozilla::dom::PushEncryptionKeyName::P256dh &&
+      !mRawP256dhKey.IsEmpty()) {
+    aP256dhKey.set(ArrayBuffer::Create(aCx,
+                                       mRawP256dhKey.Length(),
+                                       mRawP256dhKey.Elements()));
+  } else {
+    aP256dhKey.set(nullptr);
   }
-
-  AutoJSAPI jsapi;
-  jsapi.Init();
-
-  nsRefPtr<PromiseWorkerProxyControlRunnable> cr =
-    new PromiseWorkerProxyControlRunnable(proxy->GetWorkerPrivate(),
-                                          proxy);
-
-  MOZ_ALWAYS_TRUE(cr->Dispatch(jsapi.cx()));
 }
-} // anonymous namespace
 
 class UnsubscribeResultRunnable final : public WorkerRunnable
 {
@@ -259,15 +303,14 @@ public:
     MOZ_ASSERT(aWorkerPrivate);
     aWorkerPrivate->AssertIsOnWorkerThread();
 
-    nsRefPtr<PromiseWorkerProxy> proxy = mProxy.forget();
-    nsRefPtr<Promise> promise = proxy->GetWorkerPromise();
+    nsRefPtr<Promise> promise = mProxy->WorkerPromise();
     if (NS_SUCCEEDED(mStatus)) {
       promise->MaybeResolve(mSuccess);
     } else {
       promise->MaybeReject(NS_ERROR_DOM_NETWORK_ERR);
     }
 
-    proxy->CleanUp(aCx);
+    mProxy->CleanUp(aCx);
     return true;
   }
 private:
@@ -294,12 +337,12 @@ public:
   OnUnsubscribe(nsresult aStatus, bool aSuccess) override
   {
     AssertIsOnMainThread();
-    if (!mProxy) {
-      return NS_OK;
-    }
+    MOZ_ASSERT(mProxy, "OnUnsubscribe() called twice?");
 
-    MutexAutoLock lock(mProxy->GetCleanUpLock());
-    if (mProxy->IsClean()) {
+    nsRefPtr<PromiseWorkerProxy> proxy = mProxy.forget();
+
+    MutexAutoLock lock(proxy->Lock());
+    if (proxy->CleanedUp()) {
       return NS_OK;
     }
 
@@ -307,29 +350,14 @@ public:
     jsapi.Init();
 
     nsRefPtr<UnsubscribeResultRunnable> r =
-      new UnsubscribeResultRunnable(mProxy, aStatus, aSuccess);
-    if (!r->Dispatch(jsapi.cx())) {
-      ReleasePromiseWorkerProxy(mProxy.forget());
-    }
-
-    mProxy = nullptr;
+      new UnsubscribeResultRunnable(proxy, aStatus, aSuccess);
+    r->Dispatch(jsapi.cx());
     return NS_OK;
   }
 
 private:
   ~WorkerUnsubscribeResultCallback()
   {
-    AssertIsOnMainThread();
-    if (mProxy) {
-      MutexAutoLock lock(mProxy->GetCleanUpLock());
-      if (!mProxy->IsClean()) {
-        AutoJSAPI jsapi;
-        jsapi.Init();
-        nsRefPtr<PromiseWorkerProxyControlRunnable> cr =
-          new PromiseWorkerProxyControlRunnable(mProxy->GetWorkerPrivate(), mProxy);
-        cr->Dispatch(jsapi.cx());
-      }
-    }
   }
 
   nsRefPtr<PromiseWorkerProxy> mProxy;
@@ -353,8 +381,8 @@ public:
   Run() override
   {
     AssertIsOnMainThread();
-    MutexAutoLock lock(mProxy->GetCleanUpLock());
-    if (mProxy->IsClean()) {
+    MutexAutoLock lock(mProxy->Lock());
+    if (mProxy->CleanedUp()) {
       return NS_OK;
     }
 
@@ -410,6 +438,7 @@ WorkerPushSubscription::Unsubscribe(ErrorResult &aRv)
 }
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_0(WorkerPushSubscription)
+
 NS_IMPL_CYCLE_COLLECTING_ADDREF(WorkerPushSubscription)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(WorkerPushSubscription)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(WorkerPushSubscription)
@@ -436,32 +465,33 @@ public:
   GetSubscriptionResultRunnable(PromiseWorkerProxy* aProxy,
                                 nsresult aStatus,
                                 const nsAString& aEndpoint,
-                                const nsAString& aScope)
+                                const nsAString& aScope,
+                                const nsTArray<uint8_t>& aRawP256dhKey)
     : WorkerRunnable(aProxy->GetWorkerPrivate(), WorkerThreadModifyBusyCount)
     , mProxy(aProxy)
     , mStatus(aStatus)
     , mEndpoint(aEndpoint)
     , mScope(aScope)
+    , mRawP256dhKey(aRawP256dhKey)
   { }
 
   bool
   WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
-    nsRefPtr<PromiseWorkerProxy> proxy = mProxy.forget();
-    nsRefPtr<Promise> promise = proxy->GetWorkerPromise();
+    nsRefPtr<Promise> promise = mProxy->WorkerPromise();
     if (NS_SUCCEEDED(mStatus)) {
       if (mEndpoint.IsEmpty()) {
         promise->MaybeResolve(JS::NullHandleValue);
       } else {
         nsRefPtr<WorkerPushSubscription> sub =
-          new WorkerPushSubscription(mEndpoint, mScope);
+          new WorkerPushSubscription(mEndpoint, mScope, mRawP256dhKey);
         promise->MaybeResolve(sub);
       }
     } else {
       promise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
     }
 
-    proxy->CleanUp(aCx);
+    mProxy->CleanUp(aCx);
     return true;
   }
 private:
@@ -472,6 +502,7 @@ private:
   nsresult mStatus;
   nsString mEndpoint;
   nsString mScope;
+  nsTArray<uint8_t> mRawP256dhKey;
 };
 
 class GetSubscriptionCallback final : public nsIPushEndpointCallback
@@ -486,47 +517,40 @@ public:
   {}
 
   NS_IMETHOD
-  OnPushEndpoint(nsresult aStatus, const nsAString& aEndpoint) override
+  OnPushEndpoint(nsresult aStatus,
+                 const nsAString& aEndpoint,
+                 uint32_t aKeyLen,
+                 uint8_t* aKey) override
   {
     AssertIsOnMainThread();
+    MOZ_ASSERT(mProxy, "OnPushEndpoint() called twice?");
 
-    if (!mProxy) {
-      return NS_OK;
-    }
+    nsRefPtr<PromiseWorkerProxy> proxy = mProxy.forget();
 
-    MutexAutoLock lock(mProxy->GetCleanUpLock());
-    if (mProxy->IsClean()) {
+    MutexAutoLock lock(proxy->Lock());
+    if (proxy->CleanedUp()) {
       return NS_OK;
     }
 
     AutoJSAPI jsapi;
     jsapi.Init();
 
-    nsRefPtr<GetSubscriptionResultRunnable> r =
-      new GetSubscriptionResultRunnable(mProxy, aStatus, aEndpoint, mScope);
-    if (!r->Dispatch(jsapi.cx())) {
-      ReleasePromiseWorkerProxy(mProxy.forget());
-    }
+    nsTArray<uint8_t> rawP256dhKey(aKeyLen);
+    rawP256dhKey.ReplaceElementsAt(0, aKeyLen, aKey, aKeyLen);
 
-    mProxy = nullptr;
+    nsRefPtr<GetSubscriptionResultRunnable> r =
+      new GetSubscriptionResultRunnable(proxy,
+                                        aStatus,
+                                        aEndpoint,
+                                        mScope,
+                                        rawP256dhKey);
+    r->Dispatch(jsapi.cx());
     return NS_OK;
   }
 
 protected:
   ~GetSubscriptionCallback()
-  {
-    AssertIsOnMainThread();
-    if (mProxy) {
-      MutexAutoLock lock(mProxy->GetCleanUpLock());
-      if (!mProxy->IsClean()) {
-        AutoJSAPI jsapi;
-        jsapi.Init();
-        nsRefPtr<PromiseWorkerProxyControlRunnable> cr =
-          new PromiseWorkerProxyControlRunnable(mProxy->GetWorkerPrivate(), mProxy);
-        cr->Dispatch(jsapi.cx());
-      }
-    }
-  }
+  {}
 
 private:
   nsRefPtr<PromiseWorkerProxy> mProxy;
@@ -549,8 +573,8 @@ public:
   Run() override
   {
     AssertIsOnMainThread();
-    MutexAutoLock lock(mProxy->GetCleanUpLock());
-    if (mProxy->IsClean()) {
+    MutexAutoLock lock(mProxy->Lock());
+    if (mProxy->CleanedUp()) {
       return NS_OK;
     }
 
@@ -559,30 +583,29 @@ public:
     nsCOMPtr<nsIPermissionManager> permManager =
       mozilla::services::GetPermissionManager();
     if (!permManager) {
-      callback->OnPushEndpoint(NS_ERROR_FAILURE, EmptyString());
+      callback->OnPushEndpoint(NS_ERROR_FAILURE, EmptyString(), 0, nullptr);
       return NS_OK;
     }
 
+    nsCOMPtr<nsIPrincipal> principal = mProxy->GetWorkerPrivate()->GetPrincipal();
+
     uint32_t permission = nsIPermissionManager::DENY_ACTION;
     nsresult rv = permManager->TestExactPermissionFromPrincipal(
-                    mProxy->GetWorkerPrivate()->GetPrincipal(),
+                    principal,
                     "push",
                     &permission);
 
     if (NS_WARN_IF(NS_FAILED(rv)) || permission != nsIPermissionManager::ALLOW_ACTION) {
-      callback->OnPushEndpoint(NS_ERROR_FAILURE, EmptyString());
+      callback->OnPushEndpoint(NS_ERROR_FAILURE, EmptyString(), 0, nullptr);
       return NS_OK;
     }
 
     nsCOMPtr<nsIPushClient> client =
       do_CreateInstance("@mozilla.org/push/PushClient;1");
     if (!client) {
-      callback->OnPushEndpoint(NS_ERROR_FAILURE, EmptyString());
+      callback->OnPushEndpoint(NS_ERROR_FAILURE, EmptyString(), 0, nullptr);
       return NS_OK;
     }
-
-    nsCOMPtr<nsIPrincipal> principal = mProxy->GetWorkerPrivate()->GetPrincipal();
-    mProxy = nullptr;
 
     if (mAction == WorkerPushManager::SubscribeAction) {
       rv = client->Subscribe(mScope, principal, callback);
@@ -592,7 +615,7 @@ public:
     }
 
     if (NS_WARN_IF(NS_FAILED(rv))) {
-      callback->OnPushEndpoint(NS_ERROR_FAILURE, EmptyString());
+      callback->OnPushEndpoint(NS_ERROR_FAILURE, EmptyString(), 0, nullptr);
       return rv;
     }
 
@@ -666,17 +689,17 @@ public:
     MOZ_ASSERT(aWorkerPrivate);
     aWorkerPrivate->AssertIsOnWorkerThread();
 
-    nsRefPtr<PromiseWorkerProxy> proxy = mProxy.forget();
-    nsRefPtr<Promise> promise = proxy->GetWorkerPromise();
+    nsRefPtr<Promise> promise = mProxy->WorkerPromise();
     if (NS_SUCCEEDED(mStatus)) {
       MOZ_ASSERT(uint32_t(mState) < ArrayLength(PushPermissionStateValues::strings));
-      nsAutoCString stringState(PushPermissionStateValues::strings[uint32_t(mState)].value, PushPermissionStateValues::strings[uint32_t(mState)].length);
+      nsAutoCString stringState(PushPermissionStateValues::strings[uint32_t(mState)].value,
+                                PushPermissionStateValues::strings[uint32_t(mState)].length);
       promise->MaybeResolve(NS_ConvertUTF8toUTF16(stringState));
     } else {
       promise->MaybeReject(aCx, JS::UndefinedHandleValue);
     }
 
-    proxy->CleanUp(aCx);
+    mProxy->CleanUp(aCx);
     return true;
   }
 
@@ -700,8 +723,8 @@ public:
   Run() override
   {
     AssertIsOnMainThread();
-    MutexAutoLock lock(mProxy->GetCleanUpLock());
-    if (mProxy->IsClean()) {
+    MutexAutoLock lock(mProxy->Lock());
+    if (mProxy->CleanedUp()) {
       return NS_OK;
     }
 
@@ -739,9 +762,7 @@ public:
     jsapi.Init();
     nsRefPtr<PermissionResultRunnable> r =
       new PermissionResultRunnable(mProxy, rv, state);
-    if (!r->Dispatch(jsapi.cx())) {
-      ReleasePromiseWorkerProxy(mProxy.forget());
-    }
+    r->Dispatch(jsapi.cx());
     return NS_OK;
   }
 

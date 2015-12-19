@@ -8,6 +8,7 @@ Library('stagefright_gtest')
 
 SOURCES += [
     'TestInterval.cpp',
+    'TestParser.cpp',
 ]
 
 if CONFIG['MOZ_RUST']:
@@ -17,5 +18,3 @@ if CONFIG['MOZ_RUST']:
     ]
 
 FINAL_LIBRARY = 'xul-gtest'
-
-FAIL_ON_WARNINGS = True

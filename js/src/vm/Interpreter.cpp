@@ -56,14 +56,10 @@
 #include "vm/ScopeObject-inl.h"
 #include "vm/Stack-inl.h"
 
-#if defined(XP_MACOSX)
-#include <mach/mach.h>
-#elif defined(XP_UNIX)
-#include <sys/resource.h>
-#elif defined(XP_WIN)
+#if defined(XP_WIN)
 #include <processthreadsapi.h>
 #include <windows.h>
-#endif // defined(XP_MACOSX) || defined(XP_UNIX) || defined(XP_WIN)
+#endif // defined(XP_WIN)
 
 using namespace js;
 using namespace js::gc;
@@ -259,7 +255,9 @@ GetPropertyOperation(JSContext* cx, InterpreterFrame* fp, HandleScript script, j
     }
 
     MOZ_ASSERT(op == JSOP_GETPROP || op == JSOP_LENGTH);
-    return GetProperty(cx, lval, name, vp);
+    // Copy lval, because it might alias vp.
+    RootedValue v(cx, lval);
+    return GetProperty(cx, v, name, vp);
 }
 
 static inline bool
@@ -379,7 +377,7 @@ namespace js {
 // All mutable state is stored in `Runtime::stopwatch` (per-process
 // performance stats and logistics) and in `PerformanceGroup` (per
 // group performance stats).
-class AutoStopwatch final
+class MOZ_RAII AutoStopwatch final
 {
     // The context with which this object was initialized.
     // Non-null.
@@ -395,25 +393,47 @@ class AutoStopwatch final
     bool isMonitoringCPOW_;
 
     // Timestamps captured while starting the stopwatch.
-    uint64_t userTimeStart_;
-    uint64_t systemTimeStart_;
+    uint64_t cyclesStart_;
     uint64_t CPOWTimeStart_;
 
-   // The performance group shared by this compartment and possibly
-   // others, or `nullptr` if another AutoStopwatch is already in
-   // charge of monitoring that group.
-   mozilla::RefPtr<js::PerformanceGroup> sharedGroup_;
+    // The CPU on which we started the measure. Defined only
+    // if `isMonitoringJank_` is `true`.
+#if defined(XP_WIN) && WINVER >= _WIN32_WINNT_VISTA
+    struct cpuid_t {
+        WORD group_;
+        BYTE number_;
+        cpuid_t(WORD group, BYTE number)
+          : group_(group),
+            number_(number)
+        { }
+        cpuid_t()
+          : group_(0),
+            number_(0)
+        { }
+    };
+#elif defined(XP_LINUX)
+    typedef int cpuid_t;
+#else
+    typedef struct {} cpuid_t;
+#endif // defined(XP_WIN) || defined(XP_LINUX)
 
-   // The toplevel group, representing the entire process, or `nullptr`
-   // if another AutoStopwatch is already in charge of monitoring that group.
-   mozilla::RefPtr<js::PerformanceGroup> topGroup_;
+    cpuid_t cpuStart_;
 
-   // The performance group specific to this compartment, or
-   // `nullptr` if another AutoStopwatch is already in charge of
-   // monitoring that group.
-   mozilla::RefPtr<js::PerformanceGroup> ownGroup_;
+    // The performance group shared by this compartment and possibly
+    // others, or `nullptr` if another AutoStopwatch is already in
+    // charge of monitoring that group.
+    mozilla::RefPtr<js::PerformanceGroup> sharedGroup_;
 
-   public:
+    // The toplevel group, representing the entire process, or `nullptr`
+    // if another AutoStopwatch is already in charge of monitoring that group.
+    mozilla::RefPtr<js::PerformanceGroup> topGroup_;
+
+    // The performance group specific to this compartment, or
+    // `nullptr` if another AutoStopwatch is already in charge of
+    // monitoring that group.
+    mozilla::RefPtr<js::PerformanceGroup> ownGroup_;
+
+ public:
     // If the stopwatch is active, constructing an instance of
     // AutoStopwatch causes it to become the current owner of the
     // stopwatch.
@@ -424,8 +444,7 @@ class AutoStopwatch final
       , iteration_(0)
       , isMonitoringJank_(false)
       , isMonitoringCPOW_(false)
-      , userTimeStart_(0)
-      , systemTimeStart_(0)
+      , cyclesStart_(0)
       , CPOWTimeStart_(0)
     {
         MOZ_GUARD_OBJECT_NOTIFIER_INIT;
@@ -435,7 +454,7 @@ class AutoStopwatch final
             return;
 
         JSRuntime* runtime = cx_->runtime();
-        iteration_ = runtime->stopwatch.iteration;
+        iteration_ = runtime->stopwatch.iteration();
 
         sharedGroup_ = acquireGroup(compartment->performanceMonitoring.getSharedGroup(cx));
         if (sharedGroup_)
@@ -449,14 +468,15 @@ class AutoStopwatch final
             return;
         }
 
+        // Now that we are sure that JS code is being executed,
+        // initialize the stopwatch for this iteration, lazily.
+        runtime->stopwatch.start();
         enter();
     }
     ~AutoStopwatch()
     {
         if (!sharedGroup_ && !ownGroup_) {
             // We are not in charge of monitoring anything.
-            // (isMonitoringForTop_ implies isMonitoringForGroup_,
-            // so we do not need to check it)
             return;
         }
 
@@ -465,32 +485,32 @@ class AutoStopwatch final
             return;
 
         JSRuntime* runtime = cx_->runtime();
-        if (iteration_ != runtime->stopwatch.iteration) {
+        if (iteration_ != runtime->stopwatch.iteration()) {
             // We have entered a nested event loop at some point.
             // Any information we may have is obsolete.
             return;
         }
 
+        // Finish and commit measures
+        exit();
+
         releaseGroup(sharedGroup_);
         releaseGroup(topGroup_);
         releaseGroup(ownGroup_);
-
-        // Finish and commit measures
-        exit();
     }
    private:
     void enter() {
         JSRuntime* runtime = cx_->runtime();
 
         if (runtime->stopwatch.isMonitoringCPOW()) {
-            CPOWTimeStart_ = runtime->stopwatch.performance.getOwnGroup()->data.totalCPOWTime;
+            CPOWTimeStart_ = runtime->stopwatch.totalCPOWTime;
             isMonitoringCPOW_ = true;
         }
 
         if (runtime->stopwatch.isMonitoringJank()) {
-            if (this->getTimes(runtime, &userTimeStart_, &systemTimeStart_)) {
-                isMonitoringJank_ = true;
-            }
+            cyclesStart_ = this->getCycles();
+            cpuStart_ = this->getCPU();
+            isMonitoringJank_ = true;
         }
 
     }
@@ -498,29 +518,37 @@ class AutoStopwatch final
     void exit() {
         JSRuntime* runtime = cx_->runtime();
 
-        uint64_t userTimeDelta = 0;
-        uint64_t systemTimeDelta = 0;
+        uint64_t cyclesDelta = 0;
         if (isMonitoringJank_ && runtime->stopwatch.isMonitoringJank()) {
             // We were monitoring jank when we entered and we still are.
-            uint64_t userTimeEnd, systemTimeEnd;
-            if (!this->getTimes(runtime, &userTimeEnd, &systemTimeEnd)) {
-                // We make no attempt to recover from this error. If
-                // we bail out here, we lose nothing of value, plus
-                // I'm nearly sure that this error cannot happen in
-                // practice.
-                return;
+
+            // If possible, discard results when we don't end on the
+            // same CPU as we started.  Note that we can be
+            // rescheduled to another CPU beween `getCycles()` and
+            // `getCPU()`.  We hope that this will happen rarely
+            // enough that the impact on our statistics will remain
+            // limited.
+            const cpuid_t cpuEnd = this->getCPU();
+            if (isSameCPU(cpuStart_, cpuEnd)) {
+                const uint64_t cyclesEnd = getCycles();
+                cyclesDelta = getDelta(cyclesEnd, cyclesStart_);
             }
-            userTimeDelta = userTimeEnd - userTimeStart_;
-            systemTimeDelta = systemTimeEnd - systemTimeStart_;
+#if (defined(XP_WIN) && WINVER >= _WIN32_WINNT_VISTA) || defined(XP_LINUX)
+            if (isSameCPU(cpuStart_, cpuEnd))
+                runtime->stopwatch.testCpuRescheduling.stayed += 1;
+            else
+                runtime->stopwatch.testCpuRescheduling.moved += 1;
+#endif // defined(XP_WIN) || defined(XP_LINUX)
         }
 
         uint64_t CPOWTimeDelta = 0;
         if (isMonitoringCPOW_ && runtime->stopwatch.isMonitoringCPOW()) {
             // We were monitoring CPOW when we entered and we still are.
-            CPOWTimeDelta = runtime->stopwatch.performance.getOwnGroup()->data.totalCPOWTime - CPOWTimeStart_;
+            const uint64_t CPOWTimeEnd = runtime->stopwatch.totalCPOWTime;
+            CPOWTimeDelta = getDelta(CPOWTimeEnd, CPOWTimeStart_);
 
         }
-        commitDeltasToGroups(userTimeDelta, systemTimeDelta, CPOWTimeDelta);
+        addToGroups(cyclesDelta, CPOWTimeDelta);
     }
 
     // Attempt to acquire a group
@@ -547,121 +575,85 @@ class AutoStopwatch final
             group->releaseStopwatch(iteration_, this);
     }
 
-    void commitDeltasToGroups(uint64_t userTimeDelta, uint64_t systemTimeDelta,
-                              uint64_t CPOWTimeDelta) const {
-        applyDeltas(userTimeDelta, systemTimeDelta, CPOWTimeDelta, sharedGroup_);
-        applyDeltas(userTimeDelta, systemTimeDelta, CPOWTimeDelta, topGroup_);
-        applyDeltas(userTimeDelta, systemTimeDelta, CPOWTimeDelta, ownGroup_);
+    // Add recent changes to all the groups owned by this stopwatch.
+    // Mark the groups as changed recently.
+    void addToGroups(uint64_t cyclesDelta, uint64_t CPOWTimeDelta) {
+        addToGroup(cyclesDelta, CPOWTimeDelta, sharedGroup_);
+        addToGroup(cyclesDelta, CPOWTimeDelta, topGroup_);
+        addToGroup(cyclesDelta, CPOWTimeDelta, ownGroup_);
     }
 
-    void applyDeltas(uint64_t userTimeDelta, uint64_t systemTimeDelta,
-                     uint64_t CPOWTimeDelta, PerformanceGroup* group) const {
+    // Add recent changes to a single group. Mark the group as changed recently.
+    void addToGroup(uint64_t cyclesDelta, uint64_t CPOWTimeDelta, PerformanceGroup* group) {
         if (!group)
             return;
 
-        group->data.ticks++;
+        MOZ_ASSERT(group->hasStopwatch(iteration_, this));
 
-        uint64_t totalTimeDelta = userTimeDelta + systemTimeDelta;
-        group->data.totalUserTime += userTimeDelta;
-        group->data.totalSystemTime += systemTimeDelta;
-        group->data.totalCPOWTime += CPOWTimeDelta;
-
-        // Update an array containing the number of times we have missed
-        // at least 2^0 successive ms, 2^1 successive ms, ...
-        // 2^i successive ms.
-
-        // Duration of one frame, i.e. 16ms in museconds
-        size_t i = 0;
-        uint64_t duration = 1000;
-        for (i = 0, duration = 1000;
-             i < ArrayLength(group->data.durations) && duration < totalTimeDelta;
-             ++i, duration *= 2)
-        {
-            group->data.durations[i]++;
+        if (group->recentTicks == 0) {
+            // First time we meet this group during the tick,
+            // mark it as needing updates.
+            JSRuntime* runtime = cx_->runtime();
+            runtime->stopwatch.addChangedGroup(group);
         }
+        group->recentTicks++;
+        group->recentCycles += cyclesDelta;
+        group->recentCPOW += CPOWTimeDelta;
     }
 
-    // Get the OS-reported time spent in userland/systemland, in
-    // microseconds. On most platforms, this data is per-thread,
-    // but on some platforms we need to fall back to per-process.
-    bool getTimes(JSRuntime* runtime, uint64_t* userTime, uint64_t* systemTime) const {
-        MOZ_ASSERT(userTime);
-        MOZ_ASSERT(systemTime);
+    // Perform a subtraction for a quantity that should be monotonic
+    // but is not guaranteed to be so.
+    //
+    // If `start <= end`, return `end - start`.
+    // Otherwise, return `0`.
+    uint64_t getDelta(const uint64_t end, const uint64_t start) const
+    {
+        if (start >= end)
+            return 0;
+        return end - start;
+    }
 
-#if defined(XP_MACOSX)
-        // On MacOS X, to get we per-thread data, we need to
-        // reach into the kernel.
-
-        mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
-        thread_basic_info_data_t info;
-        mach_port_t port = mach_thread_self();
-        kern_return_t err =
-            thread_info(/* [in] targeted thread*/ port,
-                        /* [in] nature of information*/ THREAD_BASIC_INFO,
-                        /* [out] thread information */  (thread_info_t)&info,
-                        /* [inout] number of items */   &count);
-
-        // We do not need ability to communicate with the thread, so
-        // let's release the port.
-        mach_port_deallocate(mach_task_self(), port);
-
-        if (err != KERN_SUCCESS)
-            return false;
-
-        *userTime = info.user_time.microseconds + info.user_time.seconds * 1000000;
-        *systemTime = info.system_time.microseconds + info.system_time.seconds * 1000000;
-
-#elif defined(XP_UNIX)
-        struct rusage rusage;
-#if defined(RUSAGE_THREAD)
-        // Under Linux, we can obtain per-thread statistics
-        int err = getrusage(RUSAGE_THREAD, &rusage);
+    // Return the value of the Timestamp Counter, as provided by the CPU.
+    // 0 on platforms for which we do not have access to a Timestamp Counter.
+    uint64_t getCycles() const
+    {
+#if defined(MOZ_HAVE_RDTSC)
+        return ReadTimestampCounter();
 #else
-        // Under other Unices, we need to do with more noisy
-        // per-process statistics.
-        int err = getrusage(RUSAGE_SELF, &rusage);
-#endif // defined(RUSAGE_THREAD)
-
-        if (err)
-            return false;
-
-        *userTime = rusage.ru_utime.tv_usec + rusage.ru_utime.tv_sec * 1000000;
-        *systemTime = rusage.ru_stime.tv_usec + rusage.ru_stime.tv_sec * 1000000;
-
-#elif defined(XP_WIN)
-        // Under Windows, we can obtain per-thread statistics,
-        // although experience seems to suggest that they are
-        // not very good under Windows XP.
-        FILETIME creationFileTime; // Ignored
-        FILETIME exitFileTime; // Ignored
-        FILETIME kernelFileTime;
-        FILETIME userFileTime;
-        BOOL success = GetThreadTimes(GetCurrentThread(),
-                                      &creationFileTime, &exitFileTime,
-                                      &kernelFileTime, &userFileTime);
-
-        if (!success)
-            return false;
-
-        ULARGE_INTEGER kernelTimeInt;
-        ULARGE_INTEGER userTimeInt;
-        kernelTimeInt.LowPart = kernelFileTime.dwLowDateTime;
-        kernelTimeInt.HighPart = kernelFileTime.dwHighDateTime;
-        // Convert 100 ns to 1 us, make sure that the result is monotonic
-        *systemTime = runtime->stopwatch.systemTimeFix.monotonize(kernelTimeInt.QuadPart / 10);
-
-        userTimeInt.LowPart = userFileTime.dwLowDateTime;
-        userTimeInt.HighPart = userFileTime.dwHighDateTime;
-        // Convert 100 ns to 1 us, make sure that the result is monotonic
-        *userTime = runtime->stopwatch.userTimeFix.monotonize(userTimeInt.QuadPart / 10);
-
-#endif // defined(XP_MACOSX) || defined(XP_UNIX) || defined(XP_WIN)
-
-        return true;
+        return 0;
+#endif // defined(MOZ_HAVE_RDTSC)
     }
 
 
-private:
+    // Return the identifier of the current CPU, on platforms for which we have
+    // access to the current CPU.
+    cpuid_t inline getCPU() const
+    {
+#if defined(XP_WIN) && WINVER >= _WIN32_WINNT_VISTA
+        PROCESSOR_NUMBER proc;
+        GetCurrentProcessorNumberEx(&proc);
+
+        cpuid_t result(proc.Group, proc.Number);
+        return result;
+#elif defined(XP_LINUX)
+        return sched_getcpu();
+#else
+        return {};
+#endif // defined(XP_WIN) || defined(XP_LINUX)
+    }
+
+    // Compare two CPU identifiers.
+    bool inline isSameCPU(const cpuid_t& a, const cpuid_t& b) const
+    {
+#if defined(XP_WIN)  && WINVER >= _WIN32_WINNT_VISTA
+        return a.group_ == b.group_ && a.number_ == b.number_;
+#elif defined(XP_LINUX)
+        return a == b;
+#else
+        return true;
+#endif
+    }
+ private:
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER;
 };
 
@@ -678,9 +670,9 @@ js::RunScript(JSContext* cx, RunState& state)
 {
     JS_CHECK_RECURSION(cx, return false);
 
-#if defined(NIGHTLY_BUILD)
+#if defined(NIGHTLY_BUILD) && defined(MOZ_HAVE_RDTSC)
     js::AutoStopwatch stopwatch(cx);
-#endif // defined(NIGHTLY_BUILD)
+#endif // defined(NIGHTLY_BUILD) && defined(MOZ_HAVE_RDTSC)
 
     SPSEntryMarker marker(cx->runtime(), state.script());
 
@@ -731,7 +723,7 @@ struct AutoGCIfRequested
  * when done.  Then push the return value.
  */
 bool
-js::Invoke(JSContext* cx, CallArgs args, MaybeConstruct construct)
+js::Invoke(JSContext* cx, const CallArgs& args, MaybeConstruct construct)
 {
     MOZ_ASSERT(args.length() <= ARGS_LENGTH_MAX);
     MOZ_ASSERT(!cx->zone()->types.activeAnalysis);
@@ -926,7 +918,7 @@ js::InternalConstructWithProvidedThis(JSContext* cx, HandleValue fval, HandleVal
 }
 
 bool
-js::InvokeGetter(JSContext* cx, JSObject* obj, Value fval, MutableHandleValue rval)
+js::InvokeGetter(JSContext* cx, const Value& thisv, Value fval, MutableHandleValue rval)
 {
     /*
      * Invoke could result in another try to get or set the same id again, see
@@ -934,7 +926,7 @@ js::InvokeGetter(JSContext* cx, JSObject* obj, Value fval, MutableHandleValue rv
      */
     JS_CHECK_RECURSION(cx, return false);
 
-    return Invoke(cx, ObjectValue(*obj), fval, 0, nullptr, rval);
+    return Invoke(cx, thisv, fval, 0, nullptr, rval);
 }
 
 bool
@@ -1269,6 +1261,7 @@ PopScope(JSContext* cx, ScopeIter& si)
       case ScopeIter::With:
         si.initialFrame().popWith(cx);
         break;
+      case ScopeIter::Module:
       case ScopeIter::Call:
       case ScopeIter::Eval:
       case ScopeIter::NonSyntactic:
@@ -1460,6 +1453,14 @@ HandleError(JSContext* cx, InterpreterRegs& regs)
 {
     MOZ_ASSERT(regs.fp()->script()->containsPC(regs.pc));
 
+    if (regs.fp()->script()->hasScriptCounts()) {
+        PCCounts* counts = regs.fp()->script()->getThrowCounts(regs.pc);
+        // If we failed to allocate, then skip the increment and continue to
+        // handle the exception.
+        if (counts)
+            counts->numExec()++;
+    }
+
     ScopeIter si(cx, regs.fp(), regs.pc);
     bool ok = false;
 
@@ -1487,15 +1488,19 @@ HandleError(JSContext* cx, InterpreterRegs& regs)
             }
         }
 
-        switch (ProcessTryNotes(cx, si, regs)) {
+        HandleErrorContinuation res = ProcessTryNotes(cx, si, regs);
+        switch (res) {
           case SuccessfulReturnContinuation:
             break;
           case ErrorReturnContinuation:
             goto again;
           case CatchContinuation:
-            return CatchContinuation;
           case FinallyContinuation:
-            return FinallyContinuation;
+            // No need to increment the PCCounts number of execution here, as
+            // the interpreter increments any PCCounts if present.
+            MOZ_ASSERT_IF(regs.fp()->script()->hasScriptCounts(),
+                          regs.fp()->script()->maybeGetPCCounts(regs.pc));
+            return res;
         }
 
         ok = HandleClosingGeneratorReturn(cx, regs.fp(), ok);
@@ -1780,12 +1785,7 @@ class ReservedRooted : public ReservedRootedBase<T>
 
 template <>
 class ReservedRootedBase<Value> : public ValueOperations<ReservedRooted<Value>>
-{
-    friend class ValueOperations<ReservedRooted<Value>>;
-    const Value* extract() const {
-        return static_cast<const ReservedRooted<Value>*>(this)->address();
-    }
-};
+{};
 
 static MOZ_NEVER_INLINE bool
 Interpret(JSContext* cx, RunState& state)
@@ -1962,7 +1962,7 @@ Interpret(JSContext* cx, RunState& state)
         MOZ_CRASH("bad Debugger::onEnterFrame status");
     }
 
-    if (cx->runtime()->profilingScripts)
+    if (cx->compartment()->collectCoverage())
         activation.enableInterruptsUnconditionally();
 
     // Enter the interpreter loop starting at the current pc.
@@ -1975,15 +1975,15 @@ CASE(EnableInterruptsPseudoOpcode)
     bool moreInterrupts = false;
     jsbytecode op = *REGS.pc;
 
-    if (cx->runtime()->profilingScripts) {
-        if (!script->hasScriptCounts())
-            script->initScriptCounts(cx);
+    if (!script->hasScriptCounts() && cx->compartment()->collectCoverage()) {
+        script->initScriptCounts(cx);
         moreInterrupts = true;
     }
 
     if (script->hasScriptCounts()) {
-        PCCounts counts = script->getPCCounts(REGS.pc);
-        counts.numExec()++;
+        PCCounts* counts = script->maybeGetPCCounts(REGS.pc);
+        if (counts)
+            counts->numExec()++;
         moreInterrupts = true;
     }
 
@@ -3356,7 +3356,6 @@ CASE(JSOP_TABLESWITCH)
 }
 
 CASE(JSOP_ARGUMENTS)
-    MOZ_ASSERT(!REGS.fp()->fun()->hasRest());
     if (!script->ensureHasAnalyzedArgsUsage(cx))
         goto error;
     if (script->needsArgsObj()) {
@@ -4193,7 +4192,7 @@ js::GetProperty(JSContext* cx, HandleValue v, HandlePropertyName name, MutableHa
             proto = GlobalObject::getOrCreateSymbolPrototype(cx, cx->global());
         }
         if (!proto)
-             return false;
+            return false;
 
         if (GetPropertyPure(cx, proto, NameToId(name), vp.address()))
             return true;
@@ -4203,7 +4202,9 @@ js::GetProperty(JSContext* cx, HandleValue v, HandlePropertyName name, MutableHa
     if (!obj)
         return false;
 
-    return GetProperty(cx, obj, obj, name, vp);
+    // Bug 603201: Pass primitive receiver here.
+    RootedValue receiver(cx, ObjectValue(*obj));
+    return GetProperty(cx, obj, receiver, name, vp);
 }
 
 bool

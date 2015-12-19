@@ -4,7 +4,7 @@
 
 "use strict";
 
-const EXPORTED_SYMBOLS = ["ExtensionStorage"];
+this.EXPORTED_SYMBOLS = ["ExtensionStorage"];
 
 const Ci = Components.interfaces;
 const Cc = Components.classes;
@@ -16,10 +16,10 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/osfile.jsm")
 Cu.import("resource://gre/modules/AsyncShutdown.jsm");
 
-let Path = OS.Path;
-let profileDir = OS.Constants.Path.profileDir;
+var Path = OS.Path;
+var profileDir = OS.Constants.Path.profileDir;
 
-let ExtensionStorage = {
+this.ExtensionStorage = {
   cache: new Map(),
   listeners: new Map(),
 

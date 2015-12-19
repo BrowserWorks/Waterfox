@@ -130,6 +130,8 @@ TEST_DIRS += [
     'gtest',
 ]
 
+ALLOW_COMPILER_WARNINGS = True
+
 FINAL_LIBRARY = 'xul'
 
 # Suppress warnings in third-party code.
@@ -150,11 +152,11 @@ if CONFIG['_MSC_VER']:
 elif CONFIG['GNU_CXX']:
     CFLAGS += [
         '-Wno-comment',
-        '-Wno-declaration-after-statement',
         '-Wno-sign-compare'
     ]
     CXXFLAGS += [
         '-Wno-format',
+        '-Wno-format-security',
         '-Wno-multichar',
         '-Wno-sign-compare',
         '-Wno-unused',

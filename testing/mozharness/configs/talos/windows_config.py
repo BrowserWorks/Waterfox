@@ -26,20 +26,20 @@ config = {
         'mozinstall': ['%s/scripts/python' % VENV_PATH,
                        '%s/scripts/mozinstall-script.py' % VENV_PATH],
         'hg': 'c:/mozilla-build/hg/hg',
+        'tooltool.py': [PYTHON, 'C:/mozilla-build/tooltool.py'],
     },
     "title": socket.gethostname().split('.')[0],
     "default_actions": [
         "clobber",
         "read-buildbot-config",
         "download-and-extract",
-        "clone-talos",
+        "populate-webroot",
         "create-virtualenv",
         "install",
         "run-tests",
     ],
     "python_webserver": False,
     "webroot": 'c:/slave/talos-data',
-    "populate_webroot": True,
     # Srsly gly? Ys
     "webroot_extract_cmd": r'''c:/mozilla-build/msys/bin/bash -c "PATH=/c/mozilla-build/msys/bin:$PATH tar zx --strip-components=1 -f '%(tarball)s' --wildcards '**/talos/'"''',
     "default_blob_upload_servers": [
@@ -47,4 +47,7 @@ config = {
     ],
     "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
     "metro_harness_path_frmt": "%(metro_base_path)s/metro/metrotestharness.exe",
+    "download_minidump_stackwalk": True,
+    "minidump_stackwalk_path": "win32-minidump_stackwalk.exe",
+    "minidump_tooltool_manifest_path": "config/tooltool-manifests/win32/releng.manifest",
 }

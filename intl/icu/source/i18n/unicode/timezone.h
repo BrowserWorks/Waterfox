@@ -304,6 +304,9 @@ public:
      */
     static TimeZone* U_EXPORT2 createDefault(void);
 
+#define ICU_TZ_HAS_RECREATE_DEFAULT
+    static void U_EXPORT2 recreateDefault();
+
     /**
      * Sets the default time zone (i.e., what's returned by createDefault()) to be the
      * specified time zone.  If NULL is specified for the time zone, the default time

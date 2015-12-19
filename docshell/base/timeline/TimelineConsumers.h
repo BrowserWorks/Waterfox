@@ -10,11 +10,17 @@
 #include "mozilla/UniquePtr.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/Vector.h"
-#include "timeline/ObservedDocShell.h"
+#include "mozilla/TimeStamp.h"
+#include "mozilla/Mutex.h"
+
+#include "TimelineMarkerEnums.h"
 
 class nsDocShell;
+class nsIDocShell;
 
 namespace mozilla {
+class ObservedDocShell;
+class AbstractTimelineMarker;
 
 class TimelineConsumers
 {
@@ -24,22 +30,81 @@ private:
   static LinkedList<ObservedDocShell>* sObservedDocShells;
   static LinkedList<ObservedDocShell>& GetOrCreateObservedDocShellsList();
 
+  // Lock used when adding off-the-main-thread markers.
+  static Mutex* sLock;
+
 public:
+  static Mutex& GetLock();
+
   static void AddConsumer(nsDocShell* aDocShell);
   static void RemoveConsumer(nsDocShell* aDocShell);
   static bool IsEmpty();
   static bool GetKnownDocShells(Vector<nsRefPtr<nsDocShell>>& aStore);
 
-  // Methods for adding markers to appropriate docshells. These will only add
-  // markers if the docshell is currently being observed by a timeline.
+  // Methods for adding markers relevant for particular docshells, or generic
+  // (meaning that they either can't be tied to a particular docshell, or one
+  // wasn't accessible in the part of the codebase where they're instantiated).
+
+  // These will only add markers if at least one docshell is currently being
+  // observed by a timeline. Markers tied to a particular docshell won't be
+  // created unless that docshell is specifically being currently observed.
   // See nsIDocShell::recordProfileTimelineMarkers
+
+  // These methods create a custom marker from a name and some metadata,
+  // relevant for a specific docshell.
   static void AddMarkerForDocShell(nsDocShell* aDocShell,
-                                   UniquePtr<TimelineMarker>&& aMarker);
+                                   const char* aName,
+                                   MarkerTracingType aTracingType);
+  static void AddMarkerForDocShell(nsIDocShell* aDocShell,
+                                   const char* aName,
+                                   MarkerTracingType aTracingType);
+
   static void AddMarkerForDocShell(nsDocShell* aDocShell,
-                                   const char* aName, TracingMetadata aMetaData);
+                                   const char* aName,
+                                   const TimeStamp& aTime,
+                                   MarkerTracingType aTracingType);
+  static void AddMarkerForDocShell(nsIDocShell* aDocShell,
+                                   const char* aName,
+                                   const TimeStamp& aTime,
+                                   MarkerTracingType aTracingType);
+
+  // These methods register and receive ownership of an already created marker,
+  // relevant for a specific docshell.
+  static void AddMarkerForDocShell(nsDocShell* aDocShell,
+                                   UniquePtr<AbstractTimelineMarker>&& aMarker);
+  static void AddMarkerForDocShell(nsIDocShell* aDocShell,
+                                   UniquePtr<AbstractTimelineMarker>&& aMarker);
+
+  // These methods create or clone markers relevant for a list of docshells.
   static void AddMarkerForDocShellsList(Vector<nsRefPtr<nsDocShell>>& aDocShells,
-                                        const char* aName, TracingMetadata aMetaData);
-  static void AddMarkerForAllObservedDocShells(const char* aName, TracingMetadata aMetaData);
+                                        const char* aName,
+                                        MarkerTracingType aTracingType);
+  static void AddMarkerForDocShellsList(Vector<nsRefPtr<nsDocShell>>& aDocShells,
+                                        const char* aName,
+                                        const TimeStamp& aTime,
+                                        MarkerTracingType aTracingType);
+  static void AddMarkerForDocShellsList(Vector<nsRefPtr<nsDocShell>>& aDocShells,
+                                        UniquePtr<AbstractTimelineMarker>& aMarker);
+
+  // These methods create or clone markers, none of which have to be tied to
+  // a particular docshell.
+  static void AddMarkerForAllObservedDocShells(const char* aName,
+                                               MarkerTracingType aTracingType);
+  static void AddMarkerForAllObservedDocShells(const char* aName,
+                                               const TimeStamp& aTime,
+                                               MarkerTracingType aTracingType);
+  static void AddMarkerForAllObservedDocShells(UniquePtr<AbstractTimelineMarker>& aMarker);
+
+  // Thread-safe versions of the above methods. Need to lock first using
+  // the mutex returned by `TimelineConsumers::GetLock()`.
+  static void AddOTMTMarkerForDocShell(nsDocShell* aDocShell,
+                                       UniquePtr<AbstractTimelineMarker>& aMarker);
+  static void AddOTMTMarkerForDocShell(nsIDocShell* aDocShell,
+                                       UniquePtr<AbstractTimelineMarker>& aMarker);
+  static void AddOTMTMarkerForDocShellsList(Vector<nsRefPtr<nsDocShell>>& aDocShells,
+                                            UniquePtr<AbstractTimelineMarker>& aMarker);
+  static void AddOTMTMarkerForAllObservedDocShells(UniquePtr<AbstractTimelineMarker>& aMarker);
+
 };
 
 } // namespace mozilla

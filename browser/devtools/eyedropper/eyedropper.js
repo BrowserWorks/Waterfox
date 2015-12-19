@@ -6,7 +6,7 @@ const {Cc, Ci, Cu} = require("chrome");
 const {rgbToHsl} = require("devtools/css-color").colorUtils;
 const Telemetry = require("devtools/shared/telemetry");
 const {EventEmitter} = Cu.import("resource://gre/modules/devtools/event-emitter.js");
-const promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
+const promise = require("promise");
 const {setTimeout, clearTimeout} = Cu.import("resource://gre/modules/Timer.jsm", {});
 
 Cu.import("resource://gre/modules/Services.jsm");
@@ -55,7 +55,7 @@ const HSL_BOX_WIDTH = 158;
  * Manage instances of eyedroppers for windows. Registering here isn't
  * necessary for creating an eyedropper, but can be used for testing.
  */
-let EyedropperManager = {
+var EyedropperManager = {
   _instances: new WeakMap(),
 
   getInstance: function(chromeWindow) {

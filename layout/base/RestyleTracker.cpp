@@ -18,6 +18,7 @@
 #include "RestyleManager.h"
 #include "RestyleTrackerInlines.h"
 #include "nsTransitionManager.h"
+#include "mozilla/RestyleTimelineMarker.h"
 
 namespace mozilla {
 
@@ -95,31 +96,6 @@ struct RestyleCollector {
 #ifdef RESTYLE_LOGGING
   uint32_t count;
 #endif
-};
-
-class RestyleTimelineMarker : public TimelineMarker
-{
-public:
-  RestyleTimelineMarker(nsDocShell* aDocShell,
-                        TracingMetadata aMetaData,
-                        nsRestyleHint aRestyleHint)
-    : TimelineMarker(aDocShell, "Styles", aMetaData)
-  {
-    if (aRestyleHint) {
-      mRestyleHint.AssignWithConversion(RestyleManager::RestyleHintToString(aRestyleHint));
-    }
-  }
-
-  virtual void AddDetails(JSContext* aCx,
-                          mozilla::dom::ProfileTimelineMarker& aMarker) override
-  {
-    if (GetMetaData() == TRACING_INTERVAL_START) {
-      aMarker.mRestyleHint.Construct(mRestyleHint);
-    }
-  }
-
-private:
-  nsAutoString mRestyleHint;
 };
 
 static PLDHashOperator
@@ -249,6 +225,12 @@ RestyleTracker::DoProcessRestyles()
     docShell->GetRecordProfileTimelineMarkers(&isTimelineRecording);
   }
 
+  // Create a AnimationsWithDestroyedFrame during restyling process to
+  // stop animations on elements that have no frame at the end of the
+  // restyling process.
+  RestyleManager::AnimationsWithDestroyedFrame
+    animationsWithDestroyedFrame(mRestyleManager);
+
   // Create a ReframingStyleContexts struct on the stack and put it in our
   // mReframingStyleContexts for almost all of the remaining scope of
   // this function.
@@ -359,10 +341,8 @@ RestyleTracker::DoProcessRestyles()
         }
 
         if (isTimelineRecording) {
-          mozilla::UniquePtr<TimelineMarker> marker =
-            MakeUnique<RestyleTimelineMarker>(docShell,
-                                              TRACING_INTERVAL_START,
-                                              data->mRestyleHint);
+          UniquePtr<TimelineMarker> marker = MakeUnique<RestyleTimelineMarker>(
+            data->mRestyleHint, MarkerTracingType::START);
           TimelineConsumers::AddMarkerForDocShell(docShell, Move(marker));
         }
 
@@ -377,10 +357,8 @@ RestyleTracker::DoProcessRestyles()
         AddRestyleRootsIfAwaitingRestyle(data->mDescendants);
 
         if (isTimelineRecording) {
-          mozilla::UniquePtr<TimelineMarker> marker =
-            MakeUnique<RestyleTimelineMarker>(docShell,
-                                              TRACING_INTERVAL_END,
-                                              data->mRestyleHint);
+          UniquePtr<TimelineMarker> marker = MakeUnique<RestyleTimelineMarker>(
+            data->mRestyleHint, MarkerTracingType::END);
           TimelineConsumers::AddMarkerForDocShell(docShell, Move(marker));
         }
       }
@@ -424,10 +402,8 @@ RestyleTracker::DoProcessRestyles()
           }
 #endif
           if (isTimelineRecording) {
-            mozilla::UniquePtr<TimelineMarker> marker =
-              MakeUnique<RestyleTimelineMarker>(docShell,
-                                                TRACING_INTERVAL_START,
-                                                currentRestyle->mRestyleHint);
+            UniquePtr<TimelineMarker> marker = MakeUnique<RestyleTimelineMarker>(
+              currentRestyle->mRestyleHint, MarkerTracingType::START);
             TimelineConsumers::AddMarkerForDocShell(docShell, Move(marker));
           }
 
@@ -437,10 +413,8 @@ RestyleTracker::DoProcessRestyles()
                             currentRestyle->mRestyleHintData);
 
           if (isTimelineRecording) {
-            mozilla::UniquePtr<TimelineMarker> marker =
-              MakeUnique<RestyleTimelineMarker>(docShell,
-                                                TRACING_INTERVAL_END,
-                                                currentRestyle->mRestyleHint);
+            UniquePtr<TimelineMarker> marker = MakeUnique<RestyleTimelineMarker>(
+              currentRestyle->mRestyleHint, MarkerTracingType::END);
             TimelineConsumers::AddMarkerForDocShell(docShell, Move(marker));
           }
         }

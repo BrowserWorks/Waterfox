@@ -9,9 +9,9 @@
 #include "nsWeakPtr.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/ReentrantMonitor.h"
+#include "mozilla/Mutex.h"
 #include "nsIFile.h"
 #include "nsProxyRelease.h"
-#include "AutoRwLock.h"
 #include "ICameraControl.h"
 #include "CameraCommon.h"
 #include "DeviceStorage.h"
@@ -48,6 +48,8 @@ public:
   virtual nsresult StartRecording(DeviceStorageFileDescriptor* aFileDescriptor,
                                   const StartRecordingOptions* aOptions) override;
   virtual nsresult StopRecording() override;
+  virtual nsresult PauseRecording() override;
+  virtual nsresult ResumeRecording() override;
   virtual nsresult ResumeContinuousFocus() override;
 
   // Event handlers called directly from outside this class.
@@ -89,7 +91,7 @@ protected:
   void AddListenerImpl(already_AddRefed<CameraControlListener> aListener);
   void RemoveListenerImpl(CameraControlListener* aListener);
   nsTArray<nsRefPtr<CameraControlListener> > mListeners;
-  PRRWLock* mListenerLock;
+  mutable Mutex mListenerLock;
 
   class ControlMessage;
   class ListenerMessage;
@@ -121,6 +123,8 @@ protected:
   virtual nsresult StartRecordingImpl(DeviceStorageFileDescriptor* aFileDescriptor,
                                       const StartRecordingOptions* aOptions) = 0;
   virtual nsresult StopRecordingImpl() = 0;
+  virtual nsresult PauseRecordingImpl() = 0;
+  virtual nsresult ResumeRecordingImpl() = 0;
   virtual nsresult ResumeContinuousFocusImpl() = 0;
   virtual nsresult PushParametersImpl() = 0;
   virtual nsresult PullParametersImpl() = 0;

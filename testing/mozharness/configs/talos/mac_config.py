@@ -27,20 +27,20 @@ config = {
     "exes": {
         'python': PYTHON,
         'virtualenv': [PYTHON, '/tools/misc-python/virtualenv.py'],
+        'tooltool.py': "/tools/tooltool.py",
     },
     "title": os.uname()[1].lower().split('.')[0],
     "default_actions": [
         "clobber",
         "read-buildbot-config",
         "download-and-extract",
-        "clone-talos",
+        "populate-webroot",
         "create-virtualenv",
         "install",
         "run-tests",
     ],
     "python_webserver": False,
     "webroot": '%s/../talos-data' % os.getcwd(),
-    "populate_webroot": True,
     "run_cmd_checks_enabled": True,
     "preflight_run_cmd_suites": [
         SCREEN_RESOLUTION_CHECK,
@@ -52,4 +52,8 @@ config = {
         "https://blobupload.elasticbeanstalk.com",
     ],
     "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
+    "download_minidump_stackwalk": True,
+    "minidump_stackwalk_path": "macosx64-minidump_stackwalk",
+    "minidump_tooltool_manifest_path": "config/tooltool-manifests/macosx64/releng.manifest",
+    "tooltool_cache": "/builds/tooltool_cache",
 }

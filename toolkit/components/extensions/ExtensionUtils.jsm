@@ -4,7 +4,7 @@
 
 "use strict";
 
-const EXPORTED_SYMBOLS = ["ExtensionUtils"];
+this.EXPORTED_SYMBOLS = ["ExtensionUtils"];
 
 const Ci = Components.interfaces;
 const Cc = Components.classes;
@@ -231,9 +231,9 @@ function injectAPI(source, dest)
  * Messaging primitives.
  */
 
-let nextBrokerId = 1;
+var nextBrokerId = 1;
 
-let MESSAGES = [
+var MESSAGES = [
   "Extension:Message",
   "Extension:Connect",
 ];
@@ -527,7 +527,13 @@ Messenger.prototype = {
   },
 };
 
-let ExtensionUtils = {
+function flushJarCache(jarFile)
+{
+  Services.obs.notifyObservers(jarFile, "flush-cache-entry", null);
+}
+
+this.ExtensionUtils = {
+  runSafeWithoutClone,
   runSafe,
   DefaultWeakMap,
   EventManager,
@@ -536,5 +542,6 @@ let ExtensionUtils = {
   injectAPI,
   MessageBroker,
   Messenger,
+  flushJarCache,
 };
 

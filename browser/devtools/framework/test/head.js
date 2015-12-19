@@ -19,8 +19,8 @@ function toggleAllTools(state) {
 
 function getChromeActors(callback)
 {
-  let { DebuggerServer } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
-  let { DebuggerClient } = Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
+  let { DebuggerServer } = require("devtools/server/main");
+  let { DebuggerClient } = require("devtools/toolkit/client/main");
 
   if (!DebuggerServer.initialized) {
     DebuggerServer.init();

@@ -74,20 +74,16 @@ function dumpn(text)
 /**
  * Configure preferences to load engines from
  * chrome://testsearchplugin/locale/searchplugins/
- * unless the loadFromJars parameter is set to false.
  */
-function configureToLoadJarEngines(loadFromJars = true)
+function configureToLoadJarEngines()
 {
   let defaultBranch = Services.prefs.getDefaultBranch(null);
 
   let url = "chrome://testsearchplugin/locale/searchplugins/";
-  defaultBranch.setCharPref("browser.search.jarURIs", url);
-
-  defaultBranch.setBoolPref("browser.search.loadFromJars", loadFromJars);
-
-  // Give the pref a user set value that is the opposite of the default,
-  // to ensure user set values are ignored.
-  Services.prefs.setBoolPref("browser.search.loadFromJars", !loadFromJars)
+  let resProt = Services.io.getProtocolHandler("resource")
+                        .QueryInterface(Ci.nsIResProtocolHandler);
+  resProt.setSubstitution("search-plugins",
+                          Services.io.newURI(url, null, null));
 
   // Ensure a test engine exists in the app dir anyway.
   let dir = Services.dirsvc.get(NS_APP_SEARCH_DIR, Ci.nsIFile);
@@ -229,7 +225,7 @@ function promiseSaveGlobalMetadata(globalData) {
   }));
 }
 
-let forceExpiration = Task.async(function* () {
+var forceExpiration = Task.async(function* () {
   let metadata = yield promiseGlobalMetadata();
 
   // Make the current geodefaults expire 1s ago.
@@ -369,7 +365,7 @@ if (!isChild) {
  * After useHttpServer() is called, this string contains the URL of the "data"
  * directory, including the final slash.
  */
-let gDataUrl;
+var gDataUrl;
 
 /**
  * Initializes the HTTP server and ensures that it is terminated when tests end.
@@ -401,7 +397,7 @@ function useHttpServer() {
  *                   except for the engine name.  Alternative to xmlFileName.
  *        }
  */
-let addTestEngines = Task.async(function* (aItems) {
+var addTestEngines = Task.async(function* (aItems) {
   if (!gDataUrl) {
     do_throw("useHttpServer must be called before addTestEngines.");
   }

@@ -179,6 +179,7 @@ TypeUtils::ToCacheRequest(CacheRequest& aOut, InternalRequest* aIn,
   aOut.credentials() = aIn->GetCredentialsMode();
   aOut.contentPolicyType() = aIn->ContentPolicyType();
   aOut.requestCache() = aIn->GetCacheMode();
+  aOut.requestRedirect() = aIn->GetRedirectMode();
 
   if (aBodyAction == IgnoreBody) {
     aOut.body() = void_t();
@@ -201,7 +202,7 @@ TypeUtils::ToCacheResponseWithoutBody(CacheResponse& aOut,
 {
   aOut.type() = aIn.Type();
 
-  aIn.GetUrl(aOut.url());
+  aIn.GetUnfilteredUrl(aOut.url());
 
   if (aOut.url() != EmptyCString()) {
     // Pass all Response URL schemes through... The spec only requires we take
@@ -212,8 +213,8 @@ TypeUtils::ToCacheResponseWithoutBody(CacheResponse& aOut,
     }
   }
 
-  aOut.status() = aIn.GetStatus();
-  aOut.statusText() = aIn.GetStatusText();
+  aOut.status() = aIn.GetUnfilteredStatus();
+  aOut.statusText() = aIn.GetUnfilteredStatusText();
   nsRefPtr<InternalHeaders> headers = aIn.UnfilteredHeaders();
   MOZ_ASSERT(headers);
   if (HasVaryStar(headers)) {
@@ -245,7 +246,7 @@ TypeUtils::ToCacheResponse(CacheResponse& aOut, Response& aIn, ErrorResult& aRv)
   }
 
   nsCOMPtr<nsIInputStream> stream;
-  ir->GetInternalBody(getter_AddRefs(stream));
+  ir->GetUnfilteredBody(getter_AddRefs(stream));
   if (stream) {
     aIn.SetBodyUsed();
   }
@@ -304,16 +305,19 @@ TypeUtils::ToResponse(const CacheResponse& aIn)
 
   switch (aIn.type())
   {
-    case ResponseType::Default:
-      break;
-    case ResponseType::Opaque:
-      ir = ir->OpaqueResponse();
-      break;
     case ResponseType::Basic:
       ir = ir->BasicResponse();
       break;
     case ResponseType::Cors:
       ir = ir->CORSResponse();
+      break;
+    case ResponseType::Default:
+      break;
+    case ResponseType::Opaque:
+      ir = ir->OpaqueResponse();
+      break;
+    case ResponseType::Opaqueredirect:
+      ir = ir->OpaqueRedirectResponse();
       break;
     default:
       MOZ_CRASH("Unexpected ResponseType!");
@@ -340,6 +344,7 @@ TypeUtils::ToInternalRequest(const CacheRequest& aIn)
   internalRequest->SetCredentialsMode(aIn.credentials());
   internalRequest->SetContentPolicyType(aIn.contentPolicyType());
   internalRequest->SetCacheMode(aIn.requestCache());
+  internalRequest->SetRedirectMode(aIn.requestRedirect());
 
   nsRefPtr<InternalHeaders> internalHeaders =
     ToInternalHeaders(aIn.headers(), aIn.headersGuard());
@@ -414,23 +419,13 @@ TypeUtils::ProcessURL(nsACString& aUrl, bool* aSchemeValidOut,
 
   uint32_t queryPos;
   int32_t queryLen;
-  uint32_t refPos;
-  int32_t refLen;
 
   aRv = urlParser->ParsePath(url + pathPos, flatURL.Length() - pathPos,
                              nullptr, nullptr,               // ignore filepath
                              &queryPos, &queryLen,
-                             &refPos, &refLen);
+                             nullptr, nullptr);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
-  }
-
-  // TODO: Remove this once Request/Response properly strip the fragment (bug 1110476)
-  if (refLen >= 0) {
-    // ParsePath gives us ref position relative to the start of the path
-    refPos += pathPos;
-
-    aUrl = Substring(aUrl, 0, refPos - 1);
   }
 
   if (!aUrlWithoutQueryOut) {

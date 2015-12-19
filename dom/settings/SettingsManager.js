@@ -12,8 +12,8 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/DOMRequestHelper.jsm");
 
-let DEBUG = false;
-let VERBOSE = false;
+var DEBUG = false;
+var VERBOSE = false;
 
 try {
   DEBUG   =
@@ -38,6 +38,8 @@ XPCOMUtils.defineLazyServiceGetter(this, "mrm",
 XPCOMUtils.defineLazyServiceGetter(this, "uuidgen",
                                    "@mozilla.org/uuid-generator;1",
                                    "nsIUUIDGenerator");
+
+const kObserverSoftLimit = 10;
 
 /**
  * In order to make SettingsManager work with Privileged Apps, we need the lock
@@ -363,14 +365,27 @@ SettingsManager.prototype = {
 
   addObserver: function addObserver(aName, aCallback) {
     if (VERBOSE) debug("addObserver " + aName);
+
     if (!this._callbacks) {
       this._callbacks = {};
     }
+
     if (!this._callbacks[aName]) {
       this._callbacks[aName] = [aCallback];
     } else {
       this._callbacks[aName].push(aCallback);
     }
+
+    let length = this._callbacks[aName].length;
+    if (length >= kObserverSoftLimit) {
+      debug("WARNING: MORE THAN " + kObserverSoftLimit + " OBSERVERS FOR " +
+            aName + ": " + length + " FROM" + (new Error).stack);
+#ifdef DEBUG
+      debug("JS STOPS EXECUTING AT THIS POINT IN DEBUG BUILDS!");
+      throw Components.results.NS_ERROR_ABORT;
+#endif
+    }
+
     this.checkMessageRegistration();
   },
 
@@ -421,7 +436,7 @@ SettingsManager.prototype = {
       }
 
       let path;
-      if (length < 20) {
+      if (length < kObserverSoftLimit) {
         path = "settings-observers";
       } else {
         path = "settings-observers-suspect/referent(topic=" +

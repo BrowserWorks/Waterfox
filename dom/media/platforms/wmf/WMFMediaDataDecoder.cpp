@@ -12,8 +12,8 @@
 
 #include "mozilla/Logging.h"
 
-PRLogModuleInfo* GetDemuxerLog();
-#define LOG(...) MOZ_LOG(GetDemuxerLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+extern PRLogModuleInfo* GetPDMLog();
+#define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 namespace mozilla {
 
@@ -33,22 +33,17 @@ WMFMediaDataDecoder::~WMFMediaDataDecoder()
 {
 }
 
-nsresult
+nsRefPtr<MediaDataDecoder::InitPromise>
 WMFMediaDataDecoder::Init()
 {
-  MOZ_ASSERT(!mDecoder);
   MOZ_ASSERT(!mIsShutDown);
-
-  mDecoder = mMFTManager->Init();
-  NS_ENSURE_TRUE(mDecoder, NS_ERROR_FAILURE);
-
-  return NS_OK;
+  return InitPromise::CreateAndResolve(mMFTManager->GetType(), __func__);
 }
 
 // A single telemetry sample is reported for each MediaDataDecoder object
 // that has detected error or produced output successfully.
 static void
-SendTelemetry(HRESULT hr)
+SendTelemetry(unsigned long hr)
 {
   // Collapse the error codes into a range of 0-0xff that can be viewed in
   // telemetry histograms.  For most MF_E_* errors, unique samples are used,
@@ -104,7 +99,6 @@ WMFMediaDataDecoder::ProcessShutdown()
       SendTelemetry(S_OK);
     }
   }
-  mDecoder = nullptr;
 }
 
 // Inserts data into the decoder's pipeline.
@@ -177,8 +171,8 @@ WMFMediaDataDecoder::ProcessOutput()
 void
 WMFMediaDataDecoder::ProcessFlush()
 {
-  if (mDecoder) {
-    mDecoder->Flush();
+  if (mMFTManager) {
+    mMFTManager->Flush();
   }
   MonitorAutoLock mon(mMonitor);
   mIsFlushing = false;
@@ -210,11 +204,9 @@ WMFMediaDataDecoder::ProcessDrain()
     MonitorAutoLock mon(mMonitor);
     isFlushing = mIsFlushing;
   }
-  if (!isFlushing && mDecoder) {
+  if (!isFlushing && mMFTManager) {
     // Order the decoder to drain...
-    if (FAILED(mDecoder->SendMFTMessage(MFT_MESSAGE_COMMAND_DRAIN, 0))) {
-      NS_WARNING("Failed to send DRAIN command to MFT");
-    }
+    mMFTManager->Drain();
     // Then extract all available output.
     ProcessOutput();
   }
@@ -234,10 +226,10 @@ WMFMediaDataDecoder::Drain()
 }
 
 bool
-WMFMediaDataDecoder::IsHardwareAccelerated() const {
+WMFMediaDataDecoder::IsHardwareAccelerated(nsACString& aFailureReason) const {
   MOZ_ASSERT(!mIsShutDown);
 
-  return mMFTManager && mMFTManager->IsHardwareAccelerated();
+  return mMFTManager && mMFTManager->IsHardwareAccelerated(aFailureReason);
 }
 
 } // namespace mozilla

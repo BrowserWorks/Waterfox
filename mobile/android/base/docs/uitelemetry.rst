@@ -120,8 +120,23 @@ Events
   event is fired with the previous locale as the extra. If the previous locale
   could not be determined, "unknown" is provided.
 
-``setdefault.1``
+``neterror.1``
+  When the user performs actions on the in-content network error page. This should probably be a ``Session``, but it's difficult to start and stop the session reliably.
+
+``panel.hide.1``
+  Hide a built-in home panel.
+
+``panel.move.1``
+  Move a home panel up or down.
+
+``panel.remove.1``
+  Remove a custom home panel.
+
+``panel.setdefault.1``
   Set default home panel.
+
+``panel.show.1``
+  Show a hidden built-in home panel.
 
 ``pin.1``, ``unpin.1``
   Sent when the user pinned or unpinned a top site.
@@ -140,20 +155,109 @@ Events
 ``search.1``
   Sent when the user performs a search. Currently used in the search activity.
 
+``search.remove.1``
+  Sent when the user removes a search engine.
+
+``search.restore.1``
+  Sent when the user restores the search engine configuration back to the built-in configuration.
+
+``search.setdefault.1``
+  Sent when the user sets a search engine to be the default.
+
 ``share.1``
   Sharing content.
 
+``show.1``
+  Sent when a contextual UI element is shown to the user.
+
+``undo.1``
+  Sent when performing an undo-style action, like undoing a closed tab.
+
 Methods
 -------
+``actionbar``
+  Action triggered from an ActionBar UI.
+
+``back``
+  Action triggered from the back button.
+
 ``banner``
   Action triggered from a banner (such as HomeBanner).
+
+``button``
+  Action triggered from a button.
   Note: Only used in JavaScript for now.
 
 ``content``
   Action triggered from a content page.
 
+``contextmenu``
+  Action triggered from a contextmenu. Could be from chrome or content.
+
+``dialog``
+  Action triggered from a dialog.
+
+``griditem``
+  Action triggered from a griditem, such as those used in Top Sites panel.
+
+``homescreen``
+  Action triggered from a homescreen shortcut icon.
+
+``intent``
+  Action triggered from a system Intent, usually sent from the OS.
+
+``list``
+  Action triggered from an unmanaged list of items, usually provided by the OS.
+
+``listitem``
+  Action triggered from a listitem.
+
+``menu``
+  Action triggered from the main menu.
+
+``notification``
+  Action triggered from a system notification.
+
+``pageaction``
+  Action triggered from a pageaction, displayed in the URL bar.
+
+``settings``
+  Action triggered from a content page.
+
+``shareoverlay``
+  Action triggered from a content page.
+
+``suggestion``
+  Action triggered from a suggested result, like those from search engines or default tiles.
+
+``toast``
+  Action triggered from an unobtrusive, temporary notification.
+
+``widget``
+  Action triggered from a widget placed on the homescreen.
+
 Sessions
 --------
+``awesomescreen.1``
+  Awesomescreen (including frecency search) is active.
+
+``firstrun.1``
+  Started the very first time we believe the application has been launched.
+
+``frecency.1``
+  Awesomescreen frecency search is active.
+
+``homepanel.1``
+  Started when a user enters a given home panel.
+  Session name is dynamic, encoded as "homepanel.1:<panel_id>"
+  Built-in home panels have fixed IDs
+
+``reader.1``
+  Reader viewer becomes active in the foreground.
+
 ``searchactivity.1``
   Started when the user launches the search activity (onStart) and stopped
   when they leave the search activity.
+
+``settings.1``
+  Settings activity is active.

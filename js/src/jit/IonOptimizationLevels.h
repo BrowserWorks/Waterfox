@@ -79,8 +79,14 @@ class OptimizationInfo
     // Toggles whether loop unrolling is performed.
     bool loopUnrolling_;
 
+    // Toggles whether instruction reordering is performed.
+    bool reordering_;
+
     // Toggles whether Truncation based on Range Analysis is used.
     bool autoTruncate_;
+
+    // Toggles whether sincos is used.
+    bool sincos_;
 
     // Toggles whether sink is used.
     bool sink_;
@@ -175,8 +181,16 @@ class OptimizationInfo
         return loopUnrolling_ && !js_JitOptions.disableLoopUnrolling;
     }
 
+    bool instructionReorderingEnabled() const {
+        return reordering_ && !js_JitOptions.disableInstructionReordering;
+    }
+
     bool autoTruncateEnabled() const {
         return autoTruncate_ && rangeAnalysisEnabled();
+    }
+
+    bool sincosEnabled() const {
+        return sincos_ && !js_JitOptions.disableSincos;
     }
 
     bool sinkEnabled() const {

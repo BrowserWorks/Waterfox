@@ -112,7 +112,7 @@ public:
                                           int32_t aHorizontal,
                                           int32_t aVertical);
   NS_IMETHOD              PlaceBehind(nsTopLevelWidgetZPlacement aPlacement, nsIWidget *aWidget, bool aActivate);
-  NS_IMETHOD              SetSizeMode(int32_t aMode);
+  NS_IMETHOD              SetSizeMode(nsSizeMode aMode);
   NS_IMETHOD              Enable(bool aState);
   virtual bool            IsEnabled() const;
   NS_IMETHOD              SetFocus(bool aRaise);
@@ -208,11 +208,15 @@ public:
   /**
    * Event helpers
    */
-  virtual bool            DispatchMouseEvent(uint32_t aEventType, WPARAM wParam,
-                                             LPARAM lParam,
-                                             bool aIsContextMenuKey = false,
-                                             int16_t aButton = mozilla::WidgetMouseEvent::eLeftButton,
-                                             uint16_t aInputSource = nsIDOMMouseEvent::MOZ_SOURCE_MOUSE);
+  virtual bool            DispatchMouseEvent(
+                            mozilla::EventMessage aEventMessage,
+                            WPARAM wParam,
+                            LPARAM lParam,
+                            bool aIsContextMenuKey = false,
+                            int16_t aButton =
+                              mozilla::WidgetMouseEvent::eLeftButton,
+                            uint16_t aInputSource =
+                              nsIDOMMouseEvent::MOZ_SOURCE_MOUSE);
   virtual bool            DispatchWindowEvent(mozilla::WidgetGUIEvent* aEvent,
                                               nsEventStatus& aStatus);
   void                    DispatchPendingEvents();
@@ -358,7 +362,7 @@ protected:
    * Event processing helpers
    */
   void                    DispatchFocusToTopLevelWindow(bool aIsActivate);
-  bool                    DispatchStandardEvent(uint32_t aMsg);
+  bool                    DispatchStandardEvent(mozilla::EventMessage aMsg);
   void                    RelayMouseEvent(UINT aMsg, WPARAM wParam, LPARAM lParam);
   virtual bool            ProcessMessage(UINT msg, WPARAM &wParam,
                                          LPARAM &lParam, LRESULT *aRetValue);
@@ -558,6 +562,14 @@ protected:
 
   nsIntRect             mLastPaintBounds;
 
+  // Used for displayport suppression during window resize
+  enum ResizeState {
+    NOT_RESIZING,
+    IN_SIZEMOVE,
+    RESIZING,
+  };
+  ResizeState mResizeState;
+
   // Transparency
 #ifdef MOZ_XUL
   // Use layered windows to support full 256 level alpha translucency
@@ -592,11 +604,6 @@ protected:
   POINT mCachedHitTestPoint;
   TimeStamp mCachedHitTestTime;
   int32_t mCachedHitTestResult;
-
-  // For converting native event times to timestamps we record the time of the
-  // first received event in each time scale.
-  static DWORD     sFirstEventTime;
-  static TimeStamp sFirstEventTimeStamp;
 
   static bool sNeedsToInitMouseWheelSettings;
   static void InitMouseWheelScrollData();

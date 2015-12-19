@@ -9,9 +9,9 @@
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/" +
                  "test/test-error.html";
 
-let getItemForAttachment;
-let Sources;
-let getItemInvoked = false;
+var getItemForAttachment;
+var Sources;
+var getItemInvoked = false;
 
 add_task(function*() {
   yield loadTab(TEST_URI);
@@ -21,7 +21,11 @@ add_task(function*() {
   let button = content.document.querySelector("button");
   ok(button, "we have the button on the page");
 
-  expectUncaughtException();
+  // On e10s, the exception is triggered in child process
+  // and is ignored by test harness
+  if (!Services.appinfo.browserTabsRemoteAutostart) {
+    expectUncaughtException();
+  }
   EventUtils.sendMouseEvent({ type: "click" }, button, content);
 
   let { panelWin: { DebuggerView } } = yield openDebugger();

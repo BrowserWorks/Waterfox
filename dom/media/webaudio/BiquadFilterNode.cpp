@@ -138,8 +138,8 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioChunk& aInput,
-                            AudioChunk* aOutput,
+                            const AudioBlock& aInput,
+                            AudioBlock* aOutput,
                             bool* aFinished) override
   {
     float inputBuffer[WEBAUDIO_BLOCK_SIZE];
@@ -168,7 +168,7 @@ public:
 
       PodArrayZero(inputBuffer);
 
-    } else if(mBiquads.Length() != aInput.mChannelData.Length()){
+    } else if(mBiquads.Length() != aInput.ChannelCount()){
       if (mBiquads.IsEmpty()) {
         nsRefPtr<PlayingRefChangeHandler> refchanged =
           new PlayingRefChangeHandler(aStream, PlayingRefChangeHandler::ADDREF);
@@ -179,11 +179,11 @@ public:
       }
 
       // Adjust the number of biquads based on the number of channels
-      mBiquads.SetLength(aInput.mChannelData.Length());
+      mBiquads.SetLength(aInput.ChannelCount());
     }
 
     uint32_t numberOfChannels = mBiquads.Length();
-    AllocateAudioBlock(numberOfChannels, aOutput);
+    aOutput->AllocateChannels(numberOfChannels);
 
     StreamTime pos = aStream->GetCurrentPosition();
 
@@ -250,7 +250,8 @@ BiquadFilterNode::BiquadFilterNode(AudioContext* aContext)
   , mGain(new AudioParam(this, SendGainToStream, 0.f, "gain"))
 {
   BiquadFilterNodeEngine* engine = new BiquadFilterNodeEngine(this, aContext->Destination());
-  mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);
+  mStream = AudioNodeStream::Create(aContext, engine,
+                                    AudioNodeStream::NO_STREAM_FLAGS);
   engine->SetSourceStream(mStream);
 }
 

@@ -11,6 +11,7 @@
 #include "builtin/TestingFunctions.h"
 #include "builtin/TypedObject.h"
 #include "jit/BaselineInspector.h"
+#include "jit/InlinableNatives.h"
 #include "jit/IonBuilder.h"
 #include "jit/Lowering.h"
 #include "jit/MIR.h"
@@ -38,10 +39,16 @@ IonBuilder::InliningStatus
 IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
 {
     MOZ_ASSERT(target->isNative());
-    JSNative native = target->native();
 
     if (!optimizationInfo().inlineNative()) {
         trackOptimizationOutcome(TrackedOutcome::CantInlineDisabledIon);
+        return InliningStatus_NotInlined;
+    }
+
+    if (!target->jitInfo() || target->jitInfo()->type() != JSJitInfo::InlinableNative) {
+        // Reaching here means we tried to inline a native for which there is no
+        // Ion specialization.
+        trackOptimizationOutcome(TrackedOutcome::CantInlineNativeNoSpecialization);
         return InliningStatus_NotInlined;
     }
 
@@ -55,377 +62,234 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
             return InliningStatus_NotInlined;
     }
 
-    // Atomic natives.
-    if (native == atomics_compareExchange)
-        return inlineAtomicsCompareExchange(callInfo);
-    if (native == atomics_exchange)
-        return inlineAtomicsExchange(callInfo);
-    if (native == atomics_load)
-        return inlineAtomicsLoad(callInfo);
-    if (native == atomics_store)
-        return inlineAtomicsStore(callInfo);
-    if (native == atomics_fence)
-        return inlineAtomicsFence(callInfo);
-    if (native == atomics_add ||
-        native == atomics_sub ||
-        native == atomics_and ||
-        native == atomics_or ||
-        native == atomics_xor)
-    {
-        return inlineAtomicsBinop(callInfo, target);
-    }
-    if (native == atomics_isLockFree)
-        return inlineAtomicsIsLockFree(callInfo);
-
-    // Array natives.
-    if (native == ArrayConstructor)
+    switch (InlinableNative inlNative = target->jitInfo()->inlinableNative) {
+      // Array natives.
+      case InlinableNative::Array:
         return inlineArray(callInfo);
-    if (native == js::array_pop)
+      case InlinableNative::ArrayIsArray:
+        return inlineArrayIsArray(callInfo);
+      case InlinableNative::ArrayPop:
         return inlineArrayPopShift(callInfo, MArrayPopShift::Pop);
-    if (native == js::array_shift)
+      case InlinableNative::ArrayShift:
         return inlineArrayPopShift(callInfo, MArrayPopShift::Shift);
-    if (native == js::array_push)
+      case InlinableNative::ArrayPush:
         return inlineArrayPush(callInfo);
-    if (native == js::array_concat)
+      case InlinableNative::ArrayConcat:
         return inlineArrayConcat(callInfo);
-    if (native == js::array_slice)
+      case InlinableNative::ArraySlice:
         return inlineArraySlice(callInfo);
-    if (native == js::array_splice)
+      case InlinableNative::ArraySplice:
         return inlineArraySplice(callInfo);
 
-    // Math natives.
-    if (native == js::math_abs)
+      // Atomic natives.
+      case InlinableNative::AtomicsCompareExchange:
+        return inlineAtomicsCompareExchange(callInfo);
+      case InlinableNative::AtomicsExchange:
+        return inlineAtomicsExchange(callInfo);
+      case InlinableNative::AtomicsLoad:
+        return inlineAtomicsLoad(callInfo);
+      case InlinableNative::AtomicsStore:
+        return inlineAtomicsStore(callInfo);
+      case InlinableNative::AtomicsFence:
+        return inlineAtomicsFence(callInfo);
+      case InlinableNative::AtomicsAdd:
+      case InlinableNative::AtomicsSub:
+      case InlinableNative::AtomicsAnd:
+      case InlinableNative::AtomicsOr:
+      case InlinableNative::AtomicsXor:
+        return inlineAtomicsBinop(callInfo, inlNative);
+      case InlinableNative::AtomicsIsLockFree:
+        return inlineAtomicsIsLockFree(callInfo);
+
+      // Math natives.
+      case InlinableNative::MathAbs:
         return inlineMathAbs(callInfo);
-    if (native == js::math_floor)
+      case InlinableNative::MathFloor:
         return inlineMathFloor(callInfo);
-    if (native == js::math_ceil)
+      case InlinableNative::MathCeil:
         return inlineMathCeil(callInfo);
-    if (native == js::math_clz32)
-        return inlineMathClz32(callInfo);
-    if (native == js::math_round)
+      case InlinableNative::MathRound:
         return inlineMathRound(callInfo);
-    if (native == js::math_sqrt)
+      case InlinableNative::MathClz32:
+        return inlineMathClz32(callInfo);
+      case InlinableNative::MathSqrt:
         return inlineMathSqrt(callInfo);
-    if (native == js::math_atan2)
+      case InlinableNative::MathATan2:
         return inlineMathAtan2(callInfo);
-    if (native == js::math_hypot)
+      case InlinableNative::MathHypot:
         return inlineMathHypot(callInfo);
-    if (native == js::math_max)
+      case InlinableNative::MathMax:
         return inlineMathMinMax(callInfo, true /* max */);
-    if (native == js::math_min)
+      case InlinableNative::MathMin:
         return inlineMathMinMax(callInfo, false /* max */);
-    if (native == js::math_pow)
+      case InlinableNative::MathPow:
         return inlineMathPow(callInfo);
-    if (native == js::math_random)
+      case InlinableNative::MathRandom:
         return inlineMathRandom(callInfo);
-    if (native == js::math_imul)
+      case InlinableNative::MathImul:
         return inlineMathImul(callInfo);
-    if (native == js::math_fround)
+      case InlinableNative::MathFRound:
         return inlineMathFRound(callInfo);
-    if (native == js::math_sin)
+      case InlinableNative::MathSin:
         return inlineMathFunction(callInfo, MMathFunction::Sin);
-    if (native == js::math_cos)
-        return inlineMathFunction(callInfo, MMathFunction::Cos);
-    if (native == js::math_exp)
-        return inlineMathFunction(callInfo, MMathFunction::Exp);
-    if (native == js::math_tan)
+      case InlinableNative::MathTan:
         return inlineMathFunction(callInfo, MMathFunction::Tan);
-    if (native == js::math_log)
+      case InlinableNative::MathCos:
+        return inlineMathFunction(callInfo, MMathFunction::Cos);
+      case InlinableNative::MathExp:
+        return inlineMathFunction(callInfo, MMathFunction::Exp);
+      case InlinableNative::MathLog:
         return inlineMathFunction(callInfo, MMathFunction::Log);
-    if (native == js::math_atan)
-        return inlineMathFunction(callInfo, MMathFunction::ATan);
-    if (native == js::math_asin)
+      case InlinableNative::MathASin:
         return inlineMathFunction(callInfo, MMathFunction::ASin);
-    if (native == js::math_acos)
+      case InlinableNative::MathATan:
+        return inlineMathFunction(callInfo, MMathFunction::ATan);
+      case InlinableNative::MathACos:
         return inlineMathFunction(callInfo, MMathFunction::ACos);
-    if (native == js::math_log10)
+      case InlinableNative::MathLog10:
         return inlineMathFunction(callInfo, MMathFunction::Log10);
-    if (native == js::math_log2)
+      case InlinableNative::MathLog2:
         return inlineMathFunction(callInfo, MMathFunction::Log2);
-    if (native == js::math_log1p)
+      case InlinableNative::MathLog1P:
         return inlineMathFunction(callInfo, MMathFunction::Log1P);
-    if (native == js::math_expm1)
+      case InlinableNative::MathExpM1:
         return inlineMathFunction(callInfo, MMathFunction::ExpM1);
-    if (native == js::math_cosh)
+      case InlinableNative::MathCosH:
         return inlineMathFunction(callInfo, MMathFunction::CosH);
-    if (native == js::math_sinh)
+      case InlinableNative::MathSinH:
         return inlineMathFunction(callInfo, MMathFunction::SinH);
-    if (native == js::math_tanh)
+      case InlinableNative::MathTanH:
         return inlineMathFunction(callInfo, MMathFunction::TanH);
-    if (native == js::math_acosh)
+      case InlinableNative::MathACosH:
         return inlineMathFunction(callInfo, MMathFunction::ACosH);
-    if (native == js::math_asinh)
+      case InlinableNative::MathASinH:
         return inlineMathFunction(callInfo, MMathFunction::ASinH);
-    if (native == js::math_atanh)
+      case InlinableNative::MathATanH:
         return inlineMathFunction(callInfo, MMathFunction::ATanH);
-    if (native == js::math_sign)
+      case InlinableNative::MathSign:
         return inlineMathFunction(callInfo, MMathFunction::Sign);
-    if (native == js::math_trunc)
+      case InlinableNative::MathTrunc:
         return inlineMathFunction(callInfo, MMathFunction::Trunc);
-    if (native == js::math_cbrt)
+      case InlinableNative::MathCbrt:
         return inlineMathFunction(callInfo, MMathFunction::Cbrt);
 
-    // String natives.
-    if (native == StringConstructor)
+      // RegExp natives.
+      case InlinableNative::RegExpExec:
+        return CallResultEscapes(pc) ? inlineRegExpExec(callInfo) : inlineRegExpTest(callInfo);
+      case InlinableNative::RegExpTest:
+        return inlineRegExpTest(callInfo);
+
+      // String natives.
+      case InlinableNative::String:
         return inlineStringObject(callInfo);
-    if (native == str_split)
+      case InlinableNative::StringSplit:
         return inlineStringSplit(callInfo);
-    if (native == str_charCodeAt)
+      case InlinableNative::StringCharCodeAt:
         return inlineStrCharCodeAt(callInfo);
-    if (native == str_fromCharCode)
+      case InlinableNative::StringFromCharCode:
         return inlineStrFromCharCode(callInfo);
-    if (native == str_charAt)
+      case InlinableNative::StringCharAt:
         return inlineStrCharAt(callInfo);
-    if (native == str_replace)
+      case InlinableNative::StringReplace:
         return inlineStrReplace(callInfo);
 
-    // RegExp natives.
-    if (native == regexp_exec && CallResultEscapes(pc))
-        return inlineRegExpExec(callInfo);
-    if (native == regexp_exec && !CallResultEscapes(pc))
-        return inlineRegExpTest(callInfo);
-    if (native == regexp_test)
-        return inlineRegExpTest(callInfo);
-
-    // Object natives.
-    if (native == obj_create)
+      // Object natives.
+      case InlinableNative::ObjectCreate:
         return inlineObjectCreate(callInfo);
-    if (native == intrinsic_DefineDataProperty)
-        return inlineDefineDataProperty(callInfo);
 
-    // Slot intrinsics.
-    if (native == intrinsic_UnsafeSetReservedSlot)
+      // Bound function.
+      case InlinableNative::CallBoundFunction:
+        return inlineBoundFunction(callInfo, target);
+
+      // SIMD natives.
+      case InlinableNative::SimdInt32x4:
+        return inlineSimdInt32x4(callInfo, target->native());
+      case InlinableNative::SimdFloat32x4:
+        return inlineSimdFloat32x4(callInfo, target->native());
+
+      // Testing functions.
+      case InlinableNative::TestBailout:
+        return inlineBailout(callInfo);
+      case InlinableNative::TestAssertFloat32:
+        return inlineAssertFloat32(callInfo);
+      case InlinableNative::TestAssertRecoveredOnBailout:
+        return inlineAssertRecoveredOnBailout(callInfo);
+
+      // Slot intrinsics.
+      case InlinableNative::IntrinsicUnsafeSetReservedSlot:
         return inlineUnsafeSetReservedSlot(callInfo);
-    if (native == intrinsic_UnsafeGetReservedSlot)
+      case InlinableNative::IntrinsicUnsafeGetReservedSlot:
         return inlineUnsafeGetReservedSlot(callInfo, MIRType_Value);
-    if (native == intrinsic_UnsafeGetObjectFromReservedSlot)
+      case InlinableNative::IntrinsicUnsafeGetObjectFromReservedSlot:
         return inlineUnsafeGetReservedSlot(callInfo, MIRType_Object);
-    if (native == intrinsic_UnsafeGetInt32FromReservedSlot)
+      case InlinableNative::IntrinsicUnsafeGetInt32FromReservedSlot:
         return inlineUnsafeGetReservedSlot(callInfo, MIRType_Int32);
-    if (native == intrinsic_UnsafeGetStringFromReservedSlot)
+      case InlinableNative::IntrinsicUnsafeGetStringFromReservedSlot:
         return inlineUnsafeGetReservedSlot(callInfo, MIRType_String);
-    if (native == intrinsic_UnsafeGetBooleanFromReservedSlot)
+      case InlinableNative::IntrinsicUnsafeGetBooleanFromReservedSlot:
         return inlineUnsafeGetReservedSlot(callInfo, MIRType_Boolean);
 
-    // Utility intrinsics.
-    if (native == intrinsic_IsCallable)
+      // Utility intrinsics.
+      case InlinableNative::IntrinsicIsCallable:
         return inlineIsCallable(callInfo);
-    if (native == intrinsic_ToObject)
+      case InlinableNative::IntrinsicToObject:
         return inlineToObject(callInfo);
-    if (native == intrinsic_IsObject)
+      case InlinableNative::IntrinsicIsObject:
         return inlineIsObject(callInfo);
-    if (native == intrinsic_ToInteger)
+      case InlinableNative::IntrinsicToInteger:
         return inlineToInteger(callInfo);
-    if (native == intrinsic_ToString)
+      case InlinableNative::IntrinsicToString:
         return inlineToString(callInfo);
-    if (native == intrinsic_IsConstructing)
+      case InlinableNative::IntrinsicIsConstructing:
         return inlineIsConstructing(callInfo);
-    if (native == intrinsic_SubstringKernel)
+      case InlinableNative::IntrinsicSubstringKernel:
         return inlineSubstringKernel(callInfo);
-    if (native == intrinsic_IsArrayIterator)
+      case InlinableNative::IntrinsicIsArrayIterator:
         return inlineHasClass(callInfo, &ArrayIteratorObject::class_);
-    if (native == intrinsic_IsMapIterator)
+      case InlinableNative::IntrinsicIsMapIterator:
         return inlineHasClass(callInfo, &MapIteratorObject::class_);
-    if (native == intrinsic_IsStringIterator)
+      case InlinableNative::IntrinsicIsStringIterator:
         return inlineHasClass(callInfo, &StringIteratorObject::class_);
+      case InlinableNative::IntrinsicDefineDataProperty:
+        return inlineDefineDataProperty(callInfo);
 
-    // TypedArray intrinsics.
-    if (native == intrinsic_IsTypedArray)
+      // TypedArray intrinsics.
+      case InlinableNative::IntrinsicIsTypedArray:
         return inlineIsTypedArray(callInfo);
-    if (native == intrinsic_IsPossiblyWrappedTypedArray)
+      case InlinableNative::IntrinsicIsPossiblyWrappedTypedArray:
         return inlineIsPossiblyWrappedTypedArray(callInfo);
-    if (native == intrinsic_TypedArrayLength)
+      case InlinableNative::IntrinsicTypedArrayLength:
         return inlineTypedArrayLength(callInfo);
-    if (native == intrinsic_SetDisjointTypedElements)
+      case InlinableNative::IntrinsicSetDisjointTypedElements:
         return inlineSetDisjointTypedElements(callInfo);
 
-    // TypedObject intrinsics.
-    if (native == js::ObjectIsTypedObject)
+      // TypedObject intrinsics.
+      case InlinableNative::IntrinsicObjectIsTypedObject:
         return inlineHasClass(callInfo,
                               &OutlineTransparentTypedObject::class_,
                               &OutlineOpaqueTypedObject::class_,
                               &InlineTransparentTypedObject::class_,
                               &InlineOpaqueTypedObject::class_);
-    if (native == js::ObjectIsTransparentTypedObject)
+      case InlinableNative::IntrinsicObjectIsTransparentTypedObject:
         return inlineHasClass(callInfo,
                               &OutlineTransparentTypedObject::class_,
                               &InlineTransparentTypedObject::class_);
-    if (native == js::ObjectIsOpaqueTypedObject)
+      case InlinableNative::IntrinsicObjectIsOpaqueTypedObject:
         return inlineHasClass(callInfo,
                               &OutlineOpaqueTypedObject::class_,
                               &InlineOpaqueTypedObject::class_);
-    if (native == js::ObjectIsTypeDescr)
+      case InlinableNative::IntrinsicObjectIsTypeDescr:
         return inlineObjectIsTypeDescr(callInfo);
-    if (native == js::TypeDescrIsSimpleType)
+      case InlinableNative::IntrinsicTypeDescrIsSimpleType:
         return inlineHasClass(callInfo,
                               &ScalarTypeDescr::class_, &ReferenceTypeDescr::class_);
-    if (native == js::TypeDescrIsArrayType)
+      case InlinableNative::IntrinsicTypeDescrIsArrayType:
         return inlineHasClass(callInfo, &ArrayTypeDescr::class_);
-    if (native == js::SetTypedObjectOffset)
+      case InlinableNative::IntrinsicSetTypedObjectOffset:
         return inlineSetTypedObjectOffset(callInfo);
+    }
 
-    // Testing Functions
-    if (native == testingFunc_bailout)
-        return inlineBailout(callInfo);
-    if (native == testingFunc_assertFloat32)
-        return inlineAssertFloat32(callInfo);
-    if (native == testingFunc_assertRecoveredOnBailout)
-        return inlineAssertRecoveredOnBailout(callInfo);
-
-    // Bound function
-    if (native == js::CallOrConstructBoundFunction)
-        return inlineBoundFunction(callInfo, target);
-
-    // Simd functions
-#define INLINE_FLOAT32X4_SIMD_ARITH_(OP)                                                         \
-    if (native == js::simd_float32x4_##OP)                                                       \
-        return inlineBinarySimd<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_##OP,   \
-                                                  SimdTypeDescr::Float32x4);
-
-#define INLINE_INT32X4_SIMD_ARITH_(OP)                                                           \
-    if (native == js::simd_int32x4_##OP)                                                         \
-        return inlineBinarySimd<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_##OP,   \
-                                                  SimdTypeDescr::Int32x4);
-
-    ARITH_COMMONX4_SIMD_OP(INLINE_INT32X4_SIMD_ARITH_)
-    ARITH_COMMONX4_SIMD_OP(INLINE_FLOAT32X4_SIMD_ARITH_)
-    BINARY_ARITH_FLOAT32X4_SIMD_OP(INLINE_FLOAT32X4_SIMD_ARITH_)
-#undef INLINE_SIMD_ARITH_
-#undef INLINE_FLOAT32X4_SIMD_ARITH_
-
-#define INLINE_SIMD_BITWISE_(OP)                                                                 \
-    if (native == js::simd_int32x4_##OP)                                                         \
-        return inlineBinarySimd<MSimdBinaryBitwise>(callInfo, native, MSimdBinaryBitwise::OP##_, \
-                                                    SimdTypeDescr::Int32x4);                     \
-    if (native == js::simd_float32x4_##OP)                                                       \
-        return inlineBinarySimd<MSimdBinaryBitwise>(callInfo, native, MSimdBinaryBitwise::OP##_, \
-                                                    SimdTypeDescr::Float32x4);
-
-    BITWISE_COMMONX4_SIMD_OP(INLINE_SIMD_BITWISE_)
-#undef INLINE_SIMD_BITWISE_
-
-    if (native == js::simd_int32x4_shiftLeftByScalar)
-        return inlineBinarySimd<MSimdShift>(callInfo, native, MSimdShift::lsh, SimdTypeDescr::Int32x4);
-    if (native == js::simd_int32x4_shiftRightArithmeticByScalar)
-        return inlineBinarySimd<MSimdShift>(callInfo, native, MSimdShift::rsh, SimdTypeDescr::Int32x4);
-    if (native == js::simd_int32x4_shiftRightLogicalByScalar)
-        return inlineBinarySimd<MSimdShift>(callInfo, native, MSimdShift::ursh, SimdTypeDescr::Int32x4);
-
-#define INLINE_SIMD_COMPARISON_(OP)                                                                \
-    if (native == js::simd_int32x4_##OP)                                                           \
-        return inlineCompSimd(callInfo, native, MSimdBinaryComp::OP, SimdTypeDescr::Int32x4);      \
-    if (native == js::simd_float32x4_##OP)                                                         \
-        return inlineCompSimd(callInfo, native, MSimdBinaryComp::OP, SimdTypeDescr::Float32x4);
-
-    COMP_COMMONX4_TO_INT32X4_SIMD_OP(INLINE_SIMD_COMPARISON_)
-#undef INLINE_SIMD_COMPARISON_
-
-    if (native == js::simd_int32x4_extractLane)
-        return inlineSimdExtractLane(callInfo, native, SimdTypeDescr::Int32x4);
-    if (native == js::simd_float32x4_extractLane)
-        return inlineSimdExtractLane(callInfo, native, SimdTypeDescr::Float32x4);
-
-    if (native == js::simd_int32x4_replaceLane)
-        return inlineSimdReplaceLane(callInfo, native, SimdTypeDescr::Int32x4);
-    if (native == js::simd_float32x4_replaceLane)
-        return inlineSimdReplaceLane(callInfo, native, SimdTypeDescr::Float32x4);
-
-    if (native == js::simd_int32x4_not)
-        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::not_, SimdTypeDescr::Int32x4);
-    if (native == js::simd_int32x4_neg)
-        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::neg, SimdTypeDescr::Int32x4);
-
-#define INLINE_SIMD_FLOAT32X4_UNARY_(OP)                                                           \
-    if (native == js::simd_float32x4_##OP)                                                         \
-        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::OP, SimdTypeDescr::Float32x4);
-
-    UNARY_ARITH_FLOAT32X4_SIMD_OP(INLINE_SIMD_FLOAT32X4_UNARY_)
-    INLINE_SIMD_FLOAT32X4_UNARY_(neg)
-#undef INLINE_SIMD_FLOAT32X4_UNARY_
-
-    if (native == js::simd_float32x4_not)
-        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::not_, SimdTypeDescr::Float32x4);
-
-    typedef bool IsCast;
-    if (native == js::simd_float32x4_fromInt32x4)
-        return inlineSimdConvert(callInfo, native, IsCast(false), SimdTypeDescr::Int32x4, SimdTypeDescr::Float32x4);
-    if (native == js::simd_int32x4_fromFloat32x4)
-        return inlineSimdConvert(callInfo, native, IsCast(false), SimdTypeDescr::Float32x4, SimdTypeDescr::Int32x4);
-    if (native == js::simd_float32x4_fromInt32x4Bits)
-        return inlineSimdConvert(callInfo, native, IsCast(true), SimdTypeDescr::Int32x4, SimdTypeDescr::Float32x4);
-    if (native == js::simd_int32x4_fromFloat32x4Bits)
-        return inlineSimdConvert(callInfo, native, IsCast(true), SimdTypeDescr::Float32x4, SimdTypeDescr::Int32x4);
-
-    if (native == js::simd_int32x4_splat)
-        return inlineSimdSplat(callInfo, native, SimdTypeDescr::Int32x4);
-    if (native == js::simd_float32x4_splat)
-        return inlineSimdSplat(callInfo, native, SimdTypeDescr::Float32x4);
-
-    if (native == js::simd_int32x4_check)
-        return inlineSimdCheck(callInfo, native, SimdTypeDescr::Int32x4);
-    if (native == js::simd_float32x4_check)
-        return inlineSimdCheck(callInfo, native, SimdTypeDescr::Float32x4);
-
-    typedef bool IsElementWise;
-    if (native == js::simd_int32x4_select)
-        return inlineSimdSelect(callInfo, native, IsElementWise(true), SimdTypeDescr::Int32x4);
-    if (native == js::simd_int32x4_selectBits)
-        return inlineSimdSelect(callInfo, native, IsElementWise(false), SimdTypeDescr::Int32x4);
-    if (native == js::simd_float32x4_select)
-        return inlineSimdSelect(callInfo, native, IsElementWise(true), SimdTypeDescr::Float32x4);
-
-    if (native == js::simd_int32x4_swizzle)
-        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Int32x4, 1, 4);
-    if (native == js::simd_float32x4_swizzle)
-        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Float32x4, 1, 4);
-    if (native == js::simd_int32x4_shuffle)
-        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Int32x4, 2, 4);
-    if (native == js::simd_float32x4_shuffle)
-        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Float32x4, 2, 4);
-
-    if (native == js::simd_int32x4_load)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 4);
-    if (native == js::simd_int32x4_load1)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 1);
-    if (native == js::simd_int32x4_load2)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 2);
-    if (native == js::simd_int32x4_load3)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 3);
-
-    if (native == js::simd_float32x4_load)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 4);
-    if (native == js::simd_float32x4_load1)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 1);
-    if (native == js::simd_float32x4_load2)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 2);
-    if (native == js::simd_float32x4_load3)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 3);
-
-    if (native == js::simd_int32x4_store)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 4);
-    if (native == js::simd_int32x4_store1)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 1);
-    if (native == js::simd_int32x4_store2)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 2);
-    if (native == js::simd_int32x4_store3)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 3);
-    if (native == js::simd_float32x4_store)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 4);
-    if (native == js::simd_float32x4_store1)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 1);
-    if (native == js::simd_float32x4_store2)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 2);
-    if (native == js::simd_float32x4_store3)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 3);
-
-    if (native == js::simd_int32x4_bool)
-        return inlineSimdBool(callInfo, native, SimdTypeDescr::Int32x4);
-
-    // Reaching here means we tried to inline a native for which there is no
-    // Ion specialization.
-    trackOptimizationOutcome(TrackedOutcome::CantInlineNativeNoSpecialization);
-
-    return InliningStatus_NotInlined;
+    MOZ_CRASH("Shouldn't get here");
 }
 
 IonBuilder::InliningStatus
@@ -615,6 +479,40 @@ IonBuilder::inlineArray(CallInfo& callInfo)
             return InliningStatus_Error;
     }
 
+    return InliningStatus_Inlined;
+}
+
+IonBuilder::InliningStatus
+IonBuilder::inlineArrayIsArray(CallInfo& callInfo)
+{
+    if (callInfo.constructing() || callInfo.argc() != 1) {
+        trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
+        return InliningStatus_NotInlined;
+    }
+
+    if (getInlineReturnType() != MIRType_Boolean)
+        return InliningStatus_NotInlined;
+
+    MDefinition* arg = callInfo.getArg(0);
+
+    bool isArray;
+    if (!arg->mightBeType(MIRType_Object)) {
+        isArray = false;
+    } else {
+        if (arg->type() != MIRType_Object)
+            return InliningStatus_NotInlined;
+
+        TemporaryTypeSet* types = arg->resultTypeSet();
+        const Class* clasp = types ? types->getKnownClass(constraints()) : nullptr;
+        if (!clasp || clasp->isProxy())
+            return InliningStatus_NotInlined;
+
+        isArray = (clasp == &ArrayObject::class_ || clasp == &UnboxedArrayObject::class_);
+    }
+
+    pushConstant(BooleanValue(isArray));
+
+    callInfo.setImplicitlyUsedUnchecked();
     return InliningStatus_Inlined;
 }
 
@@ -862,9 +760,10 @@ IonBuilder::inlineArrayConcat(CallInfo& callInfo)
     if (!thisTypes || !argTypes)
         return InliningStatus_NotInlined;
 
-    const Class* clasp = thisTypes->getKnownClass(constraints());
-    if (clasp != &ArrayObject::class_ && clasp != &UnboxedArrayObject::class_)
+    const Class* thisClasp = thisTypes->getKnownClass(constraints());
+    if (thisClasp != &ArrayObject::class_ && thisClasp != &UnboxedArrayObject::class_)
         return InliningStatus_NotInlined;
+    bool unboxedThis = (thisClasp == &UnboxedArrayObject::class_);
     if (thisTypes->hasObjectFlags(constraints(), OBJECT_FLAG_SPARSE_INDEXES |
                                   OBJECT_FLAG_LENGTH_OVERFLOW))
     {
@@ -872,22 +771,15 @@ IonBuilder::inlineArrayConcat(CallInfo& callInfo)
         return InliningStatus_NotInlined;
     }
 
-    if (argTypes->getKnownClass(constraints()) != clasp)
+    const Class* argClasp = argTypes->getKnownClass(constraints());
+    if (argClasp != &ArrayObject::class_ && argClasp != &UnboxedArrayObject::class_)
         return InliningStatus_NotInlined;
+    bool unboxedArg = (argClasp == &UnboxedArrayObject::class_);
     if (argTypes->hasObjectFlags(constraints(), OBJECT_FLAG_SPARSE_INDEXES |
                                  OBJECT_FLAG_LENGTH_OVERFLOW))
     {
         trackOptimizationOutcome(TrackedOutcome::ArrayBadFlags);
         return InliningStatus_NotInlined;
-    }
-
-    JSValueType unboxedType = JSVAL_TYPE_MAGIC;
-    if (clasp == &UnboxedArrayObject::class_) {
-        unboxedType = UnboxedArrayElementType(constraints(), thisArg, nullptr);
-        if (unboxedType == JSVAL_TYPE_MAGIC)
-            return InliningStatus_NotInlined;
-        if (unboxedType != UnboxedArrayElementType(constraints(), objArg, nullptr))
-            return InliningStatus_NotInlined;
     }
 
     // Watch out for indexed properties on the prototype.
@@ -956,7 +848,7 @@ IonBuilder::inlineArrayConcat(CallInfo& callInfo)
     MArrayConcat* ins = MArrayConcat::New(alloc(), constraints(), thisArg, objArg,
                                           templateObj,
                                           templateObj->group()->initialHeap(constraints()),
-                                          unboxedType);
+                                          unboxedThis, unboxedArg);
     current->add(ins);
     current->push(ins);
 
@@ -2957,7 +2849,7 @@ IonBuilder::inlineAtomicsFence(CallInfo& callInfo)
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineAtomicsBinop(CallInfo& callInfo, JSFunction* target)
+IonBuilder::inlineAtomicsBinop(CallInfo& callInfo, InlinableNative target)
 {
     if (callInfo.argc() != 3 || callInfo.constructing()) {
         trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
@@ -2978,20 +2870,26 @@ IonBuilder::inlineAtomicsBinop(CallInfo& callInfo, JSFunction* target)
     MDefinition* index;
     atomicsCheckBounds(callInfo, &elements, &index);
 
-    JSNative native = target->native();
     AtomicOp k = AtomicFetchAddOp;
-    if (native == atomics_add)
+    switch (target) {
+      case InlinableNative::AtomicsAdd:
         k = AtomicFetchAddOp;
-    else if (native == atomics_sub)
+        break;
+      case InlinableNative::AtomicsSub:
         k = AtomicFetchSubOp;
-    else if (native == atomics_and)
+        break;
+      case InlinableNative::AtomicsAnd:
         k = AtomicFetchAndOp;
-    else if (native == atomics_or)
+        break;
+      case InlinableNative::AtomicsOr:
         k = AtomicFetchOrOp;
-    else if (native == atomics_xor)
+        break;
+      case InlinableNative::AtomicsXor:
         k = AtomicFetchXorOp;
-    else
+        break;
+      default:
         MOZ_CRASH("Bad atomic operation");
+    }
 
     MAtomicTypedArrayElementBinop* binop =
         MAtomicTypedArrayElementBinop::New(alloc(), k, elements, index, arrayType, value);
@@ -3129,6 +3027,182 @@ IonBuilder::inlineConstructTypedObject(CallInfo& callInfo, TypeDescr* descr)
     current->push(ins);
 
     return InliningStatus_Inlined;
+}
+
+IonBuilder::InliningStatus
+IonBuilder::inlineSimdInt32x4(CallInfo& callInfo, JSNative native)
+{
+#define INLINE_INT32X4_SIMD_ARITH_(OP)                                                           \
+    if (native == js::simd_int32x4_##OP)                                                         \
+        return inlineBinarySimd<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_##OP,   \
+                                                  SimdTypeDescr::Int32x4);
+
+    ARITH_COMMONX4_SIMD_OP(INLINE_INT32X4_SIMD_ARITH_)
+#undef INLINE_INT32X4_SIMD_ARITH_
+
+#define INLINE_SIMD_BITWISE_(OP)                                                                 \
+    if (native == js::simd_int32x4_##OP)                                                         \
+        return inlineBinarySimd<MSimdBinaryBitwise>(callInfo, native, MSimdBinaryBitwise::OP##_, \
+                                                    SimdTypeDescr::Int32x4);
+
+    BITWISE_COMMONX4_SIMD_OP(INLINE_SIMD_BITWISE_)
+#undef INLINE_SIMD_BITWISE_
+
+    if (native == js::simd_int32x4_shiftLeftByScalar)
+        return inlineBinarySimd<MSimdShift>(callInfo, native, MSimdShift::lsh, SimdTypeDescr::Int32x4);
+    if (native == js::simd_int32x4_shiftRightArithmeticByScalar)
+        return inlineBinarySimd<MSimdShift>(callInfo, native, MSimdShift::rsh, SimdTypeDescr::Int32x4);
+    if (native == js::simd_int32x4_shiftRightLogicalByScalar)
+        return inlineBinarySimd<MSimdShift>(callInfo, native, MSimdShift::ursh, SimdTypeDescr::Int32x4);
+
+#define INLINE_SIMD_COMPARISON_(OP)                                                                \
+    if (native == js::simd_int32x4_##OP)                                                           \
+        return inlineCompSimd(callInfo, native, MSimdBinaryComp::OP, SimdTypeDescr::Int32x4);
+
+    COMP_COMMONX4_TO_INT32X4_SIMD_OP(INLINE_SIMD_COMPARISON_)
+#undef INLINE_SIMD_COMPARISON_
+
+    if (native == js::simd_int32x4_extractLane)
+        return inlineSimdExtractLane(callInfo, native, SimdTypeDescr::Int32x4);
+    if (native == js::simd_int32x4_replaceLane)
+        return inlineSimdReplaceLane(callInfo, native, SimdTypeDescr::Int32x4);
+
+    if (native == js::simd_int32x4_not)
+        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::not_, SimdTypeDescr::Int32x4);
+    if (native == js::simd_int32x4_neg)
+        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::neg, SimdTypeDescr::Int32x4);
+
+    typedef bool IsCast;
+    if (native == js::simd_int32x4_fromFloat32x4)
+        return inlineSimdConvert(callInfo, native, IsCast(false), SimdTypeDescr::Float32x4, SimdTypeDescr::Int32x4);
+    if (native == js::simd_int32x4_fromFloat32x4Bits)
+        return inlineSimdConvert(callInfo, native, IsCast(true), SimdTypeDescr::Float32x4, SimdTypeDescr::Int32x4);
+
+    if (native == js::simd_int32x4_splat)
+        return inlineSimdSplat(callInfo, native, SimdTypeDescr::Int32x4);
+
+    if (native == js::simd_int32x4_check)
+        return inlineSimdCheck(callInfo, native, SimdTypeDescr::Int32x4);
+
+    typedef bool IsElementWise;
+    if (native == js::simd_int32x4_select)
+        return inlineSimdSelect(callInfo, native, IsElementWise(true), SimdTypeDescr::Int32x4);
+    if (native == js::simd_int32x4_selectBits)
+        return inlineSimdSelect(callInfo, native, IsElementWise(false), SimdTypeDescr::Int32x4);
+
+    if (native == js::simd_int32x4_swizzle)
+        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Int32x4, 1, 4);
+    if (native == js::simd_int32x4_shuffle)
+        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Int32x4, 2, 4);
+
+    if (native == js::simd_int32x4_load)
+        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 4);
+    if (native == js::simd_int32x4_load1)
+        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 1);
+    if (native == js::simd_int32x4_load2)
+        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 2);
+    if (native == js::simd_int32x4_load3)
+        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 3);
+
+    if (native == js::simd_int32x4_store)
+        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 4);
+    if (native == js::simd_int32x4_store1)
+        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 1);
+    if (native == js::simd_int32x4_store2)
+        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 2);
+    if (native == js::simd_int32x4_store3)
+        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 3);
+
+    if (native == js::simd_int32x4_bool)
+        return inlineSimdBool(callInfo, native, SimdTypeDescr::Int32x4);
+
+    return InliningStatus_NotInlined;
+}
+
+IonBuilder::InliningStatus
+IonBuilder::inlineSimdFloat32x4(CallInfo& callInfo, JSNative native)
+{
+    // Simd functions
+#define INLINE_FLOAT32X4_SIMD_ARITH_(OP)                                                         \
+    if (native == js::simd_float32x4_##OP)                                                       \
+        return inlineBinarySimd<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_##OP,   \
+                                                  SimdTypeDescr::Float32x4);
+
+    ARITH_COMMONX4_SIMD_OP(INLINE_FLOAT32X4_SIMD_ARITH_)
+    BINARY_ARITH_FLOAT32X4_SIMD_OP(INLINE_FLOAT32X4_SIMD_ARITH_)
+#undef INLINE_FLOAT32X4_SIMD_ARITH_
+
+#define INLINE_SIMD_BITWISE_(OP)                                                                 \
+    if (native == js::simd_float32x4_##OP)                                                       \
+        return inlineBinarySimd<MSimdBinaryBitwise>(callInfo, native, MSimdBinaryBitwise::OP##_, \
+                                                    SimdTypeDescr::Float32x4);
+
+    BITWISE_COMMONX4_SIMD_OP(INLINE_SIMD_BITWISE_)
+#undef INLINE_SIMD_BITWISE_
+
+#define INLINE_SIMD_COMPARISON_(OP)                                                                \
+    if (native == js::simd_float32x4_##OP)                                                         \
+        return inlineCompSimd(callInfo, native, MSimdBinaryComp::OP, SimdTypeDescr::Float32x4);
+
+    COMP_COMMONX4_TO_INT32X4_SIMD_OP(INLINE_SIMD_COMPARISON_)
+#undef INLINE_SIMD_COMPARISON_
+
+    if (native == js::simd_float32x4_extractLane)
+        return inlineSimdExtractLane(callInfo, native, SimdTypeDescr::Float32x4);
+    if (native == js::simd_float32x4_replaceLane)
+        return inlineSimdReplaceLane(callInfo, native, SimdTypeDescr::Float32x4);
+
+#define INLINE_SIMD_FLOAT32X4_UNARY_(OP)                                                           \
+    if (native == js::simd_float32x4_##OP)                                                         \
+        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::OP, SimdTypeDescr::Float32x4);
+
+    UNARY_ARITH_FLOAT32X4_SIMD_OP(INLINE_SIMD_FLOAT32X4_UNARY_)
+    INLINE_SIMD_FLOAT32X4_UNARY_(neg)
+#undef INLINE_SIMD_FLOAT32X4_UNARY_
+
+    if (native == js::simd_float32x4_not)
+        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::not_, SimdTypeDescr::Float32x4);
+
+    typedef bool IsCast;
+    if (native == js::simd_float32x4_fromInt32x4)
+        return inlineSimdConvert(callInfo, native, IsCast(false), SimdTypeDescr::Int32x4, SimdTypeDescr::Float32x4);
+    if (native == js::simd_float32x4_fromInt32x4Bits)
+        return inlineSimdConvert(callInfo, native, IsCast(true), SimdTypeDescr::Int32x4, SimdTypeDescr::Float32x4);
+
+    if (native == js::simd_float32x4_splat)
+        return inlineSimdSplat(callInfo, native, SimdTypeDescr::Float32x4);
+
+    if (native == js::simd_float32x4_check)
+        return inlineSimdCheck(callInfo, native, SimdTypeDescr::Float32x4);
+
+    typedef bool IsElementWise;
+    if (native == js::simd_float32x4_select)
+        return inlineSimdSelect(callInfo, native, IsElementWise(true), SimdTypeDescr::Float32x4);
+
+    if (native == js::simd_float32x4_swizzle)
+        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Float32x4, 1, 4);
+    if (native == js::simd_float32x4_shuffle)
+        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Float32x4, 2, 4);
+
+    if (native == js::simd_float32x4_load)
+        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 4);
+    if (native == js::simd_float32x4_load1)
+        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 1);
+    if (native == js::simd_float32x4_load2)
+        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 2);
+    if (native == js::simd_float32x4_load3)
+        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 3);
+
+    if (native == js::simd_float32x4_store)
+        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 4);
+    if (native == js::simd_float32x4_store1)
+        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 1);
+    if (native == js::simd_float32x4_store2)
+        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 2);
+    if (native == js::simd_float32x4_store3)
+        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 3);
+
+    return InliningStatus_NotInlined;
 }
 
 IonBuilder::InliningStatus
@@ -3435,7 +3509,7 @@ IonBuilder::prepareForSimdLoadStore(CallInfo& callInfo, Scalar::Type simdType, M
         MAdd* addedIndex = MAdd::New(alloc(), *index, suppSlots);
         // We're fine even with the add overflows, as long as the generated code
         // for the bounds check uses an unsigned comparison.
-        addedIndex->setInt32();
+        addedIndex->setInt32Specialization();
         current->add(addedIndex);
         indexForBoundsCheck = addedIndex;
     }
@@ -3536,6 +3610,11 @@ IonBuilder::inlineSimdBool(CallInfo& callInfo, JSNative native, SimdTypeDescr::T
                                                      MIRType_Int32x4);
     return boxSimd(callInfo, result, templateObj);
 }
+
+#define ADD_NATIVE(native) const JSJitInfo JitInfo_##native { \
+    { nullptr }, { uint16_t(InlinableNative::native) }, 0, JSJitInfo::InlinableNative };
+    INLINABLE_NATIVE_LIST(ADD_NATIVE)
+#undef ADD_NATIVE
 
 } // namespace jit
 } // namespace js

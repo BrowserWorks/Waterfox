@@ -18,6 +18,10 @@
 #include "nsAutoPtr.h"
 #include "mozilla/AlreadyAddRefed.h"
 
+namespace mozilla {
+class CycleCollectedJSRuntime;
+}
+
 // A native thread
 class nsThread
   : public nsIThreadInternal
@@ -67,12 +71,15 @@ public:
     mEventObservers.Clear();
   }
 
-  static nsresult
-  SetMainThreadObserver(nsIThreadObserver* aObserver);
+  void
+  SetScriptObserver(mozilla::CycleCollectedJSRuntime* aScriptObserver);
+
+  uint32_t
+  RecursionDepth() const;
+
+  void ShutdownComplete(struct nsThreadShutdownContext* aContext);
 
 protected:
-  static nsIThreadObserver* sMainThreadObserver;
-
   class nsChainedEventQueue;
 
   class nsNestedEventTarget;
@@ -107,6 +114,8 @@ protected:
 
   nsresult DispatchInternal(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFlags,
                             nsNestedEventTarget* aTarget);
+
+  struct nsThreadShutdownContext* ShutdownInternal(bool aSync);
 
   // Wrapper for nsEventQueue that supports chaining.
   class nsChainedEventQueue
@@ -175,6 +184,7 @@ protected:
   mozilla::Mutex mLock;
 
   nsCOMPtr<nsIThreadObserver> mObserver;
+  mozilla::CycleCollectedJSRuntime* mScriptObserver;
 
   // Only accessed on the target thread.
   nsAutoTObserverArray<nsCOMPtr<nsIThreadObserver>, 2> mEventObservers;
@@ -187,7 +197,10 @@ protected:
   uint32_t  mNestedEventLoopDepth;
   uint32_t  mStackSize;
 
+  // The shutdown context for ourselves.
   struct nsThreadShutdownContext* mShutdownContext;
+  // The shutdown contexts for any other threads we've asked to shut down.
+  nsTArray<nsAutoPtr<struct nsThreadShutdownContext>> mRequestedShutdownContexts;
 
   bool mShutdownRequired;
   // Set to true when events posted to this thread will never run.

@@ -81,9 +81,15 @@ void
 ImageClient::RemoveTextureWithWaiter(TextureClient* aTexture,
                                      AsyncTransactionWaiter* aAsyncTransactionWaiter)
 {
-#ifdef MOZ_WIDGET_GONK
-  if (aAsyncTransactionWaiter ||
-      GetForwarder()->IsImageBridgeChild()) {
+  if ((aAsyncTransactionWaiter ||
+      GetForwarder()->IsImageBridgeChild())
+#ifndef MOZ_WIDGET_GONK
+      // If the texture client is taking part in recycling then we should make sure
+      // the host has finished with it before dropping the ref and triggering
+      // the recycle callback.
+      && aTexture->GetRecycleAllocator()
+#endif
+     ) {
     RefPtr<AsyncTransactionTracker> request =
       new RemoveTextureFromCompositableTracker(aAsyncTransactionWaiter);
     // Hold TextureClient until the transaction complete to postpone
@@ -92,7 +98,6 @@ ImageClient::RemoveTextureWithWaiter(TextureClient* aTexture,
     GetForwarder()->RemoveTextureFromCompositableAsync(request, this, aTexture);
     return;
   }
-#endif
 
   GetForwarder()->RemoveTextureFromCompositable(this, aTexture);
 }
@@ -355,7 +360,6 @@ ImageClientOverlay::UpdateImage(ImageContainer* aContainer, uint32_t aContentFla
   }
   mLastUpdateGenerationCounter = (uint32_t)image->GetSerial();
 
-  AutoRemoveTexture autoRemoveTexture(this);
   if (image->GetFormat() == ImageFormat::OVERLAY_IMAGE) {
     OverlayImage* overlayImage = static_cast<OverlayImage*>(image);
     uint32_t overlayId = overlayImage->GetOverlayId();

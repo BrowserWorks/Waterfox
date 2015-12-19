@@ -80,7 +80,6 @@ loop.shared.actions = (function() {
      * a contact can't be reached.
      */
     FetchRoomEmailLink: Action.define("fetchRoomEmailLink", {
-      roomOwner: String,
       roomName: String
     }),
 
@@ -201,6 +200,12 @@ loop.shared.actions = (function() {
     }),
 
     /**
+     * Used for notifying that a waiting tile was shown.
+     */
+    TileShown: Action.define("tileShown", {
+    }),
+
+    /**
      * Used for notifying that local media has been obtained.
      */
     GotMediaPermission: Action.define("gotMediaPermission", {
@@ -228,7 +233,7 @@ loop.shared.actions = (function() {
     MediaStreamCreated: Action.define("mediaStreamCreated", {
       hasVideo: Boolean,
       isLocal: Boolean,
-      srcVideoObject: Object
+      srcMediaElement: Object
     }),
 
     /**
@@ -289,7 +294,7 @@ loop.shared.actions = (function() {
      */
     ReceivingScreenShare: Action.define("receivingScreenShare", {
       receiving: Boolean
-      // srcVideoObject: Object (only present if receiving is true)
+      // srcMediaElement: Object (only present if receiving is true)
     }),
 
     /**
@@ -299,8 +304,7 @@ loop.shared.actions = (function() {
     CreateRoom: Action.define("createRoom", {
       // The localized template to use to name the new room
       // (eg. "Conversation {{conversationLabel}}").
-      nameTemplate: String,
-      roomOwner: String
+      nameTemplate: String
       // See https://wiki.mozilla.org/Loop/Architecture/Context#Format_of_context.value
       // urls: Object - Optional
     }),
@@ -456,7 +460,6 @@ loop.shared.actions = (function() {
       // roomContextUrls: Array - Optional.
       // roomDescription: String - Optional.
       // roomName: String - Optional.
-      roomOwner: String,
       roomToken: String,
       roomUrl: String,
       socialShareProviders: Array
@@ -471,7 +474,6 @@ loop.shared.actions = (function() {
     UpdateRoomInfo: Action.define("updateRoomInfo", {
       // description: String - Optional.
       // roomName: String - Optional.
-      roomOwner: String,
       roomUrl: String
       // urls: Array - Optional.
       // See https://wiki.mozilla.org/Loop/Architecture/Context#Format_of_context.value

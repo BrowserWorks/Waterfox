@@ -15,16 +15,27 @@
 'use strict';
 
 var gScript = SpecialPowers.loadChromeScript(SimpleTest.getTestFileURL('PresentationSessionChromeScript.js'));
-var presentation;
+var request;
 var session;
 
 function testSetup() {
   return new Promise(function(aResolve, aReject) {
-    presentation.onavailablechange = function(aIsAvailable) {
-      presentation.onavailablechange = null;
-      ok(aIsAvailable, "Device should be available.");
-      aResolve();
-    };
+    request = new PresentationRequest("http://example.com");
+
+    request.getAvailability().then(
+      function(aAvailability) {
+        aAvailability.onchange = function() {
+          aAvailability.onchange = null;
+          ok(aAvailability.value, "Device should be available.");
+          aResolve();
+        }
+      },
+      function(aError) {
+        ok(false, "Error occurred when getting availability: " + aError);
+        teardown();
+        aReject();
+      }
+    );
 
     gScript.sendAsyncMessage('trigger-device-add');
   });
@@ -41,6 +52,12 @@ function testStartSession() {
     gScript.addMessageListener('control-channel-established', function controlChannelEstablishedHandler() {
       gScript.removeMessageListener('control-channel-established', controlChannelEstablishedHandler);
       info("A control channel is established.");
+      gScript.sendAsyncMessage('trigger-control-channel-open');
+    });
+
+    gScript.addMessageListener('control-channel-opened', function controlChannelOpenedHandler(aReason) {
+      gScript.removeMessageListener('control-channel-opened', controlChannelOpenedHandler);
+      info("The control channel is opened.");
     });
 
     gScript.addMessageListener('control-channel-closed', function controlChannelClosedHandler(aReason) {
@@ -48,9 +65,9 @@ function testStartSession() {
       info("The control channel is closed. " + aReason);
     });
 
-    gScript.addMessageListener('offer-sent', function offerSentHandler() {
+    gScript.addMessageListener('offer-sent', function offerSentHandler(aIsValid) {
       gScript.removeMessageListener('offer-sent', offerSentHandler);
-      info("An offer is sent out.");
+      ok(aIsValid, "A valid offer is sent out.");
       gScript.sendAsyncMessage('trigger-incoming-transport');
     });
 
@@ -65,13 +82,34 @@ function testStartSession() {
       gScript.sendAsyncMessage('trigger-incoming-answer');
     });
 
-    presentation.startSession("http://example.com").then(
+    gScript.addMessageListener('data-transport-notification-enabled', function dataTransportNotificationEnabledHandler() {
+      gScript.removeMessageListener('data-transport-notification-enabled', dataTransportNotificationEnabledHandler);
+      info("Data notification is enabled for data transport channel.");
+    });
+
+    var sessionFromEvent;
+    request.onsessionconnect = function(aEvent) {
+      request.onsessionconnect = null;
+      sessionFromEvent = aEvent.session;
+      ok(sessionFromEvent, "|sessionconnect| event is fired with a session.");
+
+      if (session) {
+        is(session, sessionFromEvent, "The session from promise and the one from |sessionconnect| event should be the same.");
+        aResolve();
+      }
+    };
+
+    request.start().then(
       function(aSession) {
         session = aSession;
         ok(session, "Session should be availlable.");
         ok(session.id, "Session ID should be set.");
         is(session.state, "connected", "Session state at sender side should be connected by default.");
-        aResolve();
+
+        if (sessionFromEvent) {
+          is(session, sessionFromEvent, "The session from promise and the one from |sessionconnect| event should be the same.");
+          aResolve();
+        }
       },
       function(aError) {
         ok(false, "Error occurred when starting session: " + aError);
@@ -138,8 +176,7 @@ function teardown() {
 }
 
 function runTests() {
-  ok(navigator.presentation, "navigator.presentation should be available.");
-  presentation = navigator.presentation;
+  ok(window.PresentationRequest, "PresentationRequest should be available.");
 
   testSetup().
   then(testStartSession).

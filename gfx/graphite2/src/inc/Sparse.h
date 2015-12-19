@@ -56,7 +56,7 @@ private:
         key_type        offset;
     };
 
-    static chunk  empty_chunk;
+    static const chunk  empty_chunk;
     sparse(const sparse &);
     sparse & operator = (const sparse &);
 
@@ -88,7 +88,7 @@ private:
 inline
 sparse::sparse() throw() : m_nchunks(0)
 {
-    m_array.map = &empty_chunk;
+    m_array.map = const_cast<graphite2::sparse::chunk *>(&empty_chunk);
 }
 
 
@@ -113,7 +113,7 @@ sparse::sparse(I attr, const I last)
     }
     if (m_nchunks == 0)
     {
-        m_array.map=&empty_chunk;
+        m_array.map=const_cast<graphite2::sparse::chunk *>(&empty_chunk);
         return;
     }
 
@@ -127,6 +127,7 @@ sparse::sparse(I attr, const I last)
         return;
     }
 
+    // coverity[forward_null : FALSE] Since m_array is union and m_array.values is not NULL
     chunk * ci = m_array.map;
     ci->offset = (m_nchunks*sizeof(chunk) + sizeof(mapped_type)-1)/sizeof(mapped_type);
     mapped_type * vi = m_array.values + ci->offset;

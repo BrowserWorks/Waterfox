@@ -77,17 +77,91 @@ loop.standaloneRoomViews = (function(mozL10n) {
   });
 
   var StandaloneRoomInfoArea = React.createClass({
+    statics: {
+      RENDER_WAITING_DELAY: 2000
+    },
+
     propTypes: {
-      activeRoomStore: React.PropTypes.oneOfType([
-        React.PropTypes.instanceOf(loop.store.ActiveRoomStore),
-        React.PropTypes.instanceOf(loop.store.FxOSActiveRoomStore)
-      ]).isRequired,
+      activeRoomStore: React.PropTypes.instanceOf(loop.store.ActiveRoomStore).isRequired,
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
       failureReason: React.PropTypes.string,
       isFirefox: React.PropTypes.bool.isRequired,
       joinRoom: React.PropTypes.func.isRequired,
       roomState: React.PropTypes.string.isRequired,
       roomUsed: React.PropTypes.bool.isRequired
+    },
+
+    getInitialState: function() {
+      return { waitToRenderWaiting: true };
+    },
+
+    componentDidMount: function() {
+      // Watch for messages from the waiting-tile iframe
+      window.addEventListener("message", this.recordTileClick);
+    },
+
+    /**
+     * Change state to allow for the waiting message to be shown and send an
+     * event to record that fact.
+     */
+    _allowRenderWaiting: function() {
+      delete this._waitTimer;
+
+      // Only update state if we're still showing a waiting message.
+      switch (this.props.roomState) {
+        case ROOM_STATES.JOINING:
+        case ROOM_STATES.JOINED:
+        case ROOM_STATES.SESSION_CONNECTED:
+          this.setState({ waitToRenderWaiting: false });
+          this.props.dispatcher.dispatch(new sharedActions.TileShown());
+          break;
+      }
+    },
+
+    componentDidUpdate: function() {
+      // Start a timer once from the earliest waiting state or from the state
+      // after someone else leaves if we need to wait before showing a message.
+      if ((this.props.roomState === ROOM_STATES.JOINING ||
+           this.props.roomState === ROOM_STATES.SESSION_CONNECTED) &&
+          this.state.waitToRenderWaiting &&
+          this._waitTimer === undefined) {
+        this._waitTimer = setTimeout(this._allowRenderWaiting,
+          this.constructor.RENDER_WAITING_DELAY);
+      }
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+      switch (nextProps.roomState) {
+        // Reset waiting for the next time the user joins.
+        case ROOM_STATES.ENDED:
+        case ROOM_STATES.READY:
+          if (!this.state.waitToRenderWaiting) {
+            this.setState({ waitToRenderWaiting: true });
+          }
+          if (this._waitTimer !== undefined) {
+            clearTimeout(this._waitTimer);
+            delete this._waitTimer;
+          }
+          break;
+      }
+    },
+
+    componentWillUnmount: function() {
+      window.removeEventListener("message", this.recordTileClick);
+    },
+
+    recordTileClick: function(event) {
+      if (event.data === "tile-click") {
+        this.props.dispatcher.dispatch(new sharedActions.RecordClick({
+          linkInfo: "Tiles iframe click"
+        }));
+      }
+    },
+
+    recordTilesSupport: function() {
+      this.props.dispatcher.dispatch(new sharedActions.RecordClick({
+        linkInfo: "Tiles support link click"
+      }));
     },
 
     _renderCallToActionLink: function() {
@@ -147,15 +221,21 @@ loop.standaloneRoomViews = (function(mozL10n) {
         case ROOM_STATES.JOINING:
         case ROOM_STATES.JOINED:
         case ROOM_STATES.SESSION_CONNECTED: {
+          // Don't show the waiting display until after a brief wait in case
+          // there's another participant that will momentarily appear.
+          if (this.state.waitToRenderWaiting) {
+            return null;
+          }
+
           return (
             <div className="room-inner-info-area">
               <p className="empty-room-message">
-                {mozL10n.get("rooms_only_occupant_label")}
+                {mozL10n.get("rooms_only_occupant_label2")}
               </p>
               <p className="room-waiting-area">
                 {mozL10n.get("rooms_read_while_wait_offer")}
                 <a href={loop.config.tilesSupportUrl}
-                  onClick={this.recordClick}
+                  onClick={this.recordTilesSupport}
                   rel="noreferrer"
                   target="_blank">
                   <i className="room-waiting-help"></i>
@@ -273,10 +353,7 @@ loop.standaloneRoomViews = (function(mozL10n) {
     propTypes: {
       // We pass conversationStore here rather than use the mixin, to allow
       // easy configurability for the ui-showcase.
-      activeRoomStore: React.PropTypes.oneOfType([
-        React.PropTypes.instanceOf(loop.store.ActiveRoomStore),
-        React.PropTypes.instanceOf(loop.store.FxOSActiveRoomStore)
-      ]).isRequired,
+      activeRoomStore: React.PropTypes.instanceOf(loop.store.ActiveRoomStore).isRequired,
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
       isFirefox: React.PropTypes.bool.isRequired,
       // The poster URLs are for UI-showcase testing and development
@@ -414,6 +491,8 @@ loop.standaloneRoomViews = (function(mozL10n) {
 
         case ROOM_STATES.FAILED:
         case ROOM_STATES.CLOSING:
+        case ROOM_STATES.FULL:
+        case ROOM_STATES.ENDED:
           // the other person has shown up, so we don't want to show an avatar
           return true;
 
@@ -434,7 +513,7 @@ loop.standaloneRoomViews = (function(mozL10n) {
      */
     _isLocalLoading: function () {
       return this.state.roomState === ROOM_STATES.MEDIA_WAIT &&
-             !this.state.localSrcVideoObject;
+             !this.state.localSrcMediaElement;
     },
 
     /**
@@ -446,7 +525,7 @@ loop.standaloneRoomViews = (function(mozL10n) {
      */
     _isRemoteLoading: function() {
       return !!(this.state.roomState === ROOM_STATES.HAS_PARTICIPANTS &&
-                !this.state.remoteSrcVideoObject &&
+                !this.state.remoteSrcMediaElement &&
                 !this.state.mediaConnected);
     },
 
@@ -459,7 +538,7 @@ loop.standaloneRoomViews = (function(mozL10n) {
      */
     _isScreenShareLoading: function() {
       return this.state.receivingScreenShare &&
-             !this.state.screenShareVideoObject &&
+             !this.state.screenShareMediaElement &&
              !this.props.screenSharePosterUrl;
     },
 
@@ -478,14 +557,14 @@ loop.standaloneRoomViews = (function(mozL10n) {
             isRemoteLoading={this._isRemoteLoading()}
             isScreenShareLoading={this._isScreenShareLoading()}
             localPosterUrl={this.props.localPosterUrl}
-            localSrcVideoObject={this.state.localSrcVideoObject}
+            localSrcMediaElement={this.state.localSrcMediaElement}
             localVideoMuted={this.state.videoMuted}
             matchMedia={this.state.matchMedia || window.matchMedia.bind(window)}
             remotePosterUrl={this.props.remotePosterUrl}
-            remoteSrcVideoObject={this.state.remoteSrcVideoObject}
+            remoteSrcMediaElement={this.state.remoteSrcMediaElement}
             renderRemoteVideo={this.shouldRenderRemoteVideo()}
+            screenShareMediaElement={this.state.screenShareMediaElement}
             screenSharePosterUrl={this.props.screenSharePosterUrl}
-            screenShareVideoObject={this.state.screenShareVideoObject}
             showContextRoomName={true}
             useDesktopPaths={false}>
             <StandaloneRoomInfoArea activeRoomStore={this.props.activeRoomStore}
@@ -495,21 +574,18 @@ loop.standaloneRoomViews = (function(mozL10n) {
               joinRoom={this.joinRoom}
               roomState={this.state.roomState}
               roomUsed={this.state.used} />
+            <sharedViews.ConversationToolbar
+              audio={{enabled: !this.state.audioMuted,
+                      visible: this._roomIsActive()}}
+              dispatcher={this.props.dispatcher}
+              enableHangup={this._roomIsActive()}
+              hangup={this.leaveRoom}
+              hangupButtonLabel={mozL10n.get("rooms_leave_button_label")}
+              publishStream={this.publishStream}
+              show={true}
+              video={{enabled: !this.state.videoMuted,
+                      visible: this._roomIsActive()}} />
           </sharedViews.MediaLayoutView>
-          <sharedViews.ConversationToolbar
-            audio={{enabled: !this.state.audioMuted,
-                    visible: this._roomIsActive()}}
-            dispatcher={this.props.dispatcher}
-            edit={{ visible: false, enabled: false }}
-            enableHangup={this._roomIsActive()}
-            hangup={this.leaveRoom}
-            hangupButtonLabel={mozL10n.get("rooms_leave_button_label")}
-            publishStream={this.publishStream}
-            video={{enabled: !this.state.videoMuted,
-                    visible: this._roomIsActive()}} />
-          <loop.fxOSMarketplaceViews.FxOSHiddenMarketplaceView
-            marketplaceSrc={this.state.marketplaceSrc}
-            onMarketplaceMessage={this.state.onMarketplaceMessage} />
           <StandaloneRoomFooter dispatcher={this.props.dispatcher} />
         </div>
       );
@@ -519,6 +595,7 @@ loop.standaloneRoomViews = (function(mozL10n) {
   return {
     StandaloneRoomFooter: StandaloneRoomFooter,
     StandaloneRoomHeader: StandaloneRoomHeader,
+    StandaloneRoomInfoArea: StandaloneRoomInfoArea,
     StandaloneRoomView: StandaloneRoomView
   };
 })(navigator.mozL10n);

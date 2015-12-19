@@ -3,13 +3,13 @@
 
 "use strict";
 
-let gTestTab;
-let gContentAPI;
-let gContentWindow;
+var gTestTab;
+var gContentAPI;
+var gContentWindow;
 
-let hasWebIDE = Services.prefs.getBoolPref("devtools.webide.widget.enabled");
+var hasWebIDE = Services.prefs.getBoolPref("devtools.webide.widget.enabled");
 
-let hasPocket = false;
+var hasPocket = false;
 if (Services.prefs.getBoolPref("browser.pocket.enabled")) {
   let isEnabledForLocale = true;
   if (Services.prefs.getBoolPref("browser.pocket.useLocaleList")) {
@@ -34,14 +34,7 @@ function test() {
   UITourTest();
 }
 
-function searchEngineTargets() {
-  let engines = Services.search.getVisibleEngines();
-  return ["searchEngine-" + engine.identifier
-          for (engine of engines)
-          if (engine.identifier)];
-}
-
-let tests = [
+var tests = [
   function test_availableTargets(done) {
     gContentAPI.getConfiguration("availableTargets", (data) => {
       ok_targets(data, [
@@ -63,7 +56,6 @@ let tests = [
         "searchIcon",
         "trackingProtection",
         "urlbar",
-        ...searchEngineTargets(),
         ...(hasWebIDE ? ["webide"] : [])
       ]);
 
@@ -96,7 +88,6 @@ let tests = [
         "searchIcon",
         "trackingProtection",
         "urlbar",
-        ...searchEngineTargets(),
         ...(hasWebIDE ? ["webide"] : [])
       ]);
 
@@ -114,7 +105,7 @@ let tests = [
     // Make sure the callback still fires with the other available targets.
     CustomizableUI.removeWidgetFromArea("search-container");
     gContentAPI.getConfiguration("availableTargets", (data) => {
-      // Default minus "search" and "searchProvider" and "searchIcon"
+      // Default minus "search" and "searchIcon"
       ok_targets(data, [
         "accountStatus",
         "addons",
