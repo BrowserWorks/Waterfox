@@ -4,6 +4,7 @@
 *~
 *.pyc
 *.pyo
+*.bak
 TAGS
 tags
 ID
