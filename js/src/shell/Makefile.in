@@ -26,8 +26,8 @@ SHELL_INSTALL_AUTOLOAD_DEST := $(DIST)/bin
 
 include $(topsrcdir)/config/rules.mk
 
-CFLAGS += "-Qstd=c++11" -no-prec-div -Qparallel -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3 -O3
-CXXFLAGS += "-Qstd=c++11" -no-prec-div -Qparallel -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3 -O3
+CFLAGS += -O3
+CXXFLAGS += -O3
 
 # People expect the js shell to wind up in the top-level JS dir.
 libs::
