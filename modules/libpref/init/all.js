@@ -132,11 +132,7 @@ pref("dom.indexedDB.logging.profiler-marks", false);
 pref("dom.fileHandle.enabled", true);
 
 // Whether or not the Permissions API is enabled.
-#ifdef NIGHTLY_BUILD
 pref("dom.permissions.enabled", true);
-#else
-pref("dom.permissions.enabled", false);
-#endif
 
 // Whether or not selection events are enabled
 #ifdef NIGHTLY_BUILD
@@ -153,7 +149,7 @@ pref("dom.workers.maxPerDomain", 20);
 // Whether or not Shared Web Workers are enabled.
 pref("dom.workers.sharedWorkers.enabled", true);
 
-pref("dom.serviceWorkers.enabled", false);
+pref("dom.serviceWorkers.enabled", true);
 
 // Allow service workers to intercept network requests using the fetch event
 pref("dom.serviceWorkers.interception.enabled", false);
@@ -475,7 +471,7 @@ pref("media.webvtt.enabled", true);
 pref("media.webvtt.regions.enabled", false);
 
 // AudioTrack and VideoTrack support
-pref("media.track.enabled", false);
+pref("media.track.enabled", true);
 
 // Whether to enable MediaSource support.
 pref("media.mediasource.enabled", true);
@@ -483,7 +479,7 @@ pref("media.mediasource.enabled", true);
 pref("media.mediasource.mp4.enabled", true);
 
 #if defined(XP_WIN) || defined(XP_MACOSX) || defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_ANDROID)
-pref("media.mediasource.webm.enabled", false);
+pref("media.mediasource.webm.enabled", true);
 #else
 pref("media.mediasource.webm.enabled", true);
 #endif
@@ -492,8 +488,8 @@ pref("media.mediasource.webm.enabled", true);
 pref("media.format-reader.webm", true);
 
 #ifdef MOZ_WEBSPEECH
-pref("media.webspeech.recognition.enable", false);
-pref("media.webspeech.synth.enabled", false);
+pref("media.webspeech.recognition.enable", true);
+pref("media.webspeech.synth.enabled", true);
 #endif
 #ifdef MOZ_WEBM_ENCODER
 pref("media.encoder.webm.enabled", true);
@@ -731,7 +727,7 @@ pref("ui.scrollToClick", 0);
 // provide ability to turn on support for canvas focus rings
 pref("canvas.focusring.enabled", true);
 pref("canvas.customfocusring.enabled", false);
-pref("canvas.hitregions.enabled", false);
+pref("canvas.hitregions.enabled", true);
 pref("canvas.filters.enabled", false);
 // Add support for canvas path objects
 pref("canvas.path.enabled", true);
@@ -1049,7 +1045,7 @@ pref("dom.min_timeout_value", 4);
 pref("dom.min_background_timeout_value", 1000);
 
 // Don't use new input types
-pref("dom.experimental_forms", false);
+pref("dom.experimental_forms", true);
 
 // Enable <input type=number>:
 pref("dom.forms.number", true);
@@ -1088,7 +1084,7 @@ pref("content.sink.pending_event_mode", 0);
 pref("privacy.popups.disable_from_plugins", 2);
 
 // send "do not track" HTTP header, disabled by default
-pref("privacy.donottrackheader.enabled",    false);
+pref("privacy.donottrackheader.enabled",    true);
 // Enforce tracking protection in all modes
 pref("privacy.trackingprotection.enabled",  false);
 // Enforce tracking protection in Private Browsing mode
@@ -1099,10 +1095,10 @@ pref("dom.event.clipboardevents.enabled",   true);
 #if defined(XP_WIN) && !defined(RELEASE_BUILD) || defined(MOZ_WIDGET_GTK) && !defined(RELEASE_BUILD)
 pref("dom.event.highrestimestamp.enabled",  true);
 #else
-pref("dom.event.highrestimestamp.enabled",  false);
+pref("dom.event.highrestimestamp.enabled",  true);
 #endif
 
-pref("dom.webcomponents.enabled",           false);
+pref("dom.webcomponents.enabled",           true);
 
 pref("javascript.enabled",                  true);
 pref("javascript.options.strict",           false);
@@ -2432,11 +2428,7 @@ pref("layout.spammy_warnings.enabled", false);
 pref("layout.float-fragments-inside-column.enabled", true);
 
 // Is support for the Web Animations API enabled?
-#ifdef RELEASE_BUILD
-pref("dom.animations-api.core.enabled", false);
-#else
 pref("dom.animations-api.core.enabled", true);
-#endif
 
 // pref to permit users to make verified SOAP calls by default
 pref("capability.policy.default.SOAPCall.invokeVerifySourceHeader", "allAccess");
@@ -4363,7 +4355,7 @@ pref("browser.history.allowPopState", true);
 pref("browser.history.maxStateObjectSize", 655360);
 
 // XPInstall prefs
-pref("xpinstall.whitelist.required", true);
+pref("xpinstall.whitelist.required", false);
 // Only Firefox requires add-on signatures
 pref("xpinstall.signatures.required", false);
 pref("extensions.alwaysUnpack", false);
@@ -4505,13 +4497,13 @@ pref("dom.w3c_touch_events.enabled", 2);
 #endif
 
 // W3C draft pointer events
-pref("dom.w3c_pointer_events.enabled", false);
+pref("dom.w3c_pointer_events.enabled", true);
 
 // W3C draft ImageCapture API
-pref("dom.imagecapture.enabled", false);
+pref("dom.imagecapture.enabled", true);
 
 // W3C touch-action css property (related to touch and pointer events)
-pref("layout.css.touch_action.enabled", false);
+pref("layout.css.touch_action.enabled", true);
 
 // Enables some assertions in nsStyleContext that are too expensive
 // for general use, but might be useful to enable for specific tests.
