@@ -1,0 +1,493 @@
+﻿# ***************************************************************************
+# *
+# *  Copyright (C) 2004-2015, International Business Machines
+# *  Corporation; Unicode, Inc.; and others.  All Rights Reserved.
+# *
+# ***************************************************************************
+# File: am_am_FONIPA.txt
+# Generated from CLDR 
+#
+
+\u135D → '';  # U+135D ETHIOPIC COMBINING GEMINATION AND VOWEL LENGTH MARK
+\u135E → '';  # U+135E ETHIOPIC COMBINING VOWEL LENGTH MARK
+\u135F → '';  # U+135F ETHIOPIC COMBINING GEMINATION MARK
+
+ሀ → ha;
+ሁ → hu;
+ሂ → hi;
+ሃ → ha;
+ሄ → he;
+ህ → hɨ;
+ሆ → ho;
+ሇ → ho;  # Dizi, Me’en, Mursi, Suri /hɔ/ ([1], Appendix E); not used in Amharic.
+
+ለ → lə;
+ሉ → lu;
+ሊ → li;
+ላ → la;
+ሌ → le;
+ል → lɨ;
+ሎ → lo;
+ⶀ → lo;  # Dizi, Me’en, Mursi, Suri /lɔ/ ([1], Appendix E); not used in Amharic.
+ሏ → lwa;
+
+ሐ → ha;
+ሑ → hu;
+ሒ → hi;
+ሓ → ha;
+ሔ → he;
+ሕ → hɨ;
+ሖ → ho;
+ሗ → hwa;
+
+መ → mə;
+ሙ → mu;
+ሚ → mi;
+ማ → ma;
+ሜ → me;
+ም → mɨ;
+ሞ → mo;
+ⶁ → mo;  # Dizi, Me’en, Mursi, Suri /mɔ/ ([1], Appendix E); not used in Amharic.
+ᎀ → mwə;  # Sebatbeit /mwə/ ([1], Appendix H); not used in Amharic.
+ᎃ → mwu;  # Sebatbeit /mwu/ ([1], Appendix H); not used in Amharic.
+ᎁ → mwi;  # Sebatbeit /mwi/ ([1], Appendix H); not used in Amharic.
+ሟ → mwa;
+ᎂ → mwe;  # Sebatbeit /mwe/ ([1], Appendix H); not used in Amharic.
+ፙ → mja;  # Unclear which language; Appendix L of [1] transcribes ፙ as /mʲa/.
+
+ሠ → sə;
+ሡ → su;
+ሢ → si;
+ሣ → sa;
+ሤ → se;
+ሥ → sɨ;
+ሦ → so;
+ሧ → swa;
+
+ረ → rə;
+ሩ → ru;
+ሪ → ri;
+ራ → ra;
+ሬ → re;
+ር → rɨ;
+ሮ → ro;
+ⶂ → ro;  # Dizi, Me’en, Mursi, Suri /rɔ/ ([1], Appendix E); not used in Amharic.
+ሯ → rwa;
+ፘ → rja;  # Unclear which language; Appendix L of [1] transcribes ፘ as /rʲa/.
+
+ሰ → sə;
+ሱ → su;
+ሲ → si;
+ሳ → sa;
+ሴ → se;
+ስ → sɨ;
+ሶ → so;
+ⶃ → so;  # Dizi, Me’en, Mursi, Suri /sɔ/ ([1], Appendix E); not used in Amharic.
+ሷ → swa;
+
+ሸ → ʃə;
+ሹ → ʃu;
+ሺ → ʃi;
+ሻ → ʃa;
+ሼ → ʃe;
+ሽ → ʃɨ;
+ሾ → ʃo;
+ⶄ → ʃo;  # Dizi, Me’en, Mursi, Suri /ʃɔ/ ([1], Appendix E); not used in Amharic.
+ሿ → ʃwa;
+
+ⶠ → ʃə;
+ⶡ → ʃu;
+ⶢ → ʃi;
+ⶣ → ʃa;
+ⶤ → ʃe;
+ⶥ → ʃɨ;
+ⶦ → ʃo;
+
+ቀ → kʼə;
+ቁ → kʼu;
+ቂ → kʼi;
+ቃ → kʼa;
+ቄ → kʼe;
+ቅ → kʼɨ;
+ቆ → kʼo;
+ቇ → kʼo;  # Dizi, Me’en, Mursi, Suri /kʼɔ/ ([1], Appendix E); not used in Amharic.
+ቈ → kʼwə;
+ቍ → kʼwu;
+ቊ → kʼwi;
+ቋ → kʼwa;
+ቌ → kʼwe;
+
+ቐ → kʼə;
+ቑ → kʼu;
+ቒ → kʼi;
+ቓ → kʼa;
+ቔ → kʼe;
+ቕ → kʼɨ;
+ቖ → kʼo;
+ቘ → kʼwə;
+ቝ → kʼwu;
+ቚ → kʼwi;
+ቛ → kʼwa;
+ቜ → kʼwe;
+
+ⷀ → kʼjə;
+ⷁ → kʼju;
+ⷂ → kʼji;
+ⷃ → kʼja;
+ⷄ → kʼje;
+ⷅ → kʼjɨ;
+ⷆ → kʼjo;
+
+በ → bə;
+ቡ → bu;
+ቢ → bi;
+ባ → ba;
+ቤ → be;
+ብ → bɨ;
+ቦ → bo;
+ⶅ → bo;  # Dizi, Me’en, Mursi, Suri /bɔ/ ([1], Appendix E); not used in Amharic.
+ᎄ → bwə;  # Sebatbeit /bʷə/ ([1], Appendix H); not used in Amharic.
+ᎇ → bwu;  # Sebatbeit /bʷu/ ([1], Appendix H); not used in Amharic.
+ᎅ → bwi;  # Sebatbeit /bʷi/ ([1], Appendix H); not used in Amharic.
+ቧ → bwa;  # Sebatbeit /bʷa/ ([1], Appendix H); not used in Amharic.
+ᎆ → bwe;  # Sebatbeit /bʷe/ ([1], Appendix H); not used in Amharic.
+
+ቨ → və;
+ቩ → vu;
+ቪ → vi;
+ቫ → va;
+ቬ → ve;
+ቭ → vɨ;
+ቮ → vo;
+ቯ → vwa;
+
+ተ → tə;
+ቱ → tu;
+ቲ → ti;
+ታ → ta;
+ቴ → te;
+ት → tɨ;
+ቶ → to;
+ⶆ → to;  # Dizi, Me’en, Mursi, Suri /tɔ/ ([1], Appendix E); not used in Amharic.
+ቷ → twa;
+
+ቸ → t\u0361ʃə;
+ቹ → t\u0361ʃu;
+ቺ → t\u0361ʃi;
+ቻ → t\u0361ʃa;
+ቼ → t\u0361ʃe;
+ች → t\u0361ʃɨ;
+ቾ → t\u0361ʃo;
+ቿ → t\u0361ʃwa;
+
+ⶨ → t\u0361ʃə;
+ⶩ → t\u0361ʃu;
+ⶪ → t\u0361ʃi;
+ⶫ → t\u0361ʃa;
+ⶬ → t\u0361ʃe;
+ⶭ → t\u0361ʃɨ;
+ⶮ → t\u0361ʃo;
+
+
+ኀ → ha;
+ኁ → hu;
+ኂ → hi;
+ኃ → ha;
+ኄ → he;
+ኅ → hɨ;
+ኆ → ho;
+ኇ → ho;  # Dizi, Me’en, Mursi, Suri /ŋɔ/ ([1], Appendix E); not used in Amharic.
+ኈ → hwə;
+ኍ → hwu;
+ኊ → hwi;
+ኋ → hwa;
+ኌ → hwe;
+
+ነ → nə;
+ኑ → nu;
+ኒ → ni;
+ና → na;
+ኔ → ne;
+ን → nɨ;
+ኖ → no;
+ⶈ → no;  # Dizi, Me’en, Mursi, Suri /nɔ/ ([1], Appendix E); not used in Amharic.
+ኗ → nwa;
+
+ኘ → ɲə;
+ኙ → ɲu;
+ኚ → ɲi;
+ኛ → ɲa;
+ኜ → ɲe;
+ኝ → ɲɨ;
+ኞ → ɲo;
+ⶉ → ɲo;  # Dizi, Me’en, Mursi, Suri /ɲɔ/ ([1], Appendix E); not used in Amharic.
+ኟ → ɲwa;
+
+አ → ʔə;
+ኡ → ʔu;
+ኢ → ʔi;
+ኣ → ʔa;
+ኤ → ʔe;
+እ → ʔɨ;
+ኦ → ʔo;
+ⶊ → ʔo;  # Dizi, Me’en, Mursi, Suri /ɲɔ/ ([1], Appendix E); not used in Amharic.
+
+ከ → kə;
+ኩ → ku;
+ኪ → ki;
+ካ → ka;
+ኬ → ke;
+ክ → kɨ;
+ኮ → ko;
+ኰ → kwə;
+ኵ → kwu;
+ኲ → kwi;
+ኳ → kwa;
+ኴ → kwe;
+
+ⷈ → kə;
+ⷉ → ku;
+ⷊ → ki;
+ⷋ → ka;
+ⷌ → ke;
+ⷍ → kɨ;
+ⷎ → ko;
+
+ⷐ → kə;
+ⷑ → ku;
+ⷒ → ki;
+ⷓ → ka;
+ⷔ → ke;
+ⷕ → kɨ;
+ⷖ → ko;
+
+ወ → wə;
+ዉ → wu;
+ዊ → wi;
+ዋ → wa;
+ዌ → we;
+ው → wɨ;
+ዎ → wo;
+ዏ → wo;  # Dizi, Me’en, Mursi, Suri /wɔ/ ([1], Appendix E); not used in Amharic.
+
+ዐ → ʕə;
+ዑ → ʕu;
+ዒ → ʕi;
+ዓ → ʕa;
+ዔ → ʕe;
+ዕ → ʕɨ;
+ዖ → ʕo;
+
+ዘ → zə;
+ዙ → zu;
+ዚ → zi;
+ዛ → za;
+ዜ → ze;
+ዝ → zɨ;
+ዞ → zo;
+ⶋ → zo;  # Dizi, Me’en, Mursi, Suri /zɔ/ ([1], Appendix E); not used in Amharic.
+ዟ → zwa;
+
+ዠ → ʒə;
+ዡ → ʒu;
+ዢ → ʒi;
+ዣ → ʒa;
+ዤ → ʒe;
+ዥ → ʒɨ;
+ዦ → ʒo;
+ዧ → ʒwa;
+
+ⶰ → ʒə;
+ⶱ → ʒu;
+ⶲ → ʒi;
+ⶳ → ʒa;
+ⶴ → ʒe;
+ⶵ → ʒɨ;
+ⶶ → ʒo;
+
+የ → jə;
+ዩ → ju;
+ዪ → ji;
+ያ → ja;
+ዬ → je;
+ይ → jɨ;
+ዮ → jo;
+ዯ → jo;  # Dizi, Me’en, Mursi, Suri /zɔ/ ([1], Appendix E); not used in Amharic.
+
+ደ → də;
+ዱ → du;
+ዲ → di;
+ዳ → da;
+ዴ → de;
+ድ → dɨ;
+ዶ → do;
+ⶌ → do;  # Dizi, Me’en, Mursi, Suri /zɔ/ ([1], Appendix E); not used in Amharic.
+ዷ → dwa;
+
+ጀ → d\u0361ʒə;
+ጁ → d\u0361ʒu;
+ጂ → d\u0361ʒi;
+ጃ → d\u0361ʒa;
+ጄ → d\u0361ʒe;
+ጅ → d\u0361ʒɨ;
+ጆ → d\u0361ʒo;
+ጇ → d\u0361ʒwa;
+
+ገ → ɡə;
+ጉ → ɡu;
+ጊ → ɡi;
+ጋ → ɡa;
+ጌ → ɡe;
+ግ → ɡɨ;
+ጎ → ɡo;
+ጐ → ɡwə;
+ጕ → ɡwu;
+ጒ → ɡwi;
+ጓ → ɡwa;
+ጔ → ɡwe;
+
+ጘ → ŋə;
+ጙ → ŋu;
+ጚ → ŋi;
+ጛ → ŋa;
+ጜ → ŋe;
+ጝ → ŋɨ;
+ጞ → ŋo;
+ⶓ → ŋwə;
+ⶖ → ŋwu;
+ⶔ → ŋwi;
+ጟ → ŋwa;
+ⶕ → ŋwe;
+
+ⷘ → ɡə;
+ⷙ → ɡu;
+ⷚ → ɡi;
+ⷛ → ɡa;
+ⷜ → ɡe;
+ⷝ → ɡɨ;
+ⷞ → ɡo;
+
+ጠ → tʼə;
+ጡ → tʼu;
+ጢ → tʼi;
+ጣ → tʼa;
+ጤ → tʼe;
+ጥ → tʼɨ;
+ጦ → tʼo;
+ጧ → tʼwa;
+
+ጨ → t\u0361ʃʼə;
+ጩ → t\u0361ʃʼu;
+ጪ → t\u0361ʃʼi;
+ጫ → t\u0361ʃʼa;
+ጬ → t\u0361ʃʼe;
+ጭ → t\u0361ʃʼɨ;
+ጮ → t\u0361ʃʼo;
+ⶐ → t\u0361ʃʼo;  # Dizi, Me’en, Mursi, Suri /t\u0361ʃʼɔ/ ([1], Appendix E); not used in Amharic.
+ጯ → t\u0361ʃʼwa;
+
+ⶸ → t\u0361ʃʼə;
+ⶹ → t\u0361ʃʼu;
+ⶺ → t\u0361ʃʼi;
+ⶻ → t\u0361ʃʼa;
+ⶼ → t\u0361ʃʼe;
+ⶽ → t\u0361ʃʼɨ;
+ⶾ → t\u0361ʃʼo;
+
+ጰ → pʼə;
+ጱ → pʼu;
+ጲ → pʼi;
+ጳ → pʼa;
+ጴ → pʼe;
+ጵ → pʼɨ;
+ጶ → pʼo;
+ⶑ → pʼo;  # Dizi, Me’en, Mursi, Suri /pʼɔ/ ([1], Appendix E); not used in Amharic.
+ጷ → pʼwa;
+
+ጸ → sʼə;
+ጹ → sʼu;
+ጺ → sʼi;
+ጻ → sʼa;
+ጼ → sʼe;
+ጽ → sʼɨ;
+ጾ → sʼo;
+ጿ → sʼwa;
+
+ፀ → sʼə;
+ፁ → sʼu;
+ፂ → sʼi;
+ፃ → sʼa;
+ፄ → sʼe;
+ፅ → sʼɨ;
+ፆ → sʼo;
+ፇ → sʼo;  # Dizi, Me’en, Mursi, Suri /sʼɔ/ ([1], Appendix E); not used in Amharic.
+
+ፈ → fə;
+ፉ → fu;
+ፊ → fi;
+ፋ → fa;
+ፌ → fe;
+ፍ → fɨ;
+ፎ → fo;
+ᎈ → fwə;  # Sebatbeit /fwə/ ([1], Appendix H); not used in Amharic.
+ᎉ → fwu;  # Sebatbeit /fwu/ ([1], Appendix H); not used in Amharic.
+ᎋ → fwi;  # Sebatbeit /fwi/ ([1], Appendix H); not used in Amharic.
+ፏ → fwa;
+ᎊ → fwe;  # Sebatbeit /fwe/ ([1], Appendix H); not used in Amharic.
+ፚ → fja;  # Unclear which language; Appendix L of [1] transcribes ፚ as /fja/.
+
+ፐ → pə;
+ፑ → pu;
+ፒ → pi;
+ፓ → pa;
+ፔ → pe;
+ፕ → pɨ;
+ፖ → po;
+ⶒ → po;  # Dizi, Me’en, Mursi, Suri /pɔ/ ([1], Appendix E); not used in Amharic.
+ᎌ → pwə;  # Sebatbeit /pwə/ ([1], Appendix H); not used in Amharic.
+ᎍ → pwu;  # Sebatbeit /pwu/ ([1], Appendix H); not used in Amharic.
+ᎏ → pwi;  # Sebatbeit /pwi/ ([1], Appendix H); not used in Amharic.
+ፗ → pwa;
+ᎎ → pwe;  # Sebatbeit /pwe/ ([1], Appendix H); not used in Amharic.
+
+ኧ → ə;
+
+፠ → ' ';  # U+1360 ETHIOPIC SECTION MARK
+፡ → ' ';  # U+1361 ETHIOPIC WORDSPACE
+። → ' ';  # U+1362 ETHIOPIC FULL STOP
+፣ → ' ';  # U+1363 ETHIOPIC COMMA
+፤ → ' ';  # U+1364 ETHIOPIC SEMICOLON
+፥ → ' ';  # U+1365 ETHIOPIC COLON
+፦ → ' ';  # U+1366 ETHIOPIC PREFACE COLON
+፧ → ' ';  # U+1367 ETHIOPIC QUESTION MARK
+፨ → ' ';  # U+1368 ETHIOPIC PARAGRAPH SEPARATOR
+
+፩ → ' ';  # U+1369 ETHIOPIC DIGIT ONE
+፪ → ' ';  # U+136A ETHIOPIC DIGIT TWO
+፫ → ' ';  # U+136B ETHIOPIC DIGIT THREE
+፬ → ' ';  # U+136C ETHIOPIC DIGIT FOUR
+፭ → ' ';  # U+136D ETHIOPIC DIGIT FIVE
+፮ → ' ';  # U+136E ETHIOPIC DIGIT SIX
+፯ → ' ';  # U+136F ETHIOPIC DIGIT SEVEN
+፰ → ' ';  # U+1370 ETHIOPIC DIGIT EIGHT
+፱ → ' ';  # U+1371 ETHIOPIC DIGIT NINE
+፲ → ' ';  # U+1372 ETHIOPIC NUMBER TEN
+፳ → ' ';  # U+1373 ETHIOPIC NUMBER TWENTY
+፴ → ' ';  # U+1374 ETHIOPIC NUMBER THIRTY
+፵ → ' ';  # U+1375 ETHIOPIC NUMBER FORTY
+፶ → ' ';  # U+1376 ETHIOPIC NUMBER FIFTY
+፷ → ' ';  # U+1377 ETHIOPIC NUMBER SIXTY
+፸ → ' ';  # U+1378 ETHIOPIC NUMBER SEVENTY
+፹ → ' ';  # U+1379 ETHIOPIC NUMBER EIGHTY
+፺ → ' ';  # U+137A ETHIOPIC NUMBER NINETY
+፻ → ' ';  # U+137B ETHIOPIC NUMBER HUNDRED
+፼ → ' ';  # U+137C ETHIOPIC NUMBER TEN THOUSAND
+
+::NULL;
+{i} [[:L:]] → i \.;
+{ɨ} [[:L:]] → ɨ \.;
+{u} [[:L:]] → u \.;
+{e} [[:L:]] → e \.;
+{o} [[:L:]] → o \.;
+{ə} [[:L:]] → ə \.;
+{a} [[:L:]] → a \.;

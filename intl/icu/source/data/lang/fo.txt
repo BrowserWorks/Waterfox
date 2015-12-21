@@ -1,0 +1,410 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2015 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/fo.xml
+// *
+// ***************************************************************************
+fo{
+    Keys{
+        calendar{"kalendari"}
+        collation{"raðskipan"}
+        currency{"gjaldoyra"}
+        hc{"klokkuskipan (12 ímóti 24)"}
+        lb{"reglubrot stílur"}
+        ms{"mátingareind"}
+        numbers{"tøl"}
+    }
+    Languages{
+        ab{"abkhasiskt"}
+        af{"afrikaans"}
+        agq{"aghem"}
+        ak{"akan"}
+        am{"amhariskt"}
+        ar{"arabiskt"}
+        arn{"mapuche"}
+        as{"assamesiskt"}
+        asa{"asu"}
+        ay{"aymara"}
+        az{"aserbajdsjanskt"}
+        ba{"bashkir"}
+        be{"hvitarussiskt"}
+        bem{"bemba"}
+        bez{"bena"}
+        bg{"bulgarskt"}
+        bgn{"vestur balochi"}
+        bm{"bambara"}
+        bn{"bengalskt"}
+        bo{"tibetskt"}
+        br{"bretonskt"}
+        brx{"bodo"}
+        bs{"bosniskt"}
+        bss{"bakossi"}
+        ca{"katalani"}
+        ce{"tjetjenskt"}
+        cgg{"chiga"}
+        chr{"cherokee"}
+        ckb{"miðkurdiskt"}
+        co{"korsikanskt"}
+        cs{"kekkiskt"}
+        cv{"chuvash"}
+        cy{"walisiskt"}
+        da{"danskt"}
+        dav{"taita"}
+        de{"týskt"}
+        de_CH{"høgt týskt (Sveis)"}
+        dje{"sarma"}
+        dsb{"lágt sorbian"}
+        dua{"duala"}
+        dv{"divehi"}
+        dyo{"jola-fonyi"}
+        dz{"dzongkha"}
+        ebu{"embu"}
+        ee{"ewe"}
+        efi{"efik"}
+        el{"grikskt"}
+        en{"enskt"}
+        eo{"esperanto"}
+        es{"spanskt"}
+        et{"estiskt"}
+        eu{"baskiskt"}
+        fa{"persiskt"}
+        fi{"finskt"}
+        fil{"filipiniskt"}
+        fj{"fijimál"}
+        fo{"føroyskt"}
+        fr{"franskt"}
+        fy{"vestur frísiskt"}
+        ga{"írskt"}
+        gag{"gagauz"}
+        gd{"skotskt gæliskt"}
+        gl{"galisiskt"}
+        gn{"guarani"}
+        gsw{"týskt (Sveis)"}
+        gu{"gujarati"}
+        guz{"gusii"}
+        gv{"manx"}
+        ha{"hausa"}
+        haw{"hawaiianskt"}
+        he{"hebraiskt"}
+        hi{"hindi"}
+        hr{"kroatiskt"}
+        hsb{"ovara sorbian"}
+        ht{"haitiskt"}
+        hu{"ungarskt"}
+        hy{"armenskt"}
+        ia{"interlingua"}
+        id{"indonesiskt"}
+        ie{"interlingue"}
+        ig{"igbo"}
+        ii{"sichuan yi"}
+        is{"íslendskt"}
+        it{"italskt"}
+        iu{"inuktitut"}
+        ja{"japanskt"}
+        jgo{"ngomba"}
+        jmc{"machame"}
+        jv{"javanskt"}
+        ka{"georgiskt"}
+        kab{"kabyle"}
+        kam{"kamba"}
+        kde{"makonde"}
+        kea{"grønhøvdaoyggjarskt"}
+        khq{"koyra chiini"}
+        ki{"kikuyu"}
+        kk{"kazakh"}
+        kl{"kalaallisut"}
+        kln{"kalenjin"}
+        km{"khmer"}
+        kn{"kannada"}
+        ko{"koreanskt"}
+        koi{"komi-permyak"}
+        kok{"konkani"}
+        ks{"kashmiri"}
+        ksb{"shambala"}
+        ksf{"bafia"}
+        ku{"kurdiskt"}
+        kw{"corniskt"}
+        ky{"kyrgyz"}
+        la{"latín"}
+        lag{"langi"}
+        lah{"lahnda"}
+        lb{"luksemborgskt"}
+        lg{"ganda"}
+        lkt{"lakota"}
+        ln{"lingala"}
+        lo{"laoskt"}
+        lrc{"norður luri"}
+        lt{"litaviskt"}
+        lu{"luba-katanga"}
+        luo{"luo"}
+        luy{"luyia"}
+        lv{"lettiskt"}
+        mas{"masai"}
+        mer{"meru"}
+        mfe{"morisyen"}
+        mg{"malagassiskt"}
+        mgh{"makhuwa-meetto"}
+        mgo{"metaʼ"}
+        mi{"maori"}
+        mk{"makedónskt"}
+        ml{"malayalam"}
+        mn{"mongolskt"}
+        moh{"mohawk"}
+        mr{"marathi"}
+        ms{"malaiiskt"}
+        mt{"maltiskt"}
+        mua{"mundang"}
+        my{"burmesiskt"}
+        mzn{"mazanderani"}
+        naq{"nama"}
+        nb{"norskt bókmál"}
+        nd{"norður ndebele"}
+        nds{"lágt týskt"}
+        nds_NL{"lágt saksiskt"}
+        ne{"nepalskt"}
+        nl{"hálendskt"}
+        nl_BE{"flamskt"}
+        nmg{"kwasio"}
+        nn{"nýnorskt"}
+        no{"norskt"}
+        nqo{"nʼko"}
+        nus{"nuer"}
+        ny{"nyanja"}
+        nyn{"nyankole"}
+        oc{"occitan"}
+        om{"oromo"}
+        or{"oriya"}
+        os{"ossetiskt"}
+        pa{"punjabi"}
+        pl{"pólskt"}
+        ps{"pashto"}
+        pt{"portugiskiskt"}
+        pt_BR{"portugiskiskt (Brasilia)"}
+        pt_PT{"portugiskiskt (Evropa)"}
+        qu{"quechua"}
+        quc{"kʼicheʼ"}
+        rm{"retoromanskt"}
+        rn{"rundi"}
+        ro{"rumenskt"}
+        ro_MD{"moldaviskt"}
+        rof{"rombo"}
+        ru{"russiskt"}
+        rw{"kinyarwanda"}
+        rwk{"rwa"}
+        sa{"sanskrit"}
+        saq{"samburu"}
+        sbp{"sangu"}
+        sd{"sindhi"}
+        sdh{"suður kurdiskt"}
+        se{"norður sámiskt"}
+        seh{"sena"}
+        ses{"koyraboro senni"}
+        sg{"sango"}
+        sh{"serbokroatiskt"}
+        shi{"tachelhit"}
+        si{"singalesiskt"}
+        sk{"slovakiskt"}
+        sl{"slovenskt"}
+        sm{"samoiskt"}
+        sma{"suður sámiskt"}
+        smj{"lule sámiskt"}
+        smn{"inari sami"}
+        sms{"skolt sámiskt"}
+        sn{"shona"}
+        so{"somaliskt"}
+        sq{"albanskt"}
+        sr{"serbiskt"}
+        ss{"swatiskt"}
+        st{"sesotho"}
+        su{"sundanesiskt"}
+        sv{"svenskt"}
+        sw{"swahili"}
+        swb{"shimaoré"}
+        swc{"kongo svahili"}
+        ta{"tamilskt"}
+        te{"telugu"}
+        teo{"teso"}
+        tet{"tetum"}
+        tg{"tajik"}
+        th{"tailendskt"}
+        ti{"tigrinya"}
+        tk{"turkmenskt"}
+        tl{"tagalog"}
+        tlh{"klingonskt"}
+        tn{"tswana"}
+        to{"tonganskt"}
+        tpi{"tok pisin"}
+        tr{"turkiskt"}
+        ts{"tsonga"}
+        tt{"tatar"}
+        tw{"twi"}
+        twq{"tasawaq"}
+        ty{"tahitiskt"}
+        tzm{"miðatlasfjøll tamazight"}
+        ug{"uyghur"}
+        uk{"ukrainskt"}
+        und{"ókent mál"}
+        ur{"urdu"}
+        uz{"usbekiskt"}
+        vai{"vai"}
+        ve{"venda"}
+        vi{"vjetnamesiskt"}
+        vun{"vunjo"}
+        wbp{"warlpiri"}
+        wo{"wolof"}
+        xh{"xhosa"}
+        xog{"soga"}
+        yi{"jiddiskt"}
+        yo{"yoruba"}
+        yue{"kantonesískt"}
+        zgh{"vanligt marokanskt tamazight"}
+        zh{"kinesiskt"}
+        zh_Hans{"einkult kinesiskt"}
+        zh_Hant{"vanligt kinesiskt"}
+        zu{"sulu"}
+        zxx{"einki málsligt innihald"}
+    }
+    Languages%short{
+        az{"azeri"}
+        en_GB{"enskt (UK)"}
+        en_US{"enskt (USA)"}
+    }
+    Scripts{
+        Arab{"arabisk"}
+        Armn{"armenskt"}
+        Beng{"bengali"}
+        Bopo{"bopomofo"}
+        Brai{"blindaskrift"}
+        Cyrl{"kyrilliskt"}
+        Deva{"devanagari"}
+        Ethi{"etiopiskt"}
+        Geor{"georgianskt"}
+        Grek{"grikskt"}
+        Gujr{"gujarati"}
+        Guru{"gurmukhi"}
+        Hang{"hangul"}
+        Hani{"han"}
+        Hans{"einkult"}
+        Hant{"vanligt"}
+        Hebr{"hebraiskt"}
+        Hira{"hiragana"}
+        Jpan{"japanskt"}
+        Kana{"katakana"}
+        Khmr{"khmer"}
+        Knda{"kannada"}
+        Kore{"koreanskt"}
+        Laoo{"lao"}
+        Latn{"latínskt"}
+        Mlym{"malayalam"}
+        Mong{"mongolsk"}
+        Mymr{"myanmarskt"}
+        Orya{"oriya"}
+        Sinh{"sinhala"}
+        Taml{"tamilskt"}
+        Telu{"telugu"}
+        Thaa{"thaana"}
+        Thai{"tailendskt"}
+        Tibt{"tibetskt"}
+        Zsym{"tekin"}
+        Zxxx{"óskriva"}
+        Zyyy{"vanlig"}
+        Zzzz{"ókend skrift"}
+    }
+    Scripts%stand-alone{
+        Hans{"einkult han"}
+        Hant{"vanligt han"}
+    }
+    Types{
+        calendar{
+            buddhist{"buddistiskur kalendari"}
+            chinese{"kinesiskur kalendari"}
+            dangi{"dangi kalendari"}
+            ethiopic{"etiopiskur kalendari"}
+            gregorian{"Gregorianskur kalendari"}
+            hebrew{"hebraiskur kalendari"}
+            islamic{"islamiskur kalendari"}
+            iso8601{"ISO-8601 kalendari"}
+            japanese{"japanskur kalendari"}
+            persian{"persiskur kalendari"}
+            roc{"minguo kalendari"}
+        }
+        collation{
+            ducet{"forsett Unicode raðskipan"}
+            eor{"röðina fyrir fjöltyngi evrópskum skjölum"}
+            search{"vanlig leiting"}
+            standard{"vanlig raðskipan"}
+        }
+        hc{
+            h11{"12 tímar klokkuskipan (0–11)"}
+            h12{"12 tímar klokkuskipan (1–12)"}
+            h23{"24 tímar klokkuskipan (0–23)"}
+            h24{"24 tímar klokkuskipan (1–24)"}
+        }
+        lb{
+            loose{"leysur reglubrot stílur"}
+            normal{"vanligur reglubrot stílur"}
+            strict{"strangur reglubrot stílur"}
+        }
+        ms{
+            metric{"metralag"}
+            uksystem{"mátingareind (Imperial)"}
+            ussystem{"mátingareind (USA)"}
+        }
+        numbers{
+            arab{"arabisk tøl"}
+            arabext{"víðkað arabisk tøl"}
+            armn{"armensk tøl"}
+            armnlow{"armensk tøl (smáir bókstavir)"}
+            beng{"bengalisk tøl"}
+            deva{"devanagarik tøl"}
+            ethi{"etiopisk tøl"}
+            fullwide{"tøl í fullari longd"}
+            geor{"gregoriansk tøl"}
+            grek{"grikskt tøl"}
+            greklow{"grikskt tøl (smáir bókstavir)"}
+            gujr{"gujaratik tøl"}
+            guru{"gurmukhik tøl"}
+            hanidec{"kinesisk desimal tøl"}
+            hans{"einkul kinesisk tøl"}
+            hansfin{"einkul kinesisk fíggjarlig tøl"}
+            hant{"vanlig kinesisk tøl"}
+            hantfin{"vanlig kinesisk fíggjarlig tøl"}
+            hebr{"hebraisk tøl"}
+            jpan{"japanskt tøl"}
+            jpanfin{"japanskt fíggjarlig tøl"}
+            khmr{"khmer tøl"}
+            knda{"kannada tøl"}
+            laoo{"lao tøl"}
+            latn{"vesturlendsk tøl"}
+            mlym{"malayalam tøl"}
+            mymr{"myanmarsk tøl"}
+            orya{"oriya tøl"}
+            roman{"rómartøl"}
+            romanlow{"rómartøl (smáir bókstavir)"}
+            taml{"vanlig tamilsk tøl"}
+            tamldec{"tamilsk tøl"}
+            telu{"telugu tøl"}
+            thai{"tailendsk tøl"}
+            tibt{"tibetsk tøl"}
+        }
+    }
+    Variants{
+        MONOTON{"monotonísk"}
+        PINYIN{"pinyin"}
+        POLYTON{"polytonísk"}
+        WADEGILE{"Wade-Giles"}
+    }
+    Version{"2.1.19.17"}
+    codePatterns{
+        language{"Mál: {0}"}
+        script{"Skrift: {0}"}
+        territory{"Øki: {0}"}
+    }
+    localeDisplayPattern{
+        keyTypePattern{"{0}: {1}"}
+        pattern{"{0} ({1})"}
+        separator{"{0}, {1}"}
+    }
+}

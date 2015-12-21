@@ -1,0 +1,28 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2015 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/en_IE.xml
+// *
+// ***************************************************************************
+en_IE{
+    %%Parent{"en_001"}
+    Version{"2.1.19.79"}
+    units{
+        mass{
+            stone{
+                dnam{"stone"}
+                one{"{0} stone"}
+                other{"{0} stone"}
+            }
+        }
+    }
+    unitsShort{
+        mass{
+            stone{
+                dnam{"stone"}
+            }
+        }
+    }
+}

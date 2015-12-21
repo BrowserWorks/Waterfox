@@ -1,0 +1,102 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2015 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/en_CA.xml
+// *
+// ***************************************************************************
+en_CA{
+    %%Parent{"en_001"}
+    Version{"2.1.19.79"}
+    unitsNarrow{
+        consumption{
+            liter-per-100kilometers{
+                dnam{"L/100km"}
+                one{"{0}L/100km"}
+                other{"{0}L/100km"}
+            }
+            liter-per-kilometer{
+                dnam{"L/km"}
+                one{"{0}L/km"}
+                other{"{0}L/km"}
+            }
+        }
+        volume{
+            centiliter{
+                dnam{"cL"}
+                one{"{0}cL"}
+                other{"{0}cL"}
+            }
+            deciliter{
+                dnam{"dL"}
+                one{"{0}dL"}
+                other{"{0}dL"}
+            }
+            hectoliter{
+                dnam{"hL"}
+                one{"{0}hL"}
+                other{"{0}hL"}
+            }
+            liter{
+                one{"{0}L"}
+                other{"{0}L"}
+                per{"{0}/L"}
+            }
+            megaliter{
+                dnam{"ML"}
+                one{"{0}ML"}
+                other{"{0}ML"}
+            }
+            milliliter{
+                dnam{"mL"}
+                one{"{0}mL"}
+                other{"{0}mL"}
+            }
+        }
+    }
+    unitsShort{
+        consumption{
+            liter-per-100kilometers{
+                dnam{"L/100 km"}
+                one{"{0} L/100 km"}
+                other{"{0} L/100 km"}
+            }
+            liter-per-kilometer{
+                one{"{0} L/km"}
+                other{"{0} L/km"}
+            }
+        }
+        volume{
+            centiliter{
+                dnam{"cL"}
+                one{"{0} cL"}
+                other{"{0} cL"}
+            }
+            deciliter{
+                dnam{"dL"}
+                one{"{0} dL"}
+                other{"{0} dL"}
+            }
+            hectoliter{
+                dnam{"hL"}
+                one{"{0} hL"}
+                other{"{0} hL"}
+            }
+            liter{
+                one{"{0} L"}
+                other{"{0} L"}
+            }
+            megaliter{
+                dnam{"ML"}
+                one{"{0} ML"}
+                other{"{0} ML"}
+            }
+            milliliter{
+                dnam{"mL"}
+                one{"{0} mL"}
+                other{"{0} mL"}
+            }
+        }
+    }
+}
