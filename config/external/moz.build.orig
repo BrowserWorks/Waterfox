@@ -1,0 +1,61 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+external_dirs = []
+
+DIRS += [
+    'lgpllibs',
+    'sqlite',
+]
+if not CONFIG['MOZ_NATIVE_JPEG']:
+    external_dirs += ['media/libjpeg']
+
+if CONFIG['MOZ_UPDATER']:
+    if not CONFIG['MOZ_NATIVE_BZ2']:
+        external_dirs += ['modules/libbz2']
+
+# There's no "native brotli" yet, but probably in the future...
+external_dirs += ['modules/brotli']
+
+if CONFIG['MOZ_VORBIS']:
+    external_dirs += ['media/libvorbis']
+
+if CONFIG['MOZ_TREMOR']:
+    external_dirs += ['media/libtremor']
+
+if CONFIG['MOZ_WEBM']:
+    external_dirs += ['media/libnestegg']
+
+if CONFIG['MOZ_WEBM_ENCODER']:
+    external_dirs += ['media/libmkv']
+
+if CONFIG['MOZ_VPX'] and not CONFIG['MOZ_NATIVE_LIBVPX']:
+    external_dirs += ['media/libvpx']
+
+if not CONFIG['MOZ_NATIVE_PNG']:
+    external_dirs += ['media/libpng']
+
+if CONFIG['CPU_ARCH'] == 'arm':
+    external_dirs += ['media/openmax_dl']
+
+if CONFIG['MOZ_WEBSPEECH_POCKETSPHINX']:
+    external_dirs += [
+        'media/sphinxbase',
+        'media/pocketsphinx',
+    ]
+
+external_dirs += [
+    'media/kiss_fft',
+    'media/libcubeb',
+    'media/libogg',
+    'media/libopus',
+    'media/libtheora',
+    'media/libspeex_resampler',
+    'media/libstagefright',
+    'media/libsoundtouch',
+]
+
+DIRS += ['../../' + i for i in external_dirs]
