@@ -775,8 +775,11 @@ static const UConverterStaticData _UTF7StaticData={
     { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } /* reserved */
 };
 
-const UConverterSharedData _UTF7Data=
-        UCNV_IMMUTABLE_SHARED_DATA_INITIALIZER(&_UTF7StaticData, &_UTF7Impl);
+const UConverterSharedData _UTF7Data={
+    sizeof(UConverterSharedData), ~((uint32_t)0),
+    NULL, NULL, &_UTF7StaticData, FALSE, &_UTF7Impl,
+    0
+};
 
 /* IMAP mailbox name encoding ----------------------------------------------- */
 
@@ -1472,7 +1475,10 @@ static const UConverterStaticData _IMAPStaticData={
     { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } /* reserved */
 };
 
-const UConverterSharedData _IMAPData=
-        UCNV_IMMUTABLE_SHARED_DATA_INITIALIZER(&_IMAPStaticData, &_IMAPImpl);
+const UConverterSharedData _IMAPData={
+    sizeof(UConverterSharedData), ~((uint32_t)0),
+    NULL, NULL, &_IMAPStaticData, FALSE, &_IMAPImpl,
+    0
+};
 
 #endif

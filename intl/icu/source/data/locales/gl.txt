@@ -159,7 +159,7 @@ gl{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.19.94"}
+    Version{"2.1.12.94"}
     calendar{
         generic{
             DateTimePatterns{
@@ -178,7 +178,6 @@ gl{
                 "{1} {0}",
             }
             availableFormats{
-                E{"ccc"}
                 Ed{"d E"}
                 Gy{"G y"}
                 GyMMM{"G y MMM"}
@@ -217,7 +216,6 @@ gl{
                 yyyyMEd{"GGGGG E, d/M/y"}
                 yyyyMMM{"G MMM y"}
                 yyyyMMMEd{"G E, d MMM y"}
-                yyyyMMMM{"MMMM y G"}
                 yyyyMMMd{"G d, MMM y"}
                 yyyyMd{"GGGGG d/M/y"}
                 yyyyQQQ{"G QQQ y"}
@@ -329,8 +327,8 @@ gl{
                 "p.m.",
             }
             AmPmMarkersNarrow{
-                "a.m.",
-                "p.m.",
+                "a",
+                "p",
             }
             DateTimePatterns{
                 "HH:mm:ss zzzz",
@@ -347,6 +345,8 @@ gl{
                 "{1} {0}",
                 "{1} {0}",
             }
+            NoonMarker{"mediodía"}
+            NoonMarkerNarrow{"m"}
             appendItems{
                 Timezone{"{0} {1}"}
             }
@@ -364,8 +364,6 @@ gl{
                 H{"HH"}
                 Hm{"HH:mm"}
                 Hms{"HH:mm:ss"}
-                Hmsv{"HH:mm:ss v"}
-                Hmv{"HH:mm v"}
                 M{"L"}
                 MEd{"E, d-M"}
                 MMM{"LLL"}
@@ -379,8 +377,6 @@ gl{
                 h{"h a"}
                 hm{"h:mm a"}
                 hms{"h:mm:ss a"}
-                hmsv{"h:mm:ss a v"}
-                hmv{"h:mm a v"}
                 ms{"mm:ss"}
                 y{"y"}
                 yM{"M-y"}
@@ -398,7 +394,7 @@ gl{
                 format{
                     abbreviated{
                         "dom",
-                        "luns",
+                        "lun",
                         "mar",
                         "mér",
                         "xov",
@@ -469,66 +465,6 @@ gl{
                         "Xoves",
                         "Venres",
                         "Sábado",
-                    }
-                }
-            }
-            dayPeriod{
-                format{
-                    abbreviated{
-                        afternoon1{"da mediodía"}
-                        evening1{"da tarde"}
-                        midnight{"da noite"}
-                        morning1{"da mañá"}
-                        morning2{"da mañá"}
-                        night1{"da noite"}
-                    }
-                    narrow{
-                        afternoon1{"da mediodía"}
-                        evening1{"da tarde"}
-                        midnight{"da noite"}
-                        morning1{"da mañá"}
-                        morning2{"da mañá"}
-                        night1{"da noite"}
-                    }
-                    wide{
-                        afternoon1{"da mediodía"}
-                        evening1{"da tarde"}
-                        midnight{"da noite"}
-                        morning1{"da mañá"}
-                        morning2{"da mañá"}
-                        night1{"da noite"}
-                    }
-                }
-                stand-alone{
-                    abbreviated{
-                        afternoon1{"mediodía"}
-                        am{"a.m."}
-                        evening1{"tarde"}
-                        midnight{"medianoite"}
-                        morning1{"madrugada"}
-                        morning2{"mañá"}
-                        night1{"noite"}
-                        pm{"p.m."}
-                    }
-                    narrow{
-                        afternoon1{"mediodía"}
-                        am{"a.m."}
-                        evening1{"tarde"}
-                        midnight{"medianoite"}
-                        morning1{"madrugada"}
-                        morning2{"mañá"}
-                        night1{"noite"}
-                        pm{"p.m."}
-                    }
-                    wide{
-                        afternoon1{"mediodía"}
-                        am{"a.m."}
-                        evening1{"tarde"}
-                        midnight{"medianoite"}
-                        morning1{"madrugada"}
-                        morning2{"mañá"}
-                        night1{"noite"}
-                        pm{"p.m."}
                     }
                 }
             }
@@ -746,10 +682,10 @@ gl{
                         "4",
                     }
                     wide{
-                        "1º trimestre",
-                        "2º trimestre",
-                        "3º trimestre",
-                        "4º trimestre",
+                        "1o trimestre",
+                        "2o trimestre",
+                        "3o trimestre",
+                        "4o trimestre",
                     }
                 }
                 stand-alone{
@@ -766,10 +702,10 @@ gl{
                         "4",
                     }
                     wide{
-                        "1º trimestre",
+                        "1o trimestre",
                         "2º trimestre",
-                        "3º trimestre",
-                        "4º trimestre",
+                        "3o trimestre",
+                        "4o trimestre",
                     }
                 }
             }
@@ -957,11 +893,6 @@ gl{
         }
         month-short{
             dn{"Mes"}
-            relative{
-                "-1"{"m. pasado"}
-                "0"{"este m."}
-                "1"{"m. seguinte"}
-            }
             relativeTime{
                 future{
                     one{"En {0} m."}
@@ -975,11 +906,6 @@ gl{
         }
         quarter{
             dn{"Trimestre"}
-            relative{
-                "-1"{"trimestre pasado"}
-                "0"{"este trimestre"}
-                "1"{"seguinte trimestre"}
-            }
             relativeTime{
                 future{
                     one{"En {0} trimestre"}
@@ -993,11 +919,6 @@ gl{
         }
         quarter-narrow{
             dn{"trim."}
-            relative{
-                "-1"{"trim. pasado"}
-                "0"{"este trim."}
-                "1"{"trim. seguinte"}
-            }
             relativeTime{
                 future{
                     one{"En {0} trim."}
@@ -1011,11 +932,6 @@ gl{
         }
         quarter-short{
             dn{"trim."}
-            relative{
-                "-1"{"trim. pasado"}
-                "0"{"este trim."}
-                "1"{"trim. seguinte"}
-            }
             relativeTime{
                 future{
                     one{"En {0} trim."}
@@ -1128,7 +1044,6 @@ gl{
         thu-short{
             relative{
                 "-1"{"xov. pasado"}
-                "0"{"este xov."}
                 "1"{"próximo xov."}
             }
         }
@@ -1197,11 +1112,6 @@ gl{
         }
         week-short{
             dn{"sem."}
-            relative{
-                "-1"{"sem. pasada"}
-                "0"{"esta sem."}
-                "1"{"sem. seguinte"}
-            }
             relativeTime{
                 future{
                     one{"En {0} sem."}
@@ -1236,11 +1146,6 @@ gl{
         }
         year-narrow{
             dn{"Ano"}
-            relative{
-                "-1"{"ano pasado"}
-                "0"{"este ano"}
-                "1"{"seguinte ano"}
-            }
             relativeTime{
                 future{
                     one{"En {0} anos"}
@@ -1254,11 +1159,6 @@ gl{
         }
         year-short{
             dn{"Ano"}
-            relative{
-                "-1"{"ano pasado"}
-                "0"{"este ano"}
-                "1"{"seguinte ano"}
-            }
             relativeTime{
                 future{
                     one{"En {0} anos"}

@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1997-2015, International Business Machines Corporation and    *
+* Copyright (C) 1997-2014, International Business Machines Corporation and    *
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 */
@@ -14,7 +14,6 @@
 #include "unicode/uobject.h"
 #include "unicode/unistr.h"
 #include "digitlst.h"
-#include "affixpatternparser.h"
 
 U_NAMESPACE_BEGIN
 
@@ -64,10 +63,6 @@ struct DecimalFormatPattern : UMemory {
   UnicodeString fNegSuffixPattern;
   UnicodeString fPosPrefixPattern;
   UnicodeString fPosSuffixPattern;
-  AffixPattern fNegPrefixAffix; 
-  AffixPattern fNegSuffixAffix; 
-  AffixPattern fPosPrefixAffix; 
-  AffixPattern fPosSuffixAffix; 
   EPadPosition fPadPosition;
 };
 

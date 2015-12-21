@@ -116,25 +116,9 @@ public:
      */
     UBool operator!=(const DateTimePatternGenerator& other) const;
 
-#ifndef U_HIDE_DRAFT_API
     /**
      * Utility to return a unique skeleton from a given pattern. For example,
      * both "MMM-dd" and "dd/MMM" produce the skeleton "MMMdd".
-     *
-     * @param pattern   Input pattern, such as "dd/MMM"
-     * @param status  Output param set to success/failure code on exit,
-     *                  which must not indicate a failure before the function call.
-     * @return skeleton such as "MMMdd"
-     * @draft ICU 56
-     */
-    static UnicodeString staticGetSkeleton(const UnicodeString& pattern, UErrorCode& status);
-#endif  /* U_HIDE_DRAFT_API */
-
-    /**
-     * Utility to return a unique skeleton from a given pattern. For example,
-     * both "MMM-dd" and "dd/MMM" produce the skeleton "MMMdd".
-     * getSkeleton() works exactly like staticGetSkeleton().
-     * Use staticGetSkeleton() instead of getSkeleton().
      *
      * @param pattern   Input pattern, such as "dd/MMM"
      * @param status  Output param set to success/failure code on exit,
@@ -142,11 +126,8 @@ public:
      * @return skeleton such as "MMMdd"
      * @stable ICU 3.8
      */
-    UnicodeString getSkeleton(const UnicodeString& pattern, UErrorCode& status) {
-        return staticGetSkeleton(pattern, status);
-    }
+    UnicodeString getSkeleton(const UnicodeString& pattern, UErrorCode& status);
 
-#ifndef U_HIDE_DRAFT_API
     /**
      * Utility to return a unique base skeleton from a given pattern. This is
      * the same as the skeleton, except that differences in length are minimized
@@ -157,30 +138,10 @@ public:
      * @param pattern  Input pattern, such as "dd/MMM"
      * @param status  Output param set to success/failure code on exit,
      *               which must not indicate a failure before the function call.
-     * @return base skeleton, such as "MMMd"
-     * @draft ICU 56
-     */
-    static UnicodeString staticGetBaseSkeleton(const UnicodeString& pattern, UErrorCode& status);
-#endif  /* U_HIDE_DRAFT_API */
-
-    /**
-     * Utility to return a unique base skeleton from a given pattern. This is
-     * the same as the skeleton, except that differences in length are minimized
-     * so as to only preserve the difference between string and numeric form. So
-     * for example, both "MMM-dd" and "d/MMM" produce the skeleton "MMMd"
-     * (notice the single d).
-     * getBaseSkeleton() works exactly like staticGetBaseSkeleton().
-     * Use staticGetBaseSkeleton() instead of getBaseSkeleton().
-     *
-     * @param pattern  Input pattern, such as "dd/MMM"
-     * @param status  Output param set to success/failure code on exit,
-     *               which must not indicate a failure before the function call.
-     * @return base skeleton, such as "MMMd"
+     * @return base skeleton, such as "Md"
      * @stable ICU 3.8
      */
-    UnicodeString getBaseSkeleton(const UnicodeString& pattern, UErrorCode& status) {
-        return staticGetBaseSkeleton(pattern, status);
-    }
+    UnicodeString getBaseSkeleton(const UnicodeString& pattern, UErrorCode& status);
 
     /**
      * Adds a pattern to the generator. If the pattern has the same skeleton as

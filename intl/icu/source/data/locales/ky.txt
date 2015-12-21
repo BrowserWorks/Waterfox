@@ -24,7 +24,6 @@ ky{
     }
     MoreInformation{"?"}
     NumberElements{
-        default{"latn"}
         latn{
             miscPatterns{
                 atLeast{"{0}+"}
@@ -90,56 +89,6 @@ ky{
                 }
             }
             patternsShort{
-                currencyFormat{
-                    1000{
-                        one{"0 миӊ ¤"}
-                        other{"0 миӊ ¤"}
-                    }
-                    10000{
-                        one{"00 миӊ ¤"}
-                        other{"00 миӊ ¤"}
-                    }
-                    100000{
-                        one{"000 миӊ ¤"}
-                        other{"000 миӊ ¤"}
-                    }
-                    1000000{
-                        one{"0 млн ¤"}
-                        other{"0 млн ¤"}
-                    }
-                    10000000{
-                        one{"00 млн ¤"}
-                        other{"00 млн ¤"}
-                    }
-                    100000000{
-                        one{"000 млн ¤"}
-                        other{"000 млн ¤"}
-                    }
-                    1000000000{
-                        one{"0 млд ¤"}
-                        other{"0 млд ¤"}
-                    }
-                    10000000000{
-                        one{"00 млд ¤"}
-                        other{"00 млд ¤"}
-                    }
-                    100000000000{
-                        one{"000 млд ¤"}
-                        other{"000 млд ¤"}
-                    }
-                    1000000000000{
-                        one{"0 трн ¤"}
-                        other{"0 трн ¤"}
-                    }
-                    10000000000000{
-                        one{"00 трн ¤"}
-                        other{"00 трн ¤"}
-                    }
-                    100000000000000{
-                        one{"000 трн ¤"}
-                        other{"000 трн ¤"}
-                    }
-                }
                 decimalFormat{
                     1000{
                         one{"0 миӊ"}
@@ -206,9 +155,8 @@ ky{
             }
         }
         minimumGroupingDigits{"1"}
-        native{"latn"}
     }
-    Version{"2.1.19.19"}
+    Version{"2.1.12.94"}
     calendar{
         generic{
             DateTimePatterns{
@@ -227,7 +175,6 @@ ky{
                 "{1} {0}",
             }
             availableFormats{
-                E{"ccc"}
                 Ed{"d, E"}
                 Gy{"G y"}
                 GyMMM{"G y MMM"}
@@ -237,7 +184,6 @@ ky{
                 MEd{"MM-dd, E"}
                 MMM{"LLL"}
                 MMMEd{"d-MMM, E"}
-                MMMMd{"MMMM d"}
                 MMMd{"d-MMM"}
                 Md{"MM-dd"}
                 d{"d"}
@@ -247,7 +193,6 @@ ky{
                 yyyyMEd{"GGGGG y-MM-dd, E"}
                 yyyyMMM{"G y-'ж'. MMM"}
                 yyyyMMMEd{"G y-'ж'. d-MMM, E"}
-                yyyyMMMM{"G y MMMM"}
                 yyyyMMMd{"G y-'ж'. d-MMM"}
                 yyyyMd{"GGGGG y-MM-dd"}
                 yyyyQQQ{"G y-'ж'. QQQ"}
@@ -320,11 +265,7 @@ ky{
         gregorian{
             AmPmMarkers{
                 "таңкы",
-                "түштөн кийинки",
-            }
-            AmPmMarkersAbbr{
-                "тң",
-                "тк",
+                "түштөн кийин",
             }
             AmPmMarkersNarrow{
                 "тң",
@@ -345,6 +286,8 @@ ky{
                 "{1} {0}",
                 "{1} {0}",
             }
+            NoonMarker{"чак түш"}
+            NoonMarkerNarrow{"чт"}
             appendItems{
                 Timezone{"{0} {1}"}
             }
@@ -362,28 +305,22 @@ ky{
                 H{"HH"}
                 Hm{"HH:mm"}
                 Hms{"HH:mm:ss"}
-                Hmsv{"HH:mm:ss v"}
-                Hmv{"HH:mm v"}
                 M{"L"}
                 MEd{"dd-MM, E"}
                 MMM{"LLL"}
                 MMMEd{"d-MMM, E"}
-                MMMMd{"MMMM d"}
                 MMMd{"d-MMM"}
                 Md{"dd-MM"}
                 d{"d"}
                 h{"h a"}
                 hm{"h:mm a"}
                 hms{"h:mm:ss a"}
-                hmsv{"h:mm:ss a v"}
-                hmv{"h:mm a v"}
                 ms{"mm:ss"}
                 y{"y"}
                 yM{"y-MM"}
                 yMEd{"y-MM-dd, E"}
                 yMMM{"y-'ж'. MMM"}
                 yMMMEd{"y-'ж'. d-MMM, E"}
-                yMMMM{"y MMMM"}
                 yMMMd{"y-'ж'. d-MMM"}
                 yMd{"y-MM-dd"}
                 yQQQ{"y-'ж'., QQQ"}
@@ -464,66 +401,6 @@ ky{
                         "бейшемби",
                         "жума",
                         "ишемби",
-                    }
-                }
-            }
-            dayPeriod{
-                format{
-                    abbreviated{
-                        afternoon1{"түштөн кийин"}
-                        evening1{"кечинде"}
-                        midnight{"түн ортосу"}
-                        morning1{"эртең менен"}
-                        night1{"түн ичинде"}
-                        noon{"чак түш"}
-                    }
-                    narrow{
-                        afternoon1{"түшт кйн"}
-                        evening1{"кечк"}
-                        midnight{"түн орт"}
-                        morning1{"эртң мн"}
-                        night1{"түн"}
-                        noon{"чт"}
-                    }
-                    wide{
-                        afternoon1{"түштөн кийин"}
-                        evening1{"кечинде"}
-                        midnight{"түн ортосу"}
-                        morning1{"эртең менен"}
-                        night1{"түн ичинде"}
-                        noon{"чак түш"}
-                    }
-                }
-                stand-alone{
-                    abbreviated{
-                        afternoon1{"түштөн кийин"}
-                        am{"тң"}
-                        evening1{"кечкурун"}
-                        midnight{"түн ортосу"}
-                        morning1{"эртең менен"}
-                        night1{"түн"}
-                        noon{"чак түш"}
-                        pm{"тк"}
-                    }
-                    narrow{
-                        afternoon1{"түштөн кийин"}
-                        am{"тң"}
-                        evening1{"кечкурун"}
-                        midnight{"түн ортосу"}
-                        morning1{"эртең менен"}
-                        night1{"түн"}
-                        noon{"чак түш"}
-                        pm{"тк"}
-                    }
-                    wide{
-                        afternoon1{"түштөн кийин"}
-                        am{"таңкы"}
-                        evening1{"кечкурун"}
-                        midnight{"түн ортосу"}
-                        morning1{"эртең менен"}
-                        night1{"түн"}
-                        noon{"чак түш"}
-                        pm{"түштөн кийинки"}
                     }
                 }
             }
@@ -795,10 +672,6 @@ ky{
         }
         day-narrow{
             dn{"күн"}
-            relative{
-                "-2"{"мурдагы күнү"}
-                "2"{"бүрсүгүнү"}
-            }
             relativeTime{
                 future{
                     one{"+{0} күн"}
@@ -812,10 +685,6 @@ ky{
         }
         day-short{
             dn{"күн"}
-            relative{
-                "-2"{"мурдагы күнү"}
-                "2"{"бүрсүгүнү"}
-            }
             relativeTime{
                 future{
                     one{"{0} күндөн кийин"}
@@ -868,7 +737,7 @@ ky{
             }
         }
         hour-narrow{
-            dn{"ст"}
+            dn{"с"}
             relativeTime{
                 future{
                     one{"+{0} с."}
@@ -881,7 +750,7 @@ ky{
             }
         }
         hour-short{
-            dn{"ст"}
+            dn{"с."}
             relativeTime{
                 future{
                     one{"{0} саат. кийин"}
@@ -973,11 +842,6 @@ ky{
         }
         month-narrow{
             dn{"ай"}
-            relative{
-                "-1"{"өткөн айда"}
-                "0"{"бул айда"}
-                "1"{"эмдиги айда"}
-            }
             relativeTime{
                 future{
                     one{"+{0} ай"}
@@ -991,11 +855,6 @@ ky{
         }
         month-short{
             dn{"ай"}
-            relative{
-                "-1"{"өткөн айда"}
-                "0"{"бул айда"}
-                "1"{"эмдиги айда"}
-            }
             relativeTime{
                 future{
                     one{"{0} айдан кийин"}
@@ -1009,11 +868,6 @@ ky{
         }
         quarter{
             dn{"чейрек"}
-            relative{
-                "-1"{"акыркы чейрек"}
-                "0"{"бул чейрек"}
-                "1"{"кийинки чейрек"}
-            }
             relativeTime{
                 future{
                     one{"кийинки {0} чейректе"}
@@ -1027,11 +881,6 @@ ky{
         }
         quarter-narrow{
             dn{"чейр."}
-            relative{
-                "-1"{"акыркы чейр."}
-                "0"{"бул чейр."}
-                "1"{"кийинки чейр."}
-            }
             relativeTime{
                 future{
                     one{"+{0} чейр."}
@@ -1045,11 +894,6 @@ ky{
         }
         quarter-short{
             dn{"чейр."}
-            relative{
-                "-1"{"акыркы чейр."}
-                "0"{"бул чейр."}
-                "1"{"кийинки чейр."}
-            }
             relativeTime{
                 future{
                     one{"кийинки {0} чейр."}
@@ -1177,7 +1021,7 @@ ky{
             relative{
                 "-1"{"өткөн шш."}
                 "0"{"ушул шш."}
-                "1"{"келерки шейш."}
+                "1"{"ушул шш."}
             }
         }
         tue-short{
@@ -1228,11 +1072,6 @@ ky{
         }
         week-narrow{
             dn{"апта"}
-            relative{
-                "-1"{"өткөн апт."}
-                "0"{"ушул апт."}
-                "1"{"келерки апт."}
-            }
             relativeTime{
                 future{
                     one{"+{0} апт."}
@@ -1246,11 +1085,6 @@ ky{
         }
         week-short{
             dn{"апта"}
-            relative{
-                "-1"{"өткөн апт."}
-                "0"{"ушул апт."}
-                "1"{"келерки апт."}
-            }
             relativeTime{
                 future{
                     one{"{0} апт. кийин"}
@@ -1285,11 +1119,6 @@ ky{
         }
         year-narrow{
             dn{"ж."}
-            relative{
-                "-1"{"былтыр"}
-                "0"{"быйыл"}
-                "1"{"эмдиги жылы"}
-            }
             relativeTime{
                 future{
                     one{"{0} жыл. кийин"}
@@ -1303,11 +1132,6 @@ ky{
         }
         year-short{
             dn{"ж."}
-            relative{
-                "-1"{"былтыр"}
-                "0"{"быйыл"}
-                "1"{"эмдиги жылы"}
-            }
             relativeTime{
                 future{
                     one{"{0} жыл. кийин"}
@@ -1320,7 +1144,7 @@ ky{
             }
         }
         zone{
-            dn{"убакыт алкагы"}
+            dn{"саат алкагы"}
         }
     }
     listPattern{
@@ -1336,12 +1160,6 @@ ky{
             middle{"{0}, {1}"}
             start{"{0}, {1}"}
         }
-        unit-narrow{
-            2{"{0} {1}"}
-            end{"{0} {1}"}
-            middle{"{0} {1}"}
-            start{"{0} {1}"}
-        }
         unit-short{
             2{"{0}, {1}"}
             end{"{0}, {1}"}
@@ -1352,6 +1170,6 @@ ky{
     measurementSystemNames{
         UK{"Британия"}
         US{"АКШ"}
-        metric{"Метрикалык өлчөө тутуму"}
+        metric{"метрикалык"}
     }
 }

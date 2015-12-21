@@ -7,12 +7,11 @@
 // *
 // ***************************************************************************
 fa{
-    Version{"2.1.19.14"}
+    Version{"2.0.97.64"}
     collations{
         standard{
             Sequence{
-                "[normalization on]"
-                "[reorder Arab]"
+                "[normalization on][reorder Arab]"
                 "&َ<<ِ<<ُ<<ً<<ٍ<<ٌ"
                 "&[before 1]ا<آ"
                 "&ا<<ٱ<ء"
@@ -22,7 +21,7 @@ fa{
                 "&ۏ<ه<<ە<<ہ<<ة<<ۃ<<ۀ<<ھ"
                 "&ی<<*ىےيېۑۍێ"
             }
-            Version{"28"}
+            Version{"27.0.1"}
         }
     }
 }

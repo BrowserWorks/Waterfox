@@ -440,6 +440,7 @@ public:
     void setTimeSeparatorString(const UnicodeString& newTimeSeparator);
 #endif  /* U_HIDE_DRAFT_API */
 
+#ifndef U_HIDE_DRAFT_API
     /**
      * Gets cyclic year name strings if the calendar has them, by width and context.
      * For example: "jia-zi", "yi-chou", etc.
@@ -448,7 +449,7 @@ public:
      * @param width     The requested name width: WIDE, ABBREVIATED, NARROW.
      * @return          The year name strings (DateFormatSymbols retains ownership),
      *                  or null if they are not available for this calendar.
-     * @stable ICU 54
+     * @draft ICU 54
      */
     const UnicodeString* getYearNames(int32_t& count,
                             DtContextType context, DtWidthType width) const;
@@ -460,7 +461,7 @@ public:
      * @param count     The length of the array.
      * @param context   The usage context: FORMAT, STANDALONE (currently only FORMAT is supported).
      * @param width     The name width: WIDE, ABBREVIATED, NARROW (currently only ABBREVIATED is supported).
-     * @stable ICU 54
+     * @draft ICU 54
      */
     void setYearNames(const UnicodeString* yearNames, int32_t count,
                             DtContextType context, DtWidthType width);
@@ -473,7 +474,7 @@ public:
      * @param width     The requested name width: WIDE, ABBREVIATED, NARROW.
      * @return          The zodiac name strings (DateFormatSymbols retains ownership),
      *                  or null if they are not available for this calendar.
-     * @stable ICU 54
+     * @draft ICU 54
      */
     const UnicodeString* getZodiacNames(int32_t& count,
                             DtContextType context, DtWidthType width) const;
@@ -485,10 +486,12 @@ public:
      * @param count     The length of the array.
      * @param context   The usage context: FORMAT, STANDALONE (currently only FORMAT is supported).
      * @param width     The name width: WIDE, ABBREVIATED, NARROW (currently only ABBREVIATED is supported).
-     * @stable ICU 54
+     * @draft ICU 54
      */
     void setZodiacNames(const UnicodeString* zodiacNames, int32_t count,
                             DtContextType context, DtWidthType width);
+
+#endif  /* U_HIDE_DRAFT_API */
 
 #ifndef U_HIDE_INTERNAL_API
     /**

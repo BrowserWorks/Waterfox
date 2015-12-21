@@ -31,7 +31,7 @@ gsw{
             }
         }
     }
-    Version{"2.1.19.74"}
+    Version{"2.1.10.93"}
     calendar{
         buddhist{
             DateTimePatterns{
@@ -69,8 +69,9 @@ gsw{
             availableFormats{
                 Ed{"E d."}
                 H{"H"}
-                Hm{"HH:mm"}
-                Hms{"HH:mm:ss"}
+                HHmm{"HH:mm"}
+                HHmmss{"HH:mm:ss"}
+                Hm{"H:mm"}
                 M{"L"}
                 MEd{"E, d.M."}
                 MMM{"LLL"}
@@ -217,8 +218,9 @@ gsw{
             availableFormats{
                 Ed{"E d."}
                 H{"H"}
-                Hm{"HH:mm"}
-                Hms{"HH:mm:ss"}
+                HHmm{"HH:mm"}
+                HHmmss{"HH:mm:ss"}
+                Hm{"H:mm"}
                 M{"L"}
                 MEd{"E, d.M."}
                 MMM{"LLL"}

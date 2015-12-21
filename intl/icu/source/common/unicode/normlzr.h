@@ -1,7 +1,7 @@
 /*
  ********************************************************************
  * COPYRIGHT:
- * Copyright (c) 1996-2015, International Business Machines Corporation and
+ * Copyright (c) 1996-2011, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************
  */
@@ -26,15 +26,13 @@
 
 U_NAMESPACE_BEGIN
 /**
- * Old Unicode normalization API.
- *
- * This API has been replaced by the Normalizer2 class and is only available
- * for backward compatibility. This class simply delegates to the Normalizer2 class.
- * There is one exception: The new API does not provide a replacement for Normalizer::compare().
- *
  * The Normalizer class supports the standard normalization forms described in
  * <a href="http://www.unicode.org/unicode/reports/tr15/" target="unicode">
  * Unicode Standard Annex #15: Unicode Normalization Forms</a>.
+ *
+ * Note: This API has been replaced by the Normalizer2 class and is only available
+ * for backward compatibility. This class simply delegates to the Normalizer2 class.
+ * There is one exception: The new API does not provide a replacement for Normalizer::compare().
  *
  * The Normalizer class consists of two parts:
  * - static functions that normalize strings or test if strings are normalized
@@ -131,11 +129,10 @@ U_NAMESPACE_BEGIN
  */
 class U_COMMON_API Normalizer : public UObject {
 public:
-#ifndef U_HIDE_DEPRECATED_API
   /**
    * If DONE is returned from an iteration function that returns a code point,
    * then there are no more normalization results available.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   enum {
       DONE=0xffff
@@ -151,7 +148,7 @@ public:
    *              will start at the beginning of the string.
    *
    * @param mode  The normalization mode.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   Normalizer(const UnicodeString& str, UNormalizationMode mode);
 
@@ -164,7 +161,7 @@ public:
    *
    * @param length Length of the string, or -1 if NUL-terminated.
    * @param mode  The normalization mode.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   Normalizer(const UChar* str, int32_t length, UNormalizationMode mode);
 
@@ -176,21 +173,20 @@ public:
    *              will start at the beginning of the string.
    *
    * @param mode  The normalization mode.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   Normalizer(const CharacterIterator& iter, UNormalizationMode mode);
 
   /**
    * Copy constructor.
    * @param copy The object to be copied.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   Normalizer(const Normalizer& copy);
-#endif  /* U_HIDE_DEPRECATED_API */
 
   /**
    * Destructor
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   virtual ~Normalizer();
 
@@ -199,7 +195,6 @@ public:
   // Static utility methods
   //-------------------------------------------------------------------------
 
-#ifndef U_HIDE_DEPRECATED_API
   /**
    * Normalizes a <code>UnicodeString</code> according to the specified normalization mode.
    * This is a wrapper for unorm_normalize(), using UnicodeString's.
@@ -212,7 +207,7 @@ public:
    * @param options   the optional features to be enabled (0 for no options)
    * @param result    The normalized string (on output).
    * @param status    The error code.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   static void U_EXPORT2 normalize(const UnicodeString& source,
                         UNormalizationMode mode, int32_t options,
@@ -234,7 +229,7 @@ public:
    * @param options   the optional features to be enabled (0 for no options)
    * @param result    The composed string (on output).
    * @param status    The error code.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   static void U_EXPORT2 compose(const UnicodeString& source,
                       UBool compat, int32_t options,
@@ -256,7 +251,7 @@ public:
    * @param options   the optional features to be enabled (0 for no options)
    * @param result    The decomposed string (on output).
    * @param status    The error code.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   static void U_EXPORT2 decompose(const UnicodeString& source,
                         UBool compat, int32_t options,
@@ -281,7 +276,7 @@ public:
    * @return UNORM_YES, UNORM_NO or UNORM_MAYBE
    *
    * @see isNormalized
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   static inline UNormalizationCheckResult
   quickCheck(const UnicodeString &source, UNormalizationMode mode, UErrorCode &status);
@@ -297,7 +292,7 @@ public:
    * @return UNORM_YES, UNORM_NO or UNORM_MAYBE
    *
    * @see isNormalized
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.6
    */
   static UNormalizationCheckResult
   quickCheck(const UnicodeString &source, UNormalizationMode mode, int32_t options, UErrorCode &status);
@@ -320,7 +315,7 @@ public:
    *         "mode" normalization form.
    *
    * @see quickCheck
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.2
    */
   static inline UBool
   isNormalized(const UnicodeString &src, UNormalizationMode mode, UErrorCode &errorCode);
@@ -338,7 +333,7 @@ public:
    *         "mode" normalization form.
    *
    * @see quickCheck
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.6
    */
   static UBool
   isNormalized(const UnicodeString &src, UNormalizationMode mode, int32_t options, UErrorCode &errorCode);
@@ -370,14 +365,13 @@ public:
    * @see unorm_next
    * @see unorm_previous
    *
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.1
    */
   static UnicodeString &
   U_EXPORT2 concatenate(const UnicodeString &left, const UnicodeString &right,
               UnicodeString &result,
               UNormalizationMode mode, int32_t options,
               UErrorCode &errorCode);
-#endif  /* U_HIDE_DEPRECATED_API */
 
   /**
    * Compare two strings for canonical equivalence.
@@ -448,7 +442,6 @@ public:
           uint32_t options,
           UErrorCode &errorCode);
 
-#ifndef U_HIDE_DEPRECATED_API
   //-------------------------------------------------------------------------
   // Iteration API
   //-------------------------------------------------------------------------
@@ -459,7 +452,7 @@ public:
    * The getIndex() is not changed.
    *
    * @return the current normalized code point
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   UChar32              current(void);
 
@@ -469,7 +462,7 @@ public:
    * (Post-increment semantics.)
    *
    * @return the first normalized code point
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   UChar32              first(void);
 
@@ -479,7 +472,7 @@ public:
    * (Pre-decrement semantics.)
    *
    * @return the last normalized code point
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   UChar32              last(void);
 
@@ -495,7 +488,7 @@ public:
    * The C API unorm_next() is more efficient and does not have this ambiguity.
    *
    * @return the next normalized code point
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   UChar32              next(void);
 
@@ -511,7 +504,7 @@ public:
    * The C API unorm_previous() is more efficient and does not have this ambiguity.
    *
    * @return the previous normalized code point
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   UChar32              previous(void);
 
@@ -522,14 +515,14 @@ public:
    * specified here.
    *
    * @param index the desired index in the input text.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   void                 setIndexOnly(int32_t index);
 
   /**
    * Reset the index to the beginning of the text.
    * This is equivalent to setIndexOnly(startIndex)).
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   void                reset(void);
 
@@ -545,7 +538,7 @@ public:
    * was returned from with previous().
    *
    * @return the current index in the input text
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   int32_t            getIndex(void) const;
 
@@ -555,7 +548,7 @@ public:
    * over which this <code>Normalizer</code> is iterating.
    *
    * @return the smallest index in the input text where the Normalizer operates
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   int32_t            startIndex(void) const;
 
@@ -567,7 +560,7 @@ public:
    * before this index.
    *
    * @return the first index in the input text where the Normalizer does not operate
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   int32_t            endIndex(void) const;
 
@@ -577,7 +570,7 @@ public:
    *
    * @param that a Normalizer object to compare this one to
    * @return comparison result
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   UBool        operator==(const Normalizer& that) const;
 
@@ -587,7 +580,7 @@ public:
    *
    * @param that a Normalizer object to compare this one to
    * @return comparison result
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   inline UBool        operator!=(const Normalizer& that) const;
 
@@ -595,7 +588,7 @@ public:
    * Returns a pointer to a new Normalizer that is a clone of this one.
    * The caller is responsible for deleting the new clone.
    * @return a pointer to a new Normalizer
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   Normalizer*        clone(void) const;
 
@@ -603,7 +596,7 @@ public:
    * Generates a hash code for this iterator.
    *
    * @return the hash code
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   int32_t                hashCode(void) const;
 
@@ -624,7 +617,7 @@ public:
    * <p>
    * @param newMode the new mode for this <code>Normalizer</code>.
    * @see #getUMode
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   void setMode(UNormalizationMode newMode);
 
@@ -636,7 +629,7 @@ public:
    *
    * @return the mode for this <code>Normalizer</code>
    * @see #setMode
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   UNormalizationMode getUMode(void) const;
 
@@ -654,7 +647,7 @@ public:
    *                  turn the option(s) on and <code>FALSE</code> to turn it/them off.
    *
    * @see #getOption
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   void setOption(int32_t option,
          UBool value);
@@ -667,7 +660,7 @@ public:
    * @param option the option(s) that are to be checked
    * @return TRUE if any of the option(s) are set
    * @see #setOption
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   UBool getOption(int32_t option) const;
 
@@ -677,7 +670,7 @@ public:
    *
    * @param newText a string that replaces the current input text
    * @param status a UErrorCode
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   void setText(const UnicodeString& newText,
            UErrorCode &status);
@@ -688,7 +681,7 @@ public:
    *
    * @param newText a CharacterIterator object that replaces the current input text
    * @param status a UErrorCode
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   void setText(const CharacterIterator& newText,
            UErrorCode &status);
@@ -700,7 +693,7 @@ public:
    * @param newText a string that replaces the current input text
    * @param length the length of the string, or -1 if NUL-terminated
    * @param status a UErrorCode
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   void setText(const UChar* newText,
                     int32_t length,
@@ -709,22 +702,21 @@ public:
    * Copies the input text into the UnicodeString argument.
    *
    * @param result Receives a copy of the text under iteration.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.0
    */
   void            getText(UnicodeString&  result);
 
   /**
    * ICU "poor man's RTTI", returns a UClassID for this class.
    * @returns a UClassID for this class.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.2
    */
   static UClassID U_EXPORT2 getStaticClassID();
-#endif  /* U_HIDE_DEPRECATED_API */
 
   /**
    * ICU "poor man's RTTI", returns a UClassID for the actual class.
    * @return a UClassID for the actual class.
-   * @deprecated ICU 56 Use Normalizer2 instead.
+   * @stable ICU 2.2
    */
   virtual UClassID getDynamicClassID() const;
 
@@ -750,9 +742,7 @@ private:
 
   FilteredNormalizer2*fFilteredNorm2;  // owned if not NULL
   const Normalizer2  *fNorm2;  // not owned; may be equal to fFilteredNorm2
-#ifndef U_HIDE_DEPRECATED_API
   UNormalizationMode  fUMode;
-#endif  /* U_HIDE_DEPRECATED_API */
   int32_t             fOptions;
 
   // The input text and our position in it
@@ -771,7 +761,6 @@ private:
 // Inline implementations
 //-------------------------------------------------------------------------
 
-#ifndef U_HIDE_DEPRECATED_API
 inline UBool
 Normalizer::operator!= (const Normalizer& other) const
 { return ! operator==(other); }
@@ -789,7 +778,6 @@ Normalizer::isNormalized(const UnicodeString& source,
                          UErrorCode &status) {
     return isNormalized(source, mode, 0, status);
 }
-#endif  /* U_HIDE_DEPRECATED_API */
 
 inline int32_t
 Normalizer::compare(const UnicodeString &s1, const UnicodeString &s2,

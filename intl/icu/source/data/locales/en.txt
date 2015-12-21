@@ -82,56 +82,6 @@ en{
                 }
             }
             patternsShort{
-                currencyFormat{
-                    1000{
-                        one{"¤0K"}
-                        other{"¤0K"}
-                    }
-                    10000{
-                        one{"¤00K"}
-                        other{"¤00K"}
-                    }
-                    100000{
-                        one{"¤000K"}
-                        other{"¤000K"}
-                    }
-                    1000000{
-                        one{"¤0M"}
-                        other{"¤0M"}
-                    }
-                    10000000{
-                        one{"¤00M"}
-                        other{"¤00M"}
-                    }
-                    100000000{
-                        one{"¤000M"}
-                        other{"¤000M"}
-                    }
-                    1000000000{
-                        one{"¤0B"}
-                        other{"¤0B"}
-                    }
-                    10000000000{
-                        one{"¤00B"}
-                        other{"¤00B"}
-                    }
-                    100000000000{
-                        one{"¤000B"}
-                        other{"¤000B"}
-                    }
-                    1000000000000{
-                        one{"¤0T"}
-                        other{"¤0T"}
-                    }
-                    10000000000000{
-                        one{"¤00T"}
-                        other{"¤00T"}
-                    }
-                    100000000000000{
-                        one{"¤000T"}
-                        other{"¤000T"}
-                    }
-                }
                 decimalFormat{
                     1000{
                         one{"0K"}
@@ -198,7 +148,7 @@ en{
             }
         }
     }
-    Version{"2.1.19.72"}
+    Version{"2.1.13.48"}
     calendar{
         buddhist{
             eras{
@@ -241,7 +191,6 @@ en{
                 MEd{"E, M/d"}
                 MMM{"LLL"}
                 MMMEd{"E, MMM d"}
-                MMMMd{"MMMM d"}
                 MMMd{"MMM d"}
                 Md{"M/d"}
                 UM{"M/U"}
@@ -260,7 +209,6 @@ en{
                 yyyyMEd{"E, M/d/r"}
                 yyyyMMM{"MMM r(U)"}
                 yyyyMMMEd{"E, MMM d, r(U)"}
-                yyyyMMMM{"MMMM r(U)"}
                 yyyyMMMd{"MMM d, r"}
                 yyyyMd{"M/d/r"}
                 yyyyQQQ{"QQQ r(U)"}
@@ -461,7 +409,6 @@ en{
                 MEd{"E, M/d"}
                 MMM{"LLL"}
                 MMMEd{"E, MMM d"}
-                MMMMd{"MMMM d"}
                 MMMd{"MMM d"}
                 Md{"M/d"}
                 d{"d"}
@@ -475,7 +422,6 @@ en{
                 yyyyMEd{"E, M/d/y GGGGG"}
                 yyyyMMM{"MMM y G"}
                 yyyyMMMEd{"E, MMM d, y G"}
-                yyyyMMMM{"MMMM y G"}
                 yyyyMMMd{"MMM d, y G"}
                 yyyyMd{"M/d/y GGGGG"}
                 yyyyQQQ{"QQQ y G"}
@@ -586,14 +532,6 @@ en{
                 "am",
                 "pm",
             }
-            AmPmMarkersAbbr{
-                "AM",
-                "PM",
-            }
-            AmPmMarkersAbbr%variant{
-                "am",
-                "pm",
-            }
             AmPmMarkersNarrow{
                 "a",
                 "p",
@@ -613,6 +551,8 @@ en{
                 "{1}, {0}",
                 "{1}, {0}",
             }
+            NoonMarker{"noon"}
+            NoonMarkerNarrow{"n"}
             appendItems{
                 Day{"{0} ({2}: {1})"}
                 Day-Of-Week{"{0} {1}"}
@@ -646,7 +586,6 @@ en{
                 MEd{"E, M/d"}
                 MMM{"LLL"}
                 MMMEd{"E, MMM d"}
-                MMMMd{"MMMM d"}
                 MMMd{"MMM d"}
                 Md{"M/d"}
                 d{"d"}
@@ -661,7 +600,6 @@ en{
                 yMEd{"E, M/d/y"}
                 yMMM{"MMM y"}
                 yMMMEd{"E, MMM d, y"}
-                yMMMM{"MMMM y"}
                 yMMMd{"MMM d, y"}
                 yMd{"M/d/y"}
                 yQQQ{"QQQ y"}
@@ -706,46 +644,6 @@ en{
                         "T",
                         "F",
                         "S",
-                    }
-                }
-            }
-            dayPeriod{
-                format{
-                    abbreviated{
-                        afternoon1{"in the afternoon"}
-                        evening1{"in the evening"}
-                        midnight{"midnight"}
-                        morning1{"in the morning"}
-                        night1{"at night"}
-                        noon{"noon"}
-                    }
-                    narrow{
-                        afternoon1{"in the afternoon"}
-                        evening1{"in the evening"}
-                        midnight{"mi"}
-                        morning1{"in the morning"}
-                        night1{"at night"}
-                        noon{"n"}
-                    }
-                    wide{
-                        afternoon1{"in the afternoon"}
-                        evening1{"in the evening"}
-                        midnight{"midnight"}
-                        morning1{"in the morning"}
-                        night1{"at night"}
-                        noon{"noon"}
-                    }
-                }
-                stand-alone{
-                    wide{
-                        afternoon1{"afternoon"}
-                        am{"AM"}
-                        evening1{"evening"}
-                        midnight{"midnight"}
-                        morning1{"morning"}
-                        night1{"night"}
-                        noon{"noon"}
-                        pm{"PM"}
                     }
                 }
             }
@@ -964,7 +862,6 @@ en{
                 MEd{"E, d MMM"}
                 MMM{"LLL"}
                 MMMEd{"E, d MMM"}
-                MMMMd{"d MMMM"}
                 MMMd{"d MMM"}
                 Md{"d MMM"}
                 y{"y"}
@@ -972,7 +869,6 @@ en{
                 yMEd{"E, d MMM y"}
                 yMMM{"MMM y"}
                 yMMMEd{"E, d MMM y"}
-                yMMMM{"MMMM y"}
                 yMMMd{"d MMM y"}
                 yMd{"d MMM y"}
                 yQQQ{"QQQ y"}
@@ -1102,7 +998,7 @@ en{
     }
     fields{
         day{
-            dn{"day"}
+            dn{"Day"}
             relative{
                 "-1"{"yesterday"}
                 "0"{"today"}
@@ -1121,23 +1017,13 @@ en{
         }
         day-short{
             dn{"day"}
-            relativeTime{
-                future{
-                    one{"in {0} day"}
-                    other{"in {0} days"}
-                }
-                past{
-                    one{"{0} day ago"}
-                    other{"{0} days ago"}
-                }
-            }
         }
         dayperiod{
             dn{"AM/PM"}
             dn%variant{"am/pm"}
         }
         era{
-            dn{"era"}
+            dn{"Era"}
         }
         fri{
             relative{
@@ -1161,7 +1047,7 @@ en{
             }
         }
         hour{
-            dn{"hour"}
+            dn{"Hour"}
             relativeTime{
                 future{
                     one{"in {0} hour"}
@@ -1187,7 +1073,7 @@ en{
             }
         }
         minute{
-            dn{"minute"}
+            dn{"Minute"}
             relativeTime{
                 future{
                     one{"in {0} minute"}
@@ -1234,7 +1120,7 @@ en{
             }
         }
         month{
-            dn{"month"}
+            dn{"Month"}
             relative{
                 "-1"{"last month"}
                 "0"{"this month"}
@@ -1270,7 +1156,7 @@ en{
             }
         }
         quarter{
-            dn{"quarter"}
+            dn{"Quarter"}
             relative{
                 "-1"{"last quarter"}
                 "0"{"this quarter"}
@@ -1327,7 +1213,7 @@ en{
             }
         }
         second{
-            dn{"second"}
+            dn{"Second"}
             relative{
                 "0"{"now"}
             }
@@ -1443,7 +1329,7 @@ en{
             }
         }
         week{
-            dn{"week"}
+            dn{"Week"}
             relative{
                 "-1"{"last week"}
                 "0"{"this week"}
@@ -1479,10 +1365,10 @@ en{
             }
         }
         weekday{
-            dn{"day of the week"}
+            dn{"Day of the Week"}
         }
         year{
-            dn{"year"}
+            dn{"Year"}
             relative{
                 "-1"{"last year"}
                 "0"{"this year"}
@@ -1518,7 +1404,7 @@ en{
             }
         }
         zone{
-            dn{"time zone"}
+            dn{"Time Zone"}
         }
     }
     listPattern{

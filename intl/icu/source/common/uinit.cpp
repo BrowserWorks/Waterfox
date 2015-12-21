@@ -1,6 +1,6 @@
 /*
 ******************************************************************************
-* Copyright (C) 2001-2015, International Business Machines
+* Copyright (C) 2001-2013, International Business Machines
 *                Corporation and others. All Rights Reserved.
 ******************************************************************************
 *   file name:  uinit.cpp
@@ -34,10 +34,8 @@ static UBool U_CALLCONV uinit_cleanup() {
 static void U_CALLCONV
 initData(UErrorCode &status)
 {
-#if UCONFIG_ENABLE_PLUGINS
     /* initialize plugins */
     uplug_init(&status);
-#endif
 
 #if !UCONFIG_NO_CONVERSION
     /*

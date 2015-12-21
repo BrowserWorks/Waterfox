@@ -7,14 +7,11 @@
 // *
 // ***************************************************************************
 el{
-    Version{"2.1.19.14"}
+    Version{"2.0.96.14"}
     collations{
         standard{
-            Sequence{
-                "[normalization on]"
-                "[reorder Grek]"
-            }
-            Version{"28"}
+            Sequence{"[normalization on][reorder Grek]"}
+            Version{"27.0.1"}
         }
     }
 }

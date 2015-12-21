@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-*   Copyright (C) 1996-2015, International Business Machines
+*   Copyright (C) 1996-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * Modification History:
@@ -20,7 +20,6 @@
 #include "unicode/numfmt.h"
 #include "unicode/decimfmt.h"
 #include "unicode/rbnf.h"
-#include "unicode/compactdecimalformat.h"
 #include "unicode/ustring.h"
 #include "unicode/fmtable.h"
 #include "unicode/dcfmtsym.h"
@@ -57,7 +56,6 @@ unum_open(  UNumberFormatStyle    style,
     case UNUM_CURRENCY_PLURAL:
     case UNUM_CURRENCY_ACCOUNTING:
     case UNUM_CASH_CURRENCY:
-    case UNUM_CURRENCY_STANDARD:
         retVal = NumberFormat::createInstance(Locale(locale), style, *status);
         break;
 
@@ -115,14 +113,6 @@ unum_open(  UNumberFormatStyle    style,
         retVal = new RuleBasedNumberFormat(URBNF_NUMBERING_SYSTEM, Locale(locale), *status);
         break;
 #endif
-
-    case UNUM_DECIMAL_COMPACT_SHORT:
-        retVal = CompactDecimalFormat::createInstance(Locale(locale), UNUM_SHORT, *status);
-        break;
-
-    case UNUM_DECIMAL_COMPACT_LONG:
-        retVal = CompactDecimalFormat::createInstance(Locale(locale), UNUM_LONG, *status);
-        break;
 
     default:
         *status = U_UNSUPPORTED_ERROR;

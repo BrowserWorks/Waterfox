@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2009-2015, International Business Machines Corporation and    *
+* Copyright (C) 2009-2010, International Business Machines Corporation and    *
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 */
@@ -19,12 +19,12 @@ U_NAMESPACE_BEGIN
 // utility FieldPositionHandler
 // base class, null implementation
 
-class U_I18N_API FieldPositionHandler: public UMemory {
+class FieldPositionHandler: public UMemory {
  public:
   virtual ~FieldPositionHandler();
   virtual void addAttribute(int32_t id, int32_t start, int32_t limit);
   virtual void shiftLast(int32_t delta);
-  virtual UBool isRecording(void) const;
+  virtual UBool isRecording(void);
 };
 
 
@@ -39,7 +39,7 @@ class FieldPositionOnlyHandler : public FieldPositionHandler {
 
   virtual void addAttribute(int32_t id, int32_t start, int32_t limit);
   virtual void shiftLast(int32_t delta);
-  virtual UBool isRecording(void) const;
+  virtual UBool isRecording(void);
 };
 
 
@@ -63,7 +63,7 @@ class FieldPositionIteratorHandler : public FieldPositionHandler {
 
   virtual void addAttribute(int32_t id, int32_t start, int32_t limit);
   virtual void shiftLast(int32_t delta);
-  virtual UBool isRecording(void) const;
+  virtual UBool isRecording(void);
 };
 
 U_NAMESPACE_END

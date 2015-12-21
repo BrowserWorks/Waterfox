@@ -14,11 +14,6 @@
 */
 
 #include "unicode/icuplug.h"
-
-
-#if UCONFIG_ENABLE_PLUGINS
-
-
 #include "icuplugimp.h"
 #include "cstring.h"
 #include "cmemory.h"
@@ -312,9 +307,6 @@ static void uplug_queryPlug(UPlugData *plug, UErrorCode *status) {
 
 
 static void uplug_loadPlug(UPlugData *plug, UErrorCode *status) {
-  if(U_FAILURE(*status)) {
-    return;
-  }
   if(!plug->awaitingLoad || (plug->level < UPLUG_LEVEL_LOW) ) {  /* shouldn't happen. Plugin hasn'tbeen loaded yet.*/
     *status = U_INTERNAL_PROGRAM_ERROR;
     return;
@@ -360,11 +352,13 @@ static UPlugData *uplug_allocateEmptyPlug(UErrorCode *status)
 
 static UPlugData *uplug_allocatePlug(UPlugEntrypoint *entrypoint, const char *config, void *lib, const char *symName,
                                      UErrorCode *status) {
-  UPlugData *plug = uplug_allocateEmptyPlug(status);
+  UPlugData *plug;
+
   if(U_FAILURE(*status)) {
     return NULL;
   }
 
+  plug = uplug_allocateEmptyPlug(status);
   if(config!=NULL) {
     uprv_strncpy(plug->config, config, UPLUG_NAME_MAX);
   } else {
@@ -876,7 +870,3 @@ uplug_init(UErrorCode *status) {
   gCurrentLevel = UPLUG_LEVEL_HIGH;
   ucln_registerCleanup(UCLN_UPLUG, uplug_cleanup);
 }
-
-#endif
-
-

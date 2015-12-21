@@ -1,6 +1,6 @@
 /*
 ******************************************************************************
-* Copyright (C) 2014-2015, International Business Machines
+* Copyright (C) 2014, International Business Machines
 * Corporation and others.  All Rights Reserved.
 ******************************************************************************
 * quantityformatter.cpp
@@ -11,11 +11,11 @@
 #include "unicode/unistr.h"
 #include "unicode/decimfmt.h"
 #include "cstring.h"
+#include "plurrule_impl.h"
 #include "unicode/plurrule.h"
 #include "charstr.h"
 #include "unicode/fmtable.h"
 #include "unicode/fieldpos.h"
-#include "visibledigits.h"
 
 #if !UCONFIG_NO_FORMATTING
 
@@ -136,14 +136,13 @@ UnicodeString &QuantityFormatter::format(
         return appendTo;
     }
     UnicodeString count;
-    VisibleDigitsWithExponent digits;
     const DecimalFormat *decFmt = dynamic_cast<const DecimalFormat *>(&fmt);
     if (decFmt != NULL) {
-        decFmt->initVisibleDigitsWithExponent(quantity, digits, status);
+        FixedDecimal fd = decFmt->getFixedDecimal(quantity, status);
         if (U_FAILURE(status)) {
             return appendTo;
         }
-        count = rules.select(digits);
+        count = rules.select(fd);
     } else {
         if (quantity.getType() == Formattable::kDouble) {
             count = rules.select(quantity.getDouble());
@@ -168,11 +167,7 @@ UnicodeString &QuantityFormatter::format(
     }
     UnicodeString formattedNumber;
     FieldPosition fpos(pos.getField());
-    if (decFmt != NULL) {
-        decFmt->format(digits, formattedNumber, fpos, status);
-    } else {
-        fmt.format(quantity, formattedNumber, fpos, status);
-    }
+    fmt.format(quantity, formattedNumber, fpos, status);
     const UnicodeString *params[1] = {&formattedNumber};
     int32_t offsets[1];
     pattern->formatAndAppend(

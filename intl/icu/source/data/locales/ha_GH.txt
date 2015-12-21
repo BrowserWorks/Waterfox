@@ -3,9 +3,9 @@
 // * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
-// * Source File: <path>/common/main/ha_GH.xml
+// * Source File: <path>/icu-locale-deprecates.xml & build.xml
 // *
 // ***************************************************************************
 ha_GH{
-    Version{"2.1.19.14"}
+    "%%ALIAS"{"ha_Latn_GH"}
 }

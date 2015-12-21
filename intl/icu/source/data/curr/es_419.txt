@@ -8,17 +8,9 @@
 // ***************************************************************************
 es_419{
     Currencies{
-        AMD{
-            "AMD",
-            "dram armenio",
-        }
         CAD{
             "CAD",
             "dólar canadiense",
-        }
-        ERN{
-            "ERN",
-            "nafka",
         }
         EUR{
             "EUR",
@@ -38,18 +30,7 @@ es_419{
         }
     }
     Currencies%narrow{
-        EGP{"E£"}
-        VEF{"BsF"}
+        EUR{"€"}
     }
-    CurrencyPlurals{
-        BGN{
-            one{"lev búlgaro"}
-            other{"leva búlgaros"}
-        }
-        XXX{
-            one{"(unidad de moneda desconocida)"}
-            other{"(moneda desconocida)"}
-        }
-    }
-    Version{"2.1.19.14"}
+    Version{"2.1.13.23"}
 }

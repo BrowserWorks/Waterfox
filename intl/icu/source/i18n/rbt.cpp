@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 1999-2015, International Business Machines
+*   Copyright (C) 1999-2013, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   Date        Name        Description
@@ -18,7 +18,6 @@
 #include "rbt_data.h"
 #include "rbt_rule.h"
 #include "rbt.h"
-#include "mutex.h"
 #include "umutex.h"
 
 U_NAMESPACE_BEGIN
@@ -245,23 +244,17 @@ RuleBasedTransliterator::handleTransliterate(Replaceable& text, UTransPosition& 
     //   so no concurrent access from multiple threads is possible.
     UBool    lockedMutexAtThisLevel = FALSE;
     if (isDataOwned == FALSE) {
-        // Test whether this request is operating on the same text string as
+        // Test whether this request is operating on the same text string as some
         //   some other transliteration that is still in progress and holding the 
         //   transliteration mutex.  If so, do not lock the transliteration
         //    mutex again.
-        //
-        //  gLockedText variable is protected by the global ICU mutex.
-        //  Shared RBT data protected by transliteratorDataMutex.
-        //
         // TODO(andy): Need a better scheme for handling this.
         UBool needToLock;
-        {
-            Mutex m;
-            needToLock = (&text != gLockedText);
-        }
+        umtx_lock(NULL);
+        needToLock = (&text != gLockedText);
+        umtx_unlock(NULL);
         if (needToLock) {
-            umtx_lock(&transliteratorDataMutex);  // Contention, longish waits possible here.
-            Mutex m;
+            umtx_lock(&transliteratorDataMutex);
             gLockedText = &text;
             lockedMutexAtThisLevel = TRUE;
         }
@@ -276,10 +269,7 @@ RuleBasedTransliterator::handleTransliterate(Replaceable& text, UTransPosition& 
 	    }
     }
     if (lockedMutexAtThisLevel) {
-        {
-            Mutex m;
-            gLockedText = NULL;
-        }
+        gLockedText = NULL;
         umtx_unlock(&transliteratorDataMutex);
     }
 }

@@ -23,7 +23,7 @@ pa_Arab{
         }
         native{"arabext"}
     }
-    Version{"2.1.19.74"}
+    Version{"2.1.6.69"}
     calendar{
         generic{
             DateTimePatterns{
@@ -44,7 +44,7 @@ pa_Arab{
             availableFormats{
                 HHmmss{"HH:mm:ss"}
                 Md{"d/M"}
-                ms{"mm:ss"}
+                mmss{"mm:ss"}
                 yMMM{"MMM y"}
                 yQQQ{"QQQ y"}
             }
@@ -86,10 +86,6 @@ pa_Arab{
                 }
             }
             eras{
-                abbreviated{
-                    "ايساپورو",
-                    "سں",
-                }
                 wide{
                     "ايساپورو",
                     "سں",

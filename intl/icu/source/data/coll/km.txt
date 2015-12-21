@@ -7,13 +7,12 @@
 // *
 // ***************************************************************************
 km{
-    Version{"2.1.19.14"}
+    Version{"2.0.96.14"}
     collations{
         standard{
             Sequence{
-                "[normalization on]"
-                "[reorder Khmr]"
-                "&[last tertiary ignorable]=\u17b4=\u17b5"
+                "[normalization on][reorder Khmr]"
+                "&[last tertiary ignorable]=឴=឵"
                 "&។ល។<<<៘"
                 "&ៈ<<៎<<៏<<៑<<័<<ៈ<<៝<<់<<៉<<៊<<៍"
                 "&រ<ឫ<ឬ"
@@ -72,7 +71,7 @@ km{
                 "&ឱ<<<ឲ"
                 "&ៅ<ុំ<ំ<ាំ<ះ<ិះ<ុះ<េះ<ោះ"
             }
-            Version{"28"}
+            Version{"27.0.1"}
         }
     }
 }

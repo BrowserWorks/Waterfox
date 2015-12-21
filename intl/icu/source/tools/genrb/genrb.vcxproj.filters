@@ -18,7 +18,7 @@
     <ClCompile Include="errmsg.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="genrb.cpp">
+    <ClCompile Include="genrb.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="parse.cpp">
@@ -33,7 +33,7 @@
     <ClCompile Include="read.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="reslist.cpp">
+    <ClCompile Include="reslist.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="rle.c">
@@ -42,7 +42,7 @@
     <ClCompile Include="ustr.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="wrtjava.cpp">
+    <ClCompile Include="wrtjava.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="wrtxml.cpp">

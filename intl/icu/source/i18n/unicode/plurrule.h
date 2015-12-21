@@ -39,7 +39,6 @@ U_NAMESPACE_BEGIN
 
 class Hashtable;
 class FixedDecimal;
-class VisibleDigitsWithExponent;
 class RuleChain;
 class PluralRuleParser;
 class PluralKeywordEnumeration;
@@ -347,10 +346,6 @@ public:
       * @internal
       */
     UnicodeString select(const FixedDecimal &number) const;
-    /**
-      * @internal
-      */
-    UnicodeString select(const VisibleDigitsWithExponent &number) const;
 #endif  /* U_HIDE_INTERNAL_API */
 
     /**

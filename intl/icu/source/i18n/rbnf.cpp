@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1997-2015, International Business Machines Corporation
+* Copyright (C) 1997-2014, International Business Machines Corporation
 * and others. All Rights Reserved.
 *******************************************************************************
 */
@@ -36,7 +36,7 @@
 // #define RBNF_DEBUG
 
 #ifdef RBNF_DEBUG
-#include <stdio.h>
+#include "stdio.h"
 #endif
 
 #define U_ICUDATA_RBNF U_ICUDATA_NAME U_TREE_SEPARATOR_STRING "rbnf"
@@ -661,8 +661,6 @@ RuleBasedNumberFormat::RuleBasedNumberFormat(const UnicodeString& description,
   , locale(alocale)
   , collator(NULL)
   , decimalFormatSymbols(NULL)
-  , defaultInfinityRule(NULL)
-  , defaultNaNRule(NULL)
   , lenient(FALSE)
   , lenientParseRules(NULL)
   , localizations(NULL)
@@ -685,8 +683,6 @@ RuleBasedNumberFormat::RuleBasedNumberFormat(const UnicodeString& description,
   , locale(Locale::getDefault())
   , collator(NULL)
   , decimalFormatSymbols(NULL)
-  , defaultInfinityRule(NULL)
-  , defaultNaNRule(NULL)
   , lenient(FALSE)
   , lenientParseRules(NULL)
   , localizations(NULL)
@@ -709,8 +705,6 @@ RuleBasedNumberFormat::RuleBasedNumberFormat(const UnicodeString& description,
   , locale(alocale)
   , collator(NULL)
   , decimalFormatSymbols(NULL)
-  , defaultInfinityRule(NULL)
-  , defaultNaNRule(NULL)
   , lenient(FALSE)
   , lenientParseRules(NULL)
   , localizations(NULL)
@@ -732,8 +726,6 @@ RuleBasedNumberFormat::RuleBasedNumberFormat(const UnicodeString& description,
   , locale(Locale::getDefault())
   , collator(NULL)
   , decimalFormatSymbols(NULL)
-  , defaultInfinityRule(NULL)
-  , defaultNaNRule(NULL)
   , lenient(FALSE)
   , lenientParseRules(NULL)
   , localizations(NULL)
@@ -756,8 +748,6 @@ RuleBasedNumberFormat::RuleBasedNumberFormat(const UnicodeString& description,
   , locale(aLocale)
   , collator(NULL)
   , decimalFormatSymbols(NULL)
-  , defaultInfinityRule(NULL)
-  , defaultNaNRule(NULL)
   , lenient(FALSE)
   , lenientParseRules(NULL)
   , localizations(NULL)
@@ -777,8 +767,6 @@ RuleBasedNumberFormat::RuleBasedNumberFormat(URBNFRuleSetTag tag, const Locale& 
   , locale(alocale)
   , collator(NULL)
   , decimalFormatSymbols(NULL)
-  , defaultInfinityRule(NULL)
-  , defaultNaNRule(NULL)
   , lenient(FALSE)
   , lenientParseRules(NULL)
   , localizations(NULL)
@@ -826,7 +814,7 @@ RuleBasedNumberFormat::RuleBasedNumberFormat(URBNFRuleSetTag tag, const Locale& 
         }
         UParseError perror;
 
-        init(desc, locinfo, perror, status);
+        init (desc, locinfo, perror, status);
 
         ures_close(ruleSets);
         ures_close(rbnfRules);
@@ -843,8 +831,6 @@ RuleBasedNumberFormat::RuleBasedNumberFormat(const RuleBasedNumberFormat& rhs)
   , locale(rhs.locale)
   , collator(NULL)
   , decimalFormatSymbols(NULL)
-  , defaultInfinityRule(NULL)
-  , defaultNaNRule(NULL)
   , lenient(FALSE)
   , lenientParseRules(NULL)
   , localizations(NULL)
@@ -871,8 +857,8 @@ RuleBasedNumberFormat::operator=(const RuleBasedNumberFormat& rhs)
     lenient = rhs.lenient;
 
     UParseError perror;
-    setDecimalFormatSymbols(*rhs.getDecimalFormatSymbols());
     init(rhs.originalDescription, rhs.localizations ? rhs.localizations->ref() : NULL, perror, status);
+    setDecimalFormatSymbols(*rhs.getDecimalFormatSymbols());
     setDefaultRuleSet(rhs.getDefaultRuleSetName(), status);
 
     capitalizationInfoSet = rhs.capitalizationInfoSet;
@@ -950,10 +936,9 @@ UnicodeString
 RuleBasedNumberFormat::getRuleSetName(int32_t index) const
 {
     if (localizations) {
-        UnicodeString string(TRUE, localizations->getRuleSetName(index), (int32_t)-1);
-        return string;
-    }
-    else if (ruleSets) {
+      UnicodeString string(TRUE, localizations->getRuleSetName(index), (int32_t)-1);
+      return string;
+    } else if (ruleSets) {
         UnicodeString result;
         for (NFRuleSet** p = ruleSets; *p; ++p) {
             NFRuleSet* rs = *p;
@@ -974,9 +959,8 @@ RuleBasedNumberFormat::getNumberOfRuleSetNames() const
 {
     int32_t result = 0;
     if (localizations) {
-        result = localizations->getNumberOfRuleSets();
-    }
-    else if (ruleSets) {
+      result = localizations->getNumberOfRuleSets();
+    } else if (ruleSets) {
         for (NFRuleSet** p = ruleSets; *p; ++p) {
             if ((**p).isPublic()) {
                 ++result;
@@ -1084,7 +1068,7 @@ RuleBasedNumberFormat::format(int32_t number,
     if (defaultRuleSet) {
         UErrorCode status = U_ZERO_ERROR;
         int32_t startPos = toAppendTo.length();
-        defaultRuleSet->format((int64_t)number, toAppendTo, toAppendTo.length(), 0, status);
+        defaultRuleSet->format((int64_t)number, toAppendTo, toAppendTo.length(), status);
         adjustForCapitalizationContext(startPos, toAppendTo);
     }
     return toAppendTo;
@@ -1099,7 +1083,7 @@ RuleBasedNumberFormat::format(int64_t number,
     if (defaultRuleSet) {
         UErrorCode status = U_ZERO_ERROR;
         int32_t startPos = toAppendTo.length();
-        defaultRuleSet->format(number, toAppendTo, toAppendTo.length(), 0, status);
+        defaultRuleSet->format(number, toAppendTo, toAppendTo.length(), status);
         adjustForCapitalizationContext(startPos, toAppendTo);
     }
     return toAppendTo;
@@ -1112,9 +1096,15 @@ RuleBasedNumberFormat::format(double number,
                               FieldPosition& /* pos */) const
 {
     int32_t startPos = toAppendTo.length();
-    if (defaultRuleSet) {
+    // Special case for NaN; adapted from what DecimalFormat::_format( double number,...) does.
+    if (uprv_isNaN(number)) {
+        DecimalFormatSymbols* decFmtSyms = getDecimalFormatSymbols(); // RuleBasedNumberFormat internal
+        if (decFmtSyms) {
+            toAppendTo += decFmtSyms->getConstSymbol(DecimalFormatSymbols::kNaNSymbol);
+        }
+    } else if (defaultRuleSet) {
         UErrorCode status = U_ZERO_ERROR;
-        defaultRuleSet->format(number, toAppendTo, toAppendTo.length(), 0, status);
+        defaultRuleSet->format(number, toAppendTo, toAppendTo.length(), status);
     }
     return adjustForCapitalizationContext(startPos, toAppendTo);
 }
@@ -1136,7 +1126,7 @@ RuleBasedNumberFormat::format(int32_t number,
             NFRuleSet *rs = findRuleSet(ruleSetName, status);
             if (rs) {
                 int32_t startPos = toAppendTo.length();
-                rs->format((int64_t)number, toAppendTo, toAppendTo.length(), 0, status);
+                rs->format((int64_t)number, toAppendTo, toAppendTo.length(), status);
                 adjustForCapitalizationContext(startPos, toAppendTo);
             }
         }
@@ -1160,7 +1150,7 @@ RuleBasedNumberFormat::format(int64_t number,
             NFRuleSet *rs = findRuleSet(ruleSetName, status);
             if (rs) {
                 int32_t startPos = toAppendTo.length();
-                rs->format(number, toAppendTo, toAppendTo.length(), 0, status);
+                rs->format(number, toAppendTo, toAppendTo.length(), status);
                 adjustForCapitalizationContext(startPos, toAppendTo);
             }
         }
@@ -1184,7 +1174,7 @@ RuleBasedNumberFormat::format(double number,
             NFRuleSet *rs = findRuleSet(ruleSetName, status);
             if (rs) {
                 int32_t startPos = toAppendTo.length();
-                rs->format(number, toAppendTo, toAppendTo.length(), 0, status);
+                rs->format(number, toAppendTo, toAppendTo.length(), status);
                 adjustForCapitalizationContext(startPos, toAppendTo);
             }
         }
@@ -1304,13 +1294,13 @@ RuleBasedNumberFormat::setDefaultRuleSet(const UnicodeString& ruleSetName, UErro
 
 UnicodeString
 RuleBasedNumberFormat::getDefaultRuleSetName() const {
-    UnicodeString result;
-    if (defaultRuleSet && defaultRuleSet->isPublic()) {
-        defaultRuleSet->getName(result);
-    } else {
-        result.setToBogus();
-    }
-    return result;
+  UnicodeString result;
+  if (defaultRuleSet && defaultRuleSet->isPublic()) {
+    defaultRuleSet->getName(result);
+  } else {
+    result.setToBogus();
+  }
+  return result;
 }
 
 void 
@@ -1318,12 +1308,12 @@ RuleBasedNumberFormat::initDefaultRuleSet()
 {
     defaultRuleSet = NULL;
     if (!ruleSets) {
-        return;
+      return;
     }
 
-    const UnicodeString spellout(UNICODE_STRING_SIMPLE("%spellout-numbering"));
-    const UnicodeString ordinal(UNICODE_STRING_SIMPLE("%digits-ordinal"));
-    const UnicodeString duration(UNICODE_STRING_SIMPLE("%duration"));
+    const UnicodeString spellout = UNICODE_STRING_SIMPLE("%spellout-numbering");
+    const UnicodeString ordinal = UNICODE_STRING_SIMPLE("%digits-ordinal");
+    const UnicodeString duration = UNICODE_STRING_SIMPLE("%duration");
 
     NFRuleSet**p = &ruleSets[0];
     while (*p) {
@@ -1354,13 +1344,6 @@ RuleBasedNumberFormat::init(const UnicodeString& rules, LocalizationInfo* locali
     // TODO: implement UParseError
     uprv_memset(&pErr, 0, sizeof(UParseError));
     // Note: this can leave ruleSets == NULL, so remaining code should check
-    if (U_FAILURE(status)) {
-        return;
-    }
-
-    initializeDecimalFormatSymbols(status);
-    initializeDefaultInfinityRule(status);
-    initializeDefaultNaNRule(status);
     if (U_FAILURE(status)) {
         return;
     }
@@ -1462,7 +1445,7 @@ RuleBasedNumberFormat::init(const UnicodeString& rules, LocalizationInfo* locali
         int32_t start = 0;
         for (int32_t p = description.indexOf(gSemiPercent, 2, 0); p != -1; p = description.indexOf(gSemiPercent, 2, start)) {
             ruleSetDescriptions[curRuleSet].setTo(description, start, p + 1 - start);
-            ruleSets[curRuleSet] = new NFRuleSet(this, ruleSetDescriptions, curRuleSet, status);
+            ruleSets[curRuleSet] = new NFRuleSet(ruleSetDescriptions, curRuleSet, status);
             if (ruleSets[curRuleSet] == 0) {
                 status = U_MEMORY_ALLOCATION_ERROR;
                 return;
@@ -1471,7 +1454,7 @@ RuleBasedNumberFormat::init(const UnicodeString& rules, LocalizationInfo* locali
             start = p + 1;
         }
         ruleSetDescriptions[curRuleSet].setTo(description, start, description.length() - start);
-        ruleSets[curRuleSet] = new NFRuleSet(this, ruleSetDescriptions, curRuleSet, status);
+        ruleSets[curRuleSet] = new NFRuleSet(ruleSetDescriptions, curRuleSet, status);
         if (ruleSets[curRuleSet] == 0) {
             status = U_MEMORY_ALLOCATION_ERROR;
             return;
@@ -1494,7 +1477,7 @@ RuleBasedNumberFormat::init(const UnicodeString& rules, LocalizationInfo* locali
     // away the temporary descriptions as we go)
     {
         for (int i = 0; i < numRuleSets; i++) {
-            ruleSets[i]->parseRules(ruleSetDescriptions[i], status);
+            ruleSets[i]->parseRules(ruleSetDescriptions[i], this, status);
         }
     }
 
@@ -1626,7 +1609,6 @@ RuleBasedNumberFormat::dispose()
 
     if (ruleSetDescriptions) {
         delete [] ruleSetDescriptions;
-        ruleSetDescriptions = NULL;
     }
 
 #if !UCONFIG_NO_COLLATION
@@ -1637,23 +1619,15 @@ RuleBasedNumberFormat::dispose()
     delete decimalFormatSymbols;
     decimalFormatSymbols = NULL;
 
-    delete defaultInfinityRule;
-    defaultInfinityRule = NULL;
-
-    delete defaultNaNRule;
-    defaultNaNRule = NULL;
-
     delete lenientParseRules;
     lenientParseRules = NULL;
 
 #if !UCONFIG_NO_BREAK_ITERATION
-    delete capitalizationBrkIter;
-    capitalizationBrkIter = NULL;
+   delete capitalizationBrkIter;
+   capitalizationBrkIter = NULL;
 #endif
 
-    if (localizations) {
-        localizations = localizations->unref();
-    }
+    if (localizations) localizations = localizations->unref();
 }
 
 
@@ -1717,84 +1691,29 @@ RuleBasedNumberFormat::getCollator() const
 }
 
 
+/**
+ * Returns the DecimalFormatSymbols object that should be used by all DecimalFormat
+ * instances owned by this formatter.  This object is lazily created: this function
+ * creates it the first time it's called.
+ * @return The DecimalFormatSymbols object that should be used by all DecimalFormat
+ * instances owned by this formatter.
+*/
 DecimalFormatSymbols*
-RuleBasedNumberFormat::initializeDecimalFormatSymbols(UErrorCode &status)
+RuleBasedNumberFormat::getDecimalFormatSymbols() const
 {
     // lazy-evaluate the DecimalFormatSymbols object.  This object
     // is shared by all DecimalFormat instances belonging to this
     // formatter
     if (decimalFormatSymbols == NULL) {
+        UErrorCode status = U_ZERO_ERROR;
         DecimalFormatSymbols* temp = new DecimalFormatSymbols(locale, status);
         if (U_SUCCESS(status)) {
-            decimalFormatSymbols = temp;
-        }
-        else {
+            ((RuleBasedNumberFormat*)this)->decimalFormatSymbols = temp;
+        } else {
             delete temp;
         }
     }
     return decimalFormatSymbols;
-}
-
-/**
- * Returns the DecimalFormatSymbols object that should be used by all DecimalFormat
- * instances owned by this formatter.
-*/
-const DecimalFormatSymbols*
-RuleBasedNumberFormat::getDecimalFormatSymbols() const
-{
-    return decimalFormatSymbols;
-}
-
-NFRule*
-RuleBasedNumberFormat::initializeDefaultInfinityRule(UErrorCode &status)
-{
-    if (U_FAILURE(status)) {
-        return NULL;
-    }
-    if (defaultInfinityRule == NULL) {
-        UnicodeString rule(UNICODE_STRING_SIMPLE("Inf: "));
-        rule.append(getDecimalFormatSymbols()->getSymbol(DecimalFormatSymbols::kInfinitySymbol));
-        NFRule* temp = new NFRule(this, rule, status);
-        if (U_SUCCESS(status)) {
-            defaultInfinityRule = temp;
-        }
-        else {
-            delete temp;
-        }
-    }
-    return defaultInfinityRule;
-}
-
-const NFRule*
-RuleBasedNumberFormat::getDefaultInfinityRule() const
-{
-    return defaultInfinityRule;
-}
-
-NFRule*
-RuleBasedNumberFormat::initializeDefaultNaNRule(UErrorCode &status)
-{
-    if (U_FAILURE(status)) {
-        return NULL;
-    }
-    if (defaultNaNRule == NULL) {
-        UnicodeString rule(UNICODE_STRING_SIMPLE("NaN: "));
-        rule.append(getDecimalFormatSymbols()->getSymbol(DecimalFormatSymbols::kNaNSymbol));
-        NFRule* temp = new NFRule(this, rule, status);
-        if (U_SUCCESS(status)) {
-            defaultNaNRule = temp;
-        }
-        else {
-            delete temp;
-        }
-    }
-    return defaultNaNRule;
-}
-
-const NFRule*
-RuleBasedNumberFormat::getDefaultNaNRule() const
-{
-    return defaultNaNRule;
 }
 
 // De-owning the current localized symbols and adopt the new symbols.
@@ -1815,18 +1734,8 @@ RuleBasedNumberFormat::adoptDecimalFormatSymbols(DecimalFormatSymbols* symbolsTo
         // Apply the new decimalFormatSymbols by reparsing the rulesets
         UErrorCode status = U_ZERO_ERROR;
 
-        delete defaultInfinityRule;
-        defaultInfinityRule = NULL;
-        initializeDefaultInfinityRule(status); // Reset with the new DecimalFormatSymbols
-
-        delete defaultNaNRule;
-        defaultNaNRule = NULL;
-        initializeDefaultNaNRule(status); // Reset with the new DecimalFormatSymbols
-
-        if (ruleSets) {
-            for (int32_t i = 0; i < numRuleSets; i++) {
-                ruleSets[i]->setDecimalFormatSymbols(*symbolsToAdopt, status);
-            }
+        for (int32_t i = 0; i < numRuleSets; i++) {
+            ruleSets[i]->parseRules(ruleSetDescriptions[i], this, status);
         }
     }
 }

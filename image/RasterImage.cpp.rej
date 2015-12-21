@@ -1,20 +1,20 @@
---- image/RasterImage.cpp	Mon Mar 23 16:47:58 2015 -0700
-+++ image/RasterImage.cpp	Mon Mar 23 19:23:45 2015 -0700
-@@ -27,6 +27,7 @@
+--- image/RasterImage.cpp	Mon Mar 23 19:23:45 2015 -0700
++++ image/RasterImage.cpp	Mon Mar 23 16:47:58 2015 -0700
+@@ -27,7 +27,6 @@
  #include "nsPNGDecoder.h"
  #include "nsGIFDecoder2.h"
  #include "nsJPEGDecoder.h"
-+#include "nsWEBPDecoder.h"
+-#include "nsWEBPDecoder.h"
  #include "nsBMPDecoder.h"
  #include "nsICODecoder.h"
  #include "nsIconDecoder.h"
-@@ -1353,6 +1354,9 @@
+@@ -1354,9 +1353,6 @@
      case eDecoderType_icon:
        decoder = new nsIconDecoder(this);
        break;
-+    case eDecoderType_webp:
-+      decoder = new nsWEBPDecoder(this);
-+      break;
+-    case eDecoderType_webp:
+-      decoder = new nsWEBPDecoder(this);
+-      break;
      default:
        MOZ_ASSERT_UNREACHABLE("Unknown decoder type");
    }

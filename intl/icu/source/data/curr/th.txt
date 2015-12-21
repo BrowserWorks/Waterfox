@@ -1201,7 +1201,6 @@ th{
         GIP{"£"}
         GYD{"$"}
         HKD{"$"}
-        IDR{"Rp"}
         ILS{"₪"}
         INR{"₹"}
         JMD{"$"}
@@ -1233,7 +1232,6 @@ th{
         VND{"₫"}
     }
     Currencies%variant{
-        GEL{"₾"}
         RUB{"₽"}
         TRY{"TL"}
     }
@@ -1719,5 +1717,5 @@ th{
     CurrencyUnitPatterns{
         other{"{0} {1}"}
     }
-    Version{"2.1.19.77"}
+    Version{"2.1.12.94"}
 }

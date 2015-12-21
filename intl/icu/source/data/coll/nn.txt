@@ -7,15 +7,15 @@
 // *
 // ***************************************************************************
 nn{
-    Version{"2.1.19.14"}
+    Version{"2.1.6.31"}
     collations{
         search{
             Sequence{"[import nb-u-co-search]"}
-            Version{"28"}
+            Version{"27.0.1"}
         }
         standard{
             Sequence{"[import nb-u-co-standard]"}
-            Version{"28"}
+            Version{"27.0.1"}
         }
     }
 }

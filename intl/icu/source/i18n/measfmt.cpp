@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-* Copyright (c) 2004-2015, International Business Machines
+* Copyright (c) 2004-2014, International Business Machines
 * Corporation and others.  All Rights Reserved.
 **********************************************************************
 * Author: Alan Liu
@@ -37,7 +37,7 @@
 #include "sharedpluralrules.h"
 #include "unifiedcache.h"
 
-#define MEAS_UNIT_COUNT 129
+#define MEAS_UNIT_COUNT 121
 #define WIDTH_INDEX_COUNT (UMEASFMT_WIDTH_NARROW + 1)
 
 U_NAMESPACE_BEGIN
@@ -507,7 +507,7 @@ MeasureFormat::MeasureFormat() :
         cache(NULL),
         numberFormat(NULL),
         pluralRules(NULL),
-        width(UMEASFMT_WIDTH_SHORT),
+        width(UMEASFMT_WIDTH_WIDE),
         listFormatter(NULL) {
 }
 
@@ -935,6 +935,9 @@ const QuantityFormatter *MeasureFormat::getQuantityFormatter(
     if (formatters[UMEASFMT_WIDTH_SHORT].isValid()) {
         return &formatters[UMEASFMT_WIDTH_SHORT];
     }
+    if (formatters[UMEASFMT_WIDTH_WIDE].isValid()) {
+        return &formatters[UMEASFMT_WIDTH_WIDE];
+    }
     status = U_MISSING_RESOURCE_ERROR;
     return NULL;
 }
@@ -949,6 +952,9 @@ const SimplePatternFormatter *MeasureFormat::getPerUnitFormatter(
     }
     if (perUnitFormatters[UMEASFMT_WIDTH_SHORT] != NULL) {
         return perUnitFormatters[UMEASFMT_WIDTH_SHORT];
+    }
+    if (perUnitFormatters[UMEASFMT_WIDTH_WIDE] != NULL) {
+        return perUnitFormatters[UMEASFMT_WIDTH_WIDE];
     }
     return NULL;
 }
@@ -966,6 +972,9 @@ const SimplePatternFormatter *MeasureFormat::getPerFormatter(
     }
     if (perFormatters[UMEASFMT_WIDTH_SHORT].getPlaceholderCount() == 2) {
         return &perFormatters[UMEASFMT_WIDTH_SHORT];
+    }
+    if (perFormatters[UMEASFMT_WIDTH_WIDE].getPlaceholderCount() == 2) {
+        return &perFormatters[UMEASFMT_WIDTH_WIDE];
     }
     status = U_MISSING_RESOURCE_ERROR;
     return NULL;

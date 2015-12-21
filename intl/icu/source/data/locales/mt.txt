@@ -43,7 +43,7 @@ mt{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.19.94"}
+    Version{"2.1.10.93"}
     calendar{
         generic{
             DateTimePatterns{
@@ -317,7 +317,6 @@ mt{
         mon{
             relative{
                 "-1"{"It-Tnejn li għadda"}
-                "0"{"Dan It-Tnejn"}
                 "1"{"It-Tnejn li ġej"}
             }
         }
@@ -354,7 +353,6 @@ mt{
             dn{"Sena"}
             relative{
                 "-1"{"Is-sena li għaddiet"}
-                "0"{"din is-sena"}
                 "1"{"Is-sena d-dieħla"}
             }
             relativeTime{

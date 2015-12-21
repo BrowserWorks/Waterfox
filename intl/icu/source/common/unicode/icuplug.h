@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2009-2015, International Business Machines
+*   Copyright (C) 2009-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -106,10 +106,6 @@
 #define ICUPLUG_H
 
 #include "unicode/utypes.h"
-
-
-#if UCONFIG_ENABLE_PLUGINS
-
 
 
 /* === Basic types === */
@@ -372,7 +368,4 @@ U_INTERNAL void U_EXPORT2
 uplug_removePlug(UPlugData *plug, UErrorCode *status);
 #endif  /* U_HIDE_INTERNAL_API */
 
-#endif /* UCONFIG_ENABLE_PLUGINS */
-
-#endif /* _ICUPLUG */
-
+#endif

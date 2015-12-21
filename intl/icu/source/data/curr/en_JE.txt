@@ -8,17 +8,5 @@
 // ***************************************************************************
 en_JE{
     %%Parent{"en_001"}
-    Currencies{
-        GBP{
-            "£",
-            "UK Pound",
-        }
-    }
-    CurrencyPlurals{
-        GBP{
-            one{"UK pound"}
-            other{"UK pounds"}
-        }
-    }
-    Version{"2.1.19.14"}
+    Version{"2.1.6.69"}
 }

@@ -66,8 +66,8 @@ class StringEnumeration;
  * TimeZone *tz = TimeZone::createTimeZone("America/Los_Angeles");
  * </pre>
  * \htmlonly</blockquote>\endhtmlonly
- * You can use the <code>createEnumeration</code> method to iterate through
- * all the supported time zone IDs, or the <code>getCanonicalID</code> method to check
+ * You can use <code>getAvailableIDs</code> method to iterate through
+ * all the supported time zone IDs, or getCanonicalID method to check
  * if a time zone ID is supported or not.  You can then choose a
  * supported ID to get a <code>TimeZone</code>.
  * If the time zone you want is not represented by one of the
@@ -288,7 +288,7 @@ public:
      * @draft ICU 55
      */
     static TimeZone* U_EXPORT2 detectHostTimeZone();
-#endif  /* U_HIDE_DRAFT_API */
+#endif
 
     /**
      * Creates a new copy of the default TimeZone for this host. Unless the default time
@@ -303,6 +303,9 @@ public:
      * @stable ICU 2.0
      */
     static TimeZone* U_EXPORT2 createDefault(void);
+
+#define ICU_TZ_HAS_RECREATE_DEFAULT
+    static void U_EXPORT2 recreateDefault();
 
     /**
      * Sets the default time zone (i.e., what's returned by createDefault()) to be the

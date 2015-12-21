@@ -13,12 +13,9 @@ de_AT{
             patterns{
                 currencyFormat{"¤ #,##0.00"}
             }
-            symbols{
-                group{" "}
-            }
         }
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.12.50"}
     calendar{
         gregorian{
             monthNames{

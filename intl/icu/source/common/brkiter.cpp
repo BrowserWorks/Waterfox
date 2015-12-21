@@ -27,7 +27,6 @@
 #include "unicode/udata.h"
 #include "unicode/ures.h"
 #include "unicode/ustring.h"
-#include "unicode/filteredbrk.h"
 #include "ucln_cmn.h"
 #include "cstring.h"
 #include "umutex.h"
@@ -384,7 +383,7 @@ BreakIterator::createInstance(const Locale& loc, int32_t kind, UErrorCode& statu
 }
 
 // -------------------------------------
-enum { kKeyValueLenMax = 32 };
+enum { kLBTypeLenMax = 32 };
 
 BreakIterator*
 BreakIterator::makeInstance(const Locale& loc, int32_t kind, UErrorCode& status)
@@ -393,7 +392,7 @@ BreakIterator::makeInstance(const Locale& loc, int32_t kind, UErrorCode& status)
     if (U_FAILURE(status)) {
         return NULL;
     }
-    char lbType[kKeyValueLenMax];
+    char lbType[kLBTypeLenMax];
 
     BreakIterator *result = NULL;
     switch (kind) {
@@ -406,9 +405,9 @@ BreakIterator::makeInstance(const Locale& loc, int32_t kind, UErrorCode& status)
     case UBRK_LINE:
         uprv_strcpy(lbType, "line");
         {
-            char lbKeyValue[kKeyValueLenMax] = {0};
+            char lbKeyValue[kLBTypeLenMax] = {0};
             UErrorCode kvStatus = U_ZERO_ERROR;
-            int32_t kLen = loc.getKeywordValue("lb", lbKeyValue, kKeyValueLenMax, kvStatus);
+            int32_t kLen = loc.getKeywordValue("lb", lbKeyValue, kLBTypeLenMax, kvStatus);
             if (U_SUCCESS(kvStatus) && kLen > 0 && (uprv_strcmp(lbKeyValue,"strict")==0 || uprv_strcmp(lbKeyValue,"normal")==0 || uprv_strcmp(lbKeyValue,"loose")==0)) {
                 uprv_strcat(lbType, "_");
                 uprv_strcat(lbType, lbKeyValue);
@@ -418,18 +417,6 @@ BreakIterator::makeInstance(const Locale& loc, int32_t kind, UErrorCode& status)
         break;
     case UBRK_SENTENCE:
         result = BreakIterator::buildInstance(loc, "sentence", kind, status);
-        {
-            char ssKeyValue[kKeyValueLenMax] = {0};
-            UErrorCode kvStatus = U_ZERO_ERROR;
-            int32_t kLen = loc.getKeywordValue("ss", ssKeyValue, kKeyValueLenMax, kvStatus);
-            if (U_SUCCESS(kvStatus) && kLen > 0 && uprv_strcmp(ssKeyValue,"standard")==0) {
-                FilteredBreakIteratorBuilder* fbiBuilder = FilteredBreakIteratorBuilder::createInstance(loc, kvStatus);
-                if (U_SUCCESS(kvStatus)) {
-                    result = fbiBuilder->build(result, status);
-                    delete fbiBuilder;
-                }
-            }
-        }
         break;
     case UBRK_TITLE:
         result = BreakIterator::buildInstance(loc, "title", kind, status);

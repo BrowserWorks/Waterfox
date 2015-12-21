@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2009-2015, International Business Machines Corporation and
+* Copyright (C) 2009-2010, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 */
@@ -29,7 +29,7 @@ FieldPositionHandler::shiftLast(int32_t) {
 }
 
 UBool
-FieldPositionHandler::isRecording(void) const {
+FieldPositionHandler::isRecording(void) {
   return FALSE;
 }
 
@@ -60,7 +60,7 @@ FieldPositionOnlyHandler::shiftLast(int32_t delta) {
 }
 
 UBool
-FieldPositionOnlyHandler::isRecording(void) const {
+FieldPositionOnlyHandler::isRecording(void) {
   return pos.getField() != FieldPosition::DONT_CARE;
 }
 
@@ -111,7 +111,7 @@ FieldPositionIteratorHandler::shiftLast(int32_t delta) {
 }
 
 UBool
-FieldPositionIteratorHandler::isRecording(void) const {
+FieldPositionIteratorHandler::isRecording(void) {
   return U_SUCCESS(status);
 }
 

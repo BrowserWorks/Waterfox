@@ -8,7 +8,7 @@
 // ***************************************************************************
 sr_Latn{
     %%Parent{"root"}
-    Version{"2.1.20.4"}
+    Version{"2.1.13.24"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Abidžan"}
@@ -685,9 +685,6 @@ sr_Latn{
         "Asia:Calcutta"{
             ec{"Kalkuta"}
         }
-        "Asia:Chita"{
-            ec{"Čita"}
-        }
         "Asia:Choibalsan"{
             ec{"Čojbalsan"}
         }
@@ -829,9 +826,6 @@ sr_Latn{
         "Asia:Singapore"{
             ec{"Singapur"}
         }
-        "Asia:Srednekolymsk"{
-            ec{"Srednjekolimsk"}
-        }
         "Asia:Taipei"{
             ec{"Tajpej"}
         }
@@ -914,7 +908,7 @@ sr_Latn{
             ec{"Broken Hil"}
         }
         "Australia:Currie"{
-            ec{"Kari"}
+            ec{"Kurie"}
         }
         "Australia:Darwin"{
             ec{"Darvin"}
@@ -981,7 +975,7 @@ sr_Latn{
         }
         "Europe:Dublin"{
             ec{"Dablin"}
-            ld{"Irska standardno vreme"}
+            ld{"irsko letnje vreme"}
         }
         "Europe:Gibraltar"{
             ec{"Gibraltar"}
@@ -1015,7 +1009,7 @@ sr_Latn{
         }
         "Europe:London"{
             ec{"London"}
-            ld{"Britanija letnje računanje vremena"}
+            ld{"britansko letnje vreme"}
         }
         "Europe:Luxembourg"{
             ec{"Luksemburg"}
@@ -1152,9 +1146,6 @@ sr_Latn{
         "Pacific:Auckland"{
             ec{"Okland"}
         }
-        "Pacific:Bougainville"{
-            ec{"Buganvil"}
-        }
         "Pacific:Chatham"{
             ec{"Čatam"}
         }
@@ -1286,9 +1277,9 @@ sr_Latn{
             ls{"Zapadno-afričko standardno vreme"}
         }
         "meta:Alaska"{
-            ld{"Aljaska, letnje računanje vremena"}
-            lg{"Aljaska"}
-            ls{"Aljaska, standardno vreme"}
+            ld{"Aljaško letnje vreme"}
+            lg{"Aljaško vreme"}
+            ls{"Aljaško standardno vreme"}
         }
         "meta:Almaty"{
             ld{"Almati letnje računanje vremena"}
@@ -1356,9 +1347,9 @@ sr_Latn{
             ls{"Zapadna Argentina standardno vreme"}
         }
         "meta:Armenia"{
-            ld{"Jermenija letnje računanje vremena"}
-            lg{"Jermenija vreme"}
-            ls{"Jermenija standardno vreme"}
+            ld{"Armenija letnje računanje vremena"}
+            lg{"Armenija vreme"}
+            ls{"Armenija standardno vreme"}
         }
         "meta:Atlantic"{
             ld{"Atlansko ltnje računanje vremena"}
@@ -1415,9 +1406,9 @@ sr_Latn{
             ls{"Brunej Darusalum vreme"}
         }
         "meta:Cape_Verde"{
-            ld{"Zelenortska Ostrva letnje računanje vremena"}
-            lg{"Zelenortska Ostrva vreme"}
-            ls{"Zelenortska Ostrva standardno vreme"}
+            ld{"Zelenortsko letnje računanje vremena"}
+            lg{"Zelenirtsko vreme"}
+            ls{"Zelenirtsko standardno vreme"}
         }
         "meta:Chamorro"{
             ls{"Čamoro vreme"}
@@ -1443,7 +1434,7 @@ sr_Latn{
             ls{"Čojbalsan standardno vreme"}
         }
         "meta:Christmas"{
-            ls{"Božićno ostrvo vreme"}
+            ls{"Božićna ostrva vreme"}
         }
         "meta:Cocos"{
             ls{"Kokos (Keling) Ostrva vreme"}
@@ -1531,7 +1522,7 @@ sr_Latn{
             ls{"Galapagos vreme"}
         }
         "meta:Gambier"{
-            ls{"Gambije vreme"}
+            ls{"Gambijer vreme"}
         }
         "meta:Georgia"{
             ld{"Gruzija letnje računanje vremena"}
@@ -1644,7 +1635,7 @@ sr_Latn{
             ls{"Šri Lanka vreme"}
         }
         "meta:Line_Islands"{
-            ls{"Ostrva Lajn vreme"}
+            ls{"Line Ostrva vreme"}
         }
         "meta:Lord_Howe"{
             ld{"Lord Hov letnje računanje vremena"}
@@ -1657,7 +1648,7 @@ sr_Latn{
             ls{"Makao standardno vreme"}
         }
         "meta:Macquarie"{
-            ls{"Ostrvo Makveri vreme"}
+            ls{"Makverijsko vreme"}
         }
         "meta:Magadan"{
             ld{"Magadan letnje računanje vremena"}
@@ -1790,7 +1781,7 @@ sr_Latn{
             ls{"Pitkern vreme"}
         }
         "meta:Ponape"{
-            ls{"Ponpej vreme"}
+            ls{"Ponpei vreme"}
         }
         "meta:Qyzylorda"{
             ld{"Kizilorda letnje računanje vremena"}
@@ -1831,7 +1822,7 @@ sr_Latn{
             ls{"Južna Džordžija vreme"}
         }
         "meta:Suriname"{
-            ls{"Surinam vreme"}
+            ls{"Surinam"}
         }
         "meta:Syowa"{
             ls{"Šova vreme"}

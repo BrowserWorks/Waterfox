@@ -15,7 +15,7 @@ ar_LB{
             }
         }
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.12.18"}
     calendar{
         gregorian{
             monthNames{

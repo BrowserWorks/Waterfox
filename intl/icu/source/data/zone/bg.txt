@@ -7,7 +7,7 @@
 // *
 // ***************************************************************************
 bg{
-    Version{"2.1.19.94"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Абиджан"}
@@ -684,9 +684,6 @@ bg{
         "Asia:Calcutta"{
             ec{"Колката"}
         }
-        "Asia:Chita"{
-            ec{"Чита"}
-        }
         "Asia:Choibalsan"{
             ec{"Чойбалсан"}
         }
@@ -827,9 +824,6 @@ bg{
         }
         "Asia:Singapore"{
             ec{"Сингапур"}
-        }
-        "Asia:Srednekolymsk"{
-            ec{"Среднеколимск"}
         }
         "Asia:Taipei"{
             ec{"Тайпе"}
@@ -1150,9 +1144,6 @@ bg{
         }
         "Pacific:Auckland"{
             ec{"Окланд"}
-        }
-        "Pacific:Bougainville"{
-            ec{"Бугенвил"}
         }
         "Pacific:Chatham"{
             ec{"Чатам"}
@@ -1868,7 +1859,7 @@ bg{
         gmtZeroFormat{"Гринуич"}
         hourFormat{"+HH:mm;-HH:mm"}
         regionFormat{"{0}"}
-        regionFormatDaylight{"{0}, лятно часово време"}
+        regionFormatDaylight{"{0} – лятно часово време"}
         regionFormatStandard{"{0} – стандартно време"}
     }
 }

@@ -252,7 +252,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="derb.cpp" />
+    <ClCompile Include="derb.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\common\common.vcxproj">

@@ -7,7 +7,7 @@
 // *
 // ***************************************************************************
 af{
-    Version{"2.1.19.94"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Abidjan"}
@@ -238,7 +238,7 @@ af{
             ec{"Buenos Aires"}
         }
         "America:Cambridge_Bay"{
-            ec{"Cambridgebaai"}
+            ec{"Cambridge Bay"}
         }
         "America:Campo_Grande"{
             ec{"Campo Grande"}
@@ -256,7 +256,7 @@ af{
             ec{"Cayenne"}
         }
         "America:Cayman"{
-            ec{"Kaaiman"}
+            ec{"Cayman"}
         }
         "America:Chicago"{
             ec{"Chicago"}
@@ -313,13 +313,13 @@ af{
             ec{"Fortaleza"}
         }
         "America:Glace_Bay"{
-            ec{"Glacebaai"}
+            ec{"Glace Bay"}
         }
         "America:Godthab"{
             ec{"Nuuk"}
         }
         "America:Goose_Bay"{
-            ec{"Goosebaai"}
+            ec{"Goose Bay"}
         }
         "America:Grand_Turk"{
             ec{"Grand Turk"}
@@ -556,16 +556,16 @@ af{
             ec{"Sint John’s"}
         }
         "America:St_Kitts"{
-            ec{"Sint Kitts"}
+            ec{"St. Kitts"}
         }
         "America:St_Lucia"{
-            ec{"Sint Lucia"}
+            ec{"St. Lucia"}
         }
         "America:St_Thomas"{
-            ec{"Sint Thomas"}
+            ec{"St. Thomas"}
         }
         "America:St_Vincent"{
-            ec{"Sint Vincent"}
+            ec{"St. Vincent"}
         }
         "America:Swift_Current"{
             ec{"Swift Current"}
@@ -577,7 +577,7 @@ af{
             ec{"Thule"}
         }
         "America:Thunder_Bay"{
-            ec{"Thunderbaai"}
+            ec{"Thunder Bay"}
         }
         "America:Tijuana"{
             ec{"Tijuana"}
@@ -683,9 +683,6 @@ af{
         }
         "Asia:Calcutta"{
             ec{"Kolkata"}
-        }
-        "Asia:Chita"{
-            ec{"Chita"}
         }
         "Asia:Choibalsan"{
             ec{"Choibalsan"}
@@ -827,9 +824,6 @@ af{
         }
         "Asia:Singapore"{
             ec{"Singapoer"}
-        }
-        "Asia:Srednekolymsk"{
-            ec{"Srednekolymsk"}
         }
         "Asia:Taipei"{
             ec{"Taipei"}
@@ -1150,9 +1144,6 @@ af{
         }
         "Pacific:Auckland"{
             ec{"Auckland"}
-        }
-        "Pacific:Bougainville"{
-            ec{"Bougainville"}
         }
         "Pacific:Chatham"{
             ec{"Chatham"}

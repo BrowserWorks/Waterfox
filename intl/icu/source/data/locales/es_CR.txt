@@ -12,11 +12,11 @@ es_CR{
         latn{
             symbols{
                 decimal{","}
-                group{" "}
+                group{"."}
             }
         }
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.13.23"}
     fields{
         day{
             relative{

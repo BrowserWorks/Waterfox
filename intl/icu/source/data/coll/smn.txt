@@ -7,14 +7,11 @@
 // *
 // ***************************************************************************
 smn{
-    Version{"2.1.19.14"}
+    Version{"2.1.8.44"}
     collations{
         search{
-            Sequence{
-                "[import und-u-co-search]"
-                "[import smn-u-co-standard]"
-            }
-            Version{"28"}
+            Sequence{"[import und-u-co-search][import smn-u-co-standard]"}
+            Version{"27.0.1"}
         }
         standard{
             Sequence{
@@ -25,7 +22,7 @@ smn{
                 "&S<š<<<Š"
                 "&Z<ž<<<Ž<æ<<<Æ<ø<<<Ø<å<<<Å<ã<<<Ã<ä<<<Ä<á<<<Á<ö<<<Ö"
             }
-            Version{"28"}
+            Version{"27.0.1"}
         }
     }
 }

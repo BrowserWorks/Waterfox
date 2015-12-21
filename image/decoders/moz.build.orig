@@ -30,6 +30,7 @@ UNIFIED_SOURCES += [
     'nsIconDecoder.cpp',
     'nsJPEGDecoder.cpp',
     'nsPNGDecoder.cpp',
+    'nsWEBPDecoder.cpp',
 ]
 
 # Decoders need RasterImage.h

@@ -56,13 +56,6 @@ U_CDECL_BEGIN
 #include "pkgtypes.h"
 U_CDECL_END
 
-#if U_HAVE_POPEN
-
-using icu::LocalPointerBase;
-
-U_DEFINE_LOCAL_OPEN_POINTER(LocalPipeFilePointer, FILE, pclose);
-
-#endif
 
 static void loadLists(UPKGOptions *o, UErrorCode *status);
 
@@ -832,10 +825,6 @@ static int32_t initializePkgDataFlags(UPKGOptions *o) {
                     pkgDataFlags[i][0] = 0;
                 } else {
                     fprintf(stderr,"Error allocating memory for pkgDataFlags.\n");
-                    /* If an error occurs, ensure that the rest of the array is NULL */
-                    for (int32_t n = i + 1; n < PKGDATA_FLAGS_SIZE; n++) {
-                        pkgDataFlags[n] = NULL;
-                    }
                     return -1;
                 }
             }
@@ -857,10 +846,7 @@ static int32_t initializePkgDataFlags(UPKGOptions *o) {
         tmpResult = parseFlagsFile(o->options, pkgDataFlags, currentBufferSize, FLAG_NAMES, (int32_t)PKGDATA_FLAGS_SIZE, &status);
         if (status == U_BUFFER_OVERFLOW_ERROR) {
             for (int32_t i = 0; i < PKGDATA_FLAGS_SIZE; i++) {
-                if (pkgDataFlags[i]) {
-                    uprv_free(pkgDataFlags[i]);
-                    pkgDataFlags[i] = NULL;
-                }
+                uprv_free(pkgDataFlags[i]);
             }
             currentBufferSize = tmpResult;
         } else if (U_FAILURE(status)) {
@@ -2102,7 +2088,7 @@ static void loadLists(UPKGOptions *o, UErrorCode *status)
 /* Try calling icu-config directly to get the option file. */
  static int32_t pkg_getOptionsFromICUConfig(UBool verbose, UOption *option) {
 #if U_HAVE_POPEN
-    LocalPipeFilePointer p;
+    FILE *p = NULL;
     size_t n;
     static char buf[512] = "";
     icu::CharString cmdBuf;
@@ -2121,20 +2107,23 @@ static void loadLists(UPKGOptions *o, UErrorCode *status)
       if(verbose) {
         fprintf(stdout, "# Calling icu-config: %s\n", cmdBuf.data());
       }
-      p.adoptInstead(popen(cmdBuf.data(), "r"));
+      p = popen(cmdBuf.data(), "r");
     }
 
-    if(p.isNull() || (n = fread(buf, 1, UPRV_LENGTHOF(buf)-1, p.getAlias())) <= 0) {
-        if(verbose) {
-            fprintf(stdout, "# Calling icu-config: %s\n", cmd);
-        }
+      if(p == NULL || (n = fread(buf, 1, UPRV_LENGTHOF(buf)-1, p)) <= 0) {
+      if(verbose) {
+        fprintf(stdout, "# Calling icu-config: %s\n", cmd);
+      }
+      pclose(p);
 
-        p.adoptInstead(popen(cmd, "r"));
-        if(p.isNull() || (n = fread(buf, 1, UPRV_LENGTHOF(buf)-1, p.getAlias())) <= 0) {
-            fprintf(stderr, "%s: icu-config: No icu-config found. (fix PATH or use -O option)\n", progname);
-            return -1;
-        }
+      p = popen(cmd, "r");
+      if(p == NULL || (n = fread(buf, 1, UPRV_LENGTHOF(buf)-1, p)) <= 0) {
+          fprintf(stderr, "%s: icu-config: No icu-config found. (fix PATH or use -O option)\n", progname);
+          return -1;
+      }
     }
+
+    pclose(p);
 
     for (int32_t length = strlen(buf) - 1; length >= 0; length--) {
         if (buf[length] == '\n' || buf[length] == ' ') {

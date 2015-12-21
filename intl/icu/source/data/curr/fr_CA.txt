@@ -72,6 +72,10 @@ fr_CA{
             "ILS",
             "nouveau shekel israélien",
         }
+        INR{
+            "INR",
+            "roupie indienne",
+        }
         JPY{
             "¥",
             "yen japonais",
@@ -104,13 +108,9 @@ fr_CA{
             "$ SG",
             "dollar de Singapour",
         }
-        SRD{
-            "SRD",
-            "dollar surinamais",
-        }
-        TOP{
-            "TOP",
-            "pa’anga",
+        THB{
+            "THB",
+            "baht thaïlandais",
         }
         TTD{
             "TTD",
@@ -140,35 +140,12 @@ fr_CA{
             "XPF",
             "franc CFP",
         }
-        XXX{
-            "XXX",
-            "Devise inconnue",
-        }
-    }
-    Currencies%narrow{
-        KMF{"CF"}
-        NIO{"C$"}
-        ZMW{"ZK"}
-    }
-    Currencies%variant{
-        TRY{"TL"}
     }
     CurrencyPlurals{
         FKP{
             one{"livre des Îles Malouines"}
             other{"livres des Îles Malouines"}
         }
-        GEL{
-            one{"lari géorgien"}
-        }
-        TOP{
-            one{"pa’anga"}
-            other{"pa’angas"}
-        }
-        XXX{
-            one{"(devise inconnue)"}
-            other{"(devise inconnue)"}
-        }
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.13.23"}
 }

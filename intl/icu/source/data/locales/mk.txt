@@ -156,7 +156,7 @@ mk{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.12.94"}
     calendar{
         generic{
             DateTimePatterns{
@@ -175,7 +175,6 @@ mk{
                 "{1} {0}",
             }
             availableFormats{
-                E{"E"}
                 Ed{"d E"}
                 Gy{"y 'г'. G"}
                 GyMMM{"MMM y 'г'. G"}
@@ -313,10 +312,6 @@ mk{
                 "претпладне",
                 "попладне",
             }
-            AmPmMarkersAbbr{
-                "претпладне",
-                "попладне",
-            }
             AmPmMarkersNarrow{
                 "прет.",
                 "попл.",
@@ -336,6 +331,8 @@ mk{
                 "{1} {0}",
                 "{1} {0}",
             }
+            NoonMarker{"на пладне"}
+            NoonMarkerNarrow{"напл."}
             appendItems{
                 Timezone{"{0} {1}"}
             }
@@ -343,7 +340,7 @@ mk{
                 E{"ccc"}
                 EHm{"E HH:mm"}
                 EHms{"E HH:mm:ss"}
-                Ed{"d E"}
+                Ed{"E, d"}
                 Ehm{"E h:mm a"}
                 Ehms{"E h:mm:ss a"}
                 Gy{"y G"}
@@ -353,8 +350,6 @@ mk{
                 H{"HH"}
                 Hm{"HH:mm"}
                 Hms{"HH:mm:ss"}
-                Hmsv{"HH:mm:ss v"}
-                Hmv{"HH:mm v"}
                 M{"L"}
                 MEd{"E, d.M"}
                 MMM{"LLL"}
@@ -368,8 +363,6 @@ mk{
                 h{"h a"}
                 hm{"h:mm a"}
                 hms{"h:mm:ss a"}
-                hmsv{"h:mm:ss a v"}
-                hmv{"h:mm a v"}
                 ms{"mm:ss"}
                 y{"y"}
                 yM{"M.y"}
@@ -460,72 +453,6 @@ mk{
                     }
                 }
             }
-            dayPeriod{
-                format{
-                    abbreviated{
-                        afternoon1{"попладне"}
-                        evening1{"навечер"}
-                        midnight{"полноќ"}
-                        morning1{"наутро"}
-                        morning2{"претпладне"}
-                        night1{"ноќе"}
-                        noon{"на пладне"}
-                    }
-                    narrow{
-                        afternoon1{"попл."}
-                        evening1{"веч."}
-                        midnight{"полн."}
-                        morning1{"утро"}
-                        morning2{"прет."}
-                        night1{"полн."}
-                        noon{"напл."}
-                    }
-                    wide{
-                        afternoon1{"попладне"}
-                        evening1{"навечер"}
-                        midnight{"полноќ"}
-                        morning1{"наутро"}
-                        morning2{"претпладне"}
-                        night1{"по полноќ"}
-                        noon{"на пладне"}
-                    }
-                }
-                stand-alone{
-                    abbreviated{
-                        afternoon1{"попладне"}
-                        am{"претпладне"}
-                        evening1{"навечер"}
-                        midnight{"полноќ"}
-                        morning1{"наутро"}
-                        morning2{"претпладне"}
-                        night1{"по полноќ"}
-                        noon{"пладне"}
-                        pm{"попладне"}
-                    }
-                    narrow{
-                        afternoon1{"попладне"}
-                        am{"прет."}
-                        evening1{"навечер"}
-                        midnight{"полноќ"}
-                        morning1{"наутро"}
-                        morning2{"претпладне"}
-                        night1{"по полноќ"}
-                        noon{"пладне"}
-                        pm{"попл."}
-                    }
-                    wide{
-                        afternoon1{"попладне"}
-                        am{"претпладне"}
-                        evening1{"навечер"}
-                        midnight{"на полноќ"}
-                        morning1{"наутро"}
-                        morning2{"претпладне"}
-                        night1{"по полноќ"}
-                        noon{"напладне"}
-                        pm{"попладне"}
-                    }
-                }
-            }
             eras{
                 abbreviated{
                     "пр.н.е.",
@@ -536,7 +463,7 @@ mk{
                     "CE",
                 }
                 narrow{
-                    "пр.н.е.",
+                    "пр. н.е.",
                     "н.е.",
                 }
                 wide{
@@ -805,10 +732,6 @@ mk{
         }
         day-narrow{
             dn{"ден"}
-            relative{
-                "-2"{"завчера"}
-                "2"{"задутре"}
-            }
             relativeTime{
                 future{
                     one{"за {0} ден"}
@@ -822,10 +745,6 @@ mk{
         }
         day-short{
             dn{"ден"}
-            relative{
-                "-2"{"завчера"}
-                "2"{"задутре"}
-            }
             relativeTime{
                 future{
                     one{"за {0} ден"}
@@ -841,7 +760,7 @@ mk{
             dn{"претпладне/попладне"}
         }
         era{
-            dn{"ера"}
+            dn{"Ера"}
         }
         fri{
             relative{
@@ -865,7 +784,7 @@ mk{
             }
         }
         hour{
-            dn{"час"}
+            dn{"Час"}
             relativeTime{
                 future{
                     one{"за {0} час"}
@@ -904,7 +823,7 @@ mk{
             }
         }
         minute{
-            dn{"минута"}
+            dn{"Минута"}
             relativeTime{
                 future{
                     one{"за {0} минута"}
@@ -964,7 +883,7 @@ mk{
             }
         }
         month{
-            dn{"месец"}
+            dn{"Месец"}
             relative{
                 "-1"{"минатиот месец"}
                 "0"{"овој месец"}
@@ -983,11 +902,6 @@ mk{
         }
         month-narrow{
             dn{"мес."}
-            relative{
-                "-1"{"минатиот месец"}
-                "0"{"овој месец"}
-                "1"{"следниот месец"}
-            }
             relativeTime{
                 future{
                     one{"за {0} месец"}
@@ -1001,11 +915,6 @@ mk{
         }
         month-short{
             dn{"мес."}
-            relative{
-                "-1"{"минатиот месец"}
-                "0"{"овој месец"}
-                "1"{"следниот месец"}
-            }
             relativeTime{
                 future{
                     one{"за {0} месец"}
@@ -1047,11 +956,11 @@ mk{
             dn{"тромес."}
             relativeTime{
                 future{
-                    one{"за {0} тромес."}
+                    one{"за {0} тромесечје"}
                     other{"за {0} тромесечја"}
                 }
                 past{
-                    one{"пред {0} тромес."}
+                    one{"пред {0} тромесечје"}
                     other{"пред {0} тромесечја"}
                 }
             }
@@ -1078,7 +987,7 @@ mk{
             }
         }
         second{
-            dn{"секунда"}
+            dn{"Секунда"}
             relative{
                 "0"{"сега"}
             }
@@ -1177,7 +1086,7 @@ mk{
         }
         tue-short{
             relative{
-                "-1"{"мин. вт."}
+                "-1"{"минатиот вторник"}
                 "0"{"овој вторник"}
                 "1"{"следниот вторник"}
             }
@@ -1204,7 +1113,7 @@ mk{
             }
         }
         week{
-            dn{"недела"}
+            dn{"Недела"}
             relative{
                 "-1"{"минатата седмица"}
                 "0"{"оваа седмица"}
@@ -1223,11 +1132,6 @@ mk{
         }
         week-narrow{
             dn{"сед."}
-            relative{
-                "-1"{"минатата седмица"}
-                "0"{"оваа седмица"}
-                "1"{"следната седмица"}
-            }
             relativeTime{
                 future{
                     one{"за {0} седмица"}
@@ -1241,11 +1145,6 @@ mk{
         }
         week-short{
             dn{"сед."}
-            relative{
-                "-1"{"минатата седмица"}
-                "0"{"оваа седмица"}
-                "1"{"следната седмица"}
-            }
             relativeTime{
                 future{
                     one{"за {0} седмица"}
@@ -1258,7 +1157,7 @@ mk{
             }
         }
         weekday{
-            dn{"ден во неделата"}
+            dn{"Ден во неделата"}
         }
         year{
             dn{"година"}
@@ -1280,29 +1179,19 @@ mk{
         }
         year-narrow{
             dn{"год."}
-            relative{
-                "-1"{"минатата година"}
-                "0"{"оваа година"}
-                "1"{"следната година"}
-            }
             relativeTime{
                 future{
-                    one{"за {0} години"}
-                    other{"за {0} години"}
+                    one{"За {0} години"}
+                    other{"За {0} години"}
                 }
                 past{
-                    one{"пред {0} години"}
-                    other{"пред {0} години"}
+                    one{"Пред {0} години"}
+                    other{"Пред {0} години"}
                 }
             }
         }
         year-short{
             dn{"год."}
-            relative{
-                "-1"{"минатата година"}
-                "0"{"оваа година"}
-                "1"{"следната година"}
-            }
             relativeTime{
                 future{
                     one{"за {0} година"}
@@ -1315,7 +1204,7 @@ mk{
             }
         }
         zone{
-            dn{"временска зона"}
+            dn{"зона"}
         }
     }
     listPattern{

@@ -52,18 +52,6 @@ br{
             "AON",
             "kwanza nevez Angola (1990–2000)",
         }
-        AOR{
-            "AOR",
-            "AOR",
-        }
-        ARA{
-            "ARA",
-            "ARA",
-        }
-        ARL{
-            "ARL",
-            "ARL",
-        }
         ARM{
             "ARM",
             "peso Arcʼhantina (1881–1970)",
@@ -128,10 +116,6 @@ br{
             "BEL",
             "BEL",
         }
-        BGL{
-            "BGL",
-            "BGL",
-        }
         BGM{
             "BGM",
             "lev sokialour Bulgaria",
@@ -172,37 +156,9 @@ br{
             "BOP",
             "peso Bolivia",
         }
-        BOV{
-            "BOV",
-            "BOV",
-        }
-        BRB{
-            "BRB",
-            "BRB",
-        }
-        BRC{
-            "BRC",
-            "BRC",
-        }
-        BRE{
-            "BRE",
-            "BRE",
-        }
         BRL{
-            "BRL",
+            "R$",
             "real Brazil",
-        }
-        BRN{
-            "BRN",
-            "BRN",
-        }
-        BRR{
-            "BRR",
-            "BRR",
-        }
-        BRZ{
-            "BRZ",
-            "BRZ",
         }
         BSD{
             "BSD",
@@ -240,17 +196,9 @@ br{
             "CDF",
             "lur Kongo",
         }
-        CHE{
-            "CHE",
-            "euro WIR",
-        }
         CHF{
             "CHF",
             "lur Suis",
-        }
-        CHW{
-            "CHW",
-            "lur WIR",
         }
         CLE{
             "CLE",
@@ -269,16 +217,12 @@ br{
             "dollar Bank poblel Sina",
         }
         CNY{
-            "CNY",
+            "CN¥",
             "yuan Sina",
         }
         COP{
             "COP",
             "peso Kolombia",
-        }
-        COU{
-            "COU",
-            "COU",
         }
         CRC{
             "CRC",
@@ -287,10 +231,6 @@ br{
         CSD{
             "CSD",
             "dinar Serbia (2002–2006)",
-        }
-        CSK{
-            "CSK",
-            "CSK",
         }
         CUC{
             "CUC",
@@ -336,14 +276,6 @@ br{
             "DZD",
             "dinar Aljeria",
         }
-        ECS{
-            "ECS",
-            "ECS",
-        }
-        ECV{
-            "ECV",
-            "ECV",
-        }
         EEK{
             "EEK",
             "kurunenn Estonia",
@@ -355,10 +287,6 @@ br{
         ERN{
             "ERN",
             "nakfa Eritrea",
-        }
-        ESA{
-            "ESA",
-            "ESA",
         }
         ESB{
             "ESB",
@@ -396,17 +324,9 @@ br{
             "£ RU",
             "lur Breizh-Veur",
         }
-        GEK{
-            "GEK",
-            "GEK",
-        }
         GEL{
             "GEL",
             "lari Jorjia",
-        }
-        GHC{
-            "GHC",
-            "GHC",
         }
         GHS{
             "GHS",
@@ -439,10 +359,6 @@ br{
         GTQ{
             "GTQ",
             "quetzal Guatemala",
-        }
-        GWE{
-            "GWE",
-            "GWE",
         }
         GWP{
             "GWP",
@@ -493,7 +409,7 @@ br{
             "shekel Israel (1980–1985)",
         }
         ILS{
-            "ILS",
+            "₪",
             "shekel nevez Israel",
         }
         INR{
@@ -529,7 +445,7 @@ br{
             "dinar Jordania",
         }
         JPY{
-            "JPY",
+            "JP¥",
             "yen Japan",
         }
         KES{
@@ -561,7 +477,7 @@ br{
             "won Korea ar Su (1945–1953)",
         }
         KRW{
-            "KRW",
+            "₩",
             "won Korea ar Su",
         }
         KWD{
@@ -612,10 +528,6 @@ br{
             "LUF",
             "lur Luksembourg",
         }
-        LUL{
-            "LUL",
-            "LUL",
-        }
         LVL{
             "LVL",
             "lats Latvia",
@@ -639,10 +551,6 @@ br{
         MCF{
             "MCF",
             "lur Monaco",
-        }
-        MDC{
-            "MDC",
-            "MDC",
         }
         MDL{
             "MDL",
@@ -716,10 +624,6 @@ br{
             "MXP",
             "peso arcʼhant Mecʼhiko (1861–1992)",
         }
-        MXV{
-            "MXV",
-            "MXV",
-        }
         MYR{
             "MYR",
             "ringgit Malaysia",
@@ -775,10 +679,6 @@ br{
         PAB{
             "PAB",
             "balboa Panamá",
-        }
-        PEI{
-            "PEI",
-            "PEI",
         }
         PEN{
             "PEN",
@@ -977,7 +877,7 @@ br{
             "dollar Trinidad ha Tobago",
         }
         TWD{
-            "TWD",
+            "NT$",
             "dollar nevez Taiwan",
         }
         TZS{
@@ -987,10 +887,6 @@ br{
         UAH{
             "UAH",
             "hryvnia Ukraina",
-        }
-        UAK{
-            "UAK",
-            "UAK",
         }
         UGS{
             "UGS",
@@ -1003,18 +899,6 @@ br{
         USD{
             "$ SU",
             "dollar SU",
-        }
-        USN{
-            "USN",
-            "USN",
-        }
-        USS{
-            "USS",
-            "USS",
-        }
-        UYI{
-            "UYI",
-            "UYI",
         }
         UYP{
             "UYP",
@@ -1037,7 +921,7 @@ br{
             "bolivar Venezuela",
         }
         VND{
-            "VND",
+            "₫",
             "dong Viêt Nam",
         }
         VNN{
@@ -1054,7 +938,7 @@ br{
         }
         XAF{
             "FCFA",
-            "lur CFA Kreizafrika",
+            "lur CFA BEAC",
         }
         XAG{
             "XAG",
@@ -1081,7 +965,7 @@ br{
             "unanenn jediñ europat (XBD)",
         }
         XCD{
-            "XCD",
+            "EC$",
             "dollar Karib ar reter",
         }
         XDR{
@@ -1102,7 +986,7 @@ br{
         }
         XOF{
             "CFA",
-            "lur CFA Afrika ar Cʼhornôg",
+            "lur CFA BCEAO",
         }
         XPD{
             "XPD",
@@ -1115,14 +999,6 @@ br{
         XPT{
             "XPT",
             "platin",
-        }
-        XRE{
-            "XRE",
-            "XRE",
-        }
-        XSU{
-            "XSU",
-            "XSU",
         }
         XTS{
             "XTS",
@@ -1140,10 +1016,6 @@ br{
             "YER",
             "rial Yemen",
         }
-        YUD{
-            "YUD",
-            "YUD",
-        }
         YUM{
             "YUM",
             "dinar nevez Yougoslavia (1994–2002)",
@@ -1156,10 +1028,6 @@ br{
             "YUR",
             "dinar adreizhet Yougoslavia (1992–1993)",
         }
-        ZAL{
-            "ZAL",
-            "ZAL",
-        }
         ZAR{
             "ZAR",
             "rand Suafrika",
@@ -1171,14 +1039,6 @@ br{
         ZMW{
             "ZMW",
             "kwacha Zambia",
-        }
-        ZRN{
-            "ZRN",
-            "ZRN",
-        }
-        ZRZ{
-            "ZRZ",
-            "ZRZ",
         }
         ZWD{
             "ZWD",
@@ -1194,89 +1054,44 @@ br{
         }
     }
     Currencies%narrow{
-        AOA{"Kz"}
         AUD{"$"}
-        BAM{"KM"}
         BBD{"$"}
         BDT{"৳"}
         BMD{"$"}
         BND{"$"}
-        BOB{"Bs"}
         BSD{"$"}
-        BWP{"P"}
-        BYR{"р."}
         BZD{"$"}
         CAD{"$"}
         CNY{"¥"}
         CRC{"₡"}
-        CZK{"Kč"}
-        DKK{"kr"}
-        EGP{"£ E"}
-        ESP{"₧"}
         EUR{"€"}
         FJD{"$"}
-        FKP{"£"}
         GBP{"£"}
-        GIP{"£"}
-        GNF{"FG"}
-        GTQ{"Q"}
-        GYD{"$"}
         HKD{"$"}
-        HNL{"L"}
-        HRK{"kn"}
-        HUF{"Ft"}
-        IDR{"Rp"}
         ILS{"₪"}
         INR{"₹"}
-        ISK{"kr"}
         JMD{"$"}
         JPY{"¥"}
         KHR{"៛"}
-        KPW{"₩"}
         KRW{"₩"}
         KYD{"$"}
         KZT{"₸"}
         LAK{"₭"}
-        LBP{"£L"}
-        LKR{"Rs"}
         LRD{"$"}
-        LTL{"Lt"}
-        LVL{"Ls"}
-        MGA{"Ar"}
-        MMK{"K"}
         MNT{"₮"}
-        MUR{"Rs"}
-        MYR{"RM"}
         NAD{"$"}
         NGN{"₦"}
-        NOK{"kr"}
-        NPR{"Rs"}
         NZD{"$"}
         PHP{"₱"}
-        PKR{"Rs"}
-        PLN{"zł"}
         PYG{"₲"}
-        RUB{"₽"}
-        RUR{"р."}
         SBD{"$"}
-        SEK{"kr"}
         SGD{"$"}
-        SHP{"£"}
         SRD{"$"}
-        SSP{"£"}
-        STD{"Db"}
-        SYP{"£"}
-        THB{"฿"}
-        TOP{"$ T"}
         TRY{"₺"}
         TTD{"$"}
         TWD{"$"}
-        UAH{"₴"}
         USD{"$"}
-        VEF{"Bs"}
         VND{"₫"}
-        XCD{"$"}
-        ZAR{"R"}
     }
     CurrencyPlurals{
         ADP{
@@ -1608,26 +1423,12 @@ br{
             other{"lur Kongo"}
             two{"lur Kongo"}
         }
-        CHE{
-            few{"euro WIR"}
-            many{"a euroioù WIR"}
-            one{"euro WIR"}
-            other{"euro WIR"}
-            two{"euro WIR"}
-        }
         CHF{
             few{"lur Suis"}
             many{"a lurioù Suis"}
             one{"lur Suis"}
             other{"lur Suis"}
             two{"lur Suis"}
-        }
-        CHW{
-            few{"lur WIR"}
-            many{"a lurioù WIR"}
-            one{"lur WIR"}
-            other{"lur WIR"}
-            two{"lur WIR"}
         }
         CLE{
             few{"escudo Chile"}
@@ -2918,11 +2719,11 @@ br{
             two{"dala Samoa"}
         }
         XAF{
-            few{"lur CFA Kreizafrika"}
-            many{"lur CFA Kreizafrika"}
-            one{"lur CFA Kreizafrika"}
-            other{"lur CFA Kreizafrika"}
-            two{"lur CFA Kreizafrika"}
+            few{"lur CFA BEAC"}
+            many{"a lurioù CFA BEAC"}
+            one{"lur CFA BEAC"}
+            other{"lur CFA BEAC"}
+            two{"lur CFA BEAC"}
         }
         XBA{
             few{"unanenn genaoz europat"}
@@ -2959,13 +2760,6 @@ br{
             other{"dollar Karib ar reter"}
             two{"zollar Karib ar reter"}
         }
-        XDR{
-            few{"gwirioù tennañ arbennik"}
-            many{"gwirioù tennañ arbennik"}
-            one{"gwirioù tennañ arbennik"}
-            other{"gwirioù tennañ arbennik"}
-            two{"gwirioù tennañ arbennik"}
-        }
         XEU{
             few{"unanenn jediñ europat"}
             many{"a unanennoù jediñ europat"}
@@ -2990,8 +2784,8 @@ br{
         XOF{
             few{"lur CFA BCEAO"}
             many{"a lurioù CFA BCEAO"}
-            one{"lur CFA Afrika ar Cʼhornôg"}
-            other{"lur CFA Afrika ar Cʼhornôg"}
+            one{"lur CFA BCEAO"}
+            other{"lur CFA BCEAO"}
             two{"lur CFA BCEAO"}
         }
         XPF{
@@ -3009,11 +2803,11 @@ br{
             two{"unanenn voneiz amprouiñ"}
         }
         XXX{
-            few{"(moneiz dianav)"}
-            many{"(moneiz dianav)"}
-            one{"(moneiz dianav)"}
-            other{"(moneiz dianav)"}
-            two{"(moneiz dianav)"}
+            few{"moneiz dianav"}
+            many{"moneiz dianav"}
+            one{"moneiz dianav"}
+            other{"moneiz dianav"}
+            two{"moneiz dianav"}
         }
         YDD{
             few{"dinar Yemen"}
@@ -3100,5 +2894,5 @@ br{
         other{"{0} {1}"}
         two{"{0} {1}"}
     }
-    Version{"2.1.19.94"}
+    Version{"2.1.10.93"}
 }

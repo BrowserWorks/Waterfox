@@ -7,7 +7,7 @@
 // *
 // ***************************************************************************
 ur{
-    Version{"2.1.19.17"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"عابدجان"}
@@ -684,9 +684,6 @@ ur{
         "Asia:Calcutta"{
             ec{"کولکاتا"}
         }
-        "Asia:Chita"{
-            ec{"چیتا"}
-        }
         "Asia:Choibalsan"{
             ec{"چوئبالسان"}
         }
@@ -828,9 +825,6 @@ ur{
         "Asia:Singapore"{
             ec{"سنگاپور"}
         }
-        "Asia:Srednekolymsk"{
-            ec{"سرہدنیکولیمسک"}
-        }
         "Asia:Taipei"{
             ec{"تائپے"}
         }
@@ -886,7 +880,7 @@ ur{
             ec{"کیپ ورڈی"}
         }
         "Atlantic:Faeroe"{
-            ec{"فارو"}
+            ec{"فروئی"}
         }
         "Atlantic:Madeira"{
             ec{"مڈیئرا"}
@@ -967,7 +961,7 @@ ur{
             ec{"بخارسٹ"}
         }
         "Europe:Budapest"{
-            ec{"بڈاپسٹ"}
+            ec{"بدھاپیسٹ"}
         }
         "Europe:Busingen"{
             ec{"بزنجن"}
@@ -1150,9 +1144,6 @@ ur{
         }
         "Pacific:Auckland"{
             ec{"آکلینڈ"}
-        }
-        "Pacific:Bougainville"{
-            ec{"بوگینولے"}
         }
         "Pacific:Chatham"{
             ec{"چیتھم"}
@@ -1470,7 +1461,7 @@ ur{
             ls{"مشرقی یورپ کا معیاری وقت"}
         }
         "meta:Europe_Further_Eastern"{
-            ls{"بعید مشرقی یورپی وقت"}
+            ls{"مزید مشرقی یورپی وقت"}
         }
         "meta:Europe_Western"{
             ld{"مغربی یورپ کا موسم گرما کا وقت"}

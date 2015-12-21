@@ -164,7 +164,7 @@ ksh{
             }
         }
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.7.53"}
     calendar{
         buddhist{
             DateTimePatterns{
@@ -362,14 +362,6 @@ ksh{
                         "Du",
                         "Fr",
                         "Sa",
-                    }
-                }
-            }
-            dayPeriod{
-                stand-alone{
-                    wide{
-                        am{"Vormittag"}
-                        pm{"Nachmittag"}
                     }
                 }
             }

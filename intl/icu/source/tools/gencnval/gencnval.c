@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 1999-2015 International Business Machines
+*   Copyright (C) 1999-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -135,7 +135,6 @@ static uint16_t aliasListsSize = 0;
 /* Were the standard tags declared before the aliases. */
 static UBool standardTagsUsed = FALSE;
 static UBool verbose = FALSE;
-static UBool quiet = FALSE;
 static int lineNum = 1;
 
 static UConverterAliasOptions tableOptions = {
@@ -204,8 +203,7 @@ enum
     VERBOSE,
     COPYRIGHT,
     DESTDIR,
-    SOURCEDIR,
-    QUIET
+    SOURCEDIR
 };
 
 static UOption options[]={
@@ -214,8 +212,7 @@ static UOption options[]={
     UOPTION_VERBOSE,
     UOPTION_COPYRIGHT,
     UOPTION_DESTDIR,
-    UOPTION_SOURCEDIR,
-    UOPTION_QUIET
+    UOPTION_SOURCEDIR
 };
 
 extern int
@@ -245,7 +242,6 @@ main(int argc, char* argv[]) {
             "options:\n"
             "\t-h or -? or --help  this usage text\n"
             "\t-v or --verbose     prints out extra information about the alias table\n"
-            "\t-q or --quiet       do not display warnings and progress\n"
             "\t-c or --copyright   include a copyright notice\n"
             "\t-d or --destdir     destination directory, followed by the path\n"
             "\t-s or --sourcedir   source directory, followed by the path\n",
@@ -255,10 +251,6 @@ main(int argc, char* argv[]) {
 
     if(options[VERBOSE].doesOccur) {
         verbose = TRUE;
-    }
-
-    if(options[QUIET].doesOccur) {
-        quiet = TRUE;
     }
 
     if(argc>=2) {
@@ -937,7 +929,7 @@ createOneAliasList(uint16_t *aliasArrLists, uint32_t tag, uint32_t converter, ui
                 value = aliasList->aliases[aliasNum] + offset;
             } else {
                 value = 0;
-                if (tag != 0 && !quiet) { /* Only show the warning when it's not the leftover tag. */
+                if (tag != 0) { /* Only show the warning when it's not the leftover tag. */
                     fprintf(stderr, "%s: warning: tag %s does not have a default alias for %s\n",
                             path,
                             GET_TAG_STR(tags[tag].tag),

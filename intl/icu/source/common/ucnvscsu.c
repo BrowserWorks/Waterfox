@@ -2009,7 +2009,10 @@ static const UConverterStaticData _SCSUStaticData={
     { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } /* reserved */
 };
 
-const UConverterSharedData _SCSUData=
-        UCNV_IMMUTABLE_SHARED_DATA_INITIALIZER(&_SCSUStaticData, &_SCSUImpl);
+const UConverterSharedData _SCSUData={
+    sizeof(UConverterSharedData), ~((uint32_t)0),
+    NULL, NULL, &_SCSUStaticData, FALSE, &_SCSUImpl,
+    0
+};
 
 #endif

@@ -1,6 +1,6 @@
 /*
 ******************************************************************************
-* Copyright (C) 2015, International Business Machines
+* Copyright (C) 2014, International Business Machines
 * Corporation and others.  All Rights Reserved.
 ******************************************************************************
 * sharedobject.h
@@ -16,39 +16,6 @@
 U_NAMESPACE_BEGIN
 
 /**
- * Base class for unified cache exposing enough methods to SharedObject
- * instances to allow their addRef() and removeRef() methods to
- * update cache metrics. No other part of ICU, except for SharedObject,
- * should directly call the methods of this base class.
- */
-class UnifiedCacheBase : public UObject {
-public:
-    UnifiedCacheBase() { }
-
-    /**
-     * Called by addRefWhileHoldingCacheLock() when the hard reference count
-     * of its instance goes from 0 to 1.
-     */
-    virtual void incrementItemsInUse() const = 0;
-
-    /**
-     * Called by removeRef() when the hard reference count of its instance
-     * drops from 1 to 0.
-     */
-    virtual void decrementItemsInUseWithLockingAndEviction() const = 0;
-
-    /**
-     * Called by removeRefWhileHoldingCacheLock() when the hard reference
-     * count of its instance drops from 1 to 0.
-     */
-    virtual void decrementItemsInUse() const = 0;
-    virtual ~UnifiedCacheBase();
-private:
-    UnifiedCacheBase(const UnifiedCacheBase &);
-    UnifiedCacheBase &operator=(const UnifiedCacheBase &);
-};
-
-/**
  * Base class for shared, reference-counted, auto-deleted objects.
  * Subclasses can be immutable.
  * If they are mutable, then they must implement their copy constructor
@@ -60,57 +27,33 @@ private:
 class U_COMMON_API SharedObject : public UObject {
 public:
     /** Initializes totalRefCount, softRefCount to 0. */
-    SharedObject() :
-            totalRefCount(0),
-            softRefCount(0),
-            hardRefCount(0),
-            cachePtr(NULL) {}
+    SharedObject() : totalRefCount(0), softRefCount(0) {}
 
     /** Initializes totalRefCount, softRefCount to 0. */
-    SharedObject(const SharedObject &other) :
-            UObject(other),
-            totalRefCount(0),
-            softRefCount(0),
-            hardRefCount(0),
-            cachePtr(NULL) {}
+    SharedObject(const SharedObject &other)
+        : UObject(other),
+          totalRefCount(0),
+          softRefCount(0) {}
 
     virtual ~SharedObject();
 
     /**
      * Increments the number of references to this object. Thread-safe.
      */
-    void addRef() const { addRef(FALSE); }
+    void addRef() const;
 
     /**
-     * Increments the number of references to this object.
-     * Must be called only from within the internals of UnifiedCache and
-     * only while the cache global mutex is held.
-     */
-    void addRefWhileHoldingCacheLock() const { addRef(TRUE); }
-
-    /**
-     * Increments the number of soft references to this object.
-     * Must be called only from within the internals of UnifiedCache and
-     * only while the cache global mutex is held.
+     * Increments the number of soft references to this object. Thread-safe.
      */
     void addSoftRef() const;
 
     /**
      * Decrements the number of references to this object. Thread-safe.
      */
-    void removeRef() const { removeRef(FALSE); }
+    void removeRef() const;
 
     /**
-     * Decrements the number of references to this object.
-     * Must be called only from within the internals of UnifiedCache and
-     * only while the cache global mutex is held.
-     */
-    void removeRefWhileHoldingCacheLock() const { removeRef(TRUE); }
-
-    /**
-     * Decrements the number of soft references to this object.
-     * Must be called only from within the internals of UnifiedCache and
-     * only while the cache global mutex is held.
+     * Decrements the number of soft references to this object. Thread-safe.
      */
     void removeSoftRef() const;
 
@@ -121,50 +64,22 @@ public:
     int32_t getRefCount() const;
 
     /**
-     * Returns the count of soft references only.
-     * Must be called only from within the internals of UnifiedCache and
-     * only while the cache global mutex is held.
-     */
-    int32_t getSoftRefCount() const { return softRefCount; }
-
-    /**
-     * Returns the count of hard references only. Uses a memory barrier.
+     * Returns the count of soft references only. Uses a memory barrier.
      * Used for testing the cache. Regular clients won't need this.
      */
-    int32_t getHardRefCount() const;
+    int32_t getSoftRefCount() const;
 
     /**
-     * If noHardReferences() == TRUE then this object has no hard references.
-     * Must be called only from within the internals of UnifiedCache.
+     * If allSoftReferences() == TRUE then this object has only soft
+     * references. The converse is not necessarily true.
      */
-    inline UBool noHardReferences() const { return getHardRefCount() == 0; }
-
-    /**
-     * If hasHardReferences() == TRUE then this object has hard references.
-     * Must be called only from within the internals of UnifiedCache.
-     */
-    inline UBool hasHardReferences() const { return getHardRefCount() != 0; }
-
-    /**
-     * If noSoftReferences() == TRUE then this object has no soft references.
-     * Must be called only from within the internals of UnifiedCache and
-     * only while the cache global mutex is held.
-     */
-    UBool noSoftReferences() const { return (softRefCount == 0); }
+    UBool allSoftReferences() const;
 
     /**
      * Deletes this object if it has no references or soft references.
      */
     void deleteIfZeroRefCount() const;
 
-    /**
-     * @internal For UnifedCache use only to register this object with itself.
-     *   Must be called before this object is exposed to multiple threads.
-     */ 
-    void registerWithCache(const UnifiedCacheBase *ptr) const {
-        cachePtr = ptr;
-    }
-        
     /**
      * Returns a writable version of ptr.
      * If there is exactly one owner, then ptr itself is returned as a
@@ -218,15 +133,7 @@ public:
 
 private:
     mutable u_atomic_int32_t totalRefCount;
-
-    // Any thread modifying softRefCount must hold the global cache mutex
-    mutable int32_t softRefCount;
-
-    mutable u_atomic_int32_t hardRefCount;
-    mutable const UnifiedCacheBase *cachePtr;
-    void addRef(UBool withCacheLock) const;
-    void removeRef(UBool withCacheLock) const;
-
+    mutable u_atomic_int32_t softRefCount;
 };
 
 U_NAMESPACE_END

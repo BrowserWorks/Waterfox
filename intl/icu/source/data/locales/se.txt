@@ -164,7 +164,7 @@ se{
             }
         }
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.7.53"}
     calendar{
         gregorian{
             AmPmMarkers{
@@ -205,14 +205,6 @@ se{
                         "D",
                         "B",
                         "L",
-                    }
-                }
-            }
-            dayPeriod{
-                stand-alone{
-                    wide{
-                        am{"iđitbeaivi"}
-                        pm{"eahketbeaivi"}
                     }
                 }
             }

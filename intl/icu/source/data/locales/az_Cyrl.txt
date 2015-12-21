@@ -29,7 +29,7 @@ az_Cyrl{
             }
         }
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.10.34"}
     calendar{
         generic{
             DateTimePatterns{

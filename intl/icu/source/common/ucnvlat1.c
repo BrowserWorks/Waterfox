@@ -1,6 +1,6 @@
 /* 
 **********************************************************************
-*   Copyright (C) 2000-2015, International Business Machines
+*   Copyright (C) 2000-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  ucnvlat1.cpp
@@ -458,8 +458,11 @@ static const UConverterStaticData _Latin1StaticData={
     { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } /* reserved */
 };
 
-const UConverterSharedData _Latin1Data=
-        UCNV_IMMUTABLE_SHARED_DATA_INITIALIZER(&_Latin1StaticData, &_Latin1Impl);
+const UConverterSharedData _Latin1Data={
+    sizeof(UConverterSharedData), ~((uint32_t) 0),
+    NULL, NULL, &_Latin1StaticData, FALSE, &_Latin1Impl, 
+    0
+};
 
 /* US-ASCII ----------------------------------------------------------------- */
 
@@ -732,7 +735,10 @@ static const UConverterStaticData _ASCIIStaticData={
     { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } /* reserved */
 };
 
-const UConverterSharedData _ASCIIData=
-        UCNV_IMMUTABLE_SHARED_DATA_INITIALIZER(&_ASCIIStaticData, &_ASCIIImpl);
+const UConverterSharedData _ASCIIData={
+    sizeof(UConverterSharedData), ~((uint32_t) 0),
+    NULL, NULL, &_ASCIIStaticData, FALSE, &_ASCIIImpl, 
+    0
+};
 
 #endif

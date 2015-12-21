@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 1999-2015, International Business Machines
+*   Copyright (C) 1999-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -304,6 +304,7 @@ static uint8_t *
 readFile(const char *path, const char *name, int32_t &length, char &type) {
     char filename[1024];
     FILE *file;
+    uint8_t *data;
     UErrorCode errorCode;
     int32_t fileLength, typeEnum;
 
@@ -326,32 +327,34 @@ readFile(const char *path, const char *name, int32_t &length, char &type) {
 
     /* allocate the buffer, pad to multiple of 16 */
     length=(fileLength+0xf)&~0xf;
-    icu::LocalMemory<uint8_t> data((uint8_t *)uprv_malloc(length));
-    if(data.isNull()) {
+    data=(uint8_t *)uprv_malloc(length);
+    if(data==NULL) {
         fclose(file);
         fprintf(stderr, "icupkg: malloc error allocating %d bytes.\n", (int)length);
         exit(U_MEMORY_ALLOCATION_ERROR);
     }
 
     /* read the file */
-    if(fileLength!=(int32_t)fread(data.getAlias(), 1, fileLength, file)) {
+    if(fileLength!=(int32_t)fread(data, 1, fileLength, file)) {
         fprintf(stderr, "icupkg: error reading \"%s\"\n", filename);
         fclose(file);
+        free(data);
         exit(U_FILE_ACCESS_ERROR);
     }
 
     /* pad the file to a multiple of 16 using the usual padding byte */
     if(fileLength<length) {
-        memset(data.getAlias()+fileLength, 0xaa, length-fileLength);
+        memset(data+fileLength, 0xaa, length-fileLength);
     }
 
     fclose(file);
 
     // minimum check for ICU-format data
     errorCode=U_ZERO_ERROR;
-    typeEnum=getTypeEnumForInputData(data.getAlias(), length, &errorCode);
+    typeEnum=getTypeEnumForInputData(data, length, &errorCode);
     if(typeEnum<0 || U_FAILURE(errorCode)) {
         fprintf(stderr, "icupkg: not an ICU data file: \"%s\"\n", filename);
+        free(data);
 #if !UCONFIG_NO_LEGACY_CONVERSION
         exit(U_INVALID_FORMAT_ERROR);
 #else
@@ -361,7 +364,7 @@ readFile(const char *path, const char *name, int32_t &length, char &type) {
     }
     type=makeTypeLetter(typeEnum);
 
-    return data.orphan();
+    return data;
 }
 
 // .dat package file representation ---------------------------------------- ***
@@ -418,11 +421,11 @@ Package::Package()
 Package::~Package() {
     int32_t idx;
 
-    uprv_free(inData);
+    free(inData);
 
     for(idx=0; idx<itemCount; ++idx) {
         if(items[idx].isDataOwned) {
-            uprv_free(items[idx].data);
+            free(items[idx].data);
         }
     }
 
@@ -1047,7 +1050,7 @@ Package::addItem(const char *name, uint8_t *data, int32_t length, UBool isDataOw
     } else {
         // same-name item found, replace it
         if(items[idx].isDataOwned) {
-            uprv_free(items[idx].data);
+            free(items[idx].data);
         }
 
         // keep the item's name since it is the same
@@ -1086,7 +1089,7 @@ Package::removeItem(int32_t idx) {
     if(idx>=0) {
         // remove the item
         if(items[idx].isDataOwned) {
-            uprv_free(items[idx].data);
+            free(items[idx].data);
         }
 
         // move the following items up

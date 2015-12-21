@@ -28,7 +28,6 @@
 #   define UNISTR_FROM_STRING_EXPLICIT explicit
 #endif
 
-#include <assert.h>
 #include "parse.h"
 #include "errmsg.h"
 #include "uhash.h"
@@ -40,13 +39,10 @@
 #include "reslist.h"
 #include "rbt_pars.h"
 #include "genrb.h"
-#include "unicode/stringpiece.h"
-#include "unicode/unistr.h"
 #include "unicode/ustring.h"
 #include "unicode/uscript.h"
 #include "unicode/utf16.h"
 #include "unicode/putil.h"
-#include "charstr.h"
 #include "collationbuilder.h"
 #include "collationdata.h"
 #include "collationdatareader.h"
@@ -74,11 +70,7 @@
 #define OPENSQBRACKET    0x005B
 #define CLOSESQBRACKET   0x005D
 
-using icu::CharString;
-using icu::LocalMemory;
 using icu::LocalPointer;
-using icu::LocalUCHARBUFPointer;
-using icu::StringPiece;
 using icu::UnicodeString;
 
 struct Lookahead
@@ -524,7 +516,7 @@ parseTransliterator(ParseState* state, char *tag, uint32_t startline, const stru
 
     return result;
 }
-static ArrayResource* dependencyArray = NULL;
+static struct SResource* dependencyArray = NULL;
 
 static struct SResource *
 parseDependency(ParseState* state, char *tag, uint32_t startline, const struct UString* comment, UErrorCode *status)
@@ -579,7 +571,7 @@ parseDependency(ParseState* state, char *tag, uint32_t startline, const struct U
     }
     elem = string_open(state->bundle, NULL, tokenValue->fChars, tokenValue->fLength, comment, status);
 
-    dependencyArray->add(elem);
+    array_add(dependencyArray, elem, status);
 
     if (U_FAILURE(*status))
     {
@@ -659,12 +651,15 @@ parseAlias(ParseState* state, char *tag, uint32_t startline, const struct UStrin
 namespace {
 
 static struct SResource* resLookup(struct SResource* res, const char* key){
-    if (res == res_none() || !res->isTable()) {
+    struct SResource *current = NULL;
+    struct SResTable *list;
+    if (res == res_none()) {
         return NULL;
     }
 
-    TableResource *list = static_cast<TableResource *>(res);
-    SResource *current = list->fFirst;
+    list = &(res->u.fTable);
+
+    current = list->fFirst;
     while (current != NULL) {
         if (uprv_strcmp(((list->fRoot->fKeys) + (current->fKey)), key) == 0) {
             return current;
@@ -695,20 +690,47 @@ GenrbImporter::getRules(
         const char *localeID, const char *collationType,
         UnicodeString &rules,
         const char *& /*errorReason*/, UErrorCode &errorCode) {
-    CharString filename(localeID, errorCode);
-    for(int32_t i = 0; i < filename.length(); i++){
+    struct SRBRoot *data         = NULL;
+    UCHARBUF       *ucbuf        = NULL;
+    int localeLength = strlen(localeID);
+    char* filename = (char*)uprv_malloc(localeLength+5);
+    char           *inputDirBuf  = NULL;
+    char           *openFileName = NULL;
+    const char* cp = "";
+    int32_t i = 0;
+    int32_t dirlen  = 0;
+    int32_t filelen = 0;
+    struct SResource* root;
+    struct SResource* collations;
+    struct SResource* collation;
+    struct SResource* sequence;
+
+    memcpy(filename, localeID, localeLength);
+    for(i = 0; i < localeLength; i++){
         if(filename[i] == '-'){
-            filename.data()[i] = '_';
+            filename[i] = '_';
         }
     }
-    filename.append(".txt", errorCode);
+    filename[localeLength]   = '.';
+    filename[localeLength+1] = 't';
+    filename[localeLength+2] = 'x';
+    filename[localeLength+3] = 't';
+    filename[localeLength+4] = 0;
+
+
     if (U_FAILURE(errorCode)) {
         return;
     }
-    CharString inputDirBuf;
-    CharString openFileName;
+    if(filename==NULL){
+        errorCode=U_ILLEGAL_ARGUMENT_ERROR;
+        return;
+    }else{
+        filelen = (int32_t)uprv_strlen(filename);
+    }
     if(inputDir == NULL) {
-        const char *filenameBegin = uprv_strrchr(filename.data(), U_FILE_SEP_CHAR);
+        const char *filenameBegin = uprv_strrchr(filename, U_FILE_SEP_CHAR);
+        openFileName = (char *) uprv_malloc(dirlen + filelen + 2);
+        openFileName[0] = '\0';
         if (filenameBegin != NULL) {
             /*
              * When a filename ../../../data/root.txt is specified,
@@ -716,19 +738,36 @@ GenrbImporter::getRules(
              * This is very important when the resource file includes
              * another file, like UCARules.txt or thaidict.brk.
              */
-            StringPiece dir = filename.toStringPiece();
-            const char *filenameLimit = filename.data() + filename.length();
-            dir.remove_suffix((int32_t)(filenameLimit - filenameBegin));
-            inputDirBuf.append(dir, errorCode);
-            inputDir = inputDirBuf.data();
+            int32_t filenameSize = (int32_t)(filenameBegin - filename + 1);
+            inputDirBuf = (char *)uprv_malloc(filenameSize);
+
+            /* test for NULL */
+            if(inputDirBuf == NULL) {
+                errorCode = U_MEMORY_ALLOCATION_ERROR;
+                goto finish;
+            }
+
+            uprv_strncpy(inputDirBuf, filename, filenameSize);
+            inputDirBuf[filenameSize - 1] = 0;
+            inputDir = inputDirBuf;
+            dirlen  = (int32_t)uprv_strlen(inputDir);
         }
     }else{
-        int32_t dirlen  = (int32_t)uprv_strlen(inputDir);
+        dirlen  = (int32_t)uprv_strlen(inputDir);
 
-        if((filename[0] != U_FILE_SEP_CHAR) && (inputDir[dirlen-1] !='.')) {
+        if(inputDir[dirlen-1] != U_FILE_SEP_CHAR) {
+            openFileName = (char *) uprv_malloc(dirlen + filelen + 2);
+
+            /* test for NULL */
+            if(openFileName == NULL) {
+                errorCode = U_MEMORY_ALLOCATION_ERROR;
+                goto finish;
+            }
+
+            openFileName[0] = '\0';
             /*
              * append the input dir to openFileName if the first char in
-             * filename is not file separator char and the last char input directory is  not '.'.
+             * filename is not file seperation char and the last char input directory is  not '.'.
              * This is to support :
              * genrb -s. /home/icu/data
              * genrb -s. icu/data
@@ -737,48 +776,69 @@ GenrbImporter::getRules(
              * user should use
              * genrb -s. icu/data  --- start from CWD and look in icu/data dir
              */
-            openFileName.append(inputDir, dirlen, errorCode);
-            if(inputDir[dirlen-1] != U_FILE_SEP_CHAR) {
-                openFileName.append(U_FILE_SEP_CHAR, errorCode);
+            if( (filename[0] != U_FILE_SEP_CHAR) && (inputDir[dirlen-1] !='.')){
+                uprv_strcpy(openFileName, inputDir);
+                openFileName[dirlen]     = U_FILE_SEP_CHAR;
             }
+            openFileName[dirlen + 1] = '\0';
+        } else {
+            openFileName = (char *) uprv_malloc(dirlen + filelen + 1);
+
+            /* test for NULL */
+            if(openFileName == NULL) {
+                errorCode = U_MEMORY_ALLOCATION_ERROR;
+                goto finish;
+            }
+
+            uprv_strcpy(openFileName, inputDir);
+
         }
     }
-    openFileName.append(filename, errorCode);
-    if(U_FAILURE(errorCode)) {
-        return;
-    }
-    // printf("GenrbImporter::getRules(%s, %s) reads %s\n", localeID, collationType, openFileName.data());
-    const char* cp = "";
-    LocalUCHARBUFPointer ucbuf(
-            ucbuf_open(openFileName.data(), &cp, getShowWarning(), TRUE, &errorCode));
+    uprv_strcat(openFileName, filename);
+    /* printf("%s\n", openFileName);  */
+    errorCode = U_ZERO_ERROR;
+    ucbuf = ucbuf_open(openFileName, &cp,getShowWarning(),TRUE, &errorCode);
+
     if(errorCode == U_FILE_ACCESS_ERROR) {
-        fprintf(stderr, "couldn't open file %s\n", openFileName.data());
-        return;
+
+        fprintf(stderr, "couldn't open file %s\n", openFileName == NULL ? filename : openFileName);
+        goto finish;
     }
-    if (ucbuf.isNull() || U_FAILURE(errorCode)) {
-        fprintf(stderr, "An error occured processing file %s. Error: %s\n", openFileName.data(), u_errorName(errorCode));
-        return;
+    if (ucbuf == NULL || U_FAILURE(errorCode)) {
+        fprintf(stderr, "An error occured processing file %s. Error: %s\n", openFileName == NULL ? filename : openFileName,u_errorName(errorCode));
+        goto finish;
     }
 
     /* Parse the data into an SRBRoot */
-    struct SRBRoot *data =
-            parse(ucbuf.getAlias(), inputDir, outputDir, filename.data(), FALSE, FALSE, &errorCode);
+    data = parse(ucbuf, inputDir, outputDir, filename, FALSE, FALSE, &errorCode);
     if (U_FAILURE(errorCode)) {
-        return;
+        goto finish;
     }
 
-    struct SResource *root = data->fRoot;
-    struct SResource *collations = resLookup(root, "collations");
+    root = data->fRoot;
+    collations = resLookup(root, "collations");
     if (collations != NULL) {
-      struct SResource *collation = resLookup(collations, collationType);
+      collation = resLookup(collations, collationType);
       if (collation != NULL) {
-        struct SResource *sequence = resLookup(collation, "Sequence");
-        if (sequence != NULL && sequence->isString()) {
+        sequence = resLookup(collation, "Sequence");
+        if (sequence != NULL) {
           // No string pointer aliasing so that we need not hold onto the resource bundle.
-          StringResource *sr = static_cast<StringResource *>(sequence);
-          rules = sr->fString;
+          rules.setTo(sequence->u.fString.fChars, sequence->u.fString.fLength);
         }
       }
+    }
+
+finish:
+    if (inputDirBuf != NULL) {
+        uprv_free(inputDirBuf);
+    }
+
+    if (openFileName != NULL) {
+        uprv_free(openFileName);
+    }
+
+    if(ucbuf) {
+        ucbuf_close(ucbuf);
     }
 }
 
@@ -807,8 +867,8 @@ escape(const UChar *s, char *buffer) {
 
 #endif  // !UCONFIG_NO_COLLATION
 
-static TableResource *
-addCollation(ParseState* state, TableResource  *result, const char *collationType,
+static struct SResource *
+addCollation(ParseState* state, struct SResource  *result, const char *collationType,
              uint32_t startline, UErrorCode *status)
 {
     // TODO: Use LocalPointer for result, or make caller close it when there is a failure.
@@ -871,44 +931,42 @@ addCollation(ParseState* state, TableResource  *result, const char *collationTyp
         {
             // Ignore the parsed resources, continue parsing.
         }
-        else if (uprv_strcmp(subtag, "Version") == 0 && member->isString())
+        else if (uprv_strcmp(subtag, "Version") == 0)
         {
-            StringResource *sr = static_cast<StringResource *>(member);
             char     ver[40];
-            int32_t length = sr->length();
+            int32_t length = member->u.fString.fLength;
 
-            if (length >= UPRV_LENGTHOF(ver))
+            if (length >= (int32_t) sizeof(ver))
             {
-                length = UPRV_LENGTHOF(ver) - 1;
+                length = (int32_t) sizeof(ver) - 1;
             }
 
-            sr->fString.extract(0, length, ver, UPRV_LENGTHOF(ver), US_INV);
+            u_UCharsToChars(member->u.fString.fChars, ver, length + 1); /* +1 for copying NULL */
             u_versionFromString(version, ver);
 
-            result->add(member, line, *status);
+            table_add(result, member, line, status);
             member = NULL;
         }
         else if(uprv_strcmp(subtag, "%%CollationBin")==0)
         {
             /* discard duplicate %%CollationBin if any*/
         }
-        else if (uprv_strcmp(subtag, "Sequence") == 0 && member->isString())
+        else if (uprv_strcmp(subtag, "Sequence") == 0)
         {
-            StringResource *sr = static_cast<StringResource *>(member);
-            rules = sr->fString;
+            rules.setTo(member->u.fString.fChars, member->u.fString.fLength);
             haveRules = TRUE;
             // Defer building the collator until we have seen
             // all sub-elements of the collation table, including the Version.
             /* in order to achieve smaller data files, we can direct genrb */
             /* to omit collation rules */
             if(!state->omitCollationRules) {
-                result->add(member, line, *status);
+                table_add(result, member, line, status);
                 member = NULL;
             }
         }
         else  // Just copy non-special items.
         {
-            result->add(member, line, *status);
+            table_add(result, member, line, status);
             member = NULL;
         }
         res_close(member);  // TODO: use LocalPointer
@@ -969,7 +1027,7 @@ addCollation(ParseState* state, TableResource  *result, const char *collationTyp
             escape(parseError.postContext, postBuffer);
             error(line, "  error context: \"...%s\" ! \"%s...\"", preBuffer, postBuffer);
         }
-        if(isStrict() || t.isNull()) {
+        if(isStrict()) {
             *status = intStatus;
             res_close(result);
             return NULL;
@@ -1018,7 +1076,7 @@ addCollation(ParseState* state, TableResource  *result, const char *collationTyp
         }
     }
     struct SResource *collationBin = bin_open(state->bundle, "%%CollationBin", totalSize, dest, NULL, NULL, status);
-    result->add(collationBin, line, *status);
+    table_add(result, collationBin, line, status);
     if (U_FAILURE(*status)) {
         res_close(result);
         return NULL;
@@ -1035,8 +1093,9 @@ keepCollationType(const char * /*type*/) {
 static struct SResource *
 parseCollationElements(ParseState* state, char *tag, uint32_t startline, UBool newCollation, UErrorCode *status)
 {
-    TableResource  *result = NULL;
+    struct SResource  *result = NULL;
     struct SResource  *member = NULL;
+    struct SResource  *collationRes = NULL;
     struct UString    *tokenValue;
     struct UString     comment;
     enum   ETokenType  token;
@@ -1100,7 +1159,7 @@ parseCollationElements(ParseState* state, char *tag, uint32_t startline, UBool n
                     return NULL;
                 }
 
-                result->add(member, line, *status);
+                table_add(result, member, line, status);
             }
             else
             {
@@ -1110,7 +1169,6 @@ parseCollationElements(ParseState* state, char *tag, uint32_t startline, UBool n
                 /* then, we cannot handle aliases */
                 if(token == TOK_OPEN_BRACE) {
                     token = getToken(state, &tokenValue, &comment, &line, status);
-                    TableResource *collationRes;
                     if (keepCollationType(subtag)) {
                         collationRes = table_open(state->bundle, subtag, NULL, status);
                     } else {
@@ -1119,7 +1177,7 @@ parseCollationElements(ParseState* state, char *tag, uint32_t startline, UBool n
                     // need to parse the collation data regardless
                     collationRes = addCollation(state, collationRes, subtag, startline, status);
                     if (collationRes != NULL) {
-                        result->add(collationRes, startline, *status);
+                        table_add(result, collationRes, startline, status);
                     }
                 } else if(token == TOK_COLON) { /* right now, we'll just try to see if we have aliases */
                     /* we could have a table too */
@@ -1133,7 +1191,7 @@ parseCollationElements(ParseState* state, char *tag, uint32_t startline, UBool n
                             return NULL;
                         }
 
-                        result->add(member, line, *status);
+                        table_add(result, member, line, status);
                     } else {
                         res_close(result);
                         *status = U_INVALID_FORMAT_ERROR;
@@ -1162,7 +1220,7 @@ parseCollationElements(ParseState* state, char *tag, uint32_t startline, UBool n
 /* Necessary, because CollationElements requires the bundle->fRoot member to be present which,
    if this weren't special-cased, wouldn't be set until the entire file had been processed. */
 static struct SResource *
-realParseTable(ParseState* state, TableResource *table, char *tag, uint32_t startline, UErrorCode *status)
+realParseTable(ParseState* state, struct SResource *table, char *tag, uint32_t startline, UErrorCode *status)
 {
     struct SResource  *member = NULL;
     struct UString    *tokenValue=NULL;
@@ -1228,7 +1286,7 @@ realParseTable(ParseState* state, TableResource *table, char *tag, uint32_t star
             return NULL;
         }
 
-        table->add(member, line, *status);
+        table_add(table, member, line, status);
 
         if (U_FAILURE(*status))
         {
@@ -1248,6 +1306,8 @@ realParseTable(ParseState* state, TableResource *table, char *tag, uint32_t star
 static struct SResource *
 parseTable(ParseState* state, char *tag, uint32_t startline, const struct UString *comment, UErrorCode *status)
 {
+    struct SResource *result;
+
     if (tag != NULL && uprv_strcmp(tag, "CollationElements") == 0)
     {
         return parseCollationElements(state, tag, startline, FALSE, status);
@@ -1260,7 +1320,7 @@ parseTable(ParseState* state, char *tag, uint32_t startline, const struct UStrin
         printf(" table %s at line %i \n",  (tag == NULL) ? "(null)" : tag, (int)startline);
     }
 
-    TableResource *result = table_open(state->bundle, tag, comment, status);
+    result = table_open(state->bundle, tag, comment, status);
 
     if (result == NULL || U_FAILURE(*status))
     {
@@ -1272,13 +1332,14 @@ parseTable(ParseState* state, char *tag, uint32_t startline, const struct UStrin
 static struct SResource *
 parseArray(ParseState* state, char *tag, uint32_t startline, const struct UString *comment, UErrorCode *status)
 {
+    struct SResource  *result = NULL;
     struct SResource  *member = NULL;
     struct UString    *tokenValue;
     struct UString    memberComments;
     enum   ETokenType token;
     UBool             readToken = FALSE;
 
-    ArrayResource  *result = array_open(state->bundle, tag, comment, status);
+    result = array_open(state->bundle, tag, comment, status);
 
     if (result == NULL || U_FAILURE(*status))
     {
@@ -1334,7 +1395,13 @@ parseArray(ParseState* state, char *tag, uint32_t startline, const struct UStrin
             return NULL;
         }
 
-        result->add(member);
+        array_add(result, member, status);
+
+        if (U_FAILURE(*status))
+        {
+            res_close(result);
+            return NULL;
+        }
 
         /* eat optional comma if present */
         token = peekToken(state, 0, NULL, NULL, NULL, status);
@@ -1359,6 +1426,7 @@ parseArray(ParseState* state, char *tag, uint32_t startline, const struct UStrin
 static struct SResource *
 parseIntVector(ParseState* state, char *tag, uint32_t startline, const struct UString *comment, UErrorCode *status)
 {
+    struct SResource  *result = NULL;
     enum   ETokenType  token;
     char              *string;
     int32_t            value;
@@ -1367,7 +1435,7 @@ parseIntVector(ParseState* state, char *tag, uint32_t startline, const struct US
     uint32_t           len;
     struct UString     memberComments;
 
-    IntVectorResource *result = intvector_open(state->bundle, tag, comment, status);
+    result = intvector_open(state->bundle, tag, comment, status);
 
     if (result == NULL || U_FAILURE(*status))
     {
@@ -1411,7 +1479,7 @@ parseIntVector(ParseState* state, char *tag, uint32_t startline, const struct US
 
         if(len==uprv_strlen(string))
         {
-            result->add(value, *status);
+            intvector_add(result, value, status);
             uprv_free(string);
             token = peekToken(state, 0, NULL, NULL, NULL, status);
         }
@@ -1446,16 +1514,28 @@ parseIntVector(ParseState* state, char *tag, uint32_t startline, const struct US
 static struct SResource *
 parseBinary(ParseState* state, char *tag, uint32_t startline, const struct UString *comment, UErrorCode *status)
 {
-    uint32_t line;
-    LocalMemory<char> string(getInvariantString(state, &line, NULL, status));
-    if (string.isNull() || U_FAILURE(*status))
+    struct SResource *result = NULL;
+    uint8_t          *value;
+    char             *string;
+    char              toConv[3] = {'\0', '\0', '\0'};
+    uint32_t          count;
+    uint32_t          i;
+    uint32_t          line;
+    char             *stopstring;
+    uint32_t          len;
+
+    string = getInvariantString(state, &line, NULL, status);
+
+    if (string == NULL || U_FAILURE(*status))
     {
         return NULL;
     }
 
     expect(state, TOK_CLOSE_BRACE, NULL, NULL, NULL, status);
+
     if (U_FAILURE(*status))
     {
+        uprv_free(string);
         return NULL;
     }
 
@@ -1463,47 +1543,54 @@ parseBinary(ParseState* state, char *tag, uint32_t startline, const struct UStri
         printf(" binary %s at line %i \n",  (tag == NULL) ? "(null)" : tag, (int)startline);
     }
 
-    uint32_t count = (uint32_t)uprv_strlen(string.getAlias());
+    count = (uint32_t)uprv_strlen(string);
     if (count > 0){
         if((count % 2)==0){
-            LocalMemory<uint8_t> value;
-            if (value.allocateInsteadAndCopy(count) == NULL)
+            value = static_cast<uint8_t *>(uprv_malloc(sizeof(uint8_t) * count));
+
+            if (value == NULL)
             {
+                uprv_free(string);
                 *status = U_MEMORY_ALLOCATION_ERROR;
                 return NULL;
             }
 
-            char toConv[3] = {'\0', '\0', '\0'};
-            for (uint32_t i = 0; i < count; i += 2)
+            for (i = 0; i < count; i += 2)
             {
                 toConv[0] = string[i];
                 toConv[1] = string[i + 1];
 
-                char *stopstring;
                 value[i >> 1] = (uint8_t) uprv_strtoul(toConv, &stopstring, 16);
-                uint32_t len=(uint32_t)(stopstring-toConv);
+                len=(uint32_t)(stopstring-toConv);
 
-                if(len!=2)
+                if(len!=uprv_strlen(toConv))
                 {
+                    uprv_free(string);
                     *status=U_INVALID_CHAR_FOUND;
                     return NULL;
                 }
             }
 
-            return bin_open(state->bundle, tag, count >> 1, value.getAlias(), NULL, comment, status);
+            result = bin_open(state->bundle, tag, (i >> 1), value,NULL, comment, status);
+
+            uprv_free(value);
         }
         else
         {
             *status = U_INVALID_CHAR_FOUND;
-            error(line, "Encountered invalid binary value (length is odd)");
+            uprv_free(string);
+            error(line, "Encountered invalid binary string");
             return NULL;
         }
     }
     else
     {
-        warning(startline, "Encountered empty binary value");
-        return bin_open(state->bundle, tag, 0, NULL, "", comment, status);
+        result = bin_open(state->bundle, tag, 0, NULL, "",comment,status);
+        warning(startline, "Encountered empty binary tag");
     }
+    uprv_free(string);
+
+    return result;
 }
 
 static struct SResource *
@@ -1559,8 +1646,15 @@ parseInteger(ParseState* state, char *tag, uint32_t startline, const struct UStr
 static struct SResource *
 parseImport(ParseState* state, char *tag, uint32_t startline, const struct UString* comment, UErrorCode *status)
 {
+    struct SResource *result;
+    FileStream       *file;
+    int32_t           len;
+    uint8_t          *data;
+    char             *filename;
     uint32_t          line;
-    LocalMemory<char> filename(getInvariantString(state, &line, NULL, status));
+    char     *fullname = NULL;
+    filename = getInvariantString(state, &line, NULL, status);
+
     if (U_FAILURE(*status))
     {
         return NULL;
@@ -1570,6 +1664,7 @@ parseImport(ParseState* state, char *tag, uint32_t startline, const struct UStri
 
     if (U_FAILURE(*status))
     {
+        uprv_free(filename);
         return NULL;
     }
 
@@ -1578,36 +1673,90 @@ parseImport(ParseState* state, char *tag, uint32_t startline, const struct UStri
     }
 
     /* Open the input file for reading */
-    CharString fullname;
-    if (state->inputdir != NULL) {
-        fullname.append(state->inputdir, *status);
+    if (state->inputdir == NULL)
+    {
+#if 1
+        /* 
+         * Always save file file name, even if there's
+         * no input directory specified. MIGHT BREAK SOMETHING
+         */
+        int32_t filenameLength = uprv_strlen(filename);
+
+        fullname = (char *) uprv_malloc(filenameLength + 1);
+        uprv_strcpy(fullname, filename);
+#endif
+
+        file = T_FileStream_open(filename, "rb");
     }
-    fullname.appendPathPart(filename.getAlias(), *status);
-    if (U_FAILURE(*status)) {
-        return NULL;
+    else
+    {
+
+        int32_t  count     = (int32_t)uprv_strlen(filename);
+
+        if (state->inputdir[state->inputdirLength - 1] != U_FILE_SEP_CHAR)
+        {
+            fullname = (char *) uprv_malloc(state->inputdirLength + count + 2);
+
+            /* test for NULL */
+            if(fullname == NULL)
+            {
+                *status = U_MEMORY_ALLOCATION_ERROR;
+                return NULL;
+            }
+
+            uprv_strcpy(fullname, state->inputdir);
+
+            fullname[state->inputdirLength]      = U_FILE_SEP_CHAR;
+            fullname[state->inputdirLength + 1] = '\0';
+
+            uprv_strcat(fullname, filename);
+        }
+        else
+        {
+            fullname = (char *) uprv_malloc(state->inputdirLength + count + 1);
+
+            /* test for NULL */
+            if(fullname == NULL)
+            {
+                *status = U_MEMORY_ALLOCATION_ERROR;
+                return NULL;
+            }
+
+            uprv_strcpy(fullname, state->inputdir);
+            uprv_strcat(fullname, filename);
+        }
+
+        file = T_FileStream_open(fullname, "rb");
+
     }
 
-    FileStream *file = T_FileStream_open(fullname.data(), "rb");
     if (file == NULL)
     {
-        error(line, "couldn't open input file %s", filename.getAlias());
+        error(line, "couldn't open input file %s", filename);
         *status = U_FILE_ACCESS_ERROR;
         return NULL;
     }
 
-    int32_t len  = T_FileStream_size(file);
-    LocalMemory<uint8_t> data;
-    if(data.allocateInsteadAndCopy(len) == NULL)
+    len  = T_FileStream_size(file);
+    data = (uint8_t*)uprv_malloc(len * sizeof(uint8_t));
+    /* test for NULL */
+    if(data == NULL)
     {
         *status = U_MEMORY_ALLOCATION_ERROR;
         T_FileStream_close (file);
         return NULL;
     }
 
-    /* int32_t numRead = */ T_FileStream_read(file, data.getAlias(), len);
+    /* int32_t numRead = */ T_FileStream_read  (file, data, len);
     T_FileStream_close (file);
 
-    return bin_open(state->bundle, tag, len, data.getAlias(), fullname.data(), comment, status);
+    result = bin_open(state->bundle, tag, len, data, fullname, comment, status);
+
+    uprv_free(data);
+    uprv_free(filename);
+    uprv_free(fullname);
+
+    return result;
 }
 
 static struct SResource *
@@ -1989,7 +2138,7 @@ parse(UCHARBUF *buf, const char *inputDir, const char *outputDir, const char *fi
     ustr_init(&comment);
     expect(&state, TOK_STRING, &tokenValue, &comment, NULL, status);
 
-    state.bundle = new SRBRoot(&comment, FALSE, *status);
+    state.bundle = bundle_open(&comment, FALSE, status);
 
     if (state.bundle == NULL || U_FAILURE(*status))
     {
@@ -1997,7 +2146,7 @@ parse(UCHARBUF *buf, const char *inputDir, const char *outputDir, const char *fi
     }
 
 
-    state.bundle->setLocale(tokenValue->fChars, *status);
+    bundle_setlocale(state.bundle, tokenValue->fChars, status);
 
     /* The following code is to make Empty bundle work no matter with :table specifer or not */
     token = getToken(&state, NULL, NULL, &line, status);
@@ -2034,7 +2183,7 @@ parse(UCHARBUF *buf, const char *inputDir, const char *outputDir, const char *fi
 
     if (U_FAILURE(*status))
     {
-        delete state.bundle;
+        bundle_close(state.bundle, status);
         return NULL;
     }
 
@@ -2044,20 +2193,17 @@ parse(UCHARBUF *buf, const char *inputDir, const char *outputDir, const char *fi
          * This is the same as a regular table, but also sets the
          * URES_ATT_NO_FALLBACK flag in indexes[URES_INDEX_ATTRIBUTES] .
          */
-        state.bundle->fNoFallback=TRUE;
+        state.bundle->noFallback=TRUE;
     }
     /* top-level tables need not handle special table names like "collations" */
-    assert(!state.bundle->fIsPoolBundle);
-    assert(state.bundle->fRoot->fType == URES_TABLE);
-    TableResource *rootTable = static_cast<TableResource *>(state.bundle->fRoot);
-    realParseTable(&state, rootTable, NULL, line, status);
+    realParseTable(&state, state.bundle->fRoot, NULL, line, status);
     if(dependencyArray!=NULL){
-        rootTable->add(dependencyArray, 0, *status);
+        table_add(state.bundle->fRoot, dependencyArray, 0, status);
         dependencyArray = NULL;
     }
    if (U_FAILURE(*status))
     {
-        delete state.bundle;
+        bundle_close(state.bundle, status);
         res_close(dependencyArray);
         return NULL;
     }

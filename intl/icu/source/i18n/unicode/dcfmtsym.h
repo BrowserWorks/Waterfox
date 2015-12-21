@@ -163,10 +163,12 @@ public:
          * @stable ICU 4.6
          */
         kNineDigitSymbol,
+#ifndef U_HIDE_DRAFT_API
         /** Multiplication sign.
-         * @stable ICU 54
+         * @draft ICU 54
          */
         kExponentMultiplicationSymbol,
+#endif  /* U_HIDE_DRAFT_API */
         /** count symbol constants */
         kFormatSymbolCount = kNineDigitSymbol + 2
     };
@@ -354,23 +356,6 @@ private:
     void setCurrencyForSymbols();
 
 public:
-
-#ifndef U_HIDE_INTERNAL_API
-    /** 
-     * @internal For ICU use only 
-     */ 
-    inline UBool isCustomCurrencySymbol() const { 
-        return fIsCustomCurrencySymbol; 
-    } 
-
-    /**
-     * @internal For ICU use only
-     */
-    inline UBool isCustomIntlCurrencySymbol() const {
-        return fIsCustomIntlCurrencySymbol;
-    }
-#endif  /* U_HIDE_INTERNAL_API */
-
     /**
      * _Internal_ function - more efficient version of getSymbol,
      * returning a const reference to one of the symbol strings.
@@ -425,8 +410,6 @@ private:
 
     UnicodeString currencySpcBeforeSym[UNUM_CURRENCY_SPACING_COUNT];
     UnicodeString currencySpcAfterSym[UNUM_CURRENCY_SPACING_COUNT];
-    UBool fIsCustomCurrencySymbol; 
-    UBool fIsCustomIntlCurrencySymbol;
 };
 
 // -------------------------------------
@@ -462,12 +445,6 @@ DecimalFormatSymbols::getConstSymbol(ENumberFormatSymbol symbol) const {
 
 inline void
 DecimalFormatSymbols::setSymbol(ENumberFormatSymbol symbol, const UnicodeString &value, const UBool propogateDigits = TRUE) {
-    if (symbol == kCurrencySymbol) { 
-        fIsCustomCurrencySymbol = TRUE; 
-    } 
-    else if (symbol == kIntlCurrencySymbol) { 
-        fIsCustomIntlCurrencySymbol = TRUE; 
-    } 
     if(symbol<kFormatSymbolCount) {
         fSymbols[symbol]=value;
     }

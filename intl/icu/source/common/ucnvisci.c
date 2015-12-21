@@ -1617,7 +1617,15 @@ static const UConverterStaticData _ISCIIStaticData={
 
 };
 
-const UConverterSharedData _ISCIIData=
-        UCNV_IMMUTABLE_SHARED_DATA_INITIALIZER(&_ISCIIStaticData, &_ISCIIImpl);
+const UConverterSharedData _ISCIIData={
+    sizeof(UConverterSharedData),
+        ~((uint32_t) 0),
+        NULL,
+        NULL,
+        &_ISCIIStaticData,
+        FALSE,
+        &_ISCIIImpl,
+        0
+};
 
 #endif /* #if !UCONFIG_NO_LEGACY_CONVERSION */

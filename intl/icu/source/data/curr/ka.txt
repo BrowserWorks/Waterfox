@@ -890,7 +890,7 @@ ka{
         }
         XAF{
             "FCFA",
-            "ცენტრალურ აფრიკული CFA ფრანკი",
+            "CFA ფრანკი (BEAC)",
         }
         XAG{
             "XAG",
@@ -1017,7 +1017,6 @@ ka{
         SGD{"$"}
         SRD{"$"}
         SSP{"£"}
-        THB{"฿"}
         TRY{"₺"}
         TTD{"$"}
         TWD{"NT$"}
@@ -1025,9 +1024,6 @@ ka{
         USD{"$"}
         UYU{"$"}
         VND{"₫"}
-    }
-    Currencies%variant{
-        GEL{"₾"}
     }
     CurrencyPlurals{
         AED{
@@ -1631,16 +1627,16 @@ ka{
             other{"სამოური ტალა"}
         }
         XAF{
-            one{"ცენტრალურ აფრიკული CFA ფრანკი"}
-            other{"ცენტრალურ აფრიკული CFA ფრანკი"}
+            one{"CFA ფრანკი (BEAC)"}
+            other{"CFA ფრანკი (BEAC)"}
         }
         XCD{
             one{"აღმოსავლეთ კარიბიული დოლარი"}
             other{"აღმოსავლეთ კარიბიული დოლარი"}
         }
         XOF{
-            one{"დასავლეთ აფრიკული CFA ფრანკი"}
-            other{"დასავლეთ აფრიკული CFA ფრანკი"}
+            one{"CFA ფრანკი (BCEAO)"}
+            other{"CFA ფრანკი (BCEAO)"}
         }
         XPF{
             one{"CFP ფრანკი"}
@@ -1671,5 +1667,5 @@ ka{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.19.94"}
+    Version{"2.1.13.22"}
 }

@@ -657,17 +657,14 @@ hy{
         CNY{"¥"}
         COP{"$"}
         CRC{"₡"}
-        CUC{"$"}
         CUP{"$"}
         DOP{"$"}
         EUR{"€"}
         FJD{"$"}
         GBP{"£"}
         GIP{"£"}
-        GTQ{"Q"}
         GYD{"$"}
         HKD{"$"}
-        HNL{"L"}
         ILS{"₪"}
         INR{"₹"}
         JMD{"$"}
@@ -682,7 +679,6 @@ hy{
         MXN{"$"}
         NAD{"$"}
         NGN{"₦"}
-        NIO{"C$"}
         NZD{"$"}
         PHP{"₱"}
         PYG{"₲"}
@@ -690,7 +686,6 @@ hy{
         SGD{"$"}
         SRD{"$"}
         SSP{"£"}
-        THB{"฿"}
         TRY{"₺"}
         TTD{"$"}
         TWD{"NT$"}
@@ -698,7 +693,6 @@ hy{
         USD{"$"}
         UYU{"$"}
         VND{"₫"}
-        XCD{"$"}
     }
     Currencies%variant{
         AMD{"դր."}
@@ -1341,5 +1335,5 @@ hy{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.19.94"}
+    Version{"2.1.12.94"}
 }

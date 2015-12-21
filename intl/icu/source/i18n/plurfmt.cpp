@@ -19,8 +19,6 @@
 #include "plurrule_impl.h"
 #include "uassert.h"
 #include "uhash.h"
-#include "precision.h"
-#include "visibledigits.h"
 
 #if !UCONFIG_NO_FORMATTING
 
@@ -261,37 +259,18 @@ PluralFormat::format(const Formattable& numberObject, double number,
     double numberMinusOffset = number - offset;
     UnicodeString numberString;
     FieldPosition ignorePos;
-    FixedPrecision fp;
-    VisibleDigitsWithExponent dec;
-    fp.initVisibleDigitsWithExponent(numberMinusOffset, dec, status);
-    if (U_FAILURE(status)) {
-        return appendTo;
-    }
+    FixedDecimal dec(numberMinusOffset);
     if (offset == 0) {
+        numberFormat->format(numberObject, numberString, ignorePos, status);  // could be BigDecimal etc.
         DecimalFormat *decFmt = dynamic_cast<DecimalFormat *>(numberFormat);
         if(decFmt != NULL) {
-            decFmt->initVisibleDigitsWithExponent(
-                    numberObject, dec, status);
-            if (U_FAILURE(status)) {
-                return appendTo;
-            }
-            decFmt->format(dec, numberString, ignorePos, status);
-        } else {
-            numberFormat->format(
-                    numberObject, numberString, ignorePos, status);  // could be BigDecimal etc.
+            dec = decFmt->getFixedDecimal(numberObject, status);
         }
     } else {
+        numberFormat->format(numberMinusOffset, numberString, ignorePos, status);
         DecimalFormat *decFmt = dynamic_cast<DecimalFormat *>(numberFormat);
         if(decFmt != NULL) {
-            decFmt->initVisibleDigitsWithExponent(
-                    numberMinusOffset, dec, status);
-            if (U_FAILURE(status)) {
-                return appendTo;
-            }
-            decFmt->format(dec, numberString, ignorePos, status);
-        } else {
-            numberFormat->format(
-                    numberMinusOffset, numberString, ignorePos, status);
+            dec = decFmt->getFixedDecimal(numberMinusOffset, status);
         }
     }
     int32_t partIndex = findSubMessage(msgPattern, 0, pluralRulesWrapper, &dec, number, status);
@@ -583,7 +562,8 @@ PluralFormat::PluralSelectorAdapter::~PluralSelectorAdapter() {
 UnicodeString PluralFormat::PluralSelectorAdapter::select(void *context, double number,
                                                           UErrorCode& /*ec*/) const {
     (void)number;  // unused except in the assertion
-    VisibleDigitsWithExponent *dec=static_cast<VisibleDigitsWithExponent *>(context);
+    FixedDecimal *dec=static_cast<FixedDecimal *>(context);
+    U_ASSERT(dec->source==number);
     return pluralRules->select(*dec);
 }
 

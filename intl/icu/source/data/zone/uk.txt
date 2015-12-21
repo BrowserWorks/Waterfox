@@ -7,7 +7,7 @@
 // *
 // ***************************************************************************
 uk{
-    Version{"2.1.19.94"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Абіджан"}
@@ -19,7 +19,7 @@ uk{
             ec{"Аддис-Абеба"}
         }
         "Africa:Algiers"{
-            ec{"Алжир"}
+            ec{"м. Алжир"}
         }
         "Africa:Asmera"{
             ec{"Асмара"}
@@ -154,13 +154,13 @@ uk{
             ec{"Порто-Ново"}
         }
         "Africa:Sao_Tome"{
-            ec{"Сан-Томе"}
+            ec{"Сан-Томе і Принсіпі"}
         }
         "Africa:Tripoli"{
             ec{"Триполі"}
         }
         "Africa:Tunis"{
-            ec{"Туніс"}
+            ec{"м. Туніс"}
         }
         "Africa:Windhoek"{
             ec{"Віндгук"}
@@ -684,9 +684,6 @@ uk{
         "Asia:Calcutta"{
             ec{"Колката"}
         }
-        "Asia:Chita"{
-            ec{"Чита"}
-        }
         "Asia:Choibalsan"{
             ec{"Чойбалсан"}
         }
@@ -827,9 +824,6 @@ uk{
         }
         "Asia:Singapore"{
             ec{"Сінгапур"}
-        }
-        "Asia:Srednekolymsk"{
-            ec{"Середньоколимськ"}
         }
         "Asia:Taipei"{
             ec{"Тайбей"}
@@ -1014,7 +1008,7 @@ uk{
         }
         "Europe:London"{
             ec{"Лондон"}
-            ld{"за літнім часом у Великій Британії"}
+            ld{"за літнім часом у Великобританії"}
         }
         "Europe:Luxembourg"{
             ec{"Люксембург"}
@@ -1150,9 +1144,6 @@ uk{
         }
         "Pacific:Auckland"{
             ec{"Окленд"}
-        }
-        "Pacific:Bougainville"{
-            ec{"Бугенвіль"}
         }
         "Pacific:Chatham"{
             ec{"Чатем"}
@@ -1388,7 +1379,7 @@ uk{
             ls{"за часом у Бутані"}
         }
         "meta:Bolivia"{
-            ls{"за болівійським часом"}
+            ls{"за часом у Болівії"}
         }
         "meta:Brasilia"{
             ld{"за літнім бразильським часом"}

@@ -18,8 +18,5 @@ es_AR{
             "dólar estadounidense",
         }
     }
-    Currencies%variant{
-        GEL{"GEL"}
-    }
-    Version{"2.1.19.14"}
+    Version{"2.1.13.23"}
 }

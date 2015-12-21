@@ -7,7 +7,7 @@
 // *
 // ***************************************************************************
 el{
-    Version{"2.1.19.94"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Αμπιτζάν"}
@@ -406,7 +406,7 @@ el{
             ec{"Λούισβιλ"}
         }
         "America:Lower_Princes"{
-            ec{"Άγιος Μαρτίνος Ολλανδίας"}
+            ec{"Lower Prince’s Quarter (Άγιος Μαρτίνος Ολλανδίας)"}
         }
         "America:Maceio"{
             ec{"Μασέιο"}
@@ -684,9 +684,6 @@ el{
         "Asia:Calcutta"{
             ec{"Καλκούτα"}
         }
-        "Asia:Chita"{
-            ec{"Τσίτα"}
-        }
         "Asia:Choibalsan"{
             ec{"Χόιμπαλσαν"}
         }
@@ -827,9 +824,6 @@ el{
         }
         "Asia:Singapore"{
             ec{"Σιγκαπούρη"}
-        }
-        "Asia:Srednekolymsk"{
-            ec{"Σρεντνεκόλιμσκ"}
         }
         "Asia:Taipei"{
             ec{"Ταϊπέι"}
@@ -1150,9 +1144,6 @@ el{
         }
         "Pacific:Auckland"{
             ec{"Όκλαντ"}
-        }
-        "Pacific:Bougainville"{
-            ec{"Μπουγκενβίλ"}
         }
         "Pacific:Chatham"{
             ec{"Τσάταμ"}

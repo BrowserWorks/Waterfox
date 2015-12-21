@@ -7,7 +7,7 @@
 // *
 // ***************************************************************************
 nl{
-    Version{"2.1.19.96"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Abidjan"}
@@ -684,9 +684,6 @@ nl{
         "Asia:Calcutta"{
             ec{"Calcutta"}
         }
-        "Asia:Chita"{
-            ec{"Chita"}
-        }
         "Asia:Choibalsan"{
             ec{"Choibalsan"}
         }
@@ -827,9 +824,6 @@ nl{
         }
         "Asia:Singapore"{
             ec{"Singapore"}
-        }
-        "Asia:Srednekolymsk"{
-            ec{"Srednekolymsk"}
         }
         "Asia:Taipei"{
             ec{"Taipei"}
@@ -1151,9 +1145,6 @@ nl{
         "Pacific:Auckland"{
             ec{"Auckland"}
         }
-        "Pacific:Bougainville"{
-            ec{"Bougainville"}
-        }
         "Pacific:Chatham"{
             ec{"Chatham"}
         }
@@ -1425,9 +1416,9 @@ nl{
             ls{"Chamorro-tijd"}
         }
         "meta:Chatham"{
-            ld{"Chatham-zomertijd"}
-            lg{"Chatham-tijd"}
-            ls{"Chatham-standaardtijd"}
+            ld{"Chatham zomertijd"}
+            lg{"Chatham tijd"}
+            ls{"Chatham standaardtijd"}
         }
         "meta:Chile"{
             ld{"Chileense zomertijd"}
@@ -1440,9 +1431,9 @@ nl{
             ls{"Chinese standaardtijd"}
         }
         "meta:Choibalsan"{
-            ld{"Tsjojbalsan-zomertijd"}
-            lg{"Tsjojbalsan-tijd"}
-            ls{"Tsjojbalsan-standaardtijd"}
+            ld{"Tsjojbalsan zomertijd"}
+            lg{"Tsjojbalsan tijd"}
+            ls{"Tsjojbalsan standaardtijd"}
         }
         "meta:Christmas"{
             ls{"Christmaseilandse tijd"}
@@ -1466,10 +1457,10 @@ nl{
             ls{"Cubaanse standaardtijd"}
         }
         "meta:Davis"{
-            ls{"Davis-tijd"}
+            ls{"Davis tijd"}
         }
         "meta:DumontDUrville"{
-            ls{"Dumont-d’Urville-tijd"}
+            ls{"Dumont-d’Urville tijd"}
         }
         "meta:East_Timor"{
             ls{"Oost-Timorese tijd"}
@@ -1556,7 +1547,7 @@ nl{
             ls{"Guamese standaardtijd"}
         }
         "meta:Gulf"{
-            ls{"Golf-standaardtijd"}
+            ls{"Golf standaardtijd"}
         }
         "meta:Guyana"{
             ls{"Guyaanse tijd"}
@@ -1572,9 +1563,9 @@ nl{
             ls{"Hongkongse standaardtijd"}
         }
         "meta:Hovd"{
-            ld{"Hovd-zomertijd"}
-            lg{"Hovd-tijd"}
-            ls{"Hovd-standaardtijd"}
+            ld{"Hovd zomertijd"}
+            lg{"Hovd tijd"}
+            ls{"Hovd standaardtijd"}
         }
         "meta:India"{
             ls{"Indiase tijd"}
@@ -1683,7 +1674,7 @@ nl{
             ls{"Mauritiaanse standaardtijd"}
         }
         "meta:Mawson"{
-            ls{"Mawson-tijd"}
+            ls{"Mawson tijd"}
         }
         "meta:Mexico_Northwest"{
             ld{"Noordwest-Mexicaanse zomertijd"}
@@ -1696,9 +1687,9 @@ nl{
             ls{"Mexicaanse Pacific-standaardtijd"}
         }
         "meta:Mongolia"{
-            ld{"Ulaanbaatar-zomertijd"}
-            lg{"Ulaanbaatar-tijd"}
-            ls{"Ulaanbaatar-standaardtijd"}
+            ld{"Ulaanbaatar zomertijd"}
+            lg{"Ulaanbaatar tijd"}
+            ls{"Ulaanbaatar standaardtijd"}
         }
         "meta:Moscow"{
             ld{"Moskou-zomertijd"}
@@ -1791,7 +1782,7 @@ nl{
             ls{"Pitcairneilandse tijd"}
         }
         "meta:Ponape"{
-            ls{"Pohnpei-tijd"}
+            ls{"Pohnpei tijd"}
         }
         "meta:Qyzylorda"{
             ld{"Qyzylorda-zomertijd"}
@@ -1802,7 +1793,7 @@ nl{
             ls{"Réunionse tijd"}
         }
         "meta:Rothera"{
-            ls{"Rothera-tijd"}
+            ls{"Rothera tijd"}
         }
         "meta:Sakhalin"{
             ld{"Sachalin-zomertijd"}
@@ -1835,15 +1826,15 @@ nl{
             ls{"Surinaamse tijd"}
         }
         "meta:Syowa"{
-            ls{"Syowa-tijd"}
+            ls{"Syowa tijd"}
         }
         "meta:Tahiti"{
             ls{"Tahitiaanse tijd"}
         }
         "meta:Taipei"{
-            ld{"Taipei-zomertijd"}
-            lg{"Taipei-tijd"}
-            ls{"Taipei-standaardtijd"}
+            ld{"Taipei zomertijd"}
+            lg{"Taipei tijd"}
+            ls{"Taipei standaardtijd"}
         }
         "meta:Tajikistan"{
             ls{"Tadzjiekse tijd"}
@@ -1896,7 +1887,7 @@ nl{
             ls{"Wolgograd-standaardtijd"}
         }
         "meta:Vostok"{
-            ls{"Vostok-tijd"}
+            ls{"Vostok tijd"}
         }
         "meta:Wake"{
             ls{"Wake-eilandse tijd"}

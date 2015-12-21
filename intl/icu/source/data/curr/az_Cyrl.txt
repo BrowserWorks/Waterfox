@@ -10,12 +10,12 @@ az_Cyrl{
     %%Parent{"root"}
     Currencies{
         AZN{
-            "₼",
+            "ман.",
             "AZN",
         }
     }
     Currencies%variant{
-        AZN{"ман."}
+        AZN{"₼"}
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.10.34"}
 }

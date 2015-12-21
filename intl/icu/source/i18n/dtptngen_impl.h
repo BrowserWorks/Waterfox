@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2007-2015, International Business Machines Corporation and
+* Copyright (C) 2007-2014, International Business Machines Corporation and
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 *
@@ -145,11 +145,12 @@ public:
     FormatParser();
     virtual ~FormatParser();
     void set(const UnicodeString& patternString);
+    UBool isQuoteLiteral(const UnicodeString& s) const;
     void getQuoteLiteral(UnicodeString& quote, int32_t *itemIndex);
+    int32_t getCanonicalIndex(const UnicodeString& s) { return getCanonicalIndex(s, TRUE); }
+    int32_t getCanonicalIndex(const UnicodeString& s, UBool strict);
     UBool isPatternSeparator(UnicodeString& field);
-    static UBool isQuoteLiteral(const UnicodeString& s);
-    static int32_t getCanonicalIndex(const UnicodeString& s) { return getCanonicalIndex(s, TRUE); }
-    static int32_t getCanonicalIndex(const UnicodeString& s, UBool strict);
+    void setFilter(UErrorCode &status);
 
 private:
    typedef enum TokenStatus {

@@ -7,7 +7,7 @@
 // *
 // ***************************************************************************
 to{
-    Version{"2.1.19.14"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Abidjan"}
@@ -154,7 +154,7 @@ to{
             ec{"Porto-Novo"}
         }
         "Africa:Sao_Tome"{
-            ec{"São Tomé"}
+            ec{"Sao Tome"}
         }
         "Africa:Tripoli"{
             ec{"Tripoli"}
@@ -205,7 +205,7 @@ to{
             ec{"Aruba"}
         }
         "America:Asuncion"{
-            ec{"Asunción"}
+            ec{"Asuncion"}
         }
         "America:Bahia"{
             ec{"Bahia"}
@@ -550,7 +550,7 @@ to{
             ec{"Sitka"}
         }
         "America:St_Barthelemy"{
-            ec{"St. Barthélemy"}
+            ec{"St. Barthelemy"}
         }
         "America:St_Johns"{
             ec{"St. John’s"}
@@ -1077,7 +1077,7 @@ to{
             ec{"Tirane"}
         }
         "Europe:Uzhgorod"{
-            ec{"Uzhhorod"}
+            ec{"Uzhgorod"}
         }
         "Europe:Vaduz"{
             ec{"Vaduz"}
@@ -1137,7 +1137,7 @@ to{
             ec{"Mayotte"}
         }
         "Indian:Reunion"{
-            ec{"Réunion"}
+            ec{"Reunion"}
         }
         "Pacific:Apia"{
             ec{"Apia"}

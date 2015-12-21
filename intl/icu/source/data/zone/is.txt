@@ -7,7 +7,7 @@
 // *
 // ***************************************************************************
 is{
-    Version{"2.1.19.17"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Abidjan"}
@@ -550,7 +550,7 @@ is{
             ec{"Sitka"}
         }
         "America:St_Barthelemy"{
-            ec{"Sankti Bartólómeusareyjar"}
+            ec{"Saint Barthélemy"}
         }
         "America:St_Johns"{
             ec{"St. John’s"}
@@ -562,7 +562,7 @@ is{
             ec{"Sankti Lúsía"}
         }
         "America:St_Thomas"{
-            ec{"Sankti Thomas"}
+            ec{"St. Thomas"}
         }
         "America:St_Vincent"{
             ec{"Sankti Vinsent"}
@@ -802,7 +802,7 @@ is{
             ec{"Qyzylorda"}
         }
         "Asia:Rangoon"{
-            ec{"Rangún"}
+            ec{"Rangoon"}
         }
         "Asia:Riyadh"{
             ec{"Ríjad"}
@@ -820,7 +820,7 @@ is{
             ec{"Seúl"}
         }
         "Asia:Shanghai"{
-            ec{"Sjanghæ"}
+            ec{"Shanghai"}
         }
         "Asia:Singapore"{
             ec{"Singapúr"}
@@ -1020,7 +1020,7 @@ is{
             ec{"Malta"}
         }
         "Europe:Mariehamn"{
-            ec{"Maríuhöfn"}
+            ec{"Mariehamn"}
         }
         "Europe:Minsk"{
             ec{"Minsk"}
@@ -1161,7 +1161,7 @@ is{
             ec{"Fakaofo"}
         }
         "Pacific:Fiji"{
-            ec{"Fidjí"}
+            ec{"Fídjieyjar"}
         }
         "Pacific:Funafuti"{
             ec{"Funafuti"}
@@ -1367,7 +1367,7 @@ is{
         }
         "meta:Bangladesh"{
             ld{"Sumartími í Bangladess"}
-            lg{"Bangladess-tími"}
+            lg{"Bangladesstími"}
             ls{"Staðaltími í Bangladess"}
         }
         "meta:Bhutan"{
@@ -1440,7 +1440,7 @@ is{
             ls{"Tími á Dumont-d’Urville"}
         }
         "meta:East_Timor"{
-            ls{"Tíminn á Tímor-Leste"}
+            ls{"Tími á Tímor-Leste"}
         }
         "meta:Easter"{
             ld{"Sumartími á Páskaeyju"}
@@ -1499,7 +1499,7 @@ is{
             ls{"Staðaltími í Georgíu"}
         }
         "meta:Gilbert_Islands"{
-            ls{"Tími á Gilbert-eyjum"}
+            ls{"Gilberteyjatími"}
         }
         "meta:Greenland_Eastern"{
             ld{"Sumartími á Austur-Grænlandi"}
@@ -1518,9 +1518,9 @@ is{
             ls{"Gvæjanatími"}
         }
         "meta:Hawaii_Aleutian"{
-            ld{"Sumartími á Havaí og Aleúta"}
-            lg{"Tími á Havaí og Aleúta"}
-            ls{"Staðaltími á Havaí og Aleúta"}
+            ld{"Sumartími á Hawaii og Aleútaeyjum"}
+            lg{"Tími á Hawaii og Aleútaeyjum"}
+            ls{"Staðaltími á Hawaí og Aleútaeyjum"}
         }
         "meta:Hong_Kong"{
             ld{"Sumartími í Hong Kong"}
@@ -1529,7 +1529,7 @@ is{
         }
         "meta:Hovd"{
             ld{"Sumartími í Hovd"}
-            lg{"Hovd-tími"}
+            lg{"Tími í Hovd"}
             ls{"Staðaltími í Hovd"}
         }
         "meta:India"{
@@ -1595,10 +1595,10 @@ is{
             ls{"Staðaltími í Krasnoyarsk"}
         }
         "meta:Kyrgystan"{
-            ls{"Kirgistan-tími"}
+            ls{"Kirgisistantími"}
         }
         "meta:Line_Islands"{
-            ls{"Línueyja-tími"}
+            ls{"Línueyjatími"}
         }
         "meta:Lord_Howe"{
             ld{"Sumartími á Lord Howe-eyju"}
@@ -1617,13 +1617,13 @@ is{
             ls{"Malasíutími"}
         }
         "meta:Maldives"{
-            ls{"Maldíveyja-tími"}
+            ls{"Maldíveyjatími"}
         }
         "meta:Marquesas"{
             ls{"Tími á Markgreifafrúreyjum"}
         }
         "meta:Marshall_Islands"{
-            ls{"Tími á Marshall-eyjum"}
+            ls{"Marshall-eyjatími"}
         }
         "meta:Mauritius"{
             ld{"Sumartími á Máritíus"}
@@ -1650,14 +1650,14 @@ is{
         }
         "meta:Moscow"{
             ld{"Sumartími í Moskvu"}
-            lg{"Moskvutími"}
+            lg{"Tími í Moskvu"}
             ls{"Staðaltími í Moskvu"}
         }
         "meta:Myanmar"{
-            ls{"Mjanmar-tími"}
+            ls{"Mjanmartími"}
         }
         "meta:Nauru"{
-            ls{"Nárú-tími"}
+            ls{"Nárútími"}
         }
         "meta:Nepal"{
             ls{"Nepaltími"}
@@ -1695,7 +1695,7 @@ is{
         }
         "meta:Omsk"{
             ld{"Sumartími í Omsk"}
-            lg{"Tíminn í Omsk"}
+            lg{"Tími í Omsk"}
             ls{"Staðaltími í Omsk"}
         }
         "meta:Pakistan"{
@@ -1778,7 +1778,7 @@ is{
             ls{"Syowa-tími"}
         }
         "meta:Tahiti"{
-            ls{"Tahítí-tími"}
+            ls{"Tahítítími"}
         }
         "meta:Taipei"{
             ld{"Sumartími í Taipei"}
@@ -1786,10 +1786,10 @@ is{
             ls{"Staðaltími í Taipei"}
         }
         "meta:Tajikistan"{
-            ls{"Tadsjíkistan-tími"}
+            ls{"Tadsjíkistantími"}
         }
         "meta:Tokelau"{
-            ls{"Tókelá-tími"}
+            ls{"Tókelátími"}
         }
         "meta:Tonga"{
             ld{"Sumartími á Tonga"}
@@ -1801,7 +1801,7 @@ is{
         }
         "meta:Turkmenistan"{
             ld{"Sumartími í Túrkmenistan"}
-            lg{"Túrkmenistan-tími"}
+            lg{"Túrkmenistantími"}
             ls{"Staðaltími í Túrkmenistan"}
         }
         "meta:Tuvalu"{
@@ -1814,13 +1814,13 @@ is{
         }
         "meta:Uzbekistan"{
             ld{"Sumartími í Úsbekistan"}
-            lg{"Úsbekistan-tími"}
+            lg{"Úsbekistantími"}
             ls{"Staðaltími í Úsbekistan"}
         }
         "meta:Vanuatu"{
-            ld{"Sumartími á Vanúatú"}
-            lg{"Vanúatú-tími"}
-            ls{"Staðaltími á Vanúatú"}
+            ld{"Sumartími í Vanúatú"}
+            lg{"Vanúatútími"}
+            ls{"Staðaltími í Vanúatú"}
         }
         "meta:Venezuela"{
             ls{"Venesúelatími"}
@@ -1839,14 +1839,14 @@ is{
             ls{"Vostok-tími"}
         }
         "meta:Wake"{
-            ls{"Tími á Wake-eyju"}
+            ls{"Wake-eyjartími"}
         }
         "meta:Wallis"{
             ls{"Tími á Wallis- og Fútúnaeyjum"}
         }
         "meta:Yakutsk"{
             ld{"Sumartími í Yakutsk"}
-            lg{"Tíminn í Yakutsk"}
+            lg{"Tími í Yakutsk"}
             ls{"Staðaltími í Yakutsk"}
         }
         "meta:Yekaterinburg"{

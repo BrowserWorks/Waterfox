@@ -17,7 +17,7 @@ naq{
             }
         }
     }
-    Version{"2.1.19.94"}
+    Version{"2.1.6.69"}
     calendar{
         generic{
             DateTimePatterns{
@@ -221,9 +221,7 @@ naq{
         day{
             dn{"Tsees"}
             relative{
-                "-1"{"yesterday"}
                 "0"{"Neetsee"}
-                "1"{"tomorrow"}
             }
         }
         dayperiod{

@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 1997-2015, International Business Machines Corporation and
+ * Copyright (c) 1997-2014, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************
  *
@@ -46,7 +46,6 @@
 #include "ustrfmt.h"
 #include "util.h"
 #include "uvector.h"
-#include "visibledigits.h"
 
 // *****************************************************************************
 // class MessageFormat
@@ -1956,12 +1955,8 @@ UnicodeString MessageFormat::PluralSelectorProvider::select(void *ctx, double nu
     context.formatter->format(context.number, context.numberString, ec);
     const DecimalFormat *decFmt = dynamic_cast<const DecimalFormat *>(context.formatter);
     if(decFmt != NULL) {
-        VisibleDigitsWithExponent digits;
-        decFmt->initVisibleDigitsWithExponent(context.number, digits, ec);
-        if (U_FAILURE(ec)) {
-            return UnicodeString(FALSE, OTHER_STRING, 5);
-        }
-        return rules->select(digits);
+        FixedDecimal dec = decFmt->getFixedDecimal(context.number, ec);
+        return rules->select(dec);
     } else {
         return rules->select(number);
     }

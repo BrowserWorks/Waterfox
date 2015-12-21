@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1997-2015, International Business Machines Corporation and    *
+* Copyright (C) 1997-2014, International Business Machines Corporation and    *
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 */
@@ -13,14 +13,29 @@
 #include "unicode/dcfmtsym.h"
 #include "unicode/format.h"
 #include "unicode/utf16.h"
-#include "decimalformatpatternimpl.h" 
-
 
 #ifdef FMT_DEBUG
 #define debug(x) printf("%s:%d: %s\n", __FILE__,__LINE__, x);
 #else
 #define debug(x)
 #endif
+
+#define kPatternZeroDigit            ((UChar)0x0030) /*'0'*/
+#define kPatternSignificantDigit     ((UChar)0x0040) /*'@'*/
+#define kPatternGroupingSeparator    ((UChar)0x002C) /*','*/
+#define kPatternDecimalSeparator     ((UChar)0x002E) /*'.'*/
+#define kPatternPerMill              ((UChar)0x2030)
+#define kPatternPercent              ((UChar)0x0025) /*'%'*/
+#define kPatternDigit                ((UChar)0x0023) /*'#'*/
+#define kPatternSeparator            ((UChar)0x003B) /*';'*/
+#define kPatternExponent             ((UChar)0x0045) /*'E'*/
+#define kPatternPlus                 ((UChar)0x002B) /*'+'*/
+#define kPatternMinus                ((UChar)0x002D) /*'-'*/
+#define kPatternPadEscape            ((UChar)0x002A) /*'*'*/
+#define kQuote                       ((UChar)0x0027) /*'\''*/
+
+#define kCurrencySign                ((UChar)0x00A4)
+#define kDefaultPad                  ((UChar)0x0020) /* */
 
 U_NAMESPACE_BEGIN
 
@@ -76,7 +91,7 @@ DecimalFormatPattern::DecimalFormatPattern()
           fFormatWidth(0),
           fRoundingIncrementUsed(FALSE),
           fRoundingIncrement(),
-          fPad(kDefaultPad),
+          fPad(kPatternPadEscape),
           fNegPatternsBogus(TRUE),
           fPosPatternsBogus(TRUE),
           fNegPrefixPattern(),
@@ -636,15 +651,6 @@ DecimalFormatPatternParser::applyPatternWithoutExpandAffix(
         out.fNegPrefixPattern.append(kQuote).append(kPatternMinus)
             .append(out.fPosPrefixPattern);
     }
-    // TODO: Deprecate/Remove out.fNegSuffixPattern and 3 other fields.
-    AffixPattern::parseAffixString( 
-            out.fNegSuffixPattern, out.fNegSuffixAffix, status);
-    AffixPattern::parseAffixString(
-            out.fPosSuffixPattern, out.fPosSuffixAffix, status);
-    AffixPattern::parseAffixString(
-            out.fNegPrefixPattern, out.fNegPrefixAffix, status);
-    AffixPattern::parseAffixString(
-            out.fPosPrefixPattern, out.fPosPrefixAffix, status);
 }
 
 U_NAMESPACE_END

@@ -7,7 +7,7 @@
 // *
 // ***************************************************************************
 sl{
-    Version{"2.1.19.14"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Abidžan"}
@@ -684,9 +684,6 @@ sl{
         "Asia:Calcutta"{
             ec{"Kolkata"}
         }
-        "Asia:Chita"{
-            ec{"Chita"}
-        }
         "Asia:Choibalsan"{
             ec{"Čojbalsan"}
         }
@@ -828,9 +825,6 @@ sl{
         "Asia:Singapore"{
             ec{"Singapur"}
         }
-        "Asia:Srednekolymsk"{
-            ec{"Srednekolymsk"}
-        }
         "Asia:Taipei"{
             ec{"Tajpej"}
         }
@@ -940,7 +934,7 @@ sl{
             ec{"Sydney"}
         }
         "Etc:Unknown"{
-            ec{"neznano mesto"}
+            ec{"neznano"}
         }
         "Europe:Amsterdam"{
             ec{"Amsterdam"}
@@ -980,7 +974,7 @@ sl{
         }
         "Europe:Dublin"{
             ec{"Dublin"}
-            ld{"irski standardni čas"}
+            ld{"irski poletni čas"}
         }
         "Europe:Gibraltar"{
             ec{"Gibraltar"}
@@ -1150,9 +1144,6 @@ sl{
         }
         "Pacific:Auckland"{
             ec{"Auckland"}
-        }
-        "Pacific:Bougainville"{
-            ec{"Bougainville"}
         }
         "Pacific:Chatham"{
             ec{"Chatham"}
@@ -1866,9 +1857,9 @@ sl{
         fallbackFormat{"{1} ({0})"}
         gmtFormat{"GMT{0}"}
         gmtZeroFormat{"GMT"}
-        hourFormat{"+HH.mm;-HH.mm"}
+        hourFormat{"+HH:mm;-HH:mm"}
         regionFormat{"{0} čas"}
-        regionFormatDaylight{"{0} poletni čas"}
-        regionFormatStandard{"{0} standardni čas"}
+        regionFormatDaylight{"{0} (+1)"}
+        regionFormatStandard{"{0} (+0)"}
     }
 }

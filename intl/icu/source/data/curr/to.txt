@@ -12,10 +12,6 @@ to{
             "AUD$",
             "AUD",
         }
-        BRL{
-            "R$",
-            "BRL",
-        }
         FJD{
             "FJD",
             "FJD",
@@ -48,20 +44,12 @@ to{
             "CFPF",
             "XPF",
         }
-        XXX{
-            "XXX",
-            "Pa’anga Ta’e’ilo",
-        }
     }
     Currencies%narrow{
         AUD{"$"}
         FJD{"$"}
         NZD{"$"}
         SBD{"$"}
-        TWD{"$"}
-    }
-    Currencies%variant{
-        GEL{"₾"}
     }
     CurrencyPlurals{
         TOP{
@@ -70,12 +58,9 @@ to{
         WST{
             other{"Tala fakahaʻamoa"}
         }
-        XXX{
-            other{"Pa’anga Ta’e’ilo"}
-        }
     }
     CurrencyUnitPatterns{
         other{"{1} {0}"}
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.12.94"}
 }

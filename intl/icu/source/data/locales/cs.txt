@@ -24,11 +24,6 @@ cs{
     ExemplarCharactersPunctuation{"[\\- ‐ – , ; \\: ! ? . … ‘ ‚ “ „ ( ) \\[ \\] § @ * / \\&]"}
     MoreInformation{"?"}
     NumberElements{
-        arab{
-            symbols{
-                timeSeparator{":"}
-            }
-        }
         default{"latn"}
         latn{
             miscPatterns{
@@ -119,80 +114,6 @@ cs{
                 }
             }
             patternsShort{
-                currencyFormat{
-                    1000{
-                        few{"0 tis'.' ¤"}
-                        many{"0 tis'.' ¤"}
-                        one{"0 tis'.' ¤"}
-                        other{"0 tis'.' ¤"}
-                    }
-                    10000{
-                        few{"00 tis'.' ¤"}
-                        many{"00 tis'.' ¤"}
-                        one{"00 tis'.' ¤"}
-                        other{"00 tis'.' ¤"}
-                    }
-                    100000{
-                        few{"000 tis'.' ¤"}
-                        many{"000 tis'.' ¤"}
-                        one{"000 tis'.' ¤"}
-                        other{"000 tis'.' ¤"}
-                    }
-                    1000000{
-                        few{"0 mil'.' ¤"}
-                        many{"0 mil'.' ¤"}
-                        one{"0 mil'.' ¤"}
-                        other{"0 mil'.' ¤"}
-                    }
-                    10000000{
-                        few{"00 mil'.' ¤"}
-                        many{"00 mil'.' ¤"}
-                        one{"00 mil'.' ¤"}
-                        other{"00 mil'.' ¤"}
-                    }
-                    100000000{
-                        few{"000 mil'.' ¤"}
-                        many{"000 mil'.' ¤"}
-                        one{"000 mil'.' ¤"}
-                        other{"000 mil'.' ¤"}
-                    }
-                    1000000000{
-                        few{"0 mld'.' ¤"}
-                        many{"0 mld'.' ¤"}
-                        one{"0 mld'.' ¤"}
-                        other{"0 mld'.' ¤"}
-                    }
-                    10000000000{
-                        few{"00 mld'.' ¤"}
-                        many{"00 mld'.' ¤"}
-                        one{"00 mld'.' ¤"}
-                        other{"00 mld'.' ¤"}
-                    }
-                    100000000000{
-                        few{"000 mld'.' ¤"}
-                        many{"000 mld'.' ¤"}
-                        one{"000 mld'.' ¤"}
-                        other{"000 mld'.' ¤"}
-                    }
-                    1000000000000{
-                        few{"0 bil'.' ¤"}
-                        many{"0 bil'.' ¤"}
-                        one{"0 bil'.' ¤"}
-                        other{"0 bil'.' ¤"}
-                    }
-                    10000000000000{
-                        few{"00 bil'.' ¤"}
-                        many{"00 bil'.' ¤"}
-                        one{"00 bil'.' ¤"}
-                        other{"00 bil'.' ¤"}
-                    }
-                    100000000000000{
-                        few{"000 bil'.' ¤"}
-                        many{"000 bil'.' ¤"}
-                        one{"000 bil'.' ¤"}
-                        other{"000 bil'.' ¤"}
-                    }
-                }
                 decimalFormat{
                     1000{
                         few{"0 tis'.'"}
@@ -286,7 +207,7 @@ cs{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.20.4"}
+    Version{"2.1.12.94"}
     calendar{
         buddhist{
             availableFormats{
@@ -444,7 +365,6 @@ cs{
                 "{1} {0}",
             }
             availableFormats{
-                E{"ccc"}
                 Ed{"E d."}
                 Gy{"y G"}
                 GyMMM{"LLLL y G"}
@@ -580,8 +500,8 @@ cs{
         }
         gregorian{
             AmPmMarkers{
-                "dop.",
-                "odp.",
+                "dopoledne",
+                "odpoledne",
             }
             AmPmMarkersAbbr{
                 "dop.",
@@ -606,6 +526,9 @@ cs{
                 "{1} {0}",
                 "{1} {0}",
             }
+            NoonMarker{"poledne"}
+            NoonMarkerAbbr{"pol."}
+            NoonMarkerNarrow{"pol."}
             appendItems{
                 Timezone{"{0} {1}"}
             }
@@ -625,8 +548,6 @@ cs{
                 H{"H"}
                 Hm{"H:mm"}
                 Hms{"H:mm:ss"}
-                Hmsv{"H:mm:ss v"}
-                Hmv{"H:mm v"}
                 M{"L"}
                 MEd{"E d. M."}
                 MMM{"LLL"}
@@ -639,8 +560,6 @@ cs{
                 h{"h a"}
                 hm{"h:mm a"}
                 hms{"h:mm:ss a"}
-                hmsv{"h:mm:ss a v"}
-                hmv{"h:mm a v"}
                 ms{"mm:ss"}
                 y{"y"}
                 yM{"M/y"}
@@ -733,72 +652,6 @@ cs{
                     }
                 }
             }
-            dayPeriod{
-                format{
-                    abbreviated{
-                        afternoon1{"odp."}
-                        evening1{"več."}
-                        midnight{"půln."}
-                        morning1{"r."}
-                        morning2{"dop."}
-                        night1{"v n."}
-                        noon{"pol."}
-                    }
-                    narrow{
-                        afternoon1{"o."}
-                        evening1{"v."}
-                        midnight{"půl."}
-                        morning1{"r."}
-                        morning2{"d."}
-                        night1{"n."}
-                        noon{"pol."}
-                    }
-                    wide{
-                        afternoon1{"odpoledne"}
-                        evening1{"večer"}
-                        midnight{"půlnoc"}
-                        morning1{"ráno"}
-                        morning2{"dopoledne"}
-                        night1{"v noci"}
-                        noon{"poledne"}
-                    }
-                }
-                stand-alone{
-                    abbreviated{
-                        afternoon1{"odpoledne"}
-                        am{"dop."}
-                        evening1{"večer"}
-                        midnight{"půlnoc"}
-                        morning1{"ráno"}
-                        morning2{"dopoledne"}
-                        night1{"noc"}
-                        noon{"poledne"}
-                        pm{"odp."}
-                    }
-                    narrow{
-                        afternoon1{"odp."}
-                        am{"dop."}
-                        evening1{"več."}
-                        midnight{"půl."}
-                        morning1{"ráno"}
-                        morning2{"dop."}
-                        night1{"noc"}
-                        noon{"pol."}
-                        pm{"odp."}
-                    }
-                    wide{
-                        afternoon1{"odpoledne"}
-                        am{"dop."}
-                        evening1{"večer"}
-                        midnight{"půlnoc"}
-                        morning1{"ráno"}
-                        morning2{"dopoledne"}
-                        night1{"noc"}
-                        noon{"poledne"}
-                        pm{"odp."}
-                    }
-                }
-            }
             eras{
                 abbreviated{
                     "př. n. l.",
@@ -807,6 +660,10 @@ cs{
                 narrow{
                     "př.n.l.",
                     "n.l.",
+                }
+                narrow%variant{
+                    "BCE",
+                    "n. l.",
                 }
                 wide{
                     "př. n. l.",
@@ -1264,7 +1121,7 @@ cs{
     }
     fields{
         day{
-            dn{"den"}
+            dn{"Den"}
             relative{
                 "-1"{"včera"}
                 "-2"{"předevčírem"}
@@ -1289,13 +1146,6 @@ cs{
         }
         day-narrow{
             dn{"den"}
-            relative{
-                "-1"{"včera"}
-                "-2"{"předevčírem"}
-                "0"{"dnes"}
-                "1"{"zítra"}
-                "2"{"pozítří"}
-            }
             relativeTime{
                 future{
                     few{"za {0} dny"}
@@ -1313,13 +1163,6 @@ cs{
         }
         day-short{
             dn{"den"}
-            relative{
-                "-1"{"včera"}
-                "-2"{"předevčírem"}
-                "0"{"dnes"}
-                "1"{"zítra"}
-                "2"{"pozítří"}
-            }
             relativeTime{
                 future{
                     few{"za {0} dny"}
@@ -1336,10 +1179,10 @@ cs{
             }
         }
         dayperiod{
-            dn{"část dne"}
+            dn{"dop./odp."}
         }
         era{
-            dn{"letopočet"}
+            dn{"Letopočet"}
         }
         fri{
             relative{
@@ -1363,7 +1206,7 @@ cs{
             }
         }
         hour{
-            dn{"hodina"}
+            dn{"Hodina"}
             relativeTime{
                 future{
                     few{"za {0} hodiny"}
@@ -1414,7 +1257,7 @@ cs{
             }
         }
         minute{
-            dn{"minuta"}
+            dn{"Minuta"}
             relativeTime{
                 future{
                     few{"za {0} minuty"}
@@ -1486,7 +1329,7 @@ cs{
             }
         }
         month{
-            dn{"měsíc"}
+            dn{"Měsíc"}
             relative{
                 "-1"{"minulý měsíc"}
                 "0"{"tento měsíc"}
@@ -1542,12 +1385,7 @@ cs{
             }
         }
         quarter{
-            dn{"čtvrtletí"}
-            relative{
-                "-1"{"minulé čtvrtletí"}
-                "0"{"toto čtvrtletí"}
-                "1"{"příští čtvrtletí"}
-            }
+            dn{"Čtvrtletí"}
             relativeTime{
                 future{
                     few{"za {0} čtvrtletí"}
@@ -1619,7 +1457,7 @@ cs{
             }
         }
         second{
-            dn{"sekunda"}
+            dn{"Sekunda"}
             relative{
                 "0"{"nyní"}
             }
@@ -1640,9 +1478,6 @@ cs{
         }
         second-narrow{
             dn{"s"}
-            relative{
-                "0"{"nyní"}
-            }
             relativeTime{
                 future{
                     few{"za {0} s"}
@@ -1660,9 +1495,6 @@ cs{
         }
         second-short{
             dn{"s"}
-            relative{
-                "0"{"nyní"}
-            }
             relativeTime{
                 future{
                     few{"za {0} s"}
@@ -1763,7 +1595,7 @@ cs{
             }
         }
         week{
-            dn{"týden"}
+            dn{"Týden"}
             relative{
                 "-1"{"minulý týden"}
                 "0"{"tento týden"}
@@ -1786,11 +1618,6 @@ cs{
         }
         week-narrow{
             dn{"týd."}
-            relative{
-                "-1"{"minulý týd."}
-                "0"{"tento týd."}
-                "1"{"příští týd."}
-            }
             relativeTime{
                 future{
                     few{"za {0} týd."}
@@ -1808,11 +1635,6 @@ cs{
         }
         week-short{
             dn{"týd."}
-            relative{
-                "-1"{"minulý týd."}
-                "0"{"tento týd."}
-                "1"{"příští týd."}
-            }
             relativeTime{
                 future{
                     few{"za {0} týd."}
@@ -1829,10 +1651,10 @@ cs{
             }
         }
         weekday{
-            dn{"den v týdnu"}
+            dn{"Den v týdnu"}
         }
         year{
-            dn{"rok"}
+            dn{"Rok"}
             relative{
                 "-1"{"minulý rok"}
                 "0"{"tento rok"}
@@ -1855,11 +1677,6 @@ cs{
         }
         year-narrow{
             dn{"r."}
-            relative{
-                "-1"{"minulý rok"}
-                "0"{"tento rok"}
-                "1"{"příští rok"}
-            }
             relativeTime{
                 future{
                     few{"za {0} r."}
@@ -1877,11 +1694,6 @@ cs{
         }
         year-short{
             dn{"r."}
-            relative{
-                "-1"{"minulý rok"}
-                "0"{"tento rok"}
-                "1"{"příští rok"}
-            }
             relativeTime{
                 future{
                     few{"za {0} r."}
@@ -1898,7 +1710,7 @@ cs{
             }
         }
         zone{
-            dn{"časové pásmo"}
+            dn{"Časové pásmo"}
         }
     }
     listPattern{

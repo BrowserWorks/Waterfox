@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2000-2015, International Business Machines
+*   Copyright (C) 2000-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -510,7 +510,7 @@ static const UConverterImpl _MBCSImpl={
 
 const UConverterSharedData _MBCSData={
     sizeof(UConverterSharedData), 1,
-    NULL, NULL, FALSE, TRUE, &_MBCSImpl,
+    NULL, NULL, NULL, FALSE, &_MBCSImpl, 
     0, UCNV_MBCS_TABLE_INITIALIZER
 };
 

@@ -35,7 +35,6 @@ enum class DecoderType
   BMP,
   ICO,
   ICON,
-  WEBP,
   UNKNOWN
 };
 

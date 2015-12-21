@@ -21,7 +21,7 @@
     <ClCompile Include="genmbcs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="makeconv.cpp">
+    <ClCompile Include="makeconv.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ucnvstat.c">

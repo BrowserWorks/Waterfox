@@ -85,7 +85,7 @@ az{
             "Azərbaycan Manatı (1993–2006)",
         }
         AZN{
-            "₼",
+            "AZN",
             "Azərbaycan Manatı",
         }
         BAD{
@@ -1068,7 +1068,6 @@ az{
     Currencies%narrow{
         ARS{"$"}
         AUD{"$"}
-        BAM{"KM"}
         BBD{"$"}
         BDT{"৳"}
         BMD{"$"}
@@ -1083,18 +1082,13 @@ az{
         COP{"$"}
         CRC{"₡"}
         CUP{"$"}
-        CZK{"Kč"}
-        DKK{"kr"}
         DOP{"$"}
-        EGP{"E£"}
         EUR{"€"}
         FJD{"$"}
         GBP{"£"}
         GIP{"£"}
         GYD{"$"}
         HKD{"$"}
-        HRK{"kn"}
-        HUF{"Ft"}
         ILS{"₪"}
         INR{"₹"}
         JMD{"$"}
@@ -1104,7 +1098,6 @@ az{
         KYD{"$"}
         KZT{"₸"}
         LAK{"₭"}
-        LBP{"L£"}
         LRD{"$"}
         MNT{"₮"}
         MXN{"$"}
@@ -1112,15 +1105,11 @@ az{
         NGN{"₦"}
         NZD{"$"}
         PHP{"₱"}
-        PLN{"zł"}
         PYG{"₲"}
-        RUB{"₽"}
         SBD{"$"}
         SGD{"$"}
-        SHP{"£"}
         SRD{"$"}
         SSP{"£"}
-        SYP{"S£"}
         TRY{"₺"}
         TTD{"$"}
         TWD{"NT$"}
@@ -1130,8 +1119,7 @@ az{
         VND{"₫"}
     }
     Currencies%variant{
-        GEL{"₾"}
-        TRY{"TL"}
+        AZN{"₼"}
     }
     CurrencyPlurals{
         ADP{
@@ -2195,5 +2183,5 @@ az{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.19.83"}
+    Version{"2.1.12.94"}
 }

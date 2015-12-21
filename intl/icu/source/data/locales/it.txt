@@ -73,70 +73,20 @@ it{
                         other{"000 miliardi"}
                     }
                     1000000000000{
-                        one{"0 mille miliardi"}
-                        other{"0 mila miliardi"}
+                        one{"0 mille di miliardi"}
+                        other{"0 mila di miliardi"}
                     }
                     10000000000000{
-                        one{"00 mila miliardi"}
-                        other{"00 mila miliardi"}
+                        one{"00 mila di miliardi"}
+                        other{"00 mila di miliardi"}
                     }
                     100000000000000{
-                        one{"000 mila miliardi"}
-                        other{"000 mila miliardi"}
+                        one{"000 mila di miliardi"}
+                        other{"000 mila di miliardi"}
                     }
                 }
             }
             patternsShort{
-                currencyFormat{
-                    1000{
-                        one{"0 ¤"}
-                        other{"0 ¤"}
-                    }
-                    10000{
-                        one{"00 ¤"}
-                        other{"00 ¤"}
-                    }
-                    100000{
-                        one{"000 ¤"}
-                        other{"000 ¤"}
-                    }
-                    1000000{
-                        one{"0 Mio ¤"}
-                        other{"0 Mio ¤"}
-                    }
-                    10000000{
-                        one{"00 Mio ¤"}
-                        other{"00 Mio ¤"}
-                    }
-                    100000000{
-                        one{"000 Mio ¤"}
-                        other{"000 Mio ¤"}
-                    }
-                    1000000000{
-                        one{"0 Mrd ¤"}
-                        other{"0 Mrd ¤"}
-                    }
-                    10000000000{
-                        one{"00 Mrd ¤"}
-                        other{"00 Mrd ¤"}
-                    }
-                    100000000000{
-                        one{"000 Mrd ¤"}
-                        other{"000 Mrd ¤"}
-                    }
-                    1000000000000{
-                        one{"0 Bln ¤"}
-                        other{"0 Bln ¤"}
-                    }
-                    10000000000000{
-                        one{"00 Bln ¤"}
-                        other{"00 Bln ¤"}
-                    }
-                    100000000000000{
-                        one{"000 Bln ¤"}
-                        other{"000 Bln ¤"}
-                    }
-                }
                 decimalFormat{
                     1000{
                         one{"0"}
@@ -206,7 +156,7 @@ it{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.19.17"}
+    Version{"2.1.13.6"}
     calendar{
         buddhist{
             eras{
@@ -249,7 +199,6 @@ it{
                 "{1}, {0}",
             }
             availableFormats{
-                E{"ccc"}
                 Ed{"E d"}
                 Gy{"y G"}
                 GyMMM{"MMM y G"}
@@ -262,7 +211,6 @@ it{
                 MEd{"E d/M"}
                 MMM{"LLL"}
                 MMMEd{"E d MMM"}
-                MMMMd{"d MMMM"}
                 MMMd{"d MMM"}
                 Md{"d/M"}
                 d{"d"}
@@ -383,10 +331,6 @@ it{
                 "AM",
                 "PM",
             }
-            AmPmMarkersAbbr{
-                "AM",
-                "PM",
-            }
             AmPmMarkersNarrow{
                 "m.",
                 "p.",
@@ -406,6 +350,8 @@ it{
                 "{1}, {0}",
                 "{1}, {0}",
             }
+            NoonMarker{"mezzogiorno"}
+            NoonMarkerNarrow{"n"}
             appendItems{
                 Timezone{"{0} {1}"}
             }
@@ -429,7 +375,6 @@ it{
                 MEd{"E d/M"}
                 MMM{"LLL"}
                 MMMEd{"E d MMM"}
-                MMMMd{"d MMMM"}
                 MMMd{"d MMM"}
                 Md{"d/M"}
                 d{"d"}
@@ -528,74 +473,14 @@ it{
                     }
                 }
             }
-            dayPeriod{
-                format{
-                    abbreviated{
-                        afternoon1{"pomeriggio"}
-                        evening1{"sera"}
-                        midnight{"mezzanotte"}
-                        morning1{"mattina"}
-                        night1{"notte"}
-                        noon{"mezzogiorno"}
-                    }
-                    narrow{
-                        afternoon1{"pomeriggio"}
-                        evening1{"sera"}
-                        midnight{"mezzanotte"}
-                        morning1{"mattina"}
-                        night1{"notte"}
-                        noon{"mezzogiorno"}
-                    }
-                    wide{
-                        afternoon1{"pomeriggio"}
-                        evening1{"sera"}
-                        midnight{"mezzanotte"}
-                        morning1{"mattina"}
-                        night1{"notte"}
-                        noon{"mezzogiorno"}
-                    }
-                }
-                stand-alone{
-                    abbreviated{
-                        afternoon1{"pomeriggio"}
-                        am{"AM"}
-                        evening1{"sera"}
-                        midnight{"mezzanotte"}
-                        morning1{"mattina"}
-                        night1{"notte"}
-                        noon{"mezzogiorno"}
-                        pm{"PM"}
-                    }
-                    narrow{
-                        afternoon1{"pomeriggio"}
-                        am{"m."}
-                        evening1{"sera"}
-                        midnight{"mezzanotte"}
-                        morning1{"mattina"}
-                        night1{"notte"}
-                        noon{"mezzogiorno"}
-                        pm{"p."}
-                    }
-                    wide{
-                        afternoon1{"pomeriggio"}
-                        am{"AM"}
-                        evening1{"sera"}
-                        midnight{"mezzanotte"}
-                        morning1{"mattina"}
-                        night1{"notte"}
-                        noon{"mezzogiorno"}
-                        pm{"PM"}
-                    }
-                }
-            }
             eras{
                 abbreviated{
-                    "a.C.",
-                    "d.C.",
+                    "aC",
+                    "dC",
                 }
                 abbreviated%variant{
-                    "a.E.V.",
-                    "E.V.",
+                    "BCE",
+                    "CE",
                 }
                 narrow{
                     "aC",
@@ -610,8 +495,8 @@ it{
                     "d.C.",
                 }
                 wide%variant{
-                    "avanti Era Volgare",
-                    "Era Volgare",
+                    "BCE",
+                    "CE",
                 }
             }
             intervalFormats{
@@ -876,7 +761,7 @@ it{
         roc{
             eras{
                 abbreviated{
-                    "Prima di R.O.C.",
+                    "Prima della R.O.C.",
                     "Minguo",
                 }
             }
@@ -912,7 +797,7 @@ it{
     }
     fields{
         day{
-            dn{"giorno"}
+            dn{"Giorno"}
             relative{
                 "-1"{"ieri"}
                 "-2"{"l’altro ieri"}
@@ -961,7 +846,7 @@ it{
             dn{"AM/PM"}
         }
         era{
-            dn{"era"}
+            dn{"Era"}
         }
         fri{
             relative{
@@ -985,7 +870,7 @@ it{
             }
         }
         hour{
-            dn{"ora"}
+            dn{"Ora"}
             relativeTime{
                 future{
                     one{"tra {0} ora"}
@@ -1024,7 +909,7 @@ it{
             }
         }
         minute{
-            dn{"minuto"}
+            dn{"Minuto"}
             relativeTime{
                 future{
                     one{"tra {0} minuto"}
@@ -1084,7 +969,7 @@ it{
             }
         }
         month{
-            dn{"mese"}
+            dn{"Mese"}
             relative{
                 "-1"{"mese scorso"}
                 "0"{"questo mese"}
@@ -1128,7 +1013,7 @@ it{
             }
         }
         quarter{
-            dn{"trimestre"}
+            dn{"Trimestre"}
             relativeTime{
                 future{
                     one{"tra {0} trimestre"}
@@ -1314,7 +1199,7 @@ it{
             }
         }
         week{
-            dn{"settimana"}
+            dn{"Settimana"}
             relative{
                 "-1"{"settimana scorsa"}
                 "0"{"questa settimana"}
@@ -1358,10 +1243,10 @@ it{
             }
         }
         weekday{
-            dn{"giorno della settimana"}
+            dn{"Giorno della settimana"}
         }
         year{
-            dn{"anno"}
+            dn{"Anno"}
             relative{
                 "-1"{"anno scorso"}
                 "0"{"quest’anno"}
@@ -1405,7 +1290,7 @@ it{
             }
         }
         zone{
-            dn{"fuso orario"}
+            dn{"Fuso orario"}
         }
     }
     listPattern{

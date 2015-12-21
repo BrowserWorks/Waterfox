@@ -33,7 +33,7 @@ uz_Arab{
         }
         native{"arabext"}
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.6.69"}
     calendar{
         gregorian{
             dayNames{
@@ -65,7 +65,7 @@ uz_Arab{
                         "فبر",
                         "مار",
                         "اپر",
-                        "می",
+                        "مـی",
                         "جون",
                         "جول",
                         "اگس",

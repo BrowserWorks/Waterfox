@@ -140,17 +140,11 @@ ug{
         }
         native{"arabext"}
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.7.39"}
     calendar{
         buddhist{
             eras{
                 abbreviated{
-                    "BE",
-                }
-                narrow{
-                    "BE",
-                }
-                wide{
                     "بۇددا يىلنامەسى",
                 }
             }
@@ -352,6 +346,8 @@ ug{
                 "{1}، {0}",
                 "{1}، {0}",
             }
+            NoonMarker{"چۈش"}
+            NoonMarkerNarrow{"چۈش"}
             appendItems{
                 Timezone{"{0} {1}"}
             }
@@ -433,11 +429,11 @@ ug{
             }
             eras{
                 abbreviated{
-                    "BCE",
+                    "مىلادىيەدىن بۇرۇن",
                     "مىلادىيە",
                 }
                 narrow{
-                    "BCE",
+                    "مىلادىيەدىن بۇرۇن",
                     "مىلادىيە",
                 }
                 wide{
@@ -703,10 +699,6 @@ ug{
         roc{
             eras{
                 abbreviated{
-                    "Before R.O.C.",
-                    "مىنگو",
-                }
-                wide{
                     "جۇڭخۇا مىنگودىن بۇرۇن",
                     "مىنگو",
                 }

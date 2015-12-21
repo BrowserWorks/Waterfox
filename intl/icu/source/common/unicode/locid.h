@@ -493,6 +493,7 @@ public:
      */
     uint32_t        getLCID(void) const;
 
+#ifndef U_HIDE_DRAFT_API
     /**
      * Returns whether this locale's script is written right-to-left.
      * If there is no script subtag, then the likely script is used, see uloc_addLikelySubtags().
@@ -504,9 +505,10 @@ public:
      * Returns TRUE for "ar" and "en-Hebr", FALSE for "zh" and "fa-Cyrl".
      *
      * @return TRUE if the locale's script is written right-to-left
-     * @stable ICU 54
+     * @draft ICU 54
      */
     UBool isRightToLeft() const;
+#endif  /* U_HIDE_DRAFT_API */
 
     /**
      * Fills in "dispLang" with the name of this locale's language in a format suitable for

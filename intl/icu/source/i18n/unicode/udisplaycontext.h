@@ -1,6 +1,6 @@
 /*
 *****************************************************************************************
-* Copyright (C) 2014-2015, International Business Machines
+* Copyright (C) 2014, International Business Machines
 * Corporation and others. All Rights Reserved.
 *****************************************************************************************
 */
@@ -35,13 +35,16 @@ enum UDisplayContextType {
      * UDISPCTX_CAPITALIZATION_FOR_BEGINNING_OF_SENTENCE, etc.
      * @stable ICU 51
      */
-    UDISPCTX_TYPE_CAPITALIZATION = 1,
+    UDISPCTX_TYPE_CAPITALIZATION = 1
+#ifndef U_HIDE_DRAFT_API
+    ,
     /**
      * Type to retrieve the display length setting, e.g.
      * UDISPCTX_LENGTH_FULL, UDISPCTX_LENGTH_SHORT.
-     * @stable ICU 54
+     * @draft ICU 54
      */
     UDISPCTX_TYPE_DISPLAY_LENGTH = 2
+#endif  /* U_HIDE_DRAFT_API */
 };
 /**
 *  @stable ICU 51
@@ -112,7 +115,9 @@ enum UDisplayContext {
      * isolated name on a calendar page.
      * @stable ICU 51
      */
-    UDISPCTX_CAPITALIZATION_FOR_STANDALONE = (UDISPCTX_TYPE_CAPITALIZATION<<8) + 4,
+    UDISPCTX_CAPITALIZATION_FOR_STANDALONE = (UDISPCTX_TYPE_CAPITALIZATION<<8) + 4
+#ifndef U_HIDE_DRAFT_API
+    ,
     /**
      * ================================
      * DISPLAY_LENGTH can be set to one of UDISPCTX_LENGTH_FULL or
@@ -123,16 +128,17 @@ enum UDisplayContext {
      * A possible setting for DISPLAY_LENGTH:
      * use full names when generating a locale name,
      * e.g. "United States" for US.
-     * @stable ICU 54
+     * @draft ICU 54
      */
     UDISPCTX_LENGTH_FULL = (UDISPCTX_TYPE_DISPLAY_LENGTH<<8) + 0,
     /**
      * A possible setting for DISPLAY_LENGTH:
      * use short names when generating a locale name,
      * e.g. "U.S." for US.
-     * @stable ICU 54
+     * @draft ICU 54
      */
     UDISPCTX_LENGTH_SHORT = (UDISPCTX_TYPE_DISPLAY_LENGTH<<8) + 1
+#endif  /* U_HIDE_DRAFT_API */
 };
 /**
 *  @stable ICU 51

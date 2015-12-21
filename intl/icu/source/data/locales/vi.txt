@@ -36,7 +36,7 @@ vi{
             }
             patterns{
                 accountingFormat{"#,##0.00 ¤"}
-                currencyFormat{"¤ #,##0.00"}
+                currencyFormat{"#,##0.00 ¤"}
                 decimalFormat{"#,##0.###"}
                 percentFormat{"#,##0%"}
                 scientificFormat{"#E0"}
@@ -82,44 +82,6 @@ vi{
                 }
             }
             patternsShort{
-                currencyFormat{
-                    1000{
-                        other{"0 N ¤"}
-                    }
-                    10000{
-                        other{"00 N ¤"}
-                    }
-                    100000{
-                        other{"000 N ¤"}
-                    }
-                    1000000{
-                        other{"0 Tr ¤"}
-                    }
-                    10000000{
-                        other{"00 Tr ¤"}
-                    }
-                    100000000{
-                        other{"000 Tr ¤"}
-                    }
-                    1000000000{
-                        other{"0 T ¤"}
-                    }
-                    10000000000{
-                        other{"00 T ¤"}
-                    }
-                    100000000000{
-                        other{"000 T ¤"}
-                    }
-                    1000000000000{
-                        other{"0 NT ¤"}
-                    }
-                    10000000000000{
-                        other{"00 NT ¤"}
-                    }
-                    100000000000000{
-                        other{"000 NT ¤"}
-                    }
-                }
                 decimalFormat{
                     1000{
                         other{"0 N"}
@@ -177,7 +139,7 @@ vi{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.19.17"}
+    Version{"2.1.12.94"}
     calendar{
         buddhist{
             DateTimePatterns{
@@ -189,11 +151,11 @@ vi{
                 "'Ngày' dd 'tháng' M 'năm' y G",
                 "dd-MM-y G",
                 "dd/MM/y GGGGG",
-                "{1} {0}",
-                "{1} 'lúc' {0}",
-                "{1} l'ú'c {0}",
-                "{1} {0}",
-                "{1} {0}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
             }
             availableFormats{
                 M{"'tháng' L"}
@@ -608,33 +570,32 @@ vi{
                 "HH:mm:ss z",
                 "HH:mm:ss",
                 "HH:mm",
-                "EEEE, 'ngày' dd 'tháng' MM 'năm' y G",
+                "EEEE, 'ngày' dd MMMM 'năm' y G",
                 "'Ngày' dd 'tháng' M 'năm' y G",
                 "dd-MM-y G",
                 "dd/MM/y GGGGG",
-                "{1} {0}",
-                "{1} 'lúc' {0}",
-                "{1} l'ú'c {0}",
-                "{1} {0}",
-                "{1} {0}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
             }
             availableFormats{
-                E{"ccc"}
                 Ed{"E, dd"}
-                Gy{"y G"}
+                Gy{"'Năm' y G"}
                 GyMMM{"MMM y G"}
-                GyMMMEd{"E, d MMM, y G"}
-                GyMMMd{"d MMM, y G"}
+                GyMMMEd{"E, dd MMM y G"}
+                GyMMMd{"dd MMM, y G"}
                 H{"HH'h'"}
                 Hm{"HH:mm"}
                 Hms{"HH:mm:ss"}
                 M{"L"}
                 MEd{"E, dd-M"}
                 MMM{"LLL"}
-                MMMEd{"E, d MMM"}
+                MMMEd{"E, dd MMM"}
                 MMMMEd{"E, dd MMMM"}
                 MMMMd{"dd MMMM"}
-                MMMd{"d MMM"}
+                MMMd{"dd MMM"}
                 MMdd{"dd-MM"}
                 Md{"dd-M"}
                 d{"'Ngày' dd"}
@@ -642,15 +603,15 @@ vi{
                 hm{"h:mm a"}
                 hms{"h:mm:ss a"}
                 ms{"mm:ss"}
-                y{"y G"}
-                yyyy{"y G"}
+                y{"'Năm' y G"}
+                yyyy{"'Năm' y G"}
                 yyyyM{"M/y G"}
                 yyyyMEd{"E, dd-M-y G"}
                 yyyyMM{"MM-y G"}
                 yyyyMMM{"MMM y G"}
-                yyyyMMMEd{"E, d MMM, y G"}
+                yyyyMMMEd{"E, dd MMM y G"}
                 yyyyMMMM{"MMMM y G"}
-                yyyyMMMd{"d MMM, y G"}
+                yyyyMMMd{"dd MMM, y G"}
                 yyyyMd{"d/M/y G"}
                 yyyyQQQ{"QQQ y G"}
                 yyyyQQQQ{"QQQQ y G"}
@@ -756,10 +717,6 @@ vi{
                 "SA",
                 "CH",
             }
-            AmPmMarkersAbbr{
-                "SA",
-                "CH",
-            }
             AmPmMarkersNarrow{
                 "s",
                 "c",
@@ -771,14 +728,16 @@ vi{
                 "HH:mm",
                 "EEEE, 'ngày' dd MMMM 'năm' y",
                 "'Ngày' dd 'tháng' MM 'năm' y",
-                "d MMM, y",
+                "dd-MM-y",
                 "dd/MM/y",
-                "{0}, {1}",
                 "{0} {1}",
                 "{0} {1}",
-                "{0}, {1}",
-                "{0}, {1}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
             }
+            NoonMarker{"TR"}
+            NoonMarkerNarrow{"tr"}
             appendItems{
                 Timezone{"{0} {1}"}
             }
@@ -786,46 +745,42 @@ vi{
                 E{"ccc"}
                 EHm{"E HH:mm"}
                 EHms{"E HH:mm:ss"}
-                Ed{"E, 'ngày' d"}
+                Ed{"E, dd"}
                 Ehm{"E h:mm a"}
                 Ehms{"E h:mm:ss a"}
                 Gy{"y G"}
                 GyMMM{"MMM y G"}
-                GyMMMEd{"E, d MMM, y G"}
+                GyMMMEd{"E, dd MMM y G"}
                 GyMMMd{"dd MMM, y G"}
                 H{"HH"}
                 Hm{"H:mm"}
-                Hms{"HH:mm:ss"}
-                Hmsv{"HH:mm:ss v"}
-                Hmv{"HH:mm v"}
+                Hms{"H:mm:ss"}
                 M{"L"}
-                MEd{"E, dd/M"}
+                MEd{"E, dd-M"}
                 MMM{"LLL"}
-                MMMEd{"E, d MMM"}
+                MMMEd{"E, dd MMM"}
                 MMMMEd{"E, d MMMM"}
                 MMMMd{"d MMMM"}
                 MMMd{"d MMM"}
                 MMdd{"dd-MM"}
-                Md{"dd/M"}
+                Md{"dd-M"}
                 d{"d"}
                 h{"h a"}
                 hm{"h:mm a"}
                 hms{"h:mm:ss a"}
-                hmsv{"h:mm:ss a v"}
-                hmv{"h:mm a v"}
                 mmss{"mm:ss"}
                 ms{"mm:ss"}
                 y{"y"}
                 yM{"M/y"}
-                yMEd{"E, dd/M/y"}
+                yMEd{"E, dd-M-y"}
                 yMM{"'tháng' MM, y"}
                 yMMM{"MMM y"}
-                yMMMEd{"E, d MMM, y"}
+                yMMMEd{"E, dd MMM y"}
                 yMMMM{"MMMM 'năm' y"}
-                yMMMd{"d MMM, y"}
+                yMMMd{"dd MMM, y"}
                 yMd{"d/M/y"}
                 yQQQ{"QQQ y"}
-                yQQQQ{"QQQQ 'năm' y"}
+                yQQQQ{"QQQQ y"}
             }
             dayNames{
                 format{
@@ -905,74 +860,10 @@ vi{
                     }
                 }
             }
-            dayPeriod{
-                format{
-                    abbreviated{
-                        afternoon1{"chiều"}
-                        evening1{"tối"}
-                        midnight{"nửa đêm"}
-                        morning1{"sáng"}
-                        night1{"đêm"}
-                        noon{"TR"}
-                    }
-                    narrow{
-                        afternoon1{"chiều"}
-                        evening1{"tối"}
-                        midnight{"nửa đêm"}
-                        morning1{"sáng"}
-                        night1{"đêm"}
-                        noon{"tr"}
-                    }
-                    wide{
-                        afternoon1{"chiều"}
-                        evening1{"tối"}
-                        midnight{"nửa đêm"}
-                        morning1{"sáng"}
-                        night1{"đêm"}
-                        noon{"TR"}
-                    }
-                }
-                stand-alone{
-                    abbreviated{
-                        afternoon1{"chiều"}
-                        am{"SA"}
-                        evening1{"tối"}
-                        midnight{"nửa đêm"}
-                        morning1{"sáng"}
-                        night1{"đêm"}
-                        noon{"TR"}
-                        pm{"CH"}
-                    }
-                    narrow{
-                        afternoon1{"chiều"}
-                        am{"SA"}
-                        evening1{"tối"}
-                        midnight{"nửa đêm"}
-                        morning1{"sáng"}
-                        night1{"đêm"}
-                        noon{"trưa"}
-                        pm{"CH"}
-                    }
-                    wide{
-                        afternoon1{"chiều"}
-                        am{"SA"}
-                        evening1{"tối"}
-                        midnight{"nửa đêm"}
-                        morning1{"sáng"}
-                        night1{"đêm"}
-                        noon{"trưa"}
-                        pm{"CH"}
-                    }
-                }
-            }
             eras{
                 abbreviated{
                     "tr. CN",
                     "sau CN",
-                }
-                abbreviated%variant{
-                    "BCE",
-                    "CE",
                 }
                 narrow{
                     "tr. CN",
@@ -981,10 +872,6 @@ vi{
                 wide{
                     "tr. CN",
                     "sau CN",
-                }
-                wide%variant{
-                    "BCE",
-                    "CE",
                 }
             }
             intervalFormats{
@@ -1013,8 +900,8 @@ vi{
                     M{"MMM–MMM"}
                 }
                 MMMEd{
-                    M{"E, d MMM – E, d MMM"}
-                    d{"E, d MMM – E, d MMM"}
+                    M{"EEEE, 'ngày' dd 'tháng' M – EEEE, 'ngày' dd 'tháng' M"}
+                    d{"EEEE, 'ngày' dd – EEEE, 'ngày' dd 'tháng' M"}
                 }
                 MMMd{
                     M{"'Ngày' dd 'tháng' M - 'Ngày' dd 'tháng' M"}
@@ -1029,7 +916,7 @@ vi{
                 }
                 fallback{"{0} - {1}"}
                 h{
-                    a{"h a – h a"}
+                    a{"h'h' a – h'h' a"}
                     h{"h–h a"}
                 }
                 hm{
@@ -1043,7 +930,7 @@ vi{
                     m{"h:mm–h:mm a v"}
                 }
                 hv{
-                    a{"h a – h a v"}
+                    a{"h'h' a – h'h' a v"}
                     h{"h–h a v"}
                 }
                 y{
@@ -1069,11 +956,11 @@ vi{
                 }
                 yMMMM{
                     M{"MMMM–MMMM 'năm' y"}
-                    y{"MMMM, y – MMMM, y"}
+                    y{"MMMM y – MMMM y"}
                 }
                 yMMMd{
-                    M{"d MMM – d MMM, y"}
-                    d{"d – d MMM, y"}
+                    M{"'Ngày' dd 'tháng' M - 'Ngày' dd 'tháng' M 'năm' y"}
+                    d{"'Ngày' dd - 'Ngày' dd 'tháng' M 'năm' y"}
                     y{"'Ngày' dd 'tháng' M 'năm' y - 'Ngày' dd 'tháng' M 'năm' y"}
                 }
                 yMd{
@@ -1207,10 +1094,10 @@ vi{
                         "4",
                     }
                     wide{
-                        "quý 1",
-                        "quý 2",
-                        "quý 3",
-                        "quý 4",
+                        "Quý 1",
+                        "Quý 2",
+                        "Quý 3",
+                        "Quý 4",
                     }
                 }
             }
@@ -1352,11 +1239,11 @@ vi{
                 "'Ngày' dd 'tháng' M 'năm' y G",
                 "dd-MM-y G",
                 "dd/MM/y G",
-                "{1} {0}",
-                "{1} 'lúc' {0}",
-                "{1} l'ú'c {0}",
-                "{1} {0}",
-                "{1} {0}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
             }
         }
         persian{
@@ -1433,11 +1320,11 @@ vi{
                 "'Ngày' dd 'tháng' M 'năm' y G",
                 "dd-MM-y G",
                 "dd/MM/y GGGGG",
-                "{1} {0}",
-                "{1} 'lúc' {0}",
-                "{1} l'ú'c {0}",
-                "{1} {0}",
-                "{1} {0}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
+                "{0} {1}",
             }
             availableFormats{
                 M{"'tháng' L"}
@@ -1464,15 +1351,15 @@ vi{
         day{
             dn{"Ngày"}
             relative{
-                "-1"{"Hôm qua"}
-                "-2"{"Hôm kia"}
-                "0"{"Hôm nay"}
-                "1"{"Ngày mai"}
-                "2"{"Ngày kia"}
+                "-1"{"hôm qua"}
+                "-2"{"hôm kia"}
+                "0"{"hôm nay"}
+                "1"{"ngày mai"}
+                "2"{"ngày kia"}
             }
             relativeTime{
                 future{
-                    other{"sau {0} ngày nữa"}
+                    other{"trong {0} ngày nữa"}
                 }
                 past{
                     other{"{0} ngày trước"}
@@ -1483,7 +1370,7 @@ vi{
             dn{"Ngày"}
             relativeTime{
                 future{
-                    other{"sau {0} ngày nữa"}
+                    other{"trong {0} ngày"}
                 }
                 past{
                     other{"{0} ngày trước"}
@@ -1494,7 +1381,7 @@ vi{
             dn{"Ngày"}
             relativeTime{
                 future{
-                    other{"sau {0} ngày nữa"}
+                    other{"trong {0} ngày nữa"}
                 }
                 past{
                     other{"{0} ngày trước"}
@@ -1532,7 +1419,7 @@ vi{
             dn{"Giờ"}
             relativeTime{
                 future{
-                    other{"sau {0} giờ nữa"}
+                    other{"trong {0} giờ nữa"}
                 }
                 past{
                     other{"{0} giờ trước"}
@@ -1543,7 +1430,7 @@ vi{
             dn{"Giờ"}
             relativeTime{
                 future{
-                    other{"sau {0} giờ nữa"}
+                    other{"trong {0} giờ"}
                 }
                 past{
                     other{"{0} giờ trước"}
@@ -1554,7 +1441,7 @@ vi{
             dn{"Giờ"}
             relativeTime{
                 future{
-                    other{"sau {0} giờ nữa"}
+                    other{"trong {0} giờ nữa"}
                 }
                 past{
                     other{"{0} giờ trước"}
@@ -1565,7 +1452,7 @@ vi{
             dn{"Phút"}
             relativeTime{
                 future{
-                    other{"sau {0} phút nữa"}
+                    other{"trong {0} phút nữa"}
                 }
                 past{
                     other{"{0} phút trước"}
@@ -1576,7 +1463,7 @@ vi{
             dn{"Phút"}
             relativeTime{
                 future{
-                    other{"sau {0} phút nữa"}
+                    other{"trong {0} phút"}
                 }
                 past{
                     other{"{0} phút trước"}
@@ -1587,7 +1474,7 @@ vi{
             dn{"Phút"}
             relativeTime{
                 future{
-                    other{"sau {0} phút nữa"}
+                    other{"trong {0} phút nữa"}
                 }
                 past{
                     other{"{0} phút trước"}
@@ -1624,7 +1511,7 @@ vi{
             }
             relativeTime{
                 future{
-                    other{"sau {0} tháng nữa"}
+                    other{"trong {0} tháng nữa"}
                 }
                 past{
                     other{"{0} tháng trước"}
@@ -1633,14 +1520,9 @@ vi{
         }
         month-narrow{
             dn{"Tháng"}
-            relative{
-                "-1"{"tháng trước"}
-                "0"{"tháng này"}
-                "1"{"tháng sau"}
-            }
             relativeTime{
                 future{
-                    other{"sau {0} tháng nữa"}
+                    other{"trong {0} tháng nữa"}
                 }
                 past{
                     other{"{0} tháng trước"}
@@ -1649,14 +1531,9 @@ vi{
         }
         month-short{
             dn{"Tháng"}
-            relative{
-                "-1"{"tháng trước"}
-                "0"{"tháng này"}
-                "1"{"tháng sau"}
-            }
             relativeTime{
                 future{
-                    other{"sau {0} tháng nữa"}
+                    other{"trong {0} tháng nữa"}
                 }
                 past{
                     other{"{0} tháng trước"}
@@ -1665,14 +1542,9 @@ vi{
         }
         quarter{
             dn{"Quý"}
-            relative{
-                "-1"{"quý trước"}
-                "0"{"quý này"}
-                "1"{"quý sau"}
-            }
             relativeTime{
                 future{
-                    other{"sau {0} quý nữa"}
+                    other{"trong {0} quý nữa"}
                 }
                 past{
                     other{"{0} quý trước"}
@@ -1681,14 +1553,9 @@ vi{
         }
         quarter-narrow{
             dn{"Quý"}
-            relative{
-                "-1"{"quý trước"}
-                "0"{"quý này"}
-                "1"{"quý sau"}
-            }
             relativeTime{
                 future{
-                    other{"sau {0} quý nữa"}
+                    other{"trong {0} quý nữa"}
                 }
                 past{
                     other{"{0} quý trước"}
@@ -1697,14 +1564,9 @@ vi{
         }
         quarter-short{
             dn{"Quý"}
-            relative{
-                "-1"{"quý trước"}
-                "0"{"quý này"}
-                "1"{"quý sau"}
-            }
             relativeTime{
                 future{
-                    other{"sau {0} quý nữa"}
+                    other{"trong {0} quý nữa"}
                 }
                 past{
                     other{"{0} quý trước"}
@@ -1739,7 +1601,7 @@ vi{
             }
             relativeTime{
                 future{
-                    other{"sau {0} giây nữa"}
+                    other{"trong {0} giây nữa"}
                 }
                 past{
                     other{"{0} giây trước"}
@@ -1750,7 +1612,7 @@ vi{
             dn{"Giây"}
             relativeTime{
                 future{
-                    other{"sau {0} giây nữa"}
+                    other{"trong {0} giây"}
                 }
                 past{
                     other{"{0} giây trước"}
@@ -1761,7 +1623,7 @@ vi{
             dn{"Giây"}
             relativeTime{
                 future{
-                    other{"sau {0} giây nữa"}
+                    other{"trong {0} giây nữa"}
                 }
                 past{
                     other{"{0} giây trước"}
@@ -1861,7 +1723,7 @@ vi{
             }
             relativeTime{
                 future{
-                    other{"sau {0} tuần nữa"}
+                    other{"trong {0} tuần nữa"}
                 }
                 past{
                     other{"{0} tuần trước"}
@@ -1870,14 +1732,9 @@ vi{
         }
         week-narrow{
             dn{"Tuần"}
-            relative{
-                "-1"{"tuần trước"}
-                "0"{"tuần này"}
-                "1"{"tuần sau"}
-            }
             relativeTime{
                 future{
-                    other{"sau {0} tuần nữa"}
+                    other{"trong {0} tuần nữa"}
                 }
                 past{
                     other{"{0} tuần trước"}
@@ -1886,14 +1743,9 @@ vi{
         }
         week-short{
             dn{"Tuần"}
-            relative{
-                "-1"{"tuần trước"}
-                "0"{"tuần này"}
-                "1"{"tuần sau"}
-            }
             relativeTime{
                 future{
-                    other{"sau {0} tuần nữa"}
+                    other{"trong {0} tuần nữa"}
                 }
                 past{
                     other{"{0} tuần trước"}
@@ -1912,7 +1764,7 @@ vi{
             }
             relativeTime{
                 future{
-                    other{"sau {0} năm nữa"}
+                    other{"trong {0} năm nữa"}
                 }
                 past{
                     other{"{0} năm trước"}
@@ -1921,14 +1773,9 @@ vi{
         }
         year-narrow{
             dn{"Năm"}
-            relative{
-                "-1"{"năm ngoái"}
-                "0"{"năm nay"}
-                "1"{"năm sau"}
-            }
             relativeTime{
                 future{
-                    other{"sau {0} năm nữa"}
+                    other{"trong {0} năm nữa"}
                 }
                 past{
                     other{"{0} năm trước"}
@@ -1937,14 +1784,9 @@ vi{
         }
         year-short{
             dn{"Năm"}
-            relative{
-                "-1"{"năm ngoái"}
-                "0"{"năm nay"}
-                "1"{"năm sau"}
-            }
             relativeTime{
                 future{
-                    other{"sau {0} năm nữa"}
+                    other{"trong {0} năm nữa"}
                 }
                 past{
                     other{"{0} năm trước"}

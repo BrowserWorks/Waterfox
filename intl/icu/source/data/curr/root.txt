@@ -165,7 +165,6 @@ root{
         PKR{"Rs"}
         PLN{"zł"}
         PYG{"₲"}
-        RUB{"₽"}
         RUR{"р."}
         RWF{"RF"}
         SBD{"$"}
@@ -180,7 +179,7 @@ root{
         TOP{"T$"}
         TRY{"₺"}
         TTD{"$"}
-        TWD{"$"}
+        TWD{"NT$"}
         UAH{"₴"}
         USD{"$"}
         UYU{"$"}
@@ -191,13 +190,13 @@ root{
         ZMW{"ZK"}
     }
     Currencies%variant{
-        GEL{"₾"}
+        RUB{"₽"}
         TRY{"TL"}
     }
     CurrencyUnitPatterns{
         other{"{0} {1}"}
     }
-    Version{"2.1.19.19"}
+    Version{"2.1.12.90"}
     currencySpacing{
         afterCurrency{
             currencyMatch{"[:^S:]"}
