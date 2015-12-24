@@ -8,18 +8,18 @@
 
 # BrandFullNameInternal is used for some registry and file system values
 # instead of BrandFullName and typically should not be modified.
-!define BrandFullNameInternal "Mozilla Developer Preview"
-!define CompanyName           "mozilla.org"
-!define URLInfoAbout          "https://www.mozilla.org"
-!define HelpLink              "https://support.mozilla.org"
+!define BrandFullNameInternal "Waterfox"
+!define CompanyName           "WaterfoxProject.org"
+!define URLInfoAbout          "https://www.waterfoxproject.org"
+!define HelpLink              "https://www.reddit.com/r/waterfox"
 
-!define URLStubDownload "http://download.mozilla.org/?os=win&lang=${AB_CD}&product=firefox-latest"
-!define URLManualDownload "https://www.mozilla.org/${AB_CD}/firefox/installer-help/?channel=release&installer_lang=${AB_CD}"
-!define Channel "unofficial"
+!define URLStubDownload "https://www.waterfoxproject.org/downloads"
+!define URLManualDownload "https://www.waterfoxproject.org/downloads"
+!define Channel "release"
 
 # The installer's certificate name and issuer expected by the stub installer
-!define CertNameDownload   "Mozilla Corporation"
-!define CertIssuerDownload "Thawte Code Signing CA - G2"
+!define CertNameDownload   "Waterfox Ltd"
+!define CertIssuerDownload "GlobalSign Domain Validation CA"
 
 # Dialog units are used so the UI displays correctly with the system's DPI
 # settings.
