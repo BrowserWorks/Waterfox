@@ -1,0 +1,215 @@
+diff --git a/browser/app/profile/firefox.js b/browser/app/profile/firefox.js
+index 26b7f30..a88be35 100644
+--- a/browser/app/profile/firefox.js
++++ b/browser/app/profile/firefox.js
+@@ -1845,6 +1845,11 @@ pref("browser.eme.ui.enabled", true);
+ pref("media.gmp-eme-adobe.enabled", true);
+ #endif
+ 
++pref("media.youtube-ua.override", true);
++pref("media.youtube-ua.override.from", "43");
++pref("media.youtube-ua.override.to", "42");
++
++
+ // Play with different values of the decay time and get telemetry,
+ // 0 means to randomize (and persist) the experiment value in users' profiles,
+ // -1 means no experiment is run and we use the preferred value for frecency (6h)
+diff --git a/dom/base/Navigator.cpp b/dom/base/Navigator.cpp
+index 4fc4b1a..6dac6dc 100644
+--- a/dom/base/Navigator.cpp
++++ b/dom/base/Navigator.cpp
+@@ -2774,6 +2774,17 @@ Navigator::GetUserAgent(nsPIDOMWindow* aWindow, nsIURI* aURI,
+     return rv;
+   }
+ 
++  if (mozilla::Preferences::GetBool("media.youtube-ua.override", false) &&
++      nsContentUtils::IsYouTubeURI(aURI)) {
++    const nsAdoptingString& from =
++      mozilla::Preferences::GetString("media.youtube-ua.override.from");
++    const nsAdoptingString& to =
++      mozilla::Preferences::GetString("media.youtube-ua.override.to");
++    if (!from.IsEmpty() && !to.IsEmpty()) {
++      ua.ReplaceSubstring(NS_ConvertUTF16toUTF8(from), NS_ConvertUTF16toUTF8(to));
++    }
++  }
++
+   CopyASCIItoUTF16(ua, aUserAgent);
+ 
+   if (!aWindow || !aURI) {
+diff --git a/dom/base/nsContentUtils.cpp b/dom/base/nsContentUtils.cpp
+index dd046fa..57e4c04 100644
+--- a/dom/base/nsContentUtils.cpp
++++ b/dom/base/nsContentUtils.cpp
+@@ -197,6 +197,8 @@
+ #include "mozIThirdPartyUtil.h"
+ #include "nsICookieService.h"
+ #include "mozilla/EnumSet.h"
++#include "nsIEffectiveTLDService.h"
++#include "nsServiceManagerUtils.h"
+ 
+ #include "nsIBidiKeyboard.h"
+ 
+@@ -8192,3 +8194,25 @@ nsContentUtils::InternalStorageAllowedForPrincipal(nsIPrincipal* aPrincipal,
+ 
+   return access;
+ }
++
++/* static */ bool
++nsContentUtils::IsYouTubeURI(nsIURI* aURI)
++{
++  if (!aURI) {
++    return false;
++  }
++
++  nsCOMPtr<nsIEffectiveTLDService> tldServ =
++    do_GetService(NS_EFFECTIVETLDSERVICE_CONTRACTID);
++  NS_ENSURE_TRUE(tldServ, false);
++
++  nsAutoCString eTLDplusOne;
++  if (NS_FAILED(tldServ->GetBaseDomain(aURI, 0, eTLDplusOne))) {
++    return false;
++  }
++
++  // Those are the domains used by YouTube.
++  return eTLDplusOne.EqualsLiteral("youtube.com") ||
++         eTLDplusOne.EqualsLiteral("youtube-nocookie.com") ||
++         eTLDplusOne.EqualsLiteral("ytimg.com");
++}
+diff --git a/dom/base/nsContentUtils.h b/dom/base/nsContentUtils.h
+index 5182181..b414d43 100644
+--- a/dom/base/nsContentUtils.h
++++ b/dom/base/nsContentUtils.h
+@@ -530,6 +530,8 @@ class nsContentUtils
+   static bool CheckForBOM(const unsigned char* aBuffer, uint32_t aLength,
+                           nsACString& aCharset);
+ 
++  static bool IsYouTubeURI(nsIURI* aURI);
++
+   /**
+    * Returns true if |aName| is a valid name to be registered via
+    * document.registerElement.
+diff --git a/netwerk/protocol/http/HttpBaseChannel.cpp b/netwerk/protocol/http/HttpBaseChannel.cpp
+index 2b83b59..b1687ac 100644
+--- a/netwerk/protocol/http/HttpBaseChannel.cpp
++++ b/netwerk/protocol/http/HttpBaseChannel.cpp
+@@ -170,7 +170,7 @@ HttpBaseChannel::Init(nsIURI *aURI,
+   rv = mRequestHead.SetHeader(nsHttp::Host, hostLine);
+   if (NS_FAILED(rv)) return rv;
+ 
+-  rv = gHttpHandler->AddStandardRequestHeaders(&mRequestHead.Headers());
++  rv = gHttpHandler->AddStandardRequestHeaders(&mRequestHead.Headers(), nsContentUtils::IsYouTubeURI(aURI));
+   if (NS_FAILED(rv)) return rv;
+ 
+   nsAutoCString type;
+diff --git a/netwerk/protocol/http/nsHttpHandler.cpp b/netwerk/protocol/http/nsHttpHandler.cpp
+index 634a1b7..f5ea824 100644
+--- a/netwerk/protocol/http/nsHttpHandler.cpp
++++ b/netwerk/protocol/http/nsHttpHandler.cpp
+@@ -173,6 +173,7 @@ nsHttpHandler::nsHttpHandler()
+     , mLegacyAppVersion("5.0")
+     , mProduct("Gecko")
+     , mCompatFirefoxEnabled(false)
++    , mOverrideYouTubeUserAgent(false)
+     , mUserAgentIsDirty(true)
+     , mPromptTempRedirect(true)
+     , mSendSecureXSiteReferrer(true)
+@@ -381,6 +382,18 @@ nsHttpHandler::Init()
+     if (pc) {
+         pc->GetParentalControlsEnabled(&mParentalControlEnabled);
+     }
++
++
++    rv = Preferences::AddBoolVarCache(&mOverrideYouTubeUserAgent,
++                                      "media.youtube-ua.override", false);
++    if (NS_FAILED(rv)) {
++        mOverrideYouTubeUserAgent = false;
++    }
++    mOverrideYouTubeUserAgentFrom =
++        NS_ConvertUTF16toUTF8(mozilla::Preferences::GetString("media.youtube-ua.override.from"));
++    mOverrideYouTubeUserAgentTo =
++        NS_ConvertUTF16toUTF8(mozilla::Preferences::GetString("media.youtube-ua.override.to"));
++
+     return NS_OK;
+ }
+ 
+@@ -417,12 +430,12 @@ nsHttpHandler::InitConnectionMgr()
+ }
+ 
+ nsresult
+-nsHttpHandler::AddStandardRequestHeaders(nsHttpHeaderArray *request)
++nsHttpHandler::AddStandardRequestHeaders(nsHttpHeaderArray *request, bool isForYouTube)
+ {
+     nsresult rv;
+ 
+     // Add the "User-Agent" header
+-    rv = request->SetHeader(nsHttp::User_Agent, UserAgent(),
++    rv = request->SetHeader(nsHttp::User_Agent, UserAgent(isForYouTube),
+                             false, nsHttpHeaderArray::eVarietyDefault);
+     if (NS_FAILED(rv)) return rv;
+ 
+@@ -599,7 +612,7 @@ nsHttpHandler::GenerateHostPort(const nsCString& host, int32_t port,
+ //-----------------------------------------------------------------------------
+ 
+ const nsAFlatCString &
+-nsHttpHandler::UserAgent()
++nsHttpHandler::UserAgent(bool isForYouTube)
+ {
+     if (mUserAgentOverride) {
+         LOG(("using general.useragent.override : %s\n", mUserAgentOverride.get()));
+@@ -611,6 +624,10 @@ nsHttpHandler::UserAgent()
+         mUserAgentIsDirty = false;
+     }
+ 
++    if (isForYouTube) {
++      return mYouTubeUserAgent;
++    }
++
+     return mUserAgent;
+ }
+ 
+@@ -689,6 +706,15 @@ nsHttpHandler::BuildUserAgent()
+         mUserAgent += '/';
+         mUserAgent += mAppVersion;
+     }
++
++    if (mOverrideYouTubeUserAgent) {
++        mYouTubeUserAgent = mUserAgent;
++        if (!mOverrideYouTubeUserAgentFrom.IsEmpty() &&
++            !mOverrideYouTubeUserAgentTo.IsEmpty()) {
++            mYouTubeUserAgent.ReplaceSubstring(mOverrideYouTubeUserAgentFrom,
++                                               mOverrideYouTubeUserAgentTo);
++        }
++    }
+ }
+ 
+ #ifdef XP_WIN
+diff --git a/netwerk/protocol/http/nsHttpHandler.h b/netwerk/protocol/http/nsHttpHandler.h
+index c4f49ab..fe0f157 100644
+--- a/netwerk/protocol/http/nsHttpHandler.h
++++ b/netwerk/protocol/http/nsHttpHandler.h
+@@ -65,12 +65,12 @@ class nsHttpHandler final : public nsIHttpProtocolHandler
+     nsHttpHandler();
+ 
+     nsresult Init();
+-    nsresult AddStandardRequestHeaders(nsHttpHeaderArray *);
++    nsresult AddStandardRequestHeaders(nsHttpHeaderArray *, bool isForYouTube);
+     nsresult AddConnectionHeader(nsHttpHeaderArray *,
+                                  uint32_t capabilities);
+     bool     IsAcceptableEncoding(const char *encoding);
+ 
+-    const nsAFlatCString &UserAgent();
++    const nsAFlatCString &UserAgent(bool isForYouTube = false);
+ 
+     nsHttpVersion  HttpVersion()             { return mHttpVersion; }
+     nsHttpVersion  ProxyHttpVersion()        { return mProxyHttpVersion; }
+@@ -455,6 +455,10 @@ class nsHttpHandler final : public nsIHttpProtocolHandler
+ 
+     nsCString      mUserAgent;
+     nsXPIDLCString mUserAgentOverride;
++    bool           mOverrideYouTubeUserAgent;
++    nsCString      mYouTubeUserAgent;
++    nsCString      mOverrideYouTubeUserAgentFrom;
++    nsCString      mOverrideYouTubeUserAgentTo;
+     bool           mUserAgentIsDirty; // true if mUserAgent should be rebuilt
+ 
+ 

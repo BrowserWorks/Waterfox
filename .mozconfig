@@ -28,7 +28,7 @@ export MOZ_OPTIMIZE_LDFLAGS="-FORCE"
 mk_add_options MOZ_OPTIMIZE_LDFLAGS="-FORCE"
 
 # Use to use profiling
-ac_add_options --enable-optimize="-Qstd=c++11 -D_ATL_XP_TARGETING -O1 -Qparallel -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3 -arch:SSE3 -w"
+ac_add_options --enable-optimize="-Qstd=c++11 -D_ATL_XP_TARGETING -O1 -Qprec-div- -Qip -Qopt-prefetch -fp:fast=2 -Qparallel -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3 -arch:SSE3 -w"
 
 ac_add_options --enable-require-d3d-compilers
 ac_add_options --disable-websms-backend

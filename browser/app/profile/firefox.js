@@ -144,7 +144,7 @@ pref("app.update.badge", false);
 pref("app.update.staging.enabled", true);
 
 // Update service URL:
-pref("app.update.url", "https://aus5.mozilla.org/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml");
+pref("app.update.url", "https://www.waterfoxproject.org/update/win64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
 // app.update.url.manual is in branding section
 // app.update.url.details is in branding section
 
@@ -162,7 +162,7 @@ pref("app.update.idletime", 60);
 // upgrade start page instead! Other apps may wish to show this UI, and supply
 // a whatsNewURL field in their brand.properties that contains a link to a page
 // which tells users what's new in this new update.
-pref("app.update.showInstalledUI", false);
+pref("app.update.showInstalledUI", true);
 
 // 0 = suppress prompting for incompatibilities if there are updates available
 //     to newer versions of installed addons that resolve them.
@@ -1833,6 +1833,11 @@ pref("media.eme.apiVisible", true);
 // Whether we should run a test-pattern through EME GMPs before assuming they'll
 // decode H.264.
 pref("media.gmp.trial-create.enabled", true);
+
+pref("media.youtube-ua.override", true);
+pref("media.youtube-ua.override.from", "43");
+pref("media.youtube-ua.override.to", "42");
+
 
 // Play with different values of the decay time and get telemetry,
 // 0 means to randomize (and persist) the experiment value in users' profiles,

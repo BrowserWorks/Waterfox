@@ -28042,16 +28042,6 @@ EOF
 fi
 
 
-if test -n "$MOZ_SERVICES_HEALTHREPORT"; then
-  cat >> confdefs.pytmp <<\EOF
-    (''' MOZ_SERVICES_HEALTHREPORT ''', ' 1 ')
-EOF
-cat >> confdefs.h <<\EOF
-#define MOZ_SERVICES_HEALTHREPORT 1
-EOF
-
-fi
-
 
 if test -n "$MOZ_SERVICES_METRICS"; then
   cat >> confdefs.pytmp <<\EOF
@@ -28483,7 +28473,7 @@ EOF
 fi
 
 if test -n "$MOZ_TELEMETRY_REPORTING" || test -n "$MOZ_SERVICES_HEALTHREPORT" || test -n "$MOZ_CRASHREPORTER"; then
-  MOZ_DATA_REPORTING=1
+  MOZ_DATA_REPORTING=
   cat >> confdefs.pytmp <<\EOF
     (''' MOZ_DATA_REPORTING ''', ' 1 ')
 EOF
@@ -28699,12 +28689,12 @@ if test -n "$COMPILE_ENVIRONMENT"; then
 for ac_func in posix_fadvise posix_fallocate
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
-echo "configure:28703: checking for $ac_func" >&5
+echo "configure:28693: checking for $ac_func" >&5
 if eval "test \"`echo '$''{'ac_cv_func2_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 28708 "configure"
+#line 28698 "configure"
 #define $ac_func innocuous_$ac_func
 #include "confdefs.h"
 #undef $ac_func
@@ -28731,7 +28721,7 @@ $ac_func();
 
 ; return 0; }
 EOF
-if { (eval echo configure:28735: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:28725: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_func2_$ac_func=yes"
 else
@@ -28766,7 +28756,7 @@ if test "$MOZ_X11"; then
                 _SAVE_CFLAGS=$CFLAGS
     CFLAGS="$CFLAGS $XCFLAGS"
     cat > conftest.$ac_ext <<EOF
-#line 28770 "configure"
+#line 28760 "configure"
 #include "confdefs.h"
 
         #include <stdio.h>
@@ -28785,7 +28775,7 @@ int main() {
     
 ; return 0; }
 EOF
-if { (eval echo configure:28789: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:28779: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   :
 else
   echo "configure: failed program was:" >&5
@@ -28963,7 +28953,7 @@ if test -n "$MOZ_NATIVE_ICU"; then
     # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:28967: checking for $ac_word" >&5
+echo "configure:28957: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_PKG_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -29007,19 +28997,19 @@ fi
      PKG_CONFIG_MIN_VERSION=0.9.0
      if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
         echo $ac_n "checking for icu-i18n >= 50.1""... $ac_c" 1>&6
-echo "configure:29011: checking for icu-i18n >= 50.1" >&5
+echo "configure:29001: checking for icu-i18n >= 50.1" >&5
 
         if $PKG_CONFIG --exists "icu-i18n >= 50.1" ; then
             echo "$ac_t""yes" 1>&6
             succeeded=yes
 
             echo $ac_n "checking MOZ_ICU_CFLAGS""... $ac_c" 1>&6
-echo "configure:29018: checking MOZ_ICU_CFLAGS" >&5
+echo "configure:29008: checking MOZ_ICU_CFLAGS" >&5
             MOZ_ICU_CFLAGS=`$PKG_CONFIG --cflags "icu-i18n >= 50.1"`
             echo "$ac_t""$MOZ_ICU_CFLAGS" 1>&6
 
             echo $ac_n "checking MOZ_ICU_LIBS""... $ac_c" 1>&6
-echo "configure:29023: checking MOZ_ICU_LIBS" >&5
+echo "configure:29013: checking MOZ_ICU_LIBS" >&5
             ## Remove evil flags like -Wl,--export-dynamic
             MOZ_ICU_LIBS="`$PKG_CONFIG --libs \"icu-i18n >= 50.1\" |sed s/-Wl,--export-dynamic//g`"
             echo "$ac_t""$MOZ_ICU_LIBS" 1>&6
@@ -29796,7 +29786,6 @@ sed 's/$/,/' >> $CONFIG_STATUS <<EOF
     (''' BUILD_CTYPES ''', r''' $BUILD_CTYPES ''')
     (''' MOZ_SERVICES_COMMON ''', r''' $MOZ_SERVICES_COMMON ''')
     (''' MOZ_SERVICES_CRYPTO ''', r''' $MOZ_SERVICES_CRYPTO ''')
-    (''' MOZ_SERVICES_HEALTHREPORT ''', r''' $MOZ_SERVICES_HEALTHREPORT ''')
     (''' MOZ_SERVICES_METRICS ''', r''' $MOZ_SERVICES_METRICS ''')
     (''' MOZ_SERVICES_NOTIFICATIONS ''', r''' $MOZ_SERVICES_NOTIFICATIONS ''')
     (''' MOZ_SERVICES_SYNC ''', r''' $MOZ_SERVICES_SYNC ''')

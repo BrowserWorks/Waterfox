@@ -2079,25 +2079,6 @@ const UITourHealthReport = {
       addEnvironment: true,
     });
 
-    if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
-      Task.spawn(function*() {
-        let reporter = Cc["@mozilla.org/datareporting/service;1"]
-                         .getService()
-                         .wrappedJSObject
-                         .healthReporter;
-
-        // This can happen if the FHR component of the data reporting service is
-        // disabled. This is controlled by a pref that most will never use.
-        if (!reporter) {
-          return;
-        }
-
-        yield reporter.onInit();
-
-        // Get the UITourMetricsProvider instance from the Health Reporter
-        reporter.getProvider("org.mozilla.uitour").recordTreatmentTag(tag, value);
-      });
-    }
   }
 };
 
