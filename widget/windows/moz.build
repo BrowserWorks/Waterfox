@@ -105,6 +105,3 @@ for var in ('MOZ_ENABLE_D3D10_LAYER'):
 RESFILE = 'widget.res'
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
-
-if CONFIG['OS_ARCH'] == 'WINNT':
-	CXXFLAGS += ['-O1']
