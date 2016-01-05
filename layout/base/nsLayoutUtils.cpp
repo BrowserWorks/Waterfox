@@ -2334,34 +2334,22 @@ nsLayoutUtils::MatrixTransformRectOut(const nsRect &aBounds,
 {
   nsRect outside = aBounds;
   outside.ScaleRoundOut(1/aFactor);
-  RectDouble image = RectDouble(outside.x, outside.y,
-                                outside.width, outside.height);
-
-  RectDouble maxBounds = RectDouble(double(nscoord_MIN) / aFactor * 0.5,
-                                    double(nscoord_MIN) / aFactor * 0.5,
-                                    double(nscoord_MAX) / aFactor,
-                                    double(nscoord_MAX) / aFactor);
-  image = aMatrix.TransformAndClipBounds(image, maxBounds);
-  return RoundGfxRectToAppRect(ThebesRect(image), aFactor);
+  gfxRect image = gfxRect(outside.x, outside.y, outside.width, outside.height);
+  image.TransformBounds(aMatrix);
+  return RoundGfxRectToAppRect(image, aFactor);
 }
 
 nsRect
 nsLayoutUtils::MatrixTransformRect(const nsRect &aBounds,
                                    const Matrix4x4 &aMatrix, float aFactor)
 {
-  RectDouble image = RectDouble(NSAppUnitsToDoublePixels(aBounds.x, aFactor),
-                                NSAppUnitsToDoublePixels(aBounds.y, aFactor),
-                                NSAppUnitsToDoublePixels(aBounds.width, aFactor),
-                                NSAppUnitsToDoublePixels(aBounds.height, aFactor));
+  gfxRect image = gfxRect(NSAppUnitsToDoublePixels(aBounds.x, aFactor),
+                          NSAppUnitsToDoublePixels(aBounds.y, aFactor),
+                          NSAppUnitsToDoublePixels(aBounds.width, aFactor),
+                          NSAppUnitsToDoublePixels(aBounds.height, aFactor));
+  image.TransformBounds(aMatrix);
 
-  RectDouble maxBounds = RectDouble(double(nscoord_MIN) / aFactor * 0.5,
-                                    double(nscoord_MIN) / aFactor * 0.5,
-                                    double(nscoord_MAX) / aFactor,
-                                    double(nscoord_MAX) / aFactor);
-
-  image = aMatrix.TransformAndClipBounds(image, maxBounds);
-
-  return RoundGfxRectToAppRect(ThebesRect(image), aFactor);
+  return RoundGfxRectToAppRect(image, aFactor);
 }
 
 nsPoint
@@ -2705,11 +2693,7 @@ TransformGfxRectToAncestor(nsIFrame *aFrame,
     *aPreservesAxisAlignedRectangles =
       ctm.Is2D(&matrix2d) && matrix2d.PreservesAxisAlignedRectangles();
   }
-  Rect maxBounds = Rect(-std::numeric_limits<float>::max() * 0.5,
-                        -std::numeric_limits<float>::max() * 0.5,
-                        std::numeric_limits<float>::max(),
-                        std::numeric_limits<float>::max());
-  return ctm.TransformAndClipBounds(aRect, maxBounds);
+  return ctm.TransformBounds(aRect);
 }
 
 static SVGTextFrame*

@@ -43,7 +43,7 @@ TransformRect(const IntRect& aRect, const Matrix4x4& aTransform)
   }
 
   Rect rect(aRect.x, aRect.y, aRect.width, aRect.height);
-  rect = aTransform.TransformAndClipBounds(rect, Rect::MaxIntRect());
+  rect = aTransform.TransformBounds(rect);
   rect.RoundOut();
 
   IntRect intRect;

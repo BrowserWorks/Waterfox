@@ -65,9 +65,6 @@ jsconfig_TARGET := export
 
 include $(topsrcdir)/config/rules.mk
 
-CFLAGS += -O3 -fp:precise
-CXXFLAGS += -O3 -fp:precise
-
 # check_vanilla_allocations.py is tailored to Linux, so only run it there.
 # That should be enough to catch any problems.
 check-vanilla-allocations:

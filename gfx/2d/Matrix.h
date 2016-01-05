@@ -516,13 +516,6 @@ public:
   Rect ProjectRectBounds(const Rect& aRect, const Rect &aClip) const;
 
   /**
-   * TransformAndClipBounds transforms aRect as a bounding box, while clipping
-   * the transformed bounds to the extents of aClip.
-   */
-  template<class F>
-  RectTyped<UnknownUnits, F> TransformAndClipBounds(const RectTyped<UnknownUnits, F>& aRect, const RectTyped<UnknownUnits, F>& aClip) const;
-
-  /**
    * TransformAndClipRect projects a rectangle and clips against view frustum
    * clipping planes in homogenous space so that its projected vertices are
    * constrained within the 2d rectangle passed in aClip.
@@ -532,10 +525,7 @@ public:
    * emit fewer that 3 vertices, indicating that aRect will not be visible
    * within aClip.
    */
-  template<class F>
-  size_t TransformAndClipRect(const RectTyped<UnknownUnits, F>& aRect,
-                              const RectTyped<UnknownUnits, F>& aClip,
-                              PointTyped<UnknownUnits, F>* aVerts) const;
+  size_t TransformAndClipRect(const Rect& aRect, const Rect& aClip, Point* aVerts) const;
   static const size_t kTransformAndClipRectMaxVerts = 32;
 
   static Matrix4x4 From2D(const Matrix &aMatrix) {
@@ -564,10 +554,9 @@ public:
       return Point4D(x, y, z, w);
   }
 
-  template<class F>
-  Point4DTyped<UnknownUnits, F> operator *(const Point4DTyped<UnknownUnits, F>& aPoint) const
+  Point4D operator *(const Point4D& aPoint) const
   {
-    Point4DTyped<UnknownUnits, F> retPoint;
+    Point4D retPoint;
 
     retPoint.x = aPoint.x * _11 + aPoint.y * _21 + aPoint.z * _31 + _41;
     retPoint.y = aPoint.x * _12 + aPoint.y * _22 + aPoint.z * _32 + _42;
@@ -577,30 +566,28 @@ public:
     return retPoint;
   }
 
-  template<class F>
-  Point3DTyped<UnknownUnits, F> operator *(const Point3DTyped<UnknownUnits, F>& aPoint) const
+  Point3D operator *(const Point3D& aPoint) const
   {
-    Point4DTyped<UnknownUnits, F> temp(aPoint.x, aPoint.y, aPoint.z, 1);
+    Point4D temp(aPoint.x, aPoint.y, aPoint.z, 1);
 
     temp = *this * temp;
     temp /= temp.w;
 
-    return Point3DTyped<UnknownUnits, F>(temp.x, temp.y, temp.z);
+    return Point3D(temp.x, temp.y, temp.z);
   }
 
-  template<class F>
-  PointTyped<UnknownUnits, F> operator *(const PointTyped<UnknownUnits, F> &aPoint) const
+  Point operator *(const Point &aPoint) const
   {
-    Point4DTyped<UnknownUnits, F> temp(aPoint.x, aPoint.y, 0, 1);
+    Point4D temp(aPoint.x, aPoint.y, 0, 1);
 
     temp = *this * temp;
     temp /= temp.w;
 
-    return PointTyped<UnknownUnits, F>(temp.x, temp.y);
+    return Point(temp.x, temp.y);
   }
 
-  template<class F>
-  GFX2D_API RectTyped<UnknownUnits, F> TransformBounds(const RectTyped<UnknownUnits, F>& aRect) const;
+  GFX2D_API Rect TransformBounds(const Rect& rect) const;
+
 
   static Matrix4x4 Translation(Float aX, Float aY, Float aZ)
   {

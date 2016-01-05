@@ -1,0 +1,346 @@
+
+# HG changeset patch
+# User Kearwood (Kip) Gilbert <kgilbert@mozilla.com>
+# Date 1438907163 25200
+# Node ID 3baf8fb8d1f0e27a110c7a60c252539a90d86616
+# Parent  88e2ce193067f0caa55a1f6e70e8fc2b9579cf25
+Bug 1157984 - Part 2: Implement double precision clipping functions in Matrix4x4,r=vlad
+- Implement Matrix4x4::TransformAndClipBounds
+- Update methods in Matrix4x4 with templates, allowing for both single
+  and double precision.
+
+diff --git a/gfx/2d/Matrix.cpp b/gfx/2d/Matrix.cpp
+--- a/gfx/2d/Matrix.cpp
++++ b/gfx/2d/Matrix.cpp
+@@ -139,22 +139,29 @@ Matrix::NudgeToIntegers()
+   NudgeToInteger(&_12);
+   NudgeToInteger(&_21);
+   NudgeToInteger(&_22);
+   NudgeToInteger(&_31);
+   NudgeToInteger(&_32);
+   return *this;
+ }
+ 
+-Rect
+-Matrix4x4::TransformBounds(const Rect& aRect) const
++template<class F>
++RectTyped<UnknownUnits, F>
++Matrix4x4::TransformBounds(const RectTyped<UnknownUnits, F>& aRect) const
+ {
+-  Point quad[4];
+-  Float min_x, max_x;
+-  Float min_y, max_y;
++  Point4DTyped<UnknownUnits, F> verts[4];
++  verts[0] = *this * Point4DTyped<UnknownUnits, F>(aRect.x, aRect.y, 0.0, 1.0);
++  verts[1] = *this * Point4DTyped<UnknownUnits, F>(aRect.XMost(), aRect.y, 0.0, 1.0);
++  verts[2] = *this * Point4DTyped<UnknownUnits, F>(aRect.XMost(), aRect.YMost(), 0.0, 1.0);
++  verts[3] = *this * Point4DTyped<UnknownUnits, F>(aRect.x, aRect.YMost(), 0.0, 1.0);
++
++  PointTyped<UnknownUnits, F> quad[4];
++  F min_x, max_x;
++  F min_y, max_y;
+ 
+   quad[0] = *this * aRect.TopLeft();
+   quad[1] = *this * aRect.TopRight();
+   quad[2] = *this * aRect.BottomLeft();
+   quad[3] = *this * aRect.BottomRight();
+ 
+   min_x = max_x = quad[0].x;
+   min_y = max_y = quad[0].y;
+@@ -170,17 +177,17 @@ Matrix4x4::TransformBounds(const Rect& a
+     if (quad[i].y < min_y) {
+       min_y = quad[i].y;
+     }
+     if (quad[i].y > max_y) {
+       max_y = quad[i].y;
+     }
+   }
+ 
+-  return Rect(min_x, min_y, max_x - min_x, max_y - min_y);
++  return RectTyped<UnknownUnits, F>(min_x, min_y, max_x - min_x, max_y - min_y);
+ }
+ 
+ Point4D ComputePerspectivePlaneIntercept(const Point4D& aFirst,
+                                          const Point4D& aSecond)
+ {
+   // This function will always return a point with a w value of 0.
+   // The X, Y, and Z components will point towards an infinite vanishing
+   // point.
+@@ -267,79 +274,81 @@ Rect Matrix4x4::ProjectRectBounds(const 
+ 
+   if (max_x < min_x || max_y < min_y) {
+     return Rect(0, 0, 0, 0);
+   }
+ 
+   return Rect(min_x, min_y, max_x - min_x, max_y - min_y);
+ }
+ 
++template<class F>
+ size_t
+-Matrix4x4::TransformAndClipRect(const Rect& aRect, const Rect& aClip,
+-                                Point* aVerts) const
++Matrix4x4::TransformAndClipRect(const RectTyped<UnknownUnits, F>& aRect,
++                                const RectTyped<UnknownUnits, F>& aClip,
++                                PointTyped<UnknownUnits, F>* aVerts) const
+ {
+   // Initialize a double-buffered array of points in homogenous space with
+   // the input rectangle, aRect.
+-  Point4D points[2][kTransformAndClipRectMaxVerts];
+-  Point4D* dstPoint = points[0];
+-  *dstPoint++ = *this * Point4D(aRect.x, aRect.y, 0, 1);
+-  *dstPoint++ = *this * Point4D(aRect.XMost(), aRect.y, 0, 1);
+-  *dstPoint++ = *this * Point4D(aRect.XMost(), aRect.YMost(), 0, 1);
+-  *dstPoint++ = *this * Point4D(aRect.x, aRect.YMost(), 0, 1);
++  Point4DTyped<UnknownUnits, F> points[2][kTransformAndClipRectMaxVerts];
++  Point4DTyped<UnknownUnits, F>* dstPoint = points[0];
++  *dstPoint++ = *this * Point4DTyped<UnknownUnits, F>(aRect.x, aRect.y, 0, 1);
++  *dstPoint++ = *this * Point4DTyped<UnknownUnits, F>(aRect.XMost(), aRect.y, 0, 1);
++  *dstPoint++ = *this * Point4DTyped<UnknownUnits, F>(aRect.XMost(), aRect.YMost(), 0, 1);
++  *dstPoint++ = *this * Point4DTyped<UnknownUnits, F>(aRect.x, aRect.YMost(), 0, 1);
+ 
+   // View frustum clipping planes are described as normals originating from
+   // the 0,0,0,0 origin.
+-  Point4D planeNormals[4];
+-  planeNormals[0] = Point4D(1.0, 0.0, 0.0, -aClip.x);
+-  planeNormals[1] = Point4D(-1.0, 0.0, 0.0, aClip.XMost());
+-  planeNormals[2] = Point4D(0.0, 1.0, 0.0, -aClip.y);
+-  planeNormals[3] = Point4D(0.0, -1.0, 0.0, aClip.YMost());
++  Point4DTyped<UnknownUnits, F> planeNormals[4];
++  planeNormals[0] = Point4DTyped<UnknownUnits, F>(1.0, 0.0, 0.0, -aClip.x);
++  planeNormals[1] = Point4DTyped<UnknownUnits, F>(-1.0, 0.0, 0.0, aClip.XMost());
++  planeNormals[2] = Point4DTyped<UnknownUnits, F>(0.0, 1.0, 0.0, -aClip.y);
++  planeNormals[3] = Point4DTyped<UnknownUnits, F>(0.0, -1.0, 0.0, aClip.YMost());
+ 
+   // Iterate through each clipping plane and clip the polygon.
+   // In each pass, we double buffer, alternating between points[0] and
+   // points[1].
+   for (int plane=0; plane < 4; plane++) {
+     planeNormals[plane].Normalize();
+ 
+-    Point4D* srcPoint = points[plane & 1];
+-    Point4D* srcPointEnd = dstPoint;
++    Point4DTyped<UnknownUnits, F>* srcPoint = points[plane & 1];
++    Point4DTyped<UnknownUnits, F>* srcPointEnd = dstPoint;
+     dstPoint = points[~plane & 1];
+ 
+-    Point4D* prevPoint = srcPointEnd - 1;
+-    float prevDot = planeNormals[plane].DotProduct(*prevPoint);
++    Point4DTyped<UnknownUnits, F>* prevPoint = srcPointEnd - 1;
++    F prevDot = planeNormals[plane].DotProduct(*prevPoint);
+     while (srcPoint < srcPointEnd) {
+-      float nextDot = planeNormals[plane].DotProduct(*srcPoint);
++      F nextDot = planeNormals[plane].DotProduct(*srcPoint);
+ 
+       if ((nextDot >= 0.0) != (prevDot >= 0.0)) {
+         // An intersection with the clipping plane has been detected.
+         // Interpolate to find the intersecting point and emit it.
+-        float t = -prevDot / (nextDot - prevDot);
++        F t = -prevDot / (nextDot - prevDot);
+         *dstPoint++ = *srcPoint * t + *prevPoint * (1.0 - t);
+       }
+ 
+       if (nextDot >= 0.0) {
+         // Emit any source points that are on the positive side of the
+         // clipping plane.
+         *dstPoint++ = *srcPoint;
+       }
+ 
+       prevPoint = srcPoint++;
+       prevDot = nextDot;
+     }
+   }
+ 
+   size_t dstPointCount = 0;
+   size_t srcPointCount = dstPoint - points[0];
+-  for (Point4D* srcPoint = points[0]; srcPoint < points[0] + srcPointCount; srcPoint++) {
++  for (Point4DTyped<UnknownUnits, F>* srcPoint = points[0]; srcPoint < points[0] + srcPointCount; srcPoint++) {
+ 
+-    Point p;
++    PointTyped<UnknownUnits, F> p;
+     if (srcPoint->w == 0.0) {
+       // If a point lies on the intersection of the clipping planes at
+       // (0,0,0,0), we must avoid a division by zero w component.
+-      p = Point(0.0, 0.0);
++      p = PointTyped<UnknownUnits, F>(0.0, 0.0);
+     } else {
+       p = srcPoint->As2DPoint();
+     }
+     // Emit only unique points
+     if (dstPointCount == 0 || p != aVerts[dstPointCount - 1]) {
+       aVerts[dstPointCount++] = p;
+     }
+   }
+@@ -566,10 +575,67 @@ Matrix4x4::GetNormalVector() const
+ 
+   // Convert to two vectors on the surface of the plane.
+   Point3D ab = b - a;
+   Point3D ac = c - a;
+ 
+   return ac.CrossProduct(ab);
+ }
+ 
++template<class F>
++RectTyped<UnknownUnits, F>
++Matrix4x4::TransformAndClipBounds(const RectTyped<UnknownUnits, F>& aRect,
++                                  const RectTyped<UnknownUnits, F>& aClip) const
++{
++  PointTyped<UnknownUnits, F> verts[kTransformAndClipRectMaxVerts];
++  size_t vertCount = TransformAndClipRect(aRect, aClip, verts);
++
++  F min_x = std::numeric_limits<F>::max();
++  F min_y = std::numeric_limits<F>::max();
++  F max_x = -std::numeric_limits<F>::max();
++  F max_y = -std::numeric_limits<F>::max();
++  for (size_t i=0; i < vertCount; i++) {
++    min_x = std::min(min_x, verts[i].x);
++    max_x = std::max(max_x, verts[i].x);
++    min_y = std::min(min_y, verts[i].y);
++    max_y = std::max(max_y, verts[i].y);
++  }
++
++  if (max_x < min_x || max_y < min_y) {
++    return RectTyped<UnknownUnits, F>(0, 0, 0, 0);
++  }
++
++  return RectTyped<UnknownUnits, F>(min_x, min_y, max_x - min_x, max_y - min_y);
++
++}
++
++// Explicit template instantiation for float and double precision
++template
++size_t
++Matrix4x4::TransformAndClipRect(const Rect& aRect, const Rect& aClip,
++                                Point* aVerts) const;
++
++template
++size_t
++Matrix4x4::TransformAndClipRect(const RectDouble& aRect,
++                                const RectDouble& aClip,
++                                PointDouble* aVerts) const;
++
++template
++Rect
++Matrix4x4::TransformAndClipBounds(const Rect& aRect,
++                                  const Rect& aClip) const;
++
++template
++RectDouble
++Matrix4x4::TransformAndClipBounds(const RectDouble& aRect,
++                                  const RectDouble& aClip) const;
++
++template
++Rect
++Matrix4x4::TransformBounds(const Rect& aRect) const;
++
++template
++RectDouble
++Matrix4x4::TransformBounds(const RectDouble& aRect) const;
++
+ } // namespace gfx
+ } // namespace mozilla
+diff --git a/gfx/2d/Matrix.h b/gfx/2d/Matrix.h
+--- a/gfx/2d/Matrix.h
++++ b/gfx/2d/Matrix.h
+@@ -504,26 +504,36 @@ public:
+ 
+     // Compute the transformed point
+     return *this * Point4D(aPoint.x, aPoint.y, z, 1);
+   }
+ 
+   Rect ProjectRectBounds(const Rect& aRect, const Rect &aClip) const;
+ 
+   /**
++   * TransformAndClipBounds transforms aRect as a bounding box, while clipping
++   * the transformed bounds to the extents of aClip.
++   */
++  template<class F>
++  RectTyped<UnknownUnits, F> TransformAndClipBounds(const RectTyped<UnknownUnits, F>& aRect, const RectTyped<UnknownUnits, F>& aClip) const;
++
++  /**
+    * TransformAndClipRect projects a rectangle and clips against view frustum
+    * clipping planes in homogenous space so that its projected vertices are
+    * constrained within the 2d rectangle passed in aClip.
+    * The resulting vertices are populated in aVerts.  aVerts must be
+    * pre-allocated to hold at least kTransformAndClipRectMaxVerts Points.
+    * The vertex count is returned by TransformAndClipRect.  It is possible to
+    * emit fewer that 3 vertices, indicating that aRect will not be visible
+    * within aClip.
+    */
+-  size_t TransformAndClipRect(const Rect& aRect, const Rect& aClip, Point* aVerts) const;
++  template<class F>
++  size_t TransformAndClipRect(const RectTyped<UnknownUnits, F>& aRect,
++                              const RectTyped<UnknownUnits, F>& aClip,
++                              PointTyped<UnknownUnits, F>* aVerts) const;
+   static const size_t kTransformAndClipRectMaxVerts = 32;
+ 
+   static Matrix4x4 From2D(const Matrix &aMatrix) {
+     Matrix4x4 matrix;
+     matrix._11 = aMatrix._11;
+     matrix._12 = aMatrix._12;
+     matrix._21 = aMatrix._21;
+     matrix._22 = aMatrix._22;
+@@ -542,50 +552,53 @@ public:
+       Float x = aPoint.x * _11 + aPoint.y * _12 + aPoint.z * _13 + aPoint.w * _14;
+       Float y = aPoint.x * _21 + aPoint.y * _22 + aPoint.z * _23 + aPoint.w * _24;
+       Float z = aPoint.x * _31 + aPoint.y * _32 + aPoint.z * _33 + aPoint.w * _34;
+       Float w = aPoint.x * _41 + aPoint.y * _42 + aPoint.z * _43 + aPoint.w * _44;
+ 
+       return Point4D(x, y, z, w);
+   }
+ 
+-  Point4D operator *(const Point4D& aPoint) const
++  template<class F>
++  Point4DTyped<UnknownUnits, F> operator *(const Point4DTyped<UnknownUnits, F>& aPoint) const
+   {
+-    Point4D retPoint;
++    Point4DTyped<UnknownUnits, F> retPoint;
+ 
+     retPoint.x = aPoint.x * _11 + aPoint.y * _21 + aPoint.z * _31 + _41;
+     retPoint.y = aPoint.x * _12 + aPoint.y * _22 + aPoint.z * _32 + _42;
+     retPoint.z = aPoint.x * _13 + aPoint.y * _23 + aPoint.z * _33 + _43;
+     retPoint.w = aPoint.x * _14 + aPoint.y * _24 + aPoint.z * _34 + _44;
+ 
+     return retPoint;
+   }
+ 
+-  Point3D operator *(const Point3D& aPoint) const
++  template<class F>
++  Point3DTyped<UnknownUnits, F> operator *(const Point3DTyped<UnknownUnits, F>& aPoint) const
+   {
+-    Point4D temp(aPoint.x, aPoint.y, aPoint.z, 1);
++    Point4DTyped<UnknownUnits, F> temp(aPoint.x, aPoint.y, aPoint.z, 1);
+ 
+     temp = *this * temp;
+     temp /= temp.w;
+ 
+-    return Point3D(temp.x, temp.y, temp.z);
++    return Point3DTyped<UnknownUnits, F>(temp.x, temp.y, temp.z);
+   }
+ 
+-  Point operator *(const Point &aPoint) const
++  template<class F>
++  PointTyped<UnknownUnits, F> operator *(const PointTyped<UnknownUnits, F> &aPoint) const
+   {
+-    Point4D temp(aPoint.x, aPoint.y, 0, 1);
++    Point4DTyped<UnknownUnits, F> temp(aPoint.x, aPoint.y, 0, 1);
+ 
+     temp = *this * temp;
+     temp /= temp.w;
+ 
+-    return Point(temp.x, temp.y);
++    return PointTyped<UnknownUnits, F>(temp.x, temp.y);
+   }
+ 
+-  GFX2D_API Rect TransformBounds(const Rect& rect) const;
+-
++  template<class F>
++  GFX2D_API RectTyped<UnknownUnits, F> TransformBounds(const RectTyped<UnknownUnits, F>& aRect) const;
+ 
+   static Matrix4x4 Translation(Float aX, Float aY, Float aZ)
+   {
+     return Matrix4x4(1.0f, 0.0f, 0.0f, 0.0f,
+                      0.0f, 1.0f, 0.0f, 0.0f,
+                      0.0f, 0.0f, 1.0f, 0.0f,
+                        aX,   aY,   aZ, 1.0f);
+   }
+

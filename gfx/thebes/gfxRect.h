@@ -150,6 +150,11 @@ struct gfxRect :
      * Transform this rectangle with aMatrix, resulting in a gfxQuad.
      */
     gfxQuad TransformToQuad(const mozilla::gfx::Matrix4x4 &aMatrix) const;
+
+    /*
+     * Transform this rectangle with aMatrix, as an axis-aligned bounding box
+     */
+    void TransformBounds(const mozilla::gfx::Matrix4x4 &aMatrix);
 };
 
 #endif /* GFX_RECT_H */

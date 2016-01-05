@@ -21,7 +21,7 @@ struct gfxRGBA;
 namespace mozilla {
 namespace gfx {
 class Matrix4x4;
-template <class units, class F> struct RectTyped;
+template <class units> struct RectTyped;
 } // namespace gfx
 
 enum class ImageFormat;

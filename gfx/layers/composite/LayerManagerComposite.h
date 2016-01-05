@@ -554,7 +554,7 @@ RenderWithAllMasks(Layer* aLayer, Compositor* aCompositor,
   gfx::Matrix4x4 transform = aLayer->GetEffectiveTransform();
   // TODO: Use RenderTargetIntRect and TransformTo<...> here
   gfx::IntRect surfaceRect =
-    RoundedOut(transform.TransformAndClipBounds(visibleRect, gfx::Rect(aClipRect)));
+    RoundedOut(transform.TransformBounds(visibleRect)).Intersect(aClipRect);
   if (surfaceRect.IsEmpty()) {
     return;
   }

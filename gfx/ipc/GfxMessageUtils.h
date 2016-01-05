@@ -527,10 +527,10 @@ struct ParamTraits< mozilla::gfx::PointTyped<T> >
   }
 };
 
-template<class F, class T>
-struct ParamTraits< mozilla::gfx::Point3DTyped<F, T> >
+template<class T>
+struct ParamTraits< mozilla::gfx::Point3DTyped<T> >
 {
-  typedef mozilla::gfx::Point3DTyped<F, T> paramType;
+  typedef mozilla::gfx::Point3DTyped<T> paramType;
 
   static void Write(Message* msg, const paramType& param)
   {

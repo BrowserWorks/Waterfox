@@ -613,12 +613,12 @@ TransformRect(const mozilla::gfx::IntRect& aRect, const mozilla::gfx::Matrix4x4&
         return mozilla::gfx::IntRect();
     }
 
-    mozilla::gfx::RectDouble rect(aRect.x, aRect.y, aRect.width, aRect.height);
-    rect = aTransform.TransformAndClipBounds(rect, mozilla::gfx::RectDouble::MaxIntRect());
+    gfxRect rect(aRect.x, aRect.y, aRect.width, aRect.height);
+    rect.TransformBounds(aTransform);
     rect.RoundOut();
 
     mozilla::gfx::IntRect intRect;
-    if (!gfxUtils::GfxRectToIntRect(ThebesRect(rect), &intRect)) {
+    if (!gfxUtils::GfxRectToIntRect(rect, &intRect)) {
         return mozilla::gfx::IntRect();
     }
 
