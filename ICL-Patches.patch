@@ -97,7 +97,7 @@ index 69d3aea..17b56eb 100644
 -  Tie(drawResult, surface) =
 -    GetFrameInternal(mSize, FRAME_CURRENT, aFlags | FLAG_ASYNC_NOTIFY);
 -  if (!surface) {
-+	auto result = GetFrameInternal(mSize, FRAME_CURRENT, aFlags | FLAG_ASYNC_NOTIFY);
++	auto result = GetFrameInternal(FRAME_CURRENT, aFlags | FLAG_ASYNC_NOTIFY);
 +	if (!result.second()) {
 +//  DrawResult drawResult;
 +//  RefPtr<SourceSurface> surface;

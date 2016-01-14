@@ -2204,7 +2204,7 @@ ia64*-hpux*)
         if test "$CPU_ARCH" = "x86"; then
             WIN32_SUBSYSTEM_VERSION=5.01
         else
-            WIN32_SUBSYSTEM_VERSION=5.02
+            WIN32_SUBSYSTEM_VERSION=6.01
         fi
         WIN32_CONSOLE_EXE_LDFLAGS=-SUBSYSTEM:CONSOLE,$WIN32_SUBSYSTEM_VERSION
         WIN32_GUI_EXE_LDFLAGS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
@@ -8464,10 +8464,10 @@ if test -n "$MOZ_SERVICES_CRYPTO"; then
 fi
 
 dnl Build Firefox Health Reporter Service
-dnl AC_SUBST(MOZ_SERVICES_HEALTHREPORT)
-dnl if test -n "$MOZ_SERVICES_HEALTHREPORT"; then
-dnl   AC_DEFINE(MOZ_SERVICES_HEALTHREPORT)
-dnl fi
+AC_SUBST(MOZ_SERVICES_HEALTHREPORT)
+if test -n "$MOZ_SERVICES_HEALTHREPORT"; then
+  AC_DEFINE(MOZ_SERVICES_HEALTHREPORT)
+fi
 
 dnl Build Services metrics component
 AC_SUBST(MOZ_SERVICES_METRICS)
@@ -8807,7 +8807,7 @@ dnl If we have any service that uploads data (and requires data submission
 dnl policy alert), set MOZ_DATA_REPORTING.
 dnl We need SUBST for build system and DEFINE for xul preprocessor.
 if test -n "$MOZ_TELEMETRY_REPORTING" || test -n "$MOZ_SERVICES_HEALTHREPORT" || test -n "$MOZ_CRASHREPORTER"; then
-  MOZ_DATA_REPORTING=
+  MOZ_DATA_REPORTING=1
   AC_DEFINE(MOZ_DATA_REPORTING)
   AC_SUBST(MOZ_DATA_REPORTING)
 fi

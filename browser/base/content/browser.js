@@ -279,6 +279,10 @@ var gInitialPages = [
 #include browser-thumbnails.js
 #include browser-trackingprotection.js
 
+#ifdef MOZ_DATA_REPORTING
+#include browser-data-submission-info-bar.js
+#endif
+
 #ifdef MOZ_SERVICES_SYNC
 #include browser-syncui.js
 #endif
@@ -1377,6 +1381,10 @@ var gBrowserInit = {
     // initialize the sync UI
     gSyncUI.init();
     gFxAccounts.init();
+#endif
+
+#ifdef MOZ_DATA_REPORTING
+    gDataNotificationInfoBar.init();
 #endif
 
     LoopUI.init();

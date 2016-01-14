@@ -993,9 +993,8 @@ CompositorOGL::DrawQuad(const Rect& aRect,
   renderBound.IntersectRect(renderBound, aClipRect);
   renderBound.MoveBy(offset);
 
-  //Rect destRect = aTransform.TransformAndClipBounds(aRect, renderBound);
   Rect destRect = aTransform.TransformBounds(aRect);
-  
+
   // XXX: This doesn't handle 3D transforms. It also doesn't handled rotated
   //      quads. Fix me.
   mPixelsFilled += destRect.width * destRect.height;

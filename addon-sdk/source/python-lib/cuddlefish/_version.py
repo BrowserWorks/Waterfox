@@ -10,7 +10,7 @@
 
 # these strings will be replaced by git during git-archive
 git_refnames = " (release)"
-git_full = "de0b49259692aca566ef9b75c4f414b66c83c498"
+git_full = "7aab8e092de29e428efdf5ad42547172226a0596"
 
 
 import subprocess
