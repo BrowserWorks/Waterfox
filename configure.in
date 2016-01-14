@@ -2204,7 +2204,7 @@ ia64*-hpux*)
         if test "$CPU_ARCH" = "x86"; then
             WIN32_SUBSYSTEM_VERSION=5.01
         else
-            WIN32_SUBSYSTEM_VERSION=6.01
+            WIN32_SUBSYSTEM_VERSION=5.02
         fi
         WIN32_CONSOLE_EXE_LDFLAGS=-SUBSYSTEM:CONSOLE,$WIN32_SUBSYSTEM_VERSION
         WIN32_GUI_EXE_LDFLAGS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
@@ -5247,7 +5247,7 @@ fi
 
 if test -n "$MOZ_FMP4"; then
     AC_DEFINE(MOZ_FMP4)
-    MOZ_EME=1
+    MOZ_EME=
 fi;
 
 if test x"$MOZ_WIDGET_TOOLKIT" = x"gonk" -a -n "$MOZ_FMP4" -a -n "$ANDROID_VERSION"; then
@@ -8464,10 +8464,10 @@ if test -n "$MOZ_SERVICES_CRYPTO"; then
 fi
 
 dnl Build Firefox Health Reporter Service
-AC_SUBST(MOZ_SERVICES_HEALTHREPORT)
-if test -n "$MOZ_SERVICES_HEALTHREPORT"; then
-  AC_DEFINE(MOZ_SERVICES_HEALTHREPORT)
-fi
+dnl AC_SUBST(MOZ_SERVICES_HEALTHREPORT)
+dnl if test -n "$MOZ_SERVICES_HEALTHREPORT"; then
+dnl   AC_DEFINE(MOZ_SERVICES_HEALTHREPORT)
+dnl fi
 
 dnl Build Services metrics component
 AC_SUBST(MOZ_SERVICES_METRICS)
@@ -8794,23 +8794,14 @@ AC_SUBST(MOZ_INCLUDE_SOURCE_INFO)
 AC_DEFINE_UNQUOTED(MOZ_TELEMETRY_DISPLAY_REV, 2)
 AC_SUBST(MOZ_TELEMETRY_DISPLAY_REV)
 
-if test "$MOZ_TELEMETRY_REPORTING"; then
-    AC_DEFINE(MOZ_TELEMETRY_REPORTING)
-
-    # Enable Telemetry by default for nightly and aurora channels
-    if test -z "$RELEASE_BUILD"; then
-      AC_DEFINE(MOZ_TELEMETRY_ON_BY_DEFAULT)
-    fi
-fi
-
 dnl If we have any service that uploads data (and requires data submission
 dnl policy alert), set MOZ_DATA_REPORTING.
 dnl We need SUBST for build system and DEFINE for xul preprocessor.
-if test -n "$MOZ_TELEMETRY_REPORTING" || test -n "$MOZ_SERVICES_HEALTHREPORT" || test -n "$MOZ_CRASHREPORTER"; then
-  MOZ_DATA_REPORTING=1
-  AC_DEFINE(MOZ_DATA_REPORTING)
-  AC_SUBST(MOZ_DATA_REPORTING)
-fi
+dnl if test -n "$MOZ_TELEMETRY_REPORTING" || test -n "$MOZ_SERVICES_HEALTHREPORT" || test -n "$MOZ_CRASHREPORTER"; then
+dnl  MOZ_DATA_REPORTING=1
+dnl  AC_DEFINE(MOZ_DATA_REPORTING)
+dnl  AC_SUBST(MOZ_DATA_REPORTING)
+dnl fi
 
 dnl win32 options
 AC_SUBST(MOZ_BROWSE_INFO)

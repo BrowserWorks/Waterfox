@@ -4,6 +4,7 @@ export CC="icl"
 export CXX="icl"
 export LD="xilink"
 export AR="xilib"
+export MOZ_TELEMETRY_REPORTING=
 
 ac_add_options --enable-application=browser
 mk_add_options MOZ_MAKE_FLAGS=-j6
@@ -38,7 +39,6 @@ ac_add_options --disable-jemalloc
 ac_add_options --disable-eme
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-services-healthreport
-ac_add_options --disable-telemetry-reporting
 ac_add_options --disable-tests
 ac_add_options --disable-ipdl-tests
 ac_add_options --disable-profiling

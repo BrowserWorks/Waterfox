@@ -360,7 +360,7 @@ body[narrow] #restorePreviousSession::before {
 }
 
 #aboutMozilla::before {
-  content: url("chrome://browser/content/abouthome/mozilla.png");
+  content: url("chrome://browser/content/abouthome/waterfox.png");
   display: block;
   position: absolute;
   top: 12px;
@@ -445,7 +445,7 @@ body[narrow] #restorePreviousSession::before {
   }
 
   #aboutMozilla::before {
-    content: url("chrome://browser/content/abouthome/mozilla@2x.png");
+    content: url("chrome://browser/content/abouthome/waterfox.png");
   }
 }
 
